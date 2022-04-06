@@ -130,7 +130,7 @@ void xtop_rec_elect_fullnode_contract::on_timer(const uint64_t current_time) {
     }
 #endif
 
-    auto const & fork_config = chain_fork::xchain_fork_config_center_t::get_chain_fork_config();
+    auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
     if (!chain_fork::xchain_fork_config_center_t::is_forked(fork_config.enable_fullnode_election_fork_point, current_time)) {
         return;
     }

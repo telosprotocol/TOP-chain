@@ -121,7 +121,7 @@ void xedge_handler_base<T>::edge_send_msg(const std::vector<std::shared_ptr<xrpc
                 auto count = 0;
                 auto msghash = msg.hash();
 
-                auto const & fork_config = chain_fork::xchain_fork_config_center_t::get_chain_fork_config();
+                auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
                 if (chain_fork::xchain_fork_config_center_t::is_forked(fork_config.enable_fullnode_related_func_fork_point, vd->virtual_host()->last_logic_time())) {
                     auto cluster_addresses = vd->archive_addresses(common::xnode_type_t::storage_archive);
 

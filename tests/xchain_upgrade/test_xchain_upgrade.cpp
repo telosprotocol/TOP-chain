@@ -131,7 +131,7 @@ TEST_F(test_xchain_upgrade, test_fork_param_set_one) {
 
     xtop_chain_fork_config_center::update(0, new_config);
 
-    auto config = xtop_chain_fork_config_center::get_chain_fork_config();
+    auto config = xtop_chain_fork_config_center::chain_fork_config();
     EXPECT_EQ((int)config.tx_v2_fee_fork_point.value().fork_type, 1);
     EXPECT_EQ(config.tx_v2_fee_fork_point.value().point, 9999996);
 #ifndef XCHAIN_FORKED_BY_DEFAULT
@@ -169,7 +169,7 @@ TEST_F(test_xchain_upgrade, test_fork_param_set_all) {
     new_config.insert({"partly_remove_confirm", 9999998});
     xtop_chain_fork_config_center::update(0, new_config);
 
-    auto config = xtop_chain_fork_config_center::get_chain_fork_config();
+    auto config = xtop_chain_fork_config_center::chain_fork_config();
     EXPECT_EQ((int)config.block_fork_point.value().fork_type, 1);
     EXPECT_EQ(config.block_fork_point.value().point, 9999990);
     EXPECT_EQ((int)config.blacklist_function_fork_point.value().fork_type, 1);
@@ -209,7 +209,7 @@ TEST_F(test_xchain_upgrade, test_fork_param_set_more) {
 
     xtop_chain_fork_config_center::update(0, new_config);
 
-    auto config = xtop_chain_fork_config_center::get_chain_fork_config();
+    auto config = xtop_chain_fork_config_center::chain_fork_config();
     EXPECT_EQ((int)config.block_fork_point.value().fork_type, 1);
     EXPECT_EQ(config.block_fork_point.value().point, 9999990);
     EXPECT_EQ((int)config.blacklist_function_fork_point.value().fork_type, 1);
@@ -246,7 +246,7 @@ TEST_F(test_xchain_upgrade, test_fork_param_part_wrong) {
 
     xtop_chain_fork_config_center::update(0, new_config);
 
-    auto config = xtop_chain_fork_config_center::get_chain_fork_config();
+    auto config = xtop_chain_fork_config_center::chain_fork_config();
     EXPECT_EQ(config.block_fork_point.value().point, 9999990);
     EXPECT_EQ(config.blacklist_function_fork_point.value().point, 9999991);
     EXPECT_EQ(config.node_initial_credit_fork_point.value().point, 9999992);
@@ -277,7 +277,7 @@ TEST_F(test_xchain_upgrade, test_fork_param_all_wrong) {
 
     xtop_chain_fork_config_center::update(0, new_config);
 
-    auto config = xtop_chain_fork_config_center::get_chain_fork_config();
+    auto config = xtop_chain_fork_config_center::chain_fork_config();
 #ifndef XCHAIN_FORKED_BY_DEFAULT
     EXPECT_EQ(config.block_fork_point.value().point, 6859080);
     EXPECT_EQ(config.blacklist_function_fork_point.value().point, 6859080);
@@ -303,7 +303,7 @@ TEST_F(test_xchain_upgrade, test_fork_param_invalid_time) {
 
     xtop_chain_fork_config_center::update(7000000, new_config);
 
-    auto config = xtop_chain_fork_config_center::get_chain_fork_config();
+    auto config = xtop_chain_fork_config_center::chain_fork_config();
 #ifndef XCHAIN_FORKED_BY_DEFAULT
     EXPECT_EQ(config.block_fork_point.value().point, 6859080);
     EXPECT_EQ(config.blacklist_function_fork_point.value().point, 6859080);
@@ -344,7 +344,7 @@ TEST_F(test_xchain_upgrade, test_fork_param_from_file) {
     xtop_chain_fork_config_center::init();
     top::chain_fork::xchain_fork_config_center_t::update(7100000, top::data::xdev_params::get_instance().fork_config);
 
-    auto config = xtop_chain_fork_config_center::get_chain_fork_config();
+    auto config = xtop_chain_fork_config_center::chain_fork_config();
 #ifndef XCHAIN_FORKED_BY_DEFAULT
     EXPECT_EQ(config.block_fork_point.value().point, 6859080);
     EXPECT_EQ(config.V3_0_0_0_block_fork_point.value().point, 7126740);

@@ -106,13 +106,7 @@ namespace top {
         };
 #endif  // #if defined(XCHAIN_FORKED_BY_DEFAULT)
         xchain_fork_config_t const & xtop_chain_fork_config_center::chain_fork_config() noexcept {
-            if (top::config::chain_name_mainnet == XGET_CONFIG(chain_name)) {
-                return mainnet_chain_config;
-            } else if (top::config::chain_name_testnet == XGET_CONFIG(chain_name)) {
-                return testnet_chain_config;
-            }
-
-            return default_chain_config;
+            return m_fork_config;
         }
 
         bool xtop_chain_fork_config_center::is_forked(top::optional<xfork_point_t> const& fork_point, uint64_t target) noexcept {
@@ -132,12 +126,12 @@ namespace top {
         }
 
         bool xtop_chain_fork_config_center::is_block_forked(uint64_t target) noexcept {
-            xchain_fork_config_t const & _fork_config = xtop_chain_fork_config_center::get_chain_fork_config();
+            xchain_fork_config_t const & _fork_config = xtop_chain_fork_config_center::chain_fork_config();
             return  xtop_chain_fork_config_center::is_forked(_fork_config.V3_0_0_0_block_fork_point, target);
         }
 
         bool xtop_chain_fork_config_center::is_tx_forked_by_timestamp(uint64_t fire_timestamp) noexcept {
-            xchain_fork_config_t const & _fork_config = xtop_chain_fork_config_center::get_chain_fork_config();
+            xchain_fork_config_t const & _fork_config = xtop_chain_fork_config_center::chain_fork_config();
             auto clock = _fork_config.block_fork_point.value().point;
             auto clock_time_stamp = clock * 10 + base::TOP_BEGIN_GMTIME;
             return fire_timestamp >= clock_time_stamp;

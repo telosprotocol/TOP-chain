@@ -1361,7 +1361,7 @@ void xzec_reward_contract::calc_nodes_rewards_v5(common::xlogic_time_t const cur
     std::map<common::xaccount_address_t, uint64_t> account_votes;
     auto auditor_total_votes = calc_votes(property_param.votes_detail, property_param.map_nodes, account_votes);
 
-    auto const & fork_config = chain_fork::xchain_fork_config_center_t::get_chain_fork_config();
+    auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
 #if defined(XENABLE_TESTS)
     auto const fullnode_enabled = false;
 #else
