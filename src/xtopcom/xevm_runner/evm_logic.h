@@ -1,7 +1,6 @@
 #pragma once
 #include "xbasic/xmemory.hpp"
 #include "xevm_contract_runtime/xevm_type.h"
-#include "xevm_runner/evm_context.h"
 #include "xevm_runner/evm_storage_face.h"
 #include "xevm_runner/evm_util.h"
 
