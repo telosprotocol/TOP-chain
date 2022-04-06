@@ -441,8 +441,7 @@ void xrec_proposal_contract::check_bwlist_proposal(std::string const& bwlist) {
     for (auto const& v: vec_member) {
         XCONTRACT_ENSURE(v.size() > top::base::xvaccount_t::enum_vaccount_address_prefix_size, "[xrec_proposal_contract::check_bwlist_proposal]  target value error, addr not support");
         auto const addr_type = top::base::xvaccount_t::get_addrtype_from_account(v);
-        XCONTRACT_ENSURE(addr_type == top::base::enum_vaccount_addr_type::enum_vaccount_addr_type_secp256k1_eth_user_account || addr_type == top::base::enum_vaccount_addr_type::enum_vaccount_addr_type_secp256k1_user_account,
-                            "[xrec_proposal_contract::check_bwlist_proposal]  target value error, addr type not support");
+        XCONTRACT_ENSURE(top::base::xvaccount_t::is_unit_address_type(addr_type), "[xrec_proposal_contract::check_bwlist_proposal]  target value error, addr type not support");
         XCONTRACT_ENSURE(top::xverifier::xverifier_success == top::xverifier::xtx_utl::address_is_valid(v), "[xrec_proposal_contract::check_bwlist_proposal]  target value error, addr invalid");
     }
 
