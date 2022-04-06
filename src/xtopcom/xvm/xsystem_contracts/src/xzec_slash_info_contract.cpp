@@ -50,7 +50,7 @@ void xzec_slash_info_contract::summarize_slash_info(std::string const & slash_in
     uint32_t table_id = 0;
     XCONTRACT_ENSURE(data::xdatautil::extract_parts(source_addr, base_addr, table_id), "source address extract base_addr or table_id error!");
     xdbg("[xzec_slash_info_contract][summarize_slash_info] self_account %s, source_addr %s, base_addr %s\n", account.c_str(), source_addr.c_str(), base_addr.c_str());
-    XCONTRACT_ENSURE(base_addr == top::sys_contract_sharding_statistic_info_addr, "invalid source addr's call!");
+    XCONTRACT_ENSURE(base_addr == top::sys_contract_sharding_statistic_info_addr || base_addr == top::sys_contract_eth_table_statistic_info_addr, "invalid source addr's call!");
 
     xinfo("[xzec_slash_info_contract][summarize_slash_info] enter table contract report slash info, SOURCE_ADDRESS: %s, pid:%d, ", source_addr.c_str(), getpid());
 
@@ -424,6 +424,33 @@ std::vector<xaction_node_info_t> xzec_slash_info_contract::filter_helper(xunqual
         }
     }
 
+    node_to_action.clear();
+    for (auto const & node : node_map.eth_info) {
+        xunqualified_filter_info_t info;
+        info.node_id = node.first;
+        info.node_type = common::xnode_type_t::eth;
+        info.vote_percent = node.second.block_count * 100 / node.second.subset_count;
+        node_to_action.emplace_back(info);
+    }
+
+    std::sort(node_to_action.begin(), node_to_action.end(), [](xunqualified_filter_info_t const & lhs, xunqualified_filter_info_t const & rhs) {
+        return lhs.vote_percent < rhs.vote_percent;
+    });
+
+    slash_size = node_to_action.size() * slash_persent_threshold / 100;
+    for (size_t i = 0; i < slash_size; ++i) {
+        if (node_to_action[i].vote_percent < slash_vote_threshold || 0 == node_to_action[i].vote_percent) {
+            res.push_back(xaction_node_info_t{node_to_action[i].node_id, node_to_action[i].node_type});
+        }
+    }
+
+    award_size = node_to_action.size() * award_persent_threshold / 100;
+    for (int i = (int)node_to_action.size() - 1; i >= (int)(node_to_action.size() - award_size); --i) {
+        if (node_to_action[i].vote_percent > award_vote_threshold) {
+            res.push_back(xaction_node_info_t{node_to_action[i].node_id, node_to_action[i].node_type, false});
+        }
+    }
+
     return res;
 }
 
@@ -436,6 +463,12 @@ void xzec_slash_info_contract::print_summarize_info(data::xunqualified_node_info
     }
 
     for (auto const & item : summarize_slash_info.validator_info) {
+        out += item.first.value();
+        out += "|" + std::to_string(item.second.block_count);
+        out += "|" + std::to_string(item.second.subset_count) + "|";
+    }
+
+    for (auto const & item : summarize_slash_info.eth_info) {
         out += item.first.value();
         out += "|" + std::to_string(item.second.block_count);
         out += "|" + std::to_string(item.second.subset_count) + "|";
@@ -568,6 +601,11 @@ void  xzec_slash_info_contract::accumulate_node_info(xunqualified_node_info_t co
     for (auto const & item : node_info.validator_info) {
         summarize_info.validator_info[item.first].block_count += item.second.block_count;
         summarize_info.validator_info[item.first].subset_count += item.second.subset_count;
+    }
+
+    for (auto const & item : node_info.eth_info) {
+        summarize_info.eth_info[item.first].block_count += item.second.block_count;
+        summarize_info.eth_info[item.first].subset_count += item.second.subset_count;
     }
 }
 
