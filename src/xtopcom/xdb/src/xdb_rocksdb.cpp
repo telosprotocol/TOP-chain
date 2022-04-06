@@ -412,6 +412,7 @@ xColumnFamily xdb::xdb_impl::setup_universal_style_cf(const std::string & name,u
     }
     
     //XTODO,upgrade to RocksDB 6.x version
+    cf_config.cf_option.ttl = 24 * 60 * 60;
     //cf_config.cf_option.periodic_compaction_seconds = 12 * 60 * 60; //12 hour
     return cf_config;
 }
@@ -675,7 +676,8 @@ void xdb::xdb_impl::handle_error(const rocksdb::Status& status) const {
     const string errmsg = "[xdb] rocksDB error: " + status.ToString() + " ,db name " + m_db_name;
     xerror("%s", errmsg.c_str());
 
-    if (status.ToString().find("Bad table magic number") != std::string::npos) {
+    if (status.ToString().find("Bad table magic number") != std::string::npos || 
+        status.ToString().find("Corrupt or unsupported format_version") != std::string::npos) {
         //throw xdb_error(errmsg);
         exit(1);
     }
