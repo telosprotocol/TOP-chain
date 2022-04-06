@@ -63,7 +63,10 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
         common::xnode_address_t{sharding_address, common::xaccount_election_address_t{m_vhost->host_node_id(), slot_id}, election_round, group_size, associated_blk_height},
 
         joined_election_round)}
-  , m_evm_rpc{top::make_unique<rpc::evm::xevm_rpc_t>()} {
+    #ifdef BUILD_EVM
+  , m_evm_rpc{top::make_unique<rpc::evm::xevm_rpc_t>()}
+    #endif
+   {
     bool is_edge_archive = common::has<common::xnode_type_t::storage>(m_the_binding_driver->type()) || common::has<common::xnode_type_t::edge>(m_the_binding_driver->type());
     bool is_frozen = common::has<common::xnode_type_t::frozen>(m_the_binding_driver->type());
     if (!is_edge_archive && !is_frozen && !common::has<common::xnode_type_t::fullnode>(m_the_binding_driver->type())) {
@@ -190,8 +193,9 @@ void xtop_vnode::stop() {
     running(false);
     driver_removed();
     update_contract_manager(true);
+    #ifdef BUILD_EVM
     m_evm_rpc->stop();
-
+    #endif
     xkinfo("[virtual node] vnode (%p) stop running at address %s", this, m_the_binding_driver->address().to_string().c_str());
 }
 
@@ -258,12 +262,13 @@ void xtop_vnode::update_rpc_service() {
                                                            m_txstore,
                                                            m_elect_main,
                                                            m_election_cache_data_accessor);
+     }
+#ifdef BUILD_EVM
+    if (common::has<common::xnode_type_t::edge>(type())) {        
+        assert(m_evm_rpc != nullptr);   
+        m_evm_rpc->start();        
     }
-
-    if (common::has<common::xnode_type_t::edge>(type())) {
-        assert(m_evm_rpc != nullptr);
-        m_evm_rpc->start();
-    }
+#endif
 }
 
 void xtop_vnode::update_contract_manager(bool destory) {

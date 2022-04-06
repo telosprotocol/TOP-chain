@@ -2,6 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#ifdef BUILD_EVM
 #include "xrpc/xevm/xevm_rpc.h"
 
 #include <cassert>
@@ -23,3 +24,4 @@ void xtop_evm_rpc::stop() {
 }
 
 NS_END3
+#endif
