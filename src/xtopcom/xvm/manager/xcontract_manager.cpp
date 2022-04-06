@@ -88,27 +88,11 @@ void xtop_contract_manager::instantiate_sys_contracts() {
     XREGISTER_CONTRACT(top::xvm::xcontract::xzec_slash_info_contract, sys_contract_zec_slash_info_addr, network_id);
     XREGISTER_CONTRACT(top::xvm::system_contracts::reward::xtable_reward_claiming_contract_t, sys_contract_sharding_reward_claiming_addr, network_id);
     XREGISTER_CONTRACT(top::xvm::xcontract::xtable_statistic_info_collection_contract, sys_contract_sharding_statistic_info_addr, network_id);
+    XREGISTER_CONTRACT(top::xvm::xcontract::xtable_statistic_info_collection_contract, sys_contract_eth_table_statistic_info_addr, network_id);
     XREGISTER_CONTRACT(top::xvm::system_contracts::zec::xzec_elect_eth_contract_t, sys_contract_zec_elect_eth_addr, network_id);
 }
 
 #undef XREGISTER_CONTRACT
-
-void xtop_contract_manager::setup_blockchains(xvblockstore_t * blockstore) {
-    // setup all contracts' accounts, then no need
-    // sync generation block at all
-    for (auto const & pair : xcontract_deploy_t::instance().get_map()) {
-        if (data::is_sys_sharding_contract_address(pair.first)) {
-            for (auto i = 0; i < enum_vbucket_has_tables_count; i++) {
-                auto addr = data::make_address_by_prefix_and_subaddr(pair.first.value(), i);
-                register_contract_cluster_address(pair.first, addr);
-                setup_chain(addr, blockstore);
-            }
-        } else {
-            register_contract_cluster_address(pair.first, pair.first);
-            setup_chain(pair.first, blockstore);
-        }
-    }
-}
 
 void xtop_contract_manager::register_address() {
     for (auto const & pair : xcontract_deploy_t::instance().get_map()) {
@@ -117,6 +101,9 @@ void xtop_contract_manager::register_address() {
                 auto addr = data::make_address_by_prefix_and_subaddr(pair.first.value(), i);
                 register_contract_cluster_address(pair.first, addr);
             }
+        } else if (data::is_sys_evm_table_contract_address(pair.first)) {
+            auto addr = data::make_address_by_prefix_and_subaddr(pair.first.value(), 0);
+            register_contract_cluster_address(pair.first, addr);
         } else {
             register_contract_cluster_address(pair.first, pair.first);
         }
@@ -817,10 +804,10 @@ static void get_zec_workload_map(observer_ptr<store::xstore_face_t const> store,
     for (auto m : workloads) {
         auto detail = m.second;
         base::xstream_t stream{xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};
-        data::system_contract::cluster_workload_t workload;
+        data::system_contract::xgroup_workload_t workload;
         workload.serialize_from(stream);
         xJson::Value jn;
-        jn["cluster_total_workload"] = workload.cluster_total_workload;
+        jn["cluster_total_workload"] = workload.group_total_workload;
         auto const & key_str = m.first;
         common::xcluster_address_t cluster;
         xstream_t key_stream(xcontext_t::instance(), (uint8_t *)key_str.data(), key_str.size());
@@ -1351,7 +1338,7 @@ static void get_sharding_statistic_contract_property(std::string const & shardin
             xJson::Value jm;
             auto const & detail = m.second;
             base::xstream_t stream{ base::xcontext_t::instance(), reinterpret_cast<uint8_t *>(const_cast<char *>(detail.data())), static_cast<uint32_t>(detail.size()) };
-            data::system_contract::cluster_workload_t workload;
+            data::system_contract::xgroup_workload_t workload;
             try {
                 workload.serialize_from(stream);
             } catch (top::error::xtop_error_t const & eh) {
@@ -1363,15 +1350,15 @@ static void get_sharding_statistic_contract_property(std::string const & shardin
             }
             {
                 xJson::Value jn;
-                jn["cluster_total_workload"] = workload.cluster_total_workload;
-                auto const & key_str = workload.cluster_id;
-                common::xcluster_address_t cluster;
+                jn["cluster_total_workload"] = workload.group_total_workload;
+                auto const & key_str = m.first;
+                common::xgroup_address_t group_address;
                 base::xstream_t key_stream{ base::xcontext_t::instance(), reinterpret_cast<uint8_t *>(const_cast<char *>(key_str.data())), static_cast<uint32_t>(key_str.size()) };
-                key_stream >> cluster;
+                key_stream >> group_address;
                 for (auto const & node : workload.m_leader_count) {
                     jn[node.first] = node.second;
                 }
-                jm[cluster.group_id().to_string()] = jn;
+                jm[group_address.group_id().to_string()] = jn;
             }
             json["auditor_workload"].append(jm);
         }
@@ -1554,7 +1541,7 @@ static void get_zec_reward_contract_property(std::string const & property_name,
             xJson::Value jm;
             auto const & detail = m.second;
             base::xstream_t stream{ base::xcontext_t::instance(), reinterpret_cast<uint8_t *>(const_cast<char *>(detail.data())), static_cast<uint32_t>(detail.size()) };
-            data::system_contract::cluster_workload_t workload;
+            data::system_contract::xgroup_workload_t workload;
             try {
                 workload.serialize_from(stream);
             } catch (top::error::xtop_error_t const & eh) {
@@ -1566,15 +1553,15 @@ static void get_zec_reward_contract_property(std::string const & property_name,
             }
             {
                 xJson::Value jn;
-                jn["cluster_total_workload"] = workload.cluster_total_workload;
-                auto const & key_str = workload.cluster_id;
-                common::xcluster_address_t cluster;
+                jn["cluster_total_workload"] = workload.group_total_workload;
+                auto const & key_str = m.first;
+                common::xgroup_address_t group_address;
                 base::xstream_t key_stream{ base::xcontext_t::instance(), reinterpret_cast<uint8_t *>(const_cast<char *>(key_str.data())), static_cast<uint32_t>(key_str.size()) };
-                key_stream >> cluster;
+                key_stream >> group_address;
                 for (auto const & node : workload.m_leader_count) {
                     jn[node.first] = node.second;
                 }
-                jm[cluster.group_id().to_string()] = jn;
+                jm[group_address.group_id().to_string()] = jn;
             }
             json["auditor_workload"].append(jm);
         }
@@ -1599,7 +1586,7 @@ static void get_zec_reward_contract_property(std::string const & property_name,
             xJson::Value jm;
             auto const & detail = m.second;
             base::xstream_t stream{ base::xcontext_t::instance(), reinterpret_cast<uint8_t *>(const_cast<char *>(detail.data())), static_cast<uint32_t>(detail.size()) };
-            data::system_contract::cluster_workload_t workload;
+            data::system_contract::xgroup_workload_t workload;
             try {
                 workload.serialize_from(stream);
             } catch (top::error::xtop_error_t const & eh) {
@@ -1611,15 +1598,15 @@ static void get_zec_reward_contract_property(std::string const & property_name,
             }
             {
                 xJson::Value jn;
-                jn["cluster_total_workload"] = workload.cluster_total_workload;
-                auto const & key_str = workload.cluster_id;
-                common::xcluster_address_t cluster;
+                jn["cluster_total_workload"] = workload.group_total_workload;
+                auto const & key_str = m.first;
+                common::xcluster_address_t group_address;
                 base::xstream_t key_stream{ base::xcontext_t::instance(), reinterpret_cast<uint8_t *>(const_cast<char *>(key_str.data())), static_cast<uint32_t>(key_str.size()) };
-                key_stream >> cluster;
+                key_stream >> group_address;
                 for (auto const & node : workload.m_leader_count) {
                     jn[node.first] = node.second;
                 }
-                jm[cluster.group_id().to_string()] = jn;
+                jm[group_address.group_id().to_string()] = jn;
             }
             json["validator_workload"].append(jm);
         }
@@ -2203,10 +2190,10 @@ static void get_zec_workload_map(common::xaccount_address_t const & contract_add
         auto const & group_id = m.first;
         auto const & detail = m.second;
         base::xstream_t stream{xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};
-        data::system_contract::cluster_workload_t workload;
+        data::system_contract::xgroup_workload_t workload;
         workload.serialize_from(stream);
         xJson::Value jn;
-        jn["cluster_total_workload"] = workload.cluster_total_workload;
+        jn["cluster_total_workload"] = workload.group_total_workload;
         common::xcluster_address_t cluster;
         xstream_t key_stream(xcontext_t::instance(), (uint8_t *)group_id.data(), group_id.size());
         key_stream >> cluster;

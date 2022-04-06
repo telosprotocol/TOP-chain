@@ -7,7 +7,7 @@
 #include "xbase/xns_macro.h"
 
 // todo
-NS_BEG2(top, evm_statestore)
+NS_BEG2(top, vm_statestore)
 
 class xtop_evm_statestore_helper {
 public:
@@ -18,6 +18,6 @@ public:
     xtop_evm_statestore_helper & operator=(xtop_evm_statestore_helper &&) = default;
     ~xtop_evm_statestore_helper() = default;
 };
-using xevm_statestore_helper_t = xtop_evm_statestore_helper;
+using xvm_statestore_helper_t = xtop_evm_statestore_helper;
 
 NS_END2

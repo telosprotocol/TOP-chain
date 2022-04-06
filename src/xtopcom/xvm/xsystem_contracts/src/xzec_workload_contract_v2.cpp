@@ -61,7 +61,8 @@ void xzec_workload_contract_v2::on_receive_workload(std::string const & table_in
     auto const & source_address = SOURCE_ADDRESS();
     std::string base_addr;
     uint32_t table_id;
-    if (!data::xdatautil::extract_parts(source_address, base_addr, table_id) || sys_contract_sharding_statistic_info_addr != base_addr) {
+    XCONTRACT_ENSURE(data::xdatautil::extract_parts(source_address, base_addr, table_id), "source address extract base_addr or table_id error!");
+    if (sys_contract_sharding_statistic_info_addr != base_addr || sys_contract_eth_table_statistic_info_addr != base_addr) {
         xwarn("[xzec_workload_contract_v2::on_receive_workload] invalid call from %s", source_address.c_str());
         return;
     }
@@ -346,7 +347,7 @@ xgroup_workload_t xzec_workload_contract_v2::get_workload(common::xgroup_address
             ret = MAP_GET2(XPORPERTY_CONTRACT_WORKLOAD_KEY, group_address_str, value_str);
             if (ret) {
                 xdbg("[xzec_workload_contract_v2::update_workload] group not exist: %s", group_address.to_string().c_str());
-                total_workload.cluster_id = group_address_str;
+                total_workload.group_address_str = group_address_str;
             } else {
                 xstream_t stream(xcontext_t::instance(), (uint8_t *)value_str.data(), value_str.size());
                 total_workload.serialize_from(stream);
@@ -394,13 +395,13 @@ void xzec_workload_contract_v2::update_workload(const std::map<common::xgroup_ad
             auto const & leader = leader_workload.first;
             auto const & count = leader_workload.second;
             total_workload.m_leader_count[leader] += count;
-            total_workload.cluster_total_workload += count;
+            total_workload.group_total_workload += count;
             xdbg("[xzec_workload_contract_v2::update_workload] group: %u, leader: %s, count: %d, total_count: %d, total_workload: %d",
                  group_address.group_id().value(),
                  leader.c_str(),
                  count,
                  total_workload.m_leader_count[leader],
-                 total_workload.cluster_total_workload);
+                 total_workload.group_total_workload);
         }
         // set
         {
@@ -423,13 +424,13 @@ void xzec_workload_contract_v2::update_workload(std::map<common::xgroup_address_
             auto const & leader = leader_workload.first;
             auto const & count = leader_workload.second;
             total_workload.m_leader_count[leader] += count;
-            total_workload.cluster_total_workload += count;
+            total_workload.group_total_workload += count;
             xdbg("[xzec_workload_contract_v2::update_workload] group: %u, leader: %s, count: %d, total_count: %d, total_workload: %d",
                  group_address.group_id().value(),
                  leader.c_str(),
                  count,
                  total_workload.m_leader_count[leader],
-                 total_workload.cluster_total_workload);
+                 total_workload.group_total_workload);
         }
         // set
         set_workload(group_address, total_workload);

@@ -5,10 +5,10 @@
 #define private public
 #include "xchain_fork/xchain_upgrade_center.h"
 #include "xchain_timer/xchain_timer.h"
-#include "xcontract_runtime/xtop_action_generator.h"
 #include "xdata/xblocktool.h"
 #include "xdata/xdata_common.h"
 #include "xdata/xgenesis_data.h"
+#include "xdata/xtop_action_generator.h"
 #include "xdata/xtransaction_v2.h"
 #include "xloader/xconfig_onchain_loader.h"
 #include "xstore/xstore_face.h"
@@ -4229,10 +4229,10 @@ TEST_F(xtest_reward_contract_t, test_add_cluster_workload) {
         stream << group_addr4;
         group_addr_str4 = std::string((char *)stream.data(), stream.size());
     }
-    cluster_workload_t workload_add1;
-    cluster_workload_t workload_add2;
-    cluster_workload_t workload_add3;
-    cluster_workload_t workload_add4;
+    xgroup_workload_t workload_add1;
+    xgroup_workload_t workload_add2;
+    xgroup_workload_t workload_add3;
+    xgroup_workload_t workload_add4;
     for (auto i = 0; i < 10; i++) {
         workload_add1.m_leader_count.insert(std::make_pair(std::string{"node"} + xstring_utl::tostring(i), i+1));
         workload_add2.m_leader_count.insert(std::make_pair(std::string{"node"} + xstring_utl::tostring(i), i*2+1));
@@ -4265,10 +4265,10 @@ TEST_F(xtest_reward_contract_t, test_add_cluster_workload) {
     EXPECT_EQ(validator_workload_str_change.count(group_addr_str3), 1);
     EXPECT_EQ(validator_workload_str_change.count(group_addr_str4), 1);
 
-    cluster_workload_t workload1;
-    cluster_workload_t workload2;
-    cluster_workload_t workload3;
-    cluster_workload_t workload4;
+    xgroup_workload_t workload1;
+    xgroup_workload_t workload2;
+    xgroup_workload_t workload3;
+    xgroup_workload_t workload4;
     {
         xstream_t stream(xcontext_t::instance(), (uint8_t*)auditor_workload_str_change[group_addr_str1].data(), auditor_workload_str_change[group_addr_str1].size());
         workload1.serialize_from(stream);
@@ -4291,10 +4291,10 @@ TEST_F(xtest_reward_contract_t, test_add_cluster_workload) {
         EXPECT_EQ(workload3.m_leader_count[std::string{"node"} + xstring_utl::tostring(i)], i*3+1);
         EXPECT_EQ(workload4.m_leader_count[std::string{"node"} + xstring_utl::tostring(i)], i*4+1);
     }
-    EXPECT_EQ(workload1.cluster_total_workload, 55);
-    EXPECT_EQ(workload2.cluster_total_workload, 100);
-    EXPECT_EQ(workload3.cluster_total_workload, 145);
-    EXPECT_EQ(workload4.cluster_total_workload, 190);
+    EXPECT_EQ(workload1.group_total_workload, 55);
+    EXPECT_EQ(workload2.group_total_workload, 100);
+    EXPECT_EQ(workload3.group_total_workload, 145);
+    EXPECT_EQ(workload4.group_total_workload, 190);
 
     {
         xstream_t stream(xcontext_t::instance());
@@ -4319,10 +4319,10 @@ TEST_F(xtest_reward_contract_t, test_add_cluster_workload) {
     add_cluster_workload(workload_str, auditor_workload_str, validator_workload_str, auditor_workload_str_change, validator_workload_str_change);
 
     {
-        cluster_workload_t workload1;
-        cluster_workload_t workload2;
-        cluster_workload_t workload3;
-        cluster_workload_t workload4;
+        xgroup_workload_t workload1;
+        xgroup_workload_t workload2;
+        xgroup_workload_t workload3;
+        xgroup_workload_t workload4;
         {
             xstream_t stream(xcontext_t::instance(), (uint8_t*)auditor_workload_str_change[group_addr_str1].data(), auditor_workload_str_change[group_addr_str1].size());
             workload1.serialize_from(stream);
@@ -4345,10 +4345,10 @@ TEST_F(xtest_reward_contract_t, test_add_cluster_workload) {
             EXPECT_EQ(workload3.m_leader_count[std::string{"node"} + xstring_utl::tostring(i)], (i*3+1) * 2);
             EXPECT_EQ(workload4.m_leader_count[std::string{"node"} + xstring_utl::tostring(i)], (i*4+1) * 2);
         }
-        EXPECT_EQ(workload1.cluster_total_workload, 55 * 2);
-        EXPECT_EQ(workload2.cluster_total_workload, 100 * 2);
-        EXPECT_EQ(workload3.cluster_total_workload, 145 * 2);
-        EXPECT_EQ(workload4.cluster_total_workload, 190 * 2);
+        EXPECT_EQ(workload1.group_total_workload, 55 * 2);
+        EXPECT_EQ(workload2.group_total_workload, 100 * 2);
+        EXPECT_EQ(workload3.group_total_workload, 145 * 2);
+        EXPECT_EQ(workload4.group_total_workload, 190 * 2);
     }
 }
 
@@ -4450,10 +4450,10 @@ TEST_F(xtest_reward_contract_t, test_calculate_reward_1) {
         EXPECT_EQ(v_map_str.count(group_addr_str3), 1);
         EXPECT_EQ(v_map_str.count(group_addr_str4), 1);
 
-        cluster_workload_t workload1;
-        cluster_workload_t workload2;
-        cluster_workload_t workload3;
-        cluster_workload_t workload4;
+        xgroup_workload_t workload1;
+        xgroup_workload_t workload2;
+        xgroup_workload_t workload3;
+        xgroup_workload_t workload4;
         {
             xstream_t stream(xcontext_t::instance(), (uint8_t*)a_map_str[group_addr_str1].data(), a_map_str[group_addr_str1].size());
             workload1.serialize_from(stream);
@@ -4476,10 +4476,10 @@ TEST_F(xtest_reward_contract_t, test_calculate_reward_1) {
             EXPECT_EQ(workload3.m_leader_count[std::string{"node"} + xstring_utl::tostring(i)], i*3+1);
             EXPECT_EQ(workload4.m_leader_count[std::string{"node"} + xstring_utl::tostring(i)], i*4+1);
         }
-        EXPECT_EQ(workload1.cluster_total_workload, 55);
-        EXPECT_EQ(workload2.cluster_total_workload, 100);
-        EXPECT_EQ(workload3.cluster_total_workload, 145);
-        EXPECT_EQ(workload4.cluster_total_workload, 190);
+        EXPECT_EQ(workload1.group_total_workload, 55);
+        EXPECT_EQ(workload2.group_total_workload, 100);
+        EXPECT_EQ(workload3.group_total_workload, 145);
+        EXPECT_EQ(workload4.group_total_workload, 190);
     }
 }
 
@@ -5028,10 +5028,10 @@ TEST_F(xtest_reward_contract_t, test_calc_role_nums) {
 }
 
 TEST_F(xtest_reward_contract_t, test_calc_zero_workload_reward) {    
-    cluster_workload_t normal_work;
-    cluster_workload_t zero_work;
-    normal_work.cluster_total_workload = 20;
-    zero_work.cluster_total_workload = 1;
+    xgroup_workload_t normal_work;
+    xgroup_workload_t zero_work;
+    normal_work.group_total_workload = 20;
+    zero_work.group_total_workload = 1;
 
     uint32_t zero_workload = 1;
     const ::uint128_t group_reward = 1000;
@@ -5041,20 +5041,20 @@ TEST_F(xtest_reward_contract_t, test_calc_zero_workload_reward) {
     common::xgroup_address_t g_normal2(common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{0}, common::xgroup_id_t{2});
     common::xgroup_address_t g_zero1(common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{0}, common::xgroup_id_t{3});
     common::xgroup_address_t g_zero2(common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{0}, common::xgroup_id_t{4});
-    std::pair<common::xgroup_address_t, cluster_workload_t> normal1{g_normal1, normal_work};
-    std::pair<common::xgroup_address_t, cluster_workload_t> normal2{g_normal2, normal_work};
-    std::pair<common::xgroup_address_t, cluster_workload_t> zero1{g_zero1, zero_work};
+    std::pair<common::xgroup_address_t, xgroup_workload_t> normal1{g_normal1, normal_work};
+    std::pair<common::xgroup_address_t, xgroup_workload_t> normal2{g_normal2, normal_work};
+    std::pair<common::xgroup_address_t, xgroup_workload_t> zero1{g_zero1, zero_work};
     std::pair<std::string, uint32_t> zero1_1{"zero1_1", 0};
     std::pair<std::string, uint32_t> zero1_2{"zero1_2", 1};
     zero1.second.m_leader_count.insert(zero1_1);
     zero1.second.m_leader_count.insert(zero1_2);
-    std::pair<common::xgroup_address_t, cluster_workload_t> zero2{g_zero2, zero_work};
+    std::pair<common::xgroup_address_t, xgroup_workload_t> zero2{g_zero2, zero_work};
     std::pair<std::string, uint32_t> zero2_1{"zero2_1", 0};
     std::pair<std::string, uint32_t> zero2_2{"zero2_2", 1};
     zero2.second.m_leader_count.insert(zero2_1);
     zero2.second.m_leader_count.insert(zero2_2);
 
-    std::map<common::xgroup_address_t, cluster_workload_t> workloads_detail;
+    std::map<common::xgroup_address_t, xgroup_workload_t> workloads_detail;
     workloads_detail.insert(normal1);
     workloads_detail.insert(zero2);
     workloads_detail.insert(zero1);
@@ -5123,11 +5123,11 @@ TEST_F(xtest_reward_contract_t, test_calc_invalid_workload_group_reward) {
             map_nodes.insert(node);
         } 
         // workload
-        std::map<common::xgroup_address_t, cluster_workload_t> workloads_detail;     
+        std::map<common::xgroup_address_t, xgroup_workload_t> workloads_detail;     
         for(int j = 0; j < 2; j++){
-            std::pair<common::xgroup_address_t, cluster_workload_t> group;
+            std::pair<common::xgroup_address_t, xgroup_workload_t> group;
             group.first = common::xgroup_address_t{common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{0}, common::xgroup_id_t{j+1}};
-            group.second.cluster_total_workload = 100;
+            group.second.group_total_workload = 100;
             for(int i = 0; i < 5; i++){
                 std::pair<std::string, uint32_t> work;
                 work.first = "node" + std::to_string(j+1) + "_" +std::to_string(i+1);
@@ -5148,7 +5148,7 @@ TEST_F(xtest_reward_contract_t, test_calc_invalid_workload_group_reward) {
         EXPECT_EQ(workloads_detail.size(), 1);
         EXPECT_EQ(workloads_detail.count(group1), 1);
         // 5 nodes 100 total workload, invalid node of 20 workload erase, left 4 nodes, left 80 workload 
-        EXPECT_EQ(workloads_detail[group1].cluster_total_workload, 80);
+        EXPECT_EQ(workloads_detail[group1].group_total_workload, 80);
         EXPECT_EQ(workloads_detail[group1].m_leader_count.size(), 4);
         EXPECT_EQ(workloads_detail[group1].m_leader_count.count("node1_1"), 1);
         EXPECT_EQ(workloads_detail[group1].m_leader_count.count("node1_2"), 1);
@@ -5203,11 +5203,11 @@ TEST_F(xtest_reward_contract_t, test_calc_validator_worklaod_rewards) {
     ::uint128_t reward_to_self = 0;
 
     // workload
-    std::map<common::xgroup_address_t, cluster_workload_t> validator_workloads_detail;     
+    std::map<common::xgroup_address_t, xgroup_workload_t> validator_workloads_detail;     
     for(int j = 0; j < 2; j++){
-        std::pair<common::xgroup_address_t, cluster_workload_t> group;
+        std::pair<common::xgroup_address_t, xgroup_workload_t> group;
         group.first = common::xgroup_address_t{common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{0}, common::xgroup_id_t{j+1}};
-        group.second.cluster_total_workload = 100;
+        group.second.group_total_workload = 100;
         for(int i = 0; i < 5; i++){
             std::pair<std::string, uint32_t> work;
             work.first = "node" + std::to_string(j+1) + "_" +std::to_string(i+1);
@@ -5246,11 +5246,11 @@ TEST_F(xtest_reward_contract_t, test_calc_auditor_worklaod_rewards) {
     ::uint128_t reward_to_self = 0;
 
     // workload
-    std::map<common::xgroup_address_t, cluster_workload_t> auditor_workloads_detail;     
+    std::map<common::xgroup_address_t, xgroup_workload_t> auditor_workloads_detail;     
     for(int j = 0; j < 2; j++){
-        std::pair<common::xgroup_address_t, cluster_workload_t> group;
+        std::pair<common::xgroup_address_t, xgroup_workload_t> group;
         group.first = common::xgroup_address_t{common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{0}, common::xgroup_id_t{j+1}};
-        group.second.cluster_total_workload = 100;
+        group.second.group_total_workload = 100;
         for(int i = 0; i < 5; i++){
             std::pair<std::string, uint32_t> work;
             work.first = "node" + std::to_string(j+1) + "_" +std::to_string(i+1);
@@ -5365,11 +5365,11 @@ TEST_F(xtest_reward_contract_t, test_nodes_rewards) {
 
     // make property_param auditor_workloads_detail
     for(int table = 0; table < 4; table++){
-        cluster_workload_t workload;
+        xgroup_workload_t workload;
         if(table != 3){
-            workload.cluster_total_workload = 400;
+            workload.group_total_workload = 400;
         }else{
-            workload.cluster_total_workload = 200;
+            workload.group_total_workload = 200;
         }
         for(int node_idx = 0; node_idx < 64; node_idx++){
             if(node_idx >= 4 && node_idx < 2+2+20){
@@ -5390,11 +5390,11 @@ TEST_F(xtest_reward_contract_t, test_nodes_rewards) {
     }
     // make property_param validator_workloads_detail
     for(int table = 0; table < 4; table++){
-        cluster_workload_t workload;
+        xgroup_workload_t workload;
         if(table != 3){
-            workload.cluster_total_workload = 800;
+            workload.group_total_workload = 800;
         }else{
-            workload.cluster_total_workload = 0;
+            workload.group_total_workload = 0;
         }
         for(int node_idx = 0; node_idx < 64; node_idx++){
             if(node_idx >= 2+2+20){
@@ -6208,40 +6208,40 @@ TEST_F(xtest_reward_contract_t, test_calc_rewards_bench) {
         common::xgroup_address_t g4{common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{0}, common::xgroup_id_t{65}};
         common::xgroup_address_t g5{common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{0}, common::xgroup_id_t{66}};
         common::xgroup_address_t g6{common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{0}, common::xgroup_id_t{67}};
-        cluster_workload_t workload1;
-        cluster_workload_t workload2;
-        cluster_workload_t workload3;
-        cluster_workload_t workload4;
-        cluster_workload_t workload5;
-        cluster_workload_t workload6;
+        xgroup_workload_t workload1;
+        xgroup_workload_t workload2;
+        xgroup_workload_t workload3;
+        xgroup_workload_t workload4;
+        xgroup_workload_t workload5;
+        xgroup_workload_t workload6;
         for (auto idx = 16; idx < 20; idx++) {
             workload1.m_leader_count.insert(std::make_pair(accounts_vec[table * 64 + idx], 100));
-            workload1.cluster_total_workload += 100;
+            workload1.group_total_workload += 100;
             // workload1.cluster_id = g1.to_string();
         }
         for (auto idx = 20; idx < 24; idx++) {
             workload2.m_leader_count.insert(std::make_pair(accounts_vec[table * 64 + idx], 100));
-            workload2.cluster_total_workload += 100;
+            workload2.group_total_workload += 100;
             // workload2.cluster_id = g2.to_string();
         }
         for (auto idx = 36; idx < 40; idx++) {
             workload3.m_leader_count.insert(std::make_pair(accounts_vec[table * 64 + idx], 100));
-            workload3.cluster_total_workload += 100;
+            workload3.group_total_workload += 100;
             // workload3.cluster_id = g3.to_string();
         }
         for (auto idx = 40; idx < 48; idx++) {
             workload4.m_leader_count.insert(std::make_pair(accounts_vec[table * 64 + idx], 100));
-            workload4.cluster_total_workload += 100;
+            workload4.group_total_workload += 100;
             // workload4.cluster_id = g4.to_string();
         }
         for (auto idx = 48; idx < 56; idx++) {
             workload5.m_leader_count.insert(std::make_pair(accounts_vec[table * 64 + idx], 100));
-            workload5.cluster_total_workload += 100;
+            workload5.group_total_workload += 100;
             // workload5.cluster_id = g5.to_string();
         }
         for (auto idx = 56; idx < 64; idx++) {
             workload6.m_leader_count.insert(std::make_pair(accounts_vec[table * 64 + idx], 100));
-            workload6.cluster_total_workload += 100;
+            workload6.group_total_workload += 100;
             // workload6.cluster_id = g6.to_string();
         }
         property_param.auditor_workloads_detail.insert(std::make_pair(g1, workload1));
@@ -6355,40 +6355,40 @@ TEST_F(xtest_reward_contract_t, test_reward_bench) {
         common::xgroup_address_t g4{common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{0}, common::xgroup_id_t{65}};
         common::xgroup_address_t g5{common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{0}, common::xgroup_id_t{66}};
         common::xgroup_address_t g6{common::xnetwork_id_t{0}, common::xzone_id_t{0}, common::xcluster_id_t{0}, common::xgroup_id_t{67}};
-        cluster_workload_t workload1;
-        cluster_workload_t workload2;
-        cluster_workload_t workload3;
-        cluster_workload_t workload4;
-        cluster_workload_t workload5;
-        cluster_workload_t workload6;
+        xgroup_workload_t workload1;
+        xgroup_workload_t workload2;
+        xgroup_workload_t workload3;
+        xgroup_workload_t workload4;
+        xgroup_workload_t workload5;
+        xgroup_workload_t workload6;
         for (auto idx = 16; idx < 20; idx++) {
             workload1.m_leader_count.insert(std::make_pair(accounts_vec[table * 64 + idx], 100));
-            workload1.cluster_total_workload += 100;
+            workload1.group_total_workload += 100;
             // workload1.cluster_id = g1.to_string();
         }
         for (auto idx = 20; idx < 24; idx++) {
             workload2.m_leader_count.insert(std::make_pair(accounts_vec[table * 64 + idx], 100));
-            workload2.cluster_total_workload += 100;
+            workload2.group_total_workload += 100;
             // workload2.cluster_id = g2.to_string();
         }
         for (auto idx = 36; idx < 40; idx++) {
             workload3.m_leader_count.insert(std::make_pair(accounts_vec[table * 64 + idx], 100));
-            workload3.cluster_total_workload += 100;
+            workload3.group_total_workload += 100;
             // workload3.cluster_id = g3.to_string();
         }
         for (auto idx = 40; idx < 48; idx++) {
             workload4.m_leader_count.insert(std::make_pair(accounts_vec[table * 64 + idx], 100));
-            workload4.cluster_total_workload += 100;
+            workload4.group_total_workload += 100;
             // workload4.cluster_id = g4.to_string();
         }
         for (auto idx = 48; idx < 56; idx++) {
             workload5.m_leader_count.insert(std::make_pair(accounts_vec[table * 64 + idx], 100));
-            workload5.cluster_total_workload += 100;
+            workload5.group_total_workload += 100;
             // workload5.cluster_id = g5.to_string();
         }
         for (auto idx = 56; idx < 64; idx++) {
             workload6.m_leader_count.insert(std::make_pair(accounts_vec[table * 64 + idx], 100));
-            workload6.cluster_total_workload += 100;
+            workload6.group_total_workload += 100;
             // workload6.cluster_id = g6.to_string();
         }
         property_param.auditor_workloads_detail.insert(std::make_pair(g1, workload1));

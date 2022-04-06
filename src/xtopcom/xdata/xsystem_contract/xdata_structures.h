@@ -560,10 +560,12 @@ private:
     int32_t do_read(base::xstream_t & stream) override;
 };
 
-struct cluster_workload_t final : public xserializable_based_on<void> {
-    std::string cluster_id;
-    uint32_t cluster_total_workload{0};
+struct xgroup_workload_t final : public xserializable_based_on<void> {
+    std::string group_address_str;
+    uint32_t group_total_workload{0};
     std::map<std::string, uint32_t> m_leader_count;
+
+    xgroup_workload_t & operator+=(const xgroup_workload_t & adder);
 
 private:
     /**
@@ -581,7 +583,6 @@ private:
      */
     std::int32_t do_read(base::xstream_t & stream) override;
 };
-using xgroup_workload_t = cluster_workload_t;
 
 struct xactivation_record final : public xserializable_based_on<void> {
     int activated{0};
@@ -648,6 +649,7 @@ struct reward_detail final : public xserializable_based_on<void> {
     ::uint128_t m_archive_reward{0};
     ::uint128_t m_validator_reward{0};
     ::uint128_t m_auditor_reward{0};
+    ::uint128_t m_eth_reward{0};
     ::uint128_t m_vote_reward{0};
     ::uint128_t m_self_reward{0};
 
@@ -660,6 +662,8 @@ private:
         stream << m_auditor_reward;
         stream << m_vote_reward;
         stream << m_self_reward;
+        // TODO: add eth fork ?
+        stream << m_eth_reward;
         const int32_t end_pos = stream.size();
         return (end_pos - begin_pos);
     }
@@ -677,8 +681,10 @@ private:
         stream >> m_validator_reward;
         stream >> m_auditor_reward;
         stream >> m_vote_reward;
+        stream >> m_self_reward;
+        // TODO: add eth fork
         if (stream.size() > 0) {
-            stream >> m_self_reward;
+            stream >> m_eth_reward;
         }
         const int32_t end_pos = stream.size();
         return (begin_pos - end_pos);
@@ -695,10 +701,12 @@ public:
     uint16_t m_archive_reward_ratio{0};
     uint16_t m_validator_reward_ratio{0};
     uint16_t m_auditor_reward_ratio{0};
+    uint16_t m_eth_reward_ratio{0};
     uint16_t m_vote_reward_ratio{0};
     uint16_t m_governance_reward_ratio{0};
     uint64_t m_auditor_group_count{0};
     uint64_t m_validator_group_count{0};
+    uint64_t m_eth_group_count{0};
     std::map<std::string, reward_detail> m_node_rewards;
 
 public:

@@ -46,8 +46,11 @@ void xrole_context_t::on_block_to_db(const xblock_ptr_t & block, bool & event_br
     if (m_contract_info->has_block_monitors()) {
         auto block_owner = block->get_block_owner();
         // table fulltable block process
-        if ((m_contract_info->address == common::xaccount_address_t{sys_contract_sharding_statistic_info_addr}) &&
-            block_owner.find(sys_contract_sharding_table_block_addr) != std::string::npos && block->is_fulltable()) {
+        bool is_sharding_statistic =
+            (m_contract_info->address == sharding_statistic_info_contract_address) && (block_owner.find(sys_contract_sharding_table_block_addr) != std::string::npos);
+        // TODO: add eth fork
+        bool is_eth_statistic = (m_contract_info->address == eth_statistic_info_contract_address) && (block_owner.find(sys_contract_eth_table_block_addr) != std::string::npos);
+        if ((is_sharding_statistic || is_eth_statistic) && block->is_fulltable()) {
             auto block_height = block->get_height();
             xdbg("xrole_context_t::on_block_to_db fullblock process, owner: %s, height: %" PRIu64, block->get_block_owner().c_str(), block_height);
             base::xauto_ptr<base::xvblock_t> full_block = base::xvchain_t::instance().get_xblockstore()->load_block_object(base::xvaccount_t{block_owner}, block_height, base::enum_xvblock_flag_committed, true);
@@ -155,13 +158,13 @@ void xrole_context_t::on_block_timer(const xevent_ptr_t & e) {
                 assert(timer_info);
                 auto time_interval = timer_info->get_interval();
 
-                if (address == common::xaccount_address_t{sys_contract_beacon_timer_addr}) {
+                if (address == timer_system_address) {
                     xdbg("[xrole_context_t::on_block] get timer block at %" PRIu64, block->get_height());
                     onchain_timer_round = block->get_height();
                     block_timestamp = block->get_timestamp();
 
 
-                    if ((m_contract_info->address == common::xaccount_address_t{sys_contract_sharding_statistic_info_addr}) && valid_call(onchain_timer_round)) {
+                    if ((m_contract_info->address == sharding_statistic_info_contract_address) && valid_call(onchain_timer_round)) {
 
                         int table_num = m_driver->table_ids().size();
                         if (table_num == 0) {
@@ -192,9 +195,18 @@ void xrole_context_t::on_block_timer(const xevent_ptr_t & e) {
                         }
 
                         return;
+                    } else if ((m_contract_info->address == eth_statistic_info_contract_address) && valid_call(onchain_timer_round)) {
+                        // TODO: add eth fork
+                        // default size = 1
+                        auto clock_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_statistic_report_schedule_interval);
+                        if (onchain_timer_round % clock_interval == 0) {
+                            xinfo("xrole_context_t::on_block_timer table contract schedule, contract address %s, timer %" PRIu64 ", interval: %lu",
+                                  m_contract_info->address.value().c_str(),
+                                  onchain_timer_round,
+                                  clock_interval);
+                            call_contract(onchain_timer_round, info, block_timestamp, 0);
+                        }
                     }
-
-
 
                     bool first_blk = runtime_stand_alone(onchain_timer_round, m_contract_info->address);
                     if (time_interval != 0 && onchain_timer_round != 0 && ((first_blk && (onchain_timer_round % 3) == 0) || (!first_blk && (onchain_timer_round % time_interval) == 0))) {
@@ -219,11 +231,12 @@ void xrole_context_t::on_block_timer(const xevent_ptr_t & e) {
 }
 
 bool xrole_context_t::runtime_stand_alone(const uint64_t timer_round, common::xaccount_address_t const & sys_addr) const {
-    static std::vector<common::xaccount_address_t> sys_addr_list{common::xaccount_address_t{sys_contract_rec_elect_edge_addr},
-                                                                 common::xaccount_address_t{sys_contract_rec_elect_archive_addr},
-                                                                 common::xaccount_address_t{sys_contract_rec_elect_zec_addr},
-                                                                 common::xaccount_address_t{sys_contract_zec_elect_consensus_addr},
-                                                                 common::xaccount_address_t{sys_contract_rec_elect_fullnode_addr}};
+    const static std::vector<common::xaccount_address_t> sys_addr_list{rec_elect_edge_contract_address,
+                                                                       rec_elect_archive_contract_address,
+                                                                       rec_elect_zec_contract_address,
+                                                                       zec_elect_consensus_contract_address,
+                                                                       rec_elect_fullnode_contract_address,
+                                                                       zec_elect_eth_contract_address};
 
     if (std::find(std::begin(sys_addr_list), std::end(sys_addr_list), sys_addr) == std::end(sys_addr_list)) {
         return false;
@@ -309,7 +322,7 @@ void xrole_context_t:: call_contract(const uint64_t onchain_timer_round, xblock_
 }
 
 bool xrole_context_t::is_timer_unorder(common::xaccount_address_t const & address, uint64_t timestamp) {
-    if (address == common::xaccount_address_t{sys_contract_beacon_timer_addr}) {
+    if (address == timer_system_address) {
         auto block = m_syncstore->get_vblockstore()->get_latest_committed_block(address.value());
         if (abs((int64_t)(((xblock_t *)block.get())->get_timestamp() - timestamp)) <= 3) {
             return true;

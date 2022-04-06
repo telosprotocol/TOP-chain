@@ -68,7 +68,8 @@ typedef struct { void *data; GoInt len; GoInt cap; } GoSlice;
 extern "C" {
 #endif
 
-extern void RunJsonRpc();
+extern void* RunJsonRpc(GoString chainId, GoString netWorkId, GoString archivePoint, GoString clinetVersion, GoString jsonrpcPort);
+extern int StopJsonRpc(void* srv);
 
 #ifdef __cplusplus
 }

@@ -55,6 +55,8 @@ void xtop_genesis_manager::load_accounts() {
             for (auto i = 0; i < enum_vbucket_has_tables_count; i++) {
                 m_contract_accounts.insert(data::make_address_by_prefix_and_subaddr(pair.first.value(), i));
             }
+        } else if (data::is_sys_evm_table_contract_address(pair.first)) {
+            m_contract_accounts.insert(data::make_address_by_prefix_and_subaddr(pair.first.value(), 0));
         } else {
             m_contract_accounts.insert(pair.first);
         }

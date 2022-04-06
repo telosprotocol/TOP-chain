@@ -20,6 +20,21 @@ echo "osname: $osname"
 
 options="$@"
 
+gopath="./src/xtopcom/xrpc/xevm"
+modname="xevm"
+modfile="$gopath/go.mod"
+
+which go
+if [ "$?" -eq 0 ]; then
+    go env -w GO111MODULE="on"
+    cd $gopath
+    if [ ! -f "$modfile" ]; then        
+        go mod init $modname      
+    fi
+    go mod tidy
+    cd ../../../../    
+fi
+
 command_line_option_include_item "$options" "pack"
 if [ $? -eq 0 ]; then
     # make install package
