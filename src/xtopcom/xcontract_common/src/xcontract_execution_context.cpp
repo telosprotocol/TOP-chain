@@ -623,8 +623,7 @@ xcontract_execution_fee_t xtop_contract_execution_context::execute_default_sourc
         xdbg("[xtop_contract_execution_context::execute_default_source_action] reward contract issue, ignore");
         return {};
     }
-    if (sender().type() == base::enum_vaccount_addr_type_native_contract &&
-        (recver().type() == base::enum_vaccount_addr_type_secp256k1_eth_user_account || recver().type() == base::enum_vaccount_addr_type_secp256k1_user_account)) {
+    if (base::xvaccount_t::is_contract_address_type(sender().type()) && base::xvaccount_t::is_unit_address_type(recver().type())) {
         xdbg("[xtop_contract_execution_context::execute_default_source_action] contract to user, ignore");
         return {};
     }

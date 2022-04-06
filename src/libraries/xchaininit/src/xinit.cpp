@@ -370,8 +370,10 @@ bool load_bwlist_content(std::string const& config_file, std::map<std::string, s
                 try {
                     auto const& addr = json_root[member][i].asString();
                     if (addr.size() <= top::base::xvaccount_t::enum_vaccount_address_prefix_size) return false;
-                    auto const addr_type = top::base::xvaccount_t::get_addrtype_from_account(addr);
-                    if (addr_type != top::base::enum_vaccount_addr_type::enum_vaccount_addr_type_secp256k1_eth_user_account && addr_type != top::base::enum_vaccount_addr_type::enum_vaccount_addr_type_secp256k1_user_account) return false;
+                    top::base::xvaccount_t _vaccount(addr);
+                    if (!_vaccount.is_unit_address()) {
+                        return false;
+                    }
                     if ( top::xverifier::xverifier_success != top::xverifier::xtx_utl::address_is_valid(addr)) return false;
                 } catch (...) {
                     xwarn("parse config file %s failed", config_file.c_str());
@@ -394,8 +396,11 @@ bool load_bwlist_content(std::string const& config_file, std::map<std::string, s
 
 bool check_miner_info(const std::string &pub_key, const std::string &node_id, std::string& miner_type) {
     g_userinfo.account = node_id;
-    if (top::base::xvaccount_t::get_addrtype_from_account(g_userinfo.account) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
+    top::base::xvaccount_t _vaccount(node_id);
+    if (_vaccount.is_eth_address()) {
         std::transform(g_userinfo.account.begin() + 1, g_userinfo.account.end(), g_userinfo.account.begin() + 1, ::tolower);
+    }
+
     top::xtopcl::xtopcl xtop_cl;
     std::string result;
     xtop_cl.api.change_trans_mode(true);
