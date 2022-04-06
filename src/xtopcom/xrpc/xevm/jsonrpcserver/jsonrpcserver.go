@@ -200,7 +200,7 @@ func (s *Server) HandRequest(w http.ResponseWriter, req *http.Request) {
 					log.Println("eth_getBalance Marshal error:", err)
 					REST = util.ResponseErrFunc(JsonMarshalErr, jsonrpc, id, err.Error())
 				} else {
-					log.Println("eth_getBalance success res>>>", from, util.StringToHex(blc))
+					log.Println("eth_getBalance success res>>>", from, blc)
 					REST = resp
 				}
 			}
