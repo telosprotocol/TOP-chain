@@ -816,7 +816,7 @@ void xzec_reward_contract::get_reward_param(const common::xlogic_time_t current_
                 property_param.auditor_workloads_detail[group_address] = workload;
             } else if (common::has<common::xnode_type_t::consensus_validator>(group_address.type())) {
                 property_param.validator_workloads_detail[group_address] = workload;
-            } else if (common::has<common::xnode_type_t::eth>(group_address.type())) {
+            } else if (common::has<common::xnode_type_t::evm_eth>(group_address.type())) {
                 property_param.eth_workloads_detail[group_address] = workload;
             } else {
                 xwarn("[xzec_reward_contract::get_reward_param] invalid group id: %d, drop it", group_address.group_id().value());

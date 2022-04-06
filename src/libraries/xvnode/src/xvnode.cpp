@@ -238,7 +238,7 @@ bool  xtop_vnode::update_auto_prune_control(top::common::xnode_type_t node_type,
 
 void xtop_vnode::update_rpc_service() {
     xdbg("try update rpc service. node type %s", common::to_string(m_the_binding_driver->type()).c_str());
-    if (!common::has<common::xnode_type_t::frozen>(m_the_binding_driver->type()) && !common::has<common::xnode_type_t::eth>(type())) {
+    if (!common::has<common::xnode_type_t::frozen>(m_the_binding_driver->type()) && !common::has<common::xnode_type_t::evm>(type())) {
         auto const http_port = XGET_CONFIG(http_port);
         auto const ws_port = XGET_CONFIG(ws_port);
         // TODO(justin): remove unit_services temp
@@ -256,6 +256,9 @@ void xtop_vnode::update_rpc_service() {
                                                            m_txstore,
                                                            m_elect_main,
                                                            m_election_cache_data_accessor);
+    }
+
+    if (common::has<common::xnode_type_t::edge>(type())) {
         assert(m_evm_rpc != nullptr);
         m_evm_rpc->start();
     }

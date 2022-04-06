@@ -19,9 +19,7 @@ xtransaction_execution_result_t xtop_action_session<data::xevm_consensus_action_
     assert(action != nullptr);
 
     std::unique_ptr<evm_runtime::xevm_context_t> exectx{top::make_unique<evm_runtime::xevm_context_t>(std::move(action), m_evm_state)};
-    auto observed_exectx{top::make_observer(exectx.get())};
-
-    return m_associated_runtime->execute(observed_exectx);
+    return m_associated_runtime->execute(top::make_observer(exectx.get()));
 }
 
 NS_END2
