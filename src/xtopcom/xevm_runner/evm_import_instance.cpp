@@ -35,8 +35,8 @@ uint64_t evm_import_instance::register_len(uint64_t register_id) {
 //     m_vm_logic.signer_account_id(register_id);
 //     return;
 // }
-void evm_import_instance::predecessor_account_id(uint64_t register_id) {
-    m_vm_logic.predecessor_account_id(register_id);
+void evm_import_instance::sender_address(uint64_t register_id) {
+    m_vm_logic.sender_address(register_id);
     return;
 }
 void evm_import_instance::input(uint64_t register_id) {
@@ -100,8 +100,8 @@ uint64_t evm_register_len(uint64_t register_id) {
 //     evm_import_instance::instance()->signer_account_id(register_id);
 //     return;
 // }
-void evm_predecessor_account_id(uint64_t register_id) {
-    evm_import_instance::instance()->predecessor_account_id(register_id);
+void evm_sender_address(uint64_t register_id) {
+    evm_import_instance::instance()->sender_address(register_id);
     return;
 }
 void evm_input(uint64_t register_id) {
