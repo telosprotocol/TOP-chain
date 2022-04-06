@@ -48,9 +48,9 @@ void xtop_evm_logic::read_register(uint64_t register_id, uint64_t ptr) {
 //     internal_write_register(register_id, m_context.account_id);
 // }
 
-void xtop_evm_logic::predecessor_account_id(uint64_t register_id) {
-    // printf("[debug][predecessor_account_id] request: %lu \n", register_id);
-    // internal_write_register(register_id, m_context->m_predecessor_account_id);
+void xtop_evm_logic::sender_address(uint64_t register_id) {
+    // printf("[debug][sender_address] request: %lu \n", register_id);
+    // internal_write_register(register_id, m_context->m_sender_address);
     auto sender = m_context->sender().value();
     xassert(sender.substr(0, 2) == T6_ACCOUNT_PREFIX);
     internal_write_register(register_id, utils::hex_string_to_bytes(sender.substr(6)));

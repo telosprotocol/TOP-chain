@@ -12,14 +12,14 @@ public:
     // TODO: delete
     bytes m_random_seed;
     xbytes_t m_input;
-    bytes m_predecessor_account_id;
+    bytes m_sender_address;
 
     std::unique_ptr<data::xbasic_top_action_t const> m_action;
     contract_common::xcontract_execution_param_t m_param;
 
 public:
-    xtop_evm_context(bytes const & random_seed, bytes const & input, bytes const & predecessor_account_id)
-      : m_random_seed{random_seed}, m_input{input}, m_predecessor_account_id{predecessor_account_id} {
+    xtop_evm_context(bytes const & random_seed, bytes const & input, bytes const & sender_address)
+      : m_random_seed{random_seed}, m_input{input}, m_sender_address{sender_address} {
     }
 
     xtop_evm_context(std::unique_ptr<data::xbasic_top_action_t const> action, contract_common::xcontract_execution_param_t const & param)

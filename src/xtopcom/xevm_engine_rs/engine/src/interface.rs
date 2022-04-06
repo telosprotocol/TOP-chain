@@ -12,10 +12,6 @@ mod interface {
         runtime::Runtime,
     };
 
-    // fn predecessor_address(predecessor_account_id: &AccountId) -> Address {
-    //     top_account_to_evm_address(predecessor_account_id.as_bytes())
-    // }
-
     #[no_mangle]
     pub extern "C" fn deploy_code() {
         println!("========= deploy_code =========");
