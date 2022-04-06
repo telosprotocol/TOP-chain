@@ -5,6 +5,8 @@ set(TARGET jsonrpc_go)
 
 set(SRCS main.go)
 set(LIB libjsonrpc.a)
+set(INCLUDE_F libjsonrpc.h)
+set(LIBPATH ../)
 
 add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${LIB}
   DEPENDS ${SRCS}
@@ -12,6 +14,8 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${LIB}
   COMMAND env GOPATH=${GOPATH} go build -buildmode=c-archive
   -o "${CMAKE_CURRENT_BINARY_DIR}/${LIB}"
   ${CMAKE_GO_FLAGS} ./...
+  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/${INCLUDE_F} ${LIBPATH}
+  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/${LIB} ${LIBPATH}
   COMMENT "Building Go library")
 
 add_custom_target(${TARGET} DEPENDS ${LIB} ${HEADER})

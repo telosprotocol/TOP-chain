@@ -1,7 +1,7 @@
 // Copyright (c) 2017-present Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-
+#ifdef BUILD_EVM
 #pragma once
 
 #include "xbasic/xrunnable.h"
@@ -29,3 +29,4 @@ public:
 using xevm_rpc_t = xtop_evm_rpc;
 
 NS_END3
+#endif

@@ -9,6 +9,7 @@ import (
 	"time"
 	"unsafe"
 	"xevm/jsonrpcserver"
+	"xevm/logger"
 	"xevm/util"
 
 	"github.com/mattn/go-pointer"
@@ -29,10 +30,13 @@ func RunJsonRpc(chainId, netWorkId, archivePoint, clinetVersion, jsonrpcPort str
 	http.HandleFunc("/", s.HandRequest)
 
 	go func() {
-		log.Println("running jsonrpc server:", jsonp)
+		logger.InitLogger()
+		defer logger.SugarLogger.Sync()
+
+		logger.SugarLogger.Infof("running jsonrpc server:%v", jsonp)
 		err := srv.ListenAndServe()
 		if err != nil {
-			log.Fatalf("%v\n", err)
+			logger.SugarLogger.Errorf("%v\n", err)
 			return
 		}
 	}()

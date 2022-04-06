@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"xevm/client"
+	"xevm/logger"
 	"xevm/util"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -86,7 +87,7 @@ func (s *Server) Eth_sendRawTransaction(rawTx string) (string, error) {
 
 	//check chainId
 	if etx.ChainId().Uint64() != s.chainId {
-		return "", fmt.Errorf("Wrong chainId,expect %v,got:%v", s.chainId, etx.ChainId().Int64())
+		return "", fmt.Errorf("Eth_sendRawTransaction Wrong chainId,expect %v,got:%v", s.chainId, etx.ChainId().Int64())
 	}
 
 	//verify eth tx
@@ -117,7 +118,7 @@ func (s *Server) Eth_call(mp map[string]interface{}) (string, error) {
 			return "", err
 		}
 	} else {
-		return "", errors.New(fmt.Errorf("eth_call: Decode Para[%v] failed!", Para).Error())
+		return "", errors.New(fmt.Errorf("Eth_call: Decode Para[%v] failed!", Para).Error())
 	}
 
 	ret, _, err := s.client.Eth_call(para.From, para.To, para.Data, util.Check0x(para.Value))
@@ -144,7 +145,7 @@ func (s *Server) Eth_estimateGas(mp map[string]interface{}) (string, error) {
 		return "", errors.New("Eth_estimateGas wrong params!")
 	}
 
-	log.Printf("eth_estimateGas params: from=%v,to=%v,gas=%v,gasPrice=%v,value=%v,data lenght=%v\n", para.From, para.To, para.Gas, para.GasPrice, para.Value, len(para.Data))
+	logger.SugarLogger.Infof("Eth_estimateGas params: from=%v,to=%v,gas=%v,gasPrice=%v,value=%v,data lenght=%v\n", para.From, para.To, para.Gas, para.GasPrice, para.Value, len(para.Data))
 
 	limit, err := s.client.Get_gasLimit()
 	if err != nil {
@@ -161,11 +162,11 @@ func (s *Server) Eth_estimateGas(mp map[string]interface{}) (string, error) {
 
 	ret, gas, err := s.client.Eth_call(para.From, para.To, para.Data, util.Check0x(para.Value))
 	if err != nil {
-		log.Println("eth_estimateGas :", ret, "error", err)
+		logger.SugarLogger.Errorf("Eth_estimateGas error:%v,ret:%v", err, ret)
 		return ret, err
 	}
 
-	log.Println("eth_estimateGas successfully,gas:", gas)
+	logger.SugarLogger.Infof("Eth_estimateGas successfully,gas:%v", gas)
 	return gas, nil
 }
 
@@ -195,7 +196,6 @@ func (s *Server) Eth_getBlockByNumber(strNum string, bl bool) (*Block, error) {
 			return nil, err
 		}
 		num = n
-
 	} else {
 		n, err := util.HexToUint64(strNum)
 		if err != nil {
@@ -244,12 +244,12 @@ func (s *Server) getTxsHashes(txs []*client.TopTransaction) []common.Hash {
 func (s *Server) Eth_getTransactionByHash(hash string) (*Transaction, error) {
 	tx, err := s.client.GetTransactionByHash(util.Check0x(hash))
 	if err != nil {
-		log.Printf("eth_getTransactionReceipt txhash:%v, error:%v\n", hash, err.Error())
+		logger.SugarLogger.Errorf("Eth_getTransactionByHash txhash:%v, error:%v", hash, err.Error())
 		return nil, nil
 	}
 	b, err := s.client.GetBlockByNumber(tx.BlockHeignt)
 	if err != nil {
-		log.Println("eth_getTransactionReceipt GetBlockByNumber error:", tx.BlockHeignt, err.Error())
+		logger.SugarLogger.Errorf("Eth_getTransactionByHash GetBlockByNumber error:%v", err.Error())
 		return nil, nil
 	}
 
@@ -260,13 +260,13 @@ func (s *Server) Eth_getTransactionByHash(hash string) (*Transaction, error) {
 func (s *Server) Eth_getTransactionReceipt(hash string) (*TransactionReceipt, error) {
 	tx, err := s.client.GetTransactionByHash(util.Check0x(hash))
 	if err != nil {
-		log.Printf("eth_getTransactionReceipt txhash:%v, error:%v\n", hash, err.Error())
+		logger.SugarLogger.Errorf("Eth_getTransactionReceipt txhash:%v, error:%v\n", hash, err.Error())
 		return nil, nil
 	}
 
 	b, err := s.client.GetBlockByNumber(tx.BlockHeignt)
 	if err != nil {
-		log.Println("eth_getTransactionReceipt GetBlockByNumber error:", tx.BlockHeignt, err.Error())
+		logger.SugarLogger.Errorf("Eth_getTransactionReceipt GetBlockByNumber error:%v", err.Error())
 		return nil, nil
 	}
 
@@ -298,16 +298,7 @@ func (s *Server) Eth_getStorageAt(mp map[string]interface{}) (string, error) {
 
 //Returns an array of all logs matching a given filter object.
 func (s *Server) Eth_getLogs(mp map[string]interface{}) ([]*types.Log, error) {
-	// v, ok := mp["params"]
-	// if !ok {
-	// 	return nil, errors.New(fmt.Sprintf("'%s' not exist", "params"))
-	// }
-
-	// if _, ok := v.([]interface{}); !ok {
-	// 	return nil, errors.New("eth_getLogs: params are wrong!")
-	// }
-
-	Para, err := util.GetParam(mp) //v.([]interface{})
+	Para, err := util.GetParam(mp)
 	if err != nil {
 		return nil, err
 	}
@@ -321,13 +312,13 @@ func (s *Server) Eth_getLogs(mp map[string]interface{}) ([]*types.Log, error) {
 		return nil, errors.New("eth_getLogs: params are wrong!!")
 	}
 
-	log.Printf("eth_getLogs params: fromBlock=%v,toBlock=%v,address=%v,topics=%v,blockHash = %v\n", para.FromBlock, para.ToBlock, para.Address, para.Topics, para.BlockHash)
+	logger.SugarLogger.Infof("eth_getLogs params: fromBlock=%v,toBlock=%v,address=%v,topics=%v,blockHash = %v\n", para.FromBlock, para.ToBlock, para.Address, para.Topics, para.BlockHash)
 
 	var fromBlock, toBlock uint64
 	if len(para.FromBlock) > 0 {
 		fb, err := util.HexToUint64(para.FromBlock)
 		if err != nil {
-			fmt.Println("fromblock hexToUint64 error:", err)
+			logger.SugarLogger.Errorf("Eth_getLogs fromblock hexToUint64 error:%v", err)
 			return nil, err
 		}
 		fromBlock = fb
@@ -335,7 +326,7 @@ func (s *Server) Eth_getLogs(mp map[string]interface{}) ([]*types.Log, error) {
 	if len(para.ToBlock) > 0 {
 		tb, err := util.HexToUint64(para.ToBlock)
 		if err != nil {
-			fmt.Println("toblock hexToUint64 error:", err)
+			logger.SugarLogger.Errorf("Eth_getLogs toblock hexToUint64 error:%v", err)
 			return nil, err
 		}
 		toBlock = tb
@@ -347,7 +338,7 @@ func (s *Server) Eth_getLogs(mp map[string]interface{}) ([]*types.Log, error) {
 func (s *Server) Web3_sha3(mp map[string]interface{}) (string, error) {
 	para, err := util.GetParam(mp)
 	if err != nil {
-		log.Println("Web3_sha3 GetParam error:", err)
+		logger.SugarLogger.Errorf("Web3_sha3 GetParam error:%v", err)
 		return "", err
 	}
 	if len(para) != 1 {

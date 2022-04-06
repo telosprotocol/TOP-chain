@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"math/big"
 	"strconv"
+	"xevm/logger"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -92,7 +92,7 @@ func ResponseErrFunc(code int, jsonRpc string, id interface{}, msg string) []byt
 	Err := &ErrorBody{Code: code, Message: msg}
 	resp, err := json.Marshal(ResponseErr{JsonRPC: jsonRpc, Id: id, Error: Err})
 	if err != nil {
-		log.Println("eth_sendTransaction Marshal error:", err)
+		logger.SugarLogger.Errorf("ResponseErrFunc Marshal error:", err)
 		return []byte(err.Error())
 	}
 	return resp
