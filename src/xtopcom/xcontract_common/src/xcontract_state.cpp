@@ -21,11 +21,9 @@ xtop_contract_state::xtop_contract_state(common::xaccount_address_t action_accou
     m_latest_followup_tx_nonce = latest_sendtx_nonce();
 }
 
-xtop_contract_state::xtop_contract_state(common::xaccount_address_t action_account_addr,
-                                         observer_ptr<vm_statestore::xvm_statestore_helper_t> const st,
-                                         xcontract_execution_param_t const & execution_param)
-  : m_action_account_address{std::move(action_account_addr)}, m_state_store{st}, m_param{execution_param} {
-    xassert(m_state_store != nullptr);
+xtop_contract_state::xtop_contract_state(common::xaccount_address_t action_account_addr, statectx::xstatectx_face_ptr_t const state_ctx)
+  : m_action_account_address{std::move(action_account_addr)}, m_state_ctx{state_ctx} {
+    xassert(m_state_ctx != nullptr);
 }
 
 xtop_contract_state::xtop_contract_state(common::xaccount_address_t const & account_address)
@@ -243,10 +241,16 @@ std::string xtop_contract_state::fullstate_bin() const {
 }
 
 common::xlogic_time_t xtop_contract_state::time() const noexcept {
+    if (m_state_ctx != nullptr) {
+        return m_state_ctx->get_ctx_para().m_clock;
+    }
     return m_param.clock;
 }
 
 common::xlogic_time_t xtop_contract_state::timestamp() const noexcept {
+    if (m_state_ctx != nullptr) {
+        return m_state_ctx->get_ctx_para().get_timestamp();
+    }
     return m_param.timestamp;
 }
 
@@ -259,6 +263,9 @@ uint64_t xtop_contract_state::system_lock_tgas() const noexcept {
 }
 
 std::string const & xtop_contract_state::random_seed() const noexcept {
+    if (m_state_ctx != nullptr) {
+        return m_state_ctx->get_ctx_para().m_random_seed;
+    }
     return m_param.random_seed;
 }
 

@@ -8,7 +8,6 @@
 #include "xcontract_runtime/xaction_session.h"
 #include "xdata/xconsensus_action_fwd.h"
 #include "xevm_contract_runtime/xevm_type.h"
-#include "xevm_statestore_helper/xstatestore_helper.h"
 #include "xstate_accessor/xstate_accessor.h"
 
 NS_BEG2(top, contract_runtime)
@@ -17,9 +16,7 @@ template <>
 class xtop_action_session<data::xevm_consensus_action_t> {
 private:
     observer_ptr<xaction_runtime_t<data::xevm_consensus_action_t>> m_associated_runtime;
-    observer_ptr<vm_statestore::xvm_statestore_helper_t> m_statestore_helper;
     observer_ptr<evm_runtime::xevm_state_t> m_evm_state;
-    std::map<common::xaccount_address_t, state_accessor::xstate_accessor_t> m_state_accessor_cache;
 
 public:
     xtop_action_session(xtop_action_session const &) = delete;
