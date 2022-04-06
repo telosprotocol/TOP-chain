@@ -154,7 +154,7 @@ impl crate::env::Env for Runtime {
 
     fn sender_address(&self) -> engine_types::types::Address {
         unsafe {
-            exports::evm_predecessor_account_id(Self::ENV_REGISTER_ID.0);
+            exports::evm_sender_address(Self::ENV_REGISTER_ID.0);
         }
         Self::read_address()
     }
@@ -191,7 +191,7 @@ pub(crate) mod exports {
         // pub(crate) fn evm_current_account_id(register_id: u64);
         // pub(crate) fn evm_signer_account_id(register_id: u64);
 
-        pub(crate) fn evm_predecessor_account_id(register_id: u64);
+        pub(crate) fn evm_sender_address(register_id: u64);
         pub(crate) fn evm_input(register_id: u64);
 
         // Math
