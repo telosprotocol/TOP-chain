@@ -52,6 +52,7 @@ void usage() {
     std::cout << "        - db_compact_db [db_path]" << std::endl;
     std::cout << "        - db_parse_type_size [db_path] " << std::endl;
     std::cout << "        - db_read_block [db_path] <account> <height> " << std::endl;
+    std::cout << "        - db_prune [db_path] " << std::endl;
     std::cout << "-------  end  -------" << std::endl;
 }
 
@@ -128,8 +129,17 @@ int main(int argc, char ** argv) {
         xdb_export_tools_t tools_v3{v3_db_path};
         tools_v3.compact_db();
         return 0;
-    }
-    else if (function_name == "db_read_block") {
+    } else if (function_name == "db_prune") {
+        if (argc != 4) {
+            usage();
+            return -1;
+        }
+        std::string v3_db_path = argv[3];
+        xdb_export_tools_t tools_v3{v3_db_path};
+        std::cout << "db_prune start" << std::endl;
+        tools_v3.prune_db();
+        return 0;
+    } else if (function_name == "db_read_block") {
         if (argc != 5) {
             usage();
             return -1;

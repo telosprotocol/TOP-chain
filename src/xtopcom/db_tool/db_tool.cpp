@@ -122,73 +122,97 @@ void handle_error(const rocksdb::Status& status) {
 }
 
 int backup(const std::string& db_name, const std::string& backup_dir,std::string& errormsg){
-	rocksdb::DB* m_db{nullptr};
-    rocksdb::Options m_options{};
-	m_options.create_if_missing = true;
-    rocksdb::WriteBatch m_batch{};
+    
+    rocksdb::Status s;
+    rocksdb::DB* m_db{nullptr};
+    rocksdb::Options m_options;
+    m_options.create_if_missing = true;
+    std::shared_ptr<rocksdb::Logger> backup_log;
+    rocksdb::BackupEngine* backup_engine{nullptr};
+ 
+    do
+    {
+        rocksdb::Env::Default()->NewLogger("./backup_.log",  &backup_log);
+        backup_log.get()->SetInfoLogLevel(rocksdb::InfoLogLevel::DEBUG_LEVEL);
 
-    rocksdb::Status s = rocksdb::DB::OpenForReadOnly(m_options, db_name, &m_db);
-	if(!s.ok()){
-        errormsg = s.getState();
-        return -1;
-    }
+        std::vector<rocksdb::ColumnFamilyHandle*> cf_handles;
+        std::vector<rocksdb::ColumnFamilyDescriptor> column_families;
+        column_families.push_back(rocksdb::ColumnFamilyDescriptor(rocksdb::kDefaultColumnFamilyName, rocksdb::ColumnFamilyOptions()));
+        column_families.push_back(rocksdb::ColumnFamilyDescriptor("1",rocksdb::ColumnFamilyOptions()));
+        column_families.push_back(rocksdb::ColumnFamilyDescriptor("2",rocksdb::ColumnFamilyOptions()));
+        column_families.push_back(rocksdb::ColumnFamilyDescriptor("3",rocksdb::ColumnFamilyOptions()));
+        column_families.push_back(rocksdb::ColumnFamilyDescriptor("4",rocksdb::ColumnFamilyOptions()));
+        s = rocksdb::DB::OpenForReadOnly(m_options, db_name, column_families, &cf_handles, &m_db); 
+        if (!s.ok()) {
+            break;
+        }
 
-	rocksdb::BackupEngine* backup_engine;
-	s = rocksdb::BackupEngine::Open(rocksdb::Env::Default(),
-		rocksdb::BackupableDBOptions(backup_dir), &backup_engine);
-	// assert(s.ok());
-    if (!s.ok()){
-        // printf("Get error: %s when open db dir\n",s.getState());
-        errormsg = s.getState();
-        delete backup_engine;
-        delete m_db;
-        m_db = nullptr;
-        return -1;
-    }
-	s = backup_engine->CreateNewBackup(m_db);
+        rocksdb::BackupableDBOptions backup_options = rocksdb::BackupableDBOptions(backup_dir, nullptr, true, backup_log.get());
+        backup_options.max_background_operations = 4;
+        s = rocksdb::BackupEngine::Open(rocksdb::Env::Default(), backup_options, &backup_engine);
+        if (!s.ok()) {
+            break;
+        }
 
-    if(!s.ok()){
-        // printf("Get error: %s when create new backup\n",s.getState());
-        errormsg = s.getState();
-    }
-	// assert(s.ok());
+        rocksdb::CreateBackupOptions back_options;
+        s = backup_engine->CreateNewBackup(back_options, m_db);
+        if(!s.ok()) {
+            break;
+        }
+        //check db
+        std::vector<rocksdb::BackupInfo> backup_info;
+        backup_engine->GetBackupInfo(&backup_info);
 
+        //for check db 3 times
+        for(int n = 1; n < 3; n++){
+            s = backup_engine->VerifyBackup(backup_info.back().backup_id);
+            if (!s.ok()) {
+                sleep(5*60*n*n);
+                std::cout << "VerifyBackup rocksDB failed: " << backup_info.back().backup_id <<std::endl;
+            } else {
+                std::cout << "VerifyBackup rocksDB sucess: " << backup_info.back().backup_id <<std::endl;
+                //only keep 2 backup
+                backup_engine->PurgeOldBackups(2);
+                break;
+            }
+        }
+
+        if (!s.ok()) {
+            backup_engine->DeleteBackup(backup_info.back().backup_id);
+            std::cout << "VerifyBackup rocksDB failed, delete backup id  " << backup_info.back().backup_id <<std::endl;
+        }
+    } while (0);
+    
     delete backup_engine;
     delete m_db;
-	m_db = nullptr;
-	return 0;
+    if (!s.ok()) {
+        errormsg = s.getState();
+        rocksdb::Log(rocksdb::InfoLogLevel::ERROR_LEVEL, backup_log, "%s", s.getState());
+        return -1;
+    }    
+    return 0;
 }
 
 int restore(const uint32_t backup_id,const std::string& backup_dir, const std::string& restore_dir,std::string& errormsg){
+    rocksdb::Status s;
     rocksdb::BackupEngineReadOnly* backup_engine;
-    rocksdb::Status s = rocksdb::BackupEngineReadOnly::Open(
-        rocksdb::Env::Default(), rocksdb::BackupableDBOptions(backup_dir), &backup_engine);
-
-    if (!s.ok()){
-        // printf("Error: %s\n",s.getState());
-        errormsg = s.getState();
-        delete backup_engine;
-        return -1;
-    }
-
-    s = backup_engine->RestoreDBFromBackup((rocksdb::BackupID)backup_id,restore_dir, restore_dir);
-    if (!s.ok()){
-        // printf("Error: Id: %d, %s\n",backup_id,s.getState());
-        errormsg = s.getState();
-        delete backup_engine;
-        return -1;
-    }
+    
+    do {
+        s = rocksdb::BackupEngineReadOnly::Open(rocksdb::Env::Default(), rocksdb::BackupableDBOptions(backup_dir), &backup_engine);
+        if (!s.ok()) {
+            break;
+        }
+        s = backup_engine->RestoreDBFromBackup((rocksdb::BackupID)backup_id,restore_dir, restore_dir);
+        if (!s.ok()) {
+            break;
+        }
+    } while (0);
+    
     delete backup_engine;
-
-	// rocksdb::DB* m_db{nullptr};
-    // rocksdb::Options m_options{};
-    // rocksdb::WriteBatch m_batch{};
-    // s = rocksdb::DB::Open(m_options, restore_dir, &m_db);
-	// handle_error(s);
-
-    // delete m_db;
-	// m_db = nullptr;
-
+    if (!s.ok()) {
+       errormsg = s.getState();
+       return -1;
+    }   
 	return 0;
 }
 

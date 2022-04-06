@@ -221,19 +221,15 @@ int db_backup(const std::string & from, const std::string & to) {
         return -1;
     }
 
-    // printf("starting backup from:%s to %s\n", from_db_dir.c_str(), output_file_db.c_str());
     makedir(output_file_db.c_str());
-    // create directory fail
-    // printf("failed to create directory");
-    // assert(false);
 
-    if (-1 == backup(from_db_dir, output_file_db, errormsg)) {
-        printf("Backup failed\nError: %s.\n", errormsg.c_str());
+    if (0 != backup(from_db_dir, output_file_db, errormsg)) {
+        fprintf(stderr, "Backup db err: %s", errormsg.c_str());
         return -1;
+    } else {
+        printf("Backup db successfully.\n");
+        return 0;
     }
-
-    printf("Database backup operating successfully.\n");
-    return 0;
 }
 
 int db_restore(const std::string & from, const std::string & to, const int backupid) {
@@ -271,13 +267,11 @@ int db_restore(const std::string & from, const std::string & to, const int backu
     }
 
     multiplatform_mkdir(db_target.c_str());
-
     // printf("resetore from:%s to %s\n", from_db_dir.c_str(),db_target.c_str());
     if (-1 == restore(backupid, from_db_dir, db_target, errormsg)) {
-        printf("Restore failed\nError: %s.\n", errormsg.c_str());
+        fprintf(stderr, "Restore failed error: %s.\n", errormsg.c_str());
         return -1;
     }
-
     printf("Database restore operating successfully.\n");
     return 0;
 }
@@ -916,8 +910,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     db->require_subcommand();
     auto backup = db->add_subcommand("backup", "Backup the chain database to a specified directory.");
     std::string backupFromDir, backupToDir;
-    bool listflag = false;
-    backup->add_option("-d,--dir", backupFromDir, "Database-source directory，the default is current directory.");
+    backup->add_option("-d,--dir", backupFromDir, "Database-source directory,the default is current directory.");
     // backup->add_flag("-l,--list_DBversion",listflag,"List all the available backup version for restore.");
     backup->add_option("backupdir", backupToDir, "Target directory.")->mandatory();
 
