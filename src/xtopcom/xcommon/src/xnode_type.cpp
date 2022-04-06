@@ -59,7 +59,11 @@ to_string(xnode_type_t const type) {
     }
 
     if (has<xnode_type_t::evm>(type)) {
-        string += "evm.";
+        if (has<xnode_type_t::evm_eth>(type)) {
+            string += "evm.eth.";
+        } else {
+            string += "evm.";
+        }
     }
 
     if (has<xnode_type_t::group>(type)) {
@@ -116,6 +120,10 @@ std::string to_presentation_string(xnode_type_t const type) {
 
     case xnode_type_t::storage_exchange:
         name = "exchange";
+        break;
+
+    case xnode_type_t::evm_eth:
+        name = "eth";
         break;
 
     default:
