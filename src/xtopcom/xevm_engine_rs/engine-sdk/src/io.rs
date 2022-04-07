@@ -26,7 +26,7 @@ pub trait IO {
     /// generalization of `stdin` or command-line arguments.
     fn read_input(&self) -> Self::StorageValue;
 
-    /// Return a value to an external process. 
+    /// Return a value to an external process.
     fn return_output(&mut self, value: &[u8]);
 
     /// Read the value in storage at the given key, if any.
@@ -39,15 +39,6 @@ pub trait IO {
     /// Write the given value to storage under the given key. Returns a reference to the old
     /// value stored at that key (if any).
     fn write_storage(&mut self, key: &[u8], value: &[u8]) -> Option<Self::StorageValue>;
-
-    /// Write a `StorageIntermediate` to storage directly under the given key
-    /// (without ever needing to load the value into memory).Returns a reference
-    /// to the old value stored at that key (if any).
-    fn write_storage_direct(
-        &mut self,
-        key: &[u8],
-        value: Self::StorageValue,
-    ) -> Option<Self::StorageValue>;
 
     /// Remove entry from storage and capture the value present at the given key (if any)
     fn remove_storage(&mut self, key: &[u8]) -> Option<Self::StorageValue>;
@@ -88,5 +79,4 @@ pub trait IO {
         value.copy_to_slice(&mut result);
         Ok(U256::from_big_endian(&result))
     }
-
 }

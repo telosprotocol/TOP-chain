@@ -26,15 +26,6 @@ uint64_t evm_import_instance::register_len(uint64_t register_id) {
     return m_vm_logic.register_len(register_id);
 }
 
-// context:
-// void evm_import_instance::current_account_id(uint64_t register_id) {
-//     m_vm_logic.current_account_id(register_id);
-//     return;
-// }
-// void evm_import_instance::signer_account_id(uint64_t register_id) {
-//     m_vm_logic.signer_account_id(register_id);
-//     return;
-// }
 void evm_import_instance::sender_address(uint64_t register_id) {
     m_vm_logic.sender_address(register_id);
     return;
@@ -91,15 +82,8 @@ void evm_read_register(uint64_t register_id, uint64_t ptr) {
 uint64_t evm_register_len(uint64_t register_id) {
     return evm_import_instance::instance()->register_len(register_id);
 }
+
 // # Context API #
-// evm_void current_account_id(uint64_t register_id) {
-//     evm_import_instance::instance()->current_account_id(register_id);
-//     return;
-// }
-// evm_void signer_account_id(uint64_t register_id) {
-//     evm_import_instance::instance()->signer_account_id(register_id);
-//     return;
-// }
 void evm_sender_address(uint64_t register_id) {
     evm_import_instance::instance()->sender_address(register_id);
     return;

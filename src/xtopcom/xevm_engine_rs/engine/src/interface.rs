@@ -17,10 +17,8 @@ mod interface {
         println!("========= deploy_code =========");
         let io = Runtime;
         let input = io.read_input().to_vec();
-        // let current_account_id = io.current_account_id();
         let mut engine = Engine::new(
             io.sender_address(),
-            // current_account_id,
             io,
             &io,
         )
@@ -37,16 +35,6 @@ mod interface {
     pub extern "C" fn call_contract() {
         println!("========= call_contract =========");
         let io = Runtime;
-        // let current_account_id = io.current_account_id();
-
-        // let eth_address = "fb29cba9b146786da16733f89982f7481effb094";
-        // let input = util::build_input("init()", &[]);
-        // println!("input: {:?}", input);
-        // let args = CallArgs::V2(FunctionCallArgsV2 {
-        //     contract: Address::new(H160::from_slice(&hex::decode(eth_address).unwrap()[..])),
-        //     value: [0; 32],
-        //     input,
-        // });
         let bytes = io.read_input().to_vec();
         let args = bincode::deserialize::<CallArgs>(&bytes).sdk_expect("ERR_DESERIALIZE");
         // let mut ser: Vec<u8> = Vec::new();
@@ -54,7 +42,6 @@ mod interface {
         // println!("args: {:?}", ser);
         let mut engine = Engine::new(
             io.sender_address(),
-            // current_account_id,
             io,
             &io,
         )
@@ -115,7 +102,6 @@ mod interface {
         let mut io = Runtime;
         let mut engine = Engine::new(
             io.sender_address(),
-            // current_account_id,
             io,
             &io,
         )
