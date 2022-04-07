@@ -31,6 +31,10 @@ enum_execute_result_type xtvm_t::execute(const xvm_input_t & input, xvm_output_t
             xwarn("xtvm_t::execute fail-load unit state.tx=%s", tx->dump().c_str());
             return enum_exec_error_load_state;
         }
+        if (unitstate->is_state_readonly()) {
+            xerror("xtvm_t::execute fail-not same table unit state.tx=%s", tx->dump().c_str());
+            return enum_exec_error_load_state;
+        }
         xaccount_vm_t accountvm(unitstate, unitstate->get_canvas());  // TODO(jimmy)
         int32_t ret = accountvm.execute(input, output);
         if (ret != xsuccess) {
@@ -48,7 +52,10 @@ enum_execute_result_type xtvm_t::execute(const xvm_input_t & input, xvm_output_t
             xwarn("xtvm_t::execute fail-load unit state.tx=%s", tx->dump().c_str());
             return enum_exec_error_load_state;
         }
-
+        if (unitstate->is_state_readonly()) {
+            xerror("xtvm_t::execute fail-not same table unit state.tx=%s", tx->dump().c_str());
+            return enum_exec_error_load_state;
+        }
         // make a mock recvtx
         base::xvaction_t srctx_action = data::xblockaction_build_t::make_tx_action(tx);
         base::xtx_receipt_ptr_t txreceipt = make_object_ptr<base::xtx_receipt_t>(srctx_action);

@@ -32,6 +32,7 @@ class xbstate_ctx_t {
  public:
     bool                do_rollback();
     size_t              do_snapshot();
+    bool                is_state_readonly() const;
     bool                is_state_dirty() const; // dirty from snapshot
     bool                is_state_changed() const;  // change from origin
     std::string         take_snapshot();

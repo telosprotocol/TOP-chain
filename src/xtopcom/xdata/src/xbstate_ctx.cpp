@@ -74,6 +74,10 @@ bool xbstate_ctx_t::do_rollback() {
     return true;
 }
 
+bool xbstate_ctx_t::is_state_readonly() const {
+    return m_canvas == nullptr;
+}
+
 bool xbstate_ctx_t::is_state_dirty() const {
     return m_snapshot_canvas_height != m_canvas->get_op_records_size();
 }

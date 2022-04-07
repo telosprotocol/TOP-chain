@@ -737,6 +737,11 @@ xblock_ptr_t xtable_maker_t::make_full_table(const xtablemaker_para_t & table_pa
 
     xblock_builder_para_ptr_t build_para = std::make_shared<xfulltable_builder_para_t>(tablestate, blocks_from_last_full, get_resources());
     xblock_ptr_t proposal_block = m_fulltable_builder->build_block(cert_block, table_para.get_tablestate()->get_bstate(), cs_para, build_para);
+    if (proposal_block == nullptr) {
+        xwarn("xtable_maker_t::make_full_table fail-build block.%s", cs_para.dump().c_str());
+        return nullptr;
+    }
+    xinfo("xtable_maker_t::make_full_table succ.block=%s", proposal_block->dump().c_str());
     return proposal_block;
 }
 
