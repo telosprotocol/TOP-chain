@@ -100,7 +100,6 @@ impl executor::stack::PrecompileSet for Precompiles {
 }
 
 pub struct PrecompileConstructorContext {
-    // pub current_account_id: AccountId,
     pub random_seed: H256,
 }
 
