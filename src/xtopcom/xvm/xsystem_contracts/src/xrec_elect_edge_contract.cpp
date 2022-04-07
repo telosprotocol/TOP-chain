@@ -89,7 +89,7 @@ void xtop_rec_elect_edge_contract::elect_config_nodes(common::xlogic_time_t cons
         new_election_info.miner_type = common::xminer_type_t::edge;
 
         xelection_info_bundle_t election_info_bundle{};
-        election_info_bundle.node_id(nodes.node_id);
+        election_info_bundle.account_address(nodes.node_id);
         election_info_bundle.election_info(std::move(new_election_info));
 
         election_group_result.insert(std::move(election_info_bundle));

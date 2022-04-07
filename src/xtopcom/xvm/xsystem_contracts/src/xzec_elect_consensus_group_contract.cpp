@@ -201,7 +201,7 @@ void xtop_zec_elect_consensus_group_contract::elect_config_nodes(common::xlogic_
             new_election_info.miner_type = common::xminer_type_t::advance;
 
             xelection_info_bundle_t election_info_bundle{};
-            election_info_bundle.node_id(node.node_id);
+            election_info_bundle.account_address(node.node_id);
             election_info_bundle.election_info(new_election_info);
             adv_election_group_result.insert(std::move(election_info_bundle));
         }
@@ -234,7 +234,7 @@ void xtop_zec_elect_consensus_group_contract::elect_config_nodes(common::xlogic_
                 new_election_info.miner_type = common::xminer_type_t::validator;
 
                 xelection_info_bundle_t election_info_bundle{};
-                election_info_bundle.node_id(node.node_id);
+                election_info_bundle.account_address(node.node_id);
                 election_info_bundle.election_info(new_election_info);
                 val_election_group_result.insert(std::move(election_info_bundle));
             }
