@@ -362,9 +362,9 @@ std::shared_ptr<xtxpool_table_t> xtxpool_t::get_txpool_table_by_addr(const std::
 }
 
 std::shared_ptr<xtxpool_table_t> xtxpool_t::get_txpool_table(uint8_t zone, uint16_t subaddr) const {
-    if (zone == base::enum_chain_zone_evm_index)
-        subaddr = 0;
-    xtxpool_info("get_txpool_table: %d,%d", zone, subaddr);
+//    if (zone == base::enum_chain_zone_evm_index)
+//        subaddr = 0;
+    xdbg("get_txpool_table: %d,%d", zone, subaddr);
     if (!table_zone_subaddr_check(zone, subaddr)) {
         return nullptr;
     }
