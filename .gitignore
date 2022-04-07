@@ -43,3 +43,7 @@ xevm_b
 go.mod
 go.sum
 cover.out
+linkconfig.sh
+runtopio.sh
+stopio.sh
+devconf
