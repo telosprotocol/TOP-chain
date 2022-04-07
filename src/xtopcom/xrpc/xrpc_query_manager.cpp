@@ -1204,12 +1204,12 @@ void xrpc_query_manager::getConsensus(xJson::Value & js_req, xJson::Value & js_r
             xJson::Value array2;
             xJson::Value validator = j["validator"];
             for (auto i : validator.getMemberNames()) {
-                xJson::Value node = auditor[i][0];
+                xJson::Value node = validator[i][0];
                 node["account_addr"] = i;
                 array2.append(node);
             }
             tmp["validator"] = array2;
-            js_rsp.append(tmp);
+            js_rsp["value"].append(tmp);
         } else {
             js_rsp["value"][cluster_name] = j;
         }
