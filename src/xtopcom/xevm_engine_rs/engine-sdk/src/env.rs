@@ -1,4 +1,3 @@
-use crate::error;
 use crate::prelude::H256;
 use engine_types::types::Address;
 
@@ -25,8 +24,6 @@ impl Timestamp {
 }
 
 pub trait Env {
-    // fn signer_account_id(&self) -> AccountId;
-    // fn current_account_id(&self) -> AccountId;
     fn sender_address(&self) -> Address;
 
     fn block_height(&self) -> u64;

@@ -18,10 +18,9 @@ struct StackExecutorParams {
 }
 
 impl StackExecutorParams {
-    fn new(gas_limit: u64, /*current_account_id: AccountId,*/ random_seed: H256) -> Self {
+    fn new(gas_limit: u64, random_seed: H256) -> Self {
         Self {
             precompiles: Precompiles::new_london(PrecompileConstructorContext {
-                // current_account_id,
                 random_seed,
             }),
             gas_limit,
@@ -81,7 +80,6 @@ pub struct Engine<'env, I: IO, E: Env> {
     state: EngineState,
     origin: Address,
     gas_price: U256,
-    // current_account_id: AccountId,
     io: I,
     env: &'env E,
     generation_cache: RefCell<BTreeMap<Address, u32>>,
@@ -96,14 +94,12 @@ pub type EngineResult<T> = Result<T, EngineError>;
 impl<'env, I: IO + Copy, E: Env> Engine<'env, I, E> {
     pub fn new(
         origin: Address,
-        // current_account_id: AccountId,
         io: I,
         env: &'env E,
     ) -> Result<Self, EngineStateError> {
         Ok(Self::new_with_state(
             EngineState::default(),
             origin,
-            // current_account_id,
             io,
             env,
         ))
@@ -112,7 +108,6 @@ impl<'env, I: IO + Copy, E: Env> Engine<'env, I, E> {
     pub fn new_with_state(
         state: EngineState,
         origin: Address,
-        // current_account_id: AccountId,
         io: I,
         env: &'env E,
     ) -> Self {
@@ -120,7 +115,6 @@ impl<'env, I: IO + Copy, E: Env> Engine<'env, I, E> {
             state,
             origin,
             gas_price: U256::zero(),
-            // current_account_id,
             io,
             env,
             generation_cache: RefCell::new(BTreeMap::new()),
@@ -145,7 +139,6 @@ impl<'env, I: IO + Copy, E: Env> Engine<'env, I, E> {
     ) -> EngineResult<SubmitResult> {
         let executor_params = StackExecutorParams::new(
             gas_limit,
-            // self.current_account_id.clone(),
             self.env.random_seed(),
         );
         let mut executor = executor_params.make_executor(self);
@@ -201,7 +194,6 @@ impl<'env, I: IO + Copy, E: Env> Engine<'env, I, E> {
     ) -> EngineResult<SubmitResult> {
         let executor_params = StackExecutorParams::new(
             gas_limit,
-            // self.current_account_id.clone(),
             self.env.random_seed(),
         );
         let mut executor = executor_params.make_executor(self);

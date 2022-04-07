@@ -7,8 +7,7 @@ impl StorageIntermediate for RegisterIndex {
     fn len(&self) -> usize {
         unsafe {
             let result = exports::evm_register_len(self.0);
-            // By convention, an unused register will return a length of U64::MAX
-            // (see https://nomicon.io/RuntimeSpec/Components/BindingsSpec/RegistersAPI.html).
+            // By convention, an unused register might return a length of U64::MAX
             if result < u64::MAX {
                 result as usize
             } else {
@@ -35,16 +34,6 @@ impl Runtime {
     const WRITE_REGISTER_ID: RegisterIndex = RegisterIndex(2);
     const EVICT_REGISTER_ID: RegisterIndex = RegisterIndex(3);
     const ENV_REGISTER_ID: RegisterIndex = RegisterIndex(4);
-    // const PROMISE_REGISTER_ID: RegisterIndex = RegisterIndex(5);
-
-    fn read_address() -> Address {
-        let bytes = Self::ENV_REGISTER_ID.to_vec();
-        match Address::try_from(bytes.as_slice()) {
-            Ok(address) => address,
-            // the environment must give us a valid Account ID.
-            Err(_) => unreachable!(),
-        }
-    }
 }
 
 impl crate::io::IO for Runtime {
@@ -78,8 +67,9 @@ impl crate::io::IO for Runtime {
         }
     }
 
+    #[allow(unused_variables)]
     fn storage_has_key(&self, key: &[u8]) -> bool {
-        unreachable!()
+        unimplemented!()
         // unsafe { exports::evm_storage_has_key(key.len() as _, key.as_ptr() as _) == 1 }
     }
 
@@ -90,27 +80,6 @@ impl crate::io::IO for Runtime {
                 key.as_ptr() as u64,
                 value.len() as u64,
                 value.as_ptr() as u64,
-                Runtime::WRITE_REGISTER_ID.0,
-            ) == 1
-            {
-                Some(Runtime::WRITE_REGISTER_ID)
-            } else {
-                None
-            }
-        }
-    }
-
-    fn write_storage_direct(
-        &mut self,
-        key: &[u8],
-        value: Self::StorageValue,
-    ) -> Option<Self::StorageValue> {
-        unsafe {
-            if exports::evm_storage_write(
-                key.len() as _,
-                key.as_ptr() as _,
-                u64::MAX,
-                value.0,
                 Runtime::WRITE_REGISTER_ID.0,
             ) == 1
             {
@@ -138,25 +107,15 @@ impl crate::io::IO for Runtime {
 }
 
 impl crate::env::Env for Runtime {
-    // fn signer_account_id(&self) -> engine_types::account_id::AccountId {
-    //     unsafe {
-    //         exports::evm_signer_account_id(Self::ENV_REGISTER_ID.0);
-    //     }
-    //     Self::read_account_id()
-    // }
-
-    // fn current_account_id(&self) -> engine_types::account_id::AccountId {
-    //     unsafe {
-    //         exports::evm_current_account_id(Self::ENV_REGISTER_ID.0);
-    //     }
-    //     Self::read_account_id()
-    // }
-
     fn sender_address(&self) -> engine_types::types::Address {
         unsafe {
             exports::evm_sender_address(Self::ENV_REGISTER_ID.0);
         }
-        Self::read_address()
+        let bytes = Self::ENV_REGISTER_ID.to_vec();
+        match Address::try_from(bytes.as_slice()) {
+            Ok(address) => address,
+            Err(_) => unreachable!(),
+        }
     }
 
     fn block_height(&self) -> u64 {
@@ -186,10 +145,6 @@ pub(crate) mod exports {
         // Register
         pub(crate) fn evm_read_register(register_id: u64, ptr: u64);
         pub(crate) fn evm_register_len(register_id: u64) -> u64;
-
-        // Context
-        // pub(crate) fn evm_current_account_id(register_id: u64);
-        // pub(crate) fn evm_signer_account_id(register_id: u64);
 
         pub(crate) fn evm_sender_address(register_id: u64);
         pub(crate) fn evm_input(register_id: u64);

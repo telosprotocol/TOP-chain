@@ -1,5 +1,3 @@
-#![allow(unused)]
-
 use crate::prelude::Address;
 use crate::prelude::H256;
 

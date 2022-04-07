@@ -27,8 +27,6 @@ public:
     uint64_t register_len(uint64_t register_id);
 
     // context:
-    // void current_account_id(uint64_t register_id);
-    void signer_account_id(uint64_t register_id);
     void sender_address(uint64_t register_id);
     void input(uint64_t register_id);
 
