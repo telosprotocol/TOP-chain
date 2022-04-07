@@ -24,7 +24,6 @@ func getEncoder() zapcore.Encoder {
 	encodeConfig.TimeKey = "time"
 	encodeConfig.NameKey = "name"
 	encodeConfig.CallerKey = "caller"
-	//encodeConfig.FunctionKey = "func"
 
 	encodeConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	encodeConfig.EncodeDuration = zapcore.SecondsDurationEncoder
@@ -35,11 +34,11 @@ func getEncoder() zapcore.Encoder {
 
 func getLogWriter() zapcore.WriteSyncer {
 	lumberJackLogger := &lumberjack.Logger{
-		Filename:   "./log/jsonrpc.log", //日志文件的位置
-		MaxSize:    1024,                //在进行切割之前，日志文件的最大大小（以MB为单位）
-		MaxBackups: 5,                   //保留旧文件的最大个数
-		MaxAge:     10,                  //保留旧文件的最大天数
-		Compress:   true,                //是否压缩/归档旧文件
+		Filename:   "./log/jsonrpc.log", //log file name
+		MaxSize:    1024,                //one log file max size MB
+		MaxBackups: 5,                   //the latest 5 log files
+		MaxAge:     10,                  //keep maximum time
+		Compress:   true,                //whether compress
 	}
 	return zapcore.AddSync(lumberJackLogger)
 }

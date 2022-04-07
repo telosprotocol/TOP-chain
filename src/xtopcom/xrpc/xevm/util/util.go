@@ -133,12 +133,16 @@ func VerifyEthSignature(ethtx *types.Transaction) error {
 	if len(sign) <= 64 {
 		return fmt.Errorf("eth signature lenght error:%v", len(sign))
 	}
-	pub, err := crypto.Ecrecover(ethtx.Hash().Bytes(), sign)
+
+	signer := types.NewEIP2930Signer(ethtx.ChainId())
+	sighash := signer.Hash(ethtx)
+
+	pub, err := crypto.Ecrecover(sighash[:], sign)
 	if err != nil {
 		return err
 	}
-	if !crypto.VerifySignature(pub, ethtx.Hash().Bytes(), sign[:64]) {
-		return fmt.Errorf("Verify Eth Signature failed!")
+	if !crypto.VerifySignature(pub, sighash[:], sign[:64]) {
+		return fmt.Errorf("Verify Eth Signature failed")
 	}
 	return nil
 }
