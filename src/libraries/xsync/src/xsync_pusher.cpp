@@ -103,7 +103,7 @@ void xsync_pusher_t::push_newblock_to_archive(const xblock_ptr_t &block) {
     } else if (address_prefix == sys_contract_sharding_table_block_addr) {
         node_type = common::xnode_type_t::consensus;
     } else if (address_prefix == sys_contract_eth_table_block_addr) {
-        node_type = common::xnode_type_t::eth;
+        node_type = common::xnode_type_t::evm;
     } else {
         assert(0);
     }

@@ -243,7 +243,7 @@ void xvnode_house_t::add_group(const std::string &elect_address, uint64_t elect_
                 zone_id = common::xzec_zone_id;
             } else if (common::has<common::xnode_type_t::committee>(node_type)) {
                 zone_id = common::xcommittee_zone_id;
-            } else if (common::has<common::xnode_type_t::eth>(node_type)) {
+            } else if (common::has<common::xnode_type_t::evm>(node_type)) {
                 zone_id = common::xevm_zone_id;
             } else {
                 continue;

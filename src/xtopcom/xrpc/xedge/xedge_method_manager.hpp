@@ -315,7 +315,7 @@ void xedge_method_base<T>::forward_method(shared_ptr<conn_type> & response, xjso
             auto cluster_addr = m_edge_handler_ptr->get_rpc_edge_vhost()->get_router()->sharding_address_from_account(
                 account_address, vd->network_id(), common::xnode_type_t::consensus_validator);
             assert(common::has<common::xnode_type_t::consensus_validator>(cluster_addr.type()) || common::has<common::xnode_type_t::committee>(cluster_addr.type()) ||
-                   common::has<common::xnode_type_t::zec>(cluster_addr.type()) || common::has<common::xnode_type_t::eth>(cluster_addr.type()));
+                   common::has<common::xnode_type_t::zec>(cluster_addr.type()) || common::has<common::xnode_type_t::evm>(cluster_addr.type()));
             vnetwork::xvnode_address_t shard_addr{std::move(cluster_addr)};
 
             if (shard_addr_set.find(shard_addr) == shard_addr_set.end()) {
