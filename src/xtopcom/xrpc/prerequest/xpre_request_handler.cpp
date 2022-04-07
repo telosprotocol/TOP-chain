@@ -17,6 +17,7 @@ using top::xChainRPC::xrpc_signature;
 
 xpre_request_token_handler::xpre_request_token_handler() {
     PRE_REQUEST_REGISTER_V1(requestToken);
+    PRE_REQUEST_REGISTER_V1(getEstimateGas);
     // PRE_REQUEST_REGISTER_V1(create_account);
     // PRE_REQUEST_REGISTER_V1(account);
 }
@@ -47,5 +48,20 @@ void xpre_request_token_handler::requestToken(xpre_request_data_t & request) {
 
 // void xpre_request_token_handler::account(xpre_request_data_t & request) {
 // }
+
+void xpre_request_token_handler::getEstimateGas(xpre_request_data_t & request) {
+    xJson::Value result_json;
+    xJson::Value req_json;
+    auto body = request.get_request_value("body");
+    xJson::Reader reader;
+    reader.parse(body, req_json);
+    auto tx = top::data::xtx_factory::create_tx(static_cast<data::enum_xtransaction_version>(req_json["params"]["tx_structure_version"].asUInt()));
+    tx->construct_from_json(req_json["params"]);
+    tx->set_len();
+    top::data::xcons_transaction_ptr_t trans = make_object_ptr<top::data::xcons_transaction_t>(tx.get());
+    result_json["EstimateGas"] = top::txexecutor::xtransaction_fee_t::calc_tgas_usage(trans, false);
+    request.m_response_json["data"] = result_json;
+    request.m_finish = true;
+}
 
 NS_END2

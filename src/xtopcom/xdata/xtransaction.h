@@ -43,6 +43,7 @@ enum enum_xunit_tx_exec_status : uint8_t {
 
 const std::string RPC_VERSION_V1{"1.0"};
 const std::string RPC_VERSION_V2{"2.0"};
+const std::string RPC_VERSION_V3{"3.0"};
 
 class xtx_parse_data_t {
 public:

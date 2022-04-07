@@ -54,6 +54,14 @@ public:
                   std::ostringstream & out_str,
                   std::function<void(TransferResult *)> func = nullptr);
 
+    bool estimategas(const user_info & uinfo,
+                  const std::string & from,
+                  const std::string & to,
+                  uint64_t amount,
+                  const std::string & memo,
+                  std::ostringstream & out_str,
+                  std::function<void(TransferResult *)> func = nullptr);
+
     bool stakeGas(const user_info & uinfo,
                   const std::string & from,
                   const std::string & to,
@@ -191,6 +199,7 @@ public:
     bool tccVote(const user_info & uinfo, const std::string & proposal_id, bool option, std::ostringstream & out_str, std::function<void(VoteProposalResult *)> func = nullptr);
 
     bool getChainInfo(const user_info & uinfo, std::ostringstream & out_str, std::function<void(ChainInfoResult *)> func = nullptr);
+    bool getGeneralInfo(const user_info & uinfo, std::ostringstream & out_str, std::function<void(GeneralInfoResult *)> func = nullptr);
     bool queryNodeInfo(const user_info & uinfo, const std::string & target, std::ostringstream & out_str, std::function<void(NodeInfoResult *)> func = nullptr);
     bool getElectInfo(const user_info & uinfo, const std::string & target, std::function<void(ElectInfoResult *)> func = nullptr);
     bool getStandbys(const user_info & uinfo, const std::string & account, std::function<void(AccountInfoResult *)> func = nullptr);
