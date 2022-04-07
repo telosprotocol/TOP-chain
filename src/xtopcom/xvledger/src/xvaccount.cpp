@@ -342,13 +342,18 @@ namespace top
                     }
                 }
                 uint16_t ledger_id = base::xvaccount_t::get_ledgerid_from_account(account_addr);
-                if (ledger_id != enum_chain_zone_consensus_index && ledger_id != enum_chain_zone_beacon_index
-                    && ledger_id != enum_chain_zone_zec_index && ledger_id != enum_chain_zone_evm_index) {
-                    xwarn("xvaccount_t::check_address T8 eth address ledger id error");
-                    return false;
+                if (addr_type == enum_vaccount_addr_type_secp256k1_eth_user_account) {
+                    if (ledger_id != enum_chain_zone_consensus_index && ledger_id != enum_chain_zone_beacon_index && ledger_id != enum_chain_zone_zec_index) {
+                        xwarn("xvaccount_t::check_address T8 eth address ledger id error");
+                        return false;
+                    }
+                } else {
+                    if (ledger_id != enum_chain_zone_evm_index) {
+                        xwarn("xvaccount_t::check_address T6 eth address ledger id error");
+                        return false;
+                    }
                 }
             }
-
             return true;
         }
     
