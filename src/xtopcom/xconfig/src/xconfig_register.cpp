@@ -88,6 +88,7 @@ void xconfig_register_t::init_static_config() {
     XADD_OFFCHAIN_PARAMETER(msg_port);
     XADD_OFFCHAIN_PARAMETER(http_port);
     XADD_OFFCHAIN_PARAMETER(ws_port);
+    XADD_OFFCHAIN_PARAMETER(evm_port);
     XADD_OFFCHAIN_PARAMETER(network_id);
     XADD_OFFCHAIN_PARAMETER(log_level);
     XADD_OFFCHAIN_PARAMETER(log_path);
