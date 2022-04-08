@@ -339,7 +339,7 @@ std::vector<std::uint16_t> xtop_vnetwork_driver::table_ids() const {
     } else if (common::has<common::xnode_type_t::zec>(type()) || common::has<common::xnode_type_t::edge>(type())) {
         table_ids.resize(MAIN_CHAIN_ZEC_TABLE_USED_NUM);
     } else if (common::has<common::xnode_type_t::evm_eth>(type())) {
-        table_ids.resize(MAIN_CHAIN_ETH_TABLE_USED_NUM);
+        table_ids.resize(MAIN_CHAIN_EVM_TABLE_USED_NUM);
     }
 
     return table_ids;
