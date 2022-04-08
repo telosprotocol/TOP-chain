@@ -35,6 +35,7 @@ enum class enum_xrpc_type : uint8_t
 {
     enum_xrpc_http_type = 0,
     enum_xrpc_ws_type,
+    enum_xrpc_evm_http_type,
     enum_xrpc_error_type
 };
 enum class enum_xrpc_tx_type : uint8_t
