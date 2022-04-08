@@ -21,8 +21,8 @@ TEST(compatibility, standby_node_info_v0_v1) {
         from.genesis = true;
         from.miner_type = common::xminer_type_t::edge | common::xminer_type_t::validator;
         from.program_version = "99.99.99";
-        from.stake_container[common::xnode_type_t::validator] = 1;
-        from.stake_container[common::xnode_type_t::archive] = 2;
+        from.stake_container[common::xnode_type_t::consensus_validator] = 1;
+        from.stake_container[common::xnode_type_t::storage_archive] = 2;
         from.stake_container[common::xnode_type_t::consensus_auditor] = 3;
         from.stake_container[common::xnode_type_t::consensus_validator] = 4;
 
@@ -61,8 +61,8 @@ TEST(compatibility, standby_node_info_v0_v1) {
         from.miner_type = common::xminer_type_t::edge | common::xminer_type_t::validator;
 #endif
         from.program_version = "99.99.99";
-        from.stake_container[common::xnode_type_t::validator] = 1;
-        from.stake_container[common::xnode_type_t::archive] = 2;
+        from.stake_container[common::xnode_type_t::consensus_validator] = 1;
+        from.stake_container[common::xnode_type_t::storage_archive] = 2;
         from.stake_container[common::xnode_type_t::consensus_auditor] = 3;
         from.stake_container[common::xnode_type_t::consensus_validator] = 4;
 
@@ -91,12 +91,12 @@ TEST(compatibility, standby_node_info_v1_v2) {
         from.genesis = true;
         from.miner_type = common::xminer_type_t::edge | common::xminer_type_t::validator;
         from.program_version = "99.99.99";
-        from.stake_container[common::xnode_type_t::validator] = 1;
-        from.stake_container[common::xnode_type_t::archive] = 2;
+        from.stake_container[common::xnode_type_t::consensus_validator] = 1;
+        from.stake_container[common::xnode_type_t::storage_archive] = 2;
         from.stake_container[common::xnode_type_t::consensus_auditor] = 3;
         from.stake_container[common::xnode_type_t::consensus_validator] = 4;
-        from.raw_credit_scores[common::xnode_type_t::validator] = 100000;
-        from.raw_credit_scores[common::xnode_type_t::archive] = 0;
+        from.raw_credit_scores[common::xnode_type_t::consensus_validator] = 100000;
+        from.raw_credit_scores[common::xnode_type_t::storage_archive] = 0;
         from.raw_credit_scores[common::xnode_type_t::consensus_auditor] = 200000;
         from.raw_credit_scores[common::xnode_type_t::consensus_validator] = 300000;
 
@@ -130,8 +130,8 @@ TEST(compatibility, standby_node_info_v1_v2) {
         from.genesis = true;
         from.miner_type = common::xminer_type_t::edge | common::xminer_type_t::validator;
         from.program_version = "99.99.99";
-        from.stake_container[common::xnode_type_t::validator] = 1;
-        from.stake_container[common::xnode_type_t::archive] = 2;
+        from.stake_container[common::xnode_type_t::consensus_validator] = 1;
+        from.stake_container[common::xnode_type_t::storage_archive] = 2;
         from.stake_container[common::xnode_type_t::consensus_auditor] = 3;
         from.stake_container[common::xnode_type_t::consensus_validator] = 4;
 

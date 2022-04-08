@@ -251,7 +251,7 @@ std::vector<std::string> xblocktool_t::make_all_table_addresses() {
         std::make_pair(base::enum_chain_zone_consensus_index, enum_vledger_const::enum_vbucket_has_tables_count),
         std::make_pair(base::enum_chain_zone_zec_index, MAIN_CHAIN_ZEC_TABLE_USED_NUM),
         std::make_pair(base::enum_chain_zone_beacon_index, MAIN_CHAIN_REC_TABLE_USED_NUM),
-        std::make_pair(base::enum_chain_zone_evm_index, MAIN_CHAIN_ETH_TABLE_USED_NUM),
+        std::make_pair(base::enum_chain_zone_evm_index, MAIN_CHAIN_EVM_TABLE_USED_NUM),
     };
     for (auto const & t : table) {
         for (auto i = 0; i < t.second; i++) {
