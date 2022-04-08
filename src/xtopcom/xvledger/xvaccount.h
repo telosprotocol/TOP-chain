@@ -15,7 +15,7 @@ namespace top
 {
     XINLINE_CONSTEXPR uint32_t MAIN_CHAIN_REC_TABLE_USED_NUM{1};
     XINLINE_CONSTEXPR uint32_t MAIN_CHAIN_ZEC_TABLE_USED_NUM{3};
-    XINLINE_CONSTEXPR uint32_t MAIN_CHAIN_ETH_TABLE_USED_NUM{1};
+    XINLINE_CONSTEXPR uint32_t MAIN_CHAIN_EVM_TABLE_USED_NUM{1};
     namespace base
     {
         // account space is divided into netid#->zone#(aka bucket#)->book#->table#->account#

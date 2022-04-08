@@ -383,7 +383,7 @@ bool xtop_rec_standby_pool_contract::update_standby_node(data::system_contract::
     if (reg_node.can_be_fullnode()) {
         new_node_info.stake_container.insert({common::xnode_type_t::fullnode, reg_node.fullnode_stake()});
     }
-    if (reg_node.can_be_archive() || reg_node.is_genesis_node()) {
+    if (reg_node.can_be_archive() || reg_node.genesis()) {
         new_node_info.stake_container.insert({common::xnode_type_t::storage_archive, reg_node.archive_stake()});
     }
     if (reg_node.can_be_auditor()) {

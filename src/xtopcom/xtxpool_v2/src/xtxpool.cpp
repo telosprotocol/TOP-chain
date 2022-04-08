@@ -32,7 +32,7 @@ xtxpool_t::xtxpool_t(const std::shared_ptr<xtxpool_resources_face> & para) : m_p
         m_all_table_sids.insert(tableindex.to_table_shortid());
         m_tables[base::enum_chain_zone_zec_index].push_back(nullptr);
     }
-    for (uint16_t i = 0; i < MAIN_CHAIN_ETH_TABLE_USED_NUM; ++i) {
+    for (uint16_t i = 0; i < MAIN_CHAIN_EVM_TABLE_USED_NUM; ++i) {
         base::xtable_index_t tableindex(base::enum_chain_zone_evm_index, i);
         m_all_table_sids.insert(tableindex.to_table_shortid());
         m_tables[base::enum_chain_zone_evm_index].push_back(nullptr);
@@ -43,7 +43,7 @@ bool table_zone_subaddr_check(uint8_t zone, uint16_t subaddr) {
     if ((zone >= xtxpool_zone_type_max) || (zone == base::enum_chain_zone_consensus_index && subaddr >= enum_vbucket_has_tables_count) ||
         (zone == base::enum_chain_zone_beacon_index && subaddr >= MAIN_CHAIN_REC_TABLE_USED_NUM) ||
         (zone == base::enum_chain_zone_zec_index && subaddr >= MAIN_CHAIN_ZEC_TABLE_USED_NUM) ||
-        (zone == base::enum_chain_zone_evm_index && subaddr >= MAIN_CHAIN_ETH_TABLE_USED_NUM)) {
+        (zone == base::enum_chain_zone_evm_index && subaddr >= MAIN_CHAIN_EVM_TABLE_USED_NUM)) {
         xwarn("table_zone_subaddr_check zone:%d or subaddr:%d invalidate", zone, subaddr);
         return false;
     }
@@ -121,7 +121,7 @@ void xtxpool_t::print_statistic_values() const {
             unconfirm_raw_txs_size += table_unconfirm_raw_txs_size;
         }
     }
-    for (uint16_t i = 0; i < MAIN_CHAIN_ETH_TABLE_USED_NUM; ++i) {
+    for (uint16_t i = 0; i < MAIN_CHAIN_EVM_TABLE_USED_NUM; ++i) {
         auto table = m_tables[base::enum_chain_zone_evm_index][i];
         if (table != nullptr) {
             table->unconfirm_cache_status(table_sender_cache_size, table_receiver_cache_size, table_height_record_size, table_unconfirm_raw_txs_size);
@@ -427,7 +427,7 @@ std::map<std::string, uint64_t> xtxpool_t::get_min_keep_heights() const {
             table_height_map[table_addr] = height;
         }
     }
-    for (uint16_t i = 0; i < MAIN_CHAIN_ETH_TABLE_USED_NUM; i++) {
+    for (uint16_t i = 0; i < MAIN_CHAIN_EVM_TABLE_USED_NUM; i++) {
         auto table = m_tables[base::enum_chain_zone_evm_index][i];
         if (table != nullptr) {
             std::string table_addr;
