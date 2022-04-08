@@ -227,5 +227,23 @@ uint64_t xunit_bstate_t::account_send_trans_number() const {
     return get_latest_send_trans_number();
 }
 
+uint64_t xunit_bstate_t::tep_balance(const std::string & token_name) const {
+    auto & bstate = get_bstate();
+    if (!bstate->find_property(data::XPROPERTY_TEP1_BALANCE_KEY)) {
+        return 0;
+    }
+    auto propobj = bstate->load_multiple_tokens_var(data::XPROPERTY_TEP1_BALANCE_KEY);
+    if (nullptr != propobj) {
+        auto balance = propobj->get_balance(token_name);
+        if (balance < 0) {
+            xerror("xunit_bstate_t::tep_balance fail-should not appear. balance=%ld", balance);
+            return 0;
+        }
+        return balance;
+    }
+
+    return 0;
+}
+
 }  // namespace data
 }  // namespace top

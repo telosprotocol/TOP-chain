@@ -285,11 +285,22 @@ int32_t xtransaction_transfer::source_fee_exec() {
     auto transfer_amount = get_amount();
     // no check transfer amount for genesis state
     if (!is_contract_address(common::xaccount_address_t{ m_trans->get_source_addr() }) && transfer_amount) {
-        if (m_account_ctx->get_blockchain()->balance() < transfer_amount) {
-            return xconsensus_service_error_balance_not_enough;
-        }
-        if (m_trans->get_transaction()->get_deposit() > (m_account_ctx->get_blockchain()->balance() - transfer_amount)) {
-            return xtransaction_too_much_deposit;
+        uint64_t balance = m_account_ctx->get_blockchain()->balance();
+        if (get_asset().is_top_token()) {
+            if (balance < transfer_amount) {
+                return xconsensus_service_error_balance_not_enough;
+            }
+            if (m_trans->get_transaction()->get_deposit() > (balance - transfer_amount)) {
+                return xtransaction_too_much_deposit;
+            }
+        } else {
+            uint64_t tep_balance = m_account_ctx->get_blockchain()->tep_balance(get_asset().token_name());
+            if (balance < transfer_amount) {
+                return xconsensus_service_error_balance_not_enough;
+            }
+            if (m_trans->get_transaction()->get_deposit() > balance) {
+                return xtransaction_too_much_deposit;
+            }
         }
 
         ret = m_fee.update_tgas_sender();

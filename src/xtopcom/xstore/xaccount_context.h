@@ -58,8 +58,10 @@ class xaccount_context_t {
     int32_t create_user_account(const std::string& address);
     int32_t token_transfer_out(const data::xproperty_asset& asset, uint64_t gas_fee = 0, uint64_t service_fee = 0);
     int32_t top_token_transfer_out(uint64_t amount, uint64_t gas_fee = 0, uint64_t service_fee = 0);
+    int32_t tep_token_transfer_out(const data::xproperty_asset& asset, uint64_t gas_fee, uint64_t service_fee = 0);
     int32_t token_transfer_in(const data::xproperty_asset& asset);
     int32_t top_token_transfer_in(uint64_t amount);
+    int32_t tep_token_transfer_in(const data::xproperty_asset& asset);
 
     // check legal in transaction parse check, here, check balance and execute
     int32_t lock_token(const uint256_t &tran_hash, uint64_t amount, const std::string &tran_params);
@@ -135,6 +137,11 @@ class xaccount_context_t {
     uint64_t    token_balance(const std::string& key);
     int32_t     token_deposit(const std::string& key, base::vtoken_t add_token);
     int32_t     token_withdraw(const std::string& key, base::vtoken_t sub_token);
+
+    base::xauto_ptr<base::xmtokens_t> load_tep_token_for_write(base::xvbstate_t* bstate);
+    uint64_t    tep_token_balance(const std::string& token_name);
+    int32_t     tep_token_deposit(const std::string& token_name, base::vtoken_t add_token);
+    int32_t     tep_token_withdraw(const std::string& token_name, base::vtoken_t sub_token);
 
     base::xauto_ptr<base::xvintvar_t<uint64_t>> load_uin64_for_write(base::xvbstate_t* bstate, const std::string & key);
     int32_t     uint64_add(const std::string& key, uint64_t change);

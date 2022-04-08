@@ -41,6 +41,7 @@ class xunit_bstate_t {
     uint64_t            account_recv_trans_number() const;
     uint256_t           account_send_trans_hash() const;
     uint64_t            account_send_trans_number() const;
+    uint64_t            tep_balance(const std::string & token_name) const;
 
     inline uint64_t     get_last_full_unit_height() const {return m_bstate->get_last_fullblock_height();}
     inline const std::string & get_last_full_unit_hash() const {return m_bstate->get_last_fullblock_hash();}
