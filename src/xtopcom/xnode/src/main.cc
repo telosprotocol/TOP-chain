@@ -126,7 +126,7 @@ int load_lib(config_t& config) {
 
     void* component_handle = dlopen(target_component_solib.c_str(), RTLD_LAZY);
     if (NULL == component_handle) {
-        std::cerr << "topio not found component:" << target_component_solib << std::endl;
+        std::cerr << "topio not found component:" << target_component_solib <<"," << dlerror() << std::endl;
         return -1;
     }
 

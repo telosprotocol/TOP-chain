@@ -5,14 +5,14 @@
 #pragma once
 #include <string>
 #include <memory>
-#include "xrpc_define.h"
-#include "xtraffic_controller.h"
-#include "xrule_manager.h"
-#include "xedge/xedge_method_manager.hpp"
-#include "prerequest/xpre_request_handler_mgr.h"
-#include "xerror/xrpc_error.h"
-#include "xerror/xrpc_error_json.h"
-#include "prerequest/xpre_request_handler_server.h"
+#include "xrpc/xrpc_define.h"
+#include "xrpc/xtraffic_controller.h"
+#include "xrpc/xrule_manager.h"
+#include "xrpc/xedge/xedge_method_manager.hpp"
+#include "xrpc/prerequest/xpre_request_handler_mgr.h"
+#include "xrpc/xerror/xrpc_error.h"
+#include "xrpc/xerror/xrpc_error_json.h"
+#include "xrpc/prerequest/xpre_request_handler_server.h"
 #include "xtxstore/xtxstore_face.h"
 
 NS_BEG2(top, xrpc)
