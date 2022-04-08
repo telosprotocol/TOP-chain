@@ -4,6 +4,7 @@
 
 #include "xrpc_init.h"
 #include "xcommon/xnode_type.h"
+#include "xrpc/xhttp/xevm_server.h"
 
 NS_BEG2(top, xrpc)
 
@@ -48,6 +49,9 @@ xrpc_init::xrpc_init(std::shared_ptr<xvnetwork_driver_face_t> vhost,
         http_server_ptr->start(http_port);
         shared_ptr<xws_server> ws_server_ptr = std::make_shared<xws_server>(m_edge_handler, ip, false, store, block_store, txstore, elect_main, election_cache_data_accessor);
         ws_server_ptr->start(ws_port);
+
+        shared_ptr<xevm_server> evm_server_ptr = std::make_shared<xevm_server>(m_edge_handler, ip, false, store, block_store, txstore, elect_main, election_cache_data_accessor);
+        evm_server_ptr->start(XGET_CONFIG(evm_port));
         break;
     }
     case common::xnode_type_t::storage_archive:
@@ -68,6 +72,9 @@ xrpc_init::xrpc_init(std::shared_ptr<xvnetwork_driver_face_t> vhost,
         shared_ptr<xws_server> ws_server_ptr = std::make_shared<xws_server>(m_edge_handler, ip, true, store, block_store, txstore, elect_main, election_cache_data_accessor);
         ws_server_ptr->start(ws_port);
         xdbg("start exchange rpc service.");
+
+        shared_ptr<xevm_server> evm_server_ptr = std::make_shared<xevm_server>(m_edge_handler, ip, true, store, block_store, txstore, elect_main, election_cache_data_accessor);
+        evm_server_ptr->start(XGET_CONFIG(evm_port));
         break;
     }
     case common::xnode_type_t::fullnode: {

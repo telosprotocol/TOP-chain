@@ -16,7 +16,7 @@
 #include "xrpc/xtraffic_controller.h"
 #include "xrpc/xrule_manager.h"
 #include "xrpc/xedge/xedge_method_manager.hpp"
-#include "xrpc/xrpc_service.hpp"
+#include "xrpc/xhttp/xrpc_service.hpp"
 #include "xrpc/xratelimit/xratelimit_server.h"
 #include "xrpc/prerequest/xpre_request_handler_server.h"
 
