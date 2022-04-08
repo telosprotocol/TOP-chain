@@ -17,7 +17,7 @@
 #include "xrpc/xedge/xedge_evm_method_manager.hpp"
 #include "xrpc/prerequest/xpre_request_handler.h"
 #include "simplewebserver/server_http.hpp"
-#include "xrpc/xhttp/xrpc_service.hpp"
+#include "xrpc/xhttp/xevm_rpc_service.hpp"
 #include "xrpc/xratelimit/xratelimit_server.h"
 
 NS_BEG2(top, xrpc)
@@ -41,7 +41,7 @@ public:
     xedge_evm_http_method* get_edge_method() { return m_rpc_service->m_edge_method_mgr_ptr.get(); }
 private:
     static HttpServer                                   m_server;
-    static unique_ptr<xrpc_service<xedge_evm_http_method>>  m_rpc_service;
+    static unique_ptr<xevm_rpc_service<xedge_evm_http_method>>  m_rpc_service;
     static bool                                         m_is_running;
     thread                                          m_server_thread;
     RatelimitConfig                                 m_config;

@@ -177,6 +177,9 @@ void xedge_handler_base<T>::on_message(const xvnode_address_t&, const xrpc_msg_r
             iter->second->cancel_timeout();
         }
     }
+    else {
+        xdbg_rpc("not find message: %x, %s", msg.m_uuid, msg.to_string().c_str());
+    }
 }
 template <class T>
 void xedge_handler_base<T>::insert_session(const std::vector<shared_ptr<xrpc_msg_request_t>>& edge_msg_ptr_list, const unordered_set<xvnode_address_t>& addr_set, shared_ptr<T>& response)
@@ -197,6 +200,7 @@ void xedge_handler_base<T>::insert_session(const std::vector<shared_ptr<xrpc_msg
 
     std::lock_guard<std::mutex> lock(m_mutex);
     m_forward_session_map.emplace(edge_msg_ptr_list.front()->m_uuid, forward_session.get());
+    xdbg_rpc("insert_session: %x", edge_msg_ptr_list.front()->m_uuid);
     forward_session->set_timeout(TIME_OUT);
 }
 NS_END2
