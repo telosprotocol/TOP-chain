@@ -106,6 +106,11 @@ std::vector<uint16_t> get_table_ids(common::xzone_id_t const & zone_id,
         break;
     }
 
+    case common::xnode_type_t::evm_eth: {
+        // do nothing.
+        break;
+    }
+
     default: {
         assert(false);
         break;
@@ -126,6 +131,8 @@ std::vector<uint16_t> get_table_ids(common::xzone_id_t const & zone_id,
         table_ids.resize(MAIN_CHAIN_REC_TABLE_USED_NUM);
     } else if (common::has<common::xnode_type_t::zec>(type) || common::has<common::xnode_type_t::edge>(type)) {
         table_ids.resize(MAIN_CHAIN_ZEC_TABLE_USED_NUM);
+    } else if (common::has<common::xnode_type_t::evm>(type)) {
+        table_ids.resize(MAIN_CHAIN_EVM_TABLE_USED_NUM);
     }
 
     return table_ids;

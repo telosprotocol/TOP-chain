@@ -8,10 +8,12 @@
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
-#include "xdata/xcodec/xmsgpack/xelection_result_store_codec.hpp"
-#include "xdata/xcodec/xmsgpack/xstandby_node_info_codec.hpp"
-#include "xdata/xcodec/xmsgpack/xstandby_result_store_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xelection/xelection_result_store_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xelection/xstandby_node_info_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xelection/xstandby_result_store_codec.hpp"
 #include "xdata/xelection/xelection_result_property.h"
+#include "xdata/xelection/xstandby_node_info.h"
+#include "xdata/xelection/xstandby_result_store.h"
 #include "xdata/xgenesis_data.h"
 #include "xvm/xserialization/xserialization.h"
 
@@ -96,7 +98,7 @@ void xtop_zec_elect_eth_contract::elect_config_nodes(common::xlogic_time_t const
 #endif
 
 void xtop_zec_elect_eth_contract::setup() {
-    data::election::xelection_result_store_t election_result_store;
+    data::election::v2::xelection_result_store_t election_result_store;
     auto property_names = data::election::get_property_name_by_addr(SELF_ADDRESS());
     for (auto const & property : property_names) {
         STRING_CREATE(property);

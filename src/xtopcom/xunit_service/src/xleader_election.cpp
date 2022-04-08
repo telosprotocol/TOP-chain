@@ -34,7 +34,7 @@ int32_t xelection_cache_imp::get_tables(const xvip2_t & xip, std::vector<base::x
             tables->push_back({base::enum_chain_zone_zec_index, i});
         }
     } else if (zone_id == base::enum_chain_zone_evm_index) {
-        for (uint8_t i = 0; i < MAIN_CHAIN_ETH_TABLE_USED_NUM; i++) {
+        for (uint8_t i = 0; i < MAIN_CHAIN_EVM_TABLE_USED_NUM; i++) {
             tables->push_back({base::enum_chain_zone_evm_index, i});
         }
     } else {
