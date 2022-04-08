@@ -5,8 +5,8 @@
 #pragma once
 
 #include "xdata/xelection/xelection_association_result_store.h"
-#include "xdata/xelection/xelection_result_store.h"
-#include "xdata/xelection/xstandby_result_store.h"
+#include "xdata/xelection/xv2/xelection_result_store.h"
+#include "xdata/xelection/xv2/xstandby_result_store.h"
 #include "xvm/xcontract/xcontract_exec.h"
 #include "xvm/xsystem_contracts/xelection/xelect_consensus_group_contract.h"
 
@@ -49,7 +49,7 @@ private:
                                  common::xlogic_time_t const election_timestamp,
                                  common::xlogic_time_t const start_time,
                                  data::election::xelection_association_result_store_t const & association_result_store,
-                                 data::election::xstandby_network_result_t const & standby_network_result,
+                                 data::election::v2::xstandby_network_result_t const & standby_network_result,
                                  std::unordered_map<common::xgroup_id_t, data::election::xelection_result_store_t> & all_cluster_election_result_store);
 
     bool elect_auditor(common::xzone_id_t const & zid,
@@ -58,8 +58,8 @@ private:
                        common::xlogic_time_t const election_timestamp,
                        common::xlogic_time_t const start_time,
                        std::uint64_t const random_seed,
-                       data::election::xstandby_network_result_t const & standby_network_result,
-                       data::election::xelection_network_result_t & election_network_result);
+                       data::election::v2::xstandby_network_result_t const & standby_network_result,
+                       data::election::v2::xelection_network_result_t & election_network_result);
 
     bool elect_validator(common::xzone_id_t const & zid,
                          common::xcluster_id_t const & cid,
@@ -68,8 +68,8 @@ private:
                          common::xlogic_time_t const election_timestamp,
                          common::xlogic_time_t const start_time,
                          std::uint64_t const random_seed,
-                         data::election::xstandby_network_result_t const & standby_network_result,
-                         data::election::xelection_network_result_t & election_network_result);
+                         data::election::v2::xstandby_network_result_t const & standby_network_result,
+                         data::election::v2::xelection_network_result_t & election_network_result);
 
     bool genesis_elected() const;
 };

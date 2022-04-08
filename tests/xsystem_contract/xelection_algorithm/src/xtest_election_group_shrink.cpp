@@ -34,7 +34,7 @@ void record(data::election::xelection_group_result_t & election_group_result){
     for(auto & p :election_group_result){
         if(!broadcast(p.first)){
             auto slot_id = p.first.value();
-            auto node_id = p.second.node_id();
+            auto node_id = p.second.account_address();
             if(re[slot_id].size()<=round_count){
                 re[slot_id].resize(round_count * 2 + 1);
             }

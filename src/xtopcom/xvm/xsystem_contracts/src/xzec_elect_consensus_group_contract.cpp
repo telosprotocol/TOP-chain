@@ -7,14 +7,17 @@
 #include "xchain_fork/xchain_upgrade_center.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xconfig/xconfig_register.h"
-#include "xdata/xcodec/xmsgpack/xelection_association_result_store_codec.hpp"
-#include "xdata/xcodec/xmsgpack/xelection_result_store_codec.hpp"
-#include "xdata/xcodec/xmsgpack/xlegacy/xelection_result_store_codec.hpp"
-#include "xdata/xcodec/xmsgpack/xstandby_result_store_codec.hpp"
-#include "xdata/xelect_transaction.hpp"
-#include "xdata/xelection/xstandby_node_info.h"
-#include "xdata/xelection/xelection_result_property.h"
 #include "xconfig/xpredefined_configurations.h"
+#include "xdata/xcodec/xmsgpack/xelection/xelection_result_store_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xelection/xstandby_result_store_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xelection/xv0/xelection_result_store_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xelection/xv1/xelection_result_store_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xelection_association_result_store_codec.hpp"
+#include "xdata/xelect_transaction.hpp"
+#include "xdata/xelection/xelection_info_bundle.h"
+#include "xdata/xelection/xelection_result_property.h"
+#include "xdata/xelection/xstandby_node_info.h"
+#include "xdata/xelection/xstandby_result_store.h"
 #include "xutility/xhash.h"
 #include "xvm/xserialization/xserialization.h"
 
@@ -23,7 +26,9 @@
 #include <ratio>  // NOLINT
 
 #ifdef STATIC_CONSENSUS
-#    include "xvm/xsystem_contracts/xelection/xstatic_election_center.h"
+#   include "xvm/xsystem_contracts/xelection/xstatic_election_center.h"
+#   include "xdata/xelection/xelection_info.h"
+#   include "xdata/xelection/xelection_info_bundle.h"
 #endif
 
 #ifndef XSYSCONTRACT_MODULE
@@ -34,8 +39,6 @@
 
 using top::data::election::xelection_association_result_store_t;
 using top::data::election::xelection_group_result_t;
-using top::data::election::xelection_info_bundle_t;
-using top::data::election::xelection_info_t;
 using top::data::election::xelection_network_result_t;
 using top::data::election::xelection_result_store_t;
 using top::data::election::xstandby_network_result_t;
@@ -198,7 +201,7 @@ void xtop_zec_elect_consensus_group_contract::elect_config_nodes(common::xlogic_
             new_election_info.miner_type = common::xminer_type_t::advance;
 
             xelection_info_bundle_t election_info_bundle{};
-            election_info_bundle.node_id(node.node_id);
+            election_info_bundle.account_address(node.node_id);
             election_info_bundle.election_info(new_election_info);
             adv_election_group_result.insert(std::move(election_info_bundle));
         }
@@ -231,7 +234,7 @@ void xtop_zec_elect_consensus_group_contract::elect_config_nodes(common::xlogic_
                 new_election_info.miner_type = common::xminer_type_t::validator;
 
                 xelection_info_bundle_t election_info_bundle{};
-                election_info_bundle.node_id(node.node_id);
+                election_info_bundle.account_address(node.node_id);
                 election_info_bundle.election_info(new_election_info);
                 val_election_group_result.insert(std::move(election_info_bundle));
             }
@@ -259,11 +262,11 @@ void xtop_zec_elect_consensus_group_contract::elect_config_nodes(common::xlogic_
 #endif
 
 void xtop_zec_elect_consensus_group_contract::setup() {
-    data::election::legacy::xelection_result_store_t election_result_store;
+    data::election::v0::xelection_result_store_t election_result_store;
     auto property_names = data::election::get_property_name_by_addr(SELF_ADDRESS());
     for (auto const & property : property_names) {
         STRING_CREATE(property);
-        serialization::xmsgpack_t<data::election::legacy::xelection_result_store_t>::serialize_to_string_prop(*this, property, election_result_store);
+        serialization::xmsgpack_t<data::election::v0::xelection_result_store_t>::serialize_to_string_prop(*this, property, election_result_store);
     }
 
     STRING_CREATE(data::XPROPERTY_CONTRACT_ELECTION_EXECUTED_KEY);
@@ -367,15 +370,24 @@ void xtop_zec_elect_consensus_group_contract::elect(common::xzone_id_t const zon
 
 #if defined DEBUG
 
-    //std::string log;
-    //for (auto const & standby_result : standby_network_result.results()) {
-    //    log += " " + common::to_string(standby_result.first) + ": ";
-    //    for (auto const & result : standby_result.second.results()) {
-    //        log += result.first.to_string() + "|";
-    //    }
-    //}
+    std::string log;
+    for (auto const & standby_result : standby_network_result.results()) {
+        // log += " " + common::to_string(standby_result.first) + ": ";
+        for (auto const & result : standby_result.second.results()) {
+            log += result.first.to_string() + ":";
+            for (auto const & raw_credit_scores : result.second.raw_credit_scores) {
+                if (common::has<common::xnode_type_t::consensus_auditor>(raw_credit_scores.first)) {
+                    log += "|auditor:" + std::to_string(raw_credit_scores.second);
+                }
+                if (common::has<common::xnode_type_t::consensus_validator>(raw_credit_scores.first)) {
+                    log += "|validator:" + std::to_string(raw_credit_scores.second);
+                }
+            }
+            log += "-";
+        }
+    }
 
-    //xdbg("[zec contract][elect_non_genesis] elect sees standbys %s", log.c_str());
+    xdbg("[zec contract][elect_non_genesis] elect sees standbys %s", log.c_str());
 
 #endif
 
@@ -455,12 +467,12 @@ void xtop_zec_elect_consensus_group_contract::elect(common::xzone_id_t const zon
                   read_height);
 
             auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
-            if (chain_fork::xchain_fork_config_center_t::is_forked(fork_config.election_contract_stores_miner_type_and_genesis_fork_point, election_timestamp)) {
+            if (chain_fork::xchain_fork_config_center_t::is_forked(fork_config.election_contract_stores_credit_score_fork_point, election_timestamp)) {
                 serialization::xmsgpack_t<xelection_result_store_t>::serialize_to_string_prop(
                     *this, data::election::get_property_by_group_id(auditor_group_id), election_result_store);
             } else {
-                serialization::xmsgpack_t<data::election::legacy::xelection_result_store_t>::serialize_to_string_prop(
-                    *this, data::election::get_property_by_group_id(auditor_group_id), election_result_store.legacy());
+                serialization::xmsgpack_t<data::election::v1::xelection_result_store_t>::serialize_to_string_prop(
+                    *this, data::election::get_property_by_group_id(auditor_group_id), election_result_store.v1());
             }
 #if defined(DEBUG)
             auto serialized_election_result_store_data = codec::msgpack_encode(election_result_store);
@@ -510,7 +522,7 @@ bool xtop_zec_elect_consensus_group_contract::elect_auditor_validator(common::xz
                                                                       data::election::xelection_association_result_store_t const & association_result_store,
                                                                       data::election::xstandby_network_result_t const & standby_network_result,
                                                                       std::unordered_map<common::xgroup_id_t, data::election::xelection_result_store_t> & all_cluster_election_result_store) {
-    std::string log_prefix = "[zec contract][elect_auditor_validator] zone " + zone_id.to_string() + u8" cluster " + cluster_id.to_string() + " group " + auditor_group_id.to_string();
+    std::string log_prefix = "[zec contract][elect_auditor_validator] zone " + zone_id.to_string() + " cluster " + cluster_id.to_string() + " group " + auditor_group_id.to_string();
     bool election_success{false};
     std::string election_result_log;
 
@@ -524,7 +536,7 @@ bool xtop_zec_elect_consensus_group_contract::elect_auditor_validator(common::xz
         }
     }
 
-    XCONTRACT_ENSURE(!associated_validator_group_ids.empty(), u8"associated validator group id empty");
+    XCONTRACT_ENSURE(!associated_validator_group_ids.empty(), "associated validator group id empty");
     assert(!associated_validator_group_ids.empty());
 
     // clean up the auditor standby pool by filtering out the nodes that are currently in the validator group.
@@ -537,7 +549,7 @@ bool xtop_zec_elect_consensus_group_contract::elect_auditor_validator(common::xz
                                                                           .result_of(cluster_id)
                                                                           .result_of(assoc_validator_group_id);
         for (auto const & validator_node_info : assoc_validator_group_nodes) {
-            auto const & validator_node_id = top::get<data::election::xelection_info_bundle_t>(validator_node_info).node_id();
+            auto const & validator_node_id = top::get<data::election::xelection_info_bundle_t>(validator_node_info).account_address();
 
             auto it = effective_auditor_standbys.find(validator_node_id);
             if (it != std::end(effective_auditor_standbys)) {
@@ -565,7 +577,7 @@ bool xtop_zec_elect_consensus_group_contract::elect_auditor_validator(common::xz
                                                                                           .result_of(cluster_id)
                                                                                           .result_of(other_auditor_group_id);
         for (auto const & auditor_node_info : other_auditor_group_nodes) {
-            auto const & auditor_node_id = top::get<data::election::xelection_info_bundle_t>(auditor_node_info).node_id();
+            auto const & auditor_node_id = top::get<data::election::xelection_info_bundle_t>(auditor_node_info).account_address();
 
             auto it = effective_auditor_standbys.find(auditor_node_id);
             if (it != std::end(effective_auditor_standbys)) {
@@ -610,7 +622,7 @@ bool xtop_zec_elect_consensus_group_contract::elect_auditor_validator(common::xz
         auto const & auditor_group_nodes = election_network_result.result_of(common::xnode_type_t::consensus_auditor).result_of(cluster_id).result_of(auditor_group_id);
 
         for (auto const & auditor_node_info : auditor_group_nodes) {
-            auto const & auditor_node_id = top::get<data::election::xelection_info_bundle_t>(auditor_node_info).node_id();
+            auto const & auditor_node_id = top::get<data::election::xelection_info_bundle_t>(auditor_node_info).account_address();
 
             auto it = effective_validator_standbys.find(auditor_node_id);
             if (it != std::end(effective_validator_standbys)) {
@@ -632,7 +644,7 @@ bool xtop_zec_elect_consensus_group_contract::elect_auditor_validator(common::xz
                                                          .result_of(cluster_id)
                                                          .result_of(other_validator_group_id);
             for (auto const & validator_node_info : other_auditor_group_nodes) {
-                auto const & validator_node_id = top::get<data::election::xelection_info_bundle_t>(validator_node_info).node_id();
+                auto const & validator_node_id = top::get<data::election::xelection_info_bundle_t>(validator_node_info).account_address();
 
                 auto it = effective_validator_standbys.find(validator_node_id);
                 if (it != std::end(effective_validator_standbys)) {

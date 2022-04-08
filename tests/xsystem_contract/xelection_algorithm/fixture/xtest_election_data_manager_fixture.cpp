@@ -4,6 +4,8 @@
 
 #include "tests/xsystem_contract/xelection_algorithm/xtest_election_data_manager_fixture.h"
 
+#include "xdata/xelection/xelection_info.h"
+
 NS_BEG3(top, tests, election)
 
 common::xaccount_address_t build_account_address(std::string const & account_prefix, size_t const index) {
@@ -78,14 +80,14 @@ bool xtop_test_election_data_manager_fixture::add_nodes_to_election_result(std::
     for (std::size_t index = 1; index <= node_count; ++index) {
         common::xnode_id_t node_id = build_account_address(node_id_prefix, index);
 
-        xelection_info_t new_election_info;
+        data::election::xelection_info_t new_election_info;
         new_election_info.joined_version = common::xelection_round_t{0};
         new_election_info.consensus_public_key = top::xpublic_key_t{std::string{"test_publick_key"} + std::to_string(index)};
         new_election_info.stake = index;
         new_election_info.comprehensive_stake = index;
 
         xelection_info_bundle_t election_info_bundle;
-        election_info_bundle.node_id(node_id);
+        election_info_bundle.account_address(node_id);
         election_info_bundle.election_info(new_election_info);
 
         if (!add_election_result(node_type, cid, gid, election_info_bundle)) {

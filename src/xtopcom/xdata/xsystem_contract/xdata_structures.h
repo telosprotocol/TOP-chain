@@ -100,7 +100,7 @@ constexpr uint64_t TIMER_BLOCK_HEIGHT_PER_YEAR = 3155815;
  * @return true
  * @return false
  */
-bool check_registered_nodes_active(std::map<std::string, std::string> const & nodes, bool const fullnode_enabled);
+bool check_registered_nodes_active(std::map<std::string, std::string> const & nodes);
 
 struct xreward_node_record final : xserializable_based_on<void> {
     // common::xminer_type_t m_registered_miner_type {common::xminer_type_t::invalid};
@@ -492,8 +492,10 @@ public:
 
     template <common::xminer_type_t MinerTypeV>
     bool miner_type_has() const noexcept {
-        return common::has<MinerTypeV>(m_registered_miner_type);
+        return common::has<MinerTypeV>(miner_type());
     }
+
+    uint64_t raw_credit_score_data(common::xnode_type_t const node_type) const noexcept;
 
     /**
      * @brief Get required min deposit

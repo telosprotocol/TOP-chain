@@ -9,20 +9,18 @@
 
 #include <gtest/gtest.h>
 
-XINLINE_CONSTEXPR char const * TEST_NODE_ID_AUDITOR_PREFIX = u8"test__auditor__node_id_";
+XINLINE_CONSTEXPR char const * TEST_NODE_ID_AUDITOR_PREFIX = "test__auditor__node_id_";
 
-XINLINE_CONSTEXPR char const * TEST_NODE_ID_VALIDATOR_PREFIX = u8"test_validator_node_id_";
+XINLINE_CONSTEXPR char const * TEST_NODE_ID_VALIDATOR_PREFIX = "test_validator_node_id_";
 
 NS_BEG3(top, tests, election)
 
 using top::data::election::xelection_association_result_store_t;
-using top::data::election::xelection_cluster_result_t;
 using top::data::election::xelection_group_result_t;
 using top::data::election::xelection_info_bundle_t;
 using top::data::election::xelection_info_t;
 using top::data::election::xelection_network_result_t;
 using top::data::election::xelection_result_store_t;
-using top::data::election::xelection_result_t;
 using top::data::election::xstandby_network_result_t;
 using top::data::election::xstandby_node_info_t;
 using top::xvm::xcontract_helper;

@@ -49,6 +49,8 @@ public:
 
     std::uint64_t staking() const noexcept;
 
+    std::uint64_t raw_credit_score() const noexcept;
+
     hash_result_type hash() const override;
 
     void swap(xtop_node_element & other) noexcept;
