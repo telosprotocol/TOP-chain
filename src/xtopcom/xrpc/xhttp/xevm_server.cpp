@@ -14,7 +14,7 @@
 NS_BEG2(top, xrpc)
 
 HttpServer xevm_server::m_server;
-unique_ptr<xrpc_service<xedge_evm_http_method>> xevm_server::m_rpc_service = nullptr;
+unique_ptr<xevm_rpc_service<xedge_evm_http_method>> xevm_server::m_rpc_service = nullptr;
 bool xevm_server::m_is_running = false;
 
 using namespace top::xChainRPC;
@@ -31,7 +31,7 @@ xevm_server::xevm_server(shared_ptr<xrpc_edge_vhost> edge_vhost,
     xinfo("m_enable_ratelimit is false");
 #endif
     if (m_rpc_service == nullptr) {
-        m_rpc_service = top::make_unique<xrpc_service<xedge_evm_http_method>>(edge_vhost, xip2, archive_flag, store, block_store, txstore, elect_main, election_cache_data_accessor);
+        m_rpc_service = top::make_unique<xevm_rpc_service<xedge_evm_http_method>>(edge_vhost, xip2, archive_flag, store, block_store, txstore, elect_main, election_cache_data_accessor);
     } else {
         m_rpc_service->reset_edge_method_mgr(edge_vhost, xip2);
     }
@@ -139,7 +139,7 @@ void xevm_server::start_service(std::shared_ptr<SimpleWeb::ServerBase<SimpleWeb:
 }
 
 xevm_server::~xevm_server() {
-    std::call_once(xrpc_once_flag::m_once_flag, [this]() { m_rpc_service->cancel_token_timeout(); });
+    std::call_once(xevm_rpc_once_flag::m_once_flag, [this]() { m_rpc_service->cancel_token_timeout(); });
 
     // m_server_thread.join();
 }

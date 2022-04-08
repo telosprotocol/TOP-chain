@@ -81,7 +81,7 @@ protected:
     bool m_enable_sign{true};
 };
 
-class xedge_evm_http_method : public xedge_evm_method_base<xedge_http_handler> {
+class xedge_evm_http_method : public xedge_evm_method_base<xedge_evm_http_handler> {
 public:
     xedge_evm_http_method(shared_ptr<xrpc_edge_vhost> edge_vhost,
                       common::xip2_t xip2,
@@ -92,13 +92,13 @@ public:
                       observer_ptr<base::xvtxstore_t> txstore,
                       observer_ptr<elect::ElectMain> elect_main,
                       observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
-      : xedge_evm_method_base<xedge_http_handler>(edge_vhost, xip2, ioc, archive_flag, store, block_store, txstore, elect_main, election_cache_data_accessor) {
+      : xedge_evm_method_base<xedge_evm_http_handler>(edge_vhost, xip2, ioc, archive_flag, store, block_store, txstore, elect_main, election_cache_data_accessor) {
     }
     void write_response(shared_ptr<conn_type> & response, const string & content) override {
         response->write(content);
     }
     enum_xrpc_type type() override {
-        return enum_xrpc_type::enum_xrpc_http_type;
+        return enum_xrpc_type::enum_xrpc_evm_http_type;
     }
 };
 
@@ -330,6 +330,7 @@ void xedge_evm_method_base<T>::forward_method(shared_ptr<conn_type> & response, 
             // auditor return query result directly, so clear shard addr set
             shard_addr_set.clear();
             m_edge_handler_ptr->insert_session(edge_msg_list, shard_addr_set, response);
+            xdbg_rpc("forward_method, insert_session ok. %s", source_address.to_string().c_str());
         }
 #endif
     } while (0);
