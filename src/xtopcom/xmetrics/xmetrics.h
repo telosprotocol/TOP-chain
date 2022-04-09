@@ -664,6 +664,11 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     bft_verify_vote_msg_fail,
     contract_table_statistic_empty_ptr,
 
+    //statectx
+    statectx_load_block_succ,
+    statectx_load_state_succ,
+    statectx_sync_invoke_count,
+
     e_simple_total,
 };
 using xmetrics_tag_t = E_SIMPLE_METRICS_TAG;

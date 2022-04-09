@@ -59,6 +59,18 @@ do {\
     }\
 }while(0)
 
+xaccount_context_t::xaccount_context_t(const data::xaccount_ptr_t & unitstate, const xobject_ptr_t<base::xvcanvas_t> & canvas) {
+    m_account = unitstate;
+
+    m_latest_exec_sendtx_nonce = m_account->get_latest_send_trans_number();
+    m_latest_exec_sendtx_hash = m_account->account_send_trans_hash();
+    m_latest_create_sendtx_nonce = m_latest_exec_sendtx_nonce;
+    m_latest_create_sendtx_hash = m_latest_exec_sendtx_hash;
+    m_canvas = canvas;
+    xinfo("create context, address:%s,height:%ld,uri=%s",
+        unitstate->get_account().c_str(), unitstate->get_block_height(), m_account->get_bstate()->get_execute_uri().c_str());
+}
+
 xaccount_context_t::xaccount_context_t(const data::xaccount_ptr_t & unitstate) {
     m_account = unitstate;
 

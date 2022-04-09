@@ -41,18 +41,10 @@ enum enum_xdata_error_type {
     xreceipt_check_block_hash_check_fail,
     xreceipt_check_invalid_receipt,
 
-    xblock_check_header_hash_check_fail,
-    xblock_check_body_hash_check_fail,
-    xblock_check_body_hash_not_match_in_block,
-
-    xaccount_cmd_property_has_already_delete,
-    xaccount_cmd_property_not_create,
-    xaccount_cmd_property_set_value_same,
-    xaccount_cmd_property_operate_fail,
-    xaccount_cmd_property_map_field_not_create,
-    xaccount_cmd_property_operate_type_unmatch,
-    xaccount_cmd_property_has_already_create,
-
+    xaccount_property_not_create,
+    xaccount_property_map_field_not_create,
+    xaccount_property_create_fail,
+    xaccount_property_operate_fail,
     xdata_error_max,
 };
 
@@ -89,17 +81,10 @@ inline std::string xdata_error_to_string(int32_t code) {
         XDATA_TO_STR(xreceipt_check_block_hash_check_fail),
         XDATA_TO_STR(xreceipt_check_invalid_receipt),
 
-        XDATA_TO_STR(xblock_check_header_hash_check_fail),
-        XDATA_TO_STR(xblock_check_body_hash_check_fail),
-        XDATA_TO_STR(xblock_check_body_hash_not_match_in_block),
-
-        XDATA_TO_STR(xaccount_cmd_property_has_already_delete),
-        XDATA_TO_STR(xaccount_cmd_property_not_create),
-        XDATA_TO_STR(xaccount_cmd_property_set_value_same),
-        XDATA_TO_STR(xaccount_cmd_property_operate_fail),
-        XDATA_TO_STR(xaccount_cmd_property_map_field_not_create),
-        XDATA_TO_STR(xaccount_cmd_property_operate_type_unmatch),
-        XDATA_TO_STR(xaccount_cmd_property_has_already_create),
+        XDATA_TO_STR(xaccount_property_not_create),
+        XDATA_TO_STR(xaccount_property_map_field_not_create),
+        XDATA_TO_STR(xaccount_property_create_fail),
+        XDATA_TO_STR(xaccount_property_operate_fail),
     };
     return names[code - xdata_error_base - 1];
 }

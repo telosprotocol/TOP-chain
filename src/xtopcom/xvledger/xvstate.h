@@ -46,7 +46,7 @@ namespace top
             xauto_ptr<xmkeys_t>                 load_multiple_keys_var(const std::string & property_name); //to manage pubkeys of account
             
         public: //general ones for both kernel and application
-            xauto_ptr<xstringvar_t>             load_string_var(const std::string & property_name);
+            xauto_ptr<xstringvar_t>             load_string_var(const std::string & property_name) const;
             xauto_ptr<xhashmapvar_t>            load_hashmap_var(const std::string & property_name);
             xauto_ptr<xvproperty_t>             load_property(const std::string & property_name);//general way
             
@@ -165,7 +165,8 @@ namespace top
             xvbstate_t & operator = (const xvbstate_t & other);
             
         public:
-            virtual xvexeunit_t*  clone() override; //cone a new object with same state //each property is readonly after clone
+            virtual xvexeunit_t*  clone() override; //cone a new object with same state //each property is readonly after clone            
+            xvbstate_t* clone_state();  // TODO(jimmy)
             virtual std::string   dump() const override;  //just for debug purpose
             virtual void*         query_interface(const int32_t _enum_xobject_type_) override;//caller need to cast (void*) to related ptr
             
@@ -188,6 +189,7 @@ namespace top
             inline int                  get_block_version_patch() const  { return ((m_block_versions& 0x000000FF));}
             
         public:
+            bool                  apply_changes_of_binlog(std::deque<base::xvmethod_t> && records);
             bool                  apply_changes_of_binlog(const std::string & from_bin_log);//apply changes to current states,use carefully
             virtual bool          apply_changes_of_binlog(xstream_t & from_bin_log,const uint32_t bin_log_size);//apply changes to current states,use carefully
             

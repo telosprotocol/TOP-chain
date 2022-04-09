@@ -613,6 +613,11 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(bft_verify_vote_msg_fail);
         RETURN_METRICS_NAME(contract_table_statistic_empty_ptr);
 
+        //statectx
+        RETURN_METRICS_NAME(statectx_load_block_succ);
+        RETURN_METRICS_NAME(statectx_load_state_succ);
+        RETURN_METRICS_NAME(statectx_sync_invoke_count);
+
         default: assert(false); return nullptr;
     }
 }

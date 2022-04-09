@@ -389,8 +389,6 @@ TEST_F(test_tablemaker, make_receipt_hash_count) {
     mock::xdatamock_table mocktable(1, 100);
     std::string table_addr = mocktable.get_account();
     std::vector<std::string> unit_addrs = mocktable.get_unit_accounts();
-    std::string from_addr = unit_addrs[0];
-    std::string to_addr = unit_addrs[1];
 
     std::vector<xblock_ptr_t> all_gene_units = mocktable.get_all_genesis_units();
     for (auto & v : all_gene_units) {
@@ -403,7 +401,7 @@ TEST_F(test_tablemaker, make_receipt_hash_count) {
          int account_count = 64;
         int transaction_count = 4;
         std::vector<xcons_transaction_ptr_t> all_txs;
-        std::string to_addr = unit_addrs[0];
+        std::string to_addr = mock::xdatamock_address::make_unit_address(base::enum_chain_zone_consensus_index, 9);
         for (int i = 1; i <= account_count; i++)
         {
             std::string from_addr = unit_addrs[i];
@@ -461,17 +459,21 @@ TEST_F(test_tablemaker, make_receipt_hash_count) {
        // xassert(recv_txs[0]->get_last_action_receipt_id() == 1);
        // xassert(recv_txs[1]->get_last_action_receipt_id() == 2);
 
-        table_para.set_origin_txs(recv_txs);
-        xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
+    {
+        mock::xdatamock_table mocktable_recv(9, 4);
+        std::string table_addr_recv = mocktable_recv.get_account();
+        xtablemaker_para_t table_para_recv(mocktable_recv.get_table_state(), mocktable_recv.get_commit_table_state());
+        table_para_recv.set_origin_txs(recv_txs);
+        xblock_consensus_para_t proposal_para_recv = mocktable_recv.init_consensus_para();
+        xtablemaker_result_t table_result_recv;
+        xblock_ptr_t proposal_block_recv = tablemaker->make_proposal(table_para_recv, proposal_para_recv, table_result_recv);
+        xassert(proposal_block_recv != nullptr);
+        xassert(proposal_block_recv->get_height() == 1);
 
-        xtablemaker_result_t table_result;
-        xblock_ptr_t proposal_block = tablemaker->make_proposal(table_para, proposal_para, table_result);
-        xassert(proposal_block != nullptr);
-        xassert(proposal_block->get_height() == 4);
-
-        mocktable.do_multi_sign(proposal_block);
-        mocktable.on_table_finish(proposal_block);
-        resources->get_blockstore()->store_block(mocktable, proposal_block.get());
+        mocktable_recv.do_multi_sign(proposal_block_recv);
+        mocktable_recv.on_table_finish(proposal_block_recv);
+        resources->get_blockstore()->store_block(mocktable_recv, proposal_block_recv.get());        
+    }
     }
 #endif
 }
@@ -545,7 +547,9 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
     std::string table_addr = mocktable.get_account();
     std::vector<std::string> unit_addrs = mocktable.get_unit_accounts();
     std::string from_addr = unit_addrs[0];
-    std::string to_addr = unit_addrs[1];
+    std::string to_addr = mock::xdatamock_address::make_unit_address(base::enum_chain_zone_consensus_index, 9);
+    mock::xdatamock_table mocktable2(9, 2);
+    std::string table_addr2 = mocktable2.get_account();
 
     resources->get_txpool()->subscribe_tables(0, 1, 1,common::xnode_type_t::auditor);
 
@@ -555,6 +559,7 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
     }
     
     xtable_maker_ptr_t tablemaker = make_object_ptr<xtable_maker_t>(table_addr, resources);
+    xtable_maker_ptr_t tablemaker2 = make_object_ptr<xtable_maker_t>(table_addr2, resources);
 
     xblock_ptr_t first_table_block = nullptr;
     {
@@ -601,7 +606,7 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
         resources->get_txpool()->on_block_confirmed(first_table_block.get());
     }
     {
-        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
+        xtablemaker_para_t table_para(mocktable2.get_table_state(), mocktable2.get_commit_table_state());
         auto tableblocks = mocktable.get_history_tables();
         std::vector<xcons_transaction_ptr_t> recv_txs = mocktable.create_receipts(tableblocks[1]);
         xassert(recv_txs.size() == 2);
@@ -613,42 +618,42 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
         xassert(recv_txs[1]->get_last_action_receipt_id() == 2);
 
         table_para.set_origin_txs(recv_txs);
-        xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
+        xblock_consensus_para_t proposal_para = mocktable2.init_consensus_para();
 
         xtablemaker_result_t table_result;
-        xblock_ptr_t proposal_block = tablemaker->make_proposal(table_para, proposal_para, table_result);
+        xblock_ptr_t proposal_block = tablemaker2->make_proposal(table_para, proposal_para, table_result);
         xassert(proposal_block != nullptr);
-        xassert(proposal_block->get_height() == 4);
+        xassert(proposal_block->get_height() == 1);
 
-        mocktable.do_multi_sign(proposal_block);
-        mocktable.on_table_finish(proposal_block);
-        resources->get_blockstore()->store_block(mocktable, proposal_block.get());
+        mocktable2.do_multi_sign(proposal_block);
+        mocktable2.on_table_finish(proposal_block);
+        resources->get_blockstore()->store_block(mocktable2, proposal_block.get());
     }
     {
-        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
-        xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
+        xtablemaker_para_t table_para(mocktable2.get_table_state(), mocktable2.get_commit_table_state());
+        xblock_consensus_para_t proposal_para = mocktable2.init_consensus_para();
 
         xtablemaker_result_t table_result;
-        xblock_ptr_t proposal_block = tablemaker->make_proposal(table_para, proposal_para, table_result);
+        xblock_ptr_t proposal_block = tablemaker2->make_proposal(table_para, proposal_para, table_result);
         xassert(proposal_block != nullptr);
-        xassert(proposal_block->get_height() == 5);
+        xassert(proposal_block->get_height() == 2);
 
-        mocktable.do_multi_sign(proposal_block);
-        mocktable.on_table_finish(proposal_block);
-        resources->get_blockstore()->store_block(mocktable, proposal_block.get());
+        mocktable2.do_multi_sign(proposal_block);
+        mocktable2.on_table_finish(proposal_block);
+        resources->get_blockstore()->store_block(mocktable2, proposal_block.get());
     }
     {
-        xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
-        xblock_consensus_para_t proposal_para = mocktable.init_consensus_para();
+        xtablemaker_para_t table_para(mocktable2.get_table_state(), mocktable2.get_commit_table_state());
+        xblock_consensus_para_t proposal_para = mocktable2.init_consensus_para();
 
         xtablemaker_result_t table_result;
-        xblock_ptr_t proposal_block = tablemaker->make_proposal(table_para, proposal_para, table_result);
+        xblock_ptr_t proposal_block = tablemaker2->make_proposal(table_para, proposal_para, table_result);
         xassert(proposal_block != nullptr);
-        xassert(proposal_block->get_height() == 6);
+        xassert(proposal_block->get_height() == 3);
 
-        mocktable.do_multi_sign(proposal_block);
-        mocktable.on_table_finish(proposal_block);
-        resources->get_blockstore()->store_block(mocktable, proposal_block.get());
+        mocktable2.do_multi_sign(proposal_block);
+        mocktable2.on_table_finish(proposal_block);
+        resources->get_blockstore()->store_block(mocktable2, proposal_block.get());
     }
     // {
     //     xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
@@ -700,7 +705,7 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
     //     mocktable.on_table_finish(proposal_block);
     //     resources->get_blockstore()->store_block(mocktable, proposal_block.get());
     // }
-
+#if 0
     {
         xassert(mocktable.get_table_state()->get_block_height() == 6);
         xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
@@ -799,7 +804,7 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
         mocktable.on_table_finish(proposal_block);
         resources->get_blockstore()->store_block(mocktable, proposal_block.get());
     }
-
+#endif
     // {
     //     xtablemaker_para_t table_para(mocktable.get_table_state(), mocktable.get_commit_table_state());
     //     auto tableblocks = mocktable.get_history_tables();
@@ -875,11 +880,20 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
     //     mocktable.on_table_finish(proposal_block);
     //     resources->get_blockstore()->store_block(mocktable, proposal_block.get());
     // }
-
+#if 0
     {
     // full-table 16 height
     auto tableblocks = mocktable.get_history_tables();
     auto tablestate = resources->get_xblkstatestore()->get_block_state(tableblocks[10].get());
+{
+    base::xvbstate_t* tablestate2 = static_cast<base::xvbstate_t*>(tablestate->clone());
+    xassert(tablestate2 != nullptr);
+
+    xvproperty_prove_ptr_t propreceipt2 = xblocktool_t::create_receiptid_property_prove(tableblocks[10].get(), tableblocks[12].get(), tablestate2);
+    xassert(propreceipt2 != nullptr);
+    xassert(propreceipt2->is_valid());
+}
+
     xvproperty_prove_ptr_t propreceipt = xblocktool_t::create_receiptid_property_prove(tableblocks[10].get(), tableblocks[12].get(), tablestate.get());
     xassert(propreceipt != nullptr);
     xassert(propreceipt->is_valid());
@@ -903,9 +917,9 @@ TEST_F(test_tablemaker, receipt_id_check_1) {
     auto all_pairs = receiptid_state->get_all_receiptid_pairs();
     std::cout << "all_pairs=" << all_pairs->dump() << std::endl;
     }
-
+#endif
 }
-
+#if 0
 TEST_F(test_tablemaker, version_1) {
     xblockmaker_resources_ptr_t resources = std::make_shared<test_xblockmaker_resources_t>();
 
@@ -1018,8 +1032,8 @@ TEST_F(test_tablemaker, version_1) {
         }
     }
 }
-
-TEST_F(test_tablemaker, version_2) {
+#endif
+TEST_F(test_tablemaker, table_inner_tx) {
     xblockmaker_resources_ptr_t resources = std::make_shared<test_xblockmaker_resources_t>();
 
     mock::xdatamock_table mocktable(1, 2);
@@ -1033,7 +1047,7 @@ TEST_F(test_tablemaker, version_2) {
         resources->get_blockstore()->store_block(base::xvaccount_t(v->get_account()), v.get());
     }
 
-    const uint32_t tx_cnt = 2;
+    const uint32_t tx_cnt = 1;
     std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(from_addr, to_addr, tx_cnt);
     EXPECT_EQ(send_txs.size(), tx_cnt);
     xtable_maker_ptr_t tablemaker = make_object_ptr<xtable_maker_t>(table_addr, resources);
@@ -1069,39 +1083,40 @@ TEST_F(test_tablemaker, version_2) {
             xJson::Value jv2;
             proposal_block->parse_to_json(jv2, RPC_VERSION_V2);
             auto j_txs = jv2["tableblock"]["txs"];
-            for(auto tx : j_txs) {
-                auto tx_consensus_phase = tx["tx_consensus_phase"].asString();
-                EXPECT_EQ(tx_consensus_phase, "send");
-            }
+            EXPECT_EQ(j_txs.size(), 2);
+            EXPECT_EQ(j_txs[0]["tx_consensus_phase"].asString(), "send");
+            EXPECT_EQ(j_txs[1]["tx_consensus_phase"].asString(), "recv");
+
             auto units = jv2["tableblock"]["units"];
+            EXPECT_EQ(units.size(), 2);
             for (auto & unit : units) {
                 auto unit_height = unit["unit_height"].asUInt64();
                 EXPECT_EQ(unit_height, 1);
                 auto account = unit["account"].asString();
-                EXPECT_EQ(account, from_addr);
+                ASSERT_TRUE(account == from_addr || account == to_addr);
             }
         }
 
         std::vector<xobject_ptr_t<base::xvblock_t>> units;
         proposal_block->extract_sub_blocks(units);
-        EXPECT_EQ(units.size(), 1);
+        EXPECT_EQ(units.size(), 2);
         for (auto & v : units) {
             xobject_ptr_t<data::xblock_t> unit = dynamic_xobject_ptr_cast<data::xblock_t>(v);
             auto txs = unit->get_txs();
             EXPECT_EQ(txs.size(), 0);
             
-            {
-                xJson::Value jv1;
-                unit->parse_to_json(jv1, RPC_VERSION_V1);
-                auto j_txs = jv1["lightunit"]["lightunit_input"]["txs"];
-                for(auto tx : j_txs) {
-                    auto hashes = tx.getMemberNames();
-                    for (auto & hash : hashes) {
-                        auto tx_consensus_phase = tx[hash]["tx_consensus_phase"].asString();
-                        EXPECT_EQ(tx_consensus_phase, "send");
-                    }
-                }
-            }
+            // {
+            //     xJson::Value jv1;
+            //     unit->parse_to_json(jv1, RPC_VERSION_V1);
+            //     auto j_txs = jv1["lightunit"]["lightunit_input"]["txs"];
+            //     for(auto tx : j_txs) {
+            //         auto hashes = tx.getMemberNames();
+            //         for (auto & hash : hashes) {
+            //             auto tx_consensus_phase = tx[hash]["tx_consensus_phase"].asString();
+            //             EXPECT_EQ(tx_consensus_phase, "send");
+            //         }
+            //     }
+            // }
 
             {
                 xJson::Value jv2;
@@ -1115,9 +1130,9 @@ TEST_F(test_tablemaker, version_2) {
         }
 
         auto headers = proposal_block->get_sub_block_headers();
-        EXPECT_EQ(headers.size(), 1);
+        EXPECT_EQ(headers.size(), 2);
         for (auto & header : headers) {
-            EXPECT_EQ(header->get_extra_data().empty(), false);
+            EXPECT_EQ(header->get_extra_data().empty(), false);  // not include tx hashs
             EXPECT_EQ(header->get_block_version(), xvblock_fork_t::get_block_fork_new_version());
         }
     }

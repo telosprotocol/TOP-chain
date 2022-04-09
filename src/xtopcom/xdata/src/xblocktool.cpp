@@ -13,6 +13,7 @@
 #include "xvledger/xvblockstore.h"
 #include "xvledger/xvstate.h"
 #include "xvledger/xvledger.h"
+#include "xvledger/xvblockbuild.h"
 #include "xmbus/xevent_behind.h"
 
 NS_BEG2(top, data)
@@ -411,7 +412,7 @@ bool xblocktool_t::can_make_next_full_table(base::xvblock_t* latest_cert_block, 
 }
 
 void xblocktool_t::alloc_transaction_receiptid(const xcons_transaction_ptr_t & tx, const base::xreceiptid_state_ptr_t & receiptid_state, bool add_rsp_id) {
-    if (tx->is_self_tx()) {
+    if (tx->is_self_tx() || tx->get_inner_table_flag()) {
         return;  // self tx has none receiptid
     }
 
@@ -451,6 +452,170 @@ void xblocktool_t::alloc_transaction_receiptid(const xcons_transaction_ptr_t & t
     xdbg("xblocktool_t::alloc_transaction_receiptid tx=%s,receiptid=%ld,confirmid_max=%ld,sender_confirmed_id=%ld", tx->dump().c_str(), current_receipt_id, receiptid_pair.get_confirmid_max(), tx->get_last_action_sender_confirmed_receipt_id());
 }
 
+bool xblocktool_t::alloc_transaction_receiptid(const xcons_transaction_ptr_t & tx, bool add_rsp_id, base::xreceiptid_pair_t & receiptid_pair) {
+    if (tx->is_self_tx() || tx->get_inner_table_flag()) {
+        xassert(false);
+        return false;
+    }
+
+    base::xtable_shortid_t self_tableid = tx->get_self_tableid();
+    base::xtable_shortid_t peer_tableid = tx->get_peer_tableid();
+
+    uint64_t current_receipt_id = 0;
+    uint64_t current_rsp_id = 0;
+    if (tx->is_send_tx()) {
+        // alloc new receipt id for send tx
+        current_receipt_id = receiptid_pair.get_sendid_max() + 1;
+        receiptid_pair.set_sendid_max(current_receipt_id);
+        
+        if (add_rsp_id && !tx->get_not_need_confirm()) {
+            current_rsp_id = receiptid_pair.get_send_rsp_id_max() + 1;
+            receiptid_pair.set_send_rsp_id_max(current_rsp_id);
+        }
+    } else if (tx->is_recv_tx()) {
+        // copy last actiion receipt id for recv tx and confirm tx
+        current_receipt_id = tx->get_last_action_receipt_id();
+        if (current_receipt_id != receiptid_pair.get_recvid_max() + 1) {
+            xassert(false);
+            return false;
+        }
+        receiptid_pair.set_recvid_max(current_receipt_id);
+        current_rsp_id = tx->get_last_action_rsp_id();
+    } else if (tx->is_confirm_tx()) {
+        current_receipt_id = tx->get_last_action_receipt_id();
+        if (current_receipt_id != receiptid_pair.get_confirmid_max() + 1) {
+            xassert(false);
+            return false;
+        }
+        receiptid_pair.set_confirmid_max(current_receipt_id);
+        current_rsp_id = tx->get_last_action_rsp_id();
+        if (current_rsp_id != receiptid_pair.get_confirm_rsp_id_max() + 1) {
+            xassert(false);
+            return false;
+        }
+        receiptid_pair.set_confirm_rsp_id_max(current_rsp_id);
+    }
+    // update receipt id info to tx action result
+    tx->set_current_receipt_id(self_tableid, peer_tableid, current_receipt_id);
+    if (current_rsp_id != 0) {
+        tx->set_current_rsp_id(current_rsp_id);
+    }
+    if (tx->is_send_tx()) {
+        tx->set_current_sender_confirmed_receipt_id(receiptid_pair.get_confirmid_max());
+    }
+    xdbg("xblocktool_t::alloc_transaction_receiptid tx=%s,receipt=%s", tx->dump().c_str(), receiptid_pair.dump().c_str());
+    return true;
+}
+
+// =============== action & txreceipt tool =============
+std::vector<xlightunit_action_t> xblocktool_t::unpack_all_txreceipt_action(base::xvblock_t* commit_block) {
+    if (commit_block == nullptr) {
+        xassert(false);
+        return {};
+    }
+    std::vector<xlightunit_action_t> txreceipt_actions;
+    auto & all_entitys = commit_block->get_input()->get_entitys();
+    for (auto & entity : all_entitys) {
+        // it must be xinentitys
+        base::xvinentity_t* _inentity = dynamic_cast<base::xvinentity_t*>(entity);
+        if (_inentity == nullptr) {
+            xassert(false);
+            return {};
+        }
+        auto & all_actions = _inentity->get_actions();
+        for (auto & action : all_actions) {
+            xlightunit_action_t txaction(action);
+            if (txaction.is_need_make_txreceipt()) {
+                txreceipt_actions.push_back(txaction);
+            }
+        }
+    }
+    return txreceipt_actions;
+}
+
+std::vector<xlightunit_action_t> xblocktool_t::unpack_one_txreceipt_action(base::xvblock_t* commit_block, base::xtable_shortid_t peer_table_sid, uint64_t receipt_id, enum_transaction_subtype subtype) {
+    if (commit_block == nullptr) {
+        xassert(false);
+        return {};
+    }
+    std::vector<xlightunit_action_t> txreceipt_actions;
+    auto & all_entitys = commit_block->get_input()->get_entitys();
+    for (auto & entity : all_entitys) {
+        // it must be xinentitys
+        base::xvinentity_t* _inentity = dynamic_cast<base::xvinentity_t*>(entity);
+        if (_inentity == nullptr) {
+            xassert(false);
+            return {};
+        }
+        auto & all_actions = _inentity->get_actions();
+        for (auto & action : all_actions) {
+            if (xlightunit_action_t::is_not_txaction(action)) {
+                continue;;
+            }
+            enum_transaction_subtype _actionid = xlightunit_action_t::get_txaction_subtype(action);
+            if (_actionid != subtype) {
+                continue;
+            }
+            xlightunit_action_t txaction(action);
+            xinfo("xblocktool_t::create_one_txreceipt peer tableid:%d:%d, receiptid:%llu:%llu", peer_table_sid, txaction.get_receipt_id_peer_tableid(), receipt_id, txaction.get_receipt_id());
+            if (txaction.get_receipt_id_peer_tableid() != peer_table_sid || txaction.get_receipt_id() != receipt_id) {
+                continue;  
+            }
+            if (false == txaction.is_need_make_txreceipt()) {
+                xassert(false);
+                continue;  
+            }
+            txreceipt_actions.push_back(txaction);
+            break;
+        }
+    }
+    return txreceipt_actions;
+}
+
+
+std::vector<xcons_transaction_ptr_t> xblocktool_t::create_txreceipts(base::xvblock_t* commit_block, base::xvblock_t* cert_block, const std::vector<xlightunit_action_t> & txactions) {
+    if (commit_block == nullptr || cert_block == nullptr || txactions.empty()) {
+        xassert(false);
+        return {};
+    }
+    if ( (cert_block->get_justify_cert_hash() != commit_block->get_input_root_hash())
+        || (commit_block->get_height() + 2 != cert_block->get_height())
+        || (commit_block->get_account() != cert_block->get_account())
+        || (commit_block->get_block_level() != base::enum_xvblock_level_table) ) {  // txreceipts make from table block
+        xassert(false);
+        return {};
+    }
+    // get all leafs firstly for performance
+    std::vector<std::string> all_leafs = base::xvblockmaker_t::get_input_merkle_leafs(commit_block->get_input());
+
+    base::xmerkle_t<utl::xsha2_256_t, uint256_t> merkle(all_leafs);
+    // #3 calc leaf path and make rceipt
+    std::vector<xcons_transaction_ptr_t> receipt_txs;
+    for (auto & action : txactions) {
+        base::xmerkle_path_256_t hash_path;
+        if (false == base::xvblockmaker_t::calc_merkle_path(action, hash_path, merkle)) {
+            xassert(false);
+            return {};
+        }
+        std::string path_bin = hash_path.serialize_to_string();
+        base::enum_xprove_cert_type prove_type = base::enum_xprove_cert_type_table_justify;
+        // xtx_receipt_t* _receipt = new xtx_receipt_t(action, cert_block->get_cert(), path_bin, prove_type);
+        base::xtx_receipt_ptr_t _receipt_ptr = make_object_ptr<base::xtx_receipt_t>(action, cert_block->get_cert(), path_bin, prove_type);
+        // _receipt_ptr.attach(_receipt);
+        std::string orgtx_bin;
+        if (action.is_send_tx()) {
+            orgtx_bin = commit_block->get_input()->query_resource(action.get_org_tx_hash());// only sendtx has origin raw tx bin
+            xassert(!orgtx_bin.empty());
+        }
+        base::xfull_txreceipt_t full_txreceipt(_receipt_ptr, orgtx_bin);
+        xcons_transaction_ptr_t constx = make_object_ptr<data::xcons_transaction_t>(full_txreceipt);
+        receipt_txs.push_back(constx);
+    }
+    xdbg("xblocktool_t::create_all_txreceipts,block=%s,receipts=%zu,allleafs=%zu,",
+        commit_block->dump().c_str(), receipt_txs.size(), all_leafs.size());
+    return receipt_txs;
+}
+
 xcons_transaction_ptr_t xblocktool_t::create_one_txreceipt(base::xvblock_t* commit_block, base::xvblock_t* cert_block, base::xtable_shortid_t peer_table_sid, uint64_t receipt_id, enum_transaction_subtype subtype) {
     if (commit_block == nullptr || cert_block == nullptr) {
         xassert(false);
@@ -461,58 +626,27 @@ xcons_transaction_ptr_t xblocktool_t::create_one_txreceipt(base::xvblock_t* comm
         return nullptr;
     }
 
-    // find txaction by receiptid
-    std::vector<base::xvaction_t> receipt_actions;
-    auto tx_actions = commit_block->get_tx_actions();
-    for (auto & action : tx_actions) {
-        if (action.get_org_tx_hash().empty()) {
-            continue;
-        }
-        enum_transaction_subtype _actionid = (enum_transaction_subtype)action.get_org_tx_action_id();
-        if (_actionid != subtype) {
-            continue;                        
-        }
-        xlightunit_action_t txaction(action);
-        xinfo("xblocktool_t::create_one_txreceipt peer tableid:%d:%d, receiptid:%llu:%llu", peer_table_sid, txaction.get_receipt_id_peer_tableid(), receipt_id, txaction.get_receipt_id());
-        if (txaction.get_receipt_id_peer_tableid() != peer_table_sid || txaction.get_receipt_id() != receipt_id) {
-            continue;  
-        }
-        receipt_actions.push_back(action);
-    }
-
-    if (receipt_actions.size() != 1) {  // not find txhash
-        xassert(false);
+    std::vector<xlightunit_action_t> txreceipt_actions = xblocktool_t::unpack_one_txreceipt_action(commit_block, peer_table_sid, receipt_id, subtype);
+    if (txreceipt_actions.size() != 1) {  // not find txhash
+        xerror("xblocktool_t::create_one_txreceipt not find.block=%s,tableid:%d receiptid:%llu,subtype=%d", commit_block->dump().c_str(), peer_table_sid, receipt_id, subtype);
         return nullptr;
     }
 
-    std::vector<base::xfull_txreceipt_t> all_receipts = base::xtxreceipt_build_t::create_all_txreceipts(commit_block, cert_block, receipt_actions);
-    if (all_receipts.size() != 1) {  // not find txhash
+    std::vector<xcons_transaction_ptr_t> txreceipts = create_txreceipts(commit_block, cert_block, txreceipt_actions);
+    if (txreceipts.size() != 1) {  // not find txhash
         xassert(false);
         return nullptr;
     }
-    xcons_transaction_ptr_t constx = make_object_ptr<xcons_transaction_t>(all_receipts[0]);
-    return constx;
-}
-
-xcons_transaction_ptr_t xblocktool_t::create_one_txreceipt(base::xvblock_t* commit_block, base::xvblock_t* cert_block, const std::string & txhash) {
-    base::xfull_txreceipt_ptr_t receipt = base::xtxreceipt_build_t::create_one_txreceipt(commit_block, cert_block, txhash);
-    if (receipt == nullptr) {
-        xassert(false);
-        return nullptr;
-    }
-    xcons_transaction_ptr_t constx = make_object_ptr<xcons_transaction_t>(*receipt.get());
-    return constx;
+    return txreceipts[0];
 }
 
 std::vector<xcons_transaction_ptr_t> xblocktool_t::create_all_txreceipts(base::xvblock_t* commit_block, base::xvblock_t* cert_block) {
-    std::vector<base::xfull_txreceipt_t> all_receipts = base::xtxreceipt_build_t::create_all_txreceipts(commit_block, cert_block);
-    std::vector<xcons_transaction_ptr_t> all_cons_txs;
-    for (auto & receipt : all_receipts) {
-        data::xcons_transaction_ptr_t constx = make_object_ptr<data::xcons_transaction_t>(receipt);
-        all_cons_txs.push_back(constx);
-        xassert(constx->is_recv_tx() || constx->is_confirm_tx());
+    std::vector<xlightunit_action_t> txreceipt_actions = xblocktool_t::unpack_all_txreceipt_action(commit_block);
+    if (txreceipt_actions.empty()) {
+        return {};
     }
-    return all_cons_txs;
+
+    return create_txreceipts(commit_block, cert_block, txreceipt_actions);
 }
 
 base::xvproperty_prove_ptr_t xblocktool_t::create_receiptid_property_prove(base::xvblock_t* commit_block, base::xvblock_t* cert_block, base::xvbstate_t* bstate) {    
@@ -587,6 +721,14 @@ bool xblocktool_t::get_receiptid_state_and_prove(base::xvblockstore_t * blocksto
         return false;
     }
 
+    // {
+    //     auto property_prove1 = base::xpropertyprove_build_t::create_property_prove(non_nil_commit_block.get(), cert_block.get(), bstate.get(), XPROPERTY_TABLE_RECEIPTID);
+    //     if (property_prove1 == nullptr) {
+    //         xwarn("xblocktool_t::get_receiptid_state_and_prove create receipt state fail 1.table:%s, commit height:%llu", account.get_address().c_str(), non_nil_commit_block->get_height());
+    //         return false;
+    //     }
+    // }
+
     xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(bstate.get());
     if (tablestate->get_receiptid_state()->get_all_receiptid_pairs()->get_all_pairs().empty()) {
         xinfo("xblocktool_t::get_receiptid_state_and_prove table have no receipt id pairs.table:%s, commit height:%llu", account.get_address().c_str(), non_nil_commit_block->get_height());
@@ -595,7 +737,7 @@ bool xblocktool_t::get_receiptid_state_and_prove(base::xvblockstore_t * blocksto
 
     auto property_prove = base::xpropertyprove_build_t::create_property_prove(non_nil_commit_block.get(), cert_block.get(), bstate.get(), XPROPERTY_TABLE_RECEIPTID);
     if (property_prove == nullptr) {
-        xwarn("xblocktool_t::get_receiptid_state_and_prove create receipt state fail.table:%s, commit height:%llu", account.get_address().c_str(), non_nil_commit_block->get_height());
+        xwarn("xblocktool_t::get_receiptid_state_and_prove create receipt state fail 2.table:%s, commit height:%llu", account.get_address().c_str(), non_nil_commit_block->get_height());
         return false;
     }
     xassert(property_prove->is_valid());

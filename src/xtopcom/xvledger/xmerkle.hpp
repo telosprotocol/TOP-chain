@@ -452,6 +452,13 @@ namespace top
             {
                 return do_read(stream);
             }
+            std::string serialize_to_string() {
+                base::xstream_t _stream(base::xcontext_t::instance());
+                serialize_to(_stream);
+                std::string _path_bin = std::string((char *)_stream.data(), _stream.size());
+                xassert(!_path_bin.empty());
+                return _path_bin;
+            }
 
          protected:
             int32_t do_write(base::xstream_t & stream) const {

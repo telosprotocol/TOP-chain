@@ -360,7 +360,8 @@ void xreceipt_queue_new_t::update_receiptid_state(const base::xreceiptid_state_p
 }
 
 void xreceipt_queue_new_t::update_receipt_id_by_confirmed_tx(const tx_info_t & txinfo, base::xtable_shortid_t peer_table_sid, uint64_t receiptid) {
-    if (txinfo.get_subtype() == enum_transaction_subtype_self) {
+    if (txinfo.get_subtype() == enum_transaction_subtype_self || receiptid == 0) {
+        xdbg("xreceipt_queue_new_t::update_receipt_id_by_confirmed_tx no need process.subtype:%d receiptid:%llu",txinfo.get_subtype(),receiptid);
         return;
     }
 

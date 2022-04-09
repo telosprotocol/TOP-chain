@@ -458,7 +458,7 @@ namespace top
             return nullptr;
         }
  
-        xauto_ptr<xstringvar_t> xvexestate_t::load_string_var(const std::string & property_name)
+        xauto_ptr<xstringvar_t> xvexestate_t::load_string_var(const std::string & property_name) const
         {
             xvproperty_t * property_obj = get_property_object(property_name);
             if(property_obj != nullptr)
@@ -1094,6 +1094,10 @@ namespace top
         {
             return new xvbstate_t(*this);
         }
+        xvbstate_t* xvbstate_t::clone_state()
+        {
+            return new xvbstate_t(*this);
+        }
         
         std::string xvbstate_t::dump() const
         {
@@ -1172,6 +1176,18 @@ namespace top
         }
     
         //---------------------------------bin log ---------------------------------//
+        bool   xvbstate_t::apply_changes_of_binlog(std::deque<base::xvmethod_t> && records) //apply changes to current states
+        {
+            for(auto & op : records)
+            {
+                #ifdef _DEBUG_STATE_BINARY_
+                xinfo("xvbstate_t::apply,execute %s",op.dump().c_str());
+                #endif
+                execute(op,nullptr);
+            }
+            return true;
+        }
+
         bool   xvbstate_t::apply_changes_of_binlog(const std::string & from_bin_log) //apply changes to current states
         {
             std::deque<top::base::xvmethod_t> out_records;

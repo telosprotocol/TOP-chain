@@ -161,11 +161,7 @@ int32_t xstore::get_map_property(const std::string &address, uint64_t height, co
         return -1;
     }
 
-    bool ret = account->map_get(name, value);
-    if (!ret) {
-        return -1;
-    }
-    return xsuccess;
+    return account->map_copy_get(name, value);
 }
 
 int32_t xstore::get_string_property(const std::string &address, uint64_t height, const std::string &name, std::string &value) {
@@ -174,11 +170,8 @@ int32_t xstore::get_string_property(const std::string &address, uint64_t height,
         xwarn("jimmy xstore::get_string_property fail-find account. account=%s", address.c_str());
         return -1;
     }
-    bool ret = account->string_get(name, value);
-    if (!ret) {
-        return -1;
-    }
-    return xsuccess;
+
+    return account->string_get(name, value);
 }
 
 xaccount_ptr_t xstore::get_target_state(base::xvblock_t* block) const {
@@ -208,7 +201,7 @@ bool xstore::string_property_get(base::xvblock_t* block, const std::string& prop
         xwarn("xstore::string_property_get get target state fail.block=%s,prop=%s", block->dump().c_str(), prop.c_str());
         return false;
     }
-    return state->string_get(prop, value);
+    return xsuccess == state->string_get(prop, value);
 }
 
 xaccount_ptr_t xstore::get_target_state(const std::string &address, uint64_t height) const {

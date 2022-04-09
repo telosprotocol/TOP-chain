@@ -16,6 +16,7 @@ target_link_libraries(xunit_service PRIVATE
     xelection
     xblockmaker
     xtxexecutor
+    xstatectx
     xBFT
     xstore
     xcommon

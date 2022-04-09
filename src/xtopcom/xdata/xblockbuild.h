@@ -47,6 +47,7 @@ class xunitheader_extra_t {
     static XINLINE_CONSTEXPR char const * KEY_HEADER_KEY_TXS              = "t";
  public:
     static std::string build_extra_string(base::xvheader_t* _tableheader, const xlightunit_block_para_t & bodypara);
+    static std::string build_extra_string(base::xvheader_t* _tableheader, const base::xvtxkey_vec_t & txkeys);
  public:
     int32_t serialize_to_string(std::string & str) const;
     int32_t do_write(base::xstream_t & stream) const;
@@ -78,11 +79,13 @@ class xlightunit_build_t : public base::xvblockmaker_t {
     static bool should_build_unit_opt(const uint64_t clock, const uint64_t height);
     xlightunit_build_t(const std::string & account, const xlightunit_block_para_t & bodypara);
     xlightunit_build_t(base::xvblock_t* prev_block, const xlightunit_block_para_t & bodypara, const xblock_consensus_para_t & para);
+    xlightunit_build_t(base::xvblock_t* prev_block, const xunit_block_para_t & bodypara, const xblock_consensus_para_t & para);
     xlightunit_build_t(base::xvheader_t* header, base::xvinput_t* input, base::xvoutput_t* output);
 
     base::xauto_ptr<base::xvblock_t> create_new_block() override;
 private:
     bool build_block_body(const xlightunit_block_para_t & para);
+    bool build_block_body_v2(const xunit_block_para_t & para);
 };
 
 class xemptyblock_build_t : public base::xvblockmaker_t {
@@ -100,12 +103,13 @@ class xemptyblock_build_t : public base::xvblockmaker_t {
 class xfullunit_build_t : public base::xvblockmaker_t {
  public:
     xfullunit_build_t(base::xvblock_t* prev_block, const xfullunit_block_para_t & bodypara, const xblock_consensus_para_t & para);
+    xfullunit_build_t(base::xvblock_t* prev_block, const xunit_block_para_t & bodypara, const xblock_consensus_para_t & para);
     xfullunit_build_t(base::xvheader_t* header, base::xvinput_t* input, base::xvoutput_t* output);
 
     base::xauto_ptr<base::xvblock_t> create_new_block() override;
 
  private:
-    bool build_block_body(const xfullunit_block_para_t & para);
+    bool build_block_body(const xunit_block_para_t & para);
 };
 
 class xlighttable_build_t : public base::xvtableblock_maker_t {

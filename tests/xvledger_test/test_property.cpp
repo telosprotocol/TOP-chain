@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include "xbase/xmem.h"
+#include "xbase/xhash.h"
 #include "xvledger/xvaccount.h"
 #include "xvledger/xvproperty.h"
 #include "xvledger/xvstate.h"
@@ -133,4 +134,74 @@ TEST_F(test_property, serialize_compare_2)
         stream.read_compact_var(value2);
         xassert(value2 == value);
     }
+}
+
+TEST_F(test_property, bstate_clone)
+{
+    xobject_ptr_t<base::xvbstate_t> bstate = make_object_ptr<base::xvbstate_t>("T80000733b43e6a2542709dc918ef2209ae0fc6503c2f2", (uint64_t)1, (uint64_t)1, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);    
+    xauto_ptr<xvcanvas_t> canvas = new xvcanvas_t();
+    xauto_ptr<xtokenvar_t> token = bstate->new_token_var("@1", canvas.get());
+    vtoken_t add_token = (vtoken_t)100;
+    vtoken_t value = token->deposit(add_token, canvas.get());
+    xassert(value == add_token);
+
+    uint64_t prophash1;
+    uint64_t prophash2;
+    uint64_t prophash3;
+    uint64_t prophash4;
+    uint64_t prophash5;
+    {
+    auto _property = bstate->load_property("@1");
+    xassert(_property != nullptr);
+    std::string property_bin;
+    _property->serialize_to_string(property_bin);
+    prophash1 = base::xhash64_t::digest(property_bin);
+    std::cout << "hash1=" << prophash1 << std::endl;
+    }
+
+    base::xvbstate_t* _new_bstate = dynamic_cast<base::xvbstate_t*>(bstate->clone());
+    {
+    auto _property = _new_bstate->load_property("@1");
+    xassert(_property != nullptr);
+    std::string property_bin;
+    _property->serialize_to_string(property_bin);
+    prophash2 = base::xhash64_t::digest(property_bin);
+    std::cout << "hash2=" << prophash2 << std::endl;
+    }
+
+    base::xvbstate_t* _new_bstate2 = dynamic_cast<base::xvbstate_t*>(_new_bstate->clone());
+    {
+    auto _property = _new_bstate2->load_property("@1");
+    xassert(_property != nullptr);
+    std::string property_bin;
+    _property->serialize_to_string(property_bin);
+    prophash3 = base::xhash64_t::digest(property_bin);
+    std::cout << "hash3=" << prophash3 << std::endl;
+    }    
+    xassert(prophash1 == prophash2);
+    xassert(prophash1 == prophash3);
+
+
+    std::string state_db_bin;
+    bstate->serialize_to_string(state_db_bin);
+    base::xvbstate_t* _new_bstate3 = base::xvblock_t::create_state_object(state_db_bin);
+    base::xvbstate_t* _new_bstate4 = dynamic_cast<base::xvbstate_t*>(_new_bstate3->clone());
+    {
+    auto _property = _new_bstate3->load_property("@1");
+    xassert(_property != nullptr);
+    std::string property_bin;
+    _property->serialize_to_string(property_bin);
+    prophash4 = base::xhash64_t::digest(property_bin);
+    std::cout << "hash3=" << prophash4 << std::endl;
+    }    
+    {
+    auto _property = _new_bstate4->load_property("@1");
+    xassert(_property != nullptr);
+    std::string property_bin;
+    _property->serialize_to_string(property_bin);
+    prophash5 = base::xhash64_t::digest(property_bin);
+    std::cout << "hash3=" << prophash5 << std::endl;
+    }    
+    xassert(prophash1 == prophash4);
+    xassert(prophash1 == prophash5);    
 }
