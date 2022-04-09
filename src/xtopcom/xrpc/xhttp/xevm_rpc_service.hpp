@@ -5,29 +5,29 @@
 #pragma once
 #include <string>
 #include <memory>
-#include "xrpc_define.h"
-#include "xtraffic_controller.h"
-#include "xrule_manager.h"
-#include "xedge/xedge_method_manager.hpp"
-#include "prerequest/xpre_request_handler_mgr.h"
-#include "xerror/xrpc_error.h"
-#include "xerror/xrpc_error_json.h"
-#include "prerequest/xpre_request_handler_server.h"
+#include "xrpc/xrpc_define.h"
+#include "xrpc/xtraffic_controller.h"
+#include "xrpc/xrule_manager.h"
+#include "xrpc/xedge/xedge_method_manager.hpp"
+#include "xrpc/prerequest/xpre_request_handler_mgr.h"
+#include "xrpc/xerror/xrpc_error.h"
+#include "xrpc/xerror/xrpc_error_json.h"
+#include "xrpc/prerequest/xpre_request_handler_server.h"
 #include "xtxstore/xtxstore_face.h"
 
 NS_BEG2(top, xrpc)
 #define CLEAN_TIME          60
 #define TIME_OUT_SECONDS    10800
 
-struct xrpc_once_flag {
+struct xevm_rpc_once_flag {
 static std::once_flag  m_once_flag;
 };
 
 template<typename T>
-class xrpc_service : public xrpc_once_flag{
+class xevm_rpc_service : public xevm_rpc_once_flag{
     typedef typename T::conn_type conn_type;
 public:
-    xrpc_service(shared_ptr<xrpc_edge_vhost> edge_vhost,
+    xevm_rpc_service(shared_ptr<xrpc_edge_vhost> edge_vhost,
                  common::xip2_t xip2,
                  bool archive_flag = false,
                  observer_ptr<store::xstore_face_t> store = nullptr,
@@ -49,7 +49,7 @@ private:
 };
 
 template <typename T>
-xrpc_service<T>::xrpc_service(shared_ptr<xrpc_edge_vhost> edge_vhost,
+xevm_rpc_service<T>::xevm_rpc_service(shared_ptr<xrpc_edge_vhost> edge_vhost,
                               common::xip2_t xip2,
                               bool archive_flag,
                               observer_ptr<store::xstore_face_t> store,
@@ -67,16 +67,16 @@ xrpc_service<T>::xrpc_service(shared_ptr<xrpc_edge_vhost> edge_vhost,
 }
 
 template<typename T>
-void xrpc_service<T>::reset_edge_method_mgr(shared_ptr<xrpc_edge_vhost> edge_vhost, common::xip2_t xip2) {
+void xevm_rpc_service<T>::reset_edge_method_mgr(shared_ptr<xrpc_edge_vhost> edge_vhost, common::xip2_t xip2) {
     m_edge_method_mgr_ptr->reset_edge_method(edge_vhost, xip2);
 }
 
 template<typename T>
-void xrpc_service<T>::execute(shared_ptr<conn_type>& conn, const std::string& content, const std::string & ip) {
+void xevm_rpc_service<T>::execute(shared_ptr<conn_type>& conn, const std::string& content, const std::string & ip) {
     xpre_request_data_t pre_request_data;
     try {
         do {
-            xinfo_rpc("rpc request:%s", content.c_str());
+            xinfo_rpc("evm rpc request:%s", content.c_str());
 
             m_pre_request_handler_mgr_ptr->execute(pre_request_data, content);
             if (pre_request_data.m_finish) {
@@ -99,7 +99,7 @@ void xrpc_service<T>::execute(shared_ptr<conn_type>& conn, const std::string& co
 }
 
 template<typename T>
-void xrpc_service<T>::clean_token_timeout(long seconds) noexcept
+void xevm_rpc_service<T>::clean_token_timeout(long seconds) noexcept
 {
     if (seconds == 0)
     {
@@ -132,7 +132,7 @@ void xrpc_service<T>::clean_token_timeout(long seconds) noexcept
 }
 
 template<typename T>
-void xrpc_service<T>::cancel_token_timeout() noexcept
+void xevm_rpc_service<T>::cancel_token_timeout() noexcept
 {
     if (m_timer) {
         error_code ec;
