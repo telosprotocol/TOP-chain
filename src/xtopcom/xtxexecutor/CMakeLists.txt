@@ -10,6 +10,7 @@ add_library(xtxexecutor STATIC ${src_dir})
 target_link_libraries(xtxexecutor PRIVATE
     xblockstore
     xstore
+    xstatectx
     xverifier
     xvm
     xchain_upgrade

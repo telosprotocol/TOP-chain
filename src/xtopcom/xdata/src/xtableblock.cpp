@@ -104,6 +104,20 @@ void xtable_block_t::parse_to_json_v2(xJson::Value & root) {
         ju["tx_consensus_phase"] = txaction.get_tx_subtype_str();
         ju["tx_hash"] = "0x" + to_hex_str(action.get_org_tx_hash());
         jv["txs"].append(ju);
+        // inner table show recvtx and confirm phase for compatibility
+        if (txaction.get_inner_table_flag()) {
+            xassert(txaction.is_send_tx());
+            xJson::Value ju2;
+            ju2["tx_consensus_phase"] = base::xvtxkey_t::transaction_subtype_to_string(base::enum_transaction_subtype_recv);
+            ju2["tx_hash"] = "0x" + to_hex_str(action.get_org_tx_hash());
+            jv["txs"].append(ju2);
+            if (!txaction.get_not_need_confirm()) {
+                xJson::Value ju3;
+                ju3["tx_consensus_phase"] = base::xvtxkey_t::transaction_subtype_to_string(base::enum_transaction_subtype_confirm);
+                ju3["tx_hash"] = "0x" + to_hex_str(action.get_org_tx_hash());
+                jv["txs"].append(ju3);
+            }
+        }
     }
 
     auto headers = get_sub_block_headers();
@@ -134,6 +148,27 @@ std::vector<base::xvaction_t> xtable_block_t::get_tx_actions() const {
         base::xvinentity_t* tx_inentity = dynamic_cast<base::xvinentity_t*>(_table_inentitys[0]);
         return tx_inentity->get_actions();
     }
+}
+
+std::vector<base::xvaction_t> xtable_block_t::get_one_tx_action(const std::string & txhash) const {
+    std::vector<base::xvaction_t> txactions;
+    auto & all_entitys = get_input()->get_entitys();
+    for (auto & entity : all_entitys) {
+        // it must be xinentitys
+        base::xvinentity_t* _inentity = dynamic_cast<base::xvinentity_t*>(entity);
+        if (_inentity == nullptr) {
+            xassert(false);
+            return {};
+        }
+        auto & all_actions = _inentity->get_actions();
+        for (auto & action : all_actions) {
+            if (action.get_org_tx_hash() == txhash) {
+                txactions.push_back(action);
+                return txactions; 
+            }
+        }
+    }
+    return txactions;
 }
 
 std::vector<xvheader_ptr_t> xtable_block_t::get_sub_block_headers() const {

@@ -72,6 +72,7 @@ class xtable_block_t : public xblock_t {
     void *query_interface(const int32_t _enum_xobject_type_) override;
     virtual void parse_to_json(xJson::Value & root, const std::string & rpc_version) override;
     virtual std::vector<base::xvaction_t> get_tx_actions() const;
+    virtual std::vector<base::xvaction_t> get_one_tx_action(const std::string & txhash) const;
     virtual std::vector<xvheader_ptr_t> get_sub_block_headers() const;
 
  public:  // tableblock api

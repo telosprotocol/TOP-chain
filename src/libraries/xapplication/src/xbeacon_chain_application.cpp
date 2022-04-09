@@ -107,8 +107,9 @@ static top::data::election::xelection_result_store_t load_election_data(observer
 
             break;
         }
+
         data::xunit_bstate_t unitstate(bstate.get());
-        if (true == unitstate.string_get(property_name, result)) {
+        if (xsuccess == unitstate.string_get(property_name, result)) {
             block_height = block->get_height();
             break;
         }

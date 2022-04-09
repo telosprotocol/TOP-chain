@@ -309,6 +309,23 @@ namespace top
             return true;
         }
 
+        bool  xvcanvas_t::rollback(size_t height)
+        {
+            std::lock_guard<std::recursive_mutex> locker(m_lock);
+            while (m_records.size() > height)
+            {
+                m_records.pop_back();
+            }
+            return true;
+        }
+
+        std::deque<xvmethod_t>  xvcanvas_t::clone()
+        {
+            std::lock_guard<std::recursive_mutex> locker(m_lock);
+            std::deque<xvmethod_t> _records = m_records;
+            return _records;
+        }
+
         const int  xvcanvas_t::encode(xstream_t & output_bin,const int compile_options)
         {
             std::lock_guard<std::recursive_mutex> locker(m_lock);

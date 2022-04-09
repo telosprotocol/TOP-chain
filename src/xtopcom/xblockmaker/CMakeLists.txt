@@ -12,6 +12,7 @@ IF (CMAKE_SYSTEM_NAME MATCHES "Darwin")
         xtxexecutor
         xblockstore
         xstore
+        xstatectx
         xverifier
         xvm
         xchain_upgrade
@@ -24,6 +25,7 @@ ELSE()
         xtxpool_v2
         xtxexecutor
         xblockstore
+        xstore
         xstore
         xverifier
         xvm

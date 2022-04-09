@@ -15,7 +15,6 @@ enum enum_xstore_error_type {
     xstore_success = 0,
 
     xstore_error_base = chainbase::enum_xmodule_type::xmodule_type_xstore,
-    xaccount_name_length_illegal,
     xaccount_balance_not_enough,
     xaccount_account_not_exist,
     xaccount_lock_less_min_deposit,
@@ -95,7 +94,6 @@ enum enum_xstore_error_type {
 inline std::string xstore_error_to_string(int32_t code) {
     assert(code > xstore_error_base && code < xstore_error_max);
     static const char* names[] = {
-        XSTORE_TO_STR(xaccount_name_length_illegal),
         XSTORE_TO_STR(xaccount_balance_not_enough),
         XSTORE_TO_STR(xaccount_account_not_exist),
         XSTORE_TO_STR(xaccount_lock_less_min_deposit),

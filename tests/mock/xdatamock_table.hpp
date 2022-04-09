@@ -37,31 +37,15 @@ class xdatamock_table : public base::xvaccount_t {
         on_table_finish(_block);
 
         if (is_fixed) {
-            // two account is enough as reference block
-            {
-                xaddress_key_pair_t addr_pair;
-                addr_pair.m_address = send_account;
-                xdatamock_unit datamock_unit(addr_pair, xdatamock_unit::enum_default_init_balance);
-                m_mock_units.push_back(datamock_unit);
-            }
-            {
-                xaddress_key_pair_t addr_pair;
-                addr_pair.m_address = recv_account;
-                xdatamock_unit datamock_unit(addr_pair, xdatamock_unit::enum_default_init_balance);
-                m_mock_units.push_back(datamock_unit);
-            }
-        } else {
-            for (uint32_t i = 0; i < user_count; i++) {
-                xaddress_key_pair_t addr_pair = xdatamock_address::make_unit_address_with_key(tableid);
-                xdatamock_unit datamock_unit(addr_pair, xdatamock_unit::enum_default_init_balance);
-                m_mock_units.push_back(datamock_unit);
-            }
+            user_count = 2;// two account is enough as reference block
         }
+        for (uint32_t i = 0; i < user_count; i++) {
+            xaddress_key_pair_t addr_pair = xdatamock_address::make_unit_address_with_key(tableid);
+            xdatamock_unit datamock_unit(addr_pair, xdatamock_unit::enum_default_init_balance);
+            m_mock_units.push_back(datamock_unit);
+        }        
         xassert(m_mock_units.size() == user_count);
     }
-
-    const std::string send_account{"T00000LZbJfje6hW6MmG43h6EaTkme3ZqggGoUvF"};
-    const std::string recv_account{"T00000LS5oCNzqoCFe5MTkGBJDyCHCM2wCkfFBLM"};
 
     void                                disable_fulltable() {m_config_fulltable_interval = 0;}
     const base::xvaccount_t &           get_vaccount() const {return *this;}
@@ -114,12 +98,7 @@ class xdatamock_table : public base::xvaccount_t {
         }
         xblock_ptr_t cert_block = m_history_tables[cert_height];
 
-        std::vector<data::xcons_transaction_ptr_t> all_cons_txs;
-        std::vector<xfull_txreceipt_t> all_receipts = base::xtxreceipt_build_t::create_all_txreceipts(commit_block.get(), cert_block.get());
-        for (auto & receipt : all_receipts) {
-            data::xcons_transaction_ptr_t constx = make_object_ptr<data::xcons_transaction_t>(receipt);
-            all_cons_txs.push_back(constx);
-        }
+        std::vector<data::xcons_transaction_ptr_t> all_cons_txs = data::xblocktool_t::create_all_txreceipts(commit_block.get(), cert_block.get());
         return all_cons_txs;
     }
 

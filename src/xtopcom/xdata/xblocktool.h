@@ -61,12 +61,14 @@ class xblocktool_t {
 
  public:
     static void             alloc_transaction_receiptid(const xcons_transaction_ptr_t & tx, const base::xreceiptid_state_ptr_t & receiptid_state, bool add_rsp_id);
+    static bool             alloc_transaction_receiptid(const xcons_transaction_ptr_t & tx, bool add_rsp_id, base::xreceiptid_pair_t & receiptid_pair);
 
  public:  // txreceipt create
     static xcons_transaction_ptr_t                  create_one_txreceipt(base::xvblock_t* commit_block, base::xvblock_t* cert_block, base::xtable_shortid_t peer_table_sid, uint64_t receipt_id, enum_transaction_subtype subtype);
-    static xcons_transaction_ptr_t                  create_one_txreceipt(base::xvblock_t* commit_block, base::xvblock_t* cert_block, const std::string & txhash);
     static std::vector<xcons_transaction_ptr_t>     create_all_txreceipts(base::xvblock_t* commit_block, base::xvblock_t* cert_block);
-
+    static std::vector<xcons_transaction_ptr_t>     create_txreceipts(base::xvblock_t* commit_block, base::xvblock_t* cert_block, const std::vector<xlightunit_action_t> & txactions);
+    static std::vector<xlightunit_action_t>         unpack_all_txreceipt_action(base::xvblock_t* commit_block);
+    static std::vector<xlightunit_action_t>         unpack_one_txreceipt_action(base::xvblock_t* commit_block, base::xtable_shortid_t peer_table_sid, uint64_t receipt_id, enum_transaction_subtype subtype);
  public:  // property prove    
     static base::xvproperty_prove_ptr_t             create_receiptid_property_prove(base::xvblock_t* commit_block, base::xvblock_t* cert_block, base::xvbstate_t* bstate);
     static base::xreceiptid_state_ptr_t             get_receiptid_from_property_prove(const base::xvproperty_prove_ptr_t & prop_prove);

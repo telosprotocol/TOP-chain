@@ -124,7 +124,7 @@ std::string xdb_tool::cons_electinfo_by_height(uint64_t height, bool print) cons
         outstr << " auditor_" << std::dec << (uint16_t)auditor_group_id << ":";
 
         std::string property_name = std::string(top::data::XPROPERTY_CONTRACT_ELECTION_RESULT_KEY) + "_" + std::to_string(auditor_group_id);
-        std::string result = unitstate.native_string_get(property_name);
+        std::string result = unitstate.string_get(property_name);
 
         if (result.empty()) {
             std::cout << "[ xdb_tool::cons_electinfo_by_height] auditor groupid " << std::dec << (uint16_t)auditor_group_id << " cannot get native property at height: " << height << "," "\n";

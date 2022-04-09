@@ -20,6 +20,7 @@
 #include "xvledger/xvblockbuild.h"
 #include "xvledger/xvcontract.h"
 #include "xvledger/xvledger.h"
+#include "xbase/xutl.h"
 
 namespace top {
 namespace xtxpool_v2 {
@@ -319,7 +320,11 @@ void xtxpool_table_t::deal_commit_table_block(xblock_t * table_block, bool updat
                 txnonce = _rawtx->get_tx_nonce();
                 xinfo("xtxpool_table_t::deal_commit_table_block loaded rawtx:%s", _rawtx->dump().c_str());
                 if (txaction.get_tx_subtype() == base::enum_transaction_subtype_send && need_confirm) {
-                    raw_txs.push_back(xraw_tx_info(txaction.get_receipt_id_peer_tableid(), txaction.get_receipt_id(), _rawtx));
+                    if (!txaction.get_inner_table_flag()) {
+                        raw_txs.push_back(xraw_tx_info(txaction.get_receipt_id_peer_tableid(), txaction.get_receipt_id(), _rawtx));
+                    } else {
+                        xdbg("xtxpool_table_t::deal_commit_table_block no need rawtx:%s", _rawtx->dump().c_str());
+                    }
                 }
             } else {
                 xtxpool_error("xtxpool_table_t::deal_commit_table_block get raw tx fail table:%s,peer table:%d,tx type:%d,receipt_id::%llu,confirm id:%llu,table_height:%llu",
@@ -339,18 +344,22 @@ void xtxpool_table_t::deal_commit_table_block(xblock_t * table_block, bool updat
         }
 
         if (txaction.get_tx_subtype() == base::enum_transaction_subtype_send || txaction.get_tx_subtype() == base::enum_transaction_subtype_recv) {
-            tx_id_height_infos.push_back(xtx_id_height_info(txaction.get_tx_subtype(), txaction.get_receipt_id_peer_tableid(), txaction.get_receipt_id(), need_confirm));
+            if (false == txaction.get_inner_table_flag()) {
+                tx_id_height_infos.push_back(xtx_id_height_info(txaction.get_tx_subtype(), txaction.get_receipt_id_peer_tableid(), txaction.get_receipt_id(), need_confirm));
 
-            xtxpool_info(
-                "xtxpool_table_t::deal_commit_table_block update unconfirm id height table:%s,peer table:%d,tx type:%d,receipt_id:%llu,confirm "
-                "id:%llu,table_height:%llu,need_confirm:%d",
-                m_xtable_info.get_account().c_str(),
-                txaction.get_receipt_id_peer_tableid(),
-                txaction.get_tx_subtype(),
-                txaction.get_receipt_id(),
-                txaction.get_sender_confirmed_receipt_id(),
-                table_block->get_height(),
-                need_confirm);
+                xtxpool_info(
+                    "xtxpool_table_t::deal_commit_table_block update unconfirm id height table:%s,peer table:%d,tx type:%d,receipt_id:%llu,confirm "
+                    "id:%llu,table_height:%llu,need_confirm:%d",
+                    m_xtable_info.get_account().c_str(),
+                    txaction.get_receipt_id_peer_tableid(),
+                    txaction.get_tx_subtype(),
+                    txaction.get_receipt_id(),
+                    txaction.get_sender_confirmed_receipt_id(),
+                    table_block->get_height(),
+                    need_confirm);
+            } else {
+                xdbg("xtxpool_table_t::deal_commit_table_block no id height tx=%s", base::xstring_utl::to_hex(txaction.get_org_tx_hash()).c_str());
+            }
         }
     }
 
