@@ -151,19 +151,30 @@ int32_t xtx_verifier::verify_tx_signature(data::xtransaction_t const * trx, obse
 }
 
 // verify trx fire expiration
-int32_t xtx_verifier::verify_tx_fire_expiration(data::xtransaction_t const * trx, uint64_t now) {
+int32_t xtx_verifier::verify_tx_fire_expiration(data::xtransaction_t const * trx, uint64_t now, bool is_first_time_push_tx) {
     uint32_t trx_fire_tolerance_time = XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_send_timestamp_tolerance);
 
-    uint64_t fire_expire = trx->get_fire_timestamp() + trx_fire_tolerance_time;
+    uint64_t fire_expire;
+    if (is_first_time_push_tx) {
+        // XTODO only first time to txpool should check if fire timestamp is too old
+        fire_expire = trx->get_fire_timestamp() + trx_fire_tolerance_time;
+        if (fire_expire < now) {
+            xwarn("xtx_verifier::verify_tx_fire_expiration fail fire timetamp too old, tx:%s, fire_timestamp:%ld, now:%ld",
+                trx->dump().c_str(), trx->get_fire_timestamp(), now);
+            return xverifier_error::xverifier_error_tx_fire_expired;
+        }
+    }
+
+    fire_expire = trx->get_fire_timestamp() + trx->get_expire_duration() + trx_fire_tolerance_time;
     if (fire_expire < now) {
-        xwarn("[global_trace][xtx_verifier][verify_tx_fire_expiration][fail], tx:%s, fire_timestamp:%ld, now:%ld",
-            trx->dump().c_str(), trx->get_fire_timestamp(), now);
-        return xverifier_error::xverifier_error_tx_fire_expired;
+        xwarn("xtx_verifier::verify_tx_fire_expiration fail expired, tx:%s, fire_timestamp:%" PRIu64 ", fire_tolerance_time:%" PRIu32 ", expire_duration:%" PRIu16 ", now:%" PRIu64,
+            trx->dump().c_str(), trx->get_fire_timestamp(), trx_fire_tolerance_time, trx->get_expire_duration(), now);
+        return xverifier_error::xverifier_error_tx_duration_expired;
     }
 
     fire_expire = now + trx_fire_tolerance_time;
     if (fire_expire < trx->get_fire_timestamp()) {
-        xwarn("[global_trace][xtx_verifier][verify_tx_fire_expiration][fail], tx:%s, fire_timestamp:%ld, now:%ld",
+        xwarn("xtx_verifier::verify_tx_fire_expiration fail fire timetamp too future, tx:%s, fire_timestamp:%ld, now:%ld",
             trx->dump().c_str(), trx->get_fire_timestamp(), now);
         return xverifier_error::xverifier_error_tx_fire_expired;
     }
@@ -203,20 +214,6 @@ int32_t xtx_verifier::sys_contract_tx_check(data::xtransaction_t const * trx_ptr
     }
 
     xdbg("[global_trace][xtx_verifier][sys_contract_tx_check][success], tx:%s", trx_ptr->dump().c_str());
-    return xverifier_error::xverifier_success;
-}
-
-// verify trx duration expiration
-int32_t xtx_verifier::verify_tx_duration_expiration(const data::xtransaction_t * trx_ptr, uint64_t now) {
-    uint32_t trx_fire_tolerance_time = XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_send_timestamp_tolerance);
-    uint64_t fire_expire = trx_ptr->get_fire_timestamp() + trx_ptr->get_expire_duration() + trx_fire_tolerance_time;
-    if (fire_expire < now) {
-        xwarn("[global_trace][xtx_verifier][verify_tx_duration_expiration][fail], tx:%s, fire_timestamp:%" PRIu64 ", fire_tolerance_time:%" PRIu32 ", expire_duration:%" PRIu16 ", now:%" PRIu64,
-            trx_ptr->dump().c_str(), trx_ptr->get_fire_timestamp(), trx_fire_tolerance_time, trx_ptr->get_expire_duration(), now);
-        return xverifier_error::xverifier_error_tx_duration_expired;
-    }
-
-    xdbg("[global_trace][xtx_verifier][verify_tx_duration_expiration][success], tx hash: %s", trx_ptr->get_digest_hex_str().c_str());
     return xverifier_error::xverifier_success;
 }
 

@@ -243,7 +243,7 @@ void xedge_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, cons
         }
         // 3. tx duration expire check
         uint64_t now = xverifier::xtx_utl::get_gmttime_s();
-        ret = xverifier::xtx_verifier::verify_tx_duration_expiration(tx.get(), now);
+        ret = xverifier::xtx_verifier::verify_tx_fire_expiration(tx.get(), now, true);
         if (ret) {
             XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_expiration", 1);
             throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "duration expiration check failed"};

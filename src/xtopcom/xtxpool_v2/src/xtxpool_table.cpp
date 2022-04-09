@@ -89,7 +89,7 @@ int32_t xtxpool_table_t::push_send_tx(const std::shared_ptr<xtx_entry> & tx) {
         return xtxpool_error_account_unconfirm_txs_reached_upper_limit;
     }
 
-    int32_t ret = verify_send_tx(tx->get_tx());
+    int32_t ret = verify_send_tx(tx->get_tx(), true);
     if (ret != xsuccess) {
         return ret;
     }
@@ -574,7 +574,7 @@ const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxpool_table_t::get_lack
 int32_t xtxpool_table_t::verify_cons_tx(const xcons_transaction_ptr_t & tx) const {
     int32_t ret;
     if (tx->is_send_tx() || tx->is_self_tx()) {
-        ret = verify_send_tx(tx);
+        ret = verify_send_tx(tx, false);  // backup check leader txs
     } else if (tx->is_recv_tx() || tx->is_confirm_tx()) {
         ret = verify_receipt_tx(tx);
     } else {
@@ -583,7 +583,7 @@ int32_t xtxpool_table_t::verify_cons_tx(const xcons_transaction_ptr_t & tx) cons
     return ret;
 }
 
-int32_t xtxpool_table_t::verify_send_tx(const xcons_transaction_ptr_t & tx) const {
+int32_t xtxpool_table_t::verify_send_tx(const xcons_transaction_ptr_t & tx, bool is_first_time_push_tx) const {
     // 1. validation check
     int32_t ret = xverifier::xtx_verifier::verify_send_tx_validation(tx->get_transaction());
     if (ret) {
@@ -596,7 +596,7 @@ int32_t xtxpool_table_t::verify_send_tx(const xcons_transaction_ptr_t & tx) cons
     }
     // 3. tx duration expire check
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
-    ret = xverifier::xtx_verifier::verify_tx_fire_expiration(tx->get_transaction(), now);
+    ret = xverifier::xtx_verifier::verify_tx_fire_expiration(tx->get_transaction(), now, is_first_time_push_tx);
     if (ret) {
         return ret;
     }
