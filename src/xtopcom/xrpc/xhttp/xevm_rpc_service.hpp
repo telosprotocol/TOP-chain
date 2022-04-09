@@ -14,6 +14,8 @@
 #include "xrpc/xerror/xrpc_error_json.h"
 #include "xrpc/prerequest/xpre_request_handler_server.h"
 #include "xtxstore/xtxstore_face.h"
+#include "xrpc/eth_jsonrpc/Eth.h"
+#include "xrpc/eth_jsonrpc/ClientBase.h"
 
 NS_BEG2(top, xrpc)
 #define CLEAN_TIME          60
@@ -71,30 +73,66 @@ void xevm_rpc_service<T>::reset_edge_method_mgr(shared_ptr<xrpc_edge_vhost> edge
     m_edge_method_mgr_ptr->reset_edge_method(edge_vhost, xip2);
 }
 
-template<typename T>
-void xevm_rpc_service<T>::execute(shared_ptr<conn_type>& conn, const std::string& content, const std::string & ip) {
-    xpre_request_data_t pre_request_data;
-    try {
-        do {
-            xinfo_rpc("evm rpc request:%s", content.c_str());
+template <typename T>
+void xevm_rpc_service<T>::execute(shared_ptr<conn_type> & conn, const std::string & content, const std::string & ip) {
+    /*    xpre_request_data_t pre_request_data;
+        try {
+            do {
+                xinfo_rpc("evm rpc request:%s", content.c_str());
 
-            m_pre_request_handler_mgr_ptr->execute(pre_request_data, content);
-            if (pre_request_data.m_finish) {
-                m_edge_method_mgr_ptr->write_response(conn, pre_request_data.get_response());
-                break;
-            }
+                m_pre_request_handler_mgr_ptr->execute(pre_request_data, content);
+                if (pre_request_data.m_finish) {
+                    m_edge_method_mgr_ptr->write_response(conn, pre_request_data.get_response());
+                    break;
+                }
 
-            xjson_proc_t json_proc;
-            json_proc.parse_json(pre_request_data);
-            m_rule_mgr_ptr->filter(json_proc);
-            // prase json
-            // account flow controll and blacklist
+                xjson_proc_t json_proc;
+                json_proc.parse_json(pre_request_data);
+                m_rule_mgr_ptr->filter(json_proc);
+                // prase json
+                // account flow controll and blacklist
 
-            m_edge_method_mgr_ptr->do_method(conn, json_proc, ip);
-        } while (0);
-    } catch(const xrpc_error& e) {
-        xrpc_error_json error_json(e.code().value(), e.what(), pre_request_data.get_request_value(RPC_SEQUENCE_ID));
+                m_edge_method_mgr_ptr->do_method(conn, json_proc, ip);
+            } while (0);
+        } catch(const xrpc_error& e) {
+            xrpc_error_json error_json(e.code().value(), e.what(), pre_request_data.get_request_value(RPC_SEQUENCE_ID));
+            m_edge_method_mgr_ptr->write_response(conn, error_json.write());
+        }*/
+    xinfo_rpc("rpc request:%s", content.c_str());        
+    xJson::Reader reader;
+    xJson::Value req;
+    // reader.
+    if (!reader.parse(content, req)) {
+        xrpc_error_json error_json(0, "err", 0);
+        xdbg("rpc request err");
         m_edge_method_mgr_ptr->write_response(conn, error_json.write());
+        return;
+    }
+    std::string jsonrpc_version;
+    if (req.isMember("jsonrpc")) {
+        jsonrpc_version = req["jsonrpc"].asString();
+    }
+    xinfo_rpc("rpc request version:%s", jsonrpc_version.c_str());
+
+    if (jsonrpc_version == "2.0") {
+        xinfo_rpc("rpc request eth");
+        xJson::Value eth_res;
+        dev::eth::ClientBase client;
+        dev::rpc::Eth eth(client);
+        eth.CallMethod(req, eth_res);
+        xdbg("rpc request eth_res:%s", eth_res.toStyledString().c_str());
+
+        xJson::Value res;
+        res["id"] = req["id"].asString(); //base::xstring_utl::touint64(req["id"].asString());
+        res["jsonrpc"] = req["jsonrpc"].asString();
+        res["result"] = eth_res;
+
+        xJson::FastWriter j_writer;
+        std::string s_res = j_writer.write(res);
+        xdbg("rpc request:%s,i_id:%s", s_res.c_str(), req["id"].asString().c_str());
+        m_edge_method_mgr_ptr->write_response(conn, s_res);
+    } else {
+        xdbg("rpc request jsonrpc version:%s not 2.0", jsonrpc_version.c_str());
     }
 }
 
