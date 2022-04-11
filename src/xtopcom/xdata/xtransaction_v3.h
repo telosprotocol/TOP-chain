@@ -126,7 +126,7 @@ class xtransaction_v3_t : public xbase_dataunit_t<xtransaction_v3_t, xdata_type_
     virtual uint64_t get_amount() const noexcept override { return (uint64_t)(m_amount/1000000000000); }
     virtual bool is_top_transfer() const noexcept override { return false; }
     virtual void set_premium_price(uint32_t premium_price) override { };
-    virtual uint32_t get_premium_price() const override {return 1;};
+    virtual uint32_t get_premium_price() const override {return 0;};
     virtual void set_last_nonce(uint64_t last_nonce) override {m_nonce = last_nonce;};
     virtual uint64_t get_last_nonce() const override {return (uint64_t)m_nonce;};
     virtual void set_last_hash(uint64_t last_hash) override {};
@@ -151,6 +151,11 @@ private:
     std::string m_origindata;   //serialize with compat_var
     std::string m_authorization;  // serialize with compat_var
 
+    // optional,depends on m_tx_type
+    std::string m_source_action_name;  // serialize with compat_var
+    std::string m_source_action_para;  // serialize with compat_var
+    std::string m_target_action_name;  // serialize with compat_var
+    std::string m_target_action_para;  // serialize with compat_var
  private: // local members, not serialize
     uint256_t m_transaction_hash{};
     mutable uint16_t m_transaction_len{0};     // max 64KB
@@ -159,10 +164,9 @@ private:
     // just reserved for compatibility
     enum_xaction_type m_source_action_type;
     enum_xaction_type m_target_action_type;
-
-    std::string m_strSignV;  // serialize with compat_var
-    std::string m_strSignR;  // serialize with compat_var
-    std::string m_strSignS;  // serialize with compat_var
+    u256 m_SignV;
+    h256 m_SignR;
+    h256 m_SignS;
 };
 
 using xtransaction_v3_ptr_t = xobject_ptr_t<xtransaction_v3_t>;
