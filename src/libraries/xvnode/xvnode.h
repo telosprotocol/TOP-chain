@@ -16,7 +16,6 @@
 #include "xmbus/xevent_reg_holder.hpp"
 #include "xmbus/xmessage_bus.h"
 #include "xrouter/xrouter.h"
-#include "xrpc/xevm/xevm_rpc.h"
 #include "xrpc/xrpc_init.h"
 #include "xstore/xstore_face.h"
 #include "xsync/xsync_object.h"
@@ -52,9 +51,7 @@ private:
 
     std::shared_ptr<vnetwork::xvnetwork_driver_face_t> m_the_binding_driver;
     std::shared_ptr<xrpc::xrpc_init> m_rpc_services;
-    #ifdef BUILD_EVM
-    std::unique_ptr<rpc::evm::xevm_rpc_t> m_evm_rpc;
-    #endif
+
     // observer_ptr<xunit_service::xcons_service_mgr_face> m_cons_mgr;
     xtxpool_service_v2::xtxpool_proxy_face_ptr m_txpool_face;
     std::unique_ptr<components::prune_data::xprune_data> m_prune_data;
@@ -115,7 +112,7 @@ public:
     void fade() override;
     void stop() override;
     components::sniffing::xsniffer_config_t sniff_config() const override;
-    
+
     xtxpool_service_v2::xtxpool_proxy_face_ptr const & txpool_proxy() const override;
     std::shared_ptr<vnetwork::xvnetwork_driver_face_t> const & vnetwork_driver() const override;
 

@@ -25,10 +25,5 @@ if (BUILD_METRICS)
     target_link_libraries(xrpc PRIVATE xmetrics)
 endif()
 
-if (BUILD_EVM)
-    #aux_source_directory(./xevm)
-    target_link_libraries(xrpc PRIVATE jsonrpc)
-    add_dependencies(xrpc xelect_net xtxexecutor xtxstore xconfig xcodec xvnetwork xcommon xrouter xverifier jsonrpc xxbase xxg)
-endif()
 
 
