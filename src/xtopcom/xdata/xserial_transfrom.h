@@ -70,6 +70,9 @@ struct TransactionSkeleton {
     u256 gasPrice = Invalid256;
     SignatureStruct vrs;
 };
+
+bool isZeroSignature(u256 const & _r, u256 const & _s);
+
 namespace top {
 namespace data {
 class serial_transfrom {
@@ -80,8 +83,6 @@ public:
     static int eth_to_top(string strEth, string & strTop);
 
     static int top_to_eth(string strEth, string & strTop);
-
-    static int getSign(string strEth, char * szSign);
 };
 }  // namespace data
 }  // namespace top

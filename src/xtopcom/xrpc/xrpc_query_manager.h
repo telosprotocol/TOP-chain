@@ -94,6 +94,7 @@ public:
         REGISTER_QUERY_METHOD(getZecs);
         REGISTER_QUERY_METHOD(getEdges);
         REGISTER_QUERY_METHOD(getArcs);
+        REGISTER_QUERY_METHOD(getEVMs);
         REGISTER_QUERY_METHOD(getExchangeNodes);
         //REGISTER_QUERY_METHOD(getFullNodes);
         REGISTER_QUERY_METHOD(getFullNodes2);
@@ -155,6 +156,7 @@ public:
     void getZecs(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     void getEdges(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     void getArcs(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void getEVMs(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     void getExchangeNodes(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     //void getFullNodes(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     void getFullNodes2(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);

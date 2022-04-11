@@ -1108,6 +1108,31 @@ void xrpc_query_manager::getArcs(xJson::Value & js_req, xJson::Value & js_rsp, s
     js_rsp["chain_id"] = j["chain_id"];
 }
 
+void xrpc_query_manager::getEVMs(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) {
+    std::string version = js_req["version"].asString();
+    if (version.empty()) {
+        version = RPC_VERSION_V1;
+    }
+    xJson::Value j;
+    std::string const addr = sys_contract_zec_elect_eth_addr;
+    auto property_name = top::data::election::get_property_by_group_id(common::xarchive_group_id);
+    query_account_property(j, addr, property_name, xfull_node_compatible_mode_t::incompatible);
+
+    if (version == RPC_VERSION_V3) {
+        xJson::Value tmp = j[common::to_presentation_string(common::xnode_type_t::evm_eth)];
+        xJson::Value jv;
+        for (auto & i : tmp.getMemberNames()) {
+            xJson::Value node = tmp[i][0];
+            node["account_addr"] = i;
+            jv.append(node);
+        }
+        js_rsp["value"] = jv;
+    } else {
+        js_rsp["value"] = j[common::to_presentation_string(common::xnode_type_t::evm_eth)];
+    }
+    js_rsp["chain_id"] = j["chain_id"];
+}
+
 void xrpc_query_manager::getExchangeNodes(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) {
     std::string version = js_req["version"].asString();
     if (version.empty()) {
