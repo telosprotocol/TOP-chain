@@ -46,7 +46,7 @@ public:
      * @param now  current time
      * @return int32_t  see xverifier_errors definition
      */
-    static int32_t verify_tx_fire_expiration(data::xtransaction_t const * trx, uint64_t now);
+    static int32_t verify_tx_fire_expiration(data::xtransaction_t const * trx, uint64_t now, bool is_first_time_push_tx);
 
     /**
      * @brief verify trx fired by user to allowed system contracts
@@ -55,15 +55,6 @@ public:
      * @return int32_t  see xverifier_errors definition
      */
     static int32_t sys_contract_tx_check(data::xtransaction_t const * trx_ptr);
-
-    /**
-     * @brief verify trx duration expiration
-     *
-     * @param trx_ptr  the transaction to verify
-     * @param now  current time
-     * @return int32_t   see xverifier_errors definition
-     */
-    static int32_t verify_tx_duration_expiration(const data::xtransaction_t * trx_ptr, uint64_t now);
 
     /**
      * @brief verify account min deposit

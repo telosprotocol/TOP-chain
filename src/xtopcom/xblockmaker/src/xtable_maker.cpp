@@ -15,6 +15,7 @@
 #include "xchain_fork/xchain_upgrade_center.h"
 #include "xtxexecutor/xbatchtx_executor.h"
 #include "xstatectx/xstatectx.h"
+#include "xverifier/xtx_verifier.h"
 
 NS_BEG2(top, blockmaker)
 
@@ -557,6 +558,9 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
         return nullptr;
     }
 
+    // TODO(jimmy) 
+    uint64_t now = (uint64_t)base::xtime_utl::gettimeofday();
+
     // create statectx
     statectx::xstatectx_para_t statectx_para(cs_para.get_clock(), cs_para.get_random_seed(), cs_para.get_total_lock_tgas_token());
     statectx::xstatectx_ptr_t statectx_ptr = std::make_shared<statectx::xstatectx_t>(cs_para.get_latest_cert_block().get(), table_para.get_tablestate(), table_para.get_commit_tablestate(), statectx_para);
@@ -576,6 +580,18 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
                 }
                 if (false == tx->set_raw_tx(raw_tx.get())) {
                     xerror("xtable_maker_t::make_light_table_v2 fail-tx filtered set origin tx.%s tx=%s", cs_para.dump().c_str(), tx->dump().c_str());
+                    continue;
+                }
+            }
+        }
+
+        // TODO(jimmy) leader add sendtx expire check, should do this in txpool future
+        if (is_leader) {
+            if (tx->is_send_or_self_tx()) {
+                if (xsuccess != xverifier::xtx_verifier::verify_tx_fire_expiration(tx->get_transaction(), now, false)) {
+                    xtxpool_v2::tx_info_t txinfo(tx->get_source_addr(), tx->get_tx_hash_256(), tx->get_tx_subtype());
+                    get_txpool()->pop_tx(txinfo);
+                    xwarn("xtable_maker_t::make_light_table_v2 fail-tx filtered expired.is_leader=%d,%s tx=%s", is_leader, cs_para.dump().c_str(), tx->dump().c_str());
                     continue;
                 }
             }
