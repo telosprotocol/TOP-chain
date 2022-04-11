@@ -225,7 +225,7 @@ void xsync_handler_t::push_newblock(uint32_t msg_size,
     }
 
     if (!common::has<common::xnode_type_t::rec>(from_address.type()) && !common::has<common::xnode_type_t::zec>(from_address.type()) &&
-        !common::has<common::xnode_type_t::consensus>(from_address.type())) {
+        !common::has<common::xnode_type_t::consensus>(from_address.type()) && !common::has<common::xnode_type_t::evm>(from_address.type())) {
         xsync_warn("xsync_handler receive push_newblock(source must be consensus) %" PRIx64 " %s %s %s",
             msg_hash, block->dump().c_str(), network_self.to_string().c_str(), from_address.to_string().c_str());
         XMETRICS_GAUGE(metrics::xsync_recv_invalid_block, 1);
