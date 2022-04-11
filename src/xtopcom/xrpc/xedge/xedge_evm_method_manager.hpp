@@ -142,7 +142,7 @@ void xedge_evm_method_base<T>::do_method(shared_ptr<conn_type> & response, xjson
     if (jsonrpc_version == "2.0") {
         xinfo_rpc("rpc request eth");
         std::string method = json_proc.m_request_json["method"].asString();
-        if (method != "eth_sendRawTransaction") {
+        if (method != "eth_sendRawTransaction" && method != "eth_getTransactionByHash") {
             xJson::Value eth_res;
             dev::eth::ClientBase client;
             dev::rpc::Eth eth(client);
