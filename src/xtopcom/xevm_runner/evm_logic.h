@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <map>
 #include <memory>
+#include <string>
 
 namespace top {
 namespace evm {
@@ -28,6 +29,7 @@ private:
 public:
     std::shared_ptr<xevm_storage_face_t> ext_ref();
     observer_ptr<evm_runtime::xevm_context_t> context_ref();
+    void update_input_data(std::string const & contract_address, std::string const & contract_params);
     bytes return_value();
 
 public:
