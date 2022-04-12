@@ -8,8 +8,9 @@ aux_source_directory(./xserialization xserialization)
 aux_source_directory(./xerror xerror)
 aux_source_directory(./xsystem_contracts/deploy system_contracts_deploy)
 aux_source_directory(./xsystem_contracts/src system_contracts_src)
+aux_source_directory(./xsystem_contracts/xeth system_contracts_xeth)
 
-add_library(xvm STATIC ${xvm} ${manager} ${xcontract} ${xserialization} ${xerror} ${system_contracts_deploy} ${system_contracts_src})
+add_library(xvm STATIC ${xvm} ${manager} ${xcontract} ${xserialization} ${xerror} ${system_contracts_deploy} ${system_contracts_src} ${system_contracts_xeth})
 
 add_dependencies(xvm xconfig xstore xverifier xdata xcommon xcodec xbasic xxbase xcertauth xchain_upgrade)
 
