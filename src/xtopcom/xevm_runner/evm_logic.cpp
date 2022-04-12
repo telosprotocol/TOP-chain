@@ -3,12 +3,15 @@
 
 #include "xevm_runner/evm_memory_tools.h"
 #include "xevm_runner/evm_util.h"
+#include "xevm_runner/proto/proto_basic.pb.h"
+#include "xevm_runner/proto/proto_parameters.pb.h"
 
 #include <climits>
 namespace top {
 namespace evm {
 
-xtop_evm_logic::xtop_evm_logic(std::shared_ptr<xevm_storage_face_t> storage_ptr, observer_ptr<evm_runtime::xevm_context_t> const & context) : m_storage_ptr{storage_ptr}, m_context{context} {
+xtop_evm_logic::xtop_evm_logic(std::shared_ptr<xevm_storage_face_t> storage_ptr, observer_ptr<evm_runtime::xevm_context_t> const & context)
+  : m_storage_ptr{storage_ptr}, m_context{context} {
     m_registers.clear();
     m_return_data_value.clear();
 }
@@ -20,6 +23,22 @@ std::shared_ptr<xevm_storage_face_t> xtop_evm_logic::ext_ref() {
 
 observer_ptr<evm_runtime::xevm_context_t> xtop_evm_logic::context_ref() {
     return m_context;
+}
+
+void xtop_evm_logic::update_input_data(std::string const & contract_address, std::string const & contract_params) {
+    top::evm_engine::parameters::FunctionCallArgs call_args;
+    top::evm_engine::basic::ProtoAddress address;
+    top::evm_engine::basic::WeiU256 value;
+    // value.set_data(""); // todo add value encode from U256?
+    address.set_value(contract_address);
+    call_args.set_version(1);
+    call_args.set_input(utils::bytes_to_string(utils::hex_string_to_bytes(contract_params.substr(2))));
+    call_args.mutable_address()->CopyFrom(address);
+    call_args.mutable_value()->CopyFrom(value);
+    // call_args.set_allocated_address(&address);
+    std::string input_data = call_args.SerializeAsString();
+    m_context->input_data(utils::string_to_bytes(input_data));
+    return;
 }
 
 std::vector<uint8_t> xtop_evm_logic::return_value() {
@@ -43,11 +62,6 @@ void xtop_evm_logic::read_register(uint64_t register_id, uint64_t ptr) {
     memory_set_slice(ptr, data);
 }
 
-// void xtop_evm_logic::current_account_id(uint64_t register_id) {
-//     // printf("[debug][current_account_id] request: %lu \n", register_id);
-//     internal_write_register(register_id, m_context.account_id);
-// }
-
 void xtop_evm_logic::sender_address(uint64_t register_id) {
     // printf("[debug][sender_address] request: %lu \n", register_id);
     // internal_write_register(register_id, m_context->m_sender_address);
@@ -55,11 +69,6 @@ void xtop_evm_logic::sender_address(uint64_t register_id) {
     xassert(sender.substr(0, 2) == T6_ACCOUNT_PREFIX);
     internal_write_register(register_id, utils::hex_string_to_bytes(sender.substr(6)));
 }
-
-// void xtop_evm_logic::signer_account_id(uint64_t register_id) {
-//     // printf("[debug][signer_account_id] request: %lu\n", register_id);
-//     internal_write_register(register_id, m_context.signer_account_id);
-// }
 
 void xtop_evm_logic::input(uint64_t register_id) {
     // printf("[debug][input] request: %lu\n", register_id);
@@ -129,7 +138,7 @@ void xtop_evm_logic::sha256(uint64_t value_len, uint64_t value_ptr, uint64_t reg
 
     std::vector<uint8_t> value_hash;
     utl::xsha2_256_t hasher;
-    hasher.update(value.data(),value.size());
+    hasher.update(value.data(), value.size());
     hasher.get_hash(value_hash);
 
     internal_write_register(register_id, value_hash);
@@ -140,7 +149,7 @@ void xtop_evm_logic::keccak256(uint64_t value_len, uint64_t value_ptr, uint64_t 
 
     std::vector<uint8_t> value_hash;
     utl::xkeccak256_t hasher;
-    hasher.update(value.data(),value.size());
+    hasher.update(value.data(), value.size());
     hasher.get_hash(value_hash);
 
     internal_write_register(register_id, value_hash);
@@ -151,7 +160,7 @@ void xtop_evm_logic::ripemd160(uint64_t value_len, uint64_t value_ptr, uint64_t 
 
     std::vector<uint8_t> value_hash;
     utl::xripemd160_t hasher;
-    hasher.update(value.data(),value.size());
+    hasher.update(value.data(), value.size());
     hasher.get_hash(value_hash);
 
     internal_write_register(register_id, value_hash);

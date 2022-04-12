@@ -1,3 +1,4 @@
+#include "evm_test_fixture/xmock_evm_statectx.h"
 #include "tests/xevm_engine_test/evm_test_fixture/xmock_evm_storage.h"
 #include "xbasic/xmemory.hpp"
 #include "xdata/xtop_action_generator.h"
@@ -7,6 +8,8 @@
 #include "xevm_runner/evm_import_instance.h"
 #include "xevm_runner/evm_logic.h"
 #include "xevm_runner/evm_util.h"
+#include "xevm_runner/proto/proto_basic.pb.h"
+#include "xevm_runner/proto/proto_parameters.pb.h"
 
 #include <gtest/gtest.h>
 
@@ -48,15 +51,13 @@ TEST(test_demo, test_add_contract) {
         "4f0927440a2dc3e5b0298f8101a60505f1d303bc416a90fcc0db54fa64736f6c63430006040033");
 
     // param
-    top::evm_runtime::xevm_param_t param;
-    param.random_seed = "1234567890";
     top::data::xtransaction_ptr_t tx = top::make_object_ptr<top::data::xtransaction_v2_t>();
     tx->set_source_addr("T60004001bdc8251890aafc5841b05620c0eab336e3ebc");
     tx->set_target_addr("T60004001bdc8251890aafc5841b05620c0eab336e3ebc");
     auto cons_tx = top::make_object_ptr<top::data::xcons_transaction_t>(tx.get());
     auto action = top::contract_runtime::xaction_generator_t::generate(cons_tx);
-    top::vm_statestore::xvm_statestore_helper_t statestore;
-    top::evm_runtime::xevm_state_t evm_state{{}, top::make_observer(std::addressof(statestore)), param};
+    top::statectx::xstatectx_face_ptr_t statestore{std::make_shared<top::evm::tests::xmock_evm_statectx>(0, "0x1234567", 0)};
+    top::evm_runtime::xevm_state_t evm_state{{}, statestore};
     std::unique_ptr<top::evm_runtime::xevm_context_t> exectx{top::make_unique<top::evm_runtime::xevm_context_t>(std::move(action), top::make_observer(std::addressof(evm_state)))};
     auto observed_exectx = top::make_observer(exectx.get());
 
@@ -64,24 +65,37 @@ TEST(test_demo, test_add_contract) {
     xevm_logic_t n_logic{storage_ptr, observed_exectx};
     evm_import_instance::instance()->set_evm_logic(n_logic);
     auto & logic = evm_import_instance::instance()->get_vm_logic_ref();
+    logic.context_ref()->input_data(input);
 
     deploy_code();
 
-    std::string contract_address = utils::uint8_vector_to_hex_string(logic.return_value()).substr(12, 40);
+    top::evm_engine::parameters::SubmitResult return_result;
+    auto ret = return_result.ParseFromString(utils::bytes_to_string(logic.return_value()));
+    std::string contract_address = utils::uint8_vector_to_hex_string(utils::string_to_bytes(return_result.status_data()));
+    {
+        std::printf("[return result]: version: %u, status: %u, status_data: %s, gas_used: %lu\n",
+                    return_result.version(),
+                    return_result.transaction_status(),
+                    utils::uint8_vector_to_hex_string(utils::string_to_bytes(return_result.status_data())).c_str(),
+                    return_result.gas_used());
+    }
+    assert(ret);
+
+    std::printf("%s\n", contract_address.c_str());  // 580f8929080d9bbd9b61810d26985ec5c1f510d7
 
     // add(123, 321) => (123,321,444)
     std::string contract_params = "0x6e2c732d000000000000000000000000000000000000000000000000000000000000007b0000000000000000000000000000000000000000000000000000000000000141";
-    logic.context_ref()->input_data(utils::serialize_function_input(contract_address, contract_params));
+    logic.update_input_data(contract_address, contract_params);
     call_contract();
 
     // addOne(12345) => (12346)
     contract_params = "0xfad772db0000000000000000000000000000000000000000000000000000000000003039";
-    logic.context_ref()->input_data(utils::serialize_function_input(contract_address, contract_params));
+    logic.update_input_data(contract_address, contract_params);
     call_contract();
 
     // addGlobal => (1)
     contract_params = "0x2fb3c740";
-    logic.context_ref()->input_data(utils::serialize_function_input(contract_address, contract_params));
+    logic.update_input_data(contract_address, contract_params);
     call_contract();
 }
 
@@ -128,15 +142,13 @@ TEST(test_demo, erc20) {
         "667358221220d85b6d67c18cbaefa92cadb028ffbb9d0d410e0960f7466456990c711ab8a77464736f6c63430006040033");
 
     // param
-    top::evm_runtime::xevm_param_t param;
-    param.random_seed = "1234567890";
     top::data::xtransaction_ptr_t tx = top::make_object_ptr<top::data::xtransaction_v2_t>();
     tx->set_source_addr("T60004001bdc8251890aafc5841b05620c0eab336e3ebc");
     tx->set_target_addr("T60004001bdc8251890aafc5841b05620c0eab336e3ebc");
     auto cons_tx = top::make_object_ptr<top::data::xcons_transaction_t>(tx.get());
     auto action = top::contract_runtime::xaction_generator_t::generate(cons_tx);
-    top::vm_statestore::xvm_statestore_helper_t statestore;
-    top::evm_runtime::xevm_state_t evm_state{{}, top::make_observer(std::addressof(statestore)), param};
+    top::statectx::xstatectx_face_ptr_t statestore{std::make_shared<top::evm::tests::xmock_evm_statectx>(0, "0x1234567", 0)};
+    top::evm_runtime::xevm_state_t evm_state{{}, statestore};
     std::unique_ptr<top::evm_runtime::xevm_context_t> exectx{top::make_unique<top::evm_runtime::xevm_context_t>(std::move(action), top::make_observer(std::addressof(evm_state)))};
     auto observed_exectx = top::make_observer(exectx.get());
 
@@ -145,29 +157,42 @@ TEST(test_demo, erc20) {
     evm_import_instance::instance()->set_evm_logic(n_logic);
     auto & logic = evm_import_instance::instance()->get_vm_logic_ref();
 
+    logic.context_ref()->input_data(input);
+
     deploy_code();
 
-    std::string contract_address = utils::uint8_vector_to_hex_string(logic.return_value()).substr(12, 40);
-    std::cout << contract_address << std::endl;
+    top::evm_engine::parameters::SubmitResult return_result;
+    auto ret = return_result.ParseFromString(utils::bytes_to_string(logic.return_value()));
+    std::string contract_address = utils::uint8_vector_to_hex_string(utils::string_to_bytes(return_result.status_data()));
+    {
+        std::printf("[return result]: version: %u, status: %u, status_data: %s, gas_used: %lu\n",
+                    return_result.version(),
+                    return_result.transaction_status(),
+                    utils::uint8_vector_to_hex_string(utils::string_to_bytes(return_result.status_data())).c_str(),
+                    return_result.gas_used());
+    }
+    assert(ret);
+
+    std::printf("%s\n", contract_address.c_str());
 
     // erc.totalSupply.getData()
     std::string contract_params = "0x18160ddd";
-    logic.context_ref()->input_data(utils::serialize_function_input(contract_address, contract_params));
+    logic.update_input_data(contract_address, contract_params);
     call_contract();
 
     // erc.balanceOf.getData("0000000000000000000000000000000000000123")
     contract_params = "0x70a08231000000000000000000000000000000000000000000000000000000000000007b";
-    logic.context_ref()->input_data(utils::serialize_function_input(contract_address, contract_params));
+    logic.update_input_data(contract_address, contract_params);
     call_contract();
 
     // erc.transfer.getData("0000000000000000000000000000000000000123",123)
     contract_params = "0xa9059cbb000000000000000000000000000000000000000000000000000000000000007b000000000000000000000000000000000000000000000000000000000000007b";
-    logic.context_ref()->input_data(utils::serialize_function_input(contract_address, contract_params));
+    logic.update_input_data(contract_address, contract_params);
     call_contract();
 
     // erc.balanceOf.getData("0000000000000000000000000000000000000123")
     contract_params = "0x70a08231000000000000000000000000000000000000000000000000000000000000007b";
-    logic.context_ref()->input_data(utils::serialize_function_input(contract_address, contract_params));
+    logic.update_input_data(contract_address, contract_params);
     call_contract();
     storage_ptr->debug();
 }
@@ -186,15 +211,13 @@ TEST(test_demo, balance) {
         "dccf09d34d37da99fe7de2b8526427bf3f64736f6c63430006040033");
 
     // param
-    top::evm_runtime::xevm_param_t param;
-    param.random_seed = "1234567890";
     top::data::xtransaction_ptr_t tx = top::make_object_ptr<top::data::xtransaction_v2_t>();
     tx->set_source_addr("T60004001bdc8251890aafc5841b05620c0eab336e3ebc");
     tx->set_target_addr("T60004001bdc8251890aafc5841b05620c0eab336e3ebc");
     auto cons_tx = top::make_object_ptr<top::data::xcons_transaction_t>(tx.get());
     auto action = top::contract_runtime::xaction_generator_t::generate(cons_tx);
-    top::vm_statestore::xvm_statestore_helper_t statestore;
-    top::evm_runtime::xevm_state_t evm_state{{}, top::make_observer(std::addressof(statestore)), param};
+    top::statectx::xstatectx_face_ptr_t statestore{std::make_shared<top::evm::tests::xmock_evm_statectx>(0, "0x1234567", 0)};
+    top::evm_runtime::xevm_state_t evm_state{{}, statestore};
     std::unique_ptr<top::evm_runtime::xevm_context_t> exectx{top::make_unique<top::evm_runtime::xevm_context_t>(std::move(action), top::make_observer(std::addressof(evm_state)))};
     auto observed_exectx = top::make_observer(exectx.get());
 
@@ -224,28 +247,41 @@ TEST(test_demo, balance) {
     storage_ptr->debug();
     deploy_code();
     storage_ptr->debug();
-    std::string contract_address = utils::uint8_vector_to_hex_string(logic.return_value()).substr(12, 40);
+
+    top::evm_engine::parameters::SubmitResult return_result;
+    auto ret = return_result.ParseFromString(utils::bytes_to_string(logic.return_value()));
+    std::string contract_address = utils::uint8_vector_to_hex_string(utils::string_to_bytes(return_result.status_data()));
+    {
+        std::printf("[return result]: version: %u, status: %u, status_data: %s, gas_used: %lu\n",
+                    return_result.version(),
+                    return_result.transaction_status(),
+                    utils::uint8_vector_to_hex_string(utils::string_to_bytes(return_result.status_data())).c_str(),
+                    return_result.gas_used());
+    }
+    assert(ret);
+
+    std::printf("%s\n", contract_address.c_str());
 
     // deposit
     std::string contract_params = "0x";
-    logic.context_ref()->input_data(utils::serialize_function_input(contract_address, contract_params, 3000000));
+    logic.update_input_data(contract_address, contract_params);  // todo add value
     call_contract();
     storage_ptr->debug(storage_key_type::Balance);
 
     // tes.totalBalance.getData()
     contract_params = "0xad7a672f";
-    logic.context_ref()->input_data(utils::serialize_function_input(contract_address, contract_params));
+    logic.update_input_data(contract_address, contract_params);
     call_contract();
 
     // tes.withdraw_balance.getData(666)
     contract_params = "0x2565b1b8000000000000000000000000000000000000000000000000000000000000029a";
-    logic.context_ref()->input_data(utils::serialize_function_input(contract_address, contract_params));
+    logic.update_input_data(contract_address, contract_params);
     call_contract();
     storage_ptr->debug(storage_key_type::Balance);
 
     // tes.totalBalance.getData()
     contract_params = "0xad7a672f";
-    logic.context_ref()->input_data(utils::serialize_function_input(contract_address, contract_params));
+    logic.update_input_data(contract_address, contract_params);
     call_contract();
     storage_ptr->debug();
 }

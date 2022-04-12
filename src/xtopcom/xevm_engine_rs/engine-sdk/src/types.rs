@@ -1,9 +1,4 @@
-use core::panic;
-
-use crate::{
-    io::IO,
-    prelude::{Address, H256},
-};
+use crate::{io::IO, prelude::H256};
 
 pub fn keccak(input: &[u8]) -> H256 {
     unsafe {
@@ -13,18 +8,6 @@ pub fn keccak(input: &[u8]) -> H256 {
         bytes
     }
 }
-
-// pub fn top_account_to_evm_address(addr: &[u8]) -> Address {
-//     if (addr.len() == 20) {
-//         Address::try_from_slice(&addr).unwrap()
-//     } else if (addr.len() == 22) {
-//         // suppose 0x... or T6...
-//         Address::try_from_slice(&addr[2..]).unwrap()
-//     } else {
-//         unreachable!()
-//     }
-//     // Address::try_from_slice(&keccak(addr)[12..]).unwrap()
-// }
 
 // # sdk_expect()
 pub trait SdkExpect<T> {

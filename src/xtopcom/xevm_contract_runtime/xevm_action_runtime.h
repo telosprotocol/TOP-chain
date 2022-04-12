@@ -9,7 +9,6 @@
 #include "xdata/xconsensus_action.h"
 #include "xevm_contract_runtime/xevm_contract_manager.h"
 #include "xevm_contract_runtime/xevm_type.h"
-#include "xevm_statestore_helper/xstatestore_helper.h"
 
 NS_BEG2(top, contract_runtime)
 
@@ -17,8 +16,7 @@ template <>
 class xtop_action_runtime<data::xevm_consensus_action_t> {
 private:
     observer_ptr<evm::xevm_contract_manager_t> evm_contract_manager_;
-
-    observer_ptr<vm_statestore::xvm_statestore_helper_t> evm_statestore_helper_;
+    statectx::xstatectx_face_ptr_t evm_statectx_;
 
 public:
     // xtop_action_runtime() = default;
@@ -29,7 +27,7 @@ public:
     ~xtop_action_runtime() = default;
 
     xtop_action_runtime(observer_ptr<evm::xevm_contract_manager_t> const evm_contract_manager,
-                        observer_ptr<vm_statestore::xvm_statestore_helper_t> const statestore_helper) noexcept;
+                        statectx::xstatectx_face_ptr_t const evm_statectx_) noexcept;
 
     // todo this state? should be user's or contract's. User's account state or none.
     // std::unique_ptr<xaction_session_t<data::xevm_consensus_action_t>> new_session(observer_ptr<contract_common::xcontract_state_t> contract_state);

@@ -7,7 +7,6 @@ mod v0 {
     pub use engine_types::storage::*;
     pub use engine_types::types::*;
     pub use engine_types::*;
-    pub use serde::{Deserialize, Serialize};
 }
 
 pub use v0::*;

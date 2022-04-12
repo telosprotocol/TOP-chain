@@ -1,12 +1,11 @@
 use crate::types::Address;
 use crate::H256;
-use serde::{Deserialize, Serialize};
 
 pub enum VersionPrefix {
     V1 = 0x1,
 }
 
-#[derive(Clone, Copy, Serialize, Deserialize)]
+#[derive(Clone, Copy)]
 pub enum KeyPrefix {
     Nonce = 0x1,
     Balance = 0x2,

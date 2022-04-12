@@ -1,13 +1,13 @@
 #pragma once
 #include "xbasic/xmemory.hpp"
 #include "xevm_contract_runtime/xevm_type.h"
-#include "xevm_runner/evm_context.h"
 #include "xevm_runner/evm_storage_face.h"
 #include "xevm_runner/evm_util.h"
 
 #include <cstdint>
 #include <map>
 #include <memory>
+#include <string>
 
 namespace top {
 namespace evm {
@@ -29,6 +29,7 @@ private:
 public:
     std::shared_ptr<xevm_storage_face_t> ext_ref();
     observer_ptr<evm_runtime::xevm_context_t> context_ref();
+    void update_input_data(std::string const & contract_address, std::string const & contract_params);
     bytes return_value();
 
 public:
@@ -39,8 +40,6 @@ public:
     uint64_t register_len(uint64_t register_id);
 
     // context:
-    // void current_account_id(uint64_t register_id);
-    // void signer_account_id(uint64_t register_id);
     void sender_address(uint64_t register_id);
     void input(uint64_t register_id);
 

@@ -1,8 +1,7 @@
 use crate::fmt::Formatter;
 use crate::Display;
-use serde::{Deserialize, Serialize};
 
-#[derive(Default, Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Serialize, Deserialize)]
+#[derive(Default, Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd)]
 
 pub struct Balance(u128);
 

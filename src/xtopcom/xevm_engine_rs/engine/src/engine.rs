@@ -1,7 +1,7 @@
-#![allow(unused)]
 use crate::error::{BalanceOverflow, EngineError, EngineErrorKind, EngineStateError};
-use crate::parameters::{ResultLog, SubmitResult, TransactionStatus};
+use crate::parameters::TransactionStatus;
 use crate::prelude::*;
+use crate::proto_parameters::{FunctionCallArgs, ResultLog, SubmitResult};
 use core::cell::RefCell;
 use engine_precompiles::{Precompile, PrecompileConstructorContext, Precompiles};
 use engine_sdk::dup_cache::{DupCache, PairDupCache};
@@ -18,12 +18,9 @@ struct StackExecutorParams {
 }
 
 impl StackExecutorParams {
-    fn new(gas_limit: u64, /*current_account_id: AccountId,*/ random_seed: H256) -> Self {
+    fn new(gas_limit: u64, random_seed: H256) -> Self {
         Self {
-            precompiles: Precompiles::new_london(PrecompileConstructorContext {
-                // current_account_id,
-                random_seed,
-            }),
+            precompiles: Precompiles::new_london(PrecompileConstructorContext { random_seed }),
             gas_limit,
         }
     }
@@ -81,7 +78,6 @@ pub struct Engine<'env, I: IO, E: Env> {
     state: EngineState,
     origin: Address,
     gas_price: U256,
-    // current_account_id: AccountId,
     io: I,
     env: &'env E,
     generation_cache: RefCell<BTreeMap<Address, u32>>,
@@ -89,38 +85,25 @@ pub struct Engine<'env, I: IO, E: Env> {
     contract_storage_cache: RefCell<PairDupCache<Address, H256, H256>>,
 }
 
-const STATE_KEY: &[u8; 5] = b"STATE";
-
 pub type EngineResult<T> = Result<T, EngineError>;
 
 impl<'env, I: IO + Copy, E: Env> Engine<'env, I, E> {
-    pub fn new(
-        origin: Address,
-        // current_account_id: AccountId,
-        io: I,
-        env: &'env E,
-    ) -> Result<Self, EngineStateError> {
+    const CURRENT_CALL_ARGS_VERSION: u32 = 1;
+
+    pub fn new(origin: Address, io: I, env: &'env E) -> Result<Self, EngineStateError> {
         Ok(Self::new_with_state(
             EngineState::default(),
             origin,
-            // current_account_id,
             io,
             env,
         ))
     }
 
-    pub fn new_with_state(
-        state: EngineState,
-        origin: Address,
-        // current_account_id: AccountId,
-        io: I,
-        env: &'env E,
-    ) -> Self {
+    pub fn new_with_state(state: EngineState, origin: Address, io: I, env: &'env E) -> Self {
         Self {
             state,
             origin,
             gas_price: U256::zero(),
-            // current_account_id,
             io,
             env,
             generation_cache: RefCell::new(BTreeMap::new()),
@@ -143,11 +126,7 @@ impl<'env, I: IO + Copy, E: Env> Engine<'env, I, E> {
         gas_limit: u64,
         access_list: Vec<(H160, Vec<H256>)>, // See EIP-2930
     ) -> EngineResult<SubmitResult> {
-        let executor_params = StackExecutorParams::new(
-            gas_limit,
-            // self.current_account_id.clone(),
-            self.env.random_seed(),
-        );
+        let executor_params = StackExecutorParams::new(gas_limit, self.env.random_seed());
         let mut executor = executor_params.make_executor(self);
         let address = executor.create_address(CreateScheme::Legacy {
             caller: origin.raw(),
@@ -157,6 +136,7 @@ impl<'env, I: IO + Copy, E: Env> Engine<'env, I, E> {
         let result = if exit_reason.is_succeed() {
             address.0.to_vec()
         } else {
+            println!("{:?}", exit_reason);
             return_value
         };
 
@@ -174,19 +154,44 @@ impl<'env, I: IO + Copy, E: Env> Engine<'env, I, E> {
         let logs = logs.into_iter().map(|log| log.into()).collect();
 
         self.apply(values, Vec::<Log>::new(), true);
+        println!(
+            "[aurora_engine]apply {:?} {:?} {:?}",
+            status, used_gas, logs
+        );
 
-        Ok(SubmitResult::new(status, used_gas, logs))
+        Ok(SubmitResult::new_proto(status, used_gas, logs))
     }
 
-    pub fn call_with_args(&mut self, args: CallArgs) -> EngineResult<SubmitResult> {
+    pub fn call_with_args(&mut self, args: FunctionCallArgs) -> EngineResult<SubmitResult> {
         let origin = Address::new(self.origin());
-        match args {
-            CallArgs::V2(call_args) => {
-                let contract = call_args.contract;
-                let value = call_args.value.into();
-                let input = call_args.input;
+        match args.get_version() {
+            Self::CURRENT_CALL_ARGS_VERSION => {
+                // let a = args.get_address().get_value();
+                // let b = hex::decode(a).map_err(|_| EngineErrorKind::IncorrectArgs)?.as_slice();
+                // println!("hex::decode: {:?}", b);
+
+                // todo make it into Address methods
+                let contract = Address::try_from_slice(
+                    hex::decode(args.get_address().get_value())
+                        .map_err(|_| EngineErrorKind::IncorrectArgs)?
+                        .as_slice(),
+                )
+                .map_err(|_| {
+                    println!("{:?}", args.get_address().get_value());
+                    EngineErrorKind::IncorrectArgs
+                })?;
+
+                // let contract =
+                //     Address::try_from_slice(args.get_address().get_value()).map_err(|_| {
+                //         println!("{:?}", args.get_address().get_value());
+                //         EngineErrorKind::IncorrectArgs
+                //     })?;
+                let value = args.get_value().clone().into();
+                let input = args.get_input().into();
+                println!("contract: {:?} input: {:?}", contract, input);
                 self.call(&origin, &contract, value, input, u64::MAX, Vec::new())
             }
+            _ => Err(EngineErrorKind::IncorrectArgs.into()),
         }
     }
 
@@ -199,11 +204,7 @@ impl<'env, I: IO + Copy, E: Env> Engine<'env, I, E> {
         gas_limit: u64,
         access_list: Vec<(H160, Vec<H256>)>, // See EIP-2930
     ) -> EngineResult<SubmitResult> {
-        let executor_params = StackExecutorParams::new(
-            gas_limit,
-            // self.current_account_id.clone(),
-            self.env.random_seed(),
-        );
+        let executor_params = StackExecutorParams::new(gas_limit, self.env.random_seed());
         let mut executor = executor_params.make_executor(self);
         let (exit_reason, result) = executor.transact_call(
             origin.raw(),
@@ -228,7 +229,7 @@ impl<'env, I: IO + Copy, E: Env> Engine<'env, I, E> {
 
         self.apply(values, Vec::<Log>::new(), true);
 
-        Ok(SubmitResult::new(status, used_gas, logs))
+        Ok(SubmitResult::new_proto(status, used_gas, logs))
     }
 }
 

@@ -15,7 +15,6 @@ xtop_action_session<data::xevm_consensus_action_t>::xtop_action_session(observer
 
 xtransaction_execution_result_t xtop_action_session<data::xevm_consensus_action_t>::execute_action(std::unique_ptr<data::xbasic_top_action_t const> action) {
     assert(m_associated_runtime != nullptr);
-    assert(m_statestore_helper != nullptr);
     assert(action != nullptr);
 
     std::unique_ptr<evm_runtime::xevm_context_t> exectx{top::make_unique<evm_runtime::xevm_context_t>(std::move(action), m_evm_state)};
