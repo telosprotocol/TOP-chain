@@ -279,6 +279,8 @@ void xsync_peer_keeper_t::send_frozen_chain_state(const xvnode_address_t &self_a
         if (idx < select) {
             rand_seeds.push_back(seeds[i]);
             select--;
+            if (select <= 0)
+                break;
         }
     }
     xinfo("send_frozen_chain_state, %d", rand_seeds.size());
