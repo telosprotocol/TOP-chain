@@ -1113,7 +1113,7 @@ void xrpc_query_manager::getEVMs(xJson::Value & js_req, xJson::Value & js_rsp, s
         version = RPC_VERSION_V1;
     }
     xJson::Value j;
-    std::string const addr = zec_elect_eth_contract_address;
+    std::string const addr = sys_contract_zec_elect_eth_addr;
     auto property_name = top::data::election::get_property_by_group_id(common::xarchive_group_id);
     query_account_property(j, addr, property_name, xfull_node_compatible_mode_t::incompatible);
 
