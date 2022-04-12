@@ -127,6 +127,12 @@ void xsync_gossip_t::walk_role(const vnetwork::xvnode_address_t &self_addr, cons
             continue;
         }
 
+        base::xvaccount_t _vaddr(it.second.address);
+        auto zone_id = _vaddr.get_zone_index();
+        if ((zone_id == base::enum_chain_zone_zec_index) || (zone_id == base::enum_chain_zone_beacon_index)) {
+            continue;
+        }
+
         xgossip_chain_info_ptr_t info = std::make_shared<xgossip_chain_info_t>();
         info->owner = it.second.address;
         info->max_height = m_sync_store->get_latest_end_block_height(it.second.address, enum_chain_sync_policy_full);;
