@@ -123,7 +123,8 @@ class xtransaction_v3_t : public xbase_dataunit_t<xtransaction_v3_t, xdata_type_
     virtual void set_fire_timestamp(uint64_t timestamp) override {};
     virtual uint64_t get_fire_timestamp() const override { return time(nullptr); };
     virtual void set_amount(uint64_t amount) override{ m_amount = amount; }
-    virtual uint64_t get_amount() const noexcept override { return (uint64_t)m_amount; }
+    virtual uint64_t get_amount() const noexcept override { return (uint64_t)(m_amount/1000000000000); }
+    virtual bool is_top_transfer() const noexcept override { return false; }
     virtual void set_premium_price(uint32_t premium_price) override { };
     virtual uint32_t get_premium_price() const override {return 1;};
     virtual void set_last_nonce(uint64_t last_nonce) override {m_nonce = last_nonce;};
