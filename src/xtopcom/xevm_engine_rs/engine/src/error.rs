@@ -38,6 +38,7 @@ impl AsRef<[u8]> for EngineError {
 pub enum EngineErrorKind {
     EvmError(ExitError),
     EvmFatal(ExitFatal),
+    IncorrectArgs,
     IncorrectNonce,
 }
 
@@ -70,6 +71,7 @@ impl EngineErrorKind {
             EvmFatal(ExitFatal::Other(m)) => m.as_bytes(),
             EvmFatal(_) => unreachable!(), // unused misc
             IncorrectNonce => b"ERR_INCORRECT_NONCE",
+            IncorrectArgs => b"ERR_INCORRECT_ARGS",
         }
     }
 }

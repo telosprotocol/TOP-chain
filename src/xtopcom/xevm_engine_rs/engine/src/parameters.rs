@@ -1,30 +1,27 @@
-use crate::prelude::*;
+use engine_types::types::basic::*;
+use engine_types::types::proto_basic::{ProtoAddress, RawU256};
 use evm::backend::Log;
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ResultLog {
-    pub address: Address,
-    pub topics: Vec<RawU256>,
-    pub data: Vec<u8>,
-}
+use crate::proto_parameters::*;
 
 impl From<Log> for ResultLog {
     fn from(log: Log) -> Self {
-        let topics = log
-            .topics
-            .into_iter()
-            .map(|topic| topic.0)
-            .collect::<Vec<_>>();
-        ResultLog {
-            address: Address::new(log.address),
-            topics,
-            data: log.data,
-        }
+        let mut address = ProtoAddress::new();
+        address.set_value(log.address.to_fixed_bytes().into_iter().collect::<Vec<_>>());
+
+        let topics: Vec<RawU256> = log.topics.into_iter().map(|topic| topic.0.into()).collect();
+
+        let mut res = ResultLog::new();
+        res.set_address(address);
+        res.set_topics(topics.into());
+        res.set_data(log.data);
+
+        res
     }
 }
 
 /// The status of a transaction.
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum TransactionStatus {
     Succeed(Vec<u8>),
     Revert(Vec<u8>),
@@ -47,6 +44,16 @@ impl TransactionStatus {
             || *self == TransactionStatus::OutOfFund
             || *self == TransactionStatus::OutOfOffset
     }
+
+    pub fn as_u32(&self) -> u32 {
+        match self {
+            TransactionStatus::Succeed(_) => 0,
+            TransactionStatus::Revert(_) => 1,
+            TransactionStatus::OutOfGas => 2,
+            TransactionStatus::OutOfFund => 3,
+            TransactionStatus::OutOfOffset => 4,
+        }
+    }
 }
 
 impl AsRef<[u8]> for TransactionStatus {
@@ -61,54 +68,21 @@ impl AsRef<[u8]> for TransactionStatus {
     }
 }
 
-/// encoded parameters for the `call`, `call_with_args`, `deploy_code`,
-/// and `deploy_with_input` methods.
-#[derive(Debug, Serialize, Deserialize)]
-pub struct SubmitResult {
-    version: u8,
-    pub status: TransactionStatus,
-    pub gas_used: u64,
-    pub logs: Vec<ResultLog>,
-}
-
 impl SubmitResult {
-    /// Must be incremented when making breaking changes to the SubmitResult ABI.
-    /// The current value of 7 is chosen because previously a `TransactionStatus` object
-    /// was first in the serialization, which is an enum with less than 7 variants.
-    /// Therefore, no previous `SubmitResult` would have began with a leading 7 byte,
-    /// and this can be used to distinguish the new ABI (with version byte) from the old.
-    const VERSION: u8 = 7;
+    const VERSION: u32 = 1;
 
-    pub fn new(status: TransactionStatus, gas_used: u64, logs: Vec<ResultLog>) -> Self {
-        Self {
-            version: Self::VERSION,
-            status,
-            gas_used,
-            logs,
+    pub fn new_proto(status: TransactionStatus, gas_used: u64, logs: Vec<ResultLog>) -> Self {
+        let mut res = SubmitResult::new();
+        res.set_version(Self::VERSION);
+        res.set_transaction_status(status.as_u32());
+
+        match status {
+            TransactionStatus::Succeed(data) => res.set_status_data(data),
+            TransactionStatus::Revert(data) => res.set_status_data(data),
+            _ => (),
         }
+        res.set_gas_used(gas_used);
+        res.set_logs(logs.into());
+        res
     }
-}
-
-/// encoded parameters for the engine `call` function.
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
-pub struct FunctionCallArgsV2 {
-    pub contract: Address,
-    /// Wei compatible encoded value field to attach an ETH balance to the transaction
-    pub value: WeiU256,
-    pub input: Vec<u8>,
-}
-
-// impl FunctionCallArgsV2 {
-//     pub fn deserialize(bytes: &[u8]) -> Option<Self> {
-//         if let Ok(value) = Self::try_from_slice(bytes) {
-//             Some(value)
-//         } else {
-//             None
-//         }
-//     }
-// }
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone)]
-pub enum CallArgs {
-    V2(FunctionCallArgsV2),
-    // V1(FunctionCallArgsV1),
 }
