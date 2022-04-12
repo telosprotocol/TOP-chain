@@ -18,7 +18,7 @@ std::vector<uint8_t> serialize_function_input(std::string const & contract_addre
     unsigned char * output = (uint8_t *)malloc(max_output_size);
     uint64_t output_len = 0;
 
-    serial_param_function_callargs(contract_address.c_str(), contract_address.size(), value, params, (contract_params.size() - 2) / 2, max_output_size, output, &output_len);
+    // serial_param_function_callargs(contract_address.c_str(), contract_address.size(), value, params, (contract_params.size() - 2) / 2, max_output_size, output, &output_len);
 
     std::vector<uint8_t> res;
     res.resize(output_len);
@@ -61,6 +61,37 @@ std::vector<uint8_t> hex_string_to_bytes(std::string const & input) {
     // printf("\n");
     return res;
 }
+
+std::string hex_string_to_string(std::string const & input) {
+    assert(input.size() % 2 == 0);
+    std::string res;
+
+    printf("[debug][hex_string_to_string] input: %s \n", input.c_str());
+    res.resize(input.size() / 2);
+
+    for (std::size_t i = 0; i < input.size() / 2; ++i) {
+        res[i] = (CON(input[2 * i]) << 4) + CON(input[2 * i + 1]);
+    }
+    return res;
+}
+
+std::vector<uint8_t> string_to_bytes(std::string const & input) {
+    std::vector<uint8_t> res;
+    res.resize(input.size());
+    for (std::size_t i = 0; i < input.size(); ++i) {
+        res[i] = input[i];
+    }
+    return res;
+}
+std::string bytes_to_string(std::vector<uint8_t> const & input) {
+    std::string res;
+    res.resize(input.size());
+    for (std::size_t i = 0; i < input.size(); ++i) {
+        res[i] = input[i];
+    }
+    return res;
+}
+
 
 std::string uint8_vector_to_hex_string(std::vector<uint8_t> const & v) {
     std::string result;
