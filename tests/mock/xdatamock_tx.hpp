@@ -27,10 +27,13 @@ class xdatamock_tx {
     }
 
     // only for transfer now
-    void construct_tx(data::xtransaction_ptr_t & tx) {
+    void construct_tx(data::xtransaction_ptr_t & tx, bool is_eth_tx = false) {
         m_store = xstore_factory::create_store_with_memdb();
         init_account_context();
         data::xproperty_asset asset{m_transfer_out_amount};
+        if (is_eth_tx) {
+            asset.m_token_name = data::XPROPERTY_ASSET_ETH;
+        }
         tx->make_tx_transfer(asset);
         tx->set_different_source_target_address(m_source_account, m_target_account);
         tx->set_deposit(m_deposit);

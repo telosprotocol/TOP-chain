@@ -97,6 +97,7 @@ class xtransaction_v1_t : public xbase_dataunit_t<xtransaction_v1_t, xdata_type_
 
     virtual void set_amount(uint64_t) override { assert(false); }
     virtual uint64_t get_amount() const noexcept override { assert(false); return 0; }
+    virtual bool is_top_transfer() const noexcept override { return true; }
 
     // header
  public:

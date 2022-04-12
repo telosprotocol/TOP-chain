@@ -37,6 +37,7 @@ class xunit_bstate_t : public xbstate_ctx_t {
     uint64_t            account_recv_trans_number() const;
     uint256_t           account_send_trans_hash() const;
     uint64_t            account_send_trans_number() const;
+    uint64_t            tep_balance(const std::string & token_name) const;
     uint64_t            get_free_tgas() const ;
     uint64_t            get_total_tgas(uint32_t token_price) const ;
     uint64_t            get_last_tx_hour() const ;

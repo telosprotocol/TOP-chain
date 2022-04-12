@@ -318,15 +318,14 @@ void xtransaction_v3_t::construct_from_json(xJson::Value & request) {
 
 int32_t xtransaction_v3_t::parse(enum_xaction_type source_type, enum_xaction_type target_type, xtx_parse_data_t & tx_parse_data) {
     if (get_tx_type() == xtransaction_type_transfer) {
-        // todo: eth original amount is u256
-
-        tx_parse_data.m_asset = xproperty_asset((uint64_t)m_amount);
-
+        // todo: eth original amount is u256 
+        xdbg("xtransaction_v3_t::parse tx:%s,amount=%llu", dump().c_str(), get_amount());
+        tx_parse_data.m_asset = xproperty_asset(XPROPERTY_ASSET_ETH, get_amount());
     } else {
         xerror("xtransaction_v3_t::parse not support other transction types!tx:%s", dump().c_str());
-
         return xchain_error_action_param_empty;
     }
+
     return 0;
 }
 
