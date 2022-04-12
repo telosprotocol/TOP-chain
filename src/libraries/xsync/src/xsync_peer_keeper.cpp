@@ -6,6 +6,7 @@
 #include "xsync/xsync_log.h"
 #include "xsync/xsync_util.h"
 #include "xsync/xsync_prune.h"
+#include "xdata/xrootblock.h"
 
 NS_BEG2(top, sync)
 
@@ -269,10 +270,23 @@ void xsync_peer_keeper_t::send_frozen_chain_state(const xvnode_address_t &self_a
 
     XMETRICS_COUNTER_INCREMENT("sync_frozen_broadcast_chain_state_send", 1);
 
-    uint32_t factor = get_frozen_broadcast_factor();
-
-    for (uint32_t i=0; i<factor; i++) {
-        m_sync_sender->send_frozen_broadcast_chain_state(info_list, self_addr);
+    const std::vector<data::node_info_t> & seeds = data::xrootblock_t::get_seed_nodes();
+    std::vector<data::node_info_t> rand_seeds;
+    uint32_t select = sqrt(seeds.size()) + 1;
+    uint32_t size = seeds.size();
+    for (uint32_t i = 0; i < seeds.size(); ++i) {
+        uint32_t idx = RandomUint32() % (size - i);
+        if (idx < select) {
+            rand_seeds.push_back(seeds[i]);
+            select--;
+        }
+    }
+    xinfo("send_frozen_chain_state, %d", rand_seeds.size());
+    for (auto const & item : rand_seeds) {
+        xgroup_address_t group_addr = common::build_frozen_sharding_address(self_addr.network_id());
+        top::common::xslot_id_t slot_id{0};
+        common::xtop_node_address target_addr(group_addr, common::xaccount_election_address_t{item.m_account, slot_id});
+        m_sync_sender->send_broadcast_chain_state(info_list, self_addr, target_addr);
     }
 }
 
