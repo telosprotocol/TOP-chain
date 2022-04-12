@@ -483,16 +483,21 @@ bool xblocktool_t::alloc_transaction_receiptid(const xcons_transaction_ptr_t & t
         current_rsp_id = tx->get_last_action_rsp_id();
     } else if (tx->is_confirm_tx()) {
         current_receipt_id = tx->get_last_action_receipt_id();
-        if (current_receipt_id != receiptid_pair.get_confirmid_max() + 1) {
-            xassert(false);
-            return false;
+        current_rsp_id = tx->get_last_action_rsp_id();
+        if (current_rsp_id == 0) {  // not enable rsp id, confirmid must contious increase
+            if ((current_receipt_id != receiptid_pair.get_confirmid_max() + 1)
+                || (receiptid_pair.get_confirm_rsp_id_max() != 0) ) {
+                xassert(false);
+                return false;
+            }
+        } else {  // enable rsp id, rsp id must contious increase
+            if ( (current_rsp_id != receiptid_pair.get_confirm_rsp_id_max() + 1)
+                || (current_receipt_id <= receiptid_pair.get_confirmid_max())) {
+                xassert(false);
+                return false;
+            }
         }
         receiptid_pair.set_confirmid_max(current_receipt_id);
-        current_rsp_id = tx->get_last_action_rsp_id();
-        if (current_rsp_id != receiptid_pair.get_confirm_rsp_id_max() + 1) {
-            xassert(false);
-            return false;
-        }
         receiptid_pair.set_confirm_rsp_id_max(current_rsp_id);
     }
     // update receipt id info to tx action result
