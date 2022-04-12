@@ -143,6 +143,14 @@ void xsync_peer_keeper_t::walk_role(const vnetwork::xvnode_address_t &self_addr,
         const std::string &address = it.first;
         const xchain_info_t &chain_info = it.second;
 
+        if (!common::has<common::xnode_type_t::frozen>(self_addr.type())) {
+            base::xvaccount_t account_obj{address};
+            auto zone_id = account_obj.get_zone_index();
+            if ((zone_id == base::enum_chain_zone_zec_index) || (zone_id == base::enum_chain_zone_beacon_index)) {
+                continue;
+            }
+        }
+
         xchain_state_info_t info;
         info.address = address;
         if (chain_info.sync_policy == enum_chain_sync_policy_fast) {
