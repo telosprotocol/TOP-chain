@@ -297,9 +297,66 @@ void xtransaction_v3_t::set_action_type() {
 
 void xtransaction_v3_t::parse_to_json(xJson::Value & result_json, const std::string & tx_version) const {
     result_json["tx_structure_version"] = xtransaction_version_3;
-    result_json["jsonrpc"] = "2.0";
-    result_json["params"] = m_origindata;
-    result_json["method"] = "sendRawTransaction";
+    result_json["tx_deposit"] = get_deposit();
+    result_json["tx_type"] = get_tx_type();
+    result_json["tx_len"] = get_tx_len();
+    result_json["tx_hash"] = data::uint_to_str(digest().data(), digest().size());
+    result_json["tx_expire_duration"] = get_expire_duration();
+    result_json["send_timestamp"] = static_cast<xJson::UInt64>(get_fire_timestamp());
+    result_json["premium_price"] = get_premium_price();
+    result_json["last_tx_nonce"] = static_cast<xJson::UInt64>(get_last_nonce());
+    result_json["note"] = get_memo();
+    result_json["ext"] = data::uint_to_str(get_ext().data(), get_ext().size());
+    result_json["authorization"] = get_authorization();
+
+    if (tx_version == RPC_VERSION_V2) {
+        result_json["sender_account"] = m_source_addr;
+        result_json["receiver_account"] = m_target_addr;
+        result_json["amount"] = 0;
+        result_json["eth_amount"] = m_amount.str();
+        result_json["token_name"] = "ETH";
+        result_json["edge_nodeid"] = "";
+
+        result_json["sender_action_name"] = m_source_action_name;
+        result_json["sender_action_param"] = data::uint_to_str(m_source_action_para.data(), m_source_action_para.size());
+        result_json["receiver_action_name"] = m_target_action_name;
+        result_json["receiver_action_param"] = data::uint_to_str(m_target_action_para.data(), m_target_action_para.size());
+    } else {
+        result_json["to_ledger_id"] = 0;
+        result_json["from_ledger_id"] = 0;
+        result_json["tx_random_nonce"] = 0;
+        result_json["last_tx_hash"] = "";
+        result_json["challenge_proof"] = "";
+
+        std::string source_action_para = m_source_action_para;
+        std::string target_action_para = m_target_action_para;
+        if (get_tx_type() == xtransaction_type_transfer) {
+            data::xproperty_asset asset_out{m_token_name, (uint64_t)m_amount};
+            data::xaction_t action;
+            xaction_asset_out::serialze_to(action, asset_out);
+            source_action_para = action.get_action_param();
+            target_action_para = action.get_action_param();
+        }
+        xJson::Value & s_action_json = result_json["sender_action"];
+        s_action_json["action_hash"] = "";
+        s_action_json["action_type"] = m_source_action_type;
+        s_action_json["action_size"] = 0;
+        s_action_json["tx_sender_account_addr"] = m_source_addr;
+        s_action_json["action_name"] = m_source_action_name;
+        s_action_json["action_param"] = data::uint_to_str(source_action_para.data(), source_action_para.size());
+        s_action_json["action_ext"] = "";
+        s_action_json["action_authorization"] = "";
+
+        xJson::Value & t_action_json = result_json["receiver_action"];
+        t_action_json["action_hash"] = "";
+        t_action_json["action_type"] = m_target_action_type;
+        t_action_json["action_size"] = 0;
+        t_action_json["tx_receiver_account_addr"] = m_target_addr;
+        t_action_json["action_name"] = m_target_action_name;
+        t_action_json["action_param"] = data::uint_to_str(target_action_para.data(), target_action_para.size());
+        t_action_json["action_ext"] = "";
+        t_action_json["action_authorization"] = "";
+    }
 }
 
 void xtransaction_v3_t::construct_from_json(xJson::Value & request) {
