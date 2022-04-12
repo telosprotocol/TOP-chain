@@ -117,6 +117,10 @@ int32_t xtx_verifier::verify_address_type(data::xtransaction_t const * trx) {
             xwarn("[global_trace][xtx_verifier][address_verify]dst addr invalid , tx:%s", trx->dump().c_str());
             return  xverifier_error::xverifier_error_addr_invalid;
         }
+        if (!trx->is_top_transfer() && dst_addr_type == base::enum_vaccount_addr_type_black_hole) {
+            xwarn("[global_trace][xtx_verifier][address_verify]dst addr invalid , tx:%s", trx->dump().c_str());
+            return xverifier_error::xverifier_error_addr_invalid;
+        }
     }
 
     return xverifier_error::xverifier_success;
