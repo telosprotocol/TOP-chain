@@ -16,7 +16,7 @@ template <>
 class xtop_action_runtime<data::xevm_consensus_action_t> {
 private:
     observer_ptr<evm::xevm_contract_manager_t> evm_contract_manager_;
-    statectx::xstatectx_face_ptr_t evm_statectx_;
+    statectx::xstatectx_face_ptr_t m_evm_statectx;
 
 public:
     // xtop_action_runtime() = default;
@@ -27,12 +27,9 @@ public:
     ~xtop_action_runtime() = default;
 
     xtop_action_runtime(observer_ptr<evm::xevm_contract_manager_t> const evm_contract_manager,
-                        statectx::xstatectx_face_ptr_t const evm_statectx_) noexcept;
+                        statectx::xstatectx_face_ptr_t const m_evm_statectx) noexcept;
 
-    // todo this state? should be user's or contract's. User's account state or none.
-    // std::unique_ptr<xaction_session_t<data::xevm_consensus_action_t>> new_session(observer_ptr<contract_common::xcontract_state_t> contract_state);
-
-    std::unique_ptr<xaction_session_t<data::xevm_consensus_action_t>> new_session(observer_ptr<evm_runtime::xevm_state_t> evm_state);
+    std::unique_ptr<xaction_session_t<data::xevm_consensus_action_t>> new_session();
 
     xtransaction_execution_result_t execute(observer_ptr<evm_runtime::xevm_context_t> tx_ctx);
 };

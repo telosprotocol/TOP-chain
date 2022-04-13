@@ -1,11 +1,10 @@
 #pragma once
 #include "assert.h"
-#include "xevm_runner/evm_storage_face.h"
+#include "xevm_contract_runtime/xevm_storage_face.h"
 
 #include <string>
 
-namespace top {
-namespace evm {
+NS_BEG3(top, contract_runtime, evm)
 
 enum class storage_key_type {
     // Config = 0x0,
@@ -38,11 +37,11 @@ protected:
 
     /// [1 byte]   -   [1 byte]   - [20 bytes]  - [?? bytes (36 max)]
     //  [version]  - [key perfix] -  [address]  - [extra_key for storage]
-    storage_key decode_key_type(bytes const & key) {
+    storage_key decode_key_type(xbytes_t const & key) {
         storage_key res;
         assert(key.size() >= 22);
         res.key_type = storage_key_type(key[1]);
-        res.address.resize(42); // 'T6' + [hex;40]
+        res.address.resize(42);  // 'T6' + [hex;40]
         // eth address 20 hex
         res.address[0] = 'T';
         res.address[1] = '6';
@@ -52,7 +51,7 @@ protected:
             res.address[2 + 2 * index + 1] = hex[key[index + 2] % 16];
         }
         if (key.size() > 22) {
-            res.extra_key.resize(2 * (key.size() - 22)); // max 72
+            res.extra_key.resize(2 * (key.size() - 22));  // max 72
             for (std::size_t index = 20; index < key.size() - 2; ++index) {
                 res.extra_key[2 * (index - 20)] = hex[key[index + 2] / 16];
                 res.extra_key[2 * (index - 20) + 1] = hex[key[index + 2] % 16];
@@ -63,5 +62,4 @@ protected:
 };
 
 using xevm_storage_base_t = xtop_evm_storage_base;
-}  // namespace evm
-}  // namespace top
+NS_END3

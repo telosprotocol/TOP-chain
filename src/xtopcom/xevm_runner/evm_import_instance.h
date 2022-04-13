@@ -1,6 +1,6 @@
 #pragma once
 #include "stdint.h"
-#include "xevm_runner/evm_logic.h"
+#include "xevm_runner/evm_logic_face.h"
 
 namespace top {
 namespace evm {
@@ -15,11 +15,16 @@ private:
     ~evm_import_instance() {
     }
 
-    top::evm::xtop_evm_logic m_vm_logic{nullptr, nullptr};
+    std::unique_ptr<xevm_logic_face_t> m_vm_logic{nullptr};
+
+    // top::contract_runtime::evm::xtop_evm_logic m_vm_logic{nullptr, nullptr};
 
 public:
-    void set_evm_logic(top::evm::xtop_evm_logic & vm_logic);
-    top::evm::xtop_evm_logic & get_vm_logic_ref();
+    void set_evm_logic(std::unique_ptr<top::evm::xevm_logic_face_t> vm_logic_ptr);
+
+    // todo delete this
+    // not allow to change logic after set it.
+    xevm_logic_face_t * get_vm_logic_ref();
 
 public:
     // register:

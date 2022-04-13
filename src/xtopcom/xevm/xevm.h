@@ -11,12 +11,13 @@
 #include "xevm/xevm_execution_result.h"
 #include "xevm_contract_runtime/xevm_action_runtime.h"
 #include "xstatectx/xstatectx_face.h"
+#include "xtxexecutor/xvm_face.h"
 
 NS_BEG2(top, evm)
 
-class xtop_evm {
+class xtop_evm : public txexecutor::xvm_face_t {
 private:
-    statectx::xstatectx_face_ptr_t evm_statectx_;
+    statectx::xstatectx_face_ptr_t m_evm_statectx;
     std::unique_ptr<contract_runtime::evm::xevm_action_runtime_t> evm_action_runtime_;
 
 public:
@@ -30,9 +31,10 @@ public:
     xtop_evm(observer_ptr<contract_runtime::evm::xevm_contract_manager_t> const evm_contract_manager, statectx::xstatectx_face_ptr_t const evm_statectx);
 
 public:
-    xevm_output_t execute(std::vector<data::xcons_transaction_ptr_t> const & txs);
+    txexecutor::enum_execute_result_type execute(txexecutor::xvm_input_t const & input, txexecutor::xvm_output_t & output) override;
 
 private:
+    xevm_output_t execute(std::vector<data::xcons_transaction_ptr_t> const & txs);
     contract_runtime::xtransaction_execution_result_t execute_action(std::unique_ptr<data::xbasic_top_action_t const> action);
 };
 
