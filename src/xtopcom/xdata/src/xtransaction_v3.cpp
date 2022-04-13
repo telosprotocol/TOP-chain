@@ -154,12 +154,18 @@ int32_t xtransaction_v3_t::do_read_without_hash_signature(base::xstream_t & in) 
     if (bIsCreation) {
         m_transaction_type = xtransaction_type_deploy_evm_contract;
     } else {
-        m_transaction_type = xtransaction_type_transfer;
+        if (m_data.empty()) {
+            m_transaction_type = xtransaction_type_transfer;
+        } else {
+            m_transaction_type = xtransaction_type_run_contract;
+        }
     }
 
-    m_source_addr = "T60004" + strFrom.substr(2);
+    m_source_addr = ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN + strFrom.substr(2);
     string strTo = to.hex();
-    m_target_addr = "T60004" + strTo;
+    if (!strTo.empty()) {
+        m_target_addr = ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN + strTo;
+    }
 
     const int32_t end_pos = in.size();
     return (begin_pos - end_pos);
