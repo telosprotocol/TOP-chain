@@ -1,62 +1,62 @@
 #pragma once
 #include "xbasic/xmemory.hpp"
+#include "xevm_contract_runtime/xevm_storage_face.h"
 #include "xevm_contract_runtime/xevm_type.h"
-#include "xevm_runner/evm_storage_face.h"
-#include "xevm_runner/evm_util.h"
+#include "xevm_runner/evm_logic_face.h"
 
 #include <cstdint>
 #include <map>
 #include <memory>
 #include <string>
 
-namespace top {
-namespace evm {
-class xtop_evm_logic {
+NS_BEG3(top, contract_runtime, evm)
+
+class xtop_evm_logic : public top::evm::xevm_logic_face_t {
 public:
     xtop_evm_logic(std::shared_ptr<xevm_storage_face_t> storage_ptr, observer_ptr<evm_runtime::xevm_context_t> const & context);
     xtop_evm_logic(xtop_evm_logic const &) = delete;
     xtop_evm_logic & operator=(xtop_evm_logic const &) = delete;
     xtop_evm_logic(xtop_evm_logic &&) = default;
     xtop_evm_logic & operator=(xtop_evm_logic &&) = default;
-    ~xtop_evm_logic() = default;
+    ~xtop_evm_logic() override = default;
 
 private:
     std::shared_ptr<xevm_storage_face_t> m_storage_ptr;
     observer_ptr<evm_runtime::xevm_context_t> m_context;
-    std::map<uint64_t, bytes> m_registers;
-    bytes m_return_data_value;
+    std::map<uint64_t, xbytes_t> m_registers;
+    xbytes_t m_return_data_value;
 
 public:
     std::shared_ptr<xevm_storage_face_t> ext_ref();
     observer_ptr<evm_runtime::xevm_context_t> context_ref();
     void update_input_data(std::string const & contract_address, std::string const & contract_params);
-    bytes return_value();
+    xbytes_t return_value();
 
 public:
     // interface to evm_import_instance:
 
     // register:
-    void read_register(uint64_t register_id, uint64_t ptr);
-    uint64_t register_len(uint64_t register_id);
+    void read_register(uint64_t register_id, uint64_t ptr) override;
+    uint64_t register_len(uint64_t register_id) override;
 
     // context:
-    void sender_address(uint64_t register_id);
-    void input(uint64_t register_id);
+    void sender_address(uint64_t register_id) override;
+    void input(uint64_t register_id) override;
 
     // math:
-    void random_seed(uint64_t register_id);
-    void sha256(uint64_t value_len, uint64_t value_ptr, uint64_t register_id);
-    void keccak256(uint64_t value_len, uint64_t value_ptr, uint64_t register_id);
-    void ripemd160(uint64_t value_len, uint64_t value_ptr, uint64_t register_id);
+    void random_seed(uint64_t register_id) override;
+    void sha256(uint64_t value_len, uint64_t value_ptr, uint64_t register_id) override;
+    void keccak256(uint64_t value_len, uint64_t value_ptr, uint64_t register_id) override;
+    void ripemd160(uint64_t value_len, uint64_t value_ptr, uint64_t register_id) override;
 
     // others:
-    void value_return(uint64_t value_len, uint64_t value_ptr);
-    void log_utf8(uint64_t len, uint64_t ptr);
+    void value_return(uint64_t value_len, uint64_t value_ptr) override;
+    void log_utf8(uint64_t len, uint64_t ptr) override;
 
     // storage:
-    uint64_t storage_write(uint64_t key_len, uint64_t key_ptr, uint64_t value_len, uint64_t value_ptr, uint64_t register_id);
-    uint64_t storage_read(uint64_t key_len, uint64_t key_ptr, uint64_t register_id);
-    uint64_t storage_remove(uint64_t key_len, uint64_t key_ptr, uint64_t register_id);
+    uint64_t storage_write(uint64_t key_len, uint64_t key_ptr, uint64_t value_len, uint64_t value_ptr, uint64_t register_id) override;
+    uint64_t storage_read(uint64_t key_len, uint64_t key_ptr, uint64_t register_id) override;
+    uint64_t storage_remove(uint64_t key_len, uint64_t key_ptr, uint64_t register_id) override;
 
 private:
     // inner api
@@ -68,5 +68,5 @@ private:
     std::vector<uint8_t> internal_read_register(uint64_t register_id);
 };
 using xevm_logic_t = xtop_evm_logic;
-}  // namespace evm
-}  // namespace top
+
+NS_END3

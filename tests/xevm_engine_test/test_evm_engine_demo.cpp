@@ -3,17 +3,21 @@
 #include "xbasic/xmemory.hpp"
 #include "xdata/xtop_action_generator.h"
 #include "xdata/xtransaction_v2.h"
+#include "xevm_contract_runtime/xevm_context.h"
+#include "xevm_contract_runtime/xevm_logic.h"
 #include "xevm_contract_runtime/xevm_type.h"
+#include "xevm_contract_runtime/xevm_variant_bytes.h"
 #include "xevm_runner/evm_engine_interface.h"
 #include "xevm_runner/evm_import_instance.h"
-#include "xevm_runner/evm_logic.h"
-#include "xevm_runner/evm_util.h"
 #include "xevm_runner/proto/proto_basic.pb.h"
 #include "xevm_runner/proto/proto_parameters.pb.h"
 
 #include <gtest/gtest.h>
 
+NS_BEG4(top, contract_runtime, evm, tests)
+
 using namespace top::evm;
+using namespace top::contract_runtime::evm;
 using tests::xmock_evm_storage;
 
 TEST(test_demo, test_add_contract) {
@@ -38,7 +42,8 @@ TEST(test_demo, test_add_contract) {
         }
     }
     ******************************************************/
-    bytes input = utils::hex_string_to_bytes(
+
+    xvariant_bytes contract_code{
         "608060405234801561001057600080fd5b50610304806100206000396000f3fe608060405234801561001057600080fd5b506004361061004c5760003560e01c80632fb3c740146100515780636e2c732d1461005b"
         "578063a05f9906146100a7578063fad772db146100d9575b600080fd5b610059610111565b005b6100a56004803603604081101561007157600080fd5b81019080803567ffffffffffffffff169060200190929190"
         "803567ffffffffffffffff1690602001909291905050506101b3565b005b6100af610242565b604051808267ffffffffffffffff1667ffffffffffffffff16815260200191505060405180910390f35b61010f6004"
@@ -48,7 +53,8 @@ TEST(test_demo, test_add_contract) {
         "83604051808467ffffffffffffffff1667ffffffffffffffff1681526020018367ffffffffffffffff1667ffffffffffffffff1681526020018267ffffffffffffffff1667ffffffffffffffff1681526020019350"
         "50505060405180910390a1505050565b6000809054906101000a900467ffffffffffffffff1681565b60006001820190507f76b87589c0efe817c6ec312c8fa2ab35ac24bbbd1e5fb8d3e3c3b4b789fdc7d4828260"
         "4051808367ffffffffffffffff1667ffffffffffffffff1681526020018267ffffffffffffffff1667ffffffffffffffff1681526020019250505060405180910390a1505056fea2646970667358221220aa046f63"
-        "4f0927440a2dc3e5b0298f8101a60505f1d303bc416a90fcc0db54fa64736f6c63430006040033");
+        "4f0927440a2dc3e5b0298f8101a60505f1d303bc416a90fcc0db54fa64736f6c63430006040033",
+        true};
 
     // param
     top::data::xtransaction_ptr_t tx = top::make_object_ptr<top::data::xtransaction_v2_t>();
@@ -58,25 +64,29 @@ TEST(test_demo, test_add_contract) {
     auto action = top::contract_runtime::xaction_generator_t::generate(cons_tx);
     top::statectx::xstatectx_face_ptr_t statestore{std::make_shared<top::evm::tests::xmock_evm_statectx>(0, "0x1234567", 0)};
     top::evm_runtime::xevm_state_t evm_state{{}, statestore};
-    std::unique_ptr<top::evm_runtime::xevm_context_t> exectx{top::make_unique<top::evm_runtime::xevm_context_t>(std::move(action), top::make_observer(std::addressof(evm_state)))};
+    std::unique_ptr<top::evm_runtime::xevm_context_t> exectx{top::make_unique<top::evm_runtime::xevm_context_t>(std::move(action))};
     auto observed_exectx = top::make_observer(exectx.get());
 
     std::shared_ptr<xevm_storage_face_t> storage_ptr = std::make_shared<xmock_evm_storage>();
-    xevm_logic_t n_logic{storage_ptr, observed_exectx};
-    evm_import_instance::instance()->set_evm_logic(n_logic);
-    auto & logic = evm_import_instance::instance()->get_vm_logic_ref();
-    logic.context_ref()->input_data(input);
+
+    std::unique_ptr<top::evm::xevm_logic_face_t> logic_ptr = top::make_unique<top::contract_runtime::evm::xevm_logic_t>(storage_ptr, observed_exectx);
+
+    evm_import_instance::instance()->set_evm_logic(std::move(logic_ptr));
+    auto logic = static_cast<top::contract_runtime::evm::xevm_logic_t *>(evm_import_instance::instance()->get_vm_logic_ref());
+    logic->context_ref()->input_data(contract_code.to_bytes());
 
     deploy_code();
 
     top::evm_engine::parameters::SubmitResult return_result;
-    auto ret = return_result.ParseFromString(utils::bytes_to_string(logic.return_value()));
-    std::string contract_address = utils::uint8_vector_to_hex_string(utils::string_to_bytes(return_result.status_data()));
+    xvariant_bytes return_str{logic->return_value()};
+    auto ret = return_result.ParseFromString(return_str.to_string());
+
+    std::string contract_address = xvariant_bytes{return_result.status_data(), false}.to_hex_string();
     {
         std::printf("[return result]: version: %u, status: %u, status_data: %s, gas_used: %lu\n",
                     return_result.version(),
                     return_result.transaction_status(),
-                    utils::uint8_vector_to_hex_string(utils::string_to_bytes(return_result.status_data())).c_str(),
+                    contract_address.c_str(),
                     return_result.gas_used());
     }
     assert(ret);
@@ -85,23 +95,23 @@ TEST(test_demo, test_add_contract) {
 
     // add(123, 321) => (123,321,444)
     std::string contract_params = "0x6e2c732d000000000000000000000000000000000000000000000000000000000000007b0000000000000000000000000000000000000000000000000000000000000141";
-    logic.update_input_data(contract_address, contract_params);
+    logic->update_input_data(contract_address, contract_params);
     call_contract();
 
     // addOne(12345) => (12346)
     contract_params = "0xfad772db0000000000000000000000000000000000000000000000000000000000003039";
-    logic.update_input_data(contract_address, contract_params);
+    logic->update_input_data(contract_address, contract_params);
     call_contract();
 
     // addGlobal => (1)
     contract_params = "0x2fb3c740";
-    logic.update_input_data(contract_address, contract_params);
+    logic->update_input_data(contract_address, contract_params);
     call_contract();
 }
 
 TEST(test_demo, erc20) {
     // ./solidity_contracts/erc20.sol
-    bytes input = utils::hex_string_to_bytes(
+    xvariant_bytes contract_code{
         "60806040526040518060400160405280600781526020017f4d794572633230000000000000000000000000000000000000000000000000008152506003908051906020019061004f92919061016a565b50604051"
         "8060400160405280600381526020017f53594d00000000000000000000000000000000000000000000000000000000008152506004908051906020019061009b92919061016a565b506012600560006101000a8154"
         "8160ff021916908360ff1602179055503480156100c457600080fd5b50620186a0600081905550600054600160003373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffff"
@@ -139,7 +149,8 @@ TEST(test_demo, erc20) {
         "526020019081526020016000206000828254039250508190555081600160008573ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260"
         "2001600020600082825401925050819055508273ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff167fddf252ad1be2c89b69c2b068fc378daa952ba7f1"
         "63c4a11628f55a4df523b3ef846040518082815260200191505060405180910390a36001905092915050565b600260205281600052604060002060205280600052604060002060009150915050548156fea2646970"
-        "667358221220d85b6d67c18cbaefa92cadb028ffbb9d0d410e0960f7466456990c711ab8a77464736f6c63430006040033");
+        "667358221220d85b6d67c18cbaefa92cadb028ffbb9d0d410e0960f7466456990c711ab8a77464736f6c63430006040033",
+        true};
 
     // param
     top::data::xtransaction_ptr_t tx = top::make_object_ptr<top::data::xtransaction_v2_t>();
@@ -149,26 +160,30 @@ TEST(test_demo, erc20) {
     auto action = top::contract_runtime::xaction_generator_t::generate(cons_tx);
     top::statectx::xstatectx_face_ptr_t statestore{std::make_shared<top::evm::tests::xmock_evm_statectx>(0, "0x1234567", 0)};
     top::evm_runtime::xevm_state_t evm_state{{}, statestore};
-    std::unique_ptr<top::evm_runtime::xevm_context_t> exectx{top::make_unique<top::evm_runtime::xevm_context_t>(std::move(action), top::make_observer(std::addressof(evm_state)))};
+    std::unique_ptr<top::evm_runtime::xevm_context_t> exectx{top::make_unique<top::evm_runtime::xevm_context_t>(std::move(action))};
     auto observed_exectx = top::make_observer(exectx.get());
 
     std::shared_ptr<xmock_evm_storage> storage_ptr = std::make_shared<xmock_evm_storage>();
-    xevm_logic_t n_logic{storage_ptr, observed_exectx};
-    evm_import_instance::instance()->set_evm_logic(n_logic);
-    auto & logic = evm_import_instance::instance()->get_vm_logic_ref();
 
-    logic.context_ref()->input_data(input);
+    std::unique_ptr<top::evm::xevm_logic_face_t> logic_ptr = top::make_unique<top::contract_runtime::evm::xevm_logic_t>(storage_ptr, observed_exectx);
+
+    evm_import_instance::instance()->set_evm_logic(std::move(logic_ptr));
+
+    auto logic = static_cast<top::contract_runtime::evm::xevm_logic_t *>(evm_import_instance::instance()->get_vm_logic_ref());
+    logic->context_ref()->input_data(contract_code.to_bytes());
 
     deploy_code();
 
     top::evm_engine::parameters::SubmitResult return_result;
-    auto ret = return_result.ParseFromString(utils::bytes_to_string(logic.return_value()));
-    std::string contract_address = utils::uint8_vector_to_hex_string(utils::string_to_bytes(return_result.status_data()));
+    xvariant_bytes return_str{logic->return_value()};
+    auto ret = return_result.ParseFromString(return_str.to_string());
+
+    std::string contract_address = xvariant_bytes{return_result.status_data(), false}.to_hex_string();
     {
         std::printf("[return result]: version: %u, status: %u, status_data: %s, gas_used: %lu\n",
                     return_result.version(),
                     return_result.transaction_status(),
-                    utils::uint8_vector_to_hex_string(utils::string_to_bytes(return_result.status_data())).c_str(),
+                    contract_address.c_str(),
                     return_result.gas_used());
     }
     assert(ret);
@@ -177,22 +192,22 @@ TEST(test_demo, erc20) {
 
     // erc.totalSupply.getData()
     std::string contract_params = "0x18160ddd";
-    logic.update_input_data(contract_address, contract_params);
+    logic->update_input_data(contract_address, contract_params);
     call_contract();
 
     // erc.balanceOf.getData("0000000000000000000000000000000000000123")
     contract_params = "0x70a08231000000000000000000000000000000000000000000000000000000000000007b";
-    logic.update_input_data(contract_address, contract_params);
+    logic->update_input_data(contract_address, contract_params);
     call_contract();
 
     // erc.transfer.getData("0000000000000000000000000000000000000123",123)
     contract_params = "0xa9059cbb000000000000000000000000000000000000000000000000000000000000007b000000000000000000000000000000000000000000000000000000000000007b";
-    logic.update_input_data(contract_address, contract_params);
+    logic->update_input_data(contract_address, contract_params);
     call_contract();
 
     // erc.balanceOf.getData("0000000000000000000000000000000000000123")
     contract_params = "0x70a08231000000000000000000000000000000000000000000000000000000000000007b";
-    logic.update_input_data(contract_address, contract_params);
+    logic->update_input_data(contract_address, contract_params);
     call_contract();
     storage_ptr->debug();
 }
@@ -200,7 +215,7 @@ TEST(test_demo, erc20) {
 TEST(test_demo, balance) {
     // ./solidity_contracts/test_balance.sol
 
-    bytes input = utils::hex_string_to_bytes(
+    xvariant_bytes contract_code{
         "0x608060405234801561001057600080fd5b5061024e806100206000396000f3fe60806040526004361061002d5760003560e01c80632565b1b8146100b3578063ad7a672f146100ee576100ae565b366100ae5734"
         "60008082825401925050819055507fe1fffcc4923d04b559f4d29a8bfc6cda04eb5b0d3c460751c2402c5c5cc9109c3334604051808373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffff"
         "ffffffffffffffffffffffff1681526020018281526020019250505060405180910390a1005b600080fd5b3480156100bf57600080fd5b506100ec600480360360208110156100d657600080fd5b81019080803590"
@@ -208,7 +223,8 @@ TEST(test_demo, balance) {
         "ffffffffffffffffffffffffffff1661271083604051806000019050600060405180830381858888f193505050503d806000811461018c576040519150601f19603f3d011682016040523d82523d6000602084013e"
         "610191565b606091505b5050809150507f171a466754afbbdce4dc1ab85f822d6767825c31a83b1113cc18bc97ddbfed2281338460405180841515151581526020018373ffffffffffffffffffffffffffffffffff"
         "ffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001828152602001935050505060405180910390a15050565b6000548156fea26469706673582212201285a1a792cec99fd557c4fb8b1f92"
-        "dccf09d34d37da99fe7de2b8526427bf3f64736f6c63430006040033");
+        "dccf09d34d37da99fe7de2b8526427bf3f64736f6c63430006040033",
+        true};
 
     // param
     top::data::xtransaction_ptr_t tx = top::make_object_ptr<top::data::xtransaction_v2_t>();
@@ -218,13 +234,14 @@ TEST(test_demo, balance) {
     auto action = top::contract_runtime::xaction_generator_t::generate(cons_tx);
     top::statectx::xstatectx_face_ptr_t statestore{std::make_shared<top::evm::tests::xmock_evm_statectx>(0, "0x1234567", 0)};
     top::evm_runtime::xevm_state_t evm_state{{}, statestore};
-    std::unique_ptr<top::evm_runtime::xevm_context_t> exectx{top::make_unique<top::evm_runtime::xevm_context_t>(std::move(action), top::make_observer(std::addressof(evm_state)))};
+    std::unique_ptr<top::evm_runtime::xevm_context_t> exectx{top::make_unique<top::evm_runtime::xevm_context_t>(std::move(action))};
     auto observed_exectx = top::make_observer(exectx.get());
 
     std::shared_ptr<xmock_evm_storage> storage_ptr = std::make_shared<xmock_evm_storage>();
-    xevm_logic_t n_logic{storage_ptr, observed_exectx};
-    evm_import_instance::instance()->set_evm_logic(n_logic);
-    auto & logic = evm_import_instance::instance()->get_vm_logic_ref();
+    std::unique_ptr<top::evm::xevm_logic_face_t> logic_ptr = top::make_unique<top::contract_runtime::evm::xevm_logic_t>(storage_ptr, observed_exectx);
+    evm_import_instance::instance()->set_evm_logic(std::move(logic_ptr));
+
+    auto logic = static_cast<top::contract_runtime::evm::xevm_logic_t *>(evm_import_instance::instance()->get_vm_logic_ref());
 
     storage_ptr->debug();
     mock_add_balance();
@@ -234,28 +251,22 @@ TEST(test_demo, balance) {
     mock_add_balance();
     mock_add_balance();
     storage_ptr->debug(storage_key_type::Balance);
-    logic.context_ref()->input_data(utils::hex_string_to_bytes(
-        "608060405234801561001057600080fd5b5061024e806100206000396000f3fe60806040526004361061002d5760003560e01c80632565b1b8146100b3578063ad7a672f146100ee576100ae565b366100ae5734"
-        "60008082825401925050819055507fe1fffcc4923d04b559f4d29a8bfc6cda04eb5b0d3c460751c2402c5c5cc9109c3334604051808373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffff"
-        "ffffffffffffffffffffffff1681526020018281526020019250505060405180910390a1005b600080fd5b3480156100bf57600080fd5b506100ec600480360360208110156100d657600080fd5b81019080803590"
-        "60200190929190505050610119565b005b3480156100fa57600080fd5b50610103610212565b6040518082815260200191505060405180910390f35b80600080828254039250508190555060003373ffffffffffff"
-        "ffffffffffffffffffffffffffff1661271083604051806000019050600060405180830381858888f193505050503d806000811461018c576040519150601f19603f3d011682016040523d82523d6000602084013e"
-        "610191565b606091505b5050809150507f171a466754afbbdce4dc1ab85f822d6767825c31a83b1113cc18bc97ddbfed2281338460405180841515151581526020018373ffffffffffffffffffffffffffffffffff"
-        "ffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001828152602001935050505060405180910390a15050565b6000548156fea26469706673582212201285a1a792cec99fd557c4fb8b1f92"
-        "dccf09d34d37da99fe7de2b8526427bf3f64736f6c63430006040033"));
+    logic->context_ref()->input_data(contract_code.to_bytes());
 
     storage_ptr->debug();
     deploy_code();
     storage_ptr->debug();
 
     top::evm_engine::parameters::SubmitResult return_result;
-    auto ret = return_result.ParseFromString(utils::bytes_to_string(logic.return_value()));
-    std::string contract_address = utils::uint8_vector_to_hex_string(utils::string_to_bytes(return_result.status_data()));
+    xvariant_bytes return_str{logic->return_value()};
+    auto ret = return_result.ParseFromString(return_str.to_string());
+
+    std::string contract_address = xvariant_bytes{return_result.status_data(), false}.to_hex_string();
     {
         std::printf("[return result]: version: %u, status: %u, status_data: %s, gas_used: %lu\n",
                     return_result.version(),
                     return_result.transaction_status(),
-                    utils::uint8_vector_to_hex_string(utils::string_to_bytes(return_result.status_data())).c_str(),
+                    contract_address.c_str(),
                     return_result.gas_used());
     }
     assert(ret);
@@ -264,24 +275,26 @@ TEST(test_demo, balance) {
 
     // deposit
     std::string contract_params = "0x";
-    logic.update_input_data(contract_address, contract_params);  // todo add value
+    logic->update_input_data(contract_address, contract_params);  // todo add value
     call_contract();
     storage_ptr->debug(storage_key_type::Balance);
 
     // tes.totalBalance.getData()
     contract_params = "0xad7a672f";
-    logic.update_input_data(contract_address, contract_params);
+    logic->update_input_data(contract_address, contract_params);
     call_contract();
 
     // tes.withdraw_balance.getData(666)
     contract_params = "0x2565b1b8000000000000000000000000000000000000000000000000000000000000029a";
-    logic.update_input_data(contract_address, contract_params);
+    logic->update_input_data(contract_address, contract_params);
     call_contract();
     storage_ptr->debug(storage_key_type::Balance);
 
     // tes.totalBalance.getData()
     contract_params = "0xad7a672f";
-    logic.update_input_data(contract_address, contract_params);
+    logic->update_input_data(contract_address, contract_params);
     call_contract();
     storage_ptr->debug();
 }
+
+NS_END4

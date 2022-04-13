@@ -8,14 +8,21 @@
 #include "xdata/xconsensus_action.h"
 #include "xdata/xtop_action.h"
 #include "xdata/xtop_action_generator.h"
+#include "xevm_contract_runtime/xevm_action.h"
 #include "xevm_contract_runtime/xevm_action_session.h"
 
 NS_BEG2(top, evm)
 
 xtop_evm::xtop_evm(observer_ptr<contract_runtime::evm::xevm_contract_manager_t> const evm_contract_manager,
                    statectx::xstatectx_face_ptr_t const evm_statectx)
-  : evm_statectx_{evm_statectx}
+  : m_evm_statectx{evm_statectx}
   , evm_action_runtime_{top::make_unique<contract_runtime::evm::xevm_action_runtime_t>(evm_contract_manager, evm_statectx)} {
+}
+
+txexecutor::enum_execute_result_type xtop_evm::execute(txexecutor::xvm_input_t const & input, txexecutor::xvm_output_t & output) {
+    // xevm_output_t ret = execute(input);
+
+    return txexecutor::enum_exec_success;
 }
 
 xevm_output_t xtop_evm::execute(std::vector<data::xcons_transaction_ptr_t> const & txs) {
@@ -68,9 +75,8 @@ xevm_output_t xtop_evm::execute(std::vector<data::xcons_transaction_ptr_t> const
 
 contract_runtime::xtransaction_execution_result_t xtop_evm::execute_action(std::unique_ptr<data::xbasic_top_action_t const> action) {
     assert(action->type() == data::xtop_action_type_t::evm);
-    auto const * cons_action = static_cast<data::xevm_consensus_action_t const *>(action.get());
-    evm_runtime::xevm_state_t evm_state{cons_action->contract_address(), evm_statectx_};
-    return evm_action_runtime_->new_session(make_observer(std::addressof(evm_state)))->execute_action(std::move(action));
+
+    return evm_action_runtime_->new_session()->execute_action(std::move(action));
 }
 
 NS_END2

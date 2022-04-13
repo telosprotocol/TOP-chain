@@ -8,16 +8,15 @@
 
 NS_BEG2(top, contract_runtime)
 
-xtop_action_session<data::xevm_consensus_action_t>::xtop_action_session(observer_ptr<xaction_runtime_t<data::xevm_consensus_action_t>> associated_runtime,
-                                                                        observer_ptr<evm_runtime::xevm_state_t> evm_state) noexcept
-  : m_associated_runtime{associated_runtime}, m_evm_state{evm_state} {
+xtop_action_session<data::xevm_consensus_action_t>::xtop_action_session(observer_ptr<xaction_runtime_t<data::xevm_consensus_action_t>> associated_runtime) noexcept
+  : m_associated_runtime{associated_runtime} {
 }
 
 xtransaction_execution_result_t xtop_action_session<data::xevm_consensus_action_t>::execute_action(std::unique_ptr<data::xbasic_top_action_t const> action) {
     assert(m_associated_runtime != nullptr);
     assert(action != nullptr);
 
-    std::unique_ptr<evm_runtime::xevm_context_t> exectx{top::make_unique<evm_runtime::xevm_context_t>(std::move(action), m_evm_state)};
+    std::unique_ptr<evm_runtime::xevm_context_t> exectx{top::make_unique<evm_runtime::xevm_context_t>(std::move(action))};
     return m_associated_runtime->execute(top::make_observer(exectx.get()));
 }
 
