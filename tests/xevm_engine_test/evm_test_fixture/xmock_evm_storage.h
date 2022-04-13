@@ -1,11 +1,11 @@
 #pragma once
-#include "xevm_runner/evm_storage_base.h"
+
+#include "xevm_contract_runtime/xevm_storage_base.h"
 
 #include <map>
 
-namespace top {
-namespace evm {
-namespace tests {
+NS_BEG4(top, contract_runtime, evm, tests)
+
 class xmock_evm_storage : public xtop_evm_storage_base {
 public:
     xmock_evm_storage() = default;
@@ -15,11 +15,11 @@ public:
     xmock_evm_storage & operator=(xmock_evm_storage &&) = default;
     ~xmock_evm_storage() override = default;
 
-    bytes storage_get(bytes const & key) override;
+    xbytes_t storage_get(xbytes_t const & key) override;
 
-    void storage_set(bytes const & key, bytes const & value) override;
+    void storage_set(xbytes_t const & key, xbytes_t const & value) override;
 
-    void storage_remove(bytes const & key) override;
+    void storage_remove(xbytes_t const & key) override;
 
     void debug(storage_key_type const & debug_type = storage_key_type::ALL) {
         for (auto & pair : ext_kv_datas) {
@@ -60,6 +60,4 @@ private:
     std::map<std::vector<uint8_t>, std::vector<uint8_t>> ext_kv_datas;
 };
 
-}  // namespace tests
-}  // namespace evm
-}  // namespace top
+NS_END4

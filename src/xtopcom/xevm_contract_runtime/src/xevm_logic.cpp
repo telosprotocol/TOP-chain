@@ -1,14 +1,14 @@
 
-#include "xevm_runner/evm_logic.h"
+#include "xevm_contract_runtime/xevm_logic.h"
 
-#include "xevm_runner/evm_memory_tools.h"
-#include "xevm_runner/evm_util.h"
+#include "xevm_contract_runtime/xevm_memory_tools.h"
+#include "xevm_contract_runtime/xevm_variant_bytes.h"
 #include "xevm_runner/proto/proto_basic.pb.h"
 #include "xevm_runner/proto/proto_parameters.pb.h"
 
 #include <climits>
-namespace top {
-namespace evm {
+
+NS_BEG3(top, contract_runtime, evm)
 
 xtop_evm_logic::xtop_evm_logic(std::shared_ptr<xevm_storage_face_t> storage_ptr, observer_ptr<evm_runtime::xevm_context_t> const & context)
   : m_storage_ptr{storage_ptr}, m_context{context} {
@@ -32,12 +32,13 @@ void xtop_evm_logic::update_input_data(std::string const & contract_address, std
     // value.set_data(""); // todo add value encode from U256?
     address.set_value(contract_address);
     call_args.set_version(1);
-    call_args.set_input(utils::bytes_to_string(utils::hex_string_to_bytes(contract_params.substr(2))));
+    xvariant_bytes params_data{contract_params, true};
+    call_args.set_input(params_data.to_string());
     call_args.mutable_address()->CopyFrom(address);
     call_args.mutable_value()->CopyFrom(value);
-    // call_args.set_allocated_address(&address);
-    std::string input_data = call_args.SerializeAsString();
-    m_context->input_data(utils::string_to_bytes(input_data));
+
+    xvariant_bytes input_data{call_args.SerializeAsString(), false};
+    m_context->input_data(input_data.to_bytes());
     return;
 }
 
@@ -66,8 +67,9 @@ void xtop_evm_logic::sender_address(uint64_t register_id) {
     // printf("[debug][sender_address] request: %lu \n", register_id);
     // internal_write_register(register_id, m_context->m_sender_address);
     auto sender = m_context->sender().value();
-    xassert(sender.substr(0, 2) == T6_ACCOUNT_PREFIX);
-    internal_write_register(register_id, utils::hex_string_to_bytes(sender.substr(6)));
+    xassert(sender.substr(0, 6) == T6_ACCOUNT_PREFIX);
+    xvariant_bytes hex_address{sender.substr(6), true};
+    internal_write_register(register_id, hex_address.to_bytes());
 }
 
 void xtop_evm_logic::input(uint64_t register_id) {
@@ -169,7 +171,7 @@ void xtop_evm_logic::ripemd160(uint64_t value_len, uint64_t value_ptr, uint64_t 
 // MATH API
 void xtop_evm_logic::random_seed(uint64_t register_id) {
     // internal_write_register(register_id, m_context->random_seed());
-    internal_write_register(register_id, top::to_bytes(m_context->contract_state()->random_seed()));
+    internal_write_register(register_id, top::to_bytes(m_context->random_seed()));
 }
 
 // LOG
@@ -228,5 +230,5 @@ std::vector<uint8_t> xtop_evm_logic::memory_get_vec(uint64_t offset, uint64_t le
 std::vector<uint8_t> xtop_evm_logic::internal_read_register(uint64_t register_id) {
     return m_registers.at(register_id);
 }
-}  // namespace evm
-}  // namespace top
+
+NS_END3
