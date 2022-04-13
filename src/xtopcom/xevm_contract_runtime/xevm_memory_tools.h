@@ -1,11 +1,11 @@
 #pragma once
+#include "xbase/xns_macro.h"
+
 #include <map>
 #include <string>
 #include <vector>
 
-namespace top {
-namespace evm {
-namespace memory_tools {
+NS_BEG4(top, contract_runtime, evm, memory_tools)
 
 void read_memory(uint64_t offset, std::vector<uint8_t> & buffer) {
     char * begin_address = (char *)offset;
@@ -22,6 +22,5 @@ void write_memory(uint64_t offset, std::vector<uint8_t> const & buffer) {
         begin_address++;
     }
 }
-}  // namespace memory_tools
-}  // namespace evm
-}  // namespace top
+
+NS_END4

@@ -51,14 +51,6 @@ std::vector<xfollowup_transaction_datum_t> const & xtop_contract_execution_conte
     return m_execution_result.output.followup_transaction_data;
 }
 
-void xtop_contract_execution_context::input_data(xbytes_t const & data) {
-    m_input_data = data;
-}
-
-xbytes_t const & xtop_contract_execution_context::input_data() const {
-    return m_input_data;
-}
-
 void xtop_contract_execution_context::input_receipt_data(data::xreceipt_data_store_t const& receipt_data) {
     m_receipt_data = receipt_data;
 }

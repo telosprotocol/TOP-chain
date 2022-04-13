@@ -3,16 +3,14 @@
 #include "xbasic/xbyte_buffer.h"
 #include "xbasic/xmemory.hpp"
 #include "xcommon/xaccount_address_fwd.h"
-#include "xevm_runner/evm_storage_base.h"
+#include "xevm_contract_runtime/xevm_storage_base.h"
 #include "xstate_accessor/xproperties/xproperty_identifier.h"
 
-namespace top {
-namespace contract_runtime {
-namespace evm {
+NS_BEG3(top, contract_runtime, evm)
 
 const state_accessor::properties::xproperty_type_t evm_property_type = state_accessor::properties::xproperty_type_t::bytes;
 
-class xtop_evm_storage : public top::evm::xevm_storage_base_t {
+class xtop_evm_storage : public xevm_storage_base_t {
 public:
     explicit xtop_evm_storage(statectx::xstatectx_face_ptr_t const statectx) : m_statectx{statectx} {
     }
@@ -70,6 +68,4 @@ private:
 };
 using xevm_storage = xtop_evm_storage;
 
-}  // namespace evm
-}  // namespace contract_runtime
-}  // namespace top
+NS_END3

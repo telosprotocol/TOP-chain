@@ -16,7 +16,6 @@ template <>
 class xtop_action_session<data::xevm_consensus_action_t> {
 private:
     observer_ptr<xaction_runtime_t<data::xevm_consensus_action_t>> m_associated_runtime;
-    observer_ptr<evm_runtime::xevm_state_t> m_evm_state;
 
 public:
     xtop_action_session(xtop_action_session const &) = delete;
@@ -25,7 +24,7 @@ public:
     xtop_action_session & operator=(xtop_action_session &&) = default;
     ~xtop_action_session() = default;
 
-    xtop_action_session(observer_ptr<xaction_runtime_t<data::xevm_consensus_action_t>> associated_runtime, observer_ptr<evm_runtime::xevm_state_t> evm_state) noexcept;
+    xtop_action_session(observer_ptr<xaction_runtime_t<data::xevm_consensus_action_t>> associated_runtime) noexcept;
 
     xtransaction_execution_result_t execute_action(std::unique_ptr<data::xbasic_top_action_t const> action);
 };
