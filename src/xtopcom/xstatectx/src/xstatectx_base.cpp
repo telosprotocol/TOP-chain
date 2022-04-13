@@ -35,10 +35,11 @@ void xstatectx_base_t::sync_unit_block(const base::xvaccount_t & _vaddr, uint64_
     xinfo("xstatectx_base_t::sync_unit_block account=%s,end_h=%ld,connect_h=%ld", _vaddr.get_account().c_str(), end_height, latest_connect_height);
 }
 
-xobject_ptr_t<base::xvbstate_t> xstatectx_base_t::load_proposal_block_state(base::xvblock_t* prev_block) const {
+xobject_ptr_t<base::xvbstate_t> xstatectx_base_t::load_proposal_block_state(const base::xvaccount_t & addr, base::xvblock_t* prev_block) const {
     base::xauto_ptr<base::xvbstate_t> prev_bstate = get_xblkstatestore()->get_block_state(prev_block);
     if (prev_bstate == nullptr) {
         XMETRICS_GAUGE(metrics::xmetrics_tag_t::statectx_load_state_succ, 0);
+        sync_unit_block(addr, prev_block->get_height());
         xwarn("xstatectx_base_t::load_proposal_block_state fail-get target state. block=%s",
             prev_block->dump().c_str());
         return nullptr;
@@ -64,10 +65,7 @@ xobject_ptr_t<base::xvbstate_t> xstatectx_base_t::load_inner_table_unit_state(co
     }
     XMETRICS_GAUGE(metrics::xmetrics_tag_t::statectx_load_block_succ, 1);
 
-    auto state_ptr = load_proposal_block_state(prev_block.get());
-    if (nullptr == state_ptr) {
-        sync_unit_block(addr, account_index.get_latest_unit_height());
-    }
+    auto state_ptr = load_proposal_block_state(addr, prev_block.get());
     return state_ptr;
 }
 

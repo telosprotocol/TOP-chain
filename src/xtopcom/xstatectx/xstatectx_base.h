@@ -24,7 +24,7 @@ class xstatectx_base_t {
     xobject_ptr_t<base::xvbstate_t> load_inner_table_unit_state(const base::xvaccount_t & addr) const;
     xobject_ptr_t<base::xvbstate_t> load_different_table_unit_state(const base::xvaccount_t & addr) const;
     data::xblock_ptr_t              load_inner_table_unit_block(const base::xvaccount_t & addr) const;
-    xobject_ptr_t<base::xvbstate_t> load_proposal_block_state(base::xvblock_t* prev_block) const;
+    xobject_ptr_t<base::xvbstate_t> load_proposal_block_state(const base::xvaccount_t & addr, base::xvblock_t* prev_block) const;
  private:
     base::xvblockstore_t*       get_blockstore() const;
     base::xvblkstatestore_t*    get_xblkstatestore() const;
