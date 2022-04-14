@@ -4,6 +4,8 @@
 
 #pragma once
 #include "xevm_common/data.h"
+#include "xevm_common/common.h"
+#include "xevm_common/common_data.h"
 
 #include <cstdint>
 #include <string>
@@ -12,7 +14,6 @@
 namespace top {
 namespace evm_common {
 namespace rlp {
-
 /// Implementation of Ethereum's RLP encoding.
 ///
 /// - SeeAlso: https://github.com/ethereum/wiki/wiki/RLP
@@ -47,8 +48,13 @@ struct RLP {
         }
         return encode(static_cast<uint64_t>(number));
     }
+    static bytes encode(uint64_t number) noexcept {
+        bytes data = top::evm_common::toCompactBigEndian(number);
+        u256 udata = top::evm_common::fromBigEndian<u256>(data);
+        return encode(udata);
+    }
 
-    static bytes encode(const uint64_t & number) noexcept;
+    static bytes encode(const u256 & number) noexcept;
 
     /// Wraps encoded data as a list.
     static bytes encodeList(const bytes & encoded) noexcept;
@@ -91,7 +97,8 @@ struct RLP {
 
     /// Returns the representation of an integer using the least number of bytes
     /// needed.
-    static bytes putint(uint64_t i) noexcept;
+    static bytes putVarInt(uint64_t i) noexcept;
+    static uint64_t parseVarInt(size_t size, const bytes & data, size_t index);
 
     struct DecodedItem {
         std::vector<bytes> decoded;

@@ -15,7 +15,7 @@
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-
+#include <boost/lexical_cast.hpp>
 #include <boost/multiprecision/cpp_int.hpp>
 
 #pragma GCC diagnostic pop

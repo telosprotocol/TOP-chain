@@ -32,15 +32,15 @@ std::string HexDecode(const std::string & str) {
     return non_hex_output;
 }
 
-TEST_F(test_transfrom, signature_test_3) {
+TEST(test_transfrom, signature_test_3) {
     string strEth = HexDecode("f86e0285174876e80082520894a6d2b331b03fddb8c6a8830a63fe47e42c4bdf4e881bc16d674ec8000080820a94a04025663f417a36b44757d33d1e71069d9d124e6bbef809019f33d7b7d5b37e11a07ac5fe86086ed1432fb5a9b3f8548e0148c5a9ea3d30ee9156a6d95b865eace6");
     std::string rawTx = HexDecode("f86e0185174876e8008252089482e1c56d8bb42c0d9049439c00c6c51660670b43880de0b6b3a764000080820a93a03871ae8cb94eb8fa5fb18c2cb25e9e7578b4603ff23de3471a28ceced3d9b52ea06254d4faa63e64f276987553a020e38d4d26f506325c02760c7cbe9bb19f5920");
     //std::string rawTx = HexDecode("f786010203040506830304058801020304050607088831323334353637388b68656c6c6f20776f726c648d746f7020756e69742074657374");
     string strTop;
-    int nRet = serial_transfrom::eth2top(strEth, strTop);
+    int nRet = serial_transfrom::eth_to_top(strEth, strTop);
 
     string strEth1;
-    nRet = top2eth(strTop, strEth1);
+    nRet = serial_transfrom::top_to_eth(strTop, strEth1);
     cout << "eth" << HexEncode(strEth1) << endl;
 
     return 0;

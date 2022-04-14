@@ -13,6 +13,10 @@
 #include "xdata/xmemcheck_dbg.h"
 #include "xcrypto/xckey.h"
 
+using namespace std;
+using namespace top::evm_common;
+using namespace top::evm_common::rlp;
+
 namespace top { namespace data {
 
 using namespace top::base;
@@ -59,7 +63,7 @@ int32_t xtransaction_v3_t::do_read_without_hash_signature(base::xstream_t & in) 
 
     in.read_compact_var(m_origindata);
 
-    RLP::DecodedItem decoded = RLP::decode(::data(m_origindata));
+    RLP::DecodedItem decoded = RLP::decode(top::evm_common::rlp::data(m_origindata));
     CheckTransaction _checkSig = CheckTransaction::Everything;
     std::vector<std::string> vecData;
     for (int i = 0; i < (int)decoded.decoded.size(); i++) {
@@ -92,10 +96,9 @@ int32_t xtransaction_v3_t::do_read_without_hash_signature(base::xstream_t & in) 
     xdbg("serial_transfrom::eth_to_top s:%s", m_SignS.hex().c_str());
     byte recoveryID;
     uint64_t m_chainId;
-    SignatureStruct vrs;
-    if (isZeroSignature(m_SignR, m_SignS)) {
+    if (!m_SignR && !m_SignS) {
         m_chainId = static_cast<uint64_t>(m_SignV);
-        vrs = SignatureStruct{m_SignR, m_SignS, 0};
+        recoveryID = 0;
     } else {
         if (m_SignV > 36) {
             auto const chainId = (m_SignV - 35) / 2;
@@ -107,17 +110,17 @@ int32_t xtransaction_v3_t::do_read_without_hash_signature(base::xstream_t & in) 
         else if (m_SignV != 27 && m_SignV != 28) {
             return -3;
         }
-
+        static const h256 s_max{"0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141"};
+        static const h256 s_zero;
         recoveryID = m_chainId ? static_cast<byte>(m_SignV - (u256{m_chainId} * 2 + 35)) : static_cast<byte>(m_SignV - 27);
-        vrs = SignatureStruct{m_SignR, m_SignS, recoveryID};
         xdbg("serial_transfrom::eth_to_top  chainId:%d recoveryID:%d", m_chainId, recoveryID);
-        if (_checkSig >= CheckTransaction::Cheap && !vrs.isValid()) {
+        if (_checkSig >= CheckTransaction::Cheap && !(recoveryID <= 1 && m_SignR > s_zero && m_SignS > s_zero && m_SignR < s_max && m_SignS < s_max)) {
             return -4;
         }
     }
     string strFrom;
     if (_checkSig == CheckTransaction::Everything) {
-        if (isZeroSignature(m_SignR, m_SignS))
+        if (!m_SignR && !m_SignS)
             strFrom = "ffffffffffffffffffffffffffffffffffffffff";
         else {
             bytes encoded = bytes();
@@ -313,6 +316,10 @@ bool xtransaction_v3_t::sign_check() const {
         addr_prefix = get_source_addr();
     }
 
+    if (m_hash.empty() || m_authorization.empty()) {
+        return false;
+    }
+
     utl::xkeyaddress_t key_address(addr_prefix);
     utl::xecdsasig_t signature_obj((uint8_t*)m_authorization.c_str());
     top::uint256_t hash((uint8_t *)fromHex(m_hash).data());
@@ -322,6 +329,9 @@ bool xtransaction_v3_t::sign_check() const {
 bool xtransaction_v3_t::pub_key_sign_check(xpublic_key_t const & pub_key) const {
     //TODO ETH sign check
     auto pub_data = base::xstring_utl::base64_decode(pub_key.to_string());
+    if (pub_data.size() != utl::UNCOMPRESSED_PUBLICKEY_SIZE) {
+        return false;
+    }
     xdbg("xtransaction_v3_t::pub_key_sign_check pub_key: %s , decode.size():%d,m_transaction_hash:%s", pub_key.to_string().c_str(), pub_data.size(), get_digest_hex_str().c_str());
     utl::xecdsasig_t signature_obj((uint8_t *)m_authorization.data());
     uint8_t out_publickey_data[utl::UNCOMPRESSED_PUBLICKEY_SIZE];
