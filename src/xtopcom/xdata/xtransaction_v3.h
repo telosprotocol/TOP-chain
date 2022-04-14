@@ -137,6 +137,10 @@ class xtransaction_v3_t : public xbase_dataunit_t<xtransaction_v3_t, xdata_type_
     virtual const std::string & get_memo() const override {return m_data;};
     virtual const std::string & get_target_address() const override {return m_target_addr;};
 
+    virtual string get_SignV() { return m_SignV.str(); }
+    virtual string get_SignR() { return m_SignR.hex(); }
+    virtual string get_SignS() { return m_SignS.hex(); }
+
 private:
     std::string m_source_addr;
     std::string m_target_addr;
