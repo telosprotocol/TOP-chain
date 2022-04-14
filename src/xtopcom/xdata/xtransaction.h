@@ -181,9 +181,9 @@ class xtransaction_t : virtual public base::xrefcount_t {
     virtual void set_memo(const std::string & memo) = 0;
     virtual const std::string & get_memo() const = 0;
     virtual const std::string & get_target_address() const = 0;
-    virtual std::string get_SignV() { return ""; }
-    virtual std::string get_SignR() { return ""; }
-    virtual std::string get_SignS() { return ""; }
+    virtual const std::string get_SignV() { return ""; }
+    virtual const std::string get_SignR() { return ""; }
+    virtual const std::string get_SignS() { return ""; }
 };
 
 }  // namespace data
