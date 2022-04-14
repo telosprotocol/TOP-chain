@@ -81,8 +81,8 @@ class xtransaction_v3_t : public xbase_dataunit_t<xtransaction_v3_t, xdata_type_
     virtual void        construct_tx(enum_xtransaction_type tx_type, const uint16_t expire_duration, const uint32_t deposit, const uint32_t nonce, const std::string & memo, const xtx_action_info & info) override ;
 
  public:  // get apis
-    virtual uint256_t digest() const override { top::uint256_t hash((uint8_t *)fromHex(m_hash).data()); return hash; }
-    virtual std::string         get_digest_str()const override { top::uint256_t hash((uint8_t *)fromHex(m_hash).data()); return std::string(reinterpret_cast<char*>(hash.data()), hash.size());}
+    virtual uint256_t digest() const override { top::uint256_t hash((uint8_t *)top::evm_common::fromHex(m_hash).data()); return hash; }
+    virtual std::string         get_digest_str()const override { top::uint256_t hash((uint8_t *)top::evm_common::fromHex(m_hash).data()); return std::string(reinterpret_cast<char*>(hash.data()), hash.size());}
     virtual std::string         get_digest_hex_str() const override;
     virtual const std::string & get_source_addr()const override {return m_source_addr;}
     virtual const std::string & get_target_addr()const override {return m_adjust_target_addr.empty() ? m_target_addr : m_adjust_target_addr;}
@@ -137,19 +137,19 @@ class xtransaction_v3_t : public xbase_dataunit_t<xtransaction_v3_t, xdata_type_
     virtual const std::string & get_memo() const override {return m_data;};
     virtual const std::string & get_target_address() const override {return m_target_addr;};
 
-    virtual string get_SignV() { return m_SignV.str(); }
-    virtual string get_SignR() { return m_SignR.hex(); }
-    virtual string get_SignS() { return m_SignS.hex(); }
+    virtual const std::string get_SignV() { return m_SignV.str(); }
+    virtual const std::string get_SignR() { return m_SignR.hex(); }
+    virtual const std::string get_SignS() { return m_SignS.hex(); }
 
 private:
     std::string m_source_addr;
     std::string m_target_addr;
     enum_xtransaction_type m_transaction_type; // one byte
-    u256 m_gas{0};
-    u256 m_gasprice{0};   //serialize with compat_var
-    u256 m_amount{0};   //serialize with compat_var
+    top::evm_common::u256 m_gas{0};
+    top::evm_common::u256 m_gasprice{0};  // serialize with compat_var
+    top::evm_common::u256 m_amount{0};    // serialize with compat_var
     std::string m_token_name;
-    u256 m_nonce{0};   //serialize with compat_var
+    top::evm_common::u256 m_nonce{0};  // serialize with compat_var
     std::string m_hash;    //serialize with compat_var
     std::string m_data;    // serialize with compat_var
     std::string m_origindata;   //serialize with compat_var
@@ -168,9 +168,9 @@ private:
     // just reserved for compatibility
     enum_xaction_type m_source_action_type;
     enum_xaction_type m_target_action_type;
-    u256 m_SignV;
-    h256 m_SignR;
-    h256 m_SignS;
+    top::evm_common::u256 m_SignV;
+    top::evm_common::h256 m_SignR;
+    top::evm_common::h256 m_SignS;
 };
 
 using xtransaction_v3_ptr_t = xobject_ptr_t<xtransaction_v3_t>;
