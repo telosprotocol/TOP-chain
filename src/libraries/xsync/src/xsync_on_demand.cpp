@@ -588,15 +588,22 @@ bool xsync_on_demand_t::basic_check(const std::vector<data::xblock_ptr_t> &block
 
     auto it = blocks.begin();
     auto last_hash = it->get()->get_block_hash();
+    uint64_t last_height = it->get()->get_height();
     it++;
     for (; it != blocks.end(); it++) {
         auto block = it->get();
-        if (block->get_account() != account || block->get_last_block_hash() != last_hash) {
-            xsync_error("xsync_on_demand_t::store_unit_blocks_without_proof receive on_demand_blocks(address or hash error)(%s,%s)(%s,%s)",
-                block->get_account().c_str(), account.c_str(), block->get_last_block_hash().c_str(), last_hash.c_str());
+        if (block->get_account() != account) {
+            xsync_error("xsync_on_demand_t::store_unit_blocks_without_proof address error,%s,%s",
+                block->get_account().c_str(), account.c_str());
+            return false;
+        }
+        if (block->get_last_block_hash() != last_hash) {
+            xsync_error("xsync_on_demand_t::store_unit_blocks_without_proof hash error %s,h=%ld,%ld,%s,%s",
+                account.c_str(), block->get_height(), last_height, block->get_last_block_hash().c_str(), last_hash.c_str());
             return false;
         }
         last_hash = block->get_block_hash();
+        last_height = block->get_height();
     }
     return true;
 }
