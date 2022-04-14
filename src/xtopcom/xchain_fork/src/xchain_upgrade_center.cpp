@@ -60,20 +60,19 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 7126740, "v3 block fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 7221960, "tx v2 fee fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 7473960, "partly remove confirm"},
-            xfork_point_t{xfork_point_type_t::logic_time, 0, "add rsp id"},
-            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "election contract store credit score"},
-            xfork_point_t{xfork_point_type_t::logic_time, 0, "inner table tx"},// should later than "add rsp id"
+            xfork_point_t{xfork_point_type_t::logic_time, 7714440, "add rsp id"},
+            xfork_point_t{xfork_point_type_t::logic_time, 7714440, "election contract store credit score"},
+            xfork_point_t{xfork_point_type_t::logic_time, 7716060, "inner table tx"},// should later than "add rsp id"
         };
-
         // !!!change!!! fork time for galileo
         xchain_fork_config_t  testnet_chain_config{
             xfork_point_t{xfork_point_type_t::logic_time, 6859080, "block fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 7126740, "v3 block fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 7221960, "tx v2 fee fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 7473960, "partly remove confirm"},
-            xfork_point_t{xfork_point_type_t::logic_time, 0, "add rsp id"},
-            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "election contract store credit score"},
-            xfork_point_t{xfork_point_type_t::logic_time, 0, "inner table tx"},
+            xfork_point_t{xfork_point_type_t::logic_time, 7714440, "add rsp id"},
+            xfork_point_t{xfork_point_type_t::logic_time, 7714440, "election contract store credit score"},
+            xfork_point_t{xfork_point_type_t::logic_time, 7716060, "inner table tx"},
         };
 
         // !!!change!!! fork time for local develop net
@@ -82,9 +81,9 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 7126740, "v3 block fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 7221960, "tx v2 fee fork point"},//2022-2-21 10:00:00
             xfork_point_t{xfork_point_type_t::logic_time, 7473960, "partly remove confirm"},
-            xfork_point_t{xfork_point_type_t::logic_time, 0, "add rsp id"},
-            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "election contract store credit score"},
-            xfork_point_t{xfork_point_type_t::logic_time, 0, "inner table tx"},
+            xfork_point_t{xfork_point_type_t::logic_time, 7714440, "add rsp id"},
+            xfork_point_t{xfork_point_type_t::logic_time, 7714440, "election contract store credit score"},
+            xfork_point_t{xfork_point_type_t::logic_time, 7716060, "inner table tx"},
         };
 #endif  // #if defined(XCHAIN_FORKED_BY_DEFAULT)
         xchain_fork_config_t const & xtop_chain_fork_config_center::chain_fork_config() noexcept {
