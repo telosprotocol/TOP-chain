@@ -163,10 +163,15 @@ void xrpc_handler::cluster_process_query_request(const xrpc_msg_request_t & edge
         json_proc.m_request_json["params"]["version"] = version;
         string strErrorMsg = RPC_OK_MSG;
         uint32_t nErrorCode = 0;
-        m_rpc_query_mgr->call_method(strMethod, json_proc.m_request_json["params"], json_proc.m_response_json["data"], strErrorMsg, nErrorCode);
-        json_proc.m_response_json[RPC_ERRNO] = nErrorCode;
-        json_proc.m_response_json[RPC_ERRMSG] = strErrorMsg;
-        json_proc.m_response_json[RPC_SEQUENCE_ID] = edge_msg.m_client_id;
+        if (strMethod.substr(0,4) == "eth_") {
+            m_rpc_query_mgr->call_method(strMethod, json_proc.m_request_json["params"], json_proc.m_response_json, strErrorMsg, nErrorCode);
+            json_proc.m_response_json["id"] = edge_msg.m_client_id;
+        } else {
+            m_rpc_query_mgr->call_method(strMethod, json_proc.m_request_json["params"], json_proc.m_response_json["data"], strErrorMsg, nErrorCode);
+            json_proc.m_response_json[RPC_ERRNO] = nErrorCode;
+            json_proc.m_response_json[RPC_ERRMSG] = strErrorMsg;
+            json_proc.m_response_json[RPC_SEQUENCE_ID] = edge_msg.m_client_id;
+        }
         response_msg_ptr->m_message_body = json_proc.get_response();
     } catch (const xrpc_error & e) {
         xinfo_rpc("error %s", e.what());

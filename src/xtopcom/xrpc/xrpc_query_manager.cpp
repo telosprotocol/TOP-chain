@@ -70,6 +70,8 @@ bool xrpc_query_manager::handle(std::string & strReq, xJson::Value & js_req, xJs
         if (action == "getAccount" || action == "getTransaction" || action == "getCGP" || action == "getTimerInfo" || action == "getIssuanceDetail" || action == "getTransaction" ||
             action == "getStandbys" || action == "queryNodeReward" || action == "queryNodeInfo" || action == "getGeneralInfos") {
             iter->second(js_req, js_rsp["value"], strResult, nErrorCode);
+        } else if (action == "eth_getBalance") {
+            iter->second(js_req, js_rsp, strResult, nErrorCode);
         } else {
             iter->second(js_req, js_rsp, strResult, nErrorCode);
         }
@@ -2331,6 +2333,29 @@ void xrpc_query_manager::getLatestTables(xJson::Value & js_req, xJson::Value & j
 
     js_rsp = jv;
 }
+void xrpc_query_manager::eth_getBalance(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
+    std::string account = js_req["account_addr"].asString();
 
+    // add top address check
+    ADDRESS_CHECK_VALID(account)
+    try {
+        xaccount_ptr_t account_ptr = m_store->query_account(account);
+        if (account_ptr == nullptr) {
+            js_rsp["result"] = "0x0";
+        } else {
+            uint64_t balance = account_ptr->tep_balance(data::XPROPERTY_ASSET_ETH);
+            xdbg("xarc_query_manager::getBalance account: %s, %llu", account.c_str(), balance);
+            //  balance *= 1000000000000000000;
+            balance *= 1000000000000;
+            std::stringstream outstr;
+            outstr << "0x" << std::hex << balance;
+            js_rsp["result"] = std::string(outstr.str());
+        }
+        js_rsp["jsonrpc"] = "2.0";
+    } catch (exception & e) {
+        strResult = std::string(e.what());
+        nErrorCode = (uint32_t)enum_xrpc_error_code::rpc_param_unkown_error;
+    }
+}
 }  // namespace chain_info
 }  // namespace top
