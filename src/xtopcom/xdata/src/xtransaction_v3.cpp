@@ -66,7 +66,9 @@ int32_t xtransaction_v3_t::do_read_without_hash_signature(base::xstream_t & in) 
         std::string str(decoded.decoded[i].begin(), decoded.decoded[i].end());
         vecData.push_back(str);
     }
-
+    if (vecData.size() != 9) {
+        return -1;
+    }
     m_nonce = fromBigEndian<u256>(vecData[0]);
     xdbg("serial_transfrom::eth_to_top nonce:%s", m_nonce.str().c_str());
     m_gasprice = fromBigEndian<u256>(vecData[1]);
@@ -98,19 +100,19 @@ int32_t xtransaction_v3_t::do_read_without_hash_signature(base::xstream_t & in) 
         if (m_SignV > 36) {
             auto const chainId = (m_SignV - 35) / 2;
             if (chainId > std::numeric_limits<uint64_t>::max())
-                return -1;
+                return -2;
             m_chainId = static_cast<uint64_t>(chainId);
         }
         // only values 27 and 28 are allowed for non-replay protected transactions
         else if (m_SignV != 27 && m_SignV != 28) {
-            return -2;
+            return -3;
         }
 
         recoveryID = m_chainId ? static_cast<byte>(m_SignV - (u256{m_chainId} * 2 + 35)) : static_cast<byte>(m_SignV - 27);
         vrs = SignatureStruct{m_SignR, m_SignS, recoveryID};
         xdbg("serial_transfrom::eth_to_top  chainId:%d recoveryID:%d", m_chainId, recoveryID);
         if (_checkSig >= CheckTransaction::Cheap && !vrs.isValid()) {
-            return -3;
+            return -4;
         }
     }
     string strFrom;
