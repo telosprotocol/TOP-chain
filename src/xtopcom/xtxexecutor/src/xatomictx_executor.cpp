@@ -180,7 +180,7 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
         xtvm_t tvm;
         ret = tvm.execute(vminput, vmoutput);
     } else {
-        evm::xtop_evm evm;
+        evm::xtop_evm evm{m_statectx};
         ret = evm.execute(vminput,vmoutput);
         // xassert(false);
         // ret = enum_exec_error_vm_execute;

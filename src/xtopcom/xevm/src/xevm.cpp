@@ -12,6 +12,13 @@
 
 NS_BEG2(top, evm)
 
+xtop_evm::xtop_evm(statectx::xstatectx_face_ptr_t const evm_statectx)
+  : m_evm_statectx{evm_statectx}
+  , evm_action_runtime_{top::make_unique<contract_runtime::evm::xevm_action_runtime_t>(
+        top::make_observer<contract_runtime::evm::xevm_contract_manager_t>(contract_runtime::evm::xevm_contract_manager_t::instance()),
+        evm_statectx)} {
+}
+
 xtop_evm::xtop_evm(observer_ptr<contract_runtime::evm::xevm_contract_manager_t> const evm_contract_manager, statectx::xstatectx_face_ptr_t const evm_statectx)
   : m_evm_statectx{evm_statectx}, evm_action_runtime_{top::make_unique<contract_runtime::evm::xevm_action_runtime_t>(evm_contract_manager, evm_statectx)} {
 }
