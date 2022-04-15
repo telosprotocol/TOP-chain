@@ -65,7 +65,7 @@ bytes RLP::putVarInt(uint64_t i) noexcept {
         bytes.push_back(i & 0xff);
         i = i >> 8;
     } while (i);
-    if (bytes.size() >= 1 && bytes.size() <= 8);
+    if (!(bytes.size() >= 1 && bytes.size() <= 8))
     { 
         throw std::invalid_argument("invalid length length");
     }

@@ -184,6 +184,7 @@ class xtransaction_t : virtual public base::xrefcount_t {
     virtual const std::string get_SignV() { return ""; }
     virtual const std::string get_SignR() { return ""; }
     virtual const std::string get_SignS() { return ""; }
+    virtual bool is_evm_tx() const = 0;
 };
 
 }  // namespace data
