@@ -134,22 +134,6 @@ const xcons_transaction_ptr_t xtxpool_t::pop_tx(const tx_info_t & txinfo) {
     return tx_ent->get_tx();
 }
 
-ready_accounts_t xtxpool_t::get_ready_accounts(const xtxs_pack_para_t & pack_para) {
-    auto table = get_txpool_table_by_addr(pack_para.get_table_addr());
-    if (table == nullptr) {
-        return {};
-    }
-    return table->get_ready_accounts(pack_para);
-}
-
-std::vector<xcons_transaction_ptr_t> xtxpool_t::get_ready_txs(const xtxs_pack_para_t & pack_para) {
-    auto table = get_txpool_table_by_addr(pack_para.get_table_addr());
-    if (table == nullptr) {
-        return {};
-    }
-    return table->get_ready_txs(pack_para);
-}
-
 xpack_resource xtxpool_t::get_pack_resource(const xtxs_pack_para_t & pack_para) {
     auto table = get_txpool_table_by_addr(pack_para.get_table_addr());
     if (table == nullptr) {
@@ -292,7 +276,7 @@ void xtxpool_t::refresh_table(uint8_t zone, uint16_t subaddr) {
 //     }
 // }
 
-void xtxpool_t::update_table_state(const base::xvproperty_prove_ptr_t & property_prove_ptr, const data::xtablestate_ptr_t & table_state) {
+void xtxpool_t::update_table_state(const base::xvproperty_prove_ptr_t & property_prove_ptr, const data::xtablestate_ptr_t & table_state, bool add_rsp_id) {
     xtxpool_info("xtxpool_t::update_table_state table:%s height:%llu", table_state->get_account().c_str(), table_state->get_block_height());
     XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_update_receiptid_state");
     auto table = get_txpool_table_by_addr(table_state->get_account().c_str());
@@ -300,6 +284,9 @@ void xtxpool_t::update_table_state(const base::xvproperty_prove_ptr_t & property
         return;
     }
     m_para->get_receiptid_state_cache().update_table_receiptid_state(property_prove_ptr, table_state->get_receiptid_state());
+    if (add_rsp_id) {
+        m_para->update_send_ids_after_add_rsp_id(table_state->get_receiptid_state(), m_all_table_sids);
+    }
     table->update_table_state(table_state);
 }
 
@@ -436,6 +423,10 @@ bool xtxpool_t::get_sender_need_confirm_ids(const std::string & account, base::x
     }
 
     return table->get_sender_need_confirm_ids(peer_table_sid, lower_receipt_id, upper_receipt_id, receipt_ids);
+}
+
+bool xtxpool_t::get_send_id_after_add_rsp_id(base::xtable_shortid_t self_sid, base::xtable_shortid_t peer_sid, uint64_t & send_id) const {
+    return m_para->get_send_id_after_add_rsp_id(self_sid, peer_sid, send_id);
 }
 
 void xtxpool_t::build_recv_tx(base::xtable_shortid_t from_table_sid,

@@ -1360,14 +1360,7 @@ void xzec_reward_contract::calc_nodes_rewards_v5(common::xlogic_time_t const cur
     // step 2: calculate different votes and role nums
     std::map<common::xaccount_address_t, uint64_t> account_votes;
     auto auditor_total_votes = calc_votes(property_param.votes_detail, property_param.map_nodes, account_votes);
-
-    auto const & fork_config = chain_fork::xchain_fork_config_center_t::get_chain_fork_config();
-#if defined(XENABLE_TESTS)
-    auto const fullnode_enabled = false;
-#else
-    auto const fullnode_enabled = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.enable_fullnode_related_func_fork_point, current_time);
-#endif
-    std::vector<std::vector<uint32_t>> role_nums = calc_role_nums(property_param.map_nodes, fullnode_enabled);
+    std::vector<std::vector<uint32_t>> role_nums = calc_role_nums(property_param.map_nodes, true);
 
     xinfo(
         "[xzec_reward_contract::calc_nodes_rewards] issue_time_length: %llu, "
@@ -1448,25 +1441,16 @@ void xzec_reward_contract::calc_nodes_rewards_v5(common::xlogic_time_t const cur
                 self_reward += reward_to_self;
             }
         }
-        if (fullnode_enabled) {
-            if (node.could_be_archive()) {
-                ::uint128_t reward_to_self = 0;
-                calc_archive_workload_rewards(node, role_nums[archiver_idx], archive_workload_rewards, fullnode_enabled, reward_to_self);
-                if (reward_to_self != 0) {
-                    issue_detail.m_node_rewards[account.to_string()].m_archive_reward = reward_to_self;
-                    self_reward += reward_to_self;
-                }
-            }
-        } else {
-            if (node.legacy_could_be_archive()) {
-                ::uint128_t reward_to_self = 0;
-                calc_archive_workload_rewards(node, role_nums[archiver_idx], archive_workload_rewards, fullnode_enabled, reward_to_self);
-                if (reward_to_self != 0) {
-                    issue_detail.m_node_rewards[account.to_string()].m_archive_reward = reward_to_self;
-                    self_reward += reward_to_self;
-                }
+
+        if (node.could_be_archive()) {
+            ::uint128_t reward_to_self = 0;
+            calc_archive_workload_rewards(node, role_nums[archiver_idx], archive_workload_rewards, true, reward_to_self);
+            if (reward_to_self != 0) {
+                issue_detail.m_node_rewards[account.to_string()].m_archive_reward = reward_to_self;
+                self_reward += reward_to_self;
             }
         }
+
         if (node.could_be_auditor()) {
             ::uint128_t reward_to_self = 0;
             calc_auditor_workload_rewards(

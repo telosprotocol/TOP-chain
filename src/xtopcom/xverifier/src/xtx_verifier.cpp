@@ -130,7 +130,7 @@ int32_t xtx_verifier::verify_tx_signature(data::xtransaction_t const * trx, obse
             check_success = true;
 #else
             assert(store != nullptr);
-            xpublic_key_t pub_key = top::data::system_contract::get_reg_info(store, common::xaccount_address_t{trx->get_source_addr()}).consensus_public_key;
+            xpublic_key_t pub_key = top::store::get_reg_info(store, common::xaccount_address_t{trx->get_source_addr()}).consensus_public_key;
             xdbg("[global_trace][xtx_verifier][verify_tx_signature][pub_key_sign_check], tx:%s, pub_key(base64):%s", trx->dump().c_str(), pub_key.to_string().c_str());
 
             check_success = !pub_key.empty() && trx->pub_key_sign_check(pub_key);
@@ -151,19 +151,30 @@ int32_t xtx_verifier::verify_tx_signature(data::xtransaction_t const * trx, obse
 }
 
 // verify trx fire expiration
-int32_t xtx_verifier::verify_tx_fire_expiration(data::xtransaction_t const * trx, uint64_t now) {
+int32_t xtx_verifier::verify_tx_fire_expiration(data::xtransaction_t const * trx, uint64_t now, bool is_first_time_push_tx) {
     uint32_t trx_fire_tolerance_time = XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_send_timestamp_tolerance);
 
-    uint64_t fire_expire = trx->get_fire_timestamp() + trx_fire_tolerance_time;
+    uint64_t fire_expire;
+    if (is_first_time_push_tx) {
+        // XTODO only first time to txpool should check if fire timestamp is too old
+        fire_expire = trx->get_fire_timestamp() + trx_fire_tolerance_time;
+        if (fire_expire < now) {
+            xwarn("xtx_verifier::verify_tx_fire_expiration fail fire timetamp too old, tx:%s, fire_timestamp:%ld, now:%ld",
+                trx->dump().c_str(), trx->get_fire_timestamp(), now);
+            return xverifier_error::xverifier_error_tx_fire_expired;
+        }
+    }
+
+    fire_expire = trx->get_fire_timestamp() + trx->get_expire_duration() + trx_fire_tolerance_time;
     if (fire_expire < now) {
-        xwarn("[global_trace][xtx_verifier][verify_tx_fire_expiration][fail], tx:%s, fire_timestamp:%ld, now:%ld",
-            trx->dump().c_str(), trx->get_fire_timestamp(), now);
-        return xverifier_error::xverifier_error_tx_fire_expired;
+        xwarn("xtx_verifier::verify_tx_fire_expiration fail expired, tx:%s, fire_timestamp:%" PRIu64 ", fire_tolerance_time:%" PRIu32 ", expire_duration:%" PRIu16 ", now:%" PRIu64,
+            trx->dump().c_str(), trx->get_fire_timestamp(), trx_fire_tolerance_time, trx->get_expire_duration(), now);
+        return xverifier_error::xverifier_error_tx_duration_expired;
     }
 
     fire_expire = now + trx_fire_tolerance_time;
     if (fire_expire < trx->get_fire_timestamp()) {
-        xwarn("[global_trace][xtx_verifier][verify_tx_fire_expiration][fail], tx:%s, fire_timestamp:%ld, now:%ld",
+        xwarn("xtx_verifier::verify_tx_fire_expiration fail fire timetamp too future, tx:%s, fire_timestamp:%ld, now:%ld",
             trx->dump().c_str(), trx->get_fire_timestamp(), now);
         return xverifier_error::xverifier_error_tx_fire_expired;
     }
@@ -203,20 +214,6 @@ int32_t xtx_verifier::sys_contract_tx_check(data::xtransaction_t const * trx_ptr
     }
 
     xdbg("[global_trace][xtx_verifier][sys_contract_tx_check][success], tx:%s", trx_ptr->dump().c_str());
-    return xverifier_error::xverifier_success;
-}
-
-// verify trx duration expiration
-int32_t xtx_verifier::verify_tx_duration_expiration(const data::xtransaction_t * trx_ptr, uint64_t now) {
-    uint32_t trx_fire_tolerance_time = XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_send_timestamp_tolerance);
-    uint64_t fire_expire = trx_ptr->get_fire_timestamp() + trx_ptr->get_expire_duration() + trx_fire_tolerance_time;
-    if (fire_expire < now) {
-        xwarn("[global_trace][xtx_verifier][verify_tx_duration_expiration][fail], tx:%s, fire_timestamp:%" PRIu64 ", fire_tolerance_time:%" PRIu32 ", expire_duration:%" PRIu16 ", now:%" PRIu64,
-            trx_ptr->dump().c_str(), trx_ptr->get_fire_timestamp(), trx_fire_tolerance_time, trx_ptr->get_expire_duration(), now);
-        return xverifier_error::xverifier_error_tx_duration_expired;
-    }
-
-    xdbg("[global_trace][xtx_verifier][verify_tx_duration_expiration][success], tx hash: %s", trx_ptr->get_digest_hex_str().c_str());
     return xverifier_error::xverifier_success;
 }
 
@@ -316,16 +313,9 @@ int32_t xtx_verifier::verify_send_tx_legitimacy(data::xtransaction_t const * trx
         return ret;
     }
 
-    auto const& fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-    auto logic_clock = (top::base::xtime_utl::gmttime() - top::base::TOP_BEGIN_GMTIME) / 10;
-    if (chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.blacklist_function_fork_point, logic_clock)) {
-        xdbg("[xtx_verifier::verify_send_tx_legitimacy] in blacklist fork point time, clock height: %" PRIu64, logic_clock);
-        if (xverifier::xblacklist_utl_t::is_black_address(trx_ptr->get_source_addr())) {
-            xdbg("[xtx_verifier::verify_send_tx_legitimacy] in black address:%s, %s, %s", trx_ptr->get_digest_hex_str().c_str(), trx_ptr->get_target_addr().c_str(), trx_ptr->get_source_addr().c_str());
-            return xverifier_error::xverifier_error_tx_blacklist_invalid;
-        }
-    } else {
-        xdbg("[xtx_verifier::verify_send_tx_legitimacy] not up to blacklist fork point time, clock height: %" PRIu64, logic_clock);
+    if (xverifier::xblacklist_utl_t::is_black_address(trx_ptr->get_source_addr())) {
+        xdbg("[xtx_verifier::verify_send_tx_legitimacy] in black address:%s, %s, %s", trx_ptr->get_digest_hex_str().c_str(), trx_ptr->get_target_addr().c_str(), trx_ptr->get_source_addr().c_str());
+        return xverifier_error::xverifier_error_tx_blacklist_invalid;
     }
 
     if (xwhitelist_utl::check_whitelist_limit_tx(trx_ptr)) {
@@ -338,8 +328,8 @@ int32_t xtx_verifier::verify_shard_contract_addr(data::xtransaction_t const * tr
     const auto & source_addr = trx_ptr->get_source_addr();
     const auto & origin_target_addr = trx_ptr->get_origin_target_addr();
     // user call sys sharding contract, always auto set target addresss
-    if (is_sys_sharding_contract_address(common::xaccount_address_t{origin_target_addr})) {
-        if (is_account_address(common::xaccount_address_t{source_addr})) {
+    if (data::is_sys_sharding_contract_address(common::xaccount_address_t{origin_target_addr})) {
+        if (data::is_account_address(common::xaccount_address_t{source_addr})) {
             if (std::string::npos != origin_target_addr.find("@")) {
                 xwarn("[global_trace][xtx_verifier][verify_shard_contract_addr] fail-already set tableid, tx:%s,origin_target_addr=%s", trx_ptr->dump().c_str(), origin_target_addr.c_str());
                 return xverifier_error_tx_basic_validation_invalid;

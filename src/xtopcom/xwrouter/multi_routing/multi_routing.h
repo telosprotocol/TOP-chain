@@ -48,6 +48,10 @@ public:
     void HandleCacheElectNodesRequest(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
     void HandleCacheElectNodesResponse(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
 
+    void SendAddLastRoundElectNodesRequest(kadmlia::ElectRoutingTablePtr elect_routing_table_ptr, base::ServiceType service_type);
+    void HandleAddLastRoundElectNodesRequest(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
+    void HandleAddLastRoundElectNodesResponse(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
+
     // RoutingTableInfoMgr
     void add_routing_table_info(common::xip2_t const & group_xip, std::pair<uint64_t, uint64_t> const & routing_table_info);
     void delete_routing_table_info(common::xip2_t const & group_xip, uint64_t version_or_blk_height);
@@ -78,6 +82,8 @@ private:
     using OnCompleteElectRoutingTableCallback = std::function<void(base::ServiceType const, std::string const, kadmlia::NodeInfoPtr const &)>;
     void CompleteElectRoutingTable();
     void OnCompleteElectRoutingTable(base::ServiceType const service_type, std::string const election_xip2, kadmlia::NodeInfoPtr const & node_info);
+
+    void OnAddLastRoundElectRoutingNodes(int status, transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
 
     DISALLOW_COPY_AND_ASSIGN(MultiRouting);
 };

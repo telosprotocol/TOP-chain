@@ -38,7 +38,7 @@ private:
     void process_timer();
     void send_chain_state(const vnetwork::xvnode_address_t &self_addr, const std::set<vnetwork::xvnode_address_t> &target_list, std::vector<xchain_state_info_t> &info_list);
     void send_frozen_chain_state(const vnetwork::xvnode_address_t &self_addr, std::vector<xchain_state_info_t> &info_list);
-
+    void prune_table(const vnetwork::xvnode_address_t &self_addr, const map_chain_info_t &chains);
 private:
     std::string m_vnode_id;
     xsync_store_face_t *m_sync_store;

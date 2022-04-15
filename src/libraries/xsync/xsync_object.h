@@ -98,8 +98,8 @@ public:
     std::map<std::string, std::vector<std::string>> get_neighbors() const override;
     std::string auto_prune_data(const std::string& prune) const override;
 
-    void add_vnet(const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> &vnetwork_driver);
-    void remove_vnet(const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> &vnetwork_driver);
+    void add_vnet(const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> &vnetwork_driver, const common::xminer_type_t miner_type, const bool genesis);
+    void remove_vnet(const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> &vnetwork_driver, const common::xminer_type_t miner_type, const bool genesis);
 };
 using xsync_object_t = xtop_sync_object;
 

@@ -31,15 +31,15 @@ public:
     void genrate_table_chain(uint64_t max_block_height) {
         for (uint64_t i = 0; i < max_block_height; i++) {
             generate_send_tx();  // auto generate txs internal
-            xblock_ptr_t block = generate_tableblock();
+            data::xblock_ptr_t block = generate_tableblock();
             xassert(block != nullptr);
             on_table_finish(block);
         }
     }
 
-    xblock_ptr_t generate_tableblock() {
-        xblock_ptr_t prev_tableblock = get_cert_block();
-        xblock_consensus_para_t cs_para = init_consensus_para();
+    data::xblock_ptr_t generate_tableblock() {
+        data::xblock_ptr_t prev_tableblock = get_cert_block();
+        data::xblock_consensus_para_t cs_para = init_consensus_para();
 
         if (prev_tableblock->get_account() == TABLE_0) {
             if (prev_tableblock->get_height() == 1 - 1) {
@@ -57,7 +57,7 @@ public:
             }
         }
 
-        xblock_ptr_t proposal_block = nullptr;
+        data::xblock_ptr_t proposal_block = nullptr;
         uint32_t history_table_count = m_history_tables.size();
         if ((m_config_fulltable_interval != 0) && (((prev_tableblock->get_height() + 1) % m_config_fulltable_interval) == 0)) {
             proposal_block = generate_full_table(cs_para);
@@ -150,12 +150,12 @@ public:
         if(is_close())\
         {\
             xwarn_err("xvblockstore has closed at store_path=%s",m_store_path.c_str());\
-            return nullptr;\
+            return false;\
         }\
         base::xvtable_t * target_table = base::xvchain_t::instance().get_table(account_vid.get_xvid()); \
         if (target_table == nullptr) { \
             xwarn_err("xvblockstore invalid account=%s",account_vid.get_address().c_str());\
-            return nullptr;\
+            return false;\
         }\
         store::auto_xblockacct_ptr account_obj(target_table->get_lock(),this); \
         get_block_account(target_table,account_vid.get_address(),account_obj); \

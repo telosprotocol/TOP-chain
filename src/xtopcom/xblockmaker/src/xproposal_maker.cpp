@@ -11,7 +11,6 @@
 #include "xdata/xblocktool.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xblockbuild.h"
-#include "xtxpool_v2/xtxpool_tool.h"
 #include "xmbus/xevent_behind.h"
 #include "xchain_fork/xchain_upgrade_center.h"
 
@@ -38,7 +37,8 @@ bool xproposal_maker_t::can_make_proposal(data::xblock_consensus_para_t & propos
         return false;
     }
 
-    if (!xblocktool_t::verify_latest_blocks(proposal_para.get_latest_cert_block().get(), proposal_para.get_latest_locked_block().get(), proposal_para.get_latest_committed_block().get())) {
+    if (!data::xblocktool_t::verify_latest_blocks(
+            proposal_para.get_latest_cert_block().get(), proposal_para.get_latest_locked_block().get(), proposal_para.get_latest_committed_block().get())) {
         xwarn("xproposal_maker_t::can_make_proposal. fail-verify_latest_blocks fail.%s",
             proposal_para.dump().c_str());
         return false;
@@ -53,13 +53,13 @@ bool xproposal_maker_t::can_make_proposal(data::xblock_consensus_para_t & propos
     return true;
 }
 
-xtablestate_ptr_t xproposal_maker_t::get_target_tablestate(base::xvblock_t* block) {
+data::xtablestate_ptr_t xproposal_maker_t::get_target_tablestate(base::xvblock_t * block) {
     base::xauto_ptr<base::xvbstate_t> bstate = m_resources->get_xblkstatestore()->get_block_state(block,metrics::statestore_access_from_blkmaker_get_target_tablestate);
     if (bstate == nullptr) {
         xwarn("xproposal_maker_t::get_target_tablestate fail-get target state.block=%s",block->dump().c_str());
         return nullptr;
     }
-    xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(bstate.get());
+    data::xtablestate_ptr_t tablestate = std::make_shared<data::xtable_bstate_t>(bstate.get());
     return tablestate;
 }
 
@@ -67,7 +67,7 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
     XMETRICS_TIMER(metrics::cons_make_proposal_tick);
     // get tablestate related to latest cert block
     auto & latest_cert_block = proposal_para.get_latest_cert_block();
-    xtablestate_ptr_t tablestate = get_target_tablestate(latest_cert_block.get());
+    data::xtablestate_ptr_t tablestate = get_target_tablestate(latest_cert_block.get());
     if (nullptr == tablestate) {
         xwarn("xproposal_maker_t::make_proposal fail clone tablestate. %s,cert_height=%" PRIu64 "", proposal_para.dump().c_str(), latest_cert_block->get_height());
         XMETRICS_GAUGE(metrics::cons_fail_make_proposal_table_state, 1);
@@ -75,7 +75,7 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
         return nullptr;
     }
 
-    xtablestate_ptr_t tablestate_commit = get_target_tablestate(proposal_para.get_latest_committed_block().get());
+    data::xtablestate_ptr_t tablestate_commit = get_target_tablestate(proposal_para.get_latest_committed_block().get());
     if (tablestate_commit == nullptr) {
         xwarn("xproposal_maker_t::make_proposal fail clone tablestate. %s,commit_height=%" PRIu64 "", proposal_para.dump().c_str(), proposal_para.get_latest_committed_block()->get_height());
         XMETRICS_GAUGE(metrics::cons_fail_make_proposal_table_state, 1);
@@ -238,7 +238,7 @@ int xproposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::x
 
     // update txpool receiptid state
     const xblock_ptr_t & commit_block = cs_para.get_latest_committed_block();
-    xtablestate_ptr_t commit_tablestate = get_target_tablestate(commit_block.get());
+    data::xtablestate_ptr_t commit_tablestate = get_target_tablestate(commit_block.get());
     if (commit_tablestate == nullptr) {
         xwarn("xproposal_maker_t::verify_proposal fail clone tablestate. %s,cert=%s", cs_para.dump().c_str(), proposal_prev_block->dump().c_str());
         XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_table_state_get, 1);
@@ -247,16 +247,19 @@ int xproposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::x
     }
 
     base::xvproperty_prove_ptr_t property_prove_ptr = nullptr;
-    xtablestate_ptr_t tablestate_ptr = nullptr;
+    data::xtablestate_ptr_t tablestate_ptr = nullptr;
     base::xvaccount_t vaccount(get_account());
-    auto ret = xblocktool_t::get_receiptid_state_and_prove(get_blockstore(), vaccount, commit_block.get(), property_prove_ptr, tablestate_ptr);
+    auto ret = data::xblocktool_t::get_receiptid_state_and_prove(get_blockstore(), vaccount, commit_block.get(), property_prove_ptr, tablestate_ptr);
     if (!ret) {
         xwarn("xproposal_maker_t::verify_proposal create receipt state and prove fail.table:%s, commit height:%llu", get_account().c_str(), commit_block->get_height());
     }
-    get_txpool()->update_table_state(property_prove_ptr, commit_tablestate);
+
+    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+    bool commit_block_add_rsp_id = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.add_rsp_id, commit_block->get_clock());
+    get_txpool()->update_table_state(property_prove_ptr, commit_tablestate, commit_block_add_rsp_id);
 
     // get tablestate related to latest cert block
-    xtablestate_ptr_t tablestate = get_target_tablestate(proposal_prev_block.get());
+    data::xtablestate_ptr_t tablestate = get_target_tablestate(proposal_prev_block.get());
     if (nullptr == tablestate) {
         xwarn("xproposal_maker_t::verify_proposal fail clone tablestate. %s,cert=%s", cs_para.dump().c_str(), proposal_prev_block->dump().c_str());
         XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_table_state_get, 1);
@@ -311,7 +314,7 @@ bool xproposal_maker_t::verify_proposal_input(base::xvblock_t *proposal_block, x
     if (proposal_block->get_block_class() != base::enum_xvblock_class_light) {
         return true;
     }
-    xtable_block_t* tableblock = dynamic_cast<xtable_block_t*>(proposal_block);
+    data::xtable_block_t * tableblock = dynamic_cast<data::xtable_block_t *>(proposal_block);
     if (tableblock == nullptr) {
         xerror("xproposal_maker_t::verify_proposal_input fail-not light table. proposal=%s",
             proposal_block->dump().c_str());
@@ -356,13 +359,15 @@ bool xproposal_maker_t::verify_proposal_input(base::xvblock_t *proposal_block, x
             XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_confirm_id_error, 1);
             return false;
         }
-        auto peer_receiptid_state = xblocktool_t::get_receiptid_from_property_prove(prove);
+        auto peer_receiptid_state = data::xblocktool_t::get_receiptid_from_property_prove(prove);
         auto peer_sid = peer_receiptid_state->get_self_tableid();
         get_txpool()->update_peer_receipt_id_state(prove, peer_receiptid_state);
 
         base::xreceiptid_pair_t self_pair;
         table_para.get_tablestate()->get_receiptid_state()->find_pair(peer_sid, self_pair);
         auto confirmid_max = self_pair.get_confirmid_max();
+        auto confirm_rsp_id_max = self_pair.get_confirm_rsp_id_max();
+        auto send_rsp_id_max = self_pair.get_send_rsp_id_max();
 
         base::xreceiptid_pair_t peer_pair;
         peer_receiptid_state->find_pair(self_sid, peer_pair);
@@ -374,30 +379,45 @@ bool xproposal_maker_t::verify_proposal_input(base::xvblock_t *proposal_block, x
             return false;
         }
 
-        std::vector<uint64_t> need_confirm_receipt_ids;
-        auto ret = get_txpool()->get_sender_need_confirm_ids(get_account(), peer_sid, confirmid_max + 1, recvid_max, need_confirm_receipt_ids);
-        if (!ret || !need_confirm_receipt_ids.empty()) {
-            xwarn("xproposal_maker_t::verify_proposal_input fail-have need confirm ids. proposal=%s,ret:%d,confirmid:%llu,recvid:%llu", proposal_block->dump().c_str(), ret, confirmid_max, recvid_max);
-            if (ret && !need_confirm_receipt_ids.empty()) {
-                for (auto & id : need_confirm_receipt_ids) {
-                    xwarn("xproposal_maker_t::verify_proposal_input fail-have need confirm ids. proposal=%s,id:%llu,confirmid:%llu,recvid:%llu", proposal_block->dump().c_str(), id, ret, confirmid_max, recvid_max);
-                }
+        uint64_t send_id_after_add_rsp_id = 0;
+        bool result = get_txpool()->get_send_id_after_add_rsp_id(self_sid, peer_sid, send_id_after_add_rsp_id);
+        if (confirm_rsp_id_max > 0 || (result && confirmid_max >= send_id_after_add_rsp_id)) {
+            if (self_pair.get_send_rsp_id_max() != self_pair.get_confirm_rsp_id_max()) {
+                xwarn("xproposal_maker_t::verify_proposal_input fail-send rsp id:%llu not equal to confirm rsp id:%llu. proposal=%s",
+                    self_pair.get_send_rsp_id_max(),
+                    self_pair.get_confirm_rsp_id_max(),
+                    proposal_block->dump().c_str());
+                XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_confirm_id_error, 1);
+                return false;
             }
-            XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_rise_confirm_id, 1);
-            return false;
+        } else {
+            std::vector<uint64_t> need_confirm_receipt_ids;
+            auto ret = get_txpool()->get_sender_need_confirm_ids(get_account(), peer_sid, confirmid_max + 1, recvid_max, need_confirm_receipt_ids);
+            if (!ret || !need_confirm_receipt_ids.empty()) {
+                xwarn("xproposal_maker_t::verify_proposal_input fail-have need confirm ids. proposal=%s,ret:%d,confirmid:%llu,recvid:%llu", proposal_block->dump().c_str(), ret, confirmid_max, recvid_max);
+                if (ret && !need_confirm_receipt_ids.empty()) {
+                    for (auto & id : need_confirm_receipt_ids) {
+                        xwarn("xproposal_maker_t::verify_proposal_input fail-have need confirm ids. proposal=%s,id:%llu,confirmid:%llu,recvid:%llu", proposal_block->dump().c_str(), id, ret, confirmid_max, recvid_max);
+                    }
+                }
+                XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_rise_confirm_id, 1);
+                return false;
+            }
         }
 
         xinfo("xproposal_maker_t::verify_proposal_input proposal_block:%llu,receipt id prove:peer:%d,id:%llu:%llu", proposal_block->dump().c_str(), peer_sid, confirmid_max, recvid_max);
         receiptid_info_map[peer_sid] = xtxpool_v2::xreceiptid_state_and_prove(prove, peer_receiptid_state);
     }
 
-    for (auto & tx : origin_txs) {
-        if (tx->is_confirm_tx()) {
-            auto it = receiptid_info_map.find(tx->get_peer_tableid());
-            if (it != receiptid_info_map.end()) {
-                xerror("xproposal_maker_t::verify_proposal_input fail-tx changed same peer table confirm id with prove. proposal=%s", proposal_block->dump().c_str());
-                XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_confirm_id_error, 1);
-                return false;
+    if (!receiptid_info_map.empty()) {
+        for (auto & tx : origin_txs) {
+            if (tx->is_confirm_tx()) {
+                auto it = receiptid_info_map.find(tx->get_peer_tableid());
+                if (it != receiptid_info_map.end()) {
+                    xerror("xproposal_maker_t::verify_proposal_input fail-tx changed same peer table confirm id with prove. proposal=%s", proposal_block->dump().c_str());
+                    XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_confirm_id_error, 1);
+                    return false;
+                }
             }
         }
     }
@@ -442,13 +462,15 @@ bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & propos
             return false;
         }
         base::xvproperty_prove_ptr_t property_prove_ptr = nullptr;
-        xtablestate_ptr_t tablestate_ptr = nullptr;
+        data::xtablestate_ptr_t tablestate_ptr = nullptr;
         base::xvaccount_t vaccount(get_account());
-        auto ret = xblocktool_t::get_receiptid_state_and_prove(get_blockstore(), vaccount, proposal_para.get_latest_committed_block().get(), property_prove_ptr, tablestate_ptr);
+        auto ret = data::xblocktool_t::get_receiptid_state_and_prove(get_blockstore(), vaccount, proposal_para.get_latest_committed_block().get(), property_prove_ptr, tablestate_ptr);
         if (!ret) {
             xwarn("xproposal_maker_t::update_txpool_txs create receipt state and prove fail.table:%s, commit height:%llu", get_account().c_str(), proposal_para.get_latest_committed_block()->get_height());
         }
-        get_txpool()->update_table_state(property_prove_ptr, table_para.get_commit_tablestate());
+        auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+        bool commit_block_add_rsp_id = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.add_rsp_id, proposal_para.get_latest_committed_block()->get_clock());
+        get_txpool()->update_table_state(property_prove_ptr, table_para.get_commit_tablestate(), commit_block_add_rsp_id);
 
         // update locked txs for txpool, locked txs come from two latest tableblock
         // get_locked_nonce_map(proposal_para.get_latest_locked_block(), locked_nonce_map);
@@ -462,14 +484,10 @@ bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & propos
     uint16_t confirm_txs_max_num = 30;
 
     std::set<base::xtable_shortid_t> peer_sids_for_confirm_id;
-    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-    bool is_forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.partly_remove_confirm, proposal_para.get_clock());
-    if (is_forked) {
-        auto & all_table_sids = get_txpool()->get_all_table_sids();
-        std::vector<base::xtable_shortid_t> all_table_sids_vec;
-        all_table_sids_vec.assign(all_table_sids.begin(), all_table_sids.end());
-        peer_sids_for_confirm_id = select_peer_sids_for_confirm_id(all_table_sids_vec, proposal_para.get_proposal_height());
-    }
+    auto & all_table_sids = get_txpool()->get_all_table_sids();
+    std::vector<base::xtable_shortid_t> all_table_sids_vec;
+    all_table_sids_vec.assign(all_table_sids.begin(), all_table_sids.end());
+    peer_sids_for_confirm_id = select_peer_sids_for_confirm_id(all_table_sids_vec, proposal_para.get_proposal_height());
 
     xtxpool_v2::xtxs_pack_para_t txpool_pack_para(
         proposal_para.get_table_account(), tablestate_highqc, all_txs_max_num, confirm_and_recv_txs_max_num, confirm_txs_max_num, peer_sids_for_confirm_id);
@@ -566,7 +584,7 @@ bool xproposal_maker_t::backup_set_consensus_para(base::xvblock_t* latest_cert_b
         xassert(!proposal->get_header()->get_extra_data().empty());
         if (!proposal->get_header()->get_extra_data().empty()) {
             const std::string & extra_data = proposal->get_header()->get_extra_data();
-            xtableheader_extra_t blockheader_extradata;
+            data::xtableheader_extra_t blockheader_extradata;
             int32_t ret = blockheader_extradata.deserialize_from_string(extra_data);
             if (ret <= 0) {
                 xerror("xtable_blockmaker_t::verify_block fail-extra data invalid");
@@ -600,9 +618,9 @@ void xproposal_maker_t::get_locked_nonce_map(const xblock_ptr_t & block, std::ma
         }
         base::enum_transaction_subtype _subtype = (base::enum_transaction_subtype)action.get_org_tx_action_id();
 
-        if (_subtype == enum_transaction_subtype_self || _subtype == enum_transaction_subtype_send) {
-            xlightunit_action_t txaction(action);
-            xtransaction_ptr_t _rawtx = block->query_raw_transaction(txaction.get_tx_hash());
+        if (_subtype == data::enum_transaction_subtype_self || _subtype == data::enum_transaction_subtype_send) {
+            data::xlightunit_action_t txaction(action);
+            data::xtransaction_ptr_t _rawtx = block->query_raw_transaction(txaction.get_tx_hash());
             if (_rawtx != nullptr) {
                 uint64_t txnonce = _rawtx->get_tx_nonce();
                 const std::string uri = txaction.get_contract_uri();
@@ -621,7 +639,7 @@ void xproposal_maker_t::get_locked_nonce_map(const xblock_ptr_t & block, std::ma
     }
 }
 
-void xproposal_maker_t::sys_contract_sync(const xtablestate_ptr_t & tablestate) const {
+void xproposal_maker_t::sys_contract_sync(const data::xtablestate_ptr_t & tablestate) const {
     // always sync sharding sys contract
     if (m_table_maker->get_zone_index() != base::enum_chain_zone_consensus_index) {
         return;  // sync module already do rec and zec table sync
@@ -632,12 +650,12 @@ void xproposal_maker_t::sys_contract_sync(const xtablestate_ptr_t & tablestate) 
     check_and_sync_account(tablestate, sharding_reward_claiming_addr);
 }
 
-void xproposal_maker_t::check_and_sync_account(const xtablestate_ptr_t & tablestate, const std::string & addr) const {
+void xproposal_maker_t::check_and_sync_account(const data::xtablestate_ptr_t & tablestate, const std::string & addr) const {
     base::xvaccount_t _vaddr(addr);
     base::xaccount_index_t accountindex;
     tablestate->get_account_index(addr, accountindex);
     uint64_t latest_connect_height = get_blockstore()->get_latest_connected_block_height(_vaddr);
-    xblocktool_t::check_lacking_unit_and_try_sync(_vaddr, accountindex, latest_connect_height, get_blockstore(), "proposal_maker");
+    data::xblocktool_t::check_lacking_unit_and_try_sync(_vaddr, accountindex, latest_connect_height, get_blockstore(), "proposal_maker");
 }
 
 

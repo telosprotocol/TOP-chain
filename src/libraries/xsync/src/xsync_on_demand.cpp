@@ -545,7 +545,12 @@ void xsync_on_demand_t::handle_blocks_by_hash_request(const xsync_message_get_on
 
     std::vector<data::xblock_ptr_t> blocks_temp;
     for (uint32_t i = 0; i < blocks.size(); i++) {
-        blocks_temp.push_back(data::xblock_t::raw_vblock_to_object_ptr(blocks[i].get()));
+        if (blocks[i]->get_height() != 0) {
+            xsync_dbg("xsync_on_demand_t::handle_blocks_by_hash_request height not 0 owner %s hash:%s", blocks[i]->get_account().c_str(), data::to_hex_str(hash).c_str());
+            blocks_temp.push_back(data::xblock_t::raw_vblock_to_object_ptr(blocks[i].get()));
+        } else {
+            xsync_dbg("xsync_on_demand_t::handle_blocks_by_hash_request height is 0 owner %s hash:%s", blocks[i]->get_account().c_str(), data::to_hex_str(hash).c_str());
+        }
     }
 
     m_sync_sender->send_on_demand_blocks(blocks_temp, xmessage_id_sync_on_demand_by_hash_blocks, "on_demand_by_hash_blocks", network_self, to_address);
@@ -583,15 +588,22 @@ bool xsync_on_demand_t::basic_check(const std::vector<data::xblock_ptr_t> &block
 
     auto it = blocks.begin();
     auto last_hash = it->get()->get_block_hash();
+    uint64_t last_height = it->get()->get_height();
     it++;
     for (; it != blocks.end(); it++) {
         auto block = it->get();
-        if (block->get_account() != account || block->get_last_block_hash() != last_hash) {
-            xsync_error("xsync_on_demand_t::store_unit_blocks_without_proof receive on_demand_blocks(address or hash error)(%s,%s)(%s,%s)",
-                block->get_account().c_str(), account.c_str(), block->get_last_block_hash().c_str(), last_hash.c_str());
+        if (block->get_account() != account) {
+            xsync_error("xsync_on_demand_t::store_unit_blocks_without_proof address error,%s,%s",
+                block->get_account().c_str(), account.c_str());
+            return false;
+        }
+        if (block->get_last_block_hash() != last_hash) {
+            xsync_error("xsync_on_demand_t::store_unit_blocks_without_proof hash error %s,h=%ld,%ld,%s,%s",
+                account.c_str(), block->get_height(), last_height, block->get_last_block_hash().c_str(), last_hash.c_str());
             return false;
         }
         last_hash = block->get_block_hash();
+        last_height = block->get_height();
     }
     return true;
 }

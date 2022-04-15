@@ -7,6 +7,7 @@
 #include "tests/xelection/xdummy_chain_timer.h"
 #include "xbasic/xmemory.hpp"
 #include "xdata/xelection/xelection_result_store.h"
+#include "xdata/xelection/xstandby_node_info.h"
 #include "xelection/xcache/xdata_accessor.h"
 
 using top::common::xbroadcast_id_t;
@@ -15,9 +16,7 @@ using top::common::xnode_type_t;
 using top::common::xslot_id_t;
 using top::data::election::xelection_info_bundle_t;
 using top::data::election::xelection_info_t;
-using top::data::election::xelection_network_result_t;
 using top::data::election::xelection_result_store_t;
-using top::data::election::xelection_result_t;
 using top::data::election::xstandby_node_info_t;
 
 NS_BEG3(top, tests, election)
@@ -69,7 +68,7 @@ void xtop_committee_fixure::SetUp() {
 
         xelection_info_bundle_t election_info_bundle;
 
-        election_info_bundle.node_id(build_account_address(i));
+        election_info_bundle.account_address(build_account_address(i));
         election_info_bundle.election_info(std::move(new_election_info));
 
         group_result.insert(std::move(election_info_bundle));
@@ -116,7 +115,7 @@ void xtop_zec_fixture::SetUp() {
         new_election_info.joined_version = common::xelection_round_t{0};
 
         xelection_info_bundle_t election_info_bundle;
-        election_info_bundle.node_id(xnode_id_t{std::to_string(i)});
+        election_info_bundle.account_address(xnode_id_t{std::to_string(i)});
         election_info_bundle.election_info(std::move(new_election_info));
 
         group_result.insert(std::move(election_info_bundle));
@@ -163,7 +162,7 @@ void xtop_edge_fixture::SetUp() {
         new_election_info.joined_version = common::xelection_round_t{0};
 
         xelection_info_bundle_t election_info_bundle;
-        election_info_bundle.node_id(xnode_id_t{std::to_string(i)});
+        election_info_bundle.account_address(xnode_id_t{std::to_string(i)});
         election_info_bundle.election_info(std::move(new_election_info));
 
         group_result.insert(std::move(election_info_bundle));
@@ -210,7 +209,7 @@ void xtop_archive_fixture::SetUp() {
         new_election_info.joined_version = common::xelection_round_t{0};
 
         xelection_info_bundle_t election_info_bundle;
-        election_info_bundle.node_id(xnode_id_t{std::to_string(i)});
+        election_info_bundle.account_address(xnode_id_t{std::to_string(i)});
         election_info_bundle.election_info(std::move(new_election_info));
 
         group_result.insert(std::move(election_info_bundle));
@@ -264,7 +263,7 @@ void xtop_consensus_fixture::SetUp() {
         new_election_info.joined_version = common::xelection_round_t{0};
 
         xelection_info_bundle_t election_info_bundle;
-        election_info_bundle.node_id(xnode_id_t{std::to_string(i)});
+        election_info_bundle.account_address(xnode_id_t{std::to_string(i)});
         election_info_bundle.election_info(std::move(new_election_info));
 
         auditor_group_result.insert(std::move(election_info_bundle));
@@ -283,7 +282,7 @@ void xtop_consensus_fixture::SetUp() {
         new_election_info.joined_version = common::xelection_round_t{0};
 
         xelection_info_bundle_t election_info_bundle;
-        election_info_bundle.node_id(xnode_id_t{std::to_string(i + node_count)});
+        election_info_bundle.account_address(xnode_id_t{std::to_string(i + node_count)});
         election_info_bundle.election_info(std::move(new_election_info));
 
         validator_group_result.insert(std::move(election_info_bundle));

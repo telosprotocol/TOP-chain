@@ -10,11 +10,15 @@
 #include "xcommon/xnode_id.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
-#include "xdata/xcodec/xmsgpack/xelection_result_store_codec.hpp"
-#include "xdata/xcodec/xmsgpack/xlegacy/xelection_result_store_codec.hpp"
-#include "xdata/xcodec/xmsgpack/xstandby_result_store_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xelection/xelection_result_store_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xelection/xstandby_result_store_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xelection/xv0/xelection_result_store_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xelection/xv1/xelection_result_store_codec.hpp"
 #include "xdata/xelection/xelection_result_property.h"
+#include "xdata/xelection/xelection_result_store.h"
 #include "xdata/xelection/xstandby_node_info.h"
+#include "xdata/xelection/xstandby_result_store.h"
+#include "xdata/xelection/xv1/xelection_result_store.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
 #include "xvm/xserialization/xserialization.h"
@@ -22,7 +26,9 @@
 #include <cinttypes>
 
 #ifdef STATIC_CONSENSUS
-#    include "xvm/xsystem_contracts/xelection/xstatic_election_center.h"
+#   include "xvm/xsystem_contracts/xelection/xstatic_election_center.h"
+#   include "xdata/xelection/xelection_info.h"
+#   include "xdata/xelection/xelection_info_bundle.h"
 #endif
 
 #ifndef XSYSCONTRACT_MODULE
@@ -80,9 +86,11 @@ void xtop_rec_elect_fullnode_contract::elect_config_nodes(common::xlogic_time_t 
         new_election_info.consensus_public_key = nodes.pub_key;
         new_election_info.stake = nodes.stake;
         new_election_info.joined_version = common::xelection_round_t{0};
+        new_election_info.genesis = false;
+        new_election_info.miner_type = common::xminer_type_t::advance;
 
         xelection_info_bundle_t election_info_bundle{};
-        election_info_bundle.node_id(nodes.node_id);
+        election_info_bundle.account_address(nodes.node_id);
         election_info_bundle.election_info(std::move(new_election_info));
 
         election_group_result.insert(std::move(election_info_bundle));
@@ -100,11 +108,11 @@ void xtop_rec_elect_fullnode_contract::elect_config_nodes(common::xlogic_time_t 
 #endif
 
 void xtop_rec_elect_fullnode_contract::setup() {
-    election::legacy::xelection_result_store_t election_result_store;
+    data::election::v0::xelection_result_store_t election_result_store;
     auto property_names = data::election::get_property_name_by_addr(SELF_ADDRESS());
     for (auto const & property : property_names) {
         STRING_CREATE(property);
-        serialization::xmsgpack_t<election::legacy::xelection_result_store_t>::serialize_to_string_prop(*this, property, election_result_store);
+        serialization::xmsgpack_t<data::election::v0::xelection_result_store_t>::serialize_to_string_prop(*this, property, election_result_store);
     }
 }
 
@@ -127,11 +135,6 @@ void xtop_rec_elect_fullnode_contract::on_timer(const uint64_t current_time) {
         }
     }
 #endif
-
-    auto const & fork_config = chain_fork::xchain_fork_config_center_t::get_chain_fork_config();
-    if (!chain_fork::xchain_fork_config_center_t::is_forked(fork_config.enable_fullnode_election_fork_point, current_time)) {
-        return;
-    }
 
     XMETRICS_TIME_RECORD(XFULLNODE_ELECT "on_timer_all_time");
     XMETRICS_CPU_TIME_RECORD(XFULLNODE_ELECT "on_timer_cpu_time");
@@ -163,10 +166,10 @@ void xtop_rec_elect_fullnode_contract::on_timer(const uint64_t current_time) {
                         standby_network_result,
                         election_network_result)) {
             auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
-            if (chain_fork::xchain_fork_config_center_t::is_forked(fork_config.election_contract_stores_miner_type_and_genesis_fork_point, current_time)) {
+            if (chain_fork::xchain_fork_config_center_t::is_forked(fork_config.election_contract_stores_credit_score_fork_point, current_time)) {
                 xvm::serialization::xmsgpack_t<xelection_result_store_t>::serialize_to_string_prop(*this, property, election_result_store);
             } else {
-                xvm::serialization::xmsgpack_t<election::legacy::xelection_result_store_t>::serialize_to_string_prop(*this, property, election_result_store.legacy());
+                xvm::serialization::xmsgpack_t<data::election::v1::xelection_result_store_t>::serialize_to_string_prop(*this, property, election_result_store.v1());
             }
         }
     }

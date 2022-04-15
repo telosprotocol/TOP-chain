@@ -213,7 +213,7 @@ TEST_F(test_api, store_tx_1) {
         ASSERT_TRUE(blockstore->store_block(table_vaddr, tables[i].get()));
     }
 
-    std::vector<base::xfull_txreceipt_t> txreceipts = base::xtxreceipt_build_t::create_all_txreceipts(tables[max_block_height-3].get(), tables[max_block_height-1].get());
+    std::vector<data::xcons_transaction_ptr_t> txreceipts = data::xblocktool_t::create_all_txreceipts(tables[max_block_height-3].get(), tables[max_block_height-1].get());
     xassert(txreceipts.size() > 0);
 }
 

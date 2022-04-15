@@ -32,7 +32,7 @@ xconfig_onchain_loader_t::xconfig_onchain_loader_t(observer_ptr<store::xstore_fa
     m_action_map[XPROPOSAL_TYPE_TO_STR(tcc::proposal_type::proposal_delete_parameter)] = std::make_shared<config::xconfig_delete_parameter_action_t>();
 
     // set initial onchain param
-    xtcc_transaction_ptr_t tcc_genesis = std::make_shared<xtcc_transaction_t>();
+    data::xtcc_transaction_ptr_t tcc_genesis = std::make_shared<data::xtcc_transaction_t>();
     m_last_param_map = tcc_genesis->m_initial_values;
 }
 
@@ -129,9 +129,7 @@ void xconfig_onchain_loader_t::update_onchain_param(common::xlogic_time_t time) 
     }
     data::xunit_bstate_t state(_bstate.get());
 
-    std::map<std::string, std::string> params;
-    state.map_get(ONCHAIN_PARAMS, params);
-
+    std::map<std::string, std::string> params = state.map_get(ONCHAIN_PARAMS);
     if (params.empty()) {
         xwarn("xconfig_onchain_loader_t::update_onchain_param, get params map fail.");
         return;

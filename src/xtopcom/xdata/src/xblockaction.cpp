@@ -67,6 +67,14 @@ uint64_t xlightunit_action_t::get_receipt_id() const {
     return 0;
 }
 
+uint64_t xlightunit_action_t::get_rsp_id() const {
+    std::string value = get_action_result_property(xtransaction_exec_state_t::XTX_RSP_ID);
+    if (!value.empty()) {
+        return base::xstring_utl::touint64(value);
+    }
+    return 0;
+}
+
 base::xtable_shortid_t xlightunit_action_t::get_receipt_id_self_tableid()const {
     std::string value = get_action_result_property(xtransaction_exec_state_t::XTX_RECEIPT_ID_SELF_TABLE_ID);
     if (!value.empty()) {
@@ -82,6 +90,18 @@ base::xtable_shortid_t xlightunit_action_t::get_receipt_id_peer_tableid()const {
     }
     return 0;
 }
+
+base::xtable_shortid_t xlightunit_action_t::get_rawtx_source_tableid() const {
+    if (is_self_tx() || get_inner_table_flag()) {
+        base::xvaccount_t _vaddr(get_caller());
+        return _vaddr.get_short_table_id();
+    } else if (is_send_tx() || is_confirm_tx()) {
+        return get_receipt_id_self_tableid();
+    } else {
+        return get_receipt_id_peer_tableid();
+    }
+}
+
 uint64_t xlightunit_action_t::get_sender_confirmed_receipt_id() const {
     std::string value = get_action_result_property(xtransaction_exec_state_t::XTX_SENDER_CONFRIMED_RECEIPT_ID);
     if (!value.empty()) {
@@ -93,9 +113,34 @@ uint64_t xlightunit_action_t::get_sender_confirmed_receipt_id() const {
 bool xlightunit_action_t::get_not_need_confirm() const {
     std::string value = get_action_result_property(xtransaction_exec_state_t::XTX_FLAGS);
     if (!value.empty()) {
-        auto flags = (base::xtable_shortid_t)base::xstring_utl::touint32(value);
+        auto flags = base::xstring_utl::touint32(value);
         return flags & XTX_NOT_NEED_CONFIRM_FLAG_MASK;
     }
+    return false;
+}
+
+bool xlightunit_action_t::get_inner_table_flag() const {
+    std::string value = get_action_result_property(xtransaction_exec_state_t::XTX_FLAGS);
+    if (!value.empty()) {
+        auto flags = base::xstring_utl::touint32(value);
+        return flags & XTX_INNER_TABLE_FLAG_MASK;
+    }
+    return false;
+}
+
+bool xlightunit_action_t::is_need_make_txreceipt() const {
+    if (is_txaction()) {
+        if (is_send_tx()) {
+            if (!get_inner_table_flag()) {
+                return true;
+            }
+        } else if (is_recv_tx()) {
+            if (!get_not_need_confirm()) {
+                return true;
+            }
+        }
+    }
+
     return false;
 }
 

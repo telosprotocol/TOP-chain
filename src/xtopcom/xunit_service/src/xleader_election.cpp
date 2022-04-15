@@ -5,9 +5,10 @@
 #include "xunit_service/xleader_election.h"
 
 #include "xcommon/xfts.h"
-#include "xconfig/xpredefined_configurations.h"
 #include "xconfig/xconfig_register.h"
+#include "xconfig/xpredefined_configurations.h"
 #include "xdata/xnative_contract_address.h"
+#include "xdata/xtable_id_mapping.h"
 #include "xelection/xdata_accessor_error.h"
 #include "xunit_service/xcons_utl.h"
 
@@ -150,19 +151,43 @@ xvip2_t get_leader(const xelection_cache_face::elect_set & nodes, const common::
         xunit_warn("[xunitservice] leader_election candidates empty");
         return xvip2_t{(uint64_t)-1, (uint64_t)-1};
     }
+
     std::vector<common::xfts_merkle_tree_t<xvip2_t>::value_type> candidates;
     std::vector<common::xfts_merkle_tree_t<xvip2_t>::value_type> reliable_candidates;
     uint32_t default_leader_election_round = XGET_CONFIG(leader_election_round);
-    for (auto iter = nodes.begin(); iter != nodes.end(); ++iter) {
-        // xunit_dbg_info("[xunitservice] leader_election xip=%s, version=% " PRIu64 ", joined_version=% " PRIu64, xcons_utl::xip_to_hex(iter->xip).c_str(), version.value(), iter->joined_version.value());
-        if (version.value() >= (iter->joined_version.value() + default_leader_election_round)) {
-            reliable_candidates.push_back({static_cast<common::xstake_t>(iter->staking + 1), iter->xip});
+    auto const min_creditscore = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_creditscore);
+
+    for (auto const & node_datum : nodes) {
+        if (version.value() >= (node_datum.election_info.joined_version.value() + default_leader_election_round)) {
+            if (common::has<common::xnode_type_t::consensus>(node_datum.address.type()) && !node_datum.election_info.genesis &&
+                node_datum.election_info.raw_credit_score <= min_creditscore) {
+                candidates.push_back({static_cast<common::xstake_t>(node_datum.election_info.comprehensive_stake + 1), static_cast<xvip2_t>(node_datum.address.xip2())});
+                xdbg("account %s is moved to low priority leader election candidate pool. account credit score %" PRIu64 " min credit score %" PRIu64,
+                     node_datum.address.to_string().c_str(),
+                     node_datum.election_info.raw_credit_score,
+                     min_creditscore);
+                continue;
+            }
+
+            xdbg("account %s is moved to high priority leader election candidate pool. account credit score %" PRIu64 " min credit score %" PRIu64,
+                 node_datum.address.to_string().c_str(),
+                 node_datum.election_info.raw_credit_score,
+                 min_creditscore);
+            reliable_candidates.push_back({static_cast<common::xstake_t>(node_datum.election_info.comprehensive_stake + 1), static_cast<xvip2_t>(node_datum.address.xip2())});
         } else {
             // <version, joined_version> = <0, 0>, <1, 0>, <N, N-1>, <N, N>
-            if (iter->joined_version.value() == 0) {
-                reliable_candidates.push_back({static_cast<common::xstake_t>(iter->staking + 1), iter->xip});
+            if (node_datum.election_info.joined_version.value() == 0) {
+                xdbg("account is moved to high priority leader election candidate pool %s. account credit score %" PRIu64 " min credit score %" PRIu64,
+                     node_datum.address.to_string().c_str(),
+                     node_datum.election_info.raw_credit_score,
+                     min_creditscore);
+                reliable_candidates.push_back({static_cast<common::xstake_t>(node_datum.election_info.comprehensive_stake + 1), static_cast<xvip2_t>(node_datum.address.xip2())});
             } else {
-                candidates.push_back({static_cast<common::xstake_t>(iter->staking + 1), iter->xip});
+                xdbg("account is moved to low priority leader election candidate pool %s. account credit score %" PRIu64 " min credit score %" PRIu64,
+                     node_datum.address.to_string().c_str(),
+                     node_datum.election_info.raw_credit_score,
+                     min_creditscore);
+                candidates.push_back({static_cast<common::xstake_t>(node_datum.election_info.comprehensive_stake + 1), static_cast<xvip2_t>(node_datum.address.xip2())});
             }
         }
     }
@@ -177,7 +202,13 @@ xvip2_t get_leader(const xelection_cache_face::elect_set & nodes, const common::
     return leaders[0].second;
 }
 
-const xvip2_t xrandom_leader_election::get_leader_xip(uint64_t viewId, const std::string & account, base::xvblock_t* prev_block, const xvip2_t & local, const xvip2_t & candidate, const common::xelection_round_t& version, uint16_t rotate_mode) {
+const xvip2_t xrandom_leader_election::get_leader_xip(uint64_t viewId,
+                                                      const std::string & account,
+                                                      base::xvblock_t * prev_block,
+                                                      const xvip2_t & local,
+                                                      const xvip2_t & candidate,
+                                                      const common::xelection_round_t & version,
+                                                      uint16_t rotate_mode) {
     // TODO(justin): leader maybe cross group for auditor & validator
     // if (!is_xip2_group_equal(local, candidate)) {
     //     xunit_warn("[xunitservice] recv invalid candidiate %s at %s not equal group", xcons_utl::xip_to_hex(candidate).c_str(), xcons_utl::xip_to_hex(local).c_str());
@@ -209,7 +240,12 @@ const xvip2_t xrandom_leader_election::get_leader_xip(uint64_t viewId, const std
 
     xvip2_t leader_xip = get_leader(elect_set, version, random);
     xunit_dbg_info("[xunitservice] xrandom_leader_election::get_leader_xip account=%s,viewid=%ld,random=%ld,leader_xip=%s,local=%s,candidate=%s",
-        account.c_str(), viewId, random, xcons_utl::xip_to_hex(leader_xip).c_str(), xcons_utl::xip_to_hex(local).c_str(), xcons_utl::xip_to_hex(candidate).c_str());
+                   account.c_str(),
+                   viewId,
+                   random,
+                   xcons_utl::xip_to_hex(leader_xip).c_str(),
+                   xcons_utl::xip_to_hex(local).c_str(),
+                   xcons_utl::xip_to_hex(candidate).c_str());
     return leader_xip;
 }
 
@@ -221,18 +257,14 @@ int to_elect_set(const std::map<common::xslot_id_t, data::xnode_info_t> & node_m
     if (node_map.empty()) {
         return 0;
     }
-    std::vector<data::xnode_info_t> tmp;
-    for (auto elect_pair : node_map) {
-        auto node_i = elect_pair.second;
-        tmp.push_back(node_i);
-    }
+    assert(elect_set.empty());
 
-    std::sort(tmp.begin(), tmp.end(), [](const data::xnode_info_t & a, const data::xnode_info_t & b) -> bool { return a.address.slot_id().value() < b.address.slot_id().value(); });
-    for (size_t index = 0; index < tmp.size(); index++) {
-        auto data = tmp[index];
-        elect_set.push_back({xcons_utl::to_xip2(data.address), data.election_info.joined_version, data.election_info.comprehensive_stake});
-        xdbg("[xunitservice] account %s comprehensive stake %" PRIu64, data.address.account_address().c_str(), data.election_info.comprehensive_stake);
-    }
+    elect_set.reserve(node_map.size());
+    std::transform(std::begin(node_map), std::end(node_map), std::back_inserter(elect_set), [](std::pair<common::xslot_id_t const, data::xnode_info_t> const & datum) {
+        return top::get<data::xnode_info_t>(datum);
+    });
+
+    std::sort(std::begin(elect_set), std::end(elect_set), [](const data::xnode_info_t & a, const data::xnode_info_t & b) -> bool { return a.address.slot_id() < b.address.slot_id(); });
     return elect_set.size();
 }
 
@@ -241,25 +273,26 @@ bool xelection_wrapper::on_network_start(xelection_cache_face * p_election,
                                          const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> & network,
                                          const election::cache::xdata_accessor_face_t * elect_cache_ptr,
                                          uint64_t chain_time) {
-    auto tables = network->table_ids();
+    std::vector<uint16_t> tables = data::get_table_ids(network->address().group_address(), network->parent_group_address().group_id());
     if (tables.empty()) {
         return false;
     }
     // auto                           elect_data = network->neighbors_info2();
     auto address = network->address();
-    auto shard_address = address.sharding_address();
+    auto group_address = address.group_address();
 
     // neighbours
     std::error_code ec{election::xdata_accessor_errc_t::success};
-    auto elect_data = elect_cache_ptr->sharding_nodes(shard_address, address.election_round(), ec);
+    auto elect_data = elect_cache_ptr->sharding_nodes(group_address, address.election_round(), ec);
     if (ec) {
+        xwarn("xelection_wrapper::on_network_start failed to get group nodes. err msg %s", ec.message().c_str());
         return false;
     }
     xelection_cache_imp::elect_set elect_set_;
     to_elect_set(elect_data, elect_set_);
 
     ec.clear();
-    auto parent_cluster_address = elect_cache_ptr->parent_address(shard_address, address.election_round(), ec);
+    auto parent_cluster_address = elect_cache_ptr->parent_address(group_address, address.election_round(), ec);
     auto parent_address = parent_cluster_address.sharding_address();
     ec.clear();
     auto parent_elect_data = elect_cache_ptr->sharding_nodes(parent_address, address.election_round(), ec);
@@ -269,7 +302,7 @@ bool xelection_wrapper::on_network_start(xelection_cache_face * p_election,
     // children data
     std::map<int32_t, xelection_cache_imp::elect_set> child_map;
     ec.clear();
-    auto group_ele = elect_cache_ptr->group_element(shard_address, address.election_round(), ec);
+    auto group_ele = elect_cache_ptr->group_element(group_address, address.election_round(), ec);
     if (!ec && group_ele != nullptr) {
         // common::xlogic_time_t       logic_time_now{chain_time};
         ec.clear();
@@ -298,11 +331,11 @@ bool xelection_wrapper::on_network_start(xelection_cache_face * p_election,
     }
     // auditor will exchange to as validator election
     xunit_info("[xunit_service] add election cache %s address:%s, node size:%d, parent:%d, child:%d",
-          xcons_utl::xip_to_hex(xip).c_str(),
-          address.to_string().c_str(),
-          elect_set_.size(),
-          parent_set_.size(),
-          child_map.size());
+               xcons_utl::xip_to_hex(xip).c_str(),
+               address.to_string().c_str(),
+               elect_set_.size(),
+               parent_set_.size(),
+               child_map.size());
     return p_election->add(xip, elect_set_, tables, parent_set_, child_map);
 }
 
@@ -322,7 +355,13 @@ bool xrotate_leader_election::is_rotate_xip(const xvip2_t & local) {
     return rotate;
 }
 
-const xvip2_t xrotate_leader_election::get_leader_xip(uint64_t viewId, const std::string & account, base::xvblock_t* prev_block, const xvip2_t & local, const xvip2_t & candidate, const common::xelection_round_t& version, uint16_t rotate_mode) {
+const xvip2_t xrotate_leader_election::get_leader_xip(uint64_t viewId,
+                                                      const std::string & account,
+                                                      base::xvblock_t * prev_block,
+                                                      const xvip2_t & local,
+                                                      const xvip2_t & candidate,
+                                                      const common::xelection_round_t & version,
+                                                      uint16_t rotate_mode) {
     uint64_t random = viewId + base::xvaccount_t::get_xid_from_account(account);
     xelection_cache_face::elect_set elect_set;
     bool leader = false;
@@ -333,15 +372,15 @@ const xvip2_t xrotate_leader_election::get_leader_xip(uint64_t viewId, const std
     } else {
         bool rotate = is_rotate_xip(local);
         if (rotate) {
-            // get prev block leader
-            #if 0
+// get prev block leader
+#if 0
             if (rotate_mode == enum_rotate_mode_rotate_by_last_block) {
                 auto validator = prev_block->get_cert()->get_validator();
                 if (get_node_id_from_xip2(validator) == 0x3FF) {  // 0x3FF is a group node xip
                     prev_is_validator = false;
                 }
-            } 
-            #endif
+            }
+#endif
             if (rotate_mode == enum_rotate_mode_rotate_by_view_id) {
                 // viewid determine where leader is from
                 prev_is_validator = viewId & 0x1;
@@ -376,8 +415,14 @@ const xvip2_t xrotate_leader_election::get_leader_xip(uint64_t viewId, const std
 
     xvip2_t leader_xip = get_leader(elect_set, version, random);
     xunit_dbg_info("xrotate_leader_election::get_leader_xip account=%s,viewid=%ld,random=%ld,leader_xip=%s,local=%s,candidate=%s,prev_validator=%d,electsize:%d",
-        account.c_str(), viewId, random, xcons_utl::xip_to_hex(leader_xip).c_str(),
-        xcons_utl::xip_to_hex(local).c_str(), xcons_utl::xip_to_hex(candidate).c_str(), prev_is_validator, elect_set.size());
+                   account.c_str(),
+                   viewId,
+                   random,
+                   xcons_utl::xip_to_hex(leader_xip).c_str(),
+                   xcons_utl::xip_to_hex(local).c_str(),
+                   xcons_utl::xip_to_hex(candidate).c_str(),
+                   prev_is_validator,
+                   elect_set.size());
     return leader_xip;
 }
 

@@ -10,9 +10,14 @@
 #include "xcommon/xip.h"
 #include "xconfig/xconfig_register.h"
 #include "xdata/xblocktool.h"
+#include "xdata/xcodec/xmsgpack/xelection/xelection_result_store_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xelection/xstandby_result_store_codec.hpp"
 #include "xdata/xcodec/xmsgpack/xelection_association_result_store_codec.hpp"
-#include "xdata/xcodec/xmsgpack/xelection_result_store_codec.hpp"
-#include "xdata/xcodec/xmsgpack/xstandby_result_store_codec.hpp"
+#include "xdata/xelection/xelection_cluster_result.h"
+#include "xdata/xelection/xelection_group_result.h"
+#include "xdata/xelection/xelection_info_bundle.h"
+#include "xdata/xelection/xelection_network_result.h"
+#include "xdata/xelection/xelection_result.h"
 #include "xdata/xelection/xelection_result_property.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
@@ -465,7 +470,7 @@ static void get_election_result_property_data(observer_ptr<store::xstore_face_t 
                             auto const & election_group_result = top::get<data::election::xelection_group_result_t>(group_result_info);
 
                             for (auto const & node_info : election_group_result) {
-                                auto const & node_id = top::get<data::election::xelection_info_bundle_t>(node_info).node_id();
+                                auto const & node_id = top::get<data::election::xelection_info_bundle_t>(node_info).account_address();
                                 if (node_id.empty()) {
                                     continue;
                                 }
@@ -535,7 +540,7 @@ static void get_election_result_property_data(observer_ptr<store::xstore_face_t 
                         auto const & election_group_result = top::get<data::election::xelection_group_result_t>(group_result_info);
 
                         for (auto const & node_info : election_group_result) {
-                            auto const & node_id = top::get<data::election::xelection_info_bundle_t>(node_info).node_id();
+                            auto const & node_id = top::get<data::election::xelection_info_bundle_t>(node_info).account_address();
                             if (node_id.empty()) {
                                 continue;
                             }
@@ -554,6 +559,7 @@ static void get_election_result_property_data(observer_ptr<store::xstore_face_t 
                                 j["public_key"] = election_info.consensus_public_key.to_string();
                                 j["genesis"] = election_info.genesis ? "true" : "false";
                                 j["miner_type"] = common::to_string(election_info.miner_type);
+                                j["credit_score"] = std::to_string(election_info.raw_credit_score);
                                 jn[node_id.to_string()].append(j);
 
                                 break;
@@ -596,8 +602,8 @@ static void get_election_result_property_data(const xaccount_ptr_t unitstate,
            contract_address == xaccount_address_t{sys_contract_zec_elect_consensus_addr} ||
            contract_address == xaccount_address_t{sys_contract_rec_elect_fullnode_addr});
 
-    std::string serialized_value{};
-    if (unitstate->string_get(property_name, serialized_value) && !serialized_value.empty()) {
+    std::string serialized_value = unitstate->string_get(property_name);
+    if (!serialized_value.empty()) {
         auto election_result_store = codec::msgpack_decode<data::election::xelection_result_store_t>({std::begin(serialized_value), std::end(serialized_value)});
         for (auto const & election_network_result_info : election_result_store) {
             auto const network_id = top::get<common::xnetwork_id_t const>(election_network_result_info);
@@ -617,7 +623,7 @@ static void get_election_result_property_data(const xaccount_ptr_t unitstate,
                         auto const & election_group_result = top::get<data::election::xelection_group_result_t>(group_result_info);
 
                         for (auto const & node_info : election_group_result) {
-                            auto const & node_id = top::get<data::election::xelection_info_bundle_t>(node_info).node_id();
+                            auto const & node_id = top::get<data::election::xelection_info_bundle_t>(node_info).account_address();
                             if (node_id.empty()) {
                                 continue;
                             }
@@ -636,6 +642,7 @@ static void get_election_result_property_data(const xaccount_ptr_t unitstate,
                                 j["public_key"] = election_info.consensus_public_key.to_string();
                                 j["genesis"] = election_info.genesis ? "true" : "false";
                                 j["miner_type"] = common::to_string(election_info.miner_type);
+                                j["credit_score"] = std::to_string(election_info.raw_credit_score);
                                 jn[node_id.to_string()].append(j);
 
                                 break;
@@ -698,6 +705,7 @@ static void get_rec_standby_pool_property_data(observer_ptr<store::xstore_face_t
                         j["is_genesis_node"] = std::string{standby_node_info.genesis ? "true" : "false"};
                         j["program_version"] = standby_node_info.program_version;
                         j["miner_type"] = common::to_string(standby_node_info.miner_type);
+                        j["credit_score"] = std::to_string(standby_node_info.raw_credit_score(node_type));
                         json[node_type_str].append(j);
                         break;
                     }
@@ -1001,8 +1009,8 @@ static void get_reward_detail(common::xaccount_address_t const & contract_addres
                               const xaccount_ptr_t unitstate,
                               const xjson_format_t json_format,
                               xJson::Value & json) {
-    std::string serialized_value{};
-    if (!unitstate->string_get(property_name, serialized_value) || serialized_value.empty()) {
+    std::string serialized_value = unitstate->string_get(property_name);
+    if (serialized_value.empty()) {
         xdbg("[get_reward_detail] contract_address: %s, property_name: %s, error", contract_address.to_string().c_str(), property_name.c_str());
         return;
     }
@@ -1761,8 +1769,8 @@ static void get_rec_nodes_map(common::xaccount_address_t const & contract_addres
                               const xaccount_ptr_t unitstate,
                               const xjson_format_t json_format,
                               xJson::Value & json) {
-    std::map<std::string, std::string> nodes;
-    if (!unitstate->map_get(property_name, nodes) || nodes.empty()) {
+    std::map<std::string, std::string> nodes = unitstate->map_get(property_name);
+    if (nodes.empty()) {
         xdbg("[get_rec_nodes_map] contract_address: %s, property_name: %s, error", contract_address.to_string().c_str(), property_name.c_str());
         return;
     }
@@ -1775,8 +1783,10 @@ static void get_rec_nodes_map(common::xaccount_address_t const & contract_addres
         j["node_deposit"] = static_cast<unsigned long long>(reg_node_info.m_account_mortgage);
         if (reg_node_info.genesis()) {
             j["registered_node_type"] = std::string{"advance,validator,edge"};
+            j["genesis"] = "true";
         } else {
             j["registered_node_type"] = common::to_string(reg_node_info.miner_type());
+            j["genesis"] = "false";
         }
         j["miner_type"] = common::to_string(reg_node_info.miner_type());
         j["vote_amount"] = static_cast<unsigned long long>(reg_node_info.m_vote_amount);
@@ -1814,8 +1824,8 @@ static void get_unqualified_slash_info_map(common::xaccount_address_t const & co
                               const xaccount_ptr_t unitstate,
                               const xjson_format_t json_format,
                               xJson::Value & json) {
-    std::map<std::string, std::string> nodes;
-    if (!unitstate->map_get(property_name, nodes) || nodes.empty()) {
+    std::map<std::string, std::string> nodes = unitstate->map_get(property_name);
+    if (nodes.empty()) {
         xdbg("[get_unqualified_slash_info_map] contract_address: %s, property_name: %s, error", contract_address.to_string().c_str(), property_name.c_str());
         return;
     }
@@ -1841,8 +1851,8 @@ static void get_unqualified_node_map(common::xaccount_address_t const & contract
                               const xaccount_ptr_t unitstate,
                               const xjson_format_t json_format,
                               xJson::Value & json) {
-    std::map<std::string, std::string> nodes;
-    if (!unitstate->map_get(property_name, nodes) || nodes.empty()) {
+    std::map<std::string, std::string> nodes = unitstate->map_get(property_name);
+    if (nodes.empty()) {
         xdbg("[get_unqualified_slash_info_map] contract_address: %s, property_name: %s, error", contract_address.to_string().c_str(), property_name.c_str());
         return;
     }
@@ -1883,8 +1893,8 @@ static void get_tableblock_num(common::xaccount_address_t const & contract_addre
                               const xaccount_ptr_t unitstate,
                               const xjson_format_t json_format,
                               xJson::Value & json) {
-    std::map<std::string, std::string> tablenum_map;
-    if (!unitstate->map_get(property_name, tablenum_map) || tablenum_map.empty()) {
+    std::map<std::string, std::string> tablenum_map = unitstate->map_get(property_name);
+    if (tablenum_map.empty()) {
         xdbg("[get_tableblock_num] contract_address: %s, property_name: %s, error", contract_address.to_string().c_str(), property_name.c_str());
         return;
     }
@@ -1930,8 +1940,8 @@ static void get_refunds(common::xaccount_address_t const & contract_address,
                               const xaccount_ptr_t unitstate,
                               const xjson_format_t json_format,
                               xJson::Value & json) {
-    std::map<std::string, std::string> refunds;
-    if (!unitstate->map_get(property_name, refunds) || refunds.empty()) {
+    std::map<std::string, std::string> refunds = unitstate->map_get(property_name);
+    if (refunds.empty()) {
         xdbg("[get_refunds] contract_address: %s, property_name: %s, error", contract_address.to_string().c_str(), property_name.c_str());
         return;
     }
@@ -1954,8 +1964,8 @@ static void get_accumulated_issuance_map(common::xaccount_address_t const & cont
                               const xaccount_ptr_t unitstate,
                               const xjson_format_t json_format,
                               xJson::Value & json) {
-    std::map<std::string, std::string> issuances;
-    if (!unitstate->map_get(property_name, issuances) || issuances.empty()) {
+    std::map<std::string, std::string> issuances = unitstate->map_get(property_name);
+    if (issuances.empty()) {
         xdbg("[get_accumulated_issuance_map] contract_address: %s, property_name: %s, error", contract_address.to_string().c_str(), property_name.c_str());
         return;
     }
@@ -1971,8 +1981,8 @@ static void get_accumulated_issuance_yearly_map(common::xaccount_address_t const
                               const xaccount_ptr_t unitstate,
                               const xjson_format_t json_format,
                               xJson::Value & json) {
-    std::string value;
-    if (!unitstate->string_get(property_name, value) || value.empty()) {
+    std::string value = unitstate->string_get(property_name);
+    if (value.empty()) {
         xdbg("[get_accumulated_issuance_map] contract_address: %s, property_name: %s, error", contract_address.to_string().c_str(), property_name.c_str());
         return;
     }
@@ -1989,8 +1999,8 @@ static void get_zec_tasks_map(common::xaccount_address_t const & contract_addres
                               const xaccount_ptr_t unitstate,
                               const xjson_format_t json_format,
                               xJson::Value & json) {
-    std::map<std::string, std::string> tasks;
-    if (!unitstate->map_get(property_name, tasks) || tasks.empty()) {
+    std::map<std::string, std::string> tasks = unitstate->map_get(property_name);
+    if (tasks.empty()) {
         xdbg("[get_zec_tasks_map] contract_address: %s, property_name: %s, error", contract_address.to_string().c_str(), property_name.c_str());
         return;
     }
@@ -2039,8 +2049,8 @@ static void get_genesis_stage(common::xaccount_address_t const & contract_addres
                               const xaccount_ptr_t unitstate,
                               const xjson_format_t json_format,
                               xJson::Value & json) {
-    std::string value;
-    if (!unitstate->string_get(property_name, value) || value.empty()) {
+    std::string value = unitstate->string_get(property_name);
+    if (value.empty()) {
         xdbg("[get_genesis_stage] contract_address: %s, property_name: %s, error", contract_address.to_string().c_str(), property_name.c_str());
         return;
     }
@@ -2060,9 +2070,9 @@ static void get_voter_dividend(common::xaccount_address_t const & contract_addre
                               const xjson_format_t json_format,
                               xJson::Value & json) {
     xdbg("[get_voter_dividend] contract_address: %s, property_name: %s", contract_address.c_str(), property_name.c_str());
-    std::map<std::string, std::string> voter_dividends;
+    std::map<std::string, std::string> voter_dividends = unitstate->map_get(property_name);
 
-    if (!unitstate->map_get(property_name, voter_dividends) || voter_dividends.empty()) {
+    if (voter_dividends.empty()) {
         xdbg("[get_voter_dividend] contract_address: %s, property_name: %s, error", contract_address.to_string().c_str(), property_name.c_str());
         return;
     }
@@ -2105,8 +2115,8 @@ static void get_node_reward(common::xaccount_address_t const & contract_address,
                               const xaccount_ptr_t unitstate,
                               const xjson_format_t json_format,
                               xJson::Value & json) {
-    std::map<std::string, std::string> node_rewards;
-    if (!unitstate->map_get(property_name, node_rewards) || node_rewards.empty()) {
+    std::map<std::string, std::string> node_rewards = unitstate->map_get(property_name);
+    if (node_rewards.empty()) {
         xdbg("[get_node_reward] contract_address: %s, property_name: %s, error", contract_address.to_string().c_str(), property_name.c_str());
         return;
     }
@@ -2133,8 +2143,8 @@ static void get_zec_votes(common::xaccount_address_t const & contract_address,
                               const xaccount_ptr_t unitstate,
                               const xjson_format_t json_format,
                               xJson::Value & json) {
-    std::map<std::string, std::string> votes;
-    if (!unitstate->map_get(property_name, votes) || votes.empty()) {
+    std::map<std::string, std::string> votes = unitstate->map_get(property_name);
+    if (votes.empty()) {
         xdbg("[get_node_reward] contract_address: %s, property_name: %s, error", contract_address.to_string().c_str(), property_name.c_str());
         return;
     }
@@ -2162,8 +2172,8 @@ static void get_table_votes(common::xaccount_address_t const & contract_address,
                               const xaccount_ptr_t unitstate,
                               const xjson_format_t json_format,
                               xJson::Value & json) {
-    std::map<std::string, std::string> votes;
-    if (!unitstate->map_get(property_name, votes) || votes.empty()) {
+    std::map<std::string, std::string> votes = unitstate->map_get(property_name);
+    if (votes.empty()) {
         xdbg("[get_node_reward] contract_address: %s, property_name: %s, error", contract_address.to_string().c_str(), property_name.c_str());
         return;
     }
@@ -2191,8 +2201,8 @@ static void get_zec_workload_map(common::xaccount_address_t const & contract_add
                               const xaccount_ptr_t unitstate,
                               const xjson_format_t json_format,
                               xJson::Value & json) {
-    std::map<std::string, std::string> workloads;
-    if (!unitstate->map_get(property_name, workloads) || workloads.empty()) {
+    std::map<std::string, std::string> workloads = unitstate->map_get(property_name);
+    if (workloads.empty()) {
         xdbg("[get_node_reward] contract_address: %s, property_name: %s, error", contract_address.to_string().c_str(), property_name.c_str());
         return;
     }

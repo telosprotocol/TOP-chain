@@ -44,7 +44,7 @@ void xtest_zec_elect_consensus_contract_t::show_result(common::xgroup_id_t const
     auto & election_result = all_election_result_store.at(auditor_gid).result_of(common::xbeacon_network_id).result_of(node_type).result_of(cid).result_of(gid);
     printf("\n");
     for(auto & node_info : election_result){
-        auto node_id = top::get<xelection_info_bundle_t>(node_info).node_id();
+        auto node_id = top::get<xelection_info_bundle_t>(node_info).account_address();
         auto index = atoi(node_id.to_string().substr(strlen(TEST_NODE_ID_AUDITOR_PREFIX), 3).c_str());
         printf("%3d ", index);
     }
@@ -64,7 +64,7 @@ bool xtest_zec_elect_consensus_contract_t::check_election_result_XOR() {
             election_network_result.result_of(common::xbeacon_network_id).result_of(common::xnode_type_t::consensus_validator).result_of(common::xdefault_cluster_id);
 
         for (auto const & node_info : auditor_group_result) {
-            auto node_id = top::get<xelection_info_bundle_t>(node_info).node_id();
+            auto node_id = top::get<xelection_info_bundle_t>(node_info).account_address();
             for (auto const & v : validator_result) {
                 auto const & validator_group_result = top::get<xelection_group_result_t>(v);
                 if (validator_group_result.find(node_id).second) {
@@ -90,7 +90,7 @@ bool xtest_zec_elect_consensus_contract_t::check_election_result_XOR() {
             auto const & validator_group_result = top::get<xelection_group_result_t>(v);
             auto const & this_group_id = top::get<const common::xgroup_id_t>(v);
             for (auto const & node_info : validator_group_result) {
-                auto node_id = top::get<xelection_info_bundle_t>(node_info).node_id();
+                auto node_id = top::get<xelection_info_bundle_t>(node_info).account_address();
                 for (auto const & v2 : validator_result) {
                     auto const & other_group_id = top::get<const common::xgroup_id_t>(v2);
                     if (this_group_id == other_group_id)
@@ -174,7 +174,7 @@ void xtest_zec_elect_consensus_contract_t::calc_advance_election_count(std::size
 
         for (auto & election_result : election_group_result) {
             auto & election_info = top::get<xelection_info_bundle_t>(election_result);
-            auto node_id_string = election_info.node_id().to_string();
+            auto node_id_string = election_info.account_address().to_string();
             if (node_id_string.substr(0, strlen(TEST_NODE_ID_AUDITOR_PREFIX)) == TEST_NODE_ID_AUDITOR_PREFIX) {
                 node_ids.push_back(atoi(node_id_string.substr(strlen(TEST_NODE_ID_AUDITOR_PREFIX), 3).c_str()));
             }
@@ -196,7 +196,7 @@ void xtest_zec_elect_consensus_contract_t::calc_advance_election_count(std::size
 
             for (auto & election_result : election_group_result) {
                 auto & election_info = top::get<xelection_info_bundle_t>(election_result);
-                auto node_id_string = election_info.node_id().to_string();
+                auto node_id_string = election_info.account_address().to_string();
                 if (node_id_string.substr(0, strlen(TEST_NODE_ID_AUDITOR_PREFIX)) == TEST_NODE_ID_AUDITOR_PREFIX) {
                     node_ids.push_back(atoi(node_id_string.substr(strlen(TEST_NODE_ID_AUDITOR_PREFIX), 3).c_str()));
                 }
@@ -222,7 +222,7 @@ void xtest_zec_elect_consensus_contract_t::cal_advance_node_in_cnt(std::size_t c
 
         for (auto & election_result : election_group_result) {
             auto & election_info = top::get<xelection_info_bundle_t>(election_result);
-            auto node_id_string = election_info.node_id().to_string();
+            auto node_id_string = election_info.account_address().to_string();
             if (node_id_string.substr(0, strlen(TEST_NODE_ID_AUDITOR_PREFIX)) == TEST_NODE_ID_AUDITOR_PREFIX) {
                 auditor_node_ids.push_back(atoi(node_id_string.substr(strlen(TEST_NODE_ID_AUDITOR_PREFIX), 4).c_str()));
             }
@@ -244,7 +244,7 @@ void xtest_zec_elect_consensus_contract_t::cal_advance_node_in_cnt(std::size_t c
 
             for (auto & election_result : election_group_result) {
                 auto & election_info = top::get<xelection_info_bundle_t>(election_result);
-                auto node_id_string = election_info.node_id().to_string();
+                auto node_id_string = election_info.account_address().to_string();
                 if (node_id_string.substr(0, strlen(TEST_NODE_ID_AUDITOR_PREFIX)) == TEST_NODE_ID_AUDITOR_PREFIX) {
                     validator_node_ids.push_back(atoi(node_id_string.substr(strlen(TEST_NODE_ID_AUDITOR_PREFIX), 4).c_str()));
                 }
@@ -272,7 +272,7 @@ void xtest_zec_elect_consensus_contract_t::cal_validator_node_in_cnt(std::size_t
 
             for (auto & election_result : election_group_result) {
                 auto & election_info = top::get<xelection_info_bundle_t>(election_result);
-                auto node_id_string = election_info.node_id().to_string();
+                auto node_id_string = election_info.account_address().to_string();
                 if (node_id_string.substr(0, strlen(TEST_NODE_ID_VALIDATOR_PREFIX)) == TEST_NODE_ID_VALIDATOR_PREFIX) {
                     validator_node_ids.push_back(atoi(node_id_string.substr(strlen(TEST_NODE_ID_VALIDATOR_PREFIX), 4).c_str()));
                 }

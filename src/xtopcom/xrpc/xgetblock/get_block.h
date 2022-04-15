@@ -2,14 +2,6 @@
 
 #include "json/json.h"
 #include "xbase/xobject.h"
-#include "xcodec/xmsgpack_codec.hpp"
-#include "xdata/xcodec/xmsgpack/xelection_association_result_store_codec.hpp"
-#include "xdata/xcodec/xmsgpack/xelection_result_store_codec.hpp"
-#include "xdata/xcodec/xmsgpack/xstandby_result_store_codec.hpp"
-#include "xdata/xelection/xelection_association_result_store.h"
-#include "xdata/xelection/xelection_cluster_result.h"
-#include "xdata/xelection/xelection_result_store.h"
-#include "xdata/xelection/xstandby_result_store.h"
 #include "xgrpcservice/xgrpc_service.h"
 #include "xstore/xstore.h"
 #include "xsyncbase/xsync_face.h"
@@ -19,8 +11,6 @@
 namespace top {
 
 namespace chain_info {
-
-using namespace data::election;
 
 const uint8_t ARG_TYPE_UINT64 = 1;
 const uint8_t ARG_TYPE_STRING = 2;
@@ -34,7 +24,7 @@ using query_method_handler = std::function<void(void)>;
 class xtx_exec_json_key {
 public:
     xtx_exec_json_key(const std::string & rpc_version) {
-        if (rpc_version == RPC_VERSION_V2) {
+        if (rpc_version == top::data::RPC_VERSION_V2) {
             m_send = "send_block_info";
             m_recv = "recv_block_info";
             m_confirm = "confirm_block_info";
@@ -101,9 +91,9 @@ public:
         }
         return rsp;
     }
-    xJson::Value get_block_json(data::xblock_t * bp, const std::string & rpc_version = RPC_VERSION_V2);
-    xJson::Value get_blocks_json(data::xblock_t * bp, const std::string & rpc_version = RPC_VERSION_V2);
-    void query_account_property_base(xJson::Value & jph, const std::string & owner, const std::string & prop_name, xaccount_ptr_t unitstate, bool compatible_mode);
+    xJson::Value get_block_json(data::xblock_t * bp, const std::string & rpc_version = data::RPC_VERSION_V2);
+    xJson::Value get_blocks_json(data::xblock_t * bp, const std::string & rpc_version = data::RPC_VERSION_V2);
+    void query_account_property_base(xJson::Value & jph, const std::string & owner, const std::string & prop_name, data::xaccount_ptr_t unitstate, bool compatible_mode);
     void query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, xfull_node_compatible_mode_t compatible_mode);
     void query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, const uint64_t height, xfull_node_compatible_mode_t compatible_mode);
     void getLatestBlock();
@@ -119,10 +109,17 @@ public:
     uint64_t get_timer_clock() const;
     xJson::Value parse_account(const std::string & account);
     void update_tx_state(xJson::Value & result, const xJson::Value & cons, const std::string & rpc_version);
-    xJson::Value parse_tx(xtransaction_t * tx_ptr, const std::string & version);
-    int parse_tx(const uint256_t & tx_hash, xtransaction_t * cons_tx_ptr, const std::string & version, xJson::Value& result_json);
-    xJson::Value parse_action(const xaction_t & action);
-    xJson::Value get_tx_exec_result(const std::string & account, uint64_t block_height, xtransaction_ptr_t tx_ptr, xlightunit_tx_info_ptr_t & send_txinfo, xlightunit_tx_info_ptr_t & recv_txinfo, const std::string & rpc_version, bool is_confirm, uint64_t send_height);
+    xJson::Value parse_tx(data::xtransaction_t * tx_ptr, const std::string & version);
+    int parse_tx(const uint256_t & tx_hash, data::xtransaction_t * cons_tx_ptr, const std::string & version, xJson::Value & result_json);
+    xJson::Value parse_action(const data::xaction_t & action);
+    xJson::Value get_tx_exec_result(const std::string & account,
+                                    uint64_t block_height,
+                                    data::xtransaction_ptr_t tx_ptr,
+                                    data::xlightunit_tx_info_ptr_t & send_txinfo,
+                                    data::xlightunit_tx_info_ptr_t & recv_txinfo,
+                                    const std::string & rpc_version,
+                                    bool is_confirm,
+                                    uint64_t send_height);
     void getRecs();
     void getZecs();
     void getEdges();

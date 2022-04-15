@@ -72,7 +72,7 @@ base::xtable_index_t xbatch_packer::get_tableid() {
     return m_tableid;
 }
 
-void xbatch_packer::set_xip(xblock_consensus_para_t & blockpara, const xvip2_t & leader) {
+void xbatch_packer::set_xip(data::xblock_consensus_para_t & blockpara, const xvip2_t & leader) {
     auto zone_id = get_zone_id_from_xip2(leader);
     // if consensus zone
     if (zone_id == base::enum_chain_zone_consensus_index) {
@@ -126,7 +126,7 @@ bool xbatch_packer::start_proposal(base::xblock_mptrs& latest_blocks, uint32_t m
 
     uint32_t viewtoken = base::xtime_utl::get_fast_randomu();
     uint64_t gmtime = base::xtime_utl::gettimeofday();
-    xblock_consensus_para_t proposal_para(get_account(), m_last_view_clock, m_last_view_id, viewtoken, latest_blocks.get_latest_cert_block()->get_height() + 1, gmtime);
+    data::xblock_consensus_para_t proposal_para(get_account(), m_last_view_clock, m_last_view_id, viewtoken, latest_blocks.get_latest_cert_block()->get_height() + 1, gmtime);
     proposal_para.set_latest_blocks(latest_blocks);
 
     if (m_last_view_clock < m_start_time) {
@@ -159,7 +159,7 @@ bool xbatch_packer::start_proposal(base::xblock_mptrs& latest_blocks, uint32_t m
     set_xip(proposal_para, local_xip);  // set leader xip
 
     xunit_dbg_info("xbatch_packer::start_proposal leader begin make_proposal.%s cert_block_viewid=%ld", proposal_para.dump().c_str(), latest_blocks.get_latest_cert_block()->get_viewid());
-    xblock_ptr_t proposal_block = m_proposal_maker->make_proposal(proposal_para, min_tx_num);
+    data::xblock_ptr_t proposal_block = m_proposal_maker->make_proposal(proposal_para, min_tx_num);
     if (proposal_block == nullptr) {
         xunit_dbg("xbatch_packer::start_proposal fail-make_proposal.%s", proposal_para.dump().c_str());  // may has no txs for proposal
         return false;
@@ -422,12 +422,12 @@ int xbatch_packer::verify_proposal(base::xvblock_t * proposal_block, base::xvqce
 
 // get parent group xip
 xvip2_t xbatch_packer::get_parent_xip(const xvip2_t & local_xip) {
-    auto                            leader_election = m_para->get_resources()->get_election();
-    auto                            election_store = leader_election->get_election_cache_face();
+    auto leader_election = m_para->get_resources()->get_election();
+    auto election_store = leader_election->get_election_cache_face();
     xelection_cache_face::elect_set elect_set_;
-    auto                            ret = election_store->get_parent_election(local_xip, &elect_set_);
+    auto ret = election_store->get_parent_election(local_xip, &elect_set_);
     if (ret > 0) {
-        auto xip = elect_set_[0].xip;
+        auto xip = static_cast<xvip2_t>(elect_set_.front().address.xip2());
         reset_node_id_to_xip2(xip);
         set_node_id_to_xip2(xip, 0xFFF);
         return xip;
@@ -442,7 +442,7 @@ xvip2_t xbatch_packer::get_child_xip(const xvip2_t & local_xip, const std::strin
     auto                            election_store = leader_election->get_election_cache_face();
     auto                            ret = election_store->get_group_election(local_xip, child_group_id, &elect_set_);
     if (ret > 0) {
-        auto xip = elect_set_[0].xip;
+        auto xip = static_cast<xvip2_t>(elect_set_.front().address.xip2());
         return xip;
     }
 #ifdef DEBUG
@@ -528,7 +528,7 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
                     m_para->get_resources()->get_vblockstore()->load_block_object(*this, vblock->get_height() - 2, base::enum_xvblock_flag_committed, false, metrics::blockstore_access_from_us_on_proposal_finish);
                 if (commit_block != nullptr) {
                     m_para->get_resources()->get_vblockstore()->load_block_input(*this, commit_block.get());
-                    make_receipts_and_send(dynamic_cast<xblock_t *>(commit_block.get()), dynamic_cast<xblock_t *>(vblock));
+                    make_receipts_and_send(dynamic_cast<data::xblock_t *>(commit_block.get()), dynamic_cast<data::xblock_t *>(vblock));
                 }
             }
         } else {
@@ -564,7 +564,7 @@ bool xbatch_packer::on_consensus_commit(const base::xvevent_t & event, xcsobject
     return false;  // throw event up again to let txs-pool or other object start new consensus
 }
 
-void xbatch_packer::make_receipts_and_send(xblock_t * commit_block, xblock_t * cert_block) {
+void xbatch_packer::make_receipts_and_send(data::xblock_t * commit_block, data::xblock_t * cert_block) {
     // broadcast receipt id state to all shards
     if (commit_block->get_block_class() == base::enum_xvblock_class_full || commit_block->get_block_class() == base::enum_xvblock_class_nil) {
         return;
@@ -577,30 +577,13 @@ void xbatch_packer::make_receipts_and_send(xblock_t * commit_block, xblock_t * c
         return;
     }
 
-    std::vector<data::xcons_transaction_ptr_t> all_cons_txs;
-    std::vector<base::xfull_txreceipt_t> all_receipts = base::xtxreceipt_build_t::create_all_txreceipts(commit_block, cert_block);
-    if (all_receipts.empty()) {
-        xunit_info("xbatch_packer::make_receipts_and_send no receipt created,commit_block:%s,cert_block:%s", commit_block->dump().c_str(), cert_block->dump().c_str());
+    std::vector<data::xcons_transaction_ptr_t> all_cons_txs = data::xblocktool_t::create_all_txreceipts(commit_block, cert_block);
+    if (all_cons_txs.empty()) {
+        xunit_info("xbatch_packer::make_receipts_and_send no receipt created,commit_block:%s", commit_block->dump().c_str());
         return;
     }
 
-    for (auto & receipt : all_receipts) {
-        data::xcons_transaction_ptr_t constx = make_object_ptr<data::xcons_transaction_t>(receipt);
-        if (constx->is_confirm_tx() && constx->get_last_not_need_confirm()) {
-            continue;
-        }
-
-        all_cons_txs.push_back(constx);
-        xassert(constx->is_recv_tx() || constx->is_confirm_tx());
-        if (constx->is_recv_tx()) {
-            xassert(constx->get_transaction() != nullptr);  // recvtx has no origin tx
-        }
-        if (constx->is_confirm_tx()) {
-            xassert(constx->get_transaction() == nullptr);  // confirmtx has no origin tx
-        }
-    }
-
-    xunit_info("xbatch_packer::make_receipts_and_send commit_block:%s,cert_block:%s", commit_block->dump().c_str(), cert_block->dump().c_str());
+    xunit_info("xbatch_packer::make_receipts_and_send commit_block:%s,cert_block:%s,txreceipts_size=%zu", commit_block->dump().c_str(), cert_block->dump().c_str(), all_cons_txs.size());
     std::vector<data::xcons_transaction_ptr_t> non_shard_cross_receipts;
     network_proxy->send_receipt_msgs(get_xip2_addr(), all_cons_txs, non_shard_cross_receipts);
 

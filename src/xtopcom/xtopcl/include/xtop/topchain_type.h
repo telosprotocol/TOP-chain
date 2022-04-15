@@ -214,6 +214,9 @@ namespace xChainSDK {
         std::string first_timerblock_hash;
 	};
 
+    struct GeneralInfoResult : ResultBase {
+    };
+
     struct NodeInfoResult : ResultBase {
 
 	};

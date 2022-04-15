@@ -75,6 +75,11 @@ public:
     void query_tx(std::string & account, std::string & tx_hash, std::ostringstream & out_str);
 
     /*
+    *  estimate gas
+    */
+    void estimategas(std::string & to, std::string & amount_d, std::string & note, std::string & tx_deposit_d, std::ostringstream & out_str);
+
+    /*
      * mining
      */
     void query_miner_info(std::string & target, std::ostringstream & out_str);
@@ -108,6 +113,7 @@ public:
     void query_block(std::string & target, std::string & height, std::ostringstream & out_str);
     void getBlocksByHeight(std::string & target, std::string & height, std::ostringstream & out_str);
     void chain_info(std::ostringstream & out_str);
+    void general_info(std::ostringstream & out_str);
     void deploy_contract(const uint64_t & gas_limit, const std::string & amount, const std::string & path, const std::string & deposit, std::ostringstream & out_str);
     void call_contract(const std::string & amount, const string & addr, const std::string & func, const string & params, const std::string & tx_deposit, std::ostringstream & out_str);
     void block_prune(std::string & prune_enable, std::ostringstream & out_str);

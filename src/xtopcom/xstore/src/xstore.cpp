@@ -36,12 +36,29 @@
 #include "xstore/xstore_error.h"
 
 #include "xdata/xgenesis_data.h"
+#include "xdata/xnative_contract_address.h"
 
 using namespace top::base;
 using namespace top::data;
 
 namespace top {
 namespace store {
+
+data::system_contract::xreg_node_info get_reg_info(observer_ptr<store::xstore_face_t> const & store, common::xaccount_address_t const & node_addr) {
+    std::string value_str;
+    int ret = store->map_get(top::sys_contract_rec_registration_addr, data::system_contract::XPORPERTY_CONTRACT_REG_KEY, node_addr.value(), value_str);
+
+    if (ret != store::xstore_success || value_str.empty()) {
+        xwarn("[get_reg_info] get node register info fail, node_addr: %s", node_addr.value().c_str());
+        return data::system_contract::xreg_node_info{};
+    }
+
+    data::system_contract::xreg_node_info node_info;
+    base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)value_str.c_str(), (uint32_t)value_str.size());
+
+    node_info.serialize_from(stream);
+    return node_info;
+}
 
 REG_XMODULE_LOG(chainbase::enum_xmodule_type::xmodule_type_xstore, store::xstore_error_to_string, store::xstore_error_base + 1, store::xstore_error_max);
 
@@ -54,7 +71,12 @@ bool xstore::open() const {
     }
     return m_db->open();
 }
-
+bool xstore::close() const {
+    if (m_db == nullptr) {
+        return false;
+    }
+    return m_db->close();
+}
 xaccount_ptr_t xstore::query_account(const std::string &address) const {
     base::xvaccount_t _vaddr(address);
     if (_vaddr.get_account().empty()) {
@@ -139,11 +161,7 @@ int32_t xstore::get_map_property(const std::string &address, uint64_t height, co
         return -1;
     }
 
-    bool ret = account->map_get(name, value);
-    if (!ret) {
-        return -1;
-    }
-    return xsuccess;
+    return account->map_copy_get(name, value);
 }
 
 int32_t xstore::get_string_property(const std::string &address, uint64_t height, const std::string &name, std::string &value) {
@@ -152,11 +170,8 @@ int32_t xstore::get_string_property(const std::string &address, uint64_t height,
         xwarn("jimmy xstore::get_string_property fail-find account. account=%s", address.c_str());
         return -1;
     }
-    bool ret = account->string_get(name, value);
-    if (!ret) {
-        return -1;
-    }
-    return xsuccess;
+
+    return account->string_get(name, value);
 }
 
 xaccount_ptr_t xstore::get_target_state(base::xvblock_t* block) const {
@@ -186,7 +201,7 @@ bool xstore::string_property_get(base::xvblock_t* block, const std::string& prop
         xwarn("xstore::string_property_get get target state fail.block=%s,prop=%s", block->dump().c_str(), prop.c_str());
         return false;
     }
-    return state->string_get(prop, value);
+    return xsuccess == state->string_get(prop, value);
 }
 
 xaccount_ptr_t xstore::get_target_state(const std::string &address, uint64_t height) const {

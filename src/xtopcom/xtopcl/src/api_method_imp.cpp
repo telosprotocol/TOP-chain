@@ -206,6 +206,53 @@ bool api_method_imp::transfer(const user_info & uinfo,
     return true;
 }
 
+bool api_method_imp::estimategas(const user_info & uinfo,
+                              const std::string & from,
+                              const std::string & to,
+                              uint64_t amount,
+                              const std::string & memo,
+                              std::ostringstream & out_str,
+                              std::function<void(TransferResult *)> func) {
+    auto info = new task_info_callback<TransferResult>();
+    set_user_info(info, uinfo, CMD_ESTIMATEGAS, func, false);
+
+    // body->params
+    xaction_asset_param asset_param(this, "", amount);
+    std::string param = asset_param.create();
+
+    info->trans_action->set_memo(memo);
+    info->trans_action->set_deposit(m_deposit);
+    info->trans_action->set_tx_type(xtransaction_type_transfer);
+    info->trans_action->set_last_nonce(uinfo.nonce);
+    info->trans_action->set_fire_timestamp(get_timestamp());
+    info->trans_action->set_expire_duration(100);
+
+    if (info->trans_action->get_tx_version() == xtransaction_version_2) {
+        info->trans_action->set_amount(amount);
+        info->trans_action->set_source_addr(from);
+        info->trans_action->set_target_addr(to);
+    } else {
+        info->trans_action->set_last_hash(uinfo.last_hash_xxhash64);
+        info->trans_action->set_source_action_type(xaction_type_asset_out);
+        info->trans_action->set_source_addr(from);
+        info->trans_action->set_source_action_para(param);
+        info->trans_action->set_target_action_type(xaction_type_asset_in);
+        info->trans_action->set_target_addr(to);
+        info->trans_action->set_target_action_para(param);
+    }
+
+    if (!hash_signature(info->trans_action.get(), uinfo.private_key)) {
+        delete info;
+        return false;
+    }
+
+    task_dispatcher::get_instance()->post_message(msgAddTask, (uint32_t *)info, 0);
+
+    auto rpc_response = task_dispatcher::get_instance()->get_result();
+    out_str << rpc_response;
+    return true;
+}
+
 bool api_method_imp::stakeGas(const user_info & uinfo,
                               const std::string & from,
                               const std::string & to,
@@ -447,6 +494,21 @@ bool api_method_imp::getChainInfo(const user_info & uinfo, std::ostringstream & 
 
     auto info = new task_info_callback<ChainInfoResult>();
     set_user_info(info, uinfo, CMD_CHAIN_INFO, func, false);
+    info->params["account_addr"] = uinfo.account;
+
+    task_dispatcher::get_instance()->post_message(msgAddTask, (uint32_t *)info, 0);
+
+    auto rpc_response = task_dispatcher::get_instance()->get_result();
+    out_str << rpc_response;
+    return true;
+}
+
+bool api_method_imp::getGeneralInfo(const user_info & uinfo, std::ostringstream & out_str, std::function<void(GeneralInfoResult *)> func) {
+    if (uinfo.account.empty())
+        return false;
+
+    auto info = new task_info_callback<GeneralInfoResult>();
+    set_user_info(info, uinfo, CMD_GENERAL_INFO, func, false);
     info->params["account_addr"] = uinfo.account;
 
     task_dispatcher::get_instance()->post_message(msgAddTask, (uint32_t *)info, 0);

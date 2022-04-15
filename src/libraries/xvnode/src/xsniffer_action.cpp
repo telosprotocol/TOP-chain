@@ -19,7 +19,7 @@ void xtop_sniffer_action::call(observer_ptr<store::xstore_face_t> store,
     auto tx = make_object_ptr<data::xtransaction_v2_t>();
     tx->make_tx_run_contract(action_name, action_params);
     tx->set_same_source_target_address(address.value());
-    xaccount_ptr_t account = store->query_account(address.value());
+    data::xaccount_ptr_t account = store->query_account(address.value());
     assert(account != nullptr);
     tx->set_last_trans_hash_and_nonce(account->account_send_trans_hash(), account->account_send_trans_number());
     tx->set_fire_timestamp(timestamp);
@@ -44,10 +44,10 @@ void xtop_sniffer_action::call(observer_ptr<store::xstore_face_t> store,
                                std::string const & action_name,
                                std::string const & action_params,
                                uint64_t timestamp) {
-    auto tx = make_object_ptr<xtransaction_v2_t>();
+    auto tx = make_object_ptr<data::xtransaction_v2_t>();
     tx->make_tx_run_contract(action_name, action_params);
     tx->set_different_source_target_address(source_address.value(), target_address.value());
-    xaccount_ptr_t account = store->query_account(source_address.value());
+    data::xaccount_ptr_t account = store->query_account(source_address.value());
     assert(account != nullptr);
     tx->set_last_trans_hash_and_nonce(account->account_send_trans_hash(), account->account_send_trans_number());
     tx->set_fire_timestamp(timestamp);
@@ -65,7 +65,7 @@ void xtop_sniffer_action::call(observer_ptr<store::xstore_face_t> store,
             timestamp);
 }
 
-void xtop_sniffer_action::broadcast(observer_ptr<vnode::xvnode_face_t> const & vnode, xblock_ptr_t const & block_ptr, common::xnode_type_t types) {
+void xtop_sniffer_action::broadcast(observer_ptr<vnode::xvnode_face_t> const & vnode, data::xblock_ptr_t const & block_ptr, common::xnode_type_t types) {
     assert(block_ptr != nullptr);
     base::xstream_t stream(base::xcontext_t::instance());
     block_ptr->full_block_serialize_to(stream);

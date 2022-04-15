@@ -178,7 +178,7 @@ uint64_t xsync_store_t::get_latest_end_block_height(const std::string & account,
 uint64_t xsync_store_t::get_latest_immutable_connected_checkpoint_height(const std::string & account) {
     common::xaccount_address_t _vaddress(account);
     std::error_code err;
-    auto checkpoint = xtop_chain_checkpoint::get_latest_checkpoint(_vaddress, err);
+    auto checkpoint = data::xtop_chain_checkpoint::get_latest_checkpoint(_vaddress, err);
     if (err) {
         return 0;
     }
@@ -251,7 +251,7 @@ std::vector<data::xvblock_ptr_t> xsync_store_t::load_block_objects(const std::st
             xerror("xsync_store_t::load_block_objects fail-load block input or output. block=%s", blks_ptr[j]->dump().c_str());
             return {};
         }
-        blocks.push_back(xblock_t::raw_vblock_to_object_ptr(blks_ptr[j]));
+        blocks.push_back(data::xblock_t::raw_vblock_to_object_ptr(blks_ptr[j]));
     }
     return blocks;
 }
@@ -345,11 +345,8 @@ void xsync_store_t::set_fork_point() {
         m_remove_empty_unit_forked = true;
     }
 
-    forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.enable_fullnode_related_func_fork_point, vb->get_clock());
-    if (forked) {
-        xinfo("xsync_store_t::remove_empty_unit_forked already forked clock:%llu", vb->get_height());
-        m_full_node_forked = true;
-    }
+    xinfo("xsync_store_t::remove_empty_unit_forked already forked clock:%llu", vb->get_height());
+    m_full_node_forked = true;
 
     return;
 }

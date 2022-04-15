@@ -61,6 +61,13 @@ public:
 
 public:
     void GetRandomNodes(std::vector<NodeInfoPtr> & vec, size_t size);
+    NodeInfoPtr GetOneRandomNode();
+    bool lack_last_round_nodes() const {
+        return m_lack_last_round_nodes;
+    }
+    void set_lack_last_round_nodes(bool value) {
+        m_lack_last_round_nodes = value;
+    }
     std::unordered_map<std::string, NodeInfoPtr> nodes(bool cover_old_version = false);
     std::unordered_map<std::string, std::size_t> index_map(bool cover_old_version = false);
     std::vector<std::string> get_shuffled_xip2(bool cover_old_version = false);
@@ -82,6 +89,10 @@ public:
 
     // multi_rooting call this to insert node_info got from other nodes' root routing
     void OnFindNodesFromRootRouting(std::string const & election_xip2, kadmlia::NodeInfoPtr const & node_info);
+
+    void getLastRoundElectNodesInfo(std::vector<std::pair<std::string, NodeInfoPtr>> & nodes_info);
+    // multi_routing call this to insert last round node_info got from other nodes.(Only when this node is new electIn)
+    void OnAddLastRoundElectNodes(std::vector<std::pair<std::string, NodeInfoPtr>> const & nodes);
 
 private:
     void PrintRoutingTable();
@@ -115,6 +126,7 @@ private:
     std::unordered_map<std::string, std::size_t> m_broadcast_index_map;
     std::mutex m_broadcast_xip2_for_shuffle_mutex;
     std::vector<std::string> m_broadcast_xip2_for_shuffle;
+    bool m_lack_last_round_nodes{false};
 };
 
 typedef std::shared_ptr<ElectRoutingTable> ElectRoutingTablePtr;

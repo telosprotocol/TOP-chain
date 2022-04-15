@@ -383,7 +383,7 @@ void WrouterXidHandler::SendData(transport::protobuf::RoutingMessage & message, 
         }
     } else {
         std::for_each(neighbors.begin(), neighbors.begin() + 1, each_call);
-        if (success_send_count < neighbors.size()) {
+        if (success_send_count < 1) {
             ec = xwrouter::xwrouter_error_t::multi_send_partial_fail, xwarn("%s %s", ec.category().name(), ec.message().c_str());
         }
     }

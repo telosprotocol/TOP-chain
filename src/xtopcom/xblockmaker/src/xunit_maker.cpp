@@ -37,7 +37,7 @@ xblock_ptr_t xunit_maker_t::get_latest_block(const base::xaccount_index_t & acco
     base::xblock_vector blocks = get_blockstore()->load_block_object(*this, account_index.get_latest_unit_height(), metrics::blockstore_access_from_blk_mk_unit_ld_last_blk);
     for (auto & block : blocks.get_vector()) {
         if (account_index.is_match_unit(block)) {
-            return xblock_t::raw_vblock_to_object_ptr(block);
+            return data::xblock_t::raw_vblock_to_object_ptr(block);
         }
     }
     xwarn("xunit_maker_t::get_latest_block fail find match block. account=%s,index=%s,block_size=%zu",
@@ -67,7 +67,7 @@ int32_t xunit_maker_t::check_latest_state(const data::xblock_consensus_para_t & 
         m_check_state_success = false;
         // firstly, load connected block, always sync unit from latest connected block
         uint64_t latest_connect_height = get_blockstore()->get_latest_connected_block_height(*this);
-        if (!xblocktool_t::check_lacking_unit_and_try_sync(*this, commit_account_index, latest_connect_height, get_blockstore(), "unit_maker")) {
+        if (!data::xblocktool_t::check_lacking_unit_and_try_sync(*this, commit_account_index, latest_connect_height, get_blockstore(), "unit_maker")) {
             break;
         }
 
@@ -81,7 +81,7 @@ int32_t xunit_maker_t::check_latest_state(const data::xblock_consensus_para_t & 
                   account_index.get_latest_unit_height());
             break;
         }
-        xblock_ptr_t latest_block = xblock_t::raw_vblock_to_object_ptr(_latest_cert_block.get());
+        xblock_ptr_t latest_block = data::xblock_t::raw_vblock_to_object_ptr(_latest_cert_block.get());
     
         uint64_t lacked_height_from = 0;
         uint64_t lacked_height_to = 0;
@@ -185,14 +185,14 @@ bool xunit_maker_t::push_tx(const data::xblock_consensus_para_t & cs_para, const
     if (tx->is_confirm_tx()) {
         auto latest_nonce = get_latest_bstate()->get_latest_send_trans_number();
         if (tx->get_transaction()->get_tx_nonce() > latest_nonce) {
-            XMETRICS_GAUGE(metrics::cons_packtx_fail_nonce_contious, 1);
+            XMETRICS_GAUGE(metrics::cons_packtx_fail_nonce_continuous, 1);
             xwarn("xunit_maker_t::push_tx fail-tx filtered for nonce is overstepped. %s latest_nonce=%llu, tx=%s",
                 cs_para.dump().c_str(), latest_nonce, tx->dump(true).c_str());
             return false;
         }
     }
 
-    // send tx contious nonce rules
+    // send tx continuous nonce rules
     if (tx->is_send_tx() || tx->is_self_tx()) {
         uint64_t latest_nonce;
         uint256_t latest_hash;
@@ -204,7 +204,7 @@ bool xunit_maker_t::push_tx(const data::xblock_consensus_para_t & cs_para, const
             //     uint64_t account_latest_nonce = committed_state.get_latest_send_trans_number();
             //     get_txpool()->updata_latest_nonce(get_account(), account_latest_nonce);
             // }
-            XMETRICS_GAUGE(metrics::cons_packtx_fail_nonce_contious, 1);
+            XMETRICS_GAUGE(metrics::cons_packtx_fail_nonce_continuous, 1);
             xwarn("xunit_maker_t::push_tx fail-tx filtered for send nonce hash not match,%s,bstate=%s,latest_nonce=%ld,tx=%s",
                 cs_para.dump().c_str(), get_latest_bstate()->get_bstate()->dump().c_str(), latest_nonce, tx->dump().c_str());
             return false;
@@ -231,7 +231,7 @@ bool xunit_maker_t::push_tx(const data::xblock_consensus_para_t & cs_para, const
     // TODO(jimmy) non-transfer tx only include one tx limit
     if (!m_pending_txs.empty()) {
         data::enum_xtransaction_type first_tx_type = (data::enum_xtransaction_type)m_pending_txs[0]->get_transaction()->get_tx_type();
-        if ( (first_tx_type != xtransaction_type_transfer) || ((data::enum_xtransaction_type)tx->get_transaction()->get_tx_type() != data::xtransaction_type_transfer) ) {
+        if ((first_tx_type != data::xtransaction_type_transfer) || ((data::enum_xtransaction_type)tx->get_transaction()->get_tx_type() != data::xtransaction_type_transfer)) {
             XMETRICS_GAUGE(metrics::cons_packtx_fail_transfer_limit, 1);
             xwarn("xunit_maker_t::push_tx fail-tx filtered for non-transfer txs.%s,tx=%s", cs_para.dump().c_str(), tx->dump(true).c_str());
             return false;
@@ -472,7 +472,7 @@ bool xunit_maker_t::must_make_next_full_block() const {
 }
 
 bool xunit_maker_t::can_make_next_full_block(bool is_forked_unit_opt) const {
-    // TODO(jimmy) non contious block make mode. condition:non-empty block is committed status
+    // TODO(jimmy) non continuous block make mode. condition:non-empty block is committed status
     xwarn("xunit_maker_t::can_make_next_full_block lightunit.account=%s,current_height=%ld,pending_txs=%zu,locked=%d,forked%d",
         get_account().c_str(), get_latest_bstate()->get_block_height(), m_pending_txs.size(), is_account_locked(), is_forked_unit_opt);
     if (is_forked_unit_opt) {

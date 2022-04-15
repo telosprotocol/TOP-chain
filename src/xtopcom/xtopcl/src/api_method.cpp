@@ -763,6 +763,38 @@ void ApiMethod::transfer1(std::string & to, std::string & amount_d, std::string 
     tackle_send_tx_request(out_str);
 }
 
+void ApiMethod::estimategas(std::string & to, std::string & amount_d, std::string & note, std::string & tx_deposit_d, std::ostringstream & out_str) {
+    std::ostringstream res;
+    if (update_account(res) != 0) {
+        return;
+    }
+    if (!check_account_address(to)) {
+        cout << "Invalid transfer account address." << endl;
+        return;
+    }
+    std::string from = g_userinfo.account;
+    if (top::base::xvaccount_t::get_addrtype_from_account(to) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
+        std::transform(to.begin() + 1, to.end(), to.begin() + 1, ::tolower);
+
+    if (note.size() > 128) {
+        std::cout << "note size: " << note.size() << " > maximum size 128" << endl;
+        return;
+    }
+
+    uint64_t amount;  // = ASSET_TOP(amount_d);
+    if (parse_top_double(amount_d, TOP_UNIT_LENGTH, amount) != 0)
+        return;
+    uint64_t tx_deposit;  // = ASSET_TOP(tx_deposit_d);
+    if (parse_top_double(tx_deposit_d, TOP_UNIT_LENGTH, tx_deposit) != 0)
+        return;
+
+    if (tx_deposit != 0) {
+        api_method_imp_.set_tx_deposit(tx_deposit);
+    }
+    api_method_imp_.estimategas(g_userinfo, from, to, amount, note, out_str);
+    tackle_null_query(out_str);
+}
+
 void ApiMethod::query_tx(std::string & account, std::string & tx_hash, std::ostringstream & out_str) {
     if (account.empty()) {
         if (!set_default_prikey(out_str)) {
@@ -1160,6 +1192,11 @@ void ApiMethod::getBlocksByHeight(std::string & target, std::string & height, st
 void ApiMethod::chain_info(std::ostringstream & out_str) {
     api_method_imp_.make_private_key(g_userinfo.private_key, g_userinfo.account);
     api_method_imp_.getChainInfo(g_userinfo, out_str);
+}
+
+void ApiMethod::general_info(std::ostringstream & out_str) {
+    api_method_imp_.make_private_key(g_userinfo.private_key, g_userinfo.account);
+    api_method_imp_.getGeneralInfo(g_userinfo, out_str);
 }
 
 void ApiMethod::deploy_contract(const uint64_t & tgas_limit, const std::string & amount_d, const std::string & code_path, const std::string & tx_deposit_d, std::ostringstream & out_str) {

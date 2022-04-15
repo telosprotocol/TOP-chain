@@ -136,7 +136,8 @@ TEST_F(test_txmgr_table, duplicate_send_tx_to_pending) {
     std::set<base::xtable_shortid_t> peer_sids_for_confirm_id;
     xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, tablestate, 40, 35, 30, peer_sids_for_confirm_id);
 
-    auto ready_txs = txmgr_table.get_ready_txs(txpool_pack_para);
+    xunconfirm_id_height id_height_map(1);
+    auto ready_txs = txmgr_table.get_ready_txs(txpool_pack_para, id_height_map);
     ASSERT_EQ(3, ready_txs.size());
     ASSERT_EQ(tx0->get_digest_hex_str(), ready_txs[0]->get_digest_hex_str());
     ASSERT_EQ(tx1->get_digest_hex_str(), ready_txs[1]->get_digest_hex_str());
@@ -152,7 +153,7 @@ TEST_F(test_txmgr_table, duplicate_send_tx_to_pending) {
     auto tx_q = txmgr_table.query_tx(tx_ent2b->get_tx()->get_account_addr(), tx_ent2b->get_tx()->get_transaction()->digest());
     ASSERT_EQ(tx_q->get_tx()->get_digest_hex_str(), tx2b->get_digest_hex_str());
 
-    auto ready_txs2 = txmgr_table.get_ready_txs(txpool_pack_para);
+    auto ready_txs2 = txmgr_table.get_ready_txs(txpool_pack_para, id_height_map);
     ASSERT_EQ(3, ready_txs2.size());
     ASSERT_EQ(tx0->get_digest_hex_str(), ready_txs2[0]->get_digest_hex_str());
     ASSERT_EQ(tx1->get_digest_hex_str(), ready_txs2[1]->get_digest_hex_str());
@@ -160,7 +161,7 @@ TEST_F(test_txmgr_table, duplicate_send_tx_to_pending) {
 
     txmgr_table.updata_latest_nonce(tx1->get_account_addr(), tx1->get_transaction()->get_tx_nonce());
 
-    auto ready_txs3 = txmgr_table.get_ready_txs(txpool_pack_para);
+    auto ready_txs3 = txmgr_table.get_ready_txs(txpool_pack_para, id_height_map);
     ASSERT_EQ(1, ready_txs3.size());
     ASSERT_EQ(tx2b->get_digest_hex_str(), ready_txs3[0]->get_digest_hex_str());
 
@@ -168,7 +169,7 @@ TEST_F(test_txmgr_table, duplicate_send_tx_to_pending) {
     ASSERT_NE(tx_q, nullptr);
 
     txmgr_table.updata_latest_nonce(tx2b->get_account_addr(), tx2b->get_transaction()->get_tx_nonce());
-    auto ready_txs4 = txmgr_table.get_ready_txs(txpool_pack_para);
+    auto ready_txs4 = txmgr_table.get_ready_txs(txpool_pack_para, id_height_map);
     ASSERT_EQ(0, ready_txs4.size());
 
     tx_q = txmgr_table.query_tx(tx2b->get_account_addr(), tx2b->get_transaction()->digest());
@@ -241,7 +242,8 @@ TEST_F(test_txmgr_table, duplicate_send_tx_to_pending_2) {
     xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(vbstate.get());
     std::set<base::xtable_shortid_t> peer_sids_for_confirm_id;
     xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, tablestate, 40, 35, 30, peer_sids_for_confirm_id);
-    auto ready_txs = txmgr_table.get_ready_txs(txpool_pack_para);
+    xunconfirm_id_height id_height_map(1);
+    auto ready_txs = txmgr_table.get_ready_txs(txpool_pack_para, id_height_map);
     ASSERT_EQ(3, ready_txs.size());
     ASSERT_EQ(tx1b->get_digest_hex_str(), ready_txs[0]->get_digest_hex_str());
     ASSERT_EQ(tx2b->get_digest_hex_str(), ready_txs[1]->get_digest_hex_str());
@@ -276,14 +278,14 @@ TEST_F(test_txmgr_table, send_tx_clear_follower) {
     xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(vbstate.get());
     std::set<base::xtable_shortid_t> peer_sids_for_confirm_id;
     xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, tablestate, 40, 35, 30, peer_sids_for_confirm_id);
-
-    auto ready_txs = txmgr_table.get_ready_txs(txpool_pack_para);
+    xunconfirm_id_height id_height_map(1);
+    auto ready_txs = txmgr_table.get_ready_txs(txpool_pack_para, id_height_map);
     ASSERT_EQ(10, ready_txs.size());
 
     tx_info_t txinfo1(ready_txs[0]);
     txmgr_table.pop_tx(txinfo1, false);
 
-    auto ready_txs2 = txmgr_table.get_ready_txs(txpool_pack_para);
+    auto ready_txs2 = txmgr_table.get_ready_txs(txpool_pack_para, id_height_map);
     ASSERT_EQ(0, ready_txs2.size());
 }
 TEST_F(test_txmgr_table, sigle_account_uncontinuous_send_txs) {
@@ -341,8 +343,8 @@ TEST_F(test_txmgr_table, sigle_account_uncontinuous_send_txs) {
     xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(vbstate.get());
     std::set<base::xtable_shortid_t> peer_sids_for_confirm_id;
     xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, tablestate, 40, 35, 30, peer_sids_for_confirm_id);
-
-    auto ready_txs = txmgr_table.get_ready_txs(txpool_pack_para);
+    xunconfirm_id_height id_height_map(1);
+    auto ready_txs = txmgr_table.get_ready_txs(txpool_pack_para, id_height_map);
     ASSERT_EQ(0, ready_txs.size());
 
     {
@@ -352,7 +354,7 @@ TEST_F(test_txmgr_table, sigle_account_uncontinuous_send_txs) {
         ASSERT_EQ(0, ret);
     }
 
-    auto ready_txs2 = txmgr_table.get_ready_txs(txpool_pack_para);
+    auto ready_txs2 = txmgr_table.get_ready_txs(txpool_pack_para, id_height_map);
     ASSERT_EQ(1, ready_txs2.size());
     ASSERT_EQ(txs[0]->get_digest_hex_str(), ready_txs2[0]->get_digest_hex_str());
 
@@ -364,14 +366,14 @@ TEST_F(test_txmgr_table, sigle_account_uncontinuous_send_txs) {
     }
 
     {
-        auto ready_txs3 = txmgr_table.get_ready_txs(txpool_pack_para);
+        auto ready_txs3 = txmgr_table.get_ready_txs(txpool_pack_para, id_height_map);
         ASSERT_EQ(7, ready_txs3.size());
     }
 
     txmgr_table.updata_latest_nonce(txs[0]->get_account_addr(), txs[0]->get_transaction()->get_tx_nonce());
 
     {
-        auto ready_txs4 = txmgr_table.get_ready_txs(txpool_pack_para);
+        auto ready_txs4 = txmgr_table.get_ready_txs(txpool_pack_para, id_height_map);
         ASSERT_EQ(6, ready_txs4.size());
         ASSERT_EQ(txs[1]->get_digest_hex_str(), ready_txs4[0]->get_digest_hex_str());
         ASSERT_EQ(txs[2]->get_digest_hex_str(), ready_txs4[1]->get_digest_hex_str());
@@ -380,7 +382,7 @@ TEST_F(test_txmgr_table, sigle_account_uncontinuous_send_txs) {
 
     txmgr_table.updata_latest_nonce(txs[3]->get_account_addr(), txs[3]->get_transaction()->get_tx_nonce());
 
-    auto ready_txs5 = txmgr_table.get_ready_txs(txpool_pack_para);
+    auto ready_txs5 = txmgr_table.get_ready_txs(txpool_pack_para, id_height_map);
     ASSERT_EQ(3, ready_txs5.size());
     ASSERT_EQ(txs[4]->get_digest_hex_str(), ready_txs5[0]->get_digest_hex_str());
     ASSERT_EQ(txs[5]->get_digest_hex_str(), ready_txs5[1]->get_digest_hex_str());
@@ -388,7 +390,7 @@ TEST_F(test_txmgr_table, sigle_account_uncontinuous_send_txs) {
 
     txmgr_table.updata_latest_nonce(txs[5]->get_account_addr(), txs[5]->get_transaction()->get_tx_nonce());
 
-    auto ready_txs6 = txmgr_table.get_ready_txs(txpool_pack_para);
+    auto ready_txs6 = txmgr_table.get_ready_txs(txpool_pack_para, id_height_map);
     ASSERT_EQ(1, ready_txs6.size());
     ASSERT_EQ(txs[6]->get_digest_hex_str(), ready_txs6[0]->get_digest_hex_str());
 }
@@ -427,8 +429,8 @@ TEST_F(test_txmgr_table, expired_tx) {
     xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(vbstate.get());
     std::set<base::xtable_shortid_t> peer_sids_for_confirm_id;
     xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, tablestate, 40, 35, 30, peer_sids_for_confirm_id);
-
-    auto ready_txs = txmgr_table.get_ready_txs(txpool_pack_para);
+    xunconfirm_id_height id_height_map(1);
+    auto ready_txs = txmgr_table.get_ready_txs(txpool_pack_para, id_height_map);
     ASSERT_EQ(1, ready_txs.size());
 }
 

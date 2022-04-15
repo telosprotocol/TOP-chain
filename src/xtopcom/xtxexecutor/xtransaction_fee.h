@@ -18,7 +18,7 @@ using top::store::xaccount_context_t;
 
 class xtransaction_fee_t{
 public:
-    xtransaction_fee_t(xaccount_context_t* account_ctx, const xcons_transaction_ptr_t & trans)
+    xtransaction_fee_t(xaccount_context_t * account_ctx, const data::xcons_transaction_ptr_t & trans)
     : m_account_ctx(account_ctx), m_trans(trans), m_used_deposit(0), m_service_fee(0) {
     }
 
@@ -32,6 +32,19 @@ public:
     int32_t update_tgas_disk_after_sc_exec(xvm::xtransaction_trace_ptr trace);
     int32_t update_tgas_disk_contract_recv(uint64_t& used_deposit, uint64_t& frozen_tgas, uint64_t deal_used_tgas);
     int32_t update_tgas_contract_recv(uint64_t& used_deposit, uint64_t& frozen_tgas, uint64_t deal_used_tgas);
+
+    static uint32_t calc_tgas_usage(top::data::xcons_transaction_ptr_t trans, bool is_contract) {
+#ifdef ENABLE_SCALE
+        uint16_t amplify = 5;
+#else
+        uint16_t amplify = 1;
+#endif
+        if (is_contract) {
+            amplify = 1;
+        }
+        uint32_t multiple = (trans->is_self_tx()) ? 1 : 3;
+        return multiple * amplify * trans->get_transaction()->get_tx_len();
+    }
 
     uint32_t get_tgas_usage(bool is_contract) {
         #ifdef ENABLE_SCALE
@@ -78,7 +91,7 @@ public:
 
 private:
     xaccount_context_t*     m_account_ctx;
-    xcons_transaction_ptr_t m_trans;
+    data::xcons_transaction_ptr_t m_trans;
     uint64_t                m_used_deposit;
     uint64_t                m_service_fee;
 };

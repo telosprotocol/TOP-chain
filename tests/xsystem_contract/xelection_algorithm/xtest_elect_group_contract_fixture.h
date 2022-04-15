@@ -21,13 +21,10 @@ NS_BEG3(top, tests, election)
 
 XINLINE_CONSTEXPR char const * TEST_NODE_ID_PREFIX = "T00000LLyxLtW";
 
-using top::data::election::xelection_cluster_result_t;
 using top::data::election::xelection_group_result_t;
 using top::data::election::xelection_info_bundle_t;
-using top::data::election::xelection_info_t;
 using top::data::election::xelection_network_result_t;
 using top::data::election::xelection_result_store_t;
-using top::data::election::xelection_result_t;
 using top::data::election::xstandby_network_result_t;
 using top::data::election::xstandby_node_info_t;
 using top::xvm::system_contracts::xelect_consensus_group_contract_t;

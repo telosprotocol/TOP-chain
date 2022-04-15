@@ -29,6 +29,10 @@ void xtransaction_exec_state_t::set_receipt_id(base::xtable_shortid_t self_table
     set_value(XTX_RECEIPT_ID_PEER_TABLE_ID, peer_tableid);
 }
 
+void xtransaction_exec_state_t::set_rsp_id(uint64_t rspid) {
+    set_value(XTX_RSP_ID, rspid);
+}
+
 void xtransaction_exec_state_t::set_sender_confirmed_receipt_id(uint64_t receiptid) {
     set_value(XTX_SENDER_CONFRIMED_RECEIPT_ID, receiptid);
 }
@@ -55,6 +59,18 @@ void xtransaction_exec_state_t::set_not_need_confirm(bool not_need_confirm) {
     if (not_need_confirm) {
         auto flags = get_value_uint32(XTX_FLAGS);
         flags |= XTX_NOT_NEED_CONFIRM_FLAG_MASK;
+        set_value(XTX_FLAGS, (uint32_t)flags);
+    }
+}
+
+bool xtransaction_exec_state_t::get_inner_table_flag() const {
+    auto flags = get_value_uint32(XTX_FLAGS);
+    return (flags & XTX_INNER_TABLE_FLAG_MASK);
+}
+void xtransaction_exec_state_t::set_inner_table_flag(bool inner_table) {
+    if (inner_table) {
+        auto flags = get_value_uint32(XTX_FLAGS);
+        flags |= XTX_INNER_TABLE_FLAG_MASK;
         set_value(XTX_FLAGS, (uint32_t)flags);
     }
 }

@@ -8,7 +8,7 @@
 
 NS_BEG3(top, data, system_contract)
 
-bool check_registered_nodes_active(std::map<std::string, std::string> const & nodes, bool const fullnode_enabled) {
+bool check_registered_nodes_active(std::map<std::string, std::string> const & nodes) {
     uint32_t auditor_num = 0;
     uint32_t validator_num = 0;
     uint32_t archive_num = 0;
@@ -26,13 +26,12 @@ bool check_registered_nodes_active(std::map<std::string, std::string> const & no
         xreg_node_info reg_node_info;
         reg_node_info.serialize_from(stream);
 
-        xdbg("[check_registered_nodes_active] account: %s, if_adv: %d, if_validator: %d, if_archive: %d, if_edge: %d, if_fullnode: %d, votes: %llu\n",
+        xdbg("[check_registered_nodes_active] account: %s, if_adv: %d, if_validator: %d, if_archive: %d, if_edge: %d, votes: %llu",
              reg_node_info.m_account.c_str(),
              reg_node_info.can_be_auditor(),
              reg_node_info.can_be_validator(),
-             fullnode_enabled ? reg_node_info.can_be_archive() : reg_node_info.legacy_can_be_archive(),
+             reg_node_info.can_be_archive(),
              reg_node_info.can_be_edge(),
-             fullnode_enabled ? reg_node_info.can_be_fullnode() : 0,
              reg_node_info.m_vote_amount);
 
         if (reg_node_info.is_invalid_node())
@@ -44,21 +43,12 @@ bool check_registered_nodes_active(std::map<std::string, std::string> const & no
         if (reg_node_info.can_be_validator()) {
             validator_num++;
         }
-
-        if (fullnode_enabled) {
-            if (reg_node_info.can_be_archive()) {
-                archive_num++;
-            }
-
-            if (reg_node_info.can_be_fullnode()) {
-                fullnode_num++;
-            }
-        } else {
-            if (reg_node_info.legacy_can_be_archive()) {
-                archive_num++;
-            }
+        if (reg_node_info.can_be_archive()) {
+            archive_num++;
         }
-
+        if (reg_node_info.can_be_fullnode()) {
+            fullnode_num++;
+        }
         if (reg_node_info.can_be_edge()) {
             edge_num++;
         }
@@ -532,6 +522,19 @@ int32_t xslash_info::do_read(base::xstream_t & stream) {
     return (begin_pos - end_pos);
 }
 
+uint64_t xreg_node_info::raw_credit_score_data(common::xnode_type_t const node_type) const noexcept {
+    switch (node_type) {
+    case common::xnode_type_t::consensus_auditor:
+        return m_auditor_credit_numerator;
+
+    case common::xnode_type_t::consensus_validator:
+        return m_validator_credit_numerator;
+
+    default:
+        return 0;
+    }
+}
+
 void xreg_node_info::slash_credit_score(common::xnode_type_t node_type) {
     uint64_t slash_creditscore_numerator{0};
     if (common::has<common::xnode_type_t::validator>(node_type)) {
@@ -587,22 +590,6 @@ void xreg_node_info::award_credit_score(common::xnode_type_t node_type) {
             return;
         }
     }
-}
-
-xreg_node_info get_reg_info(observer_ptr<store::xstore_face_t> const & store, common::xaccount_address_t const & node_addr) {
-    std::string value_str;
-    int ret = store->map_get(top::sys_contract_rec_registration_addr, XPORPERTY_CONTRACT_REG_KEY, node_addr.value(), value_str);
-
-    if (ret != store::xstore_success || value_str.empty()) {
-        xwarn("[get_reg_info] get node register info fail, node_addr: %s", node_addr.value().c_str());
-        return xreg_node_info{};
-    }
-
-    xreg_node_info node_info;
-    base::xstream_t        stream(base::xcontext_t::instance(), (uint8_t *)value_str.c_str(), (uint32_t)value_str.size());
-
-    node_info.serialize_from(stream);
-    return node_info;
 }
 
 std::string xissue_detail::to_string() const {

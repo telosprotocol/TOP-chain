@@ -58,8 +58,14 @@ int xlightunit_builder_t::construct_block_builder_para(const data::xblock_ptr_t 
     return exec_ret;
 }
 
-xblock_ptr_t xlightunit_builder_t::create_block(const xblock_ptr_t & prev_block, const data::xblock_consensus_para_t & cs_para, const xlightunit_block_para_t & lightunit_para, const base::xreceiptid_state_ptr_t & receiptid_state) {
-    alloc_tx_receiptid(lightunit_para.get_succ_txs(), receiptid_state);
+xblock_ptr_t xlightunit_builder_t::create_block(const xblock_ptr_t & prev_block,
+                                                const data::xblock_consensus_para_t & cs_para,
+                                                const data::xlightunit_block_para_t & lightunit_para,
+                                                const base::xreceiptid_state_ptr_t & receiptid_state) {
+    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+    bool add_rsp_id = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.add_rsp_id, cs_para.get_clock());
+
+    alloc_tx_receiptid(lightunit_para.get_succ_txs(), receiptid_state, add_rsp_id);
     
     if (lightunit_para.get_input_txs().empty() && !lightunit_para.get_unchange_txs().empty()) {
         return nullptr;
@@ -169,7 +175,7 @@ xblock_ptr_t        xlightunit_builder_t::build_block(const xblock_ptr_t & prev_
             return nullptr;
         }
 
-        xlightunit_block_para_t lightunit_para;
+        data::xlightunit_block_para_t lightunit_para;
         // set lightunit para by tx result
         lightunit_para.set_input_txs(exec_result.m_exec_succ_txs);
         lightunit_para.set_unchange_txs(exec_result.m_exec_unchange_txs);
@@ -201,7 +207,7 @@ xblock_ptr_t        xfullunit_builder_t::build_block(const xblock_ptr_t & prev_b
     XMETRICS_TIMER(metrics::cons_unitbuilder_fullunit_tick);
 
     base::xauto_ptr<base::xvheader_t> _temp_header = base::xvblockbuild_t::build_proposal_header(prev_block.get(), cs_para.get_clock());
-    xfullunit_block_para_t para;
+    data::xfullunit_block_para_t para;
 
     std::shared_ptr<xlightunit_builder_para_t> lightunit_build_para = std::dynamic_pointer_cast<xlightunit_builder_para_t>(build_para);
 
@@ -221,7 +227,9 @@ xblock_ptr_t        xfullunit_builder_t::build_block(const xblock_ptr_t & prev_b
         para.set_fullstate_bin(exec_result.m_full_state);
         // para.set_binlog(exec_result.m_property_binlog);
 
-        alloc_tx_receiptid(para.get_succ_txs(), lightunit_build_para->get_receiptid_state());
+        auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+        bool add_rsp_id = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.add_rsp_id, cs_para.get_clock());
+        alloc_tx_receiptid(para.get_succ_txs(), lightunit_build_para->get_receiptid_state(), add_rsp_id);
         if (para.get_input_txs().empty() && !para.get_unchange_txs().empty()) {
             return nullptr;
         }
@@ -250,5 +258,21 @@ xblock_ptr_t        xemptyunit_builder_t::build_block(const xblock_ptr_t & prev_
     proposal_unit.attach((data::xblock_t*)_proposal_block);
     return proposal_unit;
 }
+
+// xblock_ptr_t        xunit_builder_t::build_block(const xblock_ptr_t & prev_block,
+//                                         const xobject_ptr_t<base::xvbstate_t> & proposal_bstate,
+//                                         const data::xblock_consensus_para_t & cs_para,
+//                                         xblock_builder_para_ptr_t & build_para) {
+
+
+//     if (lightunit_para.get_input_txs().empty() && !lightunit_para.get_unchange_txs().empty()) {
+//         return nullptr;
+//     }
+
+//     base::xvblock_t* _proposal_block = data::xblocktool_t::create_next_lightunit(lightunit_para, prev_block.get(), cs_para);
+//     xblock_ptr_t proposal_unit;
+//     proposal_unit.attach((data::xblock_t*)_proposal_block);
+//     return proposal_unit;
+// }
 
 NS_END2

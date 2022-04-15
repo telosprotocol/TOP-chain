@@ -3,11 +3,26 @@
 #include "xbasic/xutility.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xdata/xaction_parse.h"
+#include "xdata/xcodec/xmsgpack/xelection/xelection_cluster_result_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xelection/xelection_group_result_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xelection/xelection_info_bundle_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xelection/xelection_network_result_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xelection/xelection_result_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xelection/xelection_result_store_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xelection/xstandby_network_storage_result_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xelection/xstandby_node_info_codec.hpp"
+#include "xdata/xcodec/xmsgpack/xelection/xstandby_result_store_codec.hpp"
 #include "xdata/xcodec/xmsgpack/xelection_association_result_store_codec.hpp"
-#include "xdata/xcodec/xmsgpack/xelection_result_store_codec.hpp"
-#include "xdata/xcodec/xmsgpack/xstandby_result_store_codec.hpp"
 #include "xdata/xelection/xelection_association_result_store.h"
+#include "xdata/xelection/xelection_cluster_result.h"
+#include "xdata/xelection/xelection_group_result.h"
+#include "xdata/xelection/xelection_info_bundle.h"
+#include "xdata/xelection/xelection_network_result.h"
+#include "xdata/xelection/xelection_result.h"
 #include "xdata/xelection/xelection_result_store.h"
+#include "xdata/xelection/xstandby_network_storage_result.h"
+#include "xdata/xelection/xstandby_node_info.h"
+#include "xdata/xelection/xstandby_result.h"
 #include "xdata/xelection/xstandby_result_store.h"
 #include "xdata/xproposal_data.h"
 #include "xdata/xslash.h"
@@ -854,7 +869,7 @@ static void parse_election_result_string(std::string const & str, json & j) {
                     auto const & group_id = top::get<common::xgroup_id_t const>(group_result_info);
                     auto const & election_group_result = top::get<data::election::xelection_group_result_t>(group_result_info);
                     for (auto const & node_info : election_group_result) {
-                        auto const & node_id = top::get<data::election::xelection_info_bundle_t>(node_info).node_id();
+                        auto const & node_id = top::get<data::election::xelection_info_bundle_t>(node_info).account_address();
                         if (node_id.empty()) {
                             continue;
                         }

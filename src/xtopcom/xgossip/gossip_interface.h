@@ -28,8 +28,10 @@ struct DispatchInfos {
     kadmlia::NodeInfoPtr nodes;
     uint64_t sit1;
     uint64_t sit2;
+    bool is_last_round_node;
 
-    DispatchInfos(kadmlia::NodeInfoPtr _nodes, uint64_t _sit1, uint64_t _sit2) : nodes{_nodes}, sit1{_sit1}, sit2{_sit2} {
+    DispatchInfos(kadmlia::NodeInfoPtr _nodes, uint64_t _sit1, uint64_t _sit2, bool _is_last_round_node)
+      : nodes{_nodes}, sit1{_sit1}, sit2{_sit2}, is_last_round_node{_is_last_round_node} {
     }
     uint64_t & get_sit1() {
         return sit1;

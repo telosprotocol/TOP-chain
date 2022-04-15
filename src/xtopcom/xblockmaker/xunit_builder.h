@@ -51,7 +51,10 @@ class xlightunit_builder_t : public xblock_builder_face_t {
                                                              xblock_builder_para_ptr_t & build_para,
                                                              txexecutor::xbatch_txs_result_t & exec_result);
  protected:
-    xblock_ptr_t create_block(const xblock_ptr_t & prev_block, const data::xblock_consensus_para_t & cs_para, const xlightunit_block_para_t & lightunit_para, const base::xreceiptid_state_ptr_t & receiptid_state);
+    xblock_ptr_t create_block(const xblock_ptr_t & prev_block,
+                              const data::xblock_consensus_para_t & cs_para,
+                              const data::xlightunit_block_para_t & lightunit_para,
+                              const base::xreceiptid_state_ptr_t & receiptid_state);
 };
 
 class xfullunit_builder_t : public xblock_builder_face_t {
@@ -66,6 +69,14 @@ class xfullunit_builder_t : public xblock_builder_face_t {
 };
 
 class xemptyunit_builder_t : public xblock_builder_face_t {
+ public:
+    virtual xblock_ptr_t        build_block(const xblock_ptr_t & prev_block,
+                                            const xobject_ptr_t<base::xvbstate_t> & prev_bstate,
+                                            const data::xblock_consensus_para_t & cs_para,
+                                            xblock_builder_para_ptr_t & build_para) override;
+};
+
+class xunit_builder_t : public xblock_builder_face_t {
  public:
     virtual xblock_ptr_t        build_block(const xblock_ptr_t & prev_block,
                                             const xobject_ptr_t<base::xvbstate_t> & prev_bstate,

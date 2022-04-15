@@ -19,7 +19,7 @@ xrpc_init::xrpc_init(std::shared_ptr<xvnetwork_driver_face_t> vhost,
               observer_ptr<base::xvblockstore_t> const & block_store,
               observer_ptr<base::xvtxstore_t> const & txstore,
               observer_ptr<elect::ElectMain> elect_main,
-              observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
+              observer_ptr<top::election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
 {
     assert(nullptr != vhost);
     assert(nullptr != router_ptr);
@@ -36,7 +36,7 @@ xrpc_init::xrpc_init(std::shared_ptr<xvnetwork_driver_face_t> vhost,
     case common::xnode_type_t::consensus_auditor:
         assert(nullptr != txpool_service);
         init_rpc_cb_thread();
-        m_cluster_handler = std::make_shared<xcluster_rpc_handler>(vhost, router_ptr, txpool_service, store, block_store, txstore,  make_observer(m_thread));
+        m_cluster_handler = std::make_shared<xcluster_rpc_handler>(vhost, router_ptr, txpool_service, store, block_store, txstore, make_observer(m_thread));
         m_cluster_handler->start();
         break;
     case common::xnode_type_t::edge: {
@@ -53,8 +53,8 @@ xrpc_init::xrpc_init(std::shared_ptr<xvnetwork_driver_face_t> vhost,
     {
         xdbg("arc rpc start");
         init_rpc_cb_thread();
-        m_arc_handler = std::make_shared<xarc_rpc_handler>(vhost, router_ptr, txpool_service, store, block_store, make_observer(m_thread));
-        m_arc_handler->start();
+        m_rpc_handler = std::make_shared<xrpc_handler>(vhost, router_ptr, txpool_service, store, block_store, txstore, make_observer(m_thread));
+        m_rpc_handler->start();
         break;
     }
     case common::xnode_type_t::storage_exchange:
@@ -72,8 +72,8 @@ xrpc_init::xrpc_init(std::shared_ptr<xvnetwork_driver_face_t> vhost,
     case common::xnode_type_t::fullnode: {
         xdbg("fullnode rpc start");
         init_rpc_cb_thread();
-        m_arc_handler = std::make_shared<xarc_rpc_handler>(vhost, router_ptr, txpool_service, store, block_store, make_observer(m_thread));
-        m_arc_handler->start();
+        m_rpc_handler = std::make_shared<xrpc_handler>(vhost, router_ptr, txpool_service, store, block_store, txstore, make_observer(m_thread));
+        m_rpc_handler->start();
 
         break;
     }
@@ -87,11 +87,13 @@ void xrpc_init::stop() {
     if (m_shard_handler != nullptr) {
         m_shard_handler->stop();
     }
+
     if (m_cluster_handler != nullptr) {
         m_cluster_handler->stop();
     }
-    if (m_arc_handler != nullptr) {
-        m_arc_handler->stop();
+
+    if (m_rpc_handler != nullptr) {
+        m_rpc_handler->stop();
     }
 }
 

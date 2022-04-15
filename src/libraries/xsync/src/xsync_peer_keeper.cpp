@@ -6,6 +6,7 @@
 #include "xsync/xsync_log.h"
 #include "xsync/xsync_util.h"
 #include "xsync/xsync_prune.h"
+#include "xdata/xrootblock.h"
 
 NS_BEG2(top, sync)
 
@@ -136,33 +137,17 @@ void xsync_peer_keeper_t::walk_role(const vnetwork::xvnode_address_t &self_addr,
     std::vector<xchain_state_info_t> info_list;
 
     const map_chain_info_t &chains = role_chains->get_chains_wrapper().get_chains();
-    for (const auto &it: chains) {
+    prune_table(self_addr, chains);
 
+    for (const auto &it: chains) {
         const std::string &address = it.first;
         const xchain_info_t &chain_info = it.second;
-        if (common::has<common::xnode_type_t::fullnode>(self_addr.type())) {
-            uint64_t height = m_sync_store->get_latest_block_with_state(address);
-            xsync_prune_sigleton_t::instance().update(address, enum_height_type::latest_state_height, height);
-            uint64_t height1 = m_sync_store->get_latest_immutable_connected_checkpoint_height(address);
-            height = m_sync_store->get_latest_stable_connected_checkpoint_height(address);
-            if (height1 > height) {
-                height = height1;
-            }
-            
-            //reserve 100 blocks
-            if (height > 100) {
-                height = height - 100;
-            }
-            xsync_prune_sigleton_t::instance().update(address, enum_height_type::mutable_checkpoint_height, height);
-        }
 
-        if (common::has<common::xnode_type_t::fullnode>(self_addr.type()) || common::has<common::xnode_type_t::consensus>(self_addr.type())) {
-            base::xvaccount_t _vaddr(address);
-            uint64_t min_height;
-            bool succ = xsync_prune_sigleton_t::instance().get_height(address, min_height);
-            if (succ && m_sync_store->is_full_node_forked()) {
-                store::refresh_block_recycler_rule(top::chainbase::xmodule_type_xsync, _vaddr, min_height);
-                xsync_info("xsync_peer_keeper walk_role,refresh prune height account %s, height %llu", address.c_str(), min_height);
+        if (!common::has<common::xnode_type_t::frozen>(self_addr.type())) {
+            base::xvaccount_t account_obj{address};
+            auto zone_id = account_obj.get_zone_index();
+            if ((zone_id == base::enum_chain_zone_zec_index) || (zone_id == base::enum_chain_zone_beacon_index)) {
+                continue;
             }
         }
 
@@ -190,7 +175,78 @@ void xsync_peer_keeper_t::walk_role(const vnetwork::xvnode_address_t &self_addr,
         send_chain_state(self_addr, target_list, info_list);
     }
 }
+void xsync_peer_keeper_t::prune_table(const vnetwork::xvnode_address_t &self_addr, const map_chain_info_t &chains) {
+    common::xminer_type_t miner_type = m_role_xips_mgr->miner_type();
+    xsync_info("xsync_peer_keeper walk_role, %s", to_string(miner_type).c_str());
+    if (m_role_xips_mgr->genesis() || 
+        common::has<common::xminer_type_t::archive>(miner_type) || 
+        common::has<common::xminer_type_t::exchange>(miner_type))
+        return;
 
+    for (const auto &it: chains) {
+        const std::string &address = it.first;
+        const xchain_info_t &chain_info = it.second;
+        if (common::has<common::xminer_type_t::advance>(miner_type)) {
+            uint64_t height = m_sync_store->get_latest_block_with_state(address);
+            xsync_prune_sigleton_t::instance().update(address, enum_height_type::latest_state_height, height);
+            uint64_t height1 = m_sync_store->get_latest_immutable_connected_checkpoint_height(address);
+            height = m_sync_store->get_latest_stable_connected_checkpoint_height(address);
+            if (height1 > height) {
+                height = height1;
+            }
+            
+            //reserve 100 blocks
+            if (height > 100) {
+                height = height - 100;
+            }
+            xsync_prune_sigleton_t::instance().update(address, enum_height_type::mutable_checkpoint_height, height);
+        }
+
+        if (common::has<common::xminer_type_t::advance>(miner_type) || common::has<common::xminer_type_t::validator>(miner_type)) {
+            base::xvaccount_t _vaddr(address);
+            uint64_t min_height;
+            bool succ = xsync_prune_sigleton_t::instance().get_height(address, min_height);
+            if (succ && m_sync_store->is_full_node_forked()) {
+                store::refresh_block_recycler_rule(top::chainbase::xmodule_type_xsync, _vaddr, min_height);
+                xsync_info("xsync_peer_keeper walk_role,refresh prune height account %s, height %llu", address.c_str(), min_height);
+            }
+        }
+
+        base::xvaccount_t _vaddr(address);
+        auto zone_id = _vaddr.get_zone_index();
+        if ((zone_id == base::enum_chain_zone_zec_index) || (zone_id == base::enum_chain_zone_beacon_index)) {
+            uint64_t height = m_sync_store->get_latest_block_with_state(address);
+            xsync_prune_sigleton_t::instance().update(address, enum_height_type::latest_state_height, height);
+            uint64_t height_state = height;
+            uint64_t height1 = m_sync_store->get_latest_immutable_connected_checkpoint_height(address);
+            height = m_sync_store->get_latest_stable_connected_checkpoint_height(address);
+            if (height1 > height) {
+                height = height1;
+            }
+
+            // reserve 100 blocks
+            if (height > 100) {
+                height = height - 100;
+            }
+            xsync_prune_sigleton_t::instance().update(address, enum_height_type::mutable_checkpoint_height, height);
+
+            uint64_t peer_start_height = 0;
+            uint64_t peer_end_height = 0;
+            vnetwork::xvnode_address_t peer_addr;
+            if (m_peerset->get_newest_peer(self_addr, address, peer_start_height, peer_end_height, peer_addr)) {
+                xsync_prune_sigleton_t::instance().update(address, enum_height_type::confirm_height, peer_end_height);
+            }
+            xsync_info("xsync_peer_keeper walk_role frozen update, %s, %llu, %llu, %llu, %llu", address.c_str(), height_state, height1, height, peer_end_height);
+
+            uint64_t min_height;
+            bool succ = xsync_prune_sigleton_t::instance().get_height(address, min_height);
+            if (succ && m_sync_store->is_full_node_forked()) {
+                store::refresh_block_recycler_rule(top::chainbase::xmodule_type_xsync, _vaddr, min_height);
+                xsync_info("xsync_peer_keeper walk_role frozen,refresh prune height account %s, height %llu", address.c_str(), min_height);
+            }
+        }
+    }
+}
 void xsync_peer_keeper_t::process_timer() {
 
     for (auto &it: m_maps) {
@@ -222,10 +278,25 @@ void xsync_peer_keeper_t::send_frozen_chain_state(const xvnode_address_t &self_a
 
     XMETRICS_COUNTER_INCREMENT("sync_frozen_broadcast_chain_state_send", 1);
 
-    uint32_t factor = get_frozen_broadcast_factor();
-
-    for (uint32_t i=0; i<factor; i++) {
-        m_sync_sender->send_frozen_broadcast_chain_state(info_list, self_addr);
+    const std::vector<data::node_info_t> & seeds = data::xrootblock_t::get_seed_nodes();
+    std::vector<data::node_info_t> rand_seeds;
+    uint32_t select = sqrt(seeds.size()) + 1;
+    uint32_t size = seeds.size();
+    for (uint32_t i = 0; i < seeds.size(); ++i) {
+        uint32_t idx = RandomUint32() % (size - i);
+        if (idx < select) {
+            rand_seeds.push_back(seeds[i]);
+            select--;
+            if (select <= 0)
+                break;
+        }
+    }
+    xinfo("send_frozen_chain_state, %d", rand_seeds.size());
+    for (auto const & item : rand_seeds) {
+        xgroup_address_t group_addr = common::build_frozen_sharding_address(self_addr.network_id());
+        top::common::xslot_id_t slot_id{0};
+        common::xtop_node_address target_addr(group_addr, common::xaccount_election_address_t{item.m_account, slot_id});
+        m_sync_sender->send_broadcast_chain_state(info_list, self_addr, target_addr);
     }
 }
 

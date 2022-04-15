@@ -86,7 +86,7 @@ void xsync_behind_checker_t::check_one(const std::string &address, enum_chain_sy
     vnetwork::xvnode_address_t peer_addr;
 
     if (m_peerset->get_newest_peer(self_addr, address, peer_start_height, peer_end_height, peer_addr)) {
-        xsync_dbg("xsync_behind_checker_t::check_one, %d, %s,%llu,%llu,%llu,%llu", sync_policy, address.c_str(), latest_start_block_height, latest_end_block_height, peer_start_height, peer_end_height);
+        xsync_dbg("xsync_behind_checker_t::check_one, %d, %s,%llu,%llu,%llu,%llu,%s", sync_policy, address.c_str(), latest_start_block_height, latest_end_block_height, peer_start_height, peer_end_height, peer_addr.to_string().c_str());
         if ((m_counter % 120) == 0) {
             std::string sync_mode;
             std::string gap_metric_tag_name;
@@ -131,7 +131,7 @@ void xsync_behind_checker_t::check_one(const std::string &address, enum_chain_sy
         if (latest_end_block_height >= peer_end_height) {
             if (sync_policy == enum_chain_sync_policy_fast) {
                 auto latest_start_block = m_sync_store->get_latest_start_block(address, sync_policy);
-                xblock_ptr_t block = autoptr_to_blockptr(latest_start_block);
+                data::xblock_ptr_t block = autoptr_to_blockptr(latest_start_block);
                 if (block->is_full_state_block()) {
                     return;
                 }
@@ -140,8 +140,8 @@ void xsync_behind_checker_t::check_one(const std::string &address, enum_chain_sy
             }
         }
         
-        xsync_info("behind_checker notify %s,local(start_height=%lu,end_height=%lu) peer(start_height=%lu,end_height=%lu) sync_policy(%d) reason=%s", 
-            address.c_str(), latest_start_block_height, latest_end_block_height, peer_start_height, peer_end_height, (int32_t)sync_policy, reason.c_str());
+        xsync_info("behind_checker notify %s,local(start_height=%lu,end_height=%lu) peer(start_height=%lu,end_height=%lu) sync_policy(%d) reason=%s, %s", 
+            address.c_str(), latest_start_block_height, latest_end_block_height, peer_start_height, peer_end_height, (int32_t)sync_policy, reason.c_str(), peer_addr.to_string().c_str());
 
         mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_behind_download_t>(address, peer_start_height, peer_end_height, sync_policy, self_addr, peer_addr, reason);
         m_downloader->push_event(ev);

@@ -189,6 +189,7 @@ XDEFINE_CONFIGURATION(local_whitelist);
 
 XDEFINE_CONFIGURATION(slash_fulltable_interval);
 XDEFINE_CONFIGURATION(slash_table_split_num);
+XDEFINE_CONFIGURATION(prune_reserve_number);
 
 /* beginning of development parameters */
 XDEFINE_CONFIGURATION(http_port);

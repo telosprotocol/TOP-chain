@@ -103,8 +103,8 @@ bool xtop_sniffer::sniff_broadcast(xobject_ptr_t<base::xvblock_t> const & vblock
                 return false;
             }
             vblock->add_ref();
-            xblock_ptr_t block{};
-            block.attach(static_cast<xblock_t *>(vblock.get()));
+            data::xblock_ptr_t block{};
+            block.attach(static_cast<data::xblock_t *>(vblock.get()));
             xsniffer_action_t::broadcast(m_vnode, block, static_cast<common::xnode_type_t>(config.broadcast_config.zone));
             xinfo("[xtop_vnode::sniff_broadcast] contract: %s, block: %s, height: %llu, broadcast success, block=%s!",
                   contract_address.c_str(),
@@ -179,7 +179,7 @@ bool xtop_sniffer::sniff_block(xobject_ptr_t<base::xvblock_t> const & vblock) co
         // table upload contract sniff sharding table addr
         if ((block_address.find(config.block_config.sniff_address.value()) != std::string::npos) && (contract_address == config.block_config.action_address)) {
             xdbg("[xtop_vnode::sniff_block] sniff block match, contract: %s, block: %s, height: %llu", contract_address.c_str(), block_address.c_str(), height);
-            auto const full_tableblock = (dynamic_cast<xfull_tableblock_t *>(vblock.get()));
+            auto const full_tableblock = (dynamic_cast<data::xfull_tableblock_t *>(vblock.get()));
             auto const fulltable_statisitc_data = full_tableblock->get_table_statistics();
             auto const statistic_accounts = components::xfulltableblock_process_t::fulltableblock_statistic_accounts(fulltable_statisitc_data, m_nodesvr.get());
 
@@ -191,7 +191,7 @@ bool xtop_sniffer::sniff_block(xobject_ptr_t<base::xvblock_t> const & vblock) co
             stream << full_tableblock->get_pledge_balance_change_tgas();
             std::string action_params = std::string((char *)stream.data(), stream.size());
             uint32_t table_id = 0;
-            auto result = xdatautil::extract_table_id_from_address(block_address, table_id);
+            auto result = data::xdatautil::extract_table_id_from_address(block_address, table_id);
             assert(result);
             {
                 // table id check
@@ -295,12 +295,12 @@ void xtop_sniffer::normal_timer_func(common::xaccount_address_t const& contract_
 }
 
 void xtop_sniffer::call(common::xaccount_address_t const & address, std::string const & action_name, std::string const & action_params, const uint64_t timestamp) const {
-    xproperty_asset asset_out{0};
+    data::xproperty_asset asset_out{0};
     auto tx = make_object_ptr<data::xtransaction_v2_t>();
 
     tx->make_tx_run_contract(asset_out, action_name, action_params);
     tx->set_same_source_target_address(address.value());
-    xaccount_ptr_t account = m_store->query_account(address.value());
+    data::xaccount_ptr_t account = m_store->query_account(address.value());
     assert(account != nullptr);
     tx->set_last_trans_hash_and_nonce(account->account_send_trans_hash(), account->account_send_trans_number());
     tx->set_fire_timestamp(timestamp);
@@ -333,10 +333,10 @@ void xtop_sniffer::call(common::xaccount_address_t const & source_address,
                             std::string const & action_name,
                             std::string const & action_params,
                             uint64_t timestamp) const {
-    auto tx = make_object_ptr<xtransaction_v2_t>();
+    auto tx = make_object_ptr<data::xtransaction_v2_t>();
     tx->make_tx_run_contract(action_name, action_params);
     tx->set_different_source_target_address(source_address.value(), target_address.value());
-    xaccount_ptr_t account = m_store->query_account(source_address.value());
+    data::xaccount_ptr_t account = m_store->query_account(source_address.value());
     assert(account != nullptr);
     tx->set_last_trans_hash_and_nonce(account->account_send_trans_hash(), account->account_send_trans_number());
     tx->set_fire_timestamp(timestamp);

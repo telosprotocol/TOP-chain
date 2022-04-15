@@ -177,6 +177,16 @@ void ElectRoutingTable::GetRandomNodes(std::vector<NodeInfoPtr> & vec, size_t si
         }
     }
 }
+NodeInfoPtr ElectRoutingTable::GetOneRandomNode() {
+    auto shuffled_xip2 = get_shuffled_xip2();
+    auto all_nodes = nodes();
+    for (std::size_t _i = 0; _i < shuffled_xip2.size(); ++_i) {
+        if (all_nodes[shuffled_xip2[_i]] != nullptr) {
+            return all_nodes[shuffled_xip2[_i]];
+        }
+    }
+    return nullptr;
+}
 
 std::unordered_map<std::string, NodeInfoPtr> ElectRoutingTable::nodes(bool cover_old_version) {
     if (cover_old_version) {
@@ -219,9 +229,9 @@ NodeInfoPtr ElectRoutingTable::GetNode(const std::string & id) {
     if (m_nodes.find(id) != m_nodes.end() && m_nodes.at(id)->public_port) {
         return m_nodes.at(id);
     }
-    xdbg("elect routing table get node failed ,id: %s nodes.size:%zu", id.c_str(),m_nodes.size());
+    xdbg("elect routing table get node failed ,id: %s nodes.size:%zu", id.c_str(), m_nodes.size());
 
-    for(auto const & _p :m_nodes ){
+    for (auto const & _p : m_nodes) {
         xdbg("now have: %s %s %u", _p.first.c_str(), _p.second->public_ip.c_str(), _p.second->public_port);
     }
 
@@ -347,6 +357,41 @@ void ElectRoutingTable::UpdateBroadcastNodeInfo() {
         auto const & node_info_ptr = _p.second;
         assert(m_broadcast_nodes.find(xip) != m_broadcast_nodes.end());
         m_broadcast_nodes[xip] = node_info_ptr;
+    }
+}
+
+void ElectRoutingTable::getLastRoundElectNodesInfo(std::vector<std::pair<std::string, NodeInfoPtr>> & nodes_info) {
+    auto index = m_nodes.size();  // origin size
+    for (auto const & _p : m_broadcast_index_map) {
+        if (_p.second <= index) {
+            continue;
+        } else {
+            // last round index:
+            std::string last_election_xip2 = _p.first;
+            assert(m_broadcast_nodes.find(last_election_xip2) != m_broadcast_nodes.end());
+            auto last_round_node_info_ptr = m_broadcast_nodes[last_election_xip2];
+            if (last_round_node_info_ptr == nullptr) {
+                xdbg("[ElectRoutingTable::getLastRoundElectNodesInfo] lack of complete nodes info, can't response request");
+                nodes_info.clear();
+                return;
+            }
+            nodes_info.push_back(std::make_pair(last_election_xip2, last_round_node_info_ptr));
+        }
+    }
+    return;
+}
+
+void ElectRoutingTable::OnAddLastRoundElectNodes(std::vector<std::pair<std::string, NodeInfoPtr>> const & nodes) {
+    auto index = m_broadcast_index_map.size() + 1;
+    for (auto const & _p : nodes) {
+        if (_p.second != nullptr) {
+            xdbg("[ElectRoutingTable::SetElectionNodesExpected] get last round node %s %s %u", _p.first.c_str(), _p.second->public_ip.c_str(), _p.second->public_port);
+        } else {
+            xdbg("[ElectRoutingTable::SetElectionNodesExpected] get last round node %s without node_info", _p.first.c_str());
+        }
+        m_broadcast_nodes.insert(_p);
+        m_broadcast_index_map.insert(std::make_pair(_p.first, index++));
+        m_broadcast_xip2_for_shuffle.push_back(_p.first);
     }
 }
 

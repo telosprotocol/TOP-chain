@@ -21,6 +21,11 @@ namespace top
                enum_reserved_blocks_count           = 8,  //reserved blocks even it is qualified to recycel
                enum_min_batch_recycle_blocks_count  = 64, //min blocks to recyce each time
             };
+            enum prune_type {
+                enum_prune_none,
+                enum_prune_fullunit,
+                enum_prune_checkpoint,
+            };
         public:
             xvblockprune_impl(base::xvdbstore_t & xdb_api);
         protected:
@@ -56,6 +61,7 @@ namespace top
             base::xvdbstore_t *  m_xvdb_ptr{NULL};
             std::map<std::string, std::map<chainbase::enum_xmodule_type, uint64_t>> m_prune_boundary;
             std::mutex m_lock;
+            std::map<std::string, prune_type> m_prune_contract;
         };
     
     }

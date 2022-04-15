@@ -62,7 +62,7 @@ const std::vector<std::shared_ptr<xtx_entry>> xsend_tx_queue_internal_t::get_exp
     std::vector<std::shared_ptr<xtx_entry>> expired_txs;
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
     for (auto & tx : m_tx_time_order_set) {
-        auto ret = xverifier::xtx_verifier::verify_tx_duration_expiration(tx->get_tx()->get_transaction(), now);
+        auto ret = xverifier::xtx_verifier::verify_tx_fire_expiration(tx->get_tx()->get_transaction(), now, false);
         if (ret == 0) {
             break;
         }

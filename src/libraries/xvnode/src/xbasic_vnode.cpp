@@ -12,6 +12,7 @@ NS_BEG2(top, vnode)
 xtop_basic_vnode::xtop_basic_vnode(common::xnode_address_t address,
                                    common::xminer_type_t miner_type,
                                    bool genesis,
+                                   uint64_t raw_credit_score,
                                    common::xelection_round_t joined_election_round,
                                    observer_ptr<vnetwork::xvhost_face_t> const & vhost,
                                    observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor) noexcept
@@ -20,6 +21,7 @@ xtop_basic_vnode::xtop_basic_vnode(common::xnode_address_t address,
   , m_address{std::move(address)}
   , m_miner_type{miner_type}
   , m_genesis{genesis}
+  , m_raw_credit_score{raw_credit_score}
   , m_joined_election_round{std::move(joined_election_round)} {
 }
 
@@ -474,5 +476,9 @@ std::vector<common::xip2_t> xtop_basic_vnode::associated_child_nodes_xip2(common
 //
 //    return nodes;
 //}
+
+uint64_t xtop_basic_vnode::raw_credit_score() const noexcept {
+    return m_raw_credit_score;
+}
 
 NS_END2

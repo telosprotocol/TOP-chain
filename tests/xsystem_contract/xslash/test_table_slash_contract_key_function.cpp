@@ -10,8 +10,9 @@
 #include "xchain_timer/xchain_timer.h"
 #include "xdata/xblock_statistics_data.h"
 #include "xdata/xfulltableblock_account_data.h"
-#include "xloader/xconfig_onchain_loader.h"
+#include "xdata/xnative_contract_address.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
+#include "xloader/xconfig_onchain_loader.h"
 #include "xvm/xsystem_contracts/xslash/xtable_statistic_info_collection_contract.h"
 
 
@@ -28,7 +29,7 @@ const uint16_t VALIDATOR_ACCOUNT_ADDR_NUM = 512;
 
 class test_table_slash_contract: public xtable_statistic_info_collection_contract, public testing::Test {
 public:
-    test_table_slash_contract(): xtable_statistic_info_collection_contract{common::xnetwork_id_t{0}}, node_serv{common::xaccount_address_t{"mocked_nodesvr"}, "null"}{};
+    test_table_slash_contract() : xtable_statistic_info_collection_contract{common::xnetwork_id_t{0}}, node_serv{sharding_statistic_info_contract_address, "null"} {};
 
     void SetUp(){
         create_account_addrs(AUDITOR_ACCOUNT_ADDR_NUM, VALIDATOR_ACCOUNT_ADDR_NUM);
@@ -64,14 +65,20 @@ void test_table_slash_contract::create_account_addrs(uint32_t auditor_account_nu
     validator_account_addrs.resize(validator_account_num);
 
     for (uint32_t i = 0; i < auditor_account_num; ++i) {
-        auditor_account_addrs[i] = common::xaccount_address_t{std::string{"auditor_account__"} + std::to_string(i)};
+        std::ostringstream oss;
+        oss << "T00000LLC7zGtrhdcCp64hB2GnU1EuKX8aXLu" << std::setfill('0') << std::setw(3) << i;
+
+        auditor_account_addrs[i] = common::xaccount_address_t{oss.str()};
         // top::utl::xecprikey_t prikey;
         // auditor_account_addrs[i] = common::xaccount_address_t{prikey.to_account_address('0', 0)};
 
     }
 
     for (uint32_t i = 0; i < validator_account_num; ++i) {
-        validator_account_addrs[i] = common::xaccount_address_t{std::string{"validator_account__"} + std::to_string(i)};
+        std::ostringstream oss;
+        oss << "T00000LZkNHe2YChVTKNmGXUaXjtZpzmfCA2a" << std::setfill('0') << std::setw(3) << i;
+
+        validator_account_addrs[i] = common::xaccount_address_t{oss.str()};
         // top::utl::xecprikey_t prikey;
         // validator_account_addrs[i] = common::xaccount_address_t{prikey.to_account_address('0', 0)};
 

@@ -3,28 +3,17 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <string>
+#include "xbasic/xmodule_type.h"
 #include "xdata/xtable_bstate.h"
 
 NS_BEG2(top, data)
 
-xtable_bstate_t::xtable_bstate_t(base::xvbstate_t* bstate) {
-    bstate->add_ref();
-    m_bstate.attach(bstate);
-
-    cache_receiptid();
+xtable_bstate_t::xtable_bstate_t(base::xvbstate_t* bstate, bool readonly)
+: xbstate_ctx_t(bstate, readonly) {
+    cache_receiptid(bstate); // TODO(jimmy) delete future
 }
 
 xtable_bstate_t::~xtable_bstate_t() {
-    m_bstate->close();  // must do close firstly
-    m_bstate = nullptr;
-}
-
-std::string xtable_bstate_t::make_snapshot() {
-    std::string property_snapshot;
-    auto canvas = get_bstate()->rebase_change_to_snapshot();
-    canvas->encode(property_snapshot);
-    xassert(!property_snapshot.empty());
-    return property_snapshot;
 }
 
 bool xtable_bstate_t::set_block_offsnapshot(base::xvblock_t* block, const std::string & snapshot) {
@@ -69,13 +58,20 @@ bool xtable_bstate_t::set_account_index(const std::string & account, const base:
     return true;
 }
 
-bool xtable_bstate_t::get_account_index(const std::string & account, base::xaccount_index_t & account_index) const {
+bool xtable_bstate_t::set_account_index(const std::string & account, const base::xaccount_index_t & account_index) {
+    std::string value;
+    account_index.serialize_to(value);
+
     if (false == get_bstate()->find_property(XPROPERTY_TABLE_ACCOUNT_INDEX)) {
-        xwarn("xtable_bstate_t::get_account_index fail-find property.account=%s,height=%ld", get_account().c_str(), get_block_height());
-        return false;
+        get_bstate()->new_string_map_var(XPROPERTY_TABLE_ACCOUNT_INDEX, get_canvas().get());
     }
-    auto propobj = get_bstate()->load_string_map_var(XPROPERTY_TABLE_ACCOUNT_INDEX);  // TODO(jimmy) use hash map
-    auto value = propobj->query(account);
+
+    map_set(XPROPERTY_TABLE_ACCOUNT_INDEX, account, value);
+    return true;
+}
+
+bool xtable_bstate_t::get_account_index(const std::string & account, base::xaccount_index_t & account_index) const {
+    std::string value = map_get(XPROPERTY_TABLE_ACCOUNT_INDEX, account);
     if (value.empty()) {
         return false;
     }
@@ -84,13 +80,8 @@ bool xtable_bstate_t::get_account_index(const std::string & account, base::xacco
 }
 
 std::set<std::string> xtable_bstate_t::get_all_accounts() const {
-    if (false == get_bstate()->find_property(XPROPERTY_TABLE_ACCOUNT_INDEX)) {
-        xwarn("xtable_bstate_t::get_account_index fail-find property.account=%s,height=%ld", get_account().c_str(), get_block_height());
-        return {};
-    }
     std::set<std::string> all_accounts;
-    auto propobj = get_bstate()->load_string_map_var(XPROPERTY_TABLE_ACCOUNT_INDEX);
-    std::map<std::string,std::string> values = propobj->query();  // TODO(jimmy)
+    std::map<std::string,std::string> values = map_get(XPROPERTY_TABLE_ACCOUNT_INDEX);
     for (auto & v : values) {
         base::xaccount_index_t account_index;
         account_index.serialize_from(v.second);
@@ -99,43 +90,15 @@ std::set<std::string> xtable_bstate_t::get_all_accounts() const {
     return all_accounts;
 }
 
-std::set<std::string> xtable_bstate_t::get_unconfirmed_accounts() const {
-    if (false == get_bstate()->find_property(XPROPERTY_TABLE_ACCOUNT_INDEX)) {
-        xwarn("xtable_bstate_t::get_account_index fail-find property.account=%s,height=%ld", get_account().c_str(), get_block_height());
-        return {};
-    }
-    std::set<std::string> unconfirmed_accounts;
-    auto propobj = get_bstate()->load_string_map_var(XPROPERTY_TABLE_ACCOUNT_INDEX);
-    std::map<std::string,std::string> values = propobj->query();  // TODO(jimmy)
-    for (auto & v : values) {
-        base::xaccount_index_t account_index;
-        account_index.serialize_from(v.second);
-        if (account_index.is_has_unconfirm_tx()) {
-            unconfirmed_accounts.insert(v.first);
-        }
-    }
-    xdbg("xtable_bstate_t::get_unconfirmed_accounts account=%s,height=%ld,all_size=%zu,unconfirm_size=%zu",
-        get_account().c_str(), get_block_height(), values.size(), unconfirmed_accounts.size());
-    return unconfirmed_accounts;
-}
-
 int32_t xtable_bstate_t::get_account_size() const {
-    if (false == get_bstate()->find_property(XPROPERTY_TABLE_ACCOUNT_INDEX)) {
-        return 0;
-    }
-    auto propobj = get_bstate()->load_string_map_var(XPROPERTY_TABLE_ACCOUNT_INDEX);
-    std::map<std::string,std::string> values = propobj->query();
-    return (int32_t)values.size();
+    int32_t size = 0;
+    map_size(XPROPERTY_TABLE_ACCOUNT_INDEX, size);
+    return size;
 }
 
 bool xtable_bstate_t::find_receiptid_pair(base::xtable_shortid_t sid, base::xreceiptid_pair_t & pair) const {
-    if (false == get_bstate()->find_property(XPROPERTY_TABLE_RECEIPTID)) {
-        xdbg("xtable_bstate_t::find_receiptid_pair fail-find property.account=%s,height=%ld", get_account().c_str(), get_block_height());
-        return false;
-    }
-    auto propobj = get_bstate()->load_string_map_var(XPROPERTY_TABLE_RECEIPTID);
     std::string field = base::xstring_utl::tostring(sid);
-    auto value = propobj->query(field);
+    std::string value = map_get(XPROPERTY_TABLE_RECEIPTID, field);
     if (value.empty()) {
         return false;
     }
@@ -143,8 +106,8 @@ bool xtable_bstate_t::find_receiptid_pair(base::xtable_shortid_t sid, base::xrec
     return true;
 }
 
-void xtable_bstate_t::cache_receiptid() {
-    m_cache_receiptid = make_receiptid_from_state(get_bstate().get());
+void xtable_bstate_t::cache_receiptid(base::xvbstate_t* bstate) {
+    m_cache_receiptid = make_receiptid_from_state(bstate);
 }
 
 base::xreceiptid_state_ptr_t xtable_bstate_t::make_receiptid_from_state(base::xvbstate_t* bstate) {
@@ -190,6 +153,19 @@ bool xtable_bstate_t::set_receiptid_pair(base::xtable_shortid_t sid, const base:
     xassert(old_value != value);
     propobj->insert(field, value, canvas);
     return true;
+}
+
+bool xtable_bstate_t::set_receiptid_pair(base::xtable_shortid_t sid, const base::xreceiptid_pair_t & pair) {
+    std::string field = base::xstring_utl::tostring(sid);
+    std::string value;
+    pair.serialize_to(value);
+
+    if (false == get_bstate()->find_property(XPROPERTY_TABLE_RECEIPTID)) {
+        get_bstate()->new_string_map_var(XPROPERTY_TABLE_RECEIPTID, get_canvas().get());
+    }
+
+    int32_t ret = map_set(XPROPERTY_TABLE_RECEIPTID, field, value);
+    return ret == xsuccess;
 }
 
 NS_END2

@@ -18,6 +18,7 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                        common::xelection_round_t joined_election_round,
                        common::xminer_type_t miner_type,
                        bool genesis,
+                       uint64_t raw_credit_score,
                        common::xelection_round_t election_round,
                        std::uint16_t const group_size,
                        std::uint64_t const associated_blk_height,
@@ -30,7 +31,6 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                        observer_ptr<time::xchain_time_face_t> const & logic_timer,
                        observer_ptr<sync::xsync_object_t> const & sync_obj,
                        observer_ptr<grpcmgr::xgrpc_mgr_t> const & grpc_mgr,
-                    //    observer_ptr<xunit_service::xcons_service_mgr_face> const & cons_mgr,
                        observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
                        observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
                        observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
@@ -42,6 +42,7 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                                            associated_blk_height},
                    miner_type,
                    genesis,
+                   raw_credit_score,
                    joined_election_round,
                    vhost,
                    election_cache_data_accessor}
@@ -101,6 +102,7 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
                group_info->node_element(vhost->host_node_id())->joined_election_round(),
                group_info->node_element(vhost->host_node_id())->election_info().miner_type,
                group_info->node_element(vhost->host_node_id())->election_info().genesis,
+               group_info->node_element(vhost->host_node_id())->raw_credit_score(),
                group_info->election_round(),
                group_info->group_size(),
                group_info->associated_blk_height(),
@@ -220,7 +222,7 @@ bool  xtop_vnode::update_auto_prune_control(top::common::xnode_type_t node_type,
         return false;
     }
 
-    if (!(common::has<common::xnode_type_t::storage>(node_type) ||common::has<common::xnode_type_t::rec>(node_type))) {
+    if (!common::has<common::xnode_type_t::storage>(node_type)) {
         return true;
     }
     
@@ -263,13 +265,13 @@ void xtop_vnode::update_contract_manager(bool destory) {
 }
 
 void xtop_vnode::sync_add_vnet() {
-    m_sync_obj->add_vnet(vnetwork_driver());
+    m_sync_obj->add_vnet(vnetwork_driver(), miner_type(), genesis());
 
     xinfo("vnode (%p) at address %s starts synchronizing", this, address().to_string().c_str());
 }
 
 void xtop_vnode::sync_remove_vnet() {
-    m_sync_obj->remove_vnet(vnetwork_driver());
+    m_sync_obj->remove_vnet(vnetwork_driver(), miner_type(), genesis());
 }
 
 //std::vector<common::xip2_t> get_group_nodes_xip2_from(std::shared_ptr<xvnode_face_t> const & vnode, common::xip_t const & group_xip, std::error_code & ec) const {

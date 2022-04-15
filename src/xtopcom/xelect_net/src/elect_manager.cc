@@ -3,6 +3,12 @@
 #include "xbasic/xelapsed_time.h"
 #include "xbasic/xutility.h"
 #include "xchain_timer/xchain_timer.h"
+#include "xdata/xelection/xelection_cluster_result.h"
+#include "xdata/xelection/xelection_group_result.h"
+#include "xdata/xelection/xelection_info.h"
+#include "xdata/xelection/xelection_info_bundle.h"
+#include "xdata/xelection/xelection_network_result.h"
+#include "xdata/xelection/xelection_result.h"
 #include "xelect_net/include/elect_uitils.h"
 #include "xpbase/base/top_log.h"
 #include "xwrouter/multi_routing/small_net_cache.h"
@@ -51,7 +57,7 @@ void ElectManager::OnElectUpdated(const data::election::xelection_result_store_t
 
                     std::vector<wrouter::WrouterTableNodes> elect_data;
                     for (auto const & node_info : group_result) {
-                        auto const & node_id = top::get<xelection_info_bundle_t>(node_info).node_id();
+                        auto const & node_id = top::get<xelection_info_bundle_t>(node_info).account_address();
                         auto const & election_info = top::get<xelection_info_bundle_t>(node_info).election_info();
                         auto const & slot_id = top::get<const common::xslot_id_t>(node_info);
                         // here the slot_id is strict increasing. Start with 0.
@@ -163,6 +169,9 @@ void ElectManager::UpdateRoutingTable(std::vector<wrouter::WrouterTableNodes> co
                 last_round_out_nodes_map.insert({last_election_xip2, last_round_routing_table_ptr->GetNode(last_election_xip2)});
             }
         }
+    }
+    if (last_round_out_nodes_map.empty() && service_type.height()) {
+        routing_table_ptr->set_lack_last_round_nodes(true);
     }
 
     routing_table_ptr->SetElectionNodesExpected(elect_root_kad_key_ptrs, last_round_out_nodes_map);

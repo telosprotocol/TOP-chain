@@ -15,7 +15,7 @@ NS_BEG2(top, blockmaker)
 
 class xlighttable_builder_para_t : public xblock_builder_para_face_t {
  public:
-    xlighttable_builder_para_t(const std::vector<xblock_ptr_t> & units, const xblockmaker_resources_ptr_t & resources, const std::vector<xlightunit_tx_info_ptr_t> & txs_info)
+    xlighttable_builder_para_t(const std::vector<xblock_ptr_t> & units, const xblockmaker_resources_ptr_t & resources, const std::vector<data::xlightunit_tx_info_ptr_t> & txs_info)
     : xblock_builder_para_face_t(resources, txs_info), m_batch_units(units) {}
     virtual ~xlighttable_builder_para_t() {}
 
@@ -27,16 +27,18 @@ class xlighttable_builder_para_t : public xblock_builder_para_face_t {
 
 class xfulltable_builder_para_t : public xblock_builder_para_face_t {
  public:
-    xfulltable_builder_para_t(const xtablestate_ptr_t & latest_offstate,
+    xfulltable_builder_para_t(const data::xtablestate_ptr_t & latest_offstate,
                               const std::vector<xblock_ptr_t> & blocks_from_last_full,
                               const xblockmaker_resources_ptr_t & resources)
     : xblock_builder_para_face_t(resources), m_latest_offstate(latest_offstate), m_blocks_from_last_full(blocks_from_last_full) {}
     virtual ~xfulltable_builder_para_t() {}
 
-    const xtablestate_ptr_t &               get_latest_offstate() const {return m_latest_offstate;}
+    const data::xtablestate_ptr_t & get_latest_offstate() const {
+        return m_latest_offstate;
+    }
     const std::vector<xblock_ptr_t> &       get_blocks_from_last_full() const {return m_blocks_from_last_full;}
  private:
-    xtablestate_ptr_t               m_latest_offstate;
+    data::xtablestate_ptr_t m_latest_offstate;
     std::vector<xblock_ptr_t>       m_blocks_from_last_full;
 };
 
@@ -50,7 +52,7 @@ class xlighttable_builder_t : public xblock_builder_face_t {
                                                         const std::vector<xblock_ptr_t> & units,
                                                         std::string & property_binlog,
                                                         std::map<std::string, std::string> & property_hashs,
-                                                        const std::vector<xlightunit_tx_info_ptr_t> & txs_info,
+                                                        const std::vector<data::xlightunit_tx_info_ptr_t> & txs_info,
                                                         const std::map<base::xtable_shortid_t, uint64_t> & changed_confirm_ids);
 };
 
@@ -65,8 +67,8 @@ class xfulltable_builder_t : public xblock_builder_face_t {
                                             std::string & property_binlog,
                                             std::map<std::string, std::string> & property_hashs);
 
- protected:
-    xstatistics_data_t                 make_block_statistics(const std::vector<xblock_ptr_t> & blocks);
+protected:
+    data::xstatistics_data_t make_block_statistics(const std::vector<xblock_ptr_t> & blocks);
 };
 class xemptytable_builder_t : public xblock_builder_face_t {
  public:

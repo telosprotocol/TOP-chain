@@ -2,24 +2,29 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <inttypes.h>
-
 #include "xelection/xvnode_house.h"
-#include "xmbus/xevent_behind.h"
+
+#include "xbasic/xutility.h"
+#include "xcodec/xmsgpack_codec.hpp"
+#include "xdata/xblock.h"
+#include "xdata/xcodec/xmsgpack/xelection/xelection_result_store_codec.hpp"
+#include "xdata/xelection/xelection_cluster_result.h"
+#include "xdata/xelection/xelection_group_result.h"
+#include "xdata/xelection/xelection_info_bundle.h"
+#include "xdata/xelection/xelection_network_result.h"
+#include "xdata/xelection/xelection_result.h"
+#include "xdata/xelection/xelection_result_property.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
-#include "xdata/xblock.h"
-#include "xcodec/xmsgpack_codec.hpp"
-#include "xdata/xcodec/xmsgpack/xelection_result_store_codec.hpp"
-#include "xdata/xelection/xelection_group_result.h"
-#include "xdata/xelection/xelection_result_property.h"
 #include "xdata/xunit_bstate.h"
-#include "xbasic/xutility.h"
-#include "xvledger/xvblockstore.h"
-#include "xvledger/xvstate.h"
-#include "xvledger/xvledger.h"
-#include "xtopcl/include/user_info.h"
+#include "xmbus/xevent_behind.h"
 #include "xpbase/base/top_utils.h"
+#include "xtopcl/include/user_info.h"
+#include "xvledger/xvblockstore.h"
+#include "xvledger/xvledger.h"
+#include "xvledger/xvstate.h"
+
+#include <cinttypes>
 
 NS_BEG2(top, election)
 
@@ -267,7 +272,7 @@ void xvnode_house_t::add_group(const std::string &elect_address, uint64_t elect_
                     for (auto const & node_info : group_result) {
                         auto const slot_id = top::get<common::xslot_id_t const>(node_info);
                         auto const & bundle = top::get<data::election::xelection_info_bundle_t>(node_info);
-                        assert(bundle.node_id().has_value());
+                        assert(bundle.account_address().has_value());
 
                         common::xip2_t node_xip2{
                             xip2.network_id(),
@@ -280,7 +285,7 @@ void xvnode_house_t::add_group(const std::string &elect_address, uint64_t elect_
                             xip2.height()
                         };
                         std::string pri_key{""};
-                        if (m_node_id == bundle.node_id()) {
+                        if (m_node_id == bundle.account_address()) {
                             pri_key = DecodePrivateString(m_sign_key);
                         }
                         auto pub_key = base::xstring_utl::base64_decode(bundle.election_info().consensus_public_key.to_string());
@@ -289,7 +294,7 @@ void xvnode_house_t::add_group(const std::string &elect_address, uint64_t elect_
                             bundle.node_id().value().c_str(),
                             bundle.election_info().public_key.to_string().c_str());
 #endif
-                        auto * node = new xvnode_wrap_t{bundle.node_id().value(), node_xip2.value(), pub_key, pri_key};
+                        auto * node = new xvnode_wrap_t{bundle.account_address().value(), node_xip2.value(), pub_key, pri_key};
 #if 0
                         xdbg("[add_group222][add_node] %lu, %lu -> %lu, %lu",
                             xip2.value().high_addr,

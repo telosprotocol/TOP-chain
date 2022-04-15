@@ -5,6 +5,10 @@
 #include "xelection/xcache/xgroup_element.h"
 #include "xelection/xcache/xnode_element.h"
 
+#if defined(DEBUG)
+#   include <cinttypes>
+#endif
+
 NS_BEG3(top, election, cache)
 
 xtop_node_element::xtop_node_element(common::xnode_id_t const & node_id,
@@ -23,8 +27,7 @@ xtop_node_element::xtop_node_element(common::xnode_id_t const & node_id,
         group_element->associated_blk_height()
     }
     , m_group_element{ group_element }
-    , m_election_info{ election_info }
-{
+    , m_election_info{ election_info } {
 }
 
 std::shared_ptr<xgroup_element_t>
@@ -50,6 +53,11 @@ xtop_node_element::joined_election_round() const noexcept {
 std::uint64_t
 xtop_node_element::staking() const noexcept {
     return m_election_info.stake;
+}
+
+std::uint64_t xtop_node_element::raw_credit_score() const noexcept {
+    xdbg("xnode_element_t::raw_credit_score %" PRIu64, m_election_info.raw_credit_score);
+    return m_election_info.raw_credit_score;
 }
 
 bool

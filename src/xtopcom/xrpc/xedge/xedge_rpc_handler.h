@@ -26,7 +26,7 @@ using ws_connection_t = WsServer::Connection;
 class xedge_http_handler : public xedge_handler_base<http_response_t> {
 public:
     explicit xedge_http_handler(shared_ptr<xrpc_edge_vhost> edge_vhost, std::shared_ptr<asio::io_service> ioc,
-                                observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
+                                observer_ptr<top::election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
      :xedge_handler_base<http_response_t>(edge_vhost, ioc, election_cache_data_accessor) {}
     enum_xrpc_type type() override { return enum_xrpc_type::enum_xrpc_http_type; }
 };
@@ -34,7 +34,7 @@ public:
 class xedge_ws_handler : public xedge_handler_base<ws_connection_t> {
 public:
     explicit xedge_ws_handler(shared_ptr<xrpc_edge_vhost> edge_vhost, std::shared_ptr<asio::io_service> ioc,
-                              observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
+                              observer_ptr<top::election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
      :xedge_handler_base<ws_connection_t>(edge_vhost, ioc, election_cache_data_accessor) {}
     enum_xrpc_type type() override { return enum_xrpc_type::enum_xrpc_ws_type; }
 };
