@@ -26,6 +26,8 @@ public:
     // not allow to change logic after set it.
     xevm_logic_face_t * get_vm_logic_ref();
 
+    xbytes_t get_return_value();
+
 public:
     // register:
     void read_register(uint64_t register_id, uint64_t ptr);

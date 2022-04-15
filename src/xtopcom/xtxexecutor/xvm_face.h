@@ -8,6 +8,7 @@
 #include "xbasic/xmemory.hpp"
 #include "xdata/xcons_transaction.h"
 #include "xstatectx/xstatectx_face.h"
+#include "xevm_common/xevm_transaction_result.h"
 
 NS_BEG2(top, txexecutor)
 
@@ -68,6 +69,8 @@ class xvm_input_t {
 
 class xvm_output_t {
  public:
+    evm_common::xevm_transaction_result_t m_tx_result;
+    uint64_t used_gas;
 
  public:
     bool            m_tx_exec_succ{false};  // tx execute succ or fail

@@ -13,6 +13,12 @@ namespace top { namespace data {
 
 XINLINE_CONSTEXPR char const * XPROPERTY_ASSET_TOP                       = "TOP";
 
+XINLINE_CONSTEXPR char const * XPROPERTY_EVM_NONCE                       = "$E-NONCE";
+XINLINE_CONSTEXPR char const * XPROPERTY_EVM_BALANCE                     = "$E-BALANCE";
+XINLINE_CONSTEXPR char const * XPROPERTY_EVM_CODE                        = "$E-CODE";
+XINLINE_CONSTEXPR char const * XPROPERTY_EVM_STORAGE                     = "$E-STORAGE";
+XINLINE_CONSTEXPR char const * XPROPERTY_EVM_GENERATION                  = "$E-GENE";
+
 // $1-9 reserved for future
 XINLINE_CONSTEXPR char const * XPROPERTY_BALANCE_AVAILABLE              = "$0";  //available balance
 XINLINE_CONSTEXPR char const * XPROPERTY_BALANCE_BURN                   = "$a";  //burn balance

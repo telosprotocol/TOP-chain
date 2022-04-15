@@ -320,5 +320,84 @@ enum_xunit_tx_exec_status xtop_consensus_action<ActionTypeV>::last_action_exec_s
 }
 
 
+/// evm_action:
+
+enum xtop_evm_action_type {
+    invalid = 0,
+    deploy_contract = 1,
+    call_contract = 2,
+};
+
+template <>
+class xtop_consensus_action<xtop_action_type_t::evm> : public xtop_action_t<xtop_action_type_t::evm> {
+public:
+private:
+    xtop_evm_action_type m_evm_action_type{xtop_evm_action_type::invalid};
+    xbytes_t m_input_data;
+    common::xaccount_address_t m_sender;
+    common::xaccount_address_t m_recver;
+
+public:
+    xtop_consensus_action(xtop_consensus_action const &) = default;
+    xtop_consensus_action & operator=(xtop_consensus_action const &) = default;
+    xtop_consensus_action(xtop_consensus_action &&) = default;
+    xtop_consensus_action & operator=(xtop_consensus_action &&) = default;
+    ~xtop_consensus_action() override = default;
+
+    explicit xtop_consensus_action(xobject_ptr_t<data::xcons_transaction_t> const & tx) noexcept
+      : xtop_action_t<xtop_action_type_t::evm>{tx,
+                                               tx->is_send_tx() ?
+                                                   static_cast<common::xlogic_time_t>((tx->get_transaction()->get_fire_timestamp() + tx->get_transaction()->get_expire_duration() +
+                                                                                       XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_send_timestamp_tolerance)) /
+                                                                                      XGLOBAL_TIMER_INTERVAL_IN_SECONDS) :
+                                                   common::xjudgement_day} {
+        // todo
+        // get action_type/sender/recever/gas/value/data.... from tx
+        // - [x] action_type
+        // - [] sender
+        // - [] recever
+        // - [] gas
+        // - [] value
+        // - [x] data
+
+        m_sender = common::xaccount_address_t{tx->get_source_addr()};
+        m_recver = common::xaccount_address_t{tx->get_target_addr()};
+
+        // common::xaccount_address_t const target_address{tx->get_transaction()->get_target_address()};
+
+        if (m_recver.empty() || m_recver.value() == "T600040000000000000000000000000000000000000000") {
+            // deploy_contract
+            m_evm_action_type = xtop_evm_action_type::deploy_contract;
+        } else {
+            m_evm_action_type = xtop_evm_action_type::call_contract;
+        }
+        m_input_data = top::to_bytes(tx->get_transaction()->get_ext());
+    }
+
+    xtop_evm_action_type evm_action() const {
+        return m_evm_action_type;
+    }
+
+    common::xaccount_address_t sender() const {
+        return m_sender;
+    }
+
+    common::xaccount_address_t recver() const {
+        return m_recver;
+    }
+
+    xbytes_t const & data() const {
+        return m_input_data;
+    }
+
+    // In fact. this should be U256.
+    // Since deploy and call usually be zero.
+    // todo later
+    uint64_t value() const;
+
+    uint64_t gas_limit() const;
+
+    uint64_t gas_price() const;
+};
 
 NS_END2

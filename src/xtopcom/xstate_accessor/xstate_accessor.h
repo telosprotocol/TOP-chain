@@ -40,11 +40,12 @@ public:
     xtop_state_accessor & operator=(xtop_state_accessor &&) = default;
     ~xtop_state_accessor() = default;
 
-    explicit xtop_state_accessor(top::observer_ptr<top::base::xvbstate_t> const & bstate, xstate_access_control_data_t ac_data);
+    xtop_state_accessor(top::observer_ptr<top::base::xvbstate_t> const & bstate, xstate_access_control_data_t ac_data);
+    xtop_state_accessor(top::observer_ptr<top::base::xvbstate_t> const & bstate, top::xobject_ptr_t<top::base::xvcanvas_t> const & canvas);
 
 private:
     explicit xtop_state_accessor(common::xaccount_address_t const & account_address);
-    explicit xtop_state_accessor(common::xaccount_address_t const & account_address, uint64_t const height);
+    xtop_state_accessor(common::xaccount_address_t const & account_address, uint64_t const height);
 
 public:
     /// @brief Construct an xstate_accessor_t object against the specified account. Throws xtop_error_t when any error occurs.

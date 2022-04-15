@@ -27,10 +27,8 @@ private:
     xbytes_t m_return_data_value;
 
 public:
-    std::shared_ptr<xevm_storage_face_t> ext_ref();
-    observer_ptr<evm_runtime::xevm_context_t> context_ref();
-    void update_input_data(std::string const & contract_address, std::string const & contract_params);
-    xbytes_t return_value();
+    // for runtime
+    xbytes_t get_return_value() override;
 
 public:
     // interface to evm_import_instance:
