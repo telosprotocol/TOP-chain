@@ -133,6 +133,7 @@ class xtransaction_v2_t : public xbase_dataunit_t<xtransaction_v2_t, xdata_type_
     virtual void set_memo(const std::string & memo) override {m_memo = memo;};
     virtual const std::string & get_memo() const override {return m_memo;};
     virtual const std::string & get_target_address() const override {return m_target_addr;};
+    virtual bool is_evm_tx() const override {return false;}
 
 private:
     std::string m_source_addr;
