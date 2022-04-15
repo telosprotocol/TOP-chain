@@ -2,13 +2,15 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <string>
-#include <vector>
-
 #include "xtxexecutor/xatomictx_executor.h"
-#include "xtxexecutor/xtvm.h"
+
 #include "xdata/xblocktool.h"
 #include "xdata/xtransaction.h"
+#include "xevm/xevm.h"
+#include "xtxexecutor/xtvm.h"
+
+#include <string>
+#include <vector>
 
 NS_BEG2(top, txexecutor)
 
@@ -178,8 +180,10 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
         xtvm_t tvm;
         ret = tvm.execute(vminput, vmoutput);
     } else {
-        xassert(false);
-        ret = enum_exec_error_vm_execute;
+        evm::xtop_evm evm;
+        ret = evm.execute(vminput,vmoutput);
+        // xassert(false);
+        // ret = enum_exec_error_vm_execute;
     }
     output.m_vm_output = vmoutput;
     return ret;

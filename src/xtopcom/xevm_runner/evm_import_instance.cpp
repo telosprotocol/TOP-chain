@@ -17,6 +17,12 @@ xevm_logic_face_t * evm_import_instance::get_vm_logic_ref() {
     return m_vm_logic.get();
 }
 
+
+xbytes_t evm_import_instance::get_return_value(){
+    return m_vm_logic->get_return_value();
+}
+
+
 // register:
 void evm_import_instance::read_register(uint64_t register_id, uint64_t ptr) {
     m_vm_logic->read_register(register_id, ptr);

@@ -154,10 +154,6 @@ impl<'env, I: IO + Copy, E: Env> Engine<'env, I, E> {
         let logs = logs.into_iter().map(|log| log.into()).collect();
 
         self.apply(values, Vec::<Log>::new(), true);
-        println!(
-            "[aurora_engine]apply {:?} {:?} {:?}",
-            status, used_gas, logs
-        );
 
         Ok(SubmitResult::new_proto(status, used_gas, logs))
     }
