@@ -79,7 +79,17 @@ void xevm_rpc_service<T>::execute(shared_ptr<conn_type> & conn, const std::strin
         xpre_request_data_t pre_request_data;
         try {
             do {
-                xinfo_rpc("evm rpc request:%s", content.c_str());
+                if (content.size() <= 900) {
+                    xinfo_rpc("evm rpc request:%s", content.c_str());
+                } else {
+                    uint32_t part_num = (content.size() + 899)/900;
+                    uint32_t i = 0;
+                    for (; i < (part_num - 1); i++) {
+                        xinfo_rpc("evm rpc request%u:%s", i, content.substr(i*900,900).c_str());
+                    }
+                    
+                    xinfo_rpc("evm rpc request%u:%s", i, content.substr(i*900).c_str());
+                }
 
                 xJson::Reader reader;
                 top::xrpc::xjson_proc_t json_proc;
