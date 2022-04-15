@@ -77,17 +77,20 @@ void xtop_rec_elect_archive_contract::elect_config_nodes(common::xlogic_time_t c
         auto election_result_store =
             xvm::serialization::xmsgpack_t<xelection_result_store_t>::deserialize_from_string_prop(*this, data::election::get_property_by_group_id(archive_gid));
         auto & election_network_result = election_result_store.result_of(network_id());
-        auto node_type = common::xnode_type_t::archive;
-        std::string static_node_str = "";
-        if (archive_gid.value() == common::xarchive_group_id_value) {
+        auto node_type = common::xnode_type_t::invalid;
+        std::string static_node_str;
+        if (archive_gid == common::xarchive_group_id) {
             node_type = common::xnode_type_t::storage_archive;
             static_node_str = "archive_start_nodes";
-        } else if (archive_gid.value() == common::xexchange_group_id_value) {
+        } else if (archive_gid == common::xexchange_group_id) {
             node_type = common::xnode_type_t::storage_exchange;
             static_node_str = "exchange_start_nodes";
         } else {
-            xassert(false);
+            assert(false);
         }
+        assert(!static_node_str.empty());
+        assert(node_type != common::xnode_type_t::invalid);
+
         auto nodes_info = xstatic_election_center::instance().get_static_election_nodes(static_node_str);
         if (nodes_info.empty()) {
             xinfo("[archive_start_nodes] get empty node_info: %s gid: %d", static_node_str.c_str(), archive_gid.value());
