@@ -21,13 +21,14 @@ private:
     std::unique_ptr<contract_runtime::evm::xevm_action_runtime_t> evm_action_runtime_;
 
 public:
-    xtop_evm() = default;
+    // xtop_evm() = default;
     xtop_evm(xtop_evm const &) = delete;
     xtop_evm & operator=(xtop_evm const &) = delete;
     xtop_evm(xtop_evm &&) = default;
     xtop_evm & operator=(xtop_evm &&) = default;
     ~xtop_evm() = default;
 
+    explicit xtop_evm(statectx::xstatectx_face_ptr_t const evm_statectx);
     xtop_evm(observer_ptr<contract_runtime::evm::xevm_contract_manager_t> const evm_contract_manager, statectx::xstatectx_face_ptr_t const evm_statectx);
 
 public:
