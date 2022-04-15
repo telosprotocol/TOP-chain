@@ -15,6 +15,7 @@ bool xtransaction_t::transaction_type_check() const {
 #ifdef ENABLE_CREATE_USER  // debug use
         case xtransaction_type_create_user_account:
 #endif
+        case xtransaction_type_deploy_evm_contract:
         case xtransaction_type_run_contract:
         case xtransaction_type_transfer:
         case xtransaction_type_vote:
@@ -31,6 +32,7 @@ bool xtransaction_t::transaction_type_check() const {
 
 std::string xtransaction_t::transaction_type_to_string(uint16_t type) {
     switch (type) {
+        case xtransaction_type_deploy_evm_contract: return "evm_contract";
         case xtransaction_type_create_user_account: return "create_user";
         case xtransaction_type_run_contract:        return "run_contract";
         case xtransaction_type_transfer:            return "transfer";

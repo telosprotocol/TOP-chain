@@ -69,7 +69,7 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     bool                    is_confirm_tx() const {return get_tx_subtype() == enum_transaction_subtype_confirm;}
     bool                    is_send_or_self_tx() const {return (is_self_tx() || is_send_tx());}
     bool                    is_recv_or_confirm_tx() const {return (is_recv_tx() || is_confirm_tx());}
-    bool                    is_evm_tx() const {return false;}  // XTODO(jimmy)
+    bool                    is_evm_tx() const {return m_tx->is_evm_tx();}
     std::string             get_digest_hex_str() const {return m_tx->get_digest_hex_str();}
     uint32_t                get_last_action_used_tgas() const;
     uint32_t                get_last_action_used_deposit() const;
