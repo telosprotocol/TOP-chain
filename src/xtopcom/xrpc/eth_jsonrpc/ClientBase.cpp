@@ -510,5 +510,5 @@ unsigned ClientBase::number() const
 
 int ClientBase::chainId() const
 {
-	return 1023;
+	return 1111;
 }
