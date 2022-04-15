@@ -1,16 +1,10 @@
 #include "xdata/xserial_transfrom.h"
 #include "xdata/xtransaction.h"
 
-bool isZeroSignature(u256 const & _r, u256 const & _s) {
-    return !_r && !_s;
-}
+using namespace std;
+using namespace top::evm_common;
+using namespace top::evm_common::rlp;
 
-bool SignatureStruct::isValid() const noexcept {
-    static const h256 s_max{"0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141"};
-    static const h256 s_zero;
-
-    return (v <= 1 && r > s_zero && s > s_zero && r < s_max && s < s_max);
-}
 namespace top {
 namespace data {
 int serial_transfrom::eth_to_top(string strEth, string & strTop) {
