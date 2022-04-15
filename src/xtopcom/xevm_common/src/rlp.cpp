@@ -96,7 +96,11 @@ RLP::DecodedItem RLP::decodeList(const bytes & input) {
     auto remainder = input;
     while (true) {
         auto listItem = RLP::decode(remainder);
-        item.decoded.push_back(listItem.decoded[0]);
+        if (!listItem.decoded.empty()) {
+            item.decoded.push_back(listItem.decoded[0]);
+        } else {
+            item.decoded.push_back(bytes());
+        }
         if (listItem.remainder.size() == 0) {
             break;
         } else {
