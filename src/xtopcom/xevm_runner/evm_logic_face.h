@@ -1,5 +1,7 @@
 #pragma once
 
+#include "xbasic/xbyte_buffer.h"
+
 #include <cstdint>
 #include <map>
 #include <memory>
@@ -16,6 +18,9 @@ public:
     xtop_evm_logic_face(xtop_evm_logic_face &&) = default;
     xtop_evm_logic_face & operator=(xtop_evm_logic_face &&) = default;
     virtual ~xtop_evm_logic_face() = default;
+
+public:
+    virtual xbytes_t get_return_value() = 0;
 
 public:
     // interface to evm_import_instance:

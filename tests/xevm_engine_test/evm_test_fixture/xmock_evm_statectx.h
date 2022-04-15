@@ -1,3 +1,4 @@
+#include "xdata/xunit_bstate.h"
 #include "xstatectx/xstatectx_face.h"
 
 namespace top {
@@ -6,14 +7,20 @@ namespace tests {
 
 class xmock_evm_statectx : public statectx::xstatectx_face_t {
 public:
-    xmock_evm_statectx(uint64_t clock, const std::string & random_seed, uint64_t tgas_lock) : m_param(clock, random_seed, tgas_lock) {};
+    xmock_evm_statectx() : m_param{0, "mock", 0} {
+    }
 
     const data::xtablestate_ptr_t & get_table_state() const {
         return m_tablestate_ptr;
     }
 
     data::xunitstate_ptr_t load_unit_state(const base::xvaccount_t & addr) {
-        return nullptr;
+        if (m_mock_bstate.find(addr.get_account()) == m_mock_bstate.end()) {
+            top::base::xauto_ptr<top::base::xvbstate_t> bstate(new top::base::xvbstate_t(addr.get_account(), 1, 1, "", "", 0, 0, 0));
+            auto unitstate_ptr = std::make_shared<data::xunit_bstate_t>(bstate.get(), false);
+            m_mock_bstate[addr.get_account()] = unitstate_ptr;
+        }
+        return m_mock_bstate.at(addr.get_account());
     }
 
     const statectx::xstatectx_para_t & get_ctx_para() const {
@@ -39,6 +46,8 @@ public:
     data::xtablestate_ptr_t m_tablestate_ptr;
     statectx::xstatectx_para_t m_param;
     std::string table_address;
+
+    std::map<std::string, data::xunitstate_ptr_t> m_mock_bstate;
 };
 }  // namespace tests
 }  // namespace evm

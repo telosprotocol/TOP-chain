@@ -4,27 +4,59 @@
 
 #include "xevm_contract_runtime/xevm_context.h"
 
+#include "xevm_runner/proto/proto_parameters.pb.h"
+
 NS_BEG2(top, evm_runtime)
+
+const uint32_t CURRENT_CALL_ARGS_VERSION = 1;
 
 xtop_evm_context::xtop_evm_context(std::unique_ptr<data::xbasic_top_action_t const> action) noexcept : m_action{std::move(action)} {
     assert(m_action->type() == data::xtop_action_type_t::evm);
     // m_evm_action_type = deploy/call/..
+    // auto const * evm_action = static_cast<data::xevm_consensus_action_t const *>(m_action.get());
+    // m_evm_action_type = evm_action->evm_action();
+    // m_input_data = evm_action->data();
+
+    // todo // get action_type/sender/recever/gas/value/data.... from action
+    // - [x] action_type
+    // - [] sender
+    // - [] recever
+    // - [] gas
+    // - [] value
+    // - [] data
+    if (action_type() == data::xtop_evm_action_type::deploy_contract) {
+        // byte code is all evm need.
+        m_input_data = static_cast<data::xevm_consensus_action_t const *>(m_action.get())->data();
+        // return static_cast<data::xevm_consensus_action_t const *>(m_action.get())->data();
+    } else if (action_type() == data::xtop_evm_action_type::call_contract) {
+        evm_engine::parameters::FunctionCallArgs call_args;
+        call_args.set_version(CURRENT_CALL_ARGS_VERSION);
+
+        call_args.set_input(top::to_string(static_cast<data::xevm_consensus_action_t const *>(m_action.get())->data()));
+
+        assert(sender().value().substr(0, 6) == "T60004");
+        auto address = call_args.mutable_address();
+        address->set_value(sender().value().substr(6));
+
+        m_input_data = top::to_bytes(call_args.SerializeAsString());
+
+    } else {
+        xassert(false);
+    }
 }
 
-xtop_evm_action_type xtop_evm_context::action_type() const {
-    return m_action_type;
+data::xtop_evm_action_type xtop_evm_context::action_type() const {
+    assert(m_action->type() == data::xtop_action_type_t::evm);
+    return static_cast<data::xevm_consensus_action_t const *>(m_action.get())->evm_action();
 }
 
-void xtop_evm_context::input_data(xbytes_t const & data) {
-    m_input_data = data;
-}
 xbytes_t const & xtop_evm_context::input_data() const {
     return m_input_data;
 }
 
 common::xaccount_address_t xtop_evm_context::sender() const {
     assert(m_action->type() == data::xtop_action_type_t::evm);
-    common::xaccount_address_t ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->sender();
+    common::xaccount_address_t ret = static_cast<data::xevm_consensus_action_t const *>(m_action.get())->sender();
     return ret;
 }
 

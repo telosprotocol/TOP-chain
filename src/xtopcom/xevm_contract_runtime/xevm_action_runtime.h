@@ -8,7 +8,8 @@
 #include "xcontract_runtime/xaction_runtime.h"
 #include "xdata/xconsensus_action.h"
 #include "xevm_contract_runtime/xevm_contract_manager.h"
-#include "xevm_contract_runtime/xevm_type.h"
+#include "xevm_contract_runtime/xevm_context.h"
+#include "xevm_contract_runtime/xevm_runtime_result.h"
 
 NS_BEG2(top, contract_runtime)
 
@@ -31,7 +32,7 @@ public:
 
     std::unique_ptr<xaction_session_t<data::xevm_consensus_action_t>> new_session();
 
-    xtransaction_execution_result_t execute(observer_ptr<evm_runtime::xevm_context_t> tx_ctx);
+    evm_common::xevm_transaction_result_t execute(observer_ptr<evm_runtime::xevm_context_t> tx_ctx);
 };
 
 NS_END2
