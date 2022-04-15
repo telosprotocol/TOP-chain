@@ -42,7 +42,8 @@ void xtransaction_v3_t::construct_tx(enum_xtransaction_type tx_type,
 
 int32_t xtransaction_v3_t::do_write_without_hash_signature(base::xstream_t & out) const {
     const int32_t begin_pos = out.size();
-
+    uint8_t szEipVersion = m_EipVersion;
+    out.write_compact_var(szEipVersion);
     out.write_compact_var(m_origindata);
 
     const int32_t end_pos = out.size();
@@ -52,6 +53,8 @@ int32_t xtransaction_v3_t::do_write_without_hash_signature(base::xstream_t & out
 int32_t xtransaction_v3_t::do_uncompact_write_without_hash_signature(base::xstream_t & stream) const {
     const int32_t begin_pos = stream.size();
 
+    uint8_t szEipVersion = m_EipVersion;
+    stream << szEipVersion;
     stream << m_origindata;
 
     const int32_t end_pos = stream.size();
@@ -60,9 +63,10 @@ int32_t xtransaction_v3_t::do_uncompact_write_without_hash_signature(base::xstre
 
 int32_t xtransaction_v3_t::do_read_without_hash_signature(base::xstream_t & in) {
     const int32_t begin_pos = in.size();
-
+    uint8_t szEipVersion;
+    in.read_compact_var(szEipVersion);
     in.read_compact_var(m_origindata);
-
+    m_EipVersion = (EIP_XXXX)szEipVersion;
     RLP::DecodedItem decoded = RLP::decode(top::evm_common::rlp::data(m_origindata));
     CheckTransaction _checkSig = CheckTransaction::Everything;
     std::vector<std::string> vecData;
@@ -70,91 +74,143 @@ int32_t xtransaction_v3_t::do_read_without_hash_signature(base::xstream_t & in) 
         std::string str(decoded.decoded[i].begin(), decoded.decoded[i].end());
         vecData.push_back(str);
     }
-    if (vecData.size() != 9) {
-        return -1;
-    }
-    m_nonce = fromBigEndian<u256>(vecData[0]);
-    xdbg("serial_transfrom::eth_to_top nonce:%s", m_nonce.str().c_str());
-    m_gasprice = fromBigEndian<u256>(vecData[1]);
-    xdbg("serial_transfrom::eth_to_top gasprice:%s", m_gasprice.str().c_str());
-    m_gas = fromBigEndian<u256>(vecData[2]);
-    xdbg("serial_transfrom::eth_to_top gas:%s", m_gas.str().c_str());
-    Type type = vecData[3].empty() ? ContractCreation : MessageCall;
-    xdbg("serial_transfrom::eth_to_top type:%d", type);
-    bool bIsCreation = type == ContractCreation;
-    Address to = vecData[3].empty() ? Address() : Address(vecData[3], FixedHash<20>::FromBinary);
-    xdbg("serial_transfrom::eth_to_top target address:%s", to.hex().c_str());
-    m_amount = fromBigEndian<u256>(vecData[4]);
-    xdbg("serial_transfrom::eth_to_top value:%s", m_amount.str().c_str());
-    m_data.insert(m_data.begin(), vecData[5].begin(), vecData[5].end());
-    xdbg("serial_transfrom::eth_to_top data:%s", string(m_data.begin(), m_data.end()).c_str());
-    m_SignV = fromBigEndian<u256>(vecData[6]);
-    xdbg("serial_transfrom::eth_to_top v:%s", m_SignV.str().c_str());
-    m_SignR = fromBigEndian<u256>(vecData[7]);
-    xdbg("serial_transfrom::eth_to_top r:%s", m_SignR.hex().c_str());
-    m_SignS = fromBigEndian<u256>(vecData[8]);
-    xdbg("serial_transfrom::eth_to_top s:%s", m_SignS.hex().c_str());
+    bytes encoded;
+    bool bIsCreation;
     byte recoveryID;
-    uint64_t m_chainId;
-    if (!m_SignR && !m_SignS) {
-        m_chainId = static_cast<uint64_t>(m_SignV);
-        recoveryID = 0;
+    Address to;
+    if (m_EipVersion == EIP_XXXX::EIP_LEGACY) {
+        if (vecData.size() != 9) {
+            return -1;
+        }
+        m_nonce = fromBigEndian<u256>(vecData[0]);
+        xdbg("xtransaction_v3_t::do_read_without_hash_signature nonce:%s", m_nonce.str().c_str());
+        m_gasprice = fromBigEndian<u256>(vecData[1]);
+        xdbg("xtransaction_v3_t::do_read_without_hash_signature gasprice:%s", m_gasprice.str().c_str());
+        m_gas = fromBigEndian<u256>(vecData[2]);
+        xdbg("xtransaction_v3_t::do_read_without_hash_signature gas:%s", m_gas.str().c_str());
+        Type type = vecData[3].empty() ? ContractCreation : MessageCall;
+        xdbg("xtransaction_v3_t::do_read_without_hash_signature type:%d", type);
+        bIsCreation = type == ContractCreation;
+        to = vecData[3].empty() ? Address() : Address(vecData[3], FixedHash<20>::FromBinary);
+        xdbg("xtransaction_v3_t::do_read_without_hash_signature target address:%s", to.hex().c_str());
+        m_amount = fromBigEndian<u256>(vecData[4]);
+        xdbg("xtransaction_v3_t::do_read_without_hash_signature value:%s", m_amount.str().c_str());
+        m_data.insert(m_data.begin(), vecData[5].begin(), vecData[5].end());
+        xdbg("xtransaction_v3_t::do_read_without_hash_signature data:%s", string(m_data.begin(), m_data.end()).c_str());
+        m_SignV = fromBigEndian<u256>(vecData[6]);
+        xdbg("xtransaction_v3_t::do_read_without_hash_signature v:%s", m_SignV.str().c_str());
+        m_SignR = fromBigEndian<u256>(vecData[7]);
+        xdbg("xtransaction_v3_t::do_read_without_hash_signature r:%s", m_SignR.hex().c_str());
+        m_SignS = fromBigEndian<u256>(vecData[8]);
+        xdbg("xtransaction_v3_t::do_read_without_hash_signature s:%s", m_SignS.hex().c_str());
+        uint64_t m_chainId;
+        if (!m_SignR && !m_SignS) {
+            m_chainId = static_cast<uint64_t>(m_SignV);
+            recoveryID = 0;
+        } else {
+            if (m_SignV > 36) {
+                auto const chainId = (m_SignV - 35) / 2;
+                if (chainId > std::numeric_limits<uint64_t>::max())
+                    return -2;
+                m_chainId = static_cast<uint64_t>(chainId);
+            }
+            // only values 27 and 28 are allowed for non-replay protected transactions
+            else if (m_SignV != 27 && m_SignV != 28) {
+                return -3;
+            }
+            static const h256 s_max{"0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141"};
+            static const h256 s_zero;
+            recoveryID = m_chainId ? static_cast<byte>(m_SignV - (u256{m_chainId} * 2 + 35)) : static_cast<byte>(m_SignV - 27);
+            xdbg("serial_transfrom::eth_to_top  chainId:%d recoveryID:%d", m_chainId, recoveryID);
+            if (_checkSig >= CheckTransaction::Cheap && !(recoveryID <= 1 && m_SignR > s_zero && m_SignS > s_zero && m_SignR < s_max && m_SignS < s_max)) {
+                return -4;
+            }
+        }
+        string strFrom;
+        if (_checkSig == CheckTransaction::Everything) {
+            if (!m_SignR && !m_SignS)
+                strFrom = "ffffffffffffffffffffffffffffffffffffffff";
+            else {
+                bytes encodedtmp = bytes();
+                for (int i = 0; i < 6; i++) {
+                    append(encodedtmp, RLP::encode(vecData[i]));
+                }
+                append(encodedtmp, RLP::encode(m_chainId));
+                append(encodedtmp, RLP::encode(0));
+                append(encodedtmp, RLP::encode(0));
+                encoded = RLP::encodeList(encodedtmp);
+            }
+        }
+
+    } else if (m_EipVersion == EIP_XXXX::EIP_1559) {
+        if (vecData.size() != 12) {
+            return -1;
+        }
+        u256 chainId = fromBigEndian<u256>(vecData[0]);
+        xdbg("xtransaction_v3_t::do_read_without_hash_signature chainid:%s", chainId.str().c_str());
+        m_nonce = fromBigEndian<u256>(vecData[1]);
+        xdbg("xtransaction_v3_t::do_read_without_hash_signature nonce:%s", m_nonce.str().c_str());
+        m_max_priority_fee_per_gas = fromBigEndian<u256>(vecData[2]);
+        xdbg("xtransaction_v3_t::do_read_without_hash_signature max_priority_fee_per_gas:%s", m_max_priority_fee_per_gas.str().c_str());
+        m_max_fee_per_gas = fromBigEndian<u256>(vecData[3]);
+        xdbg("xtransaction_v3_t::do_read_without_hash_signature max_fee_per_gas:%s", m_max_fee_per_gas.str().c_str());
+        m_gas = fromBigEndian<u256>(vecData[4]);
+        xdbg("xtransaction_v3_t::do_read_without_hash_signature gas:%s", m_gas.str().c_str());
+        Type type = vecData[5].empty() ? ContractCreation : MessageCall;
+        xdbg("xtransaction_v3_t::do_read_without_hash_signature type:%d", type);
+        bIsCreation = type == ContractCreation;
+        to = vecData[5].empty() ? Address() : Address(vecData[5], FixedHash<20>::FromBinary);
+        xdbg("xtransaction_v3_t::do_read_without_hash_signature target address:%s", to.hex().c_str());
+        m_amount = fromBigEndian<u256>(vecData[6]);
+        xdbg("xtransaction_v3_t::do_read_without_hash_signature value:%s", m_amount.str().c_str());
+        m_data.insert(m_data.begin(), vecData[7].begin(), vecData[7].end());
+        xdbg("xtransaction_v3_t::do_read_without_hash_signature data:%s", string(m_data.begin(), m_data.end()).c_str());
+
+        u256 list = fromBigEndian<u256>(vecData[8]);
+        xdbg("xtransaction_v3_t::do_read_without_hash_signature list:%s", list.str().c_str());
+        m_SignV = fromBigEndian<u256>(vecData[9]);
+        xdbg("xtransaction_v3_t::do_read_without_hash_signature v:%s", m_SignV.str().c_str());
+        m_SignR = fromBigEndian<u256>(vecData[10]);
+        xdbg("xtransaction_v3_t::do_read_without_hash_signature r:%s", m_SignR.hex().c_str());
+        m_SignS = fromBigEndian<u256>(vecData[11]);
+        xdbg("xtransaction_v3_t::do_read_without_hash_signature s:%s", m_SignS.hex().c_str());
+
+        bytes encodedtmp = bytes();
+        for (int i = 0; i < 8; i++) {
+            append(encodedtmp, RLP::encode(vecData[i]));
+        }
+        append(encodedtmp, fromHex("c0"));
+
+        append(encoded, static_cast<uint8_t>(m_EipVersion));
+        append(encoded, RLP::encodeList(encodedtmp));
+        recoveryID = (byte)m_SignV;
     } else {
-        if (m_SignV > 36) {
-            auto const chainId = (m_SignV - 35) / 2;
-            if (chainId > std::numeric_limits<uint64_t>::max())
-                return -2;
-            m_chainId = static_cast<uint64_t>(chainId);
-        }
-        // only values 27 and 28 are allowed for non-replay protected transactions
-        else if (m_SignV != 27 && m_SignV != 28) {
-            return -3;
-        }
-        static const h256 s_max{"0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141"};
-        static const h256 s_zero;
-        recoveryID = m_chainId ? static_cast<byte>(m_SignV - (u256{m_chainId} * 2 + 35)) : static_cast<byte>(m_SignV - 27);
-        xdbg("serial_transfrom::eth_to_top  chainId:%d recoveryID:%d", m_chainId, recoveryID);
-        if (_checkSig >= CheckTransaction::Cheap && !(recoveryID <= 1 && m_SignR > s_zero && m_SignS > s_zero && m_SignR < s_max && m_SignS < s_max)) {
-            return -4;
-        }
+        xwarn("xtransaction_v3_t::do_read_without_hash_signature unsupport eip version:%d", m_EipVersion);
+        return -2;
     }
     string strFrom;
-    if (_checkSig == CheckTransaction::Everything) {
-        if (!m_SignR && !m_SignS)
-            strFrom = "ffffffffffffffffffffffffffffffffffffffff";
-        else {
-            bytes encoded = bytes();
-            for (int i = 0; i < 6; i++) {
-                append(encoded, RLP::encode(vecData[i]));
-            }
-            append(encoded, RLP::encode(m_chainId));
-            append(encoded, RLP::encode(0));
-            append(encoded, RLP::encode(0));
-            bytes encoded1 = RLP::encodeList(encoded);
-            char szDigest[32] = {0};
-            keccak_256((const unsigned char *)encoded1.data(), encoded1.size(), (unsigned char *)szDigest);
+    char szDigest[32] = {0};
+    keccak_256((const unsigned char *)encoded.data(), encoded.size(), (unsigned char *)szDigest);
 
-            string strDigest;
-            strDigest.append(szDigest, 32);
-            m_hash = top::base::xstring_utl::to_hex(strDigest);
-            xdbg("serial_transfrom::eth_to_top txhash:%s", m_hash.c_str());
-            top::uint256_t hash((uint8_t *)(szDigest));
-            char szSign[65] = {0};
-            memcpy(szSign, (char *)&recoveryID, 1);
-            memcpy(szSign + 1, (char *)m_SignR.data(), 32);
-            memcpy(szSign + 33, (char *)m_SignS.data(), 32);
-            m_authorization.append((char *)szSign, 65);
-            top::utl::xecdsasig_t sig((uint8_t *)szSign);
-            top::utl::xkeyaddress_t pubkey1("");
-            uint8_t szOutput[65] = {0};
-            top::utl::xsecp256k1_t::get_publickey_from_signature(sig, hash, szOutput);
-            top::utl::xecpubkey_t pubkey(szOutput);
-            strFrom = pubkey.to_raw_eth_address();
-            string strPublicKey((char *)szOutput, 65);
-            string strHex = top::base::xstring_utl::to_hex(strPublicKey);
-            xdbg("serial_transfrom::eth_to_top piblicKey:%s Source Address:%s", strHex.c_str(), strFrom.c_str());
-        }
-    }
+    string strDigest;
+    strDigest.append(szDigest, 32);
+    m_hash = top::base::xstring_utl::to_hex(strDigest);
+    xdbg("xtransaction_v3_t::do_read_without_hash_signature txhash:%s", m_hash.c_str());
+    top::uint256_t hash((uint8_t *)(szDigest));
+    char szSign[65] = {0};
+    memcpy(szSign, (char *)&recoveryID, 1);
+    memcpy(szSign + 1, (char *)m_SignR.data(), 32);
+    memcpy(szSign + 33, (char *)m_SignS.data(), 32);
+    m_authorization.append((char *)szSign, 65);
+    top::utl::xecdsasig_t sig((uint8_t *)szSign);
+    top::utl::xkeyaddress_t pubkey1("");
+    uint8_t szOutput[65] = {0};
+    top::utl::xsecp256k1_t::get_publickey_from_signature(sig, hash, szOutput);
+    top::utl::xecpubkey_t pubkey(szOutput);
+    strFrom = pubkey.to_raw_eth_address();
+    string strPublicKey((char *)szOutput, 65);
+    string strHex = top::base::xstring_utl::to_hex(strPublicKey);
+    xdbg("xtransaction_v3_t::do_read_without_hash_signature:%s Source Address:%s", strHex.c_str(), strFrom.c_str());
 
     if (bIsCreation) {
         m_transaction_type = xtransaction_type_deploy_evm_contract;
@@ -438,10 +494,25 @@ void xtransaction_v3_t::parse_to_json(xJson::Value & result_json, const std::str
 
 void xtransaction_v3_t::construct_from_json(xJson::Value & request) {
     string strEth = base::xstring_utl::from_hex(request["params"][0].asString().substr(2));
+    if (strEth[0] == '\01') {
+        m_EipVersion = EIP_XXXX::EIP_2930;
+    } else if (strEth[0] == '\02') {
+        m_EipVersion = EIP_XXXX::EIP_1559;
+    } else {
+        m_EipVersion = EIP_XXXX::EIP_LEGACY;
+    }
+
     string strTop;
-    int nRet = serial_transfrom::eth_to_top(strEth, strTop);
-    if (nRet < 0) {
-        return;
+    if (m_EipVersion == EIP_XXXX::EIP_LEGACY) {
+        int nRet = serial_transfrom::eth_to_top(strEth, m_EipVersion, strTop);
+        if (nRet < 0) {
+            return;
+        }
+    } else {
+        int nRet = serial_transfrom::eth_to_top(strEth.substr(1), m_EipVersion, strTop);
+        if (nRet < 0) {
+            return;
+        }
     }
     base::xstream_t stream(base::xcontext_t::instance(), (uint8_t*)strTop.data(), strTop.size());
 
