@@ -17,32 +17,7 @@ xtop_evm_logic::xtop_evm_logic(std::shared_ptr<xevm_storage_face_t> storage_ptr,
 }
 
 //  =========================== for runtime ===============================
-std::shared_ptr<xevm_storage_face_t> xtop_evm_logic::ext_ref() {
-    return m_storage_ptr;
-}
-
-observer_ptr<evm_runtime::xevm_context_t> xtop_evm_logic::context_ref() {
-    return m_context;
-}
-
-void xtop_evm_logic::update_input_data(std::string const & contract_address, std::string const & contract_params) {
-    top::evm_engine::parameters::FunctionCallArgs call_args;
-    top::evm_engine::basic::ProtoAddress address;
-    top::evm_engine::basic::WeiU256 value;
-    // value.set_data(""); // todo add value encode from U256?
-    address.set_value(contract_address);
-    call_args.set_version(1);
-    xvariant_bytes params_data{contract_params, true};
-    call_args.set_input(params_data.to_string());
-    call_args.mutable_address()->CopyFrom(address);
-    call_args.mutable_value()->CopyFrom(value);
-
-    xvariant_bytes input_data{call_args.SerializeAsString(), false};
-    m_context->input_data(input_data.to_bytes());
-    return;
-}
-
-std::vector<uint8_t> xtop_evm_logic::return_value() {
+std::vector<uint8_t> xtop_evm_logic::get_return_value() {
     return m_return_data_value;
 }
 
@@ -128,11 +103,11 @@ uint64_t xtop_evm_logic::storage_remove(uint64_t key_len, uint64_t key_ptr, uint
 
 void xtop_evm_logic::value_return(uint64_t key_len, uint64_t key_ptr) {
     m_return_data_value = get_vec_from_memory_or_register(key_ptr, key_len);
-    printf("[debug][value_return] in hex: ");
-    for (auto const & _c : m_return_data_value) {
-        printf("%x", _c);
-    }
-    printf("\n");
+    // printf("[debug][value_return] in hex: ");
+    // for (auto const & _c : m_return_data_value) {
+    //     printf("%x", _c);
+    // }
+    // printf("\n");
 }
 
 void xtop_evm_logic::sha256(uint64_t value_len, uint64_t value_ptr, uint64_t register_id) {

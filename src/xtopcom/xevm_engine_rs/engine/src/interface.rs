@@ -22,7 +22,7 @@ mod interface {
         let mut engine = Engine::new(io.sender_address(), io, &io).sdk_unwrap();
         Engine::deploy_code_with_input(&mut engine, input)
             .map(|res| {
-                println!("res: {:?}", res);
+                println!("[rust_evm][interface]res: {:?}", res);
                 res.write_to_bytes().sdk_expect("ERR_SERIALIZE")
                 // bincode::serialize(&res).sdk_expect("ERR_SERIALIZE")
             })
@@ -36,11 +36,11 @@ mod interface {
         let bytes = io.read_input().to_vec();
         let args = FunctionCallArgs::parse_from_bytes(&bytes).sdk_expect("ERR_DESERIALIZE");
         // let args = bincode::deserialize::<CallArgs>(&bytes).sdk_expect("ERR_DESERIALIZE");
-        println!("{:?}", args);
+        // println!("{:?}", args);
         let mut engine = Engine::new(io.sender_address(), io, &io).sdk_unwrap();
         Engine::call_with_args(&mut engine, args)
             .map(|res| {
-                println!("res: {:?}", res);
+                println!("[rust_evm][interface]res: {:?}", res);
                 res.write_to_bytes().sdk_expect("ERR_SERIALIZE")
                 // bincode::serialize(&res).sdk_expect("ERR_SERIALIZE")
             })

@@ -9,19 +9,16 @@
 #include "xbasic/xmemory.hpp"
 // #include "xcontract_common/xcontract_state.h"
 #include "xdata/xconsensus_action.h"
-#include "xevm_contract_runtime/xevm_action.h"
 
 NS_BEG2(top, evm_runtime)
 
 class xtop_evm_context {
 private:
     // mock...
-    xbytes_t m_input_data;
     std::string m_random_seed{""};
 
-    xtop_evm_action_type m_action_type{xtop_evm_action_type::invalid};
+    xbytes_t m_input_data; // for deploy , is bytecode. for call , is serialized call args
 
-    // observer_ptr<contract_common::xcontract_state_t> m_contract_state{}; // we might not need this.
     std::unique_ptr<data::xbasic_top_action_t const> m_action;
 
 public:
@@ -36,7 +33,7 @@ public:
     explicit xtop_evm_context(std::unique_ptr<data::xbasic_top_action_t const> action) noexcept;
 
 public:
-    xtop_evm_action_type action_type() const;
+    data::xtop_evm_action_type action_type() const;
 
     // todo should be settled in constructor. delete later
     void input_data(xbytes_t const & data);
