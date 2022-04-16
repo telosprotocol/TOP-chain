@@ -142,6 +142,8 @@ inline bytes toBigEndian(u160 _val) {
     return ret;
 }
 
+
+
 /// Convenience function for toBigEndian.
 /// @returns a byte array just big enough to represent @a _val.
 template <class T>
