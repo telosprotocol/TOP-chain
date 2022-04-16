@@ -131,11 +131,18 @@ inline bytes toBigEndian(u256 _val) {
     toBigEndian(_val, ret);
     return ret;
 }
+inline bytes toBigEndian(u128 _val) {
+    bytes ret(16);
+    toBigEndian(_val, ret);
+    return ret;
+}
 inline bytes toBigEndian(u160 _val) {
     bytes ret(20);
     toBigEndian(_val, ret);
     return ret;
 }
+
+
 
 /// Convenience function for toBigEndian.
 /// @returns a byte array just big enough to represent @a _val.
