@@ -19,6 +19,8 @@
 
 namespace top { namespace data {
 
+enum EIP_XXXX { EIP_LEGACY = 0, EIP_2930 = 1, EIP_1559 = 2 };
+
 class xtransaction_v3_t : public xbase_dataunit_t<xtransaction_v3_t, xdata_type_transaction_v3>, public xtransaction_t {
  public:
     xtransaction_v3_t();
@@ -161,6 +163,9 @@ private:
     std::string m_source_action_para;  // serialize with compat_var
     std::string m_target_action_name;  // serialize with compat_var
     std::string m_target_action_para;  // serialize with compat_var
+
+    top::evm_common::u256 m_max_priority_fee_per_gas;
+    top::evm_common::u256 m_max_fee_per_gas;
  private: // local members, not serialize
     uint256_t m_transaction_hash{};
     mutable uint16_t m_transaction_len{0};     // max 64KB
@@ -172,6 +177,7 @@ private:
     top::evm_common::u256 m_SignV;
     top::evm_common::h256 m_SignR;
     top::evm_common::h256 m_SignS;
+    EIP_XXXX              m_EipVersion;
 };
 
 using xtransaction_v3_ptr_t = xobject_ptr_t<xtransaction_v3_t>;

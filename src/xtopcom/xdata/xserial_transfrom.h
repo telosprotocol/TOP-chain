@@ -42,9 +42,9 @@ class serial_transfrom {
     ~serial_transfrom() { }
 
 public:
-    static int eth_to_top(std::string strEth, std::string & strTop);
+    static int eth_to_top(std::string strEth, uint8_t nEipVersion, std::string & strTop);
 
-    static int top_to_eth(std::string strEth, std::string & strTop);
+    static int top_to_eth(std::string strEth, uint8_t& nEipVersion, std::string & strTop);
 };
 }  // namespace data
 }  // namespace top
