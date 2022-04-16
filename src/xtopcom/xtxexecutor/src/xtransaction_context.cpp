@@ -288,6 +288,7 @@ int32_t xtransaction_transfer::source_fee_exec() {
         uint64_t balance = m_account_ctx->get_blockchain()->balance();
         if (get_asset().is_top_token()) {
             if (balance < transfer_amount) {
+                xdbg("xtransaction_transfer::source_fee_exec, %llu, %llu", balance, transfer_amount);
                 return xconsensus_service_error_balance_not_enough;
             }
             if (m_trans->get_transaction()->get_deposit() > (balance - transfer_amount)) {
@@ -295,7 +296,8 @@ int32_t xtransaction_transfer::source_fee_exec() {
             }
         } else {
             uint64_t tep_balance = m_account_ctx->get_blockchain()->tep_balance(get_asset().token_name());
-            if (balance < transfer_amount) {
+            if (tep_balance < transfer_amount) {
+                xdbg("xtransaction_transfer::source_fee_exec, %llu, %llu", balance, transfer_amount);
                 return xconsensus_service_error_balance_not_enough;
             }
             if (m_trans->get_transaction()->get_deposit() > balance) {

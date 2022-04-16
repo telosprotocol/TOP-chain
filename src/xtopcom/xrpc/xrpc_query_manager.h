@@ -123,6 +123,7 @@ public:
         REGISTER_QUERY_METHOD(eth_getTransactionByHash);
         REGISTER_QUERY_METHOD(eth_getTransactionReceipt);
         REGISTER_QUERY_METHOD(eth_getTransactionCount);
+        REGISTER_QUERY_METHOD(eth_blockNumber);
     }
     void call_method(std::string strMethod, xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     bool handle(std::string & strReq, xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) override;
@@ -176,6 +177,7 @@ public:
     void eth_getTransactionByHash(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     void eth_getTransactionReceipt(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     void eth_getTransactionCount(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void eth_blockNumber(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
 private:
     void getBlock(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     void getProperty(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);

@@ -39,6 +39,7 @@
 #include "xvm/manager/xcontract_manager.h"
 #include "xmbus/xevent_behind.h"
 #include "xdata/xblocktool.h"
+#include "xpbase/base/top_utils.h"
 
 #include <cstdint>
 #include <iostream>
@@ -2496,6 +2497,14 @@ void xrpc_query_manager::process_transaction(const uint256_t & tx_hash, xtransac
     js_result["to"] = result_json["original_tx_info"]["receiver_account"].asString();
     js_result["gas"] = "0x0";
     js_result["gasPrice"] = "0x0";
+    js_result["input"] = tx->get_ext();
+    js_result["transactionIndex"] = "0x0";
+    outstr.clear();
+    outstr << "0x" << std::hex << result_json["original_tx_info"]["receiver_action_param"]["amount"].asUInt64();
+    js_result["value"] = outstr.str();
+    js_result["v"] = tx->get_SignV();
+    js_result["r"] = tx->get_SignR();
+    js_result["s"] = tx->get_SignS();
 
     js_rsp["result"] = js_result;
     return;
@@ -2507,7 +2516,7 @@ void xrpc_query_manager::eth_getTransactionReceipt(xJson::Value & js_req, xJson:
         version = RPC_VERSION_V1;
     }
     std::string tx_hash_str = std::string(reinterpret_cast<char *>(hash.data()), hash.size());
-    xdbg("eth_getTransactionReceipt tx hash: %s, version: %s",  tx_hash_str.c_str(), version.c_str());
+    xdbg("eth_getTransactionReceipt tx hash: %s, version: %s",  top::HexEncode(tx_hash_str).c_str(), version.c_str());
 
 
     xtxindex_detail_ptr_t sendindex = xrpc_loader_t::load_tx_indx_detail(tx_hash_str, base::enum_transaction_subtype_send);
@@ -2519,7 +2528,7 @@ void xrpc_query_manager::eth_getTransactionReceipt(xJson::Value & js_req, xJson:
     xJson::Value js_result;
     js_result["transactionHash"] = js_req["tx_hash"].asString();
     js_result["transactionIndex"] = "0x1";
-    js_result["blockHash"] = sendindex->get_txindex()->get_block_hash();
+    js_result["blockHash"] = std::string("0x") + top::HexEncode(sendindex->get_txindex()->get_block_hash());
     std::stringstream outstr;
     outstr << "0x" << std::hex << sendindex->get_txindex()->get_block_height();
     js_result["blockNumber"] = outstr.str();
@@ -2527,9 +2536,9 @@ void xrpc_query_manager::eth_getTransactionReceipt(xJson::Value & js_req, xJson:
     js_result["gasUsed"] = "0x0";
 
     uint16_t tx_type = sendindex->get_raw_tx()->get_tx_type();
-    js_result["from"] = sendindex->get_raw_tx()->get_source_addr();
+    js_result["from"] = std::string("0x") + sendindex->get_raw_tx()->get_source_addr().substr(6);
     if (tx_type == xtransaction_type_transfer) {
-        js_result["to"] = sendindex->get_raw_tx()->get_target_addr();
+        js_result["to"] = std::string("0x") + sendindex->get_raw_tx()->get_target_addr().substr(6);
         js_result["status"] = "0x1";
     } else {
         js_result["to"] = "";
@@ -2553,7 +2562,17 @@ void xrpc_query_manager::eth_getTransactionReceipt(xJson::Value & js_req, xJson:
     }
 
     js_rsp["result"] = js_result;
-    return;    
+    return;
+}
+void xrpc_query_manager::eth_blockNumber(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
+    std::string addr = std::string(sys_contract_eth_table_block_addr) + "@0";
+    base::xvaccount_t _vaddress(addr);
+    uint64_t height = m_block_store->get_latest_committed_block_height(_vaddress);
+
+    std::stringstream outstr;
+    outstr << "0x" << std::hex << height;
+    js_rsp["result"] = std::string(outstr.str());
+    xdbg("xarc_query_manager::eth_blockNumber: %llu", height);
 }
 }  // namespace chain_info
 }  // namespace top
