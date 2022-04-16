@@ -118,6 +118,10 @@ public:
         REGISTER_QUERY_METHOD(queryProposal);
         REGISTER_QUERY_METHOD(getLatestTables);
         REGISTER_QUERY_METHOD(getChainId);
+
+        REGISTER_QUERY_METHOD(eth_getBalance);
+        REGISTER_QUERY_METHOD(eth_getTransactionByHash);
+        REGISTER_QUERY_METHOD(eth_getTransactionCount);
     }
     void call_method(std::string strMethod, xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     bool handle(std::string & strReq, xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) override;
@@ -167,6 +171,9 @@ public:
     xJson::Value parse_sharding_reward(const std::string & target, const std::string & prop_name, string & version);
     void getChainId(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
 
+    void eth_getBalance(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
+    void eth_getTransactionByHash(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void eth_getTransactionCount(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
 private:
     void getBlock(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     void getProperty(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
@@ -233,6 +240,7 @@ private:
     void get_nodes(const std::string & sys_addr);
 
     std::string HexEncode(const std::string & str);
+    void process_transaction(xJson::Value & js_rsp, xJson::Value & result_json);
 
 private:
     void set_sharding_vote_prop(xJson::Value & js_req, xJson::Value & js_rsp, std::string & prop_name, std::string & strResult, uint32_t & nErrorCode);
