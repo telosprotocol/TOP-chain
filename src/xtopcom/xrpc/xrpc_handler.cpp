@@ -166,6 +166,7 @@ void xrpc_handler::cluster_process_query_request(const xrpc_msg_request_t & edge
         if (strMethod.substr(0,4) == "eth_") {
             m_rpc_query_mgr->call_method(strMethod, json_proc.m_request_json["params"], json_proc.m_response_json, strErrorMsg, nErrorCode);
             json_proc.m_response_json["id"] = edge_msg.m_client_id;
+            json_proc.m_response_json["jsonrpc"] = "2.0";
         } else {
             m_rpc_query_mgr->call_method(strMethod, json_proc.m_request_json["params"], json_proc.m_response_json["data"], strErrorMsg, nErrorCode);
             json_proc.m_response_json[RPC_ERRNO] = nErrorCode;
