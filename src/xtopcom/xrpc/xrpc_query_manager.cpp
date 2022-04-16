@@ -2437,10 +2437,11 @@ void xrpc_query_manager::eth_getTransactionByHash(xJson::Value & js_req, xJson::
     }
 
     xJson::Value result_json;
-    if (get_transaction_on_demand("", tx_ptr, version, hash, result_json, strResult, nErrorCode) == 0)
-        process_transaction(js_rsp, result_json);
+    //if (get_transaction_on_demand("", tx_ptr, version, hash, result_json, strResult, nErrorCode) == 0)
+    process_transaction(hash, tx_ptr, version, js_rsp, result_json, strResult, nErrorCode);
 }
-void xrpc_query_manager::process_transaction(xJson::Value & js_rsp, xJson::Value & result_json) {
+void xrpc_query_manager::process_transaction(const uint256_t & tx_hash, xtransaction_t * tx_ptr, const std::string & version, xJson::Value & js_rsp, xJson::Value & result_json, std::string & strResult, uint32_t & nErrorCode) {
+    std::string strHash((char *)tx_hash.data(), tx_hash.size());
     if (parse_tx(tx_hash, tx_ptr, version, result_json, strResult, nErrorCode) != 0) {  // find tx
         strResult = "account address or transaction hash error/does not exist";
         nErrorCode = (uint32_t)enum_xrpc_error_code::rpc_shard_exec_error;
@@ -2453,8 +2454,8 @@ void xrpc_query_manager::process_transaction(xJson::Value & js_rsp, xJson::Value
     }
     auto tx = dynamic_cast<xtransaction_t *>(tx_store_ptr->get_raw_tx());
     tx->add_ref();
-    xtransaction_ptr_t tx_ptr;
-    tx_ptr.attach(tx);
+//    xtransaction_ptr_t tx_ptr;
+//    tx_ptr.attach(tx);
 
     data::xaction_t action;
     action.set_account_addr(tx->get_source_addr());
