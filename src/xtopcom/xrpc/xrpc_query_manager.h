@@ -121,6 +121,7 @@ public:
 
         REGISTER_QUERY_METHOD(eth_getBalance);
         REGISTER_QUERY_METHOD(eth_getTransactionByHash);
+        REGISTER_QUERY_METHOD(eth_getTransactionReceipt);
         REGISTER_QUERY_METHOD(eth_getTransactionCount);
     }
     void call_method(std::string strMethod, xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
@@ -173,6 +174,7 @@ public:
 
     void eth_getBalance(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
     void eth_getTransactionByHash(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void eth_getTransactionReceipt(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     void eth_getTransactionCount(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
 private:
     void getBlock(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
