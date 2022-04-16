@@ -29,7 +29,6 @@ namespace evm_common {
             struct is_string {
                 static const bool value = false;
             };
-
             template <class T, class Traits, class Alloc>
             struct is_string<std::basic_string<T, Traits, Alloc>> {
                 static const bool value = true;
@@ -42,16 +41,19 @@ namespace evm_common {
     public:
             template <typename T>
             xborsh_const xBorshEncoder &EncodeInteger(const T integer) {
-                static_assert(std::is_integral<T>::value, "Integer value only");
-                const size_t typeSize = sizeof(T);
+                static_assert(std::is_integral<T>::value || std::is_same<bigint, T>::value || !std::numeric_limits<T>::is_signed, "Integer value only");
+                size_t typeSize = sizeof(T);
                 uint8_t offset = 0;
 
-                for (size_t i = 0; i < typeSize; i++)
-                {
-                        m_Buffer.push_back((integer >> offset) & 0xff);
-                        offset += 8;
+                if(std::is_same<u256, T>::value) {
+                    typeSize = 32;
                 }
 
+                for (size_t i = 0; i < typeSize; i++) {
+                    uint8_t v = (integer>>offset) & (T)0xff;
+                    m_Buffer.push_back(v);
+                    offset += 8;
+                }
                 return *this;
             }
 
@@ -126,36 +128,32 @@ namespace evm_common {
     class xBorshDecoder
     {
     public:
-            template <typename T>
-            void getInteger(const char *buf, T &value) {
 
-                int bufLen = std::strlen(buf)-1;
-                const size_t typeSize = sizeof(T);
-                if (bufLen > typeSize) {
-                        bufLen = typeSize;
+            template < class _In, class T>
+            inline void getInteger(_In const &_bytes, T &out) {
+                int offset = 0;
+                for (auto i : _bytes){
+                    out = (T)(out | ((T)(typename std::make_unsigned<decltype(i)>::type)i << offset ));    
+                    offset += 8;
                 }
-                for (int i = bufLen; i >= 0; i--) {
-                        value += *((uint8_t*)buf+ i);
-                    if (i > 0) {
-                            value <<= 8;
-                        }
-                }
-            }
+            }   
 
-            bool getBool(const char *buf) {
+            inline bool getBool(const std::string &str) {
                 uint8_t value = 0 ;
-                getInteger(buf, value);
+                getInteger(str, value);
                 return (value > 0);
             }
 
-            void getString(const std::string &srcStr, std::string  &resultStr) {
+           inline  void getString(const std::string &srcStr, std::string  &resultStr) {
                 uint32_t strLen = srcStr.length();
                 uint32_t dataLen = 0 ;
-                getInteger(srcStr.c_str(), dataLen);
-                if ((dataLen - 4) > strLen) {
-                        return;
+                std::string strpre = srcStr.substr(0,4);
+                getInteger(strpre, dataLen);
+                if ((dataLen + 4) ==   strLen) {
+                    resultStr = srcStr.substr(4, dataLen);
+                }else {
+                     assert(false || "The string len is error");
                 }
-                resultStr = srcStr.substr(4, dataLen);
             }
     };
 
