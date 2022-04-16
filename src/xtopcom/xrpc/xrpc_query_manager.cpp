@@ -2490,6 +2490,21 @@ void xrpc_query_manager::process_transaction(const uint256_t & tx_hash, xtransac
     js_rsp["result"] = js_result;
     return;
 }
+void xrpc_query_manager::eth_getTransactionReceipt(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
+    uint256_t hash = top::data::hex_to_uint256(js_req["tx_hash"].asString());
+    std::string version = js_req["version"].asString();
+    if (version.empty()) {
+        version = RPC_VERSION_V1;
+    }
+    std::string tx_hash_str = std::string(reinterpret_cast<char *>(hash.data()), hash.size());
+    xdbg("eth_getTransactionReceipt tx hash: %s, version: %s",  tx_hash_str.c_str(), version.c_str());
 
+    xJson::Value js_result;
+    js_result["gas"] = "0x0";
+    js_result["gasPrice"] = "0x0";
+
+    js_rsp["result"] = js_result;
+    return;    
+}
 }  // namespace chain_info
 }  // namespace top
