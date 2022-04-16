@@ -20,7 +20,9 @@
 #include <cinttypes>
 
 #ifdef STATIC_CONSENSUS
-#    include "xvm/xsystem_contracts/xelection/xstatic_election_center.h"
+#   include "xvm/xsystem_contracts/xelection/xstatic_election_center.h"
+#   include "xdata/xelection/xelection_info.h"
+#   include "xdata/xelection/xelection_info_bundle.h"
 #endif
 
 #ifndef XSYSCONTRACT_MODULE
@@ -76,7 +78,7 @@ void xtop_zec_elect_eth_contract::elect_config_nodes(common::xlogic_time_t const
         new_election_info.joined_version = common::xelection_round_t{0};
 
         xelection_info_bundle_t election_info_bundle{};
-        election_info_bundle.node_id(nodes.node_id);
+        election_info_bundle.account_address(nodes.node_id);
         election_info_bundle.election_info(std::move(new_election_info));
 
         election_group_result.insert(std::move(election_info_bundle));
