@@ -429,6 +429,8 @@ bool xtop_logical_version::operator>=(xtop_logical_version const & other) const 
 bool xtop_logical_version::contains(xtop_logical_version const & logical_version) const noexcept {
     if (broadcast(associated_blk_height()) || associated_blk_height() == logical_version.associated_blk_height()) {
         return true;
+    } else if (associated_blk_height() != logical_version.associated_blk_height()) {
+        return false;
     }
 
     if (election_round().empty() || election_round() == logical_version.election_round()) {
