@@ -205,7 +205,7 @@ void xedge_evm_method_base<T>::query_process(xjson_proc_t & json_proc) {
         json_proc.m_account_set.emplace(account);
         json_proc.m_request_json.removeMember("params");
         json_proc.m_request_json["params"]["account_addr"] = account;
-    } else if (json_proc.m_request_json["method"].asString() == "eth_getTransactionByHash") {
+    } else if (json_proc.m_request_json["method"].asString() == "eth_getTransactionByHash" || json_proc.m_request_json["method"].asString() == "eth_getTransactionReceipt") {
         std::string tx_hash = json_proc.m_request_json["params"][0].asString();
         json_proc.m_request_json.removeMember("params");
         json_proc.m_request_json["params"]["tx_hash"] = tx_hash;
