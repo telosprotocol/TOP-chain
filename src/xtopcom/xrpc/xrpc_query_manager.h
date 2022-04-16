@@ -240,7 +240,7 @@ private:
     void get_nodes(const std::string & sys_addr);
 
     std::string HexEncode(const std::string & str);
-    void process_transaction(xJson::Value & js_rsp, xJson::Value & result_json);
+    void process_transaction(const uint256_t & tx_hash, xtransaction_t * tx_ptr, const std::string & version, xJson::Value & js_rsp, xJson::Value & result_json, std::string & strResult, uint32_t & nErrorCode);
 
 private:
     void set_sharding_vote_prop(xJson::Value & js_req, xJson::Value & js_rsp, std::string & prop_name, std::string & strResult, uint32_t & nErrorCode);
