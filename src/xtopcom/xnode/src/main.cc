@@ -1357,12 +1357,12 @@ int filter_node_commandline(config_t &config, int argc, char *argv[]) {
     if (argc == 1) {
         return 1;
     }
-    if (argc == 3) {
+    if (argc >= 3) {
         std::string tmp1(argv[1]);
         std::transform(tmp1.begin(), tmp1.end(), tmp1.begin(), ::tolower);
         std::string tmp2(argv[2]);
         std::transform(tmp2.begin(), tmp2.end(), tmp2.begin(), ::tolower);                
-        if (tmp1 == "db" && (tmp2 == "prune" || tmp2 == "compact")) {
+        if (tmp1 == "db" && (tmp2 == "prune" || tmp2 == "compact" || tmp2 == "convert")) {
             if (check_process_running(config.pid_file) == true) {
                 std::cout << "Please stop node." << std::endl;
                 return 0;

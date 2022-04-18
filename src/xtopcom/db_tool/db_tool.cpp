@@ -196,9 +196,15 @@ int backup(const std::string& db_name, const std::string& backup_dir,std::string
 int restore(const uint32_t backup_id,const std::string& backup_dir, const std::string& restore_dir,std::string& errormsg){
     rocksdb::Status s;
     rocksdb::BackupEngineReadOnly* backup_engine;
+    std::shared_ptr<rocksdb::Logger> backup_log;
     
     do {
-        s = rocksdb::BackupEngineReadOnly::Open(rocksdb::Env::Default(), rocksdb::BackupableDBOptions(backup_dir), &backup_engine);
+        rocksdb::Env::Default()->NewLogger("./restore_.log",  &backup_log);
+        backup_log.get()->SetInfoLogLevel(rocksdb::InfoLogLevel::DEBUG_LEVEL);
+
+        rocksdb::BackupableDBOptions backup_options = rocksdb::BackupableDBOptions(backup_dir, nullptr, true, backup_log.get());
+        backup_options.max_background_operations = 4;
+        s = rocksdb::BackupEngineReadOnly::Open(rocksdb::Env::Default(), backup_options, &backup_engine);
         if (!s.ok()) {
             break;
         }
@@ -210,8 +216,9 @@ int restore(const uint32_t backup_id,const std::string& backup_dir, const std::s
     
     delete backup_engine;
     if (!s.ok()) {
-       errormsg = s.getState();
-       return -1;
+        errormsg = s.getState();
+        rocksdb::Log(rocksdb::InfoLogLevel::ERROR_LEVEL, backup_log, "%s", s.getState());
+        return -1;
     }   
 	return 0;
 }

@@ -993,9 +993,26 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
         db_prune::DbPrune::instance().db_prune(account, config_extra_json["datadir"].get<std::string>(), out_str);
     });
     auto cmd_db_compact = db->add_subcommand("compact", "compact database.");
+    std::string compact_dir{};
+    cmd_db_compact->add_option("-d,--dir", compact_dir, "Database directory which to compact."); 
     cmd_db_compact->callback([&]() {
-        db_prune::DbPrune::instance().compact_db(config_extra_json["datadir"].get<std::string>(), out_str);
+        std::string dbdir;
+        if (!compact_dir.empty()) {
+            dbdir = compact_dir;
+        } else {
+            dbdir = config_extra_json["datadir"].get<std::string>();
+        }
+        db_prune::DbPrune::instance().compact_db(dbdir, out_str);
     });
+    auto cmd_db_convert = db->add_subcommand("convert", "convert database.");
+    std::string convert_dir;
+    cmd_db_convert->add_option("-d,--dir", convert_dir, "Database directory which to convert.")->mandatory();
+    cmd_db_convert->add_option("miner_type", miner_type, "Miner type.")->required();   
+    cmd_db_convert->callback([&]() {
+        auto dbdir = convert_dir;
+        db_prune::DbPrune::instance().db_convert(std::ref(miner_type), dbdir, out_str);
+    });
+     
     /*
      * debug
      */
