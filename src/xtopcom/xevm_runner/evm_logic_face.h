@@ -21,6 +21,7 @@ public:
 
 public:
     virtual xbytes_t get_return_value() = 0;
+    virtual std::pair<uint32_t, uint64_t> get_return_error() = 0;
 
 public:
     // interface to evm_import_instance:
@@ -41,6 +42,7 @@ public:
 
     // others:
     virtual void value_return(uint64_t value_len, uint64_t value_ptr) = 0;
+    virtual void error_return(uint32_t ec,uint64_t used_gas) = 0;
     virtual void log_utf8(uint64_t len, uint64_t ptr) = 0;
 
     // storage:

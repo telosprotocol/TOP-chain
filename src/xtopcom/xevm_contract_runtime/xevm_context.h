@@ -7,10 +7,11 @@
 #include "xbase/xns_macro.h"
 #include "xbasic/xbyte_buffer.h"
 #include "xbasic/xmemory.hpp"
-// #include "xcontract_common/xcontract_state.h"
 #include "xdata/xconsensus_action.h"
 
 NS_BEG2(top, evm_runtime)
+
+const uint32_t CURRENT_CALL_ARGS_VERSION = 1;
 
 class xtop_evm_context {
 private:
@@ -35,12 +36,10 @@ public:
 public:
     data::xtop_evm_action_type action_type() const;
 
-    // todo should be settled in constructor. delete later
-    void input_data(xbytes_t const & data);
-    // todo should get from relavent action. might not store inside self.
     xbytes_t const & input_data() const;
 
     common::xaccount_address_t sender() const;
+    common::xaccount_address_t recver() const;
 
     std::string const & random_seed() const noexcept;
 };

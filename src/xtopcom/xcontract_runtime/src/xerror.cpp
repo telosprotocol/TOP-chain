@@ -61,6 +61,21 @@ static char const * const errc_to_string(int code) {
     case xerrc_t::enum_wasm_code_invalid:
         return "WASM code invlid";
 
+    case xerrc_t::evm_vm_fatal:
+        return "EVM VM Fatal";
+
+    case xerrc_t::evm_vm_error:
+        return "EVM VM Error";
+
+    case xerrc_t::evm_incorrect_args:
+        return "EVM VM Incorrect Args";
+
+    case xerrc_t::evm_incorrect_nonce:
+        return "EVM VM Incorrect Nonce";
+
+    case xerrc_t::evm_protobuf_serilized_error:
+        return "EVM protobuf error";
+
     default:
         return "unknown contract runtime error";
     }

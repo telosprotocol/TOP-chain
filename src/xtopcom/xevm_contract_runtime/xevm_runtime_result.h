@@ -5,7 +5,7 @@
 #pragma once
 
 #include "xbasic/xbyte_buffer.h"
-#include "xevm_contract_runtime/xerror/xerror.h"
+#include "xcontract_runtime/xerror/xerror.h"
 #include "xevm_common/xevm_transaction_result.h"
 
 #include <string>
@@ -28,7 +28,9 @@ using xevm_output_status_t = xtop_evm_output_status;
 struct xtop_evm_output {
     xevm_output_status_t status;
     uint64_t used_gas;
+
     // only if status(ec == ok) tx_result has meaning.
+    // else meaning something we have't consider well
     evm_common::xevm_transaction_result_t tx_result;
 
     // debug

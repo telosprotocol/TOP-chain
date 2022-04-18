@@ -33,7 +33,17 @@ impl AsRef<[u8]> for EngineError {
     }
 }
 
-/// Errors with the EVM engine.
+/// todo add notes
+impl engine_sdk::types::ErrOutput for EngineError {
+    fn err_output(&self) -> (u32, u64) {
+        (self.kind.as_error_code(), self.gas_used)
+    }
+}
+
+/// #### Errors with the EVM engine.
+/// here is regular error code exit from rust evm interface
+/// should be defined in same order as `xcontract_runtime/xerror/xerror.h` `enum xenum_errc`
+/// use `as_error_code()` to convert into u32 than pass to C and add `evm_vm_ec_begin`
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum EngineErrorKind {
     EvmError(ExitError),
@@ -72,6 +82,16 @@ impl EngineErrorKind {
             EvmFatal(_) => unreachable!(), // unused misc
             IncorrectNonce => b"ERR_INCORRECT_NONCE",
             IncorrectArgs => b"ERR_INCORRECT_ARGS",
+        }
+    }
+
+    pub fn as_error_code(&self) -> u32 {
+        use EngineErrorKind::*;
+        match self {
+            EvmError(_) => 1,
+            EvmFatal(_) => 2,
+            IncorrectArgs => 3,
+            &IncorrectNonce => 4,
         }
     }
 }
