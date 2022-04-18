@@ -51,15 +51,35 @@ impl<T, E: AsRef<[u8]>> SdkUnwrap<T> for core::result::Result<T, E> {
     }
 }
 
-// # sdk_process
-pub trait SdkProcess<T> {
-    fn sdk_process(self);
+pub trait ErrOutput {
+    fn err_output(&self) -> (u32, u64);
 }
-impl<T: AsRef<[u8]>, E: AsRef<[u8]>> SdkProcess<T> for Result<T, E> {
-    fn sdk_process(self) {
+
+// # sdk_process
+// process Result<>
+// return rust evm execute result back to C
+// use by interface extern "C" pub function
+// Ok -  true - success
+// Err - false - error
+pub trait SdkProcess<T> {
+    fn sdk_process(self) -> bool;
+}
+impl<T, E> SdkProcess<T> for Result<T, E>
+where
+    T: AsRef<[u8]>,
+    E: AsRef<[u8]> + ErrOutput,
+{
+    fn sdk_process(self) -> bool {
         match self {
-            Ok(r) => crate::runtime::Runtime.return_output(r.as_ref()),
-            Err(e) => crate::panic_utf8(e.as_ref()),
+            Ok(r) => {
+                crate::runtime::Runtime.return_output(r.as_ref());
+                true
+            }
+            Err(e) => {
+                crate::log_utf8(e.as_ref());
+                crate::runtime::Runtime.return_error(e.err_output());
+                false
+            }
         }
     }
 }

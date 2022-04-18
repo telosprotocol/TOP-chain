@@ -3,6 +3,7 @@
 
 #include "xevm_contract_runtime/xevm_memory_tools.h"
 #include "xevm_contract_runtime/xevm_variant_bytes.h"
+#include "xcontract_runtime/xerror/xerror.h"
 #include "xevm_runner/proto/proto_basic.pb.h"
 #include "xevm_runner/proto/proto_parameters.pb.h"
 
@@ -19,6 +20,10 @@ xtop_evm_logic::xtop_evm_logic(std::shared_ptr<xevm_storage_face_t> storage_ptr,
 //  =========================== for runtime ===============================
 std::vector<uint8_t> xtop_evm_logic::get_return_value() {
     return m_return_data_value;
+}
+
+std::pair<uint32_t, uint64_t> xtop_evm_logic::get_return_error(){
+    return m_return_error_value;
 }
 
 //  =========================== interface to evm_import ===============================
@@ -110,6 +115,10 @@ void xtop_evm_logic::value_return(uint64_t key_len, uint64_t key_ptr) {
     // printf("\n");
 }
 
+void xtop_evm_logic::error_return(uint32_t ec,uint64_t used_gas){
+    m_return_error_value = std::make_pair(ec,used_gas);
+}
+
 void xtop_evm_logic::sha256(uint64_t value_len, uint64_t value_ptr, uint64_t register_id) {
     auto value = get_vec_from_memory_or_register(value_ptr, value_len);
 
@@ -152,6 +161,7 @@ void xtop_evm_logic::random_seed(uint64_t register_id) {
 // LOG
 void xtop_evm_logic::log_utf8(uint64_t len, uint64_t ptr) {
     std::string message = get_utf8_string(len, ptr);
+    // todo add xinfo_log.
     printf("[log_utf8] VM_LOG: %s \n", message.c_str());
 }
 

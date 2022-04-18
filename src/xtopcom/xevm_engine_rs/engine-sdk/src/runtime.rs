@@ -52,6 +52,12 @@ impl crate::io::IO for Runtime {
         }
     }
 
+    fn return_error(&mut self, ec_gas: (u32, u64)) {
+        unsafe {
+            exports::evm_error_return(ec_gas.0, ec_gas.1);
+        }
+    }
+
     fn read_storage(&self, key: &[u8]) -> Option<Self::StorageValue> {
         unsafe {
             if exports::evm_storage_read(
@@ -166,6 +172,7 @@ pub(crate) mod exports {
 
         // Others
         pub(crate) fn evm_value_return(value_len: u64, value_ptr: u64);
+        pub(crate) fn evm_error_return(ec: u32, used_gas: u64);
         pub(crate) fn evm_log_utf8(len: u64, ptr: u64);
 
         // Storage

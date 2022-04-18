@@ -27,6 +27,7 @@ public:
     xevm_logic_face_t * get_vm_logic_ref();
 
     xbytes_t get_return_value();
+    std::pair<uint32_t, uint64_t> get_return_error();
 
 public:
     // register:
@@ -45,6 +46,7 @@ public:
 
     // others:
     void value_return(uint64_t value_len, uint64_t value_ptr);
+    void error_return(uint32_t ec, uint64_t used_gas);
     void log_utf8(uint64_t len, uint64_t ptr);
 
     // storage:

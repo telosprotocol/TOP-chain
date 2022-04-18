@@ -18,6 +18,7 @@ public:
         std::vector<xbytes_t> topics;
         xbytes_t data;
     };
+    /// same as TransactionStatus in `evm_engine_rs/engine/src/parameters.rs`
     enum xevm_transaction_status_t : uint32_t {
         Success = 0,
         Revert = 1,

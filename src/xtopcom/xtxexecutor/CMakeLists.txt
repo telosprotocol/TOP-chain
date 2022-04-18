@@ -13,11 +13,14 @@ target_link_libraries(xtxexecutor PRIVATE
     xstatectx
     xverifier
     xvm
-    xevm
     xchain_upgrade
     xdata
     xxbase
 )
+
+if (BUILD_EVM)
+    target_link_libraries(xtxexecutor PRIVATE xevm)
+endif()
 
 if (BUILD_METRICS)
     # add_dependencies(xtxexecutor xmetrics)

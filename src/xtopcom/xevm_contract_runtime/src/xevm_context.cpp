@@ -8,8 +8,6 @@
 
 NS_BEG2(top, evm_runtime)
 
-const uint32_t CURRENT_CALL_ARGS_VERSION = 1;
-
 xtop_evm_context::xtop_evm_context(std::unique_ptr<data::xbasic_top_action_t const> action) noexcept : m_action{std::move(action)} {
     assert(m_action->type() == data::xtop_action_type_t::evm);
     // m_evm_action_type = deploy/call/..
@@ -19,11 +17,11 @@ xtop_evm_context::xtop_evm_context(std::unique_ptr<data::xbasic_top_action_t con
 
     // todo // get action_type/sender/recever/gas/value/data.... from action
     // - [x] action_type
-    // - [] sender
-    // - [] recever
-    // - [] gas
+    // - [x] sender
+    // - [x] recever
+    // - [] gas xxx
     // - [] value
-    // - [] data
+    // - [x] data
     if (action_type() == data::xtop_evm_action_type::deploy_contract) {
         // byte code is all evm need.
         m_input_data = static_cast<data::xevm_consensus_action_t const *>(m_action.get())->data();
@@ -35,8 +33,10 @@ xtop_evm_context::xtop_evm_context(std::unique_ptr<data::xbasic_top_action_t con
         call_args.set_input(top::to_string(static_cast<data::xevm_consensus_action_t const *>(m_action.get())->data()));
 
         assert(sender().value().substr(0, 6) == "T60004");
-        auto address = call_args.mutable_address();
-        address->set_value(sender().value().substr(6));
+        auto address = call_args.mutable_address(); // contract address
+        address->set_value(recver().value().substr(6));
+
+        // todo value: call_args.value(WeiU256)
 
         m_input_data = top::to_bytes(call_args.SerializeAsString());
 
@@ -57,6 +57,12 @@ xbytes_t const & xtop_evm_context::input_data() const {
 common::xaccount_address_t xtop_evm_context::sender() const {
     assert(m_action->type() == data::xtop_action_type_t::evm);
     common::xaccount_address_t ret = static_cast<data::xevm_consensus_action_t const *>(m_action.get())->sender();
+    return ret;
+}
+
+common::xaccount_address_t xtop_evm_context::recver() const {
+    assert(m_action->type() == data::xtop_action_type_t::evm);
+    common::xaccount_address_t ret = static_cast<data::xevm_consensus_action_t const *>(m_action.get())->recver();
     return ret;
 }
 
