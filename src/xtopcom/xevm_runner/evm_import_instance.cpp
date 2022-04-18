@@ -17,11 +17,13 @@ xevm_logic_face_t * evm_import_instance::get_vm_logic_ref() {
     return m_vm_logic.get();
 }
 
-
-xbytes_t evm_import_instance::get_return_value(){
+xbytes_t evm_import_instance::get_return_value() {
     return m_vm_logic->get_return_value();
 }
 
+std::pair<uint32_t, uint64_t> evm_import_instance::get_return_error(){
+    return m_vm_logic->get_return_error();
+}
 
 // register:
 void evm_import_instance::read_register(uint64_t register_id, uint64_t ptr) {
@@ -62,6 +64,10 @@ void evm_import_instance::ripemd160(uint64_t value_len, uint64_t value_ptr, uint
 // others:
 void evm_import_instance::value_return(uint64_t value_len, uint64_t value_ptr) {
     return m_vm_logic->value_return(value_len, value_ptr);
+}
+void evm_import_instance::error_return(uint32_t ec, uint64_t used_gas) {
+    m_vm_logic->error_return(ec, used_gas);
+    return;
 }
 void evm_import_instance::log_utf8(uint64_t len, uint64_t ptr) {
     m_vm_logic->log_utf8(len, ptr);
@@ -127,6 +133,9 @@ uint64_t evm_ecrecover(uint64_t hash_len, uint64_t hash_ptr, uint64_t sig_len, u
 // # Miscellaneous API #
 void evm_value_return(uint64_t value_len, uint64_t value_ptr) {
     return evm_import_instance::instance()->value_return(value_len, value_ptr);
+}
+void evm_error_return(uint32_t ec, uint64_t used_gas) {
+    return evm_import_instance::instance()->error_return(ec, used_gas);
 }
 void evm_log_utf8(uint64_t len, uint64_t ptr) {
     evm_import_instance::instance()->log_utf8(len, ptr);

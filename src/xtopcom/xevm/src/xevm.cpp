@@ -9,6 +9,7 @@
 #include "xdata/xtop_action.h"
 #include "xdata/xtop_action_generator.h"
 #include "xevm_contract_runtime/xevm_action_session.h"
+#include "xcontract_common/xerror/xerror.h"
 
 NS_BEG2(top, evm)
 
@@ -33,7 +34,6 @@ txexecutor::enum_execute_result_type xtop_evm::execute(txexecutor::xvm_input_t c
         output.m_tx_result = ret.tx_result;
         return txexecutor::enum_exec_success;
     } else {
-        // todo ?
         output.m_tx_exec_succ = false;
         output.m_vm_error_code = ret.status.ec.value();
         output.m_vm_error_str = ret.status.ec.message();
@@ -58,11 +58,10 @@ contract_runtime::evm::xevm_output_t xtop_evm::execute(data::xcons_transaction_p
         //     result.status.ec = action_result.status.ec;
         // }
     } catch (top::error::xtop_error_t & eh) {
-        // todo
-        // output.status = ...
-        xerror("xtop_evm: caught chain error exception: category: %s msg: %s", eh.code().category().name(), eh.what());
+        output.status.ec = eh.code(); // this should be implementation bug(or cases we don't charge). tx won't be made into blcok and so no gas cost.
+        // xerror("xtop_evm: caught chain error exception: category: %s msg: %s", eh.code().category().name(), eh.what());
     } catch (std::exception const & eh) {
-        xerror("xtop_evm: caught exception: %s", eh.what());
+        xerror("xtop_evm: caught unknown exception: %s", eh.what());
     }
 
     return output;
