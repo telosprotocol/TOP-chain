@@ -1,8 +1,8 @@
 #pragma once
 #include "stdint.h"
 
-extern "C" void deploy_code();
-extern "C" void call_contract();
+extern "C" bool deploy_code();
+extern "C" bool call_contract();
 // extern "C" void serial_param_function_callargs(const char * address,
 //                                                uint64_t address_len,
 //                                                uint64_t value,

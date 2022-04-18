@@ -25,10 +25,12 @@ private:
     observer_ptr<evm_runtime::xevm_context_t> m_context;
     std::map<uint64_t, xbytes_t> m_registers;
     xbytes_t m_return_data_value;
+    std::pair<uint32_t, uint64_t> m_return_error_value;
 
 public:
     // for runtime
     xbytes_t get_return_value() override;
+    std::pair<uint32_t, uint64_t> get_return_error() override;
 
 public:
     // interface to evm_import_instance:
@@ -49,6 +51,7 @@ public:
 
     // others:
     void value_return(uint64_t value_len, uint64_t value_ptr) override;
+    void error_return(uint32_t ec,uint64_t used_gas) override;
     void log_utf8(uint64_t len, uint64_t ptr) override;
 
     // storage:

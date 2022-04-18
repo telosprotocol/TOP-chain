@@ -21,6 +21,7 @@ impl From<Log> for ResultLog {
 }
 
 /// The status of a transaction.
+/// same as TransactionStatus in `xevm_common/xevm_transaction_result.h`
 #[derive(Debug, PartialEq, Eq)]
 pub enum TransactionStatus {
     Succeed(Vec<u8>),
@@ -69,11 +70,11 @@ impl AsRef<[u8]> for TransactionStatus {
 }
 
 impl SubmitResult {
-    const VERSION: u32 = 1;
+    const CURRENT_CALL_ARGS_VERSION: u32 = 1;
 
     pub fn new_proto(status: TransactionStatus, gas_used: u64, logs: Vec<ResultLog>) -> Self {
         let mut res = SubmitResult::new();
-        res.set_version(Self::VERSION);
+        res.set_version(Self::CURRENT_CALL_ARGS_VERSION);
         res.set_transaction_status(status.as_u32());
 
         match status {
