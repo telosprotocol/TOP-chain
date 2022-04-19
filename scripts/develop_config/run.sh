@@ -1,4 +1,5 @@
 kill -9 `ps -ef |grep xtopchain|awk '{print $2}'`
+kill -9 `ps -ef |grep topio|awk '{print $2}'`
 
 rm -rf ~/topnetwork/db/* ~/topnetwork/log/*
 rm -rf /tmp/rec1/

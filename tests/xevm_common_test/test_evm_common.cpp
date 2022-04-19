@@ -86,11 +86,10 @@ TEST(test_rlp, decode) {
     EXPECT_EQ(vecData[5], "top unit test");
 }
 
-
-TEST(test_rlp,wiki_example){
-    std::string raw = HexDecode("c88363617483646f67"); // The list [ “cat”, “dog” ] = [ 0xc8, 0x83, 'c', 'a', 't', 0x83, 'd', 'o', 'g' ]
+TEST(test_rlp, wiki_example) {
+    std::string raw = HexDecode("c88363617483646f67");  // The list [ “cat”, “dog” ] = [ 0xc8, 0x83, 'c', 'a', 't', 0x83, 'd', 'o', 'g' ]
     RLP::DecodedItem decoded = RLP::decode(::data(raw));
-    
+
     std::vector<std::string> vecData;
     for (int i = 0; i < (int)decoded.decoded.size(); i++) {
         std::string str(decoded.decoded[i].begin(), decoded.decoded[i].end());
@@ -98,9 +97,9 @@ TEST(test_rlp,wiki_example){
         std::cout << "data" << i << ": " << (str) << std::endl;
     }
 
-    raw = HexDecode("c7c0c1c0c3c0c1c0"); // [ [], [[]], [ [], [[]] ] ] = [ 0xc7, 0xc0, 0xc1, 0xc0, 0xc3, 0xc0, 0xc1, 0xc0 ]
+    raw = HexDecode("c7c0c1c0c3c0c1c0");  // [ [], [[]], [ [], [[]] ] ] = [ 0xc7, 0xc0, 0xc1, 0xc0, 0xc3, 0xc0, 0xc1, 0xc0 ]
     decoded = RLP::decode(::data(raw));
-    
+
     vecData.clear();
     for (int i = 0; i < (int)decoded.decoded.size(); i++) {
         std::string str(decoded.decoded[i].begin(), decoded.decoded[i].end());
@@ -108,10 +107,9 @@ TEST(test_rlp,wiki_example){
         std::cout << "data" << i << ": " << (str) << std::endl;
     }
 
-    
-    raw = HexDecode("820400"); // The encoded integer 1024 (’\x04\x00’) = [ 0x82, 0x04, 0x00 ]
+    raw = HexDecode("820400");  // The encoded integer 1024 (’\x04\x00’) = [ 0x82, 0x04, 0x00 ]
     decoded = RLP::decode(::data(raw));
-    
+
     vecData.clear();
     for (int i = 0; i < (int)decoded.decoded.size(); i++) {
         std::string str(decoded.decoded[i].begin(), decoded.decoded[i].end());
