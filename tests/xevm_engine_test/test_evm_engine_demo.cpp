@@ -222,6 +222,7 @@ TEST(test_demo, deploy_and_call_contract_success_1) {
         std::cout << output.m_tx_result.dump_info() << std::endl;
 
         ASSERT_EQ(ret, txexecutor::enum_exec_success);
+        ASSERT_EQ(output.m_tx_result.extra_msg, "00000000000000000000000000000000000000000000000000000000000186a0");  // 100000 in hex
         ASSERT_EQ(output.m_vm_error_code, 0);
         ASSERT_EQ(output.m_tx_result.status, evm_common::xevm_transaction_result_t::xevm_transaction_status_t::Success);
     }
@@ -244,6 +245,7 @@ TEST(test_demo, deploy_and_call_contract_success_1) {
         std::cout << output.m_tx_result.dump_info() << std::endl;
 
         ASSERT_EQ(ret, txexecutor::enum_exec_success);
+        ASSERT_EQ(output.m_tx_result.extra_msg, "0000000000000000000000000000000000000000000000000000000000000000");  // 0
         ASSERT_EQ(output.m_vm_error_code, 0);
         ASSERT_EQ(output.m_tx_result.status, evm_common::xevm_transaction_result_t::xevm_transaction_status_t::Success);
     }
@@ -267,6 +269,7 @@ TEST(test_demo, deploy_and_call_contract_success_1) {
         std::cout << output.m_tx_result.dump_info() << std::endl;
 
         ASSERT_EQ(ret, txexecutor::enum_exec_success);
+        ASSERT_EQ(output.m_tx_result.extra_msg, "0000000000000000000000000000000000000000000000000000000000000001");  // true
         ASSERT_EQ(output.m_vm_error_code, 0);
         ASSERT_EQ(output.m_tx_result.status, evm_common::xevm_transaction_result_t::xevm_transaction_status_t::Success);
     }
@@ -289,6 +292,7 @@ TEST(test_demo, deploy_and_call_contract_success_1) {
         std::cout << output.m_tx_result.dump_info() << std::endl;
 
         ASSERT_EQ(ret, txexecutor::enum_exec_success);
+        ASSERT_EQ(output.m_tx_result.extra_msg, "000000000000000000000000000000000000000000000000000000000000007b");  // 123 in hex
         ASSERT_EQ(output.m_vm_error_code, 0);
         ASSERT_EQ(output.m_tx_result.status, evm_common::xevm_transaction_result_t::xevm_transaction_status_t::Success);
     }

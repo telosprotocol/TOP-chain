@@ -16,33 +16,30 @@ mod interface {
 
     #[no_mangle]
     pub extern "C" fn deploy_code() -> bool {
-        println!("========= deploy_code =========");
+        sdk::log("========= deploy_code =========");
         let io = Runtime;
         let input = io.read_input().to_vec();
         let mut engine = Engine::new(io.sender_address(), io, &io).sdk_unwrap();
         Engine::deploy_code_with_input(&mut engine, input)
             .map(|res| {
-                println!("[rust_evm][interface]res: {:?}", res);
+                sdk::log(format!("[rust_evm][interface]res: {:?}", res).as_str());
                 res.write_to_bytes().sdk_expect("ERR_SERIALIZE")
-                // bincode::serialize(&res).sdk_expect("ERR_SERIALIZE")
             })
             .sdk_process()
-        // TODO: charge for storage
     }
+
     #[no_mangle]
     pub extern "C" fn call_contract() -> bool {
-        println!("========= call_contract =========");
+        sdk::log("========= call_contract =========");
         let io = Runtime;
         let bytes = io.read_input().to_vec();
         let args = FunctionCallArgs::parse_from_bytes(&bytes).sdk_expect("ERR_DESERIALIZE");
-        // let args = bincode::deserialize::<CallArgs>(&bytes).sdk_expect("ERR_DESERIALIZE");
-        // println!("{:?}", args);
+        sdk::log(format!("{:?}", args).as_str());
         let mut engine = Engine::new(io.sender_address(), io, &io).sdk_unwrap();
         Engine::call_with_args(&mut engine, args)
             .map(|res| {
-                println!("[rust_evm][interface]res: {:?}", res);
+                sdk::log(format!("[rust_evm][interface]res: {:?}", res).as_str());
                 res.write_to_bytes().sdk_expect("ERR_SERIALIZE")
-                // bincode::serialize(&res).sdk_expect("ERR_SERIALIZE")
             })
             .sdk_process()
     }
