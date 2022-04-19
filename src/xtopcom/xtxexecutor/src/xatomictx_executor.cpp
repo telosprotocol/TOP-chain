@@ -183,6 +183,9 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
 #ifdef BUILD_EVM
         evm::xtop_evm evm{m_statectx};
         ret = evm.execute(vminput,vmoutput);
+        if (ret == txexecutor::enum_exec_success) {
+            tx->set_evm_tx_result(vmoutput.m_tx_result);
+        }
 #else
         xassert(false);
 #endif

@@ -28,7 +28,7 @@ txexecutor::enum_execute_result_type xtop_evm::execute(txexecutor::xvm_input_t c
     m_evm_statectx = input.get_statectx();
     contract_runtime::evm::xevm_output_t ret = execute(input.get_tx());
 
-    output.used_gas = ret.used_gas;
+    // output.used_gas = ret.used_gas;
     if (!ret.status.ec) {
         output.m_tx_exec_succ = true;
         output.m_tx_result = ret.tx_result;

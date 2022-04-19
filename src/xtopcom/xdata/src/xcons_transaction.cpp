@@ -121,6 +121,8 @@ void xcons_transaction_t::update_transation() {
     if (m_receipt == nullptr) {
         if (m_tx->get_source_addr() == m_tx->get_target_addr() || data::is_black_hole_address(common::xaccount_address_t{m_tx->get_target_addr()})) {
             set_tx_subtype(enum_transaction_subtype_self);
+        } else if (m_tx->get_tx_version() == xtransaction_version_3 && m_tx->get_tx_type() == xtransaction_type_deploy_evm_contract) {
+            set_tx_subtype(enum_transaction_subtype_self);
         } else {
             set_tx_subtype(enum_transaction_subtype_send);
         }

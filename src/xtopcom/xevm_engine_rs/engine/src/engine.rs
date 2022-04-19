@@ -131,6 +131,7 @@ impl<'env, I: IO + Copy, E: Env> Engine<'env, I, E> {
         let address = executor.create_address(CreateScheme::Legacy {
             caller: origin.raw(),
         });
+        println!("contract_address: {:?}",address);
         let (exit_reason, return_value) =
             executor.transact_create(origin.raw(), value.raw(), input, gas_limit, access_list);
         let result = if exit_reason.is_succeed() {

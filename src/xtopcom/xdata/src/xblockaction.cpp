@@ -59,6 +59,22 @@ enum_xunit_tx_exec_status xlightunit_action_t::get_tx_exec_status() const {
     }
     return enum_xunit_tx_exec_status_success;
 }
+
+bool xlightunit_action_t::get_evm_transaction_result(evm_common::xevm_transaction_result_t result) const {
+    std::string value = get_action_result_property(xtransaction_exec_state_t::XTX_EVM_TRANSACTION_RESULT);
+    if (!value.empty()) {
+        xevm_tx_result_ptr_t evm_tx_result = make_object_ptr<xevm_tx_result_t>();
+        auto ret = evm_tx_result->serialize_from_string(value);
+        if (ret <= 0) {
+            xerror("xlightunit_action_t::get_evm_transaction_result fail-evm_tx_result serialize from.");
+            return false;
+        }
+        result = evm_tx_result->get_evm_tx_result();
+        return true;
+    }
+    return false;
+}
+
 uint64_t xlightunit_action_t::get_receipt_id() const {
     std::string value = get_action_result_property(xtransaction_exec_state_t::XTX_RECEIPT_ID);
     if (!value.empty()) {

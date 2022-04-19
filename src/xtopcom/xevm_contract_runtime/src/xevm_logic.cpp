@@ -163,6 +163,7 @@ void xtop_evm_logic::log_utf8(uint64_t len, uint64_t ptr) {
     std::string message = get_utf8_string(len, ptr);
     // todo add xinfo_log.
     printf("[log_utf8] VM_LOG: %s \n", message.c_str());
+    xdbg("xtop_evm_logic::log_utf8 VM_LOG: %s", message.c_str());
 }
 
 //  =========================== inner  api ===============================

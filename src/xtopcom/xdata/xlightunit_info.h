@@ -21,6 +21,68 @@ namespace top { namespace data {
 #define XTX_NOT_NEED_CONFIRM_FLAG_MASK (0x1)  // BIT#0
 #define XTX_INNER_TABLE_FLAG_MASK (0x1 << 1)  // BIT#1
 
+class xevm_tx_result_t : public xbase_dataunit_t<xevm_tx_result_t, xdata_type_evm_tx_result> {
+ public:
+    xevm_tx_result_t() {}
+    xevm_tx_result_t(evm_common::xevm_transaction_result_t & evm_tx_result) : m_evm_tx_result(evm_tx_result) {}
+
+ protected:
+    ~xevm_tx_result_t() {}
+ public:
+    int32_t do_write(base::xstream_t & stream) override {
+        const int32_t begin_size = stream.size();
+
+        stream.write_compact_var(m_evm_tx_result.used_gas); //todo maybe duplicate searlized
+        stream.write_compact_var((uint32_t)m_evm_tx_result.status);
+        stream.write_compact_var(m_evm_tx_result.extra_msg);
+        uint32_t count = m_evm_tx_result.logs.size();
+        stream.write_compact_var(count);
+        for (uint32_t i = 0; i < count; i++) {
+            stream.write_compact_var(m_evm_tx_result.logs[i].address);
+            uint32_t topics_num = m_evm_tx_result.logs[i].topics.size();
+            stream.write_compact_var(topics_num);
+            for (uint32_t j = 0; j < topics_num; j++) {
+                stream.write_compact_var(top::from_bytes<std::string>(m_evm_tx_result.logs[i].topics[j]));
+            }
+            stream.write_compact_var(top::from_bytes<std::string>(m_evm_tx_result.logs[i].data));
+        }
+
+        return (stream.size() - begin_size);
+    }
+    int32_t do_read(base::xstream_t & stream) override {
+        const int32_t begin_size = stream.size();
+
+        stream.read_compact_var(m_evm_tx_result.used_gas); //todo maybe duplicate searlized
+        uint32_t status;
+        stream.read_compact_var(status);
+        m_evm_tx_result.status = (evm_common::xevm_transaction_status_t)status;
+        stream.read_compact_var(m_evm_tx_result.extra_msg);
+        uint32_t count;
+        stream.read_compact_var(count);
+        for (uint32_t i = 0; i < count; i++) {
+            evm_common::xevm_log_t evm_log;
+            stream.read_compact_var(evm_log.address);
+            uint32_t topics_num;
+            stream.read_compact_var(topics_num);
+            for (uint32_t j = 0; j < topics_num; j++) {
+                std::string topic_str;
+                stream.read_compact_var(topic_str);
+                evm_log.topics.push_back(to_bytes(topic_str));
+            }
+            std::string data_str;
+            stream.read_compact_var(data_str);
+            evm_log.data = to_bytes(data_str);
+            m_evm_tx_result.logs.push_back(evm_log);
+        }
+        return (begin_size - stream.size());
+    }
+    const evm_common::xevm_transaction_result_t & get_evm_tx_result() const {return m_evm_tx_result;}
+private:
+    evm_common::xevm_transaction_result_t m_evm_tx_result;
+};
+
+using xevm_tx_result_ptr_t = xobject_ptr_t<xevm_tx_result_t>;
+
 // the transaction state change after execute
 class xtransaction_exec_state_t : public xblockpara_base_t {
  public:
@@ -37,6 +99,7 @@ class xtransaction_exec_state_t : public xblockpara_base_t {
     static XINLINE_CONSTEXPR char const * XTX_RECEIPT_DATA                             = "c";
     static XINLINE_CONSTEXPR char const * XTX_FLAGS                                    = "d";
     static XINLINE_CONSTEXPR char const * XTX_RSP_ID                                   = "e";
+    static XINLINE_CONSTEXPR char const * XTX_EVM_TRANSACTION_RESULT                   = "f";
 
  public:
     xtransaction_exec_state_t();
@@ -55,6 +118,7 @@ class xtransaction_exec_state_t : public xblockpara_base_t {
     void        set_not_need_confirm(bool not_need_confirm);
     void        set_rsp_id(uint64_t rspid);
     void        set_inner_table_flag(bool inner_table);
+    void        set_evm_tx_result(evm_common::xevm_transaction_result_t & evm_tx_result);
 
  public:
     uint32_t    get_used_disk()const {return get_value_uint32(XPROPERTY_FEE_TX_USED_DISK);}
@@ -69,6 +133,7 @@ class xtransaction_exec_state_t : public xblockpara_base_t {
     bool                      get_not_need_confirm() const;
     uint64_t                  get_rsp_id()const {return get_value_uint64(XTX_RSP_ID);}
     bool                      get_inner_table_flag() const;
+    bool                      get_evm_tx_result(evm_common::xevm_transaction_result_t & evm_tx_result) const;
 };
 
 class xlightunit_tx_info_t : public xlightunit_action_t {
