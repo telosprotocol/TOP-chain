@@ -13,8 +13,8 @@ NS_BEG2(top, evm_common)
 
 struct xevm_log_t {
     std::string address;
-    std::vector<xbytes_t> topics;
-    xbytes_t data;
+    std::vector<std::string> topics; // hex string
+    std::string data; // hex string
 };
 /// same as TransactionStatus in `evm_engine_rs/engine/src/parameters.rs`
 enum xevm_transaction_status_t : uint32_t {
