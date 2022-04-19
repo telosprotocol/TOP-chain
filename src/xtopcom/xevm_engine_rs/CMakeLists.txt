@@ -2,14 +2,27 @@ cmake_minimum_required(VERSION 3.8)
 
 add_compile_options(-Wpedantic)
 
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(CARGO_CMD cargo build --features=build_as_xtop_lib)
-    set(TARGET_DIR "debug")
-else ()
-    set(CARGO_CMD cargo build --features=build_as_xtop_lib --release)
-    set(TARGET_DIR "release")
-endif ()
 message("========== evm_engine CMAKE ============")
+
+# find cargo
+execute_process (
+    COMMAND bash -c "which cargo | grep 'cargo' | tr -d '\n'"
+    OUTPUT_VARIABLE CARGO_DIR
+)
+
+execute_process (
+    COMMAND ${CARGO_DIR} --version
+)
+
+message(STATUS "Cargo dir: " ${CARGO_DIR})
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+set(CARGO_CMD ${CARGO_DIR} build --features=build_as_xtop_lib)
+set(TARGET_DIR "debug")
+else ()
+set(CARGO_CMD ${CARGO_DIR} build --features=build_as_xtop_lib --release)
+set(TARGET_DIR "release")
+endif ()
+
 message(STATUS "Cargo cmd: " ${CARGO_CMD})
 set(EVM_A "${CMAKE_CURRENT_BINARY_DIR}/${TARGET_DIR}/libxevm_engine.a")
 message(STATUS "EVM_A: " ${EVM_A} )
