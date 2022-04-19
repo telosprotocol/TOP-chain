@@ -69,6 +69,7 @@ evm_common::xevm_transaction_result_t xtop_action_runtime<data::xevm_consensus_a
 
     // extra_msg:
     result.extra_msg = evm::xvariant_bytes{return_result.status_data(), false}.to_hex_string();
+    xdbg("xtop_action_runtime<data::xevm_consensus_action_t>::execute result.extra_msg:%s", result.extra_msg.c_str());
 
     // logs:
     for (int i = 0; i < return_result.logs_size(); ++i) {
