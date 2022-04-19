@@ -131,13 +131,21 @@ impl<'env, I: IO + Copy, E: Env> Engine<'env, I, E> {
         let address = executor.create_address(CreateScheme::Legacy {
             caller: origin.raw(),
         });
-        println!("contract_address: {:?}",address);
+        sdk::log(
+            format!(
+                "deploy_code at address: {:?} from {:?} with code size: {}",
+                address,
+                origin,
+                input.len()
+            )
+            .as_str(),
+        );
         let (exit_reason, return_value) =
             executor.transact_create(origin.raw(), value.raw(), input, gas_limit, access_list);
         let result = if exit_reason.is_succeed() {
             address.0.to_vec()
         } else {
-            println!("{:?}", exit_reason);
+            sdk::log(format!("deploy_code failed: {:?}", exit_reason).as_str());
             return_value
         };
 
@@ -185,7 +193,6 @@ impl<'env, I: IO + Copy, E: Env> Engine<'env, I, E> {
                 //     })?;
                 let value = args.get_value().clone().into();
                 let input = args.get_input().into();
-                println!("contract: {:?} input: {:?}", contract, input);
                 self.call(&origin, &contract, value, input, u64::MAX, Vec::new())
             }
             _ => Err(EngineErrorKind::IncorrectArgs.into()),
@@ -203,6 +210,13 @@ impl<'env, I: IO + Copy, E: Env> Engine<'env, I, E> {
     ) -> EngineResult<SubmitResult> {
         let executor_params = StackExecutorParams::new(gas_limit, self.env.random_seed());
         let mut executor = executor_params.make_executor(self);
+        sdk::log(
+            format!(
+                "call contract at: {:?} from {:?} with input {:?}",
+                contract, origin, input
+            )
+            .as_str(),
+        );
         let (exit_reason, result) = executor.transact_call(
             origin.raw(),
             contract.raw(),
@@ -547,12 +561,14 @@ impl<'env, J: IO + Copy, E: Env> ApplyBackend for Engine<'env, J, E> {
                     if let Some(code) = code {
                         set_code(&mut self.io, &address, &code);
                         code_bytes_written = code.len();
-                        sdk::log!(crate::prelude::format!(
-                            "code_write_at_address {:?} {}",
-                            address,
-                            code_bytes_written,
-                        )
-                        .as_str());
+                        sdk::log(
+                            crate::prelude::format!(
+                                "code_write_at_address {:?} {}",
+                                address,
+                                code_bytes_written,
+                            )
+                            .as_str(),
+                        );
                     }
 
                     let next_generation = if reset_storage {

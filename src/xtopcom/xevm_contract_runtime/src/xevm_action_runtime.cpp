@@ -50,7 +50,8 @@ evm_common::xevm_transaction_result_t xtop_action_runtime<data::xevm_consensus_a
     }
     if (!evm_result) {
         auto error_result = top::evm::evm_import_instance::instance()->get_return_error();
-        result.used_gas = error_result.second; // got it . but throw won't be able to pass this value.
+        result.used_gas = error_result.second; // todo: now got it . but throw won't be able to pass this value.
+        // todo check begin + error_result > max?
         auto ec = static_cast<error::xerrc_t>(error_result.first + static_cast<std::underlying_type<error::xerrc_t>::type>(error::xerrc_t::evm_vm_ec_begin));
         top::error::throw_error(ec);
     }
