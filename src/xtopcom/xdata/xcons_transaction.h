@@ -110,6 +110,9 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     void                    set_receipt_data(data::xreceipt_data_t data) {return m_execute_state.set_receipt_data(data);}
     bool                    get_not_need_confirm() const {return (is_self_tx() ? false : m_execute_state.get_not_need_confirm());}
 
+    void                   set_evm_tx_result(evm_common::xevm_transaction_result_t & evm_tx_result) {m_execute_state.set_evm_tx_result(evm_tx_result);}
+    bool                   get_evm_tx_result(evm_common::xevm_transaction_result_t & evm_tx_result) {return m_execute_state.get_evm_tx_result(evm_tx_result);}
+
  public:  // for debug use
     void                    set_push_pool_timestamp(uint64_t push_pool_timestamp) {m_push_pool_timestamp = push_pool_timestamp;};
     uint64_t                get_push_pool_timestamp() const {return m_push_pool_timestamp;}

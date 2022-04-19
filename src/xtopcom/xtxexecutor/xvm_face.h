@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2018 Telos Foundation & contributors
+﻿// Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -70,7 +70,7 @@ class xvm_input_t {
 class xvm_output_t {
  public:
     evm_common::xevm_transaction_result_t m_tx_result;
-    uint64_t used_gas;
+   //  uint64_t used_gas;
 
  public:
     bool            m_tx_exec_succ{false};  // tx execute succ or fail

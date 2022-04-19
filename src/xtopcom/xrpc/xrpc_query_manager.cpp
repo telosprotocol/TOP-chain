@@ -2499,9 +2499,48 @@ void xrpc_query_manager::eth_getTransactionReceipt(xJson::Value & js_req, xJson:
     std::string tx_hash_str = std::string(reinterpret_cast<char *>(hash.data()), hash.size());
     xdbg("eth_getTransactionReceipt tx hash: %s, version: %s",  tx_hash_str.c_str(), version.c_str());
 
+
+    xtxindex_detail_ptr_t sendindex = xrpc_loader_t::load_tx_indx_detail(tx_hash_str, base::enum_transaction_subtype_send);
+    if (sendindex == nullptr) {
+        nErrorCode = (uint32_t)enum_xrpc_error_code::rpc_shard_exec_error;
+        return;
+    }
+
     xJson::Value js_result;
-    js_result["gas"] = "0x0";
-    js_result["gasPrice"] = "0x0";
+    js_result["transactionHash"] = js_req["tx_hash"].asString();
+    js_result["transactionIndex"] = "0x1";
+    js_result["blockHash"] = sendindex->get_txindex()->get_block_hash();
+    std::stringstream outstr;
+    outstr << "0x" << std::hex << sendindex->get_txindex()->get_block_height();
+    js_result["blockNumber"] = outstr.str();
+    js_result["cumulativeGasUsed"] = "0x0";
+    js_result["gasUsed"] = "0x0";
+
+    uint16_t tx_type = sendindex->get_raw_tx()->get_tx_type();
+    js_result["from"] = sendindex->get_raw_tx()->get_source_addr();
+    if (tx_type == xtransaction_type_transfer) {
+        js_result["to"] = sendindex->get_raw_tx()->get_target_addr();
+        js_result["status"] = "0x1";
+    } else {
+        js_result["to"] = "";
+
+        evm_common::xevm_transaction_result_t evm_result;
+        sendindex->get_txaction().get_evm_transaction_result(evm_result);
+        js_result["contractAddress"] = "0x" + evm_result.extra_msg;
+
+        for (auto & log : evm_result.logs) {
+            xJson::Value js_log;
+            js_log["address"] = log.address;
+            for (auto & topic : log.topics) {
+                js_log["topics"].append(top::from_bytes<std::string>(topic));
+            }
+            js_log["data"] = top::from_bytes<std::string>(log.data);
+            js_result["logs"].append(js_log);
+        }
+
+        js_result["logsBloom"] = "0x0";
+        js_result["status"] = (evm_result.status == 0) ?  "0x1" : "0x0";
+    }
 
     js_rsp["result"] = js_result;
     return;    
