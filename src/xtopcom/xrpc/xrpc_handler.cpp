@@ -192,6 +192,15 @@ void xrpc_handler::cluster_process_query_request(const xrpc_msg_request_t & edge
     response_msg_ptr->m_signature_address = m_arc_vhost->address();
     xmessage_t msg(codec::xmsgpack_codec_t<xrpc_msg_response_t>::encode(*response_msg_ptr), rpc_msg_response);
     xdbg_rpc("xarc_rpc_handler response recv %" PRIx64 ", send %" PRIx64 ", %s", message.hash(), msg.hash(), response_msg_ptr->m_message_body.c_str());
+    if (response_msg_ptr->m_message_body.size() > 800) {
+        uint32_t part_num = (response_msg_ptr->m_message_body.size() + 799)/800;
+        uint32_t i = 0;
+        for (; i < (part_num - 1); i++) {
+            xinfo_rpc(">>>rsp part%u:%s", i, response_msg_ptr->m_message_body.substr(i*800,800).c_str());
+        }
+        xinfo_rpc(">>>rsp part%u:%s", i, response_msg_ptr->m_message_body.substr(i*800).c_str());
+        std::cout << ">>>rsp:" << response_msg_ptr->m_message_body << std::endl;
+    }
     std::error_code ec;
     m_arc_vhost->send_to(edge_sender, msg, ec);
 
