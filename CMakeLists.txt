@@ -24,6 +24,8 @@ option(XCHAIN_FORKED_BY_DEFAULT "Enable chain forked logic" OFF)
 option(ENABLE_METRICS_DATAOBJECT "Enable metrics dataobject" OFF)
 option(DISABLE_CORE_SIGNAL_CAPTURE "disable core signal capture" OFF)
 
+set(BUILD_EVM ON) # EVM as default VM for now
+
 if (XENABLE_TESTS)
     set(XENABLE_BLOCK_VERIFY OFF)
     set(XSYNC_TEST ON)
