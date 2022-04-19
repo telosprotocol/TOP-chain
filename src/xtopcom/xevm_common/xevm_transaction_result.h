@@ -26,6 +26,7 @@ enum xevm_transaction_status_t : uint32_t {
     OutOfFund = 3,
     /// An opcode accesses external information, but the request is off offset limit (runtime).
     OutOfOffset = 4,
+    OtherExecuteError = 5,
 };
 
 class xevm_transaction_result_t {

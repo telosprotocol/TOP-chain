@@ -1,4 +1,5 @@
 #pragma once
+#include "xbasic/xbyte_buffer.h"
 #include "xbasic/xmemory.hpp"
 #include "xevm_contract_runtime/xevm_storage_face.h"
 #include "xevm_contract_runtime/xevm_type.h"
@@ -51,7 +52,7 @@ public:
 
     // others:
     void value_return(uint64_t value_len, uint64_t value_ptr) override;
-    void error_return(uint32_t ec,uint64_t used_gas) override;
+    void error_return(uint32_t ec, uint64_t used_gas) override;
     void log_utf8(uint64_t len, uint64_t ptr) override;
 
     // storage:
@@ -62,11 +63,11 @@ public:
 private:
     // inner api
     std::string get_utf8_string(uint64_t len, uint64_t ptr);
-    void internal_write_register(uint64_t register_id, std::vector<uint8_t> const & context_input);
-    std::vector<uint8_t> get_vec_from_memory_or_register(uint64_t offset, uint64_t len);
-    void memory_set_slice(uint64_t offset, std::vector<uint8_t> buf);
-    std::vector<uint8_t> memory_get_vec(uint64_t offset, uint64_t len);
-    std::vector<uint8_t> internal_read_register(uint64_t register_id);
+    void internal_write_register(uint64_t register_id, xbytes_t const & context_input);
+    xbytes_t get_vec_from_memory_or_register(uint64_t offset, uint64_t len);
+    void memory_set_slice(uint64_t offset, xbytes_t buf);
+    xbytes_t memory_get_vec(uint64_t offset, uint64_t len);
+    xbytes_t internal_read_register(uint64_t register_id);
 };
 using xevm_logic_t = xtop_evm_logic;
 
