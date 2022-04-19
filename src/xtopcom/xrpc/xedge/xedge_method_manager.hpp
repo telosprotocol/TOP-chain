@@ -97,6 +97,7 @@ public:
     }
     void write_response(shared_ptr<conn_type> & response, const string & content) override {
         response->write(content);
+        xdbg("xedge_http_method write_response: %s", content.c_str());
     }
     enum_xrpc_type type() override {
         return enum_xrpc_type::enum_xrpc_http_type;
@@ -122,6 +123,7 @@ public:
                 xkinfo_rpc("Server: Error sending message. Error: %d, error message:%s", ec.value(), ec.message().c_str());
             }
         });
+        xdbg("xedge_ws_method write_response: %s", content.c_str());
     }
     enum_xrpc_type type() override {
         return enum_xrpc_type::enum_xrpc_ws_type;

@@ -17,6 +17,7 @@ int32_t xtransaction_fee_t::update_tgas_disk_sender(const uint64_t amount, bool 
           m_trans->get_transaction()->get_deposit(), m_account_ctx->get_blockchain()->balance(), amount, is_contract);
 
     if (m_account_ctx->get_blockchain()->balance() < amount) {
+        xdbg("xtransaction_fee_t::update_tgas_disk_sender, %llu, %llu", amount, m_account_ctx->get_blockchain()->balance());
         return xconsensus_service_error_balance_not_enough;
     }
 
