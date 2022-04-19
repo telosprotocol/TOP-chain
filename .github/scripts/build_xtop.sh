@@ -1,5 +1,6 @@
 #!/bin/bash
 source /etc/profile
+source ~/.bashrc
 # set -x
 
 BUILD_ARGS=$1
