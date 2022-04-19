@@ -11,26 +11,43 @@
 
 NS_BEG2(top, evm_common)
 
-class xevm_transaction_result_t {
-public:
-    struct xevm_log_t {
-        std::string address;
-        std::vector<xbytes_t> topics;
-        xbytes_t data;
-    };
-    /// same as TransactionStatus in `evm_engine_rs/engine/src/parameters.rs`
-    enum xevm_transaction_status_t : uint32_t {
-        Success = 0,
-        Revert = 1,
-        /// Execution runs out of gas (runtime).
-        OutOfGas = 2,
-        /// Not enough fund to start the execution (runtime).
-        OutOfFund = 3,
-        /// An opcode accesses external information, but the request is off offset limit (runtime).
-        OutOfOffset = 4,
-    };
+struct xevm_log_t {
+    std::string address;
+    std::vector<xbytes_t> topics;
+    xbytes_t data;
+};
+/// same as TransactionStatus in `evm_engine_rs/engine/src/parameters.rs`
+enum xevm_transaction_status_t : uint32_t {
+    Success = 0,
+    Revert = 1,
+    /// Execution runs out of gas (runtime).
+    OutOfGas = 2,
+    /// Not enough fund to start the execution (runtime).
+    OutOfFund = 3,
+    /// An opcode accesses external information, but the request is off offset limit (runtime).
+    OutOfOffset = 4,
+};
 
-    uint64_t used_gas;
+class xevm_transaction_result_t {
+ public:
+    xevm_transaction_result_t(){}
+    xevm_transaction_result_t(const xevm_transaction_result_t & evm_transaction_result) {
+        used_gas = evm_transaction_result.used_gas;
+        status = evm_transaction_result.status;
+        extra_msg = evm_transaction_result.extra_msg;
+        logs = evm_transaction_result.logs;
+    }
+
+    xevm_transaction_result_t & operator = (const xevm_transaction_result_t & evm_transaction_result) {
+        used_gas = evm_transaction_result.used_gas;
+        status = evm_transaction_result.status;
+        extra_msg = evm_transaction_result.extra_msg;
+        logs = evm_transaction_result.logs;
+        return *this;
+    }
+
+public:
+    uint64_t used_gas; // todo: calculate used gas to expense
     xevm_transaction_status_t status;
     std::string extra_msg;
     std::vector<xevm_log_t> logs;

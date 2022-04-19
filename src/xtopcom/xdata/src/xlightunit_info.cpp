@@ -84,6 +84,29 @@ uint64_t xlightunit_tx_info_t::get_last_trans_nonce() const {
     return 0;
 }
 
+void xtransaction_exec_state_t::set_evm_tx_result(evm_common::xevm_transaction_result_t & evm_tx_result) {
+    std::string str_evm_tx_result;
+    xevm_tx_result_ptr_t evm_tx_result_ptr = make_object_ptr<xevm_tx_result_t>(evm_tx_result);
+    evm_tx_result_ptr->serialize_to_string(str_evm_tx_result);
+    if (!str_evm_tx_result.empty()) {
+        set_value(XTX_EVM_TRANSACTION_RESULT, str_evm_tx_result);
+    }
+}
+
+bool xtransaction_exec_state_t::get_evm_tx_result(evm_common::xevm_transaction_result_t & evm_tx_result) const {
+    std::string str_evm_tx_result = get_value(XTX_EVM_TRANSACTION_RESULT);
+    if (str_evm_tx_result.empty()) {
+        return false;
+    }
+    xevm_tx_result_ptr_t evm_tx_result_ptr = make_object_ptr<xevm_tx_result_t>();
+    auto ret = evm_tx_result_ptr->serialize_from_string(str_evm_tx_result);
+    if (ret <= 0) {
+        xerror("xtransaction_exec_state_t::get_evm_tx_result fail-evm_tx_result serialize from.");
+        return false;
+    }
+    evm_tx_result = evm_tx_result_ptr->get_evm_tx_result();
+    return true;
+}
 
 
 }  // namespace data
