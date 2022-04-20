@@ -33,7 +33,7 @@ bool xatomictx_executor_t::set_tx_account_state(const data::xunitstate_ptr_t & u
         unitstate->set_account_create_time(m_para.get_clock());
     }
 
-    if (tx->is_send_or_self_tx()) {
+    if (tx->is_send_or_self_tx() && !tx->is_evm_tx()) {
         uint64_t tx_nonce = tx->get_tx_nonce();
         uint256_t tx_hash = tx->get_tx_hash_256();
         uint64_t account_nonce = unitstate->get_latest_send_trans_number();

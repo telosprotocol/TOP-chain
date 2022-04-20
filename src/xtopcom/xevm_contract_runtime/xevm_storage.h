@@ -121,6 +121,7 @@ public:
 
                 auto nonce_uint64 = value_u256.convert_to<uint64_t>();  // if overflow?
                 auto nonce_bytes = top::to_bytes(nonce_uint64);
+                xdbg("storage_set set nonce account:%s, nonce:%llu", storage_key.address.c_str(), nonce_uint64);
                 sa.set_property_cell_value<evm_property_type_map>(property, data::XPROPERTY_TX_INFO_LATEST_SENDTX_NUM, nonce_bytes, ec);
                 assert(!ec);
                 top::error::throw_error(ec);
