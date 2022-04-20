@@ -3,9 +3,13 @@
 #include <vector>
 #include "xbase/xint.h"
 #include "xbasic/xuint.hpp"
+#include "xevm_common/common.h"
+#include "xevm_common/rlp.h"
+#include "xevm_common/fixed_hash.h"
+#include "xutility/xhash.h"
 
 NS_BEG4(top, xvm, system_contracts, xeth)
-
+using namespace top::evm_common::rlp;
 class util {
 #define block_number_of_per_epoch 30000
 #define max_epoch 2048
@@ -13,6 +17,8 @@ class util {
 #define dataset_growth_bytes     1 << 23
 #define mix_bytes                128
 #define hash_bytes               64
+#define ETH1559_HEIGHT           12965000
+#define ETH4345_HEIGHT           13773000
 public:
     inline static std::string hex_to_hex(std::string& hex) {
         std::string raw_hex;
@@ -37,6 +43,16 @@ public:
         return bytes;
     }
 
+    inline static uint64_t bytes_to_uint64(std::array<byte, 8> &bytes) {
+        uint64_t value = 0;
+        for (size_t i = 0; i < bytes.size(); i ++)
+        {
+            value = (value << 8) | bytes[i];
+        }
+
+        return value;
+    }
+
     inline static std::vector<uint8_t> fromU256(u256 value) {
         std::vector<uint8_t> v;
         u256 tmp = value;
@@ -47,6 +63,15 @@ public:
         }
 
         return v;
+    }
+
+    inline static h256 zeroHash() {
+        bytes out;
+        std::vector<uint8_t> zeorVec;
+        out = RLP::encodeList<std::vector<uint8_t>>(zeorVec);
+        auto hashValue = utl::xkeccak256_t::digest(out.data(), out.size());
+        h256 hash = FixedHash<32>(hashValue.data(), h256::ConstructFromPointer);
+        return hash;
     }
 };
 NS_END4

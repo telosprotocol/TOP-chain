@@ -32,6 +32,7 @@
 #include "xmigrate/xvmigrate.h"
 #include "xdata/xcheckpoint.h"
 #include "xsync/xsync_object.h"
+#include "xvm/xsystem_contracts/xeth/xeth.h"
 
 // nlohmann_json
 #include <nlohmann/json.hpp>
@@ -254,6 +255,58 @@ int topchain_start(const std::string& config_file) {
 
     // init checkpoint
     data::xchain_checkpoint_t::load();
+
+    //test
+    xvm::system_contracts::xeth::xeth_bridge_t ethBridge;
+    std::string genesisHeader = "{\
+        \"difficulty\": \"0x3fe802ffe\",\
+        \"extraData\": \"0x476574682f76312e302e302d66633739643332642f6c696e75782f676f312e34\",\
+        \"gasLimit\": \"0x1388\",\
+        \"gasUsed\": \"0x0\",\
+        \"hash\": \"0x3d6122660cc824376f11ee842f83addc3525e2dd6756b9bcf0affa6aa88cf741\",\
+        \"logsBloom\": \"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\",\
+        \"miner\": \"0x5088d623ba0fcf0131e0897a91734a4d83596aa0\",\
+        \"mixHash\": \"0x65e12eec23fe6555e6bcdb47aa25269ae106e5f16b54e1e92dcee25e1c8ad037\",\
+        \"nonce\": \"0x2e9344e0cbde83ce\",\
+        \"number\": \"0x3\",\
+        \"parentHash\": \"0xb495a1d7e6663152ae92708da4843337b958146015a2802f4193a410044698c9\",\
+        \"receiptsRoot\": \"0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421\",\
+        \"sha3Uncles\": \"0x6b17b938c6e4ef18b26ad81b9ca3515f27fd9c4e82aac56a1fd8eab288785e41\",\
+        \"size\": \"0x437\",\
+        \"stateRoot\": \"0x76ab0b899e8387436ff2658e2988f83cbf1af1590b9fe9feca3714f8d1824940\",\
+        \"timestamp\": \"0x55ba4260\",\
+        \"totalDifficulty\": \"0xffd003ffe\",\
+        \"transactions\": [],\
+        \"transactionsRoot\": \"0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421\",\
+        \"uncles\": [\"0x5cd50096dbb856a6d1befa6de8f9c20decb299f375154427d90761dc0b101109\"]\
+        }";
+    std::string header[] = {
+        "{\
+        \"difficulty\": \"0x3fe005ff9\",\
+        \"extraData\": \"0x59617465732052616e64616c6c202d2045746865724e696e6a61\",\
+        \"gasLimit\": \"0x1388\",\
+        \"gasUsed\": \"0x0\",\
+        \"hash\": \"0x23adf5a3be0f5235b36941bcb29b62504278ec5b9cdfa277b992ba4a7a3cd3a2\",\
+        \"logsBloom\": \"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\",\
+        \"miner\": \"0xc8ebccc5f5689fa8659d83713341e5ad19349448\",\
+        \"mixHash\": \"0x06ba40902198357cbeac24a86b2ef11e9fdff48d28a421a0055e26476e3ac59f\",\
+        \"nonce\": \"0xc2535b5efca9bee0\",\
+        \"number\": \"0x4\",\
+        \"parentHash\": \"0x3d6122660cc824376f11ee842f83addc3525e2dd6756b9bcf0affa6aa88cf741\",\
+        \"receiptsRoot\": \"0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421\",\
+        \"sha3Uncles\": \"0x83a8da8965660cb6bdf0c37f1b111778e49753c4213bf7c3e280fccfde89f2b5\",\
+        \"size\": \"0x437\",\
+        \"stateRoot\": \"0xe6d9f6e95a05ee69719c718c6157d0759049ef3dffdba2d48f015d7c8b9933d8\",\
+        \"timestamp\": \"0x55ba427d\",\
+        \"totalDifficulty\": \"0x13fb009ff7\",\
+        \"transactions\": [],\
+        \"transactionsRoot\": \"0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421\",\
+        \"uncles\": [\"0xedc7a92c2a8aa140b0afa26db4ce8e05994a67d6fc3d736ddd77210b0ba565bb\"]\
+        }"};
+
+    ethBridge.init_genesis_block_header(genesisHeader, "0x12345678901234567890");
+    for (int i = 0; i < 1; i++)
+        ethBridge.sync_block_header(header[i]);
 
     //init data_path into xvchain instance
     //init auto_prune feature

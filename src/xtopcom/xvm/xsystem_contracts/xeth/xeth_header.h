@@ -23,7 +23,7 @@ class xeth_block_header_t {
     if ((jsonValue).empty()) {\
         return false;\
     }\
-    (address) = ((jsonValue).asInt64());
+    (address) = strtoll((jsonValue).asString().c_str(), 0, 0);
 
 public:
     xeth_block_header_t(){}
@@ -42,9 +42,10 @@ public:
     int64_t time();
     std::vector<uint8_t> extra();
     h256 mixDigest();
-    int64_t nonce();
+    h64 nonce();
     bigint baseFee();
     h256 hash();
+    bool isBaseFee();
 
 private:
     bytes encode_rlp();
@@ -64,12 +65,13 @@ private:
     int64_t  m_time;
     std::vector<uint8_t>  m_extra;
     h256    m_mixDigest;
-    int64_t   m_nonce;
+    h64   m_nonce;
 
 	// BaseFee was added by EIP-1559 and is ignored in legacy headers.
 	bigint    m_baseFee; //BaseFee *big.Int `json:"baseFeePerGas" rlp:"optional"`
     h256    m_hash;
     bool    m_hashed = false;
+    bool    m_isBaseFee = false;
 };
 
 NS_END4

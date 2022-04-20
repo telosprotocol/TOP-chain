@@ -218,7 +218,7 @@ bytes RLP::encode(const u256 & value) noexcept {
     bytes bytes;
     export_bits(value, std::back_inserter(bytes), 8);
 
-    if (bytes.empty() || (bytes.size() == 1 && bytes[0] == 0)) {
+    if (bytes.empty() || ((bytes.size() == 1) && (bytes[0] == 0))) {
         return {0x80};
     }
 
