@@ -118,7 +118,7 @@ namespace top
         public:
             //note: block must be committed and connected
             virtual base::xvtransaction_store_ptr_t  query_tx(const std::string & txhash, base::enum_transaction_subtype type,const int atag = 0) override;
-
+            virtual base::xauto_ptr<base::xvblock_t>    get_block_by_hash(const std::string& hash) override;
         public:
             virtual bool exist_genesis_block(const base::xvaccount_t & account, const int atag = 0) override;
             virtual base::xauto_ptr<base::xvblock_t> create_genesis_block(const base::xvaccount_t & account, std::error_code & ec) override;
