@@ -4,6 +4,8 @@
 #include "xbasic/xmemory.hpp"
 #include "xcommon/xaccount_address_fwd.h"
 #include "xdata/xproperty.h"
+#include "xevm_common/common_data.h"
+#include "xevm_common/xborsh.hpp"
 #include "xevm_contract_runtime/xevm_storage_base.h"
 #include "xstate_accessor/xproperties/xproperty_identifier.h"
 
@@ -38,10 +40,15 @@ public:
                 auto property = state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, state_accessor::properties::xproperty_category_t::system};
                 auto value = sa.get_property_cell_value<evm_property_type_map>(property, data::XPROPERTY_TX_INFO_LATEST_SENDTX_NUM, ec);  // uint64_t in string
                 auto value_uint64 = base::xstring_utl::touint64(top::to_string(value));
-                // todo u64 -> u256 than serilize to bytes(BE/LE)
                 assert(!ec);
                 top::error::throw_error(ec);
-                return value;
+
+                evm_common::u256 value_u256{value_uint64};
+                evm_common::xBorshEncoder encoder;
+                encoder.EncodeInteger(value_u256);
+                xbytes_t result = encoder.GetBuffer();
+                assert(result.size() == 32);
+                return result;
 
             } else if (storage_key.key_type == storage_key_type::Balance) {
                 auto value_uint64 = unit_state->tep_balance(data::XPROPERTY_ASSET_ETH);
@@ -107,10 +114,12 @@ public:
             if (storage_key.key_type == storage_key_type::Nonce) {
                 auto property = state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, state_accessor::properties::xproperty_category_t::system};
 
-                // todo bytes(BE/LE) -> u256 -> u64 to set.
-                // auto value_u256;
-                auto nonce_uint64 = base::xstring_utl::touint64(top::to_string(value));
-                auto nonce = base::xstring_utl::tostring(nonce_uint64);
+                assert(value.size() == 32);
+                evm_common::u256 value_u256;
+                evm_common::xBorshDecoder decoder;
+                decoder.getInteger(value, value_u256);
+
+                auto nonce_uint64 = value_u256.convert_to<uint64_t>();  // if overflow?
                 auto nonce_bytes = top::to_bytes(nonce_uint64);
                 sa.set_property_cell_value<evm_property_type_map>(property, data::XPROPERTY_TX_INFO_LATEST_SENDTX_NUM, nonce_bytes, ec);
                 assert(!ec);

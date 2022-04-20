@@ -28,10 +28,10 @@ pub trait IO {
 
     /// Return a value to an external process.
     fn return_output(&mut self, value: &[u8]);
-    
+
     /// Return error code and used gas;
-    fn return_error(&mut self, ec_gas: (u32,u64));
-    
+    fn return_error(&mut self, ec_gas: (u32, u64));
+
     /// Read the value in storage at the given key, if any.
     fn read_storage(&self, key: &[u8]) -> Option<Self::StorageValue>;
 
@@ -80,6 +80,6 @@ pub trait IO {
 
         let mut result = [0u8; 32];
         value.copy_to_slice(&mut result);
-        Ok(U256::from_big_endian(&result))
+        Ok(U256::from_little_endian(&result))
     }
 }
