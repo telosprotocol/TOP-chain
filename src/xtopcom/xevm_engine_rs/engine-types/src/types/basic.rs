@@ -15,7 +15,7 @@ impl From<[u8; 32]> for WeiU256 {
 
 impl Into<Wei> for WeiU256 {
     fn into(self) -> Wei {
-        Wei::new(U256::from_big_endian(&self.get_data()))
+        Wei::new(U256::from_little_endian(&self.get_data()))
     }
 }
 
