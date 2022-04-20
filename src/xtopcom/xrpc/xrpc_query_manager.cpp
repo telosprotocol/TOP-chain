@@ -2621,5 +2621,74 @@ void xrpc_query_manager::eth_blockNumber(xJson::Value & js_req, xJson::Value & j
     js_rsp["result"] = std::string(outstr.str());
     xdbg("xarc_query_manager::eth_blockNumber: %llu", height);
 }
+
+void xrpc_query_manager::eth_getBlockByHash(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
+    uint256_t hash = top::data::hex_to_uint256(js_req["tx_hash"].asString());
+    std::string version = js_req["version"].asString();
+    if (version.empty()) {
+        version = RPC_VERSION_V1;
+    }
+    std::string tx_hash_str = std::string(reinterpret_cast<char *>(hash.data()), hash.size());
+    xdbg("eth_getBlockByHash tx hash: %s, version: %s",  top::HexEncode(tx_hash_str).c_str(), version.c_str());
+
+    base::xauto_ptr<base::xvblock_t>  block = m_block_store->get_block_by_hash(tx_hash_str);
+    if (block == nullptr)
+        return;
+
+    xJson::Value js_result;
+    set_block_result(block, js_result);
+    js_rsp["result"] = js_result;
+    return;
+}
+void xrpc_query_manager::eth_getBlockByNumber(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
+    uint64_t height = std::strtoul(js_req["height"].asString().c_str(), NULL, 16);
+    std::string version = js_req["version"].asString();
+    if (version.empty()) {
+        version = RPC_VERSION_V1;
+    }
+    xdbg("eth_getBlockByNumber: %s, %llu, version: %s",  sys_contract_eth_table_block_addr, height, version.c_str());
+    base::xvaccount_t account(std::string(sys_contract_eth_table_block_addr) + "@0");
+    base::xauto_ptr<base::xvblock_t>  block = m_block_store->load_block_object(account, height, base::enum_xvblock_flag_committed, false);
+    if (block == nullptr)
+        return;
+
+    xJson::Value js_result;
+    set_block_result(block, js_result);
+    js_rsp["result"] = js_result;
+    return;
+}
+void xrpc_query_manager::set_block_result(const base::xauto_ptr<base::xvblock_t>&  block, xJson::Value& js_result) {
+    js_result["difficulty"] = "0x0";
+    js_result["extraData"] = "0x0";
+    js_result["gasLimit"] = "0x0";
+    js_result["gasUsed"] = "0x0";
+    std::string hash = block->get_block_hash();
+    js_result["hash"] = std::string("0x") + top::HexEncode(hash); //js_req["tx_hash"].asString();
+    js_result["logsBloom"] = "0x0";
+    js_result["miner"] = std::string("0x") + std::string(40, '0');
+    js_result["mixHash"] = "0x0";
+    js_result["nonce"] = "0x0";
+    std::stringstream outstr;
+    outstr << "0x" << std::hex << block->get_height();
+    js_result["number"] = std::string(outstr.str());
+    js_result["parentHash"] = std::string("0x") + top::HexEncode(block->get_last_block_hash());
+    js_result["receiptsRoot"] = "0x0";
+    js_result["sha3Uncles"] = "0x0";
+    js_result["size"] = "0x0";
+    js_result["stateRoot"] = "0x0";
+    outstr.seekp(0);
+    outstr << "0x" << std::hex << block->get_timestamp();
+    js_result["timestamp"] = std::string(outstr.str());
+    js_result["totalDifficulty"] = "0x0";
+    js_result["transactionsRoot"] = "0x0";
+
+    const std::vector<base::xvaction_t> input_actions = block->get_tx_actions();
+    for(auto action : input_actions) {
+        if (action.get_org_tx_hash().empty()) {  // not txaction
+            continue;
+        }
+        js_result["transactions"].append(std::string("0x") + to_hex_str(action.get_org_tx_hash()));
+    }    
+}
 }  // namespace chain_info
 }  // namespace top
