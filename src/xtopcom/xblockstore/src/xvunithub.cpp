@@ -1350,8 +1350,7 @@ namespace top
         {
             std::string account;
             uint64_t height;
-            const std::string key_path = base::xvdbkey_t::create_prunable_tx_key(hash);
-            int ret = base::xvchain_t::instance().get_xtxstore()->load_block_idx_by_hash(key_path, account, height);
+            int ret = base::xvchain_t::instance().get_xtxstore()->load_block_idx_by_hash(hash, account, height);
             if (ret != 0)
                 return nullptr;
 
