@@ -144,7 +144,7 @@ void xedge_evm_method_base<T>::do_method(shared_ptr<conn_type> & response, xjson
         xinfo_rpc("rpc request eth");
         std::string method = json_proc.m_request_json["method"].asString();
         if (method != "eth_sendRawTransaction" && method != "eth_getBalance" && method != "eth_getTransactionCount" && method != "eth_getTransactionReceipt"
-            && method != "eth_blockNumber") {
+            && method != "eth_blockNumber" && method != "eth_getBlockByHash" && method != "eth_getBlockByNumber") {
             xJson::Value eth_res;
             dev::eth::ClientBase client;
             dev::rpc::Eth eth(client);
@@ -212,7 +212,7 @@ void xedge_evm_method_base<T>::query_process(xjson_proc_t & json_proc) {
         json_proc.m_request_json.removeMember("params");
         json_proc.m_request_json["params"]["tx_hash"] = tx_hash;
         json_proc.m_request_json["params"]["account_addr"] = account;
-    } else if (json_proc.m_request_json["method"].asString() == "eth_getTransactionReceipt") {
+    } else if (json_proc.m_request_json["method"].asString() == "eth_getTransactionReceipt" || json_proc.m_request_json["method"].asString() == "eth_getBlockByHash") {
         account = std::string(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN) + std::string(40, '0');
         std::string tx_hash = json_proc.m_request_json["params"][0].asString();
         json_proc.m_account_set.emplace(account);
@@ -224,6 +224,13 @@ void xedge_evm_method_base<T>::query_process(xjson_proc_t & json_proc) {
         json_proc.m_account_set.emplace(account);
         json_proc.m_request_json.removeMember("params");
         json_proc.m_request_json["params"]["account_addr"] = account;
+    } else if (json_proc.m_request_json["method"].asString() == "eth_getBlockByNumber") {
+        std::string height = json_proc.m_request_json["params"][0].asString();
+        account = std::string(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN) + std::string(40, '0');
+        json_proc.m_account_set.emplace(account);
+        json_proc.m_request_json.removeMember("params");
+        json_proc.m_request_json["params"]["account_addr"] = account;
+        json_proc.m_request_json["params"]["height"] = height;
     }
 
     json_proc.m_request_json[RPC_SEQUENCE_ID] = json_proc.m_request_json["id"];
