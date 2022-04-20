@@ -959,6 +959,19 @@ namespace top
             else
                 return cur_balance;
         }
+        
+        int64_t  xmtokens_t::set_balance(const std::string & token_name ,const int64_t balance,xvcanvas_t * canvas)//return the updated balance
+        {
+            //using state object'locker,here ask parent unit must be set first
+            std::lock_guard<std::recursive_mutex> locker(((xvexegroup_t*)get_parent_unit())->get_mutex());
+
+            const int64_t cur_balance = get_balance(token_name);
+ 
+            if(base::insert(token_name, balance, canvas))
+                return (balance);
+            else
+                return cur_balance;
+        }
     
         //---------------------------------xmtokens_t---------------------------------//
         IMPL_REGISTER_OBJECT(xmkeys_t);
