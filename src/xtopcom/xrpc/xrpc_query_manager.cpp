@@ -28,6 +28,9 @@
 #include "xdata/xtable_bstate.h"
 #include "xdata/xtableblock.h"
 #include "xdata/xtransaction_cache.h"
+#include "xevm_common/fixed_hash.h"
+#include "xevm_common/common_data.h"
+#include "xevm_common/common.h"
 #include "xrouter/xrouter.h"
 #include "xrpc/xuint_format.h"
 #include "xrpc/xrpc_loader.h"
@@ -41,6 +44,7 @@
 #include "xmbus/xevent_behind.h"
 #include "xdata/xblocktool.h"
 #include "xpbase/base/top_utils.h"
+#include "xutility/xhash.h"
 
 #include <cstdint>
 #include <iostream>
@@ -2506,24 +2510,30 @@ void xrpc_query_manager::eth_getTransactionReceipt(xJson::Value & js_req, xJson:
         version = RPC_VERSION_V1;
     }
     std::string tx_hash_str = std::string(reinterpret_cast<char *>(hash.data()), hash.size());
-    xdbg("eth_getTransactionReceipt tx hash: %s, version: %s",  top::HexEncode(tx_hash_str).c_str(), version.c_str());
-
+    xdbg("eth_getTransactionReceipt tx hash: %s, version: %s",  js_req["tx_hash"].asString().c_str(), version.c_str());
 
     xtxindex_detail_ptr_t sendindex = xrpc_loader_t::load_tx_indx_detail(tx_hash_str, base::enum_transaction_subtype_send);
     if (sendindex == nullptr) {
+        xwarn("xrpc_query_manager::eth_getTransactionReceipt load tx index fail.%s", js_req["tx_hash"].asString().c_str());
         nErrorCode = (uint32_t)enum_xrpc_error_code::rpc_shard_exec_error;
         return;
     }
 
     xJson::Value js_result;
-    js_result["transactionHash"] = js_req["tx_hash"].asString();
+    std::string tx_hash = js_req["tx_hash"].asString();
+    js_result["transactionHash"] = tx_hash;
     js_result["transactionIndex"] = "0x1";
-    js_result["blockHash"] = std::string("0x") + top::HexEncode(sendindex->get_txindex()->get_block_hash());
+    std::string block_hash = std::string("0x") + top::HexEncode(sendindex->get_txindex()->get_block_hash());
+    js_result["blockHash"] = block_hash;
+    std::string tx_idx = "0x0";
+    js_result["transactionIndex"] = tx_idx;
     std::stringstream outstr;
     outstr << "0x" << std::hex << sendindex->get_txindex()->get_block_height();
-    js_result["blockNumber"] = outstr.str();
-    js_result["cumulativeGasUsed"] = "0x0";
-    js_result["gasUsed"] = "0x0";
+    std::string block_num = outstr.str();
+    js_result["blockNumber"] = block_num;
+    js_result["cumulativeGasUsed"] = "0x404b2";
+    js_result["effectiveGasPrice"] = "0x77359400";
+    js_result["gasUsed"] = "0x404b2";
 
     uint16_t tx_type = sendindex->get_raw_tx()->get_tx_type();
     js_result["from"] = std::string("0x") + sendindex->get_raw_tx()->get_source_addr().substr(6);
@@ -2531,27 +2541,64 @@ void xrpc_query_manager::eth_getTransactionReceipt(xJson::Value & js_req, xJson:
         js_result["to"] = std::string("0x") + sendindex->get_raw_tx()->get_target_addr().substr(6);
         js_result["status"] = "0x1";
     } else {
-        js_result["to"] = "";
+        js_result["to"] = xJson::Value::null;
 
         evm_common::xevm_transaction_result_t evm_result;
-        sendindex->get_txaction().get_evm_transaction_result(evm_result);
-        js_result["contractAddress"] = "0x" + evm_result.extra_msg;
+        auto ret = sendindex->get_txaction().get_evm_transaction_result(evm_result);
+        std::string contract_addr  = std::string("0x") + evm_result.extra_msg;
+        js_result["contractAddress"] = contract_addr;
+        xdbg("xrpc_query_manager::eth_getTransactionReceipt.tx hash:%s, ret:%d, extra_msg:%s, contract_addr:%s", js_req["tx_hash"].asString().c_str(), ret, evm_result.extra_msg.c_str(), contract_addr.c_str());
 
+        evm_common::h2048 logs_bloom;
+        uint32_t index = 0;
         for (auto & log : evm_result.logs) {
             xJson::Value js_log;
-            js_log["address"] = log.address;
+
+            std::stringstream outstr1;
+            outstr1 << "0x" << std::hex << index;
+            js_log["logIndex"] = outstr1.str();
+            js_log["blockNumber"] = block_num;
+            js_log["blockHash"] = block_hash;
+            js_log["transactionHash"] = tx_hash;
+            js_log["transactionIndex"] = tx_idx;
+            std::string address_str = std::string("0x") + log.address;
+            js_log["address"] = address_str;
+
+            evm_common::h2048 bloom;
+            evm_common::h160 address{address_str};
+            uint256_t hash = utl::xsha3_256_t::digest(address.ref().data(), address.ref().size());
+            evm_common::h256 hash_h256 = evm_common::fromBigEndian<evm_common::u256>(std::string(reinterpret_cast<char*>(hash.data()), hash.size()));
+
+            bloom.shiftBloom<3>(hash_h256);
+
             for (auto & topic : log.topics) {
-                js_log["topics"].append(top::from_bytes<std::string>(topic));
+                std::string topic_str = std::string("0x") + topic;
+                js_log["topics"].append(topic_str);
+                evm_common::h256 topic_h256{topic};
+                top::uint256_t topic_hash = top::utl::xsha3_256_t::digest(topic_h256.ref().data(), topic_h256.ref().size());
+                evm_common::h256 topic_hash_h256 = evm_common::fromBigEndian<evm_common::u256>(std::string(reinterpret_cast<char*>(topic_hash.data()), topic_hash.size()));
+                bloom.shiftBloom<3>(topic_hash_h256);
             }
-            js_log["data"] = top::from_bytes<std::string>(log.data);
+
+            js_log["data"] = std::string("0x") + log.data;
+            js_log["removed"] = false;
             js_result["logs"].append(js_log);
+
+            logs_bloom |= bloom;
+            index++;
         }
 
-        js_result["logsBloom"] = "0x0";
+        std::stringstream outstrbloom;
+        outstrbloom << logs_bloom;
+        js_result["logsBloom"] = std::string("0x") + outstrbloom.str();
+        // js_result["logsBloom"] = "0x00000000000000000000000000000000000000000400000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000004000000000020000000000000000000800000000000000000000000000000000000000010000200000000400000000000000000000000000000000000000000000000000010000000000000000040000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000000";
         js_result["status"] = (evm_result.status == 0) ?  "0x1" : "0x0";
+        js_result["type"] = "0x0";
     }
 
     js_rsp["result"] = js_result;
+
+    xdbg("xrpc_query_manager::eth_getTransactionReceipt ok.tx hash:%s", js_req["tx_hash"].asString().c_str());
     return;
 }
 void xrpc_query_manager::eth_blockNumber(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {

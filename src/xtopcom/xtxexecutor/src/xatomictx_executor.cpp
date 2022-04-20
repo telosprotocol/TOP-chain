@@ -185,6 +185,7 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
         ret = evm.execute(vminput,vmoutput);
         if (ret == txexecutor::enum_exec_success) {
             tx->set_evm_tx_result(vmoutput.m_tx_result);
+            xdbg("xatomictx_executor_t::vm_execute tx:%s vmoutput.m_tx_result.extra_msg:%s", tx->dump().c_str(), vmoutput.m_tx_result.extra_msg.c_str());
         }
 #else
         xassert(false);
