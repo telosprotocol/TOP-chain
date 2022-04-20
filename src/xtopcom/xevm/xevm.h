@@ -35,8 +35,8 @@ public:
     txexecutor::enum_execute_result_type execute(txexecutor::xvm_input_t const & input, txexecutor::xvm_output_t & output) override;
 
 private:
-    contract_runtime::evm::xevm_output_t execute(data::xcons_transaction_ptr_t const & tx);
-    evm_common::xevm_transaction_result_t execute_action(std::unique_ptr<data::xbasic_top_action_t const> action);
+    contract_runtime::evm::xevm_output_t execute(data::xcons_transaction_ptr_t const & tx, txexecutor::xvm_para_t const & vm_para);
+    evm_common::xevm_transaction_result_t execute_action(std::unique_ptr<data::xbasic_top_action_t const> action, txexecutor::xvm_para_t const & vm_para);
 };
 
 NS_END2
