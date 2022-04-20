@@ -15,6 +15,7 @@
 #include "xvledger/xvledger.h"
 #include "xtxpool_service_v2/xtxpool_service_face.h"
 #include "xrpc/xjson_proc.h"
+#include "xevm_common/fixed_hash.h"
 
 #include <string>
 
@@ -182,6 +183,7 @@ public:
     void eth_blockNumber(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
     void eth_getBlockByHash(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
     void eth_getBlockByNumber(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
+    top::evm_common::h2048 calculate_bloom(const std::string & hexstr);
 private:
     void getBlock(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     void getProperty(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
