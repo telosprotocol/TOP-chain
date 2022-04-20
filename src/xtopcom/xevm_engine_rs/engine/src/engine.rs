@@ -112,10 +112,17 @@ impl<'env, I: IO + Copy, E: Env> Engine<'env, I, E> {
         }
     }
 
-    pub fn deploy_code_with_input(&mut self, input: Vec<u8>) -> EngineResult<SubmitResult> {
+    pub fn deploy_code_with_args(&mut self, args: FunctionCallArgs) -> EngineResult<SubmitResult> {
         let origin = Address::new(self.origin());
-        let value = Wei::zero();
-        self.deploy_code(origin, value, input, u64::MAX, Vec::new())
+        match args.get_version() {
+            Self::CURRENT_CALL_ARGS_VERSION => {
+                let value = args.get_value().clone().into();
+                let input = args.get_input().into();
+                let gas_limit = args.get_gas_limit();
+                self.deploy_code(origin, value, input, gas_limit, Vec::new())
+            }
+            _ => Err(EngineErrorKind::IncorrectArgs.into()),
+        }
     }
 
     pub fn deploy_code(
@@ -193,7 +200,8 @@ impl<'env, I: IO + Copy, E: Env> Engine<'env, I, E> {
                 //     })?;
                 let value = args.get_value().clone().into();
                 let input = args.get_input().into();
-                self.call(&origin, &contract, value, input, u64::MAX, Vec::new())
+                let gas_limit = args.get_gas_limit();
+                self.call(&origin, &contract, value, input, gas_limit, Vec::new())
             }
             _ => Err(EngineErrorKind::IncorrectArgs.into()),
         }

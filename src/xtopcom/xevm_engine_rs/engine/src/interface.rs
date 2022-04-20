@@ -20,7 +20,8 @@ mod interface {
         let io = Runtime;
         let input = io.read_input().to_vec();
         let mut engine = Engine::new(io.sender_address(), io, &io).sdk_unwrap();
-        Engine::deploy_code_with_input(&mut engine, input)
+        let args = FunctionCallArgs::parse_from_bytes(&input).sdk_expect("ERR_DESERIALIZE");
+        Engine::deploy_code_with_args(&mut engine, args)
             .map(|res| {
                 sdk::log(format!("[rust_evm][interface]res: {:?}", res).as_str());
                 res.write_to_bytes().sdk_expect("ERR_SERIALIZE")
