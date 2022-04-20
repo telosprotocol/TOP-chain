@@ -24,19 +24,22 @@ public:
     bool sync_block_header(std::string headerContent);
     uint64_t getCurrentHeightOfMainChain(uint64_t chainID);
     uint8_t* getHashOfMainChainByHeight(uint64_t chainID, int64_t height);
-    bool getHeaderIfHeightConfirmed(int64_t height, xeth_block_header_t header, uint64_t chainID);
+    bool getHeaderIfHeightConfirmed(xeth_block_header_t header, uint64_t chainID);
     bool verify(xeth_block_header_t prev_header, xeth_block_header_t new_header);
 
 private:
+    bool isArrowGlacier(int64_t height);
+    bool verifyEip1559Header(xeth_block_header_t &parentHeader, xeth_block_header_t &header);
     bool validateOwner(std::string owner);
-    bool isLondonFork(int64_t height);
+    bool isLondonFork(xeth_block_header_t& header);
     // VerifyGaslimit verifies the header gas limit according increase/decrease
     // in relation to the parent gas limit.
-    bool VerifyGaslimit(u256 parentGasLimit, u256 headerGasLimit);
-    bigint CalcBaseFee(xeth_block_header_t &parentHeader);
+    bool verifyGaslimit(u256 parentGasLimit, u256 headerGasLimit);
+    bigint calcBaseFee(xeth_block_header_t &parentHeader);
 private:
     store m_store;
     std::string owner;
+    bool m_initialized{false};
 };
 
 NS_END4

@@ -5,10 +5,15 @@ NS_BEG4(top, xvm, system_contracts, xeth)
 bool store::saveMainChain(uint64_t chain_id, int64_t height, h256 hash) {
     auto chain_x = m_main_chains.find(chain_id);
     if (chain_x == m_main_chains.end()) {
-        return false;
+      std::unordered_map<int64_t, h256> chain_y;
+      chain_y[height]=hash;
+      m_main_chains[chain_id] = chain_y;
+    } else {
+        chain_x->second[height] = hash;
     }
 
-    chain_x->second[height] = hash;
+    m_current_block_height[chain_id] = height;
+    
     return true;
 }
 
@@ -19,6 +24,7 @@ bool store::saveBlock(xeth_block_header_t header, u256 difficult_sum, uint64_t c
     auto chain_x = m_chains.find(chain_id);
     if (chain_x == m_chains.end()) {
         std::unordered_map<h256, block_header_with_difficulty_t> chain_y;
+        chain_y[header.hash()] = headerWithDifficulty;
         m_chains[chain_id] = chain_y;
     } else {
         chain_x->second[header.hash()] = headerWithDifficulty;
@@ -33,10 +39,10 @@ bool store::isBlockExist(uint64_t chain_id, h256 hash) {
     }
 
     if (chain_x->second.find(hash) == chain_x->second.end()) {
-        return true;
+        return false;
     }
 
-    return false;
+    return true;
 }
 
 bool store::rebuildMainChain(uint64_t chain_id, xeth_block_header_t& current_header, xeth_block_header_t& new_header) {
@@ -122,13 +128,13 @@ bool store::getBlockbyHash(uint64_t chain_id, h256 hash, xeth_block_header_t& bl
     }
 
     if (chain_x->second.find(hash) == chain_x->second.end()) {
-        return true;
+        return false;
     }
 
     block = chain_x->second[hash].m_header;
     difficult_sum = chain_x->second[hash].m_difficult_sum;
 
-    return false;
+    return true;
 }
 
 bool store::getCurrentHeightOfMainChain(uint64_t chain_id, int64_t& height) {
