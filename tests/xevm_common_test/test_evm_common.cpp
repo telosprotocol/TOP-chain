@@ -1,6 +1,11 @@
+#include "xbase/xbase.h"
+#include "xbase/xdata.h"
+#include "xbase/xint.h"
+#include "xdata/xdatautil.h"
 #include "xevm_common/address.h"
 #include "xevm_common/common.h"
 #include "xevm_common/rlp.h"
+#include "xutility/xhash.h"
 
 #include <gtest/gtest.h>
 
@@ -116,4 +121,46 @@ TEST(test_rlp, wiki_example) {
         vecData.push_back(str);
         std::cout << "data" << i << ": " << HexEncode(str) << std::endl;
     }
+}
+
+TEST(test_rlp, logsbloom) {
+    std::string address_str = "e71d898e741c743326bf045959221cc39e0718d2";
+    h2048 bloom;
+    h160 address{address_str};
+    top::uint256_t hash = top::utl::xsha3_256_t::digest(address.ref().data(), address.ref().size());
+
+    bytes data = fromHex(top::data::to_hex_str(hash));
+    // bytes data = top::evm_common::toCompactBigEndian(hash);
+    h256 hash_h256(data);
+    // h256 hash_h256 = top::evm_common::fromBigEndian<u256>(data);
+
+
+    // h256 hash_h256 = fromBigEndian<u256>(std::string(reinterpret_cast<char *>(hash.data()), hash.size()));
+    bloom.shiftBloom<3>(hash_h256);
+
+    std::vector<std::string> topics = {"342827c97908e5e2f71151c08502a66d44b6f758e3ac2f1de95f02eb95f0a735",
+                                       "0000000000000000000000000000000000000000000000000000000000000000",
+                                       "000000000000000000000000047b2c1e1e9258ca2a7549d5b7987096f55109d1"};
+    for (auto & topic : topics) {
+        h256 topic_h256{topic};
+        top::uint256_t topic_hash = top::utl::xsha3_256_t::digest(topic_h256.ref().data(), topic_h256.ref().size());
+
+        bytes topic_data = fromHex(top::data::to_hex_str(topic_hash));
+        // bytes data = top::evm_common::toCompactBigEndian(topic_hash);
+        h256 topic_hash_h256(topic_data);
+        // h256 topic_hash_h256 = top::evm_common::fromBigEndian<u256>(topic_data);
+
+        // h256 topic_hash_h256 = fromBigEndian<u256>(std::string(reinterpret_cast<char *>(topic_hash.data()), topic_hash.size()));
+        bloom.shiftBloom<3>(topic_hash_h256);
+    }
+
+    std::stringstream outstrbloom;
+    outstrbloom << bloom;
+    std::string bloom_str = outstrbloom.str();
+
+    EXPECT_EQ(bloom_str,
+              "00000000000000000000000000000000000000000400000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000000800000000000"
+              "00000000000000000000000000400000000002000000000000000000080000000000000000000000000000000000000001000020000000040000000000000000000000000000000000000000000000000001"
+              "00000000000000000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000"
+              "00000000000000000000");
 }
