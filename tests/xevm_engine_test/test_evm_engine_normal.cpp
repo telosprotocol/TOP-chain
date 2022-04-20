@@ -22,7 +22,7 @@ using namespace top::evm;
 using namespace top::contract_runtime::evm;
 using tests::xmock_evm_storage;
 
-TEST(test_demo, deploy_and_call_contract_success_0) {
+TEST(evm_engine_normal_test, deploy_and_call_contract_success_0) {
     std::string contract_address;
     xvariant_bytes contract_code{
         "608060405234801561001057600080fd5b50610304806100206000396000f3fe608060405234801561001057600080fd5b506004361061004c5760003560e01c80632fb3c740146100515780636e2c732d1461005b"
@@ -37,6 +37,7 @@ TEST(test_demo, deploy_and_call_contract_success_0) {
         "4f0927440a2dc3e5b0298f8101a60505f1d303bc416a90fcc0db54fa64736f6c63430006040033",
         true};
     txexecutor::xvm_para_t vm_param{0, "random_seed", 0};
+    vm_param.set_evm_gas_limit(UINT64_MAX);
     top::statectx::xstatectx_face_ptr_t statestore{std::make_shared<top::evm::tests::xmock_evm_statectx>()};
 
     // deploy code
@@ -133,7 +134,7 @@ TEST(test_demo, deploy_and_call_contract_success_0) {
     }
 }
 
-TEST(test_demo, deploy_and_call_contract_success_1) {
+TEST(evm_engine_normal_test, deploy_and_call_contract_success_1) {
     std::string contract_address;
     // ./solidity_contracts/erc20.sol
     xvariant_bytes contract_code{
@@ -177,6 +178,7 @@ TEST(test_demo, deploy_and_call_contract_success_1) {
         "667358221220d85b6d67c18cbaefa92cadb028ffbb9d0d410e0960f7466456990c711ab8a77464736f6c63430006040033",
         true};
     txexecutor::xvm_para_t vm_param{0, "random_seed", 0};
+    vm_param.set_evm_gas_limit(UINT64_MAX);
     top::statectx::xstatectx_face_ptr_t statestore{std::make_shared<top::evm::tests::xmock_evm_statectx>()};
 
     // deploy code
@@ -299,7 +301,7 @@ TEST(test_demo, deploy_and_call_contract_success_1) {
     }
 }
 
-TEST(test_demo, deploy_and_call_contract_success_2) {
+TEST(evm_engine_normal_test, deploy_and_call_contract_success_2) {
     std::string contract_address;
     xvariant_bytes contract_code{
         "0x608060405234801561001057600080fd5b5061024e806100206000396000f3fe60806040526004361061002d5760003560e01c80632565b1b8146100b3578063ad7a672f146100ee576100ae565b366100ae5734"
@@ -312,6 +314,7 @@ TEST(test_demo, deploy_and_call_contract_success_2) {
         "dccf09d34d37da99fe7de2b8526427bf3f64736f6c63430006040033",
         true};
     txexecutor::xvm_para_t vm_param{0, "random_seed", 0};
+    vm_param.set_evm_gas_limit(UINT64_MAX);
     top::statectx::xstatectx_face_ptr_t statestore{std::make_shared<top::evm::tests::xmock_evm_statectx>()};
 
     // deploy code

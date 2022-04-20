@@ -132,6 +132,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUT
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::evm_engine::parameters::FunctionCallArgs, address_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::evm_engine::parameters::FunctionCallArgs, value_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::evm_engine::parameters::FunctionCallArgs, input_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::top::evm_engine::parameters::FunctionCallArgs, gas_limit_),
 };
 static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
   { 0, -1, sizeof(::top::evm_engine::parameters::ResultLog)},
@@ -174,14 +175,15 @@ void AddDescriptorsImpl() {
       "\n\014SubmitResult\022\017\n\007version\030\001 \001(\r\022\032\n\022trans"
       "action_status\030\002 \001(\r\022\023\n\013status_data\030\003 \001(\014"
       "\022\020\n\010gas_used\030\004 \001(\004\0222\n\004logs\030\005 \003(\0132$.top.e"
-      "vm_engine.parameters.ResultLog\"\225\001\n\020Funct"
+      "vm_engine.parameters.ResultLog\"\250\001\n\020Funct"
       "ionCallArgs\022\017\n\007version\030\001 \001(\r\0223\n\007address\030"
       "\002 \001(\0132\".top.evm_engine.basic.ProtoAddres"
       "s\022,\n\005value\030\003 \001(\0132\035.top.evm_engine.basic."
-      "WeiU256\022\r\n\005input\030\004 \001(\014b\006proto3"
+      "WeiU256\022\r\n\005input\030\004 \001(\014\022\021\n\tgas_limit\030\005 \001("
+      "\004b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 510);
+      descriptor, 529);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "proto_parameters.proto", &protobuf_RegisterTypes);
   ::protobuf_proto_5fbasic_2eproto::AddDescriptors();
@@ -953,6 +955,7 @@ const int FunctionCallArgs::kVersionFieldNumber;
 const int FunctionCallArgs::kAddressFieldNumber;
 const int FunctionCallArgs::kValueFieldNumber;
 const int FunctionCallArgs::kInputFieldNumber;
+const int FunctionCallArgs::kGasLimitFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 FunctionCallArgs::FunctionCallArgs()
@@ -980,7 +983,9 @@ FunctionCallArgs::FunctionCallArgs(const FunctionCallArgs& from)
   } else {
     value_ = NULL;
   }
-  version_ = from.version_;
+  ::memcpy(&gas_limit_, &from.gas_limit_,
+    static_cast<size_t>(reinterpret_cast<char*>(&version_) -
+    reinterpret_cast<char*>(&gas_limit_)) + sizeof(version_));
   // @@protoc_insertion_point(copy_constructor:top.evm_engine.parameters.FunctionCallArgs)
 }
 
@@ -1031,7 +1036,9 @@ void FunctionCallArgs::Clear() {
     delete value_;
   }
   value_ = NULL;
-  version_ = 0u;
+  ::memset(&gas_limit_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&version_) -
+      reinterpret_cast<char*>(&gas_limit_)) + sizeof(version_));
   _internal_metadata_.Clear();
 }
 
@@ -1095,6 +1102,20 @@ bool FunctionCallArgs::MergePartialFromCodedStream(
         break;
       }
 
+      // uint64 gas_limit = 5;
+      case 5: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(40u /* 40 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
+                 input, &gas_limit_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
       default: {
       handle_unusual:
         if (tag == 0) {
@@ -1144,6 +1165,11 @@ void FunctionCallArgs::SerializeWithCachedSizes(
       4, this->input(), output);
   }
 
+  // uint64 gas_limit = 5;
+  if (this->gas_limit() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(5, this->gas_limit(), output);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
@@ -1184,6 +1210,11 @@ void FunctionCallArgs::SerializeWithCachedSizes(
         4, this->input(), target);
   }
 
+  // uint64 gas_limit = 5;
+  if (this->gas_limit() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(5, this->gas_limit(), target);
+  }
+
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
@@ -1220,6 +1251,13 @@ size_t FunctionCallArgs::ByteSizeLong() const {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::MessageSize(
         *value_);
+  }
+
+  // uint64 gas_limit = 5;
+  if (this->gas_limit() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::UInt64Size(
+        this->gas_limit());
   }
 
   // uint32 version = 1;
@@ -1266,6 +1304,9 @@ void FunctionCallArgs::MergeFrom(const FunctionCallArgs& from) {
   if (from.has_value()) {
     mutable_value()->::top::evm_engine::basic::WeiU256::MergeFrom(from.value());
   }
+  if (from.gas_limit() != 0) {
+    set_gas_limit(from.gas_limit());
+  }
   if (from.version() != 0) {
     set_version(from.version());
   }
@@ -1299,6 +1340,7 @@ void FunctionCallArgs::InternalSwap(FunctionCallArgs* other) {
     GetArenaNoVirtual());
   swap(address_, other->address_);
   swap(value_, other->value_);
+  swap(gas_limit_, other->gas_limit_);
   swap(version_, other->version_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
 }
