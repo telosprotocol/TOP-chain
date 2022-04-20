@@ -14,7 +14,7 @@ bool xeth_block_header_t::fromJson(const std::string& content) {
     std::string value;
     // xJson::value value;
     auto result = reader.parse(content, root);
-    if (result != 0) {
+    if (!result) {
         return false;
     }
 
@@ -30,18 +30,16 @@ bool xeth_block_header_t::fromJson(const std::string& content) {
     convertStringFromJson(root["gasLimit"], u256, m_gasLimit)
     convertStringFromJson(root["gasUsed"], u256, m_gasUsed)
     convertInt64FromJson(root["timestamp"], m_time)
-    convertStringFromJson(root["gasLimit"], u256, m_gasLimit)
     if (root["extraData"].empty()) {
         return false;
     }
-    value = root["extraData"].asString();
-    m_extra.assign(value.begin(), value.end()); 
+    value = root["extraData"].asString().substr(2);
+    m_extra = util::hex_to_bytes(value);
     convertStringFromJson(root["mixHash"], h256, m_mixDigest)
-    convertInt64FromJson(root["nonce"], m_nonce)
-    convertStringFromJson(root["gasLimit"], u256, m_gasLimit)
-    convertStringFromJson(root["gasLimit"], u256, m_gasLimit)
+    convertStringFromJson(root["nonce"], h64, m_nonce)
     if (!root["baseFeePerGas"].empty()) {
         convertStringFromJson(root["baseFeePerGas"], bigint, m_baseFee)
+        m_isBaseFee = true;
     }
     return true;
 }
@@ -102,7 +100,7 @@ h256 xeth_block_header_t::mixDigest(){
     return m_mixDigest;
 }
 
-int64_t xeth_block_header_t::nonce() {
+h64 xeth_block_header_t::nonce() {
     return m_nonce;
 }
 
@@ -113,7 +111,7 @@ bigint xeth_block_header_t::baseFee(){
 h256 xeth_block_header_t::hash() {
     if (!m_hashed) {
         auto value = encode_rlp();
-        auto hashValue = utl::xkeccak256_t::digest(value.data(), value.size() - 1);
+        auto hashValue = utl::xkeccak256_t::digest(value.data(), value.size());
         m_hash = FixedHash<32>(hashValue.data(), h256::ConstructFromPointer);
         m_hashed = true;
     }
@@ -122,7 +120,7 @@ h256 xeth_block_header_t::hash() {
 
 bytes xeth_block_header_t::encode_rlp() {
     bytes out;
-    std::array<uint8_t, 32> arr;
+
     // parentHash
     {
         auto tmp = RLP::encode(m_parentHash.asBytes());
@@ -167,9 +165,7 @@ bytes xeth_block_header_t::encode_rlp() {
 
     // difficulty
     {
-        auto vec = util::fromU256((u256)m_difficulty);
-        std::copy(vec.begin(), vec.end(), arr.begin());
-        auto tmp = RLP::encode<32>(arr);
+        auto tmp = RLP::encode((u256)m_difficulty);
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
 
@@ -181,17 +177,13 @@ bytes xeth_block_header_t::encode_rlp() {
 
     // gasLimit
     {
-        auto vec = util::fromU256(m_gasLimit);
-        std::copy(vec.begin(), vec.end(), arr.begin());
-        auto tmp = RLP::encode<32>(arr);
+        auto tmp = RLP::encode(m_gasLimit);
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
 
     // gasUsed
     {
-        auto vec = util::fromU256(m_gasUsed);
-        std::copy(vec.begin(), vec.end(), arr.begin());
-        auto tmp = RLP::encode<32>(arr);
+        auto tmp = RLP::encode(m_gasUsed);
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     
@@ -201,6 +193,12 @@ bytes xeth_block_header_t::encode_rlp() {
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     
+    //extra
+    {
+        auto tmp = RLP::encode(m_extra);
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+
     // mixDigest
     {
         auto tmp = RLP::encode(m_mixDigest.asBytes());
@@ -209,11 +207,26 @@ bytes xeth_block_header_t::encode_rlp() {
 
     // nonce
     {
-        auto tmp = RLP::encode(m_nonce);
+        auto tmp = RLP::encode(m_nonce.asBytes());
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
 
+    {
+        if (m_isBaseFee) {
+            auto tmp = RLP::encode((u256)m_baseFee);
+            out.insert(out.end(), tmp.begin(), tmp.end());
+        }
+    }
+
+    {
+        out = RLP::encodeList(out);
+    }
+    
     return out;
+}
+
+bool xeth_block_header_t::isBaseFee() {
+    return m_isBaseFee;
 }
 
 NS_END4

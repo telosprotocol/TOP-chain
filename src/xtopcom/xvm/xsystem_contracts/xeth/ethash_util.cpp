@@ -1,5 +1,6 @@
 #include "ethash_util.h"
 #include "util.h"
+#include <boost/numeric/conversion/cast.hpp>
 NS_BEG4(top, xvm, system_contracts, xeth)
 
 bool ethash_util::verify(xeth_block_header_t *header) {
@@ -8,7 +9,7 @@ bool ethash_util::verify(xeth_block_header_t *header) {
     const ethash::hash256 mixHash = toHash256(header->mixDigest());
     const ethash::hash256 difficulty = toHash256((u256)header->difficulty());
     //
-    auto ret = ethash::verify_against_difficulty(*context, headerHash, mixHash, header->nonce(), difficulty);
+    auto ret = ethash::verify_against_difficulty(*context, headerHash, mixHash, util::bytes_to_uint64(header->nonce().asArray()), difficulty);
     if (ret != ETHASH_SUCCESS) {
         return false;
     }

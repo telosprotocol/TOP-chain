@@ -1,5 +1,5 @@
 #include "xeth.h"
-#include "ethash_util.h"
+// #include "ethash_util.h"
 #include "xevm_common/rlp.h"
 #include <array>
 NS_BEG4(top, xvm, system_contracts, xeth)
@@ -32,10 +32,16 @@ bool xeth_bridge_t::init_genesis_block_header(std::string headerContent, std::st
         return false;
     }
 
+    m_initialized = true;
+
     return true;
 }
 
 bool xeth_bridge_t::sync_block_header(std::string headerContent){
+    if (!m_initialized) {
+        return false;
+    }
+    
     xeth_block_header_t header;
     bool result = header.fromJson(headerContent);
     if (!result) {
@@ -60,15 +66,33 @@ bool xeth_bridge_t::sync_block_header(std::string headerContent){
         return false;
     }
 
-    auto diff = difficulty::calculate(parentHeader.time(), &header);
+    if (isLondonFork(header)) {
+        if (!verifyEip1559Header(parentHeader, header)) {
+            return false;
+        }
+    } else {
+        if (!verifyGaslimit(parentHeader.gasLimit(), header.gasLimit())) {
+            return false;
+        }
+    }
+
+    bigint diff;
+    if (isArrowGlacier(header.number())) {
+        diff = difficulty::calculate(header.time(), &parentHeader, 1070000);
+    } else if (isLondonFork(header)) {
+        diff = difficulty::calculate(header.time(), &parentHeader, 9700000);
+    } else {
+        diff = difficulty::calculate(header.time(), &parentHeader);
+    }
+    
     if (diff != header.difficulty()) {
         return false;
     }
 
-    result = ethash_util::verify(&header);
-    if (!result) {
-        return false;
-    }
+    // result = ethash_util::verify(&header);
+    // if (!result) {
+    //     return false;
+    // }
 
     bigint bigSumOfDifficult;
     bigSumOfDifficult = bigint(sumOfDifficult) + header.difficulty();
@@ -81,7 +105,8 @@ bool xeth_bridge_t::sync_block_header(std::string headerContent){
     }
 
     h256 hash;
-    result = m_store.getHashOfMainChainByHeight(ETH_CHAIN_ID, height, hash); {
+    result = m_store.getHashOfMainChainByHeight(ETH_CHAIN_ID, height, hash); 
+    if (!result){
         return false;
     }
 
@@ -129,7 +154,7 @@ uint8_t* xeth_bridge_t::getHashOfMainChainByHeight(uint64_t chainID, int64_t hei
     return hash.data();
 }
 
-bool xeth_bridge_t::getHeaderIfHeightConfirmed(int64_t height, xeth_block_header_t header, uint64_t chainID) {
+bool xeth_bridge_t::getHeaderIfHeightConfirmed(xeth_block_header_t header, uint64_t chainID) {
     int64_t mainHeight = 0;
     xeth_block_header_t chainHeader;
     bool result = m_store.getCurrentHeightOfMainChain(chainID, mainHeight);
@@ -202,65 +227,101 @@ bool xeth_bridge_t::validateOwner(std::string owner) {
     return true;
 }
 
-bool xeth_bridge_t::isLondonFork(int64_t height) {
-    return true;
+
+bool xeth_bridge_t::isArrowGlacier(int64_t height) {
+    if (height >= ETH4345_HEIGHT) {
+        return true;
+    }
+	return false;
+}
+
+bool xeth_bridge_t::isLondonFork(xeth_block_header_t &header) {
+    if (header.isBaseFee() || (header.number() >= ETH1559_HEIGHT)) {
+        return true;
+    }
+
+    return false;
 }
 
 // VerifyGaslimit verifies the header gas limit according increase/decrease
 // in relation to the parent gas limit.
-bool xeth_bridge_t::VerifyGaslimit(u256 parentGasLimit, u256 headerGasLimit ){
+bool xeth_bridge_t::verifyGaslimit(u256 parentGasLimit, u256 headerGasLimit ){
     // Verify that the gas limit remains within allowed bounds
-    u256 diff = parentGasLimit - headerGasLimit;
+    bigint diff = (bigint)parentGasLimit - (bigint)headerGasLimit;
     if (diff < 0) {
         diff *= -1;
     }
 
-    u256 limit = parentGasLimit / 1024;
+    bigint limit = (bigint)parentGasLimit / 1024;
     if (diff >= limit) {
         return false;
     }
+
     if (headerGasLimit < 5000) {
         return false;
     }
     return true;
 }
 
-bigint xeth_bridge_t::CalcBaseFee(xeth_block_header_t &parentHeader)  {
-    if (!isLondonFork(parentHeader.number())) {
+bool xeth_bridge_t::verifyEip1559Header(xeth_block_header_t &parentHeader, xeth_block_header_t &header) {
+	// Verify that the gas limit remains within allowed bounds
+	u256 parentGasLimit = parentHeader.gasLimit();
+	if (!isLondonFork(parentHeader)) {
+		parentGasLimit = parentHeader.gasLimit() * 2;
+	}
+
+	if (!verifyGaslimit(parentGasLimit, header.gasLimit())) {
+		return false;
+	}
+
+	// Verify the header is not malformed
+	if (!header.isBaseFee()) {
+		return false;
+	}
+	// Verify the baseFee is correct based on the parent header.
+	bigint expectedBaseFee = calcBaseFee(parentHeader);
+	if (header.baseFee() != expectedBaseFee) {
+		return false;
+	}
+	return true;
+}
+
+bigint xeth_bridge_t::calcBaseFee(xeth_block_header_t &parentHeader)  {
+    if (!isLondonFork(parentHeader)) {
         return bigint(1000000000);
     }
 
-    // uint64_t targetGas = parentHeader.gasLimit() / 2;
-    // bigint targetGas = bitint(targetGas);
-    // bigint baseFeeChangeDenominator = bigint(8);
+    bigint parentGasTarget = ((bigint)parentHeader.gasLimit()) / 2;
+    bigint parentGasTargetBig = (bigint)parentGasTarget;
+    bigint baseFeeChangeDenominator = bigint(8);
 
-    // // If the parent gasUsed is the same as the target, the baseFee remains unchanged.
-    // if (parentHeader.gasUsed() == targetGas) {
-    //     return bigint(parentHeader.baseFee());
-    // }
+    // If the parent gasUsed is the same as the target, the baseFee remains unchanged.
+    if (parentHeader.gasUsed() == parentGasTarget) {
+        return bigint(parentHeader.baseFee());
+    }
 
-    // if (parent.gasUsed > targetGas) {
-    //     bigint gasUsedDelta = bigint(parent.gasUsed() - targetGas);
-    //     x := new(big.Int).Mul(parent.BaseFee, gasUsedDelta)
-    //     y := x.Div(x, parentGasTargetBig)
-    //     baseFeeDelta := math.BigMax(
-    //         x.Div(y, baseFeeChangeDenominator),
-    //         common.Big1,
-    //     )
-
-    //     return x.Add(parent.BaseFee, baseFeeDelta)
-    // } else {
-    //     // Otherwise if the parent block used less gas than its target, the baseFee should decrease.
-    //     gasUsedDelta := new(big.Int).SetUint64(parentGasTarget - parent.GasUsed)
-    //     x := new(big.Int).Mul(parent.BaseFee, gasUsedDelta)
-    //     y := x.Div(x, parentGasTargetBig)
-    //     baseFeeDelta := x.Div(y, baseFeeChangeDenominator)
-
-    //     return math.BigMax(
-    //         x.Sub(parent.BaseFee, baseFeeDelta),
-    //         common.Big0,
-    //     )
-    // }
+    if ((bigint)parentHeader.gasUsed() > parentGasTarget) {
+        bigint gasUsedDelta = (bigint)parentHeader.gasUsed() - parentGasTarget;
+        bigint x = parentHeader.baseFee() * gasUsedDelta;
+        bigint y = x / parentGasTargetBig;
+        bigint baseFeeDelta = y / baseFeeChangeDenominator;
+        if (baseFeeDelta < 1) {
+            baseFeeDelta = 1;
+        }
+        return parentHeader.baseFee() + baseFeeDelta;
+    } else {
+        // Otherwise if the parent block used less gas than its target, the baseFee should decrease.
+        bigint gasUsedDelta = parentGasTarget - (bigint)parentHeader.gasUsed();
+        bigint x = parentHeader.baseFee() - gasUsedDelta;
+        bigint y = x / parentGasTargetBig;
+        bigint baseFeeDelta = y / baseFeeChangeDenominator;
+        x = parentHeader.baseFee() - baseFeeDelta;
+        if (x < 0) {
+            x = 0;
+        }
+        
+        return x;
+    }
     return 0;
 }
 NS_END4
