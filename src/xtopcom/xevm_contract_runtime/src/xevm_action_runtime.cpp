@@ -50,54 +50,44 @@ evm_common::xevm_transaction_result_t xtop_action_runtime<data::xevm_consensus_a
     }
     if (!evm_result) {
         auto error_result = top::evm::evm_import_instance::instance()->get_return_error();
-        result.used_gas = error_result.second; // todo: now got it . but throw won't be able to pass this value.
-        // todo check begin + error_result > max?
-        auto ec = static_cast<error::xerrc_t>(error_result.first + static_cast<std::underlying_type<error::xerrc_t>::type>(error::xerrc_t::evm_vm_ec_begin));
-        top::error::throw_error(ec);
-    }
+        xinfo("[evm_action] evm execute fail. ec code %d  used_gas: %lu", error_result.first, error_result.second);
 
-    top::evm_engine::parameters::SubmitResult return_result;
+        result.used_gas = error_result.second;
+        result.status = evm_common::xevm_transaction_status_t::OtherExecuteError;
 
-    auto ret = return_result.ParseFromString(evm::xvariant_bytes{top::evm::evm_import_instance::instance()->get_return_value()}.to_string());
+    } else {
+        top::evm_engine::parameters::SubmitResult return_result;
 
-    if (!ret || return_result.version() != evm_runtime::CURRENT_CALL_ARGS_VERSION) {
-        top::error::throw_error(error::xerrc_t::evm_protobuf_serilized_error);
-    }
+        auto ret = return_result.ParseFromString(evm::xvariant_bytes{top::evm::evm_import_instance::instance()->get_return_value()}.to_string());
 
-    // status:
-    result.set_status(return_result.transaction_status());
-
-    // extra_msg:
-    result.extra_msg = evm::xvariant_bytes{return_result.status_data(), false}.to_hex_string();
-    xdbg("xtop_action_runtime<data::xevm_consensus_action_t>::execute result.extra_msg:%s", result.extra_msg.c_str());
-
-    // logs:
-    for (int i = 0; i < return_result.logs_size(); ++i) {
-        evm_common::xevm_log_t log;
-        log.address = evm::xvariant_bytes{return_result.logs(i).address().value(), false}.to_hex_string();
-        log.data = evm::xvariant_bytes{return_result.logs(i).data(), false}.to_hex_string();
-        // log.data = top::to_bytes(return_result.logs(i).data());
-        std::vector<std::string> topic;
-        for (int j = 0; j < return_result.logs(i).topics_size(); ++j) {
-            topic.push_back(evm::xvariant_bytes{return_result.logs(i).topics(j).data(), false}.to_hex_string());
-            // topic.push_back(top::to_bytes(return_result.logs(i).topics(j).data()));
+        if (!ret || return_result.version() != evm_runtime::CURRENT_CALL_ARGS_VERSION) {
+            top::error::throw_error(error::xerrc_t::evm_protobuf_serilized_error);
         }
-        log.topics = topic;
-        result.logs.push_back(log);
-    }
-    // used_gas:
-    result.used_gas = return_result.gas_used();
 
-    // } catch (top::error::xtop_error_t const & eh) {
-    //     result.status.ec = eh.code();
-    // } catch (std::exception const & eh) {
-    //     result.status.ec = error::xerrc_t::unknown_error;
-    //     result.status.extra_msg = eh.what();
-    // } catch (enum_xerror_code ec) {
-    //     result.status.ec = ec;
-    // } catch (...) {
-    //     result.status.ec = error::xerrc_t::unknown_error;
-    // }
+        // status:
+        result.set_status(return_result.transaction_status());
+
+        // extra_msg:
+        result.extra_msg = evm::xvariant_bytes{return_result.status_data(), false}.to_hex_string();
+        xdbg("xtop_action_runtime<data::xevm_consensus_action_t>::execute result.extra_msg:%s", result.extra_msg.c_str());
+
+        // logs:
+        for (int i = 0; i < return_result.logs_size(); ++i) {
+            evm_common::xevm_log_t log;
+            log.address = evm::xvariant_bytes{return_result.logs(i).address().value(), false}.to_hex_string();
+            log.data = evm::xvariant_bytes{return_result.logs(i).data(), false}.to_hex_string();
+            // log.data = top::to_bytes(return_result.logs(i).data());
+            std::vector<std::string> topic;
+            for (int j = 0; j < return_result.logs(i).topics_size(); ++j) {
+                topic.push_back(evm::xvariant_bytes{return_result.logs(i).topics(j).data(), false}.to_hex_string());
+                // topic.push_back(top::to_bytes(return_result.logs(i).topics(j).data()));
+            }
+            log.topics = topic;
+            result.logs.push_back(log);
+        }
+        // used_gas:
+        result.used_gas = return_result.gas_used();
+    }
 
     return result;
 }

@@ -481,6 +481,12 @@ class FunctionCallArgs : public ::google::protobuf::Message /* @@protoc_insertio
   ::top::evm_engine::basic::WeiU256* mutable_value();
   void set_allocated_value(::top::evm_engine::basic::WeiU256* value);
 
+  // uint64 gas_limit = 5;
+  void clear_gas_limit();
+  static const int kGasLimitFieldNumber = 5;
+  ::google::protobuf::uint64 gas_limit() const;
+  void set_gas_limit(::google::protobuf::uint64 value);
+
   // uint32 version = 1;
   void clear_version();
   static const int kVersionFieldNumber = 1;
@@ -494,6 +500,7 @@ class FunctionCallArgs : public ::google::protobuf::Message /* @@protoc_insertio
   ::google::protobuf::internal::ArenaStringPtr input_;
   ::top::evm_engine::basic::ProtoAddress* address_;
   ::top::evm_engine::basic::WeiU256* value_;
+  ::google::protobuf::uint64 gas_limit_;
   ::google::protobuf::uint32 version_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::protobuf_proto_5fparameters_2eproto::TableStruct;
@@ -931,6 +938,20 @@ inline void FunctionCallArgs::set_allocated_input(::std::string* input) {
   }
   input_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), input);
   // @@protoc_insertion_point(field_set_allocated:top.evm_engine.parameters.FunctionCallArgs.input)
+}
+
+// uint64 gas_limit = 5;
+inline void FunctionCallArgs::clear_gas_limit() {
+  gas_limit_ = GOOGLE_ULONGLONG(0);
+}
+inline ::google::protobuf::uint64 FunctionCallArgs::gas_limit() const {
+  // @@protoc_insertion_point(field_get:top.evm_engine.parameters.FunctionCallArgs.gas_limit)
+  return gas_limit_;
+}
+inline void FunctionCallArgs::set_gas_limit(::google::protobuf::uint64 value) {
+  
+  gas_limit_ = value;
+  // @@protoc_insertion_point(field_set:top.evm_engine.parameters.FunctionCallArgs.gas_limit)
 }
 
 #ifdef __GNUC__

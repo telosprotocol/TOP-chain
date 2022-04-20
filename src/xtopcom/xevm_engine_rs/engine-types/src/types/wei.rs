@@ -84,13 +84,13 @@ impl Sub<Self> for Wei {
 
 impl From<WeiU256> for Wei {
     fn from(value: WeiU256) -> Self {
-        Wei(U256::from_big_endian(&value))
+        Wei(U256::from_little_endian(&value))
     }
 }
 
 pub fn u256_to_arr(value: &U256) -> [u8; 32] {
     let mut result = [0u8; 32];
-    value.to_big_endian(&mut result);
+    value.to_little_endian(&mut result);
     result
 }
 

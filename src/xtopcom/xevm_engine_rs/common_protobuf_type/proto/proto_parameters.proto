@@ -23,4 +23,5 @@ message FunctionCallArgs {
     basic.ProtoAddress address = 2;
     basic.WeiU256 value = 3;
     bytes input = 4;
+    uint64 gas_limit = 5;
 }
