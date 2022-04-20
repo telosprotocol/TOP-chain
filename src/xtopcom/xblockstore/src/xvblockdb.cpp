@@ -351,6 +351,10 @@ namespace top
                 const std::string key_path = create_block_index_key(*index_obj,index_obj->get_height());
                 is_stored_db_successful = get_xdbstore()->set_value(key_path,index_bin);
                 xdbg("xvblockdb_t::write_index_to_db for main entry.index=%s",index_obj->dump().c_str());
+
+                const std::string key_path2 = base::xvdbkey_t::create_prunable_tx_key(index_obj->get_block_hash());
+                is_stored_db_successful = get_xdbstore()->set_value(key_path2, index_obj->get_account() + "/" + base::xstring_utl::uint642hex(index_obj->get_height()));
+                xdbg("xvblockdb_t::write_index_to_db for main entry, hash. %s", index_obj->get_account().c_str());
             }
             else
             {

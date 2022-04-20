@@ -1346,5 +1346,16 @@ namespace top
             LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
             return account_obj->get_unit_proof(height);
         }
+        base::xauto_ptr<base::xvblock_t>    xvblockstore_impl::get_block_by_hash(const std::string& hash)
+        {
+            std::string account;
+            uint64_t height;
+            const std::string key_path = base::xvdbkey_t::create_prunable_tx_key(hash);
+            int ret = base::xvchain_t::instance().get_xtxstore()->load_block_idx_by_hash(key_path, account, height);
+            if (ret != 0)
+                return nullptr;
+
+            return query_block(account, height, hash);
+        }        
     };//end of namespace of vstore
 };//end of namespace of top
