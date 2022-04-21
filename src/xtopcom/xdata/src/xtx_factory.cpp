@@ -160,5 +160,16 @@ xtransaction_ptr_t xtx_factory::create_nodejoin_tx(const std::string & sender,
     return tx;
 }
 
+xtransaction_ptr_t xtx_factory::create_ethcall_v3_tx(const std::string & from, const std::string & to, const std::string & data, const top::evm_common::u256 & value, const top::evm_common::u256 & gas) {
+        // genesis tx should use v1 tx
+        xtransaction_ptr_t tx = xtx_factory::create_tx(xtransaction_version_3);
+        tx->set_source_addr(from);
+        tx->set_target_addr(to);
+        tx->set_data(data);
+        tx->set_amount_256(value);
+        tx->set_gaslimit(gas);
+        return tx;
+    }
+
 }  // namespace data
 }  // namespace top
