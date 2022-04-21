@@ -45,7 +45,7 @@ class xunit_bstate_t : public xbstate_ctx_t {
     uint64_t            calc_decayed_tgas(uint64_t timer_height) const ;
     static uint32_t     get_token_price(uint64_t onchain_total_gas_deposit) ;
     uint64_t            get_available_tgas(uint64_t timer_height, uint32_t token_price) const ;
-
+    std::string         get_code() const;
  public: // Set APIs
     int32_t     set_account_create_time(uint64_t clock);
     int32_t     set_tx_info_latest_sendtx_num(uint64_t num);

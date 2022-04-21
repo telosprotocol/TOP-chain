@@ -198,6 +198,11 @@ uint64_t xunit_bstate_t::tep_balance(const std::string & token_name) const {
 
     return 0;
 }
+std::string xunit_bstate_t::get_code() const {
+    std::string v;
+    string_get(XPROPERTY_EVM_CODE, v);
+    return v;
+}
 
 }  // namespace data
 }  // namespace top
