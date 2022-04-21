@@ -389,31 +389,6 @@ TEST(evm_engine_normal_test, deploy_and_call_contract_success_2) {
         ASSERT_EQ(output.m_vm_error_code, 0);
         ASSERT_EQ(output.m_tx_result.status, evm_common::xevm_transaction_status_t::Success);
     }
-
-#if 0
-        // deposit
-    std::string contract_params = "0x";
-    logic->update_input_data(contract_address, contract_params);  // todo add value
-    call_contract();
-    storage_ptr->debug(storage_key_type::Balance);
-
-    // tes.totalBalance.getData()
-    contract_params = "0xad7a672f";
-    logic->update_input_data(contract_address, contract_params);
-    call_contract();
-
-    // tes.withdraw_balance.getData(666)
-    contract_params = "0x2565b1b8000000000000000000000000000000000000000000000000000000000000029a";
-    logic->update_input_data(contract_address, contract_params);
-    call_contract();
-    storage_ptr->debug(storage_key_type::Balance);
-
-    // tes.totalBalance.getData()
-    contract_params = "0xad7a672f";
-    logic->update_input_data(contract_address, contract_params);
-    call_contract();
-    storage_ptr->debug();
-#endif
 }
 
 NS_END4
