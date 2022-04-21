@@ -370,7 +370,7 @@ public:
         } else {
             m_evm_action_type = xtop_evm_action_type::call_contract;
         }
-        m_input_data = top::to_bytes(tx->get_transaction()->get_ext());
+        m_input_data = top::to_bytes(tx->get_transaction()->get_data());
     }
 
     xtop_evm_action_type evm_action() const {
