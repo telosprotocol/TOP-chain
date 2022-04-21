@@ -4,6 +4,8 @@
 
 #include "xevm_contract_runtime/xevm_context.h"
 
+#include "xevm_common/common_data.h"
+#include "xevm_common/xborsh.hpp"
 #include "xevm_runner/proto/proto_parameters.pb.h"
 
 NS_BEG2(top, evm_runtime)
@@ -31,7 +33,18 @@ xtop_evm_context::xtop_evm_context(std::unique_ptr<data::xbasic_top_action_t con
     } else {
         xassert(false);
     }
-    // todo value: call_args.value(WeiU256)
+
+    // value into 256
+    uint64_t value_uint64 = static_cast<data::xevm_consensus_action_t const *>(m_action.get())->value();
+    evm_common::u256 value_u256{value_uint64};
+    value_u256 = value_u256 * (uint64_t)10e12;  // todo for now . tx.amount's numerical precision is 10e-6. EVM need Wei(10e-18). multi 10e12 here
+    evm_common::xBorshEncoder encoder;
+    encoder.EncodeInteger(value_u256);
+    xbytes_t result = encoder.GetBuffer();
+    assert(result.size() == 32);
+    auto value = call_args.mutable_value();
+    value->set_data(top::to_string(result));
+
     m_input_data = top::to_bytes(call_args.SerializeAsString());
 }
 

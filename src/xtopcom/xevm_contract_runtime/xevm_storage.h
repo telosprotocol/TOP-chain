@@ -54,12 +54,13 @@ public:
                 auto value_uint64 = unit_state->tep_balance(data::XPROPERTY_ASSET_ETH);
                 // todo u64 -> u256 than serilize to bytes(BE/LE)
 
-                // todo delete this
-                auto property = state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_EVM_BALANCE, state_accessor::properties::xproperty_category_t::system};
-                auto value = sa.get_property<evm_property_type_bytes>(property, ec);
-                assert(!ec);
-                top::error::throw_error(ec);
-                return value;
+                evm_common::u256 balance_u256{value_uint64};
+                balance_u256 = balance_u256 * (uint64_t)10e12;
+                evm_common::xBorshEncoder encoder;
+                encoder.EncodeInteger(balance_u256);
+                xbytes_t result = encoder.GetBuffer();
+                assert(result.size() == 32);
+                return result;
 
             } else if (storage_key.key_type == storage_key_type::Code) {
                 // todo add contract_manager lru cache.
@@ -127,13 +128,14 @@ public:
                 top::error::throw_error(ec);
 
             } else if (storage_key.key_type == storage_key_type::Balance) {
-                // todo bytes(BE/LE) -> u256 -> u64 to set.
-                //? how unit_bstate to set balance?
-
-                auto property = state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_EVM_BALANCE, state_accessor::properties::xproperty_category_t::system};
-                sa.set_property<evm_property_type_bytes>(property, value, ec);
-                assert(!ec);
-                top::error::throw_error(ec);
+                assert(value.size() == 32);
+                evm_common::u256 value_u256;
+                evm_common::xBorshDecoder decoder;
+                decoder.getInteger(value, value_u256);
+                value_u256 = value_u256 / (uint64_t)10e12;
+                auto balance_uint64 = value_u256.convert_to<uint64_t>();  // if overflow?
+                xdbg("storage_set set balance account:%s, balance:%llu", storage_key.address.c_str(), balance_uint64);
+                unit_state->set_tep_balance(data::XPROPERTY_ASSET_ETH, balance_uint64);
 
             } else if (storage_key.key_type == storage_key_type::Code) {
                 auto property = state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_EVM_CODE, state_accessor::properties::xproperty_category_t::system};

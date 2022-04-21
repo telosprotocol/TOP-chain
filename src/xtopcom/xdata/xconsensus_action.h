@@ -336,6 +336,7 @@ private:
     xbytes_t m_input_data;
     common::xaccount_address_t m_sender;
     common::xaccount_address_t m_recver;
+    uint64_t m_value;  // todo suppose here should be U256, which is more precise (Wei)
 
 public:
     xtop_consensus_action(xtop_consensus_action const &) = default;
@@ -351,22 +352,11 @@ public:
                                                                                        XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_send_timestamp_tolerance)) /
                                                                                       XGLOBAL_TIMER_INTERVAL_IN_SECONDS) :
                                                    common::xjudgement_day} {
-        // todo
-        // get action_type/sender/recever/gas/value/data.... from tx
-        // - [x] action_type
-        // - [] sender
-        // - [] recever
-        // - [] gas
-        // - [] value
-        // - [x] data
-
         m_sender = common::xaccount_address_t{tx->get_source_addr()};
         m_recver = common::xaccount_address_t{tx->get_target_addr()};
-
-        // common::xaccount_address_t const target_address{tx->get_transaction()->get_target_address()};
+        m_value = tx->get_transaction()->get_amount();
 
         if (m_recver.empty() || m_recver.value() == "T600040000000000000000000000000000000000000000") {
-            // deploy_contract
             m_evm_action_type = xtop_evm_action_type::deploy_contract;
         } else {
             m_evm_action_type = xtop_evm_action_type::call_contract;
@@ -391,13 +381,13 @@ public:
     }
 
     // In fact. this should be U256.
-    // Since deploy and call usually be zero.
-    // todo later
-    uint64_t value() const;
+    uint64_t value() const {
+        return m_value;
+    }
 
-    uint64_t gas_limit() const;
+    // uint64_t gas_limit() const;
 
-    uint64_t gas_price() const;
+    // uint64_t gas_price() const;
 };
 
 NS_END2
