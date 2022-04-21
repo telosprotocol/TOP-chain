@@ -68,7 +68,6 @@ TEST_F(test_tx_v3, exception) {
 
         xtransaction_v3_ptr_t tx_r = make_object_ptr<xtransaction_v3_t>();
         tx_r->do_read(stream);
-        EXPECT_EQ(tx_r->get_source_addr(), "T6000483d85d169f750ad626dc10565043a802b5499a3f");
     }
 
     {
@@ -85,7 +84,22 @@ TEST_F(test_tx_v3, exception) {
 
         xtransaction_v3_ptr_t tx_r = make_object_ptr<xtransaction_v3_t>();
         tx_r->do_read(stream);
-        EXPECT_EQ(tx_r->get_source_addr(), "T6000483d85d169f750ad626dc10565043a802b5499a3f");
+    }
+
+    {
+        xtransaction_v3_ptr_t tx = make_object_ptr<xtransaction_v3_t>();
+        xJson::Value jv;
+        jv["id"] = "12231";
+        jv["jsonrpc"] = "2.0";
+        jv["method"] = "eth_sendRawTransaction";
+        jv["params"][0] = "0x0";
+        tx->construct_from_json(jv);
+        base::xstream_t stream(base::xcontext_t::instance());
+        tx->do_write(stream);
+        std::cout << "run contract tx v3 size: " << stream.size() << std::endl;
+
+        xtransaction_v3_ptr_t tx_r = make_object_ptr<xtransaction_v3_t>();
+        tx_r->do_read(stream);
     }
 }
 
@@ -112,6 +126,7 @@ TEST_F(test_tx_v3, serialize_by_base) {
 }
 
 TEST_F(test_tx_v3, rlp_serialize) {
+    uint64_t sum = 0;
     for (int i = 0; i < 1000; i++)
     {
         uint64_t num1 = rand();
@@ -149,6 +164,7 @@ TEST_F(test_tx_v3, rlp_serialize) {
         top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(str5));
         encoded = top::evm_common::rlp::RLP::encodeList(encoded);
 
+        sum += encoded.size();
         top::evm_common::rlp::RLP::DecodedItem decoded = top::evm_common::rlp::RLP::decode(encoded);
 
         std::vector<std::string> vecData;
@@ -169,9 +185,11 @@ TEST_F(test_tx_v3, rlp_serialize) {
         EXPECT_EQ(vecData[8], str4);
         EXPECT_EQ(vecData[9], str5);
     }
+    std::cout << "only rlp serialize:" << sum / 1000.0 << std::endl;
 }
 
 TEST_F(test_tx_v3, xtream_serialize) {
+    uint64_t sum = 0;
     for (int i = 0; i < 1000; i++)
     {
         uint64_t num1 = rand();
@@ -208,6 +226,7 @@ TEST_F(test_tx_v3, xtream_serialize) {
         stream.write_compact_var(str4);
         stream.write_compact_var(str5);
 
+        sum += stream.size();
         uint64_t tmpnum1;
         uint64_t tmpnum2;
         uint64_t tmpnum3;
@@ -245,9 +264,11 @@ TEST_F(test_tx_v3, xtream_serialize) {
         EXPECT_EQ(tmpstr4, str4);
         EXPECT_EQ(tmpstr5, str5);
     }
+    std::cout << "only xtream  serialize:" << sum / 1000.0 << std::endl;
 }
 
 TEST_F(test_tx_v3, v3_serialize) {
+    uint64_t sum = 0;
     for (int i = 0; i < 1000; i++)
     {
         uint64_t num1 = rand();
@@ -289,6 +310,8 @@ TEST_F(test_tx_v3, v3_serialize) {
         top::base::xstream_t stream(top::base::xcontext_t::instance());
         stream.write_compact_var(nEipVersion);
         stream.write_compact_var(std::string((char*)encoded.data(), encoded.size()));
+
+        sum += stream.size();
         std::string strTop;
         strTop.append((char *)stream.data(), stream.size());
 
@@ -317,6 +340,7 @@ TEST_F(test_tx_v3, v3_serialize) {
         EXPECT_EQ(vecData[8], str4);
         EXPECT_EQ(vecData[9], str5);
     }
+    std::cout << "v3 serialize:" << sum / 1000.0 << std::endl;
 }
 
 
@@ -421,8 +445,7 @@ TEST_F(test_tx_v3, v3_performance_only) {
         tx->construct_from_json(jv);
         base::xstream_t stream(base::xcontext_t::instance());
         tx->serialize_to(stream);
-        std::cout << "run contract tx v3 size: " << stream.size() << std::endl;
-        xtransaction_ptr_t tx_r = make_object_ptr<xtransaction_v2_t>();
+        xtransaction_ptr_t tx_r = make_object_ptr<xtransaction_v3_t>();
         tx_r->serialize_from(stream);
         EXPECT_EQ(tx_r->get_source_addr(), tx->get_source_addr());
     }
@@ -451,10 +474,128 @@ TEST_F(test_tx_v3, v2_performance) {
 
         base::xstream_t stream(base::xcontext_t::instance());
         tx->serialize_to(stream);
-        std::cout << "transfer v2 tx size: " << stream.size() << std::endl;
 
         xtransaction_ptr_t tx_r = make_object_ptr<xtransaction_v2_t>();
         tx_r->serialize_from(stream);
         EXPECT_EQ(tx_r->get_source_addr(), tx->get_source_addr());
     }
+}
+
+TEST_F(test_tx_v3, serialize_compare) {
+    uint64_t num1 = rand();
+    uint64_t num2 = rand();
+    uint64_t num3 = rand();
+    uint64_t num4 = rand();
+    uint64_t num5 = rand();
+
+    std::string str1;
+    std::string str2;
+    std::string str3;
+    std::string str4;
+    std::string str5;
+    top::xbyte_buffer_t randstr = random_bytes(32);
+    str1.append((char*)randstr.data(), randstr.size());
+    randstr = random_bytes(32);
+    str2.append((char*)randstr.data(), randstr.size());
+    randstr = random_bytes(32);
+    str3.append((char*)randstr.data(), randstr.size());
+    randstr = random_bytes(32);
+    str4.append((char*)randstr.data(), randstr.size());
+    randstr = random_bytes(32);
+    str5.append((char*)randstr.data(), randstr.size());
+
+    top::evm_common::bytes encoded;
+    top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(num1));
+    top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(num2));
+    top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(num3));
+    top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(num4));
+    top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(num5));
+    top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(str1));
+    top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(str2));
+    top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(str3));
+    top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(str4));
+    top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(str5));
+    encoded = top::evm_common::rlp::RLP::encodeList(encoded);
+
+    std::cout << "only rlp serialize:" << encoded.size() << std::endl;
+
+    top::base::xstream_t stream(top::base::xcontext_t::instance());
+    stream.write_compact_var(std::string((char*)encoded.data(), encoded.size()));
+
+    std::cout << "v3 serialize:" << stream.size() << std::endl;
+
+    std::string strEth;
+    stream.read_compact_var(strEth);
+
+    top::evm_common::rlp::RLP::DecodedItem decoded = top::evm_common::rlp::RLP::decode(encoded);
+
+    std::vector<std::string> vecData;
+    for (int i = 0; i < (int)decoded.decoded.size(); i++) {
+        std::string str(decoded.decoded[i].begin(), decoded.decoded[i].end());
+        vecData.push_back(str);
+    }
+
+    EXPECT_EQ(top::evm_common::rlp::to_uint64(vecData[0]), num1);
+    EXPECT_EQ(top::evm_common::rlp::to_uint64(vecData[1]), num2);
+    EXPECT_EQ(top::evm_common::rlp::to_uint64(vecData[2]), num3);
+    EXPECT_EQ(top::evm_common::rlp::to_uint64(vecData[3]), num4);
+    EXPECT_EQ(top::evm_common::rlp::to_uint64(vecData[4]), num5);
+
+    EXPECT_EQ(vecData[5], str1);
+    EXPECT_EQ(vecData[6], str2);
+    EXPECT_EQ(vecData[7], str3);
+    EXPECT_EQ(vecData[8], str4);
+    EXPECT_EQ(vecData[9], str5);
+
+
+    stream.reset();
+    stream.write_compact_var(num1);
+    stream.write_compact_var(num2);
+    stream.write_compact_var(num3);
+    stream.write_compact_var(num4);
+    stream.write_compact_var(num5);
+    stream.write_compact_var(str1);
+    stream.write_compact_var(str2);
+    stream.write_compact_var(str3);
+    stream.write_compact_var(str4);
+    stream.write_compact_var(str5);
+
+    std::cout << "only xtream  serialize:" << stream.size() << std::endl;
+
+    uint64_t tmpnum1;
+    uint64_t tmpnum2;
+    uint64_t tmpnum3;
+    uint64_t tmpnum4;
+    uint64_t tmpnum5;
+
+    std::string tmpstr1;
+    std::string tmpstr2;
+    std::string tmpstr3;
+    std::string tmpstr4;
+    std::string tmpstr5;
+
+    stream.read_compact_var(tmpnum1);
+    stream.read_compact_var(tmpnum2);
+    stream.read_compact_var(tmpnum3);
+    stream.read_compact_var(tmpnum4);
+    stream.read_compact_var(tmpnum5);
+
+    stream.read_compact_var(tmpstr1);
+    stream.read_compact_var(tmpstr2);
+    stream.read_compact_var(tmpstr3);
+    stream.read_compact_var(tmpstr4);
+    stream.read_compact_var(tmpstr5);
+
+
+    EXPECT_EQ(tmpnum1, num1);
+    EXPECT_EQ(tmpnum2, num2);
+    EXPECT_EQ(tmpnum3, num3);
+    EXPECT_EQ(tmpnum4, num4);
+    EXPECT_EQ(tmpnum5, num5);
+
+    EXPECT_EQ(tmpstr1, str1);
+    EXPECT_EQ(tmpstr2, str2);
+    EXPECT_EQ(tmpstr3, str3);
+    EXPECT_EQ(tmpstr4, str4);
+    EXPECT_EQ(tmpstr5, str5);
 }

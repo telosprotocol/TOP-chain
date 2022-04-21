@@ -67,6 +67,10 @@ int32_t xtransaction_v3_t::do_read_without_hash_signature(base::xstream_t & in) 
     uint8_t szEipVersion;
     in.read_compact_var(szEipVersion);
     in.read_compact_var(m_origindata);
+    if (m_origindata.empty())
+    {
+        return -1;
+    }
     m_EipVersion = (EIP_XXXX)szEipVersion;
     bytes encoded;
     bool bIsCreation;
@@ -614,12 +618,15 @@ void xtransaction_v3_t::construct_from_json(xJson::Value & request) {
     {
         return ;
     }
-
     if (!request["params"][0].isString())
     {
         return ;
     }
     string strParams = request["params"][0].asString();
+    if (strParams.size() <= 10)
+    {
+        return ;
+    }
     if (strParams[0] != '0' || strParams[1] != 'x')
     {
         return ;
@@ -639,7 +646,6 @@ void xtransaction_v3_t::construct_from_json(xJson::Value & request) {
         xdbg("xtransaction_v3_t::construct_from_json unsupport tx type :%d", strEth[0]);
         return;
     }
-
     string strTop;
     if (m_EipVersion == EIP_XXXX::EIP_LEGACY) {
         int nRet = serial_transfrom::eth_to_top(strEth, m_EipVersion, strTop);
@@ -648,6 +654,10 @@ void xtransaction_v3_t::construct_from_json(xJson::Value & request) {
             return;
         }
     } else {
+        if (strEth.size() <= 1)
+        {
+            return ;
+        }
         int nRet = serial_transfrom::eth_to_top(strEth.substr(1), m_EipVersion, strTop);
         if (nRet < 0) {
             xdbg("xtransaction_v3_t::construct_from_json eth_to_top error Ret:%d", nRet);
