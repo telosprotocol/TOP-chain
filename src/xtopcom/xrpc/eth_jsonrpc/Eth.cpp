@@ -412,6 +412,7 @@ Json::Value Eth::eth_getBlockByNumber(string const& _blockNumber, bool _includeT
     response["hash"] = "0xdc0818cf78f21a8e70579cb46a43643f78291264dda342ae31049421c82d21ae";
     response["number"] = "0x1";
     response["transactions"].append("0xe670ec64341771606e55d6b4ca35a1a6b75ee3d5145a99d05921026d1527331");
+	response["baseFeePerGas"] = "0x10";
     return response;
 }
 
