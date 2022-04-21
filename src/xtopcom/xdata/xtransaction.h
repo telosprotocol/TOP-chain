@@ -171,6 +171,7 @@ class xtransaction_t : virtual public base::xrefcount_t {
     inline  uint64_t get_delay_from_fire_timestamp(uint64_t now_s) const {return now_s > get_fire_timestamp() ? now_s - get_fire_timestamp() : 0;}
     virtual void set_amount(uint64_t amount) = 0;
     virtual uint64_t get_amount() const noexcept = 0;
+    virtual void set_amount_256(top::evm_common::u256 amount) = 0;
     virtual top::evm_common::u256 get_amount_256() const noexcept = 0;
     virtual bool is_top_transfer() const noexcept = 0;
     virtual void set_premium_price(uint32_t premium_price) = 0;
@@ -184,10 +185,16 @@ class xtransaction_t : virtual public base::xrefcount_t {
     virtual void set_memo(const std::string & memo) = 0;
     virtual const std::string & get_memo() const = 0;
     virtual const std::string & get_target_address() const = 0;
-    virtual const std::string get_SignV() { return ""; }
-    virtual const std::string get_SignR() { return ""; }
-    virtual const std::string get_SignS() { return ""; }
+    virtual const std::string get_SignV() const { return ""; }
+    virtual const std::string get_SignR() const { return ""; }
+    virtual const std::string get_SignS() const { return ""; }
     virtual bool is_evm_tx() const = 0;
+    virtual void set_data(std::string data) {  }
+    virtual const std::string & get_data() const { static std::string strNull = ""; return strNull; }
+    virtual void set_gaslimit(top::evm_common::u256 gas) { }
+    virtual const top::evm_common::u256 get_gaslimit() const { return 0; }
+    virtual const top::evm_common::u256 get_max_priority_fee_per_gas() const { return 0; }
+    virtual const top::evm_common::u256 get_max_fee_per_gas() const { return 0; }
 };
 
 }  // namespace data
