@@ -40,6 +40,7 @@ xreceiptid_state_cache_t & xtxpool_resources::get_receiptid_state_cache() {
 
 void xtxpool_resources::update_send_ids_after_add_rsp_id(const base::xreceiptid_state_ptr_t & receiptid_state, const std::set<base::xtable_shortid_t> & all_table_sids) {
     auto self_sid = receiptid_state->get_self_tableid();
+    std::lock_guard<std::mutex> lck(m_mutex);
     auto it = m_send_ids_after_add_rsp_id.find(self_sid);
     if (it != m_send_ids_after_add_rsp_id.end()) {
         return;
@@ -54,6 +55,7 @@ void xtxpool_resources::update_send_ids_after_add_rsp_id(const base::xreceiptid_
 }
 
 bool xtxpool_resources::get_send_id_after_add_rsp_id(base::xtable_shortid_t self_sid, base::xtable_shortid_t peer_sid, uint64_t & send_id) const {
+    std::lock_guard<std::mutex> lck(m_mutex);
     auto it = m_send_ids_after_add_rsp_id.find(self_sid);
     if (it == m_send_ids_after_add_rsp_id.end()) {
         return false;

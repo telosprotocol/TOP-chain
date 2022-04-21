@@ -42,6 +42,7 @@ private:
     observer_ptr<mbus::xmessage_bus_face_t> m_bus;
     xreceiptid_state_cache_t m_receiptid_state_cache;
     std::map<base::xtable_shortid_t, std::map<base::xtable_shortid_t, uint64_t>> m_send_ids_after_add_rsp_id;
+    mutable std::mutex m_mutex;
 };
 
 NS_END2
