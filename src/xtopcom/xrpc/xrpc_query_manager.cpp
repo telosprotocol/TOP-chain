@@ -2400,113 +2400,27 @@ void xrpc_query_manager::eth_getTransactionCount(xJson::Value & js_req, xJson::V
 }
 void xrpc_query_manager::eth_getTransactionByHash(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     uint256_t hash = top::data::hex_to_uint256(js_req["tx_hash"].asString());
-    std::string version = js_req["version"].asString();
-    if (version.empty()) {
-        version = RPC_VERSION_V1;
-    }
+    std::string tx_hash = js_req["tx_hash"].asString();
     std::string tx_hash_str = std::string(reinterpret_cast<char *>(hash.data()), hash.size());
-    xdbg("xarc_query_manager::getTransaction tx hash: %s, version: %s",  tx_hash_str.c_str(), version.c_str());
+    xdbg("eth_getTransactionByHash tx hash: %s",  tx_hash.c_str());
 
-    std::shared_ptr<xtransaction_cache_data_t> cache_data_ptr = std::make_shared<xtransaction_cache_data_t>();
-    if (m_txstore != nullptr && m_txstore->tx_cache_get(tx_hash_str, cache_data_ptr)) {
-        const xrpc::xtx_exec_json_key jk(version);
-        std::map<int, xJson::Value> map_jv = cache_data_ptr->jv;
-        if (map_jv.find(base::enum_transaction_subtype_send) == map_jv.end()) {
-            xdbg("not find tx:%s", tx_hash_str.c_str());
-
-            xJson::Value result_json;
-            xJson::Value jv;
-
-            data::xtransaction_ptr_t tx_ptr = cache_data_ptr->tran;
-            if (map_jv.find(base::enum_transaction_subtype_recv) != map_jv.end()) {
-                jv[jk.m_recv] = map_jv[base::enum_transaction_subtype_recv];
-                if (version == RPC_VERSION_V2)
-                    jv[jk.m_recv]["account"] = tx_ptr->get_target_addr();
-            }
-            if (map_jv.find(base::enum_transaction_subtype_confirm) != map_jv.end()) {
-                jv[jk.m_confirm] = map_jv[base::enum_transaction_subtype_confirm];
-                if (version == RPC_VERSION_V2)
-                    jv[jk.m_confirm]["account"] = tx_ptr->get_source_addr();
-            }
-            result_json["tx_consensus_state"] = jv;
-            update_tx_state(result_json, jv, version);
-
-            auto ori_tx_info = parse_tx(tx_ptr.get(), version);
-            result_json["original_tx_info"] = ori_tx_info;
-            //js_rsp = result_json;
-            return;
-        }
-    }
-
-    xtransaction_t * tx_ptr = nullptr;
-    xcons_transaction_ptr_t cons_tx_ptr = nullptr;
-    if (m_txpool_service != nullptr) {
-        cons_tx_ptr = m_txpool_service->query_tx("", hash);
-        if (cons_tx_ptr != nullptr) {
-            tx_ptr = cons_tx_ptr->get_transaction();
-        }
-    }
-
-    xJson::Value result_json;
-    //if (get_transaction_on_demand("", tx_ptr, version, hash, result_json, strResult, nErrorCode) == 0)
-    process_transaction(hash, tx_ptr, version, js_rsp, result_json, strResult, nErrorCode);
-}
-void xrpc_query_manager::process_transaction(const uint256_t & tx_hash, xtransaction_t * tx_ptr, const std::string & version, xJson::Value & js_rsp, xJson::Value & result_json, std::string & strResult, uint32_t & nErrorCode) {
-    std::string strHash((char *)tx_hash.data(), tx_hash.size());
-    if (parse_tx(tx_hash, tx_ptr, version, result_json, strResult, nErrorCode) != 0) {  // find tx
-        strResult = "account address or transaction hash error/does not exist";
-        nErrorCode = (uint32_t)enum_xrpc_error_code::rpc_shard_exec_error;
-        return;
-    }
-
-    base::xvtransaction_store_ptr_t tx_store_ptr = m_block_store->query_tx(strHash, base::enum_transaction_subtype_all);
-    if (tx_store_ptr == nullptr) {
-        return;
-    }
-    auto tx = dynamic_cast<xtransaction_t *>(tx_store_ptr->get_raw_tx());
-    tx->add_ref();
-//    xtransaction_ptr_t tx_ptr;
-//    tx_ptr.attach(tx);
-
-    data::xaction_t action;
-    action.set_account_addr(tx->get_source_addr());
-    action.set_action_type(tx->get_source_action_type());
-    action.set_action_name(tx->get_source_action_name());
-    action.set_action_param(tx->get_source_action_para());
-    auto jsa = parse_action(action);
-
-    action.set_account_addr(tx->get_origin_target_addr());
-    action.set_action_type(tx->get_target_action_type());
-    action.set_action_name(tx->get_target_action_name());
-    action.set_action_param(tx->get_target_action_para());
-    auto jta = parse_action(action);
-
-    if (version == RPC_VERSION_V2) {
-        result_json["original_tx_info"]["sender_action_param"] = jsa;
-        result_json["original_tx_info"]["receiver_action_param"] = jta;
-    } else {
-        result_json["original_tx_info"]["tx_action"]["sender_action"]["action_param"] = jsa;
-        result_json["original_tx_info"]["tx_action"]["receiver_action"]["action_param"] = jta;
-    }
-
-    std::string tx_hash_str = std::string(reinterpret_cast<char*>(tx_hash.data()), tx_hash.size());
     xtxindex_detail_ptr_t sendindex = xrpc_loader_t::load_tx_indx_detail(tx_hash_str, base::enum_transaction_subtype_send);
-    xJson::Value cons;
     if (sendindex == nullptr) {
+        xwarn("xrpc_query_manager::eth_getTransactionByHash fail.tx hash:%s", tx_hash.c_str());
         return;
     }
-        
+
     xJson::Value js_result;
     std::stringstream outstr;
     outstr << "0x" << std::hex << sendindex->get_txindex()->get_block_height();
 
     js_result["blockHash"] = std::string("0x") + top::HexEncode(sendindex->get_txindex()->get_block_hash());
     js_result["blockNumber"] = outstr.str();
-    js_result["from"] = result_json["original_tx_info"]["sender_account"].asString();
+    js_result["from"] = std::string("0x") + sendindex->get_raw_tx()->get_source_addr().substr(6);
     js_result["gas"] = "0x40276";
     js_result["gasPrice"] = "0xb2d05e00";
-    js_result["hash"] = "0x" + strHash;
-    js_result["input"] = "0x" + data::to_hex_str(tx->get_ext());
+    js_result["hash"] = tx_hash;
+    js_result["input"] = "0x" + data::to_hex_str(sendindex->get_raw_tx()->get_ext());
     uint64_t nonce = sendindex->get_raw_tx()->get_last_nonce();
     std::stringstream outstr_nonce;
     outstr_nonce << "0x" << std::hex << nonce;
@@ -2520,17 +2434,22 @@ void xrpc_query_manager::process_transaction(const uint256_t & tx_hash, xtransac
         js_result["to"] = xJson::Value::null;
     }
     js_result["transactionIndex"] = "0x0";
-    js_result["value"] = "0x0";
     js_result["type"] = "0x0";
-    outstr.clear();
-    outstr << "0x" << std::hex << result_json["original_tx_info"]["receiver_action_param"]["amount"].asUInt64();
-    js_result["value"] = outstr.str();
-    js_result["v"] = tx->get_SignV();
-    js_result["r"] = tx->get_SignR();
-    js_result["s"] = tx->get_SignS();
+    js_result["value"] = "0x0";
+
+    std::string str_v = sendindex->get_raw_tx()->get_SignV();
+    uint32_t i = 0;
+    for (; i < str_v.size() - 1; i++) {
+        if (str_v[i] != '0') {
+            break;
+        }
+    }
+    js_result["v"] = std::string("0x") + str_v.substr(i);
+    js_result["r"] = std::string("0x") + sendindex->get_raw_tx()->get_SignR();
+    js_result["s"] = std::string("0x") + sendindex->get_raw_tx()->get_SignS();
 
     js_rsp["result"] = js_result;
-    xdbg("xrpc_query_manager::process_transaction ok.tx hash:%s", strHash.c_str());
+    xdbg("xrpc_query_manager::eth_getTransactionByHash ok.tx hash:%s", tx_hash.c_str());
     return;
 }
 
@@ -2547,22 +2466,18 @@ top::evm_common::h2048 xrpc_query_manager::calculate_bloom(const std::string & h
 
 void xrpc_query_manager::eth_getTransactionReceipt(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     uint256_t hash = top::data::hex_to_uint256(js_req["tx_hash"].asString());
-    std::string version = js_req["version"].asString();
-    if (version.empty()) {
-        version = RPC_VERSION_V1;
-    }
+    std::string tx_hash = js_req["tx_hash"].asString();
     std::string tx_hash_str = std::string(reinterpret_cast<char *>(hash.data()), hash.size());
-    xdbg("eth_getTransactionReceipt tx hash: %s, version: %s",  js_req["tx_hash"].asString().c_str(), version.c_str());
+    xdbg("eth_getTransactionReceipt tx hash: %s",  tx_hash.c_str());
 
     xtxindex_detail_ptr_t sendindex = xrpc_loader_t::load_tx_indx_detail(tx_hash_str, base::enum_transaction_subtype_send);
     if (sendindex == nullptr) {
-        xwarn("xrpc_query_manager::eth_getTransactionReceipt load tx index fail.%s", js_req["tx_hash"].asString().c_str());
+        xwarn("xrpc_query_manager::eth_getTransactionReceipt load tx index fail.%s", tx_hash.c_str());
         nErrorCode = (uint32_t)enum_xrpc_error_code::rpc_shard_exec_error;
         return;
     }
 
     xJson::Value js_result;
-    std::string tx_hash = js_req["tx_hash"].asString();
     js_result["transactionHash"] = tx_hash;
     js_result["transactionIndex"] = "0x1";
     std::string block_hash = std::string("0x") + top::HexEncode(sendindex->get_txindex()->get_block_hash());
@@ -2680,6 +2595,7 @@ void xrpc_query_manager::eth_getBlockByNumber(xJson::Value & js_req, xJson::Valu
     xJson::Value js_result;
     set_block_result(block, js_result);
     js_rsp["result"] = js_result;
+    js_rsp["baseFeePerGas"] = "0x10";
     return;
 }
 void xrpc_query_manager::set_block_result(const base::xauto_ptr<base::xvblock_t>&  block, xJson::Value& js_result) {

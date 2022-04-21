@@ -140,7 +140,7 @@ class xtransaction_v3_t : public xbase_dataunit_t<xtransaction_v3_t, xdata_type_
     virtual const std::string & get_target_address() const override {return m_target_addr;};
     virtual bool is_evm_tx() const override {return m_transaction_type != xtransaction_type_transfer;}
 
-    virtual const std::string get_SignV() { return m_SignV.str(); }
+    virtual const std::string get_SignV() { return ((top::evm_common::h256)m_SignV).hex(); }
     virtual const std::string get_SignR() { return m_SignR.hex(); }
     virtual const std::string get_SignS() { return m_SignS.hex(); }
 
