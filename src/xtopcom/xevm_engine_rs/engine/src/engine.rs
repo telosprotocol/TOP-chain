@@ -140,10 +140,11 @@ impl<'env, I: IO + Copy, E: Env> Engine<'env, I, E> {
         });
         sdk::log(
             format!(
-                "deploy_code at address: {:?} from {:?} with code size: {}",
+                "deploy_code at address: {:?} from {:?} with code size: {}, value: {:?}",
                 address,
                 origin,
-                input.len()
+                input.len(),
+                value
             )
             .as_str(),
         );
@@ -220,8 +221,8 @@ impl<'env, I: IO + Copy, E: Env> Engine<'env, I, E> {
         let mut executor = executor_params.make_executor(self);
         sdk::log(
             format!(
-                "call contract at: {:?} from {:?} with input {:?}",
-                contract, origin, input
+                "call contract at: {:?} from {:?} with input {:?}, value: {:?}",
+                contract, origin, input, value
             )
             .as_str(),
         );
