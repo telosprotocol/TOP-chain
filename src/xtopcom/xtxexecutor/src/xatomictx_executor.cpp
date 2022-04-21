@@ -176,6 +176,11 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
     xvm_input_t vminput(m_statectx, m_para, tx);
     xvm_output_t vmoutput;
     enum_execute_result_type ret;
+
+    // update tx flag before execute
+    tx->set_not_need_confirm();
+    tx->set_inner_table_flag();
+
     if (false == tx->is_evm_tx()) {
         xtvm_t tvm;
         ret = tvm.execute(vminput, vmoutput);
