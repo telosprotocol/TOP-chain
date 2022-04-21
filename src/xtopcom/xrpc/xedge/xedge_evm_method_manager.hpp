@@ -144,7 +144,7 @@ void xedge_evm_method_base<T>::do_method(shared_ptr<conn_type> & response, xjson
         xinfo_rpc("rpc request eth");
         std::string method = json_proc.m_request_json["method"].asString();
         if (method != "eth_sendRawTransaction" && method != "eth_getBalance" && method != "eth_getTransactionCount" && method != "eth_getTransactionReceipt"
-            && method != "eth_blockNumber" && method != "eth_getBlockByHash" && method != "eth_getBlockByNumber") {
+            && method != "eth_blockNumber" && method != "eth_getBlockByHash" && method != "eth_getBlockByNumber" && method != "eth_getCode") {
             xJson::Value eth_res;
             dev::eth::ClientBase client;
             dev::rpc::Eth eth(client);
@@ -201,7 +201,8 @@ void xedge_evm_method_base<T>::query_process(xjson_proc_t & json_proc) {
     json_proc.m_tx_type = enum_xrpc_tx_type::enum_xrpc_query_type;
     std::string account;
 
-    if (json_proc.m_request_json["method"].asString() == "eth_getBalance" || json_proc.m_request_json["method"].asString() == "eth_getTransactionCount") {
+    if (json_proc.m_request_json["method"].asString() == "eth_getBalance" || json_proc.m_request_json["method"].asString() == "eth_getTransactionCount"
+        || json_proc.m_request_json["method"].asString() == "eth_getCode") {
         account = json_proc.m_request_json["params"][0].asString();
         account = std::string(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN) + account.substr(2);
         json_proc.m_account_set.emplace(account);

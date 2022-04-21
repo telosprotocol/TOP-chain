@@ -2705,5 +2705,26 @@ void xrpc_query_manager::set_block_result(const base::xauto_ptr<base::xvblock_t>
         js_result["transactions"].append(std::string("0x") + to_hex_str(action.get_org_tx_hash()));
     }    
 }
+void xrpc_query_manager::eth_getCode(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
+    std::string account = js_req["account_addr"].asString();
+
+    // add top address check
+    ADDRESS_CHECK_VALID(account)
+    try {
+        xaccount_ptr_t account_ptr = m_store->query_account(account);
+        if (account_ptr == nullptr) {
+            js_rsp["result"] = "0x";
+            xdbg("xarc_query_manager::eth_getCode account: %s", account.c_str());
+        } else {
+            std::string code = account_ptr->get_code();
+            code = std::string("0x") + top::HexEncode(code);
+            xdbg("xarc_query_manager::eth_getCode account: %s, %s", account.c_str(), code.c_str());
+            js_rsp["result"] = code;
+        }
+    } catch (exception & e) {
+        strResult = std::string(e.what());
+        nErrorCode = (uint32_t)enum_xrpc_error_code::rpc_param_unkown_error;
+    }
+}
 }  // namespace chain_info
 }  // namespace top
