@@ -104,7 +104,7 @@ void xcons_transaction_t::set_not_need_confirm() {
 void xcons_transaction_t::set_inner_table_flag() {
     if (is_send_tx()
         && (get_self_tableid() == get_peer_tableid())
-        && get_tx_type() == xtransaction_type_transfer) {// TODO(jimmy) only support transfer now
+        && (get_tx_type() == xtransaction_type_transfer || m_tx->is_evm_tx())) {// TODO(jimmy) only support transfer now
         xdbg("xcons_transaction_t::set_inner_table_flag tx:%s true", dump().c_str());
         m_execute_state.set_inner_table_flag(true);
     }
