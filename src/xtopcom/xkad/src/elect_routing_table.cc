@@ -296,14 +296,20 @@ void ElectRoutingTable::SetElectionNodesExpected(std::map<std::string, base::Kad
 void ElectRoutingTable::EraseElectionNodesExpected(std::vector<base::KadmliaKeyPtr> const & kad_keys) {
     for (auto _kad_key : kad_keys) {
         auto node_id = _kad_key->Get();
-        if (m_expected_kad_keys.find(node_id) != m_expected_kad_keys.end()) {
-            xdbg("[ElectRoutingTable::EraseElectionNodesExpected] Erase node %s", node_id.c_str());
-            m_expected_kad_keys.erase(node_id);
-        }
+        DoEraseElectionNodesExpected(node_id);
+    }
+}
+
+void ElectRoutingTable::DoEraseElectionNodesExpected(std::string const & node_id) {
+    std::unique_lock<std::mutex> lock(m_expected_kad_keys_mutex);
+    if (m_expected_kad_keys.find(node_id) != m_expected_kad_keys.end()) {
+        xdbg("[ElectRoutingTable::EraseElectionNodesExpected] Erase node %s", node_id.c_str());
+        m_expected_kad_keys.erase(node_id);
     }
 }
 
 std::map<std::string, top::base::KadmliaKeyPtr> ElectRoutingTable::GetElectionNodesExpected() {
+    std::unique_lock<std::mutex> lock(m_expected_kad_keys_mutex);
     return m_expected_kad_keys;
 }
 
@@ -343,7 +349,7 @@ void ElectRoutingTable::OnFindNodesFromRootRouting(std::string const & election_
             node_ptr->public_ip = node_info->public_ip;
             node_ptr->public_port = node_info->public_port;
             xdbg("[ElectRoutingTable::OnFindNodesFromRootRouting] get election_xip2: %s %s:%d", election_xip2.c_str(), node_ptr->public_ip.c_str(), node_ptr->public_port);
-            m_expected_kad_keys.erase(election_xip2);
+            DoEraseElectionNodesExpected(election_xip2);
         }
     }
     UpdateBroadcastNodeInfo();
