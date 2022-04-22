@@ -562,8 +562,8 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
     uint64_t now = (uint64_t)base::xtime_utl::gettimeofday();
 
     // create statectx
-    statectx::xstatectx_para_t statectx_para(cs_para.get_clock(), cs_para.get_random_seed(), cs_para.get_total_lock_tgas_token());
-    statectx::xstatectx_ptr_t statectx_ptr = std::make_shared<statectx::xstatectx_t>(cs_para.get_latest_cert_block().get(), table_para.get_tablestate(), table_para.get_commit_tablestate(), statectx_para);
+    statectx::xstatectx_para_t statectx_para(cs_para.get_clock());
+    statectx::xstatectx_ptr_t statectx_ptr = statectx::xstatectx_factory_t::create_latest_cert_statectx(cs_para.get_latest_cert_block().get(), table_para.get_tablestate(), table_para.get_commit_tablestate(), statectx_para);
     // create batch executor
     txexecutor::xvm_para_t vmpara(cs_para.get_clock(), cs_para.get_random_seed(), cs_para.get_total_lock_tgas_token());
     vmpara.set_evm_gas_limit(UINT64_MAX);

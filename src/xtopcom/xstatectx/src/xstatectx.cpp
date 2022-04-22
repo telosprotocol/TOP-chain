@@ -8,6 +8,7 @@
 #include "xvledger/xvblock.h"
 #include "xvledger/xvblockstore.h"
 #include "xvledger/xvstatestore.h"
+#include "xvledger/xvledger.h"
 #include "xdata/xtable_bstate.h"
 #include "xdata/xunit_bstate.h"
 #include "xstatectx/xtablestate_ctx.h"
@@ -150,6 +151,29 @@ std::vector<xunitstate_ctx_ptr_t> xstatectx_t::get_modified_unit_ctx() const {
         }
     }
     return unitctxs;
+}
+
+xstatectx_ptr_t xstatectx_factory_t::create_latest_commit_statectx(const base::xvaccount_t & table_addr) {
+    base::xauto_ptr<base::xvblock_t> commit_block = base::xvchain_t::instance().get_xblockstore()->get_latest_committed_block(table_addr);
+    if (nullptr == commit_block) {
+        xerror("xstatectx_factory_t::create_latest_commit_statectx fail-get commit block.%s",table_addr.get_address().c_str());
+        return nullptr;
+    }
+    base::xauto_ptr<base::xvbstate_t> commit_bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(commit_block.get());
+    if (nullptr == commit_bstate) {
+        xwarn("xstatectx_factory_t::create_latest_commit_statectx fail-get target state.block=%s",commit_block->dump().c_str());
+        return nullptr;
+    }
+    data::xtablestate_ptr_t commit_tablestate = std::make_shared<data::xtable_bstate_t>(commit_bstate.get());
+
+    xstatectx_para_t statectx_para(commit_block->get_clock());
+    statectx::xstatectx_ptr_t statectx_ptr = std::make_shared<statectx::xstatectx_t>(commit_block.get(), commit_tablestate, commit_tablestate, statectx_para);
+    return statectx_ptr;
+}
+
+xstatectx_ptr_t xstatectx_factory_t::create_latest_cert_statectx(base::xvblock_t* prev_block, const data::xtablestate_ptr_t & prev_table_state, const data::xtablestate_ptr_t & commit_table_state, const xstatectx_para_t & para) {
+    statectx::xstatectx_ptr_t statectx_ptr = std::make_shared<statectx::xstatectx_t>(prev_block, prev_table_state, commit_table_state, para);
+    return statectx_ptr;
 }
 
 NS_END2

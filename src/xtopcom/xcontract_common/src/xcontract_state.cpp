@@ -241,16 +241,12 @@ std::string xtop_contract_state::fullstate_bin() const {
 }
 
 common::xlogic_time_t xtop_contract_state::time() const noexcept {
-    if (m_state_ctx != nullptr) {
-        return m_state_ctx->get_ctx_para().m_clock;
-    }
+    xassert(false);  // TODO(jimmy) should take from xvm_para_t
     return m_param.clock;
 }
 
 common::xlogic_time_t xtop_contract_state::timestamp() const noexcept {
-    if (m_state_ctx != nullptr) {
-        return m_state_ctx->get_ctx_para().get_timestamp();
-    }
+    xassert(false);  // TODO(jimmy) should take from xvm_para_t
     return m_param.timestamp;
 }
 
@@ -263,9 +259,7 @@ uint64_t xtop_contract_state::system_lock_tgas() const noexcept {
 }
 
 std::string const & xtop_contract_state::random_seed() const noexcept {
-    if (m_state_ctx != nullptr) {
-        return m_state_ctx->get_ctx_para().m_random_seed;
-    }
+    xassert(false);  // TODO(jimmy) should take from xvm_para_t
     return m_param.random_seed;
 }
 
