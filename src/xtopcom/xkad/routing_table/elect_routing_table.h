@@ -83,6 +83,7 @@ public:
     // map<election_xip2_str,node_id_root_kad_key>
     void SetElectionNodesExpected(std::map<std::string, base::KadmliaKeyPtr> const & elect_root_kad_keys_map, std::map<std::string, NodeInfoPtr> const & last_round_nodes_map);
     void EraseElectionNodesExpected(std::vector<base::KadmliaKeyPtr> const & kad_keys);
+    void DoEraseElectionNodesExpected(std::string const & node_id);
     std::map<std::string, base::KadmliaKeyPtr> GetElectionNodesExpected();
 
     void HandleElectionNodesInfoFromRoot(std::map<std::string, kadmlia::NodeInfoPtr> const & nodes);
@@ -114,6 +115,7 @@ private:
     std::size_t m_self_index;
     std::mutex m_nodes_mutex;
     std::unordered_map<std::string, NodeInfoPtr> m_nodes;            // map<election_xip2_str,nodeinfoptr>
+    std::mutex m_expected_kad_keys_mutex;
     std::map<std::string, base::KadmliaKeyPtr> m_expected_kad_keys;  // map<election_xip2_str,node_id_root_kad_key>
     std::map<std::string, base::KadmliaKeyPtr> m_all_nodes_root_kay_keys;
     std::unordered_map<std::string, std::size_t> m_index_map;  // map<election_xip2_str,index>
