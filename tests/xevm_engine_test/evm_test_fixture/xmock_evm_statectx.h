@@ -23,9 +23,9 @@ public:
         return m_mock_bstate.at(addr.get_account());
     }
 
-    const statectx::xstatectx_para_t & get_ctx_para() const {
-        return m_param;
-    }
+    // const statectx::xstatectx_para_t & get_ctx_para() const {
+    //     return m_param;
+    // }
 
     bool do_rollback() {
         return false;
