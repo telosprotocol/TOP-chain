@@ -51,7 +51,7 @@ public:
                 return result;
 
             } else if (storage_key.key_type == storage_key_type::Balance) {
-                auto value_uint64 = unit_state->tep_balance(data::XPROPERTY_ASSET_ETH);
+                auto value_uint64 = unit_state->tep_token_balance(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH);
                 // todo u64 -> u256 than serilize to bytes(BE/LE)
 
                 evm_common::u256 balance_u256{value_uint64};
@@ -133,7 +133,7 @@ public:
                 decoder.getInteger(value, value_u256);
                 auto balance_uint64 = value_u256.convert_to<uint64_t>();  // if overflow?
                 xdbg("storage_set set balance account:%s, balance:%llu", storage_key.address.c_str(), balance_uint64);
-                unit_state->set_tep_balance(data::XPROPERTY_ASSET_ETH, balance_uint64);
+                unit_state->set_tep_balance(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH, balance_uint64);
 
             } else if (storage_key.key_type == storage_key_type::Code) {
                 auto property = state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_EVM_CODE, state_accessor::properties::xproperty_category_t::system};

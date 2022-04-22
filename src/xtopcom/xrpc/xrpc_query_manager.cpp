@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "xrpc_query_manager.h"
 #include <cstdint>
 #include <iostream>
@@ -2359,6 +2360,7 @@ void xrpc_query_manager::getLatestTables(xJson::Value & js_req, xJson::Value & j
 }
 void xrpc_query_manager::eth_getBalance(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     std::string account = js_req["account_addr"].asString();
+    transform(account.begin() + 1,account.end(),account.begin() + 1,::tolower);
 
     // add top address check
     ADDRESS_CHECK_VALID(account)
@@ -2367,13 +2369,18 @@ void xrpc_query_manager::eth_getBalance(xJson::Value & js_req, xJson::Value & js
         if (account_ptr == nullptr) {
             js_rsp["result"] = "0x0";
         } else {
-            uint64_t balance = account_ptr->tep_balance(data::XPROPERTY_ASSET_ETH);
-            xdbg("xarc_query_manager::getBalance account: %s, %llu", account.c_str(), balance);
-            //  balance *= 1000000000000000000;
-            balance *= 1000000000000;
-            std::stringstream outstr;
-            outstr << "0x" << std::hex << balance;
-            js_rsp["result"] = std::string(outstr.str());
+            evm_common::u256 balance = account_ptr->tep_token_balance(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH);
+
+            std::string balance_str = toHex((top::evm_common::h256)balance);
+
+            uint32_t i = 0;
+            for (; i < balance_str.size() - 1; i++) {
+                if (balance_str[i] != '0') {
+                    break;
+                }
+            }
+            js_rsp["result"] = "0x" + balance_str.substr(i);
+            xdbg("xarc_query_manager::getBalance account: %s, balance:%s", account.c_str(), balance_str.substr(i).c_str());
         }
     } catch (exception & e) {
         strResult = std::string(e.what());
@@ -2382,6 +2389,7 @@ void xrpc_query_manager::eth_getBalance(xJson::Value & js_req, xJson::Value & js
 }
 void xrpc_query_manager::eth_getTransactionCount(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     std::string account = js_req["account_addr"].asString();
+    std::transform(account.begin() + 1,account.end(),account.begin() + 1,::tolower);
 
     // add top address check
     ADDRESS_CHECK_VALID(account)
@@ -2636,6 +2644,7 @@ void xrpc_query_manager::set_block_result(const base::xauto_ptr<base::xvblock_t>
 }
 void xrpc_query_manager::eth_getCode(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     std::string account = js_req["account_addr"].asString();
+    std::transform(account.begin() + 1,account.end(),account.begin() + 1,::tolower);
 
     // add top address check
     ADDRESS_CHECK_VALID(account)

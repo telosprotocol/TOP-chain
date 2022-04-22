@@ -166,38 +166,6 @@ int32_t xunit_bstate_t::set_tx_info_recvtx_num(uint64_t num) {
     return map_set(XPROPERTY_TX_INFO, XPROPERTY_TX_INFO_RECVTX_NUM, value);
 }
 
-void xunit_bstate_t::set_tep_balance(const std::string & token_name, int64_t new_balance) {
-    xdbg("xunit_bstate_t::set_tep_balance,property_modify_enter.address=%s,height=%ld,token_name=%s,new_balance=%ld", get_address().c_str(), get_chain_height(), token_name.c_str(), new_balance);
-    auto & bstate = get_bstate();
-
-    if (false == bstate->find_property(data::XPROPERTY_TEP1_BALANCE_KEY)) {
-        auto propobj = bstate->new_multiple_tokens_var(data::XPROPERTY_TEP1_BALANCE_KEY, nullptr);
-    }
-    auto propobj = bstate->load_multiple_tokens_var(data::XPROPERTY_TEP1_BALANCE_KEY);
-
-
-    auto balance = propobj->get_balance(token_name);
-    auto left_token = propobj->set_balance(token_name, new_balance, nullptr);
-    xassert(left_token == new_balance);
-}
-
-uint64_t xunit_bstate_t::tep_balance(const std::string & token_name) const {
-    auto & bstate = get_bstate();
-    if (!bstate->find_property(data::XPROPERTY_TEP1_BALANCE_KEY)) {
-        return 0;
-    }
-    auto propobj = bstate->load_multiple_tokens_var(data::XPROPERTY_TEP1_BALANCE_KEY);
-    if (nullptr != propobj) {
-        auto balance = propobj->get_balance(token_name);
-        if (balance < 0) {
-            xerror("xunit_bstate_t::tep_balance fail-should not appear. balance=%ld", balance);
-            return 0;
-        }
-        return balance;
-    }
-
-    return 0;
-}
 std::string xunit_bstate_t::get_code() const {
     std::string v;
     string_get(XPROPERTY_EVM_CODE, v);
