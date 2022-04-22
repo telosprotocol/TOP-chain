@@ -128,6 +128,7 @@ public:
         REGISTER_QUERY_METHOD(eth_getBlockByHash);
         REGISTER_QUERY_METHOD(eth_getBlockByNumber);
         REGISTER_QUERY_METHOD(eth_getCode);
+        REGISTER_QUERY_METHOD(eth_call);
     }
     void call_method(std::string strMethod, xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     bool handle(std::string & strReq, xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) override;
@@ -185,6 +186,7 @@ public:
     void eth_getBlockByHash(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
     void eth_getBlockByNumber(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
     void eth_getCode(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
+    void eth_call(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
     top::evm_common::h2048 calculate_bloom(const std::string & hexstr);
 private:
     void getBlock(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
@@ -252,6 +254,7 @@ private:
 
     std::string HexEncode(const std::string & str);
     void process_transaction(const uint256_t & tx_hash, xtransaction_t * tx_ptr, const std::string & version, xJson::Value & js_rsp, xJson::Value & result_json, std::string & strResult, uint32_t & nErrorCode);
+    int generate_tx(top::data::xtransaction_ptr_t & tx, xJson::Value & js_req);
 
 private:
     void set_sharding_vote_prop(xJson::Value & js_req, xJson::Value & js_rsp, std::string & prop_name, std::string & strResult, uint32_t & nErrorCode);
@@ -263,7 +266,6 @@ private:
                                   xJson::Value & result_json,
                                   std::string & strResult,
                                   uint32_t & nErrorCode);
-
 private:
     observer_ptr<store::xstore_face_t> m_store;
     observer_ptr<base::xvblockstore_t> m_block_store;

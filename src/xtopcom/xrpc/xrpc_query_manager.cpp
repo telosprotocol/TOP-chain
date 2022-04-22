@@ -1,4 +1,9 @@
 #include "xrpc_query_manager.h"
+#include <cstdint>
+#include <iostream>
+#include <trezor-crypto/sha3.h>
+#include <secp256k1/secp256k1.h>
+#include <secp256k1/secp256k1_recovery.h>
 #include "xbase/xbase.h"
 #include "xbase/xcontext.h"
 #include "xbase/xint.h"
@@ -46,13 +51,11 @@
 #include "xdata/xblocktool.h"
 #include "xpbase/base/top_utils.h"
 #include "xutility/xhash.h"
-#include "trezor-crypto/sha3.h"
-#include <secp256k1/secp256k1.h>
-#include <secp256k1/secp256k1_recovery.h>
 
-
-#include <cstdint>
-#include <iostream>
+#include "xtxexecutor/xvm_face.h"
+#include "xevm/xevm.h"
+#include "xdata/xtransaction_v2.h"
+#include "xstatectx/xstatectx.h"
 
 using namespace top::data;
 
@@ -2651,6 +2654,66 @@ void xrpc_query_manager::eth_getCode(xJson::Value & js_req, xJson::Value & js_rs
         strResult = std::string(e.what());
         nErrorCode = (uint32_t)enum_xrpc_error_code::rpc_param_unkown_error;
     }
+}
+void xrpc_query_manager::eth_call(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
+    top::data::xtransaction_ptr_t tx = top::make_object_ptr<top::data::xtransaction_v2_t>();
+    if (generate_tx(tx, js_req) != 0)
+        return;
+    auto cons_tx = top::make_object_ptr<top::data::xcons_transaction_t>(tx.get());
+
+    std::string addr = std::string(sys_contract_eth_table_block_addr) + "@0";
+    base::xvaccount_t _vaddress(addr);
+    auto block = m_block_store->get_latest_committed_block(_vaddress);   
+    uint64_t gmtime = block->get_second_level_gmtime();
+    xblock_consensus_para_t cs_para(addr, block->get_clock(), block->get_viewid(), block->get_viewtoken(), block->get_height(), gmtime);
+
+    statectx::xstatectx_ptr_t statectx_ptr = statectx::xstatectx_factory_t::create_latest_commit_statectx(_vaddress);
+    if (statectx_ptr == nullptr) {
+        xinfo("create_latest_commit_statectx fail: %s", addr.c_str());
+        return;
+    }
+    txexecutor::xvm_para_t vmpara(cs_para.get_clock(), cs_para.get_random_seed(), cs_para.get_total_lock_tgas_token());
+    vmpara.set_evm_gas_limit(std::strtoul(js_req["gas"].asString().c_str(), NULL, 16));
+
+    txexecutor::xvm_input_t input{statectx_ptr, vmpara, cons_tx};
+    txexecutor::xvm_output_t output;
+    top::evm::xtop_evm evm{nullptr, statectx_ptr};
+
+    auto ret = evm.execute(input, output);
+    if (ret != txexecutor::enum_exec_success) {
+        xinfo("evm call fail.");
+        return;
+    }
+    xinfo("evm call: %d, %s", output.m_tx_result.status, output.m_tx_result.extra_msg.c_str());
+    if (output.m_tx_result.status == 0)
+        js_rsp["result"] = output.m_tx_result.extra_msg;
+}
+int xrpc_query_manager::generate_tx(top::data::xtransaction_ptr_t & tx, xJson::Value & js_req) {
+    std::string to = js_req["to"].asString();
+    if (to.empty()) {
+        xinfo("generate_tx to: %s", to.c_str());
+        return 1;
+    }
+    //to = std::string(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN) + to.substr(2);
+    std::string from = js_req["account_addr"].asString();
+    if (from.empty()) {
+        xinfo("generate_tx from: %s", from.c_str());
+        return 1;
+    }
+    //from = std::string(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN) + from.substr(2);
+    std::string data = js_req["data"].asString();
+    std::string value = js_req["value"].asString();
+    std::string gas = js_req["gas"].asString();
+
+    tx->set_source_addr(from);
+    tx->set_target_addr(to);  // call contract
+    if (data.size() < 2) {
+        xinfo("generate_tx data: %s", data.c_str());
+        return 1;
+    }
+    tx->set_ext(top::HexDecode(data.substr(2)));
+    tx->set_amount(std::strtoul(value.c_str(), NULL, 16));
+    return 0;    
 }
 }  // namespace chain_info
 }  // namespace top
