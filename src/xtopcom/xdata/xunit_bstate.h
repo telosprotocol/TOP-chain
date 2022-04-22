@@ -37,7 +37,6 @@ class xunit_bstate_t : public xbstate_ctx_t {
     uint64_t            account_recv_trans_number() const;
     uint256_t           account_send_trans_hash() const;
     uint64_t            account_send_trans_number() const;
-    uint64_t            tep_balance(const std::string & token_name) const;
     uint64_t            get_free_tgas() const ;
     uint64_t            get_total_tgas(uint32_t token_price) const ;
     uint64_t            get_last_tx_hour() const ;
@@ -51,7 +50,6 @@ class xunit_bstate_t : public xbstate_ctx_t {
     int32_t     set_tx_info_latest_sendtx_num(uint64_t num);
     int32_t     set_tx_info_latest_sendtx_hash(const std::string & hash);
     int32_t     set_tx_info_recvtx_num(uint64_t num);
-    void        set_tep_balance(const std::string & token_name, int64_t new_balance);
 };
 
 using xaccount_ptr_t = std::shared_ptr<xunit_bstate_t>;  // TODO(jimmy) rename to xunitstate_ptr_t
