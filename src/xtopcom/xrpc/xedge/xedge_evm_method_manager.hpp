@@ -141,10 +141,10 @@ void xedge_evm_method_base<T>::do_method(shared_ptr<conn_type> & response, xjson
     xinfo_rpc("rpc request version:%s", jsonrpc_version.c_str());
 
     if (jsonrpc_version == "2.0") {
-        xinfo_rpc("rpc request eth");
         std::string method = json_proc.m_request_json["method"].asString();
         if (method != "eth_sendRawTransaction" && method != "eth_getBalance" && method != "eth_getTransactionCount" && method != "eth_getTransactionReceipt" &&
-            method != "eth_blockNumber" && method != "eth_getBlockByHash" && method != "eth_getBlockByNumber" && method != "eth_getCode" && method != "eth_getTransactionByHash") {
+            method != "eth_blockNumber" && method != "eth_getBlockByHash" && method != "eth_getBlockByNumber" && method != "eth_getCode" && 
+            method != "eth_getTransactionByHash" && method != "eth_call") {
             xJson::Value eth_res;
             dev::eth::ClientBase client;
             dev::rpc::Eth eth(client);
@@ -166,7 +166,8 @@ void xedge_evm_method_base<T>::do_method(shared_ptr<conn_type> & response, xjson
     }
     const string & version = jsonrpc_version;
     const string & method = json_proc.m_request_json["method"].asString();
-    ;
+    xinfo_rpc("rpc request: %s,%s", version.c_str(), method.c_str());
+
     auto version_method = pair<string, string>(version, method);
     if (m_edge_local_method_ptr->do_local_method(version_method, json_proc)) {
         write_response(response, json_proc.get_response());
@@ -234,6 +235,21 @@ void xedge_evm_method_base<T>::query_process(xjson_proc_t & json_proc) {
         json_proc.m_request_json.removeMember("params");
         json_proc.m_request_json["params"]["account_addr"] = account;
         json_proc.m_request_json["params"]["height"] = height;
+    } else if (json_proc.m_request_json["method"].asString() == "eth_call") {
+        account = json_proc.m_request_json["params"][0]["from"].asString();
+        account = std::string(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN) + account.substr(2);
+        std::string to = json_proc.m_request_json["params"][0]["to"].asString();
+        to = std::string(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN) + to.substr(2);
+        std::string data = json_proc.m_request_json["params"][0]["data"].asString();
+        std::string value = json_proc.m_request_json["params"][0]["value"].asString();
+        std::string gas = json_proc.m_request_json["params"][0]["gas"].asString();
+        json_proc.m_account_set.emplace(account);
+        json_proc.m_request_json.removeMember("params");
+        json_proc.m_request_json["params"]["account_addr"] = account;
+        json_proc.m_request_json["params"]["to"] = to;
+        json_proc.m_request_json["params"]["data"] = data;
+        json_proc.m_request_json["params"]["value"] = value;
+        json_proc.m_request_json["params"]["gas"] = gas;
     }
 
     json_proc.m_request_json[RPC_SEQUENCE_ID] = json_proc.m_request_json["id"];
