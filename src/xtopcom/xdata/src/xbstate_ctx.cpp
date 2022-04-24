@@ -517,7 +517,7 @@ std::string xbstate_ctx_t::string_get(const std::string & prop) const {
     return propobj->query();
 }
 
-bool xbstate_ctx_t::set_tep_balance(const std::string & prop, const std::string & token_name, evm_common::u256 new_balance) {
+int32_t xbstate_ctx_t::set_tep_balance(const std::string & prop, const std::string & token_name, evm_common::u256 new_balance) {
     xdbg("xbstate_ctx_t::set_tep_balance,property_modify_enter.address=%s,height=%ld,token_name=%s,new_balance=%s", get_address().c_str(), get_chain_height(), token_name.c_str(), new_balance.str().c_str());
     auto propobj = load_tep_token_for_write(prop);
     CHECK_PROPERTY_NULL_RETURN(propobj, "xbstate_ctx_t::set_tep_balance", token_name);
@@ -526,7 +526,11 @@ bool xbstate_ctx_t::set_tep_balance(const std::string & prop, const std::string 
     top::xbytes_t result_rlp = evm_common::rlp::RLP::encode(new_balance);
     std::error_code ec;
     std::string new_balance_str = top::from_bytes<std::string>(result_rlp, ec);
-    return propobj->insert(token_name, new_balance_str, m_canvas.get());
+    bool ret = propobj->insert(token_name, new_balance_str, m_canvas.get());
+    if (!ret) {
+        return xaccount_property_operate_fail;
+    }
+    return xsuccess;
 }
 
 base::xauto_ptr<base::xmapvar_t<std::string>> xbstate_ctx_t::load_tep_token_for_write(const std::string & prop) {
