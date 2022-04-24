@@ -83,7 +83,7 @@ class xbstate_ctx_t {
     evm_common::u256    tep_token_balance(const std::string & prop, const std::string& token_name);
     int32_t     tep_token_deposit(const std::string & prop, const std::string& token_name, evm_common::u256 add_token);
     int32_t     tep_token_withdraw(const std::string & prop, const std::string& token_name, evm_common::u256 sub_token);
-    bool        set_tep_balance(const std::string & prop, const std::string & token_name, evm_common::u256 new_balance);
+    int32_t     set_tep_balance(const std::string & prop, const std::string & token_name, evm_common::u256 new_balance);
 
  private:
     int32_t                                 check_create_property(const std::string& key);
