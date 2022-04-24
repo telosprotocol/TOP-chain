@@ -61,7 +61,7 @@ mod interface {
         set_balance(
             &mut io,
             &eth_address,
-            &Wei::new(origin_value.raw() + U256::from(value) * U256::from(10e12 as u64)),
+            &Wei::new(origin_value.raw() + U256::from(value)),
         );
     }
 }
