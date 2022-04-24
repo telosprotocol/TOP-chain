@@ -7,7 +7,7 @@ namespace tests {
 
 class xmock_evm_statectx : public statectx::xstatectx_face_t {
 public:
-    xmock_evm_statectx() : m_param{0, "mock", 0} {
+    xmock_evm_statectx() {
     }
 
     const data::xtablestate_ptr_t & get_table_state() const {
@@ -22,10 +22,6 @@ public:
         }
         return m_mock_bstate.at(addr.get_account());
     }
-
-    // const statectx::xstatectx_para_t & get_ctx_para() const {
-    //     return m_param;
-    // }
 
     bool do_rollback() {
         return false;
@@ -44,7 +40,6 @@ public:
     }
 
     data::xtablestate_ptr_t m_tablestate_ptr;
-    statectx::xstatectx_para_t m_param;
     std::string table_address;
 
     std::map<std::string, data::xunitstate_ptr_t> m_mock_bstate;
