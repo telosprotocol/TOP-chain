@@ -162,7 +162,7 @@ void xtop_evm_logic::random_seed(uint64_t register_id) {
 void xtop_evm_logic::log_utf8(uint64_t len, uint64_t ptr) {
     std::string message = get_utf8_string(len, ptr);
     // todo add xinfo_log.
-    printf("[log_utf8] EVM_LOG: %s \n", message.c_str());
+    // printf("[log_utf8] EVM_LOG: %s \n", message.c_str());
     xdbg("[log_utf8] EVM_LOG: %s", message.c_str());
 }
 

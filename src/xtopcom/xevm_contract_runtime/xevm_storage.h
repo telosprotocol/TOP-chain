@@ -55,7 +55,6 @@ public:
                 // todo u64 -> u256 than serilize to bytes(BE/LE)
 
                 evm_common::u256 balance_u256{value_uint64};
-                balance_u256 = balance_u256 * (uint64_t)10e12;
                 evm_common::xBorshEncoder encoder;
                 encoder.EncodeInteger(balance_u256);
                 xbytes_t result = encoder.GetBuffer();
@@ -132,7 +131,6 @@ public:
                 evm_common::u256 value_u256;
                 evm_common::xBorshDecoder decoder;
                 decoder.getInteger(value, value_u256);
-                value_u256 = value_u256 / (uint64_t)10e12;
                 auto balance_uint64 = value_u256.convert_to<uint64_t>();  // if overflow?
                 xdbg("storage_set set balance account:%s, balance:%llu", storage_key.address.c_str(), balance_uint64);
                 unit_state->set_tep_balance(data::XPROPERTY_ASSET_ETH, balance_uint64);
