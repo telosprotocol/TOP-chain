@@ -46,10 +46,11 @@ public:
     bigint baseFee();
     h256 hash();
     bool isBaseFee();
+    h256 hashWithoutSeal();
 
 private:
     bytes encode_rlp();
-
+    bytes encode_rlp_withoutseal();
 private:
     h256    m_parentHash;
     h256    m_uncleHash;
