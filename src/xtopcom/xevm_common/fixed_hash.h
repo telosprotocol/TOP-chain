@@ -122,6 +122,21 @@ public:
         return std::any_of(m_data.begin(), m_data.end(), [](byte _b) { return _b != 0; });
     }
 
+    void  copyFromStr(std::string const & _s,  ConstructFromHashType _ht = FailIfDifferent){
+
+        bytes _b = top::evm_common::asBytes(_s);
+        if (_b.size() == N)
+            memcpy(m_data.data(), _b.data(), std::min<unsigned>(_b.size(), N));
+        else {
+            m_data.fill(0);
+            if (_ht != FailIfDifferent) {
+                auto c = std::min<unsigned>(_b.size(), N);
+                for (unsigned i = 0; i < c; ++i)
+                    m_data[_ht == AlignRight ? N - 1 - i : i] = _b[_ht == AlignRight ? _b.size() - 1 - i : i];
+            }
+        }
+    }
+
     // The obvious comparison operators.
     bool operator==(FixedHash const & _c) const {
         return m_data == _c.m_data;

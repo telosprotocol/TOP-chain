@@ -14,6 +14,7 @@
 #include <type_traits>
 #include <iostream>
 #include "xevm_common/common.h"
+#include "xevm_common/fixed_hash.h"
 
 namespace top {
 namespace evm_common {
@@ -73,6 +74,26 @@ namespace evm_common {
                 return *this;
             }
 
+            xBorshEncoder &EncodeStringFixArray(const std::string &str) {
+                int len = str.end() - str.begin();
+                std::cout << "len: " <<  len << " str:: " << str<< std::endl;
+                for (int i = 0; i < len; i++) {
+                    uint8_t v = (uint8_t)str[i] ;
+                    m_Buffer.push_back(v);
+
+                }
+                return *this;
+            }
+
+            template <typename T>
+            xBorshEncoder &EncodeBytesFixArray(const T bytes_s) {
+                size_t typeSize = sizeof(T);
+                for (int i = 0; i < typeSize; i++) {
+                    m_Buffer.push_back((uint8_t)bytes_s[i]);
+                }
+                return *this;
+            }
+
             template <typename T>
             xborsh_const xBorshEncoder &EncodeFixArray(const std::initializer_list<T> &initList) {
                 return EncodeFixArray<T>(initList.begin(), initList.size());
@@ -92,7 +113,7 @@ namespace evm_common {
                 }
                 else if xborsh_const (xBorshInternals::is_string<T>::value) {
                         for (size_t i = 0; i < size; ++i) {
-                            EncodeString(reinterpret_cast<const char*>(*array));
+                            EncodeStringFixArray(*array);
                             ++array;
                         }
                 }
@@ -155,6 +176,7 @@ namespace evm_common {
                      assert(false || "The string len is error");
                 }
             }
+   
     };
 
 }
