@@ -30,6 +30,7 @@ xunqualified_node_info_t::do_write(base::xstream_t & stream) const {
     KEEP_SIZE();
     MAP_OBJECT_SERIALIZE2(stream, auditor_info);
     MAP_OBJECT_SERIALIZE2(stream, validator_info);
+    MAP_OBJECT_SERIALIZE2(stream, evm_info);
     return CALC_LEN();
 }
 
@@ -38,6 +39,9 @@ xunqualified_node_info_t::do_read(base::xstream_t & stream) {
     KEEP_SIZE();
     MAP_OBJECT_DESERIALZE2(stream, auditor_info);
     MAP_OBJECT_DESERIALZE2(stream, validator_info);
+    if (stream.size() > 0) {
+        MAP_OBJECT_DESERIALZE2(stream, evm_info);
+    }
     return CALC_LEN();
 }
 

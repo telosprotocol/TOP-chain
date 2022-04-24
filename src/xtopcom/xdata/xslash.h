@@ -24,6 +24,7 @@ private:
 struct xunqualified_node_info_t final : public xserializable_based_on<void> {
     std::map<common::xnode_id_t, xnode_vote_percent_t> auditor_info;
     std::map<common::xnode_id_t, xnode_vote_percent_t> validator_info;
+    std::map<common::xnode_id_t, xnode_vote_percent_t> evm_info;
 
 private:
     std::int32_t do_write(base::xstream_t & stream) const override;
