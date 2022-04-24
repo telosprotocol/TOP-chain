@@ -1,5 +1,5 @@
 #include "xeth.h"
-// #include "ethash_util.h"
+#include "ethash_util.h"
 #include "xevm_common/rlp.h"
 #include <array>
 NS_BEG4(top, xvm, system_contracts, xeth)
@@ -89,10 +89,10 @@ bool xeth_bridge_t::sync_block_header(std::string headerContent){
         return false;
     }
 
-    // result = ethash_util::verify(&header);
-    // if (!result) {
-    //     return false;
-    // }
+    result = ethash_util::verify(&header);
+    if (!result) {
+        return false;
+    }
 
     bigint bigSumOfDifficult;
     bigSumOfDifficult = bigint(sumOfDifficult) + header.difficulty();
@@ -105,7 +105,7 @@ bool xeth_bridge_t::sync_block_header(std::string headerContent){
     }
 
     h256 hash;
-    result = m_store.getHashOfMainChainByHeight(ETH_CHAIN_ID, height, hash); 
+    result = m_store.getHashOfMainChainByHeight(ETH_CHAIN_ID, height, hash);
     if (!result){
         return false;
     }

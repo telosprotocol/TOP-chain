@@ -1,19 +1,22 @@
 #include "ethash_util.h"
 #include "util.h"
+#include "xutility/xhash.h"
+#include "xevm_common/common_data.h"
 #include <boost/numeric/conversion/cast.hpp>
 NS_BEG4(top, xvm, system_contracts, xeth)
 
 bool ethash_util::verify(xeth_block_header_t *header) {
     const ethash::epoch_context_ptr context = ethash::create_epoch_context(epoch(header->number()));
-    const ethash::hash256 headerHash = toHash256(header->hash());
+    const ethash::hash256 headerHash = toHash256(header->hashWithoutSeal());
     const ethash::hash256 mixHash = toHash256(header->mixDigest());
-    const ethash::hash256 difficulty = toHash256((u256)header->difficulty());
-    //
-    auto ret = ethash::verify_against_difficulty(*context, headerHash, mixHash, util::bytes_to_uint64(header->nonce().asArray()), difficulty);
+    // bigint difficulty = bigint(bigint(1) << 256) / header->difficulty();
+    // const ethash::hash256 boundray = toHash256((u256)(difficulty));
+    uint64_t nonce = std::stoull(header->nonce().hex(), nullptr, 16);
+    const ethash::hash256 difficulty = toHash256(u256(header->difficulty()));
+    auto ret = ethash::verify_against_difficulty(*context, headerHash, mixHash, nonce, difficulty);
     if (ret != ETHASH_SUCCESS) {
         return false;
     }
-
     return true;
 }
 
@@ -27,10 +30,16 @@ ethash::hash256 ethash_util::toHash256(h256 hash) {
     return ehash;
 }
 
-ethash::hash256 ethash_util::toHash256(u256 hash) {
+ethash::hash256 ethash_util::toHash256(u256 value) {
     ethash::hash256 ehash = {};
-    auto v = util::fromU256(hash);
-    std::memcpy(ehash.bytes, &v[0], v.size());
+    std::array<byte,32> converted;
+    toBigEndian<u256, std::array<byte,32>>(value, converted);
+    std::memcpy(ehash.bytes, converted.data(), 32);
+
+    /*
+    auto hashValue = utl::xkeccak256_t::digest(v.data(), v.size());
+    auto hash = FixedHash<32>(hashValue.data(), h256::ConstructFromPointer);
+    std::memcpy(ehash.bytes, hash.data(), 32); */
     return ehash;
 }
 
