@@ -118,6 +118,107 @@ h256 xeth_block_header_t::hash() {
     return m_hash;
 }
 
+h256 xeth_block_header_t::hashWithoutSeal() {
+    auto value = encode_rlp_withoutseal();
+    auto hashValue = utl::xkeccak256_t::digest(value.data(), value.size());
+    return FixedHash<32>(hashValue.data(), h256::ConstructFromPointer);
+}
+
+bytes xeth_block_header_t::encode_rlp_withoutseal() {
+    bytes out;
+
+    // parentHash
+    {
+        auto tmp = RLP::encode(m_parentHash.asBytes());
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+
+    // uncle_hash
+    {
+        auto tmp = RLP::encode(m_uncleHash.asBytes());
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+
+    // miner
+    {
+        auto tmp = RLP::encode(m_miner.asBytes());
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+
+    // stateMerkleRoot
+    {
+        auto tmp = RLP::encode(m_stateMerkleRoot.asBytes());
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+
+    // txMerkleRoot
+    {
+        auto tmp = RLP::encode(m_txMerkleRoot.asBytes());
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+
+    // receiptMerkleRoot
+    {
+        auto tmp = RLP::encode(m_receiptMerkleRoot.asBytes());
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+
+    // logBloom
+    {
+        auto tmp = RLP::encode(m_bloom.asBytes());
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+
+    // difficulty
+    {
+        auto tmp = RLP::encode((u256)m_difficulty);
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+
+    // number
+    {
+        auto tmp = RLP::encode(m_number);
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+
+    // gasLimit
+    {
+        auto tmp = RLP::encode(m_gasLimit);
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+
+    // gasUsed
+    {
+        auto tmp = RLP::encode(m_gasUsed);
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+    
+    // time
+    {
+        auto tmp = RLP::encode(m_time);
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+    
+    //extra
+    {
+        auto tmp = RLP::encode(m_extra);
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+
+    {
+        if (m_isBaseFee) {
+            auto tmp = RLP::encode((u256)m_baseFee);
+            out.insert(out.end(), tmp.begin(), tmp.end());
+        }
+    }
+
+    {
+        out = RLP::encodeList(out);
+    }
+    
+    return out;
+}
+
 bytes xeth_block_header_t::encode_rlp() {
     bytes out;
 
