@@ -121,6 +121,7 @@ class xtransaction_v2_t : public xbase_dataunit_t<xtransaction_v2_t, xdata_type_
     virtual uint64_t get_fire_timestamp() const override {return m_fire_timestamp;};
     virtual void set_amount(uint64_t amount) override{ m_amount = amount; }
     virtual uint64_t get_amount() const noexcept override { return m_amount; }
+    virtual top::evm_common::u256 get_amount_256() const noexcept override { assert(false); return 0; }
     virtual bool is_top_transfer() const noexcept override { return m_transaction_type == xtransaction_type_transfer && (m_token_name.empty() || XPROPERTY_ASSET_TOP == m_token_name); }
     virtual void set_premium_price(uint32_t premium_price) override {m_premium_price = premium_price;};
     virtual uint32_t get_premium_price() const override {return m_premium_price;};

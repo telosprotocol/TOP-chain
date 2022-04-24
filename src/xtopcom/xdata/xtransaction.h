@@ -11,6 +11,7 @@
 #include "xvledger/xdataobj_base.hpp"
 #include "xbase/xrefcount.h"
 #include "xbase/xmem.h"
+#include "xevm_common/common.h"
 namespace top { namespace data {
 
 enum enum_xtransaction_type {
@@ -52,6 +53,7 @@ public:
     std::string                 m_new_account;
 #endif
     data::xproperty_asset       m_asset{0};
+    evm_common::u256            m_amount_256{0};
     std::string                 m_function_name;
     std::string                 m_function_para;
     uint64_t                    m_vote_num;
@@ -169,6 +171,7 @@ class xtransaction_t : virtual public base::xrefcount_t {
     inline  uint64_t get_delay_from_fire_timestamp(uint64_t now_s) const {return now_s > get_fire_timestamp() ? now_s - get_fire_timestamp() : 0;}
     virtual void set_amount(uint64_t amount) = 0;
     virtual uint64_t get_amount() const noexcept = 0;
+    virtual top::evm_common::u256 get_amount_256() const noexcept = 0;
     virtual bool is_top_transfer() const noexcept = 0;
     virtual void set_premium_price(uint32_t premium_price) = 0;
     virtual uint32_t get_premium_price() const = 0;

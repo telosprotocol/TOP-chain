@@ -499,6 +499,9 @@ int32_t xtransaction_v2_t::parse(enum_xaction_type source_type, enum_xaction_typ
             }
         }
         tx_parse_data.m_asset = xproperty_asset(token_name, amount);
+        if (!tx_parse_data.m_asset.is_top_token()) {
+            tx_parse_data.m_amount_256 = amount;
+        }
     }
 
     if (target_type == xaction_type_run_contract) {
