@@ -68,18 +68,18 @@ evm_common::xevm_transaction_result_t xtop_action_runtime<data::xevm_consensus_a
         result.set_status(return_result.transaction_status());
 
         // extra_msg:
-        result.extra_msg = evm::xvariant_bytes{return_result.status_data(), false}.to_hex_string();
+        result.extra_msg = evm::xvariant_bytes{return_result.status_data(), false}.to_hex_string("0x");
         xdbg("xtop_action_runtime<data::xevm_consensus_action_t>::execute result.extra_msg:%s", result.extra_msg.c_str());
 
         // logs:
         for (int i = 0; i < return_result.logs_size(); ++i) {
             evm_common::xevm_log_t log;
-            log.address = evm::xvariant_bytes{return_result.logs(i).address().value(), false}.to_hex_string();
-            log.data = evm::xvariant_bytes{return_result.logs(i).data(), false}.to_hex_string();
+            log.address = evm::xvariant_bytes{return_result.logs(i).address().value(), false}.to_hex_string("0x");
+            log.data = evm::xvariant_bytes{return_result.logs(i).data(), false}.to_hex_string("0x");
             // log.data = top::to_bytes(return_result.logs(i).data());
             std::vector<std::string> topic;
             for (int j = 0; j < return_result.logs(i).topics_size(); ++j) {
-                topic.push_back(evm::xvariant_bytes{return_result.logs(i).topics(j).data(), false}.to_hex_string());
+                topic.push_back(evm::xvariant_bytes{return_result.logs(i).topics(j).data(), false}.to_hex_string("0x"));
                 // topic.push_back(top::to_bytes(return_result.logs(i).topics(j).data()));
             }
             log.topics = topic;

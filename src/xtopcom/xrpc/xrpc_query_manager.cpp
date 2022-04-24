@@ -2505,7 +2505,7 @@ void xrpc_query_manager::eth_getTransactionReceipt(xJson::Value & js_req, xJson:
 
         evm_common::xevm_transaction_result_t evm_result;
         auto ret = sendindex->get_txaction().get_evm_transaction_result(evm_result);
-        std::string contract_addr  = std::string("0x") + evm_result.extra_msg;
+        std::string contract_addr  = evm_result.extra_msg;
         js_result["contractAddress"] = contract_addr;
         xdbg("xrpc_query_manager::eth_getTransactionReceipt.tx hash:%s, ret:%d, extra_msg:%s, contract_addr:%s", js_req["tx_hash"].asString().c_str(), ret, evm_result.extra_msg.c_str(), contract_addr.c_str());
 
@@ -2521,18 +2521,18 @@ void xrpc_query_manager::eth_getTransactionReceipt(xJson::Value & js_req, xJson:
             js_log["blockHash"] = block_hash;
             js_log["transactionHash"] = tx_hash;
             js_log["transactionIndex"] = tx_idx;
-            js_log["address"] = std::string("0x") + log.address;
+            js_log["address"] = log.address;
 
             evm_common::h2048 bloom = calculate_bloom(log.address);
             logs_bloom |= bloom;
 
             for (auto & topic : log.topics) {
-                js_log["topics"].append(std::string("0x") + topic);
+                js_log["topics"].append(topic);
                 evm_common::h2048 topic_bloom = calculate_bloom(topic);
                 logs_bloom |= topic_bloom;
             }
 
-            js_log["data"] = std::string("0x") + log.data;
+            js_log["data"] = log.data;
             js_log["removed"] = false;
             js_result["logs"].append(js_log);
             index++;

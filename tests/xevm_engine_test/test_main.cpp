@@ -5,6 +5,12 @@
 #include "xutility/xhash.h"
 #include "xdata/xrootblock.h"
 
+#include "tests/xevm_engine_test/evm_test_fixture/xtest_evm_fixture.h"
+
+int evm_tests_argc;
+char ** evm_tests_argv;
+
+
 using namespace std;
 using namespace top;
 
@@ -34,6 +40,8 @@ int main(int argc, char **argv) {
     XMETRICS_INIT();
 
     testing::InitGoogleTest(&argc, argv);
+    evm_tests_argc = argc;
+    evm_tests_argv = argv;
 
     xinit_log("./xevm_test.log", true, true);
     xset_log_level(enum_xlog_level_debug);
