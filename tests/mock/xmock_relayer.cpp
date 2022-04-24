@@ -3,6 +3,21 @@
 
 namespace top
 {
+
+    typedef  struct RECEIPTSRLP_LOG_DEF {
+        h160 contractAddress;
+        bytes32[] topics;
+        bytes data;
+    }receiptrlp_log_def;
+
+    typedef  struct  RECEIPTSRLP_DEF{
+        uint8_t status;
+        h256 gasUsed;
+        bytes logsBloom;
+        receiptrlp_log_def logs;
+    }receiptrlp_def;
+
+
     namespace mock
     {
 
@@ -53,23 +68,80 @@ namespace top
     }
 
 
- void   relayer_mock::relayer_transaction_create(){
+ void   relayer_mock::relayer_receipts_create(uint64_t height, uint32_t tx_count) {
+     
+    struct timeval beg;
+    uint64_t rand_time = 0;
 
+    std::vector<bytes> receipts;
+    for (int i = 0; i < tx_count; i++) {
+        receiptrlp_def receipt;
+
+        receipt.status = 1;
+        receipt.gasUsed = (i+1)*1000;
+
+        receiptrlp_log_def logs;
+        logs.
+
+
+    typedef  struct RECEIPTSRLP_LOG_DEF {
+        address contractAddress;
+        bytes32[] topics;
+        bytes data;
+    }receiptrlp_log_def;
+
+
+
+        gettimeofday(&beg, NULL);
+        rand_time =  beg.tv_sec *1000 + beg.tv_usec;
+        auto  rand_str = base::xstring_utl::tostring(rand_time);
+
+        receipt.TxHash = top::utl::xsha2_256_t::digest(rand_str);
+        std::cout << "i " << i << " TxHash " << TxHash.data() << std::endl;
+        rand_time++;
+        rand_str = base::xstring_utl::tostring(rand_time);
+
+        receipt.Address =  top::utl::xsha2_256_t::digest(rand_str, 20);
+        std::cout << "i " << i << " Address " << TxHash.data() << std::endl;
+
+        receipt.GasUsed = i*123;
+
+        rand_time++;
+        rand_str = base::xstring_utl::tostring(rand_time);
+        receipt.BlockHash =  top::utl::xsha2_256_t::digest(rand_str);
+        receipt.TransactionIndex = i;
+        
+        bytes encoded = bytes();
+        append(encoded, RLP::encode( receipt.Type));
+        append(encoded, RLP::encode(receipt.Status));
+        append(encoded, RLP::encode(receipt.CumulativeGasUsed));
+        append(encoded, RLP::encode(bytes(receipt.Bloom.begin(), receipt.Bloom.end())));
+        append(encoded, RLP::encode(bytes(receipt.TxHash.begin(), receipt.TxHash.end())));
+        append(encoded, RLP::encode(bytes(receipt.Address.begin(),receipt.Address.end())));
+        append(encoded, RLP::encode(receipt.GasUsed ));
+        append(encoded, RLP::encode(bytes(receipt.BlockHash.begin(), receipt.BlockHash.end())));
+        append(encoded, RLP::encode(receipt.TransactionIndex));
+        receipts.push_back(encoded);
     }
+
+    h256 receiptsRoot = orderedTrieRoot(receipts);
+    std::cout << "MPT receipts Hash: " <<  receiptsRoot.hex()  << std::endl;
+
+
+
+ }
 
 
 
  void   relayer_mock::relayer_fullOutProoff(){
 
 
-    }
+}
 
  void    relayer_mock::geneesis_block_init(const xJson::Value &key_info) {
 
-     
-     x_LightClientBlockInnerHeader &header = m_genes_block.header;
+    x_LightClientBlockInnerHeader &header = m_genes_block.header;
     
-
     std::string prev_block_hash =  key_info["prev_block_hash"].asString();
     if (!prev_block_hash.mepty()) {
         header.prev_block_hash.copyFromStr(prev_block_hash);
@@ -95,44 +167,45 @@ namespace top
      }
 
     std:::string next_epoch_id = key_info["inner_lite"]["next_epoch_id"].asString(); 
-    if (!next_epoch_id.empty())
-    {
+    if (!next_epoch_id.empty()) {
         header.next_epoch_id.copyFromStr(next_epoch_id);
      }  else {
         xerror("next_epoch_id  is NULL");
      }
     
-    std:::string next_epoch_id = key_info["inner_lite"]["next_epoch_id"].asString(); 
-    if (!next_epoch_id.empty())
-    {
+    std:::string next_epoch_id = key_info["inner_lite"]["prev_state_root"].asString(); 
+    if (!next_epoch_id.empty()) {
         header.next_epoch_id.copyFromStr(next_epoch_id);
     }  else {
         xerror("next_epoch_id  is NULL");
     }
 
 
+
+    header.timestamp = key_info["inner_lite"]["timestamp"].asUInt64(); 
     
+    std:::string next_bp_hash = key_info["inner_lite"]["next_bp_hash"].asString(); 
+    if (!next_bp_hash.empty()) {
+        header.next_bp_hash.copyFromStr(next_bp_hash);
+    }  else {
+        xerror("next_bp_hash  is NULL");
+    }
     
+    std:::string block_merkle_root = key_info["inner_lite"]["block_merkle_root"].asString(); 
+    if (!block_merkle_root.empty()) {
+        header.block_merkle_root.copyFromStr(block_merkle_root);
+    }  else {
+        xerror("block_merkle_root  is NULL");
+    }
 
+    //todo
+    std:::string outcome_root = key_info["inner_lite"]["outcome_root"].asString(); 
+    if (!outcome_root.empty()) {
+        header.outcome_root.copyFromStr(outcome_root);
+    }  else {
+        xerror("next_epoch_id  is NULL");
+    }
 
-
-
-     if (key_info_js["db_path_num"] > 1) {   
-            db_path_num = key_info_js["db_path_num"].asInt();
-            for (int i = 0; i < db_path_num; i++) {
-                std::string key_db_path = "db_path_" + std::to_string(i+1);
-                std::string key_db_size = "db_path_size_" + std::to_string(i+1);
-                std::string db_path_result =  key_info_js[key_db_path].asString();
-                uint64_t db_size_result = key_info_js[key_db_size].asUInt64(); 
-                if (db_path_result.empty() || db_size_result < 1) {
-                    db_path_num = 1;
-                    xwarn("xtop_application::read db %i path %s size %lld config failed!", i , db_path_result.c_str(), db_size_result);
-                    break;
-                }
-                xinfo("xtop_application::read db  %i path %s size %lld sucess!",i , db_path_result.c_str(), db_size_result);
-                db_data_paths.emplace_back(db_path_result, db_size_result);
-            }
-        }
 
 
     }

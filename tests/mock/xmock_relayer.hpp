@@ -21,7 +21,7 @@ public:
 
    void relayer_init();
    void relayer_approval_add();
-   void relayer_transaction_create();
+   void  relayer_receipts_create(uint64_t height, uint32_t tx_count);
 
 private:
 

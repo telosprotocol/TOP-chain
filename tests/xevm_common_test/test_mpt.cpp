@@ -140,7 +140,7 @@ TEST(test_mpt, test_mpt_test) {
 
         h256 receiptsRoot = orderedTrieRoot(receipts);
         std::cout << "MPT receipts Hash: " <<  receiptsRoot.hex()  << std::endl;
-         ASSERT_EQ(receiptsRoot, goResult);
+        ASSERT_EQ(receiptsRoot, goResult);
 
     }
 
