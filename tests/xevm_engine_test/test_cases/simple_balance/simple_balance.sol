@@ -13,7 +13,7 @@ contract test_balance {
     function withdraw_balance(uint256 amount) public {
         totalBalance -= amount;
         bool res;
-        (res, ) = address(msg.sender).call{gas: 10000, value: amount}("");
+        (res, ) = address(msg.sender).call{gas: 100000, value: amount}("");
         emit Withdraw(res, msg.sender, amount);
     }
 }

@@ -6,6 +6,16 @@ NS_BEG3(top, contract_runtime, evm)
 
 #define CON(x) (std::isdigit((x)) ? ((x) - '0') : (std::tolower((x)) - 'W'))
 
+std::string evm_to_top_address(std::string const & input) {
+    if (input.substr(0, 2) == ETH_ACCOUNT_PREFIX) {
+        return T6_ACCOUNT_PREFIX + input.substr(2);
+    }
+    if (input.substr(0, 6) == T6_ACCOUNT_PREFIX) {
+        return input;
+    }
+    return T6_ACCOUNT_PREFIX + input;
+}
+
 xvariant_bytes::xvariant_bytes() {
 }
 
@@ -52,6 +62,9 @@ std::string xvariant_bytes::to_string() {
 }
 
 std::string xvariant_bytes::to_hex_string(std::string const & PREFIX) {
+    if (m_data.empty()) {
+        return "";
+    }
     // bytes_to_hex_string
     std::string result;
     result.reserve(m_data.size() * 2);  // two digits per character
@@ -63,6 +76,6 @@ std::string xvariant_bytes::to_hex_string(std::string const & PREFIX) {
         result.push_back(hex[c % 16]);
     }
 
-    return result;
+    return PREFIX + result;
 }
 NS_END3

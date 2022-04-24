@@ -37,7 +37,6 @@ xtop_evm_context::xtop_evm_context(std::unique_ptr<data::xbasic_top_action_t con
     // value into 256
     uint64_t value_uint64 = static_cast<data::xevm_consensus_action_t const *>(m_action.get())->value();
     evm_common::u256 value_u256{value_uint64};
-    value_u256 = value_u256 * (uint64_t)10e12;  // todo for now . tx.amount's numerical precision is 10e-6. EVM need Wei(10e-18). multi 10e12 here
     evm_common::xBorshEncoder encoder;
     encoder.EncodeInteger(value_u256);
     xbytes_t result = encoder.GetBuffer();
