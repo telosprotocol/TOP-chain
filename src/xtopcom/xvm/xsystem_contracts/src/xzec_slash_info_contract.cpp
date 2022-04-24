@@ -50,7 +50,7 @@ void xzec_slash_info_contract::summarize_slash_info(std::string const & slash_in
     uint32_t table_id = 0;
     XCONTRACT_ENSURE(data::xdatautil::extract_parts(source_addr, base_addr, table_id), "source address extract base_addr or table_id error!");
     xdbg("[xzec_slash_info_contract][summarize_slash_info] self_account %s, source_addr %s, base_addr %s\n", account.c_str(), source_addr.c_str(), base_addr.c_str());
-    XCONTRACT_ENSURE(base_addr == top::sys_contract_sharding_statistic_info_addr, "invalid source addr's call!");
+    XCONTRACT_ENSURE(base_addr == top::sys_contract_sharding_statistic_info_addr || base_addr == top::sys_contract_eth_table_statistic_info_addr, "invalid source addr's call!");
 
     xinfo("[xzec_slash_info_contract][summarize_slash_info] enter table contract report slash info, SOURCE_ADDRESS: %s, pid:%d, ", source_addr.c_str(), getpid());
 
@@ -111,14 +111,15 @@ void xzec_slash_info_contract::summarize_slash_info(std::string const & slash_in
         xinfo("[xzec_slash_info_contract][summarize_slash_info] condition not statisfy!");
     }
 
-
-    xkinfo("[xzec_slash_info_contract][summarize_slash_info] effective table contract report slash info, auditor size: %zu, validator size: %zu, summarized tableblock num: %u, pid: %d",
-         summarize_info.auditor_info.size(),
-         summarize_info.validator_info.size(),
-         summarize_tableblock_count,
-         getpid());
+    xkinfo(
+        "[xzec_slash_info_contract][summarize_slash_info] effective table contract report slash info, auditor size: %zu, validator size: %zu, evm size: %zu, summarized tableblock "
+        "num: %u, pid: %d",
+        summarize_info.auditor_info.size(),
+        summarize_info.validator_info.size(),
+        summarize_info.evm_info.size(),
+        summarize_tableblock_count,
+        getpid());
 }
-
 
 bool xzec_slash_info_contract::summarize_slash_info_internal(std::string const& slash_info, std::string const& summarize_info_str, std::string const& summarize_tableblock_count_str, uint64_t const summarized_height,
                                                             xunqualified_node_info_t& summarize_info,  uint32_t&  summarize_tableblock_count, std::uint64_t& cur_statistic_height) {
@@ -352,7 +353,7 @@ void xzec_slash_info_contract::pre_condition_process(xunqualified_node_info_t& s
 std::vector<xaction_node_info_t> xzec_slash_info_contract::filter_nodes(xunqualified_node_info_t const & summarize_info, uint32_t slash_vote_threshold, uint32_t slash_persent_threshold, uint32_t award_vote_threshold, uint32_t award_persent_threshold) {
     std::vector<xaction_node_info_t> nodes_to_slash{};
 
-    if (summarize_info.auditor_info.empty() && summarize_info.validator_info.empty()) {
+    if (summarize_info.auditor_info.empty() && summarize_info.validator_info.empty() && summarize_info.evm_info.empty()) {
         xwarn("[xzec_slash_info_contract][filter_slashed_nodes] the summarized node info is empty!");
         return nodes_to_slash;
     } else {
@@ -424,6 +425,33 @@ std::vector<xaction_node_info_t> xzec_slash_info_contract::filter_helper(xunqual
         }
     }
 
+    node_to_action.clear();
+    for (auto const & node : node_map.evm_info) {
+        xunqualified_filter_info_t info;
+        info.node_id = node.first;
+        info.node_type = common::xnode_type_t::evm;
+        info.vote_percent = node.second.block_count * 100 / node.second.subset_count;
+        node_to_action.emplace_back(info);
+    }
+
+    std::sort(node_to_action.begin(), node_to_action.end(), [](xunqualified_filter_info_t const & lhs, xunqualified_filter_info_t const & rhs) {
+        return lhs.vote_percent < rhs.vote_percent;
+    });
+
+    slash_size = node_to_action.size() * slash_persent_threshold / 100;
+    for (size_t i = 0; i < slash_size; ++i) {
+        if (node_to_action[i].vote_percent < slash_vote_threshold || 0 == node_to_action[i].vote_percent) {
+            res.push_back(xaction_node_info_t{node_to_action[i].node_id, node_to_action[i].node_type});
+        }
+    }
+
+    award_size = node_to_action.size() * award_persent_threshold / 100;
+    for (int i = (int)node_to_action.size() - 1; i >= (int)(node_to_action.size() - award_size); --i) {
+        if (node_to_action[i].vote_percent > award_vote_threshold) {
+            res.push_back(xaction_node_info_t{node_to_action[i].node_id, node_to_action[i].node_type, false});
+        }
+    }
+
     return res;
 }
 
@@ -436,6 +464,12 @@ void xzec_slash_info_contract::print_summarize_info(data::xunqualified_node_info
     }
 
     for (auto const & item : summarize_slash_info.validator_info) {
+        out += item.first.value();
+        out += "|" + std::to_string(item.second.block_count);
+        out += "|" + std::to_string(item.second.subset_count) + "|";
+    }
+
+    for (auto const & item : summarize_slash_info.evm_info) {
         out += item.first.value();
         out += "|" + std::to_string(item.second.block_count);
         out += "|" + std::to_string(item.second.subset_count) + "|";
@@ -544,7 +578,14 @@ xunqualified_node_info_t xzec_slash_info_contract::process_statistic_data(top::d
                     xdbg("[xzec_slash_info_contract][do_unqualified_node_slash] incremental validator data: {gourp id: %d, account addr: %s, slot id: %u, subset count: %u, block_count: %u}", group_addr.group_id().value(), account_addr.c_str(),
                         slotid, group_account_data.account_statistics_data[slotid].vote_data.block_count, group_account_data.account_statistics_data[slotid].vote_data.vote_count);
                 }
-
+            } else if (top::common::has<top::common::xnode_type_t::evm>(group_addr.type())) {// process evm group
+                for (std::size_t slotid = 0; slotid < group_account_data.account_statistics_data.size(); ++slotid) {
+                    auto account_addr = node_service->get_group(group_xvip2)->get_node(slotid)->get_account();
+                    res_node_info.evm_info[common::xnode_id_t{account_addr}].subset_count += group_account_data.account_statistics_data[slotid].vote_data.block_count;
+                    res_node_info.evm_info[common::xnode_id_t{account_addr}].block_count += group_account_data.account_statistics_data[slotid].vote_data.vote_count;
+                    xdbg("[xzec_slash_info_contract][do_unqualified_node_slash] incremental evm data: {gourp id: %d, account addr: %s, slot id: %u, subset count: %u, block_count: %u}", group_addr.group_id().value(), account_addr.c_str(),
+                        slotid, group_account_data.account_statistics_data[slotid].vote_data.block_count, group_account_data.account_statistics_data[slotid].vote_data.vote_count);
+                }
             } else { // invalid group
                 xwarn("[xzec_slash_info_contract][do_unqualified_node_slash] invalid group id: %d", group_addr.group_id().value());
                 std::error_code ec{ xvm::enum_xvm_error_code::enum_vm_exception };
@@ -568,6 +609,11 @@ void  xzec_slash_info_contract::accumulate_node_info(xunqualified_node_info_t co
     for (auto const & item : node_info.validator_info) {
         summarize_info.validator_info[item.first].block_count += item.second.block_count;
         summarize_info.validator_info[item.first].subset_count += item.second.subset_count;
+    }
+
+    for (auto const & item : node_info.evm_info) {
+        summarize_info.evm_info[item.first].block_count += item.second.block_count;
+        summarize_info.evm_info[item.first].subset_count += item.second.subset_count;
     }
 }
 
@@ -633,7 +679,6 @@ bool xzec_slash_info_contract::slash_condition_check(std::string const& last_sla
             stream >> internal_stream;
             int32_t count;
             internal_stream >> count;
-            // xdbg("LON cnt: %d", count);
             for (int32_t i = 0; i < count; i++) {
                 std::string id;
                 xnode_vote_percent_t value;
