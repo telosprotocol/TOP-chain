@@ -1007,7 +1007,7 @@ static void get_reward_detail(common::xaccount_address_t const & contract_addres
         xdbg("[get_reward_detail] contract_address: %s, property_name: %s, error", contract_address.to_string().c_str(), property_name.c_str());
         return;
     }
-    data::system_contract::xissue_detail issue_detail;
+    data::system_contract::xissue_detail_v2 issue_detail;
     issue_detail.from_string(serialized_value);
     xJson::Value jv;
     jv["onchain_timer_round"] = (xJson::UInt64)issue_detail.onchain_timer_round;
@@ -1018,10 +1018,12 @@ static void get_reward_detail(common::xaccount_address_t const & contract_addres
     jv["archive_reward_ratio"] = issue_detail.m_archive_reward_ratio;
     jv["validator_reward_ratio"] = issue_detail.m_validator_reward_ratio;
     jv["auditor_reward_ratio"] = issue_detail.m_auditor_reward_ratio;
+    jv["eth_reward_ratio"] = issue_detail.m_eth_reward_ratio;
     jv["vote_reward_ratio"] = issue_detail.m_vote_reward_ratio;
     jv["governance_reward_ratio"] = issue_detail.m_governance_reward_ratio;
     jv["validator_group_count"] = (xJson::UInt)issue_detail.m_validator_group_count;
     jv["auditor_group_count"] = (xJson::UInt)issue_detail.m_auditor_group_count;
+    jv["eth_group_count"] = (xJson::UInt)issue_detail.m_eth_group_count;
     xJson::Value jr;
     for (auto const & node_reward : issue_detail.m_node_rewards) {
         std::stringstream ss;

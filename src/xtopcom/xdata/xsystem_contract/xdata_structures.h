@@ -241,7 +241,7 @@ struct xunqualified_node_info_v2_t final : public xserializable_based_on<void> {
     std::map<common::xnode_id_t, xnode_vote_percent_t> validator_info;
     std::map<common::xnode_id_t, xnode_vote_percent_t> evm_info;
 
-    operator xunqualified_node_info_v1_t() const;
+    explicit operator xunqualified_node_info_v1_t() const;
 
 private:
     int32_t do_write(base::xstream_t & stream) const override;
@@ -703,7 +703,27 @@ private:
     }
 };
 
-struct reward_detail final : public xserializable_based_on<void> {
+struct reward_detail_v1 final : public xserializable_based_on<void> {
+    ::uint128_t m_edge_reward{0};
+    ::uint128_t m_archive_reward{0};
+    ::uint128_t m_validator_reward{0};
+    ::uint128_t m_auditor_reward{0};
+    ::uint128_t m_vote_reward{0};
+    ::uint128_t m_self_reward{0};
+
+private:
+    int32_t do_write(base::xstream_t & stream) const override;
+
+    /**
+     * @brief read from stream
+     *
+     * @param stream
+     * @return int32_t
+     */
+    int32_t do_read(base::xstream_t & stream) override;
+};
+
+struct reward_detail_v2 final : public xserializable_based_on<void> {
     ::uint128_t m_edge_reward{0};
     ::uint128_t m_archive_reward{0};
     ::uint128_t m_validator_reward{0};
@@ -712,19 +732,10 @@ struct reward_detail final : public xserializable_based_on<void> {
     ::uint128_t m_vote_reward{0};
     ::uint128_t m_self_reward{0};
 
+    explicit operator reward_detail_v1() const;
+
 private:
-    int32_t do_write(base::xstream_t & stream) const override {
-        const int32_t begin_pos = stream.size();
-        stream << m_edge_reward;
-        stream << m_archive_reward;
-        stream << m_validator_reward;
-        stream << m_auditor_reward;
-        stream << m_vote_reward;
-        stream << m_self_reward;
-        stream << m_eth_reward;
-        const int32_t end_pos = stream.size();
-        return (end_pos - begin_pos);
-    }
+    int32_t do_write(base::xstream_t & stream) const override;
 
     /**
      * @brief read from stream
@@ -732,23 +743,42 @@ private:
      * @param stream
      * @return int32_t
      */
-    int32_t do_read(base::xstream_t & stream) override {
-        const int32_t begin_pos = stream.size();
-        stream >> m_edge_reward;
-        stream >> m_archive_reward;
-        stream >> m_validator_reward;
-        stream >> m_auditor_reward;
-        stream >> m_vote_reward;
-        stream >> m_self_reward;
-        if (stream.size() > 0) {
-            stream >> m_eth_reward;
-        }
-        const int32_t end_pos = stream.size();
-        return (begin_pos - end_pos);
-    }
+    int32_t do_read(base::xstream_t & stream) override;
 };
 
-class xissue_detail final : public xserializable_based_on<void> {
+class xissue_detail_v1 final : public xserializable_based_on<void> {
+public:
+    uint64_t onchain_timer_round{0};
+    uint64_t m_zec_vote_contract_height{0};
+    uint64_t m_zec_workload_contract_height{0};
+    uint64_t m_zec_reward_contract_height{0};
+    uint16_t m_edge_reward_ratio{0};
+    uint16_t m_archive_reward_ratio{0};
+    uint16_t m_validator_reward_ratio{0};
+    uint16_t m_auditor_reward_ratio{0};
+    uint16_t m_vote_reward_ratio{0};
+    uint16_t m_governance_reward_ratio{0};
+    uint64_t m_auditor_group_count{0};
+    uint64_t m_validator_group_count{0};
+    std::map<std::string, reward_detail_v1> m_node_rewards;
+
+public:
+    std::string to_string() const;
+    int32_t from_string(std::string const & s);
+
+private:
+    int32_t do_write(base::xstream_t & stream) const override;
+
+    /**
+     * @brief read from stream
+     *
+     * @param stream
+     * @return int32_t
+     */
+    int32_t do_read(base::xstream_t & stream) override;
+};
+
+class xissue_detail_v2 final : public xserializable_based_on<void> {
 public:
     uint64_t onchain_timer_round{0};
     uint64_t m_zec_vote_contract_height{0};
@@ -764,9 +794,10 @@ public:
     uint64_t m_auditor_group_count{0};
     uint64_t m_validator_group_count{0};
     uint64_t m_eth_group_count{0};
-    std::map<std::string, reward_detail> m_node_rewards;
+    std::map<std::string, reward_detail_v2> m_node_rewards;
 
 public:
+    explicit operator xissue_detail_v1() const;
     std::string to_string() const;
     int32_t from_string(std::string const & s);
 
