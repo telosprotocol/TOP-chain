@@ -1,7 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![cfg_attr(not(feature = "std"), feature(alloc_error_handler))]
 
-use access::{AccessTuple, EIP_2930_TYPE_BYTE, EIP_1559_TYPE_BYTE};
+use access::{AccessTuple, EIP_1559_TYPE_BYTE, EIP_2930_TYPE_BYTE};
 use engine_types::types::{Address, Wei};
 use engine_types::{vec, Vec, H160, U256};
 use rlp::{Decodable, DecoderError, Rlp};
@@ -26,8 +26,7 @@ impl TryFrom<&[u8]> for EthTransactionKind {
             Ok(Self::Eip2930(eip_2930::SignedTransaction2930::decode(
                 &Rlp::new(&bytes[1..]),
             )?))
-        } else 
-        if bytes[0] == EIP_1559_TYPE_BYTE {
+        } else if bytes[0] == EIP_1559_TYPE_BYTE {
             Ok(Self::Eip1559(eip_1559::SignedTransaction1559::decode(
                 &Rlp::new(&bytes[1..]),
             )?))
