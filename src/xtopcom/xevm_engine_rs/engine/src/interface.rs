@@ -46,7 +46,14 @@ mod interface {
     }
 
     #[no_mangle]
-    pub extern "C" fn do_mock_add_balance(address: *const u8, address_len: u64, value: u64) {
+    pub extern "C" fn do_mock_add_balance(
+        address: *const u8,
+        address_len: u64,
+        value_1: u64,
+        value_2: u64,
+        value_3: u64,
+        value_4: u64,
+    ) {
         sdk::log("========= mock set_balance =========");
         let address = unsafe {
             assert!(!address.is_null());
@@ -58,10 +65,14 @@ mod interface {
         // let mut engine = Engine::new(eth_address, io, &io).sdk_unwrap();
         // let origin = io.sender_address();
         let origin_value = get_balance(&mut io, &eth_address);
+        let mut value_u256 = U256::from(value_1);
+        value_u256 = (value_u256 << 64) + U256::from(value_2);
+        value_u256 = (value_u256 << 64) + U256::from(value_3);
+        value_u256 = (value_u256 << 64) + U256::from(value_4);
         set_balance(
             &mut io,
             &eth_address,
-            &Wei::new(origin_value.raw() + U256::from(value)),
+            &Wei::new(origin_value.raw() + value_u256),
         );
     }
 }

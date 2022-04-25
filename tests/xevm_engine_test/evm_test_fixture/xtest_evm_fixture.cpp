@@ -53,6 +53,7 @@ bool xtest_evm_fixture::execute() {
     std::cout << "-- find .json files:" << std::endl;
     find_json_files(evm_tests_argv[1], res);
     std::cout << "-- " << res.size() << " files found" << std::endl;
+    m_summary.json_files_num = res.size();
     for (auto p : res) {
         std::cout << "---- begin test_file: " << p << std::endl;
         try {
@@ -63,6 +64,7 @@ bool xtest_evm_fixture::execute() {
         clean_env();
     }
 
+    m_summary.dump();
     return true;
 }
 
@@ -89,14 +91,22 @@ bool xtest_evm_fixture::execute_test_case(std::string const & json_file_path) {
     // std::cout << j << std::endl;
 
     // auto pre_data = j["pre_data"];
-    std::map<account_id, uint64_t> pre_data = j.at("pre_data").get<std::map<account_id, uint64_t>>();
+    auto deploy_list = j["deploy_contract"];
+    auto testcases_list = j["test_cases"];
+    m_summary.deploy_cases_num += deploy_list.size();
+    m_summary.call_cases_num += testcases_list.size();
+
+    std::map<account_id, std::string> pre_data = j.at("pre_data").get<std::map<account_id, std::string>>();
     if (!pre_data.empty()) {
+        auto storage = std::make_shared<contract_runtime::evm::xevm_storage>(statestore);
+        std::unique_ptr<top::evm::xevm_logic_face_t> logic_ptr = top::make_unique<top::contract_runtime::evm::xevm_logic_t>(storage, nullptr);
+        top::evm::evm_import_instance::instance()->set_evm_logic(std::move(logic_ptr));
         for (auto _each : pre_data) {
-            mock_add_balance(_each.first, _each.second);
+            evm_common::u256 mock_value_256{_each.second};
+            mock_add_balance(_each.first, mock_value_256);
         }
     }
 
-    auto deploy_list = j["deploy_contract"];
     // std::cout << deploy_list << std::endl;
     for (auto each_deploy : deploy_list) {
         if (!each_deploy.empty()) {
@@ -104,7 +114,6 @@ bool xtest_evm_fixture::execute_test_case(std::string const & json_file_path) {
         }
     }
 
-    auto testcases_list = j["test_cases"];
     // std::cout << testcases_list << std::endl;
     for (auto each_call : testcases_list) {
         if (!each_call.empty()) {
@@ -120,43 +129,37 @@ bool xtest_evm_fixture::do_deploy_test(json const & each_deploy) {
     account_id src_address = each_deploy["src_address"];
     std::string code_file = each_deploy["code_file_path"];
     uint64_t gas_limit = each_deploy["gas_limit"];
-    uint64_t value = each_deploy["value"];
+    std::string value = each_deploy["value"];
+    evm_common::u256 value_256{value};
+    std::cout << "get value_256:" << value_256 << std::endl;
 
     auto expected = each_deploy["expected"];
     std::string contract_name_symbol = expected["extra_message"];
 
     vm_param.set_evm_gas_limit(gas_limit);
 
-    top::data::xtransaction_ptr_t tx = top::make_object_ptr<top::data::xtransaction_v2_t>();
-    tx->set_source_addr(src_address);
-    tx->set_target_addr("T600040000000000000000000000000000000000000000");  // deploy code
-    tx->set_ext(get_contract_bin(code_file));
-    tx->set_amount(value);
-    auto cons_tx = top::make_object_ptr<top::data::xcons_transaction_t>(tx.get());
+    auto evm_action = top::make_unique<data::xconsensus_action_t<data::xtop_action_type_t::evm>>(
+        common::xaccount_address_t{src_address}, common::xaccount_address_t{"T600040000000000000000000000000000000000000000"}, value_256, get_contract_bin(code_file));
 
-    txexecutor::xvm_input_t input{statestore, vm_param, cons_tx};
-    txexecutor::xvm_output_t output;
     top::evm::xtop_evm evm{nullptr, statestore};
+    auto action_result = evm.execute_action(std::move(evm_action), vm_param);
 
-    auto ret = evm.execute(input, output);
-    EXPECT_EQ(ret, txexecutor::enum_exec_success);
-    EXPECT_EQ(output.m_vm_error_code, 0);
-
-    account_id contract_address = output.m_tx_result.extra_msg;
+    account_id contract_address = action_result.extra_msg;
     deployed_contract_map[contract_name_symbol] = contract_address;
 
     uint32_t expected_result = expected["status"];
-    EXPECT_EQ(output.m_tx_result.status, expected_result);
+    EXPECT_EQ(action_result.status, expected_result);
 
     uint64_t expected_gas_used = expected["gas_used"];
-    EXPECT_EQ(output.m_tx_result.used_gas, expected_gas_used);
+    EXPECT_EQ(action_result.used_gas, expected_gas_used);
 
     // std::string expected_extra_msg = expected["extra_message"];
-    // EXPECT_EQ(output.m_tx_result.extra_msg, expected_extra_msg);
+    // EXPECT_EQ(action_result.extra_msg, expected_extra_msg);
 
-    // std::cout << "tx output: " << output.m_tx_result.dump_info() << std::endl;
-    EXPECT_TRUE(expected_logs(expected["logs"], output.m_tx_result.logs));
+    // std::cout << "tx output: " << action_result.dump_info() << std::endl;
+    EXPECT_TRUE(expected_logs(expected["logs"], action_result.logs));
 
+    m_summary.succ_deploy_cases += 1;
     return true;
 }
 bool xtest_evm_fixture::do_call_test(json const & each_call) {
@@ -172,49 +175,43 @@ bool xtest_evm_fixture::do_call_test(json const & each_call) {
     account_id target_address = deployed_contract_map[contract_name_symbol];
 
     uint64_t gas_limit = each_call["gas_limit"];
-    uint64_t value = each_call["value"];
+    std::string value = each_call["value"];
+    evm_common::u256 value_256{value};
+    std::cout << "get value_256:" << value_256 << std::endl;
     std::string input_data = each_call["data"];
 
     vm_param.set_evm_gas_limit(gas_limit);
 
-    top::data::xtransaction_ptr_t tx = top::make_object_ptr<top::data::xtransaction_v2_t>();
-    tx->set_source_addr(src_address);
-    tx->set_target_addr(evm_to_top_address(target_address));  // deploy code
-    tx->set_ext(xvariant_bytes{input_data, true}.to_string());
-    tx->set_amount(value);
-    auto cons_tx = top::make_object_ptr<top::data::xcons_transaction_t>(tx.get());
+    auto evm_action = top::make_unique<data::xconsensus_action_t<data::xtop_action_type_t::evm>>(
+        common::xaccount_address_t{src_address}, common::xaccount_address_t{evm_to_top_address(target_address)}, value_256, xvariant_bytes{input_data, true}.to_bytes());
 
-    txexecutor::xvm_input_t input{statestore, vm_param, cons_tx};
-    txexecutor::xvm_output_t output;
     top::evm::xtop_evm evm{nullptr, statestore};
-
-    auto ret = evm.execute(input, output);
-    // std::cout << "tx output: " << output.m_tx_result.dump_info() << std::endl;
-    EXPECT_EQ(ret, txexecutor::enum_exec_success);
-    EXPECT_EQ(output.m_vm_error_code, 0);
+    auto action_result = evm.execute_action(std::move(evm_action), vm_param);
 
     auto expected = each_call["expected"];
     uint32_t expected_result = expected["status"];
-    EXPECT_EQ(output.m_tx_result.status, expected_result);
+    EXPECT_EQ(action_result.status, expected_result);
 
     uint64_t expected_gas_used = expected["gas_used"];
-    EXPECT_EQ(output.m_tx_result.used_gas, expected_gas_used);
+    EXPECT_EQ(action_result.used_gas, expected_gas_used);
 
     std::string expected_extra_msg = expected["extra_message"];
     if (!expected_extra_msg.empty()) {
-        EXPECT_EQ(output.m_tx_result.extra_msg, expected_extra_msg);
+        EXPECT_EQ(action_result.extra_msg, expected_extra_msg);
     }
 
-    EXPECT_TRUE(expected_logs(expected["logs"], output.m_tx_result.logs));
+    EXPECT_TRUE(expected_logs(expected["logs"], action_result.logs));
+
+    m_summary.succ_call_cases += 1;
     return true;
 }
 
-std::string xtest_evm_fixture::get_contract_bin(std::string const & code_file_path) {
+xbytes_t xtest_evm_fixture::get_contract_bin(std::string const & code_file_path) {
     std::ifstream code_file_stream(current_json_file_directory + code_file_path);
     std::string bytecode_hex_string;
     code_file_stream >> bytecode_hex_string;
 
-    return xvariant_bytes{bytecode_hex_string, true}.to_string();
+    return xvariant_bytes{bytecode_hex_string, true}.to_bytes();
 }
 
 bool xtest_evm_fixture::expected_logs(json const & expected_json, std::vector<evm_common::xevm_log_t> const & result_logs) {
@@ -248,10 +245,19 @@ bool xtest_evm_fixture::expected_logs(json const & expected_json, std::vector<ev
     return true;
 }
 
-void xtest_evm_fixture::mock_add_balance(std::string account, uint64_t amount) {
+void xtest_evm_fixture::mock_add_balance(std::string account, evm_common::u256 amount) {
     assert(account.substr(0, 6) == "T60004");
     std::string eth_address = account.substr(6);
     assert(eth_address.size() == 40);
-    do_mock_add_balance(eth_address.c_str(), eth_address.size(), amount);
+
+    auto u64_4 = amount.convert_to<uint64_t>();
+    amount >>= 64;
+    auto u64_3 = amount.convert_to<uint64_t>();
+    amount >>= 64;
+    auto u64_2 = amount.convert_to<uint64_t>();
+    amount >>= 64;
+    auto u64_1 = amount.convert_to<uint64_t>();
+
+    do_mock_add_balance(eth_address.c_str(), eth_address.size(), u64_1, u64_2, u64_3, u64_4);
 }
 NS_END4
