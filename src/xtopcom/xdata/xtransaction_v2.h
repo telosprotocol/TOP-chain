@@ -40,7 +40,7 @@ class xtransaction_v2_t : public xbase_dataunit_t<xtransaction_v2_t, xdata_type_
     int32_t do_read_without_hash_signature(base::xstream_t & stream);
     
  public:  // check apis
-    virtual bool        unuse_member_check() const override {return true;};
+    virtual bool        unuse_member_check() const override;
     virtual bool        transaction_len_check() const override ;
     virtual bool        digest_check() const override;
     virtual bool        sign_check() const override;
