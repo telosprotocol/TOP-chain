@@ -1,4 +1,4 @@
-use crate::access::{AccessTuple,EIP_1559_TYPE_BYTE};
+use crate::access::{AccessTuple, EIP_1559_TYPE_BYTE};
 use engine_precompiles::secp256k1::ecrecover;
 use engine_types::types::{Address, Wei};
 use engine_types::{Vec, U256};
