@@ -5,7 +5,7 @@
             "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
             "code_file_path": "add.bin",
             "gas_limit": 220022,
-            "value": 0,
+            "value": "0",
             "expected": {
                 "status": 0,
                 "extra_message": "contract_one",
@@ -17,7 +17,7 @@
             "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
             "code_file_path": "add.bin",
             "gas_limit": 200000,
-            "value": 0,
+            "value": "0",
             "expected": {
                 "status": 2,
                 "extra_message": "outofgas",
@@ -32,7 +32,7 @@
             "target_address": "contract_one",
             "data": "0x6e2c732d0000000000000000000000000000000000000000000000000000000000003039000000000000000000000000000000000000000000000000000000000000d431",
             "gas_limit": 23317,
-            "value": 0,
+            "value": "0",
             "expected": {
                 "status": 0,
                 "extra_message": "",
@@ -53,7 +53,7 @@
             "target_address": "contract_one",
             "data": "0x6e2c732d0000000000000000000000000000000000000000000000000000000000003039000000000000000000000000000000000000000000000000000000000000d431",
             "gas_limit": 23000,
-            "value": 0,
+            "value": "0",
             "expected": {
                 "status": 2,
                 "extra_message": "",
@@ -66,7 +66,7 @@
             "target_address": "contract_one",
             "data": "0xfad772db000000000000000000000000000000000000000000000000000000000012d687",
             "gas_limit": 22895,
-            "value": 0,
+            "value": "0",
             "expected": {
                 "status": 0,
                 "extra_message": "",
@@ -87,7 +87,7 @@
             "target_address": "contract_one",
             "data": "0x2fb3c740",
             "gas_limit": 44710,
-            "value": 0,
+            "value": "0",
             "expected": {
                 "status": 0,
                 "extra_message": "",

@@ -51,10 +51,7 @@ public:
                 return result;
 
             } else if (storage_key.key_type == storage_key_type::Balance) {
-                auto value_uint64 = unit_state->tep_token_balance(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH);
-                // todo u64 -> u256 than serilize to bytes(BE/LE)
-
-                evm_common::u256 balance_u256{value_uint64};
+                evm_common::u256 balance_u256 = unit_state->tep_token_balance(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH);
                 evm_common::xBorshEncoder encoder;
                 encoder.EncodeInteger(balance_u256);
                 xbytes_t result = encoder.GetBuffer();
@@ -131,9 +128,8 @@ public:
                 evm_common::u256 value_u256;
                 evm_common::xBorshDecoder decoder;
                 decoder.getInteger(value, value_u256);
-                auto balance_uint64 = value_u256.convert_to<uint64_t>();  // if overflow?
-                xdbg("storage_set set balance account:%s, balance:%llu", storage_key.address.c_str(), balance_uint64);
-                unit_state->set_tep_balance(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH, balance_uint64);
+                xdbg("storage_set set balance account:%s, balance:%s", storage_key.address.c_str(), value_u256.str().c_str());
+                unit_state->set_tep_balance(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH, value_u256);
 
             } else if (storage_key.key_type == storage_key_type::Code) {
                 auto property = state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_EVM_CODE, state_accessor::properties::xproperty_category_t::system};

@@ -5,7 +5,7 @@
             "src_address": "T60004001bdc8251890aafc5841b05620c0eab336e3ebc",
             "code_file_path": "add.bin",
             "gas_limit": 220022,
-            "value": 0,
+            "value": "0",
             "expected": {
                 "status": 0,
                 "extra_message": "contract_one",
@@ -20,7 +20,7 @@
             "target_address": "contract_one",
             "data": "0x6e2c732d0000000000000000000000000000000000000000000000000000000000003039000000000000000000000000000000000000000000000000000000000000d431",
             "gas_limit": 23317,
-            "value": 0,
+            "value": "0",
             "expected": {
                 "status": 0,
                 "extra_message": "",

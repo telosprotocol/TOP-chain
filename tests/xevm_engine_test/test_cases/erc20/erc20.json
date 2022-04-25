@@ -5,7 +5,7 @@
             "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
             "code_file_path": "erc20.bin",
             "gas_limit": 746214,
-            "value": 0,
+            "value": "0",
             "expected": {
                 "status": 0,
                 "extra_message": "contract_one",
@@ -29,7 +29,7 @@
             "target_address": "contract_one",
             "data": "0x18160ddd",
             "gas_limit": 23414,
-            "value": 0,
+            "value": "0",
             "expected": {
                 "status": 0,
                 "extra_message": "",
@@ -42,7 +42,7 @@
             "target_address": "contract_one",
             "data": "0x70a08231000000000000000000000000000000000000000000000000000000000000007b",
             "gas_limit": 23695,
-            "value": 0,
+            "value": "0",
             "expected": {
                 "status": 0,
                 "extra_message": "",
@@ -55,7 +55,7 @@
             "target_address": "contract_one",
             "data": "0xa9059cbb000000000000000000000000000000000000000000000000000000000000007b0000000000000000000000000000000000000000000000000000000000003039",
             "gas_limit": 50942,
-            "value": 0,
+            "value": "0",
             "expected": {
                 "status": 0,
                 "extra_message": "",
@@ -78,7 +78,7 @@
             "target_address": "contract_one",
             "data": "0x70a08231000000000000000000000000000000000000000000000000000000000000007b",
             "gas_limit": 23695,
-            "value": 0,
+            "value": "0",
             "expected": {
                 "status": 0,
                 "extra_message": "",
