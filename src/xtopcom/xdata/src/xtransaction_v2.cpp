@@ -206,6 +206,13 @@ void xtransaction_v2_t::set_digest() {
     }
 }
 
+bool xtransaction_v2_t::unuse_member_check() const {
+    if (m_transaction_type == xtransaction_type_transfer && m_token_name != "" && m_token_name != XPROPERTY_ASSET_TOP) {
+        return false;
+    }
+    return true;
+}
+
 bool xtransaction_v2_t::transaction_len_check() const {
     if (get_memo().size() > MAX_TRANSACTION_MEMO_SIZE) {
         xwarn("xtransaction_v2_t::transaction_len_check memo size too long.size:%d", get_memo().size());

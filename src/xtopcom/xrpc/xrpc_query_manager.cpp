@@ -2485,12 +2485,12 @@ void xrpc_query_manager::eth_getTransactionReceipt(xJson::Value & js_req, xJson:
     if (sendindex == nullptr) {
         xwarn("xrpc_query_manager::eth_getTransactionReceipt load tx index fail.%s", tx_hash.c_str());
         nErrorCode = (uint32_t)enum_xrpc_error_code::rpc_shard_exec_error;
+        js_rsp["result"] = xJson::Value::null;
         return;
     }
 
     xJson::Value js_result;
     js_result["transactionHash"] = tx_hash;
-    js_result["transactionIndex"] = "0x1";
     std::string block_hash = std::string("0x") + top::HexEncode(sendindex->get_txindex()->get_block_hash());
     js_result["blockHash"] = block_hash;
     std::string tx_idx = "0x0";
