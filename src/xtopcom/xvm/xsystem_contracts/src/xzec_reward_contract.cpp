@@ -586,8 +586,8 @@ void xzec_reward_contract::on_receive_workload(std::string const& workload_str) 
 
     MAP_OBJECT_DESERIALZE2(stream, workload_info);
     xdbg("[xzec_reward_contract::on_receive_workload] pid:%d, SOURCE_ADDRESS: %s, workload_info size: %zu\n", getpid(), source_address.c_str(), workload_info.size());
-    // TODO: add eth fork
-    if (0) {
+    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+    if (top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.eth_fork_point, TIME())) {
         for (auto const & workload : workload_info) {
             xstream_t stream(xcontext_t::instance());
             stream << workload.first;
@@ -601,7 +601,6 @@ void xzec_reward_contract::on_receive_workload(std::string const& workload_str) 
             stream << workload.first;
             auto const & group_address_str = std::string((const char *)stream.data(), stream.size());
             auto const & workload_info = workload.second;
-                // TODO: add eth fork
             if (common::has<common::xnode_type_t::consensus_auditor>(workload.first.type())) {
                 add_cluster_workload(true, group_address_str, workload_info.m_leader_count);
             } else if (common::has<common::xnode_type_t::consensus_validator>(workload.first.type())) {
@@ -737,15 +736,19 @@ void xzec_reward_contract::get_reward_param(const common::xlogic_time_t current_
     onchain_param.edge_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(edge_reward_ratio);
     onchain_param.archive_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(archive_reward_ratio);
     onchain_param.validator_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(validator_reward_ratio);
-    onchain_param.auditor_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_reward_ratio);
-    // TODO: add eth fork or proposal
-    onchain_param.eth_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_reward_ratio);
+    onchain_param.auditor_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_reward_ratio);    
     onchain_param.vote_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(vote_reward_ratio);
     onchain_param.governance_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(governance_reward_ratio);
     onchain_param.auditor_group_zero_workload = XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_group_zero_workload);
     onchain_param.validator_group_zero_workload = XGET_ONCHAIN_GOVERNANCE_PARAMETER(validator_group_zero_workload);
-    // TODO: add eth fork or proposal
-    onchain_param.eth_group_zero_workload = XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_group_zero_workload);
+    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+    if (top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.eth_fork_point, current_time)) {
+        onchain_param.eth_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_reward_ratio);
+        onchain_param.eth_group_zero_workload = XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_group_zero_workload);
+    } else {
+        onchain_param.eth_reward_ratio = 0;
+        onchain_param.eth_group_zero_workload = 0;
+    }
     auto total_ratio = onchain_param.edge_reward_ratio + onchain_param.archive_reward_ratio + onchain_param.validator_reward_ratio + onchain_param.auditor_reward_ratio +
                        onchain_param.vote_reward_ratio + onchain_param.governance_reward_ratio;
     xinfo(
@@ -796,8 +799,7 @@ void xzec_reward_contract::get_reward_param(const common::xlogic_time_t current_
         property_param.map_nodes[address] = node;
     }
 
-    // TODO: add eth fork
-    if (0) {
+    if (top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.eth_fork_point, current_time)) {
         std::map<std::string, std::string> groups_workloads;
         std::map<std::string, std::string> old_groups_workloads;
         MAP_COPY_GET(data::system_contract::XPORPERTY_CONTRACT_WORKLOAD_KEY, groups_workloads);

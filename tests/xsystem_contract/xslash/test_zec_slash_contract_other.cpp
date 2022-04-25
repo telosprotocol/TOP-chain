@@ -140,9 +140,9 @@ TEST_F(test_zec_slash_contract_other, zec_slash_info_summarize) {
     m_zec_slash_account_ctx_ptr->map_create(data::system_contract::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY);
     m_zec_slash_account_ctx_ptr->map_create(data::system_contract::XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY);
 
-    xunqualified_node_info_t  node_info;
+    data::system_contract::xunqualified_node_info_v1_t  node_info;
     for (auto i = 0; i < 5; ++i) {
-        xnode_vote_percent_t node_content;
+        data::system_contract::xnode_vote_percent_t node_content;
         node_content.block_count = i + 1;
         node_content.subset_count = i + 1;
         node_info.auditor_info[build_account_address("T00000auditor", i)] = node_content;

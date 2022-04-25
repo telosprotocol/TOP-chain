@@ -16,7 +16,6 @@
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xproperty.h"
 #include "xdata/xrootblock.h"
-#include "xdata/xslash.h"
 #include "xmetrics/xmetrics.h"
 #include "xstore/xstore_error.h"
 
@@ -977,7 +976,7 @@ void xrec_registration_contract::slash_unqualified_node(std::string const & puni
 
     XCONTRACT_ENSURE(source_addr == top::sys_contract_zec_slash_info_addr, "invalid source addr's call!");
 
-    std::vector<xaction_node_info_t> node_slash_info;
+    std::vector<data::system_contract::xaction_node_info_t> node_slash_info;
     base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)punish_node_str.data(), punish_node_str.size());
     VECTOR_OBJECT_DESERIALZE2(stream, node_slash_info);
     xinfo("[xrec_registration_contract][slash_unqualified_node] do slash unqualified node, size: %zu", node_slash_info.size());

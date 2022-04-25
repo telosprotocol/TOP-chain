@@ -5,7 +5,6 @@
 #pragma once
 
 #include "xcommon/xlogic_time.h"
-#include "xdata/xslash.h"
 #include "xdata/xblock_statistics_data.h"
 #include "xvledger/xvcnode.h"
 #include "xvm/xcontract/xcontract_base.h"
@@ -65,25 +64,25 @@ private:
      */
 
     bool summarize_slash_info_internal(std::string const& slash_info, std::string const& summarize_info_str, std::string const& summarize_tableblock_count_str, uint64_t const summarized_height,
-                                       data::xunqualified_node_info_t & summarize_info,
+                                       data::system_contract::xunqualified_node_info_v2_t & summarize_info,
                                        uint32_t & summarize_tableblock_count,
                                        std::uint64_t & cur_statistic_height);
 
 
     bool do_unqualified_node_slash_internal(std::string const& last_slash_time_str, uint32_t summarize_tableblock_count, uint32_t slash_interval_table_block_param, uint32_t slash_interval_time_block_param , common::xlogic_time_t const timestamp,
-                                            data::xunqualified_node_info_t const & summarize_info,
+                                            data::system_contract::xunqualified_node_info_v2_t const & summarize_info,
                                             uint32_t slash_vote_threshold,
                                             uint32_t slash_persent_threshold,
                                             uint32_t award_vote_threshold,
                                             uint32_t award_persent_threshold,
-                                            std::vector<data::xaction_node_info_t> & node_to_action);
+                                            std::vector<data::system_contract::xaction_node_info_t> & node_to_action);
 
     /**
      * @brief print the summarize info
      *
      * @param summarize_slash_info   the current summarized slash info to print
      */
-    void print_summarize_info(data::xunqualified_node_info_t const & summarize_slash_info);
+    void print_summarize_info(data::system_contract::xunqualified_node_info_v2_t const & summarize_slash_info);
 
     /**
      * @brief print stored table height info
@@ -98,7 +97,7 @@ private:
      * @param tableblock_count  in&out  the tableblock count property
      *
      */
-    void pre_condition_process(data::xunqualified_node_info_t & summarize_info, uint32_t & tableblock_count);
+    void pre_condition_process(data::system_contract::xunqualified_node_info_v2_t & summarize_info, uint32_t & tableblock_count);
 
     /**
      * @brief filter out the slash node according the summarized slash info
@@ -106,8 +105,8 @@ private:
      * @param summarize_info   the summarized slash info
      * @return std::vector<data::xaction_node_info_t>  the node to slash or reward
      */
-    std::vector<data::xaction_node_info_t>
-    filter_nodes(data::xunqualified_node_info_t const & summarize_info, uint32_t slash_vote_threshold, uint32_t slash_persent_threshold, uint32_t award_vote_threshold, uint32_t award_persent_threshold);
+    std::vector<data::system_contract::xaction_node_info_t>
+    filter_nodes(data::system_contract::xunqualified_node_info_v2_t const & summarize_info, uint32_t slash_vote_threshold, uint32_t slash_persent_threshold, uint32_t award_vote_threshold, uint32_t award_persent_threshold);
 
     /**
      * @brief filter helper to filter out the slash node
@@ -119,28 +118,8 @@ private:
      * @param award_persent_threshold the persent of node to award
      * @return std::vector<data::xaction_node_info_t>  the node to slash or reward
      */
-    std::vector<data::xaction_node_info_t>
-    filter_helper(data::xunqualified_node_info_t const & node_map, uint32_t slash_vote_threshold, uint32_t slash_persent_threshold, uint32_t award_vote_threshold, uint32_t award_persent_threshold);
-
-    /**
-     * @brief get the latest tablefullblock from last read height
-     *
-     * @param owner the owner addr of the full tableblock
-     * @param time_interval  the interval to judge the latest block to processes
-     * @param last_read_height the height of full tableblock last time read
-     * @
-     */
-    std::vector<base::xauto_ptr<data::xblock_t>> get_next_fulltableblock(common::xaccount_address_t const & owner, uint64_t time_interval, uint64_t last_read_height) const;
-
-
-    /**
-     * @brief process statistic data to get nodeinfo
-     *
-     * @param block_statistic_data  the statistic data of a fulltable block
-     * @return xunqualified_node_info_t  the node info from statistic data
-     */
-    data::xunqualified_node_info_t process_statistic_data(top::data::xstatistics_data_t const & block_statistic_data, base::xvnodesrv_t * node_service);
-
+    std::vector<data::system_contract::xaction_node_info_t>
+    filter_helper(data::system_contract::xunqualified_node_info_v2_t const & node_map, uint32_t slash_vote_threshold, uint32_t slash_persent_threshold, uint32_t award_vote_threshold, uint32_t award_persent_threshold);
 
     /**
      * @brief accumulate  node info of all tables
@@ -149,7 +128,7 @@ private:
      * @param  summarize_info  in&out  the accumulated node info
      *
      */
-    void accumulate_node_info(data::xunqualified_node_info_t const & node_info, data::xunqualified_node_info_t & summarize_info);
+    void accumulate_node_info(data::system_contract::xunqualified_node_info_v2_t const & node_info, data::system_contract::xunqualified_node_info_v2_t & summarize_info);
 
     /**
      * @brief check if statisfy the slash condition

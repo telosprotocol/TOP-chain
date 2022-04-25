@@ -216,6 +216,63 @@ private:
     int32_t do_read(base::xstream_t & stream) override;
 };
 
+struct xnode_vote_percent_t final : public xserializable_based_on<void> {
+    uint32_t block_count;
+    uint32_t subset_count;
+
+private:
+    std::int32_t do_write(base::xstream_t & stream) const override;
+
+    std::int32_t do_read(base::xstream_t & stream) override;
+};
+
+struct xunqualified_node_info_v1_t final : public xserializable_based_on<void> {
+    std::map<common::xnode_id_t, xnode_vote_percent_t> auditor_info;
+    std::map<common::xnode_id_t, xnode_vote_percent_t> validator_info;
+
+private:
+    int32_t do_write(base::xstream_t & stream) const override;
+
+    int32_t do_read(base::xstream_t & stream) override;
+};
+
+struct xunqualified_node_info_v2_t final : public xserializable_based_on<void> {
+    std::map<common::xnode_id_t, xnode_vote_percent_t> auditor_info;
+    std::map<common::xnode_id_t, xnode_vote_percent_t> validator_info;
+    std::map<common::xnode_id_t, xnode_vote_percent_t> evm_info;
+
+    operator xunqualified_node_info_v1_t() const;
+
+private:
+    int32_t do_write(base::xstream_t & stream) const override;
+
+    int32_t do_read(base::xstream_t & stream) override;
+};
+
+struct xunqualified_filter_info_t final : public xserializable_based_on<void> {
+    common::xnode_id_t node_id;
+    common::xnode_type_t node_type;
+    uint32_t vote_percent;
+
+private:
+    int32_t do_write(base::xstream_t & stream) const override;
+
+    int32_t do_read(base::xstream_t & stream) override;
+};
+
+struct xaction_node_info_t final : public xserializable_based_on<void> {
+    common::xnode_id_t node_id;
+    common::xnode_type_t node_type;
+    bool action_type;  // default true for punish
+    xaction_node_info_t() : node_id(common::xnode_id_t{}), node_type(common::xnode_type_t::invalid), action_type(true) {}
+    xaction_node_info_t(common::xnode_id_t _node_id, common::xnode_type_t _node_type, bool type = true) : node_id(_node_id), node_type(_node_type), action_type(type) {}
+
+private:
+    int32_t do_write(base::xstream_t & stream) const override;
+
+    int32_t do_read(base::xstream_t & stream) override;
+};
+
 struct account_stake_t final {
     account_stake_t(account_stake_t const &) = default;
     account_stake_t & operator=(account_stake_t const &) = default;
@@ -664,7 +721,6 @@ private:
         stream << m_auditor_reward;
         stream << m_vote_reward;
         stream << m_self_reward;
-        // TODO: add eth fork ?
         stream << m_eth_reward;
         const int32_t end_pos = stream.size();
         return (end_pos - begin_pos);
@@ -684,7 +740,6 @@ private:
         stream >> m_auditor_reward;
         stream >> m_vote_reward;
         stream >> m_self_reward;
-        // TODO: add eth fork
         if (stream.size() > 0) {
             stream >> m_eth_reward;
         }
