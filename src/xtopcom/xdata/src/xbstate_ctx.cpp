@@ -526,6 +526,9 @@ int32_t xbstate_ctx_t::set_tep_balance(const std::string & prop, const std::stri
     top::xbytes_t result_rlp = evm_common::rlp::RLP::encode(new_balance);
     std::error_code ec;
     std::string new_balance_str = top::from_bytes<std::string>(result_rlp, ec);
+    if (ec) {
+        return xaccount_property_operate_fail;
+    }
     bool ret = propobj->insert(token_name, new_balance_str, m_canvas.get());
     if (!ret) {
         return xaccount_property_operate_fail;
@@ -592,7 +595,9 @@ int32_t xbstate_ctx_t::tep_token_withdraw(const std::string & prop, const std::s
     top::xbytes_t result_rlp = evm_common::rlp::RLP::encode(new_balance);
     std::error_code ec;
     std::string new_balance_str = top::from_bytes<std::string>(result_rlp, ec);
-
+    if (ec) {
+        return xaccount_property_operate_fail;
+    }
     auto ret = propobj->insert(token_name, new_balance_str, m_canvas.get());
     if (!ret) {
         return xaccount_property_operate_fail;
@@ -624,7 +629,9 @@ int32_t xbstate_ctx_t::tep_token_deposit(const std::string & prop, const std::st
     top::xbytes_t result_rlp = evm_common::rlp::RLP::encode(new_balance);
     std::error_code ec;
     std::string new_balance_str = top::from_bytes<std::string>(result_rlp, ec);
-
+    if (ec) {
+        return xaccount_property_operate_fail;
+    }
     auto ret = propobj->insert(token_name, new_balance_str, m_canvas.get());
     if (!ret) {
         return xaccount_property_operate_fail;

@@ -335,7 +335,7 @@ namespace dev {
                 inline virtual void web3_clientVersion(const Json::Value &request, Json::Value &response)
                 {
                     (void)request;
-                    response = "Mist/v0.9.3/darwin/go1.4.1";
+                    response = "Geth/v1.10.17-25c9b49f-20220330/linux-amd64/go1.17.6";
                     xinfo("web3_clientVersion: %s", response.asString().c_str());
                 }
 
