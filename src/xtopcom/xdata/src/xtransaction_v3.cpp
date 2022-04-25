@@ -146,8 +146,8 @@ int32_t xtransaction_v3_t::do_read_without_hash_signature(base::xstream_t & in) 
         if (vecData.size() != 12) {
             return -1;
         }
-        u256 chainId = fromBigEndian<u256>(vecData[0]);
-        xdbg("xtransaction_v3_t::do_read_without_hash_signature chainid:%s", chainId.str().c_str());
+     //   u256 chainId = fromBigEndian<u256>(vecData[0]);
+     //   xdbg("xtransaction_v3_t::do_read_without_hash_signature chainid:%s", chainId.str().c_str());
         m_nonce = fromBigEndian<u256>(vecData[1]);
         xdbg("xtransaction_v3_t::do_read_without_hash_signature nonce:%s", m_nonce.str().c_str());
         m_max_priority_fee_per_gas = fromBigEndian<u256>(vecData[2]);

@@ -1,4 +1,4 @@
-#if 0
+
 #include "evm_test_fixture/xmock_evm_statectx.h"
 #include "tests/xevm_engine_test/evm_test_fixture/xmock_evm_storage.h"
 #include "xbasic/xmemory.hpp"
@@ -393,4 +393,3 @@ TEST(evm_engine_normal_test, deploy_and_call_contract_success_2) {
 }
 
 NS_END4
-#endif
