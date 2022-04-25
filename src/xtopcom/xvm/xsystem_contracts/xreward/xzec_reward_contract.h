@@ -242,7 +242,7 @@ private:
      *
      * @param issue_detail
      */
-    void update_issuance_detail(data::system_contract::xissue_detail const & issue_detail);
+    void update_issuance_detail(data::system_contract::xissue_detail_v2 const & issue_detail);
 
     // add by lon
     /**
@@ -258,7 +258,7 @@ private:
                           common::xlogic_time_t & activation_time,
                           xreward_onchain_param_t & onchain_param,
                           xreward_property_param_t & property_param,
-                          data::system_contract::xissue_detail & issue_detail);
+                          data::system_contract::xissue_detail_v2 & issue_detail);
 
     /**
      * @brief calculate nodes rewards
@@ -275,7 +275,7 @@ private:
                                common::xlogic_time_t const issue_time_length,
                                xreward_onchain_param_t const & onchain_param,
                                xreward_property_param_t & property_param,
-                               data::system_contract::xissue_detail & issue_detail,
+                               data::system_contract::xissue_detail_v2 & issue_detail,
                                std::map<common::xaccount_address_t, ::uint128_t> & node_reward_detail,
                                std::map<common::xaccount_address_t, ::uint128_t> & node_dividend_detail,
                                ::uint128_t & community_reward);
@@ -325,7 +325,7 @@ private:
     void update_property(const uint64_t current_time,
                          const uint64_t actual_issuance,
                          data::system_contract::xaccumulated_reward_record const & record,
-                         data::system_contract::xissue_detail const & issue_detail);
+                         data::system_contract::xissue_detail_v2 const & issue_detail);
 
     /**
      * @brief calculate issuance
