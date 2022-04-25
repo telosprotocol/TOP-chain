@@ -4,6 +4,7 @@
 #include "xdata/xsystem_contract/xdata_structures.h"
 
 #include "xbasic/xutility.h"
+#include "xbasic/xversion.h"
 #include "xdata/xnative_contract_address.h"
 
 NS_BEG3(top, data, system_contract)
@@ -174,6 +175,91 @@ int32_t xrefund_info::do_read(base::xstream_t & stream) {
     stream >> create_time;
     const int32_t end_pos = stream.size();
     return (begin_pos - end_pos);
+}
+
+std::int32_t xnode_vote_percent_t::do_write(base::xstream_t & stream) const {
+    KEEP_SIZE();
+    stream << block_count;
+    stream << subset_count;
+    return CALC_LEN();
+}
+
+std::int32_t xnode_vote_percent_t::do_read(base::xstream_t & stream) {
+    KEEP_SIZE();
+    stream >> block_count;
+    stream >> subset_count;
+    return CALC_LEN();
+}
+
+int32_t xunqualified_node_info_v1_t::do_write(base::xstream_t & stream) const {
+    KEEP_SIZE();
+    MAP_OBJECT_SERIALIZE2(stream, auditor_info);
+    MAP_OBJECT_SERIALIZE2(stream, validator_info);
+    return CALC_LEN();
+}
+
+int32_t xunqualified_node_info_v1_t::do_read(base::xstream_t & stream) {
+    KEEP_SIZE();
+    MAP_OBJECT_DESERIALZE2(stream, auditor_info);
+    MAP_OBJECT_DESERIALZE2(stream, validator_info);
+    return CALC_LEN();
+}
+
+int32_t xunqualified_node_info_v2_t::do_write(base::xstream_t & stream) const {
+    KEEP_SIZE();
+    MAP_OBJECT_SERIALIZE2(stream, auditor_info);
+    MAP_OBJECT_SERIALIZE2(stream, validator_info);
+    MAP_OBJECT_SERIALIZE2(stream, evm_info);
+    return CALC_LEN();
+}
+
+int32_t xunqualified_node_info_v2_t::do_read(base::xstream_t & stream) {
+    KEEP_SIZE();
+    MAP_OBJECT_DESERIALZE2(stream, auditor_info);
+    MAP_OBJECT_DESERIALZE2(stream, validator_info);
+    if (stream.size() > 0) {
+        MAP_OBJECT_DESERIALZE2(stream, evm_info);
+    }
+    return CALC_LEN();
+}
+
+xunqualified_node_info_v2_t::operator xunqualified_node_info_v1_t() const {
+    xunqualified_node_info_v1_t v1;
+    v1.auditor_info = auditor_info;
+    v1.validator_info = validator_info;
+    return v1;
+}
+
+int32_t xunqualified_filter_info_t::do_write(base::xstream_t & stream) const {
+    KEEP_SIZE();
+    stream << node_id;
+    stream << node_type;
+    stream << vote_percent;
+    return CALC_LEN();
+}
+
+int32_t xunqualified_filter_info_t::do_read(base::xstream_t & stream) {
+    KEEP_SIZE();
+    stream >> node_id;
+    stream >> node_type;
+    stream >> vote_percent;
+    return CALC_LEN();
+}
+
+int32_t xaction_node_info_t::do_write(base::xstream_t & stream) const {
+    KEEP_SIZE();
+    stream << node_id;
+    stream << node_type;
+    stream << action_type;
+    return CALC_LEN();
+}
+
+int32_t xaction_node_info_t::do_read(base::xstream_t & stream) {
+    KEEP_SIZE();
+    stream >> node_id;
+    stream >> node_type;
+    stream >> action_type;
+    return CALC_LEN();
 }
 
 template <>
@@ -639,7 +725,6 @@ int32_t xissue_detail::do_write(base::xstream_t & stream) const {
     stream << m_auditor_group_count;
     stream << m_validator_group_count;
     MAP_OBJECT_SERIALIZE2(stream, m_node_rewards);
-    // TODO: add eth fork
     stream << m_eth_reward_ratio;
     stream << m_eth_group_count;
     const int32_t end_pos = stream.size();
@@ -661,7 +746,6 @@ int32_t xissue_detail::do_read(base::xstream_t & stream) {
     stream >> m_auditor_group_count;
     stream >> m_validator_group_count;
     MAP_OBJECT_DESERIALZE2(stream, m_node_rewards);
-    // TODO: add eth fork
     if (stream.size() > 0) {
         stream >> m_eth_reward_ratio;
     }
