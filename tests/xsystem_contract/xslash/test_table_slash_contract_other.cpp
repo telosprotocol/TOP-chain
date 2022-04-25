@@ -278,9 +278,9 @@ TEST_F(test_table_slash_contract_other, table_slash_report_statistic_info) {
 #endif
 
 TEST_F(test_table_slash_contract_other, update_slash_statistic_info) {
-    xunqualified_node_info_t  node_info;
+    data::system_contract::xunqualified_node_info_v2_t  node_info;
     for (auto i = 0; i < 5; ++i) {
-        xnode_vote_percent_t node_content;
+        data::system_contract::xnode_vote_percent_t node_content;
         node_content.block_count = i + 1;
         node_content.subset_count = i + 1;
         node_info.auditor_info[build_account_address("T00000auditor", i)] = node_content;

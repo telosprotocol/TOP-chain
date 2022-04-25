@@ -6,10 +6,10 @@
 
 #include "xbase/xmem.h"
 #include "xcertauth/xcertauth_face.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 #include "xcommon/xip.h"
 #include "xdata/xdata_common.h"
 #include "xdata/xnative_contract_address.h"
-#include "xdata/xslash.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
 #include "xmetrics/xmetrics.h"
 #include "xvm/manager/xcontract_manager.h"
@@ -80,12 +80,11 @@ void xtable_statistic_info_collection_contract::on_collect_statistic_info(xstati
     }
 
 
-    xinfo("[xtable_statistic_info_collection_contract][on_collect_statistic_info] enter collect statistic data, fullblock height: %" PRIu64 ", tgas: %ld, contract addr: %s, table_id: %u, pid: %d",
+    xinfo("[xtable_statistic_info_collection_contract][on_collect_statistic_info] enter collect statistic data, fullblock height: %" PRIu64 ", tgas: %ld, contract addr: %s, table_id: %u",
         block_height,
         tgas,
         source_addr.c_str(),
-        table_id,
-        getpid());
+        table_id);
 
 
     std::string summarize_info_str;
@@ -110,7 +109,7 @@ void xtable_statistic_info_collection_contract::on_collect_statistic_info(xstati
     }
 
 
-    xunqualified_node_info_t summarize_info;
+    data::system_contract::xunqualified_node_info_v2_t summarize_info;
     uint32_t summarize_fulltableblock_num = 0;
     collect_slash_statistic_info(statistic_data, statistic_accounts, summarize_info_str, summarize_fulltableblock_num_str,
                                     summarize_info, summarize_fulltableblock_num);
@@ -120,8 +119,29 @@ void xtable_statistic_info_collection_contract::on_collect_statistic_info(xstati
     process_workload_statistic_data(statistic_data, statistic_accounts, tgas);
 }
 
-void xtable_statistic_info_collection_contract::collect_slash_statistic_info(xstatistics_data_t const& statistic_data,  xfulltableblock_statistic_accounts const& statistic_accounts, std::string const& summarize_info_str, std::string const& summarize_fulltableblock_num_str,
-                                                                                xunqualified_node_info_t& summarize_info, uint32_t& summarize_fulltableblock_num) {
+static void print_summarize_info(data::system_contract::xunqualified_node_info_v2_t const & summarize_slash_info) {
+    std::string out = "";
+    for (auto const & item : summarize_slash_info.auditor_info) {
+        out += item.first.value();
+        out += "|" + std::to_string(item.second.block_count);
+        out += "|" + std::to_string(item.second.subset_count) + "|";
+    }
+
+    for (auto const & item : summarize_slash_info.validator_info) {
+        out += item.first.value();
+        out += "|" + std::to_string(item.second.block_count);
+        out += "|" + std::to_string(item.second.subset_count) + "|";
+    }
+
+    xdbg("[print_summarize_info] summarize info: %s", out.c_str());
+}
+
+void xtable_statistic_info_collection_contract::collect_slash_statistic_info(xstatistics_data_t const & statistic_data,
+                                                                             xfulltableblock_statistic_accounts const & statistic_accounts,
+                                                                             std::string const & summarize_info_str,
+                                                                             std::string const & summarize_fulltableblock_num_str,
+                                                                             data::system_contract::xunqualified_node_info_v2_t & summarize_info,
+                                                                             uint32_t & summarize_fulltableblock_num) {
     XMETRICS_TIME_RECORD("sysContract_tableStatistic_collect_slash_statistic_info");
     XMETRICS_CPU_TIME_RECORD("sysContract_tableStatistic_collect_slash_statistic_info");
 
@@ -143,11 +163,19 @@ void xtable_statistic_info_collection_contract::collect_slash_statistic_info(xst
 
 }
 
-void  xtable_statistic_info_collection_contract::update_slash_statistic_info( xunqualified_node_info_t const& summarize_info, uint32_t summarize_fulltableblock_num, uint64_t block_height) {
+void xtable_statistic_info_collection_contract::update_slash_statistic_info(data::system_contract::xunqualified_node_info_v2_t const & summarize_info,
+                                                                            uint32_t summarize_fulltableblock_num,
+                                                                            uint64_t block_height) {
+    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
     {
         XMETRICS_TIME_RECORD("sysContract_tableStatistic_set_property_contract_unqualified_node_key");
         base::xstream_t stream(base::xcontext_t::instance());
+        if (top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.eth_fork_point, TIME())) {
         summarize_info.serialize_to(stream);
+        } else {
+            auto summarize_info_v1 = static_cast<data::system_contract::xunqualified_node_info_v1_t>(summarize_info);
+            summarize_info_v1.serialize_to(stream);
+        }
         MAP_SET(data::system_contract::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY, "UNQUALIFIED_NODE", std::string((char *)stream.data(), stream.size()));
     }
 
@@ -159,14 +187,11 @@ void  xtable_statistic_info_collection_contract::update_slash_statistic_info( xu
         MAP_SET(data::system_contract::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, FULLTABLE_NUM, base::xstring_utl::tostring(summarize_fulltableblock_num));
     }
 
-
-    xinfo("[xtable_statistic_info_collection_contract][on_collect_statistic_info] successfully summarize fulltableblock, current table num: %u, pid: %d",
-        summarize_fulltableblock_num,
-        getpid());
-
+    xinfo("[xtable_statistic_info_collection_contract][on_collect_statistic_info] successfully summarize fulltableblock, current table num: %u", summarize_fulltableblock_num);
 }
 
-void  xtable_statistic_info_collection_contract::accumulate_node_info(xunqualified_node_info_t const&  node_info, xunqualified_node_info_t& summarize_info) {
+void xtable_statistic_info_collection_contract::accumulate_node_info(data::system_contract::xunqualified_node_info_v2_t const & node_info,
+                                                                     data::system_contract::xunqualified_node_info_v2_t & summarize_info) {
     for (auto const & item : node_info.auditor_info) {
         summarize_info.auditor_info[item.first].block_count += item.second.block_count;
         summarize_info.auditor_info[item.first].subset_count += item.second.subset_count;
@@ -183,10 +208,12 @@ void  xtable_statistic_info_collection_contract::accumulate_node_info(xunqualifi
     }
 }
 
-xunqualified_node_info_t  xtable_statistic_info_collection_contract::process_statistic_data(top::data::xstatistics_data_t const& block_statistic_data, xfulltableblock_statistic_accounts const& statistic_accounts) {
+data::system_contract::xunqualified_node_info_v2_t xtable_statistic_info_collection_contract::process_statistic_data(
+    top::data::xstatistics_data_t const & block_statistic_data,
+    xfulltableblock_statistic_accounts const & statistic_accounts) {
     XMETRICS_TIME_RECORD("sysContract_tableStatistic_process_statistic_data");
     XMETRICS_CPU_TIME_RECORD("sysContract_tableStatistic_process_statistic_data");
-    xunqualified_node_info_t res_node_info;
+    data::system_contract::xunqualified_node_info_v2_t res_node_info;
 
     // process one full tableblock statistic data
     for (auto const & static_item: block_statistic_data.detail) {
@@ -200,7 +227,7 @@ xunqualified_node_info_t  xtable_statistic_info_collection_contract::process_sta
             // process auditor group
             if (top::common::has<top::common::xnode_type_t::consensus_auditor>(group_addr.type())) {
                 for (std::size_t slotid = 0; slotid < group_account_data.account_statistics_data.size(); ++slotid) {
-                    auto account_addr = group_accounts.account_data[slotid];
+                    auto const & account_addr = group_accounts.account_data[slotid];
                     res_node_info.auditor_info[common::xnode_id_t{account_addr}].subset_count += group_account_data.account_statistics_data[slotid].vote_data.block_count;
                     res_node_info.auditor_info[common::xnode_id_t{account_addr}].block_count += group_account_data.account_statistics_data[slotid].vote_data.vote_count;
                     xdbg("[xtable_statistic_info_collection_contract][do_unqualified_node_slash] incremental auditor data: {gourp id: %d, account addr: %s, slot id: %u, subset count: %u, block_count: %u}", group_addr.group_id().value(), account_addr.c_str(),
@@ -208,7 +235,7 @@ xunqualified_node_info_t  xtable_statistic_info_collection_contract::process_sta
                 }
             } else if (top::common::has<top::common::xnode_type_t::consensus_validator>(group_addr.type())) {// process validator group
                 for (std::size_t slotid = 0; slotid < group_account_data.account_statistics_data.size(); ++slotid) {
-                    auto account_addr = group_accounts.account_data[slotid];
+                    auto const & account_addr = group_accounts.account_data[slotid];
                     res_node_info.validator_info[common::xnode_id_t{account_addr}].subset_count += group_account_data.account_statistics_data[slotid].vote_data.block_count;
                     res_node_info.validator_info[common::xnode_id_t{account_addr}].block_count += group_account_data.account_statistics_data[slotid].vote_data.vote_count;
                     xdbg("[xtable_statistic_info_collection_contract][do_unqualified_node_slash] incremental validator data: {gourp id: %d, account addr: %s, slot id: %u, subset count: %u, block_count: %u}", group_addr.group_id().value(), account_addr.c_str(),
@@ -217,7 +244,7 @@ xunqualified_node_info_t  xtable_statistic_info_collection_contract::process_sta
 
             } else if (top::common::has<top::common::xnode_type_t::evm>(group_addr.type())) {
                 for (std::size_t slotid = 0; slotid < group_account_data.account_statistics_data.size(); ++slotid) {
-                    auto account_addr = group_accounts.account_data[slotid];
+                    auto const & account_addr = group_accounts.account_data[slotid];
                     res_node_info.evm_info[common::xnode_id_t{account_addr}].subset_count += group_account_data.account_statistics_data[slotid].vote_data.block_count;
                     res_node_info.evm_info[common::xnode_id_t{account_addr}].block_count += group_account_data.account_statistics_data[slotid].vote_data.vote_count;
                     xdbg("[xtable_statistic_info_collection_contract][do_unqualified_node_slash] incremental eth data: {gourp id: %d, account addr: %s, slot id: %u, subset count: %u, block_count: %u}", group_addr.group_id().value(), account_addr.c_str(),
@@ -274,15 +301,14 @@ void xtable_statistic_info_collection_contract::report_summarized_statistic_info
     }
 
 
-    xinfo("[xtable_statistic_info_collection_contract][report_summarized_statistic_info] enter report summarized info, timer round: %" PRIu64 ", table_id: %u, contract addr: %s, pid: %d",
+    xinfo("[xtable_statistic_info_collection_contract][report_summarized_statistic_info] enter report summarized info, timer round: %" PRIu64 ", table_id: %u, contract addr: %s",
          timestamp,
          table_id,
-         source_addr.c_str(),
-         getpid());
+         source_addr.c_str());
 
     {
         XMETRICS_TIME_RECORD("sysContractc_slash_report_statistic_info");
-        xunqualified_node_info_t summarize_info;
+        data::system_contract::xunqualified_node_info_v2_t summarize_info;
         value_str.clear();
         try {
             XMETRICS_TIME_RECORD("sysContract_tableStatistic_get_property_contract_unqualified_node_key");
@@ -317,17 +343,22 @@ void xtable_statistic_info_collection_contract::report_summarized_statistic_info
 
 
         base::xstream_t stream(base::xcontext_t::instance());
+        auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+        if (top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.eth_fork_point, timestamp)) {
         summarize_info.serialize_to(stream);
+        } else {
+            auto summarize_info_v1 = static_cast<data::system_contract::xunqualified_node_info_v1_t>(summarize_info);
+            summarize_info_v1.serialize_to(stream);
+        }
         stream << cur_statistic_height;
 
         xkinfo("[xtable_statistic_info_collection_contract][report_summarized_statistic_info] effective reprot summarized info, timer round %" PRIu64
-                ", fulltableblock num: %u, cur_statistic_height: %" PRIu64 ", table_id: %u, contract addr: %s, pid: %d",
+                ", fulltableblock num: %u, cur_statistic_height: %" PRIu64 ", table_id: %u, contract addr: %s",
                 timestamp,
                 summarize_fulltableblock_num,
                 cur_statistic_height,
                 table_id,
-                account.c_str(),
-                getpid());
+                account.c_str());
 
         {
             XMETRICS_TIME_RECORD("sysContract_tableStatistic_remove_property_contract_unqualified_node_key");
