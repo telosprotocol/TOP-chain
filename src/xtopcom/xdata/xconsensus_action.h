@@ -332,11 +332,11 @@ template <>
 class xtop_consensus_action<xtop_action_type_t::evm> : public xtop_action_t<xtop_action_type_t::evm> {
 public:
 private:
-    xtop_evm_action_type m_evm_action_type{xtop_evm_action_type::invalid};
-    xbytes_t m_input_data;
     common::xaccount_address_t m_sender;
     common::xaccount_address_t m_recver;
-    uint64_t m_value;  // todo suppose here should be U256, which is more precise (Wei)
+    evm_common::u256 m_value;
+    xbytes_t m_input_data;
+    xtop_evm_action_type m_evm_action_type{xtop_evm_action_type::invalid};
 
 public:
     xtop_consensus_action(xtop_consensus_action const &) = default;
@@ -344,6 +344,15 @@ public:
     xtop_consensus_action(xtop_consensus_action &&) = default;
     xtop_consensus_action & operator=(xtop_consensus_action &&) = default;
     ~xtop_consensus_action() override = default;
+
+    xtop_consensus_action(common::xaccount_address_t src_address, common::xaccount_address_t dst_address, evm_common::u256 value, xbytes_t data) noexcept
+      : xtop_action_t<xtop_action_type_t::evm>{nullptr, common::xjudgement_day}, m_sender{src_address}, m_recver{dst_address}, m_value{value}, m_input_data{data} {
+        if (m_recver.empty() || m_recver.value() == "T600040000000000000000000000000000000000000000") {
+            m_evm_action_type = xtop_evm_action_type::deploy_contract;
+        } else {
+            m_evm_action_type = xtop_evm_action_type::call_contract;
+        }
+    }
 
     explicit xtop_consensus_action(xobject_ptr_t<data::xcons_transaction_t> const & tx) noexcept
       : xtop_action_t<xtop_action_type_t::evm>{tx,
@@ -354,7 +363,7 @@ public:
                                                    common::xjudgement_day} {
         m_sender = common::xaccount_address_t{tx->get_source_addr()};
         m_recver = common::xaccount_address_t{tx->get_target_addr()};
-        m_value = tx->get_transaction()->get_amount();
+        m_value = tx->get_transaction()->get_amount_256();
 
         if (m_recver.empty() || m_recver.value() == "T600040000000000000000000000000000000000000000") {
             m_evm_action_type = xtop_evm_action_type::deploy_contract;
@@ -381,7 +390,7 @@ public:
     }
 
     // In fact. this should be U256.
-    uint64_t value() const {
+    evm_common::u256 value() const {
         return m_value;
     }
 
