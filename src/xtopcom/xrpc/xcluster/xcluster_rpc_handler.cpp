@@ -48,18 +48,21 @@ void xcluster_rpc_handler::on_message(const xvnode_address_t & edge_sender, cons
         auto message = para->m_message;
         auto edge_sender = para->m_sender;
         auto msgid = message.id();
-        if (msgid == rpc_msg_request || msgid == rpc_msg_query_request) {
+/*        if (msgid == rpc_msg_request || msgid == rpc_msg_query_request) {
             xrpc_msg_request_t msg = codec::xmsgpack_codec_t<xrpc_msg_request_t>::decode(message.payload());
             if (msgid == rpc_msg_request) {
                 self->cluster_process_request(msg, edge_sender, message);
                 XMETRICS_GAUGE(metrics::rpc_auditor_tx_request, 1);
             } else {
                 xwarn("xcluster_rpc_handler::on_message msgid is rpc_msg_query_request");
-            }
-        } else if (msgid == rpc_msg_response) {
-            // xrpc_msg_response_t msg = codec::xmsgpack_codec_t<xrpc_msg_response_t>::decode(message.payload());
+            }*/
+        if (msgid == rpc_msg_response || msgid == rpc_msg_eth_response) {
             self->cluster_process_response(message, edge_sender);
+            return true;
         }
+        xrpc_msg_request_t msg = codec::xmsgpack_codec_t<xrpc_msg_request_t>::decode(message.payload());
+        self->cluster_process_request(msg, edge_sender, message);
+        XMETRICS_GAUGE(metrics::rpc_auditor_tx_request, 1);
         return true;
     };
     int64_t in, out;
@@ -185,9 +188,11 @@ void xcluster_rpc_handler::cluster_process_response(const xmessage_t & msg, cons
 
 void xcluster_rpc_handler::start() {
     m_cluster_vhost->register_message_ready_notify(xmessage_category_rpc, std::bind(&xcluster_rpc_handler::on_message, shared_from_this(), _1, _2));
+    xinfo("cluster register rpc");
 }
 
 void xcluster_rpc_handler::stop() {
     m_cluster_vhost->unregister_message_ready_notify(xmessage_category_rpc);
+    xinfo("cluster unregister rpc");
 }
 NS_END2

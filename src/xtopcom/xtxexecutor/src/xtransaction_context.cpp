@@ -293,6 +293,7 @@ int32_t xtransaction_transfer::source_fee_exec() {
                     return xconsensus_service_error_balance_not_enough;
                 }
                 if (m_trans->get_transaction()->get_deposit() > (balance - transfer_amount)) {
+                    xdbg("xtransaction_transfer::source_fee_exec, %llu, %llu, %llu", m_trans->get_transaction()->get_deposit(), balance, transfer_amount);
                     return xtransaction_too_much_deposit;
                 }
             }
@@ -305,6 +306,7 @@ int32_t xtransaction_transfer::source_fee_exec() {
                     return xconsensus_service_error_balance_not_enough;
                 }
                 if (m_trans->get_transaction()->get_deposit() > balance) {
+                    xdbg("xtransaction_transfer::source_fee_exec, %llu, %llu, %s", m_trans->get_transaction()->get_deposit(), balance, transfer_amount_256.str().c_str());
                     return xtransaction_too_much_deposit;
                 }
             }

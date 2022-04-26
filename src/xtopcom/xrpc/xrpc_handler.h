@@ -13,6 +13,7 @@
 #include "xvnetwork/xmessage.h"
 #include "xvnetwork/xvhost_face.h"
 #include "xrpc/xrpc_query_manager.h"
+#include "xrpc/xrpc_eth_query_manager.h"
 
 NS_BEG2(top, xrpc)
 using router::xrouter_face_t;
@@ -43,6 +44,7 @@ private:
     xtxpool_service_v2::xtxpool_proxy_face_ptr           m_txpool_service;
     unique_ptr<xfilter_manager>                          m_rule_mgr_ptr;
     std::shared_ptr<xrpc_query_manager>                  m_rpc_query_mgr;
+    std::shared_ptr<xrpc_eth_query_manager>              m_rpc_eth_query_mgr;
     observer_ptr<top::base::xiothread_t>                 m_thread;
 };
 

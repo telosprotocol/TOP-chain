@@ -23,6 +23,7 @@ int32_t xtransaction_fee_t::update_tgas_disk_sender(const uint64_t amount, bool 
 
     // deposit more than balance
     if (m_trans->get_transaction()->get_deposit() > (m_account_ctx->get_blockchain()->balance() - amount)) {
+        xdbg("xtransaction_fee_t::update_tgas_disk_sender, %llu, %llu, %llu", m_trans->get_transaction()->get_deposit(), amount, m_account_ctx->get_blockchain()->balance());
         return xtransaction_too_much_deposit;
     }
 
