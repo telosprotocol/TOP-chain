@@ -84,8 +84,8 @@ TEST_F(test_transfer, eth_transfer_v2_free_tgas_enough) {
 
     m_source_context->top_token_transfer_in(ASSET_TOP(100));
     evm_common::u256 amount = 100000000;
-    m_source_context->get_blockchain()->tep_token_deposit(XPROPERTY_TEP1_BALANCE_KEY, XPROPERTY_ASSET_ETH, amount);
-    auto balance = m_source_context->get_blockchain()->tep_token_balance(XPROPERTY_TEP1_BALANCE_KEY, XPROPERTY_ASSET_ETH);
+    m_source_context->get_blockchain()->tep_token_deposit(PROPERTY_ASSET_ETH, amount);
+    auto balance = m_source_context->get_blockchain()->tep_token_balance(XPROPERTY_ASSET_ETH);
     EXPECT_EQ(ASSET_TOP(100), balance);
 
     uint32_t tx_len = 100;

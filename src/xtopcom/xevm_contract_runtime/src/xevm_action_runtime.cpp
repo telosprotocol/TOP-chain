@@ -32,8 +32,8 @@ evm_common::xevm_transaction_result_t xtop_action_runtime<data::xevm_consensus_a
 
     // try {
 
-    auto storage = std::make_shared<evm::xevm_storage>(m_evm_statectx);
-    std::unique_ptr<top::evm::xevm_logic_face_t> logic_ptr = top::make_unique<top::contract_runtime::evm::xevm_logic_t>(storage, tx_ctx, evm_contract_manager_);
+    auto storage = top::make_unique<evm::xevm_storage>(m_evm_statectx);
+    std::unique_ptr<top::evm::xevm_logic_face_t> logic_ptr = top::make_unique<top::contract_runtime::evm::xevm_logic_t>(std::move(storage), m_evm_statectx, tx_ctx, evm_contract_manager_);
     top::evm::evm_import_instance::instance()->set_evm_logic(std::move(logic_ptr));
 
     bool evm_result{true};

@@ -33,9 +33,9 @@ public:
     virtual void register_property(properties::xbasic_property_t * property) = 0;
 
     virtual common::xnetwork_id_t network_id() const = 0;
-    virtual uint64_t balance() const = 0;
-    virtual state_accessor::xtoken_t withdraw(std::uint64_t amount) = 0;
-    virtual void deposit(state_accessor::xtoken_t token) = 0;
+    virtual evm_common::u256 balance() const = 0;
+    virtual common::xtoken_t withdraw(evm_common::u256 amount) = 0;
+    virtual void deposit(common::xtoken_t token) = 0;
 
     virtual void reset_execution_context(observer_ptr<xcontract_execution_context_t> exe_ctx) = 0;
 
@@ -45,7 +45,7 @@ protected:
     xtop_contract_face() = default;
 
     virtual xbyte_buffer_t receipt_data(std::string const & key) const = 0;
-    // virtual state_accessor::xtoken_t retrive_received_asset(std::string const & asset_id) const = 0;
+    // virtual common::xtoken_t retrive_received_asset(std::string const & asset_id) const = 0;
     virtual void write_receipt_data(std::string const & key, xbyte_buffer_t value, std::error_code & ec) = 0;
     virtual void call(common::xaccount_address_t const & target_addr,
                       std::string const & method_name,
