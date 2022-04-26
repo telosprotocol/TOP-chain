@@ -16,8 +16,6 @@ enum class xenum_errc : uint16_t {
     ok,
     invalid_state_backend,
     token_insufficient,
-    token_symbol_not_matched,
-    token_not_used,
     invalid_property_type,
     property_access_denied,
     load_property_failed,

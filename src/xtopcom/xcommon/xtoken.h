@@ -5,12 +5,12 @@
 #pragma once
 
 #include "xcommon/xsymbol.h"
-#include "xstate_accessor/xerror/xerror.h"
+#include "xevm_common/common.h"
 
 #include <cstdint>
 #include <system_error>
 
-NS_BEG2(top, state_accessor)
+NS_BEG2(top, common)
 
 enum class xenum_token_type {
     invalid,
@@ -20,7 +20,7 @@ enum class xenum_token_type {
 using xtoken_type_t = xenum_token_type;
 
 class xtop_token {
-    uint64_t amount_{ 0 };
+    evm_common::u256 amount_{ 0 };
     common::xsymbol_t symbol_{common::SYMBOL_TOP_TOKEN};
 
 public:
@@ -32,8 +32,8 @@ public:
     xtop_token(xtop_token && other) noexcept;
 
     explicit xtop_token(common::xsymbol_t symbol);
-    explicit xtop_token(std::uint64_t const amount, common::xsymbol_t symbol);
-    explicit xtop_token(std::uint64_t amount);
+    explicit xtop_token(evm_common::u256 const amount, common::xsymbol_t symbol);
+    explicit xtop_token(evm_common::u256 amount);
 
     ~xtop_token() noexcept;
 
@@ -48,13 +48,12 @@ public:
     xtop_token & operator+=(xtop_token & other) noexcept;
 
     bool invalid() const noexcept;
-    uint64_t amount() const noexcept;
+    evm_common::u256 amount() const noexcept;
     common::xsymbol_t const & symbol() const noexcept;
     void clear() noexcept;
 
     void move_to(base::xstream_t& stream) noexcept; // move token to serialize stream
     void move_from(base::xstream_t& stream) noexcept; // serialize token from stream
-
 
 private:
     int32_t do_read(base::xstream_t& stream);
@@ -64,7 +63,6 @@ private:
     std::int32_t serialize_from(base::xstream_t & stream);
     std::int32_t serialize_to(base::xbuffer_t & buffer) const;
     std::int32_t serialize_from(base::xbuffer_t & buffer);
-
 };
 using xtoken_t = xtop_token;
 
@@ -73,8 +71,8 @@ NS_END2
 NS_BEG1(std)
 
 template <>
-struct hash<top::state_accessor::xtoken_t> {
-    size_t operator()(top::state_accessor::xtoken_t const & amount) const noexcept;
+struct hash<top::common::xtoken_t> {
+    size_t operator()(top::common::xtoken_t const & amount) const noexcept;
 };
 
 NS_END1

@@ -15,7 +15,7 @@ NS_BEG3(top, contract_runtime, evm)
 
 class xtop_evm_logic : public top::evm::xevm_logic_face_t {
 public:
-    xtop_evm_logic(std::shared_ptr<xevm_storage_face_t> storage_ptr, observer_ptr<evm_runtime::xevm_context_t> const & context, observer_ptr<xevm_contract_manager_t> const & contract_manager);
+    xtop_evm_logic(std::unique_ptr<xevm_storage_face_t> storage_ptr, observer_ptr<statectx::xstatectx_face_t> state_ctx, observer_ptr<evm_runtime::xevm_context_t> const & context, observer_ptr<xevm_contract_manager_t> const & contract_manager);
     xtop_evm_logic(xtop_evm_logic const &) = delete;
     xtop_evm_logic & operator=(xtop_evm_logic const &) = delete;
     xtop_evm_logic(xtop_evm_logic &&) = default;
@@ -23,7 +23,8 @@ public:
     ~xtop_evm_logic() override = default;
 
 private:
-    std::shared_ptr<xevm_storage_face_t> m_storage_ptr;
+    std::unique_ptr<xevm_storage_face_t> m_storage_ptr;
+    observer_ptr<statectx::xstatectx_face_t> m_state_ctx;
     observer_ptr<evm_runtime::xevm_context_t> m_context;
     observer_ptr<xevm_contract_manager_t> m_contract_manager;
     std::map<uint64_t, xbytes_t> m_registers;
@@ -69,6 +70,8 @@ public:
     bool extern_contract_call(uint64_t args_len, uint64_t args_ptr) override;
     uint64_t get_result(uint64_t register_id) override;
     uint64_t get_error(uint64_t register_id) override;
+    // contract bridge:
+    void call_erc20(uint64_t input_len, uint64_t input_ptr, uint64_t target_gas, uint64_t address_len, uint64_t address_ptr, bool is_static, uint64_t register_id) override;
 
 private:
     // inner api
@@ -78,6 +81,8 @@ private:
     void memory_set_slice(uint64_t offset, xbytes_t buf);
     xbytes_t memory_get_vec(uint64_t offset, uint64_t len);
     xbytes_t internal_read_register(uint64_t register_id);
+
+    void call_erc20(xbytes_t const & input, std::string const & contract_address, uint64_t const target_gas, bool is_static, uint64_t const register_id);
 };
 using xevm_logic_t = xtop_evm_logic;
 

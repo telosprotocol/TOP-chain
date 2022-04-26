@@ -5,9 +5,9 @@
 #pragma once
 
 #include "xcommon/xsymbol.h"
+#include "xcommon/xtoken.h"
 #include "xcontract_common/xcontract_fwd.h"
 #include "xcontract_common/xproperties/xbasic_property.h"
-#include "xstate_accessor/xtoken.h"
 
 #include <cstdint>
 #include <functional>
@@ -16,15 +16,15 @@
 
 NS_BEG3(top, contract_common, properties)
 
-class xtop_token_safe {
-public:
-    static bool transfer_safe_rule(uint64_t amount) noexcept;
-    // static void set_max_safe_token(uint64_t amount) noexcept;
-
-private:
-   constexpr static uint64_t MAX_SAFE_TOKEN = 200 * 1e8 * 1e6; //utop
-};
-using xtoken_safe_t = xtop_token_safe;
+//class xtop_token_safe {
+//public:
+//    // static bool transfer_safe_rule(evm_common::u256 amount) noexcept;
+//    // static void set_max_safe_token(uint64_t amount) noexcept;
+//
+//private:
+//   constexpr static uint64_t MAX_SAFE_TOKEN = 200 * 1e8 * 1e6; //utop
+//};
+//using xtoken_safe_t = xtop_token_safe;
 
 // token object
 class xtop_token_property: public xbasic_property_t {
@@ -43,9 +43,9 @@ public:
     explicit xtop_token_property(std::string const & name, contract_common::xcontract_face_t * contract);
     explicit xtop_token_property(contract_common::xcontract_face_t * contract);
 
-    uint64_t amount() const;
-    state_accessor::xtoken_t withdraw(std::uint64_t amount);
-    void deposit(state_accessor::xtoken_t tokens);
+    evm_common::u256 amount() const;
+    common::xtoken_t withdraw(evm_common::u256 amount);
+    void deposit(common::xtoken_t tokens);
     common::xsymbol_t const & symbol() const noexcept;
 };
 using xtoken_property_t = xtop_token_property;

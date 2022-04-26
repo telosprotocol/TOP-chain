@@ -2,16 +2,20 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <string>
-#include <cinttypes>
+
+#include "xdata/xbstate_ctx.h"
+
 #include "xbase/xobject.h"
 #include "xbasic/xbyte_buffer.h"
-#include "xvledger/xvpropertyrules.h"
-#include "xvledger/xvproperty.h"
-#include "xdata/xbstate_ctx.h"
 #include "xdata/xdata_error.h"
+#include "xdata/xproperty.h"
 #include "xevm_common/fixed_hash.h"
 #include "xevm_common/rlp.h"
+#include "xvledger/xvproperty.h"
+#include "xvledger/xvpropertyrules.h"
+
+#include <cinttypes>
+#include <string>
 
 NS_BEG2(top, data)
 
@@ -517,14 +521,14 @@ std::string xbstate_ctx_t::string_get(const std::string & prop) const {
     return propobj->query();
 }
 
-int32_t xbstate_ctx_t::set_tep_balance(const std::string & prop, const std::string & token_name, evm_common::u256 new_balance) {
+int32_t xbstate_ctx_t::set_tep_balance(const std::string & token_name, evm_common::u256 new_balance) {
     xdbg("xbstate_ctx_t::set_tep_balance,property_modify_enter.address=%s,height=%ld,token_name=%s,new_balance=%s", get_address().c_str(), get_chain_height(), token_name.c_str(), new_balance.str().c_str());
     top::xbytes_t result_rlp = evm_common::rlp::RLP::encode(new_balance);
-    return set_tep_balance_bytes(prop, token_name, result_rlp);
+    return set_tep_balance_bytes(token_name, result_rlp);
 }
 
-int32_t xbstate_ctx_t::set_tep_balance_bytes(const std::string & prop, const std::string & token_name, const top::xbytes_t & new_balance) {
-    auto propobj = load_tep_token_for_write(prop);
+int32_t xbstate_ctx_t::set_tep_balance_bytes(const std::string & token_name, const top::xbytes_t & new_balance) {
+    auto propobj = load_tep_token_for_write();
     CHECK_PROPERTY_NULL_RETURN(propobj, "xbstate_ctx_t::set_tep_balance", token_name);
 
     std::error_code ec;
@@ -539,11 +543,11 @@ int32_t xbstate_ctx_t::set_tep_balance_bytes(const std::string & prop, const std
     return xsuccess;
 }
 
-base::xauto_ptr<base::xmapvar_t<std::string>> xbstate_ctx_t::load_tep_token_for_write(const std::string & prop) {
-    if (false == m_bstate->find_property(prop)) {
-        return m_bstate->new_string_map_var(prop, m_canvas.get());
+base::xauto_ptr<base::xmapvar_t<std::string>> xbstate_ctx_t::load_tep_token_for_write() {
+    if (false == m_bstate->find_property(data::XPROPERTY_TEP1_BALANCE_KEY)) {
+        return m_bstate->new_string_map_var(data::XPROPERTY_TEP1_BALANCE_KEY, m_canvas.get());
     }
-    auto propobj = m_bstate->load_string_map_var(prop);
+    auto propobj = m_bstate->load_string_map_var(data::XPROPERTY_TEP1_BALANCE_KEY);
     if (nullptr != propobj) {
         return propobj;
     }
@@ -551,8 +555,8 @@ base::xauto_ptr<base::xmapvar_t<std::string>> xbstate_ctx_t::load_tep_token_for_
     return nullptr;
 }
 
-evm_common::u256 xbstate_ctx_t::tep_token_balance(const std::string & prop, const std::string& token_name) const {
-    auto value_rlp = tep_token_balance_bytes(prop, token_name);
+evm_common::u256 xbstate_ctx_t::tep_token_balance(const std::string& token_name) const {
+    auto value_rlp = tep_token_balance_bytes(token_name);
     if (value_rlp.empty()) {
         return 0;
     }
@@ -565,12 +569,12 @@ evm_common::u256 xbstate_ctx_t::tep_token_balance(const std::string & prop, cons
     return balance;
 }
 
-top::xbytes_t xbstate_ctx_t::tep_token_balance_bytes(const std::string & prop, const std::string& token_name) const {
+top::xbytes_t xbstate_ctx_t::tep_token_balance_bytes(const std::string& token_name) const {
     auto & bstate = get_bstate();
-    if (!bstate->find_property(prop)) {
+    if (!bstate->find_property(data::XPROPERTY_TEP1_BALANCE_KEY)) {
         return {};
     }
-    auto propobj = bstate->load_string_map_var(prop);
+    auto propobj = bstate->load_string_map_var(data::XPROPERTY_TEP1_BALANCE_KEY);
     if (nullptr != propobj) {
         auto balance_str = propobj->query(token_name);
         if (balance_str.empty()) {
@@ -584,9 +588,9 @@ top::xbytes_t xbstate_ctx_t::tep_token_balance_bytes(const std::string & prop, c
     return {};
 }
 
-int32_t xbstate_ctx_t::tep_token_withdraw(const std::string & prop, const std::string& token_name, evm_common::u256 sub_token) {
-    xdbg("xbstate_ctx_t::tep_token_withdraw,property_modify_enter.address=%s,prop=%s,height=%ld,tokenname=%s,token=%s", get_address().c_str(), prop.c_str(), get_chain_height(), token_name.c_str(), sub_token.str().c_str());
-    auto propobj = load_tep_token_for_write(prop);
+int32_t xbstate_ctx_t::tep_token_withdraw(const std::string& token_name, evm_common::u256 sub_token) {
+    xdbg("xbstate_ctx_t::tep_token_withdraw,property_modify_enter.address=%s,height=%ld,tokenname=%s,token=%s", get_address().c_str(), get_chain_height(), token_name.c_str(), sub_token.str().c_str());
+    auto propobj = load_tep_token_for_write();
     CHECK_PROPERTY_NULL_RETURN(propobj, "xbstate_ctx_t::tep_token_withdraw", token_name);
     auto balance_str = propobj->query(token_name);
 
@@ -618,9 +622,9 @@ int32_t xbstate_ctx_t::tep_token_withdraw(const std::string & prop, const std::s
     return xsuccess;
 }
 
-int32_t xbstate_ctx_t::tep_token_deposit(const std::string & prop, const std::string& token_name, evm_common::u256 add_token) {
-    xdbg("xbstate_ctx_t::tep_token_deposit,property_modify_enter.address=%s,prop=%s,height=%ld,token_name=%s,token=%s", get_address().c_str(), prop.c_str(), get_chain_height(), token_name.c_str(), add_token.str().c_str());
-    auto propobj = load_tep_token_for_write(prop);
+int32_t xbstate_ctx_t::tep_token_deposit(const std::string& token_name, evm_common::u256 add_token) {
+    xdbg("xbstate_ctx_t::tep_token_deposit,property_modify_enter.address=%s,height=%ld,token_name=%s,token=%s", get_address().c_str(), get_chain_height(), token_name.c_str(), add_token.str().c_str());
+    auto propobj = load_tep_token_for_write();
     CHECK_PROPERTY_NULL_RETURN(propobj, "xbstate_ctx_t::tep_token_deposit", token_name);
     auto balance_str = propobj->query(token_name);
 

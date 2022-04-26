@@ -30,6 +30,7 @@
 #include "xcommon/xaccount_id.h"
 #include "xcommon/xledger_id.h"
 #include "xcommon/xtable_id.h"
+#include "xvledger/xvaccount.h"
 
 #include <cstdint>
 #include <string>
@@ -104,6 +105,8 @@ public:
 
     xledger_id_t const & ledger_id() const noexcept;
     xtable_id_t const & table_id() const noexcept;
+
+    base::xvaccount_t vaccount() const;
 
     friend std::int32_t operator<<(base::xstream_t & stream, xtop_node_id const & node_id);
     friend std::int32_t operator>>(base::xstream_t & stream, xtop_node_id & node_id);
