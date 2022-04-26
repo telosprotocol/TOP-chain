@@ -32,8 +32,6 @@ public:
     virtual base::xvcertauth_t * get_certauth() const override;
     virtual mbus::xmessage_bus_face_t * get_bus() const override;
     virtual xreceiptid_state_cache_t & get_receiptid_state_cache() override;
-    virtual void update_send_ids_after_add_rsp_id(const base::xreceiptid_state_ptr_t & receiptid_state, const std::set<base::xtable_shortid_t> & all_table_sids) override;
-    virtual bool get_send_id_after_add_rsp_id(base::xtable_shortid_t self_sid, base::xtable_shortid_t peer_sid, uint64_t & send_id) const override;
 
 private:
     observer_ptr<store::xstore_face_t> m_store;
@@ -41,8 +39,6 @@ private:
     observer_ptr<base::xvcertauth_t> m_certauth;
     observer_ptr<mbus::xmessage_bus_face_t> m_bus;
     xreceiptid_state_cache_t m_receiptid_state_cache;
-    std::map<base::xtable_shortid_t, std::map<base::xtable_shortid_t, uint64_t>> m_send_ids_after_add_rsp_id;
-    mutable std::mutex m_mutex;
 };
 
 NS_END2
