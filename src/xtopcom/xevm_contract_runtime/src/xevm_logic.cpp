@@ -1,7 +1,9 @@
 
 #include "xevm_contract_runtime/xevm_logic.h"
 
+#include "xbasic/endianness.h"
 #include "xcontract_runtime/xerror/xerror.h"
+#include "xevm_common/common_data.h"
 #include "xevm_contract_runtime/xevm_memory_tools.h"
 #include "xevm_contract_runtime/xevm_variant_bytes.h"
 #include "xevm_runner/proto/proto_basic.pb.h"
@@ -12,9 +14,10 @@
 NS_BEG3(top, contract_runtime, evm)
 
 xtop_evm_logic::xtop_evm_logic(std::shared_ptr<xevm_storage_face_t> storage_ptr,
+                               observer_ptr<statectx::xstatectx_face_t> state_ctx,
                                observer_ptr<evm_runtime::xevm_context_t> const & context,
                                observer_ptr<xevm_contract_manager_t> const & contract_manager)
-  : m_storage_ptr{storage_ptr}, m_context{context}, m_contract_manager{contract_manager} {
+  : m_storage_ptr{storage_ptr}, m_state_ctx{state_ctx}, m_context{context}, m_contract_manager{contract_manager} {
     m_registers.clear();
     m_return_data_value.clear();
 }
@@ -249,6 +252,107 @@ xbytes_t xtop_evm_logic::memory_get_vec(uint64_t offset, uint64_t len) {
 
 xbytes_t xtop_evm_logic::internal_read_register(uint64_t register_id) {
     return m_registers.at(register_id);
+}
+
+void xtop_evm_logic::call_erc20(xbytes_t const & input, std::string const & contract_address, uint64_t const target_gas, bool is_static, uint64_t const register_id) {
+    // ERC20 method ids:
+    //--------------------------------------------------
+    // decimals()                            => 313ce567
+    // totalSupply()                         => 18160ddd
+    // balanceOf(address)                    => 70a08231
+    // transfer(address,uint256)             => a9059cbb
+    // transferFrom(address,address,uint256) => 23b872dd
+    // approve(address,uint256)              => 095ea7b3
+    // allowance(address,address)            => dd62ed3e
+    // approveTOP(bytes32,uint64)            => 24655e23
+    //--------------------------------------------------
+#if defined(__LITTLE_ENDIAN__)
+    constexpr uint32_t method_id_decimals{0x67e53c31};
+    constexpr uint32_t method_id_total_supply{0xdd0d1618};
+    constexpr uint32_t method_id_balance_of{0x3182a070};
+    constexpr uint32_t method_id_transfer{0xbb9c05a9};
+    constexpr uint32_t method_id_transfer_from{0xdd72b823};
+    constexpr uint32_t method_id_approve{0xb3a75e09};
+    constexpr uint32_t method_id_allowance{0x3eed62dd};
+#elif defined(__BIG_ENDIAN__)
+    constexpr uint32_t method_id_decimals{0x313ce567};
+    constexpr uint32_t method_id_total_supply{0x18160ddd};
+    constexpr uint32_t method_id_balance_of{0x70a08231};
+    constexpr uint32_t method_id_transfer{0xa9059cbb};
+    constexpr uint32_t method_id_transfer_from{0x23b872dd};
+    constexpr uint32_t method_id_approve{0x095ea7b3};
+    constexpr uint32_t method_id_allowance{0xdd62ed3e};
+#else
+#    error "I don't know what architecture this is!"
+#endif
+    // erc20_uuid (1 byte) | erc20_method_id (4 bytes) | parameters (depends)
+    auto it = std::begin(input);
+
+    xbyte_t const erc20_uuid{*it};
+    std::advance(it, 1);
+
+    xbytes_t const method_id_bytes{it, std::next(it, 4)};
+    std::advance(it, 4);
+
+    uint32_t method_id;
+    std::memcpy(&method_id, method_id_bytes.data(), 4);
+
+    switch (method_id) {
+    case method_id_decimals: {
+        xbytes_t decimals;
+        decimals.resize(1);
+        decimals[0] = static_cast<uint8_t>(18);
+
+        internal_write_register(register_id, decimals);
+        break;
+    }
+
+    case method_id_total_supply: {
+        evm_common::u256 supply;
+        internal_write_register(register_id, top::to_bytes(evm_common::toBigEndianString(supply)));
+        break;
+    }
+
+    case method_id_balance_of: {
+        assert(m_state_ctx);
+        auto state = m_state_ctx->load_unit_state(m_context->sender().vaccount());
+        evm_common::u256 value{0};
+        switch (erc20_uuid) {
+        case 0: {
+            value = state->balance();
+            break;
+        }
+
+        case 1: {
+            value = state->tep_token_balance("USDT");
+            break;
+        }
+
+        default:
+            assert(false);
+            break;
+        }
+
+        internal_write_register(register_id, top::to_bytes(evm_common::toBigEndianString(value)));
+        break;
+    }
+
+    case method_id_transfer:
+        break;
+
+    case method_id_transfer_from:
+        break;
+
+    case method_id_approve:
+        break;
+
+    case method_id_allowance:
+        break;
+
+    default:
+        assert(false);
+        break;
+    }
 }
 
 NS_END3

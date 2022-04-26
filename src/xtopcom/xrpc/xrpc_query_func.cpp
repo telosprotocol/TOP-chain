@@ -141,7 +141,7 @@ bool xrpc_query_func::query_special_property(xJson::Value & jph, const std::stri
         xJson::Value j;
         auto kvs = unitstate->map_get(prop_name);
         for (auto & v : kvs) {
-            auto token_balance = unitstate->tep_token_balance(prop_name, v.first);
+            auto token_balance = unitstate->tep_token_balance(v.first);
             j[v.first] = token_balance.str();
         }
         jph[prop_name] = j;

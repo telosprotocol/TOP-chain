@@ -43,15 +43,15 @@ common::xnetwork_id_t xtop_basic_contract::network_id() const {
     return common::xnetwork_id_t{config::to_chainid(XGET_CONFIG(chain_name))};
 }
 
-uint64_t xtop_basic_contract::balance() const {
+evm_common::u256 xtop_basic_contract::balance() const {
     return m_balance.amount();
 }
 
-state_accessor::xtoken_t xtop_basic_contract::withdraw(std::uint64_t amount) {
+common::xtoken_t xtop_basic_contract::withdraw(evm_common::u256 amount) {
     return m_balance.withdraw(amount);
 }
 
-void xtop_basic_contract::deposit(state_accessor::xtoken_t token) {
+void xtop_basic_contract::deposit(common::xtoken_t token) {
     assert(m_balance.symbol() == token.symbol());
     m_balance.deposit(std::move(token));
 }
@@ -61,7 +61,7 @@ observer_ptr<xcontract_state_t> xtop_basic_contract::contract_state() const noex
     return m_associated_execution_context->contract_state();
 }
 
-void xtop_basic_contract::asset_to_next_action(state_accessor::xtoken_t token) {
+void xtop_basic_contract::asset_to_next_action(common::xtoken_t token) {
     base::xstream_t stream{base::xcontext_t::instance()};
     token.move_to(stream);
 
@@ -87,11 +87,11 @@ xbyte_buffer_t xtop_basic_contract::action_data() const {
     return m_associated_execution_context->action_data();
 }
 
-state_accessor::xtoken_t xtop_basic_contract::last_action_asset(std::error_code & ec) const {
+common::xtoken_t xtop_basic_contract::last_action_asset(std::error_code & ec) const {
     assert(!ec);
 
     auto const& receipt_data = m_associated_execution_context->input_receipt_data(RECEITP_DATA_ASSET_OUT);
-    state_accessor::xtoken_t token;
+    common::xtoken_t token;
     if (!receipt_data.empty()) {
         m_associated_execution_context->remove_input_receipt_data(RECEITP_DATA_ASSET_OUT);
         base::xstream_t stream(base::xcontext_t::instance(), (uint8_t*)receipt_data.data(), receipt_data.size());

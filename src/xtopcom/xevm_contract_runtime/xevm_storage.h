@@ -55,7 +55,7 @@ public:
                 return result;
 
             } else if (storage_key.key_type == storage_key_type::Balance) {
-                return unit_state->tep_token_balance_bytes(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH);
+                return unit_state->tep_token_balance_bytes(data::XPROPERTY_ASSET_ETH);
             } else if (storage_key.key_type == storage_key_type::Code) {
                 // todo add contract_manager lru cache.
                 auto property = state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_EVM_CODE, state_accessor::properties::xproperty_category_t::system};
@@ -124,7 +124,7 @@ public:
                 top::error::throw_error(ec);
 
             } else if (storage_key.key_type == storage_key_type::Balance) {
-                unit_state->set_tep_balance_bytes(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH, value);
+                unit_state->set_tep_balance_bytes(data::XPROPERTY_ASSET_ETH, value);
 
             } else if (storage_key.key_type == storage_key_type::Code) {
                 auto property = state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_EVM_CODE, state_accessor::properties::xproperty_category_t::system};
@@ -189,7 +189,7 @@ public:
 
             } else if (storage_key.key_type == storage_key_type::Balance) {
                 evm_common::u256 value{0};
-                unit_state->set_tep_balance(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH, value);
+                unit_state->set_tep_balance(data::XPROPERTY_ASSET_ETH, value);
 
             } else if (storage_key.key_type == storage_key_type::Code) {
                 auto typeless_property =
