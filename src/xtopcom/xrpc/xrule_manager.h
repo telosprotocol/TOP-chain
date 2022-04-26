@@ -44,6 +44,7 @@ public:
     // void create_account_filter(xjson_proc_t& json_proc);
     // void transfer_filter(xjson_proc_t& json_proc);
     void filter(xjson_proc_t & json_proc);
+    void filter_eth(xjson_proc_t & json_proc);
     // void create_contract_account_filter(xjson_proc_t& json_proc);
     // void deploy_contract_filter(xjson_proc_t& json_proc);
     // void exec_contract_filter(xjson_proc_t& json_proc);

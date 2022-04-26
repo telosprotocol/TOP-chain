@@ -11,9 +11,9 @@ aux_source_directory(./ xrpc)
 aux_source_directory(./xhttp xhttp)
 aux_source_directory(./xws xws)
 aux_source_directory(./xratelimit xratelimit)
-aux_source_directory(./eth_jsonrpc eth_jsonrpc)
+aux_source_directory(./eth_rpc eth_rpc)
 
-add_library(xrpc STATIC ${error} ${prerequest} ${edge} ${cluster} ${getblock} ${shard} ${arc} ${xrpc} ${xhttp} ${xws} ${xratelimit} ${eth_jsonrpc})
+add_library(xrpc STATIC ${error} ${prerequest} ${edge} ${cluster} ${getblock} ${shard} ${arc} ${xrpc} ${xhttp} ${xws} ${xratelimit} ${eth_rpc})
 
 add_dependencies(xrpc xelect_net xtxexecutor xtxstore xconfig xcodec xvnetwork xcommon xrouter xverifier xxbase xxg)
 

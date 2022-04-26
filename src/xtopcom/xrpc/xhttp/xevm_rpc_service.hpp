@@ -14,8 +14,8 @@
 #include "xrpc/xerror/xrpc_error_json.h"
 #include "xrpc/prerequest/xpre_request_handler_server.h"
 #include "xtxstore/xtxstore_face.h"
-#include "xrpc/eth_jsonrpc/Eth.h"
-#include "xrpc/eth_jsonrpc/ClientBase.h"
+//#include "xrpc/eth_jsonrpc/Eth.h"
+//#include "xrpc/eth_jsonrpc/ClientBase.h"
 #include "xrpc/xjson_proc.h"
 
 NS_BEG2(top, xrpc)
@@ -76,81 +76,36 @@ void xevm_rpc_service<T>::reset_edge_method_mgr(shared_ptr<xrpc_edge_vhost> edge
 
 template <typename T>
 void xevm_rpc_service<T>::execute(shared_ptr<conn_type> & conn, const std::string & content, const std::string & ip) {
-        xpre_request_data_t pre_request_data;
-        try {
-            do {
-                if (content.size() <= 900) {
-                    xinfo_rpc("evm rpc request:%s", content.c_str());
-                } else {
-                    uint32_t part_num = (content.size() + 899)/900;
-                    uint32_t i = 0;
-                    for (; i < (part_num - 1); i++) {
-                        xinfo_rpc("evm rpc request%u:%s", i, content.substr(i*900,900).c_str());
-                    }
-                    
-                    xinfo_rpc("evm rpc request%u:%s", i, content.substr(i*900).c_str());
+    xpre_request_data_t pre_request_data;
+    try {
+
+            if (content.size() <= 900) {
+                xinfo_rpc("evm rpc request:%s", content.c_str());
+            } else {
+                uint32_t part_num = (content.size() + 899) / 900;
+                uint32_t i = 0;
+                for (; i < (part_num - 1); i++) {
+                    xinfo_rpc("evm rpc request%u:%s", i, content.substr(i * 900, 900).c_str());
                 }
+                xinfo_rpc("evm rpc request%u:%s", i, content.substr(i * 900).c_str());
+            }
 
-                xJson::Reader reader;
-                top::xrpc::xjson_proc_t json_proc;
-                // reader.
-                if (!reader.parse(content, json_proc.m_request_json)) {
-                    xrpc_error_json error_json(0, "err", 0);
-                    xdbg("rpc request err");
-                    m_edge_method_mgr_ptr->write_response(conn, error_json.write());
-                    return;
-                }
-                pre_request_data.m_request_map.emplace(RPC_SEQUENCE_ID, json_proc.m_request_json["id"].asString());
-                json_proc.m_request_json["id"];
-
-                //m_rule_mgr_ptr->filter(json_proc);
-                // prase json
-                // account flow controll and blacklist
-
-                m_edge_method_mgr_ptr->do_method(conn, json_proc, ip);
-            } while (0);
-        } catch(const xrpc_error& e) {
-            xrpc_error_json error_json(e.code().value(), e.what(), pre_request_data.get_request_value(RPC_SEQUENCE_ID));
-            m_edge_method_mgr_ptr->write_response(conn, error_json.write());
-        }
-
-    /* xinfo_rpc("rpc request:%s", content.c_str());
-    xJson::Reader reader;
-    xJson::Value req;
-    // reader.
-    if (!reader.parse(content, req)) {
-        xrpc_error_json error_json(0, "err", 0);
-        xdbg("rpc request err");
+            xJson::Reader reader;
+            top::xrpc::xjson_proc_t json_proc;
+            // reader.
+            if (!reader.parse(content, json_proc.m_request_json)) {
+                xrpc_error_json error_json(0, "err", 0);
+                xdbg("rpc request err");
+                m_edge_method_mgr_ptr->write_response(conn, error_json.write());
+                return;
+            }
+            pre_request_data.m_request_map.emplace(RPC_SEQUENCE_ID, json_proc.m_request_json["id"].asString());
+            json_proc.m_request_json["id"];
+            m_edge_method_mgr_ptr->do_method(conn, json_proc, ip);
+    } catch (const xrpc_error & e) {
+        xrpc_error_json error_json(e.code().value(), e.what(), pre_request_data.get_request_value(RPC_SEQUENCE_ID));
         m_edge_method_mgr_ptr->write_response(conn, error_json.write());
-        return;
     }
-    std::string jsonrpc_version;
-    if (req.isMember("jsonrpc")) {
-        jsonrpc_version = req["jsonrpc"].asString();
-    }
-    xinfo_rpc("rpc request version:%s", jsonrpc_version.c_str());
-
-    if (jsonrpc_version == "2.0") {
-        xinfo_rpc("rpc request eth");
-        xJson::Value eth_res;
-        dev::eth::ClientBase client;
-        dev::rpc::Eth eth(client);
-        eth.CallMethod(req, eth_res);
-        xdbg("rpc request eth_res:%s", eth_res.toStyledString().c_str());
-
-        xJson::Value res;
-        res["id"] = req["id"].asString(); //base::xstring_utl::touint64(req["id"].asString());
-        res["jsonrpc"] = req["jsonrpc"].asString();
-        res["result"] = eth_res;
-
-        xJson::FastWriter j_writer;
-        std::string s_res = j_writer.write(res);
-        xdbg("rpc request:%s,i_id:%s", s_res.c_str(), req["id"].asString().c_str());
-        m_edge_method_mgr_ptr->write_response(conn, s_res);
-    } else {
-        xdbg("rpc request jsonrpc version:%s not 2.0", jsonrpc_version.c_str());
-    }
-    */
 }
 
 template<typename T>

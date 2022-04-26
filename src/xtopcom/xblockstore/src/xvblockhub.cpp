@@ -2392,7 +2392,11 @@ namespace top
         {
             if(this_index->check_modified_flag() == false)//nothing changed
                 return true;
-            
+
+            const std::string key_path2 = base::xvdbkey_t::create_prunable_blockhash_key(this_index->get_block_hash());
+            base::xvchain_t::instance().get_xdbstore()->set_value(key_path2, this_index->get_account() + "/" + base::xstring_utl::uint642hex(this_index->get_height()));
+            xdbg("xtablebkplugin::write_index: %s", this_index->get_account().c_str());
+
             return get_blockdb_ptr()->write_index_to_db(this_index);
         }
     

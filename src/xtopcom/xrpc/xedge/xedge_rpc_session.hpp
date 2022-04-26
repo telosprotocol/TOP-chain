@@ -35,8 +35,10 @@ template<class T>
 class xforward_session_base : public std::enable_shared_from_this<xforward_session_base<T>>
 {
 public:
-    xforward_session_base(const std::vector<shared_ptr<xrpc_msg_request_t>>& edge_msg_ptr_list, xedge_handler_base<T>* edge_handler_ptr, shared_ptr<T>& response, std::shared_ptr<asio::io_service>& ioc, const unordered_set<xvnode_address_t>& addr_set)
-        :m_edge_msg_ptr_list(edge_msg_ptr_list), m_edge_handler_ptr(edge_handler_ptr), m_response(response), m_ioc(ioc), m_destination_address(addr_set) {}
+    xforward_session_base(const std::vector<shared_ptr<xrpc_msg_request_t>>& edge_msg_ptr_list, xedge_handler_base<T>* edge_handler_ptr, 
+        shared_ptr<T>& response, std::shared_ptr<asio::io_service>& ioc, const unordered_set<xvnode_address_t>& addr_set, const common::xenum_message_id& msg_type)
+        :m_edge_msg_ptr_list(edge_msg_ptr_list), m_edge_handler_ptr(edge_handler_ptr), m_response(response), m_ioc(ioc), m_destination_address(addr_set),
+        m_msg_type(msg_type) {}
     virtual ~xforward_session_base() {}
     virtual void write_response(const string&) = 0;
     void set_timeout(long seconds) noexcept;
@@ -49,6 +51,7 @@ public:
     shared_ptr<asio::io_service>&                       m_ioc;
     int16_t                                             m_retry_num{ 1 };
     unordered_set<xvnode_address_t>                     m_destination_address{};
+    common::xenum_message_id                            m_msg_type;
 };
 
 template<class T>
@@ -67,7 +70,7 @@ void xforward_session_base<T>::set_timeout(long seconds) noexcept
         if (!ec) {
             //  std::unique_lock<std::mutex> lock(session_mgr->m_mutex);
             if (self->m_retry_num-- > 0) {
-                self->m_edge_handler_ptr->edge_send_msg(self->m_edge_msg_ptr_list, "", "");
+                self->m_edge_handler_ptr->edge_send_msg(self->m_edge_msg_ptr_list, "", "", self->m_msg_type);
                 self->set_timeout(TIME_OUT);
             } else {
                 xrpc_error_json error_json(static_cast<uint32_t>(enum_xrpc_error_code::rpc_shard_exec_error), RPC_TIMEOUT_MSG, self->m_edge_msg_ptr_list.front()->m_client_id);
@@ -91,8 +94,9 @@ class forward_session;
 template<>
 class forward_session<http_response_t> : public xforward_session_base<http_response_t> {
 public:
-    forward_session(const std::vector<shared_ptr<xrpc_msg_request_t>>& edge_msg_ptr_list, xedge_handler_base<http_response_t>* edge_handler_ptr, shared_ptr<http_response_t>& response, std::shared_ptr<asio::io_service>& ioc, const unordered_set<xvnode_address_t>& addr_set)
-        :xforward_session_base<http_response_t>(edge_msg_ptr_list, edge_handler_ptr, response, ioc, addr_set) {}
+    forward_session(const std::vector<shared_ptr<xrpc_msg_request_t>>& edge_msg_ptr_list, xedge_handler_base<http_response_t>* edge_handler_ptr, 
+        shared_ptr<http_response_t>& response, std::shared_ptr<asio::io_service>& ioc, const unordered_set<xvnode_address_t>& addr_set, const common::xenum_message_id& msg_type)
+        :xforward_session_base<http_response_t>(edge_msg_ptr_list, edge_handler_ptr, response, ioc, addr_set, msg_type) {}
     ~forward_session() {}
     void write_response(const string& response) override
     {
@@ -103,8 +107,9 @@ public:
 template<>
 class forward_session<ws_connection_t> : public xforward_session_base<ws_connection_t> {
 public:
-    forward_session(const std::vector<shared_ptr<xrpc_msg_request_t>>& edge_msg_ptr_list, xedge_handler_base<ws_connection_t>* edge_handler_ptr, shared_ptr<ws_connection_t>& response, std::shared_ptr<asio::io_service>& ioc, const unordered_set<xvnode_address_t>& addr_set)
-        :xforward_session_base<ws_connection_t>(edge_msg_ptr_list, edge_handler_ptr, response, ioc, addr_set) {}
+    forward_session(const std::vector<shared_ptr<xrpc_msg_request_t>>& edge_msg_ptr_list, xedge_handler_base<ws_connection_t>* edge_handler_ptr, 
+        shared_ptr<ws_connection_t>& response, std::shared_ptr<asio::io_service>& ioc, const unordered_set<xvnode_address_t>& addr_set, const common::xenum_message_id& msg_type)
+        :xforward_session_base<ws_connection_t>(edge_msg_ptr_list, edge_handler_ptr, response, ioc, addr_set, msg_type) {}
     ~forward_session() {}
     void write_response(const string& response) override
     {

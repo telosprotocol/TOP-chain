@@ -17,6 +17,7 @@ xrpc_edge_vhost::xrpc_edge_vhost(std::shared_ptr<xvnetwork_driver_face_t> edge_h
     , m_thread(thread)
 {
     m_vnetwork_driver->register_message_ready_notify(xmessage_category_rpc, std::bind(&xrpc_edge_vhost::on_message, this, _1, _2));
+    xinfo("edge register rpc");
 }
 
 void xrpc_edge_vhost::on_message(const xvnode_address_t& sender, const xmessage_t& message)

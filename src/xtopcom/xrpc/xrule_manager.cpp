@@ -55,7 +55,19 @@ void xfilter_manager::filter(xjson_proc_t & json_proc) {
         iter->second(json_proc);
     }
 }
+void xfilter_manager::filter_eth(xjson_proc_t & json_proc) {
+    CONDTION_FAIL_THROW(json_proc.m_request_json["method"].isString() && !json_proc.m_request_json["method"].asString().empty(),
+                        enum_xrpc_error_code::rpc_param_param_lack,
+                        "miss param method or method is empty");
+    CONDTION_FAIL_THROW(json_proc.m_request_json["jsonrpc"].isString(),
+                        enum_xrpc_error_code::rpc_param_param_lack,
+                        "miss param version");
 
+    auto iter = m_filter_map.find(pair<string, string>{json_proc.m_request_json["jsonrpc"].asString(), json_proc.m_request_json["method"].asString()});
+    if (iter != m_filter_map.end()) {
+        iter->second(json_proc);
+    }
+}
 void xfilter_manager::getAccount_filter(xjson_proc_t & json_proc) {
     auto account = json_proc.m_request_json["params"]["account_addr"];
     auto is_valid_account =

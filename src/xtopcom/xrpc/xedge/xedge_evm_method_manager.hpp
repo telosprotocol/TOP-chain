@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
+#include <cinttypes>
 
 #include "xbase/xcontext.h"
 #include "xbase/xutl.h"
@@ -28,9 +29,9 @@
 #include "xverifier/xwhitelist_verifier.h"
 #include "xvledger/xvblock.h"
 #include "xvnetwork/xvhost_face.h"
-#include "xrpc/eth_jsonrpc/Eth.h"
-#include "xrpc/eth_jsonrpc/ClientBase.h"
-#include <cinttypes>
+//#include "xrpc/eth_jsonrpc/Eth.h"
+//#include "xrpc/eth_jsonrpc/ClientBase.h"
+#include "xrpc/eth_rpc/eth_method.h"
 
 NS_BEG2(top, xrpc)
 using base::xcontext_t;
@@ -81,6 +82,7 @@ protected:
     top::observer_ptr<base::xvtxstore_t> m_txstore;
     bool m_archive_flag{false};  // for local query
     bool m_enable_sign{true};
+    eth::EthMethod m_eth_method;
 };
 
 class xedge_evm_http_method : public xedge_evm_method_base<xedge_evm_http_handler> {
@@ -132,17 +134,19 @@ xedge_evm_method_base<T>::xedge_evm_method_base(shared_ptr<xrpc_edge_vhost> edge
 
 template <class T>
 void xedge_evm_method_base<T>::do_method(shared_ptr<conn_type> & response, xjson_proc_t & json_proc, const std::string & ip) {
-    // set account
-
     std::string jsonrpc_version;
     if (json_proc.m_request_json.isMember("jsonrpc")) {
         jsonrpc_version = json_proc.m_request_json["jsonrpc"].asString();
     }
-    xinfo_rpc("rpc request version:%s", jsonrpc_version.c_str());
+    //xinfo_rpc("rpc request version:%s", jsonrpc_version.c_str());
+    const string & version = jsonrpc_version;
+    const string & method = json_proc.m_request_json["method"].asString();
+    xinfo_rpc("rpc request: %s,%s", version.c_str(), method.c_str());
 
-    if (jsonrpc_version == "2.0") {
-        std::string method = json_proc.m_request_json["method"].asString();
-        if (method != "eth_sendRawTransaction" && method != "eth_getBalance" && method != "eth_getTransactionCount" && method != "eth_getTransactionReceipt" &&
+    if (jsonrpc_version != "2.0") {
+        return;
+    }
+/*        if (method != "eth_sendRawTransaction" && method != "eth_getBalance" && method != "eth_getTransactionCount" && method != "eth_getTransactionReceipt" &&
             method != "eth_blockNumber" && method != "eth_getBlockByHash" && method != "eth_getBlockByNumber" && method != "eth_getCode" && 
             method != "eth_getTransactionByHash" && method != "eth_call") {
             xJson::Value eth_res;
@@ -161,18 +165,36 @@ void xedge_evm_method_base<T>::do_method(shared_ptr<conn_type> & response, xjson
             write_response(response, s_res);
             return;
         }
-    } else {
+*/
+    xJson::Value eth_res;
+    if (m_eth_method.CallMethod(json_proc.m_request_json, eth_res) == 0) {
+        xJson::Value res;
+        res["id"] = json_proc.m_request_json["id"].asString();
+        res["jsonrpc"] = json_proc.m_request_json["jsonrpc"].asString();
+        res["result"] = eth_res;
 
-    }
-    const string & version = jsonrpc_version;
-    const string & method = json_proc.m_request_json["method"].asString();
-    xinfo_rpc("rpc request: %s,%s", version.c_str(), method.c_str());
-
-    auto version_method = pair<string, string>(version, method);
-    if (m_edge_local_method_ptr->do_local_method(version_method, json_proc)) {
-        write_response(response, json_proc.get_response());
+        xJson::FastWriter j_writer;
+        std::string s_res = j_writer.write(res);
+        xdbg("rpc response:%s,i_id:%s", s_res.c_str(), json_proc.m_request_json["id"].asString().c_str());
+        write_response(response, s_res);
         return;
     }
+
+    if (m_eth_method.supported_method(method) == false) {
+        xinfo("not support method: %s", method.c_str());
+        xJson::Value res;
+        res["id"] = json_proc.m_request_json["id"].asString();
+        res["jsonrpc"] = json_proc.m_request_json["jsonrpc"].asString();
+        res["result"] = eth_res;
+
+        xJson::FastWriter j_writer;
+        std::string s_res = j_writer.write(res);
+        xdbg("rpc response:%s,i_id:%s", s_res.c_str(), json_proc.m_request_json["id"].asString().c_str());
+        write_response(response, s_res);
+        return;
+    }
+
+    auto version_method = pair<string, string>(version, method);
     auto iter = m_edge_tx_method_map.find(version_method);
     if (iter != m_edge_tx_method_map.end()) {
         json_proc.m_tx_type = enum_xrpc_tx_type::enum_xrpc_tx_type;
@@ -189,75 +211,11 @@ void xedge_evm_method_base<T>::do_method(shared_ptr<conn_type> & response, xjson
             write_response(response, json_proc.get_response());
             return;
         } else {
-            query_process(json_proc);
-//            if (json_proc.m_request_json["method"] == "eth_getBalance")
-//                json_proc.m_request_json["method"] = "getAccount";
+            //query_process(json_proc);
+            json_proc.m_tx_type = enum_xrpc_tx_type::enum_xrpc_query_type;
         }
     }
-    assert(json_proc.m_account_set.size());
     forward_method(response, json_proc);
-}
-template <class T>
-void xedge_evm_method_base<T>::query_process(xjson_proc_t & json_proc) {
-    json_proc.m_tx_type = enum_xrpc_tx_type::enum_xrpc_query_type;
-    std::string account;
-
-    if (json_proc.m_request_json["method"].asString() == "eth_getBalance" || json_proc.m_request_json["method"].asString() == "eth_getTransactionCount"
-        || json_proc.m_request_json["method"].asString() == "eth_getCode") {
-        account = json_proc.m_request_json["params"][0].asString();
-        account = std::string(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN) + account.substr(2);
-        json_proc.m_account_set.emplace(account);
-        json_proc.m_request_json.removeMember("params");
-        json_proc.m_request_json["params"]["account_addr"] = account;
-    } else if (json_proc.m_request_json["method"].asString() == "eth_getTransactionByHash") {
-        account = std::string(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN) + std::string(40, '0');
-        std::string tx_hash = json_proc.m_request_json["params"][0].asString();
-        json_proc.m_account_set.emplace(account);
-        json_proc.m_request_json.removeMember("params");
-        json_proc.m_request_json["params"]["tx_hash"] = tx_hash;
-        json_proc.m_request_json["params"]["account_addr"] = account;
-    } else if (json_proc.m_request_json["method"].asString() == "eth_getTransactionReceipt" || json_proc.m_request_json["method"].asString() == "eth_getBlockByHash") {
-        account = std::string(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN) + std::string(40, '0');
-        std::string tx_hash = json_proc.m_request_json["params"][0].asString();
-        json_proc.m_account_set.emplace(account);
-        json_proc.m_request_json.removeMember("params");
-        json_proc.m_request_json["params"]["tx_hash"] = tx_hash;
-        json_proc.m_request_json["params"]["account_addr"] = account;
-    } else if (json_proc.m_request_json["method"].asString() == "eth_blockNumber") {
-        account = std::string(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN) + std::string(40, '0');
-        json_proc.m_account_set.emplace(account);
-        json_proc.m_request_json.removeMember("params");
-        json_proc.m_request_json["params"]["account_addr"] = account;
-    } else if (json_proc.m_request_json["method"].asString() == "eth_getBlockByNumber") {
-        std::string height = json_proc.m_request_json["params"][0].asString();
-        account = std::string(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN) + std::string(40, '0');
-        json_proc.m_account_set.emplace(account);
-        json_proc.m_request_json.removeMember("params");
-        json_proc.m_request_json["params"]["account_addr"] = account;
-        json_proc.m_request_json["params"]["height"] = height;
-    } else if (json_proc.m_request_json["method"].asString() == "eth_call") {
-        account = json_proc.m_request_json["params"][0]["from"].asString();
-        account = std::string(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN) + account.substr(2);
-        std::string to = json_proc.m_request_json["params"][0]["to"].asString();
-        to = std::string(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN) + to.substr(2);
-        std::string data = json_proc.m_request_json["params"][0]["data"].asString();
-        std::string value = json_proc.m_request_json["params"][0]["value"].asString();
-        std::string gas = json_proc.m_request_json["params"][0]["gas"].asString();
-        json_proc.m_account_set.emplace(account);
-        json_proc.m_request_json.removeMember("params");
-        json_proc.m_request_json["params"]["account_addr"] = account;
-        json_proc.m_request_json["params"]["to"] = to;
-        json_proc.m_request_json["params"]["data"] = data;
-        json_proc.m_request_json["params"]["value"] = value;
-        json_proc.m_request_json["params"]["gas"] = gas;
-    }
-
-    json_proc.m_request_json[RPC_SEQUENCE_ID] = json_proc.m_request_json["id"];
-    json_proc.m_request_json["version"] = "1.0";
-    json_proc.m_request_json["target_account_addr"] = account;
-    json_proc.m_request_json.removeMember("id");
-    xinfo_rpc("rpc query: %s,%s,%s", account.c_str(), json_proc.m_request_json["method"].asString().c_str(), json_proc.m_request_json[RPC_SEQUENCE_ID].asString().c_str());
-
 }
 
 template <class T>
@@ -352,7 +310,7 @@ shared_ptr<xrpc_msg_request_t> xedge_evm_method_base<T>::generate_request(const 
                                                                       const string account,
                                                                       xjson_proc_t & json_proc) {
     shared_ptr<xrpc_msg_request_t> edge_msg_ptr;
-    const string client_id = json_proc.m_request_json[RPC_SEQUENCE_ID].asString();
+    const string client_id = json_proc.m_request_json["id"].asString();
     if (json_proc.m_tx_type == enum_xrpc_tx_type::enum_xrpc_query_type) {
         edge_msg_ptr = std::make_shared<xrpc_msg_request_t>(type(), json_proc.m_tx_type, source_address, uuid, client_id, account, json_proc.get_request());
         xdbg_rpc("json_proc.get_request: %s", json_proc.get_request().c_str());
@@ -380,26 +338,31 @@ void xedge_evm_method_base<T>::forward_method(shared_ptr<conn_type> & response, 
         auto vd = m_edge_handler_ptr->get_rpc_edge_vhost()->get_vnetwork_driver();
         const xvnode_address_t & source_address = vd->address();
 
-        for (const auto & account : json_proc.m_account_set) {
-            std::error_code ec;
-            auto account_address = common::xaccount_address_t::build_from(account, ec);
-            if (ec) {
-                xwarn("forward_method error. invalid account %s; errc %" PRIi32 " msg %s", account.c_str(), ec.value(), ec.message().c_str());
-                continue;
-            }
-
-            auto cluster_addr = m_edge_handler_ptr->get_rpc_edge_vhost()->get_router()->sharding_address_from_account(
-                account_address, vd->network_id(), common::xnode_type_t::consensus_validator);
-            assert(common::has<common::xnode_type_t::consensus_validator>(cluster_addr.type()) || common::has<common::xnode_type_t::committee>(cluster_addr.type()) ||
-                   common::has<common::xnode_type_t::zec>(cluster_addr.type()) || common::has<common::xnode_type_t::evm>(cluster_addr.type()));
-            vnetwork::xvnode_address_t shard_addr{std::move(cluster_addr)};
-
-            if (shard_addr_set.find(shard_addr) == shard_addr_set.end()) {
-                shared_ptr<xrpc_msg_request_t> edge_msg_ptr = generate_request(source_address, uuid, account, json_proc);
-                edge_msg_list.emplace_back(edge_msg_ptr);
-                shard_addr_set.emplace(shard_addr);
-            }
+        //for (const auto & account : json_proc.m_account_set) {
+        std::string account;
+        if (json_proc.m_account_set.empty())
+            account = std::string(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN) + std::string(40, '0');
+        else 
+            account = *json_proc.m_account_set.begin();
+        std::error_code ec;
+        auto account_address = common::xaccount_address_t::build_from(account, ec);
+        if (ec) {
+            xwarn("forward_method error. invalid account %s; errc %" PRIi32 " msg %s", account.c_str(), ec.value(), ec.message().c_str());
+            continue;
         }
+
+        auto cluster_addr =
+            m_edge_handler_ptr->get_rpc_edge_vhost()->get_router()->sharding_address_from_account(account_address, vd->network_id(), common::xnode_type_t::consensus_validator);
+        assert(common::has<common::xnode_type_t::consensus_validator>(cluster_addr.type()) || common::has<common::xnode_type_t::committee>(cluster_addr.type()) ||
+               common::has<common::xnode_type_t::zec>(cluster_addr.type()) || common::has<common::xnode_type_t::evm>(cluster_addr.type()));
+        vnetwork::xvnode_address_t shard_addr{std::move(cluster_addr)};
+
+        if (shard_addr_set.find(shard_addr) == shard_addr_set.end()) {
+            shared_ptr<xrpc_msg_request_t> edge_msg_ptr = generate_request(source_address, uuid, account, json_proc);
+            edge_msg_list.emplace_back(edge_msg_ptr);
+            shard_addr_set.emplace(shard_addr);
+        }
+        //}
         if (edge_msg_list.empty()) {
             throw xrpc_error{enum_xrpc_error_code::rpc_param_param_lack, "msg list is empty"};
         }
@@ -410,13 +373,10 @@ void xedge_evm_method_base<T>::forward_method(shared_ptr<conn_type> & response, 
             }
             uint64_t delay_time_s = json_proc.m_tx_ptr->get_delay_from_fire_timestamp(now);
             XMETRICS_GAUGE(metrics::txdelay_from_client_to_edge, delay_time_s);
-            m_edge_handler_ptr->edge_send_msg(edge_msg_list, json_proc.m_tx_ptr->get_digest_hex_str(), json_proc.m_tx_ptr->get_source_addr());
+            m_edge_handler_ptr->edge_send_msg(edge_msg_list, json_proc.m_tx_ptr->get_digest_hex_str(), json_proc.m_tx_ptr->get_source_addr(), rpc_msg_eth_request);
         } else {
-            m_edge_handler_ptr->edge_send_msg(edge_msg_list, "", "");
+            m_edge_handler_ptr->edge_send_msg(edge_msg_list, "", "", rpc_msg_eth_query_request);
         }
-#if (defined ENABLE_RPC_SESSION) && (ENABLE_RPC_SESSION != 0)
-        m_edge_handler_ptr->insert_session(edge_msg_list, shard_addr_set, response);
-#else
         if (json_proc.m_tx_type == enum_xrpc_tx_type::enum_xrpc_tx_type) {
             json_proc.m_response_json[RPC_ERRNO] = RPC_OK_CODE;
             json_proc.m_response_json[RPC_ERRMSG] = RPC_OK_MSG;
@@ -426,10 +386,8 @@ void xedge_evm_method_base<T>::forward_method(shared_ptr<conn_type> & response, 
             XMETRICS_COUNTER_INCREMENT("rpc_edge_query_response", 1);
             // auditor return query result directly, so clear shard addr set
             shard_addr_set.clear();
-            m_edge_handler_ptr->insert_session(edge_msg_list, shard_addr_set, response);
-            xdbg_rpc("forward_method, insert_session ok. %s", source_address.to_string().c_str());
+            m_edge_handler_ptr->insert_session(edge_msg_list, shard_addr_set, response, rpc_msg_eth_query_request);
         }
-#endif
     } while (0);
 }
 NS_END2

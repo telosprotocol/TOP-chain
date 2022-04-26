@@ -1350,11 +1350,22 @@ namespace top
         {
             std::string account;
             uint64_t height;
-            int ret = base::xvchain_t::instance().get_xtxstore()->load_block_idx_by_hash(hash, account, height);
+            int ret = load_block_idx_by_hash(hash, account, height);
             if (ret != 0)
                 return nullptr;
 
             return query_block(account, height, hash);
-        }        
+        }
+        int xvblockstore_impl::load_block_idx_by_hash(const std::string & hash, std::string & account, uint64_t & height) {
+            const std::string key_path = base::xvdbkey_t::create_prunable_blockhash_key(hash);
+            std::string block_idx = base::xvchain_t::instance().get_xdbstore()->get_value(key_path);
+            std::string::size_type found = block_idx.find("/");
+            if (found == std::string::npos)
+                return 1;
+            account = block_idx.substr(0, found);
+            height = base::xstring_utl::hex2uint64(block_idx.substr(found + 1));
+            xdbg("xtxstoreimpl::load_block_idx_by_hash, %s,%llu", account.c_str(), height);
+            return 0;
+        }
     };//end of namespace of vstore
 };//end of namespace of top

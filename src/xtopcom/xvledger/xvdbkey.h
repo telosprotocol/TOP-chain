@@ -82,6 +82,7 @@ namespace top
            
            //prunable tx and tx index
            static const std::string  create_prunable_tx_key(const std::string & org_tx_hash);
+           static const std::string  create_prunable_blockhash_key(const std::string & org_tx_hash);
            static const std::string  create_prunable_tx_index_key(const std::string & org_tx_hash, const enum_txindex_type type);
            
            //all keys under of same height
