@@ -24,7 +24,6 @@
 #include "xdata/xfull_tableblock.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xproposal_data.h"
-#include "xdata/xslash.h"
 #include "xdata/xtable_bstate.h"
 #include "xdata/xtableblock.h"
 #include "xdata/xtransaction_cache.h"
@@ -288,7 +287,7 @@ void xrpc_query_manager::getIssuanceDetail(xJson::Value & js_req, xJson::Value &
               data::system_contract::XPROPERTY_REWARD_DETAIL);
         return;
     }
-    data::system_contract::xissue_detail issue_detail;
+    data::system_contract::xissue_detail_v2 issue_detail;
     if (issue_detail.from_string(xissue_detail_str) <= 0) {
         xwarn("[grpc::getIssuanceDetail] deserialize failed");
     }
@@ -318,10 +317,12 @@ void xrpc_query_manager::getIssuanceDetail(xJson::Value & js_req, xJson::Value &
     jv["archive_reward_ratio"] = issue_detail.m_archive_reward_ratio;
     jv["validator_reward_ratio"] = issue_detail.m_validator_reward_ratio;
     jv["auditor_reward_ratio"] = issue_detail.m_auditor_reward_ratio;
+    jv["eth_reward_ratio"] = issue_detail.m_eth_reward_ratio;
     jv["vote_reward_ratio"] = issue_detail.m_vote_reward_ratio;
     jv["governance_reward_ratio"] = issue_detail.m_governance_reward_ratio;
     jv["validator_group_count"] = (xJson::UInt)issue_detail.m_validator_group_count;
     jv["auditor_group_count"] = (xJson::UInt)issue_detail.m_auditor_group_count;
+    jv["eth_group_count"] = (xJson::UInt)issue_detail.m_eth_group_count;
     std::map<std::string, std::string> contract_auditor_votes;
     if (m_store->get_map_property(
             sys_contract_zec_vote_addr, issue_detail.m_zec_vote_contract_height, data::system_contract::XPORPERTY_CONTRACT_TICKETS_KEY, contract_auditor_votes) != 0) {
@@ -1802,7 +1803,7 @@ void xrpc_query_manager::set_accumulated_issuance_yearly(xJson::Value & j, const
 }
 
 void xrpc_query_manager::set_unqualified_node_map(xJson::Value & j, std::map<std::string, std::string> const & ms) {
-    xunqualified_node_info_t summarize_info;
+    data::system_contract::xunqualified_node_info_v2_t summarize_info;
     for (auto const & m : ms) {
         auto detail = m.second;
         if (!detail.empty()) {
@@ -1827,8 +1828,17 @@ void xrpc_query_manager::set_unqualified_node_map(xJson::Value & j, std::map<std
             jvn_validator[v.first.value()] = validator_info;
         }
 
+        xJson::Value jvn_evm;
+        for (auto const & v : summarize_info.evm_info) {
+            xJson::Value evm_info;
+            evm_info["vote_num"] = v.second.block_count;
+            evm_info["subset_num"] = v.second.subset_count;
+            jvn_evm[v.first.value()] = evm_info;
+        }
+
         jvn["auditor"] = jvn_auditor;
         jvn["validator"] = jvn_validator;
+        jvn["evm"] = jvn_evm;
         j["unqualified_node"] = jvn;
     }
 }

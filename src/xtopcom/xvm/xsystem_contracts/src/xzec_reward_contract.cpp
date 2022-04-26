@@ -191,7 +191,7 @@ void xzec_reward_contract::reward(const common::xlogic_time_t current_time, std:
     common::xlogic_time_t activation_time;  // system activation time
     xreward_onchain_param_t onchain_param;  // onchain params
     xreward_property_param_t property_param;    // property from self and other contracts
-    data::system_contract::xissue_detail issue_detail;  // issue details this round
+    data::system_contract::xissue_detail_v2 issue_detail;  // issue details this round
     get_reward_param(current_time, activation_time, onchain_param, property_param, issue_detail);
     XCONTRACT_ENSURE(current_time > activation_time, "current_time <= activation_time");
     // step2 calculate node and table rewards
@@ -586,8 +586,8 @@ void xzec_reward_contract::on_receive_workload(std::string const& workload_str) 
 
     MAP_OBJECT_DESERIALZE2(stream, workload_info);
     xdbg("[xzec_reward_contract::on_receive_workload] pid:%d, SOURCE_ADDRESS: %s, workload_info size: %zu\n", getpid(), source_address.c_str(), workload_info.size());
-    // TODO: add eth fork
-    if (0) {
+    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+    if (top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.eth_fork_point, TIME())) {
         for (auto const & workload : workload_info) {
             xstream_t stream(xcontext_t::instance());
             stream << workload.first;
@@ -601,7 +601,6 @@ void xzec_reward_contract::on_receive_workload(std::string const& workload_str) 
             stream << workload.first;
             auto const & group_address_str = std::string((const char *)stream.data(), stream.size());
             auto const & workload_info = workload.second;
-                // TODO: add eth fork
             if (common::has<common::xnode_type_t::consensus_auditor>(workload.first.type())) {
                 add_cluster_workload(true, group_address_str, workload_info.m_leader_count);
             } else if (common::has<common::xnode_type_t::consensus_validator>(workload.first.type())) {
@@ -694,7 +693,7 @@ void xzec_reward_contract::clear_workload() {
     }
 }
 
-void xzec_reward_contract::update_issuance_detail(data::system_contract::xissue_detail const & issue_detail) {
+void xzec_reward_contract::update_issuance_detail(data::system_contract::xissue_detail_v2 const & issue_detail) {
     xdbg("[xzec_reward_contract::update_issuance_detail] onchain_timer_round: %llu, m_zec_vote_contract_height: %llu, "
         "m_zec_workload_contract_height: %llu, m_zec_reward_contract_height: %llu, "
         "m_edge_reward_ratio: %u, m_archive_reward_ratio: %u "
@@ -709,7 +708,14 @@ void xzec_reward_contract::update_issuance_detail(data::system_contract::xissue_
             issue_detail.m_auditor_reward_ratio,
             issue_detail.m_vote_reward_ratio,
             issue_detail.m_governance_reward_ratio);
-    auto issue_detail_str = issue_detail.to_string();
+    std::string issue_detail_str;
+    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+    if (top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.eth_fork_point, TIME())) {
+        issue_detail_str = issue_detail.to_string();
+    } else {
+        auto issue_detail_old = static_cast<data::system_contract::xissue_detail_v1>(issue_detail);
+        issue_detail_str = issue_detail_old.to_string();
+    }
     try {
         STRING_SET(data::system_contract::XPROPERTY_REWARD_DETAIL, issue_detail_str);
     } catch (std::runtime_error & e) {
@@ -721,7 +727,7 @@ void xzec_reward_contract::get_reward_param(const common::xlogic_time_t current_
                                             common::xlogic_time_t & activation_time,
                                             xreward_onchain_param_t & onchain_param,
                                             xreward_property_param_t & property_param,
-                                            data::system_contract::xissue_detail & issue_detail) {
+                                            data::system_contract::xissue_detail_v2 & issue_detail) {
     // get time
     std::string activation_str;
     activation_str = STRING_GET2(data::system_contract::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY, sys_contract_rec_registration_addr);
@@ -737,15 +743,19 @@ void xzec_reward_contract::get_reward_param(const common::xlogic_time_t current_
     onchain_param.edge_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(edge_reward_ratio);
     onchain_param.archive_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(archive_reward_ratio);
     onchain_param.validator_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(validator_reward_ratio);
-    onchain_param.auditor_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_reward_ratio);
-    // TODO: add eth fork or proposal
-    onchain_param.eth_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_reward_ratio);
+    onchain_param.auditor_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_reward_ratio);    
     onchain_param.vote_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(vote_reward_ratio);
     onchain_param.governance_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(governance_reward_ratio);
     onchain_param.auditor_group_zero_workload = XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_group_zero_workload);
     onchain_param.validator_group_zero_workload = XGET_ONCHAIN_GOVERNANCE_PARAMETER(validator_group_zero_workload);
-    // TODO: add eth fork or proposal
-    onchain_param.eth_group_zero_workload = XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_group_zero_workload);
+    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+    if (top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.eth_fork_point, current_time)) {
+        onchain_param.eth_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_reward_ratio);
+        onchain_param.eth_group_zero_workload = XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_group_zero_workload);
+    } else {
+        onchain_param.eth_reward_ratio = 0;
+        onchain_param.eth_group_zero_workload = 0;
+    }
     auto total_ratio = onchain_param.edge_reward_ratio + onchain_param.archive_reward_ratio + onchain_param.validator_reward_ratio + onchain_param.auditor_reward_ratio +
                        onchain_param.vote_reward_ratio + onchain_param.governance_reward_ratio;
     xinfo(
@@ -796,8 +806,7 @@ void xzec_reward_contract::get_reward_param(const common::xlogic_time_t current_
         property_param.map_nodes[address] = node;
     }
 
-    // TODO: add eth fork
-    if (0) {
+    if (top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.eth_fork_point, current_time)) {
         std::map<std::string, std::string> groups_workloads;
         std::map<std::string, std::string> old_groups_workloads;
         MAP_COPY_GET(data::system_contract::XPORPERTY_CONTRACT_WORKLOAD_KEY, groups_workloads);
@@ -1486,7 +1495,7 @@ void xzec_reward_contract::calc_nodes_rewards_v5(common::xlogic_time_t const cur
                                                  common::xlogic_time_t const issue_time_length,
                                                  xreward_onchain_param_t const & onchain_param,
                                                  xreward_property_param_t & property_param,
-                                                 data::system_contract::xissue_detail & issue_detail,
+                                                 data::system_contract::xissue_detail_v2 & issue_detail,
                                                  std::map<common::xaccount_address_t, ::uint128_t> & node_reward_detail,
                                                  std::map<common::xaccount_address_t, ::uint128_t> & node_dividend_detail,
                                                  ::uint128_t & community_reward) {
@@ -1834,7 +1843,7 @@ void xzec_reward_contract::dispatch_all_reward_v3(const common::xlogic_time_t cu
 void xzec_reward_contract::update_property(const uint64_t current_time,
                                            const uint64_t actual_issuance,
                                            data::system_contract::xaccumulated_reward_record const & record,
-                                           data::system_contract::xissue_detail const & issue_detail) {
+                                           data::system_contract::xissue_detail_v2 const & issue_detail) {
     xdbg("[xzec_reward_contract::update_property] actual_issuance: %lu, current_time: %lu", actual_issuance, current_time);
     xdbg("[xzec_reward_contract::update_property] accumulated_reward_record: %lu, current_time: %lu, [%lu, %u]",
          record.last_issuance_time,

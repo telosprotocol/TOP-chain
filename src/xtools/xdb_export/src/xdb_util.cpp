@@ -25,7 +25,6 @@
 #include "xdata/xelection/xstandby_result.h"
 #include "xdata/xelection/xstandby_result_store.h"
 #include "xdata/xproposal_data.h"
-#include "xdata/xslash.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
 #include "xdata/xtable_bstate.h"
 
@@ -585,7 +584,7 @@ static void parse_genesis_string(std::string const & str, json & j) {
 static void parse_unqualified_node_map(std::map<std::string, std::string> const & map, json & j) {
     for (auto const & m : map) {
         auto detail = m.second;
-        data::xunqualified_node_info_t summarize_info;
+        data::system_contract::xunqualified_node_info_v2_t summarize_info;
         if (!detail.empty()) {
             base::xstream_t stream{base::xcontext_t::instance(), (uint8_t *)detail.data(), (uint32_t)detail.size()};
             summarize_info.serialize_from(stream);
@@ -606,8 +605,16 @@ static void parse_unqualified_node_map(std::map<std::string, std::string> const 
             validator_info["subset_num"] = v.second.subset_count;
             jvn_validator[v.first.value()] = validator_info;
         }
+        json jvn_evm;
+        for (auto const & v : summarize_info.evm_info) {
+            json evm_info;
+            evm_info["vote_num"] = v.second.block_count;
+            evm_info["subset_num"] = v.second.subset_count;
+            jvn_evm[v.first.value()] = evm_info;
+        }
         jvn["auditor"] = jvn_auditor;
         jvn["validator"] = jvn_validator;
+        jvn["evm"] = jvn_evm;
         j["unqualified_node"] = jvn;
     }
 }
@@ -704,7 +711,7 @@ static void parse_reward_detail_string(std::string const & str, json & j) {
     if (str.empty()) {
         return;
     }
-    data::system_contract::xissue_detail issue_detail;
+    data::system_contract::xissue_detail_v2 issue_detail;
     issue_detail.from_string(str);
     json jv;
     jv["onchain_timer_round"] = issue_detail.onchain_timer_round;
@@ -715,10 +722,12 @@ static void parse_reward_detail_string(std::string const & str, json & j) {
     jv["archive_reward_ratio"] = issue_detail.m_archive_reward_ratio;
     jv["validator_reward_ratio"] = issue_detail.m_validator_reward_ratio;
     jv["auditor_reward_ratio"] = issue_detail.m_auditor_reward_ratio;
+    jv["eth_reward_ratio"] = issue_detail.m_eth_reward_ratio;
     jv["vote_reward_ratio"] = issue_detail.m_vote_reward_ratio;
     jv["governance_reward_ratio"] = issue_detail.m_governance_reward_ratio;
     jv["validator_group_count"] = issue_detail.m_validator_group_count;
     jv["auditor_group_count"] = issue_detail.m_auditor_group_count;
+    jv["eth_group_count"] = issue_detail.m_eth_group_count;
     json jr;
     for (auto const & node_reward : issue_detail.m_node_rewards) {
         std::stringstream ss;

@@ -4,6 +4,7 @@
 #include "xdata/xsystem_contract/xdata_structures.h"
 
 #include "xbasic/xutility.h"
+#include "xbasic/xversion.h"
 #include "xdata/xnative_contract_address.h"
 
 NS_BEG3(top, data, system_contract)
@@ -174,6 +175,91 @@ int32_t xrefund_info::do_read(base::xstream_t & stream) {
     stream >> create_time;
     const int32_t end_pos = stream.size();
     return (begin_pos - end_pos);
+}
+
+std::int32_t xnode_vote_percent_t::do_write(base::xstream_t & stream) const {
+    KEEP_SIZE();
+    stream << block_count;
+    stream << subset_count;
+    return CALC_LEN();
+}
+
+std::int32_t xnode_vote_percent_t::do_read(base::xstream_t & stream) {
+    KEEP_SIZE();
+    stream >> block_count;
+    stream >> subset_count;
+    return CALC_LEN();
+}
+
+int32_t xunqualified_node_info_v1_t::do_write(base::xstream_t & stream) const {
+    KEEP_SIZE();
+    MAP_OBJECT_SERIALIZE2(stream, auditor_info);
+    MAP_OBJECT_SERIALIZE2(stream, validator_info);
+    return CALC_LEN();
+}
+
+int32_t xunqualified_node_info_v1_t::do_read(base::xstream_t & stream) {
+    KEEP_SIZE();
+    MAP_OBJECT_DESERIALZE2(stream, auditor_info);
+    MAP_OBJECT_DESERIALZE2(stream, validator_info);
+    return CALC_LEN();
+}
+
+int32_t xunqualified_node_info_v2_t::do_write(base::xstream_t & stream) const {
+    KEEP_SIZE();
+    MAP_OBJECT_SERIALIZE2(stream, auditor_info);
+    MAP_OBJECT_SERIALIZE2(stream, validator_info);
+    MAP_OBJECT_SERIALIZE2(stream, evm_info);
+    return CALC_LEN();
+}
+
+int32_t xunqualified_node_info_v2_t::do_read(base::xstream_t & stream) {
+    KEEP_SIZE();
+    MAP_OBJECT_DESERIALZE2(stream, auditor_info);
+    MAP_OBJECT_DESERIALZE2(stream, validator_info);
+    if (stream.size() > 0) {
+        MAP_OBJECT_DESERIALZE2(stream, evm_info);
+    }
+    return CALC_LEN();
+}
+
+xunqualified_node_info_v2_t::operator xunqualified_node_info_v1_t() const {
+    xunqualified_node_info_v1_t v1;
+    v1.auditor_info = auditor_info;
+    v1.validator_info = validator_info;
+    return v1;
+}
+
+int32_t xunqualified_filter_info_t::do_write(base::xstream_t & stream) const {
+    KEEP_SIZE();
+    stream << node_id;
+    stream << node_type;
+    stream << vote_percent;
+    return CALC_LEN();
+}
+
+int32_t xunqualified_filter_info_t::do_read(base::xstream_t & stream) {
+    KEEP_SIZE();
+    stream >> node_id;
+    stream >> node_type;
+    stream >> vote_percent;
+    return CALC_LEN();
+}
+
+int32_t xaction_node_info_t::do_write(base::xstream_t & stream) const {
+    KEEP_SIZE();
+    stream << node_id;
+    stream << node_type;
+    stream << action_type;
+    return CALC_LEN();
+}
+
+int32_t xaction_node_info_t::do_read(base::xstream_t & stream) {
+    KEEP_SIZE();
+    stream >> node_id;
+    stream >> node_type;
+    stream >> action_type;
+    return CALC_LEN();
 }
 
 template <>
@@ -604,13 +690,76 @@ void xreg_node_info::award_credit_score(common::xnode_type_t node_type) {
     }
 }
 
-std::string xissue_detail::to_string() const {
+int32_t reward_detail_v1::do_write(base::xstream_t & stream) const {
+    const int32_t begin_pos = stream.size();
+    stream << m_edge_reward;
+    stream << m_archive_reward;
+    stream << m_validator_reward;
+    stream << m_auditor_reward;
+    stream << m_vote_reward;
+    stream << m_self_reward;
+    const int32_t end_pos = stream.size();
+    return (end_pos - begin_pos);
+}
+
+int32_t reward_detail_v1::do_read(base::xstream_t & stream) {
+    const int32_t begin_pos = stream.size();
+    stream >> m_edge_reward;
+    stream >> m_archive_reward;
+    stream >> m_validator_reward;
+    stream >> m_auditor_reward;
+    stream >> m_vote_reward;
+    stream >> m_self_reward;
+    const int32_t end_pos = stream.size();
+    return (begin_pos - end_pos);
+}
+
+int32_t reward_detail_v2::do_write(base::xstream_t & stream) const {
+    const int32_t begin_pos = stream.size();
+    stream << m_edge_reward;
+    stream << m_archive_reward;
+    stream << m_validator_reward;
+    stream << m_auditor_reward;
+    stream << m_vote_reward;
+    stream << m_self_reward;
+    stream << m_eth_reward;
+    const int32_t end_pos = stream.size();
+    return (end_pos - begin_pos);
+}
+
+int32_t reward_detail_v2::do_read(base::xstream_t & stream) {
+    const int32_t begin_pos = stream.size();
+    stream >> m_edge_reward;
+    stream >> m_archive_reward;
+    stream >> m_validator_reward;
+    stream >> m_auditor_reward;
+    stream >> m_vote_reward;
+    stream >> m_self_reward;
+    if (stream.size() > 0) {
+        stream >> m_eth_reward;
+    }
+    const int32_t end_pos = stream.size();
+    return (begin_pos - end_pos);
+}
+
+reward_detail_v2::operator reward_detail_v1() const {
+    reward_detail_v1 v1;
+    v1.m_edge_reward = m_edge_reward;
+    v1.m_archive_reward = m_archive_reward;
+    v1.m_validator_reward = m_validator_reward;
+    v1.m_auditor_reward = m_auditor_reward;
+    v1.m_vote_reward = m_vote_reward;
+    v1.m_self_reward = m_self_reward;
+    return v1;
+}
+
+std::string xissue_detail_v1::to_string() const {
     base::xstream_t stream(base::xcontext_t::instance());
     serialize_to(stream);
     return std::string((const char *)stream.data(), stream.size());
 }
 
-int32_t xissue_detail::from_string(std::string const & s) {
+int32_t xissue_detail_v1::from_string(std::string const & s) {
     if (s.empty()) {
         xwarn("xissue_detail::from_string invalid input");
         return -1;
@@ -624,7 +773,7 @@ int32_t xissue_detail::from_string(std::string const & s) {
     return ret;
 }
 
-int32_t xissue_detail::do_write(base::xstream_t & stream) const {
+int32_t xissue_detail_v1::do_write(base::xstream_t & stream) const {
     const int32_t begin_pos = stream.size();
     stream << onchain_timer_round;
     stream << m_zec_vote_contract_height;
@@ -639,14 +788,11 @@ int32_t xissue_detail::do_write(base::xstream_t & stream) const {
     stream << m_auditor_group_count;
     stream << m_validator_group_count;
     MAP_OBJECT_SERIALIZE2(stream, m_node_rewards);
-    // TODO: add eth fork
-    stream << m_eth_reward_ratio;
-    stream << m_eth_group_count;
     const int32_t end_pos = stream.size();
     return (end_pos - begin_pos);
 }
 
-int32_t xissue_detail::do_read(base::xstream_t & stream) {
+int32_t xissue_detail_v1::do_read(base::xstream_t & stream) {
     const int32_t begin_pos = stream.size();
     stream >> onchain_timer_round;
     stream >> m_zec_vote_contract_height;
@@ -661,7 +807,66 @@ int32_t xissue_detail::do_read(base::xstream_t & stream) {
     stream >> m_auditor_group_count;
     stream >> m_validator_group_count;
     MAP_OBJECT_DESERIALZE2(stream, m_node_rewards);
-    // TODO: add eth fork
+    const int32_t end_pos = stream.size();
+    return (begin_pos - end_pos);
+}
+
+std::string xissue_detail_v2::to_string() const {
+    base::xstream_t stream(base::xcontext_t::instance());
+    serialize_to(stream);
+    return std::string((const char *)stream.data(), stream.size());
+}
+
+int32_t xissue_detail_v2::from_string(std::string const & s) {
+    if (s.empty()) {
+        xwarn("xissue_detail::from_string invalid input");
+        return -1;
+    }
+
+    base::xstream_t _stream(base::xcontext_t::instance(), (uint8_t *)s.data(), (int32_t)s.size());
+    int32_t ret = serialize_from(_stream);
+    if (ret <= 0) {
+        xerror("serialize_from_string fail. ret=%d,bin_data_size=%d", ret, s.size());
+    }
+    return ret;
+}
+
+int32_t xissue_detail_v2::do_write(base::xstream_t & stream) const {
+    const int32_t begin_pos = stream.size();
+    stream << onchain_timer_round;
+    stream << m_zec_vote_contract_height;
+    stream << m_zec_workload_contract_height;
+    stream << m_zec_reward_contract_height;
+    stream << m_edge_reward_ratio;
+    stream << m_archive_reward_ratio;
+    stream << m_validator_reward_ratio;
+    stream << m_auditor_reward_ratio;
+    stream << m_vote_reward_ratio;
+    stream << m_governance_reward_ratio;
+    stream << m_auditor_group_count;
+    stream << m_validator_group_count;
+    MAP_OBJECT_SERIALIZE2(stream, m_node_rewards);
+    stream << m_eth_reward_ratio;
+    stream << m_eth_group_count;
+    const int32_t end_pos = stream.size();
+    return (end_pos - begin_pos);
+}
+
+int32_t xissue_detail_v2::do_read(base::xstream_t & stream) {
+    const int32_t begin_pos = stream.size();
+    stream >> onchain_timer_round;
+    stream >> m_zec_vote_contract_height;
+    stream >> m_zec_workload_contract_height;
+    stream >> m_zec_reward_contract_height;
+    stream >> m_edge_reward_ratio;
+    stream >> m_archive_reward_ratio;
+    stream >> m_validator_reward_ratio;
+    stream >> m_auditor_reward_ratio;
+    stream >> m_vote_reward_ratio;
+    stream >> m_governance_reward_ratio;
+    stream >> m_auditor_group_count;
+    stream >> m_validator_group_count;
+    MAP_OBJECT_DESERIALZE2(stream, m_node_rewards);
     if (stream.size() > 0) {
         stream >> m_eth_reward_ratio;
     }
@@ -670,6 +875,26 @@ int32_t xissue_detail::do_read(base::xstream_t & stream) {
     }
     const int32_t end_pos = stream.size();
     return (begin_pos - end_pos);
+}
+
+xissue_detail_v2::operator xissue_detail_v1() const {
+    xissue_detail_v1 v1;
+    v1.onchain_timer_round = onchain_timer_round;
+    v1.m_zec_vote_contract_height = m_zec_vote_contract_height;
+    v1.m_zec_workload_contract_height = m_zec_workload_contract_height;
+    v1.m_zec_reward_contract_height = m_zec_reward_contract_height;
+    v1.m_edge_reward_ratio = m_edge_reward_ratio;
+    v1.m_archive_reward_ratio = m_archive_reward_ratio;
+    v1.m_validator_reward_ratio = m_validator_reward_ratio;
+    v1.m_auditor_reward_ratio = m_auditor_reward_ratio;
+    v1.m_vote_reward_ratio = m_vote_reward_ratio;
+    v1.m_governance_reward_ratio = m_governance_reward_ratio;
+    v1.m_auditor_group_count = m_auditor_group_count;
+    v1.m_validator_group_count = m_validator_group_count;
+    for (auto const & r : m_node_rewards) {
+        v1.m_node_rewards[r.first] = static_cast<reward_detail_v1>(r.second);
+    }
+    return v1;
 }
 
 NS_END3

@@ -2,18 +2,20 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include "xvm/manager/xrole_context.h"
+
+#include "xchain_fork/xchain_upgrade_center.h"
 #include "xchain_timer/xchain_timer_face.h"
 #include "xdata/xfull_tableblock.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xtx_factory.h"
-#include "xmbus/xevent_timer.h"
 #include "xmbus/xevent_store.h"
-#include "xvm/manager/xcontract_address_map.h"
-#include "xvm/manager/xmessage_ids.h"
-#include "xvm/manager/xrole_context.h"
-#include "xvm/manager/xcontract_manager.h"
-#include "xvm/xvm_service.h"
+#include "xmbus/xevent_timer.h"
 #include "xvledger/xvledger.h"
+#include "xvm/manager/xcontract_address_map.h"
+#include "xvm/manager/xcontract_manager.h"
+#include "xvm/manager/xmessage_ids.h"
+#include "xvm/xvm_service.h"
 
 #include <cinttypes>
 #include <cmath>
@@ -48,7 +50,6 @@ void xrole_context_t::on_block_to_db(const xblock_ptr_t & block, bool & event_br
         // table fulltable block process
         bool is_sharding_statistic =
             (m_contract_info->address == sharding_statistic_info_contract_address) && (block_owner.find(sys_contract_sharding_table_block_addr) != std::string::npos);
-        // TODO: add eth fork
         bool is_eth_statistic = (m_contract_info->address == eth_statistic_info_contract_address) && (block_owner.find(sys_contract_eth_table_block_addr) != std::string::npos);
         if ((is_sharding_statistic || is_eth_statistic) && block->is_fulltable()) {
             auto block_height = block->get_height();
@@ -196,16 +197,19 @@ void xrole_context_t::on_block_timer(const xevent_ptr_t & e) {
 
                         return;
                     } else if ((m_contract_info->address == eth_statistic_info_contract_address) && valid_call(onchain_timer_round)) {
-                        // TODO: add eth fork
                         // default size = 1
-                        auto clock_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_statistic_report_schedule_interval);
-                        if (onchain_timer_round % clock_interval == 0) {
-                            xinfo("xrole_context_t::on_block_timer table contract schedule, contract address %s, timer %" PRIu64 ", interval: %lu",
-                                  m_contract_info->address.value().c_str(),
-                                  onchain_timer_round,
-                                  clock_interval);
-                            call_contract(onchain_timer_round, info, block_timestamp, 0);
+                        auto call_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_statistic_report_schedule_interval);
+                        auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+                        if (top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.eth_fork_point, onchain_timer_round)) {
+                            if (call_interval != 0 && onchain_timer_round != 0 && onchain_timer_round % call_interval == 0) {
+                                xinfo("xrole_context_t::on_block_timer table contract schedule, contract address %s, timer %" PRIu64 ", interval: %lu",
+                                    m_contract_info->address.value().c_str(),
+                                    onchain_timer_round,
+                                    call_interval);
+                                call_contract(onchain_timer_round, info, block_timestamp, 0);
+                            }
                         }
+                        return;
                     }
 
                     bool first_blk = runtime_stand_alone(onchain_timer_round, m_contract_info->address);

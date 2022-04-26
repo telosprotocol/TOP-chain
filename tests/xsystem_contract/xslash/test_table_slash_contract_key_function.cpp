@@ -47,9 +47,9 @@ public:
     void nodeservice_add_group(uint64_t elect_blk_height, common::xip2_t const& group_xip, std::vector<common::xaccount_address_t> const& nodes);
     void set_according_block_statistic_data(uint64_t elect_blk_height, std::vector<common::xip2_t> const& group_xips);
     void set_according_block_accounts_data(uint64_t elect_blk_height, std::vector<common::xip2_t> const& group_xips);
-    xunqualified_node_info_t process_statistic_data(top::data::xstatistics_data_t const& block_statistic_data,
-                                                    std::vector<base::xvnode_t*> const & auditor_nodes, std::vector<base::xvnode_t*> const & validator_nodes);
-
+    data::system_contract::xunqualified_node_info_v1_t process_statistic_data(top::data::xstatistics_data_t const & block_statistic_data,
+                                                                              std::vector<base::xvnode_t *> const & auditor_nodes,
+                                                                              std::vector<base::xvnode_t *> const & validator_nodes);
 
 public:
     std::vector<common::xaccount_address_t> auditor_account_addrs;
@@ -170,8 +170,8 @@ void test_table_slash_contract::set_according_block_accounts_data(uint64_t elect
 
 }
 
-xunqualified_node_info_t test_table_slash_contract::process_statistic_data(top::data::xstatistics_data_t const& block_statistic_data, std::vector<base::xvnode_t*> const & auditor_nodes, std::vector<base::xvnode_t*> const & validator_nodes) {
-    xunqualified_node_info_t res_node_info;
+data::system_contract::xunqualified_node_info_v1_t test_table_slash_contract::process_statistic_data(top::data::xstatistics_data_t const& block_statistic_data, std::vector<base::xvnode_t*> const & auditor_nodes, std::vector<base::xvnode_t*> const & validator_nodes) {
+    data::system_contract::xunqualified_node_info_v1_t res_node_info;
 
     // process one full tableblock statistic data
     for (auto const & static_item: block_statistic_data.detail) {
@@ -238,7 +238,7 @@ TEST_F(test_table_slash_contract, collect_slash_statistic_info_BENCH) {
     stream << summarize_tableblock_count_for_str;
     std::string summarize_tableblock_count_str = std::string((char*)stream.data(), (size_t)stream.size());
 
-    xunqualified_node_info_t summarize_info;
+    data::system_contract::xunqualified_node_info_v2_t summarize_info;
     uint32_t summarize_tableblock_count = 0;
 
 
