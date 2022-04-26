@@ -28,6 +28,7 @@
 #include "xdata/xelection/xelection_result_store.h"
 #include "xdata/xelection/xstandby_result_store.h"
 #include "xdata/xfull_tableblock.h"
+#include "xdata/xtx_factory.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xproposal_data.h"
 #include "xdata/xslash.h"
@@ -57,6 +58,7 @@
 #include "xtxexecutor/xvm_face.h"
 #include "xevm/xevm.h"
 #include "xdata/xtransaction_v2.h"
+#include "xdata/xtransaction_v3.h"
 #include "xstatectx/xstatectx.h"
 
 using namespace top::data;
@@ -2421,7 +2423,7 @@ void xrpc_query_manager::eth_getTransactionByHash(xJson::Value & js_req, xJson::
     js_result["gas"] = "0x40276";
     js_result["gasPrice"] = "0xb2d05e00";
     js_result["hash"] = tx_hash;
-    js_result["input"] = "0x" + data::to_hex_str(sendindex->get_raw_tx()->get_ext());
+    js_result["input"] = "0x" + data::to_hex_str(sendindex->get_raw_tx()->get_data());
     uint64_t nonce = sendindex->get_raw_tx()->get_last_nonce();
     std::stringstream outstr_nonce;
     outstr_nonce << "0x" << std::hex << nonce;
@@ -2595,8 +2597,8 @@ void xrpc_query_manager::eth_getBlockByNumber(xJson::Value & js_req, xJson::Valu
 
     xJson::Value js_result;
     set_block_result(block, js_result);
+    js_result["baseFeePerGas"] = "0x10";
     js_rsp["result"] = js_result;
-    js_rsp["baseFeePerGas"] = "0x10";
     return;
 }
 void xrpc_query_manager::set_block_result(const base::xauto_ptr<base::xvblock_t>&  block, xJson::Value& js_result) {
@@ -2655,9 +2657,21 @@ void xrpc_query_manager::eth_getCode(xJson::Value & js_req, xJson::Value & js_rs
     }
 }
 void xrpc_query_manager::eth_call(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
-    top::data::xtransaction_ptr_t tx = top::make_object_ptr<top::data::xtransaction_v2_t>();
-    if (generate_tx(tx, js_req) != 0)
+
+    std::string to = js_req["to"].asString();
+    if (to.empty()) {
+        xinfo("generate_tx to: %s", to.c_str());
         return;
+    }
+    std::string from = js_req["account_addr"].asString();
+    if (from.empty()) {
+        xinfo("generate_tx from: %s", from.c_str());
+        return;
+    }
+    std::string data = js_req["data"].asString();
+    std::string value = js_req["value"].asString();
+    std::string gas = js_req["gas"].asString();
+    top::data::xtransaction_ptr_t tx = top::data::xtx_factory::create_ethcall_v3_tx(from, to, top::HexDecode(data.substr(2)), std::strtoul(value.c_str(), NULL, 16), std::strtoul(gas.c_str(), NULL, 16));
     auto cons_tx = top::make_object_ptr<top::data::xcons_transaction_t>(tx.get());
 
     std::string addr = std::string(sys_contract_eth_table_block_addr) + "@0";

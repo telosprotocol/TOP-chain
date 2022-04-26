@@ -162,6 +162,12 @@ int32_t xtx_verifier::verify_tx_signature(data::xtransaction_t const * trx, obse
 int32_t xtx_verifier::verify_tx_fire_expiration(data::xtransaction_t const * trx, uint64_t now, bool is_first_time_push_tx) {
     uint32_t trx_fire_tolerance_time = XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_send_timestamp_tolerance);
 
+    if (trx->get_fire_timestamp() == 0)
+    {
+        xdbg("[global_trace][xtx_verifier][verify_tx_fire_expiration][success], tx:%s", trx->dump().c_str());
+        return xverifier_error::xverifier_success;
+    }
+
     uint64_t fire_expire;
     if (is_first_time_push_tx) {
         // XTODO only first time to txpool should check if fire timestamp is too old

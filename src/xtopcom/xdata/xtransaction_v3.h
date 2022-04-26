@@ -19,7 +19,7 @@
 
 namespace top { namespace data {
 
-enum EIP_XXXX { EIP_LEGACY = 0, EIP_2930 = 1, EIP_1559 = 2 };
+enum EIP_XXXX { EIP_LEGACY = 0, EIP_2930 = 1, EIP_1559 = 2, EIP_TOP_V3 = 121 };
 
 class xtransaction_v3_t : public xbase_dataunit_t<xtransaction_v3_t, xdata_type_transaction_v3>, public xtransaction_t {
  public:
@@ -56,7 +56,7 @@ class xtransaction_v3_t : public xbase_dataunit_t<xtransaction_v3_t, xdata_type_
  public:  // set apis
     virtual void        adjust_target_address(uint32_t table_id) override ;
     virtual void        set_digest() override;
-    virtual void        set_digest(const uint256_t & digest) override {m_transaction_hash = digest;};
+    virtual void        set_digest(const uint256_t & digest) override {};
     virtual int32_t     set_different_source_target_address(const std::string & src_addr, const std::string & dts_addr) override;
     virtual int32_t     set_same_source_target_address(const std::string & addr) override;
     virtual void        set_last_trans_hash_and_nonce(uint256_t last_hash, uint64_t last_nonce) override;
@@ -65,11 +65,11 @@ class xtransaction_v3_t : public xbase_dataunit_t<xtransaction_v3_t, xdata_type_
     void                set_source(const std::string & addr, const std::string & action_name, const std::string & para);
     void                set_target(const std::string & addr, const std::string & action_name, const std::string & para);
     virtual void        set_source_addr(const std::string & addr) override { m_source_addr = addr; }
-    virtual void        set_source_action_type(const enum_xaction_type type) {m_source_action_type = type;}
+    virtual void        set_source_action_type(const enum_xaction_type type) {}
     virtual void        set_source_action_name(const std::string & name) {}
     virtual void        set_source_action_para(const std::string & para) {}
     virtual void        set_target_addr(const std::string & addr) override { m_target_addr = addr; }
-    virtual void        set_target_action_type(const enum_xaction_type type) {m_target_action_type = type;}
+    virtual void        set_target_action_type(const enum_xaction_type type) {}
     virtual void        set_target_action_name(const std::string & name) {}
     virtual void        set_target_action_para(const std::string & para) {}
     virtual void        set_authorization(const std::string & authorization) override { m_authorization = authorization; }
@@ -84,7 +84,7 @@ class xtransaction_v3_t : public xbase_dataunit_t<xtransaction_v3_t, xdata_type_
 
  public:  // get apis
     virtual uint256_t digest() const override { top::uint256_t hash((uint8_t *)top::evm_common::fromHex(m_hash).data()); return hash; }
-    virtual std::string         get_digest_str()const override { top::uint256_t hash((uint8_t *)top::evm_common::fromHex(m_hash).data()); return std::string(reinterpret_cast<char*>(hash.data()), hash.size());}
+    virtual std::string         get_digest_str()const override { if (!m_hash.empty()) { top::uint256_t hash((uint8_t *)top::evm_common::fromHex(m_hash).data()); return std::string(reinterpret_cast<char*>(hash.data()), hash.size()); } return ""; }
     virtual std::string         get_digest_hex_str() const override;
     virtual const std::string & get_source_addr()const override {return m_source_addr;}
     virtual const std::string & get_target_addr()const override {return m_adjust_target_addr.empty() ? m_target_addr : m_adjust_target_addr;}
@@ -93,13 +93,13 @@ class xtransaction_v3_t : public xbase_dataunit_t<xtransaction_v3_t, xdata_type_
     virtual size_t              get_serialize_size() const override;
     virtual std::string         dump() const override;  // just for debug purpose
     void set_action_type();
-    virtual const std::string & get_source_action_name() const override { return m_data;}
-    virtual const std::string & get_source_action_para() const override { return m_data;}
-    virtual enum_xaction_type get_source_action_type() const {return m_source_action_type;}
+    virtual const std::string & get_source_action_name() const override { if (m_eip_xxxx_tx) { return m_eip_xxxx_tx->get_data(); } return strNull; }
+    virtual const std::string & get_source_action_para() const override { if (m_eip_xxxx_tx) { return m_eip_xxxx_tx->get_data(); } return strNull; }
+    virtual enum_xaction_type get_source_action_type() const {return xaction_type_asset_out;}
     virtual std::string get_source_action_str() const;
-    virtual const std::string & get_target_action_name() const override { return m_data;}
-    virtual const std::string & get_target_action_para() const override { return m_data;}
-    virtual enum_xaction_type get_target_action_type() const {return m_target_action_type;}
+    virtual const std::string & get_target_action_name() const override { if (m_eip_xxxx_tx) { return m_eip_xxxx_tx->get_data(); } return strNull; }
+    virtual const std::string & get_target_action_para() const override { if (m_eip_xxxx_tx) { return m_eip_xxxx_tx->get_data(); } return strNull; }
+    virtual enum_xaction_type get_target_action_type() const {return xaction_type_asset_out;}
     virtual std::string get_target_action_str() const;
     virtual const std::string & get_authorization() const override {return m_authorization;}
     virtual void                parse_to_json(xJson::Value& tx_json, const std::string & version = RPC_VERSION_V2) const override;
@@ -119,65 +119,57 @@ class xtransaction_v3_t : public xbase_dataunit_t<xtransaction_v3_t, xdata_type_
     virtual void set_tx_version(uint32_t version) override {}
     virtual uint32_t get_tx_version() const override {return xtransaction_version_3;}
     virtual void set_deposit(uint32_t deposit) override {};
-    virtual uint32_t get_deposit() const override { return XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit);};
+    virtual uint32_t get_deposit() const override { return static_cast<uint32_t>(get_gaslimit() * get_max_fee_per_gas()); }
     virtual void set_expire_duration(uint16_t duration) override {};
-    virtual uint16_t get_expire_duration() const override {return 0;};
+    virtual uint16_t get_expire_duration() const override {  if (m_eip_xxxx_tx) { return (uint64_t)m_eip_xxxx_tx->get_expire_duration(); }  return 0; }
     virtual void set_fire_timestamp(uint64_t timestamp) override {};
-    virtual uint64_t get_fire_timestamp() const override { return time(nullptr); };
-    virtual void set_amount(uint64_t amount) override{ m_amount = amount; }
+    virtual uint64_t get_fire_timestamp() const override {  if (m_eip_xxxx_tx) { return (uint64_t)m_eip_xxxx_tx->get_fire_timestamp(); } return 0; };
+    virtual void set_amount(uint64_t amount) override{}
     virtual uint64_t get_amount() const noexcept override { xassert(false); return 0; }
-    virtual top::evm_common::u256 get_amount_256() const noexcept override { return m_amount; }
+    virtual top::evm_common::u256 get_amount_256() const noexcept override { if (m_eip_xxxx_tx) { return m_eip_xxxx_tx->get_value(); } return 0; }
     virtual bool is_top_transfer() const noexcept override { return false; }
-    virtual void set_premium_price(uint32_t premium_price) override { };
-    virtual uint32_t get_premium_price() const override {return 0;};
-    virtual void set_last_nonce(uint64_t last_nonce) override {m_nonce = last_nonce;};
-    virtual uint64_t get_last_nonce() const override {return (uint64_t)m_nonce;};
+    virtual void set_premium_price(uint32_t premium_price) override { }
+    virtual uint32_t get_premium_price() const override {return 0;}
+    virtual void set_last_nonce(uint64_t last_nonce) override {  }
+    virtual uint64_t get_last_nonce() const override { if (m_eip_xxxx_tx) { return (uint64_t)m_eip_xxxx_tx->get_nonce(); } return 0; };
     virtual void set_last_hash(uint64_t last_hash) override {};
     virtual uint64_t get_last_hash() const override {return 0;};
-    virtual void set_ext(const std::string & ext) override {};
-    virtual const std::string & get_ext() const override {return m_data;};
+    virtual void set_ext(const std::string & ext) override { };
+    virtual const std::string & get_ext() const override { if (m_EipVersion == EIP_XXXX::EIP_TOP_V3) { if (m_eip_xxxx_tx) { return m_eip_xxxx_tx->get_extend(); } } return strNull; }
     virtual void set_memo(const std::string & memo) override { };
-    virtual const std::string & get_memo() const override {return m_data;};
+    virtual const std::string & get_memo() const override { if (m_EipVersion == EIP_XXXX::EIP_TOP_V3) { if (m_eip_xxxx_tx) { return m_eip_xxxx_tx->get_memo(); } } return strNull; }
     virtual const std::string & get_target_address() const override {return m_target_addr;};
     virtual bool is_evm_tx() const override {return m_transaction_type != xtransaction_type_transfer;}
+public:
+    virtual const std::string get_SignV() const override { if (m_eip_xxxx_tx) { return ((top::evm_common::h256)m_eip_xxxx_tx->get_signV()).hex(); } return strNull; }
+    virtual const std::string get_SignR() const override { if (m_eip_xxxx_tx) { return m_eip_xxxx_tx->get_signR().hex(); } return strNull; }
+    virtual const std::string get_SignS() const override { if (m_eip_xxxx_tx) { return m_eip_xxxx_tx->get_signS().hex(); } return strNull; }
+    virtual void set_data(std::string data) override { if (m_eip_xxxx_tx == nullptr) { m_eip_xxxx_tx = make_object_ptr<eip_1559_tx>(); } eip_1559_tx* eip_1559_tx_ptr = reinterpret_cast<eip_1559_tx*>(m_eip_xxxx_tx.get()); eip_1559_tx_ptr->data = data; }
+    virtual const std::string & get_data() const override { if (m_eip_xxxx_tx) { return m_eip_xxxx_tx->get_data(); } return strNull; }
+    virtual void set_gaslimit(top::evm_common::u256 gas) override { if (m_eip_xxxx_tx == nullptr) { m_eip_xxxx_tx = make_object_ptr<eip_1559_tx>(); } eip_1559_tx* eip_1559_tx_ptr = reinterpret_cast<eip_1559_tx*>(m_eip_xxxx_tx.get()); eip_1559_tx_ptr->gas = gas; }
+    virtual const top::evm_common::u256 get_gaslimit() const override { if (m_eip_xxxx_tx) { return m_eip_xxxx_tx->get_gas(); } return 0; }
+    virtual const top::evm_common::u256 get_max_priority_fee_per_gas() const override { if (m_eip_xxxx_tx) { return m_eip_xxxx_tx->get_max_priority_fee_per_gas(); } return 0; }
+    virtual const top::evm_common::u256 get_max_fee_per_gas() const override { if (m_eip_xxxx_tx) { return m_eip_xxxx_tx->get_max_fee_per_gas(); } return 0; }
 
-    virtual const std::string get_SignV() { return ((top::evm_common::h256)m_SignV).hex(); }
-    virtual const std::string get_SignR() { return m_SignR.hex(); }
-    virtual const std::string get_SignS() { return m_SignS.hex(); }
+    virtual void set_amount_256(top::evm_common::u256 amount) { if (m_eip_xxxx_tx == nullptr) { m_eip_xxxx_tx = make_object_ptr<eip_1559_tx>(); } eip_1559_tx* eip_1559_tx_ptr = reinterpret_cast<eip_1559_tx*>(m_eip_xxxx_tx.get()); eip_1559_tx_ptr->value = amount; }
 
 private:
+    int unserialize_eth_legacy_transaction(top::evm_common::rlp::bytes& encoded, bool& bIsCreation, byte& recoveryID, top::evm_common::Address& to);
+    int unserialize_eth_1559_transaction(top::evm_common::rlp::bytes & encoded, bool & bIsCreation, byte & recoveryID, top::evm_common::Address & to);
+    int unserialize_top_v3_transaction(top::evm_common::rlp::bytes & encoded, bool & bIsCreation, byte & recoveryID, top::evm_common::Address & to);
+
+private:
+    xobject_ptr_t<eip_xxxx_tx> m_eip_xxxx_tx{nullptr};
     std::string m_source_addr;
     std::string m_target_addr;
     enum_xtransaction_type m_transaction_type; // one byte
-    top::evm_common::u256 m_gas{0};
-    top::evm_common::u256 m_gasprice{0};  // serialize with compat_var
-    top::evm_common::u256 m_amount{0};    // serialize with compat_var
-    std::string m_token_name;
-    top::evm_common::u256 m_nonce{0};  // serialize with compat_var
     std::string m_hash;    //serialize with compat_var
-    std::string m_data;    // serialize with compat_var
     std::string m_origindata;   //serialize with compat_var
     std::string m_authorization;  // serialize with compat_var
-
-    // optional,depends on m_tx_type
-    std::string m_source_action_name;  // serialize with compat_var
-    std::string m_source_action_para;  // serialize with compat_var
-    std::string m_target_action_name;  // serialize with compat_var
-    std::string m_target_action_para;  // serialize with compat_var
-
-    top::evm_common::u256 m_max_priority_fee_per_gas;
-    top::evm_common::u256 m_max_fee_per_gas;
  private: // local members, not serialize
-    uint256_t m_transaction_hash{};
     mutable uint16_t m_transaction_len{0};     // max 64KB
-    mutable std::string m_transaction_hash_str{};
     std::string m_adjust_target_addr{};
     // just reserved for compatibility
-    enum_xaction_type m_source_action_type;
-    enum_xaction_type m_target_action_type;
-    top::evm_common::u256 m_SignV;
-    top::evm_common::h256 m_SignR;
-    top::evm_common::h256 m_SignS;
     EIP_XXXX              m_EipVersion;
 };
 

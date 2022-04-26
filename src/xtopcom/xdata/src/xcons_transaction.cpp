@@ -226,7 +226,10 @@ std::string xcons_transaction_t::dump(bool detail) const {
     if (!m_dump_str.empty()) {
         return m_dump_str;
     }
-
+    if (get_tx_hash().empty())
+    {
+        return m_dump_str;
+    }
     std::stringstream ss;
     ss << "{";
     ss << base::xvtxkey_t::transaction_hash_subtype_to_string(get_tx_hash(), get_tx_subtype());
