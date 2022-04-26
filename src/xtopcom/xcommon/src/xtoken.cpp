@@ -3,16 +3,18 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 
-#include "xstate_accessor/xtoken.h"
+#include "xcommon/xtoken.h"
 
 #include "xbasic/xerror/xerror.h"
+#include "xcommon/xerror/xerror.h"
 #include "xcontract_common/xerror/xerror.h"
+#include "xevm_common/common_data.h"
 #include "xutility/xhash.h"
 
 #include <cassert>
 #include <memory>
 
-NS_BEG2(top, state_accessor)
+NS_BEG2(top, common)
 
 xtop_token::xtop_token(xtop_token && other) noexcept : amount_{ other.amount_ }, symbol_{ std::move(other.symbol_) } {
     other.amount_ = 0;
@@ -20,7 +22,7 @@ xtop_token::xtop_token(xtop_token && other) noexcept : amount_{ other.amount_ },
 
 xtop_token & xtop_token::operator=(xtop_token && other) {
     if (amount_ != 0) {
-        top::error::throw_error(error::xerrc_t::token_not_used);
+        top::error::throw_error(common::error::xerrc_t::token_not_used);
     }
 
     assert(amount_ == 0);
@@ -37,10 +39,10 @@ xtop_token & xtop_token::operator=(xtop_token && other) {
 xtop_token::xtop_token(common::xsymbol_t symbol) : symbol_{ std::move(symbol) } {
 }
 
-xtop_token::xtop_token(std::uint64_t const amount, common::xsymbol_t symbol) : amount_{ amount }, symbol_ { std::move(symbol) } {
+xtop_token::xtop_token(evm_common::u256 const amount, common::xsymbol_t symbol) : amount_{ amount }, symbol_ { std::move(symbol) } {
 }
 
-xtop_token::xtop_token(std::uint64_t const amount) : amount_{amount} {
+xtop_token::xtop_token(evm_common::u256 const amount) : amount_{amount} {
 }
 
 xtop_token::~xtop_token() noexcept {
@@ -116,7 +118,9 @@ bool xtop_token::invalid() const noexcept {
     return symbol_.empty();
 }
 
-uint64_t xtop_token::amount() const noexcept {
+
+
+evm_common::u256 xtop_token::amount() const noexcept {
     return amount_;
 }
 
@@ -148,28 +152,32 @@ std::int32_t xtop_token::serialize_from(base::xstream_t & stream) {
 
 std::int32_t xtop_token::serialize_to(base::xbuffer_t & buffer) const {
     auto const size = buffer.size();
-    buffer << amount_;
+    buffer << evm_common::toBigEndianString(amount_);
     buffer << symbol_;
     return buffer.size() - size;
 }
 
 std::int32_t xtop_token::serialize_from(base::xbuffer_t & buffer) {
     auto const size = buffer.size();
-    buffer >> amount_;
+    std::string amount;
+    buffer >> amount;
     buffer >> symbol_;
+    amount_ = evm_common::fromBigEndian<evm_common::u256>(amount);
     return size - buffer.size();
 }
 
 int32_t xtop_token::do_read(base::xstream_t& stream) {
     auto const size = stream.size();
-    stream >> amount_;
+    std::string amount;
+    stream >> amount;
     stream >> symbol_;
+    amount_ = evm_common::fromBigEndian<evm_common::u256>(amount);
     return size - stream.size();
 }
 
-int32_t  xtop_token::do_write(base::xstream_t& stream) const {
+int32_t xtop_token::do_write(base::xstream_t& stream) const {
     auto const size = stream.size();
-    stream << amount_;
+    stream.operator<<(evm_common::toBigEndianString(amount_));
     stream << symbol_;
     return stream.size() - size;
 }
@@ -178,9 +186,9 @@ NS_END2
 
 NS_BEG1(std)
 
-size_t hash<top::state_accessor::xtoken_t>::operator()(top::state_accessor::xtoken_t const & amount) const noexcept {
+size_t hash<top::common::xtoken_t>::operator()(top::common::xtoken_t const & amount) const noexcept {
     top::utl::xxh64_t xxhash;
-    auto const value = amount.amount();
+    auto const value = std::hash<top::evm_common::u256>{}(amount.amount());
 
     xxhash.update(std::addressof(value), sizeof(value));
     xxhash.update(amount.symbol().to_string());

@@ -5,6 +5,7 @@
 #pragma once
 
 #include "xbasic/xmemory.hpp"
+#include "xcommon/xtoken.h"
 #include "xcontract_common/xcontract_face.h"
 #include "xcontract_common/xcontract_fwd.h"
 #include "xcontract_common/xcontract_state.h"
@@ -13,7 +14,6 @@
 #include "xcontract_common/xproperties/xproperty_map.h"
 #include "xcontract_common/xproperties/xproperty_string.h"
 #include "xcontract_common/xproperties/xproperty_token.h"
-#include "xstate_accessor/xtoken.h"
 
 NS_BEG2(top, contract_common)
 
@@ -75,9 +75,9 @@ public:
 
     common::xnetwork_id_t network_id() const override;
 
-    uint64_t balance() const override;
-    state_accessor::xtoken_t withdraw(std::uint64_t amount) override;
-    void deposit(state_accessor::xtoken_t token) override;
+    evm_common::u256 balance() const override;
+    common::xtoken_t withdraw(evm_common::u256 amount) override;
+    void deposit(common::xtoken_t token) override;
 
     observer_ptr<xcontract_state_t> contract_state() const noexcept override;
 
@@ -88,8 +88,8 @@ public:
     data::enum_xaction_type source_action_type() const;
     data::enum_xaction_type target_action_type() const;
     xbyte_buffer_t action_data() const;
-    state_accessor::xtoken_t last_action_asset(std::error_code & ec) const;
-    void asset_to_next_action(state_accessor::xtoken_t token);
+    common::xtoken_t last_action_asset(std::error_code & ec) const;
+    void asset_to_next_action(common::xtoken_t token);
     data::enum_xtransaction_type transaction_type() const;
     common::xlogic_time_t time() const;
     common::xlogic_time_t timestamp() const;

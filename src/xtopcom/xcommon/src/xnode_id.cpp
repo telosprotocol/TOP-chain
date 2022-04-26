@@ -156,6 +156,10 @@ xtable_id_t const & xtop_node_id::table_id() const noexcept {
     return m_account_base_address.default_table_id();
 }
 
+base::xvaccount_t xtop_node_id::vaccount() const {
+    return {to_string()};
+}
+
 int32_t xtop_node_id::serialize_to(base::xstream_t & stream) const {
     return do_write(stream);
 }

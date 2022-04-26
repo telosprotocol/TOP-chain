@@ -49,11 +49,13 @@ public:
     virtual uint64_t storage_write(uint64_t key_len, uint64_t key_ptr, uint64_t value_len, uint64_t value_ptr, uint64_t register_id) = 0;
     virtual uint64_t storage_read(uint64_t key_len, uint64_t key_ptr, uint64_t register_id) = 0;
     virtual uint64_t storage_remove(uint64_t key_len, uint64_t key_ptr, uint64_t register_id) = 0;
-    
+
     // extern contract:
     virtual bool extern_contract_call(uint64_t args_len,uint64_t args_ptr) = 0;
     virtual uint64_t get_result(uint64_t register_id) = 0;
     virtual uint64_t get_error(uint64_t register_id) = 0;
+
+    virtual void call_erc20(uint64_t input_len, uint64_t input_ptr, uint64_t target_gas, uint64_t address_len, uint64_t address_ptr, bool is_static, uint64_t register_id) = 0;
 };
 using xevm_logic_face_t = xtop_evm_logic_face;
 
