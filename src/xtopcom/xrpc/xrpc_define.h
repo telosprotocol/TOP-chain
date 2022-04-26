@@ -21,7 +21,6 @@ using std::pair;
 using std::unique_ptr;
 using std::shared_ptr;
 using namespace std::placeholders;
-#define ENABLE_RPC_SESSION 0
 #define ENABLE_RPC_TOKEN 0
 
 #define xdbg_rpc(fmt, ...) xdbg("[rpc] " fmt, ##__VA_ARGS__)

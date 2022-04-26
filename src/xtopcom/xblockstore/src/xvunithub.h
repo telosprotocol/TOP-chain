@@ -160,9 +160,8 @@ namespace top
             bool                        on_block_committed(const xblockevent_t & event);
             bool                        on_block_stored(base::xvblock_t* this_block_ptr);//event for block store
             bool                        store_units_to_db(xblockacct_t* target_account,base::xvbindex_t* index_ptr);
-
             virtual bool                on_object_close() override;
-
+            int                         load_block_idx_by_hash(const std::string & hash, std::string & account, uint64_t & height);
         private:
             xvblockdb_t*                       m_xvblockdb_ptr;
             std::string                        m_store_path;

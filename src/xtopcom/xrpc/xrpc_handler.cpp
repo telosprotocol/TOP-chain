@@ -35,6 +35,7 @@ xrpc_handler::xrpc_handler(std::shared_ptr<xvnetwork_driver_face_t>           ar
   , m_txpool_service(txpool_service)
   , m_rule_mgr_ptr(top::make_unique<xfilter_manager>())
   , m_rpc_query_mgr(std::make_shared<xrpc_query_manager>(store, block_store, nullptr, txpool_service, txstore, exchange_flag))
+  , m_rpc_eth_query_mgr(std::make_shared<xrpc_eth_query_manager>(store, block_store, nullptr, txpool_service, txstore, exchange_flag))
   , m_thread(thread) {
 }
 
@@ -50,7 +51,7 @@ void xrpc_handler::on_message(const xvnode_address_t & edge_sender, const xmessa
         auto message = para->m_message;
         auto edge_sender = para->m_sender;
         auto msgid = message.id();
-        if (msgid == rpc_msg_request || msgid == rpc_msg_query_request) {
+        /*if (msgid == rpc_msg_request || msgid == rpc_msg_query_request) {
             xrpc_msg_request_t msg = codec::xmsgpack_codec_t<xrpc_msg_request_t>::decode(message.payload());
             if (msgid == rpc_msg_request) {
                 xdbg_rpc("wish arc tx");
@@ -58,11 +59,14 @@ void xrpc_handler::on_message(const xvnode_address_t & edge_sender, const xmessa
             } else {
                 self->cluster_process_query_request(msg, edge_sender, message);
                 XMETRICS_GAUGE(metrics::rpc_auditor_query_request, 1);
-            }
-        } else if (msgid == rpc_msg_response) {
-            // xrpc_msg_response_t msg = codec::xmsgpack_codec_t<xrpc_msg_response_t>::decode(message.payload());
+            }*/
+        if (msgid == rpc_msg_response || msgid == rpc_msg_eth_response) {
             self->cluster_process_response(message, edge_sender);
+            return true;
         }
+        xrpc_msg_request_t msg = codec::xmsgpack_codec_t<xrpc_msg_request_t>::decode(message.payload());
+        self->cluster_process_query_request(msg, edge_sender, message);
+        XMETRICS_GAUGE(metrics::rpc_auditor_query_request, 1);
         return true;
     };
     int64_t in, out;
@@ -152,43 +156,31 @@ void xrpc_handler::cluster_process_query_request(const xrpc_msg_request_t & edge
         xerror("cluster error tx_type %d", edge_msg.m_tx_type);
         return;
     }
-    xinfo_rpc("process query msg %d, %s", edge_msg.m_tx_type, edge_msg.m_source_address.to_string().c_str());
+    xdbg_rpc("process query msg %d, %s,%x,%s", edge_msg.m_tx_type, edge_msg.m_source_address.to_string().c_str(), message.id(), edge_msg.m_message_body.c_str());
     shared_ptr<xrpc_msg_response_t> response_msg_ptr = std::make_shared<xrpc_msg_response_t>(edge_msg);
-    try {
-        xjson_proc_t json_proc;
-        json_proc.parse_json(edge_msg.m_message_body);
+
+    xjson_proc_t json_proc;
+    json_proc.parse_json(edge_msg.m_message_body);
+    string strMethod = json_proc.m_request_json["method"].asString();
+    const string & version = json_proc.m_request_json["jsonrpc"].asString();
+    // json_proc.m_request_json["params"]["jsonrpc"] = version;
+    string strErrorMsg = RPC_OK_MSG;
+    uint32_t nErrorCode = 0;
+
+    if (message.id() >= rpc_msg_request && message.id() <= rpc_msg_query_request) {
         m_rule_mgr_ptr->filter(json_proc);
-        string strMethod = json_proc.m_request_json["method"].asString();
-        const string & version = json_proc.m_request_json["version"].asString();
-        json_proc.m_request_json["params"]["version"] = version;
-        string strErrorMsg = RPC_OK_MSG;
-        uint32_t nErrorCode = 0;
-        if (strMethod.substr(0,4) == "eth_") {
-            m_rpc_query_mgr->call_method(strMethod, json_proc.m_request_json["params"], json_proc.m_response_json, strErrorMsg, nErrorCode);
-            //uint64_t client_id = strtoul(edge_msg.m_client_id.c_str(), NULL, 10);
-            json_proc.m_response_json["id"] = edge_msg.m_client_id; //(xJson::UInt64)client_id;
-            json_proc.m_response_json["jsonrpc"] = "2.0";
-        } else {
-            m_rpc_query_mgr->call_method(strMethod, json_proc.m_request_json["params"], json_proc.m_response_json["data"], strErrorMsg, nErrorCode);
-            json_proc.m_response_json[RPC_ERRNO] = nErrorCode;
-            json_proc.m_response_json[RPC_ERRMSG] = strErrorMsg;
-            json_proc.m_response_json[RPC_SEQUENCE_ID] = edge_msg.m_client_id;
-        }
-        response_msg_ptr->m_message_body = json_proc.get_response();
-    } catch (const xrpc_error & e) {
-        xinfo_rpc("error %s", e.what());
-        xrpc_error_json error_json(e.code().value(), e.what(), edge_msg.m_client_id);
-        response_msg_ptr->m_message_body = error_json.write();
-    } catch (const std::exception & e) {
-        xinfo_rpc("error %s", e.what());
-        xrpc_error_json error_json(RPC_EXCEPTION_CODE, e.what(), edge_msg.m_client_id);
-        response_msg_ptr->m_message_body = error_json.write();
-    } catch (...) {
-        xinfo_rpc("error !!!!");
-        xrpc_error_json error_json(RPC_ERROR_CODE, RPC_ERROR_MSG, edge_msg.m_client_id);
-        response_msg_ptr->m_message_body = error_json.write();
+        m_rpc_query_mgr->call_method(strMethod, json_proc.m_request_json["params"], json_proc.m_response_json["data"], strErrorMsg, nErrorCode);
+        json_proc.m_response_json[RPC_ERRNO] = nErrorCode;
+        json_proc.m_response_json[RPC_ERRMSG] = strErrorMsg;
+        json_proc.m_response_json[RPC_SEQUENCE_ID] = edge_msg.m_client_id;
+    } else if (message.id() >= rpc_msg_eth_request && message.id() <= rpc_msg_eth_query_request) {
+        m_rule_mgr_ptr->filter_eth(json_proc);
+        m_rpc_eth_query_mgr->call_method(strMethod, json_proc.m_request_json["params"], json_proc.m_response_json, strErrorMsg, nErrorCode);
+        json_proc.m_response_json["id"] = json_proc.m_request_json["id"];  // edge_msg.m_client_id;
+        json_proc.m_response_json["jsonrpc"] = version;
     }
 
+    response_msg_ptr->m_message_body = json_proc.get_response();
     response_msg_ptr->m_signature_address = m_arc_vhost->address();
     xmessage_t msg(codec::xmsgpack_codec_t<xrpc_msg_response_t>::encode(*response_msg_ptr), rpc_msg_response);
     xdbg_rpc("xarc_rpc_handler response recv %" PRIx64 ", send %" PRIx64 ", %s", message.hash(), msg.hash(), response_msg_ptr->m_message_body.c_str());
@@ -222,9 +214,11 @@ void xrpc_handler::cluster_process_response(const xmessage_t & msg, const xvnode
 
 void xrpc_handler::start() {
     m_arc_vhost->register_message_ready_notify(xmessage_category_rpc, std::bind(&xrpc_handler::on_message, shared_from_this(), _1, _2));
+    xinfo("register rpc");
 }
 
 void xrpc_handler::stop() {
     m_arc_vhost->unregister_message_ready_notify(xmessage_category_rpc);
+    xinfo("unregister rpc");
 }
 NS_END2
