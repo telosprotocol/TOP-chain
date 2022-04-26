@@ -249,38 +249,13 @@ const std::vector<xcons_transaction_ptr_t> xreceipt_queue_new_t::get_txs(uint32_
             base::xreceiptid_pair_t receiptid_pair;
             receiptid_state->find_pair(peer_table_sid, receiptid_pair);
             auto last_rsp_id = receiptid_pair.get_confirm_rsp_id_max();
-            uint64_t send_id_after_add_rsp_id = 0;
-            bool result = m_para->get_send_id_after_add_rsp_id(receiptid_state->get_self_tableid(), peer_table_sid, send_id_after_add_rsp_id);
-            auto low_confirm_id = confirm_txs[0]->get_last_action_receipt_id();
-            if (last_rsp_id > 0 || (result && low_confirm_id > send_id_after_add_rsp_id)) {
-                for (auto & confirm_tx : confirm_txs) {
-                    if (ret_txs.size() < confirm_txs_max_num && confirm_tx->get_last_action_rsp_id() == last_rsp_id + 1) {
-                        ret_txs.push_back(confirm_tx);
-                        last_rsp_id++;
-                    } else {
-                        xdbg("xreceipt_queue_new_t::get_txs rsp id not continuous.confirm_tx:%s,last id:%llu", confirm_tx->dump().c_str(), last_rsp_id + 1);
-                        break;
-                    }
-                }
-            } else {
-                std::vector<uint64_t> receipt_ids;
-                for (auto & confirm_tx : confirm_txs) {
-                    receipt_ids.push_back(confirm_tx->get_last_action_receipt_id());
-                }
-                if (receipt_ids.empty()) {
-                    xtxpool_error("xreceipt_queue_new_t::get_txs receipt_ids is empty.");
-                    continue;
-                }
-                auto filted_ids = unconfirm_id_height.filter_sender_continuous_need_confirm_ids(peer_table_sid, min_receipt_id + 1, receipt_ids);
-                if (filted_ids.empty()) {
-                    continue;
-                }
-                uint64_t max_filted_id = filted_ids[filted_ids.size() - 1];
-                for (auto & confirm_tx : confirm_txs) {
-                    if (ret_txs.size() >= confirm_txs_max_num || confirm_tx->get_last_action_receipt_id() > max_filted_id) {
-                        break;
-                    }
+            for (auto & confirm_tx : confirm_txs) {
+                if (ret_txs.size() < confirm_txs_max_num && confirm_tx->get_last_action_rsp_id() == last_rsp_id + 1) {
                     ret_txs.push_back(confirm_tx);
+                    last_rsp_id++;
+                } else {
+                    xdbg("xreceipt_queue_new_t::get_txs rsp id not continuous.confirm_tx:%s,last id:%llu", confirm_tx->dump().c_str(), last_rsp_id + 1);
+                    break;
                 }
             }
         }

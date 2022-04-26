@@ -40,7 +40,7 @@ public:
     void refresh_table(uint8_t zone, uint16_t subaddr) override {
     }
     // void update_non_ready_accounts(uint8_t zone, uint16_t subaddr) override {}
-    void update_table_state(const base::xvproperty_prove_ptr_t & property_prove_ptr, const data::xtablestate_ptr_t & table_state, bool add_rsp_id) override {
+    void update_table_state(const base::xvproperty_prove_ptr_t & property_prove_ptr, const data::xtablestate_ptr_t & table_state) override {
     }
     void build_recv_tx(base::xtable_shortid_t from_table_sid,
                        base::xtable_shortid_t to_table_sid,
@@ -72,14 +72,6 @@ public:
 
     const std::set<base::xtable_shortid_t> & get_all_table_sids() const override {
         return m_all_table_sids;
-    }
-
-    bool get_sender_need_confirm_ids(const std::string & account, base::xtable_shortid_t peer_table_sid, uint64_t lower_receipt_id, uint64_t upper_receipt_id, std::vector<uint64_t> & receipt_ids) const override {
-        return true;
-    }
-
-    bool get_send_id_after_add_rsp_id(base::xtable_shortid_t self_sid, base::xtable_shortid_t peer_sid, uint64_t & send_id) const override {
-        return false;
     }
 
 private:
