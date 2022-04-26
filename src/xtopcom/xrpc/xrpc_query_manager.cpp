@@ -2410,6 +2410,7 @@ void xrpc_query_manager::eth_getTransactionByHash(xJson::Value & js_req, xJson::
     xtxindex_detail_ptr_t sendindex = xrpc_loader_t::load_tx_indx_detail(tx_hash_str, base::enum_transaction_subtype_send);
     if (sendindex == nullptr) {
         xwarn("xrpc_query_manager::eth_getTransactionByHash fail.tx hash:%s", tx_hash.c_str());
+        js_rsp["result"] = xJson::Value::null;
         return;
     }
 
@@ -2653,6 +2654,7 @@ void xrpc_query_manager::eth_getCode(xJson::Value & js_req, xJson::Value & js_rs
         }
     } catch (exception & e) {
         strResult = std::string(e.what());
+        js_rsp["result"] = xJson::Value::null;
         nErrorCode = (uint32_t)enum_xrpc_error_code::rpc_param_unkown_error;
     }
 }
