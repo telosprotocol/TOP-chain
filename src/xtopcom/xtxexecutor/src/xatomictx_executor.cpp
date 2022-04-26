@@ -65,8 +65,7 @@ bool xatomictx_executor_t::set_tx_table_state(const data::xtablestate_ptr_t & ta
     base::xreceiptid_pair_t receiptid_pair;
     tablestate->find_receiptid_pair(peer_tableid, receiptid_pair);
 
-    bool alloc_rspid = true;  // TODO(jimmy)
-    if (data::xblocktool_t::alloc_transaction_receiptid(tx, alloc_rspid, receiptid_pair)) {
+    if (data::xblocktool_t::alloc_transaction_receiptid(tx, receiptid_pair)) {
         tablestate->set_receiptid_pair(peer_tableid, receiptid_pair);  // save to modified pairs
         xinfo("xatomictx_executor_t::set_tx_table_state succ.tx=%s,pair=%s", tx->dump().c_str(), receiptid_pair.dump().c_str());
     } else {
@@ -141,17 +140,15 @@ bool xatomictx_executor_t::check_receiptid_order(const xcons_transaction_ptr_t &
         if (tx->is_confirm_tx()) {
             uint64_t tx_rsp_id = tx->get_last_action_rsp_id();
             uint64_t last_rsp_id = receiptid_pair.get_confirm_rsp_id_max();
-            if (last_rsp_id != 0 || tx_rsp_id != 0) {  // enable rsp id feature
-                if (tx_rsp_id != last_rsp_id + 1) {
-                    xwarn("xtxexecutor_top_vm_t::check_table_order fail-rsp id unmatch.tx=%s,tx_id=%ld,cur_id=%ld", tx->dump().c_str(), tx_rsp_id, last_rsp_id);
-                    return false;
-                }
+            if (tx_rsp_id != last_rsp_id + 1) {
+                xwarn("xtxexecutor_top_vm_t::check_table_order fail-rsp id unmatch.tx=%s,tx_id=%ld,cur_id=%ld", tx->dump().c_str(), tx_rsp_id, last_rsp_id);
+                return false;
+            }
 
-                uint64_t max_sendrspid = receiptid_pair.get_send_rsp_id_max();
-                if (tx_rsp_id > max_sendrspid) {
-                    xwarn("xtxexecutor_top_vm_t::check_table_order fail-rsp id larger than send rspid.tx=%s,tx_id=%ld,cur_id=%ld", tx->dump().c_str(), tx_rsp_id, max_sendrspid);
-                    return false;
-                }
+            uint64_t max_sendrspid = receiptid_pair.get_send_rsp_id_max();
+            if (tx_rsp_id > max_sendrspid) {
+                xwarn("xtxexecutor_top_vm_t::check_table_order fail-rsp id larger than send rspid.tx=%s,tx_id=%ld,cur_id=%ld", tx->dump().c_str(), tx_rsp_id, max_sendrspid);
+                return false;
             }
 
             uint64_t sendid = receiptid_pair.get_sendid_max();
