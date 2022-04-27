@@ -2460,7 +2460,9 @@ void xrpc_query_manager::eth_getTransactionByHash(xJson::Value & js_req, xJson::
         js_result["to"] = xJson::Value::null;
     }
     js_result["transactionIndex"] = "0x0";
-    js_result["type"] = "0x0";
+    std::stringstream outstr_type;
+    outstr_type << "0x" << std::hex << sendindex->get_raw_tx()->get_eip_version();
+    js_result["type"] = std::string(outstr_type.str());
     js_result["value"] = "0x0";
 
     std::string str_v = sendindex->get_raw_tx()->get_SignV();
@@ -2524,7 +2526,11 @@ void xrpc_query_manager::eth_getTransactionReceipt(xJson::Value & js_req, xJson:
         js_result["to"] = std::string("0x") + sendindex->get_raw_tx()->get_target_addr().substr(6);
         js_result["status"] = "0x1";
     } else {
-        js_result["to"] = xJson::Value::null;
+        if (tx_type == xtransaction_type_run_contract) {
+            js_result["to"] = std::string("0x") + sendindex->get_raw_tx()->get_target_addr().substr(6);
+        } else {
+            js_result["to"] = xJson::Value::null;
+        }
 
         evm_common::xevm_transaction_result_t evm_result;
         auto ret = sendindex->get_txaction().get_evm_transaction_result(evm_result);
@@ -2569,7 +2575,9 @@ void xrpc_query_manager::eth_getTransactionReceipt(xJson::Value & js_req, xJson:
         js_result["logsBloom"] = std::string("0x") + outstrbloom.str();
         // js_result["logsBloom"] = "0x00000000000000000000000000000000000000000400000000000000000000000000000000000000000080000000000000000000000000000000000000000000000000000000000000000000800000000000000000000000000000000000004000000000020000000000000000000800000000000000000000000000000000000000010000200000000400000000000000000000000000000000000000000000000000010000000000000000040000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000000";
         js_result["status"] = (evm_result.status == 0) ?  "0x1" : "0x0";
-        js_result["type"] = "0x0";
+        std::stringstream outstr;
+        outstr << "0x" << std::hex << sendindex->get_raw_tx()->get_eip_version();
+        js_result["type"] = std::string(outstr.str());
     }
 
     js_rsp["result"] = js_result;

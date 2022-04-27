@@ -153,6 +153,7 @@ public:
     virtual const top::evm_common::u256 get_max_fee_per_gas() const override { if (m_eip_xxxx_tx) { return m_eip_xxxx_tx->get_max_fee_per_gas(); } return 0; }
 
     virtual void set_amount_256(top::evm_common::u256 amount) { if (m_eip_xxxx_tx == nullptr) { m_eip_xxxx_tx = make_object_ptr<eip_1559_tx>(); } eip_1559_tx* eip_1559_tx_ptr = reinterpret_cast<eip_1559_tx*>(m_eip_xxxx_tx.get()); eip_1559_tx_ptr->value = amount; }
+    virtual uint32_t get_eip_version() const {return (uint32_t)m_EipVersion;}
 
 private:
     int unserialize_eth_legacy_transaction(top::evm_common::rlp::bytes& encoded, bool& bIsCreation, byte& recoveryID, top::evm_common::Address& to);
