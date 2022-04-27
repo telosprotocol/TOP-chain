@@ -24,6 +24,7 @@ num = { version = "0.4.0", default-features = false, features = ["alloc"] }
 ripemd160 = { version = "0.9.1", default-features = false }
 sha2 = { version = "0.9.3", default-features = false }
 sha3 = { version = "0.9.1", default-features = false }
+protobuf = "2.27.1"
 
 [features]
 std = ["engine-types/std", "engine-sdk/std", "evm/std", "libsecp256k1/std", "ripemd160/std", "sha2/std", "sha3/std", "top-blake2/std"]

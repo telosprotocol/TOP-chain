@@ -1,7 +1,17 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+pub mod basic;
+pub mod precompiles;
+pub mod proto_basic;
+pub mod proto_precompile;
 pub mod storage;
 pub mod types;
+
+pub use basic::*;
+pub use proto_basic::*;
+
+pub use precompiles::*;
+pub use proto_precompile::*;
 
 mod v0 {
     extern crate alloc;

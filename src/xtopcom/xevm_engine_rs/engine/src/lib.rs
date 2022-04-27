@@ -1,7 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(unused)]
 
-use engine_types::types::proto_basic;
+use engine_types::proto_basic;
 
 pub mod engine;
 mod error;

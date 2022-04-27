@@ -207,6 +207,7 @@ dependencies = [
  "hex",
  "libsecp256k1",
  "num",
+ "protobuf",
  "ripemd160",
  "sha2 0.9.9",
  "sha3 0.9.1",
@@ -218,6 +219,8 @@ name = "engine-sdk"
 version = "0.1.0"
 dependencies = [
  "engine-types",
+ "evm",
+ "protobuf",
  "sha3 0.9.1",
 ]
 
@@ -236,6 +239,7 @@ dependencies = [
 name = "engine-types"
 version = "0.1.0"
 dependencies = [
+ "evm",
  "hex",
  "primitive-types",
  "protobuf",

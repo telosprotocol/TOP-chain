@@ -1,8 +1,6 @@
 pub mod address;
 pub mod balance;
-pub mod basic;
 pub mod gas;
-pub mod proto_basic;
 pub mod wei;
 
 pub use address::*;

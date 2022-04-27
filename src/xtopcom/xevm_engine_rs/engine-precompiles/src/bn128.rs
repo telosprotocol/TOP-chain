@@ -1,6 +1,7 @@
-use crate::{Berlin, EvmPrecompileResult, HardFork, Precompile, PrecompileOutput};
+use crate::{Berlin, HardFork, Precompile};
 use engine_types::types::{Address, EthGas};
-use engine_types::{Borrowed, PhantomData, Vec};
+use engine_types::{Borrowed, PhantomData, PrecompileResult, RustPrecompileOutput, Vec};
+use evm::executor::stack::PrecompileFailure;
 use evm::{Context, ExitError};
 
 /// bn128 costs.
@@ -33,20 +34,25 @@ mod consts {
 }
 
 /// Reads the `x` and `y` points from an input at a given position.
-fn read_point(input: &[u8], pos: usize) -> Result<bn::G1, ExitError> {
+fn read_point(input: &[u8], pos: usize) -> Result<bn::G1, PrecompileFailure> {
     use bn::{AffineG1, Fq, Group, G1};
 
-    let px = Fq::from_slice(&input[pos..(pos + 32)])
-        .map_err(|_e| ExitError::Other(Borrowed("ERR_BN128_INVALID_X")))?;
+    let px = Fq::from_slice(&input[pos..(pos + 32)]).map_err(|_e| PrecompileFailure::Error {
+        exit_status: ExitError::Other(Borrowed("ERR_BN128_INVALID_X")),
+    })?;
 
-    let py = Fq::from_slice(&input[(pos + 32)..(pos + 64)])
-        .map_err(|_e| ExitError::Other(Borrowed("ERR_BN128_INVALID_Y")))?;
+    let py =
+        Fq::from_slice(&input[(pos + 32)..(pos + 64)]).map_err(|_e| PrecompileFailure::Error {
+            exit_status: ExitError::Other(Borrowed("ERR_BN128_INVALID_Y")),
+        })?;
 
     Ok(if px == Fq::zero() && py == bn::Fq::zero() {
         G1::zero()
     } else {
         AffineG1::new(px, py)
-            .map_err(|_| ExitError::Other(Borrowed("ERR_BN128_INVALID_POINT")))?
+            .map_err(|_| PrecompileFailure::Error {
+                exit_status: ExitError::Other(Borrowed("ERR_BN128_INVALID_POINT")),
+            })?
             .into()
     })
 }
@@ -62,7 +68,7 @@ impl<HF: HardFork> Bn128Add<HF> {
 }
 
 impl<HF: HardFork> Bn128Add<HF> {
-    fn run_inner(input: &[u8], _context: &Context) -> Result<Vec<u8>, ExitError> {
+    fn run_inner(input: &[u8], _context: &Context) -> Result<Vec<u8>, PrecompileFailure> {
         use bn::AffineG1;
 
         let mut input = input.to_vec();
@@ -82,7 +88,7 @@ impl<HF: HardFork> Bn128Add<HF> {
 }
 
 impl Precompile for Bn128Add<Berlin> {
-    fn required_gas(_input: &[u8]) -> Result<EthGas, ExitError> {
+    fn required_gas(_input: &[u8]) -> Result<EthGas, PrecompileFailure> {
         Ok(costs::BERLIN_ADD)
     }
 
@@ -97,15 +103,17 @@ impl Precompile for Bn128Add<Berlin> {
         target_gas: Option<EthGas>,
         context: &Context,
         _is_static: bool,
-    ) -> EvmPrecompileResult {
+    ) -> PrecompileResult {
         let cost = Self::required_gas(input)?;
         if let Some(target_gas) = target_gas {
             if cost > target_gas {
-                return Err(ExitError::OutOfGas);
+                return Err(PrecompileFailure::Error {
+                    exit_status: ExitError::OutOfGas,
+                });
             }
         }
         let output = Self::run_inner(input, context)?;
-        Ok(PrecompileOutput::without_logs(cost, output).into())
+        Ok(RustPrecompileOutput::without_logs(cost, output).into())
     }
 }
 
@@ -120,15 +128,16 @@ impl<HF: HardFork> Bn128Mul<HF> {
 }
 
 impl<HF: HardFork> Bn128Mul<HF> {
-    fn run_inner(input: &[u8], _context: &Context) -> Result<Vec<u8>, ExitError> {
+    fn run_inner(input: &[u8], _context: &Context) -> Result<Vec<u8>, PrecompileFailure> {
         use bn::AffineG1;
 
         let mut input = input.to_vec();
         input.resize(consts::MUL_INPUT_LEN, 0);
 
         let p = read_point(&input, 0)?;
-        let fr = bn::Fr::from_slice(&input[64..96])
-            .map_err(|_e| ExitError::Other(Borrowed("ERR_BN128_INVALID_FE")))?;
+        let fr = bn::Fr::from_slice(&input[64..96]).map_err(|_e| PrecompileFailure::Error {
+            exit_status: ExitError::Other(Borrowed("ERR_BN128_INVALID_FE")),
+        })?;
 
         let mut output = [0u8; 64];
         if let Some(mul) = AffineG1::from_jacobian(p * fr) {
@@ -141,7 +150,7 @@ impl<HF: HardFork> Bn128Mul<HF> {
 }
 
 impl Precompile for Bn128Mul<Berlin> {
-    fn required_gas(_input: &[u8]) -> Result<EthGas, ExitError> {
+    fn required_gas(_input: &[u8]) -> Result<EthGas, PrecompileFailure> {
         Ok(costs::BERLIN_MUL)
     }
 
@@ -155,16 +164,18 @@ impl Precompile for Bn128Mul<Berlin> {
         target_gas: Option<EthGas>,
         context: &Context,
         _is_static: bool,
-    ) -> EvmPrecompileResult {
+    ) -> PrecompileResult {
         let cost = Self::required_gas(input)?;
         if let Some(target_gas) = target_gas {
             if cost > target_gas {
-                return Err(ExitError::OutOfGas);
+                return Err(PrecompileFailure::Error {
+                    exit_status: ExitError::OutOfGas,
+                });
             }
         }
 
         let output = Self::run_inner(input, context)?;
-        Ok(PrecompileOutput::without_logs(cost, output).into())
+        Ok(RustPrecompileOutput::without_logs(cost, output).into())
     }
 }
 
@@ -179,11 +190,13 @@ impl<HF: HardFork> Bn128Pair<HF> {
 }
 
 impl<HF: HardFork> Bn128Pair<HF> {
-    fn run_inner(input: &[u8], _context: &Context) -> Result<Vec<u8>, ExitError> {
+    fn run_inner(input: &[u8], _context: &Context) -> Result<Vec<u8>, PrecompileFailure> {
         use bn::{arith::U256, AffineG1, AffineG2, Fq, Fq2, Group, Gt, G1, G2};
 
         if input.len() % consts::PAIR_ELEMENT_LEN != 0 {
-            return Err(ExitError::Other(Borrowed("ERR_BN128_INVALID_LEN")));
+            return Err(PrecompileFailure::Error {
+                exit_status: ExitError::Other(Borrowed("ERR_BN128_INVALID_LEN")),
+            });
         }
 
         let output = if input.is_empty() {
@@ -198,43 +211,58 @@ impl<HF: HardFork> Bn128Pair<HF> {
                 let ax = Fq::from_slice(
                     &input[(idx * consts::PAIR_ELEMENT_LEN)..(idx * consts::PAIR_ELEMENT_LEN + 32)],
                 )
-                    .map_err(|_e| ExitError::Other(Borrowed("ERR_BN128_INVALID_AX")))?;
+                .map_err(|_e| PrecompileFailure::Error {
+                    exit_status: ExitError::Other(Borrowed("ERR_BN128_INVALID_AX")),
+                })?;
 
                 let ay = Fq::from_slice(
                     &input[(idx * consts::PAIR_ELEMENT_LEN + 32)
                         ..(idx * consts::PAIR_ELEMENT_LEN + 64)],
                 )
-                    .map_err(|_e| ExitError::Other(Borrowed("ERR_BN128_INVALID_AY")))?;
+                .map_err(|_e| PrecompileFailure::Error {
+                    exit_status: ExitError::Other(Borrowed("ERR_BN128_INVALID_AY")),
+                })?;
 
                 let bay = Fq::from_slice(
                     &input[(idx * consts::PAIR_ELEMENT_LEN + 64)
                         ..(idx * consts::PAIR_ELEMENT_LEN + 96)],
                 )
-                    .map_err(|_e| ExitError::Other(Borrowed("ERR_BN128_INVALID_B_AY")))?;
+                .map_err(|_e| PrecompileFailure::Error {
+                    exit_status: ExitError::Other(Borrowed("ERR_BN128_INVALID_B_AY")),
+                })?;
 
                 let bax = Fq::from_slice(
                     &input[(idx * consts::PAIR_ELEMENT_LEN + 96)
                         ..(idx * consts::PAIR_ELEMENT_LEN + 128)],
                 )
-                    .map_err(|_e| ExitError::Other(Borrowed("ERR_BN128_INVALID_B_AX")))?;
+                .map_err(|_e| PrecompileFailure::Error {
+                    exit_status: ExitError::Other(Borrowed("ERR_BN128_INVALID_B_AX")),
+                })?;
 
                 let bby = Fq::from_slice(
                     &input[(idx * consts::PAIR_ELEMENT_LEN + 128)
                         ..(idx * consts::PAIR_ELEMENT_LEN + 160)],
                 )
-                    .map_err(|_e| ExitError::Other(Borrowed("ERR_BN128_INVALID_B_BY")))?;
+                .map_err(|_e| PrecompileFailure::Error {
+                    exit_status: ExitError::Other(Borrowed("ERR_BN128_INVALID_B_BY")),
+                })?;
 
-                let bbx = Fq::from_slice(&input[(idx * consts::PAIR_ELEMENT_LEN + 160)
-                ..(idx * consts::PAIR_ELEMENT_LEN + 192)])
-                    .map_err(|_e| ExitError::Other(Borrowed("ERR_BN128_INVALID_B_BX")))?;
+                let bbx = Fq::from_slice(
+                    &input[(idx * consts::PAIR_ELEMENT_LEN + 160)
+                        ..(idx * consts::PAIR_ELEMENT_LEN + 192)],
+                )
+                .map_err(|_e| PrecompileFailure::Error {
+                    exit_status: ExitError::Other(Borrowed("ERR_BN128_INVALID_B_BX")),
+                })?;
 
                 let a = {
                     if ax.is_zero() && ay.is_zero() {
                         G1::zero()
                     } else {
                         G1::from(
-                            AffineG1::new(ax, ay)
-                                .map_err(|_e| ExitError::Other(Borrowed("ERR_BN128_INVALID_A")))?,
+                            AffineG1::new(ax, ay).map_err(|_e| PrecompileFailure::Error {
+                                exit_status: ExitError::Other(Borrowed("ERR_BN128_INVALID_A")),
+                            })?,
                         )
                     }
                 };
@@ -246,8 +274,9 @@ impl<HF: HardFork> Bn128Pair<HF> {
                         G2::zero()
                     } else {
                         G2::from(
-                            AffineG2::new(ba, bb)
-                                .map_err(|_e| ExitError::Other(Borrowed("ERR_BN128_INVALID_B")))?,
+                            AffineG2::new(ba, bb).map_err(|_e| PrecompileFailure::Error {
+                                exit_status: ExitError::Other(Borrowed("ERR_BN128_INVALID_B")),
+                            })?,
                         )
                     }
                 };
@@ -273,7 +302,7 @@ impl<HF: HardFork> Bn128Pair<HF> {
 }
 
 impl Precompile for Bn128Pair<Berlin> {
-    fn required_gas(input: &[u8]) -> Result<EthGas, ExitError> {
+    fn required_gas(input: &[u8]) -> Result<EthGas, PrecompileFailure> {
         Ok(
             costs::BERLIN_PAIR_PER_POINT * input.len() / consts::PAIR_ELEMENT_LEN
                 + costs::BERLIN_PAIR_BASE,
@@ -290,16 +319,18 @@ impl Precompile for Bn128Pair<Berlin> {
         target_gas: Option<EthGas>,
         context: &Context,
         _is_static: bool,
-    ) -> EvmPrecompileResult {
+    ) -> PrecompileResult {
         let cost = Self::required_gas(input)?;
         if let Some(target_gas) = target_gas {
             if cost > target_gas {
-                return Err(ExitError::OutOfGas);
+                return Err(PrecompileFailure::Error {
+                    exit_status: ExitError::OutOfGas,
+                });
             }
         }
 
         let output = Self::run_inner(input, context)?;
-        Ok(PrecompileOutput::without_logs(cost, output).into())
+        Ok(RustPrecompileOutput::without_logs(cost, output).into())
     }
 }
 
@@ -371,7 +402,12 @@ mod tests {
         .unwrap();
         let res =
             Bn128Add::<Berlin>::new().run(&input, Some(EthGas::new(149)), &new_context(), false);
-        assert!(matches!(res, Err(ExitError::OutOfGas)));
+        assert!(matches!(
+            res,
+            Err(PrecompileFailure::Error {
+                exit_status: ExitError::OutOfGas
+            })
+        ));
 
         // no input test
         let input = [0u8; 0];
@@ -402,7 +438,9 @@ mod tests {
             Bn128Add::<Berlin>::new().run(&input, Some(EthGas::new(150)), &new_context(), false);
         assert!(matches!(
             res,
-            Err(ExitError::Other(Borrowed("ERR_BN128_INVALID_POINT")))
+            Err(PrecompileFailure::Error {
+                exit_status: ExitError::Other(Borrowed("ERR_BN128_INVALID_POINT"))
+            })
         ));
     }
 
@@ -436,13 +474,14 @@ mod tests {
             0200000000000000000000000000000000000000000000000000000000000000",
         )
         .unwrap();
-        let res = Bn128Mul::<Berlin>::new().run(
-            &input,
-            Some(EthGas::new(5_999)),
-            &new_context(),
-            false,
-        );
-        assert!(matches!(res, Err(ExitError::OutOfGas)));
+        let res =
+            Bn128Mul::<Berlin>::new().run(&input, Some(EthGas::new(5_999)), &new_context(), false);
+        assert!(matches!(
+            res,
+            Err(PrecompileFailure::Error {
+                exit_status: ExitError::OutOfGas
+            })
+        ));
 
         // zero multiplication test
         let input = hex::decode(
@@ -489,17 +528,15 @@ mod tests {
         )
         .unwrap();
 
-        let res = Bn128Mul::<Berlin>::new().run(
-            &input,
-            Some(EthGas::new(6_000)),
-            &new_context(),
-            false,
-        );
+        let res =
+            Bn128Mul::<Berlin>::new().run(&input, Some(EthGas::new(6_000)), &new_context(), false);
         assert!(matches!(
             res,
-            Err(ExitError::Other(Borrowed("ERR_BN128_INVALID_POINT")))
+            Err(PrecompileFailure::Error {
+                exit_status: ExitError::Other(Borrowed("ERR_BN128_INVALID_POINT"))
+            })
         ));
-        }
+    }
 
     #[test]
     fn test_alt_bn128_pair() {
@@ -552,7 +589,12 @@ mod tests {
             &new_context(),
             false,
         );
-        assert!(matches!(res, Err(ExitError::OutOfGas)));
+        assert!(matches!(
+            res,
+            Err(PrecompileFailure::Error {
+                exit_status: ExitError::OutOfGas
+            })
+        ));
 
         // no input test
         let input = [0u8; 0];
@@ -586,7 +628,9 @@ mod tests {
         );
         assert!(matches!(
             res,
-            Err(ExitError::Other(Borrowed("ERR_BN128_INVALID_A")))
+            Err(PrecompileFailure::Error {
+                exit_status: ExitError::Other(Borrowed("ERR_BN128_INVALID_A"))
+            })
         ));
 
         // invalid input length
@@ -607,7 +651,9 @@ mod tests {
         );
         assert!(matches!(
             res,
-            Err(ExitError::Other(Borrowed("ERR_BN128_INVALID_LEN",)))
+            Err(PrecompileFailure::Error {
+                exit_status: ExitError::Other(Borrowed("ERR_BN128_INVALID_LEN",))
+            })
         ));
     }
 }
