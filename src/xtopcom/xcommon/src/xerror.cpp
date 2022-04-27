@@ -37,6 +37,9 @@ static char const * errc_to_string(xerrc_t const errc) noexcept {
     case xerrc_t::token_symbol_not_matched:
         return "token symbol not matched";
 
+    case xerrc_t::token_not_predefined:
+        return "not predefined token";
+
     default:
         assert(false);
         return "unknown common category error";

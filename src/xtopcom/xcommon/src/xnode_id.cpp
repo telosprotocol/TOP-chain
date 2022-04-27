@@ -7,6 +7,7 @@
 #include "xbase/xutl.h"
 #include "xbasic/xbyte_buffer.h"
 #include "xcommon/xerror/xerror.h"
+#include "xcommon/xeth_address.h"
 #include "xutility/xhash.h"
 #include "xvledger/xvaccount.h"
 
@@ -43,6 +44,21 @@ xtop_node_id xtop_node_id::build_from(std::string const & account_string, std::e
 
 xtop_node_id xtop_node_id::build_from(std::string const & account_string) {
     return xtop_node_id{account_string};
+}
+
+xtop_node_id xtop_node_id::build_from(xeth_address_t const & eth_address, base::enum_vaccount_addr_type account_addr_type, std::error_code & ec) {
+    assert(!ec);
+
+    if (account_addr_type == base::enum_vaccount_addr_type_secp256k1_evm_user_account) {
+        return xtop_node_id::build_from("T60004" + eth_address.to_hex_string().substr(2), ec);
+    }
+
+    if (account_addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account) {
+        return xtop_node_id::build_from("T80000" + eth_address.to_hex_string().substr(2), ec);
+    }
+
+    ec = common::error::xerrc_t::invalid_account_type;
+    return xtop_node_id{};
 }
 
 bool xtop_node_id::empty() const noexcept {
