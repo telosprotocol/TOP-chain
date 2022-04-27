@@ -51,13 +51,7 @@ public:
                 return result;
 
             } else if (storage_key.key_type == storage_key_type::Balance) {
-                evm_common::u256 balance_u256 = unit_state->tep_token_balance(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH);
-                evm_common::xBorshEncoder encoder;
-                encoder.EncodeInteger(balance_u256);
-                xbytes_t result = encoder.GetBuffer();
-                assert(result.size() == 32);
-                return result;
-
+                return unit_state->tep_token_balance_bytes(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH);
             } else if (storage_key.key_type == storage_key_type::Code) {
                 // todo add contract_manager lru cache.
                 auto property = state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_EVM_CODE, state_accessor::properties::xproperty_category_t::system};
@@ -125,11 +119,7 @@ public:
 
             } else if (storage_key.key_type == storage_key_type::Balance) {
                 assert(value.size() == 32);
-                evm_common::u256 value_u256;
-                evm_common::xBorshDecoder decoder;
-                decoder.getInteger(value, value_u256);
-                xdbg("storage_set set balance account:%s, balance:%s", storage_key.address.c_str(), value_u256.str().c_str());
-                unit_state->set_tep_balance(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH, value_u256);
+                unit_state->set_tep_balance_bytes(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH, value);
 
             } else if (storage_key.key_type == storage_key_type::Code) {
                 auto property = state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_EVM_CODE, state_accessor::properties::xproperty_category_t::system};
@@ -194,11 +184,11 @@ public:
                 // todo bytes(BE/LE) -> u256 -> u64 to set.
                 //? how unit_bstate to remove balance?
 
-                auto property = state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_EVM_BALANCE, state_accessor::properties::xproperty_category_t::system};
-                // sa.set_property<evm_property_type_bytes>(property, value, ec);
-                sa.set_property<evm_property_type_bytes>(property, {}, ec);
-                assert(!ec);
-                top::error::throw_error(ec);
+                // auto property = state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_EVM_BALANCE, state_accessor::properties::xproperty_category_t::system};
+                // // sa.set_property<evm_property_type_bytes>(property, value, ec);
+                // sa.set_property<evm_property_type_bytes>(property, {}, ec);
+                // assert(!ec);
+                // top::error::throw_error(ec);
 
             } else if (storage_key.key_type == storage_key_type::Code) {
                 auto typeless_property =
