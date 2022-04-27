@@ -11,7 +11,9 @@
 #include "xcrypto/xckey.h"
 #include "xcrypto/xcrypto_util.h"
 #include "xevm_common/xtriecommon.h"
+#include "../xtopcom/xdepends/include/trezor-crypto/ed25519-donna/ed25519.h"
 
+#include "xpbase/base/top_utils.h" 
 
 NS_BEG2(top, xrelayer)
 
@@ -20,15 +22,14 @@ using namespace top::evm_common::rlp;
 
 relayer::relayer() {}
 
-   
+//test api
+void printHexHash(std::string hash_name, h256 hash_data){
+    
+    std::cout << "hash name: " << hash_name << " value : " <<  hash_data.hex() << std::endl;   
+}
 
 void relayer::relayer_init() {
  
-    //create proof vecotr
- /*  for(int i =0; i< 20; i++){
-        utl::xecprikey_t raw_pri_key_obj;
-       proof_public_vector.emplace_back(raw_pri_key_obj);
-   }*/
 
 }
 
@@ -71,12 +72,12 @@ h256 relayer::relayer_outcome_root_calc()
 
 void relayer::create_block_file()
 {
+
     static int block_index;
     block_index++;
     int writeLen = 0, fileLen;
     xBorshEncoder encoder;
-    encoder.EncodeInteger(true);
-    std::string fileName = "block_index_" +  base::xstring_utl::tostring(block_index);
+    std::string fileName = "block_index_" +  base::xstring_utl::tostring(block_index) + ".bin";
     std::ofstream fin(fileName, std::ios::binary);
 
     //cala calculate
@@ -86,11 +87,9 @@ void relayer::create_block_file()
     .EncodeInteger(m_next_block.header.timestamp).EncodeBytesFixArray(m_next_block.header.next_bp_hash).EncodeBytesFixArray(m_next_block.header.block_merkle_root);
     
 
-  
-    
     encoder.EncodeBytesFixArray(m_next_block.inner_rest_hash).EncodeInteger(m_next_block.next_bps.some);
     if (m_next_block.next_bps.some == true) {
-         //add len before blockProducers
+         //add len before blockProducers    
         uint32_t blockProducersLen = m_next_block.next_bps.blockProducers.size();
         encoder.EncodeInteger(blockProducersLen);
         std::cout << " blockProducersLen   " << blockProducersLen << std::endl;
@@ -108,10 +107,9 @@ void relayer::create_block_file()
 
 
     for (auto opt_signatrue :m_next_block.approvals_after_next)    {
-        encoder.EncodeInteger(opt_signatrue.some).EncodeInteger(opt_signatrue.signature.signatureType)
+          encoder.EncodeInteger(opt_signatrue.some).EncodeInteger(opt_signatrue.signature.signatureType)
         .EncodeBytesFixArray(opt_signatrue.signature.r).EncodeBytesFixArray(opt_signatrue.signature.s);
     }
-
 
     for (auto c : encoder.GetBuffer()) {
         fin.write((char*)&c, sizeof(uint8_t));
@@ -144,21 +142,30 @@ void relayer::relayer_approvals_next_set(std::vector<xRelayerOptionalSignature> 
     }
 }
 
+uint64_t messageSwapBytes8(uint64_t v) {
+    v = ((v & 0x00ff00ff00ff00ff) << 8) | ((v & 0xff00ff00ff00ff00) >> 8);
+    v = ((v & 0x0000ffff0000ffff) << 16) | ((v & 0xffff0000ffff0000) >> 16);
+    return (v << 32) | (v >> 32);
+}
+
 
 void relayer::relayer_new_header_build()
 {
   
     xRelayerBlockInnerHeader& header = m_next_block.header;
 
+    //1. set all data
     if (m_fulloutProof.outcome_proof.block_hash != h256{0})  {
        header.prev_block_hash = m_fulloutProof.outcome_proof.block_hash;
     } else {
        header.prev_block_hash = h256{0};
     }
+    printHexHash("prev_block_hash" , header.prev_block_hash);
 
-    //next_block_inner_hash
+    //next_block_inner_hash , it's unusefull now
     top::utl::xecprikey_t raw_pri_key_obj;
     bytesConstRef((const unsigned char *)raw_pri_key_obj.data(), 32).copyTo(header.next_block_inner_hash .ref());
+    printHexHash("header.next_block_inner_hash" ,header.next_block_inner_hash);
 
     header.height = m_last_block.header.height +1;
     header.epoch_id = h256{"00000000000000000000000000000000"};        //not used now
@@ -173,22 +180,37 @@ void relayer::relayer_new_header_build()
     header.timestamp =  GetCurrentTimeMsec();
     header.next_bp_hash = h256{0};;  //not used*/
 
+    //crate message to sign
+    //block hash(inner_lite.hash, res.inner_rest_hash), res.prev_block_hash)
 
-     res.height = data.decodeU64();
-        res.epoch_id = data.decodeBytes32();
-        res.next_epoch_id = data.decodeBytes32();
-        res.prev_state_root = data.decodeBytes32();
-        res.outcome_root = data.decodeBytes32();
-        res.timestamp = data.decodeU64();
-        res.next_bp_hash = data.decodeBytes32();
-        res.block_merkle_root = data.decodeBytes32();
+  /*  std::string  message =      uint8(0),                    topBlock.hash,
+                    Utils.swapBytes8(topBlock.inner_lite.height),
+                    bytes23(0)*/
+    m_next_block.next_bps.some = true;
+     std::string  message;
+    //merkle block proof root hash
+
+    //calc block_merkle_root
+    std::vector<std::string>  block_proof_hash_vector;
+    int index = 0;
+    for(auto & block_proof : m_block_proofs) {
+        xRelayerOptionalSignature proof ;        
+        std::string publickey((char *)block_proof.publicKey.k.data() , 32);
+       //  std::cout << " block_proof.publicKey.k. " << block_proof.publicKey.k  << " , publickey "  << publickey << std::endl;      
+        block_proof_hash_vector.emplace_back(publickey);
+    }
+
+    base::xmerkle_t<utl::xsha2_256_t, uint256_t> blook_merkle; 
+    std::string block_merkle_hash = blook_merkle.calc_root(block_proof_hash_vector);
+    bytesConstRef((const unsigned char *)block_merkle_hash.data(), 32).copyTo(header.block_merkle_root.ref());
+    printHexHash("(header.block_merkle_root " , header.block_merkle_root);
 
     //sign inner_lite hash
-     xBorshEncoder encoder_inner_lite_hash;
-     encoer.EncodeBytesFixArray(header.epoch_id).EncodeBytesFixArray(header.next_epoch_id)
-     .EncodeBytesFixArray(header.prev_state_root).EncodeBytesFixArray(header.outcome_root)
+    xBorshEncoder encoder_inner_lite_hash;
+    encoder_inner_lite_hash.EncodeInteger(header.height).EncodeBytesFixArray(header.epoch_id).EncodeBytesFixArray(header.next_epoch_id)
+    .EncodeBytesFixArray(header.prev_state_root).EncodeBytesFixArray(header.outcome_root)
     .EncodeInteger(header.timestamp).EncodeBytesFixArray(header.next_bp_hash)
-    EncodeBytesFixArray(header.outcome_root);
+    .EncodeBytesFixArray(header.block_merkle_root);
 
     std::ostringstream out;
     for (auto c : encoder_inner_lite_hash.GetBuffer()) {
@@ -199,45 +221,58 @@ void relayer::relayer_new_header_build()
 
     
     //next_block_inner_hash
-    top::utl::xecprikey_t raw_pri_key_obj;
-    bytesConstRef((const unsigned char *)raw_pri_key_obj.data(), 32).copyTo(header.inner_rest_hash.ref());
+    top::utl::xecprikey_t inner_rest_hash_key;
+    bytesConstRef((const unsigned char *)inner_rest_hash_key.data(), 32).copyTo(m_next_block.inner_rest_hash.ref());
 
-    
-
-   //block hash(inner_lite.hash, res.inner_rest_hash), res.prev_block_hash)
-  /*  std::string  message =      uint8(0),                    topBlock.hash,
-                    Utils.swapBytes8(topBlock.inner_lite.height),
-                    bytes23(0)*/
-    m_next_block.next_bps.some = 1;
-    //merkle block proof root hash
-    std::vector<std::string>  block_proof_hash_vector;
-    int index =0;
-    for(auto & block_proof : m_block_proofs) {
-       // std::string tmp{};
-        byte signature_result[64]{0};
-         ed25519_sign(message, message.length(), block_proof.publicKey.p_k.data(),
-                     block_proof.publicKey.k.data(), signature_result);
-
-        xRelayerOptionalSignature proof ;        
-        proof.signature.r = bytes(signature_result[0], signature_result[31]);
-        proof.signature.s = bytes(signature_result[32], signature_result[63]);
-
-        block_proof_hash_vector.emplace_back(block_proof.publicKey.k.hex());
-        m_next_block.approvals_after_next.emplace_back(proof);
-        index++;
+    h512 hash_256;
+    for (int i = 0; i < 32; i++) {
+        hash_256[i] = inner_lite_hash[i];
+        hash_256[i+32] = m_next_block.inner_rest_hash[i];
     }
+
+    utl::xkeccak256_t first_hash;
+    first_hash.reset();
+    first_hash.update(hash_256.data(), 64);
+    first_hash.update(header.prev_block_hash.data(), 32);    
     
-    base::xmerkle_t<utl::xsha2_256_t, uint256_t> merkle;
-    std::string root_hash = merkle.calc_root(block_proof_hash_vector);
-    header.block_merkle_root = h256{root_hash};
-    
+
+    uint256_t hash_result;
+    first_hash.get_hash(hash_result);
+
+    uint64_t bytesHeight =  messageSwapBytes8(header.height);
+//sign message     uint8(0), topBlock.hash, Utils.swapBytes8(topBlock.inner_lite.height), bytes23(0)
+    unsigned char messageSign[64]= {0};
+    memcpy(&messageSign[1], (const unsigned char*)hash_result.data(), 32);
+    memcpy(&messageSign[33], (const unsigned char*)&bytesHeight, 8);
+
+    //all block proof to sign this message
+    for(auto & block_proof : m_block_proofs) {
+        byte signature_result[64]{0};
+        ed25519_sign((const unsigned char *)messageSign, 64, block_proof.publicKey.p_k.data(),
+                                block_proof.publicKey.k.data(), signature_result);
+
+
+        h512 h_512;
+        bytesConstRef((const unsigned char *)messageSign, 62).copyTo(h_512.ref());
+        std::cout << "h_512  " << h_512.hex() << std::endl;
+
+        xRelayerOptionalSignature proof;        
+        //check sign 
+        int check = ed25519_sign_open(messageSign, 64, block_proof.publicKey.k.data(), signature_result);
+        if(check != 0){
+            std::cout << " check sign error! " << std::endl;
+        }
+        proof.some = 1;
+        bytesConstRef((const unsigned char *)signature_result, 31).copyTo( proof.signature.r.ref());
+        bytesConstRef((const unsigned char *)&signature_result[32], 31).copyTo( proof.signature.s.ref());
+
+        m_next_block.approvals_after_next.push_back(proof);
+    }
 
    for(auto & block_proof : m_block_proofs) {
        // std::string tmp{};
-        block_proof_hash_vector.emplace_back(block_proof.publicKey.k.hex());
         m_next_block.next_bps.blockProducers.emplace_back(block_proof);
     }
-
 }
 
 void relayer::relayer_new_block_build()
@@ -248,8 +283,13 @@ void relayer::relayer_new_block_build()
         assert(false);
     }
 
+    relayer_new_header_build();
     //test
     create_block_file();
+
+    m_last_block = m_next_block;
+    m_fulloutProof.outcome_proof.block_hash = m_next_block.header.prev_block_hash;
+ 
 }
 
     

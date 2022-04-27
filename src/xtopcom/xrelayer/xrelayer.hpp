@@ -30,7 +30,7 @@ public:
 
    void create_block_file();
    void relayer_fullOutProoff();
-
+   void relayer_new_header_build();
     void relayer_new_block_build();
     void relayer_block_proofs_set(std::vector<xRelayerBlockProducer>  &block_proofs);
 

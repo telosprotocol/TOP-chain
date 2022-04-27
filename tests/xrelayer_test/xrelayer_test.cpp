@@ -45,9 +45,9 @@ void relayer_receipts_create(uint64_t height, uint32_t receipt_count) {
     xRelayerReceipt receipt;
     receipt.status = 0x1;
     receipt.gasUsed = h256(50942);
-    
+
     xRelayerReceiptLog log;
-    log.contractAddress = h160{"real contract address"};   //todo
+    log.contractAddress = h160{"0xa82fF9aFd8f496c3d6ac40E2a0F282E47488CFc9"};   //todo
 
     std::string data = "0x0000000000000000000000000000000000000000000000000000000000003039";
     log.data = bytes(data.begin(),data.end());
@@ -57,6 +57,7 @@ void relayer_receipts_create(uint64_t height, uint32_t receipt_count) {
     top::evm_common::h2048 bloom;
     char szDigest[32] = {0};
     keccak_256((const unsigned char *)strAddress.data(), strAddress.size(), (unsigned char *)szDigest);
+
     top::evm_common::h256 hash_h256;
     bytesConstRef((const unsigned char *)szDigest, 32).copyTo(hash_h256.ref());
     bloom.shiftBloom<3>(hash_h256);
@@ -85,17 +86,22 @@ void relayer_receipts_create(uint64_t height, uint32_t receipt_count) {
 
 }
 
-TEST(xrelayer_test, config) {
+TEST(xrelayer_test, test_relayer) {
     relayer relayer_instance;
 
     //set proof
     std::vector<xRelayerBlockProducer> block_proofs;
     for (int i = 0; i < 10; i++) {
         xRelayerBlockProducer producers;    
+     
         top::utl::xecprikey_t raw_pri_key_obj;
         producers.stake = 1000;
+        producers.publicKey.version = 0;
+        producers.publicKey.keyType = 0;
+        producers.publicKey.bt8 = 0;
         byte publickey[32];
-        ed25519_publickey(raw_pri_key_test.data(), publickey);
+        ed25519_publickey(raw_pri_key_obj.data(), publickey);
+    //    std::cout << "prikey " << raw_pri_key_obj.data() << " ,publickey  " << publickey <<std::endl;
      
         bytesConstRef((const unsigned char *)raw_pri_key_obj.data(), 32).copyTo(producers.publicKey.p_k.ref());
         bytesConstRef((const unsigned char *)publickey, 32).copyTo(producers.publicKey.k.ref());
@@ -116,26 +122,27 @@ TEST(xrelayer_test, config) {
         approve_nexts.emplace_back(approve);
     }
     relayer_instance.relayer_approvals_next_set(approve_nexts);*/
-
+ 
     relayer_receipts_create(1, 1);
+
     relayer_instance.relayer_receipts_set(m_receiptVector);
 
     relayer_instance.relayer_new_block_build();
 
     // block 2
-    std::vector<xRelayerBlockProducer> block_proofs;
+    std::vector<xRelayerBlockProducer> block_proofs_2;
     for (int i = 0; i < 10; i++) {
         xRelayerBlockProducer producers;    
         top::utl::xecprikey_t raw_pri_key_obj;
         producers.stake = 1000;
         byte publickey[32];
-        ed25519_publickey(raw_pri_key_test.data(), publickey);
+        ed25519_publickey(raw_pri_key_obj.data(), publickey);
      
         bytesConstRef((const unsigned char *)raw_pri_key_obj.data(), 32).copyTo(producers.publicKey.p_k.ref());
         bytesConstRef((const unsigned char *)publickey, 32).copyTo(producers.publicKey.k.ref());
-        block_proofs.push_back(producers);
+        block_proofs_2.push_back(producers);
     }
-    relayer_instance.relayer_block_proofs_set(block_proofs);
+    relayer_instance.relayer_block_proofs_set(block_proofs_2);
     relayer_instance.relayer_receipts_set(m_receiptVector);
     relayer_instance.relayer_new_block_build();
 }
