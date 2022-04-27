@@ -13,50 +13,24 @@ pub mod modexp;
 // pub mod random;
 pub mod secp256k1;
 
+pub mod erc20;
+
 use crate::blake2::Blake2F;
 use crate::bn128::{Bn128Add, Bn128Mul, Bn128Pair};
 use crate::hash::{RIPEMD160, SHA256};
 use crate::identity::Identity;
 use crate::modexp::ModExp;
 // use crate::random::RandomSeed;
+use crate::erc20::Erc20Precompile;
 use crate::secp256k1::ECRecover;
-use engine_types::{types::Address, vec, BTreeMap, Box, Vec, H160, H256, types::EthGas};
-use evm::{executor, Context, ExitError, ExitSucceed, backend::Log};
-
-#[derive(Debug, Default)]
-pub struct PrecompileOutput {
-    pub cost: EthGas,
-    pub output: Vec<u8>,
-    pub logs: Vec<Log>,
-}
-
-impl PrecompileOutput {
-    pub fn without_logs(cost: EthGas, output: Vec<u8>) -> Self {
-        Self {
-            cost,
-            output,
-            logs: Vec::new(),
-        }
-    }
-}
-
-impl From<PrecompileOutput> for executor::stack::PrecompileOutput {
-    fn from(output: PrecompileOutput) -> Self {
-        executor::stack::PrecompileOutput {
-            exit_status: ExitSucceed::Returned,
-            cost: output.cost.as_u64(),
-            output: output.output,
-            logs: output.logs,
-        }
-    }
-}
-
-type EvmPrecompileResult = Result<executor::stack::PrecompileOutput, ExitError>;
+use engine_types::{types::Address, types::EthGas, vec, BTreeMap, Borrowed, Box, Vec, H160, H256};
+use evm::executor::stack::PrecompileFailure;
+use evm::{backend::Log, executor, Context, ExitError, ExitSucceed};
 
 /// A precompiled function for use in the EVM.
 pub trait Precompile {
     /// The required gas in order to run the precompile function.
-    fn required_gas(input: &[u8]) -> Result<EthGas, ExitError>
+    fn required_gas(input: &[u8]) -> Result<EthGas, PrecompileFailure>
     where
         Self: Sized;
 
@@ -67,7 +41,7 @@ pub trait Precompile {
         target_gas: Option<EthGas>,
         context: &Context,
         is_static: bool,
-    ) -> EvmPrecompileResult;
+    ) -> engine_types::PrecompileResult;
 }
 
 /// Hard fork marker.
@@ -90,7 +64,7 @@ impl executor::stack::PrecompileSet for Precompiles {
     ) -> Option<Result<executor::stack::PrecompileOutput, executor::stack::PrecompileFailure>> {
         self.0.get(&Address::new(address)).map(|p| {
             p.run(input, gas_limit.map(EthGas::new), context, is_static)
-                .map_err(|exit_status| executor::stack::PrecompileFailure::Error { exit_status })
+            // .map_err(|exit_status| executor::stack::PrecompileFailure::Error { exit_status })
         })
     }
 
@@ -115,6 +89,7 @@ impl Precompiles {
             Bn128Mul::<Berlin>::ADDRESS,
             Bn128Pair::<Berlin>::ADDRESS,
             Blake2F::ADDRESS,
+            Erc20Precompile::ADDRESS,
         ];
         let fun: Vec<Box<dyn Precompile>> = vec![
             Box::new(ECRecover),
@@ -126,6 +101,7 @@ impl Precompiles {
             Box::new(Bn128Mul::<Berlin>::new()),
             Box::new(Bn128Pair::<Berlin>::new()),
             Box::new(Blake2F),
+            Box::new(Erc20Precompile),
         ];
         let map: BTreeMap<Address, Box<dyn Precompile>> = addresses.into_iter().zip(fun).collect();
 
@@ -206,4 +182,3 @@ const fn make_h256(x: u128, y: u128) -> H256 {
         y_bytes[15],
     ])
 }
-

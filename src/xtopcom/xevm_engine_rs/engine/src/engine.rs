@@ -1,12 +1,13 @@
 use crate::error::{BalanceOverflow, EngineError, EngineErrorKind, EngineStateError};
 use crate::parameters::TransactionStatus;
 use crate::prelude::*;
-use crate::proto_parameters::{FunctionCallArgs, ResultLog, SubmitResult};
+use crate::proto_parameters::{FunctionCallArgs, SubmitResult};
 use core::cell::RefCell;
 use engine_precompiles::{Precompile, PrecompileConstructorContext, Precompiles};
 use engine_sdk::dup_cache::{DupCache, PairDupCache};
 use engine_sdk::env::Env;
 use engine_sdk::io::{StorageIntermediate, IO};
+use engine_types::ResultLog;
 use evm::backend::{Apply, ApplyBackend, Backend, Basic, Log};
 use evm::{executor, Config, CreateScheme, ExitError, ExitReason};
 

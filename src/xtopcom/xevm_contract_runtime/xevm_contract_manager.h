@@ -4,14 +4,38 @@
 
 #pragma once
 
+#if defined(__clang__)
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wpedantic"
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wpedantic"
+#elif defined(_MSC_VER)
+#    pragma warning(push, 0)
+#endif
+
 #include "xbase/xlru_cache.h"
+
+#if defined(__clang__)
+#    pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic pop
+#elif defined(_MSC_VER)
+#    pragma warning(pop)
+#endif
+
 #include "xbase/xns_macro.h"
+#include "xcommon/xaccount_address.h"
+#include "xevm_contract_runtime/xevm_sys_contract_face.h"
+
+#include <memory>
+#include <unordered_map>
 
 NS_BEG3(top, contract_runtime, evm)
 
 class xtop_evm_contract_manager {
 public:
-    xtop_evm_contract_manager() = default;
+    xtop_evm_contract_manager();
     xtop_evm_contract_manager(xtop_evm_contract_manager const &) = delete;
     xtop_evm_contract_manager & operator=(xtop_evm_contract_manager const &) = delete;
     xtop_evm_contract_manager(xtop_evm_contract_manager &&) = default;
@@ -38,11 +62,17 @@ public:
         m_code_cache.put(account, code);
     }
 
+    void add_sys_contract(common::xaccount_address_t const & contract_address, std::unique_ptr<xevm_syscontract_face_t> contract);
+
+    bool execute_sys_contract(xbytes_t const & input, xbytes_t & output);
+
 private:
     enum {
         enum_default_code_cache_max = 256,
     };
     base::xlru_cache<common::xaccount_address_t, xbytes_t> m_code_cache{enum_default_code_cache_max};
+
+    std::unordered_map<common::xaccount_address_t, std::unique_ptr<xevm_syscontract_face_t>> m_sys_contract;
 };
 using xevm_contract_manager_t = xtop_evm_contract_manager;
 

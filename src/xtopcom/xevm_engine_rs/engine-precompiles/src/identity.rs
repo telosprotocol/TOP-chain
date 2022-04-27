@@ -1,5 +1,6 @@
-use crate::{EvmPrecompileResult, Precompile, PrecompileOutput};
+use crate::{Precompile, PrecompileFailure};
 use engine_types::types::{Address, EthGas};
+use engine_types::{PrecompileResult, RustPrecompileOutput};
 use evm::{Context, ExitError};
 
 /// Identity precompile costs.
@@ -25,7 +26,7 @@ impl Identity {
 }
 
 impl Precompile for Identity {
-    fn required_gas(input: &[u8]) -> Result<EthGas, ExitError> {
+    fn required_gas(input: &[u8]) -> Result<EthGas, PrecompileFailure> {
         Ok(
             (input.len() as u64 + consts::IDENTITY_WORD_LEN - 1) / consts::IDENTITY_WORD_LEN
                 * costs::IDENTITY_PER_WORD
@@ -43,14 +44,16 @@ impl Precompile for Identity {
         target_gas: Option<EthGas>,
         _context: &Context,
         _is_static: bool,
-    ) -> EvmPrecompileResult {
+    ) -> PrecompileResult {
         let cost = Self::required_gas(input)?;
         if let Some(target_gas) = target_gas {
             if cost > target_gas {
-                return Err(ExitError::OutOfGas);
+                return Err(PrecompileFailure::Error {
+                    exit_status: ExitError::OutOfGas,
+                });
             }
         }
 
-        Ok(PrecompileOutput::without_logs(cost, input.to_vec()).into())
+        Ok(RustPrecompileOutput::without_logs(cost, input.to_vec()).into())
     }
 }

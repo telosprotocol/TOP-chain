@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package top.evm_engine.precompile;
+
+import "proto_basic.proto";
+
+message PrecompileOutput{
+    uint32 exit_status = 1;
+    uint64 cost = 2;
+    bytes output = 3;
+    repeated basic.ResultLog logs = 4;
+}
+
+message PrecompileFailure{
+    uint32 fail_status = 1;
+    uint32 minor_status = 2;
+    bytes output = 3;
+    uint64 cost = 4;
+}
+
+message ContractContext{
+    basic.ProtoAddress address = 1;
+    basic.ProtoAddress caller = 2;
+    basic.WeiU256 apparent_value = 3; // U256
+}
+
+message ContractBridgeArgs{
+    basic.ProtoAddress contract_address = 1;
+    bytes input = 2;
+    uint64 target_gas = 3;
+    ContractContext context = 4;
+    bool is_static = 5;
+}

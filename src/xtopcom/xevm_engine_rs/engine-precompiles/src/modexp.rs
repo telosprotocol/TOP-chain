@@ -1,5 +1,7 @@
-use crate::{Berlin, EvmPrecompileResult, HardFork, Precompile, PrecompileOutput};
-use engine_types::{PhantomData, Vec, U256, types::Address, types::EthGas};
+use crate::{Berlin, HardFork, Precompile, PrecompileFailure};
+use engine_types::{
+    types::Address, types::EthGas, PhantomData, PrecompileResult, RustPrecompileOutput, Vec, U256,
+};
 use evm::{Context, ExitError};
 use num::{BigUint, Integer};
 
@@ -35,7 +37,7 @@ impl<HF: HardFork> ModExp<HF> {
         }
     }
 
-    fn run_inner(input: &[u8]) -> Result<Vec<u8>, ExitError> {
+    fn run_inner(input: &[u8]) -> Result<Vec<u8>, PrecompileFailure> {
         let (base_len, exp_len, mod_len) = parse_lengths(input);
         let base_len = base_len as usize;
         let exp_len = exp_len as usize;
@@ -86,7 +88,7 @@ impl ModExp<Berlin> {
 }
 
 impl Precompile for ModExp<Berlin> {
-    fn required_gas(input: &[u8]) -> Result<EthGas, ExitError> {
+    fn required_gas(input: &[u8]) -> Result<EthGas, PrecompileFailure> {
         let (base_len, exp_len, mod_len) = parse_lengths(input);
 
         let mul = Self::mul_complexity(base_len, mod_len);
@@ -103,16 +105,18 @@ impl Precompile for ModExp<Berlin> {
         target_gas: Option<EthGas>,
         _context: &Context,
         _is_static: bool,
-    ) -> EvmPrecompileResult {
+    ) -> PrecompileResult {
         let cost = Self::required_gas(input)?;
         if let Some(target_gas) = target_gas {
             if cost > target_gas {
-                return Err(ExitError::OutOfGas);
+                return Err(PrecompileFailure::Error {
+                    exit_status: ExitError::OutOfGas,
+                });
             }
         }
 
         let output = Self::run_inner(input)?;
-        Ok(PrecompileOutput::without_logs(cost, output).into())
+        Ok(RustPrecompileOutput::without_logs(cost, output).into())
     }
 }
 

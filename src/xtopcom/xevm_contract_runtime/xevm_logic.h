@@ -1,6 +1,7 @@
 #pragma once
 #include "xbasic/xbyte_buffer.h"
 #include "xbasic/xmemory.hpp"
+#include "xevm_contract_runtime/xevm_contract_manager.h"
 #include "xevm_contract_runtime/xevm_storage_face.h"
 #include "xevm_contract_runtime/xevm_type.h"
 #include "xevm_runner/evm_logic_face.h"
@@ -14,7 +15,7 @@ NS_BEG3(top, contract_runtime, evm)
 
 class xtop_evm_logic : public top::evm::xevm_logic_face_t {
 public:
-    xtop_evm_logic(std::shared_ptr<xevm_storage_face_t> storage_ptr, observer_ptr<evm_runtime::xevm_context_t> const & context);
+    xtop_evm_logic(std::shared_ptr<xevm_storage_face_t> storage_ptr, observer_ptr<evm_runtime::xevm_context_t> const & context, observer_ptr<xevm_contract_manager_t> const & contract_manager);
     xtop_evm_logic(xtop_evm_logic const &) = delete;
     xtop_evm_logic & operator=(xtop_evm_logic const &) = delete;
     xtop_evm_logic(xtop_evm_logic &&) = default;
@@ -24,9 +25,13 @@ public:
 private:
     std::shared_ptr<xevm_storage_face_t> m_storage_ptr;
     observer_ptr<evm_runtime::xevm_context_t> m_context;
+    observer_ptr<xevm_contract_manager_t> m_contract_manager;
     std::map<uint64_t, xbytes_t> m_registers;
     xbytes_t m_return_data_value;
     std::pair<uint32_t, uint64_t> m_return_error_value;
+    xbytes_t m_call_contract_args;
+    xbytes_t m_result_ok;
+    xbytes_t m_result_err;
 
 public:
     // for runtime
@@ -59,6 +64,11 @@ public:
     uint64_t storage_write(uint64_t key_len, uint64_t key_ptr, uint64_t value_len, uint64_t value_ptr, uint64_t register_id) override;
     uint64_t storage_read(uint64_t key_len, uint64_t key_ptr, uint64_t register_id) override;
     uint64_t storage_remove(uint64_t key_len, uint64_t key_ptr, uint64_t register_id) override;
+
+    // extern contract:
+    bool extern_contract_call(uint64_t args_len, uint64_t args_ptr) override;
+    uint64_t get_result(uint64_t register_id) override;
+    uint64_t get_error(uint64_t register_id) override;
 
 private:
     // inner api

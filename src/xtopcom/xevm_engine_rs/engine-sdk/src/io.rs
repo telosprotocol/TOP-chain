@@ -1,5 +1,5 @@
 use crate::error;
-use engine_types::U256;
+use engine_types::{proto_precompile::ContractBridgeArgs, PrecompileResult, U256};
 
 /// The purpose of this trait is to represent a reference to a value that
 /// could be obtained by IO, but without eagerly loading it into memory.
@@ -82,4 +82,14 @@ pub trait IO {
         value.copy_to_slice(&mut result);
         Ok(U256::from_little_endian(&result))
     }
+}
+
+pub trait ContractBridge {
+    type StorageValue: StorageIntermediate;
+
+    fn extern_contract_call(args: ContractBridgeArgs) -> PrecompileResult;
+
+    fn get_result() -> Option<Self::StorageValue>;
+
+    fn get_error() -> Option<Self::StorageValue>;
 }

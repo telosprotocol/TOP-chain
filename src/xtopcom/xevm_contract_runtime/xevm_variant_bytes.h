@@ -11,6 +11,7 @@ NS_BEG3(top, contract_runtime, evm)
 #define ETH_ACCOUNT_PREFIX "0x"
 
 std::string evm_to_top_address(std::string const & input);
+std::string top_to_evm_address(std::string const & input);
 
 class xvariant_bytes {
 private:
