@@ -526,7 +526,6 @@ int32_t xbstate_ctx_t::set_tep_balance(const std::string & prop, const std::stri
 int32_t xbstate_ctx_t::set_tep_balance_bytes(const std::string & prop, const std::string & token_name, const top::xbytes_t & new_balance) {
     auto propobj = load_tep_token_for_write(prop);
     CHECK_PROPERTY_NULL_RETURN(propobj, "xbstate_ctx_t::set_tep_balance", token_name);
-    auto balance_str = propobj->query(token_name);
 
     std::error_code ec;
     std::string new_balance_str = top::from_bytes<std::string>(new_balance, ec);
