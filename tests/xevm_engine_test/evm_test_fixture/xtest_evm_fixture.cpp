@@ -99,7 +99,8 @@ bool xtest_evm_fixture::execute_test_case(std::string const & json_file_path) {
     std::map<account_id, std::string> pre_data = j.at("pre_data").get<std::map<account_id, std::string>>();
     if (!pre_data.empty()) {
         auto storage = std::make_shared<contract_runtime::evm::xevm_storage>(statestore);
-        std::unique_ptr<top::evm::xevm_logic_face_t> logic_ptr = top::make_unique<top::contract_runtime::evm::xevm_logic_t>(storage, nullptr);
+        std::unique_ptr<top::evm::xevm_logic_face_t> logic_ptr = top::make_unique<top::contract_runtime::evm::xevm_logic_t>(
+            storage, nullptr, top::make_observer<contract_runtime::evm::xevm_contract_manager_t>(contract_runtime::evm::xevm_contract_manager_t::instance()));
         top::evm::evm_import_instance::instance()->set_evm_logic(std::move(logic_ptr));
         for (auto _each : pre_data) {
             evm_common::u256 mock_value_256{_each.second};
@@ -141,7 +142,9 @@ bool xtest_evm_fixture::do_deploy_test(json const & each_deploy) {
     auto evm_action = top::make_unique<data::xconsensus_action_t<data::xtop_action_type_t::evm>>(
         common::xaccount_address_t{src_address}, common::xaccount_address_t{"T600040000000000000000000000000000000000000000"}, value_256, get_contract_bin(code_file));
 
-    top::evm::xtop_evm evm{nullptr, statestore};
+    auto contract_manager = top::make_observer<contract_runtime::evm::xevm_contract_manager_t>(contract_runtime::evm::xevm_contract_manager_t::instance());
+
+    top::evm::xtop_evm evm{contract_manager, statestore};
     auto action_result = evm.execute_action(std::move(evm_action), vm_param);
 
     account_id contract_address = action_result.extra_msg;
@@ -185,7 +188,9 @@ bool xtest_evm_fixture::do_call_test(json const & each_call) {
     auto evm_action = top::make_unique<data::xconsensus_action_t<data::xtop_action_type_t::evm>>(
         common::xaccount_address_t{src_address}, common::xaccount_address_t{evm_to_top_address(target_address)}, value_256, xvariant_bytes{input_data, true}.to_bytes());
 
-    top::evm::xtop_evm evm{nullptr, statestore};
+    auto contract_manager = top::make_observer<contract_runtime::evm::xevm_contract_manager_t>(contract_runtime::evm::xevm_contract_manager_t::instance());
+
+    top::evm::xtop_evm evm{contract_manager, statestore};
     auto action_result = evm.execute_action(std::move(evm_action), vm_param);
 
     auto expected = each_call["expected"];
