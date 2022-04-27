@@ -1,9 +1,9 @@
+#include "xbase/xutl.h"
 #include "xdata/xserial_transfrom.h"
 #include "xdata/xtransaction.h"
 
 using namespace std;
 using namespace top::evm_common;
-using namespace top::evm_common::rlp;
 
 namespace top {
 namespace data {

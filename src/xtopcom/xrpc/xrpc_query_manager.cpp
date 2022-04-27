@@ -1286,11 +1286,23 @@ void xrpc_query_manager::getChainId(xJson::Value & js_req, xJson::Value & js_rsp
 }
 
 void xrpc_query_manager::getStandbys(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) {
+    std::string target = js_req["node_account_addr"].asString();
     xJson::Value j;
     std::string addr = sys_contract_rec_standby_pool_addr;
     std::string prop_name = XPROPERTY_CONTRACT_STANDBYS_KEY;
     query_account_property(j, addr, prop_name, xfull_node_compatible_mode_t::incompatible);
-    js_rsp = j;
+    if (target == "") {
+        js_rsp = j;
+    } else {
+        for (auto j1 : j.getMemberNames()) {
+            auto j2 = j[j1];
+            for (auto j3 : j2) {
+                if (j3["node_id"].asString() == target) {
+                    js_rsp = j3;
+                }
+            }
+        }
+    }
 }
 
 void xrpc_query_manager::queryAllNodeInfo(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) {

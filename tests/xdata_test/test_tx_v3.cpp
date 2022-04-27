@@ -6,6 +6,7 @@
 #include "xdata/xtransaction_v1.h"
 #include "xdata/xtransaction_v2.h"
 #include "xdata/xtransaction_v3.h"
+#include "xevm_common/rlp.h"
 
 using namespace top;
 using namespace top::base;
@@ -100,6 +101,99 @@ TEST_F(test_tx_v3, exception) {
 
         xtransaction_v3_ptr_t tx_r = make_object_ptr<xtransaction_v3_t>();
         tx_r->do_read(stream);
+    }
+
+    {
+        //generate signed transaction
+        xobject_ptr_t<top::data::eip_1559_tx> tx = make_object_ptr<top::data::eip_1559_tx>();
+        tx->accesslist = "";
+        tx->chainid = rand() % 10000;
+        tx->data = "";
+        tx->gas = rand() % 100000;
+        tx->nonce = rand();
+        top::xbyte_buffer_t randstr = random_bytes(20);
+        tx->to.append((char*)randstr.data(), randstr.size());
+        tx->value = rand() * 1000000000;
+        tx->max_fee_per_gas = rand() % 100000;
+        tx->max_priority_fee_per_gas = rand() % 100000;
+
+        top::evm_common::rlp::bytes encodedtmp;
+        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->chainid));
+        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->nonce));
+        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->max_priority_fee_per_gas));
+        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->max_fee_per_gas));
+        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->gas));
+        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->to));
+        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->value));
+        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->data));
+        top::evm_common::rlp::append(encodedtmp, top::evm_common::fromHex("c0"));
+
+        top::evm_common::rlp::bytes encoded;
+        top::evm_common::rlp::append(encoded, static_cast<uint8_t>(2));
+        top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encodeList(encodedtmp));
+
+        std::string strEncoded;
+        strEncoded.append((char*)encoded.data(), encoded.size());
+        top::uint256_t hash = top::utl::xkeccak256_t::digest(strEncoded);
+
+        uint8_t prikey[32];
+
+        top::evm_common::rlp::bytes vprikey = top::evm_common::fromHex("3963ed01bce983f8829174b13d3417716ff604bfb0fed07634288df8b146f20f");
+
+        memcpy(prikey, vprikey.data(), vprikey.size());
+
+        top::utl::xecprikey_t key(prikey);
+        top::utl::xecdsasig_t sig = key.sign(hash);
+
+        char szOutput[65] = {0};
+        top::utl::xsecp256k1_t::get_publickey_from_signature(sig, hash, (uint8_t*)szOutput);
+
+        tx->signV = sig.get_recover_id();
+        top::evm_common::rlp::bytes r;
+        std::string strSignature;
+        strSignature.append((char*)sig.get_raw_signature(), 64);
+        std::string strR = strSignature.substr(0, 32); 
+        std::string strS = strSignature.substr(32);
+        r.insert(r.begin(), strR.begin(), strR.end());
+        tx->signR = top::evm_common::fromBigEndian<top::evm_common::u256>(r);
+        top::evm_common::rlp::bytes s;
+        s.insert(s.begin(), strS.begin(), strS.end());
+        tx->signS = top::evm_common::fromBigEndian<top::evm_common::u256>(s);
+
+
+        encodedtmp.clear();
+        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->chainid));
+        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->nonce));
+        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->max_priority_fee_per_gas));
+        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->max_fee_per_gas));
+        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->gas));
+        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->to));
+        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->value + 1));
+        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->data));
+        top::evm_common::rlp::append(encodedtmp, top::evm_common::fromHex("c0"));
+        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->signV));
+        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(strR));
+        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(strS));
+
+        encoded.clear();
+        top::evm_common::rlp::append(encoded, static_cast<uint8_t>(2));
+        top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encodeList(encodedtmp));
+
+        xtransaction_v3_ptr_t tx_r = make_object_ptr<xtransaction_v3_t>();
+        std::string strParams;
+        strParams.append("0x");
+        strParams.append(top::evm_common::toHex(std::string((char*)encoded.data(), encoded.size())));
+        xJson::Value jv;
+        jv["id"] = "12231";
+        jv["jsonrpc"] = "2.0";
+        jv["method"] = "eth_sendRawTransaction";
+        jv["params"][0] = strParams;
+        tx_r->construct_from_json(jv);
+
+        EXPECT_EQ(tx_r->sign_check(), true);
+
+        xpublic_key_t pub_key(std::string(szOutput, 65));
+        EXPECT_EQ(tx_r->pub_key_sign_check(pub_key), false);
     }
 }
 
