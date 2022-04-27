@@ -33,205 +33,205 @@ static const std::string user_address{"T00000LUuqEiWiVsKHTbCJTc2YqTeD6iZVsqmtks"
 static const std::string public_key{"BFqS6Al19LkycuHhrHMuI/E1G6+rZi4NJTQ1w1U55UnMjhBnb8/ey4pj+Mn69lyVB0+r6GR6M6eett9Tv/yoizI="};
 static const std::string sign_key{"NzjQLs3K3stpskP8j1VG5DKwZF2vvBJNLDaHAvxsFQA="};
 
-TEST_F(test_contract_vm, test_send_tx) {
-    const uint64_t last_nonce{10};
-    const uint256_t last_hash{12345678};
-    const uint64_t recv_num{1};
-    const uint64_t unconfirm_num{1};
-#ifndef XENABLE_MOCK_ZEC_STAKE
-    const uint64_t start_balance{10000000000 + 100000000};
-#else
-    const uint64_t start_balance{100000000};
-#endif
-
-    m_manager->deploy_system_contract<system_contracts::xcontract_a_t>(
-        common::xaccount_address_t{sys_contract_rec_standby_pool_addr}, common::xnode_type_t::rec, {}, {}, {}, {}, make_observer(m_blockstore));
-
-    // tx
-    xtransaction_ptr_t tx = make_object_ptr<xtransaction_v2_t>();
-    xstream_t param_stream(xcontext_t::instance());
-    param_stream << std::string{"test_send_tx_str"};
-    std::string param(reinterpret_cast<char *>(param_stream.data()), param_stream.size());
-    tx->make_tx_run_contract("test_set_string_property", param);
-    tx->set_source_action_name("send_only_api");
-    tx->set_different_source_target_address(user_address, sys_contract_rec_standby_pool_addr);
-    tx->set_fire_and_expire_time(600);
-    tx->set_deposit(XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit));
-    tx->set_last_trans_hash_and_nonce(last_hash, last_nonce);
-    tx->set_digest();
-    utl::xecprikey_t pri_key_obj((uint8_t *)(DecodePrivateString(sign_key).data()));
-    utl::xecdsasig_t signature_obj = pri_key_obj.sign(tx->digest());
-    auto signature = std::string(reinterpret_cast<char *>(signature_obj.get_compact_signature()), signature_obj.get_compact_signature_size());
-    tx->set_authorization(signature);
-    tx->set_len();
-    xcons_transaction_ptr_t cons_tx = make_object_ptr<xcons_transaction_t>(tx.get());
-    cons_tx->set_tx_subtype(enum_transaction_subtype_send);
-
-    const uint256_t tx_hash = cons_tx->get_tx_hash_256();
-
-    std::vector<xcons_transaction_ptr_t> input_txs;
-    input_txs.emplace_back(cons_tx);
-
-    xobject_ptr_t<xvbstate_t> bstate = make_object_ptr<xvbstate_t>(user_address, 1, 0, "", "", 0, 0, 0);
-    xobject_ptr_t<xvbstate_t> bstate_cmp = make_object_ptr<xvbstate_t>(user_address, 1, 0, "", "", 0, 0, 0);
-    {
-        xobject_ptr_t<xvcanvas_t> canvas = make_object_ptr<xvcanvas_t>();
-        if (bstate->find_property(XPROPERTY_TX_INFO) == false) {
-            bstate->new_string_map_var(XPROPERTY_TX_INFO, canvas.get());
-        }
-        if (bstate_cmp->find_property(XPROPERTY_TX_INFO) == false) {
-            bstate_cmp->new_string_map_var(XPROPERTY_TX_INFO, canvas.get());
-        }
-        if (bstate->find_property(XPROPERTY_BALANCE_AVAILABLE) == false) {
-            bstate->new_token_var(XPROPERTY_BALANCE_AVAILABLE, canvas.get());
-            bstate->load_token_var(XPROPERTY_BALANCE_AVAILABLE)->deposit(top::base::vtoken_t(start_balance), canvas.get());
-        }
-        if (bstate_cmp->find_property(XPROPERTY_BALANCE_AVAILABLE) == false) {
-            bstate_cmp->new_token_var(XPROPERTY_BALANCE_AVAILABLE, canvas.get());
-            bstate_cmp->load_token_var(XPROPERTY_BALANCE_AVAILABLE)->deposit(top::base::vtoken_t(start_balance), canvas.get());
-        }
-        if (bstate->find_property(XPROPERTY_BALANCE_BURN) == false) {
-            bstate->new_token_var(XPROPERTY_BALANCE_BURN, canvas.get());
-        }
-        if (bstate_cmp->find_property(XPROPERTY_BALANCE_BURN) == false) {
-            bstate_cmp->new_token_var(XPROPERTY_BALANCE_BURN, canvas.get());
-        }
-        if (bstate->find_property(XPROPERTY_BALANCE_LOCK) == false) {
-            bstate->new_token_var(XPROPERTY_BALANCE_LOCK, canvas.get());
-        }
-        if (bstate_cmp->find_property(XPROPERTY_BALANCE_LOCK) == false) {
-            bstate_cmp->new_token_var(XPROPERTY_BALANCE_LOCK, canvas.get());
-        }
-        auto map_property = bstate->load_string_map_var(XPROPERTY_TX_INFO);
-        auto map_property_cmp = bstate_cmp->load_string_map_var(XPROPERTY_TX_INFO);
-        {
-            auto value = top::to_bytes<std::string>(top::to_string(last_nonce));
-            map_property->insert(XPROPERTY_TX_INFO_LATEST_SENDTX_NUM, {std::begin(value), std::end(value)}, canvas.get());
-            map_property_cmp->insert(XPROPERTY_TX_INFO_LATEST_SENDTX_NUM, {std::begin(value), std::end(value)}, canvas.get());
-        }
-        {
-            auto value = top::to_bytes<uint256_t>(last_hash);
-            map_property->insert(XPROPERTY_TX_INFO_LATEST_SENDTX_HASH, {std::begin(value), std::end(value)}, canvas.get());
-            map_property_cmp->insert(XPROPERTY_TX_INFO_LATEST_SENDTX_HASH, {std::begin(value), std::end(value)}, canvas.get());
-        }
-        {
-            auto value = top::to_bytes<std::string>(top::to_string(recv_num));
-            map_property->insert(XPROPERTY_TX_INFO_RECVTX_NUM, {std::begin(value), std::end(value)}, canvas.get());
-            map_property_cmp->insert(XPROPERTY_TX_INFO_RECVTX_NUM, {std::begin(value), std::end(value)}, canvas.get());
-        }
-        {
-            auto value = top::to_bytes<std::string>(top::to_string(unconfirm_num));
-            map_property->insert(XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM, {std::begin(value), std::end(value)}, canvas.get());
-            map_property_cmp->insert(XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM, {std::begin(value), std::end(value)}, canvas.get());
-        }
-    }
-    xaccount_vm_t vm(make_observer(m_manager));
-    auto result = vm.execute(input_txs, make_observer(bstate.get()), cs_para);
-
-    EXPECT_EQ(result.status.ec.value(), 0);
-    EXPECT_EQ(result.success_tx_assemble.size(), 1);
-    EXPECT_EQ(result.success_tx_assemble[0]->get_transaction(), tx.get());
-    EXPECT_EQ(result.success_tx_assemble[0]->get_current_exec_status(), enum_xunit_tx_exec_status::enum_xunit_tx_exec_status_success);
-    EXPECT_EQ(result.failed_tx_assemble.size(), 0);
-    EXPECT_EQ(result.delay_tx_assemble.size(), 0);
-
-    auto const & state_out = bstate;
-    {
-        {
-            auto string = state_out->load_string_map_var(XPROPERTY_TX_INFO)->query(XPROPERTY_TX_INFO_LATEST_SENDTX_NUM);
-            auto value = top::from_string<uint64_t>(string);
-            EXPECT_EQ(value, last_nonce + 1);
-        }
-        {
-            auto string = state_out->load_string_map_var(XPROPERTY_TX_INFO)->query(XPROPERTY_TX_INFO_LATEST_SENDTX_HASH);
-            auto value = top::from_bytes<uint256_t>({std::begin(string), std::end(string)});
-            EXPECT_EQ(value, tx_hash);
-        }
-        {
-            auto string = state_out->load_string_map_var(XPROPERTY_TX_INFO)->query(XPROPERTY_TX_INFO_RECVTX_NUM);
-            auto value = top::from_string<uint64_t>(string);
-            EXPECT_EQ(value, recv_num);
-        }
-        {
-            auto string = state_out->load_string_map_var(XPROPERTY_TX_INFO)->query(XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM);
-            auto value = top::from_string<uint64_t>(string);
-            EXPECT_EQ(value, unconfirm_num + 1);
-        }
-        { EXPECT_EQ(false, state_out->find_property(data::system_contract::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY)); }
-#ifndef XENABLE_MOCK_ZEC_STAKE
-        {
-            auto value = state_out->load_token_var(XPROPERTY_BALANCE_BURN)->get_balance();
-            EXPECT_EQ(value, 100000000);
-        }
-#endif
-        {
-            auto string = state_out->load_string_var(XPROPERTY_USED_TGAS_KEY)->query();
-            EXPECT_EQ(string, std::to_string(3 * tx->get_tx_len()));
-        }
-        {
-            auto string = state_out->load_string_var(XPROPERTY_LAST_TX_HOUR_KEY)->query();
-            EXPECT_EQ(string, std::to_string(cs_para.m_clock));
-        }
-        {
-            auto value = state_out->load_uint64_var(XPROPERTY_LOCK_TGAS)->get();
-            EXPECT_EQ(value, 5000);
-        }
-        {
-            auto value = state_out->load_token_var(XPROPERTY_BALANCE_AVAILABLE)->get_balance();
-#ifndef XENABLE_MOCK_ZEC_STAKE
-            EXPECT_EQ(value, start_balance - XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit) - 100000000);
-#else
-            EXPECT_EQ(value, start_balance - XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit));
-#endif
-        }
-        {
-            auto value = state_out->load_token_var(XPROPERTY_BALANCE_LOCK)->get_balance();
-            EXPECT_EQ(value, 100000);
-        }
-        {
-            auto value = state_out->load_uint64_var(XPROPERTY_ACCOUNT_CREATE_TIME)->get();
-            EXPECT_EQ(value, cs_para.m_clock);
-        }
-    }
-    {
-        std::string bincode;
-        bstate_cmp->take_snapshot(bincode);
-        EXPECT_NE(result.bincode, bincode);
-    }
-    {
-        xobject_ptr_t<xvcanvas_t> canvas = make_object_ptr<xvcanvas_t>();
-        bstate_cmp->new_uint64_var(XPROPERTY_ACCOUNT_CREATE_TIME, canvas.get());
-        bstate_cmp->load_uint64_var(XPROPERTY_ACCOUNT_CREATE_TIME)->set(uint64_t{0}, canvas.get());
-        bstate_cmp->load_uint64_var(XPROPERTY_ACCOUNT_CREATE_TIME)->set(cs_para.m_clock, canvas.get());
-        auto map_property_cmp = bstate_cmp->load_string_map_var(XPROPERTY_TX_INFO);
-        map_property_cmp->insert(XPROPERTY_TX_INFO_LATEST_SENDTX_NUM, top::to_string(last_nonce + 1), canvas.get());
-        auto value = top::to_bytes<uint256_t>(tx_hash);
-        map_property_cmp->insert(XPROPERTY_TX_INFO_LATEST_SENDTX_HASH, {std::begin(value), std::end(value)}, canvas.get());
-        map_property_cmp->insert(XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM, top::to_string(unconfirm_num + 1), canvas.get());
-#ifndef XENABLE_MOCK_ZEC_STAKE
-        bstate_cmp->load_token_var(XPROPERTY_BALANCE_AVAILABLE)->withdraw(static_cast<base::vtoken_t>(100000000), canvas.get());
-        bstate_cmp->load_token_var(XPROPERTY_BALANCE_BURN)->deposit(static_cast<base::vtoken_t>(100000000), canvas.get());
-#endif
-        bstate_cmp->new_string_var(XPROPERTY_LAST_TX_HOUR_KEY, canvas.get());
-        bstate_cmp->load_string_var(XPROPERTY_LAST_TX_HOUR_KEY)->reset(std::string{}, canvas.get());
-        bstate_cmp->new_string_var(XPROPERTY_USED_TGAS_KEY, canvas.get());
-        bstate_cmp->load_string_var(XPROPERTY_USED_TGAS_KEY)->reset(std::string{}, canvas.get());
-        bstate_cmp->load_string_var(XPROPERTY_USED_TGAS_KEY)->reset(std::to_string(3 * tx->get_tx_len()), canvas.get());
-        bstate_cmp->load_string_var(XPROPERTY_LAST_TX_HOUR_KEY)->reset(std::to_string(cs_para.m_clock), canvas.get());
-        bstate_cmp->new_uint64_var(XPROPERTY_LOCK_TGAS, canvas.get());
-        bstate_cmp->load_uint64_var(XPROPERTY_LOCK_TGAS)->set(uint64_t{0}, canvas.get());
-        bstate_cmp->load_uint64_var(XPROPERTY_LOCK_TGAS)->set(uint64_t{5000}, canvas.get());
-        bstate_cmp->load_token_var(XPROPERTY_BALANCE_AVAILABLE)->withdraw(static_cast<base::vtoken_t>(100000), canvas.get());
-        bstate_cmp->load_token_var(XPROPERTY_BALANCE_LOCK)->deposit(static_cast<base::vtoken_t>(100000), canvas.get());
-
-        //std::string bincode;
-        //bstate_cmp->take_snapshot(bincode);
-        //std::string binlog;
-        //canvas->encode(binlog);
-        //EXPECT_EQ(result.bincode, bincode);
-        //EXPECT_EQ(result.binlog, binlog);
-    }
-}
+//TEST_F(test_contract_vm, test_send_tx) {
+//    const uint64_t last_nonce{10};
+//    const uint256_t last_hash{12345678};
+//    const uint64_t recv_num{1};
+//    const uint64_t unconfirm_num{1};
+//#ifndef XENABLE_MOCK_ZEC_STAKE
+//    const uint64_t start_balance{10000000000 + 100000000};
+//#else
+//    const uint64_t start_balance{100000000};
+//#endif
+//
+//    m_manager->deploy_system_contract<system_contracts::xcontract_a_t>(
+//        common::xaccount_address_t{sys_contract_rec_standby_pool_addr}, common::xnode_type_t::rec, {}, {}, {}, {}, make_observer(m_blockstore));
+//
+//    // tx
+//    xtransaction_ptr_t tx = make_object_ptr<xtransaction_v2_t>();
+//    xstream_t param_stream(xcontext_t::instance());
+//    param_stream << std::string{"test_send_tx_str"};
+//    std::string param(reinterpret_cast<char *>(param_stream.data()), param_stream.size());
+//    tx->make_tx_run_contract("test_set_string_property", param);
+//    tx->set_source_action_name("send_only_api");
+//    tx->set_different_source_target_address(user_address, sys_contract_rec_standby_pool_addr);
+//    tx->set_fire_and_expire_time(600);
+//    tx->set_deposit(XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit));
+//    tx->set_last_trans_hash_and_nonce(last_hash, last_nonce);
+//    tx->set_digest();
+//    utl::xecprikey_t pri_key_obj((uint8_t *)(DecodePrivateString(sign_key).data()));
+//    utl::xecdsasig_t signature_obj = pri_key_obj.sign(tx->digest());
+//    auto signature = std::string(reinterpret_cast<char *>(signature_obj.get_compact_signature()), signature_obj.get_compact_signature_size());
+//    tx->set_authorization(signature);
+//    tx->set_len();
+//    xcons_transaction_ptr_t cons_tx = make_object_ptr<xcons_transaction_t>(tx.get());
+//    cons_tx->set_tx_subtype(enum_transaction_subtype_send);
+//
+//    const uint256_t tx_hash = cons_tx->get_tx_hash_256();
+//
+//    std::vector<xcons_transaction_ptr_t> input_txs;
+//    input_txs.emplace_back(cons_tx);
+//
+//    xobject_ptr_t<xvbstate_t> bstate = make_object_ptr<xvbstate_t>(user_address, 1, 0, "", "", 0, 0, 0);
+//    xobject_ptr_t<xvbstate_t> bstate_cmp = make_object_ptr<xvbstate_t>(user_address, 1, 0, "", "", 0, 0, 0);
+//    {
+//        xobject_ptr_t<xvcanvas_t> canvas = make_object_ptr<xvcanvas_t>();
+//        if (bstate->find_property(XPROPERTY_TX_INFO) == false) {
+//            bstate->new_string_map_var(XPROPERTY_TX_INFO, canvas.get());
+//        }
+//        if (bstate_cmp->find_property(XPROPERTY_TX_INFO) == false) {
+//            bstate_cmp->new_string_map_var(XPROPERTY_TX_INFO, canvas.get());
+//        }
+//        if (bstate->find_property(XPROPERTY_BALANCE_AVAILABLE) == false) {
+//            bstate->new_token_var(XPROPERTY_BALANCE_AVAILABLE, canvas.get());
+//            bstate->load_token_var(XPROPERTY_BALANCE_AVAILABLE)->deposit(top::base::vtoken_t(start_balance), canvas.get());
+//        }
+//        if (bstate_cmp->find_property(XPROPERTY_BALANCE_AVAILABLE) == false) {
+//            bstate_cmp->new_token_var(XPROPERTY_BALANCE_AVAILABLE, canvas.get());
+//            bstate_cmp->load_token_var(XPROPERTY_BALANCE_AVAILABLE)->deposit(top::base::vtoken_t(start_balance), canvas.get());
+//        }
+//        if (bstate->find_property(XPROPERTY_BALANCE_BURN) == false) {
+//            bstate->new_token_var(XPROPERTY_BALANCE_BURN, canvas.get());
+//        }
+//        if (bstate_cmp->find_property(XPROPERTY_BALANCE_BURN) == false) {
+//            bstate_cmp->new_token_var(XPROPERTY_BALANCE_BURN, canvas.get());
+//        }
+//        if (bstate->find_property(XPROPERTY_BALANCE_LOCK) == false) {
+//            bstate->new_token_var(XPROPERTY_BALANCE_LOCK, canvas.get());
+//        }
+//        if (bstate_cmp->find_property(XPROPERTY_BALANCE_LOCK) == false) {
+//            bstate_cmp->new_token_var(XPROPERTY_BALANCE_LOCK, canvas.get());
+//        }
+//        auto map_property = bstate->load_string_map_var(XPROPERTY_TX_INFO);
+//        auto map_property_cmp = bstate_cmp->load_string_map_var(XPROPERTY_TX_INFO);
+//        {
+//            auto value = top::to_bytes<std::string>(top::to_string(last_nonce));
+//            map_property->insert(XPROPERTY_TX_INFO_LATEST_SENDTX_NUM, {std::begin(value), std::end(value)}, canvas.get());
+//            map_property_cmp->insert(XPROPERTY_TX_INFO_LATEST_SENDTX_NUM, {std::begin(value), std::end(value)}, canvas.get());
+//        }
+//        {
+//            auto value = top::to_bytes<uint256_t>(last_hash);
+//            map_property->insert(XPROPERTY_TX_INFO_LATEST_SENDTX_HASH, {std::begin(value), std::end(value)}, canvas.get());
+//            map_property_cmp->insert(XPROPERTY_TX_INFO_LATEST_SENDTX_HASH, {std::begin(value), std::end(value)}, canvas.get());
+//        }
+//        {
+//            auto value = top::to_bytes<std::string>(top::to_string(recv_num));
+//            map_property->insert(XPROPERTY_TX_INFO_RECVTX_NUM, {std::begin(value), std::end(value)}, canvas.get());
+//            map_property_cmp->insert(XPROPERTY_TX_INFO_RECVTX_NUM, {std::begin(value), std::end(value)}, canvas.get());
+//        }
+//        {
+//            auto value = top::to_bytes<std::string>(top::to_string(unconfirm_num));
+//            map_property->insert(XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM, {std::begin(value), std::end(value)}, canvas.get());
+//            map_property_cmp->insert(XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM, {std::begin(value), std::end(value)}, canvas.get());
+//        }
+//    }
+//    xaccount_vm_t vm(make_observer(m_manager));
+//    auto result = vm.execute(input_txs, make_observer(bstate.get()), cs_para);
+//
+//    EXPECT_EQ(result.status.ec.value(), 0);
+//    EXPECT_EQ(result.success_tx_assemble.size(), 1);
+//    EXPECT_EQ(result.success_tx_assemble[0]->get_transaction(), tx.get());
+//    EXPECT_EQ(result.success_tx_assemble[0]->get_current_exec_status(), enum_xunit_tx_exec_status::enum_xunit_tx_exec_status_success);
+//    EXPECT_EQ(result.failed_tx_assemble.size(), 0);
+//    EXPECT_EQ(result.delay_tx_assemble.size(), 0);
+//
+//    auto const & state_out = bstate;
+//    {
+//        {
+//            auto string = state_out->load_string_map_var(XPROPERTY_TX_INFO)->query(XPROPERTY_TX_INFO_LATEST_SENDTX_NUM);
+//            auto value = top::from_string<uint64_t>(string);
+//            EXPECT_EQ(value, last_nonce + 1);
+//        }
+//        {
+//            auto string = state_out->load_string_map_var(XPROPERTY_TX_INFO)->query(XPROPERTY_TX_INFO_LATEST_SENDTX_HASH);
+//            auto value = top::from_bytes<uint256_t>({std::begin(string), std::end(string)});
+//            EXPECT_EQ(value, tx_hash);
+//        }
+//        {
+//            auto string = state_out->load_string_map_var(XPROPERTY_TX_INFO)->query(XPROPERTY_TX_INFO_RECVTX_NUM);
+//            auto value = top::from_string<uint64_t>(string);
+//            EXPECT_EQ(value, recv_num);
+//        }
+//        {
+//            auto string = state_out->load_string_map_var(XPROPERTY_TX_INFO)->query(XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM);
+//            auto value = top::from_string<uint64_t>(string);
+//            EXPECT_EQ(value, unconfirm_num + 1);
+//        }
+//        { EXPECT_EQ(false, state_out->find_property(data::system_contract::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY)); }
+//#ifndef XENABLE_MOCK_ZEC_STAKE
+//        {
+//            auto value = state_out->load_token_var(XPROPERTY_BALANCE_BURN)->get_balance();
+//            EXPECT_EQ(value, 100000000);
+//        }
+//#endif
+//        {
+//            auto string = state_out->load_string_var(XPROPERTY_USED_TGAS_KEY)->query();
+//            EXPECT_EQ(string, std::to_string(3 * tx->get_tx_len()));
+//        }
+//        {
+//            auto string = state_out->load_string_var(XPROPERTY_LAST_TX_HOUR_KEY)->query();
+//            EXPECT_EQ(string, std::to_string(cs_para.m_clock));
+//        }
+//        {
+//            auto value = state_out->load_uint64_var(XPROPERTY_LOCK_TGAS)->get();
+//            EXPECT_EQ(value, 5000);
+//        }
+//        {
+//            auto value = state_out->load_token_var(XPROPERTY_BALANCE_AVAILABLE)->get_balance();
+//#ifndef XENABLE_MOCK_ZEC_STAKE
+//            EXPECT_EQ(value, start_balance - XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit) - 100000000);
+//#else
+//            EXPECT_EQ(value, start_balance - XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit));
+//#endif
+//        }
+//        {
+//            auto value = state_out->load_token_var(XPROPERTY_BALANCE_LOCK)->get_balance();
+//            EXPECT_EQ(value, 100000);
+//        }
+//        {
+//            auto value = state_out->load_uint64_var(XPROPERTY_ACCOUNT_CREATE_TIME)->get();
+//            EXPECT_EQ(value, cs_para.m_clock);
+//        }
+//    }
+//    {
+//        std::string bincode;
+//        bstate_cmp->take_snapshot(bincode);
+//        EXPECT_NE(result.bincode, bincode);
+//    }
+//    {
+//        xobject_ptr_t<xvcanvas_t> canvas = make_object_ptr<xvcanvas_t>();
+//        bstate_cmp->new_uint64_var(XPROPERTY_ACCOUNT_CREATE_TIME, canvas.get());
+//        bstate_cmp->load_uint64_var(XPROPERTY_ACCOUNT_CREATE_TIME)->set(uint64_t{0}, canvas.get());
+//        bstate_cmp->load_uint64_var(XPROPERTY_ACCOUNT_CREATE_TIME)->set(cs_para.m_clock, canvas.get());
+//        auto map_property_cmp = bstate_cmp->load_string_map_var(XPROPERTY_TX_INFO);
+//        map_property_cmp->insert(XPROPERTY_TX_INFO_LATEST_SENDTX_NUM, top::to_string(last_nonce + 1), canvas.get());
+//        auto value = top::to_bytes<uint256_t>(tx_hash);
+//        map_property_cmp->insert(XPROPERTY_TX_INFO_LATEST_SENDTX_HASH, {std::begin(value), std::end(value)}, canvas.get());
+//        map_property_cmp->insert(XPROPERTY_TX_INFO_UNCONFIRM_TX_NUM, top::to_string(unconfirm_num + 1), canvas.get());
+//#ifndef XENABLE_MOCK_ZEC_STAKE
+//        bstate_cmp->load_token_var(XPROPERTY_BALANCE_AVAILABLE)->withdraw(static_cast<base::vtoken_t>(100000000), canvas.get());
+//        bstate_cmp->load_token_var(XPROPERTY_BALANCE_BURN)->deposit(static_cast<base::vtoken_t>(100000000), canvas.get());
+//#endif
+//        bstate_cmp->new_string_var(XPROPERTY_LAST_TX_HOUR_KEY, canvas.get());
+//        bstate_cmp->load_string_var(XPROPERTY_LAST_TX_HOUR_KEY)->reset(std::string{}, canvas.get());
+//        bstate_cmp->new_string_var(XPROPERTY_USED_TGAS_KEY, canvas.get());
+//        bstate_cmp->load_string_var(XPROPERTY_USED_TGAS_KEY)->reset(std::string{}, canvas.get());
+//        bstate_cmp->load_string_var(XPROPERTY_USED_TGAS_KEY)->reset(std::to_string(3 * tx->get_tx_len()), canvas.get());
+//        bstate_cmp->load_string_var(XPROPERTY_LAST_TX_HOUR_KEY)->reset(std::to_string(cs_para.m_clock), canvas.get());
+//        bstate_cmp->new_uint64_var(XPROPERTY_LOCK_TGAS, canvas.get());
+//        bstate_cmp->load_uint64_var(XPROPERTY_LOCK_TGAS)->set(uint64_t{0}, canvas.get());
+//        bstate_cmp->load_uint64_var(XPROPERTY_LOCK_TGAS)->set(uint64_t{5000}, canvas.get());
+//        bstate_cmp->load_token_var(XPROPERTY_BALANCE_AVAILABLE)->withdraw(static_cast<base::vtoken_t>(100000), canvas.get());
+//        bstate_cmp->load_token_var(XPROPERTY_BALANCE_LOCK)->deposit(static_cast<base::vtoken_t>(100000), canvas.get());
+//
+//        //std::string bincode;
+//        //bstate_cmp->take_snapshot(bincode);
+//        //std::string binlog;
+//        //canvas->encode(binlog);
+//        //EXPECT_EQ(result.bincode, bincode);
+//        //EXPECT_EQ(result.binlog, binlog);
+//    }
+//}
 
 TEST_F(test_contract_vm, test_send_tx_balance_not_enough) {
     const uint64_t last_nonce{10};

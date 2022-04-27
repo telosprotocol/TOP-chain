@@ -12,4 +12,10 @@ NS_BEG1(top)
 
 using xbyte_t = std::uint8_t;
 
+template <typename T>
+xbyte_t to_byte(T const & input);
+
+template <typename T>
+T from_byte(xbyte_t byte);
+
 NS_END1
