@@ -21,7 +21,7 @@ xbytes_t evm_import_instance::get_return_value() {
     return m_vm_logic->get_return_value();
 }
 
-std::pair<uint32_t, uint64_t> evm_import_instance::get_return_error(){
+std::pair<uint32_t, uint64_t> evm_import_instance::get_return_error() {
     return m_vm_logic->get_return_error();
 }
 
@@ -83,6 +83,17 @@ uint64_t evm_import_instance::storage_read(uint64_t key_len, uint64_t key_ptr, u
 }
 uint64_t evm_import_instance::storage_remove(uint64_t key_len, uint64_t key_ptr, uint64_t register_id) {
     return m_vm_logic->storage_remove(key_len, key_ptr, register_id);
+}
+
+// extern contract:
+bool evm_import_instance::extern_contract_call(uint64_t args_len, uint64_t args_ptr) {
+    return m_vm_logic->extern_contract_call(args_len, args_ptr);
+}
+uint64_t evm_import_instance::get_result(uint64_t register_id) {
+    return m_vm_logic->get_result(register_id);
+}
+uint64_t evm_import_instance::get_error(uint64_t register_id) {
+    return m_vm_logic->get_error(register_id);
 }
 
 /// =======================================
@@ -150,6 +161,17 @@ uint64_t evm_storage_read(uint64_t key_len, uint64_t key_ptr, uint64_t register_
 }
 uint64_t evm_storage_remove(uint64_t key_len, uint64_t key_ptr, uint64_t register_id) {
     return evm_import_instance::instance()->storage_remove(key_len, key_ptr, register_id);
+}
+
+// # Extern Contract API #
+bool evm_extern_contract_call(uint64_t args_len, uint64_t args_ptr) {
+    return evm_import_instance::instance()->extern_contract_call(args_len, args_ptr);
+}
+uint64_t evm_get_result(uint64_t register_id) {
+    return evm_import_instance::instance()->get_result(register_id);
+}
+uint64_t evm_get_error(uint64_t register_id) {
+    return evm_import_instance::instance()->get_error(register_id);
 }
 }
 

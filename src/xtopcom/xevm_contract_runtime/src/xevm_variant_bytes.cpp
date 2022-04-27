@@ -16,6 +16,14 @@ std::string evm_to_top_address(std::string const & input) {
     return T6_ACCOUNT_PREFIX + input;
 }
 
+std::string top_to_evm_address(std::string const & input) {
+    assert(input.substr(0, 6) == T6_ACCOUNT_PREFIX);
+    if (input.substr(0, 6) == T6_ACCOUNT_PREFIX) {
+        return ETH_ACCOUNT_PREFIX + input.substr(6);
+    }
+    return input;
+}
+
 xvariant_bytes::xvariant_bytes() {
 }
 

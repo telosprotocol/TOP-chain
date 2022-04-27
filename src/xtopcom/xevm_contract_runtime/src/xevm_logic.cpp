@@ -11,8 +11,10 @@
 
 NS_BEG3(top, contract_runtime, evm)
 
-xtop_evm_logic::xtop_evm_logic(std::shared_ptr<xevm_storage_face_t> storage_ptr, observer_ptr<evm_runtime::xevm_context_t> const & context)
-  : m_storage_ptr{storage_ptr}, m_context{context} {
+xtop_evm_logic::xtop_evm_logic(std::shared_ptr<xevm_storage_face_t> storage_ptr,
+                               observer_ptr<evm_runtime::xevm_context_t> const & context,
+                               observer_ptr<xevm_contract_manager_t> const & contract_manager)
+  : m_storage_ptr{storage_ptr}, m_context{context}, m_contract_manager{contract_manager} {
     m_registers.clear();
     m_return_data_value.clear();
 }
@@ -164,6 +166,38 @@ void xtop_evm_logic::log_utf8(uint64_t len, uint64_t ptr) {
     // todo add xinfo_log.
     // printf("[log_utf8] EVM_LOG: %s \n", message.c_str());
     xdbg("[log_utf8] EVM_LOG: %s", message.c_str());
+}
+
+// extern contract:
+bool xtop_evm_logic::extern_contract_call(uint64_t args_len, uint64_t args_ptr) {
+    m_result_ok.clear();
+    m_result_err.clear();
+    m_call_contract_args = get_vec_from_memory_or_register(args_ptr, args_len);
+    xbytes_t contract_output;
+    assert(m_contract_manager != nullptr);
+    if (m_contract_manager->execute_sys_contract(m_call_contract_args, contract_output)) {
+        m_result_ok = contract_output;
+        return true;
+    } else {
+        m_result_err = contract_output;
+        return false;
+    }
+}
+uint64_t xtop_evm_logic::get_result(uint64_t register_id) {
+    if (!m_result_ok.empty()) {
+        internal_write_register(register_id, m_result_ok);
+        return 1;
+    } else {
+        return 0;
+    }
+}
+uint64_t xtop_evm_logic::get_error(uint64_t register_id) {
+    if (!m_result_err.empty()) {
+        internal_write_register(register_id, m_result_err);
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
 //  =========================== inner  api ===============================
