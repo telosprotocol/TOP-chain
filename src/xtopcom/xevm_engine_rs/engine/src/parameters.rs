@@ -1,24 +1,7 @@
-use engine_types::types::basic::*;
-use engine_types::types::proto_basic::{ProtoAddress, RawU256};
-use evm::backend::Log;
+use engine_types::basic::*;
+use engine_types::proto_basic::{ProtoAddress, RawU256, ResultLog};
 
 use crate::proto_parameters::*;
-
-impl From<Log> for ResultLog {
-    fn from(log: Log) -> Self {
-        let mut address = ProtoAddress::new();
-        address.set_value(log.address.to_fixed_bytes().into_iter().collect::<Vec<_>>());
-
-        let topics: Vec<RawU256> = log.topics.into_iter().map(|topic| topic.0.into()).collect();
-
-        let mut res = ResultLog::new();
-        res.set_address(address);
-        res.set_topics(topics.into());
-        res.set_data(log.data);
-
-        res
-    }
-}
 
 /// The status of a transaction.
 /// same as TransactionStatus in `xevm_common/xevm_transaction_result.h`

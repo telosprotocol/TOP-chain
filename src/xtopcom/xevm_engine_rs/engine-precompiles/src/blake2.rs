@@ -1,6 +1,7 @@
-use crate::{EvmPrecompileResult, Precompile, PrecompileOutput};
-use engine_sdk as sdk;
-use engine_types::{mem, Borrowed, types::Address, types::EthGas};
+use crate::Precompile;
+use engine_types::{mem, types::Address, types::EthGas, Borrowed};
+use engine_types::{PrecompileResult, RustPrecompileOutput};
+use evm::executor::stack::PrecompileFailure;
 use evm::{Context, ExitError};
 
 /// Blake2 costs.
@@ -23,7 +24,7 @@ impl Blake2F {
 }
 
 impl Precompile for Blake2F {
-    fn required_gas(input: &[u8]) -> Result<EthGas, ExitError> {
+    fn required_gas(input: &[u8]) -> Result<EthGas, PrecompileFailure> {
         let (int_bytes, _) = input.split_at(mem::size_of::<u32>());
         let num_rounds = u32::from_be_bytes(
             // Unwrap is fine here as it can not fail
@@ -48,15 +49,19 @@ impl Precompile for Blake2F {
         target_gas: Option<EthGas>,
         _context: &Context,
         _is_static: bool,
-    ) -> EvmPrecompileResult {
+    ) -> PrecompileResult {
         if input.len() != consts::INPUT_LENGTH {
-            return Err(ExitError::Other(Borrowed("ERR_BLAKE2F_INVALID_LEN")));
+            return Err(PrecompileFailure::Error {
+                exit_status: ExitError::Other(Borrowed("ERR_BLAKE2F_INVALID_LEN")),
+            });
         }
 
         let cost = Self::required_gas(input)?;
         if let Some(target_gas) = target_gas {
             if cost > target_gas {
-                return Err(ExitError::OutOfGas);
+                return Err(PrecompileFailure::Error {
+                    exit_status: ExitError::OutOfGas,
+                });
             }
         }
 
@@ -89,20 +94,22 @@ impl Precompile for Blake2F {
         }
 
         if input[212] != 0 && input[212] != 1 {
-            return Err(ExitError::Other(Borrowed("ERR_BLAKE2F_FINAL_FLAG")));
+            return Err(PrecompileFailure::Error {
+                exit_status: ExitError::Other(Borrowed("ERR_BLAKE2F_FINAL_FLAG")),
+            });
         }
         let finished = input[212] != 0;
 
         let output = top_blake2::Blake2bVarCore::f(rounds, h, m, t, finished).to_vec();
 
-        Ok(PrecompileOutput::without_logs(cost, output).into())
+        Ok(RustPrecompileOutput::without_logs(cost, output).into())
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     pub fn new_context() -> Context {
         Context {
             address: Default::default(),
@@ -129,17 +136,17 @@ mod tests {
             0000000000000000\
             01";
 
-    fn test_blake2f_out_of_gas() -> EvmPrecompileResult {
+    fn test_blake2f_out_of_gas() -> PrecompileResult {
         let input = hex::decode(INPUT).unwrap();
         Blake2F.run(&input, Some(EthGas::new(11)), &new_context(), false)
     }
 
-    fn test_blake2f_empty() -> EvmPrecompileResult {
+    fn test_blake2f_empty() -> PrecompileResult {
         let input = [0u8; 0];
         Blake2F.run(&input, Some(EthGas::new(0)), &new_context(), false)
     }
 
-    fn test_blake2f_invalid_len_1() -> EvmPrecompileResult {
+    fn test_blake2f_invalid_len_1() -> PrecompileResult {
         let input = hex::decode(
             "\
             00000c\
@@ -157,7 +164,7 @@ mod tests {
         Blake2F.run(&input, Some(EthGas::new(12)), &new_context(), false)
     }
 
-    fn test_blake2f_invalid_len_2() -> EvmPrecompileResult {
+    fn test_blake2f_invalid_len_2() -> PrecompileResult {
         let input = hex::decode(
             "\
             000000000c\
@@ -175,7 +182,7 @@ mod tests {
         Blake2F.run(&input, Some(EthGas::new(12)), &new_context(), false)
     }
 
-    fn test_blake2f_invalid_flag() -> EvmPrecompileResult {
+    fn test_blake2f_invalid_flag() -> PrecompileResult {
         let input = hex::decode(
             "\
             0000000c\
@@ -247,27 +254,37 @@ mod tests {
     fn test_blake2f() {
         assert!(matches!(
             test_blake2f_out_of_gas(),
-            Err(ExitError::OutOfGas)
+            Err(PrecompileFailure::Error {
+                exit_status: ExitError::OutOfGas
+            })
         ));
 
         assert!(matches!(
             test_blake2f_empty(),
-            Err(ExitError::Other(Borrowed("ERR_BLAKE2F_INVALID_LEN")))
+            Err(PrecompileFailure::Error {
+                exit_status: ExitError::Other(Borrowed("ERR_BLAKE2F_INVALID_LEN"))
+            })
         ));
 
         assert!(matches!(
             test_blake2f_invalid_len_1(),
-            Err(ExitError::Other(Borrowed("ERR_BLAKE2F_INVALID_LEN")))
+            Err(PrecompileFailure::Error {
+                exit_status: ExitError::Other(Borrowed("ERR_BLAKE2F_INVALID_LEN"))
+            })
         ));
 
         assert!(matches!(
             test_blake2f_invalid_len_2(),
-            Err(ExitError::Other(Borrowed("ERR_BLAKE2F_INVALID_LEN")))
+            Err(PrecompileFailure::Error {
+                exit_status: ExitError::Other(Borrowed("ERR_BLAKE2F_INVALID_LEN"))
+            })
         ));
 
         assert!(matches!(
             test_blake2f_invalid_flag(),
-            Err(ExitError::Other(Borrowed("ERR_BLAKE2F_FINAL_FLAG",)))
+            Err(PrecompileFailure::Error {
+                exit_status: ExitError::Other(Borrowed("ERR_BLAKE2F_FINAL_FLAG",))
+            })
         ));
 
         let expected = hex::decode(

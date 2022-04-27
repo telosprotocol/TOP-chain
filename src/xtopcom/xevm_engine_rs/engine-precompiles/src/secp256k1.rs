@@ -1,6 +1,7 @@
-use crate::{EvmPrecompileResult, Precompile, PrecompileOutput};
-use engine_sdk as sdk;
-use engine_types::{types::Address, types::EthGas, vec, Borrowed, H256};
+use crate::{Precompile, PrecompileFailure};
+use engine_types::{
+    types::Address, types::EthGas, vec, Borrowed, PrecompileResult, RustPrecompileOutput, H256,
+};
 use evm::{Context, ExitError};
 
 mod costs {
@@ -14,17 +15,17 @@ mod consts {
     pub(super) const SIGN_LEN: usize = 65;
 }
 
-pub fn ecrecover(hash: H256, signature: &[u8]) -> Result<Address, ExitError> {
+pub fn ecrecover(hash: H256, signature: &[u8]) -> Result<Address, PrecompileFailure> {
     assert_eq!(signature.len(), consts::SIGN_LEN);
 
     #[cfg(feature = "top_crypto")]
     return sdk::ecrecover(hash, signature).map_err(|e| ExitError::Other(Borrowed(e.as_str())));
-    
+
     #[cfg(not(feature = "top_crypto"))]
     internal_impl(hash, signature)
 }
 
-fn internal_impl(hash: H256, signature: &[u8]) -> Result<Address, ExitError> {
+fn internal_impl(hash: H256, signature: &[u8]) -> Result<Address, PrecompileFailure> {
     use sha3::Digest;
 
     let hash = secp256k1::Message::parse_slice(hash.as_bytes()).unwrap();
@@ -39,12 +40,15 @@ fn internal_impl(hash: H256, signature: &[u8]) -> Result<Address, ExitError> {
         if let Ok(public_key) = secp256k1::recover(&hash, &signature, &recovery_id) {
             // recover returns a 65-byte key, but addresses come from the raw 64-byte key
             let r = sha3::Keccak256::digest(&public_key.serialize()[1..]);
-            return Address::try_from_slice(&r[12..])
-                .map_err(|_| ExitError::Other(Borrowed("ERR_INCORRECT_ADDRESS")));
+            return Address::try_from_slice(&r[12..]).map_err(|_| PrecompileFailure::Error {
+                exit_status: ExitError::Other(Borrowed("ERR_INCORRECT_ADDRESS")),
+            });
         }
     }
 
-    Err(ExitError::Other(Borrowed(sdk::ECRecoverErr.as_str())))
+    Err(PrecompileFailure::Error {
+        exit_status: ExitError::Other(Borrowed("ERR_ECRECOVER")),
+    })
 }
 
 pub(super) struct ECRecover;
@@ -54,7 +58,7 @@ impl ECRecover {
 }
 
 impl Precompile for ECRecover {
-    fn required_gas(_input: &[u8]) -> Result<EthGas, ExitError> {
+    fn required_gas(_input: &[u8]) -> Result<EthGas, PrecompileFailure> {
         Ok(costs::ECRECOVER_BASE)
     }
 
@@ -64,11 +68,13 @@ impl Precompile for ECRecover {
         target_gas: Option<EthGas>,
         _context: &Context,
         _is_static: bool,
-    ) -> EvmPrecompileResult {
+    ) -> PrecompileResult {
         let cost = Self::required_gas(input)?;
         if let Some(target_gas) = target_gas {
             if cost > target_gas {
-                return Err(ExitError::OutOfGas);
+                return Err(PrecompileFailure::Error {
+                    exit_status: ExitError::OutOfGas,
+                });
             }
         }
 
@@ -88,7 +94,7 @@ impl Precompile for ECRecover {
         let v_bit = match v[31] {
             27 | 28 if v[..31] == [0; 31] => v[31] - 27,
             _ => {
-                return Ok(PrecompileOutput::without_logs(cost, vec![255u8; 32]).into());
+                return Ok(RustPrecompileOutput::without_logs(cost, vec![255u8; 32]).into());
             }
         };
         signature[64] = v_bit; // v
@@ -105,6 +111,6 @@ impl Precompile for ECRecover {
             }
         };
 
-        Ok(PrecompileOutput::without_logs(cost, output).into())
+        Ok(RustPrecompileOutput::without_logs(cost, output).into())
     }
 }
