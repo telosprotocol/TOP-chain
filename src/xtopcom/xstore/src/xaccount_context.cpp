@@ -142,7 +142,7 @@ int32_t xaccount_context_t::token_transfer_out(const data::xproperty_asset& asse
     if (asset.is_top_token()) {
         return top_token_transfer_out(asset.amount(), gas_fee, service_fee);
     } else {
-        return m_account->tep_token_withdraw(asset.token_name(), amount256);
+        return m_account->tep_token_withdraw(asset.token_symbol(), amount256);
     }
 
     int32_t ret = xsuccess;
@@ -175,7 +175,7 @@ int32_t xaccount_context_t::token_transfer_in(const data::xproperty_asset& asset
     if (asset.is_top_token()) {
         return top_token_transfer_in(asset.amount());
     } else {
-        return m_account->tep_token_deposit(asset.token_name(), amount256);
+        return m_account->tep_token_deposit(asset.token_symbol(), amount256);
     }
 }
 

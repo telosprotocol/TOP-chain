@@ -18,6 +18,9 @@ enum class xenum_codec_errc
     decode_input_buffer_too_long    = 0x00010003,
     decode_wrong_checksum           = 0x00010004,
     decode_wrong_header             = 0x00010005,
+    decode_missing_codec_type       = 0x00010006,
+    decode_wrong_codec_type         = 0x00010007,
+    decode_input_empty              = 0x00010008,
     encode_error                    = 0x00020000,
     encode_input_buffer_too_long    = 0x00020001,
 };

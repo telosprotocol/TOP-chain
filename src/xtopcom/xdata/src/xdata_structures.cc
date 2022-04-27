@@ -897,4 +897,63 @@ xissue_detail_v2::operator xissue_detail_v1() const {
     return v1;
 }
 
+xtop_allowance::xtop_allowance(data_type d) noexcept(std::is_nothrow_move_constructible<data_type>::value) : data_{std::move(d)} {
+}
+
+xtop_allowance::iterator xtop_allowance::begin() noexcept {
+    return data_.begin();
+}
+
+xtop_allowance::const_iterator xtop_allowance::begin() const noexcept {
+    return data_.begin();
+}
+
+xtop_allowance::const_iterator xtop_allowance::cbegin() const noexcept {
+    return data_.cbegin();
+}
+
+xtop_allowance::iterator xtop_allowance::end() noexcept {
+    return data_.end();
+}
+
+xtop_allowance::const_iterator xtop_allowance::end() const noexcept {
+    return data_.end();
+}
+
+xtop_allowance::const_iterator xtop_allowance::cend() const noexcept {
+    return data_.cend();
+}
+
+bool xtop_allowance::empty() const noexcept {
+    return data_.empty();
+}
+
+xtop_allowance::size_type xtop_allowance::size() const noexcept {
+    return data_.size();
+}
+
+std::pair<xtop_allowance::iterator, bool> xtop_allowance::insert(value_type const & value) {
+    return data_.insert(value);
+}
+
+xtop_allowance::iterator xtop_allowance::insert(const_iterator hint, const value_type & value) {
+    return data_.insert(hint, value);
+}
+
+xtop_allowance::size_type xtop_allowance::count(key_type const & key) const {
+    return data_.count(key);
+}
+
+xtop_allowance::iterator xtop_allowance::find(key_type const & key) {
+    return data_.find(key);
+}
+
+xtop_allowance::const_iterator xtop_allowance::find(key_type const & key) const {
+    return data_.find(key);
+}
+
+xtop_allowance::data_type const & xtop_allowance::raw_data() const noexcept {
+    return data_;
+}
+
 NS_END3

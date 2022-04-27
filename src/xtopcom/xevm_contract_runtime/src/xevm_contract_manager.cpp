@@ -20,7 +20,7 @@ void xtop_evm_contract_manager::add_sys_contract(common::xaccount_address_t cons
     m_sys_contract.insert(std::make_pair(contract_address, std::move(contract)));
 }
 
-bool xtop_evm_contract_manager::execute_sys_contract(xbytes_t const & input, xbytes_t & output) {
+bool xtop_evm_contract_manager::execute_sys_contract(xbytes_t const & input, xbytes_t & output, observer_ptr<statectx::xstatectx_face_t> state_ctx) {
     top::evm_engine::precompile::ContractBridgeArgs call_args;
 
     auto ret = call_args.ParseFromString(top::to_string(input));
@@ -43,6 +43,7 @@ bool xtop_evm_contract_manager::execute_sys_contract(xbytes_t const & input, xby
                                 call_args.target_gas(),                     // NOLINIT
                                 sys_contract_context{call_args.context()},  // NOLINIT
                                 call_args.is_static(),                      // NOLINIT
+                                state_ctx,
                                 contract_output,                            // NOLINIT
                                 contract_err);                              // NOLINIT
 
@@ -54,12 +55,12 @@ bool xtop_evm_contract_manager::execute_sys_contract(xbytes_t const & input, xby
         for (std::size_t i = 0; i < contract_output.logs.size(); ++i) {
             auto * log = return_output.add_logs();
             auto address = log->mutable_address();
-            address->set_value(top_to_evm_address(contract_output.logs[i].address));
+            address->set_value(contract_output.logs[i].address);
 
             log->set_data(contract_output.logs[i].data);
 
-            auto topic = log->add_topics();
             for (std::size_t j = 0; j < contract_output.logs[i].topics.size(); ++j) {
+                auto topic = log->add_topics();
                 topic->set_data(contract_output.logs[i].topics[j]);
             }
         }
