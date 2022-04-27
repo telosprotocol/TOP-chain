@@ -212,32 +212,102 @@ void relayer::relayer_new_header_build()
     .EncodeInteger(header.timestamp).EncodeBytesFixArray(header.next_bp_hash)
     .EncodeBytesFixArray(header.block_merkle_root);
 
+
+    unsigned char inner_char[208]{0};
+    memcpy(&inner_char[0], &header.height, 8);
+    memcpy(&inner_char[8], &header.epoch_id, 32);
+    memcpy(&inner_char[40], &header.next_epoch_id, 32);
+    memcpy(&inner_char[72], &header.prev_state_root, 32);
+    memcpy(&inner_char[104], &header.outcome_root, 32);
+    memcpy(&inner_char[136], &header.timestamp, 8);
+    memcpy(&inner_char[144], &header.next_bp_hash, 32);
+    memcpy(&inner_char[176], &header.block_merkle_root, 32);
+
+
+   // unsigned char inner_char[208]{0};
+    int cnt =0;
     std::ostringstream out;
     for (auto c : encoder_inner_lite_hash.GetBuffer()) {
            out << c ;
+              inner_char[cnt] = c;
+              cnt++;
     }
-    const std::string raw_digest = out.str();
-    h256 inner_lite_hash =  sha3(raw_digest);
+    std::cout << " cnt " << cnt << std::endl;
+    uint256_t   inner_hash =  utl::xkeccak256_t::digest(inner_char , 208);
+    bytesConstRef((const unsigned char *)inner_hash.data(), 32).copyTo(m_next_block.inner_rest_hash.ref());
+    printHexHash("inner_hash 1111  ", m_next_block.inner_rest_hash);   
+
 
     
-    //next_block_inner_hash
+    std::vector<uint8_t> value_hash;
+    utl::xsha2_256_t hasher;
+    hasher.update(inner_char , 208);
+    hasher.get_hash(value_hash);
+    bytesConstRef((const unsigned char *)value_hash.data(), 32).copyTo(m_next_block.inner_rest_hash.ref());
+    printHexHash("inner_hash 3333333  ", m_next_block.inner_rest_hash);   
+
+
+    //const std::string raw_digest = out.str();
+    h256 inner_lite_hash ; //=  sha3(raw_digest);
+     bytesConstRef((const unsigned char *)value_hash.data(), 32).copyTo(inner_lite_hash.ref());
+    printHexHash("inner_lite_hash  ", inner_lite_hash);
+    
+    //next_block_inner_hash  ok
     top::utl::xecprikey_t inner_rest_hash_key;
     bytesConstRef((const unsigned char *)inner_rest_hash_key.data(), 32).copyTo(m_next_block.inner_rest_hash.ref());
+    printHexHash("inner_rest_hash  ", m_next_block.inner_rest_hash);   
 
-    h512 hash_256;
-    for (int i = 0; i < 32; i++) {
-        hash_256[i] = inner_lite_hash[i];
-        hash_256[i+32] = m_next_block.inner_rest_hash[i];
+
+  
+    unsigned char new_hash_char[64]{0};
+    for (size_t i = 0; i < 32; i++)
+    {
+        new_hash_char[i] = inner_lite_hash[i];
+        new_hash_char[i+32] = m_next_block.inner_rest_hash[i];
     }
-
-    utl::xkeccak256_t first_hash;
-    first_hash.reset();
-    first_hash.update(hash_256.data(), 64);
-    first_hash.update(header.prev_block_hash.data(), 32);    
     
 
+    h512 hash_256;
+
+      bytesConstRef((const unsigned char *)new_hash_char, 64).copyTo(hash_256.ref());
+  //  bytesConstRef((const unsigned char *) m_next_block.inner_rest_hash.data(), 32).copyTo(hash_256.ref()+32);
+  /*  for (int i = 0; i < 32; i++) {
+        hash_256[i] = inner_lite_hash[i];
+        hash_256[i+32] = m_next_block.inner_rest_hash[i];
+    }*/
+
+    std::cout << "hash_256 "<< hash_256.hex() << std::endl;
+        
+    std::vector<uint8_t> value_hash_1;
+    utl::xsha2_256_t first_hash_1;
+    first_hash_1.update(hash_256.hex());
+    first_hash_1.get_hash(value_hash_1);
+    bytesConstRef((const unsigned char *)value_hash_1.data(), 32).copyTo(inner_lite_hash.ref());
+    printHexHash("new hash  11111  ",inner_lite_hash);   
+
+      for (int i = 0; i < 32; i++) {
+        hash_256[i] = value_hash_1[i];
+        hash_256[i+32] = header.prev_block_hash[i];
+    }
+
+
+        
+    std::vector<uint8_t> value_hash_2;
+    utl::xsha2_256_t hasher_2;
+    hasher_2.update(hash_256.data(), 64);
+    hasher_2.get_hash(value_hash_2);
+    bytesConstRef((const unsigned char *)value_hash_2.data(), 32).copyTo(inner_lite_hash.ref());
+     printHexHash("new hash  22222  ",inner_lite_hash);   
+
+
+    utl::xkeccak256_t first_hash_2;
+   // first_hash_2.reset();
+    first_hash_2.update(hash_256.data(), 64);
+    first_hash_2.update(header.prev_block_hash.data(), 32);    
+    printHexHash("prev_block_hash  ", header.prev_block_hash);   
+
     uint256_t hash_result;
-    first_hash.get_hash(hash_result);
+    first_hash_2.get_hash(hash_result);
 
     uint64_t bytesHeight =  messageSwapBytes8(header.height);
 //sign message     uint8(0), topBlock.hash, Utils.swapBytes8(topBlock.inner_lite.height), bytes23(0)
