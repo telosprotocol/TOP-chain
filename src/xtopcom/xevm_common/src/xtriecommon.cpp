@@ -28,7 +28,7 @@ bool sha3(bytesConstRef _input, bytesRef o_output) noexcept
 
 
 
-h256 const EmptyTrie =    sha3(rlp(""));
+h256 const EmptyTrie = sha3(xrlp(""));
 
 /*
  * Hex-prefix Notation. First nibble has flags: oddness = 2^0 & termination = 2^1

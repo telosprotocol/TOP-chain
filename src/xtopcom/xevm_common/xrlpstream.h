@@ -1,11 +1,9 @@
-// Aleth: Ethereum C++ client, tools and libraries.
-// Copyright 2013-2019 Aleth Authors.
-// Licensed under the GNU General Public License, Version 3.
+// Copyright (c) 2017-2021 Telos Foundation & contributors
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-/// @file
-/// Recursive Linear-Prefix serialization / deserialization.
+
 #pragma once
-
 
 #include "fixed_hash.h"
 #include "vector_ref.h"
@@ -452,7 +450,7 @@ template <class _T> void rlpListAux(RLPStream& _out, _T _t) { _out << _t; }
 template <class _T, class ... _Ts> void rlpListAux(RLPStream& _out, _T _t, _Ts ... _ts) { rlpListAux(_out << _t, _ts...); }
 
 /// Export a single item in XRLP format, returning a byte array.
-template <class _T> bytes rlp(_T _t) { return (RLPStream() << _t).out(); }
+template <class _T> bytes xrlp(_T _t) { return (RLPStream() << _t).out(); }
 
 /// Export a list of items in XRLP format, returning a byte array.
 inline bytes rlpList() { return RLPStream(0).out(); }

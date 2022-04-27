@@ -7,8 +7,19 @@
 #include "xrelayer/xrelayer.hpp"
 #include <gtest/gtest.h>
 #include <cinttypes>
+#include "xpbase/base/top_utils.h"
+#include <trezor-crypto/sha3.h>
+#include <secp256k1/secp256k1.h>
+#include <secp256k1/secp256k1_recovery.h>
+#include "xcrypto/xckey.h"
+#include "xcrypto/xcrypto_util.h"
+#include "xbase/xutl.h"
 
-  using namespace top::xrelayer;
+#include "../../src/xtopcom/xdepends/include/trezor-crypto/ed25519-donna/ed25519.h"
+
+
+using namespace top::evm_common;
+using namespace top::xrelayer;
 
 class xrelayer_test : public testing::Test {
 public:
@@ -20,25 +31,117 @@ public:
     }
 };
 
+std::vector<xRelayerReceipt>  m_receiptVector;
+
+
+void relayer_receipts_create(uint64_t height, uint32_t receipt_count) {
+
+  struct timeval beg;
+  uint64_t rand_time = 0;
+
+  m_receiptVector.clear();
+  for (uint32_t i = 0; i < receipt_count; i++) {
+
+    xRelayerReceipt receipt;
+    receipt.status = 0x1;
+    receipt.gasUsed = h256(50942);
+    
+    xRelayerReceiptLog log;
+    log.contractAddress = h160{"real contract address"};   //todo
+
+    std::string data = "0x0000000000000000000000000000000000000000000000000000000000003039";
+    log.data = bytes(data.begin(),data.end());
+
+    std::string address_str = "e71d898e741c743326bf045959221cc39e0718d2";
+    std::string strAddress =  top::HexDecode(address_str); 
+    top::evm_common::h2048 bloom;
+    char szDigest[32] = {0};
+    keccak_256((const unsigned char *)strAddress.data(), strAddress.size(), (unsigned char *)szDigest);
+    top::evm_common::h256 hash_h256;
+    bytesConstRef((const unsigned char *)szDigest, 32).copyTo(hash_h256.ref());
+    bloom.shiftBloom<3>(hash_h256);
+
+    std::vector<std::string> topics = {"0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+                                       "0x0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea2",
+                                       "0x000000000000000000000000000000000000000000000000000000000000007b"};
+    for (auto & topic : topics) {
+        std::string strTopic =  top::HexDecode(topic);
+        char szDigest[32] = {0};
+        keccak_256((const unsigned char *)strTopic.data(), strTopic.size(), (unsigned char *)szDigest);
+        top::evm_common::h256 hash_h256;
+        bytesConstRef((const unsigned char *)szDigest, 32).copyTo(hash_h256.ref());
+        bloom.shiftBloom<3>(hash_h256);
+
+        log.topics.push_back(bytes(topic.begin(), topic.end()));
+    }
+    std::stringstream outstrbloom;
+    outstrbloom << bloom;
+    std::string bloom_str = outstrbloom.str();
+
+    receipt.logsBloom = h2048{bloom_str};
+    receipt.logs.push_back(log);
+    m_receiptVector.push_back(receipt);
+  }
+
+}
 
 TEST(xrelayer_test, config) {
     relayer relayer_instance;
 
+    //set proof
+    std::vector<xRelayerBlockProducer> block_proofs;
+    for (int i = 0; i < 10; i++) {
+        xRelayerBlockProducer producers;    
+        top::utl::xecprikey_t raw_pri_key_obj;
+        producers.stake = 1000;
+        byte publickey[32];
+        ed25519_publickey(raw_pri_key_test.data(), publickey);
+     
+        bytesConstRef((const unsigned char *)raw_pri_key_obj.data(), 32).copyTo(producers.publicKey.p_k.ref());
+        bytesConstRef((const unsigned char *)publickey, 32).copyTo(producers.publicKey.k.ref());
+        block_proofs.push_back(producers);
+    }
+    relayer_instance.relayer_block_proofs_set(block_proofs);
 
+    //set block proof
+  /*  std::vector<xRelayerOptionalSignature>  approve_nexts;
+    for (int i = 0; i < block_proofs.size(); i++) {
+        xRelayerOptionalSignature approve;    
+        top::utl::xecprikey_t raw_pri_key_obj;
 
-//std::vector<xRelayerBlockProducer> proofs
-   // relayer_instance.relayer_all_proofs_set();
+        approve.some = 1;
+        bytesConstRef((const unsigned char *)raw_pri_key_obj.data(), 32).copyTo(  approve.signature.p_k.ref());
+       //approve.signature.p_k = h256{ raw_pri_key_obj.data()};
+        approve.signature.r  = h256{raw_pri_key_obj.get_compress_public_key()};
+        approve_nexts.emplace_back(approve);
+    }
+    relayer_instance.relayer_approvals_next_set(approve_nexts);*/
 
+    relayer_receipts_create(1, 1);
+    relayer_instance.relayer_receipts_set(m_receiptVector);
+
+    relayer_instance.relayer_new_block_build();
+
+    // block 2
+    std::vector<xRelayerBlockProducer> block_proofs;
+    for (int i = 0; i < 10; i++) {
+        xRelayerBlockProducer producers;    
+        top::utl::xecprikey_t raw_pri_key_obj;
+        producers.stake = 1000;
+        byte publickey[32];
+        ed25519_publickey(raw_pri_key_test.data(), publickey);
+     
+        bytesConstRef((const unsigned char *)raw_pri_key_obj.data(), 32).copyTo(producers.publicKey.p_k.ref());
+        bytesConstRef((const unsigned char *)publickey, 32).copyTo(producers.publicKey.k.ref());
+        block_proofs.push_back(producers);
+    }
+    relayer_instance.relayer_block_proofs_set(block_proofs);
+    relayer_instance.relayer_receipts_set(m_receiptVector);
+    relayer_instance.relayer_new_block_build();
 }
 
 
-
-
-/**
- *
- * 
- * 
-
+#if  0
 
 /*
     std::vector<std:string> all_proof_leafs;
@@ -90,105 +193,7 @@ TEST(xrelayer_test, config) {
         },
  */
 
-
-/*
-
+#endif
 
 
 
-void relayer::relayer_receipts_create(uint64_t height, uint32_t receipt_count) {
-
-  struct timeval beg;
-  uint64_t rand_time = 0;
-
-    m_receiptVector.clear();
-  for (uint32_t i = 0; i < receipt_count; i++) {
-
-    xRelayerReceipt receipt;
-    receipt.status = 0x1;
-    receipt.gasUsed = h256(50942);
-    
-    xRelayerReceiptLog log;
-    log.contractAddress = h160{"real contract address"};   //tod
-
-    std::string data = "0x0000000000000000000000000000000000000000000000000000000000003039";
-    log.data = bytes(data.begin(),data.end());
-
-    std::string address_str = "e71d898e741c743326bf045959221cc39e0718d2";
-    std::string strAddress =  top::HexDecode(address_str); 
-    top::evm_common::h2048 bloom;
-    char szDigest[32] = {0};
-    keccak_256((const unsigned char *)strAddress.data(), strAddress.size(), (unsigned char *)szDigest);
-    top::evm_common::h256 hash_h256;
-    bytesConstRef((const unsigned char *)szDigest, 32).copyTo(hash_h256.ref());
-    bloom.shiftBloom<3>(hash_h256);
-
-    std::vector<std::string> topics = {"0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
-                                       "0x0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea2",
-                                       "0x000000000000000000000000000000000000000000000000000000000000007b"};
-    for (auto & topic : topics) {
-        std::string strTopic =  top::HexDecode(topic);
-        char szDigest[32] = {0};
-        keccak_256((const unsigned char *)strTopic.data(), strTopic.size(), (unsigned char *)szDigest);
-        top::evm_common::h256 hash_h256;
-        bytesConstRef((const unsigned char *)szDigest, 32).copyTo(hash_h256.ref());
-        bloom.shiftBloom<3>(hash_h256);
-
-        log.topics.push_back(bytes(topic.begin(), topic.end()));
-    }
-    std::stringstream outstrbloom;
-    outstrbloom << bloom;
-    std::string bloom_str = outstrbloom.str();
-
-    receipt.logsBloom = h2048{bloom_str};
-    receipt.logs.push_back(log);
-    m_receiptVector.push_back(receipt);
-  }
-
-
-void relayer::genesis_block_init() {
-
-    //inner_lite
-    xRelayerBlockInnerHeader& header = m_genes_block.header;
-    header.height = 0;
-
-    header.epoch_id = h256{"00000000000000000000000000000000"};        //not used now
-    header.next_epoch_id = h256{"00000000000000000000000000000000"};        //not used 
-    header.prev_state_root = h256{"00000000000000000000000000000000"};        //not used
-
-    //create receipt and comeout root
-    relayer_receipts_create(0, 1);
-    header.outcome_root = relayer_outcome_root_calc();
-    header.timestamp =  GetCurrentTimeMsec();
-    header.next_bp_hash = h256{"00000000000000000000000000000000"};;  //not used
-
-    //merkle tree root 
-    std::vector<std::string>  proof_hash_vector;
-    for(auto & pub_key : proof_public_vector) {
-        const std::string pub_key_data = pub_key.get_compress_public_key();
-        proof_hash_vector.emplace_back(pub_key_data);
-    }
-
-    base::xmerkle_t<utl::xsha2_256_t, uint256_t> merkle;
-    std::string root_hash = merkle.calc_root(proof_hash_vector);
-    header.block_merkle_root = h256{root_hash};
-    
-    utl::xecprikey_t  random_data; //using xecprikey_t generate random data
-    uint256_t msg_digest((uint8_t*)random_data.data());
-
-    header.inner_rest_hash = h256{msg_digest.data()};
-
-    header.ne
-
-
-   //total block hash
-    xRelayerBlockInnerHeader               header;
-    h256                                   inner_rest_hash;             //32 byte
-    xRealyerBlockProducers                 next_bps;   //nex block producer info 
-    std::vector<xRelayerOptionalSignature> approvals_after_next;   //next approval info 
-
-}
-*/
-
-
-// #endif

@@ -9,7 +9,7 @@ namespace top {
 namespace evm_common {
 
 
-bytes RLPNull = rlp("");
+bytes RLPNull = xrlp("");
 bytes RLPEmptyList = rlpList();
 
 

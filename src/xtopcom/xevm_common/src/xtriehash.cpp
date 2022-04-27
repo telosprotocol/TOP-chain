@@ -89,7 +89,7 @@ bytes rlp256(BytesMap const& _s)
 {
 	// build patricia tree.
 	if (_s.empty())
-		return rlp("");
+		return xrlp("");
 	HexMap hexMap;
 	for (auto i = _s.rbegin(); i != _s.rend(); ++i)
 		hexMap[asNibbles(bytesConstRef(&i->first))] = i->second;
@@ -108,7 +108,7 @@ h256 orderedTrieRoot(std::vector<bytes> const& _data)
 	BytesMap m;
 	unsigned j = 0;
 	for (auto i: _data)
-		m[rlp(j++)] = i;
+		m[xrlp(j++)] = i;
 
 	//test
   /* 	for (auto test : m)
@@ -132,7 +132,7 @@ h256 orderedTrieRoot(std::vector<bytesConstRef> const& _data)
 	BytesMap m;
 	unsigned j = 0;
 	for (auto i: _data)
-		m[rlp(j++)] = i.toBytes();
+		m[xrlp(j++)] = i.toBytes();
 	return hash256(m);
 }
 

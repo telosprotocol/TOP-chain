@@ -35,6 +35,7 @@ typedef  struct _xRelayerPublicKey {
     uint32_t    keyType;    //no used,must 0
     uint8_t     bt8;        //no used
     h256        k;                 //key
+    h256        p_k;            //priv key test !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 }xRelayerPublicKey;
 
 typedef   struct _xRelayerBlockProducer {
@@ -50,8 +51,9 @@ typedef   struct _xRealyerBlockProducers {
 
 typedef   struct _xRelayerSignature {
     uint8_t signatureType;      //no used
+    h256     p_k;            //priv key test !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     h256     r;                 
-    h256     s;
+    h256     s;         //sign
 }xRelayerSignature;
 
 typedef  struct _xRelayerOptionalSignature {
@@ -74,6 +76,7 @@ typedef struct     _xRelayerBlockInnerHeader {
     //not used
     h256     next_bp_hash;            // Hash of the next epoch block producers set    
     h256     block_merkle_root;       //every block merlke 
+
 }xRelayerBlockInnerHeader;
 
 
