@@ -68,19 +68,13 @@ pub trait IO {
     }
 
     /// Convenience function to read a 256-bit unsigned integer from storage
-    /// (assumes big-endian encoding).
+    /// (assumes rlp encoding).
     fn read_u256(&self, key: &[u8]) -> Result<U256, error::ReadU256Error> {
         let value = self
             .read_storage(key)
             .ok_or(error::ReadU256Error::MissingValue)?;
 
-        if value.len() != 32 {
-            return Err(error::ReadU256Error::InvalidU256);
-        }
-
-        let mut result = [0u8; 32];
-        value.copy_to_slice(&mut result);
-        Ok(U256::from_little_endian(&result))
+        rlp::decode(value.to_vec().as_slice()).map_err(|_| error::ReadU256Error::InvalidU256)
     }
 }
 

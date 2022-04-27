@@ -30,7 +30,10 @@ public:
 
         try {
             auto unit_state = m_statectx->load_unit_state(storage_key.address);
-            assert(unit_state);  // todo return result = {} empty
+            assert(unit_state);
+            if (!unit_state) {
+                return {};
+            }
             auto state_observer = make_observer(unit_state->get_bstate().get());
             auto canvas = unit_state->get_canvas();
             state_accessor::xstate_accessor_t sa{state_observer, canvas};
@@ -43,11 +46,10 @@ public:
                 assert(!ec);
                 top::error::throw_error(ec);
 
-                evm_common::u256 value_u256{value_uint64};
                 evm_common::xBorshEncoder encoder;
-                encoder.EncodeInteger(value_u256);
+                encoder.EncodeInteger(value_uint64);
                 xbytes_t result = encoder.GetBuffer();
-                assert(result.size() == 32);
+                assert(result.size() == 8);
                 return result;
 
             } else if (storage_key.key_type == storage_key_type::Balance) {
@@ -96,7 +98,10 @@ public:
 
         try {
             auto unit_state = m_statectx->load_unit_state(storage_key.address);
-            assert(unit_state);  // todo return result = {} empty
+            assert(unit_state);
+            if (!unit_state) {
+                return;
+            }
             auto state_observer = make_observer(unit_state->get_bstate().get());
             auto canvas = unit_state->get_canvas();
             state_accessor::xstate_accessor_t sa{state_observer, canvas};
@@ -105,20 +110,18 @@ public:
             if (storage_key.key_type == storage_key_type::Nonce) {
                 auto property = state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, state_accessor::properties::xproperty_category_t::system};
 
-                assert(value.size() == 32);
-                evm_common::u256 value_u256;
+                assert(value.size() == 8);
+                uint64_t nonce_u64;
                 evm_common::xBorshDecoder decoder;
-                decoder.getInteger(value, value_u256);
+                decoder.getInteger(value, nonce_u64);
 
-                auto nonce_uint64 = value_u256.convert_to<uint64_t>();  // if overflow?
-                auto nonce_bytes = top::to_bytes(nonce_uint64);
-                xdbg("storage_set set nonce account:%s, nonce:%llu", storage_key.address.c_str(), nonce_uint64);
+                auto nonce_bytes = top::to_bytes(nonce_u64);
+                xdbg("storage_set set nonce account:%s, nonce:%llu", storage_key.address.c_str(), nonce_u64);
                 sa.set_property_cell_value<evm_property_type_map>(property, data::XPROPERTY_TX_INFO_LATEST_SENDTX_NUM, nonce_bytes, ec);
                 assert(!ec);
                 top::error::throw_error(ec);
 
             } else if (storage_key.key_type == storage_key_type::Balance) {
-                assert(value.size() == 32);
                 unit_state->set_tep_balance_bytes(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH, value);
 
             } else if (storage_key.key_type == storage_key_type::Code) {
@@ -162,7 +165,10 @@ public:
 
         try {
             auto unit_state = m_statectx->load_unit_state(storage_key.address);
-            assert(unit_state);  // todo return result = {} empty
+            assert(unit_state);
+            if (!unit_state) {
+                return;
+            }
             auto state_observer = make_observer(unit_state->get_bstate().get());
             auto canvas = unit_state->get_canvas();
             state_accessor::xstate_accessor_t sa{state_observer, canvas};
@@ -171,8 +177,6 @@ public:
             if (storage_key.key_type == storage_key_type::Nonce) {
                 auto property = state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, state_accessor::properties::xproperty_category_t::system};
 
-                // todo bytes(BE/LE) -> u256 -> u64 to set.
-                // auto value_u256;
                 uint64_t nonce_uint64 = 0;
                 auto nonce = base::xstring_utl::tostring(nonce_uint64);
                 auto nonce_bytes = top::to_bytes(nonce_uint64);
@@ -181,14 +185,8 @@ public:
                 top::error::throw_error(ec);
 
             } else if (storage_key.key_type == storage_key_type::Balance) {
-                // todo bytes(BE/LE) -> u256 -> u64 to set.
-                //? how unit_bstate to remove balance?
-
-                // auto property = state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_EVM_BALANCE, state_accessor::properties::xproperty_category_t::system};
-                // // sa.set_property<evm_property_type_bytes>(property, value, ec);
-                // sa.set_property<evm_property_type_bytes>(property, {}, ec);
-                // assert(!ec);
-                // top::error::throw_error(ec);
+                evm_common::u256 value{0};
+                unit_state->set_tep_balance(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH, value);
 
             } else if (storage_key.key_type == storage_key_type::Code) {
                 auto typeless_property =

@@ -221,6 +221,7 @@ dependencies = [
  "engine-types",
  "evm",
  "protobuf",
+ "rlp",
  "sha3 0.9.1",
 ]
 
@@ -244,6 +245,7 @@ dependencies = [
  "primitive-types",
  "protobuf",
  "rand 0.7.3",
+ "rlp",
 ]
 
 [[package]]
