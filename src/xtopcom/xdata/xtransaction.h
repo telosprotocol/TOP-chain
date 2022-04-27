@@ -194,6 +194,7 @@ class xtransaction_t : virtual public base::xrefcount_t {
     virtual const top::evm_common::u256 get_gaslimit() const { return 0; }
     virtual const top::evm_common::u256 get_max_priority_fee_per_gas() const { return 0; }
     virtual const top::evm_common::u256 get_max_fee_per_gas() const { return 0; }
+    virtual uint32_t get_eip_version() const = 0;
 };
 
 }  // namespace data
