@@ -1,6 +1,5 @@
-use crate::{EvmPrecompileResult, Precompile, PrecompileOutput};
-use engine_sdk as sdk;
-use engine_types::{types::Address, types::EthGas, vec};
+use crate::{Precompile, PrecompileFailure};
+use engine_types::{types::Address, types::EthGas, vec, PrecompileResult, RustPrecompileOutput};
 use evm::{Context, ExitError};
 
 mod costs {
@@ -29,7 +28,7 @@ impl SHA256 {
 }
 
 impl Precompile for SHA256 {
-    fn required_gas(input: &[u8]) -> Result<EthGas, ExitError> {
+    fn required_gas(input: &[u8]) -> Result<EthGas, PrecompileFailure> {
         Ok(
             (input.len() as u64 + consts::SHA256_WORD_LEN - 1) / consts::SHA256_WORD_LEN
                 * costs::SHA256_PER_WORD
@@ -46,13 +45,15 @@ impl Precompile for SHA256 {
         target_gas: Option<EthGas>,
         _context: &Context,
         _is_static: bool,
-    ) -> EvmPrecompileResult {
+    ) -> PrecompileResult {
         use sha2::Digest;
 
         let cost = Self::required_gas(input)?;
         if let Some(target_gas) = target_gas {
             if cost > target_gas {
-                return Err(ExitError::OutOfGas);
+                return Err(PrecompileFailure::Error {
+                    exit_status: ExitError::OutOfGas,
+                });
             }
         }
 
@@ -62,7 +63,7 @@ impl Precompile for SHA256 {
         #[cfg(feature = "top_crypto")]
         let output = sdk::sha256(input).as_bytes().to_vec();
 
-        Ok(PrecompileOutput::without_logs(cost, output).into())
+        Ok(RustPrecompileOutput::without_logs(cost, output).into())
     }
 }
 
@@ -82,7 +83,7 @@ impl RIPEMD160 {
 }
 
 impl Precompile for RIPEMD160 {
-    fn required_gas(input: &[u8]) -> Result<EthGas, ExitError> {
+    fn required_gas(input: &[u8]) -> Result<EthGas, PrecompileFailure> {
         Ok(
             (input.len() as u64 + consts::RIPEMD_WORD_LEN - 1) / consts::RIPEMD_WORD_LEN
                 * costs::RIPEMD160_PER_WORD
@@ -96,11 +97,13 @@ impl Precompile for RIPEMD160 {
         target_gas: Option<EthGas>,
         _context: &Context,
         _is_static: bool,
-    ) -> EvmPrecompileResult {
+    ) -> PrecompileResult {
         let cost = Self::required_gas(input)?;
         if let Some(target_gas) = target_gas {
             if cost > target_gas {
-                return Err(ExitError::OutOfGas);
+                return Err(PrecompileFailure::Error {
+                    exit_status: ExitError::OutOfGas,
+                });
             }
         }
 
@@ -114,6 +117,6 @@ impl Precompile for RIPEMD160 {
         // the evm works with 32-byte words.
         let mut output = vec![0u8; 32];
         output[12..].copy_from_slice(&hash);
-        Ok(PrecompileOutput::without_logs(cost, output).into())
+        Ok(RustPrecompileOutput::without_logs(cost, output).into())
     }
 }
