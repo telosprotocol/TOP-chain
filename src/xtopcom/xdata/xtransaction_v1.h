@@ -99,6 +99,7 @@ class xtransaction_v1_t : public xbase_dataunit_t<xtransaction_v1_t, xdata_type_
     virtual void set_amount_256(top::evm_common::u256 amount) noexcept override { assert(false); return; }
     virtual top::evm_common::u256 get_amount_256() const noexcept override { assert(false); return 0; }
     virtual bool is_top_transfer() const noexcept override { return true; }
+    virtual uint32_t get_eip_version() const {assert(false); return 0;}
 
     // header
  public:

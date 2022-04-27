@@ -16,6 +16,7 @@ XINLINE_CONSTEXPR char const * XPROPERTY_ASSET_ETH                       = "ETH"
 
 // $1-9 reserved for future
 XINLINE_CONSTEXPR char const * XPROPERTY_BALANCE_AVAILABLE              = "$0";  //available balance
+XINLINE_CONSTEXPR char const * XPROPERTY_TEP1_BALANCE_KEY               = "$1";  //tep balance map
 XINLINE_CONSTEXPR char const * XPROPERTY_BALANCE_BURN                   = "$a";  //burn balance
 XINLINE_CONSTEXPR char const * XPROPERTY_BALANCE_LOCK                   = "$b";  //lock balance
 XINLINE_CONSTEXPR char const * XPROPERTY_BALANCE_PLEDGE_TGAS            = "$c";  //pledge balance for tgas
@@ -40,11 +41,9 @@ XINLINE_CONSTEXPR char const * XPROPERTY_ACCOUNT_CREATE_TIME            = "$07";
 // lock token related
 XINLINE_CONSTEXPR char const * XPROPERTY_LOCK_TOKEN_KEY                 = "$08";
 
-XINLINE_CONSTEXPR char const * XPROPERTY_TEP1_BALANCE_KEY                = "$1";
-
-XINLINE_CONSTEXPR char const * XPROPERTY_EVM_CODE                        = "$20";
-XINLINE_CONSTEXPR char const * XPROPERTY_EVM_STORAGE                     = "$21";
-XINLINE_CONSTEXPR char const * XPROPERTY_EVM_GENERATION                  = "$22";
+XINLINE_CONSTEXPR char const * XPROPERTY_EVM_CODE                       = "$20";
+XINLINE_CONSTEXPR char const * XPROPERTY_EVM_STORAGE                    = "$21";
+XINLINE_CONSTEXPR char const * XPROPERTY_EVM_GENERATION                 = "$22";
 
 XINLINE_CONSTEXPR char const* XPROPERTY_LAST_READ_REC_STANDBY_POOL_CONTRACT_BLOCK_HEIGHT = "@38";
 XINLINE_CONSTEXPR char const* XPROPERTY_LAST_READ_REC_STANDBY_POOL_CONTRACT_LOGIC_TIME = "@39";
