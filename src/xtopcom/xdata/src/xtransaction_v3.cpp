@@ -13,6 +13,7 @@
 #include "xdata/xdata_error.h"
 #include "xdata/xmemcheck_dbg.h"
 #include "xcrypto/xckey.h"
+#include "xevm_common/rlp.h"
 
 using namespace std;
 using namespace top::evm_common;
@@ -157,26 +158,15 @@ int xtransaction_v3_t::unserialize_eth_legacy_transaction(bytes & encoded, bool 
         return -2;
     }
     eip_legacy_tx_ptr->nonce = fromBigEndian<u256>(vecData[0]);
-    xdbg("xtransaction_v3_t::unserialize_eth_legacy_transaction nonce:%s", eip_legacy_tx_ptr->nonce.str().c_str());
     eip_legacy_tx_ptr->gasprice = fromBigEndian<u256>(vecData[1]);
-    xdbg("xtransaction_v3_t::unserialize_eth_legacy_transaction gasprice:%s", eip_legacy_tx_ptr->gasprice.str().c_str());
     eip_legacy_tx_ptr->gas = fromBigEndian<u256>(vecData[2]);
-    xdbg("xtransaction_v3_t::unserialize_eth_legacy_transaction gas:%s", eip_legacy_tx_ptr->gas.str().c_str());
-    Type type = vecData[3].empty() ? ContractCreation : MessageCall;
-    xdbg("xtransaction_v3_t::unserialize_eth_legacy_transaction type:%d", type);
-    bIsCreation = type == ContractCreation;
+    bIsCreation = vecData[3].empty();
     eip_legacy_tx_ptr->to = vecData[3].empty() ? Address().hex() : Address(vecData[3], FixedHash<20>::FromBinary).hex();
-    xdbg("xtransaction_v3_t::unserialize_eth_legacy_transaction target address:%s", eip_legacy_tx_ptr->to.c_str());
     eip_legacy_tx_ptr->value = fromBigEndian<u256>(vecData[4]);
-    xdbg("xtransaction_v3_t::unserialize_eth_legacy_transaction value:%s", eip_legacy_tx_ptr->value.str().c_str());
     eip_legacy_tx_ptr->data = vecData[5];
-    xdbg("xtransaction_v3_t::unserialize_eth_legacy_transaction data:%s", eip_legacy_tx_ptr->data.c_str());
     eip_legacy_tx_ptr->signV = fromBigEndian<u256>(vecData[6]);
-    xdbg("xtransaction_v3_t::unserialize_eth_legacy_transaction v:%s", eip_legacy_tx_ptr->signV.str().c_str());
     eip_legacy_tx_ptr->signR = fromBigEndian<u256>(vecData[7]);
-    xdbg("xtransaction_v3_t::unserialize_eth_legacy_transaction r:%s", eip_legacy_tx_ptr->signR.hex().c_str());
     eip_legacy_tx_ptr->signS = fromBigEndian<u256>(vecData[8]);
-    xdbg("xtransaction_v3_t::unserialize_eth_legacy_transaction s:%s", eip_legacy_tx_ptr->signS.hex().c_str());
     uint64_t m_chainId;
     if (!eip_legacy_tx_ptr->signR && !eip_legacy_tx_ptr->signS) {
         m_chainId = static_cast<uint64_t>(eip_legacy_tx_ptr->signV);
@@ -235,33 +225,18 @@ int xtransaction_v3_t::unserialize_eth_1559_transaction(bytes & encoded, bool & 
     }
 
     eip_1559_tx_ptr->chainid = fromBigEndian<u256>(vecData[0]);
-    xdbg("xtransaction_v3_t::unserialize_eth_1559_transaction chainid:%s", eip_1559_tx_ptr->chainid.str().c_str());
     eip_1559_tx_ptr->nonce = fromBigEndian<u256>(vecData[1]);
-    xdbg("xtransaction_v3_t::unserialize_eth_1559_transaction nonce:%s", eip_1559_tx_ptr->nonce.str().c_str());
     eip_1559_tx_ptr->max_priority_fee_per_gas = fromBigEndian<u256>(vecData[2]);
-    xdbg("xtransaction_v3_t::unserialize_eth_1559_transaction max_priority_fee_per_gas:%s", eip_1559_tx_ptr->max_priority_fee_per_gas.str().c_str());
     eip_1559_tx_ptr->max_fee_per_gas = fromBigEndian<u256>(vecData[3]);
-    xdbg("xtransaction_v3_t::unserialize_eth_1559_transaction max_fee_per_gas:%s", eip_1559_tx_ptr->max_fee_per_gas.str().c_str());
     eip_1559_tx_ptr->gas = fromBigEndian<u256>(vecData[4]);
-    xdbg("xtransaction_v3_t::unserialize_eth_1559_transaction gas:%s", eip_1559_tx_ptr->gas.str().c_str());
-    Type type = vecData[5].empty() ? ContractCreation : MessageCall;
-    xdbg("xtransaction_v3_t::unserialize_eth_1559_transaction type:%d", type);
-    bIsCreation = type == ContractCreation;
+    bIsCreation = vecData[5].empty();
     eip_1559_tx_ptr->to = vecData[5].empty() ? Address().hex() : Address(vecData[5], FixedHash<20>::FromBinary).hex();
-    xdbg("xtransaction_v3_t::unserialize_eth_1559_transaction target address:%s", eip_1559_tx_ptr->to.c_str());
     eip_1559_tx_ptr->value = fromBigEndian<u256>(vecData[6]);
-    xdbg("xtransaction_v3_t::unserialize_eth_1559_transaction value:%s", eip_1559_tx_ptr->value.str().c_str());
     eip_1559_tx_ptr->data = vecData[7];
-    xdbg("xtransaction_v3_t::unserialize_eth_1559_transaction data:%s", eip_1559_tx_ptr->data.c_str());
-
     eip_1559_tx_ptr->accesslist = vecData[8];
-    xdbg("xtransaction_v3_t::unserialize_eth_1559_transaction list:%s", eip_1559_tx_ptr->accesslist.c_str());
     eip_1559_tx_ptr->signV = fromBigEndian<u256>(vecData[9]);
-    xdbg("xtransaction_v3_t::unserialize_eth_1559_transaction v:%s", eip_1559_tx_ptr->signV.str().c_str());
     eip_1559_tx_ptr->signR = fromBigEndian<u256>(vecData[10]);
-    xdbg("xtransaction_v3_t::unserialize_eth_1559_transaction r:%s", eip_1559_tx_ptr->signR.hex().c_str());
     eip_1559_tx_ptr->signS = fromBigEndian<u256>(vecData[11]);
-    xdbg("xtransaction_v3_t::unserialize_eth_1559_transaction s:%s", eip_1559_tx_ptr->signS.hex().c_str());
 
     bytes encodedtmp = bytes();
     for (int i = 0; i < 8; i++) {
@@ -291,53 +266,26 @@ int xtransaction_v3_t::unserialize_top_v3_transaction(bytes & encoded, bool & bI
         return -2;
     }
     eip_top_v3_tx_ptr->sub_transaction_version = (uint8_t)fromBigEndian<u256>(vecData[0]);
-    xdbg("xtransaction_v3_t::unserialize_top_v3_transaction sub_transaction_version:%d", eip_top_v3_tx_ptr->sub_transaction_version);
     eip_top_v3_tx_ptr->chainid = fromBigEndian<u256>(vecData[1]);
-    xdbg("xtransaction_v3_t::unserialize_top_v3_transaction chainid:%s", eip_top_v3_tx_ptr->chainid.str().c_str());
     eip_top_v3_tx_ptr->nonce = fromBigEndian<u256>(vecData[2]);
-    xdbg("xtransaction_v3_t::unserialize_top_v3_transaction nonce:%s", eip_top_v3_tx_ptr->nonce.str().c_str());
     eip_top_v3_tx_ptr->max_priority_fee_per_gas = fromBigEndian<u256>(vecData[3]);
-    xdbg("xtransaction_v3_t::unserialize_top_v3_transaction max_priority_fee_per_gas:%s", eip_top_v3_tx_ptr->max_priority_fee_per_gas.str().c_str());
     eip_top_v3_tx_ptr->max_fee_per_gas = fromBigEndian<u256>(vecData[4]);
-    xdbg("xtransaction_v3_t::unserialize_top_v3_transaction max_fee_per_gas:%s", eip_top_v3_tx_ptr->max_fee_per_gas.str().c_str());
     eip_top_v3_tx_ptr->gas = fromBigEndian<u256>(vecData[5]);
-    xdbg("xtransaction_v3_t::unserialize_top_v3_transaction gas:%s", eip_top_v3_tx_ptr->gas.str().c_str());
-    Type type = vecData[6].empty() ? ContractCreation : MessageCall;
-    xdbg("xtransaction_v3_t::unserialize_top_v3_transaction type:%d", type);
-    bIsCreation = type == ContractCreation;
+    bIsCreation = vecData[6].empty();
     eip_top_v3_tx_ptr->to = vecData[6].empty() ? Address().hex() : Address(vecData[6], FixedHash<20>::FromBinary).hex();
-    xdbg("xtransaction_v3_t::unserialize_top_v3_transaction target address:%s", eip_top_v3_tx_ptr->to.c_str());
     eip_top_v3_tx_ptr->value = fromBigEndian<u256>(vecData[7]);
-    xdbg("xtransaction_v3_t::unserialize_top_v3_transaction value:%s", eip_top_v3_tx_ptr->value.str().c_str());
     eip_top_v3_tx_ptr->data = vecData[8];
-    xdbg("xtransaction_v3_t::unserialize_top_v3_transaction data:%s", eip_top_v3_tx_ptr->data.c_str());
-
     eip_top_v3_tx_ptr->accesslist = vecData[9];
-    xdbg("xtransaction_v3_t::unserialize_top_v3_transaction list:%s", eip_top_v3_tx_ptr->accesslist.c_str());
-
     eip_top_v3_tx_ptr->token_name = vecData[10];
-    xdbg("xtransaction_v3_t::unserialize_top_v3_transaction token_name:%s", eip_top_v3_tx_ptr->token_name.c_str());
-
     eip_top_v3_tx_ptr->from_address_type = fromBigEndian<u256>(vecData[11]);
-    xdbg("xtransaction_v3_t::unserialize_top_v3_transaction from_address_type:%s", eip_top_v3_tx_ptr->from_address_type.str().c_str());
     eip_top_v3_tx_ptr->to_address_type = fromBigEndian<u256>(vecData[12]);
-    xdbg("xtransaction_v3_t::unserialize_top_v3_transaction to_address_type:%s", eip_top_v3_tx_ptr->to_address_type.str().c_str());
     eip_top_v3_tx_ptr->fire_timestamp = fromBigEndian<u256>(vecData[13]);
-    xdbg("xtransaction_v3_t::unserialize_top_v3_transaction fire_timestamp:%s", eip_top_v3_tx_ptr->fire_timestamp.str().c_str());
     eip_top_v3_tx_ptr->expire_duration = fromBigEndian<u256>(vecData[14]);
-    xdbg("xtransaction_v3_t::unserialize_top_v3_transaction expire_duration:%s", eip_top_v3_tx_ptr->expire_duration.str().c_str());
-
     eip_top_v3_tx_ptr->memo = vecData[15];
-    xdbg("xtransaction_v3_t::unserialize_top_v3_transaction memo:%s", eip_top_v3_tx_ptr->memo.c_str());
     eip_top_v3_tx_ptr->extend = vecData[16];
-    xdbg("xtransaction_v3_t::unserialize_top_v3_transaction extend:%s", eip_top_v3_tx_ptr->extend.c_str());
-
     eip_top_v3_tx_ptr->signV = fromBigEndian<u256>(vecData[17]);
-    xdbg("xtransaction_v3_t::unserialize_top_v3_transaction v:%s", eip_top_v3_tx_ptr->signV.str().c_str());
     eip_top_v3_tx_ptr->signR = fromBigEndian<u256>(vecData[18]);
-    xdbg("xtransaction_v3_t::unserialize_top_v3_transaction r:%s", eip_top_v3_tx_ptr->signR.hex().c_str());
     eip_top_v3_tx_ptr->signS = fromBigEndian<u256>(vecData[19]);
-    xdbg("xtransaction_v3_t::unserialize_top_v3_transaction s:%s", eip_top_v3_tx_ptr->signS.hex().c_str());
 
     bytes encodedtmp = bytes();
     for (int i = 0; i < 8; i++) {
@@ -371,11 +319,11 @@ int xtransaction_v3_t::do_read(base::xstream_t & in) {
     std::error_code ec;
     auto const target_account_address = common::xaccount_address_t::build_from(get_target_addr(), ec);
     if (ec) {
-        enum_xerror_code_bad_address;
+        return enum_xerror_code_bad_address;
     }
     auto const source_account_address = common::xaccount_address_t::build_from(get_source_addr(), ec);
     if (ec) {
-        enum_xerror_code_bad_address;
+        return enum_xerror_code_bad_address;
     }
 
     if (is_sys_sharding_contract_address(target_account_address)) {
@@ -512,13 +460,6 @@ bool xtransaction_v3_t::pub_key_sign_check(xpublic_key_t const & pub_key) const 
     memcpy(out_publickey_data, pub_data.data(), (size_t)std::min(utl::UNCOMPRESSED_PUBLICKEY_SIZE, (int)pub_data.size()));
     top::uint256_t hash((uint8_t *)fromHex(m_hash).data());
     return utl::xsecp256k1_t::verify_signature(signature_obj, hash, out_publickey_data, false);
-}
-
-size_t xtransaction_v3_t::get_serialize_size() const {
-    base::xstream_t stream(base::xcontext_t::instance());
-    xassert(stream.size() == 0);
-    const_cast<xtransaction_v3_t*>(this)->serialize_to(stream);
-    return stream.size();
 }
 
 std::string xtransaction_v3_t::dump() const {

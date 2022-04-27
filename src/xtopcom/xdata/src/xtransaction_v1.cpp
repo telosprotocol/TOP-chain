@@ -373,13 +373,6 @@ bool xtransaction_v1_t::pub_key_sign_check(xpublic_key_t const & pub_key) const 
     return utl::xsecp256k1_t::verify_signature(signature_obj, m_transaction_hash, out_publickey_data, false);
 }
 
-size_t xtransaction_v1_t::get_serialize_size() const {
-    base::xstream_t stream(base::xcontext_t::instance());
-    xassert(stream.size() == 0);
-    const_cast<xtransaction_v1_t*>(this)->serialize_to(stream);
-    return stream.size();
-}
-
 std::string xtransaction_v1_t::dump() const {
     char local_param_buf[256];
     xprintf(local_param_buf,    sizeof(local_param_buf),

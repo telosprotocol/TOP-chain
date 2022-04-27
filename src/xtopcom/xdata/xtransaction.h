@@ -137,7 +137,6 @@ class xtransaction_t : virtual public base::xrefcount_t {
     virtual const std::string & get_target_addr()const = 0;
     virtual const std::string & get_origin_target_addr()const = 0;
     virtual uint64_t            get_tx_nonce() const = 0;
-    virtual size_t              get_serialize_size() const = 0;
     virtual std::string         dump() const = 0;  // just for debug purpose
     virtual const std::string & get_source_action_name() const = 0;
     virtual const std::string & get_source_action_para() const = 0;

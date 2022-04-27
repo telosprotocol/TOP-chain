@@ -80,7 +80,6 @@ class xtransaction_v1_t : public xbase_dataunit_t<xtransaction_v1_t, xdata_type_
     virtual const std::string & get_target_addr()const override {return m_target_addr.empty() ? m_target_action.get_account_addr() : m_target_addr;}
     virtual const std::string & get_origin_target_addr()const override {return m_target_action.get_account_addr();}
     virtual uint64_t            get_tx_nonce() const override {return get_last_nonce() + 1;}
-    virtual size_t              get_serialize_size() const override;
     virtual std::string         dump() const override;  // just for debug purpose
     virtual const std::string & get_source_action_name() const override {return m_source_action.get_action_name();}
     virtual const std::string & get_source_action_para() const override {return m_source_action.get_action_param();}
