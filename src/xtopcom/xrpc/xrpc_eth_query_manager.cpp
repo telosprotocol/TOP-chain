@@ -172,7 +172,7 @@ void xrpc_eth_query_manager::eth_getBalance(xJson::Value & js_req, xJson::Value 
     if (account_ptr == nullptr) {
         js_rsp["result"] = "0x0";
     } else {
-        evm_common::u256 balance = account_ptr->tep_token_balance(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH);
+        evm_common::u256 balance = account_ptr->tep_token_balance(data::XPROPERTY_ASSET_ETH);
 
         std::string balance_str = toHex((top::evm_common::h256)balance);
 
@@ -641,7 +641,7 @@ void xrpc_eth_query_manager::eth_estimateGas(xJson::Value & js_req, xJson::Value
         xwarn("eth_estimateGas fail-load unit state, %s", from.c_str());
         return;
     }
-    unitstate->tep_token_deposit(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH, gas_value);
+    unitstate->tep_token_deposit(data::XPROPERTY_ASSET_ETH, gas_value);
 
     txexecutor::xvm_para_t vmpara(cs_para.get_clock(), cs_para.get_random_seed(), cs_para.get_total_lock_tgas_token());
 

@@ -3,23 +3,29 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xdata/xunit_bstate.h"
-#include <assert.h>
-#include <string>
-#include <vector>
+
 #include "xbase/xint.h"
 #include "xbase/xmem.h"
 #include "xbase/xutl.h"
+#include "xbasic/xutility.h"
+#include "xcodec/xcodec.h"
+#include "xcodec/xcodec_category.h"
+#include "xcommon/xcodec/xmsgpack/xaccount_address_codec.hpp"
 #include "xconfig/xconfig_register.h"
+#include "xconfig/xpredefined_configurations.h"
+#include "xdata/xcodec/xmsgpack/xallowance_codec.h"
 #include "xdata/xdata_common.h"
 #include "xdata/xdata_error.h"
+#include "xdata/xerror/xerror.h"
 #include "xdata/xfullunit.h"
 #include "xdata/xgenesis_data.h"
-#include "xconfig/xpredefined_configurations.h"
-#include "xmetrics/xmetrics.h"
 #include "xevm/xevm.h"
 #include "xevm_common/fixed_hash.h"
+#include "xevm_common/xcodec/xmsgpack/xboost_u256_codec.h"
 #include "xevm_contract_runtime/xevm_storage.h"
+#include "xmetrics/xmetrics.h"
 #include "xpbase/base/top_utils.h"
+
 namespace top {
 namespace data {
 
@@ -174,6 +180,7 @@ std::string xunit_bstate_t::get_code() const {
     string_get(XPROPERTY_EVM_CODE, v);
     return v;
 }
+
 std::string xunit_bstate_t::get_storage(const std::string& index_str) const {
     evm_common::u256 uindex = evm_common::fromBigEndian<top::evm_common::u256>(index_str);
     evm_common::h256 hindex = (evm_common::h256)uindex;
@@ -192,5 +199,224 @@ std::string xunit_bstate_t::get_storage(const std::string& index_str) const {
     }
     return value_str;
 }
+
+void xunit_bstate_t::transfer(common::xtoken_id_t const token_id, observer_ptr<xunit_bstate_t> const & recver_state, evm_common::u256 const & value, std::error_code & ec) {
+    assert(recver_state != nullptr);
+    assert(!ec);
+
+    auto const amount_vtoken = static_cast<base::vtoken_t>(value.convert_to<uint64_t>());
+
+    switch (token_id) {
+    case common::xtoken_id_t::top: {
+        if (token_withdraw(data::XPROPERTY_BALANCE_AVAILABLE, amount_vtoken)) {
+            xerror("sender_withdraw failed");
+            ec = error::xerrc_t::update_state_failed;
+            break;
+        }
+
+        if (recver_state->token_deposit(data::XPROPERTY_BALANCE_AVAILABLE, amount_vtoken)) {
+            xerror("recver_deposit failed");
+            ec = error::xerrc_t::update_state_failed;
+            break;
+        }
+
+        break;
+    }
+
+    case common::xtoken_id_t::usdt: {
+        if (tep_token_withdraw("USDT", value)) {
+            xerror("sender_tep_withdraw failed");
+            ec = error::xerrc_t::update_state_failed;
+            break;
+        }
+
+        if (recver_state->tep_token_deposit("USDT", value)) {
+            xerror("recver_tep_deposit failed");
+            ec = error::xerrc_t::update_state_failed;
+            break;
+        }
+
+        break;
+    }
+
+    case common::xtoken_id_t::usdc: {
+        if (tep_token_withdraw("USDC", value)) {
+            xerror("sender_tep_withdraw failed");
+            ec = error::xerrc_t::update_state_failed;
+            break;
+        }
+
+        if (recver_state->tep_token_deposit("USDC", value)) {
+            xerror("recver_tep_deposit failed");
+            ec = error::xerrc_t::update_state_failed;
+            break;
+        }
+
+        break;
+    }
+
+    default:
+        assert(false);
+        break;
+    }
+}
+
+evm_common::u256 xunit_bstate_t::allowance(common::xtoken_id_t const token_id, common::xaccount_address_t const & spender, std::error_code & ec) const {
+    auto const raw_allowance_data = raw_allowance(token_id, ec);
+    if (ec) {
+        return 0;
+    }
+
+    return allowance_impl(raw_allowance_data, spender, ec);
+}
+
+void xunit_bstate_t::approve(common::xtoken_id_t const token_id, common::xaccount_address_t const & spender, evm_common::u256 const & amount, std::error_code & ec) {
+    assert(!ec);
+
+    set_allowance(token_id, spender, amount, ec);
+    assert(allowance(token_id, spender, ec) == amount);
+}
+
+void xunit_bstate_t::update_allowance(common::xtoken_id_t const token_id,
+                                     common::xaccount_address_t const & spender,
+                                     evm_common::u256 const & amount,
+                                     xallowance_update_op_t const op,
+                                     std::error_code & ec) {
+    assert(!ec);
+
+    switch (op) {
+    case xallowance_update_op_t::increase:
+        set_allowance(token_id, spender, amount, ec);
+        return;
+
+    case xallowance_update_op_t::decrease:
+        dec_allowance(token_id, spender, amount, ec);
+        return;
+
+    default:
+        assert(false);
+        ec = error::xerrc_t::property_type_invalid;
+        return;
+    }
+}
+
+xbytes_t xunit_bstate_t::raw_allowance(common::xtoken_id_t const token_id, std::error_code & ec) const {
+    assert(!ec);
+
+    xobject_ptr_t<base::xmapvar_t<std::string>> raw_data;
+    if (m_bstate->find_property(data::XPROPERTY_PRECOMPILED_ERC20_ALLOWANCE_KEY)) {
+        raw_data = m_bstate->load_string_map_var(data::XPROPERTY_PRECOMPILED_ERC20_ALLOWANCE_KEY);
+    } else {
+        raw_data = m_bstate->new_string_map_var(data::XPROPERTY_PRECOMPILED_ERC20_ALLOWANCE_KEY, m_canvas.get());
+    }
+
+    if (nullptr == raw_data) {
+        ec = error::xerrc_t::property_not_exist;
+        return {};
+    }
+
+    return top::to_bytes(raw_data->query(top::to_string(token_id)));
+}
+
+void xunit_bstate_t::raw_allowance(common::xtoken_id_t const token_id, xbytes_t const & raw_data, std::error_code & ec) {
+    assert(!ec);
+
+    xobject_ptr_t<base::xmapvar_t<std::string>> property;
+    if (m_bstate->find_property(data::XPROPERTY_PRECOMPILED_ERC20_ALLOWANCE_KEY)) {
+        property = m_bstate->load_string_map_var(data::XPROPERTY_PRECOMPILED_ERC20_ALLOWANCE_KEY);
+    } else {
+        property = m_bstate->new_string_map_var(data::XPROPERTY_PRECOMPILED_ERC20_ALLOWANCE_KEY, m_canvas.get());
+    }
+
+    if (nullptr == property) {
+        ec = error::xerrc_t::property_not_exist;
+        return;
+    }
+
+    // property->query(top::to_string(token_id));
+    if (property->insert(top::to_string(token_id), top::to_string(raw_data), m_canvas.get()) == false) {
+        ec = error::xerrc_t::update_state_failed;
+    }
+    assert(top::to_bytes(property->query(top::to_string(token_id))) == raw_data);
+}
+
+evm_common::u256 xunit_bstate_t::allowance_impl(xbytes_t const & serialized_allowance_map, common::xaccount_address_t const & spender, std::error_code & ec) const {
+    assert(!ec);
+
+    auto const map = codec::xcodec_t<data::system_contract::xallowance_t, codec::xcodec_type_t::msgpack>::decode(serialized_allowance_map, ec);
+    if (ec) {
+        return 0;
+    }
+
+    auto const it = map.find(spender);
+    if (it != std::end(map)) {
+        return top::get<evm_common::u256>(*it);
+    }
+
+    return 0;
+}
+
+void xunit_bstate_t::set_allowance(common::xtoken_id_t const token_id, common::xaccount_address_t const & spender, evm_common::u256 const & amount, std::error_code & ec) {
+    assert(!ec);
+
+    auto raw_data = raw_allowance(token_id, ec);
+    if (ec) {
+        return;
+    }
+
+    auto map = codec::xcodec_t<data::system_contract::xallowance_t, codec::xcodec_type_t::msgpack>::decode(raw_data, ec);
+    if (ec) {
+        return;
+    }
+
+    auto it = map.find(spender);
+    if (it == std::end(map)) {
+        it = top::get<decltype(it)>(map.insert({spender, 0}));
+    }
+    assert(it != std::end(map));
+    auto & approved = top::get<evm_common::u256>(*it);
+    approved = amount;
+
+    raw_data = codec::xcodec_t<data::system_contract::xallowance_t, codec::xcodec_type_t::msgpack>::encode(map, ec);
+    if (ec) {
+        return;
+    }
+    assert(approved == (codec::xcodec_t<data::system_contract::xallowance_t, codec::xcodec_type_t::msgpack>::decode(raw_data, ec).find(spender)->second));
+    raw_allowance(token_id, raw_data, ec);
+}
+
+void xunit_bstate_t::dec_allowance(common::xtoken_id_t const token_id, common::xaccount_address_t const & spender, evm_common::u256 const & amount, std::error_code & ec) {
+    assert(!ec);
+
+    auto raw_data = raw_allowance(token_id, ec);
+    if (ec) {
+        return;
+    }
+
+    auto map = codec::xcodec_t<data::system_contract::xallowance_t, codec::xcodec_type_t::msgpack>::decode(raw_data, ec);
+    if (ec) {
+        return;
+    }
+
+    auto it = map.find(spender);
+    if (it == std::end(map)) {
+        ec = error::xerrc_t::property_not_exist;
+        return;
+    }
+    assert(it != std::end(map));
+    auto & approved = top::get<evm_common::u256>(*it);
+    if (approved < amount) {
+        ec = error::xerrc_t::property_not_exist;
+        return;
+    }
+    approved -= amount;
+
+    raw_data = codec::xcodec_t<data::system_contract::xallowance_t, codec::xcodec_type_t::msgpack>::encode(map, ec);
+    if (ec) {
+        return;
+    }
+    raw_allowance(token_id, raw_data, ec);
+}
+
 }  // namespace data
 }  // namespace top

@@ -4,20 +4,23 @@
 
 #pragma once
 
-#include "xbasic/xmemory.hpp"
 #include "xbasic/xbyte_buffer.h"
-#include "xvledger/xvstate.h"
+#include "xbasic/xmemory.hpp"
+#include "xcommon/xaccount_address.h"
+#include "xcommon/xtoken_metadata.h"
 #include "xevm_common/common.h"
+#include "xvledger/xvstate.h"
+#include "xvledger/xvstate.h"
 
 NS_BEG2(top, data)
 
 // bstate with canvas
 class xbstate_ctx_t {
- public:
+public:
     xbstate_ctx_t(base::xvbstate_t* bstate, bool readonly);
     virtual ~xbstate_ctx_t();
 
- public: // common APIs for state basic info
+public: // common APIs for state basic info
     const std::string & get_account()const {return m_bstate->get_account();}
     const std::string & get_address()const {return m_bstate->get_account();}
     uint64_t            get_block_height()const {return m_bstate->get_block_height();}
@@ -31,7 +34,7 @@ class xbstate_ctx_t {
     const xobject_ptr_t<base::xvcanvas_t> & get_canvas() const {return m_canvas;}
     std::string         dump() const;
 
- public:
+public:
     bool                do_rollback();
     size_t              do_snapshot();
     bool                is_state_readonly() const;
@@ -41,7 +44,7 @@ class xbstate_ctx_t {
     std::string         take_binlog();
     size_t              get_canvas_records_size() const;
 
- public: // APIs for property operation with error code return
+public: // APIs for property operation with error code return
     int32_t string_create(const std::string& key);
     int32_t string_set(const std::string& key, const std::string& value);
     int32_t string_get(const std::string& key, std::string& value) const;
@@ -73,7 +76,7 @@ class xbstate_ctx_t {
     int32_t     uint64_sub(const std::string& key, uint64_t change);
     int32_t     uint64_set(const std::string& key, uint64_t value);
 
- public:// APIs for property operation with property value return
+public:// APIs for property operation with property value return
     uint64_t            token_get(const std::string& prop) const;
     uint64_t            uint64_property_get(const std::string& prop) const;
     std::string         map_get(const std::string & prop, const std::string & field) const;
@@ -88,7 +91,7 @@ class xbstate_ctx_t {
     int32_t     set_tep_balance(const std::string & token_name, evm_common::u256 new_balance);
     int32_t     set_tep_balance_bytes(const std::string & token_name, const top::xbytes_t & new_balance);
 
- private:
+private:
     int32_t                                 check_create_property(const std::string& key);
     base::xauto_ptr<base::xstringvar_t>             load_string_for_write(const std::string & key);
     base::xauto_ptr<base::xdequevar_t<std::string>> load_deque_for_write(const std::string & key);
@@ -96,10 +99,11 @@ class xbstate_ctx_t {
     base::xauto_ptr<base::xvintvar_t<uint64_t>>     load_uin64_for_write(const std::string & key);
     base::xauto_ptr<base::xtokenvar_t>              load_token_for_write(const std::string & key);
 
- private:
+protected:
     xobject_ptr_t<base::xvbstate_t>     m_bstate{nullptr};
-    xobject_ptr_t<base::xvcanvas_t>     m_canvas{nullptr};
+    xobject_ptr_t<base::xvcanvas_t> m_canvas{nullptr};
 
+private:
     xobject_ptr_t<base::xvbstate_t>     m_snapshot_origin_bstate{nullptr};
     size_t                              m_snapshot_canvas_height{0};
 };

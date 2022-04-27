@@ -25,6 +25,8 @@ struct xtop_msgpack_codec final
     xtop_msgpack_codec & operator=(xtop_msgpack_codec &&)      = delete;
     ~xtop_msgpack_codec()                                      = delete;
 
+    static_assert(std::is_default_constructible<T>::value, "object must be default constructible");
+
     /**
      * @brief Entrypoint for encoding message.
      *
@@ -53,6 +55,10 @@ struct xtop_msgpack_codec final
     auto
     decode(xbyte_buffer_t const & in, ArgsT && ... args) -> decltype(decorators::xmsgpack_decorator_t<T>::decode(in, std::forward<ArgsT>(args)...)) {
         return decorators::xmsgpack_decorator_t<T>::decode(in, std::forward<ArgsT>(args)...);
+    }
+
+    static T decode(xbyte_buffer_t const & in, std::error_code & ec) {
+        return decorators::xmsgpack_decorator_t<T>::decode(in, ec);
     }
 };
 

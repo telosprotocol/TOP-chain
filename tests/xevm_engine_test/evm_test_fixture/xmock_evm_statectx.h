@@ -39,6 +39,8 @@ public:
         return true;
     }
 
+    // void add_balance()
+
     data::xtablestate_ptr_t m_tablestate_ptr;
     std::string table_address;
 

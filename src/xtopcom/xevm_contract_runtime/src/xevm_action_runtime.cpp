@@ -7,6 +7,7 @@
 #include "xevm_contract_runtime/xevm_action_session.h"
 #include "xevm_contract_runtime/xevm_context.h"
 #include "xevm_contract_runtime/xevm_logic.h"
+#include "xevm_contract_runtime/xevm_logic.h"
 #include "xevm_contract_runtime/xevm_storage.h"
 #include "xevm_contract_runtime/xevm_type.h"
 #include "xevm_contract_runtime/xevm_variant_bytes.h"

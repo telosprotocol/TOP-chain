@@ -4,5 +4,11 @@
 
 #pragma once
 
-#include "xcommon/xaccount_address_fwd.h"
-#include "xcommon/xnode_id.h"
+#include "xbase/xns_macro.h"
+
+NS_BEG2(top, common)
+
+class xtop_eth_address;
+using xeth_address_t = xtop_eth_address;
+
+NS_END2

@@ -21,6 +21,7 @@ enum class xenum_errc {
     invalid_account_type,
     token_not_used,
     token_symbol_not_matched,
+    token_not_predefined,
 };
 using xerrc_t = xenum_errc;
 

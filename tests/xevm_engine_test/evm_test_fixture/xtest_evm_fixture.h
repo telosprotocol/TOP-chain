@@ -55,7 +55,8 @@ private:
     xbytes_t get_contract_bin(std::string const & code_file_path);
     bool expected_logs(std::vector<evm_common::xevm_log_t> const & result_logs, json const & expected_json);
 
-    void mock_add_balance(std::string account, evm_common::u256 amount);
+    void mock_add_balance(common::xaccount_address_t const & account, std::string token_symbol, evm_common::u256 amount);
+    void mock_add_approve(common::xaccount_address_t const & owner, common::xaccount_address_t const & spender, std::string const & symbol, evm_common::u256 amount);
 
 protected:
     void SetUp() override {
@@ -73,7 +74,7 @@ private:
     using account_id = std::string;
     std::map<std::string, account_id> deployed_contract_map;
     txexecutor::xvm_para_t vm_param{0, "random_seed", 0};
-    top::statectx::xstatectx_face_ptr_t statestore{std::make_shared<top::evm::tests::xmock_evm_statectx>()};
+    std::shared_ptr<top::evm::tests::xmock_evm_statectx> statestore{std::make_shared<top::evm::tests::xmock_evm_statectx>()};
 
     struct summary_infos {
         std::size_t json_files_num{0};

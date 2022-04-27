@@ -6,13 +6,9 @@ contract TopErc20Wrapper {
 
     string public name;
     string public symbol;
-    bytes32 public uuid;
+    bytes1 public uuid;
 
-    constructor(
-        string memory name_,
-        string memory symbol_,
-        bytes32 uuid_
-    ) public {
+    constructor(string memory name_, string memory symbol_, bytes1 uuid_) {
         name = name_;
         symbol = symbol_;
         uuid = uuid_;
