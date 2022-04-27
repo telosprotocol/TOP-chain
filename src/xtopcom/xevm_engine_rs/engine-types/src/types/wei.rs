@@ -37,6 +37,10 @@ impl Wei {
         u256_to_arr(&self.0)
     }
 
+    pub fn to_rlp_bytes(self) -> Vec<u8> {
+        rlp::encode(&self.0).to_vec()
+    }
+
     pub fn is_zero(&self) -> bool {
         self.0.is_zero()
     }

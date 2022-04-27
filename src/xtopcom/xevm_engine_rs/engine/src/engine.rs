@@ -283,7 +283,7 @@ pub fn add_balance<I: IO>(
 pub fn set_balance<I: IO>(io: &mut I, address: &Address, balance: &Wei) {
     io.write_storage(
         &address_to_key(KeyPrefix::Balance, address),
-        &balance.to_bytes(),
+        balance.to_rlp_bytes().as_slice(),
     );
 }
 pub fn remove_balance<I: IO + Copy>(io: &mut I, address: &Address) {
@@ -326,7 +326,7 @@ pub fn get_code_size<I: IO>(io: &I, address: &Address) -> usize {
 pub fn set_nonce<I: IO>(io: &mut I, address: &Address, nonce: &U256) {
     io.write_storage(
         &address_to_key(KeyPrefix::Nonce, address),
-        &u256_to_arr(nonce),
+        &nonce.as_u64().to_le_bytes(),
     );
 }
 pub fn remove_nonce<I: IO>(io: &mut I, address: &Address) {
@@ -349,8 +349,10 @@ pub fn check_nonce<I: IO>(
     Ok(())
 }
 pub fn get_nonce<I: IO>(io: &I, address: &Address) -> U256 {
-    io.read_u256(&address_to_key(KeyPrefix::Nonce, address))
-        .unwrap_or_else(|_| U256::zero())
+    U256::from(
+        io.read_u64(&address_to_key(KeyPrefix::Nonce, address))
+            .unwrap_or_else(|_| 0),
+    )
 }
 pub fn increment_nonce<I: IO>(io: &mut I, address: &Address) {
     let account_nonce = get_nonce(io, address);
