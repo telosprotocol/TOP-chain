@@ -1,19 +1,22 @@
 // Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+#pragma once
 
-#include <vector>
-#include <string>
-#include <list>
-#include <unordered_map>
-#include <map>
-#include <set>
+#include "xevm_common/common.h"
+
 #include <assert.h>
+
 #include <cmath>
 #include <cstring>
-#include <type_traits>
 #include <iostream>
-#include "xevm_common/common.h"
+#include <list>
+#include <map>
+#include <set>
+#include <string>
+#include <type_traits>
+#include <unordered_map>
+#include <vector>
 
 namespace top {
 namespace evm_common {
