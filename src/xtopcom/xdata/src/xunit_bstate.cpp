@@ -102,6 +102,17 @@ uint64_t xunit_bstate_t::get_available_tgas(uint64_t timer_height, uint32_t toke
     return available_tgas;
 }
 
+uint64_t xunit_bstate_t::available_tgas(uint64_t timer_height, uint64_t onchain_total_gas_deposit) const {
+    uint32_t token_price = get_token_price(onchain_total_gas_deposit);
+    uint64_t used_tgas = calc_decayed_tgas(timer_height);
+    uint64_t total_tgas = get_total_tgas(token_price);
+    uint64_t available_tgas{0};
+    if (total_tgas > used_tgas) {
+        available_tgas = total_tgas - used_tgas;
+    }
+    return available_tgas;
+}
+
 uint64_t xunit_bstate_t::get_account_create_time() const {
     uint64_t create_time = uint64_property_get(XPROPERTY_ACCOUNT_CREATE_TIME);
     if (create_time < base::TOP_BEGIN_GMTIME) {
