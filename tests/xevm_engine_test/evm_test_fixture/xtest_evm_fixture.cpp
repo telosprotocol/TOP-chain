@@ -4,9 +4,25 @@
 #include <dirent.h>
 #include <stdio.h>
 
+#include <exception>
 #include <map>
 #include <string>
 #include <vector>
+
+#define MYEXPECT_TRUE(expr)                                                                                                                                                        \
+    {                                                                                                                                                                              \
+        EXPECT_TRUE(expr);                                                                                                                                                         \
+        if ((expr) == false)                                                                                                                                                       \
+            return false;                                                                                                                                                          \
+    }
+
+#define MYEXPECT_EQ(expra, exprb)                                                                                                                                                  \
+    {                                                                                                                                                                              \
+        EXPECT_EQ(expra, exprb);                                                                                                                                                   \
+        if (expra != exprb) {                                                                                                                                                      \
+            return false;                                                                                                                                                          \
+        }                                                                                                                                                                          \
+    }
 
 void find_json_files(const char * name, std::vector<std::string> & res, int indent = 0) {
     DIR * dir;
@@ -54,15 +70,14 @@ bool xtest_evm_fixture::execute() {
     find_json_files(evm_tests_argv[1], res);
     std::cout << "-- " << res.size() << " files found" << std::endl;
     m_summary.json_files_num = res.size();
+    std::cout << "==================================" << std::endl;
     for (auto p : res) {
-        std::cout << "---- begin test_file: " << p << std::endl;
-        try {
-            execute_test_case(p);
-        } catch (...) {
-        }
-        std::cout << "---- finish test_file: " << p << std::endl;
+        std::cout << "-- [DO TEST] file: " << p << std::endl;
+        execute_test_case(p);
+        // std::cout << "-- finish test_file: " << p << std::endl;
         clean_env();
     }
+    std::cout << "==================================" << std::endl;
 
     m_summary.dump();
     return true;
@@ -108,31 +123,68 @@ bool xtest_evm_fixture::execute_test_case(std::string const & json_file_path) {
         }
     }
 
-    // std::cout << deploy_list << std::endl;
+    std::size_t deploy_case_succ_num = 0;
+    std::size_t call_case_succ_num = 0;
     for (auto each_deploy : deploy_list) {
         if (!each_deploy.empty()) {
-            do_deploy_test(each_deploy);
+            try {
+                if (do_deploy_test(each_deploy)) {
+                    deploy_case_succ_num++;
+                } else {
+                    std::cout << "\033[1;31m    -- deploy case failed --\033[0m" << std::endl;
+                    std::cout << "    case input:\033[1;32m" << each_deploy << "\033[0m\n" << std::endl;
+                }
+            } catch (nlohmann::detail::type_error & e) {
+                std::cout << "    catch json error: " << e.what() << std::endl;
+                std::cout << "\033[1;31m    -- deploy case failed --\033[0m" << std::endl;
+                std::cout << "    case input:\033[1;32m" << each_deploy << "\033[0m\n" << std::endl;
+            } catch (const std::exception & e) {
+                std::cout << "    catch exception: " << e.what() << std::endl;
+                std::cout << "\033[1;31m    -- deploy case failed --\033[0m" << std::endl;
+                std::cout << "    case input:\033[1;32m" << each_deploy << "\033[0m\n" << std::endl;
+            } catch (...) {
+                std::cout << "\033[1;31m    -- deploy case failed --\033[0m" << std::endl;
+                std::cout << "    case input:\033[1;32m" << each_deploy << "\033[0m\n" << std::endl;
+            }
         }
     }
 
     // std::cout << testcases_list << std::endl;
     for (auto each_call : testcases_list) {
         if (!each_call.empty()) {
-            do_call_test(each_call);
+            try {
+                if (do_call_test(each_call)) {
+                    call_case_succ_num++;
+                } else {
+                    std::cout << "\033[1;31m    -- call case failed --\033[0m" << std::endl;
+                    std::cout << "    case input:\033[1;32m" << each_call << "\033[0m\n" << std::endl;
+                }
+            } catch (nlohmann::detail::type_error & e) {
+                std::cout << "    catch json error: " << e.what() << std::endl;
+                std::cout << "\033[1;31m    -- call case failed --\033[0m" << std::endl;
+                std::cout << "    case input:\033[1;32m" << each_call << "\033[0m\n" << std::endl;
+            } catch (const std::exception & e) {
+                std::cout << "    catch exception: " << e.what() << std::endl;
+                std::cout << "\033[1;31m    -- call case failed --\033[0m" << std::endl;
+                std::cout << "    case input:\033[1;32m" << each_call << "\033[0m\n" << std::endl;
+            } catch (...) {
+                std::cout << "\033[1;31m    -- call case failed --\033[0m" << std::endl;
+                std::cout << "    case input:\033[1;32m" << each_call << "\033[0m\n" << std::endl;
+            }
         }
     }
+    std::cout << "  -- succ deploy:" << deploy_case_succ_num << ", succ call:" << call_case_succ_num << std::endl;
 
     return true;
 }
 
 bool xtest_evm_fixture::do_deploy_test(json const & each_deploy) {
-    std::cout << "[deploy_contract]:" << each_deploy << std::endl;
     account_id src_address = each_deploy["src_address"];
     std::string code_file = each_deploy["code_file_path"];
     uint64_t gas_limit = each_deploy["gas_limit"];
     std::string value = each_deploy["value"];
     evm_common::u256 value_256{value};
-    std::cout << "get value_256:" << value_256 << std::endl;
+    // std::cout << "get value_256:" << value_256 << std::endl;
 
     auto expected = each_deploy["expected"];
     std::string contract_name_symbol = expected["extra_message"];
@@ -151,22 +203,21 @@ bool xtest_evm_fixture::do_deploy_test(json const & each_deploy) {
     deployed_contract_map[contract_name_symbol] = contract_address;
 
     uint32_t expected_result = expected["status"];
-    EXPECT_EQ(action_result.status, expected_result);
+    MYEXPECT_EQ(action_result.status, expected_result);
 
     uint64_t expected_gas_used = expected["gas_used"];
-    EXPECT_EQ(action_result.used_gas, expected_gas_used);
+    MYEXPECT_EQ(action_result.used_gas, expected_gas_used);
 
     // std::string expected_extra_msg = expected["extra_message"];
     // EXPECT_EQ(action_result.extra_msg, expected_extra_msg);
 
     // std::cout << "tx output: " << action_result.dump_info() << std::endl;
-    EXPECT_TRUE(expected_logs(expected["logs"], action_result.logs));
+    MYEXPECT_TRUE(expected_logs(action_result.logs, expected["logs"]));
 
     m_summary.succ_deploy_cases += 1;
     return true;
 }
 bool xtest_evm_fixture::do_call_test(json const & each_call) {
-    std::cout << "[call_contract]:" << each_call << std::endl;
     if (each_call.empty()) {
         return false;
     }
@@ -174,13 +225,13 @@ bool xtest_evm_fixture::do_call_test(json const & each_call) {
     account_id src_address = each_call["src_address"];
 
     std::string contract_name_symbol = each_call["target_address"];
-    EXPECT_TRUE(deployed_contract_map.find(contract_name_symbol) != deployed_contract_map.end());
+    MYEXPECT_TRUE(deployed_contract_map.find(contract_name_symbol) != deployed_contract_map.end());
     account_id target_address = deployed_contract_map[contract_name_symbol];
 
     uint64_t gas_limit = each_call["gas_limit"];
     std::string value = each_call["value"];
     evm_common::u256 value_256{value};
-    std::cout << "get value_256:" << value_256 << std::endl;
+    // std::cout << "get value_256:" << value_256 << std::endl;
     std::string input_data = each_call["data"];
 
     vm_param.set_evm_gas_limit(gas_limit);
@@ -195,17 +246,17 @@ bool xtest_evm_fixture::do_call_test(json const & each_call) {
 
     auto expected = each_call["expected"];
     uint32_t expected_result = expected["status"];
-    EXPECT_EQ(action_result.status, expected_result);
+    MYEXPECT_EQ(action_result.status, expected_result);
 
     uint64_t expected_gas_used = expected["gas_used"];
-    EXPECT_EQ(action_result.used_gas, expected_gas_used);
+    MYEXPECT_EQ(action_result.used_gas, expected_gas_used);
 
     std::string expected_extra_msg = expected["extra_message"];
     if (!expected_extra_msg.empty()) {
         EXPECT_EQ(action_result.extra_msg, expected_extra_msg);
     }
 
-    EXPECT_TRUE(expected_logs(expected["logs"], action_result.logs));
+    MYEXPECT_TRUE(expected_logs(action_result.logs, expected["logs"]));
 
     m_summary.succ_call_cases += 1;
     return true;
@@ -219,20 +270,20 @@ xbytes_t xtest_evm_fixture::get_contract_bin(std::string const & code_file_path)
     return xvariant_bytes{bytecode_hex_string, true}.to_bytes();
 }
 
-bool xtest_evm_fixture::expected_logs(json const & expected_json, std::vector<evm_common::xevm_log_t> const & result_logs) {
+bool xtest_evm_fixture::expected_logs(std::vector<evm_common::xevm_log_t> const & result_logs, json const & expected_json) {
     // std::cout << expected_json << std::endl;
     if (expected_json.empty()) {
-        EXPECT_TRUE(result_logs.empty());
+        MYEXPECT_TRUE(result_logs.empty());
     } else {
-        EXPECT_TRUE(result_logs.size() == expected_json.size());
+        MYEXPECT_EQ(result_logs.size(), expected_json.size());
         if (result_logs.size() == expected_json.size()) {
             auto index = 0;
             for (auto _log : expected_json) {
                 auto res_log = result_logs[index];
 
                 std::string contract_name_symbol = _log["address"];
-                EXPECT_TRUE(deployed_contract_map.find(contract_name_symbol) != deployed_contract_map.end());
-                EXPECT_EQ(deployed_contract_map[contract_name_symbol], res_log.address);
+                MYEXPECT_TRUE(deployed_contract_map.find(contract_name_symbol) != deployed_contract_map.end());
+                MYEXPECT_EQ(res_log.address, deployed_contract_map[contract_name_symbol]);
 
                 std::vector<std::string> expected_topics;
                 for (auto _each_topic : _log["topics"]) {
@@ -240,8 +291,17 @@ bool xtest_evm_fixture::expected_logs(json const & expected_json, std::vector<ev
                 }
                 std::string expected_data = _log["data"];
 
-                EXPECT_EQ(expected_topics, res_log.topics);
-                EXPECT_EQ(expected_data, res_log.data);
+                MYEXPECT_EQ(res_log.topics.size(), expected_topics.size());
+                if (res_log.topics.size() == expected_topics.size()) {
+                    auto topics_index = 0;
+                    for (auto _topics : expected_topics) {
+                        auto res_topic = res_log.topics[topics_index];
+                        MYEXPECT_EQ(res_topic, expected_topics[topics_index]);
+                    }
+                }
+
+                // MYEXPECT_EQ(res_log.topics, expected_topics);
+                MYEXPECT_EQ(res_log.data, expected_data);
 
                 index++;
             }
