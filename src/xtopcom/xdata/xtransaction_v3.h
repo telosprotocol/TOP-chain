@@ -120,7 +120,7 @@ class xtransaction_v3_t : public xbase_dataunit_t<xtransaction_v3_t, xdata_type_
     virtual void set_tx_version(uint32_t version) override {}
     virtual uint32_t get_tx_version() const override {return xtransaction_version_3;}
     virtual void set_deposit(uint32_t deposit) override {};
-    virtual uint32_t get_deposit() const override { return static_cast<uint32_t>(get_gaslimit() * get_max_fee_per_gas()); }
+    virtual uint32_t get_deposit() const override { return XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit); }
     virtual void set_expire_duration(uint16_t duration) override {};
     virtual uint16_t get_expire_duration() const override {  if (m_eip_xxxx_tx) { return (uint64_t)m_eip_xxxx_tx->get_expire_duration(); }  return 0; }
     virtual void set_fire_timestamp(uint64_t timestamp) override {};
