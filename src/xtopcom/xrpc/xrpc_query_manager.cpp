@@ -2526,17 +2526,18 @@ void xrpc_query_manager::eth_getTransactionReceipt(xJson::Value & js_req, xJson:
         js_result["to"] = std::string("0x") + sendindex->get_raw_tx()->get_target_addr().substr(6);
         js_result["status"] = "0x1";
     } else {
-        if (tx_type == xtransaction_type_run_contract) {
-            js_result["to"] = std::string("0x") + sendindex->get_raw_tx()->get_target_addr().substr(6);
-        } else {
-            js_result["to"] = xJson::Value::null;
-        }
-
         evm_common::xevm_transaction_result_t evm_result;
         auto ret = sendindex->get_txaction().get_evm_transaction_result(evm_result);
-        std::string contract_addr  = evm_result.extra_msg;
-        js_result["contractAddress"] = contract_addr;
-        xdbg("xrpc_query_manager::eth_getTransactionReceipt.tx hash:%s, ret:%d, extra_msg:%s, contract_addr:%s", js_req["tx_hash"].asString().c_str(), ret, evm_result.extra_msg.c_str(), contract_addr.c_str());
+
+        if (tx_type == xtransaction_type_run_contract) {
+            std::string contract_addr  = std::string("0x") + sendindex->get_raw_tx()->get_target_addr().substr(6);
+            js_result["to"] = contract_addr;
+            js_result["contractAddress"] = contract_addr;
+        } else {
+            js_result["to"] = xJson::Value::null;
+            std::string contract_addr  = evm_result.extra_msg;
+            js_result["contractAddress"] = contract_addr;
+        }
 
         evm_common::h2048 logs_bloom;
         uint32_t index = 0;
