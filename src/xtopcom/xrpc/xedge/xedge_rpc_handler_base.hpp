@@ -42,8 +42,8 @@ public:
     virtual ~xedge_handler_base() {}
     void init();
     virtual void on_message(const xvnode_address_t&, const xrpc_msg_response_t& msg);
-    void edge_send_msg(const std::vector<std::shared_ptr<xrpc_msg_request_t>>& edge_msg_list, const std::string &tx_hash, const std::string &account);
-    virtual void insert_session(const std::vector<shared_ptr<xrpc_msg_request_t>>&, const unordered_set<xvnode_address_t>&, shared_ptr<T>&);
+    void edge_send_msg(const std::vector<std::shared_ptr<xrpc_msg_request_t>>& edge_msg_list, const std::string &tx_hash, const std::string &account, const common::xenum_message_id& msg_type);
+    virtual void insert_session(const std::vector<shared_ptr<xrpc_msg_request_t>>&, const unordered_set<xvnode_address_t>&, shared_ptr<T>&, const common::xenum_message_id& msg_type);
     virtual enum_xrpc_type type() = 0;
     uint64_t add_seq_id() { return ++m_msg_seq_id; }
     uint64_t get_seq_id() { return m_msg_seq_id; }
@@ -76,16 +76,16 @@ void xedge_handler_base<T>::init()
 }
 
 template <class T>
-void xedge_handler_base<T>::edge_send_msg(const std::vector<std::shared_ptr<xrpc_msg_request_t>>& edge_msg_list, const std::string &tx_hash, const std::string &account)
+void xedge_handler_base<T>::edge_send_msg(const std::vector<std::shared_ptr<xrpc_msg_request_t>>& edge_msg_list, const std::string &tx_hash, const std::string &account, const common::xenum_message_id& msg_type)
 {
     for (auto msg_ptr : edge_msg_list) {
         try {
             xmessage_t msg;
             if (msg_ptr->m_tx_type == enum_xrpc_tx_type::enum_xrpc_tx_type) {
-                xmessage_t tx_msg(codec::xmsgpack_codec_t<xrpc_msg_request_t>::encode(*msg_ptr), rpc_msg_request);
+                xmessage_t tx_msg(codec::xmsgpack_codec_t<xrpc_msg_request_t>::encode(*msg_ptr), msg_type);
                 msg = std::move(tx_msg);
             } else if (msg_ptr->m_tx_type == enum_xrpc_tx_type::enum_xrpc_query_type) {
-                xmessage_t query_msg(codec::xmsgpack_codec_t<xrpc_msg_request_t>::encode(*msg_ptr), rpc_msg_query_request);
+                xmessage_t query_msg(codec::xmsgpack_codec_t<xrpc_msg_request_t>::encode(*msg_ptr), msg_type);
                 msg = std::move(query_msg);
             } else {
                 xerror("error tx_type %d", msg_ptr->m_tx_type);
@@ -182,12 +182,13 @@ void xedge_handler_base<T>::on_message(const xvnode_address_t&, const xrpc_msg_r
     }
 }
 template <class T>
-void xedge_handler_base<T>::insert_session(const std::vector<shared_ptr<xrpc_msg_request_t>>& edge_msg_ptr_list, const unordered_set<xvnode_address_t>& addr_set, shared_ptr<T>& response)
+void xedge_handler_base<T>::insert_session(const std::vector<shared_ptr<xrpc_msg_request_t>>& edge_msg_ptr_list, 
+    const unordered_set<xvnode_address_t>& addr_set, shared_ptr<T>& response, const common::xenum_message_id& msg_type)
 {
     using session_type = forward_session<T>;
     auto & forward_session_map = m_forward_session_map;
     auto & mutex = m_mutex;
-    auto forward_session = shared_ptr<session_type>(new session_type(edge_msg_ptr_list, this, response, m_ioc, addr_set),
+    auto forward_session = shared_ptr<session_type>(new session_type(edge_msg_ptr_list, this, response, m_ioc, addr_set, msg_type),
         [&forward_session_map, &mutex](session_type* session) {
             {
                 std::lock_guard<std::mutex> lock(mutex);
@@ -200,7 +201,7 @@ void xedge_handler_base<T>::insert_session(const std::vector<shared_ptr<xrpc_msg
 
     std::lock_guard<std::mutex> lock(m_mutex);
     m_forward_session_map.emplace(edge_msg_ptr_list.front()->m_uuid, forward_session.get());
-    xdbg_rpc("insert_session: %x", edge_msg_ptr_list.front()->m_uuid);
+    xdbg_rpc("insert_session: %x, %x", edge_msg_ptr_list.front()->m_uuid, msg_type);
     forward_session->set_timeout(TIME_OUT);
 }
 NS_END2

@@ -332,13 +332,10 @@ void xedge_method_base<T>::forward_method(shared_ptr<conn_type> & response, xjso
             }
             uint64_t delay_time_s = json_proc.m_tx_ptr->get_delay_from_fire_timestamp(now);
             XMETRICS_GAUGE(metrics::txdelay_from_client_to_edge, delay_time_s);
-            m_edge_handler_ptr->edge_send_msg(edge_msg_list, json_proc.m_tx_ptr->get_digest_hex_str(), json_proc.m_tx_ptr->get_source_addr());
+            m_edge_handler_ptr->edge_send_msg(edge_msg_list, json_proc.m_tx_ptr->get_digest_hex_str(), json_proc.m_tx_ptr->get_source_addr(), rpc_msg_request);
         } else {
-            m_edge_handler_ptr->edge_send_msg(edge_msg_list, "", "");
+            m_edge_handler_ptr->edge_send_msg(edge_msg_list, "", "", rpc_msg_query_request);
         }
-#if (defined ENABLE_RPC_SESSION) && (ENABLE_RPC_SESSION != 0)
-        m_edge_handler_ptr->insert_session(edge_msg_list, shard_addr_set, response);
-#else
         if (json_proc.m_tx_type == enum_xrpc_tx_type::enum_xrpc_tx_type) {
             json_proc.m_response_json[RPC_ERRNO] = RPC_OK_CODE;
             json_proc.m_response_json[RPC_ERRMSG] = RPC_OK_MSG;
@@ -348,9 +345,8 @@ void xedge_method_base<T>::forward_method(shared_ptr<conn_type> & response, xjso
             XMETRICS_COUNTER_INCREMENT("rpc_edge_query_response", 1);
             // auditor return query result directly, so clear shard addr set
             shard_addr_set.clear();
-            m_edge_handler_ptr->insert_session(edge_msg_list, shard_addr_set, response);
+            m_edge_handler_ptr->insert_session(edge_msg_list, shard_addr_set, response, rpc_msg_query_request);
         }
-#endif
     } while (0);
 }
 
