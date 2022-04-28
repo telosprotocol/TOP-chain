@@ -53,7 +53,7 @@ private:
     bool do_call_test(json const & each_call);
 
     xbytes_t get_contract_bin(std::string const & code_file_path);
-    bool expected_logs(json const & expected_json, std::vector<evm_common::xevm_log_t> const & result_logs);
+    bool expected_logs(std::vector<evm_common::xevm_log_t> const & result_logs, json const & expected_json);
 
     void mock_add_balance(std::string account, evm_common::u256 amount);
 
