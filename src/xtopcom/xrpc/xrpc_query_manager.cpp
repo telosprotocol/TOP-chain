@@ -1747,6 +1747,18 @@ bool query_special_property(xJson::Value & jph, const std::string & owner, const
         }
         return true;
     }
+
+    if (prop_name == XPROPERTY_TEP1_BALANCE_KEY)
+    {
+        xJson::Value j;
+        auto kvs = unitstate->map_get(prop_name);
+        for (auto & v : kvs) {
+            auto token_balance = unitstate->tep_token_balance(prop_name, v.first);
+            j[v.first] = token_balance.str();
+        }
+        jph[prop_name] = j;
+        return true;
+    }
     return false;
 }
 
