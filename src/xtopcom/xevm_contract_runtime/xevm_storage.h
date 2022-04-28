@@ -46,6 +46,8 @@ public:
                 assert(!ec);
                 top::error::throw_error(ec);
 
+                xdbg("storage_get get nonce account:%s, nonce:%llu", storage_key.address.c_str(), value_uint64);
+
                 evm_common::xBorshEncoder encoder;
                 encoder.EncodeInteger(value_uint64);
                 xbytes_t result = encoder.GetBuffer();
@@ -111,7 +113,7 @@ public:
                 auto property = state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, state_accessor::properties::xproperty_category_t::system};
 
                 assert(value.size() == 8);
-                uint64_t nonce_u64;
+                uint64_t nonce_u64 = 0;
                 evm_common::xBorshDecoder decoder;
                 decoder.getInteger(value, nonce_u64);
 
