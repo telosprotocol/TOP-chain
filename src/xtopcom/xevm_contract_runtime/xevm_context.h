@@ -7,21 +7,19 @@
 #include "xbase/xns_macro.h"
 #include "xbasic/xbyte_buffer.h"
 #include "xbasic/xmemory.hpp"
-// #include "xcontract_common/xcontract_state.h"
 #include "xdata/xconsensus_action.h"
-#include "xevm_contract_runtime/xevm_action.h"
+#include "xtxexecutor/xvm_face.h"  //I suppose this header file should be in some common directory like xdata.
 
 NS_BEG2(top, evm_runtime)
 
+const uint32_t CURRENT_CALL_ARGS_VERSION = 1;
+
 class xtop_evm_context {
 private:
-    // mock...
-    xbytes_t m_input_data;
     std::string m_random_seed{""};
+    uint64_t m_gas_limit{0};
+    xbytes_t m_input_data;  // for deploy , is bytecode. for call , is serialized call args
 
-    xtop_evm_action_type m_action_type{xtop_evm_action_type::invalid};
-
-    // observer_ptr<contract_common::xcontract_state_t> m_contract_state{}; // we might not need this.
     std::unique_ptr<data::xbasic_top_action_t const> m_action;
 
 public:
@@ -33,19 +31,18 @@ public:
     ~xtop_evm_context() = default;
 
     // explicit xtop_evm_context(std::unique_ptr<data::xbasic_top_action_t const> action, observer_ptr<xcontract_state_t> s) noexcept;
-    explicit xtop_evm_context(std::unique_ptr<data::xbasic_top_action_t const> action) noexcept;
+    xtop_evm_context(std::unique_ptr<data::xbasic_top_action_t const> action, txexecutor::xvm_para_t const & vm_para) noexcept;
 
 public:
-    xtop_evm_action_type action_type() const;
+    data::xtop_evm_action_type action_type() const;
 
-    // todo should be settled in constructor. delete later
-    void input_data(xbytes_t const & data);
-    // todo should get from relavent action. might not store inside self.
     xbytes_t const & input_data() const;
 
     common::xaccount_address_t sender() const;
+    common::xaccount_address_t recver() const;
 
     std::string const & random_seed() const noexcept;
+    uint64_t gas_limit() const noexcept;
 };
 using xevm_context_t = xtop_evm_context;
 

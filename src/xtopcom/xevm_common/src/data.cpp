@@ -16,6 +16,14 @@ bytes subData(const bytes & indata, size_t index, size_t length) {
     return data(indata.data() + index, subLength);
 }
 
+bytes subData(const bytes & indata, size_t startIndex) {
+    if (startIndex >= indata.size()) {
+        return bytes();
+    }
+    size_t subLength = indata.size() - startIndex;
+    return data(indata.data() + startIndex, subLength);
+}
+
 }  // namespace rlp
 }  // namespace evm_common
 }  // namespace top

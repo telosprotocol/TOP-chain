@@ -1,5 +1,5 @@
 use crate::error;
-use engine_types::U256;
+use engine_types::{proto_precompile::ContractBridgeArgs, PrecompileResult, U256};
 
 /// The purpose of this trait is to represent a reference to a value that
 /// could be obtained by IO, but without eagerly loading it into memory.
@@ -28,6 +28,9 @@ pub trait IO {
 
     /// Return a value to an external process.
     fn return_output(&mut self, value: &[u8]);
+
+    /// Return error code and used gas;
+    fn return_error(&mut self, ec_gas: (u32, u64));
 
     /// Read the value in storage at the given key, if any.
     fn read_storage(&self, key: &[u8]) -> Option<Self::StorageValue>;
@@ -65,18 +68,22 @@ pub trait IO {
     }
 
     /// Convenience function to read a 256-bit unsigned integer from storage
-    /// (assumes big-endian encoding).
+    /// (assumes rlp encoding).
     fn read_u256(&self, key: &[u8]) -> Result<U256, error::ReadU256Error> {
         let value = self
             .read_storage(key)
             .ok_or(error::ReadU256Error::MissingValue)?;
 
-        if value.len() != 32 {
-            return Err(error::ReadU256Error::InvalidU256);
-        }
-
-        let mut result = [0u8; 32];
-        value.copy_to_slice(&mut result);
-        Ok(U256::from_big_endian(&result))
+        rlp::decode(value.to_vec().as_slice()).map_err(|_| error::ReadU256Error::InvalidU256)
     }
+}
+
+pub trait ContractBridge {
+    type StorageValue: StorageIntermediate;
+
+    fn extern_contract_call(args: ContractBridgeArgs) -> PrecompileResult;
+
+    fn get_result() -> Option<Self::StorageValue>;
+
+    fn get_error() -> Option<Self::StorageValue>;
 }

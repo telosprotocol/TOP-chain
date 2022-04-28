@@ -4,18 +4,12 @@ package top.evm_engine.parameters;
 
 import "proto_basic.proto";
 
-message ResultLog {
-    basic.ProtoAddress address = 1;
-    repeated basic.RawU256 topics = 2;
-    bytes data = 3;
-}
-
 message SubmitResult {
     uint32 version = 1;
     uint32 transaction_status = 2;
     bytes status_data = 3;
     uint64 gas_used = 4;
-    repeated ResultLog logs = 5;
+    repeated basic.ResultLog logs = 5;
 }
 
 message FunctionCallArgs {
@@ -23,4 +17,5 @@ message FunctionCallArgs {
     basic.ProtoAddress address = 2;
     basic.WeiU256 value = 3;
     bytes input = 4;
+    uint64 gas_limit = 5;
 }

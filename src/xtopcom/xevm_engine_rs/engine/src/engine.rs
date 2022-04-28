@@ -1,12 +1,13 @@
 use crate::error::{BalanceOverflow, EngineError, EngineErrorKind, EngineStateError};
 use crate::parameters::TransactionStatus;
 use crate::prelude::*;
-use crate::proto_parameters::{FunctionCallArgs, ResultLog, SubmitResult};
+use crate::proto_parameters::{FunctionCallArgs, SubmitResult};
 use core::cell::RefCell;
 use engine_precompiles::{Precompile, PrecompileConstructorContext, Precompiles};
 use engine_sdk::dup_cache::{DupCache, PairDupCache};
 use engine_sdk::env::Env;
 use engine_sdk::io::{StorageIntermediate, IO};
+use engine_types::ResultLog;
 use evm::backend::{Apply, ApplyBackend, Backend, Basic, Log};
 use evm::{executor, Config, CreateScheme, ExitError, ExitReason};
 
@@ -112,10 +113,17 @@ impl<'env, I: IO + Copy, E: Env> Engine<'env, I, E> {
         }
     }
 
-    pub fn deploy_code_with_input(&mut self, input: Vec<u8>) -> EngineResult<SubmitResult> {
+    pub fn deploy_code_with_args(&mut self, args: FunctionCallArgs) -> EngineResult<SubmitResult> {
         let origin = Address::new(self.origin());
-        let value = Wei::zero();
-        self.deploy_code(origin, value, input, u64::MAX, Vec::new())
+        match args.get_version() {
+            Self::CURRENT_CALL_ARGS_VERSION => {
+                let value = args.get_value().clone().into();
+                let input = args.get_input().into();
+                let gas_limit = args.get_gas_limit();
+                self.deploy_code(origin, value, input, gas_limit, Vec::new())
+            }
+            _ => Err(EngineErrorKind::IncorrectArgs.into()),
+        }
     }
 
     pub fn deploy_code(
@@ -131,12 +139,22 @@ impl<'env, I: IO + Copy, E: Env> Engine<'env, I, E> {
         let address = executor.create_address(CreateScheme::Legacy {
             caller: origin.raw(),
         });
+        sdk::log(
+            format!(
+                "deploy_code at address: {:?} from {:?} with code size: {}, value: {:?}",
+                address,
+                origin,
+                input.len(),
+                value
+            )
+            .as_str(),
+        );
         let (exit_reason, return_value) =
             executor.transact_create(origin.raw(), value.raw(), input, gas_limit, access_list);
         let result = if exit_reason.is_succeed() {
             address.0.to_vec()
         } else {
-            println!("{:?}", exit_reason);
+            sdk::log(format!("deploy_code failed: {:?}", exit_reason).as_str());
             return_value
         };
 
@@ -154,10 +172,6 @@ impl<'env, I: IO + Copy, E: Env> Engine<'env, I, E> {
         let logs = logs.into_iter().map(|log| log.into()).collect();
 
         self.apply(values, Vec::<Log>::new(), true);
-        println!(
-            "[aurora_engine]apply {:?} {:?} {:?}",
-            status, used_gas, logs
-        );
 
         Ok(SubmitResult::new_proto(status, used_gas, logs))
     }
@@ -188,8 +202,8 @@ impl<'env, I: IO + Copy, E: Env> Engine<'env, I, E> {
                 //     })?;
                 let value = args.get_value().clone().into();
                 let input = args.get_input().into();
-                println!("contract: {:?} input: {:?}", contract, input);
-                self.call(&origin, &contract, value, input, u64::MAX, Vec::new())
+                let gas_limit = args.get_gas_limit();
+                self.call(&origin, &contract, value, input, gas_limit, Vec::new())
             }
             _ => Err(EngineErrorKind::IncorrectArgs.into()),
         }
@@ -206,6 +220,13 @@ impl<'env, I: IO + Copy, E: Env> Engine<'env, I, E> {
     ) -> EngineResult<SubmitResult> {
         let executor_params = StackExecutorParams::new(gas_limit, self.env.random_seed());
         let mut executor = executor_params.make_executor(self);
+        sdk::log(
+            format!(
+                "call contract at: {:?} from {:?} with input {:?}, value: {:?}",
+                contract, origin, input, value
+            )
+            .as_str(),
+        );
         let (exit_reason, result) = executor.transact_call(
             origin.raw(),
             contract.raw(),
@@ -262,7 +283,7 @@ pub fn add_balance<I: IO>(
 pub fn set_balance<I: IO>(io: &mut I, address: &Address, balance: &Wei) {
     io.write_storage(
         &address_to_key(KeyPrefix::Balance, address),
-        &balance.to_bytes(),
+        balance.to_rlp_bytes().as_slice(),
     );
 }
 pub fn remove_balance<I: IO + Copy>(io: &mut I, address: &Address) {
@@ -305,7 +326,7 @@ pub fn get_code_size<I: IO>(io: &I, address: &Address) -> usize {
 pub fn set_nonce<I: IO>(io: &mut I, address: &Address, nonce: &U256) {
     io.write_storage(
         &address_to_key(KeyPrefix::Nonce, address),
-        &u256_to_arr(nonce),
+        &nonce.as_u64().to_le_bytes(),
     );
 }
 pub fn remove_nonce<I: IO>(io: &mut I, address: &Address) {
@@ -328,8 +349,10 @@ pub fn check_nonce<I: IO>(
     Ok(())
 }
 pub fn get_nonce<I: IO>(io: &I, address: &Address) -> U256 {
-    io.read_u256(&address_to_key(KeyPrefix::Nonce, address))
-        .unwrap_or_else(|_| U256::zero())
+    U256::from(
+        io.read_u64(&address_to_key(KeyPrefix::Nonce, address))
+            .unwrap_or_else(|_| 0),
+    )
 }
 pub fn increment_nonce<I: IO>(io: &mut I, address: &Address) {
     let account_nonce = get_nonce(io, address);
@@ -550,12 +573,14 @@ impl<'env, J: IO + Copy, E: Env> ApplyBackend for Engine<'env, J, E> {
                     if let Some(code) = code {
                         set_code(&mut self.io, &address, &code);
                         code_bytes_written = code.len();
-                        sdk::log!(crate::prelude::format!(
-                            "code_write_at_address {:?} {}",
-                            address,
-                            code_bytes_written,
-                        )
-                        .as_str());
+                        sdk::log(
+                            crate::prelude::format!(
+                                "code_write_at_address {:?} {}",
+                                address,
+                                code_bytes_written,
+                            )
+                            .as_str(),
+                        );
                     }
 
                     let next_generation = if reset_storage {

@@ -1,0 +1,107 @@
+{
+    "pre_data": {},
+    "deploy_contract": [
+        {
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
+            "code_file_path": "add.bin",
+            "gas_limit": 220022,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "contract_one",
+                "gas_used": 220022,
+                "logs": []
+            }
+        },
+        {
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
+            "code_file_path": "add.bin",
+            "gas_limit": 200000,
+            "value": "0",
+            "expected": {
+                "status": 2,
+                "extra_message": "outofgas",
+                "gas_used": 200000,
+                "logs": []
+            }
+        }
+    ],
+    "test_cases": [
+        {
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
+            "target_address": "contract_one",
+            "data": "0x6e2c732d0000000000000000000000000000000000000000000000000000000000003039000000000000000000000000000000000000000000000000000000000000d431",
+            "gas_limit": 23317,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "",
+                "gas_used": 23317,
+                "logs": [
+                    {
+                        "address": "contract_one",
+                        "topics": [
+                            "0xba81e10edd752f92a850d20e6ca5897bc0ff54393985bc25b2c2bdc925218649"
+                        ],
+                        "data": "0x0000000000000000000000000000000000000000000000000000000000003039000000000000000000000000000000000000000000000000000000000000d431000000000000000000000000000000000000000000000000000000000001046a"
+                    }
+                ]
+            }
+        },
+        {
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
+            "target_address": "contract_one",
+            "data": "0x6e2c732d0000000000000000000000000000000000000000000000000000000000003039000000000000000000000000000000000000000000000000000000000000d431",
+            "gas_limit": 23000,
+            "value": "0",
+            "expected": {
+                "status": 2,
+                "extra_message": "",
+                "gas_used": 23000,
+                "logs": []
+            }
+        },
+        {
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
+            "target_address": "contract_one",
+            "data": "0xfad772db000000000000000000000000000000000000000000000000000000000012d687",
+            "gas_limit": 22895,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "",
+                "gas_used": 22895,
+                "logs": [
+                    {
+                        "address": "contract_one",
+                        "topics": [
+                            "0x76b87589c0efe817c6ec312c8fa2ab35ac24bbbd1e5fb8d3e3c3b4b789fdc7d4"
+                        ],
+                        "data": "0x000000000000000000000000000000000000000000000000000000000012d687000000000000000000000000000000000000000000000000000000000012d688"
+                    }
+                ]
+            }
+        },
+        {
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
+            "target_address": "contract_one",
+            "data": "0x2fb3c740",
+            "gas_limit": 44710,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "",
+                "gas_used": 44710,
+                "logs": [
+                    {
+                        "address": "contract_one",
+                        "topics": [
+                            "0x4558e87569f3778927a0c0ab7e6c04d9cc3a08694412ac6b8b8bbd8276c8fb3d"
+                        ],
+                        "data": "0x0000000000000000000000000000000000000000000000000000000000000001"
+                    }
+                ]
+            }
+        }
+    ]
+}

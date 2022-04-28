@@ -11,6 +11,7 @@
 #include "xvledger/xdataobj_base.hpp"
 #include "xbase/xrefcount.h"
 #include "xbase/xmem.h"
+#include "xevm_common/common.h"
 namespace top { namespace data {
 
 enum enum_xtransaction_type {
@@ -34,8 +35,8 @@ enum enum_xtransaction_type {
 
 enum enum_xtransaction_version {
     xtransaction_version_1 = 0,
-    xtransaction_version_2 = 2
-};
+    xtransaction_version_2 = 2,
+    xtransaction_version_3 = 3 };
 
 enum enum_xunit_tx_exec_status : uint8_t {
     enum_xunit_tx_exec_status_success   = 1,
@@ -52,6 +53,7 @@ public:
     std::string                 m_new_account;
 #endif
     data::xproperty_asset       m_asset{0};
+    evm_common::u256            m_amount_256{0};
     std::string                 m_function_name;
     std::string                 m_function_para;
     uint64_t                    m_vote_num;
@@ -135,7 +137,6 @@ class xtransaction_t : virtual public base::xrefcount_t {
     virtual const std::string & get_target_addr()const = 0;
     virtual const std::string & get_origin_target_addr()const = 0;
     virtual uint64_t            get_tx_nonce() const = 0;
-    virtual size_t              get_serialize_size() const = 0;
     virtual std::string         dump() const = 0;  // just for debug purpose
     virtual const std::string & get_source_action_name() const = 0;
     virtual const std::string & get_source_action_para() const = 0;
@@ -169,6 +170,9 @@ class xtransaction_t : virtual public base::xrefcount_t {
     inline  uint64_t get_delay_from_fire_timestamp(uint64_t now_s) const {return now_s > get_fire_timestamp() ? now_s - get_fire_timestamp() : 0;}
     virtual void set_amount(uint64_t amount) = 0;
     virtual uint64_t get_amount() const noexcept = 0;
+    virtual void set_amount_256(top::evm_common::u256 amount) = 0;
+    virtual top::evm_common::u256 get_amount_256() const noexcept = 0;
+    virtual bool is_top_transfer() const noexcept = 0;
     virtual void set_premium_price(uint32_t premium_price) = 0;
     virtual uint32_t get_premium_price() const = 0;
     virtual void set_last_nonce(uint64_t last_nonce) = 0;
@@ -180,6 +184,17 @@ class xtransaction_t : virtual public base::xrefcount_t {
     virtual void set_memo(const std::string & memo) = 0;
     virtual const std::string & get_memo() const = 0;
     virtual const std::string & get_target_address() const = 0;
+    virtual const std::string get_SignV() const { return ""; }
+    virtual const std::string get_SignR() const { return ""; }
+    virtual const std::string get_SignS() const { return ""; }
+    virtual bool is_evm_tx() const = 0;
+    virtual void set_data(std::string data) {  }
+    virtual const std::string & get_data() const { static std::string strNull = ""; return strNull; }
+    virtual void set_gaslimit(top::evm_common::u256 gas) { }
+    virtual const top::evm_common::u256 get_gaslimit() const { return 0; }
+    virtual const top::evm_common::u256 get_max_priority_fee_per_gas() const { return 0; }
+    virtual const top::evm_common::u256 get_max_fee_per_gas() const { return 0; }
+    virtual uint32_t get_eip_version() const = 0;
 };
 
 }  // namespace data

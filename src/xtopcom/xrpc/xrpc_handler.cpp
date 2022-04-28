@@ -163,10 +163,17 @@ void xrpc_handler::cluster_process_query_request(const xrpc_msg_request_t & edge
         json_proc.m_request_json["params"]["version"] = version;
         string strErrorMsg = RPC_OK_MSG;
         uint32_t nErrorCode = 0;
-        m_rpc_query_mgr->call_method(strMethod, json_proc.m_request_json["params"], json_proc.m_response_json["data"], strErrorMsg, nErrorCode);
-        json_proc.m_response_json[RPC_ERRNO] = nErrorCode;
-        json_proc.m_response_json[RPC_ERRMSG] = strErrorMsg;
-        json_proc.m_response_json[RPC_SEQUENCE_ID] = edge_msg.m_client_id;
+        if (strMethod.substr(0,4) == "eth_") {
+            m_rpc_query_mgr->call_method(strMethod, json_proc.m_request_json["params"], json_proc.m_response_json, strErrorMsg, nErrorCode);
+            //uint64_t client_id = strtoul(edge_msg.m_client_id.c_str(), NULL, 10);
+            json_proc.m_response_json["id"] = edge_msg.m_client_id; //(xJson::UInt64)client_id;
+            json_proc.m_response_json["jsonrpc"] = "2.0";
+        } else {
+            m_rpc_query_mgr->call_method(strMethod, json_proc.m_request_json["params"], json_proc.m_response_json["data"], strErrorMsg, nErrorCode);
+            json_proc.m_response_json[RPC_ERRNO] = nErrorCode;
+            json_proc.m_response_json[RPC_ERRMSG] = strErrorMsg;
+            json_proc.m_response_json[RPC_SEQUENCE_ID] = edge_msg.m_client_id;
+        }
         response_msg_ptr->m_message_body = json_proc.get_response();
     } catch (const xrpc_error & e) {
         xinfo_rpc("error %s", e.what());
@@ -185,6 +192,15 @@ void xrpc_handler::cluster_process_query_request(const xrpc_msg_request_t & edge
     response_msg_ptr->m_signature_address = m_arc_vhost->address();
     xmessage_t msg(codec::xmsgpack_codec_t<xrpc_msg_response_t>::encode(*response_msg_ptr), rpc_msg_response);
     xdbg_rpc("xarc_rpc_handler response recv %" PRIx64 ", send %" PRIx64 ", %s", message.hash(), msg.hash(), response_msg_ptr->m_message_body.c_str());
+    if (response_msg_ptr->m_message_body.size() > 800) {
+        uint32_t part_num = (response_msg_ptr->m_message_body.size() + 799)/800;
+        uint32_t i = 0;
+        for (; i < (part_num - 1); i++) {
+            xinfo_rpc(">>>rsp part%u:%s", i, response_msg_ptr->m_message_body.substr(i*800,800).c_str());
+        }
+        xinfo_rpc(">>>rsp part%u:%s", i, response_msg_ptr->m_message_body.substr(i*800).c_str());
+        std::cout << ">>>rsp:" << response_msg_ptr->m_message_body << std::endl;
+    }
     std::error_code ec;
     m_arc_vhost->send_to(edge_sender, msg, ec);
 

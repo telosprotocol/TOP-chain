@@ -1,3 +1,5 @@
+#pragma once
+
 #include "assert.h"
 #include "xbase/xns_macro.h"
 #include "xbasic/xbyte_buffer.h"
@@ -7,6 +9,9 @@ NS_BEG3(top, contract_runtime, evm)
 #define CON(x) (std::isdigit((x)) ? ((x) - '0') : (std::tolower((x)) - 'W'))
 #define T6_ACCOUNT_PREFIX "T60004"
 #define ETH_ACCOUNT_PREFIX "0x"
+
+std::string evm_to_top_address(std::string const & input);
+std::string top_to_evm_address(std::string const & input);
 
 class xvariant_bytes {
 private:

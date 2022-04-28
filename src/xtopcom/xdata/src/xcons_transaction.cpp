@@ -104,7 +104,7 @@ void xcons_transaction_t::set_not_need_confirm() {
 void xcons_transaction_t::set_inner_table_flag() {
     if (is_send_tx()
         && (get_self_tableid() == get_peer_tableid())
-        && get_tx_type() == xtransaction_type_transfer) {// TODO(jimmy) only support transfer now
+        && (get_tx_type() == xtransaction_type_transfer || m_tx->is_evm_tx())) {// TODO(jimmy) only support transfer now
         xdbg("xcons_transaction_t::set_inner_table_flag tx:%s true", dump().c_str());
         m_execute_state.set_inner_table_flag(true);
     }
@@ -120,6 +120,8 @@ void xcons_transaction_t::set_tx_subtype(enum_transaction_subtype _subtype) {
 void xcons_transaction_t::update_transation() {
     if (m_receipt == nullptr) {
         if (m_tx->get_source_addr() == m_tx->get_target_addr() || data::is_black_hole_address(common::xaccount_address_t{m_tx->get_target_addr()})) {
+            set_tx_subtype(enum_transaction_subtype_self);
+        } else if (m_tx->get_tx_version() == xtransaction_version_3 && m_tx->get_tx_type() == xtransaction_type_deploy_evm_contract) {
             set_tx_subtype(enum_transaction_subtype_self);
         } else {
             set_tx_subtype(enum_transaction_subtype_send);
@@ -224,7 +226,10 @@ std::string xcons_transaction_t::dump(bool detail) const {
     if (!m_dump_str.empty()) {
         return m_dump_str;
     }
-
+    if (get_tx_hash().empty())
+    {
+        return m_dump_str;
+    }
     std::stringstream ss;
     ss << "{";
     ss << base::xvtxkey_t::transaction_hash_subtype_to_string(get_tx_hash(), get_tx_subtype());

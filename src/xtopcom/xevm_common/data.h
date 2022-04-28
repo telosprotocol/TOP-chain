@@ -39,7 +39,8 @@ inline void append(bytes & data, const byte suffix) {
 /// Return a part (subdata) of the requested size of the input data.
 bytes subData(const bytes & data, size_t index, size_t length);
 
-/// Determines if a byte array has a specific prefix.
+bytes subData(const bytes & data, size_t startIndex);
+    /// Determines if a byte array has a specific prefix.
 template <typename T>
 inline bool has_prefix(const bytes & data, T & prefix) {
     return std::equal(prefix.begin(), prefix.end(), data.begin(), data.begin() + std::min(data.size(), prefix.size()));

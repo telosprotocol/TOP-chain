@@ -111,34 +111,41 @@ int32_t xaccount_context_t::create_user_account(const std::string& address) {
 
     // just for test debug
     base::vtoken_t add_token = (base::vtoken_t)(ASSET_TOP(100000000));
-    return token_deposit(data::XPROPERTY_BALANCE_AVAILABLE, add_token);
-}
+    auto ret = token_deposit(data::XPROPERTY_BALANCE_AVAILABLE, add_token);
+    if (ret != xsuccess) {
+        return ret;
+    }
 
-int32_t xaccount_context_t::token_transfer_out(const data::xproperty_asset& asset, uint64_t gas_fee, uint64_t service_fee) {
-    if (asset.is_top_token()) {
-        return top_token_transfer_out(asset.m_amount, gas_fee, service_fee);
-    } else {
-        xassert(false);
+    evm_common::u256 add_token_256 = 10000000000000000000ULL;
+    std::string token_name = data::XPROPERTY_ASSET_ETH;
+    auto old_token_256 = m_account->tep_token_balance(data::XPROPERTY_TEP1_BALANCE_KEY, token_name);
+    if (old_token_256 != 0) {
+        xerror("xaccount_context_t::create_user_account fail-eth token not zero");
         return -1;
     }
+
+    // just for test debug
+    return m_account->tep_token_deposit(data::XPROPERTY_TEP1_BALANCE_KEY, token_name, add_token_256);
 }
 
-int32_t xaccount_context_t::top_token_transfer_out(uint64_t amount, uint64_t gas_fee, uint64_t service_fee) {
-    if (amount == 0 && gas_fee == 0 && service_fee == 0) {
-        xerror("xaccount_context_t::top_token_transfer_out fail-invalid para.amount=%ld,gas_fee=%ld,service_fee=%ld", amount, gas_fee, service_fee);
+int32_t xaccount_context_t::token_transfer_out(const data::xproperty_asset& asset, evm_common::u256 amount256, uint64_t gas_fee, uint64_t service_fee) {
+    xdbg("xaccount_context_t::token_transfer_out token_name=%s,amount=%llu", asset.m_token_name.c_str(), asset.amount());
+    if (asset.amount() == 0 && amount256 == 0 && gas_fee == 0 && service_fee == 0) {
+        xerror("xaccount_context_t::top_token_transfer_out fail-invalid para");
         return -1;
     }
 
     if(get_address() == sys_contract_zec_reward_addr) {
         return xstore_success;
     }
-    int32_t ret = xsuccess;
-    if (amount > 0) {
-        ret = token_withdraw(data::XPROPERTY_BALANCE_AVAILABLE, (base::vtoken_t)amount);
-        if (ret != xsuccess) {
-            return ret;
-        }
+
+    if (asset.is_top_token()) {
+        return top_token_transfer_out(asset.amount(), gas_fee, service_fee);
+    } else {
+        return m_account->tep_token_withdraw(data::XPROPERTY_TEP1_BALANCE_KEY, asset.token_name(), amount256);
     }
+
+    int32_t ret = xsuccess;
     if (gas_fee > 0) {
         ret = token_withdraw(data::XPROPERTY_BALANCE_AVAILABLE, (base::vtoken_t)gas_fee);
         if (ret != xsuccess) {
@@ -151,15 +158,24 @@ int32_t xaccount_context_t::top_token_transfer_out(uint64_t amount, uint64_t gas
             return ret;
         }
     }
+}
+
+int32_t xaccount_context_t::top_token_transfer_out(uint64_t amount, uint64_t gas_fee, uint64_t service_fee) {
+    int32_t ret = xsuccess;
+    if (amount > 0) {
+        ret = token_withdraw(data::XPROPERTY_BALANCE_AVAILABLE, (base::vtoken_t)amount);
+        if (ret != xsuccess) {
+            return ret;
+        }
+    }
     return xstore_success;
 }
 
-int32_t xaccount_context_t::token_transfer_in(const data::xproperty_asset& asset) {
+int32_t xaccount_context_t::token_transfer_in(const data::xproperty_asset& asset, evm_common::u256 amount256) {
     if (asset.is_top_token()) {
-        return top_token_transfer_in(asset.m_amount);
+        return top_token_transfer_in(asset.amount());
     } else {
-        xassert(false);
-        return -1;
+        return m_account->tep_token_deposit(data::XPROPERTY_TEP1_BALANCE_KEY, asset.token_name(), amount256);
     }
 }
 
@@ -1113,9 +1129,9 @@ int32_t xaccount_context_t::token_deposit(const std::string& key, base::vtoken_t
     xdbg("xaccount_context_t::token_deposit,property_modify_enter.address=%s,height=%ld,propname=%s,token=%ld", get_address().c_str(), get_chain_height(), key.c_str(), add_token);
     auto & bstate = get_bstate();
     auto propobj = load_token_for_write(bstate.get(), key);
-    CHECK_PROPERTY_NULL_RETURN(propobj, "xaccount_context_t::token_withdraw", key);
+    CHECK_PROPERTY_NULL_RETURN(propobj, "xaccount_context_t::token_deposit", key);
     if (add_token <= 0) {
-        xwarn("xaccount_context_t::token_withdraw fail-can't do deposit. add_token=%ld", add_token);
+        xwarn("xaccount_context_t::token_deposit fail-can't do deposit. add_token=%ld", add_token);
         return xaccount_property_operate_fail;
     }
     auto balance = propobj->get_balance();

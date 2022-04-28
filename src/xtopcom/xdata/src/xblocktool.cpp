@@ -412,7 +412,7 @@ bool xblocktool_t::can_make_next_full_table(base::xvblock_t* latest_cert_block, 
     return false;
 }
 
-void xblocktool_t::alloc_transaction_receiptid(const xcons_transaction_ptr_t & tx, const base::xreceiptid_state_ptr_t & receiptid_state, bool add_rsp_id) {
+void xblocktool_t::alloc_transaction_receiptid(const xcons_transaction_ptr_t & tx, const base::xreceiptid_state_ptr_t & receiptid_state) {
     if (tx->is_self_tx() || tx->get_inner_table_flag()) {
         return;  // self tx has none receiptid
     }
@@ -428,7 +428,7 @@ void xblocktool_t::alloc_transaction_receiptid(const xcons_transaction_ptr_t & t
         current_receipt_id = receiptid_pair.get_sendid_max() + 1;
         receiptid_pair.set_sendid_max(current_receipt_id);
         
-        if (add_rsp_id && !tx->get_not_need_confirm()) {
+        if (!tx->get_not_need_confirm()) {
             current_rsp_id = receiptid_pair.get_send_rsp_id_max() + 1;
             receiptid_pair.set_send_rsp_id_max(current_rsp_id);
         }
@@ -453,7 +453,7 @@ void xblocktool_t::alloc_transaction_receiptid(const xcons_transaction_ptr_t & t
     xdbg("xblocktool_t::alloc_transaction_receiptid tx=%s,receiptid=%ld,confirmid_max=%ld,sender_confirmed_id=%ld", tx->dump().c_str(), current_receipt_id, receiptid_pair.get_confirmid_max(), tx->get_last_action_sender_confirmed_receipt_id());
 }
 
-bool xblocktool_t::alloc_transaction_receiptid(const xcons_transaction_ptr_t & tx, bool add_rsp_id, base::xreceiptid_pair_t & receiptid_pair) {
+bool xblocktool_t::alloc_transaction_receiptid(const xcons_transaction_ptr_t & tx, base::xreceiptid_pair_t & receiptid_pair) {
     if (tx->is_self_tx() || tx->get_inner_table_flag()) {
         xassert(false);
         return false;
@@ -469,7 +469,7 @@ bool xblocktool_t::alloc_transaction_receiptid(const xcons_transaction_ptr_t & t
         current_receipt_id = receiptid_pair.get_sendid_max() + 1;
         receiptid_pair.set_sendid_max(current_receipt_id);
         
-        if (add_rsp_id && !tx->get_not_need_confirm()) {
+        if (!tx->get_not_need_confirm()) {
             current_rsp_id = receiptid_pair.get_send_rsp_id_max() + 1;
             receiptid_pair.set_send_rsp_id_max(current_rsp_id);
         }

@@ -28,7 +28,8 @@
 #include "xverifier/xwhitelist_verifier.h"
 #include "xvledger/xvblock.h"
 #include "xvnetwork/xvhost_face.h"
-
+#include "xrpc/eth_jsonrpc/Eth.h"
+#include "xrpc/eth_jsonrpc/ClientBase.h"
 #include <cinttypes>
 
 NS_BEG2(top, xrpc)
@@ -70,7 +71,7 @@ public:
     }
 
     void set_tx_by_version(data::xtransaction_ptr_t & tx_ptr, uint32_t version);
-
+    void query_process(xjson_proc_t & json_proc);
 protected:
     unique_ptr<T> m_edge_handler_ptr;
     unordered_map<pair<string, string>, tx_method_handler> m_edge_tx_method_map;
@@ -97,6 +98,7 @@ public:
     }
     void write_response(shared_ptr<conn_type> & response, const string & content) override {
         response->write(content);
+        xdbg("write_response: %s", content.c_str());
     }
     enum_xrpc_type type() override {
         return enum_xrpc_type::enum_xrpc_evm_http_type;
@@ -124,15 +126,48 @@ xedge_evm_method_base<T>::xedge_evm_method_base(shared_ptr<xrpc_edge_vhost> edge
     m_edge_handler_ptr->init();
     //EDGE_REGISTER_V1_ACTION(T, sendTransaction);
     m_edge_tx_method_map.emplace(                                                                                                                                                  \
-        pair<pair<string, string>, tx_method_handler>{pair<string, string>{"1.0", "sendTransaction"}, std::bind(&xedge_evm_method_base<T>::sendTransaction_method, this, _1, _2)});
+        pair<pair<string, string>, tx_method_handler>{pair<string, string>{"2.0", "eth_sendRawTransaction"}, std::bind(&xedge_evm_method_base<T>::sendTransaction_method, this, _1, _2)});
 
 }
 
 template <class T>
 void xedge_evm_method_base<T>::do_method(shared_ptr<conn_type> & response, xjson_proc_t & json_proc, const std::string & ip) {
     // set account
-    const string & version = json_proc.m_request_json["version"].asString();
+
+    std::string jsonrpc_version;
+    if (json_proc.m_request_json.isMember("jsonrpc")) {
+        jsonrpc_version = json_proc.m_request_json["jsonrpc"].asString();
+    }
+    xinfo_rpc("rpc request version:%s", jsonrpc_version.c_str());
+
+    if (jsonrpc_version == "2.0") {
+        std::string method = json_proc.m_request_json["method"].asString();
+        if (method != "eth_sendRawTransaction" && method != "eth_getBalance" && method != "eth_getTransactionCount" && method != "eth_getTransactionReceipt" &&
+            method != "eth_blockNumber" && method != "eth_getBlockByHash" && method != "eth_getBlockByNumber" && method != "eth_getCode" && 
+            method != "eth_getTransactionByHash" && method != "eth_call") {
+            xJson::Value eth_res;
+            dev::eth::ClientBase client;
+            dev::rpc::Eth eth(client);
+
+            eth.CallMethod(json_proc.m_request_json, eth_res);
+            xJson::Value res;
+            res["id"] = json_proc.m_request_json["id"].asString();  // base::xstring_utl::touint64(req["id"].asString());
+            res["jsonrpc"] = json_proc.m_request_json["jsonrpc"].asString();
+            res["result"] = eth_res;
+
+            xJson::FastWriter j_writer;
+            std::string s_res = j_writer.write(res);
+            xdbg("rpc response:%s,i_id:%s", s_res.c_str(), json_proc.m_request_json["id"].asString().c_str());
+            write_response(response, s_res);
+            return;
+        }
+    } else {
+
+    }
+    const string & version = jsonrpc_version;
     const string & method = json_proc.m_request_json["method"].asString();
+    xinfo_rpc("rpc request: %s,%s", version.c_str(), method.c_str());
+
     auto version_method = pair<string, string>(version, method);
     if (m_edge_local_method_ptr->do_local_method(version_method, json_proc)) {
         write_response(response, json_proc.get_response());
@@ -154,17 +189,81 @@ void xedge_evm_method_base<T>::do_method(shared_ptr<conn_type> & response, xjson
             write_response(response, json_proc.get_response());
             return;
         } else {
-            json_proc.m_tx_type = enum_xrpc_tx_type::enum_xrpc_query_type;
-            json_proc.m_account_set.emplace(json_proc.m_request_json["params"]["account_addr"].asString());
+            query_process(json_proc);
+//            if (json_proc.m_request_json["method"] == "eth_getBalance")
+//                json_proc.m_request_json["method"] = "getAccount";
         }
     }
     assert(json_proc.m_account_set.size());
     forward_method(response, json_proc);
 }
+template <class T>
+void xedge_evm_method_base<T>::query_process(xjson_proc_t & json_proc) {
+    json_proc.m_tx_type = enum_xrpc_tx_type::enum_xrpc_query_type;
+    std::string account;
+
+    if (json_proc.m_request_json["method"].asString() == "eth_getBalance" || json_proc.m_request_json["method"].asString() == "eth_getTransactionCount"
+        || json_proc.m_request_json["method"].asString() == "eth_getCode") {
+        account = json_proc.m_request_json["params"][0].asString();
+        account = std::string(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN) + account.substr(2);
+        json_proc.m_account_set.emplace(account);
+        json_proc.m_request_json.removeMember("params");
+        json_proc.m_request_json["params"]["account_addr"] = account;
+    } else if (json_proc.m_request_json["method"].asString() == "eth_getTransactionByHash") {
+        account = std::string(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN) + std::string(40, '0');
+        std::string tx_hash = json_proc.m_request_json["params"][0].asString();
+        json_proc.m_account_set.emplace(account);
+        json_proc.m_request_json.removeMember("params");
+        json_proc.m_request_json["params"]["tx_hash"] = tx_hash;
+        json_proc.m_request_json["params"]["account_addr"] = account;
+    } else if (json_proc.m_request_json["method"].asString() == "eth_getTransactionReceipt" || json_proc.m_request_json["method"].asString() == "eth_getBlockByHash") {
+        account = std::string(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN) + std::string(40, '0');
+        std::string tx_hash = json_proc.m_request_json["params"][0].asString();
+        json_proc.m_account_set.emplace(account);
+        json_proc.m_request_json.removeMember("params");
+        json_proc.m_request_json["params"]["tx_hash"] = tx_hash;
+        json_proc.m_request_json["params"]["account_addr"] = account;
+    } else if (json_proc.m_request_json["method"].asString() == "eth_blockNumber") {
+        account = std::string(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN) + std::string(40, '0');
+        json_proc.m_account_set.emplace(account);
+        json_proc.m_request_json.removeMember("params");
+        json_proc.m_request_json["params"]["account_addr"] = account;
+    } else if (json_proc.m_request_json["method"].asString() == "eth_getBlockByNumber") {
+        std::string height = json_proc.m_request_json["params"][0].asString();
+        account = std::string(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN) + std::string(40, '0');
+        json_proc.m_account_set.emplace(account);
+        json_proc.m_request_json.removeMember("params");
+        json_proc.m_request_json["params"]["account_addr"] = account;
+        json_proc.m_request_json["params"]["height"] = height;
+    } else if (json_proc.m_request_json["method"].asString() == "eth_call") {
+        account = json_proc.m_request_json["params"][0]["from"].asString();
+        account = std::string(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN) + account.substr(2);
+        std::string to = json_proc.m_request_json["params"][0]["to"].asString();
+        to = std::string(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN) + to.substr(2);
+        std::string data = json_proc.m_request_json["params"][0]["data"].asString();
+        std::string value = json_proc.m_request_json["params"][0]["value"].asString();
+        std::string gas = json_proc.m_request_json["params"][0]["gas"].asString();
+        json_proc.m_account_set.emplace(account);
+        json_proc.m_request_json.removeMember("params");
+        json_proc.m_request_json["params"]["account_addr"] = account;
+        json_proc.m_request_json["params"]["to"] = to;
+        json_proc.m_request_json["params"]["data"] = data;
+        json_proc.m_request_json["params"]["value"] = value;
+        json_proc.m_request_json["params"]["gas"] = gas;
+    }
+
+    json_proc.m_request_json[RPC_SEQUENCE_ID] = json_proc.m_request_json["id"];
+    json_proc.m_request_json["version"] = "1.0";
+    json_proc.m_request_json["target_account_addr"] = account;
+    json_proc.m_request_json.removeMember("id");
+    xinfo_rpc("rpc query: %s,%s,%s", account.c_str(), json_proc.m_request_json["method"].asString().c_str(), json_proc.m_request_json[RPC_SEQUENCE_ID].asString().c_str());
+
+}
 
 template <class T>
 void xedge_evm_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, const std::string & ip) {
-    auto & request = json_proc.m_request_json["params"];
+    auto & request = json_proc.m_request_json;
+    request["tx_structure_version"] = 3;
     json_proc.m_tx_ptr = data::xtx_factory::create_tx(static_cast<data::enum_xtransaction_version>(request["tx_structure_version"].asUInt()));
     auto & tx = json_proc.m_tx_ptr;
     tx->construct_from_json(request);
@@ -236,14 +335,15 @@ void xedge_evm_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, 
     }
 
     std::string tx_hash = data::uint_to_str(json_proc.m_tx_ptr->digest().data(), json_proc.m_tx_ptr->digest().size());
-    xinfo_rpc("send tx hash:%s", tx_hash.c_str());
+    xinfo_rpc("send v3 tx hash:%s", tx_hash.c_str());
     XMETRICS_PACKET_INFO("rpc_tx_ip",
                          "tx_hash", tx_hash,
                          "client_ip", ip);
     const auto & from = tx->get_source_addr();
     json_proc.m_account_set.emplace(from);
-    json_proc.m_response_json["tx_hash"] = tx_hash;
-    json_proc.m_response_json["tx_size"] = tx->get_tx_len();
+    json_proc.m_response_json["result"] = tx_hash;
+    json_proc.m_response_json["id"] = request["id"];
+    json_proc.m_response_json["jsonrpc"] = request["jsonrpc"];
 }
 
 template <class T>
@@ -255,6 +355,7 @@ shared_ptr<xrpc_msg_request_t> xedge_evm_method_base<T>::generate_request(const 
     const string client_id = json_proc.m_request_json[RPC_SEQUENCE_ID].asString();
     if (json_proc.m_tx_type == enum_xrpc_tx_type::enum_xrpc_query_type) {
         edge_msg_ptr = std::make_shared<xrpc_msg_request_t>(type(), json_proc.m_tx_type, source_address, uuid, client_id, account, json_proc.get_request());
+        xdbg_rpc("json_proc.get_request: %s", json_proc.get_request().c_str());
     } else if (json_proc.m_tx_type == enum_xrpc_tx_type::enum_xrpc_tx_type) {
         base::xstream_t stream(xcontext_t::instance());
         // json_proc.m_tx_ptr->add_modified_count();

@@ -78,6 +78,7 @@ namespace dev {
                     m_eth_method_map.emplace(std::make_pair("eth_estimateGas", std::bind(&EthFace::eth_estimateGasI, this, std::placeholders::_1, std::placeholders::_2)));
                     // this->bindAndAddMethod(jsonrpc::Procedure("eth_chainId", jsonrpc::PARAMS_BY_POSITION, jsonrpc::JSON_STRING,  NULL), &dev::rpc::EthFace::eth_chainIdI);
                     m_eth_method_map.emplace(std::make_pair("eth_chainId", std::bind(&EthFace::eth_chainIdI, this, std::placeholders::_1, std::placeholders::_2)));
+                    m_eth_method_map.emplace(std::make_pair("web3_clientVersion", std::bind(&EthFace::web3_clientVersion, this, std::placeholders::_1, std::placeholders::_2)));
 
 
                     // NetFace
@@ -327,9 +328,17 @@ namespace dev {
                 inline virtual void net_versionI(const Json::Value &request, Json::Value &response)
                 {
                     (void)request;
-                    response = "0x3ff";
+                    response = "0x457";
                     xinfo("net_versionI: %s", response.asString().c_str());
                 }
+
+                inline virtual void web3_clientVersion(const Json::Value &request, Json::Value &response)
+                {
+                    (void)request;
+                    response = "Geth/v1.10.17-25c9b49f-20220330/linux-amd64/go1.17.6";
+                    xinfo("web3_clientVersion: %s", response.asString().c_str());
+                }
+
                 // inline virtual void net_peerCountI(const Json::Value &request, Json::Value &response)
                 // {
                 //     (void)request;

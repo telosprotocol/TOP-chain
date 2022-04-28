@@ -198,6 +198,10 @@ public:
         return nullptr;
     }
 
+    base::xauto_ptr<base::xvblock_t> get_block_by_hash(const std::string& hash) override {
+        return nullptr;
+    }
+
     bool exist_genesis_block(base::xvaccount_t const & account,const int atag = 0) override {
         return false;
     }

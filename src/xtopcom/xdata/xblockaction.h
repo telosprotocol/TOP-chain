@@ -16,6 +16,7 @@
 #include "xvledger/xvaccount.h"
 #include "xvledger/xvaction.h"
 #include "xvledger/xventity.h"
+#include "xevm_common/xevm_transaction_result.h"
 
 namespace top { namespace data {
 
@@ -60,6 +61,7 @@ class xlightunit_action_t : public base::xvaction_t {
     bool                        get_inner_table_flag() const;
     bool                        is_need_make_txreceipt() const;
     bool                        is_txaction() const {return !get_tx_hash().empty();}
+    bool                        get_evm_transaction_result(evm_common::xevm_transaction_result_t & result) const;
 
  private:
     std::string                 get_action_result_property(const std::string & key) const;

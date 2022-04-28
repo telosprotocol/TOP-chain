@@ -15,6 +15,7 @@
 #include "xvledger/xvledger.h"
 #include "xtxpool_service_v2/xtxpool_service_face.h"
 #include "xrpc/xjson_proc.h"
+#include "xevm_common/fixed_hash.h"
 
 #include <string>
 
@@ -94,6 +95,7 @@ public:
         REGISTER_QUERY_METHOD(getZecs);
         REGISTER_QUERY_METHOD(getEdges);
         REGISTER_QUERY_METHOD(getArcs);
+        REGISTER_QUERY_METHOD(getEVMs);
         REGISTER_QUERY_METHOD(getExchangeNodes);
         //REGISTER_QUERY_METHOD(getFullNodes);
         REGISTER_QUERY_METHOD(getFullNodes2);
@@ -117,6 +119,16 @@ public:
         REGISTER_QUERY_METHOD(queryProposal);
         REGISTER_QUERY_METHOD(getLatestTables);
         REGISTER_QUERY_METHOD(getChainId);
+
+        REGISTER_QUERY_METHOD(eth_getBalance);
+        REGISTER_QUERY_METHOD(eth_getTransactionByHash);
+        REGISTER_QUERY_METHOD(eth_getTransactionReceipt);
+        REGISTER_QUERY_METHOD(eth_getTransactionCount);
+        REGISTER_QUERY_METHOD(eth_blockNumber);
+        REGISTER_QUERY_METHOD(eth_getBlockByHash);
+        REGISTER_QUERY_METHOD(eth_getBlockByNumber);
+        REGISTER_QUERY_METHOD(eth_getCode);
+        REGISTER_QUERY_METHOD(eth_call);
     }
     void call_method(std::string strMethod, xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     bool handle(std::string & strReq, xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) override;
@@ -155,6 +167,7 @@ public:
     void getZecs(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     void getEdges(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     void getArcs(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void getEVMs(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     void getExchangeNodes(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     //void getFullNodes(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     void getFullNodes2(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
@@ -165,6 +178,16 @@ public:
     xJson::Value parse_sharding_reward(const std::string & target, const std::string & prop_name, string & version);
     void getChainId(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
 
+    void eth_getBalance(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
+    void eth_getTransactionByHash(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void eth_getTransactionReceipt(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void eth_getTransactionCount(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
+    void eth_blockNumber(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
+    void eth_getBlockByHash(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
+    void eth_getBlockByNumber(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
+    void eth_getCode(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
+    void eth_call(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
+    top::evm_common::h2048 calculate_bloom(const std::string & hexstr);
 private:
     void getBlock(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     void getProperty(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
@@ -219,8 +242,7 @@ private:
     void queryVoterDividend(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     void queryProposal(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     void getLatestTables(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
-
-
+    void set_block_result(const base::xauto_ptr<base::xvblock_t>&  block, xJson::Value& js_result);
 
     void get_sync_overview();
     void get_sync_detail_all_table();
@@ -231,6 +253,8 @@ private:
     void get_nodes(const std::string & sys_addr);
 
     std::string HexEncode(const std::string & str);
+    void process_transaction(const uint256_t & tx_hash, xtransaction_t * tx_ptr, const std::string & version, xJson::Value & js_rsp, xJson::Value & result_json, std::string & strResult, uint32_t & nErrorCode);
+    int generate_tx(top::data::xtransaction_ptr_t & tx, xJson::Value & js_req);
 
 private:
     void set_sharding_vote_prop(xJson::Value & js_req, xJson::Value & js_rsp, std::string & prop_name, std::string & strResult, uint32_t & nErrorCode);
@@ -242,7 +266,6 @@ private:
                                   xJson::Value & result_json,
                                   std::string & strResult,
                                   uint32_t & nErrorCode);
-
 private:
     observer_ptr<store::xstore_face_t> m_store;
     observer_ptr<base::xvblockstore_t> m_block_store;

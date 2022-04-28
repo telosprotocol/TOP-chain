@@ -2,13 +2,15 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <string>
-#include <vector>
-
 #include "xtxexecutor/xatomictx_executor.h"
-#include "xtxexecutor/xtvm.h"
+
 #include "xdata/xblocktool.h"
 #include "xdata/xtransaction.h"
+#include "xevm/xevm.h"
+#include "xtxexecutor/xtvm.h"
+
+#include <string>
+#include <vector>
 
 NS_BEG2(top, txexecutor)
 
@@ -31,7 +33,7 @@ bool xatomictx_executor_t::set_tx_account_state(const data::xunitstate_ptr_t & u
         unitstate->set_account_create_time(m_para.get_clock());
     }
 
-    if (tx->is_send_or_self_tx()) {
+    if (tx->is_send_or_self_tx() && !tx->is_evm_tx()) {
         uint64_t tx_nonce = tx->get_tx_nonce();
         uint256_t tx_hash = tx->get_tx_hash_256();
         uint64_t account_nonce = unitstate->get_latest_send_trans_number();
@@ -63,8 +65,7 @@ bool xatomictx_executor_t::set_tx_table_state(const data::xtablestate_ptr_t & ta
     base::xreceiptid_pair_t receiptid_pair;
     tablestate->find_receiptid_pair(peer_tableid, receiptid_pair);
 
-    bool alloc_rspid = true;  // TODO(jimmy)
-    if (data::xblocktool_t::alloc_transaction_receiptid(tx, alloc_rspid, receiptid_pair)) {
+    if (data::xblocktool_t::alloc_transaction_receiptid(tx, receiptid_pair)) {
         tablestate->set_receiptid_pair(peer_tableid, receiptid_pair);  // save to modified pairs
         xinfo("xatomictx_executor_t::set_tx_table_state succ.tx=%s,pair=%s", tx->dump().c_str(), receiptid_pair.dump().c_str());
     } else {
@@ -139,17 +140,15 @@ bool xatomictx_executor_t::check_receiptid_order(const xcons_transaction_ptr_t &
         if (tx->is_confirm_tx()) {
             uint64_t tx_rsp_id = tx->get_last_action_rsp_id();
             uint64_t last_rsp_id = receiptid_pair.get_confirm_rsp_id_max();
-            if (last_rsp_id != 0 || tx_rsp_id != 0) {  // enable rsp id feature
-                if (tx_rsp_id != last_rsp_id + 1) {
-                    xwarn("xtxexecutor_top_vm_t::check_table_order fail-rsp id unmatch.tx=%s,tx_id=%ld,cur_id=%ld", tx->dump().c_str(), tx_rsp_id, last_rsp_id);
-                    return false;
-                }
+            if (tx_rsp_id != last_rsp_id + 1) {
+                xwarn("xtxexecutor_top_vm_t::check_table_order fail-rsp id unmatch.tx=%s,tx_id=%ld,cur_id=%ld", tx->dump().c_str(), tx_rsp_id, last_rsp_id);
+                return false;
+            }
 
-                uint64_t max_sendrspid = receiptid_pair.get_send_rsp_id_max();
-                if (tx_rsp_id > max_sendrspid) {
-                    xwarn("xtxexecutor_top_vm_t::check_table_order fail-rsp id larger than send rspid.tx=%s,tx_id=%ld,cur_id=%ld", tx->dump().c_str(), tx_rsp_id, max_sendrspid);
-                    return false;
-                }
+            uint64_t max_sendrspid = receiptid_pair.get_send_rsp_id_max();
+            if (tx_rsp_id > max_sendrspid) {
+                xwarn("xtxexecutor_top_vm_t::check_table_order fail-rsp id larger than send rspid.tx=%s,tx_id=%ld,cur_id=%ld", tx->dump().c_str(), tx_rsp_id, max_sendrspid);
+                return false;
             }
 
             uint64_t sendid = receiptid_pair.get_sendid_max();
@@ -174,12 +173,26 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
     xvm_input_t vminput(m_statectx, m_para, tx);
     xvm_output_t vmoutput;
     enum_execute_result_type ret;
+
+    // update tx flag before execute
+    tx->set_not_need_confirm();
+    tx->set_inner_table_flag();
+
     if (false == tx->is_evm_tx()) {
         xtvm_t tvm;
         ret = tvm.execute(vminput, vmoutput);
     } else {
+#ifdef BUILD_EVM
+        evm::xtop_evm evm{m_statectx};
+        ret = evm.execute(vminput,vmoutput);
+        if (ret == txexecutor::enum_exec_success) {
+            tx->set_evm_tx_result(vmoutput.m_tx_result);
+            xdbg("xatomictx_executor_t::vm_execute tx:%s vmoutput.m_tx_result.extra_msg:%s", tx->dump().c_str(), vmoutput.m_tx_result.extra_msg.c_str());
+        }
+#else
         xassert(false);
-        ret = enum_exec_error_vm_execute;
+#endif
+        // ret = enum_exec_error_vm_execute;
     }
     output.m_vm_output = vmoutput;
     return ret;

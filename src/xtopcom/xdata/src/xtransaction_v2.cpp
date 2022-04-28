@@ -153,7 +153,7 @@ int xtransaction_v2_t::do_read(base::xstream_t & in) {
     set_digest();
     set_tx_len(begin_pos - in.size());
     if (get_tx_type() == xtransaction_type_transfer) {
-        data::xproperty_asset asset_out{m_amount};
+        data::xproperty_asset asset_out{m_token_name, m_amount};
         data::xaction_t action;
         xaction_asset_out::serialze_to(action, asset_out);
         m_source_action_para = action.get_action_param();
@@ -206,6 +206,13 @@ void xtransaction_v2_t::set_digest() {
     }
 }
 
+bool xtransaction_v2_t::unuse_member_check() const {
+    if (m_transaction_type == xtransaction_type_transfer && m_token_name != "" && m_token_name != XPROPERTY_ASSET_TOP) {
+        return false;
+    }
+    return true;
+}
+
 bool xtransaction_v2_t::transaction_len_check() const {
     if (get_memo().size() > MAX_TRANSACTION_MEMO_SIZE) {
         xwarn("xtransaction_v2_t::transaction_len_check memo size too long.size:%d", get_memo().size());
@@ -233,6 +240,7 @@ int32_t xtransaction_v2_t::make_tx_create_user_account(const std::string & addr)
 
 int32_t xtransaction_v2_t::make_tx_transfer(const data::xproperty_asset & asset) {
     set_tx_type(xtransaction_type_transfer);
+    m_token_name = asset.token_name();
     set_amount(asset.m_amount);
     return xsuccess;
 }
@@ -343,19 +351,12 @@ bool xtransaction_v2_t::pub_key_sign_check(xpublic_key_t const & pub_key) const 
     return utl::xsecp256k1_t::verify_signature(signature_obj, m_transaction_hash, out_publickey_data, false);
 }
 
-size_t xtransaction_v2_t::get_serialize_size() const {
-    base::xstream_t stream(base::xcontext_t::instance());
-    xassert(stream.size() == 0);
-    const_cast<xtransaction_v2_t*>(this)->serialize_to(stream);
-    return stream.size();
-}
-
 std::string xtransaction_v2_t::dump() const {
     char local_param_buf[256];
     xprintf(local_param_buf,    sizeof(local_param_buf),
-    "{transaction:hash=%s,type=%u,from=%s,to=%s,nonce=%" PRIu64 ",refcount=%d,this=%p}",
+    "{transaction:hash=%s,type=%u,from=%s,to=%s,nonce=%" PRIu64 ",m_token_name:%s,refcount=%d,this=%p}",
     get_digest_hex_str().c_str(), (uint32_t)get_tx_type(), get_source_addr().c_str(), get_target_addr().c_str(),
-    get_tx_nonce(), get_refcount(), this);
+    get_tx_nonce(), m_token_name.c_str(), get_refcount(), this);
     return std::string(local_param_buf);
 }
 
@@ -414,7 +415,7 @@ void xtransaction_v2_t::parse_to_json(xJson::Value& result_json, const std::stri
         std::string source_action_para = m_source_action_para;
         std::string target_action_para = m_target_action_para;
         if (get_tx_type() == xtransaction_type_transfer) {
-            data::xproperty_asset asset_out{m_amount};
+            data::xproperty_asset asset_out{m_token_name, m_amount};
             data::xaction_t action;
             xaction_asset_out::serialze_to(action, asset_out);
             source_action_para = action.get_action_param();
@@ -497,7 +498,10 @@ int32_t xtransaction_v2_t::parse(enum_xaction_type source_type, enum_xaction_typ
                 return xchain_error_action_param_empty;
             }
         }
-        tx_parse_data.m_asset = xproperty_asset(amount);
+        tx_parse_data.m_asset = xproperty_asset(token_name, amount);
+        if (!tx_parse_data.m_asset.is_top_token()) {
+            tx_parse_data.m_amount_256 = amount;
+        }
     }
 
     if (target_type == xaction_type_run_contract) {

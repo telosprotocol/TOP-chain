@@ -166,6 +166,11 @@ int32_t xunit_bstate_t::set_tx_info_recvtx_num(uint64_t num) {
     return map_set(XPROPERTY_TX_INFO, XPROPERTY_TX_INFO_RECVTX_NUM, value);
 }
 
+std::string xunit_bstate_t::get_code() const {
+    std::string v;
+    string_get(XPROPERTY_EVM_CODE, v);
+    return v;
+}
 
 }  // namespace data
 }  // namespace top

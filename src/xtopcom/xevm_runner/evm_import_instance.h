@@ -26,6 +26,9 @@ public:
     // not allow to change logic after set it.
     xevm_logic_face_t * get_vm_logic_ref();
 
+    xbytes_t get_return_value();
+    std::pair<uint32_t, uint64_t> get_return_error();
+
 public:
     // register:
     void read_register(uint64_t register_id, uint64_t ptr);
@@ -43,12 +46,18 @@ public:
 
     // others:
     void value_return(uint64_t value_len, uint64_t value_ptr);
+    void error_return(uint32_t ec, uint64_t used_gas);
     void log_utf8(uint64_t len, uint64_t ptr);
 
     // storage:
     uint64_t storage_write(uint64_t key_len, uint64_t key_ptr, uint64_t value_len, uint64_t value_ptr, uint64_t register_id);
     uint64_t storage_read(uint64_t key_len, uint64_t key_ptr, uint64_t register_id);
     uint64_t storage_remove(uint64_t key_len, uint64_t key_ptr, uint64_t register_id);
+
+    // extern contract:
+    bool extern_contract_call(uint64_t args_len,uint64_t args_ptr);
+    uint64_t get_result(uint64_t register_id);
+    uint64_t get_error(uint64_t register_id);
 };
 
 }  // namespace evm

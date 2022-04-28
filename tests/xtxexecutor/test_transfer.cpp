@@ -21,8 +21,8 @@ class test_transfer : public testing::Test {
     void TearDown() override {
     }
 
-    void construct_tx(xtransaction_ptr_t & tx) {
-        m_tx_mocker.construct_tx(tx);
+    void construct_tx(xtransaction_ptr_t & tx, bool is_eth_tx) {
+        m_tx_mocker.construct_tx(tx, is_eth_tx);
         m_source_context = m_tx_mocker.get_source_context();
         const auto & fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
         tx->set_fire_timestamp(fork_config.block_fork_point.value().point * 10);
@@ -32,9 +32,9 @@ class test_transfer : public testing::Test {
         m_trans = make_object_ptr<xcons_transaction_t>(tx.get());
     }
 
-    void construct_cons_tx_v2() {
+    void construct_cons_tx_v2(bool is_eth_tx = false) {
         xtransaction_ptr_t tx = make_object_ptr<xtransaction_v2_t>();
-        construct_tx(tx);
+        construct_tx(tx, is_eth_tx);
     }
 
  public:
@@ -77,6 +77,40 @@ TEST_F(test_transfer, transfer_v2_free_tgas_enough) {
     EXPECT_EQ(0, m_source_context->token_balance(XPROPERTY_BALANCE_LOCK));
 }
 
+TEST_F(test_transfer, eth_transfer_v2_free_tgas_enough) {
+    construct_cons_tx_v2(true);
+
+    data::xproperty_asset asset{XPROPERTY_ASSET_ETH, ASSET_TOP(100)};
+
+    m_source_context->top_token_transfer_in(ASSET_TOP(100));
+    evm_common::u256 amount = 100000000;
+    m_source_context->get_blockchain()->tep_token_deposit(XPROPERTY_TEP1_BALANCE_KEY, XPROPERTY_ASSET_ETH, amount);
+    auto balance = m_source_context->get_blockchain()->tep_token_balance(XPROPERTY_TEP1_BALANCE_KEY, XPROPERTY_ASSET_ETH);
+    EXPECT_EQ(ASSET_TOP(100), balance);
+
+    uint32_t tx_len = 100;
+    m_trans->get_transaction()->set_tx_len(tx_len);
+    uint32_t tgas_usage = tx_len * 3;
+    xtransaction_transfer tx(m_source_context.get(), m_trans);
+
+    tx.parse();
+    auto ret = tx.source_fee_exec();
+    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(balance, m_source_context->get_blockchain()->tep_token_balance(XPROPERTY_TEP1_BALANCE_KEY, XPROPERTY_ASSET_ETH));
+    EXPECT_EQ(0, m_source_context->token_balance(XPROPERTY_BALANCE_BURN));
+    EXPECT_EQ(0, m_source_context->token_balance(XPROPERTY_BALANCE_LOCK));
+    EXPECT_EQ(tgas_usage, m_source_context->get_used_tgas());
+    EXPECT_EQ(tgas_usage, m_trans->get_current_used_tgas());
+
+    tx.source_action_exec();
+    EXPECT_EQ(balance - m_transfer_out_amount, m_source_context->get_blockchain()->tep_token_balance(XPROPERTY_TEP1_BALANCE_KEY, XPROPERTY_ASSET_ETH));
+
+    tx.source_confirm_action_exec();
+    EXPECT_EQ(balance - m_transfer_out_amount, m_source_context->get_blockchain()->tep_token_balance(XPROPERTY_TEP1_BALANCE_KEY, XPROPERTY_ASSET_ETH));
+    EXPECT_EQ(0, m_source_context->token_balance(XPROPERTY_BALANCE_BURN));
+    EXPECT_EQ(0, m_source_context->token_balance(XPROPERTY_BALANCE_LOCK));
+}
+
 TEST_F(test_transfer, transfer_v2_deposit_enough) {
     construct_cons_tx_v2();
 
@@ -108,12 +142,77 @@ TEST_F(test_transfer, transfer_v2_deposit_enough) {
     EXPECT_EQ(0, m_source_context->token_balance(XPROPERTY_BALANCE_LOCK));
 }
 
+TEST_F(test_transfer, eth_transfer_v2_deposit_enough) {
+    construct_cons_tx_v2(true);
+
+    data::xproperty_asset asset{XPROPERTY_ASSET_ETH, 100};
+
+    m_source_context->top_token_transfer_in(ASSET_TOP(100));
+    evm_common::u256 amount = 100000000;
+    m_source_context->get_blockchain()->tep_token_deposit(XPROPERTY_TEP1_BALANCE_KEY, XPROPERTY_ASSET_ETH, amount);
+    auto eth_balance = m_source_context->get_blockchain()->tep_token_balance(XPROPERTY_TEP1_BALANCE_KEY, XPROPERTY_ASSET_ETH);
+    EXPECT_EQ(100000000, eth_balance);
+    auto balance = m_source_context->token_balance(XPROPERTY_BALANCE_AVAILABLE);
+
+    uint32_t tx_len = 10000;
+    m_trans->get_transaction()->set_tx_len(tx_len);
+    xtransaction_transfer tx(m_source_context.get(), m_trans);
+
+    tx.parse();
+    // tgas_usage = tx_len * 3 = 30 000 = 25 000 + 100,000 / 20 = free_tgas + (m_deposit) / ratio
+    auto ret = tx.source_fee_exec();
+    EXPECT_EQ(ret, 0);
+    EXPECT_EQ(balance - m_trans->get_transaction()->get_deposit(), m_source_context->token_balance(XPROPERTY_BALANCE_AVAILABLE));
+    EXPECT_EQ(m_deposit, m_source_context->token_balance(XPROPERTY_BALANCE_BURN));
+    EXPECT_EQ(0, m_source_context->token_balance(XPROPERTY_BALANCE_LOCK));
+    EXPECT_EQ(25000, m_source_context->get_used_tgas());
+    EXPECT_EQ(25000, m_trans->get_current_used_tgas());
+    EXPECT_EQ(ASSET_TOP(0.1), m_trans->get_current_used_deposit());
+
+    EXPECT_EQ(eth_balance, m_source_context->get_blockchain()->tep_token_balance(XPROPERTY_TEP1_BALANCE_KEY, XPROPERTY_ASSET_ETH));
+
+    tx.source_action_exec();
+    EXPECT_EQ(eth_balance - m_transfer_out_amount, m_source_context->get_blockchain()->tep_token_balance(XPROPERTY_TEP1_BALANCE_KEY, XPROPERTY_ASSET_ETH));
+
+    tx.source_confirm_action_exec();
+    EXPECT_EQ(eth_balance - m_transfer_out_amount, m_source_context->get_blockchain()->tep_token_balance(XPROPERTY_TEP1_BALANCE_KEY, XPROPERTY_ASSET_ETH));
+    EXPECT_EQ(m_deposit, m_source_context->token_balance(XPROPERTY_BALANCE_BURN));
+    EXPECT_EQ(0, m_source_context->token_balance(XPROPERTY_BALANCE_LOCK));
+}
+
 TEST_F(test_transfer, transfer_v2_not_enough) {
     construct_cons_tx_v2();
 
     m_source_context->top_token_transfer_in(ASSET_TOP(100));
     auto balance = m_source_context->token_balance(XPROPERTY_BALANCE_AVAILABLE);
     EXPECT_EQ(ASSET_TOP(100), balance);
+
+    uint32_t tx_len = 20000;
+    m_trans->get_transaction()->set_tx_len(tx_len);
+    xtransaction_transfer tx(m_source_context.get(), m_trans);
+
+    tx.parse();
+    // tgas_usage = tx_len * 3 = 60 000 > (25 000 + 100,000 / 20) = free_tgas + (m_deposit) / ratio
+    auto ret = tx.source_fee_exec();
+    EXPECT_EQ(ret, store::xtransaction_not_enough_pledge_token_tgas);
+    EXPECT_EQ(balance - m_trans->get_transaction()->get_deposit(), m_source_context->token_balance(XPROPERTY_BALANCE_AVAILABLE));
+    EXPECT_EQ(m_deposit, m_source_context->token_balance(XPROPERTY_BALANCE_BURN));
+    EXPECT_EQ(0, m_source_context->token_balance(XPROPERTY_BALANCE_LOCK));
+    EXPECT_EQ(55000, m_source_context->get_used_tgas());
+    EXPECT_EQ(55000, m_trans->get_current_used_tgas());
+}
+
+TEST_F(test_transfer, eth_transfer_v2_not_enough) {
+    construct_cons_tx_v2(true);
+
+    data::xproperty_asset asset{XPROPERTY_ASSET_ETH, 100};
+
+    m_source_context->top_token_transfer_in(ASSET_TOP(100));
+    evm_common::u256 amount = 100000000;
+    m_source_context->get_blockchain()->tep_token_deposit(XPROPERTY_TEP1_BALANCE_KEY, XPROPERTY_ASSET_ETH, amount);
+    auto eth_balance = m_source_context->get_blockchain()->tep_token_balance(XPROPERTY_TEP1_BALANCE_KEY, XPROPERTY_ASSET_ETH);
+    EXPECT_EQ(100000000, eth_balance);
+    auto balance = m_source_context->token_balance(XPROPERTY_BALANCE_AVAILABLE);
 
     uint32_t tx_len = 20000;
     m_trans->get_transaction()->set_tx_len(tx_len);

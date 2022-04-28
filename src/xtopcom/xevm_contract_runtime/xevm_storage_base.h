@@ -41,14 +41,12 @@ protected:
         storage_key res;
         assert(key.size() >= 22);
         res.key_type = storage_key_type(key[1]);
-        res.address.resize(42);  // 'T6' + [hex;40]
-        // eth address 20 hex
-        res.address[0] = 'T';
-        res.address[1] = '6';
+        res.address = "T60004";
+        res.address.resize(46);  // 'T60004' + [hex;40]
         static constexpr char hex[] = "0123456789abcdef";
         for (std::size_t index = 0; index < 20; ++index) {
-            res.address[2 + 2 * index] = hex[key[index + 2] / 16];
-            res.address[2 + 2 * index + 1] = hex[key[index + 2] % 16];
+            res.address[6 + 2 * index] = hex[key[index + 2] / 16];
+            res.address[6 + 2 * index + 1] = hex[key[index + 2] % 16];
         }
         if (key.size() > 22) {
             res.extra_key.resize(2 * (key.size() - 22));  // max 72

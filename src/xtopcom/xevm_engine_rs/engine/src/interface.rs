@@ -15,87 +15,64 @@ mod interface {
     use protobuf::Message;
 
     #[no_mangle]
-    pub extern "C" fn deploy_code() {
-        println!("========= deploy_code =========");
+    pub extern "C" fn deploy_code() -> bool {
+        sdk::log("========= deploy_code =========");
         let io = Runtime;
         let input = io.read_input().to_vec();
         let mut engine = Engine::new(io.sender_address(), io, &io).sdk_unwrap();
-        Engine::deploy_code_with_input(&mut engine, input)
+        let args = FunctionCallArgs::parse_from_bytes(&input).sdk_expect("ERR_DESERIALIZE");
+        Engine::deploy_code_with_args(&mut engine, args)
             .map(|res| {
-                println!("res: {:?}", res);
+                sdk::log(format!("[rust_evm][interface]res: {:?}", res).as_str());
                 res.write_to_bytes().sdk_expect("ERR_SERIALIZE")
-                // bincode::serialize(&res).sdk_expect("ERR_SERIALIZE")
             })
-            .sdk_process();
-        // TODO: charge for storage
+            .sdk_process()
     }
+
     #[no_mangle]
-    pub extern "C" fn call_contract() {
-        println!("========= call_contract =========");
+    pub extern "C" fn call_contract() -> bool {
+        sdk::log("========= call_contract =========");
         let io = Runtime;
         let bytes = io.read_input().to_vec();
         let args = FunctionCallArgs::parse_from_bytes(&bytes).sdk_expect("ERR_DESERIALIZE");
-        // let args = bincode::deserialize::<CallArgs>(&bytes).sdk_expect("ERR_DESERIALIZE");
-        println!("{:?}", args);
+        sdk::log(format!("{:?}", args).as_str());
         let mut engine = Engine::new(io.sender_address(), io, &io).sdk_unwrap();
         Engine::call_with_args(&mut engine, args)
             .map(|res| {
-                println!("res: {:?}", res);
+                sdk::log(format!("[rust_evm][interface]res: {:?}", res).as_str());
                 res.write_to_bytes().sdk_expect("ERR_SERIALIZE")
-                // bincode::serialize(&res).sdk_expect("ERR_SERIALIZE")
             })
-            .sdk_process();
+            .sdk_process()
     }
-    // #[no_mangle]
-    // pub extern "C" fn serial_param_function_callargs(
-    //     address: *const u8,
-    //     address_len: u64,
-    //     value: u64,
-    //     params: *const u8,
-    //     params_len: u64,
-    //     max_output_len: u64,
-    //     output: *mut u8,
-    //     output_len: *mut u64,
-    // ) {
-    //     let address = unsafe {
-    //         assert!(!address.is_null());
-    //         core::slice::from_raw_parts(address, address_len as usize)
-    //     };
-    //     let params: Vec<u8> = unsafe {
-    //         assert!(!params.is_null());
-    //         core::slice::from_raw_parts(params, params_len as usize)
-    //     }
-    //     .iter()
-    //     .cloned()
-    //     .collect();
-    //     let args = CallArgs::V2(FunctionCallArgsV2 {
-    //         contract: Address::new(H160::from_slice(&hex::decode(address).unwrap()[..])),
-    //         value: Wei::new(value.into()).to_bytes(),
-    //         input: params,
-    //     });
-    //     let ser = bincode::serialize(&args).unwrap();
-    //     // args.serialize(&mut ser).unwrap();
 
-    //     if (ser.len() <= max_output_len as usize) {
-    //         unsafe {
-    //             assert!(!output.is_null());
-    //             assert!(!output_len.is_null());
-    //             for i in 0..ser.len() as usize {
-    //                 let iter = (output as usize + i) as *mut u8;
-    //                 *iter = ser[i];
-    //             }
-    //             *output_len = ser.len() as u64;
-    //         };
-    //         // println!("ser: {:?}", ser);
-    //     }
-    // }
     #[no_mangle]
-    pub extern "C" fn mock_add_balance() {
-        println!("========= set_balance =========");
+    pub extern "C" fn do_mock_add_balance(
+        address: *const u8,
+        address_len: u64,
+        value_1: u64,
+        value_2: u64,
+        value_3: u64,
+        value_4: u64,
+    ) {
+        sdk::log("========= mock set_balance =========");
+        let address = unsafe {
+            assert!(!address.is_null());
+            core::slice::from_raw_parts(address, address_len as usize)
+        };
+        let eth_address = Address::new(H160::from_slice(&hex::decode(address).unwrap()[..]));
+
         let mut io = Runtime;
-        let mut engine = Engine::new(io.sender_address(), io, &io).sdk_unwrap();
-        let origin = io.sender_address();
-        let origin_value = get_balance(&mut io, &origin);
-        set_balance(&mut io, &origin, &Wei::new(origin_value.raw() + 10000000));
+        // let mut engine = Engine::new(eth_address, io, &io).sdk_unwrap();
+        // let origin = io.sender_address();
+        let origin_value = get_balance(&mut io, &eth_address);
+        let mut value_u256 = U256::from(value_1);
+        value_u256 = (value_u256 << 64) + U256::from(value_2);
+        value_u256 = (value_u256 << 64) + U256::from(value_3);
+        value_u256 = (value_u256 << 64) + U256::from(value_4);
+        set_balance(
+            &mut io,
+            &eth_address,
+            &Wei::new(origin_value.raw() + value_u256),
+        );
     }
 }

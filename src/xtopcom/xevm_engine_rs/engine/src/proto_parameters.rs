@@ -24,278 +24,13 @@
 // const _PROTOBUF_VERSION_CHECK: () = ::protobuf::VERSION_2_27_1;
 
 #[derive(PartialEq,Clone,Default)]
-pub struct ResultLog {
-    // message fields
-    pub address: ::protobuf::SingularPtrField<super::proto_basic::ProtoAddress>,
-    pub topics: ::protobuf::RepeatedField<super::proto_basic::RawU256>,
-    pub data: ::std::vec::Vec<u8>,
-    // special fields
-    pub unknown_fields: ::protobuf::UnknownFields,
-    pub cached_size: ::protobuf::CachedSize,
-}
-
-impl<'a> ::std::default::Default for &'a ResultLog {
-    fn default() -> &'a ResultLog {
-        <ResultLog as ::protobuf::Message>::default_instance()
-    }
-}
-
-impl ResultLog {
-    pub fn new() -> ResultLog {
-        ::std::default::Default::default()
-    }
-
-    // .top.evm_engine.basic.ProtoAddress address = 1;
-
-
-    pub fn get_address(&self) -> &super::proto_basic::ProtoAddress {
-        self.address.as_ref().unwrap_or_else(|| <super::proto_basic::ProtoAddress as ::protobuf::Message>::default_instance())
-    }
-    pub fn clear_address(&mut self) {
-        self.address.clear();
-    }
-
-    pub fn has_address(&self) -> bool {
-        self.address.is_some()
-    }
-
-    // Param is passed by value, moved
-    pub fn set_address(&mut self, v: super::proto_basic::ProtoAddress) {
-        self.address = ::protobuf::SingularPtrField::some(v);
-    }
-
-    // Mutable pointer to the field.
-    // If field is not initialized, it is initialized with default value first.
-    pub fn mut_address(&mut self) -> &mut super::proto_basic::ProtoAddress {
-        if self.address.is_none() {
-            self.address.set_default();
-        }
-        self.address.as_mut().unwrap()
-    }
-
-    // Take field
-    pub fn take_address(&mut self) -> super::proto_basic::ProtoAddress {
-        self.address.take().unwrap_or_else(|| super::proto_basic::ProtoAddress::new())
-    }
-
-    // repeated .top.evm_engine.basic.RawU256 topics = 2;
-
-
-    pub fn get_topics(&self) -> &[super::proto_basic::RawU256] {
-        &self.topics
-    }
-    pub fn clear_topics(&mut self) {
-        self.topics.clear();
-    }
-
-    // Param is passed by value, moved
-    pub fn set_topics(&mut self, v: ::protobuf::RepeatedField<super::proto_basic::RawU256>) {
-        self.topics = v;
-    }
-
-    // Mutable pointer to the field.
-    pub fn mut_topics(&mut self) -> &mut ::protobuf::RepeatedField<super::proto_basic::RawU256> {
-        &mut self.topics
-    }
-
-    // Take field
-    pub fn take_topics(&mut self) -> ::protobuf::RepeatedField<super::proto_basic::RawU256> {
-        ::std::mem::replace(&mut self.topics, ::protobuf::RepeatedField::new())
-    }
-
-    // bytes data = 3;
-
-
-    pub fn get_data(&self) -> &[u8] {
-        &self.data
-    }
-    pub fn clear_data(&mut self) {
-        self.data.clear();
-    }
-
-    // Param is passed by value, moved
-    pub fn set_data(&mut self, v: ::std::vec::Vec<u8>) {
-        self.data = v;
-    }
-
-    // Mutable pointer to the field.
-    // If field is not initialized, it is initialized with default value first.
-    pub fn mut_data(&mut self) -> &mut ::std::vec::Vec<u8> {
-        &mut self.data
-    }
-
-    // Take field
-    pub fn take_data(&mut self) -> ::std::vec::Vec<u8> {
-        ::std::mem::replace(&mut self.data, ::std::vec::Vec::new())
-    }
-}
-
-impl ::protobuf::Message for ResultLog {
-    fn is_initialized(&self) -> bool {
-        for v in &self.address {
-            if !v.is_initialized() {
-                return false;
-            }
-        };
-        for v in &self.topics {
-            if !v.is_initialized() {
-                return false;
-            }
-        };
-        true
-    }
-
-    fn merge_from(&mut self, is: &mut ::protobuf::CodedInputStream<'_>) -> ::protobuf::ProtobufResult<()> {
-        while !is.eof()? {
-            let (field_number, wire_type) = is.read_tag_unpack()?;
-            match field_number {
-                1 => {
-                    ::protobuf::rt::read_singular_message_into(wire_type, is, &mut self.address)?;
-                },
-                2 => {
-                    ::protobuf::rt::read_repeated_message_into(wire_type, is, &mut self.topics)?;
-                },
-                3 => {
-                    ::protobuf::rt::read_singular_proto3_bytes_into(wire_type, is, &mut self.data)?;
-                },
-                _ => {
-                    ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
-                },
-            };
-        }
-        ::std::result::Result::Ok(())
-    }
-
-    // Compute sizes of nested messages
-    #[allow(unused_variables)]
-    fn compute_size(&self) -> u32 {
-        let mut my_size = 0;
-        if let Some(ref v) = self.address.as_ref() {
-            let len = v.compute_size();
-            my_size += 1 + ::protobuf::rt::compute_raw_varint32_size(len) + len;
-        }
-        for value in &self.topics {
-            let len = value.compute_size();
-            my_size += 1 + ::protobuf::rt::compute_raw_varint32_size(len) + len;
-        };
-        if !self.data.is_empty() {
-            my_size += ::protobuf::rt::bytes_size(3, &self.data);
-        }
-        my_size += ::protobuf::rt::unknown_fields_size(self.get_unknown_fields());
-        self.cached_size.set(my_size);
-        my_size
-    }
-
-    fn write_to_with_cached_sizes(&self, os: &mut ::protobuf::CodedOutputStream<'_>) -> ::protobuf::ProtobufResult<()> {
-        if let Some(ref v) = self.address.as_ref() {
-            os.write_tag(1, ::protobuf::wire_format::WireTypeLengthDelimited)?;
-            os.write_raw_varint32(v.get_cached_size())?;
-            v.write_to_with_cached_sizes(os)?;
-        }
-        for v in &self.topics {
-            os.write_tag(2, ::protobuf::wire_format::WireTypeLengthDelimited)?;
-            os.write_raw_varint32(v.get_cached_size())?;
-            v.write_to_with_cached_sizes(os)?;
-        };
-        if !self.data.is_empty() {
-            os.write_bytes(3, &self.data)?;
-        }
-        os.write_unknown_fields(self.get_unknown_fields())?;
-        ::std::result::Result::Ok(())
-    }
-
-    fn get_cached_size(&self) -> u32 {
-        self.cached_size.get()
-    }
-
-    fn get_unknown_fields(&self) -> &::protobuf::UnknownFields {
-        &self.unknown_fields
-    }
-
-    fn mut_unknown_fields(&mut self) -> &mut ::protobuf::UnknownFields {
-        &mut self.unknown_fields
-    }
-
-    fn as_any(&self) -> &dyn (::std::any::Any) {
-        self as &dyn (::std::any::Any)
-    }
-    fn as_any_mut(&mut self) -> &mut dyn (::std::any::Any) {
-        self as &mut dyn (::std::any::Any)
-    }
-    fn into_any(self: ::std::boxed::Box<Self>) -> ::std::boxed::Box<dyn (::std::any::Any)> {
-        self
-    }
-
-    fn descriptor(&self) -> &'static ::protobuf::reflect::MessageDescriptor {
-        Self::descriptor_static()
-    }
-
-    fn new() -> ResultLog {
-        ResultLog::new()
-    }
-
-    fn descriptor_static() -> &'static ::protobuf::reflect::MessageDescriptor {
-        static descriptor: ::protobuf::rt::LazyV2<::protobuf::reflect::MessageDescriptor> = ::protobuf::rt::LazyV2::INIT;
-        descriptor.get(|| {
-            let mut fields = ::std::vec::Vec::new();
-            fields.push(::protobuf::reflect::accessor::make_singular_ptr_field_accessor::<_, ::protobuf::types::ProtobufTypeMessage<super::proto_basic::ProtoAddress>>(
-                "address",
-                |m: &ResultLog| { &m.address },
-                |m: &mut ResultLog| { &mut m.address },
-            ));
-            fields.push(::protobuf::reflect::accessor::make_repeated_field_accessor::<_, ::protobuf::types::ProtobufTypeMessage<super::proto_basic::RawU256>>(
-                "topics",
-                |m: &ResultLog| { &m.topics },
-                |m: &mut ResultLog| { &mut m.topics },
-            ));
-            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<_, ::protobuf::types::ProtobufTypeBytes>(
-                "data",
-                |m: &ResultLog| { &m.data },
-                |m: &mut ResultLog| { &mut m.data },
-            ));
-            ::protobuf::reflect::MessageDescriptor::new_pb_name::<ResultLog>(
-                "ResultLog",
-                fields,
-                file_descriptor_proto()
-            )
-        })
-    }
-
-    fn default_instance() -> &'static ResultLog {
-        static instance: ::protobuf::rt::LazyV2<ResultLog> = ::protobuf::rt::LazyV2::INIT;
-        instance.get(ResultLog::new)
-    }
-}
-
-impl ::protobuf::Clear for ResultLog {
-    fn clear(&mut self) {
-        self.address.clear();
-        self.topics.clear();
-        self.data.clear();
-        self.unknown_fields.clear();
-    }
-}
-
-impl ::std::fmt::Debug for ResultLog {
-    fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
-        ::protobuf::text_format::fmt(self, f)
-    }
-}
-
-impl ::protobuf::reflect::ProtobufValue for ResultLog {
-    fn as_ref(&self) -> ::protobuf::reflect::ReflectValueRef {
-        ::protobuf::reflect::ReflectValueRef::Message(self)
-    }
-}
-
-#[derive(PartialEq,Clone,Default)]
 pub struct SubmitResult {
     // message fields
     pub version: u32,
     pub transaction_status: u32,
     pub status_data: ::std::vec::Vec<u8>,
     pub gas_used: u64,
-    pub logs: ::protobuf::RepeatedField<ResultLog>,
+    pub logs: ::protobuf::RepeatedField<super::proto_basic::ResultLog>,
     // special fields
     pub unknown_fields: ::protobuf::UnknownFields,
     pub cached_size: ::protobuf::CachedSize,
@@ -383,10 +118,10 @@ impl SubmitResult {
         self.gas_used = v;
     }
 
-    // repeated .top.evm_engine.parameters.ResultLog logs = 5;
+    // repeated .top.evm_engine.basic.ResultLog logs = 5;
 
 
-    pub fn get_logs(&self) -> &[ResultLog] {
+    pub fn get_logs(&self) -> &[super::proto_basic::ResultLog] {
         &self.logs
     }
     pub fn clear_logs(&mut self) {
@@ -394,17 +129,17 @@ impl SubmitResult {
     }
 
     // Param is passed by value, moved
-    pub fn set_logs(&mut self, v: ::protobuf::RepeatedField<ResultLog>) {
+    pub fn set_logs(&mut self, v: ::protobuf::RepeatedField<super::proto_basic::ResultLog>) {
         self.logs = v;
     }
 
     // Mutable pointer to the field.
-    pub fn mut_logs(&mut self) -> &mut ::protobuf::RepeatedField<ResultLog> {
+    pub fn mut_logs(&mut self) -> &mut ::protobuf::RepeatedField<super::proto_basic::ResultLog> {
         &mut self.logs
     }
 
     // Take field
-    pub fn take_logs(&mut self) -> ::protobuf::RepeatedField<ResultLog> {
+    pub fn take_logs(&mut self) -> ::protobuf::RepeatedField<super::proto_basic::ResultLog> {
         ::std::mem::replace(&mut self.logs, ::protobuf::RepeatedField::new())
     }
 }
@@ -559,7 +294,7 @@ impl ::protobuf::Message for SubmitResult {
                 |m: &SubmitResult| { &m.gas_used },
                 |m: &mut SubmitResult| { &mut m.gas_used },
             ));
-            fields.push(::protobuf::reflect::accessor::make_repeated_field_accessor::<_, ::protobuf::types::ProtobufTypeMessage<ResultLog>>(
+            fields.push(::protobuf::reflect::accessor::make_repeated_field_accessor::<_, ::protobuf::types::ProtobufTypeMessage<super::proto_basic::ResultLog>>(
                 "logs",
                 |m: &SubmitResult| { &m.logs },
                 |m: &mut SubmitResult| { &mut m.logs },
@@ -608,6 +343,7 @@ pub struct FunctionCallArgs {
     pub address: ::protobuf::SingularPtrField<super::proto_basic::ProtoAddress>,
     pub value: ::protobuf::SingularPtrField<super::proto_basic::WeiU256>,
     pub input: ::std::vec::Vec<u8>,
+    pub gas_limit: u64,
     // special fields
     pub unknown_fields: ::protobuf::UnknownFields,
     pub cached_size: ::protobuf::CachedSize,
@@ -730,6 +466,21 @@ impl FunctionCallArgs {
     pub fn take_input(&mut self) -> ::std::vec::Vec<u8> {
         ::std::mem::replace(&mut self.input, ::std::vec::Vec::new())
     }
+
+    // uint64 gas_limit = 5;
+
+
+    pub fn get_gas_limit(&self) -> u64 {
+        self.gas_limit
+    }
+    pub fn clear_gas_limit(&mut self) {
+        self.gas_limit = 0;
+    }
+
+    // Param is passed by value, moved
+    pub fn set_gas_limit(&mut self, v: u64) {
+        self.gas_limit = v;
+    }
 }
 
 impl ::protobuf::Message for FunctionCallArgs {
@@ -767,6 +518,13 @@ impl ::protobuf::Message for FunctionCallArgs {
                 4 => {
                     ::protobuf::rt::read_singular_proto3_bytes_into(wire_type, is, &mut self.input)?;
                 },
+                5 => {
+                    if wire_type != ::protobuf::wire_format::WireTypeVarint {
+                        return ::std::result::Result::Err(::protobuf::rt::unexpected_wire_type(wire_type));
+                    }
+                    let tmp = is.read_uint64()?;
+                    self.gas_limit = tmp;
+                },
                 _ => {
                     ::protobuf::rt::read_unknown_or_skip_group(field_number, wire_type, is, self.mut_unknown_fields())?;
                 },
@@ -793,6 +551,9 @@ impl ::protobuf::Message for FunctionCallArgs {
         if !self.input.is_empty() {
             my_size += ::protobuf::rt::bytes_size(4, &self.input);
         }
+        if self.gas_limit != 0 {
+            my_size += ::protobuf::rt::value_size(5, self.gas_limit, ::protobuf::wire_format::WireTypeVarint);
+        }
         my_size += ::protobuf::rt::unknown_fields_size(self.get_unknown_fields());
         self.cached_size.set(my_size);
         my_size
@@ -814,6 +575,9 @@ impl ::protobuf::Message for FunctionCallArgs {
         }
         if !self.input.is_empty() {
             os.write_bytes(4, &self.input)?;
+        }
+        if self.gas_limit != 0 {
+            os.write_uint64(5, self.gas_limit)?;
         }
         os.write_unknown_fields(self.get_unknown_fields())?;
         ::std::result::Result::Ok(())
@@ -873,6 +637,11 @@ impl ::protobuf::Message for FunctionCallArgs {
                 |m: &FunctionCallArgs| { &m.input },
                 |m: &mut FunctionCallArgs| { &mut m.input },
             ));
+            fields.push(::protobuf::reflect::accessor::make_simple_field_accessor::<_, ::protobuf::types::ProtobufTypeUint64>(
+                "gas_limit",
+                |m: &FunctionCallArgs| { &m.gas_limit },
+                |m: &mut FunctionCallArgs| { &mut m.gas_limit },
+            ));
             ::protobuf::reflect::MessageDescriptor::new_pb_name::<FunctionCallArgs>(
                 "FunctionCallArgs",
                 fields,
@@ -893,6 +662,7 @@ impl ::protobuf::Clear for FunctionCallArgs {
         self.address.clear();
         self.value.clear();
         self.input.clear();
+        self.gas_limit = 0;
         self.unknown_fields.clear();
     }
 }
@@ -911,66 +681,55 @@ impl ::protobuf::reflect::ProtobufValue for FunctionCallArgs {
 
 static file_descriptor_proto_data: &'static [u8] = b"\
     \n\x16proto_parameters.proto\x12\x19top.evm_engine.parameters\x1a\x11pro\
-    to_basic.proto\"\x94\x01\n\tResultLog\x12<\n\x07address\x18\x01\x20\x01(\
-    \x0b2\".top.evm_engine.basic.ProtoAddressR\x07address\x125\n\x06topics\
-    \x18\x02\x20\x03(\x0b2\x1d.top.evm_engine.basic.RawU256R\x06topics\x12\
-    \x12\n\x04data\x18\x03\x20\x01(\x0cR\x04data\"\xcd\x01\n\x0cSubmitResult\
-    \x12\x18\n\x07version\x18\x01\x20\x01(\rR\x07version\x12-\n\x12transacti\
-    on_status\x18\x02\x20\x01(\rR\x11transactionStatus\x12\x1f\n\x0bstatus_d\
-    ata\x18\x03\x20\x01(\x0cR\nstatusData\x12\x19\n\x08gas_used\x18\x04\x20\
-    \x01(\x04R\x07gasUsed\x128\n\x04logs\x18\x05\x20\x03(\x0b2$.top.evm_engi\
-    ne.parameters.ResultLogR\x04logs\"\xb5\x01\n\x10FunctionCallArgs\x12\x18\
-    \n\x07version\x18\x01\x20\x01(\rR\x07version\x12<\n\x07address\x18\x02\
-    \x20\x01(\x0b2\".top.evm_engine.basic.ProtoAddressR\x07address\x123\n\
-    \x05value\x18\x03\x20\x01(\x0b2\x1d.top.evm_engine.basic.WeiU256R\x05val\
-    ue\x12\x14\n\x05input\x18\x04\x20\x01(\x0cR\x05inputJ\xb5\x07\n\x06\x12\
-    \x04\0\0\x19\x01\n\x08\n\x01\x0c\x12\x03\0\0\x12\n\x08\n\x01\x02\x12\x03\
-    \x02\x08!\n\t\n\x02\x03\0\x12\x03\x04\x07\x1a\n\n\n\x02\x04\0\x12\x04\
-    \x06\0\n\x01\n\n\n\x03\x04\0\x01\x12\x03\x06\x08\x11\n\x0b\n\x04\x04\0\
-    \x02\0\x12\x03\x07\x04#\n\r\n\x05\x04\0\x02\0\x04\x12\x04\x07\x04\x06\
-    \x13\n\x0c\n\x05\x04\0\x02\0\x06\x12\x03\x07\x04\x16\n\x0c\n\x05\x04\0\
-    \x02\0\x01\x12\x03\x07\x17\x1e\n\x0c\n\x05\x04\0\x02\0\x03\x12\x03\x07!\
-    \"\n\x0b\n\x04\x04\0\x02\x01\x12\x03\x08\x04&\n\x0c\n\x05\x04\0\x02\x01\
-    \x04\x12\x03\x08\x04\x0c\n\x0c\n\x05\x04\0\x02\x01\x06\x12\x03\x08\r\x1a\
-    \n\x0c\n\x05\x04\0\x02\x01\x01\x12\x03\x08\x1b!\n\x0c\n\x05\x04\0\x02\
-    \x01\x03\x12\x03\x08$%\n\x0b\n\x04\x04\0\x02\x02\x12\x03\t\x04\x13\n\r\n\
-    \x05\x04\0\x02\x02\x04\x12\x04\t\x04\x08&\n\x0c\n\x05\x04\0\x02\x02\x05\
-    \x12\x03\t\x04\t\n\x0c\n\x05\x04\0\x02\x02\x01\x12\x03\t\n\x0e\n\x0c\n\
-    \x05\x04\0\x02\x02\x03\x12\x03\t\x11\x12\n\n\n\x02\x04\x01\x12\x04\x0c\0\
-    \x12\x01\n\n\n\x03\x04\x01\x01\x12\x03\x0c\x08\x14\n\x0b\n\x04\x04\x01\
-    \x02\0\x12\x03\r\x04\x17\n\r\n\x05\x04\x01\x02\0\x04\x12\x04\r\x04\x0c\
-    \x16\n\x0c\n\x05\x04\x01\x02\0\x05\x12\x03\r\x04\n\n\x0c\n\x05\x04\x01\
-    \x02\0\x01\x12\x03\r\x0b\x12\n\x0c\n\x05\x04\x01\x02\0\x03\x12\x03\r\x15\
-    \x16\n\x0b\n\x04\x04\x01\x02\x01\x12\x03\x0e\x04\"\n\r\n\x05\x04\x01\x02\
-    \x01\x04\x12\x04\x0e\x04\r\x17\n\x0c\n\x05\x04\x01\x02\x01\x05\x12\x03\
-    \x0e\x04\n\n\x0c\n\x05\x04\x01\x02\x01\x01\x12\x03\x0e\x0b\x1d\n\x0c\n\
-    \x05\x04\x01\x02\x01\x03\x12\x03\x0e\x20!\n\x0b\n\x04\x04\x01\x02\x02\
-    \x12\x03\x0f\x04\x1a\n\r\n\x05\x04\x01\x02\x02\x04\x12\x04\x0f\x04\x0e\"\
-    \n\x0c\n\x05\x04\x01\x02\x02\x05\x12\x03\x0f\x04\t\n\x0c\n\x05\x04\x01\
-    \x02\x02\x01\x12\x03\x0f\n\x15\n\x0c\n\x05\x04\x01\x02\x02\x03\x12\x03\
-    \x0f\x18\x19\n\x0b\n\x04\x04\x01\x02\x03\x12\x03\x10\x04\x18\n\r\n\x05\
-    \x04\x01\x02\x03\x04\x12\x04\x10\x04\x0f\x1a\n\x0c\n\x05\x04\x01\x02\x03\
-    \x05\x12\x03\x10\x04\n\n\x0c\n\x05\x04\x01\x02\x03\x01\x12\x03\x10\x0b\
-    \x13\n\x0c\n\x05\x04\x01\x02\x03\x03\x12\x03\x10\x16\x17\n\x0b\n\x04\x04\
-    \x01\x02\x04\x12\x03\x11\x04\x20\n\x0c\n\x05\x04\x01\x02\x04\x04\x12\x03\
-    \x11\x04\x0c\n\x0c\n\x05\x04\x01\x02\x04\x06\x12\x03\x11\r\x16\n\x0c\n\
-    \x05\x04\x01\x02\x04\x01\x12\x03\x11\x17\x1b\n\x0c\n\x05\x04\x01\x02\x04\
-    \x03\x12\x03\x11\x1e\x1f\n\n\n\x02\x04\x02\x12\x04\x14\0\x19\x01\n\n\n\
-    \x03\x04\x02\x01\x12\x03\x14\x08\x18\n\x0b\n\x04\x04\x02\x02\0\x12\x03\
-    \x15\x04\x17\n\r\n\x05\x04\x02\x02\0\x04\x12\x04\x15\x04\x14\x1a\n\x0c\n\
-    \x05\x04\x02\x02\0\x05\x12\x03\x15\x04\n\n\x0c\n\x05\x04\x02\x02\0\x01\
-    \x12\x03\x15\x0b\x12\n\x0c\n\x05\x04\x02\x02\0\x03\x12\x03\x15\x15\x16\n\
-    \x0b\n\x04\x04\x02\x02\x01\x12\x03\x16\x04#\n\r\n\x05\x04\x02\x02\x01\
-    \x04\x12\x04\x16\x04\x15\x17\n\x0c\n\x05\x04\x02\x02\x01\x06\x12\x03\x16\
-    \x04\x16\n\x0c\n\x05\x04\x02\x02\x01\x01\x12\x03\x16\x17\x1e\n\x0c\n\x05\
-    \x04\x02\x02\x01\x03\x12\x03\x16!\"\n\x0b\n\x04\x04\x02\x02\x02\x12\x03\
-    \x17\x04\x1c\n\r\n\x05\x04\x02\x02\x02\x04\x12\x04\x17\x04\x16#\n\x0c\n\
-    \x05\x04\x02\x02\x02\x06\x12\x03\x17\x04\x11\n\x0c\n\x05\x04\x02\x02\x02\
-    \x01\x12\x03\x17\x12\x17\n\x0c\n\x05\x04\x02\x02\x02\x03\x12\x03\x17\x1a\
-    \x1b\n\x0b\n\x04\x04\x02\x02\x03\x12\x03\x18\x04\x14\n\r\n\x05\x04\x02\
-    \x02\x03\x04\x12\x04\x18\x04\x17\x1c\n\x0c\n\x05\x04\x02\x02\x03\x05\x12\
-    \x03\x18\x04\t\n\x0c\n\x05\x04\x02\x02\x03\x01\x12\x03\x18\n\x0f\n\x0c\n\
-    \x05\x04\x02\x02\x03\x03\x12\x03\x18\x12\x13b\x06proto3\
+    to_basic.proto\"\xc8\x01\n\x0cSubmitResult\x12\x18\n\x07version\x18\x01\
+    \x20\x01(\rR\x07version\x12-\n\x12transaction_status\x18\x02\x20\x01(\rR\
+    \x11transactionStatus\x12\x1f\n\x0bstatus_data\x18\x03\x20\x01(\x0cR\nst\
+    atusData\x12\x19\n\x08gas_used\x18\x04\x20\x01(\x04R\x07gasUsed\x123\n\
+    \x04logs\x18\x05\x20\x03(\x0b2\x1f.top.evm_engine.basic.ResultLogR\x04lo\
+    gs\"\xd2\x01\n\x10FunctionCallArgs\x12\x18\n\x07version\x18\x01\x20\x01(\
+    \rR\x07version\x12<\n\x07address\x18\x02\x20\x01(\x0b2\".top.evm_engine.\
+    basic.ProtoAddressR\x07address\x123\n\x05value\x18\x03\x20\x01(\x0b2\x1d\
+    .top.evm_engine.basic.WeiU256R\x05value\x12\x14\n\x05input\x18\x04\x20\
+    \x01(\x0cR\x05input\x12\x1b\n\tgas_limit\x18\x05\x20\x01(\x04R\x08gasLim\
+    itJ\x92\x06\n\x06\x12\x04\0\0\x14\x01\n\x08\n\x01\x0c\x12\x03\0\0\x12\n\
+    \x08\n\x01\x02\x12\x03\x02\x08!\n\t\n\x02\x03\0\x12\x03\x04\x07\x1a\n\n\
+    \n\x02\x04\0\x12\x04\x06\0\x0c\x01\n\n\n\x03\x04\0\x01\x12\x03\x06\x08\
+    \x14\n\x0b\n\x04\x04\0\x02\0\x12\x03\x07\x04\x17\n\r\n\x05\x04\0\x02\0\
+    \x04\x12\x04\x07\x04\x06\x16\n\x0c\n\x05\x04\0\x02\0\x05\x12\x03\x07\x04\
+    \n\n\x0c\n\x05\x04\0\x02\0\x01\x12\x03\x07\x0b\x12\n\x0c\n\x05\x04\0\x02\
+    \0\x03\x12\x03\x07\x15\x16\n\x0b\n\x04\x04\0\x02\x01\x12\x03\x08\x04\"\n\
+    \r\n\x05\x04\0\x02\x01\x04\x12\x04\x08\x04\x07\x17\n\x0c\n\x05\x04\0\x02\
+    \x01\x05\x12\x03\x08\x04\n\n\x0c\n\x05\x04\0\x02\x01\x01\x12\x03\x08\x0b\
+    \x1d\n\x0c\n\x05\x04\0\x02\x01\x03\x12\x03\x08\x20!\n\x0b\n\x04\x04\0\
+    \x02\x02\x12\x03\t\x04\x1a\n\r\n\x05\x04\0\x02\x02\x04\x12\x04\t\x04\x08\
+    \"\n\x0c\n\x05\x04\0\x02\x02\x05\x12\x03\t\x04\t\n\x0c\n\x05\x04\0\x02\
+    \x02\x01\x12\x03\t\n\x15\n\x0c\n\x05\x04\0\x02\x02\x03\x12\x03\t\x18\x19\
+    \n\x0b\n\x04\x04\0\x02\x03\x12\x03\n\x04\x18\n\r\n\x05\x04\0\x02\x03\x04\
+    \x12\x04\n\x04\t\x1a\n\x0c\n\x05\x04\0\x02\x03\x05\x12\x03\n\x04\n\n\x0c\
+    \n\x05\x04\0\x02\x03\x01\x12\x03\n\x0b\x13\n\x0c\n\x05\x04\0\x02\x03\x03\
+    \x12\x03\n\x16\x17\n\x0b\n\x04\x04\0\x02\x04\x12\x03\x0b\x04&\n\x0c\n\
+    \x05\x04\0\x02\x04\x04\x12\x03\x0b\x04\x0c\n\x0c\n\x05\x04\0\x02\x04\x06\
+    \x12\x03\x0b\r\x1c\n\x0c\n\x05\x04\0\x02\x04\x01\x12\x03\x0b\x1d!\n\x0c\
+    \n\x05\x04\0\x02\x04\x03\x12\x03\x0b$%\n\n\n\x02\x04\x01\x12\x04\x0e\0\
+    \x14\x01\n\n\n\x03\x04\x01\x01\x12\x03\x0e\x08\x18\n\x0b\n\x04\x04\x01\
+    \x02\0\x12\x03\x0f\x04\x17\n\r\n\x05\x04\x01\x02\0\x04\x12\x04\x0f\x04\
+    \x0e\x1a\n\x0c\n\x05\x04\x01\x02\0\x05\x12\x03\x0f\x04\n\n\x0c\n\x05\x04\
+    \x01\x02\0\x01\x12\x03\x0f\x0b\x12\n\x0c\n\x05\x04\x01\x02\0\x03\x12\x03\
+    \x0f\x15\x16\n\x0b\n\x04\x04\x01\x02\x01\x12\x03\x10\x04#\n\r\n\x05\x04\
+    \x01\x02\x01\x04\x12\x04\x10\x04\x0f\x17\n\x0c\n\x05\x04\x01\x02\x01\x06\
+    \x12\x03\x10\x04\x16\n\x0c\n\x05\x04\x01\x02\x01\x01\x12\x03\x10\x17\x1e\
+    \n\x0c\n\x05\x04\x01\x02\x01\x03\x12\x03\x10!\"\n\x0b\n\x04\x04\x01\x02\
+    \x02\x12\x03\x11\x04\x1c\n\r\n\x05\x04\x01\x02\x02\x04\x12\x04\x11\x04\
+    \x10#\n\x0c\n\x05\x04\x01\x02\x02\x06\x12\x03\x11\x04\x11\n\x0c\n\x05\
+    \x04\x01\x02\x02\x01\x12\x03\x11\x12\x17\n\x0c\n\x05\x04\x01\x02\x02\x03\
+    \x12\x03\x11\x1a\x1b\n\x0b\n\x04\x04\x01\x02\x03\x12\x03\x12\x04\x14\n\r\
+    \n\x05\x04\x01\x02\x03\x04\x12\x04\x12\x04\x11\x1c\n\x0c\n\x05\x04\x01\
+    \x02\x03\x05\x12\x03\x12\x04\t\n\x0c\n\x05\x04\x01\x02\x03\x01\x12\x03\
+    \x12\n\x0f\n\x0c\n\x05\x04\x01\x02\x03\x03\x12\x03\x12\x12\x13\n\x0b\n\
+    \x04\x04\x01\x02\x04\x12\x03\x13\x04\x19\n\r\n\x05\x04\x01\x02\x04\x04\
+    \x12\x04\x13\x04\x12\x14\n\x0c\n\x05\x04\x01\x02\x04\x05\x12\x03\x13\x04\
+    \n\n\x0c\n\x05\x04\x01\x02\x04\x01\x12\x03\x13\x0b\x14\n\x0c\n\x05\x04\
+    \x01\x02\x04\x03\x12\x03\x13\x17\x18b\x06proto3\
 ";
 
 static file_descriptor_proto_lazy: ::protobuf::rt::LazyV2<::protobuf::descriptor::FileDescriptorProto> = ::protobuf::rt::LazyV2::INIT;

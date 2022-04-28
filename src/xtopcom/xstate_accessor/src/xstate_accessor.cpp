@@ -52,6 +52,14 @@ xtop_state_accessor::xtop_state_accessor(top::observer_ptr<top::base::xvbstate_t
     }
 }
 
+xtop_state_accessor::xtop_state_accessor(top::observer_ptr<top::base::xvbstate_t> const & bstate, top::xobject_ptr_t<top::base::xvcanvas_t> const & canvas)
+  : bstate_{bstate}, canvas_{canvas}, ac_data_{} {
+    if (bstate == nullptr) {
+        assert(false);
+        top::error::throw_error({error::xerrc_t::invalid_state_backend});
+    }
+}
+
 xtop_state_accessor::xtop_state_accessor(common::xaccount_address_t const & account_address)
   : bstate_owned_{top::state_accessor::state(account_address)}, bstate_{make_observer(bstate_owned_.get())}, canvas_{make_object_ptr<base::xvcanvas_t>()} {
 }

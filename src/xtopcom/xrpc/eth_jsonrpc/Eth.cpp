@@ -77,7 +77,8 @@ Eth::Eth(eth::Interface& _eth):
 
 string Eth::eth_gasPrice()
 {
-	return toJS(10000);
+	//return toJS(10000);
+    return "0x3b9aca00";
 }
 
 // Json::Value Eth::eth_accounts()
@@ -234,7 +235,8 @@ string Eth::eth_getCode(string const& _address, string const& _blockNumber)
 	// {
 	// 	BOOST_THROW_EXCEPTION(JsonRpcException(Errors::ERROR_RPC_INVALID_PARAMS));
 	// }
-    return "0x600160008035811a818181146012578301005b601b6001356025565b8060005260206000f25b600060078202905091905056";
+    //return "0x600160008035811a818181146012578301005b601b6001356025565b8060005260206000f25b600060078202905091905056";
+    return "0x";
 }
 
 // void Eth::setTransactionDefaults(TransactionSkeleton& _t)
@@ -344,7 +346,8 @@ string Eth::eth_estimateGas(Json::Value const& _json)
 	// {
 	// 	BOOST_THROW_EXCEPTION(JsonRpcException(Errors::ERROR_RPC_INVALID_PARAMS));
 	// }
-    return toJS(21000);
+    //return toJS(21000);
+    return "0x5208";
 }
 
 // bool Eth::eth_flush()
@@ -409,6 +412,7 @@ Json::Value Eth::eth_getBlockByNumber(string const& _blockNumber, bool _includeT
     response["hash"] = "0xdc0818cf78f21a8e70579cb46a43643f78291264dda342ae31049421c82d21ae";
     response["number"] = "0x1";
     response["transactions"].append("0xe670ec64341771606e55d6b4ca35a1a6b75ee3d5145a99d05921026d1527331");
+	response["baseFeePerGas"] = "0x10";
     return response;
 }
 

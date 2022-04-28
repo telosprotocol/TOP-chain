@@ -18,6 +18,7 @@
 #include "xdata/xproperty.h"
 #include "xdata/xlightunit.h"
 #include "xstore/xstore.h"
+#include "xevm_common/common.h"
 
 namespace top { namespace store {
 
@@ -58,9 +59,9 @@ class xaccount_context_t {
 
     // property APIs
     int32_t create_user_account(const std::string& address);
-    int32_t token_transfer_out(const data::xproperty_asset& asset, uint64_t gas_fee = 0, uint64_t service_fee = 0);
+    int32_t token_transfer_out(const data::xproperty_asset& asset, evm_common::u256 amount256 = 0, uint64_t gas_fee = 0, uint64_t service_fee = 0);
     int32_t top_token_transfer_out(uint64_t amount, uint64_t gas_fee = 0, uint64_t service_fee = 0);
-    int32_t token_transfer_in(const data::xproperty_asset& asset);
+    int32_t token_transfer_in(const data::xproperty_asset& asset, evm_common::u256 amount256);
     int32_t top_token_transfer_in(uint64_t amount);
 
     // check legal in transaction parse check, here, check balance and execute

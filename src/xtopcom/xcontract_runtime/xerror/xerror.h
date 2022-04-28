@@ -12,7 +12,7 @@
 
 NS_BEG3(top, contract_runtime, error)
 
-enum class xenum_errc {
+enum class xenum_errc : uint32_t {
     ok = 0,
 
     invalid_vm_type,
@@ -62,6 +62,17 @@ enum class xenum_errc {
     // wasm user contract
     enum_wasm_code_invalid,
     enum_bin_code_not_changed,
+
+    /// eth contract
+    /// here is regular error code exit from rust evm interface 
+    /// should be defined in same order as `evm_engine_rs/engine/src/error.rs` `enum EngineErrorKind`
+    /// use `as_error_code()` to convert into u32 than pass to C and add `evm_vm_ec_begin`
+    evm_vm_ec_begin,
+    evm_vm_error,
+    evm_vm_fatal,
+    evm_incorrect_args,
+    evm_incorrect_nonce,
+    evm_protobuf_serilized_error,
 
     unknown_error,
 };

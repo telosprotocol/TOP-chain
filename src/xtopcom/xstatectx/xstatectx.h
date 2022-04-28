@@ -25,8 +25,7 @@ class xstatectx_t : public xstatectx_face_t {
     xstatectx_t(base::xvblock_t* prev_block, const data::xtablestate_ptr_t & prev_table_state, const data::xtablestate_ptr_t & commit_table_state, const xstatectx_para_t & para);
  public:// APIs for vm & tx executor
     const data::xtablestate_ptr_t &     get_table_state() const override;
-    data::xunitstate_ptr_t              load_unit_state(const base::xvaccount_t & addr) override;
-    const xstatectx_para_t &            get_ctx_para() const override {return m_statectx_para;}
+    data::xunitstate_ptr_t              load_unit_state(const base::xvaccount_t & addr) override;    
     bool                                do_rollback() override;
     size_t                              do_snapshot() override;
     const std::string &                 get_table_address() const override {return m_table_ctx->get_table_address();}
@@ -39,6 +38,7 @@ class xstatectx_t : public xstatectx_face_t {
     xunitstate_ctx_ptr_t    find_unit_ctx(const std::string & addr, bool is_same_table);
     void                    add_unit_ctx(const std::string & addr, bool is_same_table, const xunitstate_ctx_ptr_t & unit_ctx);
     bool                    is_same_table(const base::xvaccount_t & addr) const;
+    const xstatectx_para_t & get_ctx_para() const {return m_statectx_para;}
  private:
     xstatectx_base_t        m_statectx_base;
     xstatectx_para_t        m_statectx_para;
@@ -47,5 +47,11 @@ class xstatectx_t : public xstatectx_face_t {
     std::map<std::string, xunitstate_ctx_ptr_t>   m_other_table_unit_ctxs;
 };
 using xstatectx_ptr_t = std::shared_ptr<xstatectx_t>;
+
+class xstatectx_factory_t {
+ public:
+    static xstatectx_ptr_t create_latest_commit_statectx(const base::xvaccount_t & table_addr);  // for RPC eth_call
+    static xstatectx_ptr_t create_latest_cert_statectx(base::xvblock_t* prev_block, const data::xtablestate_ptr_t & prev_table_state, const data::xtablestate_ptr_t & commit_table_state, const xstatectx_para_t & para);
+};
 
 NS_END2

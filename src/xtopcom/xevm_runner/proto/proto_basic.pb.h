@@ -38,7 +38,7 @@ namespace protobuf_proto_5fbasic_2eproto {
 struct TableStruct {
   static const ::google::protobuf::internal::ParseTableField entries[];
   static const ::google::protobuf::internal::AuxillaryParseTableField aux[];
-  static const ::google::protobuf::internal::ParseTable schema[3];
+  static const ::google::protobuf::internal::ParseTable schema[4];
   static const ::google::protobuf::internal::FieldMetadata field_metadata[];
   static const ::google::protobuf::internal::SerializationTable serialization_table[];
   static const ::google::protobuf::uint32 offsets[];
@@ -54,6 +54,9 @@ extern ProtoAddressDefaultTypeInternal _ProtoAddress_default_instance_;
 class RawU256;
 class RawU256DefaultTypeInternal;
 extern RawU256DefaultTypeInternal _RawU256_default_instance_;
+class ResultLog;
+class ResultLogDefaultTypeInternal;
+extern ResultLogDefaultTypeInternal _ResultLog_default_instance_;
 class WeiU256;
 class WeiU256DefaultTypeInternal;
 extern WeiU256DefaultTypeInternal _WeiU256_default_instance_;
@@ -64,6 +67,7 @@ namespace google {
 namespace protobuf {
 template<> ::top::evm_engine::basic::ProtoAddress* Arena::CreateMaybeMessage<::top::evm_engine::basic::ProtoAddress>(Arena*);
 template<> ::top::evm_engine::basic::RawU256* Arena::CreateMaybeMessage<::top::evm_engine::basic::RawU256>(Arena*);
+template<> ::top::evm_engine::basic::ResultLog* Arena::CreateMaybeMessage<::top::evm_engine::basic::ResultLog>(Arena*);
 template<> ::top::evm_engine::basic::WeiU256* Arena::CreateMaybeMessage<::top::evm_engine::basic::WeiU256>(Arena*);
 }  // namespace protobuf
 }  // namespace google
@@ -404,6 +408,143 @@ class WeiU256 : public ::google::protobuf::Message /* @@protoc_insertion_point(c
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::protobuf_proto_5fbasic_2eproto::TableStruct;
 };
+// -------------------------------------------------------------------
+
+class ResultLog : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:top.evm_engine.basic.ResultLog) */ {
+ public:
+  ResultLog();
+  virtual ~ResultLog();
+
+  ResultLog(const ResultLog& from);
+
+  inline ResultLog& operator=(const ResultLog& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  ResultLog(ResultLog&& from) noexcept
+    : ResultLog() {
+    *this = ::std::move(from);
+  }
+
+  inline ResultLog& operator=(ResultLog&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const ResultLog& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const ResultLog* internal_default_instance() {
+    return reinterpret_cast<const ResultLog*>(
+               &_ResultLog_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    3;
+
+  void Swap(ResultLog* other);
+  friend void swap(ResultLog& a, ResultLog& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline ResultLog* New() const final {
+    return CreateMaybeMessage<ResultLog>(NULL);
+  }
+
+  ResultLog* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<ResultLog>(arena);
+  }
+  void CopyFrom(const ::google::protobuf::Message& from) final;
+  void MergeFrom(const ::google::protobuf::Message& from) final;
+  void CopyFrom(const ResultLog& from);
+  void MergeFrom(const ResultLog& from);
+  void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  ::google::protobuf::uint8* InternalSerializeWithCachedSizesToArray(
+      bool deterministic, ::google::protobuf::uint8* target) const final;
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(ResultLog* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return NULL;
+  }
+  inline void* MaybeArenaPtr() const {
+    return NULL;
+  }
+  public:
+
+  ::google::protobuf::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // repeated .top.evm_engine.basic.RawU256 topics = 2;
+  int topics_size() const;
+  void clear_topics();
+  static const int kTopicsFieldNumber = 2;
+  ::top::evm_engine::basic::RawU256* mutable_topics(int index);
+  ::google::protobuf::RepeatedPtrField< ::top::evm_engine::basic::RawU256 >*
+      mutable_topics();
+  const ::top::evm_engine::basic::RawU256& topics(int index) const;
+  ::top::evm_engine::basic::RawU256* add_topics();
+  const ::google::protobuf::RepeatedPtrField< ::top::evm_engine::basic::RawU256 >&
+      topics() const;
+
+  // bytes data = 3;
+  void clear_data();
+  static const int kDataFieldNumber = 3;
+  const ::std::string& data() const;
+  void set_data(const ::std::string& value);
+  #if LANG_CXX11
+  void set_data(::std::string&& value);
+  #endif
+  void set_data(const char* value);
+  void set_data(const void* value, size_t size);
+  ::std::string* mutable_data();
+  ::std::string* release_data();
+  void set_allocated_data(::std::string* data);
+
+  // .top.evm_engine.basic.ProtoAddress address = 1;
+  bool has_address() const;
+  void clear_address();
+  static const int kAddressFieldNumber = 1;
+  private:
+  const ::top::evm_engine::basic::ProtoAddress& _internal_address() const;
+  public:
+  const ::top::evm_engine::basic::ProtoAddress& address() const;
+  ::top::evm_engine::basic::ProtoAddress* release_address();
+  ::top::evm_engine::basic::ProtoAddress* mutable_address();
+  void set_allocated_address(::top::evm_engine::basic::ProtoAddress* address);
+
+  // @@protoc_insertion_point(class_scope:top.evm_engine.basic.ResultLog)
+ private:
+
+  ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
+  ::google::protobuf::RepeatedPtrField< ::top::evm_engine::basic::RawU256 > topics_;
+  ::google::protobuf::internal::ArenaStringPtr data_;
+  ::top::evm_engine::basic::ProtoAddress* address_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::protobuf_proto_5fbasic_2eproto::TableStruct;
+};
 // ===================================================================
 
 
@@ -582,9 +723,152 @@ inline void WeiU256::set_allocated_data(::std::string* data) {
   // @@protoc_insertion_point(field_set_allocated:top.evm_engine.basic.WeiU256.data)
 }
 
+// -------------------------------------------------------------------
+
+// ResultLog
+
+// .top.evm_engine.basic.ProtoAddress address = 1;
+inline bool ResultLog::has_address() const {
+  return this != internal_default_instance() && address_ != NULL;
+}
+inline void ResultLog::clear_address() {
+  if (GetArenaNoVirtual() == NULL && address_ != NULL) {
+    delete address_;
+  }
+  address_ = NULL;
+}
+inline const ::top::evm_engine::basic::ProtoAddress& ResultLog::_internal_address() const {
+  return *address_;
+}
+inline const ::top::evm_engine::basic::ProtoAddress& ResultLog::address() const {
+  const ::top::evm_engine::basic::ProtoAddress* p = address_;
+  // @@protoc_insertion_point(field_get:top.evm_engine.basic.ResultLog.address)
+  return p != NULL ? *p : *reinterpret_cast<const ::top::evm_engine::basic::ProtoAddress*>(
+      &::top::evm_engine::basic::_ProtoAddress_default_instance_);
+}
+inline ::top::evm_engine::basic::ProtoAddress* ResultLog::release_address() {
+  // @@protoc_insertion_point(field_release:top.evm_engine.basic.ResultLog.address)
+  
+  ::top::evm_engine::basic::ProtoAddress* temp = address_;
+  address_ = NULL;
+  return temp;
+}
+inline ::top::evm_engine::basic::ProtoAddress* ResultLog::mutable_address() {
+  
+  if (address_ == NULL) {
+    auto* p = CreateMaybeMessage<::top::evm_engine::basic::ProtoAddress>(GetArenaNoVirtual());
+    address_ = p;
+  }
+  // @@protoc_insertion_point(field_mutable:top.evm_engine.basic.ResultLog.address)
+  return address_;
+}
+inline void ResultLog::set_allocated_address(::top::evm_engine::basic::ProtoAddress* address) {
+  ::google::protobuf::Arena* message_arena = GetArenaNoVirtual();
+  if (message_arena == NULL) {
+    delete address_;
+  }
+  if (address) {
+    ::google::protobuf::Arena* submessage_arena = NULL;
+    if (message_arena != submessage_arena) {
+      address = ::google::protobuf::internal::GetOwnedMessage(
+          message_arena, address, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  address_ = address;
+  // @@protoc_insertion_point(field_set_allocated:top.evm_engine.basic.ResultLog.address)
+}
+
+// repeated .top.evm_engine.basic.RawU256 topics = 2;
+inline int ResultLog::topics_size() const {
+  return topics_.size();
+}
+inline void ResultLog::clear_topics() {
+  topics_.Clear();
+}
+inline ::top::evm_engine::basic::RawU256* ResultLog::mutable_topics(int index) {
+  // @@protoc_insertion_point(field_mutable:top.evm_engine.basic.ResultLog.topics)
+  return topics_.Mutable(index);
+}
+inline ::google::protobuf::RepeatedPtrField< ::top::evm_engine::basic::RawU256 >*
+ResultLog::mutable_topics() {
+  // @@protoc_insertion_point(field_mutable_list:top.evm_engine.basic.ResultLog.topics)
+  return &topics_;
+}
+inline const ::top::evm_engine::basic::RawU256& ResultLog::topics(int index) const {
+  // @@protoc_insertion_point(field_get:top.evm_engine.basic.ResultLog.topics)
+  return topics_.Get(index);
+}
+inline ::top::evm_engine::basic::RawU256* ResultLog::add_topics() {
+  // @@protoc_insertion_point(field_add:top.evm_engine.basic.ResultLog.topics)
+  return topics_.Add();
+}
+inline const ::google::protobuf::RepeatedPtrField< ::top::evm_engine::basic::RawU256 >&
+ResultLog::topics() const {
+  // @@protoc_insertion_point(field_list:top.evm_engine.basic.ResultLog.topics)
+  return topics_;
+}
+
+// bytes data = 3;
+inline void ResultLog::clear_data() {
+  data_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& ResultLog::data() const {
+  // @@protoc_insertion_point(field_get:top.evm_engine.basic.ResultLog.data)
+  return data_.GetNoArena();
+}
+inline void ResultLog::set_data(const ::std::string& value) {
+  
+  data_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:top.evm_engine.basic.ResultLog.data)
+}
+#if LANG_CXX11
+inline void ResultLog::set_data(::std::string&& value) {
+  
+  data_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:top.evm_engine.basic.ResultLog.data)
+}
+#endif
+inline void ResultLog::set_data(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  
+  data_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:top.evm_engine.basic.ResultLog.data)
+}
+inline void ResultLog::set_data(const void* value, size_t size) {
+  
+  data_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:top.evm_engine.basic.ResultLog.data)
+}
+inline ::std::string* ResultLog::mutable_data() {
+  
+  // @@protoc_insertion_point(field_mutable:top.evm_engine.basic.ResultLog.data)
+  return data_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* ResultLog::release_data() {
+  // @@protoc_insertion_point(field_release:top.evm_engine.basic.ResultLog.data)
+  
+  return data_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void ResultLog::set_allocated_data(::std::string* data) {
+  if (data != NULL) {
+    
+  } else {
+    
+  }
+  data_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), data);
+  // @@protoc_insertion_point(field_set_allocated:top.evm_engine.basic.ResultLog.data)
+}
+
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

@@ -7,6 +7,7 @@
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xtransaction_v1.h"
 #include "xdata/xtransaction_v2.h"
+#include "xdata/xtransaction_v3.h"
 #include "xdata/xtx_factory.h"
 namespace top { namespace data {
 
@@ -16,7 +17,11 @@ xtransaction_ptr_t xtx_factory::create_tx(const enum_xtransaction_version tx_ver
     case xtransaction_version_1:
         return make_object_ptr<xtransaction_v1_t>();
         break;
-    
+    case xtransaction_version_2:
+        return make_object_ptr<xtransaction_v2_t>();
+        break;
+    case xtransaction_version_3:
+        return make_object_ptr<xtransaction_v3_t>();
     default:
         return make_object_ptr<xtransaction_v2_t>();
         break;
@@ -154,6 +159,17 @@ xtransaction_ptr_t xtx_factory::create_nodejoin_tx(const std::string & sender,
     tx->set_len();
     return tx;
 }
+
+xtransaction_ptr_t xtx_factory::create_ethcall_v3_tx(const std::string & from, const std::string & to, const std::string & data, const top::evm_common::u256 & value, const top::evm_common::u256 & gas) {
+        // genesis tx should use v1 tx
+        xtransaction_ptr_t tx = xtx_factory::create_tx(xtransaction_version_3);
+        tx->set_source_addr(from);
+        tx->set_target_addr(to);
+        tx->set_data(data);
+        tx->set_amount_256(value);
+        tx->set_gaslimit(gas);
+        return tx;
+    }
 
 }  // namespace data
 }  // namespace top

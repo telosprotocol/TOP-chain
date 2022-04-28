@@ -1,6 +1,9 @@
 use crate::io::StorageIntermediate;
 use engine_types::types::Address;
-use engine_types::H256;
+use engine_types::{Borrowed, PrecompileResult, H256};
+use evm::executor::stack::PrecompileFailure;
+use protobuf::Message;
+
 pub struct RegisterIndex(u64);
 
 impl StorageIntermediate for RegisterIndex {
@@ -34,6 +37,7 @@ impl Runtime {
     const WRITE_REGISTER_ID: RegisterIndex = RegisterIndex(2);
     const EVICT_REGISTER_ID: RegisterIndex = RegisterIndex(3);
     const ENV_REGISTER_ID: RegisterIndex = RegisterIndex(4);
+    const CONTRACT_RESULT_REGISTER_ID: RegisterIndex = RegisterIndex(5);
 }
 
 impl crate::io::IO for Runtime {
@@ -49,6 +53,12 @@ impl crate::io::IO for Runtime {
     fn return_output(&mut self, value: &[u8]) {
         unsafe {
             exports::evm_value_return(value.len() as u64, value.as_ptr() as u64);
+        }
+    }
+
+    fn return_error(&mut self, ec_gas: (u32, u64)) {
+        unsafe {
+            exports::evm_error_return(ec_gas.0, ec_gas.1);
         }
     }
 
@@ -139,6 +149,77 @@ impl crate::env::Env for Runtime {
     }
 }
 
+impl crate::io::ContractBridge for Runtime {
+    type StorageValue = RegisterIndex;
+    fn extern_contract_call(
+        args: engine_types::proto_precompile::ContractBridgeArgs,
+    ) -> PrecompileResult {
+        let serialized_args = match args.write_to_bytes() {
+            Ok(data) => data,
+            Err(e) => {
+                crate::log(
+                    format!("contract bridege erc20 call serialized error: {:?}", e).as_str(),
+                );
+                return Err(PrecompileFailure::Fatal {
+                    exit_status: evm::ExitFatal::Other(Borrowed("CallErc20ArgsError")),
+                });
+            }
+        };
+        unsafe {
+            match exports::evm_extern_contract_call(
+                serialized_args.as_slice().len() as u64,
+                serialized_args.as_slice().as_ptr() as u64,
+            ) {
+                true => {
+                    return Self::get_result()
+                        .and_then(|value| {
+                            let bytes = value.to_vec();
+                            match engine_types::proto_precompile::PrecompileOutput::parse_from_bytes(&bytes) {
+                                Ok(output) => Some(output.into()),
+                                Err(_) => None, // todo can add logs.
+                            }
+                        })
+                        .ok_or(PrecompileFailure::Fatal {
+                            exit_status: evm::ExitFatal::Other(Borrowed("ReturnResultError")),
+                        });
+                }
+                false => {
+                    return Err(Self::get_error().and_then(|value|{
+                        let bytes = value.to_vec();
+                        match engine_types::proto_precompile::PrecompileFailure::parse_from_bytes(&bytes) {
+                            Ok(output) => Some(output.into()),
+                            Err(_) => None, // todo can add logs.
+                        }
+                    })
+                    .unwrap_or(PrecompileFailure::Fatal {
+                        exit_status: evm::ExitFatal::Other(Borrowed("ReturnErrorError")),
+                    }));
+                }
+            }
+        }
+    }
+
+    fn get_result() -> Option<Self::StorageValue> {
+        unsafe {
+            if exports::evm_get_result(Self::CONTRACT_RESULT_REGISTER_ID.0) == 1 {
+                Some(Self::CONTRACT_RESULT_REGISTER_ID)
+            } else {
+                None
+            }
+        }
+    }
+
+    fn get_error() -> Option<Self::StorageValue> {
+        unsafe {
+            if exports::evm_get_result(Self::CONTRACT_RESULT_REGISTER_ID.0) == 1 {
+                Some(Self::CONTRACT_RESULT_REGISTER_ID)
+            } else {
+                None
+            }
+        }
+    }
+}
+
 pub(crate) mod exports {
     #[allow(unused)]
     extern "C" {
@@ -166,6 +247,7 @@ pub(crate) mod exports {
 
         // Others
         pub(crate) fn evm_value_return(value_len: u64, value_ptr: u64);
+        pub(crate) fn evm_error_return(ec: u32, used_gas: u64);
         pub(crate) fn evm_log_utf8(len: u64, ptr: u64);
 
         // Storage
@@ -178,5 +260,10 @@ pub(crate) mod exports {
         ) -> u64;
         pub(crate) fn evm_storage_read(key_len: u64, key_ptr: u64, register_id: u64) -> u64;
         pub(crate) fn evm_storage_remove(key_len: u64, key_ptr: u64, register_id: u64) -> u64;
+
+        // ContractBridge
+        pub(crate) fn evm_extern_contract_call(args_len: u64, args_ptr: u64) -> bool;
+        pub(crate) fn evm_get_result(register_id: u64) -> u64;
+        pub(crate) fn evm_get_error(register_id: u64) -> u64;
     }
 }

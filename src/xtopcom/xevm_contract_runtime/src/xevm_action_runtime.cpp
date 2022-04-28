@@ -5,11 +5,15 @@
 #include "xevm_contract_runtime/xevm_action_runtime.h"
 
 #include "xevm_contract_runtime/xevm_action_session.h"
+#include "xevm_contract_runtime/xevm_context.h"
 #include "xevm_contract_runtime/xevm_logic.h"
 #include "xevm_contract_runtime/xevm_storage.h"
 #include "xevm_contract_runtime/xevm_type.h"
+#include "xevm_contract_runtime/xevm_variant_bytes.h"
 #include "xevm_runner/evm_engine_interface.h"
 #include "xevm_runner/evm_import_instance.h"
+#include "xevm_runner/proto/proto_parameters.pb.h"
+
 NS_BEG2(top, contract_runtime)
 
 xtop_action_runtime<data::xevm_consensus_action_t>::xtop_action_runtime(observer_ptr<evm::xevm_contract_manager_t> const evm_contract_manager,
@@ -23,37 +27,66 @@ std::unique_ptr<xaction_session_t<data::xevm_consensus_action_t>> xtop_action_ru
     return top::make_unique<xaction_session_t<data::xevm_consensus_action_t>>(top::make_observer(this));
 }
 
-xtransaction_execution_result_t xtop_action_runtime<data::xevm_consensus_action_t>::execute(observer_ptr<evm_runtime::xevm_context_t> tx_ctx) {
-    xtransaction_execution_result_t result;
+evm_common::xevm_transaction_result_t xtop_action_runtime<data::xevm_consensus_action_t>::execute(observer_ptr<evm_runtime::xevm_context_t> tx_ctx) {
+    evm_common::xevm_transaction_result_t result;
 
-    try {
-        // mock:
-        auto storage = std::make_shared<evm::xevm_storage>(m_evm_statectx);
-        // auto tx_type = tx_ctx->type();
-        // 1. get action type: deploy/call/transfer
-        // 2. if deploy, get code and src from action, set_evm_logic, call 'deploy_code()'
-        if (tx_ctx->action_type() == evm_runtime::xtop_evm_action_type::deploy_contract) {
-            std::unique_ptr<top::evm::xevm_logic_face_t> logic_ptr = top::make_unique<top::contract_runtime::evm::xevm_logic_t>(storage, tx_ctx);
-            top::evm::evm_import_instance::instance()->set_evm_logic(std::move(logic_ptr));
-            deploy_code();
+    // try {
+
+    auto storage = std::make_shared<evm::xevm_storage>(m_evm_statectx);
+    std::unique_ptr<top::evm::xevm_logic_face_t> logic_ptr = top::make_unique<top::contract_runtime::evm::xevm_logic_t>(storage, tx_ctx, evm_contract_manager_);
+    top::evm::evm_import_instance::instance()->set_evm_logic(std::move(logic_ptr));
+
+    bool evm_result{true};
+
+    // if deploy, get code and src from action, set_evm_logic, call 'deploy_code()'
+    if (tx_ctx->action_type() == data::xtop_evm_action_type::deploy_contract) {
+        evm_result = deploy_code();
+    }
+    // if call, get code from evm manager(lru_cache) or state(state_accessor), get src and target address, set_evm_logic, call 'call_contract()'
+    else if (tx_ctx->action_type() == data::xtop_evm_action_type::call_contract) {
+        evm_result = call_contract();
+    } else {
+        xassert(false);
+    }
+    if (!evm_result) {
+        auto error_result = top::evm::evm_import_instance::instance()->get_return_error();
+        xinfo("[evm_action] evm execute fail. ec code %d  used_gas: %lu", error_result.first, error_result.second);
+
+        result.used_gas = error_result.second;
+        result.status = evm_common::xevm_transaction_status_t::OtherExecuteError;
+
+    } else {
+        top::evm_engine::parameters::SubmitResult return_result;
+
+        auto ret = return_result.ParseFromString(evm::xvariant_bytes{top::evm::evm_import_instance::instance()->get_return_value()}.to_string());
+
+        if (!ret || return_result.version() != evm_runtime::CURRENT_CALL_ARGS_VERSION) {
+            top::error::throw_error(error::xerrc_t::evm_protobuf_serilized_error);
         }
-        // 3. if call, get code from evm manager(lru_cache) or state(state_accessor), get src and target address, set_evm_logic, call 'call_contract()'
-        else if (tx_ctx->action_type() == evm_runtime::xtop_evm_action_type::call_contract) {
-            std::unique_ptr<top::evm::xevm_logic_face_t> logic_ptr = top::make_unique<top::contract_runtime::evm::xevm_logic_t>(storage, tx_ctx);
-            top::evm::evm_import_instance::instance()->set_evm_logic(std::move(logic_ptr));
-            call_contract();
-        } else {
-            xassert(false);
+
+        // status:
+        result.set_status(return_result.transaction_status());
+
+        // extra_msg:
+        result.extra_msg = evm::xvariant_bytes{return_result.status_data(), false}.to_hex_string("0x");
+        xdbg("xtop_action_runtime<data::xevm_consensus_action_t>::execute result.extra_msg:%s", result.extra_msg.c_str());
+
+        // logs:
+        for (int i = 0; i < return_result.logs_size(); ++i) {
+            evm_common::xevm_log_t log;
+            log.address = evm::xvariant_bytes{return_result.logs(i).address().value(), false}.to_hex_string("0x");
+            log.data = evm::xvariant_bytes{return_result.logs(i).data(), false}.to_hex_string("0x");
+            // log.data = top::to_bytes(return_result.logs(i).data());
+            std::vector<std::string> topic;
+            for (int j = 0; j < return_result.logs(i).topics_size(); ++j) {
+                topic.push_back(evm::xvariant_bytes{return_result.logs(i).topics(j).data(), false}.to_hex_string("0x"));
+                // topic.push_back(top::to_bytes(return_result.logs(i).topics(j).data()));
+            }
+            log.topics = topic;
+            result.logs.push_back(log);
         }
-    } catch (top::error::xtop_error_t const & eh) {
-        result.status.ec = eh.code();
-    } catch (std::exception const & eh) {
-        result.status.ec = error::xerrc_t::unknown_error;
-        result.status.extra_msg = eh.what();
-    } catch (enum_xerror_code ec) {
-        result.status.ec = ec;
-    } catch (...) {
-        result.status.ec = error::xerrc_t::unknown_error;
+        // used_gas:
+        result.used_gas = return_result.gas_used();
     }
 
     return result;
