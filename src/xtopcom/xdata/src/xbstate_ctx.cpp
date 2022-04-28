@@ -585,7 +585,7 @@ top::xbytes_t xbstate_ctx_t::tep_token_balance_bytes(const std::string & prop, c
 }
 
 int32_t xbstate_ctx_t::tep_token_withdraw(const std::string & prop, const std::string& token_name, evm_common::u256 sub_token) {
-    xdbg("xbstate_ctx_t::tep_token_withdraw,property_modify_enter.address=%s,height=%ld,tokenname=%s,token=%s", get_address().c_str(), get_chain_height(), token_name.c_str(), sub_token.str().c_str());
+    xdbg("xbstate_ctx_t::tep_token_withdraw,property_modify_enter.address=%s,prop=%s,height=%ld,tokenname=%s,token=%s", get_address().c_str(), prop.c_str(), get_chain_height(), token_name.c_str(), sub_token.str().c_str());
     auto propobj = load_tep_token_for_write(prop);
     CHECK_PROPERTY_NULL_RETURN(propobj, "xbstate_ctx_t::tep_token_withdraw", token_name);
     auto balance_str = propobj->query(token_name);
@@ -619,7 +619,7 @@ int32_t xbstate_ctx_t::tep_token_withdraw(const std::string & prop, const std::s
 }
 
 int32_t xbstate_ctx_t::tep_token_deposit(const std::string & prop, const std::string& token_name, evm_common::u256 add_token) {
-    xdbg("xbstate_ctx_t::tep_token_deposit,property_modify_enter.address=%s,height=%ld,token_name=%s,token=%s", get_address().c_str(), get_chain_height(), token_name.c_str(), add_token.str().c_str());
+    xdbg("xbstate_ctx_t::tep_token_deposit,property_modify_enter.address=%s,prop=%s,height=%ld,token_name=%s,token=%s", get_address().c_str(), prop.c_str(), get_chain_height(), token_name.c_str(), add_token.str().c_str());
     auto propobj = load_tep_token_for_write(prop);
     CHECK_PROPERTY_NULL_RETURN(propobj, "xbstate_ctx_t::tep_token_deposit", token_name);
     auto balance_str = propobj->query(token_name);
