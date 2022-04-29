@@ -242,6 +242,7 @@ data::system_contract::xunqualified_node_info_v2_t xtable_statistic_info_collect
                         slotid, group_account_data.account_statistics_data[slotid].vote_data.block_count, group_account_data.account_statistics_data[slotid].vote_data.vote_count);
                 }
 
+            // todo (Lon)
             } else if (top::common::has<top::common::xnode_type_t::evm>(group_addr.type())) {
                 for (std::size_t slotid = 0; slotid < group_account_data.account_statistics_data.size(); ++slotid) {
                     auto const & account_addr = group_accounts.account_data[slotid];

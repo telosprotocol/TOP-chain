@@ -448,6 +448,7 @@ std::vector<data::system_contract::xaction_node_info_t> xzec_slash_info_contract
     for (auto const & node : node_map.evm_info) {
         data::system_contract::xunqualified_filter_info_t info;
         info.node_id = node.first;
+        // todo (Lon)
         info.node_type = common::xnode_type_t::evm;
         info.vote_percent = node.second.block_count * 100 / node.second.subset_count;
         node_to_action.emplace_back(info);

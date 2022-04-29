@@ -614,6 +614,7 @@ static void parse_unqualified_node_map(std::map<std::string, std::string> const 
         }
         jvn["auditor"] = jvn_auditor;
         jvn["validator"] = jvn_validator;
+        // todo (Lon):
         jvn["evm"] = jvn_evm;
         j["unqualified_node"] = jvn;
     }

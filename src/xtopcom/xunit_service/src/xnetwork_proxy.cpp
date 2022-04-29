@@ -345,7 +345,7 @@ void xnetwork_proxy::send_receipt_msg(std::shared_ptr<vnetwork::xvnetwork_driver
         auto auditor_cluster_addr =
             m_router->sharding_address_from_tableindex(target_tableindex, net_driver->network_id(), common::xnode_type_t::consensus_auditor);
         xassert(common::has<common::xnode_type_t::consensus_auditor>(auditor_cluster_addr.type()) || common::has<common::xnode_type_t::committee>(auditor_cluster_addr.type()) ||
-                common::has<common::xnode_type_t::zec>(auditor_cluster_addr.type()) || common::has<common::xnode_type_t::evm>(auditor_cluster_addr.type()));
+                common::has<common::xnode_type_t::zec>(auditor_cluster_addr.type()) || common::has<common::xnode_type_t::evm_auditor>(auditor_cluster_addr.type()));
 
         if (net_driver->address().cluster_address() == auditor_cluster_addr) {
             xunit_info("xnetwork_proxy::send_receipt_msg broadcast receipt=%s,size=%zu,from_vnode:%s", receipt->dump().c_str(), stream.size(), net_driver->address().to_string().c_str());
