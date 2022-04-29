@@ -152,7 +152,8 @@ void xtop_rec_standby_pool_contract::nodeJoinNetwork2(common::xaccount_address_t
     bool const archive = data::system_contract::could_be<common::xnode_type_t::storage_archive>(miner_type);
     bool const exchange = data::system_contract::could_be<common::xnode_type_t::storage_exchange>(miner_type);
     bool const fullnode = data::system_contract::could_be<common::xnode_type_t::fullnode>(miner_type);
-    bool const eth = data::system_contract::could_be<common::xnode_type_t::evm_eth>(miner_type);
+    bool const evm_auditor = data::system_contract::could_be<common::xnode_type_t::evm_auditor>(miner_type);
+    bool const evm_validator = data::system_contract::could_be<common::xnode_type_t::evm_validator>(miner_type);
 
     std::string const role_type_string = common::to_string(miner_type);
     assert(role_type_string == common::XMINER_TYPE_EDGE      ||
@@ -235,8 +236,13 @@ void xtop_rec_standby_pool_contract::nodeJoinNetwork2(common::xaccount_address_t
             new_node |= standby_result_store.result_of(network_id).insert({node_id, new_node_info}).second;
         }
 
-        if (eth) {
-            new_node_info.stake_container[common::xnode_type_t::evm_eth] = stake;
+        if (evm_auditor) {
+            new_node_info.stake_container[common::xnode_type_t::evm_auditor] = stake;
+            new_node |= standby_result_store.result_of(network_id).insert({node_id, new_node_info}).second;
+        }
+
+        if (evm_validator) {
+            new_node_info.stake_container[common::xnode_type_t::evm_validator] = stake;
             new_node |= standby_result_store.result_of(network_id).insert({node_id, new_node_info}).second;
         }
     }
@@ -253,18 +259,26 @@ bool xtop_rec_standby_pool_contract::nodeJoinNetworkImpl(std::string const & pro
                                                          data::election::xstandby_result_store_t & standby_result_store) {
     auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
 #if defined(XENABLE_TESTS)
-    auto const eth_enabled = true;
+    auto const evm_enabled = true;
 #else
-    auto const eth_enabled = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.eth_fork_point, TIME());
+    auto const evm_enabled = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.eth_fork_point, TIME());
 #endif
 
     std::set<common::xnetwork_id_t> network_ids = node.m_network_ids;
 
     auto consensus_public_key = node.consensus_public_key;
-    uint64_t rec_stake{0}, zec_stake{0}, auditor_stake{0}, validator_stake{0}, edge_stake{0}, archive_stake{0}, exchange_stake{0}, fullnode_stake{0}, eth_stake{0};
-    bool const rec{node.can_be_rec()}, zec{node.can_be_zec()}, auditor{node.can_be_auditor()}, validator{node.can_be_validator()}, edge{node.can_be_edge()},
-        archive{node.can_be_archive()}, exchange{node.can_be_exchange()}, fullnode{node.can_be_fullnode()},
-        eth{eth_enabled ? node.can_be_eth() : false};
+    uint64_t rec_stake{0}, zec_stake{0}, auditor_stake{0}, validator_stake{0}, edge_stake{0}, archive_stake{0}, exchange_stake{0}, fullnode_stake{0}, evm_auditor_stake{0}, evm_validator_stake{0};
+    bool const rec{node.can_be_rec()},                                    // NOLINT
+        zec{node.can_be_zec()},                                           // NOLINT
+        auditor{node.can_be_auditor()},                                   // NOLINT
+        validator{node.can_be_validator()},                               // NOLINT
+        edge{node.can_be_edge()},                                         // NOLINT
+        archive{node.can_be_archive()},                                   // NOLINT
+        exchange{node.can_be_exchange()},                                 // NOLINT
+        fullnode{node.can_be_fullnode()},                                 // NOLINT
+        evm_auditor{evm_enabled ? node.can_be_evm_auditor() : false},      // NOLINT
+        evm_validator{evm_enabled ? node.can_be_evm_validator() : false};  // NOLINT
+
     if (rec) {
         rec_stake = node.rec_stake();
     }
@@ -297,8 +311,12 @@ bool xtop_rec_standby_pool_contract::nodeJoinNetworkImpl(std::string const & pro
         fullnode_stake = node.fullnode_stake();
     }
 
-    if (eth_enabled && eth) {
-        eth_stake = node.eth_stake();
+    if (evm_enabled && evm_auditor) {
+        evm_auditor_stake = node.evm_auditor_stake();
+    }
+
+    if (evm_enabled && evm_validator) {
+        evm_validator_stake = node.evm_validator_stake();
     }
 
     auto const miner_type = node.miner_type();
@@ -354,8 +372,12 @@ bool xtop_rec_standby_pool_contract::nodeJoinNetworkImpl(std::string const & pro
             new_node_info.stake_container[common::xnode_type_t::fullnode] = fullnode_stake;
         }
 
-        if (eth_enabled && eth) {
-            new_node_info.stake_container[common::xnode_type_t::evm_eth] = eth_stake;
+        if (evm_enabled && evm_auditor) {
+            new_node_info.stake_container[common::xnode_type_t::evm_auditor] = evm_auditor_stake;
+        }
+
+        if (evm_enabled && evm_validator) {
+            new_node_info.stake_container[common::xnode_type_t::evm_validator] = evm_validator_stake;
         }
 
         if (!new_node) {
@@ -371,7 +393,7 @@ bool xtop_rec_standby_pool_contract::update_standby_node(data::system_contract::
                                                          common::xlogic_time_t const current_logic_time) const {
     auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
 
-    auto const eth_enabled = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.eth_fork_point, current_logic_time);
+    auto const evm_enabled = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.eth_fork_point, current_logic_time);
 
     election::xstandby_node_info_t new_node_info;
     if (reg_node.can_be_rec()) {
@@ -410,8 +432,11 @@ bool xtop_rec_standby_pool_contract::update_standby_node(data::system_contract::
     if (reg_node.can_be_exchange()) {
         new_node_info.stake_container.insert({ common::xnode_type_t::storage_exchange, reg_node.exchange_stake() });
     }
-    if (eth_enabled && reg_node.can_be_eth()) {
-        new_node_info.stake_container.insert({common::xnode_type_t::evm_eth, reg_node.eth_stake()});
+    if (evm_enabled && reg_node.can_be_evm_auditor()) {
+        new_node_info.stake_container.insert({common::xnode_type_t::evm_auditor, reg_node.evm_auditor_stake()});
+    }
+    if (evm_enabled && reg_node.can_be_evm_validator()) {
+        new_node_info.stake_container.insert({common::xnode_type_t::evm_validator, reg_node.evm_validator_stake()});
     }
 
     new_node_info.consensus_public_key = reg_node.consensus_public_key;

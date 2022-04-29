@@ -401,8 +401,11 @@ public:
     /// @brief Check to see if this account could be a fullnode node based on miner type.
     bool could_be_fullnode() const noexcept;
 
-    /// @brief Check to see if this account coule be an eth node based on miner type.
-    bool could_be_eth() const noexcept;
+    /// @brief Check to see if this account coule be an evm auditor node based on miner type.
+    bool could_be_evm_auditor() const noexcept;
+
+    /// @brief Check to see if this account coule be an evm validator node based on miner type.
+    bool could_be_evm_validator() const noexcept;
 
     /// @brief Check to see if this node can be an rec based on miner type and other information (e.g. deposit, amount of received tickets).
     bool can_be_rec() const noexcept;
@@ -432,7 +435,10 @@ public:
     bool can_be_fullnode() const noexcept;
 
     /// @brief Check to see if this account can be an eth based on miner type and other information (e.g. deposit, amount of received tickects).
-    bool can_be_eth() const noexcept;
+    bool can_be_evm_auditor() const noexcept;
+
+    /// @brief Check to see if this account can be an eth based on miner type and other information (e.g. deposit, amount of received tickects).
+    bool can_be_evm_validator() const noexcept;
 
     template <common::xminer_type_t MinerTypeV>
     bool has() const noexcept {
@@ -499,7 +505,9 @@ public:
 
     uint64_t fullnode_stake() const noexcept;
 
-    uint64_t eth_stake() const noexcept;
+    uint64_t evm_auditor_stake() const noexcept;
+
+    uint64_t evm_validator_stake() const noexcept;
 
     /// @brief Get miner type.
     common::xminer_type_t miner_type() const noexcept;

@@ -328,7 +328,12 @@ bool could_be<common::xnode_type_t::fullnode>(common::xminer_type_t const miner_
 }
 
 template <>
-bool could_be<common::xnode_type_t::evm_eth>(common::xminer_type_t const miner_type) {
+bool could_be<common::xnode_type_t::evm_auditor>(common::xminer_type_t const miner_type) {
+    return common::has<common::xminer_type_t::advance>(miner_type);
+}
+
+template <>
+bool could_be<common::xnode_type_t::evm_validator>(common::xminer_type_t const miner_type) {
     return common::has<common::xminer_type_t::advance>(miner_type);
 }
 
@@ -368,8 +373,12 @@ bool xreg_node_info::could_be_fullnode() const noexcept {
     return could_be<common::xnode_type_t::fullnode>(m_registered_miner_type);
 }
 
-bool xreg_node_info::could_be_eth() const noexcept {
-    return could_be<common::xnode_type_t::evm_eth>(m_registered_miner_type);
+bool xreg_node_info::could_be_evm_auditor() const noexcept {
+    return could_be<common::xnode_type_t::evm_auditor>(m_registered_miner_type);
+}
+
+bool xreg_node_info::could_be_evm_validator() const noexcept {
+    return could_be<common::xnode_type_t::evm_validator>(m_registered_miner_type);
 }
 
 bool xreg_node_info::can_be_rec() const noexcept {
@@ -408,8 +417,12 @@ bool xreg_node_info::can_be_fullnode() const noexcept {
     return could_be_auditor();
 }
 
-bool xreg_node_info::can_be_eth() const noexcept {
-    return could_be_eth() && has_enough_tickets();
+bool xreg_node_info::can_be_evm_auditor() const noexcept {
+    return could_be_evm_auditor() && has_enough_tickets();
+}
+
+bool xreg_node_info::can_be_evm_validator() const noexcept {
+    return could_be_evm_validator();
 }
 
 bool xreg_node_info::has_enough_tickets() const noexcept {
@@ -485,8 +498,12 @@ uint64_t xreg_node_info::fullnode_stake() const noexcept {
     return 0;
 }
 
-uint64_t xreg_node_info::eth_stake() const noexcept {
+uint64_t xreg_node_info::evm_auditor_stake() const noexcept {
     return auditor_stake();
+}
+
+uint64_t xreg_node_info::evm_validator_stake() const noexcept {
+    return validator_stake();
 }
 
 common::xminer_type_t xreg_node_info::miner_type() const noexcept {

@@ -1024,16 +1024,17 @@ std::vector<std::vector<uint32_t>> xzec_reward_contract::calc_role_nums(std::map
                 role_nums[validator_idx][deposit_zero_num]++;
             }
         }
-        if (node.can_be_eth()) {
-            // total validator nums
-            role_nums[eth_idx][total_idx]++;
-            // valid validator nums
-            if (node.deposit() > 0) {
-                role_nums[eth_idx][valid_idx]++;
-            } else if (node.deposit() == 0) {
-                role_nums[eth_idx][deposit_zero_num]++;
-            }
-        }
+        // todo (Lon)
+        // if (node.can_be_eth()) {
+        //     // total validator nums
+        //     role_nums[eth_idx][total_idx]++;
+        //     // valid validator nums
+        //     if (node.deposit() > 0) {
+        //         role_nums[eth_idx][valid_idx]++;
+        //     } else if (node.deposit() == 0) {
+        //         role_nums[eth_idx][deposit_zero_num]++;
+        //     }
+        // }
 #endif
     }
 
@@ -1203,13 +1204,14 @@ std::map<common::xaccount_address_t, uint64_t> xzec_reward_contract::calc_votes(
             } else {
                 node = it3->second;
             }
-            if (!node.can_be_eth()) {
-                xinfo("[xzec_reward_contract::calc_eth_invalid_workload_group_reward] account: %s is not a valid eth, deposit: %lu", it2->first.c_str(), node.deposit());
-                it->second.group_total_workload -= it2->second;
-                it->second.m_leader_count.erase(it2++);
-            } else {
-                it2++;
-            }
+            // todo (Lon)
+            // if (!node.can_be_eth()) {
+            //     xinfo("[xzec_reward_contract::calc_eth_invalid_workload_group_reward] account: %s is not a valid eth, deposit: %lu", it2->first.c_str(), node.deposit());
+            //     it->second.group_total_workload -= it2->second;
+            //     it->second.m_leader_count.erase(it2++);
+            // } else {
+            //     it2++;
+            // }
         }
         if (it->second.m_leader_count.size() == 0) {
             xinfo("[xzec_reward_contract::calc_eth_invalid_workload_group_reward] eth group: %s, all node invalid, will be ignored", it->first.to_string().c_str());
@@ -1387,9 +1389,10 @@ void xzec_reward_contract::calc_eth_workload_rewards(data::system_contract::xreg
     if (0 == divide_num) {
         return;
     }
-    if (!node.can_be_eth()) {
-        return;
-    }
+    // todo (Lon)
+    // if (!node.can_be_eth()) {
+    //     return;
+    // }
     for (auto & workload : eth_workloads_detail) {
         xdbg("[xzec_reward_contract::calc_eth_workload_rewards] account: %s, group id: %s, group size: %d, group_total_workload: %u\n",
              node.m_account.c_str(),
@@ -1652,14 +1655,15 @@ void xzec_reward_contract::calc_nodes_rewards_v5(common::xlogic_time_t const cur
                 self_reward += reward_to_self;
             }
         }
-        if (node.can_be_eth()) {
-            ::uint128_t reward_to_self = 0;
-            calc_eth_workload_rewards(node, role_nums[eth_idx], property_param.eth_workloads_detail, eth_group_workload_rewards, reward_to_self);
-            if (reward_to_self != 0) {
-                issue_detail.m_node_rewards[account.to_string()].m_eth_reward = reward_to_self;
-                self_reward += reward_to_self;
-            }
-        }
+        // todo (Lon)
+        // if (node.can_be_eth()) {
+        //     ::uint128_t reward_to_self = 0;
+        //     calc_eth_workload_rewards(node, role_nums[eth_idx], property_param.eth_workloads_detail, eth_group_workload_rewards, reward_to_self);
+        //     if (reward_to_self != 0) {
+        //         issue_detail.m_node_rewards[account.to_string()].m_eth_reward = reward_to_self;
+        //         self_reward += reward_to_self;
+        //     }
+        // }
         // 3.3 vote reward
         if (node.can_be_auditor() && node.deposit() > 0 && auditor_total_votes > 0) {
             ::uint128_t reward_to_self = 0;

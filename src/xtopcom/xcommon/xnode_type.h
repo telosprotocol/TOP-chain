@@ -145,7 +145,11 @@ enum class xenum_node_type : std::uint32_t {
     storage_archive = storage | 0x4,
     storage_exchange = storage | 0x8,
 
+    // todo delete
     evm_eth = evm | 0x1,
+
+    evm_auditor = evm | 0x1,
+    evm_validator = evm | 0x2,
 
     /// @brief all type
     real_part_mask = 0x00FFFFFF,

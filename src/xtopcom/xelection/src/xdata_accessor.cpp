@@ -706,7 +706,7 @@ std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> xtop_data_a
     std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> ret;
 
     assert(common::node_type_from(zone_element->zone_id()) == common::xnode_type_t::evm);
-    std::array<common::xnode_type_t, 1> node_types{{common::xnode_type_t::evm_eth}};
+    std::array<common::xnode_type_t, 2> node_types{{common::xnode_type_t::evm_auditor, common::xnode_type_t::evm_validator}};
 
     if (election_result_store.empty()) {
         ec = xdata_accessor_errc_t::election_data_empty;

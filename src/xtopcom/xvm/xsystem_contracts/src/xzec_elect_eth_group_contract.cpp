@@ -11,6 +11,8 @@
 #include "xdata/xcodec/xmsgpack/xelection/xelection_result_store_codec.hpp"
 #include "xdata/xcodec/xmsgpack/xelection/xstandby_node_info_codec.hpp"
 #include "xdata/xcodec/xmsgpack/xelection/xstandby_result_store_codec.hpp"
+#include "xdata/xelection/xelection_info_bundle.h"
+#include "xdata/xelection/xelection_network_result.h"
 #include "xdata/xelection/xelection_result_property.h"
 #include "xdata/xelection/xstandby_node_info.h"
 #include "xdata/xelection/xstandby_result_store.h"
@@ -20,9 +22,9 @@
 #include <cinttypes>
 
 #ifdef STATIC_CONSENSUS
-#   include "xvm/xsystem_contracts/xelection/xstatic_election_center.h"
-#   include "xdata/xelection/xelection_info.h"
-#   include "xdata/xelection/xelection_info_bundle.h"
+#    include "xdata/xelection/xelection_info.h"
+#    include "xdata/xelection/xelection_info_bundle.h"
+#    include "xvm/xsystem_contracts/xelection/xstatic_election_center.h"
 #endif
 
 #ifndef XSYSCONTRACT_MODULE
@@ -33,6 +35,8 @@
 
 NS_BEG4(top, xvm, system_contracts, zec)
 
+using data::election::xelection_info_bundle_t;
+using data::election::xelection_network_result_t;
 using data::election::xelection_result_store_t;
 using data::election::xstandby_node_info_t;
 using data::election::xstandby_result_store_t;
@@ -125,7 +129,7 @@ void xtop_zec_elect_eth_contract::on_timer(common::xlogic_time_t const current_t
     XMETRICS_TIME_RECORD(XZEC_ELECT "on_timer_all_time");
     XMETRICS_CPU_TIME_RECORD(XZEC_ELECT "on_timer_cpu_time");
     XCONTRACT_ENSURE(SOURCE_ADDRESS() == SELF_ADDRESS().value(), "xzec_elect_eth_contract_t instance is triggled by others");
-    XCONTRACT_ENSURE(SELF_ADDRESS() == zec_elect_eth_contract_address, "xzec_elect_eth_contract_t instance is not triggled by sys_contract_rec_elect_zec_addr");
+    XCONTRACT_ENSURE(SELF_ADDRESS() == zec_elect_eth_contract_address, "xzec_elect_eth_contract_t instance is not triggled by zec_elect_eth_contract_address");
     // XCONTRACT_ENSURE(current_time <= TIME(), "xzec_elect_eth_contract_t::on_timer current_time > consensus leader's time");
     XCONTRACT_ENSURE(current_time + XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_election_interval) / 2 > TIME(),
                      "xzec_elect_eth_contract_t::on_timer retried too many times. TX generated time " + std::to_string(current_time) + " TIME() " + std::to_string(TIME()));
@@ -135,45 +139,133 @@ void xtop_zec_elect_eth_contract::on_timer(common::xlogic_time_t const current_t
         auto seed = m_contract_helper->get_random_seed();
         random_seed = utl::xxh64_t::digest(seed);
     } catch (std::exception const & eh) {
-        xwarn("[zec elect eth] get random seed failed: %s", eh.what());
+        xwarn("[zec contract][on_timer] get random seed failed: %s", eh.what());
         return;
     }
-    xinfo("[zec elect eth] on_timer random seed %" PRIu64, random_seed);
 
-    auto const eth_election_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_election_interval);
-    auto const min_eth_group_size = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_eth_group_size);
-    auto const max_eth_group_size = XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_eth_group_size);
+    elect(common::xevm_zone_id, common::xdefault_cluster_id, random_seed, current_time);
+}
 
-    auto standby_result_store =
-        serialization::xmsgpack_t<xstandby_result_store_t>::deserialize_from_string_prop(*this, sys_contract_rec_standby_pool_addr, data::XPROPERTY_CONTRACT_STANDBYS_KEY);
-    auto standby_network_result = standby_result_store.result_of(network_id()).network_result();
+void xtop_zec_elect_eth_contract::elect(common::xzone_id_t const zone_id,
+                                        common::xcluster_id_t const cluster_id,
+                                        std::uint64_t const random_seed,
+                                        common::xlogic_time_t const election_timestamp) {
+    uint64_t read_height =
+        static_cast<std::uint64_t>(std::stoull(STRING_GET2(data::XPROPERTY_LAST_READ_REC_STANDBY_POOL_CONTRACT_BLOCK_HEIGHT, sys_contract_zec_standby_pool_addr)));
+
+    std::string result;
+
+    GET_STRING_PROPERTY(data::XPROPERTY_CONTRACT_STANDBYS_KEY, result, read_height, sys_contract_rec_standby_pool_addr);
+    if (result.empty()) {
+        xwarn("[zec contract][elect_non_genesis] get rec_standby_pool_addr property fail, block height %" PRIu64, read_height);
+        return;
+    }
+    xwarn("[zec contract][elect_non_genesis] elect zone %" PRIu16 " cluster %" PRIu16 " random nonce %" PRIu64 " logic time %" PRIu64 " read_height: %" PRIu64,
+          static_cast<std::uint16_t>(zone_id.value()),
+          static_cast<std::uint16_t>(cluster_id.value()),
+          random_seed,
+          election_timestamp,
+          read_height);
+
+    auto const & standby_result_store = codec::msgpack_decode<xstandby_result_store_t>({std::begin(result), std::end(result)});
+
+    auto const standby_network_result = standby_result_store.result_of(network_id()).network_result();
+
+    if (standby_network_result.empty()) {
+        xwarn("[zec contract][elect_non_genesis] no standby nodes");
+        return;
+    }
 
     auto property_names = data::election::get_property_name_by_addr(SELF_ADDRESS());
     for (auto const & property : property_names) {
         auto election_result_store = serialization::xmsgpack_t<xelection_result_store_t>::deserialize_from_string_prop(*this, property);
         auto & election_network_result = election_result_store.result_of(network_id());
-        auto const & current_group_nodes =
-            election_network_result.result_of(common::xnode_type_t::evm_eth).result_of(common::xdefault_cluster_id).result_of(common::xdefault_group_id);
 
-        auto start_time = current_time;
+        auto const & current_group_nodes =
+            election_network_result.result_of(common::xnode_type_t::evm_auditor).result_of(common::xdefault_cluster_id).result_of(common::xdefault_group_id);
+        auto start_time = election_timestamp;
         if (!current_group_nodes.empty()) {
-            start_time += eth_election_interval / 2;
+            start_time += XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_election_interval) / 2;
         }
 
-        auto const successful = elect_group(common::xevm_zone_id,
-                                            common::xdefault_cluster_id,
-                                            common::xdefault_group_id,
-                                            current_time,
-                                            start_time,
-                                            random_seed,
-                                            xrange_t<config::xgroup_size_t>{min_eth_group_size, max_eth_group_size},
-                                            standby_network_result,
-                                            election_network_result);
+        auto const successful = elect_eth_consensus(common::xevm_zone_id,
+                                                    common::xdefault_cluster_id,
+                                                    common::xauditor_group_id_begin,
+                                                    common::xvalidator_group_id_begin,
+                                                    election_timestamp,
+                                                    start_time,
+                                                    random_seed,
+                                                    standby_network_result,
+                                                    election_network_result);
         if (successful) {
             serialization::xmsgpack_t<xelection_result_store_t>::serialize_to_string_prop(*this, property, election_result_store);
-            xwarn("[zec elect eth] successful. timestamp %" PRIu64 " start time %" PRIu64 " random seed %" PRIu64, current_time, start_time, random_seed);
+            xwarn("[zec elect eth] successful. timestamp %" PRIu64 " start time %" PRIu64 " random seed %" PRIu64, election_timestamp, start_time, random_seed);
         }
     }
+}
+
+bool xtop_zec_elect_eth_contract::elect_eth_consensus(common::xzone_id_t const zone_id,
+                                                      common::xcluster_id_t const cluster_id,
+                                                      common::xgroup_id_t const auditor_group_id,
+                                                      common::xgroup_id_t const validator_group_id,
+                                                      common::xlogic_time_t const election_timestamp,
+                                                      common::xlogic_time_t const start_time,
+                                                      std::uint64_t const random_seed,
+                                                      data::election::xstandby_network_result_t const & standby_network_result,
+                                                      xelection_network_result_t & election_network_result) {
+    auto const min_eth_auditor_group_size = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_eth_auditor_group_size);
+    auto const max_eth_auditor_group_size = XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_eth_auditor_group_size);
+
+    // clean up the auditor standby pool by filtering out the nodes that are currently in the validator group.
+    auto effective_standby_network_result = standby_network_result;
+    auto & effective_auditor_standbys = effective_standby_network_result.result_of(common::xnode_type_t::evm_auditor);
+    auto const & election_validator_group_nodes = election_network_result.result_of(common::xnode_type_t::evm_validator).result_of(cluster_id).result_of(validator_group_id);
+    for (auto const & validator_node_info : election_validator_group_nodes) {
+        auto const & validator_node_id = top::get<data::election::xelection_info_bundle_t>(validator_node_info).account_address();
+        auto it = effective_auditor_standbys.find(validator_node_id);
+        if (it != std::end(effective_auditor_standbys)) {
+            xdbg("group %s kicks out associator validator %s from auditor standby pool", auditor_group_id.to_string().c_str(), validator_node_id.value().c_str());
+            effective_auditor_standbys.erase(it);
+        }
+    }
+
+    auto eth_auditor_result = elect_group(zone_id,
+                                          cluster_id,
+                                          auditor_group_id,
+                                          election_timestamp,
+                                          start_time,
+                                          random_seed,
+                                          xrange_t<config::xgroup_size_t>(min_eth_auditor_group_size, max_eth_auditor_group_size),
+                                          effective_standby_network_result,
+                                          election_network_result);
+
+    auto const min_eth_validator_group_size = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_eth_validator_group_size);
+    auto const max_eth_validator_group_size = XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_eth_validator_group_size);
+
+    // clean up the validator standby pool by filtering out the nodes that are currently in the auditor group.
+    effective_standby_network_result = standby_network_result;
+    auto & effective_validator_standbys = effective_standby_network_result.result_of(common::xnode_type_t::evm_validator);
+    auto const & election_auditor_group_nodes = election_network_result.result_of(common::xnode_type_t::evm_auditor).result_of(cluster_id).result_of(auditor_group_id);
+    for (auto const & auditor_node_info : election_auditor_group_nodes) {
+        auto const & auditor_node_id = top::get<data::election::xelection_info_bundle_t>(auditor_node_info).account_address();
+        auto it = effective_validator_standbys.find(auditor_node_id);
+        if (it != std::end(effective_validator_standbys)) {
+            xdbg("group %s kicks out associator auditor %s from auditor standby pool", auditor_group_id.to_string().c_str(), auditor_node_id.value().c_str());
+            effective_validator_standbys.erase(it);
+        }
+    }
+
+    auto eth_validator_result = elect_group(zone_id,
+                                            cluster_id,
+                                            validator_group_id,
+                                            election_timestamp,
+                                            start_time,
+                                            random_seed,
+                                            xrange_t<config::xgroup_size_t>(min_eth_auditor_group_size, max_eth_auditor_group_size),
+                                            effective_standby_network_result,
+                                            election_network_result);
+
+    return eth_auditor_result | eth_validator_result;
 }
 
 NS_END4
