@@ -238,7 +238,7 @@ TEST_F(test_table_slash_contract, collect_slash_statistic_info_BENCH) {
     stream << summarize_tableblock_count_for_str;
     std::string summarize_tableblock_count_str = std::string((char*)stream.data(), (size_t)stream.size());
 
-    data::system_contract::xunqualified_node_info_v2_t summarize_info;
+    data::system_contract::xunqualified_node_info_v1_t summarize_info;
     uint32_t summarize_tableblock_count = 0;
 
 

@@ -56,7 +56,8 @@ bool xnetwork_proxy::send_out(common::xmessage_id_t const & id, const xvip2_t & 
     assert(dst.raw_high_part() == to_addr.high_addr);
     assert(dst.raw_low_part() == to_addr.low_addr);
     // validator forward to auditor
-    if (common::has<common::xnode_type_t::consensus_validator>(network->type()) && common::broadcast(dst.slot_id())) {
+    if ((common::has<common::xnode_type_t::consensus_validator>(network->type()) || common::has<common::xnode_type_t::evm_validator>(network->type())) &&
+        common::broadcast(dst.slot_id())) {
         auto to = network->parent_group_address();
         bool forward = false;
         if (!common::broadcast(to.network_id()) && !common::broadcast(to.zone_id()) && !common::broadcast(to.cluster_id()) && !common::broadcast(to.group_id())) {
@@ -82,7 +83,8 @@ bool xnetwork_proxy::send_out(common::xmessage_id_t const & id, const xvip2_t & 
     }
 
     // auditor forward to validator
-    if (common::has<common::xnode_type_t::consensus_auditor>(network->type()) && common::broadcast(dst.slot_id())) {
+    if ((common::has<common::xnode_type_t::consensus_auditor>(network->type()) || common::has<common::xnode_type_t::evm_auditor>(network->type())) &&
+        common::broadcast(dst.slot_id())) {
         auto group_id = xcons_utl::get_groupid_by_account(from_addr, account);
         xelection_cache_face::elect_set elect_set;
         m_elect_face->get_group_election(from_addr, group_id, &elect_set);
@@ -342,10 +344,11 @@ void xnetwork_proxy::send_receipt_msg(std::shared_ptr<vnetwork::xvnetwork_driver
         vnetwork::xmessage_t msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()},
                                                         receipt->is_recv_tx() ? xtxpool_v2::xtxpool_msg_send_receipt : xtxpool_v2::xtxpool_msg_recv_receipt);
 
+        common::xnode_type_t auditor_type = (target_tableindex.get_zone_index() == base::enum_chain_zone_consensus_index) ? common::xnode_type_t::consensus_auditor : common::xnode_type_t::evm_auditor;
         auto auditor_cluster_addr =
-            m_router->sharding_address_from_tableindex(target_tableindex, net_driver->network_id(), common::xnode_type_t::consensus_auditor);
+            m_router->sharding_address_from_tableindex(target_tableindex, net_driver->network_id(), auditor_type);
         xassert(common::has<common::xnode_type_t::consensus_auditor>(auditor_cluster_addr.type()) || common::has<common::xnode_type_t::committee>(auditor_cluster_addr.type()) ||
-                common::has<common::xnode_type_t::zec>(auditor_cluster_addr.type()) || common::has<common::xnode_type_t::evm>(auditor_cluster_addr.type()));
+                common::has<common::xnode_type_t::zec>(auditor_cluster_addr.type()) || common::has<common::xnode_type_t::evm_auditor>(auditor_cluster_addr.type()));
 
         if (net_driver->address().cluster_address() == auditor_cluster_addr) {
             xunit_info("xnetwork_proxy::send_receipt_msg broadcast receipt=%s,size=%zu,from_vnode:%s", receipt->dump().c_str(), stream.size(), net_driver->address().to_string().c_str());
@@ -376,10 +379,12 @@ void xnetwork_proxy::send_receipt_msg(std::shared_ptr<vnetwork::xvnetwork_driver
         }
 
         // auditor cluster is different with validator for consensus table
-        if (target_tableindex.get_zone_index() == base::enum_chain_zone_consensus_index) {
+        if (target_tableindex.get_zone_index() == base::enum_chain_zone_consensus_index || target_tableindex.get_zone_index() == base::enum_chain_zone_evm_index) {
+            common::xnode_type_t type = (target_tableindex.get_zone_index() == base::enum_chain_zone_consensus_index) ? common::xnode_type_t::consensus_validator : common::xnode_type_t::evm_validator;
+
             auto validator_cluster_addr =
-                m_router->sharding_address_from_tableindex(target_tableindex, net_driver->network_id(), common::xnode_type_t::consensus_validator);
-            xassert(common::has<common::xnode_type_t::consensus_validator>(validator_cluster_addr.type()) ||
+                m_router->sharding_address_from_tableindex(target_tableindex, net_driver->network_id(), type);
+            xassert(common::has<common::xnode_type_t::consensus_validator>(validator_cluster_addr.type()) || common::has<common::xnode_type_t::evm_validator>(validator_cluster_addr.type()) ||
                     common::has<common::xnode_type_t::committee>(validator_cluster_addr.type()) || common::has<common::xnode_type_t::zec>(validator_cluster_addr.type()));
 
             xassert(validator_cluster_addr != auditor_cluster_addr);
