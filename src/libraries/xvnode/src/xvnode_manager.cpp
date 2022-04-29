@@ -228,7 +228,8 @@ void xtop_vnode_manager::on_timer(common::xlogic_time_t time) {
             metrics_vnode_status[common::xnode_type_t::consensus_auditor] = 0;
             metrics_vnode_status[common::xnode_type_t::consensus_validator] = 0;
             metrics_vnode_status[common::xnode_type_t::fullnode] = 0;
-            metrics_vnode_status[common::xnode_type_t::evm_eth] = 0;
+            metrics_vnode_status[common::xnode_type_t::evm_auditor] = 0;
+            metrics_vnode_status[common::xnode_type_t::evm_validator] = 0;
 
             for (auto it = std::begin(m_all_nodes); it != std::end(m_all_nodes); ++it) {
                 auto const & vnode = top::get<std::shared_ptr<xvnode_face_t>>(*it);
@@ -276,8 +277,12 @@ void xtop_vnode_manager::on_timer(common::xlogic_time_t time) {
                     // do nothing.
                     break;
 
-                case common::xnode_type_t::evm_eth:
+                case common::xnode_type_t::evm_auditor:
                     metrics_vnode_status[vnode_real_part_type] = -6;
+                    break;
+
+                case common::xnode_type_t::evm_validator:
+                    metrics_vnode_status[vnode_real_part_type] = -7;
                     break;
 
                 default:
@@ -294,7 +299,8 @@ void xtop_vnode_manager::on_timer(common::xlogic_time_t time) {
                                  "archive", metrics_vnode_status[common::xnode_type_t::storage_archive],
                                  "edge", metrics_vnode_status[common::xnode_type_t::edge],
                                  "fullnode", metrics_vnode_status[common::xnode_type_t::fullnode],
-                                 "eth", metrics_vnode_status[common::xnode_type_t::evm_eth]);
+                                 "evm_auditor", metrics_vnode_status[common::xnode_type_t::evm_auditor],
+                                 "evm_validator", metrics_vnode_status[common::xnode_type_t::evm_validator]);
         }
 #endif
     }
@@ -310,7 +316,8 @@ void xtop_vnode_manager::start_vnodes_with_lock_hold_outside(common::xlogic_time
     start_vnode_with_lock_hold_outside<common::xnode_type_t::zec>(time);
     start_vnode_with_lock_hold_outside<common::xnode_type_t::consensus_auditor>(time);
     start_vnode_with_lock_hold_outside<common::xnode_type_t::consensus_validator>(time);
-    start_vnode_with_lock_hold_outside<common::xnode_type_t::evm_eth>(time);
+    start_vnode_with_lock_hold_outside<common::xnode_type_t::evm_auditor>(time);
+    start_vnode_with_lock_hold_outside<common::xnode_type_t::evm_validator>(time);
 }
 
 void xtop_vnode_manager::fade_vnodes_with_lock_hold_outside(common::xlogic_time_t const time) {

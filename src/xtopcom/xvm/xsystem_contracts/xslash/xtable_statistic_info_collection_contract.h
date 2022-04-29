@@ -72,7 +72,7 @@ private:
                                       top::data::xfulltableblock_statistic_accounts const & statistic_accounts,
                                       std::string const & summarize_info_str,
                                       std::string const & summarize_fulltableblock_num_str,
-                                      data::system_contract::xunqualified_node_info_v2_t & summarize_info,
+                                      data::system_contract::xunqualified_node_info_v1_t & summarize_info,
                                       uint32_t & summarize_fulltableblock_num);
 
     /**
@@ -82,7 +82,7 @@ private:
      * @param summarize_fulltableblock_num
      * @param block_height
      */
-    void update_slash_statistic_info(data::system_contract::xunqualified_node_info_v2_t const & summarize_info, uint32_t summarize_fulltableblock_num, uint64_t block_height);
+    void update_slash_statistic_info(data::system_contract::xunqualified_node_info_v1_t const & summarize_info, uint32_t summarize_fulltableblock_num, uint64_t block_height);
 
     /**
      * @brief accumulate  node info
@@ -91,7 +91,7 @@ private:
      * @param  summarize_info  in&out  the accumulated node info
      *
      */
-    void accumulate_node_info(data::system_contract::xunqualified_node_info_v2_t const & node_info, data::system_contract::xunqualified_node_info_v2_t & summarize_info);
+    void accumulate_node_info(data::system_contract::xunqualified_node_info_v1_t const & node_info, data::system_contract::xunqualified_node_info_v1_t & summarize_info);
 
     /**
      * @brief process statistic data to get nodeinfo
@@ -100,7 +100,7 @@ private:
      * @param statistic_accounts    the statistic accounts data of a fulltable block
      * @return xunqualified_node_info_t  the node info from statistic data
      */
-    data::system_contract::xunqualified_node_info_v2_t process_statistic_data(top::data::xstatistics_data_t const & block_statistic_data,
+    data::system_contract::xunqualified_node_info_v1_t process_statistic_data(top::data::xstatistics_data_t const & block_statistic_data,
                                                                               top::data::xfulltableblock_statistic_accounts const & statistic_accounts);
 
     /**

@@ -75,7 +75,7 @@ base::xtable_index_t xbatch_packer::get_tableid() {
 void xbatch_packer::set_xip(data::xblock_consensus_para_t & blockpara, const xvip2_t & leader) {
     auto zone_id = get_zone_id_from_xip2(leader);
     // if consensus zone
-    if (zone_id == base::enum_chain_zone_consensus_index) {
+    if (zone_id == base::enum_chain_zone_consensus_index || zone_id == base::enum_chain_zone_evm_index) {
         if (xcons_utl::is_auditor(leader)) {
             // leader is auditor xip, set auditor_xip to leader, validator to chid group xip
             // blockpara.auditor_xip = leader;

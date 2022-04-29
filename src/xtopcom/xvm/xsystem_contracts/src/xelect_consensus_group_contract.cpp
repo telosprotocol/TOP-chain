@@ -235,9 +235,13 @@ bool xtop_elect_consensus_group_contract::elect_group(common::xzone_id_t const &
 
     case common::xnode_type_t::evm: {
         assert(cid == common::xdefault_cluster_id);
-        assert(gid == common::xdefault_group_id);
-        node_type = common::xnode_type_t::evm_eth;
-        role_type = common::xminer_type_t::advance;
+        if (gid < common::xauditor_group_id_end) {
+            node_type = common::xnode_type_t::evm_auditor;
+            role_type = common::xminer_type_t::advance;
+        } else {
+            node_type = common::xnode_type_t::evm_validator;
+            role_type = common::xminer_type_t::validator;
+        }
 
         break;
     }
@@ -537,7 +541,7 @@ bool xtop_elect_consensus_group_contract::do_normal_election(common::xzone_id_t 
             elect_in_count = min_group_size - origin_group_size;
         } else {
             elect_in_count = std::min({rotation_count, fts_standbys_size, static_cast<size_t>(max_group_size) - result_nodes.size()});
-            if (node_type == common::xnode_type_t::consensus_auditor || node_type == common::xnode_type_t::consensus_validator) {
+            if (node_type == common::xnode_type_t::consensus_auditor || node_type == common::xnode_type_t::consensus_validator || node_type == common::xnode_type_t::evm_auditor || node_type == common::xnode_type_t::evm_validator) {
                 const size_t election_minimum_rotation_percent = XGET_ONCHAIN_GOVERNANCE_PARAMETER(cluster_election_minimum_rotation_ratio);
                 if (fts_standbys_size <= (origin_group_size * election_minimum_rotation_percent + 99) / 100) {
                     elect_out_count = elect_in_count - unqualified_node_count;

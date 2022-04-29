@@ -61,7 +61,7 @@ std::vector<node_info> xstatic_election_center::get_static_election_nodes(std::s
     return res;
 }
 
-void xstatic_election_center::calc_static_consensus_election_nodes() {
+void xstatic_election_center::calc_static_top_consensus_election_nodes() {
     auto & config_register = top::config::xconfig_register_t::get_instance();
     std::string consensus_infos;
     config_register.get(std::string("consensus_start_nodes"), consensus_infos);
@@ -87,13 +87,48 @@ void xstatic_election_center::calc_static_consensus_election_nodes() {
 
         assert(group_type == "auditor" || group_type == "validator");
         uint8_t group_id_value = (group_type == "auditor") ? (auditor_group_id_start++) : (validator_group_id_start++);
-        consensus_group_map.insert({group_id_value, res});
+        top_consensus_group_map.insert({group_id_value, res});
     }
 }
 
-std::vector<node_info> xstatic_election_center::get_static_consensus_election_nodes(uint8_t group_id_value) {
+void xstatic_election_center::calc_static_evm_consensus_election_nodes() {
+    auto & config_register = top::config::xconfig_register_t::get_instance();
+    std::string consensus_infos;
+    config_register.get(std::string("eth_start_nodes"), consensus_infos);
+    std::vector<std::string> group_string_value;
+    top::base::xstring_utl::split_string(consensus_infos, '|', group_string_value);
+    assert(group_string_value.size() == 2); // for now we only have one evm auditor and one evm validator(for eth).
+
+    uint8_t auditor_group_id_start = common::xauditor_group_id_begin.value();
+    uint8_t validator_group_id_start = common::xvalidator_group_id_begin.value();
+    for (auto const & group_info : group_string_value) {
+        std::vector<std::string> type_detail;
+        top::base::xstring_utl::split_string(group_info, ':', type_detail);
+        auto group_type = type_detail[0];          // auditor or validator
+        auto detailed_node_info = type_detail[1];  // multi nodes info.
+        std::vector<std::string> nodes_info;
+        top::base::xstring_utl::split_string(detailed_node_info, ',', nodes_info);
+        std::vector<node_info> res;
+        for (auto nodes : nodes_info) {
+            std::vector<std::string> one_node_info;
+            top::base::xstring_utl::split_string(nodes, '.', one_node_info);
+            res.push_back(node_info{one_node_info[0], static_cast<std::uint64_t>(std::atoi(one_node_info[1].c_str())), one_node_info[2]});
+        }
+
+        assert(group_type == "evm_auditor" || group_type == "evm_validator");
+        uint8_t group_id_value = (group_type == "evm_auditor") ? (auditor_group_id_start++) : (validator_group_id_start++);
+        evm_consensus_group_map.insert({group_id_value, res});
+    }
+}
+
+std::vector<node_info> xstatic_election_center::get_static_top_consensus_election_nodes(uint8_t group_id_value) {
     assert(group_id_value == 1 || group_id_value == 2 || group_id_value == 64 || group_id_value == 65 || group_id_value == 66 || group_id_value == 67);
-    return consensus_group_map.at(group_id_value);
+    return top_consensus_group_map.at(group_id_value);
+}
+
+std::vector<node_info> xstatic_election_center::get_static_evm_consensus_election_nodes(uint8_t group_id_value) {
+    assert(group_id_value == 1 || group_id_value == 64);
+    return evm_consensus_group_map.at(group_id_value);
 }
 
 NS_END3
