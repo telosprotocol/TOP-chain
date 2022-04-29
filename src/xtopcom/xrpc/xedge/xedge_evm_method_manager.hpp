@@ -199,6 +199,11 @@ void xedge_evm_method_base<T>::do_method(shared_ptr<conn_type> & response, xjson
     if (iter != m_edge_tx_method_map.end()) {
         json_proc.m_tx_type = enum_xrpc_tx_type::enum_xrpc_tx_type;
         iter->second(json_proc, ip);
+        if (json_proc.m_response_json.isMember("error"))
+        {
+            write_response(response, json_proc.get_response());
+            return ;
+        }
     } else {
         if (m_archive_flag) {
             xdbg("local arc query method: %s", method.c_str());
@@ -224,31 +229,65 @@ void xedge_evm_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, 
     request["tx_structure_version"] = 3;
     json_proc.m_tx_ptr = data::xtx_factory::create_tx(static_cast<data::enum_xtransaction_version>(request["tx_structure_version"].asUInt()));
     auto & tx = json_proc.m_tx_ptr;
-    tx->construct_from_json(request);
-
-    if (!tx->digest_check()) {
-        XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_digest", 1);
-        throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "transaction hash error"};
+    std::error_code ec;
+    tx->verify_tx(request, ec);
+    if (ec)
+    {
+        json_proc.m_response_json["id"] = request["id"];
+        json_proc.m_response_json["jsonrpc"] = request["jsonrpc"];
+        xJson::Value errinfo;
+        errinfo["code"] = ec.value();
+        errinfo["messgae"] = ec.message();
+        json_proc.m_response_json["error"] = errinfo;
+        return ;
     }
     if (!(tx->get_origin_target_addr() == sys_contract_rec_standby_pool_addr && tx->get_target_action_name() == "nodeJoinNetwork2")) {
         if (!tx->sign_check()) {
             XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_sign", 1);
-            throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "transaction sign error"};
+            json_proc.m_response_json["id"] = request["id"];
+            json_proc.m_response_json["jsonrpc"] = request["jsonrpc"];
+            xJson::Value errinfo;
+            errinfo["code"] = -32000;
+            errinfo["messgae"] = "transaction sign error";
+            json_proc.m_response_json["error"] = errinfo;
+            return ;
         }
     }
-    tx->set_len();
+
+    if ((top::xverifier::xverifier_error::xverifier_success != top::xverifier::xtx_utl::address_is_valid(tx->get_source_addr(), true)) || (top::xverifier::xverifier_error::xverifier_success != top::xverifier::xtx_utl::address_is_valid(tx->get_target_addr(), true)))
+    {
+        json_proc.m_response_json["id"] = request["id"];
+        json_proc.m_response_json["jsonrpc"] = request["jsonrpc"];
+        xJson::Value errinfo;
+        errinfo["code"] = -32000;
+        errinfo["messgae"] = "account address is invalid";
+        json_proc.m_response_json["error"] = errinfo;
+        return ;
+    }
 
     // filter out black list transaction
     if (xverifier::xblacklist_utl_t::is_black_address(tx->get_source_addr())) {
         xdbg_rpc("[sendTransaction_method] in black address rpc:%s, %s, %s", tx->get_digest_hex_str().c_str(), tx->get_target_addr().c_str(), tx->get_source_addr().c_str());
         XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_blacklist", 1);
-        throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "blacklist check failed"};
+        json_proc.m_response_json["id"] = request["id"];
+        json_proc.m_response_json["jsonrpc"] = request["jsonrpc"];
+        xJson::Value errinfo;
+        errinfo["code"] = -32000;
+        errinfo["messgae"] = "blacklist check failed";
+        json_proc.m_response_json["error"] = errinfo;
+        return ;
     }
 
     if (xverifier::xwhitelist_utl::check_whitelist_limit_tx(tx.get())) {
         XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_whitelist", 1);
         xdbg_rpc("[sendTransaction_method] in whitelist address rpc:%s, %s, %s", tx->get_digest_hex_str().c_str(), tx->get_target_addr().c_str(), tx->get_source_addr().c_str());
-        throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "whitelist check failed"};
+        json_proc.m_response_json["id"] = request["id"];
+        json_proc.m_response_json["jsonrpc"] = request["jsonrpc"];
+        xJson::Value errinfo;
+        errinfo["code"] = -32000;
+        errinfo["messgae"] = "whitelist check failed";
+        json_proc.m_response_json["error"] = errinfo;
+        return ;
     }
 
     if (m_archive_flag) {
