@@ -190,7 +190,7 @@ void xtop_zec_elect_consensus_group_contract::elect_config_nodes(common::xlogic_
         adv_election_group_result.start_time(current_time);
 
         // elect in:
-        auto adv_group_node_infos = xstatic_election_center::instance().get_static_consensus_election_nodes(adv_group_id.value());
+        auto adv_group_node_infos = xstatic_election_center::instance().get_static_top_consensus_election_nodes(adv_group_id.value());
         for (auto node : adv_group_node_infos) {
             xelection_info_t new_election_info{};
             new_election_info.joined_version = next_version;
@@ -223,7 +223,7 @@ void xtop_zec_elect_consensus_group_contract::elect_config_nodes(common::xlogic_
             val_election_group_result.timestamp(current_time);
             val_election_group_result.start_time(current_time);
 
-            auto val_group_node_infos = xstatic_election_center::instance().get_static_consensus_election_nodes(val_group_id.value());
+            auto val_group_node_infos = xstatic_election_center::instance().get_static_top_consensus_election_nodes(val_group_id.value());
             for (auto node : val_group_node_infos) {
                 xelection_info_t new_election_info{};
                 new_election_info.joined_version = next_version;

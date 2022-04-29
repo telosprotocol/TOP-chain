@@ -106,8 +106,11 @@ std::vector<uint16_t> get_table_ids(common::xzone_id_t const & zone_id,
         break;
     }
 
-    case common::xnode_type_t::evm_eth: {
-        // do nothing.
+    case common::xnode_type_t::evm_auditor: {
+        break;
+    }
+
+    case common::xnode_type_t::evm_validator: {
         break;
     }
 

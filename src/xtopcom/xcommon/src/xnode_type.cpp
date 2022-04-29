@@ -59,8 +59,10 @@ to_string(xnode_type_t const type) {
     }
 
     if (has<xnode_type_t::evm>(type)) {
-        if (has<xnode_type_t::evm_eth>(type)) {
-            string += "evm.eth.";
+        if (has<xnode_type_t::evm_auditor>(type)) {
+            string += "evm.auditor.";
+        } else if (has<xnode_type_t::evm_validator>(type)) {
+            string += "evm.validator.";
         } else {
             string += "evm.";
         }
@@ -122,8 +124,12 @@ std::string to_presentation_string(xnode_type_t const type) {
         name = "exchange";
         break;
 
-    case xnode_type_t::evm_eth:
-        name = "eth";
+    case xnode_type_t::evm_auditor:
+        name = "evm_auditor";
+        break;
+
+    case xnode_type_t::evm_validator:
+        name = "evm_validator";
         break;
 
     default:

@@ -314,7 +314,11 @@ std::vector<std::uint16_t> xtop_vnetwork_driver::table_ids() const {
         break;
     }
 
-    case common::xnode_type_t::evm_eth: {
+    case common::xnode_type_t::evm_auditor: {
+        break;
+    }
+
+    case common::xnode_type_t::evm_validator: {
         break;
     }
 
@@ -338,7 +342,7 @@ std::vector<std::uint16_t> xtop_vnetwork_driver::table_ids() const {
         table_ids.resize(MAIN_CHAIN_REC_TABLE_USED_NUM);
     } else if (common::has<common::xnode_type_t::zec>(type()) || common::has<common::xnode_type_t::edge>(type())) {
         table_ids.resize(MAIN_CHAIN_ZEC_TABLE_USED_NUM);
-    } else if (common::has<common::xnode_type_t::evm_eth>(type())) {
+    } else if (common::has<common::xnode_type_t::evm>(type())) {
         table_ids.resize(MAIN_CHAIN_EVM_TABLE_USED_NUM);
     }
 

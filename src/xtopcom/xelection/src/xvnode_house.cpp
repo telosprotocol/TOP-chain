@@ -119,7 +119,7 @@ std::string xvnode_house_t::get_elect_address(const xvip2_t & target_group) cons
         elect_address = sys_contract_rec_elect_zec_addr;
     } else if (zone_id == common::xevm_zone_id_value) {
         xassert(cluster_id == 1);
-        xassert(group_id == 1);
+        xassert(group_id == 1 || group_id == 64);
         elect_address = sys_contract_zec_elect_eth_addr;
     } else {
         xassert(false);

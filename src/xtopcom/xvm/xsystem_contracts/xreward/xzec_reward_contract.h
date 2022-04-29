@@ -22,18 +22,21 @@ struct xreward_onchain_param_t {
     uint32_t archive_reward_ratio;
     uint32_t validator_reward_ratio;
     uint32_t auditor_reward_ratio;
-    uint32_t eth_reward_ratio;
+    uint32_t evm_validator_reward_ratio;
+    uint32_t evm_auditor_reward_ratio;
     uint32_t vote_reward_ratio;
     uint32_t governance_reward_ratio;
     uint32_t auditor_group_zero_workload;
     uint32_t validator_group_zero_workload;
-    uint32_t eth_group_zero_workload;
+    uint32_t evm_auditor_group_zero_workload;
+    uint32_t evm_validator_group_zero_workload;
 };
 
 struct xreward_property_param_t {
     std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> auditor_workloads_detail;
     std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> validator_workloads_detail;
-    std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> eth_workloads_detail;
+    std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> evm_auditor_workloads_detail;
+    std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> evm_validator_workloads_detail;
     std::map<common::xaccount_address_t, std::map<common::xaccount_address_t, uint64_t>> votes_detail;
     data::system_contract::xaccumulated_reward_record accumulated_reward_record;
     std::map<common::xaccount_address_t, data::system_contract::xreg_node_info> map_nodes;
@@ -388,26 +391,28 @@ private:
     /**
      * @brief calculate invalid workload group reward which roup nodes all invalid
      *
-     * @param is_auditor whether is auditor grouo
+     * @param is_auditor whether is auditor grouop
      * @param map_nodes all nodes detail
      * @param group_reward reward of single group
      * @param workloads_detail workloads detail of all groups
      * @return total invalid workload group reward
      */
     ::uint128_t calc_invalid_workload_group_reward(bool is_auditor,
-                                                              std::map<common::xaccount_address_t, data::system_contract::xreg_node_info> const & map_nodes,
-                                                              const ::uint128_t group_reward,
-                                                              std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> & workloads_detail);
+                                                   std::map<common::xaccount_address_t, data::system_contract::xreg_node_info> const & map_nodes,
+                                                   const ::uint128_t group_reward,
+                                                   std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> & workloads_detail);
 
     /**
-     * @brief calculate invalid workload group reward which roup nodes all invalid
+     * @brief calculate evm invalid workload group reward which roup nodes all invalid
      *
+     * @param is_auditor whether is auditor grouop
      * @param map_nodes all nodes detail
      * @param group_reward reward of single group
      * @param workloads_detail workloads detail of all groups
      * @return total invalid workload group reward
      */
-    ::uint128_t calc_eth_invalid_workload_group_reward(std::map<common::xaccount_address_t, data::system_contract::xreg_node_info> const & map_nodes,
+    ::uint128_t calc_evm_invalid_workload_group_reward(bool is_auditor,
+                                                       std::map<common::xaccount_address_t, data::system_contract::xreg_node_info> const & map_nodes,
                                                        const ::uint128_t group_reward,
                                                        std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> & workloads_detail);
 
@@ -469,19 +474,34 @@ private:
                                        ::uint128_t & reward_to_self);
 
     /**
-     * @brief calculate calc eth worklaod rewards
+     * @brief calculate calc eth validator worklaod rewards
      *
      * @param node node info
-     * @param eth_num eth nums caculated in calc_role_nums
-     * @param eth_workloads_detail workloads detail of all eth groups
-     * @param eth_group_workload_rewards single roup reward of eth groups
+     * @param eth_validator_num eth nums caculated in calc_role_nums
+     * @param eth_validator_workloads_detail workloads detail of all eth groups
+     * @param eth_validator_group_workload_rewards single roup reward of eth groups
      * @param reward_to_self node self reward
      */
-    void calc_eth_workload_rewards(data::system_contract::xreg_node_info const & node,
-                                   std::vector<uint32_t> const & eth_num,
-                                   std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> const & eth_workloads_detail,
-                                   const ::uint128_t eth_group_workload_rewards,
-                                   ::uint128_t & reward_to_self);
+    void calc_eth_validator_workload_rewards(data::system_contract::xreg_node_info const & node,
+                                             std::vector<uint32_t> const & eth_validator_num,
+                                             std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> const & eth_validator_workloads_detail,
+                                             const ::uint128_t eth_validator_group_workload_rewards,
+                                             ::uint128_t & reward_to_self);
+
+    /**
+     * @brief calculate calc eth auditor worklaod rewards
+     *
+     * @param node node info
+     * @param eth_auditor_num eth nums caculated in calc_role_nums
+     * @param eth_auditor_workloads_detail workloads detail of all eth groups
+     * @param eth_auditor_group_workload_rewards single roup reward of eth groups
+     * @param reward_to_self node self reward
+     */
+    void calc_eth_auditor_workload_rewards(data::system_contract::xreg_node_info const & node,
+                                           std::vector<uint32_t> const & eth_auditor_num,
+                                           std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> const & eth_auditor_workloads_detail,
+                                           const ::uint128_t eth_auditor_group_workload_rewards,
+                                           ::uint128_t & reward_to_self);
     /**
      * @brief calculate vote reward
      *

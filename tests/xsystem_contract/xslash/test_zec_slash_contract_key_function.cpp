@@ -214,7 +214,7 @@ TEST_F(test_zec_slash_contract, test_statistic_data) {
 }
 
 TEST_F(test_zec_slash_contract, test_accumulate_node_info) {
-    data::system_contract::xunqualified_node_info_v2_t origin_info;
+    data::system_contract::xunqualified_node_info_v1_t origin_info;
 
     for (std::size_t i = 0; i < auditor_account_addrs.size(); ++i) {
         data::system_contract::xnode_vote_percent_t node_vote;
@@ -230,7 +230,7 @@ TEST_F(test_zec_slash_contract, test_accumulate_node_info) {
         origin_info.validator_info[validator_account_addrs[i]] = node_vote;
     }
 
-    data::system_contract::xunqualified_node_info_v2_t summarize_slash_info;
+    data::system_contract::xunqualified_node_info_v1_t summarize_slash_info;
     accumulate_node_info(origin_info, summarize_slash_info);
 
     for (std::size_t i = 0; i < auditor_account_addrs.size(); ++i) {
@@ -258,7 +258,7 @@ TEST_F(test_zec_slash_contract, test_accumulate_node_info) {
 
 
 TEST_F(test_zec_slash_contract, test_filter_node) {
-    data::system_contract::xunqualified_node_info_v2_t origin_info;
+    data::system_contract::xunqualified_node_info_v1_t origin_info;
 
     for (std::size_t i = 0; i < auditor_account_addrs.size(); ++i) {
         data::system_contract::xnode_vote_percent_t node_vote;
@@ -305,7 +305,7 @@ TEST_F(test_zec_slash_contract, test_filter_node) {
 }
 
 TEST_F(test_zec_slash_contract, test_print_summarize_info) {
-    data::system_contract::xunqualified_node_info_v2_t  node_info;
+    data::system_contract::xunqualified_node_info_v1_t  node_info;
     for (auto i = 0; i < 5; ++i) {
         data::system_contract::xnode_vote_percent_t node_content;
         node_content.block_count = i + 1;
@@ -342,7 +342,7 @@ TEST_F(test_zec_slash_contract, test_summarize_info_internal) {
     stream << summarize_tableblock_count_for_str;
     std::string summarize_tableblock_count_str = std::string((char*)stream.data(), (size_t)stream.size());
 
-    data::system_contract::xunqualified_node_info_v2_t summarize_info;
+    data::system_contract::xunqualified_node_info_v1_t summarize_info;
     uint32_t summarize_tableblock_count = 0;
     std::uint64_t cur_statistic_height = 0;
 
@@ -499,7 +499,7 @@ TEST_F(test_zec_slash_contract, process_statistic_data_BENCH) {
 
 
 TEST_F(test_zec_slash_contract, accumulate_node_info_BENCH) {
-    data::system_contract::xunqualified_node_info_v2_t origin_info;
+    data::system_contract::xunqualified_node_info_v1_t origin_info;
 
     for (std::size_t i = 0; i < auditor_account_addrs.size(); ++i) {
         data::system_contract::xnode_vote_percent_t node_vote;
@@ -520,7 +520,7 @@ TEST_F(test_zec_slash_contract, accumulate_node_info_BENCH) {
 
     int total_time = 0;
     for (auto i = 0; i < count; ++i) {
-        data::system_contract::xunqualified_node_info_v2_t summarize_slash_info;
+        data::system_contract::xunqualified_node_info_v1_t summarize_slash_info;
         auto time_start = std::chrono::system_clock::now();
         accumulate_node_info(origin_info, summarize_slash_info);
         auto durarion = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - time_start);
@@ -532,7 +532,7 @@ TEST_F(test_zec_slash_contract, accumulate_node_info_BENCH) {
 }
 
 TEST_F(test_zec_slash_contract, filter_helper_BENCH) {
-    data::system_contract::xunqualified_node_info_v2_t origin_info;
+    data::system_contract::xunqualified_node_info_v1_t origin_info;
 
     for (std::size_t i = 0; i < auditor_account_addrs.size(); ++i) {
         data::system_contract::xnode_vote_percent_t node_vote;
@@ -588,7 +588,7 @@ TEST_F(test_zec_slash_contract, summarize_info_internal_BENCH) {
     stream << summarize_tableblock_count_for_str;
     std::string summarize_tableblock_count_str = std::string((char*)stream.data(), (size_t)stream.size());
 
-    data::system_contract::xunqualified_node_info_v2_t summarize_info;
+    data::system_contract::xunqualified_node_info_v1_t summarize_info;
     uint32_t summarize_tableblock_count = 0;
     std::uint64_t cur_statistic_height = 0;
 
