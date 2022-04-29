@@ -94,12 +94,12 @@ class xtransaction_v1_t : public xbase_dataunit_t<xtransaction_v1_t, xdata_type_
     virtual void                construct_from_json(xJson::Value& tx_json) override;
     virtual int32_t             parse(enum_xaction_type source_type, enum_xaction_type target_type, xtx_parse_data_t & tx_parse_data) override;
 
-    virtual void set_amount(uint64_t) override { assert(false); }
-    virtual uint64_t get_amount() const noexcept override { assert(false); return 0; }
-    virtual void set_amount_256(top::evm_common::u256 amount) noexcept override { assert(false); return; }
-    virtual top::evm_common::u256 get_amount_256() const noexcept override { assert(false); return 0; }
+    virtual void set_amount(uint64_t) override { }
+    virtual uint64_t get_amount() const noexcept override { return 0; }
+    virtual void set_amount_256(top::evm_common::u256 amount) noexcept override { return; }
+    virtual top::evm_common::u256 get_amount_256() const noexcept override { return 0; }
     virtual bool is_top_transfer() const noexcept override { return true; }
-    virtual uint32_t get_eip_version() const {assert(false); return 0;}
+    virtual uint32_t get_eip_version() const { return 0;}
 
     // header
  public:
