@@ -215,9 +215,9 @@ top::evm_common::h2048 xrpc_eth_query_manager::calculate_bloom(const std::string
     return bloom;
 }
 
-void xrpc_query_manager::eth_getTransactionReceipt(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
-    uint256_t hash = top::data::hex_to_uint256(js_req["tx_hash"].asString());
-    std::string tx_hash = js_req["tx_hash"].asString();
+void xrpc_eth_query_manager::eth_getTransactionReceipt(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
+    uint256_t hash = top::data::hex_to_uint256(js_req[0].asString());
+    std::string tx_hash = js_req[0].asString();
     std::string tx_hash_str = std::string(reinterpret_cast<char *>(hash.data()), hash.size());
     xdbg("eth_getTransactionReceipt tx hash: %s",  tx_hash.c_str());
 
@@ -306,7 +306,7 @@ void xrpc_query_manager::eth_getTransactionReceipt(xJson::Value & js_req, xJson:
 
     js_rsp["result"] = js_result;
 
-    xdbg("xrpc_query_manager::eth_getTransactionReceipt ok.tx hash:%s", js_req["tx_hash"].asString().c_str());
+    xdbg("xrpc_query_manager::eth_getTransactionReceipt ok.tx hash:%s", js_req[0].asString().c_str());
     return;
 }
 void xrpc_eth_query_manager::eth_blockNumber(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
