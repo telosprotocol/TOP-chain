@@ -1119,16 +1119,26 @@ void xrpc_query_manager::getEVMs(xJson::Value & js_req, xJson::Value & js_rsp, s
     m_xrpc_query_func.query_account_property(j, addr, property_name, xfull_node_compatible_mode_t::incompatible);
 
     if (version == RPC_VERSION_V3) {
-        xJson::Value tmp = j[common::to_presentation_string(common::xnode_type_t::evm_eth)];
+        xJson::Value tmp = j[common::to_presentation_string(common::xnode_type_t::evm_auditor)];
         xJson::Value jv;
         for (auto & i : tmp.getMemberNames()) {
             xJson::Value node = tmp[i][0];
             node["account_addr"] = i;
             jv.append(node);
         }
-        js_rsp["value"] = jv;
+        js_rsp["value"]["evm_auditor"] = jv;
+
+        xJson::Value tmp = j[common::to_presentation_string(common::xnode_type_t::evm_validator)];
+        xJson::Value jv;
+        for (auto & i : tmp.getMemberNames()) {
+            xJson::Value node = tmp[i][0];
+            node["account_addr"] = i;
+            jv.append(node);
+        }
+        js_rsp["value"]["evm_validator"] = jv;
     } else {
-        js_rsp["value"] = j[common::to_presentation_string(common::xnode_type_t::evm_eth)];
+        js_rsp["value"]["evm_auditor"] = j[common::to_presentation_string(common::xnode_type_t::evm_auditor)];
+        js_rsp["value"]["evm_validator"] = j[common::to_presentation_string(common::xnode_type_t::evm_validator)];
     }
     js_rsp["chain_id"] = j["chain_id"];
 }
