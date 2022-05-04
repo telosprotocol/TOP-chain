@@ -202,9 +202,13 @@ void xtable_statistic_info_collection_contract::accumulate_node_info(data::syste
         summarize_info.validator_info[item.first].subset_count += item.second.subset_count;
     }
 
-    for (auto const & item : node_info.evm_info) {
-        summarize_info.evm_info[item.first].block_count += item.second.block_count;
-        summarize_info.evm_info[item.first].subset_count += item.second.subset_count;
+    for (auto const & item : node_info.evm_auditor_info) {
+        summarize_info.evm_auditor_info[item.first].block_count += item.second.block_count;
+        summarize_info.evm_auditor_info[item.first].subset_count += item.second.subset_count;
+    }
+    for (auto const & item : node_info.evm_validator_info) {
+        summarize_info.evm_validator_info[item.first].block_count += item.second.block_count;
+        summarize_info.evm_validator_info[item.first].subset_count += item.second.subset_count;
     }
 }
 
@@ -241,16 +245,22 @@ data::system_contract::xunqualified_node_info_v2_t xtable_statistic_info_collect
                     xdbg("[xtable_statistic_info_collection_contract][do_unqualified_node_slash] incremental validator data: {gourp id: %d, account addr: %s, slot id: %u, subset count: %u, block_count: %u}", group_addr.group_id().value(), account_addr.c_str(),
                         slotid, group_account_data.account_statistics_data[slotid].vote_data.block_count, group_account_data.account_statistics_data[slotid].vote_data.vote_count);
                 }
-
-            // todo (Lon)
-            } else if (top::common::has<top::common::xnode_type_t::evm>(group_addr.type())) {
+            } else if (top::common::has<top::common::xnode_type_t::evm_auditor>(group_addr.type())) {
                 for (std::size_t slotid = 0; slotid < group_account_data.account_statistics_data.size(); ++slotid) {
                     auto const & account_addr = group_accounts.account_data[slotid];
-                    res_node_info.evm_info[common::xnode_id_t{account_addr}].subset_count += group_account_data.account_statistics_data[slotid].vote_data.block_count;
-                    res_node_info.evm_info[common::xnode_id_t{account_addr}].block_count += group_account_data.account_statistics_data[slotid].vote_data.vote_count;
-                    xdbg("[xtable_statistic_info_collection_contract][do_unqualified_node_slash] incremental eth data: {gourp id: %d, account addr: %s, slot id: %u, subset count: %u, block_count: %u}", group_addr.group_id().value(), account_addr.c_str(),
+                    res_node_info.evm_auditor_info[common::xnode_id_t{account_addr}].subset_count += group_account_data.account_statistics_data[slotid].vote_data.block_count;
+                    res_node_info.evm_auditor_info[common::xnode_id_t{account_addr}].block_count += group_account_data.account_statistics_data[slotid].vote_data.vote_count;
+                    xdbg("[xtable_statistic_info_collection_contract][do_unqualified_node_slash] incremental evm auditor data: {gourp id: %d, account addr: %s, slot id: %u, subset count: %u, block_count: %u}", group_addr.group_id().value(), account_addr.c_str(),
                         slotid, group_account_data.account_statistics_data[slotid].vote_data.block_count, group_account_data.account_statistics_data[slotid].vote_data.vote_count);
-                }                
+                }
+            } else if (top::common::has<top::common::xnode_type_t::evm_validator>(group_addr.type())) {
+                for (std::size_t slotid = 0; slotid < group_account_data.account_statistics_data.size(); ++slotid) {
+                    auto const & account_addr = group_accounts.account_data[slotid];
+                    res_node_info.evm_validator_info[common::xnode_id_t{account_addr}].subset_count += group_account_data.account_statistics_data[slotid].vote_data.block_count;
+                    res_node_info.evm_validator_info[common::xnode_id_t{account_addr}].block_count += group_account_data.account_statistics_data[slotid].vote_data.vote_count;
+                    xdbg("[xtable_statistic_info_collection_contract][do_unqualified_node_slash] incremental evm validator data: {gourp id: %d, account addr: %s, slot id: %u, subset count: %u, block_count: %u}", group_addr.group_id().value(), account_addr.c_str(),
+                        slotid, group_account_data.account_statistics_data[slotid].vote_data.block_count, group_account_data.account_statistics_data[slotid].vote_data.vote_count);
+                }
             } else { // invalid group
                 xwarn("[xtable_statistic_info_collection_contract][do_unqualified_node_slash] invalid group id: %d", group_addr.group_id().value());
                 std::error_code ec{ xvm::enum_xvm_error_code::enum_vm_exception };

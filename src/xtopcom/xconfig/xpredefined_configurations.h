@@ -153,8 +153,10 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_eth_auditor_group_size, xgroup_size_t,
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_eth_validator_group_size, xgroup_size_t, normal, 6, 6, 32);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_eth_validator_group_size, xgroup_size_t, normal, 128, 64, 512);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(eth_statistic_report_schedule_interval, xinterval_t, normal, 48, 0, std::numeric_limits<xinterval_t>::max());
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(eth_reward_ratio, uint16_t, critical, 0, 0, 100);
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(eth_group_zero_workload, uint32_t, normal, 0, 0, std::numeric_limits<uint32_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(evm_auditor_reward_ratio, uint16_t, critical, 0, 0, 100);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(evm_validator_reward_ratio, uint16_t, critical, 0, 0, 100);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(evm_auditor_group_zero_workload, uint32_t, normal, 0, 0, std::numeric_limits<uint32_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(evm_validator_group_zero_workload, uint32_t, normal, 0, 0, std::numeric_limits<uint32_t>::max());
 
 #if defined(XBUILD_CI)
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_auditor_group_size, xgroup_size_t, normal, 3, 3, 32);

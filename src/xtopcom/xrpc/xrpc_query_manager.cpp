@@ -317,12 +317,14 @@ void xrpc_query_manager::getIssuanceDetail(xJson::Value & js_req, xJson::Value &
     jv["archive_reward_ratio"] = issue_detail.m_archive_reward_ratio;
     jv["validator_reward_ratio"] = issue_detail.m_validator_reward_ratio;
     jv["auditor_reward_ratio"] = issue_detail.m_auditor_reward_ratio;
-    jv["eth_reward_ratio"] = issue_detail.m_eth_reward_ratio;
+    jv["evm_validator_reward_ratio"] = issue_detail.m_evm_validator_reward_ratio;
+    jv["evm_auditor_reward_ratio"] = issue_detail.m_evm_auditor_reward_ratio;
     jv["vote_reward_ratio"] = issue_detail.m_vote_reward_ratio;
     jv["governance_reward_ratio"] = issue_detail.m_governance_reward_ratio;
     jv["validator_group_count"] = (xJson::UInt)issue_detail.m_validator_group_count;
     jv["auditor_group_count"] = (xJson::UInt)issue_detail.m_auditor_group_count;
-    jv["eth_group_count"] = (xJson::UInt)issue_detail.m_eth_group_count;
+    jv["evm_validator_group_count"] = (xJson::UInt)issue_detail.m_evm_validator_group_count;
+    jv["evm_auditor_group_count"] = (xJson::UInt)issue_detail.m_evm_auditor_group_count;
     std::map<std::string, std::string> contract_auditor_votes;
     if (m_store->get_map_property(
             sys_contract_zec_vote_addr, issue_detail.m_zec_vote_contract_height, data::system_contract::XPORPERTY_CONTRACT_TICKETS_KEY, contract_auditor_votes) != 0) {
@@ -1128,8 +1130,9 @@ void xrpc_query_manager::getEVMs(xJson::Value & js_req, xJson::Value & js_rsp, s
         }
         js_rsp["value"]["evm_auditor"] = jv;
 
-        xJson::Value tmp = j[common::to_presentation_string(common::xnode_type_t::evm_validator)];
-        xJson::Value jv;
+        tmp.clear();
+        jv.clear();
+        tmp = j[common::to_presentation_string(common::xnode_type_t::evm_validator)];
         for (auto & i : tmp.getMemberNames()) {
             xJson::Value node = tmp[i][0];
             node["account_addr"] = i;
@@ -1703,17 +1706,26 @@ void xrpc_query_manager::set_unqualified_node_map(xJson::Value & j, std::map<std
             jvn_validator[v.first.value()] = validator_info;
         }
 
-        xJson::Value jvn_evm;
-        for (auto const & v : summarize_info.evm_info) {
+        xJson::Value jvn_evm_auditor;
+        for (auto const & v : summarize_info.evm_auditor_info) {
             xJson::Value evm_info;
             evm_info["vote_num"] = v.second.block_count;
             evm_info["subset_num"] = v.second.subset_count;
-            jvn_evm[v.first.value()] = evm_info;
+            jvn_evm_auditor[v.first.value()] = evm_info;
+        }
+
+        xJson::Value jvn_evm_validator;
+        for (auto const & v : summarize_info.evm_validator_info) {
+            xJson::Value evm_info;
+            evm_info["vote_num"] = v.second.block_count;
+            evm_info["subset_num"] = v.second.subset_count;
+            jvn_evm_validator[v.first.value()] = evm_info;
         }
 
         jvn["auditor"] = jvn_auditor;
         jvn["validator"] = jvn_validator;
-        jvn["evm"] = jvn_evm;
+        jvn["evm_auditor"] = jvn_evm_auditor;
+        jvn["evm_validator"] = jvn_evm_validator;
         j["unqualified_node"] = jvn;
     }
 }

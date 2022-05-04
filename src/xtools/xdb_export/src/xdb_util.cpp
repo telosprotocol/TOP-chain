@@ -605,17 +605,24 @@ static void parse_unqualified_node_map(std::map<std::string, std::string> const 
             validator_info["subset_num"] = v.second.subset_count;
             jvn_validator[v.first.value()] = validator_info;
         }
-        json jvn_evm;
-        for (auto const & v : summarize_info.evm_info) {
+        json jvn_evm_auditor;
+        for (auto const & v : summarize_info.evm_auditor_info) {
             json evm_info;
             evm_info["vote_num"] = v.second.block_count;
             evm_info["subset_num"] = v.second.subset_count;
-            jvn_evm[v.first.value()] = evm_info;
+            jvn_evm_auditor[v.first.value()] = evm_info;
+        }
+        json jvn_evm_validator;
+        for (auto const & v : summarize_info.evm_auditor_info) {
+            json evm_info;
+            evm_info["vote_num"] = v.second.block_count;
+            evm_info["subset_num"] = v.second.subset_count;
+            jvn_evm_validator[v.first.value()] = evm_info;
         }
         jvn["auditor"] = jvn_auditor;
         jvn["validator"] = jvn_validator;
-        // todo (Lon):
-        jvn["evm"] = jvn_evm;
+        jvn["evm_auditor"] = jvn_evm_auditor;
+        jvn["evm_validator"] = jvn_evm_validator;
         j["unqualified_node"] = jvn;
     }
 }
@@ -723,12 +730,14 @@ static void parse_reward_detail_string(std::string const & str, json & j) {
     jv["archive_reward_ratio"] = issue_detail.m_archive_reward_ratio;
     jv["validator_reward_ratio"] = issue_detail.m_validator_reward_ratio;
     jv["auditor_reward_ratio"] = issue_detail.m_auditor_reward_ratio;
-    jv["eth_reward_ratio"] = issue_detail.m_eth_reward_ratio;
+    jv["evm_validator_reward_ratio"] = issue_detail.m_evm_validator_reward_ratio;
+    jv["evm_auditor_reward_ratio"] = issue_detail.m_evm_auditor_reward_ratio;
     jv["vote_reward_ratio"] = issue_detail.m_vote_reward_ratio;
     jv["governance_reward_ratio"] = issue_detail.m_governance_reward_ratio;
     jv["validator_group_count"] = issue_detail.m_validator_group_count;
     jv["auditor_group_count"] = issue_detail.m_auditor_group_count;
-    jv["eth_group_count"] = issue_detail.m_eth_group_count;
+    jv["evm_validator_group_count"] = issue_detail.m_evm_validator_group_count;
+    jv["evm_auditor_group_count"] = issue_detail.m_evm_auditor_group_count;
     json jr;
     for (auto const & node_reward : issue_detail.m_node_rewards) {
         std::stringstream ss;

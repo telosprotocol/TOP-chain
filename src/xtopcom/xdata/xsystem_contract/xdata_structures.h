@@ -239,7 +239,8 @@ private:
 struct xunqualified_node_info_v2_t final : public xserializable_based_on<void> {
     std::map<common::xnode_id_t, xnode_vote_percent_t> auditor_info;
     std::map<common::xnode_id_t, xnode_vote_percent_t> validator_info;
-    std::map<common::xnode_id_t, xnode_vote_percent_t> evm_info;
+    std::map<common::xnode_id_t, xnode_vote_percent_t> evm_auditor_info;
+    std::map<common::xnode_id_t, xnode_vote_percent_t> evm_validator_info;
 
     explicit operator xunqualified_node_info_v1_t() const;
 
@@ -796,12 +797,14 @@ public:
     uint16_t m_archive_reward_ratio{0};
     uint16_t m_validator_reward_ratio{0};
     uint16_t m_auditor_reward_ratio{0};
-    uint16_t m_eth_reward_ratio{0};
+    uint16_t m_evm_auditor_reward_ratio{0};
+    uint16_t m_evm_validator_reward_ratio{0};
     uint16_t m_vote_reward_ratio{0};
     uint16_t m_governance_reward_ratio{0};
     uint64_t m_auditor_group_count{0};
     uint64_t m_validator_group_count{0};
-    uint64_t m_eth_group_count{0};
+    uint64_t m_evm_auditor_group_count{0};
+    uint64_t m_evm_validator_group_count{0};
     std::map<std::string, reward_detail_v2> m_node_rewards;
 
 public:

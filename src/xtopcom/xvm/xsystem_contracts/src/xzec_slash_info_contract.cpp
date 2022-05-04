@@ -119,11 +119,12 @@ void xzec_slash_info_contract::summarize_slash_info(std::string const & slash_in
     }
 
     xkinfo(
-        "[xzec_slash_info_contract][summarize_slash_info] effective table contract report slash info, auditor size: %zu, validator size: %zu, evm size: %zu, summarized tableblock "
-        "num: %u",
+        "[xzec_slash_info_contract][summarize_slash_info] effective table contract report slash info, auditor size: %zu, validator size: %zu, evm auditor size: %zu, evm validator "
+        "size: %zu, summarized tableblock num: %u",
         summarize_info.auditor_info.size(),
         summarize_info.validator_info.size(),
-        summarize_info.evm_info.size(),
+        summarize_info.evm_auditor_info.size(),
+        summarize_info.evm_validator_info.size(),
         summarize_tableblock_count);
 }
 
@@ -364,7 +365,7 @@ std::vector<data::system_contract::xaction_node_info_t> xzec_slash_info_contract
                                                                                                uint32_t award_persent_threshold) {
     std::vector<data::system_contract::xaction_node_info_t> nodes_to_slash{};
 
-    if (summarize_info.auditor_info.empty() && summarize_info.validator_info.empty() && summarize_info.evm_info.empty()) {
+    if (summarize_info.auditor_info.empty() && summarize_info.validator_info.empty() && summarize_info.evm_auditor_info.empty() && summarize_info.evm_validator_info.empty()) {
         xwarn("[xzec_slash_info_contract][filter_slashed_nodes] the summarized node info is empty!");
         return nodes_to_slash;
     } else {
@@ -445,11 +446,41 @@ std::vector<data::system_contract::xaction_node_info_t> xzec_slash_info_contract
     }
 
     node_to_action.clear();
-    for (auto const & node : node_map.evm_info) {
+    for (auto const & node : node_map.evm_auditor_info) {
         data::system_contract::xunqualified_filter_info_t info;
         info.node_id = node.first;
         // todo (Lon)
-        info.node_type = common::xnode_type_t::evm;
+        info.node_type = common::xnode_type_t::evm_auditor;
+        info.vote_percent = node.second.block_count * 100 / node.second.subset_count;
+        node_to_action.emplace_back(info);
+    }
+
+    std::sort(node_to_action.begin(),
+              node_to_action.end(),
+              [](data::system_contract::xunqualified_filter_info_t const & lhs, data::system_contract::xunqualified_filter_info_t const & rhs) {
+        return lhs.vote_percent < rhs.vote_percent;
+    });
+
+    slash_size = node_to_action.size() * slash_persent_threshold / 100;
+    for (size_t i = 0; i < slash_size; ++i) {
+        if (node_to_action[i].vote_percent < slash_vote_threshold || 0 == node_to_action[i].vote_percent) {
+            res.push_back(data::system_contract::xaction_node_info_t{node_to_action[i].node_id, node_to_action[i].node_type});
+        }
+    }
+
+    award_size = node_to_action.size() * award_persent_threshold / 100;
+    for (int i = (int)node_to_action.size() - 1; i >= (int)(node_to_action.size() - award_size); --i) {
+        if (node_to_action[i].vote_percent > award_vote_threshold) {
+            res.push_back(data::system_contract::xaction_node_info_t{node_to_action[i].node_id, node_to_action[i].node_type, false});
+        }
+    }
+
+    node_to_action.clear();
+    for (auto const & node : node_map.evm_validator_info) {
+        data::system_contract::xunqualified_filter_info_t info;
+        info.node_id = node.first;
+        // todo (Lon)
+        info.node_type = common::xnode_type_t::evm_validator;
         info.vote_percent = node.second.block_count * 100 / node.second.subset_count;
         node_to_action.emplace_back(info);
     }
@@ -491,7 +522,13 @@ void xzec_slash_info_contract::print_summarize_info(data::system_contract::xunqu
         out += "|" + std::to_string(item.second.subset_count) + "|";
     }
 
-    for (auto const & item : summarize_slash_info.evm_info) {
+    for (auto const & item : summarize_slash_info.evm_auditor_info) {
+        out += item.first.value();
+        out += "|" + std::to_string(item.second.block_count);
+        out += "|" + std::to_string(item.second.subset_count) + "|";
+    }
+
+    for (auto const & item : summarize_slash_info.evm_validator_info) {
         out += item.first.value();
         out += "|" + std::to_string(item.second.block_count);
         out += "|" + std::to_string(item.second.subset_count) + "|";
@@ -543,9 +580,14 @@ void xzec_slash_info_contract::accumulate_node_info(data::system_contract::xunqu
         summarize_info.validator_info[item.first].subset_count += item.second.subset_count;
     }
 
-    for (auto const & item : node_info.evm_info) {
-        summarize_info.evm_info[item.first].block_count += item.second.block_count;
-        summarize_info.evm_info[item.first].subset_count += item.second.subset_count;
+    for (auto const & item : node_info.evm_auditor_info) {
+        summarize_info.evm_auditor_info[item.first].block_count += item.second.block_count;
+        summarize_info.evm_auditor_info[item.first].subset_count += item.second.subset_count;
+    }
+
+    for (auto const & item : node_info.evm_validator_info) {
+        summarize_info.evm_validator_info[item.first].block_count += item.second.block_count;
+        summarize_info.evm_validator_info[item.first].subset_count += item.second.subset_count;
     }
 }
 

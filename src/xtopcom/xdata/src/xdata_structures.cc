@@ -209,7 +209,9 @@ int32_t xunqualified_node_info_v2_t::do_write(base::xstream_t & stream) const {
     KEEP_SIZE();
     MAP_OBJECT_SERIALIZE2(stream, auditor_info);
     MAP_OBJECT_SERIALIZE2(stream, validator_info);
-    MAP_OBJECT_SERIALIZE2(stream, evm_info);
+    MAP_OBJECT_SERIALIZE2(stream, evm_auditor_info);
+    MAP_OBJECT_SERIALIZE2(stream, evm_validator_info);
+
     return CALC_LEN();
 }
 
@@ -218,7 +220,10 @@ int32_t xunqualified_node_info_v2_t::do_read(base::xstream_t & stream) {
     MAP_OBJECT_DESERIALZE2(stream, auditor_info);
     MAP_OBJECT_DESERIALZE2(stream, validator_info);
     if (stream.size() > 0) {
-        MAP_OBJECT_DESERIALZE2(stream, evm_info);
+        MAP_OBJECT_DESERIALZE2(stream, evm_auditor_info);
+    }
+    if (stream.size() > 0) {
+        MAP_OBJECT_DESERIALZE2(stream, evm_validator_info);
     }
     return CALC_LEN();
 }
@@ -863,8 +868,10 @@ int32_t xissue_detail_v2::do_write(base::xstream_t & stream) const {
     stream << m_auditor_group_count;
     stream << m_validator_group_count;
     MAP_OBJECT_SERIALIZE2(stream, m_node_rewards);
-    stream << m_eth_reward_ratio;
-    stream << m_eth_group_count;
+    stream << m_evm_auditor_reward_ratio;
+    stream << m_evm_validator_reward_ratio;
+    stream << m_evm_auditor_group_count;
+    stream << m_evm_validator_group_count;
     const int32_t end_pos = stream.size();
     return (end_pos - begin_pos);
 }
@@ -885,10 +892,16 @@ int32_t xissue_detail_v2::do_read(base::xstream_t & stream) {
     stream >> m_validator_group_count;
     MAP_OBJECT_DESERIALZE2(stream, m_node_rewards);
     if (stream.size() > 0) {
-        stream >> m_eth_reward_ratio;
+        stream >> m_evm_auditor_reward_ratio;
     }
     if (stream.size() > 0) {
-        stream >> m_eth_group_count;
+        stream >> m_evm_validator_reward_ratio;
+    }
+    if (stream.size() > 0) {
+        stream >> m_evm_auditor_group_count;
+    }
+    if (stream.size() > 0) {
+        stream >> m_evm_validator_group_count;
     }
     const int32_t end_pos = stream.size();
     return (begin_pos - end_pos);
