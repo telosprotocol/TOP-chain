@@ -23,13 +23,15 @@ public:
     common::xaccount_address_t sender() const;
     common::xaccount_address_t recver() const;
     data::enum_xtransaction_type tx_type() const;
+    base::enum_transaction_subtype tx_subtype() const;
     data::enum_xtransaction_version tx_version() const;
     evm_common::u256 tx_gas_limit() const;
     evm_common::u256 tx_eth_fee_per_gas() const;
     evm_common::u256 tx_top_fee_per_gas() const;
     uint64_t deposit() const;
-    uint64_t last_action_used_deposit() const;
-    uint64_t last_action_recv_tx_use_send_tx_tgas() const;
+    uint64_t tx_used_tgas() const;
+    uint64_t tx_last_action_used_deposit() const;
+    uint64_t tx_last_action_recv_tx_use_send_tx_tgas() const;
 
     void tx_set_used_tgas(const uint64_t tgas);
     void tx_set_used_deposit(const uint64_t deposit);
