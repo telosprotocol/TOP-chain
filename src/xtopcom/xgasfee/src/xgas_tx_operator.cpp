@@ -33,6 +33,10 @@ data::enum_xtransaction_type xtop_gas_tx_operator::tx_type() const {
     return static_cast<data::enum_xtransaction_type>(m_tx->get_tx_type());
 }
 
+base::enum_transaction_subtype xtop_gas_tx_operator::tx_subtype() const {
+    return m_tx->get_tx_subtype();
+}
+
 void xtop_gas_tx_operator::tx_set_used_tgas(const uint64_t tgas) {
     m_tx->set_current_used_tgas(tgas);
 }
@@ -45,11 +49,15 @@ void xtop_gas_tx_operator::tx_set_current_recv_tx_use_send_tx_tgas(const uint64_
     m_tx->set_current_recv_tx_use_send_tx_tgas(tgas);
 }
 
-uint64_t xtop_gas_tx_operator::last_action_used_deposit() const {
+uint64_t xtop_gas_tx_operator::tx_used_tgas() const {
+    return m_tx->get_current_used_tgas();
+}
+
+uint64_t xtop_gas_tx_operator::tx_last_action_used_deposit() const {
     return m_tx->get_last_action_used_deposit();
 }
 
-uint64_t xtop_gas_tx_operator::last_action_recv_tx_use_send_tx_tgas() const {
+uint64_t xtop_gas_tx_operator::tx_last_action_recv_tx_use_send_tx_tgas() const {
     return m_tx->get_last_action_recv_tx_use_send_tx_tgas();
 }
 
@@ -90,7 +98,7 @@ uint64_t xtop_gas_tx_operator::tx_bandwith_tgas() const {
 #else
     uint16_t amplify = 1;
 #endif
-    if(tx_type() != data::xtransaction_type_transfer){
+    if (tx_type() != data::xtransaction_type_transfer) {
         amplify = 1;
     }
     uint32_t multiple = (m_tx->is_self_tx()) ? 1 : 3;
