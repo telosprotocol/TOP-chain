@@ -80,6 +80,7 @@ public:
 private:
     std::string safe_get_json_value(xJson::Value & json_value, const std::string& key);
     void set_block_result(const base::xauto_ptr<base::xvblock_t>&  block, xJson::Value& js_result);
+    xaccount_ptr_t query_account_by_number(const std::string &unit_address, const std::string& table_height);
 private:
     observer_ptr<store::xstore_face_t> m_store;
     observer_ptr<base::xvblockstore_t> m_block_store;

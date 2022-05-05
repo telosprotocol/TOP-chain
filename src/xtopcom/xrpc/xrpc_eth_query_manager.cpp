@@ -92,35 +92,80 @@ bool xrpc_eth_query_manager::handle(std::string & strReq, xJson::Value & js_req,
     return true;
 }
 
+xaccount_ptr_t xrpc_eth_query_manager::query_account_by_number(const std::string &unit_address, const std::string& table_height) {
+    base::xvaccount_t _vaddr(unit_address);
+    std::string table_address = base::xvaccount_t::make_table_account_address(_vaddr);
+    base::xvaccount_t _table_addr(table_address);
+
+    XMETRICS_GAUGE(metrics::blockstore_access_from_store, 1);
+    xobject_ptr_t<base::xvblock_t> _block;
+    if (table_height == "latest")
+        _block = base::xvchain_t::instance().get_xblockstore()->get_latest_connected_block(_table_addr);
+    else if (table_height == "earliest")
+        _block = base::xvchain_t::instance().get_xblockstore()->get_genesis_block(_table_addr);
+    else if (table_height == "pending")
+        _block = base::xvchain_t::instance().get_xblockstore()->get_latest_cert_block(_table_addr);
+    else {
+        uint64_t height = std::strtoul(table_height.c_str(), NULL, 16);
+        _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_table_addr, height, base::enum_xvblock_flag_committed, false, metrics::blockstore_access_from_rpc_get_block_query_propery);
+    }
+
+    if (_block == nullptr) {
+        xwarn("xstore::query_account_by_number fail-load. account=%s", unit_address.c_str());
+        return nullptr;
+    }
+
+    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_block.get(), metrics::statestore_access_from_vnodesrv_load_state);
+    if (bstate == nullptr) {
+        xwarn("xstore::query_account_by_number fail-load state.block=%s", _block->dump().c_str());
+        return nullptr;
+    }
+
+    data::xtablestate_ptr_t tablestate = std::make_shared<data::xtable_bstate_t>(bstate.get());
+    base::xaccount_index_t account_index;
+    tablestate->get_account_index(unit_address, account_index);
+    uint64_t unit_height = account_index.get_latest_unit_height();
+    uint64_t unit_view_id = account_index.get_latest_unit_viewid();
+
+    auto unit_block = base::xvchain_t::instance().get_xblockstore()->load_block_object(
+        _vaddr, unit_height, unit_view_id, false, metrics::blockstore_access_from_rpc_get_block_query_propery);
+    if (unit_block == nullptr) {
+        xwarn("xstore::query_account_by_number fail-load. account=%s", unit_address.c_str());
+        return nullptr;
+    }
+    base::xauto_ptr<base::xvbstate_t> unit_state =
+        base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(unit_block.get(), metrics::statestore_access_from_vnodesrv_load_state);
+    if (unit_state == nullptr) {
+        xwarn("xstore::query_account_by_number fail-load state.block=%s", unit_block->dump().c_str());
+        return nullptr;
+    }
+    return std::make_shared<xunit_bstate_t>(unit_state.get());
+}
 void xrpc_eth_query_manager::eth_getBalance(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     std::string account = js_req[0].asString();
     transform(account.begin(), account.end(), account.begin(), ::tolower);
     account = std::string(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN) + account.substr(2);
-    xdbg("xarc_query_manager::getBalance account: %s", account.c_str());
+    xdbg("xarc_query_manager::getBalance account: %s,%s", account.c_str(), js_req[1].asString().c_str());
 
-    // add top address check
     ADDRESS_CHECK_VALID(account)
-    try {
-        xaccount_ptr_t account_ptr = m_store->query_account(account);
-        if (account_ptr == nullptr) {
-            js_rsp["result"] = "0x0";
-        } else {
-            evm_common::u256 balance = account_ptr->tep_token_balance(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH);
 
-            std::string balance_str = toHex((top::evm_common::h256)balance);
+    xaccount_ptr_t account_ptr = query_account_by_number(account, js_req[1].asString());
 
-            uint32_t i = 0;
-            for (; i < balance_str.size() - 1; i++) {
-                if (balance_str[i] != '0') {
-                    break;
-                }
+    if (account_ptr == nullptr) {
+        js_rsp["result"] = "0x0";
+    } else {
+        evm_common::u256 balance = account_ptr->tep_token_balance(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH);
+
+        std::string balance_str = toHex((top::evm_common::h256)balance);
+
+        uint32_t i = 0;
+        for (; i < balance_str.size() - 1; i++) {
+            if (balance_str[i] != '0') {
+                break;
             }
-            js_rsp["result"] = "0x" + balance_str.substr(i);
-            xdbg("xarc_query_manager::getBalance account: %s, balance:%s", account.c_str(), balance_str.substr(i).c_str());
         }
-    } catch (exception & e) {
-        strResult = std::string(e.what());
-        nErrorCode = (uint32_t)enum_xrpc_error_code::rpc_param_unkown_error;
+        js_rsp["result"] = "0x" + balance_str.substr(i);
+        xdbg("xarc_query_manager::getBalance account: %s, balance:%s", account.c_str(), balance_str.substr(i).c_str());
     }
 }
 void xrpc_eth_query_manager::eth_getTransactionCount(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
@@ -413,7 +458,7 @@ std::string xrpc_eth_query_manager::safe_get_json_value(xJson::Value & js_req, c
 void xrpc_eth_query_manager::eth_call(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     std::string to = safe_get_json_value(js_req[0], "to");
     if (to.empty()) {
-        xinfo("generate_tx to: %s", to.c_str());
+        xwarn("xrpc_eth_query_manager::eth_call, generate_tx to: %s", to.c_str());
         return;
     }
     std::transform(to.begin(), to.end(), to.begin(), ::tolower);
@@ -421,7 +466,7 @@ void xrpc_eth_query_manager::eth_call(xJson::Value & js_req, xJson::Value & js_r
 
     std::string from = safe_get_json_value(js_req[0], "from");
     if (from.empty()) {
-        xinfo("generate_tx from: %s", from.c_str());
+        xwarn("xrpc_eth_query_manager::eth_call, generate_tx from: %s", from.c_str());
         return;
     }
     std::transform(from.begin(), from.end(), from.begin(), ::tolower);
@@ -430,8 +475,14 @@ void xrpc_eth_query_manager::eth_call(xJson::Value & js_req, xJson::Value & js_r
     std::string data = safe_get_json_value(js_req[0], "data");
     std::string value = safe_get_json_value(js_req[0], "value");
     std::string gas = safe_get_json_value(js_req[0], "gas");
-    top::data::xtransaction_ptr_t tx = top::data::xtx_factory::create_ethcall_v3_tx(from, to, top::HexDecode(data.substr(2)), std::strtoul(value.c_str(), NULL, 16), std::strtoul(gas.c_str(), NULL, 16));
+    top::evm_common::u256 gas_value;
+    if (gas.empty())
+        gas_value = (uint64_t)12000000U;
+    else
+        gas_value = std::strtoul(gas.c_str(), NULL, 16);
+    top::data::xtransaction_ptr_t tx = top::data::xtx_factory::create_ethcall_v3_tx(from, to, top::HexDecode(data.substr(2)), std::strtoul(value.c_str(), NULL, 16), gas_value);
     auto cons_tx = top::make_object_ptr<top::data::xcons_transaction_t>(tx.get());
+    xinfo("xrpc_eth_query_manager::eth_call, %s, %s, %s", data.c_str(), value.c_str(), gas_value.str().c_str());
 
     std::string addr = std::string(sys_contract_eth_table_block_addr) + "@0";
     base::xvaccount_t _vaddress(addr);
@@ -441,11 +492,11 @@ void xrpc_eth_query_manager::eth_call(xJson::Value & js_req, xJson::Value & js_r
 
     statectx::xstatectx_ptr_t statectx_ptr = statectx::xstatectx_factory_t::create_latest_commit_statectx(_vaddress);
     if (statectx_ptr == nullptr) {
-        xinfo("create_latest_commit_statectx fail: %s", addr.c_str());
+        xwarn("create_latest_commit_statectx fail: %s", addr.c_str());
         return;
     }
     txexecutor::xvm_para_t vmpara(cs_para.get_clock(), cs_para.get_random_seed(), cs_para.get_total_lock_tgas_token());
-    vmpara.set_evm_gas_limit(std::strtoul(gas.c_str(), NULL, 16));
+    vmpara.set_evm_gas_limit((uint64_t)gas_value);
 
     txexecutor::xvm_input_t input{statectx_ptr, vmpara, cons_tx};
     txexecutor::xvm_output_t output;
@@ -453,7 +504,7 @@ void xrpc_eth_query_manager::eth_call(xJson::Value & js_req, xJson::Value & js_r
 
     auto ret = evm.execute(input, output);
     if (ret != txexecutor::enum_exec_success) {
-        xinfo("evm call fail.");
+        xwarn("evm call fail.");
         return;
     }
     xinfo("evm call: %d, %s", output.m_tx_result.status, output.m_tx_result.extra_msg.c_str());
