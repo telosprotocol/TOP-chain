@@ -1,0 +1,227 @@
+{
+    "pre_data": {},
+    "deploy_contract": [
+        {
+            "src_address": "T60004befc5d4c0cf44e2295c01920bac668d2c4d61a4b",
+            "code_file_path": "AliceToken_sol_AliceToken.bin",
+            "gas_limit": 876585,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "contract_one",
+                "gas_used": 876585,
+                "logs": []
+            }
+        }       
+    ],
+    "test_cases": [
+        {
+            "__comments":"获取代币name.返回Alice",
+            "src_address": "T60004befc5d4c0cf44e2295c01920bac668d2c4d61a4b",
+            "target_address": "contract_one",
+            "data": "0x06fdde03",
+            "gas_limit": 24514,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000005416c696365000000000000000000000000000000000000000000000000000000",
+                "gas_used": 24514,
+                "logs": []
+            }
+        },
+        {
+            "__comments":"获取代币symbol.返回ATOKEN",
+            "src_address": "T60004befc5d4c0cf44e2295c01920bac668d2c4d61a4b",
+            "target_address": "contract_one",
+            "data": "0x95d89b41",
+            "gas_limit": 24557,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000641544f4b454e0000000000000000000000000000000000000000000000000000",
+                "gas_used": 24557,
+                "logs": []
+            }
+        },
+        {
+            "__comments":"获取代币decimals.返回18",
+            "src_address": "T60004befc5d4c0cf44e2295c01920bac668d2c4d61a4b",
+            "target_address": "contract_one",
+            "data": "0x313ce567",
+            "gas_limit": 23624 ,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000012",
+                "gas_used": 23624 ,
+                "logs": []
+            }
+        },
+        {
+            "__comments":"第1次发币mint(1000000000000000)，消耗gas较多68425 ",
+            "src_address": "T60004befc5d4c0cf44e2295c01920bac668d2c4d61a4b",
+            "target_address": "contract_one",
+            "data": "0xa0712d6800000000000000000000000000000000000000000000000000038d7ea4c68000",
+            "gas_limit": 342250,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "",
+                "gas_used": 68425,
+                "logs": [
+                    {
+                        "address": "contract_one",
+                        "topics": [
+                            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+                            "0x0000000000000000000000000000000000000000000000000000000000000000",
+                            "0x000000000000000000000000befc5d4c0cf44e2295c01920bac668d2c4d61a4b"  
+                        ],
+                        "data": "0x00000000000000000000000000000000000000000000000000038d7ea4c68000"
+                    }
+                ]
+            }
+        },
+        {
+            "__comments":"第2次发币mint(1000000000000000)，消耗gas较少34225 ",
+            "src_address": "T60004befc5d4c0cf44e2295c01920bac668d2c4d61a4b",
+            "target_address": "contract_one",
+            "data": "0xa0712d6800000000000000000000000000000000000000000000000000038d7ea4c68000",
+            "gas_limit": 342250,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "",
+                "gas_used": 34225,
+                "logs": [
+                    {
+                        "address": "contract_one",
+                        "topics": [
+                            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+                            "0x0000000000000000000000000000000000000000000000000000000000000000",
+                            "0x000000000000000000000000befc5d4c0cf44e2295c01920bac668d2c4d61a4b"  
+                        ],
+                        "data": "0x00000000000000000000000000000000000000000000000000038d7ea4c68000"
+                    }
+                ]
+            }
+        }, 
+        {
+            "__comments":"上面2个用例执行2次mint(1000000000000000)，调用totalSupply查看发币总共有2000000000000000 ",
+            "src_address": "T60004befc5d4c0cf44e2295c01920bac668d2c4d61a4b",
+            "target_address": "contract_one",
+            "data": "0x18160ddd",
+            "gas_limit": 23538,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x00000000000000000000000000000000000000000000000000071afd498d0000",
+                "gas_used": 23538,
+                "logs": []
+            }
+        },        
+        {
+            "__comments":"销毁burn(1000000000000000) ",
+            "src_address": "T60004befc5d4c0cf44e2295c01920bac668d2c4d61a4b",
+            "target_address": "contract_one",
+            "data": "0x42966c6800000000000000000000000000000000000000000000000000038d7ea4c68000",
+            "gas_limit": 34147,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "",
+                "gas_used": 34147,
+                "logs": [
+                    {
+                        "address": "contract_one",
+                        "topics": [
+                            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+                             "0x000000000000000000000000befc5d4c0cf44e2295c01920bac668d2c4d61a4b", 
+                             "0x0000000000000000000000000000000000000000000000000000000000000000"
+                        ],
+                        "data": "0x00000000000000000000000000000000000000000000000000038d7ea4c68000"
+                    }
+                ]
+            }
+        }, 
+        {
+            "__comments":"上面2个用例执行2次发币1000000000000000),销毁1次，调用totalSupply查看发币总共有1000000000000000 ",
+            "src_address": "T60004befc5d4c0cf44e2295c01920bac668d2c4d61a4b",
+            "target_address": "contract_one",
+            "data": "0x18160ddd",
+            "gas_limit": 23538,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x00000000000000000000000000000000000000000000000000038d7ea4c68000",
+                "gas_used": 23538,
+                "logs": []
+            }
+        },  
+        {
+            "__comments":"上面2个用例执行2次发币1000000000000000),销毁1次，调用balanceOf查看默认账户金额1000000000000000 ",
+            "src_address": "T60004befc5d4c0cf44e2295c01920bac668d2c4d61a4b",
+            "target_address": "contract_one",
+            "data": "0x70a08231000000000000000000000000befc5d4c0cf44e2295c01920bac668d2c4d61a4b",
+            "gas_limit": 24268,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x00000000000000000000000000000000000000000000000000038d7ea4c68000",
+                "gas_used": 24268,
+                "logs": []
+            }
+        },   
+        {
+            "__comments":"transfer(0x15ad19ed3fa956877a8d45ec47657a64e9e01502,10000) ,返回true",
+            "src_address": "T60004befc5d4c0cf44e2295c01920bac668d2c4d61a4b",
+            "target_address": "contract_one",
+            "data": "0xa9059cbb00000000000000000000000015ad19ed3fa956877a8d45ec47657a64e9e015020000000000000000000000000000000000000000000000000000000000002710",
+            "gas_limit": 52169,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000001",
+                "gas_used": 52169,
+                "logs": [
+                    {
+                        "address": "contract_one",
+                        "topics": [
+                            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+                             "0x000000000000000000000000befc5d4c0cf44e2295c01920bac668d2c4d61a4b",
+                             "0x00000000000000000000000015ad19ed3fa956877a8d45ec47657a64e9e01502"
+                            ],
+                        "data": "0x0000000000000000000000000000000000000000000000000000000000002710"
+                    }
+                ]
+            }
+        },  
+        {
+            "__comments":"查看0x15ad19ed3fa956877a8d45ec47657a64e9e01502金额10000",
+            "src_address": "T60004befc5d4c0cf44e2295c01920bac668d2c4d61a4b",
+            "target_address": "contract_one",
+            "data": "0x70a0823100000000000000000000000015ad19ed3fa956877a8d45ec47657a64e9e01502",
+            "gas_limit": 24268,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x0000000000000000000000000000000000000000000000000000000000002710",
+                "gas_used": 24268,
+                "logs": []
+            }
+        },          
+        {
+            "__comments":"非自己账号转账失败,transferFrom(0x15ad19ed3fa956877a8d45ec47657a64e9e01502,0x7767d8d47a370ec7c49b153f2731360fb08239e8,5000)",
+            "src_address": "T60004befc5d4c0cf44e2295c01920bac668d2c4d61a4b",
+            "target_address": "contract_one",
+            "data": "0x23b872dd00000000000000000000000015ad19ed3fa956877a8d45ec47657a64e9e015020000000000000000000000007767d8d47a370ec7c49b153f2731360fb08239e80000000000000000000000000000000000000000000000000000000000001388",
+            "gas_limit": 25338,
+            "value": "0",
+            "expected": {
+                "status": 1,
+                "extra_message": "0x4e487b710000000000000000000000000000000000000000000000000000000000000011",
+                "gas_used": 25338,
+                "logs": []
+            }
+        }
+    ]
+}

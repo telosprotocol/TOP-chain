@@ -1,0 +1,33 @@
+{
+    "pre_data": {},
+    "deploy_contract": [
+        {
+            "src_address": "T60004Ab8483F64d9C6d1EcF9b849Ae677dD3315835cb2",
+            "code_file_path": "Import.bin",
+            "gas_limit": 663233,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "contract_one",
+                "gas_used": 576724,
+                "logs": []
+            }
+        }
+    ],
+    "test_cases": [
+        {
+            "__comments":"调用引用的func",
+            "src_address": "T60004Ab8483F64d9C6d1EcF9b849Ae677dD3315835cb2",
+            "target_address": "contract_one",
+            "data": "0x771602f700000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000003",
+            "gas_limit": 25690,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000005",
+                "gas_used": 22339,
+                "logs": []
+            }
+        }
+    ]
+}

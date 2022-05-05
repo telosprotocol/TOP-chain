@@ -1,0 +1,156 @@
+{
+    "pre_data": {},
+    "__comments":"多个用户部署相同合约，合约都可以使用",
+    "deploy_contract": [
+        {
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
+            "code_file_path": "TestSafeMath_sol_TestSafeMath.bin",
+            "gas_limit": 308435,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "contract1",
+                "gas_used": 308435,
+                "logs": []
+            }
+        },
+        {
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "code_file_path": "TestSafeMath_sol_TestSafeMath.bin",
+            "gas_limit": 308435,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "contract2",
+                "gas_used": 308435,
+                "logs": []
+            }
+        },
+        {
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea4",
+            "code_file_path": "TestSafeMath_sol_TestSafeMath.bin",
+            "gas_limit": 308435,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "contract3",
+                "gas_used": 308435,
+                "logs": []
+            }
+        },
+        {
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea5",
+            "code_file_path": "TestSafeMath_sol_TestSafeMath.bin",
+            "gas_limit": 308435,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "contract4",
+                "gas_used": 308435,
+                "logs": []
+            }
+        }       
+    ],
+    "test_cases": [
+        {
+            "__comments":"获取MAX_UINT成员变量",
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
+            "target_address": "contract1",
+            "data": "0xe5b5019a",
+            "gas_limit": 23515,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+                "gas_used": 23515,
+                "logs": []
+            }
+        },
+        {
+            "__comments":"执行add(1,2)",
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "target_address": "contract2",
+            "data": "0x7c3ffef200000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000002",
+            "gas_limit": 22415,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000003",
+                "gas_used": 22415,
+                "logs": []
+            }
+        },
+        {
+            "__comments":"执行add(0,0)",
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea4",
+            "target_address": "contract3",
+            "data": "0x7c3ffef200000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+            "gas_limit": 22391,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "gas_used": 22391,
+                "logs": []
+            }
+        },
+        {
+            "__comments":"执行add(2000000000000000000000000000000000000000000000,2000000000000000000000000000000000000000000000)",
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea5",
+            "target_address": "contract4",
+            "data": "0x7c3ffef20000000000000000000000000059aedfc10d7279c5eed14016454000000000000000000000000000000000000059aedfc10d7279c5eed1401645400000000000",
+            "gas_limit": 22727,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x00000000000000000000000000b35dbf821ae4f38bdda2802c8a800000000000",
+                "gas_used": 22727,
+                "logs": []
+            }
+        },
+        {
+            "__comments":"执行sqrt(1)",
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
+            "target_address": "contract1",
+            "data": "0x6039b0bd0000000000000000000000000000000000000000000000000000000000000001",
+            "gas_limit": 21877 ,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000001",
+                "gas_used": 21877 ,
+                "logs": []
+            }
+        },
+        {
+            "__comments":"执行sqrt(0)",
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "target_address": "contract2",
+            "data": "0x6039b0bd0000000000000000000000000000000000000000000000000000000000000000",
+            "gas_limit": 21857  ,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "gas_used": 21857  ,
+                "logs": []
+            }
+        },
+        {
+            "__comments":"执行sqrt(100000000000000000000000000000000000000000000000000000000000)",
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea4",
+            "target_address": "contract3",
+            "data": "0x6039b0bd000000000000000fee50b7025c36a0802f236d04753d5b48e800000000000000",
+            "gas_limit": 85819 ,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x0000000000000000000000000000000000000003fdc97a29c8e052fd00e94ecb",
+                "gas_used": 85819 ,
+                "logs": []
+            }
+        }
+
+        
+    ]
+}
