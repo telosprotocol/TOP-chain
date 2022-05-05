@@ -25,8 +25,6 @@ using json = nlohmann::basic_json<my_workaround_fifo_map>;
 namespace top {
 namespace data {
 
-xcheckpoints_map_t xtop_chain_checkpoint::m_checkpoints_map;
-
 void xtop_chain_checkpoint::load() {
     json j_data;
 #ifdef CHECKPOINT_TEST
@@ -54,7 +52,7 @@ void xtop_chain_checkpoint::load() {
                 auto table_str = static_cast<std::string>(it_table.key());
                 auto const & table_data = it_table->at(TABLE_DATA_KEY);
                 {
-                    data::xcheckpoint_data_t data;
+                    base::xcheckpoint_data_t data;
                     data.height = base::xstring_utl::touint64(table_data.at(BLOCK_HEIGHT_KEY).get<std::string>());
                     data.hash = base::xstring_utl::from_hex(table_data.at(BLOCK_HASH_KEY).get<std::string>());
                     m[common::xaccount_address_t{table_str}].emplace(std::make_pair(clock, data));
@@ -64,7 +62,7 @@ void xtop_chain_checkpoint::load() {
                 for (auto it_unit = unit_data_map.cbegin(); it_unit != unit_data_map.cend(); it_unit++) {
                     auto unit_str = static_cast<std::string>(it_unit.key());
                     auto const & unit_data = it_unit.value();
-                    data::xcheckpoint_data_t data;
+                    base::xcheckpoint_data_t data;
                     data.height = base::xstring_utl::touint64(unit_data.at(BLOCK_HEIGHT_KEY).get<std::string>());
                     data.hash = base::xstring_utl::from_hex(unit_data.at(BLOCK_HASH_KEY).get<std::string>());
                     m[common::xaccount_address_t{unit_str}].emplace(std::make_pair(clock, data));
@@ -76,10 +74,12 @@ void xtop_chain_checkpoint::load() {
     };
     m_checkpoints_map = load_data(j_data);
     j_data.clear();
+    base::xvactmeta_t::init_cpstore(this);
     xinfo("[xtop_chain_checkpoint::load] cp data size: %zu", m_checkpoints_map.size());
 }
 
-xcheckpoint_data_t xtop_chain_checkpoint::get_latest_checkpoint(common::xaccount_address_t const & account, std::error_code & ec) {
+base::xcheckpoint_data_t xtop_chain_checkpoint::get_latest_checkpoint(const std::string & address, std::error_code & ec) {
+    common::xaccount_address_t account(address);
     auto it = m_checkpoints_map.find(account);
     if (it == m_checkpoints_map.end()) {
         xwarn("[xtop_chain_checkpoint::get_latest_checkpoint] %s not found!", account.c_str());

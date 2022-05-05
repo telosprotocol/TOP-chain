@@ -139,7 +139,7 @@ int DbPrune::db_prune(const std::string& node_addr, const std::string datadir, s
     }
 
     // init checkpoint
-    data::xchain_checkpoint_t::load();
+    data::xchain_checkpoint_t::instance().load();
 
     std::string sys_account[] = {sys_contract_beacon_timer_addr, sys_drand_addr};
     for (size_t i = 0; i < sizeof(sys_account)/sizeof(sys_account[0]); i++) {
@@ -192,9 +192,8 @@ int DbPrune::db_prune(const std::string& node_addr, const std::string datadir, s
             continue;
         }
 
-        common::xaccount_address_t _vaddress(table_account);
         std::error_code err;
-        auto checkpoint = data::xchain_checkpoint_t::get_latest_checkpoint(_vaddress, err);
+        auto checkpoint = data::xchain_checkpoint_t::instance().get_latest_checkpoint(table_account, err);
         if (err) {
             std::cout << "Error: table_account " << table_account << " get_latest_checkpoint " << err << std::endl;
             continue;

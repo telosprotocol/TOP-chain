@@ -176,9 +176,8 @@ uint64_t xsync_store_t::get_latest_end_block_height(const std::string & account,
 }
 
 uint64_t xsync_store_t::get_latest_immutable_connected_checkpoint_height(const std::string & account) {
-    common::xaccount_address_t _vaddress(account);
     std::error_code err;
-    auto checkpoint = data::xtop_chain_checkpoint::get_latest_checkpoint(_vaddress, err);
+    auto checkpoint = data::xtop_chain_checkpoint::instance().get_latest_checkpoint(account, err);
     if (err) {
         return 0;
     }

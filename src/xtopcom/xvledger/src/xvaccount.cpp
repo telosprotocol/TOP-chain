@@ -9,7 +9,6 @@
 #include "xbase/xcontext.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
-#include "xdata/xcheckpoint.h"
 #include "xmetrics/xmetrics.h"
 
 namespace top
@@ -608,13 +607,12 @@ namespace top
             return std::string();
         }
 
+        xvcpstore_t* xvactmeta_t::m_cpstore;
+
         void xvactmeta_t::init_cp_connect_meta(xvactmeta_t* meta_ptr, const std::string & account) {
-            std::error_code ec;
-            common::xaccount_address_t addr{account};
-            // bad performance ?
-            auto cp = data::xtop_chain_checkpoint::get_latest_checkpoint(addr, ec);
-            if (ec) {
-                xinfo("init_cp_connect_meta fail! account: %s, err: %s", account.c_str(), ec.message().c_str());
+            xcheckpoint_data_t cp;
+            if (false == get_latest_checkpoint(account, cp)) {
+                xinfo("init_cp_connect_meta fail! account: %s", account.c_str());
                 return ;
             }
             _highest_cp_connect_block_height = cp.height;
@@ -636,6 +634,32 @@ namespace top
             }
 
             return meta_ptr;
+        }
+
+        bool xvactmeta_t::init_cpstore(xvcpstore_t* cpstore)
+        {
+            if (nullptr == m_cpstore) {
+                m_cpstore = cpstore;
+                xkinfo("xvactmeta_t::init_cpstore finish");
+            } else {
+                xassert(false);
+            }
+            return true;
+        }
+        bool xvactmeta_t::get_latest_checkpoint(const std::string & address, xcheckpoint_data_t & value)
+        {
+            if (nullptr != m_cpstore) {
+                std::error_code ec;
+                value = m_cpstore->get_latest_checkpoint(address, ec);
+                if (!ec) {
+                    return true;
+                } else {
+                    xwarn("init_cp_connect_meta fail! account: %s", address.c_str());
+                }
+            } else {
+                xwarn("init_cp_connect_meta fail-init cpstore");
+            }
+            return false;
         }
         
         xvactmeta_t::xvactmeta_t(const xvaccount_t & _account)

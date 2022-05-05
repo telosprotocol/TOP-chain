@@ -251,7 +251,7 @@ int topchain_start(const std::string& config_file) {
     XMETRICS_INIT2(log_path);
 
     // init checkpoint
-    data::xchain_checkpoint_t::load();
+    data::xchain_checkpoint_t::instance().load();
 
     //init data_path into xvchain instance
     //init auto_prune feature
