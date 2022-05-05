@@ -5,6 +5,7 @@
 #include "xevm_common/address.h"
 #include "xevm_common/common.h"
 #include "xevm_common/fixed_hash.h"
+#include "xevm_common/xborsh.hpp"
 #include "json/json.h"
 #include "json/json.hpp"
 #include "xbase/xmem.h"
@@ -126,6 +127,47 @@ TEST(test_rlp, wiki_example) {
         std::string str(decoded.decoded[i].begin(), decoded.decoded[i].end());
         vecData.push_back(str);
         std::cout << "data" << i << ": " << HexEncode(str) << std::endl;
+    }
+}
+
+TEST(test_rlp, serialize_compare_1) {
+    {
+        uint64_t value = 0x112233;
+        bytes encoded = RLP::encode(value);
+        ASSERT_EQ(encoded.size(), 4);
+        ASSERT_EQ(HexEncode(std::string((char *)encoded.data(), encoded.size())), "83112233");
+
+        xBorshEncoder encoder;
+        encoder.EncodeInteger(value);
+        bytes borsh_encoded = encoder.GetBuffer();
+        ASSERT_EQ(borsh_encoded.size(), 8);
+        ASSERT_EQ(HexEncode(std::string((char *)borsh_encoded.data(), borsh_encoded.size())), "3322110000000000");
+    }
+
+    {
+        top::evm_common::u256 value("0x112233");
+        bytes encoded = RLP::encode(value);
+        ASSERT_EQ(encoded.size(), 4);
+        ASSERT_EQ(HexEncode(std::string((char *)encoded.data(), encoded.size())), "83112233");
+
+        xBorshEncoder encoder;
+        encoder.EncodeInteger(value);
+        bytes borsh_encoded = encoder.GetBuffer();
+        ASSERT_EQ(borsh_encoded.size(), 32);
+        ASSERT_EQ(HexEncode(std::string((char *)borsh_encoded.data(), borsh_encoded.size())), "3322110000000000000000000000000000000000000000000000000000000000");
+    }
+
+    {
+        top::evm_common::u256 value("0x11");
+        bytes encoded = RLP::encode(value);
+        ASSERT_EQ(encoded.size(), 1);
+        ASSERT_EQ(HexEncode(std::string((char *)encoded.data(), encoded.size())), "11");
+
+        xBorshEncoder encoder;
+        encoder.EncodeInteger(value);
+        bytes borsh_encoded = encoder.GetBuffer();
+        ASSERT_EQ(borsh_encoded.size(), 32);
+        ASSERT_EQ(HexEncode(std::string((char *)borsh_encoded.data(), borsh_encoded.size())), "1100000000000000000000000000000000000000000000000000000000000000");
     }
 }
 

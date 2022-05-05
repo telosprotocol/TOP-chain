@@ -208,16 +208,6 @@ class xblock_maker_t : public base::xvaccount_t {
     xaccount_ptr_t                          m_latest_bstate{nullptr};
 };
 
-class xblock_rules_face_t {
- public:
-    virtual bool        unit_rules_filter(const xblock_ptr_t & rules_end_block,
-                                            const xaccount_ptr_t & rules_end_state,
-                                            const std::vector<xcons_transaction_ptr_t> & origin_txs,
-                                            std::vector<xcons_transaction_ptr_t> & valid_txs,
-                                            std::vector<xcons_transaction_ptr_t> & pop_txs) = 0;
-};
-using xblock_rules_face_ptr_t = std::shared_ptr<xblock_rules_face_t>;
-
 class xblock_builder_para_face_t {
  public:
     xblock_builder_para_face_t() = default;

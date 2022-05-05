@@ -1144,7 +1144,8 @@ TEST_F(test_tablemaker, fullunit) {
     mocktable.genrate_table_chain(count, nullptr);
 
     auto & tables = mocktable.get_history_tables();
-    auto & fullunit_table = tables[23];
+    uint64_t max_limit_lightunit_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(fullunit_contain_of_unit_num);
+    auto & fullunit_table = tables[max_limit_lightunit_count];
     std::vector<xobject_ptr_t<base::xvblock_t>> sub_blocks;
     fullunit_table->extract_sub_blocks(sub_blocks);
     for(auto & unit : sub_blocks) {

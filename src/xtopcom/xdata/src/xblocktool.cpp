@@ -53,7 +53,7 @@ base::xvblock_t*   xblocktool_t::create_genesis_lightunit(const std::string & ac
     std::string fullstate_bin;
     bstate->take_snapshot(fullstate_bin);
     // TODO(jimmy) block builder class
-    xinfo("xlightunit_builder_t::build_block account=%s,height=0,binlog_size=%zu",
+    xinfo("xblocktool_t::build_block account=%s,height=0,binlog_size=%zu",
         account.c_str(), property_binlog.size());
 
     xcons_transaction_ptr_t cons_tx = make_object_ptr<xcons_transaction_t>(tx.get());
@@ -140,7 +140,7 @@ base::xvblock_t * xblocktool_t::create_genesis_lightunit(std::string const & acc
     std::string fullstate_bin;
     bstate->take_snapshot(fullstate_bin);
     // TODO(jimmy) block builder class
-    xinfo("xlightunit_builder_t::build_block account=%s,height=0,binlog_size=%zu",
+    xinfo("xblocktool_t::build_block account=%s,height=0,binlog_size=%zu",
         account.c_str(), property_binlog.size());
 
     xcons_transaction_ptr_t cons_tx = make_object_ptr<xcons_transaction_t>(tx.get());
