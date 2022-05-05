@@ -222,8 +222,8 @@ impl<'env, I: IO + Copy, E: Env> Engine<'env, I, E> {
         let mut executor = executor_params.make_executor(self);
         sdk::log(
             format!(
-                "call contract at: {:?} from {:?} with input {:?}, value: {:?}",
-                contract, origin, input, value
+                "call contract at: {:?} from {:?} with input {:?}, value: {:?}, gas: {:?}",
+                contract, origin, input, value, gas_limit
             )
             .as_str(),
         );
