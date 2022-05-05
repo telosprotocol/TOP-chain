@@ -1,0 +1,63 @@
+{
+    "pre_data": {},
+    "deploy_contract": [
+        {
+            "src_address": "T600045B38Da6a701c568545dCfcB03FcB875f56beddC4",
+            "code_file_path": "Owner.bin",
+            "gas_limit": 303525,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "contract_one",
+                "gas_used": 263934,
+                "logs": [{
+                    "address": "contract_one", 
+                    "topics": [
+                        "0x342827c97908e5e2f71151c08502a66d44b6f758e3ac2f1de95f02eb95f0a735", 
+                        "0x0000000000000000000000000000000000000000000000000000000000000000", 
+                        "0x0000000000000000000000005b38da6a701c568545dcfcb03fcb875f56beddc4"
+                    ],
+                    "data": ""
+                }]
+            }
+        }
+    ],
+    "test_cases": [
+        {
+            "__comments":"设置owner",
+            "src_address": "T600045B38Da6a701c568545dCfcB03FcB875f56beddC4",
+            "target_address": "contract_one",
+            "data": "0xa6f9dae1000000000000000000000000636a4494f0cbe56528ea1ea51fd4eccddcf04994",
+            "gas_limit": 33119,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "",
+                "gas_used": 28799,
+                "logs": [{
+                    "address": "contract_one", 
+                    "topics": [
+                        "0x342827c97908e5e2f71151c08502a66d44b6f758e3ac2f1de95f02eb95f0a735", 
+                        "0x0000000000000000000000005b38da6a701c568545dcfcb03fcb875f56beddc4", 
+                        "0x000000000000000000000000636a4494f0cbe56528ea1ea51fd4eccddcf04994"
+                    ],
+                    "data": ""
+                }]
+            }
+        },
+        {
+            "__comments":"非owner用户设置owner，设置失败",
+            "src_address": "T600045B38Da6a701c568545dCfcB03FcB875f56beddC4",
+            "target_address": "contract_one",
+            "data": "0xa6f9dae1000000000000000000000000636a4494f0cbe56528ea1ea51fd4eccddcf04994",
+            "gas_limit": 3000000,
+            "value": "0",
+            "expected": {
+                "status": 1,
+                "extra_message": "",
+                "gas_used": 24341,
+                "logs": []
+            }
+        }
+    ]
+}

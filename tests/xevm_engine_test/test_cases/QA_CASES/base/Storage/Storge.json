@@ -1,0 +1,33 @@
+{
+    "pre_data": {},
+    "deploy_contract": [
+        {
+            "src_address": "T600045B38Da6a701c568545dCfcB03FcB875f56beddC4",
+            "code_file_path": "Owner.bin",
+            "gas_limit": 144515,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "contract_one",
+                "gas_used": 53000,
+                "logs": []
+            }
+        }
+    ],
+    "test_cases": [
+        {
+            "__comments":"设置存储数值",
+            "src_address": "T600045B38Da6a701c568545dCfcB03FcB875f56beddC4",
+            "target_address": "contract_one",
+            "data": "0x6057361d0000000000000000000000000000000000000000000000000000000000000001",
+            "gas_limit": 50283,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "",
+                "gas_used": 21204,
+                "logs": []
+            }
+        }
+    ]
+}
