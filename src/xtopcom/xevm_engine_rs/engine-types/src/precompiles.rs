@@ -2,7 +2,7 @@ use crate::types::{Address, EthGas};
 use crate::Borrowed;
 use crate::{proto_precompile, ContractBridgeArgs};
 use evm::executor::stack::Log;
-use evm::{executor, Context, ExitError, ExitSucceed};
+use evm::{executor, Context, ExitError, ExitSucceed, ExitFatal};
 
 /// Rust Precompile Contract always has certain return status: ExitSucceed::Return
 /// and most of it has no logs.
@@ -64,7 +64,11 @@ impl From<proto_precompile::PrecompileFailure> for executor::stack::PrecompileFa
                 cost: output.get_cost(),
             },
             3 => executor::stack::PrecompileFailure::Fatal {
-                exit_status: evm::ExitFatal::NotSupported,
+                exit_status: match output.get_minor_status() {
+                    1 => ExitFatal::NotSupported,
+                    2 => ExitFatal::UnhandledInterrupt,
+                    _ => ExitFatal::Other(Borrowed("Other Error")),
+                }
             },
             _ => executor::stack::PrecompileFailure::Fatal {
                 exit_status: evm::ExitFatal::NotSupported,
