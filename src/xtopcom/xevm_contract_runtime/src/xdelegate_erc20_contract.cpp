@@ -54,8 +54,8 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
 
     // erc20_uuid (1 byte) | erc20_method_id (4 bytes) | parameters (depends)
     if (input.size() < 5) {
-        err.cost = target_gas;
-        err.fail_status = Error;
+        err.fail_status = precompile_error::Fatal;
+        err.minor_status = precompile_error_ExitFatal::Other;
 
         return false;
     }
@@ -100,8 +100,8 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
 
     case method_id_total_supply: {
         if (!parameters.empty()) {
-            err.cost = target_gas;
-            err.fail_status = Error;
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = precompile_error_ExitFatal::Other;
 
             return false;
         }
@@ -116,16 +116,16 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
 
     case method_id_balance_of: {
         if (parameters.size() != 32) {
-            err.cost = target_gas;
-            err.fail_status = Error;
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = precompile_error_ExitFatal::Other;
 
             return false;
         }
 
         xbytes_t const prefix{std::begin(parameters), std::next(std::begin(parameters), 12)};
         if (std::any_of(std::begin(prefix), std::end(prefix), [](xbyte_t byte) { return byte != 0; })) {
-            err.cost = target_gas;
-            err.fail_status = Error;
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = precompile_error_ExitFatal::Other;
 
             return false;
         }
@@ -171,6 +171,21 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
     }
 
     case method_id_transfer: {
+        if (parameters.size() != 32 * 2) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = precompile_error_ExitFatal::Other;
+
+            return false;
+        }
+
+        xbytes_t const prefix{std::begin(parameters), std::next(std::begin(parameters), 12)};
+        if (std::any_of(std::begin(prefix), std::end(prefix), [](xbyte_t byte) { return byte != 0; })) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = precompile_error_ExitFatal::Other;
+
+            return false;
+        }
+
         xbytes_t const to_account_address_bytes{std::next(std::begin(parameters), 12), std::next(std::begin(parameters), 32)};
         xbytes_t const value_bytes{std::next(std::begin(parameters), 32), std::next(std::begin(parameters), 32 + 32)};
 
@@ -225,6 +240,29 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
     }
 
     case method_id_transfer_from: {
+        if (parameters.size() != 32 * 3) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = precompile_error_ExitFatal::Other;
+
+            return false;
+        }
+
+        xbytes_t prefix{std::begin(parameters), std::next(std::begin(parameters), 12)};
+        if (std::any_of(std::begin(prefix), std::end(prefix), [](xbyte_t byte) { return byte != 0; })) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = precompile_error_ExitFatal::Other;
+
+            return false;
+        }
+
+        prefix = xbytes_t{std::next(std::begin(parameters), 32), std::next(std::begin(parameters), 32 + 12)};
+        if (std::any_of(std::begin(prefix), std::end(prefix), [](xbyte_t byte) { return byte != 0; })) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = precompile_error_ExitFatal::Other;
+
+            return false;
+        }
+
         xbytes_t const owner_account_address_bytes{std::next(std::begin(parameters), 12), std::next(std::begin(parameters), 32)};
         xbytes_t const to_account_address_bytes{std::next(std::begin(parameters), 32 + 12), std::next(std::begin(parameters), 32 + 32)};
         xbytes_t const value_bytes{std::next(std::begin(parameters), 32 * 2), std::next(std::begin(parameters), 32 * 3)};
@@ -286,6 +324,21 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
     }
 
     case method_id_approve: {
+        if (parameters.size() != 32 * 2) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = precompile_error_ExitFatal::Other;
+
+            return false;
+        }
+
+        xbytes_t const prefix{std::begin(parameters), std::next(std::begin(parameters), 12)};
+        if (std::any_of(std::begin(prefix), std::end(prefix), [](xbyte_t byte) { return byte != 0; })) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = precompile_error_ExitFatal::Other;
+
+            return false;
+        }
+
         xbytes_t const spender_account_bytes{std::next(std::begin(parameters), 12), std::next(std::begin(parameters), 32)};
         xbytes_t const amount_bytes{std::next(std::begin(parameters), 32), std::next(std::begin(parameters), 32 + 32)};
 
@@ -336,6 +389,29 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
     }
 
     case method_id_allowance: {
+        if (parameters.size() != 32 * 2) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = precompile_error_ExitFatal::Other;
+
+            return false;
+        }
+
+        xbytes_t prefix{std::begin(parameters), std::next(std::begin(parameters), 12)};
+        if (std::any_of(std::begin(prefix), std::end(prefix), [](xbyte_t byte) { return byte != 0; })) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = precompile_error_ExitFatal::Other;
+
+            return false;
+        }
+
+        prefix = xbytes_t{std::next(std::begin(parameters), 32), std::next(std::begin(parameters), 32 + 12)};
+        if (std::any_of(std::begin(prefix), std::end(prefix), [](xbyte_t byte) { return byte != 0; })) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = precompile_error_ExitFatal::Other;
+
+            return false;
+        }
+
         xbytes_t const owner_account_bytes{std::next(std::begin(parameters), 12), std::next(std::begin(parameters), 32)};
         xbytes_t const spender_account_bytes{std::next(std::begin(parameters), 32 + 12), std::next(std::begin(parameters), 32 + 32)};
 
