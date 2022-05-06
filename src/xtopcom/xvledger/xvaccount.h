@@ -10,6 +10,7 @@
 #include "xbase/xobject.h"
 #include "xbase/xutl.h"
 #include "xbase/xdata.h"
+#include "xvledger/xvcheckpoint.h"
 
 namespace top
 {
@@ -574,7 +575,7 @@ namespace top
             uint64_t        m_latest_tx_nonce;
             uint16_t        m_account_flag;  // [enum_xvblock_class 3bit][enum_xvblock_type 7bit][enum_xaccount_index_flag 4bit][enum_xblock_consensus_type 2bit] = 16bits
         };
-    
+
         class xvactmeta_t : public xdataobj_t,protected xblockmeta_t,protected xstatemeta_t,protected xindxmeta_t,protected xsyncmeta_t
         {
             friend class xvaccountobj_t;
@@ -592,6 +593,8 @@ namespace top
             
         public:
             static xvactmeta_t* load(xvaccount_t & _account,const std::string & meta_serialized_data);
+            static bool         init_cpstore(xvcpstore_t* cpstore);
+            static bool         get_latest_checkpoint(const std::string & address, xcheckpoint_data_t & value);
             void init_cp_connect_meta(xvactmeta_t* meta_ptr, const std::string & account);
 
             const xblockmeta_t   clone_block_meta() const;
@@ -663,6 +666,9 @@ namespace top
             uint64_t  _highest_saved_block_height; //just tracking purpose
             uint16_t  _meta_process_id;   //which process produce and save this meta
             uint8_t   _meta_spec_version; //add version control for compatible case
+
+        private:
+            static xvcpstore_t*   m_cpstore;  // XTODO just process xvledger and xdata module relation
         };
     
     }//end of namespace of base
