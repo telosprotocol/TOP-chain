@@ -182,7 +182,7 @@ bool xtop_evm_logic::extern_contract_call(uint64_t args_len, uint64_t args_ptr) 
     m_call_contract_args = get_vec_from_memory_or_register(args_ptr, args_len);
     xbytes_t contract_output;
     assert(m_contract_manager != nullptr);
-    if (m_contract_manager->execute_sys_contract(m_call_contract_args, contract_output, m_state_ctx)) {
+    if (m_contract_manager->execute_sys_contract(m_call_contract_args, m_state_ctx, contract_output)) {
         m_result_ok = contract_output;
         return true;
     } else {

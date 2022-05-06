@@ -25,6 +25,14 @@ xtop_eth_address xtop_eth_address::build_from(xaccount_address_t const & account
     return xeth_address_t{account_string, ec};
 }
 
+xtop_eth_address xtop_eth_address::build_from(xaccount_address_t const & account_address) {
+    std::error_code ec;
+    auto ret = xtop_eth_address::build_from(account_address, ec);
+    top::error::throw_error(ec);
+
+    return ret;
+}
+
 xtop_eth_address xtop_eth_address::build_from(std::array<uint8_t, 20> const & address_data) {
     return xeth_address_t{address_data};
 }
@@ -40,7 +48,25 @@ xtop_eth_address xtop_eth_address::build_from(xbytes_t const & address_data, std
     return xtop_eth_address(addr_data);
 }
 
+xtop_eth_address xtop_eth_address::build_from(xbytes_t const & address_data) {
+    std::error_code ec;
+    auto ret = xtop_eth_address::build_from(address_data, ec);
+    top::error::throw_error(ec);
+
+    return ret;
+}
+
 xtop_eth_address::xtop_eth_address(std::array<uint8_t, 20> const & raw_account_address) : raw_address_(raw_account_address) {
+}
+
+xtop_eth_address::xtop_eth_address(std::string const & account_string) {
+    std::error_code ec;
+    auto const & bytes = top::from_hex(account_string, ec);
+    top::error::throw_error(ec);
+
+    assert(bytes.size() == raw_address_.size());
+
+    std::copy(std::begin(bytes), std::end(bytes), std::begin(raw_address_));
 }
 
 xtop_eth_address::xtop_eth_address(std::string const & account_string, std::error_code & ec) {
