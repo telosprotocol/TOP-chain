@@ -5,9 +5,9 @@
 #include "xcommon/xeth_address.h"
 
 #include "xbasic/xerror/xerror.h"
+#include "xbasic/xhex.h"
 #include "xcommon/xaccount_address.h"
 #include "xcommon/xerror/xerror.h"
-#include "xevm_common/common_data.h"
 
 #include <algorithm>
 #include <cassert>
@@ -22,7 +22,7 @@ xtop_eth_address xtop_eth_address::build_from(xaccount_address_t const & account
 
     auto const account_string = account_address.value().substr(6);
     assert(account_string.size() == 40);
-    return xeth_address_t{account_string};
+    return xeth_address_t{account_string, ec};
 }
 
 xtop_eth_address xtop_eth_address::build_from(std::array<uint8_t, 20> const & address_data) {
@@ -43,15 +43,15 @@ xtop_eth_address xtop_eth_address::build_from(xbytes_t const & address_data, std
 xtop_eth_address::xtop_eth_address(std::array<uint8_t, 20> const & raw_account_address) : raw_address_(raw_account_address) {
 }
 
-xtop_eth_address::xtop_eth_address(std::string const & account_string) {
-    auto const & bytes = evm_common::fromHex(account_string);
+xtop_eth_address::xtop_eth_address(std::string const & account_string, std::error_code & ec) {
+    auto const & bytes = top::from_hex(account_string, ec);
     assert(bytes.size() == raw_address_.size());
 
     std::copy(std::begin(bytes), std::end(bytes), std::begin(raw_address_));
 }
 
 std::string xtop_eth_address::to_hex_string() const {
-    return evm_common::toHexPrefixed(raw_address_);
+    return top::to_hex_prefixed(raw_address_);
 }
 
 xbytes_t xtop_eth_address::to_bytes() const {

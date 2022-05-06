@@ -13,7 +13,10 @@ NS_BEG3(top, evm_common, error)
 
 enum class xenum_errc {
     ok,
-    not_enough_data
+    not_enough_data,
+    abi_data_length_error,
+    abi_decode_outofrange,
+    abi_data_value_error,
 };
 using xerrc_t = xenum_errc;
 
