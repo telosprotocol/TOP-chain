@@ -9,9 +9,9 @@
 #include "xcommon/xeth_address.h"
 #include "xevm_common/common_data.h"
 
+#include <cinttypes>
+
 NS_BEG4(top, contract_runtime, evm, sys_contract)
-
-
 
 bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
                                           uint64_t target_gas,
@@ -57,6 +57,8 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
         err.fail_status = precompile_error::Fatal;
         err.minor_status = precompile_error_ExitFatal::Other;
 
+        xwarn("predefined erc20 contract: invalid input");
+
         return false;
     }
 
@@ -74,15 +76,19 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
         uint64_t const decimals_gas_cost = 2535;
 
         if (!parameters.empty()) {
-            err.cost = target_gas;
-            err.fail_status = Error;
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = precompile_error_ExitFatal::Other;
+
+            xwarn("predefined erc20 contract: decimals with non-empty parameter");
 
             return false;
         }
 
         if (target_gas < decimals_gas_cost) {
-            err.cost = target_gas;
             err.fail_status = Error;
+            err.minor_status = precompile_error_ExitError::OutOfGas;
+
+            xwarn("predefined erc20 contract: decimals out of gas, gas_limit %" PRIu64 " gas required %" PRIu64, target_gas, decimals_gas_cost);
 
             return false;
         }
@@ -92,7 +98,7 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
         decimals[31] = static_cast<uint8_t>(18);
 
         output.exit_status = Returned;
-        output.cost = 2535;
+        output.cost = decimals_gas_cost;
         output.output = decimals;
 
         return true;
@@ -102,6 +108,8 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
         if (!parameters.empty()) {
             err.fail_status = precompile_error::Fatal;
             err.minor_status = precompile_error_ExitFatal::Other;
+
+            xwarn("predefined erc20 contract: total supply with non-empty parameter");
 
             return false;
         }
@@ -119,6 +127,8 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = precompile_error_ExitFatal::Other;
 
+            xwarn("predefined erc20 contract: balance_of with invalid parameter (length not 32)");
+
             return false;
         }
 
@@ -127,15 +137,26 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = precompile_error_ExitFatal::Other;
 
+            xwarn("predefined erc20 contract: balance_of invalid account");
+
+            return false;
+        }
+
+        uint64_t const balance_of_gas_cost = 3268;
+        if (target_gas < balance_of_gas_cost) {
+            err.fail_status = precompile_error::Error;
+            err.minor_status = precompile_error_ExitError::OutOfGas;
+
+            xwarn("predefined erc20 contract: balance_of out of gas, gas_limit %" PRIu64 " gas required %" PRIu64, target_gas, balance_of_gas_cost);
+
             return false;
         }
 
         xbytes_t const account_address_bytes{std::next(std::begin(parameters), 12), std::next(std::begin(parameters), 32)};
-        std::error_code ec;
-        common::xeth_address_t const eth_address{common::xeth_address_t::build_from(account_address_bytes, ec)};
-        assert(!ec);
+        assert(account_address_bytes.size() == 20);
 
-        auto state = state_ctx->load_unit_state(common::xaccount_address_t::build_from(eth_address, base::enum_vaccount_addr_type_secp256k1_evm_user_account, ec).vaccount());
+        common::xeth_address_t const eth_address = common::xeth_address_t::build_from(account_address_bytes);
+        auto state = state_ctx->load_unit_state(common::xaccount_address_t::build_from(eth_address, base::enum_vaccount_addr_type_secp256k1_evm_user_account).vaccount());
 
         evm_common::u256 value{0};
         switch (erc20_token_id) {
@@ -155,15 +176,15 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
         }
 
         default:
-            assert(false);
-            err.cost = target_gas / 2;
-            err.fail_status = Revert;
-            err.output = top::to_bytes(value);
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = precompile_error_ExitFatal::Other;
+
+            xwarn("predefined erc20 contract: balance_of invalid token id %d", static_cast<int>(erc20_token_id));
 
             return false;
         }
 
-        output.cost = 3268;
+        output.cost = balance_of_gas_cost;
         output.exit_status = Returned;
         output.output = top::to_bytes(value);
 
@@ -175,6 +196,8 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = precompile_error_ExitFatal::Other;
 
+            xwarn("predefined erc20 contract: transfer with invalid parameter");
+
             return false;
         }
 
@@ -183,32 +206,42 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = precompile_error_ExitFatal::Other;
 
+            xwarn("predefined erc20 contract: transfer with invalid account");
+
+            return false;
+        }
+
+        uint64_t const transfer_gas_cost = 18446;
+        if (target_gas < transfer_gas_cost) {
+            err.fail_status = precompile_error::Error;
+            err.minor_status = precompile_error_ExitError::OutOfGas;
+
+            xwarn("predefined erc20 contract: transfer out of gas, gas_limit %" PRIu64 " gas required %" PRIu64, target_gas, transfer_gas_cost);
+
             return false;
         }
 
         xbytes_t const to_account_address_bytes{std::next(std::begin(parameters), 12), std::next(std::begin(parameters), 32)};
+        assert(to_account_address_bytes.size() == 20);
         xbytes_t const value_bytes{std::next(std::begin(parameters), 32), std::next(std::begin(parameters), 32 + 32)};
+        assert(value_bytes.size() == 32);
 
-        std::error_code ec;
-
-        common::xeth_address_t recipient_address = common::xeth_address_t::build_from(to_account_address_bytes, ec);
-        assert(!ec);
-        common::xaccount_address_t recipient_account_address =
-            common::xaccount_address_t::build_from(recipient_address, base::enum_vaccount_addr_type_secp256k1_evm_user_account, ec);
-        assert(!ec);
+        common::xeth_address_t recipient_address = common::xeth_address_t::build_from(to_account_address_bytes);
+        common::xaccount_address_t recipient_account_address = common::xaccount_address_t::build_from(recipient_address, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
 
         evm_common::u256 const value = top::from_bytes<evm_common::u256>(value_bytes);
 
-        auto sender_state = state_ctx->load_unit_state(context.caller.vaccount());
+        auto sender_state = state_ctx->load_unit_state(common::xaccount_address_t::build_from(context.caller, base::enum_vaccount_addr_type_secp256k1_evm_user_account).vaccount());
         auto recver_state = state_ctx->load_unit_state(recipient_account_address.vaccount());
 
         xbytes_t result(32, 0);
+        std::error_code ec;
         sender_state->transfer(erc20_token_id, top::make_observer(recver_state.get()), value, ec);
 
         if (!ec) {
-            auto contract_address = common::xeth_address_t::build_from(context.address, ec);
+            auto const & contract_address = context.address;
             assert(!ec);
-            auto caller_address = common::xeth_address_t::build_from(context.caller, ec);
+            auto const & caller_address = context.caller;
             assert(!ec);
 
             evm_common::xevm_log_t log;
@@ -225,14 +258,14 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
 
             result[31] = 1;
 
-            output.cost = 37839;
+            output.cost = transfer_gas_cost;
             output.exit_status = Returned;
             output.output = result;
             output.logs.push_back(log);
         } else {
-            err.cost = 809;
+            err.cost = transfer_gas_cost / 2;
             err.fail_status = Revert;
-            // err.minor_status;
+            err.minor_status = precompile_error_ExitRevert::Reverted;
             err.output = result;
         }
 
@@ -244,6 +277,8 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = precompile_error_ExitFatal::Other;
 
+            xwarn("predefined erc20 contract: transfer_from with invalid parameters");
+
             return false;
         }
 
@@ -251,6 +286,8 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
         if (std::any_of(std::begin(prefix), std::end(prefix), [](xbyte_t byte) { return byte != 0; })) {
             err.fail_status = precompile_error::Fatal;
             err.minor_status = precompile_error_ExitFatal::Other;
+
+            xwarn("predefined erc20 contract: transfer_from invalid owner account");
 
             return false;
         }
@@ -260,30 +297,45 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = precompile_error_ExitFatal::Other;
 
+            xwarn("predefined erc20 contract: transfer_from invalid recipient account");
+
+            return false;
+        }
+
+        uint64_t const transfer_from_gas_cost = 37839;
+        if (target_gas < transfer_from_gas_cost) {
+            err.fail_status = precompile_error::Error;
+            err.minor_status = precompile_error_ExitError::OutOfGas;
+
+            xwarn("predefined erc20 contract: transfer_from out of gas, gas_limit %" PRIu64 " gas required %" PRIu64, target_gas, transfer_from_gas_cost);
+
             return false;
         }
 
         xbytes_t const owner_account_address_bytes{std::next(std::begin(parameters), 12), std::next(std::begin(parameters), 32)};
+        assert(owner_account_address_bytes.size() == 20);
         xbytes_t const to_account_address_bytes{std::next(std::begin(parameters), 32 + 12), std::next(std::begin(parameters), 32 + 32)};
+        assert(to_account_address_bytes.size() == 20);
         xbytes_t const value_bytes{std::next(std::begin(parameters), 32 * 2), std::next(std::begin(parameters), 32 * 3)};
+        assert(value_bytes.size() == 32);
 
-        std::error_code ec;
-        common::xeth_address_t owner_address = common::xeth_address_t::build_from(owner_account_address_bytes, ec);
-        assert(!ec);
+        common::xeth_address_t owner_address = common::xeth_address_t::build_from(owner_account_address_bytes);
+        common::xeth_address_t recipient_address = common::xeth_address_t::build_from(to_account_address_bytes);
 
-        common::xeth_address_t recipient_address = common::xeth_address_t::build_from(to_account_address_bytes, ec);
-        assert(!ec);
+        common::xaccount_address_t owner_account_address = common::xaccount_address_t::build_from(owner_address, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
+        common::xaccount_address_t recipient_account_address = common::xaccount_address_t::build_from(recipient_address, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
 
-        common::xaccount_address_t owner_account_address = common::xaccount_address_t::build_from(owner_address, base::enum_vaccount_addr_type_secp256k1_evm_user_account, ec);
-        assert(!ec);
-        common::xaccount_address_t recipient_account_address =
-            common::xaccount_address_t::build_from(recipient_address, base::enum_vaccount_addr_type_secp256k1_evm_user_account, ec);
-        assert(!ec);
         evm_common::u256 value = top::from_bytes<evm_common::u256>(value_bytes);
 
         xbytes_t result(32, 0);
+        std::error_code ec;
+
         auto owner_state = state_ctx->load_unit_state(owner_account_address.vaccount());
-        owner_state->update_allowance(erc20_token_id, context.caller, value, data::xallowance_update_op_t::decrease, ec);
+        owner_state->update_allowance(erc20_token_id,
+                                      common::xaccount_address_t::build_from(context.caller, base::enum_vaccount_addr_type_secp256k1_evm_user_account),
+                                      value,
+                                      data::xallowance_update_op_t::decrease,
+                                      ec);
         if (!ec) {
             auto recver_state = state_ctx->load_unit_state(recipient_account_address.vaccount());
             owner_state->transfer(erc20_token_id, top::make_observer(recver_state.get()), value, ec);
@@ -293,8 +345,7 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
         }
 
         if (!ec) {
-            auto contract_address = common::xeth_address_t::build_from(context.address, ec);
-            assert(!ec);
+            auto const & contract_address = context.address;
 
             evm_common::xevm_log_t log;
             log.address = top::to_string(contract_address.to_h160());
@@ -310,12 +361,12 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
 
             result[31] = 1;
 
-            output.cost = 37839;
+            output.cost = transfer_from_gas_cost;
             output.exit_status = Returned;
             output.output = result;
             output.logs.push_back(log);
         } else {
-            err.cost = 1;
+            err.cost = transfer_from_gas_cost / 2;
             err.fail_status = Revert;
             err.output = result;
         }
@@ -328,6 +379,8 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = precompile_error_ExitFatal::Other;
 
+            xwarn("predefined erc20 contract: approve with invalid parameter");
+
             return false;
         }
 
@@ -336,30 +389,39 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = precompile_error_ExitFatal::Other;
 
+            xwarn("predefined erc20 contract: approve invalid spender account");
+
+            return false;
+        }
+
+        uint64_t const approve_gas_cost = 18599;
+        if (target_gas < approve_gas_cost) {
+            err.fail_status = precompile_error::Error;
+            err.minor_status = precompile_error_ExitError::OutOfGas;
+
+            xwarn("predefined erc20 contract: approve out of gas, gas_limit %" PRIu64 " gas required %" PRIu64, target_gas, approve_gas_cost);
+
             return false;
         }
 
         xbytes_t const spender_account_bytes{std::next(std::begin(parameters), 12), std::next(std::begin(parameters), 32)};
+        assert(spender_account_bytes.size() == 20);
         xbytes_t const amount_bytes{std::next(std::begin(parameters), 32), std::next(std::begin(parameters), 32 + 32)};
+        assert(amount_bytes.size() == 32);
 
-        std::error_code ec;
-        common::xeth_address_t spender_address = common::xeth_address_t::build_from(spender_account_bytes, ec);
-        assert(!ec);
-
-        common::xaccount_address_t spender_account_address = common::xaccount_address_t::build_from(spender_address, base::enum_vaccount_addr_type_secp256k1_evm_user_account, ec);
-        assert(!ec);
+        common::xeth_address_t spender_address = common::xeth_address_t::build_from(spender_account_bytes);
+        common::xaccount_address_t spender_account_address = common::xaccount_address_t::build_from(spender_address, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
         evm_common::u256 amount = top::from_bytes<evm_common::u256>(amount_bytes);
 
         xbytes_t result(32, 0);
+        std::error_code ec;
 
-        auto sender_state = state_ctx->load_unit_state(context.caller.vaccount());
+        auto sender_state = state_ctx->load_unit_state(common::xaccount_address_t::build_from(context.caller, base::enum_vaccount_addr_type_secp256k1_evm_user_account).vaccount());
         sender_state->approve(erc20_token_id, spender_account_address, amount, ec);
 
         if (!ec) {
-            auto contract_address = common::xeth_address_t::build_from(context.address, ec);
-            assert(!ec);
-            auto caller_address = common::xeth_address_t::build_from(context.caller, ec);
-            assert(!ec);
+            auto const & contract_address = context.address;
+            auto const & caller_address = context.caller;
 
             evm_common::xevm_log_t log;
             log.address = top::to_string(contract_address.to_h160());
@@ -375,14 +437,16 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
 
             result[31] = 1;
 
-            output.cost = 32007;
+            output.cost = approve_gas_cost;
             output.exit_status = Returned;
             output.output = result;
             output.logs.push_back(log);
         } else {
-            err.cost = 32007;
+            err.cost = approve_gas_cost / 2;
             err.fail_status = Revert;
             err.output = result;
+
+            xwarn("predefined erc20 contract: approve failed. ec %" PRIi32 " category %s msg %s", ec.value(), ec.category().name(), ec.message().c_str());
         }
 
         return !ec;
@@ -393,6 +457,8 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = precompile_error_ExitFatal::Other;
 
+            xwarn("predefined erc20 contract: allowance with invalid parameter");
+
             return false;
         }
 
@@ -400,6 +466,8 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
         if (std::any_of(std::begin(prefix), std::end(prefix), [](xbyte_t byte) { return byte != 0; })) {
             err.fail_status = precompile_error::Fatal;
             err.minor_status = precompile_error_ExitFatal::Other;
+
+            xwarn("predefined erc20 contract: allowance invalid owner account");
 
             return false;
         }
@@ -409,39 +477,25 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = precompile_error_ExitFatal::Other;
 
+            xwarn("predefined erc20 contract: allowance invalid spender account");
+
             return false;
         }
 
         xbytes_t const owner_account_bytes{std::next(std::begin(parameters), 12), std::next(std::begin(parameters), 32)};
+        assert(owner_account_bytes.size() == 20);
         xbytes_t const spender_account_bytes{std::next(std::begin(parameters), 32 + 12), std::next(std::begin(parameters), 32 + 32)};
+        assert(spender_account_bytes.size() == 20);
+
+        common::xeth_address_t owner_address = common::xeth_address_t::build_from(owner_account_bytes);
+        common::xeth_address_t spender_address = common::xeth_address_t::build_from(spender_account_bytes);
+
+        common::xaccount_address_t owner_account_address = common::xaccount_address_t::build_from(owner_address, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
+        common::xaccount_address_t spender_account_address = common::xaccount_address_t::build_from(spender_address, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
 
         std::error_code ec;
-        common::xeth_address_t owner_address = common::xeth_address_t::build_from(owner_account_bytes, ec);
-        if (ec) {
-            err.cost = 1;
-            err.fail_status = Revert;
-            return false;
-        }
-
-        common::xeth_address_t spender_address = common::xeth_address_t::build_from(spender_account_bytes, ec);
-        if (ec) {
-            err.cost = 1;
-            err.fail_status = Revert;
-            return false;
-        }
-
-        common::xaccount_address_t owner_account_address = common::xaccount_address_t::build_from(owner_address, base::enum_vaccount_addr_type_secp256k1_evm_user_account, ec);
-        assert(!ec);
-        common::xaccount_address_t spender_account_address = common::xaccount_address_t::build_from(spender_address, base::enum_vaccount_addr_type_secp256k1_evm_user_account, ec);
-        assert(!ec);
-
         auto owner_state = state_ctx->load_unit_state(owner_account_address.vaccount());
         auto amount = owner_state->allowance(erc20_token_id, spender_account_address, ec);
-        if (ec) {
-            // internal_write_register(register_id, top::to_bytes(evm_common::u256{0}));
-        } else {
-            // internal_write_register(register_id, top::to_bytes(amount));
-        }
 
         output.cost = 1;
         output.output = top::to_bytes(amount);
@@ -451,9 +505,8 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
     }
 
     default: {
-        assert(false);
-        err.cost = 1;
-        err.fail_status = Error;
+        err.fail_status = precompile_error::Fatal;
+        err.minor_status = precompile_error_ExitFatal::NotSupported;
 
         return false;
     }
