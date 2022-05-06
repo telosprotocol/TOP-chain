@@ -61,6 +61,13 @@ xtop_node_id xtop_node_id::build_from(xeth_address_t const & eth_address, base::
     return xtop_node_id{};
 }
 
+xtop_node_id xtop_node_id::build_from(xeth_address_t const & eth_address, base::enum_vaccount_addr_type account_addr_type) {
+    std::error_code ec;
+    auto ret = xtop_node_id::build_from(eth_address, account_addr_type, ec);
+    top::error::throw_error(ec);
+    return ret;
+}
+
 bool xtop_node_id::empty() const noexcept {
     return m_account_string.empty();
 }

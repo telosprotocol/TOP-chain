@@ -5,13 +5,32 @@
 #pragma once
 
 #include "xbasic/xbyte_buffer.h"
-#include "xcommon/xaccount_address.h"
+#include "xcommon/xeth_address.h"
 #include "xevm_common/common.h"
 #include "xevm_common/xborsh.hpp"
 #include "xevm_common/xevm_transaction_result.h"
 #include "xevm_contract_runtime/xevm_variant_bytes.h"
 #include "xevm_runner/proto/proto_precompile.pb.h"
+
+#if defined(__clang__)
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wpedantic"
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wpedantic"
+#elif defined(_MSC_VER)
+#    pragma warning(push, 0)
+#endif
+
 #include "xstatectx/xstatectx_face.h"
+
+#if defined(__clang__)
+#    pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic pop
+#elif defined(_MSC_VER)
+#    pragma warning(pop)
+#endif
 
 #include <cstdint>
 #include <vector>
@@ -19,13 +38,13 @@
 NS_BEG3(top, contract_runtime, evm)
 
 struct sys_contract_context {
-    common::xaccount_address_t address;
-    common::xaccount_address_t caller;
+    common::xeth_address_t address;
+    common::xeth_address_t caller;
     evm_common::u256 apparent_value;
 
-    sys_contract_context(evm_engine::precompile::ContractContext const & proto_context) {
-        address = common::xaccount_address_t{xvariant_bytes{proto_context.address().value(), false}.to_hex_string("T60004")};
-        caller = common::xaccount_address_t{xvariant_bytes{proto_context.caller().value(), false}.to_hex_string("T60004")};
+    sys_contract_context(evm_engine::precompile::ContractContext const & proto_context)
+      : address{common::xeth_address_t::build_from(top::to_bytes(proto_context.address().value()))}
+      , caller{common::xeth_address_t::build_from(top::to_bytes(proto_context.caller().value()))} {
         evm_common::xBorshDecoder decoder;
         decoder.getInteger(top::to_bytes(proto_context.apparent_value().data()), apparent_value);
     }

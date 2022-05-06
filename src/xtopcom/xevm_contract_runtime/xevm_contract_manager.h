@@ -65,7 +65,7 @@ public:
 
     void add_sys_contract(common::xaccount_address_t const & contract_address, std::unique_ptr<xevm_syscontract_face_t> contract);
 
-    bool execute_sys_contract(xbytes_t const & input, xbytes_t & output, observer_ptr<statectx::xstatectx_face_t> state_ctx);
+    bool execute_sys_contract(xbytes_t const & input, observer_ptr<statectx::xstatectx_face_t> state_ctx, xbytes_t & output);
 
 private:
     enum {
