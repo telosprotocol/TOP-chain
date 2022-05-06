@@ -411,7 +411,7 @@
             "expected": {
                 "status": 0,
                 "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000001",
-                "gas_used": 43871,
+                "gas_used": 43694,
                 "logs": [
                     {
                         "address": "erc20_top",

@@ -31,10 +31,13 @@ public:
     explicit xtop_eth_address(std::array<uint8_t, SIZE> const & raw_account_address);
 
     static xtop_eth_address build_from(xaccount_address_t const & account_address, std::error_code & ec);
+    static xtop_eth_address build_from(xaccount_address_t const & account_address);
     static xtop_eth_address build_from(std::array<uint8_t, 20> const & address_data);
     static xtop_eth_address build_from(xbytes_t const & address_data, std::error_code & ec);
+    static xtop_eth_address build_from(xbytes_t const & address_data);
 
 private:
+    explicit xtop_eth_address(std::string const & account_string);
     explicit xtop_eth_address(std::string const & account_string, std::error_code & ec);
 
 public:
