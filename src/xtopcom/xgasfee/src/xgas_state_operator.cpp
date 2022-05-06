@@ -69,6 +69,10 @@ void xtop_gas_state_operator::state_set_last_time(uint64_t current_time, std::er
     return;
 }
 
+uint64_t xtop_gas_state_operator::account_balance() const {
+    return m_state->balance();
+}
+
 uint64_t xtop_gas_state_operator::account_available_tgas(uint64_t current_time, uint64_t onchain_total_gas_deposit) const {    
     return m_state->available_tgas(current_time, onchain_total_gas_deposit);
 }

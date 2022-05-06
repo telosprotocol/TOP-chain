@@ -65,7 +65,7 @@ data::enum_xtransaction_version xtop_gas_tx_operator::tx_version() const {
     return static_cast<data::enum_xtransaction_version>(m_tx->get_transaction()->get_tx_version());
 }
 
-evm_common::u256 xtop_gas_tx_operator::tx_gas_limit() const {
+evm_common::u256 xtop_gas_tx_operator::tx_eth_gas_limit() const {
     return m_tx->get_transaction()->get_gaslimit();
 }
 
@@ -73,13 +73,14 @@ evm_common::u256 xtop_gas_tx_operator::tx_eth_fee_per_gas() const {
     return m_tx->get_transaction()->get_max_fee_per_gas();
 }
 
-evm_common::u256 xtop_gas_tx_operator::tx_top_fee_per_gas() const {
-    // 1 Ether = 1* 10 ^18 Wei = 3*10^12 Utop; 1Gwei = 1* 10 ^9 Wei = 3*10^3 Utop
-    return tx_eth_fee_per_gas() / static_cast<evm_common::u256>(std::pow(10, 6) * 3);
+evm_common::u256 xtop_gas_tx_operator::tx_eth_limited_tgas() const {
+    // 1Gwei = (ratio / 10^3)Utop
+    // 1Utop = (10^3 / ratio)Gwei
+    return tx_eth_fee_per_gas() * tx_eth_gas_limit() * 1000 / XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_to_top_exchange_ratio);
 }
 
-evm_common::u256 xtop_gas_tx_operator::tx_limited_tgas() const {
-    return tx_top_fee_per_gas() * tx_gas_limit();
+evm_common::u256 xtop_gas_tx_operator::tx_eth_calculate_tgas(const uint64_t gas) const {
+    return tx_eth_fee_per_gas() * gas * 1000 / XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_to_top_exchange_ratio);
 }
 
 uint64_t xtop_gas_tx_operator::tx_fixed_tgas() const {
@@ -107,6 +108,18 @@ uint64_t xtop_gas_tx_operator::tx_bandwith_tgas() const {
 
 uint64_t xtop_gas_tx_operator::tx_disk_tgas() const {
     return 0;
+}
+
+bool xtop_gas_tx_operator::is_evm_tx() {
+    return tx_version() == data::xtransaction_version_3;
+}
+
+bool xtop_gas_tx_operator::is_self_tx() {
+    return m_tx->is_self_tx();
+}
+
+bool xtop_gas_tx_operator::is_one_stage_tx() {
+    return (is_self_tx() || is_evm_tx());
 }
 
 }  // namespace gasfee

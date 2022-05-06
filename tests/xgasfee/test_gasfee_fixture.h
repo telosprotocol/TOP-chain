@@ -4,9 +4,6 @@
 #include "xconfig/xpredefined_configurations.h"
 #include "xcrypto/xckey.h"
 #include "xdata/xblockbuild.h"
-#include "xdata/xtransaction.h"
-#include "xdata/xtransaction_v2.h"
-#include "xdata/xtransaction_v3.h"
 #include "xpbase/base/top_utils.h"
 
 #include <gtest/gtest.h>
@@ -14,6 +11,10 @@
 #include <string>
 
 #define private public
+#include "xdata/xserial_transfrom.h"
+#include "xdata/xtransaction.h"
+#include "xdata/xtransaction_v2.h"
+#include "xdata/xtransaction_v3.h"
 #include "xgasfee/xgasfee.h"
 
 namespace top {
@@ -26,6 +27,7 @@ public:
 
     void SetUp() override {
         top::config::config_register.get_instance().set(config::xtx_deposit_gas_exchange_ratio_onchain_goverance_parameter_t::name, std::to_string(20));
+        top::config::config_register.get_instance().set(config::xeth_to_top_exchange_ratio_onchain_goverance_parameter_t::name, std::to_string(5000000));
         top::config::config_register.get_instance().set(config::xmin_tx_deposit_onchain_goverance_parameter_t::name, std::to_string(ASSET_uTOP(100000)));
         top::config::config_register.get_instance().set(config::xinitial_total_gas_deposit_onchain_goverance_parameter_t::name, std::to_string(ASSET_TOP(1000000000)));
         top::config::config_register.get_instance().set(config::xtotal_gas_shard_onchain_goverance_parameter_t::name, std::to_string(2160000000000));
@@ -128,21 +130,16 @@ public:
 
     xobject_ptr_t<data::xtransaction_v3_t> make_tx_v3() {
         xobject_ptr_t<data::xtransaction_v3_t> tx{make_object_ptr<data::xtransaction_v3_t>()};
-        // TODO: wait for tx_v3
-        // data::xproperty_asset asset{data::XPROPERTY_ASSET_TOP, default_amount};
-        // tx->make_tx_transfer(asset);
-        // tx->set_last_trans_hash_and_nonce(uint256_t(), uint64_t(0));
-        // tx->set_different_source_target_address(default_sender, default_recver);
-        // tx->set_fire_timestamp(default_fire);
-        // tx->set_expire_duration(default_expire);
-        // tx->set_deposit(default_deposit);
-        // tx->set_gaslimit(default_evm_gas_limit);
-        // tx->set_digest();
-        // utl::xecprikey_t pri_key_obj((uint8_t *)(DecodePrivateString(default_sign_key).data()));
-        // utl::xecdsasig_t signature_obj = pri_key_obj.sign(tx->digest());
-        // auto signature = std::string(reinterpret_cast<char *>(signature_obj.get_compact_signature()), signature_obj.get_compact_signature_size());
-        // tx->set_authorization(signature);
-        // tx->set_len();
+        data::xproperty_asset asset{data::XPROPERTY_ASSET_TOP, default_amount};
+        tx->make_tx_transfer(asset);
+        tx->set_last_trans_hash_and_nonce(uint256_t(), uint64_t(0));
+        tx->set_different_source_target_address(default_sender, default_recver);
+        tx->set_fire_timestamp(default_fire);
+        tx->set_expire_duration(default_expire);
+        tx->set_deposit(default_deposit);
+        tx->set_gaslimit(default_evm_gas_limit);
+        dynamic_cast<data::eip_1559_tx *>(tx->m_eip_xxxx_tx.get())->max_fee_per_gas = default_eth_per_gas;
+        tx->set_len();
         return tx;
     }
 
@@ -204,8 +201,8 @@ public:
     uint64_t default_free_tgas{991158};
     uint64_t default_available_tgas{996158};
     data::enum_xtransaction_version default_tx_version{data::xtransaction_version_2};
-    evm_common::u256 default_eth_per_gas{6e12};
-    evm_common::u256 default_evm_gas_limit{25000};
+    evm_common::u256 default_eth_per_gas{5000};
+    evm_common::u256 default_evm_gas_limit{5000};
 
     // data to build
     xobject_ptr_t<base::xvbstate_t> default_bstate;

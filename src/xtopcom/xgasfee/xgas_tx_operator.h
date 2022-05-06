@@ -25,9 +25,10 @@ public:
     data::enum_xtransaction_type tx_type() const;
     base::enum_transaction_subtype tx_subtype() const;
     data::enum_xtransaction_version tx_version() const;
-    evm_common::u256 tx_gas_limit() const;
+    evm_common::u256 tx_eth_gas_limit() const;
     evm_common::u256 tx_eth_fee_per_gas() const;
-    evm_common::u256 tx_top_fee_per_gas() const;
+    evm_common::u256 tx_eth_limited_tgas() const;
+    evm_common::u256 tx_eth_calculate_tgas(const uint64_t gas) const;
     uint64_t deposit() const;
     uint64_t tx_used_tgas() const;
     uint64_t tx_last_action_used_deposit() const;
@@ -40,7 +41,10 @@ public:
     uint64_t tx_fixed_tgas() const;
     uint64_t tx_bandwith_tgas() const;
     uint64_t tx_disk_tgas() const;
-    evm_common::u256 tx_limited_tgas() const;
+
+    bool is_evm_tx();
+    bool is_self_tx();
+    bool is_one_stage_tx();
 
 private:
     xobject_ptr_t<data::xcons_transaction_t> m_tx{nullptr};
