@@ -172,6 +172,20 @@
             }
         },
         {
+            "__comments": "balanceOf_invalid_data",
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
+            "target_address": "erc20_top",
+            "data": "0x70a082311111111111111111111111114dce5c8961e283786cb31ad7fc072347227d7ea4",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 5,
+                "extra_message": "",
+                "gas_used": 34000,
+                "logs": []
+            }
+        },
+        {
             "__comments": "allowance_top",
             "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
             "target_address": "erc20_top",
@@ -196,6 +210,76 @@
                 "status": 0,
                 "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000141",
                 "gas_used": 25465,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "allowance_invalid_data_missing_spender",
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
+            "target_address": "erc20_top",
+            "data": "0xdd62ed3e0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea2",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 5,
+                "extra_message": "",
+                "gas_used": 34000,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "allowance_invalid_spender",
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
+            "target_address": "erc20_top",
+            "data": "0xdd62ed3e0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea20000000000100000000000004dce5c8961e283786cb31ad7fc072347227d7ea7",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 5,
+                "extra_message": "",
+                "gas_used": 34000,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "allowance_data_not_enough",
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
+            "target_address": "erc20_top",
+            "data": "0xdd62ed3e0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea20000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7e",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 5,
+                "extra_message": "",
+                "gas_used": 34000,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "allowance_data_too_long",
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
+            "target_address": "erc20_top",
+            "data": "0xdd62ed3e0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea20000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea777",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 5,
+                "extra_message": "",
+                "gas_used": 34000,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "allowance_missing_address",
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
+            "target_address": "erc20_top",
+            "data": "0xdd62ed3e",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 5,
+                "extra_message": "",
+                "gas_used": 34000,
                 "logs": []
             }
         },
@@ -245,6 +329,76 @@
                         "data": "0x00000000000000000000000000000000000000000000000000000000499602d2"
                     }
                 ]
+            }
+        },
+        {
+            "__comments": "approve_invalid_data_missing_spender",
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
+            "target_address": "erc20_usdt",
+            "data": "0x095ea7b30000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "gas_limit": 44000,
+            "value": "0",
+            "expected": {
+                "status": 5,
+                "extra_message": "",
+                "gas_used": 44000,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "approve_invalid_spender",
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
+            "target_address": "erc20_usdt",
+            "data": "0x095ea7b30000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea300000000",
+            "gas_limit": 44000,
+            "value": "0",
+            "expected": {
+                "status": 5,
+                "extra_message": "",
+                "gas_used": 44000,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "approve_data_not_enough",
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
+            "target_address": "erc20_usdt",
+            "data": "0x095ea7b3000000000000000000000000",
+            "gas_limit": 44000,
+            "value": "0",
+            "expected": {
+                "status": 5,
+                "extra_message": "",
+                "gas_used": 44000,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "approve_data_too_long",
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
+            "target_address": "erc20_usdt",
+            "data": "0x095ea7b30000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea300000000000000000000000000000000000000000000000000000000499602d2222222",
+            "gas_limit": 44000,
+            "value": "0",
+            "expected": {
+                "status": 5,
+                "extra_message": "",
+                "gas_used": 44000,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "approve_missing_address",
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
+            "target_address": "erc20_usdt",
+            "data": "0x095ea7b3",
+            "gas_limit": 44000,
+            "value": "0",
+            "expected": {
+                "status": 5,
+                "extra_message": "",
+                "gas_used": 44000,
+                "logs": []
             }
         },
         {
