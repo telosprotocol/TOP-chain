@@ -35,7 +35,7 @@ public:
     static xtop_eth_address build_from(xbytes_t const & address_data, std::error_code & ec);
 
 private:
-    explicit xtop_eth_address(std::string const & account_string);
+    explicit xtop_eth_address(std::string const & account_string, std::error_code & ec);
 
 public:
     constexpr static size_t size() noexcept {
