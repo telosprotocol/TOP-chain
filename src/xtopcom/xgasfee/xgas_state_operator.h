@@ -27,6 +27,7 @@ public:
     void state_set_used_tgas(uint64_t tgas_usage, std::error_code & ec);
     void state_set_last_time(uint64_t current_time, std::error_code & ec);
 
+    uint64_t account_balance() const;
     uint64_t account_available_tgas(uint64_t current_time, uint64_t onchain_total_gas_deposit) const;
     uint64_t account_formular_used_tgas(uint64_t current_time) const;
 private:
