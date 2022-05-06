@@ -24,6 +24,8 @@ enum class WhenError {
     Throw = 1,
 };
 
+// todo delete it 
+// use xbasic/xhex.h : top::to_hex
 template <class Iterator>
 std::string toHex(Iterator _it, Iterator _end, std::string const & _prefix) {
     typedef std::iterator_traits<Iterator> traits;

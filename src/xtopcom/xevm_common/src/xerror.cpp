@@ -18,8 +18,17 @@ static char const * const errc_to_string(int code) {
     case xerrc_t::not_enough_data:
         return "not enough data";
 
+    case xerrc_t::abi_data_length_error:
+        return "invalid abi data length";
+
+    case xerrc_t::abi_decode_outofrange:
+        return "abi decode out of data range";
+
+    case xerrc_t::abi_data_value_error:
+        return "abi decode value error";
+
     default:
-        return "unknown data module error";
+        return "unknown evm common error";
     }
 }
 
