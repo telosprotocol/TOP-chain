@@ -59,6 +59,9 @@ enum precompile_error_ExitRevert : uint32_t {
 // match: engine-types/src/precompiles.rs
 enum precompile_error_ExitFatal : uint32_t {
     NotSupported = 1,  // todo add more
+    UnhandledInterrupt = 2,
+    CallErrorAsFatal = 3,
+    Other = 4
 };
 
 struct sys_contract_precompile_output {
@@ -74,61 +77,6 @@ struct sys_contract_precompile_error {
     xbytes_t output;
     uint64_t cost{0};
 };
-
-//template <precompile_error PrecompileErrorV>
-//struct xtop_precompile_failure;
-//
-//template <precompile_error PrecompileErrorV>
-//using xprecompile_failure_t = xtop_precompile_failure;
-//
-//template <>
-//struct xtop_precompile_failure<precompile_error::Error> {
-//    enum class xtop_exit_error {
-//        stack_underflow,
-//        stack_overflow,
-//        invalid_jump,
-//        invalid_range,
-//        designated_invalid,
-//        call_too_deep,
-//        create_collision,
-//        create_contract_limit,
-//        invalid_code,
-//        out_of_offset,
-//        out_of_gas,
-//        out_of_fund,
-//        pc_underflow,
-//        create_empty,
-//        other,
-//    };
-//    using xexit_error_t = xtop_exit_error;
-//
-//    xexit_error_t exit_status;
-//};
-//
-//template <>
-//struct xtop_precompile_failure<precompile_error::Revert> {
-//    enum class xtop_exit_revert {
-//        reverted
-//    };
-//    using xexit_revert_t = xtop_exit_revert;
-//
-//    xexit_revert_t exit_status;
-//    xbytes_t output;
-//    uint64_t cost{0};
-//};
-//
-//template <>
-//struct xtop_precompile_failure<precompile_error::Fatal> {
-//    enum class xtop_exit_fatal {
-//        not_supported,
-//        unhandled_interrupt,
-//        call_error_as_fatal,
-//        other
-//    };
-//    using xexit_fatal_t = xtop_exit_fatal;
-//
-//    xexit_fatal_t exit_status;
-//};
 
 class xtop_evm_syscontract_face {
 public:
