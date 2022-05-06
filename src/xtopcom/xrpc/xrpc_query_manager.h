@@ -1,5 +1,5 @@
 #pragma once
-
+#include <string>
 #include "json/json.h"
 #include "xbase/xobject.h"
 #include "xcodec/xmsgpack_codec.hpp"
@@ -15,8 +15,7 @@
 #include "xvledger/xvledger.h"
 #include "xtxpool_service_v2/xtxpool_service_face.h"
 #include "xrpc/xjson_proc.h"
-
-#include <string>
+#include "xrpc/xrpc_query_func.h"
 
 namespace top {
 
@@ -57,12 +56,6 @@ public:
     std::string m_confirm = "confirm_unit_info";
 };
 
-enum class xtop_enum_full_node_compatible_mode {
-    incompatible,
-    compatible,
-};
-using xfull_node_compatible_mode_t = xtop_enum_full_node_compatible_mode;
-
 class xrpc_query_manager : public rpc::xrpc_handle_face_t {
 public:
     xrpc_query_manager(observer_ptr<store::xstore_face_t> store,
@@ -78,7 +71,8 @@ public:
         , m_arc_start_height(1)
         , m_txpool_service(txpool_service)
         , m_txstore(txstore)
-      , m_exchange_flag(exchange_flag) {
+        , m_exchange_flag(exchange_flag) {
+        m_xrpc_query_func.set_store(store);
         REGISTER_QUERY_METHOD(getBlock);
         REGISTER_QUERY_METHOD(getProperty);
         REGISTER_QUERY_METHOD(getAccount);
@@ -123,9 +117,9 @@ public:
     bool handle(std::string & strReq, xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) override;
     xJson::Value get_block_json(data::xblock_t * bp, const std::string & rpc_version = data::RPC_VERSION_V2);
     xJson::Value get_blocks_json(data::xblock_t * bp, const std::string & rpc_version = data::RPC_VERSION_V2);
-    void query_account_property_base(xJson::Value & jph, const std::string & owner, const std::string & prop_name, top::data::xaccount_ptr_t unitstate, bool compatible_mode);
-    void query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, xfull_node_compatible_mode_t compatible_mode);
-    void query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, const uint64_t height, xfull_node_compatible_mode_t compatible_mode);
+    //void query_account_property_base(xJson::Value & jph, const std::string & owner, const std::string & prop_name, top::data::xaccount_ptr_t unitstate, bool compatible_mode);
+    //void query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, xfull_node_compatible_mode_t compatible_mode);
+    //void query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, const uint64_t height, xfull_node_compatible_mode_t compatible_mode);
     void getLatestBlock(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     void getLatestFullBlock(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     void getBlockByHeight(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
@@ -256,6 +250,7 @@ private:
     xtxpool_service_v2::xtxpool_proxy_face_ptr m_txpool_service;
     observer_ptr<base::xvtxstore_t> m_txstore;
     bool m_exchange_flag{false};
+    xrpc_query_func m_xrpc_query_func;
 };
 
 }  // namespace xrpc
