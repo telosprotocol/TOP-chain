@@ -129,6 +129,16 @@ TEST_F(xtest_gasfee_fixture_t, test_init_deposit_not_enough) {
     EXPECT_EQ(ec, make_error_code(gasfee::error::xenum_errc::tx_deposit_not_enough));
 }
 
+TEST_F(xtest_gasfee_fixture_t, test_init_balance_not_enough) {
+    default_balance = ASSET_uTOP(99999);
+    make_default();
+
+    auto op = make_operator();
+    std::error_code ec;
+    op.init(ec);
+    EXPECT_EQ(ec, make_error_code(gasfee::error::xenum_errc::account_balance_not_enough));
+}
+
 TEST_F(xtest_gasfee_fixture_t, test_init_ok) {
     make_default();
 
@@ -137,7 +147,44 @@ TEST_F(xtest_gasfee_fixture_t, test_init_ok) {
     op.init(ec);
     EXPECT_EQ(ec.value(), 0);
     EXPECT_EQ(op.m_free_tgas, default_free_tgas);
-    EXPECT_EQ(op.m_total_available_tgas, default_available_tgas);
+    EXPECT_EQ(op.m_converted_tgas, default_available_tgas - default_free_tgas);
+    EXPECT_EQ(op.m_time, default_onchain_time);
+    EXPECT_EQ(op.m_onchain_tgas_deposit, default_onchain_deposit_tgas);
+}
+
+TEST_F(xtest_gasfee_fixture_t, test_init_eth_limited_tgas_exceeded) {
+    default_tx_version = data::xtransaction_version_3;
+    default_evm_gas_limit = UINT64_MAX;
+    default_evm_gas_limit *= 1000;
+    make_default();
+
+    auto op = make_operator();
+    std::error_code ec;
+    op.init(ec);
+    EXPECT_EQ(ec, make_error_code(gasfee::error::xenum_errc::tx_limited_tgas_exceeded));
+}
+
+TEST_F(xtest_gasfee_fixture_t, test_init_eth_balance_not_enough) {
+    default_balance = ASSET_uTOP(99999);
+    default_tx_version = data::xtransaction_version_3;
+    make_default();
+
+    auto op = make_operator();
+    std::error_code ec;
+    op.init(ec);
+    EXPECT_EQ(ec, make_error_code(gasfee::error::xenum_errc::account_balance_not_enough));
+}
+
+TEST_F(xtest_gasfee_fixture_t, test_init_eth_ok) {
+    default_tx_version = data::xtransaction_version_3;
+    make_default();
+
+    auto op = make_operator();
+    std::error_code ec;
+    op.init(ec);
+    EXPECT_EQ(ec.value(), 0);
+    EXPECT_EQ(op.m_free_tgas, default_free_tgas);
+    EXPECT_EQ(op.m_converted_tgas, default_available_tgas - default_free_tgas);
     EXPECT_EQ(op.m_time, default_onchain_time);
     EXPECT_EQ(op.m_onchain_tgas_deposit, default_onchain_deposit_tgas);
 }
@@ -152,7 +199,7 @@ TEST_F(xtest_gasfee_fixture_t, test_add_deposit_to_tgas_not_enough) {
     auto new_usage = default_available_tgas + 1;
     op.add(new_usage, ec);
     EXPECT_EQ(ec, make_error_code(gasfee::error::xenum_errc::tx_deposit_to_tgas_not_enough));
-    EXPECT_EQ(op.m_deposit_usage, default_deposit);
+    EXPECT_EQ(op.m_converted_tgas_usage, default_deposit / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio));
     EXPECT_EQ(op.m_free_tgas_usage, default_free_tgas);
 }
 
@@ -167,7 +214,7 @@ TEST_F(xtest_gasfee_fixture_t, test_add_use_all_free_tgas) {
     uint64_t new_usage = default_free_tgas + more_tgas;
     op.add(new_usage, ec);
     EXPECT_EQ(ec.value(), 0);
-    EXPECT_EQ(op.m_deposit_usage, more_tgas * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio));
+    EXPECT_EQ(op.m_converted_tgas_usage, more_tgas);
     EXPECT_EQ(op.m_free_tgas_usage, default_free_tgas);
 }
 
@@ -182,7 +229,7 @@ TEST_F(xtest_gasfee_fixture_t, test_add_use_free_tgas) {
     uint64_t new_usage = default_free_tgas - less_tgas;
     op.add(new_usage, ec);
     EXPECT_EQ(ec.value(), 0);
-    EXPECT_EQ(op.m_deposit_usage, 0);
+    EXPECT_EQ(op.m_converted_tgas_usage, 0);
     EXPECT_EQ(op.m_free_tgas_usage, new_usage);
 }
 
@@ -227,6 +274,8 @@ TEST_F(xtest_gasfee_fixture_t, test_do_process_fixed_tgas) {
 }
 
 TEST_F(xtest_gasfee_fixture_t, test_process_calculation_tgas_gas_over_limit) {
+    default_tx_version = data::xtransaction_version_3;
+    
     make_default();
     auto op = make_operator();
     std::error_code ec;
@@ -237,14 +286,6 @@ TEST_F(xtest_gasfee_fixture_t, test_process_calculation_tgas_gas_over_limit) {
     EXPECT_EQ(ec, make_error_code(gasfee::error::xenum_errc::tx_calculation_gas_over_limit));
 }
 
-TEST_F(xtest_gasfee_fixture_t, test_process_calculation_tgas_exceeded) {
-    // TODO: related tx_v3 interface not ready yet
-}
-
-TEST_F(xtest_gasfee_fixture_t, test_process_calculation_tgas_used_tgas_over_limit) {
-    // TODO: related tx_v3 interface not ready yet
-}
-
 TEST_F(xtest_gasfee_fixture_t, test_store_in_one_stage) {
     make_default();
     auto op = make_operator();
@@ -252,11 +293,11 @@ TEST_F(xtest_gasfee_fixture_t, test_store_in_one_stage) {
     op.init(ec);
     EXPECT_EQ(ec.value(), 0);
     op.m_free_tgas_usage = op.m_free_tgas;
-    op.m_deposit_usage = op.deposit() / 2;
+    op.m_converted_tgas_usage = op.deposit() / 2 / 20;
     op.store_in_one_stage(ec);
 
     EXPECT_EQ(default_cons_tx->get_current_used_tgas(), op.m_free_tgas);
-    EXPECT_EQ(default_cons_tx->get_current_used_deposit(), op.m_deposit_usage);
+    EXPECT_EQ(default_cons_tx->get_current_used_deposit(), op.m_converted_tgas_usage * 20);
     EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_gas_account)));
     EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
     EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance - default_used_deposit));
@@ -270,11 +311,11 @@ TEST_F(xtest_gasfee_fixture_t, test_store_send) {
     op.init(ec);
     EXPECT_EQ(ec.value(), 0);
     op.m_free_tgas_usage = op.m_free_tgas;
-    op.m_deposit_usage = op.deposit() / 2;
+    op.m_converted_tgas_usage = op.deposit() / 2 * 20;
     op.store_in_send_stage(ec);
 
     EXPECT_EQ(default_cons_tx->get_current_used_tgas(), op.m_free_tgas);
-    EXPECT_EQ(default_cons_tx->get_current_used_deposit(), op.m_deposit_usage);
+    EXPECT_EQ(default_cons_tx->get_current_used_deposit(), op.m_converted_tgas_usage * 20);
     EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_gas_account)));
     EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
     EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance - default_deposit));
@@ -519,6 +560,28 @@ TEST_F(xtest_gasfee_fixture_t, demo_common_contract_self) {
     EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(1000000));
     EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
     EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance));
+}
+
+TEST_F(xtest_gasfee_fixture_t, demo_common_evm_transfer) {
+    default_used_tgas = 1000000;
+    default_last_time = 10000000;
+    default_tx_version = data::xtransaction_version_3;
+    // send
+    make_default();
+    auto op = make_operator();
+    std::error_code ec;
+    op.preprocess(ec);
+    EXPECT_EQ(ec.value(), 0);
+    // ... execute tx
+    uint64_t supplement_gas = 10;
+    op.postprocess(supplement_gas, ec);
+    EXPECT_EQ(ec.value(), 0);
+    EXPECT_EQ(default_cons_tx->get_current_used_tgas(), 0);
+    EXPECT_EQ(default_cons_tx->get_current_used_deposit(), 10 * 20 + 120);
+    EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(1000000));
+    EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
+    EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance - 10 * 20 - 120));
+    EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_BURN)->get_balance(), base::vtoken_t(10 * 20 + 120));
 }
 
 }  // namespace tests
