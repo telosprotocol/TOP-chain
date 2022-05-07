@@ -175,20 +175,15 @@ void xrpc_eth_query_manager::eth_getTransactionCount(xJson::Value & js_req, xJso
 
     // add top address check
     ADDRESS_CHECK_VALID(account)
-    try {
-        xaccount_ptr_t account_ptr = m_store->query_account(account);
-        if (account_ptr == nullptr) {
-            js_rsp["result"] = "0x0";
-        } else {
-            uint64_t nonce = account_ptr->get_latest_send_trans_number();
-            xdbg("xarc_query_manager::eth_getTransactionCount: %s, %llu", account.c_str(), nonce);
-            std::stringstream outstr;
-            outstr << "0x" << std::hex << nonce;
-            js_rsp["result"] = std::string(outstr.str());
-        }
-    } catch (exception & e) {
-        strResult = std::string(e.what());
-        nErrorCode = (uint32_t)enum_xrpc_error_code::rpc_param_unkown_error;
+    xaccount_ptr_t account_ptr = query_account_by_number(account, js_req[1].asString());
+    if (account_ptr == nullptr) {
+        js_rsp["result"] = "0x0";
+    } else {
+        uint64_t nonce = account_ptr->get_latest_send_trans_number();
+        xdbg("xarc_query_manager::eth_getTransactionCount: %s, %llu", account.c_str(), nonce);
+        std::stringstream outstr;
+        outstr << "0x" << std::hex << nonce;
+        js_rsp["result"] = std::string(outstr.str());
     }
 }
 void xrpc_eth_query_manager::eth_getTransactionByHash(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
@@ -379,7 +374,7 @@ void xrpc_eth_query_manager::eth_getBlockByHash(xJson::Value & js_req, xJson::Va
         return;
 
     xJson::Value js_result;
-    set_block_result(block, js_result);
+    set_block_result(block, js_result, js_req[1].asBool());
     js_rsp["result"] = js_result;
     return;
 }
@@ -392,12 +387,12 @@ void xrpc_eth_query_manager::eth_getBlockByNumber(xJson::Value & js_req, xJson::
         return;
 
     xJson::Value js_result;
-    set_block_result(block, js_result);
+    set_block_result(block, js_result, js_req[1].asBool());
     js_result["baseFeePerGas"] = "0x10";
     js_rsp["result"] = js_result;
     return;
 }
-void xrpc_eth_query_manager::set_block_result(const base::xauto_ptr<base::xvblock_t>&  block, xJson::Value& js_result) {
+void xrpc_eth_query_manager::set_block_result(const base::xauto_ptr<base::xvblock_t>&  block, xJson::Value& js_result, bool fullTx) {
     js_result["difficulty"] = "0x0";
     js_result["extraData"] = "0x0";
     js_result["gasLimit"] = "0x0";
@@ -421,13 +416,68 @@ void xrpc_eth_query_manager::set_block_result(const base::xauto_ptr<base::xvbloc
     js_result["timestamp"] = std::string(outstr.str());
     js_result["totalDifficulty"] = "0x0";
     js_result["transactionsRoot"] = "0x0";
+    js_result["transactions"].resize(0);
 
     const std::vector<base::xvaction_t> input_actions = block->get_tx_actions();
     for(auto action : input_actions) {
         if (action.get_org_tx_hash().empty()) {  // not txaction
             continue;
         }
-        js_result["transactions"].append(std::string("0x") + to_hex_str(action.get_org_tx_hash()));
+        if (!fullTx) {
+            js_result["transactions"].append(std::string("0x") + to_hex_str(action.get_org_tx_hash()));
+        } else {
+            xJson::Value js_tx;
+            js_tx["hash"] = std::string("0x") + to_hex_str(action.get_org_tx_hash());
+
+            xtxindex_detail_ptr_t sendindex = xrpc_loader_t::load_tx_indx_detail(action.get_org_tx_hash(), base::enum_transaction_subtype_send);
+            if (sendindex == nullptr) {
+                xwarn("xrpc_eth_query_manager::set_block_result fail.tx hash:%s", to_hex_str(action.get_org_tx_hash()).c_str());
+//                js_rsp["result"] = xJson::Value::null;
+                continue;
+            }
+
+            std::string block_hash = std::string("0x") + top::HexEncode(sendindex->get_txindex()->get_block_hash());
+            js_tx["blockHash"] = block_hash;
+            std::stringstream outstr;
+            outstr << "0x" << std::hex << sendindex->get_txindex()->get_block_height();
+            std::string block_num = outstr.str();
+            js_tx["blockNumber"] = block_num;
+
+            js_tx["from"] = std::string("0x") + sendindex->get_raw_tx()->get_source_addr().substr(6);
+            js_tx["gas"] = "0x40276";
+            js_tx["gasPrice"] = "0xb2d05e00";
+            js_tx["input"] = "0x" + data::to_hex_str(sendindex->get_raw_tx()->get_data());
+            uint64_t nonce = sendindex->get_raw_tx()->get_last_nonce();
+            std::stringstream outstr_nonce;
+            outstr_nonce << "0x" << std::hex << nonce;
+            js_tx["nonce"] = outstr_nonce.str();
+
+            uint16_t tx_type = sendindex->get_raw_tx()->get_tx_type();
+            js_tx["from"] = std::string("0x") + sendindex->get_raw_tx()->get_source_addr().substr(6);
+            if (tx_type == xtransaction_type_transfer) {
+                js_tx["to"] = std::string("0x") + sendindex->get_raw_tx()->get_target_addr().substr(6);
+            } else {
+                js_tx["to"] = xJson::Value::null;
+            }
+            js_tx["transactionIndex"] = "0x0";
+            std::stringstream outstr_type;
+            outstr_type << "0x" << std::hex << sendindex->get_raw_tx()->get_eip_version();
+            js_tx["type"] = std::string(outstr_type.str());
+            js_tx["value"] = "0x0";
+
+            std::string str_v = sendindex->get_raw_tx()->get_SignV();
+            uint32_t i = 0;
+            for (; i < str_v.size() - 1; i++) {
+                if (str_v[i] != '0') {
+                    break;
+                }
+            }
+            js_tx["v"] = std::string("0x") + str_v.substr(i);
+            js_tx["r"] = std::string("0x") + sendindex->get_raw_tx()->get_SignR();
+            js_tx["s"] = std::string("0x") + sendindex->get_raw_tx()->get_SignS();
+
+            js_result["transactions"].append(js_tx);
+        }
     }    
 }
 void xrpc_eth_query_manager::eth_getCode(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
