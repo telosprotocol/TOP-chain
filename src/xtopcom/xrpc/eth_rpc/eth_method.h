@@ -26,7 +26,7 @@ public:
         m_eth_method_map.emplace(std::make_pair("web3_clientVersion", std::bind(&EthMethod::web3_clientVersion, this, std::placeholders::_1, std::placeholders::_2)));
         m_eth_method_map.emplace(std::make_pair("net_version", std::bind(&EthMethod::net_version, this, std::placeholders::_1, std::placeholders::_2)));
         m_eth_method_map.emplace(std::make_pair("eth_gasPrice", std::bind(&EthMethod::eth_gasPrice, this, std::placeholders::_1, std::placeholders::_2)));
-        m_eth_method_map.emplace(std::make_pair("eth_estimateGas", std::bind(&EthMethod::eth_estimateGas, this, std::placeholders::_1, std::placeholders::_2)));
+        //m_eth_method_map.emplace(std::make_pair("eth_estimateGas", std::bind(&EthMethod::eth_estimateGas, this, std::placeholders::_1, std::placeholders::_2)));
         m_eth_method_map.emplace(std::make_pair("web3_sha3", std::bind(&EthMethod::web3_sha3, this, std::placeholders::_1, std::placeholders::_2)));
 
         m_supported_method.insert("eth_call");
