@@ -265,7 +265,38 @@ bool xtop_zec_elect_eth_contract::elect_eth_consensus(common::xzone_id_t const z
                                             effective_standby_network_result,
                                             election_network_result);
 
-    return eth_auditor_result | eth_validator_result;
+    if (eth_auditor_result || eth_validator_result) {
+        auto const & evm_auditor_group = election_network_result.result_of(common::xnode_type_t::evm_auditor).result_of(cluster_id).result_of(auditor_group_id);
+
+        assert(evm_auditor_group.start_time() != common::xjudgement_day);
+        assert(evm_auditor_group.start_time() == start_time);
+        assert(evm_auditor_group.timestamp() == election_timestamp);
+
+        xwarn("[zec elect eth] version %s size %zu timestamp %" PRIu64 " start time %" PRIu64,
+              evm_auditor_group.group_version().to_string().c_str(),
+              evm_auditor_group.size(),
+              evm_auditor_group.timestamp(),
+              evm_auditor_group.start_time());
+
+        auto & evm_validator_group = election_network_result.result_of(common::xnode_type_t::evm_validator).result_of(cluster_id).result_of(validator_group_id);
+        evm_validator_group.associated_group_id(auditor_group_id);
+        evm_validator_group.associated_group_version(evm_auditor_group.group_version());
+
+        assert(evm_validator_group.start_time() != common::xjudgement_day);
+        assert(evm_validator_group.start_time() == start_time);
+        assert(evm_validator_group.timestamp() == election_timestamp);
+
+        xwarn("[zec elect eth] version %s size %zu timestamp %" PRIu64 " start time %" PRIu64,
+              evm_validator_group.group_version().to_string().c_str(),
+              evm_validator_group.size(),
+              evm_validator_group.timestamp(),
+              evm_validator_group.start_time());
+
+        if (evm_auditor_group.size() && evm_validator_group.size()) {
+            return true;
+        }
+    }
+    return false;
 }
 
 NS_END4

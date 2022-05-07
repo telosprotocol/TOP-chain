@@ -353,7 +353,7 @@ xrotate_leader_election::xrotate_leader_election(const observer_ptr<base::xvbloc
 bool xrotate_leader_election::is_rotate_xip(const xvip2_t & local) {
     bool rotate = false;
     auto zone_id = get_zone_id_from_xip2(local);
-    if (zone_id == base::enum_chain_zone_consensus_index) {
+    if (zone_id == base::enum_chain_zone_consensus_index || zone_id == base::enum_chain_zone_evm_index) {
         rotate = true;
     }
     return rotate;

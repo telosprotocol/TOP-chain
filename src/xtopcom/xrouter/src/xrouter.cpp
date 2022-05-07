@@ -25,7 +25,10 @@ common::xsharding_address_t xtop_router::sharding_address_from_account(common::x
 common::xsharding_address_t xtop_router::sharding_address_from_tableindex(base::xtable_index_t const & target_tableindex,
                                                                           common::xnetwork_id_t const & nid,
                                                                           common::xnode_type_t type) const {
-    assert(common::has<common::xnode_type_t::consensus_validator>(type) || common::has<common::xnode_type_t::consensus_auditor>(type));
+    assert(common::has<common::xnode_type_t::consensus_validator>(type) ||  // NOLINT
+           common::has<common::xnode_type_t::consensus_auditor>(type) ||    // NOLINT
+           common::has<common::xnode_type_t::evm_auditor>(type) ||          // NOLINT
+           common::has<common::xnode_type_t::evm_validator>(type));         // NOLINT
 
     switch (target_tableindex.get_zone_index()) {
     case base::enum_chain_zone_beacon_index:
@@ -35,8 +38,7 @@ common::xsharding_address_t xtop_router::sharding_address_from_tableindex(base::
     case base::enum_chain_zone_consensus_index:
         return address_of_table_id(target_tableindex.get_subaddr(), type, nid);
     case base::enum_chain_zone_evm_index:
-        // todo (Charles)
-        return common::build_evm_group_address(nid);
+        return common::build_evm_group_address(nid, type);
     default:
         assert(false);
         return common::build_zec_sharding_address(nid);
