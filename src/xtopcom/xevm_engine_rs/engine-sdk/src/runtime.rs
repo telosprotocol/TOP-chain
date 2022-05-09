@@ -211,7 +211,7 @@ impl crate::io::ContractBridge for Runtime {
 
     fn get_error() -> Option<Self::StorageValue> {
         unsafe {
-            if exports::evm_get_result(Self::CONTRACT_RESULT_REGISTER_ID.0) == 1 {
+            if exports::evm_get_error(Self::CONTRACT_RESULT_REGISTER_ID.0) == 1 {
                 Some(Self::CONTRACT_RESULT_REGISTER_ID)
             } else {
                 None

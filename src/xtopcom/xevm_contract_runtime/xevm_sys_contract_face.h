@@ -64,19 +64,33 @@ enum precompile_error : uint32_t {
 
 // ref: ~.cargo/git/checkouts/evm-31951a45719dc0d6/07ae445/core/src/error.rs:105
 // match: engine-types/src/precompiles.rs
-enum precompile_error_ExitError : uint32_t {
-    OutOfGas = 1,  // todo add more
+enum class precompile_error_ExitError : uint32_t {
+    StackUnderflow = 0,
+    StackOverflow = 1,
+    InvalidJump = 2,
+    InvalidRange = 3,
+    DesignatedInvalid = 4,
+    CallTooDeep = 5,
+    CreateCollision = 6,
+    CreateContractLimit = 7,
+    InvalidCode = 8,
+    OutOfOffset = 9,
+    OutOfGas = 10,
+    OutOfFund = 11,
+    PCUnderflow = 12,
+    CreateEmpty = 13,
+    Other = 14,
 };
 
 // ref: ~.cargo/git/checkouts/evm-31951a45719dc0d6/07ae445/core/src/error.rs:87
 // match: engine-types/src/precompiles.rs
-enum precompile_error_ExitRevert : uint32_t {
+enum class precompile_error_ExitRevert : uint32_t {
     Reverted = 1,  // only one
 };
 
 // ref: ~.cargo/git/checkouts/evm-31951a45719dc0d6/07ae445/core/src/error.rs:157
 // match: engine-types/src/precompiles.rs
-enum precompile_error_ExitFatal : uint32_t {
+enum class precompile_error_ExitFatal : uint32_t {
     NotSupported = 1,  // todo add more
     UnhandledInterrupt = 2,
     CallErrorAsFatal = 3,

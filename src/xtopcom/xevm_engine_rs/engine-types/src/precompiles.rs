@@ -54,7 +54,20 @@ impl From<proto_precompile::PrecompileFailure> for executor::stack::PrecompileFa
         match output.get_fail_status() {
             1 => executor::stack::PrecompileFailure::Error {
                 exit_status: match output.get_minor_status() {
-                    1 => ExitError::OutOfGas,
+                    0 => ExitError::StackOverflow,
+                    1 => ExitError::StackOverflow,
+                    2 => ExitError::InvalidJump,
+                    3 => ExitError::InvalidRange,
+                    4 => ExitError::DesignatedInvalid,
+                    5 => ExitError::CallTooDeep,
+                    6 => ExitError::CreateCollision,
+                    7 => ExitError::CreateContractLimit,
+                    8 => ExitError::InvalidCode,
+                    9 => ExitError::OutOfOffset,
+                    10 => ExitError::OutOfGas,
+                    11 => ExitError::OutOfFund,
+                    12 => ExitError::PCUnderflow,
+                    13 => ExitError::CreateEmpty,
                     _ => ExitError::Other(Borrowed("Other Error")),
                 },
             },

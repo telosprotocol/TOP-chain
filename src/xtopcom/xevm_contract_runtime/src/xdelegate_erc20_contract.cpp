@@ -55,7 +55,7 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
     // erc20_uuid (1 byte) | erc20_method_id (4 bytes) | parameters (depends)
     if (input.size() < 5) {
         err.fail_status = precompile_error::Fatal;
-        err.minor_status = precompile_error_ExitFatal::Other;
+        err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
         xwarn("predefined erc20 contract: invalid input");
 
@@ -63,6 +63,12 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
     }
 
     common::xtoken_id_t const erc20_token_id{top::from_byte<common::xtoken_id_t>(input.front())};
+    if (erc20_token_id != common::xtoken_id_t::top && erc20_token_id != common::xtoken_id_t::usdc && erc20_token_id != common::xtoken_id_t::usdt) {
+        err.fail_status = precompile_error::Fatal;
+        err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::NotSupported);
+
+        return false;
+    }
 
     xbytes_t const data{std::next(std::begin(input), 1), std::end(input)};
     xbytes_t const method_id_bytes{std::begin(data), std::next(std::begin(data), 4)};
@@ -75,39 +81,52 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
     case method_id_decimals: {
         uint64_t const decimals_gas_cost = 2535;
 
+        if (target_gas < decimals_gas_cost) {
+            err.fail_status = Error;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
+
+            xwarn("predefined erc20 contract: decimals out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, decimals_gas_cost);
+
+            return false;
+        }
+
+        xbytes_t result(32, 0);
         if (!parameters.empty()) {
-            err.fail_status = precompile_error::Fatal;
-            err.minor_status = precompile_error_ExitFatal::Other;
+            err.fail_status = precompile_error::Revert;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+            err.cost = target_gas;
+            err.output = result;
 
             xwarn("predefined erc20 contract: decimals with non-empty parameter");
 
             return false;
         }
 
-        if (target_gas < decimals_gas_cost) {
-            err.fail_status = Error;
-            err.minor_status = precompile_error_ExitError::OutOfGas;
-
-            xwarn("predefined erc20 contract: decimals out of gas, gas_limit %" PRIu64 " gas required %" PRIu64, target_gas, decimals_gas_cost);
-
-            return false;
-        }
-
-        xbytes_t decimals;
-        decimals.resize(32);
-        decimals[31] = static_cast<uint8_t>(18);
+        result[31] = static_cast<uint8_t>(18);
 
         output.exit_status = Returned;
         output.cost = decimals_gas_cost;
-        output.output = decimals;
+        output.output = result;
 
         return true;
     }
 
     case method_id_total_supply: {
+        uint64_t const total_supply_gas_cost = 2538;
+        if (target_gas < total_supply_gas_cost) {
+            err.fail_status = Error;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
+
+            xwarn("predefined erc20 contract: total_supply out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, total_supply_gas_cost);
+
+            return false;
+        }
+
         if (!parameters.empty()) {
-            err.fail_status = precompile_error::Fatal;
-            err.minor_status = precompile_error_ExitFatal::Other;
+            err.fail_status = precompile_error::Revert;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+            err.cost = total_supply_gas_cost;
+            err.output = xbytes_t(32, 0);
 
             xwarn("predefined erc20 contract: total supply with non-empty parameter");
 
@@ -116,16 +135,29 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
 
         evm_common::u256 supply{0};
         output.exit_status = Returned;
-        output.cost = 0;
+        output.cost = total_supply_gas_cost;
         output.output = top::to_bytes(supply);
 
         return true;
     }
 
     case method_id_balance_of: {
+        uint64_t const balance_of_gas_cost = 3268;
+        if (target_gas < balance_of_gas_cost) {
+            err.fail_status = precompile_error::Error;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
+
+            xwarn("predefined erc20 contract: balance_of out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, balance_of_gas_cost);
+
+            return false;
+        }
+
+        xbytes_t result(32, 0);
         if (parameters.size() != 32) {
-            err.fail_status = precompile_error::Fatal;
-            err.minor_status = precompile_error_ExitFatal::Other;
+            err.fail_status = precompile_error::Revert;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+            err.cost = balance_of_gas_cost;
+            err.output = result;
 
             xwarn("predefined erc20 contract: balance_of with invalid parameter (length not 32)");
 
@@ -134,20 +166,12 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
 
         xbytes_t const prefix{std::begin(parameters), std::next(std::begin(parameters), 12)};
         if (std::any_of(std::begin(prefix), std::end(prefix), [](xbyte_t byte) { return byte != 0; })) {
-            err.fail_status = precompile_error::Fatal;
-            err.minor_status = precompile_error_ExitFatal::Other;
+            err.fail_status = precompile_error::Revert;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+            err.cost = balance_of_gas_cost;
+            err.output = result;
 
             xwarn("predefined erc20 contract: balance_of invalid account");
-
-            return false;
-        }
-
-        uint64_t const balance_of_gas_cost = 3268;
-        if (target_gas < balance_of_gas_cost) {
-            err.fail_status = precompile_error::Error;
-            err.minor_status = precompile_error_ExitError::OutOfGas;
-
-            xwarn("predefined erc20 contract: balance_of out of gas, gas_limit %" PRIu64 " gas required %" PRIu64, target_gas, balance_of_gas_cost);
 
             return false;
         }
@@ -176,13 +200,17 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
         }
 
         default:
+            assert(false);  // won't reach.
             err.fail_status = precompile_error::Fatal;
-            err.minor_status = precompile_error_ExitFatal::Other;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("predefined erc20 contract: balance_of invalid token id %d", static_cast<int>(erc20_token_id));
 
             return false;
         }
+
+        result = top::to_bytes(value);
+        assert(result.size() == 32);
 
         output.cost = balance_of_gas_cost;
         output.exit_status = Returned;
@@ -192,9 +220,36 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
     }
 
     case method_id_transfer: {
+        uint64_t const transfer_gas_cost = 18446;
+        uint64_t const transfer_reverted_gas_cost = 3662;
+
+        if (target_gas < transfer_gas_cost) {
+            err.fail_status = precompile_error::Error;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
+
+            xwarn("predefined erc20 contract: transfer out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, transfer_gas_cost);
+
+            return false;
+        }
+
+        xbytes_t result(32, 0);
+
+        if (is_static) {
+            err.fail_status = precompile_error::Revert;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+            err.cost = transfer_reverted_gas_cost;
+            err.output = result;
+
+            xwarn("predefined erc20 contract: transfer is not allowed in static context");
+
+            return false;
+        }
+
         if (parameters.size() != 32 * 2) {
-            err.fail_status = precompile_error::Fatal;
-            err.minor_status = precompile_error_ExitFatal::Other;
+            err.fail_status = precompile_error::Revert;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+            err.cost = transfer_reverted_gas_cost;
+            err.output = result;
 
             xwarn("predefined erc20 contract: transfer with invalid parameter");
 
@@ -203,20 +258,12 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
 
         xbytes_t const prefix{std::begin(parameters), std::next(std::begin(parameters), 12)};
         if (std::any_of(std::begin(prefix), std::end(prefix), [](xbyte_t byte) { return byte != 0; })) {
-            err.fail_status = precompile_error::Fatal;
-            err.minor_status = precompile_error_ExitFatal::Other;
+            err.fail_status = precompile_error::Revert;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+            err.cost = transfer_reverted_gas_cost;
+            err.output = result;
 
             xwarn("predefined erc20 contract: transfer with invalid account");
-
-            return false;
-        }
-
-        uint64_t const transfer_gas_cost = 18446;
-        if (target_gas < transfer_gas_cost) {
-            err.fail_status = precompile_error::Error;
-            err.minor_status = precompile_error_ExitError::OutOfGas;
-
-            xwarn("predefined erc20 contract: transfer out of gas, gas_limit %" PRIu64 " gas required %" PRIu64, target_gas, transfer_gas_cost);
 
             return false;
         }
@@ -234,15 +281,12 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
         auto sender_state = state_ctx->load_unit_state(common::xaccount_address_t::build_from(context.caller, base::enum_vaccount_addr_type_secp256k1_evm_user_account).vaccount());
         auto recver_state = state_ctx->load_unit_state(recipient_account_address.vaccount());
 
-        xbytes_t result(32, 0);
         std::error_code ec;
         sender_state->transfer(erc20_token_id, top::make_observer(recver_state.get()), value, ec);
 
         if (!ec) {
             auto const & contract_address = context.address;
-            assert(!ec);
             auto const & caller_address = context.caller;
-            assert(!ec);
 
             evm_common::xevm_log_t log;
             log.address = top::to_string(contract_address.to_h160());
@@ -263,19 +307,48 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
             output.output = result;
             output.logs.push_back(log);
         } else {
-            err.cost = transfer_gas_cost / 2;
-            err.fail_status = Revert;
-            err.minor_status = precompile_error_ExitRevert::Reverted;
+            err.fail_status = precompile_error::Revert;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+            err.cost = transfer_reverted_gas_cost;
             err.output = result;
+
+            xwarn("predefined erc20 contract: transfer reverted. ec %" PRIi32 " category %s msg %s", ec.value(), ec.category().name(), ec.message().c_str());
         }
 
         return !ec;
     }
 
     case method_id_transfer_from: {
+        uint64_t const transfer_from_gas_cost = 18190;
+        uint64_t const transfer_from_reverted_gas_cost = 4326;
+
+        if (target_gas < transfer_from_gas_cost) {
+            err.fail_status = precompile_error::Error;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
+
+            xwarn("predefined erc20 contract: transfer_from out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, transfer_from_gas_cost);
+
+            return false;
+        }
+
+        xbytes_t result(32, 0);
+
+        if (is_static) {
+            err.fail_status = precompile_error::Revert;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+            err.cost = transfer_from_reverted_gas_cost;
+            err.output = result;
+
+            xwarn("predefined erc20 contract: transfer_from is not allowed in static context");
+
+            return false;
+        }
+
         if (parameters.size() != 32 * 3) {
-            err.fail_status = precompile_error::Fatal;
-            err.minor_status = precompile_error_ExitFatal::Other;
+            err.fail_status = precompile_error::Revert;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+            err.cost = transfer_from_reverted_gas_cost;
+            err.output = result;
 
             xwarn("predefined erc20 contract: transfer_from with invalid parameters");
 
@@ -284,8 +357,10 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
 
         xbytes_t prefix{std::begin(parameters), std::next(std::begin(parameters), 12)};
         if (std::any_of(std::begin(prefix), std::end(prefix), [](xbyte_t byte) { return byte != 0; })) {
-            err.fail_status = precompile_error::Fatal;
-            err.minor_status = precompile_error_ExitFatal::Other;
+            err.fail_status = precompile_error::Revert;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+            err.cost = transfer_from_reverted_gas_cost;
+            err.output = result;
 
             xwarn("predefined erc20 contract: transfer_from invalid owner account");
 
@@ -294,20 +369,12 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
 
         prefix = xbytes_t{std::next(std::begin(parameters), 32), std::next(std::begin(parameters), 32 + 12)};
         if (std::any_of(std::begin(prefix), std::end(prefix), [](xbyte_t byte) { return byte != 0; })) {
-            err.fail_status = precompile_error::Fatal;
-            err.minor_status = precompile_error_ExitFatal::Other;
+            err.fail_status = precompile_error::Revert;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+            err.cost = transfer_from_reverted_gas_cost;
+            err.output = result;
 
             xwarn("predefined erc20 contract: transfer_from invalid recipient account");
-
-            return false;
-        }
-
-        uint64_t const transfer_from_gas_cost = 37839;
-        if (target_gas < transfer_from_gas_cost) {
-            err.fail_status = precompile_error::Error;
-            err.minor_status = precompile_error_ExitError::OutOfGas;
-
-            xwarn("predefined erc20 contract: transfer_from out of gas, gas_limit %" PRIu64 " gas required %" PRIu64, target_gas, transfer_from_gas_cost);
 
             return false;
         }
@@ -327,9 +394,7 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
 
         evm_common::u256 value = top::from_bytes<evm_common::u256>(value_bytes);
 
-        xbytes_t result(32, 0);
         std::error_code ec;
-
         auto owner_state = state_ctx->load_unit_state(owner_account_address.vaccount());
         owner_state->update_allowance(erc20_token_id,
                                       common::xaccount_address_t::build_from(context.caller, base::enum_vaccount_addr_type_secp256k1_evm_user_account),
@@ -366,18 +431,45 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
             output.output = result;
             output.logs.push_back(log);
         } else {
-            err.cost = transfer_from_gas_cost / 2;
-            err.fail_status = Revert;
+            err.fail_status = precompile_error::Revert;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+            err.cost = transfer_from_reverted_gas_cost;
             err.output = result;
+
+            xwarn("predefined erc20 contract: transfer_from reverted. ec %" PRIi32 " category %s msg %s", ec.value(), ec.category().name(), ec.message().c_str());
         }
 
         return !ec;
     }
 
     case method_id_approve: {
+        uint64_t const approve_gas_cost = 18599;
+        if (target_gas < approve_gas_cost) {
+            err.fail_status = precompile_error::Error;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
+
+            xwarn("predefined erc20 contract: approve out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, approve_gas_cost);
+
+            return false;
+        }
+
+        xbytes_t result(32, 0);
+        if (is_static) {
+            err.fail_status = precompile_error::Revert;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+            err.cost = approve_gas_cost;
+            err.output = result;
+
+            xwarn("predefined erc20 contract: approve is not allowed in static context");
+
+            return false;
+        }
+
         if (parameters.size() != 32 * 2) {
-            err.fail_status = precompile_error::Fatal;
-            err.minor_status = precompile_error_ExitFatal::Other;
+            err.fail_status = precompile_error::Revert;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+            err.cost = approve_gas_cost;
+            err.output = result;
 
             xwarn("predefined erc20 contract: approve with invalid parameter");
 
@@ -386,20 +478,12 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
 
         xbytes_t const prefix{std::begin(parameters), std::next(std::begin(parameters), 12)};
         if (std::any_of(std::begin(prefix), std::end(prefix), [](xbyte_t byte) { return byte != 0; })) {
-            err.fail_status = precompile_error::Fatal;
-            err.minor_status = precompile_error_ExitFatal::Other;
+            err.fail_status = precompile_error::Revert;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+            err.cost = approve_gas_cost;
+            err.output = result;
 
             xwarn("predefined erc20 contract: approve invalid spender account");
-
-            return false;
-        }
-
-        uint64_t const approve_gas_cost = 18599;
-        if (target_gas < approve_gas_cost) {
-            err.fail_status = precompile_error::Error;
-            err.minor_status = precompile_error_ExitError::OutOfGas;
-
-            xwarn("predefined erc20 contract: approve out of gas, gas_limit %" PRIu64 " gas required %" PRIu64, target_gas, approve_gas_cost);
 
             return false;
         }
@@ -413,16 +497,14 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
         common::xaccount_address_t spender_account_address = common::xaccount_address_t::build_from(spender_address, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
         evm_common::u256 amount = top::from_bytes<evm_common::u256>(amount_bytes);
 
-        xbytes_t result(32, 0);
         std::error_code ec;
-
         auto sender_state = state_ctx->load_unit_state(common::xaccount_address_t::build_from(context.caller, base::enum_vaccount_addr_type_secp256k1_evm_user_account).vaccount());
         sender_state->approve(erc20_token_id, spender_account_address, amount, ec);
 
-        if (!ec) {
-            auto const & contract_address = context.address;
-            auto const & caller_address = context.caller;
+        auto const & contract_address = context.address;
+        auto const & caller_address = context.caller;
 
+        if (!ec) {
             evm_common::xevm_log_t log;
             log.address = top::to_string(contract_address.to_h160());
             assert(log.address.size() == 20);
@@ -442,20 +524,34 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
             output.output = result;
             output.logs.push_back(log);
         } else {
-            err.cost = approve_gas_cost / 2;
-            err.fail_status = Revert;
+            err.fail_status = precompile_error::Revert;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+            err.cost = approve_gas_cost;
             err.output = result;
 
-            xwarn("predefined erc20 contract: approve failed. ec %" PRIi32 " category %s msg %s", ec.value(), ec.category().name(), ec.message().c_str());
+            xerror("predefined erc20 contract: approve reverted. ec %" PRIi32 " category %s msg %s", ec.value(), ec.category().name(), ec.message().c_str());
         }
 
-        return !ec;
+        return true;
     }
 
     case method_id_allowance: {
+        uint64_t const allowance_gas_cost = 3987;
+        if (target_gas < allowance_gas_cost) {
+            err.fail_status = precompile_error::Error;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
+
+            xwarn("predefined erc20 contract: allowance out of gas. gas remained %" PRIu64 " gas required %" PRIu64, target_gas, allowance_gas_cost);
+
+            return false;
+        }
+
+        xbytes_t result(32, 0);
         if (parameters.size() != 32 * 2) {
-            err.fail_status = precompile_error::Fatal;
-            err.minor_status = precompile_error_ExitFatal::Other;
+            err.fail_status = precompile_error::Revert;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+            err.cost = allowance_gas_cost;
+            err.output = result;
 
             xwarn("predefined erc20 contract: allowance with invalid parameter");
 
@@ -464,8 +560,10 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
 
         xbytes_t prefix{std::begin(parameters), std::next(std::begin(parameters), 12)};
         if (std::any_of(std::begin(prefix), std::end(prefix), [](xbyte_t byte) { return byte != 0; })) {
-            err.fail_status = precompile_error::Fatal;
-            err.minor_status = precompile_error_ExitFatal::Other;
+            err.fail_status = precompile_error::Revert;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+            err.cost = allowance_gas_cost;
+            err.output = result;
 
             xwarn("predefined erc20 contract: allowance invalid owner account");
 
@@ -474,8 +572,10 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
 
         prefix = xbytes_t{std::next(std::begin(parameters), 32), std::next(std::begin(parameters), 32 + 12)};
         if (std::any_of(std::begin(prefix), std::end(prefix), [](xbyte_t byte) { return byte != 0; })) {
-            err.fail_status = precompile_error::Fatal;
-            err.minor_status = precompile_error_ExitFatal::Other;
+            err.fail_status = precompile_error::Revert;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+            err.cost = allowance_gas_cost;
+            err.output = result;
 
             xwarn("predefined erc20 contract: allowance invalid spender account");
 
@@ -495,10 +595,11 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
 
         std::error_code ec;
         auto owner_state = state_ctx->load_unit_state(owner_account_address.vaccount());
-        auto amount = owner_state->allowance(erc20_token_id, spender_account_address, ec);
+        result = top::to_bytes(owner_state->allowance(erc20_token_id, spender_account_address, ec));
+        assert(result.size() == 32);
 
-        output.cost = 1;
-        output.output = top::to_bytes(amount);
+        output.cost = allowance_gas_cost;
+        output.output = result;
         output.exit_status = Returned;
 
         return true;
@@ -506,7 +607,7 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
 
     default: {
         err.fail_status = precompile_error::Fatal;
-        err.minor_status = precompile_error_ExitFatal::NotSupported;
+        err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::NotSupported);
 
         return false;
     }
