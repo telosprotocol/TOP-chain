@@ -51,22 +51,20 @@ void xrpc_handler::on_message(const xvnode_address_t & edge_sender, const xmessa
         auto message = para->m_message;
         auto edge_sender = para->m_sender;
         auto msgid = message.id();
-        /*if (msgid == rpc_msg_request || msgid == rpc_msg_query_request) {
+        if (msgid == rpc_msg_request || msgid == rpc_msg_query_request || msgid == rpc_msg_eth_request || msgid == rpc_msg_eth_query_request) {
             xrpc_msg_request_t msg = codec::xmsgpack_codec_t<xrpc_msg_request_t>::decode(message.payload());
-            if (msgid == rpc_msg_request) {
+            if (msgid == rpc_msg_request || msgid == rpc_msg_eth_request) {
                 xdbg_rpc("wish arc tx");
                 return true;
             } else {
                 self->cluster_process_query_request(msg, edge_sender, message);
                 XMETRICS_GAUGE(metrics::rpc_auditor_query_request, 1);
-            }*/
-        if (msgid == rpc_msg_response || msgid == rpc_msg_eth_response) {
+            }
+        }
+        else if (msgid == rpc_msg_response || msgid == rpc_msg_eth_response) {
             self->cluster_process_response(message, edge_sender);
             return true;
         }
-        xrpc_msg_request_t msg = codec::xmsgpack_codec_t<xrpc_msg_request_t>::decode(message.payload());
-        self->cluster_process_query_request(msg, edge_sender, message);
-        XMETRICS_GAUGE(metrics::rpc_auditor_query_request, 1);
         return true;
     };
     int64_t in, out;
@@ -156,6 +154,13 @@ void xrpc_handler::cluster_process_query_request(const xrpc_msg_request_t & edge
         xerror("cluster error tx_type %d", edge_msg.m_tx_type);
         return;
     }
+
+    if (edge_msg.m_message_body.empty())
+    {
+        xwarn("message is empty");
+        return;
+    }
+
     xdbg_rpc("process query msg %d, %s,%x,%s", edge_msg.m_tx_type, edge_msg.m_source_address.to_string().c_str(), message.id(), edge_msg.m_message_body.c_str());
     shared_ptr<xrpc_msg_response_t> response_msg_ptr = std::make_shared<xrpc_msg_response_t>(edge_msg);
 
@@ -169,6 +174,7 @@ void xrpc_handler::cluster_process_query_request(const xrpc_msg_request_t & edge
 
     if (message.id() >= rpc_msg_request && message.id() <= rpc_msg_query_request) {
         m_rule_mgr_ptr->filter(json_proc);
+        json_proc.m_request_json["params"]["version"] = version;
         m_rpc_query_mgr->call_method(strMethod, json_proc.m_request_json["params"], json_proc.m_response_json["data"], strErrorMsg, nErrorCode);
         json_proc.m_response_json[RPC_ERRNO] = nErrorCode;
         json_proc.m_response_json[RPC_ERRMSG] = strErrorMsg;
