@@ -345,4 +345,16 @@ std::string to_string<evm_common::u256>(evm_common::u256 const & value);
 template <>
 evm_common::u256 from_string<evm_common::u256>(std::string const & input, std::error_code & ec);
 
+template <>
+xbytes_t to_bytes<evm_common::u160>(evm_common::u160 const & value);
+
+template <>
+evm_common::u160 from_bytes<evm_common::u160>(xbytes_t const & input, std::error_code & ec);
+
+template <>
+std::string to_string<evm_common::u160>(evm_common::u160 const & value);
+
+template <>
+evm_common::u160 from_string<evm_common::u160>(std::string const & input, std::error_code & ec);
+
 NS_END1

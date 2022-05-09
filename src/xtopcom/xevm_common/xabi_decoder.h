@@ -1,10 +1,9 @@
-// Copyright (c) 2017-2020 Telos Foundation & contributors
+// Copyright (c) 2017-present Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
 
-#include "xbase/xns_macro.h"
 #include "xbasic/xbyte_buffer.h"
 #include "xbasic/xhex.h"
 #include "xbasic/xstring.h"
@@ -13,8 +12,7 @@
 #include "xevm_common/common_data.h"
 #include "xevm_common/xerror/xerror.h"
 
-#include <assert.h>
-
+#include <cassert>
 #include <string>
 #include <system_error>
 #include <type_traits>
@@ -22,9 +20,14 @@
 
 NS_BEG2(top, evm_common)
 
+struct xtop_function_selector {
+    uint32_t method_id{0};
+};
+using xfunction_selector_t = xtop_function_selector;
+
 class xtop_abi_decoder {
-    static const std::size_t FS_BYTES_SIZE = 4;
-    static const std::size_t BYTES_WIDTH = 32;
+    static constexpr std::size_t FS_BYTES_SIZE = 4;
+    static constexpr std::size_t BYTES_WIDTH = 32;
 
 private:
     xbytes_t m_data;
@@ -33,81 +36,54 @@ private:
 
 public:
     xtop_abi_decoder() = default;
+    xtop_abi_decoder(xtop_abi_decoder const &) = delete;
+    xtop_abi_decoder & operator=(xtop_abi_decoder const &) = delete;
+    xtop_abi_decoder(xtop_abi_decoder &&) = default;
+    xtop_abi_decoder & operator=(xtop_abi_decoder &&) = default;
+    ~xtop_abi_decoder() = default;
 
-    static xtop_abi_decoder build_from_hex_string(std::string const & input_hex_string, std::error_code & ec) {
-        assert(!ec);
-        auto hex_data = top::from_hex(input_hex_string, ec);
-        if (!ec) {
-            return xtop_abi_decoder{hex_data, ec};
-        }
-        return {};
-    }
-
-    xtop_abi_decoder(xbytes_t input_data, std::error_code & ec) : m_data{input_data} {
-        assert(!ec);
-        // assert(m_data.size() % 32 == FS_BYTES_SIZE);
-        if (m_data.size() % BYTES_WIDTH != FS_BYTES_SIZE) {
-            ec = error::xerrc_t::abi_data_length_error;
-        }
-        m_max_data_field_number = m_data.size() / BYTES_WIDTH;
-    }
+private:
+    explicit xtop_abi_decoder(xbytes_t input_data);
+    xtop_abi_decoder(xbytes_t input_data, std::error_code & ec);
 
 public:
-    /// decode into bool
-    bool decode_bool(std::error_code & ec) {
+    static xtop_abi_decoder build_from_hex_string(std::string const & input_hex_string, std::error_code & ec);
+    static xtop_abi_decoder build_from(xbytes_t const & input, std::error_code & ec);
+
+    template <typename T>
+    T extract(std::error_code & ec);
+
+    bool empty() const noexcept;
+
+    size_t size() const noexcept;
+
+    size_t unconsumed_size() const noexcept;
+
+    /// decode into bytes<M> with `0 < M <= 32`
+    xbytes_t decode_bytes(std::size_t sz, std::error_code & ec);
+
+    /// decode array[T] with type T
+    /// Noted: always with "memory" parameter
+    template <typename ElementType>
+    std::vector<ElementType> decode_array(std::error_code & ec) {
         assert(!ec);
-        // assert(m_decoded_count <= m_max_data_field_number);
-        if (m_decoded_count > m_max_data_field_number) {
-            ec = error::xerrc_t::abi_decode_outofrange;
-            return false;
-        }
-        return decode_as_u256(m_decoded_count++).convert_to<bool>();
+        return do_decode_array<ElementType>(0, m_decoded_count++, ec);
     }
 
+private:
+    /// decode into bool
+    bool decode_bool(std::error_code & ec);
+
     /// decode address:
-    common::xeth_address_t decode_address(std::error_code & ec) {
-        assert(!ec);
-        if (m_decoded_count > m_max_data_field_number) {
-            ec = error::xerrc_t::abi_decode_outofrange;
-            return {};
-        }
-        return decode_as_address(m_decoded_count++);
-    }
+    common::xeth_address_t decode_address(std::error_code & ec);
 
     /// decode into string
     /// Noted: always with "memory" parameter
-    std::string decode_string(std::error_code & ec) {
-        assert(!ec);
-        auto bytes_res = decode_bytes(ec);
-        if (ec) {
-            return "";
-        }
-        return top::to_string(bytes_res);
-    }
+    std::string decode_string(std::error_code & ec);
 
     /// decode into bytes
     /// Noted: always with "memory" parameter
-    xbytes_t decode_bytes(std::error_code & ec) {
-        assert(!ec);
-        return do_decode_bytes(0, m_decoded_count++, ec);
-    }
-
-    /// decode into bytes<M> with `0 < M <= 32`
-    xbytes_t decode_bytes(std::size_t sz, std::error_code & ec) {
-        if (sz == 0 || sz > BYTES_WIDTH) {
-            ec = error::xerrc_t::abi_data_length_error;
-            return {};
-        }
-        if (m_decoded_count > m_max_data_field_number) {
-            ec = error::xerrc_t::abi_decode_outofrange;
-            return {};
-        }
-        if (m_data.size() < FS_BYTES_SIZE + m_decoded_count * BYTES_WIDTH + sz) {
-            ec = error::xerrc_t::abi_decode_outofrange;
-            return {};
-        }
-        return at_raw(m_decoded_count++, sz);
-    }
+    xbytes_t decode_bytes(std::error_code & ec);
 
     /// decode into uint8/16/32/64/....
     /// or boost bigInt unsigned: u256/u160...
@@ -139,14 +115,6 @@ public:
             std::is_signed<SignedInteger>::value || (boost::multiprecision::is_number<SignedInteger>::value && boost::multiprecision::is_signed_number<SignedInteger>::value),
             "SignedInteger value only");
         return decode_as_s256(m_decoded_count++).convert_to<SignedInteger>();
-    }
-
-    /// decode array[T] with type T
-    /// Noted: always with "memory" parameter
-    template <typename ElementType>
-    std::vector<ElementType> decode_array(std::error_code & ec) {
-        assert(!ec);
-        return do_decode_array<ElementType>(0, m_decoded_count++, ec);
     }
 
     /// get first four bytes of function_selector.
@@ -235,11 +203,17 @@ private:
     }
 
     inline xbytes_t at(std::size_t pos) {
-        return xbytes_t{m_data.begin() + FS_BYTES_SIZE + pos * BYTES_WIDTH, m_data.begin() + FS_BYTES_SIZE + (pos + 1) * BYTES_WIDTH};
+        auto begin = std::next(std::begin(m_data), FS_BYTES_SIZE + pos * BYTES_WIDTH);
+        auto end = std::next(begin, BYTES_WIDTH);
+
+        return xbytes_t{begin, end};
     }
 
     inline xbytes_t at_raw(std::size_t start_pos, std::size_t sz) {
-        return xbytes_t{m_data.begin() + FS_BYTES_SIZE + start_pos * BYTES_WIDTH, m_data.begin() + FS_BYTES_SIZE + start_pos * BYTES_WIDTH + sz};
+        auto begin = std::next(std::begin(m_data), FS_BYTES_SIZE + start_pos * BYTES_WIDTH);
+        auto end = std::next(begin, sz);
+
+        return xbytes_t{begin, end};
     }
 
     std::size_t decode_as_real_position(std::size_t field_num, std::error_code & ec) {
@@ -284,5 +258,41 @@ private:
     // }
 };
 using xabi_decoder_t = xtop_abi_decoder;
+
+template <>
+xfunction_selector_t xtop_abi_decoder::extract<xfunction_selector_t>(std::error_code & ec);
+
+template <>
+common::xeth_address_t xtop_abi_decoder::extract<common::xeth_address_t>(std::error_code & ec);
+
+template <>
+bool xtop_abi_decoder::extract<bool>(std::error_code & ec);
+
+template <>
+int8_t xtop_abi_decoder::extract<int8_t>(std::error_code & ec);
+
+template <>
+int16_t xtop_abi_decoder::extract<int16_t>(std::error_code & ec);
+
+template <>
+uint16_t xtop_abi_decoder::extract<uint16_t>(std::error_code & ec);
+
+template <>
+uint32_t xtop_abi_decoder::extract<uint32_t>(std::error_code & ec);
+
+template <>
+uint64_t xtop_abi_decoder::extract<uint64_t>(std::error_code & ec);
+
+template <>
+s256 xtop_abi_decoder::extract<s256>(std::error_code & ec);
+
+template <>
+u256 xtop_abi_decoder::extract<u256>(std::error_code & ec);
+
+template <>
+std::string xtop_abi_decoder::extract<std::string>(std::error_code & ec);
+
+template <>
+xbytes_t xtop_abi_decoder::extract<xbytes_t>(std::error_code & ec);
 
 NS_END2
