@@ -101,27 +101,6 @@ private:
     xtx_para_t m_para;
 };
 
-class xready_account_t {
-public:
-    xready_account_t(const std::string & account) : m_account(account) {
-    }
-    xready_account_t(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs) : m_account(account), m_txs(txs) {
-    }
-    const std::vector<xcons_transaction_ptr_t> & get_txs() const {
-        return m_txs;
-    }
-    bool put_tx(const xcons_transaction_ptr_t & tx);
-    const std::string & get_addr() const {
-        return m_account;
-    }
-
-private:
-    std::string m_account;
-    mutable std::vector<xcons_transaction_ptr_t> m_txs;
-};
-
-using ready_accounts_t = std::vector<std::shared_ptr<xready_account_t>>;
-
 class tx_info_t {
 public:
     tx_info_t(const std::string & account_addr, const uint256_t & hash, base::enum_transaction_subtype subtype) : m_account_addr(account_addr), m_hash(hash), m_subtype(subtype) {

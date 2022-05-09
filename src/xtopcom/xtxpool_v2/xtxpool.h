@@ -19,6 +19,30 @@ namespace xtxpool_v2 {
 
 #define xtxpool_zone_type_max (5)
 
+struct xtable {
+    xtable() {}
+    xtable(const xtable & table) {
+        _table = table._table;
+    }
+    std::shared_ptr<xtxpool_table_t> _table{nullptr};
+    std::mutex _table_mutex;
+};
+
+class xtables_mgr {
+public:
+    void add_tables(uint8_t zone, uint32_t size);
+    bool subscribe_table(uint8_t zone,
+                         uint16_t subaddr,
+                         xtxpool_resources_face * para,
+                         xtxpool_role_info_t * role,
+                         xtxpool_statistic_t * statistic,
+                         std::set<base::xtable_shortid_t> * all_sid_set);
+    bool unsubscribe_table(uint8_t zone, uint16_t subaddr, xtxpool_role_info_t * role);
+    std::shared_ptr<xtxpool_table_t> get_table(uint8_t zone, uint16_t subaddr) const;
+public:
+    mutable std::vector<xtable> m_tables[xtxpool_zone_type_max];
+};
+
 class xtxpool_t : public xtxpool_face_t {
 public:
     xtxpool_t(const std::shared_ptr<xtxpool_resources_face> & para);
@@ -58,7 +82,7 @@ private:
     std::shared_ptr<xtxpool_table_t> get_txpool_table_by_addr(const std::shared_ptr<xtx_entry> & tx) const;
     std::shared_ptr<xtxpool_table_t> get_txpool_table(uint8_t zone, uint16_t subaddr) const;
 
-    mutable std::vector<std::shared_ptr<xtxpool_table_t>> m_tables[xtxpool_zone_type_max];
+    xtables_mgr m_tables_mgr;
     std::vector<std::shared_ptr<xtxpool_role_info_t>> m_roles[xtxpool_zone_type_max];
     std::shared_ptr<xtxpool_resources_face> m_para;
     mutable std::mutex m_mutex[xtxpool_zone_type_max];

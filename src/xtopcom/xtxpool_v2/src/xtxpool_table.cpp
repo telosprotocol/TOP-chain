@@ -239,11 +239,9 @@ xpack_resource xtxpool_table_t::get_pack_resource(const xtxs_pack_para_t & pack_
         base::xreceiptid_pair_t self_pair;
         self_receiptid_state->find_pair(peer_sid, self_pair);
         uint64_t confirmid_max = self_pair.get_confirmid_max();
-        uint64_t send_rsp_id_max = self_pair.get_send_rsp_id_max();
-        uint64_t confirm_rsp_id_max = self_pair.get_confirm_rsp_id_max();
         uint64_t max_not_need_confirm_receiptid = self_pair.get_sendid_max();
 
-        if (send_rsp_id_max == confirm_rsp_id_max && confirmid_max < max_not_need_confirm_receiptid) {
+        if (self_pair.all_confirmed_as_sender() && confirmid_max < max_not_need_confirm_receiptid) {
             auto receiptid_state_prove =
                 m_para->get_receiptid_state_cache().get_receiptid_state_and_prove(self_sid, peer_sid, confirmid_max + 1, max_not_need_confirm_receiptid);
             if (receiptid_state_prove.m_property_prove_ptr != nullptr && receiptid_state_prove.m_receiptid_state != nullptr) {
