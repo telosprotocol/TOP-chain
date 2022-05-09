@@ -117,8 +117,6 @@ TEST_F(test_tx_v3, exception) {
         std::cout << "run contract tx v3 size: " << stream.size() << std::endl;
 
         std::cout << "sign :" << top::evm_common::toHex(tx->get_authorization()) << std::endl;
-
-        EXPECT_EQ(tx->sign_check(), true);
     }
 
     {
@@ -140,7 +138,7 @@ TEST_F(test_tx_v3, exception) {
         //generate signed transaction
         xobject_ptr_t<top::data::eip_1559_tx> tx = make_object_ptr<top::data::eip_1559_tx>();
         tx->accesslist = "";
-        tx->chainid = rand() % 10000;
+        tx->chainid = 1023;
         tx->data = "";
         tx->gas = rand() % 100000;
         tx->nonce = rand();
@@ -477,7 +475,7 @@ TEST_F(test_tx_v3, v3_performance) {
         //generate signed transaction
         xobject_ptr_t<top::data::eip_1559_tx> tx = make_object_ptr<top::data::eip_1559_tx>();
         tx->accesslist = "";
-        tx->chainid = rand() % 10000;
+        tx->chainid = 1023;
         tx->data = "";
         tx->gas = rand() % 100000;
         tx->nonce = rand();
