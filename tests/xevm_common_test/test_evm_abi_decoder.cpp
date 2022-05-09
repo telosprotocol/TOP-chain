@@ -1,4 +1,4 @@
-#include "xevm_common/xabi_decoder.hpp"
+#include "xevm_common/xabi_decoder.h"
 
 #include <gtest/gtest.h>
 
@@ -17,14 +17,13 @@ TEST(test_abi, integer_only_1) {
         "0x7c4df3eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000000000000000000000000000000000000000000000000000000002", ec);
     ASSERT_TRUE(!ec);
 
-    auto fs = t.function_selector();
-    auto expected = top::from_hex("0x7c4df3ee", ec);
-    ASSERT_EQ(fs, expected);
+    auto selector = t.extract<xfunction_selector_t>(ec);
+    ASSERT_EQ(selector.method_id, 0x7c4df3ee);
 
-    auto fi = t.decode_int<int8_t>(ec);
+    auto fi = t.extract<int8_t>(ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(fi, (int8_t)-1);
-    auto si = t.decode_int<int16_t>(ec);
+    auto si = t.extract<int16_t>(ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(si, (int16_t)2);
 }
@@ -44,17 +43,16 @@ TEST(test_abi, integer_only_2) {
         ec);
     ASSERT_TRUE(!ec);
 
-    auto fs = t.function_selector();
-    auto expected = top::from_hex("0x4ab51583", ec);
-    ASSERT_EQ(fs, expected);
+    auto selector = t.extract<xfunction_selector_t>(ec);
+    ASSERT_EQ(selector.method_id, 0x4ab51583);
 
-    auto fu = t.decode_uint<uint16_t>(ec);
+    auto fu = t.extract<uint16_t>(ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(fu, (uint16_t)1);
-    auto su = t.decode_uint<uint32_t>(ec);
+    auto su = t.extract<uint32_t>(ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(su, (uint32_t)2);
-    auto tu = t.decode_uint<uint64_t>(ec);
+    auto tu = t.extract<uint64_t>(ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(tu, (uint64_t)3);
 }
@@ -71,14 +69,13 @@ TEST(test_abi, integer_only_3) {
         "0xac8d63f0ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffcfc7000000000000000000000000000000000000000000000000000000000000d431", ec);
     ASSERT_TRUE(!ec);
 
-    auto fs = t.function_selector();
-    auto expected = top::from_hex("0xac8d63f0", ec);
-    ASSERT_EQ(fs, expected);
+    auto selector = t.extract<xfunction_selector_t>(ec);
+    ASSERT_EQ(selector.method_id, 0xac8d63f0);
 
-    auto fi = t.decode_int<s256>(ec);
+    auto fi = t.extract<s256>(ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(fi, (s256)-12345);
-    auto su = t.decode_uint<u256>(ec);
+    auto su = t.extract<u256>(ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(su, (u256)54321);
 }
@@ -100,11 +97,10 @@ TEST(test_abi, address_only) {
         ec);
     ASSERT_TRUE(!ec);
 
-    auto fs = t.function_selector();
-    auto expected = top::from_hex("0xb6333743", ec);
-    ASSERT_EQ(fs, expected);
+    auto selector = t.extract<xfunction_selector_t>(ec);
+    ASSERT_EQ(selector.method_id, 0xb6333743);
 
-    auto addr1 = t.decode_address(ec);
+    auto addr1 = t.extract<common::xeth_address_t>(ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(addr1.to_hex_string(), "0x4dce5c8961e283786cb31ad7fc072347227d7ea2");
 
@@ -134,15 +130,14 @@ TEST(test_abi, string_only) {
         ec);
     ASSERT_TRUE(!ec);
 
-    auto fs = t.function_selector();
-    auto expected = top::from_hex("0xcad1ec28", ec);
-    ASSERT_EQ(fs, expected);
+    auto selector = t.extract<xfunction_selector_t>(ec);
+    ASSERT_EQ(selector.method_id, 0xcad1ec28);
 
-    auto s1 = t.decode_string(ec);
+    auto s1 = t.extract<std::string>(ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(s1, "first");
 
-    auto s2 = t.decode_string(ec);
+    auto s2 = t.extract<std::string>(ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(s2, "second");
 }
@@ -161,12 +156,11 @@ TEST(test_abi, wiki_sample_1) {
 
     ASSERT_TRUE(!ec);
 
-    auto fs = t.function_selector();
-    auto expected = top::from_hex("0xfce353f6", ec);
-    ASSERT_EQ(fs, expected);
+    auto selector = t.extract<xfunction_selector_t>(ec);
+    ASSERT_EQ(selector.method_id, 0xfce353f6);
 
     auto b1 = t.decode_bytes(3, ec);
-    expected = top::to_bytes(std::string{"abc"});
+    auto expected = top::to_bytes(std::string{"abc"});
     ASSERT_TRUE(!ec);
     ASSERT_EQ(b1, expected);
 
@@ -202,16 +196,15 @@ TEST(test_abi, wiki_sample_2) {
 
     ASSERT_TRUE(!ec);
 
-    auto fs = t.function_selector();
-    auto expected = top::from_hex("0xa5643bf2", ec);
-    ASSERT_EQ(fs, expected);
+    auto selector = t.extract<xfunction_selector_t>(ec);
+    ASSERT_EQ(selector.method_id, 0xa5643bf2);
 
-    auto bs = t.decode_bytes(ec);
-    expected = top::from_hex("0x123456789000000000000000000000000111111111111111111111", ec);
+    auto bs = t.extract<xbytes_t>(ec);
+    auto expected = top::from_hex("0x123456789000000000000000000000000111111111111111111111", ec);
     ASSERT_EQ(bs, expected);
     ASSERT_TRUE(!ec);
 
-    auto b = t.decode_bool(ec);
+    auto b = t.extract<bool>(ec);
     ASSERT_EQ(b, true);
     ASSERT_TRUE(!ec);
 
@@ -247,11 +240,10 @@ TEST(test_abi, wiki_sample_3) {
 
     ASSERT_TRUE(!ec);
 
-    auto fs = t.function_selector();
-    auto expected = top::from_hex("0x8be65246", ec);
-    ASSERT_EQ(fs, expected);
+    auto selector = t.extract<xfunction_selector_t>(ec);
+    ASSERT_EQ(selector.method_id, 0x8be65246);
 
-    auto ui = t.decode_uint<u256>(ec);
+    auto ui = t.extract<u256>(ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(ui, u256(0x123));
 
@@ -263,10 +255,10 @@ TEST(test_abi, wiki_sample_3) {
     auto b10 = t.decode_bytes(10, ec);
     ASSERT_TRUE(b10.size() == 10);
     ASSERT_TRUE(!ec);
-    expected = top::to_bytes(std::string{"1234567890"});
+    auto expected = top::to_bytes(std::string{"1234567890"});
     ASSERT_EQ(b10, expected);
 
-    auto b = t.decode_bytes(ec);
+    auto b = t.extract<xbytes_t>(ec);
     ASSERT_TRUE(!ec);
     expected = top::to_bytes(std::string{"Hello, world!"});
     ASSERT_EQ(b, expected);
@@ -314,9 +306,8 @@ TEST(test_abi, wiki_sample_4) {
 
     ASSERT_TRUE(!ec);
 
-    auto fs = t.function_selector();
-    auto expected = top::from_hex("0x2289b18c", ec);
-    ASSERT_EQ(fs, expected);
+    auto selector = t.extract<xfunction_selector_t>(ec);
+    ASSERT_EQ(selector.method_id, 0x2289b18c);
 
     auto vvu256 = t.decode_array<std::vector<u256>>(ec);
     ASSERT_TRUE(!ec);
@@ -385,9 +376,8 @@ TEST(test_abi, array_recursive_test) {
 
     ASSERT_TRUE(!ec);
 
-    auto fs = t.function_selector();
-    auto expected = top::from_hex("0x65bf4b82", ec);
-    ASSERT_EQ(fs, expected);
+    auto selector = t.extract<xfunction_selector_t>(ec);
+    ASSERT_EQ(selector.method_id, 0x65bf4b82);
 
     auto vvvu256 = t.decode_array<std::vector<std::vector<u256>>>(ec);
     ASSERT_TRUE(!ec);
