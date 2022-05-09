@@ -691,6 +691,7 @@ bool xblocktool_t::get_receiptid_state_and_prove(base::xvblockstore_t * blocksto
             nil_block_num++;
             if (nil_block_num > 2) {
                 xerror("xblocktool_t::get_receiptid_state_and_prove, continuous nil table block number is more than 2,table:%s,height:%llu", account.get_address().c_str(), height);
+                return false;
             }
 
             auto commit_block =
@@ -701,7 +702,8 @@ bool xblocktool_t::get_receiptid_state_and_prove(base::xvblockstore_t * blocksto
             }
             height = commit_block->get_height();
 
-            if (commit_block->get_block_class() != base::enum_xvblock_class_nil) {
+            block_class = commit_block->get_block_class();
+            if (block_class != base::enum_xvblock_class_nil) {
                 base::xvblock_t * _block = commit_block.get();
                 _block->add_ref();
                 non_nil_commit_block.attach(_block);
@@ -710,7 +712,7 @@ bool xblocktool_t::get_receiptid_state_and_prove(base::xvblockstore_t * blocksto
         }
     }
 
-    if (height == 0 || block_class == base::enum_xvblock_class_nil) {
+    if (non_nil_commit_block == nullptr) {
         xinfo("xblocktool_t::get_receiptid_state_and_prove latest commit height is 0, no need send receipt id state.table:%s", account.get_address().c_str());
         return false;
     }
@@ -726,14 +728,6 @@ bool xblocktool_t::get_receiptid_state_and_prove(base::xvblockstore_t * blocksto
         xinfo("xblocktool_t::get_receiptid_state_and_prove cert block load fail.table:%s, cert height:%llu", account.get_address().c_str(), non_nil_commit_block->get_height() + 2);
         return false;
     }
-
-    // {
-    //     auto property_prove1 = base::xpropertyprove_build_t::create_property_prove(non_nil_commit_block.get(), cert_block.get(), bstate.get(), XPROPERTY_TABLE_RECEIPTID);
-    //     if (property_prove1 == nullptr) {
-    //         xwarn("xblocktool_t::get_receiptid_state_and_prove create receipt state fail 1.table:%s, commit height:%llu", account.get_address().c_str(), non_nil_commit_block->get_height());
-    //         return false;
-    //     }
-    // }
 
     xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(bstate.get());
     if (tablestate->get_receiptid_state()->get_all_receiptid_pairs()->get_all_pairs().empty()) {
