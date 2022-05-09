@@ -111,7 +111,15 @@ int32_t xtransaction_v3_t::do_read_without_hash_signature(base::xstream_t & in, 
     string strEncoded;
     strEncoded.append((char*)encoded.data(), encoded.size());
     m_unsign_hash = top::utl::xkeccak256_t::digest(strEncoded);
-    top::uint256_t origin_hash = top::utl::xkeccak256_t::digest(m_origindata);
+    string strTxString;
+    if (m_EipVersion != EIP_XXXX::EIP_LEGACY) {
+         strTxString.append((char*)&m_EipVersion, 1);
+         strTxString.append(m_origindata);
+    }
+    else {
+         strTxString.append(m_origindata);
+    }
+    top::uint256_t origin_hash = top::utl::xkeccak256_t::digest(strTxString);
     string strOriginDigest;
     strOriginDigest.append((char*)origin_hash.data(), origin_hash.size());
     m_hash = top::base::xstring_utl::to_hex(strOriginDigest);
