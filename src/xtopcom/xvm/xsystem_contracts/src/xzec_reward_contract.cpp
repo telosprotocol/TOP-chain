@@ -1405,28 +1405,27 @@ void xzec_reward_contract::calc_validator_workload_rewards(data::system_contract
     return;
 }
 
-void xzec_reward_contract::calc_eth_workload_rewards(data::system_contract::xreg_node_info const & node,
-                                                     std::vector<uint32_t> const & eth_num,
-                                                     std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> const & eth_workloads_detail,
-                                                     const ::uint128_t eth_group_workload_rewards,
-                                                     ::uint128_t & reward_to_self) {
-    xdbg("[xzec_reward_contract::calc_eth_workload_rewards] account: %s, %d group report workloads, group_total_rewards: [%llu, %u]\n",
+void xzec_reward_contract::calc_eth_auditor_workload_rewards(data::system_contract::xreg_node_info const & node,
+                                                             std::vector<uint32_t> const & eth_num,
+                                                             std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> const & eth_workloads_detail,
+                                                             const ::uint128_t eth_group_workload_rewards,
+                                                             ::uint128_t & reward_to_self) {
+    xdbg("[xzec_reward_contract::calc_eth_auditor_workload_rewards] account: %s, %d group report workloads, group_total_rewards: [%llu, %u]\n",
          node.m_account.c_str(),
          eth_workloads_detail.size(),
          static_cast<uint64_t>(eth_group_workload_rewards / data::system_contract::REWARD_PRECISION),
          static_cast<uint32_t>(eth_group_workload_rewards % data::system_contract::REWARD_PRECISION));
-    XCONTRACT_ENSURE(eth_num.size() == num_type_idx_num, "validator_num array not 3");
+    XCONTRACT_ENSURE(eth_num.size() == num_type_idx_num, "array not 3");
     auto divide_num = eth_num[valid_idx];
     reward_to_self = 0;
     if (0 == divide_num) {
         return;
     }
-    // todo (Lon)
-    // if (!node.can_be_eth()) {
-    //     return;
-    // }
+    if (!node.can_be_evm_auditor()) {
+        return;
+    }
     for (auto & workload : eth_workloads_detail) {
-        xdbg("[xzec_reward_contract::calc_eth_workload_rewards] account: %s, group id: %s, group size: %d, group_total_workload: %u\n",
+        xdbg("[xzec_reward_contract::calc_eth_auditor_workload_rewards] account: %s, group id: %s, group size: %d, group_total_workload: %u\n",
              node.m_account.c_str(),
              workload.first.to_string().c_str(),
              workload.second.m_leader_count.size(),
@@ -1436,7 +1435,53 @@ void xzec_reward_contract::calc_eth_workload_rewards(data::system_contract::xreg
             auto const & work = it->second;
             reward_to_self += eth_group_workload_rewards * work / workload.second.group_total_workload;
             xdbg(
-                "[xzec_reward_contract::calc_eth_workload_rewards] account: %s, group id: %s, work: %d, total_workload: %d, group_total_workload: [%llu, %u], reward: "
+                "[xzec_reward_contract::calc_eth_auditor_workload_rewards] account: %s, group id: %s, work: %d, total_workload: %d, group_total_workload: [%llu, %u], reward: "
+                "[%llu, %u]\n",
+                node.m_account.c_str(),
+                workload.first.to_string().c_str(),
+                work,
+                workload.second.group_total_workload,
+                static_cast<uint64_t>(eth_group_workload_rewards / data::system_contract::REWARD_PRECISION),
+                static_cast<uint32_t>(eth_group_workload_rewards % data::system_contract::REWARD_PRECISION),
+                static_cast<uint64_t>(reward_to_self / data::system_contract::REWARD_PRECISION),
+                static_cast<uint32_t>(reward_to_self % data::system_contract::REWARD_PRECISION));
+        }
+    }
+
+    return;
+}
+
+void xzec_reward_contract::calc_eth_validator_workload_rewards(data::system_contract::xreg_node_info const & node,
+                                                               std::vector<uint32_t> const & eth_num,
+                                                               std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> const & eth_workloads_detail,
+                                                               const ::uint128_t eth_group_workload_rewards,
+                                                               ::uint128_t & reward_to_self) {
+    xdbg("[xzec_reward_contract::calc_eth_validator_workload_rewards] account: %s, %d group report workloads, group_total_rewards: [%llu, %u]\n",
+         node.m_account.c_str(),
+         eth_workloads_detail.size(),
+         static_cast<uint64_t>(eth_group_workload_rewards / data::system_contract::REWARD_PRECISION),
+         static_cast<uint32_t>(eth_group_workload_rewards % data::system_contract::REWARD_PRECISION));
+    XCONTRACT_ENSURE(eth_num.size() == num_type_idx_num, "array not 3");
+    auto divide_num = eth_num[valid_idx];
+    reward_to_self = 0;
+    if (0 == divide_num) {
+        return;
+    }
+    if (!node.can_be_evm_validator()) {
+        return;
+    }
+    for (auto & workload : eth_workloads_detail) {
+        xdbg("[xzec_reward_contract::calc_eth_validator_workload_rewards] account: %s, group id: %s, group size: %d, group_total_workload: %u\n",
+             node.m_account.c_str(),
+             workload.first.to_string().c_str(),
+             workload.second.m_leader_count.size(),
+             workload.second.group_total_workload);
+        auto it = workload.second.m_leader_count.find(node.m_account.value());
+        if (it != workload.second.m_leader_count.end()) {
+            auto const & work = it->second;
+            reward_to_self += eth_group_workload_rewards * work / workload.second.group_total_workload;
+            xdbg(
+                "[xzec_reward_contract::calc_eth_validator_workload_rewards] account: %s, group id: %s, work: %d, total_workload: %d, group_total_workload: [%llu, %u], reward: "
                 "[%llu, %u]\n",
                 node.m_account.c_str(),
                 workload.first.to_string().c_str(),
@@ -1707,15 +1752,22 @@ void xzec_reward_contract::calc_nodes_rewards_v5(common::xlogic_time_t const cur
                 self_reward += reward_to_self;
             }
         }
-        // todo (Lon)
-        // if (node.can_be_eth()) {
-        //     ::uint128_t reward_to_self = 0;
-        //     calc_eth_workload_rewards(node, role_nums[eth_idx], property_param.eth_workloads_detail, eth_group_workload_rewards, reward_to_self);
-        //     if (reward_to_self != 0) {
-        //         issue_detail.m_node_rewards[account.to_string()].m_eth_reward = reward_to_self;
-        //         self_reward += reward_to_self;
-        //     }
-        // }
+        if (node.can_be_evm_auditor()) {
+            ::uint128_t reward_to_self = 0;
+            calc_eth_auditor_workload_rewards(node, role_nums[evm_auditor_idx], property_param.evm_auditor_workloads_detail, evm_auditor_group_workload_rewards, reward_to_self);
+            if (reward_to_self != 0) {
+                issue_detail.m_node_rewards[account.to_string()].m_eth_reward = reward_to_self;
+                self_reward += reward_to_self;
+            }
+        }
+        if (node.can_be_evm_validator()) {
+            ::uint128_t reward_to_self = 0;
+            calc_eth_validator_workload_rewards(node, role_nums[evm_validator_idx], property_param.evm_validator_workloads_detail, evm_validator_group_workload_rewards, reward_to_self);
+            if (reward_to_self != 0) {
+                issue_detail.m_node_rewards[account.to_string()].m_eth_reward = reward_to_self;
+                self_reward += reward_to_self;
+            }
+        }
         // 3.3 vote reward
         if (node.can_be_auditor() && node.deposit() > 0 && auditor_total_votes > 0) {
             ::uint128_t reward_to_self = 0;

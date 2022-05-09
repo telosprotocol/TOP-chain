@@ -474,19 +474,34 @@ private:
                                        ::uint128_t & reward_to_self);
 
     /**
-     * @brief calculate calc eth worklaod rewards
+     * @brief calculate calc eth validator worklaod rewards
      *
      * @param node node info
-     * @param eth_num eth nums caculated in calc_role_nums
-     * @param eth_workloads_detail workloads detail of all eth groups
-     * @param eth_group_workload_rewards single roup reward of eth groups
+     * @param eth_validator_num eth nums caculated in calc_role_nums
+     * @param eth_validator_workloads_detail workloads detail of all eth groups
+     * @param eth_validator_group_workload_rewards single roup reward of eth groups
      * @param reward_to_self node self reward
      */
-    void calc_eth_workload_rewards(data::system_contract::xreg_node_info const & node,
-                                   std::vector<uint32_t> const & eth_num,
-                                   std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> const & eth_workloads_detail,
-                                   const ::uint128_t eth_group_workload_rewards,
-                                   ::uint128_t & reward_to_self);
+    void calc_eth_validator_workload_rewards(data::system_contract::xreg_node_info const & node,
+                                             std::vector<uint32_t> const & eth_validator_num,
+                                             std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> const & eth_validator_workloads_detail,
+                                             const ::uint128_t eth_validator_group_workload_rewards,
+                                             ::uint128_t & reward_to_self);
+
+    /**
+     * @brief calculate calc eth auditor worklaod rewards
+     *
+     * @param node node info
+     * @param eth_auditor_num eth nums caculated in calc_role_nums
+     * @param eth_auditor_workloads_detail workloads detail of all eth groups
+     * @param eth_auditor_group_workload_rewards single roup reward of eth groups
+     * @param reward_to_self node self reward
+     */
+    void calc_eth_auditor_workload_rewards(data::system_contract::xreg_node_info const & node,
+                                           std::vector<uint32_t> const & eth_auditor_num,
+                                           std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> const & eth_auditor_workloads_detail,
+                                           const ::uint128_t eth_auditor_group_workload_rewards,
+                                           ::uint128_t & reward_to_self);
     /**
      * @brief calculate vote reward
      *
