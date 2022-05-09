@@ -8,6 +8,7 @@
 #include "xcommon/xaccount_address.h"
 #include "xcommon/xeth_address.h"
 #include "xevm_common/common_data.h"
+#include "xevm_common/xabi_decoder.h"
 
 #include <cinttypes>
 
@@ -31,15 +32,6 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
     // allowance(address,address)            => dd62ed3e
     // approveTOP(bytes32,uint64)            => 24655e23
     //--------------------------------------------------
-#if defined(__LITTLE_ENDIAN__)
-    constexpr uint32_t method_id_decimals{0x67e53c31};
-    constexpr uint32_t method_id_total_supply{0xdd0d1618};
-    constexpr uint32_t method_id_balance_of{0x3182a070};
-    constexpr uint32_t method_id_transfer{0xbb9c05a9};
-    constexpr uint32_t method_id_transfer_from{0xdd72b823};
-    constexpr uint32_t method_id_approve{0xb3a75e09};
-    constexpr uint32_t method_id_allowance{0x3eed62dd};
-#elif defined(__BIG_ENDIAN__)
     constexpr uint32_t method_id_decimals{0x313ce567};
     constexpr uint32_t method_id_total_supply{0x18160ddd};
     constexpr uint32_t method_id_balance_of{0x70a08231};
@@ -47,13 +39,11 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
     constexpr uint32_t method_id_transfer_from{0x23b872dd};
     constexpr uint32_t method_id_approve{0x095ea7b3};
     constexpr uint32_t method_id_allowance{0xdd62ed3e};
-#else
-#    error "I don't know what architecture this is!"
-#endif
+
     assert(state_ctx);
 
     // erc20_uuid (1 byte) | erc20_method_id (4 bytes) | parameters (depends)
-    if (input.size() < 5) {
+    if (input.empty()) {
         err.fail_status = precompile_error::Fatal;
         err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
@@ -70,14 +60,28 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
         return false;
     }
 
-    xbytes_t const data{std::next(std::begin(input), 1), std::end(input)};
-    xbytes_t const method_id_bytes{std::begin(data), std::next(std::begin(data), 4)};
-    xbytes_t const parameters{std::next(std::begin(data), 4), std::end(data)};
+    std::error_code ec;
+    evm_common::xabi_decoder_t abi_decoder = evm_common::xabi_decoder_t::build_from(xbytes_t{std::next(std::begin(input), 1), std::end(input)}, ec);
+    if (ec) {
+        err.fail_status = precompile_error::Fatal;
+        err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-    uint32_t method_id;
-    std::memcpy(&method_id, method_id_bytes.data(), 4);
+        xwarn("predefined erc20 contract: illegal input data");
 
-    switch (method_id) {
+        return false;
+    }
+
+    auto function_selector = abi_decoder.extract<evm_common::xfunction_selector_t>(ec);
+    if (ec) {
+        err.fail_status = precompile_error::Fatal;
+        err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
+
+        xwarn("predefined erc20 contract: illegal input function selector");
+
+        return false;
+    }
+
+    switch (function_selector.method_id) {
     case method_id_decimals: {
         uint64_t const decimals_gas_cost = 2535;
 
@@ -91,11 +95,9 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
         }
 
         xbytes_t result(32, 0);
-        if (!parameters.empty()) {
-            err.fail_status = precompile_error::Revert;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
-            err.cost = target_gas;
-            err.output = result;
+        if (!abi_decoder.empty()) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("predefined erc20 contract: decimals with non-empty parameter");
 
@@ -122,11 +124,9 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
             return false;
         }
 
-        if (!parameters.empty()) {
-            err.fail_status = precompile_error::Revert;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
-            err.cost = total_supply_gas_cost;
-            err.output = xbytes_t(32, 0);
+        if (!abi_decoder.empty()) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("predefined erc20 contract: total supply with non-empty parameter");
 
@@ -152,34 +152,25 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
             return false;
         }
 
-        xbytes_t result(32, 0);
-        if (parameters.size() != 32) {
-            err.fail_status = precompile_error::Revert;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
-            err.cost = balance_of_gas_cost;
-            err.output = result;
+        if (abi_decoder.size() != 1) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined erc20 contract: balance_of with invalid parameter (length not 32)");
+            xwarn("predefined erc20 contract: balance_of with invalid parameter (parameter count not one)");
 
             return false;
         }
 
-        xbytes_t const prefix{std::begin(parameters), std::next(std::begin(parameters), 12)};
-        if (std::any_of(std::begin(prefix), std::end(prefix), [](xbyte_t byte) { return byte != 0; })) {
-            err.fail_status = precompile_error::Revert;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
-            err.cost = balance_of_gas_cost;
-            err.output = result;
+        common::xeth_address_t const eth_address = abi_decoder.extract<common::xeth_address_t>(ec);
+        if (ec) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("predefined erc20 contract: balance_of invalid account");
 
             return false;
         }
 
-        xbytes_t const account_address_bytes{std::next(std::begin(parameters), 12), std::next(std::begin(parameters), 32)};
-        assert(account_address_bytes.size() == 20);
-
-        common::xeth_address_t const eth_address = common::xeth_address_t::build_from(account_address_bytes);
         auto state = state_ctx->load_unit_state(common::xaccount_address_t::build_from(eth_address, base::enum_vaccount_addr_type_secp256k1_evm_user_account).vaccount());
 
         evm_common::u256 value{0};
@@ -209,7 +200,7 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
             return false;
         }
 
-        result = top::to_bytes(value);
+        auto result = top::to_bytes(value);
         assert(result.size() == 32);
 
         output.cost = balance_of_gas_cost;
@@ -233,11 +224,10 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
         }
 
         xbytes_t result(32, 0);
-
         if (is_static) {
             err.fail_status = precompile_error::Revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
-            err.cost = transfer_reverted_gas_cost;
+            err.cost = transfer_gas_cost;
             err.output = result;
 
             xwarn("predefined erc20 contract: transfer is not allowed in static context");
@@ -245,38 +235,35 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
             return false;
         }
 
-        if (parameters.size() != 32 * 2) {
-            err.fail_status = precompile_error::Revert;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
-            err.cost = transfer_reverted_gas_cost;
-            err.output = result;
+        if (abi_decoder.size() != 2) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("predefined erc20 contract: transfer with invalid parameter");
 
             return false;
         }
 
-        xbytes_t const prefix{std::begin(parameters), std::next(std::begin(parameters), 12)};
-        if (std::any_of(std::begin(prefix), std::end(prefix), [](xbyte_t byte) { return byte != 0; })) {
-            err.fail_status = precompile_error::Revert;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
-            err.cost = transfer_reverted_gas_cost;
-            err.output = result;
+        common::xeth_address_t recipient_address = abi_decoder.extract<common::xeth_address_t>(ec);
+        if (ec) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("predefined erc20 contract: transfer with invalid account");
 
             return false;
         }
-
-        xbytes_t const to_account_address_bytes{std::next(std::begin(parameters), 12), std::next(std::begin(parameters), 32)};
-        assert(to_account_address_bytes.size() == 20);
-        xbytes_t const value_bytes{std::next(std::begin(parameters), 32), std::next(std::begin(parameters), 32 + 32)};
-        assert(value_bytes.size() == 32);
-
-        common::xeth_address_t recipient_address = common::xeth_address_t::build_from(to_account_address_bytes);
         common::xaccount_address_t recipient_account_address = common::xaccount_address_t::build_from(recipient_address, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
 
-        evm_common::u256 const value = top::from_bytes<evm_common::u256>(value_bytes);
+        evm_common::u256 const value = abi_decoder.extract<evm_common::u256>(ec);
+        if (ec) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
+
+            xwarn("predefined erc20 contract: transfer with invalid value");
+
+            return false;
+        }
 
         auto sender_state = state_ctx->load_unit_state(common::xaccount_address_t::build_from(context.caller, base::enum_vaccount_addr_type_secp256k1_evm_user_account).vaccount());
         auto recver_state = state_ctx->load_unit_state(recipient_account_address.vaccount());
@@ -332,11 +319,10 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
         }
 
         xbytes_t result(32, 0);
-
         if (is_static) {
             err.fail_status = precompile_error::Revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
-            err.cost = transfer_from_reverted_gas_cost;
+            err.cost = transfer_from_gas_cost;
             err.output = result;
 
             xwarn("predefined erc20 contract: transfer_from is not allowed in static context");
@@ -344,57 +330,49 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
             return false;
         }
 
-        if (parameters.size() != 32 * 3) {
-            err.fail_status = precompile_error::Revert;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
-            err.cost = transfer_from_reverted_gas_cost;
-            err.output = result;
+        if (abi_decoder.size() != 3) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("predefined erc20 contract: transfer_from with invalid parameters");
 
             return false;
         }
 
-        xbytes_t prefix{std::begin(parameters), std::next(std::begin(parameters), 12)};
-        if (std::any_of(std::begin(prefix), std::end(prefix), [](xbyte_t byte) { return byte != 0; })) {
-            err.fail_status = precompile_error::Revert;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
-            err.cost = transfer_from_reverted_gas_cost;
-            err.output = result;
+        std::error_code ec;
+        common::xeth_address_t owner_address = abi_decoder.extract<common::xeth_address_t>(ec);
+        if (ec) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("predefined erc20 contract: transfer_from invalid owner account");
 
             return false;
         }
 
-        prefix = xbytes_t{std::next(std::begin(parameters), 32), std::next(std::begin(parameters), 32 + 12)};
-        if (std::any_of(std::begin(prefix), std::end(prefix), [](xbyte_t byte) { return byte != 0; })) {
-            err.fail_status = precompile_error::Revert;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
-            err.cost = transfer_from_reverted_gas_cost;
-            err.output = result;
+        common::xeth_address_t recipient_address = abi_decoder.extract<common::xeth_address_t>(ec);
+        if (ec) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("predefined erc20 contract: transfer_from invalid recipient account");
 
             return false;
         }
 
-        xbytes_t const owner_account_address_bytes{std::next(std::begin(parameters), 12), std::next(std::begin(parameters), 32)};
-        assert(owner_account_address_bytes.size() == 20);
-        xbytes_t const to_account_address_bytes{std::next(std::begin(parameters), 32 + 12), std::next(std::begin(parameters), 32 + 32)};
-        assert(to_account_address_bytes.size() == 20);
-        xbytes_t const value_bytes{std::next(std::begin(parameters), 32 * 2), std::next(std::begin(parameters), 32 * 3)};
-        assert(value_bytes.size() == 32);
-
-        common::xeth_address_t owner_address = common::xeth_address_t::build_from(owner_account_address_bytes);
-        common::xeth_address_t recipient_address = common::xeth_address_t::build_from(to_account_address_bytes);
-
         common::xaccount_address_t owner_account_address = common::xaccount_address_t::build_from(owner_address, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
         common::xaccount_address_t recipient_account_address = common::xaccount_address_t::build_from(recipient_address, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
 
-        evm_common::u256 value = top::from_bytes<evm_common::u256>(value_bytes);
+        evm_common::u256 value = abi_decoder.extract<evm_common::u256>(ec);
+        if (ec) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-        std::error_code ec;
+            xwarn("predefined erc20 contract: transfer_from invalid value");
+
+            return false;
+        }
+
         auto owner_state = state_ctx->load_unit_state(owner_account_address.vaccount());
         owner_state->update_allowance(erc20_token_id,
                                       common::xaccount_address_t::build_from(context.caller, base::enum_vaccount_addr_type_secp256k1_evm_user_account),
@@ -465,39 +443,37 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
             return false;
         }
 
-        if (parameters.size() != 32 * 2) {
-            err.fail_status = precompile_error::Revert;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
-            err.cost = approve_gas_cost;
-            err.output = result;
+        if (abi_decoder.size() != 2) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("predefined erc20 contract: approve with invalid parameter");
 
             return false;
         }
 
-        xbytes_t const prefix{std::begin(parameters), std::next(std::begin(parameters), 12)};
-        if (std::any_of(std::begin(prefix), std::end(prefix), [](xbyte_t byte) { return byte != 0; })) {
-            err.fail_status = precompile_error::Revert;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
-            err.cost = approve_gas_cost;
-            err.output = result;
+        std::error_code ec;
+        common::xeth_address_t spender_address = abi_decoder.extract<common::xeth_address_t>(ec);
+        if (ec) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("predefined erc20 contract: approve invalid spender account");
 
             return false;
         }
-
-        xbytes_t const spender_account_bytes{std::next(std::begin(parameters), 12), std::next(std::begin(parameters), 32)};
-        assert(spender_account_bytes.size() == 20);
-        xbytes_t const amount_bytes{std::next(std::begin(parameters), 32), std::next(std::begin(parameters), 32 + 32)};
-        assert(amount_bytes.size() == 32);
-
-        common::xeth_address_t spender_address = common::xeth_address_t::build_from(spender_account_bytes);
         common::xaccount_address_t spender_account_address = common::xaccount_address_t::build_from(spender_address, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
-        evm_common::u256 amount = top::from_bytes<evm_common::u256>(amount_bytes);
 
-        std::error_code ec;
+        evm_common::u256 amount = abi_decoder.extract<evm_common::u256>(ec);
+        if (ec) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
+
+            xwarn("predefined erc20 contract: approve invalid value");
+
+            return false;
+        }
+
         auto sender_state = state_ctx->load_unit_state(common::xaccount_address_t::build_from(context.caller, base::enum_vaccount_addr_type_secp256k1_evm_user_account).vaccount());
         sender_state->approve(erc20_token_id, spender_account_address, amount, ec);
 
@@ -526,7 +502,7 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
         } else {
             err.fail_status = precompile_error::Revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
-            err.cost = approve_gas_cost;
+            err.cost = approve_gas_cost / 2;
             err.output = result;
 
             xerror("predefined erc20 contract: approve reverted. ec %" PRIi32 " category %s msg %s", ec.value(), ec.category().name(), ec.message().c_str());
@@ -547,53 +523,39 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
         }
 
         xbytes_t result(32, 0);
-        if (parameters.size() != 32 * 2) {
-            err.fail_status = precompile_error::Revert;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
-            err.cost = allowance_gas_cost;
-            err.output = result;
+        if (abi_decoder.size() != 2) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("predefined erc20 contract: allowance with invalid parameter");
 
             return false;
         }
 
-        xbytes_t prefix{std::begin(parameters), std::next(std::begin(parameters), 12)};
-        if (std::any_of(std::begin(prefix), std::end(prefix), [](xbyte_t byte) { return byte != 0; })) {
-            err.fail_status = precompile_error::Revert;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
-            err.cost = allowance_gas_cost;
-            err.output = result;
+        std::error_code ec;
+        common::xeth_address_t owner_address = abi_decoder.extract<common::xeth_address_t>(ec);
+        if (ec) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("predefined erc20 contract: allowance invalid owner account");
 
             return false;
         }
 
-        prefix = xbytes_t{std::next(std::begin(parameters), 32), std::next(std::begin(parameters), 32 + 12)};
-        if (std::any_of(std::begin(prefix), std::end(prefix), [](xbyte_t byte) { return byte != 0; })) {
-            err.fail_status = precompile_error::Revert;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
-            err.cost = allowance_gas_cost;
-            err.output = result;
+        common::xeth_address_t spender_address = abi_decoder.extract<common::xeth_address_t>(ec);
+        if (ec) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("predefined erc20 contract: allowance invalid spender account");
 
             return false;
         }
 
-        xbytes_t const owner_account_bytes{std::next(std::begin(parameters), 12), std::next(std::begin(parameters), 32)};
-        assert(owner_account_bytes.size() == 20);
-        xbytes_t const spender_account_bytes{std::next(std::begin(parameters), 32 + 12), std::next(std::begin(parameters), 32 + 32)};
-        assert(spender_account_bytes.size() == 20);
-
-        common::xeth_address_t owner_address = common::xeth_address_t::build_from(owner_account_bytes);
-        common::xeth_address_t spender_address = common::xeth_address_t::build_from(spender_account_bytes);
-
         common::xaccount_address_t owner_account_address = common::xaccount_address_t::build_from(owner_address, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
         common::xaccount_address_t spender_account_address = common::xaccount_address_t::build_from(spender_address, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
 
-        std::error_code ec;
         auto owner_state = state_ctx->load_unit_state(owner_account_address.vaccount());
         result = top::to_bytes(owner_state->allowance(erc20_token_id, spender_account_address, ec));
         assert(result.size() == 32);
