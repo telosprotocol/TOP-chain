@@ -156,4 +156,60 @@ evm_common::u256 from_string<evm_common::u256>(std::string const & input, std::e
     return r;
 }
 
+template <>
+xbytes_t to_bytes<evm_common::u160>(evm_common::u160 const & value) {
+    xbytes_t bytes(20, 0);
+    evm_common::u160 val = value;
+    for (auto i = bytes.size(); i != 0; val >>= 8, i--) {
+        evm_common::u160 v = val & static_cast<evm_common::u160>(0xff);
+        bytes[i - 1] = v.convert_to<xbyte_t>();
+    }
+    return bytes;
+}
+
+template <>
+evm_common::u160 from_bytes<evm_common::u160>(xbytes_t const & input, std::error_code & ec) {
+    assert(input.size() >= 20);
+
+    if (input.size() < 20) {
+        ec = evm_common::error::xerrc_t::not_enough_data;
+        return 0;
+    }
+
+    evm_common::u160 r{0};
+    for (size_t i = 0; i < 20; ++i) {
+        r = (r << 8) | input[i];
+    }
+
+    return r;
+}
+
+template <>
+std::string to_string<evm_common::u160>(evm_common::u160 const & value) {
+    std::string str(20, 0);
+    evm_common::u160 val = value;
+    for (auto i = str.size(); i != 0; val >>= 8, i--) {
+        evm_common::u160 v = val & static_cast<evm_common::u160>(0xff);
+        str[i - 1] = v.convert_to<xbyte_t>();
+    }
+    return str;
+}
+
+template <>
+evm_common::u160 from_string<evm_common::u160>(std::string const & input, std::error_code & ec) {
+    assert(input.size() >= 20);
+
+    if (input.size() < 20) {
+        ec = evm_common::error::xerrc_t::not_enough_data;
+        return 0;
+    }
+
+    evm_common::u160 r{0};
+    for (size_t i = 0; i < 20; ++i) {
+        r = (r << 8) |= input[i];
+    }
+
+    return r;
+}
+
 NS_END1

@@ -193,9 +193,23 @@
             "gas_limit": 34000,
             "value": "0",
             "expected": {
-                "status": 1,
+                "status": 5,
                 "extra_message": "",
-                "gas_used": 28952,
+                "gas_used": 34000,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "balanceOf_too_much_data",
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
+            "target_address": "erc20_top",
+            "data": "0x70a082310000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea40000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea4",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 5,
+                "extra_message": "",
+                "gas_used": 34000,
                 "logs": []
             }
         },
@@ -249,9 +263,9 @@
             "gas_limit": 34000,
             "value": "0",
             "expected": {
-                "status": 1,
+                "status": 5,
                 "extra_message": "",
-                "gas_used": 29527,
+                "gas_used": 34000,
                 "logs": []
             }
         },
@@ -263,9 +277,9 @@
             "gas_limit": 34000,
             "value": "0",
             "expected": {
-                "status": 1,
+                "status": 5,
                 "extra_message": "",
-                "gas_used": 29988,
+                "gas_used": 34000,
                 "logs": []
             }
         },
@@ -277,9 +291,9 @@
             "gas_limit": 34000,
             "value": "0",
             "expected": {
-                "status": 1,
+                "status": 5,
                 "extra_message": "",
-                "gas_used": 29960,
+                "gas_used": 34000,
                 "logs": []
             }
         },
@@ -291,9 +305,9 @@
             "gas_limit": 34000,
             "value": "0",
             "expected": {
-                "status": 1,
+                "status": 5,
                 "extra_message": "",
-                "gas_used": 29992,
+                "gas_used": 34000,
                 "logs": []
             }
         },
@@ -305,9 +319,9 @@
             "gas_limit": 34000,
             "value": "0",
             "expected": {
-                "status": 1,
+                "status": 5,
                 "extra_message": "",
-                "gas_used": 29078,
+                "gas_used": 34000,
                 "logs": []
             }
         },
@@ -381,9 +395,9 @@
             "gas_limit": 54000,
             "value": "0",
             "expected": {
-                "status": 1,
+                "status": 5,
                 "extra_message": "",
-                "gas_used": 44139,
+                "gas_used": 54000,
                 "logs": []
             }
         },
@@ -395,9 +409,9 @@
             "gas_limit": 54000,
             "value": "0",
             "expected": {
-                "status": 1,
+                "status": 5,
                 "extra_message": "",
-                "gas_used": 44155,
+                "gas_used": 54000,
                 "logs": []
             }
         },
@@ -409,9 +423,9 @@
             "gas_limit": 44000,
             "value": "0",
             "expected": {
-                "status": 1,
+                "status": 5,
                 "extra_message": "",
-                "gas_used": 43738,
+                "gas_used": 44000,
                 "logs": []
             }
         },
@@ -423,9 +437,9 @@
             "gas_limit": 54000,
             "value": "0",
             "expected": {
-                "status": 1,
+                "status": 5,
                 "extra_message": "",
-                "gas_used": 44444,
+                "gas_used": 54000,
                 "logs": []
             }
         },
@@ -437,9 +451,9 @@
             "gas_limit": 44000,
             "value": "0",
             "expected": {
-                "status": 1,
+                "status": 5,
                 "extra_message": "",
-                "gas_used": 43690,
+                "gas_used": 44000,
                 "logs": []
             }
         },
