@@ -46,7 +46,10 @@ static char const * const errc_to_string(int code) {
 
     case xerrc_t::action_address_type_error:
         return "action address type error";
-
+    case xerrc_t::eth_server_error:
+        return "eth transaction server error";
+    case xerrc_t::eth_invalid_params:
+        return "eth transaction invalid params";
     default:
         return "unknown data module error";
     }

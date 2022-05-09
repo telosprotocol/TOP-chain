@@ -11,6 +11,7 @@
 #include "xdata/xgenesis_data.h"
 #include "xdata/xdata_defines.h"
 #include "xdata/xdata_error.h"
+#include "xdata/xerror/xerror.h"
 #include "xdata/xmemcheck_dbg.h"
 #include "xcrypto/xckey.h"
 #include "xevm_common/rlp.h"
@@ -63,13 +64,14 @@ int32_t xtransaction_v3_t::do_uncompact_write_without_hash_signature(base::xstre
     return (end_pos - begin_pos);
 }
 
-int32_t xtransaction_v3_t::do_read_without_hash_signature(base::xstream_t & in) {
+int32_t xtransaction_v3_t::do_read_without_hash_signature(base::xstream_t & in, std::error_code &ec) {
     const int32_t begin_pos = in.size();
     uint8_t szEipVersion;
     in.read_compact_var(szEipVersion);
     in.read_compact_var(m_origindata);
     if (m_origindata.empty())
     {
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
         return -1;
     }
     m_EipVersion = (EIP_XXXX)szEipVersion;
@@ -78,34 +80,41 @@ int32_t xtransaction_v3_t::do_read_without_hash_signature(base::xstream_t & in) 
     byte recoveryID;
     Address to;
     int ret = 0;
-    if (m_EipVersion == EIP_XXXX::EIP_TOP_V3) {
-        m_eip_xxxx_tx = make_object_ptr<eip_top_v3_tx>();
-        ret = unserialize_top_v3_transaction(encoded, bIsCreation, recoveryID, to);
-    } else if (m_EipVersion == EIP_XXXX::EIP_LEGACY) {
-        m_eip_xxxx_tx = make_object_ptr<eip_legacy_tx>();
-        ret = unserialize_eth_legacy_transaction(encoded, bIsCreation, recoveryID, to);
-    } else if (m_EipVersion == EIP_1559) {
-        m_eip_xxxx_tx = make_object_ptr<eip_1559_tx>();
-        ret = unserialize_eth_1559_transaction(encoded, bIsCreation, recoveryID, to);
-    } else {
-        xwarn("xtransaction_v3_t::do_read_without_hash_signature unsupport eip version:%d", m_EipVersion);
-        return -1;
+    try {
+        if (m_EipVersion == EIP_XXXX::EIP_TOP_V3) {
+            m_eip_xxxx_tx = make_object_ptr<eip_top_v3_tx>();
+            ret = unserialize_top_v3_transaction(encoded, bIsCreation, recoveryID, to, ec);
+        } else if (m_EipVersion == EIP_XXXX::EIP_LEGACY) {
+            m_eip_xxxx_tx = make_object_ptr<eip_legacy_tx>();
+            ret = unserialize_eth_legacy_transaction(encoded, bIsCreation, recoveryID, to, ec);
+        } else if (m_EipVersion == EIP_1559) {
+            m_eip_xxxx_tx = make_object_ptr<eip_1559_tx>();
+            ret = unserialize_eth_1559_transaction(encoded, bIsCreation, recoveryID, to, ec);
+        } else {
+            xwarn("xtransaction_v3_t::do_read_without_hash_signature unsupport eip version:%d", m_EipVersion);
+            ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+            return -1;
+        }
+    } catch (...) {
+        xwarn("xtransaction_v3_t::do_read_without_hash_signature unserialize transaction error:%d", ret);
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        return -2;
     }
-
     if (ret < 0)
     {
         xwarn("xtransaction_v3_t::do_read_without_hash_signature unserialize transaction error:%d", ret);
-        return -2;
+        return -3;
     }
 
     string strFrom;
     char szDigest[32] = {0};
     string strEncoded;
     strEncoded.append((char*)encoded.data(), encoded.size());
-    top::uint256_t hash = top::utl::xkeccak256_t::digest(strEncoded);
-    string strDigest;
-    strDigest.append((char*)hash.data(), hash.size());
-    m_hash = top::base::xstring_utl::to_hex(strDigest);
+    m_unsign_hash = top::utl::xkeccak256_t::digest(strEncoded);
+    top::uint256_t origin_hash = top::utl::xkeccak256_t::digest(m_origindata);
+    string strOriginDigest;
+    strOriginDigest.append((char*)origin_hash.data(), origin_hash.size());
+    m_hash = top::base::xstring_utl::to_hex(strOriginDigest);
     xdbg("xtransaction_v3_t::do_read_without_hash_signature txhash:%s", m_hash.c_str());
     char szSign[65] = {0};
     memcpy(szSign, (char *)&recoveryID, 1);
@@ -115,7 +124,7 @@ int32_t xtransaction_v3_t::do_read_without_hash_signature(base::xstream_t & in) 
     top::utl::xecdsasig_t sig((uint8_t *)szSign);
     top::utl::xkeyaddress_t pubkey1("");
     uint8_t szOutput[65] = {0};
-    top::utl::xsecp256k1_t::get_publickey_from_signature(sig, hash, szOutput);
+    top::utl::xsecp256k1_t::get_publickey_from_signature(sig, m_unsign_hash, szOutput);
     top::utl::xecpubkey_t pubkey(szOutput);
     strFrom = pubkey.to_raw_eth_address();
     string strPublicKey((char *)szOutput, 65);
@@ -142,9 +151,10 @@ int32_t xtransaction_v3_t::do_read_without_hash_signature(base::xstream_t & in) 
     return (begin_pos - end_pos);
 }
 
-int xtransaction_v3_t::unserialize_eth_legacy_transaction(bytes & encoded, bool & bIsCreation, byte & recoveryID, Address & to) {
+int xtransaction_v3_t::unserialize_eth_legacy_transaction(bytes & encoded, bool & bIsCreation, byte & recoveryID, Address & to, std::error_code& ec) {
     if (m_eip_xxxx_tx == nullptr)
     {
+        ec = error::make_error_code(error::xenum_errc::eth_server_error);
         return -1;
     }
     eip_legacy_tx* eip_legacy_tx_ptr = reinterpret_cast<eip_legacy_tx*>(m_eip_xxxx_tx.get());
@@ -155,17 +165,58 @@ int xtransaction_v3_t::unserialize_eth_legacy_transaction(bytes & encoded, bool 
         vecData.push_back(str);
     }
     if (vecData.size() != 9) {
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
         return -2;
     }
+    if (vecData[0].length() > 32)
+    {
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        return -3;
+    }
     eip_legacy_tx_ptr->nonce = fromBigEndian<u256>(vecData[0]);
+    if (vecData[1].length() > 32)
+    {
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        return -4;
+    }
     eip_legacy_tx_ptr->gasprice = fromBigEndian<u256>(vecData[1]);
+    if (vecData[2].length() > 32)
+    {
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        return -5;
+    }
     eip_legacy_tx_ptr->gas = fromBigEndian<u256>(vecData[2]);
+    if (vecData[3].length() != 40)
+    {
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        return -6;
+    }
     bIsCreation = vecData[3].empty();
     eip_legacy_tx_ptr->to = vecData[3].empty() ? Address().hex() : Address(vecData[3], FixedHash<20>::FromBinary).hex();
+    if (vecData[4].length() > 32)
+    {
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        return -7;
+    }
     eip_legacy_tx_ptr->value = fromBigEndian<u256>(vecData[4]);
     eip_legacy_tx_ptr->data = vecData[5];
+    if (vecData[6].length() > 32)
+    {
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        return -8;
+    }
     eip_legacy_tx_ptr->signV = fromBigEndian<u256>(vecData[6]);
+    if (vecData[7].length() > 32)
+    {
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        return -9;
+    }
     eip_legacy_tx_ptr->signR = fromBigEndian<u256>(vecData[7]);
+    if (vecData[8].length() > 32)
+    {
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        return -10;
+    }
     eip_legacy_tx_ptr->signS = fromBigEndian<u256>(vecData[8]);
     uint64_t m_chainId;
     if (!eip_legacy_tx_ptr->signR && !eip_legacy_tx_ptr->signS) {
@@ -175,20 +226,30 @@ int xtransaction_v3_t::unserialize_eth_legacy_transaction(bytes & encoded, bool 
         if (eip_legacy_tx_ptr->signV > 36) {
             auto const chainId = (eip_legacy_tx_ptr->signV - 35) / 2;
             if (chainId > std::numeric_limits<uint64_t>::max())
-                return -3;
+            {
+                ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+                return -11;
+            }
             m_chainId = static_cast<uint64_t>(chainId);
         }
         // only values 27 and 28 are allowed for non-replay protected transactions
         else if (eip_legacy_tx_ptr->signV != 27 && eip_legacy_tx_ptr->signV != 28) {
-            return -4;
+            ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+            return -12;
         }
         static const h256 s_max{"0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141"};
         static const h256 s_zero;
         recoveryID = m_chainId ? static_cast<byte>(eip_legacy_tx_ptr->signV - (u256{m_chainId} * 2 + 35)) : static_cast<byte>(eip_legacy_tx_ptr->signV - 27);
         xdbg("xtransaction_v3_t::unserialize_eth_legacy_transaction  chainId:%d recoveryID:%d", m_chainId, recoveryID);
         if (!(recoveryID <= 1 && eip_legacy_tx_ptr->signR > s_zero && eip_legacy_tx_ptr->signS > s_zero && eip_legacy_tx_ptr->signR < s_max && eip_legacy_tx_ptr->signS < s_max)) {
-            return -5;
+            ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+            return -13;
         }
+    }
+    if (m_chainId != 1023)
+    {
+        ec = error::make_error_code(error::xenum_errc::eth_server_error);
+        return -14;
     }
     string strFrom;
     if (!eip_legacy_tx_ptr->signR && !eip_legacy_tx_ptr->signS) {
@@ -207,9 +268,10 @@ int xtransaction_v3_t::unserialize_eth_legacy_transaction(bytes & encoded, bool 
     return 0;
 }
 
-int xtransaction_v3_t::unserialize_eth_1559_transaction(bytes & encoded, bool & bIsCreation, byte & recoveryID, Address & to) {
+int xtransaction_v3_t::unserialize_eth_1559_transaction(bytes & encoded, bool & bIsCreation, byte & recoveryID, Address & to, std::error_code& ec) {
     if (m_eip_xxxx_tx == nullptr)
     {
+        ec = error::make_error_code(error::xenum_errc::eth_server_error);
         return -1;
     }
     eip_1559_tx* eip_1559_tx_ptr = reinterpret_cast<eip_1559_tx*>(m_eip_xxxx_tx.get());
@@ -221,21 +283,77 @@ int xtransaction_v3_t::unserialize_eth_1559_transaction(bytes & encoded, bool & 
     }
 
     if (vecData.size() != 12) {
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
         return -2;
     }
 
+    if (vecData[0].length() > 32)
+    {
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        return -3;
+    }
     eip_1559_tx_ptr->chainid = fromBigEndian<u256>(vecData[0]);
+    if (eip_1559_tx_ptr->chainid != 1023)
+    {
+        ec = error::make_error_code(error::xenum_errc::eth_server_error);
+        return -1;
+    }
+    if (vecData[1].length() > 32)
+    {
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        return -4;
+    }
     eip_1559_tx_ptr->nonce = fromBigEndian<u256>(vecData[1]);
+    if (vecData[2].length() > 32)
+    {
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        return -5;
+    }
     eip_1559_tx_ptr->max_priority_fee_per_gas = fromBigEndian<u256>(vecData[2]);
+    if (vecData[3].length() > 32)
+    {
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        return -6;
+    }
     eip_1559_tx_ptr->max_fee_per_gas = fromBigEndian<u256>(vecData[3]);
+    if (vecData[4].length() > 32)
+    {
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        return -7;
+    }
     eip_1559_tx_ptr->gas = fromBigEndian<u256>(vecData[4]);
+    if (vecData[5].length() > 40)
+    {
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        return -8;
+    }
     bIsCreation = vecData[5].empty();
     eip_1559_tx_ptr->to = vecData[5].empty() ? Address().hex() : Address(vecData[5], FixedHash<20>::FromBinary).hex();
+    if (vecData[6].length() > 32)
+    {
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        return -9;
+    }
     eip_1559_tx_ptr->value = fromBigEndian<u256>(vecData[6]);
     eip_1559_tx_ptr->data = vecData[7];
     eip_1559_tx_ptr->accesslist = vecData[8];
+    if (vecData[9].length() > 32)
+    {
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        return -10;
+    }
     eip_1559_tx_ptr->signV = fromBigEndian<u256>(vecData[9]);
+    if (vecData[10].length() > 32)
+    {
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        return -10;
+    }
     eip_1559_tx_ptr->signR = fromBigEndian<u256>(vecData[10]);
+    if (vecData[11].length() > 32)
+    {
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        return -10;
+    }
     eip_1559_tx_ptr->signS = fromBigEndian<u256>(vecData[11]);
 
     bytes encodedtmp = bytes();
@@ -250,9 +368,10 @@ int xtransaction_v3_t::unserialize_eth_1559_transaction(bytes & encoded, bool & 
     return 0;
 }
 
-int xtransaction_v3_t::unserialize_top_v3_transaction(bytes & encoded, bool & bIsCreation, byte & recoveryID, Address & to) {
+int xtransaction_v3_t::unserialize_top_v3_transaction(bytes & encoded, bool & bIsCreation, byte & recoveryID, Address & to, std::error_code& ec) {
     if (m_eip_xxxx_tx == nullptr)
     {
+        ec = error::make_error_code(error::xenum_errc::eth_server_error);
         return -1;
     }
     eip_top_v3_tx* eip_top_v3_tx_ptr = reinterpret_cast<eip_top_v3_tx*>(m_eip_xxxx_tx.get());
@@ -263,16 +382,63 @@ int xtransaction_v3_t::unserialize_top_v3_transaction(bytes & encoded, bool & bI
         vecData.push_back(str);
     }
     if (vecData.size() != 20) {
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
         return -2;
     }
+
+    if (vecData[0].length() > 32)
+    {
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        return -3;
+    }
     eip_top_v3_tx_ptr->sub_transaction_version = (uint8_t)fromBigEndian<u256>(vecData[0]);
+    if (vecData[1].length() > 32)
+    {
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        return -4;
+    }
     eip_top_v3_tx_ptr->chainid = fromBigEndian<u256>(vecData[1]);
+    if (eip_top_v3_tx_ptr->chainid != 1023)
+    {
+        ec = error::make_error_code(error::xenum_errc::eth_server_error);
+        return -1;
+    }
+    if (vecData[2].length() > 32)
+    {
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        return -5;
+    }
     eip_top_v3_tx_ptr->nonce = fromBigEndian<u256>(vecData[2]);
+    if (vecData[3].length() > 32)
+    {
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        return -6;
+    }
     eip_top_v3_tx_ptr->max_priority_fee_per_gas = fromBigEndian<u256>(vecData[3]);
+    if (vecData[4].length() > 32)
+    {
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        return -7;
+    }
     eip_top_v3_tx_ptr->max_fee_per_gas = fromBigEndian<u256>(vecData[4]);
+    if (vecData[5].length() > 32)
+    {
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        return -8;
+    }
     eip_top_v3_tx_ptr->gas = fromBigEndian<u256>(vecData[5]);
+    if (vecData[6].length() > 40)
+    {
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        return -9;
+    }
     bIsCreation = vecData[6].empty();
     eip_top_v3_tx_ptr->to = vecData[6].empty() ? Address().hex() : Address(vecData[6], FixedHash<20>::FromBinary).hex();
+    if (vecData[7].length() > 32)
+    {
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        return -10;
+    }
     eip_top_v3_tx_ptr->value = fromBigEndian<u256>(vecData[7]);
     eip_top_v3_tx_ptr->data = vecData[8];
     eip_top_v3_tx_ptr->accesslist = vecData[9];
@@ -283,8 +449,23 @@ int xtransaction_v3_t::unserialize_top_v3_transaction(bytes & encoded, bool & bI
     eip_top_v3_tx_ptr->expire_duration = fromBigEndian<u256>(vecData[14]);
     eip_top_v3_tx_ptr->memo = vecData[15];
     eip_top_v3_tx_ptr->extend = vecData[16];
+    if (vecData[17].length() > 32)
+    {
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        return -11;
+    }
     eip_top_v3_tx_ptr->signV = fromBigEndian<u256>(vecData[17]);
+    if (vecData[18].length() > 32)
+    {
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        return -12;
+    }
     eip_top_v3_tx_ptr->signR = fromBigEndian<u256>(vecData[18]);
+    if (vecData[19].length() > 32)
+    {
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        return -13;
+    }
     eip_top_v3_tx_ptr->signS = fromBigEndian<u256>(vecData[19]);
 
     bytes encodedtmp = bytes();
@@ -311,12 +492,12 @@ int xtransaction_v3_t::do_write(base::xstream_t & out) {
 
 int xtransaction_v3_t::do_read(base::xstream_t & in) {
     const int32_t begin_pos = in.size();
-    int32_t ret = do_read_without_hash_signature(in);
+    std::error_code ec;
+    int32_t ret = do_read_without_hash_signature(in, ec);
     if (ret < 0) {
         return enum_xerror_code_bad_transaction;
     }
     set_tx_len(begin_pos - in.size());
-    std::error_code ec;
     auto const target_account_address = common::xaccount_address_t::build_from(get_target_addr(), ec);
     if (ec) {
         return enum_xerror_code_bad_address;
@@ -360,6 +541,79 @@ void xtransaction_v3_t::set_digest() {
 
 bool xtransaction_v3_t::transaction_len_check() const {
    
+    return true;
+}
+
+bool xtransaction_v3_t::verify_tx(xJson::Value & request, std::error_code& ec)
+{
+    if (request["params"].empty())
+    {
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        return false;
+    }
+    if (!request["params"].isArray())
+    {
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        return false;
+    }
+    if (!request["params"][0].isString())
+    {
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        return false;
+    }
+    string strParams = request["params"][0].asString();
+    if (strParams.size() <= 10)
+    {
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        return false;
+    }
+    if (strParams[0] != '0' || strParams[1] != 'x')
+    {
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        return false;
+    }
+    string strEth = base::xstring_utl::from_hex(strParams.substr(2));
+    if (strEth[0] == '\01') {
+        m_EipVersion = EIP_XXXX::EIP_2930;
+        xdbg("xtransaction_v3_t::construct_from_json unsupport tx type :%d", strEth[0]);
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        return false;
+    } else if (strEth[0] == '\02') {
+        m_EipVersion = EIP_XXXX::EIP_1559;
+    } else if (strEth[0] == 'y') {
+        m_EipVersion = EIP_XXXX::EIP_TOP_V3;
+    } else if ((unsigned char)strEth[0] >= ((unsigned char)128)) {
+        m_EipVersion = EIP_XXXX::EIP_LEGACY;
+    } else {
+        xdbg("xtransaction_v3_t::construct_from_json unsupport tx type :%d", strEth[0]);
+        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        return false;
+    }
+    string strTop;
+    if (m_EipVersion == EIP_XXXX::EIP_LEGACY) {
+        int nRet = serial_transfrom::eth_to_top(strEth, m_EipVersion, strTop);
+        if (nRet < 0) {
+            xdbg("xtransaction_v3_t::construct_from_json eth_to_top error Ret:%d", nRet);
+            ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+            return false;
+        }
+    } else {
+        if (strEth.size() <= 1)
+        {
+            ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+            return false;
+        }
+        int nRet = serial_transfrom::eth_to_top(strEth.substr(1), m_EipVersion, strTop);
+        if (nRet < 0) {
+            xdbg("xtransaction_v3_t::construct_from_json eth_to_top error Ret:%d", nRet);
+            ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+            return false;
+        }
+    }
+    base::xstream_t stream(base::xcontext_t::instance(), (uint8_t*)strTop.data(), strTop.size());
+
+    do_read_without_hash_signature(stream, ec);
+    set_tx_len(strTop.size());
     return true;
 }
 
@@ -438,14 +692,13 @@ bool xtransaction_v3_t::sign_check() const {
         addr_prefix = get_source_addr();
     }
 
-    if (m_hash.empty() || m_authorization.empty()) {
+    if (m_unsign_hash.empty() || m_authorization.empty()) {
         return false;
     }
 
     utl::xkeyaddress_t key_address(addr_prefix);
     utl::xecdsasig_t signature_obj((uint8_t*)m_authorization.c_str());
-    top::uint256_t hash((uint8_t *)fromHex(m_hash).data());
-    return key_address.verify_signature(signature_obj, hash);
+    return key_address.verify_signature(signature_obj, m_unsign_hash);
 }
 
 bool xtransaction_v3_t::pub_key_sign_check(xpublic_key_t const & pub_key) const {
@@ -458,8 +711,7 @@ bool xtransaction_v3_t::pub_key_sign_check(xpublic_key_t const & pub_key) const 
     utl::xecdsasig_t signature_obj((uint8_t *)m_authorization.data());
     uint8_t out_publickey_data[utl::UNCOMPRESSED_PUBLICKEY_SIZE];
     memcpy(out_publickey_data, pub_data.data(), (size_t)std::min(utl::UNCOMPRESSED_PUBLICKEY_SIZE, (int)pub_data.size()));
-    top::uint256_t hash((uint8_t *)fromHex(m_hash).data());
-    return utl::xsecp256k1_t::verify_signature(signature_obj, hash, out_publickey_data, false);
+    return utl::xsecp256k1_t::verify_signature(signature_obj, m_unsign_hash, out_publickey_data, false);
 }
 
 std::string xtransaction_v3_t::dump() const {
@@ -607,7 +859,8 @@ void xtransaction_v3_t::construct_from_json(xJson::Value & request) {
     }
     base::xstream_t stream(base::xcontext_t::instance(), (uint8_t*)strTop.data(), strTop.size());
 
-    do_read_without_hash_signature(stream);
+    std::error_code ec;
+    do_read_without_hash_signature(stream, ec);
 
     set_tx_len(strTop.size());
 }
