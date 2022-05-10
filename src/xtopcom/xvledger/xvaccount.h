@@ -421,6 +421,16 @@ namespace top
             
             //convert to binary/bytes address with compact mode as for DB 'key
             static const std::string  get_storage_key(const xvaccount_t & src_account);
+            static std::string to_evm_address(const std::string& account)
+            {
+                if (account.size() < 2)
+                    return "";
+                std::string value;
+                value.resize(account.size());
+                std::transform(account.begin(), account.end(), value.begin(), ::tolower);
+                value = std::string(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN) + value.substr(2);
+                return value;
+            }
 
         public:
             xvaccount_t(const std::string & account_address);

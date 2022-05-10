@@ -67,7 +67,7 @@ public:
     }
 
     inline void net_version(const Json::Value & request, Json::Value & response) {
-        response = "0x457";
+        response = "1023";
     }
 
     inline void web3_clientVersion(const Json::Value & request, Json::Value & response) {

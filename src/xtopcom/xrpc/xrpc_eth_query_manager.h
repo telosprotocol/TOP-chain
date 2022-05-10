@@ -16,6 +16,7 @@
 #include "xtxpool_service_v2/xtxpool_service_face.h"
 #include "xrpc/xjson_proc.h"
 #include "xevm_common/fixed_hash.h"
+#include "xrpc/eth_rpc/eth_error_code.h"
 
 namespace top {
 namespace xrpc {
@@ -25,11 +26,12 @@ using namespace top::data;
 
 using query_method_handler = std::function<void(xJson::Value &, xJson::Value &, std::string &, uint32_t &)>;
 
-#define ADDRESS_CHECK_VALID(x)                                                                                                                                                     \
+#define ETH_ADDRESS_CHECK_VALID(x)                                                                                                                                                     \
     if (xverifier::xtx_utl::address_is_valid(x) != xverifier::xverifier_error::xverifier_success) {                                                                                \
         xwarn("xtx_verifier address_verify address invalid, account:%s", x.c_str());                                                                                               \
         strResult = "account address is invalid";                                                                                                                                  \
         nErrorCode = (uint32_t)enum_xrpc_error_code::rpc_param_param_error; \
+        deal_error(js_rsp, eth::enum_invalid_address); \
         return; \
     }
 
@@ -64,6 +66,7 @@ public:
         REGISTER_ETH_QUERY_METHOD(eth_getCode);
         REGISTER_ETH_QUERY_METHOD(eth_call);
         REGISTER_ETH_QUERY_METHOD(eth_estimateGas);
+        REGISTER_ETH_QUERY_METHOD(eth_getStorageAt);
     }
     void call_method(std::string strMethod, xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     bool handle(std::string & strReq, xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) override;
@@ -78,11 +81,14 @@ public:
     void eth_getCode(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
     void eth_call(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
     void eth_estimateGas(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
+    void eth_getStorageAt(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
     top::evm_common::h2048 calculate_bloom(const std::string & hexstr);
 private:
     std::string safe_get_json_value(xJson::Value & json_value, const std::string& key);
     void set_block_result(const base::xauto_ptr<base::xvblock_t>&  block, xJson::Value& js_result, bool fullTx);
     xaccount_ptr_t query_account_by_number(const std::string &unit_address, const std::string& table_height);
+    void deal_error(xJson::Value & js_rsp, eth::enum_error_code error_code);
+    bool check_eth_address(const std::string& account);
 private:
     observer_ptr<store::xstore_face_t> m_store;
     observer_ptr<base::xvblockstore_t> m_block_store;
@@ -94,6 +100,7 @@ private:
     xtxpool_service_v2::xtxpool_proxy_face_ptr m_txpool_service;
     observer_ptr<base::xvtxstore_t> m_txstore;
     bool m_exchange_flag{false};
+    eth::EthErrorCode m_eth_error_info;
 };
 
 }  // namespace xrpc
