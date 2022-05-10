@@ -4,7 +4,10 @@
 #include "xconfig/xpredefined_configurations.h"
 #include "xcrypto/xckey.h"
 #include "xdata/xblockbuild.h"
+#include "xdata/xnative_contract_address.h"
+#include "xdata/xtable_bstate.h"
 #include "xpbase/base/top_utils.h"
+#include "xstatectx/xstatectx_face.h"
 
 #include <gtest/gtest.h>
 
@@ -20,29 +23,8 @@
 namespace top {
 namespace tests {
 
-class xtest_gasfee_fixture_t : public testing::Test {
+class xtest_gasfee_data_t {
 public:
-    xtest_gasfee_fixture_t() {
-    }
-
-    void SetUp() override {
-        top::config::config_register.get_instance().set(config::xtx_deposit_gas_exchange_ratio_onchain_goverance_parameter_t::name, std::to_string(20));
-        top::config::config_register.get_instance().set(config::xeth_to_top_exchange_ratio_onchain_goverance_parameter_t::name, std::to_string(5000000));
-        top::config::config_register.get_instance().set(config::xmin_tx_deposit_onchain_goverance_parameter_t::name, std::to_string(ASSET_uTOP(100000)));
-        top::config::config_register.get_instance().set(config::xinitial_total_gas_deposit_onchain_goverance_parameter_t::name, std::to_string(ASSET_TOP(1000000000)));
-        top::config::config_register.get_instance().set(config::xtotal_gas_shard_onchain_goverance_parameter_t::name, std::to_string(2160000000000));
-        top::config::config_register.get_instance().set(config::xvalidator_group_count_configuration_t::name, std::to_string(4));
-        top::config::config_register.get_instance().set(config::xusedgas_reset_interval_onchain_goverance_parameter_t::name, std::to_string(24 * 60 * 6));
-        top::config::config_register.get_instance().set(config::xmin_free_gas_asset_onchain_goverance_parameter_t::name, std::to_string(ASSET_TOP(100)));
-        top::config::config_register.get_instance().set(config::xfree_gas_onchain_goverance_parameter_t::name, std::to_string(25000));
-        top::config::config_register.get_instance().set(config::xmax_gas_contract_onchain_goverance_parameter_t::name, std::to_string(50000000));
-        top::config::config_register.get_instance().set(config::xmax_gas_account_onchain_goverance_parameter_t::name, std::to_string(1000000));
-        top::config::config_register.get_instance().set(config::xbeacon_tx_fee_onchain_goverance_parameter_t::name, std::to_string(ASSET_TOP(100)));
-    }
-
-    void TearDown() override {
-    }
-
     void make_default() {
         make_bstate();
         make_unit_state(default_bstate);
@@ -131,7 +113,7 @@ public:
     xobject_ptr_t<data::xtransaction_v3_t> make_tx_v3() {
         xobject_ptr_t<data::xtransaction_v3_t> tx{make_object_ptr<data::xtransaction_v3_t>()};
         data::xproperty_asset asset{data::XPROPERTY_ASSET_TOP, default_amount};
-        tx->make_tx_transfer(asset);
+        tx->set_tx_type(data::xtransaction_type_transfer);
         tx->set_last_trans_hash_and_nonce(uint256_t(), uint64_t(0));
         tx->set_different_source_target_address(default_sender, default_recver);
         tx->set_fire_timestamp(default_fire);
@@ -139,6 +121,7 @@ public:
         tx->set_deposit(default_deposit);
         tx->set_gaslimit(default_evm_gas_limit);
         dynamic_cast<data::eip_1559_tx *>(tx->m_eip_xxxx_tx.get())->max_fee_per_gas = default_eth_per_gas;
+        dynamic_cast<data::eip_1559_tx *>(tx->m_eip_xxxx_tx.get())->value = default_eth_value;
         tx->set_len();
         return tx;
     }
@@ -201,8 +184,9 @@ public:
     uint64_t default_free_tgas{991158};
     uint64_t default_available_tgas{996158};
     data::enum_xtransaction_version default_tx_version{data::xtransaction_version_2};
-    evm_common::u256 default_eth_per_gas{5000};
+    evm_common::u256 default_eth_per_gas{5000 * 20};
     evm_common::u256 default_evm_gas_limit{5000};
+    evm_common::u256 default_eth_value{1000};
 
     // data to build
     xobject_ptr_t<base::xvbstate_t> default_bstate;
@@ -213,6 +197,79 @@ public:
     xobject_ptr_t<data::xcons_transaction_t> default_cons_tx;
     xobject_ptr_t<data::xcons_transaction_t> default_recv_cons_tx;
     xobject_ptr_t<data::xcons_transaction_t> default_confirm_cons_tx;
+};
+
+class xtest_gasfee_fixture_t : public testing::Test, public xtest_gasfee_data_t {
+public:
+    xtest_gasfee_fixture_t() {
+    }
+
+    void SetUp() override {
+        top::config::config_register.get_instance().set(config::xtx_deposit_gas_exchange_ratio_onchain_goverance_parameter_t::name, std::to_string(20));
+        top::config::config_register.get_instance().set(config::xtgas_to_eth_gas_exchange_ratio_onchain_goverance_parameter_t::name, std::to_string(50));
+        top::config::config_register.get_instance().set(config::xeth_to_top_exchange_ratio_onchain_goverance_parameter_t::name, std::to_string(5000000));
+        top::config::config_register.get_instance().set(config::xmin_tx_deposit_onchain_goverance_parameter_t::name, std::to_string(ASSET_uTOP(100000)));
+        top::config::config_register.get_instance().set(config::xinitial_total_gas_deposit_onchain_goverance_parameter_t::name, std::to_string(ASSET_TOP(1000000000)));
+        top::config::config_register.get_instance().set(config::xtotal_gas_shard_onchain_goverance_parameter_t::name, std::to_string(2160000000000));
+        top::config::config_register.get_instance().set(config::xvalidator_group_count_configuration_t::name, std::to_string(4));
+        top::config::config_register.get_instance().set(config::xusedgas_reset_interval_onchain_goverance_parameter_t::name, std::to_string(24 * 60 * 6));
+        top::config::config_register.get_instance().set(config::xmin_free_gas_asset_onchain_goverance_parameter_t::name, std::to_string(ASSET_TOP(100)));
+        top::config::config_register.get_instance().set(config::xfree_gas_onchain_goverance_parameter_t::name, std::to_string(25000));
+        top::config::config_register.get_instance().set(config::xmax_gas_contract_onchain_goverance_parameter_t::name, std::to_string(50000000));
+        top::config::config_register.get_instance().set(config::xmax_gas_account_onchain_goverance_parameter_t::name, std::to_string(1000000));
+        top::config::config_register.get_instance().set(config::xbeacon_tx_fee_onchain_goverance_parameter_t::name, std::to_string(ASSET_TOP(100)));
+    }
+
+    void TearDown() override {
+    }
+};
+
+
+class xmock_statectx_t : public statectx::xstatectx_face_t, public xtest_gasfee_data_t {
+public:
+    xmock_statectx_t() {
+    }
+
+    void build_default() {
+        make_default();
+        sender = std::make_shared<data::xunit_bstate_t>(default_bstate.get(), false);
+        recver_bstate = make_object_ptr<base::xvbstate_t>(default_recver, (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
+        recver = std::make_shared<data::xunit_bstate_t>(recver_bstate.get(), false);
+    }
+
+    const data::xtablestate_ptr_t & get_table_state() const override {
+        return table_state;
+    }
+
+    data::xunitstate_ptr_t load_unit_state(const base::xvaccount_t & addr) override {
+        if (addr.get_account() == default_recver) {
+            return recver;
+        }
+        return sender;
+    }
+
+    bool do_rollback() override {
+        return false;
+    }
+
+    size_t do_snapshot() override {
+        return 0;
+    }
+
+    const std::string & get_table_address() const override {
+        return table_address;
+    }
+
+    bool is_state_dirty() const override {
+        return true;
+    }
+
+    data::xtablestate_ptr_t table_state{nullptr};
+    data::xunitstate_ptr_t sender{nullptr};
+    data::xunitstate_ptr_t recver{nullptr};
+    xobject_ptr_t<base::xvbstate_t> sender_bstate{nullptr};
+    xobject_ptr_t<base::xvbstate_t> recver_bstate{nullptr};
+    std::string table_address{eth_table_address.value()};
 };
 
 }  // namespace tests

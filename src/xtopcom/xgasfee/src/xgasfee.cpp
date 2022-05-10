@@ -29,15 +29,14 @@ xtop_gasfee::xtop_gasfee(std::shared_ptr<data::xunit_bstate_t> const & state, xo
 void xtop_gasfee::init(std::error_code & ec) {
     uint64_t max_gasfee{0};
     if (is_evm_tx()) {
-        evm_common::u256 evm_tx_limited_tgas = tx_eth_limited_tgas();
-        if (evm_tx_limited_tgas > UINT64_MAX) {
-            ec = gasfee::error::xenum_errc::tx_limited_tgas_exceeded;
-            xwarn("[xtop_gasfee::init] tx_limited_tgas_exceeded: %s", evm_tx_limited_tgas.str().c_str());
+        auto eth_max_gasfee = tx_eth_limited_gasfee();
+        if (eth_max_gasfee > UINT64_MAX) {
+            ec = gasfee::error::xenum_errc::tx_limited_gasfee_exceeded;
+            xwarn("[xtop_gasfee::init] tx_limited_gasfee_exceeded: %s", eth_max_gasfee.str().c_str());
             return;
         }
-        m_converted_tgas = static_cast<uint64_t>(evm_tx_limited_tgas);
-        max_gasfee = tgas_to_balance(m_converted_tgas);
-        xdbg("[xtop_gasfee::init] evm tx, m_converted_tgas(m_converted_tgas): %lu, max_gasfee: %lu", m_converted_tgas, max_gasfee);
+        max_gasfee = static_cast<uint64_t>(eth_max_gasfee);
+        xdbg("[xtop_gasfee::init] evm tx, gasfee limit(eth_limited_gasfee): %lu", max_gasfee);
     } else {
         max_gasfee = deposit();
         if (max_gasfee < XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit)) {
@@ -45,8 +44,7 @@ void xtop_gasfee::init(std::error_code & ec) {
             xwarn("[xtop_gasfee::init] tx_deposit_not_enough: %lu", max_gasfee);
             return;
         }
-        m_converted_tgas = balance_to_tgas(max_gasfee);
-        xdbg("[xtop_gasfee::init] not evm tx, gasfee limit(deposit): %lu, m_converted_tgas: %lu", max_gasfee, m_converted_tgas);
+        xdbg("[xtop_gasfee::init] not evm tx, gasfee limit(deposit): %lu", max_gasfee);
     }
     const uint64_t balance = account_balance();
     if (max_gasfee > balance) {
@@ -54,8 +52,9 @@ void xtop_gasfee::init(std::error_code & ec) {
         xwarn("[xtop_gasfee::init] account_balance_not_enough, max_gasfee: %lu, balance: %lu", max_gasfee, balance);
         return;
     }
+    m_converted_tgas = balance_to_tgas(max_gasfee);
     m_free_tgas = account_available_tgas(m_time, m_onchain_tgas_deposit);
-    xdbg("[xtop_gasfee::init] m_free_tgas: %lu", m_free_tgas);
+    xdbg("[xtop_gasfee::init] m_free_tgas: %lu, m_converted_tgas: %lu", m_free_tgas, m_converted_tgas);
 }
 
 void xtop_gasfee::add(const uint64_t tgas, std::error_code & ec) {
@@ -126,7 +125,7 @@ void xtop_gasfee::process_calculation_tgas(const uint64_t calculation_gas, std::
         ec = gasfee::error::xenum_errc::tx_calculation_gas_over_limit;
         return;
     }
-    evm_common::u256 calculation_tgas = tx_eth_calculate_tgas(calculation_gas);
+    evm_common::u256 calculation_tgas = calculation_gas / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tgas_to_eth_gas_exchange_ratio);
     if (calculation_tgas > UINT64_MAX) {
         xwarn("[xtop_gasfee::process_calculation_tgas] tx_calculation_tgas_exceeded: %s", calculation_tgas.str().c_str());
         ec = gasfee::error::xenum_errc::tx_calculation_tgas_exceeded;

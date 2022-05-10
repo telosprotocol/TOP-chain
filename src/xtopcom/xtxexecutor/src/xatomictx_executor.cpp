@@ -8,6 +8,7 @@
 #include "xdata/xtransaction.h"
 #include "xevm/xevm.h"
 #include "xtxexecutor/xtvm.h"
+#include "xtxexecutor/xtvm_v2.h"
 
 #include <string>
 #include <vector>
@@ -179,8 +180,13 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
     tx->set_inner_table_flag();
 
     if (false == tx->is_evm_tx()) {
-        xtvm_t tvm;
-        ret = tvm.execute(vminput, vmoutput);
+        if (tx->get_tx_version() == data::xtransaction_version_3) {
+            xtvm_v2_t tvm;
+            ret = tvm.execute(vminput, vmoutput);
+        } else {
+            xtvm_t tvm;
+            ret = tvm.execute(vminput, vmoutput);
+        }
     } else {
 #ifdef BUILD_EVM
         evm::xtop_evm evm{m_statectx};

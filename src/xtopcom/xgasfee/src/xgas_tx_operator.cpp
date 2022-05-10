@@ -73,14 +73,10 @@ evm_common::u256 xtop_gas_tx_operator::tx_eth_fee_per_gas() const {
     return m_tx->get_transaction()->get_max_fee_per_gas();
 }
 
-evm_common::u256 xtop_gas_tx_operator::tx_eth_limited_tgas() const {
+evm_common::u256 xtop_gas_tx_operator::tx_eth_limited_gasfee() const {
     // 1Gwei = (ratio / 10^3)Utop
     // 1Utop = (10^3 / ratio)Gwei
     return tx_eth_fee_per_gas() * tx_eth_gas_limit() * 1000 / XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_to_top_exchange_ratio);
-}
-
-evm_common::u256 xtop_gas_tx_operator::tx_eth_calculate_tgas(const uint64_t gas) const {
-    return tx_eth_fee_per_gas() * gas * 1000 / XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_to_top_exchange_ratio);
 }
 
 uint64_t xtop_gas_tx_operator::tx_fixed_tgas() const {

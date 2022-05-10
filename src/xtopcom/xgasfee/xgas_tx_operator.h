@@ -27,8 +27,7 @@ public:
     data::enum_xtransaction_version tx_version() const;
     evm_common::u256 tx_eth_gas_limit() const;
     evm_common::u256 tx_eth_fee_per_gas() const;
-    evm_common::u256 tx_eth_limited_tgas() const;
-    evm_common::u256 tx_eth_calculate_tgas(const uint64_t gas) const;
+    evm_common::u256 tx_eth_limited_gasfee() const;
     uint64_t deposit() const;
     uint64_t tx_used_tgas() const;
     uint64_t tx_last_action_used_deposit() const;
