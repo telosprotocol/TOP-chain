@@ -46,7 +46,6 @@ class xevm_tx_result_t : public xbase_dataunit_t<xevm_tx_result_t, xdata_type_ev
             }
             stream.write_compact_var(m_evm_tx_result.logs[i].data);
         }
-
         return (stream.size() - begin_size);
     }
     int32_t do_read(base::xstream_t & stream) override {

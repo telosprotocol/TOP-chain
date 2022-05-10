@@ -12,6 +12,8 @@
 #include "xdata/xtableblock.h"
 #include "xdata/xrootblock.h"
 #include "xdata/xblock.h"
+#include "xevm_common/common.h"
+#include "xevm_common/fixed_hash.h"
 
 NS_BEG2(top, data)
 
@@ -21,9 +23,12 @@ class xtableheader_extra_t : public xserializable_based_on<void> {
     enum xblockheader_extra_data_type : uint16_t {
         enum_extra_data_type_tgas_total_lock_amount_property_height = 0,
         enum_extra_data_type_tgas_second_level_gmtime               = 1,
+        enum_extra_data_type_eth_logsbloom                          = 2,
+        enum_extra_data_type_eth_gasused                            = 3,
+
     };
  public:
-    static std::string build_extra_string(base::xvheader_t* _tableheader, uint64_t tgas_height, uint64_t gmtime);
+    static std::string build_extra_string(base::xvheader_t* _tableheader, uint64_t tgas_height, uint64_t gmtime, std::string logsbloom = "", uint64_t gasused = 0);
 
  protected:
     int32_t do_write(base::xstream_t & stream) const override;
@@ -34,10 +39,13 @@ class xtableheader_extra_t : public xserializable_based_on<void> {
 
  public:
     uint64_t get_tgas_total_lock_amount_property_height() const;
+    std::string get_eth_logsbloom() const;
+    uint64_t get_eth_gasused() const;
     void     set_tgas_total_lock_amount_property_height(uint64_t height);
     uint64_t get_second_level_gmtime() const;
     void     set_second_level_gmtime(uint64_t gmtime);
-
+    void     set_eth_logsbloom(std::string strlogsbloom);
+    void     set_eth_gasused(uint64_t gasused);
  private:
     std::map<uint16_t, std::string>  m_paras;
 };

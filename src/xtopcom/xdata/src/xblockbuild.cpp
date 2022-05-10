@@ -62,6 +62,24 @@ uint64_t xtableheader_extra_t::get_tgas_total_lock_amount_property_height() cons
     }
 }
 
+uint64_t xtableheader_extra_t::get_eth_gasused() const {
+    auto iter = m_paras.find(enum_extra_data_type_eth_gasused);
+    if (iter == m_paras.end()) {
+        return 0;
+    } else {
+        return base::xstring_utl::touint64(iter->second);
+    }
+}
+
+std::string xtableheader_extra_t::get_eth_logsbloom() const {
+    auto iter = m_paras.find(enum_extra_data_type_eth_logsbloom);
+    if (iter == m_paras.end()) {
+        return "";
+    } else {
+        return iter->second;
+    }
+}
+
 void xtableheader_extra_t::set_tgas_total_lock_amount_property_height(uint64_t height) {
     std::string height_str = base::xstring_utl::tostring(height);
     m_paras[enum_extra_data_type_tgas_total_lock_amount_property_height] = height_str;
@@ -81,7 +99,16 @@ void     xtableheader_extra_t::set_second_level_gmtime(uint64_t gmtime) {
     m_paras[enum_extra_data_type_tgas_second_level_gmtime] = value;
 }
 
-std::string xtableheader_extra_t::build_extra_string(base::xvheader_t* _tableheader, uint64_t tgas_height, uint64_t gmtime) {
+void     xtableheader_extra_t::set_eth_logsbloom(std::string strlogsbloom) {
+    m_paras[enum_extra_data_type_eth_logsbloom] = strlogsbloom;
+}
+
+void     xtableheader_extra_t::set_eth_gasused(uint64_t gasused) {
+    std::string value = base::xstring_utl::tostring(gasused);
+    m_paras[enum_extra_data_type_eth_gasused] = value;
+}
+
+std::string xtableheader_extra_t::build_extra_string(base::xvheader_t* _tableheader, uint64_t tgas_height, uint64_t gmtime, std::string logsbloom, uint64_t gasused) {
     if (_tableheader->get_height() == 0) {
         // genesis block should not set extra
         return {};
@@ -101,6 +128,8 @@ std::string xtableheader_extra_t::build_extra_string(base::xvheader_t* _tablehea
             header_extra.set_tgas_total_lock_amount_property_height(tgas_height);
         }
         header_extra.set_second_level_gmtime(gmtime);
+        //header_extra.set_eth_logsbloom(logsbloom);
+        //header_extra.set_eth_gasused(gasused);
     }
     std::string extra_string;
     header_extra.serialize_to_string(extra_string);
@@ -457,8 +486,24 @@ xlighttable_build_t::xlighttable_build_t(base::xvblock_t* prev_block, const xtab
     build_para.set_table_cert_para(para.get_clock(), para.get_viewtoken(), para.get_viewid(), para.get_validator(), para.get_auditor(),
                                     para.get_drand_height(), para.get_justify_cert_hash());
     base::xvaccount_t _vaccount(prev_block->get_account());
+    top::evm_common::h2048 logs_bloom;
+    std::string logsbloom;
+    uint64_t    gasused;
+    std::vector<xlightunit_tx_info_ptr_t> txs = bodypara.get_txs();
+    for (unsigned int i = 0; i < txs.size(); i++)
+    {
+        top::evm_common::xevm_transaction_result_t evm_result;
+        bool ret = txs[i]->get_evm_transaction_result(evm_result);
+        if (!ret)
+        {
+            continue;
+        }
+        gasused += evm_result.used_gas;
+        logs_bloom |= evm_result.get_logsbloom();
+    }
+    logsbloom.append((char*)logs_bloom.data(), logs_bloom.size);
     init_header_qcert(build_para);
-    std::string _extra_data = xtableheader_extra_t::build_extra_string(get_header(), para.get_tgas_height(), para.get_gmtime());
+    std::string _extra_data = xtableheader_extra_t::build_extra_string(get_header(), para.get_tgas_height(), para.get_gmtime(), logsbloom, gasused);
     set_header_extra(_extra_data);
     build_block_body(bodypara, _vaccount, prev_block->get_height() + 1);
 }

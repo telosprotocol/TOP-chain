@@ -186,7 +186,7 @@ public:
 
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(contract_call_contracts_num);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(workload_collection_interval);
-
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(eth_transaction_gas_limit);
 #if defined(XCHAIN_FORKED_BY_DEFAULT) && ((XCHAIN_FORKED_BY_DEFAULT) >= 10206)
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(table_statistic_report_schedule_interval);
 #endif

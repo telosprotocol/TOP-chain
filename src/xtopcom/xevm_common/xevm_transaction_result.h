@@ -5,7 +5,8 @@
 #pragma once
 
 #include "xbasic/xbyte_buffer.h"
-
+#include "xevm_common/fixed_hash.h"
+#include "xutility/xhash.h"
 #include <string>
 #include <vector>
 
@@ -55,6 +56,30 @@ public:
 
     void set_status(uint32_t input) {
         status = static_cast<xevm_transaction_status_t>(input);
+    }
+
+    top::evm_common::h2048 get_logsbloom() {
+        top::evm_common::h2048  logsbloom;
+        for (auto & log : logs) {
+            top::evm_common::h2048 bloom;
+            std::string str = top::base::xstring_utl::from_hex(log.address);
+            top::uint256_t hash = top::utl::xkeccak256_t::digest(str);
+            top::evm_common::h256 hash_h256;
+            top::evm_common::bytesConstRef((const unsigned char *)hash.data(), hash.size()).copyTo(hash_h256.ref());
+            bloom.shiftBloom<3>(hash_h256);
+            logsbloom |= bloom;
+
+            for (auto & topic : log.topics) {
+                top::evm_common::h2048 bloom;
+                std::string str = top::base::xstring_utl::from_hex(topic);
+                top::uint256_t hash = top::utl::xkeccak256_t::digest(str);
+                top::evm_common::h256 hash_h256;
+                top::evm_common::bytesConstRef((const unsigned char *)hash.data(), hash.size()).copyTo(hash_h256.ref());
+                bloom.shiftBloom<3>(hash_h256);
+                logsbloom |= bloom;
+            }
+        }
+        return logsbloom;
     }
 
     // debug

@@ -21,6 +21,10 @@
 
 namespace top { namespace data {
 
+#define ETH_RPC_ERROR(code, messgae) \
+    ec.error_code = (int)code; \
+    ec.error_message = messgae;
+
 enum EIP_XXXX { EIP_LEGACY = 0, EIP_2930 = 1, EIP_1559 = 2, EIP_TOP_V3 = 121 };
 
 class xtransaction_v3_t : public xbase_dataunit_t<xtransaction_v3_t, xdata_type_transaction_v3>, public xtransaction_t {
@@ -44,7 +48,7 @@ class xtransaction_v3_t : public xbase_dataunit_t<xtransaction_v3_t, xdata_type_
  private:  // not safe for multiple threads
     int32_t do_write_without_hash_signature(base::xstream_t & stream) const;
     int32_t do_uncompact_write_without_hash_signature(base::xstream_t & stream) const;
-    int32_t do_read_without_hash_signature(base::xstream_t & stream, std::error_code& ec);
+    int32_t do_read_without_hash_signature(base::xstream_t & stream, eth_error& ec);
     
  public:  // check apis
     virtual bool        unuse_member_check() const override {return true;};
@@ -136,7 +140,7 @@ class xtransaction_v3_t : public xbase_dataunit_t<xtransaction_v3_t, xdata_type_
     virtual void set_last_hash(uint64_t last_hash) override {};
     virtual uint64_t get_last_hash() const override {return 0;};
     virtual void set_ext(const std::string & ext) override { };
-    virtual const std::string & get_ext() const override { if (m_EipVersion == EIP_XXXX::EIP_TOP_V3) { if (m_eip_xxxx_tx) { return m_eip_xxxx_tx->get_extend(); } } return strNull; }
+    virtual const std::string & get_ext() const override { return strNull; }
     virtual void set_memo(const std::string & memo) override { };
     virtual const std::string & get_memo() const override { if (m_EipVersion == EIP_XXXX::EIP_TOP_V3) { if (m_eip_xxxx_tx) { return m_eip_xxxx_tx->get_memo(); } } return strNull; }
     virtual const std::string & get_target_address() const override {return m_target_addr;};
@@ -153,13 +157,13 @@ public:
     virtual const top::evm_common::u256 get_max_fee_per_gas() const override { if (m_eip_xxxx_tx) { return m_eip_xxxx_tx->get_max_fee_per_gas(); } return 0; }
 
     virtual void set_amount_256(top::evm_common::u256 amount) { if (m_eip_xxxx_tx == nullptr) { m_eip_xxxx_tx = make_object_ptr<eip_1559_tx>(); } eip_1559_tx* eip_1559_tx_ptr = reinterpret_cast<eip_1559_tx*>(m_eip_xxxx_tx.get()); eip_1559_tx_ptr->value = amount; }
-    virtual bool verify_tx(xJson::Value & request, std::error_code & ec) override;
+    virtual bool verify_tx(xJson::Value & request, eth_error & ec) override;
     virtual uint32_t get_eip_version() const {return (uint32_t)m_EipVersion;}
 
 private:
-    int unserialize_eth_legacy_transaction(top::evm_common::rlp::bytes& encoded, bool& bIsCreation, byte& recoveryID, top::evm_common::Address& to, std::error_code& ec);
-    int unserialize_eth_1559_transaction(top::evm_common::rlp::bytes & encoded, bool & bIsCreation, byte & recoveryID, top::evm_common::Address & to, std::error_code& ec);
-    int unserialize_top_v3_transaction(top::evm_common::rlp::bytes & encoded, bool & bIsCreation, byte & recoveryID, top::evm_common::Address & to, std::error_code& ec);
+    int unserialize_eth_legacy_transaction(top::evm_common::rlp::bytes& encoded, bool& bIsCreation, byte& recoveryID, top::evm_common::Address& to, eth_error& ec);
+    int unserialize_eth_1559_transaction(top::evm_common::rlp::bytes & encoded, bool & bIsCreation, byte & recoveryID, top::evm_common::Address & to, eth_error& ec);
+    int unserialize_top_v3_transaction(top::evm_common::rlp::bytes & encoded, bool & bIsCreation, byte & recoveryID, top::evm_common::Address & to, eth_error& ec);
 
 private:
     xobject_ptr_t<eip_xxxx_tx> m_eip_xxxx_tx{nullptr};

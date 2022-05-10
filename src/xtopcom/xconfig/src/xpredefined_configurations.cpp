@@ -172,7 +172,7 @@ XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(award_auditor_credit);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(validator_award_creditscore);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(auditor_award_creditscore);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(contract_call_contracts_num);
-
+XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(eth_transaction_gas_limit);
 /* begin of offchain parameters */
 XDEFINE_CONFIGURATION(auditor_group_count);
 XDEFINE_CONFIGURATION(validator_group_count);

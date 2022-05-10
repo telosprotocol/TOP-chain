@@ -256,6 +256,7 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(workload_collection_interval, xinterval_t,
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(workload_collection_interval, xinterval_t, normal, 12, 1, std::numeric_limits<xinterval_t>::max());
 #endif
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_archive_deposit, std::uint64_t, normal, ASSET_TOP(1000000), 0, std::numeric_limits<std::uint64_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(eth_transaction_gas_limit, uint64_t, important, 1200000000, 0, std::numeric_limits<uint64_t>::max());
 // mainnet node active
 
 #if defined(XBUILD_GALILEO)
