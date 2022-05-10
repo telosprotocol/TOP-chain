@@ -63,7 +63,7 @@ fn generation_storage_key(address: &Address, key: &H256, generation: u32) -> [u8
     result[0] = VersionPrefix::V1 as u8;
     result[1] = KeyPrefix::Storage as u8;
     result[2..22].copy_from_slice(address.as_bytes());
-    result[22..26].copy_from_slice(&generation.to_le_bytes());
+    result[22..26].copy_from_slice(&generation.to_be_bytes());
     result[26..58].copy_from_slice(&key.0);
     result
 }

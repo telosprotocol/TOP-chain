@@ -3,6 +3,9 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xdata/xunit_bstate.h"
+#include <assert.h>
+#include <string>
+#include <vector>
 #include "xbase/xint.h"
 #include "xbase/xmem.h"
 #include "xbase/xutl.h"
@@ -13,10 +16,10 @@
 #include "xdata/xgenesis_data.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xmetrics/xmetrics.h"
-#include <assert.h>
-#include <string>
-#include <vector>
-
+#include "xevm/xevm.h"
+#include "xevm_common/fixed_hash.h"
+#include "xevm_contract_runtime/xevm_storage.h"
+#include "xpbase/base/top_utils.h"
 namespace top {
 namespace data {
 
@@ -171,6 +174,23 @@ std::string xunit_bstate_t::get_code() const {
     string_get(XPROPERTY_EVM_CODE, v);
     return v;
 }
+std::string xunit_bstate_t::get_storage(const std::string& index_str) const {
+    evm_common::u256 uindex = evm_common::fromBigEndian<top::evm_common::u256>(index_str);
+    evm_common::h256 hindex = (evm_common::h256)uindex;
+    std::string index = evm_common::toHex(hindex);
 
+    std::string generation_str = top::HexEncode(string_get(data::XPROPERTY_EVM_GENERATION));
+    xdbg("xunit_bstate_t::get_storage, %s, %s", generation_str.c_str(), index.c_str());
+    std::string value_str = map_get(data::XPROPERTY_EVM_STORAGE, generation_str + index);
+
+    if (value_str.empty()) {
+        xwarn("xunit_bstate_t::get_storage fail");
+        evm_common::h256 value;
+        //js_rsp["result"] = std::string("0x") + evm_common::toHex(value);
+        //return;
+        value_str = std::string((char*)value.data(), value.size);
+    }
+    return value_str;
+}
 }  // namespace data
 }  // namespace top
