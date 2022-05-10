@@ -77,6 +77,7 @@ class xvm_output_t {
     bool            m_tx_exec_succ{false};  // tx execute succ or fail
     int32_t         m_vm_error_code{0};
     std::string     m_vm_error_str;
+    std::error_code m_vm_ec;
     int64_t         m_tgas_balance_change{0};
     std::vector<xcons_transaction_ptr_t> m_contract_create_txs;
 };

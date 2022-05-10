@@ -1,6 +1,8 @@
 #include "test_gasfee_fixture.h"
 #include "xdata/src/xnative_contract_address.cpp"
 #include "xgasfee/xerror/xerror.h"
+#include "xtxexecutor/xvm_face.h"
+#include "xtxexecutor/xtvm_v2.h"
 
 namespace top {
 namespace tests {
@@ -161,7 +163,7 @@ TEST_F(xtest_gasfee_fixture_t, test_init_eth_limited_tgas_exceeded) {
     auto op = make_operator();
     std::error_code ec;
     op.init(ec);
-    EXPECT_EQ(ec, make_error_code(gasfee::error::xenum_errc::tx_limited_tgas_exceeded));
+    EXPECT_EQ(ec, make_error_code(gasfee::error::xenum_errc::tx_limited_gasfee_exceeded));
 }
 
 TEST_F(xtest_gasfee_fixture_t, test_init_eth_balance_not_enough) {
@@ -565,6 +567,7 @@ TEST_F(xtest_gasfee_fixture_t, demo_common_contract_self) {
 TEST_F(xtest_gasfee_fixture_t, demo_common_evm_transfer) {
     default_used_tgas = 1000000;
     default_last_time = 10000000;
+    default_evm_gas_limit = 500000;
     default_tx_version = data::xtransaction_version_3;
     // send
     make_default();
@@ -573,15 +576,55 @@ TEST_F(xtest_gasfee_fixture_t, demo_common_evm_transfer) {
     op.preprocess(ec);
     EXPECT_EQ(ec.value(), 0);
     // ... execute tx
-    uint64_t supplement_gas = 10;
+    uint64_t supplement_gas = 21000;
     op.postprocess(supplement_gas, ec);
+    auto used_deposit = supplement_gas / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tgas_to_eth_gas_exchange_ratio) * 20 + 6 * 20;
     EXPECT_EQ(ec.value(), 0);
     EXPECT_EQ(default_cons_tx->get_current_used_tgas(), 0);
-    EXPECT_EQ(default_cons_tx->get_current_used_deposit(), 10 * 20 + 120);
+    EXPECT_EQ(default_cons_tx->get_current_used_deposit(), used_deposit);
     EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(1000000));
     EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
-    EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance - 10 * 20 - 120));
-    EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_BURN)->get_balance(), base::vtoken_t(10 * 20 + 120));
+    EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance - used_deposit));
+    EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_BURN)->get_balance(), base::vtoken_t(used_deposit));
+}
+
+TEST(test_xtvm_v2, demo_common_evm_transfer_real) {
+    // data
+    statectx::xstatectx_face_ptr_t statectx = std::make_shared<xmock_statectx_t>();
+    auto p_statectx = dynamic_cast<xmock_statectx_t *>(statectx.get());
+    txexecutor::xvm_para_t param{p_statectx->default_onchain_time, "0000", p_statectx->default_onchain_deposit_tgas};
+    p_statectx->default_tx_version = data::xtransaction_version_3;
+    p_statectx->default_evm_gas_limit = 500000;
+    p_statectx->default_used_tgas = 1000000;
+    p_statectx->default_last_time = 10000000;
+    p_statectx->build_default();
+
+    base::xvaccount_t sender_vaccount{p_statectx->default_sender};
+    base::xvaccount_t recver_vaccount{p_statectx->default_recver};
+    auto sender_unitstate = statectx->load_unit_state(sender_vaccount);
+    auto recver_unitstate = statectx->load_unit_state(recver_vaccount);
+    sender_unitstate->tep_token_deposit(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH, 20000);
+
+    txexecutor::xvm_input_t vminput(statectx, param, p_statectx->default_cons_tx);
+    txexecutor::xvm_output_t vmoutput;
+    txexecutor::xtvm_v2_t tvm;
+    auto ret = tvm.execute(vminput, vmoutput);
+    EXPECT_EQ(ret, 0);
+    EXPECT_TRUE(vmoutput.m_tx_exec_succ);
+    EXPECT_EQ(vmoutput.m_vm_error_code, 0);
+    EXPECT_TRUE(vmoutput.m_vm_error_str.empty());
+
+    auto s_eth_balance = sender_unitstate->tep_token_balance(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH);
+    auto r_eth_balance = recver_unitstate->tep_token_balance(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH);
+    EXPECT_EQ(s_eth_balance, 20000 - p_statectx->default_eth_value);
+    EXPECT_EQ(r_eth_balance, p_statectx->default_eth_value);
+
+    auto used_deposit = 21000 / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tgas_to_eth_gas_exchange_ratio) * 20 + 6 * 20;
+    EXPECT_EQ(p_statectx->default_cons_tx->get_current_used_tgas(), 0);
+    EXPECT_EQ(p_statectx->default_cons_tx->get_current_used_deposit(), used_deposit);
+    EXPECT_EQ(sender_unitstate->get_used_tgas(), 1000000);
+    EXPECT_EQ(sender_unitstate->balance(), base::vtoken_t(p_statectx->default_balance - used_deposit));
+    EXPECT_EQ(sender_unitstate->burn_balance(), base::vtoken_t(used_deposit));
 }
 
 }  // namespace tests
