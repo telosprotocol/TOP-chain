@@ -61,7 +61,6 @@
 #include "xdata/xtransaction_v2.h"
 #include "xdata/xtransaction_v3.h"
 #include "xstatectx/xstatectx.h"
-
 using namespace top::data;
 
 namespace top {
@@ -91,7 +90,23 @@ bool xrpc_eth_query_manager::handle(std::string & strReq, xJson::Value & js_req,
 
     return true;
 }
-
+void xrpc_eth_query_manager::deal_error(xJson::Value & js_rsp, eth::enum_error_code error_id) {
+    eth::ErrorMessage err_msg;
+    if (m_eth_error_info.get_error(error_id, err_msg) == false) {
+        xwarn("xrpc_eth_query_manager::deal_error, not find:%d", (int32_t)error_id);
+        return;
+    }
+    js_rsp["error"]["code"] = err_msg.m_code;
+    js_rsp["error"]["message"] = err_msg.m_message;
+    return;
+}
+bool xrpc_eth_query_manager::check_eth_address(const std::string& account) {
+    if (account.size() < 2)
+        return false;
+    if (account.substr(0,2) != "0x" && account.substr(0,2) != "0X")
+        return false;
+    return true;
+}
 xaccount_ptr_t xrpc_eth_query_manager::query_account_by_number(const std::string &unit_address, const std::string& table_height) {
     base::xvaccount_t _vaddr(unit_address);
     std::string table_address = base::xvaccount_t::make_table_account_address(_vaddr);
@@ -100,7 +115,7 @@ xaccount_ptr_t xrpc_eth_query_manager::query_account_by_number(const std::string
     XMETRICS_GAUGE(metrics::blockstore_access_from_store, 1);
     xobject_ptr_t<base::xvblock_t> _block;
     if (table_height == "latest")
-        _block = base::xvchain_t::instance().get_xblockstore()->get_latest_connected_block(_table_addr);
+        _block = base::xvchain_t::instance().get_xblockstore()->get_latest_cert_block(_table_addr);
     else if (table_height == "earliest")
         _block = base::xvchain_t::instance().get_xblockstore()->get_genesis_block(_table_addr);
     else if (table_height == "pending")
@@ -143,11 +158,14 @@ xaccount_ptr_t xrpc_eth_query_manager::query_account_by_number(const std::string
 }
 void xrpc_eth_query_manager::eth_getBalance(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     std::string account = js_req[0].asString();
-    transform(account.begin(), account.end(), account.begin(), ::tolower);
-    account = std::string(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN) + account.substr(2);
+    if (!check_eth_address(account)) {
+        deal_error(js_rsp, eth::enum_invalid_argument_hex);
+        return;
+    }
+    account = xvaccount_t::to_evm_address(account);
     xdbg("xarc_query_manager::getBalance account: %s,%s", account.c_str(), js_req[1].asString().c_str());
 
-    ADDRESS_CHECK_VALID(account)
+    ETH_ADDRESS_CHECK_VALID(account)
 
     xaccount_ptr_t account_ptr = query_account_by_number(account, js_req[1].asString());
 
@@ -170,11 +188,14 @@ void xrpc_eth_query_manager::eth_getBalance(xJson::Value & js_req, xJson::Value 
 }
 void xrpc_eth_query_manager::eth_getTransactionCount(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     std::string account = js_req[0].asString();
-    std::transform(account.begin(), account.end(), account.begin(),::tolower);
-    account = std::string(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN) + account.substr(2);
+    if (!check_eth_address(account)) {
+        deal_error(js_rsp, eth::enum_invalid_argument_hex);
+        return;
+    }
+    account = xvaccount_t::to_evm_address(account);
 
     // add top address check
-    ADDRESS_CHECK_VALID(account)
+    ETH_ADDRESS_CHECK_VALID(account)
     xaccount_ptr_t account_ptr = query_account_by_number(account, js_req[1].asString());
     if (account_ptr == nullptr) {
         js_rsp["result"] = "0x0";
@@ -482,11 +503,14 @@ void xrpc_eth_query_manager::set_block_result(const base::xauto_ptr<base::xvbloc
 }
 void xrpc_eth_query_manager::eth_getCode(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     std::string account = js_req[0].asString();
-    std::transform(account.begin(), account.end(), account.begin(), ::tolower);
-    account = std::string(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN) + account.substr(2);
+    if (!check_eth_address(account)) {
+        deal_error(js_rsp, eth::enum_invalid_argument_hex);
+        return;
+    }
+    account = xvaccount_t::to_evm_address(account);
 
     // add top address check
-    ADDRESS_CHECK_VALID(account)
+    ETH_ADDRESS_CHECK_VALID(account)
 
     xaccount_ptr_t account_ptr = query_account_by_number(account, js_req[1].asString());
     if (account_ptr == nullptr) {
@@ -507,20 +531,20 @@ std::string xrpc_eth_query_manager::safe_get_json_value(xJson::Value & js_req, c
 }
 void xrpc_eth_query_manager::eth_call(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     std::string to = safe_get_json_value(js_req[0], "to");
-    if (to.empty()) {
-        xwarn("xrpc_eth_query_manager::eth_call, generate_tx to: %s", to.c_str());
+    if (!check_eth_address(to)) {
+        deal_error(js_rsp, eth::enum_invalid_argument_hex);
         return;
     }
-    std::transform(to.begin(), to.end(), to.begin(), ::tolower);
-    to = std::string(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN) + to.substr(2);
+    to = xvaccount_t::to_evm_address(to);
+    ETH_ADDRESS_CHECK_VALID(to)
 
     std::string from = safe_get_json_value(js_req[0], "from");
-    if (from.empty()) {
-        xwarn("xrpc_eth_query_manager::eth_call, generate_tx from: %s", from.c_str());
+    if (!check_eth_address(from)) {
+        deal_error(js_rsp, eth::enum_invalid_argument_hex);
         return;
     }
-    std::transform(from.begin(), from.end(), from.begin(), ::tolower);
-    from = std::string(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN) + from.substr(2);
+    from = xvaccount_t::to_evm_address(from);
+    ETH_ADDRESS_CHECK_VALID(from)
 
     std::string jdata = safe_get_json_value(js_req[0], "data");
     std::string data;
@@ -569,20 +593,19 @@ void xrpc_eth_query_manager::eth_estimateGas(xJson::Value & js_req, xJson::Value
     std::string to = safe_get_json_value(js_req[0], "to");
     if (to.empty()) {
         xinfo("xrpc_eth_query_manager::eth_estimateGas, generate_tx to: %s", to.c_str());
-//        return;
         to = std::string(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN) + std::string(40, '0');
     } else {
-        std::transform(to.begin(), to.end(), to.begin(), ::tolower);
-        to = std::string(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN) + to.substr(2);
+        to = xvaccount_t::to_evm_address(to);
     }
+    ETH_ADDRESS_CHECK_VALID(to)
 
     std::string from = safe_get_json_value(js_req[0], "from");
-    if (from.empty()) {
-        xwarn("xrpc_eth_query_manager::eth_estimateGas, generate_tx from: %s", from.c_str());
+    if (!check_eth_address(from)) {
+        deal_error(js_rsp, eth::enum_invalid_argument_hex);
         return;
     }
-    std::transform(from.begin(), from.end(), from.begin(), ::tolower);
-    from = std::string(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN) + from.substr(2);
+    from = xvaccount_t::to_evm_address(from);
+    ETH_ADDRESS_CHECK_VALID(from)
 
     std::string jdata = safe_get_json_value(js_req[0], "data");
     std::string data;
@@ -637,6 +660,29 @@ void xrpc_eth_query_manager::eth_estimateGas(xJson::Value & js_req, xJson::Value
         outstr << "0x" << std::hex << output.m_tx_result.used_gas;        
         js_rsp["result"] = outstr.str();
     }
+}
+void xrpc_eth_query_manager::eth_getStorageAt(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
+    std::string account = js_req[0].asString();
+    if (!check_eth_address(account)) {
+        deal_error(js_rsp, eth::enum_invalid_argument_hex);
+        return;
+    }
+    account = xvaccount_t::to_evm_address(account);
+    xdbg("xarc_query_manager::eth_getStorageAt account: %s,%s", account.c_str(), js_req[1].asString().c_str());
+
+    ETH_ADDRESS_CHECK_VALID(account)
+
+    xunitstate_ptr_t account_ptr = query_account_by_number(account, js_req[2].asString());
+    if (account_ptr == nullptr) {
+        js_rsp["result"] = "0x0";
+        return;
+    }
+
+    std::string index_str = top::HexDecode(js_req[1].asString().substr(2));
+    std::string value_str = account_ptr->get_storage(index_str);
+    xinfo("xrpc_eth_query_manager::eth_getStorageAt, %s,%s,%s, %s", js_req[0].asString().c_str(), js_req[1].asString().c_str(), js_req[2].asString().c_str(),
+        top::HexEncode(value_str).c_str());
+    js_rsp["result"] = std::string("0x") + top::HexEncode(value_str);
 }
 }  // namespace chain_info
 }  // namespace top
