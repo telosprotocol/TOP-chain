@@ -12,12 +12,6 @@
 
 NS_BEG2(top, xtxpool_v2)
 
-enum enum_min_unconfirm_id_result {
-    enum_min_unconfirm_id_ok = 0,
-    enum_min_unconfirm_id_all_confirmed = 1,
-    enum_min_unconfirm_id_fail = 2,
-};
-
 class xreceiptid_state_cache_t {
 public:
     // xreceiptid_state_cache_t();

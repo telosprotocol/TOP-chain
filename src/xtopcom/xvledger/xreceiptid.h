@@ -35,6 +35,7 @@ class xreceiptid_pair_t {
     uint64_t        get_send_rsp_id_max() const {return m_send_rsp_id_max;}
     uint64_t        get_confirm_rsp_id_max() const {return m_send_rsp_id_max - m_unconfirm_rsp_num;}
     uint32_t        get_unconfirm_rsp_num() const {return m_unconfirm_rsp_num;}
+    bool            all_confirmed_as_sender() const {return m_unconfirm_rsp_num == 0;}
 
  public:
     void            set_sendid_max(uint64_t value);
