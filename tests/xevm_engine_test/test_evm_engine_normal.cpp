@@ -38,7 +38,6 @@ TEST(evm_engine_normal_test, deploy_and_call_contract_success_0) {
         "353d97dcc679b08a746d7d8f00f5b7051bdf6c1793d3f6f3a9e361fa64736f6c63430006040033",
         true};
     txexecutor::xvm_para_t vm_param{0, "random_seed", 0};
-    vm_param.set_evm_gas_limit(UINT64_MAX);
     top::statectx::xstatectx_face_ptr_t statestore{std::make_shared<top::evm::tests::xmock_evm_statectx>()};
 
     // deploy code
@@ -179,7 +178,6 @@ TEST(evm_engine_normal_test, deploy_and_call_contract_success_1) {
         "667358221220d85b6d67c18cbaefa92cadb028ffbb9d0d410e0960f7466456990c711ab8a77464736f6c63430006040033",
         true};
     txexecutor::xvm_para_t vm_param{0, "random_seed", 0};
-    vm_param.set_evm_gas_limit(UINT64_MAX);
     top::statectx::xstatectx_face_ptr_t statestore{std::make_shared<top::evm::tests::xmock_evm_statectx>()};
 
     // deploy code
@@ -315,7 +313,6 @@ TEST(evm_engine_normal_test, deploy_and_call_contract_success_2) {
         "dccf09d34d37da99fe7de2b8526427bf3f64736f6c63430006040033",
         true};
     txexecutor::xvm_para_t vm_param{0, "random_seed", 0};
-    vm_param.set_evm_gas_limit(UINT64_MAX);
     top::statectx::xstatectx_face_ptr_t statestore{std::make_shared<top::evm::tests::xmock_evm_statectx>()};
 
     // deploy code

@@ -337,6 +337,7 @@ private:
     evm_common::u256 m_value;
     xbytes_t m_input_data;
     xtop_evm_action_type m_evm_action_type{xtop_evm_action_type::invalid};
+    uint64_t m_gaslimit;
 
 public:
     xtop_consensus_action(xtop_consensus_action const &) = default;
@@ -345,8 +346,8 @@ public:
     xtop_consensus_action & operator=(xtop_consensus_action &&) = default;
     ~xtop_consensus_action() override = default;
 
-    xtop_consensus_action(common::xaccount_address_t src_address, common::xaccount_address_t dst_address, evm_common::u256 value, xbytes_t data) noexcept
-      : xtop_action_t<xtop_action_type_t::evm>{nullptr, common::xjudgement_day}, m_sender{src_address}, m_recver{dst_address}, m_value{value}, m_input_data{data} {
+    xtop_consensus_action(common::xaccount_address_t src_address, common::xaccount_address_t dst_address, evm_common::u256 value, xbytes_t data, uint64_t gaslimit) noexcept
+      : xtop_action_t<xtop_action_type_t::evm>{nullptr, common::xjudgement_day}, m_sender{src_address}, m_recver{dst_address}, m_value{value}, m_input_data{data}, m_gaslimit(gaslimit) {
         if (m_recver.empty() || m_recver.value() == "T600040000000000000000000000000000000000000000") {
             m_evm_action_type = xtop_evm_action_type::deploy_contract;
         } else {
@@ -371,6 +372,7 @@ public:
             m_evm_action_type = xtop_evm_action_type::call_contract;
         }
         m_input_data = top::to_bytes(tx->get_transaction()->get_data());
+        m_gaslimit = (uint64_t)tx->get_transaction()->get_gaslimit();
     }
 
     xtop_evm_action_type evm_action() const {
@@ -394,7 +396,9 @@ public:
         return m_value;
     }
 
-    // uint64_t gas_limit() const;
+    uint64_t gas_limit() const {
+        return m_gaslimit;
+    }
 
     // uint64_t gas_price() const;
 };

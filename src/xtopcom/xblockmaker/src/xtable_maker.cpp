@@ -566,7 +566,6 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
     statectx::xstatectx_ptr_t statectx_ptr = statectx::xstatectx_factory_t::create_latest_cert_statectx(cs_para.get_latest_cert_block().get(), table_para.get_tablestate(), table_para.get_commit_tablestate(), statectx_para);
     // create batch executor
     txexecutor::xvm_para_t vmpara(cs_para.get_clock(), cs_para.get_random_seed(), cs_para.get_total_lock_tgas_token());
-    vmpara.set_evm_gas_limit(UINT64_MAX);
     txexecutor::xbatchtx_executor_t executor(statectx_ptr, vmpara);
 
     std::vector<xcons_transaction_ptr_t> input_txs;
