@@ -29,7 +29,7 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
     // transferFrom(address,address,uint256) => 23b872dd
     // approve(address,uint256)              => 095ea7b3
     // allowance(address,address)            => dd62ed3e
-    // approveTOP(bytes32,uint64)            => 24655e23
+    // mint(uint256)                         => a0712d68
     //--------------------------------------------------
     constexpr uint32_t method_id_total_supply{0x18160ddd};
     constexpr uint32_t method_id_balance_of{0x70a08231};
@@ -37,6 +37,7 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
     constexpr uint32_t method_id_transfer_from{0x23b872dd};
     constexpr uint32_t method_id_approve{0x095ea7b3};
     constexpr uint32_t method_id_allowance{0xdd62ed3e};
+    constexpr uint32_t method_id_mint{0xa0712d68};
 
     assert(state_ctx);
 
@@ -532,6 +533,107 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
         output.exit_status = Returned;
 
         return true;
+    }
+
+    case method_id_mint: {
+        uint64_t const mint_gas_cost = 13155;
+        if (target_gas < mint_gas_cost) {
+            err.fail_status = precompile_error::Error;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
+
+            xwarn("predefined erc20 contract: mint out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, mint_gas_cost);
+
+            return false;
+        }
+
+        xbytes_t result(32, 0);
+        if (is_static) {
+            err.fail_status = precompile_error::Revert;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+            err.cost = mint_gas_cost;
+            err.output = result;
+
+            xwarn("predefined erc20 contract: mint is not allowed in static context");
+
+            return false;
+        }
+
+        if (abi_decoder.size() != 1) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
+
+            xwarn("predefined erc20 contract: mint with invalid parameter");
+
+            return false;
+        }
+
+        std::error_code ec;
+        common::xaccount_address_t caller_account_address = common::xaccount_address_t::build_from(context.caller, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
+        evm_common::u256 const value = abi_decoder.extract<evm_common::u256>(ec);
+        if (ec) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
+
+            xwarn("predefined erc20 contract: transfer with invalid value");
+
+            return false;
+        }
+
+        auto sender_state = state_ctx->load_unit_state(caller_account_address.vaccount());
+        switch (erc20_token_id) {
+        case common::xtoken_id_t::top:
+            sender_state->token_deposit(data::XPROPERTY_BALANCE_AVAILABLE, static_cast<base::vtoken_t>(value.convert_to<uint64_t>()));
+            break;
+
+        case common::xtoken_id_t::usdt:
+            sender_state->tep_token_deposit("USDT", value);
+            break;
+
+        case common::xtoken_id_t::usdc:
+            sender_state->tep_token_deposit("USDC", value);
+            break;
+
+        default:
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
+
+            xwarn("predefined erc20 contract: mint invalid token id %d", static_cast<int>(erc20_token_id));
+
+            return false;
+        }
+
+        if (!ec) {
+            auto const & contract_address = context.address;
+            auto const & recipient_address = context.caller;
+
+            evm_common::xevm_log_t log;
+            log.address = top::to_string(contract_address.to_h160());
+            assert(log.address.size() == 20);
+            log.data = top::to_string(value);
+            assert(log.data.size() == 32);
+            log.topics.push_back(top::to_string(evm_common::fromHex("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef", evm_common::WhenError::Throw)));
+            assert(log.topics.back().size() == 32);
+            log.topics.push_back(top::to_string(common::xeth_address_t::zero().to_h256()));
+            assert(log.topics.back().size() == 32);
+            log.topics.push_back(top::to_string(recipient_address.to_h256()));
+            assert(log.topics.back().size() == 32);
+
+            result[31] = 1;
+
+            output.cost = mint_gas_cost;
+            output.exit_status = Returned;
+            output.output = result;
+            output.logs.push_back(log);
+        } else {
+            err.fail_status = precompile_error::Revert;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+            err.cost = mint_gas_cost / 2;
+            err.output = result;
+
+            xwarn("predefined erc20 contract: mint reverted. ec %" PRIi32 " category %s msg %s", ec.value(), ec.category().name(), ec.message().c_str());
+        }
+
+        return !ec;
     }
 
     default: {
