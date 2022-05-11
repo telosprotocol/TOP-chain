@@ -96,6 +96,35 @@ void call_contract_api(ContractT * obj, top::base::xstream_t & stream, Callable 
 
 /// @brief Macro for declaring send only(source action only) contract API 'func'
 ///        'CONTRACT' is from 'BEGIN_CONTRACT_APIs'
+#define DECLARE_API(CONTRACT_API)                                                                                                                                                  \
+    do {                                                                                                                                                                           \
+        std::string const api_string{#CONTRACT_API};                                                                                                                               \
+        auto const pos = api_string.find("::");                                                                                                                                    \
+        if (pos == std::string::npos) {                                                                                                                                            \
+            break;                                                                                                                                                                 \
+        }                                                                                                                                                                          \
+        auto const api_name = api_string.substr(pos + 2);                                                                                                                          \
+        if (action_name != api_name) {                                                                                                                                             \
+            break;                                                                                                                                                                 \
+        }                                                                                                                                                                          \
+                                                                                                                                                                                   \
+        try {                                                                                                                                                                      \
+            top::txexecutor::contract::call_contract_api(this, stream, std::mem_fn(&CONTRACT_API), &CONTRACT_API);                                                                 \
+            result.output.followup_transaction_data = exe_ctx->followup_transaction();                                                                                             \
+        } catch (top::error::xtop_error_t const & eh) {                                                                                                                            \
+            result.status.ec = eh.code();                                                                                                                                          \
+            result.status.extra_msg = eh.what();                                                                                                                                   \
+        } catch (std::exception const & eh) {                                                                                                                                      \
+            result.status.ec = top::contract_runtime::error::xerrc_t::unknown_error;                                                                                               \
+            result.status.extra_msg = eh.what();                                                                                                                                   \
+        } catch (...) {                                                                                                                                                            \
+            result.status.ec = top::contract_runtime::error::xerrc_t::unknown_error;                                                                                               \
+        }                                                                                                                                                                          \
+        return result;                                                                                                                                                             \
+    } while (false)
+
+/// @brief Macro for declaring send only(source action only) contract API 'func'
+///        'CONTRACT' is from 'BEGIN_CONTRACT_APIs'
 #define DECLARE_SEND_ONLY_API(CONTRACT_API)                                                                                                                                        \
     do {                                                                                                                                                                           \
         std::string const api_string{#CONTRACT_API};                                                                                                                               \
@@ -109,13 +138,13 @@ void call_contract_api(ContractT * obj, top::base::xstream_t & stream, Callable 
         }                                                                                                                                                                          \
                                                                                                                                                                                    \
         try {                                                                                                                                                                      \
-            if (data::xconsensus_action_stage_t::send != exe_ctx->action_stage()) {                                                                                      \
+            if (data::xconsensus_action_stage_t::send != exe_ctx->action_stage()) {                                                                                                \
                 result.status.ec = top::contract_runtime::error::xerrc_t::enum_vm_not_correct_action_stage_error;                                                                  \
                 assert(false);                                                                                                                                                     \
                 return result;                                                                                                                                                     \
             }                                                                                                                                                                      \
-            top::txexecutor::contract::call_contract_api(this, stream, std::mem_fn(&CONTRACT_API), &CONTRACT_API);                                                             \
-            result.output.followup_transaction_data = exe_ctx->followup_transaction();                                                                                                      \
+            top::txexecutor::contract::call_contract_api(this, stream, std::mem_fn(&CONTRACT_API), &CONTRACT_API);                                                                 \
+            result.output.followup_transaction_data = exe_ctx->followup_transaction();                                                                                             \
         } catch (top::error::xtop_error_t const & eh) {                                                                                                                            \
             result.status.ec = eh.code();                                                                                                                                          \
             result.status.extra_msg = eh.what();                                                                                                                                   \
@@ -141,14 +170,14 @@ void call_contract_api(ContractT * obj, top::base::xstream_t & stream, Callable 
         }                                                                                                                                                                          \
                                                                                                                                                                                    \
         try {                                                                                                                                                                      \
-            if (data::xconsensus_action_stage_t::self != exe_ctx->action_stage()) {                                                                                      \
+            if (data::xconsensus_action_stage_t::self != exe_ctx->action_stage()) {                                                                                                \
                 assert(false);                                                                                                                                                     \
                 result.status.ec = top::contract_runtime::error::xerrc_t::enum_vm_not_correct_action_stage_error;                                                                  \
                 return result;                                                                                                                                                     \
             }                                                                                                                                                                      \
             xdbg("self calling contract API: %s", api_name.c_str());                                                                                                               \
-            top::txexecutor::contract::call_contract_api(this, stream, std::mem_fn(&CONTRACT_API), &CONTRACT_API);                                                             \
-            result.output.followup_transaction_data = exe_ctx->followup_transaction();                                                                                                      \
+            top::txexecutor::contract::call_contract_api(this, stream, std::mem_fn(&CONTRACT_API), &CONTRACT_API);                                                                 \
+            result.output.followup_transaction_data = exe_ctx->followup_transaction();                                                                                             \
         } catch (top::error::xtop_error_t const & eh) {                                                                                                                            \
             result.status.ec = eh.code();                                                                                                                                          \
             result.status.extra_msg = eh.what();                                                                                                                                   \
@@ -177,13 +206,12 @@ void call_contract_api(ContractT * obj, top::base::xstream_t & stream, Callable 
         }                                                                                                                                                                          \
                                                                                                                                                                                    \
         try {                                                                                                                                                                      \
-            if (data::xconsensus_action_stage_t::confirm != exe_ctx->action_stage()) {                                                                                   \
-                result.status.ec = top::contract_runtime::error::xerrc_t::enum_vm_not_correct_action_stage_error;                                                 \
+            if (data::xconsensus_action_stage_t::confirm != exe_ctx->action_stage()) {                                                                                             \
+                result.status.ec = top::contract_runtime::error::xerrc_t::enum_vm_not_correct_action_stage_error;                                                                  \
                 return result;                                                                                                                                                     \
             }                                                                                                                                                                      \
                                                                                                                                                                                    \
-                                                                                                                                                                                   \
-            top::txexecutor::contract::call_contract_api(this, stream, std::mem_fn(&CONTRACT_API), &CONTRACT_API);                                                             \
+            top::txexecutor::contract::call_contract_api(this, stream, std::mem_fn(&CONTRACT_API), &CONTRACT_API);                                                                 \
             result.output.followup_transaction_data = followup_transaction();                                                                                                      \
         } catch (top::error::xtop_error_t const & eh) {                                                                                                                            \
             result.status.ec = eh.code();                                                                                                                                          \
@@ -198,28 +226,29 @@ void call_contract_api(ContractT * obj, top::base::xstream_t & stream, Callable 
     } while (false)
 
 /// @brief  contract begin & end macro
-#define BEGIN_CONTRACT_API()                                                                                                                                                        \
-    top::contract_common::xcontract_execution_result_t execute(observer_ptr<top::contract_common::xstateless_contract_execution_context_t> exe_ctx) override {                                \
-        this->reset_execution_context(exe_ctx);                                                                                                                                     \
-        top::contract_common::xcontract_execution_result_t result;                                                                                                                  \
-        auto const & action_name = exe_ctx->action_name();                                                                                                                          \
-        auto const & action_data = exe_ctx->action_data(); xdbg("inhere, action_name: %s", action_name.c_str());            \
-        if (action_name.empty()) {                                                                                                                                                  \
-            return result;                                                                                                                                                          \
-        }                                                                                                                                                                           \
-        std::unique_ptr<base::xstream_t> stream_ptr;                                                                                                                                \
-        if (action_data.empty()) {                                                                                                                                                  \
-            stream_ptr = top::make_unique<base::xstream_t>(base::xcontext_t::instance());                                                                                           \
-        } else {                                                                                                                                                                    \
-            stream_ptr = top::make_unique<base::xstream_t>(base::xcontext_t::instance(), const_cast<uint8_t *>(action_data.data()), static_cast<uint32_t>(action_data.size()));     \
-        }                                                                                                                                                                           \
-        assert(stream_ptr != nullptr);                                                                                                                                              \
+#define BEGIN_CONTRACT_API()                                                                                                                                                       \
+    top::contract_common::xcontract_execution_result_t execute(observer_ptr<top::contract_common::xstateless_contract_execution_context_t> exe_ctx) override {                     \
+        this->reset_execution_context(exe_ctx);                                                                                                                                    \
+        top::contract_common::xcontract_execution_result_t result;                                                                                                                 \
+        auto const & action_name = exe_ctx->action_name();                                                                                                                         \
+        auto const & action_data = exe_ctx->action_data();                                                                                                                         \
+        xdbg("inhere, action_name: %s", action_name.c_str());                                                                                                                      \
+        if (action_name.empty()) {                                                                                                                                                 \
+            return result;                                                                                                                                                         \
+        }                                                                                                                                                                          \
+        std::unique_ptr<base::xstream_t> stream_ptr;                                                                                                                               \
+        if (action_data.empty()) {                                                                                                                                                 \
+            stream_ptr = top::make_unique<base::xstream_t>(base::xcontext_t::instance());                                                                                          \
+        } else {                                                                                                                                                                   \
+            stream_ptr = top::make_unique<base::xstream_t>(base::xcontext_t::instance(), const_cast<uint8_t *>(action_data.data()), static_cast<uint32_t>(action_data.size()));    \
+        }                                                                                                                                                                          \
+        assert(stream_ptr != nullptr);                                                                                                                                             \
         auto & stream = *stream_ptr;
 
-#define END_CONTRACT_API                                                                                                                                                            \
-        assert(false);                                                                                                                                                              \
-        top::error::throw_error(top::contract_runtime::error::xerrc_t::contract_api_not_found);                                                                                     \
-        return {};                                                                                                                                                                  \
+#define END_CONTRACT_API                                                                                                                                                           \
+    assert(false);                                                                                                                                                                 \
+    top::error::throw_error(top::contract_runtime::error::xerrc_t::contract_api_not_found);                                                                                        \
+    return {};                                                                                                                                                                     \
     }
 
 NS_END3

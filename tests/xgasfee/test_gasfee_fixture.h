@@ -118,7 +118,7 @@ public:
         tx->set_different_source_target_address(default_sender, default_recver);
         tx->set_fire_timestamp(default_fire);
         tx->set_expire_duration(default_expire);
-        tx->set_deposit(default_deposit);
+        tx->set_deposit(default_v3_deposit);
         tx->set_gaslimit(default_evm_gas_limit);
         dynamic_cast<data::eip_1559_tx *>(tx->m_eip_xxxx_tx.get())->max_fee_per_gas = default_eth_per_gas;
         dynamic_cast<data::eip_1559_tx *>(tx->m_eip_xxxx_tx.get())->value = default_eth_value;
@@ -169,6 +169,10 @@ public:
     // default data
     std::string default_sender{"T00000LWZ2K7Be3iMZwkLTZpi2saSmdp9AyWsCBc"};
     std::string default_recver{"T00000LfxdAPxPUrbYvDCkpijvicSQCXTBT7J7WW"};
+    std::string default_T6_sender{"T600042d3f291fac3dea7f5ed1da06ace4b50ebee76207"};
+    std::string default_T6_recver{"T600043b85b55221b4fbc5ef999b40694bef221dd16f00"};
+    std::string default_T8_sender{"T800000fe304a43d35321e39d2c9b10183c10ed941d687"};
+    std::string default_T8_recver{"T80000b7f80a61dfe2418465e2a845724b54005886bfa8"};
     std::string default_sign_key{"NzjQLs3K3stpskP8j1VG5DKwZF2vvBJNLDaHAvxsFQA="};
     uint64_t default_balance{ASSET_TOP(1000)};
     uint64_t default_tgas_balance{ASSET_TOP(1000)};
@@ -178,6 +182,7 @@ public:
     uint64_t default_expire{600};
     uint64_t default_amount{100};
     uint64_t default_deposit{ASSET_uTOP(100000)};
+    uint64_t default_v3_deposit{0};
     uint64_t default_used_deposit{ASSET_uTOP(50000)};
     uint64_t default_onchain_time{10000000};
     uint64_t default_onchain_deposit_tgas{ASSET_TOP(2000000000)};
