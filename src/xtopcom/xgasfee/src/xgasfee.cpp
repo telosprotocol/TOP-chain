@@ -147,22 +147,29 @@ uint64_t xtop_gasfee::tgas_to_balance(const uint64_t tgas) const {
 
 void xtop_gasfee::store_in_one_stage(std::error_code & ec) {
     const uint64_t deposit_usage = tgas_to_balance(m_converted_tgas_usage);
+    // fill tx
     tx_set_used_tgas(m_free_tgas_usage);
     tx_set_used_deposit(deposit_usage);
+    // store tgas_usage
     xassert(m_free_tgas_usage >= m_deducted_free_tgas_usage);
     uint64_t free_tgas_usage_add = m_free_tgas_usage - m_deducted_free_tgas_usage;
-    state_set_used_tgas(free_tgas_usage_add + account_formular_used_tgas(m_time), ec);
-    m_deducted_free_tgas_usage = free_tgas_usage_add;
-    CHECK_EC_RETURN(ec);
+    xdbg("[xtop_gasfee::store] free_tgas_usage_add: %lu - %lu = %lu", m_free_tgas_usage, m_deducted_free_tgas_usage, free_tgas_usage_add);
+    if (free_tgas_usage_add > 0) {
+        state_set_used_tgas(free_tgas_usage_add + account_formular_used_tgas(m_time), ec);
+        CHECK_EC_RETURN(ec);
+        m_deducted_free_tgas_usage = free_tgas_usage_add;
+    }
+    // store time
     state_set_last_time(m_time, ec);
     CHECK_EC_RETURN(ec);
+    // burn deposit
     xassert(m_converted_tgas_usage >= m_deducted_converted_tgas_usage);
     uint64_t deposit_to_burn = tgas_to_balance(m_converted_tgas_usage - m_deducted_converted_tgas_usage);
     xdbg("[xtop_gasfee::store] converted_tgas_to_burn: %lu - %lu, deposit_to_burn: %lu", m_converted_tgas_usage, m_deducted_converted_tgas_usage, deposit_to_burn);
     if (deposit_to_burn > 0) {
         burn(static_cast<base::vtoken_t>(deposit_to_burn), ec);
-        m_deducted_converted_tgas_usage = m_converted_tgas_usage;
         CHECK_EC_RETURN(ec);
+        m_deducted_converted_tgas_usage = m_converted_tgas_usage;
     }
     xdbg("[xtop_gasfee::store_in_one_stage] m_free_tgas_usage: %lu, m_converted_tgas_usage: %lu, deposit_usage: %lu", m_free_tgas_usage, m_converted_tgas_usage, deposit_usage);
 }

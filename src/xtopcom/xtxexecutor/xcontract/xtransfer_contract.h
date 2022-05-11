@@ -23,9 +23,9 @@ public:
     END_CONTRACT_API
 
 private:
-    void transfer(const std::string & token_name, const base::vtoken_t token);
-    void deposit(const std::string & token_name, const base::vtoken_t token);
-    void withdraw(const std::string & token_name, const base::vtoken_t token);
+    void transfer(const std::string & token_name, const std::string & amount_256_str);
+    void deposit(const std::string & token_name, const std::string & amount_256_str);
+    void withdraw(const std::string & token_name, const std::string & amount_256_str);
 };
 using xtransfer_contract_t = xtop_transfer_contract;
 
