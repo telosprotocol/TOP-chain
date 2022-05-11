@@ -65,9 +65,12 @@ void xblockpara_base_t::delete_value(const std::string & key) {
 }
 
 void xblockpara_base_t::set_value(const std::string & key, const std::string & value) {
-    if (key.size() > 2 || value.size() > 4096 || value.empty()) {
+    if (key.size() > 2 || value.empty()) {
         xerror("xblockpara_base_t::set_value para should limit key and value size. key=%s,value_size=%d",
             key.c_str(), value.size());
+    }
+    if (value.size() > 4096) {
+        xinfo("xblockpara_base_t::set_value large value size. key=%s,value_size=%d", key.c_str(), value.size());
     }
     if (!value.empty()) {
         m_values[key] = value;
