@@ -4,6 +4,7 @@
 
 #include "xtxexecutor/xtvm_v2.h"
 
+#include "xevm_common/common_data.h"
 #include "xtxexecutor/xcontract/xtransfer_contract.h"
 #include "xtxexecutor/xerror/xerror.h"
 #include "xtxexecutor/xunit_service_error.h"
@@ -17,6 +18,10 @@ enum_execute_result_type xtvm_v2_t::execute(const xvm_input_t & input, xvm_outpu
     const statectx::xstatectx_face_ptr_t & statectx = input.get_statectx();
     const xcons_transaction_ptr_t & tx = input.get_tx();
     xassert(tx->get_tx_type() == data::xtransaction_type_transfer);
+    xassert(tx->get_tx_version() == data::xtransaction_version_3);
+    xassert(tx->get_tx_version() == data::xtransaction_version_3);
+    xassert(base::xvaccount_t::get_addrtype_from_account(tx->get_source_addr()) == base::enum_vaccount_addr_type_secp256k1_evm_user_account);
+    xassert(base::xvaccount_t::get_addrtype_from_account(tx->get_target_addr()) == base::enum_vaccount_addr_type_secp256k1_evm_user_account);
 
     data::xunitstate_ptr_t unitstate = statectx->load_unit_state(tx->get_account_addr());
     if (nullptr == unitstate) {
@@ -55,7 +60,7 @@ void xtvm_v2_t::execute_impl(const xvm_input_t & input, xvm_output_t & output) {
         output.m_contract_create_txs.emplace_back(followup_tx.followed_transaction);
     }
     if (base::xvaccount_t::get_addrtype_from_account(tx->get_source_addr()) == base::enum_vaccount_addr_type_secp256k1_evm_user_account &&
-        base::xvaccount_t::get_addrtype_from_account(tx->get_source_addr()) == base::enum_vaccount_addr_type_secp256k1_evm_user_account) {
+        base::xvaccount_t::get_addrtype_from_account(tx->get_target_addr()) == base::enum_vaccount_addr_type_secp256k1_evm_user_account) {
         output.m_tx_result.used_gas = default_eth_tx_gas;
     }
 
@@ -162,18 +167,6 @@ void xtvm_v2_t::fill_transfer_context(const statectx::xstatectx_face_ptr_t & sta
             ec = error::xenum_errc::xtransaction_parse_type_invalid;
             return;
         }
-        auto amount_256 = tx->get_transaction()->get_amount_256();
-        if (amount_256 > UINT64_MAX) {
-            xwarn("[xtvm_v2_t::fill_transfer_context] token overflow: %s", amount_256.str().c_str());
-            ec = error::xenum_errc::xtransaction_pledge_token_overflow;
-            return;
-        }
-        auto amount = static_cast<uint64_t>(amount_256);
-        base::xstream_t param_stream(base::xcontext_t::instance());
-        param_stream << std::string{data::XPROPERTY_ASSET_ETH};
-        param_stream << amount;
-        std::string data{reinterpret_cast<char *>(param_stream.data()), static_cast<std::size_t>(param_stream.size())};
-        ctx.set_action_data(xbytes_t{data.data(), data.data() + data.size()});
     } else {
         // three stage
         if (ctx.action_stage() == data::xconsensus_action_stage_t::send) {
@@ -189,19 +182,12 @@ void xtvm_v2_t::fill_transfer_context(const statectx::xstatectx_face_ptr_t & sta
             ec = error::xenum_errc::xtransaction_parse_type_invalid;
             return;
         }
-        auto amount_256 = tx->get_transaction()->get_amount_256();
-        if (amount_256 > UINT64_MAX) {
-            xwarn("[xtvm_v2_t::fill_transfer_context] token overflow: %s", amount_256.str().c_str());
-            ec = error::xenum_errc::xtransaction_pledge_token_overflow;
-            return;
-        }
-        auto amount = static_cast<uint64_t>(amount_256);
-        base::xstream_t param_stream(base::xcontext_t::instance());
-        param_stream << std::string{data::XPROPERTY_ASSET_ETH};
-        param_stream << amount;
-        std::string data{reinterpret_cast<char *>(param_stream.data()), static_cast<std::size_t>(param_stream.size())};
-        ctx.set_action_data(xbytes_t{data.data(), data.data() + data.size()});
     }
+    base::xstream_t param_stream(base::xcontext_t::instance());
+    param_stream << std::string{data::XPROPERTY_ASSET_ETH};
+    param_stream << evm_common::toBigEndianString(tx->get_transaction()->get_amount_256());
+    std::string data{reinterpret_cast<char *>(param_stream.data()), static_cast<std::size_t>(param_stream.size())};
+    ctx.set_action_data(xbytes_t{data.data(), data.data() + data.size()});
 
     return;
 }

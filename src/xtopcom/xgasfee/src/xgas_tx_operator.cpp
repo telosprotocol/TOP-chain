@@ -103,6 +103,9 @@ uint64_t xtop_gas_tx_operator::tx_bandwith_tgas() const {
 }
 
 uint64_t xtop_gas_tx_operator::tx_disk_tgas() const {
+    if (tx_type() != data::xtransaction_type_transfer) {
+        return m_tx->get_transaction()->get_tx_len();
+    }
     return 0;
 }
 
