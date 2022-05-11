@@ -189,10 +189,8 @@ bool xtest_evm_fixture::do_deploy_test(json const & each_deploy) {
     auto expected = each_deploy["expected"];
     std::string contract_name_symbol = expected["extra_message"];
 
-    vm_param.set_evm_gas_limit(gas_limit);
-
     auto evm_action = top::make_unique<data::xconsensus_action_t<data::xtop_action_type_t::evm>>(
-        common::xaccount_address_t{src_address}, common::xaccount_address_t{"T600040000000000000000000000000000000000000000"}, value_256, get_contract_bin(code_file));
+        common::xaccount_address_t{src_address}, common::xaccount_address_t{"T600040000000000000000000000000000000000000000"}, value_256, get_contract_bin(code_file), gas_limit);
 
     auto contract_manager = top::make_observer<contract_runtime::evm::xevm_contract_manager_t>(contract_runtime::evm::xevm_contract_manager_t::instance());
 
@@ -234,10 +232,8 @@ bool xtest_evm_fixture::do_call_test(json const & each_call) {
     // std::cout << "get value_256:" << value_256 << std::endl;
     std::string input_data = each_call["data"];
 
-    vm_param.set_evm_gas_limit(gas_limit);
-
     auto evm_action = top::make_unique<data::xconsensus_action_t<data::xtop_action_type_t::evm>>(
-        common::xaccount_address_t{src_address}, common::xaccount_address_t{evm_to_top_address(target_address)}, value_256, xvariant_bytes{input_data, true}.to_bytes());
+        common::xaccount_address_t{src_address}, common::xaccount_address_t{evm_to_top_address(target_address)}, value_256, xvariant_bytes{input_data, true}.to_bytes(), gas_limit);
 
     auto contract_manager = top::make_observer<contract_runtime::evm::xevm_contract_manager_t>(contract_runtime::evm::xevm_contract_manager_t::instance());
 
