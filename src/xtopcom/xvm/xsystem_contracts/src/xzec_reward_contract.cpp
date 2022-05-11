@@ -1585,10 +1585,12 @@ void xzec_reward_contract::calc_nodes_rewards_v5(common::xlogic_time_t const cur
     XCONTRACT_ENSURE(total_issuance > 0, "total issuance = 0");
     auto edge_workload_rewards = total_issuance * onchain_param.edge_reward_ratio / 100;
     auto archive_workload_rewards = total_issuance * onchain_param.archive_reward_ratio / 100;
-    auto auditor_total_workload_rewards = total_issuance * onchain_param.auditor_reward_ratio / 100;
-    auto validator_total_workload_rewards = total_issuance * onchain_param.validator_reward_ratio / 100;
-    auto evm_auditor_total_workload_rewards = total_issuance * onchain_param.evm_auditor_reward_ratio / 100;
-    auto evm_validator_total_workload_rewards = total_issuance * onchain_param.evm_validator_reward_ratio / 100;
+    auto total_auditor_total_workload_rewards = total_issuance * onchain_param.auditor_reward_ratio / 100;
+    auto total_validator_total_workload_rewards = total_issuance * onchain_param.validator_reward_ratio / 100;
+    auto evm_auditor_total_workload_rewards = total_auditor_total_workload_rewards * onchain_param.evm_auditor_reward_ratio / 100;
+    auto evm_validator_total_workload_rewards = total_validator_total_workload_rewards * onchain_param.evm_validator_reward_ratio / 100;
+    auto auditor_total_workload_rewards = total_auditor_total_workload_rewards - evm_auditor_total_workload_rewards;
+    auto validator_total_workload_rewards = total_validator_total_workload_rewards - evm_validator_total_workload_rewards;
     auto vote_rewards = total_issuance * onchain_param.vote_reward_ratio / 100;
     auto governance_rewards = total_issuance * onchain_param.governance_reward_ratio / 100;
     community_reward = governance_rewards;
