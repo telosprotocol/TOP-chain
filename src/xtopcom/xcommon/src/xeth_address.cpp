@@ -56,6 +56,10 @@ xtop_eth_address xtop_eth_address::build_from(xbytes_t const & address_data) {
     return ret;
 }
 
+xtop_eth_address::xtop_eth_address() {
+    std::fill(std::begin(raw_address_), std::end(raw_address_), 0);
+}
+
 xtop_eth_address::xtop_eth_address(std::array<uint8_t, 20> const & raw_account_address) : raw_address_(raw_account_address) {
 }
 
@@ -93,6 +97,11 @@ xbytes_t xtop_eth_address::to_h256() const {
     xbytes_t h160 = to_h160();
     std::copy_n(std::begin(h160), h160.size(), std::next(std::begin(h256), 12));
     return h256;
+}
+
+xtop_eth_address const & xtop_eth_address::zero() {
+    static xtop_eth_address const z;
+    return z;
 }
 
 NS_END2

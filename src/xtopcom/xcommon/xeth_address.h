@@ -21,12 +21,14 @@ private:
     std::array<uint8_t, SIZE> raw_address_;
 
 public:
-    xtop_eth_address() = default;
+    
     xtop_eth_address(xtop_eth_address const &) = default;
     xtop_eth_address & operator=(xtop_eth_address const &) = default;
     xtop_eth_address(xtop_eth_address &&) = default;
     xtop_eth_address & operator=(xtop_eth_address &&) = default;
     ~xtop_eth_address() = default;
+
+    xtop_eth_address();
 
     explicit xtop_eth_address(std::array<uint8_t, SIZE> const & raw_account_address);
 
@@ -49,6 +51,8 @@ public:
     xbytes_t to_bytes() const;
     xbytes_t to_h160() const;
     xbytes_t to_h256() const;
+
+    static xeth_address_t const & zero();
 };
 
 NS_END2
