@@ -16,7 +16,7 @@ xtop_evm_context::xtop_evm_context(std::unique_ptr<data::xbasic_top_action_t con
     // todo // get action_type/sender/recever/gas/value/data.... from action
     // - [] value
 
-    m_gas_limit = vm_para.get_evm_gas_limit();
+    m_gas_limit = static_cast<data::xevm_consensus_action_t const *>(m_action.get())->gas_limit();
     m_random_seed = vm_para.get_random_seed();
 
     evm_engine::parameters::FunctionCallArgs call_args;
