@@ -240,7 +240,7 @@ bool xtop_elect_consensus_group_contract::elect_group(common::xzone_id_t const &
             role_type = common::xminer_type_t::advance;
         } else {
             node_type = common::xnode_type_t::evm_validator;
-            role_type = common::xminer_type_t::advance;
+            role_type = common::xminer_type_t::validator;
         }
 
         break;
