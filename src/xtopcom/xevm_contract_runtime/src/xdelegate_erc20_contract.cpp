@@ -23,7 +23,6 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
                                           sys_contract_precompile_error & err) {
     // ERC20 method ids:
     //--------------------------------------------------
-    // decimals()                            => 313ce567
     // totalSupply()                         => 18160ddd
     // balanceOf(address)                    => 70a08231
     // transfer(address,uint256)             => a9059cbb
@@ -32,7 +31,6 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
     // allowance(address,address)            => dd62ed3e
     // approveTOP(bytes32,uint64)            => 24655e23
     //--------------------------------------------------
-    constexpr uint32_t method_id_decimals{0x313ce567};
     constexpr uint32_t method_id_total_supply{0x18160ddd};
     constexpr uint32_t method_id_balance_of{0x70a08231};
     constexpr uint32_t method_id_transfer{0xa9059cbb};
@@ -82,37 +80,6 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
     }
 
     switch (function_selector.method_id) {
-    case method_id_decimals: {
-        uint64_t const decimals_gas_cost = 2535;
-
-        if (target_gas < decimals_gas_cost) {
-            err.fail_status = Error;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
-
-            xwarn("predefined erc20 contract: decimals out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, decimals_gas_cost);
-
-            return false;
-        }
-
-        xbytes_t result(32, 0);
-        if (!abi_decoder.empty()) {
-            err.fail_status = precompile_error::Fatal;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
-
-            xwarn("predefined erc20 contract: decimals with non-empty parameter");
-
-            return false;
-        }
-
-        result[31] = static_cast<uint8_t>(18);
-
-        output.exit_status = Returned;
-        output.cost = decimals_gas_cost;
-        output.output = result;
-
-        return true;
-    }
-
     case method_id_total_supply: {
         uint64_t const total_supply_gas_cost = 2538;
         if (target_gas < total_supply_gas_cost) {
