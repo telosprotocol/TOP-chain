@@ -41,8 +41,6 @@ public:
     uint64_t tx_bandwith_tgas() const;
     uint64_t tx_disk_tgas() const;
 
-    bool is_evm_tx();
-    bool is_self_tx();
     bool is_one_stage_tx();
 
 private:

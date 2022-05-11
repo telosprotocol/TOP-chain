@@ -51,8 +51,10 @@ private:
     // tgas related param
     uint64_t m_free_tgas{0};
     uint64_t m_free_tgas_usage{0};
+    uint64_t m_deducted_free_tgas_usage{0};
     uint64_t m_converted_tgas{0};
     uint64_t m_converted_tgas_usage{0};
+    uint64_t m_deducted_converted_tgas_usage{0};
 
     // onchain related param
     uint64_t m_time{0};

@@ -48,7 +48,7 @@ class xevm_transaction_result_t {
     }
 
 public:
-    uint64_t used_gas; // todo: calculate used gas to expense
+    uint64_t used_gas{0}; // todo: calculate used gas to expense
     xevm_transaction_status_t status;
     std::string extra_msg;
     std::vector<xevm_log_t> logs;

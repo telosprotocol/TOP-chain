@@ -17,9 +17,9 @@ public:
     ~xtop_transfer_contract() override = default;
 
     BEGIN_CONTRACT_API()
-    DECLARE_SEND_ONLY_API(xtop_transfer_contract::transfer);
-    DECLARE_SEND_ONLY_API(xtop_transfer_contract::deposit);
-    DECLARE_SELF_ONLY_API(xtop_transfer_contract::withdraw);
+    DECLARE_API(xtop_transfer_contract::transfer);
+    DECLARE_API(xtop_transfer_contract::deposit);
+    DECLARE_API(xtop_transfer_contract::withdraw);
     END_CONTRACT_API
 
 private:
