@@ -106,16 +106,8 @@ uint64_t xtop_gas_tx_operator::tx_disk_tgas() const {
     return 0;
 }
 
-bool xtop_gas_tx_operator::is_evm_tx() {
-    return tx_version() == data::xtransaction_version_3;
-}
-
-bool xtop_gas_tx_operator::is_self_tx() {
-    return m_tx->is_self_tx();
-}
-
 bool xtop_gas_tx_operator::is_one_stage_tx() {
-    return (is_self_tx() || is_evm_tx());
+    return (m_tx->is_self_tx() || m_tx->get_inner_table_flag());
 }
 
 }  // namespace gasfee

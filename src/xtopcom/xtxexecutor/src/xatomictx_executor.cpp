@@ -7,6 +7,7 @@
 #include "xdata/xblocktool.h"
 #include "xdata/xtransaction.h"
 #include "xevm/xevm.h"
+#include "xgasfee/xgasfee.h"
 #include "xtxexecutor/xtvm.h"
 #include "xtxexecutor/xtvm_v2.h"
 
@@ -179,18 +180,54 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
     tx->set_not_need_confirm();
     tx->set_inner_table_flag();
 
+    data::xunitstate_ptr_t unitstate = m_statectx->load_unit_state(tx->get_account_addr());
+    gasfee::xgasfee_t gasfee{unitstate, tx, m_para.get_clock(), m_para.get_lock_tgas_token()};
+    std::error_code ec;
+
     if (false == tx->is_evm_tx()) {
         if (tx->get_tx_version() == data::xtransaction_version_3) {
+            gasfee.preprocess(ec);
+            if (ec) {
+                output.m_vm_output.m_tx_exec_succ = false;
+                output.m_vm_output.m_vm_ec = ec;
+                output.m_vm_output.m_vm_error_code = ec.value();
+                output.m_vm_output.m_vm_error_str = ec.message().c_str();
+                return enum_exec_error_vm_execute;
+            }
             xtvm_v2_t tvm;
             ret = tvm.execute(vminput, vmoutput);
+            gasfee.postprocess(vmoutput.m_tx_result.used_gas, ec);
+            if (ec) {
+                output.m_vm_output.m_tx_exec_succ = false;
+                output.m_vm_output.m_vm_ec = ec;
+                output.m_vm_output.m_vm_error_code = ec.value();
+                output.m_vm_output.m_vm_error_str = ec.message().c_str();
+                return enum_exec_error_vm_execute;
+            }
         } else {
             xtvm_t tvm;
             ret = tvm.execute(vminput, vmoutput);
         }
     } else {
 #ifdef BUILD_EVM
+        gasfee.preprocess(ec);
+        if (ec) {
+            output.m_vm_output.m_tx_exec_succ = false;
+            output.m_vm_output.m_vm_ec = ec;
+            output.m_vm_output.m_vm_error_code = ec.value();
+            output.m_vm_output.m_vm_error_str = ec.message().c_str();
+            return enum_exec_error_vm_execute;
+        }
         evm::xtop_evm evm{m_statectx};
         ret = evm.execute(vminput,vmoutput);
+        gasfee.postprocess(vmoutput.m_tx_result.used_gas, ec);
+        if (ec) {
+            output.m_vm_output.m_tx_exec_succ = false;
+            output.m_vm_output.m_vm_ec = ec;
+            output.m_vm_output.m_vm_error_code = ec.value();
+            output.m_vm_output.m_vm_error_str = ec.message().c_str();
+            return enum_exec_error_vm_execute;
+        }
         if (ret == txexecutor::enum_exec_success) {
             tx->set_evm_tx_result(vmoutput.m_tx_result);
             xdbg("xatomictx_executor_t::vm_execute tx:%s vmoutput.m_tx_result.extra_msg:%s", tx->dump().c_str(), vmoutput.m_tx_result.extra_msg.c_str());

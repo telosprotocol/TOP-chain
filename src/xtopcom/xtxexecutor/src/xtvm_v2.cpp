@@ -4,7 +4,6 @@
 
 #include "xtxexecutor/xtvm_v2.h"
 
-#include "xgasfee/xgasfee.h"
 #include "xtxexecutor/xcontract/xtransfer_contract.h"
 #include "xtxexecutor/xerror/xerror.h"
 #include "xtxexecutor/xunit_service_error.h"
@@ -42,17 +41,6 @@ void xtvm_v2_t::execute_impl(const xvm_input_t & input, xvm_output_t & output) {
     const statectx::xstatectx_face_ptr_t & statectx = input.get_statectx();
     const xcons_transaction_ptr_t & tx = input.get_tx();
 
-    data::xunitstate_ptr_t unitstate = statectx->load_unit_state(tx->get_account_addr());
-    gasfee::xgasfee_t gasfee{unitstate, tx, input.get_para().get_clock(), input.get_para().get_lock_tgas_token()};
-    std::error_code ec;
-    gasfee.preprocess(ec);
-    if (ec) {
-        output.m_tx_exec_succ = false;
-        output.m_vm_ec = ec;
-        output.m_vm_error_code = ec.value();
-        output.m_vm_error_str = ec.message().c_str();
-        return;
-    }
     auto result = execute_tx(statectx, tx);
     if (result.status.ec) {
         output.m_tx_exec_succ = false;
@@ -61,19 +49,14 @@ void xtvm_v2_t::execute_impl(const xvm_input_t & input, xvm_output_t & output) {
         output.m_vm_error_str = result.status.ec.message().c_str();
         return;
     }
-    uint64_t supplement_gas = (tx->get_tx_version() == data::xtransaction_version_3) ? default_eth_tx_gas : 0;
-    gasfee.postprocess(supplement_gas, ec);
-    if (ec) {
-        output.m_tx_exec_succ = false;
-        output.m_vm_ec = ec;
-        output.m_vm_error_code = ec.value();
-        output.m_vm_error_str = ec.message().c_str();
-        return;
-    }
     output.m_tx_exec_succ = true;
     output.m_tgas_balance_change = result.output.tgas_balance_change;
     for (auto followup_tx : result.output.followup_transaction_data) {
         output.m_contract_create_txs.emplace_back(followup_tx.followed_transaction);
+    }
+    if (base::xvaccount_t::get_addrtype_from_account(tx->get_source_addr()) == base::enum_vaccount_addr_type_secp256k1_evm_user_account &&
+        base::xvaccount_t::get_addrtype_from_account(tx->get_source_addr()) == base::enum_vaccount_addr_type_secp256k1_evm_user_account) {
+        output.m_tx_result.used_gas = default_eth_tx_gas;
     }
 
     return;
@@ -167,7 +150,7 @@ void xtvm_v2_t::fill_transfer_context(const statectx::xstatectx_face_ptr_t & sta
                                       const xcons_transaction_ptr_t & tx,
                                       contract_common::xstateless_contract_execution_context_t & ctx,
                                       std::error_code & ec) {
-    if (tx->get_tx_version() == data::xtransaction_version_3) {
+    if (tx->get_inner_table_flag() || tx->is_self_tx()) {
         // one stage
         if (ctx.action_stage() == data::xconsensus_action_stage_t::send) {
             auto recver_unitstate = statectx->load_unit_state(tx->get_transaction()->get_target_addr());
@@ -194,9 +177,9 @@ void xtvm_v2_t::fill_transfer_context(const statectx::xstatectx_face_ptr_t & sta
     } else {
         // three stage
         if (ctx.action_stage() == data::xconsensus_action_stage_t::send) {
-            ctx.set_action_name("deposit");
-        } else if (ctx.action_stage() == data::xconsensus_action_stage_t::recv) {
             ctx.set_action_name("withdraw");
+        } else if (ctx.action_stage() == data::xconsensus_action_stage_t::recv) {
+            ctx.set_action_name("deposit");
         } else if (ctx.action_stage() == data::xconsensus_action_stage_t::confirm) {
             // do nothing
             return;
@@ -206,9 +189,15 @@ void xtvm_v2_t::fill_transfer_context(const statectx::xstatectx_face_ptr_t & sta
             ec = error::xenum_errc::xtransaction_parse_type_invalid;
             return;
         }
-        auto amount = tx->get_transaction()->get_amount();
+        auto amount_256 = tx->get_transaction()->get_amount_256();
+        if (amount_256 > UINT64_MAX) {
+            xwarn("[xtvm_v2_t::fill_transfer_context] token overflow: %s", amount_256.str().c_str());
+            ec = error::xenum_errc::xtransaction_pledge_token_overflow;
+            return;
+        }
+        auto amount = static_cast<uint64_t>(amount_256);
         base::xstream_t param_stream(base::xcontext_t::instance());
-        param_stream << std::string{data::XPROPERTY_ASSET_TOP};
+        param_stream << std::string{data::XPROPERTY_ASSET_ETH};
         param_stream << amount;
         std::string data{reinterpret_cast<char *>(param_stream.data()), static_cast<std::size_t>(param_stream.size())};
         ctx.set_action_data(xbytes_t{data.data(), data.data() + data.size()});
