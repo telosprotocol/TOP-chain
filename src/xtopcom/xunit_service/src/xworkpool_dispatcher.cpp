@@ -40,6 +40,7 @@ int16_t xworkpool_dispatcher::get_thread_index(base::xworkerpool_t * pool, base:
 
 bool xworkpool_dispatcher::dispatch(base::xworkerpool_t * pool, base::xcspdu_t * pdu, const xvip2_t & xip_from, const xvip2_t & xip_to) {
     auto            table_id = get_tableid(pdu->get_block_account());
+    xdbg("xworkpool_dispatcher::dispatch,pdu=%s,", pdu->dump().c_str());
     xbatch_packer * packer = nullptr;
     {
         std::lock_guard<std::mutex> lock(m_mutex);

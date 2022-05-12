@@ -222,6 +222,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     message_category_rpc_contains_duplicate,
     message_category_sync_contains_duplicate,
     message_block_broadcast_contains_duplicate,
+    message_category_relay_contains_duplicate,
     message_category_end_contains_duplicate,
     message_category_unknown_contains_duplicate = message_category_end_contains_duplicate,
 
@@ -233,6 +234,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     message_category_rpc,
     message_category_sync,
     message_block_broadcast,
+    message_category_relay,
     message_category_unknown,
     message_category_end = message_category_unknown,
 

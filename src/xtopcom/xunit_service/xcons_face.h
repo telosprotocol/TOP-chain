@@ -133,6 +133,7 @@ public:
 enum e_cons_type {
     e_timer,
     e_table,
+    e_relay,
 };
 
 class xproposal_maker_face {
