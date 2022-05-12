@@ -38,7 +38,6 @@ TEST(evm_engine_out_of_gas_test, deploy_failed) {
         "353d97dcc679b08a746d7d8f00f5b7051bdf6c1793d3f6f3a9e361fa64736f6c63430006040033",
         true};
     txexecutor::xvm_para_t vm_param{0, "random_seed", 0};
-    vm_param.set_evm_gas_limit(100000);
     top::statectx::xstatectx_face_ptr_t statestore{std::make_shared<top::evm::tests::xmock_evm_statectx>()};
 
     // deploy code
@@ -67,7 +66,6 @@ TEST(evm_engine_out_of_gas_test, deploy_failed) {
         ASSERT_EQ(output.m_tx_result.used_gas, 100000);
     }
 
-    vm_param.set_evm_gas_limit(200000);
     // deploy code
     {
         // param
@@ -94,7 +92,6 @@ TEST(evm_engine_out_of_gas_test, deploy_failed) {
         ASSERT_EQ(output.m_tx_result.used_gas, 200000);
     }
 
-    vm_param.set_evm_gas_limit(250000);
     // deploy code
     {
         // param
@@ -137,7 +134,6 @@ TEST(evm_engine_out_of_gas_test, deploy_success_call_failed) {
         "353d97dcc679b08a746d7d8f00f5b7051bdf6c1793d3f6f3a9e361fa64736f6c63430006040033",
         true};
     txexecutor::xvm_para_t vm_param{0, "random_seed", 0};
-    vm_param.set_evm_gas_limit(300000);
     top::statectx::xstatectx_face_ptr_t statestore{std::make_shared<top::evm::tests::xmock_evm_statectx>()};
 
     // deploy code
@@ -167,7 +163,6 @@ TEST(evm_engine_out_of_gas_test, deploy_success_call_failed) {
     }
 
     // no enough to call
-    vm_param.set_evm_gas_limit(21000);
     // call contract:
     // add(123, 321) => (123,321,444)
     {
@@ -240,7 +235,6 @@ TEST(evm_engine_out_of_gas_test, deploy_success_call_failed) {
     }
 
     // enough to call
-    vm_param.set_evm_gas_limit(50000);
     // call contract:
     // add(123, 321) => (123,321,444)
     {

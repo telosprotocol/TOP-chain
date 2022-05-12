@@ -103,11 +103,42 @@ TEST_F(test_tx_v3, exception) {
         tx_r->do_read(stream);
     }
 
+    //0xf8671185174876e80082754194d8ae0197425c0ea651264b06978580dcb62f3c918203e880820a94a01d3aac56ba977387ae9e8fb87b9baee0759c75c306ba8ef9983ff20d284f1c839ff9d7100bceeb191ddd4ca9dfd03b1be1717660572d77adeb16d514c0ed2634
+    {
+        xtransaction_v3_ptr_t tx = make_object_ptr<xtransaction_v3_t>();
+        xJson::Value jv;
+        jv["id"] = "12231";
+        jv["jsonrpc"] = "2.0";
+        jv["method"] = "eth_sendRawTransaction";
+        jv["params"][0] = "0xf8671185174876e80082754194d8ae0197425c0ea651264b06978580dcb62f3c918203e880820a94a01d3aac56ba977387ae9e8fb87b9baee0759c75c306ba8ef9983ff20d284f1c839ff9d7100bceeb191ddd4ca9dfd03b1be1717660572d77adeb16d514c0ed2634";
+        tx->construct_from_json(jv);
+        base::xstream_t stream(base::xcontext_t::instance());
+        tx->do_write(stream);
+        std::cout << "run contract tx v3 size: " << stream.size() << std::endl;
+
+        std::cout << "sign :" << top::evm_common::toHex(tx->get_authorization()) << std::endl;
+    }
+
+    {
+        xtransaction_v3_ptr_t tx = make_object_ptr<xtransaction_v3_t>();
+        xJson::Value jv;
+        jv["id"] = "12231";
+        jv["jsonrpc"] = "2.0";
+        jv["method"] = "eth_sendRawTransaction";
+        jv["params"][0] = "0xeef8708203ff80822710822710827b0c94b7762d8dbd7e5c023ff99402b78af7c13b01eec1881bc16d674ec8000080c001a0d336694faa98f9cd69792ee30f9979f906f997d7562a0cb86d109f3476643a65a0679a7f510b12d48f9d1637884245229b7037b4f4094d1fb30e0f4f5cc77388ec1111";
+        tx->construct_from_json(jv);
+        base::xstream_t stream(base::xcontext_t::instance());
+        tx->do_write(stream);
+        std::cout << "run contract tx v3 size: " << stream.size() << std::endl;
+
+        std::cout << "sign :" << top::evm_common::toHex(tx->get_authorization()) << std::endl;
+    }
+
     {
         //generate signed transaction
         xobject_ptr_t<top::data::eip_1559_tx> tx = make_object_ptr<top::data::eip_1559_tx>();
         tx->accesslist = "";
-        tx->chainid = rand() % 10000;
+        tx->chainid = 1023;
         tx->data = "";
         tx->gas = rand() % 100000;
         tx->nonce = rand();
@@ -444,7 +475,7 @@ TEST_F(test_tx_v3, v3_performance) {
         //generate signed transaction
         xobject_ptr_t<top::data::eip_1559_tx> tx = make_object_ptr<top::data::eip_1559_tx>();
         tx->accesslist = "";
-        tx->chainid = rand() % 10000;
+        tx->chainid = 1023;
         tx->data = "";
         tx->gas = rand() % 100000;
         tx->nonce = rand();

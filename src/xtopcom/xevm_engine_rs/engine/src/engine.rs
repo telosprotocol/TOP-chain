@@ -222,8 +222,8 @@ impl<'env, I: IO + Copy, E: Env> Engine<'env, I, E> {
         let mut executor = executor_params.make_executor(self);
         sdk::log(
             format!(
-                "call contract at: {:?} from {:?} with input {:?}, value: {:?}",
-                contract, origin, input, value
+                "call contract at: {:?} from {:?} with input {:?}, value: {:?}, gas: {:?}",
+                contract, origin, input, value, gas_limit
             )
             .as_str(),
         );
@@ -594,6 +594,7 @@ impl<'env, J: IO + Copy, E: Env> ApplyBackend for Engine<'env, J, E> {
                         if value == H256::default() {
                             remove_storage(&mut self.io, &address, &index, next_generation)
                         } else {
+                            println!("set_storage: {:?}, {:?}", hex::encode(index.as_bytes()), hex::encode(value.as_bytes()));
                             set_storage(&mut self.io, &address, &index, &value, next_generation)
                         }
                         writes_counter += 1;

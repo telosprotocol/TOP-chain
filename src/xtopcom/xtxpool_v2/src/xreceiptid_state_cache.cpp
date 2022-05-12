@@ -86,29 +86,15 @@ base::xreceiptid_state_ptr_t xreceiptid_state_cache_t::get_table_receiptid_state
     return nullptr;
 }
 
-// bool xreceiptid_state_cache_t::is_all_table_state_cached(const std::set<base::xtable_shortid_t> & all_table_sids) const {
-//     std::lock_guard<std::mutex> lck(m_mutex);
-//     if (m_all_cached) {
-//         return true;
-//     }
-//     if (all_table_sids.size() != m_receiptid_state_map.size()) {
-//         xdbg("xreceiptid_state_cache_t::is_all_table_state_cached all_table_sids size:%u,m_receiptid_state_map size:%u", all_table_sids.size(), m_receiptid_state_map.size());
-//         return false;
-//     }
-
-//     for (auto & receiptid_state : m_receiptid_state_map) {
-//         auto & table_sid = receiptid_state.first;
-//         auto it = all_table_sids.find(table_sid);
-//         if (it == all_table_sids.end()) {
-//             xerror("xreceiptid_state_cache_t::is_all_table_state_cached a illegal table sid(%d) state founded!!!", table_sid);
-//             return false;
-//         }
-//     }
-//     xdbg("xreceiptid_state_cache_t::is_all_table_state_cached succ");
-//     m_all_cached = true;
-//     return true;
-// }
-
+// normal case for table A and table B
+// section of A as sender pull from B：         (A confirm id, B recv id]
+// section of A as sender for B pull from A：   (B recv id, A send id]
+// left boundary for A as sender: if A have no unconfirm rsp id    ----> B recv id
+//                                else                             ----> A confirm id
+// section of A as receiver pull from B：       (A recv id, B send id]
+// section of A as receiver for B pull from A： (B confirm id, A recv id]
+// left boundary for A as receiver: if B have no unconfirm rsp id  ----> A recv id
+//                                  else                           ----> B confirm id
 void xreceiptid_state_cache_t::get_unconfirm_id_section_as_sender(base::xtable_shortid_t table_id,
                                                                   base::xtable_shortid_t peer_table_id,
                                                                   uint64_t & confirm_id,
@@ -117,26 +103,46 @@ void xreceiptid_state_cache_t::get_unconfirm_id_section_as_sender(base::xtable_s
     std::lock_guard<std::mutex> lck(m_mutex);
     uint64_t sendid_max = 0;
     uint64_t confirmid_max = 0;
+    uint64_t recvid_max = 0;
+
+    auto iter_peer = m_receiptid_state_map.find(peer_table_id);
+    if (iter_peer != m_receiptid_state_map.end()) {
+        auto & table_receiptid_state = iter_peer->second.m_receiptid_state;
+        base::xreceiptid_pair_t peer_pair;
+        table_receiptid_state->find_pair(table_id, peer_pair);
+        recvid_max = peer_pair.get_recvid_max();
+    }
+
     auto iter_self = m_receiptid_state_map.find(table_id);
     if (iter_self != m_receiptid_state_map.end()) {
         auto & table_receiptid_state = iter_self->second.m_receiptid_state;
-        base::xreceiptid_pair_t pair;
-        table_receiptid_state->find_pair(peer_table_id, pair);
-        sendid_max = pair.get_sendid_max();
-        confirmid_max = pair.get_confirmid_max();
+        base::xreceiptid_pair_t self_pair;
+        table_receiptid_state->find_pair(peer_table_id, self_pair);
+        sendid_max = self_pair.get_sendid_max();
+        confirmid_max = self_pair.get_confirmid_max();
+
+        if (self_pair.all_confirmed_as_sender()) {
+            if (recvid_max > sendid_max) {
+                // self state is fall behind
+                confirm_id = sendid_max;
+                unconfirm_id_max = sendid_max;
+                return;
+            } else if (recvid_max >= confirmid_max) {
+                // normal
+                confirm_id = recvid_max;
+            } else {
+                // peer state is fall behind
+                confirm_id = confirmid_max;
+            }
+        } else {
+            confirm_id = confirmid_max;
+        }
     }
 
-    confirm_id = confirmid_max;
-    if (!for_pull_lacking) {
-        unconfirm_id_max = sendid_max;
+    if (for_pull_lacking) {
+        unconfirm_id_max = (confirm_id > recvid_max) ? confirm_id : recvid_max;
     } else {
-        auto iter_peer = m_receiptid_state_map.find(peer_table_id);
-        if (iter_peer != m_receiptid_state_map.end()) {
-            auto & table_receiptid_state = iter_peer->second.m_receiptid_state;
-            base::xreceiptid_pair_t pair;
-            table_receiptid_state->find_pair(table_id, pair);
-            unconfirm_id_max = pair.get_recvid_max();
-        }
+        unconfirm_id_max = sendid_max;
     }
 }
 
@@ -150,17 +156,35 @@ void xreceiptid_state_cache_t::get_unconfirm_id_section_as_receiver(base::xtable
     auto iter_self = m_receiptid_state_map.find(table_id);
     if (iter_self != m_receiptid_state_map.end()) {
         auto & table_receiptid_state = iter_self->second.m_receiptid_state;
-        base::xreceiptid_pair_t pair;
-        table_receiptid_state->find_pair(peer_table_id, pair);
-        recvid_max = pair.get_recvid_max();
+        base::xreceiptid_pair_t self_pair;
+        table_receiptid_state->find_pair(peer_table_id, self_pair);
+        recvid_max = self_pair.get_recvid_max();
     }
 
     auto iter_peer = m_receiptid_state_map.find(peer_table_id);
     if (iter_peer != m_receiptid_state_map.end()) {
         auto & table_receiptid_state = iter_peer->second.m_receiptid_state;
-        base::xreceiptid_pair_t pair;
-        table_receiptid_state->find_pair(table_id, pair);
-        confirmid_max = pair.get_confirmid_max();
+        base::xreceiptid_pair_t peer_pair;
+        table_receiptid_state->find_pair(table_id, peer_pair);
+        if (peer_pair.all_confirmed_as_sender()) {
+            if (recvid_max < peer_pair.get_confirmid_max()) {
+                // self state is fall behind
+                confirm_id = peer_pair.get_confirmid_max();
+                unconfirm_id_max = peer_pair.get_confirmid_max();
+                return;
+            } else if (peer_pair.get_sendid_max() >= recvid_max) {
+                // normal
+                confirm_id = recvid_max;
+                unconfirm_id_max = recvid_max;
+                return;                
+            } else {
+                // peer state is fall behind.
+                confirm_id = peer_pair.get_sendid_max();
+                unconfirm_id_max = recvid_max;
+                return;
+            }
+        }
+        confirmid_max = peer_pair.get_confirmid_max();
     }
 
     confirm_id = confirmid_max;

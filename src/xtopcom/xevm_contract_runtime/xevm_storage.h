@@ -46,6 +46,8 @@ public:
                 assert(!ec);
                 top::error::throw_error(ec);
 
+                xdbg("storage_get get nonce account:%s, nonce:%llu", storage_key.address.c_str(), value_uint64);
+
                 evm_common::xBorshEncoder encoder;
                 encoder.EncodeInteger(value_uint64);
                 xbytes_t result = encoder.GetBuffer();
@@ -72,7 +74,7 @@ public:
             } else if (storage_key.key_type == storage_key_type::Generation) {
                 auto property =
                     state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_EVM_GENERATION, state_accessor::properties::xproperty_category_t::system};
-                auto value = sa.get_property_cell_value<evm_property_type_map>(property, storage_key.extra_key, ec);
+                auto value = sa.get_property<evm_property_type_bytes>(property, ec);
                 assert(!ec);
                 top::error::throw_error(ec);
                 return value;
@@ -111,7 +113,7 @@ public:
                 auto property = state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_TX_INFO, state_accessor::properties::xproperty_category_t::system};
 
                 assert(value.size() == 8);
-                uint64_t nonce_u64;
+                uint64_t nonce_u64 = 0;
                 evm_common::xBorshDecoder decoder;
                 decoder.getInteger(value, nonce_u64);
 
@@ -133,13 +135,14 @@ public:
             } else if (storage_key.key_type == storage_key_type::Storage) {
                 auto property = state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_EVM_STORAGE, state_accessor::properties::xproperty_category_t::system};
                 sa.set_property_cell_value<evm_property_type_map>(property, storage_key.extra_key, value, ec);
+                xdbg("storage_set:%s,%s", storage_key.address.c_str(), storage_key.extra_key.c_str());
                 assert(!ec);
                 top::error::throw_error(ec);
 
             } else if (storage_key.key_type == storage_key_type::Generation) {
                 auto property =
                     state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_EVM_GENERATION, state_accessor::properties::xproperty_category_t::system};
-                sa.set_property_cell_value<evm_property_type_map>(property, storage_key.extra_key, value, ec);
+                sa.set_property<evm_property_type_bytes>(property, value, ec);
                 assert(!ec);
                 top::error::throw_error(ec);
 
@@ -207,7 +210,7 @@ public:
             } else if (storage_key.key_type == storage_key_type::Generation) {
                 auto typeless_property =
                     state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_EVM_GENERATION, state_accessor::properties::xproperty_category_t::system};
-                auto property = state_accessor::properties::xproperty_identifier_t{typeless_property, evm_property_type_map};
+                auto property = state_accessor::properties::xproperty_identifier_t{typeless_property, evm_property_type_bytes};
                 sa.clear_property(property, ec);
                 assert(!ec);
                 top::error::throw_error(ec);

@@ -29,6 +29,10 @@ enum class xenum_errc {
     checkpoint_not_found,
 
     action_address_type_error,
+
+    eth_server_error = -32000,
+
+    eth_invalid_params = -32602
 };
 using xerrc_t = xenum_errc;
 

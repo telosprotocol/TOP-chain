@@ -12,6 +12,7 @@ static std::string strNull = "";
 
 class eip_xxxx_tx : virtual public top::base::xrefcount_t {
 public:
+    virtual const top::evm_common::u256 get_chainid() { return 0; }
     virtual const top::evm_common::u256 get_nonce() = 0;
     virtual const top::evm_common::u256 get_gasprice() { return 0;}
     virtual const top::evm_common::u256 get_max_priority_fee_per_gas() { return 0; }

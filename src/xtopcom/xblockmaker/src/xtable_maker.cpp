@@ -566,7 +566,6 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
     statectx::xstatectx_ptr_t statectx_ptr = statectx::xstatectx_factory_t::create_latest_cert_statectx(cs_para.get_latest_cert_block().get(), table_para.get_tablestate(), table_para.get_commit_tablestate(), statectx_para);
     // create batch executor
     txexecutor::xvm_para_t vmpara(cs_para.get_clock(), cs_para.get_random_seed(), cs_para.get_total_lock_tgas_token());
-    vmpara.set_evm_gas_limit(UINT64_MAX);
     txexecutor::xbatchtx_executor_t executor(statectx_ptr, vmpara);
 
     std::vector<xcons_transaction_ptr_t> input_txs;
@@ -670,6 +669,7 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
         }
         batch_units.push_back(unitblock);
         xinfo("xtable_maker_t::make_light_table_v2 succ-make unit.is_leader=%d,unit=%s,txkeys=%zu",is_leader, unitblock->dump().c_str(),txkeys.get_txkeys().size());
+        xtablebuilder_t::update_account_index_property(statectx_ptr->get_table_state(), unitblock, unitctx->get_unitstate());
     }
 
     // reset justify cert hash para
@@ -694,7 +694,6 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
         changed_confirm_ids[peer_table_sid] = recvid_max;
     }
 
-    xtablebuilder_t::update_account_index_property(statectx_ptr->get_table_state(), batch_units, txs_info);
     xtablebuilder_t::update_receipt_confirmids(statectx_ptr->get_table_state(), changed_confirm_ids);
     std::map<std::string, std::string> property_hashs;
     xtablebuilder_t::make_table_prove_property_hashs(statectx_ptr->get_table_state()->get_bstate().get(), property_hashs);
