@@ -50,12 +50,12 @@ bool executed_eth{false};
 // make sure add config in config.xxxx.json
 // like this :
 //
-// "eth_start_nodes":"T00000LNi53Ub726HcPXZfC4z6zLgTo5ks6GzTUp.0.pub_key,T00000LeXNqW7mCCoj23LEsxEmNcWKs8m6kJH446.0.pub_key,T00000LVpL9XRtVdU5RwfnmrCtJhvQFxJ8TB46gB.0.pub_key",
+// "eth_start_nodes":"evm_auditor:T00000LNi53Ub726HcPXZfC4z6zLgTo5ks6GzTUp.0.pub_key,T00000LeXNqW7mCCoj23LEsxEmNcWKs8m6kJH446.0.pub_key,T00000LVpL9XRtVdU5RwfnmrCtJhvQFxJ8TB46gB.0.pub_key|evm_validator:T00000LhCXUC5iQCREefnRPRFhxwDJTEbufi41EL.0.pub_key,T00000LTSip8Xbjutrtm8RkQzsHKqt28g97xdUxg.0.pub_key,T00000LgGPqEpiK6XLCKRj9gVPN8Ej1aMbyAb3Hu.0.pub_key",
 //
-// it will elect the first and only round zec nodes as you want.
+// it will elect the first and only round eth auditor/validator nodes as you want.
 
 void xtop_zec_elect_eth_contract::elect_config_nodes(common::xlogic_time_t const current_time) {
-    uint64_t latest_height = get_blockchain_height(sys_contract_rec_elect_zec_addr);
+    uint64_t latest_height = get_blockchain_height(sys_contract_zec_elect_eth_addr);
     xinfo("[eth_start_nodes] get_latest_height: %" PRIu64, latest_height);
     if (latest_height > 0) {
         executed_eth = true;
@@ -67,39 +67,79 @@ void xtop_zec_elect_eth_contract::elect_config_nodes(common::xlogic_time_t const
     using top::data::election::xelection_result_store_t;
     using top::data::election::xstandby_node_info_t;
 
-    auto property_names = data::election::get_property_name_by_addr(SELF_ADDRESS());
-    auto election_result_store =
-        xvm::serialization::xmsgpack_t<xelection_result_store_t>::deserialize_from_string_prop(*this, data::election::get_property_by_group_id(common::xcommittee_group_id));
-    auto node_type = common::xnode_type_t::zec;
-    auto & election_group_result =
-        election_result_store.result_of(network_id()).result_of(node_type).result_of(common::xcommittee_cluster_id).result_of(common::xcommittee_group_id);
 
-    auto nodes_info = xstatic_election_center::instance().get_static_election_nodes("eth_start_nodes");
-    for (auto nodes : nodes_info) {
-        xelection_info_t new_election_info{};
-        new_election_info.consensus_public_key = nodes.pub_key;
-        new_election_info.stake = nodes.stake;
-        new_election_info.joined_version = common::xelection_round_t{0};
+    // auditor:
+    common::xnode_type_t adv_node_type = common::xnode_type_t::evm_auditor;
+    common::xnode_type_t val_node_type = common::xnode_type_t::evm_validator;
+    common::xgroup_id_t adv_group_id = common::xauditor_group_id_begin;
+    common::xgroup_id_t val_group_id = common::xvalidator_group_id_begin;
+    auto election_result_store = serialization::xmsgpack_t<xelection_result_store_t>::deserialize_from_string_prop(*this, data::election::get_property_by_group_id(adv_group_id));
+    auto & adv_election_group_result = election_result_store.result_of(m_network_id).result_of(adv_node_type).result_of(common::xdefault_cluster_id).result_of(adv_group_id);
 
-        xelection_info_bundle_t election_info_bundle{};
-        election_info_bundle.account_address(nodes.node_id);
-        election_info_bundle.election_info(std::move(new_election_info));
-
-        election_group_result.insert(std::move(election_info_bundle));
-    }
-    auto next_version = election_group_result.group_version();
+    auto next_version = adv_election_group_result.group_version();
     if (!next_version.empty()) {
         next_version.increase();
     } else {
         next_version = common::xelection_round_t{0};
     }
-    election_group_result.group_version(next_version);
-    election_group_result.election_committee_version(common::xelection_round_t{0});
-    election_group_result.timestamp(current_time);
-    election_group_result.start_time(current_time);
+    adv_election_group_result.group_version(next_version);
+    adv_election_group_result.election_committee_version(common::xelection_round_t{0});
+    adv_election_group_result.timestamp(current_time);
+    adv_election_group_result.start_time(current_time);
 
-    xvm::serialization::xmsgpack_t<xelection_result_store_t>::serialize_to_string_prop(
-        *this, data::election::get_property_by_group_id(common::xcommittee_group_id), election_result_store);
+    auto adv_group_node_infos = xstatic_election_center::instance().get_static_evm_consensus_election_nodes(adv_group_id.value());
+    for (auto node : adv_group_node_infos) {
+        xelection_info_t new_election_info{};
+        new_election_info.joined_version = next_version;
+        new_election_info.stake = node.stake;
+        new_election_info.comprehensive_stake = node.stake;
+        new_election_info.consensus_public_key = node.pub_key;
+        new_election_info.genesis = false;
+        new_election_info.miner_type = common::xminer_type_t::advance;
+
+        xelection_info_bundle_t election_info_bundle{};
+        election_info_bundle.account_address(node.node_id);
+        election_info_bundle.election_info(new_election_info);
+        adv_election_group_result.insert(std::move(election_info_bundle));
+    }
+
+     
+    auto & val_election_group_result =
+        election_result_store.result_of(m_network_id).result_of(val_node_type).result_of(common::xdefault_cluster_id).result_of(val_group_id);
+
+    next_version = val_election_group_result.group_version();
+    if (!next_version.empty()) {
+        next_version.increase();
+    } else {
+        next_version = common::xelection_round_t{0};
+    }
+    val_election_group_result.group_version(next_version);
+    val_election_group_result.election_committee_version(common::xelection_round_t{0});
+    val_election_group_result.timestamp(current_time);
+    val_election_group_result.start_time(current_time);
+
+    // set associated relation
+    val_election_group_result.associated_group_id(adv_group_id);
+    val_election_group_result.cluster_version(common::xelection_round_t{0});
+    val_election_group_result.associated_group_version(adv_election_group_result.group_version());
+
+    auto val_group_node_infos = xstatic_election_center::instance().get_static_top_consensus_election_nodes(val_group_id.value());
+    for (auto node : val_group_node_infos) {
+        xelection_info_t new_election_info{};
+        new_election_info.joined_version = next_version;
+        new_election_info.stake = node.stake;
+        new_election_info.comprehensive_stake = node.stake;
+        new_election_info.consensus_public_key = node.pub_key;
+        new_election_info.genesis = false;
+        new_election_info.miner_type = common::xminer_type_t::validator;
+
+        xelection_info_bundle_t election_info_bundle{};
+        election_info_bundle.account_address(node.node_id);
+        election_info_bundle.election_info(new_election_info);
+        val_election_group_result.insert(std::move(election_info_bundle));
+    }
+
+    serialization::xmsgpack_t<xelection_result_store_t>::serialize_to_string_prop(*this, data::election::get_property_by_group_id(adv_group_id), election_result_store);
 }
 #endif
 
