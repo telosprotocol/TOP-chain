@@ -1118,6 +1118,7 @@ void xrpc_query_manager::getArcs(xJson::Value & js_req, xJson::Value & js_rsp, s
     }
     xJson::Value j;
     std::string const addr = sys_contract_rec_elect_archive_addr;
+    // todo(charles) add fork logic to query in new exchange contract
     auto property_name = top::data::election::get_property_by_group_id(common::xarchive_group_id);
     m_xrpc_query_func.query_account_property(j, addr, property_name, xfull_node_compatible_mode_t::incompatible);
 
@@ -1179,6 +1180,7 @@ void xrpc_query_manager::getExchangeNodes(xJson::Value & js_req, xJson::Value & 
     }
     xJson::Value j;
     std::string const addr = sys_contract_rec_elect_archive_addr;
+    // todo(charles) add fork logic to query in new exchange contract
     auto property_name = top::data::election::get_property_by_group_id(common::xlegacy_exchange_group_id);
     m_xrpc_query_func.query_account_property(j, addr, property_name, xfull_node_compatible_mode_t::incompatible);
     if (version == RPC_VERSION_V3) {
@@ -1798,6 +1800,7 @@ void xrpc_query_manager::set_addition_info(xJson::Value & body, xblock_t * bp) {
     std::string elect_data;
     auto block_owner = bp->get_block_owner();
 
+    // todo(charles) add fork logic to query in new exchange contract
     static std::set<std::string> sys_block_owner{sys_contract_rec_elect_edge_addr,
                                                  sys_contract_rec_elect_archive_addr,
                                                  sys_contract_rec_elect_rec_addr,
@@ -2111,6 +2114,7 @@ void xrpc_query_manager::getElectInfo(xJson::Value & js_req, xJson::Value & js_r
         }
     }
 
+    // todo(charles) add fork logic to query in new exchange contract
     addr = sys_contract_rec_elect_archive_addr;
     std::string prop_name = data::election::get_property_by_group_id(common::xarchive_group_id);
     m_xrpc_query_func.query_account_property(j, addr, prop_name, xfull_node_compatible_mode_t::incompatible);

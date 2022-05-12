@@ -23,6 +23,7 @@ namespace top
             m_prune_contract[sys_contract_rec_elect_edge_addr] = enum_prune_none;
             m_prune_contract[sys_contract_rec_elect_fullnode_addr] = enum_prune_none;
             m_prune_contract[sys_contract_rec_elect_archive_addr] = enum_prune_none;
+            m_prune_contract[sys_contract_rec_elect_exchange_addr] = enum_prune_none;
             m_prune_contract[sys_contract_rec_elect_rec_addr] = enum_prune_none;
             m_prune_contract[sys_contract_rec_elect_zec_addr] = enum_prune_none;
             m_prune_contract[sys_contract_rec_tcc_addr] = enum_prune_none;
