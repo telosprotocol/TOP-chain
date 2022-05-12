@@ -792,7 +792,7 @@ xnode_type_t node_type_from(common::xzone_id_t const & zone_id, common::xcluster
     case xnode_type_t::storage: {
         if (xarchive_group_id == group_id) {
             node_type |= xnode_type_t::storage_archive;
-        } else if (xexchange_group_id == group_id) {
+        } else if (xlegacy_exchange_group_id == group_id) {
             node_type |= xnode_type_t::storage_exchange;
         } else {
             assert(false);

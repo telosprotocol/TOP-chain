@@ -33,7 +33,7 @@ common::xnode_type_t xtop_test_elect_nonconsensus_group_algorithm::standby_type(
         return common::xnode_type_t::storage_archive;
     }
 
-    if (gid == common::xexchange_group_id) {
+    if (gid == common::xlegacy_exchange_group_id) {
         return common::xnode_type_t::storage_exchange;
     }
 

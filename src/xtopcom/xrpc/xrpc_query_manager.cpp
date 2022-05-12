@@ -1179,7 +1179,7 @@ void xrpc_query_manager::getExchangeNodes(xJson::Value & js_req, xJson::Value & 
     }
     xJson::Value j;
     std::string const addr = sys_contract_rec_elect_archive_addr;
-    auto property_name = top::data::election::get_property_by_group_id(common::xexchange_group_id);
+    auto property_name = top::data::election::get_property_by_group_id(common::xlegacy_exchange_group_id);
     m_xrpc_query_func.query_account_property(j, addr, property_name, xfull_node_compatible_mode_t::incompatible);
     if (version == RPC_VERSION_V3) {
         xJson::Value tmp = j[common::to_presentation_string(common::xnode_type_t::storage_exchange)];
@@ -1204,7 +1204,7 @@ void xrpc_query_manager::getFullNodes(xJson::Value & js_req, xJson::Value & js_r
     }
     xJson::Value j;
     std::string const addr = sys_contract_rec_elect_archive_addr;
-    auto property_name = top::data::election::get_property_by_group_id(common::xexchange_group_id);
+    auto property_name = top::data::election::get_property_by_group_id(common::xlegacy_exchange_group_id);
     m_xrpc_query_func.query_account_property(j, addr, property_name, xfull_node_compatible_mode_t::compatible);
     if (version == RPC_VERSION_V3) {
         xJson::Value tmp = j[common::to_presentation_string_compatible(common::xnode_type_t::storage_exchange)];
@@ -2117,7 +2117,7 @@ void xrpc_query_manager::getElectInfo(xJson::Value & js_req, xJson::Value & js_r
     if (j[common::to_presentation_string(common::xnode_type_t::storage_archive)].isMember(target)) {
         ev.push_back("archiver");
     }
-    prop_name = data::election::get_property_by_group_id(common::xexchange_group_id);
+    prop_name = data::election::get_property_by_group_id(common::xlegacy_exchange_group_id);
     m_xrpc_query_func.query_account_property(j, addr, prop_name, xfull_node_compatible_mode_t::incompatible);
     if (j[common::to_presentation_string(common::xnode_type_t::storage_exchange)].isMember(target)) {
         ev.push_back("exchange");
