@@ -82,7 +82,7 @@ void xtop_rec_elect_archive_contract::elect_config_nodes(common::xlogic_time_t c
         if (archive_gid == common::xarchive_group_id) {
             node_type = common::xnode_type_t::storage_archive;
             static_node_str = "archive_start_nodes";
-        } else if (archive_gid == common::xexchange_group_id) {
+        } else if (archive_gid == common::xlegacy_exchange_group_id) {
             node_type = common::xnode_type_t::storage_exchange;
             static_node_str = "exchange_start_nodes";
         } else {
@@ -176,7 +176,7 @@ void xtop_rec_elect_archive_contract::on_timer(const uint64_t current_time) {
         auto & election_network_result = election_result_store.result_of(network_id());
 
         auto range = archive_group_range;
-        if (archive_gid == common::xexchange_group_id) {
+        if (archive_gid == common::xlegacy_exchange_group_id) {
             range = exchange_group_range;
         }
 
@@ -209,13 +209,13 @@ common::xnode_type_t xtop_rec_elect_archive_contract::standby_type(common::xzone
 
     assert(zid == common::xarchive_zone_id);
     assert(cid == common::xdefault_cluster_id);
-    assert(gid == common::xarchive_group_id || gid == common::xexchange_group_id);
+    assert(gid == common::xarchive_group_id || gid == common::xlegacy_exchange_group_id);
 
     if (gid == common::xarchive_group_id) {
         return common::xnode_type_t::storage_archive;
     }
 
-    if (gid == common::xexchange_group_id) {
+    if (gid == common::xlegacy_exchange_group_id) {
         return common::xnode_type_t::storage_exchange;
     }
 
