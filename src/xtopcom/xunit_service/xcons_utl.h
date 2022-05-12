@@ -42,4 +42,5 @@ public:
 };
 XDEFINE_MSG_ID(xmessage_category_consensus, xBFT_msg, 0x00000000);
 XDEFINE_MSG_ID(xmessage_category_timer, xTimer_msg, 0x00000000);
+XDEFINE_MSG_ID(xmessage_category_relay, xrelay_BFT_msg, 0x00000000);
 NS_END2
