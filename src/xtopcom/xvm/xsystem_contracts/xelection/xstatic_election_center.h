@@ -66,6 +66,7 @@ public:
        {"archive",common::xnode_type_t::storage_archive},
        {"exchange", common::xnode_type_t::storage_exchange},
        {"fullnode", common::xnode_type_t::fullnode},
+       {"evm", common::xnode_type_t::evm_eth},
     };
 
     std::vector<standby_node_info> get_standby_config();
