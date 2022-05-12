@@ -11,6 +11,7 @@ common::xaccount_address_t const evm_zero_address{evm_zero_addr};
 common::xaccount_address_t const rec_registration_contract_address{sys_contract_rec_registration_addr};
 common::xaccount_address_t const rec_elect_edge_contract_address{sys_contract_rec_elect_edge_addr};
 common::xaccount_address_t const rec_elect_archive_contract_address{sys_contract_rec_elect_archive_addr};
+common::xaccount_address_t const rec_elect_exchange_contract_address{sys_contract_rec_elect_exchange_addr};
 common::xaccount_address_t const rec_elect_fullnode_contract_address{sys_contract_rec_elect_fullnode_addr};
 common::xaccount_address_t const rec_elect_rec_contract_address{sys_contract_rec_elect_rec_addr};
 common::xaccount_address_t const rec_elect_zec_contract_address{sys_contract_rec_elect_zec_addr};
