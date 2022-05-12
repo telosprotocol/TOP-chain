@@ -467,6 +467,7 @@ xzone_id_t const
  */
 XINLINE_CONSTEXPR xcluster_id_t::value_type xcommittee_cluster_id_value{0};
 XINLINE_CONSTEXPR xcluster_id_t::value_type xdefault_cluster_id_value{1};
+XINLINE_CONSTEXPR xcluster_id_t::value_type xexchange_cluster_id_value{2};
 XINLINE_CONSTEXPR xcluster_id_t::value_type xnormal_cluster_id_value_begin{1};
 XINLINE_CONSTEXPR xcluster_id_t::value_type xnormal_cluster_id_value_end{127};
 
@@ -483,6 +484,13 @@ XINLINE_CONSTEXPR xcluster_id_t
 xcluster_id_t const
 #endif
     xdefault_cluster_id{xdefault_cluster_id_value};
+
+#if defined XCXX14_OR_ABOVE
+XINLINE_CONSTEXPR xcluster_id_t
+#else
+xcluster_id_t const
+#endif
+    xexchange_cluster_id{xexchange_cluster_id_value};
 
 #if defined XCXX14_OR_ABOVE
 XINLINE_CONSTEXPR xcluster_id_t
@@ -571,6 +579,7 @@ xgroup_id_t const
 XINLINE_CONSTEXPR xgroup_id_t::value_type xarchive_group_id_value_begin{ 1 };
 XINLINE_CONSTEXPR xgroup_id_t::value_type xarchive_group_id_value{ 1 };
 XINLINE_CONSTEXPR xgroup_id_t::value_type xlegacy_exchange_group_id_value{ 2 };
+XINLINE_CONSTEXPR xgroup_id_t::value_type xexchange_group_id_value{ 1 };
 XINLINE_CONSTEXPR xgroup_id_t::value_type xarchive_group_id_value_end{ 3 };
 
 #if defined(XCXX14_OR_ABOVE)
@@ -593,6 +602,13 @@ XINLINE_CONSTEXPR xgroup_id_t
 xgroup_id_t const
 #endif
 xlegacy_exchange_group_id{ xlegacy_exchange_group_id_value };
+
+#if defined(XCXX14_OR_ABOVE)
+XINLINE_CONSTEXPR xgroup_id_t
+#else
+xgroup_id_t const
+#endif
+xexchange_group_id{ xexchange_group_id_value };
 
 #if defined(XCXX14_OR_ABOVE)
 XINLINE_CONSTEXPR xgroup_id_t
