@@ -574,6 +574,12 @@ void xtop_vhost::do_handle_network_data() {
                         XMETRICS_GAUGE(metrics::message_block_broadcast_contains_duplicate, 1);
                         break;
                     }
+
+                    case xmessage_category_relay:
+                    {
+                        XMETRICS_GAUGE(metrics::message_category_relay_contains_duplicate, 1);
+                        break;
+                    }
 #if defined(__clang__)
 #    pragma clang diagnostic pop
 #elif defined(__GNUC__)
