@@ -204,6 +204,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(message_category_rpc_contains_duplicate);
         RETURN_METRICS_NAME(message_category_sync_contains_duplicate);
         RETURN_METRICS_NAME(message_block_broadcast_contains_duplicate);
+        RETURN_METRICS_NAME(message_category_relay_contains_duplicate);
         RETURN_METRICS_NAME(message_category_unknown_contains_duplicate);
 
         RETURN_METRICS_NAME(message_category_recv);
@@ -213,6 +214,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(message_category_rpc);
         RETURN_METRICS_NAME(message_category_sync);
         RETURN_METRICS_NAME(message_block_broadcast);
+        RETURN_METRICS_NAME(message_category_relay);
         RETURN_METRICS_NAME(message_category_unknown);
 
         RETURN_METRICS_NAME(message_category_send);

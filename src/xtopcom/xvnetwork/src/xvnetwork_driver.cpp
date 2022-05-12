@@ -465,6 +465,11 @@ void xtop_vnetwork_driver::on_vhost_message_data_ready(common::xnode_address_t c
                 XMETRICS_GAUGE(metrics::message_block_broadcast, 1);
                 break;
             }
+            case xmessage_category_relay:
+            {
+                XMETRICS_GAUGE(metrics::message_category_relay, 1);
+                break;
+            }
 #if defined(__clang__)
 #    pragma clang diagnostic pop
 #elif defined(__GNUC__)
