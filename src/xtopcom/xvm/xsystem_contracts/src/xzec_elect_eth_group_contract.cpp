@@ -123,7 +123,7 @@ void xtop_zec_elect_eth_contract::elect_config_nodes(common::xlogic_time_t const
     val_election_group_result.cluster_version(common::xelection_round_t{0});
     val_election_group_result.associated_group_version(adv_election_group_result.group_version());
 
-    auto val_group_node_infos = xstatic_election_center::instance().get_static_top_consensus_election_nodes(val_group_id.value());
+    auto val_group_node_infos = xstatic_election_center::instance().get_static_evm_consensus_election_nodes(val_group_id.value());
     for (auto node : val_group_node_infos) {
         xelection_info_t new_election_info{};
         new_election_info.joined_version = next_version;
