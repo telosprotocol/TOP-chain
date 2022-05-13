@@ -166,7 +166,8 @@ xstatectx_ptr_t xstatectx_factory_t::create_latest_commit_statectx(const base::x
     }
     data::xtablestate_ptr_t commit_tablestate = std::make_shared<data::xtable_bstate_t>(commit_bstate.get());
 
-    xstatectx_para_t statectx_para(commit_block->get_clock());
+    auto const commit_blk_clk = commit_block->get_clock();
+    xstatectx_para_t statectx_para(commit_blk_clk != 0 ? commit_blk_clk : static_cast<uint64_t>(1));
     statectx::xstatectx_ptr_t statectx_ptr = std::make_shared<statectx::xstatectx_t>(commit_block.get(), commit_tablestate, commit_tablestate, statectx_para);
     return statectx_ptr;
 }
