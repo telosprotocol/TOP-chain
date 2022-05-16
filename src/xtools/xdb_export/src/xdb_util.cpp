@@ -584,7 +584,7 @@ static void parse_genesis_string(std::string const & str, json & j) {
 static void parse_unqualified_node_map(std::map<std::string, std::string> const & map, json & j) {
     for (auto const & m : map) {
         auto detail = m.second;
-        data::system_contract::xunqualified_node_info_v2_t summarize_info;
+        data::system_contract::xunqualified_node_info_v1_t summarize_info;
         if (!detail.empty()) {
             base::xstream_t stream{base::xcontext_t::instance(), (uint8_t *)detail.data(), (uint32_t)detail.size()};
             summarize_info.serialize_from(stream);
@@ -605,24 +605,8 @@ static void parse_unqualified_node_map(std::map<std::string, std::string> const 
             validator_info["subset_num"] = v.second.subset_count;
             jvn_validator[v.first.value()] = validator_info;
         }
-        json jvn_evm_auditor;
-        for (auto const & v : summarize_info.evm_auditor_info) {
-            json evm_info;
-            evm_info["vote_num"] = v.second.block_count;
-            evm_info["subset_num"] = v.second.subset_count;
-            jvn_evm_auditor[v.first.value()] = evm_info;
-        }
-        json jvn_evm_validator;
-        for (auto const & v : summarize_info.evm_auditor_info) {
-            json evm_info;
-            evm_info["vote_num"] = v.second.block_count;
-            evm_info["subset_num"] = v.second.subset_count;
-            jvn_evm_validator[v.first.value()] = evm_info;
-        }
         jvn["auditor"] = jvn_auditor;
         jvn["validator"] = jvn_validator;
-        jvn["evm_auditor"] = jvn_evm_auditor;
-        jvn["evm_validator"] = jvn_evm_validator;
         j["unqualified_node"] = jvn;
     }
 }

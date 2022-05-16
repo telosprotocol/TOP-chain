@@ -1100,7 +1100,7 @@ static void get_unqualified_node_map(observer_ptr<store::xstore_face_t const> st
                                                  xJson::Value & json) {
     std::map<std::string, std::string> nodes;
     if ( store->map_copy_get(contract_address.value(), property_name, nodes) != 0 ) return;
-    data::system_contract::xunqualified_node_info_v2_t summarize_info;
+    data::system_contract::xunqualified_node_info_v1_t summarize_info;
     for (auto const & m : nodes) {
         auto detail = m.second;
         if (!detail.empty()) {
@@ -1125,26 +1125,8 @@ static void get_unqualified_node_map(observer_ptr<store::xstore_face_t const> st
             jvn_validator[v.first.value()] = validator_info;
         }
 
-        xJson::Value jvn_evm_auditor;
-        for (auto const & v : summarize_info.evm_auditor_info) {
-            xJson::Value evm_info;
-            evm_info["vote_num"] = v.second.block_count;
-            evm_info["subset_num"] = v.second.subset_count;
-            jvn_evm_auditor[v.first.value()] = evm_info;
-        }
-
-        xJson::Value jvn_evm_validator;
-        for (auto const & v : summarize_info.evm_validator_info) {
-            xJson::Value evm_info;
-            evm_info["vote_num"] = v.second.block_count;
-            evm_info["subset_num"] = v.second.subset_count;
-            jvn_evm_validator[v.first.value()] = evm_info;
-        }
-
         jvn["auditor"] = jvn_auditor;
         jvn["validator"] = jvn_validator;
-        jvn["evm_auditor"] = jvn_evm_auditor;
-        jvn["evm_validator"] = jvn_evm_validator;
         json["unqualified_node"] = jvn;
     }
 }
@@ -1272,7 +1254,7 @@ static void get_sharding_statistic_contract_property(std::string const & shardin
             return;
         }
 
-        data::system_contract::xunqualified_node_info_v2_t data;
+        data::system_contract::xunqualified_node_info_v1_t data;
         base::xstream_t stream{ base::xcontext_t::instance(), reinterpret_cast<uint8_t *>(const_cast<char *>(value.data())), static_cast<uint32_t>(value.size()) };
         try {
             data.serialize_from(stream);
@@ -1304,27 +1286,6 @@ static void get_sharding_statistic_contract_property(std::string const & shardin
             v["subset_count"] = unqualified_data.subset_count;
 
             json[property_name]["validator"].append(v);
-        }
-
-        for (auto const & evm_data : data.evm_auditor_info) {
-            xJson::Value v;
-            auto const & unqualified_data = top::get<data::system_contract::xnode_vote_percent_t>(evm_data);
-
-            v["account"] = top::get<common::xaccount_address_t const>(evm_data).value();
-            v["block_count"] = unqualified_data.block_count;
-            v["subset_count"] = unqualified_data.subset_count;
-
-            json[property_name]["evm_auditor"].append(v);
-        }
-        for (auto const & evm_data : data.evm_validator_info) {
-            xJson::Value v;
-            auto const & unqualified_data = top::get<data::system_contract::xnode_vote_percent_t>(evm_data);
-
-            v["account"] = top::get<common::xaccount_address_t const>(evm_data).value();
-            v["block_count"] = unqualified_data.block_count;
-            v["subset_count"] = unqualified_data.subset_count;
-
-            json[property_name]["evm_validator"].append(v);
         }
     } else if (property_name == data::system_contract::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY) {
         auto error = store->get_map_property(sharding_contract_addr, height, property_name, result);
@@ -1455,7 +1416,7 @@ static void get_zec_slash_contract_property(std::string const & property_name,
             return;
         }
 
-        data::system_contract::xunqualified_node_info_v2_t data;
+        data::system_contract::xunqualified_node_info_v1_t data;
         base::xstream_t stream{ base::xcontext_t::instance(), reinterpret_cast<uint8_t *>(const_cast<char *>(value.data())), static_cast<uint32_t>(value.size()) };
         try {
             data.serialize_from(stream);
@@ -1487,27 +1448,6 @@ static void get_zec_slash_contract_property(std::string const & property_name,
             v["subset_count"] = unqualified_data.subset_count;
 
             json[property_name]["validator"].append(v);
-        }
-
-        for (auto const & evm_data : data.evm_auditor_info) {
-            xJson::Value v;
-            auto const & unqualified_data = top::get<data::system_contract::xnode_vote_percent_t>(evm_data);
-
-            v["account"] = top::get<common::xaccount_address_t const>(evm_data).value();
-            v["block_count"] = unqualified_data.block_count;
-            v["subset_count"] = unqualified_data.subset_count;
-
-            json[property_name]["evm_auditor"].append(v);
-        }
-        for (auto const & evm_data : data.evm_validator_info) {
-            xJson::Value v;
-            auto const & unqualified_data = top::get<data::system_contract::xnode_vote_percent_t>(evm_data);
-
-            v["account"] = top::get<common::xaccount_address_t const>(evm_data).value();
-            v["block_count"] = unqualified_data.block_count;
-            v["subset_count"] = unqualified_data.subset_count;
-
-            json[property_name]["evm_validator"].append(v);
         }
     } else if (property_name == data::system_contract::XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY) {
         auto error = store->get_map_property(sys_contract_zec_slash_info_addr, height, property_name, result);
@@ -1585,23 +1525,20 @@ static void get_zec_slash_contract_property(std::string const & property_name,
     }
 }
 
-static void get_zec_reward_contract_property(std::string const & property_name,
-                                            uint64_t const height,
-                                            observer_ptr<store::xstore_face_t> store,
-                                            xJson::Value & json,
-                                            std::error_code & ec) {
+static void get_zec_reward_contract_workload(uint64_t const height, observer_ptr<store::xstore_face_t> store, xJson::Value & json, std::error_code & ec) {
     assert(!ec);
     assert(store != nullptr);
 
-    std::map<std::string, std::string> result;
-
-    if (property_name == data::system_contract::XPORPERTY_CONTRACT_WORKLOAD_KEY) {
-        auto error = store->get_map_property(sys_contract_zec_reward_addr, height, property_name, result);
+    
+    std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> workloads_detail;
+    {
+        std::string property = data::system_contract::XPORPERTY_CONTRACT_WORKLOAD_KEY;
+        std::map<std::string, std::string> result;
+        auto error = store->get_map_property(sys_contract_zec_reward_addr, height, property, result);
         if (error) {
             ec = xvm::enum_xvm_error_code::query_contract_data_fail_to_get_block;
             return;
         }
-
 #if defined(DEBUG)
         for (auto const & p : result) {
             xdbg("sys_contract_zec_reward_addr: key : %s; value size %zu", p.first.c_str(), p.second.size());
@@ -1611,42 +1548,26 @@ static void get_zec_reward_contract_property(std::string const & property_name,
             ec = xvm::enum_xvm_error_code::query_contract_data_property_empty;
             return;
         }
-
-        for (auto const & m : result) {
-            xJson::Value jm;
-            auto const & detail = m.second;
-            base::xstream_t stream{ base::xcontext_t::instance(), reinterpret_cast<uint8_t *>(const_cast<char *>(detail.data())), static_cast<uint32_t>(detail.size()) };
+        for (auto it = result.begin(); it != result.end(); it++) {
+            auto const & key_str = it->first;
+            common::xgroup_address_t group_address;
+            xstream_t key_stream(xcontext_t::instance(), (uint8_t *)key_str.data(), key_str.size());
+            key_stream >> group_address;
+            auto const & value_str = it->second;
             data::system_contract::xgroup_workload_t workload;
-            try {
-                workload.serialize_from(stream);
-            } catch (top::error::xtop_error_t const & eh) {
-                ec = eh.code();
-                return;
-            } catch (enum_xerror_code const errc) {
-                ec = errc;
-                return;
-            }
-            {
-                xJson::Value jn;
-                jn["cluster_total_workload"] = workload.group_total_workload;
-                auto const & key_str = m.first;
-                common::xgroup_address_t group_address;
-                base::xstream_t key_stream{ base::xcontext_t::instance(), reinterpret_cast<uint8_t *>(const_cast<char *>(key_str.data())), static_cast<uint32_t>(key_str.size()) };
-                key_stream >> group_address;
-                for (auto const & node : workload.m_leader_count) {
-                    jn[node.first] = node.second;
-                }
-                jm[group_address.group_id().to_string()] = jn;
-            }
-            json["auditor_workload"].append(jm);
+            xstream_t stream(xcontext_t::instance(), (uint8_t *)value_str.data(), value_str.size());
+            workload.serialize_from(stream);
+            workloads_detail[group_address] = workload;
         }
-    } else if (property_name == data::system_contract::XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY) {
-        auto error = store->get_map_property(sys_contract_zec_reward_addr, height, property_name, result);
+    }
+    {
+        std::string property = data::system_contract::XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY;
+        std::map<std::string, std::string> result;
+        auto error = store->get_map_property(sys_contract_zec_reward_addr, height, property, result);
         if (error) {
             ec = xvm::enum_xvm_error_code::query_contract_data_fail_to_get_block;
             return;
         }
-
 #if defined(DEBUG)
         for (auto const & p : result) {
             xdbg("sys_contract_zec_reward_addr: key : %s; value size %zu", p.first.c_str(), p.second.size());
@@ -1656,34 +1577,39 @@ static void get_zec_reward_contract_property(std::string const & property_name,
             ec = xvm::enum_xvm_error_code::query_contract_data_property_empty;
             return;
         }
-
-        for (auto const & m : result) {
-            xJson::Value jm;
-            auto const & detail = m.second;
-            base::xstream_t stream{ base::xcontext_t::instance(), reinterpret_cast<uint8_t *>(const_cast<char *>(detail.data())), static_cast<uint32_t>(detail.size()) };
+        for (auto it = result.begin(); it != result.end(); it++) {
+            auto const & key_str = it->first;
+            common::xgroup_address_t group_address;
+            xstream_t key_stream(xcontext_t::instance(), (uint8_t *)key_str.data(), key_str.size());
+            key_stream >> group_address;
+            auto const & value_str = it->second;
             data::system_contract::xgroup_workload_t workload;
-            try {
-                workload.serialize_from(stream);
-            } catch (top::error::xtop_error_t const & eh) {
-                ec = eh.code();
-                return;
-            } catch (enum_xerror_code const errc) {
-                ec = errc;
-                return;
+            xstream_t stream(xcontext_t::instance(), (uint8_t *)value_str.data(), value_str.size());
+            workload.serialize_from(stream);
+            workloads_detail[group_address] += workload;
+        }
+    }
+
+    for (auto const & m : workloads_detail) {
+        auto const & group_address = m.first;
+        auto const & workload = m.second;
+        xJson::Value jm;
+        {
+            xJson::Value jn;
+            jn["cluster_total_workload"] = workload.group_total_workload;
+            for (auto const & node : workload.m_leader_count) {
+                jn[node.first] = node.second;
             }
-            {
-                xJson::Value jn;
-                jn["cluster_total_workload"] = workload.group_total_workload;
-                auto const & key_str = m.first;
-                common::xcluster_address_t group_address;
-                base::xstream_t key_stream{ base::xcontext_t::instance(), reinterpret_cast<uint8_t *>(const_cast<char *>(key_str.data())), static_cast<uint32_t>(key_str.size()) };
-                key_stream >> group_address;
-                for (auto const & node : workload.m_leader_count) {
-                    jn[node.first] = node.second;
-                }
-                jm[group_address.group_id().to_string()] = jn;
+            jm[group_address.group_id().to_string()] = jn;
+            if (common::has<common::xnode_type_t::consensus_auditor>(group_address.type())) {
+                json["auditor_workload"].append(jm);
+            } else if (common::has<common::xnode_type_t::consensus_validator>(group_address.type())) {
+                json["validator_workload"].append(jm);
+            } else if (common::has<common::xnode_type_t::evm_auditor>(group_address.type())) {
+                json["evm_auditor_workload"].append(jm);
+            } else if (common::has<common::xnode_type_t::evm_validator>(group_address.type())) {
+                json["evm_validator_workload"].append(jm);
             }
-            json["validator_workload"].append(jm);
         }
     }
 }
@@ -1749,16 +1675,11 @@ void xtop_contract_manager::get_contract_data(common::xaccount_address_t const &
         }
     } else if (contract_address == xaccount_address_t{ sys_contract_zec_reward_addr }) {
         std::error_code internal_ec;
-        get_zec_reward_contract_property(data::system_contract::XPORPERTY_CONTRACT_WORKLOAD_KEY, height, m_store, json, internal_ec);
+        get_zec_reward_contract_workload(height, m_store, json, internal_ec);
         if (internal_ec) {
-            xdbg("get data::system_contract::XPORPERTY_CONTRACT_WORKLOAD_KEY failed");
+            xdbg("get_zec_reward_contract_workload failed");
             ec = internal_ec;
             internal_ec.clear();
-        }
-        get_zec_reward_contract_property(data::system_contract::XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY, height, m_store, json, internal_ec);
-        if (internal_ec && !ec) {
-            xdbg("get data::system_contract::XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY failed");
-            ec = internal_ec;
         }
     }
 }
@@ -1915,7 +1836,7 @@ static void get_unqualified_node_map(common::xaccount_address_t const & contract
         xdbg("[get_unqualified_slash_info_map] contract_address: %s, property_name: %s, error", contract_address.to_string().c_str(), property_name.c_str());
         return;
     }
-    data::system_contract::xunqualified_node_info_v2_t summarize_info;
+    data::system_contract::xunqualified_node_info_v1_t summarize_info;
     for (auto const & m : nodes) {
         auto detail = m.second;
         if (!detail.empty()) {
@@ -1940,26 +1861,8 @@ static void get_unqualified_node_map(common::xaccount_address_t const & contract
             jvn_validator[v.first.value()] = validator_info;
         }
 
-        xJson::Value jvn_evm_auditor;
-        for (auto const & v : summarize_info.evm_auditor_info) {
-            xJson::Value evm_info;
-            evm_info["vote_num"] = v.second.block_count;
-            evm_info["subset_num"] = v.second.subset_count;
-            jvn_evm_auditor[v.first.value()] = evm_info;
-        }
-
-        xJson::Value jvn_evm_validator;
-        for (auto const & v : summarize_info.evm_validator_info) {
-            xJson::Value evm_info;
-            evm_info["vote_num"] = v.second.block_count;
-            evm_info["subset_num"] = v.second.subset_count;
-            jvn_evm_validator[v.first.value()] = evm_info;
-        }
-
         jvn["auditor"] = jvn_auditor;
         jvn["validator"] = jvn_validator;
-        jvn["evm_auditor"] = jvn_evm_auditor;
-        jvn["evm_validator"] = jvn_evm_validator;
         json["unqualified_node"] = jvn;
     }
 }

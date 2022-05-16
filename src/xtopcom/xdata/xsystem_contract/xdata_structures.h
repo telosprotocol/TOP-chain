@@ -236,20 +236,6 @@ private:
     int32_t do_read(base::xstream_t & stream) override;
 };
 
-struct xunqualified_node_info_v2_t final : public xserializable_based_on<void> {
-    std::map<common::xnode_id_t, xnode_vote_percent_t> auditor_info;
-    std::map<common::xnode_id_t, xnode_vote_percent_t> validator_info;
-    std::map<common::xnode_id_t, xnode_vote_percent_t> evm_auditor_info;
-    std::map<common::xnode_id_t, xnode_vote_percent_t> evm_validator_info;
-
-    explicit operator xunqualified_node_info_v1_t() const;
-
-private:
-    int32_t do_write(base::xstream_t & stream) const override;
-
-    int32_t do_read(base::xstream_t & stream) override;
-};
-
 struct xunqualified_filter_info_t final : public xserializable_based_on<void> {
     common::xnode_id_t node_id;
     common::xnode_type_t node_type;
@@ -737,7 +723,8 @@ struct reward_detail_v2 final : public xserializable_based_on<void> {
     ::uint128_t m_archive_reward{0};
     ::uint128_t m_validator_reward{0};
     ::uint128_t m_auditor_reward{0};
-    ::uint128_t m_eth_reward{0};
+    ::uint128_t m_evm_validator_reward{0};
+    ::uint128_t m_evm_auditor_reward{0};
     ::uint128_t m_vote_reward{0};
     ::uint128_t m_self_reward{0};
 

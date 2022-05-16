@@ -278,7 +278,7 @@ TEST_F(test_table_slash_contract_other, table_slash_report_statistic_info) {
 #endif
 
 TEST_F(test_table_slash_contract_other, update_slash_statistic_info) {
-    data::system_contract::xunqualified_node_info_v2_t  node_info;
+    data::system_contract::xunqualified_node_info_v1_t  node_info;
     for (auto i = 0; i < 5; ++i) {
         data::system_contract::xnode_vote_percent_t node_content;
         node_content.block_count = i + 1;

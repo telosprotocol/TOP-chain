@@ -1758,7 +1758,7 @@ void xzec_reward_contract::calc_nodes_rewards_v5(common::xlogic_time_t const cur
             ::uint128_t reward_to_self = 0;
             calc_eth_auditor_workload_rewards(node, role_nums[evm_auditor_idx], property_param.evm_auditor_workloads_detail, evm_auditor_group_workload_rewards, reward_to_self);
             if (reward_to_self != 0) {
-                issue_detail.m_node_rewards[account.to_string()].m_eth_reward = reward_to_self;
+                issue_detail.m_node_rewards[account.to_string()].m_evm_auditor_reward = reward_to_self;
                 self_reward += reward_to_self;
             }
         }
@@ -1766,7 +1766,7 @@ void xzec_reward_contract::calc_nodes_rewards_v5(common::xlogic_time_t const cur
             ::uint128_t reward_to_self = 0;
             calc_eth_validator_workload_rewards(node, role_nums[evm_validator_idx], property_param.evm_validator_workloads_detail, evm_validator_group_workload_rewards, reward_to_self);
             if (reward_to_self != 0) {
-                issue_detail.m_node_rewards[account.to_string()].m_eth_reward = reward_to_self;
+                issue_detail.m_node_rewards[account.to_string()].m_evm_validator_reward = reward_to_self;
                 self_reward += reward_to_self;
             }
         }

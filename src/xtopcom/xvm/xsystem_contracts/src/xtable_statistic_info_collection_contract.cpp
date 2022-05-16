@@ -109,7 +109,7 @@ void xtable_statistic_info_collection_contract::on_collect_statistic_info(xstati
     }
 
 
-    data::system_contract::xunqualified_node_info_v2_t summarize_info;
+    data::system_contract::xunqualified_node_info_v1_t summarize_info;
     uint32_t summarize_fulltableblock_num = 0;
     collect_slash_statistic_info(statistic_data, statistic_accounts, summarize_info_str, summarize_fulltableblock_num_str,
                                     summarize_info, summarize_fulltableblock_num);
@@ -119,7 +119,7 @@ void xtable_statistic_info_collection_contract::on_collect_statistic_info(xstati
     process_workload_statistic_data(statistic_data, statistic_accounts, tgas);
 }
 
-static void print_summarize_info(data::system_contract::xunqualified_node_info_v2_t const & summarize_slash_info) {
+static void print_summarize_info(data::system_contract::xunqualified_node_info_v1_t const & summarize_slash_info) {
     std::string out = "";
     for (auto const & item : summarize_slash_info.auditor_info) {
         out += item.first.value();
@@ -140,7 +140,7 @@ void xtable_statistic_info_collection_contract::collect_slash_statistic_info(xst
                                                                              xfulltableblock_statistic_accounts const & statistic_accounts,
                                                                              std::string const & summarize_info_str,
                                                                              std::string const & summarize_fulltableblock_num_str,
-                                                                             data::system_contract::xunqualified_node_info_v2_t & summarize_info,
+                                                                             data::system_contract::xunqualified_node_info_v1_t & summarize_info,
                                                                              uint32_t & summarize_fulltableblock_num) {
     XMETRICS_TIME_RECORD("sysContract_tableStatistic_collect_slash_statistic_info");
     XMETRICS_CPU_TIME_RECORD("sysContract_tableStatistic_collect_slash_statistic_info");
@@ -163,7 +163,7 @@ void xtable_statistic_info_collection_contract::collect_slash_statistic_info(xst
 
 }
 
-void xtable_statistic_info_collection_contract::update_slash_statistic_info(data::system_contract::xunqualified_node_info_v2_t const & summarize_info,
+void xtable_statistic_info_collection_contract::update_slash_statistic_info(data::system_contract::xunqualified_node_info_v1_t const & summarize_info,
                                                                             uint32_t summarize_fulltableblock_num,
                                                                             uint64_t block_height) {
     auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
@@ -190,8 +190,8 @@ void xtable_statistic_info_collection_contract::update_slash_statistic_info(data
     xinfo("[xtable_statistic_info_collection_contract][on_collect_statistic_info] successfully summarize fulltableblock, current table num: %u", summarize_fulltableblock_num);
 }
 
-void xtable_statistic_info_collection_contract::accumulate_node_info(data::system_contract::xunqualified_node_info_v2_t const & node_info,
-                                                                     data::system_contract::xunqualified_node_info_v2_t & summarize_info) {
+void xtable_statistic_info_collection_contract::accumulate_node_info(data::system_contract::xunqualified_node_info_v1_t const & node_info,
+                                                                     data::system_contract::xunqualified_node_info_v1_t & summarize_info) {
     for (auto const & item : node_info.auditor_info) {
         summarize_info.auditor_info[item.first].block_count += item.second.block_count;
         summarize_info.auditor_info[item.first].subset_count += item.second.subset_count;
@@ -201,23 +201,14 @@ void xtable_statistic_info_collection_contract::accumulate_node_info(data::syste
         summarize_info.validator_info[item.first].block_count += item.second.block_count;
         summarize_info.validator_info[item.first].subset_count += item.second.subset_count;
     }
-
-    for (auto const & item : node_info.evm_auditor_info) {
-        summarize_info.evm_auditor_info[item.first].block_count += item.second.block_count;
-        summarize_info.evm_auditor_info[item.first].subset_count += item.second.subset_count;
-    }
-    for (auto const & item : node_info.evm_validator_info) {
-        summarize_info.evm_validator_info[item.first].block_count += item.second.block_count;
-        summarize_info.evm_validator_info[item.first].subset_count += item.second.subset_count;
-    }
 }
 
-data::system_contract::xunqualified_node_info_v2_t xtable_statistic_info_collection_contract::process_statistic_data(
+data::system_contract::xunqualified_node_info_v1_t xtable_statistic_info_collection_contract::process_statistic_data(
     top::data::xstatistics_data_t const & block_statistic_data,
     xfulltableblock_statistic_accounts const & statistic_accounts) {
     XMETRICS_TIME_RECORD("sysContract_tableStatistic_process_statistic_data");
     XMETRICS_CPU_TIME_RECORD("sysContract_tableStatistic_process_statistic_data");
-    data::system_contract::xunqualified_node_info_v2_t res_node_info;
+    data::system_contract::xunqualified_node_info_v1_t res_node_info;
 
     // process one full tableblock statistic data
     for (auto const & static_item: block_statistic_data.detail) {
@@ -229,7 +220,7 @@ data::system_contract::xunqualified_node_info_v2_t xtable_statistic_info_collect
             auto group_accounts = account_group.group_data[group_addr];
 
             // process auditor group
-            if (top::common::has<top::common::xnode_type_t::consensus_auditor>(group_addr.type())) {
+            if (top::common::has<top::common::xnode_type_t::consensus_auditor>(group_addr.type()) || top::common::has<top::common::xnode_type_t::evm_auditor>(group_addr.type())) {
                 for (std::size_t slotid = 0; slotid < group_account_data.account_statistics_data.size(); ++slotid) {
                     auto const & account_addr = group_accounts.account_data[slotid];
                     res_node_info.auditor_info[common::xnode_id_t{account_addr}].subset_count += group_account_data.account_statistics_data[slotid].vote_data.block_count;
@@ -237,28 +228,12 @@ data::system_contract::xunqualified_node_info_v2_t xtable_statistic_info_collect
                     xdbg("[xtable_statistic_info_collection_contract][do_unqualified_node_slash] incremental auditor data: {gourp id: %d, account addr: %s, slot id: %u, subset count: %u, block_count: %u}", group_addr.group_id().value(), account_addr.c_str(),
                         slotid, group_account_data.account_statistics_data[slotid].vote_data.block_count, group_account_data.account_statistics_data[slotid].vote_data.vote_count);
                 }
-            } else if (top::common::has<top::common::xnode_type_t::consensus_validator>(group_addr.type())) {// process validator group
+            } else if (top::common::has<top::common::xnode_type_t::consensus_validator>(group_addr.type()) || top::common::has<top::common::xnode_type_t::evm_validator>(group_addr.type())) {// process validator group
                 for (std::size_t slotid = 0; slotid < group_account_data.account_statistics_data.size(); ++slotid) {
                     auto const & account_addr = group_accounts.account_data[slotid];
                     res_node_info.validator_info[common::xnode_id_t{account_addr}].subset_count += group_account_data.account_statistics_data[slotid].vote_data.block_count;
                     res_node_info.validator_info[common::xnode_id_t{account_addr}].block_count += group_account_data.account_statistics_data[slotid].vote_data.vote_count;
                     xdbg("[xtable_statistic_info_collection_contract][do_unqualified_node_slash] incremental validator data: {gourp id: %d, account addr: %s, slot id: %u, subset count: %u, block_count: %u}", group_addr.group_id().value(), account_addr.c_str(),
-                        slotid, group_account_data.account_statistics_data[slotid].vote_data.block_count, group_account_data.account_statistics_data[slotid].vote_data.vote_count);
-                }
-            } else if (top::common::has<top::common::xnode_type_t::evm_auditor>(group_addr.type())) {
-                for (std::size_t slotid = 0; slotid < group_account_data.account_statistics_data.size(); ++slotid) {
-                    auto const & account_addr = group_accounts.account_data[slotid];
-                    res_node_info.evm_auditor_info[common::xnode_id_t{account_addr}].subset_count += group_account_data.account_statistics_data[slotid].vote_data.block_count;
-                    res_node_info.evm_auditor_info[common::xnode_id_t{account_addr}].block_count += group_account_data.account_statistics_data[slotid].vote_data.vote_count;
-                    xdbg("[xtable_statistic_info_collection_contract][do_unqualified_node_slash] incremental evm auditor data: {gourp id: %d, account addr: %s, slot id: %u, subset count: %u, block_count: %u}", group_addr.group_id().value(), account_addr.c_str(),
-                        slotid, group_account_data.account_statistics_data[slotid].vote_data.block_count, group_account_data.account_statistics_data[slotid].vote_data.vote_count);
-                }
-            } else if (top::common::has<top::common::xnode_type_t::evm_validator>(group_addr.type())) {
-                for (std::size_t slotid = 0; slotid < group_account_data.account_statistics_data.size(); ++slotid) {
-                    auto const & account_addr = group_accounts.account_data[slotid];
-                    res_node_info.evm_validator_info[common::xnode_id_t{account_addr}].subset_count += group_account_data.account_statistics_data[slotid].vote_data.block_count;
-                    res_node_info.evm_validator_info[common::xnode_id_t{account_addr}].block_count += group_account_data.account_statistics_data[slotid].vote_data.vote_count;
-                    xdbg("[xtable_statistic_info_collection_contract][do_unqualified_node_slash] incremental evm validator data: {gourp id: %d, account addr: %s, slot id: %u, subset count: %u, block_count: %u}", group_addr.group_id().value(), account_addr.c_str(),
                         slotid, group_account_data.account_statistics_data[slotid].vote_data.block_count, group_account_data.account_statistics_data[slotid].vote_data.vote_count);
                 }
             } else { // invalid group
@@ -319,7 +294,7 @@ void xtable_statistic_info_collection_contract::report_summarized_statistic_info
 
     {
         XMETRICS_TIME_RECORD("sysContractc_slash_report_statistic_info");
-        data::system_contract::xunqualified_node_info_v2_t summarize_info;
+        data::system_contract::xunqualified_node_info_v1_t summarize_info;
         value_str.clear();
         try {
             XMETRICS_TIME_RECORD("sysContract_tableStatistic_get_property_contract_unqualified_node_key");

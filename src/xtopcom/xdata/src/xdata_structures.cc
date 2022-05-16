@@ -205,36 +205,6 @@ int32_t xunqualified_node_info_v1_t::do_read(base::xstream_t & stream) {
     return CALC_LEN();
 }
 
-int32_t xunqualified_node_info_v2_t::do_write(base::xstream_t & stream) const {
-    KEEP_SIZE();
-    MAP_OBJECT_SERIALIZE2(stream, auditor_info);
-    MAP_OBJECT_SERIALIZE2(stream, validator_info);
-    MAP_OBJECT_SERIALIZE2(stream, evm_auditor_info);
-    MAP_OBJECT_SERIALIZE2(stream, evm_validator_info);
-
-    return CALC_LEN();
-}
-
-int32_t xunqualified_node_info_v2_t::do_read(base::xstream_t & stream) {
-    KEEP_SIZE();
-    MAP_OBJECT_DESERIALZE2(stream, auditor_info);
-    MAP_OBJECT_DESERIALZE2(stream, validator_info);
-    if (stream.size() > 0) {
-        MAP_OBJECT_DESERIALZE2(stream, evm_auditor_info);
-    }
-    if (stream.size() > 0) {
-        MAP_OBJECT_DESERIALZE2(stream, evm_validator_info);
-    }
-    return CALC_LEN();
-}
-
-xunqualified_node_info_v2_t::operator xunqualified_node_info_v1_t() const {
-    xunqualified_node_info_v1_t v1;
-    v1.auditor_info = auditor_info;
-    v1.validator_info = validator_info;
-    return v1;
-}
-
 int32_t xunqualified_filter_info_t::do_write(base::xstream_t & stream) const {
     KEEP_SIZE();
     stream << node_id;
@@ -744,7 +714,8 @@ int32_t reward_detail_v2::do_write(base::xstream_t & stream) const {
     stream << m_auditor_reward;
     stream << m_vote_reward;
     stream << m_self_reward;
-    stream << m_eth_reward;
+    stream << m_evm_validator_reward;
+    stream << m_evm_auditor_reward;
     const int32_t end_pos = stream.size();
     return (end_pos - begin_pos);
 }
@@ -758,7 +729,10 @@ int32_t reward_detail_v2::do_read(base::xstream_t & stream) {
     stream >> m_vote_reward;
     stream >> m_self_reward;
     if (stream.size() > 0) {
-        stream >> m_eth_reward;
+        stream >> m_evm_validator_reward;
+    }
+    if (stream.size() > 0) {
+        stream >> m_evm_auditor_reward;
     }
     const int32_t end_pos = stream.size();
     return (begin_pos - end_pos);
