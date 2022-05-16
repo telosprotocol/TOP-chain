@@ -105,17 +105,20 @@ void xtop_sniffer_action::broadcast(observer_ptr<vnode::xvnode_face_t> const & v
         }
 
         if (common::has<common::xnode_type_t::storage>(types)) {
-            for (auto archive_gid = common::xarchive_group_id_begin; archive_gid < common::xarchive_group_id_end; ++archive_gid) {
-                common::xnode_address_t dest{
-                    common::build_archive_sharding_address(archive_gid, vnode->address().network_id()),
-                };
-                vnode->broadcast(dest.xip2().group_xip2(), message, ec);
-                if (ec) {
-                    xwarn("[xtop_sniffer_action::broadcast] broadcast to archive failed. block owner %s", block_ptr->get_block_owner().c_str());
-                    assert(false);
-                } else {
-                    xdbg("[xtop_sniffer_action::broadcast] broadcast to archive. block owner %s", block_ptr->get_block_owner().c_str());
-                }
+            common::xnode_address_t dest{};
+            if (common::has<common::xnode_type_t::storage_archive>(types)) {
+                dest = common::xnode_address_t{common::build_archive_sharding_address(common::xarchive_group_id, vnode->address().network_id())};
+            } else if (common::has<common::xnode_type_t::storage_exchange>(types)) {
+                dest = common::xnode_address_t{common::build_exchange_sharding_address(vnode->address().network_id())};
+            } else {
+                xassert(false);
+            }
+            vnode->broadcast(dest.xip2().group_xip2(), message, ec);
+            if (ec) {
+                xwarn("[xtop_sniffer_action::broadcast] broadcast to archive failed. block owner %s", block_ptr->get_block_owner().c_str());
+                assert(false);
+            } else {
+                xdbg("[xtop_sniffer_action::broadcast] broadcast to archive. block owner %s", block_ptr->get_block_owner().c_str());
             }
         }
     }

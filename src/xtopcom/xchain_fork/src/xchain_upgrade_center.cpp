@@ -70,7 +70,7 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 10000000, "election contract store credit score"},
             xfork_point_t{xfork_point_type_t::logic_time, 0, "inner table tx"},// should later than "add rsp id"
             xfork_point_t{xfork_point_type_t::logic_time, 10000000, "enable eth shard"},
-            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "elect exchange alone"},
+            xfork_point_t{xfork_point_type_t::logic_time, 100000000, "elect exchange alone"}, // todo(next version fork)
         };
 
         // !!!change!!! fork time for galileo
@@ -83,7 +83,7 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 10000000, "election contract store credit score"},
             xfork_point_t{xfork_point_type_t::logic_time, 0, "inner table tx"},
             xfork_point_t{xfork_point_type_t::logic_time, 10000000, "enable eth shard"},
-            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "elect exchange alone"},
+            xfork_point_t{xfork_point_type_t::logic_time, 100000000, "elect exchange alone"}, // todo(next version fork)
         };
 
         // !!!change!!! fork time for local develop net
@@ -96,7 +96,7 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 10000000, "election contract store credit score"},
             xfork_point_t{xfork_point_type_t::logic_time, 0, "inner table tx"},
             xfork_point_t{xfork_point_type_t::logic_time, 10000000, "enable eth shard"},
-            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "elect exchange alone"},
+            xfork_point_t{xfork_point_type_t::logic_time, 100000000, "elect exchange alone"}, // todo(next version fork)
         };
 #endif  // #if defined(XCHAIN_FORKED_BY_DEFAULT)
         xchain_fork_config_t const & xtop_chain_fork_config_center::chain_fork_config() noexcept {

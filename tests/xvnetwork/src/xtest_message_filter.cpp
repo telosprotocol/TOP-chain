@@ -144,19 +144,19 @@ common::xnode_address_t build_zec_node_address(common::xaccount_address_t accoun
                               common::build_zec_sharding_address(common::xtestnet_id));
 }
 
-common::xnode_address_t build_data_node_address(common::xaccount_address_t account_address,
-                                                common::xslot_id_t slot_id,
-                                                common::xlogic_epoch_t logic_epoch,
-                                                common::xgroup_id_t data_group_id) {
-    if (data_group_id != common::xarchive_group_id && data_group_id != common::xlegacy_exchange_group_id) {
-        assert(false);
-        return{};
-    }
-    return build_node_address(std::move(account_address),
-                              std::move(slot_id),
-                              std::move(logic_epoch),
-                              common::build_archive_sharding_address(data_group_id, common::xtestnet_id));
-}
+// common::xnode_address_t build_data_node_address(common::xaccount_address_t account_address,
+//                                                 common::xslot_id_t slot_id,
+//                                                 common::xlogic_epoch_t logic_epoch,
+//                                                 common::xgroup_id_t data_group_id) {
+//     if (data_group_id != common::xarchive_group_id && data_group_id != common::xlegacy_exchange_group_id) {
+//         assert(false);
+//         return{};
+//     }
+//     return build_node_address(std::move(account_address),
+//                               std::move(slot_id),
+//                               std::move(logic_epoch),
+//                               common::build_archive_sharding_address(data_group_id, common::xtestnet_id));
+// }
 
 common::xnode_address_t build_edge_node_address(common::xaccount_address_t account_address,
                                                 common::xslot_id_t slot_id,

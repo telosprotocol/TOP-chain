@@ -490,17 +490,29 @@ void xrole_context_t::broadcast(const xblock_ptr_t & block_ptr, common::xnode_ty
         }
 
         if (common::has<common::xnode_type_t::storage>(types)) {
-            for (auto archive_gid = common::xarchive_group_id_begin; archive_gid < common::xarchive_group_id_end; ++archive_gid) {
-                common::xnode_address_t dest{
-                    common::build_archive_sharding_address(archive_gid, m_driver->network_id()),
-                };
-                //m_driver->forward_broadcast_message(message, dest);
+            {
+                common::xnode_address_t archive_dest{common::build_archive_sharding_address(common::xarchive_group_id, m_driver->network_id())};
                 std::error_code ec;
-                m_driver->broadcast(dest.xip2(), message, ec);
+                m_driver->broadcast(archive_dest.xip2(), message, ec);
                 if (ec) {
                     xerror("[xrole_context_t] broadcast to archive failed. block owner %s", block_ptr->get_block_owner().c_str());
                 } else {
                     xdbg("[xrole_context_t] broadcast to archive. block owner %s", block_ptr->get_block_owner().c_str());
+                }
+            }
+            {
+                // todo(next version fork)
+                // if (forked standalone_exchange_point) {
+                //     common::xnode_address_t exchange_dest{common::build_exchange_sharding_address(m_driver->network_id())};
+                // } else {
+                    common::xnode_address_t exchange_dest{common::build_legacy_exchange_sharding_address(common::xlegacy_exchange_group_id, m_driver->network_id())};
+                // }
+                std::error_code ec;
+                m_driver->broadcast(exchange_dest.xip2(), message, ec);
+                if (ec) {
+                    xerror("[xrole_context_t] broadcast to exchange failed. block owner %s", block_ptr->get_block_owner().c_str());
+                } else {
+                    xdbg("[xrole_context_t] broadcast to exchange. block owner %s", block_ptr->get_block_owner().c_str());
                 }
             }
             //xdbg("[xrole_context_t] broadcast to archive. block owner %s", block_ptr->get_block_owner().c_str());
