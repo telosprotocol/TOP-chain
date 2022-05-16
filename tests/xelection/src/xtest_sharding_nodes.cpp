@@ -222,7 +222,7 @@ TEST(xtest_edge_sharding_nodes, _) {
 
 TEST(xtest_archive_sharding_nodes, _) {
     top::common::xnetwork_id_t network_id{ top::common::xtopchain_network_id };
-    top::common::xzone_id_t zone_id{ top::common::xarchive_zone_id };
+    top::common::xzone_id_t zone_id{ top::common::xstorage_zone_id };
     top::common::xcluster_id_t cluster_id{ top::common::xdefault_cluster_id };
     top::common::xgroup_id_t group_id{ top::common::xdefault_group_id };
 

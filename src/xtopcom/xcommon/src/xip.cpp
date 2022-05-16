@@ -741,7 +741,7 @@ xnode_type_t node_type_from(common::xzone_id_t const & zone_id) {
         return xnode_type_t::consensus;
     }
 
-    if (zone_id == xarchive_zone_id) {
+    if (zone_id == xstorage_zone_id) {
         return xnode_type_t::storage;
     }
 

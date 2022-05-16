@@ -162,7 +162,7 @@ void xtop_beacon_chain_application::load_last_election_data() {
 
     std::map<common::xaccount_address_t, common::xzone_id_t> addr_to_zone_id{{rec_elect_rec_contract_address, common::xcommittee_zone_id},
                                                                              {rec_elect_zec_contract_address, common::xzec_zone_id},
-                                                                             {rec_elect_archive_contract_address, common::xarchive_zone_id},
+                                                                             {rec_elect_archive_contract_address, common::xstorage_zone_id},
                                                                              {rec_elect_fullnode_contract_address, common::xfullnode_zone_id},
                                                                              {rec_elect_edge_contract_address, common::xedge_zone_id},
                                                                              {zec_elect_consensus_contract_address, common::xdefault_zone_id},
