@@ -59,6 +59,8 @@ void xtop_gasfee::init(std::error_code & ec) {
 }
 
 void xtop_gasfee::add(const uint64_t tgas, std::error_code & ec) {
+    xassert(m_free_tgas >= m_free_tgas_usage);
+    xassert(m_converted_tgas >= m_converted_tgas_usage);
     const uint64_t left_available_tgas = m_free_tgas + m_converted_tgas - m_free_tgas_usage - m_converted_tgas_usage;
     xdbg("[xtop_gasfee::add] supplement: %lu, m_free_tgas_usage: %lu, m_converted_tgas_usage: %lu, m_free_tgas: %lu, m_converted_tgas: %lu, left_available_tgas: %lu",
          tgas,
@@ -68,13 +70,13 @@ void xtop_gasfee::add(const uint64_t tgas, std::error_code & ec) {
          m_converted_tgas,
          left_available_tgas);
     if (tgas > left_available_tgas) {
-        m_free_tgas_usage = m_free_tgas;
         m_converted_tgas_usage = m_converted_tgas;
+        m_free_tgas_usage = m_free_tgas;
         xwarn("[xtop_gasfee::add] transaction not enough deposit to tgas, m_converted_tgas_usage to: %lu, m_free_tgas_usage to: %lu", m_converted_tgas_usage, m_free_tgas_usage);
         ec = gasfee::error::xenum_errc::tx_deposit_to_tgas_not_enough;
     } else if (tgas > (m_free_tgas - m_free_tgas_usage)) {
+        m_converted_tgas_usage += m_free_tgas - m_free_tgas_usage;
         m_free_tgas_usage = m_free_tgas;
-        m_converted_tgas_usage += tgas - m_free_tgas;
         xdbg("[xtop_gasfee::add] m_converted_tgas_usage to: %lu, m_free_tgas_usage to: %lu", m_converted_tgas_usage, m_free_tgas_usage);
     } else {
         m_free_tgas_usage += tgas;
@@ -146,10 +148,6 @@ uint64_t xtop_gasfee::tgas_to_balance(const uint64_t tgas) const {
 }
 
 void xtop_gasfee::store_in_one_stage(std::error_code & ec) {
-    const uint64_t deposit_usage = tgas_to_balance(m_converted_tgas_usage);
-    // fill tx
-    tx_set_used_tgas(m_free_tgas_usage);
-    tx_set_used_deposit(deposit_usage);
     // store tgas_usage
     xassert(m_free_tgas_usage >= m_deducted_free_tgas_usage);
     uint64_t free_tgas_usage_add = m_free_tgas_usage - m_deducted_free_tgas_usage;
@@ -171,13 +169,14 @@ void xtop_gasfee::store_in_one_stage(std::error_code & ec) {
         CHECK_EC_RETURN(ec);
         m_deducted_converted_tgas_usage = m_converted_tgas_usage;
     }
+    // fill tx
+    const uint64_t deposit_usage = tgas_to_balance(m_converted_tgas_usage);
+    tx_set_used_tgas(m_free_tgas_usage);
+    tx_set_used_deposit(deposit_usage);
     xdbg("[xtop_gasfee::store_in_one_stage] m_free_tgas_usage: %lu, m_converted_tgas_usage: %lu, deposit_usage: %lu", m_free_tgas_usage, m_converted_tgas_usage, deposit_usage);
 }
 
 void xtop_gasfee::store_in_send_stage(std::error_code & ec) {
-    const uint64_t deposit_usage = tgas_to_balance(m_converted_tgas_usage);
-    tx_set_used_tgas(m_free_tgas_usage);
-    tx_set_used_deposit(deposit_usage);
     state_set_used_tgas(m_free_tgas_usage + account_formular_used_tgas(m_time), ec);
     CHECK_EC_RETURN(ec);
     state_set_last_time(m_time, ec);
@@ -187,6 +186,9 @@ void xtop_gasfee::store_in_send_stage(std::error_code & ec) {
         lock(static_cast<base::vtoken_t>(deposit_total), ec);
         CHECK_EC_RETURN(ec);
     }
+    const uint64_t deposit_usage = tgas_to_balance(m_converted_tgas_usage);
+    tx_set_used_tgas(m_free_tgas_usage);
+    tx_set_used_deposit(deposit_usage);
     xdbg("[xtop_gasfee::store_in_send_stage] m_free_tgas_usage: %lu, m_converted_tgas_usage: %lu, deposit_usage: %lu, m_converted_tgas: %lu, deposit_total: %lu",
          m_free_tgas_usage,
          m_converted_tgas_usage,
@@ -215,12 +217,12 @@ void xtop_gasfee::store_in_confirm_stage(std::error_code & ec) {
         state_set_last_time(m_time, ec);
         CHECK_EC_RETURN(ec);
     }
-    tx_set_used_tgas(recv_tgas_usage);
-    tx_set_used_deposit(deposit_usage);
     if (deposit_usage > 0) {
         burn(static_cast<base::vtoken_t>(deposit_usage), ec);
         CHECK_EC_RETURN(ec);
     }
+    tx_set_used_tgas(recv_tgas_usage);
+    tx_set_used_deposit(deposit_usage);
     xdbg("[xtop_gasfee::store] m_free_tgas_usage: %lu, deposit_usage: %lu, deposit_total: %lu", m_free_tgas_usage, deposit_usage, deposit_total);
 }
 
