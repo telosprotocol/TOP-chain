@@ -111,8 +111,8 @@ namespace top
             static enum_consensus_msg_type  get_msg_type() {return enum_consensus_msg_type_vote;}
         public:
             xvote_msg_t();
-            xvote_msg_t(base::xvqcert_t & agree_by_cert_obj);     //agree by cert
-            xvote_msg_t(base::xvblock_t & agree_by_block_object); //agree by block
+            xvote_msg_t(base::xvqcert_t & agree_by_cert_obj, const std::string & inner_vote_data);     //agree by cert
+            xvote_msg_t(base::xvblock_t & agree_by_block_object, const std::string & inner_vote_data); //agree by block
 
             virtual ~xvote_msg_t();
         private:
@@ -120,6 +120,7 @@ namespace top
             xvote_msg_t & operator = (const xvote_msg_t&);
         public:
             const std::string & get_justify_source()const {return m_justify_source;}
+            const std::string & get_inner_vote_data()const {return m_inner_vote_data;}
 
         protected:
             //return how many bytes readout /writed in, return < 0(enum_xerror_code_type) when have error
@@ -127,6 +128,7 @@ namespace top
             virtual int32_t     do_read(base::xstream_t & stream)  override;
         private:
             std::string         m_justify_source;       //quorum_certificaiton or whole block object ,depends on m_vote_type
+            std::string         m_inner_vote_data;
         };
         
         //xvote_report_t is not an offical vote, it actually just inform leader why not agree it'proposal

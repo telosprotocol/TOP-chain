@@ -19,6 +19,7 @@
 #include "xunit_service/xrelay_packer.h"
 #include "xblockmaker/xrelay_proposal_maker.h"
 #include "xblockmaker/xblockmaker_face.h"
+#include "xverifier/xverifier_utl.h"
 
 #include <cinttypes>
 NS_BEG2(top, xunit_service)
@@ -120,6 +121,9 @@ bool xrelay_packer::start_proposal(base::xblock_mptrs & latest_blocks) {
         xunit_dbg("xrelay_packer::start_proposal fail-make_proposal.%s", proposal_para.dump().c_str());  // may has no txs for proposal
         return false;
     }
+
+    set_inner_vote_data(proposal_block.get());
+
     base::xauto_ptr<xconsensus::xproposal_start> _event_obj(new xconsensus::xproposal_start(proposal_block.get()));
     push_event_down(*_event_obj, this, 0, 0);
     // check viewid again, may changed
@@ -383,9 +387,43 @@ bool xrelay_packer::recv_in(const xvip2_t & from_addr, const xvip2_t & to_addr, 
     return xcsaccount_t::recv_in(from_addr, to_addr, packet, cur_thread_id, timenow_ms);
 }
 
+void xrelay_packer::set_inner_vote_data(base::xvblock_t * proposal_block) {
+        auto relay_block_data = proposal_block->get_relay_block_data();
+        top::uint256_t sign_hash = top::utl::xkeccak256_t::digest(relay_block_data);
+
+        auto prikey_str = get_vcertauth()->get_prikey(get_xip2_addr());
+        uint8_t priv_content[xverifier::PRIKEY_LEN];
+        memcpy(priv_content, prikey_str.data(), prikey_str.size());
+        top::utl::xecprikey_t ecpriv(priv_content);
+
+        auto signature = ecpriv.sign(sign_hash);
+        std::string signature_str = std::string((char*)signature.get_compact_signature(), signature.get_compact_signature_size());
+        xdbg("nathan test signature_str size:%d,:%s", signature_str.size(), signature_str.c_str());
+        proposal_block->set_inner_vote_data(signature_str);
+
+        // // for test
+        // top::utl::xecpubkey_t pub_key_obj = ecpriv.get_public_key();
+
+        // uint8_t signature_content[65];
+        // memcpy(signature_content, signature_str.data(), signature_str.size());
+
+        // utl::xecdsasig_t signature1(signature_content);
+        // bool verify_ret = pub_key_obj.verify_signature(signature1, sign_hash);
+        // if (verify_ret) {
+        //     xdbg("nathan test verify_signature ok");
+        // } else {
+        //     xerror("nathan test verify_signature fail");
+        // }
+}
+
 int xrelay_packer::verify_proposal(base::xvblock_t * proposal_block, base::xvqcert_t * bind_clock_cert, xcsobject_t * _from_child) {
     XMETRICS_TIME_RECORD("cons_tableblock_verify_proposal_time_consuming");
-    return m_proposal_maker->verify_proposal(proposal_block, bind_clock_cert);
+    auto ret = m_proposal_maker->verify_proposal(proposal_block, bind_clock_cert);
+    if (ret == xsuccess) {
+        set_inner_vote_data(proposal_block);
+    }
+
+    return ret;
 }
 
 // get parent group xip

@@ -29,12 +29,12 @@ public:
 
 protected:
     bool verify_proposal_with_local(base::xvblock_t * proposal_block, base::xvblock_t * local_block) const;
-    xblock_ptr_t make_empty_table(const xtablemaker_para_t & table_para, const xblock_consensus_para_t & cs_para, int32_t & error_code);
-    bool can_make_next_empty_block() const;
+    xblock_ptr_t make_relay_table(const xtablemaker_para_t & table_para, const xblock_consensus_para_t & cs_para, int32_t & error_code);
+    bool can_make_next_relay_block() const;
 
 private:
     static constexpr uint32_t m_keep_latest_blocks_max{3};
-    xblock_builder_face_ptr_t m_emptytable_builder;
+    xblock_builder_face_ptr_t m_relay_block_builder;
     xblock_builder_para_ptr_t m_default_builder_para;
     mutable std::mutex m_lock;
 };

@@ -174,6 +174,9 @@ namespace top
                 
                 _proposal_obj->get_block()->reset_block_flags(); //reset flags before start proposal
                 _proposal_obj->add_voted_cert(get_xip2_addr(),_proposal_obj->get_cert(),get_vcertauth()); //count leader 'vote
+                if (!proposal->get_inner_vote_data().empty()) {
+                    _proposal_obj->add_inner_vote_data(get_xip2_addr(),proposal->get_inner_vote_data());
+                }
                 _proposal_obj->mark_leader(); //mark original proposal at leader side
                 _proposal_obj->mark_voted();  //mark voted,for leader it is always true
                 _proposal_obj->set_result_of_verify_proposal(enum_xconsensus_code_successful);//mark verified
@@ -525,7 +528,10 @@ namespace top
                         _proposal->mark_voted();  //mark voted at replica side
                         
                         std::string msg_stream;
-                        xvote_msg_t _vote_msg(*_proposal->get_proposal_cert());
+                        if (!_proposal->get_block()->get_inner_vote_data().empty()) {
+                            xdbg("nathan test vote msg inner proposal:%s,vote data size:%d,:%s", _proposal->dump().c_str(), _proposal->get_block()->get_inner_vote_data().size(), _proposal->get_block()->get_inner_vote_data().c_str());
+                        }
+                        xvote_msg_t _vote_msg(*_proposal->get_proposal_cert(), _proposal->get_block()->get_inner_vote_data());
                         _vote_msg.serialize_to_string(msg_stream);
                         fire_pdu_event_up(xvote_msg_t::get_msg_type(),msg_stream,_proposal->get_proposal_msg_nonce() + 1,get_xip2_addr(),peer_addr,_proposal->get_block());
                         
@@ -580,6 +586,10 @@ namespace top
             {
                 xwarn("xBFTdriver_t::handle_vote_msg,fail-local proposal has been removed for packet=%s,at node=0x%llx",packet.dump().c_str(),get_xip2_low_addr());
                 return enum_xconsensus_error_bad_vote;
+            }
+            
+            if (!_vote_msg.get_inner_vote_data().empty()) {
+                xdbg("nathan test handle_vote_msg,proposal:%s,inner vote data size:%d,:%s", _local_proposal_block->dump().c_str(), _vote_msg.get_inner_vote_data().size(), _vote_msg.get_inner_vote_data().c_str());
             }
             //step#3: verify view_id & viewtoken to protect from DDOS attack
             if( false == _local_proposal_block->is_valid_packet(packet) )
@@ -655,7 +665,7 @@ namespace top
             xinfo("xBFTdriver_t::handle_vote_msg,finally start verify vote=%s of packet=%s at node=0x%llx",_voted_cert->dump().c_str(), packet.dump().c_str(),get_xip2_low_addr());
 
             //routing to worer thread per account_address
-            fire_verify_vote_job(from_addr,_voted_cert.get(),_local_proposal_block,_after_verify_vote_callback);
+            fire_verify_vote_job(from_addr,_voted_cert.get(),_local_proposal_block,_after_verify_vote_callback, _vote_msg.get_inner_vote_data());
             return enum_xconsensus_code_successful;
         }
 
@@ -1248,13 +1258,13 @@ namespace top
                 return (dispatch_call(asyn_verify_call) == enum_xcode_successful);
         }
 
-        bool xBFTdriver_t::fire_verify_vote_job(const xvip2_t replica_xip,base::xvqcert_t*replica_cert,xproposal_t * local_proposal,base::xfunction_t &callback)
+        bool xBFTdriver_t::fire_verify_vote_job(const xvip2_t replica_xip,base::xvqcert_t*replica_cert,xproposal_t * local_proposal,base::xfunction_t &callback, const std::string & inner_vote_data)
         {
             if( (NULL == replica_cert) || (NULL == local_proposal) )
                 return false;
 
             replica_cert->add_ref();
-            auto _verify_function = [this,replica_xip,replica_cert](base::xcall_t & call, const int32_t cur_thread_id,const uint64_t timenow_ms)->bool{
+            auto _verify_function = [this,replica_xip,replica_cert, inner_vote_data](base::xcall_t & call, const int32_t cur_thread_id,const uint64_t timenow_ms)->bool{
                 base::xauto_ptr<base::xvqcert_t> _dummy_release(replica_cert);//auto release the added addtional once quit
                 if(is_close() == false)//running at a specific worker thread of pool
                 {
@@ -1270,8 +1280,12 @@ namespace top
                         XMETRICS_GAUGE(metrics::cpu_ca_verify_sign_xbft, 1);
                         if(get_vcertauth()->verify_sign(replica_xip, replica_cert,_proposal->get_account()) == base::enum_vcert_auth_result::enum_successful) //verify partial-certication of msg
                         {
+                            // todo(nathan) : check inner signature!!!
                             if(_proposal->add_voted_cert(replica_xip,replica_cert,get_vcertauth())) //add to local list
                             {
+                                if (!inner_vote_data.empty()) {
+                                    _proposal->add_inner_vote_data(replica_xip, inner_vote_data);
+                                }
                                 if(_proposal->is_vote_finish()) //check again
                                 {
                                     if(false == _proposal->get_voted_validators().empty())

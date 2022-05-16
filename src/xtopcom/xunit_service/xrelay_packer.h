@@ -64,6 +64,7 @@ protected:
 private:
     bool    start_proposal(base::xblock_mptrs& latest_blocks);
     bool    verify_proposal_packet(const xvip2_t & from_addr, const xvip2_t & local_addr, const base::xcspdu_t & packet);
+    void    set_inner_vote_data(base::xvblock_t * proposal_block);
 
 private:
     volatile uint64_t                        m_last_view_id;

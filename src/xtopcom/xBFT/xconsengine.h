@@ -165,6 +165,9 @@ namespace top
             
             bool                 set_highest_QC_viewid(const uint64_t new_viewid);
             const uint64_t       get_highest_QC_viewid() const;
+
+            void                 add_inner_vote_data(const xvip2_t & addr, const std::string & vote_data);
+            const std::vector<std::string> get_inner_vote_datas() const;
         private:
             std::atomic<int32_t>           m_voted_validators_count;    //atomic for m_voted_validators' size
             std::atomic<int32_t>           m_voted_auditors_count;      //atomic for m_voted_auditors 'size
@@ -173,6 +176,7 @@ namespace top
             std::set<std::string>          m_all_voted_cert;//to remove duplicated certificates,possible attack or duplicated
             std::map<xvip2_t,std::string,xvip2_compare> m_voted_validators;          //include leader as well
             std::map<xvip2_t,std::string,xvip2_compare> m_voted_auditors;            //include leader as well if need
+            std::map<xvip2_t,std::string,xvip2_compare> m_inner_voted_datas;
         private:
             base::xvqcert_t *              m_proposal_cert;             //dedicated cert to store signature of leader
             base::xvqcert_t *              m_bind_clock_cert;           //each proposal ask carry the related clock cert

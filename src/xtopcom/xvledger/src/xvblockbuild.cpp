@@ -129,6 +129,18 @@ namespace top
             m_drand_height = _drand_height;
             m_justify_cert_hash = _justify_hash;
         }
+        void xbbuild_para_t::set_relay_cert_para(uint64_t _clock, uint32_t _viewtoken, uint64_t _viewid, const xvip2_t & _validator, const xvip2_t & _auditor, uint64_t _drand_height,
+                                    const std::string & _justify_hash) {
+            set_default_qcert();
+            m_clock = _clock;
+            m_viewtoken = _viewtoken;
+            m_viewid = _viewid;
+            m_validator = _validator;
+            m_auditor = _auditor;
+            m_drand_height = _drand_height;
+            m_justify_cert_hash = _justify_hash;
+            // m_consensus_flag = base::enum_xconsensus_flag_extend_cert;
+        }
 
 
         //----------------------------------------xvblockbuild_t-------------------------------------//
