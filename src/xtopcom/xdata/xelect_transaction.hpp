@@ -32,7 +32,6 @@ public:
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(zone_election_trigger_interval);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(edge_election_interval);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(archive_election_interval);
-
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(cluster_election_interval);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(election_rotation_count_ratio);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(cluster_election_minimum_rotation_ratio);
