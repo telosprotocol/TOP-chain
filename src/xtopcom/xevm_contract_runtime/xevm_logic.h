@@ -39,8 +39,8 @@ private:
 
 public:
     // for runtime
-    xbytes_t get_return_value() override;
-    std::pair<uint32_t, uint64_t> get_return_error() override;
+    xbytes_t get_return_value() const override;
+    std::pair<uint32_t, uint64_t> get_return_error() const override;
 
 public:
     // interface to evm_import_instance:

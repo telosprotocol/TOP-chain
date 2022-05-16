@@ -20,8 +20,8 @@ public:
     virtual ~xtop_evm_logic_face() = default;
 
 public:
-    virtual xbytes_t get_return_value() = 0;
-    virtual std::pair<uint32_t, uint64_t> get_return_error() = 0;
+    virtual xbytes_t get_return_value() const = 0;
+    virtual std::pair<uint32_t, uint64_t> get_return_error() const = 0;
 
 public:
     // interface to evm_import_instance:
