@@ -22,6 +22,8 @@ enum enum_execute_result_type {
     enum_exec_error_vm_execute          = 4,
     enum_exec_error_property_set        = 5,
     enum_exec_error_state_dirty         = 6,
+    enum_exec_error_preprocess_tgas     = 7,
+    enum_exec_error_postprocess_tgas    = 8,
 };
 
 class xvm_para_t {
@@ -77,6 +79,7 @@ class xvm_output_t {
     bool            m_tx_exec_succ{false};  // tx execute succ or fail
     int32_t         m_vm_error_code{0};
     std::string     m_vm_error_str;
+    std::error_code m_vm_ec;
     int64_t         m_tgas_balance_change{0};
     std::vector<xcons_transaction_ptr_t> m_contract_create_txs;
 };

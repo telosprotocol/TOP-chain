@@ -21,6 +21,7 @@ struct xtop_contract_execution_output {
     std::vector<xfollowup_transaction_datum_t> followup_transaction_data;
     std::string binlog;
     std::string contract_state_snapshot;
+    uint64_t tgas_balance_change{0};
 };
 using xcontract_execution_output_t = xtop_contract_execution_output;
 
