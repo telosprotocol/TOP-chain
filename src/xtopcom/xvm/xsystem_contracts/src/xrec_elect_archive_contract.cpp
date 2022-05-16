@@ -189,7 +189,7 @@ void xtop_rec_elect_archive_contract::elect_storage(const uint64_t current_time)
             range = exchange_group_range;
         }
 
-        if (elect_group(common::xarchive_zone_id,
+        if (elect_group(common::xstorage_zone_id,
                         common::xdefault_cluster_id,
                         archive_gid,
                         current_time,
@@ -226,7 +226,7 @@ void xtop_rec_elect_archive_contract::elect_archive(const uint64_t current_time)
 
     auto range = archive_group_range;
 
-    if (elect_group(common::xarchive_zone_id, common::xdefault_cluster_id, archive_gid, current_time, current_time, range, standby_network_result, election_network_result)) {
+    if (elect_group(common::xstorage_zone_id, common::xdefault_cluster_id, archive_gid, current_time, current_time, range, standby_network_result, election_network_result)) {
         xvm::serialization::xmsgpack_t<xelection_result_store_t>::serialize_to_string_prop(*this, data::election::get_property_by_group_id(archive_gid), election_result_store);
     }
 
@@ -250,7 +250,7 @@ common::xnode_type_t xtop_rec_elect_archive_contract::standby_type(common::xzone
     assert(!broadcast(cid));
     assert(!broadcast(gid));
 
-    assert(zid == common::xarchive_zone_id);
+    assert(zid == common::xstorage_zone_id);
     assert(cid == common::xdefault_cluster_id);
     assert(gid == common::xarchive_group_id || gid == common::xlegacy_exchange_group_id);
 

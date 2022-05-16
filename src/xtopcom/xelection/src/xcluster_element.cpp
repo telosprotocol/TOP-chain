@@ -536,7 +536,7 @@ xgroup_update_result_t xtop_cluster_element::add_group_element_with_lock_hold_ou
     }
 
     case common::xnode_type_t::storage: {
-        assert(zone_id() == common::xarchive_zone_id);
+        assert(zone_id() == common::xstorage_zone_id);
 
         auto const archive_type = common::node_type_from(zone_id(), cluster_id(), group_id);
         if (archive_type == common::xnode_type_t::invalid) {
