@@ -229,6 +229,9 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
             return enum_exec_error_postprocess_tgas;
         }
         if (ret == txexecutor::enum_exec_success) {
+            if (vmoutput.m_tx_result.status != evm_common::xevm_transaction_status_t::Success) {
+                ret = txexecutor::enum_exec_error_evm_execute;
+            }
             tx->set_evm_tx_result(vmoutput.m_tx_result);
             xdbg("xatomictx_executor_t::vm_execute tx:%s vmoutput.m_tx_result.extra_msg:%s", tx->dump().c_str(), vmoutput.m_tx_result.extra_msg.c_str());
         }
