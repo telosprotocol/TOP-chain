@@ -49,7 +49,7 @@ using data::election::xstandby_result_store_t;
 xtop_rec_elect_exchange_contract::xtop_rec_elect_exchange_contract(common::xnetwork_id_t const & network_id) : xbase_t{network_id} {}
 
 #ifdef STATIC_CONSENSUS
-bool executed_archive{false};
+bool executed_exchange{false};
 // if enabled static_consensus
 // make sure add config in config.xxxx.json
 // like this :
@@ -62,7 +62,7 @@ void xtop_rec_elect_exchange_contract::elect_config_nodes(common::xlogic_time_t 
     uint64_t latest_height = get_blockchain_height(sys_contract_rec_elect_exchange_addr);
     xinfo("[archive_start_nodes] get_latest_height: %" PRIu64, latest_height);
     if (latest_height > 0) {
-        executed_archive = true;
+        executed_exchange = true;
         return;
     }
 
@@ -135,7 +135,7 @@ void xtop_rec_elect_exchange_contract::setup() {
 void xtop_rec_elect_exchange_contract::on_timer(const uint64_t current_time) {
 #ifdef STATIC_CONSENSUS
     if (xstatic_election_center::instance().if_allow_elect()) {
-        if (!executed_archive) {
+        if (!executed_exchange) {
             elect_config_nodes(current_time);
             return;
         }
@@ -161,30 +161,26 @@ void xtop_rec_elect_exchange_contract::on_timer(const uint64_t current_time) {
     auto standby_result_store =
         xvm::serialization::xmsgpack_t<xstandby_result_store_t>::deserialize_from_string_prop(*this, sys_contract_rec_standby_pool_addr, data::XPROPERTY_CONTRACT_STANDBYS_KEY);
     auto standby_network_result = standby_result_store.result_of(network_id()).network_result();
-
-    std::unordered_map<common::xgroup_id_t, data::election::xelection_result_store_t> all_archive_election_result_store;
     
-    top::common::xgroup_id_t archive_gid = common::xarchive_group_id;
-    xkinfo("[xrec_elect_exchange_contract_t] archive_gid: %s, insert %s",
-            archive_gid.to_string().c_str(),
-            data::election::get_property_by_group_id(archive_gid).c_str());
+    top::common::xgroup_id_t exchange_gid = common::xexchange_group_id;
+    xkinfo("[xrec_elect_exchange_contract_t] exchange_gid: %s, insert %s",
+            exchange_gid.to_string().c_str(),
+            data::election::get_property_by_group_id(exchange_gid).c_str());
     auto election_result_store =
-        serialization::xmsgpack_t<xelection_result_store_t>::deserialize_from_string_prop(*this, data::election::get_property_by_group_id(archive_gid));
+        serialization::xmsgpack_t<xelection_result_store_t>::deserialize_from_string_prop(*this, data::election::get_property_by_group_id(exchange_gid));
 
     auto & election_network_result = election_result_store.result_of(network_id());
 
-        range = exchange_group_range;
-
     if (elect_group(common::xarchive_zone_id,
-                    common::xdefault_cluster_id,
-                    archive_gid,
+                    common::xexchange_cluster_id,
+                    exchange_gid,
                     current_time,
                     current_time,
-                    range,
+                    exchange_group_range,
                     standby_network_result,
                     election_network_result)) {
         xvm::serialization::xmsgpack_t<xelection_result_store_t>::serialize_to_string_prop(
-            *this, data::election::get_property_by_group_id(archive_gid), election_result_store);
+            *this, data::election::get_property_by_group_id(exchange_gid), election_result_store);
         
     }
 }
