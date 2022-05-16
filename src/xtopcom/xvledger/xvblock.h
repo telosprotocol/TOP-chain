@@ -650,6 +650,7 @@ namespace top
             inline  enum_xvblock_level  get_block_level() const {return m_vheader_ptr->get_block_level();}
             inline  uint64_t            get_timestamp()   const {return m_vqcert_ptr->get_gmtime();}  // default timestamp is clock level gmtime, which is used for tx execute
             virtual uint64_t            get_second_level_gmtime() const {return 0;}  // table-block has second level gmtime used for performance statistics
+            virtual const std::string   get_relay_block_data() const {return "";};
 
             //note:block'hash actually = cert'hash
             inline  const  std::string& get_cert_hash()   const {return m_cert_hash;}
@@ -742,6 +743,9 @@ namespace top
            
             bool  set_parent_block(const std::string parent_addr, uint32_t parent_entity_id);
 
+            void  set_inner_vote_data(const std::string & vote_data);
+            const std::string &  get_inner_vote_data() const;
+
         private:
             //generated the unique path of object(like vblock) under store-space(get_store_path()) to store data to DB
             //path like :   chainid/account/height/name
@@ -779,6 +783,7 @@ namespace top
             std::string                 m_offblock_snapshot;  // for sync set and cache
             std::string                 m_parent_account;   //container(e.g.tableblock)'account id(refer xvaccount_t::get_xvid())
             uint32_t                    m_parent_entity_id{0};  //entity id of container(like tableblock) that carry this sub-block
+            std::string                 m_inner_vote_data;
         };
         using xvblock_ptr_t = xobject_ptr_t<base::xvblock_t>;
 

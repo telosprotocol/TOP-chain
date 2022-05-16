@@ -9,6 +9,7 @@
 #include "xdata/xblocktool.h"
 #include "xmbus/xevent_behind.h"
 #include "xblockmaker/xtable_builder.h"
+#include "xbase/xcontext.h"
 
 #include <string>
 
@@ -16,7 +17,7 @@ NS_BEG2(top, blockmaker)
 
 xrelay_maker_t::xrelay_maker_t(const std::string & account, const xblockmaker_resources_ptr_t & resources) : xblock_maker_t(account, resources, m_keep_latest_blocks_max) {
     xdbg("xrelay_maker_t::xrelay_maker_t create,this=%p,account=%s", this, account.c_str());
-    m_emptytable_builder = std::make_shared<xemptytable_builder_t>();
+    m_relay_block_builder = std::make_shared<xrelay_block_builder_t>();
     m_default_builder_para = std::make_shared<xblock_builder_para_face_t>(resources);
 }
 
@@ -34,12 +35,12 @@ xblock_ptr_t xrelay_maker_t::make_proposal(xtablemaker_para_t & table_para, cons
         return nullptr;
     }
 
-    bool can_make_empty_table_block = can_make_next_empty_block();
+    bool can_make_relay_table_block = can_make_next_relay_block();
 
-    if (!can_make_empty_table_block) {
+    if (!can_make_relay_table_block) {
         return nullptr;
     }
-    xblock_ptr_t proposal_block = make_empty_table(table_para, cs_para, tablemaker_result.m_make_block_error_code);
+    xblock_ptr_t proposal_block = make_relay_table(table_para, cs_para, tablemaker_result.m_make_block_error_code);
     if (proposal_block == nullptr) {
         return nullptr;
     }
@@ -77,10 +78,21 @@ int32_t xrelay_maker_t::verify_proposal(base::xvblock_t * proposal_block, const 
         return xblockmaker_error_proposal_table_not_match_prev_block;
     }
 
+    // TODO(nathan): check relay block. bellow code is just demo.
+    auto relay_block_data_local = base::xstring_utl::tostring(highest_block->get_height());
+    auto relay_block_data = proposal_block->get_relay_block_data();
+    if (relay_block_data_local != relay_block_data) {
+        xerror("xrelay_maker_t::verify_proposal fail-relay block data not match.proposal=%s, last_height=%" PRIu64 ",relay_block_data=%s,%s",
+            proposal_block->dump().c_str(), highest_block->get_height(),
+            relay_block_data.c_str(),
+            relay_block_data_local.c_str());
+        return xblockmaker_error_proposal_not_match_local;
+    }
+
     xblock_ptr_t local_block = nullptr;
     xtablemaker_result_t table_result;
-    if (can_make_next_empty_block()) {
-        local_block = make_empty_table(table_para, cs_para, table_result.m_make_block_error_code);
+    if (can_make_next_relay_block()) {
+        local_block = make_relay_table(table_para, cs_para, table_result.m_make_block_error_code);
     }
     if (local_block == nullptr) {
         xwarn("xrelay_maker_t::verify_proposal fail-make table. proposal=%s,error_code=%s",
@@ -141,19 +153,19 @@ bool xrelay_maker_t::verify_proposal_with_local(base::xvblock_t *proposal_block,
     return true;
 }
 
-bool xrelay_maker_t::can_make_next_empty_block() const {
+bool xrelay_maker_t::can_make_next_relay_block() const {
     return true;
 }
 
-xblock_ptr_t xrelay_maker_t::make_empty_table(const xtablemaker_para_t & table_para, const xblock_consensus_para_t & cs_para, int32_t & error_code) {
+xblock_ptr_t xrelay_maker_t::make_relay_table(const xtablemaker_para_t & table_para, const xblock_consensus_para_t & cs_para, int32_t & error_code) {
     // TODO(jimmy)
-    XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_imp_make_empty_table");
+    XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_imp_make_relay_table");
 
     // reset justify cert hash para
     const xblock_ptr_t & cert_block = cs_para.get_latest_cert_block();
     xblock_ptr_t lock_block = get_prev_block_from_cache(cert_block);
     if (lock_block == nullptr) {
-        xerror("xrelay_maker_t::make_empty_table fail-get block block.%s", cs_para.dump().c_str());
+        xerror("xrelay_maker_t::make_relay_table fail-get block block.%s", cs_para.dump().c_str());
         return nullptr;
     }
     cs_para.set_justify_cert_hash(lock_block->get_input_root_hash());
@@ -161,7 +173,9 @@ xblock_ptr_t xrelay_maker_t::make_empty_table(const xtablemaker_para_t & table_p
     data::xtablestate_ptr_t tablestate = table_para.get_tablestate();
     xassert(nullptr != tablestate);
 
-    xblock_ptr_t proposal_block = m_emptytable_builder->build_block(cert_block, table_para.get_tablestate()->get_bstate(), cs_para, m_default_builder_para);
+    auto relay_block_data = base::xstring_utl::tostring(cert_block->get_height());
+    m_default_builder_para->set_relay_block_data(relay_block_data);
+    xblock_ptr_t proposal_block = m_relay_block_builder->build_block(cert_block, table_para.get_tablestate()->get_bstate(), cs_para, m_default_builder_para);
     return proposal_block;
 }
 
