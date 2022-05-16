@@ -97,7 +97,7 @@ struct RLP {
 
     /// Returns the representation of an integer using the least number of bytes
     /// needed.
-    static bytes putVarInt(uint64_t i) noexcept;
+    static bytes putVarInt(uint64_t i);
     static uint64_t parseVarInt(size_t size, const bytes & data, size_t index);
 
     struct DecodedItem {
