@@ -75,7 +75,7 @@ void xtop_gasfee::add(const uint64_t tgas, std::error_code & ec) {
         xwarn("[xtop_gasfee::add] transaction not enough deposit to tgas, m_converted_tgas_usage to: %lu, m_free_tgas_usage to: %lu", m_converted_tgas_usage, m_free_tgas_usage);
         ec = gasfee::error::xenum_errc::tx_deposit_to_tgas_not_enough;
     } else if (tgas > (m_free_tgas - m_free_tgas_usage)) {
-        m_converted_tgas_usage += m_free_tgas - m_free_tgas_usage;
+        m_converted_tgas_usage += tgas + m_free_tgas_usage - m_free_tgas;
         m_free_tgas_usage = m_free_tgas;
         xdbg("[xtop_gasfee::add] m_converted_tgas_usage to: %lu, m_free_tgas_usage to: %lu", m_converted_tgas_usage, m_free_tgas_usage);
     } else {
