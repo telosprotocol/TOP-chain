@@ -192,7 +192,7 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
                 output.m_vm_output.m_vm_ec = ec;
                 output.m_vm_output.m_vm_error_code = ec.value();
                 output.m_vm_output.m_vm_error_str = ec.message().c_str();
-                return enum_exec_error_vm_execute;
+                return enum_exec_error_preprocess_tgas;
             }
             xtvm_v2_t tvm;
             ret = tvm.execute(vminput, vmoutput);
@@ -202,7 +202,7 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
                 output.m_vm_output.m_vm_ec = ec;
                 output.m_vm_output.m_vm_error_code = ec.value();
                 output.m_vm_output.m_vm_error_str = ec.message().c_str();
-                return enum_exec_error_vm_execute;
+                return enum_exec_error_postprocess_tgas;
             }
         } else {
             xtvm_t tvm;
@@ -216,7 +216,7 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
             output.m_vm_output.m_vm_ec = ec;
             output.m_vm_output.m_vm_error_code = ec.value();
             output.m_vm_output.m_vm_error_str = ec.message().c_str();
-            return enum_exec_error_vm_execute;
+            return enum_exec_error_preprocess_tgas;
         }
         evm::xtop_evm evm{m_statectx};
         ret = evm.execute(vminput,vmoutput);
@@ -226,7 +226,7 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
             output.m_vm_output.m_vm_ec = ec;
             output.m_vm_output.m_vm_error_code = ec.value();
             output.m_vm_output.m_vm_error_str = ec.message().c_str();
-            return enum_exec_error_vm_execute;
+            return enum_exec_error_postprocess_tgas;
         }
         if (ret == txexecutor::enum_exec_success) {
             tx->set_evm_tx_result(vmoutput.m_tx_result);
@@ -279,7 +279,11 @@ void xatomictx_executor_t::vm_execute_after_process(const data::xunitstate_ptr_t
         if (tx->is_recv_or_confirm_tx()) {  // recv or confirm tx should always be packed
             is_pack_tx = true;
         } else if (tx->is_evm_tx()) {
-            is_pack_tx = true;
+            if (vm_result != enum_exec_error_preprocess_tgas) {
+                is_pack_tx = true;
+            } else {
+                xinfo("xatomictx_executor_t::vm_execute_after_process evm_tx: %s, preprocess_tgas error, do not pack", tx->dump().c_str());
+            }
         }
     }
 
