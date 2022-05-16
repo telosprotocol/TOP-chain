@@ -2131,7 +2131,7 @@ void xrpc_query_manager::getElectInfo(xJson::Value & js_req, xJson::Value & js_r
     }
     // todo(next version fork)
     // if (forked standalone_exchange_point) {
-        // addr = sys_contract_rec_elect_fullnode_addr;
+        // addr = sys_contract_rec_elect_exchange_addr;
         // prop_name = data::election::get_property_by_group_id(common::xexchange_group_id);
         // m_xrpc_query_func.query_account_property(j, addr, prop_name, xfull_node_compatible_mode_t::incompatible);
     // } else {
