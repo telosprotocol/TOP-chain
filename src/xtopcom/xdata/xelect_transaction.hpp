@@ -34,6 +34,7 @@ public:
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(archive_election_interval);
 #if defined(XCHAIN_FORKED_BY_DEFAULT) && ((XCHAIN_FORKED_BY_DEFAULT) >= 10208)
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(fullnode_election_interval);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(exchange_election_interval);
 #endif
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(cluster_election_interval);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(election_rotation_count_ratio);
