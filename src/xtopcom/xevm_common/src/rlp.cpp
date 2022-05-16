@@ -58,7 +58,7 @@ bytes RLP::encodeHeader(uint64_t size, uint8_t smallTag, uint8_t largeTag) noexc
     return header;
 }
 
-bytes RLP::putVarInt(uint64_t i) noexcept {
+bytes RLP::putVarInt(uint64_t i) {
     bytes bytes;  // accumulate bytes here, in reverse order
     do {
         // take LSB byte, append
