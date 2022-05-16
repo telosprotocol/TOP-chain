@@ -240,6 +240,8 @@ class xblock_builder_para_face_t {
     const std::vector<data::xlightunit_tx_info_ptr_t> & get_txs() const {return m_txs_info;}
     void set_changed_confirm_ids(const std::map<base::xtable_shortid_t, uint64_t> & changed_confirm_ids) {m_changed_confirm_ids = changed_confirm_ids;}
     const std::map<base::xtable_shortid_t, uint64_t> & get_changed_confirm_ids() const {return m_changed_confirm_ids;}
+    void set_relay_block_data(const std::string & relay_block_data) {m_relay_block_data = relay_block_data;}
+    const std::string & get_relay_block_data() const {return m_relay_block_data;}
 
  private:
     xblockmaker_resources_ptr_t m_resources{nullptr};
@@ -247,6 +249,7 @@ class xblock_builder_para_face_t {
     int64_t                     m_tgas_balance_change{0};
     std::vector<data::xlightunit_tx_info_ptr_t> m_txs_info;
     std::map<base::xtable_shortid_t, uint64_t> m_changed_confirm_ids;
+    std::string                 m_relay_block_data;
 };
 using xblock_builder_para_ptr_t = std::shared_ptr<xblock_builder_para_face_t>;
 

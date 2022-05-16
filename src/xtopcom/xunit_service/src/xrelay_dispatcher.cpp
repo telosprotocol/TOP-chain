@@ -71,6 +71,7 @@ bool xrelay_dispatcher_t::start(const xvip2_t & xip, const common::xlogic_time_t
         return true;
     };
     base::xcall_t asyn_call(async_reset, (xconsensus::xcsaccount_t *)m_packer);
+    m_packer->set_start_time(start_time);
     ((xconsensus::xcsaccount_t *)m_packer)->send_call(asyn_call);
 
     m_watcher_name = std::string("relay_dispatch_timer").append("_").append(std::to_string(xip.low_addr));

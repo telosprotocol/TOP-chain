@@ -22,10 +22,10 @@ class xtableheader_extra_t : public xserializable_based_on<void> {
         enum_extra_data_type_tgas_total_lock_amount_property_height = 0,
         enum_extra_data_type_tgas_second_level_gmtime               = 1,
         enum_extra_data_type_eth_header                             = 2,
+        enum_extra_data_type_relay_block_data                       = 3,
     };
  public:
-    static std::string build_extra_string(base::xvheader_t* _tableheader, uint64_t tgas_height, uint64_t gmtime, const std::string & eth_header);
-
+    static std::string build_extra_string(base::xvheader_t* _tableheader, uint64_t tgas_height, uint64_t gmtime, const std::string & eth_header, const std::string & relay_block_data = "");
  protected:
     int32_t do_write(base::xstream_t & stream) const override;
     int32_t do_read(base::xstream_t & stream) override;
@@ -40,6 +40,8 @@ class xtableheader_extra_t : public xserializable_based_on<void> {
     void     set_second_level_gmtime(uint64_t gmtime);
     std::string get_ethheader() const;
     void     set_ethheader(const std::string & value);
+    const std::string get_relay_block_data() const;
+    void     set_relay_block_data(const std::string & data);
 
  private:
     std::map<uint16_t, std::string>  m_paras;
@@ -112,6 +114,12 @@ class xemptyblock_build_t : public base::xvblockmaker_t {
     xemptyblock_build_t(const std::string & tc_account, uint64_t _tc_height);  // for tc block
 
 
+    base::xauto_ptr<base::xvblock_t> create_new_block() override;
+};
+
+class xrelay_block_build_t : public base::xvblockmaker_t {
+ public:
+    xrelay_block_build_t(base::xvblock_t* prev_block, const xblock_consensus_para_t & para, const std::string & relay_block_data);
     base::xauto_ptr<base::xvblock_t> create_new_block() override;
 };
 
