@@ -74,6 +74,8 @@ namespace top
             
             //note:check from ground: generate/check vbody'hash->  generate/check vheader'hash -> generate/check vqcert'sign-hash-> finally verify multi-signature of group. for safety please check threshold first to see it was ready
             virtual enum_vcert_auth_result   verify_muti_sign(const xvblock_t * test_for_block) = 0;
+
+            virtual const std::string get_prikey(const xvip2_t & signer) = 0;
         };
 
     }//end of namespace of base

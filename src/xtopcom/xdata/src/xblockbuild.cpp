@@ -93,7 +93,22 @@ void xtableheader_extra_t::set_ethheader(const std::string & value) {
     m_paras[enum_extra_data_type_eth_header] = value;
 }
 
-std::string xtableheader_extra_t::build_extra_string(base::xvheader_t* _tableheader, uint64_t tgas_height, uint64_t gmtime, const std::string & eth_header) {
+const std::string xtableheader_extra_t::get_relay_block_data() const {
+    auto iter = m_paras.find(enum_extra_data_type_relay_block_data);
+    if (iter == m_paras.end()) {
+        return "";
+    } else {
+        return iter->second;
+    }
+}
+
+void xtableheader_extra_t::set_relay_block_data(const std::string & data) {
+    if (!data.empty()) {
+        m_paras[enum_extra_data_type_relay_block_data] = data;
+    }
+}
+
+std::string xtableheader_extra_t::build_extra_string(base::xvheader_t* _tableheader, uint64_t tgas_height, uint64_t gmtime, const std::string & eth_header, const std::string & relay_block_data) {
     if (_tableheader->get_height() == 0) {
         // genesis block should not set extra
         return {};
@@ -108,6 +123,9 @@ std::string xtableheader_extra_t::build_extra_string(base::xvheader_t* _tablehea
     if (!base::xvblock_fork_t::is_block_older_version(_tableheader->get_block_version(), base::enum_xvblock_fork_version_compatible_eth) && !eth_header.empty()) {
         header_extra.set_ethheader(eth_header);
     }
+
+    // TODO(jimmy) fork check
+    header_extra.set_relay_block_data(relay_block_data);
     std::string extra_string;
     header_extra.serialize_to_string(extra_string);
     return extra_string;
@@ -414,7 +432,7 @@ xemptyblock_build_t::xemptyblock_build_t(base::xvblock_t* prev_block, const xblo
     }
     init_header_qcert(build_para);
     if ((prev_block->get_block_level() == base::enum_xvblock_level_table)) {
-        std::string _extra_data = xtableheader_extra_t::build_extra_string(get_header(), para.get_tgas_height(), para.get_gmtime(), para.get_ethheader());
+        std::string _extra_data = xtableheader_extra_t::build_extra_string(get_header(), para.get_tgas_height(), para.get_gmtime(), para.get_ethheader(), "");
         set_header_extra(_extra_data);
     }
 }
@@ -430,6 +448,23 @@ xemptyblock_build_t::xemptyblock_build_t(base::xvheader_t* header)
 }
 
 base::xauto_ptr<base::xvblock_t> xemptyblock_build_t::create_new_block() {
+    return new xemptyblock_t(*get_header(), *get_qcert());
+}
+
+xrelay_block_build_t::xrelay_block_build_t(base::xvblock_t* prev_block, const xblock_consensus_para_t & para, const std::string & relay_block_data) {
+    base::enum_xvblock_type _type = get_block_type_from_empty_block(prev_block->get_account());
+    base::xbbuild_para_t build_para(prev_block, base::enum_xvblock_class_nil, _type);
+
+    build_para.set_relay_cert_para(para.get_clock(), para.get_viewtoken(), para.get_viewid(), para.get_validator(), para.get_auditor(),
+                                para.get_drand_height(), para.get_justify_cert_hash());
+    init_header_qcert(build_para);
+    // todo(nathan):set extend data
+    // get_qcert()->set_extend_data("test");
+    std::string _extra_data = xtableheader_extra_t::build_extra_string(get_header(), para.get_tgas_height(), para.get_gmtime(), relay_block_data);
+    set_header_extra(_extra_data);
+}
+
+base::xauto_ptr<base::xvblock_t> xrelay_block_build_t::create_new_block() {
     return new xemptyblock_t(*get_header(), *get_qcert());
 }
 

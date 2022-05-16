@@ -431,4 +431,14 @@ uint64_t xblock_t::get_second_level_gmtime() const {
     return gmtime;
 }
 
+const std::string xblock_t::get_relay_block_data() const {
+    auto & extra_str = get_header()->get_extra_data();
+    if (!extra_str.empty()) {
+        xtableheader_extra_t he;
+        he.deserialize_from_string(extra_str);
+        return he.get_relay_block_data();
+    }
+    return "";
+}
+
 NS_END2
