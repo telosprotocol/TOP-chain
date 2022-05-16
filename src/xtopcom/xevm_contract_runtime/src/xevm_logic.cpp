@@ -22,16 +22,16 @@ xtop_evm_logic::xtop_evm_logic(std::unique_ptr<xevm_storage_face_t> storage_ptr,
                                observer_ptr<evm_runtime::xevm_context_t> const & context,
                                observer_ptr<xevm_contract_manager_t> const & contract_manager)
   : m_storage_ptr{std::move(storage_ptr)}, m_state_ctx{state_ctx}, m_context{context}, m_contract_manager{contract_manager} {
-    m_registers.clear();
-    m_return_data_value.clear();
+    xdbg("emv logic instance %p, contract manager instance %p", static_cast<void *>(this), static_cast<void *>(m_contract_manager.get()));
+    assert(m_contract_manager != nullptr);
 }
 
 //  =========================== for runtime ===============================
-xbytes_t xtop_evm_logic::get_return_value() {
+xbytes_t xtop_evm_logic::get_return_value() const {
     return m_return_data_value;
 }
 
-std::pair<uint32_t, uint64_t> xtop_evm_logic::get_return_error() {
+std::pair<uint32_t, uint64_t> xtop_evm_logic::get_return_error() const {
     return m_return_error_value;
 }
 
@@ -181,6 +181,7 @@ bool xtop_evm_logic::extern_contract_call(uint64_t args_len, uint64_t args_ptr) 
     m_result_err.clear();
     m_call_contract_args = get_vec_from_memory_or_register(args_ptr, args_len);
     xbytes_t contract_output;
+    xdbg("emv logic instance %p, contract manager instance %p", static_cast<void *>(this), static_cast<void *>(m_contract_manager.get()));
     assert(m_contract_manager != nullptr);
     if (m_contract_manager->execute_sys_contract(m_call_contract_args, m_state_ctx, contract_output)) {
         m_result_ok = contract_output;
