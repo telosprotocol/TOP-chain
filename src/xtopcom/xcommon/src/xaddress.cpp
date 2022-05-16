@@ -775,12 +775,34 @@ build_edge_sharding_address(xnetwork_id_t const & network_id) {
 }
 
 xgroup_address_t
-build_archive_sharding_address(xgroup_id_t const & group_id, xnetwork_id_t const & network_id) {
+build_archive_sharding_address(xgroup_id_t const & group_id /* todo delete this */, xnetwork_id_t const & network_id) {
+    assert(group_id == common::xarchive_group_id);
     return xgroup_address_t{
         network_id,
         xstorage_zone_id,
         xdefault_cluster_id,
-        group_id
+        xarchive_group_id
+    };
+}
+
+xgroup_address_t
+build_legacy_exchange_sharding_address(xgroup_id_t const & group_id, xnetwork_id_t const & network_id) {
+    assert(group_id == xlegacy_exchange_group_id);
+    return xgroup_address_t{
+        network_id,
+        xstorage_zone_id,
+        xdefault_cluster_id,
+        xlegacy_exchange_group_id
+    };
+}
+
+xgroup_address_t
+build_exchange_sharding_address(xnetwork_id_t const & network_id) {
+    return xgroup_address_t{
+        network_id,
+        xstorage_zone_id,
+        xexchange_cluster_id,
+        xexchange_group_id
     };
 }
 
