@@ -32,9 +32,9 @@ std::vector<std::string> get_property_name_by_addr(common::xaccount_address_t co
         for (auto index = common::xauditor_group_id_value_begin; index <= auditor_group_count; ++index) {
             property_name.push_back(get_property_by_group_id(common::xgroup_id_t{ index }));
         }
-    } else if (sys_contract_addr == sys_addr[3]) { // rec_elect_archive_contract_address // todo(charles) fork
-        auto const archive_group_count = XGET_CONFIG(archive_group_count);
-        for (auto index = common::xarchive_group_id_value_begin; index <= archive_group_count; ++index) {
+    } else if (sys_contract_addr == sys_addr[3]) { // rec_elect_archive_contract_address
+        auto const legacy_archive_group_count = XGET_CONFIG(legacy_archive_group_count); // ! can't not delete legacy exchange group value. (used in rec_elect_archive setup)
+        for (auto index = common::xarchive_group_id_value_begin; index <= legacy_archive_group_count; ++index) {
             property_name.push_back(get_property_by_group_id(common::xgroup_id_t{ index }));
         }
     } else if (sys_contract_addr == sys_addr[4]){ // rec_elect_exchange_contract_address

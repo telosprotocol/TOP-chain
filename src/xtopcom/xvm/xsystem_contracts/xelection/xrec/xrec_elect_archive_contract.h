@@ -37,6 +37,12 @@ private:
 #ifdef STATIC_CONSENSUS
     void elect_config_nodes(common::xlogic_time_t const current_time);
 #endif
+
+    // before fork point: standalone_exchange_point
+    void elect_storage(const uint64_t current_time);
+
+    void elect_archive(const uint64_t current_time);
+
 };
 using xrec_elect_archive_contract_t = xtop_rec_elect_archive_contract;
 
