@@ -441,7 +441,7 @@ XDECLARE_CONFIGURATION(validator_group_count, std::uint16_t, 2);
 XDECLARE_CONFIGURATION(auditor_group_count, std::uint16_t, 2);
 XDECLARE_CONFIGURATION(validator_group_count, std::uint16_t, 4);
 #endif
-XDECLARE_CONFIGURATION(archive_group_count, std::uint16_t, 2);
+XDECLARE_CONFIGURATION(legacy_archive_group_count, std::uint16_t, 2);
 
 XDECLARE_CONFIGURATION(min_edge_archive_deposit, std::uint64_t, ASSET_TOP(0));
 
