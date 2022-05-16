@@ -71,7 +71,7 @@ void xtop_rec_elect_exchange_contract::elect_config_nodes(common::xlogic_time_t 
     using top::data::election::xelection_result_store_t;
     using top::data::election::xstandby_node_info_t;
 
-    for (auto index = 0; index < XGET_CONFIG(archive_group_count); ++index) {
+    for (auto index = 0; index < XGET_CONFIG(legacy_archive_group_count); ++index) {
         top::common::xgroup_id_t archive_gid{static_cast<top::common::xgroup_id_t::value_type>(common::xarchive_group_id_value_begin + index)};
 
         auto election_result_store =

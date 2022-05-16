@@ -772,7 +772,7 @@ xnode_type_t node_type_from(common::xzone_id_t const & zone_id, xcluster_id_t co
     return node_type_from(zone_id);
 }
 
-xnode_type_t node_type_from(common::xzone_id_t const & zone_id, common::xcluster_id_t const & /* cluster_id */, xgroup_id_t const & group_id) {
+xnode_type_t node_type_from(common::xzone_id_t const & zone_id, common::xcluster_id_t const & cluster_id, xgroup_id_t const & group_id) {
     auto node_type = node_type_from(zone_id);
 
     switch (node_type) {
@@ -790,13 +790,18 @@ xnode_type_t node_type_from(common::xzone_id_t const & zone_id, common::xcluster
     }
 
     case xnode_type_t::storage: {
-        if (xarchive_group_id == group_id) {
-            node_type |= xnode_type_t::storage_archive;
-        } else if (xlegacy_exchange_group_id == group_id) {
+        if (cluster_id == xexchange_cluster_id) {
+            assert(group_id == common::xexchange_group_id);
             node_type |= xnode_type_t::storage_exchange;
         } else {
-            assert(false);
-            node_type = xnode_type_t::invalid;
+            if (xarchive_group_id == group_id) {
+                node_type |= xnode_type_t::storage_archive;
+            } else if (xlegacy_exchange_group_id == group_id) {
+                node_type |= xnode_type_t::storage_exchange;
+            } else {
+                assert(false);
+                node_type = xnode_type_t::invalid;
+            }
         }
 
         break;

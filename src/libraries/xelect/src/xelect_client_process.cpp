@@ -5,6 +5,7 @@
 #include "xelect/client/xelect_client_process.h"
 
 #include "xbasic/xutility.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
@@ -204,6 +205,16 @@ void xelect_client_process::update_election_status(common::xlogic_time_t current
     auto const update_archive_interval = nonconsensus_group_update_interval;   // for mainnet & bounty
 #endif
     process_election_contract(common::xaccount_address_t{sys_contract_rec_elect_archive_addr}, current_time, update_archive_interval);
+
+    // auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
+    // if (chain_fork::xchain_fork_config_center_t::is_forked(fork_config.standalone_exchange_point, current_time)) {
+#if defined(XBUILD_CI) || defined(XBUILD_DEV) || defined(XBUILD_GALILEO)
+    auto const uodate_exchange_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(exchange_election_interval) / update_divider;
+#else
+    auto const uodate_exchange_interval = nonconsensus_group_update_interval;  // for mainnet & bounty
+#endif
+    process_election_contract(common::xaccount_address_t{sys_contract_rec_elect_exchange_addr}, current_time, uodate_exchange_interval);
+    // }
 
 #if defined(XBUILD_CI) || defined(XBUILD_DEV) || defined(XBUILD_GALILEO)
     auto const update_fullnode_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(fullnode_election_interval) / update_divider;
