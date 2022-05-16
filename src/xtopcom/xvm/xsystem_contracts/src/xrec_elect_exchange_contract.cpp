@@ -171,7 +171,7 @@ void xtop_rec_elect_exchange_contract::on_timer(const uint64_t current_time) {
 
     auto & election_network_result = election_result_store.result_of(network_id());
 
-    if (elect_group(common::xarchive_zone_id,
+    if (elect_group(common::xstorage_zone_id,
                     common::xexchange_cluster_id,
                     exchange_gid,
                     current_time,
@@ -192,7 +192,7 @@ common::xnode_type_t xtop_rec_elect_exchange_contract::standby_type(common::xzon
     assert(!broadcast(cid));
     assert(!broadcast(gid));
 
-    assert(zid == common::xarchive_zone_id);
+    assert(zid == common::xstorage_zone_id);
     assert(cid == common::xexchange_cluster_id);
     assert(gid == common::xexchange_group_id);
 

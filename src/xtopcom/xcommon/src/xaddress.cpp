@@ -778,7 +778,7 @@ xgroup_address_t
 build_archive_sharding_address(xgroup_id_t const & group_id, xnetwork_id_t const & network_id) {
     return xgroup_address_t{
         network_id,
-        xarchive_zone_id,
+        xstorage_zone_id,
         xdefault_cluster_id,
         group_id
     };
@@ -836,15 +836,6 @@ build_frozen_sharding_address(xnetwork_id_t const & network_id, xcluster_id_t co
         xfrozen_zone_id,
         cluster_id,
         group_id
-    };
-}
-
-xgroup_address_t build_edge_archive_group_address(xnetwork_id_t const & network_id) {
-    return xgroup_address_t{
-        network_id,
-        xarchive_zone_id,
-        xdefault_cluster_id,
-        xgroup_id_t{xdefault_group_id_value + 1}
     };
 }
 

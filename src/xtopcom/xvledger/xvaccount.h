@@ -71,7 +71,7 @@ namespace top
             enum_chain_zone_evm_index         = 4,  // for eth
 
             enum_chain_zone_fullnode_index    = 13,
-            enum_chain_zone_archive_index     = 14, //for archive nodes
+            enum_chain_zone_storage_index     = 14, //for archive nodes
             enum_chain_zone_edge_index        = 15, //for edge nodes
         };
         //define common rules for chain_id

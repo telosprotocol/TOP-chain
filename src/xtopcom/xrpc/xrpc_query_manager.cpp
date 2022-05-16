@@ -1837,7 +1837,7 @@ void xrpc_query_manager::set_addition_info(xJson::Value & body, xblock_t * bp) {
             } else if (block_owner == sys_contract_rec_elect_fullnode_addr) {
                 zid = common::xfullnode_zone_id;
             } else if (block_owner == sys_contract_rec_elect_archive_addr || block_owner == sys_contract_rec_elect_exchange_addr) {
-                zid = common::xarchive_zone_id;
+                zid = common::xstorage_zone_id;
             } else {
                 zid = common::xcommittee_zone_id;
             }

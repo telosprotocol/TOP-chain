@@ -427,13 +427,13 @@ xzone_id_t const
 /**
  * @brief default archive zone id
  */
-XINLINE_CONSTEXPR xzone_id_t::value_type xarchive_zone_id_value{base::enum_chain_zone_archive_index};
+XINLINE_CONSTEXPR xzone_id_t::value_type xstorage_zone_id_value{base::enum_chain_zone_storage_index};
 #if defined XCXX14_OR_ABOVE
 XINLINE_CONSTEXPR xzone_id_t
 #else
 xzone_id_t const
 #endif
-    xarchive_zone_id{xarchive_zone_id_value};
+    xstorage_zone_id{xstorage_zone_id_value};
 
 /**
  * @brief default edge zone id
