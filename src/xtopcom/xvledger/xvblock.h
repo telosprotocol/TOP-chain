@@ -273,7 +273,8 @@ namespace top
         {
             //any cert with unspecified flag means just a "prepared-cert" that ask the next 3/2 more certs to proof it
             enum_xconsensus_flag_audit_cert          = 0x01, //audit required
-            enum_xconsensus_flag_commit_cert         = 0x02, //commit certification for a commit block,just use by basic-mode
+            // enum_xconsensus_flag_commit_cert         = 0x02, //commit certification for a commit block,just use by basic-mode
+            enum_xconsensus_flag_relay_prove         = 0x02, //save relay prove in extend data
             enum_xconsensus_flag_extend_cert         = 0x04, //relyon m_extend_cert to proof
         };
 
@@ -840,6 +841,33 @@ namespace top
                 return (front.get_viewid() > back.get_viewid());
             }
         };
+
+        // class xrelay_multisign : public base::xdataobj_t {
+        // public:
+        //     xrelay_multisign(const xrelay_multisign & relay_multisign) {
+        //         m_multisign = relay_multisign.m_multisign;
+        //     }
+        // private:
+
+
+        // public:
+        //     void add_sign(const xvip2_t & addr, const std::string & vote_data) {
+        //         m_multisign[addr] = vote_data;
+        //     }
+        //     const std::map<xvip2_t, std::string, xvip2_compare> & get_multisign() const {
+        //         return m_multisign;
+        //     }
+        //     uint32_t size() const {
+        //         return m_multisign.size();
+        //     }
+
+        // protected:
+        //     int32_t do_write(base::xstream_t & stream) override;
+        //     int32_t do_read(base::xstream_t & stream) override;
+
+        // private:
+        //     std::map<xvip2_t, std::string, xvip2_compare> m_multisign;
+        // };
 
     }//end of namespace of base
 

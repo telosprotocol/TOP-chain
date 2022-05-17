@@ -206,7 +206,7 @@ namespace top
             m_voted_validators = obj.m_voted_validators;
             m_voted_auditors   = obj.m_voted_auditors;
             m_all_voted_cert   = obj.m_all_voted_cert;
-            m_inner_voted_datas = obj.m_inner_voted_datas;
+            m_relay_multisign  = obj.m_relay_multisign;
         }
         
         xproposal_t::~xproposal_t()
@@ -238,17 +238,13 @@ namespace top
             return m_highest_QC_viewid;
         }
 
-        void xproposal_t::add_inner_vote_data(const xvip2_t & addr, const std::string & vote_data) {
-            m_inner_voted_datas[addr] = vote_data;
-            xdbg("nathan test add_inner_vote_data proposal:%s m_inner_voted_datas size:%d", get_block()->dump().c_str(), m_inner_voted_datas.size());
+        void xproposal_t::add_relay_sign(const xvip2_t & addr, const std::string & vote_data) {
+            m_relay_multisign[addr] = vote_data;
+            xdbg("nathan test add_relay_sign proposal:%s m_inner_voted_datas size:%d", get_block()->dump().c_str(), m_relay_multisign.size());
         }
 
-        const std::vector<std::string> xproposal_t::get_inner_vote_datas() const {
-            std::vector<std::string> vote_data_vec;
-            for (auto & it : m_inner_voted_datas) {
-                vote_data_vec.push_back(it.second);
-            }
-            return vote_data_vec;
+        const std::map<xvip2_t, std::string, xvip2_compare> & xproposal_t::get_relay_multisign() const {
+            return m_relay_multisign;
         }
     
         void   xproposal_t::set_proposal_cert(base::xvqcert_t* new_proposal_cert)

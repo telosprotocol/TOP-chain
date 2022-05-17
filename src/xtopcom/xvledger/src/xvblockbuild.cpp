@@ -139,7 +139,7 @@ namespace top
             m_auditor = _auditor;
             m_drand_height = _drand_height;
             m_justify_cert_hash = _justify_hash;
-            // m_consensus_flag = base::enum_xconsensus_flag_extend_cert;
+            m_consensus_flag = base::enum_xconsensus_flag_relay_prove;
         }
 
 
