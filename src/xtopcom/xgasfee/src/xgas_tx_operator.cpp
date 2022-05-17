@@ -25,6 +25,14 @@ common::xaccount_address_t xtop_gas_tx_operator::recver() const {
     return common::xaccount_address_t{m_tx->get_target_addr()};
 }
 
+std::string xtop_gas_tx_operator::sender_str() const {
+    return m_tx->get_source_addr();
+}
+
+std::string xtop_gas_tx_operator::recver_str() const {
+    return m_tx->get_target_addr();
+}
+
 uint64_t xtop_gas_tx_operator::deposit() const {
     return m_tx->get_transaction()->get_deposit();
 }
@@ -82,6 +90,9 @@ evm_common::u256 xtop_gas_tx_operator::tx_eth_limited_gasfee() const {
 uint64_t xtop_gas_tx_operator::tx_fixed_tgas() const {
     uint64_t fixed_tgas{0};
 #ifndef XENABLE_MOCK_ZEC_STAKE
+    if (recver_str().empty()) {
+        return 0;
+    }
     if (!data::is_sys_contract_address(sender()) && data::is_beacon_contract_address(recver())) {
         fixed_tgas = XGET_ONCHAIN_GOVERNANCE_PARAMETER(beacon_tx_fee);
     }
@@ -98,15 +109,22 @@ uint64_t xtop_gas_tx_operator::tx_bandwith_tgas() const {
     if (tx_type() != data::xtransaction_type_transfer) {
         amplify = 1;
     }
-    uint32_t multiple = (m_tx->is_self_tx()) ? 1 : 3;
-    return multiple * amplify * m_tx->get_transaction()->get_tx_len();
+    evm_common::u256 multiple{3};
+    evm_common::u256 bandwith_tgas = multiple * amplify * m_tx->get_transaction()->get_tx_len();
+    return static_cast<uint64_t>(bandwith_tgas);
 }
 
 uint64_t xtop_gas_tx_operator::tx_disk_tgas() const {
-    if (tx_type() != data::xtransaction_type_transfer) {
-        return m_tx->get_transaction()->get_tx_len();
+    if (tx_type() == data::xtransaction_type_transfer) {
+        return 0;
     }
-    return 0;
+    evm_common::u256 multiple{1};
+    // evm deploy tx
+    if (m_tx->get_target_addr().empty()) {
+        multiple = 100000;
+    }
+    evm_common::u256 disk_tgas = multiple * m_tx->get_transaction()->get_tx_len();
+    return static_cast<uint64_t>(disk_tgas);
 }
 
 bool xtop_gas_tx_operator::is_one_stage_tx() {
