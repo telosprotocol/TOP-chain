@@ -2,7 +2,7 @@ use crate::types::{Address, EthGas};
 use crate::Borrowed;
 use crate::{proto_precompile, ContractBridgeArgs};
 use evm::executor::stack::Log;
-use evm::{executor, Context, ExitError, ExitSucceed};
+use evm::{executor, Context, ExitError, ExitSucceed, ExitFatal};
 
 /// Rust Precompile Contract always has certain return status: ExitSucceed::Return
 /// and most of it has no logs.
@@ -54,7 +54,20 @@ impl From<proto_precompile::PrecompileFailure> for executor::stack::PrecompileFa
         match output.get_fail_status() {
             1 => executor::stack::PrecompileFailure::Error {
                 exit_status: match output.get_minor_status() {
-                    1 => ExitError::OutOfGas,
+                    0 => ExitError::StackOverflow,
+                    1 => ExitError::StackOverflow,
+                    2 => ExitError::InvalidJump,
+                    3 => ExitError::InvalidRange,
+                    4 => ExitError::DesignatedInvalid,
+                    5 => ExitError::CallTooDeep,
+                    6 => ExitError::CreateCollision,
+                    7 => ExitError::CreateContractLimit,
+                    8 => ExitError::InvalidCode,
+                    9 => ExitError::OutOfOffset,
+                    10 => ExitError::OutOfGas,
+                    11 => ExitError::OutOfFund,
+                    12 => ExitError::PCUnderflow,
+                    13 => ExitError::CreateEmpty,
                     _ => ExitError::Other(Borrowed("Other Error")),
                 },
             },
@@ -64,7 +77,11 @@ impl From<proto_precompile::PrecompileFailure> for executor::stack::PrecompileFa
                 cost: output.get_cost(),
             },
             3 => executor::stack::PrecompileFailure::Fatal {
-                exit_status: evm::ExitFatal::NotSupported,
+                exit_status: match output.get_minor_status() {
+                    1 => ExitFatal::NotSupported,
+                    2 => ExitFatal::UnhandledInterrupt,
+                    _ => ExitFatal::Other(Borrowed("Other Error")),
+                }
             },
             _ => executor::stack::PrecompileFailure::Fatal {
                 exit_status: evm::ExitFatal::NotSupported,

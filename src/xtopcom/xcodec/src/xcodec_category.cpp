@@ -15,31 +15,40 @@ xcodec_errc_map(int const errc) noexcept {
     auto const ec = static_cast<xcodec_errc_t>(errc);
     switch (ec) {
         case xcodec_errc_t::decode_error:
-            return u8"codec decode error";
+            return "codec decode error";
 
         case xcodec_errc_t::decode_prepend_size_error:
-            return u8"decode prepend size error";
+            return "decode prepend size error";
 
         case xcodec_errc_t::decode_input_buffer_not_enough:
-            return u8"decode input buffer not enough";
+            return "decode input buffer not enough";
 
         case xcodec_errc_t::decode_input_buffer_too_long:
-            return u8"decode input buffer too long";
+            return "decode input buffer too long";
 
         case xcodec_errc_t::decode_wrong_checksum:
-            return u8"decode wrong checksum";
+            return "decode wrong checksum";
 
         case xcodec_errc_t::decode_wrong_header:
-            return u8"decode wrong header";
+            return "decode wrong header";
+
+        case xcodec_errc_t::decode_missing_codec_type:
+            return "decode missing codec type";
+
+        case xcodec_errc_t::decode_wrong_codec_type:
+            return "decode wrong codec type";
+
+        case xcodec_errc_t::decode_input_empty:
+            return "decode input empty";
 
         case xcodec_errc_t::encode_error:
-            return u8"encode error";
+            return "encode error";
 
         case xcodec_errc_t::encode_input_buffer_too_long:
-            return u8"encode input buffer too long";
+            return "encode input buffer too long";
 
         default:
-            return u8"codec unknown error";
+            return "codec unknown error";
     }
 }
 
@@ -47,7 +56,7 @@ class xtop_codec_category final : public std::error_category
 {
     char const *
     name() const noexcept override {
-        return u8"top::codec";
+        return "codec";
     }
 
     std::string

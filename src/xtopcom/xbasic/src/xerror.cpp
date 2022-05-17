@@ -125,6 +125,9 @@ static char const * errc_to_message(int const errc) noexcept {
     case xbasic_errc_t::deserialization_error:
         return "deserialization error";
 
+    case xbasic_errc_t::invalid_char_data:
+        return "invalid_char error";
+
     default:
         return "unknown error";
     }

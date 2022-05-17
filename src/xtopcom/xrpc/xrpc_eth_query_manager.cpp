@@ -14,6 +14,7 @@
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xcommon/xip.h"
 #include "xconfig/xconfig_register.h"
+#include "xdata/xblocktool.h"
 #include "xdata/xcodec/xmsgpack/xelection/xelection_network_result_codec.hpp"
 #include "xdata/xcodec/xmsgpack/xelection/xelection_result_store_codec.hpp"
 #include "xdata/xcodec/xmsgpack/xelection/xstandby_result_store_codec.hpp"
@@ -29,38 +30,37 @@
 #include "xdata/xelection/xelection_result_store.h"
 #include "xdata/xelection/xstandby_result_store.h"
 #include "xdata/xfull_tableblock.h"
-#include "xdata/xtx_factory.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xproposal_data.h"
-//#include "xdata/xslash.h"
 #include "xdata/xtable_bstate.h"
 #include "xdata/xtableblock.h"
 #include "xdata/xtransaction_cache.h"
-#include "xevm_common/fixed_hash.h"
-#include "xevm_common/common_data.h"
-#include "xevm_common/common.h"
-#include "xevm_common/rlp.h"
+#include "xdata/xtransaction_v2.h"
+#include "xdata/xtransaction_v3.h"
+#include "xdata/xtx_factory.h"
+#include "xevm/xevm.h"
 #include "xevm_common/address.h"
+#include "xevm_common/common.h"
+#include "xevm_common/common_data.h"
+#include "xevm_common/fixed_hash.h"
+#include "xevm_common/rlp.h"
+#include "xevm_contract_runtime/xevm_contract_manager.h"
+#include "xmbus/xevent_behind.h"
+#include "xpbase/base/top_utils.h"
 #include "xrouter/xrouter.h"
-#include "xrpc/xuint_format.h"
 #include "xrpc/xrpc_loader.h"
+#include "xrpc/xuint_format.h"
+#include "xstatectx/xstatectx.h"
 #include "xstore/xaccount_context.h"
 #include "xstore/xtgas_singleton.h"
 #include "xtxexecutor/xtransaction_fee.h"
+#include "xtxexecutor/xvm_face.h"
+#include "xutility/xhash.h"
 #include "xvledger/xvblock.h"
 #include "xvledger/xvledger.h"
 #include "xvm/manager/xcontract_address_map.h"
 #include "xvm/manager/xcontract_manager.h"
-#include "xmbus/xevent_behind.h"
-#include "xdata/xblocktool.h"
-#include "xpbase/base/top_utils.h"
-#include "xutility/xhash.h"
 
-#include "xtxexecutor/xvm_face.h"
-#include "xevm/xevm.h"
-#include "xdata/xtransaction_v2.h"
-#include "xdata/xtransaction_v3.h"
-#include "xstatectx/xstatectx.h"
 using namespace top::data;
 
 namespace top {
@@ -172,7 +172,7 @@ void xrpc_eth_query_manager::eth_getBalance(xJson::Value & js_req, xJson::Value 
     if (account_ptr == nullptr) {
         js_rsp["result"] = "0x0";
     } else {
-        evm_common::u256 balance = account_ptr->tep_token_balance(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH);
+        evm_common::u256 balance = account_ptr->tep_token_balance(data::XPROPERTY_ASSET_ETH);
 
         std::string balance_str = toHex((top::evm_common::h256)balance);
 
@@ -577,7 +577,7 @@ void xrpc_eth_query_manager::eth_call(xJson::Value & js_req, xJson::Value & js_r
 
     txexecutor::xvm_input_t input{statectx_ptr, vmpara, cons_tx};
     txexecutor::xvm_output_t output;
-    top::evm::xtop_evm evm{nullptr, statectx_ptr};
+    top::evm::xtop_evm evm{top::make_observer(contract_runtime::evm::xevm_contract_manager_t::instance()), statectx_ptr};
 
     auto ret = evm.execute(input, output);
     if (ret != txexecutor::enum_exec_success) {
@@ -641,13 +641,13 @@ void xrpc_eth_query_manager::eth_estimateGas(xJson::Value & js_req, xJson::Value
         xwarn("eth_estimateGas fail-load unit state, %s", from.c_str());
         return;
     }
-    unitstate->tep_token_deposit(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH, gas_value);
+    unitstate->tep_token_deposit(data::XPROPERTY_ASSET_ETH, gas_value);
 
     txexecutor::xvm_para_t vmpara(cs_para.get_clock(), cs_para.get_random_seed(), cs_para.get_total_lock_tgas_token());
 
     txexecutor::xvm_input_t input{statectx_ptr, vmpara, cons_tx};
     txexecutor::xvm_output_t output;
-    top::evm::xtop_evm evm{nullptr, statectx_ptr};
+    top::evm::xtop_evm evm{top::make_observer(contract_runtime::evm::xevm_contract_manager_t::instance()), statectx_ptr};
 
     auto ret = evm.execute(input, output);
     if (ret != txexecutor::enum_exec_success) {

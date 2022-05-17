@@ -118,14 +118,14 @@ int32_t xaccount_context_t::create_user_account(const std::string& address) {
 
     evm_common::u256 add_token_256 = 10000000000000000000ULL;
     std::string token_name = data::XPROPERTY_ASSET_ETH;
-    auto old_token_256 = m_account->tep_token_balance(data::XPROPERTY_TEP1_BALANCE_KEY, token_name);
+    auto old_token_256 = m_account->tep_token_balance(token_name);
     if (old_token_256 != 0) {
         xerror("xaccount_context_t::create_user_account fail-eth token not zero");
         return -1;
     }
 
     // just for test debug
-    return m_account->tep_token_deposit(data::XPROPERTY_TEP1_BALANCE_KEY, token_name, add_token_256);
+    return m_account->tep_token_deposit(token_name, add_token_256);
 }
 
 int32_t xaccount_context_t::token_transfer_out(const data::xproperty_asset& asset, evm_common::u256 amount256, uint64_t gas_fee, uint64_t service_fee) {
@@ -142,7 +142,7 @@ int32_t xaccount_context_t::token_transfer_out(const data::xproperty_asset& asse
     if (asset.is_top_token()) {
         return top_token_transfer_out(asset.amount(), gas_fee, service_fee);
     } else {
-        return m_account->tep_token_withdraw(data::XPROPERTY_TEP1_BALANCE_KEY, asset.token_name(), amount256);
+        return m_account->tep_token_withdraw(asset.token_symbol(), amount256);
     }
 
     int32_t ret = xsuccess;
@@ -175,7 +175,7 @@ int32_t xaccount_context_t::token_transfer_in(const data::xproperty_asset& asset
     if (asset.is_top_token()) {
         return top_token_transfer_in(asset.amount());
     } else {
-        return m_account->tep_token_deposit(data::XPROPERTY_TEP1_BALANCE_KEY, asset.token_name(), amount256);
+        return m_account->tep_token_deposit(asset.token_symbol(), amount256);
     }
 }
 

@@ -55,9 +55,12 @@ public:
     uint64_t storage_remove(uint64_t key_len, uint64_t key_ptr, uint64_t register_id);
 
     // extern contract:
-    bool extern_contract_call(uint64_t args_len,uint64_t args_ptr);
+    bool extern_contract_call(uint64_t args_len, uint64_t args_ptr);
     uint64_t get_result(uint64_t register_id);
     uint64_t get_error(uint64_t register_id);
+
+    // contract bridge:
+    void call_erc20(uint64_t input_len, uint64_t input_ptr, uint64_t target_gas, uint64_t address_len, uint64_t address_ptr, bool is_static, uint64_t register_id);
 };
 
 }  // namespace evm

@@ -1,7 +1,13 @@
+// Copyright (c) 2017-present Telos Foundation & contributors
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xevm_contract_runtime/xevm_logic.h"
 
+#include "xbasic/endianness.h"
+#include "xcommon/xtoken_metadata.h"
 #include "xcontract_runtime/xerror/xerror.h"
+#include "xevm_common/common_data.h"
 #include "xevm_contract_runtime/xevm_memory_tools.h"
 #include "xevm_contract_runtime/xevm_variant_bytes.h"
 #include "xevm_runner/proto/proto_basic.pb.h"
@@ -11,20 +17,21 @@
 
 NS_BEG3(top, contract_runtime, evm)
 
-xtop_evm_logic::xtop_evm_logic(std::shared_ptr<xevm_storage_face_t> storage_ptr,
+xtop_evm_logic::xtop_evm_logic(std::unique_ptr<xevm_storage_face_t> storage_ptr,
+                               observer_ptr<statectx::xstatectx_face_t> state_ctx,
                                observer_ptr<evm_runtime::xevm_context_t> const & context,
                                observer_ptr<xevm_contract_manager_t> const & contract_manager)
-  : m_storage_ptr{storage_ptr}, m_context{context}, m_contract_manager{contract_manager} {
-    m_registers.clear();
-    m_return_data_value.clear();
+  : m_storage_ptr{std::move(storage_ptr)}, m_state_ctx{state_ctx}, m_context{context}, m_contract_manager{contract_manager} {
+    xdbg("emv logic instance %p, contract manager instance %p", static_cast<void *>(this), static_cast<void *>(m_contract_manager.get()));
+    assert(m_contract_manager != nullptr);
 }
 
 //  =========================== for runtime ===============================
-xbytes_t xtop_evm_logic::get_return_value() {
+xbytes_t xtop_evm_logic::get_return_value() const {
     return m_return_data_value;
 }
 
-std::pair<uint32_t, uint64_t> xtop_evm_logic::get_return_error() {
+std::pair<uint32_t, uint64_t> xtop_evm_logic::get_return_error() const {
     return m_return_error_value;
 }
 
@@ -174,8 +181,9 @@ bool xtop_evm_logic::extern_contract_call(uint64_t args_len, uint64_t args_ptr) 
     m_result_err.clear();
     m_call_contract_args = get_vec_from_memory_or_register(args_ptr, args_len);
     xbytes_t contract_output;
+    xdbg("emv logic instance %p, contract manager instance %p", static_cast<void *>(this), static_cast<void *>(m_contract_manager.get()));
     assert(m_contract_manager != nullptr);
-    if (m_contract_manager->execute_sys_contract(m_call_contract_args, contract_output)) {
+    if (m_contract_manager->execute_sys_contract(m_call_contract_args, m_state_ctx, contract_output)) {
         m_result_ok = contract_output;
         return true;
     } else {

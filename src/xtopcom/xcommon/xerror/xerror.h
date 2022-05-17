@@ -19,6 +19,9 @@ enum class xenum_errc {
     invalid_table_id,
     invalid_ledger_id,
     invalid_account_type,
+    token_not_used,
+    token_symbol_not_matched,
+    token_not_predefined,
 };
 using xerrc_t = xenum_errc;
 

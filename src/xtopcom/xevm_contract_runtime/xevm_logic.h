@@ -15,7 +15,10 @@ NS_BEG3(top, contract_runtime, evm)
 
 class xtop_evm_logic : public top::evm::xevm_logic_face_t {
 public:
-    xtop_evm_logic(std::shared_ptr<xevm_storage_face_t> storage_ptr, observer_ptr<evm_runtime::xevm_context_t> const & context, observer_ptr<xevm_contract_manager_t> const & contract_manager);
+    xtop_evm_logic(std::unique_ptr<xevm_storage_face_t> storage_ptr,
+                   observer_ptr<statectx::xstatectx_face_t> state_ctx,
+                   observer_ptr<evm_runtime::xevm_context_t> const & context,
+                   observer_ptr<xevm_contract_manager_t> const & contract_manager);
     xtop_evm_logic(xtop_evm_logic const &) = delete;
     xtop_evm_logic & operator=(xtop_evm_logic const &) = delete;
     xtop_evm_logic(xtop_evm_logic &&) = default;
@@ -23,7 +26,8 @@ public:
     ~xtop_evm_logic() override = default;
 
 private:
-    std::shared_ptr<xevm_storage_face_t> m_storage_ptr;
+    std::unique_ptr<xevm_storage_face_t> m_storage_ptr;
+    observer_ptr<statectx::xstatectx_face_t> m_state_ctx;
     observer_ptr<evm_runtime::xevm_context_t> m_context;
     observer_ptr<xevm_contract_manager_t> m_contract_manager;
     std::map<uint64_t, xbytes_t> m_registers;
@@ -35,8 +39,8 @@ private:
 
 public:
     // for runtime
-    xbytes_t get_return_value() override;
-    std::pair<uint32_t, uint64_t> get_return_error() override;
+    xbytes_t get_return_value() const override;
+    std::pair<uint32_t, uint64_t> get_return_error() const override;
 
 public:
     // interface to evm_import_instance:

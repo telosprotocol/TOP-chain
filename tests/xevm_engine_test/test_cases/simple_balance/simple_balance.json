@@ -1,7 +1,12 @@
 {
-    "pre_data": {
-        "T600044dce5c8961e283786cb31ad7fc072347227d7ea2": "12345678912345678912345678900"
-    },
+    "pre_data": [
+        {
+            "account": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
+            "balances": {
+                "ETH": "12345678912345678912345678900"
+            }
+        }
+    ],
     "deploy_contract": [
         {
             "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",

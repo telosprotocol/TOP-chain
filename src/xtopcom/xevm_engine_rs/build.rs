@@ -19,8 +19,8 @@ fn main() {
     //     .arg(&format!("{}", out_dir))
     //     .status()
     //     .unwrap();
-    
-    // product: 
+
+    // product:
     // from: cbuild/src/xtopcom/xevm_engine_rs/debug/build/xevm_engine-94e9d92524952b17/out/
     // to  : cbuild/lib/Linux
     Command::new("cp")

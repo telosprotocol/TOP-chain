@@ -20,8 +20,8 @@ public:
     virtual ~xtop_evm_logic_face() = default;
 
 public:
-    virtual xbytes_t get_return_value() = 0;
-    virtual std::pair<uint32_t, uint64_t> get_return_error() = 0;
+    virtual xbytes_t get_return_value() const = 0;
+    virtual std::pair<uint32_t, uint64_t> get_return_error() const = 0;
 
 public:
     // interface to evm_import_instance:
@@ -49,7 +49,7 @@ public:
     virtual uint64_t storage_write(uint64_t key_len, uint64_t key_ptr, uint64_t value_len, uint64_t value_ptr, uint64_t register_id) = 0;
     virtual uint64_t storage_read(uint64_t key_len, uint64_t key_ptr, uint64_t register_id) = 0;
     virtual uint64_t storage_remove(uint64_t key_len, uint64_t key_ptr, uint64_t register_id) = 0;
-    
+
     // extern contract:
     virtual bool extern_contract_call(uint64_t args_len,uint64_t args_ptr) = 0;
     virtual uint64_t get_result(uint64_t register_id) = 0;
