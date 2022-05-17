@@ -174,8 +174,9 @@ namespace top
                 
                 _proposal_obj->get_block()->reset_block_flags(); //reset flags before start proposal
                 _proposal_obj->add_voted_cert(get_xip2_addr(),_proposal_obj->get_cert(),get_vcertauth()); //count leader 'vote
-                if (!proposal->get_inner_vote_data().empty()) {
-                    _proposal_obj->add_inner_vote_data(get_xip2_addr(),proposal->get_inner_vote_data());
+                if (_proposal_obj->get_cert()->get_consensus_flags() & base::enum_xconsensus_flag_relay_prove) {
+                    xassert(!proposal->get_inner_vote_data().empty());
+                    _proposal_obj->add_relay_sign(get_xip2_addr(),proposal->get_inner_vote_data());
                 }
                 _proposal_obj->mark_leader(); //mark original proposal at leader side
                 _proposal_obj->mark_voted();  //mark voted,for leader it is always true
@@ -1192,6 +1193,24 @@ namespace top
                 {
                     if(_full_block_->merge_cert(*_commit_cert)) //now is thread-safe to merge cert into block
                     {
+                        if (_full_block_->get_cert()->get_consensus_flags() & base::enum_xconsensus_flag_relay_prove) {
+                            xassert(!_commit_cert->get_extend_data().empty());
+                            _full_block_->set_extend_data(_commit_cert->get_extend_data());
+
+                        //for test
+
+                            base::xstream_t stream{base::xcontext_t::instance(), (uint8_t*)_commit_cert->get_extend_data().data(), static_cast<uint32_t>(_commit_cert->get_extend_data().size())};
+                            uint16_t size = 0;
+                            stream >> size;
+                            for (uint16_t i = 0; i < size; i++) {
+                                xvip2_t xip;
+                                std::string vote_data;
+                                stream >> xip.high_addr;
+                                stream >> xip.low_addr;
+                                stream >> vote_data;
+                            }
+                            xdbg("nathan test set relay multisign to extend data backup, size:%d", size);
+                        }
                         _full_block_->get_cert()->set_unit_flag(base::enum_xvblock_flag_authenticated);
                         _full_block_->set_block_flag(base::enum_xvblock_flag_authenticated);
                         
@@ -1284,7 +1303,7 @@ namespace top
                             if(_proposal->add_voted_cert(replica_xip,replica_cert,get_vcertauth())) //add to local list
                             {
                                 if (!inner_vote_data.empty()) {
-                                    _proposal->add_inner_vote_data(replica_xip, inner_vote_data);
+                                    _proposal->add_relay_sign(replica_xip, inner_vote_data);
                                 }
                                 if(_proposal->is_vote_finish()) //check again
                                 {
@@ -1300,6 +1319,24 @@ namespace top
                                         const std::string merged_sign_for_auditors = get_vcertauth()->merge_muti_sign(_proposal->get_voted_auditors(), _proposal->get_block());
                                         _proposal->get_block()->set_audit_signature(merged_sign_for_auditors);
                                     }
+                                    if (_proposal->get_cert()->get_consensus_flags() & base::enum_xconsensus_flag_relay_prove) {
+                                        auto relay_multisign = _proposal->get_relay_multisign();
+                                        xassert(!relay_multisign.empty());
+                                        if (!relay_multisign.empty()) {
+                                            base::xstream_t _stream(base::xcontext_t::instance());
+                                            uint16_t size = relay_multisign.size();
+                                            _stream << size;
+                                            for (auto & it : relay_multisign) {
+                                                _stream << it.first.high_addr;
+                                                _stream << it.first.low_addr;
+                                                _stream << it.second;
+                                            }
+                                            xdbg("nathan test set relay multisign to extend data leader, size=%d", size);
+                                            std::string extend_data = std::string((char *)_stream.data(), _stream.size());
+                                            _proposal->get_block()->set_extend_data(extend_data);
+                                        }
+                                    }
+                                    
                                     XMETRICS_GAUGE(metrics::cpu_ca_verify_multi_sign_xbft, 1);
                                     if(get_vcertauth()->verify_muti_sign(_proposal->get_block()) == base::enum_vcert_auth_result::enum_successful) //quorum certification and  check if majority voted
                                     {
