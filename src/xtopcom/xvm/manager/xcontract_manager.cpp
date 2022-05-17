@@ -1576,7 +1576,11 @@ static void get_zec_reward_contract_property(std::string const & property_name,
                 for (auto const & node : workload.m_leader_count) {
                     jn[node.first] = node.second;
                 }
-                jm[group_address.group_id().to_string()] = jn;
+                if (common::has<common::xnode_type_t::evm_auditor>(group_address.type()) || common::has<common::xnode_type_t::evm_validator>(group_address.type())) {
+                    jm[std::string{"evm"} + group_address.group_id().to_string()] = jn;
+                } else {
+                    jm[group_address.group_id().to_string()] = jn;
+                }
             }
             json["auditor_workload"].append(jm);
         }
@@ -1621,7 +1625,11 @@ static void get_zec_reward_contract_property(std::string const & property_name,
                 for (auto const & node : workload.m_leader_count) {
                     jn[node.first] = node.second;
                 }
-                jm[group_address.group_id().to_string()] = jn;
+                if (common::has<common::xnode_type_t::evm_auditor>(group_address.type()) || common::has<common::xnode_type_t::evm_validator>(group_address.type())) {
+                    jm[std::string{"evm"} + group_address.group_id().to_string()] = jn;
+                } else {
+                    jm[group_address.group_id().to_string()] = jn;
+                }
             }
             json["validator_workload"].append(jm);
         }

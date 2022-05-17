@@ -259,13 +259,21 @@ void xrpc_query_manager::getIssuanceDetail(xJson::Value & js_req, xJson::Value &
                         array.append(n);
                     }
                     jn["miner_workload"] = array;
-                    jn["cluster_name"] = group_address.group_id().to_string();
+                    if (common::has<common::xnode_type_t::evm_auditor>(group_address.type()) || common::has<common::xnode_type_t::evm_validator>(group_address.type())) {
+                        jn["cluster_name"] = std::string{"evm"} + group_address.group_id().to_string();
+                    } else {
+                        jn["cluster_name"] = group_address.group_id().to_string();
+                    }
                     jm.append(jn);
                 } else {
                     for (auto node : workload.m_leader_count) {
                         jn[node.first] = node.second;
                     }
-                    jm[group_address.group_id().to_string()] = jn;
+                    if (common::has<common::xnode_type_t::evm_auditor>(group_address.type()) || common::has<common::xnode_type_t::evm_validator>(group_address.type())) {
+                        jm[std::string{"evm"} + group_address.group_id().to_string()] = jn;
+                    } else {
+                        jm[group_address.group_id().to_string()] = jn;
+                    }
                 }
             }
             json[property_name] = jm;
@@ -450,10 +458,6 @@ void xrpc_query_manager::getIssuanceDetail(xJson::Value & js_req, xJson::Value &
                << std::setfill('0') << static_cast<uint32_t>(node_reward.second.m_validator_reward % data::system_contract::REWARD_PRECISION)
                << ", auditor_reward: " << static_cast<uint64_t>(node_reward.second.m_auditor_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6)
                << std::setfill('0') << static_cast<uint32_t>(node_reward.second.m_auditor_reward % data::system_contract::REWARD_PRECISION)
-               << ", evm_validator_reward: " << static_cast<uint64_t>(node_reward.second.m_evm_validator_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6)
-               << std::setfill('0') << static_cast<uint32_t>(node_reward.second.m_evm_validator_reward % data::system_contract::REWARD_PRECISION)
-               << ", evm_auditor_reward: " << static_cast<uint64_t>(node_reward.second.m_evm_auditor_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6)
-               << std::setfill('0') << static_cast<uint32_t>(node_reward.second.m_evm_auditor_reward % data::system_contract::REWARD_PRECISION)
                << ", voter_reward: " << static_cast<uint64_t>(node_reward.second.m_vote_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6)
                << std::setfill('0') << static_cast<uint32_t>(node_reward.second.m_vote_reward % data::system_contract::REWARD_PRECISION)
                << ", self_reward: " << static_cast<uint64_t>(node_reward.second.m_self_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
