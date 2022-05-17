@@ -696,12 +696,12 @@ namespace top
         
         void    xvqcert_t::set_extend_data(const std::string& extention)
         {
-            if(m_extend_data.empty())
-            {
+            // if(m_extend_data.empty())
+            // {
                 m_extend_data = extention;
                 add_modified_count();
                 return;
-            }
+            // }
             xassert(0);
         }
         
@@ -783,11 +783,11 @@ namespace top
                 xerror("xvqcert_t::is_valid,audit and threshold must be empty for non-audit block");
                 return false;
             }
-            if( (get_consensus_flags() & enum_xconsensus_flag_commit_cert) != 0)//not support this flag yet,so not allow use now
-            {
-                xerror("xvqcert_t::is_valid,not support flag of commit_cert at current version");
-                return false;//change behavior once we support basic-mode of xBFT
-            }
+            // if( (get_consensus_flags() & enum_xconsensus_flag_commit_cert) != 0)//not support this flag yet,so not allow use now
+            // {
+            //     xerror("xvqcert_t::is_valid,not support flag of commit_cert at current version");
+            //     return false;//change behavior once we support basic-mode of xBFT
+            // }
             return true;
         }
         
@@ -814,6 +814,14 @@ namespace top
             }
             else
             {
+                if( (get_consensus_flags() & enum_xconsensus_flag_relay_prove) != 0)
+                {
+                    if(m_extend_data.empty())
+                    {
+                        xerror("xvqcert_t::is_deliver,has flag_relay_prove but miss extend data");
+                        return false;
+                    }
+                }
                 if(m_verify_signature.empty())
                     return false;
                 
@@ -2671,8 +2679,38 @@ namespace top
             block_ptr->dump2(); //genereate dump information before return, to improve performance
             return block_ptr;
         }
-        
-    
+
+        // int32_t xrelay_multisign::do_write(base::xstream_t & stream) {
+        //     KEEP_SIZE();
+
+        //     if (!m_multisign.empty()) {
+        //         uint16_t size = m_multisign.size();
+        //         stream << size;
+        //         for (auto & it : m_multisign) {
+        //             stream << it.first;
+        //             stream << it.second;
+        //         }
+        //     }
+
+        //     return CALC_LEN();
+        // }
+
+        // int32_t xrelay_multisign::do_read(base::xstream_t & stream) {
+        //     KEEP_SIZE();
+        //     if (stream.size() != 0) {
+        //         uint16_t size = 0;
+        //         stream >> size;
+        //         for (uint16_t i = 0; i < size; i++) {
+        //             xvip2_t xip;
+        //             std::string vote_data;
+        //             stream >> xip;
+        //             stream >> vote_data;
+        //             m_multisign[xip] = vote_data;
+        //         }
+        //     }
+        //     // restore padding
+        //     return CALC_LEN();
+        // }
 
     };//end of namespace of base
 };//end of namespace of top
