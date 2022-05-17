@@ -7,6 +7,7 @@
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xdata/xgenesis_data.h"
+#include "xdata/xnative_contract_address.h"
 #include "xgasfee/xerror/xerror.h"
 
 #include <stdint.h>
@@ -120,7 +121,7 @@ uint64_t xtop_gas_tx_operator::tx_disk_tgas() const {
     }
     evm_common::u256 multiple{1};
     // evm deploy tx
-    if (m_tx->get_target_addr().empty()) {
+    if (recver_str().empty() || recver() == evm_zero_address) {
         multiple = 100000;
     }
     evm_common::u256 disk_tgas = multiple * m_tx->get_transaction()->get_tx_len();
