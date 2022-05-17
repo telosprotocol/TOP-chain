@@ -459,7 +459,7 @@ xrelay_block_build_t::xrelay_block_build_t(base::xvblock_t* prev_block, const xb
                                 para.get_drand_height(), para.get_justify_cert_hash());
     init_header_qcert(build_para);
     // todo(nathan):set extend data
-    // get_qcert()->set_extend_data("test");
+    get_qcert()->set_extend_data("test");
     std::string _extra_data = xtableheader_extra_t::build_extra_string(get_header(), para.get_tgas_height(), para.get_gmtime(), relay_block_data);
     set_header_extra(_extra_data);
 }
