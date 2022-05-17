@@ -17,16 +17,18 @@ class DbPrune {
 private:
     xobject_ptr_t<store::xstore_face_t> m_store;
     xobject_ptr_t<base::xvblockstore_t> m_blockstore;
-    xobject_ptr_t<base::xvtxstore_t> m_txstore;
     int update_meta(base::xvaccount_t& _vaddr, const uint64_t& height);
 
     int db_init(const std::string datadir);
     int db_close();
     std::vector<std::string> get_db_unit_accounts();
     std::vector<std::string> get_table_accounts();
+    int do_db_prune(const std::string& node_addr, const std::string& datadir, std::ostringstream & out_str);
+    int db_check(const std::string& node_addr, const std::string& datadir, std::ostringstream & out_str);
 public:
     static DbPrune & instance();
-    int db_prune(const std::string& node_addr, const std::string datadir, std::ostringstream & out_str);
+    int db_prune(const std::string& node_addr, const std::string& datadir, std::ostringstream & out_str);
+    int db_convert(const std::string& miner_type, const std::string& datadir, std::ostringstream & out_str);
     void compact_db(const std::string datadir, std::ostringstream& out_str);
 };
 

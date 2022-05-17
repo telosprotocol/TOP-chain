@@ -23,7 +23,7 @@
 #include "xdb/xdb_factory.h"
 #include "xvledger/xvaccount.h"
 #include "xbase/xhash.h"
-
+#include "xdata/xcheckpoint.h"
 #define NODE_ID "T00000LgGPqEpiK6XLCKRj9gVPN8Ej1aMbyAb3Hu"
 #define SIGN_KEY "ONhWC2LJtgi9vLUyoa48MF3tiXxqWf7jmT9KtOg/Lwo="
 
@@ -711,6 +711,10 @@ void xdb_export_tools_t::query_archive_db(const uint32_t redundancy) {
     file.close();
     if (total_errors != 0) {
         std::cerr << "total error num: " << total_errors << std::endl;
+        std::string filename_error = "check_archive_db_error.log";
+        std::ofstream file_error(filename_error);
+        file_error << "[error] " << total_errors  << std::endl;
+        file_error.close();
     } else {
         generate_common_file("success", {});
     }
@@ -1793,7 +1797,7 @@ std::set<std::string> xdb_export_tools_t::get_special_genesis_accounts() {
         accounts_set.insert(user_data.address);
     }
     auto const genesis_loader = std::make_shared<loader::xconfig_genesis_loader_t>("{}");
-    data::xrootblock_para_t rootblock_para;
+    data::xrootblock_para_t  rootblock_para;
     genesis_loader->extract_genesis_para(rootblock_para);
     for (auto const & account : rootblock_para.m_account_balances) {
         accounts_set.insert(account.first);
@@ -1836,5 +1840,76 @@ void xdb_export_tools_t::compact_db() {
     std::string begin_key;
     std::string end_key;
     base::xvchain_t::instance().get_xdbstore()->compact_range(begin_key, end_key);
+}
+
+void  xdb_export_tools_t::prune_db(){
+    // init checkpoint
+    data::xchain_checkpoint_t::load();
+
+    std::string sys_account[] = {sys_contract_beacon_timer_addr, sys_drand_addr};
+    for (size_t i = 0; i < sizeof(sys_account)/sizeof(sys_account[0]); i++) {
+       auto vblock = m_blockstore->get_latest_cert_block(sys_account[i]);
+        data::xblock_t * block = dynamic_cast<data::xblock_t *>(vblock.get());
+        if (block == nullptr || block->get_height() < 8) {
+            //std::cout << " account " << sys_account[i] << " get_latest_cert_block null" << std::endl;
+            continue;
+        }
+
+        base::xvaccount_t account_obj{sys_account[i]};
+        //prune 
+        const std::string begin_delete_key = base::xvdbkey_t::create_prunable_block_height_key(account_obj, 1);
+        const uint64_t target_height = block->get_height()-100;
+        const std::string end_delete_key = base::xvdbkey_t::create_prunable_block_height_key(account_obj, target_height);
+        m_store->delete_range(begin_delete_key, end_delete_key);
+    }
+
+    //prune account
+    auto const unit_account_vec = get_db_unit_accounts();
+    std::cout << " start prune unit account!" << std::endl;
+    for (auto unit_account: unit_account_vec) {
+        if (data::is_sys_contract_address(common::xaccount_address_t{ unit_account })) {
+            continue;
+        }
+        auto vblock = m_blockstore->get_latest_committed_full_block(unit_account);
+        data::xblock_t * block = dynamic_cast<data::xblock_t *>(vblock.get());
+        if (block == nullptr || block->get_height() < 8) {
+           // std::cout << " account " << unit_account << " get_latest_committed_full_block null" <<  << std::endl;
+            continue;
+        }
+
+        base::xvaccount_t account_obj{unit_account};
+        //prune 
+        const std::string begin_delete_key = base::xvdbkey_t::create_prunable_block_height_key(account_obj, 1);
+        const std::string end_delete_key = base::xvdbkey_t::create_prunable_block_height_key(account_obj, block->get_height());
+        m_store->delete_range(begin_delete_key, end_delete_key);
+    }
+    
+    //prune table
+    std::cout << " start table account!" << std::endl;
+    auto const tables = get_table_accounts();
+    for (auto const table_account : tables) {
+        auto vblock = m_blockstore->get_latest_committed_full_block(table_account);
+        data::xblock_t * block = dynamic_cast<data::xblock_t *>(vblock.get());
+        if (block == nullptr || block->get_height() < 8) {
+            std::cout << " table_account " << table_account << " get_latest_committed_full_block null" << std::endl;
+            continue;
+        }
+
+        common::xaccount_address_t _vaddress(table_account);
+        std::error_code err;
+        auto checkpoint = data::xtop_chain_checkpoint::get_latest_checkpoint(_vaddress, err);
+        if (err) {
+            //std::cout << "Error: table_account " << table_account << " get_latest_checkpoint " << err << std::endl;
+            continue;
+        }
+        base::xvaccount_t account_obj{table_account};
+        const std::string begin_delete_key = base::xvdbkey_t::create_prunable_block_height_key(account_obj, 1);
+        const std::string end_delete_key = base::xvdbkey_t::create_prunable_block_height_key(account_obj, checkpoint.height);
+        m_store->delete_range(begin_delete_key, end_delete_key);
+    }
+
+    std::string begin_key;
+    std::string end_key;
+    m_store->compact_range(begin_key, end_key);
 }
 NS_END2
