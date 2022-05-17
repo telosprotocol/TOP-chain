@@ -22,6 +22,8 @@ public:
 public:
     common::xaccount_address_t sender() const;
     common::xaccount_address_t recver() const;
+    std::string sender_str() const;
+    std::string recver_str() const;
     data::enum_xtransaction_type tx_type() const;
     base::enum_transaction_subtype tx_subtype() const;
     data::enum_xtransaction_version tx_version() const;
