@@ -222,65 +222,34 @@ void xrpc_query_manager::getIssuanceDetail(xJson::Value & js_req, xJson::Value &
         version = RPC_VERSION_V1;
     }
     auto get_zec_workload_map =
-        [&](store::xstore_face_t * store, uint64_t height, xJson::Value & json) {
-            std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> workloads_detail;
-            do {
-                std::string property = data::system_contract::XPORPERTY_CONTRACT_WORKLOAD_KEY;
-                std::map<std::string, std::string> result;
-                auto error = store->get_map_property(sys_contract_zec_reward_addr, height - 1, property, result);
-                if (error) {
-                    xwarn("[grpc::getIssuanceDetail] get_zec_workload_map height: %llu, property_name: %s", height, property.c_str());
-                    return;
-                }
-                if (result.empty()) {
-                    break;
-                }
-                for (auto it = result.begin(); it != result.end(); it++) {
-                    auto const & key_str = it->first;
-                    common::xgroup_address_t group_address;
-                    xstream_t key_stream(xcontext_t::instance(), (uint8_t *)key_str.data(), key_str.size());
-                    key_stream >> group_address;
-                    auto const & value_str = it->second;
-                    data::system_contract::xgroup_workload_t workload;
-                    xstream_t stream(xcontext_t::instance(), (uint8_t *)value_str.data(), value_str.size());
-                    workload.serialize_from(stream);
-                    workloads_detail[group_address] = workload;
-                }
-            } while(0);
-            do {
-                std::string property = data::system_contract::XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY;
-                std::map<std::string, std::string> result;
-                auto error = store->get_map_property(sys_contract_zec_reward_addr, height - 1, property, result);
-                if (error) {
-                    xwarn("[grpc::getIssuanceDetail] get_zec_workload_map height: %llu, property_name: %s", height, property.c_str());
-                    return;
-                }
-                if (result.empty()) {
-                    break;
-                }
-                for (auto it = result.begin(); it != result.end(); it++) {
-                    auto const & key_str = it->first;
-                    common::xgroup_address_t group_address;
-                    xstream_t key_stream(xcontext_t::instance(), (uint8_t *)key_str.data(), key_str.size());
-                    key_stream >> group_address;
-                    auto const & value_str = it->second;
-                    data::system_contract::xgroup_workload_t workload;
-                    xstream_t stream(xcontext_t::instance(), (uint8_t *)value_str.data(), value_str.size());
-                    workload.serialize_from(stream);
-                    workloads_detail[group_address] = workload;
-                }
-            } while(0);
+        [&](store::xstore_face_t * store, common::xaccount_address_t const & contract_address, std::string const & property_name, uint64_t height, xJson::Value & json) {
+            std::map<std::string, std::string> workloads;
+            if (store->get_map_property(contract_address.value(), height - 1, property_name, workloads) != 0) {
+                xwarn("[grpc::getIssuanceDetail] get_zec_workload_map contract_address: %s, height: %llu, property_name: %s",
+                      contract_address.value().c_str(),
+                      height,
+                      property_name.c_str());
+                return;
+            }
 
-            xdbg("[grpc::getIssuanceDetail] get_zec_workload_map contract_address: %s, height: %llu, workloads size: %d",
-                 sys_contract_zec_reward_addr,
+            xdbg("[grpc::getIssuanceDetail] get_zec_workload_map contract_address: %s, height: %llu, property_name: %s, workloads size: %d",
+                 contract_address.value().c_str(),
                  height,
-                 workloads_detail.size());
-
-            for (auto m : workloads_detail) {
-                auto const & group_address = m.first;
-                auto const & workload = m.second;
+                 property_name.c_str(),
+                 workloads.size());
+            // if (store->map_copy_get(contract_address.value(), property_name, workloads) != 0) return;
+            xJson::Value jm;
+            for (auto m : workloads) {
+                auto detail = m.second;
+                base::xstream_t stream{xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};
+                data::system_contract::xgroup_workload_t workload;
+                workload.serialize_from(stream);
                 xJson::Value jn;
                 jn["cluster_total_workload"] = workload.group_total_workload;
+                auto const & key_str = m.first;
+                common::xgroup_address_t group_address;
+                base::xstream_t key_stream(xcontext_t::instance(), (uint8_t *)key_str.data(), key_str.size());
+                key_stream >> group_address;
                 if (version == RPC_VERSION_V3) {
                     xJson::Value array;
                     for (auto node : workload.m_leader_count) {
@@ -291,30 +260,15 @@ void xrpc_query_manager::getIssuanceDetail(xJson::Value & js_req, xJson::Value &
                     }
                     jn["miner_workload"] = array;
                     jn["cluster_name"] = group_address.group_id().to_string();
-                    if (common::has<common::xnode_type_t::consensus_auditor>(group_address.type())) {
-                        json["auditor_workloads"].append(jn);
-                    } else if (common::has<common::xnode_type_t::consensus_validator>(group_address.type())) {
-                        json["validator_workloads"].append(jn);
-                    } else if (common::has<common::xnode_type_t::evm_auditor>(group_address.type())) {
-                        json["evm_auditor_workloads"].append(jn);
-                    } else if (common::has<common::xnode_type_t::evm_validator>(group_address.type())) {
-                        json["evm_validator_workloads"].append(jn);
-                    }
+                    jm.append(jn);
                 } else {
                     for (auto node : workload.m_leader_count) {
                         jn[node.first] = node.second;
                     }
-                    if (common::has<common::xnode_type_t::consensus_auditor>(group_address.type())) {
-                        json["auditor_workloads"][group_address.group_id().to_string()] = jn;
-                    } else if (common::has<common::xnode_type_t::consensus_validator>(group_address.type())) {
-                        json["validator_workloads"][group_address.group_id().to_string()] = jn;
-                    } else if (common::has<common::xnode_type_t::evm_auditor>(group_address.type())) {
-                        json["evm_auditor_workloads"][group_address.group_id().to_string()] = jn;
-                    } else if (common::has<common::xnode_type_t::evm_validator>(group_address.type())) {
-                        json["evm_validator_workloads"][group_address.group_id().to_string()] = jn;
-                    }
+                    jm[group_address.group_id().to_string()] = jn;
                 }
             }
+            json[property_name] = jm;
         };
 
     uint64_t height = js_req["height"].asUInt64();
@@ -415,18 +369,22 @@ void xrpc_query_manager::getIssuanceDetail(xJson::Value & js_req, xJson::Value &
         }
         jv["table_votes"] = jvt;
     }
-    get_zec_workload_map(m_store.get(), issue_detail.m_zec_reward_contract_height + 1, jv);
-    if (jv["auditor_workloads"].empty()) {
+    xJson::Value jw1;
+    common::xaccount_address_t contract_addr{sys_contract_zec_reward_addr};
+    std::string prop_name = data::system_contract::XPORPERTY_CONTRACT_WORKLOAD_KEY;
+    get_zec_workload_map(m_store.get(), contract_addr, prop_name, issue_detail.m_zec_reward_contract_height + 1, jw1);
+    if (jw1[prop_name].empty()) {
         jv["auditor_workloads"] = xJson::Value::null;
+    } else {
+        jv["auditor_workloads"] = jw1[prop_name];
     }
-    if (jv["validator_workloads"].empty()) {
+    xJson::Value jw2;
+    prop_name = data::system_contract::XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY;
+    get_zec_workload_map(m_store.get(), contract_addr, prop_name, issue_detail.m_zec_reward_contract_height + 1, jw2);
+    if (jw2[prop_name].empty()) {
         jv["validator_workloads"] = xJson::Value::null;
-    }
-    if (jv["evm_auditor_workloads"].empty()) {
-        jv["evm_auditor_workloads"] = xJson::Value::null;
-    }
-    if (jv["evm_validator_workloads"].empty()) {
-        jv["evm_validator_workloads"] = xJson::Value::null;
+    } else {
+        jv["validator_workloads"] = jw2[prop_name];
     }
     xJson::Value jr;
     for (auto const & node_reward : issue_detail.m_node_rewards) {

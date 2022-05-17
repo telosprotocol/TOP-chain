@@ -586,30 +586,19 @@ void xzec_reward_contract::on_receive_workload(std::string const& workload_str) 
 
     MAP_OBJECT_DESERIALZE2(stream, workload_info);
     xdbg("[xzec_reward_contract::on_receive_workload] pid:%d, SOURCE_ADDRESS: %s, workload_info size: %zu\n", getpid(), source_address.c_str(), workload_info.size());
-    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-    if (top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.eth_fork_point, TIME())) {
-        for (auto const & workload : workload_info) {
-            xstream_t stream(xcontext_t::instance());
-            stream << workload.first;
-            auto const & group_address_str = std::string((const char *)stream.data(), stream.size());
-            auto const & workload_info = workload.second;
+    for (auto const & workload : workload_info) {
+        xstream_t stream(xcontext_t::instance());
+        stream << workload.first;
+        auto const & group_address_str = std::string((const char *)stream.data(), stream.size());
+        auto const & workload_info = workload.second;
+        if (common::has<common::xnode_type_t::consensus_auditor>(workload.first.type()) || common::has<common::xnode_type_t::evm_auditor>(workload.first.type())) {
             add_cluster_workload(true, group_address_str, workload_info.m_leader_count);
-        }
-    } else {
-        for (auto const & workload : workload_info) {
-            xstream_t stream(xcontext_t::instance());
-            stream << workload.first;
-            auto const & group_address_str = std::string((const char *)stream.data(), stream.size());
-            auto const & workload_info = workload.second;
-            if (common::has<common::xnode_type_t::consensus_auditor>(workload.first.type())) {
-                add_cluster_workload(true, group_address_str, workload_info.m_leader_count);
-            } else if (common::has<common::xnode_type_t::consensus_validator>(workload.first.type())) {
-                add_cluster_workload(false, group_address_str, workload_info.m_leader_count);
-            } else {
-                // invalid group
-                xwarn("[xzec_workload_contract_v2::accumulate_workload] invalid group id: %d", workload.first.group_id().value());
-                continue;
-            }
+        } else if (common::has<common::xnode_type_t::consensus_validator>(workload.first.type()) || common::has<common::xnode_type_t::evm_validator>(workload.first.type())) {
+            add_cluster_workload(false, group_address_str, workload_info.m_leader_count);
+        } else {
+            // invalid group
+            xwarn("[xzec_workload_contract_v2::accumulate_workload] invalid group id: %d", workload.first.group_id().value());
+            continue;
         }
     }
 
@@ -811,74 +800,40 @@ void xzec_reward_contract::get_reward_param(const common::xlogic_time_t current_
         common::xaccount_address_t address{account};
         property_param.map_nodes[address] = node;
     }
-
-    if (top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.eth_fork_point, current_time)) {
-        std::map<std::string, std::string> groups_workloads;
-        std::map<std::string, std::string> old_groups_workloads;
-        MAP_COPY_GET(data::system_contract::XPORPERTY_CONTRACT_WORKLOAD_KEY, groups_workloads);
-        MAP_COPY_GET(data::system_contract::XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY, old_groups_workloads);
-        clear_workload();
-        for (auto it = groups_workloads.begin(); it != groups_workloads.end(); it++) {
-            auto const & key_str = it->first;
-            common::xgroup_address_t group_address;
-            xstream_t key_stream(xcontext_t::instance(), (uint8_t *)key_str.data(), key_str.size());
-            key_stream >> group_address;
-            auto const & value_str = it->second;
-            data::system_contract::xgroup_workload_t workload;
-            xstream_t stream(xcontext_t::instance(), (uint8_t *)value_str.data(), value_str.size());
-            workload.serialize_from(stream);
-            if (common::has<common::xnode_type_t::consensus_auditor>(group_address.type())) {
-                property_param.auditor_workloads_detail[group_address] = workload;
-            } else if (common::has<common::xnode_type_t::consensus_validator>(group_address.type())) {
-                property_param.validator_workloads_detail[group_address] = workload;
-            } else if (common::has<common::xnode_type_t::evm_auditor>(group_address.type())) {
-                property_param.evm_auditor_workloads_detail[group_address] = workload;
-            } else if (common::has<common::xnode_type_t::evm_validator>(group_address.type())) {
-                property_param.evm_validator_workloads_detail[group_address] = workload;
-            } else {
-                xwarn("[xzec_reward_contract::get_reward_param] invalid group id: %d, drop it", group_address.group_id().value());
-                continue;
-            }
-        }
-        for (auto it = old_groups_workloads.begin(); it != old_groups_workloads.end(); it++) {
-            auto const & key_str = it->first;
-            common::xgroup_address_t group_address;
-            xstream_t key_stream(xcontext_t::instance(), (uint8_t *)key_str.data(), key_str.size());
-            key_stream >> group_address;
-            auto const & value_str = it->second;
-            data::system_contract::xgroup_workload_t workload;
-            xstream_t stream(xcontext_t::instance(), (uint8_t *)value_str.data(), value_str.size());
-            workload.serialize_from(stream);
-            property_param.validator_workloads_detail[group_address] += workload;
-        }
-    } else {
-        // get workload
-        std::map<std::string, std::string> auditor_group_workloads;
-        std::map<std::string, std::string> validator_group_workloads;
-        MAP_COPY_GET(data::system_contract::XPORPERTY_CONTRACT_WORKLOAD_KEY, auditor_group_workloads);
-        MAP_COPY_GET(data::system_contract::XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY, validator_group_workloads);
-        clear_workload();
-        for (auto it = auditor_group_workloads.begin(); it != auditor_group_workloads.end(); it++) {
-            auto const & key_str = it->first;
-            common::xgroup_address_t group_address;
-            xstream_t key_stream(xcontext_t::instance(), (uint8_t *)key_str.data(), key_str.size());
-            key_stream >> group_address;
-            auto const & value_str = it->second;
-            data::system_contract::xgroup_workload_t workload;
-            xstream_t stream(xcontext_t::instance(), (uint8_t *)value_str.data(), value_str.size());
-            workload.serialize_from(stream);
+    // get workload
+    std::map<std::string, std::string> auditor_group_workloads;
+    std::map<std::string, std::string> validator_group_workloads;
+    MAP_COPY_GET(data::system_contract::XPORPERTY_CONTRACT_WORKLOAD_KEY, auditor_group_workloads);
+    MAP_COPY_GET(data::system_contract::XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY, validator_group_workloads);
+    clear_workload();
+    for (auto it = auditor_group_workloads.begin(); it != auditor_group_workloads.end(); it++) {
+        auto const & key_str = it->first;
+        common::xgroup_address_t group_address;
+        xstream_t key_stream(xcontext_t::instance(), (uint8_t *)key_str.data(), key_str.size());
+        key_stream >> group_address;
+        auto const & value_str = it->second;
+        data::system_contract::xgroup_workload_t workload;
+        xstream_t stream(xcontext_t::instance(), (uint8_t *)value_str.data(), value_str.size());
+        workload.serialize_from(stream);
+        if (common::has<common::xnode_type_t::consensus_auditor>(group_address.type())) {
             property_param.auditor_workloads_detail[group_address] = workload;
+        } else if (common::has<common::xnode_type_t::evm_auditor>(group_address.type())) {
+            property_param.evm_auditor_workloads_detail[group_address] = workload;
         }
-        for (auto it = validator_group_workloads.begin(); it != validator_group_workloads.end(); it++) {
-            auto const & key_str = it->first;
-            common::xgroup_address_t group_address;
-            xstream_t key_stream(xcontext_t::instance(), (uint8_t *)key_str.data(), key_str.size());
-            key_stream >> group_address;
-            auto const & value_str = it->second;
-            data::system_contract::xgroup_workload_t workload;
-            xstream_t stream(xcontext_t::instance(), (uint8_t *)value_str.data(), value_str.size());
-            workload.serialize_from(stream);
+    }
+    for (auto it = validator_group_workloads.begin(); it != validator_group_workloads.end(); it++) {
+        auto const & key_str = it->first;
+        common::xgroup_address_t group_address;
+        xstream_t key_stream(xcontext_t::instance(), (uint8_t *)key_str.data(), key_str.size());
+        key_stream >> group_address;
+        auto const & value_str = it->second;
+        data::system_contract::xgroup_workload_t workload;
+        xstream_t stream(xcontext_t::instance(), (uint8_t *)value_str.data(), value_str.size());
+        workload.serialize_from(stream);
+        if (common::has<common::xnode_type_t::consensus_validator>(group_address.type())) {
             property_param.validator_workloads_detail[group_address] = workload;
+        } else if (common::has<common::xnode_type_t::evm_validator>(group_address.type())) {
+            property_param.evm_validator_workloads_detail[group_address] = workload;
         }
     }
     issue_detail.m_auditor_group_count = property_param.auditor_workloads_detail.size();
