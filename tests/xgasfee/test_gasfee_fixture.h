@@ -1,24 +1,24 @@
 #pragma once
 
-#include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xcrypto/xckey.h"
-#include "xdata/xblockbuild.h"
 #include "xdata/xnative_contract_address.h"
-#include "xdata/xtable_bstate.h"
 #include "xpbase/base/top_utils.h"
-#include "xstatectx/xstatectx_face.h"
 
 #include <gtest/gtest.h>
 
 #include <string>
 
 #define private public
+#include "xconfig/xconfig_register.h"
+#include "xdata/xblockbuild.h"
 #include "xdata/xserial_transfrom.h"
+#include "xdata/xtable_bstate.h"
 #include "xdata/xtransaction.h"
 #include "xdata/xtransaction_v2.h"
 #include "xdata/xtransaction_v3.h"
 #include "xgasfee/xgasfee.h"
+#include "xstatectx/xstatectx_face.h"
 
 namespace top {
 namespace tests {
@@ -30,6 +30,7 @@ public:
         make_unit_state(default_bstate);
         default_tx_v2 = make_tx_v2();
         default_tx_v3 = make_tx_v3();
+        default_tx_v3_deploy = make_tx_v3_deploy();
         make_cons_tx();
     }
 
@@ -126,9 +127,34 @@ public:
         return tx;
     }
 
+    xobject_ptr_t<data::xtransaction_v3_t> make_tx_v3_deploy() {
+        xobject_ptr_t<data::xtransaction_v3_t> tx{make_object_ptr<data::xtransaction_v3_t>()};
+        data::xproperty_asset asset{data::XPROPERTY_ASSET_TOP, default_amount};
+        tx->set_tx_type(data::xtransaction_type_deploy_evm_contract);
+        tx->set_last_trans_hash_and_nonce(uint256_t(), uint64_t(0));
+        tx->set_source(default_sender, {}, {});
+        tx->set_fire_timestamp(default_fire);
+        tx->set_expire_duration(default_expire);
+        tx->set_deposit(default_v3_deposit);
+        tx->set_gaslimit(default_evm_gas_limit);
+        dynamic_cast<data::eip_1559_tx *>(tx->m_eip_xxxx_tx.get())->max_fee_per_gas = default_eth_per_gas;
+        dynamic_cast<data::eip_1559_tx *>(tx->m_eip_xxxx_tx.get())->value = default_eth_value;
+        tx->set_len();
+        return tx;
+    }
+
     void make_cons_tx() {
         if (default_tx_version == data::xtransaction_version_3) {
-            default_cons_tx = make_object_ptr<data::xcons_transaction_t>(default_tx_v3.get());
+            if (default_tx_type == data::xtransaction_type_transfer) {
+                default_cons_tx = make_object_ptr<data::xcons_transaction_t>(default_tx_v3.get());
+            } else {
+
+                default_cons_tx = make_object_ptr<data::xcons_transaction_t>();
+                auto tx = default_tx_v3_deploy.get();
+                tx->add_ref();
+                default_cons_tx->m_tx.attach(tx);
+                default_cons_tx->m_subtype = data::enum_transaction_subtype_self;
+            }
             return;
         }
         default_cons_tx = make_object_ptr<data::xcons_transaction_t>(default_tx_v2.get());
@@ -189,6 +215,7 @@ public:
     uint64_t default_free_tgas{991158};
     uint64_t default_available_tgas{996158};
     data::enum_xtransaction_version default_tx_version{data::xtransaction_version_2};
+    data::enum_xtransaction_type default_tx_type{data::xtransaction_type_transfer};
     evm_common::u256 default_eth_per_gas{5000 * 20};
     evm_common::u256 default_evm_gas_limit{5000};
     evm_common::u256 default_eth_value{1000};
@@ -199,6 +226,7 @@ public:
     std::shared_ptr<data::xunit_bstate_t> default_unit_state;
     xobject_ptr_t<data::xtransaction_v2_t> default_tx_v2;
     xobject_ptr_t<data::xtransaction_v3_t> default_tx_v3;
+    xobject_ptr_t<data::xtransaction_v3_t> default_tx_v3_deploy;
     xobject_ptr_t<data::xcons_transaction_t> default_cons_tx;
     xobject_ptr_t<data::xcons_transaction_t> default_recv_cons_tx;
     xobject_ptr_t<data::xcons_transaction_t> default_confirm_cons_tx;
