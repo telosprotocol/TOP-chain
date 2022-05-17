@@ -11,6 +11,7 @@
 #include "xvledger/xvledger.h"
 #include "xdata/xtable_bstate.h"
 #include "xdata/xunit_bstate.h"
+#include "xdata/xblocktool.h"
 #include "xstatectx/xtablestate_ctx.h"
 #include "xstatectx/xunitstate_ctx.h"
 #include "xstatectx/xstatectx_face.h"
@@ -169,6 +170,40 @@ xstatectx_ptr_t xstatectx_factory_t::create_latest_commit_statectx(const base::x
     auto const commit_blk_clk = commit_block->get_clock();
     xstatectx_para_t statectx_para(commit_blk_clk != 0 ? commit_blk_clk : static_cast<uint64_t>(1));
     statectx::xstatectx_ptr_t statectx_ptr = std::make_shared<statectx::xstatectx_t>(commit_block.get(), commit_tablestate, commit_tablestate, statectx_para);
+    return statectx_ptr;
+}
+
+xstatectx_ptr_t xstatectx_factory_t::create_latest_cert_statectx(const base::xvaccount_t & table_addr) {
+    base::xblock_mptrs latest_blocks = base::xvchain_t::instance().get_xblockstore()->get_latest_blocks(table_addr);
+    if (latest_blocks.get_latest_cert_block() == nullptr
+        || latest_blocks.get_latest_locked_block() == nullptr
+        || latest_blocks.get_latest_committed_block() == nullptr) {
+        xwarn("xstatectx_factory_t::create_latest_cert_statectx fail-get latest blocks,account=%s", table_addr.get_account().c_str());
+        return nullptr;
+    }
+
+    if (!data::xblocktool_t::verify_latest_blocks(
+            latest_blocks.get_latest_cert_block(), latest_blocks.get_latest_locked_block(), latest_blocks.get_latest_committed_block())) {
+        xwarn("xstatectx_factory_t::create_latest_cert_statectx fail-verify_latest_blocks fail.%s",
+            latest_blocks.get_latest_cert_block()->dump().c_str());
+        return nullptr;
+    }
+
+    base::xauto_ptr<base::xvbstate_t> cert_bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_blocks.get_latest_cert_block());
+    if (nullptr == cert_bstate) {
+        xwarn("xstatectx_factory_t::create_latest_cert_statectx fail-get target state.block=%s",latest_blocks.get_latest_cert_block()->dump().c_str());
+        return nullptr;
+    }
+    data::xtablestate_ptr_t cert_tablestate = std::make_shared<data::xtable_bstate_t>(cert_bstate.get());
+    base::xauto_ptr<base::xvbstate_t> commit_bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_blocks.get_latest_committed_block());
+    if (nullptr == cert_bstate) {
+        xwarn("xstatectx_factory_t::create_latest_cert_statectx fail-get target state.block=%s",latest_blocks.get_latest_committed_block()->dump().c_str());
+        return nullptr;
+    }
+    data::xtablestate_ptr_t commit_tablestate = std::make_shared<data::xtable_bstate_t>(commit_bstate.get());
+
+    xstatectx_para_t statectx_para(latest_blocks.get_latest_cert_block()->get_clock()+1);
+    statectx::xstatectx_ptr_t statectx_ptr = std::make_shared<statectx::xstatectx_t>(latest_blocks.get_latest_cert_block(), cert_tablestate, commit_tablestate, statectx_para);
     return statectx_ptr;
 }
 
