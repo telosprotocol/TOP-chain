@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.5.12;
+pragma solidity 0.8.10;
 
 contract TopErc20Wrapper {
     address constant TopErc20 = 0xff00000000000000000000000000000000000001;

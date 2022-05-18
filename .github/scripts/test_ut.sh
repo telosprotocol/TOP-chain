@@ -17,7 +17,11 @@ run_err_count=0
 for utest in $(ls cbuild/bin/Linux/*test);do
     utest_file_name=$(basename $utest)
     echo "testcase running: ${utest_file_name}"
-    time ${utest} --gtest_output="xml:"${utest_file_name}"_report.xml" --gtest_filter=-*.*BENCH*
+    if [ "$utest_file_name" == "xevm_engine_test" ]; then
+        time ${utest} ${WORK_DIR}/tests/xevm_engine_test/test_cases/ --gtest_output="xml:"${utest_file_name}"_report.xml" --gtest_filter=-*.*BENCH*
+    else
+        time ${utest} --gtest_output="xml:"${utest_file_name}"_report.xml" --gtest_filter=-*.*BENCH*
+    fi
     if [[ $? -ne 0 ]];then
         echo "testcase failed: ${utest_file_name}"
         let run_err_count="${run_err_count}+1"
