@@ -594,7 +594,14 @@ impl<'env, J: IO + Copy, E: Env> ApplyBackend for Engine<'env, J, E> {
                         if value == H256::default() {
                             remove_storage(&mut self.io, &address, &index, next_generation)
                         } else {
-                            println!("set_storage: {:?}, {:?}", hex::encode(index.as_bytes()), hex::encode(value.as_bytes()));
+                            sdk::log(
+                                format!(
+                                    "set_storage: {:?}, {:?}",
+                                    hex::encode(index.as_bytes()),
+                                    hex::encode(value.as_bytes())
+                                )
+                                .as_str(),
+                            );
                             set_storage(&mut self.io, &address, &index, &value, next_generation)
                         }
                         writes_counter += 1;
