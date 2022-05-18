@@ -746,7 +746,7 @@ void xrpc_eth_query_manager::eth_estimateGas(xJson::Value & js_req, xJson::Value
         return;
 
     from = xvaccount_t::to_evm_address(from);
-    ETH_ADDRESS_CHECK_VALID(from)    
+    ETH_ADDRESS_CHECK_VALID(from)
 
     std::string data;
     std::string jdata = safe_get_json_value(js_req[0], "data");

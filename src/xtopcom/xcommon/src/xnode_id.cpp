@@ -17,11 +17,15 @@
 NS_BEG2(top, common)
 
 xtop_node_id::xtop_node_id(std::string const & v) : m_account_string{v} {
-    parse();
+    if (!empty()) {
+        parse();
+    }
 }
 
 xtop_node_id::xtop_node_id(xaccount_base_address_t base_address) : m_account_string {base_address.to_string()}, m_account_base_address{std::move(base_address)} {
-    parse();
+    if (!empty()) {
+        parse();
+    }
 }
 
 xtop_node_id::xtop_node_id(xaccount_base_address_t base_address, uint16_t const table_id_value) : xtop_node_id{std::move(base_address), xtable_id_t{table_id_value}} {

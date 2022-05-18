@@ -20,6 +20,8 @@ private:
     static constexpr size_t SIZE{20};
     std::array<uint8_t, SIZE> raw_address_;
 
+    mutable std::string hex_string_;
+
 public:
     
     xtop_eth_address(xtop_eth_address const &) = default;
@@ -37,6 +39,8 @@ public:
     static xtop_eth_address build_from(std::array<uint8_t, 20> const & address_data);
     static xtop_eth_address build_from(xbytes_t const & address_data, std::error_code & ec);
     static xtop_eth_address build_from(xbytes_t const & address_data);
+    static xtop_eth_address build_from(std::string const & hex_string, std::error_code & ec);
+    static xtop_eth_address build_from(std::string const & hex_string);
 
 private:
     explicit xtop_eth_address(std::string const & account_string);
@@ -47,10 +51,13 @@ public:
         return SIZE;
     }
 
-    std::string to_hex_string() const;
+    std::string const & to_hex_string() const;
     xbytes_t to_bytes() const;
     xbytes_t to_h160() const;
     xbytes_t to_h256() const;
+    char const * c_str() const;
+
+    xbyte_t const * data() const noexcept;
 
     static xeth_address_t const & zero();
 };
