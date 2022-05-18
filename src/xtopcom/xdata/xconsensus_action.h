@@ -11,6 +11,7 @@
 #include "xdata/xcons_transaction.h"
 #include "xdata/xconsensus_action_fwd.h"
 #include "xdata/xconsensus_action_stage.h"
+#include "xdata/xnative_contract_address.h"
 #include "xdata/xreceipt_data_store.h"
 #include "xdata/xtop_action.h"
 
@@ -348,14 +349,14 @@ public:
 
     xtop_consensus_action(common::xaccount_address_t src_address, common::xaccount_address_t dst_address, evm_common::u256 value, xbytes_t data, uint64_t gaslimit) noexcept
       : xtop_action_t<xtop_action_type_t::evm>{nullptr, common::xjudgement_day}, m_sender{src_address}, m_recver{dst_address}, m_value{value}, m_input_data{data}, m_gaslimit(gaslimit) {
-        if (m_recver.empty() || m_recver.value() == "T600040000000000000000000000000000000000000000") {
+        if (m_recver.empty() || m_recver == eth_zero_address) {
             m_evm_action_type = xtop_evm_action_type::deploy_contract;
         } else {
             m_evm_action_type = xtop_evm_action_type::call_contract;
         }
     }
 
-    explicit xtop_consensus_action(xobject_ptr_t<data::xcons_transaction_t> const & tx) noexcept
+    explicit xtop_consensus_action(xobject_ptr_t<data::xcons_transaction_t> const & tx)
       : xtop_action_t<xtop_action_type_t::evm>{tx,
                                                tx->is_send_tx() ?
                                                    static_cast<common::xlogic_time_t>((tx->get_transaction()->get_fire_timestamp() + tx->get_transaction()->get_expire_duration() +
@@ -363,10 +364,13 @@ public:
                                                                                       XGLOBAL_TIMER_INTERVAL_IN_SECONDS) :
                                                    common::xjudgement_day} {
         m_sender = common::xaccount_address_t{tx->get_source_addr()};
+        if (m_sender.empty()) {
+            m_sender = eth_zero_address;
+        }
         m_recver = common::xaccount_address_t{tx->get_target_addr()};
         m_value = tx->get_transaction()->get_amount_256();
 
-        if (m_recver.empty() || m_recver.value() == "T600040000000000000000000000000000000000000000") {
+        if (m_recver.empty() || m_recver == eth_zero_address) {
             m_evm_action_type = xtop_evm_action_type::deploy_contract;
         } else {
             m_evm_action_type = xtop_evm_action_type::call_contract;

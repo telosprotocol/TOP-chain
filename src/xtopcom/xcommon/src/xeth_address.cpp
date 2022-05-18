@@ -56,6 +56,28 @@ xtop_eth_address xtop_eth_address::build_from(xbytes_t const & address_data) {
     return ret;
 }
 
+xtop_eth_address xtop_eth_address::build_from(std::string const & hex_string, std::error_code & ec) {
+    assert(!ec);
+
+    if (hex_string.empty()) {
+        return xtop_eth_address{};
+    }
+
+    auto bytes = from_hex(hex_string, ec);
+    if (ec) {
+        return xtop_eth_address{};
+    }
+
+    return xtop_eth_address::build_from(bytes, ec);
+}
+
+xtop_eth_address xtop_eth_address::build_from(std::string const & hex_string) {
+    std::error_code ec;
+    auto ret = xtop_eth_address::build_from(hex_string, ec);
+    top::error::throw_error(ec);
+    return ret;
+}
+
 xtop_eth_address::xtop_eth_address() {
     std::fill(std::begin(raw_address_), std::end(raw_address_), 0);
 }
@@ -80,8 +102,12 @@ xtop_eth_address::xtop_eth_address(std::string const & account_string, std::erro
     std::copy(std::begin(bytes), std::end(bytes), std::begin(raw_address_));
 }
 
-std::string xtop_eth_address::to_hex_string() const {
-    return top::to_hex_prefixed(raw_address_);
+std::string const & xtop_eth_address::to_hex_string() const {
+    if (hex_string_.empty()) {
+        hex_string_ = top::to_hex_prefixed(raw_address_);
+    }
+
+    return hex_string_;
 }
 
 xbytes_t xtop_eth_address::to_bytes() const {
@@ -97,6 +123,14 @@ xbytes_t xtop_eth_address::to_h256() const {
     xbytes_t h160 = to_h160();
     std::copy_n(std::begin(h160), h160.size(), std::next(std::begin(h256), 12));
     return h256;
+}
+
+char const * xtop_eth_address::c_str() const {
+    return to_hex_string().c_str();
+}
+
+xbyte_t const * xtop_eth_address::data() const noexcept {
+    return raw_address_.data();
 }
 
 xtop_eth_address const & xtop_eth_address::zero() {
