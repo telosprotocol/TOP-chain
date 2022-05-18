@@ -29,24 +29,27 @@ xatomictx_executor_t::xatomictx_executor_t(const statectx::xstatectx_face_ptr_t 
 
 }
 
-bool xatomictx_executor_t::set_tx_account_state(const data::xunitstate_ptr_t & unitstate, const xcons_transaction_ptr_t & tx, bool nonce_force_update) {
-    // update account create time propertys
-    if (unitstate->get_block_height() < 2) {
-        unitstate->set_account_create_time(m_para.get_clock());
-    }
-
-    if (tx->is_send_or_self_tx() && (!tx->is_evm_tx() || nonce_force_update)) {
+bool xatomictx_executor_t::update_nonce_and_hash(const data::xunitstate_ptr_t & unitstate, const xcons_transaction_ptr_t & tx) {
+    if (tx->is_send_or_self_tx()) {
         uint64_t tx_nonce = tx->get_tx_nonce();
         uint256_t tx_hash = tx->get_tx_hash_256();
         uint64_t account_nonce = unitstate->get_latest_send_trans_number();
         if (account_nonce + 1 != tx_nonce) {
-            xerror("xatomictx_executor_t::set_tx_account_state fail-set nonce.tx=%s,account_nonce=%ld,nonce=%ld", tx->dump().c_str(), account_nonce, tx_nonce);
+            xerror("xatomictx_executor_t::update_nonce_and_hash fail-set nonce.tx=%s,account_nonce=%ld,nonce=%ld", tx->dump().c_str(), account_nonce, tx_nonce);
             return false;
         }
         unitstate->set_tx_info_latest_sendtx_num(tx_nonce);
         std::string transaction_hash_str = std::string(reinterpret_cast<char*>(tx_hash.data()), tx_hash.size());
         unitstate->set_tx_info_latest_sendtx_hash(transaction_hash_str); // XTODO(jimmy)?
-        xdbg("xatomictx_executor_t::set_tx_account_state set nonce.tx=%s,nonce=%ld", tx->dump().c_str(), tx_nonce);
+        xdbg("xatomictx_executor_t::update_nonce_and_hash set nonce.tx=%s,nonce=%ld", tx->dump().c_str(), tx_nonce);
+    }
+    return true;
+}
+
+bool xatomictx_executor_t::set_tx_account_state(const data::xunitstate_ptr_t & unitstate, const xcons_transaction_ptr_t & tx) {
+    // update account create time propertys
+    if (unitstate->get_block_height() < 2) {
+        unitstate->set_account_create_time(m_para.get_clock());
     }
 
     // TODO(jimmy) recvtx num has no value but will cause to state change
@@ -78,8 +81,7 @@ bool xatomictx_executor_t::set_tx_table_state(const data::xtablestate_ptr_t & ta
 
 bool xatomictx_executor_t::update_tx_related_state(const data::xunitstate_ptr_t & tx_unitstate, const xcons_transaction_ptr_t & tx, const xvm_output_t & vmoutput) {
     bool ret = false;
-    bool nonce_force_update = (tx->is_evm_tx() && (vmoutput.m_tx_result.status != evm_common::xevm_transaction_status_t::Success));
-    ret = set_tx_account_state(tx_unitstate, tx, nonce_force_update);
+    ret = set_tx_account_state(tx_unitstate, tx);
     if (!ret) {
         return ret;
     }
@@ -209,6 +211,9 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
             xtvm_t tvm;
             ret = tvm.execute(vminput, vmoutput);
         }
+        if (ret == enum_exec_success) {
+            update_nonce_and_hash(unitstate, tx);
+        }
     } else {
 #ifdef BUILD_EVM
         gasfee.preprocess(ec);
@@ -270,6 +275,7 @@ void xatomictx_executor_t::vm_execute_after_process(const data::xunitstate_ptr_t
         m_statectx->do_rollback();
         is_state_dirty = false;
         tx->set_current_exec_status(data::enum_xunit_tx_exec_status_fail);
+        update_nonce_and_hash(tx_unitstate, tx);
     } else {
         is_state_dirty = m_statectx->is_state_dirty();
         tx->set_current_exec_status(data::enum_xunit_tx_exec_status_success);
@@ -295,8 +301,6 @@ void xatomictx_executor_t::vm_execute_after_process(const data::xunitstate_ptr_t
         bool tx_related_update = update_tx_related_state(tx_unitstate, tx, output.m_vm_output);
         if (false == tx_related_update) {
             xassert(false);
-            m_statectx->do_rollback();
-            is_state_dirty = false;
             is_pack_tx = false;
         }
     }
@@ -305,6 +309,9 @@ void xatomictx_executor_t::vm_execute_after_process(const data::xunitstate_ptr_t
     if (is_pack_tx) {
         _snapshot_size = m_statectx->do_snapshot();
         xassert(!m_statectx->is_state_dirty());
+    } else {
+        m_statectx->do_rollback();
+        is_state_dirty = false;
     }
 
     output.m_is_state_dirty = is_state_dirty;
