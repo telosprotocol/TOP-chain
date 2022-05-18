@@ -270,7 +270,8 @@ void xrpc_query_manager::getIssuanceDetail(xJson::Value & js_req, xJson::Value &
                         jn[node.first] = node.second;
                     }
                     if (common::has<common::xnode_type_t::evm_auditor>(group_address.type()) || common::has<common::xnode_type_t::evm_validator>(group_address.type())) {
-                        jm[std::string{"evm"} + group_address.group_id().to_string()] = jn;
+                        // do not show in V2
+                        // jm[std::string{"evm"} + group_address.group_id().to_string()] = jn;
                     } else {
                         jm[group_address.group_id().to_string()] = jn;
                     }
@@ -326,14 +327,18 @@ void xrpc_query_manager::getIssuanceDetail(xJson::Value & js_req, xJson::Value &
     jv["archive_reward_ratio"] = issue_detail.m_archive_reward_ratio;
     jv["validator_reward_ratio"] = issue_detail.m_validator_reward_ratio;
     jv["auditor_reward_ratio"] = issue_detail.m_auditor_reward_ratio;
-    jv["evm_validator_reward_ratio"] = issue_detail.m_evm_validator_reward_ratio;
-    jv["evm_auditor_reward_ratio"] = issue_detail.m_evm_auditor_reward_ratio;
+    if (version == RPC_VERSION_V3) {
+        jv["evm_validator_reward_ratio"] = issue_detail.m_evm_validator_reward_ratio;
+        jv["evm_auditor_reward_ratio"] = issue_detail.m_evm_auditor_reward_ratio;
+    }
     jv["vote_reward_ratio"] = issue_detail.m_vote_reward_ratio;
     jv["governance_reward_ratio"] = issue_detail.m_governance_reward_ratio;
     jv["validator_group_count"] = (xJson::UInt)issue_detail.m_validator_group_count;
     jv["auditor_group_count"] = (xJson::UInt)issue_detail.m_auditor_group_count;
-    jv["evm_validator_group_count"] = (xJson::UInt)issue_detail.m_evm_validator_group_count;
-    jv["evm_auditor_group_count"] = (xJson::UInt)issue_detail.m_evm_auditor_group_count;
+    if (version == RPC_VERSION_V3) {
+        jv["evm_validator_group_count"] = (xJson::UInt)issue_detail.m_evm_validator_group_count;
+        jv["evm_auditor_group_count"] = (xJson::UInt)issue_detail.m_evm_auditor_group_count;
+    }
     std::map<std::string, std::string> contract_auditor_votes;
     if (m_store->get_map_property(
             sys_contract_zec_vote_addr, issue_detail.m_zec_vote_contract_height, data::system_contract::XPORPERTY_CONTRACT_TICKETS_KEY, contract_auditor_votes) != 0) {
