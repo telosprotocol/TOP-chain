@@ -20,35 +20,35 @@ xlightunit_action_t::xlightunit_action_t(const std::string & tx_hash, base::enum
     set_org_tx_action_id(_subtype);
 }
 
-uint32_t xlightunit_action_t::get_used_disk()const {
+uint64_t xlightunit_action_t::get_used_disk()const {
     // TODO(jimmy) not support now
     return 0;
 }
-uint32_t xlightunit_action_t::get_used_tgas()const {
+uint64_t xlightunit_action_t::get_used_tgas()const {
     std::string value = get_action_result_property(xtransaction_exec_state_t::XPROPERTY_FEE_TX_USED_TGAS);
     if (!value.empty()) {
-        return base::xstring_utl::touint32(value);
+        return base::xstring_utl::touint64(value);
     }
     return 0;
 }
-uint32_t xlightunit_action_t::get_used_deposit()const {
+uint64_t xlightunit_action_t::get_used_deposit()const {
     std::string value = get_action_result_property(xtransaction_exec_state_t::XPROPERTY_FEE_TX_USED_DEPOSIT);
     if (!value.empty()) {
-        return base::xstring_utl::touint32(value);
+        return base::xstring_utl::touint64(value);
     }
     return 0;
 }
-uint32_t xlightunit_action_t::get_send_tx_lock_tgas()const {
+uint64_t xlightunit_action_t::get_send_tx_lock_tgas()const {
     std::string value = get_action_result_property(xtransaction_exec_state_t::XPROPERTY_FEE_SEND_TX_LOCK_TGAS);
     if (!value.empty()) {
-        return base::xstring_utl::touint32(value);
+        return base::xstring_utl::touint64(value);
     }
     return 0;
 }
-uint32_t xlightunit_action_t::get_recv_tx_use_send_tx_tgas()const {
+uint64_t xlightunit_action_t::get_recv_tx_use_send_tx_tgas()const {
     std::string value = get_action_result_property(xtransaction_exec_state_t::XPROPERTY_FEE_RECV_TX_USE_SEND_TX_TGAS);
     if (!value.empty()) {
-        return base::xstring_utl::touint32(value);
+        return base::xstring_utl::touint64(value);
     }
     return 0;
 }

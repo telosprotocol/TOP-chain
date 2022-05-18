@@ -15,6 +15,36 @@ static char const * errc_to_message(int const errc) noexcept {
     switch (ec) {
     case xerrc_t::ok:
         return "ok";
+    
+    case xerrc_t::account_withdraw_failed:
+        return "account withdraw failed";
+
+    case xerrc_t::account_deposit_failed:
+        return "account deposit failed";
+
+    case xerrc_t::account_property_set_failed:
+        return "account property set failed";
+
+    case xerrc_t::account_balance_not_enough:
+        return "account balance not enough";
+
+    case xerrc_t::tx_deposit_not_enough:
+        return "tx deposit not enough";
+
+    case xerrc_t::tx_deposit_to_tgas_not_enough:
+        return "tx deposit to tgas not enough";
+
+    case xerrc_t::tx_limited_gas_exceeded:
+        return "tx limited gas exceeded";
+
+    case xerrc_t::tx_limited_gasfee_exceeded:
+        return "tx limited gasfee exceeded";
+
+    case xerrc_t::tx_calculation_tgas_exceeded:
+        return "tx calculation tgas exceeded";
+
+    case xerrc_t::tx_calculation_gas_over_limit:
+        return "tx calculation gas over limit";
 
     default:  // NOLINT(clang-diagnostic-covered-switch-default)
         return "unknown error";
