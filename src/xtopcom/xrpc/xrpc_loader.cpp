@@ -117,7 +117,7 @@ xJson::Value xrpc_loader_t::load_and_parse_recv_tx(const std::string & raw_tx_ha
     xJson::Value jv;
     if (sendindex->get_txaction().get_inner_table_flag()) {  // not need recvindex, create a mock recv json
         jv = xrpc_loader_t::parse_recv_tx(sendindex, nullptr);
-        recvtx_status = data::enum_xunit_tx_exec_status_success;
+        recvtx_status = sendindex->get_txaction().get_tx_exec_status();
     } else {
         xtxindex_detail_ptr_t recvindex = xrpc_loader_t::load_tx_indx_detail(raw_tx_hash, base::enum_transaction_subtype_recv);
         if (recvindex != nullptr) {

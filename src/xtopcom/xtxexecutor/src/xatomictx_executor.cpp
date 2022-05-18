@@ -29,13 +29,13 @@ xatomictx_executor_t::xatomictx_executor_t(const statectx::xstatectx_face_ptr_t 
 
 }
 
-bool xatomictx_executor_t::set_tx_account_state(const data::xunitstate_ptr_t & unitstate, const xcons_transaction_ptr_t & tx) {
+bool xatomictx_executor_t::set_tx_account_state(const data::xunitstate_ptr_t & unitstate, const xcons_transaction_ptr_t & tx, bool nonce_force_update) {
     // update account create time propertys
     if (unitstate->get_block_height() < 2) {
         unitstate->set_account_create_time(m_para.get_clock());
     }
 
-    if (tx->is_send_or_self_tx() && !tx->is_evm_tx()) {
+    if (tx->is_send_or_self_tx() && (!tx->is_evm_tx() || nonce_force_update)) {
         uint64_t tx_nonce = tx->get_tx_nonce();
         uint256_t tx_hash = tx->get_tx_hash_256();
         uint64_t account_nonce = unitstate->get_latest_send_trans_number();
@@ -78,7 +78,8 @@ bool xatomictx_executor_t::set_tx_table_state(const data::xtablestate_ptr_t & ta
 
 bool xatomictx_executor_t::update_tx_related_state(const data::xunitstate_ptr_t & tx_unitstate, const xcons_transaction_ptr_t & tx, const xvm_output_t & vmoutput) {
     bool ret = false;
-    ret = set_tx_account_state(tx_unitstate, tx);
+    bool nonce_force_update = (tx->is_evm_tx() && (vmoutput.m_tx_result.status != evm_common::xevm_transaction_status_t::Success));
+    ret = set_tx_account_state(tx_unitstate, tx, nonce_force_update);
     if (!ret) {
         return ret;
     }
