@@ -67,7 +67,7 @@ xtxindex_detail_ptr_t  xrpc_loader_t::load_tx_indx_detail(const std::string & ra
 void xrpc_loader_t::parse_common_info(const xtxindex_detail_ptr_t & txindex, xJson::Value & jv) {
     jv["account"] = txindex->get_txindex()->get_block_addr();
     jv["height"] = static_cast<xJson::UInt64>(txindex->get_txindex()->get_block_height());
-    jv["used_gas"] = txindex->get_txaction().get_used_tgas();
+    jv["used_gas"] = static_cast<xJson::UInt64>(txindex->get_txaction().get_used_tgas());
     // jv["used_deposit"] = txindex->get_txaction().get_used_deposit();
     // jv["exec_status"] = data::xtransaction_t::tx_exec_status_to_str(txindex->get_txaction().get_tx_exec_status());
 }
@@ -75,7 +75,7 @@ void xrpc_loader_t::parse_common_info(const xtxindex_detail_ptr_t & txindex, xJs
 xJson::Value xrpc_loader_t::parse_send_tx(const xtxindex_detail_ptr_t & sendindex) {
     xJson::Value jv;
     parse_common_info(sendindex, jv);
-    jv["used_deposit"] = sendindex->get_txaction().get_used_deposit();
+    jv["used_deposit"] = static_cast<xJson::UInt64>(sendindex->get_txaction().get_used_deposit());
     auto beacon_tx_fee = txexecutor::xtransaction_fee_t::cal_service_fee(sendindex->get_raw_tx()->get_source_addr(), sendindex->get_raw_tx()->get_target_addr());
     jv["tx_fee"] = static_cast<xJson::UInt64>(beacon_tx_fee);
     if (sendindex->get_txaction().is_self_tx()) {  // XTODO sendtx not need set exec_status, only confirmtx and selftx need set exec_status
@@ -101,7 +101,7 @@ xJson::Value xrpc_loader_t::parse_confirm_tx(const xtxindex_detail_ptr_t & sendi
     xJson::Value jv;
     if (nullptr != confirmindex) {  // set real confirmtx info
         parse_common_info(confirmindex, jv);
-        jv["used_deposit"] = confirmindex->get_txaction().get_used_deposit();
+        jv["used_deposit"] = static_cast<xJson::UInt64>(confirmindex->get_txaction().get_used_deposit());
     } else {
         jv["account"] = sendindex->get_txindex()->get_block_addr();
         jv["height"] = static_cast<xJson::UInt64>(sendindex->get_txindex()->get_block_height());

@@ -652,21 +652,21 @@ xJson::Value xrpc_query_manager::get_tx_exec_result(const std::string & account,
     }
     auto tx_info = block_ptr->get_tx_info(tx_ptr->get_digest_str());
     if (tx_info != nullptr) {
-        jv["used_gas"] = tx_info->get_used_tgas();
+        jv["used_gas"] = static_cast<xJson::UInt64>(tx_info->get_used_tgas());
         if (tx_info->is_self_tx()) {
             jv["exec_status"] = xtransaction_t::tx_exec_status_to_str(tx_info->get_tx_exec_status());
-            jv["used_deposit"] = tx_info->get_used_deposit();
+            jv["used_deposit"] = static_cast<xJson::UInt64>(tx_info->get_used_deposit());
         }
         if (tx_info->is_send_tx()) {
             if ((tx_ptr->get_tx_type() == xtransaction_type_transfer) && (tx_ptr->get_tx_version() == xtransaction_version_2 || tx_info->get_not_need_confirm())) {
-                jv["used_deposit"] = tx_info->get_used_deposit();
+                jv["used_deposit"] = static_cast<xJson::UInt64>(tx_info->get_used_deposit());
             } else {
                 jv["used_deposit"] = 0;
             }
             send_txinfo = tx_info;
         }
         if (tx_info->is_confirm_tx()) {
-            jv["used_deposit"] = tx_info->get_used_deposit();
+            jv["used_deposit"] = static_cast<xJson::UInt64>(tx_info->get_used_deposit());
             // TODO(jimmy) should read recv tx exec status from recv tx unit
             if (recv_txinfo != nullptr) {
                 jv["recv_tx_exec_status"] = xtransaction_t::tx_exec_status_to_str(recv_txinfo->get_tx_exec_status());
