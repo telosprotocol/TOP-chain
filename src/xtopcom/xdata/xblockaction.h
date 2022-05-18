@@ -45,11 +45,11 @@ class xlightunit_action_t : public base::xvaction_t {
     std::string                 get_tx_hex_hash() const {return get_tx_key().get_tx_hex_hash();}
     std::string                 get_tx_subtype_str() const {return get_tx_key().get_tx_subtype_str();}
 
-    uint32_t                    get_used_disk()const;
-    uint32_t                    get_used_tgas()const;
-    uint32_t                    get_used_deposit()const;
-    uint32_t                    get_send_tx_lock_tgas()const;
-    uint32_t                    get_recv_tx_use_send_tx_tgas()const;
+    uint64_t                    get_used_disk()const;
+    uint64_t                    get_used_tgas()const;
+    uint64_t                    get_used_deposit()const;
+    uint64_t                    get_send_tx_lock_tgas()const;
+    uint64_t                    get_recv_tx_use_send_tx_tgas()const;
     enum_xunit_tx_exec_status   get_tx_exec_status() const;
     uint64_t                    get_receipt_id() const;
     uint64_t                    get_rsp_id() const;

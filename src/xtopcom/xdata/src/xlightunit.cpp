@@ -79,9 +79,9 @@ void xlightunit_block_t::parse_to_json_v1(xJson::Value & root) {
             xJson::Value jv;
             jv["tx_consensus_phase"] = tx->get_tx_subtype_str();
             jv["send_tx_lock_gas"] = static_cast<unsigned long long>(tx->get_send_tx_lock_tgas());
-            jv["used_gas"] = tx->get_used_tgas();
-            jv["used_tx_deposit"] = tx->get_used_deposit();
-            jv["used_disk"] = tx->get_used_disk();
+            jv["used_gas"] = static_cast<xJson::UInt64>(tx->get_used_tgas());
+            jv["used_tx_deposit"] = static_cast<xJson::UInt64>(tx->get_used_deposit());
+            jv["used_disk"] = static_cast<xJson::UInt64>(tx->get_used_disk());
             jv["tx_exec_status"] = xtransaction_t::tx_exec_status_to_str(tx->get_tx_exec_status());  // 1: success, 2: fail
             xJson::Value jtx;
             jtx["0x" + tx->get_tx_hex_hash()] = jv;
