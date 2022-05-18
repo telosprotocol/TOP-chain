@@ -61,14 +61,14 @@
     "deploy_contract": [
         {
             "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
-            "__comments": "NAME: USDT;SYMBOL: USDT;UUID:0x03",
+            "__comments": "NAME: USDT;SYMBOL: USDT;DECIMALS: 18;UUID:0x03",
             "code_file_path": "delegate_erc20_usdt.bin",
             "gas_limit": 543721,
             "value": "0",
             "expected": {
                 "status": 0,
                 "extra_message": "erc20_usdt",
-                "gas_used": 432371,
+                "gas_used": 459526,
                 "logs": []
             }
         },
@@ -97,7 +97,7 @@
             "expected": {
                 "status": 0,
                 "extra_message": "",
-                "gas_used": 24519,
+                "gas_used": 24541,
                 "logs": []
             }
         },
@@ -125,7 +125,7 @@
             "expected": {
                 "status": 0,
                 "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000012",
-                "gas_used": 27098,
+                "gas_used": 23535,
                 "logs": []
             }
         },
@@ -139,7 +139,7 @@
             "expected": {
                 "status": 0,
                 "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000000",
-                "gas_used": 28280,
+                "gas_used": 28352,
                 "logs": []
             }
         },
@@ -153,7 +153,7 @@
             "expected": {
                 "status": 0,
                 "extra_message": "0x0000000000000000000000000000002447db449988978536bf5bbbe40e766c34",
-                "gas_used": 28280,
+                "gas_used": 28352,
                 "logs": []
             }
         },
@@ -237,7 +237,7 @@
             "expected": {
                 "status": 0,
                 "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000141",
-                "gas_used": 29451,
+                "gas_used": 29523,
                 "logs": []
             }
         },
@@ -354,12 +354,12 @@
             "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
             "target_address": "erc20_usdt",
             "data": "0x095ea7b30000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea300000000000000000000000000000000000000000000000000000000499602d2",
-            "gas_limit": 44000,
+            "gas_limit": 45000,
             "value": "0",
             "expected": {
                 "status": 0,
                 "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000001",
-                "gas_used": 43871,
+                "gas_used": 43943,
                 "logs": [
                     {
                         "address": "erc20_usdt",
@@ -486,12 +486,12 @@
             "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea3",
             "target_address": "erc20_usdt",
             "data": "0xa9059cbb0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea700000000000000000000000000000003a0c92075c0dbf3b8acbc5f96ce3f0ad2",
-            "gas_limit": 44000,
+            "gas_limit": 45000,
             "value": "0",
             "expected": {
                 "status": 0,
                 "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000001",
-                "gas_used": 43874,
+                "gas_used": 43946,
                 "logs": [
                     {
                         "address": "erc20_usdt",
@@ -548,12 +548,12 @@
             "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea4",
             "target_address": "erc20_usdt",
             "data": "0x23b872dd0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea30000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea70000000000000000000000000000000000000000000000000000000000000064",
-            "gas_limit": 44000,
+            "gas_limit": 45000,
             "value": "0",
             "expected": {
                 "status": 0,
                 "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000001",
-                "gas_used": 43878,
+                "gas_used": 43950,
                 "logs": [
                     {
                         "address": "erc20_usdt",
