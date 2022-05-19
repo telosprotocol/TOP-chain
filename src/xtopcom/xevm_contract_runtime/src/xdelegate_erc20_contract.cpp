@@ -593,6 +593,10 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
             sender_state->tep_token_deposit("USDC", value);
             break;
 
+        case common::xtoken_id_t::eth:
+            sender_state->tep_token_deposit("ETH", value);
+            break;
+
         default:
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
