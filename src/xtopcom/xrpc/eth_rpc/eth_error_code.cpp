@@ -21,7 +21,7 @@ bool EthErrorCode::check_req(const xJson::Value & js_req, xJson::Value & js_rsp,
     return true;
 }
 bool EthErrorCode::check_hex(const std::string& value, xJson::Value & js_rsp, uint32_t index, bool is_block_number) {
-    if (value.size() < 2) {
+    if (value.empty()) {
         std::string msg = std::string("invalid argument ") + std::to_string(index) + ": empty hex string";
         deal_error(js_rsp, eth::enum_eth_rpc_invalid_params, msg);
         return false;
