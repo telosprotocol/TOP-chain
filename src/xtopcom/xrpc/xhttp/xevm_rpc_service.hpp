@@ -14,9 +14,8 @@
 #include "xrpc/xerror/xrpc_error_json.h"
 #include "xrpc/prerequest/xpre_request_handler_server.h"
 #include "xtxstore/xtxstore_face.h"
-//#include "xrpc/eth_jsonrpc/Eth.h"
-//#include "xrpc/eth_jsonrpc/ClientBase.h"
 #include "xrpc/xjson_proc.h"
+#include "xrpc/eth_rpc/eth_error_code.h"
 
 NS_BEG2(top, xrpc)
 #define CLEAN_TIME          60
@@ -94,17 +93,23 @@ void xevm_rpc_service<T>::execute(shared_ptr<conn_type> & conn, const std::strin
             top::xrpc::xjson_proc_t json_proc;
             // reader.
             if (!reader.parse(content, json_proc.m_request_json)) {
-                xrpc_error_json error_json(0, "err", 0);
+                xJson::Value err;
+                err["error"]["code"] = eth::enum_eth_rpc_invalid_request;
+                err["error"]["message"] = "invalid json request";
                 xdbg("rpc request err");
-                m_edge_method_mgr_ptr->write_response(conn, error_json.write());
+                xJson::FastWriter       writer;
+                m_edge_method_mgr_ptr->write_response(conn, writer.write(err));
                 return;
             }
             pre_request_data.m_request_map.emplace(RPC_SEQUENCE_ID, json_proc.m_request_json["id"].asString());
             json_proc.m_request_json["id"];
             m_edge_method_mgr_ptr->do_method(conn, json_proc, ip);
     } catch (const xrpc_error & e) {
-        xrpc_error_json error_json(e.code().value(), e.what(), pre_request_data.get_request_value(RPC_SEQUENCE_ID));
-        m_edge_method_mgr_ptr->write_response(conn, error_json.write());
+        xJson::Value err;
+        err["error"]["code"] = eth::enum_eth_rpc_invalid_request;
+        err["error"]["message"] = "invalid json request";
+        xJson::FastWriter writer;
+        m_edge_method_mgr_ptr->write_response(conn, writer.write(err));
     }
 }
 

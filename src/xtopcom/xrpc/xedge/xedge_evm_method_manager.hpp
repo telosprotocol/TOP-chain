@@ -146,30 +146,25 @@ void xedge_evm_method_base<T>::do_method(shared_ptr<conn_type> & response, xjson
     if (jsonrpc_version != "2.0") {
         return;
     }
-    xJson::Value eth_res;
-    if (m_eth_method.CallMethod(json_proc.m_request_json, eth_res) == 0) {
-        xJson::Value res;
-        res["id"] = json_proc.m_request_json["id"].asString();
-        res["jsonrpc"] = json_proc.m_request_json["jsonrpc"].asString();
-        res["result"] = eth_res;
-
+    xJson::Value res;
+    res["id"] = json_proc.m_request_json["id"].asString();
+    res["jsonrpc"] = json_proc.m_request_json["jsonrpc"].asString();
+    if (m_eth_method.CallMethod(json_proc.m_request_json, res) == 0) {
+//        res["result"] = eth_res;
         xJson::FastWriter j_writer;
         std::string s_res = j_writer.write(res);
-        xdbg("rpc response:%s,i_id:%s", s_res.c_str(), json_proc.m_request_json["id"].asString().c_str());
+        xdbg("rpc response:%s", s_res.c_str());
         write_response(response, s_res);
         return;
     }
 
     if (m_eth_method.supported_method(method) == false) {
         xinfo("not support method: %s", method.c_str());
-        xJson::Value res;
-        res["id"] = json_proc.m_request_json["id"].asString();
-        res["jsonrpc"] = json_proc.m_request_json["jsonrpc"].asString();
-        res["result"] = eth_res;
+//        res["result"] = eth_res;
 
         xJson::FastWriter j_writer;
         std::string s_res = j_writer.write(res);
-        xdbg("rpc response:%s,i_id:%s", s_res.c_str(), json_proc.m_request_json["id"].asString().c_str());
+        xdbg("rpc response:%s", s_res.c_str());
         write_response(response, s_res);
         return;
     }
