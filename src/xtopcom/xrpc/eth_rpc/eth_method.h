@@ -1,7 +1,7 @@
 // Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-
+#pragma once
 #include <unordered_map>
 #include <iostream>
 #include <functional>
@@ -26,7 +26,6 @@ public:
         m_eth_method_map.emplace(std::make_pair("web3_clientVersion", std::bind(&EthMethod::web3_clientVersion, this, std::placeholders::_1, std::placeholders::_2)));
         m_eth_method_map.emplace(std::make_pair("net_version", std::bind(&EthMethod::net_version, this, std::placeholders::_1, std::placeholders::_2)));
         m_eth_method_map.emplace(std::make_pair("eth_gasPrice", std::bind(&EthMethod::eth_gasPrice, this, std::placeholders::_1, std::placeholders::_2)));
-        //m_eth_method_map.emplace(std::make_pair("eth_estimateGas", std::bind(&EthMethod::eth_estimateGas, this, std::placeholders::_1, std::placeholders::_2)));
         m_eth_method_map.emplace(std::make_pair("web3_sha3", std::bind(&EthMethod::web3_sha3, this, std::placeholders::_1, std::placeholders::_2)));
 
         m_supported_method.insert("eth_call");
@@ -63,25 +62,24 @@ public:
         }
     }
     inline void eth_chainId(const Json::Value & request, Json::Value & response) {
-        response = "0x3ff";
+        Json::Value value = "0x3ff";
+        response["result"] = value;
     }
 
     inline void net_version(const Json::Value & request, Json::Value & response) {
-        response = "1023";
+        Json::Value value = "1023";
+        response["result"] = value;
     }
 
     inline void web3_clientVersion(const Json::Value & request, Json::Value & response) {
-        response = "Geth/v1.10.17-25c9b49f-20220330/linux-amd64/go1.17.6";
-        xdbg("web3_clientVersion: %s", response.asString().c_str());
+        xdbg("web3_clientVersion1");
+        Json::Value value = "Geth/v1.10.17-25c9b49f-20220330/linux-amd64/go1.17.6";
+        response["result"] = value;
+        //xdbg("web3_clientVersion: %s", response.asString().c_str());
     }
 
-    inline void eth_gasPrice(const Json::Value & request, Json::Value & response) {
-        response = "0x3b9aca00";
-    }
+    void eth_gasPrice(const Json::Value & request, Json::Value & response);
 
-    inline void eth_estimateGas(const Json::Value & request, Json::Value & response) {
-        response = "0x5208";
-    }
     void web3_sha3(const Json::Value & request, Json::Value & response);
 };
 
