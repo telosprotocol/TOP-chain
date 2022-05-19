@@ -569,6 +569,33 @@ evm_common::u256 xbstate_ctx_t::tep_token_balance(const std::string& token_name)
     return balance;
 }
 
+evm_common::u256 xbstate_ctx_t::tep_token_balance(common::xtoken_id_t const token_id) const {
+    std::string token_sym;
+    switch (token_id) {
+    case common::xtoken_id_t::eth: {
+        token_sym = "ETH";
+        break;
+    }
+
+    case common::xtoken_id_t::usdt: {
+        token_sym = "USDT";
+        break;
+    }
+
+    case common::xtoken_id_t::usdc: {
+        token_sym = "USDC";
+        break;
+    }
+
+    default: {
+        assert(false);
+        break;
+    }
+    }
+
+    return tep_token_balance(token_sym);
+}
+
 top::xbytes_t xbstate_ctx_t::tep_token_balance_bytes(const std::string& token_name) const {
     auto & bstate = get_bstate();
     if (!bstate->find_property(data::XPROPERTY_TEP1_BALANCE_KEY)) {
@@ -586,6 +613,33 @@ top::xbytes_t xbstate_ctx_t::tep_token_balance_bytes(const std::string& token_na
     }
 
     return {};
+}
+
+top::xbytes_t xbstate_ctx_t::tep_token_balance_bytes(common::xtoken_id_t const token_id) const {
+    std::string token_sym;
+    switch (token_id) {
+    case common::xtoken_id_t::eth: {
+        token_sym = "ETH";
+        break;
+    }
+
+    case common::xtoken_id_t::usdt: {
+        token_sym = "USDT";
+        break;
+    }
+
+    case common::xtoken_id_t::usdc: {
+        token_sym = "USDC";
+        break;
+    }
+
+    default: {
+        assert(false);
+        break;
+    }
+    }
+
+    return tep_token_balance_bytes(token_sym);
 }
 
 int32_t xbstate_ctx_t::tep_token_withdraw(const std::string& token_name, evm_common::u256 sub_token) {
@@ -622,6 +676,33 @@ int32_t xbstate_ctx_t::tep_token_withdraw(const std::string& token_name, evm_com
     return xsuccess;
 }
 
+int32_t xbstate_ctx_t::tep_token_withdraw(common::xtoken_id_t const token_id, evm_common::u256 sub_token) {
+    std::string token_sym;
+    switch (token_id) {
+    case common::xtoken_id_t::eth: {
+        token_sym = "ETH";
+        break;
+    }
+
+    case common::xtoken_id_t::usdt: {
+        token_sym = "USDT";
+        break;
+    }
+
+    case common::xtoken_id_t::usdc: {
+        token_sym = "USDC";
+        break;
+    }
+
+    default: {
+        assert(false);
+        break;
+    }
+    }
+
+    return tep_token_withdraw(token_sym, sub_token);
+}
+
 int32_t xbstate_ctx_t::tep_token_deposit(const std::string& token_name, evm_common::u256 add_token) {
     xdbg("xbstate_ctx_t::tep_token_deposit,property_modify_enter.address=%s,height=%ld,token_name=%s,token=%s", get_address().c_str(), get_chain_height(), token_name.c_str(), add_token.str().c_str());
     auto propobj = load_tep_token_for_write();
@@ -654,6 +735,33 @@ int32_t xbstate_ctx_t::tep_token_deposit(const std::string& token_name, evm_comm
     }
     xdbg("xbstate_ctx_t::tep_token_deposit address=%s,balance=%s,hex=%s,balance_str=%s", get_address().c_str(), new_balance.str().c_str(), toHex((evm_common::h256)new_balance).c_str(), new_balance_str.c_str());
     return xsuccess;
+}
+
+int32_t xbstate_ctx_t::tep_token_deposit(common::xtoken_id_t const token_id, evm_common::u256 add_token) {
+    std::string token_sym;
+    switch (token_id) {
+    case common::xtoken_id_t::eth: {
+        token_sym = "ETH";
+        break;
+    }
+
+    case common::xtoken_id_t::usdt: {
+        token_sym = "USDT";
+        break;
+    }
+
+    case common::xtoken_id_t::usdc: {
+        token_sym = "USDC";
+        break;
+    }
+
+    default: {
+        assert(false);
+        break;
+    }
+    }
+
+    return tep_token_deposit(token_sym, add_token);
 }
 
 NS_END2
