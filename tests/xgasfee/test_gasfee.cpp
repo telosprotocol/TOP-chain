@@ -345,15 +345,22 @@ TEST_F(xtest_gasfee_fixture_t, test_store_in_one_stage) {
     op.init(ec);
     EXPECT_EQ(ec.value(), 0);
     op.m_free_tgas_usage = op.m_free_tgas;
-    op.m_converted_tgas_usage = op.deposit() / 2 / 20;
+    op.m_converted_tgas_usage = op.deposit() / 2 / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio);
     op.store_in_one_stage(ec);
 
-    EXPECT_EQ(default_cons_tx->get_current_used_tgas(), op.m_free_tgas);
-    EXPECT_EQ(default_cons_tx->get_current_used_deposit(), op.m_converted_tgas_usage * 20);
-    EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_gas_account)));
-    EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
-    EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance - default_used_deposit));
-    EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_BURN)->get_balance(), base::vtoken_t(default_used_deposit));
+    auto detail = op.gasfee_detail();
+    EXPECT_EQ(detail.m_tx_used_tgas, op.m_free_tgas);
+    EXPECT_EQ(detail.m_tx_used_deposit, op.m_converted_tgas_usage * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio));
+    EXPECT_EQ(detail.m_state_used_tgas, XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_gas_account));
+    EXPECT_EQ(detail.m_state_last_time, default_onchain_time);
+    EXPECT_EQ(detail.m_state_burn_balance, default_used_deposit);
+
+    // EXPECT_EQ(default_cons_tx->get_current_used_tgas(), op.m_free_tgas);
+    // EXPECT_EQ(default_cons_tx->get_current_used_deposit(), op.m_converted_tgas_usage * 20);
+    // EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_gas_account)));
+    // EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
+    // EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance - default_used_deposit));
+    // EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_BURN)->get_balance(), base::vtoken_t(default_used_deposit));
 }
 
 TEST_F(xtest_gasfee_fixture_t, test_store_send) {
@@ -366,12 +373,18 @@ TEST_F(xtest_gasfee_fixture_t, test_store_send) {
     op.m_converted_tgas_usage = op.deposit() / 2 * 20;
     op.store_in_send_stage(ec);
 
-    EXPECT_EQ(default_cons_tx->get_current_used_tgas(), op.m_free_tgas);
-    EXPECT_EQ(default_cons_tx->get_current_used_deposit(), op.m_converted_tgas_usage * 20);
-    EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_gas_account)));
-    EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
-    EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance - default_deposit));
-    EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_LOCK)->get_balance(), base::vtoken_t(default_deposit));
+    auto detail = op.gasfee_detail();
+    EXPECT_EQ(detail.m_tx_used_tgas, op.m_free_tgas);
+    EXPECT_EQ(detail.m_tx_used_deposit, op.m_converted_tgas_usage * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio));
+    EXPECT_EQ(detail.m_state_used_tgas, XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_gas_account));
+    EXPECT_EQ(detail.m_state_last_time, default_onchain_time);
+    EXPECT_EQ(detail.m_state_lock_balance, default_deposit);
+    // EXPECT_EQ(default_cons_tx->get_current_used_tgas(), op.m_free_tgas);
+    // EXPECT_EQ(default_cons_tx->get_current_used_deposit(), op.m_converted_tgas_usage * 20);
+    // EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_gas_account)));
+    // EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
+    // EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance - default_deposit));
+    // EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_LOCK)->get_balance(), base::vtoken_t(default_deposit));
 }
 
 TEST_F(xtest_gasfee_fixture_t, test_store_recv) {
@@ -380,8 +393,10 @@ TEST_F(xtest_gasfee_fixture_t, test_store_recv) {
     std::error_code ec;
     op.store_in_recv_stage(ec);
     EXPECT_EQ(ec.value(), 0);
-    EXPECT_EQ(default_recv_cons_tx->get_current_used_deposit(), default_used_deposit);
-    EXPECT_EQ(default_recv_cons_tx->get_current_recv_tx_use_send_tx_tgas(), 0);
+
+    auto detail = op.gasfee_detail();
+    EXPECT_EQ(detail.m_tx_used_deposit, default_used_deposit);
+    // EXPECT_EQ(default_recv_cons_tx->get_current_used_deposit(), default_used_deposit);
 }
 
 TEST_F(xtest_gasfee_fixture_t, test_store_confirm) {
@@ -392,10 +407,15 @@ TEST_F(xtest_gasfee_fixture_t, test_store_confirm) {
     std::error_code ec;
     op.store_in_confirm_stage(ec);
     EXPECT_EQ(ec.value(), 0);
-    EXPECT_EQ(default_confirm_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_gas_account)));
-    EXPECT_EQ(default_confirm_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
-    EXPECT_EQ(default_confirm_cons_tx->get_current_used_tgas(), 0);
-    EXPECT_EQ(default_confirm_cons_tx->get_current_used_deposit(), default_used_deposit);
+    auto detail = op.gasfee_detail();
+    EXPECT_EQ(detail.m_tx_used_tgas, 0);
+    EXPECT_EQ(detail.m_tx_used_deposit, default_used_deposit);
+    EXPECT_EQ(detail.m_state_used_tgas, 0);
+    EXPECT_EQ(detail.m_state_last_time, 0);
+    // EXPECT_EQ(default_confirm_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_gas_account)));
+    // EXPECT_EQ(default_confirm_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
+    // EXPECT_EQ(default_confirm_cons_tx->get_current_used_tgas(), 0);
+    // EXPECT_EQ(default_confirm_cons_tx->get_current_used_deposit(), default_used_deposit);
 }
 
 TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v2_transfer_not_use_deposit) {
@@ -409,11 +429,17 @@ TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v2_transfer_not_use_deposit) {
     uint64_t supplement_gas = 0;
     op_send.postprocess(supplement_gas, ec);
     EXPECT_EQ(ec.value(), 0);
-    EXPECT_EQ(default_cons_tx->get_current_used_tgas(), 525);
-    EXPECT_EQ(default_cons_tx->get_current_used_deposit(), 0);
-    EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(525 + 8842));
-    EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
-    EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance));
+    auto detail = op_send.gasfee_detail();
+    EXPECT_EQ(detail.m_tx_used_tgas, 525);
+    EXPECT_EQ(detail.m_tx_used_deposit, 0);
+    EXPECT_EQ(detail.m_state_used_tgas, 525 + 8842);
+    EXPECT_EQ(detail.m_state_last_time, default_onchain_time);
+    default_cons_tx->set_current_used_tgas(525);
+    // EXPECT_EQ(default_cons_tx->get_current_used_tgas(), 525);
+    // EXPECT_EQ(default_cons_tx->get_current_used_deposit(), 0);
+    // EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(525 + 8842));
+    // EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
+    // EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance));
 
     // recv
     make_recv_cons_tx();
@@ -423,8 +449,9 @@ TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v2_transfer_not_use_deposit) {
     // ... execute recv tx
     op_recv.postprocess(supplement_gas, ec);
     EXPECT_EQ(ec.value(), 0);
-    EXPECT_EQ(default_recv_cons_tx->get_current_used_deposit(), 0);
-    EXPECT_EQ(default_recv_cons_tx->get_current_recv_tx_use_send_tx_tgas(), 0);
+    detail = op_recv.gasfee_detail();
+    EXPECT_EQ(detail.m_tx_used_deposit, 0);
+    // EXPECT_EQ(default_recv_cons_tx->get_current_used_deposit(), 0);
 
     // confirm
     make_confirm_cons_tx();
@@ -434,11 +461,17 @@ TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v2_transfer_not_use_deposit) {
     // ... execute confirm tx
     op_confirm.postprocess(supplement_gas, ec);
     EXPECT_EQ(ec.value(), 0);
-    EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(525 + 8842));
-    EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
-    EXPECT_EQ(default_confirm_cons_tx->get_current_used_tgas(), 0);
-    EXPECT_EQ(default_confirm_cons_tx->get_current_used_deposit(), 0);
-    EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance));
+    detail = op_confirm.gasfee_detail();
+    // no exec
+    EXPECT_EQ(detail.m_tx_used_tgas, 0);
+    EXPECT_EQ(detail.m_tx_used_deposit, 0);
+    EXPECT_EQ(detail.m_state_used_tgas, 0);
+    EXPECT_EQ(detail.m_state_last_time, 0);
+    // EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(525 + 8842));
+    // EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
+    // EXPECT_EQ(default_confirm_cons_tx->get_current_used_tgas(), 0);
+    // EXPECT_EQ(default_confirm_cons_tx->get_current_used_deposit(), 0);
+    // EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance));
 }
 
 TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v2_transfer_use_deposit) {
@@ -454,12 +487,19 @@ TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v2_transfer_use_deposit) {
     uint64_t supplement_gas = 0;
     op_send.postprocess(supplement_gas, ec);
     EXPECT_EQ(ec.value(), 0);
-    EXPECT_EQ(default_cons_tx->get_current_used_tgas(), 0);
-    EXPECT_EQ(default_cons_tx->get_current_used_deposit(), 525 * 20);
-    EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(1000000));
-    EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
-    EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance - 525 * 20));
-    EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_BURN)->get_balance(), base::vtoken_t(525 * 20));
+    auto detail = op_send.gasfee_detail();
+    EXPECT_EQ(detail.m_tx_used_tgas, 0);
+    EXPECT_EQ(detail.m_tx_used_deposit, 525 * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio));
+    EXPECT_EQ(detail.m_state_used_tgas, 1000000);
+    EXPECT_EQ(detail.m_state_last_time, default_onchain_time);
+    EXPECT_EQ(detail.m_state_burn_balance, 525 * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio));
+    default_cons_tx->set_current_used_deposit(525 * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio));
+    // EXPECT_EQ(default_cons_tx->get_current_used_tgas(), 0);
+    // EXPECT_EQ(default_cons_tx->get_current_used_deposit(), 525 * 20);
+    // EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(1000000));
+    // EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
+    // EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance - 525 * 20));
+    // EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_BURN)->get_balance(), base::vtoken_t(525 * 20));
 
     // recv
     make_recv_cons_tx();
@@ -469,8 +509,10 @@ TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v2_transfer_use_deposit) {
     // ... execute recv tx
     op_recv.postprocess(supplement_gas, ec);
     EXPECT_EQ(ec.value(), 0);
-    EXPECT_EQ(default_recv_cons_tx->get_current_used_deposit(), 525 * 20);
-    EXPECT_EQ(default_recv_cons_tx->get_current_recv_tx_use_send_tx_tgas(), 0);
+    detail = op_recv.gasfee_detail();
+    EXPECT_EQ(detail.m_tx_used_deposit, 525 * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio));
+    default_recv_cons_tx->set_current_used_deposit(525 * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio));
+    // EXPECT_EQ(default_recv_cons_tx->get_current_used_deposit(), 525 * 20);
 
     // confirm
     make_confirm_cons_tx();
@@ -480,13 +522,20 @@ TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v2_transfer_use_deposit) {
     // ... execute confirm tx
     op_confirm.postprocess(supplement_gas, ec);
     EXPECT_EQ(ec.value(), 0);
-    EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(1000000));
-    EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
-    EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance - 525 * 20));
-    EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_BURN)->get_balance(), base::vtoken_t(525 * 20));
-    EXPECT_EQ(default_confirm_cons_tx->get_current_used_tgas(), 0);
-    // ignore transfer
-    EXPECT_EQ(default_confirm_cons_tx->get_current_used_deposit(), 0);
+    detail = op_confirm.gasfee_detail();
+    // no exec
+    EXPECT_EQ(detail.m_tx_used_tgas, 0);
+    EXPECT_EQ(detail.m_tx_used_deposit, 0);
+    EXPECT_EQ(detail.m_state_used_tgas, 0);
+    EXPECT_EQ(detail.m_state_last_time, 0);
+    EXPECT_EQ(detail.m_state_burn_balance, 0);
+    // EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(1000000));
+    // EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
+    // EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance - 525 * 20));
+    // EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_BURN)->get_balance(), base::vtoken_t(525 * 20));
+    // EXPECT_EQ(default_confirm_cons_tx->get_current_used_tgas(), 0);
+    // // ignore transfer
+    // EXPECT_EQ(default_confirm_cons_tx->get_current_used_deposit(), 0);
 }
 
 TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v2_transfer_self) {
@@ -503,12 +552,18 @@ TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v2_transfer_self) {
     uint64_t supplement_gas = 0;
     op.postprocess(supplement_gas, ec);
     EXPECT_EQ(ec.value(), 0);
-    EXPECT_EQ(default_cons_tx->get_current_used_tgas(), 0);
-    EXPECT_EQ(default_cons_tx->get_current_used_deposit(), 525 * 20);
-    EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(1000000));
-    EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
-    EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance - 525 * 20));
-    EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_BURN)->get_balance(), base::vtoken_t(525 * 20));
+    auto detail = op.gasfee_detail();
+    EXPECT_EQ(detail.m_tx_used_tgas, 0);
+    EXPECT_EQ(detail.m_tx_used_deposit, 525 * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio));
+    EXPECT_EQ(detail.m_state_used_tgas, 1000000);
+    EXPECT_EQ(detail.m_state_last_time, default_onchain_time);
+    EXPECT_EQ(detail.m_state_burn_balance, 525 * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio));
+    // EXPECT_EQ(default_cons_tx->get_current_used_tgas(), 0);
+    // EXPECT_EQ(default_cons_tx->get_current_used_deposit(), 525 * 20);
+    // EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(1000000));
+    // EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
+    // EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance - 525 * 20));
+    // EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_BURN)->get_balance(), base::vtoken_t(525 * 20));
 }
 
 TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v2_transfer_inner_table) {
@@ -525,12 +580,18 @@ TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v2_transfer_inner_table) {
     uint64_t supplement_gas = 0;
     op.postprocess(supplement_gas, ec);
     EXPECT_EQ(ec.value(), 0);
-    EXPECT_EQ(default_cons_tx->get_current_used_tgas(), 0);
-    EXPECT_EQ(default_cons_tx->get_current_used_deposit(), 525 * 20);
-    EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(1000000));
-    EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
-    EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance - 525 * 20));
-    EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_BURN)->get_balance(), base::vtoken_t(525 * 20));
+    auto detail = op.gasfee_detail();
+    EXPECT_EQ(detail.m_tx_used_tgas, 0);
+    EXPECT_EQ(detail.m_tx_used_deposit, 525 * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio));
+    EXPECT_EQ(detail.m_state_used_tgas, 1000000);
+    EXPECT_EQ(detail.m_state_last_time, default_onchain_time);
+    EXPECT_EQ(detail.m_state_burn_balance, 525 * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio));
+    // EXPECT_EQ(default_cons_tx->get_current_used_tgas(), 0);
+    // EXPECT_EQ(default_cons_tx->get_current_used_deposit(), 525 * 20);
+    // EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(1000000));
+    // EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
+    // EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance - 525 * 20));
+    // EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_BURN)->get_balance(), base::vtoken_t(525 * 20));
 }
 
 TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v2_run_contract) {
@@ -565,12 +626,20 @@ TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v2_run_contract) {
     uint64_t supplement_gas = 0;
     op.postprocess(supplement_gas, ec);
     EXPECT_EQ(ec.value(), 0);
-    EXPECT_EQ(default_cons_tx->get_current_used_tgas(), 0);
-    EXPECT_EQ(default_cons_tx->get_current_used_deposit(), (606 + tx_size) * 20);
-    EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(1000000));
-    EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
-    EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance - default_deposit - ASSET_TOP(100)));
-    EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_LOCK)->get_balance(), base::vtoken_t(default_deposit));
+    auto detail = op.gasfee_detail();
+    EXPECT_EQ(detail.m_tx_used_tgas, 0);
+    EXPECT_EQ(detail.m_tx_used_deposit, (606 + tx_size) * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio));
+    EXPECT_EQ(detail.m_state_used_tgas, 1000000);
+    EXPECT_EQ(detail.m_state_last_time, default_onchain_time);
+    EXPECT_EQ(detail.m_state_lock_balance, default_deposit);
+    EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance - ASSET_TOP(100)));
+    default_cons_tx->set_current_used_deposit((606 + tx_size) * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio));
+    // EXPECT_EQ(default_cons_tx->get_current_used_tgas(), 0);
+    // EXPECT_EQ(default_cons_tx->get_current_used_deposit(), (606 + tx_size) * 20);
+    // EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(1000000));
+    // EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
+    // EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance - default_deposit - ASSET_TOP(100)));
+    // EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_LOCK)->get_balance(), base::vtoken_t(default_deposit));
 
     // recv
     make_recv_cons_tx();
@@ -580,8 +649,13 @@ TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v2_run_contract) {
     // ... execute recv tx
     op_recv.postprocess(supplement_gas, ec);
     EXPECT_EQ(ec.value(), 0);
-    EXPECT_EQ(default_recv_cons_tx->get_current_used_deposit(), (606 + tx_size) * 20);
-    EXPECT_EQ(default_recv_cons_tx->get_current_recv_tx_use_send_tx_tgas(), 0);
+    detail = op_recv.gasfee_detail();
+    // empty
+    EXPECT_EQ(detail.m_tx_used_deposit, (606 + tx_size) * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio));
+    default_recv_cons_tx->set_current_used_deposit((606 + tx_size) * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio));
+
+    // EXPECT_EQ(default_recv_cons_tx->get_current_used_deposit(), (606 + tx_size) * 20);
+    // EXPECT_EQ(default_recv_cons_tx->get_current_recv_tx_use_send_tx_tgas(), 0);
 
     // confirm
     make_confirm_cons_tx();
@@ -591,12 +665,18 @@ TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v2_run_contract) {
     // ... execute confirm tx
     op_confirm.postprocess(supplement_gas, ec);
     EXPECT_EQ(ec.value(), 0);
-    EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(1000000));
-    EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
-    EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance - (606 + tx_size) * 20 - ASSET_TOP(100)));
-    EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_LOCK)->get_balance(), base::vtoken_t(0));
-    EXPECT_EQ(default_confirm_cons_tx->get_current_used_tgas(), 0);
-    EXPECT_EQ(default_confirm_cons_tx->get_current_used_deposit(), (606 + tx_size) * 20);
+    detail = op_confirm.gasfee_detail();
+    EXPECT_EQ(detail.m_tx_used_tgas, 0);
+    EXPECT_EQ(detail.m_tx_used_deposit, (606 + tx_size) * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio));
+    EXPECT_EQ(detail.m_state_used_tgas, 0);
+    EXPECT_EQ(detail.m_state_last_time, 0);
+    EXPECT_EQ(detail.m_state_unlock_balance, default_deposit);
+    // EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(1000000));
+    // EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
+    // EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance - (606 + tx_size) * 20 - ASSET_TOP(100)));
+    // EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_LOCK)->get_balance(), base::vtoken_t(0));
+    // EXPECT_EQ(default_confirm_cons_tx->get_current_used_tgas(), 0);
+    // EXPECT_EQ(default_confirm_cons_tx->get_current_used_deposit(), (606 + tx_size) * 20);
 }
 
 TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v2_run_contract_self) {
@@ -629,11 +709,16 @@ TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v2_run_contract_self) {
     uint64_t supplement_gas = 0;
     op.postprocess(supplement_gas, ec);
     EXPECT_EQ(ec.value(), 0);
-    EXPECT_EQ(default_cons_tx->get_current_used_tgas(), 0);
-    EXPECT_EQ(default_cons_tx->get_current_used_deposit(), 0);
-    EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(1000000));
-    EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
-    EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance));
+    auto detail = op.gasfee_detail();
+    EXPECT_EQ(detail.m_tx_used_tgas, 0);
+    EXPECT_EQ(detail.m_tx_used_deposit, 0);
+    EXPECT_EQ(detail.m_state_used_tgas, 0);
+    EXPECT_EQ(detail.m_state_last_time, 0);
+    // EXPECT_EQ(default_cons_tx->get_current_used_tgas(), 0);
+    // EXPECT_EQ(default_cons_tx->get_current_used_deposit(), 0);
+    // EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(1000000));
+    // EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
+    // EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance));
 }
 
 TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v3_deploy) {
@@ -652,12 +737,18 @@ TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v3_deploy) {
     uint64_t supplement_gas = 0;
     op.postprocess(supplement_gas, ec);
     EXPECT_EQ(ec.value(), 0);
-    EXPECT_EQ(default_cons_tx->get_current_used_tgas(), 0);
-    EXPECT_EQ(default_cons_tx->get_current_used_deposit(), (200000 + 6) * 20);
-    EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(1000000));
-    EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
-    EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance - (200000 + 6) * 20));
-    EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_BURN)->get_balance(), base::vtoken_t((200000 + 6) * 20));
+    auto detail = op.gasfee_detail();
+    EXPECT_EQ(detail.m_tx_used_tgas, 0);
+    EXPECT_EQ(detail.m_tx_used_deposit, (200000 + 6) * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio));
+    EXPECT_EQ(detail.m_state_used_tgas, 1000000);
+    EXPECT_EQ(detail.m_state_last_time, default_onchain_time);
+    EXPECT_EQ(detail.m_state_burn_balance, (200000 + 6) * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio));
+    // EXPECT_EQ(default_cons_tx->get_current_used_tgas(), 0);
+    // EXPECT_EQ(default_cons_tx->get_current_used_deposit(), (200000 + 6) * 20);
+    // EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(1000000));
+    // EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
+    // EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance - (200000 + 6) * 20));
+    // EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_BURN)->get_balance(), base::vtoken_t((200000 + 6) * 20));
 }
 
 TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v3_transfer_inner_table_not_use_deposit) {
@@ -675,11 +766,16 @@ TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v3_transfer_inner_table_not_use_depos
     uint64_t supplement_gas = 21000;
     op.postprocess(supplement_gas, ec);
     EXPECT_EQ(ec.value(), 0);
-    EXPECT_EQ(default_cons_tx->get_current_used_tgas(),  tx_size * 3 + supplement_gas / 50);
-    EXPECT_EQ(default_cons_tx->get_current_used_deposit(), 0);
-    EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(8842 + tx_size * 3 + supplement_gas / 50));
-    EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
-    EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance));
+    auto detail = op.gasfee_detail();
+    EXPECT_EQ(detail.m_tx_used_tgas, tx_size * 3 + supplement_gas / 50);
+    EXPECT_EQ(detail.m_tx_used_deposit, 0);
+    EXPECT_EQ(detail.m_state_used_tgas, 8842 + tx_size * 3 + supplement_gas / 50);
+    EXPECT_EQ(detail.m_state_last_time, default_onchain_time);
+    // EXPECT_EQ(default_cons_tx->get_current_used_tgas(),  tx_size * 3 + supplement_gas / 50);
+    // EXPECT_EQ(default_cons_tx->get_current_used_deposit(), 0);
+    // EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(8842 + tx_size * 3 + supplement_gas / 50));
+    // EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
+    // EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance));
 }
 
 TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v3_transfer_inner_table_use_deposit) {
@@ -698,14 +794,20 @@ TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v3_transfer_inner_table_use_deposit) 
     // ... execute tx
     uint64_t supplement_gas = 21000;
     op.postprocess(supplement_gas, ec);
-    auto used_deposit = supplement_gas / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tgas_to_eth_gas_exchange_ratio) * 20 + tx_size * 3 * 20;
+    auto used_deposit = supplement_gas / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tgas_to_eth_gas_exchange_ratio) * 20 + tx_size * 3 * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio);
     EXPECT_EQ(ec.value(), 0);
-    EXPECT_EQ(default_cons_tx->get_current_used_tgas(), 0);
-    EXPECT_EQ(default_cons_tx->get_current_used_deposit(), used_deposit);
-    EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(1000000));
-    EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
-    EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance - used_deposit));
-    EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_BURN)->get_balance(), base::vtoken_t(used_deposit));
+    auto detail = op.gasfee_detail();
+    EXPECT_EQ(detail.m_tx_used_tgas, 0);
+    EXPECT_EQ(detail.m_tx_used_deposit, used_deposit);
+    EXPECT_EQ(detail.m_state_used_tgas, 1000000);
+    EXPECT_EQ(detail.m_state_last_time, default_onchain_time);
+    EXPECT_EQ(detail.m_state_burn_balance, used_deposit);
+    // EXPECT_EQ(default_cons_tx->get_current_used_tgas(), 0);
+    // EXPECT_EQ(default_cons_tx->get_current_used_deposit(), used_deposit);
+    // EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(1000000));
+    // EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
+    // EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance - used_deposit));
+    // EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_BURN)->get_balance(), base::vtoken_t(used_deposit));
 }
 
 TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v3_transfer_diff_table_use_deposit) {
@@ -725,12 +827,19 @@ TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v3_transfer_diff_table_use_deposit) {
     uint64_t supplement_gas = 0;
     op_send.postprocess(supplement_gas, ec);
     EXPECT_EQ(ec.value(), 0);
-    EXPECT_EQ(default_cons_tx->get_current_used_tgas(), 0);
-    EXPECT_EQ(default_cons_tx->get_current_used_deposit(), tx_size * 3 * 20);
-    EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(1000000));
-    EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
-    EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance - tx_size * 3 * 20));
-    EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_BURN)->get_balance(), base::vtoken_t(tx_size * 3 * 20));
+    auto detail = op_send.gasfee_detail();
+    EXPECT_EQ(detail.m_tx_used_tgas, 0);
+    EXPECT_EQ(detail.m_tx_used_deposit, tx_size * 3 * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio));
+    EXPECT_EQ(detail.m_state_used_tgas, 1000000);
+    EXPECT_EQ(detail.m_state_last_time, default_onchain_time);
+    EXPECT_EQ(detail.m_state_burn_balance, tx_size * 3 * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio));
+    default_cons_tx->set_current_used_deposit(tx_size * 3 * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio));
+    // EXPECT_EQ(default_cons_tx->get_current_used_tgas(), 0);
+    // EXPECT_EQ(default_cons_tx->get_current_used_deposit(), tx_size * 3 * 20);
+    // EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(1000000));
+    // EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
+    // EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance - tx_size * 3 * 20));
+    // EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_BURN)->get_balance(), base::vtoken_t(tx_size * 3 * 20));
 
     // recv
     make_recv_cons_tx();
@@ -740,8 +849,10 @@ TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v3_transfer_diff_table_use_deposit) {
     // ... execute recv tx
     op_recv.postprocess(supplement_gas, ec);
     EXPECT_EQ(ec.value(), 0);
-    EXPECT_EQ(default_recv_cons_tx->get_current_used_deposit(), tx_size * 3 * 20);
-    EXPECT_EQ(default_recv_cons_tx->get_current_recv_tx_use_send_tx_tgas(), 0);
+    detail = op_recv.gasfee_detail();
+    EXPECT_EQ(detail.m_tx_used_deposit, tx_size * 3 * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio));
+    default_recv_cons_tx->set_current_used_deposit(tx_size * 3 * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio));
+    // EXPECT_EQ(default_recv_cons_tx->get_current_used_deposit(), tx_size * 3 * 20);
 
     // confirm
     make_confirm_cons_tx();
@@ -751,13 +862,21 @@ TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v3_transfer_diff_table_use_deposit) {
     // ... execute confirm tx
     op_confirm.postprocess(supplement_gas, ec);
     EXPECT_EQ(ec.value(), 0);
-    EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(1000000));
-    EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
-    EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance - tx_size * 3 * 20));
-    EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_BURN)->get_balance(), base::vtoken_t(tx_size * 3 * 20));
-    EXPECT_EQ(default_confirm_cons_tx->get_current_used_tgas(), 0);
-    // ignore transfer
-    EXPECT_EQ(default_confirm_cons_tx->get_current_used_deposit(), 0);
+    detail = op_confirm.gasfee_detail();
+    // no exec
+    EXPECT_EQ(detail.m_tx_used_tgas, 0);
+    EXPECT_EQ(detail.m_tx_used_deposit, 0);
+    EXPECT_EQ(detail.m_state_used_tgas, 0);
+    EXPECT_EQ(detail.m_state_last_time, 0);
+    EXPECT_EQ(detail.m_state_burn_balance, 0);
+
+    // EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(1000000));
+    // EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
+    // EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance - tx_size * 3 * 20));
+    // EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_BURN)->get_balance(), base::vtoken_t(tx_size * 3 * 20));
+    // EXPECT_EQ(default_confirm_cons_tx->get_current_used_tgas(), 0);
+    // // ignore transfer
+    // EXPECT_EQ(default_confirm_cons_tx->get_current_used_deposit(), 0);
 }
 
 TEST(test_xtvm_v2, xtvm2_demo_v3_T6_transfer_inner_table) {
@@ -791,11 +910,15 @@ TEST(test_xtvm_v2, xtvm2_demo_v3_T6_transfer_inner_table) {
 
     auto tx_size = p_statectx->default_cons_tx->get_transaction()->get_tx_len();
     auto used_deposit = 21000 / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tgas_to_eth_gas_exchange_ratio) * 20 + tx_size * 3 * 20;
-    EXPECT_EQ(p_statectx->default_cons_tx->get_current_used_tgas(), 0);
-    EXPECT_EQ(p_statectx->default_cons_tx->get_current_used_deposit(), used_deposit);
-    EXPECT_EQ(sender_unitstate->get_used_tgas(), 1000000);
-    EXPECT_EQ(sender_unitstate->balance(), base::vtoken_t(p_statectx->default_balance - used_deposit));
-    EXPECT_EQ(sender_unitstate->burn_balance(), base::vtoken_t(used_deposit));
+    EXPECT_EQ(output.m_vm_output.m_gasfee_detail.m_tx_used_deposit, used_deposit);
+    EXPECT_EQ(output.m_vm_output.m_gasfee_detail.m_tx_used_tgas, 0);
+    EXPECT_EQ(output.m_vm_output.m_gasfee_detail.m_state_used_tgas, 1000000);
+    EXPECT_EQ(output.m_vm_output.m_gasfee_detail.m_state_burn_balance, used_deposit);
+    // EXPECT_EQ(p_statectx->default_cons_tx->get_current_used_tgas(), 0);
+    // EXPECT_EQ(p_statectx->default_cons_tx->get_current_used_deposit(), used_deposit);
+    // EXPECT_EQ(sender_unitstate->get_used_tgas(), 1000000);
+    // EXPECT_EQ(sender_unitstate->balance(), base::vtoken_t(p_statectx->default_balance - used_deposit));
+    // EXPECT_EQ(sender_unitstate->burn_balance(), base::vtoken_t(used_deposit));
 }
 
 // TEST(test_xtvm_v2, xtvm2_demo_v3_transfer_diff_table) {

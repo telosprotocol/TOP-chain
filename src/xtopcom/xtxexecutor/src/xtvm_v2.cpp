@@ -33,8 +33,8 @@ enum_execute_result_type xtvm_v2_t::execute(const xvm_input_t & input, xvm_outpu
         return enum_exec_error_load_state;
     }
     execute_impl(input, output);
-    if (output.m_vm_ec) {
-        xwarn("[xtvm_v2_t::execute] fail-vm execute, category: %s, msg: %s. tx=%s", output.m_vm_ec.category().name(), output.m_vm_ec.message().c_str(), tx->dump().c_str());
+    if (!output.m_tx_exec_succ) {
+        xwarn("[xtvm_v2_t::execute] fail-vm execute, error code: %d, error msg: %s. tx=%s", output.m_vm_error_code, output.m_vm_error_str.c_str(), tx->dump().c_str());
         return enum_exec_error_vm_execute;
     }
     xdbg("[xtvm_v2_t::execute] succ vm execute. tx=%s", tx->dump().c_str());
@@ -49,7 +49,6 @@ void xtvm_v2_t::execute_impl(const xvm_input_t & input, xvm_output_t & output) {
     auto result = execute_tx(statectx, tx);
     if (result.status.ec) {
         output.m_tx_exec_succ = false;
-        output.m_vm_ec = result.status.ec;
         output.m_vm_error_code = result.status.ec.value();
         output.m_vm_error_str = result.status.ec.message().c_str();
         return;
