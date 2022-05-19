@@ -198,6 +198,11 @@ public:
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(min_eth_validator_group_size);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(max_eth_validator_group_size);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(eth_statistic_report_schedule_interval);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(eth_reward_ratio);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(eth_group_zero_workload);
+#endif
+
+#if defined(XCHAIN_FORKED_BY_DEFAULT) && ((XCHAIN_FORKED_BY_DEFAULT) >= 10501)
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(eth_to_top_exchange_ratio);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(tgas_to_eth_gas_exchange_ratio);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(evm_auditor_reward_ratio);
