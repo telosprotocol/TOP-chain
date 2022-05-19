@@ -31,14 +31,18 @@ using query_method_handler = std::function<void(xJson::Value &, xJson::Value &, 
         xwarn("xtx_verifier address_verify address invalid, account:%s", x.c_str());                                                                                               \
         strResult = "account address is invalid";                                                                                                                                  \
         nErrorCode = (uint32_t)enum_xrpc_error_code::rpc_param_param_error; \
-        deal_error(js_rsp, eth::enum_invalid_address); \
+        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_invalid_address, "invalid address"); \
         return; \
     }
 
 #define REGISTER_ETH_QUERY_METHOD(func_name)                                                                                                                                           \
     m_query_method_map.emplace(std::pair<std::string, top::xrpc::query_method_handler>{std::string{#func_name},                                                                    \
                                                                                        std::bind(&xrpc_eth_query_manager::func_name, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4)})
-
+enum enum_query_result {
+    enum_success,
+    enum_block_not_found,
+    enum_unit_not_found,
+};
 class xrpc_eth_query_manager : public rpc::xrpc_handle_face_t {
 public:
     xrpc_eth_query_manager(observer_ptr<store::xstore_face_t> store,
@@ -85,10 +89,9 @@ public:
     top::evm_common::h2048 calculate_bloom(const std::string & hexstr);
 private:
     std::string safe_get_json_value(xJson::Value & json_value, const std::string& key);
-    void set_block_result(const base::xauto_ptr<base::xvblock_t>&  block, xJson::Value& js_result, bool fullTx);
-    xaccount_ptr_t query_account_by_number(const std::string &unit_address, const std::string& table_height);
-    void deal_error(xJson::Value & js_rsp, eth::enum_error_code error_code);
-    bool check_eth_address(const std::string& account);
+    void set_block_result(const xobject_ptr_t<base::xvblock_t>&  block, xJson::Value& js_result, bool fullTx);
+    enum_query_result query_account_by_number(const std::string &unit_address, const std::string& table_height, xaccount_ptr_t& ptr);
+    xobject_ptr_t<base::xvblock_t> query_block_by_height(const std::string& height_str);
 private:
     observer_ptr<store::xstore_face_t> m_store;
     observer_ptr<base::xvblockstore_t> m_block_store;
@@ -100,7 +103,6 @@ private:
     xtxpool_service_v2::xtxpool_proxy_face_ptr m_txpool_service;
     observer_ptr<base::xvtxstore_t> m_txstore;
     bool m_exchange_flag{false};
-    eth::EthErrorCode m_eth_error_info;
 };
 
 }  // namespace xrpc
