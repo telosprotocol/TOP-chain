@@ -301,7 +301,7 @@ bool xtop_zec_elect_eth_contract::elect_eth_consensus(common::xzone_id_t const z
                                             election_timestamp,
                                             start_time,
                                             random_seed,
-                                            xrange_t<config::xgroup_size_t>(min_eth_auditor_group_size, max_eth_auditor_group_size),
+                                            xrange_t<config::xgroup_size_t>(min_eth_validator_group_size, max_eth_validator_group_size),
                                             effective_standby_network_result,
                                             election_network_result);
 
