@@ -429,12 +429,13 @@ static void get_election_result_property_data(observer_ptr<store::xstore_face_t 
                                               common::xaccount_address_t const & contract_address,
                                               xjson_format_t const json_format,
                                               xJson::Value & json) {
-    assert(contract_address == rec_elect_rec_contract_address       ||      // NOLINT
-           contract_address == rec_elect_zec_contract_address       ||      // NOLINT
-           contract_address == rec_elect_edge_contract_address      ||     // NOLINT
+    assert(contract_address == rec_elect_rec_contract_address       ||  // NOLINT
+           contract_address == rec_elect_zec_contract_address       ||  // NOLINT
+           contract_address == rec_elect_edge_contract_address      ||  // NOLINT
            contract_address == rec_elect_archive_contract_address   ||  // NOLINT
-           contract_address == zec_elect_consensus_contract_address ||
-           contract_address == rec_elect_fullnode_contract_address  ||
+           contract_address == rec_elect_exchange_contract_address  ||  // NOLINT
+           contract_address == zec_elect_consensus_contract_address ||  // NOLINT
+           contract_address == rec_elect_fullnode_contract_address  ||  // NOLINT
            contract_address == zec_elect_eth_contract_address);
 
     std::string serialized_value{};
@@ -509,6 +510,7 @@ static void get_election_result_property_data(observer_ptr<store::xstore_face_t 
            contract_address == rec_elect_zec_contract_address       ||  // NOLINT
            contract_address == rec_elect_edge_contract_address      ||  // NOLINT
            contract_address == rec_elect_archive_contract_address   ||  // NOLINT
+           contract_address == rec_elect_exchange_contract_address  ||  // NOLINT
            contract_address == zec_elect_consensus_contract_address ||  // NOLINT
            contract_address == rec_elect_fullnode_contract_address  ||
            contract_address == zec_elect_eth_contract_address);
@@ -593,8 +595,9 @@ static void get_election_result_property_data(const xaccount_ptr_t unitstate,
            contract_address == rec_elect_zec_contract_address       ||  // NOLINT
            contract_address == rec_elect_edge_contract_address      ||  // NOLINT
            contract_address == rec_elect_archive_contract_address   ||  // NOLINT
-           contract_address == zec_elect_consensus_contract_address ||
-           contract_address == rec_elect_fullnode_contract_address  ||
+           contract_address == rec_elect_exchange_contract_address  ||  // NOLINT
+           contract_address == zec_elect_consensus_contract_address ||  // NOLINT
+           contract_address == rec_elect_fullnode_contract_address  ||  // NOLINT
            contract_address == zec_elect_eth_contract_address);
 
     std::string serialized_value = unitstate->string_get(property_name);
@@ -1643,6 +1646,7 @@ void xtop_contract_manager::get_contract_data(common::xaccount_address_t const &
         contract_address == rec_elect_zec_contract_address       || // NOLINT
         contract_address == rec_elect_edge_contract_address      || // NOLINT
         contract_address == rec_elect_archive_contract_address   || // NOLINT
+        contract_address == rec_elect_exchange_contract_address  || // NOLINT
         contract_address == zec_elect_consensus_contract_address ||
         contract_address == rec_elect_fullnode_contract_address  ||
         contract_address == zec_elect_eth_contract_address) {
@@ -1722,6 +1726,7 @@ void xtop_contract_manager::get_contract_data(common::xaccount_address_t const &
         contract_address == rec_elect_zec_contract_address       || // NOLINT
         contract_address == rec_elect_edge_contract_address      || // NOLINT
         contract_address == rec_elect_archive_contract_address   || // NOLINT
+        contract_address == rec_elect_exchange_contract_address  || // NOLINT
         contract_address == zec_elect_consensus_contract_address ||
         contract_address == rec_elect_fullnode_contract_address  ||
         contract_address == zec_elect_eth_contract_address) {
@@ -2246,6 +2251,7 @@ void xtop_contract_manager::get_contract_data(common::xaccount_address_t const &
         contract_address == rec_elect_zec_contract_address       || // NOLINT
         contract_address == rec_elect_edge_contract_address      || // NOLINT
         contract_address == rec_elect_archive_contract_address   || // NOLINT
+        contract_address == rec_elect_exchange_contract_address  || // NOLINT
         contract_address == zec_elect_consensus_contract_address ||
         contract_address == rec_elect_fullnode_contract_address  ||
         contract_address == zec_elect_eth_contract_address) {
