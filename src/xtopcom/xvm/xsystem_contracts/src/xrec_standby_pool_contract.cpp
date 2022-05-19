@@ -434,9 +434,21 @@ bool xtop_rec_standby_pool_contract::update_standby_node(data::system_contract::
     }
     if (evm_enabled && reg_node.can_be_evm_auditor()) {
         new_node_info.stake_container.insert({common::xnode_type_t::evm_auditor, reg_node.evm_auditor_stake()});
+        if (chain_fork::xchain_fork_config_center_t::is_forked(fork_config.election_contract_stores_credit_score_fork_point, current_logic_time)) {
+            xdbg("xrec_standby_pool_contract_t::update_standby_node account %s credit score %" PRIu64,
+                reg_node.m_account.c_str(),
+                reg_node.raw_credit_score_data(common::xnode_type_t::consensus_auditor));
+            new_node_info.raw_credit_score(common::xnode_type_t::evm_auditor, reg_node.raw_credit_score_data(top::common::xnode_type_t::consensus_auditor));
+        }
     }
     if (evm_enabled && reg_node.can_be_evm_validator()) {
         new_node_info.stake_container.insert({common::xnode_type_t::evm_validator, reg_node.evm_validator_stake()});
+        if (chain_fork::xchain_fork_config_center_t::is_forked(fork_config.election_contract_stores_credit_score_fork_point, current_logic_time)) {
+            xdbg("xrec_standby_pool_contract_t::update_standby_node account %s credit score %" PRIu64,
+                 reg_node.m_account.c_str(),
+                 reg_node.raw_credit_score_data(common::xnode_type_t::consensus_validator));
+            new_node_info.raw_credit_score(common::xnode_type_t::evm_validator, reg_node.raw_credit_score_data(top::common::xnode_type_t::consensus_validator));
+        }
     }
 
     new_node_info.consensus_public_key = reg_node.consensus_public_key;
@@ -476,6 +488,16 @@ bool xtop_rec_standby_pool_contract::update_standby_node(data::system_contract::
              reg_node.raw_credit_score_data(common::xnode_type_t::consensus_validator));
     }
     if (reg_node.can_be_auditor()) {
+        xdbg("xrec_standby_pool_contract_t::update_standby_node account %s updated credit score %" PRIu64,
+             reg_node.m_account.c_str(),
+             reg_node.raw_credit_score_data(common::xnode_type_t::consensus_auditor));
+    }
+    if (reg_node.can_be_evm_validator()) {
+        xdbg("xrec_standby_pool_contract_t::update_standby_node account %s updated credit score %" PRIu64,
+             reg_node.m_account.c_str(),
+             reg_node.raw_credit_score_data(common::xnode_type_t::consensus_validator));
+    }
+    if (reg_node.can_be_evm_auditor()) {
         xdbg("xrec_standby_pool_contract_t::update_standby_node account %s updated credit score %" PRIu64,
              reg_node.m_account.c_str(),
              reg_node.raw_credit_score_data(common::xnode_type_t::consensus_auditor));
