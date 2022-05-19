@@ -6,6 +6,7 @@
 
 #include "xgasfee/xgas_state_operator.h"
 #include "xgasfee/xgas_tx_operator.h"
+#include "xtxexecutor/xvm_face.h"
 
 #include <iostream>
 
@@ -19,6 +20,8 @@ public:
 public:
     void preprocess(std::error_code & ec);
     void postprocess(const uint64_t supplement_gas, std::error_code & ec);
+
+    txexecutor::xvm_gasfee_detail_t gasfee_detail() const;
 
 private:
     void preprocess_one_stage(std::error_code & ec);
@@ -59,6 +62,9 @@ private:
     // onchain related param
     uint64_t m_time{0};
     uint64_t m_onchain_tgas_deposit{0};
+
+    // output
+    txexecutor::xvm_gasfee_detail_t m_detail;
 };
 
 using xgasfee_t = xtop_gasfee;
