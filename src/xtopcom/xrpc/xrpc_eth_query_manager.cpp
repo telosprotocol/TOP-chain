@@ -14,7 +14,6 @@
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xcommon/xip.h"
 #include "xconfig/xconfig_register.h"
-#include "xdata/xblocktool.h"
 #include "xdata/xcodec/xmsgpack/xelection/xelection_network_result_codec.hpp"
 #include "xdata/xcodec/xmsgpack/xelection/xelection_result_store_codec.hpp"
 #include "xdata/xcodec/xmsgpack/xelection/xstandby_result_store_codec.hpp"
@@ -30,37 +29,38 @@
 #include "xdata/xelection/xelection_result_store.h"
 #include "xdata/xelection/xstandby_result_store.h"
 #include "xdata/xfull_tableblock.h"
+#include "xdata/xtx_factory.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xproposal_data.h"
+//#include "xdata/xslash.h"
 #include "xdata/xtable_bstate.h"
 #include "xdata/xtableblock.h"
 #include "xdata/xtransaction_cache.h"
-#include "xdata/xtransaction_v2.h"
-#include "xdata/xtransaction_v3.h"
-#include "xdata/xtx_factory.h"
-#include "xevm/xevm.h"
-#include "xevm_common/address.h"
-#include "xevm_common/common.h"
-#include "xevm_common/common_data.h"
 #include "xevm_common/fixed_hash.h"
+#include "xevm_common/common_data.h"
+#include "xevm_common/common.h"
 #include "xevm_common/rlp.h"
-#include "xevm_contract_runtime/xevm_contract_manager.h"
-#include "xmbus/xevent_behind.h"
-#include "xpbase/base/top_utils.h"
+#include "xevm_common/address.h"
 #include "xrouter/xrouter.h"
-#include "xrpc/xrpc_loader.h"
 #include "xrpc/xuint_format.h"
-#include "xstatectx/xstatectx.h"
+#include "xrpc/xrpc_loader.h"
 #include "xstore/xaccount_context.h"
 #include "xstore/xtgas_singleton.h"
 #include "xtxexecutor/xtransaction_fee.h"
-#include "xtxexecutor/xvm_face.h"
-#include "xutility/xhash.h"
 #include "xvledger/xvblock.h"
 #include "xvledger/xvledger.h"
 #include "xvm/manager/xcontract_address_map.h"
 #include "xvm/manager/xcontract_manager.h"
+#include "xmbus/xevent_behind.h"
+#include "xdata/xblocktool.h"
+#include "xpbase/base/top_utils.h"
+#include "xutility/xhash.h"
 
+#include "xtxexecutor/xvm_face.h"
+#include "xevm/xevm.h"
+#include "xdata/xtransaction_v2.h"
+#include "xdata/xtransaction_v3.h"
+#include "xstatectx/xstatectx.h"
 using namespace top::data;
 
 namespace top {
@@ -185,6 +185,7 @@ void xrpc_eth_query_manager::eth_getBalance(xJson::Value & js_req, xJson::Value 
         js_rsp["result"] = "0x0";
     } else if (ret == enum_success) {
         evm_common::u256 balance = account_ptr->tep_token_balance(data::XPROPERTY_ASSET_ETH);
+
         std::string balance_str = toHex((top::evm_common::h256)balance);
 
         uint32_t i = 0;
@@ -596,8 +597,8 @@ std::string xrpc_eth_query_manager::safe_get_json_value(xJson::Value & js_req, c
     return "";
 }
 void xrpc_eth_query_manager::eth_call(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
-    if (!eth::EthErrorCode::check_req(js_req, js_rsp, 2))
-        return;
+//    if (!eth::EthErrorCode::check_req(js_req, js_rsp, 2))
+//        return;
     if (!eth::EthErrorCode::check_hex(js_req[1].asString(), js_rsp, 1, true))
         return;
 
@@ -698,12 +699,14 @@ void xrpc_eth_query_manager::eth_call(xJson::Value & js_req, xJson::Value & js_r
         return;
     }
     xinfo("evm call: %d, %s", output.m_tx_result.status, output.m_tx_result.extra_msg.c_str());
-    gas_value = std::strtoul(gas.c_str(), NULL, 16);
-    if (gas_value < output.m_tx_result.used_gas) {
-        std::string msg = std::string("err: intrinsic gas too low: have ") + gas_value.str() + ", want " +
-            std::to_string(output.m_tx_result.used_gas) + " (supplied gas " + gas_value.str() + ")";
-        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);
-        return;
+    if (!gas.empty()) {
+        gas_value = std::strtoul(gas.c_str(), NULL, 16);
+        if (gas_value < output.m_tx_result.used_gas) {
+            std::string msg = std::string("err: intrinsic gas too low: have ") + gas_value.str() + ", want " + std::to_string(output.m_tx_result.used_gas)
+                + " (supplied gas " + gas_value.str() + ")";
+            eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);
+            return;
+        }
     }
     if (output.m_tx_result.status == evm_common::OutOfFund) {
         std::string msg = "insufficient funds for transfer";
@@ -720,8 +723,8 @@ void xrpc_eth_query_manager::eth_call(xJson::Value & js_req, xJson::Value & js_r
 }
 
 void xrpc_eth_query_manager::eth_estimateGas(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
-    if (!eth::EthErrorCode::check_req(js_req, js_rsp, 2))
-        return;
+//    if (!eth::EthErrorCode::check_req(js_req, js_rsp, 2))
+//        return;
     if (!eth::EthErrorCode::check_hex(js_req[1].asString(), js_rsp, 1, true))
         return;
 
@@ -777,7 +780,7 @@ void xrpc_eth_query_manager::eth_estimateGas(xJson::Value & js_req, xJson::Value
     base::xvaccount_t _vaddress(addr);
      xobject_ptr_t<base::xvblock_t> block = query_block_by_height(js_req[1].asString());
     if (block == nullptr) {
-        std::string msg = "header not found";
+        std::string msg = "block not found";
         eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);
         return;
     }
@@ -798,6 +801,18 @@ void xrpc_eth_query_manager::eth_estimateGas(xJson::Value & js_req, xJson::Value
     }
 //        unitstate->tep_token_deposit(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH, std::strtoul(value.c_str(), NULL, 16));
     //evm_common::u256 allowance = unitstate->tep_token_balance(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_TOP);
+    if (!gas.empty() && !gas_price.empty()) {
+        evm_common::u256 fund = unitstate->balance();
+        uint64_t supplied_gas = std::strtoul(gas.c_str(), NULL, 16);
+        evm_common::u256 gasfee = supplied_gas;
+        gasfee *= std::strtoul(gas_price.c_str(), NULL, 16);
+        xinfo("eth_call, gas: %s,%s,%llu, %s, %s", gas.c_str(), gas_price.c_str(), supplied_gas, fund.str().c_str(), gasfee.str().c_str());
+        if (fund < gasfee) {
+            std::string msg = std::string("gas required exceeds allowance (") + fund.str() + ")";
+            eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);
+            return;
+        }
+    }
 
     txexecutor::xvm_para_t vmpara(cs_para.get_clock(), cs_para.get_random_seed(), cs_para.get_total_lock_tgas_token());
 
