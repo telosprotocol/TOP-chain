@@ -803,8 +803,10 @@ xnode_type_t node_type_from(common::xzone_id_t const & zone_id, common::xcluster
     }
 
     case xnode_type_t::evm: {
-        if (xdefault_group_id == group_id) {
-            node_type |= xnode_type_t::evm_eth;
+        if (xauditor_group_id_begin <= group_id && group_id < xauditor_group_id_end) {
+            node_type |= xnode_type_t::evm_auditor;
+        } else if (xvalidator_group_id_begin <= group_id && group_id < xvalidator_group_id_end) {
+            node_type |= xnode_type_t::evm_validator;
         } else {
             assert(false);
             node_type = xnode_type_t::invalid;

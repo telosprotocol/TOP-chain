@@ -236,19 +236,6 @@ private:
     int32_t do_read(base::xstream_t & stream) override;
 };
 
-struct xunqualified_node_info_v2_t final : public xserializable_based_on<void> {
-    std::map<common::xnode_id_t, xnode_vote_percent_t> auditor_info;
-    std::map<common::xnode_id_t, xnode_vote_percent_t> validator_info;
-    std::map<common::xnode_id_t, xnode_vote_percent_t> evm_info;
-
-    explicit operator xunqualified_node_info_v1_t() const;
-
-private:
-    int32_t do_write(base::xstream_t & stream) const override;
-
-    int32_t do_read(base::xstream_t & stream) override;
-};
-
 struct xunqualified_filter_info_t final : public xserializable_based_on<void> {
     common::xnode_id_t node_id;
     common::xnode_type_t node_type;
@@ -401,8 +388,11 @@ public:
     /// @brief Check to see if this account could be a fullnode node based on miner type.
     bool could_be_fullnode() const noexcept;
 
-    /// @brief Check to see if this account coule be an eth node based on miner type.
-    bool could_be_eth() const noexcept;
+    /// @brief Check to see if this account coule be an evm auditor node based on miner type.
+    bool could_be_evm_auditor() const noexcept;
+
+    /// @brief Check to see if this account coule be an evm validator node based on miner type.
+    bool could_be_evm_validator() const noexcept;
 
     /// @brief Check to see if this node can be an rec based on miner type and other information (e.g. deposit, amount of received tickets).
     bool can_be_rec() const noexcept;
@@ -432,7 +422,10 @@ public:
     bool can_be_fullnode() const noexcept;
 
     /// @brief Check to see if this account can be an eth based on miner type and other information (e.g. deposit, amount of received tickects).
-    bool can_be_eth() const noexcept;
+    bool can_be_evm_auditor() const noexcept;
+
+    /// @brief Check to see if this account can be an eth based on miner type and other information (e.g. deposit, amount of received tickects).
+    bool can_be_evm_validator() const noexcept;
 
     template <common::xminer_type_t MinerTypeV>
     bool has() const noexcept {
@@ -499,7 +492,9 @@ public:
 
     uint64_t fullnode_stake() const noexcept;
 
-    uint64_t eth_stake() const noexcept;
+    uint64_t evm_auditor_stake() const noexcept;
+
+    uint64_t evm_validator_stake() const noexcept;
 
     /// @brief Get miner type.
     common::xminer_type_t miner_type() const noexcept;
@@ -728,7 +723,8 @@ struct reward_detail_v2 final : public xserializable_based_on<void> {
     ::uint128_t m_archive_reward{0};
     ::uint128_t m_validator_reward{0};
     ::uint128_t m_auditor_reward{0};
-    ::uint128_t m_eth_reward{0};
+    ::uint128_t m_evm_validator_reward{0};
+    ::uint128_t m_evm_auditor_reward{0};
     ::uint128_t m_vote_reward{0};
     ::uint128_t m_self_reward{0};
 
@@ -788,12 +784,14 @@ public:
     uint16_t m_archive_reward_ratio{0};
     uint16_t m_validator_reward_ratio{0};
     uint16_t m_auditor_reward_ratio{0};
-    uint16_t m_eth_reward_ratio{0};
+    uint16_t m_evm_auditor_reward_ratio{0};
+    uint16_t m_evm_validator_reward_ratio{0};
     uint16_t m_vote_reward_ratio{0};
     uint16_t m_governance_reward_ratio{0};
     uint64_t m_auditor_group_count{0};
     uint64_t m_validator_group_count{0};
-    uint64_t m_eth_group_count{0};
+    uint64_t m_evm_auditor_group_count{0};
+    uint64_t m_evm_validator_group_count{0};
     std::map<std::string, reward_detail_v2> m_node_rewards;
 
 public:

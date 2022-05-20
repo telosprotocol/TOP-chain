@@ -10,6 +10,7 @@
 #include "xrpc/xrpc_init.h"
 #include "xrpc/xrpc_method.h"
 #include "xrpc/xuint_format.h"
+#include "xvledger/xvaccount.h"
 #include "xvnetwork/xvnetwork_error.h"
 
 #include <cinttypes>
@@ -83,6 +84,7 @@ void xcluster_rpc_handler::on_message(const xvnode_address_t & edge_sender, cons
 void xcluster_rpc_handler::cluster_process_request(const xrpc_msg_request_t & edge_msg, const xvnode_address_t & edge_sender, const xmessage_t & message) {
     std::string tx_hash;
     std::string account;
+    bool is_evm_tx = false;
     if (edge_msg.m_tx_type == enum_xrpc_tx_type::enum_xrpc_tx_type) {
         xtransaction_ptr_t tx_ptr;
         auto ret = xtransaction_t::set_tx_by_serialized_data(tx_ptr, edge_msg.m_message_body);
@@ -100,6 +102,7 @@ void xcluster_rpc_handler::cluster_process_request(const xrpc_msg_request_t & ed
                edge_sender.to_string().c_str(),
                m_cluster_vhost->address().to_string().c_str(),
                message.hash());
+        is_evm_tx = base::xvaccount_t::get_addrtype_from_account(account) == base::enum_vaccount_addr_type_secp256k1_evm_user_account;
 
         uint64_t now = (uint64_t)base::xtime_utl::gettimeofday();
         uint64_t delay_time_s = tx_ptr->get_delay_from_fire_timestamp(now);
@@ -129,10 +132,11 @@ void xcluster_rpc_handler::cluster_process_request(const xrpc_msg_request_t & ed
         if (me_addr == item.second.address && (message.hash() % neighbors.size() == count || (message.hash() + 1) % neighbors.size() == count)) {
             xkinfo("m_cluster_vhost send:%s,%" PRIu64, item.second.address.to_string().c_str(), message.hash());
 
+            common::xnode_type_t type = is_evm_tx ? common::xnode_type_t::evm_validator : common::xnode_type_t::consensus_validator;
             xmessage_t msg(codec::xmsgpack_codec_t<xrpc_msg_request_t>::encode(edge_msg), rpc_msg_request);
             auto cluster_addr =
-                m_router_ptr->sharding_address_from_account(common::xaccount_address_t{edge_msg.m_account}, edge_sender.network_id(), common::xnode_type_t::consensus_validator);
-            assert(common::has<common::xnode_type_t::consensus_validator>(cluster_addr.type()));
+                m_router_ptr->sharding_address_from_account(common::xaccount_address_t{edge_msg.m_account}, edge_sender.network_id(), type);
+            assert(is_evm_tx ? common::has<common::xnode_type_t::evm_validator>(cluster_addr.type()) : common::has<common::xnode_type_t::consensus_validator>(cluster_addr.type()));
             vnetwork::xvnode_address_t vaddr{std::move(cluster_addr)};
             xkinfo("[global_trace][advance_rpc][forward shard]%s,%s,src %s,dst %s,%" PRIx64,
                    tx_hash.c_str(),

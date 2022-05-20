@@ -401,6 +401,31 @@ void xtop_vhost::broadcast(common::xnode_address_t const & src, common::xnode_ad
             }
         }
 
+        if (common::has<common::xnode_type_t::evm_auditor>(src.type()) && common::has<common::xnode_type_t::evm_validator>(n_dst.type())) {
+            // dst is child
+            auto child_address = m_election_cache_data_accessor->child_addresses(src.sharding_address(), src.logic_epoch(), ec);
+            if (ec) {
+                xwarn("%s ec category: %s ec msg: %s", vnetwork_category2().name(), ec.category().name(), ec.message().c_str());
+                assert(false);
+            }
+            for (auto const & _child : child_address) {
+                if (_child.sharding_address() == n_dst.sharding_address()) {
+                    n_dst = common::xnode_address_t{n_dst.sharding_address(), _child.election_round(), _child.group_size(), _child.associated_blk_height()};
+                    break;
+                }
+            }
+        } else if (common::has<common::xnode_type_t::evm_validator>(src.type()) && common::has<common::xnode_type_t::evm_auditor>(n_dst.type())) {
+            // dst is parent
+            auto parent_address = m_election_cache_data_accessor->parent_address(src.sharding_address(), src.logic_epoch(), ec);
+            if (ec) {
+                xwarn("%s ec category: %s ec msg: %s", vnetwork_category2().name(), ec.category().name(), ec.message().c_str());
+                assert(false);
+            }
+            if (n_dst.sharding_address() == parent_address.sharding_address()) {
+                n_dst = common::xnode_address_t{n_dst.sharding_address(), parent_address.election_round(), parent_address.group_size(), parent_address.associated_blk_height()};
+            }
+        }
+
         xvnetwork_message_t const vmsg{src, n_dst, message, m_chain_timer->logic_time()};
         auto const bytes_message = top::codec::msgpack_encode(vmsg);
 

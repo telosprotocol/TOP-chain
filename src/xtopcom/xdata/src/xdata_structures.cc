@@ -205,31 +205,6 @@ int32_t xunqualified_node_info_v1_t::do_read(base::xstream_t & stream) {
     return CALC_LEN();
 }
 
-int32_t xunqualified_node_info_v2_t::do_write(base::xstream_t & stream) const {
-    KEEP_SIZE();
-    MAP_OBJECT_SERIALIZE2(stream, auditor_info);
-    MAP_OBJECT_SERIALIZE2(stream, validator_info);
-    MAP_OBJECT_SERIALIZE2(stream, evm_info);
-    return CALC_LEN();
-}
-
-int32_t xunqualified_node_info_v2_t::do_read(base::xstream_t & stream) {
-    KEEP_SIZE();
-    MAP_OBJECT_DESERIALZE2(stream, auditor_info);
-    MAP_OBJECT_DESERIALZE2(stream, validator_info);
-    if (stream.size() > 0) {
-        MAP_OBJECT_DESERIALZE2(stream, evm_info);
-    }
-    return CALC_LEN();
-}
-
-xunqualified_node_info_v2_t::operator xunqualified_node_info_v1_t() const {
-    xunqualified_node_info_v1_t v1;
-    v1.auditor_info = auditor_info;
-    v1.validator_info = validator_info;
-    return v1;
-}
-
 int32_t xunqualified_filter_info_t::do_write(base::xstream_t & stream) const {
     KEEP_SIZE();
     stream << node_id;
@@ -328,7 +303,12 @@ bool could_be<common::xnode_type_t::fullnode>(common::xminer_type_t const miner_
 }
 
 template <>
-bool could_be<common::xnode_type_t::evm_eth>(common::xminer_type_t const miner_type) {
+bool could_be<common::xnode_type_t::evm_auditor>(common::xminer_type_t const miner_type) {
+    return common::has<common::xminer_type_t::advance>(miner_type);
+}
+
+template <>
+bool could_be<common::xnode_type_t::evm_validator>(common::xminer_type_t const miner_type) {
     return common::has<common::xminer_type_t::advance>(miner_type);
 }
 
@@ -368,8 +348,12 @@ bool xreg_node_info::could_be_fullnode() const noexcept {
     return could_be<common::xnode_type_t::fullnode>(m_registered_miner_type);
 }
 
-bool xreg_node_info::could_be_eth() const noexcept {
-    return could_be<common::xnode_type_t::evm_eth>(m_registered_miner_type);
+bool xreg_node_info::could_be_evm_auditor() const noexcept {
+    return could_be<common::xnode_type_t::evm_auditor>(m_registered_miner_type);
+}
+
+bool xreg_node_info::could_be_evm_validator() const noexcept {
+    return could_be<common::xnode_type_t::evm_validator>(m_registered_miner_type);
 }
 
 bool xreg_node_info::can_be_rec() const noexcept {
@@ -408,8 +392,12 @@ bool xreg_node_info::can_be_fullnode() const noexcept {
     return could_be_auditor();
 }
 
-bool xreg_node_info::can_be_eth() const noexcept {
-    return could_be_eth() && has_enough_tickets();
+bool xreg_node_info::can_be_evm_auditor() const noexcept {
+    return could_be_evm_auditor() && has_enough_tickets();
+}
+
+bool xreg_node_info::can_be_evm_validator() const noexcept {
+    return could_be_evm_validator();
 }
 
 bool xreg_node_info::has_enough_tickets() const noexcept {
@@ -485,8 +473,12 @@ uint64_t xreg_node_info::fullnode_stake() const noexcept {
     return 0;
 }
 
-uint64_t xreg_node_info::eth_stake() const noexcept {
+uint64_t xreg_node_info::evm_auditor_stake() const noexcept {
     return auditor_stake();
+}
+
+uint64_t xreg_node_info::evm_validator_stake() const noexcept {
+    return validator_stake();
 }
 
 common::xminer_type_t xreg_node_info::miner_type() const noexcept {
@@ -722,7 +714,8 @@ int32_t reward_detail_v2::do_write(base::xstream_t & stream) const {
     stream << m_auditor_reward;
     stream << m_vote_reward;
     stream << m_self_reward;
-    stream << m_eth_reward;
+    stream << m_evm_validator_reward;
+    stream << m_evm_auditor_reward;
     const int32_t end_pos = stream.size();
     return (end_pos - begin_pos);
 }
@@ -736,7 +729,10 @@ int32_t reward_detail_v2::do_read(base::xstream_t & stream) {
     stream >> m_vote_reward;
     stream >> m_self_reward;
     if (stream.size() > 0) {
-        stream >> m_eth_reward;
+        stream >> m_evm_validator_reward;
+    }
+    if (stream.size() > 0) {
+        stream >> m_evm_auditor_reward;
     }
     const int32_t end_pos = stream.size();
     return (begin_pos - end_pos);
@@ -846,8 +842,10 @@ int32_t xissue_detail_v2::do_write(base::xstream_t & stream) const {
     stream << m_auditor_group_count;
     stream << m_validator_group_count;
     MAP_OBJECT_SERIALIZE2(stream, m_node_rewards);
-    stream << m_eth_reward_ratio;
-    stream << m_eth_group_count;
+    stream << m_evm_auditor_reward_ratio;
+    stream << m_evm_validator_reward_ratio;
+    stream << m_evm_auditor_group_count;
+    stream << m_evm_validator_group_count;
     const int32_t end_pos = stream.size();
     return (end_pos - begin_pos);
 }
@@ -868,10 +866,16 @@ int32_t xissue_detail_v2::do_read(base::xstream_t & stream) {
     stream >> m_validator_group_count;
     MAP_OBJECT_DESERIALZE2(stream, m_node_rewards);
     if (stream.size() > 0) {
-        stream >> m_eth_reward_ratio;
+        stream >> m_evm_auditor_reward_ratio;
     }
     if (stream.size() > 0) {
-        stream >> m_eth_group_count;
+        stream >> m_evm_validator_reward_ratio;
+    }
+    if (stream.size() > 0) {
+        stream >> m_evm_auditor_group_count;
+    }
+    if (stream.size() > 0) {
+        stream >> m_evm_validator_group_count;
     }
     const int32_t end_pos = stream.size();
     return (begin_pos - end_pos);
