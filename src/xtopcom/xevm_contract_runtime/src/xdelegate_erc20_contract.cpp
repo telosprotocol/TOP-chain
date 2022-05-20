@@ -57,6 +57,8 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
         err.fail_status = precompile_error::Fatal;
         err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::NotSupported);
 
+        xwarn("predefined erc20 contract: not supported token: %d", static_cast<int>(erc20_token_id));
+
         return false;
     }
 
@@ -83,6 +85,8 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
 
     switch (function_selector.method_id) {
     case method_id_total_supply: {
+        xdbg("predefined erc20 contract: totalSupply");
+
         uint64_t const total_supply_gas_cost = 2538;
         if (target_gas < total_supply_gas_cost) {
             err.fail_status = Error;
@@ -111,6 +115,8 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
     }
 
     case method_id_balance_of: {
+        xdbg("predefined erc20 contract: balanceOf");
+
         uint64_t const balance_of_gas_cost = 3268;
         if (target_gas < balance_of_gas_cost) {
             err.fail_status = precompile_error::Error;
@@ -180,6 +186,8 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
     }
 
     case method_id_transfer: {
+        xdbg("predefined erc20 contract: transfer");
+
         uint64_t const transfer_gas_cost = 18446;
         uint64_t const transfer_reverted_gas_cost = 3662;
 
@@ -269,6 +277,8 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
     }
 
     case method_id_transfer_from: {
+        xdbg("predefined erc20 contract: transferFrom");
+
         uint64_t const transfer_from_gas_cost = 18190;
         uint64_t const transfer_from_reverted_gas_cost = 4326;
 
@@ -378,6 +388,8 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
     }
 
     case method_id_approve: {
+        xdbg("predefined erc20 contract: approve");
+
         uint64_t const approve_gas_cost = 18599;
         if (target_gas < approve_gas_cost) {
             err.fail_status = precompile_error::Error;
@@ -462,6 +474,8 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
     }
 
     case method_id_allowance: {
+        xdbg("predefined erc20 contract: allowance");
+
         uint64_t const allowance_gas_cost = 3987;
         if (target_gas < allowance_gas_cost) {
             err.fail_status = precompile_error::Error;
@@ -518,7 +532,9 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
     }
 
     case method_id_mint: {
-        uint64_t const mint_gas_cost = 13155;
+        xdbg("predefined erc20 contract: mint");
+
+        uint64_t const mint_gas_cost = 3155;
         if (target_gas < mint_gas_cost) {
             err.fail_status = precompile_error::Error;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
@@ -618,6 +634,8 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
     default: {
         err.fail_status = precompile_error::Fatal;
         err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::NotSupported);
+
+        xwarn("predefined erc20 contract: not supported method_id: %" PRIx32, function_selector.method_id);
 
         return false;
     }

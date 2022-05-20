@@ -220,13 +220,13 @@ void xunit_bstate_t::transfer(common::xtoken_id_t const token_id, observer_ptr<x
     switch (token_id) {
     case common::xtoken_id_t::top: {
         if (token_withdraw(data::XPROPERTY_BALANCE_AVAILABLE, amount_vtoken)) {
-            xerror("sender_withdraw failed");
+            xwarn("sender_withdraw failed");
             ec = error::xerrc_t::update_state_failed;
             break;
         }
 
         if (recver_state->token_deposit(data::XPROPERTY_BALANCE_AVAILABLE, amount_vtoken)) {
-            xerror("recver_deposit failed");
+            xwarn("recver_deposit failed");
             ec = error::xerrc_t::update_state_failed;
             break;
         }
@@ -236,13 +236,13 @@ void xunit_bstate_t::transfer(common::xtoken_id_t const token_id, observer_ptr<x
 
     case common::xtoken_id_t::usdt: {
         if (tep_token_withdraw("USDT", value)) {
-            xerror("sender_tep_withdraw failed");
+            xwarn("sender_tep_withdraw failed");
             ec = error::xerrc_t::update_state_failed;
             break;
         }
 
         if (recver_state->tep_token_deposit("USDT", value)) {
-            xerror("recver_tep_deposit failed");
+            xwarn("recver_tep_deposit failed");
             ec = error::xerrc_t::update_state_failed;
             break;
         }
@@ -252,13 +252,13 @@ void xunit_bstate_t::transfer(common::xtoken_id_t const token_id, observer_ptr<x
 
     case common::xtoken_id_t::usdc: {
         if (tep_token_withdraw("USDC", value)) {
-            xerror("sender_tep_withdraw failed");
+            xwarn("sender_tep_withdraw failed");
             ec = error::xerrc_t::update_state_failed;
             break;
         }
 
         if (recver_state->tep_token_deposit("USDC", value)) {
-            xerror("recver_tep_deposit failed");
+            xwarn("recver_tep_deposit failed");
             ec = error::xerrc_t::update_state_failed;
             break;
         }
@@ -268,6 +268,7 @@ void xunit_bstate_t::transfer(common::xtoken_id_t const token_id, observer_ptr<x
 
     default:
         assert(false);
+        ec = error::xerrc_t::action_address_type_error;
         break;
     }
 }
