@@ -29,9 +29,8 @@
 #include "xverifier/xwhitelist_verifier.h"
 #include "xvledger/xvblock.h"
 #include "xvnetwork/xvhost_face.h"
-//#include "xrpc/eth_jsonrpc/Eth.h"
-//#include "xrpc/eth_jsonrpc/ClientBase.h"
 #include "xrpc/eth_rpc/eth_method.h"
+#include "xrpc/eth_rpc/eth_error_code.h"
 
 NS_BEG2(top, xrpc)
 using base::xcontext_t;
@@ -150,7 +149,6 @@ void xedge_evm_method_base<T>::do_method(shared_ptr<conn_type> & response, xjson
     res["id"] = json_proc.m_request_json["id"].asString();
     res["jsonrpc"] = json_proc.m_request_json["jsonrpc"].asString();
     if (m_eth_method.CallMethod(json_proc.m_request_json, res) == 0) {
-//        res["result"] = eth_res;
         xJson::FastWriter j_writer;
         std::string s_res = j_writer.write(res);
         xdbg("rpc response:%s", s_res.c_str());
@@ -160,8 +158,6 @@ void xedge_evm_method_base<T>::do_method(shared_ptr<conn_type> & response, xjson
 
     if (m_eth_method.supported_method(method) == false) {
         xinfo("not support method: %s", method.c_str());
-//        res["result"] = eth_res;
-
         xJson::FastWriter j_writer;
         std::string s_res = j_writer.write(res);
         xdbg("rpc response:%s", s_res.c_str());
@@ -201,6 +197,13 @@ void xedge_evm_method_base<T>::do_method(shared_ptr<conn_type> & response, xjson
 template <class T>
 void xedge_evm_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, const std::string & ip) {
     auto & request = json_proc.m_request_json;
+    json_proc.m_response_json["id"] = request["id"];
+    json_proc.m_response_json["jsonrpc"] = request["jsonrpc"];
+    if (!eth::EthErrorCode::check_req(request["params"], json_proc.m_response_json, 1))
+        return;
+    if (!eth::EthErrorCode::check_hex(request["params"][0].asString(), json_proc.m_response_json, 0, false))
+        return;
+
     request["tx_structure_version"] = 3;
     json_proc.m_tx_ptr = data::xtx_factory::create_tx(static_cast<data::enum_xtransaction_version>(request["tx_structure_version"].asUInt()));
     auto & tx = json_proc.m_tx_ptr;
@@ -208,8 +211,6 @@ void xedge_evm_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, 
     tx->verify_tx(request, ec);
     if (ec)
     {
-        json_proc.m_response_json["id"] = request["id"];
-        json_proc.m_response_json["jsonrpc"] = request["jsonrpc"];
         xJson::Value errinfo;
         errinfo["code"] = ec.value();
         errinfo["messgae"] = ec.message();
@@ -219,8 +220,6 @@ void xedge_evm_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, 
     if (!(tx->get_origin_target_addr() == sys_contract_rec_standby_pool_addr && tx->get_target_action_name() == "nodeJoinNetwork2")) {
         if (!tx->sign_check()) {
             XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_sign", 1);
-            json_proc.m_response_json["id"] = request["id"];
-            json_proc.m_response_json["jsonrpc"] = request["jsonrpc"];
             xJson::Value errinfo;
             errinfo["code"] = -32000;
             errinfo["messgae"] = "transaction sign error";
@@ -231,8 +230,6 @@ void xedge_evm_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, 
 
     if ((top::xverifier::xverifier_error::xverifier_success != top::xverifier::xtx_utl::address_is_valid(tx->get_source_addr(), true)) || (top::xverifier::xverifier_error::xverifier_success != top::xverifier::xtx_utl::address_is_valid(tx->get_target_addr(), true)))
     {
-        json_proc.m_response_json["id"] = request["id"];
-        json_proc.m_response_json["jsonrpc"] = request["jsonrpc"];
         xJson::Value errinfo;
         errinfo["code"] = -32000;
         errinfo["messgae"] = "account address is invalid";
@@ -244,8 +241,6 @@ void xedge_evm_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, 
     if (xverifier::xblacklist_utl_t::is_black_address(tx->get_source_addr())) {
         xdbg_rpc("[sendTransaction_method] in black address rpc:%s, %s, %s", tx->get_digest_hex_str().c_str(), tx->get_target_addr().c_str(), tx->get_source_addr().c_str());
         XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_blacklist", 1);
-        json_proc.m_response_json["id"] = request["id"];
-        json_proc.m_response_json["jsonrpc"] = request["jsonrpc"];
         xJson::Value errinfo;
         errinfo["code"] = -32000;
         errinfo["messgae"] = "blacklist check failed";
@@ -256,8 +251,6 @@ void xedge_evm_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, 
     if (xverifier::xwhitelist_utl::check_whitelist_limit_tx(tx.get())) {
         XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_whitelist", 1);
         xdbg_rpc("[sendTransaction_method] in whitelist address rpc:%s, %s, %s", tx->get_digest_hex_str().c_str(), tx->get_target_addr().c_str(), tx->get_source_addr().c_str());
-        json_proc.m_response_json["id"] = request["id"];
-        json_proc.m_response_json["jsonrpc"] = request["jsonrpc"];
         xJson::Value errinfo;
         errinfo["code"] = -32000;
         errinfo["messgae"] = "whitelist check failed";
@@ -314,8 +307,6 @@ void xedge_evm_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, 
     const auto & from = tx->get_source_addr();
     json_proc.m_account_set.emplace(from);
     json_proc.m_response_json["result"] = tx_hash;
-    json_proc.m_response_json["id"] = request["id"];
-    json_proc.m_response_json["jsonrpc"] = request["jsonrpc"];
 }
 
 template <class T>
