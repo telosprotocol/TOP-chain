@@ -29,6 +29,7 @@ enum class xenum_errc {
     checkpoint_not_found,
 
     action_address_type_error,
+    invalid_toke_id,
 
     eth_server_error = -32000,
 
