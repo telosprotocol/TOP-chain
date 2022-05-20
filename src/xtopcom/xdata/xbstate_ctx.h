@@ -85,11 +85,17 @@ public:// APIs for property operation with property value return
 
     base::xauto_ptr<base::xmapvar_t<std::string>> load_tep_token_for_write();
     evm_common::u256 tep_token_balance(const std::string& token_name) const;
-    top::xbytes_t    tep_token_balance_bytes(const std::string& token_name) const;
-    int32_t     tep_token_deposit(const std::string& token_name, evm_common::u256 add_token);
-    int32_t     tep_token_withdraw(const std::string& token_name, evm_common::u256 sub_token);
-    int32_t     set_tep_balance(const std::string & token_name, evm_common::u256 new_balance);
-    int32_t     set_tep_balance_bytes(const std::string & token_name, const top::xbytes_t & new_balance);
+    evm_common::u256 tep_token_balance(common::xtoken_id_t const token_id) const;
+    top::xbytes_t tep_token_balance_bytes(const std::string& token_name) const;
+    top::xbytes_t tep_token_balance_bytes(common::xtoken_id_t const token_id) const;
+    int32_t tep_token_deposit(const std::string& token_name, evm_common::u256 add_token);
+    int32_t tep_token_deposit(common::xtoken_id_t const token_id, evm_common::u256 add_token);
+    int32_t tep_token_withdraw(const std::string& token_name, evm_common::u256 sub_token);
+    int32_t tep_token_withdraw(common::xtoken_id_t const token_id, evm_common::u256 sub_token);
+    int32_t set_tep_balance(const std::string & token_name, evm_common::u256 new_balance);
+    int32_t set_tep_balance(common::xtoken_id_t const token_id, evm_common::u256 new_balance);
+    int32_t set_tep_balance_bytes(const std::string & token_name, const top::xbytes_t & new_balance);
+    int32_t set_tep_balance_bytes(common::xtoken_id_t const token_id, const top::xbytes_t & new_balance);
 
 private:
     int32_t                                 check_create_property(const std::string& key);
