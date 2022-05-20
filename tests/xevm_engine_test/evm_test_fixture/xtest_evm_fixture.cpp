@@ -1,5 +1,6 @@
 
 #include "tests/xevm_engine_test/evm_test_fixture/xtest_evm_fixture.h"
+#include "xdata/xnative_contract_address.h"
 
 #include <dirent.h>
 #include <stdio.h>
@@ -210,7 +211,7 @@ bool xtest_evm_fixture::do_deploy_test(json const & each_deploy) {
     std::string contract_name_symbol = expected["extra_message"];
 
     auto evm_action = top::make_unique<data::xconsensus_action_t<data::xtop_action_type_t::evm>>(
-        common::xaccount_address_t{src_address}, eth_zero_address, value_256, get_contract_bin(code_file), gas_limit);
+        common::xaccount_address_t{src_address}, evm_zero_address, value_256, get_contract_bin(code_file), gas_limit);
 
     auto contract_manager = top::make_observer<contract_runtime::evm::xevm_contract_manager_t>(contract_runtime::evm::xevm_contract_manager_t::instance());
 

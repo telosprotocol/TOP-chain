@@ -71,10 +71,10 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     bool                    is_recv_or_confirm_tx() const {return (is_recv_tx() || is_confirm_tx());}
     bool                    is_evm_tx() const {return m_tx->is_evm_tx();}
     std::string             get_digest_hex_str() const {return m_tx->get_digest_hex_str();}
-    uint32_t                get_last_action_used_tgas() const;
-    uint32_t                get_last_action_used_deposit() const;
-    uint32_t                get_last_action_send_tx_lock_tgas() const;
-    uint32_t                get_last_action_recv_tx_use_send_tx_tgas() const;
+    uint64_t                get_last_action_used_tgas() const;
+    uint64_t                get_last_action_used_deposit() const;
+    uint64_t                get_last_action_send_tx_lock_tgas() const;
+    uint64_t                get_last_action_recv_tx_use_send_tx_tgas() const;
     enum_xunit_tx_exec_status   get_last_action_exec_status() const;
     uint64_t                get_last_action_receipt_id() const;
     uint64_t                get_last_action_sender_confirmed_receipt_id() const;
@@ -85,16 +85,16 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
 
  public:
     const xtransaction_exec_state_t & get_tx_execute_state() const {return m_execute_state;}
-    void                    set_current_used_disk(uint32_t disk) {m_execute_state.set_used_disk(disk);}
-    uint32_t                get_current_used_disk() const {return m_execute_state.get_used_disk();}
-    void                    set_current_used_tgas(uint32_t tgas) {m_execute_state.set_used_tgas(tgas);}
-    uint32_t                get_current_used_tgas() const {return m_execute_state.get_used_tgas();}
-    void                    set_current_used_deposit(uint32_t deposit) {m_execute_state.set_used_deposit(deposit);}
-    uint32_t                get_current_used_deposit() const {return m_execute_state.get_used_deposit();}
-    void                    set_current_send_tx_lock_tgas(uint32_t tgas) {m_execute_state.set_send_tx_lock_tgas(tgas);}
-    uint32_t                get_current_send_tx_lock_tgas() const {return m_execute_state.get_send_tx_lock_tgas();}
-    void                    set_current_recv_tx_use_send_tx_tgas(uint32_t tgas) {m_execute_state.set_recv_tx_use_send_tx_tgas(tgas);}
-    uint32_t                get_current_recv_tx_use_send_tx_tgas() const {return m_execute_state.get_recv_tx_use_send_tx_tgas();}
+    void                    set_current_used_disk(uint64_t disk) {m_execute_state.set_used_disk(disk);}
+    uint64_t                get_current_used_disk() const {return m_execute_state.get_used_disk();}
+    void                    set_current_used_tgas(uint64_t tgas) {m_execute_state.set_used_tgas(tgas);}
+    uint64_t                get_current_used_tgas() const {return m_execute_state.get_used_tgas();}
+    void                    set_current_used_deposit(uint64_t deposit) {m_execute_state.set_used_deposit(deposit);}
+    uint64_t                get_current_used_deposit() const {return m_execute_state.get_used_deposit();}
+    void                    set_current_send_tx_lock_tgas(uint64_t tgas) {m_execute_state.set_send_tx_lock_tgas(tgas);}
+    uint64_t                get_current_send_tx_lock_tgas() const {return m_execute_state.get_send_tx_lock_tgas();}
+    void                    set_current_recv_tx_use_send_tx_tgas(uint64_t tgas) {m_execute_state.set_recv_tx_use_send_tx_tgas(tgas);}
+    uint64_t                get_current_recv_tx_use_send_tx_tgas() const {return m_execute_state.get_recv_tx_use_send_tx_tgas();}
     void                    set_current_exec_status(enum_xunit_tx_exec_status status) {m_execute_state.set_tx_exec_status(status);}
     enum_xunit_tx_exec_status   get_current_exec_status() const {return m_execute_state.get_tx_exec_status();}
     uint64_t                get_current_receipt_id() const {return m_execute_state.get_receipt_id();}

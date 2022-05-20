@@ -20,10 +20,11 @@ enum enum_execute_result_type {
     enum_exec_error_receiptid_mismatch  = 2,
     enum_exec_error_load_state          = 3,
     enum_exec_error_vm_execute          = 4,
-    enum_exec_error_property_set        = 5,
-    enum_exec_error_state_dirty         = 6,
-    enum_exec_error_preprocess_tgas     = 7,
-    enum_exec_error_postprocess_tgas    = 8,
+    enum_exec_error_evm_execute         = 5,
+    enum_exec_error_property_set        = 6,
+    enum_exec_error_state_dirty         = 7,
+    enum_exec_error_preprocess_tgas     = 8,
+    enum_exec_error_postprocess_tgas    = 9,
 };
 
 class xvm_para_t {
@@ -42,6 +43,36 @@ class xvm_para_t {
     uint64_t        m_clock{0};
     std::string     m_random_seed;
     uint64_t        m_lock_tgas_token{0};
+};
+
+class xvm_gasfee_detail_t {
+public:
+    uint64_t m_state_burn_balance{0};
+    uint64_t m_state_lock_balance{0};
+    uint64_t m_state_unlock_balance{0};
+    uint64_t m_state_used_tgas{0};
+    uint64_t m_state_last_time{0};
+    uint64_t m_tx_used_tgas{0};
+    uint64_t m_tx_used_deposit{0};
+
+    std::string str() {
+        std::stringstream ss;
+        ss << "m_state_burn_balance: ";
+        ss << m_state_burn_balance;
+        ss << ", m_state_lock_balance: ";
+        ss << m_state_lock_balance;
+        ss << ", m_state_unlock_balance: ";
+        ss << m_state_unlock_balance;
+        ss << ", m_state_used_tgas: ";
+        ss << m_state_used_tgas;
+        ss << ", m_state_last_time: ";
+        ss << m_state_last_time;
+        ss << ", m_tx_used_tgas: ";
+        ss << m_tx_used_tgas;
+        ss << ", m_tx_used_deposit: ";
+        ss << m_tx_used_deposit;
+        return ss.str();
+    }
 };
 
 // struct xtxexecutor_ctx_para_t {
@@ -79,9 +110,9 @@ class xvm_output_t {
     bool            m_tx_exec_succ{false};  // tx execute succ or fail
     int32_t         m_vm_error_code{0};
     std::string     m_vm_error_str;
-    std::error_code m_vm_ec;
     int64_t         m_tgas_balance_change{0};
     std::vector<xcons_transaction_ptr_t> m_contract_create_txs;
+    xvm_gasfee_detail_t m_gasfee_detail;
 };
 
 class xvm_face_t {

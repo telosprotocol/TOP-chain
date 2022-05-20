@@ -148,82 +148,45 @@ uint64_t xtop_gasfee::tgas_to_balance(const uint64_t tgas) const {
 }
 
 void xtop_gasfee::store_in_one_stage(std::error_code & ec) {
-    // store tgas_usage
-    xassert(m_free_tgas_usage >= m_deducted_free_tgas_usage);
-    uint64_t free_tgas_usage_add = m_free_tgas_usage - m_deducted_free_tgas_usage;
-    xdbg("[xtop_gasfee::store] free_tgas_usage_add: %lu - %lu = %lu", m_free_tgas_usage, m_deducted_free_tgas_usage, free_tgas_usage_add);
-    if (free_tgas_usage_add > 0) {
-        state_set_used_tgas(free_tgas_usage_add + account_formular_used_tgas(m_time), ec);
-        CHECK_EC_RETURN(ec);
-        m_deducted_free_tgas_usage = free_tgas_usage_add;
-    }
-    // store time
-    state_set_last_time(m_time, ec);
-    CHECK_EC_RETURN(ec);
-    // burn deposit
-    xassert(m_converted_tgas_usage >= m_deducted_converted_tgas_usage);
-    uint64_t deposit_to_burn = tgas_to_balance(m_converted_tgas_usage - m_deducted_converted_tgas_usage);
-    xdbg("[xtop_gasfee::store] converted_tgas_to_burn: %lu - %lu, deposit_to_burn: %lu", m_converted_tgas_usage, m_deducted_converted_tgas_usage, deposit_to_burn);
-    if (deposit_to_burn > 0) {
-        burn(static_cast<base::vtoken_t>(deposit_to_burn), ec);
-        CHECK_EC_RETURN(ec);
-        m_deducted_converted_tgas_usage = m_converted_tgas_usage;
-    }
-    // fill tx
-    const uint64_t deposit_usage = tgas_to_balance(m_converted_tgas_usage);
-    tx_set_used_tgas(m_free_tgas_usage);
-    tx_set_used_deposit(deposit_usage);
+    m_detail.m_state_used_tgas = m_free_tgas_usage + account_formular_used_tgas(m_time);
+    m_detail.m_state_last_time = m_time;
+    uint64_t deposit_usage = tgas_to_balance(m_converted_tgas_usage);
+    m_detail.m_state_burn_balance = deposit_usage;
+    m_detail.m_tx_used_tgas = m_free_tgas_usage;
+    m_detail.m_tx_used_deposit = deposit_usage;
     xdbg("[xtop_gasfee::store_in_one_stage] m_free_tgas_usage: %lu, m_converted_tgas_usage: %lu, deposit_usage: %lu", m_free_tgas_usage, m_converted_tgas_usage, deposit_usage);
+    xdbg("[xtop_gasfee::store] gasfee_detail: %s", m_detail.str().c_str());
 }
 
 void xtop_gasfee::store_in_send_stage(std::error_code & ec) {
-    state_set_used_tgas(m_free_tgas_usage + account_formular_used_tgas(m_time), ec);
-    CHECK_EC_RETURN(ec);
-    state_set_last_time(m_time, ec);
-    CHECK_EC_RETURN(ec);
+    m_detail.m_state_used_tgas = m_free_tgas_usage + account_formular_used_tgas(m_time);
+    m_detail.m_state_last_time = m_time;
     uint64_t deposit_total = tgas_to_balance(m_converted_tgas);
-    if (deposit_total > 0) {
-        lock(static_cast<base::vtoken_t>(deposit_total), ec);
-        CHECK_EC_RETURN(ec);
-    }
+    m_detail.m_state_lock_balance = deposit_total;
     const uint64_t deposit_usage = tgas_to_balance(m_converted_tgas_usage);
-    tx_set_used_tgas(m_free_tgas_usage);
-    tx_set_used_deposit(deposit_usage);
+    m_detail.m_tx_used_tgas = m_free_tgas_usage;
+    m_detail.m_tx_used_deposit = deposit_usage;
     xdbg("[xtop_gasfee::store_in_send_stage] m_free_tgas_usage: %lu, m_converted_tgas_usage: %lu, deposit_usage: %lu, m_converted_tgas: %lu, deposit_total: %lu",
          m_free_tgas_usage,
          m_converted_tgas_usage,
          deposit_usage,
          m_converted_tgas,
          deposit_total);
+    xdbg("[xtop_gasfee::store] gasfee_detail: %s", m_detail.str().c_str());
 }
 
 void xtop_gasfee::store_in_recv_stage(std::error_code & ec) {
-    tx_set_used_deposit(tx_last_action_used_deposit());
-    tx_set_current_recv_tx_use_send_tx_tgas(0);
+    m_detail.m_tx_used_deposit = tx_last_action_used_deposit();
 }
 
 void xtop_gasfee::store_in_confirm_stage(std::error_code & ec) {
     uint64_t deposit_total = tgas_to_balance(m_converted_tgas);
-    if (deposit_total > 0) {
-        unlock(static_cast<base::vtoken_t>(deposit_total), ec);
-    }
-    uint64_t recv_tgas_usage = tx_last_action_recv_tx_use_send_tx_tgas();
+    m_detail.m_state_unlock_balance = deposit_total;
     uint64_t deposit_usage = tx_last_action_used_deposit();
-    if (recv_tgas_usage > 0) {
-        add(recv_tgas_usage, ec);
-        CHECK_EC_RETURN(ec);
-        state_set_used_tgas(m_free_tgas_usage + account_formular_used_tgas(m_time), ec);
-        CHECK_EC_RETURN(ec);
-        state_set_last_time(m_time, ec);
-        CHECK_EC_RETURN(ec);
-    }
-    if (deposit_usage > 0) {
-        burn(static_cast<base::vtoken_t>(deposit_usage), ec);
-        CHECK_EC_RETURN(ec);
-    }
-    tx_set_used_tgas(recv_tgas_usage);
-    tx_set_used_deposit(deposit_usage);
+    m_detail.m_state_burn_balance = deposit_usage;
+    m_detail.m_tx_used_deposit = deposit_usage;
     xdbg("[xtop_gasfee::store] m_free_tgas_usage: %lu, deposit_usage: %lu, deposit_total: %lu", m_free_tgas_usage, deposit_usage, deposit_total);
+    xdbg("[xtop_gasfee::store] gasfee_detail: %s", m_detail.str().c_str());
 }
 
 void xtop_gasfee::preprocess_one_stage(std::error_code & ec) {
@@ -315,6 +278,10 @@ void xtop_gasfee::preprocess(std::error_code & ec) {
 }
 
 void xtop_gasfee::postprocess(const uint64_t supplement_gas, std::error_code & ec) {
+     // ignore gas calculation of system contracts
+     if (data::is_sys_contract_address(sender())) {
+         return;
+     }
     if (is_one_stage_tx()) {
         postprocess_one_stage(supplement_gas, ec);
     } else {
@@ -331,6 +298,10 @@ void xtop_gasfee::postprocess(const uint64_t supplement_gas, std::error_code & e
         }
     }
     CHECK_EC_RETURN(ec);
+}
+
+txexecutor::xvm_gasfee_detail_t xtop_gasfee::gasfee_detail() const {
+    return m_detail;
 }
 
 }  // namespace gasfee
