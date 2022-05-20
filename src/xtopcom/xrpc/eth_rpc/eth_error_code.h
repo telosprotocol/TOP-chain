@@ -17,6 +17,7 @@ enum enum_eth_rpc_code {
     enum_eth_rpc_invalid_params = -32602,
     enum_eth_rpc_internal_error = -32603,
 
+    enum_eth_rpc_parse_error = -32700,
     enum_eth_rpc_invalid_address = -32801,
 };
 struct ErrorMessage {
