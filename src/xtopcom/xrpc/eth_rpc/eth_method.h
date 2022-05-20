@@ -33,7 +33,7 @@ public:
         m_supported_method.insert("eth_getCode");
         m_supported_method.insert("eth_getStorageAt");
         m_supported_method.insert("eth_sendRawTransaction");
-        m_supported_method.insert("Eth_getLogs");
+        m_supported_method.insert("eth_getLogs");
         //m_supported_method.insert("web3_sha3");
         m_supported_method.insert("eth_getBalance");
         m_supported_method.insert("eth_blockNumber");

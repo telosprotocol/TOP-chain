@@ -71,6 +71,7 @@ public:
         REGISTER_ETH_QUERY_METHOD(eth_call);
         REGISTER_ETH_QUERY_METHOD(eth_estimateGas);
         REGISTER_ETH_QUERY_METHOD(eth_getStorageAt);
+        REGISTER_ETH_QUERY_METHOD(eth_getLogs);
     }
     void call_method(std::string strMethod, xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     bool handle(std::string & strReq, xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) override;
@@ -86,6 +87,7 @@ public:
     void eth_call(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
     void eth_estimateGas(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
     void eth_getStorageAt(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
+    void eth_getLogs(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
     top::evm_common::h2048 calculate_bloom(const std::string & hexstr);
 private:
     std::string safe_get_json_value(xJson::Value & json_value, const std::string& key);
