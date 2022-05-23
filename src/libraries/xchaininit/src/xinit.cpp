@@ -32,7 +32,7 @@
 #include "xmigrate/xvmigrate.h"
 #include "xdata/xcheckpoint.h"
 #include "xsync/xsync_object.h"
-#include "xvm/xsystem_contracts/xeth/xeth.h"
+#include "xevm_contract_runtime/sys_contract/xevm_eth_bridge_contract.h"
 
 // nlohmann_json
 #include <nlohmann/json.hpp>
@@ -255,7 +255,7 @@ int topchain_start(const std::string& config_file) {
     data::xchain_checkpoint_t::load();
 
     //test
-    xvm::system_contracts::xeth::xeth_bridge_t ethBridge;
+    contract_runtime::evm::sys_contract::xtop_evm_eth_bridge_contract ethBridge;
     std::string genesisHeader = "{\
         \"difficulty\": \"0x2\",\
         \"extraData\": \"0x0000000000000000000000000000000000000000000000000000000000000000\",\
@@ -368,9 +368,9 @@ int topchain_start(const std::string& config_file) {
         \"uncles\": []\
         }"};
 
-    ethBridge.init_genesis_block_header(genesisHeader, "0x12345678901234567890");
+    ethBridge.init(genesisHeader, "0x12345678901234567890");
     for (uint32_t i = 0; i < sizeof(header) / sizeof(header[0]); i++)
-        ethBridge.sync_block_header(header[i]);
+        ethBridge.sync(header[i]);
 
     //init data_path into xvchain instance
     //init auto_prune feature

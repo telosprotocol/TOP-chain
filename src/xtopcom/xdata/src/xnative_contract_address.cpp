@@ -39,4 +39,7 @@ common::xaccount_address_t const zec_table_address{sys_contract_zec_table_block_
 common::xaccount_address_t const sharding_table_address{sys_contract_sharding_table_block_addr};
 common::xaccount_address_t const eth_table_address{sys_contract_eth_table_block_addr};
 
+common::xaccount_address_t const evm_erc20_contract_address{sys_contract_evm_erc20_addr};
+common::xaccount_address_t const evm_eth_bridge_contract_address{sys_contract_evm_eth_bridge_addr};
+
 NS_END1

@@ -9,4 +9,4 @@ target_link_libraries(xevm_contract_runtime PRIVATE ${EVM_ENGINE_DIR}/libxevm_en
 
 add_dependencies(xevm_contract_runtime xevm_runner xcontract_runtime xcontract_common xevm_common xbasic xcommon)
 
-target_link_libraries(xevm_contract_runtime PRIVATE xevm_runner xcontract_runtime xcontract_common xevm_common xbasic xcommon)
+target_link_libraries(xevm_contract_runtime PRIVATE xevm_runner xcontract_runtime xcontract_common xevm_common xbasic xcommon ethash keccak)

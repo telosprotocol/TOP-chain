@@ -8,7 +8,7 @@
 #include "xevm_common/fixed_hash.h"
 #include "xutility/xhash.h"
 
-NS_BEG4(top, xvm, system_contracts, xeth)
+NS_BEG3(top, evm_common, eth)
 using namespace top::evm_common::rlp;
 class util {
 #define block_number_of_per_epoch 30000
@@ -74,4 +74,4 @@ public:
         return hash;
     }
 };
-NS_END4
+NS_END3
