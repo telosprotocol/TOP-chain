@@ -1,9 +1,9 @@
-#include "ethash_util.h"
-#include "util.h"
+#include "xevm_common/xeth/xethash_util.h"
+#include "xevm_common/xeth/xeth_util.h"
 #include "xutility/xhash.h"
 #include "xevm_common/common_data.h"
 #include <boost/numeric/conversion/cast.hpp>
-NS_BEG4(top, xvm, system_contracts, xeth)
+NS_BEG3(top, evm_common, eth)
 
 bool ethash_util::verify(xeth_block_header_t *header) {
     const ethash::epoch_context_ptr context = ethash::create_epoch_context(epoch(header->number()));
@@ -76,4 +76,4 @@ ethash::hash256 ethash_util::toHash256(u256 value) {
 //     // }
 //     return size;
 // }
-NS_END4
+NS_END3

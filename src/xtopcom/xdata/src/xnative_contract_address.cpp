@@ -42,4 +42,7 @@ common::xaccount_address_t const eth_table_address{sys_contract_eth_table_block_
 common::xaccount_base_address_t const relay_table_base_address{common::xaccount_base_address_t::build_from(sys_contract_relay_table_block_base_addr)};
 common::xaccount_address_t const relay_table_address{sys_contract_relay_table_block_addr};
 
+common::xaccount_address_t const evm_erc20_contract_address{sys_contract_evm_erc20_addr};
+common::xaccount_address_t const evm_eth_bridge_contract_address{sys_contract_evm_eth_bridge_addr};
+
 NS_END1

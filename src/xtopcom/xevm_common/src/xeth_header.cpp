@@ -1,10 +1,11 @@
 #include "xdepends/include/json/reader.h"
-#include "xeth_header.h"
+#include "xevm_common/xeth/xeth_header.h"
+#include "xevm_common/xeth/xeth_util.h"
 #include "xevm_common/rlp.h"
-#include "util.h"
 #include "xutility/xhash.h"
+#include "xbase/xcontext.h"
 // The log bloom's size (2048-bit).
-NS_BEG4(top, xvm, system_contracts, xeth)
+NS_BEG3(top, evm_common, eth)
 
 using namespace top::evm_common;
 using namespace top::evm_common::rlp;
@@ -330,4 +331,32 @@ bool xeth_block_header_t::isBaseFee() {
     return m_isBaseFee;
 }
 
-NS_END4
+std::string xeth_block_header_t::to_string() {
+    base::xstream_t stream(base::xcontext_t::instance());
+    stream << m_parentHash.asBytes();
+    stream << m_uncleHash.asBytes();
+    stream << m_miner.asBytes();
+    stream << m_stateMerkleRoot.asBytes();
+    stream << m_txMerkleRoot.asBytes();
+    stream << m_receiptMerkleRoot.asBytes();
+    stream << m_bloom.asBytes();
+    // stream << evm_common::toBigEndian(m_difficulty);
+    m_difficulty.convert_to<std::string>();
+    stream << m_number;
+    stream << evm_common::toBigEndian(m_gasLimit);
+    stream << evm_common::toBigEndian(m_gasUsed);
+    stream << m_time;
+    stream << m_extra;
+    stream << m_mixDigest.asBytes();
+    stream << m_nonce.asBytes();
+    // stream << evm_common::toBigEndian(m_baseFee);
+    stream << m_hash.asBytes();
+    stream << m_hashed;
+    stream << m_isBaseFee;
+    return std::string(reinterpret_cast<const char *>(stream.data()), stream.size());
+}
+int32_t xeth_block_header_t::from_string() {
+    return 0;
+}
+
+NS_END3

@@ -2,10 +2,9 @@
 
 #include <map>
 #include <unordered_map>
-#include "xeth_header.h"
+#include "xevm_common/xeth/xeth_header.h"
 
-NS_BEG4(top, xvm, system_contracts, xeth)
-using namespace top::evm_common;
+NS_BEG3(top, evm_common, eth)
 
 class block_header_with_difficulty_t {
 public:
@@ -33,4 +32,4 @@ private:
     std::map<uint64_t, int64_t> m_current_block_height;
 };
 
-NS_END4
+NS_END3

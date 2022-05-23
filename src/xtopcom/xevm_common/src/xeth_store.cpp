@@ -1,6 +1,6 @@
-#include "xstore.h"
+#include "xevm_common/xeth/xeth_store.h"
 
-NS_BEG4(top, xvm, system_contracts, xeth)
+NS_BEG3(top, evm_common, eth)
 
 bool store::saveMainChain(uint64_t chain_id, int64_t height, h256 hash) {
     auto chain_x = m_main_chains.find(chain_id);
@@ -161,4 +161,4 @@ bool store::getHashOfMainChainByHeight(uint64_t chain_id, int64_t height, h256& 
     return true;        
 }
 
-NS_END4
+NS_END3

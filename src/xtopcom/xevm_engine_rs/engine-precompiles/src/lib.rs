@@ -14,6 +14,7 @@ pub mod modexp;
 pub mod secp256k1;
 
 pub mod erc20;
+pub mod eth_bridge;
 
 use crate::blake2::Blake2F;
 use crate::bn128::{Bn128Add, Bn128Mul, Bn128Pair};
@@ -22,6 +23,7 @@ use crate::identity::Identity;
 use crate::modexp::ModExp;
 // use crate::random::RandomSeed;
 use crate::erc20::Erc20Precompile;
+use crate::eth_bridge::EthBridgePrecompile;
 use crate::secp256k1::ECRecover;
 use engine_types::{types::Address, types::EthGas, vec, BTreeMap, Borrowed, Box, Vec, H160, H256};
 use evm::executor::stack::PrecompileFailure;
@@ -90,6 +92,7 @@ impl Precompiles {
             Bn128Pair::<Berlin>::ADDRESS,
             Blake2F::ADDRESS,
             Erc20Precompile::ADDRESS,
+            EthBridgePrecompile::ADDRESS,
         ];
         let fun: Vec<Box<dyn Precompile>> = vec![
             Box::new(ECRecover),
@@ -102,6 +105,7 @@ impl Precompiles {
             Box::new(Bn128Pair::<Berlin>::new()),
             Box::new(Blake2F),
             Box::new(Erc20Precompile),
+            Box::new(EthBridgePrecompile),
         ];
         let map: BTreeMap<Address, Box<dyn Precompile>> = addresses.into_iter().zip(fun).collect();
 

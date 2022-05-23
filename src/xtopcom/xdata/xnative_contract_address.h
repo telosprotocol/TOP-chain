@@ -52,6 +52,9 @@ XINLINE_CONSTEXPR char const * sys_contract_eth_table_block_addr{"Ta0004"};
 XINLINE_CONSTEXPR char const * sys_contract_relay_table_block_base_addr{"Ta0005"};
 XINLINE_CONSTEXPR char const * sys_contract_relay_table_block_addr{"Ta0005@0"};
 
+XINLINE_CONSTEXPR char const * sys_contract_evm_erc20_addr{ "T60004ff00000000000000000000000000000000000001" };
+XINLINE_CONSTEXPR char const * sys_contract_evm_eth_bridge_addr{"T60004ff00000000000000000000000000000000000002"};
+
 extern common::xaccount_address_t const black_hole_system_address;
 extern common::xaccount_address_t const genesis_root_system_address;
 extern common::xaccount_address_t const timer_system_address;
@@ -91,5 +94,8 @@ extern common::xaccount_address_t const sharding_table_address;
 extern common::xaccount_address_t const eth_table_address;
 extern common::xaccount_base_address_t const relay_table_base_address;
 extern common::xaccount_address_t const relay_table_address;
+
+extern common::xaccount_address_t const evm_erc20_contract_address;
+extern common::xaccount_address_t const evm_eth_bridge_contract_address;
 
 NS_END1
