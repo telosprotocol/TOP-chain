@@ -158,6 +158,9 @@ void xedge_evm_method_base<T>::do_method(shared_ptr<conn_type> & response, xjson
 
     if (m_eth_method.supported_method(method) == false) {
         xinfo("not support method: %s", method.c_str());
+        std::string msg = std::string("the method ") + method +" does not exist/is not available";
+        eth::EthErrorCode::deal_error(res, eth::enum_eth_rpc_method_not_find, msg);
+
         xJson::FastWriter j_writer;
         std::string s_res = j_writer.write(res);
         xdbg("rpc response:%s", s_res.c_str());

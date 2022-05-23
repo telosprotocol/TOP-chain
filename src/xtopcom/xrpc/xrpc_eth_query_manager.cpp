@@ -439,10 +439,10 @@ void xrpc_eth_query_manager::eth_getBlockByHash(xJson::Value & js_req, xJson::Va
     }
 
     uint256_t hash = top::data::hex_to_uint256(js_req[0].asString());
-    std::string tx_hash_str = std::string(reinterpret_cast<char *>(hash.data()), hash.size());
-    xdbg("eth_getBlockByHash tx hash: %s",  top::HexEncode(tx_hash_str).c_str());
+    std::string block_hash_str = std::string(reinterpret_cast<char *>(hash.data()), hash.size());
+    xdbg("eth_getBlockByHash block hash: %s",  top::HexEncode(block_hash_str).c_str());
 
-    base::xauto_ptr<base::xvblock_t>  block = m_block_store->get_block_by_hash(tx_hash_str);
+    base::xauto_ptr<base::xvblock_t>  block = m_block_store->get_block_by_hash(block_hash_str);
     if (block == nullptr) {
         js_rsp["result"] = xJson::Value::null;
         return;
@@ -478,29 +478,30 @@ void xrpc_eth_query_manager::eth_getBlockByNumber(xJson::Value & js_req, xJson::
 }
 void xrpc_eth_query_manager::set_block_result(const xobject_ptr_t<base::xvblock_t>&  block, xJson::Value& js_result, bool fullTx) {
     js_result["difficulty"] = "0x0";
-    js_result["extraData"] = "0x0";
-    js_result["gasLimit"] = "0x0";
+    js_result["extraData"] = std::string("0x") + std::string(50, '0');
+    js_result["gasLimit"] = "0x5b15aa";
     js_result["gasUsed"] = "0x0";
     std::string hash = block->get_block_hash();
     js_result["hash"] = std::string("0x") + top::HexEncode(hash); //js_req["tx_hash"].asString();
-    js_result["logsBloom"] = "0x0";
+    js_result["logsBloom"] = std::string("0x") + std::string(512, '0');
     js_result["miner"] = std::string("0x") + std::string(40, '0');
-    js_result["mixHash"] = "0x0";
-    js_result["nonce"] = "0x0";
+    js_result["mixHash"] = std::string("0x") + std::string(64, '0');
+    js_result["nonce"] = std::string("0x") + std::string(16, '0');
     std::stringstream outstr;
     outstr << "0x" << std::hex << block->get_height();
     js_result["number"] = std::string(outstr.str());
     js_result["parentHash"] = std::string("0x") + top::HexEncode(block->get_last_block_hash());
-    js_result["receiptsRoot"] = "0x0";
-    js_result["sha3Uncles"] = "0x0";
-    js_result["size"] = "0x0";
-    js_result["stateRoot"] = "0x0";
+    js_result["receiptsRoot"] = std::string("0x") + std::string(64, '0');
+    js_result["sha3Uncles"] = std::string("0x") + std::string(64, '0');
+    js_result["size"] = "0x219";
+    js_result["stateRoot"] = std::string("0x") + std::string(64, '0');
     outstr.seekp(0);
     outstr << "0x" << std::hex << block->get_timestamp();
     js_result["timestamp"] = std::string(outstr.str());
     js_result["totalDifficulty"] = "0x0";
-    js_result["transactionsRoot"] = "0x0";
+    js_result["transactionsRoot"] = std::string("0x") + std::string(64, '0');
     js_result["transactions"].resize(0);
+    js_result["uncles"].resize(0);
 
     const std::vector<base::xvaction_t> input_actions = block->get_tx_actions();
     for(auto action : input_actions) {
