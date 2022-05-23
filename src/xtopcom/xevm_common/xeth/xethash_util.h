@@ -1,9 +1,8 @@
 #pragma once
-#include "xeth_header.h"
-#include "util.h"
+#include "xevm_common/xeth/xeth_header.h"
+#include "xevm_common/xeth/xeth_util.h"
 #include "xdepends/include/ethash/ethash.hpp"
-NS_BEG4(top, xvm, system_contracts, xeth)
-using namespace top::evm_common;
+NS_BEG3(top, evm_common, eth)
 class ethash_util {
 public:
     static bool verify(xeth_block_header_t *header);
@@ -759,4 +758,4 @@ private:
         284950208, 285081536
     };
 };
-NS_END4
+NS_END3

@@ -67,6 +67,29 @@ base::xvblock_t*   xblocktool_t::create_genesis_lightunit(const std::string & ac
     return _new_block.get();  // TODO(jimmy) xblocktool_t return auto ptr
 }
 
+base::xvblock_t * xblocktool_t::create_genesis_lightunit(const xobject_ptr_t<base::xvbstate_t> & state, const xobject_ptr_t<base::xvcanvas_t> & canvas) {
+    auto account = state->get_account();
+    auto tx = xtx_factory::create_genesis_tx_with_balance(account, 0);
+
+    std::string property_binlog;
+    std::string fullstate_bin;
+    canvas->encode(property_binlog);
+    state->take_snapshot(fullstate_bin);
+    // TODO(jimmy) block builder class
+    xinfo("xlightunit_builder_t::build_block account=%s,height=0,binlog_size=%zu",
+        account.c_str(), property_binlog.size());
+
+    xcons_transaction_ptr_t cons_tx = make_object_ptr<xcons_transaction_t>(tx.get());
+    xlightunit_block_para_t bodypara;
+    bodypara.set_one_input_tx(cons_tx);
+    bodypara.set_binlog(property_binlog);
+    bodypara.set_fullstate_bin(fullstate_bin);
+    xlightunit_build_t bbuild(account, bodypara);
+    base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
+    _new_block->add_ref();
+    return _new_block.get();  // TODO(jimmy) xblocktool_t return auto ptr
+}
+
 base::xvblock_t * xblocktool_t::create_genesis_lightunit(std::string const & account, chain_data::data_processor_t const & data) {
     xtransaction_ptr_t tx = xtx_factory::create_genesis_tx_with_balance(account, data.top_balance);
 

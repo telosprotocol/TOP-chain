@@ -20,7 +20,7 @@ public:
                  bool is_static,
                  observer_ptr<statectx::xstatectx_face_t> state_ctx,
                  sys_contract_precompile_output & output,
-                 sys_contract_precompile_error & err) override;
+                 sys_contract_precompile_error & err) override;  
 };
 
 NS_END4

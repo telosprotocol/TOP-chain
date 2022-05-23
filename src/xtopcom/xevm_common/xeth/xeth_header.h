@@ -6,7 +6,7 @@
 #include "xbase/xns_macro.h"
 #include "xdepends/include/json/reader.h"
 
-NS_BEG4(top, xvm, system_contracts, xeth)
+NS_BEG3(top, evm_common, eth)
 
 // The log bloom's size (2048-bit).
 using namespace top::evm_common;
@@ -28,6 +28,8 @@ class xeth_block_header_t {
 public:
     xeth_block_header_t(){}
     bool fromJson(const std::string& content);
+    std::string to_string();
+    int32_t from_string();
     h256 parentHash();
     h256 uncle_hash();
     Address miner();
@@ -75,4 +77,4 @@ private:
     bool    m_isBaseFee = false;
 };
 
-NS_END4
+NS_END3

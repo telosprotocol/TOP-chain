@@ -1,6 +1,6 @@
-#include "difficulty.h"
-#include "util.h"
-NS_BEG4(top, xvm, system_contracts, xeth)
+#include "xevm_common/xeth/xeth_difficulty.h"
+#include "xevm_common/xeth/xeth_util.h"
+NS_BEG3(top, evm_common, eth)
 // diff = (parent_diff +
 //         (parent_diff / 2048 * max((2 if len(parent.uncles) else 1) - ((timestamp - parent.timestamp) // 9), -99))
 //        ) + 2^(periodCount - 2)
@@ -43,4 +43,4 @@ bigint difficulty::calculate(int64_t time, xeth_block_header_t *header, bigint b
     return target;
 }
 
-NS_END4
+NS_END3
