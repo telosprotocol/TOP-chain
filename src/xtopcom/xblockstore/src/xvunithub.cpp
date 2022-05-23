@@ -1353,8 +1353,8 @@ namespace top
             int ret = load_block_idx_by_hash(hash, account, height);
             if (ret != 0)
                 return nullptr;
-
-            return query_block(account, height, hash);
+            
+            return load_block_object(account, height, base::enum_xvblock_flag_authenticated, false);
         }
         int xvblockstore_impl::load_block_idx_by_hash(const std::string & hash, std::string & account, uint64_t & height) {
             const std::string key_path = base::xvdbkey_t::create_prunable_blockhash_key(hash);
