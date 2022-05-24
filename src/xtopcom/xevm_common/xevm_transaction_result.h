@@ -7,6 +7,7 @@
 #include "xbasic/xbyte_buffer.h"
 #include "xevm_common/fixed_hash.h"
 #include "xutility/xhash.h"
+#include "xbase/xutl.h"
 #include <string>
 #include <vector>
 

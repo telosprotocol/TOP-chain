@@ -3,11 +3,9 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 //#include "xevm_common/common_data.h"
-#include "xevm_common/xborsh.hpp"
-//#include "xevm_common/xtriecommon.h"
-#include "xevm_common/xtriehash.h"
+//#include "xevm_common/xborsh.hpp"
 #include "xevm_common/rlp.h"
-
+#include "xevm_common/xtriehash.h"
 #include <iostream>
 #include <limits>
 #include <fstream>
@@ -15,7 +13,7 @@
 #include "xpbase/base/top_utils.h"
 
 using namespace top::evm_common;
-using namespace top::evm_common::rlp;
+
 
 
 
@@ -70,74 +68,85 @@ TEST(test_mpt, test_mpt_test) {
         ASSERT_EQ(hashResult, goResult);
         //go result 0xb72d55c76bd8f477f4b251763c33f75e6f5f5dd8af071e711e0cb9b2accc70ea
     }
-
+    
     {
+        struct xrelay_receipt_log {
+            //address of the contract that transaction execution
+            h160                m_contract_address;
+            // supplied by the contract, usually ABI-encoded
+            bytes               m_data;
+            // list of topics provided by the contract
+            h256s               m_topics;
+        };
 
-        std::string hasharray[] ={
-        "92b220a2a01703e1fd89ab22f00d6983631852090209416f1508b84175455c3d",
-        "34141241241412341289ab22f00d6983631852090209416f1508b84175455c3d",
-        "334141241244323423423b22f00d6983631852090209416f1508b84175455c3d",
-        "1ce12341a244323423423b22f00d6983631852090209416f1508b84175455c3d"};
+        struct  xrelay_receipt{
+            //status code,check transactions status
+            uint8_t                         m_status;
+            //gas of block used
+            u256                m_gasUsed;
+            // bloom filter for the logs of the block
+            h2048               m_logsBloom;
+            //receipt log
+            std::vector<xrelay_receipt_log> m_logs;
+        };
 
-        std::string  addressArray[] ={
-            "4708fDB6D749EdB1d7848c0bb14B85da17dc4Dd2",
-            "6248e54F072Fc61745AF93D4EF95bC338E1c4Ef8",
-            "5C8Dce7268C796832C9F664486ad718731f73bEa",
-            "40D21280d5399Af7aE6507ba48643eaE47c618cE"};
-
-         std::string blockHashArray[] = {
-            "d38c0c4e84de118cfdcc775130155d83b8bbaaf23dc7f3c83a626b10473213bd",
-            "fb3aa5c655c2ec9d40609401f88d505d1da61afaa550e36ef5da0509ada257ba",
-            "8e54a4494fe5da016bfc01363f4f6cdc91013bb5434bd2a4a3359f13a23afa2f",
-            "0684ac65a9fa32414dda56996f4183597d695987fdb82b145d722743891a6fe8" };
+        const h256 goResult{"9c21c8bb362995ccb4c0058d55d1b7c354e092f807728afae0b417109ff3b649"};
         
-        
-        typedef  struct  receipt_def{
-            uint8_t     Type;
-            //bytes       PostState;
-            uint64_t    Status;
-            uint64_t    CumulativeGasUsed;
-            h2048     Bloom;    //2048;
-            h256        TxHash;
-            h160     Address;   
-            uint64_t    GasUsed;
-            h256        BlockHash;
-            uint        TransactionIndex;
-        }receipt_def;
+        xrelay_receipt receipt;
+        receipt.m_status = 0x1;
+        receipt.m_gasUsed = u256 {0xccde};
+        receipt.m_logsBloom = h2048{"00000001000000004000000000000000000000000000000000000000000000000000000000041000000000000000008000000000000080000000000000200000000000000000000000000008000000000000000000008000000000000000000010000000020000000004000100000800000000040000000000000012000000000000000020000000008000000000000000000000000000000000000000000000420000000000000000000000000000000000000000080000000000000000000000000002000000200000000000000000000008002000000000000000000020000010000200000000000000000000000000000000000000000000002000000000"};
+        //add logs
+        xrelay_receipt_log log1;
+        log1.m_contract_address = h160 {"e22c0e020c99e9aed339618fdcea2871d678ef38"};
+        log1.m_topics.push_back(h256 {"8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925"});
+        log1.m_topics.push_back(h256 {"000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266"});
+        log1.m_topics.push_back(h256 {"000000000000000000000000009b5f068bc20a5b12030fcb72975d8bddc4e84c"});
+        std::string str1 = "00000000000000000000000000000000000000000000000000000000000003de";
+        std::string log_data1 = top::HexDecode(str1);
+        log1.m_data = bytes(log_data1.begin(), log_data1.end());
+        receipt.m_logs.push_back(log1);
 
-         const h256 goResult{"06d13153a5d7562c6d79f3079687164ad79cf705e67830938f9a4f9670e1fb22"};
-        std::vector<bytes> receipts;
-        for (int i = 0; i < 4; i++)
-        {
-           receipt_def receipt;
-           receipt.Type =  i;
-          // receipt.PostState =  h256.data();
-            receipt.Status = i;
-            receipt.CumulativeGasUsed = i*2;
-            receipt.Bloom =  h2048{"00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"};
-            receipt.TxHash = h256{hasharray[i]};
-            receipt.Address = h160{addressArray[i]};
-            receipt.GasUsed = i*123;
-            receipt.BlockHash = h256{blockHashArray[i]};
-            receipt.TransactionIndex = i;
-            
-            bytes encoded = bytes();
-            append(encoded, RLP::encode( receipt.Type));
-            append(encoded, RLP::encode(receipt.Status));
-            append(encoded, RLP::encode(receipt.CumulativeGasUsed));
-            append(encoded, RLP::encode(bytes(receipt.Bloom.begin(), receipt.Bloom.end())));
-            append(encoded, RLP::encode(bytes(receipt.TxHash.begin(), receipt.TxHash.end())));
-            append(encoded, RLP::encode(bytes(receipt.Address.begin(),receipt.Address.end())));
-            append(encoded, RLP::encode(receipt.GasUsed ));
-            append(encoded, RLP::encode(bytes(receipt.BlockHash.begin(), receipt.BlockHash.end())));
-            append(encoded, RLP::encode(receipt.TransactionIndex));
-            receipts.push_back(encoded);
+        xrelay_receipt_log log2;
+        log2.m_contract_address = h160 {"e22c0e020c99e9aed339618fdcea2871d678ef38"};
+        log2.m_topics.push_back(h256 {"ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"});
+        log2.m_topics.push_back(h256 {"000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266"});
+        log2.m_topics.push_back(h256 {"0000000000000000000000000000000000000000000000000000000000000000"});
+        std::string   str2 = "000000000000000000000000000000000000000000000000000000000000000a";
+        std::string log_data2 = top::HexDecode(str2);
+        log2.m_data = bytes(log_data2.begin(), log_data2.end());
+        receipt.m_logs.push_back(log2);
+
+        xrelay_receipt_log log3;
+        log3.m_contract_address = h160 {"009b5f068bc20a5b12030fcb72975d8bddc4e84c"};
+        log3.m_topics.push_back(h256 {"4f89ece0f576ba3986204ba19a44d94601604b97cf3baa922b010a758d303842"});
+        log3.m_topics.push_back(h256 {"000000000000000000000000e22c0e020c99e9aed339618fdcea2871d678ef38"});
+        log3.m_topics.push_back(h256 {"000000000000000000000000f3b23b373dc8854cc2936f4ab4b8e782011ccf87"});
+        log3.m_topics.push_back(h256 {"000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266"});
+        std::string str3 = "000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000a4ba11f3f36b12c71f2aef775583b306a3cf784a";
+        std::string log_data3 = top::HexDecode(str3);
+        log3.m_data = bytes(log_data3.begin(), log_data3.end());
+        receipt.m_logs.push_back(log3);
+
+        std::vector<bytes> receipt_vector;
+
+        //RLP receipt
+        RLPStream receiptrlp;
+        receiptrlp.appendList(4);
+        receiptrlp << receipt.m_status;
+        receiptrlp << receipt.m_gasUsed << receipt.m_logsBloom;
+        receiptrlp.appendList(receipt.m_logs.size());
+        for (auto &log : receipt.m_logs) {
+            receiptrlp.appendList(3)  << log.m_contract_address << log.m_topics << log.m_data;
         }
-
-        h256 receiptsRoot = orderedTrieRoot(receipts);
-        std::cout << "MPT receipts Hash: " <<  receiptsRoot.hex()  << std::endl;
+        //get rlp bytes
+        bytes receiptOut = receiptrlp.out();
+       // std::cout << "encoded  " << toHex(receiptOut.begin(), receiptOut.end(), "") <<std::endl;
+        receipt_vector.push_back(receiptOut);
+        
+        h256 receiptsRoot = orderedTrieRoot(receipt_vector);
+        std::cout << "receipts  test  Hash: " <<  receiptsRoot.hex()  << std::endl;
         ASSERT_EQ(receiptsRoot, goResult);
-
     }
 
 }

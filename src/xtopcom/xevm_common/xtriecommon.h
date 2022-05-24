@@ -5,7 +5,7 @@
 #pragma once
 
 #include "common.h"
-#include "xrlpstream.h"
+#include "rlp.h"
 #include "xutility/xhash.h"
 
 namespace top {
@@ -104,7 +104,7 @@ inline std::ostream& operator<<(std::ostream& _out, NibbleSlice const& _m)
 }
 
 /*
-inline bool isLeaf(XRLP const& _twoItem)
+inline bool isLeaf(RLP const& _twoItem)
 {
 	assert(_twoItem.isList() && _twoItem.itemCount() == 2);
 	auto pl = _twoItem[0].payload();
@@ -122,12 +122,12 @@ inline NibbleSlice keyOf(bytesConstRef _hpe)
 		return NibbleSlice(_hpe, 2);
 }*/
 /*
-inline NibbleSlice keyOf(XRLP const& _twoItem)
+inline NibbleSlice keyOf(RLP const& _twoItem)
 {
 	return keyOf(_twoItem[0].payload());
 }
 */
-byte uniqueInUse(XRLP const& _orig, byte except);
+byte uniqueInUse(RLP const& _orig, byte except);
 std::string hexPrefixEncode(bytes const& _hexVector, bool _leaf = false, int _begin = 0, int _end = -1);
 std::string hexPrefixEncode(bytesConstRef _data, bool _leaf, int _beginNibble, int _endNibble, unsigned _offset);
 std::string hexPrefixEncode(bytesConstRef _d1, unsigned _o1, bytesConstRef _d2, unsigned _o2, bool _leaf);

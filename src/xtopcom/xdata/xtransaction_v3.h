@@ -161,9 +161,9 @@ public:
     virtual uint32_t get_eip_version() const {return (uint32_t)m_EipVersion;}
 
 private:
-    int unserialize_eth_legacy_transaction(top::evm_common::rlp::bytes& encoded, bool& bIsCreation, byte& recoveryID, top::evm_common::Address& to, eth_error& ec);
-    int unserialize_eth_1559_transaction(top::evm_common::rlp::bytes & encoded, bool & bIsCreation, byte & recoveryID, top::evm_common::Address & to, eth_error& ec);
-    int unserialize_top_v3_transaction(top::evm_common::rlp::bytes & encoded, bool & bIsCreation, byte & recoveryID, top::evm_common::Address & to, eth_error& ec);
+    int unserialize_eth_legacy_transaction(top::evm_common::bytes& encoded, bool& bIsCreation, byte& recoveryID, top::evm_common::Address& to, eth_error& ec);
+    int unserialize_eth_1559_transaction(top::evm_common::bytes & encoded, bool & bIsCreation, byte & recoveryID, top::evm_common::Address & to, eth_error& ec);
+    int unserialize_top_v3_transaction(top::evm_common::bytes & encoded, bool & bIsCreation, byte & recoveryID, top::evm_common::Address & to, eth_error& ec);
 
 private:
     xobject_ptr_t<eip_xxxx_tx> m_eip_xxxx_tx{nullptr};

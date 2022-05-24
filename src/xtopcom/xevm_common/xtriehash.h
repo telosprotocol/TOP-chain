@@ -8,7 +8,6 @@
 
 namespace top {
 namespace evm_common {
-
   
 
 	bytes rlp256(BytesMap const& _s);
@@ -26,7 +25,6 @@ namespace evm_common {
 
 	h256 orderedTrieRoot(std::vector<bytesConstRef> const& _data);
 	h256 orderedTrieRoot(std::vector<bytes> const& _data);
-
 
 
 }

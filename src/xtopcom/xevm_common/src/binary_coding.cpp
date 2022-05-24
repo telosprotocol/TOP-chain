@@ -9,7 +9,6 @@
 
 namespace top {
 namespace evm_common {
-namespace rlp {
 
 void encode64LE(uint64_t val, std::vector<uint8_t> & data) {
     data.push_back(static_cast<uint8_t>(val));
@@ -172,6 +171,6 @@ std::tuple<bool, std::string> decodeString(const bytes & in, size_t & indexInOut
     indexInOut += len;
     return std::make_tuple(true, result);
 }
-}  // namespace rlp
+
 }  // namespace evm_common
 }  // namespace top

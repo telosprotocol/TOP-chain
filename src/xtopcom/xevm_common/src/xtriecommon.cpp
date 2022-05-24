@@ -8,7 +8,6 @@ namespace top {
 namespace evm_common {
 
 
-
 h256 const EmptySHA3 = sha3(bytesConstRef());
 h256 const EmptyListSHA3 = sha3(rlpList());
 
@@ -116,7 +115,7 @@ std::string hexPrefixEncode(bytesConstRef _d1, unsigned _o1, bytesConstRef _d2, 
 	return ret;
 }
 
-byte uniqueInUse(XRLP const& _orig, byte except)
+byte uniqueInUse(RLP const& _orig, byte except)
 {
 	byte used = 255;
 	for (unsigned i = 0; i < 17; ++i)
@@ -130,6 +129,6 @@ byte uniqueInUse(XRLP const& _orig, byte except)
 	return used;
 }
 
-}
 
+}
 }

@@ -10,14 +10,10 @@ namespace top {
 namespace evm_common {
 
 
-
-
-
 void hash256aux(HexMap const& _s, HexMap::const_iterator _begin, HexMap::const_iterator _end, unsigned _preLen, RLPStream& _rlp);
 
 void hash256rlp(HexMap const& _s, HexMap::const_iterator _begin, HexMap::const_iterator _end, unsigned _preLen, RLPStream& _rlp)
 {
-	//std::cout << " loop: " << std::endl;
 
 	if (_begin == _end)
 		_rlp << "";	// NULL
@@ -28,7 +24,6 @@ void hash256rlp(HexMap const& _s, HexMap::const_iterator _begin, HexMap::const_i
 	}
 	else
 	{
-		
 		// find the number of common prefix nibbles shared
 		// i.e. the minimum number of nibbles shared at the beginning between the first hex string and each successive.
 		unsigned sharedPre = (unsigned)-1;
@@ -110,20 +105,6 @@ h256 orderedTrieRoot(std::vector<bytes> const& _data)
 	for (auto i: _data)
 		m[xrlp(j++)] = i;
 
-	//test
-  /* 	for (auto test : m)
-	{
-	
-			std::cout << " key  " <<  toHex(test.first) ;
-	
-			std::cout	<< std::endl;
-
-	
-				std::cout << " value  " <<  toHex(test.second);
-	
-			std::cout	<< std::endl;
-	}*/
-	
 	return hash256(m);
 }
 
@@ -137,5 +118,4 @@ h256 orderedTrieRoot(std::vector<bytesConstRef> const& _data)
 }
 
 }
-
 }

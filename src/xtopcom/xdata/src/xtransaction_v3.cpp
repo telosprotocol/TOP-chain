@@ -18,7 +18,7 @@
 
 using namespace std;
 using namespace top::evm_common;
-using namespace top::evm_common::rlp;
+
 
 namespace top { namespace data {
 
@@ -172,7 +172,7 @@ int xtransaction_v3_t::unserialize_eth_legacy_transaction(bytes & encoded, bool 
         return -1;
     }
     eip_legacy_tx* eip_legacy_tx_ptr = reinterpret_cast<eip_legacy_tx*>(m_eip_xxxx_tx.get());
-    RLP::DecodedItem decoded = RLP::decode(top::evm_common::rlp::data(m_origindata));
+    RLP::DecodedItem decoded = RLP::decode(top::evm_common::data(m_origindata));
     std::vector<std::string> vecData;
     for (int i = 0; i < (int)decoded.decoded.size(); i++) {
         std::string str(decoded.decoded[i].begin(), decoded.decoded[i].end());
@@ -302,7 +302,7 @@ int xtransaction_v3_t::unserialize_eth_1559_transaction(bytes & encoded, bool & 
         return -1;
     }
     eip_1559_tx* eip_1559_tx_ptr = reinterpret_cast<eip_1559_tx*>(m_eip_xxxx_tx.get());
-    RLP::DecodedItem decoded = RLP::decode(top::evm_common::rlp::data(m_origindata));
+    RLP::DecodedItem decoded = RLP::decode(top::evm_common::data(m_origindata));
     std::vector<std::string> vecData;
     for (int i = 0; i < (int)decoded.decoded.size(); i++) {
         std::string str(decoded.decoded[i].begin(), decoded.decoded[i].end());
@@ -416,7 +416,7 @@ int xtransaction_v3_t::unserialize_top_v3_transaction(bytes & encoded, bool & bI
         return -1;
     }
     eip_top_v3_tx* eip_top_v3_tx_ptr = reinterpret_cast<eip_top_v3_tx*>(m_eip_xxxx_tx.get());
-    RLP::DecodedItem decoded = RLP::decode(top::evm_common::rlp::data(m_origindata));
+    RLP::DecodedItem decoded = RLP::decode(top::evm_common::data(m_origindata));
     std::vector<std::string> vecData;
     for (int i = 0; i < (int)decoded.decoded.size(); i++) {
         std::string str(decoded.decoded[i].begin(), decoded.decoded[i].end());
@@ -499,7 +499,7 @@ int xtransaction_v3_t::unserialize_top_v3_transaction(bytes & encoded, bool & bI
     eip_top_v3_tx_ptr->signS = fromBigEndian<u256>(vecData[12]);
 
 
-    RLP::DecodedItem extradecode = RLP::decode(top::evm_common::rlp::data(extra));
+    RLP::DecodedItem extradecode = RLP::decode(top::evm_common::data(extra));
     std::vector<std::string> vecExtraData;
     for (int i = 0; i < (int)extradecode.decoded.size(); i++) {
         std::string str(extradecode.decoded[i].begin(), extradecode.decoded[i].end());
