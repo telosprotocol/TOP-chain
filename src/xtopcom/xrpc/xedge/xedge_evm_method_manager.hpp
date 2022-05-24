@@ -204,7 +204,7 @@ void xedge_evm_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, 
     json_proc.m_response_json["jsonrpc"] = request["jsonrpc"];
     if (!eth::EthErrorCode::check_req(request["params"], json_proc.m_response_json, 1))
         return;
-    if (!eth::EthErrorCode::check_hex(request["params"][0].asString(), json_proc.m_response_json, 0, false))
+    if (!eth::EthErrorCode::check_hex(request["params"][0].asString(), json_proc.m_response_json, 0, eth::enum_rpc_type_data))
         return;
 
     request["tx_structure_version"] = 3;

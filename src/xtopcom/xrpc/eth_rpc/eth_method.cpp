@@ -16,7 +16,7 @@ void EthMethod::web3_sha3(const Json::Value & js_req, Json::Value & js_rsp) {
         return;
     }
 
-    if (!eth::EthErrorCode::check_hex(js_req[0].asString(), js_rsp, 0, false))
+    if (!eth::EthErrorCode::check_hex(js_req[0].asString(), js_rsp, 0, eth::enum_rpc_type_data))
         return;
 
     std::string input = js_req[0].asString();
@@ -37,6 +37,12 @@ void EthMethod::eth_gasPrice(const Json::Value & js_req, Json::Value & js_rsp) {
     outstr << "0x" << std::hex << gas;
     //Json::Value value = outstr.str();
     Json::Value value = "0x1";*/
+    js_rsp["result"] = value;
+}
+void EthMethod::eth_maxPriorityFeePerGas(const Json::Value & js_req, Json::Value & js_rsp) {
+    if (!eth::EthErrorCode::check_req(js_req, js_rsp, 0))
+        return;
+    Json::Value value = "0x989680";
     js_rsp["result"] = value;
 }
 }
