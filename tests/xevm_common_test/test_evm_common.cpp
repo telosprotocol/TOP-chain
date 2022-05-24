@@ -17,7 +17,7 @@
 
 using namespace top::evm_common;
 
-using namespace top::evm_common::rlp;
+
 
 TEST(test_boost, uint) {
     u512 n = 1;

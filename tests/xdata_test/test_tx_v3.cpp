@@ -148,20 +148,20 @@ TEST_F(test_tx_v3, exception) {
         tx->max_fee_per_gas = rand() % 100000;
         tx->max_priority_fee_per_gas = rand() % 100000;
 
-        top::evm_common::rlp::bytes encodedtmp;
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->chainid));
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->nonce));
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->max_priority_fee_per_gas));
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->max_fee_per_gas));
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->gas));
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->to));
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->value));
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->data));
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::fromHex("c0"));
+        top::evm_common::bytes encodedtmp;
+        top::evm_common::append(encodedtmp, top::evm_common::RLP::encode(tx->chainid));
+        top::evm_common::append(encodedtmp, top::evm_common::RLP::encode(tx->nonce));
+        top::evm_common::append(encodedtmp, top::evm_common::RLP::encode(tx->max_priority_fee_per_gas));
+        top::evm_common::append(encodedtmp, top::evm_common::RLP::encode(tx->max_fee_per_gas));
+        top::evm_common::append(encodedtmp, top::evm_common::RLP::encode(tx->gas));
+        top::evm_common::append(encodedtmp, top::evm_common::RLP::encode(tx->to));
+        top::evm_common::append(encodedtmp, top::evm_common::RLP::encode(tx->value));
+        top::evm_common::append(encodedtmp, top::evm_common::RLP::encode(tx->data));
+        top::evm_common::append(encodedtmp, top::evm_common::fromHex("c0"));
 
-        top::evm_common::rlp::bytes encoded;
-        top::evm_common::rlp::append(encoded, static_cast<uint8_t>(2));
-        top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encodeList(encodedtmp));
+        top::evm_common::bytes encoded;
+        top::evm_common::append(encoded, static_cast<uint8_t>(2));
+        top::evm_common::append(encoded, top::evm_common::RLP::encodeList(encodedtmp));
 
         std::string strEncoded;
         strEncoded.append((char*)encoded.data(), encoded.size());
@@ -169,7 +169,7 @@ TEST_F(test_tx_v3, exception) {
 
         uint8_t prikey[32];
 
-        top::evm_common::rlp::bytes vprikey = top::evm_common::fromHex("3963ed01bce983f8829174b13d3417716ff604bfb0fed07634288df8b146f20f");
+        top::evm_common::bytes vprikey = top::evm_common::fromHex("3963ed01bce983f8829174b13d3417716ff604bfb0fed07634288df8b146f20f");
 
         memcpy(prikey, vprikey.data(), vprikey.size());
 
@@ -180,35 +180,35 @@ TEST_F(test_tx_v3, exception) {
         top::utl::xsecp256k1_t::get_publickey_from_signature(sig, hash, (uint8_t*)szOutput);
 
         tx->signV = sig.get_recover_id();
-        top::evm_common::rlp::bytes r;
+        top::evm_common::bytes r;
         std::string strSignature;
         strSignature.append((char*)sig.get_raw_signature(), 64);
         std::string strR = strSignature.substr(0, 32); 
         std::string strS = strSignature.substr(32);
         r.insert(r.begin(), strR.begin(), strR.end());
         tx->signR = top::evm_common::fromBigEndian<top::evm_common::u256>(r);
-        top::evm_common::rlp::bytes s;
+        top::evm_common::bytes s;
         s.insert(s.begin(), strS.begin(), strS.end());
         tx->signS = top::evm_common::fromBigEndian<top::evm_common::u256>(s);
 
 
         encodedtmp.clear();
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->chainid));
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->nonce));
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->max_priority_fee_per_gas));
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->max_fee_per_gas));
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->gas));
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->to));
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->value + 1));
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->data));
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::fromHex("c0"));
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->signV));
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(strR));
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(strS));
+        top::evm_common::append(encodedtmp, top::evm_common::RLP::encode(tx->chainid));
+        top::evm_common::append(encodedtmp, top::evm_common::RLP::encode(tx->nonce));
+        top::evm_common::append(encodedtmp, top::evm_common::RLP::encode(tx->max_priority_fee_per_gas));
+        top::evm_common::append(encodedtmp, top::evm_common::RLP::encode(tx->max_fee_per_gas));
+        top::evm_common::append(encodedtmp, top::evm_common::RLP::encode(tx->gas));
+        top::evm_common::append(encodedtmp, top::evm_common::RLP::encode(tx->to));
+        top::evm_common::append(encodedtmp, top::evm_common::RLP::encode(tx->value + 1));
+        top::evm_common::append(encodedtmp, top::evm_common::RLP::encode(tx->data));
+        top::evm_common::append(encodedtmp, top::evm_common::fromHex("c0"));
+        top::evm_common::append(encodedtmp, top::evm_common::RLP::encode(tx->signV));
+        top::evm_common::append(encodedtmp, top::evm_common::RLP::encode(strR));
+        top::evm_common::append(encodedtmp, top::evm_common::RLP::encode(strS));
 
         encoded.clear();
-        top::evm_common::rlp::append(encoded, static_cast<uint8_t>(2));
-        top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encodeList(encodedtmp));
+        top::evm_common::append(encoded, static_cast<uint8_t>(2));
+        top::evm_common::append(encoded, top::evm_common::RLP::encodeList(encodedtmp));
 
         xtransaction_v3_ptr_t tx_r = make_object_ptr<xtransaction_v3_t>();
         std::string strParams;
@@ -277,20 +277,20 @@ TEST_F(test_tx_v3, rlp_serialize) {
         str5.append((char*)randstr.data(), randstr.size());
 
         top::evm_common::bytes encoded;
-        top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(num1));
-        top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(num2));
-        top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(num3));
-        top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(num4));
-        top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(num5));
-        top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(str1));
-        top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(str2));
-        top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(str3));
-        top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(str4));
-        top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(str5));
-        encoded = top::evm_common::rlp::RLP::encodeList(encoded);
+        top::evm_common::append(encoded, top::evm_common::RLP::encode(num1));
+        top::evm_common::append(encoded, top::evm_common::RLP::encode(num2));
+        top::evm_common::append(encoded, top::evm_common::RLP::encode(num3));
+        top::evm_common::append(encoded, top::evm_common::RLP::encode(num4));
+        top::evm_common::append(encoded, top::evm_common::RLP::encode(num5));
+        top::evm_common::append(encoded, top::evm_common::RLP::encode(str1));
+        top::evm_common::append(encoded, top::evm_common::RLP::encode(str2));
+        top::evm_common::append(encoded, top::evm_common::RLP::encode(str3));
+        top::evm_common::append(encoded, top::evm_common::RLP::encode(str4));
+        top::evm_common::append(encoded, top::evm_common::RLP::encode(str5));
+        encoded = top::evm_common::RLP::encodeList(encoded);
 
         sum += encoded.size();
-        top::evm_common::rlp::RLP::DecodedItem decoded = top::evm_common::rlp::RLP::decode(encoded);
+        top::evm_common::RLP::DecodedItem decoded = top::evm_common::RLP::decode(encoded);
 
         std::vector<std::string> vecData;
         for (int i = 0; i < (int)decoded.decoded.size(); i++) {
@@ -298,11 +298,11 @@ TEST_F(test_tx_v3, rlp_serialize) {
             vecData.push_back(str);
         }
 
-        EXPECT_EQ(top::evm_common::rlp::to_uint64(vecData[0]), num1);
-        EXPECT_EQ(top::evm_common::rlp::to_uint64(vecData[1]), num2);
-        EXPECT_EQ(top::evm_common::rlp::to_uint64(vecData[2]), num3);
-        EXPECT_EQ(top::evm_common::rlp::to_uint64(vecData[3]), num4);
-        EXPECT_EQ(top::evm_common::rlp::to_uint64(vecData[4]), num5);
+        EXPECT_EQ(top::evm_common::to_uint64(vecData[0]), num1);
+        EXPECT_EQ(top::evm_common::to_uint64(vecData[1]), num2);
+        EXPECT_EQ(top::evm_common::to_uint64(vecData[2]), num3);
+        EXPECT_EQ(top::evm_common::to_uint64(vecData[3]), num4);
+        EXPECT_EQ(top::evm_common::to_uint64(vecData[4]), num5);
 
         EXPECT_EQ(vecData[5], str1);
         EXPECT_EQ(vecData[6], str2);
@@ -419,17 +419,17 @@ TEST_F(test_tx_v3, v3_serialize) {
         str5.append((char*)randstr.data(), randstr.size());
 
         top::evm_common::bytes encoded;
-        top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(num1));
-        top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(num2));
-        top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(num3));
-        top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(num4));
-        top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(num5));
-        top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(str1));
-        top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(str2));
-        top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(str3));
-        top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(str4));
-        top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(str5));
-        encoded = top::evm_common::rlp::RLP::encodeList(encoded);
+        top::evm_common::append(encoded, top::evm_common::RLP::encode(num1));
+        top::evm_common::append(encoded, top::evm_common::RLP::encode(num2));
+        top::evm_common::append(encoded, top::evm_common::RLP::encode(num3));
+        top::evm_common::append(encoded, top::evm_common::RLP::encode(num4));
+        top::evm_common::append(encoded, top::evm_common::RLP::encode(num5));
+        top::evm_common::append(encoded, top::evm_common::RLP::encode(str1));
+        top::evm_common::append(encoded, top::evm_common::RLP::encode(str2));
+        top::evm_common::append(encoded, top::evm_common::RLP::encode(str3));
+        top::evm_common::append(encoded, top::evm_common::RLP::encode(str4));
+        top::evm_common::append(encoded, top::evm_common::RLP::encode(str5));
+        encoded = top::evm_common::RLP::encodeList(encoded);
 
         uint8_t nEipVersion = 1;
         top::base::xstream_t stream(top::base::xcontext_t::instance());
@@ -446,18 +446,18 @@ TEST_F(test_tx_v3, v3_serialize) {
 
         EXPECT_EQ(nEipVersion, 1);
 
-        top::evm_common::rlp::RLP::DecodedItem decoded = top::evm_common::rlp::RLP::decode(top::evm_common::rlp::data(strEth));
+        top::evm_common::RLP::DecodedItem decoded = top::evm_common::RLP::decode(top::evm_common::data(strEth));
         std::vector<std::string> vecData;
         for (int i = 0; i < (int)decoded.decoded.size(); i++) {
             std::string str(decoded.decoded[i].begin(), decoded.decoded[i].end());
             vecData.push_back(str);
         }
 
-        EXPECT_EQ(top::evm_common::rlp::to_uint64(vecData[0]), num1);
-        EXPECT_EQ(top::evm_common::rlp::to_uint64(vecData[1]), num2);
-        EXPECT_EQ(top::evm_common::rlp::to_uint64(vecData[2]), num3);
-        EXPECT_EQ(top::evm_common::rlp::to_uint64(vecData[3]), num4);
-        EXPECT_EQ(top::evm_common::rlp::to_uint64(vecData[4]), num5);
+        EXPECT_EQ(top::evm_common::to_uint64(vecData[0]), num1);
+        EXPECT_EQ(top::evm_common::to_uint64(vecData[1]), num2);
+        EXPECT_EQ(top::evm_common::to_uint64(vecData[2]), num3);
+        EXPECT_EQ(top::evm_common::to_uint64(vecData[3]), num4);
+        EXPECT_EQ(top::evm_common::to_uint64(vecData[4]), num5);
 
         EXPECT_EQ(vecData[5], str1);
         EXPECT_EQ(vecData[6], str2);
@@ -485,62 +485,62 @@ TEST_F(test_tx_v3, v3_performance) {
         tx->max_fee_per_gas = rand() % 100000;
         tx->max_priority_fee_per_gas = rand() % 100000;
 
-        top::evm_common::rlp::bytes encodedtmp;
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->chainid));
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->nonce));
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->max_priority_fee_per_gas));
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->max_fee_per_gas));
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->gas));
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->to));
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->value));
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->data));
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::fromHex("c0"));
+        top::evm_common::bytes encodedtmp;
+        top::evm_common::append(encodedtmp, top::evm_common::RLP::encode(tx->chainid));
+        top::evm_common::append(encodedtmp, top::evm_common::RLP::encode(tx->nonce));
+        top::evm_common::append(encodedtmp, top::evm_common::RLP::encode(tx->max_priority_fee_per_gas));
+        top::evm_common::append(encodedtmp, top::evm_common::RLP::encode(tx->max_fee_per_gas));
+        top::evm_common::append(encodedtmp, top::evm_common::RLP::encode(tx->gas));
+        top::evm_common::append(encodedtmp, top::evm_common::RLP::encode(tx->to));
+        top::evm_common::append(encodedtmp, top::evm_common::RLP::encode(tx->value));
+        top::evm_common::append(encodedtmp, top::evm_common::RLP::encode(tx->data));
+        top::evm_common::append(encodedtmp, top::evm_common::fromHex("c0"));
 
-        top::evm_common::rlp::bytes encoded;
-        top::evm_common::rlp::append(encoded, static_cast<uint8_t>(2));
-        top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encodeList(encodedtmp));
+        top::evm_common::bytes encoded;
+        top::evm_common::append(encoded, static_cast<uint8_t>(2));
+        top::evm_common::append(encoded, top::evm_common::RLP::encodeList(encodedtmp));
 
         std::string strEncoded;
         strEncoded.append((char*)encoded.data(), encoded.size());
         top::uint256_t hash = top::utl::xkeccak256_t::digest(strEncoded);
         uint8_t prikey[32];
 
-        top::evm_common::rlp::bytes vprikey = top::evm_common::fromHex("3963ed01bce983f8829174b13d3417716ff604bfb0fed07634288df8b146f20f");
+        top::evm_common::bytes vprikey = top::evm_common::fromHex("3963ed01bce983f8829174b13d3417716ff604bfb0fed07634288df8b146f20f");
 
         memcpy(prikey, vprikey.data(), vprikey.size());
 
         top::utl::xecprikey_t key(prikey);
         top::utl::xecdsasig_t sig = key.sign(hash);
         tx->signV = sig.get_recover_id();
-        top::evm_common::rlp::bytes r;
+        top::evm_common::bytes r;
         std::string strSignature;
         strSignature.append((char*)sig.get_raw_signature(), 64);
         std::string strR = strSignature.substr(0, 32); 
         std::string strS = strSignature.substr(32);
         r.insert(r.begin(), strR.begin(), strR.end());
         tx->signR = top::evm_common::fromBigEndian<top::evm_common::u256>(r);
-        top::evm_common::rlp::bytes s;
+        top::evm_common::bytes s;
         s.insert(s.begin(), strS.begin(), strS.end());
         tx->signS = top::evm_common::fromBigEndian<top::evm_common::u256>(s);
 
 
         encodedtmp.clear();
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->chainid));
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->nonce));
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->max_priority_fee_per_gas));
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->max_fee_per_gas));
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->gas));
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->to));
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->value));
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->data));
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::fromHex("c0"));
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(tx->signV));
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(strR));
-        top::evm_common::rlp::append(encodedtmp, top::evm_common::rlp::RLP::encode(strS));
+        top::evm_common::append(encodedtmp, top::evm_common::RLP::encode(tx->chainid));
+        top::evm_common::append(encodedtmp, top::evm_common::RLP::encode(tx->nonce));
+        top::evm_common::append(encodedtmp, top::evm_common::RLP::encode(tx->max_priority_fee_per_gas));
+        top::evm_common::append(encodedtmp, top::evm_common::RLP::encode(tx->max_fee_per_gas));
+        top::evm_common::append(encodedtmp, top::evm_common::RLP::encode(tx->gas));
+        top::evm_common::append(encodedtmp, top::evm_common::RLP::encode(tx->to));
+        top::evm_common::append(encodedtmp, top::evm_common::RLP::encode(tx->value));
+        top::evm_common::append(encodedtmp, top::evm_common::RLP::encode(tx->data));
+        top::evm_common::append(encodedtmp, top::evm_common::fromHex("c0"));
+        top::evm_common::append(encodedtmp, top::evm_common::RLP::encode(tx->signV));
+        top::evm_common::append(encodedtmp, top::evm_common::RLP::encode(strR));
+        top::evm_common::append(encodedtmp, top::evm_common::RLP::encode(strS));
 
         encoded.clear();
-        top::evm_common::rlp::append(encoded, static_cast<uint8_t>(2));
-        top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encodeList(encodedtmp));
+        top::evm_common::append(encoded, static_cast<uint8_t>(2));
+        top::evm_common::append(encoded, top::evm_common::RLP::encodeList(encodedtmp));
 
         xtransaction_v3_ptr_t tx_r = make_object_ptr<xtransaction_v3_t>();
         std::string strParams;
@@ -630,17 +630,17 @@ TEST_F(test_tx_v3, serialize_compare) {
     str5.append((char*)randstr.data(), randstr.size());
 
     top::evm_common::bytes encoded;
-    top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(num1));
-    top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(num2));
-    top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(num3));
-    top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(num4));
-    top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(num5));
-    top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(str1));
-    top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(str2));
-    top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(str3));
-    top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(str4));
-    top::evm_common::rlp::append(encoded, top::evm_common::rlp::RLP::encode(str5));
-    encoded = top::evm_common::rlp::RLP::encodeList(encoded);
+    top::evm_common::append(encoded, top::evm_common::RLP::encode(num1));
+    top::evm_common::append(encoded, top::evm_common::RLP::encode(num2));
+    top::evm_common::append(encoded, top::evm_common::RLP::encode(num3));
+    top::evm_common::append(encoded, top::evm_common::RLP::encode(num4));
+    top::evm_common::append(encoded, top::evm_common::RLP::encode(num5));
+    top::evm_common::append(encoded, top::evm_common::RLP::encode(str1));
+    top::evm_common::append(encoded, top::evm_common::RLP::encode(str2));
+    top::evm_common::append(encoded, top::evm_common::RLP::encode(str3));
+    top::evm_common::append(encoded, top::evm_common::RLP::encode(str4));
+    top::evm_common::append(encoded, top::evm_common::RLP::encode(str5));
+    encoded = top::evm_common::RLP::encodeList(encoded);
 
     std::cout << "only rlp serialize:" << encoded.size() << std::endl;
 
@@ -652,7 +652,7 @@ TEST_F(test_tx_v3, serialize_compare) {
     std::string strEth;
     stream.read_compact_var(strEth);
 
-    top::evm_common::rlp::RLP::DecodedItem decoded = top::evm_common::rlp::RLP::decode(encoded);
+    top::evm_common::RLP::DecodedItem decoded = top::evm_common::RLP::decode(encoded);
 
     std::vector<std::string> vecData;
     for (int i = 0; i < (int)decoded.decoded.size(); i++) {
@@ -660,11 +660,11 @@ TEST_F(test_tx_v3, serialize_compare) {
         vecData.push_back(str);
     }
 
-    EXPECT_EQ(top::evm_common::rlp::to_uint64(vecData[0]), num1);
-    EXPECT_EQ(top::evm_common::rlp::to_uint64(vecData[1]), num2);
-    EXPECT_EQ(top::evm_common::rlp::to_uint64(vecData[2]), num3);
-    EXPECT_EQ(top::evm_common::rlp::to_uint64(vecData[3]), num4);
-    EXPECT_EQ(top::evm_common::rlp::to_uint64(vecData[4]), num5);
+    EXPECT_EQ(top::evm_common::to_uint64(vecData[0]), num1);
+    EXPECT_EQ(top::evm_common::to_uint64(vecData[1]), num2);
+    EXPECT_EQ(top::evm_common::to_uint64(vecData[2]), num3);
+    EXPECT_EQ(top::evm_common::to_uint64(vecData[3]), num4);
+    EXPECT_EQ(top::evm_common::to_uint64(vecData[4]), num5);
 
     EXPECT_EQ(vecData[5], str1);
     EXPECT_EQ(vecData[6], str2);

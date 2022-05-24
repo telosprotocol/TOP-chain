@@ -60,6 +60,13 @@ public:
     uint16_t                    m_lock_duration;
 };
 
+class eth_error
+{
+public:
+    int error_code = 0;
+    std::string  error_message = "";
+};
+
 class xtx_action_info {
 public:
     xtx_action_info(const std::string & source_addr, const std::string & source_action_name, const std::string & source_action_para,
@@ -194,7 +201,7 @@ class xtransaction_t : virtual public base::xrefcount_t {
     virtual const top::evm_common::u256 get_gaslimit() const { return 0; }
     virtual const top::evm_common::u256 get_max_priority_fee_per_gas() const { return 0; }
     virtual const top::evm_common::u256 get_max_fee_per_gas() const { return 0; }
-    virtual bool verify_tx(xJson::Value & request, std::error_code& ec) { return true; }
+    virtual bool verify_tx(xJson::Value & request, eth_error& ec) { return true; }
     virtual uint32_t get_eip_version() const = 0;
 };
 

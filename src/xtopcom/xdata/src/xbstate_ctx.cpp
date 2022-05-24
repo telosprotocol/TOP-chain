@@ -523,7 +523,7 @@ std::string xbstate_ctx_t::string_get(const std::string & prop) const {
 
 int32_t xbstate_ctx_t::set_tep_balance(const std::string & token_name, evm_common::u256 new_balance) {
     xdbg("xbstate_ctx_t::set_tep_balance,property_modify_enter.address=%s,height=%ld,token_name=%s,new_balance=%s", get_address().c_str(), get_chain_height(), token_name.c_str(), new_balance.str().c_str());
-    top::xbytes_t result_rlp = evm_common::rlp::RLP::encode(new_balance);
+    top::xbytes_t result_rlp = evm_common::RLP::encode(new_balance);
     return set_tep_balance_bytes(token_name, result_rlp);
 }
 
@@ -561,7 +561,7 @@ evm_common::u256 xbstate_ctx_t::tep_token_balance(const std::string& token_name)
         return 0;
     }
 
-    auto decoded = evm_common::rlp::RLP::decode(value_rlp);
+    auto decoded = evm_common::RLP::decode(value_rlp);
     std::string str(decoded.decoded[0].begin(), decoded.decoded[0].end());
     evm_common::u256 balance = evm_common::fromBigEndian<top::evm_common::u256>(str);
 
@@ -651,7 +651,7 @@ int32_t xbstate_ctx_t::tep_token_withdraw(const std::string& token_name, evm_com
     evm_common::u256 balance = 0;
     if (!balance_str.empty()) {
         xbytes_t value_rlp = to_bytes(balance_str);
-        auto decoded = evm_common::rlp::RLP::decode(value_rlp);
+        auto decoded = evm_common::RLP::decode(value_rlp);
         std::string str(decoded.decoded[0].begin(), decoded.decoded[0].end());
         balance = evm_common::fromBigEndian<top::evm_common::u256>(str);
     }
@@ -662,7 +662,7 @@ int32_t xbstate_ctx_t::tep_token_withdraw(const std::string& token_name, evm_com
     }
 
     evm_common::u256 new_balance = balance - sub_token;
-    top::xbytes_t result_rlp = evm_common::rlp::RLP::encode(new_balance);
+    top::xbytes_t result_rlp = evm_common::RLP::encode(new_balance);
     std::error_code ec;
     std::string new_balance_str = top::from_bytes<std::string>(result_rlp, ec);
     if (ec) {
@@ -712,7 +712,7 @@ int32_t xbstate_ctx_t::tep_token_deposit(const std::string& token_name, evm_comm
     evm_common::u256 balance = 0;
     if (!balance_str.empty()) {
         xbytes_t value_rlp = to_bytes(balance_str);
-        auto decoded = evm_common::rlp::RLP::decode(value_rlp);
+        auto decoded = evm_common::RLP::decode(value_rlp);
         std::string str(decoded.decoded[0].begin(), decoded.decoded[0].end());
         balance = evm_common::fromBigEndian<top::evm_common::u256>(str);
     }
@@ -723,7 +723,7 @@ int32_t xbstate_ctx_t::tep_token_deposit(const std::string& token_name, evm_comm
     }
 
     evm_common::u256 new_balance = balance + add_token;
-    top::xbytes_t result_rlp = evm_common::rlp::RLP::encode(new_balance);
+    top::xbytes_t result_rlp = evm_common::RLP::encode(new_balance);
     std::error_code ec;
     std::string new_balance_str = top::from_bytes<std::string>(result_rlp, ec);
     if (ec) {

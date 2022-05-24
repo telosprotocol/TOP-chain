@@ -6,7 +6,6 @@
 
 namespace top {
 namespace evm_common {
-namespace rlp {
 
 bytes subData(const bytes & indata, size_t index, size_t length) {
     size_t subLength = length;
@@ -24,6 +23,6 @@ bytes subData(const bytes & indata, size_t startIndex) {
     return data(indata.data() + startIndex, subLength);
 }
 
-}  // namespace rlp
+
 }  // namespace evm_common
 }  // namespace top
