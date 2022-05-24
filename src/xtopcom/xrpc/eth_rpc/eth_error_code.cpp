@@ -20,18 +20,30 @@ bool EthErrorCode::check_req(const xJson::Value & js_req, xJson::Value & js_rsp,
     }
     return true;
 }
-bool EthErrorCode::check_hex(const std::string& value, xJson::Value & js_rsp, uint32_t index, bool is_block_number) {
+bool EthErrorCode::check_hex(const std::string& value, xJson::Value & js_rsp, uint32_t index, const enum_rpc_check_type type) {
     if (value.empty()) {
         std::string msg = std::string("invalid argument ") + std::to_string(index) + ": empty hex string";
         deal_error(js_rsp, eth::enum_eth_rpc_invalid_params, msg);
         return false;
     }
-    if (is_block_number) {
+    if (type == enum_rpc_type_block) {
         if (value == "latest" || value == "earliest" || value == "pending")
             return true;
-    } else {
+    } else if (type == enum_rpc_type_address) {
         if (value.size() % 2 == 1) {
             std::string msg = std::string("invalid argument ") + std::to_string(index) + ": json: cannot unmarshal hex string of odd length into Go value of type common.Address";
+            deal_error(js_rsp, eth::enum_eth_rpc_invalid_params, msg);
+            return false;
+        }
+    } else if (type == enum_rpc_type_hash) {
+        if (value.size() % 2 == 1) {
+            std::string msg = std::string("invalid argument ") + std::to_string(index) + ": json: cannot unmarshal hex string of odd length into Go value of type common.Hash";
+            deal_error(js_rsp, eth::enum_eth_rpc_invalid_params, msg);
+            return false;
+        }
+    } else if (type == enum_rpc_type_data) {
+        if (value.size() % 2 == 1) {
+            std::string msg = std::string("invalid argument ") + std::to_string(index) + ": json: cannot unmarshal hex string of odd length into Go value of type hexutil.Bytes";
             deal_error(js_rsp, eth::enum_eth_rpc_invalid_params, msg);
             return false;
         }
@@ -41,7 +53,7 @@ bool EthErrorCode::check_hex(const std::string& value, xJson::Value & js_rsp, ui
         deal_error(js_rsp, eth::enum_eth_rpc_invalid_params, msg);
         return false;
     }
-    if (is_block_number) {
+    if (type == enum_rpc_type_block) {
         if (value.size() >= 4 && value[2] == '0') {
             std::string msg = "invalid argument " + std::to_string(index) + ": hex number with leading zero digits";
             deal_error(js_rsp, eth::enum_eth_rpc_invalid_params, msg);
