@@ -22,6 +22,7 @@
 #include "xelect_net/include/elect_vhost_face.h"
 #include "xgenesis/xgenesis_manager.h"
 #include "xmbus/xmessage_bus.h"
+#include "xrelay_chain/xrelay_chain_mgr.h"
 #include "xrouter/xrouter_face.h"
 #include "xstore/xstore_face.h"
 #include "xsync/xsync_object.h"
@@ -92,6 +93,7 @@ private:
     std::vector<xobject_ptr_t<base::xiothread_t>> m_sync_handler_thread_pool{};
     std::unique_ptr<elect::xelect_client_imp> m_elect_client;
     xobject_ptr_t<xtxpool_v2::xtxpool_face_t> m_txpool;
+    std::shared_ptr<xrelay_chain::xrelay_chain_mgr_t> m_relay_chain_mgr;
     std::unordered_map<xthread_pool_type_t, xthread_pool_t> m_thread_pools;
     xobject_ptr_t<base::xvnodesrv_t> m_nodesvr_ptr;
     xobject_ptr_t<base::xvcertauth_t> m_cert_ptr;
@@ -144,6 +146,8 @@ public:
     xthread_pool_t const & thread_pool(xthread_pool_type_t const thread_pool_type) const noexcept;
 
     observer_ptr<xtxpool_v2::xtxpool_face_t> txpool() const noexcept;
+
+    observer_ptr<xrelay_chain::xrelay_chain_mgr_t> relay_chain_mgr() const noexcept;
 
     xobject_ptr_t<base::xvnodesrv_t> node_service() const noexcept;
 

@@ -42,7 +42,9 @@ xrelay_packer::xrelay_packer(const std::string & account_id,
     base::xauto_ptr<xcsobject_t> ptr_engine_obj(create_engine(*this, xconsensus::enum_xconsensus_pacemaker_type_clock_cert));
     ptr_engine_obj->register_plugin(para->get_resources()->get_xbft_workpool());  // used for xbft heavy work, such as verify_proposal and signature verify.
     m_raw_timer = get_thread()->create_timer((base::xtimersink_t *)this);
+    m_raw_timer->start(1000, 1000);
     m_proposal_maker = block_maker->get_proposal_maker(account_id);
+    para->get_resources()->get_relay_chain_mgr()->start(target_thread_id);
 
     xunit_dbg("xrelay_packer::xrelay_packer,create,this=%p,account=%s", this, account_id.c_str());
 }
@@ -55,6 +57,7 @@ xrelay_packer::~xrelay_packer() {
 }
 
 bool xrelay_packer::close(bool force_async) {
+    m_para->get_resources()->get_relay_chain_mgr()->stop();
     xcsaccount_t::close(force_async);
     // xunit_dbg("xrelay_packer::close, this=%p,refcount=%d", this, get_refcount());
     return true;
@@ -246,10 +249,6 @@ bool xrelay_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     if (latest_blocks.get_latest_cert_block()->get_height() == 0) {
         m_leader_packed = start_proposal(latest_blocks);
     }
-    
-    if (!m_leader_packed) {
-        m_raw_timer->start(m_timer_repeat_time_ms, 0);
-    }
     return true;
 }
 
@@ -258,13 +257,13 @@ bool xrelay_packer::on_timer_fire(const int32_t thread_id,
                                   const int64_t current_time_ms,
                                   const int32_t start_timeout_ms,
                                   int32_t & in_out_cur_interval_ms) {
+    m_para->get_resources()->get_relay_chain_mgr()->on_timer();
     if (!m_is_leader || m_leader_packed) {
         return true;
     }
     
     if (m_wait_count < 10) {
         m_wait_count++;
-        m_raw_timer->start(m_timer_repeat_time_ms, 0);
         return true;
     } else {
         m_wait_count = 0;
@@ -274,9 +273,6 @@ bool xrelay_packer::on_timer_fire(const int32_t thread_id,
     // xunit_dbg("xrelay_packer::on_timer_fire retry start proposal.this:%p node:%s", this, m_para->get_resources()->get_account().c_str());
     base::xblock_mptrs latest_blocks = m_para->get_resources()->get_vblockstore()->get_latest_blocks(get_account(), metrics::blockstore_access_from_us_on_timer_fire);
     m_leader_packed = start_proposal(latest_blocks);
-    if (!m_leader_packed) {
-        m_raw_timer->start(m_timer_repeat_time_ms, 0);
-    }
     return true;
 }
 

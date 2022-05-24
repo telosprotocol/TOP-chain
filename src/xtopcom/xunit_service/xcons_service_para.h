@@ -29,10 +29,11 @@ public:
                const observer_ptr<base::xvblockstore_t> & blockstore,
                const std::shared_ptr<xnetwork_proxy_face> & network,
                const std::shared_ptr<xleader_election_face> & elect_face,
-               observer_ptr<time::xchain_time_face_t> const & tx_timer,
-               observer_ptr<election::cache::xdata_accessor_face_t> const & accessor,
-               observer_ptr<mbus::xmessage_bus_face_t> const & mb,
-               const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool);
+               const observer_ptr<time::xchain_time_face_t> & tx_timer,
+               const observer_ptr<election::cache::xdata_accessor_face_t> & accessor,
+               const observer_ptr<mbus::xmessage_bus_face_t> & mb,
+               const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool,
+               const observer_ptr<xrelay_chain::xrelay_chain_mgr_t> & relay_chain_mgr);
     virtual ~xresources();
 
 public:
@@ -56,6 +57,7 @@ public:
     virtual const std::string & get_account();
     virtual mbus::xmessage_bus_face_t * get_bus();
     virtual xtxpool_v2::xtxpool_face_t * get_txpool();
+    virtual xrelay_chain::xrelay_chain_mgr_t * get_relay_chain_mgr();
 
 private:
     xobject_ptr_t<base::xworkerpool_t> m_worker_pool;
@@ -69,6 +71,7 @@ private:
     observer_ptr<election::cache::xdata_accessor_face_t> m_accessor;
     observer_ptr<mbus::xmessage_bus_face_t> m_bus{};
     observer_ptr<xtxpool_v2::xtxpool_face_t> m_txpool{};
+    observer_ptr<xrelay_chain::xrelay_chain_mgr_t> m_relay_chain_mgr;
 };
 
 // consensuss parameter

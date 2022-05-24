@@ -175,6 +175,7 @@ XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(award_auditor_credit);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(validator_award_creditscore);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(auditor_award_creditscore);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(contract_call_contracts_num);
+XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_addr_for_eth);
 
 /* begin of offchain parameters */
 XDEFINE_CONFIGURATION(auditor_group_count);

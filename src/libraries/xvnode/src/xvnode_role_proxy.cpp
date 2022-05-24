@@ -16,10 +16,11 @@ xtop_vnode_role_proxy::xtop_vnode_role_proxy(observer_ptr<mbus::xmessage_bus_fac
                                              xobject_ptr_t<base::xvcertauth_t> const & certauth,
                                              observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
                                              //    std::vector<xobject_ptr_t<base::xiothread_t>> const & iothreads,
-                                             observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
+                                             observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
+                                             observer_ptr<xrelay_chain::xrelay_chain_mgr_t> const & relay_chain_mgr)
   : m_txstore{txstore} {
     m_cons_mgr = xunit_service::xcons_mgr_build(
-        data::xuser_params::get_instance().account.value(), store, block_store, txpool, logic_timer, certauth, election_cache_data_accessor, mbus, router);
+        data::xuser_params::get_instance().account.value(), store, block_store, txpool, logic_timer, certauth, election_cache_data_accessor, mbus, router, relay_chain_mgr);
     // m_txpool_service_mgr = xtxpool_service_v2::xtxpool_service_mgr_instance::create_xtxpool_service_mgr_inst(store, block_store, txpool, iothreads, mbus, logic_timer);
 }
 
