@@ -17,8 +17,6 @@ class util {
 #define dataset_growth_bytes     1 << 23
 #define mix_bytes                128
 #define hash_bytes               64
-#define ETH1559_HEIGHT           12965000
-#define ETH4345_HEIGHT           13773000
 public:
     inline static std::string hex_to_hex(std::string& hex) {
         std::string raw_hex;
