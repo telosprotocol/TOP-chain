@@ -210,13 +210,13 @@ void xedge_evm_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, 
     request["tx_structure_version"] = 3;
     json_proc.m_tx_ptr = data::xtx_factory::create_tx(static_cast<data::enum_xtransaction_version>(request["tx_structure_version"].asUInt()));
     auto & tx = json_proc.m_tx_ptr;
-    std::error_code ec;
+    top::data::eth_error ec;
     tx->verify_tx(request, ec);
-    if (ec)
+    if (ec.error_code)
     {
         xJson::Value errinfo;
-        errinfo["code"] = ec.value();
-        errinfo["messgae"] = ec.message();
+        errinfo["code"] = ec.error_code;
+        errinfo["messgae"] = ec.error_message;
         json_proc.m_response_json["error"] = errinfo;
         return ;
     }

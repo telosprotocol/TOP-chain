@@ -11,7 +11,6 @@
 #include <vector>
 namespace top {
 namespace evm_common {
-namespace rlp {
 
 using byte = std::uint8_t;
 using bytes = std::vector<byte>;
@@ -58,6 +57,6 @@ inline uint32_t to_uint32(const std::string & input) {
     output += std::string(sizeof(uint32_t) - input.size(), 0);
     return *(uint32_t *)output.data();
 }
-}  // namespace rlp
+
 }  // namespace evm_common
 }  // namespace top
