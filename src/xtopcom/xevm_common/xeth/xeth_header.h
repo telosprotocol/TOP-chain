@@ -53,7 +53,7 @@ public:
     BlockNonce nonce() const;
     bigint baseFee() const;
     Hash hash();
-    bool isBaseFee();
+    bool isBaseFee() const;
     Hash hashWithoutSeal();
 
 private:
