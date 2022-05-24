@@ -36,5 +36,7 @@ add_subdirectory(xcheckpoint_test)
 if (BUILD_EVM)
     add_subdirectory(xevm_engine_test)
     add_subdirectory(xevm_common_test)
+    add_subdirectory(xevm_contract_runtime)
 endif()
 add_subdirectory(xgasfee)
+
