@@ -26,22 +26,21 @@ public:
     bool sync(std::string headerContent);
 
 private:
+    evm_common::bigint calcBaseFee(const evm_common::eth::xeth_block_header_t & parentHeader) const;
+    bool verifyOwner(const std::string & owner) const;
+    bool verifyCommon(const evm_common::eth::xeth_block_header_t & prev_header, const evm_common::eth::xeth_block_header_t & new_header) const;
+    bool verifyEip1559Header(const evm_common::eth::xeth_block_header_t & parentHeader, const evm_common::eth::xeth_block_header_t & header) const;
+    bool verifyGaslimit(const evm_common::u256 parentGasLimit, const evm_common::u256 headerGasLimit) const;
+    bool isLondon(const evm_common::eth::xeth_block_header_t & header) const;
+    bool isArrowGlacier(const evm_common::eth::xeth_block_header_t & header) const;
 
-    evm_common::bigint calcBaseFee(evm_common::eth::xeth_block_header_t &parentHeader);
-    bool validateOwner(std::string owner);
-    bool verifyCommon(evm_common::eth::xeth_block_header_t prev_header, evm_common::eth::xeth_block_header_t new_header);
-    bool verifyEip1559Header(evm_common::eth::xeth_block_header_t & parentHeader, evm_common::eth::xeth_block_header_t & header);
-    bool verifyGaslimit(evm_common::u256 parentGasLimit, evm_common::u256 headerGasLimit);
-    bool isLondon(evm_common::eth::xeth_block_header_t & header) const;
-    bool isArrowGlacier(evm_common::eth::xeth_block_header_t &header) const;
-
-    bool get_hash(const uint64_t chain_id, const evm_common::bigint height, evm_common::h256 & hash) const;
-    bool set_hash(const uint64_t chain_id, const evm_common::bigint height, const evm_common::h256 hash);
-    bool get_height(const uint64_t chain_id, evm_common::bigint & height) const;
-    bool set_height(const uint64_t chain_id, const evm_common::bigint height);
-    bool get_header(const uint64_t chain_id, const evm_common::h256 hash, evm_common::eth::xeth_block_header_t & header, evm_common::bigint & difficulty) const;
-    bool set_header(const uint64_t chain_id, evm_common::eth::xeth_block_header_t header, evm_common::bigint difficulty);
-    bool rebuild(uint64_t chain_id, evm_common::eth::xeth_block_header_t & current_header, evm_common::eth::xeth_block_header_t & new_header);
+    bool get_hash(const evm_common::bigint height, evm_common::h256 & hash) const;
+    bool set_hash(const evm_common::bigint height, const evm_common::h256 hash);
+    bool get_height(evm_common::bigint & height) const;
+    bool set_height(const evm_common::bigint height);
+    bool get_header(const evm_common::h256 hash, evm_common::eth::xeth_block_header_t & header, evm_common::bigint & difficulty) const;
+    bool set_header(evm_common::eth::xeth_block_header_t & header, evm_common::bigint difficulty);
+    bool rebuild(evm_common::eth::xeth_block_header_t & current_header, evm_common::eth::xeth_block_header_t & new_header);
 
     common::xaccount_address_t m_contract_address{evm_eth_bridge_contract_address};
     std::shared_ptr<data::xunit_bstate_t> m_contract_state{nullptr};

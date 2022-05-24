@@ -327,7 +327,7 @@ bytes xeth_block_header_t::encode_rlp() {
     return out;
 }
 
-bool xeth_block_header_t::isBaseFee() {
+bool xeth_block_header_t::isBaseFee() const {
     return m_isBaseFee;
 }
 
