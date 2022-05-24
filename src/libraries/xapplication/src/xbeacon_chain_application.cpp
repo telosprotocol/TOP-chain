@@ -79,31 +79,25 @@ static top::data::election::xelection_result_store_t load_election_data(observer
         if (block == nullptr) {
             ec = error::xerrc_t::load_election_data_block_type_mismatch;
 
-            xerror("load_election_data failed: category %s; msg: %s; contract address: %s; property %s; from height %" PRIu64,
+            xwarn("load_election_data failed (block is null): category %s; msg: %s; contract address: %s; property %s; from height %" PRIu64,
                    ec.category().name(),
                    ec.message().c_str(),
                    contract_address.c_str(),
                    property_name.c_str(),
                    block_height_upper_limit);
-            // shouldn't happen. if happens, something goes wrong and we don't known how to fix it. let it crash and perform a postmortem analysis is the best solution.
-            top::error::throw_error(ec);
-
             break;
         }
 
         base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(vblock.get(), metrics::statestore_access_from_application_load_election);
         if (bstate == nullptr) {
-            // TODO(jimmy)
             ec = error::xerrc_t::load_election_data_missing_state;
 
-            xwarn("load_election_data failed: category %s; msg: %s; contract address: %s; property %s; from height %" PRIu64,
+            xwarn("load_election_data failed (state is null): category %s; msg: %s; contract address: %s; property %s; from height %" PRIu64,
                    ec.category().name(),
                    ec.message().c_str(),
                    contract_address.c_str(),
                    property_name.c_str(),
                    block_height_upper_limit);
-            // shouldn't happen. if happens, something goes wrong and we don't known how to fix it. let it crash and perform a postmortem analysis is the best solution.
-            // top::error::throw_error(ec);
 
             break;
         }
@@ -118,27 +112,28 @@ static top::data::election::xelection_result_store_t load_election_data(observer
         if (min_height == 0) {
             ec = error::xerrc_t::load_election_data_missing_property;
 
-            xerror("load_election_data failed: category %s; msg: %s; contract address: %s; property %s; from height %" PRIu64,
+            xwarn("load_election_data failed (genesis state empty): category %s; msg: %s; contract address: %s; property %s; from height %" PRIu64,
                    ec.category().name(),
                    ec.message().c_str(),
                    contract_address.c_str(),
                    property_name.c_str(),
                    block_height_upper_limit);
-            // we fail to read election data even in the genesis block. bad news.
-            top::error::throw_error(ec);
+            // we fail to read election data even in the genesis block.
+            break;
         } else {
             block_height = min_height - 1;
         }
     } while (true);
 
     if (ec) {
+        xwarn("load_election_data failed");
         return {};
     }
 
     if (result.empty()) {
         ec = error::xerrc_t::load_election_data_property_empty;
 
-        xerror("load_election_data failed: category %s; msg: %s; contract address: %s; property %s; from height %" PRIu64,
+        xwarn("load_election_data failed (property empty): category %s; msg: %s; contract address: %s; property %s; from height %" PRIu64,
                ec.category().name(),
                ec.message().c_str(),
                contract_address.c_str(),
@@ -154,19 +149,23 @@ static top::data::election::xelection_result_store_t load_election_data(observer
 void xtop_beacon_chain_application::load_last_election_data() {
     std::vector<common::xaccount_address_t> sys_addr{rec_elect_rec_contract_address,
                                                      rec_elect_archive_contract_address,
+                                                     rec_elect_exchange_contract_address,
                                                      rec_elect_fullnode_contract_address,
                                                      rec_elect_edge_contract_address,
                                                      rec_elect_zec_contract_address,
                                                      zec_elect_consensus_contract_address,
-                                                     zec_elect_eth_contract_address};
+                                                     zec_elect_eth_contract_address,
+                                                     relay_elect_relay_contract_address};
 
     std::map<common::xaccount_address_t, common::xzone_id_t> addr_to_zone_id{{rec_elect_rec_contract_address, common::xcommittee_zone_id},
                                                                              {rec_elect_zec_contract_address, common::xzec_zone_id},
                                                                              {rec_elect_archive_contract_address, common::xstorage_zone_id},
+                                                                             {rec_elect_exchange_contract_address, common::xstorage_zone_id},
                                                                              {rec_elect_fullnode_contract_address, common::xfullnode_zone_id},
                                                                              {rec_elect_edge_contract_address, common::xedge_zone_id},
                                                                              {zec_elect_consensus_contract_address, common::xdefault_zone_id},
-                                                                             {zec_elect_eth_contract_address, common::xevm_zone_id}};
+                                                                             {zec_elect_eth_contract_address, common::xevm_zone_id},
+                                                                             {relay_elect_relay_contract_address, common::xrelay_zone_id}};
     for (const auto & addr : sys_addr) {
         for (auto const & property : data::election::get_property_name_by_addr(addr)) {
             common::xzone_id_t zone_id = addr_to_zone_id[addr];
@@ -194,13 +193,19 @@ void xtop_beacon_chain_application::load_last_election_data() {
                                                                          block_height,
                                                                          ec);
             if (ec) {
-                xerror("xbeacon_chain_application::load_last_election_data fail to load election data. addr %s; property %s; from height %" PRIu64, addr.c_str(), property.c_str(), block_height);
-                top::error::throw_error(ec);
-                // continue;
+                if (block_height != 0) {
+                    xerror("xbeacon_chain_application::load_last_election_data fail to load election data. addr %s; property %s; from height %" PRIu64,
+                           addr.c_str(),
+                           property.c_str(),
+                           block_height);
+                    top::error::throw_error(ec);
+                } else {
+                    continue;
+                }
             }
 
             if ((addr == rec_elect_rec_contract_address || addr == rec_elect_zec_contract_address || addr == zec_elect_consensus_contract_address ||
-                 addr == zec_elect_eth_contract_address) &&
+                 addr == zec_elect_eth_contract_address || addr == relay_elect_relay_contract_address) &&
                 block_height != 0) {
                 uint64_t prev_block_height = block_height - 1;
                 auto const & before_last_election_result_store = load_election_data(m_application->blockstore(), addr, prev_block_height, property, prev_block_height, ec);

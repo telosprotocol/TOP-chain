@@ -274,8 +274,14 @@ namespace top
                             xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
                             return false;
                         }
+                    } else if (ledger_id == enum_chain_zone_relay_index) {
+                        if (subaddr_int32 < 0 || static_cast<uint32_t>(subaddr_int32) >= MAIN_CHAIN_RELAY_TABLE_USED_NUM) {
+                            xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
+                            return false;
+                        }
                     } else {
                         // invalid table addr
+                        assert(false);
                         xwarn("xvaccount_t::check_address fail-invalid header. header:%s type=%d", parts[0].c_str(), addr_type);
                         return false;
                     }
@@ -304,7 +310,13 @@ namespace top
                             xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
                             return false;
                         }
+                    } else if (ledger_id == enum_chain_zone_relay_index) {
+                        if (subaddr_int32 < 0 || static_cast<uint32_t>(subaddr_int32) >= MAIN_CHAIN_RELAY_TABLE_USED_NUM) {
+                            xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
+                            return false;
+                        }
                     } else {
+                        assert(false);
                         //invalid contracts addr
                         xwarn("xvaccount_t::check_address fail-invalid header. header:%s type=%d", parts[0].c_str(), addr_type);
                         return false;
@@ -343,7 +355,8 @@ namespace top
                 }
                 uint16_t ledger_id = base::xvaccount_t::get_ledgerid_from_account(account_addr);
                 if (addr_type == enum_vaccount_addr_type_secp256k1_eth_user_account) {
-                    if (ledger_id != enum_chain_zone_consensus_index && ledger_id != enum_chain_zone_beacon_index && ledger_id != enum_chain_zone_zec_index) {
+                    if (ledger_id != enum_chain_zone_consensus_index && ledger_id != enum_chain_zone_beacon_index && ledger_id != enum_chain_zone_zec_index &&
+                        ledger_id != enum_chain_zone_relay_index) {
                         xwarn("xvaccount_t::check_address T8 eth address ledger id error");
                         return false;
                     }

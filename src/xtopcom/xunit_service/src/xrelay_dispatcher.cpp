@@ -18,7 +18,7 @@ xrelay_dispatcher_t::xrelay_dispatcher_t(std::shared_ptr<xcons_service_para_face
     auto wp = m_para->get_resources()->get_workpool();
     m_worker = wp->get_thread((++tid) % wp->get_count());
     // m_packer = new xrelay_packer(th->get_context(), th->get_thread_id(), m_para, m_block_maker);
-    m_packer = new xrelay_packer(relay_block_addr, m_para, m_block_maker, base::xcontext_t::instance(), m_worker->get_thread_id());
+    m_packer = new xrelay_packer(sys_contract_relay_table_block_addr, m_para, m_block_maker, base::xcontext_t::instance(), m_worker->get_thread_id());
     xunit_info("xrelay_dispatcher_t::xrelay_dispatcher_t,create,this=%p,pick_refcount=%d", this, m_packer->get_refcount());
 }
 

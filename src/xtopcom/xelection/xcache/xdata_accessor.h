@@ -134,6 +134,11 @@ private:
                                                                                          std::uint64_t const associated_blk_height,
                                                                                          std::error_code & ec);
 
+    std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> update_relay_zone(std::shared_ptr<xzone_element_t> const & zone_element,
+                                                                                           data::election::xelection_result_store_t const & election_result_store,
+                                                                                           std::uint64_t const associated_blk_height,
+                                                                                           std::error_code & ec);
+
     std::unordered_map<common::xcluster_address_t, xgroup_update_result_t> update_cluster(std::shared_ptr<xzone_element_t> const & zone_element,
                                                                                           std::shared_ptr<xcluster_element_t> const & cluster_element,
                                                                                           data::election::xelection_cluster_result_t const & cluster_result,
