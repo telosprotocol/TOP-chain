@@ -815,11 +815,11 @@ void xzec_reward_contract::get_reward_param(const common::xlogic_time_t current_
         data::system_contract::xgroup_workload_t workload;
         xstream_t stream(xcontext_t::instance(), (uint8_t *)value_str.data(), value_str.size());
         workload.serialize_from(stream);
-        if (common::has<common::xnode_type_t::consensus_auditor>(group_address.type())) {
-            property_param.auditor_workloads_detail[group_address] = workload;
-        } else if (common::has<common::xnode_type_t::evm_auditor>(group_address.type())) {
-            property_param.evm_auditor_workloads_detail[group_address] = workload;
-        }
+        // if (common::has<common::xnode_type_t::consensus_auditor>(group_address.type())) {
+        property_param.auditor_workloads_detail[group_address] = workload;
+        // } else if (common::has<common::xnode_type_t::evm_auditor>(group_address.type())) {
+        // property_param.evm_auditor_workloads_detail[group_address] = workload;
+        // }
     }
     for (auto it = validator_group_workloads.begin(); it != validator_group_workloads.end(); it++) {
         auto const & key_str = it->first;
@@ -830,11 +830,11 @@ void xzec_reward_contract::get_reward_param(const common::xlogic_time_t current_
         data::system_contract::xgroup_workload_t workload;
         xstream_t stream(xcontext_t::instance(), (uint8_t *)value_str.data(), value_str.size());
         workload.serialize_from(stream);
-        if (common::has<common::xnode_type_t::consensus_validator>(group_address.type())) {
-            property_param.validator_workloads_detail[group_address] = workload;
-        } else if (common::has<common::xnode_type_t::evm_validator>(group_address.type())) {
-            property_param.evm_validator_workloads_detail[group_address] = workload;
-        }
+        // if (common::has<common::xnode_type_t::consensus_validator>(group_address.type())) {
+        property_param.validator_workloads_detail[group_address] = workload;
+        // } else if (common::has<common::xnode_type_t::evm_validator>(group_address.type())) {
+        //     property_param.evm_validator_workloads_detail[group_address] = workload;
+        // }
     }
     issue_detail.m_auditor_group_count = property_param.auditor_workloads_detail.size();
     issue_detail.m_validator_group_count = property_param.validator_workloads_detail.size();
@@ -1542,33 +1542,35 @@ void xzec_reward_contract::calc_nodes_rewards_v5(common::xlogic_time_t const cur
     auto archive_workload_rewards = total_issuance * onchain_param.archive_reward_ratio / 100;
     auto total_auditor_total_workload_rewards = total_issuance * onchain_param.auditor_reward_ratio / 100;
     auto total_validator_total_workload_rewards = total_issuance * onchain_param.validator_reward_ratio / 100;
-    auto evm_auditor_total_workload_rewards = total_auditor_total_workload_rewards * onchain_param.evm_auditor_reward_ratio / 100;
-    auto evm_validator_total_workload_rewards = total_validator_total_workload_rewards * onchain_param.evm_validator_reward_ratio / 100;
-    auto auditor_total_workload_rewards = total_auditor_total_workload_rewards - evm_auditor_total_workload_rewards;
-    auto validator_total_workload_rewards = total_validator_total_workload_rewards - evm_validator_total_workload_rewards;
+    // auto evm_auditor_total_workload_rewards = total_auditor_total_workload_rewards * onchain_param.evm_auditor_reward_ratio / 100;
+    // auto evm_validator_total_workload_rewards = total_validator_total_workload_rewards * onchain_param.evm_validator_reward_ratio / 100;
+    // auto auditor_total_workload_rewards = total_auditor_total_workload_rewards - evm_auditor_total_workload_rewards;
+    // auto validator_total_workload_rewards = total_validator_total_workload_rewards - evm_validator_total_workload_rewards;
+    auto auditor_total_workload_rewards = total_auditor_total_workload_rewards;
+    auto validator_total_workload_rewards = total_validator_total_workload_rewards;
     auto vote_rewards = total_issuance * onchain_param.vote_reward_ratio / 100;
     auto governance_rewards = total_issuance * onchain_param.governance_reward_ratio / 100;
     community_reward = governance_rewards;
     auto auditor_group_count = property_param.auditor_workloads_detail.size();
     auto validator_group_count = property_param.validator_workloads_detail.size();
-    auto evm_auditor_group_count = property_param.evm_auditor_workloads_detail.size();
-    auto evm_validator_group_count = property_param.evm_validator_workloads_detail.size();
+    // auto evm_auditor_group_count = property_param.evm_auditor_workloads_detail.size();
+    // auto evm_validator_group_count = property_param.evm_validator_workloads_detail.size();
     ::uint128_t auditor_group_workload_rewards = 0;
     ::uint128_t validator_group_workload_rewards = 0;
-    ::uint128_t evm_auditor_group_workload_rewards = 0;
-    ::uint128_t evm_validator_group_workload_rewards = 0;
+    // ::uint128_t evm_auditor_group_workload_rewards = 0;
+    // ::uint128_t evm_validator_group_workload_rewards = 0;
     if (auditor_group_count != 0) {
         auditor_group_workload_rewards = auditor_total_workload_rewards / auditor_group_count;
     }
     if (validator_group_count != 0) {
         validator_group_workload_rewards = validator_total_workload_rewards / validator_group_count;
     }
-    if (evm_auditor_group_count != 0) {
-        evm_auditor_group_workload_rewards = evm_auditor_total_workload_rewards / evm_auditor_group_count;
-    }
-    if (evm_validator_group_count != 0) {
-        evm_validator_group_workload_rewards = evm_validator_total_workload_rewards / evm_validator_group_count;
-    }
+    // if (evm_auditor_group_count != 0) {
+    //     evm_auditor_group_workload_rewards = evm_auditor_total_workload_rewards / evm_auditor_group_count;
+    // }
+    // if (evm_validator_group_count != 0) {
+    //     evm_validator_group_workload_rewards = evm_validator_total_workload_rewards / evm_validator_group_count;
+    // }
 
     // step 2: calculate different votes and role nums
     std::map<common::xaccount_address_t, uint64_t> account_votes;
@@ -1582,8 +1584,8 @@ void xzec_reward_contract::calc_nodes_rewards_v5(common::xlogic_time_t const cur
         "archive workload rewards: [%llu, %u], total archive num: %d, valid archive num: %d, "
         "auditor workload rewards: [%llu, %u], auditor workload group num: %d, auditor group workload rewards: [%llu, %u], total auditor num: %d, valid auditor num: %d, "
         "validator workload rewards: [%llu, %u], validator workload group num: %d, validator group workload rewards: [%llu, %u], total validator num: %d, valid validator num: %d,  "
-        "evm auditor workload rewards: [%llu, %u], evm auditor workload group num: %d, evm auditor group workload rewards: [%llu, %u], total evm auditor num: %d, valid evm auditor num: %d,  "
-        "evm validator workload rewards: [%llu, %u], evm validator workload group num: %d, evm validator group workload rewards: [%llu, %u], total evm validator num: %d, valid evm validator num: %d,  "
+        // "evm auditor workload rewards: [%llu, %u], evm auditor workload group num: %d, evm auditor group workload rewards: [%llu, %u], total evm auditor num: %d, valid evm auditor num: %d,  "
+        // "evm validator workload rewards: [%llu, %u], evm validator workload group num: %d, evm validator group workload rewards: [%llu, %u], total evm validator num: %d, valid evm validator num: %d,  "
         "vote rewards: [%llu, %u], "
         "governance rewards: [%llu, %u], ",
         issue_time_length,
@@ -1611,20 +1613,20 @@ void xzec_reward_contract::calc_nodes_rewards_v5(common::xlogic_time_t const cur
         static_cast<uint32_t>(validator_group_workload_rewards % data::system_contract::REWARD_PRECISION),
         role_nums[validator_idx][total_idx],
         role_nums[validator_idx][valid_idx],
-        static_cast<uint64_t>(evm_auditor_total_workload_rewards / data::system_contract::REWARD_PRECISION),
-        static_cast<uint32_t>(evm_auditor_total_workload_rewards % data::system_contract::REWARD_PRECISION),
-        evm_auditor_group_count,
-        static_cast<uint64_t>(evm_auditor_group_workload_rewards / data::system_contract::REWARD_PRECISION),
-        static_cast<uint32_t>(evm_auditor_group_workload_rewards % data::system_contract::REWARD_PRECISION),
-        role_nums[evm_auditor_idx][total_idx],
-        role_nums[evm_auditor_idx][valid_idx],
-        static_cast<uint64_t>(evm_validator_total_workload_rewards / data::system_contract::REWARD_PRECISION),
-        static_cast<uint32_t>(evm_validator_total_workload_rewards % data::system_contract::REWARD_PRECISION),
-        evm_validator_group_count,
-        static_cast<uint64_t>(evm_validator_group_workload_rewards / data::system_contract::REWARD_PRECISION),
-        static_cast<uint32_t>(evm_validator_group_workload_rewards % data::system_contract::REWARD_PRECISION),
-        role_nums[evm_validator_idx][total_idx],
-        role_nums[evm_validator_idx][valid_idx],
+        // static_cast<uint64_t>(evm_auditor_total_workload_rewards / data::system_contract::REWARD_PRECISION),
+        // static_cast<uint32_t>(evm_auditor_total_workload_rewards % data::system_contract::REWARD_PRECISION),
+        // evm_auditor_group_count,
+        // static_cast<uint64_t>(evm_auditor_group_workload_rewards / data::system_contract::REWARD_PRECISION),
+        // static_cast<uint32_t>(evm_auditor_group_workload_rewards % data::system_contract::REWARD_PRECISION),
+        // role_nums[evm_auditor_idx][total_idx],
+        // role_nums[evm_auditor_idx][valid_idx],
+        // static_cast<uint64_t>(evm_validator_total_workload_rewards / data::system_contract::REWARD_PRECISION),
+        // static_cast<uint32_t>(evm_validator_total_workload_rewards % data::system_contract::REWARD_PRECISION),
+        // evm_validator_group_count,
+        // static_cast<uint64_t>(evm_validator_group_workload_rewards / data::system_contract::REWARD_PRECISION),
+        // static_cast<uint32_t>(evm_validator_group_workload_rewards % data::system_contract::REWARD_PRECISION),
+        // role_nums[evm_validator_idx][total_idx],
+        // role_nums[evm_validator_idx][valid_idx],
         static_cast<uint64_t>(vote_rewards / data::system_contract::REWARD_PRECISION),
         static_cast<uint32_t>(vote_rewards % data::system_contract::REWARD_PRECISION),
         static_cast<uint64_t>(governance_rewards / data::system_contract::REWARD_PRECISION),
@@ -1652,17 +1654,17 @@ void xzec_reward_contract::calc_nodes_rewards_v5(common::xlogic_time_t const cur
         community_reward += calc_zero_workload_reward(
             property_param.validator_workloads_detail, onchain_param.validator_group_zero_workload, validator_group_workload_rewards, zero_workload_account);
     }
-    if (evm_auditor_group_workload_rewards != 0) {
-        community_reward += calc_evm_invalid_workload_group_reward(true, property_param.map_nodes, evm_auditor_group_workload_rewards, property_param.evm_auditor_workloads_detail);
-        community_reward += calc_zero_workload_reward(
-            property_param.evm_auditor_workloads_detail, onchain_param.evm_auditor_group_zero_workload, evm_auditor_group_workload_rewards, zero_workload_account);
-    }
-    if (evm_validator_group_workload_rewards != 0) {
-        community_reward +=
-            calc_evm_invalid_workload_group_reward(false, property_param.map_nodes, evm_validator_group_workload_rewards, property_param.evm_validator_workloads_detail);
-        community_reward += calc_zero_workload_reward(
-            property_param.evm_validator_workloads_detail, onchain_param.evm_validator_group_zero_workload, evm_validator_group_workload_rewards, zero_workload_account);
-    }
+    // if (evm_auditor_group_workload_rewards != 0) {
+    //     community_reward += calc_evm_invalid_workload_group_reward(true, property_param.map_nodes, evm_auditor_group_workload_rewards, property_param.evm_auditor_workloads_detail);
+    //     community_reward += calc_zero_workload_reward(
+    //         property_param.evm_auditor_workloads_detail, onchain_param.evm_auditor_group_zero_workload, evm_auditor_group_workload_rewards, zero_workload_account);
+    // }
+    // if (evm_validator_group_workload_rewards != 0) {
+    //     community_reward +=
+    //         calc_evm_invalid_workload_group_reward(false, property_param.map_nodes, evm_validator_group_workload_rewards, property_param.evm_validator_workloads_detail);
+    //     community_reward += calc_zero_workload_reward(
+    //         property_param.evm_validator_workloads_detail, onchain_param.evm_validator_group_zero_workload, evm_validator_group_workload_rewards, zero_workload_account);
+    // }
 
     // TODO: voter to zero workload account has no workload reward
     for (auto const & entity : property_param.map_nodes) {
@@ -1709,22 +1711,22 @@ void xzec_reward_contract::calc_nodes_rewards_v5(common::xlogic_time_t const cur
                 self_reward += reward_to_self;
             }
         }
-        if (node.can_be_evm_auditor()) {
-            ::uint128_t reward_to_self = 0;
-            calc_eth_auditor_workload_rewards(node, role_nums[evm_auditor_idx], property_param.evm_auditor_workloads_detail, evm_auditor_group_workload_rewards, reward_to_self);
-            if (reward_to_self != 0) {
-                issue_detail.m_node_rewards[account.to_string()].m_evm_auditor_reward = reward_to_self;
-                self_reward += reward_to_self;
-            }
-        }
-        if (node.can_be_evm_validator()) {
-            ::uint128_t reward_to_self = 0;
-            calc_eth_validator_workload_rewards(node, role_nums[evm_validator_idx], property_param.evm_validator_workloads_detail, evm_validator_group_workload_rewards, reward_to_self);
-            if (reward_to_self != 0) {
-                issue_detail.m_node_rewards[account.to_string()].m_evm_validator_reward = reward_to_self;
-                self_reward += reward_to_self;
-            }
-        }
+        // if (node.can_be_evm_auditor()) {
+        //     ::uint128_t reward_to_self = 0;
+        //     calc_eth_auditor_workload_rewards(node, role_nums[evm_auditor_idx], property_param.evm_auditor_workloads_detail, evm_auditor_group_workload_rewards, reward_to_self);
+        //     if (reward_to_self != 0) {
+        //         issue_detail.m_node_rewards[account.to_string()].m_evm_auditor_reward = reward_to_self;
+        //         self_reward += reward_to_self;
+        //     }
+        // }
+        // if (node.can_be_evm_validator()) {
+        //     ::uint128_t reward_to_self = 0;
+        //     calc_eth_validator_workload_rewards(node, role_nums[evm_validator_idx], property_param.evm_validator_workloads_detail, evm_validator_group_workload_rewards, reward_to_self);
+        //     if (reward_to_self != 0) {
+        //         issue_detail.m_node_rewards[account.to_string()].m_evm_validator_reward = reward_to_self;
+        //         self_reward += reward_to_self;
+        //     }
+        // }
         // 3.3 vote reward
         if (node.can_be_auditor() && node.deposit() > 0 && auditor_total_votes > 0) {
             ::uint128_t reward_to_self = 0;
