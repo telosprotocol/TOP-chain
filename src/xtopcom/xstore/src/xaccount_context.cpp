@@ -116,16 +116,21 @@ int32_t xaccount_context_t::create_user_account(const std::string& address) {
         return ret;
     }
 
-    evm_common::u256 add_token_256 = 10000000000000000000ULL;
-    std::string token_name = data::XPROPERTY_ASSET_ETH;
-    auto old_token_256 = m_account->tep_token_balance(token_name);
-    if (old_token_256 != 0) {
-        xerror("xaccount_context_t::create_user_account fail-eth token not zero");
-        return -1;
+    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+    if (top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.eth_fork_point, get_timer_height())) {
+        evm_common::u256 add_token_256 = 10000000000000000000ULL;
+        std::string token_name = data::XPROPERTY_ASSET_ETH;
+        auto old_token_256 = m_account->tep_token_balance(token_name);
+        if (old_token_256 != 0) {
+            xerror("xaccount_context_t::create_user_account fail-eth token not zero");
+            return -1;
+        }
+
+        // just for test debug
+        ret = m_account->tep_token_deposit(token_name, add_token_256);
     }
 
-    // just for test debug
-    return m_account->tep_token_deposit(token_name, add_token_256);
+    return ret;
 }
 
 int32_t xaccount_context_t::token_transfer_out(const data::xproperty_asset& asset, evm_common::u256 amount256, uint64_t gas_fee, uint64_t service_fee) {

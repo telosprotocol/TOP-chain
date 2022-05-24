@@ -85,13 +85,14 @@ bool xatomictx_executor_t::set_tx_account_state(const data::xunitstate_ptr_t & u
     if (unitstate->get_block_height() < 2) {
         unitstate->set_account_create_time(m_para.get_clock());
     }
+    return update_nonce_and_hash(unitstate, tx);
 
     // TODO(jimmy) recvtx num has no value but will cause to state change
     // if (tx->is_recv_tx()) {
     //     uint64_t recv_num = unitstate->account_recv_trans_number();
     //     unitstate->set_tx_info_recvtx_num(recv_num + 1);
     // }
-    return true;
+    // return true;
 }
 
 bool xatomictx_executor_t::set_tx_table_state(const data::xtablestate_ptr_t & tablestate, const xcons_transaction_ptr_t & tx) {
@@ -115,10 +116,6 @@ bool xatomictx_executor_t::set_tx_table_state(const data::xtablestate_ptr_t & ta
 
 bool xatomictx_executor_t::update_tx_related_state(const data::xunitstate_ptr_t & tx_unitstate, const xcons_transaction_ptr_t & tx, const xvm_output_t & vmoutput) {
     bool ret = false;
-    ret = set_tx_account_state(tx_unitstate, tx);
-    if (!ret) {
-        return ret;
-    }
     for (auto & subtx : vmoutput.m_contract_create_txs) {
         ret = set_tx_account_state(tx_unitstate, subtx);
         if (!ret) {
@@ -247,7 +244,7 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
                 ret = tvm.execute(vminput, vmoutput);
             }
             if (ret == enum_exec_success) {
-                update_nonce_and_hash(unitstate, tx);
+                set_tx_account_state(unitstate, tx);
             }
         } else {
 #ifdef BUILD_EVM
@@ -317,7 +314,7 @@ void xatomictx_executor_t::vm_execute_after_process(const data::xunitstate_ptr_t
         update_gasfee(output.m_vm_output.m_gasfee_detail, tx_unitstate, tx);
         is_state_dirty = m_statectx->is_state_dirty();
         tx->set_current_exec_status(data::enum_xunit_tx_exec_status_fail);
-        update_nonce_and_hash(tx_unitstate, tx);
+        set_tx_account_state(tx_unitstate, tx);
     } else {
         update_gasfee(output.m_vm_output.m_gasfee_detail, tx_unitstate, tx);
         is_state_dirty = m_statectx->is_state_dirty();
