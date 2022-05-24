@@ -9,6 +9,7 @@
 #include "xelect_net/include/elect_main.h"
 #include "xgrpc_mgr/xgrpc_mgr.h"
 #include "xmbus/xmessage_bus.h"
+#include "xrelay_chain/xrelay_chain_mgr.h"
 #include "xrouter/xrouter_face.h"
 #include "xstore/xstore_face.h"
 #include "xsync/xsync_object.h"
@@ -48,7 +49,8 @@ public:
                           xobject_ptr_t<base::xvcertauth_t> const & certauth,
                           observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
                           //  std::vector<xobject_ptr_t<base::xiothread_t>> const & iothreads,
-                          observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor);
+                          observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
+                          observer_ptr<xrelay_chain::xrelay_chain_mgr_t> const & relay_chain_mgr);
 
     // void start() override;
     

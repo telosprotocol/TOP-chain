@@ -18,10 +18,11 @@ NS_BEG2(top, blockmaker)
 
 // REG_XMODULE_LOG(chainbase::enum_xmodule_type::xmodule_type_xblockmaker, xblockmaker_error_to_string, xblockmaker_error_base+1, xblockmaker_error_max);
 
-xrelay_proposal_maker_t::xrelay_proposal_maker_t(const std::string & account, const xblockmaker_resources_ptr_t & resources) {
+xrelay_proposal_maker_t::xrelay_proposal_maker_t(const std::string & account,
+                                                 const xblockmaker_resources_ptr_t & resources,
+                                                 const observer_ptr<xrelay_chain::xrelay_chain_mgr_t> & relay_chain_mgr)
+  : m_resources(resources), m_relay_chain_mgr(relay_chain_mgr), m_relay_maker(make_object_ptr<xrelay_maker_t>(account, resources)) {
     xdbg("xrelay_proposal_maker_t::xrelay_proposal_maker_t create,this=%p,account=%s", this, account.c_str());
-    m_resources = resources;
-    m_relay_maker = make_object_ptr<xrelay_maker_t>(account, resources);
 }
 
 xrelay_proposal_maker_t::~xrelay_proposal_maker_t() {
@@ -72,6 +73,63 @@ xblock_ptr_t xrelay_proposal_maker_t::make_proposal(data::xblock_consensus_para_
 
     xtablemaker_para_t table_para(tablestate, tablestate_commit);
 
+    // todo(nathan): set relay block data, evm height, rec height to wrap block.
+    uint8_t last_wrap_phase;
+    uint64_t last_evm_height;
+    uint64_t last_rec_height;
+    if (latest_cert_block->is_genesis_block()) {
+        last_wrap_phase = 2;
+        last_evm_height = 0;
+        last_rec_height = 0;
+    } else {
+        auto & last_wrap_data = latest_cert_block->get_header()->get_comments();
+        if (last_wrap_data.empty()) {
+            xerror("xrelay_proposal_maker_t::make_proposal wrap data should not empty.");
+            return nullptr;
+        } else {
+            base::xstream_t stream_wrap_data{base::xcontext_t::instance(), (uint8_t*)last_wrap_data.data(), static_cast<uint32_t>(last_wrap_data.size())};
+            stream_wrap_data >> last_wrap_phase;
+            stream_wrap_data >> last_evm_height;
+            stream_wrap_data >> last_rec_height;
+        }
+    }
+
+    base::xstream_t _stream(base::xcontext_t::instance());
+    // wrap phase: 0, 1, 2
+    uint8_t wrap_phase = last_wrap_phase + 1;
+    uint64_t evm_height;
+    uint64_t rec_height;
+    std::string relay_block_data;
+    if (wrap_phase > 2) {
+        wrap_phase = 0;
+        // use m_relay_chain_mgr build relay block data.
+        // std::map<uint64_t, xrelay_chain::xcross_txs_t> cross_tx_map;
+        // uint64_t upper_height;
+        // uint32_t tx_num;
+        // bool ret = m_relay_chain_mgr->get_tx_cache(last_evm_height, cross_tx_map, evm_height, tx_num);
+        // if (!ret) {
+        //     xinfo("xrelay_proposal_maker_t::make_proposal no cross tx, not pack relay block.");
+        //     return nullptr;
+        // }
+        // todo(nathan): build real relay block data.
+        relay_block_data = base::xstring_utl::tostring(latest_cert_block->get_height());
+        // todo(nathan): use real rec height.
+        evm_height = last_evm_height + 1;
+        rec_height = last_rec_height + 1;
+    }
+    else {
+        evm_height = last_evm_height;
+        rec_height = last_rec_height;
+        relay_block_data = latest_cert_block->get_header()->get_extra_data();
+    }
+    _stream << wrap_phase;
+    _stream << evm_height;
+    _stream << rec_height;
+    std::string wrap_data = std::string((char *)_stream.data(), _stream.size());
+
+    table_para.set_relay_block_data(relay_block_data);
+    table_para.set_relay_wrap_data(wrap_data);
+
     if (false == leader_set_consensus_para(latest_cert_block.get(), proposal_para)) {
         xwarn("xrelay_proposal_maker_t::make_proposal fail-leader_set_consensus_para.%s", proposal_para.dump().c_str());
         return nullptr;
@@ -104,6 +162,68 @@ xblock_ptr_t xrelay_proposal_maker_t::make_proposal(data::xblock_consensus_para_
           proposal_input->get_input_txs().size(),
           proposal_input->get_other_accounts().size());
     return proposal_block;
+}
+
+bool xrelay_proposal_maker_t::check_wrap_proposal(const xblock_ptr_t & latest_cert_block, base::xvblock_t * proposal_block) {
+    uint8_t last_wrap_phase;
+    uint64_t last_evm_height;
+    uint64_t last_rec_height;
+    std::string last_relay_block_data = latest_cert_block->get_relay_block_data();
+    
+    if (latest_cert_block->is_genesis_block()) {
+        last_wrap_phase = 2;
+        last_evm_height = 0;
+        last_rec_height = 0;
+    } else {
+        auto & last_wrap_data = latest_cert_block->get_header()->get_comments();
+        if (last_wrap_data.empty()) {
+            xerror("xrelay_proposal_maker_t::check_wrap_proposal wrap data should not empty.proposal_block=%s", proposal_block->dump().c_str());
+            return false;
+        } else {
+            base::xstream_t stream_wrap_data{base::xcontext_t::instance(), (uint8_t*)last_wrap_data.data(), static_cast<uint32_t>(last_wrap_data.size())};
+            stream_wrap_data >> last_wrap_phase;
+            stream_wrap_data >> last_evm_height;
+            stream_wrap_data >> last_rec_height;
+        }
+    }
+
+    uint8_t wrap_phase;
+    uint64_t evm_height;
+    uint64_t rec_height;
+    auto & proposal_wrap_data = proposal_block->get_header()->get_comments();
+    if (proposal_wrap_data.empty()) {
+        xerror("xrelay_proposal_maker_t::check_wrap_proposal wrap data should not empty.");
+        return false;
+    } else {
+        base::xstream_t stream_wrap_data{base::xcontext_t::instance(), (uint8_t*)proposal_wrap_data.data(), static_cast<uint32_t>(proposal_wrap_data.size())};
+        stream_wrap_data >> wrap_phase;
+        stream_wrap_data >> evm_height;
+        stream_wrap_data >> rec_height;
+    }
+
+    std::string relay_block_data;
+    if (wrap_phase == 0) {
+        relay_block_data = base::xstring_utl::tostring(latest_cert_block->get_height());
+    } else {
+        relay_block_data = last_relay_block_data;
+    }
+
+    if (wrap_phase != ((last_wrap_phase + 1) % 3) || (wrap_phase != 0 && (evm_height != last_evm_height || rec_height != last_rec_height)) ||
+        (wrap_phase == 0 && (evm_height != last_evm_height + 1 || rec_height != last_rec_height + 1)) || relay_block_data != proposal_block->get_relay_block_data()) {
+        xerror("xrelay_proposal_maker_t::check_wrap_proposal wrap data not match.wrap_phase:%d:%d,evm_height:%llu:%llu,rec_height:%llu:%llu,relay_block_data:%s:%s.proposal_block=%s",
+               wrap_phase,
+               last_wrap_phase,
+               evm_height,
+               last_evm_height,
+               rec_height,
+               last_rec_height,
+               relay_block_data.c_str(),
+               proposal_block->get_relay_block_data().c_str(),
+               proposal_block->dump().c_str());
+        return false;
+    }
+
+    return true;
 }
 
 int xrelay_proposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::xvqcert_t * bind_clock_cert) {
@@ -205,6 +325,13 @@ int xrelay_proposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, b
         xwarn("xrelay_proposal_maker_t::verify_proposal fail-proposal input invalid. proposal=%s", proposal_block->dump().c_str());
         return xblockmaker_error_proposal_bad_input;
     }
+
+    if (false == check_wrap_proposal(proposal_prev_block, proposal_block)) {
+        return xblockmaker_error_proposal_bad_input;
+    }
+
+    table_para.set_relay_wrap_data(proposal_block->get_header()->get_comments());
+    table_para.set_relay_block_data(proposal_block->get_relay_block_data());
 
     if (false == backup_set_consensus_para(proposal_prev_block.get(), proposal_block, nullptr, cs_para)) {
         xwarn("xproposal_maker_t::verify_proposal fail-backup_set_consensus_para. proposal=%s",

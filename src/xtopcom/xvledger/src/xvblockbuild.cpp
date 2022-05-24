@@ -246,6 +246,14 @@ namespace top
             get_header()->set_extra_data(_extra);
         }
 
+        void xvblockbuild_t::set_header_comments(const std::string & comments) {
+            if (get_header() == nullptr) {
+                xassert(false);
+                return;
+            }
+            get_header()->set_comments(comments);
+        }
+
         xauto_ptr<xvheader_t> xvblockbuild_t::build_proposal_header(xvblock_t* block, uint64_t _clock) {
             xbbuild_para_t _para(block, block->get_block_class(), block->get_block_type());
             _para.m_clock = _clock;

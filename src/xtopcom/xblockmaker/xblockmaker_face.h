@@ -161,17 +161,29 @@ class xtablemaker_para_t {
         m_receiptid_info_map = pack_resource.m_receiptid_info_map;
     }
 
+    void    set_relay_block_data(const std::string & relay_block_data) {
+        m_relay_block_data = relay_block_data;
+    }
+
+    void    set_relay_wrap_data(const std::string & relay_wrap_data) {
+        m_relay_wrap_data = relay_wrap_data;
+    }
+
     const std::vector<xcons_transaction_ptr_t> &    get_origin_txs() const {return m_origin_txs;}
     const std::map<base::xtable_shortid_t, xtxpool_v2::xreceiptid_state_and_prove> & get_receiptid_info_map() const {return m_receiptid_info_map;}
     const std::vector<std::string> &                get_other_accounts() const {return m_other_accounts;}
     const data::xtablestate_ptr_t &                 get_tablestate() const {return m_tablestate;}
     const data::xtablestate_ptr_t &                 get_commit_tablestate() const {return m_commit_tablestate;}
     const xtable_proposal_input_ptr_t &             get_proposal() const {return m_proposal;}
+    const std::string &                             get_relay_block_data() const {return m_relay_block_data;}
+    const std::string &                             get_relay_wrap_data() const {return m_relay_wrap_data;}
 
  private:
     std::vector<xcons_transaction_ptr_t>    m_origin_txs;
     std::map<base::xtable_shortid_t, xtxpool_v2::xreceiptid_state_and_prove> m_receiptid_info_map;
     std::vector<std::string>                m_other_accounts;  // for empty or full unit accounts
+    std::string                             m_relay_block_data;
+    std::string                             m_relay_wrap_data;
 
     mutable xtable_proposal_input_ptr_t     m_proposal;  // leader should make proposal input; backup should verify proposal input
     mutable data::xtablestate_ptr_t         m_tablestate{nullptr};
@@ -242,6 +254,8 @@ class xblock_builder_para_face_t {
     const std::map<base::xtable_shortid_t, uint64_t> & get_changed_confirm_ids() const {return m_changed_confirm_ids;}
     void set_relay_block_data(const std::string & relay_block_data) {m_relay_block_data = relay_block_data;}
     const std::string & get_relay_block_data() const {return m_relay_block_data;}
+    void set_relay_wrap_data(const std::string & relay_wrap_data) {m_relay_wrap_data = relay_wrap_data;}
+    const std::string & get_relay_wrap_data() const {return m_relay_wrap_data;}
 
  private:
     xblockmaker_resources_ptr_t m_resources{nullptr};
@@ -250,6 +264,7 @@ class xblock_builder_para_face_t {
     std::vector<data::xlightunit_tx_info_ptr_t> m_txs_info;
     std::map<base::xtable_shortid_t, uint64_t> m_changed_confirm_ids;
     std::string                 m_relay_block_data;
+    std::string                 m_relay_wrap_data;
 };
 using xblock_builder_para_ptr_t = std::shared_ptr<xblock_builder_para_face_t>;
 

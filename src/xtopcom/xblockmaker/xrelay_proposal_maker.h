@@ -8,6 +8,7 @@
 #include "xblockmaker/xblockmaker_face.h"
 #include "xblockmaker/xrelay_maker.h"
 #include "xdata/xblock.h"
+#include "xrelay_chain/xrelay_chain_mgr.h"
 #include "xunit_service/xcons_face.h"
 
 #include <map>
@@ -17,7 +18,7 @@ NS_BEG2(top, blockmaker)
 
 class xrelay_proposal_maker_t : public xunit_service::xproposal_maker_face {
 public:
-    xrelay_proposal_maker_t(const std::string & account, const xblockmaker_resources_ptr_t & resources);
+    xrelay_proposal_maker_t(const std::string & account, const xblockmaker_resources_ptr_t & resources, const observer_ptr<xrelay_chain::xrelay_chain_mgr_t> & relay_chain_mgr);
     virtual ~xrelay_proposal_maker_t();
 
 public:
@@ -36,9 +37,13 @@ protected:
 
     bool verify_proposal_input(base::xvblock_t * proposal_block, xtablemaker_para_t & table_para);
 
+    bool check_wrap_proposal(const xblock_ptr_t & latest_cert_block, base::xvblock_t * proposal_block); 
+
 private:
     xblockmaker_resources_ptr_t m_resources{nullptr};
+    observer_ptr<xrelay_chain::xrelay_chain_mgr_t> m_relay_chain_mgr;
     xrelay_maker_ptr_t m_relay_maker{nullptr};
+
 };
 
 NS_END2
