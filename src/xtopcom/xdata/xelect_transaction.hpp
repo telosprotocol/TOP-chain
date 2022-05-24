@@ -206,6 +206,12 @@ public:
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit);
 #endif
 
+#if defined(XCHAIN_FORKED_BY_DEFAULT) && ((XCHAIN_FORKED_BY_DEFAULT) >= 10600)
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(relay_election_interval);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(min_relay_group_size);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(max_relay_group_size);
+#endif
+
         std::vector<std::string> committee_addrs = xrootblock_t::get_tcc_initial_committee_addr();
         for (auto & v : committee_addrs) {
             m_initial_committee.push_back(v);
