@@ -13,7 +13,7 @@
 
 namespace top {
 namespace evm_common {
-namespace rlp {
+
 
 /// Encodes a 16-bit little-endian value into the provided buffer.
 inline void encode16LE(uint16_t val, std::vector<uint8_t> & data) {
@@ -110,6 +110,6 @@ void encodeString(const std::string & str, std::vector<uint8_t> & data);
 /// Decodes an ASCII string prefixed by its length (varInt)
 /// @returns a tuple with a success indicator and the decoded string.
 std::tuple<bool, std::string> decodeString(const bytes & in, size_t & indexInOut);
-}  // namespace rlp
+
 }  // namespace evm_common
 }  // namespace top
