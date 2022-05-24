@@ -259,22 +259,22 @@ void xrpc_query_manager::getIssuanceDetail(xJson::Value & js_req, xJson::Value &
                         array.append(n);
                     }
                     jn["miner_workload"] = array;
-                    if (common::has<common::xnode_type_t::evm_auditor>(group_address.type()) || common::has<common::xnode_type_t::evm_validator>(group_address.type())) {
-                        jn["cluster_name"] = std::string{"evm"} + group_address.group_id().to_string();
-                    } else {
-                        jn["cluster_name"] = group_address.group_id().to_string();
-                    }
+                    // if (common::has<common::xnode_type_t::evm_auditor>(group_address.type()) || common::has<common::xnode_type_t::evm_validator>(group_address.type())) {
+                    //     jn["cluster_name"] = std::string{"evm"} + group_address.group_id().to_string();
+                    // } else {
+                    jn["cluster_name"] = group_address.group_id().to_string();
+                    // }
                     jm.append(jn);
                 } else {
                     for (auto node : workload.m_leader_count) {
                         jn[node.first] = node.second;
                     }
-                    if (common::has<common::xnode_type_t::evm_auditor>(group_address.type()) || common::has<common::xnode_type_t::evm_validator>(group_address.type())) {
+                    // if (common::has<common::xnode_type_t::evm_auditor>(group_address.type()) || common::has<common::xnode_type_t::evm_validator>(group_address.type())) {
                         // do not show in V2
                         // jm[std::string{"evm"} + group_address.group_id().to_string()] = jn;
-                    } else {
-                        jm[group_address.group_id().to_string()] = jn;
-                    }
+                    // } else {
+                    jm[group_address.group_id().to_string()] = jn;
+                    // }
                 }
             }
             json[property_name] = jm;
@@ -304,7 +304,7 @@ void xrpc_query_manager::getIssuanceDetail(xJson::Value & js_req, xJson::Value &
     xdbg(
         "[grpc::getIssuanceDetail] reward contract height: %llu, onchain_timer_round: %llu, m_zec_vote_contract_height: %llu, m_zec_workload_contract_height: %llu, "
         "m_zec_reward_contract_height: %llu, m_edge_reward_ratio: %u, m_archive_reward_ratio: %u, m_validator_reward_ratio: %u, m_auditor_reward_ratio: %u, "
-        "m_evm_validator_reward_ratio: %lu, m_evm_auditor_reward_ratio: %lu, m_vote_reward_ratio: %u, m_governance_reward_ratio: %u",
+        "m_vote_reward_ratio: %u, m_governance_reward_ratio: %u",
         height,
         issue_detail.onchain_timer_round,
         issue_detail.m_zec_vote_contract_height,
@@ -314,8 +314,8 @@ void xrpc_query_manager::getIssuanceDetail(xJson::Value & js_req, xJson::Value &
         issue_detail.m_archive_reward_ratio,
         issue_detail.m_validator_reward_ratio,
         issue_detail.m_auditor_reward_ratio,
-        issue_detail.m_evm_validator_reward_ratio,
-        issue_detail.m_evm_auditor_reward_ratio,
+        // issue_detail.m_evm_validator_reward_ratio,
+        // issue_detail.m_evm_auditor_reward_ratio,
         issue_detail.m_vote_reward_ratio,
         issue_detail.m_governance_reward_ratio);
     xJson::Value jv;
@@ -327,10 +327,10 @@ void xrpc_query_manager::getIssuanceDetail(xJson::Value & js_req, xJson::Value &
     jv["archive_reward_ratio"] = issue_detail.m_archive_reward_ratio;
     jv["validator_reward_ratio"] = issue_detail.m_validator_reward_ratio;
     jv["auditor_reward_ratio"] = issue_detail.m_auditor_reward_ratio;
-    if (version == RPC_VERSION_V3) {
-        jv["evm_validator_reward_ratio"] = issue_detail.m_evm_validator_reward_ratio;
-        jv["evm_auditor_reward_ratio"] = issue_detail.m_evm_auditor_reward_ratio;
-    }
+    // if (version == RPC_VERSION_V3) {
+    //     jv["evm_validator_reward_ratio"] = issue_detail.m_evm_validator_reward_ratio;
+    //     jv["evm_auditor_reward_ratio"] = issue_detail.m_evm_auditor_reward_ratio;
+    // }
     jv["vote_reward_ratio"] = issue_detail.m_vote_reward_ratio;
     jv["governance_reward_ratio"] = issue_detail.m_governance_reward_ratio;
     jv["validator_group_count"] = (xJson::UInt)issue_detail.m_validator_group_count;
@@ -428,18 +428,18 @@ void xrpc_query_manager::getIssuanceDetail(xJson::Value & js_req, xJson::Value &
                    << static_cast<uint32_t>(node_reward.second.m_auditor_reward % data::system_contract::REWARD_PRECISION);
                 node_reward_json["auditor_reward"] = ss.str();
             }
-            {
-                std::stringstream ss;
-                ss << static_cast<uint64_t>(node_reward.second.m_evm_validator_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
-                   << static_cast<uint32_t>(node_reward.second.m_evm_validator_reward % data::system_contract::REWARD_PRECISION);
-                node_reward_json["evm_validator_reward"] = ss.str();
-            }
-            {
-                std::stringstream ss;
-                ss << static_cast<uint64_t>(node_reward.second.m_evm_auditor_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
-                   << static_cast<uint32_t>(node_reward.second.m_evm_auditor_reward % data::system_contract::REWARD_PRECISION);
-                node_reward_json["evm_auditor_reward"] = ss.str();
-            }
+            // {
+            //     std::stringstream ss;
+            //     ss << static_cast<uint64_t>(node_reward.second.m_evm_validator_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
+            //        << static_cast<uint32_t>(node_reward.second.m_evm_validator_reward % data::system_contract::REWARD_PRECISION);
+            //     node_reward_json["evm_validator_reward"] = ss.str();
+            // }
+            // {
+            //     std::stringstream ss;
+            //     ss << static_cast<uint64_t>(node_reward.second.m_evm_auditor_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
+            //        << static_cast<uint32_t>(node_reward.second.m_evm_auditor_reward % data::system_contract::REWARD_PRECISION);
+            //     node_reward_json["evm_auditor_reward"] = ss.str();
+            // }
             {
                 std::stringstream ss;
                 ss << static_cast<uint64_t>(node_reward.second.m_vote_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
