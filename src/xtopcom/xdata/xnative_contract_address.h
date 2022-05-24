@@ -40,12 +40,17 @@ XINLINE_CONSTEXPR char const * sys_contract_sharding_reward_claiming_addr{ "T200
 XINLINE_CONSTEXPR char const * sys_contract_sharding_statistic_info_addr{ "T20000ML7oBZbitBCcXhrJwqBhha2MUimd6SM9Z6" };
 XINLINE_CONSTEXPR char const * sys_contract_eth_table_statistic_info_addr{ "T200040000000000000000000000000000000001" };
 
+XINLINE_CONSTEXPR char const * sys_contract_relay_elect_relay_addr{"T2000500000000000000000000000000000000001@0"};
+
 XINLINE_CONSTEXPR char const * sys_eth_zero_addr{"T600040000000000000000000000000000000000000000"};
 
 XINLINE_CONSTEXPR char const * sys_contract_beacon_table_block_addr{ "Ta0001" };
 XINLINE_CONSTEXPR char const * sys_contract_zec_table_block_addr{ "Ta0002" };
 XINLINE_CONSTEXPR char const * sys_contract_sharding_table_block_addr{ "Ta0000" };
 XINLINE_CONSTEXPR char const * sys_contract_eth_table_block_addr{"Ta0004"};
+
+XINLINE_CONSTEXPR char const * sys_contract_relay_table_block_base_addr{"Ta0005"};
+XINLINE_CONSTEXPR char const * sys_contract_relay_table_block_addr{"Ta0005@0"};
 
 extern common::xaccount_address_t const black_hole_system_address;
 extern common::xaccount_address_t const genesis_root_system_address;
@@ -75,11 +80,16 @@ extern common::xaccount_address_t const sharding_vote_contract_address;
 extern common::xaccount_address_t const sharding_reward_claiming_contract_address;
 extern common::xaccount_address_t const sharding_statistic_info_contract_address;
 extern common::xaccount_address_t const eth_statistic_info_contract_address;
+
+extern common::xaccount_address_t const relay_elect_relay_contract_address;
+
 extern common::xaccount_address_t const eth_zero_address;
 
 extern common::xaccount_address_t const rec_table_address;
 extern common::xaccount_address_t const zec_table_address;
 extern common::xaccount_address_t const sharding_table_address;
 extern common::xaccount_address_t const eth_table_address;
+extern common::xaccount_base_address_t const relay_table_base_address;
+extern common::xaccount_address_t const relay_table_address;
 
 NS_END1

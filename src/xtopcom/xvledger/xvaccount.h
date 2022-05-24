@@ -16,7 +16,8 @@ namespace top
     XINLINE_CONSTEXPR uint32_t MAIN_CHAIN_REC_TABLE_USED_NUM{1};
     XINLINE_CONSTEXPR uint32_t MAIN_CHAIN_ZEC_TABLE_USED_NUM{3};
     XINLINE_CONSTEXPR uint32_t MAIN_CHAIN_EVM_TABLE_USED_NUM{1};
-    XINLINE_CONSTEXPR uint32_t TOTAL_TABLE_NUM{MAIN_CHAIN_REC_TABLE_USED_NUM+MAIN_CHAIN_ZEC_TABLE_USED_NUM+MAIN_CHAIN_EVM_TABLE_USED_NUM+enum_vbucket_has_tables_count};
+    XINLINE_CONSTEXPR uint32_t MAIN_CHAIN_RELAY_TABLE_USED_NUM{1};
+    XINLINE_CONSTEXPR uint32_t TOTAL_TABLE_NUM{MAIN_CHAIN_REC_TABLE_USED_NUM+MAIN_CHAIN_ZEC_TABLE_USED_NUM+MAIN_CHAIN_EVM_TABLE_USED_NUM+MAIN_CHAIN_RELAY_TABLE_USED_NUM+enum_vbucket_has_tables_count};
     namespace base
     {
         // account space is divided into netid#->zone#(aka bucket#)->book#->table#->account#
@@ -69,6 +70,7 @@ namespace top
             enum_chain_zone_zec_index         = 2,  //for election
             enum_chain_zone_frozen_index      = 3,  // for sync
             enum_chain_zone_evm_index         = 4,  // for eth
+            enum_chain_zone_relay_index       = 5,
 
             enum_chain_zone_fullnode_index    = 13,
             enum_chain_zone_storage_index     = 14, //for archive nodes
@@ -107,7 +109,7 @@ namespace top
             xtable_index_t(enum_xchain_zone_index zone_index, uint8_t subaddr) {
                 m_zone_index = zone_index;
                 m_subaddr = subaddr;
-                xassert(m_zone_index <= enum_chain_zone_zec_index || m_zone_index == enum_chain_zone_evm_index);
+                xassert(m_zone_index <= enum_chain_zone_zec_index || (enum_chain_zone_evm_index <= m_zone_index && m_zone_index<= enum_chain_zone_relay_index));
                 xassert(m_subaddr < enum_vbucket_has_tables_count);
             }
         public:

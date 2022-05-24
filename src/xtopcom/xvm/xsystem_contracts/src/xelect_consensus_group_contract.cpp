@@ -200,7 +200,7 @@ bool xtop_elect_consensus_group_contract::elect_group(common::xzone_id_t const &
     assert(!broadcast(cid));
     assert(!broadcast(gid));
 
-    assert(zid == common::xcommittee_zone_id || zid == common::xzec_zone_id || zid == common::xconsensus_zone_id || zid == common::xevm_zone_id);
+    assert(zid == common::xcommittee_zone_id || zid == common::xzec_zone_id || zid == common::xconsensus_zone_id || zid == common::xevm_zone_id || zid == common::xrelay_zone_id);
 
     auto const log_prefix = "[elect consensus group contract] zone " + zid.to_string() + " cluster " + cid.to_string() + " group " + gid.to_string() + ":";
 
@@ -243,6 +243,12 @@ bool xtop_elect_consensus_group_contract::elect_group(common::xzone_id_t const &
             role_type = common::xminer_type_t::validator;
         }
 
+        break;
+    }
+
+    case common::xnode_type_t::relay: {
+        node_type = common::xnode_type_t::relay;
+        role_type = common::xminer_type_t::advance;
         break;
     }
 

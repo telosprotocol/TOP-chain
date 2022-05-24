@@ -394,6 +394,9 @@ public:
     /// @brief Check to see if this account coule be an evm validator node based on miner type.
     bool could_be_evm_validator() const noexcept;
 
+    /// @brief Check to see if this account could be an relay node based on miner type.
+    bool could_be_relay() const noexcept;
+
     /// @brief Check to see if this node can be an rec based on miner type and other information (e.g. deposit, amount of received tickets).
     bool can_be_rec() const noexcept;
 
@@ -426,6 +429,9 @@ public:
 
     /// @brief Check to see if this account can be an eth based on miner type and other information (e.g. deposit, amount of received tickects).
     bool can_be_evm_validator() const noexcept;
+
+    /// @brief Check to see if this account can be a relayer based on miner type and other information (e.g. deposit, amount of received tickects).
+    bool can_be_relay() const noexcept;
 
     template <common::xminer_type_t MinerTypeV>
     bool has() const noexcept {
@@ -495,6 +501,8 @@ public:
     uint64_t evm_auditor_stake() const noexcept;
 
     uint64_t evm_validator_stake() const noexcept;
+
+    uint64_t relay_stake() const noexcept;
 
     /// @brief Get miner type.
     common::xminer_type_t miner_type() const noexcept;

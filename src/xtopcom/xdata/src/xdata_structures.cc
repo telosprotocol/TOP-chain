@@ -316,6 +316,11 @@ bool could_be<common::xnode_type_t::evm_validator>(common::xminer_type_t const m
 #endif
 }
 
+template <>
+bool could_be<common::xnode_type_t::relay>(common::xminer_type_t const miner_type) {
+    return common::has<common::xminer_type_t::advance>(miner_type);
+}
+
 bool xreg_node_info::could_be_rec() const noexcept {
     return could_be<common::xnode_type_t::rec>(m_registered_miner_type);
 }
@@ -360,6 +365,10 @@ bool xreg_node_info::could_be_evm_validator() const noexcept {
     return could_be<common::xnode_type_t::evm_validator>(m_registered_miner_type);
 }
 
+bool xreg_node_info::could_be_relay() const noexcept {
+    return could_be<common::xnode_type_t::relay>(m_registered_miner_type);
+}
+
 bool xreg_node_info::can_be_rec() const noexcept {
     return could_be_rec();
 }
@@ -402,6 +411,10 @@ bool xreg_node_info::can_be_evm_auditor() const noexcept {
 
 bool xreg_node_info::can_be_evm_validator() const noexcept {
     return could_be_evm_validator();
+}
+
+bool xreg_node_info::can_be_relay() const noexcept {
+    return could_be_relay() && has_enough_tickets();
 }
 
 bool xreg_node_info::has_enough_tickets() const noexcept {
@@ -483,6 +496,10 @@ uint64_t xreg_node_info::evm_auditor_stake() const noexcept {
 
 uint64_t xreg_node_info::evm_validator_stake() const noexcept {
     return validator_stake();
+}
+
+uint64_t xreg_node_info::relay_stake() const noexcept {
+    return auditor_stake();
 }
 
 common::xminer_type_t xreg_node_info::miner_type() const noexcept {

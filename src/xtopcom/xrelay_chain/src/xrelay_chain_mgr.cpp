@@ -258,7 +258,7 @@ void xrelay_chain_mgr_t::on_block_to_db_event(mbus::xevent_ptr_t e) {
           block_event->blk_level);
 
     // todo(nathan):sys_contract_zec_elect_eth_addr change to relay nodes elect contract addr.
-    if (block_event->owner != "Ta0004@0" && block_event->owner != relay_block_addr && block_event->owner != sys_contract_zec_elect_eth_addr) {
+    if (block_event->owner != "Ta0004@0" && block_event->owner != sys_contract_relay_table_block_addr && block_event->owner != sys_contract_zec_elect_eth_addr) {
         return;
     }
 
@@ -281,7 +281,7 @@ void xrelay_chain_mgr_t::on_block_to_db_event(mbus::xevent_ptr_t e) {
         xassert(block->check_block_flag(base::enum_xvblock_flag_committed));
         if (block->get_account() == "Ta0004@0") {
             on_evm_db_event(block);
-        } else if (block->get_account() == relay_block_addr) {
+        } else if (block->get_account() == sys_contract_relay_table_block_addr) {
             on_wrap_db_event(block);
         } else {
             on_wrap_db_event(block);
