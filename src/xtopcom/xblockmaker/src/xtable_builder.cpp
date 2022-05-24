@@ -246,7 +246,7 @@ xblock_ptr_t xrelay_block_builder_t::build_block(const xblock_ptr_t & prev_block
                                                 const xobject_ptr_t<base::xvbstate_t> & prev_bstate,
                                                 const data::xblock_consensus_para_t & cs_para,
                                                 xblock_builder_para_ptr_t & build_para) {
-    base::xvblock_t* _proposal_block = data::xblocktool_t::create_next_relay_block(prev_block.get(), cs_para, build_para->get_relay_block_data());
+    base::xvblock_t* _proposal_block = data::xblocktool_t::create_next_relay_block(prev_block.get(), cs_para, build_para->get_relay_block_data(), build_para->get_relay_wrap_data());
     xblock_ptr_t proposal_table;
     proposal_table.attach((data::xblock_t*)_proposal_block);
     return proposal_table;

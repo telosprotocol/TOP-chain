@@ -119,7 +119,7 @@ class xemptyblock_build_t : public base::xvblockmaker_t {
 
 class xrelay_block_build_t : public base::xvblockmaker_t {
  public:
-    xrelay_block_build_t(base::xvblock_t* prev_block, const xblock_consensus_para_t & para, const std::string & relay_block_data);
+    xrelay_block_build_t(base::xvblock_t* prev_block, const xblock_consensus_para_t & para, const std::string & relay_block_data, const std::string & relay_wrap_data);
     base::xauto_ptr<base::xvblock_t> create_new_block() override;
 };
 

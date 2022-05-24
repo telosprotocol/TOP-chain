@@ -30,16 +30,11 @@ xblock_ptr_t xrelay_maker_t::make_proposal(xtablemaker_para_t & table_para, cons
     // check table maker state
     const xblock_ptr_t & latest_cert_block = cs_para.get_latest_cert_block();
 
-   if (!load_and_cache_enough_blocks(latest_cert_block)) {
+    if (!load_and_cache_enough_blocks(latest_cert_block)) {
         xwarn("xrelay_maker_t::make_proposal fail-load_and_cache_enough_blocks.account=%s", get_account().c_str());
         return nullptr;
     }
 
-    bool can_make_relay_table_block = can_make_next_relay_block();
-
-    if (!can_make_relay_table_block) {
-        return nullptr;
-    }
     xblock_ptr_t proposal_block = make_relay_table(table_para, cs_para, tablemaker_result.m_make_block_error_code);
     if (proposal_block == nullptr) {
         return nullptr;
@@ -76,17 +71,6 @@ int32_t xrelay_maker_t::verify_proposal(base::xvblock_t * proposal_block, const 
             base::xstring_utl::to_hex(proposal_block->get_cert()->get_justify_cert_hash()).c_str(),
             base::xstring_utl::to_hex(lock_block->get_input_root_hash()).c_str());
         return xblockmaker_error_proposal_table_not_match_prev_block;
-    }
-
-    // TODO(nathan): check relay block. bellow code is just demo.
-    auto relay_block_data_local = base::xstring_utl::tostring(highest_block->get_height());
-    auto relay_block_data = proposal_block->get_relay_block_data();
-    if (relay_block_data_local != relay_block_data) {
-        xerror("xrelay_maker_t::verify_proposal fail-relay block data not match.proposal=%s, last_height=%" PRIu64 ",relay_block_data=%s,%s",
-            proposal_block->dump().c_str(), highest_block->get_height(),
-            relay_block_data.c_str(),
-            relay_block_data_local.c_str());
-        return xblockmaker_error_proposal_not_match_local;
     }
 
     xblock_ptr_t local_block = nullptr;
@@ -158,7 +142,6 @@ bool xrelay_maker_t::can_make_next_relay_block() const {
 }
 
 xblock_ptr_t xrelay_maker_t::make_relay_table(const xtablemaker_para_t & table_para, const xblock_consensus_para_t & cs_para, int32_t & error_code) {
-    // TODO(jimmy)
     XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_imp_make_relay_table");
 
     // reset justify cert hash para
@@ -173,8 +156,8 @@ xblock_ptr_t xrelay_maker_t::make_relay_table(const xtablemaker_para_t & table_p
     data::xtablestate_ptr_t tablestate = table_para.get_tablestate();
     xassert(nullptr != tablestate);
 
-    auto relay_block_data = base::xstring_utl::tostring(cert_block->get_height());
-    m_default_builder_para->set_relay_block_data(relay_block_data);
+    m_default_builder_para->set_relay_block_data(table_para.get_relay_block_data());
+    m_default_builder_para->set_relay_wrap_data(table_para.get_relay_wrap_data());
     xblock_ptr_t proposal_block = m_relay_block_builder->build_block(cert_block, table_para.get_tablestate()->get_bstate(), cs_para, m_default_builder_para);
     return proposal_block;
 }

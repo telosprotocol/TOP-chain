@@ -451,7 +451,9 @@ base::xauto_ptr<base::xvblock_t> xemptyblock_build_t::create_new_block() {
     return new xemptyblock_t(*get_header(), *get_qcert());
 }
 
-xrelay_block_build_t::xrelay_block_build_t(base::xvblock_t* prev_block, const xblock_consensus_para_t & para, const std::string & relay_block_data) {
+// set relay block data to m_extra_data in xvheader.
+// set evm height to m_comments in xvheader.
+xrelay_block_build_t::xrelay_block_build_t(base::xvblock_t* prev_block, const xblock_consensus_para_t & para, const std::string & relay_block_data, const std::string & relay_wrap_data) {
     base::enum_xvblock_type _type = get_block_type_from_empty_block(prev_block->get_account());
     base::xbbuild_para_t build_para(prev_block, base::enum_xvblock_class_nil, _type);
 
@@ -460,8 +462,9 @@ xrelay_block_build_t::xrelay_block_build_t(base::xvblock_t* prev_block, const xb
     init_header_qcert(build_para);
     // todo(nathan):set extend data
     get_qcert()->set_extend_data("test");
-    std::string _extra_data = xtableheader_extra_t::build_extra_string(get_header(), para.get_tgas_height(), para.get_gmtime(), relay_block_data);
-    set_header_extra(_extra_data);
+    // std::string _extra_data = xtableheader_extra_t::build_extra_string(get_header(), para.get_tgas_height(), para.get_gmtime(), relay_block_data);
+    set_header_extra(relay_block_data);
+    set_header_comments(relay_wrap_data);
 }
 
 base::xauto_ptr<base::xvblock_t> xrelay_block_build_t::create_new_block() {

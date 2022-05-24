@@ -189,8 +189,8 @@ base::xvblock_t*  xblocktool_t::create_next_emptyblock(base::xvblock_t* prev_blo
     return _new_block.get();  // TODO(jimmy) xblocktool_t return auto ptr
 }
 
-base::xvblock_t*  xblocktool_t::create_next_relay_block(base::xvblock_t* prev_block, const xblock_consensus_para_t & cs_para, const std::string & relay_block_data) {
-    xrelay_block_build_t bbuild(prev_block, cs_para, relay_block_data);
+base::xvblock_t*  xblocktool_t::create_next_relay_block(base::xvblock_t* prev_block, const xblock_consensus_para_t & cs_para, const std::string & relay_block_data, const std::string & relay_wrap_data) {
+    xrelay_block_build_t bbuild(prev_block, cs_para, relay_block_data, relay_wrap_data);
     base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
     _new_block->add_ref();
     return _new_block.get();  // TODO(jimmy) xblocktool_t return auto ptr

@@ -13,6 +13,7 @@
 #include "xmbus/xmessage_bus.h"
 #include "xtxpool_v2/xtxpool_face.h"
 #include "xcommon/xlogic_time.h"
+#include "xrelay_chain/xrelay_chain_mgr.h"
 #include "xunit_service/xunit_log.h"
 #include "xunit_service/xcons_utl.h"
 #include "xrouter/xrouter_face.h"
@@ -128,6 +129,7 @@ public:
     virtual const std::string & get_account() = 0;
     virtual mbus::xmessage_bus_face_t* get_bus() = 0;
     virtual xtxpool_v2::xtxpool_face_t * get_txpool() = 0;
+    virtual xrelay_chain::xrelay_chain_mgr_t * get_relay_chain_mgr() = 0;
 };
 
 enum e_cons_type {
