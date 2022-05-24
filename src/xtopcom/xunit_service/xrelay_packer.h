@@ -9,6 +9,7 @@
 #include "xBFT/xconsaccount.h"
 #include "xbase/xobject_ptr.h"
 #include "xunit_service/xcons_face.h"
+#include "xrelay_chain/xrelay_chain_mgr.h"
 #include "xmbus/xmessage_bus.h"
 #include "xbase/xtimer.h"
 
@@ -71,7 +72,7 @@ private:
     std::shared_ptr<xcons_service_para_face> m_para;
     std::shared_ptr<xproposal_maker_face>    m_proposal_maker;
     uint64_t                                 m_cons_start_time_ms;
-    static constexpr uint32_t                m_timer_repeat_time_ms{1000};  // check account by every 3 seconds
+    static constexpr uint32_t                m_timer_repeat_time_ms{1000};
     std::string                              m_account_id;
     std::string                              m_latest_cert_block_hash;
     bool                                     m_can_make_empty_block{false};

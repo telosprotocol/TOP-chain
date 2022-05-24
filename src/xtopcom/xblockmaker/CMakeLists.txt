@@ -9,6 +9,7 @@ add_library(xblockmaker STATIC ${src_dir})
 IF (CMAKE_SYSTEM_NAME MATCHES "Darwin")
     target_link_libraries(xblockmaker PRIVATE
         xtxpool_v2
+        xrelay_chain
         xtxexecutor
         xblockstore
         xstore
@@ -23,6 +24,7 @@ IF (CMAKE_SYSTEM_NAME MATCHES "Darwin")
 ELSE()
     target_link_libraries(xblockmaker PRIVATE
         xtxpool_v2
+        xrelay_chain
         xtxexecutor
         xblockstore
         xstore

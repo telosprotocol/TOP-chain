@@ -39,7 +39,7 @@ class xblocktool_t {
     static base::xvblock_t*   create_next_tableblock(const xtable_block_para_t & bodypara, base::xvblock_t* prev_block, const xblock_consensus_para_t & cs_para);
     static base::xvblock_t*   create_next_fulltable(const xfulltable_block_para_t & bodypara, base::xvblock_t* prev_block, const xblock_consensus_para_t & cs_para);
 
-    static base::xvblock_t*   create_next_relay_block(base::xvblock_t* prev_block, const xblock_consensus_para_t & cs_para, const std::string & relay_block_data);
+    static base::xvblock_t*   create_next_relay_block(base::xvblock_t* prev_block, const xblock_consensus_para_t & cs_para, const std::string & relay_block_data, const std::string & relay_wrap_data);
 
  public:
    //  static uint16_t         get_chain_id_from_account(const std::string & account);
