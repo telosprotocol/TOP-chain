@@ -18,7 +18,7 @@
 
 using namespace std;
 using namespace top::evm_common;
-using namespace top::evm_common::rlp;
+
 
 namespace top { namespace data {
 
@@ -64,14 +64,14 @@ int32_t xtransaction_v3_t::do_uncompact_write_without_hash_signature(base::xstre
     return (end_pos - begin_pos);
 }
 
-int32_t xtransaction_v3_t::do_read_without_hash_signature(base::xstream_t & in, std::error_code &ec) {
+int32_t xtransaction_v3_t::do_read_without_hash_signature(base::xstream_t & in, eth_error &ec) {
     const int32_t begin_pos = in.size();
     uint8_t szEipVersion;
     in.read_compact_var(szEipVersion);
     in.read_compact_var(m_origindata);
     if (m_origindata.empty())
     {
-        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        ETH_RPC_ERROR(error::xenum_errc::eth_invalid_params, "rlp: value size exceeds available input length")
         return -1;
     }
     m_EipVersion = (EIP_XXXX)szEipVersion;
@@ -92,12 +92,12 @@ int32_t xtransaction_v3_t::do_read_without_hash_signature(base::xstream_t & in, 
             ret = unserialize_eth_1559_transaction(encoded, bIsCreation, recoveryID, to, ec);
         } else {
             xwarn("xtransaction_v3_t::do_read_without_hash_signature unsupport eip version:%d", m_EipVersion);
-            ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+            ETH_RPC_ERROR(error::xenum_errc::eth_server_error, "transaction type not supported")
             return -1;
         }
     } catch (...) {
         xwarn("xtransaction_v3_t::do_read_without_hash_signature unserialize transaction error:%d", ret);
-        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        ETH_RPC_ERROR(error::xenum_errc::eth_server_error, "rlp: value size exceeds available input length")
         return -2;
     }
     if (ret < 0)
@@ -159,70 +159,83 @@ int32_t xtransaction_v3_t::do_read_without_hash_signature(base::xstream_t & in, 
     return (begin_pos - end_pos);
 }
 
-int xtransaction_v3_t::unserialize_eth_legacy_transaction(bytes & encoded, bool & bIsCreation, byte & recoveryID, Address & to, std::error_code& ec) {
+int xtransaction_v3_t::unserialize_eth_legacy_transaction(bytes & encoded, bool & bIsCreation, byte & recoveryID, Address & to, eth_error& ec) {
     if (m_eip_xxxx_tx == nullptr)
     {
-        ec = error::make_error_code(error::xenum_errc::eth_server_error);
+        ETH_RPC_ERROR(error::xenum_errc::eth_server_error, "top node not enough storage")
         return -1;
     }
     eip_legacy_tx* eip_legacy_tx_ptr = reinterpret_cast<eip_legacy_tx*>(m_eip_xxxx_tx.get());
-    RLP::DecodedItem decoded = RLP::decode(top::evm_common::rlp::data(m_origindata));
+    RLP::DecodedItem decoded = RLP::decode(top::evm_common::data(m_origindata));
     std::vector<std::string> vecData;
     for (int i = 0; i < (int)decoded.decoded.size(); i++) {
         std::string str(decoded.decoded[i].begin(), decoded.decoded[i].end());
         vecData.push_back(str);
     }
     if (vecData.size() != 9) {
-        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        if (vecData.size() > 9)
+        {
+            ETH_RPC_ERROR(error::xenum_errc::eth_server_error, "rlp: input list has too many elements for types.DynamicFeeTx")
+        }
+        else
+        {
+            ETH_RPC_ERROR(error::xenum_errc::eth_server_error, "rlp: too few elements for types.DynamicFeeTx")
+        }
         return -2;
     }
     if (vecData[0].length() > 32)
     {
-        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+       ETH_RPC_ERROR(error::xenum_errc::eth_server_error, "rlp: input string too long for common.Nonce, decoding into (types.DynamicFeeTx).Nonce")
         return -3;
     }
     eip_legacy_tx_ptr->nonce = fromBigEndian<u256>(vecData[0]);
     if (vecData[1].length() > 32)
     {
-        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        ETH_RPC_ERROR(error::xenum_errc::eth_invalid_params, "rlp: input string too long for common.Nonce, decoding into (types.DynamicFeeTx).Nonce")
         return -4;
     }
     eip_legacy_tx_ptr->gasprice = fromBigEndian<u256>(vecData[1]);
     if (vecData[2].length() > 32)
     {
-        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        ETH_RPC_ERROR(error::xenum_errc::eth_invalid_params, "rlp: input string too long for common.GasPrice, decoding into (types.DynamicFeeTx).GasPrice")
         return -5;
     }
     eip_legacy_tx_ptr->gas = fromBigEndian<u256>(vecData[2]);
-    if (vecData[3].length() != 40)
+    if (vecData[3].length() != 20 && vecData[3].length() != 0)
     {
-        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        if (vecData[3].length() > 20)
+        {
+            ETH_RPC_ERROR(error::xenum_errc::eth_invalid_params, "rlp: input string too long for common.Address, decoding into (types.DynamicFeeTx).To")
+        }
+        else {
+            ETH_RPC_ERROR(error::xenum_errc::eth_invalid_params, "rlp: input string too short for common.Address, decoding into (types.DynamicFeeTx).To")
+        }
         return -6;
     }
     bIsCreation = vecData[3].empty();
     eip_legacy_tx_ptr->to = vecData[3].empty() ? Address().hex() : Address(vecData[3], FixedHash<20>::FromBinary).hex();
     if (vecData[4].length() > 32)
     {
-        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        ETH_RPC_ERROR(error::xenum_errc::eth_invalid_params,"rlp: input string too long for common.Data, decoding into (types.DynamicFeeTx).Data")
         return -7;
     }
     eip_legacy_tx_ptr->value = fromBigEndian<u256>(vecData[4]);
     eip_legacy_tx_ptr->data = vecData[5];
     if (vecData[6].length() > 32)
     {
-        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        ETH_RPC_ERROR(error::xenum_errc::eth_invalid_params,"rlp: input string too long for common.signV, decoding into (types.DynamicFeeTx).SignV")
         return -8;
     }
     eip_legacy_tx_ptr->signV = fromBigEndian<u256>(vecData[6]);
     if (vecData[7].length() > 32)
     {
-        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        ETH_RPC_ERROR(error::xenum_errc::eth_invalid_params, "rlp: input string too long for common.signR, decoding into (types.DynamicFeeTx).SignR")
         return -9;
     }
     eip_legacy_tx_ptr->signR = fromBigEndian<u256>(vecData[7]);
     if (vecData[8].length() > 32)
     {
-        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        ETH_RPC_ERROR(error::xenum_errc::eth_invalid_params, "rlp: input string too long for common.signS, decoding into (types.DynamicFeeTx).SignS")
         return -10;
     }
     eip_legacy_tx_ptr->signS = fromBigEndian<u256>(vecData[8]);
@@ -235,14 +248,14 @@ int xtransaction_v3_t::unserialize_eth_legacy_transaction(bytes & encoded, bool 
             auto const chainId = (eip_legacy_tx_ptr->signV - 35) / 2;
             if (chainId > std::numeric_limits<uint64_t>::max())
             {
-                ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+                ETH_RPC_ERROR(error::xenum_errc::eth_invalid_params, "chainid is not top chainid")
                 return -11;
             }
             m_chainId = static_cast<uint64_t>(chainId);
         }
         // only values 27 and 28 are allowed for non-replay protected transactions
         else if (eip_legacy_tx_ptr->signV != 27 && eip_legacy_tx_ptr->signV != 28) {
-            ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+            ETH_RPC_ERROR(error::xenum_errc::eth_invalid_params, "transaction sign error")
             return -12;
         }
         static const h256 s_max{"0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141"};
@@ -250,13 +263,13 @@ int xtransaction_v3_t::unserialize_eth_legacy_transaction(bytes & encoded, bool 
         recoveryID = m_chainId ? static_cast<byte>(eip_legacy_tx_ptr->signV - (u256{m_chainId} * 2 + 35)) : static_cast<byte>(eip_legacy_tx_ptr->signV - 27);
         xdbg("xtransaction_v3_t::unserialize_eth_legacy_transaction  chainId:%d recoveryID:%d", m_chainId, recoveryID);
         if (!(recoveryID <= 1 && eip_legacy_tx_ptr->signR > s_zero && eip_legacy_tx_ptr->signS > s_zero && eip_legacy_tx_ptr->signR < s_max && eip_legacy_tx_ptr->signS < s_max)) {
-            ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+            ETH_RPC_ERROR(error::xenum_errc::eth_invalid_params, "transaction sign error")
             return -13;
         }
     }
     if (m_chainId != 1023)
     {
-        ec = error::make_error_code(error::xenum_errc::eth_server_error);
+        ETH_RPC_ERROR(error::xenum_errc::eth_invalid_params, "chainid is not top chainid")
         return -14;
     }
     string strFrom;
@@ -276,14 +289,14 @@ int xtransaction_v3_t::unserialize_eth_legacy_transaction(bytes & encoded, bool 
     return 0;
 }
 
-int xtransaction_v3_t::unserialize_eth_1559_transaction(bytes & encoded, bool & bIsCreation, byte & recoveryID, Address & to, std::error_code& ec) {
+int xtransaction_v3_t::unserialize_eth_1559_transaction(bytes & encoded, bool & bIsCreation, byte & recoveryID, Address & to, eth_error& ec) {
     if (m_eip_xxxx_tx == nullptr)
     {
-        ec = error::make_error_code(error::xenum_errc::eth_server_error);
+        ETH_RPC_ERROR(error::xenum_errc::eth_server_error, "top node not enough storage")
         return -1;
     }
     eip_1559_tx* eip_1559_tx_ptr = reinterpret_cast<eip_1559_tx*>(m_eip_xxxx_tx.get());
-    RLP::DecodedItem decoded = RLP::decode(top::evm_common::rlp::data(m_origindata));
+    RLP::DecodedItem decoded = RLP::decode(top::evm_common::data(m_origindata));
     std::vector<std::string> vecData;
     for (int i = 0; i < (int)decoded.decoded.size(); i++) {
         std::string str(decoded.decoded[i].begin(), decoded.decoded[i].end());
@@ -291,76 +304,90 @@ int xtransaction_v3_t::unserialize_eth_1559_transaction(bytes & encoded, bool & 
     }
 
     if (vecData.size() != 12) {
-        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        if (vecData.size() > 12)
+        {
+            ETH_RPC_ERROR(error::xenum_errc::eth_server_error, "rlp: input list has too many elements for types.DynamicFeeTx")
+        }
+        else
+        {
+            ETH_RPC_ERROR(error::xenum_errc::eth_server_error, "rlp: too few elements for types.DynamicFeeTx")
+        }
         return -2;
     }
 
     if (vecData[0].length() > 32)
     {
-        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        ETH_RPC_ERROR(error::xenum_errc::eth_invalid_params, "rlp: input string too long for common.ChainId, decoding into (types.DynamicFeeTx).ChainId")
         return -3;
     }
     eip_1559_tx_ptr->chainid = fromBigEndian<u256>(vecData[0]);
     if (eip_1559_tx_ptr->chainid != 1023)
     {
-        ec = error::make_error_code(error::xenum_errc::eth_server_error);
-        return -1;
+        ETH_RPC_ERROR(error::xenum_errc::eth_invalid_params, "chainid is not top chainid")
+        return -4;
     }
     if (vecData[1].length() > 32)
     {
-        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
-        return -4;
+        ETH_RPC_ERROR(error::xenum_errc::eth_invalid_params, "rlp: input string too long for common.ChainId, decoding into (types.DynamicFeeTx).ChainId")
+        return -5;
     }
     eip_1559_tx_ptr->nonce = fromBigEndian<u256>(vecData[1]);
     if (vecData[2].length() > 32)
     {
-        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
-        return -5;
+        ETH_RPC_ERROR(error::xenum_errc::eth_invalid_params, "rlp: input string too long for common.MaxPriorityFeePerGas, decoding into (types.DynamicFeeTx).MaxPriorityFeePerGas")
+        return -6;
     }
     eip_1559_tx_ptr->max_priority_fee_per_gas = fromBigEndian<u256>(vecData[2]);
     if (vecData[3].length() > 32)
     {
-        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
-        return -6;
+        ETH_RPC_ERROR(error::xenum_errc::eth_invalid_params, "rlp: input string too long for common.MaxFeePerGas, decoding into (types.DynamicFeeTx).MaxFeePerGas")
+        return -7;
     }
     eip_1559_tx_ptr->max_fee_per_gas = fromBigEndian<u256>(vecData[3]);
     if (vecData[4].length() > 32)
     {
-        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
-        return -7;
+        ETH_RPC_ERROR(error::xenum_errc::eth_invalid_params, "rlp: input string too long for common.Gas, decoding into (types.DynamicFeeTx).Gas")
+        return -8;
     }
     eip_1559_tx_ptr->gas = fromBigEndian<u256>(vecData[4]);
-    if (vecData[5].length() > 40)
+    if (vecData[5].length() != 20 && vecData[5].length() != 0)
     {
-        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
-        return -8;
+        if (vecData[5].length() > 20)
+        {
+            ETH_RPC_ERROR(error::xenum_errc::eth_invalid_params, "rlp: input string too long for common.Address, decoding into (types.DynamicFeeTx).Address")
+        }
+        else 
+        {
+            ETH_RPC_ERROR(error::xenum_errc::eth_invalid_params, "rlp: input string too short for common.Address, decoding into (types.DynamicFeeTx).Address")
+        }
+        return -9;
     }
     bIsCreation = vecData[5].empty();
     eip_1559_tx_ptr->to = vecData[5].empty() ? Address().hex() : Address(vecData[5], FixedHash<20>::FromBinary).hex();
     if (vecData[6].length() > 32)
     {
-        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
-        return -9;
+        ETH_RPC_ERROR(error::xenum_errc::eth_invalid_params, "rlp: input string too long for common.value, decoding into (types.DynamicFeeTx).value")
+        return -10;
     }
     eip_1559_tx_ptr->value = fromBigEndian<u256>(vecData[6]);
     eip_1559_tx_ptr->data = vecData[7];
     eip_1559_tx_ptr->accesslist = vecData[8];
     if (vecData[9].length() > 32)
     {
-        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
-        return -10;
+        ETH_RPC_ERROR(error::xenum_errc::eth_invalid_params, "rlp: input string too long for common.signV, decoding into (types.DynamicFeeTx).signV")
+        return -11;
     }
     eip_1559_tx_ptr->signV = fromBigEndian<u256>(vecData[9]);
     if (vecData[10].length() > 32)
     {
-        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
-        return -10;
+        ETH_RPC_ERROR(error::xenum_errc::eth_invalid_params, "rlp: input string too long for common.signR, decoding into (types.DynamicFeeTx).signR")
+        return -12;
     }
     eip_1559_tx_ptr->signR = fromBigEndian<u256>(vecData[10]);
     if (vecData[11].length() > 32)
     {
-        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
-        return -10;
+        ETH_RPC_ERROR(error::xenum_errc::eth_invalid_params, "rlp: input string too long for common.signS, decoding into (types.DynamicFeeTx).signS")
+        return -13;
     }
     eip_1559_tx_ptr->signS = fromBigEndian<u256>(vecData[11]);
 
@@ -376,14 +403,17 @@ int xtransaction_v3_t::unserialize_eth_1559_transaction(bytes & encoded, bool & 
     return 0;
 }
 
-int xtransaction_v3_t::unserialize_top_v3_transaction(bytes & encoded, bool & bIsCreation, byte & recoveryID, Address & to, std::error_code& ec) {
+int xtransaction_v3_t::unserialize_top_v3_transaction(bytes & encoded, bool & bIsCreation, byte & recoveryID, Address & to, eth_error& ec) {
+    ETH_RPC_ERROR(error::xenum_errc::eth_server_error, "not support top v3 transaction")
+    return -1;
+#if 0
     if (m_eip_xxxx_tx == nullptr)
     {
-        ec = error::make_error_code(error::xenum_errc::eth_server_error);
+        ETH_RPC_ERROR(error::xenum_errc::eth_server_error, "top node not enough storage")
         return -1;
     }
     eip_top_v3_tx* eip_top_v3_tx_ptr = reinterpret_cast<eip_top_v3_tx*>(m_eip_xxxx_tx.get());
-    RLP::DecodedItem decoded = RLP::decode(top::evm_common::rlp::data(m_origindata));
+    RLP::DecodedItem decoded = RLP::decode(top::evm_common::data(m_origindata));
     std::vector<std::string> vecData;
     for (int i = 0; i < (int)decoded.decoded.size(); i++) {
         std::string str(decoded.decoded[i].begin(), decoded.decoded[i].end());
@@ -489,6 +519,7 @@ int xtransaction_v3_t::unserialize_top_v3_transaction(bytes & encoded, bool & bI
     append(encoded, RLP::encodeList(encodedtmp));
     recoveryID = (byte)eip_top_v3_tx_ptr->signV;
     return 0;
+#endif    
 }
 
 int xtransaction_v3_t::do_write(base::xstream_t & out) {
@@ -500,12 +531,13 @@ int xtransaction_v3_t::do_write(base::xstream_t & out) {
 
 int xtransaction_v3_t::do_read(base::xstream_t & in) {
     const int32_t begin_pos = in.size();
-    std::error_code ec;
-    int32_t ret = do_read_without_hash_signature(in, ec);
+    eth_error eth_ec;
+    int32_t ret = do_read_without_hash_signature(in, eth_ec);
     if (ret < 0) {
         return enum_xerror_code_bad_transaction;
     }
     set_tx_len(begin_pos - in.size());
+    std::error_code ec;
     auto const target_account_address = common::xaccount_address_t::build_from(get_target_addr(), ec);
     if (ec) {
         return enum_xerror_code_bad_address;
@@ -552,39 +584,46 @@ bool xtransaction_v3_t::transaction_len_check() const {
     return true;
 }
 
-bool xtransaction_v3_t::verify_tx(xJson::Value & request, std::error_code& ec)
+bool xtransaction_v3_t::verify_tx(xJson::Value & request, eth_error& ec)
 {
     if (request["params"].empty())
     {
-        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        ETH_RPC_ERROR(error::xenum_errc::eth_invalid_params, "missing value for required argument 0")
         return false;
     }
     if (!request["params"].isArray())
     {
-        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        ETH_RPC_ERROR(error::xenum_errc::eth_invalid_params, "non-array args")
         return false;
     }
     if (!request["params"][0].isString())
     {
-        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        ETH_RPC_ERROR(error::xenum_errc::eth_invalid_params, "invalid argument 0: json: cannot unmarshal non-string into Go value of type hexutil.Bytes")
         return false;
     }
     string strParams = request["params"][0].asString();
+
+    if (strParams.size() % 2)
+    {
+        ETH_RPC_ERROR(error::xenum_errc::eth_invalid_params, "invalid argument 0: json: cannot unmarshal hex string of odd length into Go value of type hexutil.Bytes")
+        return false;
+    }
+
     if (strParams.size() <= 10)
     {
-        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        ETH_RPC_ERROR(error::xenum_errc::eth_invalid_params, "rlp: value size exceeds available input length")
         return false;
     }
     if (strParams[0] != '0' || strParams[1] != 'x')
     {
-        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        ETH_RPC_ERROR(error::xenum_errc::eth_invalid_params, "invalid argument 0: json: cannot unmarshal hex string without 0x prefix into Go value of type hexutil.Bytes")
         return false;
     }
     string strEth = base::xstring_utl::from_hex(strParams.substr(2));
     if (strEth[0] == '\01') {
         m_EipVersion = EIP_XXXX::EIP_2930;
         xdbg("xtransaction_v3_t::construct_from_json unsupport tx type :%d", strEth[0]);
-        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        ETH_RPC_ERROR(error::xenum_errc::eth_server_error, "transaction type not supported")
         return false;
     } else if (strEth[0] == '\02') {
         m_EipVersion = EIP_XXXX::EIP_1559;
@@ -594,7 +633,7 @@ bool xtransaction_v3_t::verify_tx(xJson::Value & request, std::error_code& ec)
         m_EipVersion = EIP_XXXX::EIP_LEGACY;
     } else {
         xdbg("xtransaction_v3_t::construct_from_json unsupport tx type :%d", strEth[0]);
-        ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+        ETH_RPC_ERROR(error::xenum_errc::eth_server_error, "transaction type not supported")
         return false;
     }
     string strTop;
@@ -602,19 +641,19 @@ bool xtransaction_v3_t::verify_tx(xJson::Value & request, std::error_code& ec)
         int nRet = serial_transfrom::eth_to_top(strEth, m_EipVersion, strTop);
         if (nRet < 0) {
             xdbg("xtransaction_v3_t::construct_from_json eth_to_top error Ret:%d", nRet);
-            ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+            ETH_RPC_ERROR(error::xenum_errc::eth_invalid_params, "rlp: value size exceeds available input length")
             return false;
         }
     } else {
         if (strEth.size() <= 1)
         {
-            ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+            ETH_RPC_ERROR(error::xenum_errc::eth_invalid_params, "rlp: value size exceeds available input length")
             return false;
         }
         int nRet = serial_transfrom::eth_to_top(strEth.substr(1), m_EipVersion, strTop);
         if (nRet < 0) {
             xdbg("xtransaction_v3_t::construct_from_json eth_to_top error Ret:%d", nRet);
-            ec = error::make_error_code(error::xenum_errc::eth_invalid_params);
+            ETH_RPC_ERROR(error::xenum_errc::eth_invalid_params, "rlp: value size exceeds available input length")
             return false;
         }
     }
@@ -867,7 +906,7 @@ void xtransaction_v3_t::construct_from_json(xJson::Value & request) {
     }
     base::xstream_t stream(base::xcontext_t::instance(), (uint8_t*)strTop.data(), strTop.size());
 
-    std::error_code ec;
+    eth_error ec;
     do_read_without_hash_signature(stream, ec);
 
     set_tx_len(strTop.size());
