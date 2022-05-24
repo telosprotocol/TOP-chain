@@ -19,16 +19,15 @@
 #include <cinttypes>
 
 #define ETH_CHAIN_ID 1
-#define CONFIRM_HEIGHTS 25
+
+#define ARROWGLACIER_BLOCK 13773000
+#define ARROWGLACIER_BOMBDELAY 10700000
+#define LONDON_BLOCK 12965000
+#define LONDON_BOMBDELAY 9700000
 
 NS_BEG4(top, contract_runtime, evm, sys_contract)
 
-using namespace top::evm_common::eth;
-
-struct xeth_block_header_with_difficulty_t {
-    xeth_block_header_t m_header;
-    u256 m_difficult_sum;
-};
+using namespace top::evm_common;
 
 bool xtop_evm_eth_bridge_contract::execute(xbytes_t input,
                                            uint64_t target_gas,
@@ -47,13 +46,18 @@ bool xtop_evm_eth_bridge_contract::execute(xbytes_t input,
 }
 
 bool xtop_evm_eth_bridge_contract::init(std::string headerContent, std::string emitter) {
+    // step 0: check int flag
+    if (m_initialized) {
+        xwarn("[xtop_evm_eth_bridge_contract::init] init already");
+        return false;
+    }
     // step 1: check emitter
     if (!validateOwner(emitter)) {
         xwarn("[xtop_evm_eth_bridge_contract::init] emitter: %s invalid", emitter.c_str());
         return false;
     }
     // step 2: header
-    xeth_block_header_t header;
+    eth::xeth_block_header_t header;
     if (!header.fromJson(headerContent)) {
         xwarn("[xtop_evm_eth_bridge_contract::init] decode header error");
         return false;
@@ -61,118 +65,124 @@ bool xtop_evm_eth_bridge_contract::init(std::string headerContent, std::string e
     // step 3: check exist
     h256 hash{0};
     if (get_hash(ETH_CHAIN_ID, header.number(), hash)) {
-        xwarn("[xtop_evm_eth_bridge_contract::init] chain: %d, height: %lu, hash existed", ETH_CHAIN_ID, header.number());
+        xwarn("[xtop_evm_eth_bridge_contract::init] get_hash existed, chain: %d, height: %s, hash: %s", ETH_CHAIN_ID, header.number().str().c_str(), hash.hex().c_str());
         return false;
     }
     // step 4: store block
-    if (!m_store.saveBlock(header, u256(header.difficulty()), ETH_CHAIN_ID)) {
-        xwarn("[xtop_evm_eth_bridge_contract::init] chain: %d, header of height: %lu, store failed", ETH_CHAIN_ID, header.number());
+    if (!set_header(ETH_CHAIN_ID, header, header.difficulty())) {
+        xwarn("[xtop_evm_eth_bridge_contract::init] set_header failed, chain: %d, height: %s, hash: %s", ETH_CHAIN_ID, header.number().str().c_str(), header.hash().hex().c_str());
         return false;
     }
     // step 5: store mainchain header
     if (!set_hash(ETH_CHAIN_ID, header.number(), header.hash())) {
-        xwarn("[xtop_evm_eth_bridge_contract::init] chain: %d, height: %lu, hash store failed", ETH_CHAIN_ID, header.number());
+        xwarn("[xtop_evm_eth_bridge_contract::init] set_hash failed, chain: %d, height: %s, hash: %s", ETH_CHAIN_ID, header.number().str().c_str(), header.hash().hex().c_str());
         return false;
     }
     // step 6: store height
     if (!set_height(ETH_CHAIN_ID, header.number())) {
-        xwarn("[xtop_evm_eth_bridge_contract::init] chain: %d, height: %lu, store failed", ETH_CHAIN_ID, header.number());
+        xwarn("[xtop_evm_eth_bridge_contract::init] set_height failed, chain: %d, height: %s", ETH_CHAIN_ID, header.number().str().c_str());
         return false;
     }
-    // step 6: set init flag
+    // step 7: set init flag
     m_initialized = true;
 
     return true;
 }
 
 bool xtop_evm_eth_bridge_contract::sync(std::string headerContent) {
+    // step 1: check init flag
     if (!m_initialized) {
         xwarn("[xtop_evm_eth_bridge_contract::sync] not init yet");
         return false;
     }
-    
-    xeth_block_header_t header;
+    // step 2: decode header
+    eth::xeth_block_header_t header;
     if (!header.fromJson(headerContent)) {
-        xwarn("[xtop_evm_eth_bridge_contract::init] decode header error");
+        xwarn("[xtop_evm_eth_bridge_contract::sync] decode header error");
         return false;
     }
-
-    /* calculate block header hash */
-    bool result = m_store.isBlockExist(ETH_CHAIN_ID, header.hash());
-    if (result) {
+    // step 3: check exist
+    h256 exist_hash{0};
+    if (get_hash(ETH_CHAIN_ID, header.number(), exist_hash)) {
+        xwarn("[xtop_evm_eth_bridge_contract::sync] get_hash existed, chain: %d, height: %s, hash: %s", ETH_CHAIN_ID, header.number().str().c_str(), exist_hash.hex().c_str());
         return false;
     }
-
-    xeth_block_header_t parentHeader;
-    u256 sumOfDifficult = 0;
-    result = m_store.getBlockbyHash(ETH_CHAIN_ID, header.parentHash(), parentHeader, sumOfDifficult);
-    if (!result) {
+    // step 4: get parent header
+    eth::xeth_block_header_t parentHeader;
+    bigint preSumOfDifficult{0};
+    if (!get_header(ETH_CHAIN_ID, header.parentHash(), parentHeader, preSumOfDifficult)) {
+        xwarn("[xtop_evm_eth_bridge_contract::sync] get parent header failed, chain: %d, hash: %s", ETH_CHAIN_ID, header.parentHash().hex().c_str());
         return false;
     }
-
-    result = verify(parentHeader, header);
-    if (!result) {
+    // step 5: verify header common
+    if (!verifyCommon(parentHeader, header)) {
+        xwarn("[xtop_evm_eth_bridge_contract::sync] verify header common failed, header: %s, parrent header: %s", header.hash().hex().c_str(), parentHeader.hash().hex());
         return false;
     }
-
-    if (isLondonFork(header)) {
-        if (!verifyEip1559Header(parentHeader, header)) {
-            return false;
-        }
-    } else {
-        if (!verifyGaslimit(parentHeader.gasLimit(), header.gasLimit())) {
-            return false;
-        }
-    }
-
+    // if (isLondon(header)) {
+    //     if (!verifyEip1559Header(parentHeader, header)) {
+    //         return false;
+    //     }
+    // } else {
+    //     if (!verifyGaslimit(parentHeader.gasLimit(), header.gasLimit())) {
+    //         return false;
+    //     }
+    // }
+    // step 6: verify difficulty
     bigint diff;
-    if (isArrowGlacier(header.number())) {
-        diff = difficulty::calculate(header.time(), &parentHeader, 1070000);
-    } else if (isLondonFork(header)) {
-        diff = difficulty::calculate(header.time(), &parentHeader, 9700000);
+    if (isArrowGlacier(header)) {
+        diff = eth::difficulty::calculate(header.time(), &parentHeader, ARROWGLACIER_BOMBDELAY);
+    } else if (isLondon(header)) {
+        diff = eth::difficulty::calculate(header.time(), &parentHeader, LONDON_BOMBDELAY);
     } else {
-        diff = difficulty::calculate(header.time(), &parentHeader);
+        xwarn("[xtop_evm_eth_bridge_contract::sync] unexpected fork");
+        xassert(false);
     }
-    
     if (diff != header.difficulty()) {
         return false;
     }
-
-    result = evm_common::eth::ethash_util::verify(&header);
-    if (!result) {
+    // step 7: verify ethash
+    if (!eth::ethash_util::verify(&header)) {
+        xwarn("[xtop_evm_eth_bridge_contract::sync] ethash verify failed, header: %s", ETH_CHAIN_ID, header.hash().hex().c_str());
         return false;
     }
-
-    bigint bigSumOfDifficult;
-    bigSumOfDifficult = bigint(sumOfDifficult) + header.difficulty();
-    m_store.saveBlock(header, (u256)bigSumOfDifficult, ETH_CHAIN_ID);
-
-    uint64_t height;
+    // step 8: set header
+    bigint newSumOfDifficult = preSumOfDifficult + header.difficulty();
+    if (!set_header(ETH_CHAIN_ID, header, newSumOfDifficult)) {
+        xwarn("[xtop_evm_eth_bridge_contract::sync] set_header failed, chain: %d, height: %s, hash: %s", ETH_CHAIN_ID, header.number().str().c_str(), header.hash().hex().c_str());
+        return false;
+    }
+    // step 9: get last header
+    bigint height{0};
     if (!get_height(ETH_CHAIN_ID, height)) {
+        xwarn("[xtop_evm_eth_bridge_contract::sync] get_height failed, chain: %d, height: %s", ETH_CHAIN_ID, height.str().c_str());
         return false;
     }
-
     h256 hash;
     if (!get_hash(ETH_CHAIN_ID, height, hash)){
+        xwarn("[xtop_evm_eth_bridge_contract::sync] get_hash failed, chain: %d, height: %s, hash: %s", ETH_CHAIN_ID, height.str().c_str(), hash.hex().c_str());
         return false;
     }
-
-    xeth_block_header_t mainHeader;
-    u256 sumOfDifficult1 = 0;
-    result = m_store.getBlockbyHash(ETH_CHAIN_ID, hash, mainHeader, sumOfDifficult1);
-    if (!result) {
+    eth::xeth_block_header_t last_header;
+    bigint last_difficulty{0};
+    if (!get_header(ETH_CHAIN_ID, hash, last_header, last_difficulty)) {
+        xwarn("[xtop_evm_eth_bridge_contract::sync] get last header failed, chain: %d, hash: %s", ETH_CHAIN_ID, hash.hex().c_str());
         return false;
     }
-
-    if (mainHeader.hash() == header.parentHash()) {
-        result = m_store.saveMainChain(ETH_CHAIN_ID, header.number(), header.hash());
-        if (!result) {
+    // step 10: set or rebuild
+    if (last_header.hash() == header.parentHash()) {
+        if (!set_hash(ETH_CHAIN_ID, header.number(), header.hash())) {
+            xwarn("[xtop_evm_eth_bridge_contract::sync] set_hash failed, chain: %d, height: %s, hash: %s", ETH_CHAIN_ID, header.number().str().c_str(), header.hash().hex().c_str());
+            return false;
+        }
+        if (!set_height(ETH_CHAIN_ID, header.number())) {
+            xwarn("[xtop_evm_eth_bridge_contract::sync] set_height failed, chain: %d, height: %s", ETH_CHAIN_ID, header.number().str().c_str());
             return false;
         }
     } else {
-        if (bigSumOfDifficult > (bigint)sumOfDifficult1) {
-            result = m_store.rebuildMainChain(ETH_CHAIN_ID, mainHeader, header);
-            if (!result) {
+        if (newSumOfDifficult > last_difficulty) {
+            if (!rebuild(ETH_CHAIN_ID, last_header, header)) {
+                xwarn("[xtop_evm_eth_bridge_contract::sync] rebuild failed");
                 return false;
             }
         }
@@ -185,7 +195,7 @@ bool xtop_evm_eth_bridge_contract::validateOwner(std::string owner) {
     return true;
 }
 
-bool xtop_evm_eth_bridge_contract::verify(xeth_block_header_t prev_header, xeth_block_header_t new_header) {
+bool xtop_evm_eth_bridge_contract::verifyCommon(eth::xeth_block_header_t prev_header, eth::xeth_block_header_t new_header) {
     if (new_header.number() != prev_header.number() + 1) {
         return false;
     }
@@ -214,10 +224,10 @@ bool xtop_evm_eth_bridge_contract::verify(xeth_block_header_t prev_header, xeth_
     return true;
 }
 
-bool xtop_evm_eth_bridge_contract::verifyEip1559Header(xeth_block_header_t &parentHeader, xeth_block_header_t &header) {
+bool xtop_evm_eth_bridge_contract::verifyEip1559Header(eth::xeth_block_header_t &parentHeader, eth::xeth_block_header_t &header) {
 	// Verify that the gas limit remains within allowed bounds
 	u256 parentGasLimit = parentHeader.gasLimit();
-	if (!isLondonFork(parentHeader)) {
+	if (!isLondon(parentHeader)) {
 		parentGasLimit = parentHeader.gasLimit() * 2;
 	}
 
@@ -257,23 +267,21 @@ bool xtop_evm_eth_bridge_contract::verifyGaslimit(u256 parentGasLimit, u256 head
     return true;
 }
 
-bool xtop_evm_eth_bridge_contract::isLondonFork(xeth_block_header_t &header) {
-    if (header.isBaseFee() || (header.number() >= ETH1559_HEIGHT)) {
+bool xtop_evm_eth_bridge_contract::isLondon(eth::xeth_block_header_t &header) const {
+    if (header.number() >= LONDON_BLOCK) {
+        xassert(header.isBaseFee());
         return true;
     }
 
     return false;
 }
 
-bool xtop_evm_eth_bridge_contract::isArrowGlacier(int64_t height) {
-    if (height >= ETH4345_HEIGHT) {
-        return true;
-    }
-	return false;
+bool xtop_evm_eth_bridge_contract::isArrowGlacier(eth::xeth_block_header_t &header) const {
+    return (header.number() >= ARROWGLACIER_BLOCK);
 }
 
-bigint xtop_evm_eth_bridge_contract::calcBaseFee(xeth_block_header_t &parentHeader)  {
-    if (!isLondonFork(parentHeader)) {
+bigint xtop_evm_eth_bridge_contract::calcBaseFee(eth::xeth_block_header_t &parentHeader)  {
+    if (!isLondon(parentHeader)) {
         return bigint(1000000000);
     }
 
@@ -311,88 +319,210 @@ bigint xtop_evm_eth_bridge_contract::calcBaseFee(xeth_block_header_t &parentHead
     return 0;
 }
 
-bool xtop_evm_eth_bridge_contract::get_hash(const uint64_t chain_id, const uint64_t height, h256 & hash) const {
-    std::map<uint64_t, xbytes_t> info;
+bool xtop_evm_eth_bridge_contract::get_header(const uint64_t chain_id, const h256 hash, eth::xeth_block_header_t & header, bigint & difficulty) const {
+    std::map<xbytes_t, std::string> header_map;
+    auto header_map_str = m_contract_state->map_get(data::system_contract::XPROPERTY_ETH_CHAINS_HEADER, top::to_string(chain_id));
+    if (header_map_str.empty()) {
+        xwarn("[xtop_evm_eth_bridge_contract::get_header] chain: %d not exist", chain_id);
+        return false;
+    }
+    base::xstream_t header_map_stream(base::xcontext_t::instance(), (uint8_t *)header_map_str.data(), header_map_str.size());
+    MAP_DESERIALIZE_SIMPLE(header_map_stream, header_map);
+    if (!header_map.count(hash.asBytes())) {
+        xwarn("[xtop_evm_eth_bridge_contract::get_header] get_header not exist, chain: %d, hash: %s", chain_id, hash.hex().c_str());
+        return false;
+    }
+    eth::xeth_block_header_with_difficulty_t header_with_difficulty;
+    header_with_difficulty.from_string(header_map[hash.asBytes()]);
+    header = header_with_difficulty.m_header;
+    difficulty = header_with_difficulty.m_difficult_sum;
+    xinfo("[xtop_evm_eth_bridge_contract::get_header] get_header success, chain: %d, hash: %lu", chain_id, hash.hex().c_str());
+    return true;
+}
+
+bool xtop_evm_eth_bridge_contract::set_header(const uint64_t chain_id, eth::xeth_block_header_t header, bigint difficulty) {
+    std::map<xbytes_t, std::string> header_map;
+    h256 hash = header.hash();
+    eth::xeth_block_header_with_difficulty_t header_with_difficulty{header, difficulty};
+    auto k = hash.asBytes();
+    auto v = header_with_difficulty.to_string();
+    auto header_map_str = m_contract_state->map_get(data::system_contract::XPROPERTY_ETH_CHAINS_HEADER, top::to_string(chain_id));
+    if (header_map_str.empty()) {
+        header_map.insert({k, v});
+    } else {
+        base::xstream_t header_map_stream(base::xcontext_t::instance(), (uint8_t *)header_map_str.data(), header_map_str.size());
+        MAP_DESERIALIZE_SIMPLE(header_map_stream, header_map);
+        if (header_map.count(k)) {
+            header_map[k] = v;
+        } else {
+            header_map.insert({k, v});
+        }
+    }
+    base::xstream_t header_map_stream(base::xcontext_t::instance());
+    MAP_SERIALIZE_SIMPLE(header_map_stream, header_map);
+    auto header_map_stream_str = std::string{reinterpret_cast<const char *>(header_map_stream.data()), static_cast<std::string::size_type>(header_map_stream.size())};
+    auto ret = m_contract_state->map_set(data::system_contract::XPROPERTY_ETH_CHAINS_HEADER, top::to_string(chain_id), header_map_stream_str);
+    if (ret != 0) {
+        xwarn("[xtop_evm_eth_bridge_contract::set_header] set_header failed, chain: %d, header: %s", chain_id, hash.hex().c_str());
+        return false;
+    }
+    xinfo("[xtop_evm_eth_bridge_contract::set_header] set_header success, chain: %d, set header: %s", chain_id, hash.hex().c_str());
+    return true;
+}
+
+bool xtop_evm_eth_bridge_contract::get_hash(const uint64_t chain_id, const bigint height, h256 & hash) const {
+    std::map<xbytes_t, xbytes_t> info;
     auto info_str = m_contract_state->map_get(data::system_contract::XPROPERTY_ETH_CHAINS_HASH, top::to_string(chain_id));
     if (info_str.empty()) {
-        xwarn("[xtop_evm_eth_bridge_contract::get_hash] chain: %d hash not exist", chain_id);
+        xwarn("[xtop_evm_eth_bridge_contract::get_hash] chain: %d not exist", chain_id);
         return false;
     }
     base::xstream_t info_stream(base::xcontext_t::instance(), (uint8_t *)info_str.data(), info_str.size());
     MAP_DESERIALIZE_SIMPLE(info_stream, info);
-    if (!info.count(height)) {
-        xwarn("[xtop_evm_eth_bridge_contract::get_hash] chain: %d, height: %lu not exist", chain_id, height);
+    auto k = evm_common::toBigEndian(static_cast<u256>(height));
+    if (!info.count(k)) {
+        xwarn("[xtop_evm_eth_bridge_contract::get_hash] height not exist, chain: %d, height: %s ", chain_id, height.str().c_str());
         return false;
     }
-    hash = h256(info[height]);
-    xinfo("[xtop_evm_eth_bridge_contract::get_hash] chain: %d, height: %lu, hash: %s", chain_id, height, hash.hex().c_str());
+    hash = static_cast<h256>(info[k]);
+    xinfo("[xtop_evm_eth_bridge_contract::get_hash] get_hash success, chain: %d, height: %s, hash: %s", chain_id, height.str().c_str(), hash.hex().c_str());
     return true;
 }
 
-bool xtop_evm_eth_bridge_contract::set_hash(const uint64_t chain_id, const uint64_t height, const h256 hash) {
-    std::map<uint64_t, xbytes_t> info;
+bool xtop_evm_eth_bridge_contract::set_hash(const uint64_t chain_id, const bigint height, const h256 hash) {
+    std::map<xbytes_t, xbytes_t> info;
+    auto k = evm_common::toBigEndian(static_cast<u256>(height));
     auto info_str = m_contract_state->map_get(data::system_contract::XPROPERTY_ETH_CHAINS_HASH, top::to_string(chain_id));
     if (info_str.empty()) {
-        info.insert({height, hash.asBytes()});
+        info.insert({k, hash.asBytes()});
     } else {
         base::xstream_t info_stream(base::xcontext_t::instance(), (uint8_t *)info_str.data(), info_str.size());
         MAP_DESERIALIZE_SIMPLE(info_stream, info);
-        if (info.count(height)) {
-            info[height] = hash.asBytes();
+        if (info.count(k)) {
+            info[k] = hash.asBytes();
         } else {
-            info.insert({height, hash.asBytes()});
+            info.insert({k, hash.asBytes()});
         }
     }
     base::xstream_t info_stream(base::xcontext_t::instance());
     MAP_SERIALIZE_SIMPLE(info_stream, info);
     auto info_stream_str = std::string{reinterpret_cast<const char *>(info_stream.data()), static_cast<std::string::size_type>(info_stream.size())};
-    auto ret = m_contract_state->map_set(data::system_contract::XPROPERTY_ETH_CHAINS_HASH, top::to_string(height), info_stream_str);
+    auto ret = m_contract_state->map_set(data::system_contract::XPROPERTY_ETH_CHAINS_HASH, top::to_string(chain_id), info_stream_str);
     if (ret != 0) {
-        xwarn("[xtop_evm_eth_bridge_contract::set_hash] chain: %d, height: %lu, set hash: %s failed", chain_id, height, hash.hex().c_str());
+        xwarn("[xtop_evm_eth_bridge_contract::set_hash] set_hash failed, chain: %d, height: %s, hash: %s", chain_id, height.str().c_str(), hash.hex().c_str());
         return false;
     }
-    xinfo("[xtop_evm_eth_bridge_contract::set_hash] chain: %d, height: %lu, set hash: %s success", chain_id, height, hash.hex().c_str());
+    xinfo("[xtop_evm_eth_bridge_contract::set_hash] set_hash success, chain: %d, height: %s, hash: %s", chain_id, height.str().c_str(), hash.hex().c_str());
     return true;
 }
 
-bool xtop_evm_eth_bridge_contract::get_height(const uint64_t chain_id, uint64_t & height) const {
-    std::map<uint64_t, xbytes_t> info;
+bool xtop_evm_eth_bridge_contract::get_height(const uint64_t chain_id, bigint & height) const {
     auto height_str = m_contract_state->map_get(data::system_contract::XPROPERTY_ETH_CHAINS_HEIGHT, top::to_string(chain_id));
     if (height_str.empty()) {
         xwarn("[xtop_evm_eth_bridge_contract::get_height] chain: %d height not exist", chain_id);
         return false;
     }
-    height = top::from_string<uint64_t>(height_str);
-    xinfo("[xtop_evm_eth_bridge_contract::get_height] chain: %d, get height: %lu success", chain_id, height, height);
+    height = static_cast<bigint>(evm_common::fromBigEndian<u256>(height_str));
+    xinfo("[xtop_evm_eth_bridge_contract::get_height] chain: %d, get height: %s, get success", chain_id, height.str().c_str(), height);
     return true;
 }
 
-bool xtop_evm_eth_bridge_contract::set_height(const uint64_t chain_id, const uint64_t height) {
-    auto ret = m_contract_state->map_set(data::system_contract::XPROPERTY_ETH_CHAINS_HEIGHT, top::to_string(chain_id), top::to_string(height));
+bool xtop_evm_eth_bridge_contract::set_height(const uint64_t chain_id, const bigint height) {
+    auto bytes = evm_common::toBigEndian(static_cast<u256>(height));
+    auto ret = m_contract_state->map_set(data::system_contract::XPROPERTY_ETH_CHAINS_HEIGHT, top::to_string(chain_id), {bytes.begin(), bytes.end()});
     if (ret != 0) {
-        xwarn("[xtop_evm_eth_bridge_contract::set_height] chain: %d, height: %lu, set failed", chain_id, height);
+        xwarn("[xtop_evm_eth_bridge_contract::set_height] set_height failed, chain: %d, height: %s", chain_id, height.str().c_str());
         return false;
     }
-    xinfo("[xtop_evm_eth_bridge_contract::set_height] chain: %d, height: %lu, set success", chain_id, height);
+    xinfo("[xtop_evm_eth_bridge_contract::set_height] set_height success, chain: %d, height: %s", chain_id, height.str().c_str());
     return true;
-
-    h256    m_parentHash;
-    h256    m_uncleHash;
-    Address   m_miner;
-    h256    m_stateMerkleRoot;
-    h256    m_txMerkleRoot;
-    h256    m_receiptMerkleRoot;
-    LogBloom  m_bloom;
-    bigint    m_difficulty;
-    int64_t    m_number;
-    u256    m_gasLimit;
-    u256    m_gasUsed;
-    int64_t  m_time;
-    std::vector<uint8_t>  m_extra;
-    h256    m_mixDigest;
-    h64   m_nonce;
 }
 
+bool xtop_evm_eth_bridge_contract::rebuild(uint64_t chain_id, eth::xeth_block_header_t & current_header, eth::xeth_block_header_t & new_header) {
+    auto const current_height = current_header.number();
+    auto new_height = new_header.number();
+    auto new_hash = new_header.hash();
 
+    std::map<bigint, h256> add;
+    bigint remove_cnt{0};
+    
+    if (new_height < current_height) {
+        remove_cnt = current_height - new_height;
+    } else if (new_height > current_height) {
+        while (new_height > current_height) {
+            eth::xeth_block_header_with_difficulty_t h;
+            bigint difficult_sum;
+            if (!get_header(chain_id, new_hash, h.m_header, difficult_sum)) {
+                xwarn("[xtop_evm_eth_bridge_contract::rebuild] get_header failed, chain_id: %d, hash: %s", chain_id, new_hash.hex().c_str());
+                return false;
+            }
+            if (h.m_header.number() != new_height) {
+                xwarn("[xtop_evm_eth_bridge_contract::rebuild] header height mismatch, stored height: %s, new_height: %s", h.m_header.number().str().c_str(), new_height.str().c_str());
+                return false;
+            }
+            add[new_height] = new_hash;
+            new_hash = h.m_header.parentHash();
+            new_height--;
+        }
+        xassert(new_height == current_height);
+    }
+
+    h256 new_fork_hash{new_hash};
+    h256 same_height_hash{0};
+    if (!get_hash(chain_id, new_height, same_height_hash)) {
+        xwarn("[xtop_evm_eth_bridge_contract::rebuild] get hash failed, chain: %d , height: %s", chain_id, new_height);
+        return false;
+    }
+    
+    while (new_fork_hash != same_height_hash) {
+        add[new_height] = new_hash;
+        new_height--;
+        // get previous new_fork_hash
+        eth::xeth_block_header_with_difficulty_t h;
+        if (!get_header(chain_id, new_hash, h.m_header, h.m_difficult_sum)) {
+            xwarn("[xtop_evm_eth_bridge_contract::rebuild] get last header failed, chain: %d, hash: %s", chain_id, new_hash.hex().c_str());
+            return false;
+        }
+        new_fork_hash = h.m_header.parentHash();
+        // get previous same_height_hash
+        if (!get_hash(chain_id, new_height, same_height_hash)) {
+            xwarn("[xtop_evm_eth_bridge_contract::rebuild] get_hash failed, chain: %d, hash: %s", chain_id, new_height.str().c_str());
+            return false;
+        }
+    }
+
+    std::map<xbytes_t, xbytes_t> info;
+    auto info_str = m_contract_state->map_get(data::system_contract::XPROPERTY_ETH_CHAINS_HASH, top::to_string(chain_id));
+    if (info_str.empty()) {
+        xwarn("[xtop_evm_eth_bridge_contract::rebuild] chain: %d hash not exist", chain_id);
+        return false;
+    }
+    {
+        base::xstream_t info_stream(base::xcontext_t::instance(), (uint8_t *)info_str.data(), info_str.size());
+        MAP_DESERIALIZE_SIMPLE(info_stream, info);
+    }
+    for (bigint h = 0; h < remove_cnt; h++) {
+        info.erase(evm_common::toBigEndian(static_cast<u256>(current_height - h)));
+    }
+    for (auto const & a : add) {
+        info.insert({evm_common::toBigEndian(static_cast<u256>(a.first)), a.second.asBytes()});
+    }
+    base::xstream_t info_stream(base::xcontext_t::instance());
+    MAP_SERIALIZE_SIMPLE(info_stream, info);
+    auto info_stream_str = std::string{reinterpret_cast<const char *>(info_stream.data()), static_cast<std::string::size_type>(info_stream.size())};
+    auto ret = m_contract_state->map_set(data::system_contract::XPROPERTY_ETH_CHAINS_HASH, top::to_string(chain_id), info_stream_str);
+    if (ret != 0) {
+        xwarn("[xtop_evm_eth_bridge_contract::rebuild] batch set_hash failed");
+        return false;
+    }
+
+    if (!set_height(chain_id, new_header.number())) {
+        xwarn("[xtop_evm_eth_bridge_contract::rebuild] set_height failed, chain_id: %d, height: %s", chain_id, new_header.number().str().c_str());
+        return false;
+    }
+    xinfo("[xtop_evm_eth_bridge_contract::rebuild] rebuild success");
+
+    return true;
+}
 
 NS_END4

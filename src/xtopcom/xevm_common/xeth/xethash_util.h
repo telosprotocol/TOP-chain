@@ -7,7 +7,7 @@ class ethash_util {
 public:
     static bool verify(xeth_block_header_t *header);
 private:
-    static int32_t epoch(uint64_t height);
+    static int epoch(bigint height);
     static ethash::hash256 toHash256(h256 hash);
     static ethash::hash256 toHash256(u256 hash);
     // static uint64_t datasetSize(uint64_t height);

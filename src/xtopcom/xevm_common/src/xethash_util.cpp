@@ -20,8 +20,8 @@ bool ethash_util::verify(xeth_block_header_t *header) {
     return true;
 }
 
-int32_t ethash_util::epoch(uint64_t height) {
-    return (int32_t)(height / block_number_of_per_epoch);
+int ethash_util::epoch(bigint height) {
+    return static_cast<int>(height / block_number_of_per_epoch);
 }
 
 ethash::hash256 ethash_util::toHash256(h256 hash) {
