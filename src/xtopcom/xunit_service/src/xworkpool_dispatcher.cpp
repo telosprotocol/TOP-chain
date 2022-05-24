@@ -25,10 +25,10 @@ xworkpool_dispatcher::~xworkpool_dispatcher() {
     xassert(m_packers.empty());
 }
 
-int16_t xworkpool_dispatcher::get_thread_index(base::xworkerpool_t * pool, base::xtable_index_t& table_id) {
+int16_t xworkpool_dispatcher::get_thread_index(base::xworkerpool_t * pool, base::xtable_index_t & table_id) {
     auto pool_size = pool->get_count();
     if (table_id.get_zone_index() == base::enum_chain_zone_beacon_index || table_id.get_zone_index() == base::enum_chain_zone_zec_index ||
-        table_id.get_zone_index() == base::enum_chain_zone_evm_index) {
+        table_id.get_zone_index() == base::enum_chain_zone_relay_index) {
         // zec & rec always dispatch to thread 0
         return 0;
     } else {

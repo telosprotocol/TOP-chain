@@ -37,6 +37,10 @@ int32_t xelection_cache_imp::get_tables(const xvip2_t & xip, std::vector<base::x
         for (uint8_t i = 0; i < MAIN_CHAIN_EVM_TABLE_USED_NUM; i++) {
             tables->push_back({base::enum_chain_zone_evm_index, i});
         }
+    } else if (zone_id == base::enum_chain_zone_relay_index) {
+        for (uint8_t i = 0; i < MAIN_CHAIN_RELAY_TABLE_USED_NUM; ++i) {
+            tables->push_back({base::enum_chain_zone_relay_index, i});
+        }
     } else {
         {
             xvip2_t tmp = get_group_xip2(xip);

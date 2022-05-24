@@ -1004,8 +1004,8 @@ int xrpc_eth_query_manager::get_log(xJson::Value & js_rsp, const uint64_t begin,
 }
 
 xobject_ptr_t<base::xvblock_t> xrpc_eth_query_manager::query_relay_block_by_height(const std::string& table_height) {
-    xdbg("xrpc_eth_query_manager::query_relay_block_by_height: %s, %s",  relay_block_addr, table_height.c_str());
-    base::xvaccount_t _table_addr(relay_block_addr);
+    xdbg("xrpc_eth_query_manager::query_relay_block_by_height: %s, %s", sys_contract_relay_table_block_addr, table_height.c_str());
+    base::xvaccount_t _table_addr(sys_contract_relay_table_block_addr);
 
     xobject_ptr_t<base::xvblock_t> _block;
     if (table_height == "latest")
@@ -1097,7 +1097,7 @@ void xrpc_eth_query_manager::top_relayBlockNumber(xJson::Value & js_req, xJson::
     if (!eth::EthErrorCode::check_req(js_req, js_rsp, 0))
         return;
 
-    base::xvaccount_t _vaddress(relay_block_addr);
+    base::xvaccount_t _vaddress(sys_contract_relay_table_block_addr);
     uint64_t height = m_block_store->get_latest_cert_block_height(_vaddress);
     xinfo("xarc_query_manager::top_relayBlockNumber: %llu", height);
     if (height != 0)

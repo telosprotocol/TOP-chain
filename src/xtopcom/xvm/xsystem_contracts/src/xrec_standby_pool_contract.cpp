@@ -149,6 +149,7 @@ void xtop_rec_standby_pool_contract::nodeJoinNetwork2(common::xaccount_address_t
     bool const fullnode = data::system_contract::could_be<common::xnode_type_t::fullnode>(miner_type);
     bool const evm_auditor = data::system_contract::could_be<common::xnode_type_t::evm_auditor>(miner_type);
     bool const evm_validator = data::system_contract::could_be<common::xnode_type_t::evm_validator>(miner_type);
+    bool const relay = data::system_contract::could_be<common::xnode_type_t::relay>(miner_type);
 
     std::string const role_type_string = common::to_string(miner_type);
     assert(role_type_string == common::XMINER_TYPE_EDGE      ||
@@ -240,6 +241,11 @@ void xtop_rec_standby_pool_contract::nodeJoinNetwork2(common::xaccount_address_t
             new_node_info.stake_container[common::xnode_type_t::evm_validator] = stake;
             new_node |= standby_result_store.result_of(network_id).insert({node_id, new_node_info}).second;
         }
+
+        if (relay) {
+            new_node_info.stake_container[common::xnode_type_t::relay] = stake;
+            new_node |= standby_result_store.result_of(network_id).insert({node_id, new_node_info}).second;
+        }
     }
 
     if (new_node) {
@@ -255,24 +261,28 @@ bool xtop_rec_standby_pool_contract::nodeJoinNetworkImpl(std::string const & pro
     auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
 #if defined(XENABLE_TESTS)
     auto const evm_enabled = true;
+    auto const relay_enabled = true;
 #else
     auto const evm_enabled = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.eth_fork_point, TIME());
+    auto const relay_enabled = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.relay_fork_point, TIME());
 #endif
 
     std::set<common::xnetwork_id_t> network_ids = node.m_network_ids;
 
     auto consensus_public_key = node.consensus_public_key;
-    uint64_t rec_stake{0}, zec_stake{0}, auditor_stake{0}, validator_stake{0}, edge_stake{0}, archive_stake{0}, exchange_stake{0}, fullnode_stake{0}, evm_auditor_stake{0}, evm_validator_stake{0};
-    bool const rec{node.can_be_rec()},                                    // NOLINT
-        zec{node.can_be_zec()},                                           // NOLINT
-        auditor{node.can_be_auditor()},                                   // NOLINT
-        validator{node.can_be_validator()},                               // NOLINT
-        edge{node.can_be_edge()},                                         // NOLINT
-        archive{node.can_be_archive()},                                   // NOLINT
-        exchange{node.can_be_exchange()},                                 // NOLINT
-        fullnode{node.can_be_fullnode()},                                 // NOLINT
+    uint64_t rec_stake{0}, zec_stake{0}, auditor_stake{0}, validator_stake{0}, edge_stake{0}, archive_stake{0}, exchange_stake{0}, fullnode_stake{0}, evm_auditor_stake{0},
+        evm_validator_stake{0}, relay_stake{0};
+    bool const rec{node.can_be_rec()},                                     // NOLINT
+        zec{node.can_be_zec()},                                            // NOLINT
+        auditor{node.can_be_auditor()},                                    // NOLINT
+        validator{node.can_be_validator()},                                // NOLINT
+        edge{node.can_be_edge()},                                          // NOLINT
+        archive{node.can_be_archive()},                                    // NOLINT
+        exchange{node.can_be_exchange()},                                  // NOLINT
+        fullnode{node.can_be_fullnode()},                                  // NOLINT
         evm_auditor{evm_enabled ? node.can_be_evm_auditor() : false},      // NOLINT
-        evm_validator{evm_enabled ? node.can_be_evm_validator() : false};  // NOLINT
+        evm_validator{evm_enabled ? node.can_be_evm_validator() : false},  // NOLINT
+        relay{relay_enabled ? node.can_be_relay() : false};
 
     if (rec) {
         rec_stake = node.rec_stake();
@@ -312,6 +322,10 @@ bool xtop_rec_standby_pool_contract::nodeJoinNetworkImpl(std::string const & pro
 
     if (evm_enabled && evm_validator) {
         evm_validator_stake = node.evm_validator_stake();
+    }
+
+    if (relay_enabled && relay) {
+        relay_stake = node.relay_stake();
     }
 
     auto const miner_type = node.miner_type();
@@ -375,6 +389,10 @@ bool xtop_rec_standby_pool_contract::nodeJoinNetworkImpl(std::string const & pro
             new_node_info.stake_container[common::xnode_type_t::evm_validator] = evm_validator_stake;
         }
 
+        if (relay_enabled && relay) {
+            new_node_info.stake_container[common::xnode_type_t::relay] = relay_stake;
+        }
+
         if (!new_node) {
             new_node = standby_result_store.result_of(network_id).insert({node.m_account, new_node_info}).second;
         }
@@ -389,6 +407,7 @@ bool xtop_rec_standby_pool_contract::update_standby_node(data::system_contract::
     auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
 
     auto const evm_enabled = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.eth_fork_point, current_logic_time);
+    auto const relay_enabled = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.relay_fork_point, current_logic_time);
 
     election::xstandby_node_info_t new_node_info;
     if (reg_node.can_be_rec()) {
@@ -436,6 +455,13 @@ bool xtop_rec_standby_pool_contract::update_standby_node(data::system_contract::
              reg_node.m_account.c_str(),
              reg_node.raw_credit_score_data(common::xnode_type_t::consensus_validator));
         new_node_info.raw_credit_score(common::xnode_type_t::evm_validator, reg_node.raw_credit_score_data(top::common::xnode_type_t::consensus_validator));
+    }
+    if (relay_enabled && reg_node.can_be_relay()) {
+        new_node_info.stake_container.insert({common::xnode_type_t::relay, reg_node.relay_stake()});
+        xdbg("xrec_standby_pool_contract_t::update_standby_node account %s credit score %" PRIu64,
+             reg_node.m_account.c_str(),
+             reg_node.raw_credit_score_data(common::xnode_type_t::relay));
+        new_node_info.raw_credit_score(common::xnode_type_t::relay, reg_node.raw_credit_score_data(top::common::xnode_type_t::relay));
     }
 
     new_node_info.consensus_public_key = reg_node.consensus_public_key;
@@ -489,7 +515,7 @@ bool xtop_rec_standby_pool_contract::update_standby_node(data::system_contract::
              reg_node.m_account.c_str(),
              reg_node.raw_credit_score_data(common::xnode_type_t::consensus_auditor));
     }
-#endif    
+#endif
     return true;
 }
 

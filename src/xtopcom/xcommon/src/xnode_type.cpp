@@ -68,6 +68,10 @@ to_string(xnode_type_t const type) {
         }
     }
 
+    if (has<xnode_type_t::relay>(type)) {
+        string += "relay.";
+    }
+
     if (has<xnode_type_t::group>(type)) {
         string += "group";
     }
@@ -130,6 +134,10 @@ std::string to_presentation_string(xnode_type_t const type) {
 
     case xnode_type_t::evm_validator:
         name = "evm_validator";
+        break;
+
+    case xnode_type_t::relay:
+        name = "relay";
         break;
 
     default:

@@ -34,8 +34,11 @@ xrpc_init::xrpc_init(std::shared_ptr<xvnetwork_driver_face_t> vhost,
         m_shard_handler->start();
         break;
     case common::xnode_type_t::committee:
+        XATTRIBUTE_FALLTHROUGH;
     case common::xnode_type_t::zec:
+        XATTRIBUTE_FALLTHROUGH;
     case common::xnode_type_t::consensus_auditor:
+        XATTRIBUTE_FALLTHROUGH;
     case common::xnode_type_t::evm_auditor:
         assert(nullptr != txpool_service);
         init_rpc_cb_thread();
@@ -46,11 +49,14 @@ xrpc_init::xrpc_init(std::shared_ptr<xvnetwork_driver_face_t> vhost,
         init_rpc_cb_thread();
         m_edge_handler = std::make_shared<xrpc_edge_vhost>(vhost, router_ptr, make_observer(m_thread));
         auto ip = vhost->address().xip2();
+
+        xdbg("edge http");
         shared_ptr<xhttp_server> http_server_ptr = std::make_shared<xhttp_server>(m_edge_handler, ip, false, store, block_store, txstore, elect_main, election_cache_data_accessor);
         http_server_ptr->start(http_port);
         shared_ptr<xws_server> ws_server_ptr = std::make_shared<xws_server>(m_edge_handler, ip, false, store, block_store, txstore, elect_main, election_cache_data_accessor);
         ws_server_ptr->start(ws_port);
 
+        xdbg("edge evm");
         shared_ptr<xevm_server> evm_server_ptr = std::make_shared<xevm_server>(m_edge_handler, ip, false, store, block_store, txstore, elect_main, election_cache_data_accessor);
         evm_server_ptr->start(XGET_CONFIG(evm_port));
         break;
@@ -86,6 +92,20 @@ xrpc_init::xrpc_init(std::shared_ptr<xvnetwork_driver_face_t> vhost,
 
         break;
     }
+
+    case common::xnode_type_t::relay: {
+        xdbg("relay rpc start");
+        init_rpc_cb_thread();
+
+        xdbg("relay evm");
+        m_edge_handler = std::make_shared<xrpc_edge_vhost>(vhost, router_ptr, make_observer(m_thread));
+        auto ip = vhost->address().xip2();
+        shared_ptr<xevm_server> evm_server_ptr = std::make_shared<xevm_server>(m_edge_handler, ip, false, store, block_store, txstore, elect_main, election_cache_data_accessor);
+        evm_server_ptr->start(XGET_CONFIG(evm_port));
+
+        break;
+    }
+
     default:
         assert(false);
         break;

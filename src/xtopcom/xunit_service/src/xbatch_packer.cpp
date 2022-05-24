@@ -259,7 +259,7 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
 
     auto zone_id = get_zone_id_from_xip2(local_xip);
     if (zone_id != base::enum_chain_zone_consensus_index && zone_id != base::enum_chain_zone_beacon_index && zone_id != base::enum_chain_zone_zec_index &&
-        zone_id != base::enum_chain_zone_evm_index) {
+        zone_id != base::enum_chain_zone_evm_index && zone_id != base::enum_chain_zone_relay_index) {
         xerror("xbatch_packer::on_view_fire fail-wrong zone id. zoneid=%d", zone_id);
         XMETRICS_GAUGE(metrics::cons_view_fire_succ, 0);
         return false;

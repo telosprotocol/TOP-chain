@@ -349,7 +349,7 @@ public:
 
     xtop_consensus_action(common::xaccount_address_t src_address, common::xaccount_address_t dst_address, evm_common::u256 value, xbytes_t data, uint64_t gaslimit) noexcept
       : xtop_action_t<xtop_action_type_t::evm>{nullptr, common::xjudgement_day}, m_sender{src_address}, m_recver{dst_address}, m_value{value}, m_input_data{data}, m_gaslimit(gaslimit) {
-        if (m_recver.empty() || m_recver == evm_zero_address) {
+        if (m_recver.empty() || m_recver == eth_zero_address) {
             m_evm_action_type = xtop_evm_action_type::deploy_contract;
         } else {
             m_evm_action_type = xtop_evm_action_type::call_contract;
@@ -370,7 +370,7 @@ public:
         m_recver = common::xaccount_address_t{tx->get_target_addr()};
         m_value = tx->get_transaction()->get_amount_256();
 
-        if (m_recver.empty() || m_recver == evm_zero_address) {
+        if (m_recver.empty() || m_recver == eth_zero_address) {
             m_evm_action_type = xtop_evm_action_type::deploy_contract;
         } else {
             m_evm_action_type = xtop_evm_action_type::call_contract;

@@ -416,6 +416,14 @@ xzone_id_t const
 #endif
     xevm_zone_id{xevm_zone_id_value};
 
+XINLINE_CONSTEXPR xzone_id_t::value_type xrelay_zone_id_value{base::enum_chain_zone_relay_index};
+#if defined XCXX14_OR_ABOVE
+XINLINE_CONSTEXPR xzone_id_t
+#else
+xzone_id_t const
+#endif
+    xrelay_zone_id{xrelay_zone_id_value};
+
 XINLINE_CONSTEXPR xzone_id_t::value_type xfullnode_zone_id_value{base::enum_chain_zone_fullnode_index};
 #if defined XCXX14_OR_ABOVE
 XINLINE_CONSTEXPR xzone_id_t

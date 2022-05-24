@@ -6,7 +6,6 @@ common::xaccount_address_t const black_hole_system_address{black_hole_addr};
 common::xaccount_address_t const genesis_root_system_address{genesis_root_addr_main_chain};
 common::xaccount_address_t const timer_system_address{sys_contract_beacon_timer_addr};
 common::xaccount_address_t const drand_system_address{sys_drand_addr};
-common::xaccount_address_t const evm_zero_address{evm_zero_addr};
 
 common::xaccount_address_t const rec_registration_contract_address{sys_contract_rec_registration_addr};
 common::xaccount_address_t const rec_elect_edge_contract_address{sys_contract_rec_elect_edge_addr};
@@ -32,11 +31,15 @@ common::xaccount_address_t const sharding_reward_claiming_contract_address{sys_c
 common::xaccount_address_t const sharding_statistic_info_contract_address{sys_contract_sharding_statistic_info_addr};
 common::xaccount_address_t const eth_statistic_info_contract_address{sys_contract_eth_table_statistic_info_addr};
 
+common::xaccount_address_t const relay_elect_relay_contract_address{sys_contract_relay_elect_relay_addr};
+
 common::xaccount_address_t const eth_zero_address{sys_eth_zero_addr};
 
 common::xaccount_address_t const rec_table_address{sys_contract_beacon_table_block_addr};
 common::xaccount_address_t const zec_table_address{sys_contract_zec_table_block_addr};
 common::xaccount_address_t const sharding_table_address{sys_contract_sharding_table_block_addr};
 common::xaccount_address_t const eth_table_address{sys_contract_eth_table_block_addr};
+common::xaccount_base_address_t const relay_table_base_address{common::xaccount_base_address_t::build_from(sys_contract_relay_table_block_base_addr)};
+common::xaccount_address_t const relay_table_address{sys_contract_relay_table_block_addr};
 
 NS_END1
