@@ -1,13 +1,13 @@
-#include "xbase/xcontext.h"
-#include "xbasic/xbyte_buffer.h"
-
-#include <gtest/gtest.h>
+#include "tests/xevm_contract_runtime/test_vem_eth_bridge_contract_fixture.h"
 
 #define private public
 #include "xevm_common/xeth/xeth_header.h"
 
 namespace top {
 namespace tests {
+
+using namespace contract_runtime::evm::sys_contract;
+using namespace evm_common;
 
 TEST(stream, basic_test) {
     base::xstream_t stream(base::xcontext_t::instance());
@@ -72,6 +72,36 @@ TEST(eth_header, encode_decode_test) {
     EXPECT_EQ(header.m_hash, header_decode.m_hash);
     EXPECT_EQ(header.m_hashed, header_decode.m_hashed);
     EXPECT_EQ(header.m_isBaseFee, header_decode.m_isBaseFee);
+}
+
+TEST_F(xcontract_fixture_t, test_height_property) {
+    bigint height(0);
+    EXPECT_TRUE(contract.get_height(height));
+    EXPECT_EQ(height, bigint(0));
+
+    bigint set_height(9999);
+    EXPECT_TRUE(contract.set_height(set_height));
+    bigint get_height(0);
+    EXPECT_TRUE(contract.get_height(get_height));
+    EXPECT_EQ(get_height, bigint(9999));
+}
+
+TEST_F(xcontract_fixture_t, test_hash_property) {
+    h256 hash{0};
+    for (auto i = 0; i < 10; i++) {
+        bigint height(i);
+        EXPECT_FALSE(contract.get_hash(height, hash));
+    }
+    for (auto i = 0; i < 100; i++) {
+        bigint height(i*10);
+        h256 hash(UINT64_MAX - i);
+        EXPECT_FALSE(contract.set_hash(height, hash));
+    }
+    for (auto i = 0; i < 100; i++) {
+        bigint height(i*10);
+        EXPECT_TRUE(contract.get_hash(height, hash));
+        EXPECT_EQ(h256(UINT64_MAX - i), hash);
+    }
 }
 
 }

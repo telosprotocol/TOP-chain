@@ -3,7 +3,6 @@
 #include <vector>
 #include "xevm_common/common.h"
 #include "xevm_common/fixed_hash.h"
-#include "xbase/xns_macro.h"
 #include "xdepends/include/json/reader.h"
 
 NS_BEG3(top, evm_common, eth)

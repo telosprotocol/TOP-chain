@@ -1,14 +1,33 @@
-#include "xdepends/include/json/reader.h"
 #include "xevm_common/xeth/xeth_header.h"
-#include "xevm_common/xeth/xeth_util.h"
-#include "xevm_common/rlp.h"
-#include "xutility/xhash.h"
+
+#if defined(__clang__)
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wpedantic"
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wpedantic"
+#elif defined(_MSC_VER)
+#    pragma warning(push, 0)
+#endif
+
 #include "xbase/xcontext.h"
+
+#if defined(__clang__)
+#    pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic pop
+#elif defined(_MSC_VER)
+#    pragma warning(pop)
+#endif
+
+#include "xdepends/include/json/reader.h"
+#include "xevm_common/rlp.h"
+#include "xevm_common/xeth/xeth_util.h"
+#include "xutility/xhash.h"
 // The log bloom's size (2048-bit).
 NS_BEG3(top, evm_common, eth)
 
 using namespace top::evm_common;
-using namespace top::evm_common::rlp;
 bool xeth_block_header_t::fromJson(const std::string& content) {
     xJson::Reader reader;
     xJson::Value root;

@@ -368,9 +368,9 @@ int topchain_start(const std::string& config_file) {
         \"uncles\": []\
         }"};
 
-    ethBridge.init(genesisHeader, "0x12345678901234567890");
-    for (uint32_t i = 0; i < sizeof(header) / sizeof(header[0]); i++)
-        ethBridge.sync(header[i]);
+    // ethBridge.init(genesisHeader, "0x12345678901234567890");
+    // for (uint32_t i = 0; i < sizeof(header) / sizeof(header[0]); i++)
+    //     ethBridge.sync(header[i]);
 
     //init data_path into xvchain instance
     //init auto_prune feature

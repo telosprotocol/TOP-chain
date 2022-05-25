@@ -44,7 +44,7 @@ private:
 
     common::xaccount_address_t m_contract_address{evm_eth_bridge_contract_address};
     std::shared_ptr<data::xunit_bstate_t> m_contract_state{nullptr};
-    bool m_initialized{false};
 };
+using xevm_eth_bridge_contract_t = xtop_evm_eth_bridge_contract;
 
 NS_END4
