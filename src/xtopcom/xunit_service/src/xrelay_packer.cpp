@@ -73,7 +73,25 @@ bool xrelay_packer::on_object_close() {
 }
 
 void xrelay_packer::set_xip(data::xblock_consensus_para_t & blockpara, const xvip2_t & leader) {
-    blockpara.set_xip(leader, xvip2_t{(uint64_t)0, (uint64_t)0});
+    // todo(nathan): modify after use new group for relay chain!!!!!
+    auto zone_id = get_zone_id_from_xip2(leader);
+    // if consensus zone
+    if (xcons_utl::is_auditor(leader)) {
+        xvip2_t child = get_child_xip(leader, get_account());
+        auto group_id = child;
+        reset_node_id_to_xip2(group_id);
+        set_node_id_to_xip2(group_id, 0x3FF);
+        // blockpara.validator_xip = group_id;
+        blockpara.set_xip(group_id, leader);
+        xunit_dbg("[xunitservice] set auditor leader validator:%s auditor:%s", xcons_utl::xip_to_hex(blockpara.get_validator()).c_str(), xcons_utl::xip_to_hex(blockpara.get_auditor()).c_str());
+    } else {
+        xvip2_t parent = get_parent_xip(leader);
+        auto group_id = parent;
+        reset_node_id_to_xip2(group_id);
+        set_node_id_to_xip2(group_id, 0x3FF);
+        blockpara.set_xip(leader, group_id);
+        xunit_dbg("[xunitservice] set validator leader validator:%s auditor:%s", xcons_utl::xip_to_hex(blockpara.get_validator()).c_str(), xcons_utl::xip_to_hex(blockpara.get_auditor()).c_str());
+    }
 }
 
 bool xrelay_packer::start_proposal(base::xblock_mptrs & latest_blocks) {
