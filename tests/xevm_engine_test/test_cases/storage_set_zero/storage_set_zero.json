@@ -1,0 +1,117 @@
+{
+    "pre_data": {},
+    "deploy_contract": [
+        {
+            "src_address": "T60004001bdc8251890aafc5841b05620c0eab336e3ebc",
+            "code_file_path": "storage_set_zero.bin",
+            "gas_limit": 223041,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "contract_one",
+                "gas_used": 193948,
+                "logs": []
+            }
+        }
+    ],
+    "test_cases": [
+        {
+            "src_address": "T60004001bdc8251890aafc5841b05620c0eab336e3ebc",
+            "target_address": "contract_one",
+            "__comment": "get a",
+            "data": "0x0dbe671f",
+            "gas_limit": 30579,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "",
+                "gas_used": 23532,
+                "logs": []
+            }
+        },
+        {
+            "src_address": "T60004001bdc8251890aafc5841b05620c0eab336e3ebc",
+            "target_address": "contract_one",
+            "__comment": "set B = 0",
+            "data": "0x09cdcf9b0000000000000000000000000000000000000000000000000000000000000000",
+            "gas_limit": 30579,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "",
+                "gas_used": 21790,
+                "logs": []
+            }
+        },
+        {
+            "src_address": "T60004001bdc8251890aafc5841b05620c0eab336e3ebc",
+            "target_address": "contract_one",
+            "__comment": "get a",
+            "data": "0x0dbe671f",
+            "gas_limit": 30579,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000001",
+                "gas_used": 23532,
+                "logs": []
+            }
+        },
+        {
+            "src_address": "T60004001bdc8251890aafc5841b05620c0eab336e3ebc",
+            "target_address": "contract_one",
+            "__comment": "get b",
+            "data": "0x4df7e3d0",
+            "gas_limit": 30579,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000000",
+                "gas_used": 23515,
+                "logs": []
+            }
+        },
+        {
+            "src_address": "T60004001bdc8251890aafc5841b05620c0eab336e3ebc",
+            "target_address": "contract_one",
+            "__comment": "set B = 100",
+            "data": "0x09cdcf9b0000000000000000000000000000000000000000000000000000000000000064",
+            "gas_limit": 50258,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "",
+                "gas_used": 43702,
+                "logs": []
+            }
+        },
+        {
+            "src_address": "T60004001bdc8251890aafc5841b05620c0eab336e3ebc",
+            "target_address": "contract_one",
+            "__comment": "get b",
+            "data": "0x4df7e3d0",
+            "gas_limit": 30579,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000064",
+                "gas_used": 23515,
+                "logs": []
+            }
+        },
+        {
+            "src_address": "T60004001bdc8251890aafc5841b05620c0eab336e3ebc",
+            "target_address": "contract_one",
+            "__comment": "get a",
+            "data": "0x0dbe671f",
+            "gas_limit": 30579,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000001",
+                "gas_used": 23532,
+                "logs": []
+            }
+        }
+    ]
+}
