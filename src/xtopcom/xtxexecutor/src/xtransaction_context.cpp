@@ -234,6 +234,12 @@ int32_t xtransaction_run_contract::source_fee_exec() {
 }
 
 int32_t xtransaction_run_contract::source_action_exec() {
+    auto const & account = common::xaccount_address_t{m_account_ctx->get_address()};
+    if (common::is_t6(account)) {
+        xwarn("T6 account is not allowed to call contract");
+        return -1;
+    }
+    
     if (get_amount() != 0) {
         int32_t ret = m_account_ctx->available_balance_to_other_balance(XPROPERTY_BALANCE_LOCK, base::vtoken_t(get_amount()));
         if (ret) {
@@ -333,6 +339,12 @@ int32_t xtransaction_pledge_token_vote::source_fee_exec(){
 }
 
 int32_t xtransaction_pledge_token_vote::source_action_exec() {
+    auto const & account = common::xaccount_address_t{m_account_ctx->get_address()};
+    if (common::is_t6(account)) {
+        xwarn("T6 account is not allowed to call contract");
+        return -1;
+    }
+
     return 0;
 }
 
@@ -359,6 +371,12 @@ int32_t xtransaction_redeem_token_vote::source_fee_exec(){
 }
 
 int32_t xtransaction_redeem_token_vote::source_action_exec() {
+    auto const & account = common::xaccount_address_t{m_account_ctx->get_address()};
+    if (common::is_t6(account)) {
+        xwarn("T6 account is not allowed to call contract");
+        return -1;
+    }
+
     return 0;
 }
 
@@ -377,6 +395,12 @@ int32_t xtransaction_vote::source_fee_exec(){
 }
 
 int32_t xtransaction_vote::source_action_exec() {
+    auto const account = common::xaccount_address_t{m_account_ctx->get_address()};
+    if (common::is_t6(account)) {
+        xinfo("only T0 or T8 is allowed to vote");
+        return -1;
+    }
+
     uint64_t vote_num = parse_vote_info(get_function_para());
     int32_t ret = m_account_ctx->uint64_sub(XPROPERTY_UNVOTE_NUM, vote_num);
     return ret;
@@ -398,6 +422,11 @@ int32_t xtransaction_abolish_vote::source_fee_exec() {
 }
 
 int32_t xtransaction_abolish_vote::source_action_exec() {
+    auto const & account = common::xaccount_address_t{m_account_ctx->get_address()};
+    if (common::is_t6(account)) {
+        xwarn("T6 account is not allowed to call contract");
+        return -1;
+    }
     return 0;
 }
 
