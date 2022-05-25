@@ -164,12 +164,7 @@ void xtop_rec_elect_edge_contract::on_timer(const uint64_t current_time) {
                         range,
                         standby_network_result,
                         election_network_result)) {
-            auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
-            if (chain_fork::xchain_fork_config_center_t::is_forked(fork_config.election_contract_stores_credit_score_fork_point, current_time)) {
-                xvm::serialization::xmsgpack_t<xelection_result_store_t>::serialize_to_string_prop(*this, property, election_result_store);
-            } else {
-                xvm::serialization::xmsgpack_t<data::election::v1::xelection_result_store_t>::serialize_to_string_prop(*this, property, election_result_store.v1());
-            }
+            xvm::serialization::xmsgpack_t<xelection_result_store_t>::serialize_to_string_prop(*this, property, election_result_store);
         }
     }
 }
