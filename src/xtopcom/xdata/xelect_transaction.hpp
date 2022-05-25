@@ -34,7 +34,6 @@ public:
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(archive_election_interval);
 #if defined(XCHAIN_FORKED_BY_DEFAULT) && ((XCHAIN_FORKED_BY_DEFAULT) >= 10208)
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(fullnode_election_interval);
-        XADD_ONCHAIN_GOVERNANCE_PARAMETER(exchange_election_interval);
 #endif
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(cluster_election_interval);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(election_rotation_count_ratio);
@@ -208,6 +207,7 @@ public:
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(evm_validator_reward_ratio);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(evm_auditor_group_zero_workload);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(evm_validator_group_zero_workload);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(exchange_election_interval);
 #endif
 
         std::vector<std::string> committee_addrs = xrootblock_t::get_tcc_initial_committee_addr();
