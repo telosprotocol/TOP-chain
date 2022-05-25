@@ -17,7 +17,7 @@ XINLINE_CONSTEXPR char const * XPROPERTY_ASSET_ETH                       = "ETH"
 // $1-9 reserved for future
 XINLINE_CONSTEXPR char const * XPROPERTY_BALANCE_AVAILABLE              = "$0";  //available balance
 XINLINE_CONSTEXPR char const * XPROPERTY_TEP1_BALANCE_KEY               = "$1";  //tep balance map
-XINLINE_CONSTEXPR char const * XPROPERTY_PRECOMPILED_ERC20_ALLOWANCE_KEY = "$2";
+XINLINE_CONSTEXPR char const * XPROPERTY_PRECOMPILED_ERC20_ALLOWANCE_KEY = "$11";
 XINLINE_CONSTEXPR char const * XPROPERTY_BALANCE_BURN                   = "$a";  //burn balance
 XINLINE_CONSTEXPR char const * XPROPERTY_BALANCE_LOCK                   = "$b";  //lock balance
 XINLINE_CONSTEXPR char const * XPROPERTY_BALANCE_PLEDGE_TGAS            = "$c";  //pledge balance for tgas
