@@ -95,6 +95,8 @@ void xtable_vote_contract::voteNode(vote_info_map_t const & vote_info) {
     auto const & account = common::xaccount_address_t{SOURCE_ADDRESS()};
     xinfo("[xtable_vote_contract::voteNode] timer round: %" PRIu64 ", src_addr: %s, self addr: %s, pid: %d\n", TIME(), account.c_str(), SELF_ADDRESS().c_str(), getpid());
 
+    XCONTRACT_ENSURE(common::is_t0(account) || common::is_t8(account), "only T0 or T8 account can vote for an account");
+
     const xtransaction_ptr_t trans_ptr = GET_TRANSACTION();
     XCONTRACT_ENSURE(trans_ptr->get_tx_type() == xtransaction_type_vote,
                      "xtable_vote_contract::voteNode: transaction_type must be xtransaction_type_vote");
@@ -107,7 +109,9 @@ void xtable_vote_contract::unvoteNode(vote_info_map_t const & vote_info) {
     XMETRICS_TIME_RECORD("sysContract_tableVote_unvote_node");
 
     auto const & account = common::xaccount_address_t{SOURCE_ADDRESS()};
-    xinfo("[xtable_vote_contract::unvoteNode] timer round: %" PRIu64 ", src_addr: %s, self addr: %s, pid: %d\n", TIME(), account.c_str(), SELF_ADDRESS().c_str(), getpid());
+    xinfo("[xtable_vote_contract::unvoteNode] timer round: %" PRIu64 ", src_addr: %s, self addr: %s", TIME(), account.c_str(), SELF_ADDRESS().c_str());
+
+    XCONTRACT_ENSURE(common::is_t0(account) || common::is_t8(account), "only T0 or T8 can withdraw votes from an account");
 
     const xtransaction_ptr_t trans_ptr = GET_TRANSACTION();
     XCONTRACT_ENSURE(trans_ptr->get_tx_type() == xtransaction_type_abolish_vote,

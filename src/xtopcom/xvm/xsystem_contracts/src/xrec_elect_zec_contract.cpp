@@ -171,12 +171,7 @@ void xtop_rec_elect_zec_contract::on_timer(common::xlogic_time_t const current_t
                                             standby_network_result,
                                             election_network_result);
         if (successful) {
-            auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
-            if (chain_fork::xchain_fork_config_center_t::is_forked(fork_config.election_contract_stores_credit_score_fork_point, current_time)) {
-                serialization::xmsgpack_t<xelection_result_store_t>::serialize_to_string_prop(*this, property, election_result_store);
-            } else {
-                serialization::xmsgpack_t<data::election::v1::xelection_result_store_t>::serialize_to_string_prop(*this, property, election_result_store.v1());
-            }
+            serialization::xmsgpack_t<xelection_result_store_t>::serialize_to_string_prop(*this, property, election_result_store);
             xwarn("[zec committee election] successful. timestamp %" PRIu64 " start time %" PRIu64 " random seed %" PRIu64, current_time, start_time, random_seed);
         }
     }
