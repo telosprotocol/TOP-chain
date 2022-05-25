@@ -426,9 +426,8 @@ void xrole_context_t::on_fulltableblock_event(common::xaccount_address_t const& 
         xassert(nullptr != account);
         return;
     }
-    xtransaction_ptr_t tx = xtx_factory::create_sys_contract_call_self_tx(address.value(),
-                                                     account->account_send_trans_number(), account->account_send_trans_hash(),
-                                                     action_name, action_params, timestamp, EXPIRE_DURATION);
+    xtransaction_ptr_t tx = xtx_factory::create_sys_contract_call_self_tx(
+        address.value(), account->account_send_trans_number(), account->account_send_trans_hash(), action_name, action_params, timestamp, EXPIRE_DURATION);
 
     auto const & driver_ids = m_driver->table_ids();
     auto result = find(driver_ids.begin(), driver_ids.end(), table_id);
