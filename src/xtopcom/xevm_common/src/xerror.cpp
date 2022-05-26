@@ -27,6 +27,48 @@ static char const * const errc_to_string(int code) {
     case xerrc_t::abi_data_value_error:
         return "abi decode value error";
 
+    case xerrc_t::trie_db_missing_node_error:
+        return "trie db missing node error";
+
+    case xerrc_t::trie_db_not_provided:
+        return "trie db not provided";
+
+    case xerrc_t::trie_db_not_found:
+        return "trie db not found";
+
+    case xerrc_t::rlp_canonint:
+        return "rlp: non-canonical integer format";
+
+    case xerrc_t::rlp_canonsize:
+        return "rlp: non-canonical size information";
+
+    case xerrc_t::rlp_uint_overflow:
+        return "rlp: uint overflow";
+
+    case xerrc_t::rlp_oversized:
+        return "rlp: oversized data";
+
+    case xerrc_t::rlp_value_too_large:
+        return "rlp: value size exceeds available input length";
+
+    case xerrc_t::rlp_expected_string:
+        return "rlp: expected String or Byte";
+
+    case xerrc_t::rlp_expected_list:
+        return "rlp: expected List";
+
+    case xerrc_t::trie_proof_missing:
+        return "rlp: trie proof missing";
+
+    case xerrc_t::trie_node_unexpected:
+        return "trie node unexcepted";
+
+    case xerrc_t::trie_sync_not_requested:
+        return "trie sync not requested";
+
+    case xerrc_t::trie_sync_already_processed:
+        return "trie sync already processed";
+
     default:
         return "unknown evm common error";
     }
