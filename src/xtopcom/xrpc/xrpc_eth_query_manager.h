@@ -95,9 +95,10 @@ private:
     enum_query_result query_account_by_number(const std::string &unit_address, const std::string& table_height, xaccount_ptr_t& ptr);
     xobject_ptr_t<base::xvblock_t> query_block_by_height(const std::string& height_str);
     uint64_t get_block_height(const std::string& table_height);
-    int get_log(xJson::Value & js_rsp, const uint64_t begin, const uint64_t end, const std::vector<std::string>& vTopics, const std::set<std::string>& sAddress);
+    int get_log(xJson::Value & js_rsp, const uint64_t begin, const uint64_t end, const std::vector<std::set<std::string>>& vTopics, const std::set<std::string>& sAddress);
     void evmlog_to_json(evm_common::xevm_log_t const& evmlog, xJson::Value & js_v) const;
-    bool check_log_is_match(evm_common::xevm_log_t const& log, const std::vector<std::string>& vTopics, const std::set<std::string>& sAddress) const;
+    bool check_log_is_match(evm_common::xevm_log_t const& log, const std::vector<std::set<std::string>>& vTopics, const std::set<std::string>& sAddress) const;
+    int parse_topics(const xJson::Value& t, std::vector<std::set<std::string>>& vTopics, xJson::Value & js_rsp);
 private:
     observer_ptr<store::xstore_face_t> m_store;
     observer_ptr<base::xvblockstore_t> m_block_store;
