@@ -52,6 +52,7 @@ public:
     bool   db_scan_key_callback(const std::string& key, const std::string& value);
     void   db_parse_type_size(const std::string &fileName);
     std::string get_account_key_string(const std::string & key);
+    void   prune_db();
 private:
     struct tx_ext_t {
         base::xtable_shortid_t  sendtableid;
