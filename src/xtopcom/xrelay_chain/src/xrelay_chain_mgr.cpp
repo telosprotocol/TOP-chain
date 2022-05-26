@@ -64,7 +64,8 @@ void xcross_tx_cache_t::process_block(data::xblock_t * block) {
             // if (_rawtx->get_target_addr() != cross_addr) {
             //     continue;
             // }
-            if (_rawtx->get_tx_version() != data::xtransaction_version_3 || (_rawtx->get_tx_type() != data::xtransaction_type_deploy_evm_contract && _rawtx->get_tx_type() != data::xtransaction_type_run_contract)) {
+            if (_rawtx->get_tx_version() != data::xtransaction_version_3 ||
+                (_rawtx->get_tx_type() != data::xtransaction_type_deploy_evm_contract && _rawtx->get_tx_type() != data::xtransaction_type_run_contract)) {
                 continue;
             }
             evm_common::xevm_transaction_result_t evm_result;
@@ -112,14 +113,27 @@ void xcross_tx_cache_t::on_evm_db_event(data::xblock_t * block) {
     }
 }
 
-bool xcross_tx_cache_t::get_tx_cache(std::map<uint64_t, xcross_txs_t> & cross_tx_map, uint64_t & upper_height, uint32_t & tx_num) const {
+bool xcross_tx_cache_t::get_tx_cache_leader(uint64_t & upper_height, std::map<uint64_t, xcross_txs_t> & cross_tx_map) const {
     if (m_last_proc_evm_height + 1 != m_cached_evm_lower_height) {
-        xinfo("xcross_tx_cache_t::get_tx_cache cache not full.");
+        xinfo("xcross_tx_cache_t::get_tx_cache_leader cache not full.");
         return false;
     }
     upper_height = m_cached_evm_upper_height;
-    tx_num = m_tx_num;
     cross_tx_map = m_cross_tx_map;
+    return true;
+}
+
+bool xcross_tx_cache_t::get_tx_cache_backup(uint64_t upper_height, std::map<uint64_t, xcross_txs_t> & cross_tx_map) const {
+    if (m_last_proc_evm_height + 1 != m_cached_evm_lower_height) {
+        xinfo("xcross_tx_cache_t::get_tx_cache_leader cache not full.");
+        return false;
+    }
+
+    for (auto & cross_tx_map_pair : m_cross_tx_map) {
+        if (cross_tx_map_pair.first < upper_height) {
+            cross_tx_map[cross_tx_map_pair.first] = cross_tx_map_pair.second;
+        }
+    }
     return true;
 }
 
@@ -176,7 +190,7 @@ void xcross_tx_cache_t::update_last_proc_evm_height(uint64_t last_proc_evm_heigh
     }
 }
 
-bool xwrap_block_convertor::convert_to_relay_block(std::vector<data::xblock_ptr_t> wrap_blocks, std::shared_ptr<xrelay_block_t> & relay_block) {
+bool xwrap_block_convertor::convert_to_relay_block(std::vector<data::xblock_ptr_t> wrap_blocks, std::shared_ptr<data::xrelay_block> & relay_block) {
     // todo(nathan):
     return true;
 }
@@ -188,9 +202,24 @@ xrelay_chain_mgr_t::xrelay_chain_mgr_t(const observer_ptr<store::xstore_face_t> 
     m_wrap_blocks.resize(3);
 }
 
-bool xrelay_chain_mgr_t::get_tx_cache(uint64_t lower_height, std::map<uint64_t, xcross_txs_t> & cross_tx_map, uint64_t & upper_height, uint32_t & tx_num) const {
+bool xrelay_chain_mgr_t::get_tx_cache_leader(uint64_t lower_height, uint64_t & upper_height, std::map<uint64_t, xcross_txs_t> & cross_tx_map) {
     std::lock_guard<std::mutex> lck(m_mutex);
-    return m_cross_tx_cache.get_tx_cache(cross_tx_map, upper_height, tx_num);
+    // if (!m_wrap_blocks.empty()) {
+    //     if (m_wrap_blocks[0]->get_height() >= latest_wrap_block->get_height()) {
+    //         xerror("xrelay_chain_mgr_t::get_tx_cache_leader wrap block cache height >= latest wrap block.cache:%s,latest:%s",
+    //                m_wrap_blocks[0]->dump().c_str(),
+    //                latest_wrap_block->dump().c_str());
+    //     }
+    //     m_wrap_blocks.clear();
+    // }
+    m_cross_tx_cache.update_last_proc_evm_height(lower_height);
+    return m_cross_tx_cache.get_tx_cache_leader(upper_height, cross_tx_map);
+}
+
+bool xrelay_chain_mgr_t::get_tx_cache_backup(uint64_t lower_height, uint64_t upper_height, std::map<uint64_t, xcross_txs_t> & cross_tx_map) {
+    std::lock_guard<std::mutex> lck(m_mutex);
+    m_cross_tx_cache.update_last_proc_evm_height(lower_height);
+    return m_cross_tx_cache.get_tx_cache_backup(upper_height, cross_tx_map);
 }
 
 void xrelay_chain_mgr_t::start(int32_t thread_id) {
@@ -228,7 +257,8 @@ void xrelay_chain_mgr_t::on_block_to_db_event(mbus::xevent_ptr_t e) {
           block_event->owner.c_str(),
           block_event->blk_level);
 
-    if (block_event->owner != "Ta0004@0" && block_event->owner != relay_block_addr) {
+    // todo(nathan):sys_contract_zec_elect_eth_addr change to relay nodes elect contract addr.
+    if (block_event->owner != "Ta0004@0" && block_event->owner != relay_block_addr && block_event->owner != sys_contract_zec_elect_eth_addr) {
         return;
     }
 
@@ -251,6 +281,8 @@ void xrelay_chain_mgr_t::on_block_to_db_event(mbus::xevent_ptr_t e) {
         xassert(block->check_block_flag(base::enum_xvblock_flag_committed));
         if (block->get_account() == "Ta0004@0") {
             on_evm_db_event(block);
+        } else if (block->get_account() == relay_block_addr) {
+            on_wrap_db_event(block);
         } else {
             on_wrap_db_event(block);
         }
@@ -296,7 +328,7 @@ void xrelay_chain_mgr_t::on_wrap_db_event(data::xblock_ptr_t wrap_block) {
 
     if (wrap_phase == 2) {
         if (m_wrap_blocks.size() == 3) {
-            std::shared_ptr<xrelay_block_t> relay_block = nullptr;
+            std::shared_ptr<data::xrelay_block> relay_block = nullptr;
             xwrap_block_convertor::convert_to_relay_block(m_wrap_blocks, relay_block);
             auto relay_block_data = m_wrap_blocks[2]->get_relay_block_data();
             // todo: store relay block.
@@ -312,6 +344,15 @@ void xrelay_chain_mgr_t::on_wrap_db_event(data::xblock_ptr_t wrap_block) {
         m_wrap_blocks.clear();
     }
     m_cross_tx_cache.update_last_proc_evm_height(evm_height);
+}
+
+void xrelay_chain_mgr_t::on_relay_elect_db_event(data::xblock_ptr_t relay_elect_block) {
+    xinfo("xrelay_chain_mgr_t::on_relay_elect_db_event block:%s", relay_elect_block->dump().c_str());
+    if (relay_elect_block->is_genesis_block()) {
+        return;
+    }
+    std::lock_guard<std::mutex> lck(m_mutex);
+    // todo(nathan):decode relay elect data.
 }
 
 void xrelay_chain_mgr_dispatcher_t::dispatch(base::xcall_t & call) {

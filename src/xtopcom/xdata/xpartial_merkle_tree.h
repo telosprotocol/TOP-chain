@@ -16,7 +16,7 @@
 #include "xcrypto/xckey.h"
 #include "xcrypto/xcrypto_util.h"
 #include "xevm_common/xtriecommon.h"
-#include "../xtopcom/xdepends/include/common/sha2.h"
+#include <openssl/sha.h>
 #include "xevm_common/common_data.h"
 #include "xevm_common/xborsh.hpp"
 
