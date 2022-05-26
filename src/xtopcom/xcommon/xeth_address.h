@@ -52,6 +52,7 @@ public:
     }
 
     std::string const & to_hex_string() const;
+    std::string to_string() const;
     xbytes_t to_bytes() const;
     xbytes_t to_h160() const;
     xbytes_t to_h256() const;

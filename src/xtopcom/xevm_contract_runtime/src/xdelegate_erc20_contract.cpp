@@ -9,6 +9,7 @@
 #include "xcommon/xeth_address.h"
 #include "xevm_common/common_data.h"
 #include "xevm_common/xabi_decoder.h"
+#include "xevm_common/xfixed_hash.h"
 
 #include <cinttypes>
 
@@ -243,17 +244,11 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
             auto const & contract_address = context.address;
             auto const & caller_address = context.caller;
 
-            evm_common::xevm_log_t log;
-            log.address = top::to_string(contract_address.to_h160());
-            assert(log.address.size() == 20);
-            log.data = top::to_string(value);
-            assert(log.data.size() == 32);
-            log.topics.push_back(top::to_string(evm_common::fromHex("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef", evm_common::WhenError::Throw)));
-            assert(log.topics.back().size() == 32);
-            log.topics.push_back(top::to_string(caller_address.to_h256()));
-            assert(log.topics.back().size() == 32);
-            log.topics.push_back(top::to_string(recipient_address.to_h256()));
-            assert(log.topics.back().size() == 32);
+            evm_common::xh256s_t topics;
+            topics.push_back(evm_common::xh256_t("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"));
+            topics.push_back(evm_common::xh256_t(caller_address.to_h256()));
+            topics.push_back(evm_common::xh256_t(recipient_address.to_h256()));
+            evm_common::xevm_log_t log(contract_address, topics, top::to_bytes(value));
 
             result[31] = 1;
 
@@ -358,17 +353,11 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
         if (!ec) {
             auto const & contract_address = context.address;
 
-            evm_common::xevm_log_t log;
-            log.address = top::to_string(contract_address.to_h160());
-            assert(log.address.size() == 20);
-            log.data = top::to_string(value);
-            assert(log.data.size() == 32);
-            log.topics.push_back(top::to_string(evm_common::fromHex("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef", evm_common::WhenError::Throw)));
-            assert(log.topics.back().size() == 32);
-            log.topics.push_back(top::to_string(owner_address.to_h256()));
-            assert(log.topics.back().size() == 32);
-            log.topics.push_back(top::to_string(recipient_address.to_h256()));
-            assert(log.topics.back().size() == 32);
+            evm_common::xh256s_t topics;
+            topics.push_back(evm_common::xh256_t("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"));
+            topics.push_back(evm_common::xh256_t(owner_address.to_h256()));
+            topics.push_back(evm_common::xh256_t(recipient_address.to_h256()));
+            evm_common::xevm_log_t log(contract_address, topics, top::to_bytes(value));
 
             result[31] = 1;
 
@@ -449,18 +438,11 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
         auto const & caller_address = context.caller;
 
         if (!ec) {
-            evm_common::xevm_log_t log;
-            log.address = top::to_string(contract_address.to_h160());
-            assert(log.address.size() == 20);
-            log.data = top::to_string(amount);
-            assert(log.data.size() == 32);
-            log.topics.push_back(top::to_string(evm_common::fromHex("0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925", evm_common::WhenError::Throw)));
-            assert(log.topics.back().size() == 32);
-            log.topics.push_back(top::to_string(caller_address.to_h256()));
-            assert(log.topics.back().size() == 32);
-            log.topics.push_back(top::to_string(spender_address.to_h256()));
-            assert(log.topics.back().size() == 32);
-
+            evm_common::xh256s_t topics;
+            topics.push_back(evm_common::xh256_t("0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925"));
+            topics.push_back(evm_common::xh256_t(caller_address.to_h256()));
+            topics.push_back(evm_common::xh256_t(spender_address.to_h256()));
+            evm_common::xevm_log_t log(contract_address, topics, top::to_bytes(amount));
             result[31] = 1;
 
             output.cost = approve_gas_cost;
@@ -610,18 +592,11 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
             auto const & contract_address = context.address;
             auto const & recipient_address = context.caller;
 
-            evm_common::xevm_log_t log;
-            log.address = top::to_string(contract_address.to_h160());
-            assert(log.address.size() == 20);
-            log.data = top::to_string(value);
-            assert(log.data.size() == 32);
-            log.topics.push_back(top::to_string(evm_common::fromHex("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef", evm_common::WhenError::Throw)));
-            assert(log.topics.back().size() == 32);
-            log.topics.push_back(top::to_string(common::xeth_address_t::zero().to_h256()));
-            assert(log.topics.back().size() == 32);
-            log.topics.push_back(top::to_string(recipient_address.to_h256()));
-            assert(log.topics.back().size() == 32);
-
+            evm_common::xh256s_t topics;
+            topics.push_back(evm_common::xh256_t("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"));
+            topics.push_back(evm_common::xh256_t(common::xeth_address_t::zero().to_h256()));
+            topics.push_back(evm_common::xh256_t(recipient_address.to_h256()));
+            evm_common::xevm_log_t log(contract_address, topics, top::to_bytes(value));
             result[31] = 1;
 
             output.cost = mint_gas_cost;

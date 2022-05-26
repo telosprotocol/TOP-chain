@@ -6,6 +6,7 @@
 
 #include "xbasic/xerror/xerror.h"
 #include "xbasic/xhex.h"
+#include "xbasic/xstring.h"
 #include "xcommon/xaccount_address.h"
 #include "xcommon/xerror/xerror.h"
 
@@ -108,6 +109,10 @@ std::string const & xtop_eth_address::to_hex_string() const {
     }
 
     return hex_string_;
+}
+
+std::string xtop_eth_address::to_string() const {
+    return top::to_string(to_bytes());
 }
 
 xbytes_t xtop_eth_address::to_bytes() const {
