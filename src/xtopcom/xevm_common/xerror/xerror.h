@@ -17,6 +17,20 @@ enum class xenum_errc {
     abi_data_length_error,
     abi_decode_outofrange,
     abi_data_value_error,
+    trie_db_missing_node_error,
+    trie_db_not_provided,
+    trie_db_not_found,
+    rlp_canonint,
+    rlp_canonsize,
+    rlp_uint_overflow,
+    rlp_oversized,
+    rlp_value_too_large,
+    rlp_expected_string,
+    rlp_expected_list,
+    trie_proof_missing,
+    trie_node_unexpected,
+    trie_sync_not_requested,
+    trie_sync_already_processed,
 };
 using xerrc_t = xenum_errc;
 
