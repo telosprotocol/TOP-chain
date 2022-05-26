@@ -16,7 +16,7 @@
 #include "xcrypto/xcrypto_util.h"
 #include "xevm_common/xtriecommon.h"
 #include "../xtopcom/xdepends/include/trezor-crypto/ed25519-donna/ed25519.h"
-#include "../xtopcom/xdepends/include/common/sha2.h"
+#include <openssl/sha.h>
 #include "xdata/xrelay_block_store.h"
 
 NS_BEG2(top, data)
