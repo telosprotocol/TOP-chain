@@ -138,7 +138,8 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_contrac
             xinfo("[xtop_genesis_manager::create_genesis_of_contract_account] account %s, genesis block already exists", account.get_account().c_str());
             return nullptr;
         }
-        if (account.get_account().find(sys_contract_rec_elect_fullnode_addr) != std::string::npos) {
+        if ((account.get_account().find(sys_contract_rec_elect_fullnode_addr) != std::string::npos) ||
+            (account.get_account().find(sys_contract_rec_elect_exchange_addr) != std::string::npos)) {
             // just delete it here and store new root block after
             xwarn("[xtop_genesis_manager::create_genesis_of_contract_account] account: %s genesis block exist but hash not match, replace it, %s, %s",
                   account.get_account().c_str(),
