@@ -9,7 +9,7 @@
 #include "xevm_common/fixed_hash.h"
 #include "xtransaction_v3.h"
 #include "xevm_common/rlp.h"
-#include "xdata/xpartial_merkle_tree.h"
+//#include "xdata/xpartial_merkle_tree.h"
 
 namespace top {
 namespace data {
@@ -49,15 +49,18 @@ namespace data {
         void streamRLP(evm_common::RLPStream &_s) {
             _s.appendList(3)  << m_contract_address << m_topics << m_data;
         }
-        void decodeRLP(evm_common::RLP const& _r) {
+        bool decodeRLP(evm_common::RLP const& _r) {
             assert(_r.itemCount() == 3);
+            //todo check error
+
             m_contract_address = _r[0].toHash<evm_common::h160>();
             m_topics           = _r[1].toVector<evm_common::h256>();
             m_data             = _r[2].toBytes();
+            return true;
         }
     };
 
-    struct  xrelay_receipt{
+    struct  xrelay_receipt {
         // Transaction types. LegacyTxType:0 , AccessListTxType:1 , DynamicFeeTxType:2
         uint8_t                         m_type;
         //status code,check transactions status
@@ -78,8 +81,9 @@ namespace data {
                 log.streamRLP(_s);
             }
         }
-        void decodeRLP(evm_common::RLP const& _r) {
+        bool decodeRLP(evm_common::RLP const& _r) {
             assert(_r.itemCount() == 4);
+            //todo check error
             m_status    = _r[0].toInt<uint64_t>();
             m_gasUsed   = _r[1].toInt<evm_common::u256>();
             m_logsBloom = _r[2].toHash<evm_common::h2048>();
@@ -92,6 +96,7 @@ namespace data {
                 log.decodeRLP(rlp_log);
                 m_logs.emplace_back(log);
             }
+            return true;
         }
     };
 
@@ -100,12 +105,34 @@ namespace data {
         evm_common::h256        public_key;
          //election stake
         uint64_t                stake;
+
+        void streamRLP(evm_common::RLPStream &_s) {
+            _s.appendList(2)  << public_key << stake;
+        }
+        bool decodeRLP(evm_common::RLP const& _r) {
+            assert(_r.itemCount() == 2);
+            //todo check error
+            public_key = _r[0].toHash<evm_common::h256>();
+            stake      = _r[1].toInt<uint64_t>();
+            return true;
+        }
     };
 
     struct xrelay_signature {
         evm_common::h256    r;
         evm_common::h256    s;
         evm_common::byte    v;
+        void streamRLP(evm_common::RLPStream &_s) {
+            _s.appendList(3)  << r << s << v;
+        }
+        bool decodeRLP(evm_common::RLP const& _r) {
+            assert(_r.itemCount() == 3);
+            //todo check error
+            r = _r[0].toHash<evm_common::h256>();
+            s = _r[1].toHash<evm_common::h256>();
+            v = _r[2].toInt<uint8_t>();
+            return true;
+        }
     };
 
     struct xrelay_block_inner_header{
@@ -134,24 +161,24 @@ namespace data {
         /**
          * @brief 
          * 
-         * @param innerFlag  0:rlp all data, 1: rlp data to create inner hash
+         * @param innerFlag  false:rlp all data, true: rlp data to create inner hash
          * @return evm_common::bytes 
          */
-        void streamRLP(evm_common::RLPStream &_s, int innerFlag=0) const {
-            if (innerFlag < 0 || innerFlag > 1) {
-                //warn
-                return ;
+        void streamRLP(evm_common::RLPStream &_s, bool innerFlag = false) const {
+            unsigned decLen = 0;
+            if (innerFlag) {
+               decLen = 1;
             }
-            _s.appendList(10-innerFlag);
+            _s.appendList(10 - decLen);
             _s << m_version;
-            if (1 == innerFlag) {
+            if (!innerFlag) {
                _s << m_inner_hash;
             }
             _s << m_height << m_epochID << m_timestamp << m_elections_hash
                << m_txs_merkle_root << m_receipts_merkle_root << m_state_merkle_root << m_block_merkle_root;
         }
 
-        void decodeRLP(evm_common::RLP const& _r) {
+        bool decodeRLP(evm_common::RLP const& _r) {
             assert(_r.itemCount() == 10);
             m_version               = _r[0].toInt<uint64_t>();
             m_inner_hash            = _r[1].toHash<evm_common::h256>();
@@ -163,6 +190,7 @@ namespace data {
             m_receipts_merkle_root  = _r[7].toHash<evm_common::h256>();
             m_state_merkle_root     = _r[8].toHash<evm_common::h256>();
             m_block_merkle_root     = _r[9].toHash<evm_common::h256>();
+            return true;
         }
 
     };
@@ -172,19 +200,25 @@ namespace data {
     public:
        static const unsigned block_header_fileds = 7;
 
-       xrelay_block_header();
+       xrelay_block_header(){};
 
-       void                             streamRLP(evm_common::RLPStream &rlp_stream,int blocksignature = 0);
-       void                             decodeRLP(evm_common::RLP const& _r);
+       void                             streamRLP(evm_common::RLPStream &rlp_stream,bool blocksignature = false);
+       bool                             decodeRLP(evm_common::RLP const& _r);
        void                             serialize_from_data();
 
     public:
        void                             make_elections_root_hash();
-       void                             make_block_root_hash();
        void                             set_txs_root_hash(evm_common::h256 hash);
        void                             set_receipts_root_hash(evm_common::h256 hash);
        void                             set_state_root_hash(evm_common::h256 hash);
        void                             set_block_root_hash(evm_common::h256 hash);
+       void                             set_inner_header(xrelay_block_inner_header &inner_hedaer);
+       void                             set_prev_hash(evm_common::h256 hash);
+       void                             set_block_hash(evm_common::h256 hash);
+       void                             set_chain_bits(evm_common::u256 chain_bits);
+       void                             set_table_height(uint64_t table_height);
+       void                             set_elections_next(std::vector<xrelay_election> &elections);
+       void                             add_signature(xrelay_signature signature);
 
        const xrelay_block_inner_header  &get_inner_header() const {return m_inner_header; }
        const evm_common::h256           &get_inner_header_hash() const {return m_inner_header.m_inner_hash;}
@@ -193,6 +227,12 @@ namespace data {
        const evm_common::h256           &get_receipts_root_hash() const { return m_inner_header.m_receipts_merkle_root;}
        const evm_common::h256           &get_state_root_hash() const { return m_inner_header.m_state_merkle_root;}
        const evm_common::h256           &get_block_root_hash() const { return m_inner_header.m_block_merkle_root;}
+       const evm_common::h256           &get_prev_block_hash() const { return m_prev_hash;}
+       const evm_common::h256           &get_block_hash() const { return m_block_hash;}
+       const evm_common::u256           &get_bchain_bits() const { return m_chain_bits;}
+       const uint64_t                   &get_table_height() const { return m_table_height;}
+       const std::vector<xrelay_election>  &get_elections_sets() const { return m_next_elections;}
+       const std::vector<xrelay_signature>  &get_signatures_sets() const { return m_block_signatures;}
 
        void                              make_inner_hash();
     private:
@@ -218,7 +258,7 @@ namespace data {
     public:
         static const unsigned block_fileds = 2;
 
-        xrelay_block();
+        xrelay_block(){};
         xrelay_block(uint64_t block_version, evm_common::h256  prev_hash, evm_common::u256  chain_bits, 
                      uint64_t table_height, uint64_t block_height, uint64_t epochID, uint64_t timestamp);
         ~xrelay_block() {};
@@ -230,26 +270,28 @@ namespace data {
          * @param rlp_stream 
          * @param withSingaure 0:rlp data include signature info, 1: without signature info
          */
-        void                                streamRLP(evm_common::RLPStream &rlp_stream,int withSignature = 0);
-        void                                decodeRLP(evm_common::RLP const& _r);
+        void                                streamRLP(evm_common::RLPStream &rlp_stream,bool withSignature = false);
+        bool                                decodeRLP(evm_common::RLP const& _r);
         void                                set_elections_next(std::vector<xrelay_election> &elections);
         void                                set_transaction(const std::vector<top::data::xtransaction_v3_ptr_t> &transactions);
         void                                set_receipts(const std::vector<xrelay_receipt> &receipts);
+        void                                set_header(xrelay_block_header &block_hedaer);   
         void                                add_signature(xrelay_signature signature);
         bool                                build_finish();
-        void                                save_block_trie();                              
+        void                                save_block_trie();        
+                   
     public:
        
         const xrelay_block_header           &get_header() const { return m_header;}
-        const evm_common::h256              &get_block_hash() { return m_header.m_block_hash;}
-        const xrelay_block_inner_header     &get_inner_header() const {return m_header.m_inner_header; }
+        const evm_common::h256              &get_block_hash() { return m_header.get_block_hash();}
+        const xrelay_block_inner_header     &get_inner_header() const {return m_header.get_inner_header(); }
         const evm_common::h256              &get_inner_header_hash() const {return m_header.get_inner_header_hash();}
         const evm_common::h256              &get_elections_root_hash() const { return m_header.get_elections_root_hash();}
         const evm_common::h256              &get_txs_root_hash() const { return m_header.get_txs_root_hash();}
         const evm_common::h256              &get_receipts_root_hash() const { return m_header.get_receipts_root_hash();}
         const evm_common::h256              &get_state_root_hash() const { return m_header.get_state_root_hash();}
         const evm_common::h256              &get_block_root_hash() const { return m_header.get_block_root_hash();}
-
+        const std::vector<xrelay_receipt>   &get_block_receipts_set() const { return m_receipts;}
     private:
         
         void                                make_receipts_root_hash();
@@ -267,9 +309,9 @@ namespace data {
         // vector of transaction in this block
         std::vector<top::data::xtransaction_v3_ptr_t> m_transactions;
 
-        evm_common::bytes                             m_block_bytes;
+       // evm_common::bytes                             m_block_bytes;
        // evm_common::bytes                             m_body_bytes;
-        xPartialMerkleTree                           m_block_merkle_tree;
+       // xPartialMerkleTree                           m_block_merkle_tree;
 
     };
 
