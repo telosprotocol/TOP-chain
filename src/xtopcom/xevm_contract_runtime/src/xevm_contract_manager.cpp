@@ -57,13 +57,13 @@ bool xtop_evm_contract_manager::execute_sys_contract(xbytes_t const & input, obs
             for (std::size_t i = 0; i < contract_output.logs.size(); ++i) {
                 auto * log = return_output.add_logs();
                 auto address = log->mutable_address();
-                address->set_value(contract_output.logs[i].address);
+                address->set_value(contract_output.logs[i].address.to_string());
 
-                log->set_data(contract_output.logs[i].data);
+                log->set_data(top::to_string(contract_output.logs[i].data));
 
                 for (std::size_t j = 0; j < contract_output.logs[i].topics.size(); ++j) {
                     auto topic = log->add_topics();
-                    topic->set_data(contract_output.logs[i].topics[j]);
+                    topic->set_data(top::to_string(contract_output.logs[i].topics[j].asBytes()));
                 }
             }
             output = top::to_bytes(return_output.SerializeAsString());

@@ -1,7 +1,7 @@
 
 #include "tests/xevm_engine_test/evm_test_fixture/xtest_evm_fixture.h"
 #include "xdata/xnative_contract_address.h"
-
+#include "xbasic/xhex.h"
 #include <dirent.h>
 #include <stdio.h>
 
@@ -300,7 +300,7 @@ bool xtest_evm_fixture::expected_logs(std::vector<evm_common::xevm_log_t> const 
 
                 std::string contract_name_symbol = _log["address"];
                 MYEXPECT_TRUE(deployed_contract_map.find(contract_name_symbol) != deployed_contract_map.end());
-                MYEXPECT_EQ(res_log.address, deployed_contract_map[contract_name_symbol]);
+                MYEXPECT_EQ(res_log.address.to_hex_string(), deployed_contract_map[contract_name_symbol]);
 
                 std::vector<std::string> expected_topics;
                 for (auto _each_topic : _log["topics"]) {
@@ -312,13 +312,14 @@ bool xtest_evm_fixture::expected_logs(std::vector<evm_common::xevm_log_t> const 
                 if (res_log.topics.size() == expected_topics.size()) {
                     auto topics_index = 0;
                     for (auto _topics : expected_topics) {
-                        auto res_topic = res_log.topics[topics_index];
+                        auto res_topic = top::to_hex_prefixed(res_log.topics[topics_index].asBytes());
                         MYEXPECT_EQ(res_topic, expected_topics[topics_index]);
                     }
                 }
 
                 // MYEXPECT_EQ(res_log.topics, expected_topics);
-                MYEXPECT_EQ(res_log.data, expected_data);
+                std::string data_hex = res_log.data.size() > 0 ? top::to_hex_prefixed(res_log.data) : "";
+                MYEXPECT_EQ(data_hex, expected_data);
 
                 index++;
             }
