@@ -21,7 +21,7 @@ namespace data {
     class xrelay_block_store {
 
         public:
-        xrelay_block_store();
+        xrelay_block_store(): m_blocks_map(100), m_block_merkle_tree_map(100), m_block_height_to_hash_map(100), m_block_ordinal_to_hash_map(100) {}
         static xrelay_block_store &get_instance()
         {
             static xrelay_block_store m_instance_store;

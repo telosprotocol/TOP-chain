@@ -37,7 +37,7 @@ namespace data {
     class xPartialMerkleTree {
 
     public:
-        xPartialMerkleTree(){};
+        xPartialMerkleTree(){}
         xPartialMerkleTree( const xPartialMerkleTree &obj)
         {
             m_path = obj.m_path;
