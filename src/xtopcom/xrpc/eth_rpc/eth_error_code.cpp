@@ -47,6 +47,19 @@ bool EthErrorCode::check_hex(const std::string& value, xJson::Value & js_rsp, ui
             deal_error(js_rsp, eth::enum_eth_rpc_invalid_params, msg);
             return false;
         }
+    } else if (type == enum_rpc_type_topic) {
+        if (value.size() % 2 == 1) {
+            std::string msg = std::string("invalid argument ") + std::to_string(index) + ": json: cannot unmarshal hex string of odd length";
+            deal_error(js_rsp, eth::enum_eth_rpc_invalid_params, msg);
+            return false;
+        }
+        if (value.size() != 66) {
+            std::string msg = std::string("invalid argument ") + std::to_string(index) + ": hex has invalid length " + std::to_string(value.size()/2 - 1) +
+                " after decoding; expected 32 for topic";
+            xinfo("check_topic fail: %s", value.c_str());
+            deal_error(js_rsp, eth::enum_eth_rpc_invalid_params, msg);
+            return false;
+        }
     }
     if (value.substr(0, 2) != "0x" && value.substr(0, 2) != "0X") {
         std::string msg = "invalid argument " + std::to_string(index) + ": hex string without 0x prefix";
