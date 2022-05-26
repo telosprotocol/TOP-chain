@@ -61,14 +61,14 @@ namespace data {
         private:
 
             //cache withe block . block hash -> xrelay_block
-            basic::xlru_cache<top::evm_common::h256, xrelay_block>  m_blocks_map;
+            basic::xlru_cache<top::evm_common::h256, xrelay_block>  m_blocks_map{1000};
 
             // block -> block_merkle_tree
-            basic::xlru_cache<top::evm_common::h256, xPartialMerkleTree> m_block_merkle_tree_map;
+            basic::xlru_cache<top::evm_common::h256, xPartialMerkleTree> m_block_merkle_tree_map{1000};
             //  height -> block hash
-             basic::xlru_cache<uint64_t,  top::evm_common::h256> m_block_height_to_hash_map;
+             basic::xlru_cache<uint64_t,  top::evm_common::h256> m_block_height_to_hash_map{1000};
             //save ordinal -> block hash
-            basic::xlru_cache<uint64_t, top::evm_common::h256> m_block_ordinal_to_hash_map;
+            basic::xlru_cache<uint64_t, top::evm_common::h256> m_block_ordinal_to_hash_map{1000};
 
             //save block height
             uint64_t    m_block_height;
