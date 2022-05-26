@@ -40,6 +40,15 @@ static char const * errc_to_string(xerrc_t const errc) noexcept {
     case xerrc_t::token_not_predefined:
         return "not predefined token";
 
+    case xerrc_t::invalid_rlp_stream:
+        return "invalid rlp stream";
+
+    case xerrc_t::empty_token_symbol:
+        return "empty token symbol";
+
+    case xerrc_t::token_symbol_unknown:
+        return "unknown token symbol";
+
     default:
         assert(false);
         return "unknown common category error";
