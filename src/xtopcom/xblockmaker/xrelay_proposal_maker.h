@@ -39,6 +39,11 @@ protected:
 
     bool check_wrap_proposal(const xblock_ptr_t & latest_cert_block, base::xvblock_t * proposal_block); 
 
+    void convert_to_xrelay_receipts(const std::map<uint64_t, xrelay_chain::xcross_txs_t> & cross_tx_map, std::vector<data::xrelay_receipt> receipts);
+    data::xrelay_block build_relay_block(evm_common::h256 prev_hash, uint64_t block_height, uint64_t cur_evm_table_height, uint64_t timestamp, std::vector<data::xrelay_receipt> receipts);
+    bool build_relay_block_data_leader(const data::xblock_ptr_t & latest_wrap_block, uint64_t timestamp, std::string & relay_block_data);
+    bool build_relay_block_data_backup(evm_common::h256 prev_hash, uint64_t block_height, uint64_t last_evm_table_height, uint64_t cur_evm_table_height, uint64_t timestamp, std::string & relay_block_data);
+
 private:
     xblockmaker_resources_ptr_t m_resources{nullptr};
     observer_ptr<xrelay_chain::xrelay_chain_mgr_t> m_relay_chain_mgr;

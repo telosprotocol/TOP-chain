@@ -6,6 +6,7 @@
 
 #include "xbase/xobject_ptr.h"
 #include "xdata/xtransaction.h"
+#include "xdata/xrelay_block.h"
 #include "xstore/xstore_face.h"
 #include "xvledger/xvblockstore.h"
 #include "xmbus/xmessage_bus.h"
@@ -42,7 +43,8 @@ public:
 
 public:
     void on_evm_db_event(data::xblock_t * block);
-    bool get_tx_cache(std::map<uint64_t, xcross_txs_t> & cross_tx_map, uint64_t & upper_height, uint32_t & tx_num) const;
+    bool get_tx_cache_leader(uint64_t & upper_height, std::map<uint64_t, xcross_txs_t> & cross_tx_map) const;
+    bool get_tx_cache_backup(uint64_t upper_height, std::map<uint64_t, xcross_txs_t> & cross_tx_map) const;
     void recover_cache();
     void update_last_proc_evm_height(uint64_t last_proc_evm_height);
 
@@ -93,21 +95,10 @@ private:
     std::string m_mock_data;
 };
 
-class xrelay_block_t {
-public:
-    xrelay_block_t(const xrelay_block_data_t & relay_block_data, std::string multisign) : m_relay_block_data(relay_block_data), m_multisign(multisign) {}
-    base::enum_xvblock_flag get_flag() const {return m_relay_block_data.get_flag();}
-    uint64_t get_height() const {return m_relay_block_data.get_height();}
-    const std::string & get_mock_data() const {return m_relay_block_data.get_mock_data();}
-    const std::string & get_multisign() const {return m_multisign;}
-private:
-    xrelay_block_data_t m_relay_block_data;
-    std::string m_multisign;
-};
 
 class xwrap_block_convertor {
 public:
-    static bool convert_to_relay_block(std::vector<data::xblock_ptr_t> wrap_blocks, std::shared_ptr<xrelay_block_t> & relay_block);
+    static bool convert_to_relay_block(std::vector<data::xblock_ptr_t> wrap_blocks, std::shared_ptr<data::xrelay_block> & relay_block);
 };
 
 class xrelay_chain_mgr_t {
@@ -119,18 +110,23 @@ public:
 public:
     void start(int32_t thread_id);
     void stop();
-    bool get_tx_cache(uint64_t lower_height, std::map<uint64_t, xcross_txs_t> & cross_tx_map, uint64_t & upper_height, uint32_t & tx_num) const;
+    bool get_tx_cache_leader(uint64_t lower_height, uint64_t & upper_height, std::map<uint64_t, xcross_txs_t> & cross_tx_map);
+    bool get_tx_cache_backup(uint64_t lower_height, uint64_t upper_height, std::map<uint64_t, xcross_txs_t> & cross_tx_map);
     void on_timer();
 
 private:
     void on_block_to_db_event(mbus::xevent_ptr_t e);
     void on_evm_db_event(data::xblock_ptr_t evm_block);
     void on_wrap_db_event(data::xblock_ptr_t wrap_block);
+    void on_relay_elect_db_event(data::xblock_ptr_t relay_elect_block);
 
 private:
     std::shared_ptr<xrelay_chain_resources> m_para;
     xcross_tx_cache_t m_cross_tx_cache;
     std::vector<data::xblock_ptr_t> m_wrap_blocks;
+    // todo(nathan):pack elect data first.
+    std::map<uint64_t, std::vector<std::string>> m_relay_elect_data;
+    uint64_t m_last_relay_elect_height{0};
     uint32_t m_bus_listen_id;
     int32_t m_thread_id;
     xrelay_chain_mgr_dispatcher_t * m_dispatcher;

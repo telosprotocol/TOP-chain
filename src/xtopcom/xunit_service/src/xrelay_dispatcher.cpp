@@ -29,7 +29,17 @@ xrelay_dispatcher_t::~xrelay_dispatcher_t() {
 
 bool xrelay_dispatcher_t::dispatch(base::xworkerpool_t * pool, base::xcspdu_t * pdu, const xvip2_t & xip_from, const xvip2_t & xip_to) {
     xunit_info("xrelay_dispatcher_t::dispatch,this=%p", this);
-    return async_dispatch(pdu, xip_from, xip_to, (xconsensus::xcsaccount_t *)m_packer) == 0;
+    xrelay_packer * packer = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        if (m_packer == nullptr) {
+            return false;
+        } else {
+            packer = m_packer;
+        }
+    }
+
+    return async_dispatch(pdu, xip_from, xip_to, (xconsensus::xcsaccount_t *)packer) == 0;
 }
 
 void xrelay_dispatcher_t::chain_timer(common::xlogic_time_t time) {
@@ -48,7 +58,15 @@ void xrelay_dispatcher_t::chain_timer(common::xlogic_time_t time) {
 }
 
 void xrelay_dispatcher_t::on_clock(base::xvblock_t * clock_block) {
-    std::lock_guard<std::mutex> lock(m_mutex);
+    xrelay_packer * packer = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        if (m_packer == nullptr) {
+            return;
+        }
+        packer = m_packer;
+    }
+
     xunit_dbg("xrelay_dispatcher_t::on_clock this:%p TC %" PRIu64, this, clock_block->get_height());
 
     auto _call = [](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
@@ -57,30 +75,52 @@ void xrelay_dispatcher_t::on_clock(base::xvblock_t * clock_block) {
         packer->fire_clock(*block_ptr, 0, 0);
         return true;
     };
-    base::xcall_t asyn_call((base::xcallback_t)_call, m_packer, clock_block);
+    base::xcall_t asyn_call((base::xcallback_t)_call, packer, clock_block);
     auto ret = m_worker->send_call(asyn_call);
     { xunit_dbg("xrelay_dispatcher_t::on_clock ret:%d TC: %" PRIu64, ret, clock_block->get_height()); }
 }
 
+std::string relay_watcher_name(const xvip2_t & xip) {
+    return std::string("relay_dispatch_timer").append("_").append(std::to_string(xip.low_addr));
+}
+
 bool xrelay_dispatcher_t::start(const xvip2_t & xip, const common::xlogic_time_t & start_time) {
     xunit_info("xrelay_dispatcher_t::start %s %p start", xcons_utl::xip_to_hex(xip).c_str(), this);
-    auto async_reset = [xip](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
+    xrelay_packer * packer = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        if (m_packer == nullptr) {
+            return false;
+        }
+        packer = m_packer;
+    }
+
+    auto async_reset = [xip, start_time](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
         auto packer = dynamic_cast<xrelay_packer *>(call.get_param1().get_object());
+        packer->set_start_time(start_time);
         packer->reset_xip_addr(xip);
         xunit_info("[xrelay_dispatcher_t::start] with xip {%" PRIx64 ", %" PRIx64 "} done", xip.high_addr, xip.low_addr);
         return true;
     };
-    base::xcall_t asyn_call(async_reset, (xconsensus::xcsaccount_t *)m_packer);
-    m_packer->set_start_time(start_time);
-    ((xconsensus::xcsaccount_t *)m_packer)->send_call(asyn_call);
 
-    m_watcher_name = std::string("relay_dispatch_timer").append("_").append(std::to_string(xip.low_addr));
+    base::xcall_t asyn_call(async_reset, (xconsensus::xcsaccount_t *)packer);
+    ((xconsensus::xcsaccount_t *)packer)->send_call(asyn_call);
+
+    m_watcher_name = relay_watcher_name(xip);
     m_para->get_resources()->get_chain_timer()->watch(m_watcher_name, 1, std::bind(&xrelay_dispatcher_t::chain_timer, shared_from_this(), std::placeholders::_1));
 
     return true;
 }
 
 bool xrelay_dispatcher_t::fade(const xvip2_t & xip) {
+    xrelay_packer * packer = nullptr;
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        if (m_packer == nullptr) {
+            return false;
+        }
+        packer = m_packer;
+    }
     xunit_info("xrelay_dispatcher_t::fade %s %p fade", xcons_utl::xip_to_hex(xip).c_str(), this);
     auto async_reset = [xip](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
         auto packer = dynamic_cast<xrelay_packer *>(call.get_param1().get_object());
@@ -88,19 +128,21 @@ bool xrelay_dispatcher_t::fade(const xvip2_t & xip) {
         xunit_info("[xrelay_dispatcher_t::fade] with xip {%" PRIx64 ", %" PRIx64 "} done", xip.high_addr, xip.low_addr);
         return true;
     };
-    base::xcall_t asyn_call(async_reset, (xconsensus::xcsaccount_t *)m_packer);
-    ((xconsensus::xcsaccount_t *)m_packer)->send_call(asyn_call);
+    base::xcall_t asyn_call(async_reset, (xconsensus::xcsaccount_t *)packer);
+    ((xconsensus::xcsaccount_t *)packer)->send_call(asyn_call);
     return true;
 }
 
 bool xrelay_dispatcher_t::unreg(const xvip2_t & xip) {
     xunit_info("xrelay_dispatcher_t::unreg %s %p", xcons_utl::xip_to_hex(xip).c_str(), this);
+    m_para->get_resources()->get_chain_timer()->unwatch(relay_watcher_name(xip));
     return true;
 }
 
 bool xrelay_dispatcher_t::destroy(const xvip2_t & xip) {
     xunit_info("xrelay_dispatcher_t::destroy %s %p", xcons_utl::xip_to_hex(xip).c_str(), this);
     m_para->get_resources()->get_chain_timer()->unwatch(m_watcher_name);
+    std::lock_guard<std::mutex> lock(m_mutex);
     if (m_packer != nullptr) {
         m_packer->close();
         m_packer->release_ref();
