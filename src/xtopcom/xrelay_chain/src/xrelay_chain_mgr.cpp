@@ -114,8 +114,8 @@ void xcross_tx_cache_t::on_evm_db_event(data::xblock_t * block) {
 }
 
 bool xcross_tx_cache_t::get_tx_cache_leader(uint64_t & upper_height, std::map<uint64_t, xcross_txs_t> & cross_tx_map) const {
-    if (m_last_proc_evm_height + 1 != m_cached_evm_lower_height) {
-        xinfo("xcross_tx_cache_t::get_tx_cache_leader cache not full.");
+    if (m_last_proc_evm_height + 1 != m_cached_evm_lower_height && m_last_proc_evm_height != 0) {
+        xinfo("xcross_tx_cache_t::get_tx_cache_leader cache not full.last_proc_evm_height:%llu,cached_evm_lower_height:%llu", m_last_proc_evm_height, m_cached_evm_lower_height);
         return false;
     }
     upper_height = m_cached_evm_upper_height;
@@ -124,8 +124,8 @@ bool xcross_tx_cache_t::get_tx_cache_leader(uint64_t & upper_height, std::map<ui
 }
 
 bool xcross_tx_cache_t::get_tx_cache_backup(uint64_t upper_height, std::map<uint64_t, xcross_txs_t> & cross_tx_map) const {
-    if (m_last_proc_evm_height + 1 != m_cached_evm_lower_height) {
-        xinfo("xcross_tx_cache_t::get_tx_cache_leader cache not full.");
+    if (m_last_proc_evm_height + 1 != m_cached_evm_lower_height && m_last_proc_evm_height != 0) {
+        xinfo("xcross_tx_cache_t::get_tx_cache_backup cache not full.last_proc_evm_height:%llu,cached_evm_lower_height:%llu", m_last_proc_evm_height, m_cached_evm_lower_height);
         return false;
     }
 

@@ -84,7 +84,7 @@ bool xrelay_proposal_maker_t::build_relay_block_data_leader(const data::xblock_p
     auto last_relay_block_data = latest_wrap_block->get_header()->get_extra_data();
     if (!last_relay_block_data.empty()) {
         data::xrelay_block last_relay_block;
-        last_relay_block.serialize_data_from_rlp(to_bytes(last_relay_block_data));
+        last_relay_block.decodeRLP(evm_common::RLP(last_relay_block_data));
         last_relay_block.build_finish();
         prev_hash = last_relay_block.get_block_hash();
         block_height = last_relay_block.get_inner_header().m_height + 1;
@@ -97,6 +97,11 @@ bool xrelay_proposal_maker_t::build_relay_block_data_leader(const data::xblock_p
     if (!ret) {
         return {};
     }
+    if (cross_tx_map.empty()) {
+        xinfo("xrelay_proposal_maker_t::build_relay_block_data_leader no cross txs.");
+        return false;
+    }
+
     std::vector<data::xrelay_receipt> receipts;
     convert_to_xrelay_receipts(cross_tx_map, receipts);
 
@@ -290,9 +295,8 @@ bool xrelay_proposal_maker_t::check_wrap_proposal(const xblock_ptr_t & latest_ce
     if (wrap_phase == 0) {
         // relay_block_data = base::xstring_utl::tostring(latest_cert_block->get_height());
 
-        auto proposal_relay_block_bytes = to_bytes(proposal_block->get_relay_block_data());
         data::xrelay_block proposal_relay_block;
-        proposal_relay_block.serialize_data_from_rlp(proposal_relay_block_bytes);
+        proposal_relay_block.decodeRLP(evm_common::RLP(proposal_block->get_relay_block_data()));
 
         evm_common::h256 local_prev_hash;
         uint64_t local_block_height = 0;
@@ -300,16 +304,16 @@ bool xrelay_proposal_maker_t::check_wrap_proposal(const xblock_ptr_t & latest_ce
         auto last_relay_block_data = latest_cert_block->get_header()->get_extra_data();
         if (!last_relay_block_data.empty()) {
             data::xrelay_block last_relay_block;
-            last_relay_block.serialize_data_from_rlp(to_bytes(last_relay_block_data));
+            last_relay_block.decodeRLP(evm_common::RLP(last_relay_block_data));
             last_relay_block.build_finish();
             local_prev_hash = last_relay_block.get_block_hash();
             local_block_height = last_relay_block.get_inner_header().m_height + 1;
             local_last_evm_table_height = last_relay_block.get_header().get_table_height();
         }
 
-        if (proposal_relay_block.get_header().get_prev_hash() != local_prev_hash || proposal_relay_block.get_inner_header().m_height != local_block_height) {
+        if (proposal_relay_block.get_header().get_prev_block_hash() != local_prev_hash || proposal_relay_block.get_inner_header().m_height != local_block_height) {
             xerror("xrelay_proposal_maker_t::check_wrap_proposal relay block pre hash or height not match.pre hash:%s:%s,height:%llu:%llu.proposal_block=%s",
-               proposal_relay_block.get_header().get_prev_hash().hex().c_str(),
+               proposal_relay_block.get_header().get_prev_block_hash().hex().c_str(),
                local_prev_hash.hex().c_str(),
                proposal_relay_block.get_inner_header().m_height,
                local_block_height,

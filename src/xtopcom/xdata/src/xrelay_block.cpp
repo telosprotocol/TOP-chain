@@ -328,5 +328,18 @@ void  xrelay_block::save_block_trie()
 }
 
 
+xrelay_signature::xrelay_signature(const std::string & sign_str) {
+    xassert(sign_str.size() == 65);
+    uint8_t compact_signature[65];
+    memcpy(compact_signature, sign_str.data(), sign_str.size());
+
+    v = compact_signature[0];
+
+    top::evm_common::bytes r_bytes(compact_signature + 1, compact_signature + 33);
+    r = top::evm_common::fromBigEndian<top::evm_common::u256>(r_bytes);
+
+    top::evm_common::bytes s_bytes(compact_signature + 33, compact_signature + 65);
+    s = top::evm_common::fromBigEndian<top::evm_common::u256>(s_bytes);
+}
 
 NS_END2
