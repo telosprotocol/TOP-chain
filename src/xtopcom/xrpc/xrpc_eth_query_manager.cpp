@@ -11,6 +11,7 @@
 #include "xbase/xint.h"
 #include "xbase/xutl.h"
 #include "xbasic/xutility.h"
+#include "xbasic/xhex.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xcommon/xip.h"
 #include "xconfig/xconfig_register.h"
@@ -325,6 +326,14 @@ top::evm_common::h2048 xrpc_eth_query_manager::calculate_bloom(const std::string
     return bloom;
 }
 
+void xrpc_eth_query_manager::evmlog_to_json(evm_common::xevm_log_t const& log, xJson::Value & js_v) const {
+    js_v["address"] = log.address.to_hex_string();
+    for (auto & topic : log.topics) {
+        js_v["topics"].append(top::to_hex_prefixed(topic.asBytes()));
+    }
+    js_v["data"] = top::to_hex_prefixed(log.data);
+}
+
 void xrpc_eth_query_manager::eth_getTransactionReceipt(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     if (!eth::EthErrorCode::check_req(js_req, js_rsp, 1))
         return;
@@ -379,7 +388,7 @@ void xrpc_eth_query_manager::eth_getTransactionReceipt(xJson::Value & js_req, xJ
             js_result["contractAddress"] = contract_addr;
         }
 
-        evm_common::h2048 logs_bloom;
+        evm_common::xbloom9_t logs_bloom;
         uint32_t index = 0;
         for (auto & log : evm_result.logs) {
             xJson::Value js_log;
@@ -391,18 +400,10 @@ void xrpc_eth_query_manager::eth_getTransactionReceipt(xJson::Value & js_req, xJ
             js_log["blockHash"] = block_hash;
             js_log["transactionHash"] = tx_hash;
             js_log["transactionIndex"] = tx_idx;
-            js_log["address"] = log.address;
-
-            evm_common::h2048 bloom = calculate_bloom(log.address);
+            evmlog_to_json(log, js_log);
+            evm_common::xbloom9_t bloom = log.bloom();
             logs_bloom |= bloom;
 
-            for (auto & topic : log.topics) {
-                js_log["topics"].append(topic);
-                evm_common::h2048 topic_bloom = calculate_bloom(topic);
-                logs_bloom |= topic_bloom;
-            }
-
-            js_log["data"] = log.data;
             js_log["removed"] = false;
             js_result["logs"].append(js_log);
             index++;
@@ -411,9 +412,7 @@ void xrpc_eth_query_manager::eth_getTransactionReceipt(xJson::Value & js_req, xJ
             js_result["logs"].resize(0);
         }
 
-        std::stringstream outstrbloom;
-        outstrbloom << logs_bloom;
-        js_result["logsBloom"] = std::string("0x") + outstrbloom.str();
+        js_result["logsBloom"] = std::string("0x") + logs_bloom.get_hex_string_data();
         js_result["status"] = (evm_result.status == 0) ?  "0x1" : "0x0";
         std::stringstream outstr;
         outstr << "0x" << std::hex << sendindex->get_raw_tx()->get_eip_version();
@@ -983,6 +982,30 @@ void xrpc_eth_query_manager::eth_getLogs(xJson::Value & js_req, xJson::Value & j
     get_log(js_rsp, begin, end, vTopics, sAddress);
     return;
 }
+
+bool xrpc_eth_query_manager::check_log_is_match(evm_common::xevm_log_t const& log, const std::vector<std::string>& vTopics, const std::set<std::string>& sAddress) const {
+    std::string log_address_hex = log.address.to_hex_string();
+    if (!sAddress.empty() && sAddress.find(log_address_hex) == sAddress.end()) {
+        xdbg("address not match: %s", log_address_hex.c_str());
+        return false;
+    }
+    if (vTopics.size() > log.topics.size()) {
+        xdbg("topics size not match %zu,%zu", vTopics.size(), log.topics.size());
+        return false;
+    }
+    
+    uint32_t topic_index = 0;
+    for (auto & vtopic : vTopics) {
+        std::string log_topic_hex = top::to_hex_prefixed(log.topics[topic_index].asBytes());
+        if (vtopic != log_topic_hex) {  // Topics are order-dependent.
+            xdbg("topic value not match %d", topic_index);
+            return false;
+        }
+        topic_index++;
+    }
+    return true;
+}
+
 int xrpc_eth_query_manager::get_log(xJson::Value & js_rsp, const uint64_t begin, const uint64_t end, const std::vector<std::string>& vTopics, const std::set<std::string>& sAddress) {
     base::xvaccount_t _table_addr(std::string(sys_contract_eth_table_block_addr) + "@0");
     for (uint64_t i = begin; i <= end; i++) {  // traverse blocks
@@ -1022,11 +1045,9 @@ int xrpc_eth_query_manager::get_log(xJson::Value & js_rsp, const uint64_t begin,
 
             uint32_t index = 0;
             for (auto & log : evm_result.logs) {  // logs in a transaction
-                if (!sAddress.empty() && sAddress.find(log.address) == sAddress.end()) {
-                    xdbg("address matching: %s", log.address.c_str());
+                if (false == check_log_is_match(log, vTopics, sAddress)) {
                     continue;
                 }
-
                 xJson::Value js_log;
                 std::stringstream outstr1;
                 outstr1 << "0x" << std::hex << index;
@@ -1034,24 +1055,11 @@ int xrpc_eth_query_manager::get_log(xJson::Value & js_rsp, const uint64_t begin,
                 js_log["blockNumber"] = block_num;
                 js_log["blockHash"] = block_hash;
                 js_log["transactionIndex"] = "0x0";
-                js_log["address"] = log.address;
+                evmlog_to_json(log, js_log);
                 js_log["transactionHash"] = std::string("0x") + to_hex_str(action.get_org_tx_hash());
                 js_log["blockHash"] = block_hash;
-                uint32_t topic_index = 0;
-                for (auto & topic : log.topics) {
-                    if (vTopics.size() > topic_index && vTopics[topic_index] != topic) {  // Topics are order-dependent.
-                        js_log["topics"].clear();
-                        break;
-                    }
-                    js_log["topics"].append(topic);
-                    topic_index++;
-                }
-                if (js_log["topics"].empty()) {
-                    xdbg("no topics");
-                    continue;
-                }
 
-                js_log["data"] = std::string("0x") + log.data;
+
                 js_log["removed"] = false;
                 index++;
                 js_rsp["result"].append(js_log);

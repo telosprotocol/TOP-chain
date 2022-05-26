@@ -5,16 +5,31 @@
 #pragma once
 
 #include "xbasic/xbyte_buffer.h"
+#include "xcommon/xeth_address.h"
+#include "xbase/xmem.h"
+#include "xevm_common/rlp.h"
+#include "xevm_common/xbloom9.h"
+#include "xevm_common/xfixed_hash.h"
 
 #include <string>
 #include <vector>
 
 NS_BEG2(top, evm_common)
 
-struct xevm_log_t {
-    std::string address;
-    std::vector<std::string> topics; // hex string
-    std::string data; // hex string
+class xevm_log_t {
+ public:
+    xevm_log_t() = default;
+    xevm_log_t(common::xeth_address_t const& _address, xh256s_t const& topics, xbytes_t const& data);
+
+    int32_t do_write(base::xstream_t & stream);
+    int32_t do_read(base::xstream_t & stream);
+    void streamRLP(RLPStream& _s) const;
+    void decodeRLP(RLP const& _r, std::error_code & ec);
+    xbloom9_t   bloom() const;
+
+    common::xeth_address_t  address;
+    xh256s_t                topics;
+    xbytes_t                data;
 };
 /// same as TransactionStatus in `evm_engine_rs/engine/src/parameters.rs`
 enum xevm_transaction_status_t : uint32_t {

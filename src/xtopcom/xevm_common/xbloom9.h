@@ -24,6 +24,15 @@ public:
         m_data.resize(Bloom9ByteLength, xbyte_t{0});
     }
 
+    xtop_bloom9 & operator|=(xtop_bloom9 const & _c) {
+        for (unsigned i = 0; i < Bloom9ByteLength; ++i)
+            m_data[i] |= _c.m_data[i];
+        return *this;
+    }
+    xtop_bloom9 operator|(xtop_bloom9 const & _c) const {
+        return xtop_bloom9(*this) |= _c;
+    }
+
 public:
     void add(xbytes_t const & data) {
         auto res = bloomValues(data);
