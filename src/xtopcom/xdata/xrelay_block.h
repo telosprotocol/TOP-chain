@@ -123,6 +123,8 @@ namespace data {
     };
 
     struct xrelay_signature {
+        xrelay_signature() {}
+        xrelay_signature(const std::string & sign_str);
         evm_common::h256    r;
         evm_common::h256    s;
         evm_common::byte    v;
@@ -204,7 +206,7 @@ namespace data {
     public:
        static const unsigned block_header_fileds = 7;
 
-       xrelay_block_header(){};
+       xrelay_block_header(){}
 
        void                             streamRLP(evm_common::RLPStream &rlp_stream,bool blocksignature = false);
        bool                             decodeRLP(evm_common::RLP const& _r);
@@ -262,10 +264,10 @@ namespace data {
     public:
         static const unsigned block_fileds = 2;
 
-        xrelay_block(){};
+        xrelay_block() {}
         xrelay_block(uint64_t block_version, evm_common::h256  prev_hash, evm_common::u256  chain_bits, 
                      uint64_t table_height, uint64_t block_height, uint64_t epochID, uint64_t timestamp);
-        ~xrelay_block() {};
+        ~xrelay_block() {}
     
     public:
         /**
