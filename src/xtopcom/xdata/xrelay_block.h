@@ -61,6 +61,10 @@ namespace data {
     };
 
     struct  xrelay_receipt {
+        xrelay_receipt(){}
+        xrelay_receipt(uint8_t type, uint8_t status, const evm_common::u256 & gas_used, const evm_common::h2048 & logs_bloom, std::vector<xrelay_receipt_log> logs)
+          : m_type(type), m_status(status), m_gasUsed(gas_used), m_logsBloom(logs_bloom), m_logs(logs) {
+        }
         // Transaction types. LegacyTxType:0 , AccessListTxType:1 , DynamicFeeTxType:2
         uint8_t                         m_type;
         //status code,check transactions status
