@@ -8,6 +8,7 @@
 #include "xdata/xblock.h"
 #include "xdata/xbstate_ctx.h"
 #include "xdata/xproperty.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xvledger/xvstate.h"
 
 #include <string>
@@ -65,6 +66,8 @@ class xunit_bstate_t : public xbstate_ctx_t {
     void transfer(common::xtoken_id_t const token_id, observer_ptr<xunit_bstate_t> const & recver_state, evm_common::u256 const & value, std::error_code & ec);
 
     evm_common::u256 allowance(common::xtoken_id_t const token_id, common::xaccount_address_t const & spender, std::error_code & ec) const;
+    std::map<common::xtoken_id_t, data::system_contract::xallowance_t> allowance(std::error_code & ec) const;
+
     void update_allowance(common::xtoken_id_t const token_id,
                           common::xaccount_address_t const & spender,
                           evm_common::u256 const & amount,
@@ -74,8 +77,11 @@ class xunit_bstate_t : public xbstate_ctx_t {
 
 private:
     xbytes_t raw_allowance(common::xtoken_id_t const token_id, std::error_code & ec) const;
+    xobject_ptr_t<base::xmapvar_t<std::string>> raw_allowance(std::error_code & ec) const;
     void raw_allowance(common::xtoken_id_t const token_id, xbytes_t const & raw_data, std::error_code & ec);
     evm_common::u256 allowance_impl(xbytes_t const & serialized_allowance_map, common::xaccount_address_t const & spender, std::error_code & ec) const;
+    std::map<common::xtoken_id_t, data::system_contract::xallowance_t> allowance_impl(xobject_ptr_t<base::xmapvar_t<std::string>> const & raw_allowance_data,
+                                                                                      std::error_code & ec) const;
     void set_allowance(common::xtoken_id_t const token_id, common::xaccount_address_t const & spender, evm_common::u256 const & amount, std::error_code & ec);
     void dec_allowance(common::xtoken_id_t const token_id, common::xaccount_address_t const & spender, evm_common::u256 const & amount, std::error_code & ec);
 };

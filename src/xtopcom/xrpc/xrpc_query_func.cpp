@@ -1,6 +1,5 @@
 #include "xrpc/xrpc_query_func.h"
-#include <cstdint>
-#include <iostream>
+
 #include "xbase/xbase.h"
 #include "xbase/xcontext.h"
 #include "xbase/xint.h"
@@ -9,6 +8,7 @@
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xcommon/xip.h"
 #include "xconfig/xconfig_register.h"
+#include "xdata/xblocktool.h"
 #include "xdata/xcodec/xmsgpack/xelection/xelection_network_result_codec.hpp"
 #include "xdata/xcodec/xmsgpack/xelection/xelection_result_store_codec.hpp"
 #include "xdata/xcodec/xmsgpack/xelection/xstandby_result_store_codec.hpp"
@@ -29,9 +29,11 @@
 #include "xdata/xtable_bstate.h"
 #include "xdata/xtableblock.h"
 #include "xdata/xtransaction_cache.h"
+#include "xevm_common/common.h"
+#include "xmbus/xevent_behind.h"
 #include "xrouter/xrouter.h"
-#include "xrpc/xuint_format.h"
 #include "xrpc/xrpc_loader.h"
+#include "xrpc/xuint_format.h"
 #include "xstore/xaccount_context.h"
 #include "xstore/xtgas_singleton.h"
 #include "xtxexecutor/xtransaction_fee.h"
@@ -39,8 +41,9 @@
 #include "xvledger/xvledger.h"
 #include "xvm/manager/xcontract_address_map.h"
 #include "xvm/manager/xcontract_manager.h"
-#include "xmbus/xevent_behind.h"
-#include "xdata/xblocktool.h"
+
+#include <cstdint>
+#include <iostream>
 
 NS_BEG2(top, xrpc)
 
@@ -143,6 +146,35 @@ bool xrpc_query_func::query_special_property(xJson::Value & jph, const std::stri
         for (auto & v : kvs) {
             auto token_balance = unitstate->tep_token_balance(v.first);
             j[v.first] = token_balance.str();
+        }
+        jph[prop_name] = j;
+        return true;
+    }
+
+    if (prop_name == data::XPROPERTY_PRECOMPILED_ERC20_ALLOWANCE_KEY) {
+        xJson::Value j;
+        std::error_code ec;
+        auto const allowance_data = unitstate->allowance(ec);
+        for (auto const & allowance_datum : allowance_data) {
+            auto const token_id = top::get<common::xtoken_id_t const>(allowance_datum);
+            auto const & allowance = top::get<data::system_contract::xallowance_t>(allowance_datum);
+
+            auto const & symbol = common::symbol(token_id, ec);
+            if (ec) {
+                continue;
+            }
+
+            xJson::Value spenderJson;
+            for (auto const & a : allowance) {
+                auto const & spender = top::get<common::xaccount_address_t const>(a);
+                auto const & value = top::get<evm_common::u256>(a);
+
+                xdbg("found allowance: symbol %s spender %s value %s", symbol.c_str(), spender.c_str(), value.str().c_str());
+
+                spenderJson[spender.value()] = value.str();
+            }
+
+            j[symbol.to_string()] = spenderJson;
         }
         jph[prop_name] = j;
         return true;
