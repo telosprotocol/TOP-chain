@@ -25,6 +25,7 @@ enum enum_rpc_check_type {
     enum_rpc_type_address,
     enum_rpc_type_hash,
     enum_rpc_type_data,
+    enum_rpc_type_topic,
     enum_rpc_type_unknown = 99,
 };
 struct ErrorMessage {

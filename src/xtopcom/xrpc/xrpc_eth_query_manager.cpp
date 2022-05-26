@@ -490,7 +490,6 @@ void xrpc_eth_query_manager::eth_getBlockByNumber(xJson::Value & js_req, xJson::
 
     xJson::Value js_result;
     set_block_result(block, js_result, js_req[1].asBool());
-    js_result["baseFeePerGas"] = "0x10";
     js_rsp["result"] = js_result;
     return;
 }
@@ -520,6 +519,7 @@ void xrpc_eth_query_manager::set_block_result(const xobject_ptr_t<base::xvblock_
     js_result["transactionsRoot"] = std::string("0x") + std::string(64, '0');
     js_result["transactions"].resize(0);
     js_result["uncles"].resize(0);
+    js_result["baseFeePerGas"] = "0x10";
 
     const std::vector<base::xvaction_t> input_actions = block->get_tx_actions();
     for(auto action : input_actions) {
@@ -896,19 +896,59 @@ void xrpc_eth_query_manager::eth_getStorageAt(xJson::Value & js_req, xJson::Valu
         top::HexEncode(value_str).c_str());
     js_rsp["result"] = std::string("0x") + top::HexEncode(value_str);
 }
+int xrpc_eth_query_manager::parse_topics(const xJson::Value& topics, std::vector<std::set<std::string>>& vTopics, xJson::Value & js_rsp) {
+    for (int i = 0; i < (int)topics.size(); i++) {
+        xJson::Value one_topic = topics[i];
+        if (one_topic.isString()) {
+            if (!eth::EthErrorCode::check_hex(one_topic.asString(), js_rsp, 0, eth::enum_rpc_type_topic))
+                return 1;
+            std::set<std::string> s;
+            s.insert(one_topic.asString());
+            vTopics.push_back(s);
+            xdbg("eth_getLogs, topics: %s", one_topic.asString().c_str());
+        } else if (one_topic.isArray()) {
+            std::set<std::string> s;
+            for (int j = 0; j < (int)one_topic.size(); j++) {
+                if (one_topic[j].isString()) {
+                    if (!eth::EthErrorCode::check_hex(one_topic[j].asString(), js_rsp, 0, eth::enum_rpc_type_topic))
+                        return 1;
+                    s.insert(one_topic[j].asString());
+                    continue;
+                } else if (one_topic[j].isNull()) {
+                    continue;
+                }
+                std::string msg = "parse error";
+                eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_parse_error, msg);
+                return 1;
+            }
+            vTopics.push_back(s);
+            xdbg("eth_getLogs, topics: %d", s.size());
+        } else if (one_topic.isNull()) {
+            std::set<std::string> s;
+            vTopics.push_back(s);
+            xdbg("eth_getLogs, topics: null");
+        } else {
+            std::string msg = "parse error";
+            eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_parse_error, msg);
+            return 1;
+        }
+    }
+    return 0;
+}
 void xrpc_eth_query_manager::eth_getLogs(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     std::string from_block = safe_get_json_value(js_req[0], "fromBlock");
     std::string to_block = safe_get_json_value(js_req[0], "toBlock");
     std::string blockhash = safe_get_json_value(js_req[0], "blockhash");
-    std::vector<std::string> vTopics;
+    std::vector<std::set<std::string>> vTopics;
     if (js_req[0].isMember("topics")) {
         xJson::Value t = js_req[0]["topics"];
-        for ( int i= 0; i < (int)t.size(); i++) {
-            if (!eth::EthErrorCode::check_hex(t[i].asString(), js_rsp, 0, eth::enum_rpc_type_data))
-                return;
-            vTopics.push_back(t[i].asString());
-            xdbg("eth_getLogs, topics: %s", t[i].asString().c_str());
+        if (!t.isArray()) {
+            std::string msg = "parse error";
+            eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_parse_error, msg);
+            return;
         }
+        if (parse_topics(t, vTopics, js_rsp) != 0)
+            return;
     }
     std::set<std::string> sAddress;
     if (js_req[0].isMember("address")) {
@@ -974,8 +1014,8 @@ void xrpc_eth_query_manager::eth_getLogs(xJson::Value & js_req, xJson::Value & j
             js_rsp["result"] = xJson::Value::null;
             return;
         }
-        if (end - begin > 128)
-            begin = end - 128;
+        if (end - begin > 1024)
+            begin = end - 1024;
     }
     xinfo("xrpc_eth_query_manager::eth_getLogs, %llu, %llu", begin, end);
 
@@ -983,7 +1023,7 @@ void xrpc_eth_query_manager::eth_getLogs(xJson::Value & js_req, xJson::Value & j
     return;
 }
 
-bool xrpc_eth_query_manager::check_log_is_match(evm_common::xevm_log_t const& log, const std::vector<std::string>& vTopics, const std::set<std::string>& sAddress) const {
+bool xrpc_eth_query_manager::check_log_is_match(evm_common::xevm_log_t const& log, const std::vector<std::set<std::string>>& vTopics, const std::set<std::string>& sAddress) const {
     std::string log_address_hex = log.address.to_hex_string();
     if (!sAddress.empty() && sAddress.find(log_address_hex) == sAddress.end()) {
         xdbg("address not match: %s", log_address_hex.c_str());
@@ -993,11 +1033,15 @@ bool xrpc_eth_query_manager::check_log_is_match(evm_common::xevm_log_t const& lo
         xdbg("topics size not match %zu,%zu", vTopics.size(), log.topics.size());
         return false;
     }
-    
+
     uint32_t topic_index = 0;
     for (auto & vtopic : vTopics) {
+        if (vtopic.empty()) {
+            topic_index++;
+            continue;
+        }
         std::string log_topic_hex = top::to_hex_prefixed(log.topics[topic_index].asBytes());
-        if (vtopic != log_topic_hex) {  // Topics are order-dependent.
+        if (vtopic.find(log_topic_hex) == vtopic.end()) {  // Topics are order-dependent.
             xdbg("topic value not match %d", topic_index);
             return false;
         }
@@ -1006,7 +1050,7 @@ bool xrpc_eth_query_manager::check_log_is_match(evm_common::xevm_log_t const& lo
     return true;
 }
 
-int xrpc_eth_query_manager::get_log(xJson::Value & js_rsp, const uint64_t begin, const uint64_t end, const std::vector<std::string>& vTopics, const std::set<std::string>& sAddress) {
+int xrpc_eth_query_manager::get_log(xJson::Value & js_rsp, const uint64_t begin, const uint64_t end, const std::vector<std::set<std::string>>& vTopics, const std::set<std::string>& sAddress) {
     base::xvaccount_t _table_addr(std::string(sys_contract_eth_table_block_addr) + "@0");
     for (uint64_t i = begin; i <= end; i++) {  // traverse blocks
         xobject_ptr_t<base::xvblock_t> block = m_block_store->load_block_object(_table_addr, i, base::enum_xvblock_flag_authenticated, false);
