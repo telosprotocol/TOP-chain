@@ -158,14 +158,33 @@ xobject_ptr_t<base::xvblock_t> xrpc_eth_query_manager::query_block_by_height(con
     }
     return _block;
 }
+uint64_t xrpc_eth_query_manager::get_block_height(const std::string& table_height) {
+    uint64_t height = 0;
+    std::string addr = std::string(sys_contract_eth_table_block_addr) + "@0";
+    base::xvaccount_t _vaddress(addr);
+    uint64_t max_height = m_block_store->get_latest_cert_block_height(_vaddress);
+
+    if (table_height == "latest")
+        height = max_height;
+    else if (table_height == "earliest")
+        height = 0;
+    else if (table_height == "pending") {
+        height = max_height;
+    } else {
+        height = std::strtoul(table_height.c_str(), NULL, 16);
+        if (height > max_height)
+            height = max_height;
+    }
+    return height;
+}
 void xrpc_eth_query_manager::eth_getBalance(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     if (!eth::EthErrorCode::check_req(js_req, js_rsp, 2))
         return;
-    if (!eth::EthErrorCode::check_hex(js_req[0].asString(), js_rsp, 0, false))
+    if (!eth::EthErrorCode::check_hex(js_req[0].asString(), js_rsp, 0, eth::enum_rpc_type_address))
         return;
     if (!eth::EthErrorCode::check_eth_address(js_req[0].asString(), js_rsp))
         return;
-    if (!eth::EthErrorCode::check_hex(js_req[1].asString(), js_rsp, 1, true))
+    if (!eth::EthErrorCode::check_hex(js_req[1].asString(), js_rsp, 1, eth::enum_rpc_type_block))
         return;
 
     std::string account = js_req[0].asString();
@@ -201,11 +220,11 @@ void xrpc_eth_query_manager::eth_getBalance(xJson::Value & js_req, xJson::Value 
 void xrpc_eth_query_manager::eth_getTransactionCount(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     if (!eth::EthErrorCode::check_req(js_req, js_rsp, 2))
         return;
-    if (!eth::EthErrorCode::check_hex(js_req[0].asString(), js_rsp, 0, false))
+    if (!eth::EthErrorCode::check_hex(js_req[0].asString(), js_rsp, 0, eth::enum_rpc_type_address))
         return;
     if (!eth::EthErrorCode::check_eth_address(js_req[0].asString(), js_rsp))
         return;
-    if (!eth::EthErrorCode::check_hex(js_req[1].asString(), js_rsp, 1, true))
+    if (!eth::EthErrorCode::check_hex(js_req[1].asString(), js_rsp, 1, eth::enum_rpc_type_block))
         return;
 
     std::string account = js_req[0].asString();
@@ -234,7 +253,7 @@ void xrpc_eth_query_manager::eth_getTransactionByHash(xJson::Value & js_req, xJs
     if (!eth::EthErrorCode::check_req(js_req, js_rsp, 1))
         return;
     std::string tx_hash = js_req[0].asString();
-    if (!eth::EthErrorCode::check_hex(tx_hash, js_rsp, 0, false))
+    if (!eth::EthErrorCode::check_hex(tx_hash, js_rsp, 0, eth::enum_rpc_type_hash))
         return;
     if (!eth::EthErrorCode::check_hash(tx_hash, js_rsp))
         return;
@@ -310,7 +329,7 @@ void xrpc_eth_query_manager::eth_getTransactionReceipt(xJson::Value & js_req, xJ
     if (!eth::EthErrorCode::check_req(js_req, js_rsp, 1))
         return;
     std::string tx_hash = js_req[0].asString();
-    if (!eth::EthErrorCode::check_hex(tx_hash, js_rsp, 0, false))
+    if (!eth::EthErrorCode::check_hex(tx_hash, js_rsp, 0, eth::enum_rpc_type_hash))
         return;
     if (!eth::EthErrorCode::check_hash(tx_hash, js_rsp))
         return;
@@ -428,7 +447,7 @@ void xrpc_eth_query_manager::eth_getBlockByHash(xJson::Value & js_req, xJson::Va
     if (!eth::EthErrorCode::check_req(js_req, js_rsp, 2))
         return;
     std::string tx_hash = js_req[0].asString();
-    if (!eth::EthErrorCode::check_hex(tx_hash, js_rsp, 0, false))
+    if (!eth::EthErrorCode::check_hex(tx_hash, js_rsp, 0, eth::enum_rpc_type_hash))
         return;
     if (!eth::EthErrorCode::check_hash(tx_hash, js_rsp))
         return;
@@ -456,7 +475,7 @@ void xrpc_eth_query_manager::eth_getBlockByHash(xJson::Value & js_req, xJson::Va
 void xrpc_eth_query_manager::eth_getBlockByNumber(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     if (!eth::EthErrorCode::check_req(js_req, js_rsp, 2))
         return;
-    if (!eth::EthErrorCode::check_hex(js_req[0].asString(), js_rsp, 0, true))
+    if (!eth::EthErrorCode::check_hex(js_req[0].asString(), js_rsp, 0, eth::enum_rpc_type_block))
         return;
     if (!js_req[1].isBool()) {
         std::string msg = "parse error";
@@ -568,11 +587,11 @@ void xrpc_eth_query_manager::set_block_result(const xobject_ptr_t<base::xvblock_
 void xrpc_eth_query_manager::eth_getCode(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     if (!eth::EthErrorCode::check_req(js_req, js_rsp, 2))
         return;
-    if (!eth::EthErrorCode::check_hex(js_req[0].asString(), js_rsp, 0, false))
+    if (!eth::EthErrorCode::check_hex(js_req[0].asString(), js_rsp, 0, eth::enum_rpc_type_address))
         return;
     if (!eth::EthErrorCode::check_eth_address(js_req[0].asString(), js_rsp))
         return;
-    if (!eth::EthErrorCode::check_hex(js_req[1].asString(), js_rsp, 1, true))
+    if (!eth::EthErrorCode::check_hex(js_req[1].asString(), js_rsp, 1, eth::enum_rpc_type_block))
         return;
 
     std::string account = js_req[0].asString();
@@ -606,7 +625,7 @@ std::string xrpc_eth_query_manager::safe_get_json_value(xJson::Value & js_req, c
 void xrpc_eth_query_manager::eth_call(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
     if (!eth::EthErrorCode::check_req(js_req, js_rsp, 2))
         return;
-    if (!eth::EthErrorCode::check_hex(js_req[1].asString(), js_rsp, 1, true))
+    if (!eth::EthErrorCode::check_hex(js_req[1].asString(), js_rsp, 1, eth::enum_rpc_type_block))
         return;
 
     std::string to = safe_get_json_value(js_req[0], "to");
@@ -630,7 +649,7 @@ void xrpc_eth_query_manager::eth_call(xJson::Value & js_req, xJson::Value & js_r
         js_rsp["result"] = "0x";
         return;
     } else {
-        if (!eth::EthErrorCode::check_hex(jdata, js_rsp, 0, false))
+        if (!eth::EthErrorCode::check_hex(jdata, js_rsp, 0, eth::enum_rpc_type_data))
             return;
         data = top::HexDecode(jdata.substr(2));
     }
@@ -639,11 +658,11 @@ void xrpc_eth_query_manager::eth_call(xJson::Value & js_req, xJson::Value & js_r
     std::string gas = safe_get_json_value(js_req[0], "gas");
     std::string gas_price = safe_get_json_value(js_req[0], "gasPrice");
     if (!gas.empty()) {
-        if (!eth::EthErrorCode::check_hex(gas, js_rsp, 0, true))
+        if (!eth::EthErrorCode::check_hex(gas, js_rsp, 0, eth::enum_rpc_type_unknown))
             return;
     }
     if (!gas_price.empty()) {
-        if (!eth::EthErrorCode::check_hex(gas_price, js_rsp, 0, true))
+        if (!eth::EthErrorCode::check_hex(gas_price, js_rsp, 0, eth::enum_rpc_type_unknown))
             return;
     }
 
@@ -727,12 +746,10 @@ void xrpc_eth_query_manager::eth_call(xJson::Value & js_req, xJson::Value & js_r
 }
 
 void xrpc_eth_query_manager::eth_estimateGas(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
-//    if (!eth::EthErrorCode::check_req(js_req, js_rsp, 2))
-//        return;
     std::string block_number = "latest";
     if (js_req.size() >= 2)
         block_number = js_req[1].asString();
-    if (!eth::EthErrorCode::check_hex(block_number, js_rsp, 1, true))
+    if (!eth::EthErrorCode::check_hex(block_number, js_rsp, 1, eth::enum_rpc_type_block))
         return;
 
     std::string to = safe_get_json_value(js_req[0], "to");
@@ -762,7 +779,7 @@ void xrpc_eth_query_manager::eth_estimateGas(xJson::Value & js_req, xJson::Value
         js_rsp["result"] = "0x5208";
         return;
     } else {
-        if (!eth::EthErrorCode::check_hex(jdata, js_rsp, 0, false))
+        if (!eth::EthErrorCode::check_hex(jdata, js_rsp, 0, eth::enum_rpc_type_data))
             return;
         data = top::HexDecode(jdata.substr(2));
     }
@@ -771,11 +788,11 @@ void xrpc_eth_query_manager::eth_estimateGas(xJson::Value & js_req, xJson::Value
     std::string gas = safe_get_json_value(js_req[0], "gas");
     std::string gas_price = safe_get_json_value(js_req[0], "gasPrice");
     if (!gas.empty()) {
-        if (!eth::EthErrorCode::check_hex(gas, js_rsp, 0, true))
+        if (!eth::EthErrorCode::check_hex(gas, js_rsp, 0, eth::enum_rpc_type_unknown))
             return;
     }
     if (!gas_price.empty()) {
-        if (!eth::EthErrorCode::check_hex(gas_price, js_rsp, 0, true))
+        if (!eth::EthErrorCode::check_hex(gas_price, js_rsp, 0, eth::enum_rpc_type_unknown))
             return;
     }
 
@@ -849,13 +866,13 @@ void xrpc_eth_query_manager::eth_getStorageAt(xJson::Value & js_req, xJson::Valu
     if (!eth::EthErrorCode::check_req(js_req, js_rsp, 3))
         return;
     std::string account = js_req[0].asString();
-    if (!eth::EthErrorCode::check_hex(account, js_rsp, 0, false))
+    if (!eth::EthErrorCode::check_hex(account, js_rsp, 0, eth::enum_rpc_type_address))
         return;
     if (!eth::EthErrorCode::check_eth_address(account, js_rsp))
         return;
-    if (!eth::EthErrorCode::check_hex(js_req[1].asString(), js_rsp, 1, true))
+    if (!eth::EthErrorCode::check_hex(js_req[1].asString(), js_rsp, 1, eth::enum_rpc_type_unknown))
         return;
-    if (!eth::EthErrorCode::check_hex(js_req[2].asString(), js_rsp, 2, true))
+    if (!eth::EthErrorCode::check_hex(js_req[2].asString(), js_rsp, 2, eth::enum_rpc_type_block))
         return;
 
     account = xvaccount_t::to_evm_address(account);
@@ -881,38 +898,173 @@ void xrpc_eth_query_manager::eth_getStorageAt(xJson::Value & js_req, xJson::Valu
     js_rsp["result"] = std::string("0x") + top::HexEncode(value_str);
 }
 void xrpc_eth_query_manager::eth_getLogs(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
-    std::string from = safe_get_json_value(js_req[0], "fromBlock");
-    std::string to = safe_get_json_value(js_req[0], "toBlock");
-    std::string address = safe_get_json_value(js_req[0], "address");
+    std::string from_block = safe_get_json_value(js_req[0], "fromBlock");
+    std::string to_block = safe_get_json_value(js_req[0], "toBlock");
     std::string blockhash = safe_get_json_value(js_req[0], "blockhash");
     std::vector<std::string> vTopics;
     if (js_req[0].isMember("topics")) {
         xJson::Value t = js_req[0]["topics"];
         for ( int i= 0; i < (int)t.size(); i++) {
-            if (!eth::EthErrorCode::check_hex(t[i].asString(), js_rsp, 0, false))
+            if (!eth::EthErrorCode::check_hex(t[i].asString(), js_rsp, 0, eth::enum_rpc_type_data))
                 return;
             vTopics.push_back(t[i].asString());
             xdbg("eth_getLogs, topics: %s", t[i].asString().c_str());
         }
     }
+    std::set<std::string> sAddress;
+    if (js_req[0].isMember("address")) {
+        xJson::Value t = js_req[0]["address"];
+        if (t.isString()) {
+            sAddress.insert(t.asString());
+            xdbg("eth_getLogs, address : %s", t.asString().c_str());
+        } else if (t.isArray()) {
+            for (int i = 0; i < (int)t.size(); i++) {
+                if (!eth::EthErrorCode::check_hex(t[i].asString(), js_rsp, 0, eth::enum_rpc_type_address))
+                    return;
+                if (!eth::EthErrorCode::check_eth_address(t[i].asString(), js_rsp))
+                    return;
+                sAddress.insert(t[i].asString());
+                xdbg("eth_getLogs, address: %s", t[i].asString().c_str());
+            }
+        }
+    }
 
-
-
-    if (!eth::EthErrorCode::check_hex(from, js_rsp, 0, true))
+    if (!from_block.empty() && !eth::EthErrorCode::check_hex(from_block, js_rsp, 0, eth::enum_rpc_type_block))
         return;
-    if (!eth::EthErrorCode::check_hex(to, js_rsp, 0, true))
+    if (!to_block.empty() && !eth::EthErrorCode::check_hex(to_block, js_rsp, 0, eth::enum_rpc_type_block))
         return;
-    if (!eth::EthErrorCode::check_hex(address, js_rsp, 0, false))
+    if (!blockhash.empty() && !eth::EthErrorCode::check_hex(blockhash, js_rsp, 0, eth::enum_rpc_type_hash))
         return;
-    if (!eth::EthErrorCode::check_eth_address(address, js_rsp))
-        return;
-    if (!eth::EthErrorCode::check_hex(blockhash, js_rsp, 0, false))
-        return;
-    if (!eth::EthErrorCode::check_hash(blockhash, js_rsp))
+    if (!blockhash.empty() && !eth::EthErrorCode::check_hash(blockhash, js_rsp))
         return;
 
-    js_rsp["result"] = xJson::Value::null;
+    if ((!from_block.empty() || !to_block.empty()) && !blockhash.empty()) {
+        std::string msg = "invalid argument 0: cannot specify both BlockHash and FromBlock/ToBlock, choose one or the other";
+        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);
+        return;
+    }
+    uint64_t begin;
+    uint64_t end;
+    if (!blockhash.empty()) {
+        uint256_t hash = top::data::hex_to_uint256(blockhash);
+        std::string block_hash_str = std::string(reinterpret_cast<char *>(hash.data()), hash.size());
+        //xdbg("eth_getBlockByHash block hash: %s", top::HexEncode(block_hash_str).c_str());
+
+        base::xauto_ptr<base::xvblock_t> block = m_block_store->get_block_by_hash(block_hash_str);
+        if (block == nullptr) {
+            js_rsp["result"] = xJson::Value::null;
+            return;
+        }
+        begin = block->get_height();
+        end = block->get_height();
+    } else if (from_block.empty() && to_block.empty()){
+        js_rsp["result"] = xJson::Value::null;
+        return;
+    } else {
+        if (from_block.empty())
+            begin = 0;
+        else
+            begin = get_block_height(from_block);
+        if (to_block.empty()) {
+            std::string addr = std::string(sys_contract_eth_table_block_addr) + "@0";
+            base::xvaccount_t _vaddress(addr);
+            end = m_block_store->get_latest_cert_block_height(_vaddress);
+        } else
+            end = get_block_height(to_block);
+        if (begin > end) {
+            js_rsp["result"] = xJson::Value::null;
+            return;
+        }
+        if (end - begin > 128)
+            begin = end - 128;
+    }
+    xinfo("xrpc_eth_query_manager::eth_getLogs, %llu, %llu", begin, end);
+
+    get_log(js_rsp, begin, end, vTopics, sAddress);
     return;
+}
+int xrpc_eth_query_manager::get_log(xJson::Value & js_rsp, const uint64_t begin, const uint64_t end, const std::vector<std::string>& vTopics, const std::set<std::string>& sAddress) {
+    base::xvaccount_t _table_addr(std::string(sys_contract_eth_table_block_addr) + "@0");
+    for (uint64_t i = begin; i <= end; i++) {  // traverse blocks
+        xobject_ptr_t<base::xvblock_t> block = m_block_store->load_block_object(_table_addr, i, base::enum_xvblock_flag_authenticated, false);
+        if (block == nullptr) {
+            xwarn("xrpc_eth_query_manager::get_log, load_block_object fail:%llu", i);
+            continue;
+        }
+
+        const std::vector<base::xvaction_t> input_actions = block->get_tx_actions();
+        xdbg("input_actions size:%d", input_actions.size());
+        for (auto action : input_actions) {  // logs in a block
+            if (action.get_org_tx_hash().empty()) {
+                xdbg("action.get_org_tx_hash null");
+                continue;
+            }
+
+            xtxindex_detail_ptr_t sendindex = xrpc_loader_t::load_tx_indx_detail(action.get_org_tx_hash(), base::enum_transaction_subtype_send);
+            if (sendindex == nullptr) {
+                xwarn("xrpc_eth_query_manager::get_log fail.tx hash:%s", to_hex_str(action.get_org_tx_hash()).c_str());
+                continue;
+            }
+            uint16_t tx_type = sendindex->get_raw_tx()->get_tx_type();
+            if (tx_type == xtransaction_type_transfer) {
+                xdbg("tx_type: transfer.");
+                continue;
+            }
+
+            xJson::Value js_log;
+            std::string block_hash = std::string("0x") + top::HexEncode(sendindex->get_txindex()->get_block_hash());
+            std::stringstream outstr;
+            outstr << "0x" << std::hex << sendindex->get_txindex()->get_block_height();
+            std::string block_num = outstr.str();
+
+            evm_common::xevm_transaction_result_t evm_result;
+            auto ret = sendindex->get_txaction().get_evm_transaction_result(evm_result);
+
+            uint32_t index = 0;
+            for (auto & log : evm_result.logs) {  // logs in a transaction
+                if (!sAddress.empty() && sAddress.find(log.address) == sAddress.end()) {
+                    xdbg("address matching: %s", log.address.c_str());
+                    continue;
+                }
+
+                xJson::Value js_log;
+                std::stringstream outstr1;
+                outstr1 << "0x" << std::hex << index;
+                js_log["logIndex"] = outstr1.str();
+                js_log["blockNumber"] = block_num;
+                js_log["blockHash"] = block_hash;
+                js_log["transactionIndex"] = "0x0";
+                js_log["address"] = log.address;
+                js_log["transactionHash"] = std::string("0x") + to_hex_str(action.get_org_tx_hash());
+                js_log["blockHash"] = block_hash;
+                uint32_t topic_index = 0;
+                for (auto & topic : log.topics) {
+                    if (vTopics.size() > topic_index && vTopics[topic_index] != topic) {  // Topics are order-dependent.
+                        js_log["topics"].clear();
+                        break;
+                    }
+                    js_log["topics"].append(topic);
+                    topic_index++;
+                }
+                if (js_log["topics"].empty()) {
+                    xdbg("no topics");
+                    continue;
+                }
+
+                js_log["data"] = std::string("0x") + log.data;
+                js_log["removed"] = false;
+                index++;
+                js_rsp["result"].append(js_log);
+                if (js_rsp["result"].size() >= 1024) {
+                    xwarn("too many logs: %d", js_rsp["result"].size());
+                    return 0;
+                }
+            }
+        }
+    }
+    if (js_rsp["result"].empty())
+        js_rsp["result"].resize(0);
+    return 0;
 }
 }  // namespace chain_info
 }  // namespace top

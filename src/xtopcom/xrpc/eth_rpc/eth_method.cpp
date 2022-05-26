@@ -16,7 +16,7 @@ void EthMethod::web3_sha3(const Json::Value & js_req, Json::Value & js_rsp) {
         return;
     }
 
-    if (!eth::EthErrorCode::check_hex(js_req[0].asString(), js_rsp, 0, false))
+    if (!eth::EthErrorCode::check_hex(js_req[0].asString(), js_rsp, 0, eth::enum_rpc_type_data))
         return;
 
     std::string input = js_req[0].asString();

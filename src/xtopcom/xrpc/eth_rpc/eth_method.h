@@ -34,7 +34,6 @@ public:
         m_supported_method.insert("eth_getStorageAt");
         m_supported_method.insert("eth_sendRawTransaction");
         m_supported_method.insert("eth_getLogs");
-        //m_supported_method.insert("web3_sha3");
         m_supported_method.insert("eth_getBalance");
         m_supported_method.insert("eth_blockNumber");
         m_supported_method.insert("eth_getBlockByHash");
@@ -79,7 +78,6 @@ public:
     }
 
     void eth_gasPrice(const Json::Value & request, Json::Value & response);
-
     void web3_sha3(const Json::Value & request, Json::Value & response);
 };
 
