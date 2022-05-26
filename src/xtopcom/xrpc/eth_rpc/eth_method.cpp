@@ -39,10 +39,4 @@ void EthMethod::eth_gasPrice(const Json::Value & js_req, Json::Value & js_rsp) {
     Json::Value value = "0x1";*/
     js_rsp["result"] = value;
 }
-void EthMethod::eth_maxPriorityFeePerGas(const Json::Value & js_req, Json::Value & js_rsp) {
-    if (!eth::EthErrorCode::check_req(js_req, js_rsp, 0))
-        return;
-    Json::Value value = "0x989680";
-    js_rsp["result"] = value;
-}
 }
