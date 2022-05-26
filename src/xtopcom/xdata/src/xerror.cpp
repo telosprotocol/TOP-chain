@@ -50,6 +50,12 @@ static char const * const errc_to_string(int code) {
     case xerrc_t::invalid_toke_id:
         return "invalid token id";
 
+    case xerrc_t::erc20_allowance_spender_not_found:
+        return "erc20 allowance spender not found";
+
+    case xerrc_t::erc20_allowance_not_enough:
+        return "erc20 allowance not enough";
+
     case xerrc_t::eth_server_error:
         return "eth transaction server error";
     case xerrc_t::eth_invalid_params:

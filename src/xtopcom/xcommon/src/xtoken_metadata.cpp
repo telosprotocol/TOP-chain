@@ -11,11 +11,16 @@
 
 NS_BEG2(top, common)
 
+static xsymbol_t const SYMBOL_TOP{"TOP"};
+static xsymbol_t const SYMBOL_ETH{"ETH"};
+static xsymbol_t const SYMBOL_USDT{"USDT"};
+static xsymbol_t const SYMBOL_USDC{"USDC"};
+
 observer_ptr<xtoken_metadata_t const> predefined_token_metadata(xtoken_id_t const token_id, std::error_code & ec) noexcept {
-    static xtoken_metadata_t const top_token_metadata{xsymbol_t{"TOP"}, std::string{"TOP"}, xtoken_id_t::top};
-    static xtoken_metadata_t const eth_token_metadata{xsymbol_t{"ETH"}, std::string{"ETH"}, xtoken_id_t::eth};
-    static xtoken_metadata_t const usdt_token_metadata{xsymbol_t{"USDT"}, std::string{"USDT"}, xtoken_id_t::usdt};
-    static xtoken_metadata_t const usdc_token_metadata{xsymbol_t{"USDC"}, std::string{"USDC"}, xtoken_id_t::usdc};
+    static xtoken_metadata_t const top_token_metadata{SYMBOL_TOP, std::string{"TOP"}, xtoken_id_t::top};
+    static xtoken_metadata_t const eth_token_metadata{SYMBOL_ETH, std::string{"ETH"}, xtoken_id_t::eth};
+    static xtoken_metadata_t const usdt_token_metadata{SYMBOL_USDT, std::string{"USDT"}, xtoken_id_t::usdt};
+    static xtoken_metadata_t const usdc_token_metadata{SYMBOL_USDC, std::string{"USDC"}, xtoken_id_t::usdc};
 
     assert(!ec);
 
@@ -47,6 +52,46 @@ bool operator==(xtoken_metadata_t const & lhs, xtoken_metadata_t const & rhs) no
 bool operator!=(xtoken_metadata_t const & lhs, xtoken_metadata_t const & rhs) noexcept {
     return !(lhs == rhs);
 }
+
+xsymbol_t symbol(xtoken_id_t const token_id, std::error_code & ec) {
+    assert(!ec);
+    auto const & token_metadata = predefined_token_metadata(token_id, ec);
+    if (ec) {
+        return {};
+    }
+
+    return token_metadata->token_symbol;
+}
+
+xsymbol_t symbol(xtoken_id_t const token_id) {
+    std::error_code ec;
+    auto r = symbol(token_id, ec);
+    top::error::throw_error(ec);
+    return r;
+}
+
+xtoken_id_t token_id(xsymbol_t const & symbol, std::error_code & ec) {
+    assert(!ec);
+    if (symbol.empty() || symbol == SYMBOL_TOP) {
+        return xtoken_id_t::top;
+    }
+
+    if (symbol == SYMBOL_ETH) {
+        return xtoken_id_t::eth;
+    }
+
+    if (symbol == SYMBOL_USDC) {
+        return xtoken_id_t::usdc;
+    }
+
+    if (symbol == SYMBOL_USDT) {
+        return xtoken_id_t::usdt;
+    }
+
+    return xtoken_id_t::invalid;
+}
+
+xtoken_id_t token_id(xsymbol_t const & symbol);
 
 NS_END2
 

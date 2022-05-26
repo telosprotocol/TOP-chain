@@ -34,6 +34,11 @@ observer_ptr<xtoken_metadata_t const> predefined_token_metadata(xtoken_id_t cons
 bool operator==(xtoken_metadata_t const & lhs, xtoken_metadata_t const & rhs) noexcept;
 bool operator!=(xtoken_metadata_t const & lhs, xtoken_metadata_t const & rhs) noexcept;
 
+xsymbol_t symbol(xtoken_id_t const token_id, std::error_code & ec);
+xsymbol_t symbol(xtoken_id_t const token_id);
+xtoken_id_t token_id(xsymbol_t const & symbol, std::error_code & ec);
+xtoken_id_t token_id(xsymbol_t const & symbol);
+
 NS_END2
 
 NS_BEG1(top)
