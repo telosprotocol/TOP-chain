@@ -1,0 +1,82 @@
+// Copyright (c) 2017-present Telos Foundation & contributors
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+#include "xevm_common/trie/xtrie_encoding.h"
+
+NS_BEG3(top, evm_common, trie)
+
+xbytes_t hexToCompact(xbytes_t hex) {
+    auto terminator = xbyte_t{0};
+    if (hasTerm(hex)) {
+        terminator = 1;
+        hex = {hex.begin(), hex.end() - 1};
+    }
+
+    xbytes_t buf(hex.size() / 2 + 1);
+    buf[0] = terminator << 5;  // the flag byte
+    if ((hex.size() & 1) == 1) {
+        buf[0] |= 1 << 4;  // old flag
+        buf[0] |= hex[0];  // first nibble is contained in the first byte
+        hex = {hex.begin() + 1, hex.end()};
+    }
+
+    decodeNibbles(hex, buf.begin() + 1);
+    return buf;
+}
+
+std::size_t hexToCompactInPlace(xbytes_t & hex);  // todo impl for stacktrie
+
+xbytes_t compactToHex(xbytes_t compact) {
+    if (compact.size() == 0) {
+        return compact;
+    }
+    auto base = keybytesToHex(compact);
+
+    // delete terminator flag
+    if (base[0] < 2) {
+        base = {base.begin(), base.end() - 1};
+    }
+
+    auto chop = 2 - (base[0] & 1);
+    return {base.begin() + chop, base.end()};
+}
+
+xbytes_t keybytesToHex(xbytes_t const & str) {
+    std::size_t l = str.size() * 2 + 1;
+    auto nibbles = xbytes_t(l);
+    for (std::size_t index = 0; index < str.size(); ++index) {
+        nibbles[2 * index] = str[index] / 16;
+        nibbles[2 * index + 1] = str[index] % 16;
+    }
+    nibbles[l - 1] = 16;
+    return nibbles;
+}
+
+// hexToKeybytes turns hex nibbles into key bytes.
+// This can only be used for keys of even length.
+xbytes_t hexToKeybytes(xbytes_t hex) {
+    if (hasTerm(hex)) {
+        hex = {hex.begin(), hex.end() - 1};
+    }
+    if ((hex.size() & 1) != 0) {
+        xassert(false);
+    }
+    auto key = xbytes_t(hex.size() / 2);
+    decodeNibbles(hex, key.begin());
+    return key;
+}
+
+void decodeNibbles(xbytes_t const & nibbles, xbytes_t::iterator bytes_begin) {
+    for (std::size_t bi = 0, ni = 0; ni < nibbles.size(); bi += 1, ni += 2) {
+        *(bytes_begin + bi) = nibbles[ni] << 4 | nibbles[ni + 1];
+        // bytes[bi] = nibbles[ni] << 4 | nibbles[ni + 1];
+    }
+}
+
+// hasTerm returns whether a hex key has the terminator flag.
+bool hasTerm(xbytes_t const & s) {
+    return (s.size() > 0) && (s[s.size() - 1] == 16);
+}
+
+NS_END3
