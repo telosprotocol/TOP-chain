@@ -23,8 +23,8 @@ enum enum_execute_result_type {
     enum_exec_error_evm_execute         = 5,
     enum_exec_error_property_set        = 6,
     enum_exec_error_state_dirty         = 7,
-    enum_exec_error_preprocess_tgas     = 8,
-    enum_exec_error_postprocess_tgas    = 9,
+    enum_exec_error_estimate_gas        = 8,
+    enum_exec_error_out_of_gas          = 9,
 };
 
 class xvm_para_t {

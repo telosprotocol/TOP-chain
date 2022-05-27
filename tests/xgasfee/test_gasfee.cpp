@@ -8,93 +8,14 @@
 namespace top {
 namespace tests {
 
-TEST(test_gas_state_operator, test_burn) {
-    std::string sender{"T00000LWZ2K7Be3iMZwkLTZpi2saSmdp9AyWsCBc"};
-    auto bstate = make_object_ptr<base::xvbstate_t>(sender, 1, 0, "", "", 0, 0, 0);
-    auto canvas = make_object_ptr<base::xvcanvas_t>();
-    bstate->new_token_var(data::XPROPERTY_BALANCE_AVAILABLE, canvas.get());
-    bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->deposit(top::base::vtoken_t(100), canvas.get());
-
-    auto unit_state = std::make_shared<data::xunit_bstate_t>(bstate.get());
-    top::gasfee::xgas_state_operator_t op(unit_state);
-    std::error_code ec;
-    op.burn(base::vtoken_t(90), ec);
-    EXPECT_EQ(ec.value(), 0);
-
-    EXPECT_EQ(bstate->find_property(data::XPROPERTY_BALANCE_AVAILABLE), true);
-    EXPECT_EQ(bstate->find_property(data::XPROPERTY_BALANCE_BURN), true);
-    EXPECT_EQ(bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), 10);
-    EXPECT_EQ(bstate->load_token_var(data::XPROPERTY_BALANCE_BURN)->get_balance(), 90);
-}
-
-TEST(test_gas_state_operator, test_lock) {
-    std::string sender{"T00000LWZ2K7Be3iMZwkLTZpi2saSmdp9AyWsCBc"};
-    auto bstate = make_object_ptr<base::xvbstate_t>(sender, 1, 0, "", "", 0, 0, 0);
-    auto canvas = make_object_ptr<base::xvcanvas_t>();
-    bstate->new_token_var(data::XPROPERTY_BALANCE_AVAILABLE, canvas.get());
-    bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->deposit(top::base::vtoken_t(100), canvas.get());
-
-    auto unit_state = std::make_shared<data::xunit_bstate_t>(bstate.get());
-    top::gasfee::xgas_state_operator_t op(unit_state);
-    std::error_code ec;
-    op.lock(base::vtoken_t(90), ec);
-    EXPECT_EQ(ec.value(), 0);
-
-    EXPECT_EQ(bstate->find_property(data::XPROPERTY_BALANCE_AVAILABLE), true);
-    EXPECT_EQ(bstate->find_property(data::XPROPERTY_BALANCE_LOCK), true);
-    EXPECT_EQ(bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), 10);
-    EXPECT_EQ(bstate->load_token_var(data::XPROPERTY_BALANCE_LOCK)->get_balance(), 90);
-}
-
-TEST(test_gas_state_operator, test_unlock) {
-    std::string sender{"T00000LWZ2K7Be3iMZwkLTZpi2saSmdp9AyWsCBc"};
-    auto bstate = make_object_ptr<base::xvbstate_t>(sender, 1, 0, "", "", 0, 0, 0);
-    auto canvas = make_object_ptr<base::xvcanvas_t>();
-    bstate->new_token_var(data::XPROPERTY_BALANCE_AVAILABLE, canvas.get());
-    bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->deposit(top::base::vtoken_t(100), canvas.get());
-    bstate->new_token_var(data::XPROPERTY_BALANCE_LOCK, canvas.get());
-    bstate->load_token_var(data::XPROPERTY_BALANCE_LOCK)->deposit(top::base::vtoken_t(100), canvas.get());
-
-    auto unit_state = std::make_shared<data::xunit_bstate_t>(bstate.get());
-    top::gasfee::xgas_state_operator_t op(unit_state);
-    std::error_code ec;
-    op.unlock(base::vtoken_t(90), ec);
-    EXPECT_EQ(ec.value(), 0);
-
-    EXPECT_EQ(bstate->find_property(data::XPROPERTY_BALANCE_AVAILABLE), true);
-    EXPECT_EQ(bstate->find_property(data::XPROPERTY_BALANCE_LOCK), true);
-    EXPECT_EQ(bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), 190);
-    EXPECT_EQ(bstate->load_token_var(data::XPROPERTY_BALANCE_LOCK)->get_balance(), 10);
-}
-
-TEST(test_gas_state_operator, test_state_set_used_tgas) {
-    std::string sender{"T00000LWZ2K7Be3iMZwkLTZpi2saSmdp9AyWsCBc"};
-    auto bstate = make_object_ptr<base::xvbstate_t>(sender, 1, 0, "", "", 0, 0, 0);
-    auto canvas = make_object_ptr<base::xvcanvas_t>();
-
-    auto unit_state = std::make_shared<data::xunit_bstate_t>(bstate.get());
-    top::gasfee::xgas_state_operator_t op(unit_state);
-    std::error_code ec;
-    op.state_set_used_tgas(100, ec);
-    EXPECT_EQ(ec.value(), 0);
-
-    EXPECT_EQ(bstate->find_property(data::XPROPERTY_USED_TGAS_KEY), true);
-    EXPECT_EQ(bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(100));
-}
-
-TEST(test_gas_state_operator, test_state_set_last_time) {
-    std::string sender{"T00000LWZ2K7Be3iMZwkLTZpi2saSmdp9AyWsCBc"};
-    auto bstate = make_object_ptr<base::xvbstate_t>(sender, 1, 0, "", "", 0, 0, 0);
-    auto canvas = make_object_ptr<base::xvcanvas_t>();
-
-    auto unit_state = std::make_shared<data::xunit_bstate_t>(bstate.get());
-    top::gasfee::xgas_state_operator_t op(unit_state);
-    std::error_code ec;
-    op.state_set_last_time(10000000, ec);
-    EXPECT_EQ(ec.value(), 0);
-
-    EXPECT_EQ(bstate->find_property(data::XPROPERTY_LAST_TX_HOUR_KEY), true);
-    EXPECT_EQ(bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(10000000));
+TEST(test_gas, calculate_big_data) {
+    uint64_t max_gasfee{0};
+    auto price = evm_common::u256(1640847);
+    auto limit = evm_common::u256(2500000032);
+    auto eth_max_gasfee = limit * price * XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_to_top_exchange_ratio) / evm_common::u256(1e12);
+    max_gasfee = static_cast<uint64_t>(eth_max_gasfee);
+    EXPECT_EQ(eth_max_gasfee, max_gasfee);
+    printf("eth_max_gasfee: %s, max_gasfee: %lu\n", eth_max_gasfee.str().c_str(), max_gasfee);
 }
 
 TEST(test_gas_state_operator, test_new_available_tgas_interface) {
@@ -346,7 +267,7 @@ TEST_F(xtest_gasfee_fixture_t, test_store_in_one_stage) {
     EXPECT_EQ(ec.value(), 0);
     op.m_free_tgas_usage = op.m_free_tgas;
     op.m_converted_tgas_usage = op.deposit() / 2 / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio);
-    op.store_in_one_stage(ec);
+    op.store_in_one_stage();
 
     auto detail = op.gasfee_detail();
     EXPECT_EQ(detail.m_tx_used_tgas, op.m_free_tgas);
@@ -371,7 +292,7 @@ TEST_F(xtest_gasfee_fixture_t, test_store_send) {
     EXPECT_EQ(ec.value(), 0);
     op.m_free_tgas_usage = op.m_free_tgas;
     op.m_converted_tgas_usage = op.deposit() / 2 * 20;
-    op.store_in_send_stage(ec);
+    op.store_in_send_stage();
 
     auto detail = op.gasfee_detail();
     EXPECT_EQ(detail.m_tx_used_tgas, op.m_free_tgas);
@@ -391,7 +312,7 @@ TEST_F(xtest_gasfee_fixture_t, test_store_recv) {
     make_recv_default();
     auto op = make_recv_operator();
     std::error_code ec;
-    op.store_in_recv_stage(ec);
+    op.store_in_recv_stage();
     EXPECT_EQ(ec.value(), 0);
 
     auto detail = op.gasfee_detail();
@@ -405,7 +326,7 @@ TEST_F(xtest_gasfee_fixture_t, test_store_confirm) {
     EXPECT_EQ(default_confirm_cons_tx->get_last_action_recv_tx_use_send_tx_tgas(), 0);
     EXPECT_EQ(default_confirm_cons_tx->get_last_action_used_deposit(), default_used_deposit);
     std::error_code ec;
-    op.store_in_confirm_stage(ec);
+    op.store_in_confirm_stage();
     EXPECT_EQ(ec.value(), 0);
     auto detail = op.gasfee_detail();
     EXPECT_EQ(detail.m_tx_used_tgas, 0);

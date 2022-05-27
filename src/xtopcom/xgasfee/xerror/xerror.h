@@ -27,6 +27,8 @@ enum class xenum_errc {
     tx_limited_gasfee_exceeded,
     tx_calculation_tgas_exceeded,
     tx_calculation_gas_over_limit,
+
+    tx_out_of_gas,
 };
 using xerrc_t = xenum_errc;
 
