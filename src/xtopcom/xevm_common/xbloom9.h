@@ -23,6 +23,9 @@ public:
     xtop_bloom9() {
         m_data.resize(Bloom9ByteLength, xbyte_t{0});
     }
+    explicit xtop_bloom9(xbytes_t const& data) {
+        m_data = data;
+    }
 
     xtop_bloom9 & operator|=(xtop_bloom9 const & _c) {
         for (unsigned i = 0; i < Bloom9ByteLength; ++i)
@@ -48,7 +51,7 @@ public:
                (std::get<5>(res) == (std::get<5>(res) & m_data[std::get<4>(res)]));    // NOLINT
     }
 
-    xbytes_t get_data() {
+    xbytes_t const& get_data() const {
         return m_data;
     }
 
