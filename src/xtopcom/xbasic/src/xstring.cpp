@@ -9,6 +9,21 @@
 NS_BEG1(top)
 
 template <>
+std::string to_string<char>(char const & input) {
+    return std::string(1, input);
+}
+
+template <>
+std::string to_string<unsigned char>(unsigned char const & input) {
+    return to_string(static_cast<char>(input));
+}
+
+template <>
+std::string to_string<signed char>(signed char const & input) {
+    return to_string(static_cast<char>(input));
+}
+
+template <>
 std::string to_string<int>(int const & input) {
     return std::to_string(input);
 }
@@ -46,6 +61,29 @@ std::string to_string<std::string>(std::string const & input) {
 template <>
 std::string to_string<xbytes_t>(xbytes_t const & input) {
     return {input.begin(), input.end()};
+}
+
+template <>
+char from_string<char>(std::string const & input, std::error_code & ec) {
+    assert(!ec);
+    if (input.empty()) {
+        ec = error::xenum_basic_errc::deserialization_error;
+        return 0;
+    }
+
+    return input.front();
+}
+
+template <>
+unsigned char from_string<unsigned char>(std::string const & input, std::error_code & ec) {
+    assert(!ec);
+    return static_cast<unsigned char>(top::from_string<char>(input, ec));
+}
+
+template <>
+signed char from_string<signed char>(std::string const & input, std::error_code & ec) {
+    assert(!ec);
+    return static_cast<signed char>(top::from_string<char>(input, ec));
 }
 
 template <>

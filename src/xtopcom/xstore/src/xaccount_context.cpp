@@ -119,15 +119,14 @@ int32_t xaccount_context_t::create_user_account(const std::string& address) {
     auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
     if (top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.eth_fork_point, get_timer_height())) {
         evm_common::u256 add_token_256 = 10000000000000000000ULL;
-        std::string token_name = data::XPROPERTY_ASSET_ETH;
-        auto old_token_256 = m_account->tep_token_balance(token_name);
+        auto old_token_256 = m_account->tep_token_balance(common::xtoken_id_t::eth);
         if (old_token_256 != 0) {
             xerror("xaccount_context_t::create_user_account fail-eth token not zero");
             return -1;
         }
 
         // just for test debug
-        ret = m_account->tep_token_deposit(token_name, add_token_256);
+        ret = m_account->tep_token_deposit(common::xtoken_id_t::eth, add_token_256);
     }
 
     return ret;
@@ -147,7 +146,14 @@ int32_t xaccount_context_t::token_transfer_out(const data::xproperty_asset& asse
     if (asset.is_top_token()) {
         return top_token_transfer_out(asset.amount(), gas_fee, service_fee);
     } else {
-        return m_account->tep_token_withdraw(asset.token_symbol(), amount256);
+        std::error_code ec;
+        auto const token_id = common::token_id(common::xsymbol_t{asset.token_symbol()}, ec);
+        if (ec) {
+            xwarn("unknown symbol");
+            return ec.value();
+        }
+
+        return m_account->tep_token_withdraw(token_id, amount256);
     }
 
     int32_t ret = xsuccess;
@@ -180,7 +186,14 @@ int32_t xaccount_context_t::token_transfer_in(const data::xproperty_asset& asset
     if (asset.is_top_token()) {
         return top_token_transfer_in(asset.amount());
     } else {
-        return m_account->tep_token_deposit(asset.token_symbol(), amount256);
+        std::error_code ec;
+        auto const token_id = common::token_id(common::xsymbol_t{asset.token_symbol()}, ec);
+        if (ec) {
+            xwarn("unknown symbol");
+            return ec.value();
+        }
+
+        return m_account->tep_token_deposit(token_id, amount256);
     }
 }
 

@@ -893,7 +893,7 @@ TEST(test_xtvm_v2, xtvm2_demo_v3_T6_transfer_inner_table) {
     base::xvaccount_t recver_vaccount{p_statectx->default_recver};
     auto sender_unitstate = statectx->load_unit_state(sender_vaccount);
     auto recver_unitstate = statectx->load_unit_state(recver_vaccount);
-    sender_unitstate->tep_token_deposit(data::XPROPERTY_ASSET_ETH, 20000);
+    sender_unitstate->tep_token_deposit(common::xtoken_id_t::eth, 20000);
     txexecutor::xvm_para_t param{p_statectx->default_onchain_time, "0000", p_statectx->default_onchain_deposit_tgas};
     txexecutor::xatomictx_executor_t atomictx_executor{statectx, param};
     txexecutor::xatomictx_output_t output;
