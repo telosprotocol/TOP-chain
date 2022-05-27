@@ -234,30 +234,16 @@ void xunit_bstate_t::transfer(common::xtoken_id_t const token_id, observer_ptr<x
         break;
     }
 
-    case common::xtoken_id_t::usdt: {
-        if (tep_token_withdraw("USDT", value)) {
-            xwarn("sender_tep_withdraw failed");
-            ec = error::xerrc_t::update_state_failed;
-            break;
-        }
-
-        if (recver_state->tep_token_deposit("USDT", value)) {
-            xwarn("recver_tep_deposit failed");
-            ec = error::xerrc_t::update_state_failed;
-            break;
-        }
-
-        break;
-    }
-
+    case common::xtoken_id_t::usdt:
+        XATTRIBUTE_FALLTHROUGH;
     case common::xtoken_id_t::usdc: {
-        if (tep_token_withdraw("USDC", value)) {
+        if (tep_token_withdraw(token_id, value)) {
             xwarn("sender_tep_withdraw failed");
             ec = error::xerrc_t::update_state_failed;
             break;
         }
 
-        if (recver_state->tep_token_deposit("USDC", value)) {
+        if (recver_state->tep_token_deposit(token_id, value)) {
             xwarn("recver_tep_deposit failed");
             ec = error::xerrc_t::update_state_failed;
             break;

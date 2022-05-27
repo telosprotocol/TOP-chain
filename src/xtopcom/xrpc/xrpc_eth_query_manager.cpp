@@ -204,7 +204,7 @@ void xrpc_eth_query_manager::eth_getBalance(xJson::Value & js_req, xJson::Value 
     } else if (ret == enum_unit_not_found) {
         js_rsp["result"] = "0x0";
     } else if (ret == enum_success) {
-        evm_common::u256 balance = account_ptr->tep_token_balance(data::XPROPERTY_ASSET_ETH);
+        evm_common::u256 balance = account_ptr->tep_token_balance(common::xtoken_id_t::eth);
 
         std::string balance_str = toHex((top::evm_common::h256)balance);
 

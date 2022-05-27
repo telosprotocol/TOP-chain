@@ -300,7 +300,13 @@ int32_t xtransaction_transfer::source_fee_exec() {
         } else {
             auto transfer_amount_256 = get_amount_256();
             if (transfer_amount_256 != 0) {
-                evm_common::u256 tep_balance = m_account_ctx->get_blockchain()->tep_token_balance(get_asset().token_symbol());
+                std::error_code ec;
+                auto const token_id = common::token_id(common::xsymbol_t{get_asset().token_symbol()}, ec);
+                if (ec) {
+                    xwarn("unknown symbol %s", get_asset().token_symbol().c_str());
+                    return ec.value();
+                }
+                evm_common::u256 tep_balance = m_account_ctx->get_blockchain()->tep_token_balance(token_id);
                 if (tep_balance < transfer_amount_256) {
                     xdbg("xtransaction_transfer::source_fee_exec, %s, %s", tep_balance.str().c_str(), transfer_amount_256.str().c_str());
                     return xconsensus_service_error_balance_not_enough;

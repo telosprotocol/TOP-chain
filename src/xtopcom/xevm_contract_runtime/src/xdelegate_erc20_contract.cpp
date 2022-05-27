@@ -107,6 +107,24 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
         }
 
         evm_common::u256 supply{0};
+        switch (erc20_token_id) {
+        case common::xtoken_id_t::usdt:
+            supply = 36815220940394632;
+            break;
+
+        case common::xtoken_id_t::usdc:
+            supply = 45257057549529550;
+            break;
+
+        case common::xtoken_id_t::top:
+            supply = 20000000000000000;
+            break;
+
+        default:
+            assert(false);
+            break;
+        }
+
         output.exit_status = Returned;
         output.cost = total_supply_gas_cost;
         output.output = top::to_bytes(supply);
@@ -155,13 +173,10 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
             break;
         }
 
-        case common::xtoken_id_t::usdt: {
-            value = state->tep_token_balance("USDT");
-            break;
-        }
-
+        case common::xtoken_id_t::usdt:
+            XATTRIBUTE_FALLTHROUGH;
         case common::xtoken_id_t::usdc: {
-            value = state->tep_token_balance("USDC");
+            value = state->tep_token_balance(erc20_token_id);
             break;
         }
 
@@ -579,29 +594,28 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
 
         auto sender_state = state_ctx->load_unit_state(caller_account_address.vaccount());
         switch (erc20_token_id) {
-        case common::xtoken_id_t::top:
+        case common::xtoken_id_t::top: {
             sender_state->token_deposit(data::XPROPERTY_BALANCE_AVAILABLE, static_cast<base::vtoken_t>(value.convert_to<uint64_t>()));
             break;
+        }
 
         case common::xtoken_id_t::usdt:
-            sender_state->tep_token_deposit("USDT", value);
+            XATTRIBUTE_FALLTHROUGH;
+        case common::xtoken_id_t::usdc: {
+            sender_state->tep_token_deposit(erc20_token_id, value);
             break;
+        }
 
-        case common::xtoken_id_t::usdc:
-            sender_state->tep_token_deposit("USDC", value);
-            break;
+        default: {
+            assert(false);
 
-        case common::xtoken_id_t::eth:
-            sender_state->tep_token_deposit("ETH", value);
-            break;
-
-        default:
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("predefined erc20 contract: mint invalid token id %d", static_cast<int>(erc20_token_id));
 
             return false;
+        }
         }
 
         if (!ec) {
