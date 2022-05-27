@@ -144,8 +144,9 @@ bool xrpc_query_func::query_special_property(xJson::Value & jph, const std::stri
         xJson::Value j;
         auto kvs = unitstate->map_get(prop_name);
         for (auto & v : kvs) {
-            auto token_balance = unitstate->tep_token_balance(v.first);
-            j[v.first] = token_balance.str();
+            auto const token_id = top::from_string<common::xtoken_id_t>(v.first);
+            auto token_balance = unitstate->tep_token_balance(token_id);
+            j[common::symbol(token_id).to_string()] = token_balance.str();
         }
         jph[prop_name] = j;
         return true;
@@ -161,6 +162,7 @@ bool xrpc_query_func::query_special_property(xJson::Value & jph, const std::stri
 
             auto const & symbol = common::symbol(token_id, ec);
             if (ec) {
+                xwarn("invalid token id %d", static_cast<int>(token_id));
                 continue;
             }
 

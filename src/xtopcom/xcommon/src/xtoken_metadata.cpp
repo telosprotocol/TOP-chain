@@ -13,14 +13,14 @@ NS_BEG2(top, common)
 
 static xsymbol_t const SYMBOL_TOP{"TOP"};
 static xsymbol_t const SYMBOL_ETH{"ETH"};
-static xsymbol_t const SYMBOL_USDT{"USDT"};
-static xsymbol_t const SYMBOL_USDC{"USDC"};
+static xsymbol_t const SYMBOL_USDT{"tUSDT"};
+static xsymbol_t const SYMBOL_USDC{"tUSDC"};
 
 observer_ptr<xtoken_metadata_t const> predefined_token_metadata(xtoken_id_t const token_id, std::error_code & ec) noexcept {
     static xtoken_metadata_t const top_token_metadata{SYMBOL_TOP, std::string{"TOP"}, xtoken_id_t::top};
     static xtoken_metadata_t const eth_token_metadata{SYMBOL_ETH, std::string{"ETH"}, xtoken_id_t::eth};
-    static xtoken_metadata_t const usdt_token_metadata{SYMBOL_USDT, std::string{"USDT"}, xtoken_id_t::usdt};
-    static xtoken_metadata_t const usdc_token_metadata{SYMBOL_USDC, std::string{"USDC"}, xtoken_id_t::usdc};
+    static xtoken_metadata_t const usdt_token_metadata{SYMBOL_USDT, std::string{"Tether USD"}, xtoken_id_t::usdt};
+    static xtoken_metadata_t const usdc_token_metadata{SYMBOL_USDC, std::string{"USD Coin"}, xtoken_id_t::usdc};
 
     assert(!ec);
 
@@ -91,7 +91,12 @@ xtoken_id_t token_id(xsymbol_t const & symbol, std::error_code & ec) {
     return xtoken_id_t::invalid;
 }
 
-xtoken_id_t token_id(xsymbol_t const & symbol);
+xtoken_id_t token_id(xsymbol_t const & symbol) {
+    std::error_code ec;
+    auto r = token_id(symbol, ec);
+    top::error::throw_error(ec);
+    return r;
+}
 
 NS_END2
 
@@ -99,22 +104,34 @@ NS_BEG1(top)
 
 template <>
 std::string to_string<common::xtoken_id_t>(common::xtoken_id_t const & token_id) {
-    return std::to_string(static_cast<std::underlying_type<common::xtoken_id_t>::type>(token_id));
+    return top::to_string(top::to_byte(token_id));
 }
 
 template <>
-common::xtoken_id_t from_string<common::xtoken_id_t>(std::string const & input, std::error_code &) {
-    return static_cast<common::xtoken_id_t>(static_cast<std::underlying_type<common::xtoken_id_t>::type>(std::stoul(input)));
+common::xtoken_id_t from_string<common::xtoken_id_t>(std::string const & input, std::error_code & ec) {
+    assert(!ec);
+    auto const byte = top::from_string<xbyte_t>(input, ec);
+    if (ec) {
+        return common::xtoken_id_t::invalid;
+    }
+
+    return top::from_byte<common::xtoken_id_t>(byte);
 }
 
 template <>
 xbytes_t to_bytes<common::xtoken_id_t>(common::xtoken_id_t const & token_id) {
-    return to_bytes(std::to_string(static_cast<std::underlying_type<common::xtoken_id_t>::type>(token_id)));
+    return to_bytes(top::to_byte(token_id));
 }
 
 template <>
-common::xtoken_id_t from_bytes<common::xtoken_id_t>(xbytes_t const & input, std::error_code &) {
-    return static_cast<common::xtoken_id_t>(static_cast<std::underlying_type<common::xtoken_id_t>::type>(std::stoul(top::to_string(input))));
+common::xtoken_id_t from_bytes<common::xtoken_id_t>(xbytes_t const & input, std::error_code & ec) {
+    assert(!ec);
+    auto const byte = top::from_bytes<xbyte_t>(input, ec);
+    if (ec) {
+        return common::xtoken_id_t::invalid;
+    }
+
+    return top::from_byte<common::xtoken_id_t>(byte);
 }
 
 template <>
