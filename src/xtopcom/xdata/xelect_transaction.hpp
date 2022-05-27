@@ -103,6 +103,7 @@ public:
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(free_gas);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(cpu_gas_exchange_ratio);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(usedgas_decay_cycle);
 #if defined(XCHAIN_FORKED_BY_DEFAULT) && ((XCHAIN_FORKED_BY_DEFAULT) >= 10208)
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(usedgas_reset_interval); // new name of 'usedgas_decay_cycle'

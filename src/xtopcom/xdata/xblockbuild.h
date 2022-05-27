@@ -21,6 +21,7 @@ class xtableheader_extra_t : public xserializable_based_on<void> {
     enum xblockheader_extra_data_type : uint16_t {
         enum_extra_data_type_tgas_total_lock_amount_property_height = 0,
         enum_extra_data_type_tgas_second_level_gmtime               = 1,
+        enum_extra_data_type_eth_header                             = 2,
     };
  public:
     static std::string build_extra_string(base::xvheader_t* _tableheader, uint64_t tgas_height, uint64_t gmtime);
@@ -37,6 +38,8 @@ class xtableheader_extra_t : public xserializable_based_on<void> {
     void     set_tgas_total_lock_amount_property_height(uint64_t height);
     uint64_t get_second_level_gmtime() const;
     void     set_second_level_gmtime(uint64_t gmtime);
+    std::string get_ethheader() const;
+    void     set_ethheader(const std::string & value);
 
  private:
     std::map<uint16_t, std::string>  m_paras;
