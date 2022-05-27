@@ -74,6 +74,20 @@ void decodeNibbles(xbytes_t const & nibbles, xbytes_t::iterator bytes_begin) {
     }
 }
 
+// prefixLen returns the length of the common prefix of a and b.
+std::size_t prefixLen(xbytes_t const & a, xbytes_t const & b) {
+    std::size_t i = 0, length = a.size();
+    if (b.size() < length) {
+        length = b.size();
+    }
+    for (; i < length; i++) {
+        if (a[i] != b[i]) {
+            break;
+        }
+    }
+    return i;
+}
+
 // hasTerm returns whether a hex key has the terminator flag.
 bool hasTerm(xbytes_t const & s) {
     return (s.size() > 0) && (s[s.size() - 1] == 16);

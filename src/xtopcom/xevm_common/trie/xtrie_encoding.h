@@ -13,6 +13,7 @@ xbytes_t compactToHex(xbytes_t compact);
 xbytes_t keybytesToHex(xbytes_t const & str);
 xbytes_t hexToKeybytes(xbytes_t hex);
 void decodeNibbles(xbytes_t const & nibbles, xbytes_t::iterator bytes_begin);
+std::size_t prefixLen(xbytes_t const & a, xbytes_t const & b);
 bool hasTerm(xbytes_t const & s);
 
 NS_END3
