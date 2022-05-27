@@ -34,10 +34,11 @@ private:
     void postprocess_recv_stage(const uint64_t supplement_gas, std::error_code & ec);
     void postprocess_confirm_stage(const uint64_t supplement_gas, std::error_code & ec);
 
-    void store_in_one_stage(std::error_code & ec);
-    void store_in_send_stage(std::error_code & ec);
-    void store_in_recv_stage(std::error_code & ec);
-    void store_in_confirm_stage(std::error_code & ec);
+    void store_in_one_stage();
+    void store_in_send_stage();
+    void store_in_recv_stage();
+    void store_in_confirm_stage();
+    void store_abnormal();
 
     void init(std::error_code & ec);
     void add(const uint64_t tgas, std::error_code & ec);
@@ -48,16 +49,11 @@ private:
     void process_disk_tgas(std::error_code & ec);
     void process_calculation_tgas(const uint64_t supplement_gas, std::error_code & ec);
 
-    uint64_t balance_to_tgas(const uint64_t balance) const;
-    uint64_t tgas_to_balance(const uint64_t tgas) const;
-
     // tgas related param
     uint64_t m_free_tgas{0};
     uint64_t m_free_tgas_usage{0};
-    uint64_t m_deducted_free_tgas_usage{0};
     uint64_t m_converted_tgas{0};
     uint64_t m_converted_tgas_usage{0};
-    uint64_t m_deducted_converted_tgas_usage{0};
 
     // onchain related param
     uint64_t m_time{0};

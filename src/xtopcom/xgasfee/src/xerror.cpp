@@ -46,6 +46,9 @@ static char const * errc_to_message(int const errc) noexcept {
     case xerrc_t::tx_calculation_gas_over_limit:
         return "tx calculation gas over limit";
 
+    case xerrc_t::tx_out_of_gas:
+        return "tx out of gas";
+
     default:  // NOLINT(clang-diagnostic-covered-switch-default)
         return "unknown error";
     }
