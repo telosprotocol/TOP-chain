@@ -81,6 +81,18 @@ void     xtableheader_extra_t::set_second_level_gmtime(uint64_t gmtime) {
     m_paras[enum_extra_data_type_tgas_second_level_gmtime] = value;
 }
 
+std::string xtableheader_extra_t::get_ethheader() const {
+    auto iter = m_paras.find(enum_extra_data_type_eth_header);
+    if (iter == m_paras.end()) {
+        return std::string();
+    }
+    return iter->second;
+}
+
+void xtableheader_extra_t::set_ethheader(const std::string & value) {
+    m_paras[enum_extra_data_type_eth_header] = value;
+}
+
 std::string xtableheader_extra_t::build_extra_string(base::xvheader_t* _tableheader, uint64_t tgas_height, uint64_t gmtime) {
     if (_tableheader->get_height() == 0) {
         // genesis block should not set extra
