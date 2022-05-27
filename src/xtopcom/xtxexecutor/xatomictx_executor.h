@@ -16,6 +16,7 @@ class xatomictx_output_t {
     std::string     dump() const;
 
     bool                        m_is_pack{false};
+    bool                        m_drop_tx{false};
     bool                        m_is_state_dirty{false};
     size_t                      m_snapshot_size{0};
     xvm_output_t                m_vm_output;

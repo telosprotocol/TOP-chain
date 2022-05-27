@@ -19,12 +19,25 @@ xbatchtx_executor_t::xbatchtx_executor_t(const statectx::xstatectx_face_ptr_t & 
 
 int32_t xbatchtx_executor_t::execute(const std::vector<xcons_transaction_ptr_t> & txs, std::vector<xatomictx_output_t> & outputs) {
     xatomictx_executor_t atomic_executor(m_statectx, m_para);
+    uint64_t gas_used = 0;
     xassert(!txs.empty());
     for (auto & tx : txs) {
         xatomictx_output_t output;
         output.m_tx = tx;
-        enum_execute_result_type result = atomic_executor.execute(tx, output);
-        output.m_result = result;
+        if (tx->get_transaction()->get_gaslimit() + gas_used > m_para.get_gas_limit()) {
+            output.m_is_pack = false;
+            output.m_drop_tx = false;
+            continue;
+        } else {
+            enum_execute_result_type result = atomic_executor.execute(tx, output);
+            if (result == enum_exec_success) {
+                gas_used += output.m_vm_output.m_tx_result.used_gas;
+            }
+            if (!output.m_is_pack && output.m_tx->is_send_or_self_tx()) {
+                output.m_drop_tx = true;
+            }
+            output.m_result = result;
+        }
         outputs.push_back(output);
         // xinfo("xbatchtx_executor_t::execute %s,batch_result=%d", output.dump().c_str(),result);
     }
