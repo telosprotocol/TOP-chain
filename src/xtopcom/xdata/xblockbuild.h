@@ -24,7 +24,7 @@ class xtableheader_extra_t : public xserializable_based_on<void> {
         enum_extra_data_type_eth_header                             = 2,
     };
  public:
-    static std::string build_extra_string(base::xvheader_t* _tableheader, uint64_t tgas_height, uint64_t gmtime);
+    static std::string build_extra_string(base::xvheader_t* _tableheader, uint64_t tgas_height, uint64_t gmtime, const std::string & eth_header);
 
  protected:
     int32_t do_write(base::xstream_t & stream) const override;

@@ -93,26 +93,20 @@ void xtableheader_extra_t::set_ethheader(const std::string & value) {
     m_paras[enum_extra_data_type_eth_header] = value;
 }
 
-std::string xtableheader_extra_t::build_extra_string(base::xvheader_t* _tableheader, uint64_t tgas_height, uint64_t gmtime) {
+std::string xtableheader_extra_t::build_extra_string(base::xvheader_t* _tableheader, uint64_t tgas_height, uint64_t gmtime, const std::string & eth_header) {
     if (_tableheader->get_height() == 0) {
         // genesis block should not set extra
         return {};
     }
 
-    xtableheader_extra_t header_extra;  
-    if (base::xvblock_fork_t::is_block_older_version(_tableheader->get_block_version(), base::enum_xvblock_fork_version_3_0_0)) {
-        // before v3.0.0, only light-table set tgas height
-        if (_tableheader->get_block_class() == base::enum_xvblock_class_light) {
-            header_extra.set_tgas_total_lock_amount_property_height(tgas_height);
-        } else {
-            return {};
-        }
-    } else {
-        // after v3.0.0, only light-table set tgas height, and all class table should set gmtime
-        if (_tableheader->get_block_class() == base::enum_xvblock_class_light) {
-            header_extra.set_tgas_total_lock_amount_property_height(tgas_height);
-        }
-        header_extra.set_second_level_gmtime(gmtime);
+    xtableheader_extra_t header_extra;
+    if (_tableheader->get_block_class() == base::enum_xvblock_class_light) {
+        header_extra.set_tgas_total_lock_amount_property_height(tgas_height);
+    }
+    // after v3.0.0, only light-table set tgas height, and all class table should set gmtime
+    header_extra.set_second_level_gmtime(gmtime);
+    if (!base::xvblock_fork_t::is_block_older_version(_tableheader->get_block_version(), base::enum_xvblock_fork_version_compatible_eth) && !eth_header.empty()) {
+        header_extra.set_ethheader(eth_header);
     }
     std::string extra_string;
     header_extra.serialize_to_string(extra_string);
@@ -395,7 +389,7 @@ xemptyblock_build_t::xemptyblock_build_t(base::xvblock_t* prev_block, const xblo
     }
     init_header_qcert(build_para);
     if ((prev_block->get_block_level() == base::enum_xvblock_level_table)) {
-        std::string _extra_data = xtableheader_extra_t::build_extra_string(get_header(), para.get_tgas_height(), para.get_gmtime());
+        std::string _extra_data = xtableheader_extra_t::build_extra_string(get_header(), para.get_tgas_height(), para.get_gmtime(), para.get_ethheader());
         set_header_extra(_extra_data);
     }
 }
@@ -466,7 +460,7 @@ xlighttable_build_t::xlighttable_build_t(base::xvblock_t* prev_block, const xtab
                                     para.get_drand_height(), para.get_justify_cert_hash());
     base::xvaccount_t _vaccount(prev_block->get_account());
     init_header_qcert(build_para);
-    std::string _extra_data = xtableheader_extra_t::build_extra_string(get_header(), para.get_tgas_height(), para.get_gmtime());
+    std::string _extra_data = xtableheader_extra_t::build_extra_string(get_header(), para.get_tgas_height(), para.get_gmtime(), para.get_ethheader());
     set_header_extra(_extra_data);
     build_block_body(bodypara, _vaccount, prev_block->get_height() + 1);
 }
@@ -728,7 +722,7 @@ xfulltable_build_t::xfulltable_build_t(base::xvblock_t* prev_block, const xfullt
                                     para.get_drand_height(), para.get_justify_cert_hash());
     base::xvaccount_t _vaccount(prev_block->get_account());
     init_header_qcert(build_para);
-    std::string _extra_data = xtableheader_extra_t::build_extra_string(get_header(), para.get_tgas_height(), para.get_gmtime());
+    std::string _extra_data = xtableheader_extra_t::build_extra_string(get_header(), para.get_tgas_height(), para.get_gmtime(), para.get_ethheader());
     set_header_extra(_extra_data);    
     build_block_body(bodypara, _vaccount, prev_block->get_height() + 1);
 }

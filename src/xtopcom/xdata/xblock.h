@@ -142,6 +142,7 @@ class xblock_consensus_para_t {
     void    set_timeofday_s(uint64_t now) {m_timeofday_s = now;}
     void    set_clock(uint64_t clock) {m_clock = clock;}
     void    set_gmtime(uint64_t gmtime) {m_gmtime = gmtime;}
+    void    set_ethheader(const std::string & ethheader) const {m_ethheader = ethheader;}
 
  public:
     const std::string &     get_random_seed() const {return m_random_seed;}
@@ -166,6 +167,7 @@ class xblock_consensus_para_t {
     uint64_t                get_parent_height() const {return m_parent_height;}
     const std::string &     dump() const {return m_dump_str;}
     uint64_t                get_gettimeofday_s() const {return m_timeofday_s;}
+    const std::string &     get_ethheader() const {return m_ethheader;}
 
  private:
     std::string     m_account;
@@ -189,6 +191,7 @@ class xblock_consensus_para_t {
     mutable std::string     m_justify_cert_hash;  // may changed by unit
     mutable uint64_t        m_parent_height{0};  // may changed by unit
     uint64_t        m_timeofday_s{0};
+    mutable std::string     m_ethheader;
 };
 
 NS_END2
