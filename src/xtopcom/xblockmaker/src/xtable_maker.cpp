@@ -10,6 +10,8 @@
 #include "xblockmaker/xblock_builder.h"
 #include "xdata/xblocktool.h"
 #include "xdata/xblockbuild.h"
+#include "xdata/xethheader.h"
+#include "xdata/xethreceipt.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xconfig/xconfig_register.h"
 #include "xchain_fork/xchain_upgrade_center.h"
@@ -565,7 +567,8 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
     statectx::xstatectx_para_t statectx_para(cs_para.get_clock());
     statectx::xstatectx_ptr_t statectx_ptr = statectx::xstatectx_factory_t::create_latest_cert_statectx(cs_para.get_latest_cert_block().get(), table_para.get_tablestate(), table_para.get_commit_tablestate(), statectx_para);
     // create batch executor
-    txexecutor::xvm_para_t vmpara(cs_para.get_clock(), cs_para.get_random_seed(), cs_para.get_total_lock_tgas_token());
+    uint64_t gas_limit = XGET_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit);
+    txexecutor::xvm_para_t vmpara(cs_para.get_clock(), cs_para.get_random_seed(), cs_para.get_total_lock_tgas_token(), gas_limit);
     txexecutor::xbatchtx_executor_t executor(statectx_ptr, vmpara);
 
     std::vector<xcons_transaction_ptr_t> input_txs;
@@ -633,7 +636,7 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
                 txkeys_mgr.add_pack_tx(v);
             }
         } else {
-            if (txout.m_tx->is_send_or_self_tx()) {
+            if (txout.m_drop_tx) {
                 // TODO(jimmy) delete from txpool
                 xtxpool_v2::tx_info_t txinfo(txout.m_tx->get_source_addr(), txout.m_tx->get_tx_hash_256(), txout.m_tx->get_tx_subtype());
                 get_txpool()->pop_tx(txinfo);
@@ -697,6 +700,9 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
     xtablebuilder_t::update_receipt_confirmids(statectx_ptr->get_table_state(), changed_confirm_ids);
     std::map<std::string, std::string> property_hashs;
     xtablebuilder_t::make_table_prove_property_hashs(statectx_ptr->get_table_state()->get_bstate().get(), property_hashs);
+
+    cs_para.set_ethheader(data::xeth_header_builder::build(cs_para.get_clock(), data::ETH_HEADER_fORMAT_NORMAL, gas_limit, txs_info));
+
     data::xblock_ptr_t tableblock = xtablebuilder_t::make_light_block(cs_para.get_latest_cert_block(),
                                                                         statectx_ptr->get_table_state(),
                                                                         cs_para,
@@ -751,6 +757,9 @@ xblock_ptr_t xtable_maker_t::make_full_table(const xtablemaker_para_t & table_pa
     data::xtablestate_ptr_t tablestate = table_para.get_tablestate();
     xassert(nullptr != tablestate);
 
+    uint64_t gas_limit = XGET_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit);
+    cs_para.set_ethheader(data::xeth_header_builder::build(cs_para.get_clock(), data::ETH_HEADER_fORMAT_SIMPLE, gas_limit));
+
     xblock_builder_para_ptr_t build_para = std::make_shared<xfulltable_builder_para_t>(tablestate, blocks_from_last_full, get_resources());
     xblock_ptr_t proposal_block = m_fulltable_builder->build_block(cert_block, table_para.get_tablestate()->get_bstate(), cs_para, build_para);
     if (proposal_block == nullptr) {
@@ -776,6 +785,9 @@ xblock_ptr_t xtable_maker_t::make_empty_table(const xtablemaker_para_t & table_p
     cs_para.set_parent_height(0);
     data::xtablestate_ptr_t tablestate = table_para.get_tablestate();
     xassert(nullptr != tablestate);
+
+    uint64_t gas_limit = XGET_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit);
+    cs_para.set_ethheader(data::xeth_header_builder::build(cs_para.get_clock(), data::ETH_HEADER_fORMAT_SIMPLE, gas_limit));
 
     xblock_ptr_t proposal_block = m_emptytable_builder->build_block(cert_block, table_para.get_tablestate()->get_bstate(), cs_para, m_default_builder_para);
     return proposal_block;

@@ -37,6 +37,7 @@ class xtable_block_para_t {
     void    set_fullstate_bin(const std::string & fullstate) {m_fullstate_bin = fullstate;}
     void    set_tgas_balance_change(const int64_t amount) {m_tgas_balance_change = amount;}
     void    set_property_hashs(const std::map<std::string, std::string> & hashs) {m_property_hashs = hashs;}
+    void    set_eth_header(const std::string & eth_header) {m_eth_header = eth_header;}
 
     const std::vector<xblock_ptr_t> & get_account_units() const {return m_account_units;}
     const std::vector<xlightunit_tx_info_ptr_t> & get_txs() const {return m_txs;}
@@ -44,6 +45,7 @@ class xtable_block_para_t {
     const std::string &             get_fullstate_bin() const {return m_fullstate_bin;}
     int64_t                         get_tgas_balance_change() const {return m_tgas_balance_change;}
     const std::map<std::string, std::string> &  get_property_hashs() const {return m_property_hashs;}
+    const std::string &             get_eth_header() const {return m_eth_header;}
 
  private:
     std::vector<xblock_ptr_t>        m_account_units;
@@ -52,6 +54,7 @@ class xtable_block_para_t {
     int64_t                          m_tgas_balance_change{0};
     std::map<std::string, std::string> m_property_hashs;  // need set to table-action for property receipt
     std::vector<xlightunit_tx_info_ptr_t> m_txs;
+    std::string                      m_eth_header;
 };
 
 class xtable_block_t : public xblock_t {
