@@ -39,6 +39,8 @@ namespace data {
     */
 
     struct xrelay_election_node_t {
+        xrelay_election_node_t() {}
+        xrelay_election_node_t(const evm_common::h256 & pubkey_x, const evm_common::h256 & pubkey_y, uint64_t stk) : public_key_x(pubkey_x), public_key_y(pubkey_y), stake(stk) {}
         //election key 
         evm_common::h256        public_key_x;
         evm_common::h256        public_key_y;
@@ -140,7 +142,7 @@ namespace data {
        void                             set_block_height(uint64_t height);
        void                             set_epochid(uint64_t id);
        void                             set_timestamp(uint64_t timestamp);
-       void                             set_elections_next(xrelay_election_group_t &elections);
+       void                             set_elections_next(const xrelay_election_group_t &elections);
        void                             add_signature(xrelay_signature signature);
 
        const xrelay_block_inner_header  &get_inner_header() const {return m_inner_header; }
@@ -200,7 +202,7 @@ namespace data {
         bool                                decodeBytes(xbytes_t const& _d, std::error_code & ec,  bool withSignature = false);
         xbytes_t                            streamRLP_header_to_contract();
 
-        void                                set_elections_next(xrelay_election_group_t &elections);
+        void                                set_elections_next(const xrelay_election_group_t &elections);
         void                                set_transactions(const std::vector<xeth_transaction_t> &transactions);
         void                                set_receipts(const std::vector<xeth_receipt_t> &receipts);
         void                                set_header(xrelay_block_header &block_hedaer);   
@@ -221,6 +223,7 @@ namespace data {
         const uint64_t                   &get_timestamp() const { return m_header.get_timestamp();}
         const std::vector<xeth_receipt_t>   &get_block_receipts() const { return m_receipts;}
         const std::vector<xeth_transaction_t>   &get_all_transactions() { return m_transactions ;}
+        std::string                         dump() const;
 
     protected:
         void                                streamRLP(evm_common::RLPStream &rlp_stream,bool withSignature = false) const;

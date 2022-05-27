@@ -360,7 +360,7 @@ void xrelay_block_header::set_timestamp(uint64_t timestamp)
 }
 
 
-void xrelay_block_header::set_elections_next(xrelay_election_group_t &elections)
+void xrelay_block_header::set_elections_next(const xrelay_election_group_t &elections)
 {   
     m_next_elections_set.election_epochID = elections.election_epochID;
     for (auto &election : elections.elections_vector) {
@@ -404,7 +404,7 @@ xrelay_block::xrelay_block(uint8_t block_version, evm_common::h256  prev_hash, u
 
 }
 
-void xrelay_block::set_elections_next(xrelay_election_group_t &elections)
+void xrelay_block::set_elections_next(const xrelay_election_group_t &elections)
 {   
     m_header.set_elections_next(elections);
 }
@@ -593,6 +593,17 @@ xrelay_signature::xrelay_signature(const std::string & sign_str) {
     s = top::evm_common::fromBigEndian<top::evm_common::u256>(s_bytes);
 }
 
-
+std::string xrelay_block::dump() const {
+    char local_param_buf[256];
+    xprintf(local_param_buf,
+            sizeof(local_param_buf),
+            "{height:%lu,epochid:%lu,timestamp:%lu,election size:%u,receipts size:%u}",
+            m_header.m_inner_header.get_block_height(),
+            m_header.m_inner_header.get_epochID(),
+            m_header.m_inner_header.get_timestamp(),
+            (uint32_t)m_header.get_elections_sets().elections_vector.size(),
+            (uint32_t)m_receipts.size());
+    return std::string(local_param_buf);
+}
 
 NS_END2

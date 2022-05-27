@@ -2,7 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xvm/xsystem_contracts/xelection/xrelay/xrelay_elect_relay_contract.h"
+#include "xvm/xsystem_contracts/xelection/xzec/xzec_elect_relay_contract.h"
 
 #include "xchain_fork/xchain_upgrade_center.h"
 #include "xcodec/xmsgpack_codec.hpp"
@@ -22,17 +22,17 @@
 #ifndef XSYSCONTRACT_MODULE
 #    define XSYSCONTRACT_MODULE "sysContract_"
 #endif
-#define XCONTRACT_PREFIX "RelayElectRelay_"
+#define XCONTRACT_PREFIX "ZecElectRelay_"
 #define XRELAY_ELECT XSYSCONTRACT_MODULE XCONTRACT_PREFIX
 
-NS_BEG4(top, xvm, system_contracts, relay)
+NS_BEG4(top, xvm, system_contracts, zec)
 
 using data::election::xelection_result_store_t;
 using data::election::xstandby_result_store_t;
 
-xtop_relay_elect_relay_contract::xtop_relay_elect_relay_contract(common::xnetwork_id_t const & network_id) : xbase_t{network_id} {}
+xtop_zec_elect_relay_contract::xtop_zec_elect_relay_contract(common::xnetwork_id_t const & network_id) : xbase_t{network_id} {}
 
-void xtop_relay_elect_relay_contract::setup() {
+void xtop_zec_elect_relay_contract::setup() {
     data::election::v2::xelection_result_store_t election_result_store;
     common::xelection_round_t group_version{0};
 
@@ -71,32 +71,55 @@ void xtop_relay_elect_relay_contract::setup() {
         *this, data::election::get_property_by_group_id(common::xdefault_group_id), election_result_store);
 }
 
-void xtop_relay_elect_relay_contract::on_timer(common::xlogic_time_t const current_time) {
+void xtop_zec_elect_relay_contract::on_timer(common::xlogic_time_t const current_time) {
     XMETRICS_TIME_RECORD(XRELAY_ELECT "on_timer_all_time");
     XMETRICS_CPU_TIME_RECORD(XRELAY_ELECT "on_timer_cpu_time");
-    XCONTRACT_ENSURE(SOURCE_ADDRESS() == SELF_ADDRESS().value(), "xtop_relay_elect_relay_contract instance is triggled by " + SOURCE_ADDRESS());
-    XCONTRACT_ENSURE(SELF_ADDRESS() == relay_elect_relay_contract_address, "xtop_relay_elect_relay_contract instance is not triggled by relay_elect_relay_contract_address");
-    // XCONTRACT_ENSURE(current_time <= TIME(), u8"xtop_relay_elect_relay_contract::on_timer current_time > consensus leader's time");
+    XCONTRACT_ENSURE(SOURCE_ADDRESS() == SELF_ADDRESS().value(), "xtop_zec_elect_relay_contract instance is triggled by " + SOURCE_ADDRESS());
+    XCONTRACT_ENSURE(SELF_ADDRESS() == zec_elect_relay_contract_address, "xtop_zec_elect_relay_contract instance is not triggled by zec_elect_relay_contract_address");
+    // XCONTRACT_ENSURE(current_time <= TIME(), u8"xtop_zec_elect_relay_contract::on_timer current_time > consensus leader's time");
     XCONTRACT_ENSURE(current_time + XGET_ONCHAIN_GOVERNANCE_PARAMETER(relay_election_interval) / 2 > TIME(),
-                     "xrelay_elect_relay_contract_t::on_timer retried too many times. TX generated time " + std::to_string(current_time) + " TIME() " + std::to_string(TIME()));
+                     "xzec_elect_relay_contract_t::on_timer retried too many times. TX generated time " + std::to_string(current_time) + " TIME() " + std::to_string(TIME()));
 
     std::uint64_t random_seed;
     try {
         auto seed = m_contract_helper->get_random_seed();
         random_seed = utl::xxh64_t::digest(seed);
     } catch (std::exception const & eh) {
-        xwarn("[relay election][on_timer] get random seed failed: %s", eh.what());
+        xwarn("[zec contract][relay election][on_timer] get random seed failed: %s", eh.what());
         return;
     }
-    xinfo("[relay election] on_timer random seed %" PRIu64, random_seed);
+    xinfo("[zec contract][relay election] on_timer random seed %" PRIu64, random_seed);
 
     auto const relay_election_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(relay_election_interval);
     auto const min_relay_group_size = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_relay_group_size);
     auto const max_relay_group_size = XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_relay_group_size);
 
-    auto standby_result_store =
-        serialization::xmsgpack_t<xstandby_result_store_t>::deserialize_from_string_prop(*this, sys_contract_rec_standby_pool_addr, data::XPROPERTY_CONTRACT_STANDBYS_KEY);
-    auto standby_network_result = standby_result_store.result_of(network_id()).network_result();
+    uint64_t read_height =
+        static_cast<std::uint64_t>(std::stoull(STRING_GET2(data::XPROPERTY_LAST_READ_REC_STANDBY_POOL_CONTRACT_BLOCK_HEIGHT, sys_contract_zec_standby_pool_addr)));
+
+    std::string result;
+
+    GET_STRING_PROPERTY(data::XPROPERTY_CONTRACT_STANDBYS_KEY, result, read_height, sys_contract_rec_standby_pool_addr);
+    if (result.empty()) {
+        xwarn("[zec contract][relay election] get rec_standby_pool_addr property fail, block height %" PRIu64, read_height);
+        return;
+    }
+
+    xwarn("[zec contract][relay election] elect zone %" PRIu16 " cluster %" PRIu16 " random nonce %" PRIu64 " logic time %" PRIu64 " read_height: %" PRIu64,
+          static_cast<std::uint16_t>(common::xrelay_zone_id.value()),
+          static_cast<std::uint16_t>(common::xdefault_cluster_id.value()),
+          random_seed,
+          current_time,
+          read_height);
+
+    auto const & standby_result_store = codec::msgpack_decode<xstandby_result_store_t>({std::begin(result), std::end(result)});
+
+    auto const standby_network_result = standby_result_store.result_of(network_id()).network_result();
+
+    if (standby_network_result.empty()) {
+        xwarn("[zec contract][relay election] no standby nodes");
+        return;
+    }
 
     auto election_result_store =
         serialization::xmsgpack_t<xelection_result_store_t>::deserialize_from_string_prop(*this, data::election::get_property_by_group_id(common::xdefault_group_id));
