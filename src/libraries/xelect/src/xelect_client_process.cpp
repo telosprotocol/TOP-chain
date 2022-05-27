@@ -72,9 +72,6 @@ void xelect_client_process::process_timer(const mbus::xevent_ptr_t & e) {
 
     xdbg("[xelect_client_process::process_timer] update xchain timer to %" PRIu64, block->get_height());
     m_xchain_timer->update_time(block->get_height(), time::xlogic_timer_update_strategy_t::discard_old_value);
-
-    // xdbg("[xelect_client_process::process_timer] try update election status at logic time %" PRIu64, block->get_height());
-    // update_election_status(block->get_height());
 }
 
 void xelect_client_process::process_election_block(xobject_ptr_t<base::xvblock_t> const& election_data_block, common::xlogic_time_t const current_time) {
@@ -193,65 +190,89 @@ void xelect_client_process::update_election_status(common::xlogic_time_t current
     constexpr config::xinterval_t committee_group_update_interval = 180;
     constexpr config::xinterval_t consensus_group_update_interval = 60;
     constexpr config::xinterval_t nonconsensus_group_update_interval = 60;
-
+    {
 #if defined(XBUILD_CI) || defined(XBUILD_DEV) || defined(XBUILD_GALILEO)
-    auto const update_rec_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(rec_election_interval) / update_divider;
+        auto const update_rec_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(rec_election_interval) / update_divider;
 #else
-    auto const update_rec_interval = committee_group_update_interval;  // for mainnet & bounty
+        auto const update_rec_interval = committee_group_update_interval;      // for mainnet & bounty
 #endif
-    process_election_contract(common::xaccount_address_t{ sys_contract_rec_elect_rec_addr }, current_time, update_rec_interval);
+        process_election_contract(common::xaccount_address_t{sys_contract_rec_elect_rec_addr}, current_time, update_rec_interval);
+    }
 
+    {
 #if defined(XBUILD_CI) || defined(XBUILD_DEV) || defined(XBUILD_GALILEO)
-    auto const update_archive_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(archive_election_interval) / update_divider;
+        auto const update_archive_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(archive_election_interval) / update_divider;
 #else
-    auto const update_archive_interval = nonconsensus_group_update_interval;   // for mainnet & bounty
+        auto const update_archive_interval = nonconsensus_group_update_interval;  // for mainnet & bounty
 #endif
-    process_election_contract(common::xaccount_address_t{sys_contract_rec_elect_archive_addr}, current_time, update_archive_interval);
+        process_election_contract(common::xaccount_address_t{sys_contract_rec_elect_archive_addr}, current_time, update_archive_interval);
+    }
 
-    // auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
-    // if (chain_fork::xchain_fork_config_center_t::is_forked(fork_config.standalone_exchange_point, current_time)) {
+    {
+        // auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
+        // if (chain_fork::xchain_fork_config_center_t::is_forked(fork_config.standalone_exchange_point, current_time)) {
 #if defined(XBUILD_CI) || defined(XBUILD_DEV) || defined(XBUILD_GALILEO)
-    auto const uodate_exchange_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(exchange_election_interval) / update_divider;
+        auto const uodate_exchange_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(exchange_election_interval) / update_divider;
 #else
-    auto const uodate_exchange_interval = nonconsensus_group_update_interval;  // for mainnet & bounty
+        auto const uodate_exchange_interval = nonconsensus_group_update_interval;  // for mainnet & bounty
 #endif
-    process_election_contract(common::xaccount_address_t{sys_contract_rec_elect_exchange_addr}, current_time, uodate_exchange_interval);
-    // }
+        process_election_contract(common::xaccount_address_t{sys_contract_rec_elect_exchange_addr}, current_time, uodate_exchange_interval);
+        // }
+    }
 
+    {
 #if defined(XBUILD_CI) || defined(XBUILD_DEV) || defined(XBUILD_GALILEO)
-    auto const update_fullnode_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(fullnode_election_interval) / update_divider;
+        auto const update_fullnode_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(fullnode_election_interval) / update_divider;
 #else
-    auto const update_fullnode_interval = nonconsensus_group_update_interval;  // for mainnet & bounty
+        auto const update_fullnode_interval = nonconsensus_group_update_interval;  // for mainnet & bounty
 #endif
-    process_election_contract(common::xaccount_address_t{sys_contract_rec_elect_fullnode_addr}, current_time, update_fullnode_interval);
+        process_election_contract(common::xaccount_address_t{sys_contract_rec_elect_fullnode_addr}, current_time, update_fullnode_interval);
+    }
 
+    {
 #if defined(XBUILD_CI) || defined(XBUILD_DEV) || defined(XBUILD_GALILEO)
-    auto const update_edge_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(edge_election_interval) / update_divider;
+        auto const update_edge_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(edge_election_interval) / update_divider;
 #else
-    auto const update_edge_interval = nonconsensus_group_update_interval;  // for mainnet & bounty
+        auto const update_edge_interval = nonconsensus_group_update_interval;      // for mainnet & bounty
 #endif
-    process_election_contract(common::xaccount_address_t{ sys_contract_rec_elect_edge_addr }, current_time, update_edge_interval);
+        process_election_contract(common::xaccount_address_t{sys_contract_rec_elect_edge_addr}, current_time, update_edge_interval);
+    }
 
+    {
 #if defined(XBUILD_CI) || defined(XBUILD_DEV) || defined(XBUILD_GALILEO)
-    auto const update_zec_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(zec_election_interval) / update_divider;
+        auto const update_zec_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(zec_election_interval) / update_divider;
 #else
-    auto const update_zec_interval = committee_group_update_interval;  // for mainnet & bounty
+        auto const update_zec_interval = committee_group_update_interval;          // for mainnet & bounty
 #endif
-    process_election_contract(common::xaccount_address_t{sys_contract_rec_elect_zec_addr}, current_time, update_zec_interval);
+        process_election_contract(common::xaccount_address_t{sys_contract_rec_elect_zec_addr}, current_time, update_zec_interval);
+    }
 
+    {
 #if defined(XBUILD_CI) || defined(XBUILD_DEV) || defined(XBUILD_GALILEO)
-    auto const update_consensus_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(cluster_election_interval) / update_divider;
+        auto const update_consensus_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(cluster_election_interval) / update_divider;
 #else
-    auto const update_consensus_interval = consensus_group_update_interval;  // for mainnet & bounty
+        auto const update_consensus_interval = consensus_group_update_interval;    // for mainnet & bounty
 #endif
-    process_election_contract(common::xaccount_address_t{ sys_contract_zec_elect_consensus_addr }, current_time, update_consensus_interval);
+        process_election_contract(common::xaccount_address_t{sys_contract_zec_elect_consensus_addr}, current_time, update_consensus_interval);
+    }
 
+    {
 #if defined(XBUILD_CI) || defined(XBUILD_DEV) || defined(XBUILD_GALILEO)
-    auto const update_eth_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_election_interval) / update_divider;
+        auto const update_eth_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_election_interval) / update_divider;
 #else
-    auto const update_eth_interval = consensus_group_update_interval;
+        auto const update_eth_interval = consensus_group_update_interval;
 #endif
-    process_election_contract(zec_elect_eth_contract_address, current_time, update_eth_interval);
+        process_election_contract(zec_elect_eth_contract_address, current_time, update_eth_interval);
+    }
+
+    {
+#if defined(XBUILD_CI) || defined(XBUILD_DEV) || defined(XBUILD_GALILEO)
+        auto const update_relay_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(relay_election_interval) / update_divider;
+#else
+        auto const update_relay_interval = consensus_group_update_interval;
+#endif
+        process_election_contract(zec_elect_relay_contract_address, current_time, update_relay_interval);
+    }
 }
 
 NS_END2

@@ -65,6 +65,7 @@
 #include "xdata/xtransaction_v3.h"
 #include "xstatectx/xstatectx.h"
 #include "xdata/xrelay_block.h"
+#include "xrelay_chain/xrelay_chain_mgr.h"
 
 using namespace top::data;
 
@@ -1034,8 +1035,18 @@ void xrpc_eth_query_manager::top_getRelayBlockByNumber(xJson::Value & js_req, xJ
        // evm_common::u256 chain_bits = 0;
         uint64_t epochID = 0;
         evm_common::h256 prev_hash;
-        data::xrelay_block relay_block(block_version, prev_hash,  0, epochID, 0);
 
+        base::xvaccount_t vaccount(sys_contract_zec_elect_relay_addr);
+        std::vector<data::xrelay_election_node_t> relay_elections;
+        auto ret = xrelay_chain::xrelay_elect_cache_t::get_relay_elections_by_height(vaccount, 0, relay_elections);
+        if (!ret) {
+            return;
+        }
+        data::xrelay_election_group_t reley_election_group;
+        reley_election_group.election_epochID = 0;
+        reley_election_group.elections_vector = relay_elections;
+        data::xrelay_block relay_block(block_version, prev_hash,  0, epochID, 0);
+        relay_block.set_elections_next(reley_election_group);
         xbytes_t header_data = relay_block.get_header().streamRLP_header_to_contract();
 
         xJson::Value js_result;

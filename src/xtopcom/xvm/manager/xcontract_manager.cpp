@@ -31,15 +31,15 @@
 #include "xvm/xsystem_contracts/deploy/xcontract_deploy.h"
 #include "xvm/xsystem_contracts/tcc/xrec_proposal_contract.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_archive_contract.h"
-#include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_exchange_contract.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_edge_contract.h"
+#include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_exchange_contract.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_fullnode_contract.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_rec_contract.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_zec_contract.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_standby_pool_contract.h"
-#include "xvm/xsystem_contracts/xelection/xrelay/xrelay_elect_relay_contract.h"
 #include "xvm/xsystem_contracts/xelection/xzec/xzec_elect_consensus_group_contract.h"
 #include "xvm/xsystem_contracts/xelection/xzec/xzec_elect_eth_group_contract.h"
+#include "xvm/xsystem_contracts/xelection/xzec/xzec_elect_relay_contract.h"
 #include "xvm/xsystem_contracts/xelection/xzec/xzec_group_association_contract.h"
 #include "xvm/xsystem_contracts/xelection/xzec/xzec_standby_pool_contract.h"
 #include "xvm/xsystem_contracts/xregistration/xrec_registration_contract.h"
@@ -98,7 +98,7 @@ void xtop_contract_manager::instantiate_sys_contracts() {
     XREGISTER_CONTRACT(top::xvm::xcontract::xtable_statistic_info_collection_contract, sys_contract_sharding_statistic_info_addr, network_id);
     // XREGISTER_CONTRACT(top::xvm::xcontract::xtable_statistic_info_collection_contract, sys_contract_eth_table_statistic_info_addr, network_id);
     XREGISTER_CONTRACT(top::xvm::system_contracts::zec::xzec_elect_eth_contract_t, sys_contract_zec_elect_eth_addr, network_id);
-    // TODO(JIMMY-RELAY-ELECTION) XREGISTER_CONTRACT(top::xvm::system_contracts::relay::xrelay_elect_relay_contract_t, sys_contract_relay_elect_relay_addr, network_id);
+    XREGISTER_CONTRACT(top::xvm::system_contracts::zec::xzec_elect_relay_contract_t, sys_contract_zec_elect_relay_addr, network_id);
 }
 
 #undef XREGISTER_CONTRACT
@@ -1777,6 +1777,48 @@ void xtop_contract_manager::get_contract_data(common::xaccount_address_t const &
         return get_proposal_map(m_store, contract_address, property_name, json);
     } else if (property_name == VOTE_MAP_ID) {
         return get_proposal_voting_map(m_store, contract_address, property_name, json);
+    }
+}
+
+void xtop_contract_manager::get_election_data(common::xaccount_address_t const & contract_address,
+                                              const xaccount_ptr_t unitstate,
+                                              std::string const & property_name,
+                                              std::vector<std::pair<xpublic_key_t, uint64_t>> & election_data) const {
+    xassert(contract_address == rec_elect_rec_contract_address       ||  // NOLINT
+            contract_address == rec_elect_zec_contract_address       ||  // NOLINT
+            contract_address == rec_elect_edge_contract_address      ||  // NOLINT
+            contract_address == rec_elect_archive_contract_address   ||  // NOLINT
+            contract_address == zec_elect_consensus_contract_address ||
+            contract_address == rec_elect_fullnode_contract_address  ||
+            contract_address == zec_elect_eth_contract_address       ||
+            contract_address == zec_elect_relay_contract_address);
+
+    std::string serialized_value = unitstate->string_get(property_name);
+    if (!serialized_value.empty()) {
+        auto election_result_store = codec::msgpack_decode<data::election::xelection_result_store_t>({std::begin(serialized_value), std::end(serialized_value)});
+        for (auto const & election_network_result_info : election_result_store) {
+            auto const & election_network_result = top::get<data::election::xelection_network_result_t>(election_network_result_info);
+
+            for (auto const & election_result_info : election_network_result) {
+                auto const & election_result = top::get<data::election::xelection_result_t>(election_result_info);
+                for (auto const & election_cluster_result_info : election_result) {
+                    auto const & election_cluster_result = top::get<data::election::xelection_cluster_result_t>(election_cluster_result_info);
+
+                    for (auto const & group_result_info : election_cluster_result) {
+                        auto const & election_group_result = top::get<data::election::xelection_group_result_t>(group_result_info);
+
+                        for (auto const & node_info : election_group_result) {
+                            auto const & node_id = top::get<data::election::xelection_info_bundle_t>(node_info).account_address();
+                            if (node_id.empty()) {
+                                continue;
+                            }
+                            auto const & election_info = top::get<data::election::xelection_info_bundle_t>(node_info).election_info();
+                            election_data.push_back(std::make_pair(election_info.consensus_public_key, election_info.stake));
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 

@@ -25,13 +25,12 @@ common::xaccount_address_t const zec_elect_consensus_contract_address{sys_contra
 common::xaccount_address_t const zec_standby_pool_contract_address{sys_contract_zec_standby_pool_addr};
 common::xaccount_address_t const zec_group_assoc_contract_address{sys_contract_zec_group_assoc_addr};
 common::xaccount_address_t const zec_elect_eth_contract_address{sys_contract_zec_elect_eth_addr};
+common::xaccount_address_t const zec_elect_relay_contract_address{sys_contract_zec_elect_relay_addr};
 
 common::xaccount_address_t const sharding_vote_contract_address{sys_contract_sharding_vote_addr};
 common::xaccount_address_t const sharding_reward_claiming_contract_address{sys_contract_sharding_reward_claiming_addr};
 common::xaccount_address_t const sharding_statistic_info_contract_address{sys_contract_sharding_statistic_info_addr};
 common::xaccount_address_t const eth_statistic_info_contract_address{sys_contract_eth_table_statistic_info_addr};
-
-common::xaccount_address_t const relay_elect_relay_contract_address{sys_contract_relay_elect_relay_addr};
 
 common::xaccount_address_t const eth_zero_address{sys_eth_zero_addr};
 
