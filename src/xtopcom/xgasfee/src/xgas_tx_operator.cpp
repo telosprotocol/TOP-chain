@@ -46,28 +46,8 @@ base::enum_transaction_subtype xtop_gas_tx_operator::tx_subtype() const {
     return m_tx->get_tx_subtype();
 }
 
-void xtop_gas_tx_operator::tx_set_used_tgas(const uint64_t tgas) {
-    m_tx->set_current_used_tgas(tgas);
-}
-
-void xtop_gas_tx_operator::tx_set_used_deposit(const uint64_t deposit) {
-    m_tx->set_current_used_deposit(deposit);
-}
-
-void xtop_gas_tx_operator::tx_set_current_recv_tx_use_send_tx_tgas(const uint64_t tgas) {
-    m_tx->set_current_recv_tx_use_send_tx_tgas(tgas);
-}
-
-uint64_t xtop_gas_tx_operator::tx_used_tgas() const {
-    return m_tx->get_current_used_tgas();
-}
-
 uint64_t xtop_gas_tx_operator::tx_last_action_used_deposit() const {
     return m_tx->get_last_action_used_deposit();
-}
-
-uint64_t xtop_gas_tx_operator::tx_last_action_recv_tx_use_send_tx_tgas() const {
-    return m_tx->get_last_action_recv_tx_use_send_tx_tgas();
 }
 
 data::enum_xtransaction_version xtop_gas_tx_operator::tx_version() const {
@@ -87,8 +67,13 @@ evm_common::u256 xtop_gas_tx_operator::tx_eth_limited_gasfee() const {
     // 1Utop = (10^3 / ratio)Gwei
     auto price = tx_eth_gas_limit();
     auto limit = tx_eth_fee_per_gas();
-    xdbg("[xtop_gas_tx_operator::tx_eth_limited_gasfee] eth_gas_price: %s, eth_gas_limit: %s", price.str().c_str(), limit.str().c_str());
-    return limit * price * XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_to_top_exchange_ratio) / evm_common::u256(1e12);
+    auto gasfee = limit * price * XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_to_top_exchange_ratio) / evm_common::u256(1000000000000ULL);
+    xdbg("[xtop_gas_tx_operator::tx_eth_limited_gasfee] eth_gas_price: %s, eth_gas_limit: %s, ratio: %lu, gasfee: %s",
+         price.str().c_str(),
+         limit.str().c_str(),
+         XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_to_top_exchange_ratio),
+         gasfee.str().c_str());
+    return gasfee;
 }
 
 uint64_t xtop_gas_tx_operator::tx_fixed_tgas() const {
@@ -98,7 +83,7 @@ uint64_t xtop_gas_tx_operator::tx_fixed_tgas() const {
         return 0;
     }
     if (!data::is_sys_contract_address(sender()) && data::is_beacon_contract_address(recver())) {
-        fixed_tgas = XGET_ONCHAIN_GOVERNANCE_PARAMETER(beacon_tx_fee);
+        fixed_tgas = balance_to_tgas(XGET_ONCHAIN_GOVERNANCE_PARAMETER(beacon_tx_fee));
     }
 #endif
     return fixed_tgas;
@@ -131,8 +116,17 @@ uint64_t xtop_gas_tx_operator::tx_disk_tgas() const {
     return static_cast<uint64_t>(disk_tgas);
 }
 
-bool xtop_gas_tx_operator::is_one_stage_tx() {
+bool xtop_gas_tx_operator::is_one_stage_tx() const {
     return (m_tx->is_self_tx() || m_tx->get_inner_table_flag());
+}
+
+uint64_t xtop_gas_tx_operator::balance_to_tgas(const uint64_t balance) const {
+    xassert(XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio) > 0);
+    return balance / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio);
+}
+
+uint64_t xtop_gas_tx_operator::tgas_to_balance(const uint64_t tgas) const {
+    return tgas * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio);
 }
 
 }  // namespace gasfee
