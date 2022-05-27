@@ -119,6 +119,13 @@ public:
     std::array<xtrie_node_face_ptr_t, 17> Childern;
     nodeFlag flags;
 
+public:
+    xtop_trie_full_node() {
+    }
+    xtop_trie_full_node(nodeFlag const & f) {
+        flags = f;
+    }
+
 private:
 public:
     std::shared_ptr<xtop_trie_full_node> copy() {
@@ -153,6 +160,11 @@ public:
     xbytes_t Key;
     xtrie_node_face_ptr_t Val;
     nodeFlag flags;
+
+public:
+    xtop_trie_short_node(xbytes_t const & key, xtrie_node_face_ptr_t val, nodeFlag const & flag) : Key{key}, Val{val} {
+        flags = flag;
+    }
 
 private:
 public:
