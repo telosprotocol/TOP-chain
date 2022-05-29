@@ -39,6 +39,8 @@ public:
 
     uint64_t balance_to_tgas(const uint64_t balance) const;
     uint64_t tgas_to_balance(const uint64_t tgas) const;
+    evm_common::u256 wei_to_utop(const evm_common::u256 wei) const;
+    evm_common::u256 utop_to_wei(const evm_common::u256 utop) const;
 
     bool is_one_stage_tx() const;
 

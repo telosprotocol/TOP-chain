@@ -21,6 +21,7 @@ public:
     ~xtop_gas_state_operator() = default;
 
     uint64_t account_balance() const;
+    evm_common::u256 account_eth_balance() const;
     uint64_t account_available_tgas(uint64_t current_time, uint64_t onchain_total_gas_deposit) const;
     uint64_t account_formular_used_tgas(uint64_t current_time) const;
 
