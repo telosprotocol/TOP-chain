@@ -652,38 +652,41 @@ TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v2_run_contract_self) {
     // EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance));
 }
 
-// TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v3_deploy) {
-//     default_tx_version = data::xtransaction_version_3;
-//     default_tx_type = data::xtransaction_type_deploy_evm_contract;
-//     default_evm_gas_limit = 5000000;
-//     default_used_tgas = 1000000;
-//     default_last_time = 10000000;
-//     // send
-//     make_default();
-//     auto op = make_operator();
-//     std::error_code ec;
-//     op.preprocess(ec);
-//     EXPECT_EQ(ec.value(), 0);
-//     // ... execute self tx
-//     uint64_t supplement_gas = 0;
-//     op.postprocess(supplement_gas, ec);
-//     EXPECT_EQ(ec.value(), 0);
-//     auto detail = op.gasfee_detail();
-//     EXPECT_EQ(detail.m_tx_used_tgas, 0);
-//     EXPECT_EQ(detail.m_tx_used_deposit, (200000 + 6) * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio));
-//     EXPECT_EQ(detail.m_state_used_tgas, 1000000);
-//     EXPECT_EQ(detail.m_state_last_time, default_onchain_time);
-//     EXPECT_EQ(detail.m_state_burn_balance, (200000 + 6) * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio));
-//     // EXPECT_EQ(default_cons_tx->get_current_used_tgas(), 0);
-//     // EXPECT_EQ(default_cons_tx->get_current_used_deposit(), (200000 + 6) * 20);
-//     // EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(1000000));
-//     // EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
-//     // EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance - (200000 + 6) * 20));
-//     // EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_BURN)->get_balance(), base::vtoken_t((200000 + 6) * 20));
-// }
+TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v3_deploy) {
+    default_tx_version = data::xtransaction_version_3;
+    default_tx_type = data::xtransaction_type_deploy_evm_contract;
+    default_evm_gas_limit = 500000000;
+    default_balance = ASSET_TOP(1000000);
+    default_used_tgas = 1000000;
+    default_last_time = 10000000;
+    // send
+    make_default();
+    auto op = make_operator();
+    std::error_code ec;
+    op.preprocess(ec);
+    EXPECT_EQ(ec.value(), 0);
+    // ... execute self tx
+    uint64_t supplement_gas = 0;
+    op.postprocess(supplement_gas, ec);
+    EXPECT_EQ(ec.value(), 0);
+    auto detail = op.gasfee_detail();
+    auto tx_size = default_cons_tx->get_transaction()->get_tx_len();
+    EXPECT_EQ(detail.m_tx_used_tgas, 0);
+    EXPECT_EQ(detail.m_tx_used_deposit, (1200000  + 3) * tx_size * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio));
+    EXPECT_EQ(detail.m_state_used_tgas, 1000000);
+    EXPECT_EQ(detail.m_state_last_time, default_onchain_time);
+    EXPECT_EQ(detail.m_state_burn_balance, (1200000 + 3) * tx_size * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio));
+    // EXPECT_EQ(default_cons_tx->get_current_used_tgas(), 0);
+    // EXPECT_EQ(default_cons_tx->get_current_used_deposit(), (200000 + 6) * 20);
+    // EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_USED_TGAS_KEY)->query(), std::to_string(1000000));
+    // EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
+    // EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance - (200000 + 6) * 20));
+    // EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_BURN)->get_balance(), base::vtoken_t((200000 + 6) * 20));
+}
 
 TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v3_transfer_inner_table_not_use_deposit) {
-    default_evm_gas_limit = 500000;
+    default_evm_gas_limit = 500000000;
+    default_balance = ASSET_TOP(1000000);
     default_tx_version = data::xtransaction_version_3;
     // send
     make_default();
@@ -698,9 +701,9 @@ TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v3_transfer_inner_table_not_use_depos
     op.postprocess(supplement_gas, ec);
     EXPECT_EQ(ec.value(), 0);
     auto detail = op.gasfee_detail();
-    EXPECT_EQ(detail.m_tx_used_tgas, tx_size * 3 + supplement_gas / 50);
-    EXPECT_EQ(detail.m_tx_used_deposit, 0);
-    EXPECT_EQ(detail.m_state_used_tgas, 8842 + tx_size * 3 + supplement_gas / 50);
+    EXPECT_EQ(detail.m_tx_used_tgas, default_free_tgas);
+    EXPECT_EQ(detail.m_tx_used_deposit, (tx_size * 3 + supplement_gas * 80 - 991158) * 20);
+    EXPECT_EQ(detail.m_state_used_tgas, 1000000);
     EXPECT_EQ(detail.m_state_last_time, default_onchain_time);
     // EXPECT_EQ(default_cons_tx->get_current_used_tgas(),  tx_size * 3 + supplement_gas / 50);
     // EXPECT_EQ(default_cons_tx->get_current_used_deposit(), 0);
@@ -712,7 +715,8 @@ TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v3_transfer_inner_table_not_use_depos
 TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v3_transfer_inner_table_use_deposit) {
     default_used_tgas = 1000000;
     default_last_time = 10000000;
-    default_evm_gas_limit = 500000;
+    default_evm_gas_limit = 500000000;
+    default_balance = ASSET_TOP(1000000);
     default_tx_version = data::xtransaction_version_3;
     // send
     make_default();
@@ -720,15 +724,13 @@ TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v3_transfer_inner_table_use_deposit) 
     default_cons_tx->set_inner_table_flag();
     auto op = make_operator();
     std::error_code ec;
-    op.init(ec);
-    EXPECT_EQ(ec.value(), 0);
     op.preprocess(ec);
     EXPECT_EQ(ec.value(), 0);
     // ... execute tx
     uint64_t supplement_gas = 21000;
     op.postprocess(supplement_gas, ec);
-    auto used_deposit = supplement_gas / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tgas_to_eth_gas_exchange_ratio) * 20 + tx_size * 3 * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio);
     EXPECT_EQ(ec.value(), 0);
+    auto used_deposit = supplement_gas * XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_gas_to_tgas_exchange_ratio) * 20 + tx_size * 3 * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio);
     auto detail = op.gasfee_detail();
     EXPECT_EQ(detail.m_tx_used_tgas, 0);
     EXPECT_EQ(detail.m_tx_used_deposit, used_deposit);
@@ -816,7 +818,8 @@ TEST(test_xtvm_v2, xtvm2_demo_v3_T6_transfer_inner_table) {
     statectx::xstatectx_face_ptr_t statectx = std::make_shared<xmock_statectx_t>();
     auto p_statectx = dynamic_cast<xmock_statectx_t *>(statectx.get());
     p_statectx->default_tx_version = data::xtransaction_version_3;
-    p_statectx->default_evm_gas_limit = 500000;
+    p_statectx->default_evm_gas_limit = 500000000;
+    p_statectx->default_balance = ASSET_TOP(1000000);
     p_statectx->default_used_tgas = 1000000;
     p_statectx->default_last_time = 10000000;
     p_statectx->default_sender = p_statectx->default_T6_sender;
@@ -842,7 +845,7 @@ TEST(test_xtvm_v2, xtvm2_demo_v3_T6_transfer_inner_table) {
     EXPECT_EQ(r_eth_balance, p_statectx->default_eth_value);
 
     auto tx_size = p_statectx->default_cons_tx->get_transaction()->get_tx_len();
-    auto used_deposit = 21000 / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tgas_to_eth_gas_exchange_ratio) * 20 + tx_size * 3 * 20;
+    auto used_deposit = 21000 * XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_gas_to_tgas_exchange_ratio) * 20 + tx_size * 3 * 20;
     EXPECT_EQ(output.m_vm_output.m_gasfee_detail.m_tx_used_deposit, used_deposit);
     EXPECT_EQ(output.m_vm_output.m_gasfee_detail.m_tx_used_tgas, 0);
     EXPECT_EQ(output.m_vm_output.m_gasfee_detail.m_state_used_tgas, 1000000);
@@ -884,7 +887,7 @@ TEST(test_xtvm_v2, xtvm2_demo_v3_T6_transfer_inner_table) {
 //     EXPECT_EQ(s_eth_balance, 20000 - p_statectx->default_eth_value);
 //     EXPECT_EQ(r_eth_balance, 0);
 
-//     auto used_deposit = 21000 / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tgas_to_eth_gas_exchange_ratio) * 20 + 6 * 20;
+//     auto used_deposit = 21000 * XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_gas_to_tgas_exchange_ratio) * 20 + 6 * 20;
 //     EXPECT_EQ(p_statectx->default_cons_tx->get_current_used_tgas(), 0);
 //     EXPECT_EQ(p_statectx->default_cons_tx->get_current_used_deposit(), 6 * 20);
 //     EXPECT_EQ(sender_unitstate->get_used_tgas(), 1000000);

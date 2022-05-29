@@ -239,7 +239,7 @@ public:
 
     void SetUp() override {
         top::config::config_register.get_instance().set(config::xtx_deposit_gas_exchange_ratio_onchain_goverance_parameter_t::name, std::to_string(20));
-        top::config::config_register.get_instance().set(config::xtgas_to_eth_gas_exchange_ratio_onchain_goverance_parameter_t::name, std::to_string(50));
+        top::config::config_register.get_instance().set(config::xeth_gas_to_tgas_exchange_ratio_onchain_goverance_parameter_t::name, std::to_string(80));
         top::config::config_register.get_instance().set(config::xeth_to_top_exchange_ratio_onchain_goverance_parameter_t::name, std::to_string(5000000));
         top::config::config_register.get_instance().set(config::xmin_tx_deposit_onchain_goverance_parameter_t::name, std::to_string(ASSET_uTOP(100000)));
         top::config::config_register.get_instance().set(config::xinitial_total_gas_deposit_onchain_goverance_parameter_t::name, std::to_string(ASSET_TOP(1000000000)));
