@@ -50,6 +50,7 @@ class xvm_para_t {
 class xvm_gasfee_detail_t {
 public:
     uint64_t m_state_burn_balance{0};
+    evm_common::u256 m_state_burn_eth_balance{0};
     uint64_t m_state_lock_balance{0};
     uint64_t m_state_unlock_balance{0};
     uint64_t m_state_used_tgas{0};
@@ -61,6 +62,8 @@ public:
         std::stringstream ss;
         ss << "m_state_burn_balance: ";
         ss << m_state_burn_balance;
+        ss << "m_state_burn_eth_balance: ";
+        ss << m_state_burn_eth_balance.str();
         ss << ", m_state_lock_balance: ";
         ss << m_state_lock_balance;
         ss << ", m_state_unlock_balance: ";

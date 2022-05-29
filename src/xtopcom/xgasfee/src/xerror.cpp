@@ -34,6 +34,9 @@ static char const * errc_to_message(int const errc) noexcept {
     case xerrc_t::tx_deposit_to_tgas_not_enough:
         return "tx deposit to tgas not enough";
 
+    case xerrc_t::tx_balance_exceeded:
+        return "tx balance exceeded";
+
     case xerrc_t::tx_limited_gas_exceeded:
         return "tx limited gas exceeded";
 
