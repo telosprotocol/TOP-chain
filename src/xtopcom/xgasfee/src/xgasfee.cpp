@@ -190,7 +190,7 @@ void xtop_gasfee::process_calculation_tgas(const uint64_t calculation_gas, std::
         ec = gasfee::error::xenum_errc::tx_out_of_gas;
         return;
     }
-    evm_common::u256 calculation_tgas = calculation_gas / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tgas_to_eth_gas_exchange_ratio);
+    evm_common::u256 calculation_tgas = calculation_gas * XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_gas_to_tgas_exchange_ratio);
     if (calculation_tgas > UINT64_MAX) {
         xwarn("[xtop_gasfee::process_calculation_tgas] tx_calculation_tgas_exceeded: %s", calculation_tgas.str().c_str());
         ec = gasfee::error::xenum_errc::tx_out_of_gas;
