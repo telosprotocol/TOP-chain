@@ -77,7 +77,7 @@ xbytes_t xeth_store_receipt_t::encodeBytes() const {
     return _bytes;
 }
 
-void xeth_store_receipt_t::decodeBytes(xbytes_t const& _d, std::error_code & ec) {    
+void xeth_store_receipt_t::decodeBytes(xbytes_t const& _d, std::error_code & ec) {
     if (_d.size() < 2) {
         ec = common::error::xerrc_t::invalid_rlp_stream;
         xerror("xeth_store_receipt_t::decodeBytes fail bytes,%zu", _d.size());
@@ -212,6 +212,7 @@ xeth_local_receipt_t::xeth_local_receipt_t(enum_ethtx_version _version, enum_eth
 : xeth_receipt_t(_version, _status, _gasused, _logs) {
 
 }
+
 
 void xeth_local_receipt_t::set_block_hash(std::string const& blockhash) {
     m_block_hash = blockhash;
