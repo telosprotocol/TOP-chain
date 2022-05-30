@@ -73,7 +73,7 @@ private:
 
     using account_id = std::string;
     std::map<std::string, account_id> deployed_contract_map;
-    txexecutor::xvm_para_t vm_param{0, "random_seed", 0};
+    txexecutor::xvm_para_t vm_param{0, "random_seed", 0, 0};
     std::shared_ptr<top::evm::tests::xmock_evm_statectx> statestore{std::make_shared<top::evm::tests::xmock_evm_statectx>()};
 
     struct summary_infos {

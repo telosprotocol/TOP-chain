@@ -38,7 +38,7 @@ TEST(evm_engine_out_of_gas_test, deploy_failed) {
         "4051808367ffffffffffffffff1667ffffffffffffffff1681526020018267ffffffffffffffff1667ffffffffffffffff1681526020019250505060405180910390a1505056fea2646970667358221220b81251e6"
         "353d97dcc679b08a746d7d8f00f5b7051bdf6c1793d3f6f3a9e361fa64736f6c63430006040033",
         true};
-    txexecutor::xvm_para_t vm_param{0, "random_seed", 0};
+    txexecutor::xvm_para_t vm_param{0, "random_seed", 0, 0};
     top::statectx::xstatectx_face_ptr_t statestore{std::make_shared<top::evm::tests::xmock_evm_statectx>()};
 
     // deploy code
@@ -134,7 +134,7 @@ TEST(evm_engine_out_of_gas_test, deploy_success_call_failed) {
         "4051808367ffffffffffffffff1667ffffffffffffffff1681526020018267ffffffffffffffff1667ffffffffffffffff1681526020019250505060405180910390a1505056fea2646970667358221220b81251e6"
         "353d97dcc679b08a746d7d8f00f5b7051bdf6c1793d3f6f3a9e361fa64736f6c63430006040033",
         true};
-    txexecutor::xvm_para_t vm_param{0, "random_seed", 0};
+    txexecutor::xvm_para_t vm_param{0, "random_seed", 0, 0};
     top::statectx::xstatectx_face_ptr_t statestore{std::make_shared<top::evm::tests::xmock_evm_statectx>()};
 
     // deploy code
