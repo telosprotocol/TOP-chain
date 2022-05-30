@@ -375,8 +375,8 @@ void xrpc_eth_query_manager::eth_getTransactionReceipt(xJson::Value & js_req, xJ
         js_result["effectiveGasPrice"] = "0x0";
         js_result["gasUsed"] = std::string("0x") + sendindex->get_raw_tx()->get_gaslimit().str();
     } else {
-        evm_common::xevm_transaction_result_t evm_result;
-        auto ret = sendindex->get_txaction().get_evm_transaction_result(evm_result);
+        data::xeth_store_receipt_t evm_tx_receipt;
+        auto ret = sendindex->get_txaction().get_evm_transaction_receipt(evm_tx_receipt);
 
         if (tx_type == xtransaction_type_run_contract) {
             std::string contract_addr  = std::string("0x") + sendindex->get_raw_tx()->get_target_addr().substr(6);
@@ -384,13 +384,13 @@ void xrpc_eth_query_manager::eth_getTransactionReceipt(xJson::Value & js_req, xJ
             js_result["contractAddress"] = contract_addr;
         } else {
             js_result["to"] = xJson::Value::null;
-            std::string contract_addr  = evm_result.extra_msg;
+            std::string contract_addr  = evm_tx_receipt.get_contract_address().to_hex_string();
             js_result["contractAddress"] = contract_addr;
         }
 
         evm_common::xbloom9_t logs_bloom;
         uint32_t index = 0;
-        for (auto & log : evm_result.logs) {
+        for (auto & log : evm_tx_receipt.get_logs()) {
             xJson::Value js_log;
 
             std::stringstream outstr1;
@@ -408,18 +408,20 @@ void xrpc_eth_query_manager::eth_getTransactionReceipt(xJson::Value & js_req, xJ
             js_result["logs"].append(js_log);
             index++;
         }
-        if (evm_result.logs.empty()) {
+        if (evm_tx_receipt.get_logs().empty()) {
             js_result["logs"].resize(0);
         }
 
         js_result["logsBloom"] = std::string("0x") + logs_bloom.get_hex_string_data();
-        js_result["status"] = (evm_result.status == 0) ?  "0x1" : "0x0";
+        js_result["status"] = (evm_tx_receipt.get_tx_status() == ethreceipt_status_successful) ?  "0x1" : "0x0";
         std::stringstream outstr;
         outstr << "0x" << std::hex << sendindex->get_raw_tx()->get_eip_version();
         js_result["type"] = std::string(outstr.str());
         outstr.seekp(0);
-        outstr << "0x" << std::hex << evm_result.used_gas;
+        outstr << "0x" << std::hex << evm_tx_receipt.get_gas_used();
         js_result["gasUsed"] = outstr.str();
+        outstr.seekp(0);
+        outstr << "0x" << std::hex << evm_tx_receipt.get_cumulative_gas_used();
         js_result["cumulativeGasUsed"] = outstr.str();
         js_result["effectiveGasPrice"] = "0x77359400";
     }
@@ -1107,11 +1109,11 @@ int xrpc_eth_query_manager::get_log(xJson::Value & js_rsp, const uint64_t begin,
             outstr << "0x" << std::hex << sendindex->get_txindex()->get_block_height();
             std::string block_num = outstr.str();
 
-            evm_common::xevm_transaction_result_t evm_result;
-            auto ret = sendindex->get_txaction().get_evm_transaction_result(evm_result);
+            data::xeth_store_receipt_t evm_tx_receipt;
+            auto ret = sendindex->get_txaction().get_evm_transaction_receipt(evm_tx_receipt);
 
             uint32_t index = 0;
-            for (auto & log : evm_result.logs) {  // logs in a transaction
+            for (auto & log : evm_tx_receipt.get_logs()) {  // logs in a transaction
                 if (false == check_log_is_match(log, vTopics, sAddress)) {
                     continue;
                 }

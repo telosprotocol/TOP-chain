@@ -16,7 +16,6 @@ class xatomictx_output_t {
     std::string     dump() const;
 
     bool                        m_is_pack{false};
-    bool                        m_drop_tx{false};
     bool                        m_is_state_dirty{false};
     size_t                      m_snapshot_size{0};
     xvm_output_t                m_vm_output;
@@ -29,10 +28,10 @@ class xatomictx_executor_t {
     xatomictx_executor_t(const statectx::xstatectx_face_ptr_t & statectx, const xvm_para_t & para);
 
  public:
-    enum_execute_result_type execute(const xcons_transaction_ptr_t & tx, xatomictx_output_t & output);
+    enum_execute_result_type execute(const xcons_transaction_ptr_t & tx, xatomictx_output_t & output, uint64_t gas_used);
 
  private:
-    enum_execute_result_type vm_execute(const xcons_transaction_ptr_t & tx, xatomictx_output_t & output); 
+    enum_execute_result_type vm_execute(const xcons_transaction_ptr_t & tx, xatomictx_output_t & output, uint64_t gas_used = 0); 
     enum_execute_result_type vm_execute_before_process(const xcons_transaction_ptr_t & tx);
     bool    set_tx_account_state(const data::xunitstate_ptr_t & unitstate, const xcons_transaction_ptr_t & tx);
     bool    set_tx_table_state(const data::xtablestate_ptr_t & tablestate, const xcons_transaction_ptr_t & tx);
