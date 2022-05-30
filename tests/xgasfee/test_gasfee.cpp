@@ -857,6 +857,44 @@ TEST(test_xtvm_v2, xtvm2_demo_v3_T6_transfer_inner_table) {
     // EXPECT_EQ(sender_unitstate->burn_balance(), base::vtoken_t(used_deposit));
 }
 
+TEST(test_xtvm_v2, xtvm2_demo_v3_T6_transfer_inner_table_use_eth) {
+    statectx::xstatectx_face_ptr_t statectx = std::make_shared<xmock_statectx_t>();
+    auto p_statectx = dynamic_cast<xmock_statectx_t *>(statectx.get());
+    p_statectx->default_tx_version = data::xtransaction_version_3;
+    p_statectx->default_evm_gas_limit = 500000000;
+    p_statectx->default_balance = 10;
+    p_statectx->default_used_tgas = 1000000;
+    p_statectx->default_last_time = 10000000;
+    p_statectx->default_sender = p_statectx->default_T6_sender;
+    p_statectx->default_recver = p_statectx->default_T6_recver;
+    p_statectx->build_default();
+    base::xvaccount_t sender_vaccount{p_statectx->default_sender};
+    base::xvaccount_t recver_vaccount{p_statectx->default_recver};
+    auto sender_unitstate = statectx->load_unit_state(sender_vaccount);
+    auto recver_unitstate = statectx->load_unit_state(recver_vaccount);
+    sender_unitstate->tep_token_deposit(data::XPROPERTY_ASSET_ETH, evm_common::u256(2000000000000000ULL));
+    txexecutor::xvm_para_t param{p_statectx->default_onchain_time, "0000", p_statectx->default_onchain_deposit_tgas};
+    txexecutor::xatomictx_executor_t atomictx_executor{statectx, param};
+    txexecutor::xatomictx_output_t output;
+
+    EXPECT_EQ(txexecutor::enum_exec_success, atomictx_executor.vm_execute(p_statectx->default_cons_tx, output));
+    EXPECT_TRUE(output.m_vm_output.m_tx_exec_succ);
+    EXPECT_EQ(output.m_vm_output.m_vm_error_code, 0);
+    EXPECT_TRUE(output.m_vm_output.m_vm_error_str.empty());
+
+    auto s_eth_balance = sender_unitstate->tep_token_balance(data::XPROPERTY_ASSET_ETH);
+    auto r_eth_balance = recver_unitstate->tep_token_balance(data::XPROPERTY_ASSET_ETH);
+    EXPECT_EQ(s_eth_balance, evm_common::u256(2000000000000000ULL) - p_statectx->default_eth_value);
+    EXPECT_EQ(r_eth_balance, p_statectx->default_eth_value);
+
+    auto tx_size = p_statectx->default_cons_tx->get_transaction()->get_tx_len();
+    EXPECT_EQ(output.m_vm_output.m_gasfee_detail.m_tx_used_deposit, 0);
+    EXPECT_EQ(output.m_vm_output.m_gasfee_detail.m_tx_used_tgas, 0);
+    EXPECT_EQ(output.m_vm_output.m_gasfee_detail.m_state_used_tgas, 1000000);
+    EXPECT_EQ(output.m_vm_output.m_gasfee_detail.m_state_burn_balance, 0);
+    EXPECT_EQ(output.m_vm_output.m_gasfee_detail.m_state_burn_eth_balance, evm_common::u256(6720024000000));
+}
+
 // TEST(test_xtvm_v2, xtvm2_demo_v3_transfer_diff_table) {
 //     statectx::xstatectx_face_ptr_t statectx = std::make_shared<xmock_statectx_t>();
 //     auto p_statectx = dynamic_cast<xmock_statectx_t *>(statectx.get());
