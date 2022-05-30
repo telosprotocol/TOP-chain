@@ -7,6 +7,7 @@
 #include "xbase/xns_macro.h"
 #include "xbasic/xbyte_buffer.h"
 #include "xbasic/xhash.hpp"
+#include "xevm_common/rlp.h"  // todo move it to .cpp
 #include "xevm_common/rlp/xrlp_encodable.h"
 
 #include <array>
@@ -19,10 +20,6 @@ NS_BEG3(top, evm_common, trie)
 // fwd:
 class xtop_trie_hash_node;
 using xtrie_hash_node_t = xtop_trie_hash_node;
-
-// using hashNode = xbytes_t;
-// using valueNode = xbytes_t;
-// static valueNode nullValueNode{};
 
 enum class xtop_trie_node_type : uint8_t {
     invalid = 0,
@@ -110,48 +107,6 @@ struct nodeFlag {
     bool dirty;
 };
 
-// for branch node
-// actual trie node data to encode/decode, so it need to impl encodeELP
-class xtop_trie_full_node
-  : public xtrie_node_face_t
-  , public rlp::xrlp_encodable_t<xtop_trie_full_node> {
-public:
-    std::array<xtrie_node_face_ptr_t, 17> Childern;
-    nodeFlag flags;
-
-public:
-    xtop_trie_full_node() {
-    }
-    xtop_trie_full_node(nodeFlag const & f) {
-        flags = f;
-    }
-
-private:
-public:
-    std::shared_ptr<xtop_trie_full_node> copy() {
-        return std::make_shared<xtop_trie_full_node>(*this);
-    }
-
-public:
-    std::string fstring(std::string const & ind) override {
-        // todo;
-        return "";
-    }
-    std::pair<xtrie_hash_node_t, bool> cache() override {
-        return {flags.hash, flags.dirty};
-    }
-    xtrie_node_type_t type() override {
-        return xtrie_node_type_t::fullnode;
-    }
-
-public:
-    void EncodeRLP(xbytes_t & buf, std::error_code & ec) override {
-        // todo . how to recursive encode a trie.
-    }
-};
-using xtrie_full_node_t = xtop_trie_full_node;
-using xtrie_full_node_ptr_t = std::shared_ptr<xtrie_full_node_t>;
-
 // for leaf node && extension node
 class xtop_trie_short_node
   : public xtrie_node_face_t
@@ -187,9 +142,84 @@ public:
 public:
     void EncodeRLP(xbytes_t & buf, std::error_code & ec) override {
         // todo . how to recursive encode a trie.
+        xbytes_t encoded;
+        append(encoded, RLP::encode(Key));
+        if (Val->type() == xtrie_node_type_t::hashnode) {
+            auto child = std::make_shared<xtrie_hash_node_t>(*(static_cast<xtrie_hash_node_t *>(Val.get())));
+            append(encoded, RLP::encode(child->data()));
+        } else {
+            printf("Value type: %d\n", static_cast<uint8_t>(Val->type()));
+        }
+        append(buf, RLP::encodeList(encoded));
     }
 };
 using xtrie_short_node_t = xtop_trie_short_node;
 using xtrie_short_node_ptr_t = std::shared_ptr<xtrie_short_node_t>;
+
+// for branch node
+// actual trie node data to encode/decode, so it need to impl encodeELP
+class xtop_trie_full_node
+  : public xtrie_node_face_t
+  , public rlp::xrlp_encodable_t<xtop_trie_full_node> {
+public:
+    std::array<xtrie_node_face_ptr_t, 17> Children;
+    nodeFlag flags;
+
+public:
+    xtop_trie_full_node() {
+    }
+    xtop_trie_full_node(nodeFlag const & f) {
+        flags = f;
+    }
+
+private:
+public:
+    std::shared_ptr<xtop_trie_full_node> copy() {
+        return std::make_shared<xtop_trie_full_node>(*this);
+    }
+
+public:
+    std::string fstring(std::string const & ind) override {
+        // todo;
+        return "";
+    }
+    std::pair<xtrie_hash_node_t, bool> cache() override {
+        return {flags.hash, flags.dirty};
+    }
+    xtrie_node_type_t type() override {
+        return xtrie_node_type_t::fullnode;
+    }
+
+public:
+    void EncodeRLP(xbytes_t & buf, std::error_code & ec) override {
+        // todo . how to recursive encode a trie.
+        xbytes_t encoded;
+        for (auto const & child : Children) {
+            if (child == nullptr){
+                // printf("encode nullptr value\n");
+                append(encoded, RLP::encode(nilValueNode.data()));
+                continue;
+            }
+            if (child->type() == xtrie_node_type_t::hashnode) {
+                auto child_node = std::make_shared<xtrie_hash_node_t>(*(static_cast<xtrie_hash_node_t *>(child.get())));
+                // printf("encode hash child node\n");
+                append(encoded, RLP::encode(child_node->data()));
+            } else if (child->type() == xtrie_node_type_t::shortnode) {
+                auto child_node = std::make_shared<xtrie_short_node_t>(*(static_cast<xtrie_short_node_t *>(child.get())));
+                // printf("encode short child node\n");
+                child_node->EncodeRLP(encoded, ec);
+            } else if (child->type() == xtrie_node_type_t::valuenode) {
+                auto child_node = std::make_shared<xtrie_value_node_t>(*(static_cast<xtrie_value_node_t *>(child.get())));
+                // printf("encode value child node\n");
+                append(encoded, RLP::encode(child_node->data()));
+            } else {
+                printf("child type: %d\n", static_cast<uint8_t>(child->type()));
+            }
+        }
+        append(buf, RLP::encodeList(encoded));
+    }
+};
+using xtrie_full_node_t = xtop_trie_full_node;
+using xtrie_full_node_ptr_t = std::shared_ptr<xtrie_full_node_t>;
 
 NS_END3

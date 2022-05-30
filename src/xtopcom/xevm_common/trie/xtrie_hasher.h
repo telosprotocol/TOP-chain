@@ -95,6 +95,7 @@ public:
         }
         default:
             xassert(false);
+            __builtin_unreachable();
         }
     }
 
@@ -123,13 +124,13 @@ private:
         // ...
         // else{
         for (std::size_t index = 0; index < 16; ++index) {
-            auto child = node->Childern[index];
+            auto child = node->Children[index];
             if (child != nullptr) {
                 auto res = hash(child, false);
-                collapsed->Childern[index] = res.first;
-                cached->Childern[index] = res.second;
+                collapsed->Children[index] = res.first;
+                cached->Children[index] = res.second;
             } else {
-                collapsed->Childern[index] = std::make_shared<xtrie_value_node_t>(nilValueNode);
+                collapsed->Children[index] = std::make_shared<xtrie_value_node_t>(nilValueNode);
             }
         }
         // }
@@ -141,6 +142,7 @@ private:
 
         std::error_code ec;
         node->EncodeRLP(tmp.data(), ec);
+        printf("[shortnodeToHash] %s \n -> %s \n", top::to_hex(node->Key).c_str(), top::to_hex(tmp.data()).c_str());
         xassert(!ec);
 
         if (tmp.len() < 32 && !force) {
@@ -154,6 +156,7 @@ private:
 
         std::error_code ec;
         node->EncodeRLP(tmp.data(), ec);
+        printf("[fullnodeToHash] -> %s \n", top::to_hex(tmp.data()).c_str());
         xassert(!ec);
 
         if (tmp.len() < 32 && !force) {
@@ -163,11 +166,14 @@ private:
     }
 
     xtrie_hash_node_ptr_t hashData(xbytes_t input) {
+        printf("hashData:(%zu) %s\n", input.size(), top::to_hex(input).c_str());
         xbytes_t hashbuf;
         utl::xkeccak256_t hasher;
         // hasher.reset(); // make hasher class member , than need this.
         hasher.update(input.data(), input.size());
         hasher.get_hash(hashbuf);
+        printf(" -> hashed data:(%zu) %s\n", hashbuf.size(), top::to_hex(hashbuf).c_str());
+        printf(" ----------------- \n");
         return std::make_shared<xtrie_hash_node_t>(hashbuf);
     }
 };
