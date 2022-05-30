@@ -6,6 +6,7 @@
 
 #include "xdata/xblocktool.h"
 #include "xdata/xtransaction.h"
+#include "xdata/xethreceipt.h"
 #include "xevm/xevm.h"
 #include "xgasfee/xgasfee.h"
 #include "xtxexecutor/xtvm.h"
@@ -18,8 +19,8 @@ NS_BEG2(top, txexecutor)
 
 std::string xatomictx_output_t::dump() const {
     char local_param_buf[256];
-    xprintf(local_param_buf,sizeof(local_param_buf),"{is_pack=%d,drop=%d,snapshot_height=%zu,is_state_dirty=%d,vm_error=%d,vmexec_succ=%d,tgas_change=%ld,vmcode=%d,subtxs=%zu",
-        m_is_pack, m_drop_tx, m_snapshot_size,m_is_state_dirty,m_result,
+    xprintf(local_param_buf,sizeof(local_param_buf),"{is_pack=%d,snapshot_height=%zu,is_state_dirty=%d,vm_error=%d,vmexec_succ=%d,tgas_change=%ld,vmcode=%d,subtxs=%zu",
+        m_is_pack, m_snapshot_size,m_is_state_dirty,m_result,
         m_vm_output.m_tx_exec_succ,m_vm_output.m_tgas_balance_change,m_vm_output.m_vm_error_code,m_vm_output.m_contract_create_txs.size());
     return std::string(local_param_buf);
 }
@@ -204,7 +205,7 @@ bool xatomictx_executor_t::check_receiptid_order(const xcons_transaction_ptr_t &
     return true;
 }
 
-enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transaction_ptr_t & tx, xatomictx_output_t & output) {
+enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transaction_ptr_t & tx, xatomictx_output_t & output, uint64_t gas_used) {
     // XTODO(TOP-tx or ETH-tx)
     xvm_input_t vminput(m_statectx, m_para, tx);
     xvm_output_t vmoutput;
@@ -239,6 +240,13 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
                     ret = enum_exec_error_postprocess_tgas;
                     // no break here, to do after works
                 }
+                if (ret == enum_exec_success) {
+                    data::xeth_store_receipt_t evm_tx_receipt;
+                    evm_tx_receipt.set_tx_status(data::ethreceipt_status_successful);
+                    evm_tx_receipt.set_cumulative_gas_used(gas_used + vmoutput.m_tx_result.used_gas);
+                    evm_tx_receipt.set_gas_used(vmoutput.m_tx_result.used_gas);
+                    tx->set_evm_tx_receipt(evm_tx_receipt);
+                }
             } else {
                 xtvm_t tvm;
                 ret = tvm.execute(vminput, vmoutput);
@@ -267,10 +275,22 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
                 // no break here, to do after works
             }
             if (ret == txexecutor::enum_exec_success) {
+                data::xeth_store_receipt_t evm_tx_receipt;
+                data::enum_ethreceipt_status status =
+                    (vmoutput.m_tx_result.status == evm_common::xevm_transaction_status_t::Success) ? data::ethreceipt_status_successful : data::ethreceipt_status_failed;
+                evm_tx_receipt.set_tx_status(status);
+                evm_tx_receipt.set_cumulative_gas_used(gas_used + vmoutput.m_tx_result.used_gas);
+                evm_tx_receipt.set_gas_used(vmoutput.m_tx_result.used_gas);
                 if (vmoutput.m_tx_result.status != evm_common::xevm_transaction_status_t::Success) {
                     ret = txexecutor::enum_exec_error_evm_execute;
+                } else {
+                    evm_tx_receipt.set_logs(vmoutput.m_tx_result.logs);
+                    if (tx->get_tx_type() == data::xtransaction_type_deploy_evm_contract) {
+                        evm_tx_receipt.set_contract_address(common::xtop_eth_address::build_from(vmoutput.m_tx_result.extra_msg));
+                    }
                 }
-                tx->set_evm_tx_result(vmoutput.m_tx_result);
+
+                tx->set_evm_tx_receipt(evm_tx_receipt);
                 xdbg("xatomictx_executor_t::vm_execute tx:%s vmoutput.m_tx_result.extra_msg:%s", tx->dump().c_str(), vmoutput.m_tx_result.extra_msg.c_str());
             }
 #else
@@ -359,7 +379,7 @@ void xatomictx_executor_t::vm_execute_after_process(const data::xunitstate_ptr_t
     output.m_snapshot_size = _snapshot_size;
 }
 
-enum_execute_result_type xatomictx_executor_t::execute(const xcons_transaction_ptr_t & tx, xatomictx_output_t & output) {
+enum_execute_result_type xatomictx_executor_t::execute(const xcons_transaction_ptr_t & tx, xatomictx_output_t & output, uint64_t gas_used) {
     tx->clear_modified_state(); // TODO(jimmy)
 
     std::string address = tx->get_account_addr();
@@ -375,7 +395,7 @@ enum_execute_result_type xatomictx_executor_t::execute(const xcons_transaction_p
         return result;
     }
 
-    result = vm_execute(tx, output);
+    result = vm_execute(tx, output, gas_used);
     vm_execute_after_process(tx_unitstate, tx, result, output);
     return result;
 }

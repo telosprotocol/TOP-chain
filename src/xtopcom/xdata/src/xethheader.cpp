@@ -7,8 +7,6 @@
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xdata/xethheader.h"
-#include "xdata/xethbuild.h"
-#include "xchain_fork/xchain_upgrade_center.h"
 #include "xcommon/xerror/xerror.h"
 
 NS_BEG2(top, data)
@@ -89,56 +87,6 @@ void xeth_header_t::decodeRLP(evm_common::RLP const& _r, std::error_code & ec) {
         xwarn("xeth_header_t::decodeRLP invalid,field=%d,%s", field, top::to_hex(_r[field].toString()).c_str());
         ec = common::error::xerrc_t::invalid_rlp_stream;
     }
-}
-
-const std::string xeth_header_builder::build(uint64_t clock, enum_eth_header_format format, uint64_t gas_limit, std::vector<data::xlightunit_tx_info_ptr_t> txs_info) {
-    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-    if (!top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.eth_fork_point, clock)) {
-        return {};
-    }
-    
-    uint64_t gas_used;
-    evm_common::xbloom9_t logs_bloom;
-    data::xeth_receipts_t eth_receipts;
-
-    for (auto & tx_info : txs_info) {
-        evm_common::xevm_transaction_result_t evm_result;
-        auto ret = tx_info->get_evm_transaction_result(evm_result);
-        if (!ret) {
-            continue;
-        }
-        gas_used += evm_result.used_gas;
-        for (auto & log : evm_result.logs) {
-            evm_common::xbloom9_t bloom = log.bloom();
-            logs_bloom |= bloom;
-        }
-
-        data::enum_ethreceipt_status status = (evm_result.status == evm_common::xevm_transaction_status_t::Success) ? data::ethreceipt_status_successful : data::ethreceipt_status_failed;
-        data::xeth_receipt_t eth_receipt((data::enum_ethtx_version)tx_info->get_raw_tx()->get_eip_version(), status, gas_used, evm_result.logs);
-        eth_receipts.push_back(eth_receipt);
-    }
-
-    xeth_header_t eth_header;
-    eth_header.set_format(format);
-    eth_header.set_gaslimit(gas_limit);
-    eth_header.set_gasused(gas_used);
-    eth_header.set_logBloom(logs_bloom);
-    auto receipts_root = xeth_build_t::build_receipts_root(eth_receipts);
-    eth_header.set_receipts_root(receipts_root);
-
-    evm_common::RLPStream rlp_stream;
-    eth_header.streamRLP(rlp_stream);
-    return from_bytes<std::string>(rlp_stream.out());
-}
-
-bool xeth_header_builder::string_to_eth_header(const std::string & eth_header_str, xeth_header_t & eth_header) {
-    std::error_code ec;
-    eth_header.decodeRLP(evm_common::RLP(eth_header_str), ec);
-    if (ec) {
-        xerror("xeth_header_builder::string_to_eth_header decode fail");
-        return false;
-    }
-    return true;
 }
 
 //============= xeth_block_t ===============

@@ -10,6 +10,7 @@
 #include "xbase/xobject_ptr.h"
 #include "xbasic/xversion.h"
 #include "xdata/xblock_paras.h"
+#include "xdata/xethreceipt.h"
 #include "xdata/xreceipt_data_store.h"
 #include "xdata/xtransaction.h"
 #include "xvledger/xdataobj_base.hpp"
@@ -61,7 +62,7 @@ class xlightunit_action_t : public base::xvaction_t {
     bool                        get_inner_table_flag() const;
     bool                        is_need_make_txreceipt() const;
     bool                        is_txaction() const {return !get_tx_hash().empty();}
-    bool                        get_evm_transaction_result(evm_common::xevm_transaction_result_t & result) const;
+    bool                        get_evm_transaction_receipt(data::xeth_store_receipt_t & evm_tx_receipt) const;
 
  private:
     std::string                 get_action_result_property(const std::string & key) const;

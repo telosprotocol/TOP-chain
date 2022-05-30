@@ -206,8 +206,8 @@ data::xeth_local_receipt_prt_t xrpc_eth_loader_t::load_tx_receipt(const std::str
         return nullptr;
     }
 
-    evm_common::xevm_transaction_result_t evm_result;
-    bool ret = txindex->get_txaction().get_evm_transaction_result(evm_result);
+    data::xeth_store_receipt_t evm_result;
+    auto ret = txindex->get_txaction().get_evm_transaction_receipt(evm_result);
     if (false == ret) {
         xwarn("xrpc_eth_loader_t::load_tx_receipt,fail to get evm result for hash:%s", base::xstring_utl::to_hex(raw_tx_hash).c_str());
         return nullptr;
@@ -231,15 +231,15 @@ data::xeth_local_receipt_prt_t xrpc_eth_loader_t::load_tx_receipt(const std::str
         local_receipt->set_contract_address(_eth_addr);
     } else if (tx_type == data::xtransaction_type_deploy_evm_contract) {
         // TODO(jimmy)
-        std::string _str1 = evm_result.extra_msg.substr(2);
+        std::string _str1 = evm_result.get_contract_address().to_hex_string().substr(2);
         xbytes_t _bytes = top::to_bytes(_str1);
         common::xtop_eth_address _eth_addr = common::xtop_eth_address::build_from(_bytes);
         local_receipt->set_contract_address(_eth_addr);
     }
-    uint64_t used_gas = evm_result.used_gas;// TODO(jimmy)
+    uint64_t used_gas = evm_result.get_gas_used();// TODO(jimmy)
     local_receipt->set_used_gas(used_gas);
-    local_receipt->set_tx_status(evm_result.status == evm_common::xevm_transaction_status_t::Success ? data::ethreceipt_status_successful : data::ethreceipt_status_failed);
-    local_receipt->set_logs(evm_result.logs);
+    local_receipt->set_tx_status(evm_result.get_tx_status());
+    local_receipt->set_logs(evm_result.get_logs());
 
     return local_receipt;
 }
