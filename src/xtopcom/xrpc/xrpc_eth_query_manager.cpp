@@ -521,11 +521,8 @@ void xrpc_eth_query_manager::set_block_result(const xobject_ptr_t<base::xvblock_
     js_result["uncles"].resize(0);
     js_result["baseFeePerGas"] = "0x10";
 
-    const std::vector<base::xvaction_t> input_actions = block->get_tx_actions();
+    auto input_actions = data::xblockextract_t::unpack_txactions(block.get());
     for(auto action : input_actions) {
-        if (action.get_org_tx_hash().empty()) {  // not txaction
-            continue;
-        }
         if (!fullTx) {
             js_result["transactions"].append(std::string("0x") + to_hex_str(action.get_org_tx_hash()));
         } else {
@@ -1088,14 +1085,9 @@ int xrpc_eth_query_manager::get_log(xJson::Value & js_rsp, const uint64_t begin,
             continue;
         }
 
-        const std::vector<base::xvaction_t> input_actions = block->get_tx_actions();
+        auto input_actions = data::xblockextract_t::unpack_txactions(block.get());
         xdbg("input_actions size:%d", input_actions.size());
-        for (auto action : input_actions) {  // logs in a block
-            if (action.get_org_tx_hash().empty()) {
-                xdbg("action.get_org_tx_hash null");
-                continue;
-            }
-
+        for (auto & action : input_actions) {  // logs in a block
             xtxindex_detail_ptr_t sendindex = xrpc_loader_t::load_tx_indx_detail(action.get_org_tx_hash(), base::enum_transaction_subtype_send);
             if (sendindex == nullptr) {
                 xwarn("xrpc_eth_query_manager::get_log fail.tx hash:%s", to_hex_str(action.get_org_tx_hash()).c_str());

@@ -16,6 +16,7 @@
 #include "xdata/xrootblock.h"
 #include "xdata/xtable_bstate.h"
 #include "xdata/xtableblock.h"
+#include "xdata/xblockextract.h"
 #include "xvledger/xreceiptid.h"
 #include "xvledger/xvpropertyprove.h"
 

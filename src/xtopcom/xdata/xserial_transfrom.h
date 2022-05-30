@@ -8,6 +8,13 @@
 namespace top {
 namespace data {
 
+enum enum_ethtx_version {
+    EIP_LEGACY = 0,
+    EIP_2930 = 1,
+    EIP_1559 = 2,
+    EIP_TOP_V3 = 121
+};
+
 static std::string strNull = "";
 
 class eip_xxxx_tx : virtual public top::base::xrefcount_t {

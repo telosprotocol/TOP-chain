@@ -97,10 +97,7 @@ public:
     std::string     dump_cert(base::xvqcert_t* qcert) const;
 
  public:
-    virtual const std::vector<xlightunit_tx_info_ptr_t> get_txs() const { return m_empty_txs;}
-    virtual xlightunit_tx_info_ptr_t    get_tx_info(const std::string & txhash) const;
     virtual int64_t                     get_pledge_balance_change_tgas() const {return 0;}
-    virtual uint32_t                    get_txs_count() const {return 0;}
     virtual void                        dump_block_data(xJson::Value & json) const {return;}
     virtual uint32_t                    get_unconfirm_sendtx_num() const {return 0;}
     virtual uint64_t                    get_second_level_gmtime() const override;
@@ -111,13 +108,6 @@ public:
  public:
     uint64_t    get_timerblock_height() const {return get_clock();}
     std::string get_block_owner()const {return get_account();}
-
- private:
-    static std::map<std::string, std::string>      m_empty_map;
-    static std::vector<xlightunit_tx_info_ptr_t>   m_empty_txs;
-    static uint256_t                               m_empty_uint256;
-    static std::string                             m_empty_string;
-    static std::vector<xobject_ptr_t<xblock_t>>    m_empty_blocks;
 };
 
 using xblock_ptr_t = xobject_ptr_t<xblock_t>;

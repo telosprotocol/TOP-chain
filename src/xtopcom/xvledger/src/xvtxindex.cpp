@@ -120,7 +120,6 @@ namespace top
             : xdataunit_t(xdataunit_t::enum_xdata_type_undefine)
         {
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvtxindex, 1);
-            m_raw_tx_obj    = NULL;
             m_block_flags = 0;
             m_block_height = 0;
             m_tx_phase_type = 0;
@@ -129,11 +128,10 @@ namespace top
 #endif
         }
 
-        xvtxindex_t::xvtxindex_t(xvblock_t & owner, xdataunit_t* raw_tx,const std::string & txhash, enum_transaction_subtype type)
+        xvtxindex_t::xvtxindex_t(xvblock_t & owner, const std::string & txhash, enum_transaction_subtype type)
         : xdataunit_t(xdataunit_t::enum_xdata_type_undefine)
         {
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvtxindex, 1);
-            m_raw_tx_obj    = NULL;
             m_block_addr    = owner.get_account();
             m_block_height  = owner.get_height();
             m_block_hash    = owner.get_block_hash();
@@ -143,16 +141,10 @@ namespace top
 #ifdef  LONG_CONFIRM_CHECK
             m_block_clock   = owner.get_clock();
 #endif
-            m_raw_tx_obj = raw_tx;
-            if(raw_tx != NULL)
-                raw_tx->add_ref();
         }
 
         xvtxindex_t::~xvtxindex_t()
         {
-            if(m_raw_tx_obj != NULL) {
-                m_raw_tx_obj->release_ref();
-            }
             XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xvtxindex, -1);
         }
 

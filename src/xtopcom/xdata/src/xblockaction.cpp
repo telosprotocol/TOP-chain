@@ -13,6 +13,7 @@ namespace top { namespace data {
 
 xlightunit_action_t::xlightunit_action_t(const base::xvaction_t & _action)
 : base::xvaction_t(_action) {
+    xassert(!_action.get_org_tx_hash().empty());
 }
 
 xlightunit_action_t::xlightunit_action_t(const std::string & tx_hash, base::enum_transaction_subtype _subtype, const std::string & caller_addr,const std::string & target_uri,const std::string & method_name)
