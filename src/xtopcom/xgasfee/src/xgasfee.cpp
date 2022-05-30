@@ -47,8 +47,8 @@ void xtop_gasfee::init(std::error_code & ec) {
         if (max_gasfee > 0) {
             xdbg("[xtop_gasfee::init] not evm tx, gasfee limit(deposit): %lu", max_gasfee);
             if (max_gasfee > balance) {
-                ec = gasfee::error::xenum_errc::account_balance_not_enough;
-                xwarn("[xtop_gasfee::init] account_balance_not_enough, max_gasfee: %lu, balance: %lu", max_gasfee, balance);
+                ec = gasfee::error::xenum_errc::tx_out_of_gas;
+                xwarn("[xtop_gasfee::init] tx_out_of_gas, max_gasfee: %lu, balance: %lu", max_gasfee, balance);
                 // need to burn the balance?
                 top_balance_to_use = balance;
                 break;
@@ -73,8 +73,8 @@ void xtop_gasfee::init(std::error_code & ec) {
             if (eth_max_gasfee > balance) {
                 // need use eth balance
                 if (eth_max_gasfee > balance + balance_from_eth) {
-                    ec = gasfee::error::xenum_errc::account_balance_not_enough;
-                    xwarn("[xtop_gasfee::init] account_balance_not_enough, eth_max_gasfee: %lu, balance: %lu, balance_from_eth: %lu", eth_max_gasfee, balance, balance_from_eth);
+                    ec = gasfee::error::xenum_errc::tx_out_of_gas;
+                    xwarn("[xtop_gasfee::init] tx_out_of_gas, eth_max_gasfee: %lu, balance: %lu, balance_from_eth: %lu", eth_max_gasfee, balance, balance_from_eth);
                     top_balance_to_use = balance;
                     eth_balance_to_use = balance_from_eth;
                     break;
@@ -90,11 +90,6 @@ void xtop_gasfee::init(std::error_code & ec) {
                 }
             } else {
                 top_balance_to_use = eth_max_gasfee;
-            }
-            if (eth_max_gasfee < XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit)) {
-                ec = gasfee::error::xenum_errc::tx_deposit_not_enough;
-                xwarn("[xtop_gasfee::init] tx_deposit_not_enough: %lu", eth_max_gasfee);
-                break;
             }
         }
     } while(0);
