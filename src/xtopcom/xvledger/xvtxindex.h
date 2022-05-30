@@ -69,7 +69,7 @@ namespace top
             friend class xvtxstore_t;
         public:
             xvtxindex_t();
-            xvtxindex_t(xvblock_t & owner, xdataunit_t* raw_tx,const std::string & txhash, enum_transaction_subtype type);
+            xvtxindex_t(xvblock_t & owner, const std::string & txhash, enum_transaction_subtype type);
         protected:
             virtual ~xvtxindex_t();
         private:
@@ -87,7 +87,6 @@ namespace top
             inline enum_transaction_subtype    get_tx_phase_type()  const {return (enum_transaction_subtype)m_tx_phase_type;}
             inline bool                        is_self_tx() const {return m_tx_phase_type == enum_transaction_subtype_self;}
 
-            inline xdataunit_t*                get_tx_obj()         const {return m_raw_tx_obj;}
             const uint64_t                     get_block_clock()   const;
         
         public:
@@ -100,7 +99,6 @@ namespace top
             virtual int32_t    do_read(base::xstream_t & stream) override;
 
         private:
-            xdataunit_t*                m_raw_tx_obj{nullptr};//optional
             std::string                 m_block_addr;   //associated block 'address
             std::string                 m_block_hash;   //associated block 'hash
             uint64_t                    m_block_height; //associated block 'height

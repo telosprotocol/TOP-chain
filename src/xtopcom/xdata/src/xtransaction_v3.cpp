@@ -74,17 +74,17 @@ int32_t xtransaction_v3_t::do_read_without_hash_signature(base::xstream_t & in, 
         ETH_RPC_ERROR(error::xenum_errc::eth_invalid_params, "rlp: value size exceeds available input length")
         return -1;
     }
-    m_EipVersion = (EIP_XXXX)szEipVersion;
+    m_EipVersion = (enum_ethtx_version)szEipVersion;
     bytes encoded;
     bool bIsCreation;
     byte recoveryID;
     Address to;
     int ret = 0;
     try {
-        if (m_EipVersion == EIP_XXXX::EIP_TOP_V3) {
+        if (m_EipVersion == enum_ethtx_version::EIP_TOP_V3) {
             m_eip_xxxx_tx = make_object_ptr<eip_top_v3_tx>();
             ret = unserialize_top_v3_transaction(encoded, bIsCreation, recoveryID, to, ec);
-        } else if (m_EipVersion == EIP_XXXX::EIP_LEGACY) {
+        } else if (m_EipVersion == enum_ethtx_version::EIP_LEGACY) {
             m_eip_xxxx_tx = make_object_ptr<eip_legacy_tx>();
             ret = unserialize_eth_legacy_transaction(encoded, bIsCreation, recoveryID, to, ec);
         } else if (m_EipVersion == EIP_1559) {
@@ -112,7 +112,7 @@ int32_t xtransaction_v3_t::do_read_without_hash_signature(base::xstream_t & in, 
     strEncoded.append((char*)encoded.data(), encoded.size());
     m_unsign_hash = top::utl::xkeccak256_t::digest(strEncoded);
     string strTxString;
-    if (m_EipVersion != EIP_XXXX::EIP_LEGACY) {
+    if (m_EipVersion != enum_ethtx_version::EIP_LEGACY) {
          strTxString.append((char*)&m_EipVersion, 1);
          strTxString.append(m_origindata);
     }
@@ -623,23 +623,23 @@ bool xtransaction_v3_t::verify_tx(xJson::Value & request, eth_error& ec)
     }
     string strEth = base::xstring_utl::from_hex(strParams.substr(2));
     if (strEth[0] == '\01') {
-        m_EipVersion = EIP_XXXX::EIP_2930;
+        m_EipVersion = enum_ethtx_version::EIP_2930;
         xdbg("xtransaction_v3_t::construct_from_json unsupport tx type :%d", strEth[0]);
         ETH_RPC_ERROR(error::xenum_errc::eth_server_error, "transaction type not supported")
         return false;
     } else if (strEth[0] == '\02') {
-        m_EipVersion = EIP_XXXX::EIP_1559;
+        m_EipVersion = enum_ethtx_version::EIP_1559;
     } else if (strEth[0] == 'y') {
-        m_EipVersion = EIP_XXXX::EIP_TOP_V3;
+        m_EipVersion = enum_ethtx_version::EIP_TOP_V3;
     } else if ((unsigned char)strEth[0] >= ((unsigned char)128)) {
-        m_EipVersion = EIP_XXXX::EIP_LEGACY;
+        m_EipVersion = enum_ethtx_version::EIP_LEGACY;
     } else {
         xdbg("xtransaction_v3_t::construct_from_json unsupport tx type :%d", strEth[0]);
         ETH_RPC_ERROR(error::xenum_errc::eth_server_error, "transaction type not supported")
         return false;
     }
     string strTop;
-    if (m_EipVersion == EIP_XXXX::EIP_LEGACY) {
+    if (m_EipVersion == enum_ethtx_version::EIP_LEGACY) {
         int nRet = serial_transfrom::eth_to_top(strEth, m_EipVersion, strTop);
         if (nRet < 0) {
             xdbg("xtransaction_v3_t::construct_from_json eth_to_top error Ret:%d", nRet);
@@ -875,21 +875,21 @@ void xtransaction_v3_t::construct_from_json(xJson::Value & request) {
     }
     string strEth = base::xstring_utl::from_hex(strParams.substr(2));
     if (strEth[0] == '\01') {
-        m_EipVersion = EIP_XXXX::EIP_2930;
+        m_EipVersion = enum_ethtx_version::EIP_2930;
         xdbg("xtransaction_v3_t::construct_from_json unsupport tx type :%d", strEth[0]);
         return;
     } else if (strEth[0] == '\02') {
-        m_EipVersion = EIP_XXXX::EIP_1559;
+        m_EipVersion = enum_ethtx_version::EIP_1559;
     } else if (strEth[0] == 'y') {
-        m_EipVersion = EIP_XXXX::EIP_TOP_V3;
+        m_EipVersion = enum_ethtx_version::EIP_TOP_V3;
     } else if ((unsigned char)strEth[0] >= ((unsigned char)128)) {
-        m_EipVersion = EIP_XXXX::EIP_LEGACY;
+        m_EipVersion = enum_ethtx_version::EIP_LEGACY;
     } else {
         xdbg("xtransaction_v3_t::construct_from_json unsupport tx type :%d", strEth[0]);
         return;
     }
     string strTop;
-    if (m_EipVersion == EIP_XXXX::EIP_LEGACY) {
+    if (m_EipVersion == enum_ethtx_version::EIP_LEGACY) {
         int nRet = serial_transfrom::eth_to_top(strEth, m_EipVersion, strTop);
         if (nRet < 0) {
             xdbg("xtransaction_v3_t::construct_from_json eth_to_top error Ret:%d", nRet);

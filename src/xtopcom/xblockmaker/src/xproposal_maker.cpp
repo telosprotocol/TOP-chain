@@ -448,8 +448,6 @@ bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & propos
         get_txpool()->update_table_state(property_prove_ptr, table_para.get_commit_tablestate());
 
         // update locked txs for txpool, locked txs come from two latest tableblock
-        // get_locked_nonce_map(proposal_para.get_latest_locked_block(), locked_nonce_map);
-        // get_locked_nonce_map(proposal_para.get_latest_cert_block(), locked_nonce_map);
     }
 
     // get table batch txs for execute and make block
@@ -583,35 +581,6 @@ bool xproposal_maker_t::backup_set_consensus_para(base::xvblock_t* latest_cert_b
             proposal->dump().c_str(), random_seed.c_str(), total_lock_tgas_token);
     }
     return true;
-}
-
-void xproposal_maker_t::get_locked_nonce_map(const xblock_ptr_t & block, std::map<std::string, uint64_t> & locked_nonce_map) const {
-    auto tx_actions = block->get_tx_actions();
-    for (auto & action : tx_actions) {
-        if (action.get_org_tx_hash().empty()) {  // not txaction
-            continue;
-        }
-        base::enum_transaction_subtype _subtype = (base::enum_transaction_subtype)action.get_org_tx_action_id();
-
-        if (_subtype == data::enum_transaction_subtype_self || _subtype == data::enum_transaction_subtype_send) {
-            data::xlightunit_action_t txaction(action);
-            data::xtransaction_ptr_t _rawtx = block->query_raw_transaction(txaction.get_tx_hash());
-            if (_rawtx != nullptr) {
-                uint64_t txnonce = _rawtx->get_tx_nonce();
-                const std::string uri = txaction.get_contract_uri();
-                const std::string & account_addr = _rawtx->get_source_addr();
-                auto it = locked_nonce_map.find(account_addr);
-                xdbg("xproposal_maker_t::get_locked_nonce_map account:%s,nonce:%u", account_addr.c_str(), txnonce);
-                if (it == locked_nonce_map.end()) {
-                    locked_nonce_map[account_addr] = txnonce;
-                } else {
-                    if (it->second < txnonce) {
-                        locked_nonce_map[account_addr] = txnonce;
-                    }
-                }
-            }
-        }
-    }
 }
 
 void xproposal_maker_t::sys_contract_sync(const data::xtablestate_ptr_t & tablestate) const {

@@ -39,7 +39,6 @@ class xproposal_maker_t : public xunit_service::xproposal_maker_face {
     bool                        verify_proposal_input(base::xvblock_t *proposal_block, xtablemaker_para_t & table_para);
 
 private:
-    void                        get_locked_nonce_map(const xblock_ptr_t & block, std::map<std::string, uint64_t> & locked_nonce_map) const;
     data::xtablestate_ptr_t get_target_tablestate(base::xvblock_t * block);
     void sys_contract_sync(const data::xtablestate_ptr_t & tablestate) const;
     void check_and_sync_account(const data::xtablestate_ptr_t & tablestate, const std::string & addr) const;

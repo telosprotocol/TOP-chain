@@ -45,12 +45,7 @@ class xtableheader_extra_t : public xserializable_based_on<void> {
     std::map<uint16_t, std::string>  m_paras;
 };
 
-class xunitheader_extra_t {
- private:
-    static XINLINE_CONSTEXPR char const * KEY_HEADER_KEY_TXS              = "t";
- public:
-    static std::string build_extra_string(base::xvheader_t* _tableheader, const xlightunit_block_para_t & bodypara);
-    static std::string build_extra_string(base::xvheader_t* _tableheader, const base::xvtxkey_vec_t & txkeys);
+class xextra_map_base_t {
  public:
     int32_t serialize_to_string(std::string & str) const;
     int32_t do_write(base::xstream_t & stream) const;
@@ -58,15 +53,32 @@ class xunitheader_extra_t {
     int32_t do_read(base::xstream_t & stream);
     void insert(const std::string & key, const std::string & val);
     std::string get_val(const std::string & key) const;
-
- public:
-    std::vector<base::xvtxkey_t>    get_txkeys() const;
-    void    set_txkeys(const base::xvtxkey_vec_t & txkeys);
+    std::map<std::string, std::string> const&   get_all_val() const {return m_map;}
 
  private:
     std::map<std::string, std::string> m_map;
 };
+class xunitheader_extra_t : public xextra_map_base_t {
+ private:
+    static XINLINE_CONSTEXPR char const * KEY_HEADER_KEY_TXS              = "t";
+ public:
+    static std::string build_extra_string(base::xvheader_t* _tableheader, const xlightunit_block_para_t & bodypara);
+    static std::string build_extra_string(base::xvheader_t* _tableheader, const base::xvtxkey_vec_t & txkeys);
 
+ public:
+    std::vector<base::xvtxkey_t>    get_txkeys() const;
+    void    set_txkeys(const base::xvtxkey_vec_t & txkeys);
+};
+
+class xtable_primary_inentity_extend_t : public xextra_map_base_t {
+ private:
+    static XINLINE_CONSTEXPR char const * KEY_ETH_RECEIPT_ACTIONS              = "t";
+ public:
+
+ public:
+    base::xvactions_t  get_txactions() const;
+    void    set_txactions(base::xvactions_t const& txactions);
+};
 
 class xblockaction_build_t {
  public:

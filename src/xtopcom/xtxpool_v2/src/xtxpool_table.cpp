@@ -288,16 +288,11 @@ void xtxpool_table_t::deal_commit_table_block(xblock_t * table_block, bool updat
     std::vector<xraw_tx_info> raw_txs;
 
     std::vector<update_id_state_para> update_id_state_para_vec;
-    auto tx_actions = table_block->get_tx_actions();
+    auto tx_actions = data::xblockextract_t::unpack_txactions(table_block);
 
     xdbg("xtxpool_table_t::deal_commit_table_block table block:%s", table_block->dump().c_str());
 
-    for (auto & action : tx_actions) {
-        if (action.get_org_tx_hash().empty()) {  // not txaction
-            continue;
-        }
-
-        xlightunit_action_t txaction(action);
+    for (auto & txaction : tx_actions) {
         bool need_confirm = !txaction.get_not_need_confirm();
         uint64_t txnonce = 0;
         if (txaction.get_tx_subtype() == base::enum_transaction_subtype_send || txaction.get_tx_subtype() == base::enum_transaction_subtype_self) {
