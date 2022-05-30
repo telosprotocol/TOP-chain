@@ -65,10 +65,10 @@ evm_common::u256 xtop_gas_tx_operator::tx_eth_fee_per_gas() const {
 evm_common::u256 xtop_gas_tx_operator::tx_eth_limited_gasfee() const {
     // 1Gwei = (ratio / 10^3)Utop
     // 1Utop = (10^3 / ratio)Gwei
-    auto price = tx_eth_gas_limit();
-    auto limit = tx_eth_fee_per_gas();
-    auto wei_gasfee = limit * price;
-    auto utop_gasfee = wei_to_utop(wei_gasfee);
+    evm_common::u256 price = tx_eth_gas_limit();
+    evm_common::u256 limit = tx_eth_fee_per_gas();
+    evm_common::u256 wei_gasfee = limit * price;
+    evm_common::u256 utop_gasfee = wei_to_utop(wei_gasfee);
     xdbg("[xtop_gas_tx_operator::tx_eth_limited_gasfee] eth_gas_price: %s, eth_gas_limit: %s, wei_gasfee: %s, utop_gasfee: %s",
          price.str().c_str(),
          limit.str().c_str(),
@@ -78,7 +78,9 @@ evm_common::u256 xtop_gas_tx_operator::tx_eth_limited_gasfee() const {
 }
 
 evm_common::u256 xtop_gas_tx_operator::wei_to_utop(const evm_common::u256 wei) const {
-    auto utop = wei * XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_to_top_exchange_ratio) / evm_common::u256(1000000000000ULL);
+    evm_common::u256 gwei = wei / evm_common::u256(1000000000ULL);
+    evm_common::u256 mtop = gwei * XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_to_top_exchange_ratio);
+    evm_common::u256 utop = mtop / 1000U;
     xdbg("[xtop_gas_tx_operator::wei_to_utop] exchange ratio: %lu, wei: %s, utop: %s",
          XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_to_top_exchange_ratio),
          wei.str().c_str(),
