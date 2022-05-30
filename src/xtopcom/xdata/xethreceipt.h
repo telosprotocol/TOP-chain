@@ -20,6 +20,45 @@ enum enum_ethreceipt_status {
     ethreceipt_status_successful = 1
 };
 
+// xeth_store_receipt_t is packed in block
+class xeth_store_receipt_t {
+ public:
+    xeth_store_receipt_t() = default;
+
+    xbytes_t    encodeBytes() const;
+    void        decodeBytes(xbytes_t const& _d, std::error_code & ec);
+ public:  // get APIS
+    enum_ethreceipt_status      get_tx_status() const {return m_tx_status;}
+    uint64_t                    get_cumulative_gas_used() const {return m_cumulative_gas_used;}
+    const evm_common::xevm_logs_t & get_logs() const {return m_logs;}
+    evm_common::u256            get_gas_price() const {return m_gas_price;}
+    uint64_t                    get_gas_used() const {return m_gas_used;}
+    common::xeth_address_t const&   get_contract_address() const {return m_contract_address;}
+
+ public:
+    void    set_tx_status(enum_ethreceipt_status status) {m_tx_status = status;}
+    void    set_cumulative_gas_used(uint64_t gas) {m_cumulative_gas_used = gas;}
+    void    set_logs(evm_common::xevm_logs_t const& logs) {m_logs = logs;}
+    void    set_gas_price(evm_common::u256 const& price) {m_gas_price = price;}
+    void    set_gas_used(uint64_t gas) {m_gas_used = gas;}
+    void    set_contract_address(common::xeth_address_t const& addr) {m_contract_address = addr;}
+
+ protected:
+    void    streamRLP(evm_common::RLPStream& _s) const;
+    void    decodeRLP(evm_common::RLP const& _r, std::error_code & ec);
+
+ private:
+    uint8_t                     m_version{0};
+    enum_ethreceipt_status      m_tx_status{ethreceipt_status_failed};
+    uint64_t                    m_cumulative_gas_used{0};
+    evm_common::xevm_logs_t     m_logs;
+    evm_common::u256            m_gas_price;  // TODO(jimmy) effective gas price
+    uint64_t                    m_gas_used{0};
+    common::xeth_address_t      m_contract_address;
+};
+
+using xeth_store_receipt_ptr_t = std::shared<xeth_store_receipt_t>;
+
 // xeth_receipt_t is fully compatiable with eth
 class xeth_receipt_t {
  public:
@@ -49,7 +88,7 @@ class xeth_receipt_t {
     evm_common::xevm_logs_t     m_logs;
 };
 
-// xeth_local_receipt_t represents the full results of a transaction.
+// xeth_local_receipt_t represents the full results of a transaction
 class xeth_local_receipt_t : public xeth_receipt_t {
  public:
     xeth_local_receipt_t() = default;
@@ -57,26 +96,38 @@ class xeth_local_receipt_t : public xeth_receipt_t {
     ~xeth_local_receipt_t() = default;
 
  public:  // get APIS
-    evm_common::xh256_t const&      get_tx_hash() const {return m_tx_hash;}
+    std::string const&              get_tx_hash() const {return m_tx_hash;}
     uint64_t                        get_gas_used() const {return m_used_gas;}
     common::xeth_address_t const&   get_contract_address() const {return m_contract_address;}
-    evm_common::xh256_t const&      get_block_hash() const {return m_block_hash;}
+    std::string const&              get_block_hash() const {return m_block_hash;}
     uint64_t                        get_block_number() const {return m_block_number;}
     uint32_t                        get_transaction_index() const {return m_transaction_index;}
+
+ public:
+    void        set_block_hash(std::string const& blockhash);
+    void        set_block_number(uint64_t blocknumer);
+    void        set_transaction_index(uint32_t index);
+    void        set_tx_hash(std::string const& txhash);
+    void        set_to_address(common::xeth_address_t const& address);
+    void        set_contract_address(common::xeth_address_t const& address);
+    void        set_used_gas(uint64_t used_gas);
 
  private:
     // Implementation fields: These fields are added by geth when processing a transaction.
     // They are stored in the chain database.
-    evm_common::xh256_t         m_tx_hash;
+    std::string                 m_tx_hash;
+    common::xeth_address_t      m_to_address;
     common::xeth_address_t      m_contract_address;
     uint64_t                    m_used_gas{0};
     // Inclusion information: These fields provide information about the inclusion of the
     // transaction corresponding to this receipt.
-    evm_common::xh256_t         m_block_hash;
+    std::string                 m_block_hash;
     uint64_t                    m_block_number{0};
     uint32_t                    m_transaction_index{0};
 };
 
+using xeth_receipt_ptr_t = std::shared_ptr<xeth_receipt_t>;
+using xeth_local_receipt_prt_t = std::shared_ptr<xeth_local_receipt_t>;
 using xeth_receipts_t = std::vector<xeth_receipt_t>;
 using xeth_local_receipts_t = std::vector<xeth_local_receipt_t>;
 
