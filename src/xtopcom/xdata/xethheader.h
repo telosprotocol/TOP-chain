@@ -6,8 +6,6 @@
 
 #include <string>
 #include "xbasic/xbyte_buffer.h"
-#include "xdata/xethreceipt.h"
-#include "xdata/xlightunit_info.h"
 #include "xevm_common/common.h"
 #include "xevm_common/xfixed_hash.h"
 #include "xevm_common/rlp.h"
@@ -59,12 +57,6 @@ class xeth_header_t {
     evm_common::xh256_t     m_receipts_root;
     evm_common::xh256_t     m_state_root;
     xbytes_t                m_extra_data;
-};
-
-class xeth_header_builder {
-public:
-    static const std::string build(uint64_t clock, enum_eth_header_format format, uint64_t gas_limit, std::vector<data::xlightunit_tx_info_ptr_t> txs_info = {});
-    static bool string_to_eth_header(const std::string & eth_header_str, xeth_header_t & eth_header);
 };
 
 // class xeth_block_t {
