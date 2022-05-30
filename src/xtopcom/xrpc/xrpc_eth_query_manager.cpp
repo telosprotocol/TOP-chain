@@ -404,7 +404,7 @@ void xrpc_eth_query_manager::set_block_result(const xobject_ptr_t<base::xvblock_
     }
 
     std::string block_hash = top::to_hex_prefixed(block->get_block_hash());
-    std::string block_num = xrpc_eth_parser_t::uint64_to_hex_prefixed(block->get_height());    
+    std::string block_num = xrpc_eth_parser_t::uint64_to_hex_prefixed(block->get_height());
 
     auto input_actions = data::xblockextract_t::unpack_eth_txactions(block.get());
     for (uint64_t txindex = 0; txindex < (uint64_t)input_actions.size(); txindex++) {
@@ -964,7 +964,7 @@ int xrpc_eth_query_manager::get_log(xJson::Value & js_rsp, const uint64_t begin,
         auto input_actions = data::xblockextract_t::unpack_eth_txactions(block.get());
         xdbg("input_actions size:%d", input_actions.size());
         for (uint64_t txindex = 0; txindex < (uint64_t)input_actions.size(); txindex++) {
-            auto & action = input_actions[txindex];            
+            auto & action = input_actions[txindex];
 
             data::xeth_store_receipt_t evm_tx_receipt;
             auto ret = action.get_evm_transaction_receipt(evm_tx_receipt);
