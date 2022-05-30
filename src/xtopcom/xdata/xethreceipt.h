@@ -57,7 +57,7 @@ class xeth_store_receipt_t {
     common::xeth_address_t      m_contract_address;
 };
 
-using xeth_store_receipt_ptr_t = std::shared<xeth_store_receipt_t>;
+using xeth_store_receipt_ptr_t = std::shared_ptr<xeth_store_receipt_t>;
 
 // xeth_receipt_t is fully compatiable with eth
 class xeth_receipt_t {

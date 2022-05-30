@@ -43,7 +43,7 @@ TEST(evm_engine_balance_test, OufOfFund) {
         "ffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001828152602001935050505060405180910390a15050565b6000548156fea26469706673582212201285a1a792cec99fd557c4fb8b1f92"
         "dccf09d34d37da99fe7de2b8526427bf3f64736f6c63430006040033",
         true};
-    txexecutor::xvm_para_t vm_param{0, "random_seed", 0};
+    txexecutor::xvm_para_t vm_param{0, "random_seed", 0, 0};
     top::statectx::xstatectx_face_ptr_t statestore{std::make_shared<top::evm::tests::xmock_evm_statectx>()};
 
     // deploy code
@@ -109,7 +109,7 @@ TEST(evm_engine_balance_test, success) {
         "ffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001828152602001935050505060405180910390a15050565b6000548156fea26469706673582212201285a1a792cec99fd557c4fb8b1f92"
         "dccf09d34d37da99fe7de2b8526427bf3f64736f6c63430006040033",
         true};
-    txexecutor::xvm_para_t vm_param{0, "random_seed", 0};
+    txexecutor::xvm_para_t vm_param{0, "random_seed", 0, 0};
     top::statectx::xstatectx_face_ptr_t statestore{std::make_shared<top::evm::tests::xmock_evm_statectx>()};
 
     // deploy code
