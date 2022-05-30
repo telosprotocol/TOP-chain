@@ -1059,8 +1059,8 @@ TEST_F(test_tablemaker, table_inner_tx) {
 
         xtablemaker_result_t table_result;
         xblock_ptr_t proposal_block = tablemaker->make_proposal(table_para, proposal_para, table_result);
-        auto txs = proposal_block->get_txs();
-        EXPECT_EQ(txs.size(), tx_cnt);
+        // auto txs = proposal_block->get_txs();
+        // EXPECT_EQ(txs.size(), tx_cnt);
         EXPECT_EQ(proposal_block->get_block_version(), xvblock_fork_t::get_block_fork_new_version());
 
         xassert(proposal_block != nullptr);
@@ -1102,8 +1102,8 @@ TEST_F(test_tablemaker, table_inner_tx) {
         EXPECT_EQ(units.size(), 2);
         for (auto & v : units) {
             xobject_ptr_t<data::xblock_t> unit = dynamic_xobject_ptr_cast<data::xblock_t>(v);
-            auto txs = unit->get_txs();
-            EXPECT_EQ(txs.size(), 0);
+            // auto txs = unit->get_txs();
+            // EXPECT_EQ(txs.size(), 0);
             
             // {
             //     xJson::Value jv1;

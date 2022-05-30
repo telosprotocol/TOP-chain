@@ -10,6 +10,7 @@
 #include "xdata/xrootblock.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
 #include "xdata/xtable_bstate.h"
+#include "xdata/xblocktool.h"
 #include "xdepends/include/asio/post.hpp"
 #include "xdepends/include/asio/thread_pool.hpp"
 #include "xelection/xvnode_house.h"
@@ -350,17 +351,9 @@ void xdb_export_tools_t::query_block_basic(std::string const & account, const ui
     result["clock"] = vblock->get_clock();
     result["hash"] = base::xstring_utl::to_hex(vblock->get_block_hash());
     result["last_hash"] = base::xstring_utl::to_hex(vblock->get_last_block_hash());
-    auto const & _table_inentitys = vblock->get_input()->get_entitys();
-    auto const entitys_count = _table_inentitys.size();
-    for (size_t index = 1; index < entitys_count; index++) {  // unit entity from index#1
-        auto _table_unit_inentity = dynamic_cast<base::xvinentity_t *>(_table_inentitys[index]);
-        auto const & input_actions = _table_unit_inentity->get_actions();
-        for (auto & action : input_actions) {
-            if (action.get_org_tx_hash().empty()) {  // not txaction
-                continue;
-            }
-            result["tx"].push_back(base::xstring_utl::to_hex(action.get_org_tx_hash()));
-        }
+    auto txactions = data::xblockextract_t::unpack_txactions(vblock.get());
+    for (auto & txaction : txactions) {
+        result["tx"].push_back(base::xstring_utl::to_hex(txaction.get_org_tx_hash()));
     }
 }
 
@@ -802,22 +795,13 @@ void xdb_export_tools_t::query_archive_db_internal(std::string const & account, 
             if (type == query_account_unit) {
                 continue;
             }
-            auto const & _table_inentitys = block->get_input()->get_entitys();
-            auto const entitys_count = _table_inentitys.size();
-            for (size_t index = 0; index < entitys_count; index++) {  // unit entity from index#1
-                auto _table_unit_inentity = dynamic_cast<base::xvinentity_t *>(_table_inentitys[index]);
-                auto const & input_actions = _table_unit_inentity->get_actions();
-                for (auto & action : input_actions) {
-                    if (action.get_org_tx_hash().empty()) {  // not txaction
-                        continue;
-                    }
-                    data::xlightunit_action_t txaction(action);
-                    auto txindex = base::xvchain_t::instance().get_xtxstore()->load_tx_idx(txaction.get_tx_hash(), txaction.get_tx_subtype());
-                    if (txindex == nullptr) {
-                        file << "[warn] " << type_str << ": " << account << ", height: " << h << ", tx: " << base::xstring_utl::to_hex(txaction.get_tx_hash())
-                             << ", load tx idx null!" << std::endl;
-                        error_num++;
-                    }
+            auto txactions = data::xblockextract_t::unpack_txactions(block.get());
+            for (auto & txaction : txactions) {
+                auto txindex = base::xvchain_t::instance().get_xtxstore()->load_tx_idx(txaction.get_tx_hash(), txaction.get_tx_subtype());
+                if (txindex == nullptr) {
+                    file << "[warn] " << type_str << ": " << account << ", height: " << h << ", tx: " << base::xstring_utl::to_hex(txaction.get_tx_hash())
+                            << ", load tx idx null!" << std::endl;
+                    error_num++;
                 }
             }
         } while (h-- > 0);
@@ -1240,7 +1224,7 @@ void xdb_export_tools_t::query_tx_info_internal(std::string const & account, con
 
     auto const block_height = m_blockstore->get_latest_committed_block_height(account);
     for (uint64_t h = 0; h <= block_height; h++) {
-        auto const vblock = m_blockstore->load_block_object(account, h, 0, false);
+        auto vblock = m_blockstore->load_block_object(account, h, 0, false);
         const data::xblock_t * block = dynamic_cast<data::xblock_t *>(vblock.get());
         if (block == nullptr) {
             table_info.missing_table_block_num++;
@@ -1272,12 +1256,8 @@ void xdb_export_tools_t::query_tx_info_internal(std::string const & account, con
             }
         }
         // step all actions
-        auto input_actions = block->get_tx_actions();
-        for (auto & action : input_actions) {
-            if (action.get_org_tx_hash().empty()) {  // not txaction
-                continue;
-            }
-            data::xlightunit_action_t txaction(action);
+        auto input_actions = data::xblockextract_t::unpack_txactions(vblock.get());
+        for (auto & txaction : input_actions) {
             if (txaction.is_self_tx()) {
                 table_info.selftx_num++;
             } else {

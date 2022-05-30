@@ -2,6 +2,7 @@
 #include "xdata/xlightunit_info.h"
 #include "xdata/xtransaction.h"
 #include "xdata/xdatautil.h"
+#include "xdata/xblocktool.h"
 #include "xvledger/xvledger.h"
 #include "xvledger/xvtxstore.h"
 #include "xrpc/xrpc_loader.h"
@@ -36,12 +37,12 @@ xtxindex_detail_ptr_t  xrpc_loader_t::load_tx_indx_detail(const std::string & ra
         xwarn("xrpc_loader_t::load_tx_indx_detail,fail to load block for hash:%s,type:%d", base::xstring_utl::to_hex(raw_tx_hash).c_str(), type);
         return nullptr;
     }
-    std::vector<base::xvaction_t> txaction = _block->get_one_tx_action(raw_tx_hash);
-    if (txaction.empty()) {
+    data::xlightunit_action_ptr_t txaction = data::xblockextract_t::unpack_one_txaction(_block.get(), raw_tx_hash);
+    if (txaction == nullptr) {
         xerror("xrpc_loader_t::load_tx_indx_detail,fail to load action for hash:%s,type:%d", base::xstring_utl::to_hex(raw_tx_hash).c_str(), type);
         return nullptr;
     }
-    xtxindex_detail_ptr_t index_detail = std::make_shared<xtxindex_detail_t>(txindex, txaction[0]);
+    xtxindex_detail_ptr_t index_detail = std::make_shared<xtxindex_detail_t>(txindex, *txaction);
     if (type == base::enum_transaction_subtype_self || type == base::enum_transaction_subtype_send) {
         if (false == base::xvchain_t::instance().get_xblockstore()->load_block_input(_vaddress, _block.get())) {
             xwarn("xrpc_loader_t::load_tx_indx_detail,fail to load block input for hash:%s,type:%d", base::xstring_utl::to_hex(raw_tx_hash).c_str(), type);

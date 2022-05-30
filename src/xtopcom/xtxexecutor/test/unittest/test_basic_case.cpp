@@ -349,7 +349,8 @@ TEST_F(test_basic_case, create_units_and_tableblock) {
 
     ASSERT_TRUE(store->set_vblock(taccount1_proposal_block));
     ASSERT_NE(taccount1_proposal_block, nullptr);
-    ASSERT_EQ(tableblock->get_txs_count(), 4);
+    uint32_t txs_count = data::xblockextract_t::get_txactions_count(tableblock);
+    ASSERT_EQ(txs_count, 4);
 
     auto temp_block = store->get_block_by_height(taccount1, 1);
     ASSERT_NE(temp_block, nullptr);
