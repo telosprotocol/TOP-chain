@@ -25,8 +25,6 @@ namespace top { namespace data {
     ec.error_code = (int)code; \
     ec.error_message = messgae;
 
-enum EIP_XXXX { EIP_LEGACY = 0, EIP_2930 = 1, EIP_1559 = 2, EIP_TOP_V3 = 121 };
-
 class xtransaction_v3_t : public xbase_dataunit_t<xtransaction_v3_t, xdata_type_transaction_v3>, public xtransaction_t {
  public:
     xtransaction_v3_t();
@@ -142,7 +140,7 @@ class xtransaction_v3_t : public xbase_dataunit_t<xtransaction_v3_t, xdata_type_
     virtual void set_ext(const std::string & ext) override { };
     virtual const std::string & get_ext() const override { return strNull; }
     virtual void set_memo(const std::string & memo) override { };
-    virtual const std::string & get_memo() const override { if (m_EipVersion == EIP_XXXX::EIP_TOP_V3) { if (m_eip_xxxx_tx) { return m_eip_xxxx_tx->get_memo(); } } return strNull; }
+    virtual const std::string & get_memo() const override { if (m_EipVersion == enum_ethtx_version::EIP_TOP_V3) { if (m_eip_xxxx_tx) { return m_eip_xxxx_tx->get_memo(); } } return strNull; }
     virtual const std::string & get_target_address() const override {return m_target_addr;};
     virtual bool is_evm_tx() const override {return m_transaction_type != xtransaction_type_transfer;}
 public:
@@ -179,7 +177,7 @@ private:
     mutable uint16_t m_transaction_len{0};     // max 64KB
     std::string m_adjust_target_addr{};
     // just reserved for compatibility
-    EIP_XXXX              m_EipVersion;
+    enum_ethtx_version              m_EipVersion;
 };
 
 using xtransaction_v3_ptr_t = xobject_ptr_t<xtransaction_v3_t>;

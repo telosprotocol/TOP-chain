@@ -31,6 +31,9 @@ class xevm_log_t {
     xh256s_t                topics;
     xbytes_t                data;
 };
+
+using xevm_logs_t = std::vector<xevm_log_t>;
+
 /// same as TransactionStatus in `evm_engine_rs/engine/src/parameters.rs`
 enum xevm_transaction_status_t : uint32_t {
     Success = 0,

@@ -39,15 +39,10 @@ TEST_F(test_unconfirm_raw_txs, unconfirm_raw_txs) {
     mocktable.generate_one_table();
     mocktable.generate_one_table();
 
-    std::vector<base::xvaction_t> tx_actions = _tableblock1->get_tx_actions();
-
+    auto tx_actions = data::xblockextract_t::unpack_txactions(_tableblock1.get());
     std::vector<xraw_tx_info> raw_txs;
 
-    for (auto & action : tx_actions) {
-        xlightunit_action_t txaction(action);
-        if (txaction.get_tx_hash().empty()) {
-            continue;
-        }
+    for (auto & txaction : tx_actions) {
         xtransaction_ptr_t _rawtx = _tableblock1->query_raw_transaction(txaction.get_tx_hash());
         raw_txs.push_back(xraw_tx_info(txaction.get_receipt_id_peer_tableid(), txaction.get_receipt_id(), _rawtx));
     }

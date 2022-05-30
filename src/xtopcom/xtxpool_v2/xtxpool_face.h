@@ -150,9 +150,7 @@ public:
     const data::xtablestate_ptr_t & get_table_state_highqc() const {
         return m_table_state_highqc;
     }
-    // const std::map<std::string, uint64_t> & get_locked_nonce_map() const {
-    //     return m_locked_nonce_map;
-    // }
+
     uint16_t get_all_txs_max_num() const {
         return m_all_txs_max_num;
     }

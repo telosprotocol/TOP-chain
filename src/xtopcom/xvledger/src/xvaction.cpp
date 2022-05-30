@@ -5,6 +5,7 @@
 
 #include <cinttypes>
 #include "xbase/xutl.h"
+#include "xbase/xcontext.h"
 #include "../xvinstruction.h"
 #include "../xvaction.h"
 #include "xmetrics/xmetrics.h"
@@ -170,6 +171,53 @@ namespace top
             }
             return false;
         }
-    
+
+        //----------------------------------------xvactions_t-------------------------------------//
+        int32_t xvactions_t::do_write(base::xstream_t & stream) const {
+            const int32_t begin_size = stream.size();
+            const uint32_t count = (uint32_t)m_actions.size();
+            stream << count;
+            for (auto & v : m_actions) {
+                v.serialize_to(stream);
+            }
+            return (stream.size() - begin_size);
+        }
+
+        int32_t xvactions_t::do_read(base::xstream_t & stream)
+        {
+            m_actions.clear();
+            const int32_t begin_size = stream.size();
+            uint32_t count = 0;
+            stream >> count;
+            for (uint32_t i = 0; i < count; i++) {
+                base::xvaction_t action;
+                const int res = action.serialize_from(stream);
+                if(res <= 0) {
+                    xerror("xvactions_t::do_read,fail to read action as error=%d,i=%d,count=%d",res,i,count);
+                    m_actions.clear(); //clean others as well
+                    return res;
+                }
+                m_actions.emplace_back(action);
+            }
+            return (begin_size - stream.size());
+        }
+
+        int32_t xvactions_t::serialize_to_string(std::string & _str) const {
+            base::xstream_t _raw_stream(base::xcontext_t::instance());
+            int32_t ret = do_write(_raw_stream);
+            _str.assign((const char*)_raw_stream.data(),_raw_stream.size());
+            return ret;
+        }
+
+        int32_t xvactions_t::serialize_from_string(const std::string & _str) {
+            base::xstream_t _stream(base::xcontext_t::instance(), (uint8_t *)_str.data(), (int32_t)_str.size());
+            int32_t ret = do_read(_stream);
+            return ret;
+        }
+
+        void xvactions_t::add_action(xvaction_t const& action) {
+            m_actions.push_back(action);
+        }
+
     };//end of namespace of base
 };//end of namespace of top
