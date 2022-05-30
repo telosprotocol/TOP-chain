@@ -24,6 +24,10 @@ void xtxindex_detail_t::set_raw_tx(base::xdataunit_t* tx) {
     }
 }
 
+void xtxindex_detail_t::set_transaction_index(uint32_t transaction_index) {
+    m_transaction_index = transaction_index;
+}
+
 xtxindex_detail_ptr_t  xrpc_loader_t::load_tx_indx_detail(const std::string & raw_tx_hash,base::enum_transaction_subtype type) {
     base::xauto_ptr<base::xvtxindex_t> txindex = base::xvchain_t::instance().get_xtxstore()->load_tx_idx(raw_tx_hash, type);
     if (nullptr == txindex) {
@@ -140,6 +144,96 @@ xJson::Value xrpc_loader_t::load_and_parse_confirm_tx(const std::string & raw_tx
         }
     }
     return jv;
+}
+
+//----------------------xrpc_eth_loader_t----------------
+xtxindex_detail_ptr_t xrpc_eth_loader_t::load_tx_indx_detail(const std::string & raw_tx_hash) {
+    base::enum_transaction_subtype type = base::enum_transaction_subtype_send;
+    base::xauto_ptr<base::xvtxindex_t> txindex = base::xvchain_t::instance().get_xtxstore()->load_tx_idx(raw_tx_hash, type);
+    if (nullptr == txindex) {
+        xwarn("xrpc_eth_loader_t::load_tx_indx_detail,fail to index for hash:%s,type:%d", base::xstring_utl::to_hex(raw_tx_hash).c_str(), type);
+        return nullptr;
+    }  
+
+    base::xvaccount_t _vaddress(txindex->get_block_addr());
+    auto _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_vaddress, txindex->get_block_height(), txindex->get_block_hash(), false);
+    if (nullptr == _block) {
+        xwarn("xrpc_eth_loader_t::load_tx_indx_detail,fail to load block for hash:%s,type:%d", base::xstring_utl::to_hex(raw_tx_hash).c_str(), type);
+        return nullptr;
+    }
+
+    data::xlightunit_action_ptr_t txaction_ptr = nullptr;
+    std::vector<xlightunit_action_t> eth_txactions = data::xblockextract_t::unpack_eth_txactions(_block.get());
+    uint32_t transaction_index = (uint32_t)eth_txactions.size();
+    for (uint32_t i = 0; i < (uint32_t)eth_txactions.size(); i++) {
+        if (eth_txactions[i].get_org_tx_hash() == raw_tx_hash) {
+            transaction_index = i;
+            txaction_ptr = std::make_shared<xlightunit_action_t>(action);
+            break;
+        }
+    }
+    if (transaction_index >= (uint32_t)eth_txactions.size()) {
+        xerror("xrpc_eth_loader_t::load_tx_indx_detail,fail to find txaction hash:%s,block:%s", base::xstring_utl::to_hex(raw_tx_hash).c_str(), _block->dump().c_str());
+        return nullptr;
+    }
+    xtxindex_detail_ptr_t index_detail = std::make_shared<xtxindex_detail_t>(txindex, *txaction_ptr);
+    if (type == base::enum_transaction_subtype_self || type == base::enum_transaction_subtype_send) {
+        if (false == base::xvchain_t::instance().get_xblockstore()->load_block_input(_vaddress, _block.get())) {
+            xerror("xrpc_eth_loader_t::load_tx_indx_detail,fail to load input hash:%s,block:%s", base::xstring_utl::to_hex(raw_tx_hash).c_str(), _block->dump().c_str());
+            return nullptr;
+        }
+        std::string orgtx_bin = _block->get_input()->query_resource(raw_tx_hash);
+        if (orgtx_bin.empty()) {
+            xerror("xrpc_eth_loader_t::load_tx_indx_detail,fail to find raw tx hash:%s,block:%s", base::xstring_utl::to_hex(raw_tx_hash).c_str(), _block->dump().c_str());
+            return nullptr;
+        }
+        base::xauto_ptr<base::xdataunit_t> raw_tx = base::xdataunit_t::read_from(orgtx_bin);
+        if(nullptr == raw_tx) {
+            xerror("xrpc_eth_loader_t::load_tx_indx_detail,fail to read from hash:%s,block:%s", base::xstring_utl::to_hex(raw_tx_hash).c_str(), _block->dump().c_str());
+            return nullptr;
+        }
+        index_detail->set_raw_tx(raw_tx.get());
+    }
+    return index_detail;
+}
+
+data::xeth_local_receipt_prt_t xrpc_eth_loader_t::load_tx_receipt(const std::string & raw_tx_hash) {
+    xtxindex_detail_ptr_t txindex = load_tx_indx_detail(raw_tx_hash);
+    if (nullptr == txindex) {
+        xwarn("xrpc_eth_loader_t::load_tx_receipt,fail to load tx index for hash:%s", base::xstring_utl::to_hex(raw_tx_hash).c_str());
+        return nullptr;
+    }
+
+    evm_common::xevm_transaction_result_t evm_result;
+    bool ret = txindex->get_txaction().get_evm_transaction_result(evm_result);
+    if (false == ret) {
+        xwarn("xrpc_eth_loader_t::load_tx_receipt,fail to get evm result for hash:%s", base::xstring_utl::to_hex(raw_tx_hash).c_str());
+        return nullptr;
+    }
+
+    data::xeth_local_receipt_prt_t local_receipt = std::make_shared<data::xeth_local_receipt_t>();
+    local_receipt->set_tx_hash(raw_tx_hash);
+    local_receipt->set_block_hash(txindex->get_txindex()->get_block_hash());
+    local_receipt->set_block_number(txindex->get_txindex()->get_block_height());
+    local_receipt->set_transaction_index(txindex->get_transaction_index());
+
+    uint16_t tx_type = txindex->get_raw_tx()->get_tx_type();
+    if (tx_type == data::xtransaction_type_transfer || ) {
+        data::xaccount_address_t _top_addr(txindex->get_raw_tx()->get_target_addr());
+        common::xtop_eth_address _eth_addr = common::xtop_eth_address::build_from(_top_addr);
+        local_receipt->set_to_address(_eth_addr);
+    } else if (tx_type == data::xtransaction_type_run_contract) {
+        data::xaccount_address_t _top_addr(txindex->get_raw_tx()->get_target_addr());
+        common::xtop_eth_address _eth_addr = common::xtop_eth_address::build_from(_top_addr);
+        local_receipt->set_to_address(_eth_addr);
+        local_receipt->set_contract_address(_eth_addr);
+    } else if (tx_type == data::xtransaction_type_deploy_contract) {
+        local_receipt->set_contract_address(_eth_addr);  // TODO(jimmy)
+    }
+    uint64_t used_gas = 0;// TODO(jimmy)
+    local_receipt->set_used_gas(used_gas);
+
+    return local_receipt;
 }
 
 }  // namespace chain_info
