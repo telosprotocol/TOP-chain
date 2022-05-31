@@ -48,8 +48,13 @@ class xrpc_eth_loader_t {
  public:
     static data::xeth_local_receipt_prt_t     load_tx_receipt(const std::string & raw_tx_hash);
 
+ public:  // json transfer
+    static  xJson::Value                parse_receipt(const data::xeth_local_receipt_prt_t & _receipt);
+    static  void                        parse_log_to_json(evm_common::xevm_log_t const& log, xJson::Value & js_v);
+
  private:
     static  xtxindex_detail_ptr_t       load_tx_indx_detail(const std::string & raw_tx_hash);
+    static  std::string                 uint64_to_hex_prefixed(uint64_t value);
 };
 
 }  // namespace chain_info

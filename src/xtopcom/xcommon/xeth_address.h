@@ -57,6 +57,7 @@ public:
     xbytes_t to_h160() const;
     xbytes_t to_h256() const;
     char const * c_str() const;
+    bool empty() const;
 
     xbyte_t const * data() const noexcept;
 
