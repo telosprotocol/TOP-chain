@@ -249,6 +249,10 @@ public:
     bytes asBytes() const {
         return bytes(data(), data() + N);
     }
+    /// @returns a copy of the object's data as a byte vector.
+    bytes to_bytes() const {
+        return bytes(data(), data() + N);
+    }
 
     /// @returns a mutable reference to the object's data as an STL array.
     std::array<byte, N> & asArray() {
