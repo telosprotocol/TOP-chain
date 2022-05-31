@@ -546,104 +546,104 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
         return true;
     }
 
-    case method_id_mint: {
-        xdbg("predefined erc20 contract: mint");
+    //case method_id_mint: {
+    //    xdbg("predefined erc20 contract: mint");
 
-        uint64_t const mint_gas_cost = 3155;
-        if (target_gas < mint_gas_cost) {
-            err.fail_status = precompile_error::Error;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
+    //    uint64_t const mint_gas_cost = 3155;
+    //    if (target_gas < mint_gas_cost) {
+    //        err.fail_status = precompile_error::Error;
+    //        err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
 
-            xwarn("predefined erc20 contract: mint out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, mint_gas_cost);
+    //        xwarn("predefined erc20 contract: mint out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, mint_gas_cost);
 
-            return false;
-        }
+    //        return false;
+    //    }
 
-        xbytes_t result(32, 0);
-        if (is_static) {
-            err.fail_status = precompile_error::Revert;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
-            err.cost = mint_gas_cost;
-            err.output = result;
+    //    xbytes_t result(32, 0);
+    //    if (is_static) {
+    //        err.fail_status = precompile_error::Revert;
+    //        err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+    //        err.cost = mint_gas_cost;
+    //        err.output = result;
 
-            xwarn("predefined erc20 contract: mint is not allowed in static context");
+    //        xwarn("predefined erc20 contract: mint is not allowed in static context");
 
-            return false;
-        }
+    //        return false;
+    //    }
 
-        if (abi_decoder.size() != 1) {
-            err.fail_status = precompile_error::Fatal;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
+    //    if (abi_decoder.size() != 1) {
+    //        err.fail_status = precompile_error::Fatal;
+    //        err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined erc20 contract: mint with invalid parameter");
+    //        xwarn("predefined erc20 contract: mint with invalid parameter");
 
-            return false;
-        }
+    //        return false;
+    //    }
 
-        std::error_code ec;
-        common::xaccount_address_t caller_account_address = common::xaccount_address_t::build_from(context.caller, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
-        evm_common::u256 const value = abi_decoder.extract<evm_common::u256>(ec);
-        if (ec) {
-            err.fail_status = precompile_error::Fatal;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
+    //    std::error_code ec;
+    //    common::xaccount_address_t caller_account_address = common::xaccount_address_t::build_from(context.caller, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
+    //    evm_common::u256 const value = abi_decoder.extract<evm_common::u256>(ec);
+    //    if (ec) {
+    //        err.fail_status = precompile_error::Fatal;
+    //        err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined erc20 contract: transfer with invalid value");
+    //        xwarn("predefined erc20 contract: transfer with invalid value");
 
-            return false;
-        }
+    //        return false;
+    //    }
 
-        auto sender_state = state_ctx->load_unit_state(caller_account_address.vaccount());
-        switch (erc20_token_id) {
-        case common::xtoken_id_t::top: {
-            sender_state->token_deposit(data::XPROPERTY_BALANCE_AVAILABLE, static_cast<base::vtoken_t>(value.convert_to<uint64_t>()));
-            break;
-        }
+    //    auto sender_state = state_ctx->load_unit_state(caller_account_address.vaccount());
+    //    switch (erc20_token_id) {
+    //    case common::xtoken_id_t::top: {
+    //        sender_state->token_deposit(data::XPROPERTY_BALANCE_AVAILABLE, static_cast<base::vtoken_t>(value.convert_to<uint64_t>()));
+    //        break;
+    //    }
 
-        case common::xtoken_id_t::usdt:
-            XATTRIBUTE_FALLTHROUGH;
-        case common::xtoken_id_t::usdc: {
-            sender_state->tep_token_deposit(erc20_token_id, value);
-            break;
-        }
+    //    case common::xtoken_id_t::usdt:
+    //        XATTRIBUTE_FALLTHROUGH;
+    //    case common::xtoken_id_t::usdc: {
+    //        sender_state->tep_token_deposit(erc20_token_id, value);
+    //        break;
+    //    }
 
-        default: {
-            assert(false);
+    //    default: {
+    //        assert(false);
 
-            err.fail_status = precompile_error::Fatal;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
+    //        err.fail_status = precompile_error::Fatal;
+    //        err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined erc20 contract: mint invalid token id %d", static_cast<int>(erc20_token_id));
+    //        xwarn("predefined erc20 contract: mint invalid token id %d", static_cast<int>(erc20_token_id));
 
-            return false;
-        }
-        }
+    //        return false;
+    //    }
+    //    }
 
-        if (!ec) {
-            auto const & contract_address = context.address;
-            auto const & recipient_address = context.caller;
+    //    if (!ec) {
+    //        auto const & contract_address = context.address;
+    //        auto const & recipient_address = context.caller;
 
-            evm_common::xh256s_t topics;
-            topics.push_back(evm_common::xh256_t("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"));
-            topics.push_back(evm_common::xh256_t(common::xeth_address_t::zero().to_h256()));
-            topics.push_back(evm_common::xh256_t(recipient_address.to_h256()));
-            evm_common::xevm_log_t log(contract_address, topics, top::to_bytes(value));
-            result[31] = 1;
+    //        evm_common::xh256s_t topics;
+    //        topics.push_back(evm_common::xh256_t("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"));
+    //        topics.push_back(evm_common::xh256_t(common::xeth_address_t::zero().to_h256()));
+    //        topics.push_back(evm_common::xh256_t(recipient_address.to_h256()));
+    //        evm_common::xevm_log_t log(contract_address, topics, top::to_bytes(value));
+    //        result[31] = 1;
 
-            output.cost = mint_gas_cost;
-            output.exit_status = Returned;
-            output.output = result;
-            output.logs.push_back(log);
-        } else {
-            err.fail_status = precompile_error::Revert;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
-            err.cost = mint_gas_cost / 2;
-            err.output = result;
+    //        output.cost = mint_gas_cost;
+    //        output.exit_status = Returned;
+    //        output.output = result;
+    //        output.logs.push_back(log);
+    //    } else {
+    //        err.fail_status = precompile_error::Revert;
+    //        err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+    //        err.cost = mint_gas_cost / 2;
+    //        err.output = result;
 
-            xwarn("predefined erc20 contract: mint reverted. ec %" PRIi32 " category %s msg %s", ec.value(), ec.category().name(), ec.message().c_str());
-        }
+    //        xwarn("predefined erc20 contract: mint reverted. ec %" PRIi32 " category %s msg %s", ec.value(), ec.category().name(), ec.message().c_str());
+    //    }
 
-        return !ec;
-    }
+    //    return !ec;
+    //}
 
     default: {
         err.fail_status = precompile_error::Fatal;
