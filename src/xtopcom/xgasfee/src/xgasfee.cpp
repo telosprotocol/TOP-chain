@@ -47,18 +47,16 @@ void xtop_gasfee::init(std::error_code & ec) {
         if (max_gasfee > 0) {
             xdbg("[xtop_gasfee::init] not evm tx, gasfee limit(deposit): %lu", max_gasfee);
             if (max_gasfee > balance) {
-                ec = gasfee::error::xenum_errc::tx_out_of_gas;
-                xwarn("[xtop_gasfee::init] tx_out_of_gas, max_gasfee: %lu, balance: %lu", max_gasfee, balance);
-                // need to burn the balance?
-                top_balance_to_use = balance;
-                break;
+                ec = gasfee::error::xenum_errc::account_balance_not_enough;
+                xwarn("[xtop_gasfee::init] account_balance_not_enough, max_gasfee: %lu, balance: %lu", max_gasfee, balance);
+                return;
             } else {
                 top_balance_to_use = max_gasfee;
             }
             if (max_gasfee < XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit)) {
                 ec = gasfee::error::xenum_errc::tx_deposit_not_enough;
                 xwarn("[xtop_gasfee::init] tx_deposit_not_enough: %lu", max_gasfee);
-                break;
+                return;
             }
         } else {
             // evm tx or eth transfer
@@ -73,11 +71,9 @@ void xtop_gasfee::init(std::error_code & ec) {
             if (eth_max_gasfee > balance) {
                 // need use eth balance
                 if (eth_max_gasfee > balance + balance_from_eth) {
-                    ec = gasfee::error::xenum_errc::tx_out_of_gas;
-                    xwarn("[xtop_gasfee::init] tx_out_of_gas, eth_max_gasfee: %lu, balance: %lu, balance_from_eth: %lu", eth_max_gasfee, balance, balance_from_eth);
-                    top_balance_to_use = balance;
-                    eth_balance_to_use = balance_from_eth;
-                    break;
+                    ec = gasfee::error::xenum_errc::account_balance_not_enough;
+                    xwarn("[xtop_gasfee::init] account_balance_not_enough, eth_max_gasfee: %lu, balance: %lu, balance_from_eth: %lu", eth_max_gasfee, balance, balance_from_eth);
+                    return;
                 } else {
                     // use extra eth balance
                     top_balance_to_use = balance;
@@ -202,15 +198,15 @@ void xtop_gasfee::store_in_one_stage() {
     m_detail.m_state_burn_balance = top_usage;
     m_detail.m_tx_used_tgas = m_free_tgas_usage;
     m_detail.m_tx_used_deposit = top_usage;
-    auto eth_usage = utop_to_wei(tgas_to_balance(m_eth_converted_tgas_usage));
+    evm_common::u256 eth_usage = utop_to_wei(tgas_to_balance(m_eth_converted_tgas_usage));
     m_detail.m_state_burn_eth_balance = eth_usage;
-    xdbg("[xtop_gasfee::store_abnormal] m_free_tgas: %lu, m_converted_tgas_usage: %lu, top_usage: %lu, m_eth_converted_tgas_usage: %lu, eth_usage: %s",
+    xdbg("[xtop_gasfee::store_in_one_stage] m_free_tgas: %lu, m_converted_tgas_usage: %lu, top_usage: %lu, m_eth_converted_tgas_usage: %lu, eth_usage: %s",
          m_free_tgas,
          m_converted_tgas_usage,
          top_usage,
          m_eth_converted_tgas_usage,
          eth_usage.str().c_str());
-    xdbg("[xtop_gasfee::store_abnormal] gasfee_detail: %s", m_detail.str().c_str());
+    xdbg("[xtop_gasfee::store_in_one_stage] gasfee_detail: %s", m_detail.str().c_str());
 }
 
 void xtop_gasfee::store_in_send_stage() {
@@ -268,7 +264,6 @@ void xtop_gasfee::preprocess_one_stage(std::error_code & ec) {
     CHECK_EC_RETURN(ec);
     // 1. calculate common tgas
     calculate(ec);
-    CHECK_EC_RETURN(ec);
     // 2. store if not eth tx(need postprocess)
     store_in_one_stage();
 }
@@ -279,7 +274,6 @@ void xtop_gasfee::preprocess_send_stage(std::error_code & ec) {
     CHECK_EC_RETURN(ec);
     // 1. calculate common tgas
     calculate(ec);
-    CHECK_EC_RETURN(ec);
     // 2. store
     if (tx_type() == data::xtransaction_type_transfer) {
         store_in_one_stage();
@@ -305,7 +299,6 @@ void xtop_gasfee::preprocess_confirm_stage(std::error_code & ec) {
 
 void xtop_gasfee::postprocess_one_stage(const uint64_t supplement_gas, std::error_code & ec) {
     process_calculation_tgas(supplement_gas, ec);
-    CHECK_EC_RETURN(ec);
     store_in_one_stage();
 }
 
