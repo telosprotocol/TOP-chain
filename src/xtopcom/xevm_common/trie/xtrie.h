@@ -106,6 +106,7 @@ public:
     // The value bytes must not be modified by the caller while they are
     // stored in the trie.
     void Update(xbytes_t const & key, xbytes_t const & value) {
+        // printf("update: %s %s\n", top::to_hex(key).c_str(), top::to_hex(value).c_str());
         std::error_code ec;
         TryUpdate(key, value, ec);
         if (ec) {
@@ -126,7 +127,7 @@ public:
         unhashed++;
         auto k = keybytesToHex(key);
         if (value.size() != 0) {
-            auto result = insert(m_root, {}, k, std::make_shared<xtrie_hash_node_t>(value), ec);
+            auto result = insert(m_root, {}, k, std::make_shared<xtrie_value_node_t>(value), ec);
             if (ec) {
                 return;
             }
@@ -166,6 +167,7 @@ public:
 
 private:
     std::tuple<xbytes_t, xtrie_node_face_ptr_t, bool> tryGet(xtrie_node_face_ptr_t node, xbytes_t const & key, std::size_t const pos, std::error_code & ec) {
+        printf("tryGet key: %s ,pos: %zu\n", top::to_hex(key).c_str(), pos);
         if (node == nullptr) {
             return std::make_tuple(xbytes_t{}, nullptr, false);
         }
@@ -333,6 +335,7 @@ private:
     }
 
     std::pair<bool, xtrie_node_face_ptr_t> erase(xtrie_node_face_ptr_t node, xbytes_t prefix, xbytes_t key, std::error_code & ec) {
+        // printf("erase: prefix: %s key: %s\n", top::to_hex(prefix).c_str(), top::to_hex(key).c_str());
         if (node == nullptr) {
             return std::make_pair(false, nullptr);
         }
@@ -340,6 +343,7 @@ private:
 
         switch (node->type()) {
         case xtrie_node_type_t::shortnode: {
+            // printf("erase node_type short\n");
             auto n = std::make_shared<xtrie_short_node_t>(*(static_cast<xtrie_short_node_t *>(node.get())));
             auto matchlen = prefixLen(key, n->Key);
             if (matchlen < n->Key.size()) {
@@ -380,6 +384,7 @@ private:
             }
         }
         case xtrie_node_type_t::fullnode: {
+            // printf("erase node_type full\n");
             auto n = std::make_shared<xtrie_full_node_t>(*(static_cast<xtrie_full_node_t *>(node.get())));
             bool dirty;
             xtrie_node_face_ptr_t nn;
@@ -419,10 +424,10 @@ private:
                 if (cld != nullptr) {
                     if (pos == -1) {
                         pos = ind;
+                    } else {
+                        pos = -2;
+                        break;
                     }
-                } else {
-                    pos = -2;
-                    break;
                 }
                 ind++;
             }
@@ -449,12 +454,15 @@ private:
             return std::make_pair(true, n);
         }
         case xtrie_node_type_t::valuenode: {
+            // printf("erase node_type value\n");
             return std::make_pair(true, nullptr);
         }
         case xtrie_node_type_t::invalid: {
+            // printf("erase node_type invalid\n");
             return std::make_pair(false, nullptr);
         }
         case xtrie_node_type_t::hashnode: {
+            // printf("erase node_type hash\n");
             auto n = std::make_shared<xtrie_hash_node_t>(*(static_cast<xtrie_hash_node_t *>(node.get())));
             auto rn = resolveHash(n, /*prefix,*/ ec);
             if (ec) {
