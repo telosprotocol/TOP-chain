@@ -143,10 +143,10 @@ namespace data {
 
     struct xrelay_block_inner_header{
 
+        //computable hash(inner_header data, no rlp )
+        evm_common::h256    m_inner_hash; 
         //version of header
         uint64_t            m_version;
-        //computable hash(inner_header data)
-        evm_common::h256    m_inner_hash; 
         //block height
         uint64_t            m_height;
         // Epoch id of this block's epoch. Used for retrieving validator information
@@ -164,38 +164,38 @@ namespace data {
         // Merkle root of block hashes up to the current block.
         evm_common::h256    m_block_merkle_root;
 
+        static const unsigned inner_fileds = 9;
         /**
          * @brief 
          * 
          * @param innerFlag  false:rlp all data, true: rlp data to create inner hash
          * @return evm_common::bytes 
          */
-        void streamRLP(evm_common::RLPStream &_s, bool innerFlag = false) const {
-            unsigned decLen = 0;
-            if (innerFlag) {
-               decLen = 1;
-            }
-            _s.appendList(10 - decLen);
+        void streamRLP(evm_common::RLPStream &_s) const {
+            _s.appendList(inner_fileds);
             _s << m_version;
-            if (!innerFlag) {
-               _s << m_inner_hash;
-            }
-            _s << m_height << m_epochID << m_timestamp << m_elections_hash
-               << m_txs_merkle_root << m_receipts_merkle_root << m_state_merkle_root << m_block_merkle_root;
+            _s << m_height;
+            _s << m_epochID;
+            _s << m_timestamp;
+            _s << m_elections_hash;
+            _s << m_txs_merkle_root;
+            _s << m_receipts_merkle_root;
+            _s << m_state_merkle_root;
+            _s << m_block_merkle_root;
         }
 
         bool decodeRLP(evm_common::RLP const& _r) {
-            assert(_r.itemCount() == 10);
-            m_version               = _r[0].toInt<uint64_t>();
-            m_inner_hash            = _r[1].toHash<evm_common::h256>();
-            m_height                = _r[2].toInt<uint64_t>();
-            m_epochID               = _r[3].toInt<uint64_t>();
-            m_timestamp             = _r[4].toInt<uint64_t>();
-            m_elections_hash        = _r[5].toHash<evm_common::h256>();
-            m_txs_merkle_root       = _r[6].toHash<evm_common::h256>();
-            m_receipts_merkle_root  = _r[7].toHash<evm_common::h256>();
-            m_state_merkle_root     = _r[8].toHash<evm_common::h256>();
-            m_block_merkle_root     = _r[9].toHash<evm_common::h256>();
+            assert(_r.itemCount() == inner_fileds);
+
+            m_version               = _r[0].toInt<uint64_t>(); 
+            m_height                = _r[1].toInt<uint64_t>(); 
+            m_epochID               = _r[2].toInt<uint64_t>(); 
+            m_timestamp             = _r[3].toInt<uint64_t>(); 
+            m_elections_hash        = _r[4].toHash<evm_common::h256>();
+            m_txs_merkle_root       = _r[5].toHash<evm_common::h256>(); 
+            m_receipts_merkle_root  = _r[6].toHash<evm_common::h256>(); 
+            m_state_merkle_root     = _r[7].toHash<evm_common::h256>();
+            m_block_merkle_root     = _r[8].toHash<evm_common::h256>(); 
             return true;
         }
 
@@ -204,13 +204,13 @@ namespace data {
     class xrelay_block_header {
     friend class xrelay_block;
     public:
-       static const unsigned block_header_fileds = 7;
+       static const size_t block_header_fileds = 7;
 
        xrelay_block_header(){}
 
-       void                             streamRLP(evm_common::RLPStream &rlp_stream,bool blocksignature = false);
-       bool                             decodeRLP(evm_common::RLP const& _r);
-       void                             serialize_from_data();
+       void                             streamRLP(evm_common::RLPStream &rlp_stream,bool withSignature = false);
+       void                             streamRLP_header_to_contract(evm_common::RLPStream &rlp_stream);
+       bool                             decodeRLP(evm_common::RLP const& _r, bool withSignature = false);
 
     public:
        void                             make_elections_root_hash();
@@ -277,14 +277,15 @@ namespace data {
          * @param withSingaure 0:rlp data include signature info, 1: without signature info
          */
         void                                streamRLP(evm_common::RLPStream &rlp_stream,bool withSignature = false);
-        bool                                decodeRLP(evm_common::RLP const& _r);
+        bool                                decodeRLP(evm_common::RLP const& _r,bool withSignature = false);
         void                                set_elections_next(std::vector<xrelay_election> &elections);
         void                                set_transaction(const std::vector<top::data::xtransaction_v3_ptr_t> &transactions);
         void                                set_receipts(const std::vector<xrelay_receipt> &receipts);
         void                                set_header(xrelay_block_header &block_hedaer);   
         void                                add_signature(xrelay_signature signature);
         bool                                build_finish();
-        void                                save_block_trie();        
+        void                                save_block_trie();
+
                    
     public:
        
