@@ -73,9 +73,7 @@ xbytes_t xeth_store_receipt_t::encodeBytes() const {
     _bytes.push_back(m_version);
     evm_common::RLPStream _s;
     streamRLP(_s);
-    for (auto & v : _s.out()) {
-        _bytes.push_back(v);
-    }
+    _bytes.insert(_bytes.begin() + 1, _s.out().begin(), _s.out().end());
     return _bytes;
 }
 
@@ -86,15 +84,14 @@ void xeth_store_receipt_t::decodeBytes(xbytes_t const& _d, std::error_code & ec)
         return;
     }
 
-    m_version = (uint8_t)_d.back();
+    m_version = (uint8_t)_d.front();
     if (m_version != 0) {
         ec = common::error::xerrc_t::invalid_rlp_stream;
         xerror("xeth_store_receipt_t::decodeBytes fail invalid version,%d", m_version);
         return;
     }
 
-    xbytes_t _d2 = _d;
-    _d2.pop_back();
+    xbytes_t _d2(_d.begin() + 1, _d.end());
     evm_common::RLP _r(_d2);
     decodeRLP(_r, ec);
 }
@@ -164,9 +161,7 @@ xbytes_t xeth_receipt_t::encodeBytes() const {
     _bytes.push_back((uint8_t)m_tx_version_type);
     evm_common::RLPStream _s;
     streamRLP(_s);
-    for (auto & v : _s.out()) {
-        _bytes.push_back(v);
-    }
+    _bytes.insert(_bytes.begin() + 1, _s.out().begin(), _s.out().end());
     return _bytes;
 }
 
@@ -177,15 +172,14 @@ void xeth_receipt_t::decodeBytes(xbytes_t const& _d, std::error_code & ec) {
         return;
     }
 
-    enum_ethtx_version tx_version = (enum_ethtx_version)(uint8_t)_d.back();
+    enum_ethtx_version tx_version = (enum_ethtx_version)(uint8_t)_d.front();
     if (tx_version != EIP_1559) {
         ec = common::error::xerrc_t::invalid_rlp_stream;
         xerror("xeth_receipt_t::decodeBytes fail tx version,%d", tx_version);
         return;
     }
 
-    xbytes_t _d2 = _d;
-    _d2.pop_back();
+    xbytes_t _d2(_d.begin() + 1, _d.end());
 
     evm_common::RLP _r(_d2);
     decodeRLP(_r, ec);

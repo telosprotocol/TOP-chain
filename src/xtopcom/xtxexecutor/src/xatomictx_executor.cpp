@@ -291,7 +291,7 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
                 }
 
                 tx->set_evm_tx_receipt(evm_tx_receipt);
-                xdbg("xatomictx_executor_t::vm_execute tx:%s vmoutput.m_tx_result.extra_msg:%s", tx->dump().c_str(), vmoutput.m_tx_result.extra_msg.c_str());
+                xdbg("xatomictx_executor_t::vm_execute tx:%s status:%d,extra_msg:%s", tx->dump().c_str(), vmoutput.m_tx_result.status, vmoutput.m_tx_result.extra_msg.c_str());
             }
 #else
             xassert(false);
@@ -300,9 +300,9 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
         }
     } while(0);
 
-    if (ret != enum_exec_error_evm_execute) {
-        xwarn("xatomictx_executor_t::vm_execute tx error: %s, error_code: %d, error_msg: %s", tx->dump().c_str(), vmoutput.m_vm_error_code, vmoutput.m_vm_error_str.c_str());
-    }
+    // if (ret != enum_exec_error_evm_execute) {
+    //     xwarn("xatomictx_executor_t::vm_execute tx error: %s, error_code: %d, error_msg: %s", tx->dump().c_str(), vmoutput.m_vm_error_code, vmoutput.m_vm_error_str.c_str());
+    // }
     vmoutput.m_gasfee_detail = gasfee.gasfee_detail();
     output.m_vm_output = vmoutput;
     return ret;
