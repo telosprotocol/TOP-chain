@@ -289,7 +289,7 @@ namespace data {
                    
     public:
        
-        const xrelay_block_header           &get_header() const { return m_header;}
+        xrelay_block_header           &get_header() { return m_header;}
         const evm_common::h256              &get_block_hash() { return m_header.get_block_hash();}
         const xrelay_block_inner_header     &get_inner_header() const {return m_header.get_inner_header(); }
         const evm_common::h256              &get_inner_header_hash() const {return m_header.get_inner_header_hash();}
