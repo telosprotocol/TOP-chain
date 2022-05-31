@@ -150,21 +150,5 @@ uint64_t xtop_gas_tx_operator::tgas_to_balance(const uint64_t tgas) const {
     return tgas * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio);
 }
 
-evm_common::u256 xtop_gas_tx_operator::estimate_eth_base_price() const{
-    return evm_common::u256{5000000000UL};
-}
-
-evm_common::u256 xtop_gas_tx_operator::estimate_eth_gas_price() const {
-    return estimate_eth_base_price() * evm_common::u256(5U);
-}
-
-evm_common::u256 xtop_gas_tx_operator::estimate_eth_gas_limit(const evm_common::u256 evm_gas) const {
-    evm_common::u256 total_tgas = tx_bandwith_tgas() + tx_disk_tgas() + evm_gas * XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_gas_to_tgas_exchange_ratio);
-    evm_common::u256 total_utop = total_tgas * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio);
-    evm_common::u256 total_wei = utop_to_wei(total_utop);
-    evm_common::u256 max_gas = total_wei / estimate_eth_base_price();
-    return max_gas;
-}
-
 }  // namespace gasfee
 }  // namespace top
