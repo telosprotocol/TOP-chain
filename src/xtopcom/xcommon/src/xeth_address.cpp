@@ -143,4 +143,8 @@ xtop_eth_address const & xtop_eth_address::zero() {
     return z;
 }
 
+bool xtop_eth_address::empty() const {
+    return raw_address_ == zero().raw_address_;
+}
+
 NS_END2
