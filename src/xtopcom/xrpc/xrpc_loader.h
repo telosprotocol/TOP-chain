@@ -42,19 +42,9 @@ class xrpc_loader_t {
     static  xJson::Value            parse_recv_tx(const xtxindex_detail_ptr_t & sendindex, const xtxindex_detail_ptr_t & recvindex);
     static  xJson::Value            parse_confirm_tx(const xtxindex_detail_ptr_t & sendindex, data::enum_xunit_tx_exec_status recvtx_status, const xtxindex_detail_ptr_t & confirmindex);
     static  void                    parse_common_info(const xtxindex_detail_ptr_t & txindex, xJson::Value & jv);
-};
 
-class xrpc_eth_loader_t {
- public:
-    static data::xeth_local_receipt_prt_t     load_tx_receipt(const std::string & raw_tx_hash);
-
- public:  // json transfer
-    static  xJson::Value                parse_receipt(const data::xeth_local_receipt_prt_t & _receipt);
-    static  void                        parse_log_to_json(evm_common::xevm_log_t const& log, xJson::Value & js_v);
-
- private:
-    static  xtxindex_detail_ptr_t       load_tx_indx_detail(const std::string & raw_tx_hash);
-    static  std::string                 uint64_to_hex_prefixed(uint64_t value);
+ public: // load ethdata
+    static  xtxindex_detail_ptr_t   load_ethtx_indx_detail(const std::string & raw_tx_hash);
 };
 
 }  // namespace chain_info
