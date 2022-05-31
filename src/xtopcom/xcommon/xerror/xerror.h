@@ -25,6 +25,7 @@ enum class xenum_errc {
     invalid_rlp_stream,
     empty_token_symbol,
     token_symbol_unknown,
+    invalid_block,
 };
 using xerrc_t = xenum_errc;
 

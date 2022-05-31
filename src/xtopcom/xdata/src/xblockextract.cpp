@@ -6,6 +6,7 @@
 #include "xdata/xblockextract.h"
 #include "xdata/xblockbuild.h"
 #include "xbase/xutl.h"
+#include "xcommon/xerror/xerror.h"
 
 NS_BEG2(top, data)
 
@@ -110,6 +111,34 @@ xlightunit_action_ptr_t xblockextract_t::unpack_one_txaction(base::xvblock_t* _b
     }
     xerror("xblockextract_t::unpack_one_txaction fail-find tx.block=%s,tx=%s", _block->dump().c_str(), base::xstring_utl::to_hex(txhash).c_str());
     return nullptr;
+}
+
+void xblockextract_t::unpack_ethheader(base::xvblock_t* _block, xeth_header_t & ethheader, std::error_code & ec) {
+    if (_block->get_header()->get_extra_data().empty()) {
+        ec = common::error::xerrc_t::invalid_block;
+        xerror("xblockextract_t::unpack_ethheader fail-extra data empty.block=%s",_block->dump().c_str());
+        return;
+    }
+
+    const std::string & extra_data = _block->get_header()->get_extra_data();
+    data::xtableheader_extra_t blockheader_extradata;
+    int32_t ret = blockheader_extradata.deserialize_from_string(extra_data);
+    if (ret <= 0) {
+        ec = common::error::xerrc_t::invalid_block;
+        xerror("xblockextract_t::unpack_ethheader fail-extra data invalid.block=%s",_block->dump().c_str());
+        return;
+    }
+    std::string eth_header_str = blockheader_extradata.get_ethheader();
+    if (eth_header_str.empty()) {
+        ec = common::error::xerrc_t::invalid_block;
+        xerror("xblockextract_t::unpack_ethheader fail-eth_header_str empty.block=%s",_block->dump().c_str());
+        return;
+    }
+    ethheader.serialize_from_string(eth_header_str, ec);
+    if (ec) {
+        xerror("xeth_header_builder::string_to_eth_header decode fail");
+        return;
+    }
 }
 
 
