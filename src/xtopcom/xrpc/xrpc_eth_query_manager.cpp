@@ -346,7 +346,12 @@ void xrpc_eth_query_manager::eth_getTransactionReceipt(xJson::Value & js_req, xJ
         return;
 
     std::error_code ec;
-    std::string raw_tx_hash = base::xstring_utl::from_hex(tx_hash);
+    auto tx_hash_bytes = top::from_hex(tx_hash, ec);
+    if (ec) {
+        xdbg("eth_getTransactionReceipt from_hex fail: %s",  tx_hash.c_str());
+        return;
+    }
+    std::string raw_tx_hash = top::to_string(tx_hash_bytes);
     xdbg("eth_getTransactionReceipt tx hash: %s",  tx_hash.c_str());
 
     xtxindex_detail_ptr_t sendindex = xrpc_loader_t::load_ethtx_indx_detail(raw_tx_hash);

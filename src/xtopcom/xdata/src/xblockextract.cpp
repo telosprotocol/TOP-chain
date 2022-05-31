@@ -7,6 +7,8 @@
 #include "xdata/xblockbuild.h"
 #include "xbase/xutl.h"
 #include "xcommon/xerror/xerror.h"
+#include "xconfig/xpredefined_configurations.h"
+#include "xconfig/xconfig_register.h"
 
 NS_BEG2(top, data)
 
@@ -114,6 +116,12 @@ xlightunit_action_ptr_t xblockextract_t::unpack_one_txaction(base::xvblock_t* _b
 }
 
 void xblockextract_t::unpack_ethheader(base::xvblock_t* _block, xeth_header_t & ethheader, std::error_code & ec) {
+    if (_block->is_genesis_block()) {
+        uint64_t gas_limit = XGET_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit);
+        ethheader.set_gaslimit(gas_limit);
+        return;
+    }
+
     if (_block->get_header()->get_extra_data().empty()) {
         ec = common::error::xerrc_t::invalid_block;
         xerror("xblockextract_t::unpack_ethheader fail-extra data empty.block=%s",_block->dump().c_str());
