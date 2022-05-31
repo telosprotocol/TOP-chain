@@ -45,6 +45,7 @@
 #include "xrouter/xrouter.h"
 #include "xrpc/xuint_format.h"
 #include "xrpc/xrpc_loader.h"
+#include "xrpc/xrpc_eth_parser.h"
 #include "xstore/xaccount_context.h"
 #include "xstore/xtgas_singleton.h"
 #include "xtxexecutor/xtransaction_fee.h"
@@ -62,6 +63,7 @@
 #include "xdata/xtransaction_v2.h"
 #include "xdata/xtransaction_v3.h"
 #include "xstatectx/xstatectx.h"
+
 using namespace top::data;
 
 namespace top {
@@ -343,11 +345,11 @@ void xrpc_eth_query_manager::eth_getTransactionReceipt(xJson::Value & js_req, xJ
     if (!eth::EthErrorCode::check_hash(tx_hash, js_rsp))
         return;
 
-    uint256_t hash = top::data::hex_to_uint256(js_req[0].asString());
-    std::string tx_hash_str = std::string(reinterpret_cast<char *>(hash.data()), hash.size());
+    std::error_code ec;
+    std::string raw_tx_hash = base::xstring_utl::from_hex(tx_hash);
     xdbg("eth_getTransactionReceipt tx hash: %s",  tx_hash.c_str());
 
-    xtxindex_detail_ptr_t sendindex = xrpc_loader_t::load_tx_indx_detail(tx_hash_str, base::enum_transaction_subtype_send);
+    xtxindex_detail_ptr_t sendindex = xrpc_loader_t::load_ethtx_indx_detail(raw_tx_hash);
     if (sendindex == nullptr) {
         xwarn("xrpc_query_manager::eth_getTransactionReceipt load tx index fail.%s", tx_hash.c_str());
         nErrorCode = (uint32_t)enum_xrpc_error_code::rpc_shard_exec_error;
@@ -355,79 +357,15 @@ void xrpc_eth_query_manager::eth_getTransactionReceipt(xJson::Value & js_req, xJ
         return;
     }
 
-    xJson::Value js_result;
-    js_result["transactionHash"] = tx_hash;
-    std::string block_hash = std::string("0x") + top::HexEncode(sendindex->get_txindex()->get_block_hash());
-    js_result["blockHash"] = block_hash;
-    std::string tx_idx = "0x0";
-    js_result["transactionIndex"] = tx_idx;
-    std::stringstream outstr;
-    outstr << "0x" << std::hex << sendindex->get_txindex()->get_block_height();
-    std::string block_num = outstr.str();
-    js_result["blockNumber"] = block_num;
-
-    uint16_t tx_type = sendindex->get_raw_tx()->get_tx_type();
-    js_result["from"] = std::string("0x") + sendindex->get_raw_tx()->get_source_addr().substr(6);
-    if (tx_type == xtransaction_type_transfer) {
-        js_result["to"] = std::string("0x") + sendindex->get_raw_tx()->get_target_addr().substr(6);
-        js_result["status"] = "0x1";
-        js_result["cumulativeGasUsed"] = "0x0";
-        js_result["effectiveGasPrice"] = "0x0";
-        js_result["gasUsed"] = std::string("0x") + sendindex->get_raw_tx()->get_gaslimit().str();
-    } else {
-        data::xeth_store_receipt_t evm_tx_receipt;
-        auto ret = sendindex->get_txaction().get_evm_transaction_receipt(evm_tx_receipt);
-
-        if (tx_type == xtransaction_type_run_contract) {
-            std::string contract_addr  = std::string("0x") + sendindex->get_raw_tx()->get_target_addr().substr(6);
-            js_result["to"] = contract_addr;
-            js_result["contractAddress"] = contract_addr;
-        } else {
-            js_result["to"] = xJson::Value::null;
-            std::string contract_addr  = evm_tx_receipt.get_contract_address().to_hex_string();
-            js_result["contractAddress"] = contract_addr;
-        }
-
-        evm_common::xbloom9_t logs_bloom;
-        uint32_t index = 0;
-        for (auto & log : evm_tx_receipt.get_logs()) {
-            xJson::Value js_log;
-
-            std::stringstream outstr1;
-            outstr1 << "0x" << std::hex << index;
-            js_log["logIndex"] = outstr1.str();
-            js_log["blockNumber"] = block_num;
-            js_log["blockHash"] = block_hash;
-            js_log["transactionHash"] = tx_hash;
-            js_log["transactionIndex"] = tx_idx;
-            evmlog_to_json(log, js_log);
-            evm_common::xbloom9_t bloom = log.bloom();
-            logs_bloom |= bloom;
-
-            js_log["removed"] = false;
-            js_result["logs"].append(js_log);
-            index++;
-        }
-        if (evm_tx_receipt.get_logs().empty()) {
-            js_result["logs"].resize(0);
-        }
-
-        js_result["logsBloom"] = std::string("0x") + logs_bloom.get_hex_string_data();
-        js_result["status"] = (evm_tx_receipt.get_tx_status() == ethreceipt_status_successful) ?  "0x1" : "0x0";
-        std::stringstream outstr;
-        outstr << "0x" << std::hex << sendindex->get_raw_tx()->get_eip_version();
-        js_result["type"] = std::string(outstr.str());
-        outstr.seekp(0);
-        outstr << "0x" << std::hex << evm_tx_receipt.get_gas_used();
-        js_result["gasUsed"] = outstr.str();
-        outstr.seekp(0);
-        outstr << "0x" << std::hex << evm_tx_receipt.get_cumulative_gas_used();
-        js_result["cumulativeGasUsed"] = outstr.str();
-        js_result["effectiveGasPrice"] = "0x77359400";
+    xJson::Value js_result;    
+    xrpc_eth_parser_t::receipt_to_json(tx_hash, sendindex, js_result, ec);
+    if (ec) {
+        xerror("xrpc_query_manager::eth_getTransactionReceipt parse json fail.%s", tx_hash.c_str());
+        nErrorCode = (uint32_t)enum_xrpc_error_code::rpc_shard_exec_error;
+        js_rsp["result"] = xJson::Value::null;
+        return;
     }
-
     js_rsp["result"] = js_result;
-
     xdbg("xrpc_query_manager::eth_getTransactionReceipt ok.tx hash:%s", js_req[0].asString().c_str());
     return;
 }
@@ -496,32 +434,12 @@ void xrpc_eth_query_manager::eth_getBlockByNumber(xJson::Value & js_req, xJson::
     return;
 }
 void xrpc_eth_query_manager::set_block_result(const xobject_ptr_t<base::xvblock_t>&  block, xJson::Value& js_result, bool fullTx) {
-    js_result["difficulty"] = "0x0";
-    js_result["extraData"] = std::string("0x") + std::string(50, '0');
-    js_result["gasLimit"] = "0x5b15aa";
-    js_result["gasUsed"] = "0x0";
-    std::string hash = block->get_block_hash();
-    js_result["hash"] = std::string("0x") + top::HexEncode(hash); //js_req["tx_hash"].asString();
-    js_result["logsBloom"] = std::string("0x") + std::string(512, '0');
-    js_result["miner"] = std::string("0x") + std::string(40, '0');
-    js_result["mixHash"] = std::string("0x") + std::string(64, '0');
-    js_result["nonce"] = std::string("0x") + std::string(16, '0');
-    std::stringstream outstr;
-    outstr << "0x" << std::hex << block->get_height();
-    js_result["number"] = std::string(outstr.str());
-    js_result["parentHash"] = std::string("0x") + top::HexEncode(block->get_last_block_hash());
-    js_result["receiptsRoot"] = std::string("0x") + std::string(64, '0');
-    js_result["sha3Uncles"] = std::string("0x") + std::string(64, '0');
-    js_result["size"] = "0x219";
-    js_result["stateRoot"] = std::string("0x") + std::string(64, '0');
-    outstr.seekp(0);
-    outstr << "0x" << std::hex << block->get_timestamp();
-    js_result["timestamp"] = std::string(outstr.str());
-    js_result["totalDifficulty"] = "0x0";
-    js_result["transactionsRoot"] = std::string("0x") + std::string(64, '0');
-    js_result["transactions"].resize(0);
-    js_result["uncles"].resize(0);
-    js_result["baseFeePerGas"] = "0x10";
+    std::error_code ec;
+    xrpc_eth_parser_t::blockheader_to_json(block.get(), js_result, ec);
+    if (ec) {
+        xassert(false);
+        return;
+    }
 
     auto input_actions = data::xblockextract_t::unpack_txactions(block.get());
     for(auto action : input_actions) {

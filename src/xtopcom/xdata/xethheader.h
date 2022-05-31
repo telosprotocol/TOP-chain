@@ -26,6 +26,8 @@ class xeth_header_t {
  public:  // serialize
     void    streamRLP(evm_common::RLPStream& _s) const;
     void    decodeRLP(evm_common::RLP const& _r, std::error_code & ec);
+    std::string serialize_to_string() const;
+    void        serialize_from_string(const std::string & bin_data, std::error_code & ec);
 
  public:  // get APIS
     enum_eth_header_format get_format() const {return m_format;}
@@ -58,6 +60,8 @@ class xeth_header_t {
     evm_common::xh256_t     m_state_root;
     xbytes_t                m_extra_data;
 };
+
+using xeth_header_ptr_t = std::shared_ptr<xeth_header_t>;
 
 // class xeth_block_t {
 //  public:
