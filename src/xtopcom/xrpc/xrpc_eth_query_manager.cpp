@@ -64,6 +64,7 @@
 #include "xdata/xtransaction_v2.h"
 #include "xdata/xtransaction_v3.h"
 #include "xstatectx/xstatectx.h"
+#include "xdata/xrelay_block.h"
 
 using namespace top::data;
 
@@ -1000,6 +1001,96 @@ int xrpc_eth_query_manager::get_log(xJson::Value & js_rsp, const uint64_t begin,
     if (js_rsp["result"].empty())
         js_rsp["result"].resize(0);
     return 0;
+}
+
+xobject_ptr_t<base::xvblock_t> xrpc_eth_query_manager::query_relay_block_by_height(const std::string& table_height) {
+    xdbg("xrpc_eth_query_manager::query_relay_block_by_height: %s, %s",  relay_block_addr, table_height.c_str());
+    base::xvaccount_t _table_addr(relay_block_addr);
+
+    xobject_ptr_t<base::xvblock_t> _block;
+    if (table_height == "latest")
+        _block = base::xvchain_t::instance().get_xblockstore()->get_latest_cert_block(_table_addr);
+    else if (table_height == "earliest")
+        _block = base::xvchain_t::instance().get_xblockstore()->get_genesis_block(_table_addr);
+    else if (table_height == "pending")
+        _block = base::xvchain_t::instance().get_xblockstore()->get_latest_cert_block(_table_addr);
+    else {
+        uint64_t height = std::strtoul(table_height.c_str(), NULL, 16);
+        _block = m_block_store->load_block_object(_table_addr, height * 3, base::enum_xvblock_flag_authenticated, false);
+    }
+    return _block;
+}
+void xrpc_eth_query_manager::top_getRelayBlockByNumber(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
+    if (!eth::EthErrorCode::check_req(js_req, js_rsp, 1))
+        return;
+    if (!eth::EthErrorCode::check_hex(js_req[0].asString(), js_rsp, 0, eth::enum_rpc_type_block))
+        return;
+
+    xobject_ptr_t<base::xvblock_t>  block = query_relay_block_by_height(js_req[0].asString());
+    if (block == nullptr) {
+        js_rsp["result"] = xJson::Value::null;
+        return;
+    }
+
+    std::string sign_list = block->get_cert()->get_extend_data();
+    if (sign_list.empty()) {
+        js_rsp["result"] = xJson::Value::null;
+        return;
+    }
+    base::xstream_t stream{base::xcontext_t::instance(), (uint8_t *)sign_list.data(), static_cast<uint32_t>(sign_list.size())};
+    uint16_t size = 0;
+    stream >> size;
+
+    data::xrelay_block relay_block;
+    for (uint16_t i = 0; i < size; i++) {
+        xvip2_t xip;
+        std::string sign_str;
+        stream >> xip.high_addr;
+        stream >> xip.low_addr;
+        stream >> sign_str;
+
+        if (sign_str.size() != 65) {
+            js_rsp["result"] = xJson::Value::null;
+            xwarn("xrpc_eth_query_manager::top_getRelayBlockByNumber, sign size error: %d", sign_str.size());
+            return;
+        }
+
+        xdbg("top_getRelayBlockByNumber, sign_str: %s", top::HexEncode(sign_str).c_str());
+        uint8_t compact_signature[65];
+        memcpy(compact_signature, sign_str.data(), sign_str.size());
+        xrelay_signature signature;
+        signature.v = compact_signature[0];
+        top::evm_common::bytes r_bytes(compact_signature + 1, compact_signature + 33);
+        signature.r = top::evm_common::fromBigEndian<top::evm_common::u256>(r_bytes);
+        top::evm_common::bytes s_bytes(compact_signature + 33, compact_signature + 65);
+        signature.s = top::evm_common::fromBigEndian<top::evm_common::u256>(s_bytes);
+        relay_block.add_signature(signature);
+    }
+
+    std::string relay_block_data = block->get_header()->get_extra_data();
+    xdbg("top_getRelayBlockByNumber, relay_block_data: %s", top::HexEncode(relay_block_data).c_str());
+    relay_block.decodeRLP(evm_common::RLP(relay_block_data));
+    evm_common::RLPStream rlp_stream;
+    //relay_block.streamRLP(rlp_stream, true);
+    relay_block.get_header().streamRLP_header_to_contract(rlp_stream);
+
+    xJson::Value js_result;
+    js_rsp["result"] = top::to_hex_prefixed(rlp_stream.out());
+    return;    
+}
+void xrpc_eth_query_manager::top_relayBlockNumber(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
+    if (!eth::EthErrorCode::check_req(js_req, js_rsp, 0))
+        return;
+
+    base::xvaccount_t _vaddress(relay_block_addr);
+    uint64_t height = m_block_store->get_latest_cert_block_height(_vaddress);
+    xinfo("xarc_query_manager::top_relayBlockNumber: %llu", height);
+    if (height != 0)
+        height = (height-1)/3 + 1;
+
+    std::stringstream outstr;
+    outstr << "0x" << std::hex << height;
+    js_rsp["result"] = std::string(outstr.str());
 }
 }  // namespace chain_info
 }  // namespace top
