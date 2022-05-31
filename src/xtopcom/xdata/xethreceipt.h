@@ -75,6 +75,10 @@ class xeth_receipt_t {
     uint64_t                    get_cumulative_gas_used() const {return m_cumulative_gas_used;}
     const evm_common::xbloom9_t &   get_logsBloom() const {return m_logsBloom;}
     const evm_common::xevm_logs_t & get_logs() const {return m_logs;}
+ public:
+    void        set_tx_status(enum_ethreceipt_status _status) {m_tx_status = _status;}
+    void        set_cumulative_gas_used(uint64_t _gas) {m_cumulative_gas_used = _gas;}
+    void        set_logs(evm_common::xevm_logs_t const& logs) {m_logs = logs;}
 
  protected:
     void    streamRLP(evm_common::RLPStream& _s) const;
@@ -99,6 +103,8 @@ class xeth_local_receipt_t : public xeth_receipt_t {
     std::string const&              get_tx_hash() const {return m_tx_hash;}
     uint64_t                        get_gas_used() const {return m_used_gas;}
     common::xeth_address_t const&   get_contract_address() const {return m_contract_address;}
+    common::xeth_address_t const&   get_from_address() const {return m_from_address;}
+    common::xeth_address_t const&   get_to_address() const {return m_to_address;}
     std::string const&              get_block_hash() const {return m_block_hash;}
     uint64_t                        get_block_number() const {return m_block_number;}
     uint32_t                        get_transaction_index() const {return m_transaction_index;}
@@ -108,6 +114,7 @@ class xeth_local_receipt_t : public xeth_receipt_t {
     void        set_block_number(uint64_t blocknumer);
     void        set_transaction_index(uint32_t index);
     void        set_tx_hash(std::string const& txhash);
+    void        set_from_address(common::xeth_address_t const& address);
     void        set_to_address(common::xeth_address_t const& address);
     void        set_contract_address(common::xeth_address_t const& address);
     void        set_used_gas(uint64_t used_gas);
@@ -116,6 +123,7 @@ class xeth_local_receipt_t : public xeth_receipt_t {
     // Implementation fields: These fields are added by geth when processing a transaction.
     // They are stored in the chain database.
     std::string                 m_tx_hash;
+    common::xeth_address_t      m_from_address;
     common::xeth_address_t      m_to_address;
     common::xeth_address_t      m_contract_address;
     uint64_t                    m_used_gas{0};

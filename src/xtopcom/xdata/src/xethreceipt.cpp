@@ -192,6 +192,9 @@ void xeth_receipt_t::decodeBytes(xbytes_t const& _d, std::error_code & ec) {
 }
 
 void xeth_receipt_t::create_bloom() {
+    if (m_logs.empty()) {
+        return;
+    }
     evm_common::xbloom9_t  logsbloom;
     for (auto & log : m_logs) {
         evm_common::xbloom9_t logbloom = log.bloom();
@@ -217,6 +220,9 @@ void xeth_local_receipt_t::set_transaction_index(uint32_t index) {
 }
 void xeth_local_receipt_t::set_tx_hash(std::string const& txhash) {
     m_tx_hash = txhash;
+}
+void xeth_local_receipt_t::set_from_address(common::xeth_address_t const& address) {
+    m_from_address = address;
 }
 void xeth_local_receipt_t::set_to_address(common::xeth_address_t const& address) {
     m_to_address = address;
