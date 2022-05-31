@@ -21,9 +21,9 @@
 
 namespace top { namespace data {
 
-#define ETH_RPC_ERROR(code, messgae) \
+#define ETH_RPC_ERROR(code, message) \
     ec.error_code = (int)code; \
-    ec.error_message = messgae;
+    ec.error_message = message;
 
 class xtransaction_v3_t : public xbase_dataunit_t<xtransaction_v3_t, xdata_type_transaction_v3>, public xtransaction_t {
  public:

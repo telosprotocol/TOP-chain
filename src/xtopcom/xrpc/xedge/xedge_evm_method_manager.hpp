@@ -216,7 +216,7 @@ void xedge_evm_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, 
     {
         xJson::Value errinfo;
         errinfo["code"] = ec.error_code;
-        errinfo["messgae"] = ec.error_message;
+        errinfo["message"] = ec.error_message;
         json_proc.m_response_json["error"] = errinfo;
         return ;
     }
@@ -225,7 +225,7 @@ void xedge_evm_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, 
             XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_sign", 1);
             xJson::Value errinfo;
             errinfo["code"] = -32000;
-            errinfo["messgae"] = "transaction sign error";
+            errinfo["message"] = "transaction sign error";
             json_proc.m_response_json["error"] = errinfo;
             return ;
         }
@@ -235,7 +235,7 @@ void xedge_evm_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, 
     {
         xJson::Value errinfo;
         errinfo["code"] = -32000;
-        errinfo["messgae"] = "account address is invalid";
+        errinfo["message"] = "account address is invalid";
         json_proc.m_response_json["error"] = errinfo;
         return ;
     }
@@ -246,7 +246,7 @@ void xedge_evm_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, 
         XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_blacklist", 1);
         xJson::Value errinfo;
         errinfo["code"] = -32000;
-        errinfo["messgae"] = "blacklist check failed";
+        errinfo["message"] = "blacklist check failed";
         json_proc.m_response_json["error"] = errinfo;
         return ;
     }
@@ -256,7 +256,7 @@ void xedge_evm_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, 
         xdbg_rpc("[sendTransaction_method] in whitelist address rpc:%s, %s, %s", tx->get_digest_hex_str().c_str(), tx->get_target_addr().c_str(), tx->get_source_addr().c_str());
         xJson::Value errinfo;
         errinfo["code"] = -32000;
-        errinfo["messgae"] = "whitelist check failed";
+        errinfo["message"] = "whitelist check failed";
         json_proc.m_response_json["error"] = errinfo;
         return ;
     }
