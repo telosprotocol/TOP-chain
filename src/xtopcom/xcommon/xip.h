@@ -427,13 +427,13 @@ xzone_id_t const
 /**
  * @brief default archive zone id
  */
-XINLINE_CONSTEXPR xzone_id_t::value_type xarchive_zone_id_value{base::enum_chain_zone_archive_index};
+XINLINE_CONSTEXPR xzone_id_t::value_type xstorage_zone_id_value{base::enum_chain_zone_storage_index};
 #if defined XCXX14_OR_ABOVE
 XINLINE_CONSTEXPR xzone_id_t
 #else
 xzone_id_t const
 #endif
-    xarchive_zone_id{xarchive_zone_id_value};
+    xstorage_zone_id{xstorage_zone_id_value};
 
 /**
  * @brief default edge zone id
@@ -467,6 +467,7 @@ xzone_id_t const
  */
 XINLINE_CONSTEXPR xcluster_id_t::value_type xcommittee_cluster_id_value{0};
 XINLINE_CONSTEXPR xcluster_id_t::value_type xdefault_cluster_id_value{1};
+XINLINE_CONSTEXPR xcluster_id_t::value_type xexchange_cluster_id_value{2};
 XINLINE_CONSTEXPR xcluster_id_t::value_type xnormal_cluster_id_value_begin{1};
 XINLINE_CONSTEXPR xcluster_id_t::value_type xnormal_cluster_id_value_end{127};
 
@@ -483,6 +484,13 @@ XINLINE_CONSTEXPR xcluster_id_t
 xcluster_id_t const
 #endif
     xdefault_cluster_id{xdefault_cluster_id_value};
+
+#if defined XCXX14_OR_ABOVE
+XINLINE_CONSTEXPR xcluster_id_t
+#else
+xcluster_id_t const
+#endif
+    xexchange_cluster_id{xexchange_cluster_id_value};
 
 #if defined XCXX14_OR_ABOVE
 XINLINE_CONSTEXPR xcluster_id_t
@@ -570,7 +578,8 @@ xgroup_id_t const
 
 XINLINE_CONSTEXPR xgroup_id_t::value_type xarchive_group_id_value_begin{ 1 };
 XINLINE_CONSTEXPR xgroup_id_t::value_type xarchive_group_id_value{ 1 };
-XINLINE_CONSTEXPR xgroup_id_t::value_type xexchange_group_id_value{ 2 };
+XINLINE_CONSTEXPR xgroup_id_t::value_type xlegacy_exchange_group_id_value{ 2 };
+XINLINE_CONSTEXPR xgroup_id_t::value_type xexchange_group_id_value{ 1 };
 XINLINE_CONSTEXPR xgroup_id_t::value_type xarchive_group_id_value_end{ 3 };
 
 #if defined(XCXX14_OR_ABOVE)
@@ -586,6 +595,13 @@ XINLINE_CONSTEXPR xgroup_id_t
 xgroup_id_t const
 #endif
 xarchive_group_id{ xarchive_group_id_value_begin };
+
+#if defined(XCXX14_OR_ABOVE)
+XINLINE_CONSTEXPR xgroup_id_t
+#else
+xgroup_id_t const
+#endif
+xlegacy_exchange_group_id{ xlegacy_exchange_group_id_value };
 
 #if defined(XCXX14_OR_ABOVE)
 XINLINE_CONSTEXPR xgroup_id_t

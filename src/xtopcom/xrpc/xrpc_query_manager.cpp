@@ -1178,9 +1178,18 @@ void xrpc_query_manager::getExchangeNodes(xJson::Value & js_req, xJson::Value & 
         version = RPC_VERSION_V1;
     }
     xJson::Value j;
-    std::string const addr = sys_contract_rec_elect_archive_addr;
-    auto property_name = top::data::election::get_property_by_group_id(common::xexchange_group_id);
-    m_xrpc_query_func.query_account_property(j, addr, property_name, xfull_node_compatible_mode_t::incompatible);
+
+    // todo(next version fork)
+    // if (forked standalone_exchange_point) {
+        // std::string const addr = sys_contract_rec_elect_exchange_addr;
+        // auto property_name = top::data::election::get_property_by_group_id(common::xexchange_group_id);
+        // m_xrpc_query_func.query_account_property(j, addr, property_name, xfull_node_compatible_mode_t::incompatible);
+    // } else {
+        std::string const addr = sys_contract_rec_elect_archive_addr;
+        auto property_name = top::data::election::get_property_by_group_id(common::xlegacy_exchange_group_id);
+        m_xrpc_query_func.query_account_property(j, addr, property_name, xfull_node_compatible_mode_t::incompatible);
+    // }
+
     if (version == RPC_VERSION_V3) {
         xJson::Value tmp = j[common::to_presentation_string(common::xnode_type_t::storage_exchange)];
         xJson::Value jv;
@@ -1204,7 +1213,7 @@ void xrpc_query_manager::getFullNodes(xJson::Value & js_req, xJson::Value & js_r
     }
     xJson::Value j;
     std::string const addr = sys_contract_rec_elect_archive_addr;
-    auto property_name = top::data::election::get_property_by_group_id(common::xexchange_group_id);
+    auto property_name = top::data::election::get_property_by_group_id(common::xlegacy_exchange_group_id);
     m_xrpc_query_func.query_account_property(j, addr, property_name, xfull_node_compatible_mode_t::compatible);
     if (version == RPC_VERSION_V3) {
         xJson::Value tmp = j[common::to_presentation_string_compatible(common::xnode_type_t::storage_exchange)];
@@ -1800,6 +1809,7 @@ void xrpc_query_manager::set_addition_info(xJson::Value & body, xblock_t * bp) {
 
     static std::set<std::string> sys_block_owner{sys_contract_rec_elect_edge_addr,
                                                  sys_contract_rec_elect_archive_addr,
+                                                 sys_contract_rec_elect_exchange_addr,
                                                  sys_contract_rec_elect_rec_addr,
                                                  sys_contract_rec_elect_zec_addr,
                                                  sys_contract_zec_elect_consensus_addr,
@@ -1825,6 +1835,8 @@ void xrpc_query_manager::set_addition_info(xJson::Value & body, xblock_t * bp) {
                 zid = common::xdefault_zone_id;
             } else if (block_owner == sys_contract_rec_elect_fullnode_addr) {
                 zid = common::xfullnode_zone_id;
+            } else if (block_owner == sys_contract_rec_elect_archive_addr || block_owner == sys_contract_rec_elect_exchange_addr) {
+                zid = common::xstorage_zone_id;
             } else {
                 zid = common::xcommittee_zone_id;
             }
@@ -2117,8 +2129,15 @@ void xrpc_query_manager::getElectInfo(xJson::Value & js_req, xJson::Value & js_r
     if (j[common::to_presentation_string(common::xnode_type_t::storage_archive)].isMember(target)) {
         ev.push_back("archiver");
     }
-    prop_name = data::election::get_property_by_group_id(common::xexchange_group_id);
-    m_xrpc_query_func.query_account_property(j, addr, prop_name, xfull_node_compatible_mode_t::incompatible);
+    // todo(next version fork)
+    // if (forked standalone_exchange_point) {
+        // addr = sys_contract_rec_elect_exchange_addr;
+        // prop_name = data::election::get_property_by_group_id(common::xexchange_group_id);
+        // m_xrpc_query_func.query_account_property(j, addr, prop_name, xfull_node_compatible_mode_t::incompatible);
+    // } else {
+        prop_name = data::election::get_property_by_group_id(common::xlegacy_exchange_group_id);
+        m_xrpc_query_func.query_account_property(j, addr, prop_name, xfull_node_compatible_mode_t::incompatible);
+    // }
     if (j[common::to_presentation_string(common::xnode_type_t::storage_exchange)].isMember(target)) {
         ev.push_back("exchange");
     }

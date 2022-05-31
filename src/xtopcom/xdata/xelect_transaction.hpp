@@ -207,6 +207,7 @@ public:
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(evm_validator_reward_ratio);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(evm_auditor_group_zero_workload);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(evm_validator_group_zero_workload);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(exchange_election_interval);
 #endif
 
         std::vector<std::string> committee_addrs = xrootblock_t::get_tcc_initial_committee_addr();

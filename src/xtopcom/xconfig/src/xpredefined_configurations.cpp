@@ -26,6 +26,7 @@ XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(zec_election_interval);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(zone_election_trigger_interval);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(edge_election_interval);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(archive_election_interval);
+XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(exchange_election_interval);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(fullnode_election_interval);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(cluster_election_interval);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(election_rotation_count_ratio);
@@ -176,7 +177,7 @@ XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(contract_call_contracts_num);
 /* begin of offchain parameters */
 XDEFINE_CONFIGURATION(auditor_group_count);
 XDEFINE_CONFIGURATION(validator_group_count);
-XDEFINE_CONFIGURATION(archive_group_count);
+XDEFINE_CONFIGURATION(legacy_archive_group_count);
 XDEFINE_CONFIGURATION(min_edge_archive_deposit);
 XDEFINE_CONFIGURATION(min_account_deposit);
 XDEFINE_CONFIGURATION(zone_count);

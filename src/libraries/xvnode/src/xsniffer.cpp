@@ -213,6 +213,7 @@ bool xtop_sniffer::sniff_block(xobject_ptr_t<base::xvblock_t> const & vblock) co
 bool xtop_sniffer::is_valid_timer_call(common::xaccount_address_t const & address, xrole_config_t & data, const uint64_t height) const {
     static std::vector<common::xaccount_address_t> const sys_addr_list{common::xaccount_address_t{sys_contract_rec_elect_edge_addr},
                                                                        common::xaccount_address_t{sys_contract_rec_elect_archive_addr},
+                                                                       common::xaccount_address_t{sys_contract_rec_elect_exchange_addr},
                                                                        // common::xaccount_address_t{ sys_contract_zec_elect_edge_addr },
                                                                        // common::xaccount_address_t{ sys_contract_zec_elect_archive_addr },
                                                                        common::xaccount_address_t{sys_contract_rec_elect_zec_addr},
@@ -247,6 +248,7 @@ bool xtop_sniffer::is_valid_timer_call(common::xaccount_address_t const & addres
 bool xtop_sniffer::trigger_first_timer_call(common::xaccount_address_t const & address) const {
     static std::vector<common::xaccount_address_t> const sys_addr_list{common::xaccount_address_t{sys_contract_rec_elect_edge_addr},
                                                                        common::xaccount_address_t{sys_contract_rec_elect_archive_addr},
+                                                                       common::xaccount_address_t{sys_contract_rec_elect_exchange_addr},
                                                                        // common::xaccount_address_t{ sys_contract_zec_elect_edge_addr },
                                                                        // common::xaccount_address_t{ sys_contract_zec_elect_archive_addr },
                                                                        common::xaccount_address_t{sys_contract_rec_elect_zec_addr},

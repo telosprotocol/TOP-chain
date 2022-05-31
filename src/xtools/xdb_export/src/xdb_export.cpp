@@ -100,6 +100,7 @@ std::vector<std::string> xdb_export_tools_t::get_system_contract_accounts() {
         sys_contract_rec_registration_addr,
         sys_contract_rec_elect_edge_addr,
         sys_contract_rec_elect_archive_addr,
+        sys_contract_rec_elect_exchange_addr,
         sys_contract_rec_elect_rec_addr,
         sys_contract_rec_elect_zec_addr,
         sys_contract_rec_elect_fullnode_addr,
