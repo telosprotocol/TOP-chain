@@ -20,10 +20,6 @@ public:
     ~xtop_gas_tx_operator() = default;
 
 public:
-    evm_common::u256 estimate_eth_gas_price() const;
-    evm_common::u256 estimate_eth_base_price() const;
-    evm_common::u256 estimate_eth_gas_limit(const evm_common::u256 evm_gas) const;
-
     common::xaccount_address_t sender() const;
     common::xaccount_address_t recver() const;
     std::string sender_str() const;
