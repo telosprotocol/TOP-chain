@@ -823,9 +823,34 @@ int xrpc_eth_query_manager::parse_topics(const xJson::Value& topics, std::vector
     return 0;
 }
 void xrpc_eth_query_manager::eth_getLogs(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
-    std::string from_block = safe_get_json_value(js_req[0], "fromBlock");
-    std::string to_block = safe_get_json_value(js_req[0], "toBlock");
-    std::string blockhash = safe_get_json_value(js_req[0], "blockhash");
+    if (js_req.size() == 0) {
+        std::string msg = std::string("missing value for required argument 0");
+        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_invalid_params, msg);
+        return;
+    }
+    std::string from_block;
+    if (js_req[0].isMember("fromBlock")) {
+        from_block = js_req[0]["fromBlock"].asString();
+        if (!eth::EthErrorCode::check_hex(from_block, js_rsp, 0, eth::enum_rpc_type_block))
+            return;
+    }
+
+    std::string to_block;
+    if (js_req[0].isMember("toBlock")) {
+        to_block = js_req[0]["toBlock"].asString();
+        if (!eth::EthErrorCode::check_hex(to_block, js_rsp, 0, eth::enum_rpc_type_block))
+            return;
+    }
+
+    std::string blockhash;
+    if (js_req[0].isMember("blockhash")) {
+        blockhash = js_req[0]["blockhash"].asString();
+        if (!eth::EthErrorCode::check_hex(blockhash, js_rsp, 0, eth::enum_rpc_type_hash))
+            return;
+        if (!eth::EthErrorCode::check_hash(blockhash, js_rsp))
+            return;
+    }
+
     std::vector<std::set<std::string>> vTopics;
     if (js_req[0].isMember("topics")) {
         xJson::Value t = js_req[0]["topics"];
@@ -841,6 +866,11 @@ void xrpc_eth_query_manager::eth_getLogs(xJson::Value & js_req, xJson::Value & j
     if (js_req[0].isMember("address")) {
         xJson::Value t = js_req[0]["address"];
         if (t.isString()) {
+            if (!eth::EthErrorCode::check_hex(t.asString(), js_rsp, 0, eth::enum_rpc_type_address))
+                return;
+            if (!eth::EthErrorCode::check_eth_address(t.asString(), js_rsp))
+                return;
+
             sAddress.insert(t.asString());
             xdbg("eth_getLogs, address : %s", t.asString().c_str());
         } else if (t.isArray()) {
@@ -855,18 +885,9 @@ void xrpc_eth_query_manager::eth_getLogs(xJson::Value & js_req, xJson::Value & j
         }
     }
 
-    if (!from_block.empty() && !eth::EthErrorCode::check_hex(from_block, js_rsp, 0, eth::enum_rpc_type_block))
-        return;
-    if (!to_block.empty() && !eth::EthErrorCode::check_hex(to_block, js_rsp, 0, eth::enum_rpc_type_block))
-        return;
-    if (!blockhash.empty() && !eth::EthErrorCode::check_hex(blockhash, js_rsp, 0, eth::enum_rpc_type_hash))
-        return;
-    if (!blockhash.empty() && !eth::EthErrorCode::check_hash(blockhash, js_rsp))
-        return;
-
     if ((!from_block.empty() || !to_block.empty()) && !blockhash.empty()) {
         std::string msg = "invalid argument 0: cannot specify both BlockHash and FromBlock/ToBlock, choose one or the other";
-        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);
+        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_invalid_params, msg);
         return;
     }
     uint64_t begin;
@@ -874,11 +895,10 @@ void xrpc_eth_query_manager::eth_getLogs(xJson::Value & js_req, xJson::Value & j
     if (!blockhash.empty()) {
         uint256_t hash = top::data::hex_to_uint256(blockhash);
         std::string block_hash_str = std::string(reinterpret_cast<char *>(hash.data()), hash.size());
-        //xdbg("eth_getBlockByHash block hash: %s", top::HexEncode(block_hash_str).c_str());
-
         base::xauto_ptr<base::xvblock_t> block = m_block_store->get_block_by_hash(block_hash_str);
         if (block == nullptr) {
-            js_rsp["result"] = xJson::Value::null;
+            std::string msg = "unknown block";
+            eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);
             return;
         }
         begin = block->get_height();
@@ -887,9 +907,11 @@ void xrpc_eth_query_manager::eth_getLogs(xJson::Value & js_req, xJson::Value & j
         js_rsp["result"] = xJson::Value::null;
         return;
     } else {
-        if (from_block.empty())
-            begin = 0;
-        else
+        if (from_block.empty()) {
+            std::string addr = std::string(sys_contract_eth_table_block_addr) + "@0";
+            base::xvaccount_t _vaddress(addr);
+            begin = m_block_store->get_latest_cert_block_height(_vaddress);
+        } else
             begin = get_block_height(from_block);
         if (to_block.empty()) {
             std::string addr = std::string(sys_contract_eth_table_block_addr) + "@0";
