@@ -64,9 +64,8 @@ enum_xunit_tx_exec_status xlightunit_action_t::get_tx_exec_status() const {
 bool xlightunit_action_t::get_evm_transaction_receipt(data::xeth_store_receipt_t & evm_tx_receipt) const {
     std::string value = get_action_result_property(xtransaction_exec_state_t::XTX_EVM_TRANSACTION_RECEIPT);
     if (!value.empty()) {
-        data::xeth_store_receipt_t evm_tx_receipt;
         std::error_code ec;
-        evm_tx_receipt.decodeBytes(to_bytes(value), ec);
+        evm_tx_receipt.decodeBytes(to_bytes<std::string>(value), ec);
         if (ec) {
             xerror("xlightunit_action_t::get_evm_transaction_receipt decode fail");
             return false;
