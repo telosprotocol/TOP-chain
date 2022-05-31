@@ -1105,14 +1105,12 @@ const std::string xeth_header_builder::build(uint64_t clock, data::enum_eth_head
     auto receipts_root = data::xeth_build_t::build_receipts_root(eth_receipts);
     eth_header.set_receipts_root(receipts_root);
 
-    evm_common::RLPStream rlp_stream;
-    eth_header.streamRLP(rlp_stream);
-    return from_bytes<std::string>(rlp_stream.out());
+    return eth_header.serialize_to_string();
 }
 
 bool xeth_header_builder::string_to_eth_header(const std::string & eth_header_str, data::xeth_header_t & eth_header) {
     std::error_code ec;
-    eth_header.decodeRLP(evm_common::RLP(eth_header_str), ec);
+    eth_header.serialize_from_string(eth_header_str, ec);
     if (ec) {
         xerror("xeth_header_builder::string_to_eth_header decode fail");
         return false;

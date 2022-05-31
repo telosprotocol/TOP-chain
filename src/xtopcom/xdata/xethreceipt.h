@@ -34,6 +34,7 @@ class xeth_store_receipt_t {
     evm_common::u256            get_gas_price() const {return m_gas_price;}
     uint64_t                    get_gas_used() const {return m_gas_used;}
     common::xeth_address_t const&   get_contract_address() const {return m_contract_address;}
+    evm_common::xbloom9_t       bloom() const;
 
  public:
     void    set_tx_status(enum_ethreceipt_status status) {m_tx_status = status;}

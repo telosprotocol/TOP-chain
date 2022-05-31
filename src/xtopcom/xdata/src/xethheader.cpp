@@ -89,6 +89,16 @@ void xeth_header_t::decodeRLP(evm_common::RLP const& _r, std::error_code & ec) {
     }
 }
 
+std::string xeth_header_t::serialize_to_string() const {
+    evm_common::RLPStream rlp_stream;
+    streamRLP(rlp_stream);
+    return from_bytes<std::string>(rlp_stream.out());
+}
+void xeth_header_t::serialize_from_string(const std::string & bin_data, std::error_code & ec) {
+    evm_common::RLP _r(bin_data);
+    decodeRLP(_r, ec);
+}
+
 //============= xeth_block_t ===============
 // xeth_block_t::xeth_block_t(const xeth_receipts_t & receipts)
 // : m_receipts(receipts) {

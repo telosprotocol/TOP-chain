@@ -96,6 +96,14 @@ void xeth_store_receipt_t::decodeBytes(xbytes_t const& _d, std::error_code & ec)
     decodeRLP(_r, ec);
 }
 
+evm_common::xbloom9_t xeth_store_receipt_t::bloom() const {
+    evm_common::xbloom9_t  logsbloom;
+    for (auto & log : m_logs) {
+        evm_common::xbloom9_t logbloom = log.bloom();
+        logsbloom |= logbloom;
+    }
+    return logsbloom;
+}
 
 xeth_receipt_t::xeth_receipt_t(enum_ethtx_version _version, enum_ethreceipt_status _status, uint64_t _gasused, evm_common::xevm_logs_t const & _logs)
 : m_tx_version_type(_version), m_tx_status(_status), m_cumulative_gas_used(_gasused), m_logs(_logs) {
