@@ -335,7 +335,7 @@ void xtest_evm_fixture::mock_add_balance(common::xaccount_address_t const & acco
 
     auto state = statestore->load_unit_state(account.vaccount());
     if (token_symbol != top::data::XPROPERTY_ASSET_TOP) {
-        state->set_tep_balance(token_symbol, amount);
+        state->set_tep_balance(top::common::token_id(common::xsymbol_t{token_symbol}), amount);
     } else {
         state->token_deposit(data::XPROPERTY_BALANCE_AVAILABLE, static_cast<top::base::vtoken_t>(amount.convert_to<uint64_t>()));
     }
@@ -352,9 +352,9 @@ void xtest_evm_fixture::mock_add_approve(common::xaccount_address_t const & owne
     std::error_code ec;
     auto state = statestore->load_unit_state(owner.vaccount());
     if (symbol != top::data::XPROPERTY_ASSET_TOP) {
-        if (symbol == "USDT") {
+        if (symbol == "tUSDT") {
             state->approve(common::xtoken_id_t::usdt, spender, amount, ec);
-        } else if (symbol == "USDC") {
+        } else if (symbol == "tUSDC") {
             state->approve(common::xtoken_id_t::usdc, spender, amount, ec);
         } else if (symbol == "ETH") {
             xerror("ETH is not allowed to approve");

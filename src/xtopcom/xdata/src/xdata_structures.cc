@@ -309,7 +309,11 @@ bool could_be<common::xnode_type_t::evm_auditor>(common::xminer_type_t const min
 
 template <>
 bool could_be<common::xnode_type_t::evm_validator>(common::xminer_type_t const miner_type) {
+#if defined (XBUILD_DEV)
+    return common::has<common::xminer_type_t::validator>(miner_type);
+#else
     return common::has<common::xminer_type_t::advance>(miner_type);
+#endif
 }
 
 bool xreg_node_info::could_be_rec() const noexcept {

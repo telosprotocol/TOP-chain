@@ -522,22 +522,32 @@ std::string xbstate_ctx_t::string_get(const std::string & prop) const {
 }
 
 int32_t xbstate_ctx_t::set_tep_balance(const std::string & token_name, evm_common::u256 new_balance) {
-    xdbg("xbstate_ctx_t::set_tep_balance,property_modify_enter.address=%s,height=%ld,token_name=%s,new_balance=%s", get_address().c_str(), get_chain_height(), token_name.c_str(), new_balance.str().c_str());
+    assert(token_name.length() == 1);
+
+    xdbg("xbstate_ctx_t::set_tep_balance,property_modify_enter.address=%s,height=%ld,token_name=%s,new_balance=%s",
+         get_address().c_str(),
+         get_chain_height(),
+         common::symbol(top::from_string<common::xtoken_id_t>(token_name)).c_str(),
+         new_balance.str().c_str());
     top::xbytes_t result_rlp = evm_common::RLP::encode(new_balance);
     return set_tep_balance_bytes(token_name, result_rlp);
 }
 
 int32_t xbstate_ctx_t::set_tep_balance_bytes(const std::string & token_name, const top::xbytes_t & new_balance) {
+    assert(token_name.length() == 1);
+
     auto propobj = load_tep_token_for_write();
     CHECK_PROPERTY_NULL_RETURN(propobj, "xbstate_ctx_t::set_tep_balance", token_name);
 
     std::error_code ec;
     std::string new_balance_str = top::from_bytes<std::string>(new_balance, ec);
     if (ec) {
+        xwarn("convert bytes balance to string format fialed");
         return xaccount_property_operate_fail;
     }
     bool ret = propobj->insert(token_name, new_balance_str, m_canvas.get());
     if (!ret) {
+        xwarn("failed to update TEP1 token balance property. token %s", common::symbol(top::from_string<common::xtoken_id_t>(token_name)).c_str());
         return xaccount_property_operate_fail;
     }
     return xsuccess;
@@ -556,6 +566,8 @@ base::xauto_ptr<base::xmapvar_t<std::string>> xbstate_ctx_t::load_tep_token_for_
 }
 
 evm_common::u256 xbstate_ctx_t::tep_token_balance(const std::string& token_name) const {
+    assert(token_name.length() == 1);
+
     auto value_rlp = tep_token_balance_bytes(token_name);
     if (value_rlp.empty()) {
         return 0;
@@ -570,33 +582,12 @@ evm_common::u256 xbstate_ctx_t::tep_token_balance(const std::string& token_name)
 }
 
 evm_common::u256 xbstate_ctx_t::tep_token_balance(common::xtoken_id_t const token_id) const {
-    std::string token_sym;
-    switch (token_id) {
-    case common::xtoken_id_t::eth: {
-        token_sym = "ETH";
-        break;
-    }
-
-    case common::xtoken_id_t::usdt: {
-        token_sym = "USDT";
-        break;
-    }
-
-    case common::xtoken_id_t::usdc: {
-        token_sym = "USDC";
-        break;
-    }
-
-    default: {
-        assert(false);
-        break;
-    }
-    }
-
-    return tep_token_balance(token_sym);
+    return tep_token_balance(top::to_string(token_id));
 }
 
 top::xbytes_t xbstate_ctx_t::tep_token_balance_bytes(const std::string& token_name) const {
+    assert(token_name.length() == 1);
+
     auto & bstate = get_bstate();
     if (!bstate->find_property(data::XPROPERTY_TEP1_BALANCE_KEY)) {
         return {};
@@ -616,33 +607,12 @@ top::xbytes_t xbstate_ctx_t::tep_token_balance_bytes(const std::string& token_na
 }
 
 top::xbytes_t xbstate_ctx_t::tep_token_balance_bytes(common::xtoken_id_t const token_id) const {
-    std::string token_sym;
-    switch (token_id) {
-    case common::xtoken_id_t::eth: {
-        token_sym = "ETH";
-        break;
-    }
-
-    case common::xtoken_id_t::usdt: {
-        token_sym = "USDT";
-        break;
-    }
-
-    case common::xtoken_id_t::usdc: {
-        token_sym = "USDC";
-        break;
-    }
-
-    default: {
-        assert(false);
-        break;
-    }
-    }
-
-    return tep_token_balance_bytes(token_sym);
+    return tep_token_balance_bytes(top::to_string(token_id));
 }
 
 int32_t xbstate_ctx_t::tep_token_withdraw(const std::string& token_name, evm_common::u256 sub_token) {
+    assert(token_name.length() == 1);
+
     xdbg("xbstate_ctx_t::tep_token_withdraw,property_modify_enter.address=%s,height=%ld,tokenname=%s,token=%s", get_address().c_str(), get_chain_height(), token_name.c_str(), sub_token.str().c_str());
     auto propobj = load_tep_token_for_write();
     CHECK_PROPERTY_NULL_RETURN(propobj, "xbstate_ctx_t::tep_token_withdraw", token_name);
@@ -677,33 +647,12 @@ int32_t xbstate_ctx_t::tep_token_withdraw(const std::string& token_name, evm_com
 }
 
 int32_t xbstate_ctx_t::tep_token_withdraw(common::xtoken_id_t const token_id, evm_common::u256 sub_token) {
-    std::string token_sym;
-    switch (token_id) {
-    case common::xtoken_id_t::eth: {
-        token_sym = "ETH";
-        break;
-    }
-
-    case common::xtoken_id_t::usdt: {
-        token_sym = "USDT";
-        break;
-    }
-
-    case common::xtoken_id_t::usdc: {
-        token_sym = "USDC";
-        break;
-    }
-
-    default: {
-        assert(false);
-        break;
-    }
-    }
-
-    return tep_token_withdraw(token_sym, sub_token);
+    return tep_token_withdraw(top::to_string(token_id), sub_token);
 }
 
 int32_t xbstate_ctx_t::tep_token_deposit(const std::string& token_name, evm_common::u256 add_token) {
+    assert(token_name.length() == 1);
+
     xdbg("xbstate_ctx_t::tep_token_deposit,property_modify_enter.address=%s,height=%ld,token_name=%s,token=%s", get_address().c_str(), get_chain_height(), token_name.c_str(), add_token.str().c_str());
     auto propobj = load_tep_token_for_write();
     CHECK_PROPERTY_NULL_RETURN(propobj, "xbstate_ctx_t::tep_token_deposit", token_name);
@@ -738,30 +687,15 @@ int32_t xbstate_ctx_t::tep_token_deposit(const std::string& token_name, evm_comm
 }
 
 int32_t xbstate_ctx_t::tep_token_deposit(common::xtoken_id_t const token_id, evm_common::u256 add_token) {
-    std::string token_sym;
-    switch (token_id) {
-    case common::xtoken_id_t::eth: {
-        token_sym = "ETH";
-        break;
-    }
+    return tep_token_deposit(top::to_string(token_id), add_token);
+}
 
-    case common::xtoken_id_t::usdt: {
-        token_sym = "USDT";
-        break;
-    }
+int32_t xbstate_ctx_t::set_tep_balance(common::xtoken_id_t const token_id, evm_common::u256 new_balance) {
+    return set_tep_balance(top::to_string(token_id), new_balance);
+}
 
-    case common::xtoken_id_t::usdc: {
-        token_sym = "USDC";
-        break;
-    }
-
-    default: {
-        assert(false);
-        break;
-    }
-    }
-
-    return tep_token_deposit(token_sym, add_token);
+int32_t xbstate_ctx_t::set_tep_balance_bytes(common::xtoken_id_t const token_id, const top::xbytes_t & new_balance) {
+    return set_tep_balance_bytes(top::to_string(token_id), new_balance);
 }
 
 NS_END2

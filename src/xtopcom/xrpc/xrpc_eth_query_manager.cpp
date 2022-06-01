@@ -204,7 +204,7 @@ void xrpc_eth_query_manager::eth_getBalance(xJson::Value & js_req, xJson::Value 
     } else if (ret == enum_unit_not_found) {
         js_rsp["result"] = "0x0";
     } else if (ret == enum_success) {
-        evm_common::u256 balance = account_ptr->tep_token_balance(data::XPROPERTY_ASSET_ETH);
+        evm_common::u256 balance = account_ptr->tep_token_balance(common::xtoken_id_t::eth);
 
         std::string balance_str = toHex((top::evm_common::h256)balance);
 
@@ -851,14 +851,43 @@ void xrpc_eth_query_manager::eth_estimateGas(xJson::Value & js_req, xJson::Value
     }
     xinfo("eth_estimateGas call: %d, %d, %s, %llu", ret, output.m_tx_result.status, output.m_tx_result.extra_msg.c_str(), output.m_tx_result.used_gas);
 
-    if (output.m_tx_result.status == evm_common::OutOfFund) {
-        std::string msg = "insufficient funds for transfer";
-        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);
-        return;
-    } else if (output.m_tx_result.status == evm_common::Success) {
+    switch (output.m_tx_result.status) {
+    case evm_common::Success: {
         std::stringstream outstr;
         outstr << "0x" << std::hex << output.m_tx_result.used_gas + output.m_tx_result.used_gas / 2;
         js_rsp["result"] = outstr.str();
+        break;
+    }
+
+    case evm_common::OutOfFund: {
+        std::string msg = "insufficient funds for transfer";
+        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);
+        break;
+    }
+
+    case evm_common::Revert:
+        js_rsp["error"]["code"] = eth::enum_eth_rpc_execution_reverted;
+        js_rsp["error"]["message"] = "execution reverted";
+        break;
+
+    case evm_common::OutOfGas:
+        js_rsp["error"]["code"] = eth::enum_eth_rpc_execution_reverted;
+        js_rsp["error"]["message"] = "execution out of gas";
+        break;
+
+    case evm_common::OutOfOffset:
+        js_rsp["error"]["code"] = eth::enum_eth_rpc_execution_reverted;
+        js_rsp["error"]["message"] = "execution out of offset";
+        break;
+
+    case evm_common::OtherExecuteError:
+        js_rsp["error"]["code"] = eth::enum_eth_rpc_execution_reverted;
+        js_rsp["error"]["message"] = "execution unknown error";
+        break;
+
+    default:
+        assert(false);
+        break;
     }
 }
 void xrpc_eth_query_manager::eth_getStorageAt(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {

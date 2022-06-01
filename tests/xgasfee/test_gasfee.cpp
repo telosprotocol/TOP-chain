@@ -632,7 +632,11 @@ TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v2_run_contract) {
     EXPECT_EQ(detail.m_state_used_tgas, 1000000);
     EXPECT_EQ(detail.m_state_last_time, default_onchain_time);
     EXPECT_EQ(detail.m_state_lock_balance, default_deposit);
+#if defined(XENABLE_MOCK_ZEC_STAKE)
+    EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance));
+#else
     EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance - ASSET_TOP(100)));
+#endif
     default_cons_tx->set_current_used_deposit((606 + tx_size) * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio));
     // EXPECT_EQ(default_cons_tx->get_current_used_tgas(), 0);
     // EXPECT_EQ(default_cons_tx->get_current_used_deposit(), (606 + tx_size) * 20);
@@ -893,7 +897,7 @@ TEST(test_xtvm_v2, xtvm2_demo_v3_T6_transfer_inner_table) {
     base::xvaccount_t recver_vaccount{p_statectx->default_recver};
     auto sender_unitstate = statectx->load_unit_state(sender_vaccount);
     auto recver_unitstate = statectx->load_unit_state(recver_vaccount);
-    sender_unitstate->tep_token_deposit(data::XPROPERTY_ASSET_ETH, 20000);
+    sender_unitstate->tep_token_deposit(common::xtoken_id_t::eth, 20000);
     txexecutor::xvm_para_t param{p_statectx->default_onchain_time, "0000", p_statectx->default_onchain_deposit_tgas};
     txexecutor::xatomictx_executor_t atomictx_executor{statectx, param};
     txexecutor::xatomictx_output_t output;
@@ -903,8 +907,8 @@ TEST(test_xtvm_v2, xtvm2_demo_v3_T6_transfer_inner_table) {
     EXPECT_EQ(output.m_vm_output.m_vm_error_code, 0);
     EXPECT_TRUE(output.m_vm_output.m_vm_error_str.empty());
 
-    auto s_eth_balance = sender_unitstate->tep_token_balance(data::XPROPERTY_ASSET_ETH);
-    auto r_eth_balance = recver_unitstate->tep_token_balance(data::XPROPERTY_ASSET_ETH);
+    auto s_eth_balance = sender_unitstate->tep_token_balance(common::xtoken_id_t::eth);
+    auto r_eth_balance = recver_unitstate->tep_token_balance(common::xtoken_id_t::eth);
     EXPECT_EQ(s_eth_balance, 20000 - p_statectx->default_eth_value);
     EXPECT_EQ(r_eth_balance, p_statectx->default_eth_value);
 

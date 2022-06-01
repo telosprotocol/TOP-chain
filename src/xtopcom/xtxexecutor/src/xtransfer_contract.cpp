@@ -20,7 +20,7 @@ void xtop_transfer_contract::deposit(const std::string & token_name, const std::
             top::error::throw_error(ec, "tep_token_deposit failed");
         }
     } else if (token_name == data::XPROPERTY_ASSET_ETH) {
-        auto ret = unitstate->tep_token_deposit(token_name, token);
+        auto ret = unitstate->tep_token_deposit(common::xtoken_id_t::eth, token);
         if (ret) {
             xwarn("[xtop_transfer_contract::deposit] %s, deposit %s, token %s failed", unitstate->get_account().c_str(), token.str().c_str(), token_name.c_str());
             std::error_code ec{contract_runtime::error::xenum_errc::enum_vm_exception};
@@ -51,7 +51,7 @@ void xtop_transfer_contract::withdraw(const std::string & token_name, const std:
             top::error::throw_error(ec, "tep_token_withdraw failed");
         }
     } else if (token_name == data::XPROPERTY_ASSET_ETH) {
-        auto ret = unitstate->tep_token_withdraw(token_name, token);
+        auto ret = unitstate->tep_token_withdraw(common::xtoken_id_t::eth, token);
         if (ret) {
             xwarn("[xtop_transfer_contract::withdraw] %s, withdraw %s, token %s failed", unitstate->get_account().c_str(), token.str().c_str(), token_name.c_str());
             std::error_code ec{contract_runtime::error::xenum_errc::enum_vm_exception};
@@ -90,13 +90,13 @@ void xtop_transfer_contract::transfer(const std::string & token_name, const std:
             top::error::throw_error(ec, "tep_token_deposit failed");
         }
     } else if (token_name == data::XPROPERTY_ASSET_ETH) {
-        auto ret = sender_unitstate->tep_token_withdraw(token_name, token);
+        auto ret = sender_unitstate->tep_token_withdraw(common::xtoken_id_t::eth, token);
         if (ret) {
             xwarn("[xtop_transfer_contract::transfer] %s, withdraw %s, token %s failed", sender_unitstate->get_account().c_str(), token.str().c_str(), token_name.c_str());
             std::error_code ec{contract_runtime::error::xenum_errc::enum_vm_exception};
             top::error::throw_error(ec, "tep_token_withdraw failed");
         }
-        ret = recver_unitstate->tep_token_deposit(token_name, token);
+        ret = recver_unitstate->tep_token_deposit(common::xtoken_id_t::eth, token);
         if (ret) {
             xwarn("[xtop_transfer_contract::transfer] %s, deposit %s, token %s failed", recver_unitstate->get_account().c_str(), token.str().c_str(), token_name.c_str());
             std::error_code ec{contract_runtime::error::xenum_errc::enum_vm_exception};
