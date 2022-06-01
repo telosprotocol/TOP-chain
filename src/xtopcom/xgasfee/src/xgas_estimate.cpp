@@ -12,11 +12,11 @@
 namespace top {
 namespace gasfee {
 
-static evm_common::u256 base_price() {
+evm_common::u256 xgas_estimate::base_price() {
     return evm_common::u256{40000000000UL};
 }
 
-static evm_common::u256 flexible_price(const xobject_ptr_t<data::xcons_transaction_t> tx, const evm_common::u256 evm_gas) {
+evm_common::u256 xgas_estimate::flexible_price(const xobject_ptr_t<data::xcons_transaction_t> tx, const evm_common::u256 evm_gas) {
     xtop_gas_tx_operator op{tx};
     evm_common::u256 total_tgas = op.tx_bandwith_tgas() + op.tx_disk_tgas() + evm_gas * XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_gas_to_tgas_exchange_ratio);
     evm_common::u256 total_utop = total_tgas * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio);
@@ -25,7 +25,7 @@ static evm_common::u256 flexible_price(const xobject_ptr_t<data::xcons_transacti
     return flexible_price;
 }
 
-static evm_common::u256 estimate_used_gas(const xobject_ptr_t<data::xcons_transaction_t> tx, const evm_common::u256 evm_gas) {
+evm_common::u256 xgas_estimate::estimate_used_gas(const xobject_ptr_t<data::xcons_transaction_t> tx, const evm_common::u256 evm_gas) {
     xtop_gas_tx_operator op{tx};
     evm_common::u256 total_tgas = op.tx_bandwith_tgas() + op.tx_disk_tgas() + evm_gas * XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_gas_to_tgas_exchange_ratio);
     evm_common::u256 total_utop = total_tgas * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio);
