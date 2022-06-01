@@ -57,7 +57,7 @@ void xrpc_eth_parser_t::receipt_to_json(const std::string & tx_hash, xtxindex_de
     js_v["type"] = uint64_to_hex_prefixed((uint64_t)sendindex->get_raw_tx()->get_eip_version());
     js_v["gasUsed"] = uint64_to_hex_prefixed(evm_tx_receipt.get_gas_used());
     js_v["cumulativeGasUsed"] = uint64_to_hex_prefixed(evm_tx_receipt.get_cumulative_gas_used());  // TODO(jimmy)
-    js_v["effectiveGasPrice"] = "0x77359400";// TODO(jimmy)
+    js_v["effectiveGasPrice"] = top::to_hex_prefixed((top::evm_common::h256)evm_tx_receipt.get_gas_price());
 
     uint16_t tx_type = sendindex->get_raw_tx()->get_tx_type();
     js_v["from"] = _from_addr_str;
@@ -159,7 +159,7 @@ void xrpc_eth_parser_t::blockheader_to_json(base::xvblock_t* _block, xJson::Valu
     js_v["transactionsRoot"] = std::string("0x") + std::string(64, '0');// TODO(jimmy)
     js_v["transactions"].resize(0);
     js_v["uncles"].resize(0);
-    js_v["baseFeePerGas"] = "0x10";// TODO(jimmy)
+    js_v["baseFeePerGas"] = top::to_hex_prefixed((top::evm_common::h256)ethheader.get_baseprice());
 }
 
 
