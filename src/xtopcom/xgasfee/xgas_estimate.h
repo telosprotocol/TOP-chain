@@ -11,9 +11,12 @@
 namespace top {
 namespace gasfee {
 
-static evm_common::u256 base_price();
-static evm_common::u256 flexible_price(const xobject_ptr_t<data::xcons_transaction_t> tx, const evm_common::u256 evm_gas);
-static evm_common::u256 estimate_used_gas(const xobject_ptr_t<data::xcons_transaction_t> tx, const evm_common::u256 evm_gas);
+class xgas_estimate {
+public:
+    static evm_common::u256 base_price();
+    static evm_common::u256 flexible_price(const xobject_ptr_t<data::xcons_transaction_t> tx, const evm_common::u256 evm_gas);
+    static evm_common::u256 estimate_used_gas(const xobject_ptr_t<data::xcons_transaction_t> tx, const evm_common::u256 evm_gas);
+};
 
 }  // namespace gasfee
 }  // namespace top

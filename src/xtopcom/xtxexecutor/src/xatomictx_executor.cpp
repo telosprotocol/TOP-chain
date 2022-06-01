@@ -10,6 +10,7 @@
 #include "xevm/xevm.h"
 #include "xgasfee/xerror/xerror.h"
 #include "xgasfee/xgasfee.h"
+#include "xgasfee/xgas_estimate.h"
 #include "xtxexecutor/xtvm.h"
 #include "xtxexecutor/xtvm_v2.h"
 
@@ -241,6 +242,7 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
                         evm_tx_receipt.set_tx_status(data::ethreceipt_status_failed);
                         evm_tx_receipt.set_cumulative_gas_used(gas_used + vmoutput.m_tx_result.used_gas);
                         evm_tx_receipt.set_gas_used(vmoutput.m_tx_result.used_gas);
+                        evm_tx_receipt.set_gas_price(gasfee::xgas_estimate::flexible_price(tx, (evm_common::u256)vmoutput.m_tx_result.used_gas));
                         tx->set_evm_tx_receipt(evm_tx_receipt);
                         xwarn(
                             "xatomictx_executor_t::vm_execute outof gas, ret: %d, evm_status: %d, used_gas: %lu", ret, vmoutput.m_tx_result.status, vmoutput.m_tx_result.used_gas);
@@ -265,6 +267,7 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
                         evm_tx_receipt.set_tx_status(data::ethreceipt_status_failed);
                         evm_tx_receipt.set_cumulative_gas_used(gas_used + vmoutput.m_tx_result.used_gas);
                         evm_tx_receipt.set_gas_used(vmoutput.m_tx_result.used_gas);
+                        evm_tx_receipt.set_gas_price(gasfee::xgas_estimate::flexible_price(tx, (evm_common::u256)vmoutput.m_tx_result.used_gas));
                         tx->set_evm_tx_receipt(evm_tx_receipt);
                         xwarn(
                             "xatomictx_executor_t::vm_execute outof gas, ret: %d, evm_status: %d, used_gas: %lu", ret, vmoutput.m_tx_result.status, vmoutput.m_tx_result.used_gas);
@@ -278,6 +281,7 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
                     evm_tx_receipt.set_tx_status(data::ethreceipt_status_successful);
                     evm_tx_receipt.set_cumulative_gas_used(gas_used + vmoutput.m_tx_result.used_gas);
                     evm_tx_receipt.set_gas_used(vmoutput.m_tx_result.used_gas);
+                    evm_tx_receipt.set_gas_price(gasfee::xgas_estimate::flexible_price(tx, (evm_common::u256)vmoutput.m_tx_result.used_gas));
                     tx->set_evm_tx_receipt(evm_tx_receipt);
                 }
             } else {
@@ -302,6 +306,7 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
                     evm_tx_receipt.set_tx_status(data::ethreceipt_status_failed);
                     evm_tx_receipt.set_cumulative_gas_used(gas_used + vmoutput.m_tx_result.used_gas);
                     evm_tx_receipt.set_gas_used(vmoutput.m_tx_result.used_gas);
+                    evm_tx_receipt.set_gas_price(gasfee::xgas_estimate::flexible_price(tx, (evm_common::u256)vmoutput.m_tx_result.used_gas));
                     tx->set_evm_tx_receipt(evm_tx_receipt);
                     xwarn("xatomictx_executor_t::vm_execute outof gas, ret: %d, evm_status: %d, used_gas: %lu", ret, vmoutput.m_tx_result.status, vmoutput.m_tx_result.used_gas);
                 } else {
@@ -325,6 +330,7 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
                     evm_tx_receipt.set_tx_status(data::ethreceipt_status_failed);
                     evm_tx_receipt.set_cumulative_gas_used(gas_used + vmoutput.m_tx_result.used_gas);
                     evm_tx_receipt.set_gas_used(vmoutput.m_tx_result.used_gas);
+                    evm_tx_receipt.set_gas_price(gasfee::xgas_estimate::flexible_price(tx, (evm_common::u256)vmoutput.m_tx_result.used_gas));
                     tx->set_evm_tx_receipt(evm_tx_receipt);
                     xwarn("xatomictx_executor_t::vm_execute outof gas, ret: %d, evm_status: %d", ret, vmoutput.m_tx_result.status);
                 } else {
@@ -339,6 +345,7 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
                 evm_tx_receipt.set_tx_status(status);
                 evm_tx_receipt.set_cumulative_gas_used(gas_used + vmoutput.m_tx_result.used_gas);
                 evm_tx_receipt.set_gas_used(vmoutput.m_tx_result.used_gas);
+                evm_tx_receipt.set_gas_price(gasfee::xgas_estimate::flexible_price(tx, (evm_common::u256)vmoutput.m_tx_result.used_gas));
                 if (vmoutput.m_tx_result.status != evm_common::xevm_transaction_status_t::Success) {
                     ret = txexecutor::enum_exec_error_evm_execute;
                 } else {
