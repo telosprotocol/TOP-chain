@@ -18,6 +18,7 @@ enum class xenum_errc {
     abi_decode_outofrange,
     abi_data_value_error,
     trie_db_missing_node_error,
+    trie_db_not_provided,
 };
 using xerrc_t = xenum_errc;
 

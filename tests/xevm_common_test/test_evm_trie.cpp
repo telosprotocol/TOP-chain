@@ -12,6 +12,9 @@ public:
     xtrie_node_face_ptr_t node(xhash256_t hash) override {
         return m.at(hash);
     }
+    void insert(xhash256_t hash, int32_t size, xtrie_node_face_ptr_t node) override {
+        m.insert({hash, node});
+    }
     std::map<xhash256_t, xtrie_node_face_ptr_t> m;
 };
 using xtest_memory_db_ptr = std::shared_ptr<xtest_memory_db>;
@@ -52,6 +55,22 @@ TEST(xtrie, test_insert2) {
 
     ASSERT_TRUE(!ec);
     ASSERT_EQ(exp, trie->Hash());
+}
+
+TEST(xtrie, test_insert3) {
+    std::error_code ec;
+    auto xtest_memory_db_ptr = std::make_shared<xtest_memory_db>();
+    auto trie = xtrie_t::New({}, xtest_memory_db_ptr, ec);
+
+    UpdateString(trie, "A", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    // std::cout << "root hash: " << top::to_hex(trie->Hash().as_array()) << std::endl;
+
+    auto exp = xhash256_t{top::from_hex("d23786fb4a010da3ce639d66d5e904a11dbc02746d1ce25029e53290cabf28ab", ec)};
+
+    auto res = trie->Commit(ec);
+
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(exp, res.first);
 }
 
 TEST(xtrie, test_get) {
