@@ -19,7 +19,7 @@ uint64_t xtop_gas_state_operator::account_balance() const {
 }
 
 evm_common::u256 xtop_gas_state_operator::account_eth_balance() const {
-    return m_state->tep_token_balance(data::XPROPERTY_ASSET_ETH);
+    return m_state->tep_token_balance(common::xtoken_id_t::eth);
 }
 
 uint64_t xtop_gas_state_operator::account_available_tgas(uint64_t current_time, uint64_t onchain_total_gas_deposit) const {    
