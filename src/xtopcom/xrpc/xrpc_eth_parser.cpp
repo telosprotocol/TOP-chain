@@ -159,7 +159,14 @@ void xrpc_eth_parser_t::blockheader_to_json(base::xvblock_t* _block, xJson::Valu
     js_v["transactionsRoot"] = std::string("0x") + std::string(64, '0');// TODO(jimmy)
     js_v["transactions"].resize(0);
     js_v["uncles"].resize(0);
-    js_v["baseFeePerGas"] = top::to_hex_prefixed((top::evm_common::h256)ethheader.get_baseprice());
+    std::string baseprice_str = top::to_hex((top::evm_common::h256)ethheader.get_baseprice());
+    uint32_t i = 0;
+    for (; i < baseprice_str.size() - 1; i++) {
+        if (baseprice_str[i] != '0') {
+            break;
+        }
+    }
+    js_v["baseFeePerGas"] = "0x" + baseprice_str.substr(i);
 }
 
 

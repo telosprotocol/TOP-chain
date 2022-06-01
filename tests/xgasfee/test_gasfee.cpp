@@ -872,7 +872,7 @@ TEST(test_xtvm_v2, xtvm2_demo_v3_T6_transfer_inner_table_use_eth) {
     base::xvaccount_t recver_vaccount{p_statectx->default_recver};
     auto sender_unitstate = statectx->load_unit_state(sender_vaccount);
     auto recver_unitstate = statectx->load_unit_state(recver_vaccount);
-    sender_unitstate->tep_token_deposit(data::XPROPERTY_ASSET_ETH, evm_common::u256(2000000000000000ULL));
+    sender_unitstate->tep_token_deposit(common::xtoken_id_t::eth, evm_common::u256(2000000000000000ULL));
     txexecutor::xvm_para_t param{p_statectx->default_onchain_time, "0000", p_statectx->default_onchain_deposit_tgas, UINT64_MAX};
     txexecutor::xatomictx_executor_t atomictx_executor{statectx, param};
     txexecutor::xatomictx_output_t output;
@@ -882,8 +882,8 @@ TEST(test_xtvm_v2, xtvm2_demo_v3_T6_transfer_inner_table_use_eth) {
     EXPECT_EQ(output.m_vm_output.m_vm_error_code, 0);
     EXPECT_TRUE(output.m_vm_output.m_vm_error_str.empty());
 
-    auto s_eth_balance = sender_unitstate->tep_token_balance(data::XPROPERTY_ASSET_ETH);
-    auto r_eth_balance = recver_unitstate->tep_token_balance(data::XPROPERTY_ASSET_ETH);
+    auto s_eth_balance = sender_unitstate->tep_token_balance(common::xtoken_id_t::eth);
+    auto r_eth_balance = recver_unitstate->tep_token_balance(common::xtoken_id_t::eth);
     EXPECT_EQ(s_eth_balance, evm_common::u256(2000000000000000ULL) - p_statectx->default_eth_value);
     EXPECT_EQ(r_eth_balance, p_statectx->default_eth_value);
 
