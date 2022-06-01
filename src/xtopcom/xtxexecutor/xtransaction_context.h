@@ -118,8 +118,8 @@ class xtransaction_run_contract : public xtransaction_face_t{
     }
 
     int32_t source_fee_exec() override ;
-    int32_t source_action_exec() override ;
-    int32_t target_action_exec() override ;
+    int32_t source_action_exec() override;
+    int32_t target_action_exec() override;
     int32_t target_fee_exec() override {
         return 0;
     };

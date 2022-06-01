@@ -214,8 +214,15 @@ int32_t xtx_verifier::sys_contract_tx_check(data::xtransaction_t const * trx_ptr
     auto source_addr = trx_ptr->get_source_addr();
     auto target_addr = trx_ptr->get_origin_target_addr();
 
-    bool source_is_user_addr            = data::is_account_address(common::xaccount_address_t{source_addr}) || data::is_sub_account_address(common::xaccount_address_t{source_addr});
-    bool target_is_sys_contract_addr    = data::is_sys_contract_address(common::xaccount_address_t{target_addr});
+    auto const sender_addr = common::xaccount_address_t{source_addr};
+    auto const recver_addr = common::xaccount_address_t{target_addr};
+    if (common::is_t6(sender_addr) && common::is_t2(recver_addr)) {
+        xinfo("T6 account is not allowed to call system contract");
+        return xverifier_error::xverifier_error_t6_not_allowed_to_call_contract;
+    }
+
+    bool source_is_user_addr            = data::is_account_address(sender_addr) || data::is_sub_account_address(sender_addr);
+    bool target_is_sys_contract_addr    = data::is_sys_contract_address(recver_addr);
     if (source_is_user_addr && target_is_sys_contract_addr) {
         for (const auto & addr : open_sys_contracts) {
             if (addr == target_addr) {
@@ -360,7 +367,7 @@ int32_t xtx_verifier::verify_shard_contract_addr(data::xtransaction_t const * tr
             base::xvaccount_t _dst_vaddr(target_addr);
             if (_src_vaddr.get_ledger_subaddr() != _dst_vaddr.get_ledger_subaddr()
                 || _src_vaddr.get_ledger_id() != _dst_vaddr.get_ledger_id()) {
-                xerror("[global_trace][xtx_verifier][verify_shard_contract_addr] fail-src and dst not match, tx:%s,target_addr=%s", trx_ptr->dump().c_str(), target_addr.c_str());
+                xwarn("[global_trace][xtx_verifier][verify_shard_contract_addr] fail-src and dst not match, tx:%s,target_addr=%s", trx_ptr->dump().c_str(), target_addr.c_str());
                 return xverifier_error_tx_basic_validation_invalid;
             }
         } else {

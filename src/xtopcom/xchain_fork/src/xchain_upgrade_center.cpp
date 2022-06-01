@@ -30,7 +30,6 @@ namespace top {
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "tx v2 fee fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "partly remove confirm"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "add rsp id"},
-                xfork_point_t{xfork_point_type_t::logic_time, 0, "election contract store credit score"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "inner table tx"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "enable eth shard"},
                 xfork_point_t{xfork_point_type_t::logic_time, 100000000, "elect exchange alone"},
@@ -43,7 +42,6 @@ namespace top {
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "tx v2 fee fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "partly remove confirm"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "add rsp id"},
-                xfork_point_t{xfork_point_type_t::logic_time, 0, "election contract store credit score"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "inner table tx"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "enable eth shard"},
                 xfork_point_t{xfork_point_type_t::logic_time, 100000000, "elect exchange alone"},
@@ -55,7 +53,6 @@ namespace top {
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "tx v2 fee fork point"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "partly remove confirm"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "add rsp id"},
-                xfork_point_t{xfork_point_type_t::logic_time, 0, "election contract store credit score"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "inner table tx"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "enable eth shard"},
                 xfork_point_t{xfork_point_type_t::logic_time, 100000000, "elect exchange alone"},
@@ -67,7 +64,6 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 7221960, "tx v2 fee fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 7473960, "partly remove confirm"},
             xfork_point_t{xfork_point_type_t::logic_time, 0, "add rsp id"},
-            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "election contract store credit score"},
             xfork_point_t{xfork_point_type_t::logic_time, 0, "inner table tx"},// should later than "add rsp id"
             xfork_point_t{xfork_point_type_t::logic_time, 10000000, "enable eth shard"},
             xfork_point_t{xfork_point_type_t::logic_time, 100000000, "elect exchange alone"}, // todo(next version fork)
@@ -80,7 +76,6 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 7221960, "tx v2 fee fork point"},
             xfork_point_t{xfork_point_type_t::logic_time, 7473960, "partly remove confirm"},
             xfork_point_t{xfork_point_type_t::logic_time, 0, "add rsp id"},
-            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "election contract store credit score"},
             xfork_point_t{xfork_point_type_t::logic_time, 0, "inner table tx"},
             xfork_point_t{xfork_point_type_t::logic_time, 10000000, "enable eth shard"},
             xfork_point_t{xfork_point_type_t::logic_time, 100000000, "elect exchange alone"}, // todo(next version fork)
@@ -93,7 +88,6 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 7221960, "tx v2 fee fork point"},//2022-2-21 10:00:00
             xfork_point_t{xfork_point_type_t::logic_time, 7473960, "partly remove confirm"},
             xfork_point_t{xfork_point_type_t::logic_time, 0, "add rsp id"},
-            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "election contract store credit score"},
             xfork_point_t{xfork_point_type_t::logic_time, 0, "inner table tx"},
             xfork_point_t{xfork_point_type_t::logic_time, 10000000, "enable eth shard"},
             xfork_point_t{xfork_point_type_t::logic_time, 100000000, "elect exchange alone"}, // todo(next version fork)

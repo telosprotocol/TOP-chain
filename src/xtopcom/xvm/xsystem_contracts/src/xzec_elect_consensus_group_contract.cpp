@@ -466,14 +466,7 @@ void xtop_zec_elect_consensus_group_contract::elect(common::xzone_id_t const zon
                   static_cast<std::uint16_t>(auditor_group_id.value()),
                   read_height);
 
-            auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
-            if (chain_fork::xchain_fork_config_center_t::is_forked(fork_config.election_contract_stores_credit_score_fork_point, election_timestamp)) {
-                serialization::xmsgpack_t<xelection_result_store_t>::serialize_to_string_prop(
-                    *this, data::election::get_property_by_group_id(auditor_group_id), election_result_store);
-            } else {
-                serialization::xmsgpack_t<data::election::v1::xelection_result_store_t>::serialize_to_string_prop(
-                    *this, data::election::get_property_by_group_id(auditor_group_id), election_result_store.v1());
-            }
+            serialization::xmsgpack_t<xelection_result_store_t>::serialize_to_string_prop(*this, data::election::get_property_by_group_id(auditor_group_id), election_result_store);
 #if defined(DEBUG)
             auto serialized_election_result_store_data = codec::msgpack_encode(election_result_store);
             auto base64str =
