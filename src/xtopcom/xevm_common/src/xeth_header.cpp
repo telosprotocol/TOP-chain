@@ -456,6 +456,34 @@ int xeth_block_header_t::from_string(const std::string & s) {
     return (begin_pos - end_pos);
 }
 
+int xeth_block_header_t::from_rlp(const xbytes_t & bytes) {
+    auto l = RLP::decodeList(bytes);
+    if (!l.remainder.empty()) {
+        xassert(false);
+        return -1;
+    }
+    m_parentHash = static_cast<Hash>(l.decoded[0]);
+    m_uncleHash = static_cast<Hash>(l.decoded[1]);
+    m_miner = static_cast<Address>(l.decoded[2]);
+    m_stateMerkleRoot = static_cast<Hash>(l.decoded[3]);
+    m_txMerkleRoot = static_cast<Hash>(l.decoded[4]);
+    m_receiptMerkleRoot = static_cast<Hash>(l.decoded[5]);
+    m_bloom = static_cast<LogBloom>(l.decoded[6]);
+    m_difficulty = static_cast<bigint>(evm_common::fromBigEndian<u256>(l.decoded[7]));
+    m_number = static_cast<bigint>(evm_common::fromBigEndian<u256>(l.decoded[8]));
+    m_gasLimit = static_cast<uint64_t>(evm_common::fromBigEndian<u64>(l.decoded[9]));
+    m_gasUsed = static_cast<uint64_t>(evm_common::fromBigEndian<u64>(l.decoded[10]));
+    m_time = static_cast<uint64_t>(evm_common::fromBigEndian<u64>(l.decoded[11]));
+    m_extra = l.decoded[12];
+    m_mixDigest = static_cast<Hash>(l.decoded[13]);
+    m_nonce = static_cast<BlockNonce>(l.decoded[14]);
+    if (l.decoded.size() > 15) {
+        m_baseFee = true;
+        m_baseFee = static_cast<bigint>(evm_common::fromBigEndian<u256>(l.decoded[15]));
+    }
+    return l.decoded.size();
+}
+
 xeth_block_header_with_difficulty_t::xeth_block_header_with_difficulty_t(xeth_block_header_t header, bigint difficulty) : m_header{header}, m_difficult_sum{difficulty} {
 }
 

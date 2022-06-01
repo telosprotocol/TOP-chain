@@ -33,6 +33,7 @@ public:
     // encode and decode
     std::string to_string();
     int from_string(const std::string & s);
+    int from_rlp(const xbytes_t & bytes);
 
     // member of header
     Hash parentHash() const;

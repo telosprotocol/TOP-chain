@@ -22,10 +22,11 @@ public:
                  observer_ptr<statectx::xstatectx_face_t> state_ctx,
                  sys_contract_precompile_output & output,
                  sys_contract_precompile_error & err) override;
-    bool init(std::string headerContent, std::string emitter);
-    bool sync(std::string headerContent);
 
 private:
+    bool init(const xbytes_t & headerContent, std::string emitter);
+    bool sync(const xbytes_t & headerContent);
+
     evm_common::bigint calcBaseFee(const evm_common::eth::xeth_block_header_t & parentHeader) const;
     bool verifyOwner(const std::string & owner) const;
     bool verifyCommon(const evm_common::eth::xeth_block_header_t & prev_header, const evm_common::eth::xeth_block_header_t & new_header) const;
@@ -42,7 +43,7 @@ private:
     bool set_header(evm_common::eth::xeth_block_header_t & header, evm_common::bigint difficulty);
     bool rebuild(evm_common::eth::xeth_block_header_t & current_header, evm_common::eth::xeth_block_header_t & new_header);
 
-    common::xaccount_address_t m_contract_address{evm_eth_bridge_contract_address};
+    const common::xaccount_address_t m_contract_address{evm_eth_bridge_contract_address};
     std::shared_ptr<data::xunit_bstate_t> m_contract_state{nullptr};
 };
 using xevm_eth_bridge_contract_t = xtop_evm_eth_bridge_contract;
