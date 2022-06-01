@@ -45,6 +45,8 @@ enum xevm_transaction_status_t : uint32_t {
     /// An opcode accesses external information, but the request is off offset limit (runtime).
     OutOfOffset = 4,
     OtherExecuteError = 5,
+
+    Invalid = 32,
 };
 
 class xevm_transaction_result_t {
@@ -67,9 +69,8 @@ class xevm_transaction_result_t {
 
 public:
     uint64_t used_gas{0}; // todo: calculate used gas to expense
-    xevm_transaction_status_t status;
+    xevm_transaction_status_t status{Invalid};
     std::string extra_msg;
-    common::xeth_address_t  constract_address;
     std::vector<xevm_log_t> logs;
 
     void set_status(uint32_t input) {
