@@ -87,6 +87,11 @@ void xtop_gasfee::init(std::error_code & ec) {
             } else {
                 top_balance_to_use = eth_max_gasfee;
             }
+            if (eth_max_gasfee < XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit)) {
+                ec = gasfee::error::xenum_errc::tx_deposit_not_enough;
+                xwarn("[xtop_gasfee::init] tx_deposit_not_enough: %lu", max_gasfee);
+                return;
+            }
         }
     } while(0);
     m_converted_tgas = balance_to_tgas(top_balance_to_use);
