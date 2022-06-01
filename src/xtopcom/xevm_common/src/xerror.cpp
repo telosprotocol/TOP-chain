@@ -30,6 +30,9 @@ static char const * const errc_to_string(int code) {
     case xerrc_t::trie_db_missing_node_error:
         return "trie db missing node error";
 
+    case xerrc_t::trie_db_not_provided:
+        return "trie db not provided";
+
     default:
         return "unknown evm common error";
     }

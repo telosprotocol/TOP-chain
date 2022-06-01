@@ -70,7 +70,6 @@ xbytes_t hexToKeybytes(xbytes_t hex) {
 void decodeNibbles(xbytes_t const & nibbles, xbytes_t::iterator bytes_begin) {
     for (std::size_t bi = 0, ni = 0; ni < nibbles.size(); bi += 1, ni += 2) {
         *(bytes_begin + bi) = nibbles[ni] << 4 | nibbles[ni + 1];
-        // bytes[bi] = nibbles[ni] << 4 | nibbles[ni + 1];
     }
 }
 
