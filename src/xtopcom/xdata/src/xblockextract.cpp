@@ -149,5 +149,25 @@ void xblockextract_t::unpack_ethheader(base::xvblock_t* _block, xeth_header_t & 
     }
 }
 
+xtransaction_ptr_t xblockextract_t::unpack_raw_tx(base::xvblock_t* _block, std::string const& txhash, std::error_code & ec) {
+    std::string orgtx_bin = _block->get_input()->query_resource(txhash);
+    if (orgtx_bin.empty()) {
+        ec = common::error::xerrc_t::invalid_block;
+        xerror("xblockextract_t::unpack_raw_tx fail-query tx resouce._block=%s,tx=%s", _block->dump().c_str(), base::xstring_utl::to_hex(txhash).c_str());
+        return nullptr;
+    }
+    base::xauto_ptr<base::xdataunit_t> raw_tx = base::xdataunit_t::read_from(orgtx_bin);
+    if(nullptr == raw_tx) {
+        ec = common::error::xerrc_t::invalid_block;
+        xerror("xblockextract_t::unpack_raw_tx fail-query tx resouce._block=%s,tx=%s", _block->dump().c_str(), base::xstring_utl::to_hex(txhash).c_str());
+        return nullptr;
+    }
+    xtransaction_ptr_t tx;
+    data::xtransaction_t* _tx_ptr = dynamic_cast<data::xtransaction_t*>(raw_tx.get());
+    _tx_ptr->add_ref();
+    tx.attach(_tx_ptr);
+    return tx;
+}
+
 
 NS_END2
