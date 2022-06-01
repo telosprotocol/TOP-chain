@@ -16,6 +16,8 @@ struct xblock_location_t {
     std::string     m_block_number;
 };
 struct xtx_location_t : public xblock_location_t {
+    xtx_location_t(std::string const& blockhash, std::string const& blocknumber)
+    : xblock_location_t(blockhash, blocknumber) {}
     xtx_location_t(std::string const& blockhash, std::string const& blocknumber, std::string const& txhash, std::string const& txindex)
     : xblock_location_t(blockhash, blocknumber), m_tx_hash(txhash),m_transaction_index(txindex) {}
     std::string     m_tx_hash;
@@ -30,13 +32,11 @@ struct xlog_location_t : public xtx_location_t {
 
 class xrpc_eth_parser_t {
  public:
-    static  void txlocation_to_json(xtx_location_t const& txlocation, xJson::Value & js_v);
     static  void log_to_json(xlog_location_t const& loglocation, evm_common::xevm_log_t const& log, xJson::Value & js_v);
     static  void receipt_to_json(const std::string & tx_hash, xtxindex_detail_ptr_t const& sendindex, xJson::Value & js_v, std::error_code & ec);
-    static  void transaction_to_json(const std::string & tx_hash, xtxindex_detail_ptr_t const& sendindex, xJson::Value & js_v, std::error_code & ec);
+    static  void transaction_to_json(xtx_location_t const& txlocation, data::xtransaction_ptr_t const& rawtx, xJson::Value & js_v, std::error_code & ec);
     static  void blockheader_to_json(base::xvblock_t* _block, xJson::Value & js_v, std::error_code & ec);
 
- private:
     static  std::string                 uint64_to_hex_prefixed(uint64_t value);
 };
 
