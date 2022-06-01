@@ -237,12 +237,16 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
                         ret = enum_exec_error_out_of_gas;
                         vmoutput.m_tx_result.status = evm_common::xevm_transaction_status_t::OutOfGas;
                         vmoutput.m_tx_result.used_gas = static_cast<uint64_t>(gasfee.tx_eth_gas_limit());
-                        tx->set_evm_tx_result(vmoutput.m_tx_result);
+                        data::xeth_store_receipt_t evm_tx_receipt;
+                        evm_tx_receipt.set_tx_status(data::ethreceipt_status_failed);
+                        evm_tx_receipt.set_cumulative_gas_used(gas_used + vmoutput.m_tx_result.used_gas);
+                        evm_tx_receipt.set_gas_used(vmoutput.m_tx_result.used_gas);
+                        tx->set_evm_tx_receipt(evm_tx_receipt);
                         xwarn(
                             "xatomictx_executor_t::vm_execute outof gas, ret: %d, evm_status: %d, used_gas: %lu", ret, vmoutput.m_tx_result.status, vmoutput.m_tx_result.used_gas);
                     } else {
                         ret = enum_exec_error_estimate_gas;
-                        xwarn("xatomictx_executor_t::vm_execute error_estimate_gas, ret: %d: %d", ret);
+                        xwarn("xatomictx_executor_t::vm_execute error_estimate_gas, ret: %d", ret);
                     }
                     break;
                 }
@@ -257,7 +261,11 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
                         ret = enum_exec_error_out_of_gas;
                         vmoutput.m_tx_result.status = evm_common::xevm_transaction_status_t::OutOfGas;
                         vmoutput.m_tx_result.used_gas = static_cast<uint64_t>(gasfee.tx_eth_gas_limit());
-                        tx->set_evm_tx_result(vmoutput.m_tx_result);
+                        data::xeth_store_receipt_t evm_tx_receipt;
+                        evm_tx_receipt.set_tx_status(data::ethreceipt_status_failed);
+                        evm_tx_receipt.set_cumulative_gas_used(gas_used + vmoutput.m_tx_result.used_gas);
+                        evm_tx_receipt.set_gas_used(vmoutput.m_tx_result.used_gas);
+                        tx->set_evm_tx_receipt(evm_tx_receipt);
                         xwarn(
                             "xatomictx_executor_t::vm_execute outof gas, ret: %d, evm_status: %d, used_gas: %lu", ret, vmoutput.m_tx_result.status, vmoutput.m_tx_result.used_gas);
                     } else {
@@ -290,11 +298,15 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
                     ret = enum_exec_error_out_of_gas;
                     vmoutput.m_tx_result.status = evm_common::xevm_transaction_status_t::OutOfGas;
                     vmoutput.m_tx_result.used_gas = static_cast<uint64_t>(gasfee.tx_eth_gas_limit());
-                    tx->set_evm_tx_result(vmoutput.m_tx_result);
+                    data::xeth_store_receipt_t evm_tx_receipt;
+                    evm_tx_receipt.set_tx_status(data::ethreceipt_status_failed);
+                    evm_tx_receipt.set_cumulative_gas_used(gas_used + vmoutput.m_tx_result.used_gas);
+                    evm_tx_receipt.set_gas_used(vmoutput.m_tx_result.used_gas);
+                    tx->set_evm_tx_receipt(evm_tx_receipt);
                     xwarn("xatomictx_executor_t::vm_execute outof gas, ret: %d, evm_status: %d, used_gas: %lu", ret, vmoutput.m_tx_result.status, vmoutput.m_tx_result.used_gas);
                 } else {
                     ret = enum_exec_error_estimate_gas;
-                    xwarn("xatomictx_executor_t::vm_execute error_estimate_gas, ret: %d: %d", ret);
+                    xwarn("xatomictx_executor_t::vm_execute error_estimate_gas, ret: %d", ret);
                 }
                 break;
             }
@@ -309,8 +321,12 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
                     ret = enum_exec_error_out_of_gas;
                     vmoutput.m_tx_result.status = evm_common::xevm_transaction_status_t::OutOfGas;
                     vmoutput.m_tx_result.used_gas = static_cast<uint64_t>(gasfee.tx_eth_gas_limit());
-                    tx->set_evm_tx_result(vmoutput.m_tx_result);
-                    xwarn("xatomictx_executor_t::vm_execute outof gas, ret: %d, evm_status: %d", ret);
+                    data::xeth_store_receipt_t evm_tx_receipt;
+                    evm_tx_receipt.set_tx_status(data::ethreceipt_status_failed);
+                    evm_tx_receipt.set_cumulative_gas_used(gas_used + vmoutput.m_tx_result.used_gas);
+                    evm_tx_receipt.set_gas_used(vmoutput.m_tx_result.used_gas);
+                    tx->set_evm_tx_receipt(evm_tx_receipt);
+                    xwarn("xatomictx_executor_t::vm_execute outof gas, ret: %d, evm_status: %d", ret, vmoutput.m_tx_result.status);
                 } else {
                     xassert(false);
                 }
