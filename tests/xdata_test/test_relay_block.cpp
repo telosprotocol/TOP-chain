@@ -27,7 +27,8 @@ const h256 test_topics4{"000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279c
 const uint8_t  test_status = 1;
 const u256     test_gasUsed{0xccde};
 const h2048    test_logsBloom{"00000001000000004000000000000000000000000000000000000000000000000000000000041000000000000000008000000000000080000000000000200000000000000000000000000008000000000000000000008000000000000000000010000000020000000004000100000800000000040000000000000012000000000000000020000000008000000000000000000000000000000000000000000000420000000000000000000000000000000000000000080000000000000000000000000002000000200000000000000000000008002000000000000000000020000010000200000000000000000000000000000000000000000000002000000000"};
-const h256     test_public_key{"b72d55c76bd8f477f4b251763c33f75e6f5f5dd8af071e711e0cb9b2accc70ea"};
+const h256     test_public_key_x{"b72d55c76bd8f477f4b251763c33f75e6f5f5dd8af071e711e0cb9b2accc70ea"};
+const h256     test_public_key_y{"b72d55c76bd8f477f4b251763c33f75e6f5f5dd8af071e711e0cb9b2accc70ea"};
 const uint64_t  test_stake = 0x12345678;
 const h256    test_r{"4f89ece0f576ba39123456789123456781604b97cf3baa922b010a758d303842"} ;
 const h256    test_s{"4f812345678abcdef1234ba19a44d94601604b97cf3baa922b010a758d303842"} ;
@@ -87,7 +88,8 @@ xrelay_receipt xrelay_receipt_create()
 xrelay_election xrelay_election_create()
 {
     xrelay_election _election;
-    _election.public_key = test_public_key;
+    _election.public_key_x = test_public_key_x;
+    _election.public_key_y = test_public_key_y;
     _election.stake = test_stake;
     return _election;
 }
@@ -215,7 +217,8 @@ TEST_F(test_relay_block, serialize_xrelay_election) {
     xrelay_election election_dst;
     election_dst.decodeRLP(rlp_dst);
 
-    EXPECT_EQ(election_dst.public_key, election_src.public_key);
+    EXPECT_EQ(election_dst.public_key_x, election_src.public_key_x);
+    EXPECT_EQ(election_dst.public_key_y, election_src.public_key_y);
     EXPECT_EQ(election_dst.stake, election_src.stake);
 }
 
@@ -305,7 +308,8 @@ TEST_F(test_relay_block, serialize_xrelay_block_header_without_signature) {
     for (unsigned i = 0; i < TEST_ELECTIONS_NUM; i++) {
         xrelay_election xrelay_election_dst = block_header_dst.get_elections_sets()[i];
         xrelay_election xrelay_election_src = block_header_src.get_elections_sets()[i];
-        EXPECT_EQ(xrelay_election_dst.public_key,  xrelay_election_src.public_key);
+        EXPECT_EQ(xrelay_election_dst.public_key_x, xrelay_election_src.public_key_x);
+        EXPECT_EQ(xrelay_election_dst.public_key_y, xrelay_election_src.public_key_y);
         EXPECT_EQ(xrelay_election_dst.stake, xrelay_election_src.stake);
     }
 
@@ -354,7 +358,8 @@ TEST_F(test_relay_block, serialize_xrelay_block_header_with_signature) {
     for (unsigned i = 0; i < TEST_ELECTIONS_NUM; i++) {
         xrelay_election xrelay_election_dst = block_header_dst.get_elections_sets()[i];
         xrelay_election xrelay_election_src = block_header_src.get_elections_sets()[i];
-        EXPECT_EQ(xrelay_election_dst.public_key,  xrelay_election_src.public_key);
+        EXPECT_EQ(xrelay_election_dst.public_key_x, xrelay_election_src.public_key_x);
+        EXPECT_EQ(xrelay_election_dst.public_key_y, xrelay_election_src.public_key_y);
         EXPECT_EQ(xrelay_election_dst.stake, xrelay_election_src.stake);
     }
 
@@ -412,7 +417,8 @@ TEST_F(test_relay_block, serialize_xrelay_block_header_with_contract) {
     for (unsigned i = 0; i < TEST_ELECTIONS_NUM; i++) {
         xrelay_election xrelay_election_dst = block_header_dst.get_elections_sets()[i];
         xrelay_election xrelay_election_src = block_header_src.get_elections_sets()[i];
-        EXPECT_EQ(xrelay_election_dst.public_key,  xrelay_election_src.public_key);
+        EXPECT_EQ(xrelay_election_dst.public_key_x, xrelay_election_src.public_key_x);
+        EXPECT_EQ(xrelay_election_dst.public_key_y, xrelay_election_src.public_key_y);
         EXPECT_EQ(xrelay_election_dst.stake, xrelay_election_src.stake);
     }
 
@@ -433,6 +439,7 @@ TEST_F(test_relay_block, serialize_xrelay_block_header_with_contract) {
     for (auto c :  rlp_block_header_contract.out()) {
         fin.write((char*)&c, sizeof(uint8_t));
     }
+    fin.close();
 }
 
 
@@ -462,7 +469,8 @@ TEST_F(test_relay_block, serialize_xrelay_block_without_signature) {
     for(unsigned i = 0; i < TEST_ELECTIONS_NUM; i++) {
         xrelay_election xrelay_election_dst = block_header_dst.get_elections_sets()[i];
         xrelay_election xrelay_election_src = block_header_src.get_elections_sets()[i];
-        EXPECT_EQ(xrelay_election_dst.public_key,  xrelay_election_src.public_key);
+        EXPECT_EQ(xrelay_election_dst.public_key_x, xrelay_election_src.public_key_x);
+        EXPECT_EQ(xrelay_election_dst.public_key_y, xrelay_election_src.public_key_y);
         EXPECT_EQ(xrelay_election_dst.stake, xrelay_election_src.stake);
     }
 
@@ -531,7 +539,8 @@ TEST_F(test_relay_block, serialize_xrelay_block_with_signature) {
     for(unsigned i = 0; i < TEST_ELECTIONS_NUM; i++) {
         xrelay_election xrelay_election_dst = block_header_dst.get_elections_sets()[i];
         xrelay_election xrelay_election_src = block_header_src.get_elections_sets()[i];
-        EXPECT_EQ(xrelay_election_dst.public_key,  xrelay_election_src.public_key);
+        EXPECT_EQ(xrelay_election_dst.public_key_x, xrelay_election_src.public_key_x);
+        EXPECT_EQ(xrelay_election_dst.public_key_y, xrelay_election_src.public_key_y);
         EXPECT_EQ(xrelay_election_dst.stake, xrelay_election_src.stake);
     }
 
@@ -582,6 +591,9 @@ TEST_F(test_relay_block, serialize_xrelay_block_with_signature) {
             }         
         }
     }
+
 }
+
+
 
 
