@@ -18,8 +18,9 @@ class xblockextract_t {
     static std::vector<xlightunit_action_t>         unpack_txactions(base::xvblock_t* _block);
     static std::vector<xlightunit_action_t>         unpack_eth_txactions(base::xvblock_t* _block);
     static xlightunit_action_ptr_t                  unpack_one_txaction(base::xvblock_t* _block, std::string const& txhash);
+    static xtransaction_ptr_t                       unpack_raw_tx(base::xvblock_t* _block, std::string const& txhash, std::error_code & ec);
 
-    static void     unpack_ethheader(base::xvblock_t* _block, xeth_header_t & ethheader, std::error_code & ec);
+    static void     unpack_ethheader(base::xvblock_t* _block, xeth_header_t & ethheader, std::error_code & ec);    
 };
 
 
