@@ -524,7 +524,11 @@ std::string xbstate_ctx_t::string_get(const std::string & prop) const {
 int32_t xbstate_ctx_t::set_tep_balance(const std::string & token_name, evm_common::u256 new_balance) {
     assert(token_name.length() == 1);
 
-    xdbg("xbstate_ctx_t::set_tep_balance,property_modify_enter.address=%s,height=%ld,token_name=%s,new_balance=%s", get_address().c_str(), get_chain_height(), token_name.c_str(), new_balance.str().c_str());
+    xdbg("xbstate_ctx_t::set_tep_balance,property_modify_enter.address=%s,height=%ld,token_name=%s,new_balance=%s",
+         get_address().c_str(),
+         get_chain_height(),
+         common::symbol(top::from_string<common::xtoken_id_t>(token_name)).c_str(),
+         new_balance.str().c_str());
     top::xbytes_t result_rlp = evm_common::RLP::encode(new_balance);
     return set_tep_balance_bytes(token_name, result_rlp);
 }
@@ -538,10 +542,12 @@ int32_t xbstate_ctx_t::set_tep_balance_bytes(const std::string & token_name, con
     std::error_code ec;
     std::string new_balance_str = top::from_bytes<std::string>(new_balance, ec);
     if (ec) {
+        xwarn("convert bytes balance to string format fialed");
         return xaccount_property_operate_fail;
     }
     bool ret = propobj->insert(token_name, new_balance_str, m_canvas.get());
     if (!ret) {
+        xwarn("failed to update TEP1 token balance property. token %s", common::symbol(top::from_string<common::xtoken_id_t>(token_name)).c_str());
         return xaccount_property_operate_fail;
     }
     return xsuccess;
