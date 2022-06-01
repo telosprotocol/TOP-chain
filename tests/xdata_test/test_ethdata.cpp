@@ -2,6 +2,8 @@
 #include "xbase/xmem.h"
 #include "xconfig/xconfig_register.h"
 #include "xdata/xethheader.h"
+#include "xdata/xethreceipt.h"
+#include "xdata/xlightunit_info.h"
 
 using namespace top;
 using namespace top::base;
@@ -102,6 +104,22 @@ TEST_F(test_ethdata, ethheader_rlp) {
         if (ec) {
             assert(false);
         }        
+    }
+}
+
+TEST_F(test_ethdata, ethreceipt_store_serialize) {
+    {
+        xeth_store_receipt_t _receipt;
+        _receipt.set_tx_status(enum_ethreceipt_status::ethreceipt_status_successful);
+        xbytes_t _bytes = _receipt.encodeBytes();
+        std::string _bin_str = top::to_string(_bytes);
+
+        std::error_code ec;
+        xbytes_t _bytes2 = top::to_bytes(_bin_str);
+        xeth_store_receipt_t _receipt2;
+        _receipt2.decodeBytes(_bytes2, ec);
+        if (ec) {assert(false);}
+        ASSERT_EQ(_receipt2.get_tx_status(), enum_ethreceipt_status::ethreceipt_status_successful);
     }
 }
 
