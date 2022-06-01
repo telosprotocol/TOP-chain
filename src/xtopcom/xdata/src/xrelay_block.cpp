@@ -6,7 +6,6 @@
 #include "xdata/xrelay_block.h"
 #include "base/log.h"
 #include "xevm_common/xtriehash.h"
-
 #include "xdata/xrelay_block_store.h"
 
 NS_BEG2(top, data)
@@ -30,24 +29,120 @@ top::evm_common::h256 combine_hash(top::evm_common::h256 hash1, top::evm_common:
     return hash_result;
 }
 
+void xrelay_receipt_log::streamRLP(evm_common::RLPStream &_s) {
+    _s.appendList(3)  << m_contract_address << m_topics << m_data;
+}
+
+bool xrelay_receipt_log::decodeRLP(evm_common::RLP const& _r) {
+    assert(_r.itemCount() == 3);
+    //todo check error
+    m_contract_address = _r[0].toHash<evm_common::h160>();
+    m_topics           = _r[1].toVector<evm_common::h256>();
+    m_data             = _r[2].toBytes();
+    return true;
+}
+
+void xrelay_receipt::streamRLP(evm_common::RLPStream &_s) {
+    _s.appendList(4);
+    _s << m_status;
+    _s << m_gasUsed << m_logsBloom;
+    _s.appendList(m_logs.size());
+    for (auto &log : m_logs) {
+        log.streamRLP(_s);
+    }
+}
+
+bool xrelay_receipt::decodeRLP(evm_common::RLP const& _r) {
+    assert(_r.itemCount() == 4);
+    //todo check error
+    m_status    = _r[0].toInt<uint64_t>();
+    m_gasUsed   = _r[1].toInt<evm_common::u256>();
+    m_logsBloom = _r[2].toHash<evm_common::h2048>();
+    
+    evm_common::RLP const& rlp_logsList = evm_common::RLP(_r[3].data());
+    unsigned itemCount = rlp_logsList.itemCount();
+    for (unsigned i = 0; i < itemCount; i++) {
+        evm_common::RLP const& rlp_log = evm_common::RLP(rlp_logsList[i].data());
+        xrelay_receipt_log log;
+        log.decodeRLP(rlp_log);
+        m_logs.emplace_back(log);
+    }
+    return true;
+}
+
+void xrelay_election::streamRLP(evm_common::RLPStream &_s) {
+    _s.appendList(3)  << public_key_x << public_key_y << stake;
+}
+
+bool xrelay_election::decodeRLP(evm_common::RLP const& _r) {
+    assert(_r.itemCount() == 3);
+    //todo check error
+    public_key_x = _r[0].toHash<evm_common::h256>();  
+    public_key_y = _r[1].toHash<evm_common::h256>();
+    stake        = _r[2].toInt<uint64_t>();
+    return true;
+}
+
+void xrelay_signature::streamRLP(evm_common::RLPStream &_s) {
+    _s.appendList(3)  << r << s << v;
+}
+
+bool xrelay_signature::decodeRLP(evm_common::RLP const& _r) {
+    assert(_r.itemCount() == 3);
+    //todo check error
+    r = _r[0].toHash<evm_common::h256>();
+    s = _r[1].toHash<evm_common::h256>();
+    v = _r[2].toInt<uint8_t>();
+    return true;
+}
+
+void xrelay_block_inner_header::streamRLP(evm_common::RLPStream &_s) const {
+    _s.appendList(inner_fileds);
+    _s << m_version;
+    _s << m_height;
+    _s << m_epochID;
+    _s << m_timestamp;
+    _s << m_elections_hash;
+    _s << m_txs_merkle_root;
+    _s << m_receipts_merkle_root;
+    _s << m_state_merkle_root;
+    _s << m_block_merkle_root;
+}
+
+bool xrelay_block_inner_header::decodeRLP(evm_common::RLP const& _r) {
+    assert(_r.itemCount() == inner_fileds);
+    m_version               = _r[0].toInt<uint64_t>(); 
+    m_height                = _r[1].toInt<uint64_t>(); 
+    m_epochID               = _r[2].toInt<uint64_t>(); 
+    m_timestamp             = _r[3].toInt<uint64_t>(); 
+    m_elections_hash        = _r[4].toHash<evm_common::h256>();
+    m_txs_merkle_root       = _r[5].toHash<evm_common::h256>(); 
+    m_receipts_merkle_root  = _r[6].toHash<evm_common::h256>(); 
+    m_state_merkle_root     = _r[7].toHash<evm_common::h256>();
+    m_block_merkle_root     = _r[8].toHash<evm_common::h256>(); 
+    return true;
+}
+
 void xrelay_block_header::make_inner_hash()
 {
     RLPStream rlpdata;
-    streamRLP(rlpdata, true);
+    m_inner_header.streamRLP(rlpdata);
     m_inner_header.m_inner_hash = sha3(rlpdata.out());
 }
 
 
 void    xrelay_block_header::make_elections_root_hash()
 {
-    if (m_next_elections.size() > 0) {
-        xPartialMerkleTree  merkleTree;
-        auto &elections = m_next_elections;
-        for (auto &_election: elections) {
-            merkleTree.insert(_election.public_key);
+    std::vector<bytes> rlp_elections;
+    if(m_next_elections.size() > 0) {
+        for (auto &_election: m_next_elections) {
+            RLPStream _s;
+            _election.streamRLP(_s);
+            rlp_elections.push_back(_s.out());
         }
-        m_inner_header.m_elections_hash = merkleTree.get_root();
     }
+    h256 electionsRoot = orderedTrieRoot(rlp_elections);
+    m_inner_header.m_elections_hash = electionsRoot;
 }
 
 void  xrelay_block_header::set_txs_root_hash(evm_common::h256 hash)
@@ -359,6 +454,10 @@ void  xrelay_block::save_block_trie()
   //  xrelay_block_store::get_instance().save_block_ordinal_block_hash(m_block_merkle_tree.size(),  m_header.m_block_hash);
 }
 
+void xrelay_block::streamRLP_header_to_contract(evm_common::RLPStream &rlp_stream)
+{
+    m_header.streamRLP_header_to_contract(rlp_stream);
+}
 
 
 xrelay_signature::xrelay_signature(const std::string & sign_str) {
