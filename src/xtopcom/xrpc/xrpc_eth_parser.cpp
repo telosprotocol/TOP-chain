@@ -57,7 +57,14 @@ void xrpc_eth_parser_t::receipt_to_json(const std::string & tx_hash, xtxindex_de
     js_v["type"] = uint64_to_hex_prefixed((uint64_t)sendindex->get_raw_tx()->get_eip_version());
     js_v["gasUsed"] = uint64_to_hex_prefixed(evm_tx_receipt.get_gas_used());
     js_v["cumulativeGasUsed"] = uint64_to_hex_prefixed(evm_tx_receipt.get_cumulative_gas_used());  // TODO(jimmy)
-    js_v["effectiveGasPrice"] = top::to_hex_prefixed((top::evm_common::h256)evm_tx_receipt.get_gas_price());
+    std::string gasprice_str = top::to_hex((top::evm_common::h256)evm_tx_receipt.get_gas_price());
+    uint32_t i = 0;
+    for (; i < gasprice_str.size() - 1; i++) {
+        if (gasprice_str[i] != '0') {
+            break;
+        }
+    }
+    js_v["effectiveGasPrice"] = "0x" + gasprice_str.substr(i);
 
     uint16_t tx_type = sendindex->get_raw_tx()->get_tx_type();
     js_v["from"] = _from_addr_str;
