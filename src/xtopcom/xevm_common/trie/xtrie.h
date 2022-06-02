@@ -10,7 +10,7 @@
 #include "xbasic/xhex.h"
 #include "xevm_common/trie/xtrie_db_face.h"
 #include "xevm_common/trie/xtrie_node.h"
-#include "xevm_common/trie/xtrie_node_encoding.h"
+#include "xevm_common/trie/xtrie_node_coding.h"
 
 #include <algorithm>
 #include <tuple>
@@ -38,7 +38,7 @@ public:
 
     // todo tmp solution...
     xbytes_t Encode() {
-        return EncodeToBytes(m_root);
+        return xtrie_node_rlp::EncodeToBytes(m_root);
     }
 
     // Hash returns the root hash of the trie. It does not write to the

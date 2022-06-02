@@ -1,6 +1,6 @@
 #include "xevm_common/trie/xtrie.h"
 #include "xevm_common/trie/xtrie_node.h"
-#include "xevm_common/trie/xtrie_node_encoding.h"
+#include "xevm_common/trie/xtrie_node_coding.h"
 
 #include <gtest/gtest.h>
 
