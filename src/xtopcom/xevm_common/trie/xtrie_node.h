@@ -108,8 +108,23 @@ using xtrie_value_node_ptr_t = std::shared_ptr<xtrie_value_node_t>;
 static const xtrie_value_node_t nilValueNode{};
 
 struct nodeFlag {
-    xtrie_hash_node_t hash;
-    bool dirty;
+    xtrie_hash_node_t hash{};
+    bool dirty{false};
+
+    nodeFlag() {
+    }
+    nodeFlag(xtrie_hash_node_t _hash) : hash{_hash} {
+    }
+
+    nodeFlag(nodeFlag const & flag) {
+        hash = flag.hash;
+        dirty = flag.dirty;
+    }
+    nodeFlag & operator=(const nodeFlag & flag) {
+        hash = flag.hash;
+        dirty = flag.dirty;
+        return *this;
+    }
 };
 
 // for leaf node && extension node
@@ -122,8 +137,7 @@ public:
     nodeFlag flags;
 
 public:
-    xtop_trie_short_node(xbytes_t const & key, xtrie_node_face_ptr_t val, nodeFlag const & flag) : Key{key}, Val{val} {
-        flags = flag;
+    xtop_trie_short_node(xbytes_t const & key, xtrie_node_face_ptr_t val, nodeFlag const & flag) : Key{key}, Val{val}, flags{flag} {
     }
 
 private:

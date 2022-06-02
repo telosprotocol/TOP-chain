@@ -223,7 +223,7 @@ bool xtop_trie::Prove(xbytes_t const & key, uint32_t fromLevel /*, proofDB write
         if (hn->type() == xtrie_node_type_t::hashnode || index == 0) {
             // If the node's database encoding is a hash (or is the
             // root node), it becomes a proof element.
-            auto enc = EncodeToBytes(n);
+            auto enc = xtrie_node_rlp::EncodeToBytes(n);
             xtrie_hash_node_ptr_t hash;
             if (hn->type() != xtrie_node_type_t::hashnode) {
                 auto hash = hasher.hashData(enc);

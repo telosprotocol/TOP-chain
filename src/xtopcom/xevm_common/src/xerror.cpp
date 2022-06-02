@@ -33,6 +33,27 @@ static char const * const errc_to_string(int code) {
     case xerrc_t::trie_db_not_provided:
         return "trie db not provided";
 
+    case xerrc_t::rlp_canonint:
+        return "rlp: non-canonical integer format";
+
+    case xerrc_t::rlp_canonsize:
+        return "rlp: non-canonical size information";
+
+    case xerrc_t::rlp_uint_overflow:
+        return "rlp: uint overflow";
+
+    case xerrc_t::rlp_oversized:
+        return "rlp: oversized data";
+
+    case xerrc_t::rlp_value_too_large:
+        return "rlp: value size exceeds available input length";
+
+    case xerrc_t::rlp_expected_string:
+        return "rlp: expected String or Byte";
+
+    case xerrc_t::rlp_expected_list:
+        return "rlp: expected List";
+
     default:
         return "unknown evm common error";
     }
