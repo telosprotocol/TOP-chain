@@ -105,7 +105,10 @@ bool xrelay_packer::start_proposal(base::xblock_mptrs & latest_blocks) {
 
     uint32_t viewtoken = base::xtime_utl::get_fast_randomu();
     // uint64_t gmtime = base::xtime_utl::gettimeofday();
-    data::xblock_consensus_para_t proposal_para(get_account(), m_last_view_clock, m_last_view_id, viewtoken, latest_blocks.get_latest_cert_block()->get_height() + 1, 0);
+    struct timeval val;
+    base::xtime_utl::gettimeofday(&val);
+    uint64_t now = static_cast<uint64_t>(val.tv_sec);
+    data::xblock_consensus_para_t proposal_para(get_account(), m_last_view_clock, m_last_view_id, viewtoken, latest_blocks.get_latest_cert_block()->get_height() + 1, now);
     proposal_para.set_latest_blocks(latest_blocks);
 
     if (m_last_view_clock < m_start_time) {
