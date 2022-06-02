@@ -53,6 +53,17 @@ std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> xtop_trie_hasher::hash(x
     }
 }
 
+xtrie_hash_node_ptr_t xtop_trie_hasher::hashData(xbytes_t input) {
+    xdbg("hashData:(%zu) %s ", input.size(), top::to_hex(input).c_str());
+    xbytes_t hashbuf;
+    utl::xkeccak256_t hasher;
+    // hasher.reset(); // make hasher class member , than need this.
+    hasher.update(input.data(), input.size());
+    hasher.get_hash(hashbuf);
+    xdbg(" -> hashed data:(%zu) %s", hashbuf.size(), top::to_hex(hashbuf).c_str());
+    return std::make_shared<xtrie_hash_node_t>(hashbuf);
+}
+
 std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> xtop_trie_hasher::proofHash(xtrie_node_face_ptr_t node) {
     switch (node->type()) {
     case xtrie_node_type_t::shortnode: {
@@ -139,17 +150,6 @@ xtrie_node_face_ptr_t xtop_trie_hasher::fullnodeToHash(xtrie_full_node_ptr_t nod
         return node;  // Nodes smaller than 32 bytes are stored inside their parent
     }
     return hashData(tmp.data());
-}
-
-xtrie_hash_node_ptr_t xtop_trie_hasher::hashData(xbytes_t input) {
-    xdbg("hashData:(%zu) %s ", input.size(), top::to_hex(input).c_str());
-    xbytes_t hashbuf;
-    utl::xkeccak256_t hasher;
-    // hasher.reset(); // make hasher class member , than need this.
-    hasher.update(input.data(), input.size());
-    hasher.get_hash(hashbuf);
-    xdbg(" -> hashed data:(%zu) %s", hashbuf.size(), top::to_hex(hashbuf).c_str());
-    return std::make_shared<xtrie_hash_node_t>(hashbuf);
 }
 
 NS_END3

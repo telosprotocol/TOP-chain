@@ -56,6 +56,9 @@ public:
      */
     std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> hash(xtrie_node_face_ptr_t node, bool force);
 
+    // hashData hashes the provided data
+    xtrie_hash_node_ptr_t hashData(xbytes_t input);
+
 public:
     // proofHash is used to construct trie proofs, and returns the 'collapsed'
     // node (for later RLP encoding) aswell as the hashed node -- unless the
@@ -71,8 +74,6 @@ private:
     xtrie_node_face_ptr_t shortnodeToHash(xtrie_short_node_ptr_t node, bool force);
 
     xtrie_node_face_ptr_t fullnodeToHash(xtrie_full_node_ptr_t node, bool force);
-
-    xtrie_hash_node_ptr_t hashData(xbytes_t input);
 };
 using xtrie_hasher_t = xtop_trie_hasher;
 

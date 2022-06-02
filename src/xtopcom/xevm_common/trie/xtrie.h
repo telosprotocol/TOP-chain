@@ -10,13 +10,13 @@
 #include "xbasic/xhex.h"
 #include "xevm_common/trie/xtrie_db_face.h"
 #include "xevm_common/trie/xtrie_node.h"
+#include "xevm_common/trie/xtrie_node_encoding.h"
 
 #include <algorithm>
 #include <tuple>
 #include <type_traits>
 
 NS_BEG3(top, evm_common, trie)
-
 
 class xtop_trie {
 private:
@@ -35,6 +35,11 @@ public:
 public:
     // Reset drops the referenced root node and cleans all internal state.
     void Reset();
+
+    // todo tmp solution...
+    xbytes_t Encode() {
+        return EncodeToBytes(m_root);
+    }
 
     // Hash returns the root hash of the trie. It does not write to the
     // database and can be used even if the trie doesn't have one.
@@ -77,6 +82,15 @@ public:
     // Commit writes all nodes to the trie's memory database, tracking the internal
     // and external (for account tries) references.
     std::pair<xhash256_t, int32_t> Commit(std::error_code & ec);
+
+    // Prove constructs a merkle proof for key. The result contains all encoded nodes
+    // on the path to the value at key. The value itself is also included in the last
+    // node and can be retrieved by verifying the proof.
+    //
+    // If the trie does not contain a value for key, the returned proof contains all
+    // nodes of the longest existing prefix of the key (at least the root node), ending
+    // with the node that proves the absence of the key.
+    bool Prove(xbytes_t const & key, uint32_t fromLevel /*, proofDB writer*/, std::error_code & ec);
 
 private:
     std::tuple<xbytes_t, xtrie_node_face_ptr_t, bool> tryGet(xtrie_node_face_ptr_t node, xbytes_t const & key, std::size_t const pos, std::error_code & ec);
