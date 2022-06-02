@@ -72,6 +72,7 @@ data::xrelay_block xrelay_proposal_maker_t::build_relay_block(evm_common::h256 p
     evm_common::u256 chain_bits = 0;
     uint64_t epochID = 0;
     data::xrelay_block relay_block(block_version, prev_hash, chain_bits, cur_evm_table_height, block_height, epochID, timestamp);
+    xdbg("xrelay_proposal_maker_t::build_relay_block, %s,%llu,%llu", prev_hash.hex().c_str(), block_height, timestamp);
     relay_block.set_receipts(receipts);
     return relay_block;
 }
@@ -89,6 +90,17 @@ bool xrelay_proposal_maker_t::build_relay_block_data_leader(const data::xblock_p
         prev_hash = last_relay_block.get_block_hash();
         block_height = last_relay_block.get_inner_header().m_height + 1;
         last_evm_table_height = last_relay_block.get_header().get_table_height();
+    } else {
+        uint64_t block_version = 0;
+        evm_common::u256 chain_bits = 0;
+        uint64_t epochID = 0;
+        evm_common::h256 prev_hash;
+        data::xrelay_block genesis_block(block_version, prev_hash, chain_bits, 0, 0, epochID, 0);
+        genesis_block.build_finish();
+
+        prev_hash = genesis_block.get_block_hash();
+        block_height = genesis_block.get_inner_header().m_height + 1;
+        last_evm_table_height = genesis_block.get_header().get_table_height();
     }
 
     std::map<uint64_t, xrelay_chain::xcross_txs_t> cross_tx_map;
@@ -309,6 +321,17 @@ bool xrelay_proposal_maker_t::check_wrap_proposal(const xblock_ptr_t & latest_ce
             local_prev_hash = last_relay_block.get_block_hash();
             local_block_height = last_relay_block.get_inner_header().m_height + 1;
             local_last_evm_table_height = last_relay_block.get_header().get_table_height();
+        } else {
+            uint64_t block_version = 0;
+            evm_common::u256 chain_bits = 0;
+            uint64_t epochID = 0;
+            evm_common::h256 prev_hash;
+            data::xrelay_block genesis_block(block_version, prev_hash, chain_bits, 0, 0, epochID, 0);
+            genesis_block.build_finish();
+
+            prev_hash = genesis_block.get_block_hash();
+            local_block_height = genesis_block.get_inner_header().m_height + 1;
+            local_last_evm_table_height = genesis_block.get_header().get_table_height();
         }
 
         if (proposal_relay_block.get_header().get_prev_block_hash() != local_prev_hash || proposal_relay_block.get_inner_header().m_height != local_block_height) {

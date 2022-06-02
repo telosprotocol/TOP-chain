@@ -1029,6 +1029,21 @@ void xrpc_eth_query_manager::top_getRelayBlockByNumber(xJson::Value & js_req, xJ
     if (!eth::EthErrorCode::check_hex(js_req[0].asString(), js_rsp, 0, eth::enum_rpc_type_block))
         return;
 
+    if (std::strtoul(js_req[0].asString().c_str(), NULL, 16) == 0) {
+        uint64_t block_version = 0;
+        evm_common::u256 chain_bits = 0;
+        uint64_t epochID = 0;
+        evm_common::h256 prev_hash;
+        data::xrelay_block relay_block(block_version, prev_hash, chain_bits, 0, 0, epochID, 0);
+
+        evm_common::RLPStream rlp_stream;
+        relay_block.get_header().streamRLP_header_to_contract(rlp_stream);
+
+        xJson::Value js_result;
+        js_rsp["result"] = top::to_hex_prefixed(rlp_stream.out());
+        return;
+    }
+
     xobject_ptr_t<base::xvblock_t>  block = query_relay_block_by_height(js_req[0].asString());
     if (block == nullptr) {
         js_rsp["result"] = xJson::Value::null;
