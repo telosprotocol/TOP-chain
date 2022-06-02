@@ -288,6 +288,12 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
                         xassert(false);
                     }
                     // no break here, to do after works
+                } else if (ret == enum_exec_success) {
+                    vmoutput.m_tx_exec_succ = true;
+                    vmoutput.m_tx_result.status = evm_common::xevm_transaction_status_t::Success;
+                } else {
+                    vmoutput.m_tx_exec_succ = false;
+                    vmoutput.m_tx_result.status = evm_common::xevm_transaction_status_t::OtherExecuteError;
                 }
             } else {
                 xtvm_t tvm;
