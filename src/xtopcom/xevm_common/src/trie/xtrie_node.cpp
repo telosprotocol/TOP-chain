@@ -21,7 +21,7 @@ void xtop_trie_short_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
         auto child_node = std::make_shared<xtrie_full_node_t>(*(static_cast<xtrie_full_node_t *>(Val.get())));
         child_node->EncodeRLP(encoded, ec);
     } else {
-        xwarn("!!!! shortnode not encode type: %d\n", static_cast<uint8_t>(Val->type()));
+        xwarn("!!!! shortnode not encode type: %d", static_cast<uint8_t>(Val->type()));
     }
     append(buf, RLP::encodeList(encoded));
 }
@@ -30,20 +30,23 @@ void xtop_trie_full_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
     xbytes_t encoded;
     for (auto const & child : Children) {
         if (child == nullptr) {
-            append(encoded, RLP::encode(nilValueNode.data()));
+            append(encoded, RLP::encode(nilValueNode.data()));  // 0x80 for empty bytes.
             continue;
         }
         if (child->type() == xtrie_node_type_t::hashnode) {
             auto child_node = std::make_shared<xtrie_hash_node_t>(*(static_cast<xtrie_hash_node_t *>(child.get())));
             append(encoded, RLP::encode(child_node->data()));
-        } else if (child->type() == xtrie_node_type_t::shortnode) {
-            auto child_node = std::make_shared<xtrie_short_node_t>(*(static_cast<xtrie_short_node_t *>(child.get())));
-            child_node->EncodeRLP(encoded, ec);
         } else if (child->type() == xtrie_node_type_t::valuenode) {
             auto child_node = std::make_shared<xtrie_value_node_t>(*(static_cast<xtrie_value_node_t *>(child.get())));
             append(encoded, RLP::encode(child_node->data()));
+        } else if (child->type() == xtrie_node_type_t::fullnode) {
+            auto child_node = std::make_shared<xtrie_full_node_t>(*(static_cast<xtrie_full_node_t *>(child.get())));
+            child_node->EncodeRLP(encoded, ec);
+        } else if (child->type() == xtrie_node_type_t::shortnode) {
+            auto child_node = std::make_shared<xtrie_short_node_t>(*(static_cast<xtrie_short_node_t *>(child.get())));
+            child_node->EncodeRLP(encoded, ec);
         } else {
-            xwarn("!!! full node not encode child type: %d\n", static_cast<uint8_t>(child->type()));
+            xwarn("!!! full node not encode child type: %d", static_cast<uint8_t>(child->type()));
         }
     }
     append(buf, RLP::encodeList(encoded));

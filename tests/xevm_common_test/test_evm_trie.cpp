@@ -1,5 +1,6 @@
 #include "xevm_common/trie/xtrie.h"
 #include "xevm_common/trie/xtrie_node.h"
+#include "xevm_common/trie/xtrie_node_encoding.h"
 
 #include <gtest/gtest.h>
 
@@ -166,6 +167,39 @@ TEST(xtrie, test_large_value) {
 
     ASSERT_TRUE(!ec);
     ASSERT_EQ(exp, trie->Hash());
+}
+
+TEST(xtrie, test_encoding_trie) {
+    std::error_code ec;
+    auto xtest_memory_db_ptr = std::make_shared<xtest_memory_db>();
+    auto trie = xtrie_t::New({}, xtest_memory_db_ptr, ec);
+
+    UpdateString(trie, "do", "verb");
+    UpdateString(trie, "ether", "wookiedoo");
+    UpdateString(trie, "horse", "stallion");
+    UpdateString(trie, "shaman", "horse");
+    UpdateString(trie, "doge", "coin");
+    UpdateString(trie, "dog", "puppy");
+    UpdateString(trie, "daog1", "pup12dpy1");
+    UpdateString(trie, "dsog2", "pup12epy1");
+    UpdateString(trie, "ado3", "pue21ppy1");
+    UpdateString(trie, "dsog4", "puppqy1");
+    UpdateString(trie, "dog12", "pupd1py1");
+    UpdateString(trie, "dog1242", "pup12epy1");
+    UpdateString(trie, "somethingveryoddindeedthis is", "myothernodedata");
+    UpdateString(trie, "somethisadngveryoddindeedthis is", "myothernodedata");
+
+    auto res = trie->Encode();
+    xbytes_t exp = top::from_hex(
+        "f901ed808080808080f9011280d2870604060f030310897075653231707079318080f8c7808080808080f88880d287060f06070301108970757031326470793180808080808080808080808080f864808080808080"
+        "f84e07f84b808080ed83010302e8808080cf8404030210897075703132657079318080808080808080808080808870757064317079318080c882051084636f696e8080808080808080808570757070798080808080"
+        "80808080847665726280ed8603060f060703e58080cb108970757031326570793180c9108770757070717931808080808080808080808080808080808080808080d48907040608060507021089776f6f6b6965646f"
+        "6f8080d389060f07020703060510887374616c6c696f6e8080808080808080f8c7820306f8c28080808080808080d0890601060d0601060e1085686f727365808080808080f8a08a060d0605070406080609f89380"
+        "8080808080f83dac0e06070706060507020709060f060406040609060e06040605060506040704060806090703020006090703108f6d796f746865726e6f646564617461f843b20306010604060e06070706060507"
+        "020709060f060406040609060e06040605060506040704060806090703020006090703108f6d796f746865726e6f64656461746180808080808080808080808080808080808080",
+        ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(exp, res);
 }
 
 NS_END4
