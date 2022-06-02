@@ -29,7 +29,7 @@ done
 ARC_DIR=/tmp/archive
 
 if [[ ${OPT} == "clean" ]];then
-    ps -ef |grep "[.]/xtopchain"|awk '{print $2}'|xargs -I {} bash -c 'kill -9 {}'
+    ps -ef |grep "[.]/topio"|awk '{print $2}'|xargs -I {} bash -c 'kill -9 {}'
     rm -fr /tmp/rec*
 elif [[ ${OPT} == "archive" ]];then
     if [[ -z ${ID} ]];then
@@ -52,7 +52,7 @@ elif [[ ${OPT} == "archive" ]];then
     mv -f /tmp/rec4/log  ${ARC_DIR}/${ID}/rec4.log
     mv -f /tmp/rec5/log  ${ARC_DIR}/${ID}/rec5.log
     mv -f /tmp/rec6/log  ${ARC_DIR}/${ID}/rec6.log
-    ps -ef |grep "[.]/xtopchain"|awk '{print $2}'|xargs -I {} bash -c 'kill -9 {}'
+    ps -ef |grep "[.]/topio"|awk '{print $2}'|xargs -I {} bash -c 'kill -9 {}'
     rm -fr /tmp/rec*
 else
     echo "invalid opt: ${OPT}"
