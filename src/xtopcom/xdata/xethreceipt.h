@@ -28,6 +28,7 @@ class xeth_store_receipt_t {
     xbytes_t    encodeBytes() const;
     void        decodeBytes(xbytes_t const& _d, std::error_code & ec);
  public:  // get APIS
+    uint8_t                     get_version() const {return m_version;}
     enum_ethreceipt_status      get_tx_status() const {return m_tx_status;}
     uint64_t                    get_cumulative_gas_used() const {return m_cumulative_gas_used;}
     const evm_common::xevm_logs_t & get_logs() const {return m_logs;}

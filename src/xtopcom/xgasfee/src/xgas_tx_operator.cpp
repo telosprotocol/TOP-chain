@@ -130,7 +130,7 @@ uint64_t xtop_gas_tx_operator::tx_disk_tgas() const {
     }
     evm_common::u256 multiple{1};
     // evm deploy tx
-    if (recver_str().empty() || recver() == evm_zero_address) {
+    if (recver_str().empty() || recver() == eth_zero_address) {
         multiple = 1200000UL;
     }
     evm_common::u256 disk_tgas = multiple * m_tx->get_transaction()->get_tx_len();

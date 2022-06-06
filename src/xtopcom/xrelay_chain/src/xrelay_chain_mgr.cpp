@@ -68,14 +68,14 @@ void xcross_tx_cache_t::process_block(data::xblock_t * block) {
                 (_rawtx->get_tx_type() != data::xtransaction_type_deploy_evm_contract && _rawtx->get_tx_type() != data::xtransaction_type_run_contract)) {
                 continue;
             }
-            evm_common::xevm_transaction_result_t evm_result;
-            auto ret = txaction.get_evm_transaction_result(evm_result);
+            data::xeth_store_receipt_t evm_result;
+            auto ret = txaction.get_evm_transaction_receipt(evm_result);
             if (!ret) {
                 xwarn("xcross_tx_cache_t::process_block get evm tx result fail. block:%s,tx:%s", block->dump().c_str(), _rawtx->dump().c_str());
                 continue;
             }
 
-            if (evm_result.status == evm_common::Success) {
+            if (evm_result.get_tx_status() == data::enum_ethreceipt_status::ethreceipt_status_successful) {
                 xdbg("xcross_tx_cache_t::process_block add cross tx to cache block:%s,tx:%s,last proc h:%llu,cache low h:%llu,cache up h:%llu,tx num:%u",
                      block->dump().c_str(),
                      _rawtx->dump().c_str(),
