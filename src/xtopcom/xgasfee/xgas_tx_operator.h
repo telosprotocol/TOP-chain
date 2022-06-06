@@ -37,10 +37,10 @@ public:
     uint64_t tx_bandwith_tgas() const;
     uint64_t tx_disk_tgas() const;
 
-    uint64_t balance_to_tgas(const uint64_t balance) const;
-    uint64_t tgas_to_balance(const uint64_t tgas) const;
-    evm_common::u256 wei_to_utop(const evm_common::u256 wei) const;
-    evm_common::u256 utop_to_wei(const evm_common::u256 utop) const;
+    static uint64_t balance_to_tgas(const uint64_t balance);
+    static uint64_t tgas_to_balance(const uint64_t tgas);
+    static evm_common::u256 wei_to_utop(const evm_common::u256 wei);
+    static evm_common::u256 utop_to_wei(const evm_common::u256 utop);
 
     bool is_one_stage_tx() const;
 
