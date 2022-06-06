@@ -77,7 +77,7 @@ evm_common::u256 xtop_gas_tx_operator::tx_eth_limited_gasfee() const {
     return utop_gasfee;
 }
 
-evm_common::u256 xtop_gas_tx_operator::wei_to_utop(const evm_common::u256 wei) const {
+evm_common::u256 xtop_gas_tx_operator::wei_to_utop(const evm_common::u256 wei) {
     evm_common::u256 gwei = wei / evm_common::u256(1000000000ULL);
     evm_common::u256 mtop = gwei * XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_to_top_exchange_ratio);
     evm_common::u256 utop = mtop / 1000U;
@@ -88,7 +88,7 @@ evm_common::u256 xtop_gas_tx_operator::wei_to_utop(const evm_common::u256 wei) c
     return utop;
 }
 
-evm_common::u256 xtop_gas_tx_operator::utop_to_wei(const evm_common::u256 utop) const {
+evm_common::u256 xtop_gas_tx_operator::utop_to_wei(const evm_common::u256 utop) {
     auto wei = utop * evm_common::u256(1000000000000ULL) / XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_to_top_exchange_ratio);
     xdbg("[xtop_gas_tx_operator::utop_to_wei] exchange ratio: %lu, utop: %s, wei: %s",
          XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_to_top_exchange_ratio),
@@ -141,12 +141,12 @@ bool xtop_gas_tx_operator::is_one_stage_tx() const {
     return (m_tx->is_self_tx() || m_tx->get_inner_table_flag());
 }
 
-uint64_t xtop_gas_tx_operator::balance_to_tgas(const uint64_t balance) const {
+uint64_t xtop_gas_tx_operator::balance_to_tgas(const uint64_t balance) {
     xassert(XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio) > 0);
     return balance / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio);
 }
 
-uint64_t xtop_gas_tx_operator::tgas_to_balance(const uint64_t tgas) const {
+uint64_t xtop_gas_tx_operator::tgas_to_balance(const uint64_t tgas) {
     return tgas * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio);
 }
 
