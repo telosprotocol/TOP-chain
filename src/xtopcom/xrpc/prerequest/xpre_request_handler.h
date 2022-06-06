@@ -19,7 +19,6 @@ public:
     void requestToken(xpre_request_data_t & request);
     // void create_account(xpre_request_data_t & request);
     // void account(xpre_request_data_t & request);
-    void getEstimateGas(xpre_request_data_t & request);
 };
 
 NS_END2

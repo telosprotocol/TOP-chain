@@ -31,6 +31,7 @@
 #include "xvnetwork/xvhost_face.h"
 #include "xrpc/eth_rpc/eth_method.h"
 #include "xrpc/eth_rpc/eth_error_code.h"
+#include "xrpc/xrpc_eth_parser.h"
 
 NS_BEG2(top, xrpc)
 using base::xcontext_t;
@@ -208,34 +209,15 @@ void xedge_evm_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, 
         return;
 
     request["tx_structure_version"] = 3;
-    json_proc.m_tx_ptr = data::xtx_factory::create_tx(static_cast<data::enum_xtransaction_version>(request["tx_structure_version"].asUInt()));
-    auto & tx = json_proc.m_tx_ptr;
+
     top::data::eth_error ec;
-    tx->verify_tx(request, ec);
+    json_proc.m_tx_ptr = xrpc_eth_parser_t::json_to_ethtx(request, ec);
+    auto & tx = json_proc.m_tx_ptr;
     if (ec.error_code)
     {
         xJson::Value errinfo;
-        errinfo["code"] = ec.error_code;
+        errinfo["code"] = ec.error_code.value();
         errinfo["message"] = ec.error_message;
-        json_proc.m_response_json["error"] = errinfo;
-        return ;
-    }
-    if (!(tx->get_origin_target_addr() == sys_contract_rec_standby_pool_addr && tx->get_target_action_name() == "nodeJoinNetwork2")) {
-        if (!tx->sign_check()) {
-            XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_sign", 1);
-            xJson::Value errinfo;
-            errinfo["code"] = -32000;
-            errinfo["message"] = "transaction sign error";
-            json_proc.m_response_json["error"] = errinfo;
-            return ;
-        }
-    }
-
-    if ((top::xverifier::xverifier_error::xverifier_success != top::xverifier::xtx_utl::address_is_valid(tx->get_source_addr(), true)) || (top::xverifier::xverifier_error::xverifier_success != top::xverifier::xtx_utl::address_is_valid(tx->get_target_addr(), true)))
-    {
-        xJson::Value errinfo;
-        errinfo["code"] = -32000;
-        errinfo["message"] = "account address is invalid";
         json_proc.m_response_json["error"] = errinfo;
         return ;
     }

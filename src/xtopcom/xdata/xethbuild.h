@@ -7,11 +7,13 @@
 #include <string>
 #include "xdata/xethheader.h"
 #include "xdata/xethreceipt.h"
+#include "xdata/xethtransaction.h"
 
 NS_BEG2(top, data)
 
 class xeth_build_t {
  public:
+    static evm_common::h256         build_transactions_root(const xeth_transactions_t & ethtxs);
     static evm_common::h256         build_receipts_root(const xeth_receipts_t & receipts);
     // static evm_common::LogBloom     build_block_logsbloom(const xeth_receipts_t & receipts);
     static uint64_t                 calc_receipts_gas_used(const xeth_receipts_t & receipts);
