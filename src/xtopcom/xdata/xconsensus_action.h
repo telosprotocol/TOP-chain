@@ -375,7 +375,7 @@ public:
         } else {
             m_evm_action_type = xtop_evm_action_type::call_contract;
         }
-        m_input_data = top::to_bytes(tx->get_transaction()->get_data());
+        m_input_data = tx->get_transaction()->get_data();
         m_gaslimit = (uint64_t)tx->get_transaction()->get_gaslimit();
     }
 

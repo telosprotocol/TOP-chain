@@ -12,11 +12,11 @@
 #define private public
 #include "xconfig/xconfig_register.h"
 #include "xdata/xblockbuild.h"
-#include "xdata/xserial_transfrom.h"
 #include "xdata/xtable_bstate.h"
 #include "xdata/xtransaction.h"
 #include "xdata/xtransaction_v2.h"
 #include "xdata/xtransaction_v3.h"
+#include "xdata/xtx_factory.h"
 #include "xgasfee/xgasfee.h"
 #include "xstatectx/xstatectx_face.h"
 
@@ -111,35 +111,16 @@ public:
         return tx;
     }
 
-    xobject_ptr_t<data::xtransaction_v3_t> make_tx_v3() {
-        xobject_ptr_t<data::xtransaction_v3_t> tx{make_object_ptr<data::xtransaction_v3_t>()};
-        data::xproperty_asset asset{data::XPROPERTY_ASSET_TOP, default_amount};
-        tx->set_tx_type(data::xtransaction_type_transfer);
-        tx->set_last_trans_hash_and_nonce(uint256_t(), uint64_t(0));
-        tx->set_different_source_target_address(default_sender, default_recver);
-        tx->set_fire_timestamp(default_fire);
-        tx->set_expire_duration(default_expire);
-        tx->set_deposit(default_v3_deposit);
-        tx->set_gaslimit(default_evm_gas_limit);
-        dynamic_cast<data::eip_1559_tx *>(tx->m_eip_xxxx_tx.get())->max_fee_per_gas = default_eth_per_gas;
-        dynamic_cast<data::eip_1559_tx *>(tx->m_eip_xxxx_tx.get())->value = default_eth_value;
-        tx->set_len();
+    xobject_ptr_t<data::xtransaction_t> make_tx_v3() {
+        std::string data;
+        data::xtransaction_ptr_t tx = data::xtx_factory::create_ethcall_v3_tx(default_T6_sender, default_T6_recver, data, default_eth_value, default_evm_gas_limit, default_eth_per_gas);
         return tx;
     }
 
-    xobject_ptr_t<data::xtransaction_v3_t> make_tx_v3_deploy() {
-        xobject_ptr_t<data::xtransaction_v3_t> tx{make_object_ptr<data::xtransaction_v3_t>()};
-        data::xproperty_asset asset{data::XPROPERTY_ASSET_TOP, default_amount};
-        tx->set_tx_type(data::xtransaction_type_deploy_evm_contract);
-        tx->set_last_trans_hash_and_nonce(uint256_t(), uint64_t(0));
-        tx->set_source(default_sender, {}, {});
-        tx->set_fire_timestamp(default_fire);
-        tx->set_expire_duration(default_expire);
-        tx->set_deposit(default_v3_deposit);
-        tx->set_gaslimit(default_evm_gas_limit);
-        dynamic_cast<data::eip_1559_tx *>(tx->m_eip_xxxx_tx.get())->max_fee_per_gas = default_eth_per_gas;
-        dynamic_cast<data::eip_1559_tx *>(tx->m_eip_xxxx_tx.get())->value = default_eth_value;
-        tx->set_len();
+    xobject_ptr_t<data::xtransaction_t> make_tx_v3_deploy() {
+        std::string data = "1111111"; // code not empty
+        std::string to;  // to addr is empty
+        data::xtransaction_ptr_t tx = data::xtx_factory::create_ethcall_v3_tx(default_T6_sender, to, data, default_eth_value, default_evm_gas_limit, default_eth_per_gas);
         return tx;
     }
 
@@ -225,8 +206,8 @@ public:
     xobject_ptr_t<base::xvbstate_t> default_confirm_bstate;
     std::shared_ptr<data::xunit_bstate_t> default_unit_state;
     xobject_ptr_t<data::xtransaction_v2_t> default_tx_v2;
-    xobject_ptr_t<data::xtransaction_v3_t> default_tx_v3;
-    xobject_ptr_t<data::xtransaction_v3_t> default_tx_v3_deploy;
+    xobject_ptr_t<data::xtransaction_t>    default_tx_v3;
+    xobject_ptr_t<data::xtransaction_t>    default_tx_v3_deploy;
     xobject_ptr_t<data::xcons_transaction_t> default_cons_tx;
     xobject_ptr_t<data::xcons_transaction_t> default_recv_cons_tx;
     xobject_ptr_t<data::xcons_transaction_t> default_confirm_cons_tx;

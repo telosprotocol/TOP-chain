@@ -160,16 +160,27 @@ xtransaction_ptr_t xtx_factory::create_nodejoin_tx(const std::string & sender,
     return tx;
 }
 
-xtransaction_ptr_t xtx_factory::create_ethcall_v3_tx(const std::string & from, const std::string & to, const std::string & data, const top::evm_common::u256 & value, const top::evm_common::u256 & gas) {
-        // genesis tx should use v1 tx
-        xtransaction_ptr_t tx = xtx_factory::create_tx(xtransaction_version_3);
-        tx->set_source_addr(from);
-        tx->set_target_addr(to);
-        tx->set_data(data);
-        tx->set_amount_256(value);
-        tx->set_gaslimit(gas);
-        return tx;
+xtransaction_ptr_t xtx_factory::create_ethcall_v3_tx(const std::string & from, const std::string & to, const std::string & data, const top::evm_common::u256 & value, const top::evm_common::u256 & gas, evm_common::u256 const& _maxGasPrice) {
+    std::error_code ec;
+    common::xaccount_address_t _top_from_addr(from);
+    common::xeth_address_t _eth_from_addr = common::xeth_address_t::build_from(_top_from_addr, ec);
+
+    common::xeth_address_t _eth_to_addr;
+    if (!to.empty()) {
+        common::xaccount_address_t _top_to_addr(to);
+        _eth_to_addr = common::xeth_address_t::build_from(_top_to_addr, ec);
     }
+
+    xbytes_t _data_bs = top::to_bytes(data);
+
+    xeth_transaction_t ethtx(_eth_from_addr, _eth_to_addr, _data_bs, value, gas, _maxGasPrice);
+    return create_v3_tx(ethtx);
+}
+
+xtransaction_ptr_t xtx_factory::create_v3_tx(xeth_transaction_t const& ethtx) {
+    xtransaction_ptr_t tx = make_object_ptr<xtransaction_v3_t>(ethtx);
+    return tx;
+}
 
 }  // namespace data
 }  // namespace top

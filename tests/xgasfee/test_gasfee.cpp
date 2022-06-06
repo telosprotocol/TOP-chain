@@ -82,6 +82,9 @@ TEST_F(xtest_gasfee_fixture_t, test_v3_transfer_T6_to_T6_init_limited_tgas_excee
     default_evm_gas_limit *= 1000;
     make_default();
 
+    ASSERT_EQ(default_tx_v3->get_gaslimit() > UINT64_MAX, true);
+    ASSERT_EQ(default_tx_v3->get_max_fee_per_gas() > 0, true);
+
     auto op = make_operator();
     std::error_code ec;
     op.init(ec);
@@ -134,7 +137,7 @@ TEST_F(xtest_gasfee_fixture_t, test_v3_transfer_T6_to_T8_init_deposit_not_enough
     op.init(ec);
     EXPECT_EQ(ec, make_error_code(gasfee::error::xenum_errc::tx_deposit_not_enough));
 }
-
+#if 0
 TEST_F(xtest_gasfee_fixture_t, test_v3_transfer_T6_to_T8_init_balance_not_enough) {
     default_balance = ASSET_uTOP(99999);
     default_tx_version = data::xtransaction_version_3;
@@ -161,7 +164,7 @@ TEST_F(xtest_gasfee_fixture_t, test_v3_transfer_T6_to_T8_init_ok) {
     EXPECT_EQ(op.m_time, default_onchain_time);
     EXPECT_EQ(op.m_onchain_tgas_deposit, default_onchain_deposit_tgas);
 }
-
+#endif
 TEST_F(xtest_gasfee_fixture_t, test_add_deposit_to_tgas_not_enough) {
     make_default();
 

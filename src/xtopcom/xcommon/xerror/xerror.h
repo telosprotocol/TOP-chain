@@ -27,6 +27,7 @@ enum class xenum_errc {
     token_symbol_unknown,
     invalid_block,
     invalid_db_load,
+    invalid_eth_tx,
 };
 using xerrc_t = xenum_errc;
 
