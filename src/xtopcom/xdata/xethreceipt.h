@@ -11,7 +11,7 @@
 #include "xevm_common/rlp.h"
 #include "xevm_common/address.h"
 #include "xevm_common/xbloom9.h"
-#include "xdata/xserial_transfrom.h"
+#include "xdata/xethtransaction.h"
 
 NS_BEG2(top, data)
 

@@ -208,17 +208,7 @@ void xrpc_eth_query_manager::eth_getBalance(xJson::Value & js_req, xJson::Value 
         js_rsp["result"] = "0x0";
     } else if (ret == enum_success) {
         evm_common::u256 balance = account_ptr->tep_token_balance(common::xtoken_id_t::eth);
-
-        std::string balance_str = toHex((top::evm_common::h256)balance);
-
-        uint32_t i = 0;
-        for (; i < balance_str.size() - 1; i++) {
-            if (balance_str[i] != '0') {
-                break;
-            }
-        }
-        js_rsp["result"] = "0x" + balance_str.substr(i);
-        xdbg("xarc_query_manager::getBalance account: %s, balance:%s", account.c_str(), balance_str.substr(i).c_str());
+        js_rsp["result"] = xrpc_eth_parser_t::u256_to_hex_prefixed(balance);
     }
 }
 void xrpc_eth_query_manager::eth_getTransactionCount(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
@@ -521,9 +511,8 @@ void xrpc_eth_query_manager::eth_call(xJson::Value & js_req, xJson::Value & js_r
             return;
     }
 
-    top::evm_common::u256 gas_value;
-    gas_value = (uint64_t)12000000U;
-    top::data::xtransaction_ptr_t tx = top::data::xtx_factory::create_ethcall_v3_tx(from, to, data, std::strtoul(value.c_str(), NULL, 16), gas_value);
+    evm_common::u256 gas_value = (evm_common::u256)XGET_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit);
+    top::data::xtransaction_ptr_t tx = top::data::xtx_factory::create_ethcall_v3_tx(from, to, data, std::strtoul(value.c_str(), NULL, 16), gas_value, 0);
     auto cons_tx = top::make_object_ptr<top::data::xcons_transaction_t>(tx.get());
     xinfo("xrpc_eth_query_manager::eth_call, %s, %s, %s", jdata.c_str(), value.c_str(), gas_value.str().c_str());
 
@@ -652,8 +641,8 @@ void xrpc_eth_query_manager::eth_estimateGas(xJson::Value & js_req, xJson::Value
             return;
     }
 
-    top::evm_common::u256 gas_value = (uint64_t)12000000U;
-    top::data::xtransaction_ptr_t tx = top::data::xtx_factory::create_ethcall_v3_tx(from, to, data, std::strtoul(value.c_str(), NULL, 16), gas_value);
+    evm_common::u256 gas_value = (evm_common::u256)XGET_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit);
+    top::data::xtransaction_ptr_t tx = top::data::xtx_factory::create_ethcall_v3_tx(from, to, data, std::strtoul(value.c_str(), NULL, 16), gas_value, 0);
     auto cons_tx = top::make_object_ptr<top::data::xcons_transaction_t>(tx.get());
     xinfo("xrpc_eth_query_manager::eth_estimateGas, %s, %s, %s", jdata.c_str(), value.c_str(), gas_value.str().c_str());
 

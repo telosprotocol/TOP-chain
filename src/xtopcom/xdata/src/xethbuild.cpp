@@ -16,7 +16,15 @@ NS_BEG2(top, data)
 //     }
 //     return block_bloom;
 // }
-
+evm_common::h256 xeth_build_t::build_transactions_root(const xeth_transactions_t & ethtxs) {
+    std::vector<xbytes_t> _leafs;
+    for (auto & tx: ethtxs) {
+        xbytes_t _rb = tx.encodeBytes();
+        _leafs.push_back(_rb);
+    }
+    evm_common::h256 txsRoot = evm_common::orderedTrieRoot(_leafs);
+    return txsRoot;
+}
 evm_common::h256 xeth_build_t::build_receipts_root(const xeth_receipts_t & receipts) {
     std::vector<xbytes_t> receipt_leafs;
     for (auto & receipt: receipts) {

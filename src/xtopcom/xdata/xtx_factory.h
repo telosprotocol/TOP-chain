@@ -5,6 +5,7 @@
 #pragma once
 
 #include "xtransaction.h"
+#include "xethtransaction.h"
 namespace top { namespace data {
 
 class xtx_factory {
@@ -39,7 +40,13 @@ public:
                                                  const uint32_t deposit,
                                                  const std::string & sign_key);
 
-    static xtransaction_ptr_t create_ethcall_v3_tx(const std::string & from, const std::string & to, const std::string & data, const top::evm_common::u256 & value, const top::evm_common::u256 & gas);
+    static xtransaction_ptr_t create_ethcall_v3_tx(const std::string & from, 
+                                                   const std::string & to,
+                                                   const std::string & data,
+                                                   const top::evm_common::u256 & value,
+                                                   const top::evm_common::u256 & gas,
+                                                   evm_common::u256 const& _maxGasPrice);
+    static xtransaction_ptr_t create_v3_tx(xeth_transaction_t const& tx);
 };
 
 }  // namespace data
