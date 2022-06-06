@@ -193,7 +193,7 @@ void xrpc_eth_query_manager::eth_getBalance(xJson::Value & js_req, xJson::Value 
 
     std::string account = js_req[0].asString();
     account = xvaccount_t::to_evm_address(account);
-    xdbg("xarc_query_manager::getBalance account: %s,%s", account.c_str(), js_req[1].asString().c_str());
+    xdbg("xrpc_eth_query_manager::eth_getBalance account: %s,%s", account.c_str(), js_req[1].asString().c_str());
 
     ETH_ADDRESS_CHECK_VALID(account)
 
@@ -209,6 +209,7 @@ void xrpc_eth_query_manager::eth_getBalance(xJson::Value & js_req, xJson::Value 
     } else if (ret == enum_success) {
         evm_common::u256 balance = account_ptr->tep_token_balance(common::xtoken_id_t::eth);
         js_rsp["result"] = xrpc_eth_parser_t::u256_to_hex_prefixed(balance);
+        xdbg("xrpc_eth_query_manager::eth_getBalance address=%s,balance=%s,%s", account.c_str(), balance.str().c_str(), xrpc_eth_parser_t::u256_to_hex_prefixed(balance).c_str());
     }
 }
 void xrpc_eth_query_manager::eth_getTransactionCount(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {

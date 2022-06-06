@@ -22,14 +22,15 @@ std::string xrpc_eth_parser_t::uint64_to_hex_prefixed(uint64_t value) {
 
 std::string xrpc_eth_parser_t::u256_to_hex_prefixed(evm_common::u256 const& value) {
     // TODO(jimmy) optimize
-    std::string str_v = value.str();
+    std::string value_str = toHex((top::evm_common::h256)value);
+
     uint32_t i = 0;
-    for (; i < str_v.size() - 1; i++) {
-        if (str_v[i] != '0') {
+    for (; i < value_str.size() - 1; i++) {
+        if (value_str[i] != '0') {
             break;
         }
     }
-    return std::string("0x") + str_v.substr(i);
+    return std::string("0x") + value_str.substr(i);
 }
 
 void xrpc_eth_parser_t::log_to_json(xlog_location_t const& loglocation, evm_common::xevm_log_t const& log, xJson::Value & js_v) {
