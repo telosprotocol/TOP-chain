@@ -6,6 +6,7 @@
 
 #include "xbasic/xbyte.h"
 #include "xbasic/xbyte_buffer.h"
+#include "xbasic/xhex.h"
 
 #include <array>
 #include <cstdint>
@@ -233,6 +234,11 @@ public:
     std::array<xbyte_t, Bytes> const &
     as_array() const noexcept {
         return m_data;
+    }
+
+    std::string 
+    hex_string() const {
+        return top::to_hex(m_data);
     }
 
     auto

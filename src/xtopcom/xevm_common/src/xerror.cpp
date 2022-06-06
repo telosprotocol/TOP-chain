@@ -54,6 +54,9 @@ static char const * const errc_to_string(int code) {
     case xerrc_t::rlp_expected_list:
         return "rlp: expected List";
 
+    case xerrc_t::trie_proof_missing:
+        return "rlp: trie proof missing";
+
     default:
         return "unknown evm common error";
     }

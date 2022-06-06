@@ -90,7 +90,7 @@ public:
     // If the trie does not contain a value for key, the returned proof contains all
     // nodes of the longest existing prefix of the key (at least the root node), ending
     // with the node that proves the absence of the key.
-    bool Prove(xbytes_t const & key, uint32_t fromLevel /*, proofDB writer*/, std::error_code & ec);
+    bool Prove(xbytes_t const & key, uint32_t fromLevel, xkv_db_face_ptr_t proofDB, std::error_code & ec);
 
 private:
     std::tuple<xbytes_t, xtrie_node_face_ptr_t, bool> tryGet(xtrie_node_face_ptr_t node, xbytes_t const & key, std::size_t const pos, std::error_code & ec);
