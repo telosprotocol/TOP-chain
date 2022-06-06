@@ -642,7 +642,7 @@ int32_t xbstate_ctx_t::tep_token_withdraw(const std::string& token_name, evm_com
     if (!ret) {
         return xaccount_property_operate_fail;
     }
-    xdbg("xbstate_ctx_t::tep_token_withdraw address=%s,balance=%s,hex=%s,balance_str=%s", get_address().c_str(), new_balance.str().c_str(), toHex((evm_common::h256)new_balance).c_str(), new_balance_str.c_str());
+    xdbg("xbstate_ctx_t::tep_token_withdraw address=%s,balance=%s,hex=%s", get_address().c_str(), new_balance.str().c_str(), toHex((evm_common::h256)new_balance).c_str());
     return xsuccess;
 }
 
@@ -682,7 +682,7 @@ int32_t xbstate_ctx_t::tep_token_deposit(const std::string& token_name, evm_comm
     if (!ret) {
         return xaccount_property_operate_fail;
     }
-    xdbg("xbstate_ctx_t::tep_token_deposit address=%s,balance=%s,hex=%s,balance_str=%s", get_address().c_str(), new_balance.str().c_str(), toHex((evm_common::h256)new_balance).c_str(), new_balance_str.c_str());
+    xdbg("xbstate_ctx_t::tep_token_deposit address=%s,balance=%s,hex=%s", get_address().c_str(), new_balance.str().c_str(), toHex((evm_common::h256)new_balance).c_str());
     return xsuccess;
 }
 
