@@ -20,6 +20,10 @@ private:
     uint64_t m_gas_limit{0};
     xbytes_t m_input_data;  // for deploy , is bytecode. for call , is serialized call args
 
+    common::xaccount_address_t m_block_coinbase;  // T60004.....
+    uint64_t m_block_height{0};
+    uint64_t m_block_timestamp{0};
+
     std::unique_ptr<data::xbasic_top_action_t const> m_action;
 
 public:
@@ -43,6 +47,11 @@ public:
 
     std::string const & random_seed() const noexcept;
     uint64_t gas_limit() const noexcept;
+
+    // EVM API:
+    std::string block_coinbase() const noexcept;
+    uint64_t block_height() const noexcept;
+    uint64_t block_timestamp() const noexcept;
 };
 using xevm_context_t = xtop_evm_context;
 

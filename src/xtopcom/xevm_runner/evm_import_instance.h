@@ -38,6 +38,11 @@ public:
     void sender_address(uint64_t register_id);
     void input(uint64_t register_id);
 
+    // EVM API:
+    void evm_block_coinbase(uint64_t register_id);
+    uint64_t evm_block_height();
+    uint64_t evm_block_timestamp();
+
     // math:
     void random_seed(uint64_t register_id);
     void sha256(uint64_t value_len, uint64_t value_ptr, uint64_t register_id);
