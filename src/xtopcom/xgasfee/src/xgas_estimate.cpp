@@ -13,7 +13,7 @@ namespace top {
 namespace gasfee {
 
 evm_common::u256 xgas_estimate::base_price() {
-    return evm_common::u256{40000000000UL};
+    return XGET_ONCHAIN_GOVERNANCE_PARAMETER(top_eth_base_price);
 }
 
 evm_common::u256 xgas_estimate::flexible_price(const xobject_ptr_t<data::xcons_transaction_t> tx, const evm_common::u256 evm_gas) {
