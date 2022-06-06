@@ -14,9 +14,9 @@ xtop_evm_context::xtop_evm_context(std::unique_ptr<data::xbasic_top_action_t con
     assert(m_action->type() == data::xtop_action_type_t::evm);
 
     // todo(jimmy) get block coinbase/ts/height
-    // m_block_coinbase = ...
-    // m_block_height = ...
-    // m_block_timestamp = ...
+    m_block_coinbase = common::xaccount_address_t{evm_zero_addr};
+    m_block_height = 0;
+    m_block_timestamp = 1654511400;
 
     m_gas_limit = static_cast<data::xevm_consensus_action_t const *>(m_action.get())->gas_limit();
     m_random_seed = vm_para.get_random_seed();
