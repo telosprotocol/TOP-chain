@@ -7,6 +7,7 @@
 
 #include "xbase/xobject.h"
 #include "xbasic/xbyte_buffer.h"
+#include "xbasic/xhex.h"
 #include "xdata/xdata_error.h"
 #include "xdata/xproperty.h"
 #include "xevm_common/fixed_hash.h"
@@ -577,7 +578,7 @@ evm_common::u256 xbstate_ctx_t::tep_token_balance(const std::string& token_name)
     std::string str(decoded.decoded[0].begin(), decoded.decoded[0].end());
     evm_common::u256 balance = evm_common::fromBigEndian<top::evm_common::u256>(str);
 
-    xdbg("xbstate_ctx_t::tep_token_balance address=%s,balance=%s,hex=%s", get_address().c_str(), balance.str().c_str(), toHex((evm_common::h256)balance).c_str());
+    xdbg("xbstate_ctx_t::tep_token_balance address=%s,token=%s,balance=%s", get_address().c_str(), top::to_hex(token_name).c_str(), balance.str().c_str());
     return balance;
 }
 
@@ -613,7 +614,7 @@ top::xbytes_t xbstate_ctx_t::tep_token_balance_bytes(common::xtoken_id_t const t
 int32_t xbstate_ctx_t::tep_token_withdraw(const std::string& token_name, evm_common::u256 sub_token) {
     assert(token_name.length() == 1);
 
-    xdbg("xbstate_ctx_t::tep_token_withdraw,property_modify_enter.address=%s,height=%ld,tokenname=%s,token=%s", get_address().c_str(), get_chain_height(), token_name.c_str(), sub_token.str().c_str());
+    xdbg("xbstate_ctx_t::tep_token_withdraw,property_modify_enter.address=%s,height=%ld,tokenname=%s,token=%s", get_address().c_str(), get_chain_height(), top::to_hex(token_name).c_str(), sub_token.str().c_str());
     auto propobj = load_tep_token_for_write();
     CHECK_PROPERTY_NULL_RETURN(propobj, "xbstate_ctx_t::tep_token_withdraw", token_name);
     auto balance_str = propobj->query(token_name);
@@ -627,7 +628,7 @@ int32_t xbstate_ctx_t::tep_token_withdraw(const std::string& token_name, evm_com
     }
 
     if (sub_token <= 0 || sub_token > balance) {
-        xwarn("xbstate_ctx_t::tep_token_withdraw fail-can't do withdraw. token_name=%s,balance=%s,sub_token=%s", token_name.c_str(), balance.str().c_str(), sub_token.str().c_str());
+        xwarn("xbstate_ctx_t::tep_token_withdraw fail-can't do withdraw. token_name=%s,balance=%s,sub_token=%s", top::to_hex(token_name).c_str(), balance.str().c_str(), sub_token.str().c_str());
         return xaccount_property_operate_fail;
     }
 
@@ -653,7 +654,7 @@ int32_t xbstate_ctx_t::tep_token_withdraw(common::xtoken_id_t const token_id, ev
 int32_t xbstate_ctx_t::tep_token_deposit(const std::string& token_name, evm_common::u256 add_token) {
     assert(token_name.length() == 1);
 
-    xdbg("xbstate_ctx_t::tep_token_deposit,property_modify_enter.address=%s,height=%ld,token_name=%s,token=%s", get_address().c_str(), get_chain_height(), token_name.c_str(), add_token.str().c_str());
+    xdbg("xbstate_ctx_t::tep_token_deposit,property_modify_enter.address=%s,height=%ld,token_name=%s,token=%s", get_address().c_str(), get_chain_height(), top::to_hex(token_name).c_str(), add_token.str().c_str());
     auto propobj = load_tep_token_for_write();
     CHECK_PROPERTY_NULL_RETURN(propobj, "xbstate_ctx_t::tep_token_deposit", token_name);
     auto balance_str = propobj->query(token_name);
@@ -667,7 +668,7 @@ int32_t xbstate_ctx_t::tep_token_deposit(const std::string& token_name, evm_comm
     }
 
     if (add_token <= 0) {
-        xwarn("xbstate_ctx_t::tep_token_withdraw fail-can't do withdraw. token_name=%s,balance=%s,add_token=%s", token_name.c_str(), balance.str().c_str(), add_token.str().c_str());
+        xwarn("xbstate_ctx_t::tep_token_withdraw fail-can't do withdraw. token_name=%s,balance=%s,add_token=%s", top::to_hex(token_name).c_str(), balance.str().c_str(), add_token.str().c_str());
         return xaccount_property_operate_fail;
     }
 
