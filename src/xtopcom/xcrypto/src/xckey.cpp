@@ -422,8 +422,9 @@ namespace top
             const uint256_t hash_value = xkeccak256_t::digest(m_publickey_data + 1, size() - 1);  // remove frist byte of type from public key
             const std::string raw_eth_address((const char *)hash_value.data() + 12, hash_value.size() - 12);  // drop first 12 bytes of total 32,as Ethereum just use the last 20
                                                                                                               // bytes of hash(keccak256)
-            const std::string hex_eth_address = base::xstring_utl::to_hex(raw_eth_address);  // convert to Hex codec
-            return "0x" + hex_eth_address;
+            // const std::string hex_eth_address = base::xstring_utl::to_hex(raw_eth_address);  // convert to Hex codec
+            // return "0x" + hex_eth_address;
+            return raw_eth_address;
         }
 
         bool     xecpubkey_t::verify_signature(xecdsasig_t & signature,const uint256_t & msg_digest, bool compress)

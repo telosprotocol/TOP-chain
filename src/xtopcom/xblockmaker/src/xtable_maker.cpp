@@ -1079,14 +1079,23 @@ const std::string xeth_header_builder::build(uint64_t clock, data::enum_eth_head
         return {};
     }
     
+    std::error_code ec;
     uint64_t gas_used = 0;
     evm_common::xbloom9_t logs_bloom;
     data::xeth_receipts_t eth_receipts;
+    data::xeth_transactions_t eth_txs; 
 
     for (auto & txout : pack_txs_outputs) {
         if (txout.m_tx->get_tx_version() != data::xtransaction_version_3) {
             continue;
         }
+
+        data::xeth_transaction_t ethtx = txout.m_tx->get_transaction()->to_eth_tx(ec);
+        if (ec) {
+            xerror("xeth_header_builder::build fail-to eth tx");
+            continue;
+        }
+
         auto & evm_result = txout.m_vm_output.m_tx_result;
         gas_used += evm_result.used_gas;
         for (auto & log : evm_result.logs) {
@@ -1095,8 +1104,9 @@ const std::string xeth_header_builder::build(uint64_t clock, data::enum_eth_head
         }
 
         data::enum_ethreceipt_status status = (evm_result.status == evm_common::xevm_transaction_status_t::Success) ? data::ethreceipt_status_successful : data::ethreceipt_status_failed;
-        data::xeth_receipt_t eth_receipt((data::enum_ethtx_version)txout.m_tx->get_transaction()->get_eip_version(), status, gas_used, evm_result.logs);
+        data::xeth_receipt_t eth_receipt(ethtx.get_tx_version(), status, gas_used, evm_result.logs);
         eth_receipts.push_back(eth_receipt);
+        eth_txs.push_back(ethtx);
     }
 
     xassert(gas_used <= gas_limit);
@@ -1109,7 +1119,8 @@ const std::string xeth_header_builder::build(uint64_t clock, data::enum_eth_head
     eth_header.set_logBloom(logs_bloom);
     auto receipts_root = data::xeth_build_t::build_receipts_root(eth_receipts);
     eth_header.set_receipts_root(receipts_root);
-
+    auto txs_root = data::xeth_build_t::build_transactions_root(eth_txs);
+    eth_header.set_transactions_root(txs_root);
     return eth_header.serialize_to_string();
 }
 
