@@ -143,7 +143,11 @@ void xeth_transaction_t::streamRLP_eip1599(bool includesig, evm_common::RLPStrea
     _s << m_max_priority_fee_per_gas;
     _s << m_max_fee_per_gas;
     _s << m_gas;
-    _s << m_to.to_bytes();
+    if (!m_to.empty()) {
+        _s << m_to.to_bytes();
+    } else {
+        _s << "";
+    }
     _s << m_value;
     _s << m_data;
     m_accesslist.streamRLP(_s);
@@ -205,13 +209,16 @@ void xeth_transaction_t::decodeRLP_eip1599(bool includesig, evm_common::RLP cons
             }
             return;
         }
-        xbytes_t _bytes = _r[field = 5].toBytes();
-        if (!_bytes.empty()) {
+
+        if (!_r[5].isEmpty()) {
+            xbytes_t _bytes = _r[field = 5].toBytes();
             m_to = common::xeth_address_t::build_from(_bytes, ec.error_code);
             if (ec.error_code) {
                 ec = eth_error(error::xenum_errc::eth_server_error, "rlp: input string invalid for common.Address, decoding into (types.DynamicFeeTx).To");
                 return;
             }
+        } else {
+            m_to = common::xeth_address_t::zero();
         }
         if (_r[6].size() > 32) {
             ec = eth_error(error::xenum_errc::eth_server_error, "rlp: input string too long for common.value, decoding into (types.DynamicFeeTx).value");
@@ -276,7 +283,7 @@ common::xeth_address_t xeth_transaction_t::get_from() const {
 
         std::string m_authorization;
         m_authorization.append((char *)szSign, 65);
-        // std::cout << "m_authorization=" << base::xstring_utl::to_hex(m_authorization) << std::endl;
+        // std::cout << "sig_bytes=" << base::xstring_utl::to_hex(m_authorization) << std::endl;
 
         top::utl::xecdsasig_t sig((uint8_t *)szSign);
         top::utl::xkeyaddress_t pubkey1("");
