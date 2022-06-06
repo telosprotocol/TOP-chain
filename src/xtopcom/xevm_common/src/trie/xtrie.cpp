@@ -170,16 +170,17 @@ std::pair<xhash256_t, int32_t> xtop_trie::Commit(std::error_code & ec) {
     return std::make_pair(rootHash, committed);
 }
 
-bool xtop_trie::Prove(xbytes_t const & key, uint32_t fromLevel /*, proofDB writer*/, std::error_code & ec) {
+bool xtop_trie::Prove(xbytes_t const & key, uint32_t fromLevel, xkv_db_face_ptr_t proofDB, std::error_code & ec) {
     // Collect all nodes on the path to key.
     auto key_path = keybytesToHex(key);
     std::vector<xtrie_node_face_ptr_t> nodes;
     auto tn = m_root;
     for (; key_path.size() > 0 && tn != nullptr;) {
+        xdbg("key: %s",top::to_hex(key_path).c_str());
         switch (tn->type()) {
         case xtrie_node_type_t::shortnode: {
             auto n = std::make_shared<xtrie_short_node_t>(*(static_cast<xtrie_short_node_t *>(tn.get())));
-            if (key_path.size() < n->Key.size() || std::equal(key_path.begin(), key_path.begin() + n->Key.size(), n->Key.begin())) {
+            if (key_path.size() < n->Key.size() || !std::equal(key_path.begin(), key_path.begin() + n->Key.size(), n->Key.begin())) {
                 // The trie doesn't contain the key.
                 tn = nullptr;
             } else {
@@ -187,6 +188,7 @@ bool xtop_trie::Prove(xbytes_t const & key, uint32_t fromLevel /*, proofDB write
                 key_path = {key_path.begin() + n->Key.size(), key_path.end()};
             }
             nodes.push_back(n);
+            xdbg("append shortnode %s",top::to_hex(key_path).c_str());
             break;
         }
         case xtrie_node_type_t::fullnode: {
@@ -194,6 +196,7 @@ bool xtop_trie::Prove(xbytes_t const & key, uint32_t fromLevel /*, proofDB write
             tn = n->Children[key_path[0]];
             key_path.erase(key_path.begin());
             nodes.push_back(n);
+            xdbg("append fullnode %s",top::to_hex(key_path).c_str());
             break;
         }
         case xtrie_node_type_t::hashnode: {
@@ -212,6 +215,7 @@ bool xtop_trie::Prove(xbytes_t const & key, uint32_t fromLevel /*, proofDB write
     }
 
     auto hasher = xtrie_hasher_t::newHasher(false);
+    xdbg("nodes.size():%zu", nodes.size());
     for (std::size_t index = 0; index < nodes.size(); ++index) {
         if (fromLevel > 0) {
             fromLevel--;
@@ -226,12 +230,12 @@ bool xtop_trie::Prove(xbytes_t const & key, uint32_t fromLevel /*, proofDB write
             auto enc = xtrie_node_rlp::EncodeToBytes(n);
             xtrie_hash_node_ptr_t hash;
             if (hn->type() != xtrie_node_type_t::hashnode) {
-                auto hash = hasher.hashData(enc);
+                hash = hasher.hashData(enc);
             } else {
                 hash = std::make_shared<xtrie_hash_node_t>(*(static_cast<xtrie_hash_node_t *>(hn.get())));
             }
-
-            // proofDb.put(hash,enc); // todo
+            xdbg("[Prove]: put into db <%s> %s", top::to_hex(hash->data()).c_str(), top::to_hex(enc).c_str());
+            proofDB->Put(hash->data(), enc, ec);
         }
     }
 

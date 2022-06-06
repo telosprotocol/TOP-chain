@@ -26,6 +26,7 @@ enum class xenum_errc {
     rlp_value_too_large,
     rlp_expected_string,
     rlp_expected_list,
+    trie_proof_missing,
 };
 using xerrc_t = xenum_errc;
 

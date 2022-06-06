@@ -20,6 +20,7 @@ std::tuple<xrlp_elem_kind, xbytes_t, xbytes_t> Split(xbytes_t const & b, std::er
     xrlp_elem_kind k;
     uint64_t ts, cs;
     std::tie(k, ts, cs) = readKind(b, ec);
+    xdbg("Split: %d %lu %lu %d", static_cast<int>(k), ts, cs, ec.value());
     if (ec) {
         return std::make_tuple(k, xbytes_t{}, b);
     }
@@ -128,7 +129,7 @@ std::tuple<xrlp_elem_kind, uint64_t, uint64_t> readKind(xbytes_t const & buf, st
     } else {
         k = xrlp_elem_kind::List;
         tagsize = static_cast<uint64_t>(b - 0xf7) + 1;
-        contentsize = static_cast<uint64_t>(xbytes_t{buf.begin() + 1, buf.end()}, b - 0xf7);
+        contentsize = readSize(xbytes_t{buf.begin() + 1, buf.end()}, b - 0xf7, ec);
     }
     if (ec) {
         return std::make_tuple(xrlp_elem_kind{}, 0, 0);
