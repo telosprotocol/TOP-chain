@@ -157,8 +157,6 @@ void xrpc_eth_parser_t::blockheader_to_json(base::xvblock_t* _block, xJson::Valu
     // TODO(jimmy) should implement correctly later
     js_v["size"] = "0x219";
     js_v["miner"] = std::string("0x") + std::string(40, '0');
-    js_v["transactionsRoot"] = std::string("0x") + std::string(64, '0');
-    js_v["stateRoot"] = std::string("0x") + std::string(64, '0');
 
     // already implemented
     js_v["gasLimit"] = uint64_to_hex_prefixed(ethheader.get_gaslimit());
@@ -168,13 +166,14 @@ void xrpc_eth_parser_t::blockheader_to_json(base::xvblock_t* _block, xJson::Valu
     js_v["number"] = uint64_to_hex_prefixed(_block->get_height());
     js_v["parentHash"] = top::to_hex_prefixed(_block->get_last_block_hash());
     js_v["receiptsRoot"] = top::to_hex_prefixed(ethheader.get_receipts_root().asBytes());
+    js_v["transactionsRoot"] = top::to_hex_prefixed(ethheader.get_transactions_root().asBytes());
+    js_v["stateRoot"] = top::to_hex_prefixed(ethheader.get_state_root().asBytes());
     js_v["timestamp"] = uint64_to_hex_prefixed(_block->get_timestamp());
     js_v["transactions"].resize(0);
     js_v["baseFeePerGas"] = u256_to_hex_prefixed(ethheader.get_baseprice());
 }
 
 data::xtransaction_ptr_t xrpc_eth_parser_t::json_to_ethtx(xJson::Value const& request, data::eth_error& ec) {
-    xdbg("xrpc_eth_parser_t::json_to_ethtx begin.req=%s", request.asString().c_str());
     if (request["params"].empty()) {
         ec = data::eth_error(data::error::xenum_errc::eth_invalid_params, "missing value for required argument 0");
         return nullptr;
@@ -201,8 +200,7 @@ data::xtransaction_ptr_t xrpc_eth_parser_t::json_to_ethtx(xJson::Value const& re
         ec = data::eth_error(data::error::xenum_errc::eth_invalid_params, "invalid argument 0: json: cannot unmarshal hex string without 0x prefix into Go value of type hexutil.Bytes");
         return nullptr;
     }
-    xbytes_t tx_bs = top::to_bytes(strParams.substr(2));
-    data::xeth_transaction_t ethtx = data::xeth_transaction_t::build_from(tx_bs, ec);
+    data::xeth_transaction_t ethtx = data::xeth_transaction_t::build_from(strParams, ec);
     if (ec.error_code) {
         return nullptr;
     }
