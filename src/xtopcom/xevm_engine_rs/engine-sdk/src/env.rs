@@ -26,6 +26,7 @@ impl Timestamp {
 pub trait Env {
     fn sender_address(&self) -> Address;
 
+    fn block_coinbase(&self) -> Address;
     fn block_height(&self) -> u64;
     fn block_timestamp(&self) -> Timestamp;
     // fn attached_deposit(&self) -> u128; // todo

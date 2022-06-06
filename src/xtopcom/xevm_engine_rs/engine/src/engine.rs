@@ -254,20 +254,26 @@ impl<'env, I: IO + Copy, E: Env> Engine<'env, I, E> {
     }
 }
 
-// pub fn compute_block_hash(chain_id: [u8; 32], block_height: u64, account_id: &[u8]) -> H256 {
-//     debug_assert_eq!(BLOCK_HASH_PREFIX_SIZE, mem::size_of_val(&BLOCK_HASH_PREFIX));
-//     debug_assert_eq!(BLOCK_HEIGHT_SIZE, mem::size_of_val(&block_height));
-//     debug_assert_eq!(CHAIN_ID_SIZE, mem::size_of_val(&chain_id));
-//     let mut data = Vec::with_capacity(
-//         BLOCK_HASH_PREFIX_SIZE + BLOCK_HEIGHT_SIZE + CHAIN_ID_SIZE + account_id.len(),
-//     );
-//     data.push(BLOCK_HASH_PREFIX);
-//     data.extend_from_slice(&chain_id);
-//     data.extend_from_slice(account_id);
-//     data.extend_from_slice(&block_height.to_be_bytes());
+/// Used as the first byte in the concatenation of data used to compute the blockhash.
+/// Could be useful in the future as a version byte, or to distinguish different types of blocks.
+const BLOCK_HASH_PREFIX: u8 = 0;
+const BLOCK_HASH_PREFIX_SIZE: usize = 1;
+const BLOCK_HEIGHT_SIZE: usize = 8;
+const CHAIN_ID_SIZE: usize = 32;
+pub fn compute_block_hash(chain_id: [u8; 32], block_height: u64, origin_address: &[u8]) -> H256 {
+    debug_assert_eq!(BLOCK_HASH_PREFIX_SIZE, mem::size_of_val(&BLOCK_HASH_PREFIX));
+    debug_assert_eq!(BLOCK_HEIGHT_SIZE, mem::size_of_val(&block_height));
+    debug_assert_eq!(CHAIN_ID_SIZE, mem::size_of_val(&chain_id));
+    let mut data = Vec::with_capacity(
+        BLOCK_HASH_PREFIX_SIZE + BLOCK_HEIGHT_SIZE + CHAIN_ID_SIZE + origin_address.len(),
+    );
+    data.push(BLOCK_HASH_PREFIX);
+    data.extend_from_slice(&chain_id);
+    data.extend_from_slice(origin_address);
+    data.extend_from_slice(&block_height.to_be_bytes());
 
-//     sdk::sha256(&data)
-// }
+    sdk::sha256(&data)
+}
 
 /// # balance #
 pub fn add_balance<I: IO>(
@@ -445,18 +451,17 @@ impl<'env, I: IO + Copy, E: Env> evm::backend::Backend for Engine<'env, I, E> {
 
     /// Returns a block hash from a given index.
     fn block_hash(&self, number: U256) -> H256 {
-        unreachable!()
-        // let idx = U256::from(self.env.block_height());
-        // if idx.saturating_sub(U256::from(256)) <= number && number < idx {
-        //     // since `idx` comes from `u64` it is always safe to downcast `number` from `U256`
-        //     compute_block_hash(
-        //         self.state.chain_id,
-        //         number.low_u64(),
-        //         self.current_account_id.as_bytes(),
-        //     )
-        // } else {
-        //     H256::zero()
-        // }
+        let idx = U256::from(self.env.block_height());
+        if idx.saturating_sub(U256::from(256)) <= number && number < idx {
+            // since `idx` comes from `u64` it is always safe to downcast `number` from `U256`
+            compute_block_hash(
+                self.state.chain_id,
+                number.low_u64(),
+                self.origin().as_bytes(),
+            )
+        } else {
+            H256::zero()
+        }
     }
 
     /// Returns the current block index number.
@@ -465,8 +470,7 @@ impl<'env, I: IO + Copy, E: Env> evm::backend::Backend for Engine<'env, I, E> {
     }
 
     fn block_coinbase(&self) -> H160 {
-        unreachable!()
-        // H160([...])
+        self.env.block_coinbase().raw()
     }
 
     /// Returns the current block timestamp.

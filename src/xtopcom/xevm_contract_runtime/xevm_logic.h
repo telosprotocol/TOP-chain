@@ -53,6 +53,11 @@ public:
     void sender_address(uint64_t register_id) override;
     void input(uint64_t register_id) override;
 
+    // EVM API:
+    void block_coinbase(uint64_t register_id) override;
+    uint64_t block_height() override;
+    uint64_t block_timestamp() override;
+
     // math:
     void random_seed(uint64_t register_id) override;
     void sha256(uint64_t value_len, uint64_t value_ptr, uint64_t register_id) override;
