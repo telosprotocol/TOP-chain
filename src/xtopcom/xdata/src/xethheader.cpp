@@ -38,6 +38,32 @@ void xeth_header_t::set_state_root(const evm_common::xh256_t & root) {
     m_state_root = root;
 }
 
+xbytes_t xeth_header_t::encodeBytes() const {
+    xbytes_t _bytes;
+    _bytes.push_back(m_format);
+    evm_common::RLPStream _s;
+    streamRLP(_s);
+    _bytes.insert(_bytes.begin() + 1, _s.out().begin(), _s.out().end());
+    return _bytes;
+}
+void xeth_header_t::decodeBytes(xbytes_t const& _d, std::error_code & ec) {
+    if (_d.size() < 2) {
+        ec = common::error::xerrc_t::invalid_rlp_stream;
+        xerror("xeth_header_t::decodeBytes fail bytes,%zu", _d.size());
+        return;
+    }
+
+    m_format = (uint8_t)_d.front();
+    if (m_format != ETH_HEADER_fORMAT_NORMAL && m_format != ETH_HEADER_fORMAT_SIMPLE) {
+        ec = common::error::xerrc_t::invalid_rlp_stream;
+        xerror("xeth_header_t::decodeBytes fail invalid version,%d", m_format);
+        return;
+    }
+    xbytes_t _d2(_d.begin() + 1, _d.end());
+    evm_common::RLP _r(_d2);
+    decodeRLP(_r, ec);
+}
+
 void xeth_header_t::streamRLP(evm_common::RLPStream& _s) const {
     // todo: use different way to serialize for nil block and full block to reduce storage cost.
     if (m_format == ETH_HEADER_fORMAT_NORMAL) {
@@ -90,13 +116,12 @@ void xeth_header_t::decodeRLP(evm_common::RLP const& _r, std::error_code & ec) {
 }
 
 std::string xeth_header_t::serialize_to_string() const {
-    evm_common::RLPStream rlp_stream;
-    streamRLP(rlp_stream);
-    return from_bytes<std::string>(rlp_stream.out());
+    xbytes_t _bs = encodeBytes();
+    return top::to_string(_bs);
 }
 void xeth_header_t::serialize_from_string(const std::string & bin_data, std::error_code & ec) {
-    evm_common::RLP _r(bin_data);
-    decodeRLP(_r, ec);
+    xbytes_t _bs = top::to_bytes(bin_data);
+    decodeBytes(_bs, ec);
 }
 
 //============= xeth_block_t ===============

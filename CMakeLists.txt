@@ -23,6 +23,7 @@ option(XENABLE_MOCK_ZEC_STAKE "Enable mocking stake for ZEC" OFF)
 option(XCHAIN_FORKED_BY_DEFAULT "Enable chain forked logic" OFF)
 option(ENABLE_METRICS_DATAOBJECT "Enable metrics dataobject" OFF)
 option(DISABLE_CORE_SIGNAL_CAPTURE "disable core signal capture" OFF)
+option(DISABLE_SIGNAL_CAPTURE "disable all signal capture" OFF)
 
 set(BUILD_EVM ON) # EVM as default VM for now
 
@@ -342,6 +343,10 @@ if (DISABLE_CORE_SIGNAL_CAPTURE)
     add_definitions(-DDISABLE_CORE_SIGNAL_CAPTURE)
 endif()
 
+if (DISABLE_SIGNAL_CAPTURE)
+    add_definitions(-DDISABLE_SIGNAL_CAPTURE)
+endif()
+
 if (${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo)
     add_definitions(-DRELEASEDEBINFO)
 endif()
@@ -369,6 +374,7 @@ message(STATUS "BUILD_METRICS:" ${BUILD_METRICS})
 message(STATUS "ADDRESS_SANITIZER:" ${ADDRESS_SANITIZER})
 message(STATUS "XCHAIN_FORKED_BY_DEFAULT:" ${XCHAIN_FORKED_BY_DEFAULT})
 message(STATUS "DISABLE_CORE_SIGNAL_CAPTURE:" ${DISABLE_CORE_SIGNAL_CAPTURE})
+message(STATUS "DISABLE_SIGNAL_CAPTURE:" ${DISABLE_SIGNAL_CAPTURE})
 
 find_package(Threads REQUIRED)
 

@@ -144,6 +144,7 @@ void xedge_evm_method_base<T>::do_method(shared_ptr<conn_type> & response, xjson
     xinfo_rpc("rpc request: %s,%s", version.c_str(), method.c_str());
 
     if (jsonrpc_version != "2.0") {
+        xerror("xedge_evm_method_base do_method fail-jsonrpc version not 2.0 version=%s", jsonrpc_version.c_str());
         return;
     }
     xJson::Value res;
