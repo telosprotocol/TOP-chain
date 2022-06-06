@@ -1,6 +1,7 @@
 #include "xevm_common/trie/xtrie.h"
 #include "xevm_common/trie/xtrie_node.h"
 #include "xevm_common/trie/xtrie_node_coding.h"
+#include "xevm_common/trie/xtrie_proof.h"
 #include "xevm_common/xerror/xerror.h"
 
 #include <gtest/gtest.h>
@@ -275,6 +276,20 @@ TEST(xtrie, test_prove_sample) {
         "f83b8080808080ca20887265696e6465657280a09492a10ce8854d76e3cd842b7e89364de72d5170d2f1807a5952776d2a61cb16808080808080808080");
     // clang-format on
 #undef ASSERT_DB_HAS
+}
+
+TEST(xtrie, test_verify_one_element_proof) {
+    std::error_code ec;
+    auto xtest_memory_db_ptr = std::make_shared<xtest_memory_db>();
+    auto trie = xtrie_t::New({}, xtest_memory_db_ptr, ec);
+
+    UpdateString(trie, "k", "v");
+    auto xtest_prove_memory_db_ptr = std::make_shared<xtest_prove_db>();
+    trie->Prove(top::to_bytes(std::string{"k"}), 0, xtest_prove_memory_db_ptr, ec);
+
+    auto result = VerifyProof(trie->Hash(), top::to_bytes(std::string{"k"}), xtest_prove_memory_db_ptr, ec);
+    ASSERT_TRUE(!ec);
+    ASSERT_EQ(result, top::to_bytes(std::string{"v"}));
 }
 
 NS_END4
