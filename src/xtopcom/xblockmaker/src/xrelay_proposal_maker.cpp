@@ -50,9 +50,9 @@ void xrelay_proposal_maker_t::convert_to_xrelay_receipts(const std::map<uint64_t
         auto & cross_txs = cross_tx_map_pair.second;
         for (auto & tx_result : cross_txs.m_tx_results) {
             // todo(nathan): use real data for m_type, logs_bloom etc.
-            evm_common::h2048 logs_bloom;
+            evm_common::h2048 logs_bloom(tx_result.bloom().get_data());
             std::vector<data::xrelay_receipt_log> relay_receipt_logs;
-            for (auto & log : tx_result.logs) {
+            for (auto & log : tx_result.get_logs()) {
                 data::xrelay_receipt_log relay_receipt_log;
                 relay_receipt_log.m_contract_address = evm_common::h160(to_bytes(log.address));
                 relay_receipt_log.m_data = to_bytes(log.data);
@@ -61,7 +61,7 @@ void xrelay_proposal_maker_t::convert_to_xrelay_receipts(const std::map<uint64_t
                 }
                 relay_receipt_logs.push_back(relay_receipt_log);
             }
-            data::xrelay_receipt receipt(0, tx_result.status, tx_result.used_gas, logs_bloom, relay_receipt_logs);
+            data::xrelay_receipt receipt(tx_result.get_version(), (uint8_t)tx_result.get_tx_status(), (evm_common::u256)tx_result.get_cumulative_gas_used(), logs_bloom, relay_receipt_logs);
             receipts.push_back(receipt);
         }
     }

@@ -46,7 +46,7 @@ TEST(evm_engine_normal_test, deploy_and_call_contract_success_0) {
         // param
         top::data::xtransaction_ptr_t tx = top::make_object_ptr<top::data::xtransaction_v2_t>();
         tx->set_source_addr("T60004001bdc8251890aafc5841b05620c0eab336e3ebc");
-        tx->set_target_addr(evm_zero_address.value());  // deploy code
+        tx->set_target_addr(eth_zero_address.value());  // deploy code
         tx->set_ext(contract_code.to_string());
         auto cons_tx = top::make_object_ptr<top::data::xcons_transaction_t>(tx.get());
 
@@ -186,7 +186,7 @@ TEST(evm_engine_normal_test, deploy_and_call_contract_success_1) {
         // param
         top::data::xtransaction_ptr_t tx = top::make_object_ptr<top::data::xtransaction_v2_t>();
         tx->set_source_addr("T60004001bdc8251890aafc5841b05620c0eab336e3ebc");
-        tx->set_target_addr(evm_zero_address.value());  // deploy code
+        tx->set_target_addr(eth_zero_address.value());  // deploy code
         tx->set_ext(contract_code.to_string());
         auto cons_tx = top::make_object_ptr<top::data::xcons_transaction_t>(tx.get());
 
@@ -321,7 +321,7 @@ TEST(evm_engine_normal_test, deploy_and_call_contract_success_2) {
         // param
         top::data::xtransaction_ptr_t tx = top::make_object_ptr<top::data::xtransaction_v2_t>();
         tx->set_source_addr("T60004001bdc8251890aafc5841b05620c0eab336e3ebc");
-        tx->set_target_addr(evm_zero_address.value());  // deploy code
+        tx->set_target_addr(eth_zero_address.value());  // deploy code
         tx->set_ext(contract_code.to_string());
         auto cons_tx = top::make_object_ptr<top::data::xcons_transaction_t>(tx.get());
 
@@ -345,7 +345,7 @@ TEST(evm_engine_normal_test, deploy_and_call_contract_success_2) {
         // param
         top::data::xtransaction_ptr_t tx = top::make_object_ptr<top::data::xtransaction_v2_t>();
         tx->set_source_addr("T60004001bdc8251890aafc5841b05620c0eab336e3ebc");
-        tx->set_target_addr(evm_zero_address.value());  // deploy code
+        tx->set_target_addr(eth_zero_address.value());  // deploy code
         tx->set_ext(contract_code.to_string());
         auto cons_tx = top::make_object_ptr<top::data::xcons_transaction_t>(tx.get());
 
@@ -369,7 +369,7 @@ TEST(evm_engine_normal_test, deploy_and_call_contract_success_2) {
         // param
         top::data::xtransaction_ptr_t tx = top::make_object_ptr<top::data::xtransaction_v2_t>();
         tx->set_source_addr("T60004001bdc8251890aafc5841b05620c0eab336e3ebc");
-        tx->set_target_addr(evm_zero_address.value());  // deploy code
+        tx->set_target_addr(eth_zero_address.value());  // deploy code
         tx->set_ext(contract_code.to_string());
         auto cons_tx = top::make_object_ptr<top::data::xcons_transaction_t>(tx.get());
 
