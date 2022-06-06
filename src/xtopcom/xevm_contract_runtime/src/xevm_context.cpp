@@ -13,8 +13,10 @@ NS_BEG2(top, evm_runtime)
 xtop_evm_context::xtop_evm_context(std::unique_ptr<data::xbasic_top_action_t const> action, txexecutor::xvm_para_t const & vm_para) noexcept : m_action{std::move(action)} {
     assert(m_action->type() == data::xtop_action_type_t::evm);
 
-    // todo // get action_type/sender/recever/gas/value/data.... from action
-    // - [] value
+    // todo(jimmy) get block coinbase/ts/height
+    // m_block_coinbase = ...
+    // m_block_height = ...
+    // m_block_timestamp = ...
 
     m_gas_limit = static_cast<data::xevm_consensus_action_t const *>(m_action.get())->gas_limit();
     m_random_seed = vm_para.get_random_seed();
@@ -72,6 +74,17 @@ std::string const & xtop_evm_context::random_seed() const noexcept {
 
 uint64_t xtop_evm_context::gas_limit() const noexcept {
     return m_gas_limit;
+}
+
+// EVM API:
+std::string xtop_evm_context::block_coinbase() const noexcept {
+    return m_block_coinbase.value();
+}
+uint64_t xtop_evm_context::block_height() const noexcept {
+    return m_block_height;
+}
+uint64_t xtop_evm_context::block_timestamp() const noexcept {
+    return m_block_timestamp;
 }
 
 NS_END2

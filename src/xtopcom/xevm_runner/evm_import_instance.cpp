@@ -43,6 +43,17 @@ void evm_import_instance::input(uint64_t register_id) {
     return;
 }
 
+// # EVM API #
+void evm_import_instance::evm_block_coinbase(uint64_t register_id) {
+    return m_vm_logic->block_coinbase(register_id);
+}
+uint64_t evm_import_instance::evm_block_height() {
+    return m_vm_logic->block_height();
+}
+uint64_t evm_import_instance::evm_block_timestamp() {
+    return m_vm_logic->block_timestamp();
+}
+
 // math:
 void evm_import_instance::random_seed(uint64_t register_id) {
     m_vm_logic->random_seed(register_id);
@@ -117,6 +128,17 @@ void evm_sender_address(uint64_t register_id) {
 void evm_input(uint64_t register_id) {
     evm_import_instance::instance()->input(register_id);
     return;
+}
+
+// # EVM API #
+void evm_block_coinbase(uint64_t register_id) {
+    return evm_import_instance::instance()->evm_block_coinbase(register_id);
+}
+uint64_t evm_block_height() {
+    return evm_import_instance::instance()->evm_block_height();
+}
+uint64_t evm_block_timestamp() {
+    return evm_import_instance::instance()->evm_block_timestamp();
 }
 
 // ############

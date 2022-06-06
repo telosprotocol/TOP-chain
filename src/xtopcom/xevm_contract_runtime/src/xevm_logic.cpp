@@ -69,6 +69,21 @@ void xtop_evm_logic::input(uint64_t register_id) {
     return;
 }
 
+// EVM API:
+void xtop_evm_logic::block_coinbase(uint64_t register_id) {
+    auto coinbase = m_context->block_coinbase();
+    xassert(coinbase.substr(0, 6) == T6_ACCOUNT_PREFIX);
+    xvariant_bytes hex_coinbase{coinbase.substr(6), true};
+    internal_write_register(register_id, hex_coinbase.to_bytes());
+    return;
+}
+uint64_t xtop_evm_logic::block_height() {
+    return m_context->block_height();
+}
+uint64_t xtop_evm_logic::block_timestamp() {
+    return m_context->block_timestamp();
+}
+
 // storage:
 uint64_t xtop_evm_logic::storage_read(uint64_t key_len, uint64_t key_ptr, uint64_t register_id) {
     // printf("[debug][storage_read] request: %lu\n", register_id);
