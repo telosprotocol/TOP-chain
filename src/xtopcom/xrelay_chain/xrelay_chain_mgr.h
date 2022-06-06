@@ -34,7 +34,7 @@ class xrelay_chain_mgr_dispatcher_t;
 
 struct xcross_txs_t {
     std::vector<data::xtransaction_ptr_t> m_txs;
-    std::vector<evm_common::xevm_transaction_result_t> m_tx_results;
+    std::vector<data::xeth_store_receipt_t> m_tx_results;
 };
 
 class xcross_tx_cache_t {
