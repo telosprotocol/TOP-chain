@@ -82,12 +82,12 @@ class xtransaction_v3_t : public xbase_dataunit_t<xtransaction_v3_t, xdata_type_
     virtual uint64_t            get_tx_nonce() const override {return get_last_nonce() + 1;}
     virtual std::string         dump() const override;  // just for debug purpose
     void set_action_type();
-    virtual const std::string & get_source_action_name() const override { xassert(false);return strNull; }
-    virtual const std::string & get_source_action_para() const override { xassert(false);return strNull; }
+    virtual const std::string & get_source_action_name() const override { return strNull; }
+    virtual const std::string & get_source_action_para() const override { return strNull; }
     virtual enum_xaction_type get_source_action_type() const {xassert(false);return xaction_type_max;}
     virtual std::string get_source_action_str() const;
-    virtual const std::string & get_target_action_name() const override { xassert(false); return strNull; }
-    virtual const std::string & get_target_action_para() const override { xassert(false); return strNull; }
+    virtual const std::string & get_target_action_name() const override { return strNull; }
+    virtual const std::string & get_target_action_para() const override { return strNull; }
     virtual enum_xaction_type get_target_action_type() const {xassert(false);return xaction_type_max;}
     virtual std::string get_target_action_str() const;
     virtual const std::string & get_authorization() const override {return m_authorization;}

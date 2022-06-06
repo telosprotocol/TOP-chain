@@ -24,13 +24,13 @@ class xeth_header_t {
     ~xeth_header_t() = default;
 
  public:  // serialize
-    void    streamRLP(evm_common::RLPStream& _s) const;
-    void    decodeRLP(evm_common::RLP const& _r, std::error_code & ec);
     std::string serialize_to_string() const;
     void        serialize_from_string(const std::string & bin_data, std::error_code & ec);
-
+    xbytes_t    encodeBytes() const;
+    void        decodeBytes(xbytes_t const& _d, std::error_code & ec); 
+    void        streamRLP(evm_common::RLPStream& _s) const;
+    void        decodeRLP(evm_common::RLP const& _r, std::error_code & ec);
  public:  // get APIS
-    enum_eth_header_format get_format() const {return m_format;}
     uint64_t    get_gaslimit() const {return m_gaslimit;}
     uint64_t    get_gasused() const {return m_gasused;}
     const evm_common::u256 &            get_baseprice() const {return m_baseprice;}
@@ -38,6 +38,7 @@ class xeth_header_t {
     const evm_common::xh256_t &         get_transactions_root() const {return m_transactions_root;}
     const evm_common::xh256_t &         get_receipts_root() const {return m_receipts_root;}
     const evm_common::xh256_t &         get_state_root() const {return m_state_root;}
+    xbytes_t const&                     get_extra_data() const {return m_extra_data;}
 
  public:  // set APIS
     void        set_format(enum_eth_header_format format);
@@ -50,7 +51,7 @@ class xeth_header_t {
     void        set_state_root(const evm_common::xh256_t & root);
 
  private:
-    enum_eth_header_format  m_format{ETH_HEADER_fORMAT_NORMAL};
+    uint8_t                 m_format{ETH_HEADER_fORMAT_NORMAL};
     uint64_t                m_gaslimit{0};  // the block gaslimit
     evm_common::u256        m_baseprice;
     uint64_t                m_gasused{0};  // the block gasUsed by all txs

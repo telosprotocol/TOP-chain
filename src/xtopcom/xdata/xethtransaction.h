@@ -11,10 +11,9 @@ namespace top {
 namespace data {
 
 enum enum_ethtx_version {
-    EIP_LEGACY = 0,
-    EIP_2930 = 1,
+    EIP_LEGACY = 0,  // not support
+    EIP_2930 = 1, // not support
     EIP_1559 = 2,
-    EIP_TOP_V3 = 121
 };
 
 static std::string strNull = "";
@@ -97,8 +96,6 @@ class xeth_transaction_t {
     common::xeth_address_t  m_to;
     evm_common::u256    m_value;
     xbytes_t            m_data;
-    // evm_common::RLP     m_accesslist; // not use accesslist
-    // xbytes_t            m_accesslist; // not use accesslist
     xeth_accesslist_t   m_accesslist;
     evm_common::u256    m_signV;
     evm_common::xh256_t m_signR;

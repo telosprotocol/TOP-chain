@@ -158,6 +158,7 @@ void on_sys_signal_callback(int signum, siginfo_t *info, void *ptr)
 
 void catch_system_signals()
 {
+#ifndef DISABLE_SIGNAL_CAPTURE
     static struct sigaction _sys_sigact;
     memset(&_sys_sigact, 0, sizeof(_sys_sigact));
     
@@ -181,6 +182,7 @@ void catch_system_signals()
     sigaction(SIGUSR1, &_sys_sigact, NULL);
     sigaction(SIGUSR2, &_sys_sigact, NULL);
     std::cout << "catch_system_signals" << std::endl;
+#endif
 }
 
 int topchain_init(const std::string& config_file, const std::string& config_extra) {
