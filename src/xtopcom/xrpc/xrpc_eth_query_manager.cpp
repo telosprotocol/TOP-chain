@@ -766,8 +766,10 @@ void xrpc_eth_query_manager::eth_getStorageAt(xJson::Value & js_req, xJson::Valu
         js_rsp["result"] = "0x0";
         return;
     }
-
-    std::string index_str = top::HexDecode(js_req[1].asString().substr(2));
+    std::string index_str = js_req[1].asString().substr(2);
+    if (index_str.size() % 2 != 0)
+        index_str = std::string("0") + index_str;
+    index_str = top::HexDecode(index_str);
     std::string value_str = account_ptr->get_storage(index_str);
     xinfo("xrpc_eth_query_manager::eth_getStorageAt, %s,%s,%s, %s", js_req[0].asString().c_str(), js_req[1].asString().c_str(), js_req[2].asString().c_str(),
         top::HexEncode(value_str).c_str());
