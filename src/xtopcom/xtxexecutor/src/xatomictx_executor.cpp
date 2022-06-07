@@ -259,16 +259,7 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
                     vmoutput.m_tx_exec_succ = false;
                     vmoutput.m_vm_error_code = ec.value();
                     vmoutput.m_vm_error_str = std::string{ec.category().name()} + ": " + ec.message().c_str();
-                    if (ec == make_error_code(gasfee::error::xenum_errc::tx_out_of_gas)) {
-                        ret = enum_exec_error_out_of_gas;
-                        vmoutput.m_tx_result.status = evm_common::xevm_transaction_status_t::OutOfGas;
-                        vmoutput.m_tx_result.used_gas = static_cast<uint64_t>(gasfee.tx_eth_gas_limit());
-                        xwarn(
-                            "xatomictx_executor_t::vm_execute outof gas, ret: %d, evm_status: %d, used_gas: %lu", ret, vmoutput.m_tx_result.status, vmoutput.m_tx_result.used_gas);
-                    } else {
-                        ret = enum_exec_error_estimate_gas;
-                        xwarn("xatomictx_executor_t::vm_execute error_estimate_gas, ret: %d", ret);
-                    }
+                    ret = enum_exec_error_estimate_gas;
                     break;
                 }
                 xtvm_v2_t tvm;
@@ -309,15 +300,7 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
                 vmoutput.m_tx_exec_succ = false;
                 vmoutput.m_vm_error_code = ec.value();
                 vmoutput.m_vm_error_str = std::string{ec.category().name()} + ": " + ec.message().c_str();
-                if (ec == make_error_code(gasfee::error::xenum_errc::tx_out_of_gas)) {
-                    ret = enum_exec_error_out_of_gas;
-                    vmoutput.m_tx_result.status = evm_common::xevm_transaction_status_t::OutOfGas;
-                    vmoutput.m_tx_result.used_gas = static_cast<uint64_t>(gasfee.tx_eth_gas_limit());
-                    xwarn("xatomictx_executor_t::vm_execute outof gas, ret: %d, evm_status: %d, used_gas: %lu", ret, vmoutput.m_tx_result.status, vmoutput.m_tx_result.used_gas);
-                } else {
-                    ret = enum_exec_error_estimate_gas;
-                    xwarn("xatomictx_executor_t::vm_execute error_estimate_gas, ret: %d", ret);
-                }
+                ret = enum_exec_error_estimate_gas;
                 break;
             }
             evm::xtop_evm evm{m_statectx};

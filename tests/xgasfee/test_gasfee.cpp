@@ -15,7 +15,6 @@ TEST(test_gas, calculate_big_data) {
     auto eth_max_gasfee = limit * price * XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_to_top_exchange_ratio) / evm_common::u256(1e12);
     max_gasfee = static_cast<uint64_t>(eth_max_gasfee);
     EXPECT_EQ(eth_max_gasfee, max_gasfee);
-    printf("eth_max_gasfee: %s, max_gasfee: %lu\n", eth_max_gasfee.str().c_str(), max_gasfee);
 }
 
 TEST(test_gas_state_operator, test_new_available_tgas_interface) {
@@ -42,7 +41,7 @@ TEST(test_gas_state_operator, test_new_available_tgas_interface) {
     auto legcy_available_tgas = unit_state->get_available_tgas(now_time, token_price);
     EXPECT_EQ(legcy_available_tgas, unit_state->available_tgas(now_time, onchain_deposit_tgas));
 }
-
+#if 0
 TEST_F(xtest_gasfee_fixture_t, test_v2_transfer_init_deposit_not_enough) {
     default_deposit = ASSET_uTOP(99999);
     make_default();
@@ -75,8 +74,9 @@ TEST_F(xtest_gasfee_fixture_t, test_v2_transfer_init_ok) {
     EXPECT_EQ(op.m_time, default_onchain_time);
     EXPECT_EQ(op.m_onchain_tgas_deposit, default_onchain_deposit_tgas);
 }
+#endif
 
-TEST_F(xtest_gasfee_fixture_t, test_v3_transfer_T6_to_T6_init_limited_tgas_exceeded) {
+TEST_F(xtest_gasfee_fixture_t, test_v3_transfer_T6_to_T6_check_limited_gasfee_exceeded) {
     default_tx_version = data::xtransaction_version_3;
     default_evm_gas_limit = UINT64_MAX;
     default_evm_gas_limit *= 1000;
@@ -87,46 +87,56 @@ TEST_F(xtest_gasfee_fixture_t, test_v3_transfer_T6_to_T6_init_limited_tgas_excee
 
     auto op = make_operator();
     std::error_code ec;
-    op.init(ec);
+    op.check(ec);
     EXPECT_EQ(ec, make_error_code(gasfee::error::xenum_errc::tx_limited_gasfee_exceeded));
 }
 
-TEST_F(xtest_gasfee_fixture_t, test_v3_transfer_T6_to_T6_init_deposit_not_enough) {
+TEST_F(xtest_gasfee_fixture_t, test_v3_transfer_T6_to_T6_check_deposit_not_enough) {
     default_tx_version = data::xtransaction_version_3;
-    default_evm_gas_limit = 4999;
+    default_evm_gas_limit = 0;
+    make_default();
+
+    auto op = make_operator();
+    std::error_code ec;
+    op.check(ec);
+    EXPECT_EQ(ec, make_error_code(gasfee::error::xenum_errc::tx_deposit_not_enough));
+}
+
+TEST_F(xtest_gasfee_fixture_t, test_v3_transfer_T6_to_T6_check_balance_not_enough) {
+    default_balance = ASSET_uTOP(99999);
+    default_tx_version = data::xtransaction_version_3;
+    make_default();
+
+    auto op = make_operator();
+    std::error_code ec;
+    op.check(ec);
+    EXPECT_EQ(ec, make_error_code(gasfee::error::xenum_errc::account_balance_not_enough));
+}
+
+TEST_F(xtest_gasfee_fixture_t, test_v3_transfer_T6_to_T6_check_ok) {
+    default_tx_version = data::xtransaction_version_3;
+    make_default();
+
+    auto op = make_operator();
+    std::error_code ec;
+    op.check(ec);
+}
+
+TEST_F(xtest_gasfee_fixture_t, test_v3_transfer_T6_to_T6_init_ok) {
+    default_tx_version = data::xtransaction_version_3;
     make_default();
 
     auto op = make_operator();
     std::error_code ec;
     op.init(ec);
-    EXPECT_EQ(ec, make_error_code(gasfee::error::xenum_errc::tx_deposit_not_enough));
+    EXPECT_EQ(ec.value(), 0);
+    EXPECT_EQ(op.m_free_tgas, default_free_tgas);
+    EXPECT_EQ(op.m_converted_tgas, default_available_tgas - default_free_tgas);
+    EXPECT_EQ(op.m_time, default_onchain_time);
+    EXPECT_EQ(op.m_onchain_tgas_deposit, default_onchain_deposit_tgas);
 }
 
-// TEST_F(xtest_gasfee_fixture_t, test_v3_transfer_T6_to_T6_init_balance_not_enough) {
-//     default_balance = ASSET_uTOP(99999);
-//     default_tx_version = data::xtransaction_version_3;
-//     make_default();
-
-//     auto op = make_operator();
-//     std::error_code ec;
-//     op.init(ec);
-//     EXPECT_EQ(ec, make_error_code(gasfee::error::xenum_errc::account_balance_not_enough));
-// }
-
-// TEST_F(xtest_gasfee_fixture_t, test_v3_transfer_T6_to_T6_init_ok) {
-//     default_tx_version = data::xtransaction_version_3;
-//     make_default();
-
-//     auto op = make_operator();
-//     std::error_code ec;
-//     op.init(ec);
-//     EXPECT_EQ(ec.value(), 0);
-//     EXPECT_EQ(op.m_free_tgas, default_free_tgas);
-//     EXPECT_EQ(op.m_converted_tgas, default_available_tgas - default_free_tgas);
-//     EXPECT_EQ(op.m_time, default_onchain_time);
-//     EXPECT_EQ(op.m_onchain_tgas_deposit, default_onchain_deposit_tgas);
-// }
-
+#if 0
 TEST_F(xtest_gasfee_fixture_t, test_v3_transfer_T6_to_T8_init_deposit_not_enough) {
     default_tx_version = data::xtransaction_version_3;
     default_v3_deposit = ASSET_uTOP(100000-1);
@@ -137,7 +147,7 @@ TEST_F(xtest_gasfee_fixture_t, test_v3_transfer_T6_to_T8_init_deposit_not_enough
     op.init(ec);
     EXPECT_EQ(ec, make_error_code(gasfee::error::xenum_errc::tx_deposit_not_enough));
 }
-#if 0
+
 TEST_F(xtest_gasfee_fixture_t, test_v3_transfer_T6_to_T8_init_balance_not_enough) {
     default_balance = ASSET_uTOP(99999);
     default_tx_version = data::xtransaction_version_3;
@@ -166,6 +176,7 @@ TEST_F(xtest_gasfee_fixture_t, test_v3_transfer_T6_to_T8_init_ok) {
 }
 #endif
 TEST_F(xtest_gasfee_fixture_t, test_add_deposit_to_tgas_not_enough) {
+    default_tx_version = data::xtransaction_version_3;
     make_default();
 
     auto op = make_operator();
@@ -180,6 +191,7 @@ TEST_F(xtest_gasfee_fixture_t, test_add_deposit_to_tgas_not_enough) {
 }
 
 TEST_F(xtest_gasfee_fixture_t, test_add_use_all_free_tgas) {
+    default_tx_version = data::xtransaction_version_3;
     make_default();
 
     auto op = make_operator();
@@ -195,6 +207,7 @@ TEST_F(xtest_gasfee_fixture_t, test_add_use_all_free_tgas) {
 }
 
 TEST_F(xtest_gasfee_fixture_t, test_add_use_free_tgas) {
+    default_tx_version = data::xtransaction_version_3;
     make_default();
 
     auto op = make_operator();
@@ -208,7 +221,7 @@ TEST_F(xtest_gasfee_fixture_t, test_add_use_free_tgas) {
     EXPECT_EQ(op.m_converted_tgas_usage, 0);
     EXPECT_EQ(op.m_free_tgas_usage, new_usage);
 }
-
+#if 0
 TEST_F(xtest_gasfee_fixture_t, test_undo_process_fixed_tgas1) {
     make_default();
     auto op = make_operator();
@@ -232,7 +245,7 @@ TEST_F(xtest_gasfee_fixture_t, test_undo_process_fixed_tgas2) {
     EXPECT_EQ(ec.value(), 0);
     EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), default_balance);
 }
-#if 0 // TODO(jimmy) not used now CI can't pass
+
 TEST_F(xtest_gasfee_fixture_t, test_do_process_fixed_tgas) {
     default_recver = rec_registration_contract_address.value();
     make_default();
@@ -263,13 +276,14 @@ TEST_F(xtest_gasfee_fixture_t, test_do_process_fixed_tgas) {
 // }
 
 TEST_F(xtest_gasfee_fixture_t, test_store_in_one_stage) {
+    default_tx_version = data::xtransaction_version_3;
     make_default();
     auto op = make_operator();
     std::error_code ec;
     op.init(ec);
     EXPECT_EQ(ec.value(), 0);
     op.m_free_tgas_usage = op.m_free_tgas;
-    op.m_converted_tgas_usage = op.deposit() / 2 / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio);
+    op.m_converted_tgas_usage = uint64_t(op.tx_eth_limited_gasfee()) / 2 / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio);
     op.store_in_one_stage();
 
     auto detail = op.gasfee_detail();
@@ -287,6 +301,7 @@ TEST_F(xtest_gasfee_fixture_t, test_store_in_one_stage) {
     // EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_BURN)->get_balance(), base::vtoken_t(default_used_deposit));
 }
 
+#if 0
 TEST_F(xtest_gasfee_fixture_t, test_store_send) {
     make_default();
     auto op = make_operator();
@@ -517,7 +532,7 @@ TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v2_transfer_inner_table) {
     // EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance - 525 * 20));
     // EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_BURN)->get_balance(), base::vtoken_t(525 * 20));
 }
-#if 0  // TODO(jimmy) not used now CI can't pass
+
 TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v2_run_contract) {
     default_used_tgas = 1000000;
     default_last_time = 10000000;
@@ -612,7 +627,7 @@ TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v2_run_contract) {
     // EXPECT_EQ(default_confirm_cons_tx->get_current_used_tgas(), 0);
     // EXPECT_EQ(default_confirm_cons_tx->get_current_used_deposit(), (606 + tx_size) * 20);
 }
-#endif
+
 TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v2_run_contract_self) {
     default_used_tgas = 1000000;
     default_last_time = 10000000;
@@ -654,12 +669,13 @@ TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v2_run_contract_self) {
     // EXPECT_EQ(default_bstate->load_string_var(data::XPROPERTY_LAST_TX_HOUR_KEY)->query(), std::to_string(default_onchain_time));
     // EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance));
 }
+#endif
 
 TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v3_deploy) {
     default_tx_version = data::xtransaction_version_3;
     default_tx_type = data::xtransaction_type_deploy_evm_contract;
-    default_evm_gas_limit = 500000000000;
-    default_balance = ASSET_TOP(1000000);
+    default_evm_gas_limit = 5000000;
+    default_balance = ASSET_TOP(100000000);
     default_used_tgas = 1000000;
     default_last_time = 10000000;
     // send
@@ -688,8 +704,8 @@ TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v3_deploy) {
 }
 
 TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v3_transfer_inner_table_not_use_deposit) {
-    default_evm_gas_limit = 500000000;
-    default_balance = ASSET_TOP(1000000);
+    default_evm_gas_limit = 5000000;
+    default_balance = ASSET_TOP(100000000);
     default_tx_version = data::xtransaction_version_3;
     // send
     make_default();
@@ -718,8 +734,8 @@ TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v3_transfer_inner_table_not_use_depos
 TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v3_transfer_inner_table_use_deposit) {
     default_used_tgas = 1000000;
     default_last_time = 10000000;
-    default_evm_gas_limit = 500000000;
-    default_balance = ASSET_TOP(1000000);
+    default_evm_gas_limit = 5000000;
+    default_balance = ASSET_TOP(100000000);
     default_tx_version = data::xtransaction_version_3;
     // send
     make_default();
@@ -823,8 +839,8 @@ TEST(test_xtvm_v2, xtvm2_demo_v3_T6_transfer_inner_table) {
     statectx::xstatectx_face_ptr_t statectx = std::make_shared<xmock_statectx_t>();
     auto p_statectx = dynamic_cast<xmock_statectx_t *>(statectx.get());
     p_statectx->default_tx_version = data::xtransaction_version_3;
-    p_statectx->default_evm_gas_limit = 500000000;
-    p_statectx->default_balance = ASSET_TOP(1000000);
+    p_statectx->default_evm_gas_limit = 5000000;
+    p_statectx->default_balance = ASSET_TOP(100000000);
     p_statectx->default_used_tgas = 1000000;
     p_statectx->default_last_time = 10000000;
     p_statectx->default_sender = p_statectx->default_T6_sender;
@@ -866,7 +882,7 @@ TEST(test_xtvm_v2, xtvm2_demo_v3_T6_transfer_inner_table_use_eth) {
     statectx::xstatectx_face_ptr_t statectx = std::make_shared<xmock_statectx_t>();
     auto p_statectx = dynamic_cast<xmock_statectx_t *>(statectx.get());
     p_statectx->default_tx_version = data::xtransaction_version_3;
-    p_statectx->default_evm_gas_limit = 500000000;
+    p_statectx->default_evm_gas_limit = 21000;
     p_statectx->default_balance = 10;
     p_statectx->default_used_tgas = 1000000;
     p_statectx->default_last_time = 10000000;
