@@ -33,7 +33,7 @@ void xrpc_edge_vhost::on_message(const xvnode_address_t& sender, const xmessage_
 
         xrpc_msg_response_t msg = codec::xmsgpack_codec_t<xrpc_msg_response_t>::decode(message.payload());
         auto iter = this->m_edge_handler_map.find(msg.m_type);
-        assert(iter != this->m_edge_handler_map.end());
+        // assert(iter != this->m_edge_handler_map.end());
         if (iter != this->m_edge_handler_map.end()) {
             iter->second(sender, msg);
         }
