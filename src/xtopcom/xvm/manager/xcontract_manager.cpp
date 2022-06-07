@@ -98,7 +98,7 @@ void xtop_contract_manager::instantiate_sys_contracts() {
     XREGISTER_CONTRACT(top::xvm::xcontract::xtable_statistic_info_collection_contract, sys_contract_sharding_statistic_info_addr, network_id);
     // XREGISTER_CONTRACT(top::xvm::xcontract::xtable_statistic_info_collection_contract, sys_contract_eth_table_statistic_info_addr, network_id);
     XREGISTER_CONTRACT(top::xvm::system_contracts::zec::xzec_elect_eth_contract_t, sys_contract_zec_elect_eth_addr, network_id);
-    XREGISTER_CONTRACT(top::xvm::system_contracts::relay::xrelay_elect_relay_contract_t, sys_contract_relay_elect_relay_addr, network_id);
+    // TODO(JIMMY-RELAY-ELECTION) XREGISTER_CONTRACT(top::xvm::system_contracts::relay::xrelay_elect_relay_contract_t, sys_contract_relay_elect_relay_addr, network_id);
 }
 
 #undef XREGISTER_CONTRACT
