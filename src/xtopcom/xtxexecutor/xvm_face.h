@@ -61,7 +61,7 @@ struct xvm_gasfee_detail_t {
         std::stringstream ss;
         ss << "m_state_burn_balance: ";
         ss << m_state_burn_balance;
-        ss << "m_state_burn_eth_balance: ";
+        ss << ", m_state_burn_eth_balance: ";
         ss << m_state_burn_eth_balance.str();
         ss << ", m_state_lock_balance: ";
         ss << m_state_lock_balance;

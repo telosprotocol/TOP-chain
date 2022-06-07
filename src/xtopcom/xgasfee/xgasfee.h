@@ -38,11 +38,11 @@ private:
     void store_in_send_stage();
     void store_in_recv_stage();
     void store_in_confirm_stage();
-    void store_abnormal();
 
+    void check(std::error_code & ec);
     void init(std::error_code & ec);
     void add(const uint64_t tgas, std::error_code & ec);
-    void calculate(std::error_code & ec);
+    void calculate(const uint64_t supplement_gas, std::error_code & ec);
 
     void process_fixed_tgas(std::error_code & ec);
     void process_bandwith_tgas(std::error_code & ec);
