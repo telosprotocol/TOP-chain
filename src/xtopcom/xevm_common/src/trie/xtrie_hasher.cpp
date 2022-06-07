@@ -49,8 +49,8 @@ std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> xtop_trie_hasher::hash(x
     }
     default:
         xassert(false);
-        __builtin_unreachable();
     }
+    __builtin_unreachable();
 }
 
 xtrie_hash_node_ptr_t xtop_trie_hasher::hashData(xbytes_t input) {
