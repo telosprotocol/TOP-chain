@@ -197,8 +197,8 @@ public:
     uint64_t default_available_tgas{996158};
     data::enum_xtransaction_version default_tx_version{data::xtransaction_version_2};
     data::enum_xtransaction_type default_tx_type{data::xtransaction_type_transfer};
-    evm_common::u256 default_eth_per_gas{5000 * 20};
-    evm_common::u256 default_evm_gas_limit{5000};
+    evm_common::u256 default_eth_per_gas{5000000000};
+    evm_common::u256 default_evm_gas_limit{4};
     evm_common::u256 default_eth_value{1000};
 
     // data to build
