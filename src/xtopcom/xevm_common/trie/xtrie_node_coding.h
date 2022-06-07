@@ -15,6 +15,7 @@ public:
 
     static xtrie_node_face_ptr_t decodeNode(xhash256_t const & hash_bytes, xbytes_t const & buf, std::error_code & ec);
     static xtrie_node_face_ptr_t decodeNode(xtrie_hash_node_t hash, xbytes_t const & buf, std::error_code & ec);
+    static xtrie_node_face_ptr_t mustDecodeNode(xhash256_t const & hash_bytes, xbytes_t const & buf);
 
 private:
     static xtrie_node_face_ptr_t decodeShort(xtrie_hash_node_t hash, xbytes_t const & elems, std::error_code & ec);

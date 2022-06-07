@@ -43,6 +43,15 @@ xbytes_t xtop_trie_node_rlp::EncodeToBytes(xtrie_node_face_ptr_t node) {
     }
 }
 
+xtrie_node_face_ptr_t xtop_trie_node_rlp::mustDecodeNode(xhash256_t const & hash_bytes, xbytes_t const & buf) {
+    std::error_code ec;
+    auto n = decodeNode(hash_bytes, buf, ec);
+    if (ec) {
+        xerror("decode error: %s", ec.message().c_str());
+    }
+    return n;
+}
+
 xtrie_node_face_ptr_t xtop_trie_node_rlp::decodeNode(xhash256_t const & hash_bytes, xbytes_t const & buf, std::error_code & ec) {
     return decodeNode(xtrie_hash_node_t{hash_bytes}, buf, ec);
 }
