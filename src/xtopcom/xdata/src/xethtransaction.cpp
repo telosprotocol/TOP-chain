@@ -249,6 +249,11 @@ void xeth_transaction_t::decodeRLP_eip1599(bool includesig, evm_common::RLP cons
             }
             m_signS = _r[field = 11].toInt<evm_common::u256>();
         }
+
+        if (m_data.empty() && m_to.empty()) {
+            ec = eth_error(error::xenum_errc::eth_server_error, "rlp: input data and to all empty, not valid tx");
+            return;
+        }
     }
     catch (...)
     {

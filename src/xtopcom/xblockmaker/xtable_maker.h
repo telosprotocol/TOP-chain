@@ -78,7 +78,7 @@ class xtable_maker_t : public xblock_maker_t {
 
 class xeth_header_builder {
 public:
-    static const std::string build(uint64_t clock, data::enum_eth_header_format format, uint64_t gas_limit, evm_common::u256 base_price, const std::vector<txexecutor::xatomictx_output_t> & pack_txs_outputs = {});
+    static const std::string build(const xblock_consensus_para_t & cs_para, const std::vector<txexecutor::xatomictx_output_t> & pack_txs_outputs = {});
     static bool string_to_eth_header(const std::string & eth_header_str, data::xeth_header_t & eth_header);
 };
 
