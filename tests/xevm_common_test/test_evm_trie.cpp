@@ -1,4 +1,5 @@
 #include "xevm_common/trie/xtrie.h"
+#include "xevm_common/trie/xtrie_db.h"
 #include "xevm_common/trie/xtrie_node.h"
 #include "xevm_common/trie/xtrie_node_coding.h"
 #include "xevm_common/trie/xtrie_proof.h"
@@ -10,17 +11,33 @@ NS_BEG4(top, evm_common, trie, tests)
 
 // impl a memory test db.
 
-class xtest_memory_db : public xtrie_db_face_t {
+class xtest_disk_db : public xkv_db_face_t {
 public:
-    xtrie_node_face_ptr_t node(xhash256_t hash) override {
-        return m.at(hash);
+    void Put(xbytes_t const & key, xbytes_t const & value, std::error_code & ec) {
+        m[key] = value;
     }
-    void insert(xhash256_t hash, int32_t size, xtrie_node_face_ptr_t node) override {
-        m.insert({hash, node});
+    void Delete(xbytes_t const & key, std::error_code & ec) {
+        m.erase(key);
     }
-    std::map<xhash256_t, xtrie_node_face_ptr_t> m;
+    bool Has(xbytes_t const & key, std::error_code & ec) {
+        return m.find(key) != m.end();
+    }
+    xbytes_t Get(xbytes_t const & key, std::error_code & ec) {
+        if (!Has(key, ec)) {
+            ec = error::xerrc_t::trie_proof_missing;
+            return xbytes_t{};
+        }
+        return m[key];
+    }
+    void debug() {
+        for (auto const & p : m) {
+            xdbg("%s : %s", top::to_hex(p.first).c_str(), top::to_hex(p.second).c_str());
+        }
+    }
+
+    std::map<xbytes_t, xbytes_t> m;
 };
-using xtest_memory_db_ptr = std::shared_ptr<xtest_memory_db>;
+using xtest_disk_db_ptr = std::shared_ptr<xtest_disk_db>;
 
 class xtest_prove_db : public xkv_db_face_t {
 public:
@@ -47,10 +64,13 @@ using xtest_prove_db_ptr = std::shared_ptr<xtest_prove_db>;
 
 #define UpdateString(trie, key, value) trie->Update(top::to_bytes(std::string{key}), top::to_bytes(std::string{value}));
 
+#define TESTINTRIE(trie, key, value) ASSERT_EQ(trie->Get(top::to_bytes(std::string{key})), top::to_bytes(std::string{value}));
+
 TEST(xtrie, test_insert1) {
     std::error_code ec;
-    auto xtest_memory_db_ptr = std::make_shared<xtest_memory_db>();
-    auto trie = xtrie_t::New({}, xtest_memory_db_ptr, ec);
+    auto xtest_disk_db_ptr = std::make_shared<xtest_disk_db>();
+    auto xtrie_db_ptr = xtrie_db_t::NewDatabase(xtest_disk_db_ptr);
+    auto trie = xtrie_t::New({}, xtrie_db_ptr, ec);
     // std::cout << "root hash: " << top::to_hex(trie->Hash().as_array()) << std::endl;
 
     // trie->Update(top::to_bytes(std::string{"doe"}), top::to_bytes(std::string{"reindeer"}));
@@ -71,8 +91,9 @@ TEST(xtrie, test_insert1) {
 
 TEST(xtrie, test_insert2) {
     std::error_code ec;
-    auto xtest_memory_db_ptr = std::make_shared<xtest_memory_db>();
-    auto trie = xtrie_t::New({}, xtest_memory_db_ptr, ec);
+    auto xtest_disk_db_ptr = std::make_shared<xtest_disk_db>();
+    auto xtrie_db_ptr = xtrie_db_t::NewDatabase(xtest_disk_db_ptr);
+    auto trie = xtrie_t::New({}, xtrie_db_ptr, ec);
 
     UpdateString(trie, "A", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
     // std::cout << "root hash: " << top::to_hex(trie->Hash().as_array()) << std::endl;
@@ -85,8 +106,9 @@ TEST(xtrie, test_insert2) {
 
 TEST(xtrie, test_insert3) {
     std::error_code ec;
-    auto xtest_memory_db_ptr = std::make_shared<xtest_memory_db>();
-    auto trie = xtrie_t::New({}, xtest_memory_db_ptr, ec);
+    auto xtest_disk_db_ptr = std::make_shared<xtest_disk_db>();
+    auto xtrie_db_ptr = xtrie_db_t::NewDatabase(xtest_disk_db_ptr);
+    auto trie = xtrie_t::New({}, xtrie_db_ptr, ec);
 
     UpdateString(trie, "A", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
     // std::cout << "root hash: " << top::to_hex(trie->Hash().as_array()) << std::endl;
@@ -101,8 +123,9 @@ TEST(xtrie, test_insert3) {
 
 TEST(xtrie, test_get) {
     std::error_code ec;
-    auto xtest_memory_db_ptr = std::make_shared<xtest_memory_db>();
-    auto trie = xtrie_t::New({}, xtest_memory_db_ptr, ec);
+    auto xtest_disk_db_ptr = std::make_shared<xtest_disk_db>();
+    auto xtrie_db_ptr = xtrie_db_t::NewDatabase(xtest_disk_db_ptr);
+    auto trie = xtrie_t::New({}, xtrie_db_ptr, ec);
 
     UpdateString(trie, "doe", "reindeer");
     UpdateString(trie, "dog", "puppy");
@@ -117,8 +140,9 @@ TEST(xtrie, test_get) {
 
 TEST(xtrie, test_delete) {
     std::error_code ec;
-    auto xtest_memory_db_ptr = std::make_shared<xtest_memory_db>();
-    auto trie = xtrie_t::New({}, xtest_memory_db_ptr, ec);
+    auto xtest_disk_db_ptr = std::make_shared<xtest_disk_db>();
+    auto xtrie_db_ptr = xtrie_db_t::NewDatabase(xtest_disk_db_ptr);
+    auto trie = xtrie_t::New({}, xtrie_db_ptr, ec);
 
     UpdateString(trie, "do", "verb");
     // std::cout << "root hash: after [verb] " << top::to_hex(trie->Hash().as_array()) << std::endl;
@@ -145,8 +169,9 @@ TEST(xtrie, test_delete) {
 
 TEST(xtrie, test_empty_value_as_delete) {
     std::error_code ec;
-    auto xtest_memory_db_ptr = std::make_shared<xtest_memory_db>();
-    auto trie = xtrie_t::New({}, xtest_memory_db_ptr, ec);
+    auto xtest_disk_db_ptr = std::make_shared<xtest_disk_db>();
+    auto xtrie_db_ptr = xtrie_db_t::NewDatabase(xtest_disk_db_ptr);
+    auto trie = xtrie_t::New({}, xtrie_db_ptr, ec);
 
     UpdateString(trie, "do", "verb");
     UpdateString(trie, "ether", "wookiedoo");
@@ -163,11 +188,11 @@ TEST(xtrie, test_empty_value_as_delete) {
     ASSERT_EQ(exp, trie->Hash());
 }
 
-// todo
 TEST(xtrie, test_replication) {
     std::error_code ec;
-    auto xtest_memory_db_ptr = std::make_shared<xtest_memory_db>();
-    auto trie = xtrie_t::New({}, xtest_memory_db_ptr, ec);
+    auto xtest_disk_db_ptr = std::make_shared<xtest_disk_db>();
+    auto xtrie_db_ptr = xtrie_db_t::NewDatabase(xtest_disk_db_ptr);
+    auto trie = xtrie_t::New({}, xtrie_db_ptr, ec);
 
     UpdateString(trie, "do", "verb");
     UpdateString(trie, "ether", "wookiedoo");
@@ -177,13 +202,30 @@ TEST(xtrie, test_replication) {
     UpdateString(trie, "dog", "puppy");
     UpdateString(trie, "somethingveryoddindeedthis is", "myothernodedata");
 
-    // need impl Commit
+    xbytes_t res0;
+    res0 = trie->Get(top::to_bytes(std::string{"do"}));
+    ASSERT_EQ(res0, top::to_bytes(std::string{"verb"}));
+
+    auto exp = trie->Commit(ec).first;
+
+    //----------new trie from db && root hash
+    auto trie2 = xtrie_t::New(exp, xtrie_db_ptr, ec);
+    ASSERT_TRUE(!ec);
+
+    TESTINTRIE(trie2, "do", "verb");
+    TESTINTRIE(trie2, "ether", "wookiedoo");
+    TESTINTRIE(trie2, "horse", "stallion");
+    TESTINTRIE(trie2, "shaman", "horse");
+    TESTINTRIE(trie2, "doge", "coin");
+    TESTINTRIE(trie2, "dog", "puppy");
+    TESTINTRIE(trie2, "somethingveryoddindeedthis is", "myothernodedata");
 }
 
 TEST(xtrie, test_large_value) {
     std::error_code ec;
-    auto xtest_memory_db_ptr = std::make_shared<xtest_memory_db>();
-    auto trie = xtrie_t::New({}, xtest_memory_db_ptr, ec);
+    auto xtest_disk_db_ptr = std::make_shared<xtest_disk_db>();
+    auto xtrie_db_ptr = xtrie_db_t::NewDatabase(xtest_disk_db_ptr);
+    auto trie = xtrie_t::New({}, xtrie_db_ptr, ec);
 
     trie->Update(top::to_bytes(std::string{"key1"}), xbytes_t(4, 99));  //{99,99,99,99}
     trie->Update(top::to_bytes(std::string{"key2"}), xbytes_t(32, 1));  //{1,1,1,...,1}
@@ -196,8 +238,9 @@ TEST(xtrie, test_large_value) {
 
 TEST(xtrie, test_encoding_trie) {
     std::error_code ec;
-    auto xtest_memory_db_ptr = std::make_shared<xtest_memory_db>();
-    auto trie = xtrie_t::New({}, xtest_memory_db_ptr, ec);
+    auto xtest_disk_db_ptr = std::make_shared<xtest_disk_db>();
+    auto xtrie_db_ptr = xtrie_db_t::NewDatabase(xtest_disk_db_ptr);
+    auto trie = xtrie_t::New({}, xtrie_db_ptr, ec);
 
     UpdateString(trie, "do", "verb");
     UpdateString(trie, "ether", "wookiedoo");
@@ -229,8 +272,9 @@ TEST(xtrie, test_encoding_trie) {
 
 TEST(xtrie, test_prove_sample) {
     std::error_code ec;
-    auto xtest_memory_db_ptr = std::make_shared<xtest_memory_db>();
-    auto trie = xtrie_t::New({}, xtest_memory_db_ptr, ec);
+    auto xtest_disk_db_ptr = std::make_shared<xtest_disk_db>();
+    auto xtrie_db_ptr = xtrie_db_t::NewDatabase(xtest_disk_db_ptr);
+    auto trie = xtrie_t::New({}, xtrie_db_ptr, ec);
 
     UpdateString(trie, "doe", "reindeer");
     UpdateString(trie, "dog", "puppy");
@@ -280,8 +324,9 @@ TEST(xtrie, test_prove_sample) {
 
 TEST(xtrie, test_verify_one_element_proof) {
     std::error_code ec;
-    auto xtest_memory_db_ptr = std::make_shared<xtest_memory_db>();
-    auto trie = xtrie_t::New({}, xtest_memory_db_ptr, ec);
+    auto xtest_disk_db_ptr = std::make_shared<xtest_disk_db>();
+    auto xtrie_db_ptr = xtrie_db_t::NewDatabase(xtest_disk_db_ptr);
+    auto trie = xtrie_t::New({}, xtrie_db_ptr, ec);
 
     UpdateString(trie, "k", "v");
     auto xtest_prove_memory_db_ptr = std::make_shared<xtest_prove_db>();

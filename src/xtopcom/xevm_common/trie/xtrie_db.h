@@ -5,8 +5,8 @@
 #pragma once
 
 #include "xbasic/xhash.hpp"
-#include "xevm_common/trie/xtrie_db_face.h"
-#include "xevm_common/trie/xtrie_node.h"
+#include "xevm_common/trie/xtrie_kv_db_face.h"
+#include "xevm_common/trie/xtrie_node_fwd.h"
 
 #include <functional>
 #include <map>
@@ -25,9 +25,24 @@ public:
 using xtrie_db_config_t = xtop_trie_db_config;
 using xtrie_db_config_ptr_t = std::shared_ptr<xtrie_db_config_t>;
 
+// fwd:
+class xtop_trie_cache_node;
+using xtrie_cache_node_t = xtop_trie_cache_node;
+
 class xtop_trie_db {
 private:
+    friend class xtop_trie_cache_node;
     xkv_db_face_ptr_t diskdb;  // Persistent storage for matured trie nodes
+
+    std::map<xhash256_t, xbytes_t> cleans;
+    std::map<xhash256_t, xtrie_cache_node_t> dirties;
+
+    xhash256_t oldest;
+    xhash256_t newest;
+
+public:
+    xtop_trie_db(xkv_db_face_ptr_t _diskdb) : diskdb(_diskdb) {
+    }
 
 public:
     // NewDatabase creates a new trie database to store ephemeral trie content before
@@ -46,8 +61,14 @@ public:
     }
 
 public:
+    // node retrieves a cached trie node from memory, or returns nil if none can be
+    // found in the memory cache.
     xtrie_node_face_ptr_t node(xhash256_t hash);
 
+    // insert inserts a collapsed trie node into the memory database.
+    // The blob size must be specified to allow proper size tracking.
+    // All nodes inserted by this function will be reference tracked
+    // and in theory should only used for **trie nodes** insertion.
     void insert(xhash256_t hash, int32_t size, xtrie_node_face_ptr_t node);
 };
 using xtrie_db_t = xtop_trie_db;
@@ -66,7 +87,10 @@ private:
     xhash256_t flushPrev;  // Previous node in the flush-list
     xhash256_t flushNext;  // Next node in the flush-list
 
-public:
+private:
+    xtop_trie_cache_node(xtrie_node_face_ptr_t _node, uint16_t _size, xhash256_t _flushPrev) : node{_node}, size{_size}, flushPrev{_flushPrev} {
+    }
+
 private:
     // rlp returns the raw rlp encoded blob of the cached trie node, either directly
     // from the cache, or by regenerating it from the collapsed node.

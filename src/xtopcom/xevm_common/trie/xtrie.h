@@ -8,7 +8,7 @@
 #include "xbase/xns_macro.h"
 #include "xbasic/xhash.hpp"
 #include "xbasic/xhex.h"
-#include "xevm_common/trie/xtrie_db_face.h"
+#include "xevm_common/trie/xtrie_db.h"
 #include "xevm_common/trie/xtrie_node.h"
 #include "xevm_common/trie/xtrie_node_coding.h"
 
@@ -20,17 +20,17 @@ NS_BEG3(top, evm_common, trie)
 
 class xtop_trie {
 private:
-    xtrie_db_face_ptr_t m_db;
+    xtrie_db_ptr_t m_db;
     xtrie_node_face_ptr_t m_root;
 
     std::size_t unhashed{0};
 
 public:
-    xtop_trie(xtrie_db_face_ptr_t db) : m_db{db} {
+    xtop_trie(xtrie_db_ptr_t db) : m_db{db} {
     }
 
 public:
-    static std::shared_ptr<xtop_trie> New(xhash256_t hash, xtrie_db_face_ptr_t db, std::error_code & ec);
+    static std::shared_ptr<xtop_trie> New(xhash256_t hash, xtrie_db_ptr_t db, std::error_code & ec);
 
 public:
     // Reset drops the referenced root node and cleans all internal state.
