@@ -153,12 +153,9 @@ void xrpc_eth_parser_t::blockheader_to_json(base::xvblock_t* _block, xJson::Valu
     js_v["totalDifficulty"] = "0x0";
     js_v["uncles"].resize(0);
     js_v["sha3Uncles"] = std::string("0x") + std::string(64, '0');
-    js_v["extraData"] = std::string("0x") + std::string(50, '0');  // TODO(jimmy)
 
     // TODO(jimmy) should implement correctly later
     js_v["size"] = "0x219";
-    js_v["miner"] = std::string("0x") + std::string(40, '0');
-
     // already implemented
     js_v["gasLimit"] = uint64_to_hex_prefixed(ethheader.get_gaslimit());
     js_v["gasUsed"] = uint64_to_hex_prefixed(ethheader.get_gasused());
@@ -170,8 +167,10 @@ void xrpc_eth_parser_t::blockheader_to_json(base::xvblock_t* _block, xJson::Valu
     js_v["transactionsRoot"] = top::to_hex_prefixed(ethheader.get_transactions_root().asBytes());
     js_v["stateRoot"] = top::to_hex_prefixed(ethheader.get_state_root().asBytes());
     js_v["timestamp"] = uint64_to_hex_prefixed(_block->get_timestamp());
-    js_v["transactions"].resize(0);
     js_v["baseFeePerGas"] = u256_to_hex_prefixed(ethheader.get_baseprice());
+    js_v["miner"] = ethheader.get_coinbase().to_hex_string();
+    js_v["extraData"] = top::to_hex_prefixed(ethheader.get_extra_data());
+    js_v["transactions"].resize(0);
 }
 
 data::xtransaction_ptr_t xrpc_eth_parser_t::json_to_ethtx(xJson::Value const& request, data::eth_error& ec) {

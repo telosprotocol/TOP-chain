@@ -94,6 +94,13 @@ void xblock_consensus_para_t::set_tableblock_consensus_para(uint64_t drand_heigh
     m_total_lock_tgas_token_property_height = total_lock_tgas_token_property_height;
 }
 
+xvip2_t xblock_consensus_para_t::get_leader_xip() const {
+    if (m_auditor.high_addr != 0 && m_auditor.low_addr != 0 && get_node_id_from_xip2(m_auditor) != 0x3FF) {
+        return m_auditor;
+    }
+    return m_validator;
+}
+
 xobject_ptr_t<xblock_t> xblock_t::raw_vblock_to_object_ptr(base::xvblock_t* vblock) {
     xblock_ptr_t object_ptr;
     xblock_t* block_ptr = dynamic_cast<xblock_t*>(vblock);
