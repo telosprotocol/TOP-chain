@@ -35,6 +35,7 @@ public:
     virtual void input(uint64_t register_id) = 0;
 
     // EVM API:
+    virtual uint64_t chain_id() = 0;
     virtual void block_coinbase(uint64_t register_id) = 0;
     virtual uint64_t block_height() = 0;
     virtual uint64_t block_timestamp() = 0;

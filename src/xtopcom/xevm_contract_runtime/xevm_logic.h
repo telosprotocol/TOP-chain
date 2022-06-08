@@ -54,6 +54,7 @@ public:
     void input(uint64_t register_id) override;
 
     // EVM API:
+    uint64_t chain_id() override;
     void block_coinbase(uint64_t register_id) override;
     uint64_t block_height() override;
     uint64_t block_timestamp() override;
