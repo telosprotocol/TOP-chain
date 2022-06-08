@@ -2,7 +2,6 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #include "eth_method.h"
-#include <sstream>
 #include "xbasic/xhex.h"
 #include "eth_error_code.h"
 #include "xconfig/xconfig_register.h"
