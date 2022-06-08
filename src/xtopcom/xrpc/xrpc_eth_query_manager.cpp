@@ -1069,6 +1069,7 @@ void xrpc_eth_query_manager::top_getRelayBlockByNumber(xJson::Value & js_req, xJ
     uint16_t size = 0;
     stream >> size;
 
+    std::vector<xrelay_signature_node_t> signature_nodes;
     data::xrelay_block relay_block;
     for (uint16_t i = 0; i < size; i++) {
         xvip2_t xip;
@@ -1086,15 +1087,18 @@ void xrpc_eth_query_manager::top_getRelayBlockByNumber(xJson::Value & js_req, xJ
         xdbg("top_getRelayBlockByNumber, sign_str: %s", top::HexEncode(sign_str).c_str());
         uint8_t compact_signature[65];
         memcpy(compact_signature, sign_str.data(), sign_str.size());
-        xrelay_signature signature;
-        signature.v = compact_signature[0];
+        xrelay_signature_node_t signature{sign_str};
+        signature_nodes.push_back(signature);
+
+       /* signature.v = compact_signature[0];
         top::evm_common::bytes r_bytes(compact_signature + 1, compact_signature + 33);
         signature.r = top::evm_common::fromBigEndian<top::evm_common::u256>(r_bytes);
         top::evm_common::bytes s_bytes(compact_signature + 33, compact_signature + 65);
-        signature.s = top::evm_common::fromBigEndian<top::evm_common::u256>(s_bytes);
-        relay_block.add_signature(signature);
+        signature.s = top::evm_common::fromBigEndian<top::evm_common::u256>(s_bytes);*/
+       // todo
+       // relay_block.add_signature(signature);
     }
-
+    relay_block.add_signature_nodes(signature_nodes);
     std::string relay_block_data = block->get_header()->get_extra_data();
     xdbg("top_getRelayBlockByNumber, relay_block_data: %s", top::HexEncode(relay_block_data).c_str());
     std::error_code ec;

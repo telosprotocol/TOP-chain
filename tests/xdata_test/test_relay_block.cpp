@@ -23,6 +23,7 @@ protected:
 
 
 //test data
+const std::string  test_signature {"1BETTgEv6HFFtxTVCQZBioXc5M2oXb5iPQgoO6qlXlPEzTPK4D2yuz4pAfQqfxwAC"};
 const std::string  test_address   {"0xbc9b5f068bc20a5b12030fcb72975d8bddc4e84c"};
 const std::string  test_to_address{"0xaaaaaf068bc20a5b12030fcb72975d8bddc4e84c"};
 const h256 test_topics1{"4f89ece0f576ba3986204ba19a44d94601604b97cf3baa922b010a758d303842"};
@@ -115,14 +116,35 @@ xrelay_election_node_t xrelay_election_create()
     return _election;
 }
 
-xrelay_signature xrelay_signature_create(unsigned num = 0)
+xrelay_signature_node_t xrelay_signature_node_t_create(bool exist)
 {
-    xrelay_signature _signature;
-    _signature.r = test_r;
-    _signature.s = test_s;
-    _signature.v = test_v + num;
-    return _signature;
+    xrelay_signature_node_t _signature_node;
+    if (exist) {
+       _signature_node.exist = true;
+        _signature_node.signature.r = test_r;
+        _signature_node.signature.s = test_s;
+        _signature_node.signature.v = test_v;
+    } else {
+        _signature_node.exist = false;
+    }
+    
+    return _signature_node;
 }
+
+
+xrelay_signature_node_t xrelay_signature_node_t_string_create(bool exist)
+{
+    xrelay_signature_node_t _signature_node;
+    if (exist) {
+       _signature_node = xrelay_signature_node_t(test_signature);
+    } else {
+        std::string error_signature = "abcdef";
+        _signature_node = xrelay_signature_node_t(error_signature);
+    }
+    
+    return _signature_node;
+}
+
 
 xrelay_block_inner_header xrelay_block_inner_header_create()
 {
@@ -152,9 +174,13 @@ xrelay_block_header xrelay_block_header_create()
     }
     _block_header.set_elections_next(election_set);
 
+    std::vector<xrelay_signature_node_t> signature_nodes;
     for (int i = 0; i < TEST_SIGNATURE_NUM; i++) {
-        _block_header.add_signature(xrelay_signature_create(i));
+        signature_nodes.push_back(xrelay_signature_node_t_create(true));
     }
+
+    _block_header.add_signature_nodes(signature_nodes);
+
     return _block_header;
 }
 
@@ -259,20 +285,73 @@ TEST_F(test_relay_block, serialize_xrelay_election) {
 
 TEST_F(test_relay_block, serialize_xrelay_signature) {
 
-    xrelay_signature signature_src = xrelay_signature_create();
+    xrelay_signature_node_t signature_src = xrelay_signature_node_t_create(true);
 
     RLPStream rlp_signature;
     signature_src.streamRLP(rlp_signature);
     bytes  rlp_bytes = rlp_signature.out();
     RLP rlp_dst = RLP(rlp_bytes);
 
-    xrelay_signature signature_dst;
+    xrelay_signature_node_t signature_dst;
     std::error_code  ec;
     signature_dst.decodeRLP(rlp_dst, ec);
 
-    EXPECT_EQ(signature_dst.r, signature_src.r);
-    EXPECT_EQ(signature_dst.s, signature_src.s);
-    EXPECT_EQ(signature_dst.v, signature_src.v);
+    EXPECT_EQ(signature_dst.exist, signature_src.exist);
+    EXPECT_EQ(signature_dst.signature.r, signature_src.signature.r);
+    EXPECT_EQ(signature_dst.signature.s, signature_src.signature.s);
+    EXPECT_EQ(signature_dst.signature.v, signature_src.signature.v);
+}
+
+TEST_F(test_relay_block, serialize_xrelay_signature_empty) {
+
+    xrelay_signature_node_t signature_src = xrelay_signature_node_t_create(false);
+
+    RLPStream rlp_signature;
+    signature_src.streamRLP(rlp_signature);
+    bytes  rlp_bytes = rlp_signature.out();
+    RLP rlp_dst = RLP(rlp_bytes);
+
+    xrelay_signature_node_t signature_dst;
+    std::error_code  ec;
+    signature_dst.decodeRLP(rlp_dst, ec);
+
+    EXPECT_EQ(signature_dst.exist, signature_src.exist);
+}
+
+
+TEST_F(test_relay_block, serialize_xrelay_signature_string) {
+
+    xrelay_signature_node_t signature_src = xrelay_signature_node_t_string_create(true);
+
+    RLPStream rlp_signature;
+    signature_src.streamRLP(rlp_signature);
+    bytes  rlp_bytes = rlp_signature.out();
+    RLP rlp_dst = RLP(rlp_bytes);
+
+    xrelay_signature_node_t signature_dst;
+    std::error_code  ec;
+    signature_dst.decodeRLP(rlp_dst, ec);
+
+    EXPECT_EQ(signature_dst.exist, signature_src.exist);
+    EXPECT_EQ(signature_dst.signature.r, signature_src.signature.r);
+    EXPECT_EQ(signature_dst.signature.s, signature_src.signature.s);
+    EXPECT_EQ(signature_dst.signature.v, signature_src.signature.v);
+}
+
+TEST_F(test_relay_block, serialize_xrelay_signature_string_empty) {
+
+    xrelay_signature_node_t signature_src = xrelay_signature_node_t_create(false);
+
+    RLPStream rlp_signature;
+    signature_src.streamRLP(rlp_signature);
+    bytes  rlp_bytes = rlp_signature.out();
+    RLP rlp_dst = RLP(rlp_bytes);
+
+    xrelay_signature_node_t signature_dst;
+    std::error_code  ec;
+    signature_dst.decodeRLP(rlp_dst, ec);
+
+    EXPECT_EQ(signature_dst.exist, signature_src.exist);
 }
 
 TEST_F(test_relay_block, serialize_xrelay_inner_header) {
@@ -366,11 +445,12 @@ TEST_F(test_relay_block, serialize_xrelay_block_header_with_signature) {
     EXPECT_EQ(block_header_dst.get_signatures_sets().size(), TEST_SIGNATURE_NUM);
     EXPECT_EQ(block_header_src.get_signatures_sets().size(), TEST_SIGNATURE_NUM);
     for (unsigned i = 0; i < TEST_SIGNATURE_NUM; i++) {
-        xrelay_signature xrelay_signature_dst = block_header_dst.get_signatures_sets()[i];
-        xrelay_signature xrelay_signature_src = block_header_src.get_signatures_sets()[i];
-        EXPECT_EQ(xrelay_signature_dst.r,  xrelay_signature_src.r);
-        EXPECT_EQ(xrelay_signature_dst.s, xrelay_signature_src.s);
-        EXPECT_EQ(xrelay_signature_dst.v, xrelay_signature_src.v);
+        xrelay_signature_node_t xrelay_signature_dst = block_header_dst.get_signatures_sets()[i];
+        xrelay_signature_node_t xrelay_signature_src = block_header_src.get_signatures_sets()[i];
+        EXPECT_EQ(xrelay_signature_dst.exist,  xrelay_signature_src.exist);
+        EXPECT_EQ(xrelay_signature_dst.signature.r,  xrelay_signature_src.signature.r);
+        EXPECT_EQ(xrelay_signature_dst.signature.s, xrelay_signature_src.signature.s);
+        EXPECT_EQ(xrelay_signature_dst.signature.v, xrelay_signature_src.signature.v);
     }
 
 }
@@ -412,11 +492,12 @@ TEST_F(test_relay_block, serialize_xrelay_block_header_with_contract) {
     EXPECT_EQ(block_header_dst.get_signatures_sets().size(), TEST_SIGNATURE_NUM);
     EXPECT_EQ(block_header_src.get_signatures_sets().size(), TEST_SIGNATURE_NUM);
     for (unsigned i = 0; i < TEST_SIGNATURE_NUM; i++) {
-        xrelay_signature xrelay_signature_dst = block_header_dst.get_signatures_sets()[i];
-        xrelay_signature xrelay_signature_src = block_header_src.get_signatures_sets()[i];
-        EXPECT_EQ(xrelay_signature_dst.r,  xrelay_signature_src.r);
-        EXPECT_EQ(xrelay_signature_dst.s, xrelay_signature_src.s);
-        EXPECT_EQ(xrelay_signature_dst.v, xrelay_signature_src.v);
+        xrelay_signature_node_t xrelay_signature_dst = block_header_dst.get_signatures_sets()[i];
+        xrelay_signature_node_t xrelay_signature_src = block_header_src.get_signatures_sets()[i];
+        EXPECT_EQ(xrelay_signature_dst.exist,  xrelay_signature_src.exist);
+        EXPECT_EQ(xrelay_signature_dst.signature.r,  xrelay_signature_src.signature.r);
+        EXPECT_EQ(xrelay_signature_dst.signature.s, xrelay_signature_src.signature.s);
+        EXPECT_EQ(xrelay_signature_dst.signature.v, xrelay_signature_src.signature.v);
     }
 
     xbytes_t rlp_block_header_data =  block_header_src.streamRLP_header_to_contract();
@@ -518,11 +599,12 @@ TEST_F(test_relay_block, serialize_xrelay_block_with_signature) {
     EXPECT_EQ(block_header_dst.get_signatures_sets().size(), TEST_SIGNATURE_NUM);
     EXPECT_EQ(block_header_src.get_signatures_sets().size(), TEST_SIGNATURE_NUM);
     for (unsigned i = 0; i < TEST_SIGNATURE_NUM; i++) {
-        xrelay_signature xrelay_signature_dst = block_header_dst.get_signatures_sets()[i];
-        xrelay_signature xrelay_signature_src = block_header_src.get_signatures_sets()[i];
-        EXPECT_EQ(xrelay_signature_dst.r, xrelay_signature_src.r);
-        EXPECT_EQ(xrelay_signature_dst.s, xrelay_signature_src.s);
-        EXPECT_EQ(xrelay_signature_dst.v, xrelay_signature_src.v);
+        xrelay_signature_node_t xrelay_signature_dst = block_header_dst.get_signatures_sets()[i];
+        xrelay_signature_node_t xrelay_signature_src = block_header_src.get_signatures_sets()[i];
+        EXPECT_EQ(xrelay_signature_dst.exist,  xrelay_signature_src.exist);
+        EXPECT_EQ(xrelay_signature_dst.signature.r,  xrelay_signature_src.signature.r);
+        EXPECT_EQ(xrelay_signature_dst.signature.s, xrelay_signature_src.signature.s);
+        EXPECT_EQ(xrelay_signature_dst.signature.v, xrelay_signature_src.signature.v);
     }
 
     xrelay_block_inner_header inner_header_dst = block_dst.get_inner_header();
