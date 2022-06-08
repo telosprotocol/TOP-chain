@@ -152,7 +152,7 @@ void sign_block_hash(xrelay_block &block, h256 block_hash)
         top::evm_common::bytes s_bytes(sig.get_raw_signature() + 32, sig.get_raw_signature() + 64);
         signature.s = top::evm_common::fromBigEndian<top::evm_common::u256>(s_bytes);
          std::cout << "signature.s  " <<  signature.s << std::endl;
-        block.add_signature(signature);
+       // block.add_signature(signature);
 
         std::cout << "public " << std::endl;
         std::cout << "signature. block_hash  x " << vote.election.public_key_x.hex() << std::endl;

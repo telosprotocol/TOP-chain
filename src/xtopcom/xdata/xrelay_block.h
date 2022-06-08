@@ -39,34 +39,47 @@ namespace data {
     */
 
     struct xrelay_election_node_t {
-        xrelay_election_node_t() {}
-        xrelay_election_node_t(const evm_common::h256 & pubkey_x, const evm_common::h256 & pubkey_y, uint64_t stk) : public_key_x(pubkey_x), public_key_y(pubkey_y), stake(stk) {}
-        //election key 
-        evm_common::h256        public_key_x;
+        xrelay_election_node_t() = default;
+        xrelay_election_node_t(const evm_common::h256 & pubkey_x, const evm_common::h256 & pubkey_y, uint64_t stk) : stake(stk) ,public_key_x(pubkey_x), public_key_y(pubkey_y) {}
+       
+        void    streamRLP(evm_common::RLPStream &_s) const; 
+        bool    decodeRLP(evm_common::RLP const& _r, std::error_code & ec);
+
+        uint64_t                stake;           //election stake
+        evm_common::h256        public_key_x;    //election key 
         evm_common::h256        public_key_y;
-         //election stake
-        uint64_t                stake;
-        void streamRLP(evm_common::RLPStream &_s) const; 
-        bool decodeRLP(evm_common::RLP const& _r, std::error_code & ec);
     };
 
     struct xrelay_election_group_t {
-        //epoch id for these elections
-        uint64_t                     election_epochID;
-        std::vector<xrelay_election_node_t> elections_vector;
-        void streamRLP(evm_common::RLPStream &_s) const; 
-        bool decodeRLP(evm_common::RLP const& _r, std::error_code & ec);
-        size_t      size() const { return elections_vector.size();}
+        xrelay_election_group_t() = default;
+        void    streamRLP(evm_common::RLPStream &_s) const; 
+        bool    decodeRLP(evm_common::RLP const& _r, std::error_code & ec);
+        size_t  size() const { return elections_vector.size();}
+
+        uint64_t                            election_epochID;   //epoch id for these elections
+        std::vector<xrelay_election_node_t> elections_vector;   
+
     };
 
-    struct xrelay_signature {
-        xrelay_signature() {}
-        xrelay_signature(const std::string & sign_str);
+    struct xrelay_signature_t {
+        xrelay_signature_t() = default;
+        xrelay_signature_t(const std::string & sign_str);
+        void streamRLP(evm_common::RLPStream &_s) const;
+        bool decodeRLP(evm_common::RLP const& _r, std::error_code & ec);
+
         evm_common::h256    r;
         evm_common::h256    s;
         evm_common::byte    v;
+    };
+
+    struct xrelay_signature_node_t {
+        xrelay_signature_node_t() = default;
+        xrelay_signature_node_t(const std::string & sign_str);
         void streamRLP(evm_common::RLPStream &_s) const;
         bool decodeRLP(evm_common::RLP const& _r, std::error_code & ec);
+
+        bool                exist{false};          //check signature if exist
+        xrelay_signature_t  signature;
     };
 
     class  xrelay_block_inner_header{
@@ -99,25 +112,15 @@ namespace data {
         bool                             decodeRLP(evm_common::RLP const& _r, std::error_code & ec);
 
     private:
-        //computable hash(inner_header data, no rlp )
-        evm_common::h256    m_inner_hash; 
-
+        evm_common::h256    m_inner_hash;              //computable hash(inner_header data, no rlp )
         uint8_t             m_version{0};
-        //block height
-        uint64_t            m_height;
-        // Epoch id of this block's epoch. Used for retrieving validator information
-        uint64_t            m_epochID;
-        //Timestamp at which the block was built.
-        uint64_t            m_timestamp;
-
-        // root hash of the  transactions in the given block. now is null
-        evm_common::h256    m_txs_merkle_root;
-        // root hash of the  receipts in the given block.
-        evm_common::h256    m_receipts_merkle_root;
-        // Merkle root of block hashes up to the current block.
-        evm_common::h256    m_block_merkle_root;
-
-        static const unsigned inner_fileds = 6;
+        uint64_t            m_height{0};               //block height
+        uint64_t            m_epochID{0};              // Epoch id of this block's epoch. Used for retrieving validator information
+        uint64_t            m_timestamp{0};            //Timestamp at which the block was built.
+        evm_common::h256    m_txs_merkle_root;         // root hash of the  transactions in the given block. now is null
+        evm_common::h256    m_receipts_merkle_root;    // root hash of the  receipts in the given block.
+        evm_common::h256    m_block_merkle_root;       // Merkle root of block hashes up to the current block.
+        static const unsigned inner_fileds = 6;        
     };
 
     class xrelay_block_header {
@@ -143,7 +146,7 @@ namespace data {
        void                             set_epochid(uint64_t id);
        void                             set_timestamp(uint64_t timestamp);
        void                             set_elections_next(const xrelay_election_group_t &elections);
-       void                             add_signature(xrelay_signature signature);
+       void                             add_signature_nodes(std::vector<xrelay_signature_node_t> signature_nodes);
 
        const xrelay_block_inner_header  &get_inner_header() const {return m_inner_header; }
        const evm_common::h256           &get_inner_header_hash() const {return m_inner_header.get_inner_header_hash();}
@@ -156,9 +159,8 @@ namespace data {
        const evm_common::h256           &get_block_hash() const { return m_block_hash;}
 
 
-       const xrelay_election_group_t        &get_elections_sets() const { return m_next_elections_set;}
-       const std::vector<xrelay_signature>  &get_signatures_sets() const { return m_block_signatures;}
-
+       const xrelay_election_group_t               &get_elections_sets() const { return m_next_elections_groups;}
+       const std::vector<xrelay_signature_node_t>  &get_signatures_sets() const { return m_block_signatures_nodes;}
        void                              make_inner_hash();
 
     protected:
@@ -166,18 +168,13 @@ namespace data {
        bool                             decodeRLP(evm_common::RLP const& _r,  std::error_code & ec, bool withSignature) ;
 
     private:
-        //hash of this block
-        evm_common::h256                m_block_hash;
-
-        uint8_t                         m_version{0};
-        //innder header that sent to relayer
-        xrelay_block_inner_header       m_inner_header;
-        //hash ot prev block
-        evm_common::h256                m_prev_hash;
-        //vector of elections info 
-        xrelay_election_group_t             m_next_elections_set;
-        //vector of this blcok's signatures
-        std::vector<xrelay_signature>   m_block_signatures;
+       
+        evm_common::h256                        m_block_hash{0};             //hash of this block
+        uint8_t                                 m_version{0};
+        xrelay_block_inner_header               m_inner_header;             //innder header that sent to relayer
+        evm_common::h256                        m_prev_hash{0};              //hash ot prev block
+        xrelay_election_group_t                 m_next_elections_groups;       //vector of elections info 
+        std::vector<xrelay_signature_node_t>    m_block_signatures_nodes;   //vector of this blcok's signatures
         
     };
 
@@ -206,7 +203,7 @@ namespace data {
         void                                set_transactions(const std::vector<xeth_transaction_t> &transactions);
         void                                set_receipts(const std::vector<xeth_receipt_t> &receipts);
         void                                set_header(xrelay_block_header &block_hedaer);   
-        void                                add_signature(xrelay_signature signature);
+        void                                add_signature_nodes(std::vector<xrelay_signature_node_t> signature_nodes);
         bool                                build_finish();
         void                                save_block_trie();
 
@@ -220,7 +217,7 @@ namespace data {
         const evm_common::h256              &get_receipts_root_hash() const { return m_header.get_receipts_root_hash();}
         const evm_common::h256              &get_block_root_hash() const { return m_header.get_block_root_hash();}
         const uint64_t                      &get_block_height() const { return m_header.get_block_height();}
-        const uint64_t                   &get_timestamp() const { return m_header.get_timestamp();}
+        const uint64_t                      &get_timestamp() const { return m_header.get_timestamp();}
         const std::vector<xeth_receipt_t>   &get_block_receipts() const { return m_receipts;}
         const std::vector<xeth_transaction_t>   &get_all_transactions() { return m_transactions ;}
         std::string                         dump() const;
@@ -230,22 +227,17 @@ namespace data {
         bool                                decodeRLP(evm_common::RLP const& _r, std::error_code & ec, bool withSignature = false);
 
     private:
-        
         void                                make_receipts_root_hash();
         void                                make_txs_root_hash();
         void                                make_block_root_hash();
         void                                make_block_hash();
+
     private:
-        //version of header
-        uint8_t                                       m_version{0};
-
-        //this part used by relayer or light clients;
-        xrelay_block_header                           m_header;
-        // vector of receipts in this block
-        std::vector<xeth_receipt_t>                   m_receipts;
-        // vector of transaction in this block
-        std::vector<xeth_transaction_t>               m_transactions;
-
+       
+        uint8_t                                       m_version{0};     //version of block
+        xrelay_block_header                           m_header;         //this part used by relayer or light clients;
+        std::vector<xeth_receipt_t>                   m_receipts;       // vector of receipts in this block
+        std::vector<xeth_transaction_t>               m_transactions;   // vector of transaction in this block
        // xPartialMerkleTree                           m_block_merkle_tree;
 
     };

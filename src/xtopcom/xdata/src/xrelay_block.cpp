@@ -80,12 +80,22 @@ bool xrelay_election_group_t::decodeRLP(evm_common::RLP const& _r, std::error_co
     return true;
 }
 
+xrelay_signature_t::xrelay_signature_t(const std::string & sign_str) {
+    xassert(sign_str.size() == 65);
+    uint8_t compact_signature[65];
+    memcpy(compact_signature, sign_str.data(), sign_str.size());
+    v = compact_signature[0];
+    top::evm_common::bytes r_bytes(compact_signature + 1, compact_signature + 33);
+    r = top::evm_common::fromBigEndian<top::evm_common::u256>(r_bytes);
+    top::evm_common::bytes s_bytes(compact_signature + 33, compact_signature + 65);
+    s = top::evm_common::fromBigEndian<top::evm_common::u256>(s_bytes);
+}
 
-void xrelay_signature::streamRLP(evm_common::RLPStream &_s) const {
+void xrelay_signature_t::streamRLP(evm_common::RLPStream &_s) const {
     _s.appendList(3)  << r << s << v;
 }
 
-bool xrelay_signature::decodeRLP(evm_common::RLP const& _r,  std::error_code & ec) {
+bool xrelay_signature_t::decodeRLP(evm_common::RLP const& _r,  std::error_code & ec) {
     if (!_r.isList() || _r.itemCount() != 3) {
         ec = common::error::xerrc_t::invalid_rlp_stream;
         xerror("xrelay_election_group_t::decodeRLP fail item count,%d", _r.itemCount());
@@ -97,6 +107,42 @@ bool xrelay_signature::decodeRLP(evm_common::RLP const& _r,  std::error_code & e
     v = _r[2].toInt<uint8_t>();
     return true;
 }
+
+
+xrelay_signature_node_t::xrelay_signature_node_t(const std::string & sign_str) {
+    if (sign_str.length() != 65) {
+        exist = false;
+    } else {
+        exist = true;
+        signature = xrelay_signature_t(sign_str);
+    }
+}
+
+void xrelay_signature_node_t::streamRLP(evm_common::RLPStream &_s) const {
+    if (exist) {
+        _s.appendList(2) << exist;
+        signature.streamRLP(_s);
+    } else {
+        _s.appendList(1) << exist;
+    }
+}
+
+bool xrelay_signature_node_t::decodeRLP(evm_common::RLP const& _r,  std::error_code & ec) {
+    if (!_r.isList() || _r.itemCount() < 1) {
+        ec = common::error::xerrc_t::invalid_rlp_stream;
+        xerror("xrelay_signature_node_t::decodeRLP fail item count,%d", _r.itemCount());
+        return false;
+    }
+        
+    exist = _r[0].toInt<bool>();
+    if (exist) {
+       signature.decodeRLP(RLP(_r[1].data()), ec);
+    }
+    
+    return true;
+}
+
+
 
 xbytes_t xrelay_block_inner_header::encodeBytes() const {
     xbytes_t _bytes;
@@ -241,10 +287,10 @@ void xrelay_block_header::streamRLP(evm_common::RLPStream &rlp_stream, bool with
     rlp_stream.appendList(decLen);
     rlp_stream <<  m_inner_header.encodeBytes() ;
     rlp_stream << m_prev_hash ;
-    m_next_elections_set.streamRLP(rlp_stream);
+    m_next_elections_groups.streamRLP(rlp_stream);
     if(withSignature) {
-        rlp_stream.appendList(m_block_signatures.size());
-        for(auto & signature : m_block_signatures) {
+        rlp_stream.appendList(m_block_signatures_nodes.size());
+        for(auto & signature : m_block_signatures_nodes) {
             signature.streamRLP(rlp_stream);
         }
     }
@@ -283,16 +329,16 @@ bool xrelay_block_header::decodeRLP(evm_common::RLP const& _r, std::error_code &
     m_prev_hash     = _r[idx].toHash<evm_common::h256>(); idx++;
 
     evm_common::RLP const& rlp_electionsList = RLP(_r[idx].data()); idx++;
-    m_next_elections_set.decodeRLP(rlp_electionsList, ec);
+    m_next_elections_groups.decodeRLP(rlp_electionsList, ec);
 
     if(withSignature) {
         evm_common::RLP const& rlp_signaturesList = RLP(_r[idx].data()); idx++;
         unsigned itemCount = rlp_signaturesList.itemCount();
         for(unsigned i = 0; i < itemCount; i++ ) {
             evm_common::RLP const& rlp_signature = RLP(rlp_signaturesList[i].data());
-            xrelay_signature block_signature;
-            block_signature.decodeRLP(rlp_signature, ec);
-            m_block_signatures.emplace_back(block_signature);
+            xrelay_signature_node_t block_signature_node;
+            block_signature_node.decodeRLP(rlp_signature, ec);
+            m_block_signatures_nodes.emplace_back(block_signature_node);
         }
     }
 
@@ -312,11 +358,11 @@ xbytes_t xrelay_block_header::streamRLP_header_to_contract()
         rlp_stream.appendList(decLen);
         rlp_stream << m_inner_header.encodeBytes();
         rlp_stream << m_prev_hash ;
-        m_next_elections_set.streamRLP(rlp_stream);
+        m_next_elections_groups.streamRLP(rlp_stream);
 
-        rlp_stream.appendList(m_block_signatures.size());
-        for(auto & signature : m_block_signatures) {
-            signature.streamRLP(rlp_stream);
+        rlp_stream.appendList(m_block_signatures_nodes.size());
+        for(auto & signature_node : m_block_signatures_nodes) {
+            signature_node.streamRLP(rlp_stream);
         }
         
         _bytes.insert(_bytes.begin() + 1, rlp_stream.out().begin(), rlp_stream.out().end());
@@ -362,21 +408,18 @@ void xrelay_block_header::set_timestamp(uint64_t timestamp)
 
 void xrelay_block_header::set_elections_next(const xrelay_election_group_t &elections)
 {   
-    m_next_elections_set.election_epochID = elections.election_epochID;
+    m_next_elections_groups.election_epochID = elections.election_epochID;
     for (auto &election : elections.elections_vector) {
-        m_next_elections_set.elections_vector.emplace_back(election);
+        m_next_elections_groups.elections_vector.emplace_back(election);
     }
 }
 
-void xrelay_block_header::add_signature(xrelay_signature signature)
+
+void xrelay_block_header::add_signature_nodes(std::vector<xrelay_signature_node_t> signature_nodes)
 {
-   for (auto &iter : m_block_signatures) {
-        if (iter.r == signature.r && iter.s == signature.s && iter.v == signature.v ) {
-           xwarn("xrelay_block::add_signature signature[%s][%s]is exist.", signature.r.hex().c_str(), signature.s.hex().c_str());
-           return;
-        }
+    if (signature_nodes.size() > 0) {
+        m_block_signatures_nodes = signature_nodes;
     }
-    m_block_signatures.emplace_back(signature);
 }
 
 void xrelay_block_header::make_inner_hash()
@@ -423,10 +466,9 @@ void xrelay_block::set_receipts(const std::vector<xeth_receipt_t> &receipts)
     }
 }
 
-void xrelay_block::add_signature(xrelay_signature signature)
+void xrelay_block::add_signature_nodes(std::vector<xrelay_signature_node_t> signature_nodes)
 {
-
-    m_header.add_signature(signature);
+    m_header.add_signature_nodes(signature_nodes);
 }
 
 
@@ -581,17 +623,6 @@ xbytes_t xrelay_block::streamRLP_header_to_contract()
    return m_header.streamRLP_header_to_contract();
 }
 
-
-xrelay_signature::xrelay_signature(const std::string & sign_str) {
-    xassert(sign_str.size() == 65);
-    uint8_t compact_signature[65];
-    memcpy(compact_signature, sign_str.data(), sign_str.size());
-    v = compact_signature[0];
-    top::evm_common::bytes r_bytes(compact_signature + 1, compact_signature + 33);
-    r = top::evm_common::fromBigEndian<top::evm_common::u256>(r_bytes);
-    top::evm_common::bytes s_bytes(compact_signature + 33, compact_signature + 65);
-    s = top::evm_common::fromBigEndian<top::evm_common::u256>(s_bytes);
-}
 
 std::string xrelay_block::dump() const {
     char local_param_buf[256];
