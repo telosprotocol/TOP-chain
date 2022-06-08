@@ -50,7 +50,7 @@ xtop_evm_context::xtop_evm_context(std::unique_ptr<data::xbasic_top_action_t con
 
 data::xtop_evm_action_type xtop_evm_context::action_type() const {
     assert(m_action->type() == data::xtop_action_type_t::evm);
-    return static_cast<data::xevm_consensus_action_t const *>(m_action.get())->evm_action();
+    return static_cast<data::xevm_consensus_action_t const *>(m_action.get())->evm_action_type();
 }
 
 xbytes_t const & xtop_evm_context::input_data() const {
