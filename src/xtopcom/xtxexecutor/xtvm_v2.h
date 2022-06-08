@@ -21,7 +21,7 @@ private:
     enum {
         default_eth_tx_gas = 21000,
     };
-    void execute_impl(const xvm_input_t & input, xvm_output_t & output);
+    bool execute_impl(const xvm_input_t & input, xvm_output_t & output);
     contract_runtime::xtransaction_execution_result_t execute_tx(const statectx::xstatectx_face_ptr_t & statectx, const xcons_transaction_ptr_t & tx);
     contract_runtime::xtransaction_execution_result_t execute_one_tx(const statectx::xstatectx_face_ptr_t & statectx, const xcons_transaction_ptr_t & tx);
 

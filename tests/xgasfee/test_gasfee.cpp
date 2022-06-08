@@ -856,9 +856,6 @@ TEST(test_xtvm_v2, xtvm2_demo_v3_T6_transfer_inner_table) {
     txexecutor::xatomictx_output_t output;
 
     EXPECT_EQ(txexecutor::enum_exec_success, atomictx_executor.vm_execute(p_statectx->default_cons_tx, output));
-    EXPECT_TRUE(output.m_vm_output.m_tx_exec_succ);
-    EXPECT_EQ(output.m_vm_output.m_vm_error_code, 0);
-    EXPECT_TRUE(output.m_vm_output.m_vm_error_str.empty());
 
     auto s_eth_balance = sender_unitstate->tep_token_balance(common::xtoken_id_t::eth);
     auto r_eth_balance = recver_unitstate->tep_token_balance(common::xtoken_id_t::eth);
@@ -899,9 +896,6 @@ TEST(test_xtvm_v2, xtvm2_demo_v3_T6_transfer_inner_table_use_eth) {
     txexecutor::xatomictx_output_t output;
 
     EXPECT_EQ(txexecutor::enum_exec_success, atomictx_executor.vm_execute(p_statectx->default_cons_tx, output));
-    EXPECT_TRUE(output.m_vm_output.m_tx_exec_succ);
-    EXPECT_EQ(output.m_vm_output.m_vm_error_code, 0);
-    EXPECT_TRUE(output.m_vm_output.m_vm_error_str.empty());
 
     auto s_eth_balance = sender_unitstate->tep_token_balance(common::xtoken_id_t::eth);
     auto r_eth_balance = recver_unitstate->tep_token_balance(common::xtoken_id_t::eth);
@@ -939,10 +933,6 @@ TEST(test_xtvm_v2, xtvm2_demo_v3_T6_transfer_inner_table_use_eth) {
 //     txexecutor::xatomictx_output_t output;
 
 //     EXPECT_EQ(txexecutor::enum_exec_success, atomictx_executor.vm_execute(p_statectx->default_cons_tx, output));
-//     EXPECT_TRUE(output.m_vm_output.m_tx_exec_succ);
-//     EXPECT_EQ(output.m_vm_output.m_vm_error_code, 0);
-//     EXPECT_TRUE(output.m_vm_output.m_vm_error_str.empty());
-
 //     auto s_eth_balance = sender_unitstate->tep_token_balance(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH);
 //     auto r_eth_balance = recver_unitstate->tep_token_balance(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH);
 //     EXPECT_EQ(s_eth_balance, 20000 - p_statectx->default_eth_value);
