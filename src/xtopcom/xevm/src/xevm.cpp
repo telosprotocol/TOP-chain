@@ -31,13 +31,10 @@ txexecutor::enum_execute_result_type xtop_evm::execute(txexecutor::xvm_input_t c
 
     // output.used_gas = evm_output.used_gas;
     if (!evm_output.status.ec) {
-        output.m_tx_exec_succ = true;
         output.m_tx_result = evm_output.tx_result;
         return txexecutor::enum_exec_success;
     } else {
-        output.m_tx_exec_succ = false;
-        output.m_vm_error_code = evm_output.status.ec.value();
-        output.m_vm_error_str = evm_output.status.ec.message();
+        output.m_ec = evm_output.status.ec;
         return txexecutor::enum_exec_error_vm_execute;
     }
 }

@@ -96,11 +96,8 @@ int32_t xaccount_vm_t::execute(const xvm_input_t & input, xvm_output_t & output)
     std::vector<xcons_transaction_ptr_t> contract_create_txs;
     int32_t ret = exec_tx(m_account_context.get(), input.get_tx(), contract_create_txs);
     if (ret != xsuccess) {
-        output.m_tx_exec_succ = false;
-        output.m_vm_error_code = ret;
         return ret;
     }
-    output.m_tx_exec_succ = true;
     output.m_contract_create_txs = contract_create_txs;
     output.m_tgas_balance_change = m_account_context->get_tgas_balance_change();
     return xsuccess;
