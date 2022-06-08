@@ -29,8 +29,11 @@ enum enum_execute_result_type {
 
 class xvm_para_t {
  public:
-    xvm_para_t(uint64_t clock, const std::string & random_seed, uint64_t tgas_lock, uint64_t gas_limit)
+    xvm_para_t(uint64_t clock, const std::string & random_seed, uint64_t tgas_lock, uint64_t gas_limit)  // for test
     : m_clock(clock), m_random_seed(random_seed), m_lock_tgas_token(tgas_lock), m_gas_limit(gas_limit) {
+    }
+    xvm_para_t(uint64_t clock, const std::string & random_seed, uint64_t tgas_lock, uint64_t gas_limit, uint64_t block_height, common::xaccount_address_t const& coinbase)
+    : m_clock(clock), m_random_seed(random_seed), m_lock_tgas_token(tgas_lock), m_gas_limit(gas_limit), m_block_height(block_height), m_block_coinbase(coinbase) {
     }
 
  public:
@@ -39,12 +42,16 @@ class xvm_para_t {
     const std::string &     get_random_seed() const {return m_random_seed;}
     uint64_t                get_lock_tgas_token() const {return m_lock_tgas_token;}
     uint64_t                get_gas_limit() const {return m_gas_limit;}
+    uint64_t                get_block_height() const {return m_block_height;}
+    common::xaccount_address_t const&   get_block_coinbase() const {return m_block_coinbase;}
 
  private:
     uint64_t        m_clock{0};
     std::string     m_random_seed;
     uint64_t        m_lock_tgas_token{0};
     uint64_t        m_gas_limit{0};
+    uint64_t        m_block_height{0};
+    common::xaccount_address_t  m_block_coinbase;
 };
 
 struct xvm_gasfee_detail_t {

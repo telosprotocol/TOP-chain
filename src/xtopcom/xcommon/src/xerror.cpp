@@ -49,6 +49,21 @@ static char const * errc_to_string(xerrc_t const errc) noexcept {
     case xerrc_t::token_symbol_unknown:
         return "unknown token symbol";
 
+    case xerrc_t::invalid_block:
+        return "invalid block";
+
+    case xerrc_t::invalid_db_load:
+        return "invalid db load";
+
+    case xerrc_t::invalid_eth_tx:
+        return "invalid eth tx";
+
+    case xerrc_t::invalid_eth_header:
+        return "invalid eth header";
+
+    case xerrc_t::invalid_bloom:
+        return "invalid bloom";
+
     default:
         assert(false);
         return "unknown common category error";
