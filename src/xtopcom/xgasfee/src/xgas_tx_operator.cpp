@@ -65,8 +65,8 @@ evm_common::u256 xtop_gas_tx_operator::tx_eth_fee_per_gas() const {
 evm_common::u256 xtop_gas_tx_operator::tx_eth_limited_gasfee() const {
     // 1Gwei = (ratio / 10^3)Utop
     // 1Utop = (10^3 / ratio)Gwei
-    evm_common::u256 price = tx_eth_gas_limit();
-    evm_common::u256 limit = tx_eth_fee_per_gas();
+    evm_common::u256 limit = tx_eth_gas_limit();
+    evm_common::u256 price = tx_eth_fee_per_gas();
     evm_common::u256 wei_gasfee = limit * price;
     evm_common::u256 utop_gasfee = wei_to_utop(wei_gasfee);
     xdbg("[xtop_gas_tx_operator::tx_eth_limited_gasfee] eth_gas_price: %s, eth_gas_limit: %s, wei_gasfee: %s, utop_gasfee: %s",
