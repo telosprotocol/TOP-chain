@@ -36,11 +36,6 @@ public:
     // Reset drops the referenced root node and cleans all internal state.
     void Reset();
 
-    // todo tmp solution...
-    xbytes_t Encode() {
-        return xtrie_node_rlp::EncodeToBytes(m_root);
-    }
-
     // Hash returns the root hash of the trie. It does not write to the
     // database and can be used even if the trie doesn't have one.
     xhash256_t Hash();

@@ -5,8 +5,8 @@
 #include "xevm_common/trie/xtrie_db.h"
 
 #include "xevm_common/trie/xtrie_encoding.h"
-#include "xevm_common/trie/xtrie_node_coding.h"
 #include "xevm_common/trie/xtrie_node.h"
+#include "xevm_common/trie/xtrie_node_coding.h"
 NS_BEG3(top, evm_common, trie)
 
 std::shared_ptr<xtop_trie_db> xtop_trie_db::NewDatabase(xkv_db_face_ptr_t diskdb) {
@@ -63,6 +63,7 @@ void xtop_trie_db::insert(xhash256_t hash, int32_t size, xtrie_node_face_ptr_t n
             this->dirties.at(child).parents++;
         }
     });
+    xdbg("xtop_trie_db::insert %s size:%d", hash.hex_string().c_str(), size);
     dirties.insert({hash, entry});
 
     if (oldest == xhash256_t{}) {
@@ -76,6 +77,54 @@ void xtop_trie_db::insert(xhash256_t hash, int32_t size, xtrie_node_face_ptr_t n
     // todo dirties size;
 }
 
+void xtop_trie_db::Commit(xhash256_t hash, AfterCommitCallback cb, std::error_code & ec) {
+    // what we can optimize here:
+    // 1. use batch writer to sum all <k,v> into db with once writeDB operation
+    // 2. db.preimages for secure trie
+    // 3. use async cleaner to clean dirties value after commit.
+
+    // If the node does not exist, it's a previously committed node
+    if (dirties.find(hash) == dirties.end()) {
+        return;
+    }
+
+    auto node = dirties.at(hash);
+    node.forChilds([&](xhash256_t child) {
+        if (!ec) {
+            this->Commit(child, cb, ec);
+        }
+    });
+    if (ec) {
+        return;
+    }
+
+    // put it into diskDB
+    auto enc = node.rlp();
+    auto hash_bytes = xbytes_t{hash.begin(), hash.end()};
+    xdbg("xtop_trie_db::Commit Put in %s %zu", top::to_hex(hash_bytes).c_str(), enc.size());
+    diskdb->Put(hash_bytes, enc, ec);
+    if (ec) {
+        xwarn("trie_db Commit diskdb error: %s", ec.message().c_str());
+        return;
+    }
+    if (cb) {
+        cb(hash);
+    }
+
+    // clean dirties:
+    // todos: noted to remove size of dirty cache.
+    // todos: change link-list of flush-list Next/Prev Node ptr
+    // for now : we can simplily erase it:
+    dirties.erase(hash);
+
+    // and move it to cleans:
+    cleans.insert({hash, enc});
+    // todo mark size everywhere with cleans/dirties' insert/erase/...
+}
+
+// void xtop_trie_db::commit(xhash256_t hash, AfterCommitCallback cb, std::error_code & ec) {
+// }
+
 // ============
 // trie cache
 // ============
@@ -83,10 +132,10 @@ xbytes_t xtrie_cache_node_t::rlp() {
     if (node == nullptr) {
         return xbytes_t{};
     }
-    if (node->type() == xtrie_node_type_t::rawnode) {
-        auto n = std::make_shared<xtrie_raw_node_t>(*(static_cast<xtrie_raw_node_t *>(node.get())));
-        return n->data();
-    }
+    // if (node->type() == xtrie_node_type_t::rawnode) {
+    //     auto n = std::make_shared<xtrie_raw_node_t>(*(static_cast<xtrie_raw_node_t *>(node.get())));
+    //     return n->data();
+    // }
     return xtrie_node_rlp::EncodeToBytes(node);
 }
 
@@ -118,30 +167,31 @@ void xtrie_cache_node_t::forGatherChildren(xtrie_node_face_ptr_t n, onChildFunc 
     case xtrie_node_type_t::rawshortnode: {
         auto nn = std::make_shared<xtrie_raw_short_node_t>(*(static_cast<xtrie_raw_short_node_t *>(n.get())));
         forGatherChildren(nn->Val, f);
-        break;
+        return;
     }
     case xtrie_node_type_t::rawfullnode: {
         auto nn = std::make_shared<xtrie_raw_full_node_t>(*(static_cast<xtrie_raw_full_node_t *>(n.get())));
         for (std::size_t index = 0; index < 16; ++index) {
             forGatherChildren(nn->Children[index], f);
         }
-        break;
+        return;
     }
     case xtrie_node_type_t::hashnode: {
         auto nn = std::make_shared<xtrie_hash_node_t>(*(static_cast<xtrie_hash_node_t *>(n.get())));
         f(xhash256_t{nn->data()});
-        break;
+        return;
     }
     case xtrie_node_type_t::valuenode:
         XATTRIBUTE_FALLTHROUGH;
     case xtrie_node_type_t::rawnode:
         // pass;
-        break;
+        return;
     default: {
         xerror("unknown node type: %d", n->type());
         xassert(false);
     }
     }
+    __builtin_unreachable();
 }
 
 // static methods:
