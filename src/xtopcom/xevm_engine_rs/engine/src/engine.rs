@@ -61,22 +61,7 @@ impl ExitIntoResult for ExitReason {
     }
 }
 
-#[derive(Default, Clone)]
-pub struct EngineState {
-    /// Chain id, according to the EIP-155 / ethereum-lists spec.
-    pub chain_id: [u8; 32],
-    // /// Account which can upgrade this contract.
-    // /// Use empty to disable updatability.
-    // pub owner_id: AccountId,
-    // /// Account of the bridge prover.
-    // /// Use empty to not use base token as bridged asset.
-    // pub bridge_prover_id: AccountId,
-    // /// How many blocks after staging upgrade can deploy it.
-    // pub upgrade_delay_blocks: u64
-}
-
 pub struct Engine<'env, I: IO, E: Env> {
-    state: EngineState,
     origin: Address,
     gas_price: U256,
     io: I,
@@ -92,17 +77,11 @@ impl<'env, I: IO + Copy, E: Env> Engine<'env, I, E> {
     const CURRENT_CALL_ARGS_VERSION: u32 = 1;
 
     pub fn new(origin: Address, io: I, env: &'env E) -> Result<Self, EngineStateError> {
-        Ok(Self::new_with_state(
-            EngineState::default(),
-            origin,
-            io,
-            env,
-        ))
+        Ok(Self::new_with_default(origin, io, env))
     }
 
-    pub fn new_with_state(state: EngineState, origin: Address, io: I, env: &'env E) -> Self {
+    pub fn new_with_default(origin: Address, io: I, env: &'env E) -> Self {
         Self {
-            state,
             origin,
             gas_price: U256::zero(),
             io,
@@ -455,7 +434,7 @@ impl<'env, I: IO + Copy, E: Env> evm::backend::Backend for Engine<'env, I, E> {
         if idx.saturating_sub(U256::from(256)) <= number && number < idx {
             // since `idx` comes from `u64` it is always safe to downcast `number` from `U256`
             compute_block_hash(
-                self.state.chain_id,
+                U256::from(self.env.chain_id()).into(),
                 number.low_u64(),
                 self.origin().as_bytes(),
             )
@@ -496,7 +475,7 @@ impl<'env, I: IO + Copy, E: Env> evm::backend::Backend for Engine<'env, I, E> {
 
     /// Returns the states chain ID.
     fn chain_id(&self) -> U256 {
-        U256::from(self.state.chain_id)
+        U256::from(self.env.chain_id())
     }
 
     /// Checks if an address exists.

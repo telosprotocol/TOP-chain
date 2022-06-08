@@ -13,7 +13,8 @@ NS_BEG2(top, evm_runtime)
 xtop_evm_context::xtop_evm_context(std::unique_ptr<data::xbasic_top_action_t const> action, txexecutor::xvm_para_t const & vm_para) noexcept : m_action{std::move(action)} {
     assert(m_action->type() == data::xtop_action_type_t::evm);
 
-    // todo(jimmy) get block coinbase/ts/height
+    // todo(jimmy) get chain id from? , default is 1023 in xevm_context.h:23
+    // m_chain_id = ...
     m_block_coinbase = vm_para.get_block_coinbase();
     m_block_height = vm_para.get_block_height();
     m_block_timestamp = vm_para.get_timestamp();
@@ -77,6 +78,9 @@ uint64_t xtop_evm_context::gas_limit() const noexcept {
 }
 
 // EVM API:
+uint64_t xtop_evm_context::chain_id() const noexcept {
+    return m_chain_id;
+}
 std::string xtop_evm_context::block_coinbase() const noexcept {
     return m_block_coinbase.value();
 }
