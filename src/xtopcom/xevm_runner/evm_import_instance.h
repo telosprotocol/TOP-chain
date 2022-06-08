@@ -39,6 +39,7 @@ public:
     void input(uint64_t register_id);
 
     // EVM API:
+    uint64_t evm_chain_id();
     void evm_block_coinbase(uint64_t register_id);
     uint64_t evm_block_height();
     uint64_t evm_block_timestamp();
