@@ -15,7 +15,7 @@ NS_BEG3(top, evm_common, trie)
 static constexpr auto emptyRootBytes = ConstHexBytes<32>("56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421");
 static xhash256_t emptyRoot = xhash256_t{emptyRootBytes};
 
-std::shared_ptr<xtop_trie> xtop_trie::New(xhash256_t hash, xtrie_db_face_ptr_t db, std::error_code & ec) {
+std::shared_ptr<xtop_trie> xtop_trie::New(xhash256_t hash, xtrie_db_ptr_t db, std::error_code & ec) {
     if (db == nullptr) {
         xerror("build trie from null db");
     }
@@ -24,7 +24,7 @@ std::shared_ptr<xtop_trie> xtop_trie::New(xhash256_t hash, xtrie_db_face_ptr_t d
         // resolve Hash
         auto root_hash = std::make_shared<xtrie_hash_node_t>(hash);
         auto root = trie.resolveHash(root_hash, ec);
-        if (!ec) {
+        if (ec) {
             return nullptr;
         }
         trie.m_root = root;
@@ -176,7 +176,7 @@ bool xtop_trie::Prove(xbytes_t const & key, uint32_t fromLevel, xkv_db_face_ptr_
     std::vector<xtrie_node_face_ptr_t> nodes;
     auto tn = m_root;
     for (; key_path.size() > 0 && tn != nullptr;) {
-        xdbg("key: %s",top::to_hex(key_path).c_str());
+        xdbg("key: %s", top::to_hex(key_path).c_str());
         switch (tn->type()) {
         case xtrie_node_type_t::shortnode: {
             auto n = std::make_shared<xtrie_short_node_t>(*(static_cast<xtrie_short_node_t *>(tn.get())));
@@ -188,7 +188,7 @@ bool xtop_trie::Prove(xbytes_t const & key, uint32_t fromLevel, xkv_db_face_ptr_
                 key_path = {key_path.begin() + n->Key.size(), key_path.end()};
             }
             nodes.push_back(n);
-            xdbg("append shortnode %s",top::to_hex(key_path).c_str());
+            xdbg("append shortnode %s", top::to_hex(key_path).c_str());
             break;
         }
         case xtrie_node_type_t::fullnode: {
@@ -196,7 +196,7 @@ bool xtop_trie::Prove(xbytes_t const & key, uint32_t fromLevel, xkv_db_face_ptr_
             tn = n->Children[key_path[0]];
             key_path.erase(key_path.begin());
             nodes.push_back(n);
-            xdbg("append fullnode %s",top::to_hex(key_path).c_str());
+            xdbg("append fullnode %s", top::to_hex(key_path).c_str());
             break;
         }
         case xtrie_node_type_t::hashnode: {

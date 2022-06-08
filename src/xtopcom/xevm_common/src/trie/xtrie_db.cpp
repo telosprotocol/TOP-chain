@@ -6,6 +6,7 @@
 
 #include "xevm_common/trie/xtrie_encoding.h"
 #include "xevm_common/trie/xtrie_node_coding.h"
+#include "xevm_common/trie/xtrie_node.h"
 NS_BEG3(top, evm_common, trie)
 
 std::shared_ptr<xtop_trie_db> xtop_trie_db::NewDatabase(xkv_db_face_ptr_t diskdb) {
@@ -21,24 +22,58 @@ std::shared_ptr<xtop_trie_db> xtop_trie_db::NewDatabaseWithConfig(xkv_db_face_pt
         }
     }
 
-    // todo:
-    auto db = xtrie_db_t{};
-    return std::make_shared<xtop_trie_db>(db);
+    return std::make_shared<xtop_trie_db>(diskdb);
 }
 
 xtrie_node_face_ptr_t xtop_trie_db::node(xhash256_t hash) {
     // todo:
-    return nullptr;
+    if (cleans.find(hash) != cleans.end()) {
+        // todo clean mark hit
+        return xtrie_node_rlp::mustDecodeNode(hash, cleans.at(hash));
+    }
+    if (dirties.find(hash) != dirties.end()) {
+        // todo dirty mark hit
+        return dirties.at(hash).obj(hash);
+    }
+    // todo mark miss hit
+
+    // retrieve from disk db
+    std::error_code ec;
+    xbytes_t hash_bytes = xbytes_t{hash.begin(), hash.end()};
+    auto enc = diskdb->Get(hash_bytes, ec);
+    if (ec || enc.empty()) {
+        return nullptr;
+    }
+    // put into clean cache
+    cleans.insert({hash, enc});
+    return xtrie_node_rlp::mustDecodeNode(hash, enc);
 }
 
 void xtop_trie_db::insert(xhash256_t hash, int32_t size, xtrie_node_face_ptr_t node) {
-    // todo:
+    // If the node's already cached, skip
+    if (dirties.find(hash) != dirties.end()) {
+        return;
+    }
 
-    auto entry = xtrie_cache_node_t{};
-    entry.forChilds([](xhash256_t child) {
-        // for example:
-        xdbg("%s", child.hex_string().c_str());
+    // todo mark size.
+
+    auto entry = xtrie_cache_node_t{simplifyNode(node), static_cast<uint16_t>(size), newest};
+    entry.forChilds([&](xhash256_t child) {
+        if (this->dirties.find(child) != this->dirties.end()) {
+            this->dirties.at(child).parents++;
+        }
     });
+    dirties.insert({hash, entry});
+
+    if (oldest == xhash256_t{}) {
+        oldest = hash;
+
+    } else {
+        dirties.at(newest).flushNext = hash;
+    }
+    newest = hash;
+
+    // todo dirties size;
 }
 
 // ============
@@ -107,7 +142,6 @@ void xtrie_cache_node_t::forGatherChildren(xtrie_node_face_ptr_t n, onChildFunc 
         xassert(false);
     }
     }
-    __builtin_unreachable();
 }
 
 // static methods:

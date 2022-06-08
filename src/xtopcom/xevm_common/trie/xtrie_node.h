@@ -252,7 +252,9 @@ public:
     }
 
 public:
-    void EncodeRLP(xbytes_t & buf, std::error_code & ec) override;
+    void EncodeRLP(xbytes_t & buf, std::error_code & ec) override {
+        xassert(false);
+    }
 };
 using xtrie_raw_node_t = xtop_trie_raw_node;
 using xtrie_raw_node_ptr_t = std::shared_ptr<xtrie_raw_node_t>;
@@ -284,7 +286,9 @@ public:
     }
 
 public:
-    void EncodeRLP(xbytes_t & buf, std::error_code & ec) override;
+    void EncodeRLP(xbytes_t & buf, std::error_code & ec) override {
+        xassert(false);
+    }
 };
 using xtrie_raw_full_node_t = xtop_trie_raw_full_node;
 using xtrie_raw_full_node_ptr_t = std::shared_ptr<xtrie_raw_full_node_t>;

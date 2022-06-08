@@ -13,15 +13,6 @@
 
 NS_BEG3(top, evm_common, trie)
 
-class xtop_trie_db_face {
-public:
-    virtual xtrie_node_face_ptr_t node(xhash256_t hash) = 0;
-
-    virtual void insert(xhash256_t hash, int32_t size, xtrie_node_face_ptr_t node) = 0;
-};
-using xtrie_db_face_t = xtop_trie_db_face;
-using xtrie_db_face_ptr_t = std::shared_ptr<xtrie_db_face_t>;
-
 class xtop_kv_writer_face {
 public:
     virtual void Put(xbytes_t const & key, xbytes_t const & value, std::error_code & ec) = 0;

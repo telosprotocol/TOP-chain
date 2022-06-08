@@ -6,7 +6,7 @@
 
 #include "xbasic/xbyte_buffer.h"
 #include "xbasic/xhash.hpp"
-#include "xevm_common/trie/xtrie_db_face.h"
+#include "xevm_common/trie/xtrie_db.h"
 
 #include <system_error>
 

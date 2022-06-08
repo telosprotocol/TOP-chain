@@ -9,7 +9,7 @@
 
 NS_BEG3(top, evm_common, trie)
 
-std::pair<xtrie_hash_node_ptr_t, int32_t> xtop_trie_committer::Commit(xtrie_node_face_ptr_t n, xtrie_db_face_ptr_t db, std::error_code & ec) {
+std::pair<xtrie_hash_node_ptr_t, int32_t> xtop_trie_committer::Commit(xtrie_node_face_ptr_t n, xtrie_db_ptr_t db, std::error_code & ec) {
     if (db == nullptr) {
         ec = error::xerrc_t::trie_db_not_provided;
         return std::make_pair(nullptr, 0);
@@ -25,7 +25,7 @@ std::pair<xtrie_hash_node_ptr_t, int32_t> xtop_trie_committer::Commit(xtrie_node
     return std::make_pair(hashnode, committed);
 }
 
-std::pair<xtrie_node_face_ptr_t, int32_t> xtop_trie_committer::commit(xtrie_node_face_ptr_t n, xtrie_db_face_ptr_t db, std::error_code & ec) {
+std::pair<xtrie_node_face_ptr_t, int32_t> xtop_trie_committer::commit(xtrie_node_face_ptr_t n, xtrie_db_ptr_t db, std::error_code & ec) {
     // if this path is clean, use available cached data
     xtrie_hash_node_t hash;
     bool dirty;
@@ -93,7 +93,7 @@ std::pair<xtrie_node_face_ptr_t, int32_t> xtop_trie_committer::commit(xtrie_node
     __builtin_unreachable();
 }
 
-std::pair<std::array<xtrie_node_face_ptr_t, 17>, int32_t> xtop_trie_committer::commitChildren(xtrie_full_node_ptr_t n, xtrie_db_face_ptr_t db, std::error_code & ec) {
+std::pair<std::array<xtrie_node_face_ptr_t, 17>, int32_t> xtop_trie_committer::commitChildren(xtrie_full_node_ptr_t n, xtrie_db_ptr_t db, std::error_code & ec) {
     std::array<xtrie_node_face_ptr_t, 17> children;
     int32_t committed{0};
 
@@ -135,7 +135,7 @@ std::pair<std::array<xtrie_node_face_ptr_t, 17>, int32_t> xtop_trie_committer::c
 // store hashes the node n and if we have a storage layer specified, it writes
 // the key/value pair to it and tracks any node->child references as well as any
 // node->external trie references.
-xtrie_node_face_ptr_t xtop_trie_committer::store(xtrie_node_face_ptr_t n, xtrie_db_face_ptr_t db) {
+xtrie_node_face_ptr_t xtop_trie_committer::store(xtrie_node_face_ptr_t n, xtrie_db_ptr_t db) {
     auto hash = n->cache().first;
     int32_t size{0};
 
