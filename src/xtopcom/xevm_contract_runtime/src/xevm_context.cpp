@@ -14,7 +14,7 @@ xtop_evm_context::xtop_evm_context(std::unique_ptr<data::xbasic_top_action_t con
     assert(m_action->type() == data::xtop_action_type_t::evm);
 
     // todo(jimmy) get block coinbase/ts/height
-    m_block_coinbase = common::xaccount_address_t{evm_zero_addr};
+    m_block_coinbase = eth_zero_address;
     m_block_height = 0;
     m_block_timestamp = 1654511400;
 
@@ -49,7 +49,7 @@ xtop_evm_context::xtop_evm_context(std::unique_ptr<data::xbasic_top_action_t con
 
 data::xtop_evm_action_type xtop_evm_context::action_type() const {
     assert(m_action->type() == data::xtop_action_type_t::evm);
-    return static_cast<data::xevm_consensus_action_t const *>(m_action.get())->evm_action();
+    return static_cast<data::xevm_consensus_action_t const *>(m_action.get())->evm_action_type();
 }
 
 xbytes_t const & xtop_evm_context::input_data() const {
