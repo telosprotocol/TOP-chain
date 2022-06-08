@@ -70,6 +70,9 @@ void xtop_evm_logic::input(uint64_t register_id) {
 }
 
 // EVM API:
+uint64_t xtop_evm_logic::chain_id() {
+    return m_context->chain_id();
+}
 void xtop_evm_logic::block_coinbase(uint64_t register_id) {
     auto coinbase = m_context->block_coinbase();
     xassert(coinbase.substr(0, 6) == T6_ACCOUNT_PREFIX);

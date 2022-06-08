@@ -128,6 +128,10 @@ impl crate::env::Env for Runtime {
         }
     }
 
+    fn chain_id(&self) -> u64 {
+        unsafe { exports::evm_chain_id() }
+    }
+
     fn block_coinbase(&self) -> engine_types::types::Address {
         unsafe {
             exports::evm_block_coinbase(Self::ENV_REGISTER_ID.0);
@@ -144,7 +148,7 @@ impl crate::env::Env for Runtime {
     }
 
     fn block_timestamp(&self) -> crate::env::Timestamp {
-        let ns = unsafe { exports::evm_block_timestamp() };
+        let ns = unsafe { exports::evm_block_timestamp() * 1_000_000_000 };
         crate::env::Timestamp::new(ns)
     }
 
@@ -240,6 +244,7 @@ pub(crate) mod exports {
         pub(crate) fn evm_input(register_id: u64);
 
         // EVM API
+        pub(crate) fn evm_chain_id() -> u64;
         pub(crate) fn evm_block_coinbase(register_id: u64);
         pub(crate) fn evm_block_height() -> u64;
         pub(crate) fn evm_block_timestamp() -> u64;
