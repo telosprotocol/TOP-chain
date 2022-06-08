@@ -7,6 +7,8 @@
 #include "xbasic/xhex.h"
 #include "xutility/xhash.h"
 #include "xbase/xutl.h"
+#include "xconfig/xpredefined_configurations.h"
+#include "xconfig/xconfig_register.h"
 
 namespace top {
 namespace data {
@@ -177,7 +179,7 @@ void xeth_transaction_t::decodeRLP_eip1599(bool includesig, evm_common::RLP cons
             return;
         }
         m_chainid = _r[field = 0].toInt<evm_common::u256>();
-        if (m_chainid != 1023) {// TODO(jimmy) 1023
+        if (m_chainid != XGET_CONFIG(chain_id)) {// TODO(jimmy) 1023
             ec = eth_error(error::xenum_errc::eth_server_error, "invalid sender");
             return;
         }
