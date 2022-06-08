@@ -10,6 +10,7 @@
 #include "xvledger/xvstate.h"
 #include "xvledger/xvstatestore.h"
 #include "xvledger/xvledger.h"
+#include "xvledger/xvcertauth.h"
 #include "xdata/xblock.h"
 #include "xdata/xtable_bstate.h"
 #include "xstore/xstore_face.h"
@@ -28,6 +29,10 @@ class xblockmaker_resources_t {
     virtual xtxpool_v2::xtxpool_face_t* get_txpool() const = 0;
     virtual mbus::xmessage_bus_face_t*  get_bus() const = 0;
     virtual base::xvblkstatestore_t*    get_xblkstatestore() const = 0;
+    virtual base::xvcertauth_t*         get_certauth() const {return m_ca;}
+    virtual void                        set_certauth(base::xvcertauth_t* _ca) {m_ca = _ca;}
+ private:
+    base::xvcertauth_t* m_ca{nullptr};
 };
 using xblockmaker_resources_ptr_t = std::shared_ptr<xblockmaker_resources_t>;
 

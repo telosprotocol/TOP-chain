@@ -93,6 +93,22 @@ TEST_F(test_ethdata, ethheader_rlp) {
         _header.set_gaslimit(10000000);
         _header.set_gasused(5000000);
         _header.set_baseprice(10000000000);
+        evm_common::xbloom9_t _logBloom;
+        xbytes_t _logdata = {1,2,3,4};
+        _logBloom.add(_logdata);
+        _header.set_logBloom(_logBloom);
+        std::string root_str = "0x9c09bae2c4a8f1487e11260efd4a19b7cb719ad4dc40fdd4ac461e04fae01aba";
+        std::error_code ec;
+        xbytes_t root_bs = top::from_hex(root_str, ec);
+        evm_common::xh256_t _root(root_bs);
+        _header.set_transactions_root(_root);
+        _header.set_receipts_root(_root);
+        _header.set_state_root(_root);
+        common::xeth_address_t _ethaddr = common::xeth_address_t::build_from("0xb7762d8dbd7e5c023ff99402b78af7c13b01eec1");
+        _header.set_coinbase(_ethaddr);
+
+        xbytes_t data_bs = top::from_hex("0x112233", ec);
+        _header.set_extra_data(data_bs);
 
         evm_common::RLPStream s;
         _header.streamRLP(s);
@@ -101,11 +117,18 @@ TEST_F(test_ethdata, ethheader_rlp) {
 
         xeth_header_t _header2;
         evm_common::RLP d(s.out());
-        std::error_code ec;
         _header2.decodeRLP(d, ec);
         if (ec) {
             assert(false);
-        }        
+        }
+        ASSERT_EQ(_header2.get_gaslimit(), 10000000);
+        ASSERT_EQ(_header2.get_gasused(), 5000000);
+        ASSERT_EQ(_header2.get_baseprice(), 10000000000);
+        ASSERT_EQ(_header2.get_transactions_root().asBytes(), root_bs);
+        ASSERT_EQ(_header2.get_receipts_root().asBytes(), root_bs);
+        ASSERT_EQ(_header2.get_state_root().asBytes(), root_bs);
+        ASSERT_EQ(_header2.get_coinbase().to_bytes(), _ethaddr.to_bytes());
+        ASSERT_EQ(_header2.get_extra_data(), data_bs);
     }
 }
 
