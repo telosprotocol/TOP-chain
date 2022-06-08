@@ -37,8 +37,29 @@ xbytes_t xtop_trie_node_rlp::EncodeToBytes(xtrie_node_face_ptr_t node) {
         auto vn = std::make_shared<xtrie_value_node_t>(*(static_cast<xtrie_value_node_t *>(node.get())));
         return vn->data();
     }
+    case xtrie_node_type_t::rawfullnode: {
+        auto rfn = std::make_shared<xtrie_raw_full_node_t>(*(static_cast<xtrie_raw_full_node_t *>(node.get())));
+        xbytes_t buf;
+        std::error_code ec;
+        rfn->EncodeRLP(buf, ec);
+        // printf("buf: %s", top::to_hex(buf).c_str());
+        return buf;
+    }
+    case xtrie_node_type_t::rawnode: {
+        auto rn = std::make_shared<xtrie_raw_node_t>(*(static_cast<xtrie_raw_node_t *>(node.get())));
+        return rn->data();
+    }
+    case xtrie_node_type_t::rawshortnode: {
+        auto rsn = std::make_shared<xtrie_raw_short_node_t>(*(static_cast<xtrie_raw_short_node_t *>(node.get())));
+        xbytes_t buf;
+        std::error_code ec;
+        rsn->EncodeRLP(buf, ec);
+        // printf("buf: %s", top::to_hex(buf).c_str());
+        return buf;
+    }
     default:
-        xassert(false);
+        printf("unknonw type: %d", node->type());
+        // xassert(false);
         return {};
     }
 }

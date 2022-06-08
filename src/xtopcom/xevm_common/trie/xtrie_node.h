@@ -219,9 +219,7 @@ using xtrie_full_node_t = xtop_trie_full_node;
 using xtrie_full_node_ptr_t = std::shared_ptr<xtrie_full_node_t>;
 
 /// ? only used by database? xtrie_db.cpp
-class xtop_trie_raw_node
-  : public xtrie_node_face_t
-  , public rlp::xrlp_encodable_t<xtop_trie_raw_node> {
+class xtop_trie_raw_node : public xtrie_node_face_t {
 private:
     xbytes_t m_data;
 
@@ -249,11 +247,6 @@ public:
     }
     xtrie_node_type_t type() override {
         return xtrie_node_type_t::rawnode;
-    }
-
-public:
-    void EncodeRLP(xbytes_t & buf, std::error_code & ec) override {
-        xassert(false);
     }
 };
 using xtrie_raw_node_t = xtop_trie_raw_node;
@@ -286,14 +279,14 @@ public:
     }
 
 public:
-    void EncodeRLP(xbytes_t & buf, std::error_code & ec) override {
-        xassert(false);
-    }
+    void EncodeRLP(xbytes_t & buf, std::error_code & ec);
 };
 using xtrie_raw_full_node_t = xtop_trie_raw_full_node;
 using xtrie_raw_full_node_ptr_t = std::shared_ptr<xtrie_raw_full_node_t>;
 
-class xtop_trie_raw_short_node : public xtrie_node_face_t {
+class xtop_trie_raw_short_node
+  : public xtrie_node_face_t
+  , public rlp::xrlp_encodable_t<xtop_trie_raw_full_node> {
 public:
     xbytes_t Key;
     xtrie_node_face_ptr_t Val;
@@ -316,6 +309,9 @@ public:
     xtrie_node_type_t type() override {
         return xtrie_node_type_t::rawshortnode;
     }
+
+public:
+    void EncodeRLP(xbytes_t & buf, std::error_code & ec);
 };
 using xtrie_raw_short_node_t = xtop_trie_raw_short_node;
 using xtrie_raw_short_node_ptr_t = std::shared_ptr<xtrie_raw_short_node_t>;

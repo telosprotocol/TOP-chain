@@ -70,6 +70,20 @@ public:
     // All nodes inserted by this function will be reference tracked
     // and in theory should only used for **trie nodes** insertion.
     void insert(xhash256_t hash, int32_t size, xtrie_node_face_ptr_t node);
+
+    using AfterCommitCallback = std::function<void(xhash256_t const &)>;
+
+    // Commit iterates over all the children of a particular node, writes them out
+    // to disk, forcefully tearing down all references in both directions. As a side
+    // effect, all pre-images accumulated up to this point are also written.
+    //
+    // Note, this method is a non-synchronized mutator. It is unsafe to call this
+    // concurrently with other mutators.
+    void Commit(xhash256_t hash, AfterCommitCallback cb, std::error_code & ec);
+
+private:
+    // commit is the private locked version of Commit.
+    // void commit(xhash256_t hash, AfterCommitCallback cb, std::error_code & ec);
 };
 using xtrie_db_t = xtop_trie_db;
 using xtrie_db_ptr_t = std::shared_ptr<xtrie_db_t>;
