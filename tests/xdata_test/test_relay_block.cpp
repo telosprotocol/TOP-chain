@@ -1,12 +1,16 @@
 #include "gtest/gtest.h"
 #include "xdata/xrelay_block.h"
 #include "xbase/xmem.h"
+#include "xcommon/xeth_address.h"
+#include "xdata/xethtransaction.h"
 #include "xpbase/base/top_utils.h"
 #include<fstream>  
 using namespace top;
 using namespace top::base;
 using namespace top::data;
 using namespace top::evm_common;
+using namespace top::common;
+
 
 class test_relay_block : public testing::Test {
 protected:
@@ -19,13 +23,14 @@ protected:
 
 
 //test data
-const h160 test_address{"009b5f068bc20a5b12030fcb72975d8bddc4e84c"};
+const std::string  test_address   {"0xbc9b5f068bc20a5b12030fcb72975d8bddc4e84c"};
+const std::string  test_to_address{"0xaaaaaf068bc20a5b12030fcb72975d8bddc4e84c"};
 const h256 test_topics1{"4f89ece0f576ba3986204ba19a44d94601604b97cf3baa922b010a758d303842"};
 const h256 test_topics2{"000000000000000000000000e22c0e020c99e9aed339618fdcea2871d678ef38"};
 const h256 test_topics3{"000000000000000000000000f3b23b373dc8854cc2936f4ab4b8e782011ccf87"};
 const h256 test_topics4{"000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266"};
 const uint8_t  test_status = 1;
-const u256     test_gasUsed{0xccde};
+const uint64_t     test_gasUsed{0xccde};
 const h2048    test_logsBloom{"00000001000000004000000000000000000000000000000000000000000000000000000000041000000000000000008000000000000080000000000000200000000000000000000000000008000000000000000000008000000000000000000010000000020000000004000100000800000000040000000000000012000000000000000020000000008000000000000000000000000000000000000000000000420000000000000000000000000000000000000000080000000000000000000000000002000000200000000000000000000008002000000000000000000020000010000200000000000000000000000000000000000000000000002000000000"};
 const h256     test_public_key_x{"b72d55c76bd8f477f4b251763c33f75e6f5f5dd8af071e711e0cb9b2accc70ea"};
 const h256     test_public_key_y{"b72d55c76bd8f477f4b251763c33f75e6f5f5dd8af071e711e0cb9b2accc70ea"};
@@ -45,7 +50,8 @@ const h256    test_state_merkle_root{"f37ec61d84cea03dcc5e8385db93248584e8af4b4d
 const h256    test_block_merkle_root{"e3f407f83fc012470c26a93fdff534100f2c6f736439ce0ca90e9914f7d1c381"};
 const h256    test_prev_hash        {"cda1f407f83fc012470c26a93fdff534100f2c6f736439ce0ca9acbde1234567"};
 const h256    test_block_hash       {"1234acdeacbfc012470c26a93fdff534100f2c6f736439ce0ca9acbde1234123"};
-const u256    test_chain_bits{0x45567};
+const u256    test_value{0x45567};
+const u256    test_value_gas{0x12346};
 const uint64_t test_table_height = 999;
 
 #define  TEST_TOPICS_NUM        (4)
@@ -55,39 +61,54 @@ const uint64_t test_table_height = 999;
 #define  TEST_RECEIPT_NUM       (2)
 
 
-
-xrelay_receipt_log  xrelay_receipt_log_create() 
+xevm_log_t  xrelay_evm_log_create() 
 {
-    xrelay_receipt_log _receipt_log;
+    xeth_address_t address = xtop_eth_address::build_from(test_address);
+    xh256s_t     topics;
+    topics.push_back(test_topics1);
+    topics.push_back(test_topics2);
+    topics.push_back(test_topics3);
+    topics.push_back(test_topics4);
     std::string test_str = "000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000a4ba11f3f36b12c71f2aef775583b306a3cf784a";
     std::string log_data = top::HexDecode(test_str);
-    bytes    test_data =  bytes(log_data.begin(), log_data.end());
-    _receipt_log.m_data = test_data;
-    _receipt_log.m_contract_address = test_address;
-    _receipt_log.m_topics.push_back(test_topics1);
-    _receipt_log.m_topics.push_back(test_topics2);
-    _receipt_log.m_topics.push_back(test_topics3);
-    _receipt_log.m_topics.push_back(test_topics4);
-    return _receipt_log;
+    xbytes_t  data = bytes(log_data.begin(), log_data.end());
+
+    xevm_log_t _evm_log(address, topics, data); 
+    return _evm_log;
 }
 
-xrelay_receipt xrelay_receipt_create()
+xeth_receipt_t xrelay_receipt_create()
 {
-    xrelay_receipt _receipt;
-    _receipt.m_status = test_status;
-    _receipt.m_gasUsed = test_gasUsed;
-    _receipt.m_logsBloom = test_logsBloom;
-
+    xeth_receipt_t _receipt;
+    xeth_address_t address = xtop_eth_address::build_from(test_address);
+    evm_common::xevm_logs_t  logs;
     for (int i = 0; i < TEST_RECEIPT_LOG_NUM; i++) {
-        xrelay_receipt_log log = xrelay_receipt_log_create();
-        _receipt.m_logs.emplace_back(log);
+        xevm_log_t log = xrelay_evm_log_create();
+        logs.emplace_back(log);
     }
+    _receipt.set_tx_status(ethreceipt_status_successful);
+    _receipt.set_cumulative_gas_used(test_gasUsed);
+    _receipt.set_logs(logs);
+    _receipt.create_bloom();
+
     return _receipt;
 }
 
-xrelay_election xrelay_election_create()
+xeth_transaction_t xrelay_tx_create()
 {
-    xrelay_election _election;
+    xeth_address_t from_address = xtop_eth_address::build_from(test_address);
+    xeth_address_t to_address = xtop_eth_address::build_from(test_to_address);
+    std::string test_str = "000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000a4ba11f3f36b12c71f2aef775583b306a3cf784a";
+    std::string log_data = top::HexDecode(test_str);
+    xbytes_t  data = bytes(log_data.begin(), log_data.end());
+
+    xeth_transaction_t tx(from_address, to_address, data, test_value, test_value_gas, test_value_gas);
+    return tx;
+}
+
+xrelay_election_node_t xrelay_election_create()
+{
+    xrelay_election_node_t _election;
     _election.public_key_x = test_public_key_x;
     _election.public_key_y = test_public_key_y;
     _election.stake = test_stake;
@@ -106,16 +127,14 @@ xrelay_signature xrelay_signature_create(unsigned num = 0)
 xrelay_block_inner_header xrelay_block_inner_header_create()
 {
     xrelay_block_inner_header _inner_header;
-    _inner_header.m_version = test_version;
- //   _inner_header.m_inner_hash = test_inner_hash;
-    _inner_header.m_height = test_height;
-    _inner_header.m_epochID = test_epochID;
-    _inner_header.m_timestamp = test_timestamp;
-    _inner_header.m_elections_hash = test_elections_hash;
-    _inner_header.m_txs_merkle_root = test_txs_merkle_root;
-    _inner_header.m_receipts_merkle_root = test_receipts_merkle_root;
-    _inner_header.m_state_merkle_root = test_state_merkle_root;
-    _inner_header.m_block_merkle_root = test_block_merkle_root;
+
+    _inner_header.set_version(test_version);
+    _inner_header.set_block_height(test_height);
+    _inner_header.set_epochid(test_epochID);
+    _inner_header.set_timestamp(test_timestamp);
+    _inner_header.set_txs_merkle_root_hash(test_txs_merkle_root);
+    _inner_header.set_receipts_merkle_root_hash(test_receipts_merkle_root);
+    _inner_header.set_block_merkle_root_hash(test_block_merkle_root);
     return _inner_header;
 }
 
@@ -125,15 +144,13 @@ xrelay_block_header xrelay_block_header_create()
     xrelay_block_inner_header _inner_header = xrelay_block_inner_header_create();
     _block_header.set_inner_header(_inner_header);
     _block_header.set_prev_hash(test_prev_hash);
-    _block_header.set_block_hash(test_block_hash);
-    _block_header.set_chain_bits(test_chain_bits);
-    _block_header.set_table_height(test_table_height);    
     
-    std::vector<xrelay_election>    election_vector;
+    xrelay_election_group_t election_set;
+    election_set.election_epochID = 100;
     for (int i = 0; i< TEST_ELECTIONS_NUM; i++) {
-        election_vector.push_back(xrelay_election_create());
+        election_set.elections_vector.push_back(xrelay_election_create());
     }
-    _block_header.set_elections_next(election_vector);
+    _block_header.set_elections_next(election_set);
 
     for (int i = 0; i < TEST_SIGNATURE_NUM; i++) {
         _block_header.add_signature(xrelay_signature_create(i));
@@ -147,7 +164,7 @@ xrelay_block xrelay_block_create()
     xrelay_block_header _block_header = xrelay_block_header_create();
     _relay_block.set_header(_block_header);
 
-    std::vector<xrelay_receipt>   receipts_vector;
+    std::vector<xeth_receipt_t>   receipts_vector;
     for(int i = 0; i < TEST_RECEIPT_NUM; i ++) {
         receipts_vector.push_back(xrelay_receipt_create());
     }
@@ -156,66 +173,83 @@ xrelay_block xrelay_block_create()
     return _relay_block;
 }
 
-
 TEST_F(test_relay_block, serialize_receipt_log) {
+    std::error_code  ec;
+    xevm_log_t log_src = xrelay_evm_log_create();
 
-    xrelay_receipt_log log_src = xrelay_receipt_log_create();
     RLPStream rlp_log;
     log_src.streamRLP(rlp_log);
     bytes  rlp_bytes = rlp_log.out();
 
-    xrelay_receipt_log log_dst;
+    xevm_log_t log_dst;
     RLP rlp_dst = RLP(rlp_bytes);
-    log_dst.decodeRLP(rlp_dst);
+    log_dst.decodeRLP(rlp_dst, ec);
 
-    EXPECT_EQ(log_dst.m_data, log_src.m_data);
-    EXPECT_EQ(log_dst.m_contract_address, log_src.m_contract_address);
+    EXPECT_EQ(log_dst.data, log_src.data);
+    EXPECT_EQ(log_dst.address.to_hex_string(), log_src.address.to_hex_string());
     for(unsigned i = 0; i < TEST_TOPICS_NUM; i++ ) {
-        EXPECT_EQ(log_dst.m_topics[i], log_src.m_topics[i]);
+        EXPECT_EQ(log_dst.topics[i], log_src.topics[i]);
     }
 }
 
+TEST_F(test_relay_block, serialize_tx) {
+    eth_error  ec;
+    xeth_transaction_t tx_src = xrelay_tx_create();
+    xbytes_t tx_data = tx_src.encodeBytes();
+    xeth_transaction_t tx_dst;
+    tx_dst.decodeBytes(tx_data, ec);
+
+    EXPECT_EQ(tx_dst.get_from().to_hex_string(), tx_dst.get_from().to_hex_string());
+    EXPECT_EQ(tx_dst.get_to().to_hex_string(), tx_dst.get_to().to_hex_string());
+    EXPECT_EQ(tx_dst.get_data(), tx_dst.get_data());
+    EXPECT_EQ(tx_dst.get_value(), tx_dst.get_value());
+    EXPECT_EQ(tx_dst.get_gas(), tx_dst.get_gas());
+    EXPECT_EQ(tx_dst.get_max_fee_per_gas(), tx_dst.get_max_fee_per_gas());
+}
+
+
+
 TEST_F(test_relay_block, serialize_receipt) {
 
-    xrelay_receipt receipt_src = xrelay_receipt_create();
-    RLPStream rlp_receipt;
-    receipt_src.streamRLP(rlp_receipt);
-    bytes  rlp_bytes = rlp_receipt.out();
-    RLP rlp_dst = RLP(rlp_bytes);
+    std::error_code  ec;
+    xeth_receipt_t receipt_src = xrelay_receipt_create();
+    xbytes_t rlp_receipt = receipt_src.encodeBytes();
 
-    xrelay_receipt receipt_dst;
-    receipt_dst.decodeRLP(rlp_dst);
+    xeth_receipt_t receipt_dst;
+    receipt_dst.decodeBytes(rlp_receipt, ec);
 
-    EXPECT_EQ(receipt_dst.m_status, receipt_src.m_status);
-    EXPECT_EQ(receipt_dst.m_gasUsed, receipt_src.m_gasUsed);
-    EXPECT_EQ(receipt_dst.m_logsBloom, receipt_src.m_logsBloom);
-    EXPECT_EQ(receipt_src.m_logs.size(), TEST_RECEIPT_LOG_NUM);
-    EXPECT_EQ(receipt_dst.m_logs.size(), TEST_RECEIPT_LOG_NUM);
-    
+    EXPECT_EQ(receipt_dst.get_tx_version_type(), receipt_src.get_tx_version_type());
+    EXPECT_EQ(receipt_dst.get_tx_status(), receipt_src.get_tx_status());
+    EXPECT_EQ(receipt_dst.get_cumulative_gas_used(), receipt_src.get_cumulative_gas_used());
+    EXPECT_EQ(receipt_dst.get_logsBloom().get_data(), receipt_src.get_logsBloom().get_data());
+    EXPECT_EQ(receipt_src.get_logs().size(), TEST_RECEIPT_LOG_NUM);
+    EXPECT_EQ(receipt_dst.get_logs().size(), TEST_RECEIPT_LOG_NUM);
+ 
     for (unsigned i = 0; i < TEST_RECEIPT_LOG_NUM; i++) {
-        xrelay_receipt_log log_src = receipt_src.m_logs[i];
-        xrelay_receipt_log log_dst = receipt_dst.m_logs[i];
-        EXPECT_EQ(log_dst.m_contract_address, log_src.m_contract_address);
-        EXPECT_EQ(log_dst.m_data, log_src.m_data);
-        EXPECT_EQ(log_dst.m_topics.size(), TEST_TOPICS_NUM);
-        EXPECT_EQ(log_src.m_topics.size(), TEST_TOPICS_NUM);
+        auto &log_src = receipt_src.get_logs()[i];
+        auto &log_dst = receipt_dst.get_logs()[i];
+        EXPECT_EQ(log_dst.data, log_src.data);
+        EXPECT_EQ(log_dst.address.to_hex_string(), log_src.address.to_hex_string());
+        EXPECT_EQ(log_dst.topics.size(), TEST_TOPICS_NUM);
+        EXPECT_EQ(log_src.topics.size(), TEST_TOPICS_NUM);
         for(unsigned i = 0; i< TEST_TOPICS_NUM; i++ ) {
-            EXPECT_EQ(log_dst.m_topics[i], log_src.m_topics[i]);
-        }        
+            EXPECT_EQ(log_dst.topics[i], log_src.topics[i]);
+        }    
     }
 }
 
 TEST_F(test_relay_block, serialize_xrelay_election) {
 
-    xrelay_election election_src = xrelay_election_create();
+    xrelay_election_node_t election_src = xrelay_election_create();
 
     RLPStream rlp_election;
     election_src.streamRLP(rlp_election);
     bytes  rlp_bytes = rlp_election.out();
     RLP rlp_dst = RLP(rlp_bytes);
 
-    xrelay_election election_dst;
-    election_dst.decodeRLP(rlp_dst);
+    xrelay_election_node_t election_dst;
+    std::error_code  ec;
+    election_dst.decodeRLP(rlp_dst, ec);
 
     EXPECT_EQ(election_dst.public_key_x, election_src.public_key_x);
     EXPECT_EQ(election_dst.public_key_y, election_src.public_key_y);
@@ -233,131 +267,97 @@ TEST_F(test_relay_block, serialize_xrelay_signature) {
     RLP rlp_dst = RLP(rlp_bytes);
 
     xrelay_signature signature_dst;
-    signature_dst.decodeRLP(rlp_dst);
+    std::error_code  ec;
+    signature_dst.decodeRLP(rlp_dst, ec);
 
     EXPECT_EQ(signature_dst.r, signature_src.r);
     EXPECT_EQ(signature_dst.s, signature_src.s);
     EXPECT_EQ(signature_dst.v, signature_src.v);
 }
 
-
 TEST_F(test_relay_block, serialize_xrelay_inner_header) {
+    std::error_code  ec;
+    xrelay_block_inner_header inner_header_src = xrelay_block_inner_header_create();
+    xbytes_t rlp_innder_header = inner_header_src.encodeBytes();
+    xrelay_block_inner_header inner_header_dst;
+    inner_header_dst.decodeBytes(rlp_innder_header , ec);
 
-    xrelay_block_inner_header inner_hader_src = xrelay_block_inner_header_create();
-
-    RLPStream rlp_innder_header;
-    inner_hader_src.streamRLP(rlp_innder_header);
-    bytes  rlp_bytes = rlp_innder_header.out();
-    RLP rlp_dst = RLP(rlp_bytes);
-
-    xrelay_block_inner_header innder_header_dst;
-    innder_header_dst.decodeRLP(rlp_dst);
-
-    EXPECT_EQ(innder_header_dst.m_version, inner_hader_src.m_version);
-  //  EXPECT_EQ(innder_header_dst.m_inner_hash, inner_hader_src.m_inner_hash);
-    EXPECT_EQ(innder_header_dst.m_height, inner_hader_src.m_height);
-    EXPECT_EQ(innder_header_dst.m_epochID, inner_hader_src.m_epochID);
-    EXPECT_EQ(innder_header_dst.m_timestamp, inner_hader_src.m_timestamp);
-    EXPECT_EQ(innder_header_dst.m_elections_hash, inner_hader_src.m_elections_hash);
-    EXPECT_EQ(innder_header_dst.m_txs_merkle_root, inner_hader_src.m_txs_merkle_root);
-    EXPECT_EQ(innder_header_dst.m_receipts_merkle_root, inner_hader_src.m_receipts_merkle_root);
-    EXPECT_EQ(innder_header_dst.m_state_merkle_root, inner_hader_src.m_state_merkle_root);
-    EXPECT_EQ(innder_header_dst.m_block_merkle_root, inner_hader_src.m_block_merkle_root);
+    EXPECT_EQ(inner_header_dst.get_block_height(), inner_header_src.get_block_height());
+    EXPECT_EQ(inner_header_dst.get_epochID(), inner_header_src.get_epochID());
+    EXPECT_EQ(inner_header_dst.get_timestamp(), inner_header_src.get_timestamp());
+    EXPECT_EQ(inner_header_dst.get_txs_root_hash(), inner_header_src.get_txs_root_hash());
+    EXPECT_EQ(inner_header_dst.get_receipts_root_hash(), inner_header_src.get_receipts_root_hash());
+    EXPECT_EQ(inner_header_dst.get_block_root_hash(), inner_header_src.get_block_root_hash());
    
-   std::cout << " innder_header " << toHex(rlp_innder_header.out()) << std::endl;
+  // std::cout << " innder_header " << toHex(rlp_innder_header.out()) << std::endl;
 
 }
 
-
 TEST_F(test_relay_block, serialize_xrelay_block_header_without_signature) {
-
+    std::error_code  ec;
     xrelay_block_header block_header_src = xrelay_block_header_create();
 
     EXPECT_EQ(block_header_src.get_elections_sets().size(), TEST_ELECTIONS_NUM);
     EXPECT_EQ(block_header_src.get_signatures_sets().size(), TEST_SIGNATURE_NUM);
 
-    RLPStream rlp_block_header;
-    block_header_src.streamRLP(rlp_block_header);
-    bytes  rlp_bytes = rlp_block_header.out();
-    RLP rlp_dst = RLP(rlp_bytes);
-
+    xbytes_t rlp_block_header = block_header_src.encodeBytes();
     xrelay_block_header block_header_dst;
-    block_header_dst.decodeRLP(rlp_dst);
+    block_header_dst.decodeBytes(rlp_block_header, ec);
 
     xrelay_block_inner_header inner_header_dst = block_header_dst.get_inner_header();
     xrelay_block_inner_header inner_header_src = block_header_src.get_inner_header();
-
-    EXPECT_EQ(inner_header_dst.m_version, inner_header_src.m_version);
-  //  EXPECT_EQ(inner_header_dst.m_inner_hash, inner_header_src.m_inner_hash);
-    EXPECT_EQ(inner_header_dst.m_height, inner_header_src.m_height);
-    EXPECT_EQ(inner_header_dst.m_epochID, inner_header_src.m_epochID);
-    EXPECT_EQ(inner_header_dst.m_timestamp, inner_header_src.m_timestamp);
-    EXPECT_EQ(inner_header_dst.m_elections_hash, inner_header_src.m_elections_hash);
-    EXPECT_EQ(inner_header_dst.m_txs_merkle_root, inner_header_src.m_txs_merkle_root);
-    EXPECT_EQ(inner_header_dst.m_receipts_merkle_root, inner_header_src.m_receipts_merkle_root);
-    EXPECT_EQ(inner_header_dst.m_state_merkle_root, inner_header_src.m_state_merkle_root);
-    EXPECT_EQ(inner_header_dst.m_block_merkle_root, inner_header_src.m_block_merkle_root);
+ 
+    EXPECT_EQ(inner_header_dst.get_block_height(), inner_header_src.get_block_height());
+    EXPECT_EQ(inner_header_dst.get_epochID(), inner_header_src.get_epochID());
+    EXPECT_EQ(inner_header_dst.get_timestamp(), inner_header_src.get_timestamp());
+    EXPECT_EQ(inner_header_dst.get_txs_root_hash(), inner_header_src.get_txs_root_hash());
+    EXPECT_EQ(inner_header_dst.get_receipts_root_hash(), inner_header_src.get_receipts_root_hash());
+    EXPECT_EQ(inner_header_dst.get_block_root_hash(), inner_header_src.get_block_root_hash());
 
     EXPECT_EQ(block_header_dst.get_prev_block_hash(), block_header_src.get_prev_block_hash());
     EXPECT_EQ(block_header_dst.get_block_hash(), block_header_src.get_block_hash());
-    EXPECT_EQ(block_header_dst.get_bchain_bits(), block_header_src.get_bchain_bits());
-    EXPECT_EQ(block_header_dst.get_table_height(), block_header_src.get_table_height());
 
     EXPECT_EQ(block_header_dst.get_elections_sets().size(), TEST_ELECTIONS_NUM);
     EXPECT_EQ(block_header_src.get_elections_sets().size(), TEST_ELECTIONS_NUM);
     for (unsigned i = 0; i < TEST_ELECTIONS_NUM; i++) {
-        xrelay_election xrelay_election_dst = block_header_dst.get_elections_sets()[i];
-        xrelay_election xrelay_election_src = block_header_src.get_elections_sets()[i];
+        xrelay_election_node_t xrelay_election_dst = block_header_dst.get_elections_sets().elections_vector[i];
+        xrelay_election_node_t xrelay_election_src = block_header_src.get_elections_sets().elections_vector[i];
         EXPECT_EQ(xrelay_election_dst.public_key_x, xrelay_election_src.public_key_x);
         EXPECT_EQ(xrelay_election_dst.public_key_y, xrelay_election_src.public_key_y);
         EXPECT_EQ(xrelay_election_dst.stake, xrelay_election_src.stake);
     }
 
-
-    std::cout << " block_header serialize_xrelay_block_header_without_signature  " << toHex(rlp_block_header.out()) << std::endl;
+    //std::cout << " block_header serialize_xrelay_block_header_without_signature  " << toHex(rlp_block_header.out()) << std::endl;
 }
 
-
 TEST_F(test_relay_block, serialize_xrelay_block_header_with_signature) {
-
+    std::error_code  ec;
     xrelay_block_header block_header_src = xrelay_block_header_create();
-
     EXPECT_EQ(block_header_src.get_elections_sets().size(), TEST_ELECTIONS_NUM);
     EXPECT_EQ(block_header_src.get_signatures_sets().size(), TEST_SIGNATURE_NUM);
 
-    RLPStream rlp_block_header;
-    block_header_src.streamRLP(rlp_block_header,true);
-
-    bytes  rlp_bytes = rlp_block_header.out();
-    RLP rlp_dst = RLP(rlp_bytes);
-
+    xbytes_t rlp_block_header = block_header_src.encodeBytes(true);
     xrelay_block_header block_header_dst;
-    block_header_dst.decodeRLP(rlp_dst, true);
+    block_header_dst.decodeBytes(rlp_block_header, ec, true);
 
     xrelay_block_inner_header inner_header_dst = block_header_dst.get_inner_header();
     xrelay_block_inner_header inner_header_src = block_header_src.get_inner_header();
 
-    EXPECT_EQ(inner_header_dst.m_version, inner_header_src.m_version);
-   // EXPECT_EQ(inner_header_dst.m_inner_hash, inner_header_src.m_inner_hash);
-    EXPECT_EQ(inner_header_dst.m_height, inner_header_src.m_height);
-    EXPECT_EQ(inner_header_dst.m_epochID, inner_header_src.m_epochID);
-    EXPECT_EQ(inner_header_dst.m_timestamp, inner_header_src.m_timestamp);
-    EXPECT_EQ(inner_header_dst.m_elections_hash, inner_header_src.m_elections_hash);
-    EXPECT_EQ(inner_header_dst.m_txs_merkle_root, inner_header_src.m_txs_merkle_root);
-    EXPECT_EQ(inner_header_dst.m_receipts_merkle_root, inner_header_src.m_receipts_merkle_root);
-    EXPECT_EQ(inner_header_dst.m_state_merkle_root, inner_header_src.m_state_merkle_root);
-    EXPECT_EQ(inner_header_dst.m_block_merkle_root, inner_header_src.m_block_merkle_root);
+    EXPECT_EQ(inner_header_dst.get_block_height(), inner_header_src.get_block_height());
+    EXPECT_EQ(inner_header_dst.get_epochID(), inner_header_src.get_epochID());
+    EXPECT_EQ(inner_header_dst.get_timestamp(), inner_header_src.get_timestamp());
+    EXPECT_EQ(inner_header_dst.get_txs_root_hash(), inner_header_src.get_txs_root_hash());
+    EXPECT_EQ(inner_header_dst.get_receipts_root_hash(), inner_header_src.get_receipts_root_hash());
+    EXPECT_EQ(inner_header_dst.get_block_root_hash(), inner_header_src.get_block_root_hash());
 
     EXPECT_EQ(block_header_dst.get_prev_block_hash(), block_header_src.get_prev_block_hash());
-  //  EXPECT_EQ(block_header_dst.get_block_hash(), block_header_src.get_block_hash());
-    EXPECT_EQ(block_header_dst.get_bchain_bits(), block_header_src.get_bchain_bits());
-    EXPECT_EQ(block_header_dst.get_table_height(), block_header_src.get_table_height());
+    EXPECT_EQ(block_header_dst.get_block_hash(), block_header_src.get_block_hash());
 
     EXPECT_EQ(block_header_dst.get_elections_sets().size(), TEST_ELECTIONS_NUM);
     EXPECT_EQ(block_header_src.get_elections_sets().size(), TEST_ELECTIONS_NUM);
     for (unsigned i = 0; i < TEST_ELECTIONS_NUM; i++) {
-        xrelay_election xrelay_election_dst = block_header_dst.get_elections_sets()[i];
-        xrelay_election xrelay_election_src = block_header_src.get_elections_sets()[i];
+        xrelay_election_node_t xrelay_election_dst = block_header_dst.get_elections_sets().elections_vector[i];
+        xrelay_election_node_t xrelay_election_src = block_header_src.get_elections_sets().elections_vector[i];
         EXPECT_EQ(xrelay_election_dst.public_key_x, xrelay_election_src.public_key_x);
         EXPECT_EQ(xrelay_election_dst.public_key_y, xrelay_election_src.public_key_y);
         EXPECT_EQ(xrelay_election_dst.stake, xrelay_election_src.stake);
@@ -374,49 +374,36 @@ TEST_F(test_relay_block, serialize_xrelay_block_header_with_signature) {
     }
 
 }
-
 
 
 TEST_F(test_relay_block, serialize_xrelay_block_header_with_contract) {
-
+    std::error_code  ec;
     xrelay_block_header block_header_src = xrelay_block_header_create();
 
     EXPECT_EQ(block_header_src.get_elections_sets().size(), TEST_ELECTIONS_NUM);
     EXPECT_EQ(block_header_src.get_signatures_sets().size(), TEST_SIGNATURE_NUM);
 
-    RLPStream rlp_block_header;
-    block_header_src.streamRLP(rlp_block_header,true);
-
-    bytes  rlp_bytes = rlp_block_header.out();
-    RLP rlp_dst = RLP(rlp_bytes);
-
+    xbytes_t rlp_block_header = block_header_src.encodeBytes(true);
     xrelay_block_header block_header_dst;
-    block_header_dst.decodeRLP(rlp_dst, true);
+    block_header_dst.decodeBytes(rlp_block_header, ec, true);
 
     xrelay_block_inner_header inner_header_dst = block_header_dst.get_inner_header();
     xrelay_block_inner_header inner_header_src = block_header_src.get_inner_header();
 
-    EXPECT_EQ(inner_header_dst.m_version, inner_header_src.m_version);
-   // EXPECT_EQ(inner_header_dst.m_inner_hash, inner_header_src.m_inner_hash);
-    EXPECT_EQ(inner_header_dst.m_height, inner_header_src.m_height);
-    EXPECT_EQ(inner_header_dst.m_epochID, inner_header_src.m_epochID);
-    EXPECT_EQ(inner_header_dst.m_timestamp, inner_header_src.m_timestamp);
-    EXPECT_EQ(inner_header_dst.m_elections_hash, inner_header_src.m_elections_hash);
-    EXPECT_EQ(inner_header_dst.m_txs_merkle_root, inner_header_src.m_txs_merkle_root);
-    EXPECT_EQ(inner_header_dst.m_receipts_merkle_root, inner_header_src.m_receipts_merkle_root);
-    EXPECT_EQ(inner_header_dst.m_state_merkle_root, inner_header_src.m_state_merkle_root);
-    EXPECT_EQ(inner_header_dst.m_block_merkle_root, inner_header_src.m_block_merkle_root);
+    EXPECT_EQ(inner_header_dst.get_block_height(), inner_header_src.get_block_height());
+    EXPECT_EQ(inner_header_dst.get_epochID(), inner_header_src.get_epochID());
+    EXPECT_EQ(inner_header_dst.get_timestamp(), inner_header_src.get_timestamp());
+    EXPECT_EQ(inner_header_dst.get_txs_root_hash(), inner_header_src.get_txs_root_hash());
+    EXPECT_EQ(inner_header_dst.get_receipts_root_hash(), inner_header_src.get_receipts_root_hash());
+    EXPECT_EQ(inner_header_dst.get_block_root_hash(), inner_header_src.get_block_root_hash());
 
     EXPECT_EQ(block_header_dst.get_prev_block_hash(), block_header_src.get_prev_block_hash());
-  //  EXPECT_EQ(block_header_dst.get_block_hash(), block_header_src.get_block_hash());
-    EXPECT_EQ(block_header_dst.get_bchain_bits(), block_header_src.get_bchain_bits());
-    EXPECT_EQ(block_header_dst.get_table_height(), block_header_src.get_table_height());
 
     EXPECT_EQ(block_header_dst.get_elections_sets().size(), TEST_ELECTIONS_NUM);
     EXPECT_EQ(block_header_src.get_elections_sets().size(), TEST_ELECTIONS_NUM);
     for (unsigned i = 0; i < TEST_ELECTIONS_NUM; i++) {
-        xrelay_election xrelay_election_dst = block_header_dst.get_elections_sets()[i];
-        xrelay_election xrelay_election_src = block_header_src.get_elections_sets()[i];
+        xrelay_election_node_t xrelay_election_dst = block_header_dst.get_elections_sets().elections_vector[i];
+        xrelay_election_node_t xrelay_election_src = block_header_src.get_elections_sets().elections_vector[i];
         EXPECT_EQ(xrelay_election_dst.public_key_x, xrelay_election_src.public_key_x);
         EXPECT_EQ(xrelay_election_dst.public_key_y, xrelay_election_src.public_key_y);
         EXPECT_EQ(xrelay_election_dst.stake, xrelay_election_src.stake);
@@ -432,43 +419,34 @@ TEST_F(test_relay_block, serialize_xrelay_block_header_with_contract) {
         EXPECT_EQ(xrelay_signature_dst.v, xrelay_signature_src.v);
     }
 
-    RLPStream rlp_block_header_contract;
-    block_header_src.streamRLP_header_to_contract(rlp_block_header_contract);
-    std::cout << " streamRLP_to_contract   " << toHex(rlp_block_header_contract.out()) << std::endl;
+    xbytes_t rlp_block_header_data =  block_header_src.streamRLP_header_to_contract();
+    std::cout << " streamRLP_to_contract   " << toHex(rlp_block_header_data) << std::endl;
     std::ofstream fin("block_index_0.bin", std::ios::binary);
-    for (auto c :  rlp_block_header_contract.out()) {
+    for (auto c :  rlp_block_header_data) {
         fin.write((char*)&c, sizeof(uint8_t));
     }
     fin.close();
 }
 
-
-
 TEST_F(test_relay_block, serialize_xrelay_block_without_signature) {
-
+    std::error_code  ec;
     xrelay_block  block_src = xrelay_block_create();
 
-    RLPStream rlp_block;
-    block_src.streamRLP(rlp_block);
-    bytes  rlp_bytes = rlp_block.out();
-    RLP rlp_dst = RLP(rlp_bytes);
-
+    xbytes_t rlp_block =  block_src.encodeBytes();
     xrelay_block  block_dst;
-    block_dst.decodeRLP(rlp_dst);
+    block_dst.decodeBytes(rlp_block, ec);
 
     xrelay_block_header block_header_dst = block_dst.get_header();
     xrelay_block_header block_header_src = block_src.get_header();
 
     EXPECT_EQ(block_header_dst.get_prev_block_hash(), block_header_src.get_prev_block_hash());
     EXPECT_EQ(block_header_dst.get_block_hash(), block_header_src.get_block_hash());
-    EXPECT_EQ(block_header_dst.get_bchain_bits(), block_header_src.get_bchain_bits());
-    EXPECT_EQ(block_header_dst.get_table_height(), block_header_src.get_table_height());
 
     EXPECT_EQ(block_header_dst.get_elections_sets().size(), TEST_ELECTIONS_NUM);
     EXPECT_EQ(block_header_src.get_elections_sets().size(), TEST_ELECTIONS_NUM);
     for(unsigned i = 0; i < TEST_ELECTIONS_NUM; i++) {
-        xrelay_election xrelay_election_dst = block_header_dst.get_elections_sets()[i];
-        xrelay_election xrelay_election_src = block_header_src.get_elections_sets()[i];
+        xrelay_election_node_t xrelay_election_dst = block_header_dst.get_elections_sets().elections_vector[i];
+        xrelay_election_node_t xrelay_election_src = block_header_src.get_elections_sets().elections_vector[i];
         EXPECT_EQ(xrelay_election_dst.public_key_x, xrelay_election_src.public_key_x);
         EXPECT_EQ(xrelay_election_dst.public_key_y, xrelay_election_src.public_key_y);
         EXPECT_EQ(xrelay_election_dst.stake, xrelay_election_src.stake);
@@ -477,68 +455,61 @@ TEST_F(test_relay_block, serialize_xrelay_block_without_signature) {
     xrelay_block_inner_header inner_header_dst = block_dst.get_inner_header();
     xrelay_block_inner_header inner_header_src = block_src.get_inner_header();
 
-    EXPECT_EQ(inner_header_dst.m_version, inner_header_src.m_version);
-    EXPECT_EQ(inner_header_dst.m_inner_hash, inner_header_src.m_inner_hash);
-    EXPECT_EQ(inner_header_dst.m_height, inner_header_src.m_height);
-    EXPECT_EQ(inner_header_dst.m_epochID, inner_header_src.m_epochID);
-    EXPECT_EQ(inner_header_dst.m_timestamp, inner_header_src.m_timestamp);
-    EXPECT_EQ(inner_header_dst.m_elections_hash, inner_header_src.m_elections_hash);
-    EXPECT_EQ(inner_header_dst.m_txs_merkle_root, inner_header_src.m_txs_merkle_root);
-    EXPECT_EQ(inner_header_dst.m_receipts_merkle_root, inner_header_src.m_receipts_merkle_root);
-    EXPECT_EQ(inner_header_dst.m_state_merkle_root, inner_header_src.m_state_merkle_root);
-    EXPECT_EQ(inner_header_dst.m_block_merkle_root, inner_header_src.m_block_merkle_root);
+    EXPECT_EQ(inner_header_dst.get_block_height(), inner_header_src.get_block_height());
+    EXPECT_EQ(inner_header_dst.get_epochID(), inner_header_src.get_epochID());
+    EXPECT_EQ(inner_header_dst.get_timestamp(), inner_header_src.get_timestamp());
+    EXPECT_EQ(inner_header_dst.get_txs_root_hash(), inner_header_src.get_txs_root_hash());
+    EXPECT_EQ(inner_header_dst.get_receipts_root_hash(), inner_header_src.get_receipts_root_hash());
+    EXPECT_EQ(inner_header_dst.get_block_root_hash(), inner_header_src.get_block_root_hash());
 
-    EXPECT_EQ(block_dst.get_block_receipts_set().size(), TEST_RECEIPT_NUM);
-    EXPECT_EQ(block_src.get_block_receipts_set().size(), TEST_RECEIPT_NUM);
+    EXPECT_EQ(block_dst.get_block_receipts().size(), TEST_RECEIPT_NUM);
+    EXPECT_EQ(block_src.get_block_receipts().size(), TEST_RECEIPT_NUM);
     for (unsigned i = 0; i < TEST_RECEIPT_NUM; i++) {
-        xrelay_receipt receipt_src = block_src.get_block_receipts_set()[i];
-        xrelay_receipt receipt_dst = block_dst.get_block_receipts_set()[i];
-        EXPECT_EQ(receipt_src.m_status, receipt_dst.m_status);
-        EXPECT_EQ(receipt_src.m_gasUsed, receipt_dst.m_gasUsed);
-        EXPECT_EQ(receipt_src.m_logsBloom, receipt_dst.m_logsBloom);
-        EXPECT_EQ(receipt_src.m_logs.size(), TEST_RECEIPT_LOG_NUM);
-        EXPECT_EQ(receipt_dst.m_logs.size(), TEST_RECEIPT_LOG_NUM);
+        auto receipt_src = block_src.get_block_receipts()[i];
+        auto receipt_dst = block_dst.get_block_receipts()[i];
+
+        EXPECT_EQ(receipt_dst.get_tx_version_type(), receipt_src.get_tx_version_type());
+        EXPECT_EQ(receipt_dst.get_tx_status(), receipt_src.get_tx_status());
+        EXPECT_EQ(receipt_dst.get_cumulative_gas_used(), receipt_src.get_cumulative_gas_used());
+        EXPECT_EQ(receipt_dst.get_logsBloom().get_data(), receipt_src.get_logsBloom().get_data());
+
+        EXPECT_EQ(receipt_src.get_logs().size(), TEST_RECEIPT_LOG_NUM);
+        EXPECT_EQ(receipt_dst.get_logs().size(), TEST_RECEIPT_LOG_NUM);
         
         for (unsigned i = 0; i < TEST_RECEIPT_LOG_NUM; i++) {
-            xrelay_receipt_log log_src = receipt_src.m_logs[i];
-            xrelay_receipt_log log_dst = receipt_dst.m_logs[i];
-            EXPECT_EQ(log_dst.m_contract_address, log_src.m_contract_address);
-            EXPECT_EQ(log_dst.m_data, log_src.m_data);
-            EXPECT_EQ(log_dst.m_topics.size(), TEST_TOPICS_NUM);
-            EXPECT_EQ(log_src.m_topics.size(), TEST_TOPICS_NUM);
+            auto log_src = receipt_src.get_logs()[i];
+            auto log_dst = receipt_dst.get_logs()[i];
+
+            EXPECT_EQ(log_dst.data, log_src.data);
+            EXPECT_EQ(log_dst.address.to_hex_string(), log_src.address.to_hex_string());
+            EXPECT_EQ(log_dst.topics.size(), TEST_TOPICS_NUM);
+            EXPECT_EQ(log_src.topics.size(), TEST_TOPICS_NUM);
             for(unsigned i = 0; i< TEST_TOPICS_NUM; i++ ) {
-                EXPECT_EQ(log_dst.m_topics[i], log_src.m_topics[i]);
+                EXPECT_EQ(log_dst.topics[i], log_src.topics[i]);
             }         
         }
     }
 }
 
-
 TEST_F(test_relay_block, serialize_xrelay_block_with_signature) {
-
+    std::error_code  ec;
     xrelay_block  block_src = xrelay_block_create();
 
-    RLPStream rlp_block;
-    block_src.streamRLP(rlp_block, true);
-    bytes  rlp_bytes = rlp_block.out();
-    RLP rlp_dst = RLP(rlp_bytes);
-
+    xbytes_t rlp_block = block_src.encodeBytes(true);
     xrelay_block  block_dst;
-    block_dst.decodeRLP(rlp_dst, true);
+    block_dst.decodeBytes(rlp_block, ec, true);
 
     xrelay_block_header block_header_dst = block_dst.get_header();
     xrelay_block_header block_header_src = block_src.get_header();
 
     EXPECT_EQ(block_header_dst.get_prev_block_hash(), block_header_src.get_prev_block_hash());
     EXPECT_EQ(block_header_dst.get_block_hash(), block_header_src.get_block_hash());
-    EXPECT_EQ(block_header_dst.get_bchain_bits(), block_header_src.get_bchain_bits());
-    EXPECT_EQ(block_header_dst.get_table_height(), block_header_src.get_table_height());
 
     EXPECT_EQ(block_header_dst.get_elections_sets().size(), TEST_ELECTIONS_NUM);
     EXPECT_EQ(block_header_src.get_elections_sets().size(), TEST_ELECTIONS_NUM);
     for(unsigned i = 0; i < TEST_ELECTIONS_NUM; i++) {
-        xrelay_election xrelay_election_dst = block_header_dst.get_elections_sets()[i];
-        xrelay_election xrelay_election_src = block_header_src.get_elections_sets()[i];
+        auto xrelay_election_dst = block_header_dst.get_elections_sets().elections_vector[i];
+        auto xrelay_election_src = block_header_src.get_elections_sets().elections_vector[i];
         EXPECT_EQ(xrelay_election_dst.public_key_x, xrelay_election_src.public_key_x);
         EXPECT_EQ(xrelay_election_dst.public_key_y, xrelay_election_src.public_key_y);
         EXPECT_EQ(xrelay_election_dst.stake, xrelay_election_src.stake);
@@ -557,43 +528,41 @@ TEST_F(test_relay_block, serialize_xrelay_block_with_signature) {
     xrelay_block_inner_header inner_header_dst = block_dst.get_inner_header();
     xrelay_block_inner_header inner_header_src = block_src.get_inner_header();
 
-    EXPECT_EQ(inner_header_dst.m_version, inner_header_src.m_version);
-    EXPECT_EQ(inner_header_dst.m_inner_hash, inner_header_src.m_inner_hash);
-    EXPECT_EQ(inner_header_dst.m_height, inner_header_src.m_height);
-    EXPECT_EQ(inner_header_dst.m_epochID, inner_header_src.m_epochID);
-    EXPECT_EQ(inner_header_dst.m_timestamp, inner_header_src.m_timestamp);
-    EXPECT_EQ(inner_header_dst.m_elections_hash, inner_header_src.m_elections_hash);
-    EXPECT_EQ(inner_header_dst.m_txs_merkle_root, inner_header_src.m_txs_merkle_root);
-    EXPECT_EQ(inner_header_dst.m_receipts_merkle_root, inner_header_src.m_receipts_merkle_root);
-    EXPECT_EQ(inner_header_dst.m_state_merkle_root, inner_header_src.m_state_merkle_root);
-    EXPECT_EQ(inner_header_dst.m_block_merkle_root, inner_header_src.m_block_merkle_root);
+    EXPECT_EQ(inner_header_dst.get_block_height(), inner_header_src.get_block_height());
+    EXPECT_EQ(inner_header_dst.get_epochID(), inner_header_src.get_epochID());
+    EXPECT_EQ(inner_header_dst.get_timestamp(), inner_header_src.get_timestamp());
+    EXPECT_EQ(inner_header_dst.get_txs_root_hash(), inner_header_src.get_txs_root_hash());
+    EXPECT_EQ(inner_header_dst.get_receipts_root_hash(), inner_header_src.get_receipts_root_hash());
+    EXPECT_EQ(inner_header_dst.get_block_root_hash(), inner_header_src.get_block_root_hash());
 
-    EXPECT_EQ(block_dst.get_block_receipts_set().size(), TEST_RECEIPT_NUM);
-    EXPECT_EQ(block_src.get_block_receipts_set().size(), TEST_RECEIPT_NUM);
-    for (unsigned i = 0; i < TEST_RECEIPT_NUM; i++) {
-        xrelay_receipt receipt_src = block_src.get_block_receipts_set()[i];
-        xrelay_receipt receipt_dst = block_dst.get_block_receipts_set()[i];
-        EXPECT_EQ(receipt_src.m_status, receipt_dst.m_status);
-        EXPECT_EQ(receipt_src.m_gasUsed, receipt_dst.m_gasUsed);
-        EXPECT_EQ(receipt_src.m_logsBloom, receipt_dst.m_logsBloom);
-        EXPECT_EQ(receipt_src.m_logs.size(), TEST_RECEIPT_LOG_NUM);
-        EXPECT_EQ(receipt_dst.m_logs.size(), TEST_RECEIPT_LOG_NUM);
+    EXPECT_EQ(block_dst.get_block_receipts().size(), TEST_RECEIPT_NUM);
+    EXPECT_EQ(block_src.get_block_receipts().size(), TEST_RECEIPT_NUM);
+     for (unsigned i = 0; i < TEST_RECEIPT_NUM; i++) {
+        auto receipt_src = block_src.get_block_receipts()[i];
+        auto receipt_dst = block_dst.get_block_receipts()[i];
+
+        EXPECT_EQ(receipt_dst.get_tx_version_type(), receipt_src.get_tx_version_type());
+        EXPECT_EQ(receipt_dst.get_tx_status(), receipt_src.get_tx_status());
+        EXPECT_EQ(receipt_dst.get_cumulative_gas_used(), receipt_src.get_cumulative_gas_used());
+        EXPECT_EQ(receipt_dst.get_logsBloom().get_data(), receipt_src.get_logsBloom().get_data());
+
+        EXPECT_EQ(receipt_src.get_logs().size(), TEST_RECEIPT_LOG_NUM);
+        EXPECT_EQ(receipt_dst.get_logs().size(), TEST_RECEIPT_LOG_NUM);
         
         for (unsigned i = 0; i < TEST_RECEIPT_LOG_NUM; i++) {
-            xrelay_receipt_log log_src = receipt_src.m_logs[i];
-            xrelay_receipt_log log_dst = receipt_dst.m_logs[i];
-            EXPECT_EQ(log_dst.m_contract_address, log_src.m_contract_address);
-            EXPECT_EQ(log_dst.m_data, log_src.m_data);
-            EXPECT_EQ(log_dst.m_topics.size(), TEST_TOPICS_NUM);
-            EXPECT_EQ(log_src.m_topics.size(), TEST_TOPICS_NUM);
+            auto log_src = receipt_src.get_logs()[i];
+            auto log_dst = receipt_dst.get_logs()[i];
+
+            EXPECT_EQ(log_dst.data, log_src.data);
+            EXPECT_EQ(log_dst.address.to_hex_string(), log_src.address.to_hex_string());
+            EXPECT_EQ(log_dst.topics.size(), TEST_TOPICS_NUM);
+            EXPECT_EQ(log_src.topics.size(), TEST_TOPICS_NUM);
             for(unsigned i = 0; i< TEST_TOPICS_NUM; i++ ) {
-                EXPECT_EQ(log_dst.m_topics[i], log_src.m_topics[i]);
+                EXPECT_EQ(log_dst.topics[i], log_src.topics[i]);
             }         
         }
     }
 
 }
 
-
-
-
+ 

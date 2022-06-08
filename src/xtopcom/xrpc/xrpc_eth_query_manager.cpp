@@ -1031,16 +1031,15 @@ void xrpc_eth_query_manager::top_getRelayBlockByNumber(xJson::Value & js_req, xJ
 
     if (std::strtoul(js_req[0].asString().c_str(), NULL, 16) == 0) {
         uint64_t block_version = 0;
-        evm_common::u256 chain_bits = 0;
+       // evm_common::u256 chain_bits = 0;
         uint64_t epochID = 0;
         evm_common::h256 prev_hash;
-        data::xrelay_block relay_block(block_version, prev_hash, chain_bits, 0, 0, epochID, 0);
+        data::xrelay_block relay_block(block_version, prev_hash,  0, epochID, 0);
 
-        evm_common::RLPStream rlp_stream;
-        relay_block.get_header().streamRLP_header_to_contract(rlp_stream);
+        xbytes_t header_data = relay_block.get_header().streamRLP_header_to_contract();
 
         xJson::Value js_result;
-        js_rsp["result"] = top::to_hex_prefixed(rlp_stream.out());
+        js_rsp["result"] = top::to_hex_prefixed(header_data);
         return;
     }
 
@@ -1087,13 +1086,18 @@ void xrpc_eth_query_manager::top_getRelayBlockByNumber(xJson::Value & js_req, xJ
 
     std::string relay_block_data = block->get_header()->get_extra_data();
     xdbg("top_getRelayBlockByNumber, relay_block_data: %s", top::HexEncode(relay_block_data).c_str());
-    relay_block.decodeRLP(evm_common::RLP(relay_block_data));
-    evm_common::RLPStream rlp_stream;
+    std::error_code ec;
+    relay_block.decodeBytes(to_bytes(relay_block_data), ec);
+    if (ec) {
+        xwarn("xrpc_eth_query_manager::top_getRelayBlockByNumber relay_block decodeBytes error %s; err msg %s", ec.category().name(), ec.message().c_str());
+        return ;
+    }
+
     //relay_block.streamRLP(rlp_stream, true);
-    relay_block.get_header().streamRLP_header_to_contract(rlp_stream);
+    xbytes_t header_data = relay_block.get_header().streamRLP_header_to_contract();
 
     xJson::Value js_result;
-    js_rsp["result"] = top::to_hex_prefixed(rlp_stream.out());
+    js_rsp["result"] = top::to_hex_prefixed(header_data);
     return;    
 }
 void xrpc_eth_query_manager::top_relayBlockNumber(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {

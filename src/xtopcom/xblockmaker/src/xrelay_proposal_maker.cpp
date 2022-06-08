@@ -11,6 +11,7 @@
 #include "xdata/xblocktool.h"
 #include "xmbus/xevent_behind.h"
 #include "xstore/xtgas_singleton.h"
+#include "xevm_common/xevm_transaction_result.h"
 
 #include <string>
 
@@ -45,62 +46,59 @@ bool xrelay_proposal_maker_t::can_make_proposal(data::xblock_consensus_para_t & 
     return true;
 }
 
-void xrelay_proposal_maker_t::convert_to_xrelay_receipts(const std::map<uint64_t, xrelay_chain::xcross_txs_t> & cross_tx_map, std::vector<data::xrelay_receipt> receipts) {
+void xrelay_proposal_maker_t::convert_to_xrelay_receipts(const std::map<uint64_t, xrelay_chain::xcross_txs_t> & cross_tx_map, std::vector<data::xeth_receipt_t> receipts) {
     for (auto & cross_tx_map_pair : cross_tx_map) {
         auto & cross_txs = cross_tx_map_pair.second;
         for (auto & tx_result : cross_txs.m_tx_results) {
-            // todo(nathan): use real data for m_type, logs_bloom etc.
-            evm_common::h2048 logs_bloom(tx_result.bloom().get_data());
-            std::vector<data::xrelay_receipt_log> relay_receipt_logs;
-            for (auto & log : tx_result.get_logs()) {
-                data::xrelay_receipt_log relay_receipt_log;
-                relay_receipt_log.m_contract_address = evm_common::h160(to_bytes(log.address));
-                relay_receipt_log.m_data = to_bytes(log.data);
-                for (auto & topic : log.topics) {
-                    relay_receipt_log.m_topics.push_back(evm_common::h256(to_bytes(topic)));
-                }
-                relay_receipt_logs.push_back(relay_receipt_log);
-            }
-            data::xrelay_receipt receipt(tx_result.get_version(), (uint8_t)tx_result.get_tx_status(), (evm_common::u256)tx_result.get_cumulative_gas_used(), logs_bloom, relay_receipt_logs);
+            data::xeth_receipt_t receipt;
+            receipt.set_tx_status(tx_result.get_tx_status());
+            receipt.set_cumulative_gas_used(tx_result.get_cumulative_gas_used());
+            receipt.set_logs(tx_result.get_logs());
+            receipt.create_bloom();
             receipts.push_back(receipt);
         }
     }
 }
 
-data::xrelay_block xrelay_proposal_maker_t::build_relay_block(evm_common::h256 prev_hash, uint64_t block_height, uint64_t cur_evm_table_height, uint64_t timestamp, std::vector<data::xrelay_receipt> receipts) {
-    uint64_t block_version = 0;
-    evm_common::u256 chain_bits = 0;
+data::xrelay_block xrelay_proposal_maker_t::build_relay_block(evm_common::h256 prev_hash, uint64_t block_height, uint64_t timestamp, std::vector<data::xeth_receipt_t> receipts) {
+    uint8_t block_version = 0;
+   // evm_common::u256 chain_bits = 0;
     uint64_t epochID = 0;
-    data::xrelay_block relay_block(block_version, prev_hash, chain_bits, cur_evm_table_height, block_height, epochID, timestamp);
+    data::xrelay_block relay_block(block_version, prev_hash,  block_height, epochID, timestamp);
     xdbg("xrelay_proposal_maker_t::build_relay_block, %s,%llu,%llu", prev_hash.hex().c_str(), block_height, timestamp);
     relay_block.set_receipts(receipts);
     return relay_block;
 }
 
-bool xrelay_proposal_maker_t::build_relay_block_data_leader(const data::xblock_ptr_t & latest_wrap_block, uint64_t timestamp, std::string & relay_block_data) {
+bool xrelay_proposal_maker_t::build_relay_block_data_leader(const data::xblock_ptr_t & latest_wrap_block, uint64_t timestamp, std::string & relay_block_data, uint64_t table_height) {
     evm_common::h256 prev_hash;
     uint64_t block_height = 0;
+    std::error_code  ec;
+    uint64_t last_evm_table_height = table_height;
 
-    uint64_t last_evm_table_height = 0;
     auto last_relay_block_data = latest_wrap_block->get_header()->get_extra_data();
     if (!last_relay_block_data.empty()) {
         data::xrelay_block last_relay_block;
-        last_relay_block.decodeRLP(evm_common::RLP(last_relay_block_data));
+        last_relay_block.decodeBytes(to_bytes(last_relay_block_data), ec);
+        if (ec) {
+            xwarn("xrelay_proposal_maker_t:build_relay_block_data_leader decodeBytes error %s; err msg %s", ec.category().name(), ec.message().c_str());
+            return false;
+        }
+        
         last_relay_block.build_finish();
         prev_hash = last_relay_block.get_block_hash();
-        block_height = last_relay_block.get_inner_header().m_height + 1;
-        last_evm_table_height = last_relay_block.get_header().get_table_height();
+        block_height = last_relay_block.get_block_height() + 1;
+       // last_evm_table_height = last_relay_block.get_header().get_table_height();
     } else {
         uint64_t block_version = 0;
-        evm_common::u256 chain_bits = 0;
+        //evm_common::u256 chain_bits = 0;
         uint64_t epochID = 0;
         evm_common::h256 prev_hash;
-        data::xrelay_block genesis_block(block_version, prev_hash, chain_bits, 0, 0, epochID, 0);
+        data::xrelay_block genesis_block(block_version, prev_hash,  0, epochID, 0);
         genesis_block.build_finish();
-
         prev_hash = genesis_block.get_block_hash();
-        block_height = genesis_block.get_inner_header().m_height + 1;
-        last_evm_table_height = genesis_block.get_header().get_table_height();
+        block_height = genesis_block.get_block_height() + 1;
+       // last_evm_table_height = genesis_block.get_header().get_table_height();
     }
 
     std::map<uint64_t, xrelay_chain::xcross_txs_t> cross_tx_map;
@@ -114,14 +112,13 @@ bool xrelay_proposal_maker_t::build_relay_block_data_leader(const data::xblock_p
         return false;
     }
 
-    std::vector<data::xrelay_receipt> receipts;
+    std::vector<data::xeth_receipt_t> receipts;
     convert_to_xrelay_receipts(cross_tx_map, receipts);
 
-    data::xrelay_block relay_block = build_relay_block(prev_hash, block_height, cur_evm_table_height, timestamp, receipts);
+    data::xrelay_block relay_block = build_relay_block(prev_hash, block_height, timestamp, receipts);
 
-    evm_common::RLPStream rlp_stream;
-    relay_block.streamRLP(rlp_stream);
-    relay_block_data = from_bytes<std::string>((xbytes_t)(rlp_stream.out()));
+    xbytes_t rlp_stream = relay_block.encodeBytes();
+    relay_block_data = from_bytes<std::string>((xbytes_t)(rlp_stream));
     return true;
 }
 
@@ -131,14 +128,13 @@ bool xrelay_proposal_maker_t::build_relay_block_data_backup(evm_common::h256 pre
     if (!ret) {
         return {};
     }
-    std::vector<data::xrelay_receipt> receipts;
+    std::vector<data::xeth_receipt_t> receipts;
     convert_to_xrelay_receipts(cross_tx_map, receipts);
 
-    data::xrelay_block relay_block = build_relay_block(prev_hash, block_height, cur_evm_table_height, timestamp, receipts);
+    data::xrelay_block relay_block = build_relay_block(prev_hash, block_height, timestamp, receipts);
 
-    evm_common::RLPStream rlp_stream;
-    relay_block.streamRLP(rlp_stream);
-    relay_block_data = from_bytes<std::string>((xbytes_t)(rlp_stream.out()));
+    xbytes_t rlp_stream = relay_block.encodeBytes();
+    relay_block_data = from_bytes<std::string>((xbytes_t)(rlp_stream));
     return true;
 }
 
@@ -210,7 +206,7 @@ xblock_ptr_t xrelay_proposal_maker_t::make_proposal(data::xblock_consensus_para_
         //     return nullptr;
         // }
         // todo(nathan): build real relay block data.
-        bool ret = build_relay_block_data_leader(latest_cert_block, proposal_para.get_gmtime(), relay_block_data);
+        bool ret = build_relay_block_data_leader(latest_cert_block, proposal_para.get_gmtime(), relay_block_data, last_evm_height);
         if (!ret) {
             xinfo("xrelay_proposal_maker_t::make_proposal fail-no tx for pack.%s", proposal_para.dump().c_str());
             return nullptr;
@@ -306,39 +302,46 @@ bool xrelay_proposal_maker_t::check_wrap_proposal(const xblock_ptr_t & latest_ce
     std::string relay_block_data;
     if (wrap_phase == 0) {
         // relay_block_data = base::xstring_utl::tostring(latest_cert_block->get_height());
-
+        std::error_code  ec;
         data::xrelay_block proposal_relay_block;
-        proposal_relay_block.decodeRLP(evm_common::RLP(proposal_block->get_relay_block_data()));
-
+        proposal_relay_block.decodeBytes(to_bytes(proposal_block->get_relay_block_data()), ec);
+        if (ec) {
+            xwarn("xrelay_proposal_maker_t:check_wrap_proposal proposal_relay_block decodeBytes error %s; err msg %s", ec.category().name(), ec.message().c_str());
+            return false;
+        }
         evm_common::h256 local_prev_hash;
         uint64_t local_block_height = 0;
         uint64_t local_last_evm_table_height = 0;
         auto last_relay_block_data = latest_cert_block->get_header()->get_extra_data();
         if (!last_relay_block_data.empty()) {
             data::xrelay_block last_relay_block;
-            last_relay_block.decodeRLP(evm_common::RLP(last_relay_block_data));
+            last_relay_block.decodeBytes(to_bytes(last_relay_block_data), ec);
+            if (ec) {
+                xwarn("xrelay_proposal_maker_t:check_wrap_proposal last_relay_block decodeBytes error %s; err msg %s", ec.category().name(), ec.message().c_str());
+                return false;
+            }
             last_relay_block.build_finish();
             local_prev_hash = last_relay_block.get_block_hash();
-            local_block_height = last_relay_block.get_inner_header().m_height + 1;
-            local_last_evm_table_height = last_relay_block.get_header().get_table_height();
+            local_block_height = last_relay_block.get_block_height() + 1;
+            //local_last_evm_table_height = last_relay_block.get_header().get_table_height();
         } else {
             uint64_t block_version = 0;
-            evm_common::u256 chain_bits = 0;
+           // evm_common::u256 chain_bits = 0;
             uint64_t epochID = 0;
             evm_common::h256 prev_hash;
-            data::xrelay_block genesis_block(block_version, prev_hash, chain_bits, 0, 0, epochID, 0);
+            data::xrelay_block genesis_block(block_version, prev_hash,  0, epochID, 0);
             genesis_block.build_finish();
 
             prev_hash = genesis_block.get_block_hash();
-            local_block_height = genesis_block.get_inner_header().m_height + 1;
-            local_last_evm_table_height = genesis_block.get_header().get_table_height();
+            local_block_height = genesis_block.get_block_height() + 1;
+            //local_last_evm_table_height = genesis_block.get_header().get_table_height();
         }
 
-        if (proposal_relay_block.get_header().get_prev_block_hash() != local_prev_hash || proposal_relay_block.get_inner_header().m_height != local_block_height) {
+        if (proposal_relay_block.get_header().get_prev_block_hash() != local_prev_hash || proposal_relay_block.get_block_height() != local_block_height) {
             xerror("xrelay_proposal_maker_t::check_wrap_proposal relay block pre hash or height not match.pre hash:%s:%s,height:%llu:%llu.proposal_block=%s",
                proposal_relay_block.get_header().get_prev_block_hash().hex().c_str(),
                local_prev_hash.hex().c_str(),
-               proposal_relay_block.get_inner_header().m_height,
+               proposal_relay_block.get_block_height(),
                local_block_height,
                proposal_block->dump().c_str());
             return false;
@@ -347,8 +350,8 @@ bool xrelay_proposal_maker_t::check_wrap_proposal(const xblock_ptr_t & latest_ce
         auto ret = build_relay_block_data_backup(local_prev_hash,
                                                  local_block_height,
                                                  local_last_evm_table_height,
-                                                 proposal_relay_block.get_header().get_table_height(),
-                                                 proposal_relay_block.get_inner_header().m_timestamp,
+                                                 proposal_relay_block.get_block_height(),
+                                                 proposal_relay_block.get_timestamp(),
                                                  relay_block_data);
         if (!ret) {
             xerror("xrelay_proposal_maker_t::check_wrap_proposal build relay block data fail.proposal_block=%s", proposal_block->dump().c_str());
