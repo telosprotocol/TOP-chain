@@ -285,6 +285,8 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
                 } else {
                     vmoutput.m_tx_exec_succ = false;
                     vmoutput.m_tx_result.status = evm_common::xevm_transaction_status_t::OtherExecuteError;
+                    vmoutput.m_tx_result.used_gas = static_cast<uint64_t>(gasfee.tx_eth_gas_limit());
+                    xwarn("xatomictx_executor_t::vm_execute outof gas, ret: %d, evm_status: %d, used_gas: %lu", ret, vmoutput.m_tx_result.status, vmoutput.m_tx_result.used_gas);
                 }
             } else {
                 xtvm_t tvm;
@@ -304,9 +306,10 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
                 break;
             }
             evm::xtop_evm evm{m_statectx};
-            ret = evm.execute(vminput,vmoutput);
+            evm.execute(vminput,vmoutput);
             gasfee.postprocess(vmoutput.m_tx_result.used_gas, ec);
-            if (ret == enum_exec_success && ec) {
+            if (vmoutput.m_tx_result.status == evm_common::xevm_transaction_status_t::Success && ec) {
+                ret = enum_exec_error_evm_execute;
                 vmoutput.m_tx_exec_succ = false;
                 vmoutput.m_vm_error_code = ec.value();
                 vmoutput.m_vm_error_str = std::string{ec.category().name()} + ": " + ec.message().c_str();
@@ -314,14 +317,15 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
                     ret = enum_exec_error_out_of_gas;
                     vmoutput.m_tx_result.status = evm_common::xevm_transaction_status_t::OutOfGas;
                     vmoutput.m_tx_result.used_gas = static_cast<uint64_t>(gasfee.tx_eth_gas_limit());
-                    xwarn("xatomictx_executor_t::vm_execute outof gas, ret: %d, evm_status: %d", ret, vmoutput.m_tx_result.status);
+                    xwarn("xatomictx_executor_t::vm_execute outof gas, evm_status: %d", vmoutput.m_tx_result.status);
                 } else {
                     xassert(false);
                 }
-                // no break here, to do after works
-            }
-            if (ret == txexecutor::enum_exec_success) {
-                xdbg("xatomictx_executor_t::vm_execute tx:%s status:%d,extra_msg:%s", tx->dump().c_str(), vmoutput.m_tx_result.status, vmoutput.m_tx_result.extra_msg.c_str());
+            } else if (vmoutput.m_tx_result.status == evm_common::xevm_transaction_status_t::Success) {
+                ret = enum_exec_success;
+            } else {
+                ret = enum_exec_error_evm_execute;
+                xwarn("xatomictx_executor_t::vm_execute error evm_status: %d", vmoutput.m_tx_result.status);
             }
 #else
             xassert(false);
@@ -330,7 +334,7 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
         }
     } while(0);
 
-    if (ret != enum_exec_success) {
+    if (ret != enum_exec_success || vmoutput.m_tx_result.status != evm_common::xevm_transaction_status_t::Success) {
         xwarn("xatomictx_executor_t::vm_execute tx error: %s, ret: %d, error_code: %d, error_msg: %s", tx->dump().c_str(), ret, vmoutput.m_vm_error_code, vmoutput.m_vm_error_str.c_str());
     }
     vmoutput.m_gasfee_detail = gasfee.gasfee_detail();
