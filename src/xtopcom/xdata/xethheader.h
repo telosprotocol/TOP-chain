@@ -6,17 +6,13 @@
 
 #include <string>
 #include "xbasic/xbyte_buffer.h"
+#include "xcommon/xeth_address.h"
 #include "xevm_common/common.h"
 #include "xevm_common/xfixed_hash.h"
 #include "xevm_common/rlp.h"
 #include "xevm_common/xbloom9.h"
 
 NS_BEG2(top, data)
-
-enum enum_eth_header_format {
-    ETH_HEADER_fORMAT_NORMAL = 0,
-    ETH_HEADER_fORMAT_SIMPLE = 1,
-};
 
 class xeth_header_t {
  public:
@@ -39,9 +35,9 @@ class xeth_header_t {
     const evm_common::xh256_t &         get_receipts_root() const {return m_receipts_root;}
     const evm_common::xh256_t &         get_state_root() const {return m_state_root;}
     xbytes_t const&                     get_extra_data() const {return m_extra_data;}
+    common::xeth_address_t const&       get_coinbase() const {return m_coinbase;}
 
  public:  // set APIS
-    void        set_format(enum_eth_header_format format);
     void        set_gaslimit(uint64_t gaslimit);
     void        set_gasused(uint64_t gasused);
     void        set_baseprice(const evm_common::u256 & price);
@@ -49,9 +45,11 @@ class xeth_header_t {
     void        set_transactions_root(const evm_common::xh256_t & root);
     void        set_receipts_root(const evm_common::xh256_t & root);
     void        set_state_root(const evm_common::xh256_t & root);
+    void        set_extra_data(xbytes_t const& _data);
+    void        set_coinbase(const common::xeth_address_t & miner);
 
  private:
-    uint8_t                 m_format{ETH_HEADER_fORMAT_NORMAL};
+    uint8_t                 m_version{0};
     uint64_t                m_gaslimit{0};  // the block gaslimit
     evm_common::u256        m_baseprice;
     uint64_t                m_gasused{0};  // the block gasUsed by all txs
@@ -60,6 +58,7 @@ class xeth_header_t {
     evm_common::xh256_t     m_receipts_root;
     evm_common::xh256_t     m_state_root;
     xbytes_t                m_extra_data;
+    common::xeth_address_t  m_coinbase;
 };
 
 using xeth_header_ptr_t = std::shared_ptr<xeth_header_t>;

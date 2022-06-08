@@ -52,7 +52,7 @@ bool xtransaction_t::set_tx_by_serialized_data(xtransaction_ptr_t & tx_ptr, cons
     try {
         base::xdataunit_t * raw_tx = base::xdataunit_t::read_from(data);
         if (nullptr == raw_tx) {
-            xerror("xtransaction_t::set_tx_by_serialized_data fail-tx content read from fail.");
+            xwarn("xtransaction_t::set_tx_by_serialized_data fail-tx content read from fail.");
             return false;
         }
 

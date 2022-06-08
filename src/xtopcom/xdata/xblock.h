@@ -43,6 +43,8 @@
 #include "xdata/xcons_transaction.h"
 #include "xdata/xdata_common.h"
 #include "xdata/xlightunit_info.h"
+#include "xcommon/xaccount_address.h"
+#include "xevm_common/common.h"
 
 NS_BEG2(top, data)
 
@@ -143,6 +145,9 @@ class xblock_consensus_para_t {
     void    set_clock(uint64_t clock) {m_clock = clock;}
     void    set_gmtime(uint64_t gmtime) {m_gmtime = gmtime;}
     void    set_ethheader(const std::string & ethheader) const {m_ethheader = ethheader;}
+    void    set_coinbase(common::xaccount_address_t const& address) {m_coinbase = address;}
+    void    set_block_gaslimit(uint64_t _gas_limit) {m_block_gas_limit = _gas_limit;}
+    void    set_block_base_price(evm_common::u256 const& _price) {m_base_price = _price;}
 
  public:
     const std::string &     get_random_seed() const {return m_random_seed;}
@@ -158,6 +163,8 @@ class xblock_consensus_para_t {
     const xblock_ptr_t &    get_latest_committed_block() const {return m_latest_committed_block;}
     const xvip2_t &         get_validator() const {return m_validator;}
     const xvip2_t &         get_auditor() const {return m_auditor;}
+    xvip2_t                 get_leader_xip() const;
+    common::xaccount_address_t const&   get_coinbase() const {return m_coinbase;}
     uint64_t                get_total_lock_tgas_token() const {return m_total_lock_tgas_token;}
     uint64_t                get_tgas_height() const {return m_total_lock_tgas_token_property_height;}
     const std::string &     get_justify_cert_hash() const {return m_justify_cert_hash;}
@@ -168,6 +175,8 @@ class xblock_consensus_para_t {
     const std::string &     dump() const {return m_dump_str;}
     uint64_t                get_gettimeofday_s() const {return m_timeofday_s;}
     const std::string &     get_ethheader() const {return m_ethheader;}
+    uint64_t                get_block_gaslimit() const {return m_block_gas_limit;}
+    evm_common::u256 const& get_block_base_price() const {return m_base_price;}
 
  private:
     std::string     m_account;
@@ -192,6 +201,9 @@ class xblock_consensus_para_t {
     mutable uint64_t        m_parent_height{0};  // may changed by unit
     uint64_t        m_timeofday_s{0};
     mutable std::string     m_ethheader;
+    common::xaccount_address_t  m_coinbase;
+    uint64_t                    m_block_gas_limit{0};
+    evm_common::u256            m_base_price;
 };
 
 NS_END2

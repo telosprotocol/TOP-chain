@@ -569,8 +569,7 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
     statectx::xstatectx_ptr_t statectx_ptr = statectx::xstatectx_factory_t::create_latest_cert_statectx(cs_para.get_latest_cert_block().get(), table_para.get_tablestate(), table_para.get_commit_tablestate(), statectx_para);
     // create batch executor
     uint64_t gas_limit = XGET_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit);
-    auto base_price = top::gasfee::xgas_estimate::base_price();
-    txexecutor::xvm_para_t vmpara(cs_para.get_clock(), cs_para.get_random_seed(), cs_para.get_total_lock_tgas_token(), gas_limit);
+    txexecutor::xvm_para_t vmpara(cs_para.get_clock(), cs_para.get_random_seed(), cs_para.get_total_lock_tgas_token(), gas_limit, cs_para.get_table_proposal_height(), cs_para.get_coinbase());
     txexecutor::xbatchtx_executor_t executor(statectx_ptr, vmpara);
 
     std::vector<xcons_transaction_ptr_t> input_txs;
@@ -700,7 +699,7 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
     std::map<std::string, std::string> property_hashs;
     xtablebuilder_t::make_table_prove_property_hashs(statectx_ptr->get_table_state()->get_bstate().get(), property_hashs);
 
-    cs_para.set_ethheader(xeth_header_builder::build(cs_para.get_clock(), data::ETH_HEADER_fORMAT_NORMAL, gas_limit, base_price, execute_output.pack_outputs));
+    cs_para.set_ethheader(xeth_header_builder::build(cs_para, execute_output.pack_outputs));
 
     data::xblock_ptr_t tableblock = xtablebuilder_t::make_light_block(cs_para.get_latest_cert_block(),
                                                                         statectx_ptr->get_table_state(),
@@ -756,9 +755,7 @@ xblock_ptr_t xtable_maker_t::make_full_table(const xtablemaker_para_t & table_pa
     data::xtablestate_ptr_t tablestate = table_para.get_tablestate();
     xassert(nullptr != tablestate);
 
-    uint64_t gas_limit = XGET_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit);
-    auto base_price = top::gasfee::xgas_estimate::base_price();
-    cs_para.set_ethheader(xeth_header_builder::build(cs_para.get_clock(), data::ETH_HEADER_fORMAT_SIMPLE, gas_limit, base_price));
+    cs_para.set_ethheader(xeth_header_builder::build(cs_para));
 
     xblock_builder_para_ptr_t build_para = std::make_shared<xfulltable_builder_para_t>(tablestate, blocks_from_last_full, get_resources());
     xblock_ptr_t proposal_block = m_fulltable_builder->build_block(cert_block, table_para.get_tablestate()->get_bstate(), cs_para, build_para);
@@ -786,9 +783,7 @@ xblock_ptr_t xtable_maker_t::make_empty_table(const xtablemaker_para_t & table_p
     data::xtablestate_ptr_t tablestate = table_para.get_tablestate();
     xassert(nullptr != tablestate);
 
-    uint64_t gas_limit = XGET_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit);
-    auto base_price = top::gasfee::xgas_estimate::base_price();
-    cs_para.set_ethheader(xeth_header_builder::build(cs_para.get_clock(), data::ETH_HEADER_fORMAT_SIMPLE, gas_limit, base_price));
+    cs_para.set_ethheader(xeth_header_builder::build(cs_para));
 
     xblock_ptr_t proposal_block = m_emptytable_builder->build_block(cert_block, table_para.get_tablestate()->get_bstate(), cs_para, m_default_builder_para);
     return proposal_block;
@@ -1073,9 +1068,9 @@ bool xtable_maker_t::can_make_next_empty_block() const {
     return false;
 }
 
-const std::string xeth_header_builder::build(uint64_t clock, data::enum_eth_header_format format, uint64_t gas_limit, evm_common::u256 base_price, const std::vector<txexecutor::xatomictx_output_t> & pack_txs_outputs) {
+const std::string xeth_header_builder::build(const xblock_consensus_para_t & cs_para, const std::vector<txexecutor::xatomictx_output_t> & pack_txs_outputs) {
     auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-    if (!top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.eth_fork_point, clock)) {
+    if (!top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.eth_fork_point, cs_para.get_clock())) {
         return {};
     }
     
@@ -1084,7 +1079,6 @@ const std::string xeth_header_builder::build(uint64_t clock, data::enum_eth_head
     evm_common::xbloom9_t logs_bloom;
     data::xeth_receipts_t eth_receipts;
     data::xeth_transactions_t eth_txs; 
-
     for (auto & txout : pack_txs_outputs) {
         if (txout.m_tx->get_tx_version() != data::xtransaction_version_3) {
             continue;
@@ -1109,19 +1103,24 @@ const std::string xeth_header_builder::build(uint64_t clock, data::enum_eth_head
         eth_txs.push_back(ethtx);
     }
 
-    xassert(gas_used <= gas_limit);
+    xassert(gas_used <= cs_para.get_block_gaslimit());
 
     data::xeth_header_t eth_header;
-    eth_header.set_format(format);
-    eth_header.set_gaslimit(gas_limit);
-    eth_header.set_baseprice(base_price);
+    eth_header.set_gaslimit(cs_para.get_block_gaslimit());
+    eth_header.set_baseprice(cs_para.get_block_base_price());
     eth_header.set_gasused(gas_used);
-    eth_header.set_logBloom(logs_bloom);
-    auto receipts_root = data::xeth_build_t::build_receipts_root(eth_receipts);
-    eth_header.set_receipts_root(receipts_root);
-    auto txs_root = data::xeth_build_t::build_transactions_root(eth_txs);
-    eth_header.set_transactions_root(txs_root);
-    return eth_header.serialize_to_string();
+    eth_header.set_coinbase(common::xeth_address_t::build_from(cs_para.get_coinbase()));
+    if (eth_receipts.size() > 0) {
+        eth_header.set_logBloom(logs_bloom);
+        auto receipts_root = data::xeth_build_t::build_receipts_root(eth_receipts);
+        eth_header.set_receipts_root(receipts_root);
+        auto txs_root = data::xeth_build_t::build_transactions_root(eth_txs);
+        eth_header.set_transactions_root(txs_root);
+    }
+
+    std::string _ethheader_str = eth_header.serialize_to_string();
+    xdbg("xeth_header_builder::build ethheader txcount=%zu,headersize=%zu", eth_receipts.size(), _ethheader_str.size());
+    return _ethheader_str;
 }
 
 bool xeth_header_builder::string_to_eth_header(const std::string & eth_header_str, data::xeth_header_t & eth_header) {
