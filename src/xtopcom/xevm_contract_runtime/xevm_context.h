@@ -9,6 +9,7 @@
 #include "xbasic/xmemory.hpp"
 #include "xdata/xconsensus_action.h"
 #include "xtxexecutor/xvm_face.h"  //I suppose this header file should be in some common directory like xdata.
+#include "xconfig/xconfig_register.h"
 
 NS_BEG2(top, evm_runtime)
 
@@ -20,7 +21,7 @@ private:
     uint64_t m_gas_limit{0};
     xbytes_t m_input_data;  // for deploy , is bytecode. for call , is serialized call args
 
-    uint64_t m_chain_id{1023};
+    uint64_t m_chain_id{XGET_CONFIG(chain_id)};
     common::xaccount_address_t m_block_coinbase;  // T60004.....
     uint64_t m_block_height{0};
     uint64_t m_block_timestamp{0};
