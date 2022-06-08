@@ -204,8 +204,13 @@ TEST_F(xtest_trie_fixture, test_commit_to_disk) {
     auto res = trie->Commit(ec).first;
     ASSERT_TRUE(!ec);
 
+    // havn't get anything from disk db for now
+    ASSERT_TRUE(test_disk_db_ptr->Counter_Get.load() == 0);
     xdbg("trie->Commit() res: %s", res.hex_string().c_str());
     test_trie_db_ptr->Commit(res, nullptr, ec);
+
+    // still zero
+    ASSERT_TRUE(test_disk_db_ptr->Counter_Get.load() == 0);
     test_disk_db_ptr->debug();
 
 #if 0
@@ -287,6 +292,53 @@ commit:  9a53de09e43869f9ee8bea0535c15924a9f5f5f98c6ec81b4b3f2fc8c7090f8c  >  f8
     // clang-format on
 
 #undef ASSERT_DISK_DB_HAS
+
+    // read 17 times above
+    ASSERT_TRUE(test_disk_db_ptr->Counter_Get.load() == 17);
+
+    // now trie_db.dirties is empty. all from cleans :
+    TESTINTRIE(trie, "do", "verb");
+    TESTINTRIE(trie, "ether", "wookiedoo");
+    TESTINTRIE(trie, "horse", "stallion");
+    TESTINTRIE(trie, "shaman", "horse");
+    TESTINTRIE(trie, "doge", "coin");
+    TESTINTRIE(trie, "dog", "puppy");
+    TESTINTRIE(trie, "daog1", "pup12dpy1");
+    TESTINTRIE(trie, "dsog2", "pup12epy1");
+    TESTINTRIE(trie, "ado3", "pue21ppy1");
+    TESTINTRIE(trie, "dsog4", "puppqy1");
+    TESTINTRIE(trie, "dog12", "pupd1py1");
+    TESTINTRIE(trie, "dog1242", "pup12epy1");
+    TESTINTRIE(trie, "somethingveryoddindeedthis is", "myothernodedata");
+    TESTINTRIE(trie, "somethisadngveryoddindeedthis is", "myothernodedata");
+    
+    // still 17, above is read from trie_db.cleans
+    ASSERT_TRUE(test_disk_db_ptr->Counter_Get.load() == 17);
+
+    // use diskdb to rebuild a new trie:
+    auto new_clean_trie_db_ptr = xtrie_db_t::NewDatabase(test_disk_db_ptr);
+    auto new_trie = xtrie_t::New(trie->Hash(), new_clean_trie_db_ptr, ec);
+    // read once of root hash: +1
+    ASSERT_TRUE(test_disk_db_ptr->Counter_Get.load() == 18);
+
+    // now trie_db.dirties && cleans is empty. check all nodes from disk db :
+    TESTINTRIE(new_trie, "do", "verb");
+    TESTINTRIE(new_trie, "ether", "wookiedoo");
+    TESTINTRIE(new_trie, "horse", "stallion");
+    TESTINTRIE(new_trie, "shaman", "horse");
+    TESTINTRIE(new_trie, "doge", "coin");
+    TESTINTRIE(new_trie, "dog", "puppy");
+    TESTINTRIE(new_trie, "daog1", "pup12dpy1");
+    TESTINTRIE(new_trie, "dsog2", "pup12epy1");
+    TESTINTRIE(new_trie, "ado3", "pue21ppy1");
+    TESTINTRIE(new_trie, "dsog4", "puppqy1");
+    TESTINTRIE(new_trie, "dog12", "pupd1py1");
+    TESTINTRIE(new_trie, "dog1242", "pup12epy1");
+    TESTINTRIE(new_trie, "somethingveryoddindeedthis is", "myothernodedata");
+    TESTINTRIE(new_trie, "somethisadngveryoddindeedthis is", "myothernodedata");
+    
+    // all enc were loaded. +16
+    ASSERT_TRUE(test_disk_db_ptr->Counter_Get.load() == 34);
 }
 
 NS_END4

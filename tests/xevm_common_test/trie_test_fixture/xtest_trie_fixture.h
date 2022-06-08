@@ -4,6 +4,8 @@
 
 #include <gtest/gtest.h>
 
+#include <atomic>
+
 NS_BEG4(top, evm_common, trie, tests)
 
 class xmock_disk_db : public xkv_db_face_t {
@@ -23,6 +25,7 @@ public:
             ec = error::xerrc_t::trie_proof_missing;
             return xbytes_t{};
         }
+        Counter_Get++;
         return m[key];
     }
     void debug() {
@@ -32,6 +35,8 @@ public:
     }
 
     std::map<xbytes_t, xbytes_t> m;
+
+    std::atomic<uint64_t> Counter_Get{0};
 };
 using xmock_disk_db_ptr = std::shared_ptr<xmock_disk_db>;
 
