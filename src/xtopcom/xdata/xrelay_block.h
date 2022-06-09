@@ -157,11 +157,11 @@ namespace data {
        const uint64_t                   &get_timestamp() const { return m_inner_header.get_timestamp();}
        const evm_common::h256           &get_prev_block_hash() const { return m_prev_hash;}
        const evm_common::h256           &get_block_hash() const { return m_block_hash;}
-
+       const uint8_t                    &get_header_version() {return m_version;}
 
        const xrelay_election_group_t               &get_elections_sets() const { return m_next_elections_groups;}
        const std::vector<xrelay_signature_node_t>  &get_signatures_sets() const { return m_block_signatures_nodes;}
-       void                              make_inner_hash();
+       void                                         make_inner_hash();
 
     protected:
        void                             streamRLP(evm_common::RLPStream &rlp_stream,bool withSignature) const;
