@@ -4,10 +4,14 @@
 
 #include "xevm_common/trie/xtrie_db.h"
 
+#include "xbasic/xhex.h"
 #include "xevm_common/trie/xtrie_encoding.h"
 #include "xevm_common/trie/xtrie_node.h"
 #include "xevm_common/trie/xtrie_node_coding.h"
+
 NS_BEG3(top, evm_common, trie)
+
+constexpr auto PreimagePrefix = ConstBytes<11>("secure-key-");
 
 std::shared_ptr<xtop_trie_db> xtop_trie_db::NewDatabase(xkv_db_face_ptr_t diskdb) {
     return NewDatabaseWithConfig(diskdb, nullptr);
@@ -23,30 +27,6 @@ std::shared_ptr<xtop_trie_db> xtop_trie_db::NewDatabaseWithConfig(xkv_db_face_pt
     }
 
     return std::make_shared<xtop_trie_db>(diskdb);
-}
-
-xtrie_node_face_ptr_t xtop_trie_db::node(xhash256_t hash) {
-    // todo:
-    if (cleans.find(hash) != cleans.end()) {
-        // todo clean mark hit
-        return xtrie_node_rlp::mustDecodeNode(hash, cleans.at(hash));
-    }
-    if (dirties.find(hash) != dirties.end()) {
-        // todo dirty mark hit
-        return dirties.at(hash).obj(hash);
-    }
-    // todo mark miss hit
-
-    // retrieve from disk db
-    std::error_code ec;
-    xbytes_t hash_bytes = xbytes_t{hash.begin(), hash.end()};
-    auto enc = diskdb->Get(hash_bytes, ec);
-    if (ec || enc.empty()) {
-        return nullptr;
-    }
-    // put into clean cache
-    cleans.insert({hash, enc});
-    return xtrie_node_rlp::mustDecodeNode(hash, enc);
 }
 
 void xtop_trie_db::insert(xhash256_t hash, int32_t size, xtrie_node_face_ptr_t node) {
@@ -77,11 +57,62 @@ void xtop_trie_db::insert(xhash256_t hash, int32_t size, xtrie_node_face_ptr_t n
     // todo dirties size;
 }
 
+void xtop_trie_db::insertPreimage(xhash256_t hash, xbytes_t const & preimage) {
+    preimages.insert({hash, preimage});
+    // todo cal preimage size metrics.
+}
+
+xtrie_node_face_ptr_t xtop_trie_db::node(xhash256_t hash) {
+    // todo:
+    if (cleans.find(hash) != cleans.end()) {
+        // todo clean mark hit
+        return xtrie_node_rlp::mustDecodeNode(hash, cleans.at(hash));
+    }
+    if (dirties.find(hash) != dirties.end()) {
+        // todo dirty mark hit
+        return dirties.at(hash).obj(hash);
+    }
+    // todo mark miss hit
+
+    // retrieve from disk db
+    std::error_code ec;
+    xbytes_t hash_bytes = xbytes_t{hash.begin(), hash.end()};
+    auto enc = diskdb->Get(hash_bytes, ec);
+    if (ec || enc.empty()) {
+        return nullptr;
+    }
+    // put into clean cache
+    cleans.insert({hash, enc});
+    return xtrie_node_rlp::mustDecodeNode(hash, enc);
+}
+
+xbytes_t xtop_trie_db::preimage(xhash256_t hash) const {
+    if (preimages.find(hash) != preimages.end()) {
+        return preimages.at(hash);
+    }
+    std::error_code ec;
+    auto result = diskdb->Get(preimageKey(hash), ec);
+    if (ec) {
+        xwarn("xtrie_db Get preimage %s failed: %s", hash.hex_string().c_str(), ec.message().c_str());
+    }
+    return result;
+}
+
 void xtop_trie_db::Commit(xhash256_t hash, AfterCommitCallback cb, std::error_code & ec) {
     // what we can optimize here:
     // 1. use batch writer to sum all <k,v> into db with once writeDB operation
     // 2. db.preimages for secure trie
     // 3. use async cleaner to clean dirties value after commit.
+
+    // 0. first, Move all of the accumulated preimages in.
+    for (auto const & preimage : preimages) {
+        diskdb->Put(preimageKey(preimage.first), preimage.second, ec);
+        if (ec) {
+            xwarn("xtrie_db Commit diskdb error at preimage %s, err: %s", preimage.first.hex_string().c_str(), ec.message().c_str());
+            // return;
+        }
+        // todo could add some metrics here.
+    }
 
     // If the node does not exist, it's a previously committed node
     if (dirties.find(hash) == dirties.end()) {
@@ -120,10 +151,20 @@ void xtop_trie_db::Commit(xhash256_t hash, AfterCommitCallback cb, std::error_co
     // and move it to cleans:
     cleans.insert({hash, enc});
     // todo mark size everywhere with cleans/dirties' insert/erase/...
+
+    // clean preimages:
+    preimages.clear();
 }
 
 // void xtop_trie_db::commit(xhash256_t hash, AfterCommitCallback cb, std::error_code & ec) {
 // }
+
+xbytes_t xtop_trie_db::preimageKey(xhash256_t hash_key) const {
+    xbytes_t res;
+    res.insert(res.begin(), PreimagePrefix.begin(), PreimagePrefix.end());
+    res.insert(res.end(), hash_key.begin(), hash_key.end());
+    return res;
+}
 
 // ============
 // trie cache

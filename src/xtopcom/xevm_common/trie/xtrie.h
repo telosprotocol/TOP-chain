@@ -29,6 +29,10 @@ public:
     xtop_trie(xtrie_db_ptr_t db) : m_db{db} {
     }
 
+    xtrie_db_ptr_t trie_db() const {
+        return m_db;
+    }
+
 public:
     static std::shared_ptr<xtop_trie> New(xhash256_t hash, xtrie_db_ptr_t db, std::error_code & ec);
 
@@ -42,12 +46,12 @@ public:
 
     // Get returns the value for key stored in the trie.
     // The value bytes must not be modified by the caller.
-    xbytes_t Get(xbytes_t const & key);
+    xbytes_t Get(xbytes_t const & key) const;
 
     // TryGet returns the value for key stored in the trie.
     // The value bytes must not be modified by the caller.
     // If a node was not found in the database, a MissingNodeError(trie_db_missing_node_error) is returned.
-    xbytes_t TryGet(xbytes_t const & key, std::error_code & ec);
+    xbytes_t TryGet(xbytes_t const & key, std::error_code & ec) const;
 
     // Update associates key with value in the trie. Subsequent calls to
     // Get will return value. If value has length zero, any existing value
@@ -88,7 +92,7 @@ public:
     bool Prove(xbytes_t const & key, uint32_t fromLevel, xkv_db_face_ptr_t proofDB, std::error_code & ec);
 
 private:
-    std::tuple<xbytes_t, xtrie_node_face_ptr_t, bool> tryGet(xtrie_node_face_ptr_t node, xbytes_t const & key, std::size_t const pos, std::error_code & ec);
+    std::tuple<xbytes_t, xtrie_node_face_ptr_t, bool> tryGet(xtrie_node_face_ptr_t node, xbytes_t const & key, std::size_t const pos, std::error_code & ec) const;
 
 private:
     std::pair<bool, xtrie_node_face_ptr_t> insert(xtrie_node_face_ptr_t node, xbytes_t prefix, xbytes_t key, xtrie_node_face_ptr_t value, std::error_code & ec);
@@ -98,7 +102,7 @@ private:
 private:
     xtrie_node_face_ptr_t resolve(xtrie_node_face_ptr_t n, /*xbytes_t prefix,*/ std::error_code & ec);
 
-    xtrie_node_face_ptr_t resolveHash(xtrie_hash_node_ptr_t n, /*xbytes_t prefix,*/ std::error_code & ec);
+    xtrie_node_face_ptr_t resolveHash(xtrie_hash_node_ptr_t n, /*xbytes_t prefix,*/ std::error_code & ec) const;
 
     // hashRoot calculates the root hash of the given trie
     std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> hashRoot();
