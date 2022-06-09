@@ -52,7 +52,7 @@ public:
 
     bool empty() const;
 
-    std::string get_hex_string_data() const;
+    std::string to_hex_string() const;
 
 private:
     std::tuple<std::size_t, xbyte_t, std::size_t, xbyte_t, std::size_t, xbyte_t> bloomValues(xbytes_t data);
