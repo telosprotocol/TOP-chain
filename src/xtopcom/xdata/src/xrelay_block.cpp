@@ -48,10 +48,14 @@ bool xrelay_election_node_t::decodeRLP(evm_common::RLP const& _r, std::error_cod
 }
 
 void xrelay_election_group_t::streamRLP(evm_common::RLPStream &_s)  const {
-    _s.appendList(2)  << election_epochID ;
-    _s.appendList(elections_vector.size());
-    for(auto & election : elections_vector) {
-        election.streamRLP(_s);
+    if (elections_vector.size() > 0 ) {
+        _s.appendList(2)  << election_epochID ;
+        _s.appendList(elections_vector.size());
+        for(auto & election : elections_vector) {
+            election.streamRLP(_s);
+        }
+    } else {
+        _s << "";
     }
 }
 
@@ -206,6 +210,7 @@ void xrelay_block_inner_header::make_inner_hash()
 {
     xbytes_t bytes_data = encodeBytes();
     m_inner_hash = sha3(bytes_data);
+    xdbg_info("xrelay_block_inner_header::make_inner_hash  hash[%s]", m_inner_hash.hex().c_str());
 }
 
 
@@ -285,8 +290,8 @@ void xrelay_block_header::streamRLP(evm_common::RLPStream &rlp_stream, bool with
     }
 
     rlp_stream.appendList(decLen);
-    rlp_stream <<  m_inner_header.encodeBytes() ;
-    rlp_stream << m_prev_hash ;
+    rlp_stream << m_inner_header.encodeBytes();
+    rlp_stream << m_prev_hash;
     m_next_elections_groups.streamRLP(rlp_stream);
     if(withSignature) {
         rlp_stream.appendList(m_block_signatures_nodes.size());
@@ -434,7 +439,7 @@ xrelay_block::xrelay_block(uint8_t block_version, evm_common::h256  prev_hash, u
     switch (block_version)
     {
     case 0:
-        m_version                               = block_version;
+        m_version = block_version;
         m_header.set_prev_hash(prev_hash);
         m_header.set_block_height(block_height);
         m_header.set_epochid(epochID);
@@ -577,9 +582,14 @@ bool xrelay_block::decodeRLP(evm_common::RLP const& _r, std::error_code &ec, boo
 
 void    xrelay_block::make_block_hash()
 {
-    xbytes_t _bytes;
-    _bytes = encodeBytes(true);    
-    m_header.m_block_hash = sha3(_bytes);
+    evm_common::RLPStream _s(4); 
+    _s << m_header.get_header_version();
+    _s << m_header.get_inner_header_hash();
+    _s << m_header.get_prev_block_hash();
+    m_header.get_elections_sets().streamRLP(_s);
+
+    m_header.m_block_hash = sha3(_s.out());
+    xdbg_info("xrelay_block::make_block_hash  hash[%s]", m_header.m_block_hash.hex().c_str());
 }
 
 void xrelay_block::make_block_root_hash()
@@ -597,7 +607,6 @@ bool    xrelay_block::build_finish()
     //calc hash 
     make_txs_root_hash();
     make_receipts_root_hash();
-
     make_block_root_hash();
     m_header.make_inner_hash();
     make_block_hash();
