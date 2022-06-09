@@ -1109,7 +1109,9 @@ const std::string xeth_header_builder::build(const xblock_consensus_para_t & cs_
     eth_header.set_gaslimit(cs_para.get_block_gaslimit());
     eth_header.set_baseprice(cs_para.get_block_base_price());
     eth_header.set_gasused(gas_used);
-    eth_header.set_coinbase(common::xeth_address_t::build_from(cs_para.get_coinbase()));
+    if (!cs_para.get_coinbase().empty()) {
+        eth_header.set_coinbase(common::xeth_address_t::build_from(cs_para.get_coinbase()));
+    }
     if (eth_receipts.size() > 0) {
         eth_header.set_logBloom(logs_bloom);
         auto receipts_root = data::xeth_build_t::build_receipts_root(eth_receipts);

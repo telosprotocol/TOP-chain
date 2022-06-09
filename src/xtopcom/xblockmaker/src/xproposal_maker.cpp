@@ -531,7 +531,7 @@ bool xproposal_maker_t::leader_xip_to_leader_address(xvip2_t _xip, common::xacco
     common::xaccount_address_t _coinbase;
     base::enum_vaccount_addr_type addr_type = base::xvaccount_t::get_addrtype_from_account(leader_address);
     if (addr_type != base::enum_vaccount_addr_type_secp256k1_eth_user_account && addr_type != base::enum_vaccount_addr_type_secp256k1_evm_user_account) {
-        _coinbase = evm_zero_address;
+        _coinbase = eth_zero_address;
     } else {
         _coinbase = common::xaccount_address_t(leader_address);
     }
