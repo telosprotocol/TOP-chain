@@ -1076,7 +1076,6 @@ const std::string xeth_header_builder::build(const xblock_consensus_para_t & cs_
     
     std::error_code ec;
     uint64_t gas_used = 0;
-    evm_common::xbloom9_t logs_bloom;
     data::xeth_receipts_t eth_receipts;
     data::xeth_transactions_t eth_txs; 
     for (auto & txout : pack_txs_outputs) {
@@ -1092,33 +1091,21 @@ const std::string xeth_header_builder::build(const xblock_consensus_para_t & cs_
 
         auto & evm_result = txout.m_vm_output.m_tx_result;
         gas_used += evm_result.used_gas;
-        for (auto & log : evm_result.logs) {
-            evm_common::xbloom9_t bloom = log.bloom();
-            logs_bloom |= bloom;
-        }
-
         data::enum_ethreceipt_status status = (evm_result.status == evm_common::xevm_transaction_status_t::Success) ? data::ethreceipt_status_successful : data::ethreceipt_status_failed;
         data::xeth_receipt_t eth_receipt(ethtx.get_tx_version(), status, gas_used, evm_result.logs);
+        eth_receipt.create_bloom();
         eth_receipts.push_back(eth_receipt);
         eth_txs.push_back(ethtx);
     }
 
-    xassert(gas_used <= cs_para.get_block_gaslimit());
-
     data::xeth_header_t eth_header;
-    eth_header.set_gaslimit(cs_para.get_block_gaslimit());
-    eth_header.set_baseprice(cs_para.get_block_base_price());
-    eth_header.set_gasused(gas_used);
+    data::xethheader_para_t header_para;
+    header_para.m_gaslimit = cs_para.get_block_gaslimit();
+    header_para.m_baseprice = cs_para.get_block_base_price();
     if (!cs_para.get_coinbase().empty()) {
-        eth_header.set_coinbase(common::xeth_address_t::build_from(cs_para.get_coinbase()));
-    }
-    if (eth_receipts.size() > 0) {
-        eth_header.set_logBloom(logs_bloom);
-        auto receipts_root = data::xeth_build_t::build_receipts_root(eth_receipts);
-        eth_header.set_receipts_root(receipts_root);
-        auto txs_root = data::xeth_build_t::build_transactions_root(eth_txs);
-        eth_header.set_transactions_root(txs_root);
-    }
+        header_para.m_coinbase = common::xeth_address_t::build_from(cs_para.get_coinbase());
+    }    
+    data::xeth_build_t::build_ethheader(header_para, eth_txs, eth_receipts, eth_header);
 
     std::string _ethheader_str = eth_header.serialize_to_string();
     xdbg("xeth_header_builder::build ethheader txcount=%zu,headersize=%zu", eth_receipts.size(), _ethheader_str.size());

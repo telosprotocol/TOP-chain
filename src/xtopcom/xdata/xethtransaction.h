@@ -79,6 +79,19 @@ class xeth_transaction_t {
     evm_common::h256 const&    get_signR() const { return m_signR; }
     evm_common::h256 const&    get_signS() const { return m_signS; }
 
+ public:
+    void    set_chainid(evm_common::u256 const& value) {m_chainid = value;}
+    void    set_nonce(evm_common::u256 const& value) {m_nonce = value;}
+    void    set_max_priority_fee_per_gas(evm_common::u256 const& value) {m_max_priority_fee_per_gas = value;}
+    void    set_max_fee_per_gas(evm_common::u256 const& value) {m_max_fee_per_gas = value;}
+    void    set_gas(evm_common::u256 const& value) {m_gas = value;}
+    void    set_to(common::xeth_address_t const& value) {m_to = value;}
+    void    set_value(evm_common::u256 const& value) {m_value = value;}
+    void    set_data(xbytes_t const& value) {m_data = value;}
+    void    set_signV(evm_common::u256 const& value) {m_signV = value;}
+    void    set_signR(evm_common::h256 const& value) {m_signR = value;}
+    void    set_signS(evm_common::h256 const& value) {m_signS = value;}
+
  protected:
     void        streamRLP_eip1599(bool includesig, evm_common::RLPStream& _s) const;
     void        decodeRLP_eip1599(bool includesig, evm_common::RLP const& _r, eth_error & ec);
