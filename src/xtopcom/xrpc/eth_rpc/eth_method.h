@@ -4,6 +4,7 @@
 #pragma once
 #include <unordered_map>
 #include <iostream>
+#include <sstream>
 #include <functional>
 #include <string>
 #include <set>
@@ -12,6 +13,8 @@
 #include "xutility/xhash.h"
 #include "xpbase/base/top_utils.h"
 #include "xbase/xint.h"
+#include "xconfig/xpredefined_configurations.h"
+#include "xconfig/xconfig_register.h"
 
 namespace eth {
 using eth_method_handler = std::function<void(const xJson::Value & request, xJson::Value & response)>;
@@ -61,12 +64,16 @@ public:
         }
     }
     inline void eth_chainId(const Json::Value & request, Json::Value & response) {
-        Json::Value value = "0x3ff";
+        uint32_t chain_id = XGET_CONFIG(chain_id);
+        std::stringstream outstr;
+        outstr << "0x" << std::hex << chain_id;
+        Json::Value value = outstr.str();  //"0x3ff";
         response["result"] = value;
     }
 
     inline void net_version(const Json::Value & request, Json::Value & response) {
-        Json::Value value = "1023";
+        uint32_t chain_id = XGET_CONFIG(chain_id);
+        Json::Value value = std::to_string(chain_id); // "1023";
         response["result"] = value;
     }
 

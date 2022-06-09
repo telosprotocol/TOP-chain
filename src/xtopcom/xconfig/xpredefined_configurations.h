@@ -493,8 +493,13 @@ XDECLARE_CONFIGURATION(grpc_port, uint16_t, 19082);
 XDECLARE_CONFIGURATION(dht_port, uint16_t, 19083);
 XDECLARE_CONFIGURATION(msg_port, uint16_t, 19084);
 XDECLARE_CONFIGURATION(ws_port, uint16_t, 19085);
-XDECLARE_CONFIGURATION(evm_port, uint16_t, 19086);
+XDECLARE_CONFIGURATION(evm_port, uint16_t, 80);
 XDECLARE_CONFIGURATION(log_level, uint16_t, 0);
+#if defined(XBUILD_CI) || defined(XBUILD_DEV) || defined(XBUILD_GALILEO) || defined(XBUILD_BOUNTY)
+XDECLARE_CONFIGURATION(chain_id, uint32_t, 1023);
+#else
+XDECLARE_CONFIGURATION(chain_id, uint32_t, 980);
+#endif
 XDECLARE_CONFIGURATION(network_id, uint32_t, 0);
 XDECLARE_CONFIGURATION(log_path, const char *, "/chain/log/clog"); // config log path
 XDECLARE_CONFIGURATION(db_path, const char *, "/chain/db_v2/cdb"); // config log path
