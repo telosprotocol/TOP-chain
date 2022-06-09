@@ -16,21 +16,6 @@
 #include "xcommon/xip.h"
 #include "xcommon/xerror/xerror.h"
 #include "xconfig/xconfig_register.h"
-// #include "xdata/xcodec/xmsgpack/xelection/xelection_network_result_codec.hpp"
-// #include "xdata/xcodec/xmsgpack/xelection/xelection_result_store_codec.hpp"
-// #include "xdata/xcodec/xmsgpack/xelection/xstandby_result_store_codec.hpp"
-// #include "xdata/xcodec/xmsgpack/xelection_association_result_store_codec.hpp"
-// #include "xdata/xelection/xelection_association_result_store.h"
-// #include "xdata/xelection/xelection_cluster_result.h"
-// #include "xdata/xelection/xelection_cluster_result.h"
-// #include "xdata/xelection/xelection_group_result.h"
-// #include "xdata/xelection/xelection_info_bundle.h"
-// #include "xdata/xelection/xelection_network_result.h"
-// #include "xdata/xelection/xelection_result.h"
-// #include "xdata/xelection/xelection_result_property.h"
-// #include "xdata/xelection/xelection_result_store.h"
-// #include "xdata/xelection/xstandby_result_store.h"
-// #include "xdata/xfull_tableblock.h"
 #include "xdata/xtx_factory.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xproposal_data.h"
@@ -957,7 +942,69 @@ bool xrpc_eth_query_manager::check_log_is_match(evm_common::xevm_log_t const& lo
     }
     return true;
 }
+bool xrpc_eth_query_manager::check_block_log_bloom(xobject_ptr_t<base::xvblock_t>& block, const std::vector<std::set<std::string>>& vTopics,
+    const std::set<std::string>& sAddress) const {
+    if (vTopics.empty() && sAddress.empty())
+        return true;
 
+    data::xeth_header_t ethheader;
+    std::error_code ec;
+    data::xblockextract_t::unpack_ethheader(block.get(), ethheader, ec);
+    if (ec) {
+        xwarn("check_block_log_bloom fail, block: %llu", block->get_height());
+        return false;
+    }
+
+    xbytes_t bloom_bytes = ethheader.get_logBloom().get_data();
+    evm_common::xbloom9_t block_bloom = evm_common::xbloom9_t::build_from(bloom_bytes, ec);
+    if (ec) {
+        xwarn("check_block_log_bloom fail, bloom: %d", bloom_bytes.size());
+        return false;
+    }
+
+    if (!sAddress.empty()) {
+        bool address_check = false;
+        for (auto address: sAddress) {
+            auto address_bytes = top::from_hex(address, ec);
+            if (ec) {
+                xdbg("check_block_log_bloom fail, address: %s", address.c_str());
+                return false;
+            }
+            if (block_bloom.contain(address_bytes)) {
+                xdbg("check_block_log_bloom ok, %s", address.c_str());
+                address_check = true;
+                break;
+            }
+        }
+        if (address_check == false)
+            return false;
+    }
+    if (vTopics.empty())
+        return true;
+
+    for (auto setTopics : vTopics) {
+        if (setTopics.empty())
+            continue;
+        bool topic_check = false;
+        for (auto topic : setTopics) {  // Each topic can also be an array of DATA with “or” options.
+            auto topic_bytes = top::from_hex(topic, ec);
+            if (ec) {
+                xdbg("check_block_log_bloom fail, topic: %s", topic.c_str());
+                return false;
+            }
+
+            if (block_bloom.contain(topic_bytes)) {
+                xdbg("check_block_log_bloom ok, %s", topic.c_str());
+                topic_check = true;
+                break;
+            }
+        }
+        if (topic_check == false)
+            return false;
+    }
+
+    return true;
+}
 int xrpc_eth_query_manager::get_log(xJson::Value & js_rsp, const uint64_t begin, const uint64_t end, const std::vector<std::set<std::string>>& vTopics, const std::set<std::string>& sAddress) {
     base::xvaccount_t _table_addr(std::string(sys_contract_eth_table_block_addr) + "@0");
     for (uint64_t i = begin; i <= end; i++) {  // traverse blocks
@@ -965,6 +1012,13 @@ int xrpc_eth_query_manager::get_log(xJson::Value & js_rsp, const uint64_t begin,
         if (block == nullptr) {
             xwarn("xrpc_eth_query_manager::get_log, load_block_object fail:%llu", i);
             continue;
+        }
+
+        if (!check_block_log_bloom(block, vTopics, sAddress)) {
+            xdbg("filter_block_log_bloom fail, %llu", i);
+            continue;
+        } else {
+            xdbg("filter_block_log_bloom ok, %llu", i);
         }
 
         auto input_actions = data::xblockextract_t::unpack_eth_txactions(block.get());
