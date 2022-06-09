@@ -77,6 +77,7 @@ class xeth_receipt_t {
     const evm_common::xbloom9_t &   get_logsBloom() const {return m_logsBloom;}
     const evm_common::xevm_logs_t & get_logs() const {return m_logs;}
  public:
+    void        set_tx_version_type(enum_ethtx_version version) {m_tx_version_type = version;}
     void        set_tx_status(enum_ethreceipt_status _status) {m_tx_status = _status;}
     void        set_cumulative_gas_used(uint64_t _gas) {m_cumulative_gas_used = _gas;}
     void        set_logs(evm_common::xevm_logs_t const& logs) {m_logs = logs;}
