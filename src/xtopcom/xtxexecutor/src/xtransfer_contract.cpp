@@ -41,6 +41,7 @@ void xtop_transfer_contract::withdraw(const std::string & token_name, const std:
     auto token = evm_common::fromBigEndian<evm_common::u256>(amount_256_bytes);
     auto unitstate = unitstate_owned();
     xassert(unitstate != nullptr);
+    xdbg("[xtop_transfer_contract::withdraw] token name: %s,amount: %ld", token_name.c_str(), (uint64_t)token);
     if (token_name == data::XPROPERTY_ASSET_TOP) {
         xassert(token <= UINT64_MAX);
         auto vtoken = base::vtoken_t(static_cast<uint64_t>(token));
@@ -74,6 +75,7 @@ void xtop_transfer_contract::transfer(const std::string & token_name, const std:
     auto recver_unitstate = unitstate_other();
     xassert(sender_unitstate != nullptr);
     xassert(recver_unitstate != nullptr);
+    xdbg("[xtop_transfer_contract::transfer] token name: %s,amount: %ld", token_name.c_str(), (uint64_t)token);
     if (token_name == data::XPROPERTY_ASSET_TOP) {
         xassert(token <= UINT64_MAX);
         auto vtoken = base::vtoken_t(static_cast<uint64_t>(token));

@@ -202,12 +202,14 @@ public:
 
 #if defined(XCHAIN_FORKED_BY_DEFAULT) && ((XCHAIN_FORKED_BY_DEFAULT) >= 10501)
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(eth_to_top_exchange_ratio);
-        XADD_ONCHAIN_GOVERNANCE_PARAMETER(tgas_to_eth_gas_exchange_ratio);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(eth_gas_to_tgas_exchange_ratio);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(top_eth_base_price);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(evm_auditor_reward_ratio);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(evm_validator_reward_ratio);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(evm_auditor_group_zero_workload);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(evm_validator_group_zero_workload);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(exchange_election_interval);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit);
 #endif
 
         std::vector<std::string> committee_addrs = xrootblock_t::get_tcc_initial_committee_addr();

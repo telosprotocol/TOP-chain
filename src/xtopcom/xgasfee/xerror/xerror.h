@@ -23,10 +23,13 @@ enum class xenum_errc {
     tx_deposit_not_enough,
     tx_deposit_to_tgas_not_enough,
     
+    tx_balance_exceeded,
     tx_limited_gas_exceeded,
     tx_limited_gasfee_exceeded,
     tx_calculation_tgas_exceeded,
     tx_calculation_gas_over_limit,
+
+    tx_out_of_gas,
 };
 using xerrc_t = xenum_errc;
 

@@ -13,10 +13,11 @@ NS_BEG2(top, evm_runtime)
 xtop_evm_context::xtop_evm_context(std::unique_ptr<data::xbasic_top_action_t const> action, txexecutor::xvm_para_t const & vm_para) noexcept : m_action{std::move(action)} {
     assert(m_action->type() == data::xtop_action_type_t::evm);
 
-    // todo(jimmy) get block coinbase/ts/height
-    m_block_coinbase = common::xaccount_address_t{evm_zero_addr};
-    m_block_height = 0;
-    m_block_timestamp = 1654511400;
+    // todo(jimmy) get chain id from? , default is 1023 in xevm_context.h:23
+    // m_chain_id = ...
+    m_block_coinbase = vm_para.get_block_coinbase();
+    m_block_height = vm_para.get_block_height();
+    m_block_timestamp = vm_para.get_timestamp();
 
     m_gas_limit = static_cast<data::xevm_consensus_action_t const *>(m_action.get())->gas_limit();
     m_random_seed = vm_para.get_random_seed();
@@ -49,7 +50,7 @@ xtop_evm_context::xtop_evm_context(std::unique_ptr<data::xbasic_top_action_t con
 
 data::xtop_evm_action_type xtop_evm_context::action_type() const {
     assert(m_action->type() == data::xtop_action_type_t::evm);
-    return static_cast<data::xevm_consensus_action_t const *>(m_action.get())->evm_action();
+    return static_cast<data::xevm_consensus_action_t const *>(m_action.get())->evm_action_type();
 }
 
 xbytes_t const & xtop_evm_context::input_data() const {
@@ -77,6 +78,9 @@ uint64_t xtop_evm_context::gas_limit() const noexcept {
 }
 
 // EVM API:
+uint64_t xtop_evm_context::chain_id() const noexcept {
+    return m_chain_id;
+}
 std::string xtop_evm_context::block_coinbase() const noexcept {
     return m_block_coinbase.value();
 }

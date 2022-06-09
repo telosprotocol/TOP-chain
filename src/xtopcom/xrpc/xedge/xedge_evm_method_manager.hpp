@@ -31,6 +31,7 @@
 #include "xvnetwork/xvhost_face.h"
 #include "xrpc/eth_rpc/eth_method.h"
 #include "xrpc/eth_rpc/eth_error_code.h"
+#include "xrpc/xrpc_eth_parser.h"
 
 NS_BEG2(top, xrpc)
 using base::xcontext_t;
@@ -143,6 +144,7 @@ void xedge_evm_method_base<T>::do_method(shared_ptr<conn_type> & response, xjson
     xinfo_rpc("rpc request: %s,%s", version.c_str(), method.c_str());
 
     if (jsonrpc_version != "2.0") {
+        xerror("xedge_evm_method_base do_method fail-jsonrpc version not 2.0 version=%s", jsonrpc_version.c_str());
         return;
     }
     xJson::Value res;
@@ -208,34 +210,15 @@ void xedge_evm_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, 
         return;
 
     request["tx_structure_version"] = 3;
-    json_proc.m_tx_ptr = data::xtx_factory::create_tx(static_cast<data::enum_xtransaction_version>(request["tx_structure_version"].asUInt()));
-    auto & tx = json_proc.m_tx_ptr;
+
     top::data::eth_error ec;
-    tx->verify_tx(request, ec);
+    json_proc.m_tx_ptr = xrpc_eth_parser_t::json_to_ethtx(request, ec);
+    auto & tx = json_proc.m_tx_ptr;
     if (ec.error_code)
     {
         xJson::Value errinfo;
-        errinfo["code"] = ec.error_code;
-        errinfo["messgae"] = ec.error_message;
-        json_proc.m_response_json["error"] = errinfo;
-        return ;
-    }
-    if (!(tx->get_origin_target_addr() == sys_contract_rec_standby_pool_addr && tx->get_target_action_name() == "nodeJoinNetwork2")) {
-        if (!tx->sign_check()) {
-            XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_sign", 1);
-            xJson::Value errinfo;
-            errinfo["code"] = -32000;
-            errinfo["messgae"] = "transaction sign error";
-            json_proc.m_response_json["error"] = errinfo;
-            return ;
-        }
-    }
-
-    if ((top::xverifier::xverifier_error::xverifier_success != top::xverifier::xtx_utl::address_is_valid(tx->get_source_addr(), true)) || (top::xverifier::xverifier_error::xverifier_success != top::xverifier::xtx_utl::address_is_valid(tx->get_target_addr(), true)))
-    {
-        xJson::Value errinfo;
-        errinfo["code"] = -32000;
-        errinfo["messgae"] = "account address is invalid";
+        errinfo["code"] = ec.error_code.value();
+        errinfo["message"] = ec.error_message;
         json_proc.m_response_json["error"] = errinfo;
         return ;
     }
@@ -246,7 +229,7 @@ void xedge_evm_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, 
         XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_blacklist", 1);
         xJson::Value errinfo;
         errinfo["code"] = -32000;
-        errinfo["messgae"] = "blacklist check failed";
+        errinfo["message"] = "blacklist check failed";
         json_proc.m_response_json["error"] = errinfo;
         return ;
     }
@@ -256,7 +239,7 @@ void xedge_evm_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, 
         xdbg_rpc("[sendTransaction_method] in whitelist address rpc:%s, %s, %s", tx->get_digest_hex_str().c_str(), tx->get_target_addr().c_str(), tx->get_source_addr().c_str());
         xJson::Value errinfo;
         errinfo["code"] = -32000;
-        errinfo["messgae"] = "whitelist check failed";
+        errinfo["message"] = "whitelist check failed";
         json_proc.m_response_json["error"] = errinfo;
         return ;
     }

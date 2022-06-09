@@ -3,9 +3,11 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #include "eth_method.h"
 #include <sstream>
+#include "xbasic/xhex.h"
 #include "eth_error_code.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
+#include "xgasfee/xgas_estimate.h"
 namespace eth {
 
 void EthMethod::web3_sha3(const Json::Value & js_req, Json::Value & js_rsp) {
@@ -31,12 +33,21 @@ void EthMethod::eth_gasPrice(const Json::Value & js_req, Json::Value & js_rsp) {
     if (!eth::EthErrorCode::check_req(js_req, js_rsp, 0))
         return;
     //Json::Value value = "0x3b9aca00";
-    Json::Value value = "0x989680";
+    // Json::Value value = "0x989680";
+    auto base_price = top::gasfee::xgas_estimate::base_price();
+
+    std::string baseprice_str = top::to_hex((top::evm_common::h256)base_price);
+    uint32_t i = 0;
+    for (; i < baseprice_str.size() - 1; i++) {
+        if (baseprice_str[i] != '0') {
+            break;
+        }
+    }
 /*    std::stringstream outstr;
     uint32_t gas = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit);
     outstr << "0x" << std::hex << gas;
     //Json::Value value = outstr.str();
     Json::Value value = "0x1";*/
-    js_rsp["result"] = value;
+    js_rsp["result"] = "0x" + baseprice_str.substr(i);
 }
 }

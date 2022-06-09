@@ -16,6 +16,7 @@ namespace top
         {
             friend class xvinentity_t;
             friend class xtx_receipt_t;
+            friend class xvactions_t;
         public:
             enum{enum_obj_type = enum_xobject_type_vaction};
         public:
@@ -63,6 +64,23 @@ namespace top
             std::string     m_org_tx_hash;       //which transaction generated this action
             uint8_t         m_org_tx_action_id{0};   //the transaction includes one or multi actions
         };
+
+        class xvactions_t {
+        public:
+            int32_t serialize_to_string(std::string & str) const;
+            int32_t serialize_from_string(const std::string & _data);
+
+            void    add_action(xvaction_t const& action);
+            std::vector<xvaction_t> const&  get_actions()const {return m_actions;}
+
+        private:
+            int32_t do_write(base::xstream_t & stream) const;
+            int32_t do_read(base::xstream_t & stream);
+
+        private:
+            std::vector<xvaction_t>    m_actions;
+        };
+
 
     }//end of namespace of base
 

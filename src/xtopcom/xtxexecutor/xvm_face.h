@@ -23,14 +23,17 @@ enum enum_execute_result_type {
     enum_exec_error_evm_execute         = 5,
     enum_exec_error_property_set        = 6,
     enum_exec_error_state_dirty         = 7,
-    enum_exec_error_preprocess_tgas     = 8,
-    enum_exec_error_postprocess_tgas    = 9,
+    enum_exec_error_estimate_gas        = 8,
+    enum_exec_error_out_of_gas          = 9,
 };
 
 class xvm_para_t {
  public:
-    xvm_para_t(uint64_t clock, const std::string & random_seed, uint64_t tgas_lock)
-    : m_clock(clock), m_random_seed(random_seed), m_lock_tgas_token(tgas_lock) {
+    xvm_para_t(uint64_t clock, const std::string & random_seed, uint64_t tgas_lock, uint64_t gas_limit)  // for test
+    : m_clock(clock), m_random_seed(random_seed), m_lock_tgas_token(tgas_lock), m_gas_limit(gas_limit) {
+    }
+    xvm_para_t(uint64_t clock, const std::string & random_seed, uint64_t tgas_lock, uint64_t gas_limit, uint64_t block_height, common::xaccount_address_t const& coinbase)
+    : m_clock(clock), m_random_seed(random_seed), m_lock_tgas_token(tgas_lock), m_gas_limit(gas_limit), m_block_height(block_height), m_block_coinbase(coinbase) {
     }
 
  public:
@@ -38,15 +41,20 @@ class xvm_para_t {
     uint64_t                get_timestamp() const {return (uint64_t)(m_clock * 10) + base::TOP_BEGIN_GMTIME;}
     const std::string &     get_random_seed() const {return m_random_seed;}
     uint64_t                get_lock_tgas_token() const {return m_lock_tgas_token;}
+    uint64_t                get_gas_limit() const {return m_gas_limit;}
+    uint64_t                get_block_height() const {return m_block_height;}
+    common::xaccount_address_t const&   get_block_coinbase() const {return m_block_coinbase;}
 
  private:
     uint64_t        m_clock{0};
     std::string     m_random_seed;
     uint64_t        m_lock_tgas_token{0};
+    uint64_t        m_gas_limit{0};
+    uint64_t        m_block_height{0};
+    common::xaccount_address_t  m_block_coinbase;
 };
 
-class xvm_gasfee_detail_t {
-public:
+struct xvm_gasfee_detail_t {
     uint64_t m_state_burn_balance{0};
     uint64_t m_state_lock_balance{0};
     uint64_t m_state_unlock_balance{0};
@@ -54,11 +62,14 @@ public:
     uint64_t m_state_last_time{0};
     uint64_t m_tx_used_tgas{0};
     uint64_t m_tx_used_deposit{0};
+    evm_common::u256 m_state_burn_eth_balance{0};
 
     std::string str() {
         std::stringstream ss;
         ss << "m_state_burn_balance: ";
         ss << m_state_burn_balance;
+        ss << ", m_state_burn_eth_balance: ";
+        ss << m_state_burn_eth_balance.str();
         ss << ", m_state_lock_balance: ";
         ss << m_state_lock_balance;
         ss << ", m_state_unlock_balance: ";

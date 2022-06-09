@@ -20,6 +20,7 @@ private:
     uint64_t m_gas_limit{0};
     xbytes_t m_input_data;  // for deploy , is bytecode. for call , is serialized call args
 
+    uint64_t m_chain_id{1023};
     common::xaccount_address_t m_block_coinbase;  // T60004.....
     uint64_t m_block_height{0};
     uint64_t m_block_timestamp{0};
@@ -49,6 +50,7 @@ public:
     uint64_t gas_limit() const noexcept;
 
     // EVM API:
+    uint64_t chain_id() const noexcept;
     std::string block_coinbase() const noexcept;
     uint64_t block_height() const noexcept;
     uint64_t block_timestamp() const noexcept;

@@ -30,12 +30,6 @@
 #include <string>
 NS_BEG2(top, data)
 
-std::map<std::string, std::string>      xblock_t::m_empty_map;
-std::vector<xlightunit_tx_info_ptr_t>   xblock_t::m_empty_txs;
-uint256_t                               xblock_t::m_empty_uint256;
-std::string                             xblock_t::m_empty_string;
-std::vector<xobject_ptr_t<xblock_t>>    xblock_t::m_empty_blocks;
-
 xblock_consensus_para_t::xblock_consensus_para_t(const std::string & _account, uint64_t _clock, uint64_t _viewid, uint32_t _viewtoken, uint64_t _proposal_height, uint64_t _gmtime)
 : m_account(_account), m_clock(_clock), m_viewtoken(_viewtoken), m_viewid(_viewid), m_proposal_height(_proposal_height), m_gmtime(_gmtime) {
     set_empty_xip2(m_validator);
@@ -98,6 +92,13 @@ void xblock_consensus_para_t::set_tableblock_consensus_para(uint64_t drand_heigh
     m_random_seed = random_seed;
     m_total_lock_tgas_token = total_lock_tgas_token;
     m_total_lock_tgas_token_property_height = total_lock_tgas_token_property_height;
+}
+
+xvip2_t xblock_consensus_para_t::get_leader_xip() const {
+    if (m_auditor.high_addr != 0 && m_auditor.low_addr != 0 && get_node_id_from_xip2(m_auditor) != 0x3FF) {
+        return m_auditor;
+    }
+    return m_validator;
 }
 
 xobject_ptr_t<xblock_t> xblock_t::raw_vblock_to_object_ptr(base::xvblock_t* vblock) {
@@ -377,16 +378,6 @@ std::string xblock_t::dump_body() const {
 
 std::string xblock_t::get_block_hash_hex_str() const {
     return to_hex_str(get_block_hash());
-}
-
-xlightunit_tx_info_ptr_t xblock_t::get_tx_info(const std::string & txhash) const {
-    const auto & txs = get_txs();
-    for (auto & tx : txs) {
-        if (tx->get_tx_hash() == txhash) {
-            return tx;
-        }
-    }
-    return nullptr;
 }
 
 xtransaction_ptr_t  xblock_t::query_raw_transaction(const std::string & txhash) const {

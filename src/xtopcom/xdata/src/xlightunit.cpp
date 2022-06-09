@@ -137,56 +137,21 @@ std::string xlightunit_block_t::dump_body() const {
     return ss.str();
 }
 
-const std::vector<xlightunit_tx_info_ptr_t> xlightunit_block_t::get_txs() const {
-    return get_lightunit_body().get_txs();
-}
-
-bool xlightunit_block_t::extract_sub_txs(std::vector<base::xvtxindex_ptr> & sub_txs) {
-     if (get_input() != nullptr) {
-        base::xvinentity_t* primary_input_entity = get_input()->get_primary_entity();
-        if (primary_input_entity != nullptr) {
-            const std::vector<base::xvaction_t> & actions = primary_input_entity->get_actions();
-            for (auto & action : actions) {
-                if (!action.get_org_tx_hash().empty()) {
-                    enum_transaction_subtype _actionid = (enum_transaction_subtype)action.get_org_tx_action_id();
-                    base::xvtxindex_ptr tx_index = make_object_ptr<base::xvtxindex_t>(*this, nullptr, action.get_org_tx_hash(), _actionid);
-                    sub_txs.push_back(tx_index);
-                }
-            }
-        }
-    }
-    return true;
-}
-
-const xlightunit_body_t & xlightunit_block_t::get_lightunit_body() const {
-    try_load_body();
-    // xassert(!m_cache_body.is_empty());
-    return m_cache_body;
-}
-
-void xlightunit_block_t::load_body() const {
-    if (get_input() == nullptr) {
-        return;
-    }
+const std::vector<xlightunit_action_ptr_t> xlightunit_block_t::get_txs() const {
+    std::vector<xlightunit_action_ptr_t> txactions;
     base::xvinentity_t* primary_input_entity = get_input()->get_primary_entity();
     if (primary_input_entity == nullptr) {
-        return;
+        return txactions;
     }
     const std::vector<base::xvaction_t> & actions = primary_input_entity->get_actions();
     for (auto & action : actions) {
         if (action.get_org_tx_hash().empty()) {
             continue;
         }
-        xtransaction_ptr_t raw_tx = query_raw_transaction(action.get_org_tx_hash());
-        xlightunit_tx_info_ptr_t txinfo = std::make_shared<xlightunit_tx_info_t>(action, raw_tx.get());
-        m_cache_body.add_tx_info(txinfo);
+        xlightunit_action_ptr_t txaction = std::make_shared<xlightunit_action_t>(action);
+        txactions.push_back(txaction);
     }
-}
-
-void xlightunit_block_t::try_load_body() const {
-    std::call_once(m_once_load_flag, [this] () {
-        load_body();
-    });
+    return txactions;
 }
 
 uint32_t xlightunit_block_t::get_unconfirm_sendtx_num() const {

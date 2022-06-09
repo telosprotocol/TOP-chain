@@ -31,19 +31,18 @@ public:
     evm_common::u256 tx_eth_fee_per_gas() const;
     evm_common::u256 tx_eth_limited_gasfee() const;
     uint64_t deposit() const;
-    uint64_t tx_used_tgas() const;
     uint64_t tx_last_action_used_deposit() const;
-    uint64_t tx_last_action_recv_tx_use_send_tx_tgas() const;
-
-    void tx_set_used_tgas(const uint64_t tgas);
-    void tx_set_used_deposit(const uint64_t deposit);
-    void tx_set_current_recv_tx_use_send_tx_tgas(const uint64_t tgas);
 
     uint64_t tx_fixed_tgas() const;
     uint64_t tx_bandwith_tgas() const;
     uint64_t tx_disk_tgas() const;
 
-    bool is_one_stage_tx();
+    static uint64_t balance_to_tgas(const uint64_t balance);
+    static uint64_t tgas_to_balance(const uint64_t tgas);
+    static evm_common::u256 wei_to_utop(const evm_common::u256 wei);
+    static evm_common::u256 utop_to_wei(const evm_common::u256 utop);
+
+    bool is_one_stage_tx() const;
 
 private:
     xobject_ptr_t<data::xcons_transaction_t> m_tx{nullptr};

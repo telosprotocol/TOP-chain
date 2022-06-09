@@ -525,6 +525,9 @@ std::vector<xlightunit_action_t> xblocktool_t::unpack_all_txreceipt_action(base:
         }
         auto & all_actions = _inentity->get_actions();
         for (auto & action : all_actions) {
+            if (xlightunit_action_t::is_not_txaction(action)) {
+                continue;;
+            }
             xlightunit_action_t txaction(action);
             if (txaction.is_need_make_txreceipt()) {
                 txreceipt_actions.push_back(txaction);

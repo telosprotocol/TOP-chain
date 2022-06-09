@@ -44,6 +44,9 @@ void evm_import_instance::input(uint64_t register_id) {
 }
 
 // # EVM API #
+uint64_t evm_import_instance::evm_chain_id() {
+    return m_vm_logic->chain_id();
+}
 void evm_import_instance::evm_block_coinbase(uint64_t register_id) {
     return m_vm_logic->block_coinbase(register_id);
 }
@@ -131,6 +134,9 @@ void evm_input(uint64_t register_id) {
 }
 
 // # EVM API #
+uint64_t evm_chain_id() {
+    return evm_import_instance::instance()->evm_chain_id();
+}
 void evm_block_coinbase(uint64_t register_id) {
     return evm_import_instance::instance()->evm_block_coinbase(register_id);
 }

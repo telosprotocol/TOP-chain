@@ -34,6 +34,9 @@ static char const * errc_to_message(int const errc) noexcept {
     case xerrc_t::tx_deposit_to_tgas_not_enough:
         return "tx deposit to tgas not enough";
 
+    case xerrc_t::tx_balance_exceeded:
+        return "tx balance exceeded";
+
     case xerrc_t::tx_limited_gas_exceeded:
         return "tx limited gas exceeded";
 
@@ -45,6 +48,9 @@ static char const * errc_to_message(int const errc) noexcept {
 
     case xerrc_t::tx_calculation_gas_over_limit:
         return "tx calculation gas over limit";
+
+    case xerrc_t::tx_out_of_gas:
+        return "tx out of gas";
 
     default:  // NOLINT(clang-diagnostic-covered-switch-default)
         return "unknown error";

@@ -31,6 +31,9 @@ class xevm_log_t {
     xh256s_t                topics;
     xbytes_t                data;
 };
+
+using xevm_logs_t = std::vector<xevm_log_t>;
+
 /// same as TransactionStatus in `evm_engine_rs/engine/src/parameters.rs`
 enum xevm_transaction_status_t : uint32_t {
     Success = 0,
@@ -42,6 +45,8 @@ enum xevm_transaction_status_t : uint32_t {
     /// An opcode accesses external information, but the request is off offset limit (runtime).
     OutOfOffset = 4,
     OtherExecuteError = 5,
+
+    Invalid = 32,
 };
 
 class xevm_transaction_result_t {
@@ -64,7 +69,7 @@ class xevm_transaction_result_t {
 
 public:
     uint64_t used_gas{0}; // todo: calculate used gas to expense
-    xevm_transaction_status_t status;
+    xevm_transaction_status_t status{Invalid};
     std::string extra_msg;
     std::vector<xevm_log_t> logs;
 

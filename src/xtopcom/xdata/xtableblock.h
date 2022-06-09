@@ -37,6 +37,7 @@ class xtable_block_para_t {
     void    set_fullstate_bin(const std::string & fullstate) {m_fullstate_bin = fullstate;}
     void    set_tgas_balance_change(const int64_t amount) {m_tgas_balance_change = amount;}
     void    set_property_hashs(const std::map<std::string, std::string> & hashs) {m_property_hashs = hashs;}
+    void    set_eth_header(const std::string & eth_header) {m_eth_header = eth_header;}
 
     const std::vector<xblock_ptr_t> & get_account_units() const {return m_account_units;}
     const std::vector<xlightunit_tx_info_ptr_t> & get_txs() const {return m_txs;}
@@ -44,6 +45,7 @@ class xtable_block_para_t {
     const std::string &             get_fullstate_bin() const {return m_fullstate_bin;}
     int64_t                         get_tgas_balance_change() const {return m_tgas_balance_change;}
     const std::map<std::string, std::string> &  get_property_hashs() const {return m_property_hashs;}
+    const std::string &             get_eth_header() const {return m_eth_header;}
 
  private:
     std::vector<xblock_ptr_t>        m_account_units;
@@ -52,6 +54,7 @@ class xtable_block_para_t {
     int64_t                          m_tgas_balance_change{0};
     std::map<std::string, std::string> m_property_hashs;  // need set to table-action for property receipt
     std::vector<xlightunit_tx_info_ptr_t> m_txs;
+    std::string                      m_eth_header;
 };
 
 class xtable_block_t : public xblock_t {
@@ -71,20 +74,16 @@ class xtable_block_t : public xblock_t {
     static xobject_t *create_object(int type);
     void *query_interface(const int32_t _enum_xobject_type_) override;
     virtual void parse_to_json(xJson::Value & root, const std::string & rpc_version) override;
-    virtual std::vector<base::xvaction_t> get_tx_actions() const;
-    virtual std::vector<base::xvaction_t> get_one_tx_action(const std::string & txhash) const;
     virtual std::vector<xvheader_ptr_t> get_sub_block_headers() const;
 
  public:  // tableblock api
     std::string     tableblock_dump() const;
 
  public:  // implement block common api
-    uint32_t        get_txs_count() const override;
     int64_t         get_pledge_balance_change_tgas() const override;
     virtual bool    extract_sub_blocks(std::vector<xobject_ptr_t<base::xvblock_t>> & sub_blocks) override;
     virtual bool    extract_one_sub_block(uint32_t entity_id, const std::string & extend_cert, const std::string & extend_data, xobject_ptr_t<xvblock_t> & sub_block) override;
     void update_txs_by_actions(const std::vector<base::xvaction_t> & actions, std::vector<xlightunit_tx_info_ptr_t> & txs) const;
-    const std::vector<xlightunit_tx_info_ptr_t> get_txs() const override;
     bool extract_sub_txs(std::vector<base::xvtxindex_ptr> & sub_txs) override;
 
 };
