@@ -162,14 +162,16 @@ void xeth_receipt_t::decodeRLP(evm_common::RLP const& _r, std::error_code & ec) 
 
 xbytes_t xeth_receipt_t::encodeBytes() const {
     xbytes_t _bytes;
-    if (m_tx_version_type != EIP_1559) {
-        xassert(false);
-        return {};
+    if (m_tx_version_type != EIP_LEGACY) {
+        _bytes.push_back((uint8_t)m_tx_version_type);
     }
-    _bytes.push_back((uint8_t)m_tx_version_type);
     evm_common::RLPStream _s;
     streamRLP(_s);
-    _bytes.insert(_bytes.begin() + 1, _s.out().begin(), _s.out().end());
+    if (m_tx_version_type != EIP_LEGACY) {
+        _bytes.insert(_bytes.begin() + 1, _s.out().begin(), _s.out().end());
+    } else {
+        _bytes = _s.out();
+    }
     return _bytes;
 }
 
