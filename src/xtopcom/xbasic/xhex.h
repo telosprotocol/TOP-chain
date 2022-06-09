@@ -55,20 +55,38 @@ constexpr std::uint8_t const_hex_char(char h, char l) {
 
 /* Adapter that performs sets of 2 characters into a single byte and combine the results into a uniform initialization list used to initialize T */
 template <typename T, std::size_t Length, std::size_t... Index>
-constexpr T ConstBytes(const char (&Input)[Length], const index_sequence<Index...> &) {
+constexpr T ConstHexBytes(const char (&Input)[Length], const index_sequence<Index...> &) {
     return T{const_hex_char(Input[(Index * 2)], Input[((Index * 2) + 1)])...};
 }
+
+template <typename T, std::size_t Length, std::size_t... Index>
+constexpr T ConstBytes(const char (&Input)[Length], const index_sequence<Index...> &) {
+    return T{static_cast<uint8_t>(Input[Index])...};
+}
+
 }  // namespace
 
 /* Entry function */
 template <typename T, std::size_t Length>
 constexpr T ConstHexBytes(const char (&input)[Length]) {
-    return ConstBytes<T>(input, make_index_sequence<(Length / 2)>{});
+    return ConstHexBytes<T>(input, make_index_sequence<(Length / 2)>{});
 }
 
 /* Entry function */
 template <std::size_t Length>
 constexpr std::array<std::uint8_t, Length> ConstHexBytes(const char (&input)[2 * Length + 1]) {
+    return ConstHexBytes<std::array<std::uint8_t, Length>>(input, make_index_sequence<(Length)>{});
+}
+
+/* Entry function */
+template <typename T, std::size_t Length>
+constexpr T ConstBytes(const char (&input)[Length + 1]) {
+    return ConstBytes<T>(input, make_index_sequence<(Length)>{});
+}
+
+/* Entry function */
+template <std::size_t Length>
+constexpr std::array<std::uint8_t, Length> ConstBytes(const char (&input)[Length + 1]) {
     return ConstBytes<std::array<std::uint8_t, Length>>(input, make_index_sequence<(Length)>{});
 }
 

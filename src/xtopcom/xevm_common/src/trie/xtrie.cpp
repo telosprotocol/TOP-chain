@@ -55,7 +55,7 @@ xhash256_t xtop_trie::Hash() {
 
 // Get returns the value for key stored in the trie.
 // The value bytes must not be modified by the caller.
-xbytes_t xtop_trie::Get(xbytes_t const & key) {
+xbytes_t xtop_trie::Get(xbytes_t const & key) const {
     std::error_code ec;
     auto result = TryGet(key, ec);
     if (ec) {
@@ -67,7 +67,7 @@ xbytes_t xtop_trie::Get(xbytes_t const & key) {
 // TryGet returns the value for key stored in the trie.
 // The value bytes must not be modified by the caller.
 // If a node was not found in the database, a MissingNodeError(trie_db_missing_node_error) is returned.
-xbytes_t xtop_trie::TryGet(xbytes_t const & key, std::error_code & ec) {
+xbytes_t xtop_trie::TryGet(xbytes_t const & key, std::error_code & ec) const {
     xbytes_t value;
     xtrie_node_face_ptr_t newroot;
     bool didResolve;
@@ -242,7 +242,7 @@ bool xtop_trie::Prove(xbytes_t const & key, uint32_t fromLevel, xkv_db_face_ptr_
     return true;
 }
 
-std::tuple<xbytes_t, xtrie_node_face_ptr_t, bool> xtop_trie::tryGet(xtrie_node_face_ptr_t node, xbytes_t const & key, std::size_t const pos, std::error_code & ec) {
+std::tuple<xbytes_t, xtrie_node_face_ptr_t, bool> xtop_trie::tryGet(xtrie_node_face_ptr_t node, xbytes_t const & key, std::size_t const pos, std::error_code & ec) const {
     xdbg("tryGet key: %s ,pos: %zu", top::to_hex(key).c_str(), pos);
     if (node == nullptr) {
         return std::make_tuple(xbytes_t{}, nullptr, false);
@@ -565,7 +565,7 @@ xtrie_node_face_ptr_t xtop_trie::resolve(xtrie_node_face_ptr_t n, /*xbytes_t pre
     return n;
 }
 
-xtrie_node_face_ptr_t xtop_trie::resolveHash(xtrie_hash_node_ptr_t n, /*xbytes_t prefix,*/ std::error_code & ec) {
+xtrie_node_face_ptr_t xtop_trie::resolveHash(xtrie_hash_node_ptr_t n, /*xbytes_t prefix,*/ std::error_code & ec) const {
     auto hash = xhash256_t{n->data()};
     auto node = m_db->node(hash);
     if (!node) {

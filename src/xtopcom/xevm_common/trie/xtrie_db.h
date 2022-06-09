@@ -40,6 +40,8 @@ private:
     xhash256_t oldest;
     xhash256_t newest;
 
+    std::map<xhash256_t, xbytes_t> preimages;  // Preimages of nodes from the secure trie
+
 public:
     xtop_trie_db(xkv_db_face_ptr_t _diskdb) : diskdb(_diskdb) {
     }
@@ -61,15 +63,24 @@ public:
     }
 
 public:
-    // node retrieves a cached trie node from memory, or returns nil if none can be
-    // found in the memory cache.
-    xtrie_node_face_ptr_t node(xhash256_t hash);
-
     // insert inserts a collapsed trie node into the memory database.
     // The blob size must be specified to allow proper size tracking.
     // All nodes inserted by this function will be reference tracked
     // and in theory should only used for **trie nodes** insertion.
     void insert(xhash256_t hash, int32_t size, xtrie_node_face_ptr_t node);
+
+    // insertPreimage writes a new trie node pre-image to the memory database if it's
+    // yet unknown. The method will NOT make a copy of the slice,
+    // only use if the preimage will NOT be changed later on.
+    //
+    // Note, this method assumes that the database's lock is held!
+    void insertPreimage(xhash256_t hash, xbytes_t const & preimage);
+
+    // node retrieves a cached trie node from memory, or returns nil if none can be
+    // found in the memory cache.
+    xtrie_node_face_ptr_t node(xhash256_t hash);
+
+    xbytes_t preimage(xhash256_t hash) const;
 
     using AfterCommitCallback = std::function<void(xhash256_t const &)>;
 
@@ -84,6 +95,8 @@ public:
 private:
     // commit is the private locked version of Commit.
     // void commit(xhash256_t hash, AfterCommitCallback cb, std::error_code & ec);
+
+    xbytes_t preimageKey(xhash256_t hash_key) const;
 };
 using xtrie_db_t = xtop_trie_db;
 using xtrie_db_ptr_t = std::shared_ptr<xtrie_db_t>;
