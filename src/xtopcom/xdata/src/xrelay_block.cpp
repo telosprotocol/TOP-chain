@@ -357,7 +357,7 @@ xbytes_t xrelay_block_header::streamRLP_header_to_contract()
 
         rlp_stream.appendList(decLen);
         rlp_stream << m_inner_header.encodeBytes();
-        rlp_stream << m_prev_hash ;
+        rlp_stream << m_prev_hash;
         m_next_elections_groups.streamRLP(rlp_stream);
 
         rlp_stream.appendList(m_block_signatures_nodes.size());
@@ -568,7 +568,8 @@ bool xrelay_block::decodeRLP(evm_common::RLP const& _r, std::error_code &ec, boo
     itemCount = rlp_txList.itemCount();
     for (unsigned i = 0; i < itemCount; i++) {
         xeth_transaction_t tx;
-       // tx.decodeBytes(rlp_txList[i].toBytes(), ec);
+        eth_error  ecode;
+        tx.decodeBytes(rlp_txList[i].toBytes(), ecode);
         m_transactions.emplace_back(tx);
     }
     return true;

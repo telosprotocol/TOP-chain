@@ -149,7 +149,8 @@ namespace top
             bool                clean_blocks(const int keep_blocks_count,bool force_release_unused_block);
             bool                on_block_revoked(base::xvbindex_t* index_ptr);
             bool                on_block_committed(base::xvbindex_t* index_ptr);
-            
+            bool                store_relay_txs(base::xvblock_t * block_ptr);
+
         protected:
             base::xblockmeta_t * m_meta;
             xvblockdb_t*         m_blockdb_ptr;

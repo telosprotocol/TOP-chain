@@ -31,6 +31,7 @@ public:
 
 public:  // read & load interface
     base::xauto_ptr<base::xvtxindex_t> load_tx_idx(const std::string & raw_tx_hash, base::enum_transaction_subtype type) override;
+    base::xauto_ptr<base::xvtxindex_t> load_relay_tx_idx(const std::string & raw_tx_hash, base::enum_transaction_subtype type) override;
     const std::string load_tx_bin(const std::string & raw_tx_hash) override;
     base::xauto_ptr<base::xdataunit_t> load_tx_obj(const std::string & raw_tx_hash) override;
 

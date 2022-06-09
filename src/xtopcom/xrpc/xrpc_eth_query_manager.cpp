@@ -1129,5 +1129,27 @@ void xrpc_eth_query_manager::top_relayBlockNumber(xJson::Value & js_req, xJson::
     outstr << "0x" << std::hex << height;
     js_rsp["result"] = std::string(outstr.str());
 }
+
+
+void xrpc_eth_query_manager::top_getRelayTransactionByHash(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
+    if (!eth::EthErrorCode::check_req(js_req, js_rsp, 1))
+        return;
+    std::string tx_hash = js_req[0].asString();
+    if (!eth::EthErrorCode::check_hex(tx_hash, js_rsp, 0, eth::enum_rpc_type_hash))
+        return;
+    if (!eth::EthErrorCode::check_hash(tx_hash, js_rsp))
+        return;
+
+    uint256_t hash = top::data::hex_to_uint256(js_req[0].asString());
+    std::string tx_hash_str = std::string(reinterpret_cast<char *>(hash.data()), hash.size());
+    xdbg("top_getRelayTransactionByHash tx hash: %s",  tx_hash.c_str());
+
+    xJson::Value js_result;
+    xrpc_loader_t::load_relay_tx_indx_detail(tx_hash_str, base::enum_transaction_subtype_send, js_result);
+ 
+    js_rsp["result"] = js_result;
+    xdbg("xrpc_eth_query_manager::top_getRelayTransactionByHash ok.tx hash:%s", tx_hash.c_str());
+    return;
+}
 }  // namespace chain_info
 }  // namespace top

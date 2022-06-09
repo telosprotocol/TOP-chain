@@ -32,6 +32,7 @@ using xtxindex_detail_ptr_t = std::shared_ptr<xtxindex_detail_t>;
 
 class xrpc_loader_t {
  public:
+    static   bool                   load_relay_tx_indx_detail(const std::string & raw_tx_hash, base::enum_transaction_subtype type,  xJson::Value &js_result);
     static  xtxindex_detail_ptr_t   load_tx_indx_detail(const std::string & raw_tx_hash,base::enum_transaction_subtype type);
  public:  // json transfer
     static  xJson::Value            parse_send_tx(const xtxindex_detail_ptr_t & txindex_detail);

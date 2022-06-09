@@ -43,6 +43,7 @@ namespace top
  
         public://read & load interface
             virtual xauto_ptr<xvtxindex_t>  load_tx_idx(const std::string & raw_tx_hash,enum_transaction_subtype type) = 0;
+            virtual xauto_ptr<xvtxindex_t>  load_relay_tx_idx(const std::string & raw_tx_hash, base::enum_transaction_subtype type) = 0;
             virtual const std::string       load_tx_bin(const std::string & raw_tx_hash) = 0 ;
             virtual xauto_ptr<xdataunit_t>  load_tx_obj(const std::string & raw_tx_hash) = 0;
 

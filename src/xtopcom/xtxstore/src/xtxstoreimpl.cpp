@@ -60,6 +60,24 @@ base::xauto_ptr<base::xvtxindex_t> xtxstoreimpl::load_tx_idx(const std::string &
     return txindex;
 }
 
+
+base::xauto_ptr<base::xvtxindex_t> xtxstoreimpl::load_relay_tx_idx(const std::string & raw_tx_hash, base::enum_transaction_subtype type) {
+    base::enum_txindex_type txindex_type = base::xvtxkey_t::transaction_subtype_to_txindex_type(type);
+    const std::string tx_idx_key = base::xvdbkey_t::create_prunable_relay_tx_index_key(raw_tx_hash, txindex_type);
+    const std::string tx_idx_bin = base::xvchain_t::instance().get_xdbstore()->get_value(tx_idx_key);
+    if (tx_idx_bin.empty()) {
+        xwarn("xvtxstore_t::load_relay_tx_idx, index not find for hahs_tx=%s", base::xstring_utl::to_hex(raw_tx_hash).c_str());
+        return nullptr;
+    }
+    base::xauto_ptr<base::xvtxindex_t> txindex(new base::xvtxindex_t());
+    if (txindex->serialize_from_string(tx_idx_bin) <= 0) {
+        xerror("xvtxstore_t::load_tx_idx,found bad index for hahs_tx=%s", base::xstring_utl::to_hex(raw_tx_hash).c_str());
+        return nullptr;
+    }
+    txindex->set_tx_hash(raw_tx_hash);
+    return txindex;
+}
+
 const std::string xtxstoreimpl::load_tx_bin(const std::string & raw_tx_hash) {
     xassert(raw_tx_hash.empty() == false);
     if (raw_tx_hash.empty())
