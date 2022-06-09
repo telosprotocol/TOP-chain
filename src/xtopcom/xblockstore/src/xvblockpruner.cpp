@@ -29,7 +29,7 @@ namespace top
             m_prune_contract[sys_contract_rec_tcc_addr] = enum_prune_none;
             m_prune_contract[sys_contract_rec_standby_pool_addr] = enum_prune_none;
 
-            m_prune_contract[sys_contract_zec_workload_addr] = enum_prune_fullunit;
+            m_prune_contract[sys_contract_zec_workload_addr] = enum_prune_none;
             m_prune_contract[sys_contract_zec_vote_addr] = enum_prune_fullunit;
             m_prune_contract[sys_contract_zec_reward_addr] = enum_prune_fullunit;
             m_prune_contract[sys_contract_zec_slash_info_addr] = enum_prune_fullunit;
