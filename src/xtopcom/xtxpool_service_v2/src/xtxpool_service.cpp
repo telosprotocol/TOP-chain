@@ -183,10 +183,6 @@ void xtxpool_service::pull_lacking_receipts(uint64_t now, xcovered_tables_t & co
         }
         covered_tables.add_covered_table(m_zone_index, table_id);
 
-        if (!m_para->get_txpool()->need_sync_lacking_receipts(m_zone_index, table_id)) {
-            continue;
-        }
-
         std::string self_table_addr = data::xblocktool_t::make_address_table_account((base::enum_xchain_zone_index)m_zone_index, table_id);
 
         uint32_t total_lacking_confirm_tx_num = 0;
