@@ -27,7 +27,17 @@ bool xtop_bloom9::contain(xbytes_t const & input) {
 }
 
 std::string xtop_bloom9::get_hex_string_data() const {
-    return top::to_hex_prefixed(get_data());
+    std::string result;
+    result.reserve(m_data.size() * 2);  // two digits per character
+
+    static constexpr char hex[] = "0123456789abcdef";
+
+    for (uint8_t c : m_data) {
+        result.push_back(hex[c / 16]);
+        result.push_back(hex[c % 16]);
+    }
+
+    return result;
 }
 
 std::tuple<std::size_t, xbyte_t, std::size_t, xbyte_t, std::size_t, xbyte_t> xtop_bloom9::bloomValues(xbytes_t data) {
