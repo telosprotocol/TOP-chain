@@ -271,9 +271,9 @@ void xtop_gasfee::store_in_one_stage() {
     uint64_t top_usage = tgas_to_balance(m_converted_tgas_usage);
     m_detail.m_state_burn_balance = top_usage;
     m_detail.m_tx_used_tgas = m_free_tgas_usage;
-    m_detail.m_tx_used_deposit = top_usage;
     evm_common::u256 eth_usage = utop_to_wei(tgas_to_balance(m_eth_converted_tgas_usage));
     m_detail.m_state_burn_eth_balance = eth_usage;
+    m_detail.m_tx_used_deposit = top_usage + tgas_to_balance(m_eth_converted_tgas_usage);
     xdbg("[xtop_gasfee::store_in_one_stage] m_free_tgas: %lu, m_converted_tgas_usage: %lu, top_usage: %lu, m_eth_converted_tgas_usage: %lu, eth_usage: %s",
          m_free_tgas,
          m_converted_tgas_usage,
