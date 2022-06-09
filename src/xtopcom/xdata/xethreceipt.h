@@ -20,6 +20,7 @@ enum enum_ethreceipt_status {
     ethreceipt_status_successful = 1
 };
 
+class xeth_receipt_t;
 // xeth_store_receipt_t is packed in block
 class xeth_store_receipt_t {
  public:
@@ -58,6 +59,7 @@ class xeth_store_receipt_t {
     common::xeth_address_t      m_contract_address;
 };
 
+using xeth_store_receipts_t = std::vector<xeth_store_receipt_t>;
 using xeth_store_receipt_ptr_t = std::shared_ptr<xeth_store_receipt_t>;
 
 // xeth_receipt_t is fully compatiable with eth
@@ -77,6 +79,7 @@ class xeth_receipt_t {
     const evm_common::xbloom9_t &   get_logsBloom() const {return m_logsBloom;}
     const evm_common::xevm_logs_t & get_logs() const {return m_logs;}
  public:
+    void        set_tx_version_type(enum_ethtx_version version) {m_tx_version_type = version;}
     void        set_tx_status(enum_ethreceipt_status _status) {m_tx_status = _status;}
     void        set_cumulative_gas_used(uint64_t _gas) {m_cumulative_gas_used = _gas;}
     void        set_logs(evm_common::xevm_logs_t const& logs) {m_logs = logs;}
