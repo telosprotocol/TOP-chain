@@ -46,9 +46,17 @@ bool xrelay_proposal_maker_t::can_make_proposal(data::xblock_consensus_para_t & 
     return true;
 }
 
-void xrelay_proposal_maker_t::convert_to_xrelay_receipts(const std::map<uint64_t, xrelay_chain::xcross_txs_t> & cross_tx_map, std::vector<data::xeth_receipt_t> & receipts) {
+void xrelay_proposal_maker_t::convert_to_xrelay_tx_and_receipts(const std::map<uint64_t, xrelay_chain::xcross_txs_t> & cross_tx_map, 
+                                                                std::vector<data::xeth_transaction_t> &transactions,std::vector<data::xeth_receipt_t> & receipts) {
     for (auto & cross_tx_map_pair : cross_tx_map) {
         auto & cross_txs = cross_tx_map_pair.second;
+        for (auto & tx : cross_txs.m_txs) {
+            std::error_code  ec;
+            data::xeth_transaction_t relay_tx = tx->to_eth_tx(ec);
+            xinfo("xrelay_proposal_maker_t::convert_to_xrelay_tx_and_receipts tx_info: %s  relay_tx: %ss ", tx->dump().c_str(), relay_tx.dump().c_str());
+            transactions.push_back(relay_tx); 
+        }
+        
         for (auto & tx_result : cross_txs.m_tx_results) {
             data::xeth_receipt_t receipt;
             receipt.set_tx_status(tx_result.get_tx_status());
@@ -63,12 +71,14 @@ void xrelay_proposal_maker_t::convert_to_xrelay_receipts(const std::map<uint64_t
 data::xrelay_block xrelay_proposal_maker_t::build_relay_block(evm_common::h256 prev_hash,
                                                               uint64_t block_height,
                                                               uint64_t timestamp,
+                                                              const std::vector<data::xeth_transaction_t> &transactions,
                                                               const std::vector<data::xeth_receipt_t> & receipts,
                                                               const data::xrelay_election_group_t & reley_election_group) {
     uint64_t block_version = 0;
     uint64_t epochID = 0;
     data::xrelay_block relay_block(block_version, prev_hash,  block_height, epochID, timestamp);
     xdbg("xrelay_proposal_maker_t::build_relay_block, %s,%llu,%llu", prev_hash.hex().c_str(), block_height, timestamp);
+    relay_block.set_transactions(transactions);
     relay_block.set_receipts(receipts);
     relay_block.set_elections_next(reley_election_group);
     return relay_block;
@@ -140,15 +150,16 @@ bool xrelay_proposal_maker_t::build_relay_block_data_leader(const data::xblock_p
         return false;
     }
 
+    std::vector<data::xeth_transaction_t> transactions;
     std::vector<data::xeth_receipt_t> receipts;
-    convert_to_xrelay_receipts(cross_tx_map, receipts);
+    convert_to_xrelay_tx_and_receipts(cross_tx_map, transactions, receipts);
 
     xdbg("xrelay_proposal_maker_t::build_relay_block_data_leader new_epoch_id:%llu,election size:%u,receipts size:%u",
          reley_election_group.election_epochID,
          reley_election_group.elections_vector.size(),
          receipts.size());
 
-    data::xrelay_block relay_block = build_relay_block(prev_hash, block_height, timestamp, receipts, reley_election_group);
+    data::xrelay_block relay_block = build_relay_block(prev_hash, block_height, timestamp, transactions, receipts, reley_election_group);
 
     xbytes_t rlp_stream = relay_block.encodeBytes();
     relay_block_data = from_bytes<std::string>((xbytes_t)(rlp_stream));
@@ -169,8 +180,10 @@ bool xrelay_proposal_maker_t::build_relay_block_data_backup(evm_common::h256 pre
     if (!ret) {
         return {};
     }
+    
+    std::vector<data::xeth_transaction_t> transactions;
     std::vector<data::xeth_receipt_t> receipts;
-    convert_to_xrelay_receipts(cross_tx_map, receipts);
+   convert_to_xrelay_tx_and_receipts(cross_tx_map, transactions, receipts);
 
     std::vector<data::xrelay_election_node_t> reley_election;
 
@@ -186,7 +199,7 @@ bool xrelay_proposal_maker_t::build_relay_block_data_backup(evm_common::h256 pre
     reley_election_group.election_epochID = new_election_height;
     reley_election_group.elections_vector = reley_election;
 
-    data::xrelay_block relay_block = build_relay_block(prev_hash, block_height, timestamp, receipts, reley_election_group);
+    data::xrelay_block relay_block = build_relay_block(prev_hash, block_height, timestamp,transactions, receipts, reley_election_group);
 
     xdbg("xrelay_proposal_maker_t::build_relay_block_data_backup relay_block:%s", relay_block.dump().c_str());
 

@@ -8,6 +8,7 @@
 #include "xrpc/xrpc_loader.h"
 #include "xtxexecutor/xtransaction_fee.h"
 #include "xbasic/xhex.h"
+#include "xdata/xrelay_block.h"
 
 namespace top {
 
@@ -33,7 +34,7 @@ xtxindex_detail_ptr_t  xrpc_loader_t::load_tx_indx_detail(const std::string & ra
     }  
 
     base::xvaccount_t _vaddress(txindex->get_block_addr());
-    auto _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_vaddress, txindex->get_block_height(), base::enum_xvblock_flag_committed, false);
+    auto _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_vaddress, txindex->get_block_height(), txindex->get_block_hash(), false);
     if (nullptr == _block) {
         xwarn("xrpc_loader_t::load_tx_indx_detail,fail to load block for hash:%s,type:%d", base::xstring_utl::to_hex(raw_tx_hash).c_str(), type);
         return nullptr;
@@ -67,6 +68,73 @@ xtxindex_detail_ptr_t  xrpc_loader_t::load_tx_indx_detail(const std::string & ra
     return index_detail;
 }
 
+
+
+bool  xrpc_loader_t::load_relay_tx_indx_detail(const std::string & raw_tx_hash,base::enum_transaction_subtype type,  xJson::Value &js_result) {
+    base::xauto_ptr<base::xvtxindex_t> txindex = base::xvchain_t::instance().get_xtxstore()->load_relay_tx_idx(raw_tx_hash, type);
+    if (nullptr == txindex) {
+        xwarn("xrpc_loader_t::load_tx_indx_detail,fail to index for hash:%s,type:%d", base::xstring_utl::to_hex(raw_tx_hash).c_str(), type);
+        return false;
+    }  
+    xinfo("xblockacct_t:load_relay_tx_indx_detail  %s ",   base::xstring_utl::to_hex(raw_tx_hash).c_str());
+    
+    base::xvaccount_t _vaddress(txindex->get_block_addr());
+    auto _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_vaddress, txindex->get_block_height(), base::enum_xvblock_flag_committed,false);
+    if (nullptr == _block) {
+        xwarn("xrpc_loader_t::load_tx_indx_detail,fail to load block for hash:%s,type:%d, account address %s",
+              base::xstring_utl::to_hex(raw_tx_hash).c_str(), type, txindex->get_block_addr().c_str());
+        return false;
+    }
+    xdbg("xblockacct_t:load_relay_tx_indx_detail  decode relay bock");
+    std::error_code ec;
+    top::data::xrelay_block  extra_relay_block;
+    auto relay_block_data = _block->get_header()->get_extra_data();
+    extra_relay_block.decodeBytes(to_bytes(relay_block_data), ec);
+    if (ec) {
+        xwarn("xblockacct_t:store_relay_txs decodeBytes decodeBytes error %s; err msg %s", 
+        ec.category().name(), ec.message().c_str());
+        return false;
+    }
+
+    //get tx hash from txs
+    data::xeth_transaction_t tx_iter;
+    uint32_t           tx_index = 0;
+    std::vector<base::xvtxindex_ptr> sub_txs;
+    for ( auto &tx: extra_relay_block.get_all_transactions()) {
+        
+        if (!tx.get_tx_hash().empty()) {
+             std::string tx_hash = std::string(reinterpret_cast<char*>(tx.get_tx_hash().data()), tx.get_tx_hash().size());
+            if (tx_hash == raw_tx_hash) {
+                xinfo("xblockacct_t:load_relay_tx_indx_detail find hash %s ",   base::xstring_utl::to_hex(raw_tx_hash).c_str());
+                tx_iter = tx;
+                break;
+            }
+        }
+        tx_index++;
+    }
+
+    //find tx 
+    if(!tx_iter.get_tx_hash().empty()) {
+        xinfo("xblockacct_t:load_relay_tx_indx_detail  hash %s result",  base::xstring_utl::to_hex(raw_tx_hash).c_str());
+        data::xeth_receipt_t receipt = extra_relay_block.get_block_receipts()[tx_index];
+        js_result["transactionHash"] = raw_tx_hash;
+        std::string block_hash = std::string("0x") + extra_relay_block.get_block_hash().hex();
+        js_result["blockHash"] = block_hash;
+
+        std::string tx_idx = "0x" + base::xstring_utl::tostring(tx_index);
+        js_result["transactionIndex"] = tx_idx;
+        std::stringstream outstr;
+        outstr << "0x" << std::hex << extra_relay_block.get_header().get_block_height();
+        std::string block_num = outstr.str();
+        js_result["blockNumber"] = block_num;
+
+        //otehrs 
+
+        return true;
+    }
+
+    return false;
+}
 void xrpc_loader_t::parse_common_info(const xtxindex_detail_ptr_t & txindex, xJson::Value & jv) {
     jv["account"] = txindex->get_txindex()->get_block_addr();
     jv["height"] = static_cast<xJson::UInt64>(txindex->get_txindex()->get_block_height());
