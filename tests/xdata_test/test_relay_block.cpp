@@ -199,6 +199,53 @@ xrelay_block xrelay_block_create()
     return _relay_block;
 }
 
+
+TEST_F(test_relay_block, serialize_election_set_push) {
+    std::error_code  ec;
+    xrelay_election_group_t election_set_src;
+    election_set_src.election_epochID = 100;
+    for (int i = 0; i< TEST_ELECTIONS_NUM; i++) {
+        election_set_src.elections_vector.push_back(xrelay_election_create());
+    }
+
+    RLPStream rlp_election;
+    election_set_src.streamRLP(rlp_election);
+    bytes  rlp_bytes = rlp_election.out();
+
+    xrelay_election_group_t election_set_dst;
+    election_set_dst.decodeRLP(RLP(rlp_bytes), ec);
+
+    EXPECT_EQ(election_set_src.election_epochID, election_set_dst.election_epochID);
+    EXPECT_EQ(election_set_src.elections_vector.size(), TEST_ELECTIONS_NUM);
+    EXPECT_EQ(election_set_dst.elections_vector.size(), TEST_ELECTIONS_NUM);
+    for(unsigned i = 0; i < TEST_ELECTIONS_NUM; i++ ) {
+        xrelay_election_node_t election_node_src = election_set_src.elections_vector[i];
+        xrelay_election_node_t election_node_dst = election_set_dst.elections_vector[i];
+        EXPECT_EQ(election_node_src.stake, election_node_dst.stake);
+        EXPECT_EQ(election_node_src.public_key_x, election_node_dst.public_key_x);
+        EXPECT_EQ(election_node_src.public_key_y, election_node_dst.public_key_y);
+    }
+}
+
+
+TEST_F(test_relay_block, serialize_election_set_empty) {
+    std::error_code  ec;
+    xrelay_election_group_t election_set_src;
+    election_set_src.election_epochID = 100;
+
+    RLPStream rlp_election;
+    election_set_src.streamRLP(rlp_election);
+    bytes  rlp_bytes = rlp_election.out();
+
+    xrelay_election_group_t election_set_dst;
+    election_set_dst.decodeRLP(RLP(rlp_bytes), ec);
+
+    EXPECT_EQ(election_set_dst.election_epochID, 0);
+    EXPECT_EQ(election_set_src.elections_vector.size(), 0);
+    EXPECT_EQ(election_set_dst.elections_vector.size(), 0);
+}
+
+
 TEST_F(test_relay_block, serialize_receipt_log) {
     std::error_code  ec;
     xevm_log_t log_src = xrelay_evm_log_create();
@@ -543,11 +590,11 @@ TEST_F(test_relay_block, serialize_xrelay_block_without_signature) {
     EXPECT_EQ(inner_header_dst.get_receipts_root_hash(), inner_header_src.get_receipts_root_hash());
     EXPECT_EQ(inner_header_dst.get_block_root_hash(), inner_header_src.get_block_root_hash());
 
-    EXPECT_EQ(block_dst.get_block_receipts().size(), TEST_RECEIPT_NUM);
-    EXPECT_EQ(block_src.get_block_receipts().size(), TEST_RECEIPT_NUM);
+    EXPECT_EQ(block_dst.get_all_receipts().size(), TEST_RECEIPT_NUM);
+    EXPECT_EQ(block_src.get_all_receipts().size(), TEST_RECEIPT_NUM);
     for (unsigned i = 0; i < TEST_RECEIPT_NUM; i++) {
-        auto receipt_src = block_src.get_block_receipts()[i];
-        auto receipt_dst = block_dst.get_block_receipts()[i];
+        auto receipt_src = block_src.get_all_receipts()[i];
+        auto receipt_dst = block_dst.get_all_receipts()[i];
 
         EXPECT_EQ(receipt_dst.get_tx_version_type(), receipt_src.get_tx_version_type());
         EXPECT_EQ(receipt_dst.get_tx_status(), receipt_src.get_tx_status());
@@ -617,11 +664,11 @@ TEST_F(test_relay_block, serialize_xrelay_block_with_signature) {
     EXPECT_EQ(inner_header_dst.get_receipts_root_hash(), inner_header_src.get_receipts_root_hash());
     EXPECT_EQ(inner_header_dst.get_block_root_hash(), inner_header_src.get_block_root_hash());
 
-    EXPECT_EQ(block_dst.get_block_receipts().size(), TEST_RECEIPT_NUM);
-    EXPECT_EQ(block_src.get_block_receipts().size(), TEST_RECEIPT_NUM);
+    EXPECT_EQ(block_dst.get_all_receipts().size(), TEST_RECEIPT_NUM);
+    EXPECT_EQ(block_src.get_all_receipts().size(), TEST_RECEIPT_NUM);
      for (unsigned i = 0; i < TEST_RECEIPT_NUM; i++) {
-        auto receipt_src = block_src.get_block_receipts()[i];
-        auto receipt_dst = block_dst.get_block_receipts()[i];
+        auto receipt_src = block_src.get_all_receipts()[i];
+        auto receipt_dst = block_dst.get_all_receipts()[i];
 
         EXPECT_EQ(receipt_dst.get_tx_version_type(), receipt_src.get_tx_version_type());
         EXPECT_EQ(receipt_dst.get_tx_status(), receipt_src.get_tx_status());
