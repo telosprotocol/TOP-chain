@@ -240,7 +240,7 @@ int32_t xtransaction_v2_t::make_tx_create_user_account(const std::string & addr)
 
 int32_t xtransaction_v2_t::make_tx_transfer(const data::xproperty_asset & asset) {
     set_tx_type(xtransaction_type_transfer);
-    m_token_name = asset.token_name();
+    m_token_name = asset.token_symbol();
     set_amount(asset.m_amount);
     return xsuccess;
 }

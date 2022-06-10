@@ -42,6 +42,7 @@ xbatch_packer::xbatch_packer(observer_ptr<mbus::xmessage_bus_face_t> const   &mb
     base::xauto_ptr<xcsobject_t> ptr_engine_obj(create_engine(*this, xconsensus::enum_xconsensus_pacemaker_type_clock_cert));
     ptr_engine_obj->register_plugin(para->get_resources()->get_xbft_workpool());  // used for xbft heavy work, such as verify_proposal and signature verify.
     m_proposal_maker = block_maker->get_proposal_maker(account_id);
+    m_proposal_maker->set_certauth(cert_auth);
     m_raw_timer = get_thread()->create_timer((base::xtimersink_t*)this);
     xunit_dbg("xbatch_packer::xbatch_packer,create,this=%p,account=%s,tableid=%d", this, account_id.c_str(), tableid.to_table_shortid());
 }
@@ -75,7 +76,7 @@ base::xtable_index_t xbatch_packer::get_tableid() {
 void xbatch_packer::set_xip(data::xblock_consensus_para_t & blockpara, const xvip2_t & leader) {
     auto zone_id = get_zone_id_from_xip2(leader);
     // if consensus zone
-    if (zone_id == base::enum_chain_zone_consensus_index) {
+    if (zone_id == base::enum_chain_zone_consensus_index || zone_id == base::enum_chain_zone_evm_index) {
         if (xcons_utl::is_auditor(leader)) {
             // leader is auditor xip, set auditor_xip to leader, validator to chid group xip
             // blockpara.auditor_xip = leader;

@@ -259,13 +259,22 @@ void xrpc_query_manager::getIssuanceDetail(xJson::Value & js_req, xJson::Value &
                         array.append(n);
                     }
                     jn["miner_workload"] = array;
+                    // if (common::has<common::xnode_type_t::evm_auditor>(group_address.type()) || common::has<common::xnode_type_t::evm_validator>(group_address.type())) {
+                    //     jn["cluster_name"] = std::string{"evm"} + group_address.group_id().to_string();
+                    // } else {
                     jn["cluster_name"] = group_address.group_id().to_string();
+                    // }
                     jm.append(jn);
                 } else {
                     for (auto node : workload.m_leader_count) {
                         jn[node.first] = node.second;
                     }
+                    // if (common::has<common::xnode_type_t::evm_auditor>(group_address.type()) || common::has<common::xnode_type_t::evm_validator>(group_address.type())) {
+                        // do not show in V2
+                        // jm[std::string{"evm"} + group_address.group_id().to_string()] = jn;
+                    // } else {
                     jm[group_address.group_id().to_string()] = jn;
+                    // }
                 }
             }
             json[property_name] = jm;
@@ -293,10 +302,9 @@ void xrpc_query_manager::getIssuanceDetail(xJson::Value & js_req, xJson::Value &
     }
 
     xdbg(
-        "[grpc::getIssuanceDetail] reward contract height: %llu, onchain_timer_round: %llu, m_zec_vote_contract_height: %llu, "
-        "m_zec_workload_contract_height: %llu, m_zec_reward_contract_height: %llu, "
-        "m_edge_reward_ratio: %u, m_archive_reward_ratio: %u, "
-        "m_validator_reward_ratio: %u, m_auditor_reward_ratio: %u, m_vote_reward_ratio: %u, m_governance_reward_ratio: %u",
+        "[grpc::getIssuanceDetail] reward contract height: %llu, onchain_timer_round: %llu, m_zec_vote_contract_height: %llu, m_zec_workload_contract_height: %llu, "
+        "m_zec_reward_contract_height: %llu, m_edge_reward_ratio: %u, m_archive_reward_ratio: %u, m_validator_reward_ratio: %u, m_auditor_reward_ratio: %u, "
+        "m_vote_reward_ratio: %u, m_governance_reward_ratio: %u",
         height,
         issue_detail.onchain_timer_round,
         issue_detail.m_zec_vote_contract_height,
@@ -306,6 +314,8 @@ void xrpc_query_manager::getIssuanceDetail(xJson::Value & js_req, xJson::Value &
         issue_detail.m_archive_reward_ratio,
         issue_detail.m_validator_reward_ratio,
         issue_detail.m_auditor_reward_ratio,
+        // issue_detail.m_evm_validator_reward_ratio,
+        // issue_detail.m_evm_auditor_reward_ratio,
         issue_detail.m_vote_reward_ratio,
         issue_detail.m_governance_reward_ratio);
     xJson::Value jv;
@@ -317,12 +327,18 @@ void xrpc_query_manager::getIssuanceDetail(xJson::Value & js_req, xJson::Value &
     jv["archive_reward_ratio"] = issue_detail.m_archive_reward_ratio;
     jv["validator_reward_ratio"] = issue_detail.m_validator_reward_ratio;
     jv["auditor_reward_ratio"] = issue_detail.m_auditor_reward_ratio;
-    jv["eth_reward_ratio"] = issue_detail.m_eth_reward_ratio;
+    // if (version == RPC_VERSION_V3) {
+    //     jv["evm_validator_reward_ratio"] = issue_detail.m_evm_validator_reward_ratio;
+    //     jv["evm_auditor_reward_ratio"] = issue_detail.m_evm_auditor_reward_ratio;
+    // }
     jv["vote_reward_ratio"] = issue_detail.m_vote_reward_ratio;
     jv["governance_reward_ratio"] = issue_detail.m_governance_reward_ratio;
     jv["validator_group_count"] = (xJson::UInt)issue_detail.m_validator_group_count;
     jv["auditor_group_count"] = (xJson::UInt)issue_detail.m_auditor_group_count;
-    jv["eth_group_count"] = (xJson::UInt)issue_detail.m_eth_group_count;
+    if (version == RPC_VERSION_V3) {
+        jv["evm_validator_group_count"] = (xJson::UInt)issue_detail.m_evm_validator_group_count;
+        jv["evm_auditor_group_count"] = (xJson::UInt)issue_detail.m_evm_auditor_group_count;
+    }
     std::map<std::string, std::string> contract_auditor_votes;
     if (m_store->get_map_property(
             sys_contract_zec_vote_addr, issue_detail.m_zec_vote_contract_height, data::system_contract::XPORPERTY_CONTRACT_TICKETS_KEY, contract_auditor_votes) != 0) {
@@ -412,6 +428,18 @@ void xrpc_query_manager::getIssuanceDetail(xJson::Value & js_req, xJson::Value &
                    << static_cast<uint32_t>(node_reward.second.m_auditor_reward % data::system_contract::REWARD_PRECISION);
                 node_reward_json["auditor_reward"] = ss.str();
             }
+            // {
+            //     std::stringstream ss;
+            //     ss << static_cast<uint64_t>(node_reward.second.m_evm_validator_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
+            //        << static_cast<uint32_t>(node_reward.second.m_evm_validator_reward % data::system_contract::REWARD_PRECISION);
+            //     node_reward_json["evm_validator_reward"] = ss.str();
+            // }
+            // {
+            //     std::stringstream ss;
+            //     ss << static_cast<uint64_t>(node_reward.second.m_evm_auditor_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
+            //        << static_cast<uint32_t>(node_reward.second.m_evm_auditor_reward % data::system_contract::REWARD_PRECISION);
+            //     node_reward_json["evm_auditor_reward"] = ss.str();
+            // }
             {
                 std::stringstream ss;
                 ss << static_cast<uint64_t>(node_reward.second.m_vote_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
@@ -574,82 +602,6 @@ void xrpc_query_manager::set_unlock_token_info(xJson::Value & j, const xaction_t
 }
 
 void xrpc_query_manager::set_create_sub_account_info(xJson::Value & j, const xaction_t & action) {
-}
-
-xJson::Value xrpc_query_manager::get_tx_exec_result(const std::string & account,
-                                                  uint64_t block_height,
-                                                  xtransaction_ptr_t tx_ptr,
-                                                  xlightunit_tx_info_ptr_t & send_txinfo,
-                                                  xlightunit_tx_info_ptr_t & recv_txinfo,
-                                                  const std::string & rpc_version,
-                                                  bool is_confirm,
-                                                  uint64_t send_height,
-                                                  std::string& strResult,
-                                                  uint32_t& nErrorCode) {
-    xJson::Value jv;
-    if (account.empty()) {
-        return jv;
-    }
-
-    base::xvaccount_t _account_vaddress(account);
-
-    if (is_confirm) {
-        if (send_txinfo != nullptr && send_txinfo->get_not_need_confirm()) {
-            xdbg("get_block_handle::get_tx_exec_result tx not need confirm,tx:%s", tx_ptr->dump().c_str());
-            jv["height"] = static_cast<xJson::UInt64>(send_height);
-            if (rpc_version == RPC_VERSION_V2) {
-                jv["account"] = account;
-            }
-            jv["used_gas"] = 0;
-            jv["used_deposit"] = 0;
-            if (recv_txinfo != nullptr) {
-                jv["recv_tx_exec_status"] = xtransaction_t::tx_exec_status_to_str(recv_txinfo->get_tx_exec_status());
-                jv["exec_status"] = xtransaction_t::tx_exec_status_to_str(recv_txinfo->get_tx_exec_status());
-            }
-            return jv;
-        }
-    }
-
-    auto vb = m_block_store->load_block_object(_account_vaddress, block_height, 0, true, metrics::blockstore_access_from_rpc_get_unit);
-    auto block_ptr = dynamic_cast<xblock_t *>(vb.get());
-    if (block_ptr == nullptr) {
-        strResult = "account address does not exist or block height does not exist";
-        nErrorCode = (uint32_t)enum_xrpc_error_code::rpc_shard_exec_error;
-        return jv;
-    }
-
-    jv["height"] = static_cast<xJson::UInt64>(block_height);
-    if (rpc_version == RPC_VERSION_V2) {
-        jv["account"] = account;
-    }
-    auto tx_info = block_ptr->get_tx_info(tx_ptr->get_digest_str());
-    if (tx_info != nullptr) {
-        jv["used_gas"] = tx_info->get_used_tgas();
-        if (tx_info->is_self_tx()) {
-            jv["exec_status"] = xtransaction_t::tx_exec_status_to_str(tx_info->get_tx_exec_status());
-            jv["used_deposit"] = tx_info->get_used_deposit();
-        }
-        if (tx_info->is_send_tx()) {
-            if ((tx_ptr->get_tx_type() == xtransaction_type_transfer) && (tx_ptr->get_tx_version() == xtransaction_version_2 || tx_info->get_not_need_confirm())) {
-                jv["used_deposit"] = tx_info->get_used_deposit();
-            } else {
-                jv["used_deposit"] = 0;
-            }
-            send_txinfo = tx_info;
-        }
-        if (tx_info->is_confirm_tx()) {
-            jv["used_deposit"] = tx_info->get_used_deposit();
-            // TODO(jimmy) should read recv tx exec status from recv tx unit
-            if (recv_txinfo != nullptr) {
-                jv["recv_tx_exec_status"] = xtransaction_t::tx_exec_status_to_str(recv_txinfo->get_tx_exec_status());
-                jv["exec_status"] = xtransaction_t::tx_exec_status_to_str(tx_info->get_tx_exec_status() | recv_txinfo->get_tx_exec_status());
-            }
-        }
-        if (tx_info->is_recv_tx()) {
-            recv_txinfo = tx_info;  // TODO(jimmy) refactor here future
-        }
-    }
-    return jv;
 }
 
 xJson::Value xrpc_query_manager::parse_tx(xtransaction_t * tx_ptr, const std::string & version) {
@@ -1119,16 +1071,27 @@ void xrpc_query_manager::getEVMs(xJson::Value & js_req, xJson::Value & js_rsp, s
     m_xrpc_query_func.query_account_property(j, addr, property_name, xfull_node_compatible_mode_t::incompatible);
 
     if (version == RPC_VERSION_V3) {
-        xJson::Value tmp = j[common::to_presentation_string(common::xnode_type_t::evm_eth)];
+        xJson::Value tmp = j[common::to_presentation_string(common::xnode_type_t::evm_auditor)];
         xJson::Value jv;
         for (auto & i : tmp.getMemberNames()) {
             xJson::Value node = tmp[i][0];
             node["account_addr"] = i;
             jv.append(node);
         }
-        js_rsp["value"] = jv;
+        js_rsp["value"]["evm_auditor"] = jv;
+
+        tmp.clear();
+        jv.clear();
+        tmp = j[common::to_presentation_string(common::xnode_type_t::evm_validator)];
+        for (auto & i : tmp.getMemberNames()) {
+            xJson::Value node = tmp[i][0];
+            node["account_addr"] = i;
+            jv.append(node);
+        }
+        js_rsp["value"]["evm_validator"] = jv;
     } else {
-        js_rsp["value"] = j[common::to_presentation_string(common::xnode_type_t::evm_eth)];
+        js_rsp["value"]["evm_auditor"] = j[common::to_presentation_string(common::xnode_type_t::evm_auditor)];
+        js_rsp["value"]["evm_validator"] = j[common::to_presentation_string(common::xnode_type_t::evm_validator)];
     }
     js_rsp["chain_id"] = j["chain_id"];
 }
@@ -1139,9 +1102,18 @@ void xrpc_query_manager::getExchangeNodes(xJson::Value & js_req, xJson::Value & 
         version = RPC_VERSION_V1;
     }
     xJson::Value j;
-    std::string const addr = sys_contract_rec_elect_archive_addr;
-    auto property_name = top::data::election::get_property_by_group_id(common::xexchange_group_id);
-    m_xrpc_query_func.query_account_property(j, addr, property_name, xfull_node_compatible_mode_t::incompatible);
+
+    // todo(next version fork)
+    // if (forked standalone_exchange_point) {
+        // std::string const addr = sys_contract_rec_elect_exchange_addr;
+        // auto property_name = top::data::election::get_property_by_group_id(common::xexchange_group_id);
+        // m_xrpc_query_func.query_account_property(j, addr, property_name, xfull_node_compatible_mode_t::incompatible);
+    // } else {
+        std::string const addr = sys_contract_rec_elect_archive_addr;
+        auto property_name = top::data::election::get_property_by_group_id(common::xlegacy_exchange_group_id);
+        m_xrpc_query_func.query_account_property(j, addr, property_name, xfull_node_compatible_mode_t::incompatible);
+    // }
+
     if (version == RPC_VERSION_V3) {
         xJson::Value tmp = j[common::to_presentation_string(common::xnode_type_t::storage_exchange)];
         xJson::Value jv;
@@ -1165,7 +1137,7 @@ void xrpc_query_manager::getFullNodes(xJson::Value & js_req, xJson::Value & js_r
     }
     xJson::Value j;
     std::string const addr = sys_contract_rec_elect_archive_addr;
-    auto property_name = top::data::election::get_property_by_group_id(common::xexchange_group_id);
+    auto property_name = top::data::election::get_property_by_group_id(common::xlegacy_exchange_group_id);
     m_xrpc_query_func.query_account_property(j, addr, property_name, xfull_node_compatible_mode_t::compatible);
     if (version == RPC_VERSION_V3) {
         xJson::Value tmp = j[common::to_presentation_string_compatible(common::xnode_type_t::storage_exchange)];
@@ -1668,7 +1640,7 @@ void xrpc_query_manager::set_accumulated_issuance_yearly(xJson::Value & j, const
 }
 
 void xrpc_query_manager::set_unqualified_node_map(xJson::Value & j, std::map<std::string, std::string> const & ms) {
-    data::system_contract::xunqualified_node_info_v2_t summarize_info;
+    data::system_contract::xunqualified_node_info_v1_t summarize_info;
     for (auto const & m : ms) {
         auto detail = m.second;
         if (!detail.empty()) {
@@ -1693,17 +1665,8 @@ void xrpc_query_manager::set_unqualified_node_map(xJson::Value & j, std::map<std
             jvn_validator[v.first.value()] = validator_info;
         }
 
-        xJson::Value jvn_evm;
-        for (auto const & v : summarize_info.evm_info) {
-            xJson::Value evm_info;
-            evm_info["vote_num"] = v.second.block_count;
-            evm_info["subset_num"] = v.second.subset_count;
-            jvn_evm[v.first.value()] = evm_info;
-        }
-
         jvn["auditor"] = jvn_auditor;
         jvn["validator"] = jvn_validator;
-        jvn["evm"] = jvn_evm;
         j["unqualified_node"] = jvn;
     }
 }
@@ -1770,6 +1733,7 @@ void xrpc_query_manager::set_addition_info(xJson::Value & body, xblock_t * bp) {
 
     static std::set<std::string> sys_block_owner{sys_contract_rec_elect_edge_addr,
                                                  sys_contract_rec_elect_archive_addr,
+                                                 sys_contract_rec_elect_exchange_addr,
                                                  sys_contract_rec_elect_rec_addr,
                                                  sys_contract_rec_elect_zec_addr,
                                                  sys_contract_zec_elect_consensus_addr,
@@ -1795,6 +1759,8 @@ void xrpc_query_manager::set_addition_info(xJson::Value & body, xblock_t * bp) {
                 zid = common::xdefault_zone_id;
             } else if (block_owner == sys_contract_rec_elect_fullnode_addr) {
                 zid = common::xfullnode_zone_id;
+            } else if (block_owner == sys_contract_rec_elect_archive_addr || block_owner == sys_contract_rec_elect_exchange_addr) {
+                zid = common::xstorage_zone_id;
             } else {
                 zid = common::xcommittee_zone_id;
             }
@@ -2087,8 +2053,15 @@ void xrpc_query_manager::getElectInfo(xJson::Value & js_req, xJson::Value & js_r
     if (j[common::to_presentation_string(common::xnode_type_t::storage_archive)].isMember(target)) {
         ev.push_back("archiver");
     }
-    prop_name = data::election::get_property_by_group_id(common::xexchange_group_id);
-    m_xrpc_query_func.query_account_property(j, addr, prop_name, xfull_node_compatible_mode_t::incompatible);
+    // todo(next version fork)
+    // if (forked standalone_exchange_point) {
+        // addr = sys_contract_rec_elect_exchange_addr;
+        // prop_name = data::election::get_property_by_group_id(common::xexchange_group_id);
+        // m_xrpc_query_func.query_account_property(j, addr, prop_name, xfull_node_compatible_mode_t::incompatible);
+    // } else {
+        prop_name = data::election::get_property_by_group_id(common::xlegacy_exchange_group_id);
+        m_xrpc_query_func.query_account_property(j, addr, prop_name, xfull_node_compatible_mode_t::incompatible);
+    // }
     if (j[common::to_presentation_string(common::xnode_type_t::storage_exchange)].isMember(target)) {
         ev.push_back("exchange");
     }

@@ -1,0 +1,85 @@
+{
+    "pre_data": {},
+    "deploy_contract": [
+        {
+            "src_address": "T600045B38Da6a701c568545dCfcB03FcB875f56beddC4",
+            "code_file_path": "Array.bin",
+            "gas_limit": 265977,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "contract_one",
+                "gas_used": 231284,
+                "logs": []
+            }
+        }
+    ],
+    "test_cases": [
+        {
+            "__comments":"数组越界,执行失败",
+            "src_address": "T600045B38Da6a701c568545dCfcB03FcB875f56beddC4",
+            "target_address": "contract_one",
+            "data": "0x773d45e000000000000000000000000000000000000000000000000000000000000000030000000000000000000000000000000000000000000000000000000000000004",
+            "gas_limit": 3000000,
+            "value": "0",
+            "expected": {
+                "status": 1,
+                "extra_message": "",
+                "gas_used": 22338,
+                "logs": []
+            }
+        },{
+            "__comments":"缺少参数,执行失败",
+            "src_address": "T60004636A4494f0cbe56528EA1ea51fD4eccDDCF04994",
+            "target_address": "contract_one",
+            "data": "0xf88807850ba43b740082978f9432a191017beff8b6dbbbfc5fe9ddac2acfd0edd780a4f0fdf834000000000000000000000000000000000000000000000000000000000000000a2ca0051ba066eec5c08e4e4d12df8fc3b60cb7844d464afff130b5939e69b4e74ec6a061086bbc361423483064b0be428666c8bf79ea57bd8e3cc263a312e820546961",
+            "gas_limit": 3000000,
+            "value": "0",
+            "expected": {
+                "status": 1,
+                "extra_message": "",
+                "gas_used": 22928,
+                "logs": []
+            }
+        },{
+            "__comments":"参数类型异常,执行失败",
+            "src_address": "T60004636A4494f0cbe56528EA1ea51fD4eccDDCF04994",
+            "target_address": "contract_one",
+            "data": "0xf8a907850ba43b740082978f9432a191017beff8b6dbbbfc5fe9ddac2acfd0edd780b844ba3ef0f5000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000636a4494f0cbe56528ea1ea51fd4eccddcf049942ca0a5336abfb98e0f7bdc60ac1592ecf120b4ee3af786cbbddb962217fd612663aca077b01fdf56ebf210f63e2aa15fe2c0a490ca6180fd8dff9d2998aea471fb13d8",
+            "gas_limit": 3000000,
+            "value": "0",
+            "expected": {
+                "status": 1,
+                "extra_message": "",
+                "gas_used": 23312,
+                "logs": []
+            }
+        },{
+            "__comments":"参数过多,执行失败",
+            "src_address": "T60004636A4494f0cbe56528EA1ea51fD4eccDDCF04994",
+            "target_address": "contract_one",
+            "data": "0xf8c907850ba43b740082978f9432a191017beff8b6dbbbfc5fe9ddac2acfd0edd780b864bf3b9e380000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000012ba015fd022d480a801598326ae840bdf8583c33e7d1f1c1f7c28ef97b2f97dd858ca02de43092ba696674c6a92fa42167c524bcb24363ce7683073bfc1a3061879d71",
+            "gas_limit": 3000000,
+            "value": "0",
+            "expected": {
+                "status": 1,
+                "extra_message": "",
+                "gas_used": 23224,
+                "logs": []
+            }
+        },{
+            "__comments":"非法bytecode,执行失败",
+            "src_address": "T60004636A4494f0cbe56528EA1ea51fD4eccDDCF04994",
+            "target_address": "contract_one",
+            "data": "0xf8c907850ba43b740082978f9432a191017beff8b6dbbbfc5fe9ddac2acfd0edd780b864bf3b9e380000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000012ba015fd022d480a801598326ae840bdf8583c33e7d1f1c1f7c28ef97b2f97dd858ca02de43092ba696674c6a92fa42167c524bcb24363ce7683073bfc1a3061879d7198",
+            "gas_limit": 3000000,
+            "value": "0",
+            "expected": {
+                "status": 1,
+                "extra_message": "",
+                "gas_used": 23240,
+                "logs": []
+            }
+        }
+    ]
+}

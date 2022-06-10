@@ -6,6 +6,7 @@
 #include "xvledger/xvblock.h"
 // TODO(jimmy) #include "xbase/xvledger.h"
 #include "xbase/xobject_ptr.h"
+#include "xdata/xblocktool.h"
 
 namespace top {
 namespace blockmaker {
@@ -104,7 +105,7 @@ data::xstatistics_data_t tableblock_statistics(std::vector<xobject_ptr_t<data::x
             continue;
         }
 
-        uint32_t txs_count = blks[i]->get_txs_count();
+        uint32_t txs_count = data::xblockextract_t::get_txactions_count(blks[i].get());
 
         auto leader_xip = blks[i]->get_cert()->get_validator();
         if (get_node_id_from_xip2(leader_xip) == 0x3FF) {

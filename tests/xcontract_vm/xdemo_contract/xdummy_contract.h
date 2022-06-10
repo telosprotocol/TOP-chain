@@ -36,7 +36,7 @@ public:
     }
 
     void send_only() {
-        deposit(state_accessor::xtoken_t{500});
+        deposit(common::xtoken_t{500});
     }
 
 private:

@@ -20,6 +20,7 @@ XINLINE_CONSTEXPR char const * sys_contract_rec_registration_addr{ "T2000138NZjv
 XINLINE_CONSTEXPR char const * sys_contract_rec_elect_edge_addr{ "T2000138NpRxYCFQxMHvedTxRpgkb8B7oHt235N2W@0" };
 XINLINE_CONSTEXPR char const * sys_contract_rec_elect_fullnode_addr{ "T2000138HPAUDPz7z5HkEvCkw3Cnyc7eySmNYYDDY@0" };
 XINLINE_CONSTEXPR char const * sys_contract_rec_elect_archive_addr{ "T2000138NXb36GkofBUMqxCAZqdERi63htDVC8Yzt@0" };
+XINLINE_CONSTEXPR char const * sys_contract_rec_elect_exchange_addr{ "T2000100000000000000000000000000000000021@0" };
 XINLINE_CONSTEXPR char const * sys_contract_rec_elect_rec_addr{ "T2000138JQPo5TcurZsVLFUMd5vHJRBLenLWjLhk6@0" };
 XINLINE_CONSTEXPR char const * sys_contract_rec_elect_zec_addr{ "T2000138Kc9WynduqxJvX3VCU7XjHCR9YyKuBL1fx@0" };
 XINLINE_CONSTEXPR char const * sys_contract_rec_tcc_addr{ "T2000138Ao4jjYtrXoNwfzb6gdpD2XNBpqUv46p8B@0" };
@@ -39,6 +40,8 @@ XINLINE_CONSTEXPR char const * sys_contract_sharding_reward_claiming_addr{ "T200
 XINLINE_CONSTEXPR char const * sys_contract_sharding_statistic_info_addr{ "T20000ML7oBZbitBCcXhrJwqBhha2MUimd6SM9Z6" };
 XINLINE_CONSTEXPR char const * sys_contract_eth_table_statistic_info_addr{ "T200040000000000000000000000000000000001" };
 
+XINLINE_CONSTEXPR char const * sys_eth_zero_addr{"T600040000000000000000000000000000000000000000"};
+
 XINLINE_CONSTEXPR char const * sys_contract_beacon_table_block_addr{ "Ta0001" };
 XINLINE_CONSTEXPR char const * sys_contract_zec_table_block_addr{ "Ta0002" };
 XINLINE_CONSTEXPR char const * sys_contract_sharding_table_block_addr{ "Ta0000" };
@@ -52,6 +55,7 @@ extern common::xaccount_address_t const drand_system_address;
 extern common::xaccount_address_t const rec_registration_contract_address;
 extern common::xaccount_address_t const rec_elect_edge_contract_address;
 extern common::xaccount_address_t const rec_elect_archive_contract_address;
+extern common::xaccount_address_t const rec_elect_exchange_contract_address;
 extern common::xaccount_address_t const rec_elect_fullnode_contract_address;
 extern common::xaccount_address_t const rec_elect_rec_contract_address;
 extern common::xaccount_address_t const rec_elect_zec_contract_address;
@@ -71,6 +75,7 @@ extern common::xaccount_address_t const sharding_vote_contract_address;
 extern common::xaccount_address_t const sharding_reward_claiming_contract_address;
 extern common::xaccount_address_t const sharding_statistic_info_contract_address;
 extern common::xaccount_address_t const eth_statistic_info_contract_address;
+extern common::xaccount_address_t const eth_zero_address;
 
 extern common::xaccount_address_t const rec_table_address;
 extern common::xaccount_address_t const zec_table_address;

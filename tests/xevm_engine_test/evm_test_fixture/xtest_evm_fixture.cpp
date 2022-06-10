@@ -1,6 +1,7 @@
 
 #include "tests/xevm_engine_test/evm_test_fixture/xtest_evm_fixture.h"
-
+#include "xdata/xnative_contract_address.h"
+#include "xbasic/xhex.h"
 #include <dirent.h>
 #include <stdio.h>
 
@@ -105,21 +106,41 @@ bool xtest_evm_fixture::execute_test_case(std::string const & json_file_path) {
     i >> j;
     // std::cout << j << std::endl;
 
-    // auto pre_data = j["pre_data"];
+    auto pre_data = j["pre_data"];
     auto deploy_list = j["deploy_contract"];
     auto testcases_list = j["test_cases"];
     m_summary.deploy_cases_num += deploy_list.size();
     m_summary.call_cases_num += testcases_list.size();
 
-    std::map<account_id, std::string> pre_data = j.at("pre_data").get<std::map<account_id, std::string>>();
+    // std::map<account_id, std::string> pre_data = j.at("pre_data").get<std::map<account_id, std::string>>();
     if (!pre_data.empty()) {
-        auto storage = std::make_shared<contract_runtime::evm::xevm_storage>(statestore);
+        auto storage = top::make_unique<contract_runtime::evm::xevm_storage>(statestore);
         std::unique_ptr<top::evm::xevm_logic_face_t> logic_ptr = top::make_unique<top::contract_runtime::evm::xevm_logic_t>(
-            storage, nullptr, top::make_observer<contract_runtime::evm::xevm_contract_manager_t>(contract_runtime::evm::xevm_contract_manager_t::instance()));
+            std::move(storage),
+            top::make_observer(statestore.get()),
+            nullptr,
+            top::make_observer<contract_runtime::evm::xevm_contract_manager_t>(contract_runtime::evm::xevm_contract_manager_t::instance()));
         top::evm::evm_import_instance::instance()->set_evm_logic(std::move(logic_ptr));
-        for (auto _each : pre_data) {
-            evm_common::u256 mock_value_256{_each.second};
-            mock_add_balance(_each.first, mock_value_256);
+
+        for (auto const & each : pre_data) {
+            common::xaccount_address_t account_address{each["account"]};
+            auto balances = each["balances"].get<std::map<std::string, std::string>>();
+            for (auto const & balance : balances) {
+                evm_common::u256 mock_value_256{balance.second};
+                mock_add_balance(account_address, balance.first, mock_value_256);
+            }
+
+            if (each.contains("spenders")) {
+                auto const & spenders_data = each["spenders"];
+                for (auto const & spender_data : spenders_data) {
+                    common::xaccount_address_t spender{spender_data["spender"]};
+                    auto approve_amounts = spender_data["approve"].get<std::map<std::string, std::string>>();
+                    for (auto const & approve : approve_amounts) {
+                        evm_common::u256 value_256{approve.second};
+                        mock_add_approve(account_address, spender, approve.first, value_256);
+                    }
+                }
+            }
         }
     }
 
@@ -190,7 +211,7 @@ bool xtest_evm_fixture::do_deploy_test(json const & each_deploy) {
     std::string contract_name_symbol = expected["extra_message"];
 
     auto evm_action = top::make_unique<data::xconsensus_action_t<data::xtop_action_type_t::evm>>(
-        common::xaccount_address_t{src_address}, common::xaccount_address_t{"T600040000000000000000000000000000000000000000"}, value_256, get_contract_bin(code_file), gas_limit);
+        common::xaccount_address_t{src_address}, eth_zero_address, value_256, get_contract_bin(code_file), gas_limit);
 
     auto contract_manager = top::make_observer<contract_runtime::evm::xevm_contract_manager_t>(contract_runtime::evm::xevm_contract_manager_t::instance());
 
@@ -279,7 +300,7 @@ bool xtest_evm_fixture::expected_logs(std::vector<evm_common::xevm_log_t> const 
 
                 std::string contract_name_symbol = _log["address"];
                 MYEXPECT_TRUE(deployed_contract_map.find(contract_name_symbol) != deployed_contract_map.end());
-                MYEXPECT_EQ(res_log.address, deployed_contract_map[contract_name_symbol]);
+                MYEXPECT_EQ(res_log.address.to_hex_string(), deployed_contract_map[contract_name_symbol]);
 
                 std::vector<std::string> expected_topics;
                 for (auto _each_topic : _log["topics"]) {
@@ -291,13 +312,14 @@ bool xtest_evm_fixture::expected_logs(std::vector<evm_common::xevm_log_t> const 
                 if (res_log.topics.size() == expected_topics.size()) {
                     auto topics_index = 0;
                     for (auto _topics : expected_topics) {
-                        auto res_topic = res_log.topics[topics_index];
+                        auto res_topic = top::to_hex_prefixed(res_log.topics[topics_index].asBytes());
                         MYEXPECT_EQ(res_topic, expected_topics[topics_index]);
                     }
                 }
 
                 // MYEXPECT_EQ(res_log.topics, expected_topics);
-                MYEXPECT_EQ(res_log.data, expected_data);
+                std::string data_hex = res_log.data.size() > 0 ? top::to_hex_prefixed(res_log.data) : "";
+                MYEXPECT_EQ(data_hex, expected_data);
 
                 index++;
             }
@@ -306,19 +328,42 @@ bool xtest_evm_fixture::expected_logs(std::vector<evm_common::xevm_log_t> const 
     return true;
 }
 
-void xtest_evm_fixture::mock_add_balance(std::string account, evm_common::u256 amount) {
-    assert(account.substr(0, 6) == "T60004");
-    std::string eth_address = account.substr(6);
+void xtest_evm_fixture::mock_add_balance(common::xaccount_address_t const & account, std::string token_symbol, evm_common::u256 amount) {
+    assert(account.value().substr(0, 6) == "T60004");
+    std::string eth_address = account.value().substr(6);
     assert(eth_address.size() == 40);
 
-    auto u64_4 = amount.convert_to<uint64_t>();
-    amount >>= 64;
-    auto u64_3 = amount.convert_to<uint64_t>();
-    amount >>= 64;
-    auto u64_2 = amount.convert_to<uint64_t>();
-    amount >>= 64;
-    auto u64_1 = amount.convert_to<uint64_t>();
-
-    do_mock_add_balance(eth_address.c_str(), eth_address.size(), u64_1, u64_2, u64_3, u64_4);
+    auto state = statestore->load_unit_state(account.vaccount());
+    if (token_symbol != top::data::XPROPERTY_ASSET_TOP) {
+        state->set_tep_balance(top::common::token_id(common::xsymbol_t{token_symbol}), amount);
+    } else {
+        state->token_deposit(data::XPROPERTY_BALANCE_AVAILABLE, static_cast<top::base::vtoken_t>(amount.convert_to<uint64_t>()));
+    }
 }
+
+void xtest_evm_fixture::mock_add_approve(common::xaccount_address_t const & owner,
+                                         common::xaccount_address_t const & spender,
+                                         std::string const & symbol,
+                                         evm_common::u256 amount) {
+    assert(owner.value().substr(0, 6) == "T60004");
+    std::string eth_address = owner.value().substr(6);
+    assert(eth_address.size() == 40);
+
+    std::error_code ec;
+    auto state = statestore->load_unit_state(owner.vaccount());
+    if (symbol != top::data::XPROPERTY_ASSET_TOP) {
+        if (symbol == "tUSDT") {
+            state->approve(common::xtoken_id_t::usdt, spender, amount, ec);
+        } else if (symbol == "tUSDC") {
+            state->approve(common::xtoken_id_t::usdc, spender, amount, ec);
+        } else if (symbol == "ETH") {
+            xerror("ETH is not allowed to approve");
+        }
+    } else {
+        state->approve(common::xtoken_id_t::top, spender, amount, ec);
+    }
+
+    assert(!ec);
+}
+
 NS_END4

@@ -7,12 +7,14 @@
 #include "xevm_contract_runtime/xevm_action_session.h"
 #include "xevm_contract_runtime/xevm_context.h"
 #include "xevm_contract_runtime/xevm_logic.h"
+#include "xevm_contract_runtime/xevm_logic.h"
 #include "xevm_contract_runtime/xevm_storage.h"
 #include "xevm_contract_runtime/xevm_type.h"
 #include "xevm_contract_runtime/xevm_variant_bytes.h"
 #include "xevm_runner/evm_engine_interface.h"
 #include "xevm_runner/evm_import_instance.h"
 #include "xevm_runner/proto/proto_parameters.pb.h"
+#include "xcommon/xeth_address.h"
 
 NS_BEG2(top, contract_runtime)
 
@@ -32,8 +34,8 @@ evm_common::xevm_transaction_result_t xtop_action_runtime<data::xevm_consensus_a
 
     // try {
 
-    auto storage = std::make_shared<evm::xevm_storage>(m_evm_statectx);
-    std::unique_ptr<top::evm::xevm_logic_face_t> logic_ptr = top::make_unique<top::contract_runtime::evm::xevm_logic_t>(storage, tx_ctx, evm_contract_manager_);
+    auto storage = top::make_unique<evm::xevm_storage>(m_evm_statectx);
+    std::unique_ptr<top::evm::xevm_logic_face_t> logic_ptr = top::make_unique<top::contract_runtime::evm::xevm_logic_t>(std::move(storage), m_evm_statectx, tx_ctx, evm_contract_manager_);
     top::evm::evm_import_instance::instance()->set_evm_logic(std::move(logic_ptr));
 
     bool evm_result{true};
@@ -73,16 +75,13 @@ evm_common::xevm_transaction_result_t xtop_action_runtime<data::xevm_consensus_a
 
         // logs:
         for (int i = 0; i < return_result.logs_size(); ++i) {
-            evm_common::xevm_log_t log;
-            log.address = evm::xvariant_bytes{return_result.logs(i).address().value(), false}.to_hex_string("0x");
-            log.data = evm::xvariant_bytes{return_result.logs(i).data(), false}.to_hex_string("0x");
-            // log.data = top::to_bytes(return_result.logs(i).data());
-            std::vector<std::string> topic;
+            common::xeth_address_t address = common::xeth_address_t::build_from(top::to_bytes(return_result.logs(i).address().value()));
+            xbytes_t data = top::to_bytes(return_result.logs(i).data());
+            evm_common::xh256s_t topics;
             for (int j = 0; j < return_result.logs(i).topics_size(); ++j) {
-                topic.push_back(evm::xvariant_bytes{return_result.logs(i).topics(j).data(), false}.to_hex_string("0x"));
-                // topic.push_back(top::to_bytes(return_result.logs(i).topics(j).data()));
-            }
-            log.topics = topic;
+                topics.push_back(evm_common::xh256_t(top::to_bytes(return_result.logs(i).topics(j).data())));
+            }            
+            evm_common::xevm_log_t log(address, topics, data);
             result.logs.push_back(log);
         }
         // used_gas:

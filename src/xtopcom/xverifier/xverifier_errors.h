@@ -42,6 +42,7 @@ enum enum_xverifier_error_type: std::int32_t {
     xverifier_error_local_tx_invalid,
     xverifier_error_burn_tx_invalid,
     xverifier_error_tx_blacklist_invalid,
+    xverifier_error_t6_not_allowed_to_call_contract,
 
     xverifier_error_max
 };
@@ -58,7 +59,7 @@ using xverifier_error = enum_xverifier_error_type;
  */
 inline std::string xverifier_error_to_string(int32_t code) {
     assert(code > xverifier_error_base && code < xverifier_error_max);
-    static const char* names[] = {
+    static const char * names[] = {
         XVERIFIER_ERROR_TO_STR(xverifier_error_addr_invalid),
         XVERIFIER_ERROR_TO_STR(xverifier_error_src_dst_addr_same),
         XVERIFIER_ERROR_TO_STR(xverifier_error_priv_pub_not_match),
@@ -82,10 +83,9 @@ inline std::string xverifier_error_to_string(int32_t code) {
         XVERIFIER_ERROR_TO_STR(xverifier_error_local_tx_invalid),
         XVERIFIER_ERROR_TO_STR(xverifier_error_burn_tx_invalid),
         XVERIFIER_ERROR_TO_STR(xverifier_error_tx_blacklist_invalid),
+        XVERIFIER_ERROR_TO_STR(xverifier_error_t6_not_allowed_to_call_contract),
     };
     return names[code - xverifier_error_base - 1];
 }
-
-
 
 NS_END2

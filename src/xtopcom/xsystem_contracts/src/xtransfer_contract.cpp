@@ -5,7 +5,7 @@
 NS_BEG2(top, system_contracts)
 
 void xtop_transfer_contract::setup() {
-    state_accessor::xtoken_t token{100};
+    common::xtoken_t token{100};
     m_balance.deposit(std::move(token));
 }
 

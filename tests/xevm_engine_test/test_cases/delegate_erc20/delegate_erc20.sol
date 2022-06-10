@@ -1,20 +1,18 @@
 // SPDX-License-Identifier: MIT
-pragma solidity >=0.5.12;
+pragma solidity 0.8.10;
 
 contract TopErc20Wrapper {
     address constant TopErc20 = 0xff00000000000000000000000000000000000001;
 
     string public name;
     string public symbol;
-    bytes32 public uuid;
+    uint8 public decimals;
+    bytes1 public uuid;
 
-    constructor(
-        string memory name_,
-        string memory symbol_,
-        bytes32 uuid_
-    ) public {
+    constructor(string memory name_, string memory symbol_, uint8 decimals_, bytes1 uuid_) {
         name = name_;
         symbol = symbol_;
+        decimals = decimals_;
         uuid = uuid_;
     }
 

@@ -26,7 +26,7 @@ xrpc_init::xrpc_init(std::shared_ptr<xvnetwork_driver_face_t> vhost,
     assert(nullptr != router_ptr);
     switch (node_type) {
     case common::xnode_type_t::consensus_validator:
-    case common::xnode_type_t::evm_eth:
+    case common::xnode_type_t::evm_validator:
         assert(nullptr != txpool_service);
         assert(nullptr != store);
         init_rpc_cb_thread();
@@ -36,6 +36,7 @@ xrpc_init::xrpc_init(std::shared_ptr<xvnetwork_driver_face_t> vhost,
     case common::xnode_type_t::committee:
     case common::xnode_type_t::zec:
     case common::xnode_type_t::consensus_auditor:
+    case common::xnode_type_t::evm_auditor:
         assert(nullptr != txpool_service);
         init_rpc_cb_thread();
         m_cluster_handler = std::make_shared<xcluster_rpc_handler>(vhost, router_ptr, txpool_service, store, block_store, txstore, make_observer(m_thread));
@@ -73,8 +74,8 @@ xrpc_init::xrpc_init(std::shared_ptr<xvnetwork_driver_face_t> vhost,
         ws_server_ptr->start(ws_port);
         xdbg("start exchange rpc service.");
 
-        shared_ptr<xevm_server> evm_server_ptr = std::make_shared<xevm_server>(m_edge_handler, ip, true, store, block_store, txstore, elect_main, election_cache_data_accessor);
-        evm_server_ptr->start(XGET_CONFIG(evm_port));
+//        shared_ptr<xevm_server> evm_server_ptr = std::make_shared<xevm_server>(m_edge_handler, ip, true, store, block_store, txstore, elect_main, election_cache_data_accessor);
+//        evm_server_ptr->start(XGET_CONFIG(evm_port));
         break;
     }
     case common::xnode_type_t::fullnode: {

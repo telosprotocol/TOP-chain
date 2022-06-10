@@ -20,8 +20,8 @@ public:
     virtual ~xtop_evm_logic_face() = default;
 
 public:
-    virtual xbytes_t get_return_value() = 0;
-    virtual std::pair<uint32_t, uint64_t> get_return_error() = 0;
+    virtual xbytes_t get_return_value() const = 0;
+    virtual std::pair<uint32_t, uint64_t> get_return_error() const = 0;
 
 public:
     // interface to evm_import_instance:
@@ -34,6 +34,12 @@ public:
     virtual void sender_address(uint64_t register_id) = 0;
     virtual void input(uint64_t register_id) = 0;
 
+    // EVM API:
+    virtual uint64_t chain_id() = 0;
+    virtual void block_coinbase(uint64_t register_id) = 0;
+    virtual uint64_t block_height() = 0;
+    virtual uint64_t block_timestamp() = 0;
+
     // math:
     virtual void random_seed(uint64_t register_id) = 0;
     virtual void sha256(uint64_t value_len, uint64_t value_ptr, uint64_t register_id) = 0;
@@ -42,16 +48,16 @@ public:
 
     // others:
     virtual void value_return(uint64_t value_len, uint64_t value_ptr) = 0;
-    virtual void error_return(uint32_t ec,uint64_t used_gas) = 0;
+    virtual void error_return(uint32_t ec, uint64_t used_gas) = 0;
     virtual void log_utf8(uint64_t len, uint64_t ptr) = 0;
 
     // storage:
     virtual uint64_t storage_write(uint64_t key_len, uint64_t key_ptr, uint64_t value_len, uint64_t value_ptr, uint64_t register_id) = 0;
     virtual uint64_t storage_read(uint64_t key_len, uint64_t key_ptr, uint64_t register_id) = 0;
     virtual uint64_t storage_remove(uint64_t key_len, uint64_t key_ptr, uint64_t register_id) = 0;
-    
+
     // extern contract:
-    virtual bool extern_contract_call(uint64_t args_len,uint64_t args_ptr) = 0;
+    virtual bool extern_contract_call(uint64_t args_len, uint64_t args_ptr) = 0;
     virtual uint64_t get_result(uint64_t register_id) = 0;
     virtual uint64_t get_error(uint64_t register_id) = 0;
 };

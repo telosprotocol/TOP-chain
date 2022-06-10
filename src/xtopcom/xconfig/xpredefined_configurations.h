@@ -93,6 +93,7 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(zec_election_interval,
 
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(edge_election_interval, xinterval_t, normal, 13, 1, std::numeric_limits<xinterval_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(archive_election_interval, xinterval_t, normal, 17, 1, std::numeric_limits<xinterval_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(exchange_election_interval, xinterval_t, normal, 17, 1, std::numeric_limits<xinterval_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(fullnode_election_interval, xinterval_t, normal, 17, 1, std::numeric_limits<xinterval_t>::max());
 #else
 #    if defined(XCHAIN_FORKED_BY_DEFAULT) && ((XCHAIN_FORKED_BY_DEFAULT) >= 10206)
@@ -119,6 +120,7 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(zec_election_interval,
 
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(edge_election_interval, xinterval_t, normal, 360, 1, std::numeric_limits<xinterval_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(archive_election_interval, xinterval_t, normal, 360, 1, std::numeric_limits<xinterval_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(exchange_election_interval, xinterval_t, normal, 360, 1, std::numeric_limits<xinterval_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(fullnode_election_interval, xinterval_t, normal, 36, 1, std::numeric_limits<xinterval_t>::max());
 #endif
 
@@ -145,14 +147,22 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cluster_election_minimum_rotation_ratio, s
 
 #if defined(XBUILD_DEV) || defined(XBUILD_CI)
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(eth_election_interval, xinterval_t, normal, 41, 1, std::numeric_limits<xinterval_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_eth_auditor_group_size, xgroup_size_t, normal, 3, 3, 32);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_eth_auditor_group_size, xgroup_size_t, normal, 64, 32, 256);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_eth_validator_group_size, xgroup_size_t, normal, 3, 3, 32);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_eth_validator_group_size, xgroup_size_t, normal, 128, 64, 512);
 #else
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(eth_election_interval, xinterval_t, normal, 360, 1, std::numeric_limits<xinterval_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_eth_auditor_group_size, xgroup_size_t, normal, 6, 6, 32);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_eth_auditor_group_size, xgroup_size_t, normal, 64, 32, 256);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_eth_validator_group_size, xgroup_size_t, normal, 6, 6, 32);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_eth_validator_group_size, xgroup_size_t, normal, 128, 64, 512);
 #endif
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_eth_group_size, xgroup_size_t, normal, 6, 6, 32);
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_eth_group_size, xgroup_size_t, normal, 128, 64, 512);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(eth_statistic_report_schedule_interval, xinterval_t, normal, 48, 0, std::numeric_limits<xinterval_t>::max());
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(eth_reward_ratio, uint16_t, critical, 0, 0, 100);
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(eth_group_zero_workload, uint32_t, normal, 0, 0, std::numeric_limits<uint32_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(evm_auditor_reward_ratio, uint16_t, critical, 33, 0, 100);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(evm_validator_reward_ratio, uint16_t, critical, 20, 0, 100);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(evm_auditor_group_zero_workload, uint32_t, normal, 0, 0, std::numeric_limits<uint32_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(evm_validator_group_zero_workload, uint32_t, normal, 0, 0, std::numeric_limits<uint32_t>::max());
 
 #if defined(XBUILD_CI)
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_auditor_group_size, xgroup_size_t, normal, 3, 3, 32);
@@ -375,8 +385,12 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(total_gas_shard, uint64_t, normal, 2160000
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_free_gas_asset, uint64_t, normal, ASSET_TOP(100), 1, std::numeric_limits<uint64_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(free_gas, uint64_t, normal, 25000, 1, std::numeric_limits<uint64_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio, uint64_t, normal, 20, 1, std::numeric_limits<uint64_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(eth_to_top_exchange_ratio, uint64_t, normal, 5004220, 1, std::numeric_limits<uint64_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(eth_gas_to_tgas_exchange_ratio, uint64_t, normal, 80, 1, std::numeric_limits<uint64_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(top_eth_base_price, uint64_t, normal, 40000000000, 1, std::numeric_limits<uint64_t>::max());
 // how many micro second 1 tgas can consume
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cpu_gas_exchange_ratio, uint32_t, normal, 40, 1, std::numeric_limits<uint32_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit, uint64_t, normal, 12000000, 1, std::numeric_limits<uint64_t>::max());// TODO(jimmy)
 
 #ifdef ENABLE_SCALE
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(usedgas_decay_cycle, xinterval_t, normal, 2 * 6, 1, std::numeric_limits<xinterval_t>::max());
@@ -429,7 +443,7 @@ XDECLARE_CONFIGURATION(validator_group_count, std::uint16_t, 2);
 XDECLARE_CONFIGURATION(auditor_group_count, std::uint16_t, 2);
 XDECLARE_CONFIGURATION(validator_group_count, std::uint16_t, 4);
 #endif
-XDECLARE_CONFIGURATION(archive_group_count, std::uint16_t, 2);
+XDECLARE_CONFIGURATION(legacy_archive_group_count, std::uint16_t, 2);
 
 XDECLARE_CONFIGURATION(min_edge_archive_deposit, std::uint64_t, ASSET_TOP(0));
 
@@ -479,8 +493,13 @@ XDECLARE_CONFIGURATION(grpc_port, uint16_t, 19082);
 XDECLARE_CONFIGURATION(dht_port, uint16_t, 19083);
 XDECLARE_CONFIGURATION(msg_port, uint16_t, 19084);
 XDECLARE_CONFIGURATION(ws_port, uint16_t, 19085);
-XDECLARE_CONFIGURATION(evm_port, uint16_t, 19086);
+XDECLARE_CONFIGURATION(evm_port, uint16_t, 80);
 XDECLARE_CONFIGURATION(log_level, uint16_t, 0);
+#if defined(XBUILD_CI) || defined(XBUILD_DEV) || defined(XBUILD_GALILEO) || defined(XBUILD_BOUNTY)
+XDECLARE_CONFIGURATION(chain_id, uint32_t, 1023);
+#else
+XDECLARE_CONFIGURATION(chain_id, uint32_t, 980);
+#endif
 XDECLARE_CONFIGURATION(network_id, uint32_t, 0);
 XDECLARE_CONFIGURATION(log_path, const char *, "/chain/log/clog"); // config log path
 XDECLARE_CONFIGURATION(db_path, const char *, "/chain/db_v2/cdb"); // config log path

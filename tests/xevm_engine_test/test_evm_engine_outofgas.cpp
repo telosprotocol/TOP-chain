@@ -14,6 +14,7 @@
 #include "xevm_runner/proto/proto_basic.pb.h"
 #include "xevm_runner/proto/proto_parameters.pb.h"
 #include "xtxexecutor/xvm_face.h"
+#include "xdata/xnative_contract_address.h"
 
 #include <gtest/gtest.h>
 
@@ -37,7 +38,7 @@ TEST(evm_engine_out_of_gas_test, deploy_failed) {
         "4051808367ffffffffffffffff1667ffffffffffffffff1681526020018267ffffffffffffffff1667ffffffffffffffff1681526020019250505060405180910390a1505056fea2646970667358221220b81251e6"
         "353d97dcc679b08a746d7d8f00f5b7051bdf6c1793d3f6f3a9e361fa64736f6c63430006040033",
         true};
-    txexecutor::xvm_para_t vm_param{0, "random_seed", 0};
+    txexecutor::xvm_para_t vm_param{0, "random_seed", 0, 0};
     top::statectx::xstatectx_face_ptr_t statestore{std::make_shared<top::evm::tests::xmock_evm_statectx>()};
 
     // deploy code
@@ -45,7 +46,7 @@ TEST(evm_engine_out_of_gas_test, deploy_failed) {
         // param
         top::data::xtransaction_ptr_t tx = top::make_object_ptr<top::data::xtransaction_v2_t>();
         tx->set_source_addr("T60004001bdc8251890aafc5841b05620c0eab336e3ebc");
-        tx->set_target_addr("T600040000000000000000000000000000000000000000");  // deploy code
+        tx->set_target_addr(evm_zero_address.value());  // deploy code
         tx->set_ext(contract_code.to_string());
         auto cons_tx = top::make_object_ptr<top::data::xcons_transaction_t>(tx.get());
 
@@ -71,7 +72,7 @@ TEST(evm_engine_out_of_gas_test, deploy_failed) {
         // param
         top::data::xtransaction_ptr_t tx = top::make_object_ptr<top::data::xtransaction_v2_t>();
         tx->set_source_addr("T60004001bdc8251890aafc5841b05620c0eab336e3ebc");
-        tx->set_target_addr("T600040000000000000000000000000000000000000000");  // deploy code
+        tx->set_target_addr(evm_zero_address.value());  // deploy code
         tx->set_ext(contract_code.to_string());
         auto cons_tx = top::make_object_ptr<top::data::xcons_transaction_t>(tx.get());
 
@@ -97,7 +98,7 @@ TEST(evm_engine_out_of_gas_test, deploy_failed) {
         // param
         top::data::xtransaction_ptr_t tx = top::make_object_ptr<top::data::xtransaction_v2_t>();
         tx->set_source_addr("T60004001bdc8251890aafc5841b05620c0eab336e3ebc");
-        tx->set_target_addr("T600040000000000000000000000000000000000000000");  // deploy code
+        tx->set_target_addr(evm_zero_address.value());  // deploy code
         tx->set_ext(contract_code.to_string());
         auto cons_tx = top::make_object_ptr<top::data::xcons_transaction_t>(tx.get());
 
@@ -133,7 +134,7 @@ TEST(evm_engine_out_of_gas_test, deploy_success_call_failed) {
         "4051808367ffffffffffffffff1667ffffffffffffffff1681526020018267ffffffffffffffff1667ffffffffffffffff1681526020019250505060405180910390a1505056fea2646970667358221220b81251e6"
         "353d97dcc679b08a746d7d8f00f5b7051bdf6c1793d3f6f3a9e361fa64736f6c63430006040033",
         true};
-    txexecutor::xvm_para_t vm_param{0, "random_seed", 0};
+    txexecutor::xvm_para_t vm_param{0, "random_seed", 0, 0};
     top::statectx::xstatectx_face_ptr_t statestore{std::make_shared<top::evm::tests::xmock_evm_statectx>()};
 
     // deploy code
@@ -141,7 +142,7 @@ TEST(evm_engine_out_of_gas_test, deploy_success_call_failed) {
         // param
         top::data::xtransaction_ptr_t tx = top::make_object_ptr<top::data::xtransaction_v2_t>();
         tx->set_source_addr("T60004001bdc8251890aafc5841b05620c0eab336e3ebc");
-        tx->set_target_addr("T600040000000000000000000000000000000000000000");  // deploy code
+        tx->set_target_addr(evm_zero_address.value());  // deploy code
         tx->set_ext(contract_code.to_string());
         auto cons_tx = top::make_object_ptr<top::data::xcons_transaction_t>(tx.get());
 

@@ -196,7 +196,13 @@ std::vector<common::xnode_address_t> xtop_vnetwork_driver::archive_addresses(com
 
     case common::xnode_type_t::storage_exchange:
     {
-        auto const & tmp = m_vhost->members_info_of_group2(common::build_archive_sharding_address(common::xexchange_group_id, network_id()), common::xelection_round_t::max());
+        // todo(next version fork)
+        // if (forked standalone_exchange_point) {
+        //     auto const & tmp = m_vhost->members_info_of_group2(common::build_exchange_sharding_address(network_id()), common::xelection_round_t::max());
+        // } else {
+            auto const & tmp =
+                m_vhost->members_info_of_group2(common::build_legacy_exchange_sharding_address(common::xlegacy_exchange_group_id, network_id()), common::xelection_round_t::max());
+        // }
         result.reserve(tmp.size());
 
         for (auto const & n : tmp) {
@@ -314,7 +320,11 @@ std::vector<std::uint16_t> xtop_vnetwork_driver::table_ids() const {
         break;
     }
 
-    case common::xnode_type_t::evm_eth: {
+    case common::xnode_type_t::evm_auditor: {
+        break;
+    }
+
+    case common::xnode_type_t::evm_validator: {
         break;
     }
 
@@ -338,7 +348,7 @@ std::vector<std::uint16_t> xtop_vnetwork_driver::table_ids() const {
         table_ids.resize(MAIN_CHAIN_REC_TABLE_USED_NUM);
     } else if (common::has<common::xnode_type_t::zec>(type()) || common::has<common::xnode_type_t::edge>(type())) {
         table_ids.resize(MAIN_CHAIN_ZEC_TABLE_USED_NUM);
-    } else if (common::has<common::xnode_type_t::evm_eth>(type())) {
+    } else if (common::has<common::xnode_type_t::evm>(type())) {
         table_ids.resize(MAIN_CHAIN_EVM_TABLE_USED_NUM);
     }
 

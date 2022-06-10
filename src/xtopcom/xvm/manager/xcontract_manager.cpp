@@ -31,6 +31,7 @@
 #include "xvm/xsystem_contracts/deploy/xcontract_deploy.h"
 #include "xvm/xsystem_contracts/tcc/xrec_proposal_contract.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_archive_contract.h"
+#include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_exchange_contract.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_edge_contract.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_fullnode_contract.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_rec_contract.h"
@@ -84,6 +85,7 @@ void xtop_contract_manager::instantiate_sys_contracts() {
     XREGISTER_CONTRACT(top::xvm::system_contracts::rec::xrec_elect_edge_contract_t, sys_contract_rec_elect_edge_addr, network_id);
     XREGISTER_CONTRACT(top::xvm::system_contracts::rec::xrec_elect_fullnode_contract_t, sys_contract_rec_elect_fullnode_addr, network_id);
     XREGISTER_CONTRACT(top::xvm::system_contracts::rec::xrec_elect_archive_contract_t, sys_contract_rec_elect_archive_addr, network_id);
+    XREGISTER_CONTRACT(top::xvm::system_contracts::rec::xrec_elect_exchange_contract_t, sys_contract_rec_elect_exchange_addr, network_id);
     XREGISTER_CONTRACT(top::xvm::system_contracts::rec::xrec_elect_rec_contract_t, sys_contract_rec_elect_rec_addr, network_id);
     XREGISTER_CONTRACT(top::xvm::system_contracts::rec::xrec_elect_zec_contract_t, sys_contract_rec_elect_zec_addr, network_id);
     XREGISTER_CONTRACT(top::xvm::system_contracts::rec::xrec_standby_pool_contract_t, sys_contract_rec_standby_pool_addr, network_id);
@@ -93,7 +95,7 @@ void xtop_contract_manager::instantiate_sys_contracts() {
     XREGISTER_CONTRACT(top::xvm::xcontract::xzec_slash_info_contract, sys_contract_zec_slash_info_addr, network_id);
     XREGISTER_CONTRACT(top::xvm::system_contracts::reward::xtable_reward_claiming_contract_t, sys_contract_sharding_reward_claiming_addr, network_id);
     XREGISTER_CONTRACT(top::xvm::xcontract::xtable_statistic_info_collection_contract, sys_contract_sharding_statistic_info_addr, network_id);
-    XREGISTER_CONTRACT(top::xvm::xcontract::xtable_statistic_info_collection_contract, sys_contract_eth_table_statistic_info_addr, network_id);
+    // XREGISTER_CONTRACT(top::xvm::xcontract::xtable_statistic_info_collection_contract, sys_contract_eth_table_statistic_info_addr, network_id);
     XREGISTER_CONTRACT(top::xvm::system_contracts::zec::xzec_elect_eth_contract_t, sys_contract_zec_elect_eth_addr, network_id);
 }
 
@@ -427,12 +429,13 @@ static void get_election_result_property_data(observer_ptr<store::xstore_face_t 
                                               common::xaccount_address_t const & contract_address,
                                               xjson_format_t const json_format,
                                               xJson::Value & json) {
-    assert(contract_address == rec_elect_rec_contract_address       ||      // NOLINT
-           contract_address == rec_elect_zec_contract_address       ||      // NOLINT
-           contract_address == rec_elect_edge_contract_address      ||     // NOLINT
+    assert(contract_address == rec_elect_rec_contract_address       ||  // NOLINT
+           contract_address == rec_elect_zec_contract_address       ||  // NOLINT
+           contract_address == rec_elect_edge_contract_address      ||  // NOLINT
            contract_address == rec_elect_archive_contract_address   ||  // NOLINT
-           contract_address == zec_elect_consensus_contract_address ||
-           contract_address == rec_elect_fullnode_contract_address  ||
+           contract_address == rec_elect_exchange_contract_address  ||  // NOLINT
+           contract_address == zec_elect_consensus_contract_address ||  // NOLINT
+           contract_address == rec_elect_fullnode_contract_address  ||  // NOLINT
            contract_address == zec_elect_eth_contract_address);
 
     std::string serialized_value{};
@@ -507,6 +510,7 @@ static void get_election_result_property_data(observer_ptr<store::xstore_face_t 
            contract_address == rec_elect_zec_contract_address       ||  // NOLINT
            contract_address == rec_elect_edge_contract_address      ||  // NOLINT
            contract_address == rec_elect_archive_contract_address   ||  // NOLINT
+           contract_address == rec_elect_exchange_contract_address  ||  // NOLINT
            contract_address == zec_elect_consensus_contract_address ||  // NOLINT
            contract_address == rec_elect_fullnode_contract_address  ||
            contract_address == zec_elect_eth_contract_address);
@@ -591,8 +595,9 @@ static void get_election_result_property_data(const xaccount_ptr_t unitstate,
            contract_address == rec_elect_zec_contract_address       ||  // NOLINT
            contract_address == rec_elect_edge_contract_address      ||  // NOLINT
            contract_address == rec_elect_archive_contract_address   ||  // NOLINT
-           contract_address == zec_elect_consensus_contract_address ||
-           contract_address == rec_elect_fullnode_contract_address  ||
+           contract_address == rec_elect_exchange_contract_address  ||  // NOLINT
+           contract_address == zec_elect_consensus_contract_address ||  // NOLINT
+           contract_address == rec_elect_fullnode_contract_address  ||  // NOLINT
            contract_address == zec_elect_eth_contract_address);
 
     std::string serialized_value = unitstate->string_get(property_name);
@@ -1018,12 +1023,14 @@ static void get_reward_detail(common::xaccount_address_t const & contract_addres
     jv["archive_reward_ratio"] = issue_detail.m_archive_reward_ratio;
     jv["validator_reward_ratio"] = issue_detail.m_validator_reward_ratio;
     jv["auditor_reward_ratio"] = issue_detail.m_auditor_reward_ratio;
-    jv["eth_reward_ratio"] = issue_detail.m_eth_reward_ratio;
+    // jv["evm_auditor_reward_ratio"] = issue_detail.m_evm_auditor_reward_ratio;
+    // jv["evm_validator_reward_ratio"] = issue_detail.m_evm_validator_reward_ratio;
     jv["vote_reward_ratio"] = issue_detail.m_vote_reward_ratio;
     jv["governance_reward_ratio"] = issue_detail.m_governance_reward_ratio;
     jv["validator_group_count"] = (xJson::UInt)issue_detail.m_validator_group_count;
     jv["auditor_group_count"] = (xJson::UInt)issue_detail.m_auditor_group_count;
-    jv["eth_group_count"] = (xJson::UInt)issue_detail.m_eth_group_count;
+    jv["evm_validator_group_count"] = (xJson::UInt)issue_detail.m_evm_validator_group_count;
+    jv["evm_auditor_group_count"] = (xJson::UInt)issue_detail.m_evm_auditor_group_count;
     xJson::Value jr;
     for (auto const & node_reward : issue_detail.m_node_rewards) {
         std::stringstream ss;
@@ -1098,7 +1105,7 @@ static void get_unqualified_node_map(observer_ptr<store::xstore_face_t const> st
                                                  xJson::Value & json) {
     std::map<std::string, std::string> nodes;
     if ( store->map_copy_get(contract_address.value(), property_name, nodes) != 0 ) return;
-    data::system_contract::xunqualified_node_info_v2_t summarize_info;
+    data::system_contract::xunqualified_node_info_v1_t summarize_info;
     for (auto const & m : nodes) {
         auto detail = m.second;
         if (!detail.empty()) {
@@ -1121,14 +1128,6 @@ static void get_unqualified_node_map(observer_ptr<store::xstore_face_t const> st
             validator_info["vote_num"] = v.second.block_count;
             validator_info["subset_num"] = v.second.subset_count;
             jvn_validator[v.first.value()] = validator_info;
-        }
-
-        xJson::Value jvn_evm;
-        for (auto const & v : summarize_info.evm_info) {
-            xJson::Value evm_info;
-            evm_info["vote_num"] = v.second.block_count;
-            evm_info["subset_num"] = v.second.subset_count;
-            jvn_evm[v.first.value()] = evm_info;
         }
 
         jvn["auditor"] = jvn_auditor;
@@ -1260,7 +1259,7 @@ static void get_sharding_statistic_contract_property(std::string const & shardin
             return;
         }
 
-        data::system_contract::xunqualified_node_info_v2_t data;
+        data::system_contract::xunqualified_node_info_v1_t data;
         base::xstream_t stream{ base::xcontext_t::instance(), reinterpret_cast<uint8_t *>(const_cast<char *>(value.data())), static_cast<uint32_t>(value.size()) };
         try {
             data.serialize_from(stream);
@@ -1292,17 +1291,6 @@ static void get_sharding_statistic_contract_property(std::string const & shardin
             v["subset_count"] = unqualified_data.subset_count;
 
             json[property_name]["validator"].append(v);
-        }
-
-        for (auto const & evm_data : data.evm_info) {
-            xJson::Value v;
-            auto const & unqualified_data = top::get<data::system_contract::xnode_vote_percent_t>(evm_data);
-
-            v["account"] = top::get<common::xaccount_address_t const>(evm_data).value();
-            v["block_count"] = unqualified_data.block_count;
-            v["subset_count"] = unqualified_data.subset_count;
-
-            json[property_name]["evm"].append(v);
         }
     } else if (property_name == data::system_contract::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY) {
         auto error = store->get_map_property(sharding_contract_addr, height, property_name, result);
@@ -1433,7 +1421,7 @@ static void get_zec_slash_contract_property(std::string const & property_name,
             return;
         }
 
-        data::system_contract::xunqualified_node_info_v2_t data;
+        data::system_contract::xunqualified_node_info_v1_t data;
         base::xstream_t stream{ base::xcontext_t::instance(), reinterpret_cast<uint8_t *>(const_cast<char *>(value.data())), static_cast<uint32_t>(value.size()) };
         try {
             data.serialize_from(stream);
@@ -1465,17 +1453,6 @@ static void get_zec_slash_contract_property(std::string const & property_name,
             v["subset_count"] = unqualified_data.subset_count;
 
             json[property_name]["validator"].append(v);
-        }
-
-        for (auto const & evm_data : data.evm_info) {
-            xJson::Value v;
-            auto const & unqualified_data = top::get<data::system_contract::xnode_vote_percent_t>(evm_data);
-
-            v["account"] = top::get<common::xaccount_address_t const>(evm_data).value();
-            v["block_count"] = unqualified_data.block_count;
-            v["subset_count"] = unqualified_data.subset_count;
-
-            json[property_name]["evm"].append(v);
         }
     } else if (property_name == data::system_contract::XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY) {
         auto error = store->get_map_property(sys_contract_zec_slash_info_addr, height, property_name, result);
@@ -1604,7 +1581,11 @@ static void get_zec_reward_contract_property(std::string const & property_name,
                 for (auto const & node : workload.m_leader_count) {
                     jn[node.first] = node.second;
                 }
-                jm[group_address.group_id().to_string()] = jn;
+                if (common::has<common::xnode_type_t::evm_auditor>(group_address.type()) || common::has<common::xnode_type_t::evm_validator>(group_address.type())) {
+                    jm[std::string{"evm"} + group_address.group_id().to_string()] = jn;
+                } else {
+                    jm[group_address.group_id().to_string()] = jn;
+                }
             }
             json["auditor_workload"].append(jm);
         }
@@ -1649,7 +1630,11 @@ static void get_zec_reward_contract_property(std::string const & property_name,
                 for (auto const & node : workload.m_leader_count) {
                     jn[node.first] = node.second;
                 }
-                jm[group_address.group_id().to_string()] = jn;
+                if (common::has<common::xnode_type_t::evm_auditor>(group_address.type()) || common::has<common::xnode_type_t::evm_validator>(group_address.type())) {
+                    jm[std::string{"evm"} + group_address.group_id().to_string()] = jn;
+                } else {
+                    jm[group_address.group_id().to_string()] = jn;
+                }
             }
             json["validator_workload"].append(jm);
         }
@@ -1661,6 +1646,7 @@ void xtop_contract_manager::get_contract_data(common::xaccount_address_t const &
         contract_address == rec_elect_zec_contract_address       || // NOLINT
         contract_address == rec_elect_edge_contract_address      || // NOLINT
         contract_address == rec_elect_archive_contract_address   || // NOLINT
+        contract_address == rec_elect_exchange_contract_address  || // NOLINT
         contract_address == zec_elect_consensus_contract_address ||
         contract_address == rec_elect_fullnode_contract_address  ||
         contract_address == zec_elect_eth_contract_address) {
@@ -1740,6 +1726,7 @@ void xtop_contract_manager::get_contract_data(common::xaccount_address_t const &
         contract_address == rec_elect_zec_contract_address       || // NOLINT
         contract_address == rec_elect_edge_contract_address      || // NOLINT
         contract_address == rec_elect_archive_contract_address   || // NOLINT
+        contract_address == rec_elect_exchange_contract_address  || // NOLINT
         contract_address == zec_elect_consensus_contract_address ||
         contract_address == rec_elect_fullnode_contract_address  ||
         contract_address == zec_elect_eth_contract_address) {
@@ -1883,7 +1870,7 @@ static void get_unqualified_node_map(common::xaccount_address_t const & contract
         xdbg("[get_unqualified_slash_info_map] contract_address: %s, property_name: %s, error", contract_address.to_string().c_str(), property_name.c_str());
         return;
     }
-    data::system_contract::xunqualified_node_info_v2_t summarize_info;
+    data::system_contract::xunqualified_node_info_v1_t summarize_info;
     for (auto const & m : nodes) {
         auto detail = m.second;
         if (!detail.empty()) {
@@ -1908,17 +1895,8 @@ static void get_unqualified_node_map(common::xaccount_address_t const & contract
             jvn_validator[v.first.value()] = validator_info;
         }
 
-        xJson::Value jvn_evm;
-        for (auto const & v : summarize_info.evm_info) {
-            xJson::Value evm_info;
-            evm_info["vote_num"] = v.second.block_count;
-            evm_info["subset_num"] = v.second.subset_count;
-            jvn_evm[v.first.value()] = evm_info;
-        }
-
         jvn["auditor"] = jvn_auditor;
         jvn["validator"] = jvn_validator;
-        jvn["evm"] = jvn_evm;
         json["unqualified_node"] = jvn;
     }
 }
@@ -2273,6 +2251,7 @@ void xtop_contract_manager::get_contract_data(common::xaccount_address_t const &
         contract_address == rec_elect_zec_contract_address       || // NOLINT
         contract_address == rec_elect_edge_contract_address      || // NOLINT
         contract_address == rec_elect_archive_contract_address   || // NOLINT
+        contract_address == rec_elect_exchange_contract_address  || // NOLINT
         contract_address == zec_elect_consensus_contract_address ||
         contract_address == rec_elect_fullnode_contract_address  ||
         contract_address == zec_elect_eth_contract_address) {

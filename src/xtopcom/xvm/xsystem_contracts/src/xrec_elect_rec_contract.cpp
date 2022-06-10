@@ -111,14 +111,8 @@ void xtop_rec_elect_rec_contract::on_timer(common::xlogic_time_t const current_t
                                         standby_network_result,
                                         election_network_result);
     if (successful) {
-        auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
-        if (chain_fork::xchain_fork_config_center_t::is_forked(fork_config.election_contract_stores_credit_score_fork_point, current_time)) {
-            serialization::xmsgpack_t<xelection_result_store_t>::serialize_to_string_prop(
-                *this, data::election::get_property_by_group_id(common::xcommittee_group_id), election_result_store);
-        } else {
-            serialization::xmsgpack_t<data::election::v1::xelection_result_store_t>::serialize_to_string_prop(
-                *this, data::election::get_property_by_group_id(common::xcommittee_group_id), election_result_store.v1());
-        }
+        serialization::xmsgpack_t<xelection_result_store_t>::serialize_to_string_prop(
+            *this, data::election::get_property_by_group_id(common::xcommittee_group_id), election_result_store);
     }
 }
 

@@ -128,15 +128,28 @@ impl crate::env::Env for Runtime {
         }
     }
 
+    fn chain_id(&self) -> u64 {
+        unsafe { exports::evm_chain_id() }
+    }
+
+    fn block_coinbase(&self) -> engine_types::types::Address {
+        unsafe {
+            exports::evm_block_coinbase(Self::ENV_REGISTER_ID.0);
+        }
+        let bytes = Self::ENV_REGISTER_ID.to_vec();
+        match Address::try_from(bytes.as_slice()) {
+            Ok(address) => address,
+            Err(_) => unreachable!(),
+        }
+    }
+
     fn block_height(&self) -> u64 {
-        unreachable!()
-        // unsafe { exports::evm_block_index() }
+        unsafe { exports::evm_block_height() }
     }
 
     fn block_timestamp(&self) -> crate::env::Timestamp {
-        unreachable!()
-        // let ns = unsafe { exports::evm_block_timestamp() };
-        // crate::env::Timestamp::new(ns)
+        let ns = unsafe { exports::evm_block_timestamp() * 1_000_000_000 };
+        crate::env::Timestamp::new(ns)
     }
 
     fn random_seed(&self) -> engine_types::H256 {
@@ -211,7 +224,7 @@ impl crate::io::ContractBridge for Runtime {
 
     fn get_error() -> Option<Self::StorageValue> {
         unsafe {
-            if exports::evm_get_result(Self::CONTRACT_RESULT_REGISTER_ID.0) == 1 {
+            if exports::evm_get_error(Self::CONTRACT_RESULT_REGISTER_ID.0) == 1 {
                 Some(Self::CONTRACT_RESULT_REGISTER_ID)
             } else {
                 None
@@ -229,6 +242,12 @@ pub(crate) mod exports {
 
         pub(crate) fn evm_sender_address(register_id: u64);
         pub(crate) fn evm_input(register_id: u64);
+
+        // EVM API
+        pub(crate) fn evm_chain_id() -> u64;
+        pub(crate) fn evm_block_coinbase(register_id: u64);
+        pub(crate) fn evm_block_height() -> u64;
+        pub(crate) fn evm_block_timestamp() -> u64;
 
         // Math
         pub(crate) fn evm_random_seed(register_id: u64);

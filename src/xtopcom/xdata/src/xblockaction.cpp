@@ -13,6 +13,7 @@ namespace top { namespace data {
 
 xlightunit_action_t::xlightunit_action_t(const base::xvaction_t & _action)
 : base::xvaction_t(_action) {
+    xassert(!_action.get_org_tx_hash().empty());
 }
 
 xlightunit_action_t::xlightunit_action_t(const std::string & tx_hash, base::enum_transaction_subtype _subtype, const std::string & caller_addr,const std::string & target_uri,const std::string & method_name)
@@ -20,35 +21,35 @@ xlightunit_action_t::xlightunit_action_t(const std::string & tx_hash, base::enum
     set_org_tx_action_id(_subtype);
 }
 
-uint32_t xlightunit_action_t::get_used_disk()const {
+uint64_t xlightunit_action_t::get_used_disk()const {
     // TODO(jimmy) not support now
     return 0;
 }
-uint32_t xlightunit_action_t::get_used_tgas()const {
+uint64_t xlightunit_action_t::get_used_tgas()const {
     std::string value = get_action_result_property(xtransaction_exec_state_t::XPROPERTY_FEE_TX_USED_TGAS);
     if (!value.empty()) {
-        return base::xstring_utl::touint32(value);
+        return base::xstring_utl::touint64(value);
     }
     return 0;
 }
-uint32_t xlightunit_action_t::get_used_deposit()const {
+uint64_t xlightunit_action_t::get_used_deposit()const {
     std::string value = get_action_result_property(xtransaction_exec_state_t::XPROPERTY_FEE_TX_USED_DEPOSIT);
     if (!value.empty()) {
-        return base::xstring_utl::touint32(value);
+        return base::xstring_utl::touint64(value);
     }
     return 0;
 }
-uint32_t xlightunit_action_t::get_send_tx_lock_tgas()const {
+uint64_t xlightunit_action_t::get_send_tx_lock_tgas()const {
     std::string value = get_action_result_property(xtransaction_exec_state_t::XPROPERTY_FEE_SEND_TX_LOCK_TGAS);
     if (!value.empty()) {
-        return base::xstring_utl::touint32(value);
+        return base::xstring_utl::touint64(value);
     }
     return 0;
 }
-uint32_t xlightunit_action_t::get_recv_tx_use_send_tx_tgas()const {
+uint64_t xlightunit_action_t::get_recv_tx_use_send_tx_tgas()const {
     std::string value = get_action_result_property(xtransaction_exec_state_t::XPROPERTY_FEE_RECV_TX_USE_SEND_TX_TGAS);
     if (!value.empty()) {
-        return base::xstring_utl::touint32(value);
+        return base::xstring_utl::touint64(value);
     }
     return 0;
 }
@@ -60,16 +61,15 @@ enum_xunit_tx_exec_status xlightunit_action_t::get_tx_exec_status() const {
     return enum_xunit_tx_exec_status_success;
 }
 
-bool xlightunit_action_t::get_evm_transaction_result(evm_common::xevm_transaction_result_t & result) const {
-    std::string value = get_action_result_property(xtransaction_exec_state_t::XTX_EVM_TRANSACTION_RESULT);
+bool xlightunit_action_t::get_evm_transaction_receipt(data::xeth_store_receipt_t & evm_tx_receipt) const {
+    std::string value = get_action_result_property(xtransaction_exec_state_t::XTX_EVM_TRANSACTION_RECEIPT);
     if (!value.empty()) {
-        xevm_tx_result_ptr_t evm_tx_result = make_object_ptr<xevm_tx_result_t>();
-        auto ret = evm_tx_result->serialize_from_string(value);
-        if (ret <= 0) {
-            xerror("xlightunit_action_t::get_evm_transaction_result fail-evm_tx_result serialize from.");
+        std::error_code ec;
+        evm_tx_receipt.decodeBytes(to_bytes<std::string>(value), ec);
+        if (ec) {
+            xerror("xlightunit_action_t::get_evm_transaction_receipt decode fail");
             return false;
         }
-        result = evm_tx_result->get_evm_tx_result();
         return true;
     }
     return false;

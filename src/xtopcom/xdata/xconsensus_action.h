@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Copyright (c) 2017-present Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -11,6 +11,7 @@
 #include "xdata/xcons_transaction.h"
 #include "xdata/xconsensus_action_fwd.h"
 #include "xdata/xconsensus_action_stage.h"
+#include "xdata/xnative_contract_address.h"
 #include "xdata/xreceipt_data_store.h"
 #include "xdata/xtop_action.h"
 
@@ -327,16 +328,16 @@ enum xtop_evm_action_type {
     deploy_contract = 1,
     call_contract = 2,
 };
+using xevm_action_type_t = xtop_evm_action_type;
 
 template <>
 class xtop_consensus_action<xtop_action_type_t::evm> : public xtop_action_t<xtop_action_type_t::evm> {
-public:
 private:
     common::xaccount_address_t m_sender;
     common::xaccount_address_t m_recver;
     evm_common::u256 m_value;
     xbytes_t m_input_data;
-    xtop_evm_action_type m_evm_action_type{xtop_evm_action_type::invalid};
+    xevm_action_type_t m_evm_action_type{xtop_evm_action_type::invalid};
     uint64_t m_gaslimit;
 
 public:
@@ -346,61 +347,15 @@ public:
     xtop_consensus_action & operator=(xtop_consensus_action &&) = default;
     ~xtop_consensus_action() override = default;
 
-    xtop_consensus_action(common::xaccount_address_t src_address, common::xaccount_address_t dst_address, evm_common::u256 value, xbytes_t data, uint64_t gaslimit) noexcept
-      : xtop_action_t<xtop_action_type_t::evm>{nullptr, common::xjudgement_day}, m_sender{src_address}, m_recver{dst_address}, m_value{value}, m_input_data{data}, m_gaslimit(gaslimit) {
-        if (m_recver.empty() || m_recver.value() == "T600040000000000000000000000000000000000000000") {
-            m_evm_action_type = xtop_evm_action_type::deploy_contract;
-        } else {
-            m_evm_action_type = xtop_evm_action_type::call_contract;
-        }
-    }
+    xtop_consensus_action(common::xaccount_address_t src_address, common::xaccount_address_t dst_address, evm_common::u256 value, xbytes_t data, uint64_t gaslimit);
+    explicit xtop_consensus_action(xobject_ptr_t<data::xcons_transaction_t> const & tx);
 
-    explicit xtop_consensus_action(xobject_ptr_t<data::xcons_transaction_t> const & tx) noexcept
-      : xtop_action_t<xtop_action_type_t::evm>{tx,
-                                               tx->is_send_tx() ?
-                                                   static_cast<common::xlogic_time_t>((tx->get_transaction()->get_fire_timestamp() + tx->get_transaction()->get_expire_duration() +
-                                                                                       XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_send_timestamp_tolerance)) /
-                                                                                      XGLOBAL_TIMER_INTERVAL_IN_SECONDS) :
-                                                   common::xjudgement_day} {
-        m_sender = common::xaccount_address_t{tx->get_source_addr()};
-        m_recver = common::xaccount_address_t{tx->get_target_addr()};
-        m_value = tx->get_transaction()->get_amount_256();
-
-        if (m_recver.empty() || m_recver.value() == "T600040000000000000000000000000000000000000000") {
-            m_evm_action_type = xtop_evm_action_type::deploy_contract;
-        } else {
-            m_evm_action_type = xtop_evm_action_type::call_contract;
-        }
-        m_input_data = top::to_bytes(tx->get_transaction()->get_data());
-        m_gaslimit = (uint64_t)tx->get_transaction()->get_gaslimit();
-    }
-
-    xtop_evm_action_type evm_action() const {
-        return m_evm_action_type;
-    }
-
-    common::xaccount_address_t sender() const {
-        return m_sender;
-    }
-
-    common::xaccount_address_t recver() const {
-        return m_recver;
-    }
-
-    xbytes_t const & data() const {
-        return m_input_data;
-    }
-
-    // In fact. this should be U256.
-    evm_common::u256 value() const {
-        return m_value;
-    }
-
-    uint64_t gas_limit() const {
-        return m_gaslimit;
-    }
-
-    // uint64_t gas_price() const;
+    xevm_action_type_t evm_action_type() const noexcept;
+    common::xaccount_address_t const & sender() const noexcept;
+    common::xaccount_address_t const & recver() const noexcept;
+    xbytes_t const & data() const noexcept;
+    evm_common::u256 const & value() const noexcept;
+    uint64_t gas_limit() const noexcept;
 };
 
 NS_END2

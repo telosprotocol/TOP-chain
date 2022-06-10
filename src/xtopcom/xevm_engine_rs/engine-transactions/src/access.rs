@@ -1,4 +1,3 @@
-
 use engine_types::{Vec, H160, H256};
 use rlp::{Decodable, DecoderError, Rlp};
 

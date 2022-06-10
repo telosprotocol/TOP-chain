@@ -8,11 +8,13 @@
 #include <map>
 #include <vector>
 #include <mutex>
+#include "xdata/xethheader.h"
 #include "xdata/xtableblock.h"
 #include "xdata/xfull_tableblock.h"
 #include "xblockmaker/xunit_maker.h"
 #include "xblockmaker/xblock_maker_para.h"
 #include "xblockmaker/xblockmaker_face.h"
+#include "xtxexecutor/xatomictx_executor.h"
 #include "xunit_service/xcons_face.h"
 
 NS_BEG2(top, blockmaker)
@@ -72,6 +74,12 @@ class xtable_maker_t : public xblock_maker_t {
     xblock_builder_para_ptr_t                   m_default_builder_para;
     bool                                        m_check_state_success{false};
     mutable std::mutex                          m_lock;
+};
+
+class xeth_header_builder {
+public:
+    static const std::string build(const xblock_consensus_para_t & cs_para, const std::vector<txexecutor::xatomictx_output_t> & pack_txs_outputs = {});
+    static bool string_to_eth_header(const std::string & eth_header_str, data::xeth_header_t & eth_header);
 };
 
 using xtable_maker_ptr_t = xobject_ptr_t<xtable_maker_t>;

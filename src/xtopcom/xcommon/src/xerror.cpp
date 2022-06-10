@@ -31,6 +31,39 @@ static char const * errc_to_string(xerrc_t const errc) noexcept {
     case xerrc_t::invalid_account_type:
         return "invalid account type";
 
+    case xerrc_t::token_not_used:
+        return "token not found";
+
+    case xerrc_t::token_symbol_not_matched:
+        return "token symbol not matched";
+
+    case xerrc_t::token_not_predefined:
+        return "not predefined token";
+
+    case xerrc_t::invalid_rlp_stream:
+        return "invalid rlp stream";
+
+    case xerrc_t::empty_token_symbol:
+        return "empty token symbol";
+
+    case xerrc_t::token_symbol_unknown:
+        return "unknown token symbol";
+
+    case xerrc_t::invalid_block:
+        return "invalid block";
+
+    case xerrc_t::invalid_db_load:
+        return "invalid db load";
+
+    case xerrc_t::invalid_eth_tx:
+        return "invalid eth tx";
+
+    case xerrc_t::invalid_eth_header:
+        return "invalid eth header";
+
+    case xerrc_t::invalid_bloom:
+        return "invalid bloom";
+
     default:
         assert(false);
         return "unknown common category error";

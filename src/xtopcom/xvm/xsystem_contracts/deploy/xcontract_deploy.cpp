@@ -64,6 +64,12 @@ void xtop_contract_deploy::deploy_sys_contracts() {
            enum_broadcast_policy_t::normal,
            std::string(sys_contract_beacon_timer_addr) + ",on_timer,C," + config::xarchive_election_interval_onchain_goverance_parameter_t::name);
 
+    deploy(common::xaccount_address_t{sys_contract_rec_elect_exchange_addr},
+           xnode_type_t::committee,
+           "all",
+           enum_broadcast_policy_t::normal,
+           std::string(sys_contract_beacon_timer_addr) + ",on_timer,C," + config::xexchange_election_interval_onchain_goverance_parameter_t::name);
+
     deploy(common::xaccount_address_t{sys_contract_rec_elect_rec_addr},
            xnode_type_t::committee,
            "all",
@@ -96,11 +102,11 @@ void xtop_contract_deploy::deploy_sys_contracts() {
            enum_broadcast_policy_t::normal,
            std::string(sys_contract_beacon_timer_addr) + ",report_summarized_statistic_info,C," + config::xtable_statistic_report_schedule_interval_onchain_goverance_parameter_t::name);
 
-    deploy(common::xaccount_address_t{sys_contract_eth_table_statistic_info_addr},
-           xnode_type_t::evm_eth,
-           "",
-           enum_broadcast_policy_t::normal,
-           std::string(sys_contract_beacon_timer_addr) + ",report_summarized_statistic_info,C," + config::xeth_statistic_report_schedule_interval_onchain_goverance_parameter_t::name);
+    // deploy(common::xaccount_address_t{sys_contract_eth_table_statistic_info_addr},
+    //        xnode_type_t::evm_validator,
+    //        "",
+    //        enum_broadcast_policy_t::normal,
+    //        std::string(sys_contract_beacon_timer_addr) + ",report_summarized_statistic_info,C," + config::xeth_statistic_report_schedule_interval_onchain_goverance_parameter_t::name);
 
     deploy(common::xaccount_address_t{sys_contract_zec_slash_info_addr},
            xnode_type_t::zec,

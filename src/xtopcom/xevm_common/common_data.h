@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "xbasic/xbyte_buffer.h"
+#include "xbasic/xstring.h"
 #include "xevm_common/common.h"
 
 #include <algorithm>
@@ -13,8 +15,7 @@
 #include <unordered_set>
 #include <vector>
 
-namespace top {
-namespace evm_common {
+NS_BEG2(top, evm_common)
 
 // String conversion functions, mainly to/from hex/nibble/byte representations.
 
@@ -23,6 +24,8 @@ enum class WhenError {
     Throw = 1,
 };
 
+// todo delete it 
+// use xbasic/xhex.h : top::to_hex
 template <class Iterator>
 std::string toHex(Iterator _it, Iterator _end, std::string const & _prefix) {
     typedef std::iterator_traits<Iterator> traits;
@@ -325,5 +328,33 @@ template <class K, class V>
 bool contains(std::map<K, V> const & _map, K const & _k) {
     return _map.find(_k) != _map.end();
 }
-}  // namespace evm_common
-}  // namespace top
+
+NS_END2
+
+NS_BEG1(top)
+
+template <>
+xbytes_t to_bytes<evm_common::u256>(evm_common::u256 const & value);
+
+template <>
+evm_common::u256 from_bytes<evm_common::u256>(xbytes_t const & input, std::error_code & ec);
+
+template <>
+std::string to_string<evm_common::u256>(evm_common::u256 const & value);
+
+template <>
+evm_common::u256 from_string<evm_common::u256>(std::string const & input, std::error_code & ec);
+
+template <>
+xbytes_t to_bytes<evm_common::u160>(evm_common::u160 const & value);
+
+template <>
+evm_common::u160 from_bytes<evm_common::u160>(xbytes_t const & input, std::error_code & ec);
+
+template <>
+std::string to_string<evm_common::u160>(evm_common::u160 const & value);
+
+template <>
+evm_common::u160 from_string<evm_common::u160>(std::string const & input, std::error_code & ec);
+
+NS_END1

@@ -1,0 +1,261 @@
+{
+    "pre_data": {},
+    "deploy_contract": [
+        {
+            "__comments":"部署合约1 goden币",
+            "src_address": "T600045B38Da6a701c568545dCfcB03FcB875f56beddC4",
+            "code_file_path": "swap_sol_golden.bin",
+            "gas_limit": 8765850,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "contract_one",
+                "gas_used": 1255197,
+                "logs": [                    
+                    {
+                        "address": "contract_one",
+                        "topics": [
+                            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+                             "0x0000000000000000000000000000000000000000000000000000000000000000", 
+                            "0x0000000000000000000000005b38da6a701c568545dcfcb03fcb875f56beddc4"
+                        ],
+                        "data": "0x0000000000000000000000000000000000000000000000056bc75e2d63100000"
+                    }
+                
+                ]
+            }
+        },
+        {
+            "__comments":"部署合约2 moyed币",
+            "src_address": "T60004Ab8483F64d9C6d1EcF9b849Ae677dD3315835cb2",
+            "code_file_path": "swap_sol_moyed.bin",
+            "gas_limit": 876549000,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "contract_two",
+                "gas_used": 1255185,
+                "logs": [                    
+                    {
+                        "address": "contract_two",
+                        "topics": [
+                            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+                             "0x0000000000000000000000000000000000000000000000000000000000000000", 
+                            "0x000000000000000000000000ab8483f64d9c6d1ecf9b849ae677dd3315835cb2"],
+                        "data": "0x0000000000000000000000000000000000000000000000056bc75e2d63100000"
+                    }
+                
+                ]
+            }
+        },
+        {
+            "__comments":"部署合约3 swap",
+            "src_address": "T600044B20993Bc481177ec7E8f571ceCaE8A9e22C02db",
+            "code_file_path": "swap_sol_TokenSwap.bin",
+            "gas_limit": 876549000,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "contract_three",
+                "gas_used": 796799,
+                "logs": []
+            }
+        }           
+    ],
+    "test_cases": [
+        {
+            "__comments":"合约1 给swap合约转账 transfer(0x9ecea68de55f316b702f27ee389d10c2ee0dde84,10000)",
+            "src_address": "T600045B38Da6a701c568545dCfcB03FcB875f56beddC4",
+            "target_address": "contract_one",
+            "data": "0xa9059cbb0000000000000000000000009ecea68de55f316b702f27ee389d10c2ee0dde840000000000000000000000000000000000000000000000000000000000002710",
+            "gas_limit": 342250,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "",
+                "gas_used": 52469,
+                "logs": [
+                    {
+                        "address": "contract_one",
+                        "topics": [
+                            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef", 
+                            "0x0000000000000000000000005b38da6a701c568545dcfcb03fcb875f56beddc4", 
+                            "0x0000000000000000000000009ecea68de55f316b702f27ee389d10c2ee0dde84"],
+                        "data": "0x0000000000000000000000000000000000000000000000000000000000002710"
+                    }
+                ]
+            }
+        },
+        {
+            "__comments":"合约1 查看金额swap合约0x9ecEA68DE55F316B702f27eE389D10C2EE0dde84,10000",
+            "src_address": "T600045B38Da6a701c568545dCfcB03FcB875f56beddC4",
+            "target_address": "contract_one",
+            "data": "0x70a082310000000000000000000000009ecea68de55f316b702f27ee389d10c2ee0dde84",
+            "gas_limit": 342250,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x0000000000000000000000000000000000000000000000000000000000002710",
+                "gas_used": 24295 ,
+                "logs": []
+            }
+        },
+        {
+            "__comments":"合约1  approve Ab8483F64d9C6d1EcF9b849Ae677dD3315835cb2 100000",
+            "src_address": "T600045B38Da6a701c568545dCfcB03FcB875f56beddC4",
+            "target_address": "contract_one",
+            "data": "0x095ea7b3000000000000000000000000ab8483f64d9c6d1ecf9b849ae677dd3315835cb200000000000000000000000000000000000000000000000000000000000186a0",
+            "gas_limit": 46839 ,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "",
+                "gas_used": 46839 ,
+                "logs": [
+                    {
+                        "address": "contract_one",
+                        "topics": [
+                            "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925",
+                             "0x0000000000000000000000005b38da6a701c568545dcfcb03fcb875f56beddc4", 
+                            "0x000000000000000000000000ab8483f64d9c6d1ecf9b849ae677dd3315835cb2"],
+                        "data": "0x00000000000000000000000000000000000000000000000000000000000186a0"
+                    }
+                ]
+            }
+        },
+        {
+            "__comments":"合约1 查看allowance(0x5B38Da6a701c568545dCfcB03FcB875f56beddC4->0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2)生效，10000",
+            "src_address": "T600045B38Da6a701c568545dCfcB03FcB875f56beddC4",
+            "target_address": "contract_one",
+            "data": "0xdd62ed3e0000000000000000000000005b38da6a701c568545dcfcb03fcb875f56beddc4000000000000000000000000ab8483f64d9c6d1ecf9b849ae677dd3315835cb2",
+            "gas_limit": 25063 ,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x00000000000000000000000000000000000000000000000000000000000186a0",
+                "gas_used": 25063 ,
+                "logs": []
+            }
+        },
+        {
+            "__comments":"合约2 transfer(0x9ecea68de55f316b702f27ee389d10c2ee0dde84,10000)",
+            "src_address": "T60004Ab8483F64d9C6d1EcF9b849Ae677dD3315835cb2",
+            "target_address": "contract_two",
+            "data": "0xa9059cbb0000000000000000000000009ecea68de55f316b702f27ee389d10c2ee0dde840000000000000000000000000000000000000000000000000000000000002710",
+            "gas_limit": 342250,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "",
+                "gas_used": 52469,
+                "logs": [
+                    {
+                        "address": "contract_two",
+                        "topics": [
+                            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+                             "0x000000000000000000000000ab8483f64d9c6d1ecf9b849ae677dd3315835cb2", 
+                             "0x0000000000000000000000009ecea68de55f316b702f27ee389d10c2ee0dde84"
+                        ],
+                        "data": "0x0000000000000000000000000000000000000000000000000000000000002710"
+                    }
+                ]
+            }
+        },
+        {
+            "__comments":"合约2  approve(5B38Da6a701c568545dCfcB03FcB875f56beddC4, 100000)",
+            "src_address": "T60004Ab8483F64d9C6d1EcF9b849Ae677dD3315835cb2",
+            "target_address": "contract_two",
+            "data": "0x095ea7b30000000000000000000000005b38da6a701c568545dcfcb03fcb875f56beddc400000000000000000000000000000000000000000000000000000000000186a0",
+            "gas_limit": 342250,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "",
+                "gas_used": 46839 ,
+                "logs": [
+                    {
+                        "address": "contract_two",
+                        "topics": [
+                            "0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925",
+                             "0x000000000000000000000000ab8483f64d9c6d1ecf9b849ae677dd3315835cb2", 
+                            "0x0000000000000000000000005b38da6a701c568545dcfcb03fcb875f56beddc4" ],
+                        "data": "0x00000000000000000000000000000000000000000000000000000000000186a0"
+                    }
+                ]
+            }
+        },
+        {
+            "__comments":"合约2  查看allowance(0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2->0x5B38Da6a701c568545dCfcB03FcB875f56beddC4)生效,10000",
+            "src_address": "T60004Ab8483F64d9C6d1EcF9b849Ae677dD3315835cb2",
+            "target_address": "contract_two",
+            "data": "0xdd62ed3e000000000000000000000000ab8483f64d9c6d1ecf9b849ae677dd3315835cb20000000000000000000000005b38da6a701c568545dcfcb03fcb875f56beddc4",
+            "gas_limit": 25063 ,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x00000000000000000000000000000000000000000000000000000000000186a0",
+                "gas_used": 25063 ,
+                "logs": []
+            }
+        },
+        {
+            "__comments":"执行swap, 合约1 10个换 合约2 20个",
+            "src_address": "T600045B38Da6a701c568545dCfcB03FcB875f56beddC4",
+            "target_address": "contract_three",
+            "data": "0x8119c065",
+            "gas_limit": 3422500,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "",
+                "gas_used": 112244,
+                "logs": [
+                    {
+                        "address": "contract_one",
+                        "topics": [
+                            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+                             "0x0000000000000000000000009ecea68de55f316b702f27ee389d10c2ee0dde84", 
+                            "0x000000000000000000000000ab8483f64d9c6d1ecf9b849ae677dd3315835cb2" ],
+                        "data": "0x000000000000000000000000000000000000000000000000000000000000000a"
+                    },
+                    {
+                        "address": "contract_two",
+                        "topics": [
+                            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+                             "0x0000000000000000000000009ecea68de55f316b702f27ee389d10c2ee0dde84", 
+                            "0x0000000000000000000000005b38da6a701c568545dcfcb03fcb875f56beddc4"],
+                        "data": "0x0000000000000000000000000000000000000000000000000000000000000014"
+                    }
+                ]
+            }
+        },
+        {
+            "__comments":"合约2查看swap地址0x9ecEA68DE55F316B702f27eE389D10C2EE0dde84,1000减少10，变成990",
+            "src_address": "T60004Ab8483F64d9C6d1EcF9b849Ae677dD3315835cb2",
+            "target_address": "contract_two",
+            "data": "0x70a082310000000000000000000000009ecea68de55f316b702f27ee389d10c2ee0dde84",
+            "gas_limit": 24295 ,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x00000000000000000000000000000000000000000000000000000000000026fc",
+                "gas_used": 24295 ,
+                "logs": []
+            }
+        },
+        {
+            "__comments":"合约1查看swap地址0x9ecEA68DE55F316B702f27eE389D10C2EE0dde84,1000加10，变成1010",
+            "src_address": "T600045B38Da6a701c568545dCfcB03FcB875f56beddC4",
+            "target_address": "contract_one",
+            "data": "0x70a082310000000000000000000000009ecea68de55f316b702f27ee389d10c2ee0dde84",
+            "gas_limit": 24295 ,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x0000000000000000000000000000000000000000000000000000000000002706",
+                "gas_used": 24295 ,
+                "logs": []
+            }
+        }
+    ]
+}

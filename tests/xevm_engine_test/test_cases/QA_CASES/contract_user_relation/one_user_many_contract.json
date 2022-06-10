@@ -1,0 +1,126 @@
+{
+    "pre_data": {},
+    "__comments":"同1用户部署多个不同合约，合约都可以使用",
+    "deploy_contract": [
+        {
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
+            "code_file_path": "TestSafeMath_sol_TestSafeMath.bin",
+            "gas_limit": 308435,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "contract1",
+                "gas_used": 308435,
+                "logs": []
+            }
+        },
+        {
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
+            "code_file_path": "ForeverLoop_sol_ForeverLoop.bin",
+            "gas_limit": 138009,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "contract2",
+                "gas_used": 138009,
+                "logs": []
+            }
+        },
+        {
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
+            "code_file_path": "AssertDemo_sol_AssertDemo.bin",
+            "gas_limit": 386507,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "contract3",
+                "gas_used": 386507,
+                "logs": []
+            }
+        },
+        {
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
+                                  
+            "code_file_path": "Recursion_sol_Recursion.bin",
+            "gas_limit": 96213,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "contract4",
+                "gas_used": 96213,
+                "logs": []
+            }
+        },
+        {
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
+                                  
+            "code_file_path": "Recursion_sol_Recursion.bin",
+            "gas_limit": 96213,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "contract5",
+                "gas_used": 96213,
+                "logs": []
+            }
+        }             
+    ],
+    "test_cases": [
+        {
+            "__comments":"获取MAX_UINT成员变量",
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
+            "target_address": "contract1",
+            "data": "0xe5b5019a",
+            "gas_limit": 23515,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+                "gas_used": 23515,
+                "logs": []
+            }
+        },
+        {
+            "__comments":"n > 1 死循环，消耗完gas退出",
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
+            "target_address": "contract4",
+            "data": "0x4d99ebc90000000000000000000000000000000000000000000000000000000000000003",
+            "gas_limit": 21519,
+            "value": "0",
+            "expected": {
+                "status": 2,
+                "extra_message": "",
+                "gas_used": 21519,
+                "logs": []
+            }
+        },
+        {
+            "__comments":"执行forever死循环，执行消耗完gas退出",
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
+            "target_address": "contract2",
+            "data": "0x9ff9a603",
+            "gas_limit": 2349300,
+            "value": "0",
+            "expected": {
+                "status": 2,
+                "extra_message": "",
+                "gas_used": 2349300,
+                "logs": []
+            }
+        },
+        {
+            "__comments":"set(111), 返回assert(false)，合约执行不成功",
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
+            "target_address": "contract3",
+            "data": "0x4ed3885e000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000033131310000000000000000000000000000000000000000000000000000000000",
+            "gas_limit": 22474,
+            "value": "0",
+            "expected": {
+                "status": 1,
+                "extra_message": "",
+                "gas_used": 22474,
+                "logs": []
+            }
+        }     
+    ]
+}

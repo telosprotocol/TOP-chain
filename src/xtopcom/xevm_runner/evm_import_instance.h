@@ -38,6 +38,12 @@ public:
     void sender_address(uint64_t register_id);
     void input(uint64_t register_id);
 
+    // EVM API:
+    uint64_t evm_chain_id();
+    void evm_block_coinbase(uint64_t register_id);
+    uint64_t evm_block_height();
+    uint64_t evm_block_timestamp();
+
     // math:
     void random_seed(uint64_t register_id);
     void sha256(uint64_t value_len, uint64_t value_ptr, uint64_t register_id);
@@ -55,9 +61,12 @@ public:
     uint64_t storage_remove(uint64_t key_len, uint64_t key_ptr, uint64_t register_id);
 
     // extern contract:
-    bool extern_contract_call(uint64_t args_len,uint64_t args_ptr);
+    bool extern_contract_call(uint64_t args_len, uint64_t args_ptr);
     uint64_t get_result(uint64_t register_id);
     uint64_t get_error(uint64_t register_id);
+
+    // contract bridge:
+    void call_erc20(uint64_t input_len, uint64_t input_ptr, uint64_t target_gas, uint64_t address_len, uint64_t address_ptr, bool is_static, uint64_t register_id);
 };
 
 }  // namespace evm

@@ -7,6 +7,7 @@
 #include "xbasic/xhash.hpp"
 #include "xbasic/xcrypto_key.h"
 #include "xdata/xaction.h"
+#include "xdata/xethtransaction.h"
 #include "xbase/xobject_ptr.h"
 #include "xvledger/xdataobj_base.hpp"
 #include "xbase/xrefcount.h"
@@ -15,6 +16,7 @@
 namespace top { namespace data {
 
 enum enum_xtransaction_type {
+    xtransaction_type_invalid                    = -1,
     xtransaction_type_create_user_account        = 0,    // create user account
     xtransaction_type_deploy_wasm_contract       = 1,    // user deploy wasm contract
     xtransaction_type_deploy_evm_contract        = 2,    // user deploy evm contract
@@ -170,7 +172,6 @@ class xtransaction_t : virtual public base::xrefcount_t {
     inline  uint64_t get_delay_from_fire_timestamp(uint64_t now_s) const {return now_s > get_fire_timestamp() ? now_s - get_fire_timestamp() : 0;}
     virtual void set_amount(uint64_t amount) = 0;
     virtual uint64_t get_amount() const noexcept = 0;
-    virtual void set_amount_256(top::evm_common::u256 amount) = 0;
     virtual top::evm_common::u256 get_amount_256() const noexcept = 0;
     virtual bool is_top_transfer() const noexcept = 0;
     virtual void set_premium_price(uint32_t premium_price) = 0;
@@ -184,18 +185,11 @@ class xtransaction_t : virtual public base::xrefcount_t {
     virtual void set_memo(const std::string & memo) = 0;
     virtual const std::string & get_memo() const = 0;
     virtual const std::string & get_target_address() const = 0;
-    virtual const std::string get_SignV() const { return ""; }
-    virtual const std::string get_SignR() const { return ""; }
-    virtual const std::string get_SignS() const { return ""; }
     virtual bool is_evm_tx() const = 0;
-    virtual void set_data(std::string data) {  }
-    virtual const std::string & get_data() const { static std::string strNull = ""; return strNull; }
-    virtual void set_gaslimit(top::evm_common::u256 gas) { }
+    virtual xbytes_t const& get_data() const { static xbytes_t strNull; return strNull; }
     virtual const top::evm_common::u256 get_gaslimit() const { return 0; }
-    virtual const top::evm_common::u256 get_max_priority_fee_per_gas() const { return 0; }
     virtual const top::evm_common::u256 get_max_fee_per_gas() const { return 0; }
-    virtual bool verify_tx(xJson::Value & request, std::error_code& ec) { return true; }
-    virtual uint32_t get_eip_version() const = 0;
+    virtual xeth_transaction_t to_eth_tx(std::error_code & ec) const;
 };
 
 }  // namespace data

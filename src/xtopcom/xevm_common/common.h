@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "xbase/xns_macro.h"
+
 #include <chrono>
 #include <functional>
 #include <map>
@@ -25,8 +27,7 @@
 // CryptoPP defines byte in the global namespace, so must we.
 using byte = uint8_t;
 
-namespace top {
-namespace evm_common {
+NS_BEG2(top, evm_common)
 using namespace boost::multiprecision::literals;
 
 // Binary data types.
@@ -168,5 +169,5 @@ inline N diff(N const & _a, N const & _b) {
     return std::max(_a, _b) - std::min(_a, _b);
 }
 
-}  // namespace evm_common
-}  // namespace top
+NS_END2
+

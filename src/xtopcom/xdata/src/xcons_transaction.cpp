@@ -262,30 +262,30 @@ std::string xcons_transaction_t::dump(bool detail) const {
     return ss.str();
 }
 
-uint32_t xcons_transaction_t::get_last_action_used_tgas() const {
+uint64_t xcons_transaction_t::get_last_action_used_tgas() const {
     if (m_receipt != nullptr) {
         std::string value = m_receipt->get_tx_result_property(xtransaction_exec_state_t::XPROPERTY_FEE_TX_USED_TGAS);
         if (!value.empty()) {
-            return base::xstring_utl::touint32(value);
+            return base::xstring_utl::touint64(value);
         }
     }
     return 0;
 }
-uint32_t xcons_transaction_t::get_last_action_used_deposit() const {
+uint64_t xcons_transaction_t::get_last_action_used_deposit() const {
     if (m_receipt != nullptr) {
         std::string value = m_receipt->get_tx_result_property(xtransaction_exec_state_t::XPROPERTY_FEE_TX_USED_DEPOSIT);
         if (!value.empty()) {
-            return base::xstring_utl::touint32(value);
+            return base::xstring_utl::touint64(value);
         }
     }
     return 0;
 }
 
-uint32_t xcons_transaction_t::get_last_action_send_tx_lock_tgas() const {
+uint64_t xcons_transaction_t::get_last_action_send_tx_lock_tgas() const {
     if (m_receipt != nullptr) {
         std::string value = m_receipt->get_tx_result_property(xtransaction_exec_state_t::XPROPERTY_FEE_SEND_TX_LOCK_TGAS);
         if (!value.empty()) {
-            return base::xstring_utl::touint32(value);
+            return base::xstring_utl::touint64(value);
         }
     }
     return 0;
@@ -300,12 +300,12 @@ enum_xunit_tx_exec_status xcons_transaction_t::get_last_action_exec_status() con
     return (enum_xunit_tx_exec_status)0;
 }
 
-uint32_t xcons_transaction_t::get_last_action_recv_tx_use_send_tx_tgas() const {
+uint64_t xcons_transaction_t::get_last_action_recv_tx_use_send_tx_tgas() const {
     if (m_receipt != nullptr) {
         xassert(m_receipt->is_recv_tx());
         std::string value = m_receipt->get_tx_result_property(xtransaction_exec_state_t::XPROPERTY_FEE_RECV_TX_USE_SEND_TX_TGAS);
         if (!value.empty()) {
-            return base::xstring_utl::touint32(value);
+            return base::xstring_utl::touint64(value);
         }
     }
     return 0;

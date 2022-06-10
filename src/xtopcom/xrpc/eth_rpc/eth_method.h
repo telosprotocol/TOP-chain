@@ -1,9 +1,10 @@
 // Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-
+#pragma once
 #include <unordered_map>
 #include <iostream>
+#include <sstream>
 #include <functional>
 #include <string>
 #include <set>
@@ -12,6 +13,8 @@
 #include "xutility/xhash.h"
 #include "xpbase/base/top_utils.h"
 #include "xbase/xint.h"
+#include "xconfig/xpredefined_configurations.h"
+#include "xconfig/xconfig_register.h"
 
 namespace eth {
 using eth_method_handler = std::function<void(const xJson::Value & request, xJson::Value & response)>;
@@ -26,7 +29,6 @@ public:
         m_eth_method_map.emplace(std::make_pair("web3_clientVersion", std::bind(&EthMethod::web3_clientVersion, this, std::placeholders::_1, std::placeholders::_2)));
         m_eth_method_map.emplace(std::make_pair("net_version", std::bind(&EthMethod::net_version, this, std::placeholders::_1, std::placeholders::_2)));
         m_eth_method_map.emplace(std::make_pair("eth_gasPrice", std::bind(&EthMethod::eth_gasPrice, this, std::placeholders::_1, std::placeholders::_2)));
-        //m_eth_method_map.emplace(std::make_pair("eth_estimateGas", std::bind(&EthMethod::eth_estimateGas, this, std::placeholders::_1, std::placeholders::_2)));
         m_eth_method_map.emplace(std::make_pair("web3_sha3", std::bind(&EthMethod::web3_sha3, this, std::placeholders::_1, std::placeholders::_2)));
 
         m_supported_method.insert("eth_call");
@@ -34,8 +36,7 @@ public:
         m_supported_method.insert("eth_getCode");
         m_supported_method.insert("eth_getStorageAt");
         m_supported_method.insert("eth_sendRawTransaction");
-        m_supported_method.insert("Eth_getLogs");
-        //m_supported_method.insert("web3_sha3");
+        m_supported_method.insert("eth_getLogs");
         m_supported_method.insert("eth_getBalance");
         m_supported_method.insert("eth_blockNumber");
         m_supported_method.insert("eth_getBlockByHash");
@@ -63,25 +64,27 @@ public:
         }
     }
     inline void eth_chainId(const Json::Value & request, Json::Value & response) {
-        response = "0x3ff";
+        uint32_t chain_id = XGET_CONFIG(chain_id);
+        std::stringstream outstr;
+        outstr << "0x" << std::hex << chain_id;
+        Json::Value value = outstr.str();  //"0x3ff";
+        response["result"] = value;
     }
 
     inline void net_version(const Json::Value & request, Json::Value & response) {
-        response = "1023";
+        uint32_t chain_id = XGET_CONFIG(chain_id);
+        Json::Value value = std::to_string(chain_id); // "1023";
+        response["result"] = value;
     }
 
     inline void web3_clientVersion(const Json::Value & request, Json::Value & response) {
-        response = "Geth/v1.10.17-25c9b49f-20220330/linux-amd64/go1.17.6";
-        xdbg("web3_clientVersion: %s", response.asString().c_str());
+        xdbg("web3_clientVersion1");
+        Json::Value value = "Geth/v1.10.17-25c9b49f-20220330/linux-amd64/go1.17.6";
+        response["result"] = value;
+        //xdbg("web3_clientVersion: %s", response.asString().c_str());
     }
 
-    inline void eth_gasPrice(const Json::Value & request, Json::Value & response) {
-        response = "0x3b9aca00";
-    }
-
-    inline void eth_estimateGas(const Json::Value & request, Json::Value & response) {
-        response = "0x5208";
-    }
+    void eth_gasPrice(const Json::Value & request, Json::Value & response);
     void web3_sha3(const Json::Value & request, Json::Value & response);
 };
 

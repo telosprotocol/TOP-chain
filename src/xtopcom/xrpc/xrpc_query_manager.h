@@ -136,16 +136,6 @@ public:
     xJson::Value parse_tx(top::data::xtransaction_t * tx_ptr, const std::string & version);
     int parse_tx(const uint256_t & tx_hash, top::data::xtransaction_t * cons_tx_ptr, const std::string & version, xJson::Value & result_json, std::string & strResult, uint32_t & nErrorCode);
     xJson::Value parse_action(const top::data::xaction_t & action);
-    xJson::Value get_tx_exec_result(const std::string & account,
-                                    uint64_t block_height,
-                                    data::xtransaction_ptr_t tx_ptr,
-                                    data::xlightunit_tx_info_ptr_t & send_txinfo,
-                                    data::xlightunit_tx_info_ptr_t & recv_txinfo,
-                                    const std::string & rpc_version,
-                                    bool is_confirm,
-                                    uint64_t send_height,
-                                    std::string & strResult,
-                                    uint32_t & nErrorCode);
     void getRecs(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     void getZecs(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     void getEdges(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);

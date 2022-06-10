@@ -7,10 +7,11 @@
 #include "xbasic/xerror/xerror.h"
 #include "xbasic/xstring.h"
 
+#include <algorithm>
 #include <array>
+#include <cassert>
 #include <limits>
 #include <random>
-#include <algorithm>
 
 NS_BEG1(top)
 
@@ -68,7 +69,17 @@ random_base58_bytes(std::size_t const size) {
 
 template <>
 xbytes_t to_bytes<char>(char const & input) {
-    return xbytes_t(1, static_cast<xbyte_t>(input));
+    return top::to_bytes(static_cast<unsigned char>(input));
+}
+
+template <>
+xbytes_t to_bytes<unsigned char>(unsigned char const & input) {
+    return xbytes_t(1, input);
+}
+
+template <>
+xbytes_t to_bytes<signed char>(signed char const & input) {
+    return top::to_bytes(static_cast<unsigned char>(input));
 }
 
 template <>
@@ -84,11 +95,6 @@ xbytes_t to_bytes<long>(long const & input) {
 template <>
 xbytes_t to_bytes<long long>(long long const & input) {
     return to_bytes(top::to_string(input));
-}
-
-template <>
-xbytes_t to_bytes<unsigned char>(unsigned char const & input) {
-    return xbytes_t(1, input);
 }
 
 template <>
@@ -143,11 +149,24 @@ uint256_t from_bytes<uint256_t>(xbytes_t const & input, std::error_code & ec) {
 
 template <>
 char from_bytes<char>(xbytes_t const & input, std::error_code & ec) {
+    assert(!ec);
+
+    return static_cast<char>(top::from_bytes<unsigned char>(input, ec));
+}
+
+template <>
+unsigned char from_bytes<unsigned char>(xbytes_t const & input, std::error_code & ec) {
     if (input.empty()) {
         ec = error::xbasic_errc_t::deserialization_error;
         return {};
     }
-    return static_cast<char>(input.front());
+    return input.front();
+}
+
+template <>
+signed char from_bytes<signed char>(xbytes_t const & input, std::error_code & ec) {
+    assert(!ec);
+    return static_cast<signed char>(top::from_bytes<unsigned char>(input, ec));
 }
 
 template <>
@@ -177,15 +196,6 @@ long long from_bytes<long long>(xbytes_t const & input, std::error_code & ec) {
     }
 
     return top::from_string<long long>(string, ec);
-}
-
-template <>
-unsigned char from_bytes<unsigned char>(xbytes_t const & input, std::error_code & ec) {
-    if (input.empty()) {
-        ec = error::xbasic_errc_t::deserialization_error;
-        return {};
-    }
-    return input.front();
 }
 
 template <>

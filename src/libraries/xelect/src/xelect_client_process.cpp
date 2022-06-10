@@ -5,6 +5,7 @@
 #include "xelect/client/xelect_client_process.h"
 
 #include "xbasic/xutility.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
@@ -129,7 +130,7 @@ void xelect_client_process::process_election_block(xobject_ptr_t<base::xvblock_t
         auto const& election_result_store = codec::msgpack_decode<xelection_result_store_t>({ std::begin(result), std::end(result) });
         if (election_result_store.empty()) {
             if (!(contract_address == common::xaccount_address_t{sys_contract_rec_elect_archive_addr} &&
-                  property == data::election::get_property_by_group_id(common::xexchange_group_id))) {
+                  property == data::election::get_property_by_group_id(common::xlegacy_exchange_group_id))) {
                 if (block->get_height() != 0) {
                     xerror("xelect_client_process::process_elect decode property empty, block=%s", block->dump().c_str());
                 } else {
@@ -160,7 +161,7 @@ void xelect_client_process::process_election_block(xobject_ptr_t<base::xvblock_t
                 } else if (common::has<common::xnode_type_t::edge>(node_type)) {
                     m_update_handler2(election_result_store, common::xedge_zone_id, block->get_height(), false);
                 } else if (common::has<common::xnode_type_t::storage>(node_type)) {
-                    m_update_handler2(election_result_store, common::xarchive_zone_id, block->get_height(), false);
+                    m_update_handler2(election_result_store, common::xstorage_zone_id, block->get_height(), false);
                 } else if (common::has<common::xnode_type_t::fullnode>(node_type)) {
                     m_update_handler2(election_result_store, common::xfullnode_zone_id, block->get_height(), false);
                 } else if (common::has<common::xnode_type_t::evm>(node_type)) {
@@ -204,6 +205,16 @@ void xelect_client_process::update_election_status(common::xlogic_time_t current
     auto const update_archive_interval = nonconsensus_group_update_interval;   // for mainnet & bounty
 #endif
     process_election_contract(common::xaccount_address_t{sys_contract_rec_elect_archive_addr}, current_time, update_archive_interval);
+
+    // auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
+    // if (chain_fork::xchain_fork_config_center_t::is_forked(fork_config.standalone_exchange_point, current_time)) {
+#if defined(XBUILD_CI) || defined(XBUILD_DEV) || defined(XBUILD_GALILEO)
+    auto const uodate_exchange_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(exchange_election_interval) / update_divider;
+#else
+    auto const uodate_exchange_interval = nonconsensus_group_update_interval;  // for mainnet & bounty
+#endif
+    process_election_contract(common::xaccount_address_t{sys_contract_rec_elect_exchange_addr}, current_time, uodate_exchange_interval);
+    // }
 
 #if defined(XBUILD_CI) || defined(XBUILD_DEV) || defined(XBUILD_GALILEO)
     auto const update_fullnode_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(fullnode_election_interval) / update_divider;

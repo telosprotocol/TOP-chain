@@ -19,6 +19,17 @@ enum class xenum_errc {
     invalid_table_id,
     invalid_ledger_id,
     invalid_account_type,
+    token_not_used,
+    token_symbol_not_matched,
+    token_not_predefined,
+    invalid_rlp_stream,
+    empty_token_symbol,
+    token_symbol_unknown,
+    invalid_block,
+    invalid_db_load,
+    invalid_eth_tx,
+    invalid_eth_header,
+    invalid_bloom,
 };
 using xerrc_t = xenum_errc;
 

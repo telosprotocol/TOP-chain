@@ -51,6 +51,7 @@ using xstatectx_ptr_t = std::shared_ptr<xstatectx_t>;
 class xstatectx_factory_t {
  public:
     static xstatectx_ptr_t create_latest_commit_statectx(const base::xvaccount_t & table_addr);  // for RPC eth_call
+    static xstatectx_ptr_t create_latest_cert_statectx(const base::xvaccount_t & table_addr);  // for RPC eth_call
     static xstatectx_ptr_t create_latest_cert_statectx(base::xvblock_t* prev_block, const data::xtablestate_ptr_t & prev_table_state, const data::xtablestate_ptr_t & commit_table_state, const xstatectx_para_t & para);
 };
 

@@ -56,6 +56,8 @@ enum class xenum_basic_errc {
     serialization_error,
     deserialization_error,
 
+    invalid_char_data,
+
     unknown_error = std::numeric_limits<std::underlying_type<xenum_basic_errc>::type>::max()
 };
 using xbasic_errc_t = xenum_basic_errc;

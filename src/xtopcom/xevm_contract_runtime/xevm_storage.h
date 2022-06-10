@@ -1,6 +1,7 @@
 #pragma once
 
 #include "xbasic/xbyte_buffer.h"
+#include "xbasic/xhex.h"
 #include "xbasic/xmemory.hpp"
 #include "xcommon/xaccount_address_fwd.h"
 #include "xdata/xproperty.h"
@@ -55,7 +56,7 @@ public:
                 return result;
 
             } else if (storage_key.key_type == storage_key_type::Balance) {
-                return unit_state->tep_token_balance_bytes(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH);
+                return unit_state->tep_token_balance_bytes(common::xtoken_id_t::eth);
             } else if (storage_key.key_type == storage_key_type::Code) {
                 // todo add contract_manager lru cache.
                 auto property = state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_EVM_CODE, state_accessor::properties::xproperty_category_t::system};
@@ -68,6 +69,7 @@ public:
                 auto property = state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_EVM_STORAGE, state_accessor::properties::xproperty_category_t::system};
                 auto value = sa.get_property_cell_value<evm_property_type_map>(property, storage_key.extra_key, ec);
                 assert(!ec);
+                xdbg("storage_get storage:%s,%s,value:%s", storage_key.address.c_str(), storage_key.extra_key.c_str(), top::to_hex(value).c_str());
                 top::error::throw_error(ec);
                 return value;
 
@@ -124,7 +126,7 @@ public:
                 top::error::throw_error(ec);
 
             } else if (storage_key.key_type == storage_key_type::Balance) {
-                unit_state->set_tep_balance_bytes(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH, value);
+                unit_state->set_tep_balance_bytes(common::xtoken_id_t::eth, value);
 
             } else if (storage_key.key_type == storage_key_type::Code) {
                 auto property = state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_EVM_CODE, state_accessor::properties::xproperty_category_t::system};
@@ -135,7 +137,7 @@ public:
             } else if (storage_key.key_type == storage_key_type::Storage) {
                 auto property = state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_EVM_STORAGE, state_accessor::properties::xproperty_category_t::system};
                 sa.set_property_cell_value<evm_property_type_map>(property, storage_key.extra_key, value, ec);
-                xdbg("storage_set:%s,%s", storage_key.address.c_str(), storage_key.extra_key.c_str());
+                xdbg("storage_set storage:%s,%s,value:%s", storage_key.address.c_str(), storage_key.extra_key.c_str(), top::to_hex(value).c_str());
                 assert(!ec);
                 top::error::throw_error(ec);
 
@@ -189,7 +191,7 @@ public:
 
             } else if (storage_key.key_type == storage_key_type::Balance) {
                 evm_common::u256 value{0};
-                unit_state->set_tep_balance(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH, value);
+                unit_state->set_tep_balance(common::xtoken_id_t::eth, value);
 
             } else if (storage_key.key_type == storage_key_type::Code) {
                 auto typeless_property =
@@ -200,10 +202,10 @@ public:
                 top::error::throw_error(ec);
 
             } else if (storage_key.key_type == storage_key_type::Storage) {
-                auto typeless_property =
-                    state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_EVM_STORAGE, state_accessor::properties::xproperty_category_t::system};
-                auto property = state_accessor::properties::xproperty_identifier_t{typeless_property, evm_property_type_map};
-                sa.clear_property(property, ec);
+                auto property = state_accessor::properties::xtypeless_property_identifier_t{data::XPROPERTY_EVM_STORAGE, state_accessor::properties::xproperty_category_t::system};
+                sa.remove_property_cell<evm_property_type_map>(property, storage_key.extra_key, ec);
+                xdbg("storage_remove storage:%s,%s", storage_key.address.c_str(), storage_key.extra_key.c_str());
+                // sa.clear_property(property, ec);
                 assert(!ec);
                 top::error::throw_error(ec);
 

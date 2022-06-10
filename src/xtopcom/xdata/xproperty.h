@@ -17,6 +17,7 @@ XINLINE_CONSTEXPR char const * XPROPERTY_ASSET_ETH                       = "ETH"
 // $1-9 reserved for future
 XINLINE_CONSTEXPR char const * XPROPERTY_BALANCE_AVAILABLE              = "$0";  //available balance
 XINLINE_CONSTEXPR char const * XPROPERTY_TEP1_BALANCE_KEY               = "$1";  //tep balance map
+XINLINE_CONSTEXPR char const * XPROPERTY_PRECOMPILED_ERC20_ALLOWANCE_KEY = "$11";
 XINLINE_CONSTEXPR char const * XPROPERTY_BALANCE_BURN                   = "$a";  //burn balance
 XINLINE_CONSTEXPR char const * XPROPERTY_BALANCE_LOCK                   = "$b";  //lock balance
 XINLINE_CONSTEXPR char const * XPROPERTY_BALANCE_PLEDGE_TGAS            = "$c";  //pledge balance for tgas
@@ -63,7 +64,7 @@ public:
     explicit xproperty_asset(uint64_t amount) : m_amount(amount) { }
     xproperty_asset(const std::string & token_name, uint64_t amount) : m_token_name(token_name), m_amount(amount) { }
     bool is_top_token() const {return m_token_name.empty() || XPROPERTY_ASSET_TOP == m_token_name;};
-    const std::string & token_name() const {return m_token_name;}
+    const std::string & token_symbol() const {return m_token_name;}
     uint64_t amount() const {return m_amount;}
     std::string m_token_name{XPROPERTY_ASSET_TOP};
     uint64_t    m_amount{0};

@@ -5,9 +5,12 @@
 #pragma once
 
 #include "xbasic/xbyte_buffer.h"
-#include "xcodec/xcodec_error.h"
+#include "xbasic/xerror/xerror.h"
+#include "xcodec/xcodec_errc.h"
 
 #include <msgpack.hpp>
+
+#include <system_error>
 
 NS_BEG3(top, codec, decorators)
 
@@ -27,12 +30,13 @@ struct xtop_msgpack_decorator final
     xbyte_buffer_t
     encode(message_type const & message) {
         try {
-            ::msgpack::sbuffer buffer;
-            ::msgpack::pack(buffer, message);
+            msgpack::sbuffer buffer;
+            msgpack::pack(buffer, message);
 
             return { buffer.data(), buffer.data() + buffer.size() };
         } catch (...) {
-            throw top::codec::xcodec_error_t{ top::codec::xcodec_errc_t::encode_error, __LINE__, __FILE__ };
+            top::error::throw_error(top::codec::xcodec_errc_t::encode_error, "msgpack encode error");
+            return {};
         }
     }
 
@@ -44,7 +48,19 @@ struct xtop_msgpack_decorator final
             auto object = object_handle.get();
             return object.as<T>();
         } catch (...) {
-            throw top::codec::xcodec_error_t{ top::codec::xcodec_errc_t::decode_error, __LINE__, __FILE__ };
+            top::error::throw_error(top::codec::xcodec_errc_t::decode_error, "msgpack decode error");
+            return {};
+        }
+    }
+
+    static message_type decode(xbyte_buffer_t const & in, std::error_code & ec) {
+        try {
+            auto object_handle = msgpack::unpack(reinterpret_cast<char const *>(in.data()), in.size(), nullptr);
+            auto object = object_handle.get();
+            return object.as<T>();
+        } catch (...) {
+            ec = top::codec::xcodec_errc_t::decode_error;
+            return {};
         }
     }
 };
