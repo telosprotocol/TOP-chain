@@ -115,12 +115,12 @@ bool xtest_evm_fixture::execute_test_case(std::string const & json_file_path) {
     // std::map<account_id, std::string> pre_data = j.at("pre_data").get<std::map<account_id, std::string>>();
     if (!pre_data.empty()) {
         auto storage = top::make_unique<contract_runtime::evm::xevm_storage>(statestore);
-        std::unique_ptr<top::evm::xevm_logic_face_t> logic_ptr = top::make_unique<top::contract_runtime::evm::xevm_logic_t>(
+        std::shared_ptr<top::evm::xevm_logic_face_t> logic_ptr = std::make_shared<top::contract_runtime::evm::xevm_logic_t>(
             std::move(storage),
             top::make_observer(statestore.get()),
             nullptr,
             top::make_observer<contract_runtime::evm::xevm_contract_manager_t>(contract_runtime::evm::xevm_contract_manager_t::instance()));
-        top::evm::evm_import_instance::instance()->set_evm_logic(std::move(logic_ptr));
+        top::evm::evm_import_instance::instance()->add_evm_logic(logic_ptr);
 
         for (auto const & each : pre_data) {
             common::xaccount_address_t account_address{each["account"]};
@@ -142,6 +142,7 @@ bool xtest_evm_fixture::execute_test_case(std::string const & json_file_path) {
                 }
             }
         }
+        top::evm::evm_import_instance::instance()->remove_evm_logic();
     }
 
     std::size_t deploy_case_succ_num = 0;

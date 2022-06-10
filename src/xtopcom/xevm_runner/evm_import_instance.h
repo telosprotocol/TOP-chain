@@ -1,6 +1,9 @@
 #pragma once
 #include "stdint.h"
+#include "xbase/xlock.h"
 #include "xevm_runner/evm_logic_face.h"
+
+#include <thread>
 
 namespace top {
 namespace evm {
@@ -15,17 +18,19 @@ private:
     ~evm_import_instance() {
     }
 
-    std::unique_ptr<xevm_logic_face_t> m_vm_logic{nullptr};
-
-    // top::contract_runtime::evm::xtop_evm_logic m_vm_logic{nullptr, nullptr};
+    std::map<std::string, std::shared_ptr<top::evm::xevm_logic_face_t>> m_vm_logic_dict;
+    base::xrwlock_t m_rwlock;
+    std::shared_ptr<top::evm::xevm_logic_face_t> current_vm_logic();
 
 public:
-    void set_evm_logic(std::unique_ptr<top::evm::xevm_logic_face_t> vm_logic_ptr);
+    // add {thread_id, vm_logic} into evm_instance.
+    // !!!Noted: do not forget to call **`remove_evm_logic`** after used in same thread.
+    void add_evm_logic(std::shared_ptr<top::evm::xevm_logic_face_t> vm_logic_ptr);
 
-    // todo delete this
-    // not allow to change logic after set it.
-    xevm_logic_face_t * get_vm_logic_ref();
+    // remove {thread_id, vm_logic} from evm_instance.
+    void remove_evm_logic();
 
+public:
     xbytes_t get_return_value();
     std::pair<uint32_t, uint64_t> get_return_error();
 
