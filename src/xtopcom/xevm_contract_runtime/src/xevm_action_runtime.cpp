@@ -4,9 +4,9 @@
 
 #include "xevm_contract_runtime/xevm_action_runtime.h"
 
+#include "xcommon/xeth_address.h"
 #include "xevm_contract_runtime/xevm_action_session.h"
 #include "xevm_contract_runtime/xevm_context.h"
-#include "xevm_contract_runtime/xevm_logic.h"
 #include "xevm_contract_runtime/xevm_logic.h"
 #include "xevm_contract_runtime/xevm_storage.h"
 #include "xevm_contract_runtime/xevm_type.h"
@@ -14,7 +14,6 @@
 #include "xevm_runner/evm_engine_interface.h"
 #include "xevm_runner/evm_import_instance.h"
 #include "xevm_runner/proto/proto_parameters.pb.h"
-#include "xcommon/xeth_address.h"
 
 NS_BEG2(top, contract_runtime)
 
@@ -35,16 +34,17 @@ evm_common::xevm_transaction_result_t xtop_action_runtime<data::xevm_consensus_a
     // try {
 
     auto storage = top::make_unique<evm::xevm_storage>(m_evm_statectx);
-    std::unique_ptr<top::evm::xevm_logic_face_t> logic_ptr = top::make_unique<top::contract_runtime::evm::xevm_logic_t>(std::move(storage), m_evm_statectx, tx_ctx, evm_contract_manager_);
-    top::evm::evm_import_instance::instance()->set_evm_logic(std::move(logic_ptr));
+    std::shared_ptr<top::evm::xevm_logic_face_t> logic_ptr =
+        std::make_shared<top::contract_runtime::evm::xevm_logic_t>(std::move(storage), m_evm_statectx, tx_ctx, evm_contract_manager_);
+    top::evm::evm_import_instance::instance()->add_evm_logic(logic_ptr);
 
     bool evm_result{true};
 
-    // if deploy, get code and src from action, set_evm_logic, call 'deploy_code()'
+    // if deploy, get code and src from action, call 'deploy_code()'
     if (tx_ctx->action_type() == data::xtop_evm_action_type::deploy_contract) {
         evm_result = deploy_code();
     }
-    // if call, get code from evm manager(lru_cache) or state(state_accessor), get src and target address, set_evm_logic, call 'call_contract()'
+    // if call, get code from evm manager(lru_cache) or state(state_accessor), get src and target address, call 'call_contract()'
     else if (tx_ctx->action_type() == data::xtop_evm_action_type::call_contract) {
         evm_result = call_contract();
     } else {
@@ -80,13 +80,15 @@ evm_common::xevm_transaction_result_t xtop_action_runtime<data::xevm_consensus_a
             evm_common::xh256s_t topics;
             for (int j = 0; j < return_result.logs(i).topics_size(); ++j) {
                 topics.push_back(evm_common::xh256_t(top::to_bytes(return_result.logs(i).topics(j).data())));
-            }            
+            }
             evm_common::xevm_log_t log(address, topics, data);
             result.logs.push_back(log);
         }
         // used_gas:
         result.used_gas = return_result.gas_used();
     }
+
+    top::evm::evm_import_instance::instance()->remove_evm_logic();
 
     return result;
 }
