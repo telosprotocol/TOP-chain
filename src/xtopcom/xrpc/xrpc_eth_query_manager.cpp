@@ -1149,11 +1149,66 @@ void xrpc_eth_query_manager::top_getRelayTransactionByHash(xJson::Value & js_req
     xdbg("top_getRelayTransactionByHash tx hash: %s",  tx_hash.c_str());
 
     xJson::Value js_result;
-    xrpc_loader_t::load_relay_tx_indx_detail(tx_hash_str, base::enum_transaction_subtype_send, js_result);
- 
-    js_rsp["result"] = js_result;
-    xdbg("xrpc_eth_query_manager::top_getRelayTransactionByHash ok.tx hash:%s", tx_hash.c_str());
+    xtx_location_t  txlocation{"", ""};
+    data::xeth_transaction_t eth_transaction;
+    data::xeth_store_receipt_t evm_tx_receipt;
+    if(true == xrpc_loader_t::load_relay_tx_indx_detail(tx_hash_str, txlocation, eth_transaction, evm_tx_receipt)) {
+
+        std::error_code ec;
+        xrpc_eth_parser_t::transaction_to_json(txlocation, eth_transaction, js_result, ec);
+        if (ec) {
+            xerror("xrpc_eth_query_manager::eth_getTransactionByHash fail-transaction_to_json.tx hash:%s", tx_hash.c_str());
+            js_rsp["result"] = xJson::Value::null;
+            return;
+        }
+        js_rsp["result"] = js_result;
+        xdbg("xrpc_eth_query_manager::top_getRelayTransactionByHash ok.tx hash:%s", tx_hash.c_str());
+    } else {
+        xerror("xrpc_eth_query_manager::eth_getTransactionByHash fail-transaction_to_json.tx hash:%s", tx_hash.c_str());
+        js_rsp["result"] = xJson::Value::null;
+    }    
     return;
 }
+
+void xrpc_eth_query_manager::top_getRelayTransactionReceipt(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
+    if (!eth::EthErrorCode::check_req(js_req, js_rsp, 1))
+        return;
+    std::string tx_hash = js_req[0].asString();
+    if (!eth::EthErrorCode::check_hex(tx_hash, js_rsp, 0, eth::enum_rpc_type_hash))
+        return;
+    if (!eth::EthErrorCode::check_hash(tx_hash, js_rsp))
+        return;
+
+    std::error_code ec;
+    auto tx_hash_bytes = top::from_hex(tx_hash, ec);
+    if (ec) {
+        xdbg("xrpc_eth_query_manager::top_getRelayTransactionReceipt from_hex fail: %s",  tx_hash.c_str());
+        return;
+    }
+    std::string raw_tx_hash = top::to_string(tx_hash_bytes);
+    xdbg("xrpc_eth_query_manager::top_getRelayTransactionReceipt tx hash: %s",  tx_hash.c_str());
+
+    xJson::Value js_result;
+    xtx_location_t  txlocation{"", ""};
+    data::xeth_transaction_t eth_transaction;
+    data::xeth_store_receipt_t evm_tx_receipt;
+    if(true == xrpc_loader_t::load_relay_tx_indx_detail(raw_tx_hash, txlocation, eth_transaction, evm_tx_receipt)) {
+
+        std::error_code ec;
+        xrpc_eth_parser_t::receipt_to_json(txlocation, eth_transaction,evm_tx_receipt, js_result, ec);
+        if (ec) {
+            xerror("xrpc_eth_query_manager::top_getRelayTransactionReceipt fail-transaction_to_json.tx hash:%s", tx_hash.c_str());
+            js_rsp["result"] = xJson::Value::null;
+            return;
+        }
+        js_rsp["result"] = js_result;
+        xdbg("xrpc_eth_query_manager::top_getRelayTransactionReceipt ok.tx hash:%s", tx_hash.c_str());
+    } else {
+        xerror("xrpc_eth_query_manager::top_getRelayTransactionReceipt fail-transaction_to_json.tx hash:%s", tx_hash.c_str());
+        js_rsp["result"] = xJson::Value::null;
+    }    
+    return;
+}
+
 }  // namespace chain_info
 }  // namespace top

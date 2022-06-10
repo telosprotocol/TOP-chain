@@ -218,7 +218,7 @@ namespace data {
         const evm_common::h256              &get_block_root_hash() const { return m_header.get_block_root_hash();}
         const uint64_t                      &get_block_height() const { return m_header.get_block_height();}
         const uint64_t                      &get_timestamp() const { return m_header.get_timestamp();}
-        const std::vector<xeth_receipt_t>   &get_block_receipts() const { return m_receipts;}
+        const std::vector<xeth_receipt_t>   &get_all_receipts() const { return m_receipts;}
         const std::vector<xeth_transaction_t>   &get_all_transactions() { return m_transactions ;}
         std::string                         dump() const;
 

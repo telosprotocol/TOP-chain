@@ -9,6 +9,7 @@
 #include "xtxexecutor/xtransaction_fee.h"
 #include "xbasic/xhex.h"
 #include "xdata/xrelay_block.h"
+#include "xrpc/xrpc_eth_parser.h"
 
 namespace top {
 
@@ -69,72 +70,6 @@ xtxindex_detail_ptr_t  xrpc_loader_t::load_tx_indx_detail(const std::string & ra
 }
 
 
-
-bool  xrpc_loader_t::load_relay_tx_indx_detail(const std::string & raw_tx_hash,base::enum_transaction_subtype type,  xJson::Value &js_result) {
-    base::xauto_ptr<base::xvtxindex_t> txindex = base::xvchain_t::instance().get_xtxstore()->load_relay_tx_idx(raw_tx_hash, type);
-    if (nullptr == txindex) {
-        xwarn("xrpc_loader_t::load_tx_indx_detail,fail to index for hash:%s,type:%d", base::xstring_utl::to_hex(raw_tx_hash).c_str(), type);
-        return false;
-    }  
-    xinfo("xblockacct_t:load_relay_tx_indx_detail  %s ",   base::xstring_utl::to_hex(raw_tx_hash).c_str());
-    
-    base::xvaccount_t _vaddress(txindex->get_block_addr());
-    auto _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_vaddress, txindex->get_block_height(), base::enum_xvblock_flag_committed,false);
-    if (nullptr == _block) {
-        xwarn("xrpc_loader_t::load_tx_indx_detail,fail to load block for hash:%s,type:%d, account address %s",
-              base::xstring_utl::to_hex(raw_tx_hash).c_str(), type, txindex->get_block_addr().c_str());
-        return false;
-    }
-    xdbg("xblockacct_t:load_relay_tx_indx_detail  decode relay bock");
-    std::error_code ec;
-    top::data::xrelay_block  extra_relay_block;
-    auto relay_block_data = _block->get_header()->get_extra_data();
-    extra_relay_block.decodeBytes(to_bytes(relay_block_data), ec);
-    if (ec) {
-        xwarn("xblockacct_t:store_relay_txs decodeBytes decodeBytes error %s; err msg %s", 
-        ec.category().name(), ec.message().c_str());
-        return false;
-    }
-
-    //get tx hash from txs
-    data::xeth_transaction_t tx_iter;
-    uint32_t           tx_index = 0;
-    std::vector<base::xvtxindex_ptr> sub_txs;
-    for ( auto &tx: extra_relay_block.get_all_transactions()) {
-        
-        if (!tx.get_tx_hash().empty()) {
-             std::string tx_hash = std::string(reinterpret_cast<char*>(tx.get_tx_hash().data()), tx.get_tx_hash().size());
-            if (tx_hash == raw_tx_hash) {
-                xinfo("xblockacct_t:load_relay_tx_indx_detail find hash %s ",   base::xstring_utl::to_hex(raw_tx_hash).c_str());
-                tx_iter = tx;
-                break;
-            }
-        }
-        tx_index++;
-    }
-
-    //find tx 
-    if(!tx_iter.get_tx_hash().empty()) {
-        xinfo("xblockacct_t:load_relay_tx_indx_detail  hash %s result",  base::xstring_utl::to_hex(raw_tx_hash).c_str());
-        data::xeth_receipt_t receipt = extra_relay_block.get_block_receipts()[tx_index];
-        js_result["transactionHash"] = raw_tx_hash;
-        std::string block_hash = std::string("0x") + extra_relay_block.get_block_hash().hex();
-        js_result["blockHash"] = block_hash;
-
-        std::string tx_idx = "0x" + base::xstring_utl::tostring(tx_index);
-        js_result["transactionIndex"] = tx_idx;
-        std::stringstream outstr;
-        outstr << "0x" << std::hex << extra_relay_block.get_header().get_block_height();
-        std::string block_num = outstr.str();
-        js_result["blockNumber"] = block_num;
-
-        //otehrs 
-
-        return true;
-    }
-
-    return false;
-}
 void xrpc_loader_t::parse_common_info(const xtxindex_detail_ptr_t & txindex, xJson::Value & jv) {
     jv["account"] = txindex->get_txindex()->get_block_addr();
     jv["height"] = static_cast<xJson::UInt64>(txindex->get_txindex()->get_block_height());
@@ -262,6 +197,78 @@ xtxindex_detail_ptr_t xrpc_loader_t::load_ethtx_indx_detail(const std::string & 
         index_detail->set_raw_tx(raw_tx.get());
     }
     return index_detail;
+}
+
+bool xrpc_loader_t::load_relay_tx_indx_detail(const std::string & raw_tx_hash, xtx_location_t & txlocation, data::xeth_transaction_t &eth_transaction,  
+                                              data::xeth_store_receipt_t &evm_tx_receipt) {
+    base::enum_transaction_subtype type = base::enum_transaction_subtype_send;
+    base::xauto_ptr<base::xvtxindex_t> txindex = base::xvchain_t::instance().get_xtxstore()->load_relay_tx_idx(raw_tx_hash, type);
+    if (nullptr == txindex) {
+        xwarn("xrpc_loader_t::load_ethtx_indx_detail,fail to index for hash:%s,type:%d", base::xstring_utl::to_hex(raw_tx_hash).c_str(), type);
+        return false;
+    }  
+
+    base::xvaccount_t _vaddress(txindex->get_block_addr());
+    auto _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_vaddress, txindex->get_block_height(), txindex->get_block_hash(), false);
+    if (nullptr == _block) {
+        xwarn("xrpc_loader_t::load_relay_tx_indx_detail,fail to load block for hash:%s,type:%d", base::xstring_utl::to_hex(raw_tx_hash).c_str(), type);
+        return false;
+    }
+
+    xdbg("xrpc_loader_t:load_relay_tx_indx_detail  decode relay bock with tx_hash: %s ", base::xstring_utl::to_hex(raw_tx_hash).c_str());
+    std::error_code ec;
+    top::data::xrelay_block  extra_relay_block;
+    auto relay_block_data = _block->get_header()->get_extra_data();
+    extra_relay_block.decodeBytes(to_bytes(relay_block_data), ec);
+    if (ec) {
+        xwarn("xrpc_loader_t:load_relay_tx_indx_detail decodeBytes decodeBytes error %s; err msg %s", 
+        ec.category().name(), ec.message().c_str());
+        return false;
+    }
+
+    //get tx hash from txs
+    uint64_t tx_index = 0;
+    for ( auto &tx: extra_relay_block.get_all_transactions()) {
+        if (tx.get_tx_hash().empty()) {
+            xerror("xrpc_loader_t:load_relay_tx_indx_detail block:%s tx hash is empty", _block->dump().c_str());
+            return false;
+        }
+        std::string tx_hash = std::string(reinterpret_cast<char*>(tx.get_tx_hash().data()), tx.get_tx_hash().size());
+        if (tx_hash == raw_tx_hash) {
+            xinfo("xblockacct_t:load_relay_tx_indx_detail find hash %s ", base::xstring_utl::to_hex(raw_tx_hash).c_str());
+            eth_transaction = tx;
+            break;
+        }
+        tx_index++;
+    }
+
+    //find tx 
+    if (tx_index < extra_relay_block.get_all_transactions().size()) {
+        if (tx_index >= extra_relay_block.get_all_receipts().size()) {
+            xerror("xrpc_loader_t:load_relay_tx_indx_detail block:%s tx_index %d and receipt_size  %d not match",
+                  _block->dump().c_str(), tx_index, extra_relay_block.get_all_transactions().size());
+            return false;
+        }
+        
+        txlocation.m_tx_hash = top::to_hex_prefixed(raw_tx_hash);
+        txlocation.m_transaction_index = xrpc_eth_parser_t::uint64_to_hex_prefixed(tx_index);
+        txlocation.m_block_hash = to_hex_prefixed(txindex->get_block_hash());
+        txlocation.m_block_number = xrpc_eth_parser_t::uint64_to_hex_prefixed(txindex->get_block_height());
+
+        data::xeth_receipt_t tx_receipt = extra_relay_block.get_all_receipts()[tx_index];
+        evm_tx_receipt.set_tx_status(tx_receipt.get_tx_status());
+        evm_tx_receipt.set_logs(tx_receipt.get_logs());
+        evm_tx_receipt.set_cumulative_gas_used(tx_receipt.get_cumulative_gas_used());
+
+        /*evm_tx_receipt.set_gas_price();
+        evm_tx_receipt.set_gas_used();
+        evm_tx_receipt.set_contract_address();*/
+        return true;
+    } else {
+        xwarn("xrpc_loader_t:load_relay_tx_indx_detail block:%s tx hash %s no found.", _block->dump().c_str(), base::xstring_utl::to_hex(raw_tx_hash).c_str());
+    }
+    return false;
+
 }
 
 
