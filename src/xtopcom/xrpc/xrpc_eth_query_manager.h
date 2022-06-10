@@ -73,6 +73,7 @@ public:
         REGISTER_ETH_QUERY_METHOD(eth_getStorageAt);
         REGISTER_ETH_QUERY_METHOD(eth_getLogs);
         REGISTER_ETH_QUERY_METHOD(top_getRelayBlockByNumber);
+        REGISTER_ETH_QUERY_METHOD(top_getRelayBlockByHash);
         REGISTER_ETH_QUERY_METHOD(top_relayBlockNumber);
         REGISTER_ETH_QUERY_METHOD(top_getRelayTransactionByHash);
         REGISTER_ETH_QUERY_METHOD(top_getRelayTransactionReceipt);
