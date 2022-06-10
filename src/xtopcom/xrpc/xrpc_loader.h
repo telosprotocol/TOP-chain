@@ -30,9 +30,9 @@ private:
 };
 using xtxindex_detail_ptr_t = std::shared_ptr<xtxindex_detail_t>;
 
+struct xtx_location_t;
 class xrpc_loader_t {
  public:
-    static   bool                   load_relay_tx_indx_detail(const std::string & raw_tx_hash, base::enum_transaction_subtype type,  xJson::Value &js_result);
     static  xtxindex_detail_ptr_t   load_tx_indx_detail(const std::string & raw_tx_hash,base::enum_transaction_subtype type);
  public:  // json transfer
     static  xJson::Value            parse_send_tx(const xtxindex_detail_ptr_t & txindex_detail);
@@ -45,6 +45,13 @@ class xrpc_loader_t {
 
  public: // load ethdata
     static  xtxindex_detail_ptr_t   load_ethtx_indx_detail(const std::string & raw_tx_hash);
+ 
+ public: //load relay block data
+    static  bool                    load_relay_tx_indx_detail(const std::string & raw_tx_hash, xtx_location_t &txlocation, 
+                                                              data::xeth_transaction_t &eth_transaction, 
+                                                              data::xeth_store_receipt_t &evm_tx_receipt);
+
+                                                   
 };
 
 }  // namespace chain_info

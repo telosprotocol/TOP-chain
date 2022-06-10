@@ -47,6 +47,7 @@ public:
         m_supported_method.insert("top_getRelayBlockByNumber");
         m_supported_method.insert("top_relayBlockNumber");
         m_supported_method.insert("top_getRelayTransactionByHash");
+        m_supported_method.insert("top_getRelayTransactionReceipt");
     }
     bool supported_method(const std::string& method) {
         if (m_supported_method.find(method) == m_supported_method.end())
