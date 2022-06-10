@@ -160,7 +160,7 @@ xrelay_block_inner_header xrelay_block_inner_header_create()
     return _inner_header;
 }
 
-xrelay_block_header xrelay_block_header_create()
+xrelay_block_header xrelay_block_header_create(bool election_flag = true, bool signature_flag = true)
 {
     xrelay_block_header _block_header;
     xrelay_block_inner_header _inner_header = xrelay_block_inner_header_create();
@@ -172,14 +172,17 @@ xrelay_block_header xrelay_block_header_create()
     for (int i = 0; i< TEST_ELECTIONS_NUM; i++) {
         election_set.elections_vector.push_back(xrelay_election_create());
     }
-    _block_header.set_elections_next(election_set);
+    if(true == election_flag){
+        _block_header.set_elections_next(election_set);
+    }
 
     std::vector<xrelay_signature_node_t> signature_nodes;
     for (int i = 0; i < TEST_SIGNATURE_NUM; i++) {
         signature_nodes.push_back(xrelay_signature_node_t_create(true));
     }
-
-    _block_header.add_signature_nodes(signature_nodes);
+    if(true == signature_flag){
+        _block_header.add_signature_nodes(signature_nodes);
+    }
 
     return _block_header;
 }
@@ -416,7 +419,6 @@ TEST_F(test_relay_block, serialize_xrelay_inner_header) {
     EXPECT_EQ(inner_header_dst.get_block_root_hash(), inner_header_src.get_block_root_hash());
    
   // std::cout << " innder_header " << toHex(rlp_innder_header.out()) << std::endl;
-
 }
 
 TEST_F(test_relay_block, serialize_xrelay_block_header_without_signature) {
@@ -452,6 +454,38 @@ TEST_F(test_relay_block, serialize_xrelay_block_header_without_signature) {
         EXPECT_EQ(xrelay_election_dst.public_key_y, xrelay_election_src.public_key_y);
         EXPECT_EQ(xrelay_election_dst.stake, xrelay_election_src.stake);
     }
+
+    //std::cout << " block_header serialize_xrelay_block_header_without_signature  " << toHex(rlp_block_header.out()) << std::endl;
+}
+
+
+TEST_F(test_relay_block, serialize_xrelay_block_header_without_election) {
+    std::error_code  ec;
+    xrelay_block_header block_header_src = xrelay_block_header_create(false);
+
+    EXPECT_EQ(block_header_src.get_elections_sets().size(), 0);
+    EXPECT_EQ(block_header_src.get_signatures_sets().size(), TEST_SIGNATURE_NUM);
+
+    xbytes_t rlp_block_header = block_header_src.encodeBytes();
+    xrelay_block_header block_header_dst;
+    block_header_dst.decodeBytes(rlp_block_header, ec);
+
+    xrelay_block_inner_header inner_header_dst = block_header_dst.get_inner_header();
+    xrelay_block_inner_header inner_header_src = block_header_src.get_inner_header();
+ 
+    EXPECT_EQ(inner_header_dst.get_block_height(), inner_header_src.get_block_height());
+    EXPECT_EQ(inner_header_dst.get_epochID(), inner_header_src.get_epochID());
+    EXPECT_EQ(inner_header_dst.get_timestamp(), inner_header_src.get_timestamp());
+    EXPECT_EQ(inner_header_dst.get_txs_root_hash(), inner_header_src.get_txs_root_hash());
+    EXPECT_EQ(inner_header_dst.get_receipts_root_hash(), inner_header_src.get_receipts_root_hash());
+    EXPECT_EQ(inner_header_dst.get_block_root_hash(), inner_header_src.get_block_root_hash());
+
+    EXPECT_EQ(block_header_dst.get_prev_block_hash(), block_header_src.get_prev_block_hash());
+    EXPECT_EQ(block_header_dst.get_block_hash(), block_header_src.get_block_hash());
+
+    EXPECT_EQ(block_header_dst.get_elections_sets().size(), 0);
+    EXPECT_EQ(block_header_src.get_elections_sets().size(), 0);
+   
 
     //std::cout << " block_header serialize_xrelay_block_header_without_signature  " << toHex(rlp_block_header.out()) << std::endl;
 }
