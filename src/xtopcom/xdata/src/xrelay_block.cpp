@@ -60,27 +60,28 @@ void xrelay_election_group_t::streamRLP(evm_common::RLPStream &_s)  const {
 }
 
 bool xrelay_election_group_t::decodeRLP(evm_common::RLP const& _r, std::error_code & ec) {
-    if (!_r.isList() || _r.itemCount() != 2) {
-        ec = common::error::xerrc_t::invalid_rlp_stream;
-        xerror("xrelay_election_group_t::decodeRLP fail item count,%d", _r.itemCount());
-        return false;
-    }
-
-    election_epochID = _r[0].toInt<uint64_t>();  
-    evm_common::RLP const& electionList = RLP(_r[1].data()); 
-
-    unsigned itemCount = electionList.itemCount();
-    for(unsigned i = 0; i < itemCount; i++ ) {
-        evm_common::RLP const& rlp_election = RLP(electionList[i].data());
-        xrelay_election_node_t election;
-        election.decodeRLP(rlp_election, ec);
-        if (ec) {
-            xerror("xrelay_election_group_t::decodeRLP  election fail.");
+    if (_r.isList()) {
+        if (_r.itemCount() != 2) {
+            ec = common::error::xerrc_t::invalid_rlp_stream;
+            xerror("xrelay_election_group_t::decodeRLP fail item count,%d", _r.itemCount());
             return false;
         }
-        elections_vector.emplace_back(election);
-    }
+        election_epochID = _r[0].toInt<uint64_t>();  
+        evm_common::RLP const& electionList = RLP(_r[1].data()); 
 
+        unsigned itemCount = electionList.itemCount();
+        for(unsigned i = 0; i < itemCount; i++ ) {
+            evm_common::RLP const& rlp_election = RLP(electionList[i].data());
+            xrelay_election_node_t election;
+            election.decodeRLP(rlp_election, ec);
+            if (ec) {
+                xerror("xrelay_election_group_t::decodeRLP  election fail.");
+                return false;
+            }
+            elections_vector.emplace_back(election);
+        }
+    }
+    //"" is noting todo 
     return true;
 }
 
