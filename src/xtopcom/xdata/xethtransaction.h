@@ -80,6 +80,7 @@ class xeth_transaction_t {
     evm_common::h256 const&    get_signS() const { return m_signS; }
 
  public:
+    void    set_tx_version(enum_ethtx_version version) {m_version = version;}
     void    set_chainid(evm_common::u256 const& value) {m_chainid = value;}
     void    set_nonce(evm_common::u256 const& value) {m_nonce = value;}
     void    set_max_priority_fee_per_gas(evm_common::u256 const& value) {m_max_priority_fee_per_gas = value;}

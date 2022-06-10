@@ -104,7 +104,7 @@ class xtransaction_v3_t : public xbase_dataunit_t<xtransaction_v3_t, xdata_type_
     virtual void set_tx_type(uint16_t type) override {m_transaction_type = static_cast<enum_xtransaction_type>(type); set_action_type();}
     virtual uint16_t get_tx_type() const override {return m_transaction_type;};
     virtual void set_tx_len(uint16_t len) override {m_transaction_len = len;};
-    virtual uint16_t get_tx_len() const override {return m_transaction_len;};
+    virtual uint32_t get_tx_len() const override {return m_transaction_len;};
     virtual void set_tx_version(uint32_t version) override {}
     virtual uint32_t get_tx_version() const override {return xtransaction_version_3;}
     virtual void set_deposit(uint32_t deposit) override {xassert(false);}
@@ -147,7 +147,7 @@ private:
     std::string     m_target_addr;
     enum_xtransaction_type m_transaction_type; // one byte
     std::string     m_authorization;  // serialize with compat_var
-    mutable uint16_t m_transaction_len{0};     // max 64KB
+    mutable uint32_t m_transaction_len{0};     // max 64KB
 };
 
 using xtransaction_v3_ptr_t = xobject_ptr_t<xtransaction_v3_t>;
