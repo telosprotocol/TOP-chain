@@ -138,7 +138,6 @@ void xrpc_eth_parser_t::transaction_to_json(xtx_location_t const& txlocation, da
     js_v["r"] = top::to_hex_prefixed(ethtx.get_signR().asBytes());
     js_v["s"] = top::to_hex_prefixed(ethtx.get_signS().asBytes());
 }
-
 void xrpc_eth_parser_t::blockheader_to_json(base::xvblock_t* _block, xJson::Value & js_v, std::error_code & ec) {
     data::xeth_header_t ethheader;
     data::xblockextract_t::unpack_ethheader(_block, ethheader, ec);

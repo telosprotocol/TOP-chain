@@ -3,7 +3,7 @@
 #include "json/json.h"
 #include "xrpc/xrpc_loader.h"
 #include "xevm_common/xevm_transaction_result.h"
-
+#include "xdata/xethtransaction.h"
 
 namespace top {
 
@@ -39,7 +39,6 @@ class xrpc_eth_parser_t {
     static  void transaction_to_json(xtx_location_t const& txlocation, data::xtransaction_ptr_t const& rawtx, xJson::Value & js_v, std::error_code & ec);
     static  void transaction_to_json(xtx_location_t const& txlocation, data::xeth_transaction_t const& ethtx, xJson::Value & js_v, std::error_code & ec);
     static  void blockheader_to_json(base::xvblock_t* _block, xJson::Value & js_v, std::error_code & ec);
-
     static  data::xtransaction_ptr_t json_to_ethtx(xJson::Value const& request, data::eth_error& ec);
 
     static  std::string                 uint64_to_hex_prefixed(uint64_t value);
