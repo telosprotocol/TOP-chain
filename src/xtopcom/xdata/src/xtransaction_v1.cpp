@@ -256,7 +256,7 @@ bool xtransaction_v1_t::transaction_len_check() const {
     stream << m_transaction_hash;
     stream << m_authorization;
 
-    if (stream.size() - begin_pos != get_tx_len()) {
+    if ((stream.size() - begin_pos) != (int32_t)get_tx_len()) {
         xwarn("xtransaction_v1_t::transaction_len_check tx length not match. %d %d", stream.size() - begin_pos, get_tx_len());
         return false;
     }

@@ -124,6 +124,21 @@ bool xtransaction_v3_t::transaction_len_check() const {
     return true;
 }
 
+void xtransaction_v3_t::unique_check(std::error_code & ec) const {
+    if (m_ethtx.get_tx_version() != EIP_MAX) {
+        ec = error::xenum_errc::tx_invalid_version;
+        return;
+    }
+    if (m_ethtx.get_chainid() != XGET_CONFIG(chain_id)) {
+        ec = error::xenum_errc::tx_invalid_chainid;
+        return;
+    }
+    if (m_ethtx.get_gas() > XGET_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit)) {
+        ec = error::xenum_errc::tx_invalid_chainid;
+        return;
+    }
+}
+
 int32_t xtransaction_v3_t::make_tx_create_user_account(const std::string & addr) {
     return xsuccess;
 }

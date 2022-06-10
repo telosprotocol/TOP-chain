@@ -33,6 +33,9 @@ enum class xenum_errc {
 
     erc20_allowance_spender_not_found,
     erc20_allowance_not_enough,
+    tx_invalid_chainid,
+    tx_invalid_version,
+    tx_invalid_gas_limit,
 
     eth_server_error = -32000,
 

@@ -125,6 +125,8 @@ void xrpc_eth_parser_t::transaction_to_json(xtx_location_t const& txlocation, da
     js_v["from"] = ethtx.get_from().to_hex_string();
     js_v["gas"] = u256_to_hex_prefixed(ethtx.get_gas());
     js_v["gasPrice"] = u256_to_hex_prefixed(ethtx.get_max_fee_per_gas());
+    js_v["maxFeePerGas"] = u256_to_hex_prefixed(ethtx.get_max_fee_per_gas());
+    js_v["maxPriorityFeePerGas"] = u256_to_hex_prefixed(ethtx.get_max_priority_fee_per_gas());
     js_v["input"] = top::to_hex_prefixed(ethtx.get_data());
     js_v["nonce"] = u256_to_hex_prefixed(ethtx.get_nonce());
     if (!ethtx.get_to().empty()) {

@@ -285,6 +285,13 @@ int32_t xtx_verifier::verify_send_tx_source(data::xtransaction_t const * trx_ptr
 }
 
 int32_t xtx_verifier::verify_send_tx_validation(data::xtransaction_t const * trx_ptr) {
+    std::error_code ec;
+    trx_ptr->unique_check(ec);
+    if (ec) {
+        xwarn("[global_trace][xtx_verifier][verify_send_tx_validation][fail], tx:%s,tx unique check invalid", trx_ptr->dump().c_str());
+        return xverifier_error_tx_basic_validation_invalid;
+    }
+
     if (!trx_ptr->transaction_type_check()) {
         xwarn("[global_trace][xtx_verifier][verify_send_tx_validation][fail], tx:%s,tx type invalid", trx_ptr->dump().c_str());
         return xverifier_error_tx_basic_validation_invalid;

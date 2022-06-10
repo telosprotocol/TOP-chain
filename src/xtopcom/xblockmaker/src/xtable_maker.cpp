@@ -625,7 +625,7 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
     xunitbuildber_txkeys_mgr_t  txkeys_mgr;
     int64_t tgas_balance_change = 0;
     for (auto & txout : execute_output.pack_outputs) {
-        xinfo("xtable_maker_t::make_light_table_v2 is_leader=%d,%s,tx=%s,txout=%s,action=%s", 
+        xinfo("xtable_maker_t::make_light_table_v2 packtx is_leader=%d,%s,tx=%s,txout=%s,action=%s", 
             is_leader, cs_para.dump().c_str(), txout.m_tx->dump().c_str(), txout.dump().c_str(),txout.m_tx->dump_execute_state().c_str());
         table_para.push_tx_to_proposal(txout.m_tx);  // set pack origin tx to proposal
         txs_info.push_back(build_tx_info(txout.m_tx));
@@ -638,6 +638,8 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
     }
 
     for (auto & txout : execute_output.drop_outputs) {
+        xinfo("xtable_maker_t::make_light_table_v2 droptx is_leader=%d,%s,tx=%s,txout=%s,action=%s", 
+            is_leader, cs_para.dump().c_str(), txout.m_tx->dump().c_str(), txout.dump().c_str(),txout.m_tx->dump_execute_state().c_str());        
         xtxpool_v2::tx_info_t txinfo(txout.m_tx->get_source_addr(), txout.m_tx->get_tx_hash_256(), txout.m_tx->get_tx_subtype());
         get_txpool()->pop_tx(txinfo);
     }

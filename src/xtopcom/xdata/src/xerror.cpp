@@ -55,6 +55,12 @@ static char const * const errc_to_string(int code) {
 
     case xerrc_t::erc20_allowance_not_enough:
         return "erc20 allowance not enough";
+    case xerrc_t::tx_invalid_chainid:
+        return "tx invalid chainid";
+    case xerrc_t::tx_invalid_version:
+        return "tx invalid version";
+    case xerrc_t::tx_invalid_gas_limit:
+        return "tx invalid gas limit";
 
     case xerrc_t::eth_server_error:
         return "eth transaction server error";
