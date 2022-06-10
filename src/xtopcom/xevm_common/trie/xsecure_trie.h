@@ -23,7 +23,7 @@ private:
     xtrie_t m_trie;
     xbytes_t hashKeyBuf;
     std::shared_ptr<std::map<std::string, xbytes_t>> secKeyCache;
-    std::shared_ptr<xtop_secure_trie> secKeyCacheOwner;  // Pointer to self, replace the key cache on mismatch
+    xtop_secure_trie * secKeyCacheOwner{nullptr};  // Pointer to self, replace the key cache on mismatch
 
 public:
     xtop_secure_trie(xtrie_t _trie) : m_trie{_trie} {
@@ -112,10 +112,13 @@ private:
     // ownership changed (i.e. the current secure trie is a copy of another owning
     // the actual cache).
     std::shared_ptr<std::map<std::string, xbytes_t>> getSecKeyCache() {
-        if (this != secKeyCacheOwner.get()) {
-            secKeyCacheOwner = std::make_shared<xtop_secure_trie>(*this);
+        if (secKeyCacheOwner == nullptr || this != secKeyCacheOwner) {
+            xdbg("getSecKeyCache new, old is %p", secKeyCacheOwner);
+            secKeyCacheOwner = this;
             secKeyCache = std::make_shared<std::map<std::string, xbytes_t>>();
+            assert(secKeyCacheOwner == this);
         }
+        xdbg("getSecKeyCache at %p", secKeyCacheOwner);
         return secKeyCache;
     }
 };

@@ -72,6 +72,7 @@ xbytes_t xtop_secure_trie::GetKey(xbytes_t const & shaKey) {
     if (sc->find(top::to_string(shaKey)) != sc->end()) {
         return sc->at(top::to_string(shaKey));
     }
+    xdbg("xtop_secure_trie::GetKey find key from trie_db preimage");
     return m_trie.trie_db()->preimage(xhash256_t{shaKey});
 }
 

@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.8)
 
 aux_source_directory(./ tests_src)
+aux_source_directory(./xtest_trie/ trie_test_src)
 
-add_executable(xevm_common_test ${tests_src})
+add_executable(xevm_common_test ${tests_src} ${trie_test_src})
 
 add_dependencies(xevm_common_test xevm_common xutility xcrypto)
 # message("EVM_ENGINE_DIR: " ${EVM_ENGINE_DIR})
