@@ -156,9 +156,7 @@ void xrpc_eth_parser_t::blockheader_to_json(base::xvblock_t* _block, xJson::Valu
     js_v["uncles"].resize(0);
     js_v["sha3Uncles"] = std::string("0x") + std::string(64, '0');
 
-    // TODO(jimmy) should implement correctly later
-    js_v["size"] = "0x219";
-    // already implemented
+    js_v["size"] = uint64_to_hex_prefixed(_block->get_block_size());
     js_v["gasLimit"] = uint64_to_hex_prefixed(ethheader.get_gaslimit());
     js_v["gasUsed"] = uint64_to_hex_prefixed(ethheader.get_gasused());
     js_v["hash"] = top::to_hex_prefixed(_block->get_block_hash());

@@ -708,6 +708,7 @@ namespace top
             const std::string           get_binlog() {return get_output()->get_binlog();}
             bool                        set_offblock_snapshot(const std::string & snapshot);
             bool                        is_full_state_block();  // used for full-block sync
+            uint64_t                    get_block_size();
 
             //check whether match hash of resource first
             bool                        set_input_resources(const std::string & raw_resource_data);
