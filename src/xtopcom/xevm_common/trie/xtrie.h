@@ -18,6 +18,9 @@
 
 NS_BEG3(top, evm_common, trie)
 
+// emptyRoot is the known root hash of an empty trie.
+static constexpr auto emptyRootBytes = ConstHexBytes<32>("56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421");
+
 class xtop_trie {
 private:
     xtrie_db_ptr_t m_db;

@@ -64,6 +64,19 @@ xbytes_t xtop_trie_node_rlp::EncodeToBytes(xtrie_node_face_ptr_t node) {
     }
 }
 
+template <std::size_t len>
+xbytes_t xtop_trie_node_rlp::EncodeNodesToBytes(std::array<xtrie_node_face_ptr_t, len> nodes) {
+    xbytes_t encoded;
+    for (auto _n : nodes) {
+        if (_n == nullptr) {
+            append(encoded, RLP::encode(nilValueNode.data()));  // 0x80 for empty bytes.
+            continue;
+        }
+        append(encoded, EncodeToBytes(_n));
+    }
+    return RLP::encodeList(encoded);
+}
+
 xtrie_node_face_ptr_t xtop_trie_node_rlp::mustDecodeNode(xhash256_t const & hash_bytes, xbytes_t const & buf) {
     std::error_code ec;
     auto n = decodeNode(hash_bytes, buf, ec);

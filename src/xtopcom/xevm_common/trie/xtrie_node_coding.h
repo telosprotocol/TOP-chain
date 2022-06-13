@@ -13,6 +13,9 @@ class xtop_trie_node_rlp {
 public:
     static xbytes_t EncodeToBytes(xtrie_node_face_ptr_t node);
 
+    template <std::size_t len>
+    static xbytes_t EncodeNodesToBytes(std::array<xtrie_node_face_ptr_t, len> nodes);
+
     static xtrie_node_face_ptr_t decodeNode(xhash256_t const & hash_bytes, xbytes_t const & buf, std::error_code & ec);
     static xtrie_node_face_ptr_t decodeNode(xtrie_hash_node_t hash, xbytes_t const & buf, std::error_code & ec);
     static xtrie_node_face_ptr_t mustDecodeNode(xhash256_t const & hash_bytes, xbytes_t const & buf);

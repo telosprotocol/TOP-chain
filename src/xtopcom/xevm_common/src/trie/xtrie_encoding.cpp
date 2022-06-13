@@ -25,7 +25,25 @@ xbytes_t hexToCompact(xbytes_t hex) {
     return buf;
 }
 
-std::size_t hexToCompactInPlace(xbytes_t & hex);  // todo impl for stacktrie
+std::size_t hexToCompactInPlace(xbytes_t & hex) {
+    auto firstByte = xbyte_t{0};
+    auto hexLen = hex.size();
+    if (hasTerm(hex)) {
+        firstByte = 1 << 5;
+        hexLen--;  // last part was the terminator, ignore that
+    }
+    std::size_t binLen = hexLen / 2 + 1, ni = 0, bi = 1;
+    if ((hexLen & 1) == 1) {
+        firstByte |= 1 << 4;  // odd flag
+        firstByte |= hex[0];  // first nibble is contained in the first byte
+        ni++;
+    }
+    for (; ni < hexLen; bi = bi + 1, ni = ni + 2) {
+        hex[bi] = hex[ni] << 4 | hex[ni + 1];
+    }
+    hex[0] = firstByte;
+    return binLen;
+}
 
 xbytes_t compactToHex(xbytes_t compact) {
     if (compact.size() == 0) {
