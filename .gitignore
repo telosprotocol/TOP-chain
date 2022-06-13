@@ -38,7 +38,7 @@ src/xtopcom/xvledger/test/xvledger-test.xcodeproj
 macos
 
 src/xtopcom/xevm_engine_rs/target
-**/Cargo.lock
+src/xtopcom/xwasmer_engine/target
 pkg/
 xevm_b
 go.mod
