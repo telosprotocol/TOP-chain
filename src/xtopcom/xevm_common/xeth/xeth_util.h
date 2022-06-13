@@ -1,15 +1,11 @@
 #pragma once
-#include <string>
-#include <vector>
-#include "xbase/xint.h"
-#include "xbasic/xuint.hpp"
 #include "xevm_common/common.h"
 #include "xevm_common/rlp.h"
 #include "xevm_common/fixed_hash.h"
 #include "xutility/xhash.h"
 
 NS_BEG3(top, evm_common, eth)
-using namespace top::evm_common::rlp;
+using namespace top::evm_common;
 class util {
 #define block_number_of_per_epoch 30000
 #define max_epoch 2048

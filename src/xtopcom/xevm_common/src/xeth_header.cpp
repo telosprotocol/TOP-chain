@@ -1,14 +1,33 @@
-#include "xdepends/include/json/reader.h"
 #include "xevm_common/xeth/xeth_header.h"
-#include "xevm_common/xeth/xeth_util.h"
-#include "xevm_common/rlp.h"
-#include "xutility/xhash.h"
+
+#if defined(__clang__)
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wpedantic"
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wpedantic"
+#elif defined(_MSC_VER)
+#    pragma warning(push, 0)
+#endif
+
 #include "xbase/xcontext.h"
+
+#if defined(__clang__)
+#    pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic pop
+#elif defined(_MSC_VER)
+#    pragma warning(pop)
+#endif
+
+#include "xdepends/include/json/reader.h"
+#include "xevm_common/rlp.h"
+#include "xevm_common/xeth/xeth_util.h"
+#include "xutility/xhash.h"
 // The log bloom's size (2048-bit).
 NS_BEG3(top, evm_common, eth)
 
 using namespace top::evm_common;
-using namespace top::evm_common::rlp;
 bool xeth_block_header_t::fromJson(const std::string& content) {
     xJson::Reader reader;
     xJson::Value root;
@@ -435,6 +454,47 @@ int xeth_block_header_t::from_string(const std::string & s) {
     stream >> m_isBaseFee;
     const int end_pos = stream.size();
     return (begin_pos - end_pos);
+}
+
+int xeth_block_header_t::from_rlp(const xbytes_t & bytes) {
+    auto l = RLP::decodeList(bytes);
+    if (!l.remainder.empty()) {
+        xassert(false);
+        return -1;
+    }
+    m_parentHash = static_cast<Hash>(l.decoded[0]);
+    m_uncleHash = static_cast<Hash>(l.decoded[1]);
+    m_miner = static_cast<Address>(l.decoded[2]);
+    m_stateMerkleRoot = static_cast<Hash>(l.decoded[3]);
+    m_txMerkleRoot = static_cast<Hash>(l.decoded[4]);
+    m_receiptMerkleRoot = static_cast<Hash>(l.decoded[5]);
+    m_bloom = static_cast<LogBloom>(l.decoded[6]);
+    m_difficulty = static_cast<bigint>(evm_common::fromBigEndian<u256>(l.decoded[7]));
+    m_number = static_cast<bigint>(evm_common::fromBigEndian<u256>(l.decoded[8]));
+    m_gasLimit = static_cast<uint64_t>(evm_common::fromBigEndian<u64>(l.decoded[9]));
+    m_gasUsed = static_cast<uint64_t>(evm_common::fromBigEndian<u64>(l.decoded[10]));
+    m_time = static_cast<uint64_t>(evm_common::fromBigEndian<u64>(l.decoded[11]));
+    m_extra = l.decoded[12];
+    m_mixDigest = static_cast<Hash>(l.decoded[13]);
+    m_nonce = static_cast<BlockNonce>(l.decoded[14]);
+    if (l.decoded.size() > 15) {
+        m_isBaseFee = true;
+        m_baseFee = static_cast<bigint>(evm_common::fromBigEndian<u256>(l.decoded[15]));
+    }
+    return l.decoded.size();
+}
+
+std::string xeth_block_header_t::dump() {
+    char local_param_buf[256];
+    xprintf(local_param_buf,
+            sizeof(local_param_buf),
+            "miner: %s, height: %s, hash: %s, basefee: %d, %s",
+            m_miner.hex().c_str(),
+            m_number.str().c_str(),
+            hash().hex().c_str(),
+            m_isBaseFee,
+            m_baseFee.str().c_str());
+    return std::string(local_param_buf);
 }
 
 xeth_block_header_with_difficulty_t::xeth_block_header_with_difficulty_t(xeth_block_header_t header, bigint difficulty) : m_header{header}, m_difficult_sum{difficulty} {
