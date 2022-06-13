@@ -32,7 +32,7 @@ public:
     const std::shared_ptr<xtx_entry> query_tx(const std::string & account_addr, const uint256_t & hash) const;
     void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce);
     bool is_repeat_tx(const std::shared_ptr<xtx_entry> & tx) const;
-    const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint32_t & total_num) const;
+    const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(const std::set<base::xtable_shortid_t> & all_table_sids, uint32_t & total_num) const;
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_confirm_tx_ids(uint32_t & total_num) const;
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_discrete_confirm_tx_ids(const std::map<base::xtable_shortid_t, xneed_confirm_ids> & need_confirm_ids_map,
                                                                                                uint32_t & total_num) const;
