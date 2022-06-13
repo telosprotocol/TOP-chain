@@ -9,6 +9,9 @@
 NS_BEG3(top, evm_common, trie)
 
 xbytes_t hexToCompact(xbytes_t hex);
+// hexToCompactInPlace places the compact key in input buffer, returning the length
+// needed for the representation
+std::size_t hexToCompactInPlace(xbytes_t & hex);
 xbytes_t compactToHex(xbytes_t compact);
 xbytes_t keybytesToHex(xbytes_t const & str);
 xbytes_t hexToKeybytes(xbytes_t hex);
