@@ -3,7 +3,6 @@
 #include <vector>
 #include "xevm_common/common.h"
 #include "xevm_common/fixed_hash.h"
-#include "xbase/xns_macro.h"
 #include "xdepends/include/json/reader.h"
 
 NS_BEG3(top, evm_common, eth)
@@ -34,6 +33,8 @@ public:
     // encode and decode
     std::string to_string();
     int from_string(const std::string & s);
+    int from_rlp(const xbytes_t & bytes);
+    std::string dump();
 
     // member of header
     Hash parentHash() const;

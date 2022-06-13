@@ -10,6 +10,7 @@
 #include "xdata/xrootblock.h"
 #include "xdata/xtransaction_v1.h"
 #include "xdata/xunit_bstate.h"
+#include "xevm_common/common_data.h"
 #include "xevm_contract_runtime/xevm_contract_manager.h"
 #include "xgenesis/xerror/xerror.h"
 #include "xstore/xaccount_context.h"
@@ -176,9 +177,10 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_evm_con
             make_object_ptr<base::xvbstate_t>(account.get_account(), uint64_t{0}, uint64_t{0}, std::string{}, std::string{}, uint64_t{0}, uint32_t{0}, uint16_t{0});
         xobject_ptr_t<base::xvcanvas_t> canvas = make_object_ptr<base::xvcanvas_t>();
         bstate->new_string_map_var(data::system_contract::XPROPERTY_ETH_CHAINS_HEADER, canvas.get());
-        bstate->new_string_map_var(data::system_contract::XPROPERTY_ETH_CHAINS_HEIGHT, canvas.get());
-        bstate->new_string_var(data::system_contract::XPROPERTY_ETH_CHAINS_HASH, canvas.get());
-        bstate->load_string_var(data::system_contract::XPROPERTY_ETH_CHAINS_HASH)->reset(std::string{"0"}, canvas.get());
+        bstate->new_string_map_var(data::system_contract::XPROPERTY_ETH_CHAINS_HASH, canvas.get());
+        bstate->new_string_var(data::system_contract::XPROPERTY_ETH_CHAINS_HEIGHT, canvas.get());
+        auto bytes = evm_common::toBigEndian(evm_common::u256(0));
+        bstate->load_string_var(data::system_contract::XPROPERTY_ETH_CHAINS_HEIGHT)->reset({bytes.begin(), bytes.end()}, canvas.get());
         // create
         base::xauto_ptr<base::xvblock_t> genesis_block = data::xblocktool_t::create_genesis_lightunit(bstate, canvas);
         xassert(genesis_block != nullptr);

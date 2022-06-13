@@ -99,7 +99,7 @@ enum class precompile_error_ExitFatal : uint32_t {
 
 struct sys_contract_precompile_output {
     precompile_output_ExitSucceed exit_status;  // uint32_t exit_status;
-    uint64_t cost;
+    uint64_t cost{0};
     xbytes_t output;
     std::vector<evm_common::xevm_log_t> logs;
 };
