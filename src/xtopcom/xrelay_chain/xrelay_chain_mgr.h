@@ -60,6 +60,28 @@ private:
     std::map<uint64_t, xcross_txs_t> m_cross_tx_map;
 };
 
+class xrelay_elect_cache_t {
+public:
+    xrelay_elect_cache_t(const std::shared_ptr<xrelay_chain_resources> & para);
+
+public:
+    void on_elect_db_event(data::xblock_t * block);
+    bool get_elect_cache(uint64_t elect_height, std::vector<data::xrelay_election_node_t> & reley_election);
+    void recover_cache();
+    void update_last_proc_elect_height(uint64_t last_proc_height);
+    static bool get_relay_elections_by_height(const base::xvaccount_t & vaccount, uint64_t height, std::vector<data::xrelay_election_node_t> & relay_elections);
+
+private:
+    bool get_genesis_elect_cache(std::vector<data::xrelay_election_node_t> & reley_election);
+    bool process_election_by_height(uint64_t height);
+
+private:
+    std::shared_ptr<xrelay_chain_resources> m_para;
+    uint64_t m_last_proc_height{0};
+    std::map<uint64_t, std::vector<data::xrelay_election_node_t>> m_elect_info_map;
+    std::vector<data::xrelay_election_node_t> m_genesis_elect_info;
+};
+
 // todo(nathan):xvblock as base class like table block.
 class xrelay_block_data_t {
 public:
@@ -112,6 +134,7 @@ public:
     void stop();
     bool get_tx_cache_leader(uint64_t lower_height, uint64_t & upper_height, std::map<uint64_t, xcross_txs_t> & cross_tx_map);
     bool get_tx_cache_backup(uint64_t lower_height, uint64_t upper_height, std::map<uint64_t, xcross_txs_t> & cross_tx_map);
+    bool get_elect_cache(uint64_t elect_height, std::vector<data::xrelay_election_node_t> & reley_election);
     void on_timer();
 
 private:
@@ -125,7 +148,7 @@ private:
     xcross_tx_cache_t m_cross_tx_cache;
     std::vector<data::xblock_ptr_t> m_wrap_blocks;
     // todo(nathan):pack elect data first.
-    std::map<uint64_t, std::vector<std::string>> m_relay_elect_data;
+    xrelay_elect_cache_t m_relay_elect_cache;
     uint64_t m_last_relay_elect_height{0};
     uint32_t m_bus_listen_id;
     int32_t m_thread_id;

@@ -34,13 +34,12 @@ XINLINE_CONSTEXPR char const * sys_contract_zec_elect_consensus_addr{ "T200024uH
 XINLINE_CONSTEXPR char const * sys_contract_zec_standby_pool_addr{ "T200024uCQ5Di2vZmPURNYVUuvWm5p7EaFQrRLs76@2" };
 XINLINE_CONSTEXPR char const * sys_contract_zec_group_assoc_addr{ "T200024uN3e6AujFyvDXY4h5t6or3DgKpu5rTKELD@2" };
 XINLINE_CONSTEXPR char const * sys_contract_zec_elect_eth_addr{"T2000200000000000000000000000000000000004@2"};
+XINLINE_CONSTEXPR char const * sys_contract_zec_elect_relay_addr{"T2000200000000000000000000000000000000005@2"};
 
 XINLINE_CONSTEXPR char const * sys_contract_sharding_vote_addr{ "T20000MVfDLsBKVcy1wMp4CoEHWxUeBEAVBL9ZEa" };
 XINLINE_CONSTEXPR char const * sys_contract_sharding_reward_claiming_addr{ "T20000MTotTKfAJRxrfvEwEJvtgCqzH9GkpMmAUg" };
 XINLINE_CONSTEXPR char const * sys_contract_sharding_statistic_info_addr{ "T20000ML7oBZbitBCcXhrJwqBhha2MUimd6SM9Z6" };
 XINLINE_CONSTEXPR char const * sys_contract_eth_table_statistic_info_addr{ "T200040000000000000000000000000000000001" };
-
-XINLINE_CONSTEXPR char const * sys_contract_relay_elect_relay_addr{"T2000500000000000000000000000000000000001@0"};
 
 XINLINE_CONSTEXPR char const * sys_eth_zero_addr{"T600040000000000000000000000000000000000000000"};
 
@@ -75,13 +74,12 @@ extern common::xaccount_address_t const zec_elect_consensus_contract_address;
 extern common::xaccount_address_t const zec_standby_pool_contract_address;
 extern common::xaccount_address_t const zec_group_assoc_contract_address;
 extern common::xaccount_address_t const zec_elect_eth_contract_address;
+extern common::xaccount_address_t const zec_elect_relay_contract_address;
 
 extern common::xaccount_address_t const sharding_vote_contract_address;
 extern common::xaccount_address_t const sharding_reward_claiming_contract_address;
 extern common::xaccount_address_t const sharding_statistic_info_contract_address;
 extern common::xaccount_address_t const eth_statistic_info_contract_address;
-
-extern common::xaccount_address_t const relay_elect_relay_contract_address;
 
 extern common::xaccount_address_t const eth_zero_address;
 

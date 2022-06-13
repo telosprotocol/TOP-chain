@@ -311,6 +311,15 @@ common::xeth_address_t xeth_transaction_t::get_from() const {
     return m_from;
 }
 
+std::string xeth_transaction_t::dump() const
+{
+    char local_param_buf[256];
+    std::string hash_str =   std::string((const char*)get_tx_hash().data(),get_tx_hash().size());
+    xprintf(local_param_buf,    sizeof(local_param_buf),
+    "{xeth_transaction_t:hash=%s,from=%s,to=%s}",
+     top::to_hex(hash_str).c_str(), m_from.to_hex_string().c_str(),  m_to.to_hex_string().c_str());
+    return std::string(local_param_buf);
+}
 
 }  // namespace data
 }  // namespace top

@@ -73,25 +73,7 @@ bool xrelay_packer::on_object_close() {
 }
 
 void xrelay_packer::set_xip(data::xblock_consensus_para_t & blockpara, const xvip2_t & leader) {
-    // todo(nathan): modify after use new group for relay chain!!!!!
-    auto zone_id = get_zone_id_from_xip2(leader);
-    // if consensus zone
-    if (xcons_utl::is_auditor(leader)) {
-        xvip2_t child = get_child_xip(leader, get_account());
-        auto group_id = child;
-        reset_node_id_to_xip2(group_id);
-        set_node_id_to_xip2(group_id, 0x3FF);
-        // blockpara.validator_xip = group_id;
-        blockpara.set_xip(group_id, leader);
-        xunit_dbg("[xunitservice] set auditor leader validator:%s auditor:%s", xcons_utl::xip_to_hex(blockpara.get_validator()).c_str(), xcons_utl::xip_to_hex(blockpara.get_auditor()).c_str());
-    } else {
-        xvip2_t parent = get_parent_xip(leader);
-        auto group_id = parent;
-        reset_node_id_to_xip2(group_id);
-        set_node_id_to_xip2(group_id, 0x3FF);
-        blockpara.set_xip(leader, group_id);
-        xunit_dbg("[xunitservice] set validator leader validator:%s auditor:%s", xcons_utl::xip_to_hex(blockpara.get_validator()).c_str(), xcons_utl::xip_to_hex(blockpara.get_auditor()).c_str());
-    }
+    blockpara.set_xip(leader, xvip2_t{(uint64_t)0, (uint64_t)0});
 }
 
 bool xrelay_packer::start_proposal(base::xblock_mptrs & latest_blocks) {
@@ -228,8 +210,7 @@ bool xrelay_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     auto node_account = m_para->get_resources()->get_account();
 
     auto zone_id = get_zone_id_from_xip2(local_xip);
-    if (zone_id != base::enum_chain_zone_consensus_index && zone_id != base::enum_chain_zone_beacon_index && zone_id != base::enum_chain_zone_zec_index &&
-        zone_id != base::enum_chain_zone_evm_index) {
+    if (zone_id != base::enum_chain_zone_relay_index) {
         xerror("xrelay_packer::on_view_fire fail-wrong zone id. zoneid=%d", zone_id);
         XMETRICS_GAUGE(metrics::cons_view_fire_succ, 0);
         return false;

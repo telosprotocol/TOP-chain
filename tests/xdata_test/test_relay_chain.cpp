@@ -20,7 +20,7 @@
 #include "xdata/xrelay_block.h"
 #include "../../src/xtopcom/xdepends/include/trezor-crypto/ed25519-donna/ed25519.h"
 #include <fstream>  
-
+#if 0
 
 using namespace top;
 using namespace top::base;
@@ -44,14 +44,14 @@ void printHexHash(std::string hash_name, h256 hash_data)
 }
 
 struct  xrelay_vote_def{
-    xrelay_election election;
+    xrelay_election_node_t election;
     top::utl::xecprikey_t raw_pri_key_obj;
 };
 
 
 std::vector<xrelay_block>    g_block_vector;
 std::vector<xrelay_vote_def> g_vote_vector;
-std::vector<xrelay_election> g_elections_vecotr;
+std::vector<xrelay_election_node_t> g_elections_vecotr;
 std::vector<xrelay_receipt> m_receiptVector;
 
 void relayer_receipts_create(uint32_t receipt_count)
@@ -109,7 +109,7 @@ void xRelayer_vote_create()
     g_vote_vector.clear();
     g_elections_vecotr.clear();
     for (int i = 0; i < 1; i++) {
-        xrelay_election election;
+        xrelay_election_node_t election;
         xrelay_vote_def vote;
         byte publickey[32];
 
@@ -152,7 +152,7 @@ void sign_block_hash(xrelay_block &block, h256 block_hash)
         top::evm_common::bytes s_bytes(sig.get_raw_signature() + 32, sig.get_raw_signature() + 64);
         signature.s = top::evm_common::fromBigEndian<top::evm_common::u256>(s_bytes);
          std::cout << "signature.s  " <<  signature.s << std::endl;
-        block.add_signature(signature);
+       // block.add_signature(signature);
 
         std::cout << "public " << std::endl;
         std::cout << "signature. block_hash  x " << vote.election.public_key_x.hex() << std::endl;
@@ -206,3 +206,4 @@ TEST(xrelay_test, test_relay_chain)
     }
     
 }
+#endif 

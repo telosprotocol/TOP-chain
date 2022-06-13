@@ -122,9 +122,9 @@ std::string xvnode_house_t::get_elect_address(const xvip2_t & target_group) cons
         xassert(group_id == 1 || group_id == 64);
         elect_address = sys_contract_zec_elect_eth_addr;
     } else if (zone_id == common::xrelay_zone_id_value) {
-        xassert(cluster_id == 1);
-        xassert(group_id == 1 || group_id == 64);
-        elect_address = sys_contract_relay_elect_relay_addr;
+        assert(cluster_id == common::xdefault_cluster_id_value);
+        assert(group_id = common::xdefault_group_id_value);
+        elect_address = sys_contract_zec_elect_relay_addr;
     } else {
         xassert(false);
     }
@@ -248,13 +248,15 @@ void xvnode_house_t::add_group(const std::string &elect_address, uint64_t elect_
                 zone_id = common::xconsensus_zone_id;
 
             } else if (common::has<common::xnode_type_t::zec>(node_type)) {
-
                 zone_id = common::xzec_zone_id;
             } else if (common::has<common::xnode_type_t::committee>(node_type)) {
                 zone_id = common::xcommittee_zone_id;
             } else if (common::has<common::xnode_type_t::evm>(node_type)) {
                 zone_id = common::xevm_zone_id;
+            } else if (common::has<common::xnode_type_t::relay>(node_type)) {
+                zone_id = common::xrelay_zone_id;
             } else {
+                assert(false);
                 continue;
             }
 

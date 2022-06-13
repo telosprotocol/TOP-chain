@@ -105,7 +105,7 @@ void xcons_service_mgr::create(const std::shared_ptr<vnetwork::xvnetwork_driver_
     // create consensus service for new address without version
     auto                                             node_type = network->type();
     std::vector<std::shared_ptr<xcons_service_face>> services;
-    if ((node_type & common::xnode_type_t::rec) == common::xnode_type_t::rec) {
+    if (common::has<common::xnode_type_t::rec>(node_type)) {
         auto dispatcher = m_dispachter_builder->build(m_mbus, m_para, e_timer);
         xunit_dbg("[xcons_service_mgr::create] create timer service for rec, %" PRIx64 ":%" PRIx64", dispatcher obj %p", xip.high_addr, xip.low_addr, dispatcher.get());
         if (dispatcher != nullptr) {
@@ -113,20 +113,20 @@ void xcons_service_mgr::create(const std::shared_ptr<vnetwork::xvnetwork_driver_
             services.push_back(timer_service);
         }
     }
-    
-    if ((node_type & common::xnode_type_t::evm) == common::xnode_type_t::evm) {
+
+    if (common::has<common::xnode_type_t::relay>(node_type)) {
         auto relay_dispatcher = m_dispachter_builder->build(m_mbus, m_para, e_relay);
         xunit_dbg("[xcons_service_mgr::create] create relay service for rec, %" PRIx64 ":%" PRIx64", dispatcher obj %p", xip.high_addr, xip.low_addr, relay_dispatcher.get());
         if (relay_dispatcher != nullptr) {
             std::shared_ptr<xcons_service_face> relay_service = std::make_shared<xrelay_block_service>(m_para, relay_dispatcher);
             services.push_back(relay_service);
         }
-    }
-
-    auto table_dispatcher = m_dispachter_builder->build(m_mbus, m_para, e_table);
-    if (table_dispatcher != nullptr) {
-        std::shared_ptr<xcons_service_face> table_service = std::make_shared<xtableblockservice>(m_para, table_dispatcher);
-        services.push_back(table_service);
+    } else {
+        auto table_dispatcher = m_dispachter_builder->build(m_mbus, m_para, e_table);
+        if (table_dispatcher != nullptr) {
+            std::shared_ptr<xcons_service_face> table_service = std::make_shared<xtableblockservice>(m_para, table_dispatcher);
+            services.push_back(table_service);
+        }
     }
 
     xassert(!services.empty());

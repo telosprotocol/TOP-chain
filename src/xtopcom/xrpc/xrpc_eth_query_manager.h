@@ -73,7 +73,10 @@ public:
         REGISTER_ETH_QUERY_METHOD(eth_getStorageAt);
         REGISTER_ETH_QUERY_METHOD(eth_getLogs);
         REGISTER_ETH_QUERY_METHOD(top_getRelayBlockByNumber);
+        REGISTER_ETH_QUERY_METHOD(top_getRelayBlockByHash);
         REGISTER_ETH_QUERY_METHOD(top_relayBlockNumber);
+        REGISTER_ETH_QUERY_METHOD(top_getRelayTransactionByHash);
+        REGISTER_ETH_QUERY_METHOD(top_getRelayTransactionReceipt);
     }
     void call_method(std::string strMethod, xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     bool handle(std::string & strReq, xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) override;
@@ -92,7 +95,9 @@ public:
     void eth_getLogs(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
     void top_relayBlockNumber(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
     void top_getRelayBlockByNumber(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
-
+    void top_getRelayTransactionByHash(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
+    void top_getRelayTransactionReceipt(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
+    void top_getRelayBlockByHash(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
 private:
     std::string safe_get_json_value(xJson::Value & json_value, const std::string& key);
     void set_block_result(const xobject_ptr_t<base::xvblock_t>&  block, xJson::Value& js_result, bool fullTx, std::error_code & ec);
@@ -103,6 +108,7 @@ private:
     int get_log(xJson::Value & js_rsp, const uint64_t begin, const uint64_t end, const std::vector<std::set<std::string>>& vTopics, const std::set<std::string>& sAddress);
     bool check_log_is_match(evm_common::xevm_log_t const& log, const std::vector<std::set<std::string>>& vTopics, const std::set<std::string>& sAddress) const;
     int parse_topics(const xJson::Value& t, std::vector<std::set<std::string>>& vTopics, xJson::Value & js_rsp);
+    int set_relay_block_result(const xobject_ptr_t<base::xvblock_t>& block, xJson::Value & js_rsp, int have_txs);
 private:
     observer_ptr<store::xstore_face_t> m_store;
     observer_ptr<base::xvblockstore_t> m_block_store;

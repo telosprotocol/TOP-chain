@@ -37,18 +37,36 @@ protected:
 
     bool verify_proposal_input(base::xvblock_t * proposal_block, xtablemaker_para_t & table_para);
 
-    bool check_wrap_proposal(const xblock_ptr_t & latest_cert_block, base::xvblock_t * proposal_block); 
+    bool check_wrap_proposal(const xblock_ptr_t & latest_cert_block, base::xvblock_t * proposal_block);
 
-    void convert_to_xrelay_receipts(const std::map<uint64_t, xrelay_chain::xcross_txs_t> & cross_tx_map, std::vector<data::xrelay_receipt> receipts);
-    data::xrelay_block build_relay_block(evm_common::h256 prev_hash, uint64_t block_height, uint64_t cur_evm_table_height, uint64_t timestamp, std::vector<data::xrelay_receipt> receipts);
-    bool build_relay_block_data_leader(const data::xblock_ptr_t & latest_wrap_block, uint64_t timestamp, std::string & relay_block_data);
-    bool build_relay_block_data_backup(evm_common::h256 prev_hash, uint64_t block_height, uint64_t last_evm_table_height, uint64_t cur_evm_table_height, uint64_t timestamp, std::string & relay_block_data);
+    void convert_to_xrelay_tx_and_receipts(const std::map<uint64_t, xrelay_chain::xcross_txs_t> & cross_tx_map, 
+                                    std::vector<data::xeth_transaction_t> &transactions,
+                                    std::vector<data::xeth_receipt_t> & receipts);
+    data::xrelay_block build_relay_block(evm_common::h256 prev_hash,
+                                         uint64_t block_height,
+                                         uint64_t timestamp,
+                                         const std::vector<data::xeth_transaction_t> &transactions,
+                                         const std::vector<data::xeth_receipt_t> & receipts,
+                                         const data::xrelay_election_group_t & reley_election);
+    bool build_relay_block_data_leader(const data::xblock_ptr_t & latest_wrap_block,
+                                       uint64_t timestamp,
+                                       const data::xrelay_election_group_t & reley_election,
+                                       uint64_t last_evm_table_height,
+                                       uint64_t & new_evm_table_height,
+                                       std::string & relay_block_data);
+    bool build_relay_block_data_backup(evm_common::h256 prev_hash,
+                                       uint64_t block_height,
+                                       uint64_t last_evm_table_height,
+                                       uint64_t new_evm_table_height,
+                                       uint64_t timestamp,
+                                       uint64_t new_election_height,
+                                       std::string & relay_block_data);
+     bool build_genesis_relay_block(data::xrelay_block & genesis_block);
 
 private:
     xblockmaker_resources_ptr_t m_resources{nullptr};
     observer_ptr<xrelay_chain::xrelay_chain_mgr_t> m_relay_chain_mgr;
     xrelay_maker_ptr_t m_relay_maker{nullptr};
-
 };
 
 NS_END2

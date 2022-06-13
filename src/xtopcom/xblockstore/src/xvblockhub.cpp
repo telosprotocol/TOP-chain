@@ -10,6 +10,9 @@
 #include "xvblockhub.h"
 #include "xvledger/xvdbkey.h"
 #include "xdata/xcheckpoint.h"
+#include "xdata/xrelay_block.h"
+#include "xvledger/xvtxindex.h"
+#include "xdata/xnative_contract_address.h"
 
 #ifdef __ALLOW_FORK_LOCK__
     #undef __ALLOW_FORK_LOCK__  // XTODO always allow store multi lock blocks
@@ -1227,6 +1230,73 @@ namespace top
             }
         }
 
+        bool xblockacct_t::store_relay_txs(base::xvblock_t * block_ptr)
+        {  
+            xassert(block_ptr != NULL);
+            if (NULL == block_ptr)
+                return false;
+
+            if ((block_ptr->get_height() == 0) || ((block_ptr->get_height() % 3) != 0)) {
+                xdbg("xblockacct_t::store_relay_txs not stroe :%s ", block_ptr->dump().c_str());
+                return true;
+            }
+
+            xdbg("xblockacct_t::store_relay_txs, store txs for block=%s, ",block_ptr->dump().c_str());
+
+            std::error_code ec;
+            top::data::xrelay_block  extra_relay_block;
+            auto relay_block_data = block_ptr->get_header()->get_extra_data();
+            extra_relay_block.decodeBytes(to_bytes(relay_block_data), ec, true);
+            if (ec) {
+                xerror("xblockacct_t:store_relay_txs decodeBytes decodeBytes error %s; err msg %s", 
+                ec.category().name(), ec.message().c_str());
+                return false;
+            }
+   
+            //get tx hash from txs
+            std::vector<base::xvtxindex_ptr> sub_txs;
+            for ( auto &tx: extra_relay_block.get_all_transactions()) {
+                if (tx.get_tx_hash().empty()) {
+                    xerror("xblockacct_t::store_relay_txs  account: %s, height:%llu tx hash is null! ",block_ptr->get_account().c_str(), block_ptr->get_height());
+                    xassert(false);
+                }
+                std::string tx_hash = std::string(reinterpret_cast<char*>(tx.get_tx_hash().data()), tx.get_tx_hash().size());
+                base::xvtxindex_ptr tx_index = make_object_ptr<base::xvtxindex_t>(*block_ptr, tx_hash, base::enum_transaction_subtype_send);
+                sub_txs.push_back(tx_index);           
+                xinfo("xblockacct_t::store_relay_txs tx_hash:%s, account: %s, height:%llu ",  base::xstring_utl::to_hex(tx_hash).c_str(), 
+                     block_ptr->get_account().c_str(), block_ptr->get_height());
+            
+            }
+
+            bool has_error = false;
+            for (auto & v : sub_txs) {
+                base::enum_txindex_type txindex_type = base::xvtxkey_t::transaction_subtype_to_txindex_type(v->get_tx_phase_type());
+                const std::string tx_key = base::xvdbkey_t::create_prunable_relay_tx_index_key(v->get_tx_hash(), txindex_type);
+                std::string tx_bin;
+                v->serialize_to_string(tx_bin);
+                xassert(!tx_bin.empty());
+
+                if (base::xvchain_t::instance().get_xdbstore()->set_value(tx_key, tx_bin) == false) {
+                    xerror("xvtxstore_t::store_relay_txs,fail to store tx for block(%s)", block_ptr->dump().c_str());
+                    has_error = true;  // mark it but let do rest work
+                } else {
+                    xinfo("xvtxstore_t::store_relay_txs,store tx to DB for block=%s,tx=%s",
+                    block_ptr->dump().c_str(),
+                    base::xvtxkey_t::transaction_hash_subtype_to_string(v->get_tx_hash(), v->get_tx_phase_type()).c_str());
+                }
+
+                // test 
+                const std::string tx_bin_result = base::xvchain_t::instance().get_xdbstore()->get_value(tx_key);
+                if (!tx_bin_result.empty()) {
+                    xinfo("xvtxstore_t::store_relay_txs, check save hahs_tx=%s and %s", 
+                     base::xstring_utl::to_hex(v->get_tx_hash()).c_str(), tx_bin_result.c_str());
+                }
+            }
+            if (has_error)
+                return false;
+            return true;
+        }
+
         //physical store and cache seperately
         /* 3 rules for managing cache
          #1. clean blocks of lower stage when higher stage coming. stage include : cert, lock and commit
@@ -1252,6 +1322,10 @@ namespace top
 
                     return false;
                 }
+            }
+
+            if (new_raw_block->get_account() == sys_contract_relay_table_block_addr) {
+                store_relay_txs(new_raw_block);
             }
 
             #ifdef DEBUG

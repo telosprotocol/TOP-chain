@@ -21,7 +21,7 @@ std::vector<std::string> get_property_name_by_addr(common::xaccount_address_t co
                                                      rec_elect_edge_contract_address,
                                                      rec_elect_fullnode_contract_address,
                                                      zec_elect_eth_contract_address,
-                                                     relay_elect_relay_contract_address};
+                                                     zec_elect_relay_contract_address};
     assert(std::find(sys_addr.begin(), sys_addr.end(), sys_contract_addr) != sys_addr.end());
 
     std::vector<std::string> property_name;
