@@ -25,6 +25,7 @@ public:
     virtual bool can_make_proposal(xblock_consensus_para_t & proposal_para) override;
     virtual xblock_ptr_t make_proposal(xblock_consensus_para_t & proposal_para, uint32_t min_tx_num) override;
     virtual int verify_proposal(base::xvblock_t * proposal_block, base::xvqcert_t * bind_clock_cert) override;
+    virtual void set_certauth(base::xvcertauth_t* _ca) {}
 
 protected:
     const std::string & get_account() const {
