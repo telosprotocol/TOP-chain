@@ -387,15 +387,13 @@ void xreceipt_queue_new_t::update_receipt_id_by_confirmed_tx(const tx_info_t & t
 //     return 0;
 // }
 
-const std::vector<xtxpool_table_lacking_receipt_ids_t> xreceipt_queue_new_t::get_lacking_recv_tx_ids(uint32_t & total_num) const {
+const std::vector<xtxpool_table_lacking_receipt_ids_t> xreceipt_queue_new_t::get_lacking_recv_tx_ids(const std::set<base::xtable_shortid_t> & all_table_sids, uint32_t & total_num) const {
     std::vector<xtxpool_table_lacking_receipt_ids_t> table_lacking_ids_vec;
     auto self_table_sid = m_receipt_queue_internal.get_table_info()->get_short_table_id();
     auto table_receiptid_state = m_para->get_receiptid_state_cache().get_table_receiptid_state(self_table_sid);
 
-    for (auto & it : m_recv_tx_peer_table_map) {
+    for (auto & peer_table_sid : all_table_sids) {
         std::vector<uint64_t> lacking_ids;
-        auto & peer_table_sid = it.first;
-        auto & table_receipts = it.second;
         uint64_t recvid_max = 0;
         if (table_receiptid_state != nullptr) {
             base::xreceiptid_pair_t pair;
@@ -405,14 +403,26 @@ const std::vector<xtxpool_table_lacking_receipt_ids_t> xreceipt_queue_new_t::get
 
         uint64_t max_pull_id = m_para->get_receiptid_state_cache().get_sendid_max(peer_table_sid, self_table_sid);
 
-        table_receipts->update_latest_receipt_id(recvid_max);
-        table_receipts->get_lacking_ids(lacking_ids, max_pull_id);
+        auto it = m_recv_tx_peer_table_map.find(peer_table_sid);
+        if (it == m_recv_tx_peer_table_map.end()) {
+            if (recvid_max < max_pull_id) {
+                for (uint64_t id = recvid_max + 1; id <= max_pull_id; id++) {
+                    lacking_ids.push_back(id);
+                }
+            }
+        } else {
+            auto & table_receipts = it->second;
+            table_receipts->update_latest_receipt_id(recvid_max);
+            table_receipts->get_lacking_ids(lacking_ids, max_pull_id);
+        }
+
         if (!lacking_ids.empty()) {
             table_lacking_ids_vec.push_back(xtxpool_table_lacking_receipt_ids_t(peer_table_sid, lacking_ids));
             total_num += lacking_ids.size();
             xdbg("xreceipt_queue_new_t::get_lacking_recv_tx_ids, self:%d,peer:%d,lacking_ids size:%d", self_table_sid, peer_table_sid, lacking_ids.size());
         }
     }
+
     return table_lacking_ids_vec;
 }
 
