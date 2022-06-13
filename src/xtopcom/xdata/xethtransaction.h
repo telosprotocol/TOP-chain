@@ -66,6 +66,7 @@ class xeth_transaction_t {
     enum_ethtx_version      get_tx_version() const {return m_version;}
     uint256_t               get_tx_hash() const;
     common::xeth_address_t  get_from() const;
+    std::string             dump() const;
 
     evm_common::u256 const&    get_chainid() const { return m_chainid; }
     evm_common::u256 const&    get_nonce() const { return m_nonce; }
