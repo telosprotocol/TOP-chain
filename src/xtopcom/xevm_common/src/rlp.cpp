@@ -218,7 +218,7 @@ bytes RLP::encode(const u256 & value) noexcept {
     bytes bytes;
     export_bits(value, std::back_inserter(bytes), 8);
 
-    if (bytes.empty() || (bytes.size() == 1 && bytes[0] == 0)) {
+    if (bytes.empty() || ((bytes.size() == 1) && (bytes[0] == 0))) {
         return {0x80};
     }
 
@@ -296,7 +296,9 @@ RLP::DecodedItem RLP::decodeList(const bytes & input) {
     while (true) {
         auto listItem = RLP::decode(remainder);
         if (!listItem.decoded.empty()) {
-            item.decoded.push_back(listItem.decoded[0]);
+            for (auto const & decoded : listItem.decoded) {
+                item.decoded.push_back(decoded);
+            }
         } else {
             item.decoded.push_back(bytes());
         }
@@ -398,7 +400,87 @@ RLP::DecodedItem RLP::decode(const bytes & input) {
     return item;
 }
 
+RLP::DecodedItem RLP::decode_once(const bytes & input) {
+    if (input.size() == 0) {
+        throw std::invalid_argument("can't decode empty rlp data");
+    }
+    RLP::DecodedItem item;
+    auto inputLen = input.size();
+    auto prefix = input[0];
+    if (prefix <= 0x7f) {
+        // 00--7f: a single byte whose value is in the [0x00, 0x7f] range, that byte is its own RLP encoding.
+        item.decoded.push_back(bytes{input[0]});
+        item.remainder = subData(input, 1);
+        return item;
+    }
+    if (prefix <= 0xb7) {
+        // 80--b7: short string
+        // string is 0-55 bytes long. A single byte with value 0x80 plus the length of the string followed by the string
+        // The range of the first byte is [0x80, 0xb7]
 
+        // empty string
+        if (prefix == 0x80) {
+            item.decoded.emplace_back(bytes());
+            item.remainder = subData(input, 1);
+            return item;
+        }
+
+        size_t strLen = prefix - 0x80;
+        if (strLen == 1 && input[1] <= 0x7f) {
+            throw std::invalid_argument("single byte below 128 must be encoded as itself");
+        }
+
+        if (inputLen < (1 + strLen)) {
+            throw std::invalid_argument(std::string("invalid short string, length ") + std::to_string(strLen));
+        }
+        item.decoded.push_back(subData(input, 1, strLen));
+        item.remainder = subData(input, 1 + strLen);
+
+        return item;
+    }
+    if (prefix <= 0xbf) {
+        // b8--bf: long string
+        auto lenOfStrLen = size_t(prefix - 0xb7);
+        auto strLen = static_cast<size_t>(parseVarInt(lenOfStrLen, input, 1));
+        if (inputLen < lenOfStrLen || inputLen < (1 + lenOfStrLen + strLen)) {
+            throw std::invalid_argument(std::string("Invalid rlp encoding length, length ") + std::to_string(strLen));
+        }
+        auto data = subData(input, 1 + lenOfStrLen, strLen);
+        item.decoded.push_back(data);
+        item.remainder = subData(input, 1 + lenOfStrLen + strLen);
+        return item;
+    }
+    if (prefix <= 0xf7) {
+        // c0--f7: a list between  0-55 bytes long
+        auto listLen = size_t(prefix - 0xc0);
+        if (inputLen < (1 + listLen)) {
+            throw std::invalid_argument(std::string("Invalid rlp string length, length ") + std::to_string(listLen));
+        }
+        // empty list
+        if (listLen == 0) {
+            item.remainder = subData(input, 1);
+            return item;
+        }
+        auto data = subData(input, 1, listLen);
+        item.decoded.push_back(data);
+        item.remainder = subData(input, 1 + listLen);
+        return item;
+    } else {
+        // f8--ff
+        auto lenOfListLen = size_t(prefix - 0xf7);
+        auto listLen = static_cast<size_t>(parseVarInt(lenOfListLen, input, 1));
+        if (listLen < 56) {
+            throw std::invalid_argument("length below 56 must be encoded in one byte");
+        }
+        if (inputLen < lenOfListLen || inputLen < (1 + lenOfListLen + listLen)) {
+            throw std::invalid_argument(std::string("Invalid rlp list length, length ") + std::to_string(listLen));
+        }
+        auto data = subData(input, 1 + lenOfListLen, listLen);
+        item.decoded.push_back(data);
+        item.remainder = subData(input, 1 + lenOfListLen + listLen);
+        return item;
+    }
+}
 
 RLPStream& RLPStream::appendRaw(bytesConstRef _s, size_t _itemCount)
 {

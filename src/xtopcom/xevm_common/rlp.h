@@ -400,6 +400,7 @@ public:
     static uint64_t decodeLength(const bytes & data);
     /// Decodes data, remainder from RLP encoded data
     static DecodedItem decode(const bytes & data);
+    static DecodedItem decode_once(const bytes & input);
 
 private:
     /// Disable construction from rvalue

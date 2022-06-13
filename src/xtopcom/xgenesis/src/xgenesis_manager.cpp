@@ -10,6 +10,8 @@
 #include "xdata/xrootblock.h"
 #include "xdata/xtransaction_v1.h"
 #include "xdata/xunit_bstate.h"
+#include "xevm_common/common_data.h"
+#include "xevm_contract_runtime/xevm_contract_manager.h"
 #include "xgenesis/xerror/xerror.h"
 #include "xstore/xaccount_context.h"
 #include "xvm/manager/xcontract_manager.h"
@@ -68,6 +70,11 @@ void xtop_genesis_manager::load_accounts() {
     for (auto const & pair : genesis_accounts_data) {
         m_genesis_accounts_data.insert({common::xaccount_address_t{pair.first}, pair.second});
     }
+    // step5: new evm contract
+    auto const & evm_system_contract_map = contract_runtime::evm::xevm_contract_manager_t::instance()->get_sys_contracts();
+    for (auto const & pair : evm_system_contract_map) {
+        m_evm_contract_accounts.insert(pair.first);
+    }
 }
 
 void xtop_genesis_manager::release_accounts() {
@@ -75,6 +82,7 @@ void xtop_genesis_manager::release_accounts() {
     std::lock_guard<std::mutex> guard(m_lock);
     // clear()
     m_contract_accounts.clear();
+    m_evm_contract_accounts.clear();
     m_genesis_accounts_data.clear();
     m_user_accounts_data.clear();
 }
@@ -162,6 +170,41 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_contrac
 #endif
 }
 
+base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_evm_contract_account(base::xvaccount_t const & account, xenum_create_src_t src, std::error_code & ec) {
+    xinfo("[xtop_genesis_manager::create_genesis_of_evm_contract_account] account %s", account.get_account().c_str());
+    if (account.get_account() == evm_eth_bridge_contract_address.value()) {
+        xobject_ptr_t<base::xvbstate_t> bstate =
+            make_object_ptr<base::xvbstate_t>(account.get_account(), uint64_t{0}, uint64_t{0}, std::string{}, std::string{}, uint64_t{0}, uint32_t{0}, uint16_t{0});
+        xobject_ptr_t<base::xvcanvas_t> canvas = make_object_ptr<base::xvcanvas_t>();
+        bstate->new_string_map_var(data::system_contract::XPROPERTY_ETH_CHAINS_HEADER, canvas.get());
+        bstate->new_string_map_var(data::system_contract::XPROPERTY_ETH_CHAINS_HASH, canvas.get());
+        bstate->new_string_var(data::system_contract::XPROPERTY_ETH_CHAINS_HEIGHT, canvas.get());
+        auto bytes = evm_common::toBigEndian(evm_common::u256(0));
+        bstate->load_string_var(data::system_contract::XPROPERTY_ETH_CHAINS_HEIGHT)->reset({bytes.begin(), bytes.end()}, canvas.get());
+        // create
+        base::xauto_ptr<base::xvblock_t> genesis_block = data::xblocktool_t::create_genesis_lightunit(bstate, canvas);
+        xassert(genesis_block != nullptr);
+        if (src == xenum_create_src_t::init && m_blockstore->exist_genesis_block(account)) {
+            auto const existed_genesis_block = m_blockstore->load_block_object(account, (uint64_t)0, (uint64_t)0, false);
+            if (existed_genesis_block->get_block_hash() == genesis_block->get_block_hash()) {
+                xinfo("[xtop_genesis_manager::create_genesis_of_evm_contract_account] account %s, genesis block already exists", account.get_account().c_str());
+                return nullptr;
+            } else {
+                xerror("[xtop_genesis_manager::create_genesis_of_evm_contract_account] account: %s genesis block exist but hash not match, %s, %s",
+                       account.get_account().c_str(),
+                       base::xstring_utl::to_hex(existed_genesis_block->get_block_hash()).c_str(),
+                       base::xstring_utl::to_hex(genesis_block->get_block_hash()).c_str());
+                xassert(false);
+                ec = error::xenum_errc::genesis_block_hash_mismatch;
+                return nullptr;
+            }
+        }
+        xinfo("[xtop_genesis_manager::create_genesis_of_contract_account] account: %s, create genesis block success", account.get_account().c_str());
+        return genesis_block;
+    }
+    return nullptr;
+}
+
 base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_datauser_account(base::xvaccount_t const & account,
                                                                                           chain_data::data_processor_t const & data,
                                                                                           xenum_create_src_t src,
@@ -246,6 +289,14 @@ void xtop_genesis_manager::init_genesis_block(std::error_code & ec) {
     // step2: system contract accounts(reset)
     for (auto const & account : m_contract_accounts) {
         auto vblock = create_genesis_of_contract_account(base::xvaccount_t{account.value()}, src, ec);
+        CHECK_EC_RETURN(ec);
+        if (vblock != nullptr) {
+            store_block(base::xvaccount_t{account.value()}, vblock.get(), ec);
+            CHECK_EC_RETURN(ec);
+        }
+    }
+    for (auto const & account : m_evm_contract_accounts) {
+        auto vblock = create_genesis_of_evm_contract_account(base::xvaccount_t{account.value()}, src, ec);
         CHECK_EC_RETURN(ec);
         if (vblock != nullptr) {
             store_block(base::xvaccount_t{account.value()}, vblock.get(), ec);

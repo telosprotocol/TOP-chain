@@ -32,6 +32,7 @@
 #include "xmigrate/xvmigrate.h"
 #include "xdata/xcheckpoint.h"
 #include "xsync/xsync_object.h"
+#include "xevm_contract_runtime/sys_contract/xevm_eth_bridge_contract.h"
 
 // nlohmann_json
 #include <nlohmann/json.hpp>

@@ -93,6 +93,7 @@ void xedge_handler_base<T>::edge_send_msg(const std::vector<std::shared_ptr<xrpc
             }
 
             uint32_t edge_max_msg_packet_size = XGET_CONFIG(edge_max_msg_packet_size);
+            xdbg("[global_trace][edge][forward advance] packet_size: %zu, max_size: %zu", msg.payload().size(), edge_max_msg_packet_size);
             if (msg.payload().size() > edge_max_msg_packet_size) {
                 throw xrpc_error{ enum_xrpc_error_code::rpc_param_param_error, "msg packet size " + std::to_string(msg.payload().size()) + " bigger than " + std::to_string(edge_max_msg_packet_size) };
             }
