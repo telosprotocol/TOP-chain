@@ -65,7 +65,7 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 7473960, "partly remove confirm"},
             xfork_point_t{xfork_point_type_t::logic_time, 7714440, "add rsp id"},
             xfork_point_t{xfork_point_type_t::logic_time, 7716060, "inner table tx"},// should later than "add rsp id"
-            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "enable eth shard"},
+            xfork_point_t{xfork_point_type_t::logic_time, 8224200, "enable eth shard"},// 2022-06-17 10:00:00
             xfork_point_t{xfork_point_type_t::logic_time, 100000000, "elect exchange alone"}, // todo(next version fork)
         };
         // !!!change!!! fork time for galileo
@@ -76,7 +76,7 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 7473960, "partly remove confirm"},
             xfork_point_t{xfork_point_type_t::logic_time, 7714440, "add rsp id"},
             xfork_point_t{xfork_point_type_t::logic_time, 7716060, "inner table tx"},
-            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "enable eth shard"},
+            xfork_point_t{xfork_point_type_t::logic_time, 8224200, "enable eth shard"},
             xfork_point_t{xfork_point_type_t::logic_time, 100000000, "elect exchange alone"}, // todo(next version fork)
         };
 
@@ -88,7 +88,7 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 7473960, "partly remove confirm"},
             xfork_point_t{xfork_point_type_t::logic_time, 7714440, "add rsp id"},
             xfork_point_t{xfork_point_type_t::logic_time, 7716060, "inner table tx"},
-            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "enable eth shard"},
+            xfork_point_t{xfork_point_type_t::logic_time, 8224200, "enable eth shard"},
             xfork_point_t{xfork_point_type_t::logic_time, 100000000, "elect exchange alone"}, // todo(next version fork)
         };
 #endif  // #if defined(XCHAIN_FORKED_BY_DEFAULT)
