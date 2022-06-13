@@ -179,11 +179,11 @@ void xeth_transaction_t::decodeRLP_eip1599(bool includesig, evm_common::RLP cons
             return;
         }
         m_chainid = _r[field = 0].toInt<evm_common::u256>();
-        if (m_chainid != XGET_CONFIG(chain_id)) {// TODO(jimmy) 1023
+        if (m_chainid != XGET_CONFIG(chain_id)) {
             ec = eth_error(error::xenum_errc::eth_server_error, "invalid sender");
             return;
         }
-            if (_r[field = 1].size() > 32) {
+        if (_r[field = 1].size() > 32) {
             ec = eth_error(error::xenum_errc::eth_server_error, "rlp: input string too long for uint64, decoding into (types.DynamicFeeTx).Nonce");
             return;
         }
@@ -203,6 +203,11 @@ void xeth_transaction_t::decodeRLP_eip1599(bool includesig, evm_common::RLP cons
             return;
         }
         m_gas = _r[field = 4].toInt<evm_common::u256>();
+        if (m_gas > XGET_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit)) {
+            ec = eth_error(error::xenum_errc::eth_server_error, "exceeds block gas limit");
+            return;
+        }
+
         if (_r[5].size() != 20 && _r[5].size() != 0) {
             if (_r[5].size() > 20) {
                 ec = eth_error(error::xenum_errc::eth_server_error, "rlp: input string too long for common.Address, decoding into (types.DynamicFeeTx).To");

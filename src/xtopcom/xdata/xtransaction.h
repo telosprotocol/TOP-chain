@@ -160,7 +160,7 @@ class xtransaction_t : virtual public base::xrefcount_t {
     virtual void set_tx_type(uint16_t type) = 0;
     virtual uint16_t get_tx_type() const = 0;
     virtual void set_tx_len(uint16_t len) = 0;
-    virtual uint16_t get_tx_len() const = 0;
+    virtual uint32_t get_tx_len() const = 0;
     virtual void set_tx_version(uint32_t version) = 0;
     virtual uint32_t get_tx_version() const = 0;
     virtual void set_deposit(uint32_t deposit) = 0;

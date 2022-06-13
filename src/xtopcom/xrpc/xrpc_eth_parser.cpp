@@ -125,6 +125,8 @@ void xrpc_eth_parser_t::transaction_to_json(xtx_location_t const& txlocation, da
     js_v["from"] = ethtx.get_from().to_hex_string();
     js_v["gas"] = u256_to_hex_prefixed(ethtx.get_gas());
     js_v["gasPrice"] = u256_to_hex_prefixed(ethtx.get_max_fee_per_gas());
+    js_v["maxFeePerGas"] = u256_to_hex_prefixed(ethtx.get_max_fee_per_gas());
+    js_v["maxPriorityFeePerGas"] = u256_to_hex_prefixed(ethtx.get_max_priority_fee_per_gas());
     js_v["input"] = top::to_hex_prefixed(ethtx.get_data());
     js_v["nonce"] = u256_to_hex_prefixed(ethtx.get_nonce());
     if (!ethtx.get_to().empty()) {
@@ -154,9 +156,7 @@ void xrpc_eth_parser_t::blockheader_to_json(base::xvblock_t* _block, xJson::Valu
     js_v["uncles"].resize(0);
     js_v["sha3Uncles"] = std::string("0x") + std::string(64, '0');
 
-    // TODO(jimmy) should implement correctly later
-    js_v["size"] = "0x219";
-    // already implemented
+    js_v["size"] = uint64_to_hex_prefixed(_block->get_block_size());
     js_v["gasLimit"] = uint64_to_hex_prefixed(ethheader.get_gaslimit());
     js_v["gasUsed"] = uint64_to_hex_prefixed(ethheader.get_gasused());
     js_v["hash"] = top::to_hex_prefixed(_block->get_block_hash());

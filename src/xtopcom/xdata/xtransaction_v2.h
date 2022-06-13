@@ -109,7 +109,7 @@ class xtransaction_v2_t : public xbase_dataunit_t<xtransaction_v2_t, xdata_type_
     virtual void set_tx_type(uint16_t type) override {m_transaction_type = static_cast<enum_xtransaction_type>(type); set_action_type();}
     virtual uint16_t get_tx_type() const override {return m_transaction_type;};
     virtual void set_tx_len(uint16_t len) override {m_transaction_len = len;};
-    virtual uint16_t get_tx_len() const override {return m_transaction_len;};
+    virtual uint32_t get_tx_len() const override {return m_transaction_len;};
     virtual void set_tx_version(uint32_t version) override {}
     virtual uint32_t get_tx_version() const override {return xtransaction_version_2;}
     virtual void set_deposit(uint32_t deposit) override {m_deposit = deposit;};

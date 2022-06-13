@@ -4,7 +4,7 @@
 
 #include <string>
 #include <vector>
-
+#include "xbase/xlog.h"
 #include "xdata/xcons_transaction.h"
 #include "xtxexecutor/xbatchtx_executor.h"
 #include "xtxexecutor/xunit_service_error.h"
@@ -25,23 +25,29 @@ int32_t xbatchtx_executor_t::execute(const std::vector<xcons_transaction_ptr_t> 
         xatomictx_output_t output;
         output.m_tx = tx;
         if (tx->get_transaction()->get_gaslimit() + gas_used > m_para.get_gas_limit()) {
-            outputs.nopack_outputs.push_back(output);
             output.m_is_pack = false;
-            continue;
-        } else {
-            enum_execute_result_type result = atomic_executor.execute(tx, output, gas_used);
-            if (output.m_is_pack) {
-                gas_used += output.m_vm_output.m_tx_result.used_gas;
-                outputs.pack_outputs.push_back(output);
+            xwarn("xbatchtx_executor_t::execute gas reach limit,tx:%s,tx gaslimit:%llu,gas_used:%llu,gaslimit:%llu",
+                tx->dump().c_str(), (uint64_t)tx->get_transaction()->get_gaslimit(), gas_used, m_para.get_gas_limit());
+            if (gas_used == 0) {
+                outputs.drop_outputs.push_back(output);
             } else {
-                if (output.m_tx->is_send_or_self_tx()) {
-                    outputs.drop_outputs.push_back(output);
-                } else {
-                    outputs.nopack_outputs.push_back(output);
-                }
+                outputs.nopack_outputs.push_back(output);
             }
-            output.m_result = result;
+            continue;
         }
+
+        enum_execute_result_type result = atomic_executor.execute(tx, output, gas_used);
+        if (output.m_is_pack) {
+            gas_used += output.m_vm_output.m_tx_result.used_gas;
+            outputs.pack_outputs.push_back(output);
+        } else {
+            if (output.m_tx->is_send_or_self_tx()) {
+                outputs.drop_outputs.push_back(output);
+            } else {
+                outputs.nopack_outputs.push_back(output);
+            }
+        }
+        output.m_result = result;
         // xinfo("xbatchtx_executor_t::execute %s,batch_result=%d", output.dump().c_str(),result);
     }
 

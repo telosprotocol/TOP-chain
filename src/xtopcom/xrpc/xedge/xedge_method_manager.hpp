@@ -204,6 +204,10 @@ void xedge_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, cons
     }
     tx->set_len();
 
+    // TODO(jimmy) refactor tx verifier
+    if (xverifier::xtx_verifier::verify_address_type(tx.get())) {
+        throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "address type check failed"};
+    }
     // filter out black list transaction
     if (xverifier::xblacklist_utl_t::is_black_address(tx->get_source_addr())) {
         xdbg_rpc("[sendTransaction_method] in black address rpc:%s, %s, %s", tx->get_digest_hex_str().c_str(), tx->get_target_addr().c_str(), tx->get_source_addr().c_str());

@@ -387,19 +387,23 @@ void xrpc_eth_query_manager::eth_getBlockByNumber(xJson::Value & js_req, xJson::
     return;
 }
 void xrpc_eth_query_manager::set_block_result(const xobject_ptr_t<base::xvblock_t>&  block, xJson::Value& js_result, bool fullTx, std::error_code & ec) {
+    // TODO(jimmy) block size need load input and output. transactions hash need load input
+    if (block->get_block_class() != base::enum_xvblock_class_nil) {
+        base::xvaccount_t _vaddress(block->get_account());
+        if (false == base::xvchain_t::instance().get_xblockstore()->load_block_input(_vaddress, block.get())) {
+            ec = common::error::xerrc_t::invalid_db_load;
+            xerror("xrpc_eth_query_manager::set_block_result,fail to load block input for block:%s", block->dump().c_str());
+            return;
+        }
+        if (false == base::xvchain_t::instance().get_xblockstore()->load_block_output(_vaddress, block.get())) {
+            ec = common::error::xerrc_t::invalid_db_load;
+            xerror("xrpc_eth_query_manager::set_block_result,fail to load block output for block:%s", block->dump().c_str());
+            return;
+        }
+    }
+
     xrpc_eth_parser_t::blockheader_to_json(block.get(), js_result, ec);
     if (ec) {
-        return;
-    }
-
-    if (block->get_block_class() == base::enum_xvblock_class_nil) {
-        return;
-    }
-
-    base::xvaccount_t _vaddress(block->get_account());
-    if (false == base::xvchain_t::instance().get_xblockstore()->load_block_input(_vaddress, block.get())) {
-        ec = common::error::xerrc_t::invalid_db_load;
-        xerror("xrpc_eth_query_manager::set_block_result,fail to load block input for block:%s", block->dump().c_str());
         return;
     }
 

@@ -191,6 +191,8 @@ xbytes_t  legecy_json_tx_to_bytes(xJson::Value const& txjson) {
 xbytes_t  eip1599_json_tx_to_bytes(xJson::Value const& txjson) {
     std::error_code ec;
     xeth_transaction_t tx;
+    uint64_t txversion = (uint64_t)jsToU256(txjson["type"].asString());
+    tx.set_tx_version((enum_ethtx_version)txversion);
     evm_common::u256 chainid = jsToU256(txjson["chainId"].asString());
     tx.set_chainid(chainid);   
     evm_common::u256 nonce = jsToU256(txjson["nonce"].asString());
@@ -287,6 +289,7 @@ TEST_F(test_eth_root, txs_root_one) {
 #endif
 {
     xeth_transaction_t tx;
+    tx.set_tx_version(EIP_1559);
     tx.set_chainid(jsToU256("0x26b"));   
     tx.set_nonce(jsToU256("0x2"));
     tx.set_max_priority_fee_per_gas(jsToU256("0x59682f00"));
@@ -296,10 +299,8 @@ TEST_F(test_eth_root, txs_root_one) {
     tx.set_value(jsToU256("0x1bc16d674ec80000"));
     tx.set_data(top::from_hex("0x", ec));
     tx.set_signV(jsToU256("0x1"));
-    xbytes_t rbs = top::from_hex("0x3aa2d1b9ca2c95f5bcf3dc4076241cb0552359ebfa523ad9c045aa3c1953779c", ec);    
-    tx.set_signR(evm_common::xh256_t(rbs));
-    xbytes_t sbs = top::from_hex("0x385b0d94ee10c5325ae4960a616c9c2aaad9e8549dd43d68bb5ca14206d62ded", ec);    
-    tx.set_signS(evm_common::xh256_t(sbs));
+    tx.set_signR(evm_common::xh256_t(top::from_hex("0x3aa2d1b9ca2c95f5bcf3dc4076241cb0552359ebfa523ad9c045aa3c1953779c", ec)));
+    tx.set_signS(evm_common::xh256_t(top::from_hex("0x385b0d94ee10c5325ae4960a616c9c2aaad9e8549dd43d68bb5ca14206d62ded", ec)));
     ASSERT_EQ(top::to_hex_prefixed(to_bytes(tx.get_tx_hash())), "0x631311a3658fde222a4bce3e3a8e4f31444a78d6e184e31b676d91aa72bb65c5");
     ASSERT_EQ(top::to_hex_prefixed(tx.get_from().to_bytes()), "0x4dce5c8961e283786cb31ad7fc072347227d7ea2");
 
@@ -365,6 +366,7 @@ TEST_F(test_eth_root, transfer_three_tx) {
     xeth_receipts_t receipts;
     {
         xeth_transaction_t tx;
+        tx.set_tx_version(EIP_1559);
         tx.set_chainid(jsToU256("0x26b"));
         tx.set_nonce(jsToU256("0x3"));
         tx.set_max_priority_fee_per_gas(jsToU256("0x77359400"));
@@ -382,6 +384,7 @@ TEST_F(test_eth_root, transfer_three_tx) {
     }
     {
         xeth_transaction_t tx;
+        tx.set_tx_version(EIP_1559);
         tx.set_chainid(jsToU256("0x26b"));
         tx.set_nonce(jsToU256("0x4"));
         tx.set_max_priority_fee_per_gas(jsToU256("0x77359400"));
@@ -399,6 +402,7 @@ TEST_F(test_eth_root, transfer_three_tx) {
     }
     {
         xeth_transaction_t tx;
+        tx.set_tx_version(EIP_1559);
         tx.set_chainid(jsToU256("0x26b"));
         tx.set_nonce(jsToU256("0x5"));
         tx.set_max_priority_fee_per_gas(jsToU256("0x77359400"));
@@ -466,6 +470,7 @@ TEST_F(test_eth_root, contract_deploy_one_tx) {
         std::error_code ec;
         xeth_transactions_t txs;
         xeth_transaction_t tx;
+        tx.set_tx_version(EIP_1559);
         tx.set_chainid(jsToU256("0x26b"));
         tx.set_nonce(jsToU256("0x6"));
         tx.set_max_priority_fee_per_gas(jsToU256("0x9502f900"));
@@ -502,6 +507,7 @@ TEST_F(test_eth_root, contract_call_one_tx_1) {
         std::error_code ec;
         xeth_transactions_t txs;
         xeth_transaction_t tx;
+        tx.set_tx_version(EIP_1559);
         tx.set_chainid(jsToU256("0x26b"));
         tx.set_nonce(jsToU256("0x8"));
         tx.set_max_priority_fee_per_gas(jsToU256("0x9502f900"));
@@ -551,6 +557,7 @@ TEST_F(test_eth_root, contract_call_one_tx_2) {
 }
 {
     xeth_transaction_t tx;
+    tx.set_tx_version(EIP_1559);
     tx.set_chainid(jsToU256("0x26b"));
     tx.set_nonce(jsToU256("0x9"));
     tx.set_max_priority_fee_per_gas(jsToU256("0x9502f900"));
