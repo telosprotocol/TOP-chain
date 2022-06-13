@@ -20,7 +20,8 @@ add_subdirectory(xstore)
 add_subdirectory(xstate_accessor) # new contract only
 add_subdirectory(xcontract_common) # new contract only
 if (BUILD_RUSTVM)
-    add_subdirectory(xwasm_vm)
+    add_subdirectory(xwasmer_engine)
+    add_subdirectory(xwasmer_runner)
 endif()
 add_subdirectory(xcontract_runtime)
 add_subdirectory(xsystem_contract_runtime)

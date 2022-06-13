@@ -1,8 +1,11 @@
 use std::convert::TryInto;
 use std::sync::Arc;
+#[cfg(feature = "cranelift")]
 use wasmer::Cranelift;
+#[cfg(not(feature = "cranelift"))]
+use wasmer::Singlepass;
 use wasmer::{
-    wasmparser::Operator, BaseTunables, CompilerConfig, Engine, Pages, Store, Target, JIT,
+    wasmparser::Operator, BaseTunables, CompilerConfig, Engine, Pages, Store, Target, Universal,
     WASM_PAGE_SIZE,
 };
 use wasmer_middlewares::Metering;
@@ -38,18 +41,30 @@ pub fn make_compile_time_store(memory_limit: Option<Size>) -> Store {
     let deterministic = Arc::new(Deterministic::new());
     let metering = Arc::new(Metering::new(gas_limit, cost));
 
-    let mut config = Cranelift::default();
-    config.push_middleware(deterministic);
-    config.push_middleware(metering);
-    let engine = JIT::new(config).engine();
-    make_store_with_engine(&engine, memory_limit)
+    #[cfg(feature = "cranelift")]
+    {
+        let mut config = Cranelift::default();
+        config.push_middleware(deterministic);
+        config.push_middleware(metering);
+        let engine = Universal::new(config).engine();
+        make_store_with_engine(&engine, memory_limit)
+    }
+
+    #[cfg(not(feature = "cranelift"))]
+    {
+        let mut config = Singlepass::default();
+        config.push_middleware(deterministic);
+        config.push_middleware(metering);
+        let engine = Universal::new(config).engine();
+        make_store_with_engine(&engine, memory_limit)
+    }
 }
 
 /// Created a store with no compiler and the given memory limit (in bytes)
 /// If memory_limit is None, no limit is applied.
 #[allow(unused)]
 pub fn make_runtime_store(memory_limit: Option<Size>) -> Store {
-    let engine = JIT::headless().engine();
+    let engine = Universal::headless().engine();
     make_store_with_engine(&engine, memory_limit)
 }
 

@@ -1,3 +1,4 @@
+use loupe::MemoryUsage;
 use wasmer::wasmparser::Operator;
 use wasmer::{
     FunctionMiddleware, LocalFunctionIndex, MiddlewareError, MiddlewareReaderState,
@@ -5,7 +6,7 @@ use wasmer::{
 };
 
 /// A middleware that ensures only deterministic operations are used (i.e. no floats)
-#[derive(Debug)]
+#[derive(Debug, MemoryUsage)]
 pub struct Deterministic {}
 
 impl Deterministic {
@@ -154,7 +155,7 @@ impl FunctionMiddleware for FunctionDeterministic {
 mod tests {
     use super::*;
     use std::sync::Arc;
-    use wasmer::{CompilerConfig, Cranelift, Module, Store, JIT};
+    use wasmer::{CompilerConfig, Cranelift, Module, Store, Universal};
 
     #[test]
     fn valid_wasm_instance_sanity() {
@@ -173,7 +174,7 @@ mod tests {
         let deterministic = Arc::new(Deterministic::new());
         let mut compiler_config = Cranelift::default();
         compiler_config.push_middleware(deterministic);
-        let store = Store::new(&JIT::new(compiler_config).engine());
+        let store = Store::new(&Universal::new(compiler_config).engine());
         let result = Module::new(&store, &wasm);
         assert!(result.is_ok());
     }
@@ -194,7 +195,7 @@ mod tests {
         let deterministic = Arc::new(Deterministic::new());
         let mut compiler_config = Cranelift::default();
         compiler_config.push_middleware(deterministic);
-        let store = Store::new(&JIT::new(compiler_config).engine());
+        let store = Store::new(&Universal::new(compiler_config).engine());
         let result = Module::new(&store, &wasm);
         assert!(result.is_err());
     }
