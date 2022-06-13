@@ -397,5 +397,9 @@ TEST_F(xcontract_fixture_t, test_hash_property) {
     }
 }
 
+TEST_F(xcontract_fixture_t, sync_BENCH) {
+    
+}
+
 }
 }

@@ -125,13 +125,9 @@ bool xtop_evm_eth_bridge_contract::execute(xbytes_t input,
             xwarn("[xtop_evm_eth_bridge_contract::execute] init headers error");
             return false;
         }
-        evm_common::xevm_log_t log;
-        log.address = top::to_string(context.address.to_h160());
-        assert(log.address.size() == 20);
-        log.data = top::to_string(u256(0));
-        assert(log.data.size() == 32);
-        log.topics.push_back(top::to_string(context.caller.to_h256()));
-        assert(log.topics.back().size() == 32);
+        evm_common::xh256s_t topics;
+        topics.push_back(evm_common::xh256_t(context.caller.to_h256()));
+        evm_common::xevm_log_t log(context.address, topics, top::to_bytes(u256(0)));
         output.cost = 0;
         output.exit_status = Returned;
         output.logs.push_back(log);
@@ -159,13 +155,9 @@ bool xtop_evm_eth_bridge_contract::execute(xbytes_t input,
             xwarn("[xtop_evm_eth_bridge_contract::execute] sync headers error");
             return false;
         }
-        evm_common::xevm_log_t log;
-        log.address = top::to_string(context.address.to_h160());
-        assert(log.address.size() == 20);
-        log.data = top::to_string(u256(0));
-        assert(log.data.size() == 32);
-        log.topics.push_back(top::to_string(context.caller.to_h256()));
-        assert(log.topics.back().size() == 32);
+        evm_common::xh256s_t topics;
+        topics.push_back(evm_common::xh256_t(context.caller.to_h256()));
+        evm_common::xevm_log_t log(context.address, topics, top::to_bytes(u256(0)));
         output.cost = 0;
         output.exit_status = Returned;
         output.logs.push_back(log);
