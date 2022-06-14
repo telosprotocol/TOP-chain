@@ -55,7 +55,7 @@ void xrelay_election_group_t::streamRLP(evm_common::RLPStream &_s)  const {
             election.streamRLP(_s);
         }
     } else {
-        _s << "";
+        _s.appendList(0); 
     }
 }
 
@@ -95,6 +95,7 @@ xrelay_signature_t::xrelay_signature_t(const std::string & sign_str) {
     r = top::evm_common::fromBigEndian<top::evm_common::u256>(r_bytes);
     top::evm_common::bytes s_bytes(compact_signature + 33, compact_signature + 65);
     s = top::evm_common::fromBigEndian<top::evm_common::u256>(s_bytes);
+    
 }
 
 void xrelay_signature_t::streamRLP(evm_common::RLPStream &_s) const {
@@ -159,6 +160,7 @@ xbytes_t xrelay_block_inner_header::encodeBytes() const {
         streamRLP(_s);
         _bytes.insert(_bytes.begin() + 1, _s.out().begin(), _s.out().end());
     }
+    xinfo("xrelay_block_inner_header::encodeBytes %s.", toHex(_bytes).c_str());
     return _bytes;
 }
 
@@ -212,7 +214,8 @@ void xrelay_block_inner_header::make_inner_hash()
 {
     xbytes_t bytes_data = encodeBytes();
     m_inner_hash = sha3(bytes_data);
-    xdbg_info("xrelay_block_inner_header::make_inner_hash  hash[%s]", m_inner_hash.hex().c_str());
+    xinfo("xrelay_block_inner_header::make_inner_hash  data[%s]", toHex(bytes_data).c_str());
+    xinfo("xrelay_block_inner_header::make_inner_hash  hash[%s]", m_inner_hash.hex().c_str());
 }
 
 
@@ -591,13 +594,14 @@ void    xrelay_block::make_block_hash()
     m_header.get_elections_sets().streamRLP(_s);
 
     m_header.m_block_hash = sha3(_s.out());
-    xdbg_info("xrelay_block::make_block_hash  hash[%s]", m_header.m_block_hash.hex().c_str());
+    xinfo("xrelay_block::make_block_hash  data[%s]", toHex(_s.out()).c_str());
+    xinfo("xrelay_block::make_block_hash  hash[%s]", m_header.m_block_hash.hex().c_str());
 }
 
 void xrelay_block::make_block_root_hash()
 {
     //todo 
-    xdbg_info("xrelay_block::make_block_root_hash last block hash[%s]", m_header.m_prev_hash.hex().c_str());
+    xinfo("xrelay_block::make_block_root_hash last block hash[%s]", m_header.m_prev_hash.hex().c_str());
     h256 block_root_hash{0};
     m_header.set_block_root_hash(block_root_hash);
 }

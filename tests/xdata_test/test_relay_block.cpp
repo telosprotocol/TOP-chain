@@ -4,7 +4,20 @@
 #include "xcommon/xeth_address.h"
 #include "xdata/xethtransaction.h"
 #include "xpbase/base/top_utils.h"
+#include "xcrypto/xcrypto_util.h"
+#include "xbase/xutl.h"
+// TODO(jimmy) #include "xbase/xvledger.h"
+#include "xutility/xhash.h"
+#include "xmutisig/xmutisig.h"
+#include "xcrypto/xckey.h"
+#include "xcertauth/xcertauth_face.h"
+#include <cinttypes>
+#include <trezor-crypto/sha3.h>
+#include <secp256k1/secp256k1.h>
+#include <secp256k1/secp256k1_recovery.h>
 #include<fstream>  
+
+
 using namespace top;
 using namespace top::base;
 using namespace top::data;
@@ -30,7 +43,7 @@ const h256 test_topics1{"4f89ece0f576ba3986204ba19a44d94601604b97cf3baa922b010a7
 const h256 test_topics2{"000000000000000000000000e22c0e020c99e9aed339618fdcea2871d678ef38"};
 const h256 test_topics3{"000000000000000000000000f3b23b373dc8854cc2936f4ab4b8e782011ccf87"};
 const h256 test_topics4{"000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266"};
-const uint8_t  test_status = 1;
+
 const uint64_t     test_gasUsed{0xccde};
 const h2048    test_logsBloom{"00000001000000004000000000000000000000000000000000000000000000000000000000041000000000000000008000000000000080000000000000200000000000000000000000000008000000000000000000008000000000000000000010000000020000000004000100000800000000040000000000000012000000000000000020000000008000000000000000000000000000000000000000000000420000000000000000000000000000000000000000080000000000000000000000000002000000200000000000000000000008002000000000000000000020000010000200000000000000000000000000000000000000000000002000000000"};
 const h256     test_public_key_x{"b72d55c76bd8f477f4b251763c33f75e6f5f5dd8af071e711e0cb9b2accc70ea"};
@@ -39,7 +52,7 @@ const uint64_t  test_stake = 0x12345678;
 const h256    test_r{"4f89ece0f576ba39123456789123456781604b97cf3baa922b010a758d303842"} ;
 const h256    test_s{"4f812345678abcdef1234ba19a44d94601604b97cf3baa922b010a758d303842"} ;
 const byte    test_v = 0x1;
-const uint64_t            test_version = 0;
+const uint8_t            test_version = 0;
 const h256    test_inner_hash{"5e173f6ac3c669587538e7727cf19b782a4f2fda07c1eaa662c593e5e85e3051"}; 
 const uint64_t            test_height = 123;
 const uint64_t            test_epochID = 456;
@@ -726,6 +739,84 @@ TEST_F(test_relay_block, serialize_xrelay_block_with_signature) {
         }
     }
 
+    block_dst.build_finish();  
+    xrelay_block_header relayer_header_dst_build = block_dst.get_header();
+   // std::cout << " header inner hash   " <<  block_dst.get_inner_header_hash() << std::endl;
+  //  std::cout << " block  hash   " <<  block_dst.get_block_hash() << std::endl;
+
+    xbytes_t rlp_block_header_data =  block_dst.streamRLP_header_to_contract();
+    std::cout << " streamRLP_to_contract   " << toHex(rlp_block_header_data) << std::endl;
+    std::ofstream fin("block_index_0.bin", std::ios::binary);
+    for (auto c :  rlp_block_header_data) {
+        fin.write((char*)&c, sizeof(uint8_t));
+    }
+    fin.close();
+
 }
 
+TEST_F(test_relay_block, serialize_xrelay_block_without_election) {
+
+
+    xrelay_block  _relay_block;
+    xrelay_block_header _block_header = xrelay_block_header_create(false);
+    _relay_block.set_header(_block_header);
+
+    std::vector<xeth_receipt_t>   receipts_vector;
+    for(int i = 0; i < TEST_RECEIPT_NUM; i ++) {
+        receipts_vector.push_back(xrelay_receipt_create());
+    }
+    _relay_block.set_receipts(receipts_vector);
+
+    EXPECT_EQ(_block_header.get_elections_sets().size(), 0);
+    EXPECT_EQ(_block_header.get_signatures_sets().size(), TEST_SIGNATURE_NUM);
+
+    _relay_block.build_finish();
+
+    xrelay_block_header relayer_header_dst_build = _relay_block.get_header();
+   // std::cout << " header inner hash   " <<  block_dst.get_inner_header_hash() << std::endl;
+  //  std::cout << " block  hash   " <<  block_dst.get_block_hash() << std::endl;
+
+    xbytes_t rlp_block_header_data =  _relay_block.streamRLP_header_to_contract();
+    std::cout << " streamRLP_to_contract   " << toHex(rlp_block_header_data) << std::endl;
+    std::ofstream fin("block_index_no_election.bin", std::ios::binary);
+    for (auto c :  rlp_block_header_data) {
+        fin.write((char*)&c, sizeof(uint8_t));
+    }
+    fin.close();
+}
+
+
+TEST_F(test_relay_block, serialize_xrelay_block_sign) {
+
+    utl::xecprikey_t  random_data; //using xecprikey_t generate random data
+    uint256_t msg_digest((uint8_t*)random_data.data());
+    
+    utl::xecprikey_t raw_pri_key_obj;
+    utl::xecpubkey_t raw_pub_key_obj = raw_pri_key_obj.get_public_key();
+    const std::string uncompressed_pub_key_data((const char*)raw_pub_key_obj.data(),raw_pub_key_obj.size());
+    const std::string compressed_pub_key_data = raw_pri_key_obj.get_compress_public_key();
+    const std::string account_addr_from_raw_pri_key = raw_pri_key_obj.to_account_address(enum_vaccount_addr_type_secp256k1_user_account, 0);
+    //std::cout << " account_addr_from_raw_pri_key from pri key:" << account_addr_from_raw_pri_key << std::endl;
+    utl::xecdsasig_t signature_obj = raw_pri_key_obj.sign(msg_digest);
+    const std::string signature = utl::xcrypto_util::digest_sign(msg_digest,raw_pri_key_obj.data());
+    xassert(utl::xcrypto_util::verify_sign(msg_digest,signature,account_addr_from_raw_pri_key));
+    
  
+    const std::string account_addr_from_raw_pub_key = raw_pub_key_obj.to_address(enum_vaccount_addr_type_secp256k1_user_account, 0);
+    //std::cout << " account_addr_from_raw_pub_key from  raw_pub_key_obj: " << account_addr_from_raw_pub_key << std::endl;
+    xassert(account_addr_from_raw_pri_key == account_addr_from_raw_pub_key);
+    xassert(raw_pub_key_obj.verify_signature(signature_obj, msg_digest));
+    
+
+    std::string pub_addr_new;
+    uint8_t  out_publickey_data[65] = {0};
+    if(utl::xsecp256k1_t::get_publickey_from_signature(signature_obj, msg_digest, out_publickey_data))
+    {
+        utl::xecpubkey_t raw_pub_key_obj_new = utl::xecpubkey_t(out_publickey_data);
+        pub_addr_new = raw_pub_key_obj_new.to_address(enum_vaccount_addr_type_secp256k1_user_account, 0);
+        //std::cout << " pub_addr_new from raw_pub_key_obj_new: " << pub_addr_new << std::endl;
+    }
+    EXPECT_EQ(account_addr_from_raw_pri_key, account_addr_from_raw_pub_key);
+    EXPECT_EQ(pub_addr_new, account_addr_from_raw_pub_key);
+    
+}
