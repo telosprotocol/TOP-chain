@@ -1,6 +1,5 @@
 use crate::runtime::{process_gas_info, GasInfo, Runtime};
 
-#[link(name = "xcontract_api")]
 extern "C" {
     fn c_depoly(ptr: i64, gas_ptr: i64) -> i32;
     fn c_call(ptr: i64, gas_ptr: i64) -> i32;
