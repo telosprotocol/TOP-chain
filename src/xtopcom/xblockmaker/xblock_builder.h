@@ -45,6 +45,9 @@ class xtablebuilder_t {
     static bool     update_account_index_property(const data::xtablestate_ptr_t & tablestate, 
                                                   const std::vector<xblock_ptr_t> & batch_units,
                                                   const std::vector<data::xlightunit_tx_info_ptr_t> & txs_info);
+    static bool     update_account_index_property(const data::xtablestate_ptr_t & tablestate, 
+                                                  const xblock_ptr_t & unit,
+                                                  const data::xunitstate_ptr_t & unit_state);
     static bool     update_receipt_confirmids(const data::xtablestate_ptr_t & tablestate, 
                                                   const std::map<base::xtable_shortid_t, uint64_t> & changed_confirm_ids);
 

@@ -87,14 +87,22 @@ void xtxpool_service::set_params(const xvip2_t & xip, const std::shared_ptr<vnet
         m_is_send_receipt_role = true;
         m_zone_index = base::enum_chain_zone_zec_index;
         m_node_type = common::xnode_type_t::zec;
-    } else if (common::has<common::xnode_type_t::auditor>(type)) {
+    } else if (common::has<common::xnode_type_t::consensus_auditor>(type)) {
         m_is_send_receipt_role = true;
         m_zone_index = base::enum_chain_zone_consensus_index;
-        m_node_type = common::xnode_type_t::auditor;
-    } else if (common::has<common::xnode_type_t::validator>(type)) {
+        m_node_type = common::xnode_type_t::consensus_auditor;
+    } else if (common::has<common::xnode_type_t::consensus_validator>(type)) {
         m_is_send_receipt_role = false;
         m_zone_index = base::enum_chain_zone_consensus_index;
-        m_node_type = common::xnode_type_t::validator;
+        m_node_type = common::xnode_type_t::consensus_validator;
+    } else if (common::has<common::xnode_type_t::evm_auditor>(type)) {
+        m_is_send_receipt_role = false;
+        m_zone_index = base::enum_chain_zone_evm_index;
+        m_node_type = common::xnode_type_t::evm_auditor;
+    } else if (common::has<common::xnode_type_t::evm_validator>(type)) {
+        m_is_send_receipt_role = false;
+        m_zone_index = base::enum_chain_zone_evm_index;
+        m_node_type = common::xnode_type_t::evm_validator;
     } else {
         xassert(0);
     }
@@ -313,7 +321,8 @@ void xtxpool_service::on_message_receipt(vnetwork::xvnode_address_t const & send
 
         base::xauto_ptr<txpool_receipt_message_para_t> para = new txpool_receipt_message_para_t(sender, message);
         if (message.id() == xtxpool_v2::xtxpool_msg_push_receipt) {
-            auto handler = [this, self=shared_from_this()](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
+            auto self = shared_from_this();
+            auto handler = [this, self](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
                 txpool_receipt_message_para_t * para = dynamic_cast<txpool_receipt_message_para_t *>(call.get_param1().get_object());
                 this->on_message_push_receipt_received(para->m_sender, para->m_message);
                 return true;
@@ -322,7 +331,8 @@ void xtxpool_service::on_message_receipt(vnetwork::xvnode_address_t const & send
             base::xcall_t asyn_call(handler, para.get());
             m_para->get_fast_dispatcher()->dispatch(asyn_call);
         } else {
-            auto handler = [this, self=shared_from_this()](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
+            auto self = shared_from_this();
+            auto handler = [this, self](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
                 txpool_receipt_message_para_t * para = dynamic_cast<txpool_receipt_message_para_t *>(call.get_param1().get_object());
                 this->on_message_unit_receipt(para->m_sender, para->m_message);
                 return true;
@@ -344,7 +354,8 @@ void xtxpool_service::on_message_receipt(vnetwork::xvnode_address_t const & send
             return;
         }
 
-        auto handler = [this, self=shared_from_this()](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
+        auto self = shared_from_this();
+        auto handler = [this, self](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
             txpool_receipt_message_para_t * para = dynamic_cast<txpool_receipt_message_para_t *>(call.get_param1().get_object());
             if (para->m_message.id() == xtxpool_v2::xtxpool_msg_pull_recv_receipt || para->m_message.id() == xtxpool_v2::xtxpool_msg_pull_confirm_receipt_v2) {
                 this->on_message_pull_receipt_received(para->m_sender, para->m_message);

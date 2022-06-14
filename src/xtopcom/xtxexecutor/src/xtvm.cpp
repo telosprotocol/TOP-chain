@@ -17,11 +17,6 @@ NS_BEG2(top, txexecutor)
 
 enum_execute_result_type xtvm_t::execute(const xvm_input_t & input, xvm_output_t & output) {
     const xcons_transaction_ptr_t & tx = input.get_tx();
-
-    // update tx flag before execute
-    tx->set_not_need_confirm();
-    tx->set_inner_table_flag();
-
     // execute the first tx
     {
         std::string address = tx->get_account_addr();

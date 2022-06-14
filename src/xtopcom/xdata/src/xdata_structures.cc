@@ -4,6 +4,7 @@
 #include "xdata/xsystem_contract/xdata_structures.h"
 
 #include "xbasic/xutility.h"
+#include "xbasic/xversion.h"
 #include "xdata/xnative_contract_address.h"
 
 NS_BEG3(top, data, system_contract)
@@ -176,6 +177,66 @@ int32_t xrefund_info::do_read(base::xstream_t & stream) {
     return (begin_pos - end_pos);
 }
 
+std::int32_t xnode_vote_percent_t::do_write(base::xstream_t & stream) const {
+    KEEP_SIZE();
+    stream << block_count;
+    stream << subset_count;
+    return CALC_LEN();
+}
+
+std::int32_t xnode_vote_percent_t::do_read(base::xstream_t & stream) {
+    KEEP_SIZE();
+    stream >> block_count;
+    stream >> subset_count;
+    return CALC_LEN();
+}
+
+int32_t xunqualified_node_info_v1_t::do_write(base::xstream_t & stream) const {
+    KEEP_SIZE();
+    MAP_OBJECT_SERIALIZE2(stream, auditor_info);
+    MAP_OBJECT_SERIALIZE2(stream, validator_info);
+    return CALC_LEN();
+}
+
+int32_t xunqualified_node_info_v1_t::do_read(base::xstream_t & stream) {
+    KEEP_SIZE();
+    MAP_OBJECT_DESERIALZE2(stream, auditor_info);
+    MAP_OBJECT_DESERIALZE2(stream, validator_info);
+    return CALC_LEN();
+}
+
+int32_t xunqualified_filter_info_t::do_write(base::xstream_t & stream) const {
+    KEEP_SIZE();
+    stream << node_id;
+    stream << node_type;
+    stream << vote_percent;
+    return CALC_LEN();
+}
+
+int32_t xunqualified_filter_info_t::do_read(base::xstream_t & stream) {
+    KEEP_SIZE();
+    stream >> node_id;
+    stream >> node_type;
+    stream >> vote_percent;
+    return CALC_LEN();
+}
+
+int32_t xaction_node_info_t::do_write(base::xstream_t & stream) const {
+    KEEP_SIZE();
+    stream << node_id;
+    stream << node_type;
+    stream << action_type;
+    return CALC_LEN();
+}
+
+int32_t xaction_node_info_t::do_read(base::xstream_t & stream) {
+    KEEP_SIZE();
+    stream >> node_id;
+    stream >> node_type;
+    stream >> action_type;
+    return CALC_LEN();
+}
+
 template <>
 uint64_t minimal_deposit_of<common::xminer_type_t::edge>() {
     return XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_edge_deposit);
@@ -217,17 +278,7 @@ bool could_be<common::xnode_type_t::consensus_auditor>(common::xminer_type_t con
 }
 
 template <>
-bool could_be<common::xnode_type_t::auditor>(common::xminer_type_t const miner_type) {
-    return common::has<common::xminer_type_t::advance>(miner_type);
-}
-
-template <>
 bool could_be<common::xnode_type_t::consensus_validator>(common::xminer_type_t const miner_type) {
-    return common::has<common::xminer_type_t::validator>(miner_type) || common::has<common::xminer_type_t::advance>(miner_type);
-}
-
-template <>
-bool could_be<common::xnode_type_t::validator>(common::xminer_type_t const miner_type) {
     return common::has<common::xminer_type_t::validator>(miner_type) || common::has<common::xminer_type_t::advance>(miner_type);
 }
 
@@ -237,17 +288,7 @@ bool could_be<common::xnode_type_t::storage_archive>(common::xminer_type_t const
 }
 
 template <>
-bool could_be<common::xnode_type_t::archive>(common::xminer_type_t const miner_type) {
-    return common::has<common::xminer_type_t::archive>(miner_type);
-}
-
-template <>
 bool could_be<common::xnode_type_t::storage_exchange>(common::xminer_type_t const miner_type) {
-    return common::has<common::xminer_type_t::exchange>(miner_type);
-}
-
-template <>
-bool could_be<common::xnode_type_t::exchange>(common::xminer_type_t const miner_type) {
     return common::has<common::xminer_type_t::exchange>(miner_type);
 }
 
@@ -259,6 +300,20 @@ bool could_be<common::xnode_type_t::edge>(common::xminer_type_t const miner_type
 template <>
 bool could_be<common::xnode_type_t::fullnode>(common::xminer_type_t const miner_type) {
     return common::has<common::xminer_type_t::advance>(miner_type);
+}
+
+template <>
+bool could_be<common::xnode_type_t::evm_auditor>(common::xminer_type_t const miner_type) {
+    return common::has<common::xminer_type_t::advance>(miner_type);
+}
+
+template <>
+bool could_be<common::xnode_type_t::evm_validator>(common::xminer_type_t const miner_type) {
+#if defined (XBUILD_DEV)
+    return common::has<common::xminer_type_t::validator>(miner_type);
+#else
+    return common::has<common::xminer_type_t::advance>(miner_type);
+#endif
 }
 
 bool xreg_node_info::could_be_rec() const noexcept {
@@ -297,6 +352,14 @@ bool xreg_node_info::could_be_fullnode() const noexcept {
     return could_be<common::xnode_type_t::fullnode>(m_registered_miner_type);
 }
 
+bool xreg_node_info::could_be_evm_auditor() const noexcept {
+    return could_be<common::xnode_type_t::evm_auditor>(m_registered_miner_type);
+}
+
+bool xreg_node_info::could_be_evm_validator() const noexcept {
+    return could_be<common::xnode_type_t::evm_validator>(m_registered_miner_type);
+}
+
 bool xreg_node_info::can_be_rec() const noexcept {
     return could_be_rec();
 }
@@ -318,7 +381,7 @@ bool xreg_node_info::legacy_can_be_archive() const noexcept {
 }
 
 bool xreg_node_info::can_be_auditor() const noexcept {
-    return could_be_auditor() && m_vote_amount * TOP_UNIT >= deposit();
+    return could_be_auditor() && has_enough_tickets();
 }
 
 bool xreg_node_info::can_be_validator() const noexcept {
@@ -331,6 +394,18 @@ bool xreg_node_info::can_be_exchange() const noexcept {
 
 bool xreg_node_info::can_be_fullnode() const noexcept {
     return could_be_auditor();
+}
+
+bool xreg_node_info::can_be_evm_auditor() const noexcept {
+    return could_be_evm_auditor() && has_enough_tickets();
+}
+
+bool xreg_node_info::can_be_evm_validator() const noexcept {
+    return could_be_evm_validator();
+}
+
+bool xreg_node_info::has_enough_tickets() const noexcept {
+    return m_vote_amount * TOP_UNIT >= deposit();
 }
 
 uint64_t xreg_node_info::deposit() const noexcept {
@@ -402,6 +477,14 @@ uint64_t xreg_node_info::fullnode_stake() const noexcept {
     return 0;
 }
 
+uint64_t xreg_node_info::evm_auditor_stake() const noexcept {
+    return auditor_stake();
+}
+
+uint64_t xreg_node_info::evm_validator_stake() const noexcept {
+    return validator_stake();
+}
+
 common::xminer_type_t xreg_node_info::miner_type() const noexcept {
     return m_registered_miner_type;
 }
@@ -470,19 +553,30 @@ void xreg_node_info::genesis(bool v) noexcept {
     }
 }
 
-std::int32_t cluster_workload_t::do_write(base::xstream_t & stream) const {
+xgroup_workload_t & xgroup_workload_t::operator+=(xgroup_workload_t const & rhs) {
+    if (group_address_str != rhs.group_address_str) {
+        return *this;
+    }
+    for (auto const & count : rhs.m_leader_count) {
+        m_leader_count[count.first] += count.second;
+        group_total_workload += count.second;
+    }
+    return *this;
+}
+
+std::int32_t xgroup_workload_t::do_write(base::xstream_t & stream) const {
     auto const begin = stream.size();
-    stream << cluster_id;
-    stream << cluster_total_workload;
+    stream << group_address_str;
+    stream << group_total_workload;
     MAP_SERIALIZE_SIMPLE(stream, m_leader_count);
     auto const end = stream.size();
     return end - begin;
 }
 
-std::int32_t cluster_workload_t::do_read(base::xstream_t & stream) {
+std::int32_t xgroup_workload_t::do_read(base::xstream_t & stream) {
     auto const begin = stream.size();
-    stream >> cluster_id;
-    stream >> cluster_total_workload;
+    stream >> group_address_str;
+    stream >> group_total_workload;
     MAP_DESERIALIZE_SIMPLE(stream, m_leader_count);
     auto const end = stream.size();
     return begin - end;
@@ -537,7 +631,7 @@ uint64_t xreg_node_info::raw_credit_score_data(common::xnode_type_t const node_t
 
 void xreg_node_info::slash_credit_score(common::xnode_type_t node_type) {
     uint64_t slash_creditscore_numerator{0};
-    if (common::has<common::xnode_type_t::validator>(node_type)) {
+    if (common::has<common::xnode_type_t::consensus_validator>(node_type)) {
         slash_creditscore_numerator = XGET_ONCHAIN_GOVERNANCE_PARAMETER(validator_slash_creditscore);
         auto config_min = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_creditscore);
 
@@ -553,7 +647,7 @@ void xreg_node_info::slash_credit_score(common::xnode_type_t node_type) {
         }
 
 
-    } else if (common::has<common::xnode_type_t::auditor>(node_type)) {
+    } else if (common::has<common::xnode_type_t::consensus_auditor>(node_type)) {
         slash_creditscore_numerator = XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_slash_creditscore);
         auto config_min = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_creditscore);
 
@@ -572,7 +666,7 @@ void xreg_node_info::slash_credit_score(common::xnode_type_t node_type) {
 
 void xreg_node_info::award_credit_score(common::xnode_type_t node_type) {
     uint64_t award_creditscore_numerator{0};
-    if (common::has<common::xnode_type_t::validator>(node_type)) {
+    if (common::has<common::xnode_type_t::consensus_validator>(node_type)) {
         award_creditscore_numerator = XGET_ONCHAIN_GOVERNANCE_PARAMETER(validator_award_creditscore);
         m_validator_credit_numerator += award_creditscore_numerator;
         if (m_validator_credit_numerator > m_validator_credit_denominator) {
@@ -581,7 +675,7 @@ void xreg_node_info::award_credit_score(common::xnode_type_t node_type) {
             return;
         }
 
-    } else if (common::has<common::xnode_type_t::auditor>(node_type)) {
+    } else if (common::has<common::xnode_type_t::consensus_auditor>(node_type)) {
         award_creditscore_numerator = XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_award_creditscore);
         m_auditor_credit_numerator += award_creditscore_numerator;
         if (m_auditor_credit_numerator > m_auditor_credit_denominator) {
@@ -592,13 +686,80 @@ void xreg_node_info::award_credit_score(common::xnode_type_t node_type) {
     }
 }
 
-std::string xissue_detail::to_string() const {
+int32_t reward_detail_v1::do_write(base::xstream_t & stream) const {
+    const int32_t begin_pos = stream.size();
+    stream << m_edge_reward;
+    stream << m_archive_reward;
+    stream << m_validator_reward;
+    stream << m_auditor_reward;
+    stream << m_vote_reward;
+    stream << m_self_reward;
+    const int32_t end_pos = stream.size();
+    return (end_pos - begin_pos);
+}
+
+int32_t reward_detail_v1::do_read(base::xstream_t & stream) {
+    const int32_t begin_pos = stream.size();
+    stream >> m_edge_reward;
+    stream >> m_archive_reward;
+    stream >> m_validator_reward;
+    stream >> m_auditor_reward;
+    stream >> m_vote_reward;
+    stream >> m_self_reward;
+    const int32_t end_pos = stream.size();
+    return (begin_pos - end_pos);
+}
+
+int32_t reward_detail_v2::do_write(base::xstream_t & stream) const {
+    const int32_t begin_pos = stream.size();
+    stream << m_edge_reward;
+    stream << m_archive_reward;
+    stream << m_validator_reward;
+    stream << m_auditor_reward;
+    stream << m_vote_reward;
+    stream << m_self_reward;
+    stream << m_evm_validator_reward;
+    stream << m_evm_auditor_reward;
+    const int32_t end_pos = stream.size();
+    return (end_pos - begin_pos);
+}
+
+int32_t reward_detail_v2::do_read(base::xstream_t & stream) {
+    const int32_t begin_pos = stream.size();
+    stream >> m_edge_reward;
+    stream >> m_archive_reward;
+    stream >> m_validator_reward;
+    stream >> m_auditor_reward;
+    stream >> m_vote_reward;
+    stream >> m_self_reward;
+    if (stream.size() > 0) {
+        stream >> m_evm_validator_reward;
+    }
+    if (stream.size() > 0) {
+        stream >> m_evm_auditor_reward;
+    }
+    const int32_t end_pos = stream.size();
+    return (begin_pos - end_pos);
+}
+
+reward_detail_v2::operator reward_detail_v1() const {
+    reward_detail_v1 v1;
+    v1.m_edge_reward = m_edge_reward;
+    v1.m_archive_reward = m_archive_reward;
+    v1.m_validator_reward = m_validator_reward;
+    v1.m_auditor_reward = m_auditor_reward;
+    v1.m_vote_reward = m_vote_reward;
+    v1.m_self_reward = m_self_reward;
+    return v1;
+}
+
+std::string xissue_detail_v1::to_string() const {
     base::xstream_t stream(base::xcontext_t::instance());
     serialize_to(stream);
     return std::string((const char *)stream.data(), stream.size());
 }
 
-int32_t xissue_detail::from_string(std::string const & s) {
+int32_t xissue_detail_v1::from_string(std::string const & s) {
     if (s.empty()) {
         xwarn("xissue_detail::from_string invalid input");
         return -1;
@@ -612,7 +773,7 @@ int32_t xissue_detail::from_string(std::string const & s) {
     return ret;
 }
 
-int32_t xissue_detail::do_write(base::xstream_t & stream) const {
+int32_t xissue_detail_v1::do_write(base::xstream_t & stream) const {
     const int32_t begin_pos = stream.size();
     stream << onchain_timer_round;
     stream << m_zec_vote_contract_height;
@@ -631,7 +792,7 @@ int32_t xissue_detail::do_write(base::xstream_t & stream) const {
     return (end_pos - begin_pos);
 }
 
-int32_t xissue_detail::do_read(base::xstream_t & stream) {
+int32_t xissue_detail_v1::do_read(base::xstream_t & stream) {
     const int32_t begin_pos = stream.size();
     stream >> onchain_timer_round;
     stream >> m_zec_vote_contract_height;
@@ -648,6 +809,159 @@ int32_t xissue_detail::do_read(base::xstream_t & stream) {
     MAP_OBJECT_DESERIALZE2(stream, m_node_rewards);
     const int32_t end_pos = stream.size();
     return (begin_pos - end_pos);
+}
+
+std::string xissue_detail_v2::to_string() const {
+    base::xstream_t stream(base::xcontext_t::instance());
+    serialize_to(stream);
+    return std::string((const char *)stream.data(), stream.size());
+}
+
+int32_t xissue_detail_v2::from_string(std::string const & s) {
+    if (s.empty()) {
+        xwarn("xissue_detail::from_string invalid input");
+        return -1;
+    }
+
+    base::xstream_t _stream(base::xcontext_t::instance(), (uint8_t *)s.data(), (int32_t)s.size());
+    int32_t ret = serialize_from(_stream);
+    if (ret <= 0) {
+        xerror("serialize_from_string fail. ret=%d,bin_data_size=%d", ret, s.size());
+    }
+    return ret;
+}
+
+int32_t xissue_detail_v2::do_write(base::xstream_t & stream) const {
+    const int32_t begin_pos = stream.size();
+    stream << onchain_timer_round;
+    stream << m_zec_vote_contract_height;
+    stream << m_zec_workload_contract_height;
+    stream << m_zec_reward_contract_height;
+    stream << m_edge_reward_ratio;
+    stream << m_archive_reward_ratio;
+    stream << m_validator_reward_ratio;
+    stream << m_auditor_reward_ratio;
+    stream << m_vote_reward_ratio;
+    stream << m_governance_reward_ratio;
+    stream << m_auditor_group_count;
+    stream << m_validator_group_count;
+    MAP_OBJECT_SERIALIZE2(stream, m_node_rewards);
+    stream << m_evm_auditor_reward_ratio;
+    stream << m_evm_validator_reward_ratio;
+    stream << m_evm_auditor_group_count;
+    stream << m_evm_validator_group_count;
+    const int32_t end_pos = stream.size();
+    return (end_pos - begin_pos);
+}
+
+int32_t xissue_detail_v2::do_read(base::xstream_t & stream) {
+    const int32_t begin_pos = stream.size();
+    stream >> onchain_timer_round;
+    stream >> m_zec_vote_contract_height;
+    stream >> m_zec_workload_contract_height;
+    stream >> m_zec_reward_contract_height;
+    stream >> m_edge_reward_ratio;
+    stream >> m_archive_reward_ratio;
+    stream >> m_validator_reward_ratio;
+    stream >> m_auditor_reward_ratio;
+    stream >> m_vote_reward_ratio;
+    stream >> m_governance_reward_ratio;
+    stream >> m_auditor_group_count;
+    stream >> m_validator_group_count;
+    MAP_OBJECT_DESERIALZE2(stream, m_node_rewards);
+    if (stream.size() > 0) {
+        stream >> m_evm_auditor_reward_ratio;
+    }
+    if (stream.size() > 0) {
+        stream >> m_evm_validator_reward_ratio;
+    }
+    if (stream.size() > 0) {
+        stream >> m_evm_auditor_group_count;
+    }
+    if (stream.size() > 0) {
+        stream >> m_evm_validator_group_count;
+    }
+    const int32_t end_pos = stream.size();
+    return (begin_pos - end_pos);
+}
+
+xissue_detail_v2::operator xissue_detail_v1() const {
+    xissue_detail_v1 v1;
+    v1.onchain_timer_round = onchain_timer_round;
+    v1.m_zec_vote_contract_height = m_zec_vote_contract_height;
+    v1.m_zec_workload_contract_height = m_zec_workload_contract_height;
+    v1.m_zec_reward_contract_height = m_zec_reward_contract_height;
+    v1.m_edge_reward_ratio = m_edge_reward_ratio;
+    v1.m_archive_reward_ratio = m_archive_reward_ratio;
+    v1.m_validator_reward_ratio = m_validator_reward_ratio;
+    v1.m_auditor_reward_ratio = m_auditor_reward_ratio;
+    v1.m_vote_reward_ratio = m_vote_reward_ratio;
+    v1.m_governance_reward_ratio = m_governance_reward_ratio;
+    v1.m_auditor_group_count = m_auditor_group_count;
+    v1.m_validator_group_count = m_validator_group_count;
+    for (auto const & r : m_node_rewards) {
+        v1.m_node_rewards[r.first] = static_cast<reward_detail_v1>(r.second);
+    }
+    return v1;
+}
+
+xtop_allowance::xtop_allowance(data_type d) noexcept(std::is_nothrow_move_constructible<data_type>::value) : data_{std::move(d)} {
+}
+
+xtop_allowance::iterator xtop_allowance::begin() noexcept {
+    return data_.begin();
+}
+
+xtop_allowance::const_iterator xtop_allowance::begin() const noexcept {
+    return data_.begin();
+}
+
+xtop_allowance::const_iterator xtop_allowance::cbegin() const noexcept {
+    return data_.cbegin();
+}
+
+xtop_allowance::iterator xtop_allowance::end() noexcept {
+    return data_.end();
+}
+
+xtop_allowance::const_iterator xtop_allowance::end() const noexcept {
+    return data_.end();
+}
+
+xtop_allowance::const_iterator xtop_allowance::cend() const noexcept {
+    return data_.cend();
+}
+
+bool xtop_allowance::empty() const noexcept {
+    return data_.empty();
+}
+
+xtop_allowance::size_type xtop_allowance::size() const noexcept {
+    return data_.size();
+}
+
+std::pair<xtop_allowance::iterator, bool> xtop_allowance::insert(value_type const & value) {
+    return data_.insert(value);
+}
+
+xtop_allowance::iterator xtop_allowance::insert(const_iterator hint, const value_type & value) {
+    return data_.insert(hint, value);
+}
+
+xtop_allowance::size_type xtop_allowance::count(key_type const & key) const {
+    return data_.count(key);
+}
+
+xtop_allowance::iterator xtop_allowance::find(key_type const & key) {
+    return data_.find(key);
+}
+
+xtop_allowance::const_iterator xtop_allowance::find(key_type const & key) const {
+    return data_.find(key);
+}
+
+xtop_allowance::data_type const & xtop_allowance::raw_data() const noexcept {
+    return data_;
 }
 
 NS_END3

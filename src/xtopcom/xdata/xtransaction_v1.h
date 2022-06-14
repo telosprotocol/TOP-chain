@@ -80,7 +80,6 @@ class xtransaction_v1_t : public xbase_dataunit_t<xtransaction_v1_t, xdata_type_
     virtual const std::string & get_target_addr()const override {return m_target_addr.empty() ? m_target_action.get_account_addr() : m_target_addr;}
     virtual const std::string & get_origin_target_addr()const override {return m_target_action.get_account_addr();}
     virtual uint64_t            get_tx_nonce() const override {return get_last_nonce() + 1;}
-    virtual size_t              get_serialize_size() const override;
     virtual std::string         dump() const override;  // just for debug purpose
     virtual const std::string & get_source_action_name() const override {return m_source_action.get_action_name();}
     virtual const std::string & get_source_action_para() const override {return m_source_action.get_action_param();}
@@ -95,8 +94,10 @@ class xtransaction_v1_t : public xbase_dataunit_t<xtransaction_v1_t, xdata_type_
     virtual void                construct_from_json(xJson::Value& tx_json) override;
     virtual int32_t             parse(enum_xaction_type source_type, enum_xaction_type target_type, xtx_parse_data_t & tx_parse_data) override;
 
-    virtual void set_amount(uint64_t) override { assert(false); }
-    virtual uint64_t get_amount() const noexcept override { assert(false); return 0; }
+    virtual void set_amount(uint64_t) override { }
+    virtual uint64_t get_amount() const noexcept override { return 0; }
+    virtual top::evm_common::u256 get_amount_256() const noexcept override { return 0; }
+    virtual bool is_top_transfer() const noexcept override { return true; }
 
     // header
  public:
@@ -107,7 +108,7 @@ class xtransaction_v1_t : public xbase_dataunit_t<xtransaction_v1_t, xdata_type_
     virtual void set_tx_type(uint16_t type) override {m_transaction_type = type;};
     virtual uint16_t get_tx_type() const override {return m_transaction_type;};
     virtual void set_tx_len(uint16_t len) override {m_transaction_len = len;};
-    virtual uint16_t get_tx_len() const override {return m_transaction_len;};
+    virtual uint32_t get_tx_len() const override {return m_transaction_len;};
     virtual void set_tx_version(uint32_t version) override {m_version = version;};
     virtual uint32_t get_tx_version() const override {return m_version;};
     void set_to_ledger_id(uint16_t id) {m_to_ledger_id = id;};
@@ -135,6 +136,7 @@ class xtransaction_v1_t : public xbase_dataunit_t<xtransaction_v1_t, xdata_type_
     virtual void set_memo(const std::string & memo) override {m_memo = memo;};
     virtual const std::string & get_memo() const override {return m_memo;};
     virtual const std::string & get_target_address() const override {return m_target_addr;};
+    virtual bool is_evm_tx() const override {return false;}
     // header
 private:
     uint16_t          m_transaction_type{0};    // transfer,withdraw,deposit etc

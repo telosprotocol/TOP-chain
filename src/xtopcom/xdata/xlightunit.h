@@ -108,19 +108,8 @@ class xlightunit_block_t : public xblock_t {
  public:  // lightunit special apis
     virtual     std::string     dump_body() const;
  public:  // override base block api
-    bool                        extract_sub_txs(std::vector<base::xvtxindex_ptr> & sub_txs) override;
-    const std::vector<xlightunit_tx_info_ptr_t> get_txs() const override;
-    uint32_t                    get_txs_count() const override {return (uint32_t)get_input()->get_entitys().size();}
+    const std::vector<xlightunit_action_ptr_t> get_txs() const;
     uint32_t                    get_unconfirm_sendtx_num() const override;
-
- private:
-    void                        try_load_body() const;
-    void                        load_body() const;
-    const xlightunit_body_t &   get_lightunit_body() const;
-
- private:
-    mutable std::once_flag      m_once_load_flag;  // cache body delay init
-    mutable xlightunit_body_t   m_cache_body;
 };
 
 NS_END2

@@ -56,6 +56,7 @@ public:
 
     void input_receipt_data(data::xreceipt_data_store_t const& receipt_data);
     data::xreceipt_data_store_t& output_receipt_data() noexcept;
+
     xbyte_buffer_t input_receipt_data(std::string const & key) const;
     void remove_input_receipt_data(std::string const & key);
     data::xaction_consensus_exec_status action_consensus_result() const noexcept;

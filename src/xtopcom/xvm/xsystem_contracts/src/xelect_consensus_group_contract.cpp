@@ -200,7 +200,7 @@ bool xtop_elect_consensus_group_contract::elect_group(common::xzone_id_t const &
     assert(!broadcast(cid));
     assert(!broadcast(gid));
 
-    assert(zid == common::xcommittee_zone_id || zid == common::xzec_zone_id || zid == common::xconsensus_zone_id);
+    assert(zid == common::xcommittee_zone_id || zid == common::xzec_zone_id || zid == common::xconsensus_zone_id || zid == common::xevm_zone_id);
 
     auto const log_prefix = "[elect consensus group contract] zone " + zid.to_string() + " cluster " + cid.to_string() + " group " + gid.to_string() + ":";
 
@@ -230,6 +230,19 @@ bool xtop_elect_consensus_group_contract::elect_group(common::xzone_id_t const &
             node_type = common::xnode_type_t::consensus_validator;
             role_type = common::xminer_type_t::validator;
         }
+        break;
+    }
+
+    case common::xnode_type_t::evm: {
+        assert(cid == common::xdefault_cluster_id);
+        if (gid < common::xauditor_group_id_end) {
+            node_type = common::xnode_type_t::evm_auditor;
+            role_type = common::xminer_type_t::advance;
+        } else {
+            node_type = common::xnode_type_t::evm_validator;
+            role_type = common::xminer_type_t::validator;
+        }
+
         break;
     }
 
@@ -279,7 +292,7 @@ bool xtop_elect_consensus_group_contract::elect_group(common::xzone_id_t const &
         xwarn("%s xtop_error_t exception caught. category: %s msg: %s", log_prefix.c_str(), eh.code().category().name(), eh.what());
         throw;
     } catch (std::exception const & eh) {
-        xerror("%s std::exception exception caught: %s", log_prefix.c_str(), eh.what());
+        xwarn("%s std::exception exception caught: %s", log_prefix.c_str(), eh.what());
         throw;
     }
 
@@ -528,7 +541,7 @@ bool xtop_elect_consensus_group_contract::do_normal_election(common::xzone_id_t 
             elect_in_count = min_group_size - origin_group_size;
         } else {
             elect_in_count = std::min({rotation_count, fts_standbys_size, static_cast<size_t>(max_group_size) - result_nodes.size()});
-            if (node_type == common::xnode_type_t::consensus_auditor || node_type == common::xnode_type_t::consensus_validator) {
+            if (node_type == common::xnode_type_t::consensus_auditor || node_type == common::xnode_type_t::consensus_validator || node_type == common::xnode_type_t::evm_auditor || node_type == common::xnode_type_t::evm_validator) {
                 const size_t election_minimum_rotation_percent = XGET_ONCHAIN_GOVERNANCE_PARAMETER(cluster_election_minimum_rotation_ratio);
                 if (fts_standbys_size <= (origin_group_size * election_minimum_rotation_percent + 99) / 100) {
                     elect_out_count = elect_in_count - unqualified_node_count;

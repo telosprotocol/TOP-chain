@@ -21,7 +21,6 @@ using std::pair;
 using std::unique_ptr;
 using std::shared_ptr;
 using namespace std::placeholders;
-#define ENABLE_RPC_SESSION 0
 #define ENABLE_RPC_TOKEN 0
 
 #define xdbg_rpc(fmt, ...) xdbg("[rpc] " fmt, ##__VA_ARGS__)
@@ -35,6 +34,7 @@ enum class enum_xrpc_type : uint8_t
 {
     enum_xrpc_http_type = 0,
     enum_xrpc_ws_type,
+    enum_xrpc_evm_http_type,
     enum_xrpc_error_type
 };
 enum class enum_xrpc_tx_type : uint8_t

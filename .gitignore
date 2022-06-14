@@ -1,8 +1,8 @@
-xcomponent_administration
 cbuild*
 version.inc
 .vscode/
 .vs/
+.idea/
 CMakeSettings.json
 **/CMakeFiles
 **/Makefile
@@ -36,3 +36,11 @@ macos/XTOPCHAIN.build
 macos/src
 src/xtopcom/xvledger/test/xvledger-test.xcodeproj
 macos
+
+src/xtopcom/xevm_engine_rs/target
+**/Cargo.lock
+pkg/
+xevm_b
+go.mod
+go.sum
+cover.out

@@ -429,6 +429,8 @@ bool xtop_logical_version::operator>=(xtop_logical_version const & other) const 
 bool xtop_logical_version::contains(xtop_logical_version const & logical_version) const noexcept {
     if (broadcast(associated_blk_height()) || associated_blk_height() == logical_version.associated_blk_height()) {
         return true;
+    } else if (associated_blk_height() != logical_version.associated_blk_height()) {
+        return false;
     }
 
     if (election_round().empty() || election_round() == logical_version.election_round()) {
@@ -773,12 +775,34 @@ build_edge_sharding_address(xnetwork_id_t const & network_id) {
 }
 
 xgroup_address_t
-build_archive_sharding_address(xgroup_id_t const & group_id, xnetwork_id_t const & network_id) {
+build_archive_sharding_address(xgroup_id_t const & group_id /* todo delete this */, xnetwork_id_t const & network_id) {
+    assert(group_id == common::xarchive_group_id);
     return xgroup_address_t{
         network_id,
-        xarchive_zone_id,
+        xstorage_zone_id,
         xdefault_cluster_id,
-        group_id
+        xarchive_group_id
+    };
+}
+
+xgroup_address_t
+build_legacy_exchange_sharding_address(xgroup_id_t const & group_id, xnetwork_id_t const & network_id) {
+    assert(group_id == xlegacy_exchange_group_id);
+    return xgroup_address_t{
+        network_id,
+        xstorage_zone_id,
+        xdefault_cluster_id,
+        xlegacy_exchange_group_id
+    };
+}
+
+xgroup_address_t
+build_exchange_sharding_address(xnetwork_id_t const & network_id) {
+    return xgroup_address_t{
+        network_id,
+        xstorage_zone_id,
+        xexchange_cluster_id,
+        xexchange_group_id
     };
 }
 
@@ -789,6 +813,18 @@ xgroup_address_t build_fullnode_group_address(xnetwork_id_t const & network_id) 
         xdefault_cluster_id,
         xdefault_group_id
     };
+}
+
+xgroup_address_t
+build_evm_group_address(xnetwork_id_t const & network_id, common::xnode_type_t const & type) {
+    if (common::has<common::xnode_type_t::evm_validator>(type)) {
+        return xgroup_address_t{network_id, xevm_zone_id, xdefault_cluster_id, xvalidator_group_id_begin};
+    }
+    return xgroup_address_t{
+        network_id, 
+        xevm_zone_id, 
+        xdefault_cluster_id, 
+        xdefault_group_id};
 }
 
 xgroup_address_t
@@ -822,15 +858,6 @@ build_frozen_sharding_address(xnetwork_id_t const & network_id, xcluster_id_t co
         xfrozen_zone_id,
         cluster_id,
         group_id
-    };
-}
-
-xgroup_address_t build_edge_archive_group_address(xnetwork_id_t const & network_id) {
-    return xgroup_address_t{
-        network_id,
-        xarchive_zone_id,
-        xdefault_cluster_id,
-        xgroup_id_t{xdefault_group_id_value + 1}
     };
 }
 

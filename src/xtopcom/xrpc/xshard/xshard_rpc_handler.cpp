@@ -41,14 +41,15 @@ void xshard_rpc_handler::on_message(const xvnode_address_t & edge_sender, xmessa
            timer_height,
            message.hash());
 
-    auto process_request = [self = shared_from_this()](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
+    auto self = shared_from_this();
+    auto process_request = [self](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
         rpc_message_para_t * para = dynamic_cast<rpc_message_para_t *>(call.get_param1().get_object());
         auto message = para->m_message;
         auto edge_sender = para->m_sender;
         auto timer_height = para->m_timer_height;
 
         auto msgid = para->m_message.id();
-        if (msgid == rpc_msg_request) {
+        if (msgid == rpc_msg_request || msgid == rpc_msg_eth_request) {
             xrpc_msg_request_t msg = codec::xmsgpack_codec_t<xrpc_msg_request_t>::decode(para->m_message.payload());
             msg.m_advance_address = edge_sender;
             msg.m_timer_height = timer_height;
@@ -135,11 +136,6 @@ void xshard_rpc_handler::shard_process_request(const xrpc_msg_request_t & edge_m
             process_msg(edge_msg, json_proc);
             response_msg_ptr->m_message_body = json_proc.get_response();
         }
-#if (defined ENABLE_RPC_SESSION) && (ENABLE_RPC_SESSION != 0)
-        if (edge_msg.m_tx_type == enum_xrpc_tx_type::enum_xrpc_query_type) {
-            send_to_edge = false;
-        }
-#endif
     } catch (const xrpc_error & e) {
         xinfo_rpc("error %s", e.what());
         xrpc_error_json error_json(e.code().value(), e.what(), edge_msg.m_client_id);
@@ -157,10 +153,12 @@ void xshard_rpc_handler::shard_process_request(const xrpc_msg_request_t & edge_m
 
 void xshard_rpc_handler::start() {
     m_shard_vhost->register_message_ready_notify(xmessage_category_rpc, std::bind(&xshard_rpc_handler::on_message, shared_from_this(), _1, _2, _3));
+    xinfo("shard register rpc");
 }
 
 void xshard_rpc_handler::stop() {
     m_shard_vhost->unregister_message_ready_notify(xmessage_category_rpc);
+    xinfo("shard unregister rpc");
 }
 
 NS_END2

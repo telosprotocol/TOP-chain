@@ -55,6 +55,8 @@ void xtop_genesis_manager::load_accounts() {
             for (auto i = 0; i < enum_vbucket_has_tables_count; i++) {
                 m_contract_accounts.insert(data::make_address_by_prefix_and_subaddr(pair.first.value(), i));
             }
+        } else if (data::is_sys_evm_table_contract_address(pair.first)) {
+            m_contract_accounts.insert(data::make_address_by_prefix_and_subaddr(pair.first.value(), 0));
         } else {
             m_contract_accounts.insert(pair.first);
         }
@@ -136,7 +138,9 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_contrac
             xinfo("[xtop_genesis_manager::create_genesis_of_contract_account] account %s, genesis block already exists", account.get_account().c_str());
             return nullptr;
         }
-        if (account.get_account().find(sys_contract_rec_elect_fullnode_addr) != std::string::npos) {
+        if ((account.get_account().find(sys_contract_rec_elect_fullnode_addr) != std::string::npos) ||
+            (account.get_account().find(sys_contract_rec_elect_exchange_addr) != std::string::npos) ||
+            (account.get_account().find(sys_contract_zec_elect_eth_addr) != std::string::npos)) {
             // just delete it here and store new root block after
             xwarn("[xtop_genesis_manager::create_genesis_of_contract_account] account: %s genesis block exist but hash not match, replace it, %s, %s",
                   account.get_account().c_str(),

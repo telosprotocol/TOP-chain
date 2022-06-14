@@ -66,23 +66,29 @@ public:
        {"archive",common::xnode_type_t::storage_archive},
        {"exchange", common::xnode_type_t::storage_exchange},
        {"fullnode", common::xnode_type_t::fullnode},
+       {"evm_auditor", common::xnode_type_t::evm_auditor},
+       {"evm_validator", common::xnode_type_t::evm_validator},
     };
 
     std::vector<standby_node_info> get_standby_config();
 
     std::vector<node_info> get_static_election_nodes(std::string const & key);
 
-    void calc_static_consensus_election_nodes();
+    void calc_static_top_consensus_election_nodes();
+    void calc_static_evm_consensus_election_nodes();
     
-    std::vector<node_info> get_static_consensus_election_nodes(uint8_t group_id_value);
+    std::vector<node_info> get_static_top_consensus_election_nodes(uint8_t group_id_value);
+    std::vector<node_info> get_static_evm_consensus_election_nodes(uint8_t group_id_value);
 
 private:
-    std::map<uint8_t,std::vector<node_info>> consensus_group_map;
+    std::map<uint8_t,std::vector<node_info>> top_consensus_group_map;
+    std::map<uint8_t,std::vector<node_info>> evm_consensus_group_map;
 
     xstatic_election_center() {
         xinfo("[static_consensus][xstatic_election_center] init allow election false");
         std::signal(SIGUSR1, set_signal_true);
-        calc_static_consensus_election_nodes();
+        calc_static_top_consensus_election_nodes();
+        calc_static_evm_consensus_election_nodes();
     }
     std::atomic<bool> allow_election{false};
 };

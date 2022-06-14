@@ -101,27 +101,6 @@ private:
     xtx_para_t m_para;
 };
 
-class xready_account_t {
-public:
-    xready_account_t(const std::string & account) : m_account(account) {
-    }
-    xready_account_t(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs) : m_account(account), m_txs(txs) {
-    }
-    const std::vector<xcons_transaction_ptr_t> & get_txs() const {
-        return m_txs;
-    }
-    bool put_tx(const xcons_transaction_ptr_t & tx);
-    const std::string & get_addr() const {
-        return m_account;
-    }
-
-private:
-    std::string m_account;
-    mutable std::vector<xcons_transaction_ptr_t> m_txs;
-};
-
-using ready_accounts_t = std::vector<std::shared_ptr<xready_account_t>>;
-
 class tx_info_t {
 public:
     tx_info_t(const std::string & account_addr, const uint256_t & hash, base::enum_transaction_subtype subtype) : m_account_addr(account_addr), m_hash(hash), m_subtype(subtype) {
@@ -171,9 +150,7 @@ public:
     const data::xtablestate_ptr_t & get_table_state_highqc() const {
         return m_table_state_highqc;
     }
-    // const std::map<std::string, uint64_t> & get_locked_nonce_map() const {
-    //     return m_locked_nonce_map;
-    // }
+
     uint16_t get_all_txs_max_num() const {
         return m_all_txs_max_num;
     }
@@ -270,7 +247,7 @@ public:
     virtual int32_t verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs) = 0;
     virtual void refresh_table(uint8_t zone, uint16_t subaddr) = 0;
     // virtual void update_non_ready_accounts(uint8_t zone, uint16_t subaddr) = 0;
-    virtual void update_table_state(const base::xvproperty_prove_ptr_t & property_prove_ptr, const data::xtablestate_ptr_t & table_state, bool add_rsp_id) = 0;
+    virtual void update_table_state(const base::xvproperty_prove_ptr_t & property_prove_ptr, const data::xtablestate_ptr_t & table_state) = 0;
     virtual void build_recv_tx(base::xtable_shortid_t from_table_sid,
                                base::xtable_shortid_t to_table_sid,
                                std::vector<uint64_t> receiptids,
@@ -287,8 +264,6 @@ public:
     virtual std::map<std::string, uint64_t> get_min_keep_heights() const = 0;
     virtual xtransaction_ptr_t get_raw_tx(const std::string & account_addr, base::xtable_shortid_t peer_table_sid, uint64_t receipt_id) const = 0;
     virtual const std::set<base::xtable_shortid_t> & get_all_table_sids() const = 0;
-    virtual bool get_sender_need_confirm_ids(const std::string & account, base::xtable_shortid_t peer_table_sid, uint64_t lower_receipt_id, uint64_t upper_receipt_id, std::vector<uint64_t> & receipt_ids) const = 0;
-    virtual bool get_send_id_after_add_rsp_id(base::xtable_shortid_t self_sid, base::xtable_shortid_t peer_sid, uint64_t & send_id) const = 0;
 };
 
 class xtxpool_instance {

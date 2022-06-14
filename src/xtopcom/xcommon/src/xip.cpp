@@ -741,7 +741,7 @@ xnode_type_t node_type_from(common::xzone_id_t const & zone_id) {
         return xnode_type_t::consensus;
     }
 
-    if (zone_id == xarchive_zone_id) {
+    if (zone_id == xstorage_zone_id) {
         return xnode_type_t::storage;
     }
 
@@ -761,6 +761,10 @@ xnode_type_t node_type_from(common::xzone_id_t const & zone_id) {
         return xnode_type_t::frozen;
     }
 
+    if (zone_id == xevm_zone_id) {
+        return xnode_type_t::evm;
+    }
+
     return xnode_type_t::invalid;
 }
 
@@ -768,26 +772,57 @@ xnode_type_t node_type_from(common::xzone_id_t const & zone_id, xcluster_id_t co
     return node_type_from(zone_id);
 }
 
-xnode_type_t node_type_from(common::xzone_id_t const & zone_id, common::xcluster_id_t const & /* cluster_id */, xgroup_id_t const & group_id) {
+xnode_type_t node_type_from(common::xzone_id_t const & zone_id, common::xcluster_id_t const & cluster_id, xgroup_id_t const & group_id) {
     auto node_type = node_type_from(zone_id);
-    if (node_type == xnode_type_t::consensus) {
+
+    switch (node_type) {
+    case xnode_type_t::consensus: {
         if (xauditor_group_id_begin <= group_id && group_id < xauditor_group_id_end) {
-            node_type |= xnode_type_t::auditor;
+            node_type |= xnode_type_t::consensus_auditor;
         } else if (xvalidator_group_id_begin <= group_id && group_id < xvalidator_group_id_end) {
-            node_type |= xnode_type_t::validator;
+            node_type |= xnode_type_t::consensus_validator;
         } else {
             assert(false);
             node_type = xnode_type_t::invalid;
         }
-    } else if (node_type == xnode_type_t::storage) {
-        if (xarchive_group_id == group_id) {
-            node_type |= xnode_type_t::archive;
-        } else if (xexchange_group_id == group_id) {
-            node_type |= xnode_type_t::exchange;
+
+        break;
+    }
+
+    case xnode_type_t::storage: {
+        if (cluster_id == xexchange_cluster_id) {
+            assert(group_id == common::xexchange_group_id);
+            node_type |= xnode_type_t::storage_exchange;
+        } else {
+            if (xarchive_group_id == group_id) {
+                node_type |= xnode_type_t::storage_archive;
+            } else if (xlegacy_exchange_group_id == group_id) {
+                node_type |= xnode_type_t::storage_exchange;
+            } else {
+                assert(false);
+                node_type = xnode_type_t::invalid;
+            }
+        }
+
+        break;
+    }
+
+    case xnode_type_t::evm: {
+        if (xauditor_group_id_begin <= group_id && group_id < xauditor_group_id_end) {
+            node_type |= xnode_type_t::evm_auditor;
+        } else if (xvalidator_group_id_begin <= group_id && group_id < xvalidator_group_id_end) {
+            node_type |= xnode_type_t::evm_validator;
         } else {
             assert(false);
             node_type = xnode_type_t::invalid;
         }
+        break;
+    }
+
+    default: {
+        break;
+    }
+
     }
 
     return node_type;

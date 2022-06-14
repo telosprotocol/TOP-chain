@@ -190,7 +190,7 @@ void xtop_zec_elect_consensus_group_contract::elect_config_nodes(common::xlogic_
         adv_election_group_result.start_time(current_time);
 
         // elect in:
-        auto adv_group_node_infos = xstatic_election_center::instance().get_static_consensus_election_nodes(adv_group_id.value());
+        auto adv_group_node_infos = xstatic_election_center::instance().get_static_top_consensus_election_nodes(adv_group_id.value());
         for (auto node : adv_group_node_infos) {
             xelection_info_t new_election_info{};
             new_election_info.joined_version = next_version;
@@ -223,7 +223,7 @@ void xtop_zec_elect_consensus_group_contract::elect_config_nodes(common::xlogic_
             val_election_group_result.timestamp(current_time);
             val_election_group_result.start_time(current_time);
 
-            auto val_group_node_infos = xstatic_election_center::instance().get_static_consensus_election_nodes(val_group_id.value());
+            auto val_group_node_infos = xstatic_election_center::instance().get_static_top_consensus_election_nodes(val_group_id.value());
             for (auto node : val_group_node_infos) {
                 xelection_info_t new_election_info{};
                 new_election_info.joined_version = next_version;
@@ -466,14 +466,7 @@ void xtop_zec_elect_consensus_group_contract::elect(common::xzone_id_t const zon
                   static_cast<std::uint16_t>(auditor_group_id.value()),
                   read_height);
 
-            auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
-            if (chain_fork::xchain_fork_config_center_t::is_forked(fork_config.election_contract_stores_credit_score_fork_point, election_timestamp)) {
-                serialization::xmsgpack_t<xelection_result_store_t>::serialize_to_string_prop(
-                    *this, data::election::get_property_by_group_id(auditor_group_id), election_result_store);
-            } else {
-                serialization::xmsgpack_t<data::election::v1::xelection_result_store_t>::serialize_to_string_prop(
-                    *this, data::election::get_property_by_group_id(auditor_group_id), election_result_store.v1());
-            }
+            serialization::xmsgpack_t<xelection_result_store_t>::serialize_to_string_prop(*this, data::election::get_property_by_group_id(auditor_group_id), election_result_store);
 #if defined(DEBUG)
             auto serialized_election_result_store_data = codec::msgpack_encode(election_result_store);
             auto base64str =

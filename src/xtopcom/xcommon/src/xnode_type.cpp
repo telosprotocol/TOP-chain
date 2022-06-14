@@ -31,7 +31,13 @@ to_string(xnode_type_t const type) {
     }
 
     if (has<xnode_type_t::storage>(type)) {
-        string += "storage.";
+        if (has<xnode_type_t::storage_archive>(type)) {
+            string += "storage.archive.";
+        } else if (has<xnode_type_t::storage_exchange>(type)) {
+            string += "storage.exchange.";
+        } else {
+            string += "storage.";
+        }
     }
 
     if (has<xnode_type_t::frozen>(type)) {
@@ -39,27 +45,27 @@ to_string(xnode_type_t const type) {
     }
 
     if (has<xnode_type_t::consensus>(type)) {
-        string += "consensus.";
+        if (has<xnode_type_t::consensus_auditor>(type)) {
+            string += "consensus.auditor.";
+        } else if (has<xnode_type_t::consensus_validator>(type)) {
+            string += "consensus.validator.";
+        } else {
+            string += "consensus.";
+        }
     }
 
     if (has<xnode_type_t::fullnode>(type)) {
         string += "fullnode.";
     }
 
-    if (has<xnode_type_t::auditor>(type)) {
-        string += "auditor.";
-    }
-
-    if (has<xnode_type_t::validator>(type)) {
-        string += "validator.";
-    }
-
-    if (has<xnode_type_t::archive>(type)) {
-        string += "archive.";
-    }
-
-    if (has<xnode_type_t::exchange>(type)) {
-        string += "exchange.";
+    if (has<xnode_type_t::evm>(type)) {
+        if (has<xnode_type_t::evm_auditor>(type)) {
+            string += "evm.auditor.";
+        } else if (has<xnode_type_t::evm_validator>(type)) {
+            string += "evm.validator.";
+        } else {
+            string += "evm.";
+        }
     }
 
     if (has<xnode_type_t::group>(type)) {
@@ -116,6 +122,14 @@ std::string to_presentation_string(xnode_type_t const type) {
 
     case xnode_type_t::storage_exchange:
         name = "exchange";
+        break;
+
+    case xnode_type_t::evm_auditor:
+        name = "evm_auditor";
+        break;
+
+    case xnode_type_t::evm_validator:
+        name = "evm_validator";
         break;
 
     default:

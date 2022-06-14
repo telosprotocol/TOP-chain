@@ -234,6 +234,12 @@ int32_t xtransaction_run_contract::source_fee_exec() {
 }
 
 int32_t xtransaction_run_contract::source_action_exec() {
+    auto const & account = common::xaccount_address_t{m_account_ctx->get_address()};
+    if (common::is_t6(account)) {
+        xwarn("T6 account is not allowed to call contract");
+        return -1;
+    }
+    
     if (get_amount() != 0) {
         int32_t ret = m_account_ctx->available_balance_to_other_balance(XPROPERTY_BALANCE_LOCK, base::vtoken_t(get_amount()));
         if (ret) {
@@ -282,14 +288,40 @@ int32_t xtransaction_run_contract::target_action_exec() {
 
 int32_t xtransaction_transfer::source_fee_exec() {
     int32_t ret{0};
-    auto transfer_amount = get_amount();
     // no check transfer amount for genesis state
-    if (!is_contract_address(common::xaccount_address_t{ m_trans->get_source_addr() }) && transfer_amount) {
-        if (m_account_ctx->get_blockchain()->balance() < transfer_amount) {
-            return xconsensus_service_error_balance_not_enough;
-        }
-        if (m_trans->get_transaction()->get_deposit() > (m_account_ctx->get_blockchain()->balance() - transfer_amount)) {
-            return xtransaction_too_much_deposit;
+    if (!is_contract_address(common::xaccount_address_t{ m_trans->get_source_addr() })) {
+        uint64_t balance = m_account_ctx->get_blockchain()->balance();
+        if (get_asset().is_top_token()) {
+            auto transfer_amount = get_amount();
+            if (transfer_amount) {
+                if (balance < transfer_amount) {
+                    xdbg("xtransaction_transfer::source_fee_exec, %llu, %llu", balance, transfer_amount);
+                    return xconsensus_service_error_balance_not_enough;
+                }
+                if (m_trans->get_transaction()->get_deposit() > (balance - transfer_amount)) {
+                    xdbg("xtransaction_transfer::source_fee_exec, %llu, %llu, %llu", m_trans->get_transaction()->get_deposit(), balance, transfer_amount);
+                    return xtransaction_too_much_deposit;
+                }
+            }
+        } else {
+            auto transfer_amount_256 = get_amount_256();
+            if (transfer_amount_256 != 0) {
+                std::error_code ec;
+                auto const token_id = common::token_id(common::xsymbol_t{get_asset().token_symbol()}, ec);
+                if (ec) {
+                    xwarn("unknown symbol %s", get_asset().token_symbol().c_str());
+                    return ec.value();
+                }
+                evm_common::u256 tep_balance = m_account_ctx->get_blockchain()->tep_token_balance(token_id);
+                if (tep_balance < transfer_amount_256) {
+                    xdbg("xtransaction_transfer::source_fee_exec, %s, %s", tep_balance.str().c_str(), transfer_amount_256.str().c_str());
+                    return xconsensus_service_error_balance_not_enough;
+                }
+                if (m_trans->get_transaction()->get_deposit() > balance) {
+                    xdbg("xtransaction_transfer::source_fee_exec, %llu, %llu, %s", m_trans->get_transaction()->get_deposit(), balance, transfer_amount_256.str().c_str());
+                    return xtransaction_too_much_deposit;
+                }
+            }
         }
 
         ret = m_fee.update_tgas_sender();
@@ -307,6 +339,12 @@ int32_t xtransaction_pledge_token_vote::source_fee_exec(){
 }
 
 int32_t xtransaction_pledge_token_vote::source_action_exec() {
+    auto const & account = common::xaccount_address_t{m_account_ctx->get_address()};
+    if (common::is_t6(account)) {
+        xwarn("T6 account is not allowed to call contract");
+        return -1;
+    }
+
     return 0;
 }
 
@@ -333,6 +371,12 @@ int32_t xtransaction_redeem_token_vote::source_fee_exec(){
 }
 
 int32_t xtransaction_redeem_token_vote::source_action_exec() {
+    auto const & account = common::xaccount_address_t{m_account_ctx->get_address()};
+    if (common::is_t6(account)) {
+        xwarn("T6 account is not allowed to call contract");
+        return -1;
+    }
+
     return 0;
 }
 
@@ -351,6 +395,12 @@ int32_t xtransaction_vote::source_fee_exec(){
 }
 
 int32_t xtransaction_vote::source_action_exec() {
+    auto const account = common::xaccount_address_t{m_account_ctx->get_address()};
+    if (common::is_t6(account)) {
+        xinfo("only T0 or T8 is allowed to vote");
+        return -1;
+    }
+
     uint64_t vote_num = parse_vote_info(get_function_para());
     int32_t ret = m_account_ctx->uint64_sub(XPROPERTY_UNVOTE_NUM, vote_num);
     return ret;
@@ -372,6 +422,11 @@ int32_t xtransaction_abolish_vote::source_fee_exec() {
 }
 
 int32_t xtransaction_abolish_vote::source_action_exec() {
+    auto const & account = common::xaccount_address_t{m_account_ctx->get_address()};
+    if (common::is_t6(account)) {
+        xwarn("T6 account is not allowed to call contract");
+        return -1;
+    }
     return 0;
 }
 

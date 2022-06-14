@@ -18,10 +18,10 @@
 #include "xrouter/xrouter.h"
 #include "xrpc/xrpc_init.h"
 #include "xstore/xstore_face.h"
-#include "xtxstore/xtxstore_face.h"
 #include "xsync/xsync_object.h"
 #include "xtxpool_service_v2/xtxpool_service_face.h"
 #include "xtxpool_v2/xtxpool_face.h"
+#include "xtxstore/xtxstore_face.h"
 #include "xunit_service/xcons_face.h"
 #include "xvnetwork/xvnetwork_driver_face.h"
 #include "xvnode/xbasic_vnode.h"
@@ -112,7 +112,7 @@ public:
     void fade() override;
     void stop() override;
     components::sniffing::xsniffer_config_t sniff_config() const override;
-    
+
     xtxpool_service_v2::xtxpool_proxy_face_ptr const & txpool_proxy() const override;
     std::shared_ptr<vnetwork::xvnetwork_driver_face_t> const & vnetwork_driver() const override;
 

@@ -47,6 +47,12 @@ template <>
 xbytes_t to_bytes<char>(char const & input);
 
 template <>
+xbytes_t to_bytes<unsigned char>(unsigned char const & input);
+
+template <>
+xbytes_t to_bytes<signed char>(signed char const & input);
+
+template <>
 xbytes_t to_bytes<int>(int const & input);
 
 template <>
@@ -87,6 +93,12 @@ uint256_t from_bytes<uint256_t>(xbytes_t const & input, std::error_code & ec);
 
 template <>
 char from_bytes<char>(xbytes_t const & input, std::error_code & ec);
+
+template <>
+unsigned char from_bytes<unsigned char>(xbytes_t const & input, std::error_code & ec);
+
+template <>
+signed char from_bytes<signed char>(xbytes_t const & input, std::error_code & ec);
 
 template <>
 int from_bytes<int>(xbytes_t const & input, std::error_code & ec);

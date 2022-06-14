@@ -94,10 +94,16 @@ namespace top
         {
             std::string compact_addr;
             enum_vaccount_addr_type addr_type = get_addrtype_from_account(account_addr);
-            if (addr_type == enum_vaccount_addr_type_secp256k1_eth_user_account)
+            if (base::xvaccount_t::is_eth_address_type(addr_type))
             {
-                char compact_type = enum_vaccount_compact_type_eth_main_chain;
-                xassert(ADDRESS_PREFIX_ETH_TYPE_IN_MAIN_CHAIN == account_addr.substr(0, enum_vaccount_address_prefix_size));
+                char compact_type;
+                if (addr_type == enum_vaccount_addr_type_secp256k1_eth_user_account) {
+                    compact_type = enum_vaccount_compact_type_eth_main_chain;
+                    xassert(ADDRESS_PREFIX_ETH_TYPE_IN_MAIN_CHAIN == account_addr.substr(0, enum_vaccount_address_prefix_size));
+                } else {
+                    compact_type = enum_vaccount_compact_type_evm_main_chain;
+                    xassert(ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN == account_addr.substr(0, enum_vaccount_address_prefix_size));
+                }
                 compact_addr = account_addr.substr(enum_vaccount_address_prefix_size);
                 compact_addr = base::xstring_utl::from_hex(compact_addr);
                 return compact_type + compact_addr;
@@ -123,12 +129,38 @@ namespace top
                 compact_addr = base::xstring_utl::to_hex(compact_addr);
                 account_addr = ADDRESS_PREFIX_ETH_TYPE_IN_MAIN_CHAIN + compact_addr;
                 return account_addr;
+            } else if (compact_type == enum_vaccount_compact_type_evm_main_chain) {
+                std::string compact_addr = data.substr(1);
+                std::string account_addr;
+                compact_addr = base::xstring_utl::to_hex(compact_addr);
+                account_addr = ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN + compact_addr;
+                return account_addr;
             }
             else
             {
                 xassert(false);
                 return {};
             }
+        }
+
+        bool xvaccount_t::is_unit_address_type(enum_vaccount_addr_type addr_type) {
+            return (addr_type == enum_vaccount_addr_type_secp256k1_eth_user_account || addr_type == enum_vaccount_addr_type_secp256k1_user_account ||
+                    addr_type == enum_vaccount_addr_type_secp256k1_evm_user_account);
+        }
+        bool xvaccount_t::is_eth_address_type(enum_vaccount_addr_type addr_type) {
+            return (addr_type == enum_vaccount_addr_type_secp256k1_eth_user_account || addr_type == enum_vaccount_addr_type_secp256k1_evm_user_account);
+        }
+        bool xvaccount_t::is_table_address_type(enum_vaccount_addr_type addr_type) {
+            return (addr_type == enum_vaccount_addr_type_block_contract);
+        }
+        bool xvaccount_t::is_contract_address_type(enum_vaccount_addr_type addr_type) {
+            return (addr_type == enum_vaccount_addr_type_native_contract);
+        }
+        bool xvaccount_t::is_drand_address_type(enum_vaccount_addr_type addr_type) {
+            return (addr_type == enum_vaccount_addr_type_drand);
+        }
+        bool xvaccount_t::is_timer_address_type(enum_vaccount_addr_type addr_type) {
+            return (addr_type == enum_vaccount_addr_type_timer);
         }
 
         bool xvaccount_t::check_address(const std::string & account_addr, bool isTransaction)
@@ -163,6 +195,7 @@ namespace top
                 case enum_vaccount_addr_type_drand:
                 case enum_vaccount_addr_type_secp256k1_user_account:
                 case enum_vaccount_addr_type_secp256k1_eth_user_account:
+                case enum_vaccount_addr_type_secp256k1_evm_user_account:
                     if (parts_num != 1) {
                         xwarn("xvaccount_t::check_address fail-addr type and parts num mismatch. type=%d,parts_num=%d", addr_type, parts_num);
                         return false;
@@ -236,6 +269,11 @@ namespace top
                             xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
                             return false;
                         }
+                    } else if (ledger_id == enum_chain_zone_evm_index) {
+                        if (subaddr_int32 < 0 || static_cast<uint32_t>(subaddr_int32) >= MAIN_CHAIN_EVM_TABLE_USED_NUM) {
+                            xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
+                            return false;
+                        }
                     } else {
                         // invalid table addr
                         xwarn("xvaccount_t::check_address fail-invalid header. header:%s type=%d", parts[0].c_str(), addr_type);
@@ -261,6 +299,11 @@ namespace top
                             xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
                             return false;
                         }
+                    } else if (ledger_id == enum_chain_zone_evm_index) {
+                        if (subaddr_int32 < 0 || static_cast<uint32_t>(subaddr_int32) >= MAIN_CHAIN_EVM_TABLE_USED_NUM) {
+                            xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
+                            return false;
+                        }
                     } else {
                         //invalid contracts addr
                         xwarn("xvaccount_t::check_address fail-invalid header. header:%s type=%d", parts[0].c_str(), addr_type);
@@ -270,7 +313,8 @@ namespace top
             }
 
             // check T8 eth address
-            if (addr_type == enum_vaccount_addr_type_secp256k1_eth_user_account) {
+            if (addr_type == enum_vaccount_addr_type_secp256k1_eth_user_account ||
+                addr_type == enum_vaccount_addr_type_secp256k1_evm_user_account) {
                 std::string addrtemp = account_addr.substr(enum_vaccount_address_prefix_size);
                 // check if all lower char
                 std::string addrtemp2 = addrtemp;
@@ -298,60 +342,50 @@ namespace top
                     }
                 }
                 uint16_t ledger_id = base::xvaccount_t::get_ledgerid_from_account(account_addr);
-                if (ledger_id != enum_chain_zone_consensus_index && ledger_id != enum_chain_zone_beacon_index && ledger_id != enum_chain_zone_zec_index) {
-                    xwarn("xvaccount_t::check_address T8 eth address ledger id error");
-                    return false;
+                if (addr_type == enum_vaccount_addr_type_secp256k1_eth_user_account) {
+                    if (ledger_id != enum_chain_zone_consensus_index && ledger_id != enum_chain_zone_beacon_index && ledger_id != enum_chain_zone_zec_index) {
+                        xwarn("xvaccount_t::check_address T8 eth address ledger id error");
+                        return false;
+                    }
+                } else {
+                    if (ledger_id != enum_chain_zone_evm_index) {
+                        xwarn("xvaccount_t::check_address T6 eth address ledger id error");
+                        return false;
+                    }
                 }
             }
-
             return true;
         }
     
         bool  xvaccount_t::is_unit_address() const
         {
-            if(   (get_addr_type() == enum_vaccount_addr_type_secp256k1_eth_user_account)
-               || (get_addr_type() == enum_vaccount_addr_type_secp256k1_user_account) )
-            {
-                return true;
-            }
-            return false;
+            return is_unit_address_type(get_addr_type());
+        }
+
+        bool xvaccount_t::is_eth_address() const
+        {
+            return is_eth_address_type(get_addr_type());
         }
         
         bool  xvaccount_t::is_table_address() const
         {
             //table address like "Ta0000@255"
-            if(get_addr_type() == enum_vaccount_addr_type_block_contract) //table address
-            {
-                return true;
-            }
-            return false;
+            return is_table_address_type(get_addr_type());
         }
         
         bool  xvaccount_t::is_contract_address() const
         {
-            if(get_addr_type() == enum_vaccount_addr_type_native_contract)
-            {
-                return true;
-            }
-            return false;
+            return is_contract_address_type(get_addr_type());
         }
 
         bool  xvaccount_t::is_timer_address() const
         {
-            if (get_addr_type() == enum_vaccount_addr_type_timer)
-            {
-                return true;
-            }
-            return false;
+            return is_timer_address_type(get_addr_type());
         }
         
         bool  xvaccount_t::is_drand_address() const
         {
-            if(get_addr_type() == enum_vaccount_addr_type_drand)
-            {
-                return true;
-            }
-            return false;
+            return is_drand_address_type(get_addr_type());
         }
 
         //------------------------------------account meta-------------------------------------//

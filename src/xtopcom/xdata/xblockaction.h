@@ -10,12 +10,14 @@
 #include "xbase/xobject_ptr.h"
 #include "xbasic/xversion.h"
 #include "xdata/xblock_paras.h"
+#include "xdata/xethreceipt.h"
 #include "xdata/xreceipt_data_store.h"
 #include "xdata/xtransaction.h"
 #include "xvledger/xdataobj_base.hpp"
 #include "xvledger/xvaccount.h"
 #include "xvledger/xvaction.h"
 #include "xvledger/xventity.h"
+#include "xevm_common/xevm_transaction_result.h"
 
 namespace top { namespace data {
 
@@ -44,11 +46,11 @@ class xlightunit_action_t : public base::xvaction_t {
     std::string                 get_tx_hex_hash() const {return get_tx_key().get_tx_hex_hash();}
     std::string                 get_tx_subtype_str() const {return get_tx_key().get_tx_subtype_str();}
 
-    uint32_t                    get_used_disk()const;
-    uint32_t                    get_used_tgas()const;
-    uint32_t                    get_used_deposit()const;
-    uint32_t                    get_send_tx_lock_tgas()const;
-    uint32_t                    get_recv_tx_use_send_tx_tgas()const;
+    uint64_t                    get_used_disk()const;
+    uint64_t                    get_used_tgas()const;
+    uint64_t                    get_used_deposit()const;
+    uint64_t                    get_send_tx_lock_tgas()const;
+    uint64_t                    get_recv_tx_use_send_tx_tgas()const;
     enum_xunit_tx_exec_status   get_tx_exec_status() const;
     uint64_t                    get_receipt_id() const;
     uint64_t                    get_rsp_id() const;
@@ -60,6 +62,7 @@ class xlightunit_action_t : public base::xvaction_t {
     bool                        get_inner_table_flag() const;
     bool                        is_need_make_txreceipt() const;
     bool                        is_txaction() const {return !get_tx_hash().empty();}
+    bool                        get_evm_transaction_receipt(data::xeth_store_receipt_t & evm_tx_receipt) const;
 
  private:
     std::string                 get_action_result_property(const std::string & key) const;

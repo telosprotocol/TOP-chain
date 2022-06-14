@@ -23,6 +23,9 @@ option(XENABLE_MOCK_ZEC_STAKE "Enable mocking stake for ZEC" OFF)
 option(XCHAIN_FORKED_BY_DEFAULT "Enable chain forked logic" OFF)
 option(ENABLE_METRICS_DATAOBJECT "Enable metrics dataobject" OFF)
 option(DISABLE_CORE_SIGNAL_CAPTURE "disable core signal capture" OFF)
+option(DISABLE_SIGNAL_CAPTURE "disable all signal capture" OFF)
+
+set(BUILD_EVM ON) # EVM as default VM for now
 
 if (XENABLE_TESTS)
     set(XENABLE_BLOCK_VERIFY OFF)
@@ -312,6 +315,10 @@ if (BUILD_RUSTVM)
     add_definitions(-DBUILD_RUSTVM)
 endif()
 
+if (BUILD_EVM)
+    add_definitions(-DBUILD_EVM)
+endif()
+
 if (LEAK_TRACER)
     add_definitions(-DLEAK_TRACER)
 endif()
@@ -321,12 +328,8 @@ if (STORE_UNIT_BLOCK)
 endif()
 
 if (XCHAIN_FORKED_BY_DEFAULT)
-    add_definitions(-DXCHAIN_FORKED_BY_DEFAULT)
-endif()
-
-if (XCHAIN_FORKED_VERSION)
-    add_definitions(-DXCHAIN_FORKED_VERSION=${XCHAIN_FORKED_VERSION})
-    message("XCHAIN_FORKED_VERSION: ${XCHAIN_FORKED_VERSION}")
+    add_definitions(-DXCHAIN_FORKED_BY_DEFAULT=${XCHAIN_FORKED_BY_DEFAULT})
+    message("XCHAIN_FORKED_BY_DEFAULT: ${XCHAIN_FORKED_BY_DEFAULT}")
 endif()
 
 if (ENABLE_METRICS_DATAOBJECT)
@@ -338,6 +341,10 @@ endif()
 
 if (DISABLE_CORE_SIGNAL_CAPTURE)
     add_definitions(-DDISABLE_CORE_SIGNAL_CAPTURE)
+endif()
+
+if (DISABLE_SIGNAL_CAPTURE)
+    add_definitions(-DDISABLE_SIGNAL_CAPTURE)
 endif()
 
 if (${CMAKE_BUILD_TYPE} STREQUAL RelWithDebInfo)
@@ -366,8 +373,8 @@ message(STATUS "XENABLE_VERBOSE_DBG:" ${XENABLE_VERBOSE_DBG})
 message(STATUS "BUILD_METRICS:" ${BUILD_METRICS})
 message(STATUS "ADDRESS_SANITIZER:" ${ADDRESS_SANITIZER})
 message(STATUS "XCHAIN_FORKED_BY_DEFAULT:" ${XCHAIN_FORKED_BY_DEFAULT})
-# message(STATUS "XCHAIN_FORKED_VERSION:" ${XCHAIN_FORKED_VERSION})
 message(STATUS "DISABLE_CORE_SIGNAL_CAPTURE:" ${DISABLE_CORE_SIGNAL_CAPTURE})
+message(STATUS "DISABLE_SIGNAL_CAPTURE:" ${DISABLE_SIGNAL_CAPTURE})
 
 find_package(Threads REQUIRED)
 
@@ -406,6 +413,8 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
         link_directories(src/xtopcom/libs/${CMAKE_SYSTEM_NAME}/release)
         link_directories(src/xtopcom/xdepends/libs/linux)
     ENDIF()
+    
+    add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
 
     set(XDB_TYPE "ROCKSDB")
     add_subdirectory(src)
@@ -467,6 +476,14 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 endif()
 
 if (XENABLE_TESTS)
+    file(STRINGS /etc/os-release distro REGEX "^NAME=")
+    string(REGEX REPLACE "NAME=\"(.*)\"" "\\1" distro "${distro}")
+    message("found ${distro}")
+    if (${distro} STREQUAL "Ubuntu")
+        message("set no pie on ${distro} for test")
+        # todo update libgtest to avoid this
+        set(CMAKE_CXX_FLAGS "-no-pie")
+    endif()
     enable_testing()
     include_directories(.)
     add_subdirectory(tests)

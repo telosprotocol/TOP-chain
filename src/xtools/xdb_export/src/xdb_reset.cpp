@@ -3,7 +3,6 @@
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xproperty.h"
-#include "xdata/xslash.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
 #include "xdata/xunit_bstate.h"
 #include "xvledger/xvledger.h"
@@ -455,7 +454,7 @@ void xdb_reset_t::get_contract_stake_property_map_string_string(json & stake_jso
             }
         } else if (property_key == XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY) {
             for (auto const & m : value) {
-                xunqualified_node_info_t summarize_info;
+                data::system_contract::xunqualified_node_info_v1_t summarize_info;
                 auto detail = m.second;
                 if (!detail.empty()) {
                     base::xstream_t stream{xcontext_t::instance(), (uint8_t *)detail.data(), (uint32_t)detail.size()};

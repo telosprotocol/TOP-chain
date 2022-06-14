@@ -7,6 +7,7 @@
 #include "xbasic/xbyte_buffer.h"
 #include "xbasic/xerror/xerror.h"
 #include "xbasic/xmemory.hpp"
+#include "xcommon/xtoken.h"
 #include "xcontract_common/xcontract_execution_param.h"
 #include "xcontract_common/xcontract_state_fwd.h"
 #include "xcontract_common/xproperties/xbasic_property.h"
@@ -14,7 +15,7 @@
 #include "xdata/xtransaction.h"
 #include "xstate_accessor/xproperties/xproperty_identifier.h"
 #include "xstate_accessor/xstate_accessor.h"
-#include "xstate_accessor/xtoken.h"
+#include "xstatectx/xstatectx_face.h"
 
 #if defined(__clang__)
 #    pragma clang diagnostic push
@@ -53,6 +54,7 @@ private:
     common::xaccount_address_t m_action_account_address;
     std::unique_ptr<state_accessor::xstate_accessor_t> m_state_accessor_owned{nullptr};
     observer_ptr<state_accessor::xstate_accessor_t> m_state_accessor;
+    statectx::xstatectx_face_ptr_t m_state_ctx;
     xcontract_execution_param_t const m_param{};
 
 public:
@@ -63,9 +65,11 @@ public:
     xtop_contract_state & operator=(xtop_contract_state &&) = default;
     ~xtop_contract_state() = default;
 
-    explicit xtop_contract_state(common::xaccount_address_t action_account_addr,
-                                 observer_ptr<state_accessor::xstate_accessor_t> sa,
-                                 xcontract_execution_param_t const & execution_param);
+    xtop_contract_state(common::xaccount_address_t action_account_addr,
+                        observer_ptr<state_accessor::xstate_accessor_t> const sa,
+                        xcontract_execution_param_t const & execution_param);
+
+    xtop_contract_state(common::xaccount_address_t action_account_addr, statectx::xstatectx_face_ptr_t const state_ctx);
 
 private:
     explicit xtop_contract_state(common::xaccount_address_t const & account_address);
@@ -382,40 +386,40 @@ public:
     /// @param symbol Simbol of the token.
     /// @param ec Log the error code in the call.
     /// @return The token amount.
-    uint64_t balance(state_accessor::properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol, std::error_code & ec) const;
+    evm_common::u256 balance(state_accessor::properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol, std::error_code & ec) const;
 
     /// @brief Get the balance from the state. Throw xtop_error_t exception when any error occurs.
     /// @param property_id Property ID.
     /// @param symbol Simbol of the token.
     /// @return The token amount.
-    uint64_t balance(state_accessor::properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol) const;
+    evm_common::u256 balance(state_accessor::properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol) const;
 
     /// @brief Deposit tokens into state.
     /// @param property_id Property ID.
     /// @param tokens Tokens to deposit.
     /// @param ec Log the error code in the call.
-    void deposit(state_accessor::properties::xproperty_identifier_t const & property_id, state_accessor::xtoken_t tokens, std::error_code & ec);
+    void deposit(state_accessor::properties::xproperty_identifier_t const & property_id, common::xtoken_t tokens, std::error_code & ec);
 
     /// @brief Deposit tokens into state. Throw xtop_error_t exception when any error occurs.
     /// @param property_id Property ID.
     /// @param tokens Tokens to deposit.
-    void deposit(state_accessor::properties::xproperty_identifier_t const & property_id, state_accessor::xtoken_t tokens);
+    void deposit(state_accessor::properties::xproperty_identifier_t const & property_id, common::xtoken_t tokens);
 
     /// @brief Withdraw tokens from state.
     /// @param property_id Property ID.
     /// @param symbol Simbol of the token.
     /// @param ec Log the error code in the call.
     /// @return The token object.
-    state_accessor::xtoken_t withdraw(state_accessor::properties::xproperty_identifier_t const & property_id,
+    common::xtoken_t withdraw(state_accessor::properties::xproperty_identifier_t const & property_id,
                                       common::xsymbol_t const & symbol,
-                                      uint64_t amount,
+                                      evm_common::u256 amount,
                                       std::error_code & ec);
 
     /// @brief Withdraw tokens from state. Throw xtop_error_t exception when any error occurs.
     /// @param property_id Property ID.
     /// @param symbol Simbol of the token.
     /// @return The token object.
-    state_accessor::xtoken_t withdraw(state_accessor::properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol, uint64_t amount);
+    common::xtoken_t withdraw(state_accessor::properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol, evm_common::u256 amount);
 
     /// @brief Transfer tokens from one property the other property in same account state. Throw xtop_error_t exception when any error occurs.
     /// @param from From property.

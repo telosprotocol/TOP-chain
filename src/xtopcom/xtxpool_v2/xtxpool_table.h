@@ -121,7 +121,6 @@ public:
     xtransaction_ptr_t get_raw_tx(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id) const;
 
     void get_min_keep_height(std::string & table_addr, uint64_t & height) const;
-    bool get_sender_need_confirm_ids(base::xtable_shortid_t peer_table_sid, uint64_t lower_receipt_id, uint64_t upper_receipt_id, std::vector<uint64_t> & receipt_ids) const;
 
 private:
     // bool is_account_need_update(const std::string & account_addr) const;

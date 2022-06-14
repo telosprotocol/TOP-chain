@@ -5,7 +5,7 @@
 #include "xdata/xtransaction.h"
 
 #include "xbase/xutl.h"
-
+#include "xcommon/xerror/xerror.h"
 #include <cinttypes>
 
 namespace top { namespace data {
@@ -15,6 +15,7 @@ bool xtransaction_t::transaction_type_check() const {
 #ifdef ENABLE_CREATE_USER  // debug use
         case xtransaction_type_create_user_account:
 #endif
+        case xtransaction_type_deploy_evm_contract:
         case xtransaction_type_run_contract:
         case xtransaction_type_transfer:
         case xtransaction_type_vote:
@@ -31,6 +32,7 @@ bool xtransaction_t::transaction_type_check() const {
 
 std::string xtransaction_t::transaction_type_to_string(uint16_t type) {
     switch (type) {
+        case xtransaction_type_deploy_evm_contract: return "evm_contract";
         case xtransaction_type_create_user_account: return "create_user";
         case xtransaction_type_run_contract:        return "run_contract";
         case xtransaction_type_transfer:            return "transfer";
@@ -50,7 +52,7 @@ bool xtransaction_t::set_tx_by_serialized_data(xtransaction_ptr_t & tx_ptr, cons
     try {
         base::xdataunit_t * raw_tx = base::xdataunit_t::read_from(data);
         if (nullptr == raw_tx) {
-            xerror("xtransaction_t::set_tx_by_serialized_data fail-tx content read from fail.");
+            xwarn("xtransaction_t::set_tx_by_serialized_data fail-tx content read from fail.");
             return false;
         }
 
@@ -135,6 +137,12 @@ std::string xtransaction_t::tx_exec_status_to_str(uint8_t exec_status) {
     } else {
         return "failure";
     }
+}
+
+xeth_transaction_t xtransaction_t::to_eth_tx(std::error_code & ec) const {
+    ec = common::error::xerrc_t::invalid_eth_tx;
+    xerror("xtransaction_t::to_eth_tx fail-invalid");
+    return {};
 }
 
 }  // namespace data

@@ -7,6 +7,7 @@
 #include "xgrpcservice/xgrpc_service.h"
 #include "xmbus/xevent_store.h"
 #include "xrpc/xrpc_query_manager.h"
+#include "xdata/xblocktool.h"
 
 NS_BEG2(top, grpcmgr)
 
@@ -93,12 +94,9 @@ void xgrpc_mgr_t::process_event(const mbus::xevent_ptr_t & e) {
 
 #ifdef DEBUG
     // adding push tx log info
-    auto txactions = bp->get_tx_actions();
-    for (auto & action : txactions) {
-        if (!action.get_org_tx_hash().empty()) {
-            xlightunit_action_t txaction(action);
-            xdbg("grpc stream tx hash: tx_key=%s", txaction.get_tx_dump_key().c_str());
-        }
+    auto txactions = data::xblockextract_t::unpack_txactions(bp);
+    for (auto & txaction : txactions) {
+        xdbg("grpc stream tx hash: tx_key=%s", txaction.get_tx_dump_key().c_str());
     }
 #endif
 

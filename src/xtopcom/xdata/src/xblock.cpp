@@ -13,6 +13,7 @@
 #include "xdata/xcons_transaction.h"
 #include "xdata/xtransaction_v1.h"
 #include "xdata/xtransaction_v2.h"
+#include "xdata/xtransaction_v3.h"
 #include "xdata/xblockbuild.h"
 #include "xvledger/xtxreceipt.h"
 #include "xvledger/xvpropertyprove.h"
@@ -28,12 +29,6 @@
 #include <cinttypes>
 #include <string>
 NS_BEG2(top, data)
-
-std::map<std::string, std::string>      xblock_t::m_empty_map;
-std::vector<xlightunit_tx_info_ptr_t>   xblock_t::m_empty_txs;
-uint256_t                               xblock_t::m_empty_uint256;
-std::string                             xblock_t::m_empty_string;
-std::vector<xobject_ptr_t<xblock_t>>    xblock_t::m_empty_blocks;
 
 xblock_consensus_para_t::xblock_consensus_para_t(const std::string & _account, uint64_t _clock, uint64_t _viewid, uint32_t _viewtoken, uint64_t _proposal_height, uint64_t _gmtime)
 : m_account(_account), m_clock(_clock), m_viewtoken(_viewtoken), m_viewid(_viewid), m_proposal_height(_proposal_height), m_gmtime(_gmtime) {
@@ -97,6 +92,13 @@ void xblock_consensus_para_t::set_tableblock_consensus_para(uint64_t drand_heigh
     m_random_seed = random_seed;
     m_total_lock_tgas_token = total_lock_tgas_token;
     m_total_lock_tgas_token_property_height = total_lock_tgas_token_property_height;
+}
+
+xvip2_t xblock_consensus_para_t::get_leader_xip() const {
+    if (m_auditor.high_addr != 0 && m_auditor.low_addr != 0 && get_node_id_from_xip2(m_auditor) != 0x3FF) {
+        return m_auditor;
+    }
+    return m_validator;
 }
 
 xobject_ptr_t<xblock_t> xblock_t::raw_vblock_to_object_ptr(base::xvblock_t* vblock) {
@@ -166,6 +168,11 @@ void  xblock_t::register_object(base::xcontext_t & _context) {
     auto lambda_new_transactionv2 = [](const int type)->xobject_t*{
         return new xtransaction_v2_t();
     };      
+
+    auto lambda_new_transactionv3 = [](const int type) -> xobject_t * {
+        return new xtransaction_v3_t();
+    };
+
     auto lambda_new_property_prove = [](const int type)->xobject_t*{
         return new base::xvproperty_prove_t();
     };
@@ -179,6 +186,7 @@ void  xblock_t::register_object(base::xcontext_t & _context) {
     base::xcontext_t::register_xobject2(_context,(base::enum_xobject_type)base::xtx_receipt_t::get_object_type(),lambda_new_txreceipt);
     base::xcontext_t::register_xobject2(_context,(base::enum_xobject_type)xtransaction_v1_t::get_object_type(),lambda_new_transactionv1);
     base::xcontext_t::register_xobject2(_context,(base::enum_xobject_type)xtransaction_v2_t::get_object_type(),lambda_new_transactionv2);
+    base::xcontext_t::register_xobject2(_context,(base::enum_xobject_type)xtransaction_v3_t::get_object_type(), lambda_new_transactionv3);
     base::xcontext_t::register_xobject2(_context,(base::enum_xobject_type)base::xvproperty_prove_t::get_object_type(),lambda_new_property_prove);
     xkinfo("xblock_t::register_object,finish");    
 }
@@ -370,16 +378,6 @@ std::string xblock_t::dump_body() const {
 
 std::string xblock_t::get_block_hash_hex_str() const {
     return to_hex_str(get_block_hash());
-}
-
-xlightunit_tx_info_ptr_t xblock_t::get_tx_info(const std::string & txhash) const {
-    const auto & txs = get_txs();
-    for (auto & tx : txs) {
-        if (tx->get_tx_hash() == txhash) {
-            return tx;
-        }
-    }
-    return nullptr;
 }
 
 xtransaction_ptr_t  xblock_t::query_raw_transaction(const std::string & txhash) const {

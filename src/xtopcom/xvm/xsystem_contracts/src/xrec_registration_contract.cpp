@@ -16,7 +16,6 @@
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xproperty.h"
 #include "xdata/xrootblock.h"
-#include "xdata/xslash.h"
 #include "xmetrics/xmetrics.h"
 #include "xstore/xstore_error.h"
 
@@ -240,13 +239,14 @@ void xrec_registration_contract::registerNode2(const std::string & miner_type_na
 #else   // #if defined(XENABLE_MOCK_ZEC_STAKE)
     auto const & account = common::xaccount_address_t{ SOURCE_ADDRESS() };
 #endif  // #if defined(XENABLE_MOCK_ZEC_STAKE)
-    xdbg("[xrec_registration_contract::registerNode2] call xregistration_contract registerNode() pid:%d, balance: %lld, account: %s, node_types: %s, signing_key: %s, dividend_rate: %u\n",
-         getpid(),
+    xdbg("[xrec_registration_contract::registerNode2] call xregistration_contract registerNode(), balance: %lld, account: %s, node_types: %s, signing_key: %s, dividend_rate: %u\n",
          GET_BALANCE(),
          account.c_str(),
          miner_type_name.c_str(),
          signing_key.c_str(),
          dividend_rate);
+
+    XCONTRACT_ENSURE(common::is_t0(account) || common::is_t8(account), "only T0 or T8 account is allowed to be registered as node account");
 
     data::system_contract::xreg_node_info node_info;
     auto ret = get_node_info(account.value(), node_info);
@@ -413,7 +413,7 @@ void xrec_registration_contract::redeemNodeDeposit() {
     XMETRICS_TIME_RECORD(XREG_CONTRACT "redeemNodeDeposit_ExecutionTime");
     uint64_t cur_time = TIME();
     std::string const & account = SOURCE_ADDRESS();
-    xdbg("[xrec_registration_contract::redeemNodeDeposit] pid:%d, balance: %lld, account: %s\n", getpid(), GET_BALANCE(), account.c_str());
+    xdbg("[xrec_registration_contract::redeemNodeDeposit] pid:%d, balance: %lld, account: %s", getpid(), GET_BALANCE(), account.c_str());
 
     data::system_contract::xrefund_info refund;
     auto ret = get_refund(account, refund);
@@ -977,7 +977,7 @@ void xrec_registration_contract::slash_unqualified_node(std::string const & puni
 
     XCONTRACT_ENSURE(source_addr == top::sys_contract_zec_slash_info_addr, "invalid source addr's call!");
 
-    std::vector<xaction_node_info_t> node_slash_info;
+    std::vector<data::system_contract::xaction_node_info_t> node_slash_info;
     base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)punish_node_str.data(), punish_node_str.size());
     VECTOR_OBJECT_DESERIALZE2(stream, node_slash_info);
     xinfo("[xrec_registration_contract][slash_unqualified_node] do slash unqualified node, size: %zu", node_slash_info.size());

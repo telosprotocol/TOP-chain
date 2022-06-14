@@ -17,7 +17,7 @@
 #include "xrpc/xedge/xedge_method_manager.hpp"
 #include "xrpc/prerequest/xpre_request_handler.h"
 #include "simplewebserver/server_http.hpp"
-#include "xrpc/xrpc_service.hpp"
+#include "xrpc/xhttp/xrpc_service.hpp"
 #include "xrpc/xratelimit/xratelimit_server.h"
 
 NS_BEG2(top, xrpc)

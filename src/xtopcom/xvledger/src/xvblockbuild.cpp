@@ -277,6 +277,7 @@ namespace top
             switch (addr_type) {
             case base::enum_vaccount_addr_type_secp256k1_user_account:
             case base::enum_vaccount_addr_type_secp256k1_eth_user_account:
+            case base::enum_vaccount_addr_type_secp256k1_evm_user_account:
             case base::enum_vaccount_addr_type_secp256k1_user_sub_account:
             case base::enum_vaccount_addr_type_native_contract:
             case base::enum_vaccount_addr_type_custom_contract:
@@ -414,10 +415,10 @@ namespace top
 
             std::vector<xvaction_t> actions;
             actions.push_back(action);
-            m_primary_input_entity = new base::xvinentity_t(actions);
+            m_primary_input_entity = new xvinentity_t(actions);
             return true;
         }
-        bool xvblockmaker_t::set_input_entity(const std::vector<xvaction_t> & actions) {
+        bool xvblockmaker_t::set_input_entity(const std::vector<xvaction_t> & actions, std::string extend_bin) {
             if (m_primary_input_entity != nullptr) {  // only allow init once
                 xassert(false);
                 return false;
@@ -427,7 +428,7 @@ namespace top
                 return false;
             }
 
-            m_primary_input_entity = new base::xvinentity_t(actions);
+            m_primary_input_entity = new xvinentity_t(extend_bin, actions);
             return true;
         }
         bool    xvblockmaker_t::set_output_entity(const std::string & key, const std::string & value) {

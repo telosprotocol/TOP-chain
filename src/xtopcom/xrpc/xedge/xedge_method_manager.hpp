@@ -97,6 +97,7 @@ public:
     }
     void write_response(shared_ptr<conn_type> & response, const string & content) override {
         response->write(content);
+        xdbg("xedge_http_method write_response: %s", content.c_str());
     }
     enum_xrpc_type type() override {
         return enum_xrpc_type::enum_xrpc_http_type;
@@ -122,6 +123,7 @@ public:
                 xkinfo_rpc("Server: Error sending message. Error: %d, error message:%s", ec.value(), ec.message().c_str());
             }
         });
+        xdbg("xedge_ws_method write_response: %s", content.c_str());
     }
     enum_xrpc_type type() override {
         return enum_xrpc_type::enum_xrpc_ws_type;
@@ -202,6 +204,10 @@ void xedge_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, cons
     }
     tx->set_len();
 
+    // TODO(jimmy) refactor tx verifier
+    if (xverifier::xtx_verifier::verify_address_type(tx.get())) {
+        throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "address type check failed"};
+    }
     // filter out black list transaction
     if (xverifier::xblacklist_utl_t::is_black_address(tx->get_source_addr())) {
         xdbg_rpc("[sendTransaction_method] in black address rpc:%s, %s, %s", tx->get_digest_hex_str().c_str(), tx->get_target_addr().c_str(), tx->get_source_addr().c_str());
@@ -311,7 +317,7 @@ void xedge_method_base<T>::forward_method(shared_ptr<conn_type> & response, xjso
             auto cluster_addr = m_edge_handler_ptr->get_rpc_edge_vhost()->get_router()->sharding_address_from_account(
                 account_address, vd->network_id(), common::xnode_type_t::consensus_validator);
             assert(common::has<common::xnode_type_t::consensus_validator>(cluster_addr.type()) || common::has<common::xnode_type_t::committee>(cluster_addr.type()) ||
-                   common::has<common::xnode_type_t::zec>(cluster_addr.type()));
+                   common::has<common::xnode_type_t::zec>(cluster_addr.type()) || common::has<common::xnode_type_t::evm>(cluster_addr.type()));
             vnetwork::xvnode_address_t shard_addr{std::move(cluster_addr)};
 
             if (shard_addr_set.find(shard_addr) == shard_addr_set.end()) {
@@ -330,13 +336,10 @@ void xedge_method_base<T>::forward_method(shared_ptr<conn_type> & response, xjso
             }
             uint64_t delay_time_s = json_proc.m_tx_ptr->get_delay_from_fire_timestamp(now);
             XMETRICS_GAUGE(metrics::txdelay_from_client_to_edge, delay_time_s);
-            m_edge_handler_ptr->edge_send_msg(edge_msg_list, json_proc.m_tx_ptr->get_digest_hex_str(), json_proc.m_tx_ptr->get_source_addr());
+            m_edge_handler_ptr->edge_send_msg(edge_msg_list, json_proc.m_tx_ptr->get_digest_hex_str(), json_proc.m_tx_ptr->get_source_addr(), rpc_msg_request);
         } else {
-            m_edge_handler_ptr->edge_send_msg(edge_msg_list, "", "");
+            m_edge_handler_ptr->edge_send_msg(edge_msg_list, "", "", rpc_msg_query_request);
         }
-#if (defined ENABLE_RPC_SESSION) && (ENABLE_RPC_SESSION != 0)
-        m_edge_handler_ptr->insert_session(edge_msg_list, shard_addr_set, response);
-#else
         if (json_proc.m_tx_type == enum_xrpc_tx_type::enum_xrpc_tx_type) {
             json_proc.m_response_json[RPC_ERRNO] = RPC_OK_CODE;
             json_proc.m_response_json[RPC_ERRMSG] = RPC_OK_MSG;
@@ -346,9 +349,8 @@ void xedge_method_base<T>::forward_method(shared_ptr<conn_type> & response, xjso
             XMETRICS_COUNTER_INCREMENT("rpc_edge_query_response", 1);
             // auditor return query result directly, so clear shard addr set
             shard_addr_set.clear();
-            m_edge_handler_ptr->insert_session(edge_msg_list, shard_addr_set, response);
+            m_edge_handler_ptr->insert_session(edge_msg_list, shard_addr_set, response, rpc_msg_query_request);
         }
-#endif
     } while (0);
 }
 

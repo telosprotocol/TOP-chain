@@ -251,6 +251,7 @@ std::vector<std::string> xblocktool_t::make_all_table_addresses() {
         std::make_pair(base::enum_chain_zone_consensus_index, enum_vledger_const::enum_vbucket_has_tables_count),
         std::make_pair(base::enum_chain_zone_zec_index, MAIN_CHAIN_ZEC_TABLE_USED_NUM),
         std::make_pair(base::enum_chain_zone_beacon_index, MAIN_CHAIN_REC_TABLE_USED_NUM),
+        std::make_pair(base::enum_chain_zone_evm_index, MAIN_CHAIN_EVM_TABLE_USED_NUM),
     };
     for (auto const & t : table) {
         for (auto i = 0; i < t.second; i++) {
@@ -411,7 +412,7 @@ bool xblocktool_t::can_make_next_full_table(base::xvblock_t* latest_cert_block, 
     return false;
 }
 
-void xblocktool_t::alloc_transaction_receiptid(const xcons_transaction_ptr_t & tx, const base::xreceiptid_state_ptr_t & receiptid_state, bool add_rsp_id) {
+void xblocktool_t::alloc_transaction_receiptid(const xcons_transaction_ptr_t & tx, const base::xreceiptid_state_ptr_t & receiptid_state) {
     if (tx->is_self_tx() || tx->get_inner_table_flag()) {
         return;  // self tx has none receiptid
     }
@@ -427,7 +428,7 @@ void xblocktool_t::alloc_transaction_receiptid(const xcons_transaction_ptr_t & t
         current_receipt_id = receiptid_pair.get_sendid_max() + 1;
         receiptid_pair.set_sendid_max(current_receipt_id);
         
-        if (add_rsp_id && !tx->get_not_need_confirm()) {
+        if (!tx->get_not_need_confirm()) {
             current_rsp_id = receiptid_pair.get_send_rsp_id_max() + 1;
             receiptid_pair.set_send_rsp_id_max(current_rsp_id);
         }
@@ -452,7 +453,7 @@ void xblocktool_t::alloc_transaction_receiptid(const xcons_transaction_ptr_t & t
     xdbg("xblocktool_t::alloc_transaction_receiptid tx=%s,receiptid=%ld,confirmid_max=%ld,sender_confirmed_id=%ld", tx->dump().c_str(), current_receipt_id, receiptid_pair.get_confirmid_max(), tx->get_last_action_sender_confirmed_receipt_id());
 }
 
-bool xblocktool_t::alloc_transaction_receiptid(const xcons_transaction_ptr_t & tx, bool add_rsp_id, base::xreceiptid_pair_t & receiptid_pair) {
+bool xblocktool_t::alloc_transaction_receiptid(const xcons_transaction_ptr_t & tx, base::xreceiptid_pair_t & receiptid_pair) {
     if (tx->is_self_tx() || tx->get_inner_table_flag()) {
         xassert(false);
         return false;
@@ -468,7 +469,7 @@ bool xblocktool_t::alloc_transaction_receiptid(const xcons_transaction_ptr_t & t
         current_receipt_id = receiptid_pair.get_sendid_max() + 1;
         receiptid_pair.set_sendid_max(current_receipt_id);
         
-        if (add_rsp_id && !tx->get_not_need_confirm()) {
+        if (!tx->get_not_need_confirm()) {
             current_rsp_id = receiptid_pair.get_send_rsp_id_max() + 1;
             receiptid_pair.set_send_rsp_id_max(current_rsp_id);
         }
@@ -529,6 +530,9 @@ std::vector<xlightunit_action_t> xblocktool_t::unpack_all_txreceipt_action(base:
         }
         auto & all_actions = _inentity->get_actions();
         for (auto & action : all_actions) {
+            if (xlightunit_action_t::is_not_txaction(action)) {
+                continue;;
+            }
             xlightunit_action_t txaction(action);
             if (txaction.is_need_make_txreceipt()) {
                 txreceipt_actions.push_back(txaction);
@@ -690,6 +694,7 @@ bool xblocktool_t::get_receiptid_state_and_prove(base::xvblockstore_t * blocksto
             nil_block_num++;
             if (nil_block_num > 2) {
                 xerror("xblocktool_t::get_receiptid_state_and_prove, continuous nil table block number is more than 2,table:%s,height:%llu", account.get_address().c_str(), height);
+                return false;
             }
 
             auto commit_block =
@@ -700,7 +705,8 @@ bool xblocktool_t::get_receiptid_state_and_prove(base::xvblockstore_t * blocksto
             }
             height = commit_block->get_height();
 
-            if (commit_block->get_block_class() != base::enum_xvblock_class_nil) {
+            block_class = commit_block->get_block_class();
+            if (block_class != base::enum_xvblock_class_nil) {
                 base::xvblock_t * _block = commit_block.get();
                 _block->add_ref();
                 non_nil_commit_block.attach(_block);
@@ -709,7 +715,7 @@ bool xblocktool_t::get_receiptid_state_and_prove(base::xvblockstore_t * blocksto
         }
     }
 
-    if (height == 0 || block_class == base::enum_xvblock_class_nil) {
+    if (non_nil_commit_block == nullptr) {
         xinfo("xblocktool_t::get_receiptid_state_and_prove latest commit height is 0, no need send receipt id state.table:%s", account.get_address().c_str());
         return false;
     }
@@ -725,14 +731,6 @@ bool xblocktool_t::get_receiptid_state_and_prove(base::xvblockstore_t * blocksto
         xinfo("xblocktool_t::get_receiptid_state_and_prove cert block load fail.table:%s, cert height:%llu", account.get_address().c_str(), non_nil_commit_block->get_height() + 2);
         return false;
     }
-
-    // {
-    //     auto property_prove1 = base::xpropertyprove_build_t::create_property_prove(non_nil_commit_block.get(), cert_block.get(), bstate.get(), XPROPERTY_TABLE_RECEIPTID);
-    //     if (property_prove1 == nullptr) {
-    //         xwarn("xblocktool_t::get_receiptid_state_and_prove create receipt state fail 1.table:%s, commit height:%llu", account.get_address().c_str(), non_nil_commit_block->get_height());
-    //         return false;
-    //     }
-    // }
 
     xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(bstate.get());
     if (tablestate->get_receiptid_state()->get_all_receiptid_pairs()->get_all_pairs().empty()) {

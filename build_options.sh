@@ -161,6 +161,10 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DBUILD_RUSTVM=ON"
         echo "BUILD RUSTVM(need cargo toolchain)"
     ;;
+    evm)
+        CMAKE_EXTRA_OPTIONS+=" -DBUILD_EVM=ON"
+        echo "BUILD EVM(need cargo toolchain)"
+    ;;
     leak_trace)
         CMAKE_EXTRA_OPTIONS+=" -DLEAK_TRACER=ON"
         echo "BUILD WITH LEAK_TRACER tool"
@@ -174,8 +178,8 @@ do
         if [[ x$FORK_VERSION = x ]]; then
             FORK_VERSION=999999
         fi
-        CMAKE_EXTRA_OPTIONS+=" -DXCHAIN_FORKED_BY_DEFAULT=ON -DXCHAIN_FORKED_VERSION=$FORK_VERSION"
-        echo "BUILD WITH -DXCHAIN_FORKED_BY_DEFAULT=ON -DXCHAIN_FORKED_VERSION=$FORK_VERSION"
+        CMAKE_EXTRA_OPTIONS+=" -DXCHAIN_FORKED_BY_DEFAULT=$FORK_VERSION"
+        echo "BUILD WITH -DXCHAIN_FORKED_BY_DEFAULT=$FORK_VERSION"
     ;;
     metrics_dataobject)
         CMAKE_EXTRA_OPTIONS+=" -DENABLE_METRICS_DATAOBJECT=ON"
@@ -185,6 +189,10 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DDISABLE_CORE_SIGNAL_CAPTURE=ON"
         echo "BUILD WITH DISABLE_CORE_SIGNAL_CAPTURE"
     ;;
+    disable_capture)
+        CMAKE_EXTRA_OPTIONS+=" -DDISABLE_SIGNAL_CAPTURE=ON"
+        echo "BUILD WITH DISABLE_SIGNAL_CAPTURE"
+    ;;    
     checkpoint_test)
         CMAKE_EXTRA_OPTIONS+=" -DCHECKPOINT_TEST=ON"
         echo "BUILD WITH CHECKPOINT_TEST"

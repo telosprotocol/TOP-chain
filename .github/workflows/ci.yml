@@ -53,7 +53,7 @@ jobs:
         env:
           RUN_NUM: ${{ github.run_number }}
         run: |
-          bash .github/scripts/test_xtop_allinone.sh "$RUN_NUM"
+          sudo bash .github/scripts/test_xtop_allinone.sh "$RUN_NUM"
 
       - name: Notify
         if: always()

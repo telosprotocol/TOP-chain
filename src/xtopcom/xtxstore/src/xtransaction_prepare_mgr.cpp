@@ -6,6 +6,7 @@
 #include "xvledger/xvblockbuild.h"
 #include "xvledger/xvledger.h"
 #include "xtxexecutor/xtransaction_fee.h"
+#include "xdata/xblocktool.h"
 NS_BEG2(top, txexecutor)
 
 xtransaction_prepare_mgr::xtransaction_prepare_mgr(observer_ptr<mbus::xmessage_bus_face_t> const & mbus, observer_ptr<xbase_timer_driver_t> const & timer_driver)
@@ -63,12 +64,8 @@ void xtransaction_prepare_mgr::on_block_to_db_event(mbus::xevent_ptr_t e) {
 
 int xtransaction_prepare_mgr::update_prepare_cache(const data::xblock_ptr_t bp) {
     xJson::Value jv;
-    const std::vector<base::xvaction_t> input_actions = bp->get_tx_actions();
-    for(auto action : input_actions) {
-        if (action.get_org_tx_hash().empty()) {  // not txaction
-            xdbg("empty hash");
-            continue;
-        }
+    auto input_actions = data::xblockextract_t::unpack_txactions((base::xvblock_t*)bp.get());
+    for(auto & action : input_actions) {
         base::enum_transaction_subtype _subtype = (base::enum_transaction_subtype)action.get_org_tx_action_id();
         
         data::xlightunit_action_ptr_t txaction = std::make_shared<data::xlightunit_action_t>(action);
@@ -85,22 +82,22 @@ int xtransaction_prepare_mgr::update_prepare_cache(const data::xblock_ptr_t bp) 
         data::xtransaction_ptr_t tx_ptr = cache_data.tran;
 
         jv["height"] = static_cast<xJson::UInt64>(bp->get_height());
-        auto tx_info = bp->get_tx_info(tx_ptr->get_digest_str());
+        auto tx_info = txaction;
         if (tx_info != nullptr) {
-            jv["used_gas"] = tx_info->get_used_tgas();
+            jv["used_gas"] = static_cast<xJson::UInt64>(tx_info->get_used_tgas());
             if (tx_info->is_self_tx()) {
                 jv["exec_status"] = data::xtransaction_t::tx_exec_status_to_str(tx_info->get_tx_exec_status());
-                jv["used_deposit"] = tx_info->get_used_deposit();
+                jv["used_deposit"] = static_cast<xJson::UInt64>(tx_info->get_used_deposit());
             }
             if (tx_info->is_send_tx()) {
                 if ((tx_ptr->get_tx_type() == data::xtransaction_type_transfer) && (tx_ptr->get_tx_version() == data::xtransaction_version_2 || tx_info->get_not_need_confirm())) {
-                    jv["used_deposit"] = tx_info->get_used_deposit();
+                    jv["used_deposit"] = static_cast<xJson::UInt64>(tx_info->get_used_deposit());
                 } else {
                     jv["used_deposit"] = 0;
                 }
             }
             if (tx_info->is_confirm_tx()) {
-                jv["used_deposit"] = tx_info->get_used_deposit();
+                jv["used_deposit"] = static_cast<xJson::UInt64>(tx_info->get_used_deposit());
                 if (recv_txinfo != nullptr) {
                     jv["recv_tx_exec_status"] = data::xtransaction_t::tx_exec_status_to_str(recv_txinfo->get_tx_exec_status());
                     jv["exec_status"] = data::xtransaction_t::tx_exec_status_to_str(tx_info->get_tx_exec_status() | recv_txinfo->get_tx_exec_status());

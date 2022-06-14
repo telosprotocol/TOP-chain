@@ -7,6 +7,7 @@
 #include "xbasic/xutility.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
+#include "xevm_common/common_data.h"
 #include "xmetrics/xmetrics.h"
 #include "xstate_accessor/xerror/xerror.h"
 #include "xvledger/xvledger.h"
@@ -46,6 +47,14 @@ static xobject_ptr_t<base::xvbstate_t> state(common::xaccount_address_t const & 
 
 xtop_state_accessor::xtop_state_accessor(top::observer_ptr<top::base::xvbstate_t> const & bstate, xstate_access_control_data_t ac_data)
   : bstate_{bstate}, canvas_{make_object_ptr<base::xvcanvas_t>()}, ac_data_{std::move(ac_data)} {
+    if (bstate == nullptr) {
+        assert(false);
+        top::error::throw_error({error::xerrc_t::invalid_state_backend});
+    }
+}
+
+xtop_state_accessor::xtop_state_accessor(top::observer_ptr<top::base::xvbstate_t> const & bstate, top::xobject_ptr_t<top::base::xvcanvas_t> const & canvas)
+  : bstate_{bstate}, canvas_{canvas}, ac_data_{} {
     if (bstate == nullptr) {
         assert(false);
         top::error::throw_error({error::xerrc_t::invalid_state_backend});
@@ -117,59 +126,57 @@ static std::string token_property_name(properties::xproperty_identifier_t const 
     return property_id.full_name();
 }
 
-xtoken_t xtop_state_accessor::withdraw(properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol, uint64_t const amount, std::error_code & ec) {
+common::xtoken_t xtop_state_accessor::withdraw(properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol, evm_common::u256 const amount, std::error_code & ec) {
     assert(!ec);
     assert(bstate_ != nullptr);
 
     if (property_id.type() != properties::xproperty_type_t::token) {
         ec = error::xerrc_t::invalid_property_type;
-        return xtoken_t{};
-    }
-
-    if (static_cast<base::vtoken_t>(amount) < 0) { // allow with zero
-        ec = error::xerrc_t::property_value_out_of_range;
-        return xtoken_t{};
+        return common::xtoken_t{};
     }
 
     if (!write_permitted(property_id)) {
         ec = error::xerrc_t::property_access_denied;
-        return xtoken_t{};
+        return common::xtoken_t{};
     }
 
     auto const & property_name = token_property_name(property_id, symbol);
 
     if (!bstate_->find_property(property_name)) {
         ec = error::xerrc_t::token_insufficient;
-        return xtoken_t{ symbol };
+        return common::xtoken_t{ symbol };
     }
 
-    auto token_property = bstate_->load_token_var(property_name);
+    auto token_property = bstate_->load_string_var(property_name);
     if (token_property == nullptr) {
         ec = error::xerrc_t::load_property_failed;
-        return xtoken_t{ symbol };
+        return common::xtoken_t{ symbol };
     }
 
-    auto const balance = token_property->get_balance();
-    if (balance < 0 || amount > static_cast<uint64_t>(balance)) {
+    auto const balance_string = token_property->query();
+    evm_common::u256 balance = evm_common::fromBigEndian<evm_common::u256>(balance_string);
+    evm_common::u256 withdraw_amount = amount;
+
+    if (amount > balance) {
         ec = error::xerrc_t::token_insufficient;
-        return xtoken_t{ symbol };
+        return common::xtoken_t{symbol};
     }
 
-    auto const new_balance = token_property->withdraw(static_cast<base::vtoken_t>(amount), canvas_.get());
+    auto const new_balance = balance - withdraw_amount;
+    if (token_property->reset(evm_common::toBigEndianString(new_balance), canvas_.get()) == false) {
+        ec = error::xerrc_t::update_property_failed;
+        return common::xtoken_t{symbol};
+    }
+
     assert(new_balance <= balance); // allow with zero
-    return xtoken_t{ amount, symbol };
+    return common::xtoken_t{ amount, symbol };
 }
 
-void xtop_state_accessor::deposit(properties::xproperty_identifier_t const & property_id, xtoken_t token, std::error_code & ec) {
+void xtop_state_accessor::deposit(properties::xproperty_identifier_t const & property_id, common::xtoken_t token, std::error_code & ec) {
     assert(!ec);
 
     if (property_id.type() != properties::xproperty_type_t::token) {
         ec = error::xerrc_t::invalid_property_type;
-        return;
-    }
-
-    if (static_cast<base::vtoken_t>(token.amount()) < 0) {
-        ec = error::xerrc_t::property_value_out_of_range;
         return;
     }
 
@@ -180,16 +187,16 @@ void xtop_state_accessor::deposit(properties::xproperty_identifier_t const & pro
 
     auto const & property_name = token_property_name(property_id, token.symbol());
 
-    xobject_ptr_t<base::xtokenvar_t> token_property{ nullptr };
+    xobject_ptr_t<base::xstringvar_t> token_property{ nullptr };
     if (!bstate_->find_property(property_name)) {
         if (properties::system_property(property_id)) {
-            token_property = bstate_->new_token_var(property_name, canvas_.get());
+            token_property = bstate_->new_string_var(property_name, canvas_.get());
         } else {
             ec = error::xerrc_t::property_not_exist;
             return;
         }
     } else {
-        token_property = bstate_->load_token_var(property_name);
+        token_property = bstate_->load_string_var(property_name);
     }
 
     if (token_property == nullptr) {
@@ -197,8 +204,14 @@ void xtop_state_accessor::deposit(properties::xproperty_identifier_t const & pro
         return;
     }
 
-    auto const balance = token_property->get_balance();
-    auto const new_balance = token_property->deposit(static_cast<base::vtoken_t>(token.amount()), canvas_.get());
+    auto const balance_string = token_property->query();
+    evm_common::u256 balance = evm_common::fromBigEndian<evm_common::u256>(balance_string);
+    auto new_balance = balance + token.amount();
+    if (token_property->reset(evm_common::toBigEndianString(balance), canvas_.get()) == false) {
+        ec = error::xerrc_t::update_property_failed;
+        return;
+    }
+    // auto const new_balance = token_property->deposit(token.amount().convert_to<top::base::vtoken_t>(), canvas_.get());
     if (new_balance < balance) {
         ec = error::xerrc_t::property_value_out_of_range;
         return;
@@ -207,7 +220,7 @@ void xtop_state_accessor::deposit(properties::xproperty_identifier_t const & pro
     token.clear();
 }
 
-uint64_t xtop_state_accessor::balance(properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol, std::error_code & ec) const {
+evm_common::u256 xtop_state_accessor::balance(properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol, std::error_code & ec) const {
     assert(!ec);
 
     if (property_id.type() != properties::xproperty_type_t::token) {
@@ -225,13 +238,14 @@ uint64_t xtop_state_accessor::balance(properties::xproperty_identifier_t const &
         return 0;
     }
 
-    auto token_property = bstate_->load_token_var(property_name);
+    auto token_property = bstate_->load_string_var(property_name);
     if (token_property == nullptr) {
         ec = error::xerrc_t::load_property_failed;
         return 0;
     }
 
-    auto const balance = token_property->get_balance();
+    auto const balance_string = token_property->query();
+    evm_common::u256 balance = evm_common::fromBigEndian<evm_common::u256>(balance_string);
     return balance;
 }
 

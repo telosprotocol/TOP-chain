@@ -63,6 +63,7 @@ class xtransaction_face_t{
 #endif
     data::xproperty_asset get_asset() const {return m_exec_data.m_asset;}
     uint64_t              get_amount() const {return m_exec_data.m_asset.m_amount;}
+    evm_common::u256      get_amount_256() const {return m_exec_data.m_amount_256;}
     std::string           get_function_name() const {return m_exec_data.m_function_name;}
     std::string           get_function_para() const {return m_exec_data.m_function_para;}
     uint64_t              get_vote_num() const {return m_exec_data.m_vote_num;}
@@ -117,8 +118,8 @@ class xtransaction_run_contract : public xtransaction_face_t{
     }
 
     int32_t source_fee_exec() override ;
-    int32_t source_action_exec() override ;
-    int32_t target_action_exec() override ;
+    int32_t source_action_exec() override;
+    int32_t target_action_exec() override;
     int32_t target_fee_exec() override {
         return 0;
     };
@@ -158,12 +159,18 @@ class xtransaction_transfer : public xtransaction_face_t{
         }
 
         uint64_t amount = get_amount();
+        evm_common::u256 amount256 = get_amount_256();
+
         // min transfer amount
-        if (amount <= 0) { // just allow zero
+        if (get_asset().is_top_token() && amount <= 0) { // just allow zero
+             return xverifier::xverifier_error::xverifier_error_transfer_tx_min_amount_invalid;
+        }
+        
+        if (!get_asset().is_top_token() && amount256 <= 0) { // just allow zero
              return xverifier::xverifier_error::xverifier_error_transfer_tx_min_amount_invalid;
         }
 
-        if (amount > TOTAL_ISSUANCE){
+        if (get_asset().is_top_token() && amount > TOTAL_ISSUANCE){
             return xverifier::xverifier_error::xverifier_error_transfer_tx_amount_over_max;
         }
 
@@ -184,7 +191,7 @@ class xtransaction_transfer : public xtransaction_face_t{
         int32_t ret = transfer_amount ? m_account_ctx->unlock_all_token() : 0;
         if(!ret){
             if (m_trans->get_target_addr() != black_hole_addr) {
-                ret = m_account_ctx->token_transfer_out(get_asset(), 0);
+                ret = m_account_ctx->token_transfer_out(get_asset(), get_amount_256(), 0);
             } else {
                 ret = m_account_ctx->available_balance_to_other_balance(data::XPROPERTY_BALANCE_BURN, base::vtoken_t(transfer_amount));
             }
@@ -193,7 +200,7 @@ class xtransaction_transfer : public xtransaction_face_t{
     }
 
     int32_t target_action_exec() override {
-        return m_account_ctx->token_transfer_in(get_asset());
+        return m_account_ctx->token_transfer_in(get_asset(), get_amount_256());
     }
 
     int32_t source_confirm_fee_exec() override ;

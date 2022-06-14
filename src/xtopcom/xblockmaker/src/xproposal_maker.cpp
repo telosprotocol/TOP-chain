@@ -13,6 +13,7 @@
 #include "xdata/xblockbuild.h"
 #include "xmbus/xevent_behind.h"
 #include "xchain_fork/xchain_upgrade_center.h"
+#include "xgasfee/xgas_estimate.h"
 
 NS_BEG2(top, blockmaker)
 
@@ -254,9 +255,7 @@ int xproposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::x
         xwarn("xproposal_maker_t::verify_proposal create receipt state and prove fail.table:%s, commit height:%llu", get_account().c_str(), commit_block->get_height());
     }
 
-    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-    bool commit_block_add_rsp_id = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.add_rsp_id, commit_block->get_clock());
-    get_txpool()->update_table_state(property_prove_ptr, commit_tablestate, commit_block_add_rsp_id);
+    get_txpool()->update_table_state(property_prove_ptr, commit_tablestate);
 
     // get tablestate related to latest cert block
     data::xtablestate_ptr_t tablestate = get_target_tablestate(proposal_prev_block.get());
@@ -308,6 +307,10 @@ int xproposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::x
     xdbg_info("xproposal_maker_t::verify_proposal succ. proposal=%s,latest_cert_block=%s",
         proposal_block->dump().c_str(), proposal_prev_block->dump().c_str());
     return xsuccess;
+}
+
+void xproposal_maker_t::set_certauth(base::xvcertauth_t* _ca) {
+    m_resources->set_certauth(_ca);
 }
 
 bool xproposal_maker_t::verify_proposal_input(base::xvblock_t *proposal_block, xtablemaker_para_t & table_para) {
@@ -365,6 +368,7 @@ bool xproposal_maker_t::verify_proposal_input(base::xvblock_t *proposal_block, x
 
         base::xreceiptid_pair_t self_pair;
         table_para.get_tablestate()->get_receiptid_state()->find_pair(peer_sid, self_pair);
+        auto sendid_max = self_pair.get_sendid_max();
         auto confirmid_max = self_pair.get_confirmid_max();
         auto confirm_rsp_id_max = self_pair.get_confirm_rsp_id_max();
         auto send_rsp_id_max = self_pair.get_send_rsp_id_max();
@@ -373,36 +377,14 @@ bool xproposal_maker_t::verify_proposal_input(base::xvblock_t *proposal_block, x
         peer_receiptid_state->find_pair(self_sid, peer_pair);
         auto recvid_max = peer_pair.get_recvid_max();
 
-        if (recvid_max <= confirmid_max) {
-            xerror("xproposal_maker_t::verify_proposal_input fail-prove invalid recvid not bigger than confirm id. proposal=%s", proposal_block->dump().c_str());
+        if (confirm_rsp_id_max != send_rsp_id_max || recvid_max <= confirmid_max || recvid_max > sendid_max) {
+            xerror("xproposal_maker_t::verify_proposal_input fail-prove invalid recvid not bigger than confirm id. proposal=%s,self_pair:%s,peer sid:%d,recvid:%llu",
+                   proposal_block->dump().c_str(),
+                   self_pair.dump().c_str(),
+                   peer_sid,
+                   recvid_max);
             XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_confirm_id_error, 1);
             return false;
-        }
-
-        uint64_t send_id_after_add_rsp_id = 0;
-        bool result = get_txpool()->get_send_id_after_add_rsp_id(self_sid, peer_sid, send_id_after_add_rsp_id);
-        if (confirm_rsp_id_max > 0 || (result && confirmid_max >= send_id_after_add_rsp_id)) {
-            if (self_pair.get_send_rsp_id_max() != self_pair.get_confirm_rsp_id_max()) {
-                xwarn("xproposal_maker_t::verify_proposal_input fail-send rsp id:%llu not equal to confirm rsp id:%llu. proposal=%s",
-                    self_pair.get_send_rsp_id_max(),
-                    self_pair.get_confirm_rsp_id_max(),
-                    proposal_block->dump().c_str());
-                XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_confirm_id_error, 1);
-                return false;
-            }
-        } else {
-            std::vector<uint64_t> need_confirm_receipt_ids;
-            auto ret = get_txpool()->get_sender_need_confirm_ids(get_account(), peer_sid, confirmid_max + 1, recvid_max, need_confirm_receipt_ids);
-            if (!ret || !need_confirm_receipt_ids.empty()) {
-                xwarn("xproposal_maker_t::verify_proposal_input fail-have need confirm ids. proposal=%s,ret:%d,confirmid:%llu,recvid:%llu", proposal_block->dump().c_str(), ret, confirmid_max, recvid_max);
-                if (ret && !need_confirm_receipt_ids.empty()) {
-                    for (auto & id : need_confirm_receipt_ids) {
-                        xwarn("xproposal_maker_t::verify_proposal_input fail-have need confirm ids. proposal=%s,id:%llu,confirmid:%llu,recvid:%llu", proposal_block->dump().c_str(), id, ret, confirmid_max, recvid_max);
-                    }
-                }
-                XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_rise_confirm_id, 1);
-                return false;
-            }
         }
 
         xinfo("xproposal_maker_t::verify_proposal_input proposal_block:%llu,receipt id prove:peer:%d,id:%llu:%llu", proposal_block->dump().c_str(), peer_sid, confirmid_max, recvid_max);
@@ -468,13 +450,9 @@ bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & propos
         if (!ret) {
             xwarn("xproposal_maker_t::update_txpool_txs create receipt state and prove fail.table:%s, commit height:%llu", get_account().c_str(), proposal_para.get_latest_committed_block()->get_height());
         }
-        auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-        bool commit_block_add_rsp_id = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.add_rsp_id, proposal_para.get_latest_committed_block()->get_clock());
-        get_txpool()->update_table_state(property_prove_ptr, table_para.get_commit_tablestate(), commit_block_add_rsp_id);
+        get_txpool()->update_table_state(property_prove_ptr, table_para.get_commit_tablestate());
 
         // update locked txs for txpool, locked txs come from two latest tableblock
-        // get_locked_nonce_map(proposal_para.get_latest_locked_block(), locked_nonce_map);
-        // get_locked_nonce_map(proposal_para.get_latest_cert_block(), locked_nonce_map);
     }
 
     // get table batch txs for execute and make block
@@ -544,6 +522,23 @@ std::string xproposal_maker_t::calc_random_seed(base::xvblock_t* latest_cert_blo
     return base::xstring_utl::tostring(seed);
 }
 
+bool xproposal_maker_t::leader_xip_to_leader_address(xvip2_t _xip, common::xaccount_address_t & _addr) const {
+    std::string leader_address = m_resources->get_certauth()->get_signer(_xip);
+    if (leader_address.empty()) {
+        return false;
+    }
+    // only T6 and T8 node can change to leader address for eth compatibility
+    common::xaccount_address_t _coinbase;
+    base::enum_vaccount_addr_type addr_type = base::xvaccount_t::get_addrtype_from_account(leader_address);
+    if (addr_type != base::enum_vaccount_addr_type_secp256k1_eth_user_account && addr_type != base::enum_vaccount_addr_type_secp256k1_evm_user_account) {
+        _coinbase = eth_zero_address;
+    } else {
+        _coinbase = common::xaccount_address_t(leader_address);
+    }
+    _addr = _coinbase;
+    return true;
+}
+
 bool xproposal_maker_t::leader_set_consensus_para(base::xvblock_t* latest_cert_block, xblock_consensus_para_t & cs_para) {
     uint64_t now = (uint64_t)base::xtime_utl::gettimeofday();
     cs_para.set_timeofday_s(now);
@@ -562,6 +557,16 @@ bool xproposal_maker_t::leader_set_consensus_para(base::xvblock_t* latest_cert_b
                                             random_seed,
                                             total_lock_tgas_token,
                                             property_height);
+
+    common::xaccount_address_t leader_addr;
+    if (false == leader_xip_to_leader_address(cs_para.get_leader_xip(), leader_addr)) {
+        xwarn("xtable_maker_t::make_light_table_v2 fail-get leader address. %s", cs_para.dump().c_str());
+        return false;
+    }
+    cs_para.set_coinbase(leader_addr);
+    cs_para.set_block_gaslimit(XGET_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit));
+    cs_para.set_block_base_price(gasfee::xgas_estimate::base_price());
+
     xdbg_info("xtable_blockmaker_t::set_consensus_para %s random_seed=%s,tgas_token=%" PRIu64 ",tgas_height=%" PRIu64 " leader",
         cs_para.dump().c_str(), random_seed.c_str(), total_lock_tgas_token, property_height);
     return true;
@@ -604,39 +609,19 @@ bool xproposal_maker_t::backup_set_consensus_para(base::xvblock_t* latest_cert_b
                                               random_seed,
                                               total_lock_tgas_token,
                                               property_height);
-        xdbg_info("xtable_blockmaker_t::set_consensus_para proposal=%s,random_seed=%s,tgas_token=%" PRIu64 " backup",
+        xdbg_info("xproposal_maker_t::backup_set_consensus_para proposal=%s,random_seed=%s,tgas_token=%" PRIu64 " backup",
             proposal->dump().c_str(), random_seed.c_str(), total_lock_tgas_token);
     }
-    return true;
-}
 
-void xproposal_maker_t::get_locked_nonce_map(const xblock_ptr_t & block, std::map<std::string, uint64_t> & locked_nonce_map) const {
-    auto tx_actions = block->get_tx_actions();
-    for (auto & action : tx_actions) {
-        if (action.get_org_tx_hash().empty()) {  // not txaction
-            continue;
-        }
-        base::enum_transaction_subtype _subtype = (base::enum_transaction_subtype)action.get_org_tx_action_id();
-
-        if (_subtype == data::enum_transaction_subtype_self || _subtype == data::enum_transaction_subtype_send) {
-            data::xlightunit_action_t txaction(action);
-            data::xtransaction_ptr_t _rawtx = block->query_raw_transaction(txaction.get_tx_hash());
-            if (_rawtx != nullptr) {
-                uint64_t txnonce = _rawtx->get_tx_nonce();
-                const std::string uri = txaction.get_contract_uri();
-                const std::string & account_addr = _rawtx->get_source_addr();
-                auto it = locked_nonce_map.find(account_addr);
-                xdbg("xproposal_maker_t::get_locked_nonce_map account:%s,nonce:%u", account_addr.c_str(), txnonce);
-                if (it == locked_nonce_map.end()) {
-                    locked_nonce_map[account_addr] = txnonce;
-                } else {
-                    if (it->second < txnonce) {
-                        locked_nonce_map[account_addr] = txnonce;
-                    }
-                }
-            }
-        }
+    common::xaccount_address_t leader_addr;
+    if (false == leader_xip_to_leader_address(cs_para.get_leader_xip(), leader_addr)) {
+        xwarn("xproposal_maker_t::backup_set_consensus_para fail-get leader address. %s", cs_para.dump().c_str());
+        return false;
     }
+    cs_para.set_coinbase(leader_addr);
+    cs_para.set_block_gaslimit(XGET_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit));
+    cs_para.set_block_base_price(gasfee::xgas_estimate::base_price());
+    return true;
 }
 
 void xproposal_maker_t::sys_contract_sync(const data::xtablestate_ptr_t & tablestate) const {

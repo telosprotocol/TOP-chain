@@ -31,12 +31,14 @@
 #include "xvm/xsystem_contracts/deploy/xcontract_deploy.h"
 #include "xvm/xsystem_contracts/tcc/xrec_proposal_contract.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_archive_contract.h"
+#include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_exchange_contract.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_edge_contract.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_fullnode_contract.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_rec_contract.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_zec_contract.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_standby_pool_contract.h"
 #include "xvm/xsystem_contracts/xelection/xzec/xzec_elect_consensus_group_contract.h"
+#include "xvm/xsystem_contracts/xelection/xzec/xzec_elect_eth_group_contract.h"
 #include "xvm/xsystem_contracts/xelection/xzec/xzec_group_association_contract.h"
 #include "xvm/xsystem_contracts/xelection/xzec/xzec_standby_pool_contract.h"
 #include "xvm/xsystem_contracts/xregistration/xrec_registration_contract.h"
@@ -83,6 +85,7 @@ void xtop_contract_manager::instantiate_sys_contracts() {
     XREGISTER_CONTRACT(top::xvm::system_contracts::rec::xrec_elect_edge_contract_t, sys_contract_rec_elect_edge_addr, network_id);
     XREGISTER_CONTRACT(top::xvm::system_contracts::rec::xrec_elect_fullnode_contract_t, sys_contract_rec_elect_fullnode_addr, network_id);
     XREGISTER_CONTRACT(top::xvm::system_contracts::rec::xrec_elect_archive_contract_t, sys_contract_rec_elect_archive_addr, network_id);
+    XREGISTER_CONTRACT(top::xvm::system_contracts::rec::xrec_elect_exchange_contract_t, sys_contract_rec_elect_exchange_addr, network_id);
     XREGISTER_CONTRACT(top::xvm::system_contracts::rec::xrec_elect_rec_contract_t, sys_contract_rec_elect_rec_addr, network_id);
     XREGISTER_CONTRACT(top::xvm::system_contracts::rec::xrec_elect_zec_contract_t, sys_contract_rec_elect_zec_addr, network_id);
     XREGISTER_CONTRACT(top::xvm::system_contracts::rec::xrec_standby_pool_contract_t, sys_contract_rec_standby_pool_addr, network_id);
@@ -92,27 +95,11 @@ void xtop_contract_manager::instantiate_sys_contracts() {
     XREGISTER_CONTRACT(top::xvm::xcontract::xzec_slash_info_contract, sys_contract_zec_slash_info_addr, network_id);
     XREGISTER_CONTRACT(top::xvm::system_contracts::reward::xtable_reward_claiming_contract_t, sys_contract_sharding_reward_claiming_addr, network_id);
     XREGISTER_CONTRACT(top::xvm::xcontract::xtable_statistic_info_collection_contract, sys_contract_sharding_statistic_info_addr, network_id);
-
+    // XREGISTER_CONTRACT(top::xvm::xcontract::xtable_statistic_info_collection_contract, sys_contract_eth_table_statistic_info_addr, network_id);
+    XREGISTER_CONTRACT(top::xvm::system_contracts::zec::xzec_elect_eth_contract_t, sys_contract_zec_elect_eth_addr, network_id);
 }
 
 #undef XREGISTER_CONTRACT
-
-void xtop_contract_manager::setup_blockchains(xvblockstore_t * blockstore) {
-    // setup all contracts' accounts, then no need
-    // sync generation block at all
-    for (auto const & pair : xcontract_deploy_t::instance().get_map()) {
-        if (data::is_sys_sharding_contract_address(pair.first)) {
-            for (auto i = 0; i < enum_vbucket_has_tables_count; i++) {
-                auto addr = data::make_address_by_prefix_and_subaddr(pair.first.value(), i);
-                register_contract_cluster_address(pair.first, addr);
-                setup_chain(addr, blockstore);
-            }
-        } else {
-            register_contract_cluster_address(pair.first, pair.first);
-            setup_chain(pair.first, blockstore);
-        }
-    }
-}
 
 void xtop_contract_manager::register_address() {
     for (auto const & pair : xcontract_deploy_t::instance().get_map()) {
@@ -121,6 +108,9 @@ void xtop_contract_manager::register_address() {
                 auto addr = data::make_address_by_prefix_and_subaddr(pair.first.value(), i);
                 register_contract_cluster_address(pair.first, addr);
             }
+        } else if (data::is_sys_evm_table_contract_address(pair.first)) {
+            auto addr = data::make_address_by_prefix_and_subaddr(pair.first.value(), 0);
+            register_contract_cluster_address(pair.first, addr);
         } else {
             register_contract_cluster_address(pair.first, pair.first);
         }
@@ -146,7 +136,9 @@ void xtop_contract_manager::install_monitors(observer_ptr<xmessage_bus_face_t> c
                                              observer_ptr<vnetwork::xmessage_callback_hub_t> const & msg_callback_hub,
                                              observer_ptr<xstore_face_t> const & store,
                                              xobject_ptr_t<store::xsyncvstore_t> const & syncstore) {
-    msg_callback_hub->register_message_ready_notify([this, nid = msg_callback_hub->network_id(), bus_ptr = bus.get()](xvnode_address_t const &, xmessage_t const & msg, std::uint64_t const) {
+    auto & nid = msg_callback_hub->network_id();
+    auto bus_ptr = bus.get();
+    msg_callback_hub->register_message_ready_notify([this, nid, bus_ptr](xvnode_address_t const &, xmessage_t const & msg, std::uint64_t const) {
         if (msg.id() == xmessage_block_broadcast_id) {
             base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)msg.payload().data(), msg.payload().size());
             base::xauto_ptr<xvblock_t> block(data::xblock_t::full_block_read_from(stream));
@@ -437,12 +429,14 @@ static void get_election_result_property_data(observer_ptr<store::xstore_face_t 
                                               common::xaccount_address_t const & contract_address,
                                               xjson_format_t const json_format,
                                               xJson::Value & json) {
-    assert(contract_address == xaccount_address_t{sys_contract_rec_elect_rec_addr} ||      // NOLINT
-           contract_address == xaccount_address_t{sys_contract_rec_elect_zec_addr} ||      // NOLINT
-           contract_address == xaccount_address_t{sys_contract_rec_elect_edge_addr} ||     // NOLINT
-           contract_address == xaccount_address_t{sys_contract_rec_elect_archive_addr} ||  // NOLINT
-           contract_address == xaccount_address_t{sys_contract_zec_elect_consensus_addr} ||
-           contract_address == xaccount_address_t{sys_contract_rec_elect_fullnode_addr});
+    assert(contract_address == rec_elect_rec_contract_address       ||  // NOLINT
+           contract_address == rec_elect_zec_contract_address       ||  // NOLINT
+           contract_address == rec_elect_edge_contract_address      ||  // NOLINT
+           contract_address == rec_elect_archive_contract_address   ||  // NOLINT
+           contract_address == rec_elect_exchange_contract_address  ||  // NOLINT
+           contract_address == zec_elect_consensus_contract_address ||  // NOLINT
+           contract_address == rec_elect_fullnode_contract_address  ||  // NOLINT
+           contract_address == zec_elect_eth_contract_address);
 
     std::string serialized_value{};
     for (auto const & property_name : data::election::get_property_name_by_addr(contract_address)) {
@@ -512,12 +506,14 @@ static void get_election_result_property_data(observer_ptr<store::xstore_face_t 
                                               xjson_format_t const json_format,
                                               bool compatible_mode,
                                               xJson::Value & json) {
-    assert(contract_address == xaccount_address_t{sys_contract_rec_elect_rec_addr}       ||  // NOLINT
-           contract_address == xaccount_address_t{sys_contract_rec_elect_zec_addr}       ||  // NOLINT
-           contract_address == xaccount_address_t{sys_contract_rec_elect_edge_addr}      ||  // NOLINT
-           contract_address == xaccount_address_t{sys_contract_rec_elect_archive_addr}   ||  // NOLINT
-           contract_address == xaccount_address_t{sys_contract_zec_elect_consensus_addr} ||  // NOLINT
-           contract_address == xaccount_address_t{sys_contract_rec_elect_fullnode_addr});
+    assert(contract_address == rec_elect_rec_contract_address       ||  // NOLINT
+           contract_address == rec_elect_zec_contract_address       ||  // NOLINT
+           contract_address == rec_elect_edge_contract_address      ||  // NOLINT
+           contract_address == rec_elect_archive_contract_address   ||  // NOLINT
+           contract_address == rec_elect_exchange_contract_address  ||  // NOLINT
+           contract_address == zec_elect_consensus_contract_address ||  // NOLINT
+           contract_address == rec_elect_fullnode_contract_address  ||
+           contract_address == zec_elect_eth_contract_address);
 
     std::string serialized_value{};
     if (store->string_get(contract_address.value(), property_name, serialized_value) == 0 && !serialized_value.empty()) {
@@ -595,12 +591,14 @@ static void get_election_result_property_data(const xaccount_ptr_t unitstate,
                                               xjson_format_t const json_format,
                                               bool compatible_mode,
                                               xJson::Value & json) {
-    assert(contract_address == xaccount_address_t{sys_contract_rec_elect_rec_addr} ||      // NOLINT
-           contract_address == xaccount_address_t{sys_contract_rec_elect_zec_addr} ||      // NOLINT
-           contract_address == xaccount_address_t{sys_contract_rec_elect_edge_addr} ||     // NOLINT
-           contract_address == xaccount_address_t{sys_contract_rec_elect_archive_addr} ||  // NOLINT
-           contract_address == xaccount_address_t{sys_contract_zec_elect_consensus_addr} ||
-           contract_address == xaccount_address_t{sys_contract_rec_elect_fullnode_addr});
+    assert(contract_address == rec_elect_rec_contract_address       ||  // NOLINT
+           contract_address == rec_elect_zec_contract_address       ||  // NOLINT
+           contract_address == rec_elect_edge_contract_address      ||  // NOLINT
+           contract_address == rec_elect_archive_contract_address   ||  // NOLINT
+           contract_address == rec_elect_exchange_contract_address  ||  // NOLINT
+           contract_address == zec_elect_consensus_contract_address ||  // NOLINT
+           contract_address == rec_elect_fullnode_contract_address  ||  // NOLINT
+           contract_address == zec_elect_eth_contract_address);
 
     std::string serialized_value = unitstate->string_get(property_name);
     if (!serialized_value.empty()) {
@@ -822,10 +820,10 @@ static void get_zec_workload_map(observer_ptr<store::xstore_face_t const> store,
     for (auto m : workloads) {
         auto detail = m.second;
         base::xstream_t stream{xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};
-        data::system_contract::cluster_workload_t workload;
+        data::system_contract::xgroup_workload_t workload;
         workload.serialize_from(stream);
         xJson::Value jn;
-        jn["cluster_total_workload"] = workload.cluster_total_workload;
+        jn["cluster_total_workload"] = workload.group_total_workload;
         auto const & key_str = m.first;
         common::xcluster_address_t cluster;
         xstream_t key_stream(xcontext_t::instance(), (uint8_t *)key_str.data(), key_str.size());
@@ -1014,7 +1012,7 @@ static void get_reward_detail(common::xaccount_address_t const & contract_addres
         xdbg("[get_reward_detail] contract_address: %s, property_name: %s, error", contract_address.to_string().c_str(), property_name.c_str());
         return;
     }
-    data::system_contract::xissue_detail issue_detail;
+    data::system_contract::xissue_detail_v2 issue_detail;
     issue_detail.from_string(serialized_value);
     xJson::Value jv;
     jv["onchain_timer_round"] = (xJson::UInt64)issue_detail.onchain_timer_round;
@@ -1025,10 +1023,14 @@ static void get_reward_detail(common::xaccount_address_t const & contract_addres
     jv["archive_reward_ratio"] = issue_detail.m_archive_reward_ratio;
     jv["validator_reward_ratio"] = issue_detail.m_validator_reward_ratio;
     jv["auditor_reward_ratio"] = issue_detail.m_auditor_reward_ratio;
+    // jv["evm_auditor_reward_ratio"] = issue_detail.m_evm_auditor_reward_ratio;
+    // jv["evm_validator_reward_ratio"] = issue_detail.m_evm_validator_reward_ratio;
     jv["vote_reward_ratio"] = issue_detail.m_vote_reward_ratio;
     jv["governance_reward_ratio"] = issue_detail.m_governance_reward_ratio;
     jv["validator_group_count"] = (xJson::UInt)issue_detail.m_validator_group_count;
     jv["auditor_group_count"] = (xJson::UInt)issue_detail.m_auditor_group_count;
+    jv["evm_validator_group_count"] = (xJson::UInt)issue_detail.m_evm_validator_group_count;
+    jv["evm_auditor_group_count"] = (xJson::UInt)issue_detail.m_evm_auditor_group_count;
     xJson::Value jr;
     for (auto const & node_reward : issue_detail.m_node_rewards) {
         std::stringstream ss;
@@ -1103,7 +1105,7 @@ static void get_unqualified_node_map(observer_ptr<store::xstore_face_t const> st
                                                  xJson::Value & json) {
     std::map<std::string, std::string> nodes;
     if ( store->map_copy_get(contract_address.value(), property_name, nodes) != 0 ) return;
-    xunqualified_node_info_t summarize_info;
+    data::system_contract::xunqualified_node_info_v1_t summarize_info;
     for (auto const & m : nodes) {
         auto detail = m.second;
         if (!detail.empty()) {
@@ -1257,7 +1259,7 @@ static void get_sharding_statistic_contract_property(std::string const & shardin
             return;
         }
 
-        xunqualified_node_info_t data;
+        data::system_contract::xunqualified_node_info_v1_t data;
         base::xstream_t stream{ base::xcontext_t::instance(), reinterpret_cast<uint8_t *>(const_cast<char *>(value.data())), static_cast<uint32_t>(value.size()) };
         try {
             data.serialize_from(stream);
@@ -1271,7 +1273,7 @@ static void get_sharding_statistic_contract_property(std::string const & shardin
 
         for (auto const & auditor_data : data.auditor_info) {
             xJson::Value v;
-            auto const & unqualified_data = top::get<xnode_vote_percent_t>(auditor_data);
+            auto const & unqualified_data = top::get<data::system_contract::xnode_vote_percent_t>(auditor_data);
 
             v["account"] = top::get<common::xaccount_address_t const>(auditor_data).value();
             v["block_count"] = unqualified_data.block_count;
@@ -1282,7 +1284,7 @@ static void get_sharding_statistic_contract_property(std::string const & shardin
 
         for (auto const & validator_data : data.validator_info) {
             xJson::Value v;
-            auto const & unqualified_data = top::get<xnode_vote_percent_t>(validator_data);
+            auto const & unqualified_data = top::get<data::system_contract::xnode_vote_percent_t>(validator_data);
 
             v["account"] = top::get<common::xaccount_address_t const>(validator_data).value();
             v["block_count"] = unqualified_data.block_count;
@@ -1356,7 +1358,7 @@ static void get_sharding_statistic_contract_property(std::string const & shardin
             xJson::Value jm;
             auto const & detail = m.second;
             base::xstream_t stream{ base::xcontext_t::instance(), reinterpret_cast<uint8_t *>(const_cast<char *>(detail.data())), static_cast<uint32_t>(detail.size()) };
-            data::system_contract::cluster_workload_t workload;
+            data::system_contract::xgroup_workload_t workload;
             try {
                 workload.serialize_from(stream);
             } catch (top::error::xtop_error_t const & eh) {
@@ -1368,15 +1370,15 @@ static void get_sharding_statistic_contract_property(std::string const & shardin
             }
             {
                 xJson::Value jn;
-                jn["cluster_total_workload"] = workload.cluster_total_workload;
-                auto const & key_str = workload.cluster_id;
-                common::xcluster_address_t cluster;
+                jn["cluster_total_workload"] = workload.group_total_workload;
+                auto const & key_str = m.first;
+                common::xgroup_address_t group_address;
                 base::xstream_t key_stream{ base::xcontext_t::instance(), reinterpret_cast<uint8_t *>(const_cast<char *>(key_str.data())), static_cast<uint32_t>(key_str.size()) };
-                key_stream >> cluster;
+                key_stream >> group_address;
                 for (auto const & node : workload.m_leader_count) {
                     jn[node.first] = node.second;
                 }
-                jm[cluster.group_id().to_string()] = jn;
+                jm[group_address.group_id().to_string()] = jn;
             }
             json["auditor_workload"].append(jm);
         }
@@ -1419,7 +1421,7 @@ static void get_zec_slash_contract_property(std::string const & property_name,
             return;
         }
 
-        xunqualified_node_info_t data;
+        data::system_contract::xunqualified_node_info_v1_t data;
         base::xstream_t stream{ base::xcontext_t::instance(), reinterpret_cast<uint8_t *>(const_cast<char *>(value.data())), static_cast<uint32_t>(value.size()) };
         try {
             data.serialize_from(stream);
@@ -1433,7 +1435,7 @@ static void get_zec_slash_contract_property(std::string const & property_name,
 
         for (auto const & auditor_data : data.auditor_info) {
             xJson::Value v;
-            auto const & unqualified_data = top::get<xnode_vote_percent_t>(auditor_data);
+            auto const & unqualified_data = top::get<data::system_contract::xnode_vote_percent_t>(auditor_data);
 
             v["account"] = top::get<common::xaccount_address_t const>(auditor_data).value();
             v["block_count"] = unqualified_data.block_count;
@@ -1444,7 +1446,7 @@ static void get_zec_slash_contract_property(std::string const & property_name,
 
         for (auto const & validator_data : data.validator_info) {
             xJson::Value v;
-            auto const & unqualified_data = top::get<xnode_vote_percent_t>(validator_data);
+            auto const & unqualified_data = top::get<data::system_contract::xnode_vote_percent_t>(validator_data);
 
             v["account"] = top::get<common::xaccount_address_t const>(validator_data).value();
             v["block_count"] = unqualified_data.block_count;
@@ -1559,7 +1561,7 @@ static void get_zec_reward_contract_property(std::string const & property_name,
             xJson::Value jm;
             auto const & detail = m.second;
             base::xstream_t stream{ base::xcontext_t::instance(), reinterpret_cast<uint8_t *>(const_cast<char *>(detail.data())), static_cast<uint32_t>(detail.size()) };
-            data::system_contract::cluster_workload_t workload;
+            data::system_contract::xgroup_workload_t workload;
             try {
                 workload.serialize_from(stream);
             } catch (top::error::xtop_error_t const & eh) {
@@ -1571,15 +1573,19 @@ static void get_zec_reward_contract_property(std::string const & property_name,
             }
             {
                 xJson::Value jn;
-                jn["cluster_total_workload"] = workload.cluster_total_workload;
-                auto const & key_str = workload.cluster_id;
-                common::xcluster_address_t cluster;
+                jn["cluster_total_workload"] = workload.group_total_workload;
+                auto const & key_str = m.first;
+                common::xgroup_address_t group_address;
                 base::xstream_t key_stream{ base::xcontext_t::instance(), reinterpret_cast<uint8_t *>(const_cast<char *>(key_str.data())), static_cast<uint32_t>(key_str.size()) };
-                key_stream >> cluster;
+                key_stream >> group_address;
                 for (auto const & node : workload.m_leader_count) {
                     jn[node.first] = node.second;
                 }
-                jm[cluster.group_id().to_string()] = jn;
+                if (common::has<common::xnode_type_t::evm_auditor>(group_address.type()) || common::has<common::xnode_type_t::evm_validator>(group_address.type())) {
+                    jm[std::string{"evm"} + group_address.group_id().to_string()] = jn;
+                } else {
+                    jm[group_address.group_id().to_string()] = jn;
+                }
             }
             json["auditor_workload"].append(jm);
         }
@@ -1604,7 +1610,7 @@ static void get_zec_reward_contract_property(std::string const & property_name,
             xJson::Value jm;
             auto const & detail = m.second;
             base::xstream_t stream{ base::xcontext_t::instance(), reinterpret_cast<uint8_t *>(const_cast<char *>(detail.data())), static_cast<uint32_t>(detail.size()) };
-            data::system_contract::cluster_workload_t workload;
+            data::system_contract::xgroup_workload_t workload;
             try {
                 workload.serialize_from(stream);
             } catch (top::error::xtop_error_t const & eh) {
@@ -1616,15 +1622,19 @@ static void get_zec_reward_contract_property(std::string const & property_name,
             }
             {
                 xJson::Value jn;
-                jn["cluster_total_workload"] = workload.cluster_total_workload;
-                auto const & key_str = workload.cluster_id;
-                common::xcluster_address_t cluster;
+                jn["cluster_total_workload"] = workload.group_total_workload;
+                auto const & key_str = m.first;
+                common::xcluster_address_t group_address;
                 base::xstream_t key_stream{ base::xcontext_t::instance(), reinterpret_cast<uint8_t *>(const_cast<char *>(key_str.data())), static_cast<uint32_t>(key_str.size()) };
-                key_stream >> cluster;
+                key_stream >> group_address;
                 for (auto const & node : workload.m_leader_count) {
                     jn[node.first] = node.second;
                 }
-                jm[cluster.group_id().to_string()] = jn;
+                if (common::has<common::xnode_type_t::evm_auditor>(group_address.type()) || common::has<common::xnode_type_t::evm_validator>(group_address.type())) {
+                    jm[std::string{"evm"} + group_address.group_id().to_string()] = jn;
+                } else {
+                    jm[group_address.group_id().to_string()] = jn;
+                }
             }
             json["validator_workload"].append(jm);
         }
@@ -1632,12 +1642,14 @@ static void get_zec_reward_contract_property(std::string const & property_name,
 }
 
 void xtop_contract_manager::get_contract_data(common::xaccount_address_t const & contract_address, xjson_format_t const json_format, bool compatible_mode, xJson::Value & json) const {
-    if (contract_address == xaccount_address_t{sys_contract_rec_elect_rec_addr} ||      // NOLINT
-        contract_address == xaccount_address_t{sys_contract_rec_elect_zec_addr} ||      // NOLINT
-        contract_address == xaccount_address_t{sys_contract_rec_elect_edge_addr} ||     // NOLINT
-        contract_address == xaccount_address_t{sys_contract_rec_elect_archive_addr} ||  // NOLINT
-        contract_address == xaccount_address_t{sys_contract_zec_elect_consensus_addr} ||
-        contract_address == xaccount_address_t{sys_contract_rec_elect_fullnode_addr}) {
+    if (contract_address == rec_elect_rec_contract_address       || // NOLINT
+        contract_address == rec_elect_zec_contract_address       || // NOLINT
+        contract_address == rec_elect_edge_contract_address      || // NOLINT
+        contract_address == rec_elect_archive_contract_address   || // NOLINT
+        contract_address == rec_elect_exchange_contract_address  || // NOLINT
+        contract_address == zec_elect_consensus_contract_address ||
+        contract_address == rec_elect_fullnode_contract_address  ||
+        contract_address == zec_elect_eth_contract_address) {
         return get_election_result_property_data(m_store, contract_address, json_format, json);
     } else if (contract_address == xaccount_address_t{sys_contract_rec_standby_pool_addr}) {
         return get_rec_standby_pool_property_data(m_store, contract_address, XPROPERTY_CONTRACT_STANDBYS_KEY, json_format, compatible_mode, json);
@@ -1710,12 +1722,14 @@ void xtop_contract_manager::get_contract_data(common::xaccount_address_t const &
                                               xjson_format_t const json_format,
                                               bool compatible_mode,
                                               xJson::Value & json) const {
-    if (contract_address == xaccount_address_t{sys_contract_rec_elect_rec_addr} ||      // NOLINT
-        contract_address == xaccount_address_t{sys_contract_rec_elect_zec_addr} ||      // NOLINT
-        contract_address == xaccount_address_t{sys_contract_rec_elect_edge_addr} ||     // NOLINT
-        contract_address == xaccount_address_t{sys_contract_rec_elect_archive_addr} ||  // NOLINT
-        contract_address == xaccount_address_t{sys_contract_zec_elect_consensus_addr} ||
-        contract_address == xaccount_address_t{sys_contract_rec_elect_fullnode_addr}) {
+    if (contract_address == rec_elect_rec_contract_address       || // NOLINT
+        contract_address == rec_elect_zec_contract_address       || // NOLINT
+        contract_address == rec_elect_edge_contract_address      || // NOLINT
+        contract_address == rec_elect_archive_contract_address   || // NOLINT
+        contract_address == rec_elect_exchange_contract_address  || // NOLINT
+        contract_address == zec_elect_consensus_contract_address ||
+        contract_address == rec_elect_fullnode_contract_address  ||
+        contract_address == zec_elect_eth_contract_address) {
         if (contract_address == xaccount_address_t{sys_contract_zec_elect_consensus_addr} && property_name == XPROPERTY_CONTRACT_ELECTION_EXECUTED_KEY) {
             std::string res;
             m_store->string_get(contract_address.value(), property_name, res);
@@ -1856,7 +1870,7 @@ static void get_unqualified_node_map(common::xaccount_address_t const & contract
         xdbg("[get_unqualified_slash_info_map] contract_address: %s, property_name: %s, error", contract_address.to_string().c_str(), property_name.c_str());
         return;
     }
-    xunqualified_node_info_t summarize_info;
+    data::system_contract::xunqualified_node_info_v1_t summarize_info;
     for (auto const & m : nodes) {
         auto detail = m.second;
         if (!detail.empty()) {
@@ -2210,10 +2224,10 @@ static void get_zec_workload_map(common::xaccount_address_t const & contract_add
         auto const & group_id = m.first;
         auto const & detail = m.second;
         base::xstream_t stream{xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};
-        data::system_contract::cluster_workload_t workload;
+        data::system_contract::xgroup_workload_t workload;
         workload.serialize_from(stream);
         xJson::Value jn;
-        jn["cluster_total_workload"] = workload.cluster_total_workload;
+        jn["cluster_total_workload"] = workload.group_total_workload;
         common::xcluster_address_t cluster;
         xstream_t key_stream(xcontext_t::instance(), (uint8_t *)group_id.data(), group_id.size());
         key_stream >> cluster;
@@ -2233,12 +2247,14 @@ void xtop_contract_manager::get_contract_data(common::xaccount_address_t const &
                                               xjson_format_t const json_format,
                                               bool compatible_mode,
                                               xJson::Value & json) const {
-    if (contract_address == xaccount_address_t{sys_contract_rec_elect_rec_addr} ||      // NOLINT
-        contract_address == xaccount_address_t{sys_contract_rec_elect_zec_addr} ||      // NOLINT
-        contract_address == xaccount_address_t{sys_contract_rec_elect_edge_addr} ||     // NOLINT
-        contract_address == xaccount_address_t{sys_contract_rec_elect_archive_addr} ||  // NOLINT
-        contract_address == xaccount_address_t{sys_contract_zec_elect_consensus_addr} ||
-        contract_address == xaccount_address_t{sys_contract_rec_elect_fullnode_addr}) {
+    if (contract_address == rec_elect_rec_contract_address       || // NOLINT
+        contract_address == rec_elect_zec_contract_address       || // NOLINT
+        contract_address == rec_elect_edge_contract_address      || // NOLINT
+        contract_address == rec_elect_archive_contract_address   || // NOLINT
+        contract_address == rec_elect_exchange_contract_address  || // NOLINT
+        contract_address == zec_elect_consensus_contract_address ||
+        contract_address == rec_elect_fullnode_contract_address  ||
+        contract_address == zec_elect_eth_contract_address) {
         if (contract_address == xaccount_address_t{sys_contract_zec_elect_consensus_addr} && property_name == XPROPERTY_CONTRACT_ELECTION_EXECUTED_KEY) {
             std::string res;
             m_store->string_get(contract_address.value(), property_name, res);
@@ -2290,11 +2306,5 @@ void xtop_contract_manager::get_contract_data(common::xaccount_address_t const &
         return get_proposal_voting_map(m_store, contract_address, property_name, json);
     }
 }
-
-void xtop_contract_manager::get_contract_data(common::xaccount_address_t const & contract_address,
-                                              std::string const & property_name,
-                                              std::string const & key,
-                                              xjson_format_t const json_format,
-                                              xJson::Value & json) const {}
 
 NS_END2

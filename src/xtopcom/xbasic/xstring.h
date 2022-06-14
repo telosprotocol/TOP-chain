@@ -33,6 +33,15 @@ T from_string(std::string const & input) {
 }
 
 template <>
+std::string to_string<char>(char const & input);
+
+template <>
+std::string to_string<unsigned char>(unsigned char const & input);
+
+template <>
+std::string to_string<signed char>(signed char const & input);
+
+template <>
 std::string to_string(short const & input);
 
 template <>
@@ -58,6 +67,15 @@ std::string to_string<std::string>(std::string const & input);
 
 template <>
 std::string to_string<xbytes_t>(xbytes_t const & input);
+
+template <>
+char from_string<char>(std::string const & input, std::error_code & ec);
+
+template <>
+unsigned char from_string<unsigned char>(std::string const & input, std::error_code & ec);
+
+template <>
+signed char from_string<signed char>(std::string const & input, std::error_code & ec);
 
 template <>
 short int from_string<short int>(std::string const & input, std::error_code & ec);

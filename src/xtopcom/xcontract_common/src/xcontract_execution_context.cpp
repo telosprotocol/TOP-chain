@@ -8,6 +8,7 @@
 #include "xcontract_common/xerror/xerror.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
+#include "xevm_common/common_data.h"
 
 #include <cinttypes>
 
@@ -95,6 +96,7 @@ common::xaccount_address_t xtop_contract_execution_context::sender() const {
     common::xaccount_address_t ret;
     switch (m_action->type()) {
     case data::xtop_action_type_t::system:
+    case data::xtop_action_type_t::evm:
         ret = static_cast<data::xsystem_consensus_action_t const *>(m_action.get())->sender();
         break;
     default:
@@ -614,8 +616,7 @@ xcontract_execution_fee_t xtop_contract_execution_context::execute_default_sourc
         xdbg("[xtop_contract_execution_context::execute_default_source_action] reward contract issue, ignore");
         return {};
     }
-    if (sender().type() == base::enum_vaccount_addr_type_native_contract &&
-        (recver().type() == base::enum_vaccount_addr_type_secp256k1_eth_user_account || recver().type() == base::enum_vaccount_addr_type_secp256k1_user_account)) {
+    if (base::xvaccount_t::is_contract_address_type(sender().type()) && base::xvaccount_t::is_unit_address_type(recver().type())) {
         xdbg("[xtop_contract_execution_context::execute_default_source_action] contract to user, ignore");
         return {};
     }
@@ -642,7 +643,7 @@ xcontract_execution_fee_t xtop_contract_execution_context::execute_default_sourc
     // step2: fee
 #if defined(XENABLE_MOCK_ZEC_STAKE)
     if (data::is_sys_contract_address(recver()) && target_action_name() == "nodeJoinNetwork2") {
-        contract_state()->deposit(balance_prop, state_accessor::xtoken_t{10000000000, common::SYMBOL_TOP_TOKEN});
+        contract_state()->deposit(balance_prop, common::xtoken_t{10000000000, common::SYMBOL_TOP_TOKEN});
     }
 #endif
     auto const tx_deposit = deposit();
@@ -650,10 +651,10 @@ xcontract_execution_fee_t xtop_contract_execution_context::execute_default_sourc
     auto const asset_ = asset();
     xdbg("[xtop_contract_execution_context::execute_default_source_action] asset: %" PRIu64, asset_.m_amount);
     auto const balance = contract_state()->balance(balance_prop, common::SYMBOL_TOP_TOKEN);
-    xdbg("[xtop_contract_execution_context::execute_default_source_action] balance: %" PRIu64, balance);
+    xdbg("[xtop_contract_execution_context::execute_default_source_action] balance: %s", evm_common::toBigEndianString(balance).c_str());
     if (balance < asset_.m_amount + tx_deposit) {
-        xwarn("[xtop_contract_execution_context::execute_default_source_action] balance not enough, balance: %" PRIu64 ", asset: %" PRIu64 ", deposit: %" PRIu64,
-              balance,
+        xwarn("[xtop_contract_execution_context::execute_default_source_action] balance not enough, balance: %s, asset: %" PRIu64 ", deposit: %" PRIu64,
+              evm_common::toBigEndianString(balance).c_str(),
               asset_.m_amount,
               tx_deposit);
         ec = error::xenum_errc::transaction_not_enough_balance;
@@ -865,7 +866,8 @@ uint64_t xtop_contract_execution_context::calc_total_tgas() const {
     auto const pledge_token = contract_state()->balance(
         state_accessor::properties::xproperty_identifier_t{
             data::XPROPERTY_BALANCE_PLEDGE_TGAS, state_accessor::properties::xproperty_type_t::token, state_accessor::properties::xproperty_category_t::system},
-        common::SYMBOL_TOP_TOKEN);
+                                            common::SYMBOL_TOP_TOKEN)
+                                  .convert_to<std::uint64_t>();
     auto token_price = calc_token_price();
     auto total_tgas = pledge_token * token_price / TOP_UNIT + calc_free_tgas();
     // contract account, max tgas is different

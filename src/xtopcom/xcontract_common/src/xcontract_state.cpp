@@ -14,11 +14,16 @@
 NS_BEG2(top, contract_common)
 
 xtop_contract_state::xtop_contract_state(common::xaccount_address_t action_account_addr,
-                                         observer_ptr<state_accessor::xstate_accessor_t> sa,
+                                         observer_ptr<state_accessor::xstate_accessor_t> const sa,
                                          xcontract_execution_param_t const & execution_param)
   : m_action_account_address{std::move(action_account_addr)}, m_state_accessor{sa}, m_param{execution_param} {
     m_latest_followup_tx_hash = latest_sendtx_hash();
     m_latest_followup_tx_nonce = latest_sendtx_nonce();
+}
+
+xtop_contract_state::xtop_contract_state(common::xaccount_address_t action_account_addr, statectx::xstatectx_face_ptr_t const state_ctx)
+  : m_action_account_address{std::move(action_account_addr)}, m_state_ctx{state_ctx} {
+    xassert(m_state_ctx != nullptr);
 }
 
 xtop_contract_state::xtop_contract_state(common::xaccount_address_t const & account_address)
@@ -77,9 +82,9 @@ uint64_t xtop_contract_state::state_height(common::xaccount_address_t const & ad
     return m_state_accessor->state_height(address);
 }
 
-state_accessor::xtoken_t xtop_contract_state::withdraw(state_accessor::properties::xproperty_identifier_t const & property_id,
+common::xtoken_t xtop_contract_state::withdraw(state_accessor::properties::xproperty_identifier_t const & property_id,
                                                        common::xsymbol_t const & symbol,
-                                                       uint64_t amount,
+                                                       evm_common::u256 amount,
                                                        std::error_code & ec) {
     assert(!ec);
     assert(m_state_accessor != nullptr);
@@ -87,7 +92,7 @@ state_accessor::xtoken_t xtop_contract_state::withdraw(state_accessor::propertie
     return m_state_accessor->withdraw(property_id, symbol, amount, ec);
 }
 
-state_accessor::xtoken_t xtop_contract_state::withdraw(state_accessor::properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol, uint64_t amount) {
+common::xtoken_t xtop_contract_state::withdraw(state_accessor::properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol, evm_common::u256 amount) {
     std::error_code ec;
     auto r = withdraw(property_id, symbol, amount, ec);
     assert(!ec);
@@ -95,13 +100,13 @@ state_accessor::xtoken_t xtop_contract_state::withdraw(state_accessor::propertie
     return r;
 }
 
-void xtop_contract_state::deposit(state_accessor::properties::xproperty_identifier_t const & property_id, state_accessor::xtoken_t tokens, std::error_code & ec) {
+void xtop_contract_state::deposit(state_accessor::properties::xproperty_identifier_t const & property_id, common::xtoken_t tokens, std::error_code & ec) {
     assert(!ec);
     assert(m_state_accessor != nullptr);
     m_state_accessor->deposit(property_id, std::move(tokens), ec);
 }
 
-void xtop_contract_state::deposit(state_accessor::properties::xproperty_identifier_t const & property_id, state_accessor::xtoken_t tokens) {
+void xtop_contract_state::deposit(state_accessor::properties::xproperty_identifier_t const & property_id, common::xtoken_t tokens) {
     std::error_code ec;
     deposit(property_id, std::move(tokens), ec);
     assert(!ec);
@@ -176,16 +181,16 @@ void xtop_contract_state::deploy_bin_code(state_accessor::properties::xproperty_
     top::error::throw_error(ec);
 }
 
-uint64_t xtop_contract_state::balance(state_accessor::properties::xproperty_identifier_t const & property_id,
-                                      common::xsymbol_t const & symbol,
-                                      std::error_code & ec) const {
+evm_common::u256 xtop_contract_state::balance(state_accessor::properties::xproperty_identifier_t const & property_id,
+                                              common::xsymbol_t const & symbol,
+                                              std::error_code & ec) const {
     assert(m_state_accessor != nullptr);
     assert(!ec);
 
     return m_state_accessor->balance(property_id, symbol, ec);
 }
 
-uint64_t xtop_contract_state::balance(state_accessor::properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol) const {
+evm_common::u256 xtop_contract_state::balance(state_accessor::properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol) const {
     std::error_code ec;
     auto const r = balance(property_id, symbol, ec);
     assert(!ec);

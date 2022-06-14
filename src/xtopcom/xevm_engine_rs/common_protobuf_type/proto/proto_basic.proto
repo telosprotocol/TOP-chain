@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package top.evm_engine.basic;
+
+message ProtoAddress {
+    bytes value = 1; //  use bytes to represent H160 ( [u8; 20] )
+}
+
+message RawU256 {
+    bytes data = 1; // pub type RawU256 = [u8; 32];
+}
+
+message WeiU256 {
+    bytes data = 1; // pub type WeiU256 = [u8; 32];
+}
+
+message ResultLog {
+    ProtoAddress address = 1;
+    repeated RawU256 topics = 2;
+    bytes data = 3;
+}

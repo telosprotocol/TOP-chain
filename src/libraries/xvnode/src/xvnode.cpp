@@ -62,7 +62,8 @@ xtop_vnode::xtop_vnode(observer_ptr<elect::ElectMain> const & elect_main,
         m_vhost, m_election_cache_data_accessor,
         common::xnode_address_t{sharding_address, common::xaccount_election_address_t{m_vhost->host_node_id(), slot_id}, election_round, group_size, associated_blk_height},
 
-        joined_election_round)} {
+        joined_election_round)}
+   {
     bool is_edge_archive = common::has<common::xnode_type_t::storage>(m_the_binding_driver->type()) || common::has<common::xnode_type_t::edge>(m_the_binding_driver->type());
     bool is_frozen = common::has<common::xnode_type_t::frozen>(m_the_binding_driver->type());
     if (!is_edge_archive && !is_frozen && !common::has<common::xnode_type_t::fullnode>(m_the_binding_driver->type())) {
@@ -142,7 +143,7 @@ void xtop_vnode::start() {
     assert(m_router != nullptr);
     assert(m_logic_timer != nullptr);
     assert(m_vhost != nullptr);
-    
+
     top::store::install_block_recycler(m_store.get());
     sync_add_vnet();
     new_driver_added();
@@ -189,14 +190,13 @@ void xtop_vnode::stop() {
     running(false);
     driver_removed();
     update_contract_manager(true);
-
     xkinfo("[virtual node] vnode (%p) stop running at address %s", this, m_the_binding_driver->address().to_string().c_str());
 }
 
 void xtop_vnode::new_driver_added() {
     update_rpc_service();
     update_contract_manager(false);
-    
+
     update_auto_prune_control(m_the_binding_driver->type(), m_store.get());
     xkinfo("new_driver_added node type:%s", common::to_string(m_the_binding_driver->type()).c_str());
 }
@@ -214,10 +214,10 @@ void xtop_vnode::driver_removed() {
 bool  xtop_vnode::update_auto_prune_control(top::common::xnode_type_t node_type, base::xvdbstore_t* xvdb_ptr)
 {
     xinfo("try update block prune. node type %s", common::to_string(m_the_binding_driver->type()).c_str());
-    
+
     if(base::xvchain_t::instance().is_auto_prune_enable() == false)
         return false;//not allow change anymore
-    
+
     if (common::has<common::xnode_type_t::frozen>(node_type)) {
         return false;
     }
@@ -225,14 +225,14 @@ bool  xtop_vnode::update_auto_prune_control(top::common::xnode_type_t node_type,
     if (!common::has<common::xnode_type_t::storage>(node_type)) {
         return true;
     }
-    
+
     //force to turn off auto_prune for archive node
     base::xvchain_t::instance().enable_auto_prune(false);
-    
+
     //froce to turn off it at config file
     std::string prune_off("off");
     m_prune_data->update_prune_config_file(prune_off);
-    
+
     return true;
 }
 
@@ -256,7 +256,7 @@ void xtop_vnode::update_rpc_service() {
                                                            m_txstore,
                                                            m_elect_main,
                                                            m_election_cache_data_accessor);
-    }
+     }
 }
 
 void xtop_vnode::update_contract_manager(bool destory) {

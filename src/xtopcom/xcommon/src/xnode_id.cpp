@@ -7,6 +7,7 @@
 #include "xbase/xutl.h"
 #include "xbasic/xbyte_buffer.h"
 #include "xcommon/xerror/xerror.h"
+#include "xcommon/xeth_address.h"
 #include "xutility/xhash.h"
 #include "xvledger/xvaccount.h"
 
@@ -16,11 +17,15 @@
 NS_BEG2(top, common)
 
 xtop_node_id::xtop_node_id(std::string const & v) : m_account_string{v} {
-    parse();
+    if (!empty()) {
+        parse();
+    }
 }
 
 xtop_node_id::xtop_node_id(xaccount_base_address_t base_address) : m_account_string {base_address.to_string()}, m_account_base_address{std::move(base_address)} {
-    parse();
+    if (!empty()) {
+        parse();
+    }
 }
 
 xtop_node_id::xtop_node_id(xaccount_base_address_t base_address, uint16_t const table_id_value) : xtop_node_id{std::move(base_address), xtable_id_t{table_id_value}} {
@@ -43,6 +48,28 @@ xtop_node_id xtop_node_id::build_from(std::string const & account_string, std::e
 
 xtop_node_id xtop_node_id::build_from(std::string const & account_string) {
     return xtop_node_id{account_string};
+}
+
+xtop_node_id xtop_node_id::build_from(xeth_address_t const & eth_address, base::enum_vaccount_addr_type account_addr_type, std::error_code & ec) {
+    assert(!ec);
+
+    if (account_addr_type == base::enum_vaccount_addr_type_secp256k1_evm_user_account) {
+        return xtop_node_id::build_from("T60004" + eth_address.to_hex_string().substr(2), ec);
+    }
+
+    if (account_addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account) {
+        return xtop_node_id::build_from("T80000" + eth_address.to_hex_string().substr(2), ec);
+    }
+
+    ec = common::error::xerrc_t::invalid_account_type;
+    return xtop_node_id{};
+}
+
+xtop_node_id xtop_node_id::build_from(xeth_address_t const & eth_address, base::enum_vaccount_addr_type account_addr_type) {
+    std::error_code ec;
+    auto ret = xtop_node_id::build_from(eth_address, account_addr_type, ec);
+    top::error::throw_error(ec);
+    return ret;
 }
 
 bool xtop_node_id::empty() const noexcept {
@@ -154,6 +181,10 @@ xtable_id_t const & xtop_node_id::table_id() const noexcept {
     }
 
     return m_account_base_address.default_table_id();
+}
+
+base::xvaccount_t xtop_node_id::vaccount() const {
+    return {to_string()};
 }
 
 int32_t xtop_node_id::serialize_to(base::xstream_t & stream) const {

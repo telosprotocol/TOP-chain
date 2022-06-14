@@ -25,7 +25,6 @@
 #include "xdata/xelection/xstandby_result.h"
 #include "xdata/xelection/xstandby_result_store.h"
 #include "xdata/xproposal_data.h"
-#include "xdata/xslash.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
 #include "xdata/xtable_bstate.h"
 
@@ -404,20 +403,20 @@ static void parse_reg_node_map(std::map<std::string, std::string> const & map, j
 
 static void parse_zec_workload_map(std::map<std::string, std::string> const & map, json & j) {
     for (auto const & m : map) {
-        auto const & group_id = m.first;
+        auto const & group_address_str = m.first;
         auto const & detail = m.second;
         base::xstream_t stream{base::xcontext_t::instance(), (uint8_t *)detail.data(), static_cast<uint32_t>(detail.size())};
-        data::system_contract::cluster_workload_t workload;
+        data::system_contract::xgroup_workload_t workload;
         workload.serialize_from(stream);
         json jn;
-        jn["cluster_total_workload"] = workload.cluster_total_workload;
-        common::xcluster_address_t cluster;
-        base::xstream_t key_stream(base::xcontext_t::instance(), (uint8_t *)group_id.data(), group_id.size());
-        key_stream >> cluster;
+        jn["cluster_total_workload"] = workload.group_total_workload;
+        common::xgroup_address_t group_address;
+        base::xstream_t key_stream(base::xcontext_t::instance(), (uint8_t *)group_address_str.data(), group_address_str.size());
+        key_stream >> group_address;
         for (auto node : workload.m_leader_count) {
             jn[node.first] = node.second;
         }
-        j[cluster.group_id().to_string()] = jn;
+        j[group_address.group_id().to_string()] = jn;
     }
 }
 
@@ -585,7 +584,7 @@ static void parse_genesis_string(std::string const & str, json & j) {
 static void parse_unqualified_node_map(std::map<std::string, std::string> const & map, json & j) {
     for (auto const & m : map) {
         auto detail = m.second;
-        data::xunqualified_node_info_t summarize_info;
+        data::system_contract::xunqualified_node_info_v1_t summarize_info;
         if (!detail.empty()) {
             base::xstream_t stream{base::xcontext_t::instance(), (uint8_t *)detail.data(), (uint32_t)detail.size()};
             summarize_info.serialize_from(stream);
@@ -704,7 +703,7 @@ static void parse_reward_detail_string(std::string const & str, json & j) {
     if (str.empty()) {
         return;
     }
-    data::system_contract::xissue_detail issue_detail;
+    data::system_contract::xissue_detail_v2 issue_detail;
     issue_detail.from_string(str);
     json jv;
     jv["onchain_timer_round"] = issue_detail.onchain_timer_round;
@@ -715,10 +714,14 @@ static void parse_reward_detail_string(std::string const & str, json & j) {
     jv["archive_reward_ratio"] = issue_detail.m_archive_reward_ratio;
     jv["validator_reward_ratio"] = issue_detail.m_validator_reward_ratio;
     jv["auditor_reward_ratio"] = issue_detail.m_auditor_reward_ratio;
+    jv["evm_validator_reward_ratio"] = issue_detail.m_evm_validator_reward_ratio;
+    jv["evm_auditor_reward_ratio"] = issue_detail.m_evm_auditor_reward_ratio;
     jv["vote_reward_ratio"] = issue_detail.m_vote_reward_ratio;
     jv["governance_reward_ratio"] = issue_detail.m_governance_reward_ratio;
     jv["validator_group_count"] = issue_detail.m_validator_group_count;
     jv["auditor_group_count"] = issue_detail.m_auditor_group_count;
+    jv["evm_validator_group_count"] = issue_detail.m_evm_validator_group_count;
+    jv["evm_auditor_group_count"] = issue_detail.m_evm_auditor_group_count;
     json jr;
     for (auto const & node_reward : issue_detail.m_node_rewards) {
         std::stringstream ss;

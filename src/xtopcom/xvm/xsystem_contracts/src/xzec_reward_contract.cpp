@@ -20,7 +20,6 @@ using top::base::xcontext_t;
 using top::base::xstream_t;
 using top::base::xstring_utl;
 using namespace top::data;
-using xgroup_workload_t = top::data::system_contract::cluster_workload_t;
 
 #if !defined(XZEC_MODULE)
 #    define XZEC_MODULE "sysContract_"
@@ -36,7 +35,7 @@ using xgroup_workload_t = top::data::system_contract::cluster_workload_t;
 #define VALID_VALIDATOR(node) (node.deposit() > 0)
 
 enum { total_idx = 0, valid_idx, deposit_zero_num, num_type_idx_num } xreward_num_type_e;
-enum { edger_idx = 0, archiver_idx, auditor_idx, validator_idx, role_type_idx_num } xreward_role_type_e;
+enum { edger_idx = 0, archiver_idx, auditor_idx, validator_idx, evm_auditor_idx, evm_validator_idx, role_type_idx_num } xreward_role_type_e;
 
 NS_BEG2(top, xstake)
 
@@ -192,7 +191,7 @@ void xzec_reward_contract::reward(const common::xlogic_time_t current_time, std:
     common::xlogic_time_t activation_time;  // system activation time
     xreward_onchain_param_t onchain_param;  // onchain params
     xreward_property_param_t property_param;    // property from self and other contracts
-    data::system_contract::xissue_detail issue_detail;  // issue details this round
+    data::system_contract::xissue_detail_v2 issue_detail;  // issue details this round
     get_reward_param(current_time, activation_time, onchain_param, property_param, issue_detail);
     XCONTRACT_ENSURE(current_time > activation_time, "current_time <= activation_time");
     // step2 calculate node and table rewards
@@ -583,20 +582,19 @@ void xzec_reward_contract::on_receive_workload(std::string const& workload_str) 
     auto const& source_address = SOURCE_ADDRESS();
 
     xstream_t stream(xcontext_t::instance(), (uint8_t*)workload_str.data(), workload_str.size());
-    std::map<common::xcluster_address_t, xgroup_workload_t> workload_info;
+    std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> workload_info;
 
     MAP_OBJECT_DESERIALZE2(stream, workload_info);
     xdbg("[xzec_reward_contract::on_receive_workload] pid:%d, SOURCE_ADDRESS: %s, workload_info size: %zu\n", getpid(), source_address.c_str(), workload_info.size());
-
     for (auto const & workload : workload_info) {
         xstream_t stream(xcontext_t::instance());
         stream << workload.first;
-        auto const & cluster_id = std::string((const char *)stream.data(), stream.size());
+        auto const & group_address_str = std::string((const char *)stream.data(), stream.size());
         auto const & workload_info = workload.second;
-        if (common::has<common::xnode_type_t::auditor>(workload.first.type())) {
-            add_cluster_workload(true, cluster_id, workload_info.m_leader_count);
-        } else if (common::has<common::xnode_type_t::validator>(workload.first.type())) {
-            add_cluster_workload(false, cluster_id, workload_info.m_leader_count);
+        if (common::has<common::xnode_type_t::consensus_auditor>(workload.first.type()) || common::has<common::xnode_type_t::evm_auditor>(workload.first.type())) {
+            add_cluster_workload(true, group_address_str, workload_info.m_leader_count);
+        } else if (common::has<common::xnode_type_t::consensus_validator>(workload.first.type()) || common::has<common::xnode_type_t::evm_validator>(workload.first.type())) {
+            add_cluster_workload(false, group_address_str, workload_info.m_leader_count);
         } else {
             // invalid group
             xwarn("[xzec_workload_contract_v2::accumulate_workload] invalid group id: %d", workload.first.group_id().value());
@@ -607,7 +605,7 @@ void xzec_reward_contract::on_receive_workload(std::string const& workload_str) 
     XMETRICS_COUNTER_INCREMENT(XREWARD_CONTRACT "on_receive_workload_Executed", 1);
 }
 
-void xzec_reward_contract::add_cluster_workload(bool auditor, std::string const& cluster_id, std::map<std::string, uint32_t> const& leader_count) {
+void xzec_reward_contract::add_cluster_workload(bool auditor, std::string const& group_address_str, std::map<std::string, uint32_t> const& leader_count) {
     const char* property;
     if (auditor) {
         property = data::system_contract::XPORPERTY_CONTRACT_WORKLOAD_KEY;
@@ -617,29 +615,29 @@ void xzec_reward_contract::add_cluster_workload(bool auditor, std::string const&
     // if (!MAP_PROPERTY_EXIST(property)) {
     //     MAP_CREATE(property);
     // }
-    common::xcluster_address_t cluster_id2;
+    common::xgroup_address_t group_address;
     {
 
-        xstream_t stream(xcontext_t::instance(), (uint8_t*)cluster_id.data(), cluster_id.size());
-        stream >> cluster_id2;
-        xdbg("[xzec_reward_contract::add_cluster_workload] auditor: %d, cluster_id: %s, group size: %d",
-            auditor, cluster_id2.to_string().c_str(), leader_count.size());
+        xstream_t stream(xcontext_t::instance(), (uint8_t*)group_address_str.data(), group_address_str.size());
+        stream >> group_address;
+        xdbg("[xzec_reward_contract::add_cluster_workload] auditor: %d, group: %s, group size: %d",
+            auditor, group_address.to_string().c_str(), leader_count.size());
     }
 
-    data::system_contract::cluster_workload_t workload;
+    data::system_contract::xgroup_workload_t workload;
     std::string value_str;
     int32_t ret;
     if (auditor) {
         XMETRICS_TIME_RECORD(XREWARD_CONTRACT "XPORPERTY_CONTRACT_WORKLOAD_KEY_GetExecutionTime");
-        ret = MAP_GET2(property, cluster_id, value_str);
+        ret = MAP_GET2(property, group_address_str, value_str);
     } else {
         XMETRICS_TIME_RECORD(XREWARD_CONTRACT "XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY_GetExecutionTime");
-        ret = MAP_GET2(property, cluster_id, value_str);
+        ret = MAP_GET2(property, group_address_str, value_str);
     }
 
     if (ret) {
-        xdbg("[xzec_reward_contract::add_cluster_workload] cluster_id not exist, auditor: %d", auditor);
-        workload.cluster_id = cluster_id;
+        xdbg("[xzec_reward_contract::add_cluster_workload] group not exist, auditor: %d", auditor);
+        workload.group_address_str = group_address_str;
     } else {
         xstream_t stream(xcontext_t::instance(), (uint8_t*)value_str.data(), value_str.size());
         workload.serialize_from(stream);
@@ -650,13 +648,13 @@ void xzec_reward_contract::add_cluster_workload(bool auditor, std::string const&
         auto const& work   = leader_count_info.second;
 
         workload.m_leader_count[leader] += work;
-        workload.cluster_total_workload += work;
-        xdbg("[xzec_reward_contract::add_cluster_workload] cluster_id: %s, leader: %s, work: %u, leader total workload: %u, group total workload: %d\n",
-             cluster_id2.to_string().c_str(),
+        workload.group_total_workload += work;
+        xdbg("[xzec_reward_contract::add_cluster_workload] group: %s, leader: %s, work: %u, leader total workload: %u, group total workload: %d\n",
+             group_address.to_string().c_str(),
              leader_count_info.first.c_str(),
              work,
              workload.m_leader_count[leader],
-             workload.cluster_total_workload);
+             workload.group_total_workload);
     }
 
     xstream_t stream(xcontext_t::instance());
@@ -664,10 +662,10 @@ void xzec_reward_contract::add_cluster_workload(bool auditor, std::string const&
     std::string value = std::string((const char*)stream.data(), stream.size());
     if (auditor) {
         XMETRICS_TIME_RECORD(XREWARD_CONTRACT "XPORPERTY_CONTRACT_WORKLOAD_KEY_SetExecutionTime");
-        MAP_SET(property, cluster_id, value);
+        MAP_SET(property, group_address_str, value);
     } else {
         XMETRICS_TIME_RECORD(XREWARD_CONTRACT "XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY_SetExecutionTime");
-        MAP_SET(property, cluster_id, value);
+        MAP_SET(property, group_address_str, value);
     }
 }
 
@@ -684,7 +682,7 @@ void xzec_reward_contract::clear_workload() {
     }
 }
 
-void xzec_reward_contract::update_issuance_detail(data::system_contract::xissue_detail const & issue_detail) {
+void xzec_reward_contract::update_issuance_detail(data::system_contract::xissue_detail_v2 const & issue_detail) {
     xdbg("[xzec_reward_contract::update_issuance_detail] onchain_timer_round: %llu, m_zec_vote_contract_height: %llu, "
         "m_zec_workload_contract_height: %llu, m_zec_reward_contract_height: %llu, "
         "m_edge_reward_ratio: %u, m_archive_reward_ratio: %u "
@@ -699,7 +697,14 @@ void xzec_reward_contract::update_issuance_detail(data::system_contract::xissue_
             issue_detail.m_auditor_reward_ratio,
             issue_detail.m_vote_reward_ratio,
             issue_detail.m_governance_reward_ratio);
-    auto issue_detail_str = issue_detail.to_string();
+    std::string issue_detail_str;
+    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+    if (top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.eth_fork_point, TIME())) {
+        issue_detail_str = issue_detail.to_string();
+    } else {
+        auto issue_detail_old = static_cast<data::system_contract::xissue_detail_v1>(issue_detail);
+        issue_detail_str = issue_detail_old.to_string();
+    }
     try {
         STRING_SET(data::system_contract::XPROPERTY_REWARD_DETAIL, issue_detail_str);
     } catch (std::runtime_error & e) {
@@ -711,7 +716,7 @@ void xzec_reward_contract::get_reward_param(const common::xlogic_time_t current_
                                             common::xlogic_time_t & activation_time,
                                             xreward_onchain_param_t & onchain_param,
                                             xreward_property_param_t & property_param,
-                                            data::system_contract::xissue_detail & issue_detail) {
+                                            data::system_contract::xissue_detail_v2 & issue_detail) {
     // get time
     std::string activation_str;
     activation_str = STRING_GET2(data::system_contract::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY, sys_contract_rec_registration_addr);
@@ -727,24 +732,43 @@ void xzec_reward_contract::get_reward_param(const common::xlogic_time_t current_
     onchain_param.edge_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(edge_reward_ratio);
     onchain_param.archive_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(archive_reward_ratio);
     onchain_param.validator_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(validator_reward_ratio);
-    onchain_param.auditor_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_reward_ratio);
+    onchain_param.auditor_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_reward_ratio);    
     onchain_param.vote_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(vote_reward_ratio);
     onchain_param.governance_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(governance_reward_ratio);
     onchain_param.auditor_group_zero_workload = XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_group_zero_workload);
     onchain_param.validator_group_zero_workload = XGET_ONCHAIN_GOVERNANCE_PARAMETER(validator_group_zero_workload);
-    xdbg("[xzec_reward_contract::get_reward_param] onchain_timer_round: %u", current_time);
-    xdbg("[xzec_reward_contract::get_reward_param] min_ratio_annual_total_reward: %u", onchain_param.min_ratio_annual_total_reward);
-    xdbg("[xzec_reward_contract::get_reward_param] additional_issue_year_ratio: %u", onchain_param.additional_issue_year_ratio);
-    xdbg("[xzec_reward_contract::get_reward_param] edge_reward_ratio: %u", onchain_param.edge_reward_ratio);
-    xdbg("[xzec_reward_contract::get_reward_param] archive_reward_ratio: %u", onchain_param.archive_reward_ratio);
-    xdbg("[xzec_reward_contract::get_reward_param] validator_reward_ratio: %u", onchain_param.validator_reward_ratio);
-    xdbg("[xzec_reward_contract::get_reward_param] auditor_reward_ratio: %u", onchain_param.auditor_reward_ratio);
-    xdbg("[xzec_reward_contract::get_reward_param] vote_reward_ratio: %u", onchain_param.min_ratio_annual_total_reward);
-    xdbg("[xzec_reward_contract::get_reward_param] governance_reward_ratio: %u", onchain_param.governance_reward_ratio);
-    xdbg("[xzec_reward_contract::get_reward_param] auditor_group_zero_workload: %u", onchain_param.auditor_group_zero_workload);
-    xdbg("[xzec_reward_contract::get_reward_param] validator_group_zero_workload: %u", onchain_param.validator_group_zero_workload);
+    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
+    if (top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.eth_fork_point, current_time)) {
+        onchain_param.evm_auditor_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(evm_auditor_reward_ratio);
+        onchain_param.evm_validator_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(evm_validator_reward_ratio);
+        onchain_param.evm_auditor_group_zero_workload = XGET_ONCHAIN_GOVERNANCE_PARAMETER(evm_auditor_group_zero_workload);
+        onchain_param.evm_validator_group_zero_workload = XGET_ONCHAIN_GOVERNANCE_PARAMETER(evm_validator_group_zero_workload);
+    } else {
+        onchain_param.evm_auditor_reward_ratio = 0;
+        onchain_param.evm_validator_reward_ratio = 0;
+        onchain_param.evm_auditor_group_zero_workload = 0;
+        onchain_param.evm_validator_group_zero_workload = 0;
+    }
     auto total_ratio = onchain_param.edge_reward_ratio + onchain_param.archive_reward_ratio + onchain_param.validator_reward_ratio + onchain_param.auditor_reward_ratio +
                        onchain_param.vote_reward_ratio + onchain_param.governance_reward_ratio;
+    xinfo(
+        "[xzec_reward_contract::get_reward_param] onchain_timer_round: %u, min_ratio_annual_total_reward: %u, additional_issue_year_ratio: %u, edge_reward_ratio: %u, "
+        "archive_reward_ratio: %u, validator_reward_ratio: %u, auditor_reward_ratio: %u, evm_validator_reward_ratio: %u, evm_auditor_reward_ratio: %u, vote_reward_ratio: %u, "
+        "governance_reward_ratio: %u, auditor_group_zero_workload: %u, validator_group_zero_workload: %u, total_ratio: %u",
+        current_time,
+        onchain_param.min_ratio_annual_total_reward,
+        onchain_param.additional_issue_year_ratio,
+        onchain_param.edge_reward_ratio,
+        onchain_param.archive_reward_ratio,
+        onchain_param.validator_reward_ratio,
+        onchain_param.auditor_reward_ratio,
+        onchain_param.evm_validator_reward_ratio,
+        onchain_param.evm_auditor_reward_ratio,
+        onchain_param.vote_reward_ratio,
+        onchain_param.governance_reward_ratio,
+        onchain_param.auditor_group_zero_workload,
+        onchain_param.validator_group_zero_workload,
+        total_ratio);
     XCONTRACT_ENSURE(total_ratio == 100, "onchain reward total ratio not 100!");
     issue_detail.onchain_timer_round = current_time;
     issue_detail.m_zec_vote_contract_height = get_blockchain_height(sys_contract_zec_vote_addr);
@@ -754,6 +778,8 @@ void xzec_reward_contract::get_reward_param(const common::xlogic_time_t current_
     issue_detail.m_archive_reward_ratio = onchain_param.archive_reward_ratio;
     issue_detail.m_validator_reward_ratio = onchain_param.validator_reward_ratio;
     issue_detail.m_auditor_reward_ratio = onchain_param.auditor_reward_ratio;
+    issue_detail.m_evm_validator_reward_ratio = onchain_param.evm_validator_reward_ratio;
+    issue_detail.m_evm_auditor_reward_ratio = onchain_param.evm_auditor_reward_ratio;
     issue_detail.m_vote_reward_ratio = onchain_param.vote_reward_ratio;
     issue_detail.m_governance_reward_ratio = onchain_param.governance_reward_ratio;
     xdbg("[xzec_reward_contract::get_reward_param] m_zec_vote_contract_height: %u", issue_detail.m_zec_vote_contract_height);
@@ -775,37 +801,49 @@ void xzec_reward_contract::get_reward_param(const common::xlogic_time_t current_
         property_param.map_nodes[address] = node;
     }
     // get workload
-    std::map<std::string, std::string> auditor_clusters_workloads;
-    std::map<std::string, std::string> validator_clusters_workloads;
-    MAP_COPY_GET(data::system_contract::XPORPERTY_CONTRACT_WORKLOAD_KEY, auditor_clusters_workloads);
-    MAP_COPY_GET(data::system_contract::XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY, validator_clusters_workloads);
+    std::map<std::string, std::string> auditor_group_workloads;
+    std::map<std::string, std::string> validator_group_workloads;
+    MAP_COPY_GET(data::system_contract::XPORPERTY_CONTRACT_WORKLOAD_KEY, auditor_group_workloads);
+    MAP_COPY_GET(data::system_contract::XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY, validator_group_workloads);
     clear_workload();
-    for (auto it = auditor_clusters_workloads.begin(); it != auditor_clusters_workloads.end(); it++) {
+    for (auto it = auditor_group_workloads.begin(); it != auditor_group_workloads.end(); it++) {
         auto const & key_str = it->first;
-        common::xcluster_address_t cluster_address;
+        common::xgroup_address_t group_address;
         xstream_t key_stream(xcontext_t::instance(), (uint8_t *)key_str.data(), key_str.size());
-        key_stream >> cluster_address;
+        key_stream >> group_address;
         auto const & value_str = it->second;
-        data::system_contract::cluster_workload_t workload;
+        data::system_contract::xgroup_workload_t workload;
         xstream_t stream(xcontext_t::instance(), (uint8_t *)value_str.data(), value_str.size());
         workload.serialize_from(stream);
-        property_param.auditor_workloads_detail[cluster_address] = workload;
+        // if (common::has<common::xnode_type_t::consensus_auditor>(group_address.type())) {
+        property_param.auditor_workloads_detail[group_address] = workload;
+        // } else if (common::has<common::xnode_type_t::evm_auditor>(group_address.type())) {
+        // property_param.evm_auditor_workloads_detail[group_address] = workload;
+        // }
     }
-    for (auto it = validator_clusters_workloads.begin(); it != validator_clusters_workloads.end(); it++) {
+    for (auto it = validator_group_workloads.begin(); it != validator_group_workloads.end(); it++) {
         auto const & key_str = it->first;
-        common::xcluster_address_t cluster_address;
+        common::xgroup_address_t group_address;
         xstream_t key_stream(xcontext_t::instance(), (uint8_t *)key_str.data(), key_str.size());
-        key_stream >> cluster_address;
+        key_stream >> group_address;
         auto const & value_str = it->second;
-        data::system_contract::cluster_workload_t workload;
+        data::system_contract::xgroup_workload_t workload;
         xstream_t stream(xcontext_t::instance(), (uint8_t *)value_str.data(), value_str.size());
         workload.serialize_from(stream);
-        property_param.validator_workloads_detail[cluster_address] = workload;
+        // if (common::has<common::xnode_type_t::consensus_validator>(group_address.type())) {
+        property_param.validator_workloads_detail[group_address] = workload;
+        // } else if (common::has<common::xnode_type_t::evm_validator>(group_address.type())) {
+        //     property_param.evm_validator_workloads_detail[group_address] = workload;
+        // }
     }
     issue_detail.m_auditor_group_count = property_param.auditor_workloads_detail.size();
     issue_detail.m_validator_group_count = property_param.validator_workloads_detail.size();
+    issue_detail.m_evm_auditor_group_count = property_param.evm_auditor_workloads_detail.size();
+    issue_detail.m_evm_validator_group_count = property_param.evm_validator_workloads_detail.size();
     xdbg("[xzec_reward_contract::get_reward_param] auditor_group_count: %d", issue_detail.m_auditor_group_count);
     xdbg("[xzec_reward_contract::get_reward_param] validator_group_count: %d", issue_detail.m_validator_group_count);
+    xdbg("[xzec_reward_contract::get_reward_param] evm_auditor_group_count: %d", issue_detail.m_evm_auditor_group_count);
+    xdbg("[xzec_reward_contract::get_reward_param] evm_validator_group_count: %d", issue_detail.m_evm_validator_group_count);
     // get vote
     std::map<std::string, std::string> contract_auditor_votes;
     MAP_COPY_GET(data::system_contract::XPORPERTY_CONTRACT_TICKETS_KEY, contract_auditor_votes, sys_contract_zec_vote_addr);
@@ -951,6 +989,26 @@ std::vector<std::vector<uint32_t>> xzec_reward_contract::calc_role_nums(std::map
                 role_nums[validator_idx][deposit_zero_num]++;
             }
         }
+        if (node.could_be_evm_auditor()) {
+            // total evm auditor nums
+            role_nums[evm_auditor_idx][total_idx]++;
+            // valid evm auditor nums
+            if (node.deposit() > 0 && node.can_be_evm_auditor()) {
+                role_nums[evm_auditor_idx][valid_idx]++;
+            } else if (node.deposit() == 0) {
+                role_nums[evm_auditor_idx][deposit_zero_num]++;
+            }
+        }
+        if (node.could_be_evm_validator()) {
+            // total evm validator nums
+            role_nums[evm_validator_idx][total_idx]++;
+            // valid evm validator nums
+            if (node.deposit() > 0) {
+                role_nums[evm_validator_idx][valid_idx]++;
+            } else if (node.deposit() == 0) {
+                role_nums[evm_validator_idx][deposit_zero_num]++;
+            }
+        }
 #endif
     }
 
@@ -1024,22 +1082,20 @@ std::map<common::xaccount_address_t, uint64_t> xzec_reward_contract::calc_votes(
     return account_votes;
 }
 
-::uint128_t xzec_reward_contract::calc_zero_workload_reward(bool is_auditor,
-                                                                std::map<common::xcluster_address_t, data::system_contract::cluster_workload_t> & workloads_detail,
+::uint128_t xzec_reward_contract::calc_zero_workload_reward(std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> & workloads_detail,
                                                                 const uint32_t zero_workload,
                                                                 const ::uint128_t group_reward,
                                                                 std::vector<string> & zero_workload_account) {
     ::uint128_t zero_workload_rewards = 0;
 
     for (auto it = workloads_detail.begin(); it != workloads_detail.end();) {
-        if (it->second.cluster_total_workload <= zero_workload) {
+        if (it->second.group_total_workload <= zero_workload) {
             xinfo(
-                "[xzec_reward_contract::calc_zero_workload_reward] is auditor %d, cluster id: %s, cluster size: %lu, cluster_total_workload: %u <= zero_workload_val %u and will "
+                "[xzec_reward_contract::calc_zero_workload_reward] group id: %s, group size: %lu, group_total_workload: %u <= zero_workload_val %u and will "
                 "be ignored\n",
-                is_auditor,
                 it->first.to_string().c_str(),
                 it->second.m_leader_count.size(),
-                it->second.cluster_total_workload,
+                it->second.group_total_workload,
                 zero_workload);
             for (auto it2 = it->second.m_leader_count.begin(); it2 != it->second.m_leader_count.end(); it2++) {
                 zero_workload_account.push_back(it2->first);
@@ -1055,9 +1111,9 @@ std::map<common::xaccount_address_t, uint64_t> xzec_reward_contract::calc_votes(
 }
 
 ::uint128_t xzec_reward_contract::calc_invalid_workload_group_reward(bool is_auditor,
-                                                                         std::map<common::xaccount_address_t, data::system_contract::xreg_node_info> const & map_nodes,
-                                                                         const ::uint128_t group_reward,
-                                                                         std::map<common::xcluster_address_t, data::system_contract::cluster_workload_t> & workloads_detail) {
+                                                                     std::map<common::xaccount_address_t, data::system_contract::xreg_node_info> const & map_nodes,
+                                                                     const ::uint128_t group_reward,
+                                                                     std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> & workloads_detail) {
     ::uint128_t invalid_group_reward = 0;
 
     for (auto it = workloads_detail.begin(); it != workloads_detail.end();) {
@@ -1066,7 +1122,7 @@ std::map<common::xaccount_address_t, uint64_t> xzec_reward_contract::calc_votes(
             auto it3 = map_nodes.find(common::xaccount_address_t{it2->first});
             if (it3 == map_nodes.end()) {
                 xinfo("[xzec_reward_contract::calc_invalid_workload_group_reward] account: %s not in map nodes", it2->first.c_str());
-                it->second.cluster_total_workload -= it2->second;
+                it->second.group_total_workload -= it2->second;
                 it->second.m_leader_count.erase(it2++);
                 continue;
             } else {
@@ -1078,7 +1134,7 @@ std::map<common::xaccount_address_t, uint64_t> xzec_reward_contract::calc_votes(
                           it2->first.c_str(),
                           node.deposit(),
                           node.m_vote_amount);
-                    it->second.cluster_total_workload -= it2->second;
+                    it->second.group_total_workload -= it2->second;
                     it->second.m_leader_count.erase(it2++);
                 } else {
                     it2++;
@@ -1086,7 +1142,7 @@ std::map<common::xaccount_address_t, uint64_t> xzec_reward_contract::calc_votes(
             } else {
                 if (node.deposit() == 0 || !node.could_be_validator()) {
                     xinfo("[xzec_reward_contract::calc_invalid_workload_group_reward] account: %s is not a valid validator, deposit: %lu", it2->first.c_str(), node.deposit());
-                    it->second.cluster_total_workload -= it2->second;
+                    it->second.group_total_workload -= it2->second;
                     it->second.m_leader_count.erase(it2++);
                 } else {
                     it2++;
@@ -1094,7 +1150,58 @@ std::map<common::xaccount_address_t, uint64_t> xzec_reward_contract::calc_votes(
             }
         }
         if (it->second.m_leader_count.size() == 0) {
-            xinfo("[xzec_reward_contract::calc_invalid_workload_group_reward] is auditor %d, cluster id: %s, all node invalid, will be ignored", is_auditor, it->first.to_string().c_str());
+            xinfo("[xzec_reward_contract::calc_invalid_workload_group_reward] is auditor %d, group: %s, all node invalid, will be ignored", is_auditor, it->first.to_string().c_str());
+            workloads_detail.erase(it++);
+            invalid_group_reward += group_reward;
+        } else {
+            it++;
+        }
+    }
+
+    return invalid_group_reward;
+}
+
+::uint128_t xzec_reward_contract::calc_evm_invalid_workload_group_reward(bool is_auditor,
+                                                                         std::map<common::xaccount_address_t, data::system_contract::xreg_node_info> const & map_nodes,
+                                                                         const ::uint128_t group_reward,
+                                                                         std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> & workloads_detail) {
+    ::uint128_t invalid_group_reward = 0;
+
+    for (auto it = workloads_detail.begin(); it != workloads_detail.end();) {
+        for (auto it2 = it->second.m_leader_count.begin(); it2 != it->second.m_leader_count.end();) {
+            data::system_contract::xreg_node_info node;
+            auto it3 = map_nodes.find(common::xaccount_address_t{it2->first});
+            if (it3 == map_nodes.end()) {
+                xinfo("[xzec_reward_contract::calc_evm_invalid_workload_group_reward] account: %s not in map nodes", it2->first.c_str());
+                it->second.group_total_workload -= it2->second;
+                it->second.m_leader_count.erase(it2++);
+                continue;
+            } else {
+                node = it3->second;
+            }
+            if (is_auditor) {
+                if (node.deposit() == 0 || !node.can_be_evm_auditor()) {
+                    xinfo("[xzec_reward_contract::calc_evm_invalid_workload_group_reward] account: %s is not a valid evm auditor, deposit: %llu, votes: %llu",
+                          it2->first.c_str(),
+                          node.deposit(),
+                          node.m_vote_amount);
+                    it->second.group_total_workload -= it2->second;
+                    it->second.m_leader_count.erase(it2++);
+                } else {
+                    it2++;
+                }
+            } else {
+                if (node.deposit() == 0 || !node.could_be_evm_validator()) {
+                    xinfo("[xzec_reward_contract::calc_evm_invalid_workload_group_reward] account: %s is not a valid evm validator, deposit: %lu", it2->first.c_str(), node.deposit());
+                    it->second.group_total_workload -= it2->second;
+                    it->second.m_leader_count.erase(it2++);
+                } else {
+                    it2++;
+                }
+            }
+        }
+        if (it->second.m_leader_count.size() == 0) {
+            xinfo("[xzec_reward_contract::calc_evm_invalid_workload_group_reward] eth group: %s, all node invalid, will be ignored", it->first.to_string().c_str());
             workloads_detail.erase(it++);
             invalid_group_reward += group_reward;
         } else {
@@ -1163,10 +1270,10 @@ void xzec_reward_contract::calc_archive_workload_rewards(data::system_contract::
 
 void xzec_reward_contract::calc_auditor_workload_rewards(data::system_contract::xreg_node_info const & node,
                                                          std::vector<uint32_t> const & auditor_num,
-                                                         std::map<common::xcluster_address_t, data::system_contract::cluster_workload_t> const & auditor_workloads_detail,
+                                                         std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> const & auditor_workloads_detail,
                                                          const ::uint128_t auditor_group_workload_rewards,
                                                          ::uint128_t & reward_to_self) {
-    xdbg("[xzec_reward_contract::calc_auditor_worklaod_rewards] account: %s, %d clusters report workloads, cluster_total_rewards: [%llu, %u]\n",
+    xdbg("[xzec_reward_contract::calc_auditor_worklaod_rewards] account: %s, %d group report workloads, group_total_rewards: [%llu, %u]\n",
          node.m_account.c_str(),
          auditor_workloads_detail.size(),
          static_cast<uint64_t>(auditor_group_workload_rewards / data::system_contract::REWARD_PRECISION),
@@ -1181,22 +1288,22 @@ void xzec_reward_contract::calc_auditor_workload_rewards(data::system_contract::
         return;
     }
     for (auto & workload : auditor_workloads_detail) {
-        xdbg("[xzec_reward_contract::calc_auditor_worklaod_rewards] account: %s, cluster id: %s, cluster size: %d, cluster_total_workload: %u\n",
+        xdbg("[xzec_reward_contract::calc_auditor_worklaod_rewards] account: %s, group: %s, group size: %d, group_total_workload: %u\n",
              node.m_account.c_str(),
              workload.first.to_string().c_str(),
              workload.second.m_leader_count.size(),
-             workload.second.cluster_total_workload);
+             workload.second.group_total_workload);
         auto it = workload.second.m_leader_count.find(node.m_account.value());
         if (it != workload.second.m_leader_count.end()) {
             auto const & work = it->second;
-            reward_to_self += auditor_group_workload_rewards * work / workload.second.cluster_total_workload;
+            reward_to_self += auditor_group_workload_rewards * work / workload.second.group_total_workload;
             xdbg(
-                "[xzec_reward_contract::calc_auditor_worklaod_rewards] account: %s, cluster_id: %s, work: %d, total_workload: %u, cluster_total_rewards: [%lu, %u], reward: [%lu, "
+                "[xzec_reward_contract::calc_auditor_worklaod_rewards] account: %s, group: %s, work: %d, total_workload: %u, group_total_rewards: [%lu, %u], reward: [%lu, "
                 "%u]\n",
                 node.m_account.c_str(),
                 workload.first.to_string().c_str(),
                 work,
-                workload.second.cluster_total_workload,
+                workload.second.group_total_workload,
                 static_cast<uint64_t>(auditor_group_workload_rewards / data::system_contract::REWARD_PRECISION),
                 static_cast<uint32_t>(auditor_group_workload_rewards % data::system_contract::REWARD_PRECISION),
                 static_cast<uint64_t>(reward_to_self / data::system_contract::REWARD_PRECISION),
@@ -1209,10 +1316,10 @@ void xzec_reward_contract::calc_auditor_workload_rewards(data::system_contract::
 
 void xzec_reward_contract::calc_validator_workload_rewards(data::system_contract::xreg_node_info const & node,
                                                            std::vector<uint32_t> const & validator_num,
-                                                           std::map<common::xcluster_address_t, data::system_contract::cluster_workload_t> const & validator_workloads_detail,
+                                                           std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> const & validator_workloads_detail,
                                                            const ::uint128_t validator_group_workload_rewards,
                                                            ::uint128_t & reward_to_self) {
-    xdbg("[xzec_reward_contract::calc_validator_worklaod_rewards] account: %s, %d clusters report workloads, cluster_total_rewards: [%llu, %u]\n",
+    xdbg("[xzec_reward_contract::calc_validator_worklaod_rewards] account: %s, %d group report workloads, group_total_rewards: [%llu, %u]\n",
          node.m_account.c_str(),
          validator_workloads_detail.size(),
          static_cast<uint64_t>(validator_group_workload_rewards / data::system_contract::REWARD_PRECISION),
@@ -1227,24 +1334,116 @@ void xzec_reward_contract::calc_validator_workload_rewards(data::system_contract
         return;
     }
     for (auto & workload : validator_workloads_detail) {
-        xdbg("[xzec_reward_contract::calc_validator_worklaod_rewards] account: %s, cluster id: %s, cluster size: %d, cluster_total_workload: %u\n",
+        xdbg("[xzec_reward_contract::calc_validator_worklaod_rewards] account: %s, group: %s, group size: %d, group_total_workload: %u\n",
              node.m_account.c_str(),
              workload.first.to_string().c_str(),
              workload.second.m_leader_count.size(),
-             workload.second.cluster_total_workload);
+             workload.second.group_total_workload);
         auto it = workload.second.m_leader_count.find(node.m_account.value());
         if (it != workload.second.m_leader_count.end()) {
             auto const & work = it->second;
-            reward_to_self += validator_group_workload_rewards * work / workload.second.cluster_total_workload;
+            reward_to_self += validator_group_workload_rewards * work / workload.second.group_total_workload;
             xdbg(
-                "[xzec_reward_contract::calc_validator_worklaod_rewards] account: %s, cluster_id: %s, work: %d, total_workload: %d, cluster_total_rewards: [%llu, %u], reward: "
+                "[xzec_reward_contract::calc_validator_worklaod_rewards] account: %s, group: %s, work: %d, total_workload: %d, group_total_rewards: [%llu, %u], reward: "
                 "[%llu, %u]\n",
                 node.m_account.c_str(),
                 workload.first.to_string().c_str(),
                 work,
-                workload.second.cluster_total_workload,
+                workload.second.group_total_workload,
                 static_cast<uint64_t>(validator_group_workload_rewards / data::system_contract::REWARD_PRECISION),
                 static_cast<uint32_t>(validator_group_workload_rewards % data::system_contract::REWARD_PRECISION),
+                static_cast<uint64_t>(reward_to_self / data::system_contract::REWARD_PRECISION),
+                static_cast<uint32_t>(reward_to_self % data::system_contract::REWARD_PRECISION));
+        }
+    }
+
+    return;
+}
+
+void xzec_reward_contract::calc_eth_auditor_workload_rewards(data::system_contract::xreg_node_info const & node,
+                                                             std::vector<uint32_t> const & eth_num,
+                                                             std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> const & eth_workloads_detail,
+                                                             const ::uint128_t eth_group_workload_rewards,
+                                                             ::uint128_t & reward_to_self) {
+    xdbg("[xzec_reward_contract::calc_eth_auditor_workload_rewards] account: %s, %d group report workloads, group_total_rewards: [%llu, %u]\n",
+         node.m_account.c_str(),
+         eth_workloads_detail.size(),
+         static_cast<uint64_t>(eth_group_workload_rewards / data::system_contract::REWARD_PRECISION),
+         static_cast<uint32_t>(eth_group_workload_rewards % data::system_contract::REWARD_PRECISION));
+    XCONTRACT_ENSURE(eth_num.size() == num_type_idx_num, "array not 3");
+    auto divide_num = eth_num[valid_idx];
+    reward_to_self = 0;
+    if (0 == divide_num) {
+        return;
+    }
+    if (!node.can_be_evm_auditor()) {
+        return;
+    }
+    for (auto & workload : eth_workloads_detail) {
+        xdbg("[xzec_reward_contract::calc_eth_auditor_workload_rewards] account: %s, group id: %s, group size: %d, group_total_workload: %u\n",
+             node.m_account.c_str(),
+             workload.first.to_string().c_str(),
+             workload.second.m_leader_count.size(),
+             workload.second.group_total_workload);
+        auto it = workload.second.m_leader_count.find(node.m_account.value());
+        if (it != workload.second.m_leader_count.end()) {
+            auto const & work = it->second;
+            reward_to_self += eth_group_workload_rewards * work / workload.second.group_total_workload;
+            xdbg(
+                "[xzec_reward_contract::calc_eth_auditor_workload_rewards] account: %s, group id: %s, work: %d, total_workload: %d, group_total_workload: [%llu, %u], reward: "
+                "[%llu, %u]\n",
+                node.m_account.c_str(),
+                workload.first.to_string().c_str(),
+                work,
+                workload.second.group_total_workload,
+                static_cast<uint64_t>(eth_group_workload_rewards / data::system_contract::REWARD_PRECISION),
+                static_cast<uint32_t>(eth_group_workload_rewards % data::system_contract::REWARD_PRECISION),
+                static_cast<uint64_t>(reward_to_self / data::system_contract::REWARD_PRECISION),
+                static_cast<uint32_t>(reward_to_self % data::system_contract::REWARD_PRECISION));
+        }
+    }
+
+    return;
+}
+
+void xzec_reward_contract::calc_eth_validator_workload_rewards(data::system_contract::xreg_node_info const & node,
+                                                               std::vector<uint32_t> const & eth_num,
+                                                               std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> const & eth_workloads_detail,
+                                                               const ::uint128_t eth_group_workload_rewards,
+                                                               ::uint128_t & reward_to_self) {
+    xdbg("[xzec_reward_contract::calc_eth_validator_workload_rewards] account: %s, %d group report workloads, group_total_rewards: [%llu, %u]\n",
+         node.m_account.c_str(),
+         eth_workloads_detail.size(),
+         static_cast<uint64_t>(eth_group_workload_rewards / data::system_contract::REWARD_PRECISION),
+         static_cast<uint32_t>(eth_group_workload_rewards % data::system_contract::REWARD_PRECISION));
+    XCONTRACT_ENSURE(eth_num.size() == num_type_idx_num, "array not 3");
+    auto divide_num = eth_num[valid_idx];
+    reward_to_self = 0;
+    if (0 == divide_num) {
+        return;
+    }
+    if (!node.can_be_evm_validator()) {
+        return;
+    }
+    for (auto & workload : eth_workloads_detail) {
+        xdbg("[xzec_reward_contract::calc_eth_validator_workload_rewards] account: %s, group id: %s, group size: %d, group_total_workload: %u\n",
+             node.m_account.c_str(),
+             workload.first.to_string().c_str(),
+             workload.second.m_leader_count.size(),
+             workload.second.group_total_workload);
+        auto it = workload.second.m_leader_count.find(node.m_account.value());
+        if (it != workload.second.m_leader_count.end()) {
+            auto const & work = it->second;
+            reward_to_self += eth_group_workload_rewards * work / workload.second.group_total_workload;
+            xdbg(
+                "[xzec_reward_contract::calc_eth_validator_workload_rewards] account: %s, group id: %s, work: %d, total_workload: %d, group_total_workload: [%llu, %u], reward: "
+                "[%llu, %u]\n",
+                node.m_account.c_str(),
+                workload.first.to_string().c_str(),
+                work,
+                workload.second.group_total_workload,
+                static_cast<uint64_t>(eth_group_workload_rewards / data::system_contract::REWARD_PRECISION),
+                static_cast<uint32_t>(eth_group_workload_rewards % data::system_contract::REWARD_PRECISION),
                 static_cast<uint64_t>(reward_to_self / data::system_contract::REWARD_PRECISION),
                 static_cast<uint32_t>(reward_to_self % data::system_contract::REWARD_PRECISION));
         }
@@ -1331,7 +1530,7 @@ void xzec_reward_contract::calc_nodes_rewards_v5(common::xlogic_time_t const cur
                                                  common::xlogic_time_t const issue_time_length,
                                                  xreward_onchain_param_t const & onchain_param,
                                                  xreward_property_param_t & property_param,
-                                                 data::system_contract::xissue_detail & issue_detail,
+                                                 data::system_contract::xissue_detail_v2 & issue_detail,
                                                  std::map<common::xaccount_address_t, ::uint128_t> & node_reward_detail,
                                                  std::map<common::xaccount_address_t, ::uint128_t> & node_dividend_detail,
                                                  ::uint128_t & community_reward) {
@@ -1341,21 +1540,37 @@ void xzec_reward_contract::calc_nodes_rewards_v5(common::xlogic_time_t const cur
     XCONTRACT_ENSURE(total_issuance > 0, "total issuance = 0");
     auto edge_workload_rewards = total_issuance * onchain_param.edge_reward_ratio / 100;
     auto archive_workload_rewards = total_issuance * onchain_param.archive_reward_ratio / 100;
-    auto auditor_total_workload_rewards = total_issuance * onchain_param.auditor_reward_ratio / 100;
-    auto validator_total_workload_rewards = total_issuance * onchain_param.validator_reward_ratio / 100;
+    auto total_auditor_total_workload_rewards = total_issuance * onchain_param.auditor_reward_ratio / 100;
+    auto total_validator_total_workload_rewards = total_issuance * onchain_param.validator_reward_ratio / 100;
+    // auto evm_auditor_total_workload_rewards = total_auditor_total_workload_rewards * onchain_param.evm_auditor_reward_ratio / 100;
+    // auto evm_validator_total_workload_rewards = total_validator_total_workload_rewards * onchain_param.evm_validator_reward_ratio / 100;
+    // auto auditor_total_workload_rewards = total_auditor_total_workload_rewards - evm_auditor_total_workload_rewards;
+    // auto validator_total_workload_rewards = total_validator_total_workload_rewards - evm_validator_total_workload_rewards;
+    auto auditor_total_workload_rewards = total_auditor_total_workload_rewards;
+    auto validator_total_workload_rewards = total_validator_total_workload_rewards;
     auto vote_rewards = total_issuance * onchain_param.vote_reward_ratio / 100;
     auto governance_rewards = total_issuance * onchain_param.governance_reward_ratio / 100;
     community_reward = governance_rewards;
     auto auditor_group_count = property_param.auditor_workloads_detail.size();
     auto validator_group_count = property_param.validator_workloads_detail.size();
+    // auto evm_auditor_group_count = property_param.evm_auditor_workloads_detail.size();
+    // auto evm_validator_group_count = property_param.evm_validator_workloads_detail.size();
     ::uint128_t auditor_group_workload_rewards = 0;
     ::uint128_t validator_group_workload_rewards = 0;
+    // ::uint128_t evm_auditor_group_workload_rewards = 0;
+    // ::uint128_t evm_validator_group_workload_rewards = 0;
     if (auditor_group_count != 0) {
         auditor_group_workload_rewards = auditor_total_workload_rewards / auditor_group_count;
     }
     if (validator_group_count != 0) {
         validator_group_workload_rewards = validator_total_workload_rewards / validator_group_count;
     }
+    // if (evm_auditor_group_count != 0) {
+    //     evm_auditor_group_workload_rewards = evm_auditor_total_workload_rewards / evm_auditor_group_count;
+    // }
+    // if (evm_validator_group_count != 0) {
+    //     evm_validator_group_workload_rewards = evm_validator_total_workload_rewards / evm_validator_group_count;
+    // }
 
     // step 2: calculate different votes and role nums
     std::map<common::xaccount_address_t, uint64_t> account_votes;
@@ -1367,8 +1582,10 @@ void xzec_reward_contract::calc_nodes_rewards_v5(common::xlogic_time_t const cur
         "total issuance: [%llu, %u], "
         "edge workload rewards: [%llu, %u], total edge num: %d, valid edge num: %d, "
         "archive workload rewards: [%llu, %u], total archive num: %d, valid archive num: %d, "
-        "auditor workload rewards: [%llu, %u], auditor workload grop num: %d, auditor group workload rewards: [%llu, %u], total auditor num: %d, valid auditor num: %d, "
-        "validator workload rewards: [%llu, %u], validator workload grop num: %d, validator group workload rewards: [%llu, %u], total validator num: %d, valid validator num: %d,  "
+        "auditor workload rewards: [%llu, %u], auditor workload group num: %d, auditor group workload rewards: [%llu, %u], total auditor num: %d, valid auditor num: %d, "
+        "validator workload rewards: [%llu, %u], validator workload group num: %d, validator group workload rewards: [%llu, %u], total validator num: %d, valid validator num: %d,  "
+        // "evm auditor workload rewards: [%llu, %u], evm auditor workload group num: %d, evm auditor group workload rewards: [%llu, %u], total evm auditor num: %d, valid evm auditor num: %d,  "
+        // "evm validator workload rewards: [%llu, %u], evm validator workload group num: %d, evm validator group workload rewards: [%llu, %u], total evm validator num: %d, valid evm validator num: %d,  "
         "vote rewards: [%llu, %u], "
         "governance rewards: [%llu, %u], ",
         issue_time_length,
@@ -1396,6 +1613,20 @@ void xzec_reward_contract::calc_nodes_rewards_v5(common::xlogic_time_t const cur
         static_cast<uint32_t>(validator_group_workload_rewards % data::system_contract::REWARD_PRECISION),
         role_nums[validator_idx][total_idx],
         role_nums[validator_idx][valid_idx],
+        // static_cast<uint64_t>(evm_auditor_total_workload_rewards / data::system_contract::REWARD_PRECISION),
+        // static_cast<uint32_t>(evm_auditor_total_workload_rewards % data::system_contract::REWARD_PRECISION),
+        // evm_auditor_group_count,
+        // static_cast<uint64_t>(evm_auditor_group_workload_rewards / data::system_contract::REWARD_PRECISION),
+        // static_cast<uint32_t>(evm_auditor_group_workload_rewards % data::system_contract::REWARD_PRECISION),
+        // role_nums[evm_auditor_idx][total_idx],
+        // role_nums[evm_auditor_idx][valid_idx],
+        // static_cast<uint64_t>(evm_validator_total_workload_rewards / data::system_contract::REWARD_PRECISION),
+        // static_cast<uint32_t>(evm_validator_total_workload_rewards % data::system_contract::REWARD_PRECISION),
+        // evm_validator_group_count,
+        // static_cast<uint64_t>(evm_validator_group_workload_rewards / data::system_contract::REWARD_PRECISION),
+        // static_cast<uint32_t>(evm_validator_group_workload_rewards % data::system_contract::REWARD_PRECISION),
+        // role_nums[evm_validator_idx][total_idx],
+        // role_nums[evm_validator_idx][valid_idx],
         static_cast<uint64_t>(vote_rewards / data::system_contract::REWARD_PRECISION),
         static_cast<uint32_t>(vote_rewards % data::system_contract::REWARD_PRECISION),
         static_cast<uint64_t>(governance_rewards / data::system_contract::REWARD_PRECISION),
@@ -1416,13 +1647,24 @@ void xzec_reward_contract::calc_nodes_rewards_v5(common::xlogic_time_t const cur
     if (auditor_group_workload_rewards != 0) {
         community_reward += calc_invalid_workload_group_reward(true, property_param.map_nodes, auditor_group_workload_rewards, property_param.auditor_workloads_detail);
         community_reward +=
-            calc_zero_workload_reward(true, property_param.auditor_workloads_detail, onchain_param.auditor_group_zero_workload, auditor_group_workload_rewards, zero_workload_account);
+            calc_zero_workload_reward(property_param.auditor_workloads_detail, onchain_param.auditor_group_zero_workload, auditor_group_workload_rewards, zero_workload_account);
     }
     if (validator_group_workload_rewards != 0) {
         community_reward += calc_invalid_workload_group_reward(false, property_param.map_nodes, validator_group_workload_rewards, property_param.validator_workloads_detail);
-        community_reward +=
-            calc_zero_workload_reward(false, property_param.validator_workloads_detail, onchain_param.validator_group_zero_workload, validator_group_workload_rewards, zero_workload_account);
+        community_reward += calc_zero_workload_reward(
+            property_param.validator_workloads_detail, onchain_param.validator_group_zero_workload, validator_group_workload_rewards, zero_workload_account);
     }
+    // if (evm_auditor_group_workload_rewards != 0) {
+    //     community_reward += calc_evm_invalid_workload_group_reward(true, property_param.map_nodes, evm_auditor_group_workload_rewards, property_param.evm_auditor_workloads_detail);
+    //     community_reward += calc_zero_workload_reward(
+    //         property_param.evm_auditor_workloads_detail, onchain_param.evm_auditor_group_zero_workload, evm_auditor_group_workload_rewards, zero_workload_account);
+    // }
+    // if (evm_validator_group_workload_rewards != 0) {
+    //     community_reward +=
+    //         calc_evm_invalid_workload_group_reward(false, property_param.map_nodes, evm_validator_group_workload_rewards, property_param.evm_validator_workloads_detail);
+    //     community_reward += calc_zero_workload_reward(
+    //         property_param.evm_validator_workloads_detail, onchain_param.evm_validator_group_zero_workload, evm_validator_group_workload_rewards, zero_workload_account);
+    // }
 
     // TODO: voter to zero workload account has no workload reward
     for (auto const & entity : property_param.map_nodes) {
@@ -1469,6 +1711,22 @@ void xzec_reward_contract::calc_nodes_rewards_v5(common::xlogic_time_t const cur
                 self_reward += reward_to_self;
             }
         }
+        // if (node.can_be_evm_auditor()) {
+        //     ::uint128_t reward_to_self = 0;
+        //     calc_eth_auditor_workload_rewards(node, role_nums[evm_auditor_idx], property_param.evm_auditor_workloads_detail, evm_auditor_group_workload_rewards, reward_to_self);
+        //     if (reward_to_self != 0) {
+        //         issue_detail.m_node_rewards[account.to_string()].m_evm_auditor_reward = reward_to_self;
+        //         self_reward += reward_to_self;
+        //     }
+        // }
+        // if (node.can_be_evm_validator()) {
+        //     ::uint128_t reward_to_self = 0;
+        //     calc_eth_validator_workload_rewards(node, role_nums[evm_validator_idx], property_param.evm_validator_workloads_detail, evm_validator_group_workload_rewards, reward_to_self);
+        //     if (reward_to_self != 0) {
+        //         issue_detail.m_node_rewards[account.to_string()].m_evm_validator_reward = reward_to_self;
+        //         self_reward += reward_to_self;
+        //     }
+        // }
         // 3.3 vote reward
         if (node.can_be_auditor() && node.deposit() > 0 && auditor_total_votes > 0) {
             ::uint128_t reward_to_self = 0;
@@ -1652,7 +1910,7 @@ void xzec_reward_contract::dispatch_all_reward_v3(const common::xlogic_time_t cu
 void xzec_reward_contract::update_property(const uint64_t current_time,
                                            const uint64_t actual_issuance,
                                            data::system_contract::xaccumulated_reward_record const & record,
-                                           data::system_contract::xissue_detail const & issue_detail) {
+                                           data::system_contract::xissue_detail_v2 const & issue_detail) {
     xdbg("[xzec_reward_contract::update_property] actual_issuance: %lu, current_time: %lu", actual_issuance, current_time);
     xdbg("[xzec_reward_contract::update_property] accumulated_reward_record: %lu, current_time: %lu, [%lu, %u]",
          record.last_issuance_time,

@@ -256,7 +256,7 @@ bool xtransaction_v1_t::transaction_len_check() const {
     stream << m_transaction_hash;
     stream << m_authorization;
 
-    if (stream.size() - begin_pos != get_tx_len()) {
+    if ((stream.size() - begin_pos) != (int32_t)get_tx_len()) {
         xwarn("xtransaction_v1_t::transaction_len_check tx length not match. %d %d", stream.size() - begin_pos, get_tx_len());
         return false;
     }
@@ -371,13 +371,6 @@ bool xtransaction_v1_t::pub_key_sign_check(xpublic_key_t const & pub_key) const 
     uint8_t out_publickey_data[utl::UNCOMPRESSED_PUBLICKEY_SIZE];
     memcpy(out_publickey_data, pub_data.data(), (size_t)std::min(utl::UNCOMPRESSED_PUBLICKEY_SIZE, (int)pub_data.size()));
     return utl::xsecp256k1_t::verify_signature(signature_obj, m_transaction_hash, out_publickey_data, false);
-}
-
-size_t xtransaction_v1_t::get_serialize_size() const {
-    base::xstream_t stream(base::xcontext_t::instance());
-    xassert(stream.size() == 0);
-    const_cast<xtransaction_v1_t*>(this)->serialize_to(stream);
-    return stream.size();
 }
 
 std::string xtransaction_v1_t::dump() const {

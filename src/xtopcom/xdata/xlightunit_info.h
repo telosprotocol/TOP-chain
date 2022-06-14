@@ -15,6 +15,7 @@
 #include "xdata/xtransaction.h"
 #include "xdata/xblock_paras.h"
 #include "xdata/xblockaction.h"
+#include "xdata/xethreceipt.h"
 
 namespace top { namespace data {
 
@@ -37,17 +38,18 @@ class xtransaction_exec_state_t : public xblockpara_base_t {
     static XINLINE_CONSTEXPR char const * XTX_RECEIPT_DATA                             = "c";
     static XINLINE_CONSTEXPR char const * XTX_FLAGS                                    = "d";
     static XINLINE_CONSTEXPR char const * XTX_RSP_ID                                   = "e";
+    static XINLINE_CONSTEXPR char const * XTX_EVM_TRANSACTION_RECEIPT                   = "f";
 
  public:
     xtransaction_exec_state_t();
     xtransaction_exec_state_t(const std::map<std::string, std::string> & values);
 
  public:
-    void        set_used_disk(uint32_t value) {set_value(XPROPERTY_FEE_TX_USED_DISK, value);}
-    void        set_used_tgas(uint32_t value) {set_value(XPROPERTY_FEE_TX_USED_TGAS, value);}
-    void        set_used_deposit(uint32_t value) {set_value(XPROPERTY_FEE_TX_USED_DEPOSIT, value);}
-    void        set_send_tx_lock_tgas(uint32_t value) {set_value(XPROPERTY_FEE_SEND_TX_LOCK_TGAS, value);}
-    void        set_recv_tx_use_send_tx_tgas(uint32_t value) {set_value(XPROPERTY_FEE_RECV_TX_USE_SEND_TX_TGAS, value);}
+    void        set_used_disk(uint64_t value) {set_value(XPROPERTY_FEE_TX_USED_DISK, value);}
+    void        set_used_tgas(uint64_t value) {set_value(XPROPERTY_FEE_TX_USED_TGAS, value);}
+    void        set_used_deposit(uint64_t value) {set_value(XPROPERTY_FEE_TX_USED_DEPOSIT, value);}
+    void        set_send_tx_lock_tgas(uint64_t value) {set_value(XPROPERTY_FEE_SEND_TX_LOCK_TGAS, value);}
+    void        set_recv_tx_use_send_tx_tgas(uint64_t value) {set_value(XPROPERTY_FEE_RECV_TX_USE_SEND_TX_TGAS, value);}
     void        set_tx_exec_status(enum_xunit_tx_exec_status value);
     void        set_receipt_id(base::xtable_shortid_t self_tableid, base::xtable_shortid_t peer_tableid, uint64_t receiptid);
     void        set_sender_confirmed_receipt_id(uint64_t receiptid);
@@ -55,13 +57,14 @@ class xtransaction_exec_state_t : public xblockpara_base_t {
     void        set_not_need_confirm(bool not_need_confirm);
     void        set_rsp_id(uint64_t rspid);
     void        set_inner_table_flag(bool inner_table);
+    void        set_evm_tx_receipt(data::xeth_store_receipt_t & evm_tx_receipt);
 
  public:
-    uint32_t    get_used_disk()const {return get_value_uint32(XPROPERTY_FEE_TX_USED_DISK);}
-    uint32_t    get_used_tgas()const {return get_value_uint32(XPROPERTY_FEE_TX_USED_TGAS);}
-    uint32_t    get_used_deposit()const {return get_value_uint32(XPROPERTY_FEE_TX_USED_DEPOSIT);}
-    uint32_t    get_send_tx_lock_tgas()const {return get_value_uint32(XPROPERTY_FEE_SEND_TX_LOCK_TGAS);}
-    uint32_t    get_recv_tx_use_send_tx_tgas()const {return get_value_uint32(XPROPERTY_FEE_RECV_TX_USE_SEND_TX_TGAS);}
+    uint64_t    get_used_disk()const {return get_value_uint64(XPROPERTY_FEE_TX_USED_DISK);}
+    uint64_t    get_used_tgas()const {return get_value_uint64(XPROPERTY_FEE_TX_USED_TGAS);}
+    uint64_t    get_used_deposit()const {return get_value_uint64(XPROPERTY_FEE_TX_USED_DEPOSIT);}
+    uint64_t    get_send_tx_lock_tgas()const {return get_value_uint64(XPROPERTY_FEE_SEND_TX_LOCK_TGAS);}
+    uint64_t    get_recv_tx_use_send_tx_tgas()const {return get_value_uint64(XPROPERTY_FEE_RECV_TX_USE_SEND_TX_TGAS);}
     enum_xunit_tx_exec_status   get_tx_exec_status() const;
     uint64_t    get_receipt_id()const {return get_value_uint64(XTX_RECEIPT_ID);}
     base::xtable_shortid_t    get_receipt_id_self_tableid()const {return get_value_uint16(XTX_RECEIPT_ID_SELF_TABLE_ID);}
@@ -69,6 +72,7 @@ class xtransaction_exec_state_t : public xblockpara_base_t {
     bool                      get_not_need_confirm() const;
     uint64_t                  get_rsp_id()const {return get_value_uint64(XTX_RSP_ID);}
     bool                      get_inner_table_flag() const;
+    bool                      get_evm_tx_receipt(data::xeth_store_receipt_t & evm_tx_receipt) const;
 };
 
 class xlightunit_tx_info_t : public xlightunit_action_t {

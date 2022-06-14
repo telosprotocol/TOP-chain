@@ -15,7 +15,8 @@ namespace top
 {
     XINLINE_CONSTEXPR uint32_t MAIN_CHAIN_REC_TABLE_USED_NUM{1};
     XINLINE_CONSTEXPR uint32_t MAIN_CHAIN_ZEC_TABLE_USED_NUM{3};
-    XINLINE_CONSTEXPR uint32_t TOTAL_TABLE_NUM{MAIN_CHAIN_REC_TABLE_USED_NUM+MAIN_CHAIN_ZEC_TABLE_USED_NUM+enum_vbucket_has_tables_count};
+    XINLINE_CONSTEXPR uint32_t MAIN_CHAIN_EVM_TABLE_USED_NUM{1};
+    XINLINE_CONSTEXPR uint32_t TOTAL_TABLE_NUM{MAIN_CHAIN_REC_TABLE_USED_NUM+MAIN_CHAIN_ZEC_TABLE_USED_NUM+MAIN_CHAIN_EVM_TABLE_USED_NUM+enum_vbucket_has_tables_count};
     namespace base
     {
         // account space is divided into netid#->zone#(aka bucket#)->book#->table#->account#
@@ -55,6 +56,7 @@ namespace top
             enum_vaccount_addr_type_secp256k1_user_sub_account  = '1',  //secp256k1 generated key->account
             enum_vaccount_addr_type_native_contract             = '2',  //secp256k1 generated key->account
             enum_vaccount_addr_type_custom_contract             = '3',  //secp256k1 generated key->account
+            enum_vaccount_addr_type_secp256k1_evm_user_account  = '6',
             enum_vaccount_addr_type_secp256k1_eth_user_account  = '8',
             enum_vaccount_addr_type_block_contract              = 'a',  //secp256k1 generated key->account
         };
@@ -66,9 +68,10 @@ namespace top
             enum_chain_zone_beacon_index      = 1,  //for beacon
             enum_chain_zone_zec_index         = 2,  //for election
             enum_chain_zone_frozen_index      = 3,  // for sync
+            enum_chain_zone_evm_index         = 4,  // for eth
 
             enum_chain_zone_fullnode_index    = 13,
-            enum_chain_zone_archive_index     = 14, //for archive nodes
+            enum_chain_zone_storage_index     = 14, //for archive nodes
             enum_chain_zone_edge_index        = 15, //for edge nodes
         };
         //define common rules for chain_id
@@ -104,13 +107,18 @@ namespace top
             xtable_index_t(enum_xchain_zone_index zone_index, uint8_t subaddr) {
                 m_zone_index = zone_index;
                 m_subaddr = subaddr;
-                xassert(m_zone_index <= enum_chain_zone_zec_index);
+                xassert(m_zone_index <= enum_chain_zone_zec_index || m_zone_index == enum_chain_zone_evm_index);
                 xassert(m_subaddr < enum_vbucket_has_tables_count);
             }
         public:
             xtable_shortid_t        to_table_shortid() const {return (uint16_t)((m_zone_index << 10) | m_subaddr);}
             enum_xchain_zone_index  get_zone_index() const {return m_zone_index;}
-            uint8_t                 get_subaddr() const {return m_subaddr;}
+            uint8_t                 get_subaddr() const {
+                if (get_zone_index() == enum_chain_zone_evm_index)
+                    return 0;
+                else
+                    return m_subaddr;
+            }
             uint8_t                 to_total_table_index() const {
                 if (m_zone_index == enum_chain_zone_consensus_index) {
                     return m_subaddr;
@@ -118,6 +126,8 @@ namespace top
                     return enum_vbucket_has_tables_count + m_subaddr - 1;
                 } else if (m_zone_index == enum_chain_zone_zec_index) {
                     return enum_vbucket_has_tables_count + MAIN_CHAIN_REC_TABLE_USED_NUM + m_subaddr - 1;
+                } else if (m_zone_index == enum_chain_zone_evm_index) {
+                    return 0;
                 }
                 xassert(false);
                 return 255;
@@ -129,6 +139,7 @@ namespace top
 
         //define some special address prefix
         XINLINE_CONSTEXPR char const * ADDRESS_PREFIX_ETH_TYPE_IN_MAIN_CHAIN            = "T80000";
+        XINLINE_CONSTEXPR char const * ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN            = "T60004";
 
         class xvaccount_t : virtual public xrefcount_t
         {
@@ -144,6 +155,7 @@ namespace top
             {
                 enum_vaccount_compact_type_no_compact       = 'T',  //complete TOP address
                 enum_vaccount_compact_type_eth_main_chain   = 'U',  //TOP eth address in main chain zone consensus
+                enum_vaccount_compact_type_evm_main_chain   = 'E',  //TOP eth address in main chain zone consensus
             };            
         public: //create account address of blockchain
             //account format as = T-[type|ledger_id]-public_key_address-subaddr_of_ledger(book# and table#,optional)
@@ -336,6 +348,12 @@ namespace top
             static std::string compact_address_to(const std::string & account_addr);
             static std::string compact_address_from(const std::string & data);
             static bool check_address(const std::string & account_addr, bool isTransaction = false);
+            static bool is_unit_address_type(enum_vaccount_addr_type addr_type);
+            static bool is_eth_address_type(enum_vaccount_addr_type addr_type);
+            static bool is_table_address_type(enum_vaccount_addr_type addr_type);
+            static bool is_contract_address_type(enum_vaccount_addr_type addr_type);
+            static bool is_drand_address_type(enum_vaccount_addr_type addr_type);
+            static bool is_timer_address_type(enum_vaccount_addr_type addr_type);
 
         protected:
             static bool get_ledger_fulladdr_from_account(const std::string & account_addr,uint32_t & ledger_id,uint16_t & ledger_sub_addr,uint32_t & account_index)
@@ -403,6 +421,16 @@ namespace top
             
             //convert to binary/bytes address with compact mode as for DB 'key
             static const std::string  get_storage_key(const xvaccount_t & src_account);
+            static std::string to_evm_address(const std::string& account)
+            {
+                if (account.size() < 2)
+                    return "";
+                std::string value;
+                value.resize(account.size());
+                std::transform(account.begin(), account.end(), value.begin(), ::tolower);
+                value = std::string(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN) + value.substr(2);
+                return value;
+            }
 
         public:
             xvaccount_t(const std::string & account_address);
@@ -421,7 +449,12 @@ namespace top
             //full-ledger = /chainid/get_short_table_id
             inline const std::string&   get_storage_key() const {return m_account_store_key;}
             
-            inline const int            get_ledger_subaddr() const {return get_vledger_subaddr(m_account_xid);}
+            inline const int            get_ledger_subaddr() const {
+                if (get_zone_index() == enum_chain_zone_evm_index)
+                    return 0;
+                else 
+                    return get_vledger_subaddr(m_account_xid);
+            }
             inline const int            get_book_index()     const {return get_vledger_book_index(m_account_xid);}
             inline const int            get_table_index()    const {return get_vledger_table_index(m_account_xid);}
             
@@ -441,6 +474,7 @@ namespace top
             inline const std::string&   get_account() const {return m_account_addr;}
             inline const uint32_t       get_account_index() const {return get_xid_index(m_account_xid);}
             bool                        is_unit_address() const;
+            bool                        is_eth_address() const;
             bool                        is_table_address() const;
             bool                        is_contract_address() const;
             bool                        is_drand_address() const;

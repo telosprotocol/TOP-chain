@@ -7,15 +7,19 @@
 #include "xbasic/xhash.hpp"
 #include "xbasic/xcrypto_key.h"
 #include "xdata/xaction.h"
+#include "xdata/xethtransaction.h"
 #include "xbase/xobject_ptr.h"
 #include "xvledger/xdataobj_base.hpp"
 #include "xbase/xrefcount.h"
 #include "xbase/xmem.h"
+#include "xevm_common/common.h"
 namespace top { namespace data {
 
 enum enum_xtransaction_type {
+    xtransaction_type_invalid                    = -1,
     xtransaction_type_create_user_account        = 0,    // create user account
     xtransaction_type_deploy_wasm_contract       = 1,    // user deploy wasm contract
+    xtransaction_type_deploy_evm_contract        = 2,    // user deploy evm contract
 
     xtransaction_type_run_contract               = 3,    // run contract
     xtransaction_type_transfer                   = 4,    // transfer asset
@@ -33,8 +37,8 @@ enum enum_xtransaction_type {
 
 enum enum_xtransaction_version {
     xtransaction_version_1 = 0,
-    xtransaction_version_2 = 2
-};
+    xtransaction_version_2 = 2,
+    xtransaction_version_3 = 3 };
 
 enum enum_xunit_tx_exec_status : uint8_t {
     enum_xunit_tx_exec_status_success   = 1,
@@ -51,6 +55,7 @@ public:
     std::string                 m_new_account;
 #endif
     data::xproperty_asset       m_asset{0};
+    evm_common::u256            m_amount_256{0};
     std::string                 m_function_name;
     std::string                 m_function_para;
     uint64_t                    m_vote_num;
@@ -134,7 +139,6 @@ class xtransaction_t : virtual public base::xrefcount_t {
     virtual const std::string & get_target_addr()const = 0;
     virtual const std::string & get_origin_target_addr()const = 0;
     virtual uint64_t            get_tx_nonce() const = 0;
-    virtual size_t              get_serialize_size() const = 0;
     virtual std::string         dump() const = 0;  // just for debug purpose
     virtual const std::string & get_source_action_name() const = 0;
     virtual const std::string & get_source_action_para() const = 0;
@@ -156,7 +160,7 @@ class xtransaction_t : virtual public base::xrefcount_t {
     virtual void set_tx_type(uint16_t type) = 0;
     virtual uint16_t get_tx_type() const = 0;
     virtual void set_tx_len(uint16_t len) = 0;
-    virtual uint16_t get_tx_len() const = 0;
+    virtual uint32_t get_tx_len() const = 0;
     virtual void set_tx_version(uint32_t version) = 0;
     virtual uint32_t get_tx_version() const = 0;
     virtual void set_deposit(uint32_t deposit) = 0;
@@ -168,6 +172,8 @@ class xtransaction_t : virtual public base::xrefcount_t {
     inline  uint64_t get_delay_from_fire_timestamp(uint64_t now_s) const {return now_s > get_fire_timestamp() ? now_s - get_fire_timestamp() : 0;}
     virtual void set_amount(uint64_t amount) = 0;
     virtual uint64_t get_amount() const noexcept = 0;
+    virtual top::evm_common::u256 get_amount_256() const noexcept = 0;
+    virtual bool is_top_transfer() const noexcept = 0;
     virtual void set_premium_price(uint32_t premium_price) = 0;
     virtual uint32_t get_premium_price() const = 0;
     virtual void set_last_nonce(uint64_t last_nonce) = 0;
@@ -179,6 +185,11 @@ class xtransaction_t : virtual public base::xrefcount_t {
     virtual void set_memo(const std::string & memo) = 0;
     virtual const std::string & get_memo() const = 0;
     virtual const std::string & get_target_address() const = 0;
+    virtual bool is_evm_tx() const = 0;
+    virtual xbytes_t const& get_data() const { static xbytes_t strNull; return strNull; }
+    virtual const top::evm_common::u256 get_gaslimit() const { return 0; }
+    virtual const top::evm_common::u256 get_max_fee_per_gas() const { return 0; }
+    virtual xeth_transaction_t to_eth_tx(std::error_code & ec) const;
 };
 
 }  // namespace data

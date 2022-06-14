@@ -84,6 +84,26 @@ uint64_t xlightunit_tx_info_t::get_last_trans_nonce() const {
     return 0;
 }
 
+void xtransaction_exec_state_t::set_evm_tx_receipt(data::xeth_store_receipt_t & evm_tx_receipt) {
+    std::string str_evm_tx_receipt = from_bytes<std::string>(evm_tx_receipt.encodeBytes());
+    if (!str_evm_tx_receipt.empty()) {
+        set_value(XTX_EVM_TRANSACTION_RECEIPT, str_evm_tx_receipt);
+    }
+}
+
+bool xtransaction_exec_state_t::get_evm_tx_receipt(data::xeth_store_receipt_t & evm_tx_receipt) const {
+    std::string str_evm_tx_receipt = get_value(XTX_EVM_TRANSACTION_RECEIPT);
+    if (str_evm_tx_receipt.empty()) {
+        return false;
+    }
+    std::error_code ec;
+    evm_tx_receipt.decodeBytes(to_bytes(str_evm_tx_receipt), ec);
+    if (ec) {
+        xerror("xtransaction_exec_state_t::get_evm_tx_receipt decode fail.");
+        return false;
+    }
+    return true;
+}
 
 
 }  // namespace data

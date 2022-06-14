@@ -8,13 +8,13 @@
 #include "xstate_accessor/xproperties/xproperty_type.h"
 #include "xcontract_common/xproperties/xproperty_access_control.h"
 #include "xcontract_common/xbasic_contract.h"
-
+#include "xevm_common/common_data.h"
 
 NS_BEG3(top, contract_common, properties)
 
-bool xtop_token_safe::transfer_safe_rule(uint64_t amount) noexcept {
-    return amount < MAX_SAFE_TOKEN;
-}
+//bool xtop_token_safe::transfer_safe_rule(evm_common::u256 amount) noexcept {
+//    return amount < MAX_SAFE_TOKEN;
+//}
 
 xtop_token_property::xtop_token_property(std::string const & name, common::xsymbol_t symbol, contract_common::xcontract_face_t * contract)
   : xbasic_property_t{name, state_accessor::properties::xproperty_type_t::token, make_observer(contract)}, m_symbol{std::move(symbol)} {
@@ -32,22 +32,22 @@ xtop_token_property::xtop_token_property(contract_common::xcontract_face_t * con
   : xtop_token_property{data::XPROPERTY_BALANCE_AVAILABLE, common::SYMBOL_TOP_TOKEN, contract} {
 }
 
-uint64_t xtop_token_property::amount() const {
+evm_common::u256 xtop_token_property::amount() const {
     assert(associated_state() != nullptr);
     return associated_state()->balance(id(), m_symbol);
 }
 
-state_accessor::xtoken_t xtop_token_property::withdraw(std::uint64_t amount) {
-    xproperty_utl_t::property_assert(this->amount() > amount,  error::xerrc_t::token_not_enough, "[xtop_token_property::withdraw]withdraw amount overflow, amount: " + std::to_string(amount));
+common::xtoken_t xtop_token_property::withdraw(evm_common::u256 amount) {
+    xproperty_utl_t::property_assert(this->amount() > amount,  error::xerrc_t::token_not_enough, "[xtop_token_property::withdraw]withdraw amount overflow, amount: " + evm_common::toBigEndianString(amount));
     return associated_state()->withdraw(id(), m_symbol, amount);
 }
 
-void xtop_token_property::deposit(state_accessor::xtoken_t tokens) {
+void xtop_token_property::deposit(common::xtoken_t tokens) {
     if (symbol() != tokens.symbol()) {
         top::error::throw_error(contract_common::error::xerrc_t::token_symbol_not_matched);
     }
 
-    xproperty_utl_t::property_assert(xtoken_safe_t::transfer_safe_rule(tokens.amount()),  error::xerrc_t::token_not_enough, "[xtop_token_property::deposit]deposit amount overflow, amount: " + std::to_string(tokens.amount()));
+    // xproperty_utl_t::property_assert(xtoken_safe_t::transfer_safe_rule(tokens.amount()),  error::xerrc_t::token_not_enough, "[xtop_token_property::deposit]deposit amount overflow, amount: " + evm_common::toBigEndianString(tokens.amount()));
     associated_state()->deposit(id(), std::move(tokens));
 }
 

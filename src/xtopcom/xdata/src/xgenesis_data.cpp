@@ -37,7 +37,8 @@ bool check_address_type_and_zone(common::xaccount_address_t const & addr, base::
 }
 
 bool is_account_address(common::xaccount_address_t const & addr) {
-    return check_address_type(addr, base::enum_vaccount_addr_type_secp256k1_user_account) || check_address_type(addr, base::enum_vaccount_addr_type_secp256k1_eth_user_account);
+    return check_address_type(addr, base::enum_vaccount_addr_type_secp256k1_user_account) || check_address_type(addr, base::enum_vaccount_addr_type_secp256k1_eth_user_account) ||
+           check_address_type(addr, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
 }
 
 bool is_sub_account_address(common::xaccount_address_t const & addr) {
@@ -75,6 +76,10 @@ bool is_zec_contract_address(common::xaccount_address_t const & addr) {
 
 bool is_sys_sharding_contract_address(common::xaccount_address_t const & addr) {
     return check_address_type_and_zone(addr, base::enum_vaccount_addr_type_native_contract, base::enum_chain_zone_consensus_index);
+}
+
+bool is_sys_evm_table_contract_address(common::xaccount_address_t const & addr) {
+    return check_address_type_and_zone(addr, base::enum_vaccount_addr_type_native_contract, base::enum_chain_zone_evm_index);
 }
 
 bool is_block_contract_address(common::xaccount_address_t const & addr) {

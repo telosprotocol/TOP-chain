@@ -8,10 +8,10 @@
 #include "xbasic/xmemory.hpp"
 #include "xcommon/xaddress.h"
 #include "xcommon/xsymbol.h"
+#include "xcommon/xtoken.h"
 #include "xstate_accessor/xaccess_control_data.h"
 #include "xstate_accessor/xerror/xerror.h"
 #include "xstate_accessor/xproperties/xproperty_identifier.h"
-#include "xstate_accessor/xtoken.h"
 #include "xvledger/xvcanvas.h"
 #include "xvledger/xvstate.h"
 
@@ -40,11 +40,12 @@ public:
     xtop_state_accessor & operator=(xtop_state_accessor &&) = default;
     ~xtop_state_accessor() = default;
 
-    explicit xtop_state_accessor(top::observer_ptr<top::base::xvbstate_t> const & bstate, xstate_access_control_data_t ac_data);
+    xtop_state_accessor(top::observer_ptr<top::base::xvbstate_t> const & bstate, xstate_access_control_data_t ac_data);
+    xtop_state_accessor(top::observer_ptr<top::base::xvbstate_t> const & bstate, top::xobject_ptr_t<top::base::xvcanvas_t> const & canvas);
 
 private:
     explicit xtop_state_accessor(common::xaccount_address_t const & account_address);
-    explicit xtop_state_accessor(common::xaccount_address_t const & account_address, uint64_t const height);
+    xtop_state_accessor(common::xaccount_address_t const & account_address, uint64_t const height);
 
 public:
     /// @brief Construct an xstate_accessor_t object against the specified account. Throws xtop_error_t when any error occurs.
@@ -77,21 +78,21 @@ public:
     /// @param amount Amount to withdraw.
     /// @param ec Log the error code in the operation.
     /// @return Amount of token withdrew.
-    xtoken_t withdraw(properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol, uint64_t amount, std::error_code & ec);
+    common::xtoken_t withdraw(properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol, evm_common::u256 amount, std::error_code & ec);
 
     /// @brief Deposit token.
     /// @param property_id Property ID.
     /// @param symbol Token symblol.
     /// @param amount Amount to deposit.
     /// @param ec Log the error code in the operation.
-    void deposit(properties::xproperty_identifier_t const & property_id, xtoken_t amount, std::error_code & ec);
+    void deposit(properties::xproperty_identifier_t const & property_id, common::xtoken_t amount, std::error_code & ec);
 
     /// @brief Get balance.
     /// @param property_id Name of balance property.
     /// @param symbol Token symbol.
     /// @param ec Log the error code in the operation.
     /// @return The balance.
-    uint64_t balance(properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol, std::error_code & ec) const;
+    evm_common::u256 balance(properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol, std::error_code & ec) const;
 
     /// @brief Get nonce.
     /// @param property_id Property ID.

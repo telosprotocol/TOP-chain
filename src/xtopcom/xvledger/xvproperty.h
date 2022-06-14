@@ -8,6 +8,11 @@
 #include "xvexeunit.h"
 #include "xvinstruction.h"
 
+#ifdef __GNUC__
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wsign-compare"
+#endif  // __GNUC__
+
 namespace top
 {
     namespace base
@@ -918,6 +923,7 @@ namespace top
             bool     create(const std::string & token_name,xvcanvas_t * canvas);
             int64_t  deposit(const std::string & token_name,const int64_t add_token,xvcanvas_t * canvas);
             int64_t  withdraw(const std::string & token_name,const int64_t sub_token,xvcanvas_t * canvas);
+            int64_t  set_balance(const std::string & token_name ,const int64_t balance,xvcanvas_t * canvas);
             
         private://disable write api exposed by xstringvar_t
             using  base::insert;
@@ -972,3 +978,7 @@ namespace top
     }//end of namespace of base
 
 }//end of namespace top
+
+#ifdef __GNUC__
+#    pragma GCC diagnostic pop
+#endif  // __GNUC__

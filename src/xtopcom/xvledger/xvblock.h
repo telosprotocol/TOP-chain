@@ -473,6 +473,8 @@ namespace top
             friend class xvbbuild_t;
         public:
             static  const std::string   name(){ return std::string("xvinput");}
+            static  constexpr char const * RESOURCE_NODE_SIGN_STATISTICS     = "2";
+            static  constexpr char const * RESOURCE_INNER_TABLE_TX_ACTIONS   = "3";
             virtual std::string         get_obj_name() const override {return name();}
             enum{enum_obj_type = enum_xobject_type_vinput};//allow xbase create xvinput_t object from xdataobj_t::read_from()
 
@@ -706,6 +708,7 @@ namespace top
             const std::string           get_binlog() {return get_output()->get_binlog();}
             bool                        set_offblock_snapshot(const std::string & snapshot);
             bool                        is_full_state_block();  // used for full-block sync
+            uint64_t                    get_block_size();
 
             //check whether match hash of resource first
             bool                        set_input_resources(const std::string & raw_resource_data);

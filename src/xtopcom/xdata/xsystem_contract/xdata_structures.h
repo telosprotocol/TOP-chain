@@ -16,7 +16,7 @@
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xdata/xdata_common.h"
-// #include "xdata/xtableblock.h"
+#include "xevm_common/common.h"
 
 #include <algorithm>
 #include <cassert>
@@ -216,6 +216,50 @@ private:
     int32_t do_read(base::xstream_t & stream) override;
 };
 
+struct xnode_vote_percent_t final : public xserializable_based_on<void> {
+    uint32_t block_count;
+    uint32_t subset_count;
+
+private:
+    std::int32_t do_write(base::xstream_t & stream) const override;
+
+    std::int32_t do_read(base::xstream_t & stream) override;
+};
+
+struct xunqualified_node_info_v1_t final : public xserializable_based_on<void> {
+    std::map<common::xnode_id_t, xnode_vote_percent_t> auditor_info;
+    std::map<common::xnode_id_t, xnode_vote_percent_t> validator_info;
+
+private:
+    int32_t do_write(base::xstream_t & stream) const override;
+
+    int32_t do_read(base::xstream_t & stream) override;
+};
+
+struct xunqualified_filter_info_t final : public xserializable_based_on<void> {
+    common::xnode_id_t node_id;
+    common::xnode_type_t node_type;
+    uint32_t vote_percent;
+
+private:
+    int32_t do_write(base::xstream_t & stream) const override;
+
+    int32_t do_read(base::xstream_t & stream) override;
+};
+
+struct xaction_node_info_t final : public xserializable_based_on<void> {
+    common::xnode_id_t node_id;
+    common::xnode_type_t node_type;
+    bool action_type;  // default true for punish
+    xaction_node_info_t() : node_id(common::xnode_id_t{}), node_type(common::xnode_type_t::invalid), action_type(true) {}
+    xaction_node_info_t(common::xnode_id_t _node_id, common::xnode_type_t _node_type, bool type = true) : node_id(_node_id), node_type(_node_type), action_type(type) {}
+
+private:
+    int32_t do_write(base::xstream_t & stream) const override;
+
+    int32_t do_read(base::xstream_t & stream) override;
+};
+
 struct account_stake_t final {
     account_stake_t(account_stake_t const &) = default;
     account_stake_t & operator=(account_stake_t const &) = default;
@@ -293,25 +337,13 @@ template <>
 bool could_be<common::xnode_type_t::consensus_auditor>(common::xminer_type_t const miner_type);
 
 template <>
-bool could_be<common::xnode_type_t::auditor>(common::xminer_type_t const miner_type);
-
-template <>
 bool could_be<common::xnode_type_t::consensus_validator>(common::xminer_type_t const miner_type);
-
-template <>
-bool could_be<common::xnode_type_t::validator>(common::xminer_type_t const miner_type);
 
 template <>
 bool could_be<common::xnode_type_t::storage_archive>(common::xminer_type_t const miner_type);
 
 template <>
-bool could_be<common::xnode_type_t::archive>(common::xminer_type_t const miner_type);
-
-template <>
 bool could_be<common::xnode_type_t::storage_exchange>(common::xminer_type_t const miner_type);
-
-template <>
-bool could_be<common::xnode_type_t::exchange>(common::xminer_type_t const miner_type);
 
 template <>
 bool could_be<common::xnode_type_t::edge>(common::xminer_type_t const miner_type);
@@ -356,6 +388,12 @@ public:
     /// @brief Check to see if this account could be a fullnode node based on miner type.
     bool could_be_fullnode() const noexcept;
 
+    /// @brief Check to see if this account coule be an evm auditor node based on miner type.
+    bool could_be_evm_auditor() const noexcept;
+
+    /// @brief Check to see if this account coule be an evm validator node based on miner type.
+    bool could_be_evm_validator() const noexcept;
+
     /// @brief Check to see if this node can be an rec based on miner type and other information (e.g. deposit, amount of received tickets).
     bool can_be_rec() const noexcept;
 
@@ -381,8 +419,13 @@ public:
     bool can_be_exchange() const noexcept;
 
     /// @brief Check to see if this account can be a fullnode based on miner type and other information (e.g. deposit, amount of received tickects).
-    /// @return 
     bool can_be_fullnode() const noexcept;
+
+    /// @brief Check to see if this account can be an eth based on miner type and other information (e.g. deposit, amount of received tickects).
+    bool can_be_evm_auditor() const noexcept;
+
+    /// @brief Check to see if this account can be an eth based on miner type and other information (e.g. deposit, amount of received tickects).
+    bool can_be_evm_validator() const noexcept;
 
     template <common::xminer_type_t MinerTypeV>
     bool has() const noexcept {
@@ -400,21 +443,13 @@ public:
         return m_registered_miner_type == common::xminer_type_t::invalid;
     }
 
-    /**
-     * @brief check if self is a genesis node
-     *
-     * @return true
-     * @return false
-     */
-    bool is_genesis_node() const noexcept {
-        return m_genesis;
-    }
-
     bool genesis() const noexcept;
 
     void genesis(bool v) noexcept;
 
     uint64_t deposit() const noexcept;
+
+    bool has_enough_tickets() const noexcept;
 
     /**
      * @brief get rec stake
@@ -456,6 +491,10 @@ public:
     uint64_t exchange_stake() const noexcept;
 
     uint64_t fullnode_stake() const noexcept;
+
+    uint64_t evm_auditor_stake() const noexcept;
+
+    uint64_t evm_validator_stake() const noexcept;
 
     /// @brief Get miner type.
     common::xminer_type_t miner_type() const noexcept;
@@ -575,10 +614,12 @@ private:
     int32_t do_read(base::xstream_t & stream) override;
 };
 
-struct cluster_workload_t final : public xserializable_based_on<void> {
-    std::string cluster_id;
-    uint32_t cluster_total_workload{0};
+struct xgroup_workload_t final : public xserializable_based_on<void> {
+    std::string group_address_str;
+    uint32_t group_total_workload{0};
     std::map<std::string, uint32_t> m_leader_count;
+
+    xgroup_workload_t & operator+=(const xgroup_workload_t & adder);
 
 private:
     /**
@@ -596,7 +637,6 @@ private:
      */
     std::int32_t do_read(base::xstream_t & stream) override;
 };
-using xgroup_workload_t = cluster_workload_t;
 
 struct xactivation_record final : public xserializable_based_on<void> {
     int activated{0};
@@ -658,7 +698,7 @@ private:
     }
 };
 
-struct reward_detail final : public xserializable_based_on<void> {
+struct reward_detail_v1 final : public xserializable_based_on<void> {
     ::uint128_t m_edge_reward{0};
     ::uint128_t m_archive_reward{0};
     ::uint128_t m_validator_reward{0};
@@ -667,17 +707,7 @@ struct reward_detail final : public xserializable_based_on<void> {
     ::uint128_t m_self_reward{0};
 
 private:
-    int32_t do_write(base::xstream_t & stream) const override {
-        const int32_t begin_pos = stream.size();
-        stream << m_edge_reward;
-        stream << m_archive_reward;
-        stream << m_validator_reward;
-        stream << m_auditor_reward;
-        stream << m_vote_reward;
-        stream << m_self_reward;
-        const int32_t end_pos = stream.size();
-        return (end_pos - begin_pos);
-    }
+    int32_t do_write(base::xstream_t & stream) const override;
 
     /**
      * @brief read from stream
@@ -685,22 +715,34 @@ private:
      * @param stream
      * @return int32_t
      */
-    int32_t do_read(base::xstream_t & stream) override {
-        const int32_t begin_pos = stream.size();
-        stream >> m_edge_reward;
-        stream >> m_archive_reward;
-        stream >> m_validator_reward;
-        stream >> m_auditor_reward;
-        stream >> m_vote_reward;
-        if (stream.size() > 0) {
-            stream >> m_self_reward;
-        }
-        const int32_t end_pos = stream.size();
-        return (begin_pos - end_pos);
-    }
+    int32_t do_read(base::xstream_t & stream) override;
 };
 
-class xissue_detail final : public xserializable_based_on<void> {
+struct reward_detail_v2 final : public xserializable_based_on<void> {
+    ::uint128_t m_edge_reward{0};
+    ::uint128_t m_archive_reward{0};
+    ::uint128_t m_validator_reward{0};
+    ::uint128_t m_auditor_reward{0};
+    ::uint128_t m_evm_validator_reward{0};
+    ::uint128_t m_evm_auditor_reward{0};
+    ::uint128_t m_vote_reward{0};
+    ::uint128_t m_self_reward{0};
+
+    explicit operator reward_detail_v1() const;
+
+private:
+    int32_t do_write(base::xstream_t & stream) const override;
+
+    /**
+     * @brief read from stream
+     *
+     * @param stream
+     * @return int32_t
+     */
+    int32_t do_read(base::xstream_t & stream) override;
+};
+
+class xissue_detail_v1 final : public xserializable_based_on<void> {
 public:
     uint64_t onchain_timer_round{0};
     uint64_t m_zec_vote_contract_height{0};
@@ -714,7 +756,7 @@ public:
     uint16_t m_governance_reward_ratio{0};
     uint64_t m_auditor_group_count{0};
     uint64_t m_validator_group_count{0};
-    std::map<std::string, reward_detail> m_node_rewards;
+    std::map<std::string, reward_detail_v1> m_node_rewards;
 
 public:
     std::string to_string() const;
@@ -731,5 +773,96 @@ private:
      */
     int32_t do_read(base::xstream_t & stream) override;
 };
+
+class xissue_detail_v2 final : public xserializable_based_on<void> {
+public:
+    uint64_t onchain_timer_round{0};
+    uint64_t m_zec_vote_contract_height{0};
+    uint64_t m_zec_workload_contract_height{0};
+    uint64_t m_zec_reward_contract_height{0};
+    uint16_t m_edge_reward_ratio{0};
+    uint16_t m_archive_reward_ratio{0};
+    uint16_t m_validator_reward_ratio{0};
+    uint16_t m_auditor_reward_ratio{0};
+    uint16_t m_evm_auditor_reward_ratio{0};
+    uint16_t m_evm_validator_reward_ratio{0};
+    uint16_t m_vote_reward_ratio{0};
+    uint16_t m_governance_reward_ratio{0};
+    uint64_t m_auditor_group_count{0};
+    uint64_t m_validator_group_count{0};
+    uint64_t m_evm_auditor_group_count{0};
+    uint64_t m_evm_validator_group_count{0};
+    std::map<std::string, reward_detail_v2> m_node_rewards;
+
+public:
+    explicit operator xissue_detail_v1() const;
+    std::string to_string() const;
+    int32_t from_string(std::string const & s);
+
+private:
+    int32_t do_write(base::xstream_t & stream) const override;
+
+    /**
+     * @brief read from stream
+     *
+     * @param stream
+     * @return int32_t
+     */
+    int32_t do_read(base::xstream_t & stream) override;
+};
+
+class xtop_allowance {
+public:
+    using data_type = std::map<common::xaccount_address_t, evm_common::u256>;
+    using allocator_type = data_type::allocator_type;
+    using const_iterator = data_type::const_iterator;
+    using const_pointer = data_type::const_pointer;
+    using const_reference = data_type::const_reference;
+    using difference_type = data_type::difference_type;
+    using iterator = data_type::iterator;
+    using key_type = data_type::key_type;
+    using mapped_type = data_type::mapped_type;
+    using pointer = data_type::pointer;
+    using reference = data_type::reference;
+    using size_type = data_type::size_type;
+    using value_type = data_type::value_type;
+
+    xtop_allowance() = default;
+    xtop_allowance(xtop_allowance const &) = delete;
+    xtop_allowance & operator=(xtop_allowance const &) = delete;
+    xtop_allowance(xtop_allowance &&) = default;
+    xtop_allowance & operator=(xtop_allowance &&) = default;
+    ~xtop_allowance() = default;
+
+    explicit xtop_allowance(data_type d) noexcept(std::is_nothrow_move_constructible<data_type>::value);
+
+    // iterators
+    iterator begin() noexcept;
+    const_iterator begin() const noexcept;
+    const_iterator cbegin() const noexcept;
+
+    iterator end() noexcept;
+    const_iterator end() const noexcept;
+    const_iterator cend() const noexcept;
+
+    // capacity
+    bool empty() const noexcept;
+    size_type size() const noexcept;
+
+    // modifier
+    std::pair<iterator, bool> insert(const value_type & value);
+    iterator insert(const_iterator hint, const value_type & value);
+
+    // lookup
+    size_type count(key_type const & key) const;
+    iterator find(key_type const & key);
+    const_iterator find(key_type const & key) const;
+
+    data_type const & raw_data() const noexcept;
+
+private:
+    data_type data_;
+};
+using xallowance_t = xtop_allowance;
 
 NS_END3

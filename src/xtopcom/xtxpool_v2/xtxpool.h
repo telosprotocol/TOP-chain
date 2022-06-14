@@ -17,7 +17,31 @@
 namespace top {
 namespace xtxpool_v2 {
 
-#define xtxpool_zone_type_max (3)
+#define xtxpool_zone_type_max (5)
+
+struct xtable {
+    xtable() {}
+    xtable(const xtable & table) {
+        _table = table._table;
+    }
+    std::shared_ptr<xtxpool_table_t> _table{nullptr};
+    std::mutex _table_mutex;
+};
+
+class xtables_mgr {
+public:
+    void add_tables(uint8_t zone, uint32_t size);
+    bool subscribe_table(uint8_t zone,
+                         uint16_t subaddr,
+                         xtxpool_resources_face * para,
+                         xtxpool_role_info_t * role,
+                         xtxpool_statistic_t * statistic,
+                         std::set<base::xtable_shortid_t> * all_sid_set);
+    bool unsubscribe_table(uint8_t zone, uint16_t subaddr, xtxpool_role_info_t * role);
+    std::shared_ptr<xtxpool_table_t> get_table(uint8_t zone, uint16_t subaddr) const;
+public:
+    mutable std::vector<xtable> m_tables[xtxpool_zone_type_max];
+};
 
 class xtxpool_t : public xtxpool_face_t {
 public:
@@ -35,7 +59,7 @@ public:
     int32_t verify_txs(const std::string & account, const std::vector<xcons_transaction_ptr_t> & txs) override;
     void refresh_table(uint8_t zone, uint16_t subaddr) override;
     // void update_non_ready_accounts(uint8_t zone, uint16_t subaddr) override;
-    void update_table_state(const base::xvproperty_prove_ptr_t & property_prove_ptr, const data::xtablestate_ptr_t & table_state, bool add_rsp_id) override;
+    void update_table_state(const base::xvproperty_prove_ptr_t & property_prove_ptr, const data::xtablestate_ptr_t & table_state) override;
     void build_recv_tx(base::xtable_shortid_t from_table_sid,
                        base::xtable_shortid_t to_table_sid,
                        std::vector<uint64_t> receiptids,
@@ -52,15 +76,13 @@ public:
     std::map<std::string, uint64_t> get_min_keep_heights() const override;
     xtransaction_ptr_t get_raw_tx(const std::string & account_addr, base::xtable_shortid_t peer_table_sid, uint64_t receipt_id) const override;
     const std::set<base::xtable_shortid_t> & get_all_table_sids() const override;
-    bool get_sender_need_confirm_ids(const std::string & account, base::xtable_shortid_t peer_table_sid, uint64_t lower_receipt_id, uint64_t upper_receipt_id, std::vector<uint64_t> & receipt_ids) const override;
-    bool get_send_id_after_add_rsp_id(base::xtable_shortid_t self_sid, base::xtable_shortid_t peer_sid, uint64_t & send_id) const override;
 
 private:
     std::shared_ptr<xtxpool_table_t> get_txpool_table_by_addr(const std::string & address) const;
     std::shared_ptr<xtxpool_table_t> get_txpool_table_by_addr(const std::shared_ptr<xtx_entry> & tx) const;
     std::shared_ptr<xtxpool_table_t> get_txpool_table(uint8_t zone, uint16_t subaddr) const;
 
-    mutable std::vector<std::shared_ptr<xtxpool_table_t>> m_tables[xtxpool_zone_type_max];
+    xtables_mgr m_tables_mgr;
     std::vector<std::shared_ptr<xtxpool_role_info_t>> m_roles[xtxpool_zone_type_max];
     std::shared_ptr<xtxpool_resources_face> m_para;
     mutable std::mutex m_mutex[xtxpool_zone_type_max];

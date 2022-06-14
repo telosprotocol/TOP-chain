@@ -30,6 +30,8 @@
 #include "xcommon/xaccount_id.h"
 #include "xcommon/xledger_id.h"
 #include "xcommon/xtable_id.h"
+#include "xeth_address_fwd.h"
+#include "xvledger/xvaccount.h"
 
 #include <cstdint>
 #include <string>
@@ -64,6 +66,8 @@ public:
 
     static xtop_node_id build_from(std::string const & input, std::error_code & ec);
     static xtop_node_id build_from(std::string const & input);
+    static xtop_node_id build_from(xeth_address_t const & eth_address, base::enum_vaccount_addr_type vaccount_addr_type, std::error_code & ec);
+    static xtop_node_id build_from(xeth_address_t const & eth_address, base::enum_vaccount_addr_type vaccount_addr_type);
 
     bool empty() const noexcept;
     bool has_value() const noexcept;
@@ -104,6 +108,8 @@ public:
 
     xledger_id_t const & ledger_id() const noexcept;
     xtable_id_t const & table_id() const noexcept;
+
+    base::xvaccount_t vaccount() const;
 
     friend std::int32_t operator<<(base::xstream_t & stream, xtop_node_id const & node_id);
     friend std::int32_t operator>>(base::xstream_t & stream, xtop_node_id & node_id);

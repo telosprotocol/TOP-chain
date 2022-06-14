@@ -1,6 +1,7 @@
 // Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+#include <sstream>
 #define private public
 #define protected public
 #include "xconfig/xconfig_register.h"
@@ -444,16 +445,16 @@ public:
                     time_height, XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_ratio_annual_total_reward), XGET_ONCHAIN_GOVERNANCE_PARAMETER(additional_issue_year_ratio), reward_record);
                 ::uint128_t auditor_total_workload_rewards = total_issuance * XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_reward_ratio) / 100;
                 // make workload
-                std::map<common::xcluster_address_t, data::system_contract::cluster_workload_t> auditor_workloads_detail;
-                data::system_contract::cluster_workload_t workload;
-                workload.cluster_id = group_addr.to_string();
+                std::map<common::xcluster_address_t, data::system_contract::xgroup_workload_t> auditor_workloads_detail;
+                data::system_contract::xgroup_workload_t workload;
+                workload.group_address_str = group_addr.to_string();
                 for (size_t i = 0; i < account_num; i++) {
                     if (workload.m_leader_count.count(test_accounts[i])) {
                         workload.m_leader_count[test_accounts[i]] += workloads[i];
                     } else {
                         workload.m_leader_count[test_accounts[i]] = workloads[i];
                     }
-                    workload.cluster_total_workload += workloads[i];
+                    workload.group_total_workload += workloads[i];
                 }
                 auditor_workloads_detail.insert(std::make_pair(group_addr, workload));
                 // caculate reward

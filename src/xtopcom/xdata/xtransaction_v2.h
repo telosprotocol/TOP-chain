@@ -40,7 +40,7 @@ class xtransaction_v2_t : public xbase_dataunit_t<xtransaction_v2_t, xdata_type_
     int32_t do_read_without_hash_signature(base::xstream_t & stream);
     
  public:  // check apis
-    virtual bool        unuse_member_check() const override {return true;};
+    virtual bool        unuse_member_check() const override;
     virtual bool        transaction_len_check() const override ;
     virtual bool        digest_check() const override;
     virtual bool        sign_check() const override;
@@ -85,7 +85,6 @@ class xtransaction_v2_t : public xbase_dataunit_t<xtransaction_v2_t, xdata_type_
     virtual const std::string & get_target_addr()const override {return m_adjust_target_addr.empty() ? m_target_addr : m_adjust_target_addr;}
     virtual const std::string & get_origin_target_addr()const override {return m_target_addr;}
     virtual uint64_t            get_tx_nonce() const override {return get_last_nonce() + 1;}
-    virtual size_t              get_serialize_size() const override;
     virtual std::string         dump() const override;  // just for debug purpose
     void set_action_type();
     virtual const std::string & get_source_action_name() const override {return m_source_action_name;}
@@ -110,7 +109,7 @@ class xtransaction_v2_t : public xbase_dataunit_t<xtransaction_v2_t, xdata_type_
     virtual void set_tx_type(uint16_t type) override {m_transaction_type = static_cast<enum_xtransaction_type>(type); set_action_type();}
     virtual uint16_t get_tx_type() const override {return m_transaction_type;};
     virtual void set_tx_len(uint16_t len) override {m_transaction_len = len;};
-    virtual uint16_t get_tx_len() const override {return m_transaction_len;};
+    virtual uint32_t get_tx_len() const override {return m_transaction_len;};
     virtual void set_tx_version(uint32_t version) override {}
     virtual uint32_t get_tx_version() const override {return xtransaction_version_2;}
     virtual void set_deposit(uint32_t deposit) override {m_deposit = deposit;};
@@ -121,6 +120,8 @@ class xtransaction_v2_t : public xbase_dataunit_t<xtransaction_v2_t, xdata_type_
     virtual uint64_t get_fire_timestamp() const override {return m_fire_timestamp;};
     virtual void set_amount(uint64_t amount) override{ m_amount = amount; }
     virtual uint64_t get_amount() const noexcept override { return m_amount; }
+    virtual top::evm_common::u256 get_amount_256() const noexcept override { return 0; }
+    virtual bool is_top_transfer() const noexcept override { return m_transaction_type == xtransaction_type_transfer && (m_token_name.empty() || XPROPERTY_ASSET_TOP == m_token_name); }
     virtual void set_premium_price(uint32_t premium_price) override {m_premium_price = premium_price;};
     virtual uint32_t get_premium_price() const override {return m_premium_price;};
     virtual void set_last_nonce(uint64_t last_nonce) override {m_last_trans_nonce = last_nonce;};
@@ -132,6 +133,7 @@ class xtransaction_v2_t : public xbase_dataunit_t<xtransaction_v2_t, xdata_type_
     virtual void set_memo(const std::string & memo) override {m_memo = memo;};
     virtual const std::string & get_memo() const override {return m_memo;};
     virtual const std::string & get_target_address() const override {return m_target_addr;};
+    virtual bool is_evm_tx() const override {return false;}
 
 private:
     std::string m_source_addr;

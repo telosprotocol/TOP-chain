@@ -49,6 +49,7 @@ namespace top
         public:
             virtual void update_node_type(uint32_t combined_node_type) = 0;
             virtual int load_block_by_hash(const std::string& hash, std::vector<base::xvblock_ptr_t>& blocks) = 0;
+            //virtual int load_block_idx_by_hash(const std::string & hash, std::string& account, uint64_t& height) = 0;
         public: //write interface
             virtual bool                store_txs(xvblock_t * block_ptr) = 0;
             virtual bool                store_tx_bin(const std::string & raw_tx_hash,const std::string & raw_tx_bin) = 0;

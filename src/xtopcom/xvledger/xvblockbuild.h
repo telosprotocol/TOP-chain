@@ -145,7 +145,7 @@ namespace top
             virtual ~xvblockmaker_t();
         public:
             bool    set_input_entity(const xvaction_t & action);
-            bool    set_input_entity(const std::vector<xvaction_t> & actions);
+            bool    set_input_entity(const std::vector<xvaction_t> & actions, std::string extend_bin = "");
             bool    set_output_entity(const std::string & key, const std::string & value);
             bool    set_input_resource(const std::string & key, const std::string & value);
             bool    set_output_full_state(const std::string & value);

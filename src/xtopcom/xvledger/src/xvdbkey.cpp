@@ -135,6 +135,13 @@ namespace top
             const std::string key_path = "f/" + org_tx_hash;
             return key_path;
         }
+
+        const std::string  xvdbkey_t::create_prunable_blockhash_key(const std::string & org_tx_hash)
+        {
+            //enum_xvdb_cf_type_FIFO = 'f'
+            const std::string key_path = "f/" + org_tx_hash + "/h";  // h for height
+            return key_path;
+        }
         
         //tx index ->link to block index
         const std::string  xvdbkey_t::create_prunable_tx_index_key(const std::string & org_tx_hash, const enum_txindex_type type)

@@ -27,6 +27,16 @@ enum class xenum_errc {
     election_data_start_time_invalid,
 
     checkpoint_not_found,
+
+    action_address_type_error,
+    invalid_toke_id,
+
+    erc20_allowance_spender_not_found,
+    erc20_allowance_not_enough,
+
+    eth_server_error = -32000,
+
+    eth_invalid_params = -32602
 };
 using xerrc_t = xenum_errc;
 

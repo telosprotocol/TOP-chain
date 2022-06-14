@@ -157,6 +157,37 @@ bool     xtablebuilder_t::update_account_index_property(const data::xtablestate_
     return true;
 }
 
+bool     xtablebuilder_t::update_account_index_property(const data::xtablestate_ptr_t & tablestate, 
+                                                        const xblock_ptr_t & unit,
+                                                        const data::xunitstate_ptr_t & unit_state) {
+    uint64_t nonce = unit_state->account_send_trans_number();
+
+    // make account index property binlog
+    // read old index
+    base::xaccount_index_t _old_aindex;
+    tablestate->get_account_index(unit->get_account(), _old_aindex);
+    // update unconfirm sendtx flag
+    // bool has_unconfirm_sendtx = _old_aindex.is_has_unconfirm_tx();
+    bool has_unconfirm_sendtx = false;  // TODO(jimmy)
+    base::enum_xblock_consensus_type _cs_type = _old_aindex.get_latest_unit_consensus_type();
+    if (unit->get_block_class() == base::enum_xvblock_class_light) {
+        _cs_type = base::enum_xblock_consensus_flag_authenticated;  // if light-unit, reset to authenticated
+    } else {
+        if (_cs_type == base::enum_xblock_consensus_flag_authenticated) {  // if other-unit, update type
+            _cs_type = base::enum_xblock_consensus_flag_locked;
+        } else if (_cs_type == base::enum_xblock_consensus_flag_locked) {
+            _cs_type = base::enum_xblock_consensus_flag_committed;
+        } else if (_cs_type == base::enum_xblock_consensus_flag_committed) {
+            // do nothing
+        }
+    }
+
+    base::xaccount_index_t _new_aindex(unit.get(), has_unconfirm_sendtx, _cs_type, false, nonce);
+    tablestate->set_account_index(unit->get_account(), _new_aindex);
+    xdbg("xtablebuilder_t::update_account_index_property account:%s,index=%s", unit->get_account().c_str(), _new_aindex.dump().c_str());
+    return true;
+}
+
 bool     xtablebuilder_t::update_receipt_confirmids(const data::xtablestate_ptr_t & tablestate, 
                                             const std::map<base::xtable_shortid_t, uint64_t> & changed_confirm_ids) {
     for (auto & confirmid_pair : changed_confirm_ids) {

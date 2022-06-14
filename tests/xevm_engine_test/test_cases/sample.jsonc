@@ -1,0 +1,49 @@
+{
+    // 账户预设ETH,value用十进制字符串，支持大数U256
+    "pre_data": {
+        "T60004001bdc8251890aafc5841b05620c0eab336e3ebc": "1000",
+        "T60004001bdc8251890aafc5841b05620c0eab336e3123": "1000000"
+    },
+    // 部署合约部分：数组里可以部署多个合约。
+    // 用合约地址代号对应好
+    "deploy_contract": [
+        {
+            "src_address": "T60004001bdc8251890aafc5841b05620c0eab336e3ebc", //发送节点账号
+            "code_file_path": "add.bin", //bytecode文件 相对路径
+            "gas_limit": 220022, // 交易预设的gas_limit
+            "value": "0", // 交易的amount字段，单位应该是Wei，用十进制字符串，支持大数U256
+            "expected": {
+                "status": 0, // 0 - Success, 1 - Revert, 2 - OutOfGas, 3 - OutOfFund, 4 - OutOfOffset, 5 - OtherExecuteError
+                "extra_message": "contract_one", // 合约地址代号
+                "gas_used": 220022, // 预期消耗gas，等同于以太坊执行结果
+                "logs": [] // 部署合约如果有log ，写成和下面logs的一样。
+            }
+        }
+    ],
+    // 调用合约部分：数组里可以增加多次测试
+    "test_cases": [
+        {
+            "src_address": "T60004001bdc8251890aafc5841b05620c0eab336e3ebc", //发送节点账号
+            "target_address": "contract_one", // 对应上面的合约地址代号
+            // 方法签名和参数的hex结果
+            "data": "0x6e2c732d0000000000000000000000000000000000000000000000000000000000003039000000000000000000000000000000000000000000000000000000000000d431",
+            "gas_limit": 23317, // 交易预设的gas_limit
+            "value": "0", // 交易的amount字段，单位应该是Wei，用十进制字符串，支持大数U256
+            "expected": {
+                "status": 0, // 0 - Success, 1 - Revert, 2 - OutOfGas, 3 - OutOfFund, 4 - OutOfOffset, 5 - OtherExecuteError
+                "extra_message": "", // 接口返回结果，recepit里没有... 暂时没检查
+                "gas_used": 23317, // 预期消耗gas，等同于以太坊执行结果
+                // 多个logs按顺序填。这部分和以太坊结果应该完全一致。
+                "logs": [
+                    {
+                        "address": "contract_one", // 对应上面的合约地址代号
+                        "topics": [
+                            "0xba81e10edd752f92a850d20e6ca5897bc0ff54393985bc25b2c2bdc925218649"
+                        ],
+                        "data": "0x0000000000000000000000000000000000000000000000000000000000003039000000000000000000000000000000000000000000000000000000000000d431000000000000000000000000000000000000000000000000000000000001046a"
+                    }
+                ]
+            }
+        }
+    ]
+}

@@ -16,6 +16,7 @@
 #include "xdata/xrootblock.h"
 #include "xdata/xtable_bstate.h"
 #include "xdata/xtableblock.h"
+#include "xdata/xblockextract.h"
 #include "xvledger/xreceiptid.h"
 #include "xvledger/xvpropertyprove.h"
 
@@ -60,8 +61,8 @@ class xblocktool_t {
     static bool             can_make_next_full_table(base::xvblock_t* latest_cert_block, uint32_t max_light_num);
 
  public:
-    static void             alloc_transaction_receiptid(const xcons_transaction_ptr_t & tx, const base::xreceiptid_state_ptr_t & receiptid_state, bool add_rsp_id);
-    static bool             alloc_transaction_receiptid(const xcons_transaction_ptr_t & tx, bool add_rsp_id, base::xreceiptid_pair_t & receiptid_pair);
+    static void             alloc_transaction_receiptid(const xcons_transaction_ptr_t & tx, const base::xreceiptid_state_ptr_t & receiptid_state);
+    static bool             alloc_transaction_receiptid(const xcons_transaction_ptr_t & tx, base::xreceiptid_pair_t & receiptid_pair);
 
  public:  // txreceipt create
     static xcons_transaction_ptr_t                  create_one_txreceipt(base::xvblock_t* commit_block, base::xvblock_t* cert_block, base::xtable_shortid_t peer_table_sid, uint64_t receipt_id, enum_transaction_subtype subtype);

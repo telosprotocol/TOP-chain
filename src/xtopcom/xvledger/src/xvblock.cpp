@@ -1904,6 +1904,20 @@ namespace top
             m_offblock_snapshot = snapshot;
             return true;
         }
+
+        uint64_t xvblock_t::get_block_size() {
+            std::string block_object_bin;
+            serialize_to_string(block_object_bin);
+            uint64_t block_size = (uint64_t)block_object_bin.size();
+            uint64_t block_input_size = 0;
+            uint64_t block_output_size = 0;
+            if (get_header()->get_block_class() != base::enum_xvblock_class_nil) {
+                block_input_size = (uint64_t)get_input()->get_resources_data().size();
+                block_output_size = (uint64_t)get_output()->get_resources_data().size();
+            }
+            xdbg("xvblock_t::get_block_size block=%s header_size=%ld,input_size=%ld,output_size=%ld",dump().c_str(),block_size, block_input_size, block_output_size);
+            return block_size + block_input_size + block_output_size;
+        }
     
         //only open for xvblock_t object to set them after verify singature by CA(xvcertauth_t)
         void  xvblock_t::set_verify_signature(const std::string & proof)

@@ -1,0 +1,27 @@
+[package]
+name = "engine-types"
+version = "0.1.0"
+authors = []
+edition = "2021"
+description = ""
+documentation = ""
+readme = false
+homepage = ""
+repository = ""
+license = ""
+publish = false
+autobenches = false
+
+[dependencies]
+evm = { git = "https://github.com/rust-blockchain/evm.git", rev = "07ae4451bb1d8d1cc81e5e07685691e68220a7d2", default-features = false }
+hex = { version = "0.4", default-features = false, features = ["alloc"] }
+primitive-types = { version = "0.10.0", default-features = false, features = ["rlp"] }
+protobuf = "2.27.1"
+rlp = { version = "0.5.0", default-features = false }
+
+[dev-dependencies]
+rand = "0.7.3"
+
+[features]
+default = ["std"]
+std = ["primitive-types/std"]

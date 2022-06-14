@@ -580,7 +580,7 @@ TEST_F(xtest_zec_workload_contract_new_t, test_handle_workload_str) {
         w1_total += j;
     }
     xgroup_workload_t g1;
-    g1.cluster_total_workload = w1_total;
+    g1.group_total_workload = w1_total;
     g1.m_leader_count = w1;
     group_workload[m_group_addr1] = g1;
 
@@ -616,12 +616,12 @@ TEST_F(xtest_zec_workload_contract_new_t, test_handle_workload_str) {
     // verify
     {
         xgroup_workload_t total_workload = map[m_group_addr1];
-        // EXPECT_EQ(total_workload.cluster_total_workload, );
+        // EXPECT_EQ(total_workload.group_total_workload, );
         EXPECT_EQ(total_workload.m_leader_count.size(), 10);
         for (auto i = 1; i <= 10; i++) {
             EXPECT_EQ(total_workload.m_leader_count[std::to_string(i)], i);
         }
-        EXPECT_EQ(total_workload.cluster_total_workload, 55);
+        EXPECT_EQ(total_workload.group_total_workload, 55);
     }
 }
 
@@ -642,7 +642,7 @@ TEST_F(xtest_zec_workload_contract_new_t, upload_workload_internal) {
         std::string group_address_str = std::string((const char *)key_stream.data(), key_stream.size());
         xstream_t stream(xcontext_t::instance());
         xgroup_workload_t group_workload;
-        group_workload.cluster_total_workload = w1_total;
+        group_workload.group_total_workload = w1_total;
         group_workload.m_leader_count = w1;
         group_workload.serialize_to(stream);
         std::string value_str = std::string((const char *)stream.data(), stream.size());
@@ -703,7 +703,7 @@ TEST_F(xtest_zec_workload_contract_new_t, test_handle_workload_str_multi_thread_
                 w1_total += workload;
             }
             xgroup_workload_t g1;
-            g1.cluster_total_workload = w1_total;
+            g1.group_total_workload = w1_total;
             g1.m_leader_count = w1;
             group_workload[m_group_addr1] = g1;
         }
@@ -716,7 +716,7 @@ TEST_F(xtest_zec_workload_contract_new_t, test_handle_workload_str_multi_thread_
                 w1_total += workload;
             }
             xgroup_workload_t g1;
-            g1.cluster_total_workload = w1_total;
+            g1.group_total_workload = w1_total;
             g1.m_leader_count = w1;
             group_workload[m_group_addr2] = g1;
         }
@@ -816,7 +816,7 @@ TEST_F(xtest_zec_workload_contract_new_t, test_handle_workload_str_time_BENCH) {
             w1_total += workload;
         }
         xgroup_workload_t g1;
-        g1.cluster_total_workload = w1_total;
+        g1.group_total_workload = w1_total;
         g1.m_leader_count = w1;
         group_workload[m_group_addr1] = g1;
     }
@@ -829,7 +829,7 @@ TEST_F(xtest_zec_workload_contract_new_t, test_handle_workload_str_time_BENCH) {
             w1_total += workload;
         }
         xgroup_workload_t g1;
-        g1.cluster_total_workload = w1_total;
+        g1.group_total_workload = w1_total;
         g1.m_leader_count = w1;
         group_workload[m_group_addr2] = g1;
     }
