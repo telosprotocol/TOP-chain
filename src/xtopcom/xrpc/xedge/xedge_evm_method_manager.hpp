@@ -148,7 +148,7 @@ void xedge_evm_method_base<T>::do_method(shared_ptr<conn_type> & response, xjson
         return;
     }
     xJson::Value res;
-    res["id"] = json_proc.m_request_json["id"].asString();
+    res["id"] = json_proc.m_request_json["id"];//.asString();
     res["jsonrpc"] = json_proc.m_request_json["jsonrpc"].asString();
     if (m_eth_method.CallMethod(json_proc.m_request_json, res) == 0) {
         xJson::FastWriter j_writer;
