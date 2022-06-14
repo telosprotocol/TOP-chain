@@ -15,7 +15,7 @@
 
 NS_BEG2(top, evm)
 
-class xtop_evm : public txexecutor::xvm_face_t {
+class xtop_evm : public txexecutor::xvm_face2_t {
 private:
     statectx::xstatectx_face_ptr_t m_evm_statectx;
     std::unique_ptr<contract_runtime::evm::xevm_action_runtime_t> evm_action_runtime_;
@@ -31,8 +31,8 @@ public:
     explicit xtop_evm(statectx::xstatectx_face_ptr_t const evm_statectx);
     xtop_evm(observer_ptr<contract_runtime::evm::xevm_contract_manager_t> const evm_contract_manager, statectx::xstatectx_face_ptr_t const evm_statectx);
 
-public:
-    txexecutor::enum_execute_result_type execute(txexecutor::xvm_input_t const & input, txexecutor::xvm_output_t & output) override;
+    // txexecutor::enum_execute_result_type execute(txexecutor::xvm_input_t const & input, txexecutor::xvm_output_t & output) override;
+    evm_common::xevm_transaction_result_t execute(txexecutor::xvm_input_t const & input, std::error_code & ec) override;
 
 private:
     contract_runtime::evm::xevm_output_t execute(data::xcons_transaction_ptr_t const & tx, txexecutor::xvm_para_t const & vm_para);
@@ -42,5 +42,6 @@ public:
 #endif
     evm_common::xevm_transaction_result_t execute_action(std::unique_ptr<data::xbasic_top_action_t const> action, txexecutor::xvm_para_t const & vm_para);
 };
+using xevm_t = xtop_evm;
 
 NS_END2

@@ -15,7 +15,7 @@ NS_BEG2(top, txexecutor)
 
 class xtvm_t : public xvm_face_t {
  public:
-    virtual enum_execute_result_type execute(const xvm_input_t & input, xvm_output_t & output) override;
+    enum_execute_result_type execute(const xvm_input_t & input, xvm_output_t & output) override;
 };
 
 NS_END2

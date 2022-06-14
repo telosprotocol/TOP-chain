@@ -554,29 +554,33 @@ void xrpc_eth_query_manager::eth_call(xJson::Value & js_req, xJson::Value & js_r
     txexecutor::xvm_output_t output;
     top::evm::xtop_evm evm{top::make_observer(contract_runtime::evm::xevm_contract_manager_t::instance()), statectx_ptr};
 
-    auto ret = evm.execute(input, output);
-    if (ret != txexecutor::enum_exec_success) {
+    std::error_code ec;
+    auto ret = evm.execute(input, ec);
+    output.ec = ec;
+    if (ec) {
         xwarn("evm call fail.");
         return;
     }
-    xinfo("evm call: %d, %s", output.m_tx_result.status, output.m_tx_result.extra_msg.c_str());
+    output.tx_result = ret;
+
+    xinfo("evm call: %d, %s", output.tx_result.status, output.tx_result.extra_msg.c_str());
     if (!gas.empty()) {
         gas_value = std::strtoul(gas.c_str(), NULL, 16);
-        if (gas_value < output.m_tx_result.used_gas) {
-            std::string msg = std::string("err: intrinsic gas too low: have ") + gas_value.str() + ", want " + std::to_string(output.m_tx_result.used_gas)
+        if (gas_value < output.tx_result.used_gas) {
+            std::string msg = std::string("err: intrinsic gas too low: have ") + gas_value.str() + ", want " + std::to_string(output.tx_result.used_gas)
                 + " (supplied gas " + gas_value.str() + ")";
             eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);
             return;
         }
     }
-    if (output.m_tx_result.status == evm_common::OutOfFund) {
+    if (output.tx_result.status == evm_common::xevm_transaction_status_t::OutOfFund) {
         std::string msg = "insufficient funds for transfer";
         eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);
         return;
-    } else if (output.m_tx_result.status == evm_common::Success) {
-        if (output.m_tx_result.extra_msg.empty())
-            output.m_tx_result.extra_msg = "0x";
-        js_rsp["result"] = output.m_tx_result.extra_msg;
+    } else if (output.tx_result.status == evm_common::xevm_transaction_status_t::Success) {
+        if (output.tx_result.extra_msg.empty())
+            output.tx_result.extra_msg = "0x";
+        js_rsp["result"] = output.tx_result.extra_msg;
     } else {
         js_rsp["error"]["code"] = eth::enum_eth_rpc_execution_reverted;
         js_rsp["error"]["message"] = "execution reverted";
@@ -684,43 +688,46 @@ void xrpc_eth_query_manager::eth_estimateGas(xJson::Value & js_req, xJson::Value
     txexecutor::xvm_output_t output;
     top::evm::xtop_evm evm{top::make_observer(contract_runtime::evm::xevm_contract_manager_t::instance()), statectx_ptr};
 
-    auto ret = evm.execute(input, output);
-    if (ret != txexecutor::enum_exec_success) {
+    std::error_code ec;
+    auto ret = evm.execute(input, ec);
+    output.ec = ec;
+    if (ec) {
         xwarn("evm call fail.");
         return;
     }
-    xinfo("eth_estimateGas call: %d, %d, %s, %llu", ret, output.m_tx_result.status, output.m_tx_result.extra_msg.c_str(), output.m_tx_result.used_gas);
+    output.tx_result = ret;
+    xinfo("eth_estimateGas call: %d, %s, %llu", static_cast<uint32_t>(output.tx_result.status), output.tx_result.extra_msg.c_str(), output.tx_result.used_gas);
 
-    switch (output.m_tx_result.status) {
-    case evm_common::Success: {
+    switch (output.tx_result.status) {
+    case evm_common::xevm_transaction_status_t::Success: {
         std::stringstream outstr;
-        outstr << "0x" << std::hex << output.m_tx_result.used_gas + output.m_tx_result.used_gas / 2;
+        outstr << "0x" << std::hex << output.tx_result.used_gas + output.tx_result.used_gas / 2;
         js_rsp["result"] = outstr.str();
         break;
     }
 
-    case evm_common::OutOfFund: {
+    case evm_common::xevm_transaction_status_t::OutOfFund: {
         std::string msg = "insufficient funds for transfer";
         eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);
         break;
     }
 
-    case evm_common::Revert:
+    case evm_common::xevm_transaction_status_t::Revert:
         js_rsp["error"]["code"] = eth::enum_eth_rpc_execution_reverted;
         js_rsp["error"]["message"] = "execution reverted";
         break;
 
-    case evm_common::OutOfGas:
+    case evm_common::xevm_transaction_status_t::OutOfGas:
         js_rsp["error"]["code"] = eth::enum_eth_rpc_execution_reverted;
         js_rsp["error"]["message"] = "execution out of gas";
         break;
 
-    case evm_common::OutOfOffset:
+    case evm_common::xevm_transaction_status_t::OutOfOffset:
         js_rsp["error"]["code"] = eth::enum_eth_rpc_execution_reverted;
         js_rsp["error"]["message"] = "execution out of offset";
         break;
 
-    case evm_common::OtherExecuteError:
+    case evm_common::xevm_transaction_status_t::OtherExecuteError:
         js_rsp["error"]["code"] = eth::enum_eth_rpc_execution_reverted;
         js_rsp["error"]["message"] = "execution unknown error";
         break;
