@@ -746,6 +746,8 @@ namespace top
 
             void  set_inner_vote_data(const std::string & vote_data);
             const std::string &  get_inner_vote_data() const;
+            void  set_inner_hash(const top::uint256_t & hash);
+            const top::uint256_t & get_inner_hash() const;
 
         private:
             //generated the unique path of object(like vblock) under store-space(get_store_path()) to store data to DB
@@ -785,6 +787,7 @@ namespace top
             std::string                 m_parent_account;   //container(e.g.tableblock)'account id(refer xvaccount_t::get_xvid())
             uint32_t                    m_parent_entity_id{0};  //entity id of container(like tableblock) that carry this sub-block
             std::string                 m_inner_vote_data;
+            top::uint256_t              m_inner_hash;
         };
         using xvblock_ptr_t = xobject_ptr_t<base::xvblock_t>;
 

@@ -6,8 +6,12 @@
 #include <cinttypes>
 
 #include "xconsdriver.h"
+#include "xbasic/xbyte_buffer.h"
 #include "xbase/xutl.h"
+#include "xcommon/xeth_address.h"
+#include "xcommon/xeth_address_fwd.h"
 #include "xmetrics/xmetrics.h"
+#include "xcrypto/xckey.h"
 
 namespace top
 {
@@ -1297,12 +1301,64 @@ namespace top
                     if(false == _proposal->is_vote_finish()) //check first as async case,it might be finished already
                     {
                         XMETRICS_GAUGE(metrics::cpu_ca_verify_sign_xbft, 1);
+                        bool need_relay_prove = (_proposal->get_cert()->get_consensus_flags() & base::enum_xconsensus_flag_relay_prove) != 0;
                         if(get_vcertauth()->verify_sign(replica_xip, replica_cert,_proposal->get_account()) == base::enum_vcert_auth_result::enum_successful) //verify partial-certication of msg
                         {
-                            // todo(nathan) : check inner signature!!!
+                            // std::string inner_vote_addr;
+                            if (need_relay_prove) {
+                                if (inner_vote_data.empty()) {
+                                    xerror("xBFTdriver_t::fire_verify_vote_job,fail-no relay sign for _proposal=%s,at node=0x%llx",_proposal->dump().c_str(),get_xip2_low_addr());
+                                    return true;
+                                }
+
+                                auto & inner_hash = _proposal->get_block()->get_inner_hash();
+                                // uint8_t signature_content[65];
+                                // memcpy(signature_content, inner_vote_data.data(), inner_vote_data.size());
+
+                                // utl::xecdsasig_t signature1(signature_content);
+                                // uint8_t szOutput[65] = {0};
+                                // auto ret = utl::xsecp256k1_t::get_publickey_from_signature(signature1, inner_hash, szOutput);
+                                // if (!ret) {
+                                //     xerror("xBFTdriver_t::fire_verify_vote_job,fail-get pubkey from signature for _proposal=%s,at node=0x%llx",_proposal->dump().c_str(),get_xip2_low_addr());
+                                //     return true;
+                                // }
+                                // for (uint32_t i = 0; i < 6; i++) {
+                                //     xdbg("nathan test szOutput:%d,%d,%d,%d,%d,%d,%d,%d,%d,%d", szOutput[0 + i*10], szOutput[1 + i*10], szOutput[2 + i*10], szOutput[3 + i*10], szOutput[4 + i*10],
+                                //                                                                szOutput[5 + i*10], szOutput[6 + i*10], szOutput[7 + i*10], szOutput[8 + i*10], szOutput[9 + i*10]);
+                                // }
+                                // xdbg("nathan test szOutput:%d,%d,%d,%d,%d", szOutput[60], szOutput[61], szOutput[62], szOutput[63], szOutput[64]);
+
+                                const std::string account_addr_of_node = get_vcertauth()->get_signer(replica_xip);
+                                utl::xkeyaddress_t key_address(account_addr_of_node);
+
+                                utl::xecdsasig_t signature_obj((uint8_t *)inner_vote_data.c_str());
+                                auto verify_ret = key_address.verify_signature(signature_obj, inner_hash);
+                                if (!verify_ret) {
+                                    xerror("xBFTdriver_t::fire_verify_vote_job,fail-get pubkey from signature for _proposal=%s,at node=0x%llx",_proposal->dump().c_str(),get_xip2_low_addr());
+                                    return true;
+                                }
+
+
+
+                                
+                                // top::utl::xecpubkey_t pubkey(szOutput);
+                                // uint16_t ledger_id = base::xvaccount_t::make_ledger_id(base::enum_main_chain_id, base::enum_chain_zone_consensus_index);
+                                // std::string _addr = pubkey.to_address(top::base::enum_vaccount_addr_type_secp256k1_user_account, ledger_id);
+                                // top::xbytes_t addrbytes = top::to_bytes(_addr);
+                                // std::error_code ec;
+                                // top::common::xeth_address_t _from = top::common::xeth_address_t::build_from(addrbytes, ec);
+                                // inner_vote_addr = _from.to_hex_string();
+                            }
                             if(_proposal->add_voted_cert(replica_xip,replica_cert,get_vcertauth())) //add to local list
                             {
-                                if (!inner_vote_data.empty()) {
+                                if (need_relay_prove) {
+                                    // const std::string account_addr_of_node = get_vcertauth()->get_signer(replica_xip);
+                                    // xdbg("nathan test account_addr_of_node:%s,inner_vote_addr:%s", account_addr_of_node.c_str(), inner_vote_addr.c_str());
+                                    // if (account_addr_of_node != inner_vote_addr) {
+                                    //     xerror("xBFTdriver_t::fire_verify_vote_job sign addr not match.account_addr_of_node:%s,inner_vote_addr:%s", account_addr_of_node.c_str(), inner_vote_addr.c_str());
+                                    //     return true;
+                                    // }
+                                    // // todo(nathan) : get idx of this signature from election info.
                                     _proposal->add_relay_sign(replica_xip, inner_vote_data);
                                 }
                                 if(_proposal->is_vote_finish()) //check again
@@ -1319,7 +1375,7 @@ namespace top
                                         const std::string merged_sign_for_auditors = get_vcertauth()->merge_muti_sign(_proposal->get_voted_auditors(), _proposal->get_block());
                                         _proposal->get_block()->set_audit_signature(merged_sign_for_auditors);
                                     }
-                                    if (_proposal->get_cert()->get_consensus_flags() & base::enum_xconsensus_flag_relay_prove) {
+                                    if (need_relay_prove) {
                                         auto relay_multisign = _proposal->get_relay_multisign();
                                         xassert(!relay_multisign.empty());
                                         if (!relay_multisign.empty()) {

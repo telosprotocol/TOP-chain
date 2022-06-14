@@ -2461,6 +2461,14 @@ namespace top
         const std::string & xvblock_t::get_inner_vote_data() const {
             return m_inner_vote_data;
         }
+
+        void xvblock_t::set_inner_hash(const top::uint256_t & hash) {
+            m_inner_hash = hash;
+        }
+
+        const top::uint256_t & xvblock_t::get_inner_hash() const {
+            return m_inner_hash;
+        }
         
         void xvblock_t::register_object(xcontext_t & _context)
         {

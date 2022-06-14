@@ -34,7 +34,6 @@ mbus::xmessage_bus_face_t * xrelay_chain_resources::get_bus() const {
 xcross_tx_cache_t::xcross_tx_cache_t(const std::shared_ptr<xrelay_chain_resources> & para) : m_para(para) {
 }
 
-// todo(nathan): extract and save transaction and receipts.
 void xcross_tx_cache_t::process_block(data::xblock_t * block) {
     xdbg("xcross_tx_cache_t::process_block block=%s,last proc h:%llu,cache low h:%llu,cache up h:%llu,tx num:%u",
          block->dump().c_str(),
@@ -61,9 +60,13 @@ void xcross_tx_cache_t::process_block(data::xblock_t * block) {
 
             data::xtransaction_ptr_t _rawtx = block->query_raw_transaction(txaction.get_tx_hash());
             xdbg("xcross_tx_cache_t::process_block process tx. block:%s,tx:%s", block->dump().c_str(), _rawtx->dump().c_str());
+
+            // todo(nathan): save real cross transaction only.
             // if (_rawtx->get_target_addr() != cross_addr) {
             //     continue;
             // }
+
+            // todo(nathan): just for test here, tobe deleted.
             if (_rawtx->get_tx_version() != data::xtransaction_version_3 ||
                 (_rawtx->get_tx_type() != data::xtransaction_type_deploy_evm_contract && _rawtx->get_tx_type() != data::xtransaction_type_run_contract)) {
                 continue;
@@ -103,7 +106,7 @@ void xcross_tx_cache_t::process_block(data::xblock_t * block) {
 }
 
 void xcross_tx_cache_t::on_evm_db_event(data::xblock_t * block) {
-    base::xvaccount_t vaccount("Ta0004@0");
+    base::xvaccount_t vaccount(sys_contract_eth_table_block_addr_with_suffix);
     if (block->get_height() > m_cached_evm_upper_height) {
         for (uint32_t h = m_cached_evm_upper_height + 1; h < block->get_height(); h++) {
             auto latest_committed_block =
@@ -142,7 +145,7 @@ bool xcross_tx_cache_t::get_tx_cache_backup(uint64_t upper_height, std::map<uint
 }
 
 void xcross_tx_cache_t::recover_cache() {
-    base::xvaccount_t vaccount("Ta0004@0");
+    base::xvaccount_t vaccount(sys_contract_eth_table_block_addr_with_suffix);
     auto latest_committed_block = m_para->get_vblockstore()->get_latest_committed_block(vaccount, metrics::blockstore_access_from_txpool_refresh_table);
     if (m_cached_evm_upper_height < latest_committed_block->get_height()) {
         bool block_lack = false;
@@ -161,7 +164,6 @@ void xcross_tx_cache_t::recover_cache() {
         }
     }
 
-    // todo(nathan): recover cache
     if (m_last_proc_evm_height + 1 != m_cached_evm_lower_height && m_cached_evm_lower_height > 1) {
         for (uint64_t h = m_cached_evm_lower_height - 1; h > m_last_proc_evm_height; h--) {
             auto block = m_para->get_vblockstore()->load_block_object(vaccount, h, base::enum_xvblock_flag_committed, true, metrics::blockstore_access_from_txpool_refresh_table);
@@ -324,7 +326,7 @@ bool xrelay_elect_cache_t::process_election_by_height(uint64_t height) {
 }
 
 bool xwrap_block_convertor::convert_to_relay_block(std::vector<data::xblock_ptr_t> wrap_blocks, std::shared_ptr<data::xrelay_block> & relay_block) {
-    // todo(nathan):
+    // todo(nathan): convert to relay block and save to db.
     return true;
 }
 
@@ -332,19 +334,10 @@ xrelay_chain_mgr_t::xrelay_chain_mgr_t(const observer_ptr<store::xstore_face_t> 
                                        const observer_ptr<base::xvblockstore_t> & blockstore,
                                        const observer_ptr<mbus::xmessage_bus_face_t> & bus)
   : m_para(std::make_shared<xrelay_chain_resources>(store, blockstore, bus)), m_cross_tx_cache(m_para), m_relay_elect_cache(m_para) {
-    m_wrap_blocks.resize(3);
 }
 
 bool xrelay_chain_mgr_t::get_tx_cache_leader(uint64_t lower_height, uint64_t & upper_height, std::map<uint64_t, xcross_txs_t> & cross_tx_map) {
     std::lock_guard<std::mutex> lck(m_mutex);
-    // if (!m_wrap_blocks.empty()) {
-    //     if (m_wrap_blocks[0]->get_height() >= latest_wrap_block->get_height()) {
-    //         xerror("xrelay_chain_mgr_t::get_tx_cache_leader wrap block cache height >= latest wrap block.cache:%s,latest:%s",
-    //                m_wrap_blocks[0]->dump().c_str(),
-    //                latest_wrap_block->dump().c_str());
-    //     }
-    //     m_wrap_blocks.clear();
-    // }
     m_cross_tx_cache.update_last_proc_evm_height(lower_height);
     return m_cross_tx_cache.get_tx_cache_leader(upper_height, cross_tx_map);
 }
@@ -396,8 +389,7 @@ void xrelay_chain_mgr_t::on_block_to_db_event(mbus::xevent_ptr_t e) {
           block_event->owner.c_str(),
           block_event->blk_level);
 
-    // todo(nathan):sys_contract_zec_elect_relay_addr change to relay nodes elect contract addr.
-    if (block_event->owner != "Ta0004@0" && block_event->owner != sys_contract_relay_table_block_addr && block_event->owner != sys_contract_zec_elect_relay_addr) {
+    if (block_event->owner != sys_contract_eth_table_block_addr_with_suffix && block_event->owner != sys_contract_relay_table_block_addr && block_event->owner != sys_contract_zec_elect_relay_addr) {
         return;
     }
 
@@ -418,7 +410,7 @@ void xrelay_chain_mgr_t::on_block_to_db_event(mbus::xevent_ptr_t e) {
             return true;
         }
         xassert(block->check_block_flag(base::enum_xvblock_flag_committed));
-        if (block->get_account() == "Ta0004@0") {
+        if (block->get_account() == sys_contract_eth_table_block_addr_with_suffix) {
             on_evm_db_event(block);
         } else if (block->get_account() == sys_contract_relay_table_block_addr) {
             on_wrap_db_event(block);
@@ -459,28 +451,17 @@ void xrelay_chain_mgr_t::on_wrap_db_event(data::xblock_ptr_t wrap_block) {
         stream_wrap_data >> evm_height;
         stream_wrap_data >> rec_height;
     }
-    if (wrap_phase == 0) {
-        // a new relay block.
-        m_wrap_blocks.clear();
-    }
-    m_wrap_blocks.push_back(wrap_block);
 
     if (wrap_phase == 2) {
-        if (m_wrap_blocks.size() == 3) {
-            std::shared_ptr<data::xrelay_block> relay_block = nullptr;
-            xwrap_block_convertor::convert_to_relay_block(m_wrap_blocks, relay_block);
-            auto relay_block_data = m_wrap_blocks[2]->get_relay_block_data();
-            // todo: store relay block.
-            xinfo("xrelay_chain_mgr_t::on_wrap_db_event created a new relay block.wrap_phase:%d,evm_height:%llu,rec_height:%llu,relay_block_data:%s,wrap_block:%s",
-                  wrap_phase,
-                  evm_height,
-                  rec_height,
-                  relay_block_data.c_str(),
-                  wrap_block->dump().c_str());
-        } else {
-            // todo: sync wrap block on demand.
-        }
-        m_wrap_blocks.clear();
+        std::shared_ptr<data::xrelay_block> relay_block = nullptr;
+        auto relay_block_data = wrap_block->get_relay_block_data();
+        // todo(nathan): store relay block.
+        xinfo("xrelay_chain_mgr_t::on_wrap_db_event created a new relay block.wrap_phase:%d,evm_height:%llu,rec_height:%llu,relay_block_data:%s,wrap_block:%s",
+                wrap_phase,
+                evm_height,
+                rec_height,
+                relay_block_data.c_str(),
+                wrap_block->dump().c_str());
     }
     m_cross_tx_cache.update_last_proc_evm_height(evm_height);
 }
