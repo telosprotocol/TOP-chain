@@ -4,7 +4,7 @@
 
 #include "xvnode/xcomponents/xblock_sniffing/xsniffer_action.h"
 
-#include "xdata/xtransaction_v2.h"
+#include "xdata/xtx_factory.h"
 #include "xvm/manager/xmessage_ids.h"
 #include "xvnetwork/xmessage.h"
 
@@ -16,16 +16,13 @@ void xtop_sniffer_action::call(observer_ptr<store::xstore_face_t> store,
                                std::string const & action_name,
                                std::string const & action_params,
                                const uint64_t timestamp) {
-    auto tx = make_object_ptr<data::xtransaction_v2_t>();
-    tx->make_tx_run_contract(action_name, action_params);
-    tx->set_same_source_target_address(address.value());
     data::xaccount_ptr_t account = store->query_account(address.value());
     assert(account != nullptr);
-    tx->set_last_trans_hash_and_nonce(account->account_send_trans_hash(), account->account_send_trans_number());
-    tx->set_fire_timestamp(timestamp);
-    tx->set_expire_duration(300);
-    tx->set_digest();
-    tx->set_len();
+    auto tx = data::xtx_factory::create_v2_run_contract_tx(address,
+                                                      account->account_send_trans_number(),
+                                                      action_name,
+                                                      action_params,
+                                                      timestamp);
 
     int32_t r = txpool->request_transaction_consensus(tx, true);
     xinfo("[xrole_context_t] call_contract in consensus mode with return code : %d, %s, %s %s %ld, %lld",
@@ -44,16 +41,14 @@ void xtop_sniffer_action::call(observer_ptr<store::xstore_face_t> store,
                                std::string const & action_name,
                                std::string const & action_params,
                                uint64_t timestamp) {
-    auto tx = make_object_ptr<data::xtransaction_v2_t>();
-    tx->make_tx_run_contract(action_name, action_params);
-    tx->set_different_source_target_address(source_address.value(), target_address.value());
     data::xaccount_ptr_t account = store->query_account(source_address.value());
     assert(account != nullptr);
-    tx->set_last_trans_hash_and_nonce(account->account_send_trans_hash(), account->account_send_trans_number());
-    tx->set_fire_timestamp(timestamp);
-    tx->set_expire_duration(300);
-    tx->set_digest();
-    tx->set_len();
+    auto tx = data::xtx_factory::create_v2_run_contract_tx(source_address,
+                                                      target_address,
+                                                      account->account_send_trans_number(),
+                                                      action_name,
+                                                      action_params,
+                                                      timestamp);
 
     int32_t r = txpool->request_transaction_consensus(tx, true);
     xinfo("[xrole_context_t::fulltableblock_event] call_contract in consensus mode with return code : %d, %s, %s %s %ld, %lld",

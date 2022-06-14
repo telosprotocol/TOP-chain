@@ -47,6 +47,17 @@ public:
                                                    const top::evm_common::u256 & gas,
                                                    evm_common::u256 const& _maxGasPrice);
     static xtransaction_ptr_t create_v3_tx(xeth_transaction_t const& tx);
+    static xtransaction_ptr_t create_v2_run_contract_tx(common::xaccount_address_t const & address, // self call
+                                                        const uint64_t & latest_sendtx_nonce,
+                                                        std::string const & action_name,
+                                                        std::string const & action_params,
+                                                        const uint64_t fire_timestamp);
+    static xtransaction_ptr_t create_v2_run_contract_tx(common::xaccount_address_t const & source_address,
+                                                        common::xaccount_address_t const & target_address,
+                                                        const uint64_t & latest_sendtx_nonce,
+                                                        std::string const & action_name,
+                                                        std::string const & action_params,
+                                                        const uint64_t fire_timestamp);
 };
 
 }  // namespace data
