@@ -114,23 +114,30 @@ class xvm_input_t {
     xcons_transaction_ptr_t         m_tx;
 };
 
-class xvm_output_t {
- public:
-    evm_common::xevm_transaction_result_t m_tx_result;
-   //  uint64_t used_gas;
-
- public:
-    std::error_code m_ec;
-    int64_t         m_tgas_balance_change{0};
-    std::vector<xcons_transaction_ptr_t> m_contract_create_txs;
-    xvm_gasfee_detail_t m_gasfee_detail;
+struct xvm_output_t {
+    evm_common::xevm_transaction_result_t tx_result;
+    std::error_code ec;
+    int64_t tgas_balance_change{0};
+    std::vector<xcons_transaction_ptr_t> contract_create_txs;
+    xvm_gasfee_detail_t gasfee_detail;
 };
 
 class xvm_face_t {
- public:
+public:
     virtual enum_execute_result_type execute(const xvm_input_t & input, xvm_output_t & output) = 0;
 };
 
+class xtop_vm_face {
+public:
+    xtop_vm_face() = default;
+    xtop_vm_face(xtop_vm_face const &) = delete;
+    xtop_vm_face & operator=(xtop_vm_face const &) = delete;
+    xtop_vm_face(xtop_vm_face &&) = default;
+    xtop_vm_face & operator=(xtop_vm_face &&) = default;
+    virtual ~xtop_vm_face() = default;
 
+    virtual evm_common::xevm_transaction_result_t execute(xvm_input_t const & input, std::error_code & ec) = 0;
+};
+using xvm_face2_t = xtop_vm_face;
 
 NS_END2

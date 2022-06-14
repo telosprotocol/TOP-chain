@@ -38,7 +38,7 @@ int32_t xbatchtx_executor_t::execute(const std::vector<xcons_transaction_ptr_t> 
 
         enum_execute_result_type result = atomic_executor.execute(tx, output, gas_used);
         if (output.m_is_pack) {
-            gas_used += output.m_vm_output.m_tx_result.used_gas;
+            gas_used += output.m_vm_output.tx_result.used_gas;
             outputs.pack_outputs.push_back(output);
         } else {
             if (output.m_tx->is_send_or_self_tx()) {

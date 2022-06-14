@@ -170,8 +170,8 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
         table_para.push_tx_to_proposal(txout.m_tx);  // set pack origin tx to proposal
         txs_info.push_back(build_tx_info(txout.m_tx));
         txkeys_mgr.add_pack_tx(txout.m_tx);
-        tgas_balance_change += txout.m_vm_output.m_tgas_balance_change;
-        for (auto & v : txout.m_vm_output.m_contract_create_txs) {
+        tgas_balance_change += txout.m_vm_output.tgas_balance_change;
+        for (auto & v : txout.m_vm_output.contract_create_txs) {
             txs_info.push_back(build_tx_info(v));
             txkeys_mgr.add_pack_tx(v);
         }
@@ -621,7 +621,7 @@ const std::string xeth_header_builder::build(const xblock_consensus_para_t & cs_
             continue;
         }
 
-        auto & evm_result = txout.m_vm_output.m_tx_result;
+        auto & evm_result = txout.m_vm_output.tx_result;
         gas_used += evm_result.used_gas;
         data::enum_ethreceipt_status status = (evm_result.status == evm_common::xevm_transaction_status_t::Success) ? data::ethreceipt_status_successful : data::ethreceipt_status_failed;
         data::xeth_receipt_t eth_receipt(ethtx.get_tx_version(), status, gas_used, evm_result.logs);

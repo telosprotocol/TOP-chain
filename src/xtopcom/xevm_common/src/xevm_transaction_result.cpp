@@ -83,5 +83,9 @@ xbloom9_t xevm_log_t::bloom() const {
     return ret;
 }
 
+std::string xtop_evm_transaction_result::dump() const {
+    return "transaction_result[status:" + std::to_string(static_cast<std::underlying_type<xevm_transaction_status_t>::type>(status)) + ", extra_msg:" + extra_msg +
+           "], logs.size():" + std::to_string(logs.size());
+}
 
 NS_END2
