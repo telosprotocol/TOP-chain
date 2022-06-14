@@ -386,72 +386,35 @@ bool xrelay_packer::recv_in(const xvip2_t & from_addr, const xvip2_t & to_addr, 
 }
 
 void xrelay_packer::set_inner_vote_data(base::xvblock_t * proposal_block) {
-         auto relay_block_data = proposal_block->get_relay_block_data();
-        //todo 
-        std::error_code ec;
-        top::data::xrelay_block  extra_relay_block;
-        extra_relay_block.decodeBytes(to_bytes(relay_block_data), ec, false);
-        if (ec) {
-            xwarn("xrelay_packer:set_inner_vote_data decodeBytes decodeBytes error %s; err msg %s", 
-            ec.category().name(), ec.message().c_str());
-            return ;
-        }
-        uint256_t hash256_to_sign = from_bytes<uint256_t>(extra_relay_block.get_block_hash().to_bytes());
+    top::uint256_t hash_0;
+    top::uint256_t sign_hash = proposal_block->get_inner_hash();
+    if (sign_hash == hash_0) {
+        return;
+    }
 
-        auto prikey_str = get_vcertauth()->get_prikey(get_xip2_addr());
-        uint8_t priv_content[xverifier::PRIKEY_LEN];
-        memcpy(priv_content, prikey_str.data(), prikey_str.size());
-        top::utl::xecprikey_t ecpriv(priv_content);
+    auto prikey_str = get_vcertauth()->get_prikey(get_xip2_addr());
+    uint8_t priv_content[xverifier::PRIKEY_LEN];
+    memcpy(priv_content, prikey_str.data(), prikey_str.size());
+    top::utl::xecprikey_t ecpriv(priv_content);
 
-        auto signature = ecpriv.sign(hash256_to_sign);
-        std::string signature_str = std::string((char*)signature.get_compact_signature(), signature.get_compact_signature_size());
-        xdbg("nathan test signature_str size:%d,:%s", signature_str.size(), signature_str.c_str());
-        proposal_block->set_inner_vote_data(signature_str);
+    auto signature = ecpriv.sign(sign_hash);
+    std::string signature_str = std::string((char*)signature.get_compact_signature(), signature.get_compact_signature_size());
+    xdbg("xrelay_packer::set_inner_vote_data signature_str size:%d,:%s", signature_str.size(), signature_str.c_str());
+    proposal_block->set_inner_vote_data(signature_str);
 
-#ifdef DEBUG
-        //debug
-        {
-            evm_common::h256    r;
-            evm_common::h256    s;
-            evm_common::byte    v;
-            uint8_t compact_signature[65];
-            memcpy(compact_signature, signature_str.data(), signature_str.size());
-            v = compact_signature[0];
-            top::evm_common::bytes r_bytes(compact_signature + 1, compact_signature + 33);
-            r = top::evm_common::fromBigEndian<top::evm_common::u256>(r_bytes);
-            top::evm_common::bytes s_bytes(compact_signature + 33, compact_signature + 65);
-            s = top::evm_common::fromBigEndian<top::evm_common::u256>(s_bytes);
+    // // for test
+    // top::utl::xecpubkey_t pub_key_obj = ecpriv.get_public_key();
 
-            auto public_key =  ecpriv.get_public_key();
-            auto eth_address = public_key.to_raw_eth_address();
+    // uint8_t signature_content[65];
+    // memcpy(signature_content, signature_str.data(), signature_str.size());
 
-          //  std::string account_address = ecpriv.to_account_address(enum_vaccount_addr_type_secp256k1_user_account, 0);
-            std::string pub_addr_new;
-            uint8_t  out_publickey_data[65] = {0};
-            if(utl::xsecp256k1_t::get_publickey_from_signature(signature, hash256_to_sign, out_publickey_data)) {
-                utl::xecpubkey_t raw_pub_key_obj_new = utl::xecpubkey_t(out_publickey_data);
-                pub_addr_new = raw_pub_key_obj_new.to_raw_eth_address();
-            }
-
-            xdbg("rank  eth_address %s address_from_pub %s block hash %s height %d signature_str  v %u r %s s %s",
-                base::xstring_utl::to_hex(eth_address).c_str(),   base::xstring_utl::to_hex(pub_addr_new).c_str(),
-                extra_relay_block.get_block_hash().hex().c_str(), extra_relay_block.get_block_height(), v,
-                r.hex().c_str(), s.hex().c_str());
-        }
-#endif 
-        // // for test
-        // top::utl::xecpubkey_t pub_key_obj = ecpriv.get_public_key();
-
-        // uint8_t signature_content[65];
-        // memcpy(signature_content, signature_str.data(), signature_str.size());
-
-        // utl::xecdsasig_t signature1(signature_content);
-        // bool verify_ret = pub_key_obj.verify_signature(signature1, sign_hash);
-        // if (verify_ret) {
-        //     xdbg("nathan test verify_signature ok");
-        // } else {
-        //     xerror("nathan test verify_signature fail");
-        // }
+    // utl::xecdsasig_t signature1(signature_content);
+    // bool verify_ret = pub_key_obj.verify_signature(signature1, sign_hash);
+    // if (verify_ret) {
+    //     xdbg("nathan test verify_signature ok");
+    // } else {
+    //     xerror("nathan test verify_signature fail");
+    // }
 }
 
 int xrelay_packer::verify_proposal(base::xvblock_t * proposal_block, base::xvqcert_t * bind_clock_cert, xcsobject_t * _from_child) {

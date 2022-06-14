@@ -47,6 +47,7 @@ XINLINE_CONSTEXPR char const * sys_contract_beacon_table_block_addr{ "Ta0001" };
 XINLINE_CONSTEXPR char const * sys_contract_zec_table_block_addr{ "Ta0002" };
 XINLINE_CONSTEXPR char const * sys_contract_sharding_table_block_addr{ "Ta0000" };
 XINLINE_CONSTEXPR char const * sys_contract_eth_table_block_addr{"Ta0004"};
+XINLINE_CONSTEXPR char const * sys_contract_eth_table_block_addr_with_suffix{"Ta0004@0"};
 
 XINLINE_CONSTEXPR char const * sys_contract_relay_table_block_base_addr{"Ta0005"};
 XINLINE_CONSTEXPR char const * sys_contract_relay_table_block_addr{"Ta0005@0"};

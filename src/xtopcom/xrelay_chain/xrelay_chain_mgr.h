@@ -82,42 +82,6 @@ private:
     std::vector<data::xrelay_election_node_t> m_genesis_elect_info;
 };
 
-// todo(nathan):xvblock as base class like table block.
-class xrelay_block_data_t {
-public:
-    xrelay_block_data_t(base::enum_xvblock_flag flag, uint64_t height, std::string mock_data) : m_flag(flag), m_height(height), m_mock_data(mock_data) {}
-    xrelay_block_data_t(const xrelay_block_data_t & relay_block_data) {
-        m_flag = relay_block_data.m_flag;
-        m_height = relay_block_data.m_height;
-        m_mock_data = relay_block_data.m_mock_data;
-    }
-    xrelay_block_data_t() {}
-    base::enum_xvblock_flag get_flag() const {return m_flag;}
-    uint64_t get_height() const {return m_height;}
-    const std::string & get_mock_data() const {return m_mock_data;}
-    const std::string to_string() {
-        base::xstream_t stream(base::xcontext_t::instance());
-        uint8_t flag = (uint8_t)m_flag;
-        stream << flag;
-        stream << m_height;
-        stream << m_mock_data;
-        return std::string((char *)stream.data(), stream.size());
-    }
-    void from_string(const std::string & str) {
-        base::xstream_t stream{base::xcontext_t::instance(), (uint8_t*)str.data(), static_cast<uint32_t>(str.size())};
-        uint8_t flag;
-        stream >> flag;
-        m_flag = (base::enum_xvblock_flag)flag;
-        stream >> m_height;
-        stream >> m_mock_data;
-    }
-private:
-    base::enum_xvblock_flag m_flag;
-    uint64_t m_height;
-    std::string m_mock_data;
-};
-
-
 class xwrap_block_convertor {
 public:
     static bool convert_to_relay_block(std::vector<data::xblock_ptr_t> wrap_blocks, std::shared_ptr<data::xrelay_block> & relay_block);
@@ -146,8 +110,6 @@ private:
 private:
     std::shared_ptr<xrelay_chain_resources> m_para;
     xcross_tx_cache_t m_cross_tx_cache;
-    std::vector<data::xblock_ptr_t> m_wrap_blocks;
-    // todo(nathan):pack elect data first.
     xrelay_elect_cache_t m_relay_elect_cache;
     uint64_t m_last_relay_elect_height{0};
     uint32_t m_bus_listen_id;

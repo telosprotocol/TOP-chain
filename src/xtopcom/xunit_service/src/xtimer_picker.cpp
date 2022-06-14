@@ -113,7 +113,7 @@ bool xtimer_picker_t::on_pdu_event_up(const base::xvevent_t & event, xcsobject_t
 
 // create tc block for timecertview
 bool xtimer_picker_t::on_create_block_event(const base::xvevent_t & event,xcsobject_t* from_parent,const int32_t cur_thread_id,const uint64_t timenow_ms) {
-    xunit_dbg("[timer_picker::on_create_block_event](nathan)");
+    xunit_dbg("[timer_picker::on_create_block_event]");
     xconsensus::xcscreate_block_evt const & e = (xconsensus::xcscreate_block_evt const &)event;
     auto clock = e.get_clock();
     auto context_id = e.get_context_id();

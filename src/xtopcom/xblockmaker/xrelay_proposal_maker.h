@@ -38,7 +38,7 @@ protected:
 
     bool verify_proposal_input(base::xvblock_t * proposal_block, xtablemaker_para_t & table_para);
 
-    bool check_wrap_proposal(const xblock_ptr_t & latest_cert_block, base::xvblock_t * proposal_block);
+    bool check_wrap_proposal(const xblock_ptr_t & latest_cert_block, base::xvblock_t * proposal_block, uint8_t & wrap_phase, uint256_t & relay_hash);
 
     void convert_to_xrelay_tx_and_receipts(const std::map<uint64_t, xrelay_chain::xcross_txs_t> & cross_tx_map, 
                                     std::vector<data::xeth_transaction_t> &transactions,

@@ -79,6 +79,7 @@ data::xrelay_block xrelay_proposal_maker_t::build_relay_block(evm_common::h256 p
                                                               const std::vector<data::xeth_receipt_t> & receipts,
                                                               const data::xrelay_election_group_t & reley_election_group) {
     uint64_t block_version = 0;
+    // todo(nathan): use real epochID. 是不是可以直接用当前us vnode driver的轮次？ 需要验证签名的轮次是不是跟它匹配。
     uint64_t epochID = 0;
     data::xrelay_block relay_block(block_version, prev_hash,  block_height, epochID, timestamp);
     xdbg("xrelay_proposal_maker_t::build_relay_block, %s,%llu,%llu", prev_hash.hex().c_str(), block_height, timestamp);
@@ -261,7 +262,7 @@ xblock_ptr_t xrelay_proposal_maker_t::make_proposal(data::xblock_consensus_para_
 
     xtablemaker_para_t table_para(tablestate, tablestate_commit);
 
-    // todo(nathan): set relay block data, evm height, rec height to wrap block.
+    // wrap phase, evm table height, elect height store into wrap block header comments.
     uint8_t last_wrap_phase;
     uint64_t last_evm_height;
     uint64_t last_elect_height;
@@ -293,11 +294,6 @@ xblock_ptr_t xrelay_proposal_maker_t::make_proposal(data::xblock_consensus_para_
 
         uint64_t new_election_height = 0;
 
-        // todo(nathan): get elect data
-        // 选举信息在选举块出块后就打包到中继块中，用的签名是前一次选举结果中节点的签名。
-        // 中继块中有选举轮次信息，表征使用的是哪个轮次的选举节点来签名的。
-        // 对于以太坊上的跨链合约来说，选举轮次只能是严格递增或与前一高度相等的。
-        // 为了避免中继链出现轮次不更新的情况（作恶节点达到2F+1），还需要有一个中心化的监控。
         std::vector<data::xrelay_election_node_t> reley_election;
         auto ret = m_relay_chain_mgr->get_elect_cache(last_elect_height + 1, reley_election);
         if (!ret) {
@@ -329,6 +325,7 @@ xblock_ptr_t xrelay_proposal_maker_t::make_proposal(data::xblock_consensus_para_
 
     table_para.set_relay_block_data(relay_block_data);
     table_para.set_relay_wrap_data(wrap_data);
+    table_para.set_need_relay_prove(wrap_phase == 2);
 
     if (false == leader_set_consensus_para(latest_cert_block.get(), proposal_para)) {
         xwarn("xrelay_proposal_maker_t::make_proposal fail-leader_set_consensus_para.%s", proposal_para.dump().c_str());
@@ -348,23 +345,29 @@ xblock_ptr_t xrelay_proposal_maker_t::make_proposal(data::xblock_consensus_para_
         }
         return nullptr;
     }
-    auto & proposal_input = table_para.get_proposal();
-    std::string proposal_input_str;
-    proposal_input->serialize_to_string(proposal_input_str);
-    proposal_block->get_input()->set_proposal(proposal_input_str);
+
+    if (wrap_phase == 2) {
+        std::error_code  ec;
+        data::xrelay_block proposal_relay_block;
+        proposal_relay_block.decodeBytes(to_bytes(relay_block_data), ec);
+        if (ec) {
+            xerror("xrelay_proposal_maker_t:make_proposal proposal_relay_block decodeBytes error %s; err msg %s", ec.category().name(), ec.message().c_str());
+            return nullptr;
+        }
+        proposal_relay_block.build_finish();
+        auto hash = proposal_relay_block.get_block_hash(); // todo(nathan):inner header may not enough.
+        uint256_t hash256 = from_bytes<uint256_t>(hash.to_bytes());
+        proposal_block->set_inner_hash(hash256);
+    }
+
     bool bret = proposal_block->reset_prev_block(latest_cert_block.get());
     xassert(bret);
 
-    // add metrics of tx counts / table counts ratio
-    xinfo("xrelay_proposal_maker_t::make_proposal succ.proposal_block=%s,proposal_input={size=%zu,txs=%zu,accounts=%zu}",
-          proposal_block->dump().c_str(),
-          proposal_input_str.size(),
-          proposal_input->get_input_txs().size(),
-          proposal_input->get_other_accounts().size());
+    xinfo("xrelay_proposal_maker_t::make_proposal succ.proposal_block=%s", proposal_block->dump().c_str());
     return proposal_block;
 }
 
-bool xrelay_proposal_maker_t::check_wrap_proposal(const xblock_ptr_t & latest_cert_block, base::xvblock_t * proposal_block) {
+bool xrelay_proposal_maker_t::check_wrap_proposal(const xblock_ptr_t & latest_cert_block, base::xvblock_t * proposal_block, uint8_t & wrap_phase, uint256_t & relay_hash) {
     uint8_t last_wrap_phase;
     uint64_t last_evm_height;
     uint64_t last_elect_height;
@@ -387,7 +390,7 @@ bool xrelay_proposal_maker_t::check_wrap_proposal(const xblock_ptr_t & latest_ce
         }
     }
 
-    uint8_t wrap_phase;
+    uint8_t wrap_phase_tmp;
     uint64_t evm_height;
     uint64_t elect_height = 0;
     auto & proposal_wrap_data = proposal_block->get_header()->get_comments();
@@ -396,13 +399,13 @@ bool xrelay_proposal_maker_t::check_wrap_proposal(const xblock_ptr_t & latest_ce
         return false;
     } else {
         base::xstream_t stream_wrap_data{base::xcontext_t::instance(), (uint8_t*)proposal_wrap_data.data(), static_cast<uint32_t>(proposal_wrap_data.size())};
-        stream_wrap_data >> wrap_phase;
+        stream_wrap_data >> wrap_phase_tmp;
         stream_wrap_data >> evm_height;
         stream_wrap_data >> elect_height;
     }
 
     std::string relay_block_data;
-    if (wrap_phase == 0) {
+    if (wrap_phase_tmp == 0) {
         // relay_block_data = base::xstring_utl::tostring(latest_cert_block->get_height());
         std::error_code  ec;
         data::xrelay_block proposal_relay_block;
@@ -461,9 +464,9 @@ bool xrelay_proposal_maker_t::check_wrap_proposal(const xblock_ptr_t & latest_ce
         relay_block_data = last_relay_block_data;
     }
 
-    if (wrap_phase != ((last_wrap_phase + 1) % 3) || (wrap_phase != 0 && (evm_height != last_evm_height || elect_height != last_elect_height))) {
+    if (wrap_phase_tmp != ((last_wrap_phase + 1) % 3) || (wrap_phase_tmp != 0 && (evm_height != last_evm_height || elect_height != last_elect_height))) {
         xerror("xrelay_proposal_maker_t::check_wrap_proposal wrap data not match.wrap_phase:%d:%d,evm_height:%llu:%llu,elect_height:%llu:%llu,relay_block_data:%s:%s.proposal_block=%s",
-               wrap_phase,
+               wrap_phase_tmp,
                last_wrap_phase,
                evm_height,
                last_evm_height,
@@ -482,6 +485,20 @@ bool xrelay_proposal_maker_t::check_wrap_proposal(const xblock_ptr_t & latest_ce
                proposal_block->get_relay_block_data().c_str(),
                proposal_block->dump().c_str());
         return false;
+    }
+
+    wrap_phase = wrap_phase_tmp;
+    if (wrap_phase == 2) {
+        std::error_code  ec;
+        data::xrelay_block proposal_relay_block;
+        proposal_relay_block.decodeBytes(to_bytes(relay_block_data), ec);
+        if (ec) {
+            xerror("xrelay_proposal_maker_t:check_wrap_proposal proposal_relay_block decodeBytes error %s; err msg %s", ec.category().name(), ec.message().c_str());
+            return false;
+        }
+        proposal_relay_block.build_finish();
+        auto hash = proposal_relay_block.get_block_hash(); // todo(nathan):inner header may not enough.
+        relay_hash = from_bytes<uint256_t>(hash.to_bytes());
     }
 
     return true;
@@ -587,12 +604,15 @@ int xrelay_proposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, b
         return xblockmaker_error_proposal_bad_input;
     }
 
-    if (false == check_wrap_proposal(proposal_prev_block, proposal_block)) {
+    uint8_t wrap_phase;
+    uint256_t relay_hash;
+    if (false == check_wrap_proposal(proposal_prev_block, proposal_block, wrap_phase, relay_hash)) {
         return xblockmaker_error_proposal_bad_input;
     }
 
-    table_para.set_relay_wrap_data(proposal_block->get_header()->get_comments());
     table_para.set_relay_block_data(proposal_block->get_relay_block_data());
+    table_para.set_relay_wrap_data(proposal_block->get_header()->get_comments());
+    table_para.set_need_relay_prove(wrap_phase == 2);
 
     if (false == backup_set_consensus_para(proposal_prev_block.get(), proposal_block, nullptr, cs_para)) {
         xwarn("xproposal_maker_t::verify_proposal fail-backup_set_consensus_para. proposal=%s",
@@ -600,6 +620,10 @@ int xrelay_proposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, b
         XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_consensus_para_get, 1);
         XMETRICS_GAUGE(metrics::cons_table_backup_verify_proposal_succ, 0);
         return xblockmaker_error_proposal_bad_consensus_para;
+    }
+
+    if (wrap_phase == 2) {
+        proposal_block->set_inner_hash(relay_hash);
     }
 
     int32_t verify_ret = m_relay_maker->verify_proposal(proposal_block, table_para, cs_para);
