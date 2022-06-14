@@ -67,7 +67,7 @@ evm_common::xevm_transaction_result_t xtop_action_runtime<data::xevm_consensus_a
         }
 
         // status:
-        result.set_status(return_result.transaction_status());
+        result.status = static_cast<evm_common::xevm_transaction_status_t>(return_result.transaction_status());
 
         // extra_msg:
         result.extra_msg = evm::xvariant_bytes{return_result.status_data(), false}.to_hex_string("0x");

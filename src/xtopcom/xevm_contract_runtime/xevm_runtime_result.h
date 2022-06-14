@@ -19,7 +19,7 @@ struct xtop_evm_output_status {
     std::string extra_msg;
 
     // dump
-    std::string dump_info() {
+    std::string dump() const {
         return "[status: " + ec.message() + ", extra_msg: " + extra_msg + "]";
     }
 };
@@ -34,8 +34,8 @@ struct xtop_evm_output {
     evm_common::xevm_transaction_result_t tx_result;
 
     // debug
-    std::string dump_info() {
-        return status.dump_info() + ",[used_gas: " + std::to_string(used_gas) + "]," + tx_result.dump_info();
+    std::string dump() const {
+        return status.dump() + ",[used_gas: " + std::to_string(used_gas) + "]," + tx_result.dump();
     }
 };
 using xevm_output_t = xtop_evm_output;
