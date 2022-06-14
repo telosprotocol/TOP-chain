@@ -24,18 +24,32 @@ xtop_evm::xtop_evm(observer_ptr<contract_runtime::evm::xevm_contract_manager_t> 
   : m_evm_statectx{evm_statectx}, evm_action_runtime_{top::make_unique<contract_runtime::evm::xevm_action_runtime_t>(evm_contract_manager, evm_statectx)} {
 }
 
-txexecutor::enum_execute_result_type xtop_evm::execute(txexecutor::xvm_input_t const & input, txexecutor::xvm_output_t & output) {
-    m_evm_statectx = input.get_statectx();
+//txexecutor::enum_execute_result_type xtop_evm::execute(txexecutor::xvm_input_t const & input, txexecutor::xvm_output_t & output) {
+//    m_evm_statectx = input.get_statectx();
+//
+//    contract_runtime::evm::xevm_output_t evm_output = execute(input.get_tx(), input.get_para());
+//
+//    // output.used_gas = evm_output.used_gas;
+//    if (!evm_output.status.ec) {
+//        output.tx_result = evm_output.tx_result;
+//        return txexecutor::enum_exec_success;
+//    } else {
+//        output.ec = evm_output.status.ec;
+//        return txexecutor::enum_exec_error_vm_execute;
+//    }
+//}
 
+evm_common::xevm_transaction_result_t xtop_evm::execute(txexecutor::xvm_input_t const & input, std::error_code & ec) {
+    assert(!ec);
+
+    m_evm_statectx = input.get_statectx();
     contract_runtime::evm::xevm_output_t evm_output = execute(input.get_tx(), input.get_para());
 
-    // output.used_gas = evm_output.used_gas;
     if (!evm_output.status.ec) {
-        output.m_tx_result = evm_output.tx_result;
-        return txexecutor::enum_exec_success;
+        return evm_output.tx_result;
     } else {
-        output.m_ec = evm_output.status.ec;
-        return txexecutor::enum_exec_error_vm_execute;
+        ec = evm_output.status.ec;
+        return evm_common::xevm_transaction_result_t{};
     }
 }
 

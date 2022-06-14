@@ -33,7 +33,7 @@ enum_execute_result_type xtvm_v2_t::execute(const xvm_input_t & input, xvm_outpu
     }
     auto ret = execute_impl(input, output);
     if (!ret) {
-        xwarn("[xtvm_v2_t::execute] fail-vm execute, error code: %d, error msg: %s. tx=%s", output.m_ec.value(), output.m_ec.message().c_str(), tx->dump().c_str());
+        xwarn("[xtvm_v2_t::execute] fail-vm execute, error code: %d, error msg: %s. tx=%s", output.ec.value(), output.ec.message().c_str(), tx->dump().c_str());
         return enum_exec_error_vm_execute;
     }
     xdbg("[xtvm_v2_t::execute] succ vm execute. tx=%s", tx->dump().c_str());
@@ -47,16 +47,16 @@ bool xtvm_v2_t::execute_impl(const xvm_input_t & input, xvm_output_t & output) {
 
     if (base::xvaccount_t::get_addrtype_from_account(tx->get_source_addr()) == base::enum_vaccount_addr_type_secp256k1_evm_user_account &&
         base::xvaccount_t::get_addrtype_from_account(tx->get_target_addr()) == base::enum_vaccount_addr_type_secp256k1_evm_user_account) {
-        output.m_tx_result.used_gas = default_eth_tx_gas;
+        output.tx_result.used_gas = default_eth_tx_gas;
     }
     auto result = execute_tx(statectx, tx);
     if (result.status.ec) {
-        output.m_ec = result.status.ec;
+        output.ec = result.status.ec;
         return false;
     }
-    output.m_tgas_balance_change = result.output.tgas_balance_change;
+    output.tgas_balance_change = result.output.tgas_balance_change;
     for (auto followup_tx : result.output.followup_transaction_data) {
-        output.m_contract_create_txs.emplace_back(followup_tx.followed_transaction);
+        output.contract_create_txs.emplace_back(followup_tx.followed_transaction);
     }
 
     return true;

@@ -223,7 +223,7 @@ bool xtest_evm_fixture::do_deploy_test(json const & each_deploy) {
     deployed_contract_map[contract_name_symbol] = contract_address;
 
     uint32_t expected_result = expected["status"];
-    MYEXPECT_EQ(action_result.status, expected_result);
+    MYEXPECT_EQ(static_cast<uint32_t>(action_result.status), expected_result);
 
     uint64_t expected_gas_used = expected["gas_used"];
     MYEXPECT_EQ(action_result.used_gas, expected_gas_used);
@@ -264,7 +264,7 @@ bool xtest_evm_fixture::do_call_test(json const & each_call) {
 
     auto expected = each_call["expected"];
     uint32_t expected_result = expected["status"];
-    MYEXPECT_EQ(action_result.status, expected_result);
+    MYEXPECT_EQ(static_cast<uint32_t>(action_result.status), expected_result);
 
     uint64_t expected_gas_used = expected["gas_used"];
     MYEXPECT_EQ(action_result.used_gas, expected_gas_used);
