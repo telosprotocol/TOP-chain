@@ -81,6 +81,7 @@ data::xrelay_block xrelay_proposal_maker_t::build_relay_block(evm_common::h256 p
     relay_block.set_transactions(transactions);
     relay_block.set_receipts(receipts);
     relay_block.set_elections_next(reley_election_group);
+    relay_block.build_finish();
     return relay_block;
 }
 
@@ -101,6 +102,7 @@ data::xrelay_block xrelay_proposal_maker_t::build_relay_block(evm_common::h256 p
     reley_election_group.elections_vector = reley_election;
 
     relay_block.set_elections_next(reley_election_group);
+    relay_block.build_finish();
     genesis_block = relay_block;
     return true;
 }

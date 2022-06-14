@@ -160,7 +160,7 @@ xbytes_t xrelay_block_inner_header::encodeBytes() const {
         streamRLP(_s);
         _bytes.insert(_bytes.begin() + 1, _s.out().begin(), _s.out().end());
     }
-    xinfo("xrelay_block_inner_header::encodeBytes %s.", toHex(_bytes).c_str());
+    xdbg("xrelay_block_inner_header::encodeBytes %s.", toHex(_bytes).c_str());
     return _bytes;
 }
 
@@ -214,8 +214,8 @@ void xrelay_block_inner_header::make_inner_hash()
 {
     xbytes_t bytes_data = encodeBytes();
     m_inner_hash = sha3(bytes_data);
-    xinfo("xrelay_block_inner_header::make_inner_hash  data[%s]", toHex(bytes_data).c_str());
-    xinfo("xrelay_block_inner_header::make_inner_hash  hash[%s]", m_inner_hash.hex().c_str());
+    xdbg("xrelay_block_inner_header::make_inner_hash  data[%s]", toHex(bytes_data).c_str());
+    xdbg("xrelay_block_inner_header::make_inner_hash  hash[%s]", m_inner_hash.hex().c_str());
 }
 
 
@@ -489,7 +489,7 @@ void xrelay_block::make_txs_root_hash()
         rlp_txs.push_back(tx.encodeBytes());
     }
     h256 txsRoot = orderedTrieRoot(rlp_txs);
-    xinfo("txsRoot root hash[%s]", txsRoot.hex().c_str());
+    xdbg("txsRoot root hash[%s]", txsRoot.hex().c_str());
     m_header.set_txs_root_hash(txsRoot);
 }
 
@@ -501,7 +501,7 @@ void xrelay_block::make_receipts_root_hash()
         rlp_receipts.push_back(receipt.encodeBytes());
     }
     h256 receiptsRoot = orderedTrieRoot(rlp_receipts);
-    xinfo("receipts root hash[%s]", receiptsRoot.hex().c_str());
+    xdbg("receipts root hash[%s]", receiptsRoot.hex().c_str());
     m_header.set_receipts_root_hash(receiptsRoot);
 }
 
@@ -594,14 +594,14 @@ void    xrelay_block::make_block_hash()
     m_header.get_elections_sets().streamRLP(_s);
 
     m_header.m_block_hash = sha3(_s.out());
-    xinfo("xrelay_block::make_block_hash  data[%s]", toHex(_s.out()).c_str());
-    xinfo("xrelay_block::make_block_hash  hash[%s]", m_header.m_block_hash.hex().c_str());
+    xdbg("xrelay_block::make_block_hash  data[%s]", toHex(_s.out()).c_str());
+    xdbg("xrelay_block::make_block_hash  hash[%s]", m_header.m_block_hash.hex().c_str());
 }
 
 void xrelay_block::make_block_root_hash()
 {
     //todo 
-    xinfo("xrelay_block::make_block_root_hash last block hash[%s]", m_header.m_prev_hash.hex().c_str());
+    xdbg("xrelay_block::make_block_root_hash last block hash[%s]", m_header.m_prev_hash.hex().c_str());
     h256 block_root_hash{0};
     m_header.set_block_root_hash(block_root_hash);
 }
