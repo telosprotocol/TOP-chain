@@ -357,7 +357,7 @@ xblock_ptr_t xrelay_proposal_maker_t::make_proposal(data::xblock_consensus_para_
         proposal_relay_block.build_finish();
         auto hash = proposal_relay_block.get_block_hash(); // todo(nathan):inner header may not enough.
         uint256_t hash256 = from_bytes<uint256_t>(hash.to_bytes());
-        proposal_block->set_inner_hash(hash256);
+        proposal_block->set_vote_extend_hash(hash256);
     }
 
     bool bret = proposal_block->reset_prev_block(latest_cert_block.get());
@@ -623,7 +623,7 @@ int xrelay_proposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, b
     }
 
     if (wrap_phase == 2) {
-        proposal_block->set_inner_hash(relay_hash);
+        proposal_block->set_vote_extend_hash(relay_hash);
     }
 
     int32_t verify_ret = m_relay_maker->verify_proposal(proposal_block, table_para, cs_para);

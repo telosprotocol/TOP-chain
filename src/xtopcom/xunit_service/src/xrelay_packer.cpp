@@ -128,7 +128,7 @@ bool xrelay_packer::start_proposal(base::xblock_mptrs & latest_blocks) {
         return false;
     }
 
-    set_inner_vote_data(proposal_block.get());
+    set_vote_extend_data(proposal_block.get());
 
     base::xauto_ptr<xconsensus::xproposal_start> _event_obj(new xconsensus::xproposal_start(proposal_block.get()));
     push_event_down(*_event_obj, this, 0, 0);
@@ -385,9 +385,9 @@ bool xrelay_packer::recv_in(const xvip2_t & from_addr, const xvip2_t & to_addr, 
     return xcsaccount_t::recv_in(from_addr, to_addr, packet, cur_thread_id, timenow_ms);
 }
 
-void xrelay_packer::set_inner_vote_data(base::xvblock_t * proposal_block) {
+void xrelay_packer::set_vote_extend_data(base::xvblock_t * proposal_block) {
     top::uint256_t hash_0;
-    top::uint256_t sign_hash = proposal_block->get_inner_hash();
+    top::uint256_t sign_hash = proposal_block->get_vote_extend_hash();
     if (sign_hash == hash_0) {
         return;
     }
@@ -399,8 +399,12 @@ void xrelay_packer::set_inner_vote_data(base::xvblock_t * proposal_block) {
 
     auto signature = ecpriv.sign(sign_hash);
     std::string signature_str = std::string((char*)signature.get_compact_signature(), signature.get_compact_signature_size());
-    xdbg("xrelay_packer::set_inner_vote_data signature_str size:%d,:%s", signature_str.size(), signature_str.c_str());
-    proposal_block->set_inner_vote_data(signature_str);
+    xdbg("xrelay_packer::set_vote_extend_data signer:%s", get_vcertauth()->get_signer(get_xip2_addr()).c_str());
+    if (m_is_leader) {
+        m_relay_multisign[get_xip2_addr()] = signature_str;
+    } else {
+        proposal_block->set_vote_extend_data(signature_str);
+    }
 
     // // for test
     // top::utl::xecpubkey_t pub_key_obj = ecpriv.get_public_key();
@@ -421,10 +425,69 @@ int xrelay_packer::verify_proposal(base::xvblock_t * proposal_block, base::xvqce
     XMETRICS_TIME_RECORD("cons_tableblock_verify_proposal_time_consuming");
     auto ret = m_proposal_maker->verify_proposal(proposal_block, bind_clock_cert);
     if (ret == xsuccess) {
-        set_inner_vote_data(proposal_block);
+        set_vote_extend_data(proposal_block);
     }
 
     return ret;
+}
+
+bool xrelay_packer::verify_vote_extend_data(base::xvblock_t * proposal_block, const xvip2_t & replica_xip, const std::string & vote_extend_data) {
+    auto & inner_hash = proposal_block->get_vote_extend_hash();
+
+    const std::string account_addr_of_node = get_vcertauth()->get_signer(replica_xip);
+    utl::xkeyaddress_t key_address(account_addr_of_node);
+
+    utl::xecdsasig_t signature_obj((uint8_t *)vote_extend_data.c_str());
+    auto verify_ret = key_address.verify_signature(signature_obj, inner_hash);
+    if (!verify_ret) {
+        xerror("xrelay_packer::verify_vote_extend_data verify sign fail.account:%s", account_addr_of_node.c_str());
+        return false;
+    }
+    xdbg("xrelay_packer::verify_vote_extend_data verify sign succ.signer:%s", account_addr_of_node.c_str());
+    return true;
+}
+
+void xrelay_packer::add_vote_extend_data(base::xvblock_t * proposal_block, const xvip2_t & replica_xip, const std::string & vote_extend_data) {
+    m_relay_multisign[replica_xip] = vote_extend_data;
+    xdbg("nathan test add_relay_sign proposal:%s m_inner_voted_datas size:%u", proposal_block->dump().c_str(), m_relay_multisign.size());
+}
+
+bool xrelay_packer::proc_vote_complate(base::xvblock_t * proposal_block) {
+    if (m_relay_multisign.empty()) {
+        xerror("xrelay_packer::proc_vote_complate m_relay_multisign is empty");
+        return false;
+    }
+    base::xstream_t _stream(base::xcontext_t::instance());
+    uint16_t size = m_relay_multisign.size();
+    _stream << size;
+    for (auto & it : m_relay_multisign) {
+        _stream << it.first.high_addr;
+        _stream << it.first.low_addr;
+        _stream << it.second;
+    }
+    xdbg("nathan test set relay multisign to extend data leader, size=%d", size);
+    std::string extend_data = std::string((char *)_stream.data(), _stream.size());
+    proposal_block->set_extend_data(extend_data);
+
+    // todo(nathan): 按照选举信息中的顺序将聚合签名有序化，未签名的位置填空。
+
+    return true;
+}
+
+bool xrelay_packer::verify_commit_msg_extend_data(base::xvblock_t * block, const std::string & extend_data) {
+    // todo(nathan): 校验聚合签名的合法性
+    base::xstream_t stream{base::xcontext_t::instance(), (uint8_t*)extend_data.data(), static_cast<uint32_t>(extend_data.size())};
+    uint16_t size = 0;
+    stream >> size;
+    for (uint16_t i = 0; i < size; i++) {
+        xvip2_t xip;
+        std::string vote_data;
+        stream >> xip.high_addr;
+        stream >> xip.low_addr;
+        stream >> vote_data;
+    }
+    xdbg("nathan test set relay multisign to extend data backup, size:%d", size);
+    return true;
 }
 
 // get parent group xip

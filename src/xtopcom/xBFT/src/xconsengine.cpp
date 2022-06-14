@@ -206,7 +206,6 @@ namespace top
             m_voted_validators = obj.m_voted_validators;
             m_voted_auditors   = obj.m_voted_auditors;
             m_all_voted_cert   = obj.m_all_voted_cert;
-            m_relay_multisign  = obj.m_relay_multisign;
         }
         
         xproposal_t::~xproposal_t()
@@ -236,15 +235,6 @@ namespace top
         const uint64_t   xproposal_t::get_highest_QC_viewid() const
         {
             return m_highest_QC_viewid;
-        }
-
-        void xproposal_t::add_relay_sign(const xvip2_t & addr, const std::string & vote_data) {
-            m_relay_multisign[addr] = vote_data;
-            xdbg("nathan test add_relay_sign proposal:%s m_inner_voted_datas size:%d", get_block()->dump().c_str(), m_relay_multisign.size());
-        }
-
-        const std::map<xvip2_t, std::string, xvip2_compare> & xproposal_t::get_relay_multisign() const {
-            return m_relay_multisign;
         }
     
         void   xproposal_t::set_proposal_cert(base::xvqcert_t* new_proposal_cert)
