@@ -118,6 +118,36 @@ namespace top
             return enum_xconsensus_error_not_handled;//not handled
         }
 
+        bool    xcsobject_t::verify_vote_extend_data(base::xvblock_t * proposal_block, const xvip2_t & replica_xip, const std::string & vote_extend_data) {
+            xcsobject_t * parent_obj = (xcsobject_t*)get_parent_node();
+            if(parent_obj != NULL)
+                return parent_obj->verify_vote_extend_data(proposal_block,replica_xip,vote_extend_data);
+
+            return false;//not handled
+        }
+
+        void    xcsobject_t::add_vote_extend_data(base::xvblock_t * proposal_block, const xvip2_t & replica_xip, const std::string & vote_extend_data) {
+            xcsobject_t * parent_obj = (xcsobject_t*)get_parent_node();
+            if(parent_obj != NULL)
+                parent_obj->add_vote_extend_data(proposal_block,replica_xip,vote_extend_data);
+        }
+        
+        bool    xcsobject_t::proc_vote_complate(base::xvblock_t * proposal_block) {
+            xcsobject_t * parent_obj = (xcsobject_t*)get_parent_node();
+            if(parent_obj != NULL)
+                return parent_obj->proc_vote_complate(proposal_block);
+
+            return false;//not handled
+        }
+        
+        bool    xcsobject_t::verify_commit_msg_extend_data(base::xvblock_t * block, const std::string & extend_data) {
+            xcsobject_t * parent_obj = (xcsobject_t*)get_parent_node();
+            if(parent_obj != NULL)
+                return parent_obj->verify_commit_msg_extend_data(block, extend_data);
+
+            return false;//not handled
+        }
+
         bool  xcsobject_t::on_event_up(const base::xvevent_t & event,xionode_t* from_child,const int32_t cur_thread_id,const uint64_t timenow_ms)  //triggered by push_event_up
         {
             switch(event.get_type())

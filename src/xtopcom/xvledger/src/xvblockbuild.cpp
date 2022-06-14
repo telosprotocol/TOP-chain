@@ -140,7 +140,7 @@ namespace top
             m_drand_height = _drand_height;
             m_justify_cert_hash = _justify_hash;
             if (need_relay_prove) {
-                m_consensus_flag = base::enum_xconsensus_flag_relay_prove;
+                m_consensus_flag = base::enum_xconsensus_flag_extend_vote;
             }
         }
 

@@ -54,6 +54,21 @@ namespace top
             return enum_xconsensus_code_successful;
         }
 
+        bool    xcsaccount_t::verify_vote_extend_data(base::xvblock_t * proposal_block, const xvip2_t & replica_xip, const std::string & vote_extend_data) {
+            return true;
+        }
+
+        void    xcsaccount_t::add_vote_extend_data(base::xvblock_t * proposal_block, const xvip2_t & replica_xip, const std::string & vote_extend_data) {
+        }
+
+        bool    xcsaccount_t::proc_vote_complate(base::xvblock_t * proposal_block) {
+            return true;
+        }
+
+        bool    xcsaccount_t::verify_commit_msg_extend_data(base::xvblock_t * block, const std::string & extend_data) {
+            return true;
+        }
+
         //clock block always pass by higher layer to lower layer
         bool  xcsaccount_t::on_clock_fire(const base::xvevent_t & event,xcsobject_t* from_parent,const int32_t cur_thread_id,const uint64_t timenow_ms)
         {
