@@ -12,7 +12,11 @@
 #include "xmbus/xevent_behind.h"
 #include "xstore/xtgas_singleton.h"
 #include "xevm_common/xevm_transaction_result.h"
-
+#include "xpbase/base/top_utils.h"
+#include "xcrypto/xckey.h"
+#include "xbasic/xhex.h"
+#include "xevm_common/common_data.h"
+#include <fstream>  
 #include <string>
 
 NS_BEG2(top, blockmaker)
@@ -81,6 +85,10 @@ data::xrelay_block xrelay_proposal_maker_t::build_relay_block(evm_common::h256 p
     relay_block.set_transactions(transactions);
     relay_block.set_receipts(receipts);
     relay_block.set_elections_next(reley_election_group);
+    relay_block.build_finish();
+#ifdef DEBUG
+    reley_election_group.dump();
+#endif
     return relay_block;
 }
 
@@ -101,7 +109,24 @@ data::xrelay_block xrelay_proposal_maker_t::build_relay_block(evm_common::h256 p
     reley_election_group.elections_vector = reley_election;
 
     relay_block.set_elections_next(reley_election_group);
+    relay_block.build_finish();
     genesis_block = relay_block;
+
+#ifdef DEBUG
+    reley_election_group.dump();
+
+    //todo,  write genesis info file 
+    {
+        xbytes_t rlp_genesis_block_header_data =  genesis_block.streamRLP_header_to_contract();
+        //rlp_genesis_block_header_data length too long
+        //xdbg("xrelay_proposal_maker_t::build_genesis_relay_block conent :[%s]. \n",  top::evm_common::toHex(rlp_genesis_block_header_data).c_str());
+        std::string hex_result =  top::evm_common::toHex(rlp_genesis_block_header_data);
+       
+        FILE* file = fopen("rlp_genesis_block_header_data.txt", "wb");
+        size_t ws = fwrite(hex_result.c_str(), 1, hex_result.length(), file);
+        fclose(file);
+    }
+#endif 
     return true;
 }
 
@@ -396,7 +421,6 @@ bool xrelay_proposal_maker_t::check_wrap_proposal(const xblock_ptr_t & latest_ce
                 xwarn("xrelay_proposal_maker_t:check_wrap_proposal last_relay_block decodeBytes error %s; err msg %s", ec.category().name(), ec.message().c_str());
                 return false;
             }
-            last_relay_block.build_finish();
             local_prev_hash = last_relay_block.get_block_hash();
             local_block_height = last_relay_block.get_block_height() + 1;
         } else {
@@ -405,7 +429,6 @@ bool xrelay_proposal_maker_t::check_wrap_proposal(const xblock_ptr_t & latest_ce
             if (!ret) {
                 return false;
             }
-            genesis_block.build_finish();
 
             local_prev_hash = genesis_block.get_block_hash();
             local_block_height = genesis_block.get_block_height() + 1;
