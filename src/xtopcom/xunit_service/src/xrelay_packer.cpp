@@ -408,6 +408,37 @@ void xrelay_packer::set_inner_vote_data(base::xvblock_t * proposal_block) {
         xdbg("nathan test signature_str size:%d,:%s", signature_str.size(), signature_str.c_str());
         proposal_block->set_inner_vote_data(signature_str);
 
+#ifdef DEBUG
+        //debug
+        {
+            evm_common::h256    r;
+            evm_common::h256    s;
+            evm_common::byte    v;
+            uint8_t compact_signature[65];
+            memcpy(compact_signature, signature_str.data(), signature_str.size());
+            v = compact_signature[0];
+            top::evm_common::bytes r_bytes(compact_signature + 1, compact_signature + 33);
+            r = top::evm_common::fromBigEndian<top::evm_common::u256>(r_bytes);
+            top::evm_common::bytes s_bytes(compact_signature + 33, compact_signature + 65);
+            s = top::evm_common::fromBigEndian<top::evm_common::u256>(s_bytes);
+
+            auto public_key =  ecpriv.get_public_key();
+            auto eth_address = public_key.to_raw_eth_address();
+
+          //  std::string account_address = ecpriv.to_account_address(enum_vaccount_addr_type_secp256k1_user_account, 0);
+            std::string pub_addr_new;
+            uint8_t  out_publickey_data[65] = {0};
+            if(utl::xsecp256k1_t::get_publickey_from_signature(signature, hash256_to_sign, out_publickey_data)) {
+                utl::xecpubkey_t raw_pub_key_obj_new = utl::xecpubkey_t(out_publickey_data);
+                pub_addr_new = raw_pub_key_obj_new.to_raw_eth_address();
+            }
+
+            xdbg("rank  eth_address %s address_from_pub %s block hash %s height %d signature_str  v %u r %s s %s",
+                base::xstring_utl::to_hex(eth_address).c_str(),   base::xstring_utl::to_hex(pub_addr_new).c_str(),
+                extra_relay_block.get_block_hash().hex().c_str(), extra_relay_block.get_block_height(), v,
+                r.hex().c_str(), s.hex().c_str());
+        }
+#endif 
         // // for test
         // top::utl::xecpubkey_t pub_key_obj = ecpriv.get_public_key();
 
