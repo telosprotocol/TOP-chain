@@ -38,5 +38,8 @@ if (BUILD_EVM)
     add_subdirectory(xevm_common_test)
     add_subdirectory(xevm_contract_runtime)
 endif()
+if (BUILD_RUSTVM)
+    add_subdirectory(xwasmer_engine_test)
+endif()
 add_subdirectory(xgasfee)
 

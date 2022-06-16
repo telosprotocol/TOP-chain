@@ -3,7 +3,7 @@ use std::ptr::NonNull;
 use wasmer::{Exports, Function, ImportObject, Instance as WasmerInstance, Module, Val};
 
 use crate::errors::{VmError, VmResult};
-use crate::imports::{native_c_call, native_c_depoly};
+use crate::imports::do_block_index;
 use crate::runtime::Runtime;
 use crate::size::Size;
 
@@ -47,12 +47,8 @@ impl Instance {
 
         // todo insert import functions.
         env_imports.insert(
-            "c_call",
-            Function::new_native_with_env(store, runtime.clone(), native_c_call),
-        );
-        env_imports.insert(
-            "c_depoly",
-            Function::new_native_with_env(store, runtime.clone(), native_c_depoly),
+            "block_index",
+            Function::new_native_with_env(store, runtime.clone(), do_block_index),
         );
 
         import_obj.register("env", env_imports);
