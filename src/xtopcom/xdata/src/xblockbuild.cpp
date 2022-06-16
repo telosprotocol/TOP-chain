@@ -16,6 +16,9 @@
 #include "xvledger/xvaction.h"
 #include "xvledger/xvcontract.h"
 #include "xvledger/xvblock_fork.h"
+#include "xdata/xtop_relay_block.h"
+#include "xdata/xblockextract.h"
+#include "xpbase/base/top_utils.h"
 
 NS_BEG2(top, data)
 
@@ -482,6 +485,39 @@ xrelay_block_build_t::xrelay_block_build_t(base::xvblock_t * prev_block,
 
 base::xauto_ptr<base::xvblock_t> xrelay_block_build_t::create_new_block() {
     return new xemptyblock_t(*get_header(), *get_qcert());
+}
+
+xrelayblock_build_t::xrelayblock_build_t(base::xvblock_t* curr_block, const std::string & relay_block_data, const std::string & relay_wrap_data,
+    const std::string& sign_data, const uint64_t& block_height) {
+    base::enum_xvblock_type _type = get_block_type_from_empty_block(curr_block->get_account());
+    std::string hash(1, 0);
+
+    base::xbbuild_para_t build_para(xrootblock_t::get_rootblock_chainid(), std::string(sys_contract_relay_block_addr), block_height, //curr_block->get_height()/3,
+        base::enum_xvblock_class_nil, base::enum_xvblock_level_table, _type, hash, hash);//xrootblock_t::get_rootblock_hash());
+    build_para.set_relay_cert_para(curr_block->get_clock(), curr_block->get_viewid(), curr_block->get_viewtoken(), curr_block->get_cert());
+    init_header_qcert(build_para);
+
+    get_qcert()->set_extend_data(sign_data);
+    set_header_extra(relay_block_data);
+    set_header_comments(relay_wrap_data);
+}
+xrelayblock_build_t::xrelayblock_build_t(const std::string & relay_block_data) {
+    base::enum_xvblock_type _type = get_block_type_from_empty_block(std::string(sys_contract_relay_block_addr));
+    std::string hash(1, 0);
+
+    base::xbbuild_para_t build_para(xrootblock_t::get_rootblock_chainid(), std::string(sys_contract_relay_block_addr), 0,
+        base::enum_xvblock_class_nil, base::enum_xvblock_level_table, _type, hash, hash);//xrootblock_t::get_rootblock_hash());
+    build_para.set_relay_cert_para();
+    init_header_qcert(build_para);
+    set_header_extra(relay_block_data);
+}
+base::xauto_ptr<base::xvblock_t> xrelayblock_build_t::create_new_block() {
+    base::xauto_ptr<base::xvblock_t> new_block = new xtop_relay_block_t(*get_header(), *get_qcert(), nullptr, nullptr);
+//    new_block->get_cert()->set_verify_signature(std::string(1, 0));
+//    new_block->get_cert()->set_audit_signature(std::string(1, 0));
+
+    xdbg("xrelayblock_build_t::create_new_block: %s", new_block->dump().c_str());
+    return new_block;
 }
 
 xfullunit_build_t::xfullunit_build_t(base::xvblock_t* prev_block, const xfullunit_block_para_t & bodypara, const xblock_consensus_para_t & para) {

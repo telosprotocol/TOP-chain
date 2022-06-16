@@ -793,8 +793,10 @@ namespace top
         
         bool    xvqcert_t::is_deliver()  const
         {
-            if(is_valid() == false)
+            if(is_valid() == false) {
+                xdbg("xvqcert_t::is_deliver, is_valid fail.");
                 return false;
+            }
  
             if( (0 == m_viewid) && (0 == m_clock) ) //genesis block
                 return true;
@@ -822,8 +824,10 @@ namespace top
                         return false;
                     }
                 }
-                if(m_verify_signature.empty())
+                if(m_verify_signature.empty()) {
+                    xdbg("xvqcert_t::is_deliver, m_verify_signature empty.");
                     return false;
+                }
                 
                 if( (get_consensus_flags() & enum_xconsensus_flag_audit_cert) != 0)//if ask audit but dont have audit proof
                 {

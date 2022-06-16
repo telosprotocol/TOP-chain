@@ -10,6 +10,7 @@
 #include "xbasic/xhex.h"
 #include "xdata/xrelay_block.h"
 #include "xrpc/xrpc_eth_parser.h"
+#include "xpbase/base/top_utils.h"
 
 namespace top {
 
@@ -207,6 +208,7 @@ bool xrpc_loader_t::load_relay_tx_indx_detail(const std::string & raw_tx_hash, x
         xwarn("xrpc_loader_t::load_ethtx_indx_detail,fail to index for hash:%s,type:%d", base::xstring_utl::to_hex(raw_tx_hash).c_str(), type);
         return false;
     }  
+    xdbg("xrpc_loader_t::load_relay_tx_indx_detail, %llu, %s", txindex->get_block_height(), HexEncode(txindex->get_block_hash()).c_str());
 
     base::xvaccount_t _vaddress(txindex->get_block_addr());
     auto _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_vaddress, txindex->get_block_height(), txindex->get_block_hash(), false);

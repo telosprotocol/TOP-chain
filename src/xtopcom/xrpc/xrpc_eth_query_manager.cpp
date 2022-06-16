@@ -1067,8 +1067,8 @@ int xrpc_eth_query_manager::get_log(xJson::Value & js_rsp, const uint64_t begin,
 }
 
 xobject_ptr_t<base::xvblock_t> xrpc_eth_query_manager::query_relay_block_by_height(const std::string& table_height) {
-    xdbg("xrpc_eth_query_manager::query_relay_block_by_height: %s, %s", sys_contract_relay_table_block_addr, table_height.c_str());
-    base::xvaccount_t _table_addr(sys_contract_relay_table_block_addr);
+    xdbg("xrpc_eth_query_manager::query_relay_block_by_height: %s, %s", sys_contract_relay_block_addr, table_height.c_str());
+    base::xvaccount_t _table_addr(sys_contract_relay_block_addr);
 
     xobject_ptr_t<base::xvblock_t> _block;
     if (table_height == "latest")
@@ -1079,27 +1079,34 @@ xobject_ptr_t<base::xvblock_t> xrpc_eth_query_manager::query_relay_block_by_heig
         _block = base::xvchain_t::instance().get_xblockstore()->get_latest_cert_block(_table_addr);
     else {
         uint64_t height = std::strtoul(table_height.c_str(), NULL, 16);
-        _block = m_block_store->load_block_object(_table_addr, height * 3, base::enum_xvblock_flag_authenticated, false);
+        _block = m_block_store->load_block_object(_table_addr, height, base::enum_xvblock_flag_authenticated, false);
     }
     return _block;
 }
 
 int xrpc_eth_query_manager::set_relay_block_result(const xobject_ptr_t<base::xvblock_t>& block, xJson::Value & js_rsp, int have_txs) {
     if (block == nullptr) {
+        xdbg("set_relay_block_result, block null.");
         js_rsp["result"] = xJson::Value::null;
         return 1;
     }
 
     std::error_code ec;
     data::xrelay_block relay_block;
-    data::xblockextract_t::unpack_relayblock(block.get(), true, relay_block, ec);
+    if (block->get_height() == 0)
+        data::xblockextract_t::unpack_relayblock(block.get(), false, relay_block, ec);
+    else
+        data::xblockextract_t::unpack_relayblock(block.get(), true, relay_block, ec);
     if (ec) {
         js_rsp["result"] = xJson::Value::null;
-        xerror("xrpc_eth_query_manager::set_relay_block_result, fail-unpack relayblock.error %s; err msg %s", ec.category().name(), ec.message().c_str());
+        xwarn("xrpc_eth_query_manager::set_relay_block_result, fail-unpack relayblock.error %s; err msg %s", ec.category().name(), ec.message().c_str());
         return 1;
     }
 
     xbytes_t header_data = relay_block.get_header().streamRLP_header_to_contract();
+    //relay_block.build_finish();
+    evm_common::h256 hash = relay_block.get_block_hash();
+    std::string block_hash = top::to_hex_prefixed(std::string((char*)hash.data(), hash.size));
 
     xJson::Value js_txs;
     js_rsp["result"].append(top::to_hex_prefixed(header_data));
@@ -1116,7 +1123,7 @@ int xrpc_eth_query_manager::set_relay_block_result(const xobject_ptr_t<base::xvb
             continue;
         }
 
-        std::string block_hash = top::to_hex_prefixed(block->get_block_hash());
+        //std::string block_hash = top::to_hex_prefixed(block->get_block_hash());
         std::string block_num = xrpc_eth_parser_t::uint64_to_hex_prefixed(relay_block.get_block_height());
         std::string tx_index = xrpc_eth_parser_t::uint64_to_hex_prefixed(index++);
         xtx_location_t txlocation(block_hash, block_num, tx_hash, tx_index);
@@ -1232,7 +1239,7 @@ void xrpc_eth_query_manager::top_getRelayBlockByNumber(xJson::Value & js_req, xJ
     if (!eth::EthErrorCode::check_hex(js_req[0].asString(), js_rsp, 0, eth::enum_rpc_type_block))
         return;
 
-    if (std::strtoul(js_req[0].asString().c_str(), NULL, 16) == 0) {
+/*    if (std::strtoul(js_req[0].asString().c_str(), NULL, 16) == 0) {
         uint64_t epochID = 0;
         evm_common::h256 prev_hash;
         data::xrelay_block relay_block(prev_hash, 0, epochID, 0);
@@ -1243,7 +1250,7 @@ void xrpc_eth_query_manager::top_getRelayBlockByNumber(xJson::Value & js_req, xJ
         xJson::Value js_result;
         js_rsp["result"] = top::to_hex_prefixed(rlp_stream);
         return;
-    }
+    }*/
 
     int have_txs = 0;
     if (js_req.size() >= 2){
@@ -1252,9 +1259,7 @@ void xrpc_eth_query_manager::top_getRelayBlockByNumber(xJson::Value & js_req, xJ
             eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_parse_error, msg);
             return;
         }
-        if (!js_req[1].isBool()){
-            have_txs = 0;
-        } if (js_req[1].asBool())
+        if (js_req[1].asBool())
             have_txs = 2;
         else
             have_txs = 1;
@@ -1314,11 +1319,11 @@ void xrpc_eth_query_manager::top_relayBlockNumber(xJson::Value & js_req, xJson::
     if (!eth::EthErrorCode::check_req(js_req, js_rsp, 0))
         return;
 
-    base::xvaccount_t _vaddress(sys_contract_relay_table_block_addr);
+    base::xvaccount_t _vaddress(sys_contract_relay_block_addr);
     uint64_t height = m_block_store->get_latest_cert_block_height(_vaddress);
     xinfo("xarc_query_manager::top_relayBlockNumber: %llu", height);
-    if (height != 0)
-        height = (height-1)/3 + 1;
+//    if (height != 0)
+//        height = (height-1)/3 + 1;
 
     std::stringstream outstr;
     outstr << "0x" << std::hex << height;
@@ -1344,18 +1349,12 @@ void xrpc_eth_query_manager::top_getRelayTransactionByHash(xJson::Value & js_req
     data::xeth_transaction_t eth_transaction;
     data::xeth_store_receipt_t evm_tx_receipt;
     if(true == xrpc_loader_t::load_relay_tx_indx_detail(tx_hash_str, txlocation, eth_transaction, evm_tx_receipt)) {
-
         std::error_code ec;
         xrpc_eth_parser_t::transaction_to_json(txlocation, eth_transaction, js_result, ec);
-        if (ec) {
-            xerror("xrpc_eth_query_manager::eth_getTransactionByHash fail-transaction_to_json.tx hash:%s", tx_hash.c_str());
-            js_rsp["result"] = xJson::Value::null;
-            return;
-        }
         js_rsp["result"] = js_result;
         xdbg("xrpc_eth_query_manager::top_getRelayTransactionByHash ok.tx hash:%s", tx_hash.c_str());
     } else {
-        xwarn("xrpc_eth_query_manager::eth_getTransactionByHash fail-transaction_to_json.tx hash:%s", tx_hash.c_str());
+        xdbg("xrpc_eth_query_manager::eth_getTransactionByHash fail-transaction_to_json.tx hash:%s", tx_hash.c_str());
         js_rsp["result"] = xJson::Value::null;
     }    
     return;
