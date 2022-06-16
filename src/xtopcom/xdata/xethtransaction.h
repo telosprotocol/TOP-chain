@@ -99,6 +99,7 @@ class xeth_transaction_t {
     void        decodeRLP_eip1599(bool includesig, evm_common::RLP const& _r, eth_error & ec);
     xbytes_t    encodeBytes(bool includesig) const;
     void        decodeBytes(bool includesig, xbytes_t const& _d, eth_error & ec);
+    void        check_scope(eth_error & ec) const;
 
 
  private:
