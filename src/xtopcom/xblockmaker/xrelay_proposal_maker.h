@@ -38,7 +38,7 @@ protected:
 
     bool verify_proposal_input(base::xvblock_t * proposal_block, xtablemaker_para_t & table_para);
 
-    bool check_wrap_proposal(const xblock_ptr_t & latest_cert_block, base::xvblock_t * proposal_block);
+    bool check_wrap_proposal(const xblock_ptr_t & latest_cert_block, base::xvblock_t * proposal_block, uint8_t & wrap_phase, uint256_t & relay_hash);
 
     void convert_to_xrelay_tx_and_receipts(const std::map<uint64_t, xrelay_chain::xcross_txs_t> & cross_tx_map, 
                                     std::vector<data::xeth_transaction_t> &transactions,
@@ -48,12 +48,14 @@ protected:
                                          uint64_t timestamp,
                                          const std::vector<data::xeth_transaction_t> &transactions,
                                          const std::vector<data::xeth_receipt_t> & receipts,
-                                         const data::xrelay_election_group_t & reley_election);
+                                         const data::xrelay_election_group_t & reley_election,
+                                         uint64_t epochid);
     bool build_relay_block_data_leader(const data::xblock_ptr_t & latest_wrap_block,
                                        uint64_t timestamp,
                                        const data::xrelay_election_group_t & reley_election,
                                        uint64_t last_evm_table_height,
                                        uint64_t & new_evm_table_height,
+                                       uint64_t epochid,
                                        std::string & relay_block_data);
     bool build_relay_block_data_backup(evm_common::h256 prev_hash,
                                        uint64_t block_height,
@@ -61,6 +63,7 @@ protected:
                                        uint64_t new_evm_table_height,
                                        uint64_t timestamp,
                                        uint64_t new_election_height,
+                                       uint64_t epochid,
                                        std::string & relay_block_data);
      bool build_genesis_relay_block(data::xrelay_block & genesis_block);
 

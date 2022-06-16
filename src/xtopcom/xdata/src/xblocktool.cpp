@@ -212,8 +212,8 @@ base::xvblock_t*  xblocktool_t::create_next_emptyblock(base::xvblock_t* prev_blo
     return _new_block.get();  // TODO(jimmy) xblocktool_t return auto ptr
 }
 
-base::xvblock_t*  xblocktool_t::create_next_relay_block(base::xvblock_t* prev_block, const xblock_consensus_para_t & cs_para, const std::string & relay_block_data, const std::string & relay_wrap_data) {
-    xrelay_block_build_t bbuild(prev_block, cs_para, relay_block_data, relay_wrap_data);
+base::xvblock_t*  xblocktool_t::create_next_relay_block(base::xvblock_t* prev_block, const xblock_consensus_para_t & cs_para, const std::string & relay_block_data, const std::string & relay_wrap_data, bool need_relay_prove) {
+    xrelay_block_build_t bbuild(prev_block, cs_para, relay_block_data, relay_wrap_data, need_relay_prove);
     base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
     _new_block->add_ref();
     return _new_block.get();  // TODO(jimmy) xblocktool_t return auto ptr
@@ -819,5 +819,20 @@ bool xblocktool_t::check_lacking_unit_and_try_sync(const base::xvaccount_t & vac
     }
     return true;
 }
+
+// bool xblocktool_t::get_relay_block_from_wrap_block(base::xvblock_t * wrap_block, uint8_t & wrap_phase, data::xrelay_block & relay_block) {
+//     uint8_t wrap_phase_tmp;
+//     auto & wrap_data = wrap_block->get_header()->get_comments();
+//     if (wrap_data.empty()) {
+//         xerror("xblocktool_t::get_relay_block_from_wrap_block wrap data should not empty.");
+//         return false;
+//     } else {
+//         base::xstream_t stream_wrap_data{base::xcontext_t::instance(), (uint8_t*)wrap_data.data(), static_cast<uint32_t>(wrap_data.size())};
+//         stream_wrap_data >> wrap_phase_tmp;
+//     }
+
+
+
+// }
 
 NS_END2

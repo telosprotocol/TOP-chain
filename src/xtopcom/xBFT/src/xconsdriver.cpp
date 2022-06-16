@@ -174,10 +174,6 @@ namespace top
                 
                 _proposal_obj->get_block()->reset_block_flags(); //reset flags before start proposal
                 _proposal_obj->add_voted_cert(get_xip2_addr(),_proposal_obj->get_cert(),get_vcertauth()); //count leader 'vote
-                if (_proposal_obj->get_cert()->get_consensus_flags() & base::enum_xconsensus_flag_relay_prove) {
-                    xassert(!proposal->get_inner_vote_data().empty());
-                    _proposal_obj->add_relay_sign(get_xip2_addr(),proposal->get_inner_vote_data());
-                }
                 _proposal_obj->mark_leader(); //mark original proposal at leader side
                 _proposal_obj->mark_voted();  //mark voted,for leader it is always true
                 _proposal_obj->set_result_of_verify_proposal(enum_xconsensus_code_successful);//mark verified
@@ -529,10 +525,10 @@ namespace top
                         _proposal->mark_voted();  //mark voted at replica side
                         
                         std::string msg_stream;
-                        if (!_proposal->get_block()->get_inner_vote_data().empty()) {
-                            xdbg("nathan test vote msg inner proposal:%s,vote data size:%d,:%s", _proposal->dump().c_str(), _proposal->get_block()->get_inner_vote_data().size(), _proposal->get_block()->get_inner_vote_data().c_str());
+                        if (!_proposal->get_block()->get_vote_extend_data().empty()) {
+                            xdbg("nathan test vote msg inner proposal:%s,vote data size:%d,:%s", _proposal->dump().c_str(), _proposal->get_block()->get_vote_extend_data().size(), _proposal->get_block()->get_vote_extend_data().c_str());
                         }
-                        xvote_msg_t _vote_msg(*_proposal->get_proposal_cert(), _proposal->get_block()->get_inner_vote_data());
+                        xvote_msg_t _vote_msg(*_proposal->get_proposal_cert(), _proposal->get_block()->get_vote_extend_data());
                         _vote_msg.serialize_to_string(msg_stream);
                         fire_pdu_event_up(xvote_msg_t::get_msg_type(),msg_stream,_proposal->get_proposal_msg_nonce() + 1,get_xip2_addr(),peer_addr,_proposal->get_block());
                         
@@ -589,8 +585,8 @@ namespace top
                 return enum_xconsensus_error_bad_vote;
             }
             
-            if (!_vote_msg.get_inner_vote_data().empty()) {
-                xdbg("nathan test handle_vote_msg,proposal:%s,inner vote data size:%d,:%s", _local_proposal_block->dump().c_str(), _vote_msg.get_inner_vote_data().size(), _vote_msg.get_inner_vote_data().c_str());
+            if (!_vote_msg.get_vote_extend_data().empty()) {
+                xdbg("nathan test handle_vote_msg,proposal:%s,inner vote data size:%d,:%s", _local_proposal_block->dump().c_str(), _vote_msg.get_vote_extend_data().size(), _vote_msg.get_vote_extend_data().c_str());
             }
             //step#3: verify view_id & viewtoken to protect from DDOS attack
             if( false == _local_proposal_block->is_valid_packet(packet) )
@@ -666,7 +662,7 @@ namespace top
             xinfo("xBFTdriver_t::handle_vote_msg,finally start verify vote=%s of packet=%s at node=0x%llx",_voted_cert->dump().c_str(), packet.dump().c_str(),get_xip2_low_addr());
 
             //routing to worer thread per account_address
-            fire_verify_vote_job(from_addr,_voted_cert.get(),_local_proposal_block,_after_verify_vote_callback, _vote_msg.get_inner_vote_data());
+            fire_verify_vote_job(from_addr,_voted_cert.get(),_local_proposal_block,_after_verify_vote_callback, _vote_msg.get_vote_extend_data());
             return enum_xconsensus_code_successful;
         }
 
@@ -1193,23 +1189,9 @@ namespace top
                 {
                     if(_full_block_->merge_cert(*_commit_cert)) //now is thread-safe to merge cert into block
                     {
-                        if (_full_block_->get_cert()->get_consensus_flags() & base::enum_xconsensus_flag_relay_prove) {
+                        if (_full_block_->get_cert()->get_consensus_flags() & base::enum_xconsensus_flag_extend_vote) {
                             xassert(!_commit_cert->get_extend_data().empty());
                             _full_block_->set_extend_data(_commit_cert->get_extend_data());
-
-                        //for test
-
-                            base::xstream_t stream{base::xcontext_t::instance(), (uint8_t*)_commit_cert->get_extend_data().data(), static_cast<uint32_t>(_commit_cert->get_extend_data().size())};
-                            uint16_t size = 0;
-                            stream >> size;
-                            for (uint16_t i = 0; i < size; i++) {
-                                xvip2_t xip;
-                                std::string vote_data;
-                                stream >> xip.high_addr;
-                                stream >> xip.low_addr;
-                                stream >> vote_data;
-                            }
-                            xdbg("nathan test set relay multisign to extend data backup, size:%d", size);
                         }
                         _full_block_->get_cert()->set_unit_flag(base::enum_xvblock_flag_authenticated);
                         _full_block_->set_block_flag(base::enum_xvblock_flag_authenticated);
@@ -1254,6 +1236,10 @@ namespace top
                     XMETRICS_GAUGE(metrics::cpu_ca_verify_multi_sign_xbft, 1);
                     if(get_vcertauth()->verify_muti_sign(_merge_cert.get(),_for_check_block_->get_account()) == base::enum_vcert_auth_result::enum_successful)
                     {
+                        if (!verify_commit_msg_extend_data(_for_check_block_, _merge_cert->get_extend_data())) {
+                            xerror("xBFTdriver_t::fire_verify_commit_job,fail-commit_msg_extend_data for block=%s,at node=0x%llx",_for_check_block_->dump().c_str(),get_xip2_low_addr());
+                            return true;
+                        }
                         xinfo("xBFTdriver_t::fire_verify_commit_job,successful finish verify for commit block:%s at node=0x%llx",_for_check_block_->dump().c_str(),get_xip2_addr().low_addr);
 
                         base::xfunction_t* _callback_ = (base::xfunction_t *)call.get_param2().get_function();
@@ -1277,13 +1263,13 @@ namespace top
                 return (dispatch_call(asyn_verify_call) == enum_xcode_successful);
         }
 
-        bool xBFTdriver_t::fire_verify_vote_job(const xvip2_t replica_xip,base::xvqcert_t*replica_cert,xproposal_t * local_proposal,base::xfunction_t &callback, const std::string & inner_vote_data)
+        bool xBFTdriver_t::fire_verify_vote_job(const xvip2_t replica_xip,base::xvqcert_t*replica_cert,xproposal_t * local_proposal,base::xfunction_t &callback, const std::string & vote_extend_data)
         {
             if( (NULL == replica_cert) || (NULL == local_proposal) )
                 return false;
 
             replica_cert->add_ref();
-            auto _verify_function = [this,replica_xip,replica_cert, inner_vote_data](base::xcall_t & call, const int32_t cur_thread_id,const uint64_t timenow_ms)->bool{
+            auto _verify_function = [this,replica_xip,replica_cert, vote_extend_data](base::xcall_t & call, const int32_t cur_thread_id,const uint64_t timenow_ms)->bool{
                 base::xauto_ptr<base::xvqcert_t> _dummy_release(replica_cert);//auto release the added addtional once quit
                 if(is_close() == false)//running at a specific worker thread of pool
                 {
@@ -1299,12 +1285,14 @@ namespace top
                         XMETRICS_GAUGE(metrics::cpu_ca_verify_sign_xbft, 1);
                         if(get_vcertauth()->verify_sign(replica_xip, replica_cert,_proposal->get_account()) == base::enum_vcert_auth_result::enum_successful) //verify partial-certication of msg
                         {
-                            // todo(nathan) : check inner signature!!!
+                            std::string extend_data_result;
+                            if (!verify_vote_extend_data(_proposal->get_block(), replica_xip, vote_extend_data, extend_data_result)) {
+                                    xerror("xBFTdriver_t::fire_verify_vote_job,fail-verify vote extend data _proposal=%s,at node=0x%llx",_proposal->dump().c_str(),get_xip2_low_addr());
+                                    return true;
+                            }
                             if(_proposal->add_voted_cert(replica_xip,replica_cert,get_vcertauth())) //add to local list
                             {
-                                if (!inner_vote_data.empty()) {
-                                    _proposal->add_relay_sign(replica_xip, inner_vote_data);
-                                }
+                                add_vote_extend_data(_proposal->get_block(), replica_xip, vote_extend_data, extend_data_result);
                                 if(_proposal->is_vote_finish()) //check again
                                 {
                                     if(false == _proposal->get_voted_validators().empty())
@@ -1319,22 +1307,9 @@ namespace top
                                         const std::string merged_sign_for_auditors = get_vcertauth()->merge_muti_sign(_proposal->get_voted_auditors(), _proposal->get_block());
                                         _proposal->get_block()->set_audit_signature(merged_sign_for_auditors);
                                     }
-                                    if (_proposal->get_cert()->get_consensus_flags() & base::enum_xconsensus_flag_relay_prove) {
-                                        auto relay_multisign = _proposal->get_relay_multisign();
-                                        xassert(!relay_multisign.empty());
-                                        if (!relay_multisign.empty()) {
-                                            base::xstream_t _stream(base::xcontext_t::instance());
-                                            uint16_t size = relay_multisign.size();
-                                            _stream << size;
-                                            for (auto & it : relay_multisign) {
-                                                _stream << it.first.high_addr;
-                                                _stream << it.first.low_addr;
-                                                _stream << it.second;
-                                            }
-                                            xdbg("nathan test set relay multisign to extend data leader, size=%d", size);
-                                            std::string extend_data = std::string((char *)_stream.data(), _stream.size());
-                                            _proposal->get_block()->set_extend_data(extend_data);
-                                        }
+                                    if (!proc_vote_complate(_proposal->get_block())) {
+                                        xerror("xBFTdriver_t::fire_verify_vote_job,fail-proc vote complate _proposal=%s,at node=0x%llx",_proposal->dump().c_str(),get_xip2_low_addr());
+                                        return true;
                                     }
                                     
                                     XMETRICS_GAUGE(metrics::cpu_ca_verify_multi_sign_xbft, 1);

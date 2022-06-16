@@ -6,6 +6,8 @@
 
 #include "xBFT/xconsevent.h"
 #include "xblockmaker/xblockmaker_error.h"
+#include "xblockmaker/xblockmaker_face.h"
+#include "xblockmaker/xrelay_proposal_maker.h"
 #include "xcommon/xip.h"
 #include "xcommon/xnode_type.h"
 #include "xconfig/xconfig_register.h"
@@ -17,8 +19,6 @@
 #include "xmbus/xevent_consensus.h"
 #include "xunit_service/xcons_utl.h"
 #include "xunit_service/xrelay_packer.h"
-#include "xblockmaker/xrelay_proposal_maker.h"
-#include "xblockmaker/xblockmaker_face.h"
 #include "xverifier/xverifier_utl.h"
 
 #include <cinttypes>
@@ -77,11 +77,9 @@ void xrelay_packer::set_xip(data::xblock_consensus_para_t & blockpara, const xvi
 }
 
 bool xrelay_packer::start_proposal(base::xblock_mptrs & latest_blocks) {
-    if (latest_blocks.get_latest_cert_block() == nullptr
-        || latest_blocks.get_latest_locked_block() == nullptr
-        || latest_blocks.get_latest_committed_block() == nullptr) {  // TODO(jimmy) get_latest_blocks return bool future
-        xunit_warn("xrelay_packer::start_proposal fail-get latest blocks,account=%s,viewid=%ld,clock=%ld",
-            get_account().c_str(), m_last_view_id, m_last_view_clock);
+    if (latest_blocks.get_latest_cert_block() == nullptr || latest_blocks.get_latest_locked_block() == nullptr ||
+        latest_blocks.get_latest_committed_block() == nullptr) {  // TODO(jimmy) get_latest_blocks return bool future
+        xunit_warn("xrelay_packer::start_proposal fail-get latest blocks,account=%s,viewid=%ld,clock=%ld", get_account().c_str(), m_last_view_id, m_last_view_clock);
         return false;
     }
 
@@ -99,16 +97,17 @@ bool xrelay_packer::start_proposal(base::xblock_mptrs & latest_blocks) {
     }
 
     // TODO(jimmy) performance optimize, get cert/lock/connectted directly in future
-    auto latest_connected_block = m_para->get_resources()->get_vblockstore()->get_latest_connected_block(get_account(), metrics::blockstore_access_from_us_on_timer_fire);  // TODO(jimmy) just invoke connect flag update
-    if (latest_connected_block == nullptr) {  // TODO(jimmy) get_latest_blocks return bool future
-        xunit_error("xrelay_packer::start_proposal fail-get latest connect block,%s",
-            proposal_para.dump().c_str());
+    auto latest_connected_block = m_para->get_resources()->get_vblockstore()->get_latest_connected_block(
+        get_account(), metrics::blockstore_access_from_us_on_timer_fire);  // TODO(jimmy) just invoke connect flag update
+    if (latest_connected_block == nullptr) {                               // TODO(jimmy) get_latest_blocks return bool future
+        xunit_error("xrelay_packer::start_proposal fail-get latest connect block,%s", proposal_para.dump().c_str());
         return false;
     }
     if (latest_connected_block->get_height() != latest_blocks.get_latest_committed_block()->get_height()) {  // TODO(jimmy) get_latest_blocks return bool future
         XMETRICS_GAUGE(metrics::cons_table_leader_make_proposal_succ, 0);
         xunit_warn("xrelay_packer::start_proposal fail-latest connect not match committed block,%s,connect_height=%ld",
-            proposal_para.dump().c_str(), latest_connected_block->get_height());
+                   proposal_para.dump().c_str(),
+                   latest_connected_block->get_height());
         return false;
     }
 
@@ -121,28 +120,45 @@ bool xrelay_packer::start_proposal(base::xblock_mptrs & latest_blocks) {
     auto local_xip = get_xip2_addr();
     set_xip(proposal_para, local_xip);  // set leader xip
 
-    xunit_dbg_info("xrelay_packer::start_proposal leader begin make_proposal.%s cert_block_viewid=%ld", proposal_para.dump().c_str(), latest_blocks.get_latest_cert_block()->get_viewid());
+    auto network_proxy = m_para->get_resources()->get_network();
+    if (network_proxy == nullptr) {
+        xerror("xrelay_packer::start_proposal network_proxy is null");
+        return false;
+    }
+
+    uint64_t election_round = 0;
+    if (!network_proxy->get_election_round(local_xip, election_round)) {
+        xerror("xrelay_packer::start_proposal get_election_round fail");
+        return false;
+    }
+
+    proposal_para.set_election_round(election_round);
+
+    xunit_dbg_info(
+        "xrelay_packer::start_proposal leader begin make_proposal.%s cert_block_viewid=%ld", proposal_para.dump().c_str(), latest_blocks.get_latest_cert_block()->get_viewid());
     data::xblock_ptr_t proposal_block = m_proposal_maker->make_proposal(proposal_para, 0);
     if (proposal_block == nullptr) {
         xunit_dbg("xrelay_packer::start_proposal fail-make_proposal.%s", proposal_para.dump().c_str());  // may has no txs for proposal
         return false;
     }
 
-    set_inner_vote_data(proposal_block.get());
+    set_vote_extend_data(proposal_block.get());
 
     base::xauto_ptr<xconsensus::xproposal_start> _event_obj(new xconsensus::xproposal_start(proposal_block.get()));
     push_event_down(*_event_obj, this, 0, 0);
     // check viewid again, may changed
     if (m_last_view_id != proposal_block->get_viewid()) {
-        xunit_warn("xrelay_packer::start_proposal fail-finally viewid changed. %s latest_viewid=%" PRIu64 "",
-            proposal_para.dump().c_str(), proposal_block->get_viewid());
+        xunit_warn("xrelay_packer::start_proposal fail-finally viewid changed. %s latest_viewid=%" PRIu64 "", proposal_para.dump().c_str(), proposal_block->get_viewid());
         return false;
     }
 
     XMETRICS_GAUGE(metrics::cons_table_leader_make_proposal_succ, 1);
     xunit_info("xrelay_packer::start_proposal succ-leader start consensus. block=%s this:%p node:%s xip:%s",
-            proposal_block->dump().c_str(), this, m_para->get_resources()->get_account().c_str(), xcons_utl::xip_to_hex(local_xip).c_str());
-    
+               proposal_block->dump().c_str(),
+               this,
+               m_para->get_resources()->get_account().c_str(),
+               xcons_utl::xip_to_hex(local_xip).c_str());
+
     return true;
 }
 
@@ -185,6 +201,9 @@ bool xrelay_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
         XMETRICS_GAUGE(metrics::cons_view_fire_succ, 0);
         return false;
     }
+
+    // clear relay multisign for new view.
+    m_relay_multisign.clear();
 
     XMETRICS_TIME_RECORD("cons_tableblock_view_change_time_consuming");
     m_last_view_id = view_ev->get_viewid();
@@ -263,15 +282,14 @@ bool xrelay_packer::on_timer_fire(const int32_t thread_id,
     if (!m_is_leader || m_leader_packed) {
         return true;
     }
-    
-    if (m_wait_count < 10) {
-        m_wait_count++;
-        return true;
-    } else {
-        m_wait_count = 0;
-    }
 
-    XMETRICS_GAUGE(metrics::cons_cp_check_succ, 1);
+    // if (m_wait_count < 10) {
+    //     m_wait_count++;
+    //     return true;
+    // } else {
+    //     m_wait_count = 0;
+    // }
+
     // xunit_dbg("xrelay_packer::on_timer_fire retry start proposal.this:%p node:%s", this, m_para->get_resources()->get_account().c_str());
     base::xblock_mptrs latest_blocks = m_para->get_resources()->get_vblockstore()->get_latest_blocks(get_account(), metrics::blockstore_access_from_us_on_timer_fire);
     m_leader_packed = start_proposal(latest_blocks);
@@ -385,83 +403,242 @@ bool xrelay_packer::recv_in(const xvip2_t & from_addr, const xvip2_t & to_addr, 
     return xcsaccount_t::recv_in(from_addr, to_addr, packet, cur_thread_id, timenow_ms);
 }
 
-void xrelay_packer::set_inner_vote_data(base::xvblock_t * proposal_block) {
-         auto relay_block_data = proposal_block->get_relay_block_data();
-        //todo 
-        std::error_code ec;
-        top::data::xrelay_block  extra_relay_block;
-        extra_relay_block.decodeBytes(to_bytes(relay_block_data), ec, false);
-        if (ec) {
-            xwarn("xrelay_packer:set_inner_vote_data decodeBytes decodeBytes error %s; err msg %s", 
-            ec.category().name(), ec.message().c_str());
-            return ;
-        }
-        uint256_t hash256_to_sign = from_bytes<uint256_t>(extra_relay_block.get_block_hash().to_bytes());
+void xrelay_packer::set_vote_extend_data(base::xvblock_t * proposal_block) {
+    top::uint256_t hash_0;
+    top::uint256_t sign_hash = proposal_block->get_vote_extend_hash();
+    if (sign_hash == hash_0) {
+        return;
+    }
 
-        auto prikey_str = get_vcertauth()->get_prikey(get_xip2_addr());
-        uint8_t priv_content[xverifier::PRIKEY_LEN];
-        memcpy(priv_content, prikey_str.data(), prikey_str.size());
-        top::utl::xecprikey_t ecpriv(priv_content);
+    auto prikey_str = get_vcertauth()->get_prikey(get_xip2_addr());
+    uint8_t priv_content[xverifier::PRIKEY_LEN];
+    memcpy(priv_content, prikey_str.data(), prikey_str.size());
+    top::utl::xecprikey_t ecpriv(priv_content);
 
-        auto signature = ecpriv.sign(hash256_to_sign);
-        std::string signature_str = std::string((char*)signature.get_compact_signature(), signature.get_compact_signature_size());
-        xdbg("nathan test signature_str size:%d,:%s", signature_str.size(), signature_str.c_str());
-        proposal_block->set_inner_vote_data(signature_str);
+    auto signature = ecpriv.sign(sign_hash);
+    std::string signature_str = std::string((char *)signature.get_compact_signature(), signature.get_compact_signature_size());
+    xdbg("xrelay_packer::set_vote_extend_data signer:%s", get_vcertauth()->get_signer(get_xip2_addr()).c_str());
+    if (m_is_leader) {
+        top::utl::xecpubkey_t pub_key_obj = ecpriv.get_public_key();
+        std::string pubkey_str = std::string((char *)(pub_key_obj.data() + 1), 64);
+        m_relay_multisign[pubkey_str] = std::make_pair(get_xip2_addr(), signature_str);
+    } else {
+        proposal_block->set_vote_extend_data(signature_str);
+    }
 
-#ifdef DEBUG
-        //debug
-        {
-            evm_common::h256    r;
-            evm_common::h256    s;
-            evm_common::byte    v;
-            uint8_t compact_signature[65];
-            memcpy(compact_signature, signature_str.data(), signature_str.size());
-            v = compact_signature[0];
-            top::evm_common::bytes r_bytes(compact_signature + 1, compact_signature + 33);
-            r = top::evm_common::fromBigEndian<top::evm_common::u256>(r_bytes);
-            top::evm_common::bytes s_bytes(compact_signature + 33, compact_signature + 65);
-            s = top::evm_common::fromBigEndian<top::evm_common::u256>(s_bytes);
+    // // for test
+    // top::utl::xecpubkey_t pub_key_obj = ecpriv.get_public_key();
 
-            auto public_key =  ecpriv.get_public_key();
-            auto eth_address = public_key.to_raw_eth_address();
+    // uint8_t signature_content[65];
+    // memcpy(signature_content, signature_str.data(), signature_str.size());
 
-          //  std::string account_address = ecpriv.to_account_address(enum_vaccount_addr_type_secp256k1_user_account, 0);
-            std::string pub_addr_new;
-            uint8_t  out_publickey_data[65] = {0};
-            if(utl::xsecp256k1_t::get_publickey_from_signature(signature, hash256_to_sign, out_publickey_data)) {
-                utl::xecpubkey_t raw_pub_key_obj_new = utl::xecpubkey_t(out_publickey_data);
-                pub_addr_new = raw_pub_key_obj_new.to_raw_eth_address();
-            }
-
-            xdbg("rank  eth_address %s address_from_pub %s block hash %s height %d signature_str  v %u r %s s %s",
-                base::xstring_utl::to_hex(eth_address).c_str(),   base::xstring_utl::to_hex(pub_addr_new).c_str(),
-                extra_relay_block.get_block_hash().hex().c_str(), extra_relay_block.get_block_height(), v,
-                r.hex().c_str(), s.hex().c_str());
-        }
-#endif 
-        // // for test
-        // top::utl::xecpubkey_t pub_key_obj = ecpriv.get_public_key();
-
-        // uint8_t signature_content[65];
-        // memcpy(signature_content, signature_str.data(), signature_str.size());
-
-        // utl::xecdsasig_t signature1(signature_content);
-        // bool verify_ret = pub_key_obj.verify_signature(signature1, sign_hash);
-        // if (verify_ret) {
-        //     xdbg("nathan test verify_signature ok");
-        // } else {
-        //     xerror("nathan test verify_signature fail");
-        // }
+    // utl::xecdsasig_t signature1(signature_content);
+    // bool verify_ret = pub_key_obj.verify_signature(signature1, sign_hash);
+    // if (verify_ret) {
+    //     xdbg("nathan test verify_signature ok");
+    // } else {
+    //     xerror("nathan test verify_signature fail");
+    // }
 }
 
 int xrelay_packer::verify_proposal(base::xvblock_t * proposal_block, base::xvqcert_t * bind_clock_cert, xcsobject_t * _from_child) {
     XMETRICS_TIME_RECORD("cons_tableblock_verify_proposal_time_consuming");
     auto ret = m_proposal_maker->verify_proposal(proposal_block, bind_clock_cert);
     if (ret == xsuccess) {
-        set_inner_vote_data(proposal_block);
+        set_vote_extend_data(proposal_block);
     }
 
     return ret;
+}
+
+bool xrelay_packer::verify_vote_extend_data(base::xvblock_t * proposal_block, const xvip2_t & replica_xip, const std::string & vote_extend_data, std::string & result) {
+    if ((proposal_block->get_cert()->get_consensus_flags() & base::enum_xconsensus_flag_extend_vote) == 0) {
+        return true;
+    }
+
+    if (vote_extend_data.empty()) {
+        xerror("xrelay_packer::verify_vote_extend_data,fail-vote_extend_data empty for proposal=%s", proposal_block->dump().c_str());
+        return true;
+    }
+
+    auto & inner_hash = proposal_block->get_vote_extend_hash();
+
+    const std::string account_addr_of_node = get_vcertauth()->get_signer(replica_xip);
+    utl::xkeyaddress_t key_address(account_addr_of_node);
+
+    utl::xecdsasig_t signature_obj((uint8_t *)vote_extend_data.c_str());
+
+    uint8_t addr_type = 0;
+    uint16_t net_id = 0;
+    if (false == key_address.get_type_and_netid(addr_type, net_id)) {
+        xerror("xrelay_packer::verify_vote_extend_data get type and netid fail,proposal=%s,node:%s", proposal_block->dump().c_str(), account_addr_of_node.c_str());
+        return false;
+    }
+
+    uint8_t out_publickey_data[65] = {0};
+    if (top::utl::xsecp256k1_t::get_publickey_from_signature(signature_obj, inner_hash, out_publickey_data)) {
+        top::utl::xecpubkey_t verify_key(out_publickey_data);
+        if (verify_key.to_address(addr_type, net_id) != account_addr_of_node) {
+            xerror("xrelay_packer::verify_vote_extend_data adress not feat,proposal=%s,node:%s, verify_key.to_address(addr_type, net_id):%s",
+                   proposal_block->dump().c_str(),
+                   account_addr_of_node.c_str(),
+                   verify_key.to_address(addr_type, net_id).c_str());
+            return false;
+        }
+
+    } else {
+        xerror("xrelay_packer::verify_vote_extend_data get_publickey_from_signature fail,proposal=%s,node:%s", proposal_block->dump().c_str(), account_addr_of_node.c_str());
+        return false;
+    }
+
+    result = std::string((char *)(out_publickey_data + 1), 64);
+    xdbg("xrelay_packer::verify_vote_extend_data verify sign succ.proposal_block:%s,signer:%s", proposal_block->dump().c_str(), account_addr_of_node.c_str());
+    return true;
+}
+
+void xrelay_packer::add_vote_extend_data(base::xvblock_t * proposal_block, const xvip2_t & replica_xip, const std::string & vote_extend_data, const std::string & result) {
+    if ((proposal_block->get_cert()->get_consensus_flags() & base::enum_xconsensus_flag_extend_vote) == 0) {
+        return;
+    }
+
+    m_relay_multisign[result] = std::make_pair(replica_xip, vote_extend_data);
+    xdbg("xrelay_packer::add_vote_extend_data proposal:%s m_inner_voted_datas size:%u", proposal_block->dump().c_str(), m_relay_multisign.size());
+}
+
+bool xrelay_packer::proc_vote_complate(base::xvblock_t * proposal_block) {
+    if ((proposal_block->get_cert()->get_consensus_flags() & base::enum_xconsensus_flag_extend_vote) == 0) {
+        return true;
+    }
+
+    if (m_relay_multisign.empty()) {
+        xerror("xrelay_packer::proc_vote_complate m_relay_multisign is empty,proposal:%s", proposal_block->dump().c_str());
+        return false;
+    }
+    auto network_proxy = m_para->get_resources()->get_network();
+    if (network_proxy == nullptr) {
+        xerror("xrelay_packer::proc_vote_complate network_proxy is null,proposal:%s", proposal_block->dump().c_str());
+        return false;
+    }
+
+    auto & relay_block_data = proposal_block->get_header()->get_extra_data();
+    xassert(!relay_block_data.empty());
+    std::error_code ec;
+    data::xrelay_block relay_block;
+    relay_block.decodeBytes(to_bytes(relay_block_data), ec);
+    if (ec) {
+        xwarn("xrelay_proposal_maker_t:make_proposal last_relay_block decodeBytes,proposal:%s,error %s; err msg %s",
+              proposal_block->dump().c_str(),
+              ec.category().name(),
+              ec.message().c_str());
+        return false;
+    }
+    uint64_t election_round = relay_block.get_inner_header().get_epochID();
+
+    // order multisign by election info.
+    std::vector<data::xrelay_election_node_t> reley_election;
+    auto ret = m_para->get_resources()->get_relay_chain_mgr()->get_elect_cache(election_round, reley_election);
+    if (!ret) {
+        xerror("xrelay_packer::proc_vote_complate get elect cache fail.proposal:%s,round:%lu", proposal_block->dump().c_str(), election_round);
+        return false;
+    }
+
+    base::xstream_t _stream(base::xcontext_t::instance());
+    uint16_t size = reley_election.size();
+    _stream << size;
+
+    uint32_t num = 0;
+    uint32_t i = 0;
+    for (auto & node : reley_election) {
+        auto it = m_relay_multisign.find(node.get_pubkey_str());
+        if (it == m_relay_multisign.end()) {
+            std::string empty_str = "";
+            _stream << empty_str;
+            xdbg("xrelay_packer::proc_vote_complate not found in election.proposal:%s,elect idx:%u", proposal_block->dump().c_str(), i);
+        } else {
+            _stream << it->second.second;
+            num++;
+            xdbg("xrelay_packer::proc_vote_complate found in election.proposal:%s,elect idx:%u", proposal_block->dump().c_str(), i);
+        }
+        i++;
+    }
+    if (num != m_relay_multisign.size()) {
+        xerror("xrelay_packer::proc_vote_complate relay multisign not match with election.proposal:%s,match num:%u, multisign num:%u",
+               proposal_block->dump().c_str(),
+               num,
+               m_relay_multisign.size());
+        return false;
+    }
+
+    xdbg("xrelay_packer::proc_vote_complate.proposal:%s,sign num:%u, election num:%u", proposal_block->dump().c_str(), num, reley_election.size());
+    std::string extend_data = std::string((char *)_stream.data(), _stream.size());
+    proposal_block->set_extend_data(extend_data);
+    return true;
+}
+
+bool xrelay_packer::verify_commit_msg_extend_data(base::xvblock_t * block, const std::string & extend_data) {
+    if ((block->get_cert()->get_consensus_flags() & base::enum_xconsensus_flag_extend_vote) == 0) {
+        return true;
+    }
+    auto & relay_block_data = block->get_header()->get_extra_data();
+    xassert(!relay_block_data.empty());
+    std::error_code ec;
+    data::xrelay_block relay_block;
+    relay_block.decodeBytes(to_bytes(relay_block_data), ec);
+    if (ec) {
+        xwarn(
+            "xrelay_proposal_maker_t:make_proposal last_relay_block decodeBytes block:%s,error %s; err msg %s", block->dump().c_str(), ec.category().name(), ec.message().c_str());
+        return false;
+    }
+
+    uint64_t election_round = relay_block.get_inner_header().get_epochID();
+    auto hash = relay_block.get_block_hash();
+    uint256_t hash256 = from_bytes<uint256_t>(hash.to_bytes());
+
+    std::vector<data::xrelay_election_node_t> reley_election;
+    auto ret = m_para->get_resources()->get_relay_chain_mgr()->get_elect_cache(election_round, reley_election);
+    if (!ret) {
+        xerror("xrelay_packer::verify_commit_msg_extend_data get elect cache fail.block:%s,round:%lu", block->dump().c_str(), election_round);
+        return false;
+    }
+
+    // check if multisignature is match with election data.
+    base::xstream_t stream{base::xcontext_t::instance(), (uint8_t *)extend_data.data(), static_cast<uint32_t>(extend_data.size())};
+    uint16_t size = 0;
+    stream >> size;
+    if (size != reley_election.size()) {
+        xerror("xrelay_packer::verify_commit_msg_extend_data block:%,smultisign size not match:%u:%u", block->dump().c_str(), size, reley_election.size());
+        return false;
+    }
+
+    uint32_t num = 0;
+    for (uint16_t i = 0; i < size; i++) {
+        std::string signature;
+        stream >> signature;
+
+        if (signature == "") {
+            xdbg("xrelay_packer::verify_commit_msg_extend_data,block:%,signature[%u] is empty", block->dump().c_str(), i);
+            continue;
+        }
+
+        utl::xecdsasig_t signature_obj((uint8_t *)signature.c_str());
+        uint8_t out_publickey_data[65] = {0};
+        if (!top::utl::xsecp256k1_t::get_publickey_from_signature(signature_obj, hash256, out_publickey_data)) {
+            xerror("xrelay_packer::verify_commit_msg_extend_data get_publickey_from_signature fail,block:%s,i:%d", block->dump().c_str(), i);
+            return false;
+        }
+
+        if (std::string((char *)(out_publickey_data + 1), 64) != reley_election[i].get_pubkey_str()) {
+            xerror("xrelay_packer::verify_commit_msg_extend_data pubkey not match,block:%s,i:%d", block->dump().c_str(), i);
+            return false;
+        }
+
+        num++;
+        xdbg("xrelay_packer::verify_commit_msg_extend_data,block:%s,num:%u,signature[%u]:%s", block->dump().c_str(), num, i, signature.c_str());
+    }
+    // todo(nathan): signature number check.
+
+    xdbg("xrelay_packer::verify_commit_msg_extend_data ok,block:%s,elect size:%d,sign num:%d", block->dump().c_str(), size, num);
+    return true;
 }
 
 // get parent group xip

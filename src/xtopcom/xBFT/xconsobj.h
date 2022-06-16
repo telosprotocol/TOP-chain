@@ -135,6 +135,10 @@ namespace top
             
             //return specific error code(enum_xconsensus_result_code) to let caller know reason
             virtual int     verify_proposal(base::xvblock_t * proposal_block,base::xvqcert_t * bind_clock_cert,xcsobject_t * _from_child); //load and execute block at sanbox
+            virtual bool    verify_vote_extend_data(base::xvblock_t * proposal_block, const xvip2_t & replica_xip, const std::string & vote_extend_data, std::string & result);
+            virtual void    add_vote_extend_data(base::xvblock_t * proposal_block, const xvip2_t & replica_xip, const std::string & vote_extend_data, const std::string & result);
+            virtual bool    proc_vote_complate(base::xvblock_t * proposal_block);
+            virtual bool    verify_commit_msg_extend_data(base::xvblock_t * block, const std::string & extend_data);
             
             //send clock event to child objects
             virtual bool    fire_clock(base::xvblock_t & latest_clock_block,int32_t cur_thread_id,uint64_t timenow_ms);

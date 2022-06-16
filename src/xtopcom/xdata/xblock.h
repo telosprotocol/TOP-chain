@@ -149,6 +149,7 @@ class xblock_consensus_para_t {
     void    set_coinbase(common::xaccount_address_t const& address) {m_coinbase = address;}
     void    set_block_gaslimit(uint64_t _gas_limit) {m_block_gas_limit = _gas_limit;}
     void    set_block_base_price(evm_common::u256 const& _price) {m_base_price = _price;}
+    void    set_election_round(uint64_t election_round) {m_election_round = election_round;}
 
  public:
     const std::string &     get_random_seed() const {return m_random_seed;}
@@ -178,6 +179,7 @@ class xblock_consensus_para_t {
     const std::string &     get_ethheader() const {return m_ethheader;}
     uint64_t                get_block_gaslimit() const {return m_block_gas_limit;}
     evm_common::u256 const& get_block_base_price() const {return m_base_price;}
+    uint64_t                get_election_round() const {return m_election_round;}
 
  private:
     std::string     m_account;
@@ -205,6 +207,7 @@ class xblock_consensus_para_t {
     common::xaccount_address_t  m_coinbase;
     uint64_t                    m_block_gas_limit{0};
     evm_common::u256            m_base_price;
+    uint64_t        m_election_round;
 };
 
 NS_END2

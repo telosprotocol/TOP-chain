@@ -41,6 +41,7 @@ public:
 
     void send_receipt_msgs(const xvip2_t & from_addr, const std::vector<data::xcons_transaction_ptr_t> & receipts, std::vector<data::xcons_transaction_ptr_t> & non_shard_cross_receipts) override;
 
+    virtual bool get_election_round(const xvip2_t & xip, uint64_t & election_round) override;
 
 protected:
     // network message callback
