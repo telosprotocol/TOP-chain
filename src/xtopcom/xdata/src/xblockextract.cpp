@@ -9,6 +9,7 @@
 #include "xcommon/xerror/xerror.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xconfig/xconfig_register.h"
+#include "xpbase/base/top_utils.h"
 
 NS_BEG2(top, data)
 
@@ -171,10 +172,9 @@ xtransaction_ptr_t xblockextract_t::unpack_raw_tx(base::xvblock_t* _block, std::
 
 void xblockextract_t::unpack_relayblock(base::xvblock_t* _block, bool include_sig, xrelay_block & relayblock, std::error_code & ec) {
     auto & header_extra = _block->get_header()->get_extra_data();
-   
-
-    if (_block->get_height() == 0
-        || header_extra.empty()) {
+    xdbg("unpack_relayblock, header_extra: %d, %s", header_extra.size(), top::HexEncode(header_extra).c_str());
+    //if (_block->get_height() == 0
+    if (header_extra.empty()) {
         ec = common::error::xerrc_t::invalid_block;
         xerror("xblockextract_t::unpack_relayblock parameters invalid.");
         return;
@@ -199,7 +199,7 @@ void xblockextract_t::unpack_relayblock(base::xvblock_t* _block, bool include_si
         std::string sign_list = _block->get_cert()->get_extend_data();
         if (sign_list.empty()) {
             ec = common::error::xerrc_t::invalid_block;
-            xerror("xblockextract_t::unpack_relayblock extend data empty.");
+            xwarn("xblockextract_t::unpack_relayblock extend data empty.");
             return;
         }
         std::vector<xrelay_signature_node_t> signature_nodes;

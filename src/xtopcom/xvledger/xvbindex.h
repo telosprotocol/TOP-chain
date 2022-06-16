@@ -65,6 +65,7 @@ namespace top
 
             inline const std::string &  get_extend_cert()      const {return m_extend_cert;}
             inline const std::string &  get_extend_data()      const {return m_extend_data;}
+            inline void                 set_extend_data(const std::string& data) { m_extend_data = data;}
 
             inline enum_xvblock_level   get_block_level()  const {return xvheader_t::cal_block_level(m_block_types);}
             inline enum_xvblock_class   get_block_class()  const {return xvheader_t::cal_block_class(m_block_types);}

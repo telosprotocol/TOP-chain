@@ -162,6 +162,7 @@ namespace top
             bool                        store_units_to_db(xblockacct_t* target_account,base::xvbindex_t* index_ptr);
             virtual bool                on_object_close() override;
             int                         load_block_idx_by_hash(const std::string & hash, std::string & account, uint64_t & height);
+            xobject_ptr_t<base::xvblock_t>  create_relay_block(base::xvblock_t *block);
         private:
             xvblockdb_t*                       m_xvblockdb_ptr;
             std::string                        m_store_path;

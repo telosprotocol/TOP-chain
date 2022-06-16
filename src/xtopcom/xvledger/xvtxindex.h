@@ -86,14 +86,12 @@ namespace top
             inline const std::string &         get_tx_hash()        const {xassert(m_tx_hash!="");return m_tx_hash;}
             inline enum_transaction_subtype    get_tx_phase_type()  const {return (enum_transaction_subtype)m_tx_phase_type;}
             inline bool                        is_self_tx() const {return m_tx_phase_type == enum_transaction_subtype_self;}
-
             const uint64_t                     get_block_clock()   const;
-        
         public:
             void set_tx_hash(std::string const & tx_hash);
             void set_block_addr(const std::string & block_addr) {m_block_addr = block_addr;}
             void set_block_height(uint64_t block_height) {m_block_height = block_height;}
-            // void set_tx_phase_type(enum_transaction_subtype tx_phase_type);
+            void set_block_hash(const std::string & hash) {m_block_hash = hash;}
         protected:
             virtual int32_t    do_write(base::xstream_t & stream) override;
             virtual int32_t    do_read(base::xstream_t & stream) override;

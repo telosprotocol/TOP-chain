@@ -60,6 +60,7 @@ namespace top
             enum_vaccount_addr_type_secp256k1_evm_user_account  = '6',
             enum_vaccount_addr_type_secp256k1_eth_user_account  = '8',
             enum_vaccount_addr_type_block_contract              = 'a',  //secp256k1 generated key->account
+            enum_vaccount_addr_type_relay_block                 = 'b',  //secp256k1 generated key->account
         };
         
         //each chain has max 16 zones/buckets, define as below

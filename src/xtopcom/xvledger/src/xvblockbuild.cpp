@@ -143,7 +143,25 @@ namespace top
                 m_consensus_flag = base::enum_xconsensus_flag_extend_vote;
             }
         }
-
+        void xbbuild_para_t::set_relay_cert_para(uint64_t _clock, uint32_t _viewtoken, uint64_t _viewid, xvqcert_t * cert) {
+            set_default_qcert();
+            m_clock = _clock;
+            m_viewtoken = _viewtoken;
+            m_viewid = _viewid;
+            m_validator = cert->get_validator();
+            m_auditor = cert->get_auditor();
+            m_drand_height = cert->get_drand_height();
+            m_justify_cert_hash = cert->get_justify_cert_hash();
+            m_consensus_flag = base::enum_xconsensus_flag_extend_vote;
+        }
+        void xbbuild_para_t::set_relay_cert_para() {
+            set_default_qcert();
+            m_clock = 0;
+            m_viewtoken = 1;
+            m_viewid = 0;
+            m_validator = xvip2_t({(uint64_t)-1, (uint64_t)-1});
+            m_consensus_flag = base::enum_xconsensus_flag_extend_vote;
+        }
 
         //----------------------------------------xvblockbuild_t-------------------------------------//
         xvblockbuild_t::xvblockbuild_t() {

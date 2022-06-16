@@ -58,6 +58,12 @@ private:
     /// @return Block created.
     base::xauto_ptr<base::xvblock_t> create_genesis_of_evm_contract_account(base::xvaccount_t const & account, xenum_create_src_t src, std::error_code & ec);
 
+    /// @brief Create genesis block of relay account.
+    /// @param account Relay account.
+    /// @param ec Log the error code.
+    /// @return Block created.
+    base::xauto_ptr<base::xvblock_t> create_genesis_of_relay_account(base::xvaccount_t const & account, xenum_create_src_t src, std::error_code & ec);
+
     /// @brief Create genesis block of genesis account.
     /// @param account Genesis account.
     /// @param data Data of genesis account, which means balance.
