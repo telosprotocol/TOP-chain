@@ -44,6 +44,7 @@ namespace data {
        
         void    streamRLP(evm_common::RLPStream &_s) const; 
         bool    decodeRLP(evm_common::RLP const& _r, std::error_code & ec);
+        std::string get_pubkey_str() const;
 
         uint64_t                stake;           //election stake
         evm_common::h256        public_key_x;    //election key 
@@ -185,7 +186,7 @@ namespace data {
         static const unsigned block_fileds = 3;
 
         xrelay_block() {}
-        xrelay_block(uint8_t block_version, evm_common::h256  prev_hash, uint64_t block_height, uint64_t epochID, uint64_t timestamp);
+        xrelay_block(evm_common::h256  prev_hash, uint64_t block_height, uint64_t epochID, uint64_t timestamp);
         ~xrelay_block() {}
     
     public:

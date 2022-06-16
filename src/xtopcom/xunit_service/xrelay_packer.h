@@ -42,8 +42,8 @@ public:
 
     // return specific error code(enum_xconsensus_result_code) to let caller know reason
     virtual int  verify_proposal(base::xvblock_t * proposal_block, base::xvqcert_t * bind_clock_cert, xcsobject_t * _from_child) override;
-    virtual bool verify_vote_extend_data(base::xvblock_t * proposal_block, const xvip2_t & replica_xip, const std::string & vote_extend_data) override;
-    virtual void add_vote_extend_data(base::xvblock_t * proposal_block, const xvip2_t & replica_xip, const std::string & vote_extend_data) override;
+    virtual bool verify_vote_extend_data(base::xvblock_t * proposal_block, const xvip2_t & replica_xip, const std::string & vote_extend_data, std::string & result) override;
+    virtual void add_vote_extend_data(base::xvblock_t * proposal_block, const xvip2_t & replica_xip, const std::string & vote_extend_data, const std::string & result) override;
     virtual bool proc_vote_complate(base::xvblock_t * proposal_block) override;
     virtual bool verify_commit_msg_extend_data(base::xvblock_t * block, const std::string & extend_data) override;
 
@@ -93,8 +93,8 @@ private:
     // record last xip in case of consensus success but leader xip changed.
     xvip2_t                                  m_last_xip2{};
 
-    uint32_t                                 m_wait_count{0};
-    std::map<xvip2_t, std::string, xvip2_compare> m_relay_multisign;
+    // uint32_t                                 m_wait_count{0};
+    std::map<std::string, std::pair<xvip2_t, std::string>> m_relay_multisign; // key:pubkey string, value: first: xip, second: signature.
 };
 
 using xrelay_packer_ptr_t = xobject_ptr_t<xrelay_packer>;

@@ -77,12 +77,9 @@ data::xrelay_block xrelay_proposal_maker_t::build_relay_block(evm_common::h256 p
                                                               uint64_t timestamp,
                                                               const std::vector<data::xeth_transaction_t> &transactions,
                                                               const std::vector<data::xeth_receipt_t> & receipts,
-                                                              const data::xrelay_election_group_t & reley_election_group) {
-    uint64_t block_version = 0;
-    // todo(nathan): use real epochID. 是不是可以直接用当前us vnode driver的轮次？ 需要验证签名的轮次是不是跟它匹配。
-    uint64_t epochID = 0;
-    data::xrelay_block relay_block(block_version, prev_hash,  block_height, epochID, timestamp);
-    xdbg("xrelay_proposal_maker_t::build_relay_block, %s,%llu,%llu", prev_hash.hex().c_str(), block_height, timestamp);
+                                                              const data::xrelay_election_group_t & reley_election_group,
+                                                              uint64_t epochid) {
+    data::xrelay_block relay_block(prev_hash, block_height, epochid, timestamp);
     relay_block.set_transactions(transactions);
     relay_block.set_receipts(receipts);
     relay_block.set_elections_next(reley_election_group);
@@ -94,10 +91,9 @@ data::xrelay_block xrelay_proposal_maker_t::build_relay_block(evm_common::h256 p
 }
 
  bool xrelay_proposal_maker_t::build_genesis_relay_block(data::xrelay_block & genesis_block) {
-    uint8_t block_version = 0;
     uint64_t epochID = 0;
     evm_common::h256 prev_hash;
-    data::xrelay_block relay_block(block_version, prev_hash, 0, epochID, 0);
+    data::xrelay_block relay_block(prev_hash, 0, epochID, 0);
     xdbg("xrelay_proposal_maker_t::build_genesis_relay_block");
     std::vector<data::xrelay_election_node_t> reley_election;
     auto ret = m_relay_chain_mgr->get_elect_cache(0, reley_election);
@@ -136,6 +132,7 @@ bool xrelay_proposal_maker_t::build_relay_block_data_leader(const data::xblock_p
                                                             const data::xrelay_election_group_t & reley_election_group,
                                                             uint64_t last_evm_table_height,
                                                             uint64_t & new_evm_table_height,
+                                                            uint64_t epochid,
                                                             std::string & relay_block_data) {
     evm_common::h256 prev_hash;
     uint64_t block_height = 0;
@@ -151,7 +148,6 @@ bool xrelay_proposal_maker_t::build_relay_block_data_leader(const data::xblock_p
             return false;
         }
         
-        last_relay_block.build_finish();
         prev_hash = last_relay_block.get_block_hash();
         block_height = last_relay_block.get_block_height() + 1;
     } else {
@@ -160,7 +156,6 @@ bool xrelay_proposal_maker_t::build_relay_block_data_leader(const data::xblock_p
         if (!ret) {
             return false;
         }
-        genesis_block.build_finish();
         prev_hash = genesis_block.get_block_hash();
         block_height = genesis_block.get_block_height() + 1;
     }
@@ -185,7 +180,8 @@ bool xrelay_proposal_maker_t::build_relay_block_data_leader(const data::xblock_p
          reley_election_group.elections_vector.size(),
          receipts.size());
 
-    data::xrelay_block relay_block = build_relay_block(prev_hash, block_height, timestamp, transactions, receipts, reley_election_group);
+    data::xrelay_block relay_block = build_relay_block(prev_hash, block_height, timestamp, transactions, receipts, reley_election_group, epochid);
+    xdbg("xrelay_proposal_maker_t::build_relay_block_data_leader relay_block:%s", relay_block.dump().c_str());
 
     xbytes_t rlp_stream = relay_block.encodeBytes();
     relay_block_data = from_bytes<std::string>((xbytes_t)(rlp_stream));
@@ -200,6 +196,7 @@ bool xrelay_proposal_maker_t::build_relay_block_data_backup(evm_common::h256 pre
                                                             uint64_t new_evm_table_height,
                                                             uint64_t timestamp,
                                                             uint64_t new_election_height,
+                                                            uint64_t epochid,
                                                             std::string & relay_block_data) {
     std::map<uint64_t, xrelay_chain::xcross_txs_t> cross_tx_map;
     auto ret = m_relay_chain_mgr->get_tx_cache_backup(last_evm_table_height, new_evm_table_height, cross_tx_map);
@@ -225,7 +222,7 @@ bool xrelay_proposal_maker_t::build_relay_block_data_backup(evm_common::h256 pre
     reley_election_group.election_epochID = new_election_height;
     reley_election_group.elections_vector = reley_election;
 
-    data::xrelay_block relay_block = build_relay_block(prev_hash, block_height, timestamp,transactions, receipts, reley_election_group);
+    data::xrelay_block relay_block = build_relay_block(prev_hash, block_height, timestamp,transactions, receipts, reley_election_group, epochid);
 
     xdbg("xrelay_proposal_maker_t::build_relay_block_data_backup relay_block:%s", relay_block.dump().c_str());
 
@@ -307,7 +304,7 @@ xblock_ptr_t xrelay_proposal_maker_t::make_proposal(data::xblock_consensus_para_
         reley_election_group.election_epochID = new_election_height;
         reley_election_group.elections_vector = reley_election;
 
-        ret = build_relay_block_data_leader(latest_cert_block, proposal_para.get_gmtime(), reley_election_group, last_evm_height, evm_height, relay_block_data);
+        ret = build_relay_block_data_leader(latest_cert_block, proposal_para.get_gmtime(), reley_election_group, last_evm_height, evm_height, proposal_para.get_election_round(), relay_block_data);
         if (!ret) {
             xinfo("xrelay_proposal_maker_t::make_proposal fail-no tx for pack.%s", proposal_para.dump().c_str());
             return nullptr;
@@ -316,7 +313,28 @@ xblock_ptr_t xrelay_proposal_maker_t::make_proposal(data::xblock_consensus_para_
     else {
         evm_height = last_evm_height;
         elect_height = last_elect_height;
-        relay_block_data = latest_cert_block->get_header()->get_extra_data();
+        auto & last_relay_block_data = latest_cert_block->get_header()->get_extra_data();
+        xassert(!last_relay_block_data.empty());
+
+        std::error_code  ec;
+        data::xrelay_block last_relay_block;
+        last_relay_block.decodeBytes(to_bytes(last_relay_block_data), ec);
+        if (ec) {
+            xwarn("xrelay_proposal_maker_t:make_proposal last_relay_block decodeBytes error %s; err msg %s", ec.category().name(), ec.message().c_str());
+            return nullptr;
+        }
+        if (last_relay_block.get_inner_header().get_epochID() != proposal_para.get_election_round()) {
+            if (last_relay_block.get_inner_header().get_epochID() + 1 != proposal_para.get_election_round()) {
+                xerror("xrelay_proposal_maker_t:make_proposal epochid exception.relay_block:%s,new round:%lu", last_relay_block.dump().c_str(), proposal_para.get_election_round());
+            }
+            xwarn("xrelay_proposal_maker_t:make_proposal epochid changed, should consensus from phase 0 again.relay_block:%s,new round:%lu", last_relay_block.dump().c_str(), proposal_para.get_election_round());
+            last_relay_block.get_header().set_epochid(proposal_para.get_election_round());
+            xbytes_t rlp_stream = last_relay_block.encodeBytes();
+            relay_block_data = from_bytes<std::string>((xbytes_t)(rlp_stream));
+            wrap_phase = 0;
+        } else {
+            relay_block_data = last_relay_block_data;
+        }
     }
     _stream << wrap_phase;
     _stream << evm_height;
@@ -354,7 +372,6 @@ xblock_ptr_t xrelay_proposal_maker_t::make_proposal(data::xblock_consensus_para_
             xerror("xrelay_proposal_maker_t:make_proposal proposal_relay_block decodeBytes error %s; err msg %s", ec.category().name(), ec.message().c_str());
             return nullptr;
         }
-        proposal_relay_block.build_finish();
         auto hash = proposal_relay_block.get_block_hash(); // todo(nathan):inner header may not enough.
         uint256_t hash256 = from_bytes<uint256_t>(hash.to_bytes());
         proposal_block->set_vote_extend_hash(hash256);
@@ -455,6 +472,7 @@ bool xrelay_proposal_maker_t::check_wrap_proposal(const xblock_ptr_t & latest_ce
                                                  evm_height,
                                                  proposal_relay_block.get_timestamp(),
                                                  (proposal_relay_block.get_header().get_elections_sets().size() == 0) ? 0 : elect_height,
+                                                 proposal_relay_block.get_inner_header().get_epochID(),
                                                  relay_block_data);
         if (!ret) {
             xwarn("xrelay_proposal_maker_t::check_wrap_proposal build relay block data fail.proposal_block=%s", proposal_block->dump().c_str());
@@ -496,7 +514,6 @@ bool xrelay_proposal_maker_t::check_wrap_proposal(const xblock_ptr_t & latest_ce
             xerror("xrelay_proposal_maker_t:check_wrap_proposal proposal_relay_block decodeBytes error %s; err msg %s", ec.category().name(), ec.message().c_str());
             return false;
         }
-        proposal_relay_block.build_finish();
         auto hash = proposal_relay_block.get_block_hash(); // todo(nathan):inner header may not enough.
         relay_hash = from_bytes<uint256_t>(hash.to_bytes());
     }

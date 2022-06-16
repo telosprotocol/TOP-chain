@@ -1236,11 +1236,9 @@ namespace top
                     XMETRICS_GAUGE(metrics::cpu_ca_verify_multi_sign_xbft, 1);
                     if(get_vcertauth()->verify_muti_sign(_merge_cert.get(),_for_check_block_->get_account()) == base::enum_vcert_auth_result::enum_successful)
                     {
-                        if (_for_check_block_->get_cert()->get_consensus_flags() & base::enum_xconsensus_flag_extend_vote) {
-                            if (!verify_commit_msg_extend_data(_for_check_block_, _merge_cert->get_extend_data())) {
-                                xerror("xBFTdriver_t::fire_verify_commit_job,fail-commit_msg_extend_data for block=%s,at node=0x%llx",_for_check_block_->dump().c_str(),get_xip2_low_addr());
-                                return true;
-                            }
+                        if (!verify_commit_msg_extend_data(_for_check_block_, _merge_cert->get_extend_data())) {
+                            xerror("xBFTdriver_t::fire_verify_commit_job,fail-commit_msg_extend_data for block=%s,at node=0x%llx",_for_check_block_->dump().c_str(),get_xip2_low_addr());
+                            return true;
                         }
                         xinfo("xBFTdriver_t::fire_verify_commit_job,successful finish verify for commit block:%s at node=0x%llx",_for_check_block_->dump().c_str(),get_xip2_addr().low_addr);
 
@@ -1287,24 +1285,14 @@ namespace top
                         XMETRICS_GAUGE(metrics::cpu_ca_verify_sign_xbft, 1);
                         if(get_vcertauth()->verify_sign(replica_xip, replica_cert,_proposal->get_account()) == base::enum_vcert_auth_result::enum_successful) //verify partial-certication of msg
                         {
-                            bool need_extend_vote = (_proposal->get_cert()->get_consensus_flags() & base::enum_xconsensus_flag_extend_vote) != 0;
-                            // std::string inner_vote_addr;
-                            if (need_extend_vote) {
-                                if (vote_extend_data.empty()) {
-                                    xerror("xBFTdriver_t::fire_verify_vote_job,fail-vote_extend_data empty for _proposal=%s,at node=0x%llx",_proposal->dump().c_str(),get_xip2_low_addr());
+                            std::string extend_data_result;
+                            if (!verify_vote_extend_data(_proposal->get_block(), replica_xip, vote_extend_data, extend_data_result)) {
+                                    xerror("xBFTdriver_t::fire_verify_vote_job,fail-verify vote extend data _proposal=%s,at node=0x%llx",_proposal->dump().c_str(),get_xip2_low_addr());
                                     return true;
-                                }
-
-                                if (!verify_vote_extend_data(_proposal->get_block(), replica_xip, vote_extend_data)) {
-                                     xerror("xBFTdriver_t::fire_verify_vote_job,fail-verify vote extend data _proposal=%s,at node=0x%llx",_proposal->dump().c_str(),get_xip2_low_addr());
-                                     return true;
-                                }
                             }
                             if(_proposal->add_voted_cert(replica_xip,replica_cert,get_vcertauth())) //add to local list
                             {
-                                if (need_extend_vote) {
-                                    add_vote_extend_data(_proposal->get_block(), replica_xip, vote_extend_data);
-                                }
+                                add_vote_extend_data(_proposal->get_block(), replica_xip, vote_extend_data, extend_data_result);
                                 if(_proposal->is_vote_finish()) //check again
                                 {
                                     if(false == _proposal->get_voted_validators().empty())
@@ -1319,11 +1307,9 @@ namespace top
                                         const std::string merged_sign_for_auditors = get_vcertauth()->merge_muti_sign(_proposal->get_voted_auditors(), _proposal->get_block());
                                         _proposal->get_block()->set_audit_signature(merged_sign_for_auditors);
                                     }
-                                    if (need_extend_vote) {
-                                        if (!proc_vote_complate(_proposal->get_block())) {
-                                            xerror("xBFTdriver_t::fire_verify_vote_job,fail-proc vote complate _proposal=%s,at node=0x%llx",_proposal->dump().c_str(),get_xip2_low_addr());
-                                            return true;
-                                        }
+                                    if (!proc_vote_complate(_proposal->get_block())) {
+                                        xerror("xBFTdriver_t::fire_verify_vote_job,fail-proc vote complate _proposal=%s,at node=0x%llx",_proposal->dump().c_str(),get_xip2_low_addr());
+                                        return true;
                                     }
                                     
                                     XMETRICS_GAUGE(metrics::cpu_ca_verify_multi_sign_xbft, 1);

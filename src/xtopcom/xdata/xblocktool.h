@@ -19,6 +19,7 @@
 #include "xdata/xblockextract.h"
 #include "xvledger/xreceiptid.h"
 #include "xvledger/xvpropertyprove.h"
+#include "xdata/xrelay_block.h"
 
 NS_BEG2(top, data)
 
@@ -87,6 +88,9 @@ class xblocktool_t {
                                               base::xvblock_t * latest_commit_block,
                                               base::xvproperty_prove_ptr_t & property_prove_ptr,
                                               xtablestate_ptr_t & tablestate_ptr);
+
+public:  // relay block
+    static bool get_relay_block_from_wrap_block(base::xvblock_t * wrap_block, uint8_t & wrap_phase, data::xrelay_block & relay_block);
 };
 
 // TODO(jimmy) xblocktool_t split to xblock_utl, xreceipt_utl, xaddress_utl

@@ -54,11 +54,11 @@ namespace top
             return enum_xconsensus_code_successful;
         }
 
-        bool    xcsaccount_t::verify_vote_extend_data(base::xvblock_t * proposal_block, const xvip2_t & replica_xip, const std::string & vote_extend_data) {
+        bool    xcsaccount_t::verify_vote_extend_data(base::xvblock_t * proposal_block, const xvip2_t & replica_xip, const std::string & vote_extend_data, std::string & result) {
             return true;
         }
 
-        void    xcsaccount_t::add_vote_extend_data(base::xvblock_t * proposal_block, const xvip2_t & replica_xip, const std::string & vote_extend_data) {
+        void    xcsaccount_t::add_vote_extend_data(base::xvblock_t * proposal_block, const xvip2_t & replica_xip, const std::string & vote_extend_data, const std::string & result) {
         }
 
         bool    xcsaccount_t::proc_vote_complate(base::xvblock_t * proposal_block) {

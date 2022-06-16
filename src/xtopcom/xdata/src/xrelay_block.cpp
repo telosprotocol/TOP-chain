@@ -14,6 +14,8 @@ NS_BEG2(top, data)
 
 using namespace top::evm_common;
 
+#define RELAY_BLOCK_VERSION (0)
+
 top::evm_common::h256 combine_hash(top::evm_common::h256 hash1, top::evm_common::h256 hash2)
 {
     top::evm_common::h256 hash_result { 0 };
@@ -46,6 +48,12 @@ bool xrelay_election_node_t::decodeRLP(evm_common::RLP const& _r, std::error_cod
     public_key_y = _r[1].toHash<evm_common::h256>();
     stake        = _r[2].toInt<uint64_t>();
     return true;
+}
+
+std::string xrelay_election_node_t::get_pubkey_str() const {
+    xbytes_t bytes_x = public_key_x.to_bytes();
+    xbytes_t bytes_y = public_key_y.to_bytes();
+    return from_bytes<std::string>(bytes_x) + from_bytes<std::string>(bytes_y);
 }
 
 void xrelay_election_group_t::streamRLP(evm_common::RLPStream &_s)  const {
@@ -456,23 +464,14 @@ void xrelay_block_header::make_inner_hash()
 }
 
 ///////////////////xrelay_block start /////////
-xrelay_block::xrelay_block(uint8_t block_version, evm_common::h256  prev_hash, uint64_t block_height,
+xrelay_block::xrelay_block(evm_common::h256  prev_hash, uint64_t block_height,
                           uint64_t epochID, uint64_t timestamp)
 {
-    switch (block_version)
-    {
-    case 0:
-        m_version = block_version;
-        m_header.set_prev_hash(prev_hash);
-        m_header.set_block_height(block_height);
-        m_header.set_epochid(epochID);
-        m_header.set_timestamp(timestamp);
-        break;
-    default:
-        xwarn("xrelay_block::xrelay_block block_version %d not support!", m_version);
-        break;
-    }
-
+    m_version = RELAY_BLOCK_VERSION;
+    m_header.set_prev_hash(prev_hash);
+    m_header.set_block_height(block_height);
+    m_header.set_epochid(epochID);
+    m_header.set_timestamp(timestamp);
 }
 
 void xrelay_block::set_elections_next(const xrelay_election_group_t &elections)
@@ -562,7 +561,7 @@ bool xrelay_block::decodeBytes(xbytes_t const& _d, std::error_code & ec, bool wi
     }
 
     m_version = (uint8_t)_d.front();
-    if (m_version != 0) {
+    if (m_version != RELAY_BLOCK_VERSION) {
         ec = common::error::xerrc_t::invalid_rlp_stream;
         xerror("xrelay_block::decodeBytes fail invalid version,%d", m_version);
         return false;
@@ -662,11 +661,15 @@ std::string xrelay_block::dump() const {
     char local_param_buf[256];
     xprintf(local_param_buf,
             sizeof(local_param_buf),
-            "{height:%lu,epochid:%lu,timestamp:%lu,election size:%u,receipts size:%u}",
+            "{height:%lu,epochid:%lu,timestamp:%lu,prev_hash:%s,hash:%s,election epoch:%lu size:%u,tx size:%u,receipts size:%u}",
             m_header.m_inner_header.get_block_height(),
             m_header.m_inner_header.get_epochID(),
             m_header.m_inner_header.get_timestamp(),
+            m_header.m_prev_hash.hex().c_str(),
+            m_header.m_block_hash.hex().c_str(),
+            m_header.get_elections_sets().election_epochID,
             (uint32_t)m_header.get_elections_sets().elections_vector.size(),
+            (uint32_t)m_transactions.size(),
             (uint32_t)m_receipts.size());
     return std::string(local_param_buf);
 }

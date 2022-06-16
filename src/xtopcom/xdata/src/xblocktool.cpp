@@ -820,4 +820,19 @@ bool xblocktool_t::check_lacking_unit_and_try_sync(const base::xvaccount_t & vac
     return true;
 }
 
+// bool xblocktool_t::get_relay_block_from_wrap_block(base::xvblock_t * wrap_block, uint8_t & wrap_phase, data::xrelay_block & relay_block) {
+//     uint8_t wrap_phase_tmp;
+//     auto & wrap_data = wrap_block->get_header()->get_comments();
+//     if (wrap_data.empty()) {
+//         xerror("xblocktool_t::get_relay_block_from_wrap_block wrap data should not empty.");
+//         return false;
+//     } else {
+//         base::xstream_t stream_wrap_data{base::xcontext_t::instance(), (uint8_t*)wrap_data.data(), static_cast<uint32_t>(wrap_data.size())};
+//         stream_wrap_data >> wrap_phase_tmp;
+//     }
+
+
+
+// }
+
 NS_END2

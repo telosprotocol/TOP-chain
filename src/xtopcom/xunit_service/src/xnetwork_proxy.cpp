@@ -331,6 +331,14 @@ void xnetwork_proxy::send_receipt_msgs(const xvip2_t & from_addr,
     }
 }
 
+bool xnetwork_proxy::get_election_round(const xvip2_t & xip, uint64_t & election_round) {
+    auto net_driver = find(xip);
+    if (net_driver == nullptr) {
+        return false;
+    }
+    election_round = net_driver->address().election_round().value();
+    return true;
+}
 
 void xnetwork_proxy::send_receipt_msg(std::shared_ptr<vnetwork::xvnetwork_driver_face_t> net_driver,
                                       const data::xcons_transaction_ptr_t & receipt,
