@@ -329,6 +329,7 @@ xblock_ptr_t xrelay_proposal_maker_t::make_proposal(data::xblock_consensus_para_
             }
             xwarn("xrelay_proposal_maker_t:make_proposal epochid changed, should consensus from phase 0 again.relay_block:%s,new round:%lu", last_relay_block.dump().c_str(), proposal_para.get_election_round());
             last_relay_block.get_header().set_epochid(proposal_para.get_election_round());
+            last_relay_block.build_finish();
             xbytes_t rlp_stream = last_relay_block.encodeBytes();
             relay_block_data = from_bytes<std::string>((xbytes_t)(rlp_stream));
             wrap_phase = 0;

@@ -453,14 +453,13 @@ void xrelay_chain_mgr_t::on_wrap_db_event(data::xblock_ptr_t wrap_block) {
     }
 
     if (wrap_phase == 2) {
-        std::shared_ptr<data::xrelay_block> relay_block = nullptr;
-        auto relay_block_data = wrap_block->get_relay_block_data();
+        // std::shared_ptr<data::xrelay_block> relay_block = nullptr;
+        // auto relay_block_data = wrap_block->get_relay_block_data();
         // todo(nathan): store relay block.
-        xinfo("xrelay_chain_mgr_t::on_wrap_db_event created a new relay block.wrap_phase:%d,evm_height:%llu,rec_height:%llu,relay_block_data:%s,wrap_block:%s",
+        xinfo("xrelay_chain_mgr_t::on_wrap_db_event created a new relay block.wrap_phase:%d,evm_height:%llu,rec_height:%llu,wrap_block:%s",
                 wrap_phase,
                 evm_height,
                 rec_height,
-                relay_block_data.c_str(),
                 wrap_block->dump().c_str());
     }
     m_cross_tx_cache.update_last_proc_evm_height(evm_height);

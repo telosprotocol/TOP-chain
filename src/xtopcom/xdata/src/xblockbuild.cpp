@@ -445,10 +445,6 @@ xrelay_block_build_t::xrelay_block_build_t(base::xvblock_t * prev_block,
                                    para.get_justify_cert_hash(),
                                    need_relay_prove);
     init_header_qcert(build_para);
-    if (need_relay_prove) {
-        // set extend data, just hold place here, will set multisign when consensus success.
-        get_qcert()->set_extend_data("test");
-    }
     set_header_extra(relay_block_data);
     set_header_comments(relay_wrap_data);
 }
