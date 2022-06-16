@@ -62,13 +62,6 @@ contract_runtime::evm::xevm_output_t xtop_evm::execute(data::xcons_transaction_p
         auto action_result = execute_action(std::move(action), vm_para);
         evm_output.used_gas = action_result.used_gas;
         evm_output.tx_result = action_result;
-        // result.transaction_results.emplace_back(action_result);
-        // if (!action_result.status.ec) {
-        //     xwarn(
-        //         "[xtop_evm::execute] tx failed, category: %s, msg: %s, abort all txs after!", action_result.status.ec.category().name(),
-        //         action_result.status.ec.message().c_str());
-        //     result.status.ec = action_result.status.ec;
-        // }
     } catch (top::error::xtop_error_t & eh) {
         evm_output.status.ec = eh.code();  // this should be implementation bug(or cases we don't charge). tx won't be made into blcok and so no gas cost.
         // xerror("xtop_evm: caught chain error exception: category: %s msg: %s", eh.code().category().name(), eh.what());

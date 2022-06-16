@@ -450,6 +450,29 @@ base::xtable_shortid_t xcons_transaction_t::get_peer_tableid() const {
     }
 }
 
+common::xaccount_address_t xcons_transaction_t::sender() const {
+    return m_tx->sender();
+}
+
+common::xaccount_address_t xcons_transaction_t::recver() const {
+    return m_tx->recver();
+}
+
+common::xaccount_address_t xcons_transaction_t::executing_address() const {
+    if (get_transaction() != nullptr) {
+        return is_recv_tx() ? m_tx->recver() : m_tx->sender();
+    } else {
+        assert(m_receipt != nullptr);
+        assert(!m_receipt->get_caller().empty());
+        assert(m_receipt->get_caller() != m_receipt->get_contract_address());
+        std::error_code ec;
+        auto ret = common::xaccount_address_t::build_from(m_receipt->get_caller(), ec);
+        if (ec) {
+            xerror("invalid address %s", m_receipt->get_caller().c_str());
+        }
+        return ret;
+    }
+}
 
 }  // namespace data
 }  // namespace top

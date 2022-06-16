@@ -135,6 +135,12 @@ class xtransaction_v2_t : public xbase_dataunit_t<xtransaction_v2_t, xdata_type_
     virtual const std::string & get_target_address() const override {return m_target_addr;};
     virtual bool is_evm_tx() const override {return false;}
 
+    // refactor
+    common::xaccount_address_t sender() const override;
+    void sender(common::xaccount_address_t const & sender_addr) override;
+    common::xaccount_address_t recver() const override;
+    void recver(common::xaccount_address_t const & recver_addr) override;
+
 private:
     std::string m_source_addr;
     std::string m_target_addr;

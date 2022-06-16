@@ -601,5 +601,34 @@ int32_t xtransaction_v1_t::parse(enum_xaction_type source_type, enum_xaction_typ
     return 0;
 }
 
+common::xaccount_address_t xtransaction_v1_t::sender() const {
+    std::error_code ec;
+    auto ret = common::xaccount_address_t::build_from(m_source_action.get_account_addr(), ec);
+    if (ec) {
+        xerror("invalid sender address in v1 transaction: %s", m_source_action.get_account_addr().c_str());
+    }
+
+    return ret;
+}
+
+void xtransaction_v1_t::sender(common::xaccount_address_t const & sender_addr) {
+    m_source_action.set_account_addr(sender_addr.value());
+}
+
+common::xaccount_address_t xtransaction_v1_t::recver() const {
+    std::error_code ec;
+    auto const & raw = m_target_addr.empty() ? m_target_action.get_account_addr() : m_target_addr;
+    auto ret = common::xaccount_address_t::build_from(raw, ec);
+    if (ec) {
+        xerror("invalid recver address in v1 transaction. addr in action %s; addr in tx %s", m_target_action.get_account_addr().c_str(), m_target_addr.c_str());
+    }
+
+    return ret;
+}
+
+void xtransaction_v1_t::recver(common::xaccount_address_t const & recver_addr) {
+    m_target_action.set_account_addr(recver_addr.value());
+}
+
 }  // namespace data
 }  // namespace top
