@@ -136,6 +136,12 @@ public:
 
     virtual xeth_transaction_t to_eth_tx(std::error_code & ec) const override {return m_ethtx;}
 
+    // refactor
+    common::xaccount_address_t sender() const override;
+    void sender(common::xaccount_address_t const & sender_addr) override;
+    common::xaccount_address_t recver() const override;
+    void recver(common::xaccount_address_t const & recver_addr) override;
+
 private:
     void    update_cache();
 private:

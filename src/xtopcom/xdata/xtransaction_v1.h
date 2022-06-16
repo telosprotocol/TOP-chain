@@ -137,7 +137,12 @@ class xtransaction_v1_t : public xbase_dataunit_t<xtransaction_v1_t, xdata_type_
     virtual const std::string & get_memo() const override {return m_memo;};
     virtual const std::string & get_target_address() const override {return m_target_addr;};
     virtual bool is_evm_tx() const override {return false;}
-    // header
+    // refactor
+    common::xaccount_address_t sender() const override;
+    void sender(common::xaccount_address_t const & sender_addr) override;
+    common::xaccount_address_t recver() const override;
+    void recver(common::xaccount_address_t const & recver_addr) override;
+
 private:
     uint16_t          m_transaction_type{0};    // transfer,withdraw,deposit etc
     uint16_t          m_transaction_len{0};     // max 64KB

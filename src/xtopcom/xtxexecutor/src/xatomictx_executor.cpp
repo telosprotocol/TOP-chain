@@ -254,12 +254,12 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
     do {
         if (false == tx->is_evm_tx()) {
             if (tx->get_tx_version() == data::xtransaction_version_3) {
-                gasfee.preprocess(ec);
-                if (ec) {
-                    vmoutput.ec = ec;
+                gasfee.preprocess(vmoutput.ec);
+                if (vmoutput.ec) {
                     ret = enum_exec_error_estimate_gas;
                     break;
                 }
+
                 xtvm_v2_t tvm;
                 ret = tvm.execute(vminput, vmoutput);
                 gasfee.postprocess(vmoutput.tx_result.used_gas, ec);
