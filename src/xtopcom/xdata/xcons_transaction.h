@@ -114,6 +114,11 @@ class xcons_transaction_t : public xbase_dataunit_t<xcons_transaction_t, xdata_t
     void                   set_evm_tx_receipt(data::xeth_store_receipt_t & evm_tx_receipt) {m_execute_state.set_evm_tx_receipt(evm_tx_receipt);}
     bool                   get_evm_tx_receipt(data::xeth_store_receipt_t & evm_tx_receipt) {return m_execute_state.get_evm_tx_receipt(evm_tx_receipt);}
 
+    // refactor
+    common::xaccount_address_t sender() const;
+    common::xaccount_address_t recver() const;
+    common::xaccount_address_t executing_address() const;
+
  public:  // for debug use
     void                    set_push_pool_timestamp(uint64_t push_pool_timestamp) {m_push_pool_timestamp = push_pool_timestamp;};
     uint64_t                get_push_pool_timestamp() const {return m_push_pool_timestamp;}

@@ -17,10 +17,12 @@ NS_BEG2(top, txexecutor)
 enum_execute_result_type xtvm_v2_t::execute(const xvm_input_t & input, xvm_output_t & output) {
     const statectx::xstatectx_face_ptr_t & statectx = input.get_statectx();
     const xcons_transaction_ptr_t & tx = input.get_tx();
-    xassert(tx->get_tx_type() == data::xtransaction_type_transfer);
+    // xassert(tx->get_tx_type() == data::xtransaction_type_transfer);
     xassert(tx->get_tx_version() == data::xtransaction_version_3);
-    xassert(base::xvaccount_t::get_addrtype_from_account(tx->get_source_addr()) == base::enum_vaccount_addr_type_secp256k1_evm_user_account);
-    xassert(base::xvaccount_t::get_addrtype_from_account(tx->get_target_addr()) == base::enum_vaccount_addr_type_secp256k1_evm_user_account);
+    // xassert(base::xvaccount_t::get_addrtype_from_account(tx->get_source_addr()) == base::enum_vaccount_addr_type_secp256k1_evm_user_account);
+    // xassert(base::xvaccount_t::get_addrtype_from_account(tx->get_target_addr()) == base::enum_vaccount_addr_type_secp256k1_evm_user_account);
+    assert(common::is_t6(tx->sender()));
+    assert(common::is_t6(tx->sender()));
 
     data::xunitstate_ptr_t unitstate = statectx->load_unit_state(tx->get_account_addr());
     if (nullptr == unitstate) {
@@ -45,10 +47,14 @@ bool xtvm_v2_t::execute_impl(const xvm_input_t & input, xvm_output_t & output) {
     const statectx::xstatectx_face_ptr_t & statectx = input.get_statectx();
     const xcons_transaction_ptr_t & tx = input.get_tx();
 
-    if (base::xvaccount_t::get_addrtype_from_account(tx->get_source_addr()) == base::enum_vaccount_addr_type_secp256k1_evm_user_account &&
-        base::xvaccount_t::get_addrtype_from_account(tx->get_target_addr()) == base::enum_vaccount_addr_type_secp256k1_evm_user_account) {
+    //if (base::xvaccount_t::get_addrtype_from_account(tx->get_source_addr()) == base::enum_vaccount_addr_type_secp256k1_evm_user_account &&
+    //    base::xvaccount_t::get_addrtype_from_account(tx->get_target_addr()) == base::enum_vaccount_addr_type_secp256k1_evm_user_account) {
+    //    output.tx_result.used_gas = default_eth_tx_gas;
+    //}
+    if (common::is_t6(tx->sender()) && common::is_t6(tx->recver())) {
         output.tx_result.used_gas = default_eth_tx_gas;
     }
+
     auto result = execute_tx(statectx, tx);
     if (result.status.ec) {
         output.ec = result.status.ec;

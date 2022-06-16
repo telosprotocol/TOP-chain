@@ -380,10 +380,13 @@ void xtop_gasfee::postprocess_one_stage(const uint64_t supplement_gas, std::erro
 // }
 
 void xtop_gasfee::preprocess(std::error_code & ec) {
+    assert(!ec);
+
     // ignore gas calculation of system contracts
-    if (data::is_sys_contract_address(sender())) {
+    if (common::is_t2(sender())) {
         return;
     }
+
     if (is_one_stage_tx()) {
         // preprocess_one_stage(ec);
         check(ec);
@@ -408,9 +411,13 @@ void xtop_gasfee::preprocess(std::error_code & ec) {
 
 void xtop_gasfee::postprocess(const uint64_t supplement_gas, std::error_code & ec) {
      // ignore gas calculation of system contracts
-     if (data::is_sys_contract_address(sender())) {
-         return;
-     }
+     //if (data::is_sys_contract_address(sender())) {
+     //    return;
+     //}
+    if (common::is_t2(sender())) {
+        return;
+    }
+
     if (is_one_stage_tx()) {
         postprocess_one_stage(supplement_gas, ec);
     } else {
