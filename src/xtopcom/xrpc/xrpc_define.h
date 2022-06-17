@@ -25,6 +25,7 @@ using namespace std::placeholders;
 
 #define xdbg_rpc(fmt, ...) xdbg("[rpc] " fmt, ##__VA_ARGS__)
 #define xinfo_rpc(fmt, ...) xinfo("[rpc] " fmt, ##__VA_ARGS__)
+#define xwarn_rpc(fmt, ...) xwarn("[rpc] " fmt, ##__VA_ARGS__)
 #define xkinfo_rpc(fmt, ...) xkinfo("[rpc] " fmt, ##__VA_ARGS__)
 #define xerror_rpc(fmt, ...) xerror("[rpc] " fmt, ##__VA_ARGS__)
 

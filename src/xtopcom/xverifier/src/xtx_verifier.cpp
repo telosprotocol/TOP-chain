@@ -314,14 +314,19 @@ int32_t xtx_verifier::verify_send_tx_validation(data::xtransaction_t const * trx
     if (ret) {
         return ret;
     }
-    ret = verify_shard_contract_addr(trx_ptr);
-    if (ret) {
-        return ret;
-    }
     // verify hash
     if (!trx_ptr->digest_check()) {
-        xwarn("[global_trace][xtx_verifier][verify_send_tx_validation][fail], tx:%s digest check invalid", trx_ptr->dump().c_str());
+        xwarn("xtx_verifier::verify_send_tx_validation, tx:%s digest check invalid", trx_ptr->dump().c_str());
         return xverifier_error::xverifier_error_tx_hash_invalid;
+    }
+    if (xverifier::xblacklist_utl_t::is_black_address(trx_ptr->get_source_addr())) {
+        xwarn("[xtx_verifier::verify_send_tx_validation] in black address,tx:%s", trx_ptr->dump().c_str());
+        return xverifier_error::xverifier_error_tx_blacklist_invalid;
+    }
+
+    if (xwhitelist_utl::check_whitelist_limit_tx(trx_ptr)) {
+        xwarn("[xtx_verifier::verify_send_tx_validation] whitelist limit address,tx:%s", trx_ptr->dump().c_str());
+        return xverifier_error::xverifier_error_tx_whitelist_invalid;
     }
     return xverifier_error::xverifier_success;
 }
@@ -331,14 +336,9 @@ int32_t xtx_verifier::verify_send_tx_legitimacy(data::xtransaction_t const * trx
     if (ret) {
         return ret;
     }
-
-    if (xverifier::xblacklist_utl_t::is_black_address(trx_ptr->get_source_addr())) {
-        xdbg("[xtx_verifier::verify_send_tx_legitimacy] in black address:%s, %s, %s", trx_ptr->get_digest_hex_str().c_str(), trx_ptr->get_target_addr().c_str(), trx_ptr->get_source_addr().c_str());
-        return xverifier_error::xverifier_error_tx_blacklist_invalid;
-    }
-
-    if (xwhitelist_utl::check_whitelist_limit_tx(trx_ptr)) {
-        return xverifier_error::xverifier_error_tx_whitelist_invalid;
+    ret = verify_shard_contract_addr(trx_ptr);
+    if (ret) {
+        return ret;
     }
     return xverifier_error::xverifier_success;
 }

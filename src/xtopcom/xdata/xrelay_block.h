@@ -58,7 +58,7 @@ namespace data {
         size_t  size() const { return elections_vector.size();}
         void    dump() const;
         
-        uint64_t                            election_epochID;   //epoch id for these elections
+        uint64_t                            election_epochID{0};   //epoch id for these elections
         std::vector<xrelay_election_node_t> elections_vector;   
 
     };

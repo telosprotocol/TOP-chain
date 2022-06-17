@@ -40,9 +40,9 @@ int main(int argc, char **argv) {
     xdbg("------------------------------------------------------------------");
     xinfo("new log start here");
 
-    /*new xhashtest_t();
+    new xhashtest_t();
     top::data::xrootblock_para_t para;
-    top::data::xrootblock_t::init(para);*/
+    top::data::xrootblock_t::init(para);
 
     return RUN_ALL_TESTS();
 }
