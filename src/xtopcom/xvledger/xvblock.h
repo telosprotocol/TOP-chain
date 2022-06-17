@@ -274,7 +274,7 @@ namespace top
             //any cert with unspecified flag means just a "prepared-cert" that ask the next 3/2 more certs to proof it
             enum_xconsensus_flag_audit_cert          = 0x01, //audit required
             // enum_xconsensus_flag_commit_cert         = 0x02, //commit certification for a commit block,just use by basic-mode
-            enum_xconsensus_flag_relay_prove         = 0x02, //save relay prove in extend data
+            enum_xconsensus_flag_extend_vote         = 0x02, //save relay prove in extend data
             enum_xconsensus_flag_extend_cert         = 0x04, //relyon m_extend_cert to proof
         };
 
@@ -744,8 +744,10 @@ namespace top
            
             bool  set_parent_block(const std::string parent_addr, uint32_t parent_entity_id);
 
-            void  set_inner_vote_data(const std::string & vote_data);
-            const std::string &  get_inner_vote_data() const;
+            void  set_vote_extend_data(const std::string & vote_data);
+            const std::string &  get_vote_extend_data() const;
+            void  set_vote_extend_hash(const top::uint256_t & hash);
+            const top::uint256_t & get_vote_extend_hash() const;
 
         private:
             //generated the unique path of object(like vblock) under store-space(get_store_path()) to store data to DB
@@ -784,7 +786,8 @@ namespace top
             std::string                 m_offblock_snapshot;  // for sync set and cache
             std::string                 m_parent_account;   //container(e.g.tableblock)'account id(refer xvaccount_t::get_xvid())
             uint32_t                    m_parent_entity_id{0};  //entity id of container(like tableblock) that carry this sub-block
-            std::string                 m_inner_vote_data;
+            std::string                 m_vote_extend_data;
+            top::uint256_t              m_vote_extend_hash;
         };
         using xvblock_ptr_t = xobject_ptr_t<base::xvblock_t>;
 

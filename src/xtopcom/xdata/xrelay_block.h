@@ -44,6 +44,7 @@ namespace data {
        
         void    streamRLP(evm_common::RLPStream &_s) const; 
         bool    decodeRLP(evm_common::RLP const& _r, std::error_code & ec);
+        std::string get_pubkey_str() const;
 
         uint64_t                stake;           //election stake
         evm_common::h256        public_key_x;    //election key 
@@ -55,8 +56,9 @@ namespace data {
         void    streamRLP(evm_common::RLPStream &_s) const; 
         bool    decodeRLP(evm_common::RLP const& _r, std::error_code & ec);
         size_t  size() const { return elections_vector.size();}
-
-        uint64_t                            election_epochID;   //epoch id for these elections
+        void    dump() const;
+        
+        uint64_t                            election_epochID{0};   //epoch id for these elections
         std::vector<xrelay_election_node_t> elections_vector;   
 
     };
@@ -127,7 +129,7 @@ namespace data {
     friend class xrelay_block;
     public:
         xrelay_block_header() = default;
-        static const size_t block_header_fileds = 4;
+        static const size_t block_header_fileds = 5;
 
         xbytes_t                        encodeBytes(bool withSignature = false) const;
         bool                            decodeBytes(xbytes_t const& _d, std::error_code & ec,  bool withSignature = false);
@@ -169,8 +171,8 @@ namespace data {
 
     private:
        
-        evm_common::h256                        m_block_hash{0};             //hash of this block
         uint8_t                                 m_version{0};
+        evm_common::h256                        m_block_hash{0};             //hash of this block
         xrelay_block_inner_header               m_inner_header;             //innder header that sent to relayer
         evm_common::h256                        m_prev_hash{0};              //hash ot prev block
         xrelay_election_group_t                 m_next_elections_groups;       //vector of elections info 
@@ -184,7 +186,7 @@ namespace data {
         static const unsigned block_fileds = 3;
 
         xrelay_block() {}
-        xrelay_block(uint8_t block_version, evm_common::h256  prev_hash, uint64_t block_height, uint64_t epochID, uint64_t timestamp);
+        xrelay_block(evm_common::h256  prev_hash, uint64_t block_height, uint64_t epochID, uint64_t timestamp);
         ~xrelay_block() {}
     
     public:

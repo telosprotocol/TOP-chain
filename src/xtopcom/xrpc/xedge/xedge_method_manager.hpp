@@ -204,21 +204,11 @@ void xedge_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, cons
     }
     tx->set_len();
 
-    // TODO(jimmy) refactor tx verifier
-    if (xverifier::xtx_verifier::verify_address_type(tx.get())) {
-        throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "address type check failed"};
-    }
     // filter out black list transaction
-    if (xverifier::xblacklist_utl_t::is_black_address(tx->get_source_addr())) {
-        xdbg_rpc("[sendTransaction_method] in black address rpc:%s, %s, %s", tx->get_digest_hex_str().c_str(), tx->get_target_addr().c_str(), tx->get_source_addr().c_str());
-        XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_blacklist", 1);
-        throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "blacklist check failed"};
-    }
-
-    if (xverifier::xwhitelist_utl::check_whitelist_limit_tx(tx.get())) {
-        XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_whitelist", 1);
-        xdbg_rpc("[sendTransaction_method] in whitelist address rpc:%s, %s, %s", tx->get_digest_hex_str().c_str(), tx->get_target_addr().c_str(), tx->get_source_addr().c_str());
-        throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "whitelist check failed"};
+    if (xverifier::xtx_verifier::verify_send_tx_validation(tx.get())) {
+        xwarn_rpc("[sendTransaction_method] tx validation check fail. rpc:%s, %s, %s", tx->get_digest_hex_str().c_str(), tx->get_target_addr().c_str(), tx->get_source_addr().c_str());
+        XMETRICS_COUNTER_INCREMENT("xtransaction_validation_fail", 1);
+        throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "tx validation check failed"};
     }
 
     if (m_archive_flag) {
@@ -230,23 +220,6 @@ void xedge_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, cons
             //std::string err = std::string("transaction txpool check error (") + std::to_string(ret) + ")";
             throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, tx_prepare.get_err_msg(ret)};
         }
-        std::string old_target_addr = tx->get_origin_target_addr();
-        if (data::is_sys_sharding_contract_address(common::xaccount_address_t{tx->get_origin_target_addr()})) {
-            auto tableid = data::account_map_to_table_id(common::xaccount_address_t{tx->get_source_addr()});
-            tx->adjust_target_address(tableid.get_subaddr());
-        }
-        // 1. validation check
-        ret = xverifier::xtx_verifier::verify_send_tx_validation(tx.get());
-        if (ret) {
-            XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_validation", 1);
-            std::string err = std::string("transaction validation check failed (") + std::to_string(ret) + ")";
-            throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, err};
-        }
-        // 2. legal check, include hash/signature check and white/black check
-        if (xverifier::xwhitelist_utl::check_whitelist_limit_tx(tx.get())) {
-            XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_whitelist", 1);
-            throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "whitelist check failed"};
-        }
         // 3. tx duration expire check
         uint64_t now = xverifier::xtx_utl::get_gmttime_s();
         ret = xverifier::xtx_verifier::verify_tx_fire_expiration(tx.get(), now, true);
@@ -254,8 +227,6 @@ void xedge_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, cons
             XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_expiration", 1);
             throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "duration expiration check failed"};
         }
-        tx->set_target_addr(old_target_addr);
-
         std::string hash((char *)json_proc.m_tx_ptr->digest().data(), json_proc.m_tx_ptr->digest().size());
         if (m_txstore != nullptr) {
             m_txstore->tx_cache_add(hash, tx);

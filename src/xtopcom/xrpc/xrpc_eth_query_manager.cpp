@@ -1101,12 +1101,14 @@ int xrpc_eth_query_manager::set_relay_block_result(const xobject_ptr_t<base::xvb
     std::vector<xrelay_signature_node_t> signature_nodes;
     data::xrelay_block relay_block;
     for (uint16_t i = 0; i < size; i++) {
-        xvip2_t xip;
         std::string sign_str;
-        stream >> xip.high_addr;
-        stream >> xip.low_addr;
         stream >> sign_str;
 
+        if (sign_str == "") {
+            xrelay_signature_node_t signature;
+            signature_nodes.push_back(signature);
+            continue;
+        }
         if (sign_str.size() != 65) {
             js_rsp["result"] = xJson::Value::null;
             xwarn("xrpc_eth_query_manager::top_getRelayBlockByNumber, sign size error: %d", sign_str.size());
@@ -1202,10 +1204,9 @@ void xrpc_eth_query_manager::top_getRelayBlockByNumber(xJson::Value & js_req, xJ
         return;
 
     if (std::strtoul(js_req[0].asString().c_str(), NULL, 16) == 0) {
-        uint64_t block_version = 0;
         uint64_t epochID = 0;
         evm_common::h256 prev_hash;
-        data::xrelay_block relay_block(block_version, prev_hash, 0, epochID, 0);
+        data::xrelay_block relay_block(prev_hash, 0, epochID, 0);
 
         xbytes_t rlp_stream;
         rlp_stream = relay_block.get_header().streamRLP_header_to_contract();

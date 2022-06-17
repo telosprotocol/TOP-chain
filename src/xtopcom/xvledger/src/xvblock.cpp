@@ -814,7 +814,7 @@ namespace top
             }
             else
             {
-                if( (get_consensus_flags() & enum_xconsensus_flag_relay_prove) != 0)
+                if( (get_consensus_flags() & enum_xconsensus_flag_extend_vote) != 0)
                 {
                     if(m_extend_data.empty())
                     {
@@ -1535,7 +1535,7 @@ namespace top
             m_vbstate_ptr       = other.m_vbstate_ptr;
             m_parent_account    = other.m_parent_account;
             m_next_next_viewid  = other.m_next_next_viewid;
-            m_inner_vote_data   = other.m_inner_vote_data;
+            m_vote_extend_data   = other.m_vote_extend_data;
             
             m_next_next_qcert   = other.m_next_next_qcert;
             if(m_next_next_qcert != NULL)
@@ -2454,12 +2454,20 @@ namespace top
             return true;
         }
 
-        void xvblock_t::set_inner_vote_data(const std::string & vote_data) {
-            m_inner_vote_data = vote_data;
+        void xvblock_t::set_vote_extend_data(const std::string & vote_data) {
+            m_vote_extend_data = vote_data;
         }
 
-        const std::string & xvblock_t::get_inner_vote_data() const {
-            return m_inner_vote_data;
+        const std::string & xvblock_t::get_vote_extend_data() const {
+            return m_vote_extend_data;
+        }
+
+        void xvblock_t::set_vote_extend_hash(const top::uint256_t & hash) {
+            m_vote_extend_hash = hash;
+        }
+
+        const top::uint256_t & xvblock_t::get_vote_extend_hash() const {
+            return m_vote_extend_hash;
         }
         
         void xvblock_t::register_object(xcontext_t & _context)

@@ -121,11 +121,16 @@ void xeth_transaction_t::decodeBytes(bool includesig, xbytes_t const& _d, eth_er
     {
     case EIP_1559:
         decodeRLP_eip1599(includesig, _r, ec);
-        return;
+        break;
     default:
         ec = eth_error(error::xenum_errc::eth_server_error, "transaction type not supported");
         return;
     }
+
+    if (ec.error_code) {
+        return;
+    }
+    check_scope(ec);
 }
 
 std::string xeth_transaction_t::serialize_to_string() const {
@@ -159,7 +164,7 @@ void xeth_transaction_t::streamRLP_eip1599(bool includesig, evm_common::RLPStrea
         _s << m_signS;
     }
 }
-// TODO(jimmy) eth_error
+
 void xeth_transaction_t::decodeRLP_eip1599(bool includesig, evm_common::RLP const& _r, eth_error & ec) {
     size_t itemcount = includesig ? 12 : 9;
 
@@ -179,10 +184,6 @@ void xeth_transaction_t::decodeRLP_eip1599(bool includesig, evm_common::RLP cons
             return;
         }
         m_chainid = _r[field = 0].toInt<evm_common::u256>();
-        if (m_chainid != XGET_CONFIG(chain_id)) {
-            ec = eth_error(error::xenum_errc::eth_server_error, "invalid sender");
-            return;
-        }
         if (_r[field = 1].size() > 32) {
             ec = eth_error(error::xenum_errc::eth_server_error, "rlp: input string too long for uint64, decoding into (types.DynamicFeeTx).Nonce");
             return;
@@ -203,10 +204,6 @@ void xeth_transaction_t::decodeRLP_eip1599(bool includesig, evm_common::RLP cons
             return;
         }
         m_gas = _r[field = 4].toInt<evm_common::u256>();
-        if (m_gas > XGET_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit)) {
-            ec = eth_error(error::xenum_errc::eth_server_error, "exceeds block gas limit");
-            return;
-        }
 
         if (_r[5].size() != 20 && _r[5].size() != 0) {
             if (_r[5].size() > 20) {
@@ -266,6 +263,29 @@ void xeth_transaction_t::decodeRLP_eip1599(bool includesig, evm_common::RLP cons
     {
         xwarn("xeth_transaction_t::decodeRLP_eip1599 invalid,field=%d,%s", field, top::to_hex(_r[field].toString()).c_str());
         ec = eth_error(error::xenum_errc::eth_server_error, "rlp: input string invalid");
+    }
+}
+
+void xeth_transaction_t::check_scope(eth_error & ec) const {
+    if (m_chainid != XGET_CONFIG(chain_id)) {
+        ec = eth_error(error::xenum_errc::eth_server_error, "invalid sender");
+        return;
+    }
+    if (m_gas > XGET_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit)) {
+        ec = eth_error(error::xenum_errc::eth_server_error, "exceeds block gas limit");
+        return;
+    }
+    if (0 == m_gas) {
+        ec = eth_error(error::xenum_errc::eth_server_error, "intrinsic gas too low");
+        return;
+    }
+    if (0 == m_max_fee_per_gas) {
+        ec = eth_error(error::xenum_errc::eth_server_error, "transaction underpriced");
+        return;
+    }
+    if (m_max_priority_fee_per_gas > m_max_fee_per_gas) {
+        ec = eth_error(error::xenum_errc::eth_server_error, "max priority fee per gas higher than max fee per ga");
+        return;
     }
 }
 

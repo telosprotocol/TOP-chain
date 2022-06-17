@@ -232,7 +232,7 @@ bool xtransaction_v1_t::unuse_member_check() const {
 }
 
 bool xtransaction_v1_t::transaction_len_check() const {
-    // TODO(nathan):tx parameters validity check
+    // tx parameters validity check
     if (get_memo().size() > MAX_TRANSACTION_MEMO_SIZE) {
         xwarn("xtransaction_v1_t::transaction_len_check memo size too long.size:%d", get_memo().size());
         return false;

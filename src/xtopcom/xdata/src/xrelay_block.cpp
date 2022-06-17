@@ -8,10 +8,13 @@
 #include "xevm_common/xtriehash.h"
 #include "xdata/xrelay_block_store.h"
 #include "xcommon/xerror/xerror.h"
+#include "xbasic/xhex.h"
 
 NS_BEG2(top, data)
 
 using namespace top::evm_common;
+
+#define RELAY_BLOCK_VERSION (0)
 
 top::evm_common::h256 combine_hash(top::evm_common::h256 hash1, top::evm_common::h256 hash2)
 {
@@ -45,6 +48,12 @@ bool xrelay_election_node_t::decodeRLP(evm_common::RLP const& _r, std::error_cod
     public_key_y = _r[1].toHash<evm_common::h256>();
     stake        = _r[2].toInt<uint64_t>();
     return true;
+}
+
+std::string xrelay_election_node_t::get_pubkey_str() const {
+    xbytes_t bytes_x = public_key_x.to_bytes();
+    xbytes_t bytes_y = public_key_y.to_bytes();
+    return from_bytes<std::string>(bytes_x) + from_bytes<std::string>(bytes_y);
 }
 
 void xrelay_election_group_t::streamRLP(evm_common::RLPStream &_s)  const {
@@ -85,6 +94,21 @@ bool xrelay_election_group_t::decodeRLP(evm_common::RLP const& _r, std::error_co
 
     return true;
 }
+
+ void    xrelay_election_group_t::dump() const
+ {
+    xdbg("xrelay_election_group_t::dump  epochID %llx." , election_epochID);
+    for (auto election : elections_vector) {
+        std::string public_key_x = top::HexDecode(election.public_key_x.hex());
+        std::string public_key_y = top::HexDecode(election.public_key_y.hex());
+        std::string public_key = public_key_x + public_key_y;
+
+        utl::xecpubkey_t raw_pub_key{public_key};
+        std::string   address =   raw_pub_key.to_raw_eth_address(); 
+        xdbg("xrelay_election_group_t::dump  address %s   public_key_x %s public_key_y %s  " , 
+             top::to_hex(address).c_str(), election.public_key_x.hex().c_str(), election.public_key_y.hex().c_str());
+    }
+ }
 
 xrelay_signature_t::xrelay_signature_t(const std::string & sign_str) {
     xassert(sign_str.size() == 65);
@@ -160,7 +184,7 @@ xbytes_t xrelay_block_inner_header::encodeBytes() const {
         streamRLP(_s);
         _bytes.insert(_bytes.begin() + 1, _s.out().begin(), _s.out().end());
     }
-    xinfo("xrelay_block_inner_header::encodeBytes %s.", toHex(_bytes).c_str());
+    xdbg("xrelay_block_inner_header::encodeBytes %s.", toHex(_bytes).c_str());
     return _bytes;
 }
 
@@ -214,8 +238,8 @@ void xrelay_block_inner_header::make_inner_hash()
 {
     xbytes_t bytes_data = encodeBytes();
     m_inner_hash = sha3(bytes_data);
-    xinfo("xrelay_block_inner_header::make_inner_hash  data[%s]", toHex(bytes_data).c_str());
-    xinfo("xrelay_block_inner_header::make_inner_hash  hash[%s]", m_inner_hash.hex().c_str());
+    xdbg("xrelay_block_inner_header::make_inner_hash  data[%s]", toHex(bytes_data).c_str());
+    xdbg("xrelay_block_inner_header::make_inner_hash  hash[%s]", m_inner_hash.hex().c_str());
 }
 
 
@@ -295,6 +319,7 @@ void xrelay_block_header::streamRLP(evm_common::RLPStream &rlp_stream, bool with
     }
 
     rlp_stream.appendList(decLen);
+    rlp_stream << m_block_hash;
     rlp_stream << m_inner_header.encodeBytes();
     rlp_stream << m_prev_hash;
     m_next_elections_groups.streamRLP(rlp_stream);
@@ -335,6 +360,7 @@ bool xrelay_block_header::decodeRLP(evm_common::RLP const& _r, std::error_code &
     }
 
     size_t idx = 0;
+    m_block_hash =  _r[idx].toHash<evm_common::h256>(); idx++;
     m_inner_header.decodeBytes(_r[idx].toBytes(), ec);    idx++;
     m_prev_hash     = _r[idx].toHash<evm_common::h256>(); idx++;
 
@@ -363,7 +389,7 @@ xbytes_t xrelay_block_header::streamRLP_header_to_contract()
 
     if (m_version == 0) {
         evm_common::RLPStream rlp_stream;
-        size_t decLen = block_header_fileds;
+        size_t decLen = block_header_fileds - 1;
 
         rlp_stream.appendList(decLen);
         rlp_stream << m_inner_header.encodeBytes();
@@ -438,23 +464,14 @@ void xrelay_block_header::make_inner_hash()
 }
 
 ///////////////////xrelay_block start /////////
-xrelay_block::xrelay_block(uint8_t block_version, evm_common::h256  prev_hash, uint64_t block_height,
+xrelay_block::xrelay_block(evm_common::h256  prev_hash, uint64_t block_height,
                           uint64_t epochID, uint64_t timestamp)
 {
-    switch (block_version)
-    {
-    case 0:
-        m_version = block_version;
-        m_header.set_prev_hash(prev_hash);
-        m_header.set_block_height(block_height);
-        m_header.set_epochid(epochID);
-        m_header.set_timestamp(timestamp);
-        break;
-    default:
-        xwarn("xrelay_block::xrelay_block block_version %d not support!", m_version);
-        break;
-    }
-
+    m_version = RELAY_BLOCK_VERSION;
+    m_header.set_prev_hash(prev_hash);
+    m_header.set_block_height(block_height);
+    m_header.set_epochid(epochID);
+    m_header.set_timestamp(timestamp);
 }
 
 void xrelay_block::set_elections_next(const xrelay_election_group_t &elections)
@@ -489,7 +506,7 @@ void xrelay_block::make_txs_root_hash()
         rlp_txs.push_back(tx.encodeBytes());
     }
     h256 txsRoot = orderedTrieRoot(rlp_txs);
-    xinfo("txsRoot root hash[%s]", txsRoot.hex().c_str());
+    xdbg("txsRoot root hash[%s]", txsRoot.hex().c_str());
     m_header.set_txs_root_hash(txsRoot);
 }
 
@@ -501,7 +518,7 @@ void xrelay_block::make_receipts_root_hash()
         rlp_receipts.push_back(receipt.encodeBytes());
     }
     h256 receiptsRoot = orderedTrieRoot(rlp_receipts);
-    xinfo("receipts root hash[%s]", receiptsRoot.hex().c_str());
+    xdbg("receipts root hash[%s]", receiptsRoot.hex().c_str());
     m_header.set_receipts_root_hash(receiptsRoot);
 }
 
@@ -544,7 +561,7 @@ bool xrelay_block::decodeBytes(xbytes_t const& _d, std::error_code & ec, bool wi
     }
 
     m_version = (uint8_t)_d.front();
-    if (m_version != 0) {
+    if (m_version != RELAY_BLOCK_VERSION) {
         ec = common::error::xerrc_t::invalid_rlp_stream;
         xerror("xrelay_block::decodeBytes fail invalid version,%d", m_version);
         return false;
@@ -594,14 +611,14 @@ void    xrelay_block::make_block_hash()
     m_header.get_elections_sets().streamRLP(_s);
 
     m_header.m_block_hash = sha3(_s.out());
-    xinfo("xrelay_block::make_block_hash  data[%s]", toHex(_s.out()).c_str());
-    xinfo("xrelay_block::make_block_hash  hash[%s]", m_header.m_block_hash.hex().c_str());
+    xdbg("xrelay_block::make_block_hash  data[%s]", toHex(_s.out()).c_str());
+    xdbg("xrelay_block::make_block_hash  hash[%s]", m_header.m_block_hash.hex().c_str());
 }
 
 void xrelay_block::make_block_root_hash()
 {
     //todo 
-    xinfo("xrelay_block::make_block_root_hash last block hash[%s]", m_header.m_prev_hash.hex().c_str());
+    xdbg("xrelay_block::make_block_root_hash last block hash[%s]", m_header.m_prev_hash.hex().c_str());
     h256 block_root_hash{0};
     m_header.set_block_root_hash(block_root_hash);
 }
@@ -644,11 +661,15 @@ std::string xrelay_block::dump() const {
     char local_param_buf[256];
     xprintf(local_param_buf,
             sizeof(local_param_buf),
-            "{height:%lu,epochid:%lu,timestamp:%lu,election size:%u,receipts size:%u}",
+            "{height:%lu,epochid:%lu,timestamp:%lu,prev_hash:%s,hash:%s,election epoch:%lu size:%u,tx size:%u,receipts size:%u}",
             m_header.m_inner_header.get_block_height(),
             m_header.m_inner_header.get_epochID(),
             m_header.m_inner_header.get_timestamp(),
+            m_header.m_prev_hash.hex().c_str(),
+            m_header.m_block_hash.hex().c_str(),
+            m_header.get_elections_sets().election_epochID,
             (uint32_t)m_header.get_elections_sets().elections_vector.size(),
+            (uint32_t)m_transactions.size(),
             (uint32_t)m_receipts.size());
     return std::string(local_param_buf);
 }

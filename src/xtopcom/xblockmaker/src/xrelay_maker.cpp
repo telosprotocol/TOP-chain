@@ -158,6 +158,7 @@ xblock_ptr_t xrelay_maker_t::make_relay_table(const xtablemaker_para_t & table_p
 
     m_default_builder_para->set_relay_block_data(table_para.get_relay_block_data());
     m_default_builder_para->set_relay_wrap_data(table_para.get_relay_wrap_data());
+    m_default_builder_para->set_need_relay_prove(table_para.need_relay_prove());
     xblock_ptr_t proposal_block = m_relay_block_builder->build_block(cert_block, table_para.get_tablestate()->get_bstate(), cs_para, m_default_builder_para);
     return proposal_block;
 }

@@ -349,10 +349,35 @@ xlightunit_build_t::xlightunit_build_t(base::xvheader_t* header, base::xvinput_t
 bool xlightunit_build_t::build_block_body(const xlightunit_block_para_t & para) {
     // #1 set input entitys and resources
     std::vector<base::xvaction_t> input_actions;
-    xdbg("block version:%d, height:%llu, account:%s", get_header()->get_block_version(), get_header()->get_height(), get_header()->get_account().c_str());
-    base::xvaction_t _action = xblockaction_build_t::make_block_build_action(BLD_URI_LIGHT_UNIT);
-    input_actions.push_back(_action);
-    set_input_entity(input_actions);
+    if (base::xvblock_fork_t::is_block_older_version(get_header()->get_block_version(), base::enum_xvblock_fork_version_unit_opt)) {
+        xdbg("block version:%d, height:%llu, account:%s", get_header()->get_block_version(), get_header()->get_height(), get_header()->get_account().c_str());
+        for (auto & tx : para.get_input_txs()) {
+            base::xvaction_t _action = xblockaction_build_t::make_tx_action(tx);
+            input_actions.push_back(_action);
+        }
+        set_input_entity(input_actions);
+
+        for (auto & tx : para.get_input_txs()) {
+            // confirm tx no need take origintx
+            if (tx->is_self_tx() || tx->is_send_tx()) {
+                std::string origintx_bin;
+                tx->get_transaction()->serialize_to_string(origintx_bin);
+                std::string origintx_hash = tx->get_tx_hash();
+                set_input_resource(origintx_hash, origintx_bin);
+            }
+        }
+
+        // key_name_unconfirm_tx_count will be unusable after block 2.0.0
+        uint32_t unconfirm_tx_num = para.get_account_unconfirm_sendtx_num();
+        std::string unconfirm_tx_num_str = base::xstring_utl::tostring(unconfirm_tx_num);
+        set_output_entity(base::xvoutentity_t::key_name_unconfirm_tx_count(), unconfirm_tx_num_str);
+    } else {
+        xdbg("block version:%d, height:%llu, account:%s", get_header()->get_block_version(), get_header()->get_height(), get_header()->get_account().c_str());
+        base::xvaction_t _action = xblockaction_build_t::make_block_build_action(BLD_URI_LIGHT_UNIT);
+        input_actions.push_back(_action);
+        set_input_entity(input_actions);
+    }
+
     // #2 set output entitys and resources
     set_output_full_state(para.get_fullstate_bin());
     set_output_binlog(para.get_property_binlog());
@@ -428,16 +453,23 @@ base::xauto_ptr<base::xvblock_t> xemptyblock_build_t::create_new_block() {
 
 // set relay block data to m_extra_data in xvheader.
 // set evm height to m_comments in xvheader.
-xrelay_block_build_t::xrelay_block_build_t(base::xvblock_t* prev_block, const xblock_consensus_para_t & para, const std::string & relay_block_data, const std::string & relay_wrap_data) {
+xrelay_block_build_t::xrelay_block_build_t(base::xvblock_t * prev_block,
+                                           const xblock_consensus_para_t & para,
+                                           const std::string & relay_block_data,
+                                           const std::string & relay_wrap_data,
+                                           bool need_relay_prove) {
     base::enum_xvblock_type _type = get_block_type_from_empty_block(prev_block->get_account());
     base::xbbuild_para_t build_para(prev_block, base::enum_xvblock_class_nil, _type);
 
-    build_para.set_relay_cert_para(para.get_clock(), para.get_viewtoken(), para.get_viewid(), para.get_validator(), para.get_auditor(),
-                                para.get_drand_height(), para.get_justify_cert_hash());
+    build_para.set_relay_cert_para(para.get_clock(),
+                                   para.get_viewtoken(),
+                                   para.get_viewid(),
+                                   para.get_validator(),
+                                   para.get_auditor(),
+                                   para.get_drand_height(),
+                                   para.get_justify_cert_hash(),
+                                   need_relay_prove);
     init_header_qcert(build_para);
-    // todo(nathan):set extend data
-    get_qcert()->set_extend_data("test");
-    // std::string _extra_data = xtableheader_extra_t::build_extra_string(get_header(), para.get_tgas_height(), para.get_gmtime(), relay_block_data);
     set_header_extra(relay_block_data);
     set_header_comments(relay_wrap_data);
 }

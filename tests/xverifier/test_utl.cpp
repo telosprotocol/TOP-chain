@@ -54,8 +54,8 @@ TEST_F(test_utl, address_valid_2) {
 
     EXPECT_EQ(top::base::xvaccount_t::check_address("T20000MVfDLsBKVcy1wMp4CoEHWxUeBEAVBL9ZEa@130"), false);
     EXPECT_EQ(top::base::xvaccount_t::check_address("T20000MVfDLsBKVcy1wMp4CoEHWxUeBEAVBL9ZEa@e8"), false);
-    EXPECT_EQ(top::base::xvaccount_t::check_address("T20005MVfDLsBKVcy1wMp4CoEHWxUeBEAVBL9ZEa@0"), false);
-    EXPECT_EQ(top::base::xvaccount_t::check_address("T20005MVfDLsBKVcy1wMp4CoEHWxUeB4a@0"), false);
+    EXPECT_EQ(top::base::xvaccount_t::check_address("T20005MVfDLsBKVcy1wMp4CoEHWxUeBEAVBL9ZEa@0"), true);
+    EXPECT_EQ(top::base::xvaccount_t::check_address("T20005MVfDLsBKVcy1wMp4CoEHWxUeB4a@0"), true);
     EXPECT_EQ(top::base::xvaccount_t::check_address("A20005MVfDLsBKVcy1wMp4CoEHWxUeB4a@0"), false);
     EXPECT_EQ(top::base::xvaccount_t::check_address("T20005MVfDLsBKVc@y1wMp4CoEHWxUeB4a@0"), false);
     EXPECT_EQ(top::base::xvaccount_t::check_address("T60000d00e5539d4306fa4e0e274bc4a795e863d44e2b0"), false);
