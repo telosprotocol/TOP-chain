@@ -549,7 +549,7 @@ bool xtxpool_table_t::need_sync_lacking_receipts() const {
 
 const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxpool_table_t::get_lacking_recv_tx_ids(uint32_t & total_num) const {
     std::lock_guard<std::mutex> lck(m_mgr_mutex);
-    return m_txmgr_table.get_lacking_recv_tx_ids(total_num);
+    return m_txmgr_table.get_lacking_recv_tx_ids(m_xtable_info.get_all_table_sids(), total_num);
 }
 
 int32_t xtxpool_table_t::verify_cons_tx(const xcons_transaction_ptr_t & tx) const {

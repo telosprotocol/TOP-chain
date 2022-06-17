@@ -179,8 +179,8 @@ bool xtxmgr_table_t::is_repeat_tx(const std::shared_ptr<xtx_entry> & tx) const {
     return false;
 }
 
-const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxmgr_table_t::get_lacking_recv_tx_ids(uint32_t & total_num) const {
-    return m_new_receipt_queue.get_lacking_recv_tx_ids(total_num);
+const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxmgr_table_t::get_lacking_recv_tx_ids(const std::set<base::xtable_shortid_t> & all_table_sids, uint32_t & total_num) const {
+    return m_new_receipt_queue.get_lacking_recv_tx_ids(all_table_sids, total_num);
 }
 
 const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxmgr_table_t::get_lacking_confirm_tx_ids(uint32_t & total_num) const {
