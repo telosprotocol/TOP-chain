@@ -64,6 +64,11 @@ pub extern "C" fn call_contract_3(ins: &Instance) -> i32 {
 }
 
 #[no_mangle]
+pub extern "C" fn call_contract_test(ins: &Instance) -> i32 {
+    vm_res_handle(ins.call_function1("test", &[]))
+}
+
+#[no_mangle]
 pub extern "C" fn get_gas_left(ins: &Instance) -> u64 {
     ins.get_gas_left()
 }

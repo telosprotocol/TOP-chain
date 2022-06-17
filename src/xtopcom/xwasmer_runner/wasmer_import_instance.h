@@ -33,6 +33,8 @@ public:
 
 public:
     uint64_t wasmer_block_index();
+    const char * wasmer_get_args_ptr();
+    uint32_t wasmer_get_args_size();
 };
 
 }  // namespace wasm

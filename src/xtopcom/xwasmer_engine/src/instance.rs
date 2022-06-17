@@ -3,7 +3,7 @@ use std::ptr::NonNull;
 use wasmer::{Exports, Function, ImportObject, Instance as WasmerInstance, Module, Val};
 
 use crate::errors::{VmError, VmResult};
-use crate::imports::do_block_index;
+use crate::imports::{do_block_index, do_get_args};
 use crate::runtime::Runtime;
 use crate::size::Size;
 
@@ -49,6 +49,11 @@ impl Instance {
         env_imports.insert(
             "block_index",
             Function::new_native_with_env(store, runtime.clone(), do_block_index),
+        );
+
+        env_imports.insert(
+            "get_args",
+            Function::new_native_with_env(store, runtime.clone(), do_get_args),
         );
 
         import_obj.register("env", env_imports);

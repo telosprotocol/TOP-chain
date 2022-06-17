@@ -2,6 +2,7 @@ mod errors;
 mod imports;
 mod instance;
 mod interface;
+mod memory;
 mod middleware;
 mod runtime;
 mod size;
