@@ -147,4 +147,12 @@ bool xtop_eth_address::empty() const {
     return raw_address_ == zero().raw_address_;
 }
 
+bool xtop_eth_address::operator==(xtop_eth_address const & rhs) const noexcept {
+    return raw_address_ == rhs.raw_address_;
+}
+
+bool xtop_eth_address::operator!=(xtop_eth_address const & rhs) const noexcept {
+    return !(*this == rhs);
+}
+
 NS_END2

@@ -17,9 +17,16 @@
 NS_BEG2(top, evm_common)
 
 class xevm_log_t {
- public:
+public:
     xevm_log_t() = default;
+    xevm_log_t(xevm_log_t const &) = default;
+    xevm_log_t & operator=(xevm_log_t const &) = default;
+    xevm_log_t(xevm_log_t &&) = default;
+    xevm_log_t & operator=(xevm_log_t &&) = default;
+    ~xevm_log_t() = default;
+
     xevm_log_t(common::xeth_address_t const& _address, xh256s_t const& topics, xbytes_t const& data);
+    xevm_log_t(common::xeth_address_t const & address, xh256s_t topics);
 
     int32_t do_write(base::xstream_t & stream);
     int32_t do_read(base::xstream_t & stream);
