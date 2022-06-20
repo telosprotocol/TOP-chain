@@ -193,22 +193,19 @@ public:
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_addr_for_eth);
 #endif
 
-#if defined(XCHAIN_FORKED_BY_DEFAULT) && ((XCHAIN_FORKED_BY_DEFAULT) >= 10501)
-        XADD_ONCHAIN_GOVERNANCE_PARAMETER(eth_to_top_exchange_ratio);
-        XADD_ONCHAIN_GOVERNANCE_PARAMETER(eth_gas_to_tgas_exchange_ratio);
-        XADD_ONCHAIN_GOVERNANCE_PARAMETER(top_eth_base_price);
-        XADD_ONCHAIN_GOVERNANCE_PARAMETER(evm_auditor_reward_ratio);
-        XADD_ONCHAIN_GOVERNANCE_PARAMETER(evm_validator_reward_ratio);
-        XADD_ONCHAIN_GOVERNANCE_PARAMETER(evm_auditor_group_zero_workload);
-        XADD_ONCHAIN_GOVERNANCE_PARAMETER(evm_validator_group_zero_workload);
-        XADD_ONCHAIN_GOVERNANCE_PARAMETER(exchange_election_interval);
-        XADD_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit);
-#endif
-
 #if defined(XCHAIN_FORKED_BY_DEFAULT) && ((XCHAIN_FORKED_BY_DEFAULT) >= 10600)
-        XADD_ONCHAIN_GOVERNANCE_PARAMETER(relay_election_interval);
-        XADD_ONCHAIN_GOVERNANCE_PARAMETER(min_relay_group_size);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(eth_gas_to_tgas_exchange_ratio);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(eth_to_top_exchange_ratio);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(evm_auditor_group_zero_workload);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(evm_auditor_reward_ratio);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(evm_validator_group_zero_workload);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(evm_validator_reward_ratio);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(exchange_election_interval);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(max_relay_group_size);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(min_relay_group_size);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(relay_election_interval);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(top_eth_base_price);
 #endif
 
         std::vector<std::string> committee_addrs = xrootblock_t::get_tcc_initial_committee_addr();
