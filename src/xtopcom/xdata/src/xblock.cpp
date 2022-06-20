@@ -431,8 +431,4 @@ uint64_t xblock_t::get_second_level_gmtime() const {
     return gmtime;
 }
 
-const std::string xblock_t::get_relay_block_data() const {
-    return get_header()->get_extra_data();
-}
-
 NS_END2

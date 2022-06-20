@@ -3,9 +3,11 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xrelay_chain/xrelay_chain_mgr.h"
+
+#include "xdata/xblockbuild.h"
 #include "xdata/xblockextract.h"
-#include "xdata/xnative_contract_address.h"
 #include "xdata/xelection/xelection_result_property.h"
+#include "xdata/xnative_contract_address.h"
 #include "xmbus/xbase_sync_event_monitor.hpp"
 #include "xmbus/xevent_store.h"
 #include "xvledger/xvledger.h"
@@ -196,7 +198,7 @@ void xcross_tx_cache_t::update_last_proc_evm_height(uint64_t last_proc_evm_heigh
     }
 }
 
-xrelay_elect_cache_t::xrelay_elect_cache_t(const std::shared_ptr<xrelay_chain_resources> & para): m_para(para) {
+xrelay_elect_cache_t::xrelay_elect_cache_t(const std::shared_ptr<xrelay_chain_resources> & para) : m_para(para) {
 }
 
 void xrelay_elect_cache_t::on_elect_db_event(data::xblock_t * block) {
@@ -261,7 +263,7 @@ void xrelay_elect_cache_t::recover_cache() {
             break;
         }
     }
-    
+
     if (!m_elect_info_map.empty()) {
         auto it = m_elect_info_map.begin();
         uint64_t to_height = it->first;
@@ -296,7 +298,7 @@ bool xrelay_elect_cache_t::get_relay_elections_by_height(const base::xvaccount_t
 
     auto property_name = top::data::election::get_property_by_group_id(common::xdefault_group_id);
     std::vector<std::pair<xpublic_key_t, uint64_t>> election_data;
-    top::contract::xcontract_manager_t::instance().get_election_data(top::common::xaccount_address_t{vaccount.get_address()}, unitstate, property_name, election_data) ;
+    top::contract::xcontract_manager_t::instance().get_election_data(top::common::xaccount_address_t{vaccount.get_address()}, unitstate, property_name, election_data);
 
     for (auto & election : election_data) {
         auto pubkey_str = base::xstring_utl::base64_decode(election.first.to_string());
@@ -389,7 +391,8 @@ void xrelay_chain_mgr_t::on_block_to_db_event(mbus::xevent_ptr_t e) {
           block_event->owner.c_str(),
           block_event->blk_level);
 
-    if (block_event->owner != sys_contract_eth_table_block_addr_with_suffix && block_event->owner != sys_contract_relay_table_block_addr && block_event->owner != sys_contract_zec_elect_relay_addr) {
+    if (block_event->owner != sys_contract_eth_table_block_addr_with_suffix && block_event->owner != sys_contract_relay_table_block_addr &&
+        block_event->owner != sys_contract_zec_elect_relay_addr) {
         return;
     }
 
@@ -438,29 +441,31 @@ void xrelay_chain_mgr_t::on_wrap_db_event(data::xblock_ptr_t wrap_block) {
     }
     std::lock_guard<std::mutex> lck(m_mutex);
 
-    uint8_t wrap_phase;
-    uint64_t evm_height;
-    uint64_t rec_height;
-    auto & wrap_data = wrap_block->get_header()->get_comments();
+    data::xtableheader_extra_t header_extra;
+    auto extra_str = wrap_block->get_header()->get_extra_data();
+    header_extra.deserialize_from_string(extra_str);
+
+    auto wrap_data = header_extra.get_relay_wrap_info();
     if (wrap_data.empty()) {
-        xerror("xrelay_chain_mgr_t::on_wrap_db_event wrap data should not empty. wrap_block:%s", wrap_block->dump().c_str());
+        xerror("xrelay_chain_mgr_t::on_wrap_db_event wrap data should not empty.");
         return;
-    } else {
-        base::xstream_t stream_wrap_data{base::xcontext_t::instance(), (uint8_t *)wrap_data.data(), static_cast<uint32_t>(wrap_data.size())};
-        stream_wrap_data >> wrap_phase;
-        stream_wrap_data >> evm_height;
-        stream_wrap_data >> rec_height;
     }
+
+    data::xrelay_wrap_info_t wrap_info;
+    wrap_info.serialize_from_string(wrap_data);
+    uint8_t wrap_phase = wrap_info.get_wrap_phase();
+    uint64_t evm_height = wrap_info.get_evm_height();
+    uint64_t elect_height = wrap_info.get_elect_height();
 
     if (wrap_phase == 2) {
         // std::shared_ptr<data::xrelay_block> relay_block = nullptr;
-        // auto relay_block_data = wrap_block->get_relay_block_data();
+        // auto relay_block_data = wrap_block->get_header()->get_extra_data()();
         // todo(nathan): store relay block.
         xinfo("xrelay_chain_mgr_t::on_wrap_db_event created a new relay block.wrap_phase:%d,evm_height:%llu,rec_height:%llu,wrap_block:%s",
-                wrap_phase,
-                evm_height,
-                rec_height,
-                wrap_block->dump().c_str());
+              wrap_phase,
+              evm_height,
+              elect_height,
+              wrap_block->dump().c_str());
     }
     m_cross_tx_cache.update_last_proc_evm_height(evm_height);
 }

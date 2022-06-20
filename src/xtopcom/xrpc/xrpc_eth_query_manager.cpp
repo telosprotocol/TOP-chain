@@ -16,6 +16,7 @@
 #include "xcommon/xip.h"
 #include "xcommon/xerror/xerror.h"
 #include "xconfig/xconfig_register.h"
+#include "xdata/xblockbuild.h"
 #include "xdata/xtx_factory.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xproposal_data.h"
@@ -1116,13 +1117,15 @@ int xrpc_eth_query_manager::set_relay_block_result(const xobject_ptr_t<base::xvb
         }
 
         xdbg("top_getRelayBlockByNumber, sign_str: %s", top::HexEncode(sign_str).c_str());
-        uint8_t compact_signature[65];
-        memcpy(compact_signature, sign_str.data(), sign_str.size());
         xrelay_signature_node_t signature{sign_str};
         signature_nodes.push_back(signature);
     }
     relay_block.add_signature_nodes(signature_nodes);
-    std::string relay_block_data = block->get_header()->get_extra_data();
+
+    auto extra_str = block->get_header()->get_extra_data();
+    data::xtableheader_extra_t header_extra;
+    header_extra.deserialize_from_string(extra_str);
+    std::string relay_block_data = header_extra.get_relay_block_data();
     xdbg("top_getRelayBlockByNumber, relay_block_data: %s", top::HexEncode(relay_block_data).c_str());
     std::error_code ec;
     relay_block.decodeBytes(to_bytes(relay_block_data), ec);

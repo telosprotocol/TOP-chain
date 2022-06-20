@@ -274,7 +274,7 @@ namespace top
             //any cert with unspecified flag means just a "prepared-cert" that ask the next 3/2 more certs to proof it
             enum_xconsensus_flag_audit_cert          = 0x01, //audit required
             // enum_xconsensus_flag_commit_cert         = 0x02, //commit certification for a commit block,just use by basic-mode
-            enum_xconsensus_flag_extend_vote         = 0x02, //save relay prove in extend data
+            enum_xconsensus_flag_extend_vote         = 0x02, //save extend vote data
             enum_xconsensus_flag_extend_cert         = 0x04, //relyon m_extend_cert to proof
         };
 
@@ -651,7 +651,6 @@ namespace top
             inline  enum_xvblock_level  get_block_level() const {return m_vheader_ptr->get_block_level();}
             inline  uint64_t            get_timestamp()   const {return m_vqcert_ptr->get_gmtime();}  // default timestamp is clock level gmtime, which is used for tx execute
             virtual uint64_t            get_second_level_gmtime() const {return 0;}  // table-block has second level gmtime used for performance statistics
-            virtual const std::string   get_relay_block_data() const {return "";};
 
             //note:block'hash actually = cert'hash
             inline  const  std::string& get_cert_hash()   const {return m_cert_hash;}
@@ -845,34 +844,6 @@ namespace top
                 return (front.get_viewid() > back.get_viewid());
             }
         };
-
-        // class xrelay_multisign : public base::xdataobj_t {
-        // public:
-        //     xrelay_multisign(const xrelay_multisign & relay_multisign) {
-        //         m_multisign = relay_multisign.m_multisign;
-        //     }
-        // private:
-
-
-        // public:
-        //     void add_sign(const xvip2_t & addr, const std::string & vote_data) {
-        //         m_multisign[addr] = vote_data;
-        //     }
-        //     const std::map<xvip2_t, std::string, xvip2_compare> & get_multisign() const {
-        //         return m_multisign;
-        //     }
-        //     uint32_t size() const {
-        //         return m_multisign.size();
-        //     }
-
-        // protected:
-        //     int32_t do_write(base::xstream_t & stream) override;
-        //     int32_t do_read(base::xstream_t & stream) override;
-
-        // private:
-        //     std::map<xvip2_t, std::string, xvip2_compare> m_multisign;
-        // };
-
     }//end of namespace of base
 
 }//end of namespace top
