@@ -56,6 +56,22 @@
                 "TOP": "9876543219",
                 "ETH": "12345678901234567890123456789012345678905"
             }
+        },
+        {
+            "account": "T600040393b136b79e16360d246450c5bb9d39d8ad1fb6",
+            "balances": {
+                "tUSDT": "1234567890123456789012345678901234567890",
+                "TOP": "9876543219",
+                "ETH": "12345678901234567890123456789012345678905"
+            }
+        },
+        {
+            "account": "T6000416a1eac98970b855a907c42407f4265a366c8efe",
+            "balances": {
+                "tUSDT": "1234567890123456789012345678901234567890",
+                "TOP": "9876543219",
+                "ETH": "12345678901234567890123456789012345678905"
+            }
         }
     ],
     "deploy_contract": [
@@ -82,6 +98,19 @@
                 "status": 0,
                 "extra_message": "erc20_top",
                 "gas_used": 432073,
+                "logs": []
+            }
+        },
+        {
+            "src_address": "T600040393b136b79e16360d246450c5bb9d39d8ad1fb6",
+            "__comments": "NAME: ETH;SYMBOL: ETH;UUID:0x02",
+            "code_file_path": "delegate_erc20_eth.bin",
+            "gas_limit": 543721,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "erc20_eth",
+                "gas_used": 459598,
                 "logs": []
             }
         }
@@ -576,6 +605,305 @@
             "value": "0",
             "expected": {
                 "status": 2,
+                "extra_message": "",
+                "gas_used": 34000,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "mint_usdt",
+            "src_address": "T6000416a1eac98970b855a907c42407f4265a366c8efe",
+            "target_address": "erc20_usdt",
+            "data": "0x40c10f190000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea300000000000000000000000000000000000000000000000000000000000004d3",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000001",
+                "gas_used": 28475,
+                "logs": [
+                    {
+                        "address": "erc20_usdt",
+                        "topics": [
+                            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+                            "0x0000000000000000000000000000000000000000000000000000000000000000",
+                            "0x0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3"
+                        ],
+                        "data": "0x00000000000000000000000000000000000000000000000000000000000004d3"
+                    }
+                ]
+            }
+        },
+        {
+            "__comments": "mint_eth",
+            "src_address": "T6000416a1eac98970b855a907c42407f4265a366c8efe",
+            "target_address": "erc20_eth",
+            "data": "0x40c10f190000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea300000000000000000000000000000000000000000000000000000000000004d3",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000001",
+                "gas_used": 28475,
+                "logs": [
+                    {
+                        "address": "erc20_eth",
+                        "topics": [
+                            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+                            "0x0000000000000000000000000000000000000000000000000000000000000000",
+                            "0x0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3"
+                        ],
+                        "data": "0x00000000000000000000000000000000000000000000000000000000000004d3"
+                    }
+                ]
+            }
+        },
+        {
+            "__comments": "mint_top",
+            "src_address": "T6000416a1eac98970b855a907c42407f4265a366c8efe",
+            "target_address": "erc20_top",
+            "data": "0x40c10f190000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea300000000000000000000000000000000000000000000000000000000000004d3",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 5,
+                "extra_message": "",
+                "gas_used": 34000,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "mint_usdt_invalid_controller",
+            "src_address": "T600040393b136b79e16360d246450c5bb9d39d8ad1fb6",
+            "target_address": "erc20_usdt",
+            "data": "0x40c10f190000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea300000000000000000000000000000000000000000000000000000000000004d3",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 5,
+                "extra_message": "",
+                "gas_used": 34000,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "mint_usdt_gas_not_enough",
+            "src_address": "T6000416a1eac98970b855a907c42407f4265a366c8efe",
+            "target_address": "erc20_usdt",
+            "data": "0x40c10f190000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea300000000000000000000000000000000000000000000000000000000000004d3",
+            "gas_limit": 25000,
+            "value": "0",
+            "expected": {
+                "status": 2,
+                "extra_message": "",
+                "gas_used": 25000,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "mint_usdt_invalid_data_no_value",
+            "src_address": "T6000416a1eac98970b855a907c42407f4265a366c8efe",
+            "target_address": "erc20_usdt",
+            "data": "0x40c10f190000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 5,
+                "extra_message": "",
+                "gas_used": 34000,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "mint_usdt_invalid_data_value_too_long",
+            "src_address": "T6000416a1eac98970b855a907c42407f4265a366c8efe",
+            "target_address": "erc20_usdt",
+            "data": "0x40c10f190000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea300000000000000000000000000000000000000000000000000000000000004d300",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 5,
+                "extra_message": "",
+                "gas_used": 34000,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "burn_usdt",
+            "src_address": "T6000416a1eac98970b855a907c42407f4265a366c8efe",
+            "target_address": "erc20_usdt",
+            "data": "0x79cc67900000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea300000000000000000000000000000000000000000000000000000000000004d3",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000001",
+                "gas_used": 28475,
+                "logs": [
+                    {
+                        "address": "erc20_usdt",
+                        "topics": [
+                            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+                            "0x0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3",
+                            "0x0000000000000000000000000000000000000000000000000000000000000000"
+
+                        ],
+                        "data": "0x00000000000000000000000000000000000000000000000000000000000004d3"
+                    }
+                ]
+            }
+        },
+        {
+            "__comments": "burn_eth",
+            "src_address": "T6000416a1eac98970b855a907c42407f4265a366c8efe",
+            "target_address": "erc20_eth",
+            "data": "0x79cc67900000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea300000000000000000000000000000000000000000000000000000000000004d3",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000001",
+                "gas_used": 28475,
+                "logs": [
+                    {
+                        "address": "erc20_eth",
+                        "topics": [
+                            "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+                            "0x0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3",
+                            "0x0000000000000000000000000000000000000000000000000000000000000000"
+                        ],
+                        "data": "0x00000000000000000000000000000000000000000000000000000000000004d3"
+                    }
+                ]
+            }
+        },
+        {
+            "__comments": "burn_top",
+            "src_address": "T6000416a1eac98970b855a907c42407f4265a366c8efe",
+            "target_address": "erc20_top",
+            "data": "0x79cc67900000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea300000000000000000000000000000000000000000000000000000000000004d3",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 5,
+                "extra_message": "",
+                "gas_used": 34000,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "burn_eth_invalid_controller",
+            "src_address": "T600040393b136b79e16360d246450c5bb9d39d8ad1fb6",
+            "target_address": "erc20_eth",
+            "data": "0x79cc67900000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea300000000000000000000000000000000000000000000000000000000000004d3",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 5,
+                "extra_message": "",
+                "gas_used": 34000,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "burn_eth_gas_not_enough",
+            "src_address": "T6000416a1eac98970b855a907c42407f4265a366c8efe",
+            "target_address": "erc20_eth",
+            "data": "0x79cc67900000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea300000000000000000000000000000000000000000000000000000000000004d3",
+            "gas_limit": 25000,
+            "value": "0",
+            "expected": {
+                "status": 2,
+                "extra_message": "",
+                "gas_used": 25000,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "burn_eth_invalid_data_no_value",
+            "src_address": "T6000416a1eac98970b855a907c42407f4265a366c8efe",
+            "target_address": "erc20_eth",
+            "data": "0x79cc67900000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 5,
+                "extra_message": "",
+                "gas_used": 34000,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "burn_eth_invalid_data_value_too_long",
+            "src_address": "T6000416a1eac98970b855a907c42407f4265a366c8efe",
+            "target_address": "erc20_eth",
+            "data": "0x79cc67900000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea300000000000000000000000000000000000000000000000000000000000004d300",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 5,
+                "extra_message": "",
+                "gas_used": 34000,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "transfer_owership_eth",
+            "src_address": "T600040393b136b79e16360d246450c5bb9d39d8ad1fb6",
+            "target_address": "erc20_eth",
+            "data": "0xf2fde38b0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000001",
+                "gas_used": 28239,
+                "logs": [
+                    {
+                        "address": "erc20_eth",
+                        "topics": [
+                            "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0",
+                            "0x0000000000000000000000000393b136b79e16360d246450c5bb9d39d8ad1fb6",
+                            "0x0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3"
+                        ],
+                        "data": ""
+                    }
+                ]
+            }
+        },
+        {
+            "__comments": "transfer_owership_usdt",
+            "src_address": "T600040393b136b79e16360d246450c5bb9d39d8ad1fb6",
+            "target_address": "erc20_usdt",
+            "data": "0xf2fde38b0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000001",
+                "gas_used": 28239,
+                "logs": [
+                    {
+                        "address": "erc20_usdt",
+                        "topics": [
+                            "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0",
+                            "0x0000000000000000000000000393b136b79e16360d246450c5bb9d39d8ad1fb6",
+                            "0x0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3"
+                        ],
+                        "data": ""
+                    }
+                ]
+            }
+        },
+        {
+            "__comments": "transfer_owership_top",
+            "src_address": "T600040393b136b79e16360d246450c5bb9d39d8ad1fb6",
+            "target_address": "erc20_top",
+            "data": "0xf2fde38b0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 5,
                 "extra_message": "",
                 "gas_used": 34000,
                 "logs": []

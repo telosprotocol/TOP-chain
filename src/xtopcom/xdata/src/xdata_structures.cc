@@ -418,7 +418,11 @@ bool xreg_node_info::can_be_relay() const noexcept {
 }
 
 bool xreg_node_info::has_enough_tickets() const noexcept {
+#if defined(XENABLE_MOCK_ZEC_STAKE)
+    return true;
+#else
     return m_vote_amount * TOP_UNIT >= deposit();
+#endif
 }
 
 uint64_t xreg_node_info::deposit() const noexcept {

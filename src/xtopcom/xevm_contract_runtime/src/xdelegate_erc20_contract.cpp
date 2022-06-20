@@ -7,6 +7,7 @@
 #include "xbasic/endianness.h"
 #include "xcommon/xaccount_address.h"
 #include "xcommon/xeth_address.h"
+#include "xdata/xnative_contract_address.h"
 #include "xevm_common/common_data.h"
 #include "xevm_common/xabi_decoder.h"
 #include "xevm_common/xfixed_hash.h"
@@ -14,6 +15,11 @@
 #include <cinttypes>
 
 NS_BEG4(top, contract_runtime, evm, sys_contract)
+
+static constexpr char const * event_hex_string_transfer{"0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"};
+static constexpr char const * event_hex_string_approve{"0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925"};
+static constexpr char const * event_hex_string_ownership_transferred{"0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0"}; // OwnershipTransferred(address indexed oldOwner, address indexed newOwner)
+static constexpr char const * event_hex_string_controller_set{"0xea4ba01507e54b7b5990927a832da3ab6a71e981b5d53ffad97def0f85fcfb20"};        // ControllerSet(address indexed oldController, address indexed newController)
 
 bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
                                           uint64_t target_gas,
@@ -24,13 +30,16 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
                                           sys_contract_precompile_error & err) {
     // ERC20 method ids:
     //--------------------------------------------------
-    // totalSupply()                         => 18160ddd
-    // balanceOf(address)                    => 70a08231
-    // transfer(address,uint256)             => a9059cbb
-    // transferFrom(address,address,uint256) => 23b872dd
-    // approve(address,uint256)              => 095ea7b3
-    // allowance(address,address)            => dd62ed3e
-    // mint(uint256)                         => a0712d68
+    // totalSupply()                         => 0x18160ddd
+    // balanceOf(address)                    => 0x70a08231
+    // transfer(address,uint256)             => 0xa9059cbb
+    // transferFrom(address,address,uint256) => 0x23b872dd
+    // approve(address,uint256)              => 0x095ea7b3
+    // allowance(address,address)            => 0xdd62ed3e
+    // mint(address,uint256)                 => 0x40c10f19
+    // burnFrom(address,uint256)             => 0x79cc6790
+    // transferOwnership(address)            => 0xf2fde38b
+    // setController(address)                => 0x92eefe9b
     //--------------------------------------------------
     constexpr uint32_t method_id_total_supply{0x18160ddd};
     constexpr uint32_t method_id_balance_of{0x70a08231};
@@ -38,7 +47,10 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
     constexpr uint32_t method_id_transfer_from{0x23b872dd};
     constexpr uint32_t method_id_approve{0x095ea7b3};
     constexpr uint32_t method_id_allowance{0xdd62ed3e};
-    constexpr uint32_t method_id_mint{0xa0712d68};
+    constexpr uint32_t method_id_mint{0x40c10f19};
+    constexpr uint32_t method_id_burn_from{0x79cc6790};
+    constexpr uint32_t method_id_transfer_ownership{0xf2fde38b};
+    constexpr uint32_t method_id_set_controller{0x92eefe9b};
 
     assert(state_ctx);
 
@@ -53,7 +65,8 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
     }
 
     common::xtoken_id_t const erc20_token_id{top::from_byte<common::xtoken_id_t>(input.front())};
-    if (erc20_token_id != common::xtoken_id_t::top && erc20_token_id != common::xtoken_id_t::usdc && erc20_token_id != common::xtoken_id_t::usdt) {
+    if (erc20_token_id != common::xtoken_id_t::top && erc20_token_id != common::xtoken_id_t::usdc && erc20_token_id != common::xtoken_id_t::usdt &&
+        erc20_token_id != common::xtoken_id_t::eth) {
         err.fail_status = precompile_error::Fatal;
         err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::NotSupported);
 
@@ -87,12 +100,21 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
     case method_id_total_supply: {
         xdbg("predefined erc20 contract: totalSupply");
 
+        if (erc20_token_id == common::xtoken_id_t::eth) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::NotSupported);
+
+            xwarn("predefined erc20 contract: totalSupply not supported token: %d", static_cast<int>(erc20_token_id));
+
+            return false;
+        }
+
         uint64_t const total_supply_gas_cost = 2538;
         if (target_gas < total_supply_gas_cost) {
             err.fail_status = Error;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
 
-            xwarn("predefined erc20 contract: total_supply out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, total_supply_gas_cost);
+            xwarn("predefined erc20 contract: totalSupply out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, total_supply_gas_cost);
 
             return false;
         }
@@ -101,7 +123,7 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined erc20 contract: total supply with non-empty parameter");
+            xwarn("predefined erc20 contract: totalSupply with non-empty parameter");
 
             return false;
         }
@@ -135,12 +157,21 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
     case method_id_balance_of: {
         xdbg("predefined erc20 contract: balanceOf");
 
+        if (erc20_token_id == common::xtoken_id_t::eth) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::NotSupported);
+
+            xwarn("predefined erc20 contract: balanceOf not supported token: %d", static_cast<int>(erc20_token_id));
+
+            return false;
+        }
+
         uint64_t const balance_of_gas_cost = 3268;
         if (target_gas < balance_of_gas_cost) {
             err.fail_status = precompile_error::Error;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
 
-            xwarn("predefined erc20 contract: balance_of out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, balance_of_gas_cost);
+            xwarn("predefined erc20 contract: balanceOf out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, balance_of_gas_cost);
 
             return false;
         }
@@ -203,19 +234,19 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
     case method_id_transfer: {
         xdbg("predefined erc20 contract: transfer");
 
-        uint64_t const transfer_gas_cost = 18446;
-        uint64_t const transfer_reverted_gas_cost = 3662;
+        if (erc20_token_id == common::xtoken_id_t::eth) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::NotSupported);
 
-        if (target_gas < transfer_gas_cost) {
-            err.fail_status = precompile_error::Error;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
-
-            xwarn("predefined erc20 contract: transfer out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, transfer_gas_cost);
+            xwarn("predefined erc20 contract: transfer not supported token: %d", static_cast<int>(erc20_token_id));
 
             return false;
         }
 
+        uint64_t const transfer_gas_cost = 18446;
+        uint64_t const transfer_reverted_gas_cost = 3662;
         xbytes_t result(32, 0);
+
         if (is_static) {
             err.fail_status = precompile_error::Revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
@@ -223,6 +254,15 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
             err.output = result;
 
             xwarn("predefined erc20 contract: transfer is not allowed in static context");
+
+            return false;
+        }
+
+        if (target_gas < transfer_gas_cost) {
+            err.fail_status = precompile_error::Error;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
+
+            xwarn("predefined erc20 contract: transfer out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, transfer_gas_cost);
 
             return false;
         }
@@ -268,7 +308,7 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
             auto const & caller_address = context.caller;
 
             evm_common::xh256s_t topics;
-            topics.push_back(evm_common::xh256_t("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"));
+            topics.push_back(evm_common::xh256_t(event_hex_string_transfer));
             topics.push_back(evm_common::xh256_t(caller_address.to_h256()));
             topics.push_back(evm_common::xh256_t(recipient_address.to_h256()));
             evm_common::xevm_log_t log(contract_address, topics, top::to_bytes(value));
@@ -294,26 +334,35 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
     case method_id_transfer_from: {
         xdbg("predefined erc20 contract: transferFrom");
 
-        uint64_t const transfer_from_gas_cost = 18190;
-        uint64_t const transfer_from_reverted_gas_cost = 4326;
+        if (erc20_token_id == common::xtoken_id_t::eth) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::NotSupported);
 
-        if (target_gas < transfer_from_gas_cost) {
-            err.fail_status = precompile_error::Error;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
-
-            xwarn("predefined erc20 contract: transfer_from out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, transfer_from_gas_cost);
+            xwarn("predefined erc20 contract: transferFrom not supported token: %d", static_cast<int>(erc20_token_id));
 
             return false;
         }
 
+        uint64_t const transfer_from_gas_cost = 18190;
+        uint64_t const transfer_from_reverted_gas_cost = 4326;
         xbytes_t result(32, 0);
+
         if (is_static) {
             err.fail_status = precompile_error::Revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             err.cost = transfer_from_gas_cost;
             err.output = result;
 
-            xwarn("predefined erc20 contract: transfer_from is not allowed in static context");
+            xwarn("predefined erc20 contract: transferFrom is not allowed in static context");
+
+            return false;
+        }
+
+        if (target_gas < transfer_from_gas_cost) {
+            err.fail_status = precompile_error::Error;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
+
+            xwarn("predefined erc20 contract: transferFrom out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, transfer_from_gas_cost);
 
             return false;
         }
@@ -322,7 +371,7 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined erc20 contract: transfer_from with invalid parameters");
+            xwarn("predefined erc20 contract: transferFrom with invalid parameters");
 
             return false;
         }
@@ -333,7 +382,7 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined erc20 contract: transfer_from invalid owner account");
+            xwarn("predefined erc20 contract: transferFrom invalid owner account");
 
             return false;
         }
@@ -343,7 +392,7 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined erc20 contract: transfer_from invalid recipient account");
+            xwarn("predefined erc20 contract: transferFrom invalid recipient account");
 
             return false;
         }
@@ -356,7 +405,7 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined erc20 contract: transfer_from invalid value");
+            xwarn("predefined erc20 contract: transferFrom invalid value");
 
             return false;
         }
@@ -379,7 +428,7 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
             auto const & contract_address = context.address;
 
             evm_common::xh256s_t topics;
-            topics.push_back(evm_common::xh256_t("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"));
+            topics.push_back(evm_common::xh256_t(event_hex_string_transfer));
             topics.push_back(evm_common::xh256_t(owner_address.to_h256()));
             topics.push_back(evm_common::xh256_t(recipient_address.to_h256()));
             evm_common::xevm_log_t log(contract_address, topics, top::to_bytes(value));
@@ -396,7 +445,7 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
             err.cost = transfer_from_reverted_gas_cost;
             err.output = result;
 
-            xwarn("predefined erc20 contract: transfer_from reverted. ec %" PRIi32 " category %s msg %s", ec.value(), ec.category().name(), ec.message().c_str());
+            xwarn("predefined erc20 contract: transferFrom reverted. ec %" PRIi32 " category %s msg %s", ec.value(), ec.category().name(), ec.message().c_str());
         }
 
         return !ec;
@@ -405,16 +454,16 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
     case method_id_approve: {
         xdbg("predefined erc20 contract: approve");
 
-        uint64_t const approve_gas_cost = 18599;
-        if (target_gas < approve_gas_cost) {
-            err.fail_status = precompile_error::Error;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
+        if (erc20_token_id == common::xtoken_id_t::eth) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::NotSupported);
 
-            xwarn("predefined erc20 contract: approve out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, approve_gas_cost);
+            xwarn("predefined erc20 contract: approve not supported token: %d", static_cast<int>(erc20_token_id));
 
             return false;
         }
 
+        uint64_t const approve_gas_cost = 18599;
         xbytes_t result(32, 0);
         if (is_static) {
             err.fail_status = precompile_error::Revert;
@@ -423,6 +472,15 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
             err.output = result;
 
             xwarn("predefined erc20 contract: approve is not allowed in static context");
+
+            return false;
+        }
+
+        if (target_gas < approve_gas_cost) {
+            err.fail_status = precompile_error::Error;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
+
+            xwarn("predefined erc20 contract: approve out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, approve_gas_cost);
 
             return false;
         }
@@ -466,7 +524,7 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
 
         if (!ec) {
             evm_common::xh256s_t topics;
-            topics.push_back(evm_common::xh256_t("0x8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925"));
+            topics.push_back(evm_common::xh256_t(event_hex_string_approve));
             topics.push_back(evm_common::xh256_t(caller_address.to_h256()));
             topics.push_back(evm_common::xh256_t(spender_address.to_h256()));
             evm_common::xevm_log_t log(contract_address, topics, top::to_bytes(amount));
@@ -490,6 +548,15 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
 
     case method_id_allowance: {
         xdbg("predefined erc20 contract: allowance");
+
+        if (erc20_token_id == common::xtoken_id_t::eth) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::NotSupported);
+
+            xwarn("predefined erc20 contract: allowance not supported token: %d", static_cast<int>(erc20_token_id));
+
+            return false;
+        }
 
         uint64_t const allowance_gas_cost = 3987;
         if (target_gas < allowance_gas_cost) {
@@ -546,104 +613,436 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
         return true;
     }
 
-    //case method_id_mint: {
-    //    xdbg("predefined erc20 contract: mint");
+    case method_id_mint: {
+        xdbg("predefined erc20 contract: mint");
 
-    //    uint64_t const mint_gas_cost = 3155;
-    //    if (target_gas < mint_gas_cost) {
-    //        err.fail_status = precompile_error::Error;
-    //        err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
+        uint64_t const mint_gas_cost = 3155;
+        xbytes_t result(32, 0);
 
-    //        xwarn("predefined erc20 contract: mint out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, mint_gas_cost);
+        if (is_static) {
+            err.fail_status = precompile_error::Revert;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+            err.cost = mint_gas_cost;
+            err.output = result;
 
-    //        return false;
-    //    }
+            xwarn("predefined erc20 contract: mint is not allowed in static context");
 
-    //    xbytes_t result(32, 0);
-    //    if (is_static) {
-    //        err.fail_status = precompile_error::Revert;
-    //        err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
-    //        err.cost = mint_gas_cost;
-    //        err.output = result;
+            return false;
+        }
 
-    //        xwarn("predefined erc20 contract: mint is not allowed in static context");
+        if (erc20_token_id == common::xtoken_id_t::top) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::NotSupported);
 
-    //        return false;
-    //    }
+            xwarn("predefined erc20 contract: mint not supported TOP token");
 
-    //    if (abi_decoder.size() != 1) {
-    //        err.fail_status = precompile_error::Fatal;
-    //        err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
+            return false;
+        }
 
-    //        xwarn("predefined erc20 contract: mint with invalid parameter");
+        // Only controller can mint tokens.
+        auto const & contract_state = state_ctx->load_unit_state(evm_erc20_contract_address.vaccount());
+        auto const & msg_sender = common::xaccount_address_t::build_from(context.caller, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
+        auto const & token_controller = contract_state->tep_token_controller(erc20_token_id);
+        if (msg_sender != token_controller) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-    //        return false;
-    //    }
+            xwarn("predefined erc20 contract: mint called by non-admin account %s", context.caller.c_str());
 
-    //    std::error_code ec;
-    //    common::xaccount_address_t caller_account_address = common::xaccount_address_t::build_from(context.caller, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
-    //    evm_common::u256 const value = abi_decoder.extract<evm_common::u256>(ec);
-    //    if (ec) {
-    //        err.fail_status = precompile_error::Fatal;
-    //        err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
+            return false;
+        }
 
-    //        xwarn("predefined erc20 contract: transfer with invalid value");
+        if (target_gas < mint_gas_cost) {
+            err.fail_status = precompile_error::Error;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
 
-    //        return false;
-    //    }
+            xwarn("predefined erc20 contract: mint out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, mint_gas_cost);
 
-    //    auto sender_state = state_ctx->load_unit_state(caller_account_address.vaccount());
-    //    switch (erc20_token_id) {
-    //    case common::xtoken_id_t::top: {
-    //        sender_state->token_deposit(data::XPROPERTY_BALANCE_AVAILABLE, static_cast<base::vtoken_t>(value.convert_to<uint64_t>()));
-    //        break;
-    //    }
+            return false;
+        }
 
-    //    case common::xtoken_id_t::usdt:
-    //        XATTRIBUTE_FALLTHROUGH;
-    //    case common::xtoken_id_t::usdc: {
-    //        sender_state->tep_token_deposit(erc20_token_id, value);
-    //        break;
-    //    }
+        if (abi_decoder.size() != 2) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-    //    default: {
-    //        assert(false);
+            xwarn("predefined erc20 contract: mint with invalid parameter");
 
-    //        err.fail_status = precompile_error::Fatal;
-    //        err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
+            return false;
+        }
 
-    //        xwarn("predefined erc20 contract: mint invalid token id %d", static_cast<int>(erc20_token_id));
+        auto const recver = abi_decoder.extract<common::xeth_address_t>(ec);
+        if (ec) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-    //        return false;
-    //    }
-    //    }
+            xwarn("predefined erc20 contract: mint with invalid receiver address");
 
-    //    if (!ec) {
-    //        auto const & contract_address = context.address;
-    //        auto const & recipient_address = context.caller;
+            return false;
+        }
+        auto const recver_address = common::xaccount_address_t::build_from(recver, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
 
-    //        evm_common::xh256s_t topics;
-    //        topics.push_back(evm_common::xh256_t("0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"));
-    //        topics.push_back(evm_common::xh256_t(common::xeth_address_t::zero().to_h256()));
-    //        topics.push_back(evm_common::xh256_t(recipient_address.to_h256()));
-    //        evm_common::xevm_log_t log(contract_address, topics, top::to_bytes(value));
-    //        result[31] = 1;
+        evm_common::u256 const value = abi_decoder.extract<evm_common::u256>(ec);
+        if (ec) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-    //        output.cost = mint_gas_cost;
-    //        output.exit_status = Returned;
-    //        output.output = result;
-    //        output.logs.push_back(log);
-    //    } else {
-    //        err.fail_status = precompile_error::Revert;
-    //        err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
-    //        err.cost = mint_gas_cost / 2;
-    //        err.output = result;
+            xwarn("predefined erc20 contract: mint with invalid value");
 
-    //        xwarn("predefined erc20 contract: mint reverted. ec %" PRIi32 " category %s msg %s", ec.value(), ec.category().name(), ec.message().c_str());
-    //    }
+            return false;
+        }
 
-    //    return !ec;
-    //}
+        auto recver_state = state_ctx->load_unit_state(recver_address.vaccount());
+        recver_state->tep_token_deposit(erc20_token_id, value);
+
+        if (!ec) {
+            auto const & contract_address = context.address;
+            auto const & recipient_address = recver;
+
+            evm_common::xh256s_t topics;
+            topics.push_back(evm_common::xh256_t(event_hex_string_transfer));
+            topics.push_back(evm_common::xh256_t(common::xeth_address_t::zero().to_h256()));
+            topics.push_back(evm_common::xh256_t(recipient_address.to_h256()));
+            evm_common::xevm_log_t log(contract_address, topics, top::to_bytes(value));
+            result[31] = 1;
+
+            output.cost = mint_gas_cost;
+            output.exit_status = Returned;
+            output.output = result;
+            output.logs.push_back(log);
+        } else {
+            err.fail_status = precompile_error::Revert;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+            err.cost = mint_gas_cost;
+            err.output = result;
+
+            xwarn("predefined erc20 contract: mint reverted. ec %" PRIi32 " category %s msg %s", ec.value(), ec.category().name(), ec.message().c_str());
+        }
+
+        return !ec;
+    }
+
+    case method_id_burn_from: {
+        xdbg("predefined erc20 contract: burnFrom");
+
+        uint64_t const burn_gas_cost = 3155;
+        xbytes_t result(32, 0);
+
+        if (is_static) {
+            err.fail_status = precompile_error::Revert;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+            err.cost = burn_gas_cost;
+            err.output = result;
+
+            xwarn("predefined erc20 contract: burnFrom is not allowed in static context");
+
+            return false;
+        }
+
+        if (erc20_token_id == common::xtoken_id_t::top) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::NotSupported);
+
+            xwarn("predefined erc20 contract: burnFrom not supported token: %d", static_cast<int>(erc20_token_id));
+
+            return false;
+        }
+
+        auto const & contract_state = state_ctx->load_unit_state(evm_erc20_contract_address.vaccount());
+        auto const & msg_sender = common::xaccount_address_t::build_from(context.caller, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
+        auto const & token_controller = contract_state->tep_token_controller(erc20_token_id);
+        if (msg_sender != token_controller) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
+
+            xwarn("predefined erc20 contract: burnFrom called by non-admin account %s", context.caller.c_str());
+
+            return false;
+        }
+
+        if (target_gas < burn_gas_cost) {
+            err.fail_status = precompile_error::Error;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
+
+            xwarn("predefined erc20 contract: burnFrom out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, burn_gas_cost);
+
+            return false;
+        }
+
+        if (abi_decoder.size() != 2) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
+
+            xwarn("predefined erc20 contract: burnFrom with invalid parameter");
+
+            return false;
+        }
+
+        common::xeth_address_t burn_from = abi_decoder.extract<common::xeth_address_t>(ec);
+        if (ec) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
+
+            xwarn("predefined erc20 contract: burnFrom with invalid burn from address");
+
+            return false;
+        }
+        common::xaccount_address_t burn_from_address = common::xaccount_address_t::build_from(burn_from, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
+
+        evm_common::u256 const value = abi_decoder.extract<evm_common::u256>(ec);
+        if (ec) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
+
+            xwarn("predefined erc20 contract: burnFrom with invalid value");
+
+            return false;
+        }
+
+        auto recver_state = state_ctx->load_unit_state(burn_from_address.vaccount());
+        recver_state->tep_token_withdraw(erc20_token_id, value);
+
+        if (!ec) {
+            auto const & contract_address = context.address;
+
+            evm_common::xh256s_t topics;
+            topics.push_back(evm_common::xh256_t(event_hex_string_transfer));
+            topics.push_back(evm_common::xh256_t(burn_from.to_h256()));
+            topics.push_back(evm_common::xh256_t(common::xeth_address_t::zero().to_h256()));
+            evm_common::xevm_log_t log(contract_address, topics, top::to_bytes(value));
+            result[31] = 1;
+
+            output.cost = burn_gas_cost;
+            output.exit_status = Returned;
+            output.output = result;
+            output.logs.push_back(log);
+        } else {
+            err.fail_status = precompile_error::Revert;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+            err.cost = burn_gas_cost;
+            err.output = result;
+
+            xwarn("predefined erc20 contract: burnFrom reverted. ec %" PRIi32 " category %s msg %s", ec.value(), ec.category().name(), ec.message().c_str());
+        }
+
+        return !ec;
+    }
+
+    case method_id_transfer_ownership: {
+        xdbg("predefined erc20 contract: transferOwnership");
+
+        uint64_t const transfer_ownership_gas_cost = 3155;
+        xbytes_t result(32, 0);
+
+        if (is_static) {
+            err.fail_status = precompile_error::Revert;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+            err.cost = transfer_ownership_gas_cost;
+            err.output = result;
+
+            xwarn("predefined erc20 contract: transferOwnership is not allowed in static context");
+
+            return false;
+        }
+
+        if (erc20_token_id == common::xtoken_id_t::top) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::NotSupported);
+
+            xwarn("predefined erc20 contract: transferOwnership not supported token: %d", static_cast<int>(erc20_token_id));
+
+            return false;
+        }
+
+        assert(erc20_token_id == common::xtoken_id_t::eth || erc20_token_id == common::xtoken_id_t::usdc || erc20_token_id == common::xtoken_id_t::usdt);
+
+        auto contract_state = state_ctx->load_unit_state(evm_erc20_contract_address.vaccount());
+        auto const & msg_sender = common::xaccount_address_t::build_from(context.caller, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
+        auto const & token_owner = contract_state->tep_token_owner(erc20_token_id);
+        if (msg_sender != token_owner) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
+
+            xwarn("predefined erc20 contract: transferOwnership called by non-admin account %s", context.caller.c_str());
+
+            return false;
+        }
+        ec.clear();
+
+        if (target_gas < transfer_ownership_gas_cost) {
+            err.fail_status = precompile_error::Error;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
+
+            xwarn("predefined erc20 contract: transferOwnership out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, transfer_ownership_gas_cost);
+
+            return false;
+        }
+
+        if (abi_decoder.size() != 1) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
+
+            xwarn("predefined erc20 contract: transferOwnership with invalid parameter");
+
+            return false;
+        }
+
+        auto const new_owner = abi_decoder.extract<common::xeth_address_t>(ec);
+        if (ec) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
+
+            xwarn("predefined erc20 contract: transferOwnership with invalid burn from address");
+
+            return false;
+        }
+
+        if (new_owner.empty()) {
+            err.fail_status = precompile_error::Revert;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+            err.cost = transfer_ownership_gas_cost;
+            err.output = result;
+
+            xwarn("predefined erc20 contract: transferOwnership reverted. new owner is zero");
+
+            return false;
+        }
+
+        contract_state->tep_token_owner(erc20_token_id, common::xaccount_address_t::build_from(new_owner, base::enum_vaccount_addr_type_secp256k1_evm_user_account), ec);
+        if (!ec) {
+            auto const & contract_address = context.address;
+
+            evm_common::xh256s_t topics;
+            topics.push_back(evm_common::xh256_t(event_hex_string_ownership_transferred));
+            topics.push_back(evm_common::xh256_t(context.caller.to_h256()));
+            topics.push_back(evm_common::xh256_t(new_owner.to_h256()));
+            evm_common::xevm_log_t log{contract_address, topics};
+            result[31] = 1;
+
+            output.cost = transfer_ownership_gas_cost;
+            output.exit_status = Returned;
+            output.output = result;
+            output.logs.push_back(std::move(log));
+        } else {
+            err.fail_status = precompile_error::Revert;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+            err.cost = transfer_ownership_gas_cost;
+            err.output = result;
+
+            xwarn("predefined erc20 contract: transferOwnership reverted. ec %" PRIi32 " category %s msg %s", ec.value(), ec.category().name(), ec.message().c_str());
+        }
+
+        return !ec;
+    }
+
+    case method_id_set_controller: {
+        xdbg("predefined erc20 contract: setController");
+
+        uint64_t const set_controller_gas_cost = 3155;
+        xbytes_t result(32, 0);
+
+        if (is_static) {
+            err.fail_status = precompile_error::Revert;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+            err.cost = set_controller_gas_cost;
+            err.output = result;
+
+            xwarn("predefined erc20 contract: setController is not allowed in static context");
+
+            return false;
+        }
+
+        if (erc20_token_id == common::xtoken_id_t::top) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::NotSupported);
+
+            xwarn("predefined erc20 contract: setController not supported token: %d", static_cast<int>(erc20_token_id));
+
+            return false;
+        }
+
+        assert(erc20_token_id == common::xtoken_id_t::eth || erc20_token_id == common::xtoken_id_t::usdc || erc20_token_id == common::xtoken_id_t::usdt);
+
+        // only contract owner can set controller.
+        auto contract_state = state_ctx->load_unit_state(evm_erc20_contract_address.vaccount());
+        auto const & msg_sender = common::xaccount_address_t::build_from(context.caller, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
+        auto const & token_owner = contract_state->tep_token_owner(erc20_token_id);
+        if (msg_sender != token_owner) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
+
+            xwarn("predefined erc20 contract: setController called by non-admin account %s", context.caller.c_str());
+
+            return false;
+        }
+        ec.clear();
+
+        if (target_gas < set_controller_gas_cost) {
+            err.fail_status = precompile_error::Error;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
+
+            xwarn("predefined erc20 contract: setController out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, set_controller_gas_cost);
+
+            return false;
+        }
+
+        if (abi_decoder.size() != 1) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
+
+            xwarn("predefined erc20 contract: setController with invalid parameter");
+
+            return false;
+        }
+
+        auto const new_controller = abi_decoder.extract<common::xeth_address_t>(ec);
+        if (ec) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
+
+            xwarn("predefined erc20 contract: setController with invalid burn from address");
+
+            return false;
+        }
+
+        if (new_controller.empty()) {
+            err.fail_status = precompile_error::Revert;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+            err.cost = set_controller_gas_cost;
+            err.output = result;
+
+            xwarn("predefined erc20 contract: transferOwnership reverted. new owner is zero");
+
+            return false;
+        }
+
+        auto const & old_controller = common::xeth_address_t::build_from(contract_state->tep_token_controller(erc20_token_id));
+        contract_state->tep_token_controller(erc20_token_id, common::xaccount_address_t::build_from(new_controller, base::enum_vaccount_addr_type_secp256k1_evm_user_account), ec);
+
+        if (!ec) {
+            auto const & contract_address = context.address;
+
+            evm_common::xh256s_t topics;
+            topics.push_back(evm_common::xh256_t(event_hex_string_controller_set));
+            topics.push_back(evm_common::xh256_t(old_controller.to_h256()));
+            topics.push_back(evm_common::xh256_t(new_controller.to_h256()));
+            evm_common::xevm_log_t log{contract_address, topics};
+            result[31] = 1;
+
+            output.cost = set_controller_gas_cost;
+            output.exit_status = Returned;
+            output.output = result;
+            output.logs.push_back(std::move(log));
+        } else {
+            err.fail_status = precompile_error::Revert;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+            err.cost = set_controller_gas_cost;
+            err.output = result;
+
+            xwarn("predefined erc20 contract: setController reverted. ec %" PRIi32 " category %s msg %s", ec.value(), ec.category().name(), ec.message().c_str());
+        }
+
+        return !ec;
+    }
 
     default: {
         err.fail_status = precompile_error::Fatal;
