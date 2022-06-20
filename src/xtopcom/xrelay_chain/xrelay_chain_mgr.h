@@ -43,13 +43,14 @@ public:
 
 public:
     void on_evm_db_event(data::xblock_t * block);
-    bool get_tx_cache_leader(uint64_t & upper_height, std::map<uint64_t, xcross_txs_t> & cross_tx_map) const;
+    bool get_tx_cache_leader(uint64_t & upper_height, std::map<uint64_t, xcross_txs_t> & cross_tx_map, uint32_t max_tx_num) const;
     bool get_tx_cache_backup(uint64_t upper_height, std::map<uint64_t, xcross_txs_t> & cross_tx_map) const;
     void recover_cache();
     void update_last_proc_evm_height(uint64_t last_proc_evm_height);
 
 private:
     void process_block(data::xblock_t * block);
+    void update_lower_height();
 
 private:
     std::shared_ptr<xrelay_chain_resources> m_para;
@@ -96,7 +97,7 @@ public:
 public:
     void start(int32_t thread_id);
     void stop();
-    bool get_tx_cache_leader(uint64_t lower_height, uint64_t & upper_height, std::map<uint64_t, xcross_txs_t> & cross_tx_map);
+    bool get_tx_cache_leader(uint64_t lower_height, uint64_t & upper_height, std::map<uint64_t, xcross_txs_t> & cross_tx_map, uint32_t max_tx_num);
     bool get_tx_cache_backup(uint64_t lower_height, uint64_t upper_height, std::map<uint64_t, xcross_txs_t> & cross_tx_map);
     bool get_elect_cache(uint64_t elect_height, std::vector<data::xrelay_election_node_t> & reley_election);
     void on_timer();
