@@ -4,19 +4,21 @@
 
 #include "xblockmaker/xrelay_proposal_maker.h"
 
+#include "xbasic/xhex.h"
 #include "xbasic/xmemory.hpp"
 #include "xblockmaker/xblock_maker_para.h"
 #include "xblockmaker/xblockmaker_error.h"
 #include "xblockmaker/xrelay_proposal_maker.h"
-#include "xdata/xblocktool.h"
-#include "xmbus/xevent_behind.h"
-#include "xstore/xtgas_singleton.h"
-#include "xevm_common/xevm_transaction_result.h"
-#include "xpbase/base/top_utils.h"
 #include "xcrypto/xckey.h"
-#include "xbasic/xhex.h"
+#include "xdata/xblocktool.h"
+#include "xdata/xblockbuild.h"
 #include "xevm_common/common_data.h"
-#include <fstream>  
+#include "xevm_common/xevm_transaction_result.h"
+#include "xmbus/xevent_behind.h"
+#include "xpbase/base/top_utils.h"
+#include "xstore/xtgas_singleton.h"
+
+#include <fstream>
 #include <string>
 
 NS_BEG2(top, blockmaker)
@@ -50,17 +52,18 @@ bool xrelay_proposal_maker_t::can_make_proposal(data::xblock_consensus_para_t & 
     return true;
 }
 
-void xrelay_proposal_maker_t::convert_to_xrelay_tx_and_receipts(const std::map<uint64_t, xrelay_chain::xcross_txs_t> & cross_tx_map, 
-                                                                std::vector<data::xeth_transaction_t> &transactions,std::vector<data::xeth_receipt_t> & receipts) {
+void xrelay_proposal_maker_t::convert_to_xrelay_tx_and_receipts(const std::map<uint64_t, xrelay_chain::xcross_txs_t> & cross_tx_map,
+                                                                std::vector<data::xeth_transaction_t> & transactions,
+                                                                std::vector<data::xeth_receipt_t> & receipts) {
     for (auto & cross_tx_map_pair : cross_tx_map) {
         auto & cross_txs = cross_tx_map_pair.second;
         for (auto & tx : cross_txs.m_txs) {
-            std::error_code  ec;
+            std::error_code ec;
             data::xeth_transaction_t relay_tx = tx->to_eth_tx(ec);
             xinfo("xrelay_proposal_maker_t::convert_to_xrelay_tx_and_receipts tx_info: %s  relay_tx: %ss ", tx->dump().c_str(), relay_tx.dump().c_str());
-            transactions.push_back(relay_tx); 
+            transactions.push_back(relay_tx);
         }
-        
+
         for (auto & tx_result : cross_txs.m_tx_results) {
             data::xeth_receipt_t receipt;
             receipt.set_tx_status(tx_result.get_tx_status());
@@ -75,7 +78,7 @@ void xrelay_proposal_maker_t::convert_to_xrelay_tx_and_receipts(const std::map<u
 data::xrelay_block xrelay_proposal_maker_t::build_relay_block(evm_common::h256 prev_hash,
                                                               uint64_t block_height,
                                                               uint64_t timestamp,
-                                                              const std::vector<data::xeth_transaction_t> &transactions,
+                                                              const std::vector<data::xeth_transaction_t> & transactions,
                                                               const std::vector<data::xeth_receipt_t> & receipts,
                                                               const data::xrelay_election_group_t & reley_election_group,
                                                               uint64_t epochid) {
@@ -90,7 +93,7 @@ data::xrelay_block xrelay_proposal_maker_t::build_relay_block(evm_common::h256 p
     return relay_block;
 }
 
- bool xrelay_proposal_maker_t::build_genesis_relay_block(data::xrelay_block & genesis_block) {
+bool xrelay_proposal_maker_t::build_genesis_relay_block(data::xrelay_block & genesis_block) {
     uint64_t epochID = 0;
     evm_common::h256 prev_hash;
     data::xrelay_block relay_block(prev_hash, 0, epochID, 0);
@@ -112,31 +115,45 @@ data::xrelay_block xrelay_proposal_maker_t::build_relay_block(evm_common::h256 p
 #ifdef DEBUG
     reley_election_group.dump();
 
-    //todo,  write genesis info file 
+    // todo,  write genesis info file
     {
-        xbytes_t rlp_genesis_block_header_data =  genesis_block.streamRLP_header_to_contract();
-        //rlp_genesis_block_header_data length too long
-        //xdbg("xrelay_proposal_maker_t::build_genesis_relay_block conent :[%s]. \n",  top::evm_common::toHex(rlp_genesis_block_header_data).c_str());
-        std::string hex_result =  top::evm_common::toHex(rlp_genesis_block_header_data);
-       
-        FILE* file = fopen("rlp_genesis_block_header_data.txt", "wb");
+        xbytes_t rlp_genesis_block_header_data = genesis_block.streamRLP_header_to_contract();
+        // rlp_genesis_block_header_data length too long
+        // xdbg("xrelay_proposal_maker_t::build_genesis_relay_block conent :[%s]. \n",  top::evm_common::toHex(rlp_genesis_block_header_data).c_str());
+        std::string hex_result = top::evm_common::toHex(rlp_genesis_block_header_data);
+
+        FILE * file = fopen("rlp_genesis_block_header_data.txt", "wb");
         size_t ws = fwrite(hex_result.c_str(), 1, hex_result.length(), file);
         fclose(file);
     }
-#endif 
+#endif
     return true;
 }
 
 bool xrelay_proposal_maker_t::build_relay_block_data_leader(const data::xblock_ptr_t & latest_wrap_block,
                                                             uint64_t timestamp,
-                                                            const data::xrelay_election_group_t & reley_election_group,
+                                                            uint64_t last_election_height,
+                                                            uint64_t & new_election_height,
                                                             uint64_t last_evm_table_height,
                                                             uint64_t & new_evm_table_height,
                                                             uint64_t epochid,
                                                             std::string & relay_block_data) {
+    data::xrelay_election_group_t reley_election_group;
+    std::vector<data::xrelay_election_node_t> reley_election;
+    auto ret = m_relay_chain_mgr->get_elect_cache(last_election_height + 1, reley_election);
+    if (!ret) {
+        reley_election_group.election_epochID = 0;
+        new_election_height = last_election_height;
+        xinfo("xrelay_proposal_maker_t::build_relay_block_data_leader. get elect cache fail. height:%llu", last_election_height + 1);
+    } else {
+        new_election_height = last_election_height + 1;
+        reley_election_group.election_epochID = new_election_height;
+    }
+    reley_election_group.elections_vector = reley_election;
+
     evm_common::h256 prev_hash;
     uint64_t block_height = 0;
-    std::error_code  ec;
+    std::error_code ec;
 
     auto last_relay_block_data = latest_wrap_block->get_header()->get_extra_data();
     if (latest_wrap_block->get_height() > 0) {
@@ -147,7 +164,7 @@ bool xrelay_proposal_maker_t::build_relay_block_data_leader(const data::xblock_p
             xwarn("xrelay_proposal_maker_t:build_relay_block_data_leader decodeBytes error %s; err msg %s", ec.category().name(), ec.message().c_str());
             return false;
         }
-        
+
         prev_hash = last_relay_block.get_block_hash();
         block_height = last_relay_block.get_block_height() + 1;
     } else {
@@ -162,23 +179,21 @@ bool xrelay_proposal_maker_t::build_relay_block_data_leader(const data::xblock_p
 
     std::map<uint64_t, xrelay_chain::xcross_txs_t> cross_tx_map;
     uint64_t cur_evm_table_height = 0;
-    auto result = m_relay_chain_mgr->get_tx_cache_leader(last_evm_table_height, cur_evm_table_height, cross_tx_map);
-    if (!result) {
-        return {};
-    }
-    if (cross_tx_map.empty() && reley_election_group.elections_vector.empty()) {
-        xinfo("xrelay_proposal_maker_t::build_relay_block_data_leader no cross txs and no new relay election.");
-        return false;
-    }
-
     std::vector<data::xeth_transaction_t> transactions;
     std::vector<data::xeth_receipt_t> receipts;
-    convert_to_xrelay_tx_and_receipts(cross_tx_map, transactions, receipts);
 
-    xdbg("xrelay_proposal_maker_t::build_relay_block_data_leader new_epoch_id:%llu,election size:%u,receipts size:%u",
-         reley_election_group.election_epochID,
-         reley_election_group.elections_vector.size(),
-         receipts.size());
+    // election data and cross txs not pack into one relay block
+    if (reley_election_group.empty()) {
+        auto result = m_relay_chain_mgr->get_tx_cache_leader(last_evm_table_height, cur_evm_table_height, cross_tx_map);
+        if (!result) {
+            return {};
+        }
+        if (cross_tx_map.empty() && reley_election_group.empty()) {
+            xinfo("xrelay_proposal_maker_t::build_relay_block_data_leader no cross txs and no new relay election.");
+            return false;
+        }
+        convert_to_xrelay_tx_and_receipts(cross_tx_map, transactions, receipts);
+    }
 
     data::xrelay_block relay_block = build_relay_block(prev_hash, block_height, timestamp, transactions, receipts, reley_election_group, epochid);
     xdbg("xrelay_proposal_maker_t::build_relay_block_data_leader relay_block:%s", relay_block.dump().c_str());
@@ -203,26 +218,26 @@ bool xrelay_proposal_maker_t::build_relay_block_data_backup(evm_common::h256 pre
     if (!ret) {
         return {};
     }
-    
+
     std::vector<data::xeth_transaction_t> transactions;
     std::vector<data::xeth_receipt_t> receipts;
-   convert_to_xrelay_tx_and_receipts(cross_tx_map, transactions, receipts);
+    convert_to_xrelay_tx_and_receipts(cross_tx_map, transactions, receipts);
 
     std::vector<data::xrelay_election_node_t> reley_election;
 
     if (new_election_height != 0) {
         auto ret = m_relay_chain_mgr->get_elect_cache(new_election_height, reley_election);
         if (!ret) {
-            xinfo("xrelay_proposal_maker_t::build_relay_block_data_leader. get elect cache fail. height:%llu", new_election_height);
+            xinfo("xrelay_proposal_maker_t::build_relay_block_data_backup. get elect cache fail. height:%llu", new_election_height);
             return false;
-        }        
+        }
     }
 
     data::xrelay_election_group_t reley_election_group;
     reley_election_group.election_epochID = new_election_height;
     reley_election_group.elections_vector = reley_election;
 
-    data::xrelay_block relay_block = build_relay_block(prev_hash, block_height, timestamp,transactions, receipts, reley_election_group, epochid);
+    data::xrelay_block relay_block = build_relay_block(prev_hash, block_height, timestamp, transactions, receipts, reley_election_group, epochid);
 
     xdbg("xrelay_proposal_maker_t::build_relay_block_data_backup relay_block:%s", relay_block.dump().c_str());
 
@@ -263,21 +278,29 @@ xblock_ptr_t xrelay_proposal_maker_t::make_proposal(data::xblock_consensus_para_
     uint8_t last_wrap_phase;
     uint64_t last_evm_height;
     uint64_t last_elect_height;
+    data::xtableheader_extra_t last_header_extra;
     if (latest_cert_block->is_genesis_block()) {
         last_wrap_phase = 2;
         last_evm_height = 0;
         last_elect_height = 0;
     } else {
-        auto & last_wrap_data = latest_cert_block->get_header()->get_comments();
+        auto extra_str = latest_cert_block->get_header()->get_extra_data();
+        auto ret = last_header_extra.deserialize_from_string(extra_str);
+        if (ret <= 0) {
+            xerror("xrelay_proposal_maker_t::make_proposal header extra data deserialize fail.");
+            return nullptr;
+        }
+        auto last_wrap_data = last_header_extra.get_relay_wrap_info();
         if (last_wrap_data.empty()) {
             xerror("xrelay_proposal_maker_t::make_proposal wrap data should not empty.");
             return nullptr;
-        } else {
-            base::xstream_t stream_wrap_data{base::xcontext_t::instance(), (uint8_t*)last_wrap_data.data(), static_cast<uint32_t>(last_wrap_data.size())};
-            stream_wrap_data >> last_wrap_phase;
-            stream_wrap_data >> last_evm_height;
-            stream_wrap_data >> last_elect_height;
         }
+
+        data::xrelay_wrap_info_t last_wrap_info;
+        last_wrap_info.serialize_from_string(last_wrap_data);
+        last_wrap_phase = last_wrap_info.get_wrap_phase();
+        last_evm_height = last_wrap_info.get_evm_height();
+        last_elect_height = last_wrap_info.get_elect_height();
     }
 
     base::xstream_t _stream(base::xcontext_t::instance());
@@ -288,35 +311,19 @@ xblock_ptr_t xrelay_proposal_maker_t::make_proposal(data::xblock_consensus_para_
     std::string relay_block_data;
     if (wrap_phase > 2) {
         wrap_phase = 0;
-
-        uint64_t new_election_height = 0;
-
-        std::vector<data::xrelay_election_node_t> reley_election;
-        auto ret = m_relay_chain_mgr->get_elect_cache(last_elect_height + 1, reley_election);
-        if (!ret) {
-            xinfo("xrelay_proposal_maker_t::make_proposal. get elect cache fail. height:%llu", last_elect_height + 1);
-        } else {
-            new_election_height = last_elect_height + 1;
-            elect_height = new_election_height;
-        }
-
-        data::xrelay_election_group_t reley_election_group;
-        reley_election_group.election_epochID = new_election_height;
-        reley_election_group.elections_vector = reley_election;
-
-        ret = build_relay_block_data_leader(latest_cert_block, proposal_para.get_gmtime(), reley_election_group, last_evm_height, evm_height, proposal_para.get_election_round(), relay_block_data);
+        auto ret = build_relay_block_data_leader(
+            latest_cert_block, proposal_para.get_gmtime(), last_elect_height, elect_height, last_evm_height, evm_height, proposal_para.get_election_round(), relay_block_data);
         if (!ret) {
             xinfo("xrelay_proposal_maker_t::make_proposal fail-no tx for pack.%s", proposal_para.dump().c_str());
             return nullptr;
         }
-    }
-    else {
+    } else {
         evm_height = last_evm_height;
         elect_height = last_elect_height;
-        auto & last_relay_block_data = latest_cert_block->get_header()->get_extra_data();
+        auto last_relay_block_data = last_header_extra.get_relay_block_data();
         xassert(!last_relay_block_data.empty());
 
-        std::error_code  ec;
+        std::error_code ec;
         data::xrelay_block last_relay_block;
         last_relay_block.decodeBytes(to_bytes(last_relay_block_data), ec);
         if (ec) {
@@ -327,7 +334,9 @@ xblock_ptr_t xrelay_proposal_maker_t::make_proposal(data::xblock_consensus_para_
             if (last_relay_block.get_inner_header().get_epochID() + 1 != proposal_para.get_election_round()) {
                 xerror("xrelay_proposal_maker_t:make_proposal epochid exception.relay_block:%s,new round:%lu", last_relay_block.dump().c_str(), proposal_para.get_election_round());
             }
-            xwarn("xrelay_proposal_maker_t:make_proposal epochid changed, should consensus from phase 0 again.relay_block:%s,new round:%lu", last_relay_block.dump().c_str(), proposal_para.get_election_round());
+            xwarn("xrelay_proposal_maker_t:make_proposal epochid changed, should consensus from phase 0 again.relay_block:%s,new round:%lu",
+                  last_relay_block.dump().c_str(),
+                  proposal_para.get_election_round());
             last_relay_block.get_header().set_epochid(proposal_para.get_election_round());
             last_relay_block.build_finish();
             xbytes_t rlp_stream = last_relay_block.encodeBytes();
@@ -337,13 +346,15 @@ xblock_ptr_t xrelay_proposal_maker_t::make_proposal(data::xblock_consensus_para_
             relay_block_data = last_relay_block_data;
         }
     }
-    _stream << wrap_phase;
-    _stream << evm_height;
-    _stream << elect_height;
-    std::string wrap_data = std::string((char *)_stream.data(), _stream.size());
 
-    table_para.set_relay_block_data(relay_block_data);
-    table_para.set_relay_wrap_data(wrap_data);
+    std::string wrap_data = data::xrelay_wrap_info_t::build_relay_wrap_info_string(wrap_phase, evm_height, elect_height);
+
+    data::xtableheader_extra_t header_extra;
+    header_extra.set_relay_wrap_info(wrap_data);
+    header_extra.set_relay_block_data(relay_block_data);
+    std::string extra_data;
+    header_extra.serialize_to_string(extra_data);
+    table_para.set_relay_extra_data(extra_data);
     table_para.set_need_relay_prove(wrap_phase == 2);
 
     if (false == leader_set_consensus_para(latest_cert_block.get(), proposal_para)) {
@@ -366,14 +377,14 @@ xblock_ptr_t xrelay_proposal_maker_t::make_proposal(data::xblock_consensus_para_
     }
 
     if (wrap_phase == 2) {
-        std::error_code  ec;
+        std::error_code ec;
         data::xrelay_block proposal_relay_block;
         proposal_relay_block.decodeBytes(to_bytes(relay_block_data), ec);
         if (ec) {
             xerror("xrelay_proposal_maker_t:make_proposal proposal_relay_block decodeBytes error %s; err msg %s", ec.category().name(), ec.message().c_str());
             return nullptr;
         }
-        auto hash = proposal_relay_block.get_block_hash(); // todo(nathan):inner header may not enough.
+        auto hash = proposal_relay_block.get_block_hash();  // todo(nathan):inner header may not enough.
         uint256_t hash256 = from_bytes<uint256_t>(hash.to_bytes());
         proposal_block->set_vote_extend_hash(hash256);
     }
@@ -389,62 +400,78 @@ bool xrelay_proposal_maker_t::check_wrap_proposal(const xblock_ptr_t & latest_ce
     uint8_t last_wrap_phase;
     uint64_t last_evm_height;
     uint64_t last_elect_height;
-    std::string last_relay_block_data = latest_cert_block->get_relay_block_data();
-    
+    std::string last_relay_block_data;
+    data::xtableheader_extra_t last_header_extra;
+
     if (latest_cert_block->is_genesis_block()) {
         last_wrap_phase = 2;
         last_evm_height = 0;
         last_elect_height = 0;
     } else {
-        auto & last_wrap_data = latest_cert_block->get_header()->get_comments();
+        auto extra_str = latest_cert_block->get_header()->get_extra_data();
+        auto ret = last_header_extra.deserialize_from_string(extra_str);
+        if (ret <= 0) {
+            xerror("xrelay_proposal_maker_t::check_wrap_proposal header extra data deserialize fail.");
+            return false;
+        }
+        auto last_wrap_data = last_header_extra.get_relay_wrap_info();
         if (last_wrap_data.empty()) {
             xerror("xrelay_proposal_maker_t::check_wrap_proposal wrap data should not empty.proposal_block=%s", proposal_block->dump().c_str());
             return false;
-        } else {
-            base::xstream_t stream_wrap_data{base::xcontext_t::instance(), (uint8_t*)last_wrap_data.data(), static_cast<uint32_t>(last_wrap_data.size())};
-            stream_wrap_data >> last_wrap_phase;
-            stream_wrap_data >> last_evm_height;
-            stream_wrap_data >> last_elect_height;
         }
+
+        last_relay_block_data = last_header_extra.get_relay_block_data();
+
+        data::xrelay_wrap_info_t last_wrap_info;
+        last_wrap_info.serialize_from_string(last_wrap_data);
+        last_wrap_phase = last_wrap_info.get_wrap_phase();
+        last_evm_height = last_wrap_info.get_evm_height();
+        last_elect_height = last_wrap_info.get_elect_height();
     }
 
-    uint8_t wrap_phase_tmp;
-    uint64_t evm_height;
-    uint64_t elect_height = 0;
-    auto & proposal_wrap_data = proposal_block->get_header()->get_comments();
-    if (proposal_wrap_data.empty()) {
-        xerror("xrelay_proposal_maker_t::check_wrap_proposal wrap data should not empty.");
+    auto proposal_extra_str = proposal_block->get_header()->get_extra_data();
+    data::xtableheader_extra_t proposal_header_extra;
+    auto ret = proposal_header_extra.deserialize_from_string(proposal_extra_str);
+    if (ret <= 0) {
+        xerror("xrelay_proposal_maker_t::check_wrap_proposal header extra data deserialize fail.");
         return false;
-    } else {
-        base::xstream_t stream_wrap_data{base::xcontext_t::instance(), (uint8_t*)proposal_wrap_data.data(), static_cast<uint32_t>(proposal_wrap_data.size())};
-        stream_wrap_data >> wrap_phase_tmp;
-        stream_wrap_data >> evm_height;
-        stream_wrap_data >> elect_height;
     }
+
+    auto proposal_wrap_data = proposal_header_extra.get_relay_wrap_info();
+    if (proposal_wrap_data.empty()) {
+        xerror("xrelay_proposal_maker_t::check_wrap_proposal wrap data should not empty.proposal_block=%s", proposal_block->dump().c_str());
+        return false;
+    }
+
+    data::xrelay_wrap_info_t proposal_wrap_info;
+    proposal_wrap_info.serialize_from_string(proposal_wrap_data);
+    uint8_t wrap_phase_tmp = proposal_wrap_info.get_wrap_phase();
+    uint64_t evm_height = proposal_wrap_info.get_evm_height();
+    uint64_t elect_height = proposal_wrap_info.get_elect_height();
+
+
+    auto proposal_relay_block_data = proposal_header_extra.get_relay_block_data();
 
     std::string relay_block_data;
+    bool epochid_changed = false;
     if (wrap_phase_tmp == 0) {
-        // relay_block_data = base::xstring_utl::tostring(latest_cert_block->get_height());
-        std::error_code  ec;
+        std::error_code ec;
         data::xrelay_block proposal_relay_block;
-        proposal_relay_block.decodeBytes(to_bytes(proposal_block->get_relay_block_data()), ec);
+        proposal_relay_block.decodeBytes(to_bytes(proposal_relay_block_data), ec);
         if (ec) {
             xwarn("xrelay_proposal_maker_t:check_wrap_proposal proposal_relay_block decodeBytes error %s; err msg %s", ec.category().name(), ec.message().c_str());
             return false;
         }
+        if ((proposal_relay_block.get_all_receipts().empty() && proposal_relay_block.get_header().get_elections_sets().empty()) ||
+            (!proposal_relay_block.get_all_receipts().empty() && !proposal_relay_block.get_header().get_elections_sets().empty())) {
+            xerror("xrelay_proposal_maker_t:check_wrap_proposal proposal_relay_block election set(%d) and receipts(%d) both empty or not empty",
+                   proposal_relay_block.get_all_receipts().size(),
+                   proposal_relay_block.get_header().get_elections_sets().size());
+            return false;
+        }
         evm_common::h256 local_prev_hash;
         uint64_t local_block_height = 0;
-        auto last_relay_block_data = latest_cert_block->get_header()->get_extra_data();
-        if (!last_relay_block_data.empty()) {
-            data::xrelay_block last_relay_block;
-            last_relay_block.decodeBytes(to_bytes(last_relay_block_data), ec);
-            if (ec) {
-                xwarn("xrelay_proposal_maker_t:check_wrap_proposal last_relay_block decodeBytes error %s; err msg %s", ec.category().name(), ec.message().c_str());
-                return false;
-            }
-            local_prev_hash = last_relay_block.get_block_hash();
-            local_block_height = last_relay_block.get_block_height() + 1;
-        } else {
+        if (proposal_block->get_height() == 1) {
             data::xrelay_block genesis_block;
             auto ret = build_genesis_relay_block(genesis_block);
             if (!ret) {
@@ -453,15 +480,27 @@ bool xrelay_proposal_maker_t::check_wrap_proposal(const xblock_ptr_t & latest_ce
 
             local_prev_hash = genesis_block.get_block_hash();
             local_block_height = genesis_block.get_block_height() + 1;
+        } else {
+            data::xrelay_block last_relay_block;
+            last_relay_block.decodeBytes(to_bytes(last_relay_block_data), ec);
+            if (ec) {
+                xwarn("xrelay_proposal_maker_t:check_wrap_proposal last_relay_block decodeBytes error %s; err msg %s", ec.category().name(), ec.message().c_str());
+                return false;
+            }
+            local_prev_hash = last_relay_block.get_block_hash();
+            local_block_height = last_relay_block.get_block_height() + 1;
+            uint64_t proposal_epoch_id = proposal_relay_block.get_header().get_epochid();
+            uint64_t last_epoch_id = last_relay_block.get_header().get_epochid();
+            epochid_changed = (proposal_epoch_id != last_epoch_id);
         }
 
         if (proposal_relay_block.get_header().get_prev_block_hash() != local_prev_hash || proposal_relay_block.get_block_height() != local_block_height) {
             xerror("xrelay_proposal_maker_t::check_wrap_proposal relay block pre hash or height not match.pre hash:%s:%s,height:%llu:%llu.proposal_block=%s",
-               proposal_relay_block.get_header().get_prev_block_hash().hex().c_str(),
-               local_prev_hash.hex().c_str(),
-               proposal_relay_block.get_block_height(),
-               local_block_height,
-               proposal_block->dump().c_str());
+                   proposal_relay_block.get_header().get_prev_block_hash().hex().c_str(),
+                   local_prev_hash.hex().c_str(),
+                   proposal_relay_block.get_block_height(),
+                   local_block_height,
+                   proposal_block->dump().c_str());
             return false;
         }
 
@@ -483,39 +522,37 @@ bool xrelay_proposal_maker_t::check_wrap_proposal(const xblock_ptr_t & latest_ce
         relay_block_data = last_relay_block_data;
     }
 
-    if (wrap_phase_tmp != ((last_wrap_phase + 1) % 3) || (wrap_phase_tmp != 0 && (evm_height != last_evm_height || elect_height != last_elect_height))) {
-        xerror("xrelay_proposal_maker_t::check_wrap_proposal wrap data not match.wrap_phase:%d:%d,evm_height:%llu:%llu,elect_height:%llu:%llu,relay_block_data:%s:%s.proposal_block=%s",
-               wrap_phase_tmp,
-               last_wrap_phase,
-               evm_height,
-               last_evm_height,
-               elect_height,
-               last_elect_height,
-               relay_block_data.c_str(),
-               proposal_block->get_relay_block_data().c_str(),
-               proposal_block->dump().c_str());
+    if ((epochid_changed && wrap_phase_tmp != 0) || (!epochid_changed && wrap_phase_tmp != ((last_wrap_phase + 1) % 3)) ||
+        (wrap_phase_tmp != 0 && (evm_height != last_evm_height || elect_height != last_elect_height))) {
+        xerror(
+            "xrelay_proposal_maker_t::check_wrap_proposal wrap data not "
+            "match.wrap_phase:%d:%d,evm_height:%llu:%llu,elect_height:%llu:%llu,proposal_block=%s",
+            wrap_phase_tmp,
+            last_wrap_phase,
+            evm_height,
+            last_evm_height,
+            elect_height,
+            last_elect_height,
+            proposal_block->dump().c_str());
         return false;
     }
 
     // check relay_block_data
-    if (relay_block_data != proposal_block->get_relay_block_data()) {
-        xerror("xrelay_proposal_maker_t::check_wrap_proposal relay block data not match.relay_block_data:%s:%s.proposal_block=%s",
-               relay_block_data.c_str(),
-               proposal_block->get_relay_block_data().c_str(),
-               proposal_block->dump().c_str());
+    if (relay_block_data != proposal_relay_block_data) {
+        xerror("xrelay_proposal_maker_t::check_wrap_proposal relay block data not match.proposal_block=%s", proposal_block->dump().c_str());
         return false;
     }
 
     wrap_phase = wrap_phase_tmp;
     if (wrap_phase == 2) {
-        std::error_code  ec;
+        std::error_code ec;
         data::xrelay_block proposal_relay_block;
         proposal_relay_block.decodeBytes(to_bytes(relay_block_data), ec);
         if (ec) {
             xerror("xrelay_proposal_maker_t:check_wrap_proposal proposal_relay_block decodeBytes error %s; err msg %s", ec.category().name(), ec.message().c_str());
             return false;
         }
-        auto hash = proposal_relay_block.get_block_hash(); // todo(nathan):inner header may not enough.
+        auto hash = proposal_relay_block.get_block_hash();  // todo(nathan):inner header may not enough.
         relay_hash = from_bytes<uint256_t>(hash.to_bytes());
     }
 
@@ -525,8 +562,7 @@ bool xrelay_proposal_maker_t::check_wrap_proposal(const xblock_ptr_t & latest_ce
 int xrelay_proposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::xvqcert_t * bind_clock_cert) {
     xdbg("xrelay_proposal_maker_t::verify_proposal enter. proposal=%s", proposal_block->dump().c_str());
     // uint64_t gmtime = proposal_block->get_second_level_gmtime();
-    xblock_consensus_para_t cs_para(
-        get_account(), proposal_block->get_clock(), proposal_block->get_viewid(), proposal_block->get_viewtoken(), proposal_block->get_height(), 0);
+    xblock_consensus_para_t cs_para(get_account(), proposal_block->get_clock(), proposal_block->get_viewid(), proposal_block->get_viewtoken(), proposal_block->get_height(), 0);
 
     // verify gmtime valid
     // uint64_t now = (uint64_t)base::xtime_utl::gettimeofday();
@@ -565,10 +601,10 @@ int xrelay_proposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, b
     // find matched lock block
     if (proposal_prev_block->get_height() > 0) {
         auto lock_block = m_resources->get_blockstore()->load_block_object(*m_relay_maker,
-                                                              proposal_prev_block->get_height() - 1,
-                                                              proposal_prev_block->get_last_block_hash(),
-                                                              false,
-                                                              metrics::blockstore_access_from_blk_mk_proposer_verify_proposal);
+                                                                           proposal_prev_block->get_height() - 1,
+                                                                           proposal_prev_block->get_last_block_hash(),
+                                                                           false,
+                                                                           metrics::blockstore_access_from_blk_mk_proposer_verify_proposal);
         if (lock_block == nullptr) {
             xwarn("xrelay_proposal_maker_t::verify_proposal fail-find lock block. proposal=%s", proposal_block->dump().c_str());
             return xblockmaker_error_proposal_cannot_connect_to_cert;
@@ -628,13 +664,11 @@ int xrelay_proposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, b
         return xblockmaker_error_proposal_bad_input;
     }
 
-    table_para.set_relay_block_data(proposal_block->get_relay_block_data());
-    table_para.set_relay_wrap_data(proposal_block->get_header()->get_comments());
+    table_para.set_relay_extra_data(proposal_block->get_header()->get_extra_data());
     table_para.set_need_relay_prove(wrap_phase == 2);
 
     if (false == backup_set_consensus_para(proposal_prev_block.get(), proposal_block, nullptr, cs_para)) {
-        xwarn("xproposal_maker_t::verify_proposal fail-backup_set_consensus_para. proposal=%s",
-            proposal_block->dump().c_str());
+        xwarn("xproposal_maker_t::verify_proposal fail-backup_set_consensus_para. proposal=%s", proposal_block->dump().c_str());
         XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_consensus_para_get, 1);
         XMETRICS_GAUGE(metrics::cons_table_backup_verify_proposal_succ, 0);
         return xblockmaker_error_proposal_bad_consensus_para;
@@ -661,7 +695,7 @@ bool xrelay_proposal_maker_t::verify_proposal_input(base::xvblock_t * proposal_b
     return true;
 }
 
-std::string xrelay_proposal_maker_t::calc_random_seed(base::xvblock_t* latest_cert_block,uint64_t viewtoken) {
+std::string xrelay_proposal_maker_t::calc_random_seed(base::xvblock_t * latest_cert_block, uint64_t viewtoken) {
     std::string random_str;
     uint64_t last_block_nonce = latest_cert_block->get_cert()->get_nonce();
     random_str = base::xstring_utl::tostring(last_block_nonce);

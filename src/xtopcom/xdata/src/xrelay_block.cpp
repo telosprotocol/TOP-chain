@@ -139,6 +139,13 @@ bool xrelay_signature_t::decodeRLP(evm_common::RLP const& _r,  std::error_code &
     return true;
 }
 
+std::string xrelay_signature_t::to_string() const {
+    char szSign[65] = {0};
+    memcpy(szSign, (char *)&v, 1);
+    memcpy(szSign + 1, (char *)r.data(), r.asBytes().size());
+    memcpy(szSign + 33, (char *)s.data(), s.asBytes().size());
+    return std::string(szSign, 65);
+}
 
 xrelay_signature_node_t::xrelay_signature_node_t(const std::string & sign_str) {
     if (sign_str.length() != 65) {
