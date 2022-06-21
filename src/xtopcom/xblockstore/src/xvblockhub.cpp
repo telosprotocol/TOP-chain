@@ -11,6 +11,7 @@
 #include "xvledger/xvdbkey.h"
 #include "xdata/xcheckpoint.h"
 #include "xdata/xrelay_block.h"
+#include "xdata/xblockextract.h"
 #include "xvledger/xvtxindex.h"
 #include "xdata/xnative_contract_address.h"
 
@@ -1245,8 +1246,7 @@ namespace top
 
             std::error_code ec;
             top::data::xrelay_block  extra_relay_block;
-            auto relay_block_data = block_ptr->get_header()->get_extra_data();
-            extra_relay_block.decodeBytes(to_bytes(relay_block_data), ec, true);
+            data::xblockextract_t::unpack_relayblock(block_ptr, false, extra_relay_block, ec);
             if (ec) {
                 xerror("xblockacct_t:store_relay_txs decodeBytes decodeBytes error %s; err msg %s", 
                 ec.category().name(), ec.message().c_str());

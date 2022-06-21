@@ -46,7 +46,7 @@ namespace data {
         bool    decodeRLP(evm_common::RLP const& _r, std::error_code & ec);
         std::string get_pubkey_str() const;
 
-        uint64_t                stake;           //election stake
+        uint64_t                stake{0};        //election stake
         evm_common::h256        public_key_x;    //election key 
         evm_common::h256        public_key_y;
     };

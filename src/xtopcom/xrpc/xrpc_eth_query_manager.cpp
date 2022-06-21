@@ -1090,51 +1090,15 @@ int xrpc_eth_query_manager::set_relay_block_result(const xobject_ptr_t<base::xvb
         return 1;
     }
 
-    std::string sign_list = block->get_cert()->get_extend_data();
-    if (sign_list.empty()) {
-        js_rsp["result"] = xJson::Value::null;
-        return 1;
-    }
-    base::xstream_t stream{base::xcontext_t::instance(), (uint8_t *)sign_list.data(), static_cast<uint32_t>(sign_list.size())};
-    uint16_t size = 0;
-    stream >> size;
-
-    std::vector<xrelay_signature_node_t> signature_nodes;
-    data::xrelay_block relay_block;
-    for (uint16_t i = 0; i < size; i++) {
-        std::string sign_str;
-        stream >> sign_str;
-
-        if (sign_str == "") {
-            xrelay_signature_node_t signature;
-            signature_nodes.push_back(signature);
-            continue;
-        }
-        if (sign_str.size() != 65) {
-            js_rsp["result"] = xJson::Value::null;
-            xwarn("xrpc_eth_query_manager::top_getRelayBlockByNumber, sign size error: %d", sign_str.size());
-            return 1;
-        }
-
-        xdbg("top_getRelayBlockByNumber, sign_str: %s", top::HexEncode(sign_str).c_str());
-        xrelay_signature_node_t signature{sign_str};
-        signature_nodes.push_back(signature);
-    }
-    relay_block.add_signature_nodes(signature_nodes);
-
-    auto extra_str = block->get_header()->get_extra_data();
-    data::xtableheader_extra_t header_extra;
-    header_extra.deserialize_from_string(extra_str);
-    std::string relay_block_data = header_extra.get_relay_block_data();
-    xdbg("top_getRelayBlockByNumber, relay_block_data: %s", top::HexEncode(relay_block_data).c_str());
     std::error_code ec;
-    relay_block.decodeBytes(to_bytes(relay_block_data), ec);
+    data::xrelay_block relay_block;
+    data::xblockextract_t::unpack_relayblock(block.get(), true, relay_block, ec);
     if (ec) {
-        xwarn("xrpc_eth_query_manager::top_getRelayBlockByNumber relay_block decodeBytes error %s; err msg %s", ec.category().name(), ec.message().c_str());
+        js_rsp["result"] = xJson::Value::null;
+        xerror("xrpc_eth_query_manager::set_relay_block_result, fail-unpack relayblock.error %s; err msg %s", ec.category().name(), ec.message().c_str());
         return 1;
     }
 
-    //relay_block.streamRLP(rlp_stream, true);
     xbytes_t header_data = relay_block.get_header().streamRLP_header_to_contract();
 
     xJson::Value js_txs;

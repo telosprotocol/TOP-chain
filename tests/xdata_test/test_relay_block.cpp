@@ -288,7 +288,6 @@ TEST_F(test_relay_block, serialize_tx) {
     xeth_transaction_t tx_dst;
     tx_dst.decodeBytes(tx_data, ec);
 
-    EXPECT_EQ(tx_dst.get_from().to_hex_string(), tx_dst.get_from().to_hex_string());
     EXPECT_EQ(tx_dst.get_to().to_hex_string(), tx_dst.get_to().to_hex_string());
     EXPECT_EQ(tx_dst.get_data(), tx_dst.get_data());
     EXPECT_EQ(tx_dst.get_value(), tx_dst.get_value());

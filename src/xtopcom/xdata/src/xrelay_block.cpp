@@ -508,11 +508,16 @@ void xrelay_block::add_signature_nodes(std::vector<xrelay_signature_node_t> sign
 
 void xrelay_block::make_txs_root_hash()
 {
-    std::vector<bytes> rlp_txs;
-    for (auto & tx: m_transactions) {
-        rlp_txs.push_back(tx.encodeBytes());
+    h256 txsRoot{0x0};
+
+    if (m_transactions.size() > 0) {
+        std::vector<bytes> rlp_txs;
+        for (auto & tx: m_transactions) {
+            rlp_txs.push_back(tx.encodeBytes());
+        }
+        txsRoot = orderedTrieRoot(rlp_txs);
     }
-    h256 txsRoot = orderedTrieRoot(rlp_txs);
+
     xdbg("txsRoot root hash[%s]", txsRoot.hex().c_str());
     m_header.set_txs_root_hash(txsRoot);
 }
@@ -520,11 +525,16 @@ void xrelay_block::make_txs_root_hash()
 
 void xrelay_block::make_receipts_root_hash()
 {
-    std::vector<bytes> rlp_receipts;
-    for (auto & receipt: m_receipts) {
-        rlp_receipts.push_back(receipt.encodeBytes());
+    h256 receiptsRoot{0x0};
+
+    if (m_receipts.size() > 0) {
+        std::vector<bytes> rlp_receipts;
+        for (auto & receipt: m_receipts) {
+            rlp_receipts.push_back(receipt.encodeBytes());
+        }
+        receiptsRoot = orderedTrieRoot(rlp_receipts);
     }
-    h256 receiptsRoot = orderedTrieRoot(rlp_receipts);
+    
     xdbg("receipts root hash[%s]", receiptsRoot.hex().c_str());
     m_header.set_receipts_root_hash(receiptsRoot);
 }
