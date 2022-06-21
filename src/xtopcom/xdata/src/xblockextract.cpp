@@ -169,5 +169,31 @@ xtransaction_ptr_t xblockextract_t::unpack_raw_tx(base::xvblock_t* _block, std::
     return tx;
 }
 
+void xblockextract_t::unpack_relayblock(base::xvblock_t* _block, bool include_sig, xrelay_block & relayblock, std::error_code & ec) {
+    auto & header_extra = _block->get_header()->get_extra_data();
+    xassert(include_sig == false);  // TODO(jimmy) add later
+
+    if (_block->get_height() == 0
+        || header_extra.empty()) {
+        ec = common::error::xerrc_t::invalid_block;
+        xerror("xblockextract_t::unpack_relayblock parameters invalid.");
+        return;
+    }
+
+    data::xtableheader_extra_t last_header_extra;
+    auto ret = last_header_extra.deserialize_from_string(header_extra);
+    if (ret <= 0) {
+        ec = common::error::xerrc_t::invalid_block;
+        xerror("xblockextract_t::unpack_relayblock header extra data deserialize fail.");
+        return;
+    }
+    auto relay_block_data_str = last_header_extra.get_relay_block_data();
+
+    relayblock.decodeBytes(to_bytes(relay_block_data_str), ec);
+    if (ec) {
+        xwarn("xblockextract_t::unpack_relayblock decodeBytes error %s; err msg %s", ec.category().name(), ec.message().c_str());
+        return;
+    }
+}
 
 NS_END2
