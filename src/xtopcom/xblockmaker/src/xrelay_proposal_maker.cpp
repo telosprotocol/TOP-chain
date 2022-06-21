@@ -114,18 +114,23 @@ bool xrelay_proposal_maker_t::build_genesis_relay_block(data::xrelay_block & gen
 
 #ifdef DEBUG
     reley_election_group.dump();
-
-    // todo,  write genesis info file
-    {
-        xbytes_t rlp_genesis_block_header_data = genesis_block.streamRLP_header_to_contract();
-        // rlp_genesis_block_header_data length too long
-        // xdbg("xrelay_proposal_maker_t::build_genesis_relay_block conent :[%s]. \n",  top::evm_common::toHex(rlp_genesis_block_header_data).c_str());
-        std::string hex_result = top::evm_common::toHex(rlp_genesis_block_header_data);
-
-        FILE * file = fopen("rlp_genesis_block_header_data.txt", "wb");
-        size_t ws = fwrite(hex_result.c_str(), 1, hex_result.length(), file);
-        fclose(file);
-    }
+    FILE* file = NULL;
+#if defined(XBUILD_CI)
+    file = fopen("ci_genesis_relay_block_header_data.txt", "wb");
+#elif defined(XBUILD_GALILEO)
+    file = fopen("galileo_genesis_relay_block_header_data.txt", "wb");
+#elif defined(XBUILD_DEV)
+    file = fopen("dev_genesis_relay_block_header_data.txt", "wb");
+#elif defined(XBUILD_BOUNTY)
+    file = fopen("bounty_genesis_relay_block_header_data.txt", "wb");
+#else
+    file = fopen("mainnet_genesis_relay_block_header_data.txt", "wb");
+#endif
+    //todo,  write genesis info file 
+    xbytes_t rlp_genesis_block_header_data = genesis_block.streamRLP_header_to_contract();
+    std::string hex_result = top::evm_common::toHex(rlp_genesis_block_header_data);
+    size_t ws = fwrite(hex_result.c_str(), 1, hex_result.length(), file);
+    fclose(file);
 #endif
     return true;
 }
