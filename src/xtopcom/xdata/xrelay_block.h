@@ -57,6 +57,7 @@ namespace data {
         bool    decodeRLP(evm_common::RLP const& _r, std::error_code & ec);
         size_t  size() const { return elections_vector.size();}
         void    dump() const;
+        bool    empty() const { return elections_vector.empty();}
         
         uint64_t                            election_epochID{0};   //epoch id for these elections
         std::vector<xrelay_election_node_t> elections_vector;   
@@ -68,6 +69,7 @@ namespace data {
         xrelay_signature_t(const std::string & sign_str);
         void streamRLP(evm_common::RLPStream &_s) const;
         bool decodeRLP(evm_common::RLP const& _r, std::error_code & ec);
+        std::string to_string() const;
 
         evm_common::h256    r;
         evm_common::h256    s;
@@ -156,6 +158,7 @@ namespace data {
        const evm_common::h256           &get_receipts_root_hash() const { return m_inner_header.get_receipts_root_hash();}
        const evm_common::h256           &get_block_root_hash() const { return m_inner_header.get_block_root_hash();}
        const uint64_t                   &get_block_height() const { return m_inner_header.get_block_height();}
+       const uint64_t                   &get_epochid() const {return m_inner_header.get_epochID();}
        const uint64_t                   &get_timestamp() const { return m_inner_header.get_timestamp();}
        const evm_common::h256           &get_prev_block_hash() const { return m_prev_hash;}
        const evm_common::h256           &get_block_hash() const { return m_block_hash;}

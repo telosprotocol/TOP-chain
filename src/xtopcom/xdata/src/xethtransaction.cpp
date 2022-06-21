@@ -313,12 +313,7 @@ common::xeth_address_t xeth_transaction_t::get_from() const {
         memcpy(szSign + 1, (char *)m_signR.data(), m_signR.asBytes().size());
         memcpy(szSign + 33, (char *)m_signS.data(), m_signS.asBytes().size());
 
-        std::string m_authorization;
-        m_authorization.append((char *)szSign, 65);
-        // std::cout << "sig_bytes=" << base::xstring_utl::to_hex(m_authorization) << std::endl;
-
         top::utl::xecdsasig_t sig((uint8_t *)szSign);
-        top::utl::xkeyaddress_t pubkey1("");
         uint8_t szOutput[65] = {0};
         top::utl::xsecp256k1_t::get_publickey_from_signature(sig, m_unsign_hash, szOutput);
         top::utl::xecpubkey_t pubkey(szOutput);
