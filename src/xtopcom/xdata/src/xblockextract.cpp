@@ -171,7 +171,7 @@ xtransaction_ptr_t xblockextract_t::unpack_raw_tx(base::xvblock_t* _block, std::
 
 void xblockextract_t::unpack_relayblock(base::xvblock_t* _block, bool include_sig, xrelay_block & relayblock, std::error_code & ec) {
     auto & header_extra = _block->get_header()->get_extra_data();
-    xassert(include_sig == false);  // TODO(jimmy) add later
+   
 
     if (_block->get_height() == 0
         || header_extra.empty()) {
