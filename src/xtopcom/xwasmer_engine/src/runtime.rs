@@ -5,7 +5,7 @@ use std::ptr::NonNull;
 use std::sync::{Arc, RwLock};
 
 use crate::errors::{VmError, VmResult};
-use wasmer::HostEnvInitError;
+use wasmer::{HostEnvInitError, Memory};
 use wasmer::{Instance as WasmerInstance, Val, WasmerEnv};
 use wasmer_middlewares::metering::{get_remaining_points, set_remaining_points, MeteringPoints};
 
@@ -100,7 +100,6 @@ pub struct Runtime {
     pub print_debug: bool,
     pub gas_config: GasConfig,
     data: Arc<RwLock<ContextData>>,
-
 }
 
 impl Clone for Runtime {
@@ -227,6 +226,20 @@ impl Runtime {
             Ok(())
         })
         .expect("Wasmer instance is not set. Should set instance first.");
+    }
+
+    pub fn memory(&self) -> Memory {
+        self.with_wasmer_instance(|instance| {
+            let first = instance
+                .exports
+                .iter()
+                .memories()
+                .next()
+                .map(|pair| pair.1.clone());
+            let memory = first.expect("A contract must have and only have one exported memory");
+            Ok(memory)
+        })
+        .expect("Wasmer instance is not set.")
     }
 }
 

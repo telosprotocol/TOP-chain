@@ -46,6 +46,14 @@ uint64_t wasmer_import_instance::wasmer_block_index() {
     return current_vm_logic()->block_index();
 }
 
+const char * wasmer_import_instance::wasmer_get_args_ptr() {
+    return current_vm_logic()->get_args_ptr();
+}
+
+uint32_t wasmer_import_instance::wasmer_get_args_size() {
+    return current_vm_logic()->get_args_size();
+}
+
 /// =======================================
 /// RUST CALL C
 /// =======================================
@@ -53,6 +61,13 @@ uint64_t wasmer_import_instance::wasmer_block_index() {
 extern "C" {
 uint64_t wasmer_block_index() {
     return wasmer_import_instance::instance()->wasmer_block_index();
+}
+
+const char * get_args_bytes_ptr() {
+    return wasmer_import_instance::instance()->wasmer_get_args_ptr();
+}
+uint32_t get_args_bytes_size() {
+    return wasmer_import_instance::instance()->wasmer_get_args_size();
 }
 }
 }  // namespace wasm
