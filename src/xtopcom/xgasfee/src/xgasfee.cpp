@@ -254,6 +254,13 @@ void xtop_gasfee::process_calculation_tgas(const uint64_t calculation_gas, std::
     if (calculation_gas > gas_limit) {
         xwarn("[xtop_gasfee::process_calculation_tgas] calculation_gas %lu over limit %s", calculation_gas, gas_limit.str().c_str());
         ec = gasfee::error::xenum_errc::tx_out_of_gas;
+        m_converted_tgas_usage = m_converted_tgas;
+        m_eth_converted_tgas_usage = m_eth_converted_tgas;
+        m_free_tgas_usage = m_free_tgas;
+        xwarn("[xtop_gasfee::process_calculation_tgas] transaction out of gas, m_converted_tgas_usage to: %lu, m_eth_converted_tgas_usage to: %lu, m_free_tgas_usage to: %lu",
+              m_converted_tgas_usage,
+              m_eth_converted_tgas_usage,
+              m_free_tgas_usage);
         return;
     }
     evm_common::u256 calculation_tgas = calculation_gas * XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_gas_to_tgas_exchange_ratio);
