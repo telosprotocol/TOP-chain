@@ -194,6 +194,38 @@ void xblockextract_t::unpack_relayblock(base::xvblock_t* _block, bool include_si
         xwarn("xblockextract_t::unpack_relayblock decodeBytes error %s; err msg %s", ec.category().name(), ec.message().c_str());
         return;
     }
+
+    if (include_sig) {
+        std::string sign_list = _block->get_cert()->get_extend_data();
+        if (sign_list.empty()) {
+            ec = common::error::xerrc_t::invalid_block;
+            xerror("xblockextract_t::unpack_relayblock extend data empty.");
+            return;
+        }
+        std::vector<xrelay_signature_node_t> signature_nodes;
+        base::xstream_t stream{base::xcontext_t::instance(), (uint8_t *)sign_list.data(), static_cast<uint32_t>(sign_list.size())};
+        uint16_t size = 0;
+        stream >> size;
+        for (uint16_t i = 0; i < size; i++) {
+            std::string sign_str;
+            stream >> sign_str;
+
+            if (sign_str == "") {
+                xrelay_signature_node_t signature;
+                signature_nodes.push_back(signature);
+                continue;
+            }
+            if (sign_str.size() != 65) {
+                ec = common::error::xerrc_t::invalid_block;
+                xerror("xblockextract_t::unpack_relayblock extend data empty.");
+                return;
+            }
+
+            xrelay_signature_node_t signature{sign_str};
+            signature_nodes.push_back(signature);
+        }
+        relayblock.add_signature_nodes(signature_nodes);
+    }
 }
 
 NS_END2

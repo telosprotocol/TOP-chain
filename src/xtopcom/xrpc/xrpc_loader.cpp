@@ -218,11 +218,9 @@ bool xrpc_loader_t::load_relay_tx_indx_detail(const std::string & raw_tx_hash, x
     xdbg("xrpc_loader_t:load_relay_tx_indx_detail  decode relay bock with tx_hash: %s ", base::xstring_utl::to_hex(raw_tx_hash).c_str());
     std::error_code ec;
     top::data::xrelay_block  extra_relay_block;
-    auto relay_block_data = _block->get_header()->get_extra_data();
-    extra_relay_block.decodeBytes(to_bytes(relay_block_data), ec);
+    data::xblockextract_t::unpack_relayblock(_block.get(), false, extra_relay_block, ec);    
     if (ec) {
-        xwarn("xrpc_loader_t:load_relay_tx_indx_detail decodeBytes decodeBytes error %s; err msg %s", 
-        ec.category().name(), ec.message().c_str());
+        xerror("xrpc_loader_t:load_relay_tx_indx_detail decodeBytes decodeBytes error %s; err msg %s", ec.category().name(), ec.message().c_str());
         return false;
     }
 
