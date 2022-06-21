@@ -155,11 +155,10 @@ bool xrelay_proposal_maker_t::build_relay_block_data_leader(const data::xblock_p
     uint64_t block_height = 0;
     std::error_code ec;
 
-    auto last_relay_block_data = latest_wrap_block->get_header()->get_extra_data();
     if (latest_wrap_block->get_height() > 0) {
-        xassert(!last_relay_block_data.empty());
+        std::error_code ec;
         data::xrelay_block last_relay_block;
-        last_relay_block.decodeBytes(to_bytes(last_relay_block_data), ec);
+        data::xblockextract_t::unpack_relayblock(latest_wrap_block.get(), false, last_relay_block, ec);
         if (ec) {
             xwarn("xrelay_proposal_maker_t:build_relay_block_data_leader decodeBytes error %s; err msg %s", ec.category().name(), ec.message().c_str());
             return false;

@@ -9,6 +9,7 @@
 #include "xbase/xns_macro.h"
 #include "xdata/xblockaction.h"
 #include "xdata/xethheader.h"
+#include "xdata/xrelay_block.h"
 
 NS_BEG2(top, data)
 
@@ -21,6 +22,7 @@ class xblockextract_t {
     static xtransaction_ptr_t                       unpack_raw_tx(base::xvblock_t* _block, std::string const& txhash, std::error_code & ec);
 
     static void     unpack_ethheader(base::xvblock_t* _block, xeth_header_t & ethheader, std::error_code & ec);
+    static void     unpack_relayblock(base::xvblock_t* _block, bool include_sig, xrelay_block & relayblock, std::error_code & ec);
 };
 
 
