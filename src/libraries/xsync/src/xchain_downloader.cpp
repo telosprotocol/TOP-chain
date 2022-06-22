@@ -582,6 +582,7 @@ xsync_command_execute_result xchain_downloader_t::execute_download(uint64_t star
                 return abort;
             }
         } else if (account_prefix == sys_contract_eth_table_block_addr) {
+        } else if (account_prefix == sys_contract_relay_table_block_base_addr) {
         } else {
             xsync_dbg("xchain_downloader_t::execute_download check fail: %s", m_address.c_str());
             return abort;
