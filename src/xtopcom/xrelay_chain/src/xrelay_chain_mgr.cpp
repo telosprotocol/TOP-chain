@@ -37,6 +37,9 @@ xcross_tx_cache_t::xcross_tx_cache_t(const std::shared_ptr<xrelay_chain_resource
 }
 
 void xcross_tx_cache_t::process_block(data::xblock_t * block) {
+    if (nullptr == block) {
+        return;
+    }
     xdbg("xcross_tx_cache_t::process_block block=%s,last proc h:%llu,cache low h:%llu,cache up h:%llu,tx num:%u",
          block->dump().c_str(),
          m_last_proc_evm_height,
@@ -113,7 +116,9 @@ void xcross_tx_cache_t::on_evm_db_event(data::xblock_t * block) {
         for (uint32_t h = m_cached_evm_upper_height + 1; h < block->get_height(); h++) {
             auto latest_committed_block =
                 m_para->get_vblockstore()->load_block_object(vaccount, h, base::enum_xvblock_flag_committed, true, metrics::blockstore_access_from_txpool_refresh_table);
-            process_block(dynamic_cast<data::xblock_t *>(latest_committed_block.get()));
+            if (latest_committed_block != nullptr) {
+                process_block(dynamic_cast<data::xblock_t *>(latest_committed_block.get()));
+            }
         }
     }
 }
