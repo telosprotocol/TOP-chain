@@ -95,48 +95,6 @@ data::xrelay_block xrelay_proposal_maker_t::build_relay_block(evm_common::h256 p
     return relay_block;
 }
 
-bool xrelay_proposal_maker_t::build_genesis_relay_block(data::xrelay_block & genesis_block) {
-    uint64_t epochID = 0;
-    evm_common::h256 prev_hash;
-    data::xrelay_block relay_block(prev_hash, 0, epochID, 0);
-    xdbg("xrelay_proposal_maker_t::build_genesis_relay_block");
-    std::vector<data::xrelay_election_node_t> reley_election;
-    auto ret = m_relay_chain_mgr->get_elect_cache(0, reley_election);
-    if (!ret) {
-        return false;
-    }
-
-    data::xrelay_election_group_t reley_election_group;
-    reley_election_group.election_epochID = 0;
-    reley_election_group.elections_vector = reley_election;
-
-    relay_block.set_elections_next(reley_election_group);
-    relay_block.build_finish();
-    genesis_block = relay_block;
-
-#ifdef DEBUG
-    reley_election_group.dump();
-    FILE* file = NULL;
-#if defined(XBUILD_CI)
-    file = fopen("ci_genesis_relay_block_header_data.txt", "wb");
-#elif defined(XBUILD_GALILEO)
-    file = fopen("galileo_genesis_relay_block_header_data.txt", "wb");
-#elif defined(XBUILD_DEV)
-    file = fopen("dev_genesis_relay_block_header_data.txt", "wb");
-#elif defined(XBUILD_BOUNTY)
-    file = fopen("bounty_genesis_relay_block_header_data.txt", "wb");
-#else
-    file = fopen("mainnet_genesis_relay_block_header_data.txt", "wb");
-#endif
-    //todo,  write genesis info file 
-    xbytes_t rlp_genesis_block_header_data = genesis_block.streamRLP_header_to_contract();
-    std::string hex_result = top::evm_common::toHex(rlp_genesis_block_header_data);
-    size_t ws = fwrite(hex_result.c_str(), 1, hex_result.length(), file);
-    fclose(file);
-#endif
-    return true;
-}
-
 bool xrelay_proposal_maker_t::build_relay_block_data_leader(const data::xblock_ptr_t & latest_wrap_block,
                                                             uint64_t timestamp,
                                                             uint64_t last_election_height,
@@ -174,13 +132,13 @@ bool xrelay_proposal_maker_t::build_relay_block_data_leader(const data::xblock_p
         prev_hash = last_relay_block.get_block_hash();
         block_height = last_relay_block.get_block_height() + 1;
     } else {
-        data::xrelay_block genesis_block;
-        auto ret = build_genesis_relay_block(genesis_block);
-        if (!ret) {
+        auto genesis_block = data::xrootblock_t::get_genesis_relay_block();
+        if (genesis_block == nullptr) {
+            xwarn("xrelay_proposal_maker_t:build_relay_block_data_leader get_genesis_relay_block is nullptr");
             return false;
         }
-        prev_hash = genesis_block.get_block_hash();
-        block_height = genesis_block.get_block_height() + 1;
+        prev_hash = genesis_block->get_block_hash();
+        block_height = genesis_block->get_block_height() + 1;
     }
 
     std::map<uint64_t, xrelay_chain::xcross_txs_t> cross_tx_map;
@@ -495,14 +453,13 @@ bool xrelay_proposal_maker_t::check_wrap_proposal(const xblock_ptr_t & latest_ce
         evm_common::h256 local_prev_hash;
         uint64_t local_block_height = 0;
         if (proposal_block->get_height() == 1) {
-            data::xrelay_block genesis_block;
-            auto ret = build_genesis_relay_block(genesis_block);
-            if (!ret) {
+            auto genesis_block = data::xrootblock_t::get_genesis_relay_block();
+            if (genesis_block == nullptr) {
+                xwarn("xrelay_proposal_maker_t:build_relay_block_data_leader get_genesis_relay_block is nullptr");
                 return false;
             }
-
-            local_prev_hash = genesis_block.get_block_hash();
-            local_block_height = genesis_block.get_block_height() + 1;
+            local_prev_hash = genesis_block->get_block_hash();
+            local_block_height = genesis_block->get_block_height() + 1;
         } else {
             data::xrelay_block last_relay_block;
             last_relay_block.decodeBytes(to_bytes(last_relay_block_data), ec);

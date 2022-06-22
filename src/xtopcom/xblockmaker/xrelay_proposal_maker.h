@@ -67,7 +67,6 @@ protected:
                                        uint64_t new_election_height,
                                        uint64_t epochid,
                                        std::string & relay_block_data);
-    bool build_genesis_relay_block(data::xrelay_block & genesis_block);
 
 private:
     xblockmaker_resources_ptr_t m_resources{nullptr};

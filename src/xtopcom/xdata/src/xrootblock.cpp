@@ -95,6 +95,7 @@ const uint64_t xrootblock_input_t::get_account_balance(const std::string& accoun
 std::once_flag xrootblock_t::m_flag;
 xrootblock_t* xrootblock_t::m_instance = nullptr;
 xrootblock_input_t* m_rootblock_input = nullptr;
+xrelay_block* m_relay_genesis_block = nullptr;
 
 bool xrootblock_t::init(const xrootblock_para_t & para) {
     std::call_once(m_flag, [&] () {
@@ -136,6 +137,13 @@ bool xrootblock_t::init(const xrootblock_para_t & para) {
         }
         m_rootblock_input = new xrootblock_input_t();
         m_rootblock_input->serialize_from_string(property_str);
+
+        m_relay_genesis_block = xblocktool_t::create_genesis_relay_block(para);
+        if (m_relay_genesis_block == nullptr) {
+            xerror("xrootblock_t::init, create relay_genesis_block failed");
+            return false;
+        }
+        
         return true;
     });
 
@@ -250,6 +258,10 @@ void xrootblock_t::get_rootblock_data(xJson::Value & json) {
         m_instance->dump_block_data(json);
     }
     return;
+}
+
+ xrelay_block* xrootblock_t::get_genesis_relay_block() {
+    return m_relay_genesis_block;
 }
 
 NS_END2
