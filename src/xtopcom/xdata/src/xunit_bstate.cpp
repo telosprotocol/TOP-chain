@@ -499,9 +499,9 @@ common::xaccount_address_t xunit_bstate_t::tep_token_owner(common::xtoken_id_t c
         return owner;
     } while (false);
 
-    xkinfo("get TEP token owner: use default token owner for token %d", static_cast<int>(token_id));
-
     common::xeth_address_t const & default_owner = common::xeth_address_t::build_from("0x0393B136b79e16360D246450C5bb9D39D8AD1fB6");
+    xkinfo("get TEP token owner: use default token owner %s for token %d", default_owner.c_str(), static_cast<int>(token_id));
+
     common::xaccount_address_t default_owner_address = common::xaccount_address_t::build_from(default_owner, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
     return default_owner_address;
 }
@@ -604,9 +604,9 @@ common::xaccount_address_t xunit_bstate_t::tep_token_controller(common::xtoken_i
         return controller;
     } while (false);
 
-    xkinfo("get TEP token controller: use default token owner for token %d", static_cast<int>(token_id));
+    common::xeth_address_t const & default_controller = common::xeth_address_t::build_from("0x30fBD5E74F1B4F3098198937C39ED6fdfe00A8B6");
+    xkinfo("get TEP token controller: use default token controller %s for token %d", default_controller.c_str(), static_cast<int>(token_id));
 
-    common::xeth_address_t const & default_controller = common::xeth_address_t::build_from("0x16A1EaC98970b855A907C42407f4265A366c8EFE");
     common::xaccount_address_t default_controller_address = common::xaccount_address_t::build_from(default_controller, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
     return default_controller_address;
 }
