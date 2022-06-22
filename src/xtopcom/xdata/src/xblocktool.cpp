@@ -820,4 +820,48 @@ bool xblocktool_t::check_lacking_unit_and_try_sync(const base::xvaccount_t & vac
     return true;
 }
 
+xrelay_block* xblocktool_t::create_genesis_relay_block(const xrootblock_para_t & bodypara)
+{
+    if(bodypara.m_genesis_nodes.size() < 1) {
+        xerror("xrelay_block::create_genesis_relay_block genesis node size is 0");
+        return nullptr;
+    }
+
+    xrelay_block *_relay_block = new xrelay_block();
+    xrelay_election_group_t _election_group;
+    auto const max_relay_group_size = XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_relay_group_size);
+    for(uint64_t index = 0; (index < max_relay_group_size) && (index <= bodypara.m_genesis_nodes.size()) ; index++) {
+        auto &node = bodypara.m_genesis_nodes[index];
+        auto pubkey_str = base::xstring_utl::base64_decode(node.m_publickey.to_string());
+        xbytes_t bytes_x(pubkey_str.begin() + 1, pubkey_str.begin() + 33);
+        xbytes_t bytes_y(pubkey_str.begin() + 33, pubkey_str.end());
+        _election_group.elections_vector.push_back(data::xrelay_election_node_t(evm_common::h256(bytes_x), evm_common::h256(bytes_y), 0));
+    }
+
+    _relay_block->set_elections_next(_election_group);
+    _relay_block->build_finish();
+
+#ifdef DEBUG
+    _election_group.dump();
+    FILE* file = NULL;
+#if defined(XBUILD_CI)
+    file = fopen("ci_genesis_relay_block_header_data.txt", "wb");
+#elif defined(XBUILD_GALILEO)
+    file = fopen("galileo_genesis_relay_block_header_data.txt", "wb");
+#elif defined(XBUILD_DEV)
+    file = fopen("dev_genesis_relay_block_header_data.txt", "wb");
+#elif defined(XBUILD_BOUNTY)
+    file = fopen("bounty_genesis_relay_block_header_data.txt", "wb");
+#else
+    file = fopen("mainnet_genesis_relay_block_header_data.txt", "wb");
+#endif
+    //todo,  write genesis info file 
+    xbytes_t rlp_genesis_block_header_data = _relay_block->streamRLP_header_to_contract();
+    std::string hex_result = top::evm_common::toHex(rlp_genesis_block_header_data);
+    size_t ws = fwrite(hex_result.c_str(), 1, hex_result.length(), file);
+    fclose(file);
+#endif    
+    return _relay_block;
+}
+
 NS_END2
