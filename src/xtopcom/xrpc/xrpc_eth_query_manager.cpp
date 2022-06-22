@@ -1246,7 +1246,7 @@ void xrpc_eth_query_manager::top_getRelayTransactionByHash(xJson::Value & js_req
         js_rsp["result"] = js_result;
         xdbg("xrpc_eth_query_manager::top_getRelayTransactionByHash ok.tx hash:%s", tx_hash.c_str());
     } else {
-        xerror("xrpc_eth_query_manager::eth_getTransactionByHash fail-transaction_to_json.tx hash:%s", tx_hash.c_str());
+        xwarn("xrpc_eth_query_manager::eth_getTransactionByHash fail-transaction_to_json.tx hash:%s", tx_hash.c_str());
         js_rsp["result"] = xJson::Value::null;
     }    
     return;
