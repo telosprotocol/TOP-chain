@@ -22,8 +22,8 @@ NS_BEG2(top, txexecutor)
 std::string xatomictx_output_t::dump() const {
     char local_param_buf[256];
     xprintf(local_param_buf,sizeof(local_param_buf),"{is_pack=%d,snapshot_height=%zu,is_state_dirty=%d,vm_error=%d,tgas_change=%ld,vmcode=%d,subtxs=%zu",
-        m_is_pack, m_snapshot_size,m_is_state_dirty,m_result,
-        m_vm_output.tgas_balance_change,m_vm_output.ec.value(),m_vm_output.contract_create_txs.size());
+        is_pack, snapshot_size,is_state_dirty,result,
+        vm_output.tgas_balance_change,vm_output.ec.value(),vm_output.contract_create_txs.size());
     return std::string(local_param_buf);
 }
 
@@ -335,7 +335,7 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
         xwarn("xatomictx_executor_t::vm_execute tx error: %s, ret: %d, error_code: %d, error_msg: %s", tx->dump().c_str(), ret, vmoutput.ec.value(), vmoutput.ec.message().c_str());
     }
     vmoutput.gasfee_detail = gasfee.gasfee_detail();
-    output.m_vm_output = vmoutput;
+    output.vm_output = vmoutput;
     return ret;
 }
 
@@ -363,12 +363,12 @@ void xatomictx_executor_t::vm_execute_after_process(const data::xunitstate_ptr_t
     bool is_state_dirty = false;
     if (enum_exec_success != vm_result) {
         m_statectx->do_rollback();
-        update_gasfee(output.m_vm_output.gasfee_detail, tx_unitstate, tx);
+        update_gasfee(output.vm_output.gasfee_detail, tx_unitstate, tx);
         is_state_dirty = m_statectx->is_state_dirty();
         tx->set_current_exec_status(data::enum_xunit_tx_exec_status_fail);
         set_tx_account_state(tx_unitstate, tx);
     } else {
-        update_gasfee(output.m_vm_output.gasfee_detail, tx_unitstate, tx);
+        update_gasfee(output.vm_output.gasfee_detail, tx_unitstate, tx);
         is_state_dirty = m_statectx->is_state_dirty();
         tx->set_current_exec_status(data::enum_xunit_tx_exec_status_success);
     }
@@ -390,8 +390,8 @@ void xatomictx_executor_t::vm_execute_after_process(const data::xunitstate_ptr_t
     }
 
     if (is_pack_tx) {  // tx packed should update tx related state
-        set_evm_receipt_info(tx, output.m_vm_output, gas_used);
-        bool tx_related_update = update_tx_related_state(tx_unitstate, tx, output.m_vm_output);
+        set_evm_receipt_info(tx, output.vm_output, gas_used);
+        bool tx_related_update = update_tx_related_state(tx_unitstate, tx, output.vm_output);
         if (false == tx_related_update) {
             xassert(false);
             is_pack_tx = false;
@@ -408,9 +408,9 @@ void xatomictx_executor_t::vm_execute_after_process(const data::xunitstate_ptr_t
         is_state_dirty = false;
     }
 
-    output.m_is_state_dirty = is_state_dirty;
-    output.m_is_pack = is_pack_tx;
-    output.m_snapshot_size = _snapshot_size;
+    output.is_state_dirty = is_state_dirty;
+    output.is_pack = is_pack_tx;
+    output.snapshot_size = _snapshot_size;
 }
 
 enum_execute_result_type xatomictx_executor_t::execute(const xcons_transaction_ptr_t & tx, xatomictx_output_t & output, uint64_t gas_used) {

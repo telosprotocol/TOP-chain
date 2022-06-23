@@ -11,16 +11,15 @@
 
 NS_BEG2(top, txexecutor)
 
-class xatomictx_output_t {
- public:
-    std::string     dump() const;
+struct xatomictx_output_t {
+    bool                        is_pack{false};
+    bool                        is_state_dirty{false};
+    size_t                      snapshot_size{0};
+    xvm_output_t                vm_output;
+    enum_execute_result_type    result;
+    xcons_transaction_ptr_t     tx;
 
-    bool                        m_is_pack{false};
-    bool                        m_is_state_dirty{false};
-    size_t                      m_snapshot_size{0};
-    xvm_output_t                m_vm_output;
-    enum_execute_result_type    m_result;
-    xcons_transaction_ptr_t     m_tx;
+    std::string dump() const;
 };
 
 class xatomictx_executor_t {

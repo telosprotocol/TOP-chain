@@ -23,9 +23,9 @@ int32_t xbatchtx_executor_t::execute(const std::vector<xcons_transaction_ptr_t> 
     xassert(!txs.empty());
     for (auto & tx : txs) {
         xatomictx_output_t output;
-        output.m_tx = tx;
+        output.tx = tx;
         if (tx->get_transaction()->get_gaslimit() + gas_used > m_para.get_gas_limit()) {
-            output.m_is_pack = false;
+            output.is_pack = false;
             xwarn("xbatchtx_executor_t::execute gas reach limit,tx:%s,tx gaslimit:%llu,gas_used:%llu,gaslimit:%llu",
                 tx->dump().c_str(), (uint64_t)tx->get_transaction()->get_gaslimit(), gas_used, m_para.get_gas_limit());
             if (gas_used == 0) {
@@ -37,17 +37,17 @@ int32_t xbatchtx_executor_t::execute(const std::vector<xcons_transaction_ptr_t> 
         }
 
         enum_execute_result_type result = atomic_executor.execute(tx, output, gas_used);
-        if (output.m_is_pack) {
-            gas_used += output.m_vm_output.tx_result.used_gas;
+        if (output.is_pack) {
+            gas_used += output.vm_output.tx_result.used_gas;
             outputs.pack_outputs.push_back(output);
         } else {
-            if (output.m_tx->is_send_or_self_tx()) {
+            if (output.tx->is_send_or_self_tx()) {
                 outputs.drop_outputs.push_back(output);
             } else {
                 outputs.nopack_outputs.push_back(output);
             }
         }
-        output.m_result = result;
+        output.result = result;
         // xinfo("xbatchtx_executor_t::execute %s,batch_result=%d", output.dump().c_str(),result);
     }
 

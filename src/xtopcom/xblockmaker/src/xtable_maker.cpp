@@ -166,12 +166,12 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
     int64_t tgas_balance_change = 0;
     for (auto & txout : execute_output.pack_outputs) {
         xinfo("xtable_maker_t::make_light_table_v2 packtx is_leader=%d,%s,tx=%s,txout=%s,action=%s", 
-            is_leader, cs_para.dump().c_str(), txout.m_tx->dump().c_str(), txout.dump().c_str(),txout.m_tx->dump_execute_state().c_str());
-        table_para.push_tx_to_proposal(txout.m_tx);  // set pack origin tx to proposal
-        txs_info.push_back(build_tx_info(txout.m_tx));
-        txkeys_mgr.add_pack_tx(txout.m_tx);
-        tgas_balance_change += txout.m_vm_output.tgas_balance_change;
-        for (auto & v : txout.m_vm_output.contract_create_txs) {
+            is_leader, cs_para.dump().c_str(), txout.tx->dump().c_str(), txout.dump().c_str(),txout.tx->dump_execute_state().c_str());
+        table_para.push_tx_to_proposal(txout.tx);  // set pack origin tx to proposal
+        txs_info.push_back(build_tx_info(txout.tx));
+        txkeys_mgr.add_pack_tx(txout.tx);
+        tgas_balance_change += txout.vm_output.tgas_balance_change;
+        for (auto & v : txout.vm_output.contract_create_txs) {
             txs_info.push_back(build_tx_info(v));
             txkeys_mgr.add_pack_tx(v);
         }
@@ -179,14 +179,14 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
 
     for (auto & txout : execute_output.drop_outputs) {
         xinfo("xtable_maker_t::make_light_table_v2 droptx is_leader=%d,%s,tx=%s,txout=%s,action=%s", 
-            is_leader, cs_para.dump().c_str(), txout.m_tx->dump().c_str(), txout.dump().c_str(),txout.m_tx->dump_execute_state().c_str());        
-        xtxpool_v2::tx_info_t txinfo(txout.m_tx->get_source_addr(), txout.m_tx->get_tx_hash_256(), txout.m_tx->get_tx_subtype());
+            is_leader, cs_para.dump().c_str(), txout.tx->dump().c_str(), txout.dump().c_str(),txout.tx->dump_execute_state().c_str());
+        xtxpool_v2::tx_info_t txinfo(txout.tx->get_source_addr(), txout.tx->get_tx_hash_256(), txout.tx->get_tx_subtype());
         get_txpool()->pop_tx(txinfo);
     }
 
     for (auto & txout : execute_output.nopack_outputs) {
         xinfo("xtable_maker_t::make_light_table_v2 nopacktx is_leader=%d,%s,tx=%s,txout=%s,action=%s", 
-            is_leader, cs_para.dump().c_str(), txout.m_tx->dump().c_str(), txout.dump().c_str(),txout.m_tx->dump_execute_state().c_str());        
+            is_leader, cs_para.dump().c_str(), txout.tx->dump().c_str(), txout.dump().c_str(),txout.tx->dump_execute_state().c_str());
     }
 
     if (txs_info.empty()) {
@@ -611,17 +611,17 @@ const std::string xeth_header_builder::build(const xblock_consensus_para_t & cs_
     data::xeth_receipts_t eth_receipts;
     data::xeth_transactions_t eth_txs; 
     for (auto & txout : pack_txs_outputs) {
-        if (txout.m_tx->get_tx_version() != data::xtransaction_version_3) {
+        if (txout.tx->get_tx_version() != data::xtransaction_version_3) {
             continue;
         }
 
-        data::xeth_transaction_t ethtx = txout.m_tx->get_transaction()->to_eth_tx(ec);
+        data::xeth_transaction_t ethtx = txout.tx->get_transaction()->to_eth_tx(ec);
         if (ec) {
             xerror("xeth_header_builder::build fail-to eth tx");
             continue;
         }
 
-        auto & evm_result = txout.m_vm_output.tx_result;
+        auto & evm_result = txout.vm_output.tx_result;
         gas_used += evm_result.used_gas;
         data::enum_ethreceipt_status status = (evm_result.status == evm_common::xevm_transaction_status_t::Success) ? data::ethreceipt_status_successful : data::ethreceipt_status_failed;
         data::xeth_receipt_t eth_receipt(ethtx.get_tx_version(), status, gas_used, evm_result.logs);
