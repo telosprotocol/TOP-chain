@@ -4,6 +4,7 @@
 #include "xbase/xhash.h"
 #include "xutility/xhash.h"
 #include "xdata/xrootblock.h"
+#include "xcrypto/xckey.h"
 
 using namespace std;
 using namespace top;
@@ -43,6 +44,8 @@ int main(int argc, char **argv) {
     new xhashtest_t();
     top::data::xrootblock_para_t para;
     top::data::xrootblock_t::init(para);
+
+    top::utl::xkeyaddress_t pubkey1("");  // just init xsecp256k1_t
 
     return RUN_ALL_TESTS();
 }
