@@ -28,13 +28,8 @@ private:
     bool sync(const xbytes_t & headerContent);
     bool is_confirmed(const xbytes_t & headerContent);
 
-    evm_common::bigint calcBaseFee(const evm_common::eth::xeth_block_header_t & parentHeader) const;
     bool verifyOwner(const std::string & owner) const;
     bool verifyCommon(const evm_common::eth::xeth_block_header_t & prev_header, const evm_common::eth::xeth_block_header_t & new_header) const;
-    bool verifyEip1559Header(const evm_common::eth::xeth_block_header_t & parentHeader, const evm_common::eth::xeth_block_header_t & header) const;
-    bool verifyGaslimit(const evm_common::u256 parentGasLimit, const evm_common::u256 headerGasLimit) const;
-    bool isLondon(const evm_common::eth::xeth_block_header_t & header) const;
-    bool isArrowGlacier(const evm_common::eth::xeth_block_header_t & header) const;
 
     bool get_hash(const evm_common::bigint height, evm_common::h256 & hash) const;
     bool set_hash(const evm_common::bigint height, const evm_common::h256 hash);

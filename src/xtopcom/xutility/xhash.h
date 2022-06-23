@@ -189,6 +189,8 @@ class xsha2_256_t : public xhash_t
 public:
     static uint256_t  digest(const void* data, size_t numBytes);
     static uint256_t  digest(const std::string & text);
+    static std::vector<uint8_t>  digest_bytes(const void* data, size_t numBytes);
+    static std::vector<uint8_t>  digest_bytes(const std::string & text);
 public:
     xsha2_256_t();
     ~xsha2_256_t();

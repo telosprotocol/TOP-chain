@@ -229,7 +229,7 @@ inline hash256 hash_kernel(
 
     hash1024 mix{{le::uint32s(seed), le::uint32s(seed)}};
 
-    for (uint32_t i = 0; i < num_dataset_accesses; ++i)
+    for (uint32_t i = 0; i < ETHASH_NUM_DATASET_ACCESSES; ++i)
     {
         const uint32_t p = fnv1(i ^ seed_init, mix.word32s[i % num_words]) % index_limit;
         const hash1024 newdata = le::uint32s(lookup(context, p));
