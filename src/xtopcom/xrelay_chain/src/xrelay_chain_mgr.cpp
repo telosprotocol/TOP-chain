@@ -116,11 +116,12 @@ void xcross_tx_cache_t::process_block(data::xblock_t * block) {
 void xcross_tx_cache_t::on_evm_db_event(data::xblock_t * block) {
     base::xvaccount_t vaccount(sys_contract_eth_table_block_addr_with_suffix);
     if (block->get_height() > m_cached_evm_upper_height) {
-        for (uint32_t h = m_cached_evm_upper_height + 1; h < block->get_height(); h++) {
-            auto latest_committed_block =
+        uint64_t from_height = (m_last_proc_evm_height < m_cached_evm_upper_height) ? (m_cached_evm_upper_height + 1) : (m_last_proc_evm_height + 1);
+        for (uint32_t h = from_height; h < block->get_height(); h++) {
+            auto committed_block =
                 m_para->get_vblockstore()->load_block_object(vaccount, h, base::enum_xvblock_flag_committed, true, metrics::blockstore_access_from_txpool_refresh_table);
-            if (latest_committed_block != nullptr) {
-                process_block(dynamic_cast<data::xblock_t *>(latest_committed_block.get()));
+            if (committed_block != nullptr) {
+                process_block(dynamic_cast<data::xblock_t *>(committed_block.get()));
             } else {
                 // sync evm table on demand
                 xwarn("xcross_tx_cache_t::on_evm_db_event load evm block fail, need sync.height:%llu", h);
@@ -128,9 +129,10 @@ void xcross_tx_cache_t::on_evm_db_event(data::xblock_t * block) {
                 mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(
                     sys_contract_eth_table_block_addr_with_suffix, h, sync_num, false, "lack_of_evm_table_block", false);
                 m_para->get_bus()->push_event(ev);
-                break;
+                return;
             }
         }
+        process_block(dynamic_cast<data::xblock_t *>(block));
     }
 }
 
@@ -148,6 +150,7 @@ bool xcross_tx_cache_t::get_tx_cache_leader(uint64_t & upper_height, std::map<ui
             xwarn("xcross_tx_cache_t::get_tx_cache_leader too many cross txs.h:%llu,num:%u", height, cross_tx_map_pair.second.m_txs.size());
             break;
         }
+        xdbg("xcross_tx_cache_t::get_tx_cache_leader add txs.h:%llu,num:%u", height, cross_tx_map_pair.second.m_txs.size());
         tx_num += cross_tx_map_pair.second.m_txs.size();
         cross_tx_map[height] = cross_tx_map_pair.second;
     }
@@ -177,7 +180,8 @@ void xcross_tx_cache_t::recover_cache() {
     auto latest_committed_block = m_para->get_vblockstore()->get_latest_committed_block(vaccount, metrics::blockstore_access_from_txpool_refresh_table);
     if (m_cached_evm_upper_height < latest_committed_block->get_height()) {
         bool block_lack = false;
-        for (uint64_t h = m_cached_evm_upper_height + 1; h < latest_committed_block->get_height(); h++) {
+        uint64_t from_height = (m_last_proc_evm_height < m_cached_evm_upper_height) ? (m_cached_evm_upper_height + 1) : (m_last_proc_evm_height + 1);
+        for (uint64_t h = from_height; h < latest_committed_block->get_height(); h++) {
             auto block = m_para->get_vblockstore()->load_block_object(vaccount, h, base::enum_xvblock_flag_committed, true, metrics::blockstore_access_from_txpool_refresh_table);
             if (block == nullptr) {
                 // sync evm table on demand
@@ -219,9 +223,9 @@ void xcross_tx_cache_t::recover_cache() {
 
 void xcross_tx_cache_t::update_last_proc_evm_height(uint64_t last_proc_evm_height) {
     xinfo("xcross_tx_cache_t::update_last_proc_evm_height old:%llu,new:%llu", m_last_proc_evm_height, last_proc_evm_height);
-    if (last_proc_evm_height <= m_last_proc_evm_height) {
-        return;
-    }
+    // if (last_proc_evm_height <= m_last_proc_evm_height) {
+    //     return;
+    // }
     for (auto iter = m_cross_tx_map.begin(); iter != m_cross_tx_map.end();) {
         if (iter->first <= last_proc_evm_height) {
             m_tx_num -= iter->second.m_txs.size();

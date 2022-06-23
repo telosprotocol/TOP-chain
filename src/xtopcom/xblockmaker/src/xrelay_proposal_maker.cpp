@@ -255,7 +255,7 @@ bool xrelay_proposal_maker_t::build_relay_block_data_backup(evm_common::h256 pre
 
     data::xrelay_block relay_block = build_relay_block(prev_hash, block_height, timestamp, transactions, receipts, reley_election_group, epochid);
 
-    xdbg("xrelay_proposal_maker_t::build_relay_block_data_backup relay_block:%s", relay_block.dump().c_str());
+    xdbg("xrelay_proposal_maker_t::build_relay_block_data_backup relay_block:%s,last evm height:%llu,new evm height:%llu", relay_block.dump().c_str(), last_evm_table_height, new_evm_table_height);
 
     xbytes_t rlp_stream = relay_block.encodeBytes();
     relay_block_data = from_bytes<std::string>((xbytes_t)(rlp_stream));
