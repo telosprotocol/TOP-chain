@@ -1,7 +1,9 @@
 
 #include "tests/xevm_engine_test/evm_test_fixture/xtest_evm_fixture.h"
-#include "xdata/xnative_contract_address.h"
+
 #include "xbasic/xhex.h"
+#include "xdata/xnative_contract_address.h"
+
 #include <dirent.h>
 #include <stdio.h>
 
@@ -254,8 +256,12 @@ bool xtest_evm_fixture::do_call_test(json const & each_call) {
     // std::cout << "get value_256:" << value_256 << std::endl;
     std::string input_data = each_call["data"];
 
+    std::error_code ec;
+    auto contract_code_bytes = top::from_hex(input_data, ec);
+    EXPECT_TRUE(!ec);
+
     auto evm_action = top::make_unique<data::xconsensus_action_t<data::xtop_action_type_t::evm>>(
-        common::xaccount_address_t{src_address}, common::xaccount_address_t{evm_to_top_address(target_address)}, value_256, xvariant_bytes{input_data, true}.to_bytes(), gas_limit);
+        common::xaccount_address_t{src_address}, common::xaccount_address_t{evm_to_top_address(target_address)}, value_256, contract_code_bytes, gas_limit);
 
     auto contract_manager = top::make_observer<contract_runtime::evm::xevm_contract_manager_t>(contract_runtime::evm::xevm_contract_manager_t::instance());
 
@@ -285,7 +291,10 @@ xbytes_t xtest_evm_fixture::get_contract_bin(std::string const & code_file_path)
     std::string bytecode_hex_string;
     code_file_stream >> bytecode_hex_string;
 
-    return xvariant_bytes{bytecode_hex_string, true}.to_bytes();
+    std::error_code ec;
+    auto code_bytes = top::from_hex(bytecode_hex_string, ec);
+    EXPECT_TRUE(!ec);
+    return code_bytes;
 }
 
 bool xtest_evm_fixture::expected_logs(std::vector<evm_common::xevm_log_t> const & result_logs, json const & expected_json) {
@@ -330,7 +339,7 @@ bool xtest_evm_fixture::expected_logs(std::vector<evm_common::xevm_log_t> const 
 }
 
 void xtest_evm_fixture::mock_add_balance(common::xaccount_address_t const & account, std::string token_symbol, evm_common::u256 amount) {
-    assert(account.value().substr(0, 6) == "T60004");
+    assert(account.value().substr(0, 6) == base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN);
     std::string eth_address = account.value().substr(6);
     assert(eth_address.size() == 40);
 
@@ -346,7 +355,7 @@ void xtest_evm_fixture::mock_add_approve(common::xaccount_address_t const & owne
                                          common::xaccount_address_t const & spender,
                                          std::string const & symbol,
                                          evm_common::u256 amount) {
-    assert(owner.value().substr(0, 6) == "T60004");
+    assert(owner.value().substr(0, 6) == base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN);
     std::string eth_address = owner.value().substr(6);
     assert(eth_address.size() == 40);
 

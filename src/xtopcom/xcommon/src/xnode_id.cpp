@@ -54,11 +54,11 @@ xtop_node_id xtop_node_id::build_from(xeth_address_t const & eth_address, base::
     assert(!ec);
 
     if (account_addr_type == base::enum_vaccount_addr_type_secp256k1_evm_user_account) {
-        return xtop_node_id::build_from("T60004" + eth_address.to_hex_string().substr(2), ec);
+        return xtop_node_id::build_from(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN + eth_address.to_hex_string().substr(2), ec);
     }
 
     if (account_addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account) {
-        return xtop_node_id::build_from("T80000" + eth_address.to_hex_string().substr(2), ec);
+        return xtop_node_id::build_from(base::ADDRESS_PREFIX_ETH_TYPE_IN_MAIN_CHAIN + eth_address.to_hex_string().substr(2), ec);
     }
 
     ec = common::error::xerrc_t::invalid_account_type;

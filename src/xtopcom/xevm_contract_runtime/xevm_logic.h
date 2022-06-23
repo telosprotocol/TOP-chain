@@ -1,9 +1,13 @@
+// Copyright (c) 2017-present Telos Foundation & contributors
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
 #pragma once
 #include "xbasic/xbyte_buffer.h"
 #include "xbasic/xmemory.hpp"
+#include "xevm_contract_runtime/xevm_context.h"
 #include "xevm_contract_runtime/xevm_contract_manager.h"
 #include "xevm_contract_runtime/xevm_storage_face.h"
-#include "xevm_contract_runtime/xevm_type.h"
 #include "xevm_runner/evm_logic_face.h"
 
 #include <cstdint>

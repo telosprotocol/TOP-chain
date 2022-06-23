@@ -16,6 +16,7 @@ xtop_evm_context::xtop_evm_context(std::unique_ptr<data::xbasic_top_action_t con
     // todo(jimmy) get chain id from? , default is 1023 in xevm_context.h:23
     // m_chain_id = ...
     m_block_coinbase = vm_para.get_block_coinbase();
+    assert(m_block_coinbase.value().substr(0, 6) == base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN);
     m_block_height = vm_para.get_block_height();
     m_block_timestamp = vm_para.get_timestamp();
 
@@ -30,7 +31,7 @@ xtop_evm_context::xtop_evm_context(std::unique_ptr<data::xbasic_top_action_t con
         // byte code is all evm need.
         // m_input_data = static_cast<data::xevm_consensus_action_t const *>(m_action.get())->data();
     } else if (action_type() == data::xtop_evm_action_type::call_contract) {
-        assert(sender().value().substr(0, 6) == "T60004");
+        assert(sender().value().substr(0, 6) == base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN);
         auto address = call_args.mutable_address();  // contract address
         address->set_value(recver().value().substr(6));
     } else {

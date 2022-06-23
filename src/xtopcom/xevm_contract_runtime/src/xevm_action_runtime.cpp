@@ -4,13 +4,12 @@
 
 #include "xevm_contract_runtime/xevm_action_runtime.h"
 
+#include "xbasic/xhex.h"
 #include "xcommon/xeth_address.h"
 #include "xevm_contract_runtime/xevm_action_session.h"
 #include "xevm_contract_runtime/xevm_context.h"
 #include "xevm_contract_runtime/xevm_logic.h"
 #include "xevm_contract_runtime/xevm_storage.h"
-#include "xevm_contract_runtime/xevm_type.h"
-#include "xevm_contract_runtime/xevm_variant_bytes.h"
 #include "xevm_runner/evm_engine_interface.h"
 #include "xevm_runner/evm_import_instance.h"
 #include "xevm_runner/proto/proto_parameters.pb.h"
@@ -60,7 +59,7 @@ evm_common::xevm_transaction_result_t xtop_action_runtime<data::xevm_consensus_a
     } else {
         top::evm_engine::parameters::SubmitResult return_result;
 
-        auto ret = return_result.ParseFromString(evm::xvariant_bytes{top::evm::evm_import_instance::instance()->get_return_value()}.to_string());
+        auto ret = return_result.ParseFromString(top::to_string(top::evm::evm_import_instance::instance()->get_return_value()));
 
         if (!ret || return_result.version() != evm_runtime::CURRENT_CALL_ARGS_VERSION) {
             top::error::throw_error(error::xerrc_t::evm_protobuf_serilized_error);
@@ -70,7 +69,7 @@ evm_common::xevm_transaction_result_t xtop_action_runtime<data::xevm_consensus_a
         result.set_status(return_result.transaction_status());
 
         // extra_msg:
-        result.extra_msg = evm::xvariant_bytes{return_result.status_data(), false}.to_hex_string("0x");
+        result.extra_msg = top::to_hex_prefixed(return_result.status_data());
         xdbg("xtop_action_runtime<data::xevm_consensus_action_t>::execute result.extra_msg:%s", result.extra_msg.c_str());
 
         // logs:

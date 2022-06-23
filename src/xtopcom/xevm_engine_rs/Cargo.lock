@@ -1037,7 +1037,7 @@ dependencies = [
 [[package]]
 name = "top-blake2"
 version = "0.10.5"
-source = "git+https://github.com/LonDong-TopNetwork/top-blake2?rev=1d48fe82da9c622ae3c4b07db4af7151458c611c#1d48fe82da9c622ae3c4b07db4af7151458c611c"
+source = "git+https://github.com/telosprotocol/top-blake2?rev=1d48fe82da9c622ae3c4b07db4af7151458c611c#1d48fe82da9c622ae3c4b07db4af7151458c611c"
 dependencies = [
  "digest 0.10.3",
 ]

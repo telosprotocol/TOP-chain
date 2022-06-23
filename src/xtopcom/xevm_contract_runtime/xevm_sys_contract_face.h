@@ -9,7 +9,6 @@
 #include "xevm_common/common.h"
 #include "xevm_common/xborsh.hpp"
 #include "xevm_common/xevm_transaction_result.h"
-#include "xevm_contract_runtime/xevm_variant_bytes.h"
 #include "xevm_runner/proto/proto_precompile.pb.h"
 
 #if defined(__clang__)
