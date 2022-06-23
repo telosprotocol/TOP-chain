@@ -823,14 +823,13 @@ bool xblocktool_t::check_lacking_unit_and_try_sync(const base::xvaccount_t & vac
 xrelay_block* xblocktool_t::create_genesis_relay_block(const xrootblock_para_t & bodypara)
 {
     if(bodypara.m_genesis_nodes.size() < 1) {
-        xerror("xrelay_block::create_genesis_relay_block genesis node size is 0");
-        return nullptr;
+        xwarn("xrelay_block::create_genesis_relay_block genesis node size is 0");
     }
 
     xrelay_block *_relay_block = new xrelay_block();
     xrelay_election_group_t _election_group;
     auto const max_relay_group_size = XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_relay_group_size);
-    for(uint64_t index = 0; (index < max_relay_group_size) && (index <= bodypara.m_genesis_nodes.size()) ; index++) {
+    for(uint64_t index = 0; (index < max_relay_group_size) && (index < bodypara.m_genesis_nodes.size()) ; index++) {
         auto &node = bodypara.m_genesis_nodes[index];
         auto pubkey_str = base::xstring_utl::base64_decode(node.m_publickey.to_string());
         xbytes_t bytes_x(pubkey_str.begin() + 1, pubkey_str.begin() + 33);
