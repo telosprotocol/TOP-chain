@@ -98,9 +98,9 @@ namespace data {
         const evm_common::h256           &get_txs_root_hash() const { return m_txs_merkle_root;}
         const evm_common::h256           &get_receipts_root_hash() const { return m_receipts_merkle_root;}
         const evm_common::h256           &get_block_root_hash() const { return m_block_merkle_root;}
-        const uint64_t                   &get_block_height() const { return m_height;}
-        const uint64_t                   &get_timestamp() const { return m_timestamp;}
-        const uint64_t                   &get_epochID() const { return m_epochID;}
+        uint64_t                          get_block_height() const { return m_height;}
+        uint64_t                          get_timestamp() const { return m_timestamp;}
+        uint64_t                          get_epochID() const { return m_epochID;}
 
         void                              set_txs_merkle_root_hash(evm_common::h256 hash);
         void                              set_receipts_merkle_root_hash(evm_common::h256 hash);
@@ -157,12 +157,12 @@ namespace data {
        const evm_common::h256           &get_txs_root_hash() const { return m_inner_header.get_txs_root_hash();}
        const evm_common::h256           &get_receipts_root_hash() const { return m_inner_header.get_receipts_root_hash();}
        const evm_common::h256           &get_block_root_hash() const { return m_inner_header.get_block_root_hash();}
-       const uint64_t                   &get_block_height() const { return m_inner_header.get_block_height();}
-       const uint64_t                   &get_epochid() const {return m_inner_header.get_epochID();}
-       const uint64_t                   &get_timestamp() const { return m_inner_header.get_timestamp();}
+       uint64_t                          get_block_height() const { return m_inner_header.get_block_height();}
+       uint64_t                          get_epochid() const {return m_inner_header.get_epochID();}
+       uint64_t                          get_timestamp() const { return m_inner_header.get_timestamp();}
        const evm_common::h256           &get_prev_block_hash() const { return m_prev_hash;}
        const evm_common::h256           &get_block_hash() const { return m_block_hash;}
-       const uint8_t                    &get_header_version() {return m_version;}
+       uint8_t                           get_header_version() {return m_version;}
 
        const xrelay_election_group_t               &get_elections_sets() const { return m_next_elections_groups;}
        const std::vector<xrelay_signature_node_t>  &get_signatures_sets() const { return m_block_signatures_nodes;}
@@ -221,8 +221,8 @@ namespace data {
         const evm_common::h256              &get_txs_root_hash() const { return m_header.get_txs_root_hash();}
         const evm_common::h256              &get_receipts_root_hash() const { return m_header.get_receipts_root_hash();}
         const evm_common::h256              &get_block_root_hash() const { return m_header.get_block_root_hash();}
-        const uint64_t                      &get_block_height() const { return m_header.get_block_height();}
-        const uint64_t                      &get_timestamp() const { return m_header.get_timestamp();}
+        uint64_t                             get_block_height() const { return m_header.get_block_height();}
+        uint64_t                             get_timestamp() const { return m_header.get_timestamp();}
         const std::vector<xeth_receipt_t>   &get_all_receipts() const { return m_receipts;}
         const std::vector<xeth_transaction_t>   &get_all_transactions() { return m_transactions ;}
         std::string                         dump() const;

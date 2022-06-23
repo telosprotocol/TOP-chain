@@ -23,6 +23,8 @@
 
 NS_BEG2(top, blockmaker)
 
+#define RELAY_BLOCK_TXS_PACK_NUM_MAX    (32)
+
 // REG_XMODULE_LOG(chainbase::enum_xmodule_type::xmodule_type_xblockmaker, xblockmaker_error_to_string, xblockmaker_error_base+1, xblockmaker_error_max);
 
 xrelay_proposal_maker_t::xrelay_proposal_maker_t(const std::string & account,
@@ -182,30 +184,32 @@ bool xrelay_proposal_maker_t::build_relay_block_data_leader(const data::xblock_p
     }
 
     std::map<uint64_t, xrelay_chain::xcross_txs_t> cross_tx_map;
-    uint64_t cur_evm_table_height = 0;
     std::vector<data::xeth_transaction_t> transactions;
     std::vector<data::xeth_receipt_t> receipts;
 
     // election data and cross txs not pack into one relay block
     if (reley_election_group.empty()) {
-        auto result = m_relay_chain_mgr->get_tx_cache_leader(last_evm_table_height, cur_evm_table_height, cross_tx_map);
+        uint64_t cur_evm_table_height = 0;
+        auto result = m_relay_chain_mgr->get_tx_cache_leader(last_evm_table_height, cur_evm_table_height, cross_tx_map, RELAY_BLOCK_TXS_PACK_NUM_MAX);
         if (!result) {
-            return {};
+            return false;
         }
         if (cross_tx_map.empty() && reley_election_group.empty()) {
             xinfo("xrelay_proposal_maker_t::build_relay_block_data_leader no cross txs and no new relay election.");
             return false;
         }
         convert_to_xrelay_tx_and_receipts(cross_tx_map, transactions, receipts);
+        new_evm_table_height = cur_evm_table_height;
+    } else {
+        new_evm_table_height = last_evm_table_height;
     }
 
     data::xrelay_block relay_block = build_relay_block(prev_hash, block_height, timestamp, transactions, receipts, reley_election_group, epochid);
-    xdbg("xrelay_proposal_maker_t::build_relay_block_data_leader relay_block:%s", relay_block.dump().c_str());
+    xdbg("xrelay_proposal_maker_t::build_relay_block_data_leader relay_block:%s,last evm height:%llu,new evm height:%llu", relay_block.dump().c_str(), last_evm_table_height, new_evm_table_height);
 
     xbytes_t rlp_stream = relay_block.encodeBytes();
     relay_block_data = from_bytes<std::string>((xbytes_t)(rlp_stream));
 
-    new_evm_table_height = cur_evm_table_height;
     return true;
 }
 
@@ -217,15 +221,23 @@ bool xrelay_proposal_maker_t::build_relay_block_data_backup(evm_common::h256 pre
                                                             uint64_t new_election_height,
                                                             uint64_t epochid,
                                                             std::string & relay_block_data) {
-    std::map<uint64_t, xrelay_chain::xcross_txs_t> cross_tx_map;
-    auto ret = m_relay_chain_mgr->get_tx_cache_backup(last_evm_table_height, new_evm_table_height, cross_tx_map);
-    if (!ret) {
-        return {};
-    }
-
     std::vector<data::xeth_transaction_t> transactions;
     std::vector<data::xeth_receipt_t> receipts;
-    convert_to_xrelay_tx_and_receipts(cross_tx_map, transactions, receipts);
+
+    if (last_evm_table_height < new_evm_table_height) {
+        std::map<uint64_t, xrelay_chain::xcross_txs_t> cross_tx_map;
+        auto ret = m_relay_chain_mgr->get_tx_cache_backup(last_evm_table_height, new_evm_table_height, cross_tx_map);
+        if (!ret) {
+            return false;
+        }
+        convert_to_xrelay_tx_and_receipts(cross_tx_map, transactions, receipts);
+    } else {
+        if (last_evm_table_height != new_evm_table_height) {
+            xerror("xrelay_proposal_maker_t::build_relay_block_data_backup evm height wrong:%llu:%llu.", last_evm_table_height, new_evm_table_height);
+            return false;
+        }
+        xinfo("xrelay_proposal_maker_t::build_relay_block_data_backup not pack tx.");
+    }
 
     std::vector<data::xrelay_election_node_t> reley_election;
 
@@ -243,7 +255,7 @@ bool xrelay_proposal_maker_t::build_relay_block_data_backup(evm_common::h256 pre
 
     data::xrelay_block relay_block = build_relay_block(prev_hash, block_height, timestamp, transactions, receipts, reley_election_group, epochid);
 
-    xdbg("xrelay_proposal_maker_t::build_relay_block_data_backup relay_block:%s", relay_block.dump().c_str());
+    xdbg("xrelay_proposal_maker_t::build_relay_block_data_backup relay_block:%s,last evm height:%llu,new evm height:%llu", relay_block.dump().c_str(), last_evm_table_height, new_evm_table_height);
 
     xbytes_t rlp_stream = relay_block.encodeBytes();
     relay_block_data = from_bytes<std::string>((xbytes_t)(rlp_stream));
@@ -334,9 +346,16 @@ xblock_ptr_t xrelay_proposal_maker_t::make_proposal(data::xblock_consensus_para_
             xwarn("xrelay_proposal_maker_t:make_proposal last_relay_block decodeBytes error %s; err msg %s", ec.category().name(), ec.message().c_str());
             return nullptr;
         }
+
+        if (proposal_para.get_election_round() < last_relay_block.get_inner_header().get_epochID()) {
+            xwarn("xrelay_proposal_maker_t:make_proposal proposal epoch id fallbehind.relay_block:%s,proposal elect round:%lu", last_relay_block.dump().c_str(), proposal_para.get_election_round());
+            return nullptr;
+        }
+
         if (last_relay_block.get_inner_header().get_epochID() != proposal_para.get_election_round()) {
             if (last_relay_block.get_inner_header().get_epochID() + 1 != proposal_para.get_election_round()) {
                 xerror("xrelay_proposal_maker_t:make_proposal epochid exception.relay_block:%s,new round:%lu", last_relay_block.dump().c_str(), proposal_para.get_election_round());
+                return nullptr;
             }
             xwarn("xrelay_proposal_maker_t:make_proposal epochid changed, should consensus from phase 0 again.relay_block:%s,new round:%lu",
                   last_relay_block.dump().c_str(),
@@ -505,6 +524,13 @@ bool xrelay_proposal_maker_t::check_wrap_proposal(const xblock_ptr_t & latest_ce
                    proposal_relay_block.get_block_height(),
                    local_block_height,
                    proposal_block->dump().c_str());
+            return false;
+        }
+
+        bool election_empty = proposal_relay_block.get_header().get_elections_sets().empty();
+        bool tx_empty = proposal_relay_block.get_all_transactions().empty();
+        if ((election_empty && tx_empty) || (!election_empty && !tx_empty)) {
+            xerror("xrelay_proposal_maker_t::check_wrap_proposal both election and tx are empty or not empty.relay_block:%s", proposal_relay_block.dump().c_str());
             return false;
         }
 
