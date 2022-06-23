@@ -326,7 +326,7 @@ common::xeth_address_t xeth_transaction_t::get_from() const {
         } else {
             m_from = _from;
         }
-        std::cout << "address=" << _from.to_hex_string() << std::endl;
+        // std::cout << "address=" << _from.to_hex_string() << std::endl;
     }
     return m_from;
 }
