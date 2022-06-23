@@ -314,6 +314,22 @@ namespace top
             hasher.get_hash(output);
             return output;
         }
+        std::vector<uint8_t>  xsha2_256_t::digest_bytes(const void* data, size_t numBytes)
+        {
+            xsha2_256_t hasher;
+            std::vector<uint8_t> output;
+            hasher.update(data, numBytes);
+            hasher.get_hash(output);
+            return output;
+        }
+        std::vector<uint8_t>  xsha2_256_t::digest_bytes(const std::string & text)
+        {
+            xsha2_256_t hasher;
+            std::vector<uint8_t> output;
+            hasher.update(text);
+            hasher.get_hash(output);
+            return output;
+        }
         ////////////////////////////////////xsha2_512_t////////////////////////////////////////////////
         xsha2_512_t::xsha2_512_t()
         {
