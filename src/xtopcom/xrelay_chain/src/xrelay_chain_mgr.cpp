@@ -103,12 +103,12 @@ void xcross_tx_cache_t::process_block(data::xblock_t * block) {
         }
     }
 
-    if (block->get_height() == m_cached_evm_upper_height + 1) {
-        m_cached_evm_upper_height++;
+    if (m_cached_evm_upper_height == 0 || block->get_height() == m_cached_evm_upper_height + 1) {
+        m_cached_evm_upper_height = block->get_height();
     }
 
-    if (block->get_height() + 1 == m_cached_evm_lower_height) {
-        m_cached_evm_lower_height--;
+    if (m_cached_evm_lower_height == 0 || block->get_height() + 1 == m_cached_evm_lower_height) {
+        m_cached_evm_lower_height = block->get_height();
     }
 
     update_lower_height();
