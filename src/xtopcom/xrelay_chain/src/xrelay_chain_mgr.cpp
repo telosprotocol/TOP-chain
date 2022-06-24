@@ -99,6 +99,7 @@ void xcross_tx_cache_t::process_block(data::xblock_t * block) {
         if (!cross_txs.m_txs.empty()) {
             m_cross_tx_map[block->get_height()] = cross_txs;
             m_tx_num += cross_txs.m_txs.size();
+            xdbg("xcross_tx_cache_t::process_block cache txs.h:%llu,num:%u", block->get_height(), cross_txs.m_txs.size());
         }
     }
 
@@ -141,7 +142,6 @@ bool xcross_tx_cache_t::get_tx_cache_leader(uint64_t & upper_height, std::map<ui
         xinfo("xcross_tx_cache_t::get_tx_cache_leader cache not full.last_proc_evm_height:%llu,cached_evm_lower_height:%llu", m_last_proc_evm_height, m_cached_evm_lower_height);
         return false;
     }
-    upper_height = m_cached_evm_upper_height;
 
     uint32_t tx_num = 0;
     for(auto & cross_tx_map_pair : m_cross_tx_map) {
@@ -153,6 +153,7 @@ bool xcross_tx_cache_t::get_tx_cache_leader(uint64_t & upper_height, std::map<ui
         xdbg("xcross_tx_cache_t::get_tx_cache_leader add txs.h:%llu,num:%u", height, cross_tx_map_pair.second.m_txs.size());
         tx_num += cross_tx_map_pair.second.m_txs.size();
         cross_tx_map[height] = cross_tx_map_pair.second;
+        upper_height = height;
     }
     return true;
 }
@@ -169,7 +170,9 @@ bool xcross_tx_cache_t::get_tx_cache_backup(uint64_t upper_height, std::map<uint
 
     for (auto & cross_tx_map_pair : m_cross_tx_map) {
         if (cross_tx_map_pair.first <= upper_height) {
-            cross_tx_map[cross_tx_map_pair.first] = cross_tx_map_pair.second;
+            auto & height = cross_tx_map_pair.first;
+            cross_tx_map[height] = cross_tx_map_pair.second;
+            xdbg("xcross_tx_cache_t::get_tx_cache_backup add txs.h:%llu,num:%u", height, cross_tx_map_pair.second.m_txs.size());
         }
     }
     return true;
