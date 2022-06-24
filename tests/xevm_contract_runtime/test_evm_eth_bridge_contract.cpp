@@ -250,7 +250,7 @@ TEST(ethash, ethash_1270001) {
     EXPECT_TRUE(xethash_t::instance().verify_seal(header, nodes));
 }
 
-TEST_F(xcontract_fixture_t, test_init_and_sync_v2) {
+TEST_F(xcontract_fixture_t, test_init_and_sync) {
     std::error_code ec;
     auto init_param = top::from_hex(relayer_hex_init_12969999, ec);
     EXPECT_EQ(ec.value(), 0);
@@ -258,7 +258,7 @@ TEST_F(xcontract_fixture_t, test_init_and_sync_v2) {
     EXPECT_EQ(ec.value(), 0);
     auto sync_param2 = top::from_hex(relayer_hex_output_1270001, ec);
     EXPECT_EQ(ec.value(), 0);
-    EXPECT_TRUE(contract.init(init_param, ""));
+    EXPECT_TRUE(contract.init(init_param));
     EXPECT_TRUE(contract.sync(sync_param1));
     EXPECT_TRUE(contract.sync(sync_param2));
 }
