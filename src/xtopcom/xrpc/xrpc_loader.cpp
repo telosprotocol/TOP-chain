@@ -251,7 +251,7 @@ bool xrpc_loader_t::load_relay_tx_indx_detail(const std::string & raw_tx_hash, x
         txlocation.m_tx_hash = top::to_hex_prefixed(raw_tx_hash);
         txlocation.m_transaction_index = xrpc_eth_parser_t::uint64_to_hex_prefixed(tx_index);
         txlocation.m_block_hash = to_hex_prefixed(txindex->get_block_hash());
-        txlocation.m_block_number = xrpc_eth_parser_t::uint64_to_hex_prefixed(txindex->get_block_height());
+        txlocation.m_block_number = xrpc_eth_parser_t::uint64_to_hex_prefixed(extra_relay_block.get_block_height());
 
         data::xeth_receipt_t tx_receipt = extra_relay_block.get_all_receipts()[tx_index];
         evm_tx_receipt.set_tx_status(tx_receipt.get_tx_status());
