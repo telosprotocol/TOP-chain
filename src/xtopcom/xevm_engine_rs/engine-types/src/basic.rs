@@ -14,7 +14,7 @@ impl From<[u8; 32]> for WeiU256 {
 
 impl Into<Wei> for WeiU256 {
     fn into(self) -> Wei {
-        Wei::new(U256::from_little_endian(&self.get_data()))
+        Wei::new(U256::from_big_endian(&self.get_data()))
     }
 }
 
@@ -30,7 +30,7 @@ impl From<U256> for WeiU256 {
     fn from(data: U256) -> Self {
         let mut res = WeiU256::new();
         let mut result = [0u8; 32];
-        data.to_little_endian(&mut result);
+        data.to_big_endian(&mut result);
         res.set_data(result.to_vec());
         res
     }
@@ -38,7 +38,7 @@ impl From<U256> for WeiU256 {
 
 impl From<&WeiU256> for U256 {
     fn from(data: &WeiU256) -> Self {
-        U256::from_little_endian(data.get_data())
+        U256::from_big_endian(data.get_data())
     }
 }
 

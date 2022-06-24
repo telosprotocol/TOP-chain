@@ -8,7 +8,6 @@
 #include "xcommon/xaccount_address_fwd.h"
 #include "xdata/xproperty.h"
 #include "xevm_common/common_data.h"
-#include "xevm_common/xborsh.hpp"
 #include "xstate_accessor/xproperties/xproperty_identifier.h"
 #include "xstate_accessor/xstate_accessor.h"
 
@@ -40,11 +39,8 @@ xbytes_t xtop_evm_storage::storage_get(xbytes_t const & key) {
             top::error::throw_error(ec);
 
             xdbg("storage_get get nonce account:%s, nonce:%llu", storage_key.address.c_str(), value_uint64);
-
-            evm_common::xBorshEncoder encoder;
-            encoder.EncodeInteger(value_uint64);
-            xbytes_t result = encoder.GetBuffer();
-            assert(result.size() == 8);
+            xbytes_t result(8);
+            evm_common::toBigEndian(value_uint64, result);
             return result;
 
         } else if (storage_key.key_type == storage_key_type::Balance) {
@@ -107,8 +103,7 @@ void xtop_evm_storage::storage_set(xbytes_t const & key, xbytes_t const & value)
 
             assert(value.size() == 8);
             uint64_t nonce_u64 = 0;
-            evm_common::xBorshDecoder decoder;
-            decoder.getInteger(value, nonce_u64);
+            nonce_u64 = evm_common::fromBigEndian<uint64_t>(value);
 
             auto nonce_bytes = top::to_bytes(nonce_u64);
             xdbg("storage_set set nonce account:%s, nonce:%llu", storage_key.address.c_str(), nonce_u64);

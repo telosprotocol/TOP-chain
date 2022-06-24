@@ -311,7 +311,7 @@ pub fn get_code_size<I: IO>(io: &I, address: &Address) -> usize {
 pub fn set_nonce<I: IO>(io: &mut I, address: &Address, nonce: &U256) {
     io.write_storage(
         &address_to_key(KeyPrefix::Nonce, address),
-        &nonce.as_u64().to_le_bytes(),
+        &nonce.as_u64().to_be_bytes(),
     );
 }
 pub fn remove_nonce<I: IO>(io: &mut I, address: &Address) {
