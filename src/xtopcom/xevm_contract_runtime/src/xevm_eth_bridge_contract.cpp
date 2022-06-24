@@ -100,14 +100,20 @@ bool xtop_evm_eth_bridge_contract::execute(xbytes_t input,
             xwarn("[xtop_evm_eth_bridge_contract::execute] abi_decoder.extract bytes error");
             return false;
         }
-        auto str = abi_decoder.extract<std::string>(ec);
+        auto verify_str = abi_decoder.extract<std::string>(ec);
         if (ec) {
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
             xwarn("[xtop_evm_eth_bridge_contract::execute] abi_decoder.extract string error");
             return false;
         }
-        if (!init(headers_rlp, str)) {
+        if (!verifyOwner(verify_str)) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
+            xwarn("[xtop_evm_eth_bridge_contract::execute] verify string error");
+            return false;
+        }
+        if (!init(headers_rlp)) {
             err.fail_status = precompile_error::Revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             xwarn("[xtop_evm_eth_bridge_contract::execute] init headers error");
@@ -215,7 +221,7 @@ bool xtop_evm_eth_bridge_contract::execute(xbytes_t input,
     return true;
 }
 
-bool xtop_evm_eth_bridge_contract::init(const xbytes_t & rlp_bytes, std::string emitter) {
+bool xtop_evm_eth_bridge_contract::init(const xbytes_t & rlp_bytes) {
     // step 0: check init
     bigint height{0};
     if (!get_height(height)) {
@@ -224,11 +230,6 @@ bool xtop_evm_eth_bridge_contract::init(const xbytes_t & rlp_bytes, std::string 
     }
     if (height != 0) {
         xwarn("[xtop_evm_eth_bridge_contract::init] init already");
-        return false;
-    }
-    // step 1: check emitter
-    if (!verifyOwner(emitter)) {
-        xwarn("[xtop_evm_eth_bridge_contract::init] emitter: %s invalid", emitter.c_str());
         return false;
     }
     // step 2: decode
@@ -453,8 +454,15 @@ bool xtop_evm_eth_bridge_contract::is_confirmed(const xbytes_t & rlp_bytes) {
     return true;
 }
 
-bool xtop_evm_eth_bridge_contract::verifyOwner(const std::string & owner) const {
-    // TODO: add whitelist
+bool xtop_evm_eth_bridge_contract::verifyOwner(const std::string & verify_str) const {
+    utl::xkeccak256_t hasher;
+    xbytes_t output;
+    hasher.update(verify_str);
+    hasher.get_hash(output);
+    if (to_hex(output) != "030b540da3bab783d3feea2e60320ec6be299e41932a9f40c3965d7cb3b4ab94") {
+        xwarn("[xtop_evm_eth_bridge_contract::verifyOwner] %s is not a valid verify str", verify_str.c_str());
+        return false;
+    }
     return true;
 }
 

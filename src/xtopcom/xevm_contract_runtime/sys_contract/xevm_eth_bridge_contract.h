@@ -24,9 +24,9 @@ public:
                  sys_contract_precompile_error & err) override;
 
 private:
-    bool init(const xbytes_t & headerContent, std::string emitter);
-    bool sync(const xbytes_t & headerContent);
-    bool is_confirmed(const xbytes_t & headerContent);
+    bool init(const xbytes_t & rlp_bytes);
+    bool sync(const xbytes_t & rlp_bytes);
+    bool is_confirmed(const xbytes_t & rlp_bytes);
 
     bool verifyOwner(const std::string & owner) const;
     bool verifyCommon(const evm_common::eth::xeth_block_header_t & prev_header, const evm_common::eth::xeth_block_header_t & new_header) const;
