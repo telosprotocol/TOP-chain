@@ -429,7 +429,7 @@ bool xtop_evm_eth_bridge_contract::is_confirmed(const xbytes_t & headerContent) 
         return false;
     }
     if (height < header.number() + CONFIRM_HEIGHTS) {
-        xwarn("[xtop_evm_eth_bridge_contract::is_confirmed] height not enough: %s, %s, limit:%s", height.str().c_str(), header.number().str().c_str(), CONFIRM_HEIGHTS);
+        xwarn("[xtop_evm_eth_bridge_contract::is_confirmed] height not enough: %s, %s, limit:%d", height.str().c_str(), header.number().str().c_str(), CONFIRM_HEIGHTS);
         return false;
     }
 
