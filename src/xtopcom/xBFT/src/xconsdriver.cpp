@@ -1237,7 +1237,7 @@ namespace top
                     if(get_vcertauth()->verify_muti_sign(_merge_cert.get(),_for_check_block_->get_account()) == base::enum_vcert_auth_result::enum_successful)
                     {
                         if (!verify_commit_msg_extend_data(_for_check_block_, _merge_cert->get_extend_data())) {
-                            xerror("xBFTdriver_t::fire_verify_commit_job,fail-commit_msg_extend_data for block=%s,at node=0x%llx",_for_check_block_->dump().c_str(),get_xip2_low_addr());
+                            xwarn("xBFTdriver_t::fire_verify_commit_job,fail-commit_msg_extend_data for block=%s,at node=0x%llx",_for_check_block_->dump().c_str(),get_xip2_low_addr());
                             return true;
                         }
                         xinfo("xBFTdriver_t::fire_verify_commit_job,successful finish verify for commit block:%s at node=0x%llx",_for_check_block_->dump().c_str(),get_xip2_addr().low_addr);
@@ -1308,7 +1308,7 @@ namespace top
                                         _proposal->get_block()->set_audit_signature(merged_sign_for_auditors);
                                     }
                                     if (!proc_vote_complate(_proposal->get_block())) {
-                                        xerror("xBFTdriver_t::fire_verify_vote_job,fail-proc vote complate _proposal=%s,at node=0x%llx",_proposal->dump().c_str(),get_xip2_low_addr());
+                                        xwarn("xBFTdriver_t::fire_verify_vote_job,fail-proc vote complate _proposal=%s,at node=0x%llx",_proposal->dump().c_str(),get_xip2_low_addr());
                                         return true;
                                     }
                                     

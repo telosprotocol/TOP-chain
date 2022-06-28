@@ -364,7 +364,7 @@ xblock_ptr_t xrelay_proposal_maker_t::make_proposal(data::xblock_consensus_para_
             last_relay_block.build_finish();
             xbytes_t rlp_stream = last_relay_block.encodeBytes();
             relay_block_data = from_bytes<std::string>((xbytes_t)(rlp_stream));
-            wrap_phase = 0;
+            // wrap_phase = 0;
         } else {
             relay_block_data = last_relay_block_data;
         }
@@ -549,7 +549,9 @@ bool xrelay_proposal_maker_t::check_wrap_proposal(const xblock_ptr_t & latest_ce
             return false;
         }
     } else {
-        relay_block_data = last_relay_block_data;
+        // todo(nathan):check if epoch id is changed.
+        relay_block_data = proposal_relay_block_data;
+        // relay_block_data = last_relay_block_data;
     }
 
     if ((epochid_changed && wrap_phase_tmp != 0) || (!epochid_changed && wrap_phase_tmp != ((last_wrap_phase + 1) % 3)) ||
