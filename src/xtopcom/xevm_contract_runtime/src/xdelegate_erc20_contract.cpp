@@ -30,6 +30,7 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
                                           sys_contract_precompile_error & err) {
     // ERC20 method ids:
     //--------------------------------------------------
+    // decimals()                            => 0x313ce567
     // totalSupply()                         => 0x18160ddd
     // balanceOf(address)                    => 0x70a08231
     // transfer(address,uint256)             => 0xa9059cbb
@@ -41,6 +42,7 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
     // transferOwnership(address)            => 0xf2fde38b
     // setController(address)                => 0x92eefe9b
     //--------------------------------------------------
+    constexpr uint32_t method_id_decimals{0x313ce567};
     constexpr uint32_t method_id_total_supply{0x18160ddd};
     constexpr uint32_t method_id_balance_of{0x70a08231};
     constexpr uint32_t method_id_transfer{0xa9059cbb};
@@ -97,6 +99,37 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
     }
 
     switch (function_selector.method_id) {
+    case method_id_decimals: {
+        evm_common::u256 decimal{18};
+
+        switch (erc20_token_id) {
+        case common::xtoken_id_t::top:
+            decimal = 18;   // work around fixing precision issue in test. should be 6.
+            break;
+
+        case common::xtoken_id_t::eth:
+            decimal = 18;
+            break;
+
+        case common::xtoken_id_t::usdt:
+            decimal = 6;
+            break;
+
+        case common::xtoken_id_t::usdc:
+            decimal = 18;
+
+        default:
+            assert(false);
+            break;
+        }
+
+        output.exit_status = Returned;
+        output.cost = 0;
+        output.output = top::to_bytes(decimal);
+
+        return true;
+    }
+
     case method_id_total_supply: {
         xdbg("predefined erc20 contract: totalSupply");
 
