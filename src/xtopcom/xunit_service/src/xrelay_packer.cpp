@@ -538,7 +538,7 @@ bool xrelay_packer::proc_vote_complate(base::xvblock_t * proposal_block) {
     std::vector<data::xrelay_election_node_t> reley_election;
     auto ret = m_para->get_resources()->get_relay_chain_mgr()->get_elect_cache(election_round, reley_election);
     if (!ret) {
-        xerror("xrelay_packer::proc_vote_complate get elect cache fail.proposal:%s,round:%lu", proposal_block->dump().c_str(), election_round);
+        xwarn("xrelay_packer::proc_vote_complate get elect cache fail.proposal:%s,round:%lu", proposal_block->dump().c_str(), election_round);
         return false;
     }
 
@@ -595,7 +595,7 @@ bool xrelay_packer::verify_commit_msg_extend_data(base::xvblock_t * block, const
     std::vector<data::xrelay_election_node_t> reley_election;
     auto ret = m_para->get_resources()->get_relay_chain_mgr()->get_elect_cache(election_round, reley_election);
     if (!ret) {
-        xerror("xrelay_packer::verify_commit_msg_extend_data get elect cache fail.block:%s,round:%lu", block->dump().c_str(), election_round);
+        xwarn("xrelay_packer::verify_commit_msg_extend_data get elect cache fail.block:%s,round:%lu", block->dump().c_str(), election_round);
         return false;
     }
 
