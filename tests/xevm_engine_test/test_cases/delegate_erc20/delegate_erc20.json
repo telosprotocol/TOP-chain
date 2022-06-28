@@ -66,7 +66,7 @@
             }
         },
         {
-            "account": "T6000430fbd5e74f1b4f3098198937c39ed6fdfe00a8b6",
+            "account": "T6000489df4695e5ff786084fc4c77bee612079d7532db",
             "balances": {
                 "tUSDT": "1234567890123456789012345678901234567890",
                 "TOP": "9876543219",
@@ -77,79 +77,79 @@
     "deploy_contract": [
         {
             "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
-            "__comments": "NAME: USDT;SYMBOL: tUSDT;DECIMALS: 18;UUID:0x03",
+            "__comments": "NAME: Wrapped Tether USD; SYMBOL: tUSDT; UUID:0x03",
             "code_file_path": "delegate_erc20_usdt.bin",
             "gas_limit": 543721,
             "value": "0",
             "expected": {
                 "status": 0,
                 "extra_message": "erc20_usdt",
-                "gas_used": 459526,
+                "gas_used": 432527,
                 "logs": []
             }
         },
         {
             "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
-            "__comments": "NAME: TOP;SYMBOL: TOP;UUID:0x01",
+            "__comments": "NAME: TOP Network; SYMBOL: TOP; UUID:0x01",
             "code_file_path": "delegate_erc20_top.bin",
             "gas_limit": 543721,
             "value": "0",
             "expected": {
                 "status": 0,
                 "extra_message": "erc20_top",
-                "gas_used": 432073,
+                "gas_used": 432419,
                 "logs": []
             }
         },
         {
             "src_address": "T600040393b136b79e16360d246450c5bb9d39d8ad1fb6",
-            "__comments": "NAME: ETH;SYMBOL: ETH;UUID:0x02",
+            "__comments": "NAME: ETH; SYMBOL: ETH; UUID:0x02",
             "code_file_path": "delegate_erc20_eth.bin",
             "gas_limit": 543721,
             "value": "0",
             "expected": {
                 "status": 0,
                 "extra_message": "erc20_eth",
-                "gas_used": 459598,
+                "gas_used": 432323,
                 "logs": []
             }
         },
         {
             "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
-            "__comments": "NAME: Wrapped USDT;SYMBOL: tUSDT;DECIMALS: 6;UUID:0x03",
+            "__comments": "NAME: Wrapped Tether USD; SYMBOL: tUSDT; UUID:0x03",
             "code_file_path": "staticcall_erc20_usdt.bin",
             "gas_limit": 543721,
             "value": "0",
             "expected": {
                 "status": 0,
                 "extra_message": "staticcall_erc20_usdt",
-                "gas_used": 459634,
+                "gas_used": 432527,
                 "logs": []
             }
         },
         {
             "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
-            "__comments": "NAME: TOP Network;SYMBOL: TOP;DECIMALS: 6;UUID:0x01",
+            "__comments": "NAME: TOP Network; SYMBOL: TOP; UUID:0x01",
             "code_file_path": "staticcall_erc20_top.bin",
             "gas_limit": 543721,
             "value": "0",
             "expected": {
                 "status": 0,
                 "extra_message": "staticcall_erc20_top",
-                "gas_used": 459598,
+                "gas_used": 432419,
                 "logs": []
             }
         },
         {
             "src_address": "T600040393b136b79e16360d246450c5bb9d39d8ad1fb6",
-            "__comments": "NAME: ETH;SYMBOL: ETH;UUID:0x02",
+            "__comments": "NAME: ETH; SYMBOL: ETH; UUID:0x02",
             "code_file_path": "staticcall_erc20_eth.bin",
             "gas_limit": 543721,
             "value": "0",
             "expected": {
                 "status": 0,
                 "extra_message": "staticcall_erc20_eth",
-                "gas_used": 459598,
+                "gas_used": 432323,
                 "logs": []
             }
         }
@@ -165,7 +165,7 @@
             "expected": {
                 "status": 0,
                 "extra_message": "",
-                "gas_used": 24541,
+                "gas_used": 24519,
                 "logs": []
             }
         },
@@ -192,8 +192,8 @@
             "value": "0",
             "expected": {
                 "status": 0,
-                "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000012",
-                "gas_used": 23535,
+                "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000006",
+                "gas_used": 24563,
                 "logs": []
             }
         },
@@ -207,7 +207,7 @@
             "expected": {
                 "status": 0,
                 "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000000",
-                "gas_used": 28352,
+                "gas_used": 28280,
                 "logs": []
             }
         },
@@ -221,7 +221,7 @@
             "expected": {
                 "status": 0,
                 "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000000",
-                "gas_used": 28352,
+                "gas_used": 28280,
                 "logs": []
             }
         },
@@ -235,7 +235,7 @@
             "expected": {
                 "status": 0,
                 "extra_message": "0x0000000000000000000000000000002447db449988978536bf5bbbe40e766c34",
-                "gas_used": 28352,
+                "gas_used": 28280,
                 "logs": []
             }
         },
@@ -263,7 +263,7 @@
             "expected": {
                 "status": 0,
                 "extra_message": "0x000000000000000000000000000000000000000000000000000000024cb016ea",
-                "gas_used": 28352,
+                "gas_used": 28280,
                 "logs": []
             }
         },
@@ -333,7 +333,7 @@
             "expected": {
                 "status": 0,
                 "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000141",
-                "gas_used": 29523,
+                "gas_used": 29451,
                 "logs": []
             }
         },
@@ -455,7 +455,7 @@
             "expected": {
                 "status": 1,
                 "extra_message": "",
-                "gas_used": 44468,
+                "gas_used": 44396,
                 "logs": []
             }
         },
@@ -469,7 +469,7 @@
             "expected": {
                 "status": 0,
                 "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000001",
-                "gas_used": 43943,
+                "gas_used": 43871,
                 "logs": [
                     {
                         "address": "erc20_usdt",
@@ -615,7 +615,7 @@
             "expected": {
                 "status": 0,
                 "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000001",
-                "gas_used": 43946,
+                "gas_used": 43874,
                 "logs": [
                     {
                         "address": "erc20_usdt",
@@ -653,7 +653,7 @@
             "expected": {
                 "status": 1,
                 "extra_message": "",
-                "gas_used": 44291,
+                "gas_used": 44219,
                 "logs": []
             }
         },
@@ -719,7 +719,7 @@
             "expected": {
                 "status": 0,
                 "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000001",
-                "gas_used": 43950,
+                "gas_used": 43878,
                 "logs": [
                     {
                         "address": "erc20_usdt",
@@ -749,7 +749,7 @@
         },
         {
             "__comments": "mint_usdt",
-            "src_address": "T6000430fbd5e74f1b4f3098198937c39ed6fdfe00a8b6",
+            "src_address": "T6000489df4695e5ff786084fc4c77bee612079d7532db",
             "target_address": "erc20_usdt",
             "data": "0x40c10f190000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea300000000000000000000000000000000000000000000000000000000000004d3",
             "gas_limit": 34000,
@@ -757,7 +757,7 @@
             "expected": {
                 "status": 0,
                 "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000001",
-                "gas_used": 28475,
+                "gas_used": 28403,
                 "logs": [
                     {
                         "address": "erc20_usdt",
@@ -773,7 +773,7 @@
         },
         {
             "__comments": "mint_eth",
-            "src_address": "T6000430fbd5e74f1b4f3098198937c39ed6fdfe00a8b6",
+            "src_address": "T6000489df4695e5ff786084fc4c77bee612079d7532db",
             "target_address": "erc20_eth",
             "data": "0x40c10f190000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea300000000000000000000000000000000000000000000000000000000000004d3",
             "gas_limit": 34000,
@@ -781,7 +781,7 @@
             "expected": {
                 "status": 0,
                 "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000001",
-                "gas_used": 28475,
+                "gas_used": 28403,
                 "logs": [
                     {
                         "address": "erc20_eth",
@@ -797,7 +797,7 @@
         },
         {
             "__comments": "mint_eth_staticcall",
-            "src_address": "T6000430fbd5e74f1b4f3098198937c39ed6fdfe00a8b6",
+            "src_address": "T6000489df4695e5ff786084fc4c77bee612079d7532db",
             "target_address": "staticcall_erc20_eth",
             "data": "0x40c10f190000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea300000000000000000000000000000000000000000000000000000000000004d3",
             "gas_limit": 34000,
@@ -805,13 +805,13 @@
             "expected": {
                 "status": 1,
                 "extra_message": "",
-                "gas_used": 29000,
+                "gas_used": 28928,
                 "logs": []
             }
         },
         {
             "__comments": "mint_top",
-            "src_address": "T6000430fbd5e74f1b4f3098198937c39ed6fdfe00a8b6",
+            "src_address": "T6000489df4695e5ff786084fc4c77bee612079d7532db",
             "target_address": "erc20_top",
             "data": "0x40c10f190000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea300000000000000000000000000000000000000000000000000000000000004d3",
             "gas_limit": 34000,
@@ -825,7 +825,7 @@
         },
         {
             "__comments": "mint_top_staticcall",
-            "src_address": "T6000430fbd5e74f1b4f3098198937c39ed6fdfe00a8b6",
+            "src_address": "T6000489df4695e5ff786084fc4c77bee612079d7532db",
             "target_address": "staticcall_erc20_top",
             "data": "0x40c10f190000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea300000000000000000000000000000000000000000000000000000000000004d3",
             "gas_limit": 34000,
@@ -833,7 +833,7 @@
             "expected": {
                 "status": 1,
                 "extra_message": "",
-                "gas_used": 29000,
+                "gas_used": 28928,
                 "logs": []
             }
         },
@@ -853,7 +853,7 @@
         },
         {
             "__comments": "mint_usdt_gas_not_enough",
-            "src_address": "T6000430fbd5e74f1b4f3098198937c39ed6fdfe00a8b6",
+            "src_address": "T6000489df4695e5ff786084fc4c77bee612079d7532db",
             "target_address": "erc20_usdt",
             "data": "0x40c10f190000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea300000000000000000000000000000000000000000000000000000000000004d3",
             "gas_limit": 25000,
@@ -867,7 +867,7 @@
         },
         {
             "__comments": "mint_usdt_invalid_data_no_value",
-            "src_address": "T6000430fbd5e74f1b4f3098198937c39ed6fdfe00a8b6",
+            "src_address": "T6000489df4695e5ff786084fc4c77bee612079d7532db",
             "target_address": "erc20_usdt",
             "data": "0x40c10f190000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3",
             "gas_limit": 34000,
@@ -881,7 +881,7 @@
         },
         {
             "__comments": "mint_usdt_invalid_data_value_too_long",
-            "src_address": "T6000430fbd5e74f1b4f3098198937c39ed6fdfe00a8b6",
+            "src_address": "T6000489df4695e5ff786084fc4c77bee612079d7532db",
             "target_address": "erc20_usdt",
             "data": "0x40c10f190000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea300000000000000000000000000000000000000000000000000000000000004d300",
             "gas_limit": 34000,
@@ -895,7 +895,7 @@
         },
         {
             "__comments": "burnFrom_usdt",
-            "src_address": "T6000430fbd5e74f1b4f3098198937c39ed6fdfe00a8b6",
+            "src_address": "T6000489df4695e5ff786084fc4c77bee612079d7532db",
             "target_address": "erc20_usdt",
             "data": "0x79cc67900000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea300000000000000000000000000000000000000000000000000000000000004d3",
             "gas_limit": 34000,
@@ -903,7 +903,7 @@
             "expected": {
                 "status": 0,
                 "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000001",
-                "gas_used": 28475,
+                "gas_used": 28403,
                 "logs": [
                     {
                         "address": "erc20_usdt",
@@ -920,7 +920,7 @@
         },
         {
             "__comments": "burnFrom_usdt_staticcall",
-            "src_address": "T6000430fbd5e74f1b4f3098198937c39ed6fdfe00a8b6",
+            "src_address": "T6000489df4695e5ff786084fc4c77bee612079d7532db",
             "target_address": "staticcall_erc20_usdt",
             "data": "0x79cc67900000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea300000000000000000000000000000000000000000000000000000000000004d3",
             "gas_limit": 34000,
@@ -928,13 +928,13 @@
             "expected": {
                 "status": 1,
                 "extra_message": "",
-                "gas_used": 29000,
+                "gas_used": 28928,
                 "logs": []
             }
         },
         {
             "__comments": "burnFrom_eth",
-            "src_address": "T6000430fbd5e74f1b4f3098198937c39ed6fdfe00a8b6",
+            "src_address": "T6000489df4695e5ff786084fc4c77bee612079d7532db",
             "target_address": "erc20_eth",
             "data": "0x79cc67900000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea300000000000000000000000000000000000000000000000000000000000004d3",
             "gas_limit": 34000,
@@ -942,7 +942,7 @@
             "expected": {
                 "status": 0,
                 "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000001",
-                "gas_used": 28475,
+                "gas_used": 28403,
                 "logs": [
                     {
                         "address": "erc20_eth",
@@ -958,7 +958,7 @@
         },
         {
             "__comments": "burnFrom_eth_staticcall",
-            "src_address": "T6000430fbd5e74f1b4f3098198937c39ed6fdfe00a8b6",
+            "src_address": "T6000489df4695e5ff786084fc4c77bee612079d7532db",
             "target_address": "staticcall_erc20_eth",
             "data": "0x79cc67900000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea300000000000000000000000000000000000000000000000000000000000004d3",
             "gas_limit": 34000,
@@ -966,13 +966,13 @@
             "expected": {
                 "status": 1,
                 "extra_message": "",
-                "gas_used": 29000,
+                "gas_used": 28928,
                 "logs": []
             }
         },
         {
             "__comments": "burnFrom_top",
-            "src_address": "T6000430fbd5e74f1b4f3098198937c39ed6fdfe00a8b6",
+            "src_address": "T6000489df4695e5ff786084fc4c77bee612079d7532db",
             "target_address": "erc20_top",
             "data": "0x79cc67900000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea300000000000000000000000000000000000000000000000000000000000004d3",
             "gas_limit": 34000,
@@ -1000,7 +1000,7 @@
         },
         {
             "__comments": "burnFrom_eth_gas_not_enough",
-            "src_address": "T6000430fbd5e74f1b4f3098198937c39ed6fdfe00a8b6",
+            "src_address": "T6000489df4695e5ff786084fc4c77bee612079d7532db",
             "target_address": "erc20_eth",
             "data": "0x79cc67900000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea300000000000000000000000000000000000000000000000000000000000004d3",
             "gas_limit": 25000,
@@ -1014,7 +1014,7 @@
         },
         {
             "__comments": "burnFrom_eth_invalid_data_no_value",
-            "src_address": "T6000430fbd5e74f1b4f3098198937c39ed6fdfe00a8b6",
+            "src_address": "T6000489df4695e5ff786084fc4c77bee612079d7532db",
             "target_address": "erc20_eth",
             "data": "0x79cc67900000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3",
             "gas_limit": 34000,
@@ -1028,7 +1028,7 @@
         },
         {
             "__comments": "burnFrom_eth_invalid_data_value_too_long",
-            "src_address": "T6000430fbd5e74f1b4f3098198937c39ed6fdfe00a8b6",
+            "src_address": "T6000489df4695e5ff786084fc4c77bee612079d7532db",
             "target_address": "erc20_eth",
             "data": "0x79cc67900000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea300000000000000000000000000000000000000000000000000000000000004d300",
             "gas_limit": 34000,
@@ -1050,7 +1050,7 @@
             "expected": {
                 "status": 0,
                 "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000001",
-                "gas_used": 28239,
+                "gas_used": 28167,
                 "logs": [
                     {
                         "address": "erc20_eth",
@@ -1074,7 +1074,7 @@
             "expected": {
                 "status": 1,
                 "extra_message": "",
-                "gas_used": 28767,
+                "gas_used": 28695,
                 "logs": []
             }
         },
@@ -1088,7 +1088,7 @@
             "expected": {
                 "status": 0,
                 "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000001",
-                "gas_used": 28239,
+                "gas_used": 28167,
                 "logs": [
                     {
                         "address": "erc20_usdt",
@@ -1112,7 +1112,7 @@
             "expected": {
                 "status": 1,
                 "extra_message": "",
-                "gas_used": 28767,
+                "gas_used": 28695,
                 "logs": []
             }
         },
@@ -1140,7 +1140,7 @@
             "expected": {
                 "status": 1,
                 "extra_message": "",
-                "gas_used": 28767,
+                "gas_used": 28695,
                 "logs": []
             }
         },
@@ -1154,7 +1154,7 @@
             "expected": {
                 "status": 0,
                 "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000001",
-                "gas_used": 28239,
+                "gas_used": 28167,
                 "logs": [
                     {
                         "address": "erc20_eth",
@@ -1192,7 +1192,7 @@
             "expected": {
                 "status": 1,
                 "extra_message": "",
-                "gas_used": 28767,
+                "gas_used": 28695,
                 "logs": []
             }
         },
@@ -1206,7 +1206,7 @@
             "expected": {
                 "status": 0,
                 "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000001",
-                "gas_used": 28239,
+                "gas_used": 28167,
                 "logs": [
                     {
                         "address": "erc20_usdt",
@@ -1230,7 +1230,7 @@
             "expected": {
                 "status": 1,
                 "extra_message": "",
-                "gas_used": 28767,
+                "gas_used": 28695,
                 "logs": []
             }
         },
@@ -1258,7 +1258,7 @@
             "expected": {
                 "status": 1,
                 "extra_message": "",
-                "gas_used": 28767,
+                "gas_used": 28695,
                 "logs": []
             }
         }

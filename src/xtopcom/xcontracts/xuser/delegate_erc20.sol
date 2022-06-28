@@ -6,13 +6,11 @@ contract TopErc20Wrapper {
 
     string public name;
     string public symbol;
-    uint8 public decimals;
     bytes1 public uuid;
 
-    constructor(string memory name_, string memory symbol_, uint8 decimals_, bytes1 uuid_) {
+    constructor(string memory name_, string memory symbol_, bytes1 uuid_) {
         name = name_;
         symbol = symbol_;
-        decimals = decimals_;
         uuid = uuid_;
     }
 
