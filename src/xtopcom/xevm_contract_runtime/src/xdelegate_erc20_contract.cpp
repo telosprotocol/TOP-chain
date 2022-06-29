@@ -104,7 +104,7 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
 
         switch (erc20_token_id) {
         case common::xtoken_id_t::top:
-            decimal = 18;   // work around fixing precision issue in test. should be 6.
+            decimal = 6;
             break;
 
         case common::xtoken_id_t::eth:
@@ -116,7 +116,7 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
             break;
 
         case common::xtoken_id_t::usdc:
-            decimal = 18;
+            decimal = 6;
 
         default:
             assert(false);
