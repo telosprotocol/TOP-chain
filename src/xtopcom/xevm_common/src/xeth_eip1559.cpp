@@ -59,11 +59,6 @@ bool verify_eip1559_header(const eth::xeth_header_t & parentHeader, const eth::x
         xwarn("[xtop_evm_eth_bridge_contract::verifyEip1559Header] gaslimit mismatch, new: %lu, old: %lu", header.gasLimit(), parentHeader.gasLimit());
         return false;
     }
-    // Verify the header is not malformed
-    if (!header.isBaseFee()) {
-        xwarn("[xtop_evm_eth_bridge_contract::verifyEip1559Header] is not basefee: %d", header.isBaseFee());
-        return false;
-    }
     // Verify the baseFee is correct based on the parent header.
     auto expectedBaseFee = calc_baseFee(parentHeader);
     if (header.baseFee() != expectedBaseFee) {
