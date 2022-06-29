@@ -189,10 +189,8 @@ bytes xeth_block_header_t::encode_rlp_withoutseal() {
     }
 
     {
-        if (m_isBaseFee) {
-            auto tmp = RLP::encode(static_cast<u256>(m_baseFee));
-            out.insert(out.end(), tmp.begin(), tmp.end());
-        }
+        auto tmp = RLP::encode(static_cast<u256>(m_baseFee));
+        out.insert(out.end(), tmp.begin(), tmp.end());
     }
 
     {
@@ -296,10 +294,8 @@ bytes xeth_block_header_t::encode_rlp() {
     }
 
     {
-        if (m_isBaseFee) {
-            auto tmp = RLP::encode(static_cast<u256>(m_baseFee));
-            out.insert(out.end(), tmp.begin(), tmp.end());
-        }
+        auto tmp = RLP::encode(static_cast<u256>(m_baseFee));
+        out.insert(out.end(), tmp.begin(), tmp.end());
     }
 
     {
@@ -307,10 +303,6 @@ bytes xeth_block_header_t::encode_rlp() {
     }
     
     return out;
-}
-
-bool xeth_block_header_t::isBaseFee() const {
-    return m_isBaseFee;
 }
 
 std::string xeth_block_header_t::to_string() {
@@ -333,7 +325,6 @@ std::string xeth_block_header_t::to_string() {
     stream << evm_common::toBigEndian(static_cast<u256>(m_baseFee));
     stream << m_hash.asBytes();
     stream << m_hashed;
-    stream << m_isBaseFee;
     return std::string(reinterpret_cast<const char *>(stream.data()), stream.size());
 }
 
@@ -414,15 +405,16 @@ int xeth_block_header_t::from_string(const std::string & s) {
         m_hash = static_cast<Hash>(bytes);
     }
     stream >> m_hashed;
-    stream >> m_isBaseFee;
     const int end_pos = stream.size();
     return (begin_pos - end_pos);
 }
 
 int xeth_block_header_t::from_rlp(const xbytes_t & bytes) {
     auto l = RLP::decodeList(bytes);
+    if (l.decoded.size() != 16) {
+        return -1;
+    }
     if (!l.remainder.empty()) {
-        xassert(false);
         return -1;
     }
     m_parentHash = static_cast<Hash>(l.decoded[0]);
@@ -440,10 +432,7 @@ int xeth_block_header_t::from_rlp(const xbytes_t & bytes) {
     m_extra = l.decoded[12];
     m_mixDigest = static_cast<Hash>(l.decoded[13]);
     m_nonce = static_cast<BlockNonce>(l.decoded[14]);
-    if (l.decoded.size() > 15) {
-        m_isBaseFee = true;
-        m_baseFee = static_cast<bigint>(evm_common::fromBigEndian<u256>(l.decoded[15]));
-    }
+    m_baseFee = static_cast<bigint>(evm_common::fromBigEndian<u256>(l.decoded[15]));
     return l.decoded.size();
 }
 
@@ -451,11 +440,10 @@ std::string xeth_block_header_t::dump() {
     char local_param_buf[256];
     xprintf(local_param_buf,
             sizeof(local_param_buf),
-            "height: %s, hash: %s, parent_hash: %s, basefee: %d, %s",
+            "height: %s, hash: %s, parent_hash: %s, basefee: %s",
             m_number.str().c_str(),
             hash().hex().c_str(),
             m_parentHash.hex().c_str(),
-            m_isBaseFee,
             m_baseFee.str().c_str());
     return std::string(local_param_buf);
 }
@@ -479,7 +467,6 @@ void xeth_block_header_t::print() {
     printf("hash: %s\n", hash().hex().c_str());
     printf("m_baseFee: %s\n", m_baseFee.str().c_str());
     printf("m_hashed: %d\n", m_hashed);
-    printf("m_isBaseFee: %d\n", m_isBaseFee);
 }
 
 xeth_block_header_with_difficulty_t::xeth_block_header_with_difficulty_t(xeth_block_header_t header, bigint difficulty) : m_header{header}, m_difficult_sum{difficulty} {

@@ -26,10 +26,10 @@ public:
 private:
     bool init(const xbytes_t & rlp_bytes);
     bool sync(const xbytes_t & rlp_bytes);
-    bool is_confirmed(const xbytes_t & rlp_bytes);
+    bool is_confirmed(const xbytes_t & hash_bytes);
 
-    bool verifyOwner(const std::string & owner) const;
-    bool verifyCommon(const evm_common::eth::xeth_block_header_t & prev_header, const evm_common::eth::xeth_block_header_t & new_header) const;
+    bool verify(const std::string & owner) const;
+    bool verify_common(const evm_common::eth::xeth_block_header_t & prev_header, const evm_common::eth::xeth_block_header_t & new_header) const;
 
     bool get_hash(const evm_common::bigint height, evm_common::h256 & hash) const;
     bool set_hash(const evm_common::bigint height, const evm_common::h256 hash);

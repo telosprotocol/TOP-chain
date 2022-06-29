@@ -42,7 +42,6 @@ public:
     BlockNonce nonce() const;
     bigint baseFee() const;
     Hash hash();
-    bool isBaseFee() const;
     Hash hashWithoutSeal();
 
 private:
@@ -71,7 +70,6 @@ private:
     // Peculiar data
     Hash m_hash;
     bool m_hashed = false;
-    bool m_isBaseFee = false;
 };
 using xeth_header_t = xeth_block_header_t;
 

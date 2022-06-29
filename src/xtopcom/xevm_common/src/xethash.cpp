@@ -93,13 +93,6 @@ static uint32_t fnv1(uint32_t u, uint32_t v) noexcept {
     return (u * fnv_prime) ^ v;
 }
 
-static hash512 fnv1(const hash512 & u, const hash512 & v) noexcept {
-    hash512 r;
-    for (size_t i = 0; i < sizeof(r) / sizeof(r.word32s[0]); ++i)
-        r.word32s[i] = fnv1(u.word32s[i], v.word32s[i]);
-    return r;
-}
-
 static hash512 hash_seed(const hash256 & header_hash, uint64_t nonce) noexcept {
     nonce = ::ethash::le::uint64(nonce);
     uint8_t init_data[sizeof(header_hash) + sizeof(nonce)];
@@ -204,10 +197,10 @@ bool xethash_t::verify_seal(eth::xeth_block_header_t & header, const std::vector
     uint64_t number = static_cast<uint64_t>(header.number());
     auto hashes = hashimoto_merkle(hash, nonce, number, nodes);
     if (!::ethash::equal(hashes.first, mix_hash)) {
-        throw std::invalid_argument{"mix_hash mismatch!"};
+        return false;
     }
     if (!::ethash::check_against_difficulty(hashes.second, difficulty)) {
-        throw std::invalid_argument{"difficulty mismatch!"};
+        return false;
     }
     return true;
 }

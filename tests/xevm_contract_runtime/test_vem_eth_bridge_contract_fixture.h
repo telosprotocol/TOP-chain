@@ -11,6 +11,41 @@
 namespace top {
 namespace tests {
 
+class xmock_statectx_t : public statectx::xstatectx_face_t {
+public:
+    xmock_statectx_t(data::xunitstate_ptr_t s) {
+        ustate = s;
+    }
+
+    const data::xtablestate_ptr_t & get_table_state() const override {
+        return table_state;
+    }
+
+    data::xunitstate_ptr_t load_unit_state(const base::xvaccount_t & addr) override {
+        return ustate;
+    }
+
+    bool do_rollback() override {
+        return false;
+    }
+
+    size_t do_snapshot() override {
+        return 0;
+    }
+
+    const std::string & get_table_address() const override {
+        return table_address;
+    }
+
+    bool is_state_dirty() const override {
+        return true;
+    }
+
+    data::xtablestate_ptr_t table_state{nullptr};
+    data::xunitstate_ptr_t ustate{nullptr};
+    std::string table_address{eth_table_address.value()};
+};
+
 class xcontract_fixture_t : public testing::Test {
 public:
     xcontract_fixture_t() {
@@ -27,12 +62,11 @@ public:
         if (contract.m_contract_state == nullptr) {
             contract.m_contract_state = std::make_shared<data::xunit_bstate_t>(bstate.get(), false);
         }
-
-        parent_header.m_number = 100;
-        parent_header.m_time = 1653471000;
-        header.m_number = 101;
-        header.m_extra = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-        header.m_time = 1653471010;
+        data::xunitstate_ptr_t ustate = std::make_shared<data::xunit_bstate_t>(bstate.get(), false);
+        statectx = make_unique<xmock_statectx_t>(ustate);
+        statectx_observer = make_observer<statectx::xstatectx_face_t>(statectx.get());
+        context.address.build_from("ff00000000000000000000000000000000000002");
+        context.caller.build_from("f8a1e199c49c2ae2682ecc5b4a8838b39bab1a38");
     }
 
     void SetUp() override {
@@ -43,9 +77,10 @@ public:
     }
 
     contract_runtime::evm::sys_contract::xevm_eth_bridge_contract_t contract;
-
-    evm_common::eth::xeth_block_header_t parent_header;
-    evm_common::eth::xeth_block_header_t header;
+    std::unique_ptr<statectx::xstatectx_face_t> statectx;
+    observer_ptr<statectx::xstatectx_face_t> statectx_observer;
+    contract_runtime::evm::sys_contract_context context;
 };
+
 }
 }
