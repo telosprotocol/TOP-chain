@@ -100,29 +100,18 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
 
     switch (function_selector.method_id) {
     case method_id_decimals: {
-        evm_common::u256 decimal{18};
+        xdbg("predefined erc20 contract: decimals");
 
-        switch (erc20_token_id) {
-        case common::xtoken_id_t::top:
-            decimal = 6;
-            break;
+        if (erc20_token_id == common::xtoken_id_t::eth) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::NotSupported);
 
-        case common::xtoken_id_t::eth:
-            decimal = 18;
-            break;
+            xwarn("predefined erc20 contract: decimals not supported token: %d", static_cast<int>(erc20_token_id));
 
-        case common::xtoken_id_t::usdt:
-            decimal = 6;
-            break;
-
-        case common::xtoken_id_t::usdc:
-            decimal = 6;
-
-        default:
-            assert(false);
-            break;
+            return false;
         }
 
+        evm_common::u256 decimal{6};
         output.exit_status = Returned;
         output.cost = 0;
         output.output = top::to_bytes(decimal);
