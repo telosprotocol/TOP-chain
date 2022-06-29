@@ -604,7 +604,7 @@ common::xaccount_address_t xunit_bstate_t::tep_token_controller(common::xtoken_i
         return controller;
     } while (false);
 
-    common::xeth_address_t const & default_controller = common::xeth_address_t::build_from("0x89dF4695e5ff786084FC4c77Bee612079D7532dB");
+    common::xeth_address_t const & default_controller = common::xeth_address_t::build_from("0x4cA4bBdF750eb2CCe4D3157D8b25CD7280f03E10");
     xkinfo("get TEP token controller: use default token controller %s for token %d", default_controller.c_str(), static_cast<int>(token_id));
 
     common::xaccount_address_t default_controller_address = common::xaccount_address_t::build_from(default_controller, base::enum_vaccount_addr_type_secp256k1_evm_user_account);

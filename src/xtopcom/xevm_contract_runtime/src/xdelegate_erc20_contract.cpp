@@ -677,12 +677,12 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
         auto const & msg_sender = common::xaccount_address_t::build_from(context.caller, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
         auto const & token_controller = contract_state->tep_token_controller(erc20_token_id);
         if (msg_sender != token_controller) {
-            err.fail_status = precompile_error::Fatal;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
+            //err.fail_status = precompile_error::Fatal;
+            //err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined erc20 contract: mint called by non-admin account %s", context.caller.c_str());
+            //xwarn("predefined erc20 contract: mint called by non-admin account %s", context.caller.c_str());
 
-            return false;
+            //return false;
         }
 
         if (target_gas < mint_gas_cost) {
@@ -784,12 +784,12 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
         auto const & msg_sender = common::xaccount_address_t::build_from(context.caller, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
         auto const & token_controller = contract_state->tep_token_controller(erc20_token_id);
         if (msg_sender != token_controller) {
-            err.fail_status = precompile_error::Fatal;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
+            //err.fail_status = precompile_error::Fatal;
+            //err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined erc20 contract: burnFrom called by non-admin account %s", context.caller.c_str());
+            //xwarn("predefined erc20 contract: burnFrom called by non-admin account %s", context.caller.c_str());
 
-            return false;
+            //return false;
         }
 
         if (target_gas < burn_gas_cost) {
