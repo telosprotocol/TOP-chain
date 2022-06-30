@@ -26,10 +26,10 @@ private:
     container_t m_nodes{};
     common::xlogic_time_t m_timestamp{ 0 };
     common::xlogic_time_t m_start_time{ common::xjudgement_day };
-    common::xelection_round_t m_group_version{};
-    common::xelection_round_t m_associated_group_version{};
-    common::xelection_round_t m_cluster_version{};
-    common::xelection_round_t m_election_committee_version{};
+    common::xelection_round_t m_group_epoch{};
+    common::xelection_round_t m_associated_group_epoch{};
+    common::xelection_round_t m_cluster_epoch{};
+    common::xelection_round_t m_election_committee_epoch{};
     // std::uint64_t m_associated_election_blk_height{ 0 };
     common::xgroup_id_t m_associated_group_id{};
 
@@ -68,8 +68,11 @@ public:
     void
     group_version(common::xelection_round_t ver) noexcept;
 
-    common::xelection_round_t const &
-    associated_group_version() const noexcept;
+    common::xelection_epoch_t const & group_epoch() const noexcept;
+    common::xelection_epoch_t & group_epoch() noexcept;
+    void group_epoch(common::xelection_epoch_t epoch) noexcept;
+
+    common::xelection_epoch_t const & associated_group_version() const noexcept;
 
     void
     associated_group_version(common::xelection_round_t associated_gp_ver) noexcept;
@@ -115,6 +118,8 @@ public:
 
     bool
     empty() const noexcept;
+
+    bool empty_at(common::xslot_id_t const & slot_id) const noexcept;
 
     std::map<common::xslot_id_t, xelection_info_bundle_t> const &
     results() const noexcept;

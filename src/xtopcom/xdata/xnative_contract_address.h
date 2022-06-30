@@ -42,6 +42,8 @@ XINLINE_CONSTEXPR char const * sys_contract_sharding_statistic_info_addr{ "T2000
 XINLINE_CONSTEXPR char const * sys_contract_eth_table_statistic_info_addr{ "T200040000000000000000000000000000000001" };
 
 XINLINE_CONSTEXPR char const * sys_eth_zero_addr{"T600040000000000000000000000000000000000000000"};
+XINLINE_CONSTEXPR char const * sys_contract_evm_erc20_addr{"T60004ff00000000000000000000000000000000000001"};
+XINLINE_CONSTEXPR char const * sys_contract_evm_eth_bridge_addr{"T60004ff00000000000000000000000000000000000002"};
 
 XINLINE_CONSTEXPR char const * sys_contract_beacon_table_block_addr{ "Ta0001" };
 XINLINE_CONSTEXPR char const * sys_contract_zec_table_block_addr{ "Ta0002" };
@@ -52,9 +54,6 @@ XINLINE_CONSTEXPR char const * sys_contract_eth_table_block_addr_with_suffix{"Ta
 XINLINE_CONSTEXPR char const * sys_contract_relay_table_block_base_addr{"Ta0005"};
 XINLINE_CONSTEXPR char const * sys_contract_relay_table_block_addr{"Ta0005@0"};
 XINLINE_CONSTEXPR char const * sys_contract_relay_block_addr{"Tb0005@0"};
-
-XINLINE_CONSTEXPR char const * sys_contract_evm_erc20_addr{ "T60004ff00000000000000000000000000000000000001" };
-XINLINE_CONSTEXPR char const * sys_contract_evm_eth_bridge_addr{"T60004ff00000000000000000000000000000000000002"};
 
 extern common::xaccount_address_t const black_hole_system_address;
 extern common::xaccount_address_t const genesis_root_system_address;
@@ -97,5 +96,7 @@ extern common::xaccount_address_t const relay_table_address;
 
 extern common::xaccount_address_t const evm_erc20_contract_address;
 extern common::xaccount_address_t const evm_eth_bridge_contract_address;
+
+extern common::xaccount_address_t const package_relay_election_data_contract_address;
 
 NS_END1

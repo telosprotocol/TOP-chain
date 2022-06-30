@@ -34,12 +34,13 @@ xtop_election_result_store::result_of(common::xnetwork_id_t const network_id) {
 }
 
 std::size_t
-xtop_election_result_store::size(common::xnetwork_id_t const network_id) const noexcept {
-    try {
-        return result_of(network_id).size();
-    } catch (std::exception const &) {
+xtop_election_result_store::size_of(common::xnetwork_id_t const network_id) const noexcept {
+    auto const it = m_results.find(network_id);
+    if (it == std::end(m_results)) {
         return 0;
     }
+
+    return top::get<xelection_network_result_t>(*it).size();
 }
 
 xtop_election_result_store::iterator
@@ -100,6 +101,10 @@ xtop_election_result_store::size() const noexcept {
 bool
 xtop_election_result_store::empty() const noexcept {
     return m_results.empty();
+}
+
+bool xtop_election_result_store::empty_at(common::xnetwork_id_t const network_id) const noexcept {
+    return m_results.find(network_id) == std::end(m_results);
 }
 
 v1::xelection_result_store_t xtop_election_result_store::v1() const {
