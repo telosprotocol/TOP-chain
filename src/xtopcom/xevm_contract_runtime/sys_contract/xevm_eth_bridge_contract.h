@@ -31,13 +31,16 @@ private:
     bool verify(const std::string & owner) const;
     bool verify_common(const evm_common::eth::xeth_block_header_t & prev_header, const evm_common::eth::xeth_block_header_t & new_header) const;
 
-    bool get_hash(const evm_common::bigint height, evm_common::h256 & hash) const;
-    bool set_hash(const evm_common::bigint height, const evm_common::h256 hash);
     bool get_height(evm_common::bigint & height) const;
     bool set_height(const evm_common::bigint height);
+    bool get_hash(const evm_common::bigint height, evm_common::h256 & hash) const;
+    bool set_hash(const evm_common::bigint height, const evm_common::h256 hash);
+    bool remove_hash(const evm_common::bigint height);
     bool get_header(const evm_common::h256 hash, evm_common::eth::xeth_block_header_t & header, evm_common::bigint & difficulty) const;
     bool set_header(evm_common::eth::xeth_block_header_t & header, evm_common::bigint difficulty);
+    bool remove_header(const evm_common::h256 hash);
     bool rebuild(evm_common::eth::xeth_block_header_t & current_header, evm_common::eth::xeth_block_header_t & new_header);
+    void release(const evm_common::bigint number);
 
     const common::xaccount_address_t m_contract_address{evm_eth_bridge_contract_address};
     std::shared_ptr<data::xunit_bstate_t> m_contract_state{nullptr};

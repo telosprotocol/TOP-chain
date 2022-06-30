@@ -718,5 +718,43 @@ TEST_F(xcontract_fixture_t,  execute_is_confirmed_extract_error) {
     EXPECT_EQ(evm_common::fromBigEndian<u256>(output.output), 0);
 }
 
+    // eth::xeth_block_header_with_difficulty_t header_with_difficulty{header, difficulty};
+    // auto k = header.hash().asBytes();
+    // auto v = header_with_difficulty.to_string();
+    // if (0 != m_contract_state->map_set(data::system_contract::XPROPERTY_ETH_CHAINS_HEADER, {k.begin(), k.end()}, {v.begin(), v.end()})) {
+    //     return false;
+    // }
+
+TEST_F(xcontract_fixture_t,  test_release) {
+    // num = 40000
+    for (auto i = 10000; i <= 60000; i++) {
+        contract.set_hash(i, h256(i));
+    }
+    // num = 500
+    xeth_block_header_t header;
+    bigint difficulty;
+    xeth_block_header_with_difficulty_t header_with_difficulty{header, difficulty};
+    auto v = header_with_difficulty.to_string();
+    for (auto i = 59000; i <= 60000; i++) {
+        auto k = h256(i).asBytes();
+        contract.m_contract_state->map_set(data::system_contract::XPROPERTY_ETH_CHAINS_HEADER, {k.begin(), k.end()}, {v.begin(), v.end()});
+    }
+    contract.release(60000);
+    for (auto i = 10000; i <= 20000; i++) {
+        h256 hash;
+        EXPECT_FALSE(contract.get_hash(i, hash));
+    }
+    for (auto i = 20001; i <= 60000; i++) {
+        h256 hash;
+        EXPECT_TRUE(contract.get_hash(i, hash));
+    }
+    for (auto i = 59000; i <= 59500; i++) {
+        EXPECT_FALSE(contract.get_header(h256(i), header, difficulty));
+    }
+    for (auto i = 59501; i <= 60000; i++) {
+        EXPECT_TRUE(contract.get_header(h256(i), header, difficulty));
+    }
+}
+
 }
 }
