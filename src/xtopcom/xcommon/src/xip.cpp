@@ -5,6 +5,8 @@
 #include "xcommon/xip.h"
 
 #include "xbase/xlog.h"
+#include "xconfig/xconfig_register.h"
+#include "xconfig/xpredefined_configurations.h"
 
 #include <cassert>
 #include <iomanip>
@@ -830,6 +832,10 @@ xnode_type_t node_type_from(common::xzone_id_t const & zone_id, common::xcluster
     }
 
     return node_type;
+}
+
+xnetwork_id_t network_id() noexcept {
+    return xnetwork_id_t{static_cast<xnetwork_id_t::value_type>(top::config::to_chainid(XGET_CONFIG(chain_name)))};
 }
 
 template <>

@@ -334,6 +334,7 @@ xnode_type_t node_type_from(xzone_id_t const & zone_id, xcluster_id_t const & cl
 
 xnode_type_t node_type_from(xzone_id_t const & zone_id, xcluster_id_t const & cluster_id, xgroup_id_t const & group_id);
 
+xnetwork_id_t network_id() noexcept;
 
 #if defined XCXX14_OR_ABOVE
 XINLINE_CONSTEXPR xnetwork_version_t

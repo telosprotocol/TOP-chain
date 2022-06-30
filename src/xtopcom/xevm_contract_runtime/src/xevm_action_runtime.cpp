@@ -29,6 +29,7 @@ std::unique_ptr<xaction_session_t<data::xevm_consensus_action_t>> xtop_action_ru
 
 evm_common::xevm_transaction_result_t xtop_action_runtime<data::xevm_consensus_action_t>::execute(observer_ptr<evm_runtime::xevm_context_t> tx_ctx) {
     evm_common::xevm_transaction_result_t result;
+    void * engine = nullptr;
 
     // try {
 
@@ -45,7 +46,9 @@ evm_common::xevm_transaction_result_t xtop_action_runtime<data::xevm_consensus_a
     }
     // if call, get code from evm manager(lru_cache) or state(state_accessor), get src and target address, call 'call_contract()'
     else if (tx_ctx->action_type() == data::xtop_evm_action_type::call_contract) {
-        evm_result = call_contract();
+        engine = new_engine();
+        evm_result = engine_call_contract(engine);
+        // evm_result = call_contract();
     } else {
         xassert(false);
     }
@@ -87,6 +90,9 @@ evm_common::xevm_transaction_result_t xtop_action_runtime<data::xevm_consensus_a
         result.used_gas = return_result.gas_used();
     }
 
+    if (engine != nullptr) {
+        free_engine(engine);
+    }
     top::evm::evm_import_instance::instance()->remove_evm_logic();
 
     return result;

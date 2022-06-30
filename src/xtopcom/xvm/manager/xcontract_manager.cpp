@@ -78,7 +78,8 @@ xtop_contract_manager::~xtop_contract_manager() {
     m_contract_register.add<CONTRACT_TYPE>(top::common::xaccount_address_t{CONTRACT_ADDRESS_STR}, CONTRACT_NETWORK_ID)
 
 void xtop_contract_manager::instantiate_sys_contracts() {
-    common::xnetwork_id_t network_id{top::config::to_chainid(XGET_CONFIG(chain_name))};
+    auto const & network_id = common::network_id();
+
     XREGISTER_CONTRACT(top::xstake::xrec_registration_contract, sys_contract_rec_registration_addr, network_id);
     XREGISTER_CONTRACT(top::xvm::system_contracts::xzec_workload_contract_v2, sys_contract_zec_workload_addr, network_id);
     XREGISTER_CONTRACT(top::xstake::xzec_vote_contract, sys_contract_zec_vote_addr, network_id);
@@ -195,7 +196,7 @@ void xtop_contract_manager::install_monitors(observer_ptr<xmessage_bus_face_t> c
 }
 
 void xtop_contract_manager::clear() {
-    for (auto & pair : m_map) {
+    for (auto const & pair : m_map) {
         delete pair.second;
     }
     m_map.clear();
@@ -208,7 +209,7 @@ bool xtop_contract_manager::filter_event(const xevent_ptr_t & e) {
     case xevent_major_type_store:
         return e->minor_type == xevent_store_t::type_block_committed;
     case xevent_major_type_vnode:
-        return true;
+        XATTRIBUTE_FALLTHROUGH;
     case xevent_major_type_chain_timer:
         return true;
     default:

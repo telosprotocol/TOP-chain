@@ -3,6 +3,8 @@
 use crate::prelude::*;
 
 mod interface {
+    use std::ffi::c_void;
+
     use crate::engine::*;
     use crate::error::EngineErrorKind;
     use crate::prelude::*;
@@ -43,6 +45,42 @@ mod interface {
                 res.write_to_bytes().sdk_expect("ERR_SERIALIZE")
             })
             .sdk_process()
+    }
+
+        #[no_mangle]
+    pub extern "C" fn new_engine() -> *mut c_void {
+        sdk::log("========= new_engine =========");
+
+        Box::into_raw(Box::new(
+            Engine::new(Runtime.sender_address(), Runtime, &Runtime).sdk_unwrap(),
+        )) as *mut c_void
+    }
+
+    #[no_mangle]
+    pub extern "C" fn free_engine(ptr: *mut c_void) {
+        sdk::log("========= free_engine =========");
+
+        let engine_raw = ptr as *mut Engine<'static, Runtime, Runtime>;
+        unsafe {
+            let engine = Box::from_raw(engine_raw);
+        }
+    }
+
+    #[no_mangle]
+    pub extern "C" fn engine_call_contract(ptr: *mut c_void) -> bool {
+        assert!(!ptr.is_null());
+
+        let engine_ptr = ptr as *mut Engine<'static, Runtime, Runtime>;
+
+        let bytes = Runtime.read_input().to_vec();
+        let args = FunctionCallArgs::parse_from_bytes(&bytes).sdk_expect("ERR_DESERIALIZE");
+        sdk::log(format!("{:?}", args).as_str());
+
+       Engine::call_with_args(unsafe {&mut *engine_ptr}, args).map(|res| {
+            sdk::log(format!("[rust_evm][interface]res: {:?}", res).as_str());
+            res.write_to_bytes().sdk_expect("ERR_SERIALIZE")
+        })
+        .sdk_process()
     }
 
     #[no_mangle]

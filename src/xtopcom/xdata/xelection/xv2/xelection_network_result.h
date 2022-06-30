@@ -45,16 +45,19 @@ public:
     insert(value_type && value);
 
     xelection_result_t const &
-    result_of(common::xnode_type_t const type) const;
+    result_of(common::xnode_type_t type) const;
 
     xelection_result_t &
-    result_of(common::xnode_type_t const type);
+    result_of(common::xnode_type_t type);
 
     std::size_t
-    size(common::xnode_type_t const type) const noexcept;
+    size_of(common::xnode_type_t type) const noexcept;
 
     std::size_t
     size() const noexcept;
+
+    bool empty() const noexcept;
+    bool empty_at(common::xnode_type_t type) const noexcept;
 
     iterator
     begin() noexcept;

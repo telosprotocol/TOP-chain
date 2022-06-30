@@ -6,9 +6,15 @@
 
 #include "xchain_fork/xchain_upgrade_center.h"
 #include "xchain_timer/xchain_timer_face.h"
+#include "xcodec/xmsgpack_codec.hpp"
+#include "xdata/xblocktool.h"
+#include "xdata/xcodec/xmsgpack/xelection/xelection_result_store_codec.hpp"
+#include "xdata/xelection/xelection_result_property.h"
+#include "xdata/xelection/xelection_result_store.h"
 #include "xdata/xfull_tableblock.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xtx_factory.h"
+#include "xdata/xelection/xelection_network_result.h"
 #include "xmbus/xevent_store.h"
 #include "xmbus/xevent_timer.h"
 #include "xvledger/xvledger.h"
@@ -34,9 +40,7 @@ xrole_context_t::xrole_context_t(const observer_ptr<xstore_face_t> & store,
 
 xrole_context_t::~xrole_context_t() {
     XMETRICS_COUNTER_INCREMENT("xvm_contract_role_context_counter", -1);
-    if (m_contract_info != nullptr) {
-        delete m_contract_info;
-    }
+    delete m_contract_info;
 }
 
 void xrole_context_t::on_block_to_db(const xblock_ptr_t & block, bool & event_broadcasted) {
@@ -51,12 +55,13 @@ void xrole_context_t::on_block_to_db(const xblock_ptr_t & block, bool & event_br
         bool is_sharding_statistic =
             (m_contract_info->address == sharding_statistic_info_contract_address) && (block_owner.find(sys_contract_sharding_table_block_addr) != std::string::npos);
         bool is_eth_statistic = (m_contract_info->address == eth_statistic_info_contract_address) && (block_owner.find(sys_contract_eth_table_block_addr) != std::string::npos);
+
         if ((is_sharding_statistic || is_eth_statistic) && block->is_fulltable()) {
             auto block_height = block->get_height();
             xdbg("xrole_context_t::on_block_to_db fullblock process, owner: %s, height: %" PRIu64, block->get_block_owner().c_str(), block_height);
             base::xauto_ptr<base::xvblock_t> full_block = base::xvchain_t::instance().get_xblockstore()->load_block_object(base::xvaccount_t{block_owner}, block_height, base::enum_xvblock_flag_committed, true);
 
-            xfull_tableblock_t* full_tableblock = dynamic_cast<xfull_tableblock_t*>(full_block.get());
+            auto const * full_tableblock = dynamic_cast<xfull_tableblock_t*>(full_block.get());
             auto node_service = contract::xcontract_manager_t::instance().get_node_service();
             auto const fulltable_statisitc_data = full_tableblock->get_table_statistics();
             auto const statistic_accounts = fulltableblock_statistic_accounts(fulltable_statisitc_data, node_service);
