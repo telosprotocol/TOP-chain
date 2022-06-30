@@ -34,12 +34,13 @@ xtop_election_network_result::result_of(common::xnode_type_t const type) {
 }
 
 std::size_t
-xtop_election_network_result::size(common::xnode_type_t const type) const noexcept {
-    try {
-        return result_of(type).size();
-    } catch (std::exception const &) {
+xtop_election_network_result::size_of(common::xnode_type_t const type) const noexcept {
+    auto const it = m_results.find(type);
+    if (it == std::end(m_results)) {
         return 0;
     }
+
+    return top::get<xelection_result_t>(*it).size();
 }
 
 xtop_election_network_result::iterator
@@ -106,5 +107,14 @@ v1::xelection_network_result_t xtop_election_network_result::v1() const {
 
     return r;
 }
+
+bool xtop_election_network_result::empty() const noexcept {
+    return m_results.empty();
+}
+
+bool xtop_election_network_result::empty_at(common::xnode_type_t const type) const noexcept {
+    return m_results.find(type) == std::end(m_results);
+}
+
 
 NS_END4

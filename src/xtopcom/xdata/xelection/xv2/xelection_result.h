@@ -41,6 +41,8 @@ public:
     bool
     empty() const noexcept;
 
+    bool empty_at(common::xcluster_id_t cluster_id) const noexcept;
+
     std::map<common::xcluster_id_t, xelection_cluster_result_t> const &
     results() const noexcept;
 
