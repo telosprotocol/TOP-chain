@@ -461,7 +461,7 @@ XDECLARE_CONFIGURATION(min_account_deposit, std::uint64_t, ASSET_TOP(0)); // min
 XDECLARE_CONFIGURATION(recv_tx_cache_window, std::uint32_t, 30);
 XDECLARE_CONFIGURATION(account_send_queue_tx_max_num, std::uint32_t, 16);
 XDECLARE_CONFIGURATION(config_property_alias_name_max_len, std::uint32_t, 32);
-XDECLARE_CONFIGURATION(edge_max_msg_packet_size, std::uint32_t, 100000);
+XDECLARE_CONFIGURATION(edge_max_msg_packet_size, std::uint32_t, 500000);
 XDECLARE_CONFIGURATION(executor_max_total_sessions_service_counts, std::uint32_t, 1000); // service count all sessions per time interval
 XDECLARE_CONFIGURATION(executor_max_session_service_counts, std::uint32_t, 600);         // service count per session per time interval
 XDECLARE_CONFIGURATION(executor_session_time_interval, std::uint32_t, 60);               // seconds
