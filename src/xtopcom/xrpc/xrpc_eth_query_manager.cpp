@@ -54,6 +54,7 @@
 #include "xdata/xblock_cs_para.h"
 #include "xrelay_chain/xrelay_chain_mgr.h"
 #include "xdata/xrelay_block_store.h"
+#include "xgasfee/xgasfee.h"
 
 using namespace top::data;
 
@@ -542,14 +543,17 @@ void xrpc_eth_query_manager::eth_call(xJson::Value & js_req, xJson::Value & js_r
     }
 //        unitstate->tep_token_deposit(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH, std::strtoul(value.c_str(), NULL, 16));
     if (!gas.empty() && !gas_price.empty()) {
-        evm_common::u256 fund = unitstate->balance();
-        uint64_t supplied_gas = std::strtoul(gas.c_str(), NULL, 16);
-        evm_common::u256 gasfee = supplied_gas;
-        gasfee *= std::strtoul(gas_price.c_str(), NULL, 16);
-        xinfo("eth_call, gas: %s,%s,%llu, %s, %s", gas.c_str(), gas_price.c_str(), supplied_gas, fund.str().c_str(), gasfee.str().c_str());
-        if (fund < gasfee) {
+        gasfee::xgasfee_t gasfee{unitstate, cons_tx, cs_para.get_clock(), cs_para.get_total_lock_tgas_token()};
+        std::error_code ec;
+        gasfee.preprocess(ec);
+        if (ec) {
+            evm_common::u256 fund = unitstate->balance();
+            uint64_t supplied_gas = std::strtoul(gas.c_str(), NULL, 16);
+            evm_common::u256 gasfee = supplied_gas;
+            gasfee *= std::strtoul(gas_price.c_str(), NULL, 16);
+            xwarn("eth_call error, gas: %s,%s,%llu, %s, %s", gas.c_str(), gas_price.c_str(), supplied_gas, fund.str().c_str(), gasfee.str().c_str());
             std::string msg = std::string("err: insufficient funds for gas * price: address ") + safe_get_json_value(js_req[0], "from")
-                + " have " + fund.str() + " want " + gasfee.str() + " (supplied gas " + std::to_string(supplied_gas) + ")";
+                + " have top " + fund.str() + " need gasfee " + gasfee.str() + " (supplied gas " + std::to_string(supplied_gas) + ")";
             eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);
             return;
         }
@@ -678,13 +682,17 @@ void xrpc_eth_query_manager::eth_estimateGas(xJson::Value & js_req, xJson::Value
 //        unitstate->tep_token_deposit(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH, std::strtoul(value.c_str(), NULL, 16));
     //evm_common::u256 allowance = unitstate->tep_token_balance(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_TOP);
     if (!gas.empty() && !gas_price.empty()) {
-        evm_common::u256 fund = unitstate->balance();
-        uint64_t supplied_gas = std::strtoul(gas.c_str(), NULL, 16);
-        evm_common::u256 gasfee = supplied_gas;
-        gasfee *= std::strtoul(gas_price.c_str(), NULL, 16);
-        xinfo("eth_call, gas: %s,%s,%llu, %s, %s", gas.c_str(), gas_price.c_str(), supplied_gas, fund.str().c_str(), gasfee.str().c_str());
-        if (fund < gasfee) {
-            std::string msg = std::string("gas required exceeds allowance (") + fund.str() + ")";
+        gasfee::xgasfee_t gasfee{unitstate, cons_tx, cs_para.get_clock(), cs_para.get_total_lock_tgas_token()};
+        std::error_code ec;
+        gasfee.preprocess(ec);
+        if (ec) {
+            evm_common::u256 fund = unitstate->balance();
+            uint64_t supplied_gas = std::strtoul(gas.c_str(), NULL, 16);
+            evm_common::u256 gasfee = supplied_gas;
+            gasfee *= std::strtoul(gas_price.c_str(), NULL, 16);
+            xwarn("eth_call error, gas: %s,%s,%llu, %s, %s", gas.c_str(), gas_price.c_str(), supplied_gas, fund.str().c_str(), gasfee.str().c_str());
+            std::string msg = std::string("err: insufficient funds for gas * price: address ") + safe_get_json_value(js_req[0], "from")
+                + " have top " + fund.str() + " need gasfee " + gasfee.str() + " (supplied gas " + std::to_string(supplied_gas) + ")";
             eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);
             return;
         }
