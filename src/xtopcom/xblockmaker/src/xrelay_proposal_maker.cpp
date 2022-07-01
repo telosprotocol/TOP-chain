@@ -20,6 +20,7 @@
 //#include "xdata/xrelay_block_store.h"
 
 
+
 #include <fstream>
 #include <string>
 
@@ -33,8 +34,7 @@ xrelay_proposal_maker_t::xrelay_proposal_maker_t(const std::string & account,
                                                  const xblockmaker_resources_ptr_t & resources,
                                                  const observer_ptr<xrelay_chain::xrelay_chain_mgr_t> & relay_chain_mgr)
   : m_resources(resources), m_relay_chain_mgr(relay_chain_mgr), m_relay_maker(make_object_ptr<xrelay_maker_t>(account, resources)) {
-
-    xdbg("xrelay_proposal_maker_t::xrelay_proposal_maker_t create,this=%p,account=%s ", this, account.c_str(),);
+    xdbg("xrelay_proposal_maker_t::xrelay_proposal_maker_t create,this=%p,account=%s ", this, account.c_str());
 }
 
 xrelay_proposal_maker_t::~xrelay_proposal_maker_t() {
@@ -168,104 +168,6 @@ bool xrelay_proposal_maker_t::build_relay_block_data_leader(const data::xblock_p
     relay_block_data = from_bytes<std::string>((xbytes_t)(rlp_stream));
     return true;
 }
-
-/*
-bool xrelay_proposal_maker_t::build_relay_block_data_leader(const data::xblock_ptr_t & latest_wrap_block,
-                                                            uint64_t timestamp,
-                                                            uint64_t last_election_height,
-                                                            uint64_t & new_election_height,
-                                                            uint64_t last_evm_table_height,
-                                                            uint64_t & new_evm_table_height,
-                                                            uint64_t epochid,
-                                                            std::string & relay_block_data) {
-    data::xrelay_election_group_t reley_election_group;
-    std::vector<data::xrelay_election_node_t> reley_election;
-    data::enum_block_cache_type  last_relay_block_type;
-    auto ret = m_relay_chain_mgr->get_elect_cache(last_election_height + 1, reley_election);
-    if (!ret) {
-        reley_election_group.election_epochID = 0;
-        new_election_height = last_election_height;
-        xinfo("xrelay_proposal_maker_t::build_relay_block_data_leader. get elect cache fail. height:%llu", last_election_height + 1);
-    } else {
-        new_election_height = last_election_height + 1;
-        reley_election_group.election_epochID = new_election_height;
-    }
-    reley_election_group.elections_vector = reley_election;
-
-    evm_common::h256 prev_hash;
-    uint64_t block_height = 0;
-    std::error_code ec;
-
-    if (latest_wrap_block->get_height() > 0) {
-        std::error_code ec;
-        data::xrelay_block last_relay_block;
-        data::xblockextract_t::unpack_relayblock(latest_wrap_block.get(), false, last_relay_block, ec);
-        if (ec) {
-            xwarn("xrelay_proposal_maker_t:build_relay_block_data_leader decodeBytes error %s; err msg %s", ec.category().name(), ec.message().c_str());
-            return false;
-        }
-
-        prev_hash = last_relay_block.get_block_hash();
-        block_height = last_relay_block.get_block_height() + 1;
-        last_relay_block_type = data::xrelay_block_store::get_instance().check_block_type(last_relay_block);
-        xinfo("xrelay_proposal_maker_t::build_relay_block_data_leader height(%d) last_relay_block_type(%d) .",latest_wrap_block->get_height(), last_relay_block_type);
-    } else {
-        auto genesis_block = data::xrootblock_t::get_genesis_relay_block();
-        prev_hash = genesis_block.get_block_hash();
-        block_height = genesis_block.get_block_height() + 1;
-        last_relay_block_type = data::cache_poly_election_block;
-        xinfo("xrelay_proposal_maker_t::build_relay_block_data_leader height(%d) last_relay_block_type(%d) .",latest_wrap_block->get_height(), last_relay_block_type);
-    }
-
-    std::map<uint64_t, xrelay_chain::xcross_txs_t> cross_tx_map;
-    std::vector<data::xeth_transaction_t> transactions;
-    std::vector<data::xeth_receipt_t> receipts;
-
-    // election data and cross txs not pack into one relay block
-    if (reley_election_group.empty()) {
-        //todo, rank
-        uint64_t cur_evm_table_height = 0;
-        auto  max_relay_poly_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_relay_poly_interval) * 10;
-
-        //poly all tx in time
-        uint64_t  _last_poly_timestamp = m_last_poly_timestamp;
-        if ((timestamp - _last_poly_timestamp) >= max_relay_poly_interval) {
-            xinfo("xrelay_proposal_maker_t::build_relay_block_data_leader time last_relay_block_type(%ld), last_poly_timestamp(%ld), timestamp(%ld), max_relay_poly_interval(%ld)",
-                 last_relay_block_type, _last_poly_timestamp, timestamp, max_relay_poly_interval);
-            if (last_relay_block_type == data::cache_tx_block){
-               // xinfo("xrelay_proposal_maker_t::build_relay_block_data_leader no cross txs and no new relay election.");
-               m_last_poly_timestamp += max_relay_poly_interval;
-               new_evm_table_height = last_evm_table_height;
-            }
-
-        }
-        
-        if (_last_poly_timestamp == m_last_poly_timestamp) {
-             auto result = m_relay_chain_mgr->get_tx_cache_leader(last_evm_table_height, cur_evm_table_height, cross_tx_map, RELAY_BLOCK_TXS_PACK_NUM_MAX);
-            if (!result) {
-                return false;
-            }
-            if (cross_tx_map.empty() && reley_election_group.empty()) {
-                xinfo("xrelay_proposal_maker_t::build_relay_block_data_leader no cross txs and no new relay election.");
-                return false;
-            }
-            convert_to_xrelay_tx_and_receipts(cross_tx_map, transactions, receipts);
-            new_evm_table_height = cur_evm_table_height;
-        }
-       
-    } else {
-        new_evm_table_height = last_evm_table_height;
-    }
-
-    data::xrelay_block relay_block = build_relay_block(prev_hash, block_height, timestamp, transactions, receipts, reley_election_group, epochid);
-    xdbg("xrelay_proposal_maker_t::build_relay_block_data_leader relay_block:%s,last evm height:%llu,new evm height:%llu", relay_block.dump().c_str(), last_evm_table_height, new_evm_table_height);
-
-    xbytes_t rlp_stream = relay_block.encodeBytes();
-    relay_block_data = from_bytes<std::string>((xbytes_t)(rlp_stream));
-
-    return true;
-}
- */
 
 bool xrelay_proposal_maker_t::build_relay_block_data_backup(evm_common::h256 prev_hash,
                                                             uint64_t block_height,
