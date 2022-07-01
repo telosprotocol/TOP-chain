@@ -415,7 +415,9 @@ namespace top
             stream << m_reserved;
             stream << m_sync_cookie;
             
-            stream.write_short_string(m_block_object);
+            // stream.write_short_string(m_block_object);  // TODO(jimmy)
+            stream << m_block_object;
+
             stream << m_input_resource;
             stream << m_output_resource;
             
@@ -430,7 +432,8 @@ namespace top
             stream >> m_reserved;
             stream >> m_sync_cookie;
             
-            stream.read_short_string(m_block_object);
+            // stream.read_short_string(m_block_object);
+            stream >> m_block_object;
             stream >> m_input_resource;
             stream >> m_output_resource;
             
