@@ -74,6 +74,7 @@ private:
     void make_receipts_and_send(data::xblock_t * commit_block, data::xblock_t * cert_block);
     uint32_t calculate_min_tx_num(bool first_packing);
     void    check_latest_cert_block(base::xvblock_t* _cert_block, const xconsensus::xcsview_fire* viewfire, std::error_code & ec);
+    void    reset_leader_info();
 
 private:
     observer_ptr<mbus::xmessage_bus_face_t>  m_mbus;

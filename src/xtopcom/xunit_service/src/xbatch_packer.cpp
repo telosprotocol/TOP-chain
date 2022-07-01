@@ -183,6 +183,12 @@ bool xbatch_packer::connect_to_checkpoint() {
     return true;
 }
 
+void xbatch_packer::reset_leader_info() {
+    m_is_leader = false;
+    m_leader_packed = false;
+    m_leader_cs_para = nullptr;
+}
+
 // view updated and the judge is_leader
 // then start new consensus from leader
 bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * from_parent, const int32_t cur_thread_id, const uint64_t timenow_ms) {
@@ -190,8 +196,7 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     xassert(view_ev != nullptr);
     xassert(view_ev->get_viewid() >= m_last_view_id);
     xassert(view_ev->get_account() == get_account());
-    m_is_leader = false;
-    m_leader_packed = false;
+    reset_leader_info();
     xdbg_info("xbatch_packer::on_view_fire account=%s,clock=%ld,viewid=%ld,start_time=%ld", get_account().c_str(), view_ev->get_clock(), view_ev->get_viewid(), m_start_time);
     auto local_xip = get_xip2_addr();
     if (xcons_utl::xip_equals(m_faded_xip2, local_xip)) {
@@ -446,6 +451,8 @@ xvip2_t xbatch_packer::get_child_xip(const xvip2_t & local_xip, const std::strin
 }
 
 bool xbatch_packer::reset_xip_addr(const xvip2_t & new_addr) {
+    reset_leader_info();  // fade xip should not be leader
+
     if (!is_xip2_empty(get_xip2_addr())) {
         m_last_xip2 = get_xip2_addr();
     }
@@ -454,6 +461,9 @@ bool xbatch_packer::reset_xip_addr(const xvip2_t & new_addr) {
 }
 
 bool xbatch_packer::set_fade_xip_addr(const xvip2_t & new_addr) {
+    if (xcons_utl::xip_equals(new_addr, get_xip2_addr())) {
+        reset_leader_info();  // fade xip should not be leader
+    }
     xdbg("xbatch_packer::set_fade_xip_addr set fade xip from %s to %s", xcons_utl::xip_to_hex(m_faded_xip2).c_str(), xcons_utl::xip_to_hex(new_addr).c_str());
     m_faded_xip2 = new_addr;
     return true;
