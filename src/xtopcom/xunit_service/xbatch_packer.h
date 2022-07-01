@@ -69,10 +69,11 @@ protected:
 
 private:
     bool    connect_to_checkpoint();
-    bool    start_proposal(base::xblock_mptrs& latest_blocks, uint32_t min_tx_num);
+    bool    start_proposal(uint32_t min_tx_num);
     bool    verify_proposal_packet(const xvip2_t & from_addr, const xvip2_t & local_addr, const base::xcspdu_t & packet);
     void make_receipts_and_send(data::xblock_t * commit_block, data::xblock_t * cert_block);
     uint32_t calculate_min_tx_num(bool first_packing);
+    void    check_latest_cert_block(base::xvblock_t* _cert_block, const xconsensus::xcsview_fire* viewfire, std::error_code & ec);
 
 private:
     observer_ptr<mbus::xmessage_bus_face_t>  m_mbus;
@@ -91,6 +92,7 @@ private:
     base::xtimer_t*                          m_raw_timer{nullptr};
     // m_is_leader to decide if timer need to do packing units and then start consensus
     bool                                     m_is_leader{false};
+    data::xblock_consensus_para_ptr_t        m_leader_cs_para{nullptr};
     // m_leader_packed is used to avoid more than one block produced in one viewid
     bool                                     m_leader_packed{false};
     uint64_t                                 m_last_view_clock{0};

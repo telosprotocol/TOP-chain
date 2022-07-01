@@ -51,6 +51,7 @@
 #include "xdata/xtransaction_v3.h"
 #include "xstatectx/xstatectx.h"
 #include "xdata/xrelay_block.h"
+#include "xdata/xblock_cs_para.h"
 #include "xrelay_chain/xrelay_chain_mgr.h"
 #include "xdata/xrelay_block_store.h"
 
@@ -523,9 +524,11 @@ void xrpc_eth_query_manager::eth_call(xJson::Value & js_req, xJson::Value & js_r
     xblock_consensus_para_t cs_para(addr, block->get_clock(), block->get_viewid(), block->get_viewtoken(), block->get_height() + 1, gmtime);
 
     // TODO(jimmy) should create statectx by block
-    statectx::xstatectx_ptr_t statectx_ptr = statectx::xstatectx_factory_t::create_latest_cert_statectx(_vaddress);
+    statectx::xstatectx_ptr_t statectx_ptr = statectx::xstatectx_factory_t::create_statectx(_vaddress, block.get());
     if (statectx_ptr == nullptr) {
-        xwarn("create_latest_cert_statectx fail: %s", addr.c_str());
+        xwarn("create_statectx fail: %s", addr.c_str());
+        std::string msg = "err: statectx create fail";
+        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);
         return;
     }
 
@@ -533,6 +536,8 @@ void xrpc_eth_query_manager::eth_call(xJson::Value & js_req, xJson::Value & js_r
     data::xunitstate_ptr_t unitstate = statectx_ptr->load_unit_state(_vaddr);
     if (nullptr == unitstate) {
         xwarn("eth_call fail-load unit state, %s", from.c_str());
+        std::string msg = "err: unit state load fail";
+        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);        
         return;
     }
 //        unitstate->tep_token_deposit(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH, std::strtoul(value.c_str(), NULL, 16));
@@ -559,6 +564,8 @@ void xrpc_eth_query_manager::eth_call(xJson::Value & js_req, xJson::Value & js_r
     auto ret = evm.execute(input, output);
     if (ret != txexecutor::enum_exec_success) {
         xwarn("evm call fail.");
+        std::string msg = "err: evm execute fail " + std::to_string(ret);
+        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);        
         return;
     }
     xinfo("evm call: %d, %s", output.m_tx_result.status, output.m_tx_result.extra_msg.c_str());
@@ -652,9 +659,11 @@ void xrpc_eth_query_manager::eth_estimateGas(xJson::Value & js_req, xJson::Value
     uint64_t gmtime = block->get_second_level_gmtime();
     xblock_consensus_para_t cs_para(addr, block->get_clock(), block->get_viewid(), block->get_viewtoken(), block->get_height() + 1, gmtime);
 
-    statectx::xstatectx_ptr_t statectx_ptr = statectx::xstatectx_factory_t::create_latest_cert_statectx(_vaddress);
+    statectx::xstatectx_ptr_t statectx_ptr = statectx::xstatectx_factory_t::create_statectx(_vaddress, block.get());
     if (statectx_ptr == nullptr) {
-        xwarn("create_latest_cert_statectx fail: %s", addr.c_str());
+        xwarn("create statectx fail: %s", addr.c_str());
+        std::string msg = "err: statectx create fail";
+        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);        
         return;
     }
 
@@ -662,6 +671,8 @@ void xrpc_eth_query_manager::eth_estimateGas(xJson::Value & js_req, xJson::Value
     data::xunitstate_ptr_t unitstate = statectx_ptr->load_unit_state(_vaddr);
     if (nullptr == unitstate) {
         xwarn("eth_estimateGas fail-load unit state, %s", from.c_str());
+        std::string msg = "err: unit state load fail";
+        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);              
         return;
     }
 //        unitstate->tep_token_deposit(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH, std::strtoul(value.c_str(), NULL, 16));
@@ -689,6 +700,8 @@ void xrpc_eth_query_manager::eth_estimateGas(xJson::Value & js_req, xJson::Value
     auto ret = evm.execute(input, output);
     if (ret != txexecutor::enum_exec_success) {
         xwarn("evm call fail.");
+        std::string msg = "err: evm execute fail " + std::to_string(ret);
+        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);              
         return;
     }
     xinfo("eth_estimateGas call: %d, %d, %s, %llu", ret, output.m_tx_result.status, output.m_tx_result.extra_msg.c_str(), output.m_tx_result.used_gas);

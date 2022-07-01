@@ -12,6 +12,7 @@
 #include "xdata/xtableblock.h"
 #include "xdata/xrootblock.h"
 #include "xdata/xblock.h"
+#include "xdata/xblock_cs_para.h"
 
 NS_BEG2(top, data)
 

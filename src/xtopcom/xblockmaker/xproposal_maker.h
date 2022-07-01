@@ -23,6 +23,7 @@ class xproposal_maker_t : public xunit_service::xproposal_maker_face {
     virtual xblock_ptr_t        make_proposal(xblock_consensus_para_t & proposal_para, uint32_t min_tx_num) override;
     virtual int                 verify_proposal(base::xvblock_t* proposal_block, base::xvqcert_t * bind_clock_cert) override;
     virtual void                set_certauth(base::xvcertauth_t* _ca);
+    virtual data::xblock_consensus_para_ptr_t   leader_set_consensus_para_basic(base::xvblock_t* _cert_block, uint64_t viewid, uint64_t clock, std::error_code & ec) override;
 
     bool                        update_txpool_txs(const xblock_consensus_para_t & proposal_para, xtablemaker_para_t & table_para);
     static std::set<base::xtable_shortid_t> select_peer_sids_for_confirm_id(const std::vector<base::xtable_shortid_t> & all_sid_vec, uint64_t height);
@@ -36,14 +37,12 @@ class xproposal_maker_t : public xunit_service::xproposal_maker_face {
     bool                        backup_set_consensus_para(base::xvblock_t* latest_cert_block, base::xvblock_t* proposal, base::xvqcert_t * bind_drand_cert, xblock_consensus_para_t & cs_para);
 
     bool                        verify_proposal_drand_block(base::xvblock_t *proposal_block, xblock_ptr_t & drand_block) const;
-    bool                        verify_proposal_class(base::xvblock_t *proposal_block) const;
     bool                        verify_proposal_input(base::xvblock_t *proposal_block, xtablemaker_para_t & table_para);
 
 private:
     data::xtablestate_ptr_t get_target_tablestate(base::xvblock_t * block);
-    void sys_contract_sync(const data::xtablestate_ptr_t & tablestate) const;
-    void check_and_sync_account(const data::xtablestate_ptr_t & tablestate, const std::string & addr) const;
     bool leader_xip_to_leader_address(xvip2_t _xip, common::xaccount_address_t & _addr) const;
+    void update_txpool_table_state(base::xvblock_t* _commit_block, data::xtablestate_ptr_t const& commit_tablestate);
 
     xblockmaker_resources_ptr_t     m_resources{nullptr};
     xtable_maker_ptr_t          m_table_maker{nullptr};

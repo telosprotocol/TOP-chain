@@ -20,6 +20,7 @@
 #include "xvledger/xreceiptid.h"
 #include "xvledger/xvpropertyprove.h"
 #include "xdata/xrelay_block.h"
+#include "xdata/xblock_cs_para.h"
 
 NS_BEG2(top, data)
 
