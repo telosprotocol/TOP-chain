@@ -357,7 +357,7 @@ bool xrelay_elect_cache_t::get_relay_elections_by_height(const base::xvaccount_t
         auto pubkey_str = base::xstring_utl::base64_decode(election.first.to_string());
         xbytes_t bytes_x(pubkey_str.begin() + 1, pubkey_str.begin() + 33);
         xbytes_t bytes_y(pubkey_str.begin() + 33, pubkey_str.end());
-        relay_elections.push_back(data::xrelay_election_node_t(evm_common::h256(bytes_x), evm_common::h256(bytes_y), election.second));
+        relay_elections.push_back(data::xrelay_election_node_t(evm_common::h256(bytes_x), evm_common::h256(bytes_y)));
     }
     return true;
 }
