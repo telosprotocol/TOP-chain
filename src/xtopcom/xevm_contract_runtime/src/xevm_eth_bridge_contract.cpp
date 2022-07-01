@@ -42,7 +42,7 @@ bool xtop_evm_eth_bridge_contract::execute(xbytes_t input,
     // init(bytes,string)                    => 6158600d
     // sync(bytes)                           => 7eefcfa2
     // get_height()                          => b15ad2e8
-    // is_confirmed(bytes,uint64)            => 627b0fd2
+    // is_confirmed(bytes)                   => 627b0fd2
     //--------------------------------------------------
     constexpr uint32_t method_id_init{0x6158600d};
     constexpr uint32_t method_id_sync{0x7eefcfa2};
@@ -252,126 +252,131 @@ bool xtop_evm_eth_bridge_contract::sync(const xbytes_t & rlp_bytes) {
         xwarn("[xtop_evm_eth_bridge_contract::sync] not init yet");
         return false;
     }
-    // step 2: decode
-    auto item = RLP::decode(rlp_bytes);
-    eth::xeth_block_header_t header;
-    {
-        auto item_header = RLP::decode_once(item.decoded[0]);
-        auto header_bytes = item_header.decoded[0];
-        if (header.from_rlp(header_bytes) < 0) {
-            xwarn("[xtop_evm_eth_bridge_contract::is_confirmed] decode header error");
-            return false;
-        }
-    }
-    const uint64_t proofs_per_node = static_cast<uint64_t>(evm_common::fromBigEndian<u64>(item.decoded[item.decoded.size() - 1]));
-    const uint32_t nodes_size{64};
-    if (proofs_per_node * nodes_size + 2 * nodes_size + 3 != item.decoded.size()) {
-        xwarn("[xtop_evm_eth_bridge_contract::sync] param error");
-        return false;
-    }
-    std::vector<ethash::double_node_with_merkle_proof> nodes;
-    const uint32_t nodes_start_index{2};
-    const uint32_t proofs_start_index{2 + nodes_size * 2};
-    for (size_t i = 0; i < nodes_size; ++i) {
-        ethash::double_node_with_merkle_proof node;
-        node.dag_nodes.emplace_back(static_cast<h512>(item.decoded[nodes_start_index + 2 * i]));
-        node.dag_nodes.emplace_back(static_cast<h512>(item.decoded[nodes_start_index + 2 * i + 1]));
-        for (size_t j = 0; j < proofs_per_node; ++j) {
-            node.proof.emplace_back(static_cast<h128>(item.decoded[proofs_start_index + proofs_per_node * i + j]));
-        }
-        nodes.emplace_back(node);
-    }
-    // step 3: check exist
-    h256 hash{0};
-    if (get_hash(header.number(), hash)) {
-        xwarn("[xtop_evm_eth_bridge_contract::sync] get_hash existed, height: %s, hash: %s", header.number().str().c_str(), hash.hex().c_str());
-        return false;
-    }
-    xinfo("[xtop_evm_eth_bridge_contract::sync] header dump: %s", header.dump().c_str());
-    if (!get_height(last_height)) {
-        xwarn("[xtop_evm_eth_bridge_contract::sync] get last height failed, height: %s", last_height.str().c_str());
-        return false;
-    }
-    if (header.number() + BlockReserveNum < last_height) {
-        xwarn("[xtop_evm_eth_bridge_contract::sync] header is too old height: %s, hash: %s, now height: %s",
-              header.number().str().c_str(),
-              header.hash().hex().c_str(),
-              last_height.str().c_str());
-        return false;
-    }
-    // step 4: get parent header
-    eth::xeth_block_header_t parentHeader;
-    bigint preSumOfDifficult{0};
-    if (!get_header(header.parentHash(), parentHeader, preSumOfDifficult)) {
-        xwarn("[xtop_evm_eth_bridge_contract::sync] get parent header failed, hash: %s", header.parentHash().hex().c_str());
-        return false;
-    }
-    // step 5: verify header common
-    if (!verify_common(parentHeader, header)) {
-        xwarn("[xtop_evm_eth_bridge_contract::sync] verify header common failed, header: %s, parrent header: %s", header.hash().hex().c_str(), parentHeader.hash().hex().c_str());
-        return false;
-    }
-    if (!eth::config::is_london(header.number())) {
-        xwarn("[xtop_evm_eth_bridge_contract::sync] not london fork");
-        return false;
-    }
-    if (!eth::verify_eip1559_header(parentHeader, header)) {
-        xwarn("[xtop_evm_eth_bridge_contract::sync] verifyEip1559Header failed, new: %lu, old: %lu", header.gasLimit(), parentHeader.gasLimit());
-        return false;
-    }
-    // step 6: verify difficulty
-    bigint diff = ethash::xethash_t::instance().calc_difficulty(header.time(), parentHeader);
-    if (diff != header.difficulty()) {
-        xwarn("[xtop_evm_eth_bridge_contract::sync] difficulty check mismatch");
-        return false;
-    }
-    // step 7: verify ethash
-    if (!ethash::xethash_t::instance().verify_seal(header, nodes)) {
-        xwarn("[xtop_evm_eth_bridge_contract::sync] ethash verify failed, header: %s", header.hash().hex().c_str());
-        return false;
-    }
-    // step 8: set header
-    bigint newSumOfDifficult = preSumOfDifficult + header.difficulty();
-    if (!set_header(header, newSumOfDifficult)) {
-        xwarn("[xtop_evm_eth_bridge_contract::sync] set_header failed, height: %s, hash: %s", header.number().str().c_str(), header.hash().hex().c_str());
-        return false;
-    }
-    xinfo("[xtop_evm_eth_bridge_contract::sync] set_header success, height: %s, hash: %s", header.number().str().c_str(), header.hash().hex().c_str());
-    // step 9: get last header
-    h256 last_hash;
-    if (!get_hash(last_height, last_hash)) {
-        xwarn("[xtop_evm_eth_bridge_contract::sync] get_hash failed, height: %s", last_height.str().c_str());
-        return false;
-    }
-    eth::xeth_block_header_t last_header;
-    bigint last_difficulty{0};
-    if (!get_header(last_hash, last_header, last_difficulty)) {
-        xwarn("[xtop_evm_eth_bridge_contract::sync] get last header failed, hash: %s", last_hash.hex().c_str());
-        return false;
-    }
-    // step 10: set or rebuild
-    if (last_header.hash() == header.parentHash()) {
-        if (!set_hash(header.number(), header.hash())) {
-            xwarn("[xtop_evm_eth_bridge_contract::sync] set_hash failed, height: %s, hash: %s", header.number().str().c_str(), header.hash().hex().c_str());
-            return false;
-        }
-        xinfo("[xtop_evm_eth_bridge_contract::sync] set_hash success, height: %s, hash: %s", header.number().str().c_str(), header.hash().hex().c_str());
-        if (!set_height(header.number())) {
-            xwarn("[xtop_evm_eth_bridge_contract::sync] set_height failed, height: %s", header.number().str().c_str());
-            return false;
-        }
-        xwarn("[xtop_evm_eth_bridge_contract::sync] set_height success, height: %s", header.number().str().c_str());
-    } else {
-        xinfo("[xtop_evm_eth_bridge_contract::sync] hash mismatch rebuid, %s, %s", last_header.hash().hex().c_str(), header.parentHash().hex().c_str());
-        if (newSumOfDifficult > last_difficulty) {
-            if (!rebuild(last_header, header)) {
-                xwarn("[xtop_evm_eth_bridge_contract::sync] rebuild failed");
+
+    auto left_bytes = std::move(rlp_bytes);
+    while (left_bytes.size() != 0) {
+        // step 2: decode
+        RLP::DecodedItem item = RLP::decode(left_bytes);
+        left_bytes = std::move(item.remainder);
+        eth::xeth_block_header_t header;
+        {
+            auto item_header = RLP::decode_once(item.decoded[0]);
+            auto header_bytes = item_header.decoded[0];
+            if (header.from_rlp(header_bytes) < 0) {
+                xwarn("[xtop_evm_eth_bridge_contract::sync] decode header error");
                 return false;
             }
         }
+        auto proofs_per_node = static_cast<uint64_t>(evm_common::fromBigEndian<u64>(item.decoded[item.decoded.size() - 1]));
+        std::vector<ethash::double_node_with_merkle_proof> nodes;
+        uint32_t nodes_size{64};
+        if (proofs_per_node * nodes_size + 2 * nodes_size + 3 != item.decoded.size()) {
+            xwarn("[xtop_evm_eth_bridge_contract::sync] param error");
+            return false;
+        }
+        uint32_t nodes_start_index{2};
+        uint32_t proofs_start_index{2 + nodes_size * 2};
+        for (size_t i = 0; i < nodes_size; i++) {
+            ethash::double_node_with_merkle_proof node;
+            node.dag_nodes.emplace_back(static_cast<h512>(item.decoded[nodes_start_index + 2 * i]));
+            node.dag_nodes.emplace_back(static_cast<h512>(item.decoded[nodes_start_index + 2 * i + 1]));
+            for (size_t j = 0; j < proofs_per_node; j++) {
+                node.proof.emplace_back(static_cast<h128>(item.decoded[proofs_start_index + proofs_per_node * i + j]));
+            }
+            nodes.emplace_back(node);
+        }
+        // step 3: check exist
+        h256 hash{0};
+        if (get_hash(header.number(), hash)) {
+            xwarn("[xtop_evm_eth_bridge_contract::sync] get_hash existed, height: %s, hash: %s", header.number().str().c_str(), hash.hex().c_str());
+            return false;
+        }
+        xinfo("[xtop_evm_eth_bridge_contract::sync] header dump: %s", header.dump().c_str());
+        if (!get_height(last_height)) {
+            xwarn("[xtop_evm_eth_bridge_contract::sync] get last height failed, height: %s", last_height.str().c_str());
+            return false;
+        }
+        if (header.number() + BlockReserveNum < last_height) {
+            xwarn("[xtop_evm_eth_bridge_contract::sync] header is too old height: %s, hash: %s, now height: %s",
+                header.number().str().c_str(),
+                header.hash().hex().c_str(),
+                last_height.str().c_str());
+            return false;
+        }
+        // step 4: get parent header
+        eth::xeth_block_header_t parentHeader;
+        bigint preSumOfDifficult{0};
+        if (!get_header(header.parentHash(), parentHeader, preSumOfDifficult)) {
+            xwarn("[xtop_evm_eth_bridge_contract::sync] get parent header failed, hash: %s", header.parentHash().hex().c_str());
+            return false;
+        }
+        // step 5: verify header common
+        if (!verify_common(parentHeader, header)) {
+            xwarn("[xtop_evm_eth_bridge_contract::sync] verify header common failed, header: %s, parrent header: %s", header.hash().hex().c_str(), parentHeader.hash().hex().c_str());
+            return false;
+        }
+        if (!eth::config::is_london(header.number())) {
+            xwarn("[xtop_evm_eth_bridge_contract::sync] not london fork");
+            return false;
+        }
+        if (!eth::verify_eip1559_header(parentHeader, header)) {
+            xwarn("[xtop_evm_eth_bridge_contract::sync] verifyEip1559Header failed, new: %lu, old: %lu", header.gasLimit(), parentHeader.gasLimit());
+            return false;
+        }
+        // step 6: verify difficulty
+        bigint diff = ethash::xethash_t::instance().calc_difficulty(header.time(), parentHeader);
+        if (diff != header.difficulty()) {
+            xwarn("[xtop_evm_eth_bridge_contract::sync] difficulty check mismatch");
+            return false;
+        }
+        // step 7: verify ethash
+        if (!ethash::xethash_t::instance().verify_seal(header, nodes)) {
+            xwarn("[xtop_evm_eth_bridge_contract::sync] ethash verify failed, header: %s", header.hash().hex().c_str());
+            return false;
+        }
+        // step 8: set header
+        bigint newSumOfDifficult = preSumOfDifficult + header.difficulty();
+        if (!set_header(header, newSumOfDifficult)) {
+            xwarn("[xtop_evm_eth_bridge_contract::sync] set_header failed, height: %s, hash: %s", header.number().str().c_str(), header.hash().hex().c_str());
+            return false;
+        }
+        xinfo("[xtop_evm_eth_bridge_contract::sync] set_header success, height: %s, hash: %s", header.number().str().c_str(), header.hash().hex().c_str());
+        // step 9: get last header
+        h256 last_hash;
+        if (!get_hash(last_height, last_hash)) {
+            xwarn("[xtop_evm_eth_bridge_contract::sync] get_hash failed, height: %s", last_height.str().c_str());
+            return false;
+        }
+        eth::xeth_block_header_t last_header;
+        bigint last_difficulty{0};
+        if (!get_header(last_hash, last_header, last_difficulty)) {
+            xwarn("[xtop_evm_eth_bridge_contract::sync] get last header failed, hash: %s", last_hash.hex().c_str());
+            return false;
+        }
+        // step 10: set or rebuild
+        if (last_header.hash() == header.parentHash()) {
+            if (!set_hash(header.number(), header.hash())) {
+                xwarn("[xtop_evm_eth_bridge_contract::sync] set_hash failed, height: %s, hash: %s", header.number().str().c_str(), header.hash().hex().c_str());
+                return false;
+            }
+            xinfo("[xtop_evm_eth_bridge_contract::sync] set_hash success, height: %s, hash: %s", header.number().str().c_str(), header.hash().hex().c_str());
+            if (!set_height(header.number())) {
+                xwarn("[xtop_evm_eth_bridge_contract::sync] set_height failed, height: %s", header.number().str().c_str());
+                return false;
+            }
+            xwarn("[xtop_evm_eth_bridge_contract::sync] set_height success, height: %s", header.number().str().c_str());
+        } else {
+            xinfo("[xtop_evm_eth_bridge_contract::sync] hash mismatch rebuid, %s, %s", last_header.hash().hex().c_str(), header.parentHash().hex().c_str());
+            if (newSumOfDifficult > last_difficulty) {
+                if (!rebuild(last_header, header)) {
+                    xwarn("[xtop_evm_eth_bridge_contract::sync] rebuild failed");
+                    return false;
+                }
+            }
+        }
+        // step 11: release
+        release(header.number());
     }
-    // step 11: release
-    release(header.number());
 
     return true;
 }
