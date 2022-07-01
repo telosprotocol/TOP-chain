@@ -123,6 +123,34 @@ TEST_F(xcontract_fixture_t, test_hash_property) {
 
 #include "test_evm_eth_bridge_contract_data.cpp"
 
+static void verify_ethash(xbytes_t & left_bytes) {
+    while (left_bytes.size() != 0) {
+        RLP::DecodedItem item = RLP::decode(left_bytes);
+        left_bytes = std::move(item.remainder);
+        xeth_block_header_t header;
+        {
+            auto item_header = RLP::decode_once(item.decoded[0]);
+            auto header_bytes = item_header.decoded[0];
+            header.from_rlp(header_bytes);
+        }
+        auto proofs_per_node = static_cast<uint64_t>(evm_common::fromBigEndian<u64>(item.decoded[item.decoded.size() - 1]));
+        std::vector<double_node_with_merkle_proof> nodes;
+        uint32_t nodes_size{64};
+        uint32_t nodes_start_index{2};
+        uint32_t proofs_start_index{2 + nodes_size * 2};
+        for (size_t i = 0; i < nodes_size; i++) {
+            double_node_with_merkle_proof node;
+            node.dag_nodes.emplace_back(static_cast<h512>(item.decoded[nodes_start_index + 2 * i]));
+            node.dag_nodes.emplace_back(static_cast<h512>(item.decoded[nodes_start_index + 2 * i + 1]));
+            for (size_t j = 0; j < proofs_per_node; j++) {
+                node.proof.emplace_back(static_cast<h128>(item.decoded[proofs_start_index + proofs_per_node * i + j]));
+            }
+            nodes.emplace_back(node);
+        }
+        EXPECT_TRUE(xethash_t::instance().verify_seal(header, nodes));
+    }
+}
+
 TEST(ethash, ethash_1270000) {
 // header.m_parentHash: 749c4c2c82582cba3489bce142d6c776d50a5c18b3aeaf3cdc68b27650d0a6b6
 // header.m_uncleHash: 1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347
@@ -145,58 +173,21 @@ TEST(ethash, ethash_1270000) {
     std::error_code ec;
     xbytes_t output_bytes = top::from_hex(relayer_hex_output_1270000, ec);
     EXPECT_EQ(ec.value(), 0);
-
-    auto item = RLP::decode(output_bytes);
-    xeth_block_header_t header;
-    {
-        auto item_header = RLP::decode_once(item.decoded[0]);
-        auto header_bytes = item_header.decoded[0];
-        header.from_rlp(header_bytes);
-    }
-    auto proofs_per_node = static_cast<uint64_t>(evm_common::fromBigEndian<u64>(item.decoded[item.decoded.size() - 1]));
-    std::vector<double_node_with_merkle_proof> nodes;
-    uint32_t nodes_size{64};
-    uint32_t nodes_start_index{2};
-    uint32_t proofs_start_index{2 + nodes_size * 2};
-    for (size_t i = 0; i < nodes_size; i++) {
-        double_node_with_merkle_proof node;
-        node.dag_nodes.emplace_back(static_cast<h512>(item.decoded[nodes_start_index + 2 * i]));
-        node.dag_nodes.emplace_back(static_cast<h512>(item.decoded[nodes_start_index + 2 * i + 1]));
-        for (size_t j = 0; j < proofs_per_node; j++) {
-            node.proof.emplace_back(static_cast<h128>(item.decoded[proofs_start_index + proofs_per_node * i + j]));
-        }
-        nodes.emplace_back(node);
-    }
-    EXPECT_TRUE(xethash_t::instance().verify_seal(header, nodes));
+    verify_ethash(output_bytes);
 }
 
 TEST(ethash, ethash_1270001) {
     std::error_code ec;
     xbytes_t output_bytes = top::from_hex(relayer_hex_output_1270001, ec);
     EXPECT_EQ(ec.value(), 0);
+    verify_ethash(output_bytes);
+}
 
-    auto item = RLP::decode(output_bytes);
-    xeth_block_header_t header;
-    {
-        auto item_header = RLP::decode_once(item.decoded[0]);
-        auto header_bytes = item_header.decoded[0];
-        header.from_rlp(header_bytes);
-    }
-    auto proofs_per_node = static_cast<uint64_t>(evm_common::fromBigEndian<u64>(item.decoded[item.decoded.size() - 1]));
-    std::vector<double_node_with_merkle_proof> nodes;
-    uint32_t nodes_size{64};
-    uint32_t nodes_start_index{2};
-    uint32_t proofs_start_index{2 + nodes_size * 2};
-    for (size_t i = 0; i < nodes_size; i++) {
-        double_node_with_merkle_proof node;
-        node.dag_nodes.emplace_back(static_cast<h512>(item.decoded[nodes_start_index + 2 * i]));
-        node.dag_nodes.emplace_back(static_cast<h512>(item.decoded[nodes_start_index + 2 * i + 1]));
-        for (size_t j = 0; j < proofs_per_node; j++) {
-            node.proof.emplace_back(static_cast<h128>(item.decoded[proofs_start_index + proofs_per_node * i + j]));
-        }
-        nodes.emplace_back(node);
-    }
-    EXPECT_TRUE(xethash_t::instance().verify_seal(header, nodes));
+TEST(ethash, ethash_batch) {
+    std::error_code ec;
+    xbytes_t left_bytes = top::from_hex(relayer_hex_output_batch, ec);
+    EXPECT_EQ(ec.value(), 0);
+    verify_ethash(left_bytes);
 }
 
 TEST_F(xcontract_fixture_t, test_init_and_sync) {
@@ -235,29 +226,6 @@ TEST_F(xcontract_fixture_t, test_sync_not_init) {
     EXPECT_FALSE(contract.sync(sync_param));
 }
 
-TEST_F(xcontract_fixture_t, test_sync_error_header) {
-    const char * hex_init_param = "f90426f90210a0397cb4acc8fe4ac39c6cdcb50a28c727ad257f084020912029a2d6f2ad11d431a01dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d4934794cf4d39b0edb0b69cd15f687fd45c8fc8eb687daea0b5d83f8283dba9ba397287db1f6c0675e9a66a51aef8d7796c32b7da5cd6a982a056e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421a056e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421b90100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008302192a64834f11298084628f482099d883010a12846765746888676f312e31372e38856c696e7578a063e47112f6e95c00322701868d568e5d08e393e9430a0fd152e71e7c8be86cac8829ebdb8e839fffacf90210a0fc40ad4f64dd51d09e94d9b7f1136cdcaaf03fb9a75c32661228bd3212547107a01dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d4934794cf4d39b0edb0b69cd15f687fd45c8fc8eb687daea0be5f8f7c84539b81c621a029b3083c37e0b63dde1372545c38edb792fcb65883a056e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421a056e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421b90100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008302196d65834f24ec8084628f482199d883010a12846765746888676f312e31372e38856c696e7578a0d8f6c88a59b42eafc6bc6e048e257a415bbb17822d57566153b73a72666b297b880afe7b9f331361e7";
-    std::error_code ec;
-    auto init_param = top::from_hex(relayer_hex_init_12969999, ec);
-    EXPECT_EQ(ec.value(), 0);
-    auto sync_param = top::from_hex(relayer_hex_output_1270000, ec);
-    EXPECT_EQ(ec.value(), 0);
-    EXPECT_TRUE(contract.init(init_param));
-    sync_param[sync_param.size() - 1] = '9';
-    EXPECT_FALSE(contract.sync(sync_param));
-}
-
-TEST_F(xcontract_fixture_t, test_sync_merkle_proof_error) {
-    std::error_code ec;
-    auto init_param = top::from_hex(relayer_hex_init_12969999, ec);
-    EXPECT_EQ(ec.value(), 0);
-    auto sync_param = top::from_hex(relayer_hex_output_1270000, ec);
-    EXPECT_EQ(ec.value(), 0);
-    EXPECT_TRUE(contract.init(init_param));
-    sync_param[sync_param.size() - 1] = 25;
-    EXPECT_FALSE(contract.sync(sync_param));
-}
-
 TEST_F(xcontract_fixture_t, test_sync_get_parent_header_error) {
     std::error_code ec;
     auto init_param = top::from_hex(relayer_hex_init_12969999, ec);
@@ -265,52 +233,6 @@ TEST_F(xcontract_fixture_t, test_sync_get_parent_header_error) {
     auto sync_param = top::from_hex(relayer_hex_output_1270001, ec);
     EXPECT_EQ(ec.value(), 0);
     EXPECT_TRUE(contract.init(init_param));
-    EXPECT_FALSE(contract.sync(sync_param));
-}
-
-TEST_F(xcontract_fixture_t, test_sync_verify_common_error1) {
-    std::error_code ec;
-    auto init_param = top::from_hex(relayer_hex_init_12969999, ec);
-    EXPECT_EQ(ec.value(), 0);
-    auto sync_param = top::from_hex(relayer_hex_output_1270000, ec);
-    EXPECT_EQ(ec.value(), 0);
-    EXPECT_TRUE(contract.init(init_param));
-    sync_param[958/2] = 0;
-    EXPECT_FALSE(contract.sync(sync_param));
-}
-
-TEST_F(xcontract_fixture_t, test_sync_verify_common_error2) {
-    std::error_code ec;
-    auto init_param = top::from_hex(relayer_hex_init_12969999, ec);
-    EXPECT_EQ(ec.value(), 0);
-    auto sync_param = top::from_hex(relayer_hex_output_1270000, ec);
-    EXPECT_EQ(ec.value(), 0);
-    EXPECT_TRUE(contract.init(init_param));
-    sync_param[930/2] = 0;
-    EXPECT_FALSE(contract.sync(sync_param));
-}
-
-TEST_F(xcontract_fixture_t, test_sync_verify_common_error3) {
-    std::error_code ec;
-    auto init_param = top::from_hex(relayer_hex_init_12969999, ec);
-    EXPECT_EQ(ec.value(), 0);
-    auto sync_param = top::from_hex(relayer_hex_output_1270000, ec);
-    EXPECT_EQ(ec.value(), 0);
-    EXPECT_TRUE(contract.init(init_param));
-    sync_param[936/2] = 0;
-    sync_param[938/2] = 0;
-    EXPECT_FALSE(contract.sync(sync_param));
-}
-
-TEST_F(xcontract_fixture_t, test_sync_verify_common_error4) {
-    std::error_code ec;
-    auto init_param = top::from_hex(relayer_hex_init_12969999, ec);
-    EXPECT_EQ(ec.value(), 0);
-    auto sync_param = top::from_hex(relayer_hex_output_1270000, ec);
-    EXPECT_EQ(ec.value(), 0);
-    EXPECT_TRUE(contract.init(init_param));
-    sync_param[936/2] = 0xff;
-    sync_param[938/2] = 0xff;
     EXPECT_FALSE(contract.sync(sync_param));
 }
 
@@ -350,39 +272,6 @@ TEST_F(xcontract_fixture_t, test_verify_common_gasused) {
     h2.m_gasLimit = 5000;
     h2.m_gasUsed = 6000;
     EXPECT_FALSE(contract.verify_common(h1, h2));
-}
-
-TEST_F(xcontract_fixture_t, test_sync_verify_eip1559_error) {
-    std::error_code ec;
-    auto init_param = top::from_hex(relayer_hex_init_12969999, ec);
-    EXPECT_EQ(ec.value(), 0);
-    auto sync_param = top::from_hex(relayer_hex_output_1270000, ec);
-    EXPECT_EQ(ec.value(), 0);
-    EXPECT_TRUE(contract.init(init_param));
-    sync_param[1106/2] = 0;
-    EXPECT_FALSE(contract.sync(sync_param));
-}
-
-TEST_F(xcontract_fixture_t, test_sync_difficulty_error) {
-    std::error_code ec;
-    auto init_param = top::from_hex(relayer_hex_init_12969999, ec);
-    EXPECT_EQ(ec.value(), 0);
-    auto sync_param = top::from_hex(relayer_hex_output_1270000, ec);
-    EXPECT_EQ(ec.value(), 0);
-    EXPECT_TRUE(contract.init(init_param));
-    sync_param[922/2] = 0;
-    EXPECT_FALSE(contract.sync(sync_param));
-}
-
-TEST_F(xcontract_fixture_t, test_sync_verify_seal_error) {
-    std::error_code ec;
-    auto init_param = top::from_hex(relayer_hex_init_12969999, ec);
-    EXPECT_EQ(ec.value(), 0);
-    auto sync_param = top::from_hex(relayer_hex_output_1270000, ec);
-    EXPECT_EQ(ec.value(), 0);
-    EXPECT_TRUE(contract.init(init_param));
-    sync_param[1076/2] = 0;
-    EXPECT_FALSE(contract.sync(sync_param));
 }
 
 TEST_F(xcontract_fixture_t, test_is_confirmed) {
@@ -582,17 +471,6 @@ TEST_F(xcontract_fixture_t, execute_init_extract_error1) {
     EXPECT_FALSE(contract.execute(init_param, 0, context, false, statectx_observer, output, err));
 }
 
-TEST_F(xcontract_fixture_t, execute_init_extract_error2) {
-    contract_runtime::evm::sys_contract_precompile_output output;
-    contract_runtime::evm::sys_contract_precompile_error err;
-    std::string str{relayer_hex_output_init_1269999_tx_data};
-    str = {str.begin(), str.begin() + 1298};
-    std::error_code ec;
-    auto init_param = top::from_hex(str, ec);
-    EXPECT_EQ(ec.value(), 0);
-    EXPECT_FALSE(contract.execute(init_param, 0, context, false, statectx_observer, output, err));
-}
-
 TEST_F(xcontract_fixture_t, execute_init_static_error) {
     contract_runtime::evm::sys_contract_precompile_output output;
     contract_runtime::evm::sys_contract_precompile_error err;
@@ -718,14 +596,7 @@ TEST_F(xcontract_fixture_t,  execute_is_confirmed_extract_error) {
     EXPECT_EQ(evm_common::fromBigEndian<u256>(output.output), 0);
 }
 
-    // eth::xeth_block_header_with_difficulty_t header_with_difficulty{header, difficulty};
-    // auto k = header.hash().asBytes();
-    // auto v = header_with_difficulty.to_string();
-    // if (0 != m_contract_state->map_set(data::system_contract::XPROPERTY_ETH_CHAINS_HEADER, {k.begin(), k.end()}, {v.begin(), v.end()})) {
-    //     return false;
-    // }
-
-TEST_F(xcontract_fixture_t,  test_release) {
+TEST_F(xcontract_fixture_t, test_release) {
     // num = 40000
     for (auto i = 10000; i <= 60000; i++) {
         contract.set_hash(i, h256(i));
