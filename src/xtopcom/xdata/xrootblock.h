@@ -93,7 +93,7 @@ class xrootblock_t : public xblock_t {
     static const std::string get_rootblock_hash();
     static base::enum_xchain_id get_rootblock_chainid();
     static void get_rootblock_data(xJson::Value & json);
-    static xrelay_block* get_genesis_relay_block();
+    static xrelay_block get_genesis_relay_block();
 };
 
 NS_END2

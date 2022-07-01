@@ -380,12 +380,8 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_block(base
 base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_relay_account(base::xvaccount_t const & account, xenum_create_src_t src, std::error_code & ec) {
     xinfo("[xtop_genesis_manager::create_genesis_of_relay_account] account: %s", account.get_account().c_str());
     auto _relay_block = data::xrootblock_t::get_genesis_relay_block();
-    if (_relay_block == nullptr) {
-        xwarn("get_genesis_relay_block is nullptr");
-        return nullptr;
-    }
 
-    xbytes_t rlp_genesis_block_header_data = _relay_block->encodeBytes(false);
+    xbytes_t rlp_genesis_block_header_data = _relay_block.encodeBytes(false);
     std::string data((char*)rlp_genesis_block_header_data.data(), rlp_genesis_block_header_data.size());
     data::xemptyblock_build_t bbuild(sys_contract_relay_block_addr);
 

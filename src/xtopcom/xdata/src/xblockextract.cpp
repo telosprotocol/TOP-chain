@@ -224,7 +224,7 @@ void xblockextract_t::unpack_relayblock(base::xvblock_t* _block, bool include_si
             xrelay_signature_node_t signature{sign_str};
             signature_nodes.push_back(signature);
         }
-        relayblock.add_signature_nodes(signature_nodes);
+        relayblock.set_signature_nodes(signature_nodes);
     }
 }
 
