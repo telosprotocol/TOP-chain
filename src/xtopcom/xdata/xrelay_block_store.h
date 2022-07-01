@@ -17,61 +17,50 @@ namespace top {
 
 namespace data {
 
+    enum enum_block_cache_type {
+        cache_tx_block,
+        cache_poly_tx_block,
+        cache_poly_election_block,
+        cache_error_block,
+    };
+
+    struct xrelay_block_save_leaf {
+        xrelay_block_save_leaf() = default;
+        enum_block_cache_type   m_type;
+        //uint64_t                m_chain_id;
+       // evm_common::h256        m_merkle_root_hash;    //election key 
+        evm_common::h256        m_block_hash;
+    };
 
     class xrelay_block_store {
 
-        public:
-        xrelay_block_store(): m_blocks_map(100), m_block_merkle_tree_map(100), m_block_height_to_hash_map(100), m_block_ordinal_to_hash_map(100) {}
+    public:
+        xrelay_block_store():m_tx_block_map(100) {};
         static xrelay_block_store &get_instance()
         {
             static xrelay_block_store m_instance_store;
             return m_instance_store;
         }
 
-        public:
-        
-        top::evm_common::h256   compute_merkle_root(std::vector<top::evm_common::h256> hash_vector);
-        void                    save_block_ordinal_block_hash(uint64_t block_ordinal, top::evm_common::h256 block_hash);
-        void                    save_block_data(top::evm_common::h256 block_hash,xrelay_block block);
-        void                    save_chain_height(uint64_t block_height);
-        void                    save_block_hash(uint64_t height, top::evm_common::h256 header_hash);
-        void                    save_block_merkle_tree(top::evm_common::h256 block_hash, xPartialMerkleTree tree);
-
-        bool                    verify_path(top::evm_common::h256  rootHash, xMerklePath path ,  top::evm_common::h256 item);
-        void                    xpartial_merklize(std::vector<top::evm_common::h256> arr_in, 
-                                                  top::evm_common::h256  &hash_out, std::vector<xMerklePath> &path_out);
-        top::evm_common::h256   reconstruct_merkle_tree_node(uint64_t index, uint64_t level, uint64_t counter, uint64_t tree_size,
-                                                     std::unordered_map<std::string, top::evm_common::h256> &tree_nodes);
-        top::evm_common::h256   compute_root_from_path(xMerklePath path, top::evm_common::h256 item_hash);
-        top::evm_common::h256   compute_root_from_path_and_item(xMerklePath path, xMerklePathItem item );
-     
-
     public:
-        top::evm_common::h256       get_block_ordinal_block_hash(uint64_t block_ordinal);
-        uint64_t                    get_chain_height();
-        top::evm_common::h256       get_block_hash(uint64_t height);
-        xrelay_block                get_block_data(top::evm_common::h256 block_hash);
-        xMerklePath                 get_block_proof(top::evm_common::h256 block_hash, top::evm_common::h256 head_block_hash);
-        xPartialMerkleTree          get_block_merkle_tree_from_ordinal(uint64_t block_ordinal);
-        top::evm_common::h256       get_last_block_hash();
-        xPartialMerkleTree          get_block_merkle_tree(top::evm_common::h256 block_hash);
-        top::evm_common::h256       get_merkle_tree_node(uint64_t index, uint64_t level, uint64_t counter, uint64_t tree_size,
-                                                        std::unordered_map<std::string, top::evm_common::h256> &tree_nodes);
+        enum_block_cache_type   check_block_type(const xrelay_block &next_block);
+        bool    set_block_merkle_root_from_store(xrelay_block &next_block);
+        bool    get_all_poly_block_hash_list_from_cache(const xrelay_block &tx_block, std::vector<evm_common::h256> &leaf_hash_vector);
+        bool    get_all_leaf_block_hash_list_from_cache(const xrelay_block &poly_block, std::vector<evm_common::h256> &leaf_hash_vector, bool include_self);
+        bool    save_block_hash_to_store_cache(xrelay_block &next_block);
+        bool    load_block_hash_from_cache(uint64_t load_height, xrelay_block_save_leaf &block_leaf);
+        void    clear_cache();
 
-        private:
+    protected:
+        bool    save_tx_block_hash_to_tx_map(xrelay_block &next_block, enum_block_cache_type block_typ);
 
-            //cache withe block . block hash -> xrelay_block
-            basic::xlru_cache<top::evm_common::h256, xrelay_block>  m_blocks_map{1000};
-
-            // block -> block_merkle_tree
-            basic::xlru_cache<top::evm_common::h256, xPartialMerkleTree> m_block_merkle_tree_map{1000};
-            //  height -> block hash
-             basic::xlru_cache<uint64_t,  top::evm_common::h256> m_block_height_to_hash_map{1000};
-            //save ordinal -> block hash
-            basic::xlru_cache<uint64_t, top::evm_common::h256> m_block_ordinal_to_hash_map{1000};
-
-            //save block height
-            uint64_t    m_block_height;
+    private:
+        bool    check_tx_block_validity(const xrelay_block &next_block);
+        bool    check_poly_block_validity(const xrelay_block &next_block);
+       
+    private:
+         basic::xlru_cache<uint64_t, xrelay_block_save_leaf> m_tx_block_map;  
+          
     };
 
 }

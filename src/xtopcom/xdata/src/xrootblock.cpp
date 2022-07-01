@@ -260,8 +260,8 @@ void xrootblock_t::get_rootblock_data(xJson::Value & json) {
     return;
 }
 
- xrelay_block* xrootblock_t::get_genesis_relay_block() {
-    return m_relay_genesis_block;
+xrelay_block xrootblock_t::get_genesis_relay_block() {
+    return *m_relay_genesis_block;
 }
 
 NS_END2

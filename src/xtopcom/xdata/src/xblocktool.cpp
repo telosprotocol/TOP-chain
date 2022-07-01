@@ -834,7 +834,7 @@ xrelay_block* xblocktool_t::create_genesis_relay_block(const xrootblock_para_t &
         auto pubkey_str = base::xstring_utl::base64_decode(node.m_publickey.to_string());
         xbytes_t bytes_x(pubkey_str.begin() + 1, pubkey_str.begin() + 33);
         xbytes_t bytes_y(pubkey_str.begin() + 33, pubkey_str.end());
-        _election_group.elections_vector.push_back(data::xrelay_election_node_t(evm_common::h256(bytes_x), evm_common::h256(bytes_y), 0));
+        _election_group.elections_vector.push_back(data::xrelay_election_node_t(evm_common::h256(bytes_x), evm_common::h256(bytes_y)));
     }
 
     _relay_block->set_elections_next(_election_group);
