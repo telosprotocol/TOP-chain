@@ -13,8 +13,9 @@ h256 const EmptyListSHA3 = sha3(rlpList());
 
 bool sha3(bytesConstRef _input, bytesRef o_output) noexcept
 {
-    if (o_output.size() != 32)
-        return false;
+    if (o_output.size() != 32) {
+		return false;
+	}
 
 	const uint256_t top_hash = utl::xkeccak256_t::digest((const unsigned char *)_input.data(), _input.size());
 	bytesConstRef((const unsigned char*)top_hash.data(), 32).copyTo(o_output);

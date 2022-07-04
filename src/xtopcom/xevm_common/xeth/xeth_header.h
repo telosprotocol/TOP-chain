@@ -14,27 +14,15 @@ using Address = h160;
 using LogBloom = h2048;
 using BlockNonce = h64;
 class xeth_block_header_t {
-#define convertStringFromJson(jsonValue, type, address) \
-    if ((jsonValue).empty()) {\
-        return false;\
-    }\
-    (address) = (type)((jsonValue).asString());
-
-#define convertUint64FromJson(jsonValue, address) \
-    if ((jsonValue).empty()) {\
-        return false;\
-    }\
-    (address) = strtoull((jsonValue).asString().c_str(), 0, 0);
-
 public:
     xeth_block_header_t(){}
-    bool fromJson(const std::string& content);
 
     // encode and decode
     std::string to_string();
     int from_string(const std::string & s);
     int from_rlp(const xbytes_t & bytes);
     std::string dump();
+    void print();
 
     // member of header
     Hash parentHash() const;
@@ -54,7 +42,6 @@ public:
     BlockNonce nonce() const;
     bigint baseFee() const;
     Hash hash();
-    bool isBaseFee() const;
     Hash hashWithoutSeal();
 
 private:
@@ -83,8 +70,8 @@ private:
     // Peculiar data
     Hash m_hash;
     bool m_hashed = false;
-    bool m_isBaseFee = false;
 };
+using xeth_header_t = xeth_block_header_t;
 
 class xeth_block_header_with_difficulty_t {
 public:

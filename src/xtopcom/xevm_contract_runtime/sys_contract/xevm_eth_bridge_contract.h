@@ -24,25 +24,23 @@ public:
                  sys_contract_precompile_error & err) override;
 
 private:
-    bool init(const xbytes_t & headerContent, std::string emitter);
-    bool sync(const xbytes_t & headerContent);
-    bool is_confirmed(const xbytes_t & headerContent);
+    bool init(const xbytes_t & rlp_bytes);
+    bool sync(const xbytes_t & rlp_bytes);
+    bool is_confirmed(const xbytes_t & hash_bytes);
 
-    evm_common::bigint calcBaseFee(const evm_common::eth::xeth_block_header_t & parentHeader) const;
-    bool verifyOwner(const std::string & owner) const;
-    bool verifyCommon(const evm_common::eth::xeth_block_header_t & prev_header, const evm_common::eth::xeth_block_header_t & new_header) const;
-    bool verifyEip1559Header(const evm_common::eth::xeth_block_header_t & parentHeader, const evm_common::eth::xeth_block_header_t & header) const;
-    bool verifyGaslimit(const evm_common::u256 parentGasLimit, const evm_common::u256 headerGasLimit) const;
-    bool isLondon(const evm_common::eth::xeth_block_header_t & header) const;
-    bool isArrowGlacier(const evm_common::eth::xeth_block_header_t & header) const;
+    bool verify(const std::string & owner) const;
+    bool verify_common(const evm_common::eth::xeth_block_header_t & prev_header, const evm_common::eth::xeth_block_header_t & new_header) const;
 
-    bool get_hash(const evm_common::bigint height, evm_common::h256 & hash) const;
-    bool set_hash(const evm_common::bigint height, const evm_common::h256 hash);
     bool get_height(evm_common::bigint & height) const;
     bool set_height(const evm_common::bigint height);
+    bool get_hash(const evm_common::bigint height, evm_common::h256 & hash) const;
+    bool set_hash(const evm_common::bigint height, const evm_common::h256 hash);
+    bool remove_hash(const evm_common::bigint height);
     bool get_header(const evm_common::h256 hash, evm_common::eth::xeth_block_header_t & header, evm_common::bigint & difficulty) const;
     bool set_header(evm_common::eth::xeth_block_header_t & header, evm_common::bigint difficulty);
+    bool remove_header(const evm_common::h256 hash);
     bool rebuild(evm_common::eth::xeth_block_header_t & current_header, evm_common::eth::xeth_block_header_t & new_header);
+    void release(const evm_common::bigint number);
 
     const common::xaccount_address_t m_contract_address{evm_eth_bridge_contract_address};
     std::shared_ptr<data::xunit_bstate_t> m_contract_state{nullptr};

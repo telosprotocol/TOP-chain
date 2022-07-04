@@ -2,9 +2,12 @@
 #include "xbasic/xhex.h"
 #include "xevm_common/rlp.h"
 #include "xevm_common/xabi_decoder.h"
+#include "xevm_common/xeth/xethash.h"
+#include "xdepends/include/ethash/ethash.hpp"
 
 #define private public
 #include "xevm_common/xeth/xeth_header.h"
+#include "xevm_contract_runtime/xevm_sys_contract_face.h"
 
 namespace top {
 namespace tests {
@@ -12,28 +15,7 @@ namespace tests {
 using namespace contract_runtime::evm::sys_contract;
 using namespace evm_common;
 using namespace evm_common::eth;
-
-void print_header(xeth_block_header_t & header) {
-    printf("header.m_parentHash: %s\n", header.m_parentHash.hex().c_str());
-    printf("header.m_uncleHash: %s\n", header.m_uncleHash.hex().c_str());
-    printf("header.m_miner: %s\n", header.m_miner.hex().c_str());
-    printf("header.m_stateMerkleRoot: %s\n", header.m_stateMerkleRoot.hex().c_str());
-    printf("header.m_txMerkleRoot: %s\n", header.m_txMerkleRoot.hex().c_str());
-    printf("header.m_receiptMerkleRoot: %s\n", header.m_receiptMerkleRoot.hex().c_str());
-    printf("header.m_bloom: %s\n", header.m_bloom.hex().c_str());
-    printf("header.m_difficulty: %s\n", header.m_difficulty.str().c_str());
-    printf("header.m_number: %s\n", header.m_number.str().c_str());
-    printf("header.m_gasLimit: %lu\n", header.m_gasLimit);
-    printf("header.m_gasUsed: %lu\n", header.m_gasUsed);
-    printf("header.m_time: %lu\n", header.m_time);
-    printf("header.m_extra: %s\n", top::to_hex(header.m_extra).c_str());
-    printf("header.m_mixDigest: %s\n", header.m_mixDigest.hex().c_str());
-    printf("header.m_nonce: %s\n", header.m_nonce.hex().c_str());
-    printf("header.hash: %s\n", header.hash().hex().c_str());
-    printf("header.m_baseFee: %s\n", header.m_baseFee.str().c_str());
-    printf("header.m_hashed: %d\n", header.m_hashed);
-    printf("header.m_isBaseFee: %d\n", header.m_isBaseFee);
-}
+using namespace ethash;
 
 void header_rlp_bytes_decode(const char * hex_input) {
     std::error_code ec;
@@ -43,58 +25,7 @@ void header_rlp_bytes_decode(const char * hex_input) {
     auto header_bytes = item.decoded[0];
     xeth_block_header_t header;
     header.from_rlp(header_bytes);
-    print_header(header);
-}
-
-void headers_rlp_bytes_decode(const char * hex_input) {
-    std::error_code ec;
-    xbytes_t input = top::from_hex(hex_input, ec);
-    std::vector<xeth_block_header_t> headers;
-
-    auto decode_item = RLP::decode_once(input);
-    auto bytes = decode_item.decoded[0];
-    while (bytes.size() > 0) {
-        auto item = RLP::decode_once(bytes);
-        bytes = item.remainder;
-        xassert(item.decoded.size() == 1);
-        auto header_bytes = item.decoded[0];
-        xeth_block_header_t header;
-        header.from_rlp(header_bytes);
-        headers.emplace_back(header);
-    }
-    for (size_t i = 0; i < headers.size(); i++) {
-        auto header = headers[i];
-        print_header(header);
-    }
-}
-
-void raw_input_decode(const char * hex_input) {
-    std::error_code ec;
-    xbytes_t input = top::from_hex(hex_input, ec);
-    EXPECT_EQ(ec.value(), 0);
-    evm_common::xabi_decoder_t abi_decoder = evm_common::xabi_decoder_t::build_from(input, ec);
-    EXPECT_EQ(ec.value(), 0);
-    auto function_selector = abi_decoder.extract<evm_common::xfunction_selector_t>(ec);
-    EXPECT_EQ(ec.value(), 0);
-    function_selector.method_id;
-    auto headers_bytes = abi_decoder.extract<xbytes_t>(ec);
-    EXPECT_EQ(ec.value(), 0);
-    std::vector<xeth_block_header_t> headers;
-    auto decode_item = RLP::decode_once(headers_bytes);
-    auto bytes = decode_item.decoded[0];
-    while (bytes.size() > 0) {
-        auto item = RLP::decode_once(bytes);
-        bytes = item.remainder;
-        xassert(item.decoded.size() == 1);
-        auto header_bytes = item.decoded[0];
-        xeth_block_header_t header;
-        header.from_rlp(header_bytes);
-        headers.emplace_back(header);
-    }
-    for (size_t i = 0; i < headers.size(); i++) {
-        auto header = headers[i];
-        print_header(header);
-    }
+    header.print();
 }
 
 TEST(stream, bytes_encode_decode) {
@@ -134,7 +65,6 @@ TEST(stream, header_encode_decode) {
     header.m_time = UINT64_MAX - 5;
     header.m_baseFee = static_cast<evm_common::bigint>(UINT64_MAX - 6);
     header.m_hashed = true;
-    header.m_isBaseFee = true;
     header.m_extra = {1, 3, 5, 7};
 
     auto header_str = header.to_string();
@@ -159,212 +89,6 @@ TEST(stream, header_encode_decode) {
     EXPECT_EQ(header.m_baseFee, header_decode.m_baseFee);
     EXPECT_EQ(header.m_hash, header_decode.m_hash);
     EXPECT_EQ(header.m_hashed, header_decode.m_hashed);
-    EXPECT_EQ(header.m_isBaseFee, header_decode.m_isBaseFee);
-}
-
-TEST(eth_hash, ethash_with_basefee) {
-    // "parentHash":"0x6d70280cdec5d2cfa1a3dee20d3d1fc1aa65c80ac742a3c7e8c298a697fccb82",
-    // "sha3Uncles":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
-    // "miner":"0x0000000000000000000000000000000000000000",
-    // "stateRoot":"0xc3ecb60b288fa9c23a0a427733aab8dfcc5cddbcbcd7b39b5f7650869082c82c",
-    // "transactionsRoot":"0x55ef1e24d76cffa46675b69682003f6424034a888ef57227d043bfd01e0d3fef",
-    // "receiptsRoot":"0x593ade3839f1cf8533f17205cf41f29755e2f0f37efc4cd1b7ad66abe805820a",
-    // "logsBloom":"0x0c2010080200000040800000400060100000000004000100008100000c84020080080000000002001001000000004000000412220624a00000200000002c20418200384040000000a20000280000008001090108022400000008800040000008088884000a00c008080841500100080000001001400000800000111000000060008108040244040001510422000000100000380280000000000100044000010082000000000088044000010840000008000081004081200420a00c48002440014004002201a000080000000000000000820004008008000001000130000065000012001002000400000000020002019000001000008020000000080402842413",
-    // "difficulty":"0x1",
-    // "number":"0xa4814e",
-    // "gasLimit":"0x1c9c380",
-    // "gasUsed":"0x322351",
-    // "timestamp":"0x62981b2b",
-    // "extraData":"0x696e667572612e696f00000000000000000000000000000000000000000000007cddbf742833598f47b9641981105fb1b32d5eafc8e114e7685af196fbde6cca1fcfba80770080afd0f7094406da275eb16d5526c25a9d135b6b0ee68f30fee800",
-    // "mixHash":"0x0000000000000000000000000000000000000000000000000000000000000000",
-    // "nonce":"0x0000000000000000",
-    // "baseFeePerGas":"0x9",
-    // "hash":"0xe1160b7e6941ffea73a9fb031cd86fdfc9a87573449da4d1a186038ae8288b42"}
-    xeth_block_header_t header;
-    std::error_code ec;
-    header.m_parentHash = static_cast<evm_common::h256>(top::from_hex("6d70280cdec5d2cfa1a3dee20d3d1fc1aa65c80ac742a3c7e8c298a697fccb82", ec));
-    header.m_uncleHash = static_cast<evm_common::h256>(top::from_hex("1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347", ec));
-    header.m_miner = static_cast<evm_common::h160>(top::from_hex("0000000000000000000000000000000000000000", ec));
-    header.m_stateMerkleRoot = static_cast<evm_common::h256>(top::from_hex("c3ecb60b288fa9c23a0a427733aab8dfcc5cddbcbcd7b39b5f7650869082c82c", ec));
-    header.m_txMerkleRoot = static_cast<evm_common::h256>(top::from_hex("55ef1e24d76cffa46675b69682003f6424034a888ef57227d043bfd01e0d3fef", ec));
-    header.m_receiptMerkleRoot = static_cast<evm_common::h256>(top::from_hex("593ade3839f1cf8533f17205cf41f29755e2f0f37efc4cd1b7ad66abe805820a", ec));
-    header.m_bloom = static_cast<evm_common::h2048>(top::from_hex("0c2010080200000040800000400060100000000004000100008100000c84020080080000000002001001000000004000000412220624a00000200000002c20418200384040000000a20000280000008001090108022400000008800040000008088884000a00c008080841500100080000001001400000800000111000000060008108040244040001510422000000100000380280000000000100044000010082000000000088044000010840000008000081004081200420a00c48002440014004002201a000080000000000000000820004008008000001000130000065000012001002000400000000020002019000001000008020000000080402842413", ec));
-    header.m_difficulty = 0x1;
-    header.m_number = 0xa4814e;
-    header.m_gasLimit = 0x1c9c380;
-    header.m_gasUsed = 0x322351;
-    header.m_time = 0x62981b2b;
-    header.m_extra = top::from_hex("696e667572612e696f00000000000000000000000000000000000000000000007cddbf742833598f47b9641981105fb1b32d5eafc8e114e7685af196fbde6cca1fcfba80770080afd0f7094406da275eb16d5526c25a9d135b6b0ee68f30fee800", ec);
-    header.m_mixDigest = static_cast<evm_common::h256>(top::from_hex("0000000000000000000000000000000000000000000000000000000000000000", ec));
-    header.m_nonce = static_cast<evm_common::h64>(top::from_hex("0000000000000000", ec));
-    header.m_baseFee = 0x9;
-    header.m_isBaseFee = true;
-    header.m_hashed = false;
-    EXPECT_EQ(header.hash().hex(), "e1160b7e6941ffea73a9fb031cd86fdfc9a87573449da4d1a186038ae8288b42");
-}
-
-TEST(eth_hash, ethash_without_basefee) {
-    /*std::string str = "{\
-        \"difficulty\": \"0x200c0\",\
-        \"extraData\": \"0xd983010a0f846765746889676f312e31352e3135856c696e7578\",\
-        \"gasLimit\": \"0x47ff2c\",\
-        \"gasUsed\": \"0x0\",\
-        \"hash\": \"0x8946a06b7aab41b68ceb49cda930d595fef38b8d8df13dff29cb92dc7507e2ac\",\
-        \"logsBloom\": \"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000\",\
-        \"miner\": \"0x55b82560cf9f787705a106b8142a82be7f13c266\",\
-        \"mixHash\": \"0x076d53f285449f2d4508da903bd63b4817341d8543b534ce94bc38c6715fd191\",\
-        \"nonce\": \"0x3c6c5cd91a9cbd8e\",\
-        \"number\": \"0x4\",\
-        \"parentHash\": \"0x2b1ec97e4d25b99e006079c851c3ca1435ff5881c480517a3278af35a87e6a3a\",\
-        \"receiptsRoot\": \"0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421\",\
-        \"sha3Uncles\": \"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347\",\
-        \"size\": \"0x219\",\
-        \"stateRoot\": \"0xe3638dd1d7693222e09ac20388cce125fde4f61707b6ba77ad5e76f51f8f9662\",\
-        \"timestamp\": \"0x62625f01\",\
-        \"totalDifficulty\": \"0x80182\",\
-        \"transactions\": [],\
-        \"transactionsRoot\": \"0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421\",\
-        \"uncles\": []\
-        }";*/
-    xeth_block_header_t header;
-    std::error_code ec;
-    header.m_parentHash = static_cast<evm_common::h256>(top::from_hex("2b1ec97e4d25b99e006079c851c3ca1435ff5881c480517a3278af35a87e6a3a", ec));
-    header.m_uncleHash = static_cast<evm_common::h256>(top::from_hex("1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347", ec));
-    header.m_miner = static_cast<evm_common::h160>(top::from_hex("55b82560cf9f787705a106b8142a82be7f13c266", ec));
-    header.m_stateMerkleRoot = static_cast<evm_common::h256>(top::from_hex("e3638dd1d7693222e09ac20388cce125fde4f61707b6ba77ad5e76f51f8f9662", ec));
-    header.m_txMerkleRoot = static_cast<evm_common::h256>(top::from_hex("56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421", ec));
-    header.m_receiptMerkleRoot = static_cast<evm_common::h256>(top::from_hex("56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421", ec));
-    header.m_bloom = static_cast<evm_common::h2048>(top::from_hex("00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", ec));
-    header.m_difficulty = 0x200c0;
-    header.m_number = 0x4;
-    header.m_gasLimit = 0x47ff2c;
-    header.m_gasUsed = 0x0;
-    header.m_time = 0x62625f01;
-    header.m_extra = top::from_hex("d983010a0f846765746889676f312e31352e3135856c696e7578", ec);
-    header.m_mixDigest = static_cast<evm_common::h256>(top::from_hex("076d53f285449f2d4508da903bd63b4817341d8543b534ce94bc38c6715fd191", ec));
-    header.m_nonce = static_cast<evm_common::h64>(top::from_hex("3c6c5cd91a9cbd8e", ec));
-    EXPECT_EQ(header.hash().hex(), "8946a06b7aab41b68ceb49cda930d595fef38b8d8df13dff29cb92dc7507e2ac");
-}
-
-TEST(eth_header, rlp_decode) {
-    const char * hex_input = "7024323700000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000429f90426f90210a0397cb4acc8fe4ac39c6cdcb50a28c727ad257f084020912029a2d6f2ad11d431a01dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d4934794cf4d39b0edb0b69cd15f687fd45c8fc8eb687daea0b5d83f8283dba9ba397287db1f6c0675e9a66a51aef8d7796c32b7da5cd6a982a056e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421a056e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421b90100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008302192a64834f11298084628f482099d883010a12846765746888676f312e31372e38856c696e7578a063e47112f6e95c00322701868d568e5d08e393e9430a0fd152e71e7c8be86cac8829ebdb8e839fffacf90210a0fc40ad4f64dd51d09e94d9b7f1136cdcaaf03fb9a75c32661228bd3212547107a01dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d4934794cf4d39b0edb0b69cd15f687fd45c8fc8eb687daea0be5f8f7c84539b81c621a029b3083c37e0b63dde1372545c38edb792fcb65883a056e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421a056e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421b90100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008302196d65834f24ec8084628f482199d883010a12846765746888676f312e31372e38856c696e7578a0d8f6c88a59b42eafc6bc6e048e257a415bbb17822d57566153b73a72666b297b880afe7b9f331361e70000000000000000000000000000000000000000000000";
-    std::error_code ec;
-    xbytes_t input = top::from_hex(hex_input, ec);
-    EXPECT_EQ(ec.value(), 0);
-    evm_common::xabi_decoder_t abi_decoder = evm_common::xabi_decoder_t::build_from(input, ec);
-    EXPECT_EQ(ec.value(), 0);
-    auto function_selector = abi_decoder.extract<evm_common::xfunction_selector_t>(ec);
-    EXPECT_EQ(ec.value(), 0);
-    function_selector.method_id;
-    auto headers_bytes = abi_decoder.extract<xbytes_t>(ec);
-    EXPECT_EQ(ec.value(), 0);
-    std::vector<xeth_block_header_t> headers;
-    auto decode_item = RLP::decode_once(headers_bytes);
-    auto bytes = decode_item.decoded[0];
-    while (bytes.size() > 0) {
-        auto item = RLP::decode_once(bytes);
-        bytes = item.remainder;
-        xassert(item.decoded.size() == 1);
-        auto header_bytes = item.decoded[0];
-        xeth_block_header_t header;
-        header.from_rlp(header_bytes);
-        headers.emplace_back(header);
-    }
-    // {"parentHash":"0x397cb4acc8fe4ac39c6cdcb50a28c727ad257f084020912029a2d6f2ad11d431","sha3Uncles":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","miner":"0xcf4d39b0edb0b69cd15f687fd45c8fc8eb687dae","stateRoot":"0xb5d83f8283dba9ba397287db1f6c0675e9a66a51aef8d7796c32b7da5cd6a982","transactionsRoot":"0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421","receiptsRoot":"0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421","logsBloom":"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","difficulty":"0x2192a","number":"0x64","gasLimit":"0x4f1129","gasUsed":"0x0","timestamp":"0x628f4820","extraData":"0xd883010a12846765746888676f312e31372e38856c696e7578","mixHash":"0x63e47112f6e95c00322701868d568e5d08e393e9430a0fd152e71e7c8be86cac","nonce":"0x29ebdb8e839fffac","baseFeePerGas":null,"hash":"0xfc40ad4f64dd51d09e94d9b7f1136cdcaaf03fb9a75c32661228bd3212547107"}
-    // {"parentHash":"0xfc40ad4f64dd51d09e94d9b7f1136cdcaaf03fb9a75c32661228bd3212547107","sha3Uncles":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","miner":"0xcf4d39b0edb0b69cd15f687fd45c8fc8eb687dae","stateRoot":"0xbe5f8f7c84539b81c621a029b3083c37e0b63dde1372545c38edb792fcb65883","transactionsRoot":"0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421","receiptsRoot":"0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421","logsBloom":"0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000","difficulty":"0x2196d","number":"0x65","gasLimit":"0x4f24ec","gasUsed":"0x0","timestamp":"0x628f4821","extraData":"0xd883010a12846765746888676f312e31372e38856c696e7578","mixHash":"0xd8f6c88a59b42eafc6bc6e048e257a415bbb17822d57566153b73a72666b297b","nonce":"0x0afe7b9f331361e7","baseFeePerGas":null,"hash":"0x3a5c3c19ab2906d03fccde42623bda65153ac0045abba0ef3db998c41be38553"}
-    EXPECT_EQ(headers[0].m_parentHash.hex(), "397cb4acc8fe4ac39c6cdcb50a28c727ad257f084020912029a2d6f2ad11d431");
-    EXPECT_EQ(headers[0].m_uncleHash.hex(), "1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347");
-    EXPECT_EQ(headers[0].m_miner.hex(), "cf4d39b0edb0b69cd15f687fd45c8fc8eb687dae");
-    EXPECT_EQ(headers[0].m_stateMerkleRoot.hex(), "b5d83f8283dba9ba397287db1f6c0675e9a66a51aef8d7796c32b7da5cd6a982");
-    EXPECT_EQ(headers[0].m_txMerkleRoot.hex(), "56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421");
-    EXPECT_EQ(headers[0].m_receiptMerkleRoot.hex(), "56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421");
-    EXPECT_EQ(headers[0].m_bloom.hex(), "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
-    EXPECT_EQ(headers[0].m_difficulty.str(), std::to_string(0x2192a));
-    EXPECT_EQ(headers[0].m_number.str(), std::to_string(0x64));
-    EXPECT_EQ(headers[0].m_gasLimit, 0x4f1129);
-    EXPECT_EQ(headers[0].m_gasUsed, 0x0);
-    EXPECT_EQ(headers[0].m_time, 0x628f4820);
-    EXPECT_EQ(headers[0].m_mixDigest.hex(), "63e47112f6e95c00322701868d568e5d08e393e9430a0fd152e71e7c8be86cac");
-    EXPECT_EQ(headers[0].m_nonce.hex(), "29ebdb8e839fffac");
-    EXPECT_EQ(headers[0].hash().hex() , "fc40ad4f64dd51d09e94d9b7f1136cdcaaf03fb9a75c32661228bd3212547107");
-    EXPECT_EQ(headers[1].m_parentHash.hex(), "fc40ad4f64dd51d09e94d9b7f1136cdcaaf03fb9a75c32661228bd3212547107");
-    EXPECT_EQ(headers[1].m_uncleHash.hex(), "1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347");
-    EXPECT_EQ(headers[1].m_miner.hex(), "cf4d39b0edb0b69cd15f687fd45c8fc8eb687dae");
-    EXPECT_EQ(headers[1].m_stateMerkleRoot.hex(), "be5f8f7c84539b81c621a029b3083c37e0b63dde1372545c38edb792fcb65883");
-    EXPECT_EQ(headers[1].m_txMerkleRoot.hex(), "56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421");
-    EXPECT_EQ(headers[1].m_receiptMerkleRoot.hex(), "56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421");
-    EXPECT_EQ(headers[1].m_bloom.hex(), "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
-    EXPECT_EQ(headers[1].m_difficulty.str(), std::to_string(0x2196d));
-    EXPECT_EQ(headers[1].m_number.str(), std::to_string(0x65));
-    EXPECT_EQ(headers[1].m_gasLimit, 0x4f24ec);
-    EXPECT_EQ(headers[1].m_gasUsed, 0x0);
-    EXPECT_EQ(headers[1].m_time, 0x628f4821);
-    EXPECT_EQ(headers[1].m_mixDigest.hex(), "d8f6c88a59b42eafc6bc6e048e257a415bbb17822d57566153b73a72666b297b");
-    EXPECT_EQ(headers[1].m_nonce.hex(), "0afe7b9f331361e7");
-    EXPECT_EQ(headers[1].hash().hex() , "3a5c3c19ab2906d03fccde42623bda65153ac0045abba0ef3db998c41be38553");
-}
-
-TEST(eth_header, rlp_decode_init) {
-    const char * hex_input = "78dcb6c7000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000002c00000000000000000000000000000000000000000000000000000000000000260f9025da09f08f9313e362e1faa0fbb4a3534416dd82ce7797e8f194bc22b7c76dcdd7911a01dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347940000000000000000000000000000000000000000a0c9864d89fd30d28e1e05402d1fc12244ae5067a2f0dd21edbf10e62bf78465aca01be9adc56250943063e10082284c744156ed4580c8be0deae48b1fa057845697a0d3e02d72b7070748469fb93e794205c0e6357402520436660dd9106fe18eb42db9010040a6010c02400000108800c080004a50408a080000022000848918002c0002022010152401000280410004100000020080200000400020002220008180a420400000081042202120a50001081000442683010709420000420008000000040000008b80404244800888204822010008011a01202140106c2001001034010814481010000002400400004004020001181420008010c61064282111004460480440c2208010008288444c8110480800000a000094c00000020c03900e000681080000040203a0c00004040060009000200082800c02000c0010400400210804b088001620180108086000002402000a0032800010180290a00484140990900440180183a4814d8401c9c364838d31238462981b1cb861d883010a11846765746888676f312e31372e38856c696e757800000000000000a26ffe223af0fd86a323a3068735dd0fe36a8a0bc51547c85e756d42f7bd26db73f0227251f63142f73488ade3638c0632654b42a5c013e6d923805eca4b2dbe01a00000000000000000000000000000000000000000000000000000000000000000880000000000000000";
-    std::error_code ec;
-    xbytes_t input = top::from_hex(hex_input, ec);
-    EXPECT_EQ(ec.value(), 0);
-    evm_common::xabi_decoder_t abi_decoder = evm_common::xabi_decoder_t::build_from(input, ec);
-    EXPECT_EQ(ec.value(), 0);
-    auto function_selector = abi_decoder.extract<evm_common::xfunction_selector_t>(ec);
-    EXPECT_EQ(ec.value(), 0);
-    EXPECT_EQ(function_selector.method_id, 0x78dcb6c7);
-    auto bytes = abi_decoder.extract<xbytes_t>(ec);
-    EXPECT_EQ(ec.value(), 0);
-    std::vector<xeth_block_header_t> headers;
-    while (bytes.size() > 0) {
-        auto item = RLP::decode_once(bytes);
-        bytes = item.remainder;
-        xassert(item.decoded.size() == 1);
-        auto header_bytes = item.decoded[0];
-        xeth_block_header_t header;
-        header.from_rlp(header_bytes);
-        headers.emplace_back(header);
-    }
-}
-
-TEST_F(xcontract_fixture_t, test_init_and_sync) {
-    const char * rlp_headers = "f90213f90210a0397cb4acc8fe4ac39c6cdcb50a28c727ad257f084020912029a2d6f2ad11d431a01dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d4934794cf4d39b0edb0b69cd15f687fd45c8fc8eb687daea0b5d83f8283dba9ba397287db1f6c0675e9a66a51aef8d7796c32b7da5cd6a982a056e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421a056e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421b90100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008302192a64834f11298084628f482099d883010a12846765746888676f312e31372e38856c696e7578a063e47112f6e95c00322701868d568e5d08e393e9430a0fd152e71e7c8be86cac8829ebdb8e839fffac00000000000000000000";
-    std::error_code ec;
-    xbytes_t input = top::from_hex(rlp_headers, ec);
-    EXPECT_EQ(ec.value(), 0);
-    EXPECT_TRUE(contract.init(input, ""));
-
-    bigint height{0};
-    EXPECT_TRUE(contract.get_height(height));
-    EXPECT_EQ(height, 100);
-    h256 hash{0};
-    EXPECT_TRUE(contract.get_hash(height, hash));
-    EXPECT_EQ(hash.hex(), "fc40ad4f64dd51d09e94d9b7f1136cdcaaf03fb9a75c32661228bd3212547107");
-
-    xeth_block_header_t header;
-    bigint d{0};
-    EXPECT_TRUE(contract.get_header(hash, header, d));
-    EXPECT_EQ(header.m_parentHash.hex(), "397cb4acc8fe4ac39c6cdcb50a28c727ad257f084020912029a2d6f2ad11d431");
-    EXPECT_EQ(header.m_uncleHash.hex(), "1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347");
-    EXPECT_EQ(header.m_miner.hex(), "cf4d39b0edb0b69cd15f687fd45c8fc8eb687dae");
-    EXPECT_EQ(header.m_stateMerkleRoot.hex(), "b5d83f8283dba9ba397287db1f6c0675e9a66a51aef8d7796c32b7da5cd6a982");
-    EXPECT_EQ(header.m_txMerkleRoot.hex(), "56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421");
-    EXPECT_EQ(header.m_receiptMerkleRoot.hex(), "56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421");
-    EXPECT_EQ(header.m_bloom.hex(), "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
-    EXPECT_EQ(header.m_difficulty.str(), std::to_string(0x2192a));
-    EXPECT_EQ(header.m_number.str(), std::to_string(0x64));
-    EXPECT_EQ(header.m_gasLimit, 0x4f1129);
-    EXPECT_EQ(header.m_gasUsed, 0x0);
-    EXPECT_EQ(header.m_time, 0x628f4820);
-    EXPECT_EQ(header.m_mixDigest.hex(), "63e47112f6e95c00322701868d568e5d08e393e9430a0fd152e71e7c8be86cac");
-    EXPECT_EQ(header.m_nonce.hex(), "29ebdb8e839fffac");
-    EXPECT_EQ(header.m_difficulty, d);
-    EXPECT_EQ(header.m_hash.hex(), "fc40ad4f64dd51d09e94d9b7f1136cdcaaf03fb9a75c32661228bd3212547107");
-
-    const char * sync_rlp_headers = "f90213f90210a0fc40ad4f64dd51d09e94d9b7f1136cdcaaf03fb9a75c32661228bd3212547107a01dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d4934794cf4d39b0edb0b69cd15f687fd45c8fc8eb687daea0be5f8f7c84539b81c621a029b3083c37e0b63dde1372545c38edb792fcb65883a056e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421a056e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421b90100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008302196d65834f24ec8084628f482199d883010a12846765746888676f312e31372e38856c696e7578a0d8f6c88a59b42eafc6bc6e048e257a415bbb17822d57566153b73a72666b297b880afe7b9f331361e700000000000000000000";
-    xbytes_t sync_input = top::from_hex(sync_rlp_headers, ec);
-    EXPECT_EQ(ec.value(), 0);
 }
 
 TEST_F(xcontract_fixture_t, test_height_property) {
@@ -397,8 +121,510 @@ TEST_F(xcontract_fixture_t, test_hash_property) {
     }
 }
 
-TEST_F(xcontract_fixture_t, sync_BENCH) {
-    
+#include "test_evm_eth_bridge_contract_data.cpp"
+
+static void verify_ethash(xbytes_t & left_bytes) {
+    while (left_bytes.size() != 0) {
+        RLP::DecodedItem item = RLP::decode(left_bytes);
+        left_bytes = std::move(item.remainder);
+        xeth_block_header_t header;
+        {
+            auto item_header = RLP::decode_once(item.decoded[0]);
+            auto header_bytes = item_header.decoded[0];
+            header.from_rlp(header_bytes);
+        }
+        auto proofs_per_node = static_cast<uint64_t>(evm_common::fromBigEndian<u64>(item.decoded[item.decoded.size() - 1]));
+        std::vector<double_node_with_merkle_proof> nodes;
+        uint32_t nodes_size{64};
+        uint32_t nodes_start_index{2};
+        uint32_t proofs_start_index{2 + nodes_size * 2};
+        for (size_t i = 0; i < nodes_size; i++) {
+            double_node_with_merkle_proof node;
+            node.dag_nodes.emplace_back(static_cast<h512>(item.decoded[nodes_start_index + 2 * i]));
+            node.dag_nodes.emplace_back(static_cast<h512>(item.decoded[nodes_start_index + 2 * i + 1]));
+            for (size_t j = 0; j < proofs_per_node; j++) {
+                node.proof.emplace_back(static_cast<h128>(item.decoded[proofs_start_index + proofs_per_node * i + j]));
+            }
+            nodes.emplace_back(node);
+        }
+        EXPECT_TRUE(xethash_t::instance().verify_seal(header, nodes));
+    }
+}
+
+TEST(ethash, ethash_1270000) {
+// header.m_parentHash: 749c4c2c82582cba3489bce142d6c776d50a5c18b3aeaf3cdc68b27650d0a6b6
+// header.m_uncleHash: 1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347
+// header.m_miner: 00192fb10df37c9fb26829eb2cc623cd1bf599e8
+// header.m_stateMerkleRoot: dde529c57dd9924f169825c4415e4779c95f0e02c59af1d8b1f7a833520e5446
+// header.m_txMerkleRoot: 9c3c8bbffa9e86ffd84711ad649edc4ae9b657c732028cb3f22acb6822c8a741
+// header.m_receiptMerkleRoot: 72cf29f67b3a97c4dabf832725d1ef0780bbc8cb8faf68e7c9c7a124461b622c
+// header.m_bloom: 10200000410000000000000080000000000000000200000000010000040000000000000000000200000048000000000882048000080028000000000000200010000000080000013808000408000000200000000004401000080000000000000000000000020000200000000000000840010000000000040000000010000800000000000002000010064000000000000000000000010000180000004000002000120001000000200000004000000000000001020000000000002000021008000000000002400000002000100000000000000000000000001040000002000020000010a00000000000000010000000000010800000200000000200020000000000
+// header.m_difficulty: 7656001252874407
+// header.m_number: 12970000
+// header.m_gasLimit: 29999567
+// header.m_gasUsed: 645288
+// header.m_time: 1628233655
+// header.m_extra: 457468657265756d50504c4e532f326d696e6572735f455533
+// header.m_mixDigest: 6af002e55cd5e5c4f4e04c15ac48e9a2d2e88e364639b0713b70a77509caa556
+// header.m_nonce: 8af5a4039d877336
+// header.hash: 13049bb8cfd97fe2333829f06df37c569db68d42c23097fbac64f2c61471f281
+// header.m_baseFee: 28690644740
+// header.m_hashed: 1
+    std::error_code ec;
+    xbytes_t output_bytes = top::from_hex(relayer_hex_output_1270000, ec);
+    EXPECT_EQ(ec.value(), 0);
+    verify_ethash(output_bytes);
+}
+
+TEST(ethash, ethash_1270001) {
+    std::error_code ec;
+    xbytes_t output_bytes = top::from_hex(relayer_hex_output_1270001, ec);
+    EXPECT_EQ(ec.value(), 0);
+    verify_ethash(output_bytes);
+}
+
+TEST(ethash, ethash_batch) {
+    std::error_code ec;
+    xbytes_t left_bytes = top::from_hex(relayer_hex_output_batch, ec);
+    EXPECT_EQ(ec.value(), 0);
+    verify_ethash(left_bytes);
+}
+
+TEST_F(xcontract_fixture_t, test_init_and_sync) {
+    std::error_code ec;
+    auto init_param = top::from_hex(relayer_hex_init_12969999, ec);
+    EXPECT_EQ(ec.value(), 0);
+    auto sync_param1 = top::from_hex(relayer_hex_output_1270000, ec);
+    EXPECT_EQ(ec.value(), 0);
+    auto sync_param2 = top::from_hex(relayer_hex_output_1270001, ec);
+    EXPECT_EQ(ec.value(), 0);
+    EXPECT_TRUE(contract.init(init_param));
+    EXPECT_TRUE(contract.sync(sync_param1));
+    EXPECT_TRUE(contract.sync(sync_param2));
+}
+
+TEST_F(xcontract_fixture_t, test_double_init) {
+    std::error_code ec;
+    auto init_param = top::from_hex(relayer_hex_init_12969999, ec);
+    EXPECT_EQ(ec.value(), 0);
+    EXPECT_TRUE(contract.init(init_param));
+    EXPECT_FALSE(contract.init(init_param));
+}
+
+TEST_F(xcontract_fixture_t, test_error_init_param) {
+    const char * hex_init_param = "f90210a0fc40ad4f64dd51d09e94d9b7f1136cdcaaf03fb9a75c32661228bd3212547107a01dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d4934794cf4d39b0edb0b69cd15f687fd45c8fc8eb687daea0be5f8f7c84539b81c621a029b3083c37e0b63dde1372545c38edb792fcb65883a056e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421a056e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421b90100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008302196d65834f24ec8084628f482199d883010a12846765746888676f312e31372e38856c696e7578a0d8f6c88a59b42eafc6bc6e048e257a415bbb17822d57566153b73a72666b297b880afe7b9f331361e7";
+    std::error_code ec;
+    auto init_param = top::from_hex(hex_init_param, ec);
+    EXPECT_EQ(ec.value(), 0);
+    EXPECT_FALSE(contract.init(init_param));
+}
+
+TEST_F(xcontract_fixture_t, test_sync_not_init) {
+    std::error_code ec;
+    auto sync_param = top::from_hex(relayer_hex_output_1270000, ec);
+    EXPECT_EQ(ec.value(), 0);
+    EXPECT_FALSE(contract.sync(sync_param));
+}
+
+TEST_F(xcontract_fixture_t, test_sync_get_parent_header_error) {
+    std::error_code ec;
+    auto init_param = top::from_hex(relayer_hex_init_12969999, ec);
+    EXPECT_EQ(ec.value(), 0);
+    auto sync_param = top::from_hex(relayer_hex_output_1270001, ec);
+    EXPECT_EQ(ec.value(), 0);
+    EXPECT_TRUE(contract.init(init_param));
+    EXPECT_FALSE(contract.sync(sync_param));
+}
+
+TEST_F(xcontract_fixture_t, test_verify_common_time) {
+    xeth_block_header_t h1;
+    xeth_block_header_t h2;
+    h1.m_number = 10;
+    h2.m_number = 11;
+    EXPECT_FALSE(contract.verify_common(h1, h2));
+}
+
+TEST_F(xcontract_fixture_t, test_verify_common_extra_size) {
+    xeth_block_header_t h1;
+    xeth_block_header_t h2;
+    h1.m_number = 10;
+    h2.m_number = 11;
+    h1.m_time = 10;
+    h2.m_time = 9;
+    h2.m_extra = xbytes_t(64, 1);
+    EXPECT_FALSE(contract.verify_common(h1, h2));
+}
+
+TEST_F(xcontract_fixture_t, test_verify_common_gaslimit) {
+    xeth_block_header_t h1;
+    xeth_block_header_t h2;
+    h1.m_number = 10;
+    h2.m_number = 11;
+    h2.m_gasLimit = UINT64_MAX;
+    EXPECT_FALSE(contract.verify_common(h1, h2));
+}
+
+TEST_F(xcontract_fixture_t, test_verify_common_gasused) {
+    xeth_block_header_t h1;
+    xeth_block_header_t h2;
+    h1.m_number = 10;
+    h2.m_number = 11;
+    h2.m_gasLimit = 5000;
+    h2.m_gasUsed = 6000;
+    EXPECT_FALSE(contract.verify_common(h1, h2));
+}
+
+TEST_F(xcontract_fixture_t, test_is_confirmed) {
+    const char * hash1_hex = "13049bb8cfd97fe2333829f06df37c569db68d42c23097fbac64f2c61471f281";
+    const char * hash2_hex = "98941087c5e71acde89189ef750ee08c7ef265a7d3c2303ef4d07ccaec0de42a";
+    std::error_code ec;
+    auto init_param = top::from_hex(relayer_hex_init_12969999, ec);
+    EXPECT_EQ(ec.value(), 0);
+    auto sync_param = top::from_hex(relayer_hex_output_1270000, ec);
+    EXPECT_EQ(ec.value(), 0);
+    auto hash1 = top::from_hex(hash1_hex, ec);
+    EXPECT_EQ(ec.value(), 0);
+    auto hash2 = top::from_hex(hash2_hex, ec);
+    EXPECT_EQ(ec.value(), 0);
+    EXPECT_TRUE(contract.init(init_param));
+    EXPECT_TRUE(contract.sync(sync_param));
+    EXPECT_FALSE(contract.is_confirmed(hash1));
+    EXPECT_FALSE(contract.is_confirmed(hash2));
+}
+
+static xeth_block_header_t create_header(h256 parent_hash, uint32_t number, uint32_t difficulty) {
+    xeth_block_header_t header;
+    header.m_parentHash = parent_hash;
+    header.m_uncleHash = static_cast<evm_common::h256>(0);
+    header.m_miner = static_cast<evm_common::eth::Address>(0);
+    header.m_stateMerkleRoot = static_cast<evm_common::h256>(0);
+    header.m_txMerkleRoot = static_cast<evm_common::h256>(0);
+    header.m_receiptMerkleRoot = static_cast<evm_common::h256>(0);
+    header.m_bloom = static_cast<evm_common::eth::LogBloom>(0);
+    header.m_mixDigest = static_cast<evm_common::h256>(0);
+    header.m_nonce = static_cast<evm_common::h64>(0);
+    header.m_difficulty = difficulty;
+    header.m_number = number;
+    header.m_gasLimit = 0;
+    header.m_gasUsed = 0;
+    header.m_time = 0;
+    header.m_baseFee = static_cast<evm_common::bigint>(0);
+    return header;
+}
+
+TEST_F(xcontract_fixture_t, test_rebuild1) {
+    auto h10 = create_header(static_cast<evm_common::h256>(0), 10, 10);
+    auto h11 = create_header(h10.hash(), 11, 10);
+    auto h12 = create_header(h11.hash(), 12, 10);
+    auto h13 = create_header(h12.hash(), 13, 10);
+    auto h14 = create_header(h13.hash(), 14, 10);
+    auto h15 = create_header(h14.hash(), 15, 10);
+
+    EXPECT_TRUE(contract.set_header(h10, 10));
+    EXPECT_TRUE(contract.set_header(h11, 20));
+    EXPECT_TRUE(contract.set_header(h12, 30));
+    EXPECT_TRUE(contract.set_header(h13, 40));
+    EXPECT_TRUE(contract.set_header(h14, 50));
+    EXPECT_TRUE(contract.set_header(h15, 60));
+    EXPECT_TRUE(contract.set_hash(10, h10.hash()));
+    EXPECT_TRUE(contract.set_hash(11, h11.hash()));
+    EXPECT_TRUE(contract.set_hash(12, h12.hash()));
+    EXPECT_TRUE(contract.set_hash(13, h13.hash()));
+    EXPECT_TRUE(contract.set_hash(14, h14.hash()));
+    EXPECT_TRUE(contract.set_hash(15, h15.hash()));
+    EXPECT_TRUE(contract.set_height(15));
+
+    auto h12_fork = create_header(h11.hash(), 12, 5);
+    auto h13_fork = create_header(h12_fork.hash(), 13, 100);
+    EXPECT_TRUE(contract.set_header(h12_fork, 15));
+    EXPECT_TRUE(contract.set_header(h13_fork, 115));
+    EXPECT_TRUE(contract.rebuild(h15, h13_fork));
+
+    h256 hash;
+    EXPECT_TRUE(contract.get_hash(10, hash));
+    EXPECT_EQ(hash, h10.hash());
+    EXPECT_TRUE(contract.get_hash(11, hash));
+    EXPECT_EQ(hash, h11.hash());
+    EXPECT_TRUE(contract.get_hash(12, hash));
+    EXPECT_EQ(hash, h12_fork.hash());
+    EXPECT_TRUE(contract.get_hash(13, hash));
+    EXPECT_EQ(hash, h13_fork.hash());
+    EXPECT_FALSE(contract.get_hash(14, hash));
+    EXPECT_FALSE(contract.get_hash(15, hash));
+    bigint height{0};
+    EXPECT_TRUE(contract.get_height(height));
+    EXPECT_EQ(height, 13);
+}
+
+TEST_F(xcontract_fixture_t, test_rebuild2) {
+    auto h10 = create_header(static_cast<evm_common::h256>(0), 10, 10);
+    auto h11 = create_header(h10.hash(), 11, 10);
+    auto h12 = create_header(h11.hash(), 12, 10);
+    auto h13 = create_header(h12.hash(), 13, 10);
+    auto h14 = create_header(h13.hash(), 14, 10);
+    auto h15 = create_header(h14.hash(), 15, 10);
+
+    EXPECT_TRUE(contract.set_header(h10, 10));
+    EXPECT_TRUE(contract.set_header(h11, 20));
+    EXPECT_TRUE(contract.set_header(h12, 30));
+    EXPECT_TRUE(contract.set_header(h13, 40));
+    EXPECT_TRUE(contract.set_header(h14, 50));
+    EXPECT_TRUE(contract.set_header(h15, 60));
+    EXPECT_TRUE(contract.set_hash(10, h10.hash()));
+    EXPECT_TRUE(contract.set_hash(11, h11.hash()));
+    EXPECT_TRUE(contract.set_hash(12, h12.hash()));
+    EXPECT_TRUE(contract.set_hash(13, h13.hash()));
+    EXPECT_TRUE(contract.set_hash(14, h14.hash()));
+    EXPECT_TRUE(contract.set_hash(15, h15.hash()));
+    EXPECT_TRUE(contract.set_height(15));
+
+    auto h12_fork = create_header(h11.hash(), 12, 5);
+    auto h13_fork = create_header(h12_fork.hash(), 13, 5);
+    auto h14_fork = create_header(h13_fork.hash(), 14, 5);
+    auto h15_fork = create_header(h14_fork.hash(), 15, 5);
+    auto h16_fork = create_header(h15_fork.hash(), 16, 5);
+    auto h17_fork = create_header(h16_fork.hash(), 17, 100);
+    EXPECT_TRUE(contract.set_header(h12_fork, 15));
+    EXPECT_TRUE(contract.set_header(h13_fork, 20));
+    EXPECT_TRUE(contract.set_header(h14_fork, 25));
+    EXPECT_TRUE(contract.set_header(h15_fork, 30));
+    EXPECT_TRUE(contract.set_header(h16_fork, 35));
+    EXPECT_TRUE(contract.set_header(h17_fork, 135));
+    EXPECT_TRUE(contract.rebuild(h15, h17_fork));
+
+    h256 hash;
+    EXPECT_TRUE(contract.get_hash(10, hash));
+    EXPECT_EQ(hash, h10.hash());
+    EXPECT_TRUE(contract.get_hash(11, hash));
+    EXPECT_EQ(hash, h11.hash());
+    EXPECT_TRUE(contract.get_hash(12, hash));
+    EXPECT_EQ(hash, h12_fork.hash());
+    EXPECT_TRUE(contract.get_hash(13, hash));
+    EXPECT_EQ(hash, h13_fork.hash());
+    EXPECT_TRUE(contract.get_hash(14, hash));
+    EXPECT_EQ(hash, h14_fork.hash());
+    EXPECT_TRUE(contract.get_hash(15, hash));
+    EXPECT_EQ(hash, h15_fork.hash());
+    EXPECT_TRUE(contract.get_hash(16, hash));
+    EXPECT_EQ(hash, h16_fork.hash());
+    EXPECT_TRUE(contract.get_hash(17, hash));
+    EXPECT_EQ(hash, h17_fork.hash());
+    bigint height{0};
+    EXPECT_TRUE(contract.get_height(height));
+    EXPECT_EQ(height, 17);
+}
+
+TEST_F(xcontract_fixture_t, execute_input_empty) {
+    contract_runtime::evm::sys_contract_precompile_output output;
+    contract_runtime::evm::sys_contract_precompile_error err;
+    EXPECT_FALSE(contract.execute({}, 0, context, false, statectx_observer, output, err));
+}
+
+TEST_F(xcontract_fixture_t, execute_input_invalid) {
+    contract_runtime::evm::sys_contract_precompile_output output;
+    contract_runtime::evm::sys_contract_precompile_error err;
+    std::string str{relayer_hex_output_init_1269999_tx_data};
+    str.insert(str.begin(), 'x');
+    str.insert(str.begin(), '0');
+    std::error_code ec;
+    auto init_param = top::from_hex(relayer_hex_output_init_1269999_tx_data, ec);
+    EXPECT_EQ(ec.value(), 0);
+    EXPECT_FALSE(contract.execute(init_param, 0, context, false, statectx_observer, output, err));
+}
+
+TEST_F(xcontract_fixture_t, execute_input_invalid_method_id) {
+    contract_runtime::evm::sys_contract_precompile_output output;
+    contract_runtime::evm::sys_contract_precompile_error err;
+    std::string str{relayer_hex_output_init_1269999_tx_data};
+    str[0] = '5';
+    std::error_code ec;
+    auto init_param = top::from_hex(str, ec);
+    EXPECT_EQ(ec.value(), 0);
+    EXPECT_FALSE(contract.execute(init_param, 0, context, false, statectx_observer, output, err));
+}
+
+TEST_F(xcontract_fixture_t,  execute_method_id_extract_error) {
+    contract_runtime::evm::sys_contract_precompile_output output;
+    contract_runtime::evm::sys_contract_precompile_error err;
+    std::error_code ec;
+    auto init_param = top::from_hex(relayer_hex_init_12969999, ec);
+    EXPECT_EQ(ec.value(), 0);
+    EXPECT_TRUE(contract.init(init_param));
+    auto sync_param = top::from_hex(relayer_hex_output_sync_1270000_tx_data, ec);
+    EXPECT_EQ(ec.value(), 0);
+    EXPECT_TRUE(contract.execute(sync_param, 0, context, false, statectx_observer, output, err));
+    std::string str{relayer_hex_output_get_height_tx_date};
+    str = {str.begin(), str.begin() + 4};
+    auto height_param = top::from_hex(str, ec);
+    EXPECT_EQ(ec.value(), 0);
+    EXPECT_FALSE(contract.execute(height_param, 0, context, true, statectx_observer, output, err));
+}
+
+TEST_F(xcontract_fixture_t, execute_init_extract_error1) {
+    contract_runtime::evm::sys_contract_precompile_output output;
+    contract_runtime::evm::sys_contract_precompile_error err;
+    std::string str{relayer_hex_output_init_1269999_tx_data};
+    str = {str.begin(), str.begin() + 8};
+    std::error_code ec;
+    auto init_param = top::from_hex(str, ec);
+    EXPECT_EQ(ec.value(), 0);
+    EXPECT_FALSE(contract.execute(init_param, 0, context, false, statectx_observer, output, err));
+}
+
+TEST_F(xcontract_fixture_t, execute_init_static_error) {
+    contract_runtime::evm::sys_contract_precompile_output output;
+    contract_runtime::evm::sys_contract_precompile_error err;
+    std::error_code ec;
+    auto init_param = top::from_hex(relayer_hex_output_init_1269999_tx_data, ec);
+    EXPECT_EQ(ec.value(), 0);
+    EXPECT_FALSE(contract.execute(init_param, 0, context, true, statectx_observer, output, err));
+}
+
+TEST_F(xcontract_fixture_t, execute_init_verify_error) {
+    contract_runtime::evm::sys_contract_precompile_output output;
+    contract_runtime::evm::sys_contract_precompile_error err;
+    std::error_code ec;
+    auto init_param = top::from_hex(relayer_hex_output_init_1269999_tx_data, ec);
+    EXPECT_EQ(ec.value(), 0);
+    EXPECT_FALSE(contract.execute(init_param, 0, context, false, statectx_observer, output, err));
+}
+
+TEST_F(xcontract_fixture_t,  execute_sync_ok) {
+    contract_runtime::evm::sys_contract_precompile_output output;
+    contract_runtime::evm::sys_contract_precompile_error err;
+    std::error_code ec;
+    auto init_param = top::from_hex(relayer_hex_init_12969999, ec);
+    EXPECT_EQ(ec.value(), 0);
+    EXPECT_TRUE(contract.init(init_param));
+
+    auto sync_param = top::from_hex(relayer_hex_output_sync_1270000_tx_data, ec);
+    EXPECT_EQ(ec.value(), 0);
+    EXPECT_TRUE(contract.execute(sync_param, 0, context, false, statectx_observer, output, err));
+}
+
+TEST_F(xcontract_fixture_t, execute_sync_extract_error) {
+    contract_runtime::evm::sys_contract_precompile_output output;
+    contract_runtime::evm::sys_contract_precompile_error err;
+    std::error_code ec;
+    auto init_param = top::from_hex(relayer_hex_init_12969999, ec);
+    EXPECT_EQ(ec.value(), 0);
+    EXPECT_TRUE(contract.init(init_param));
+
+    std::string str{relayer_hex_output_sync_1270000_tx_data};
+    str = {str.begin(), str.begin() + 8};
+    auto sync_param = top::from_hex(str, ec);
+    EXPECT_EQ(ec.value(), 0);
+    EXPECT_FALSE(contract.execute(sync_param, 0, context, false, statectx_observer, output, err));
+}
+
+TEST_F(xcontract_fixture_t,  execute_sync_static_error) {
+    contract_runtime::evm::sys_contract_precompile_output output;
+    contract_runtime::evm::sys_contract_precompile_error err;
+    std::error_code ec;
+    auto init_param = top::from_hex(relayer_hex_init_12969999, ec);
+    EXPECT_EQ(ec.value(), 0);
+    EXPECT_TRUE(contract.init(init_param));
+
+    auto sync_param = top::from_hex(relayer_hex_output_sync_1270000_tx_data, ec);
+    EXPECT_EQ(ec.value(), 0);
+    EXPECT_FALSE(contract.execute(sync_param, 0, context, true, statectx_observer, output, err));
+}
+
+TEST_F(xcontract_fixture_t,  execute_sync_error) {
+    contract_runtime::evm::sys_contract_precompile_output output;
+    contract_runtime::evm::sys_contract_precompile_error err;
+    std::error_code ec;
+    auto init_param = top::from_hex(relayer_hex_init_12969999, ec);
+    EXPECT_EQ(ec.value(), 0);
+    EXPECT_TRUE(contract.init(init_param));
+
+    auto sync_param = top::from_hex(relayer_hex_output_sync_1270000_tx_data, ec);
+    EXPECT_EQ(ec.value(), 0);
+    EXPECT_TRUE(contract.execute(sync_param, 0, context, false, statectx_observer, output, err));
+    EXPECT_FALSE(contract.execute(sync_param, 0, context, false, statectx_observer, output, err));
+}
+
+TEST_F(xcontract_fixture_t,  execute_get_height) {
+    contract_runtime::evm::sys_contract_precompile_output output;
+    contract_runtime::evm::sys_contract_precompile_error err;
+    std::error_code ec;
+    auto init_param = top::from_hex(relayer_hex_init_12969999, ec);
+    EXPECT_EQ(ec.value(), 0);
+    EXPECT_TRUE(contract.init(init_param));
+    auto sync_param = top::from_hex(relayer_hex_output_sync_1270000_tx_data, ec);
+    EXPECT_EQ(ec.value(), 0);
+    EXPECT_TRUE(contract.execute(sync_param, 0, context, false, statectx_observer, output, err));
+    auto height_param = top::from_hex(relayer_hex_output_get_height_tx_date, ec);
+    EXPECT_EQ(ec.value(), 0);
+    EXPECT_TRUE(contract.execute(height_param, 0, context, true, statectx_observer, output, err));
+    u256 h = evm_common::fromBigEndian<u256>(output.output);
+    EXPECT_EQ(h, 12970000);
+}
+
+TEST_F(xcontract_fixture_t,  execute_is_confirmed) {
+    contract_runtime::evm::sys_contract_precompile_output output;
+    contract_runtime::evm::sys_contract_precompile_error err;
+    std::error_code ec;
+    auto init_param = top::from_hex(relayer_hex_init_12969999, ec);
+    EXPECT_EQ(ec.value(), 0);
+    EXPECT_TRUE(contract.init(init_param));
+    auto sync_param = top::from_hex(relayer_hex_output_sync_1270000_tx_data, ec);
+    EXPECT_EQ(ec.value(), 0);
+    EXPECT_TRUE(contract.execute(sync_param, 0, context, false, statectx_observer, output, err));
+    auto is_confirmed_param = top::from_hex(relayer_hex_output_is_confirmed_tx_data, ec);
+    EXPECT_EQ(ec.value(), 0);
+    EXPECT_TRUE(contract.execute(is_confirmed_param, 0, context, false, statectx_observer, output, err));
+    EXPECT_EQ(evm_common::fromBigEndian<u256>(output.output), 0);
+}
+
+TEST_F(xcontract_fixture_t,  execute_is_confirmed_extract_error) {
+    contract_runtime::evm::sys_contract_precompile_output output;
+    contract_runtime::evm::sys_contract_precompile_error err;
+    std::error_code ec;
+    auto init_param = top::from_hex(relayer_hex_init_12969999, ec);
+    EXPECT_EQ(ec.value(), 0);
+    EXPECT_TRUE(contract.init(init_param));
+    auto sync_param = top::from_hex(relayer_hex_output_sync_1270000_tx_data, ec);
+    EXPECT_EQ(ec.value(), 0);
+    EXPECT_TRUE(contract.execute(sync_param, 0, context, false, statectx_observer, output, err));
+
+    std::string str{relayer_hex_output_is_confirmed_tx_data};
+    str = {str.begin(), str.begin() + 136};
+    auto is_confirmed_param = top::from_hex(str, ec);
+    EXPECT_EQ(ec.value(), 0);
+    EXPECT_FALSE(contract.execute(is_confirmed_param, 0, context, false, statectx_observer, output, err));
+    EXPECT_EQ(evm_common::fromBigEndian<u256>(output.output), 0);
+}
+
+TEST_F(xcontract_fixture_t, test_release) {
+    // num = 40000
+    for (auto i = 10000; i <= 60000; i++) {
+        contract.set_hash(i, h256(i));
+    }
+    // num = 500
+    xeth_block_header_t header;
+    bigint difficulty;
+    xeth_block_header_with_difficulty_t header_with_difficulty{header, difficulty};
+    auto v = header_with_difficulty.to_string();
+    for (auto i = 59000; i <= 60000; i++) {
+        auto k = h256(i).asBytes();
+        contract.m_contract_state->map_set(data::system_contract::XPROPERTY_ETH_CHAINS_HEADER, {k.begin(), k.end()}, {v.begin(), v.end()});
+    }
+    contract.release(60000);
+    for (auto i = 10000; i <= 20000; i++) {
+        h256 hash;
+        EXPECT_FALSE(contract.get_hash(i, hash));
+    }
+    for (auto i = 20001; i <= 60000; i++) {
+        h256 hash;
+        EXPECT_TRUE(contract.get_hash(i, hash));
+    }
+    for (auto i = 59000; i <= 59500; i++) {
+        EXPECT_FALSE(contract.get_header(h256(i), header, difficulty));
+    }
+    for (auto i = 59501; i <= 60000; i++) {
+        EXPECT_TRUE(contract.get_header(h256(i), header, difficulty));
+    }
 }
 
 }

@@ -40,6 +40,7 @@ struct sys_contract_context {
     common::xeth_address_t caller;
     evm_common::u256 apparent_value;
 
+    sys_contract_context() = default;
     sys_contract_context(evm_engine::precompile::ContractContext const & proto_context)
       : address{common::xeth_address_t::build_from(top::to_bytes(proto_context.address().value()))}
       , caller{common::xeth_address_t::build_from(top::to_bytes(proto_context.caller().value()))} {

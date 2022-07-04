@@ -20,49 +20,12 @@
 #    pragma warning(pop)
 #endif
 
+#include "xbasic/xhex.h"
 #include "xdepends/include/json/reader.h"
 #include "xevm_common/rlp.h"
-#include "xevm_common/xeth/xeth_util.h"
 #include "xutility/xhash.h"
 // The log bloom's size (2048-bit).
 NS_BEG3(top, evm_common, eth)
-
-using namespace top::evm_common;
-bool xeth_block_header_t::fromJson(const std::string& content) {
-    xJson::Reader reader;
-    xJson::Value root;
-    std::string value;
-    // xJson::value value;
-    auto result = reader.parse(content, root);
-    if (!result) {
-        return false;
-    }
-
-    convertStringFromJson(root["parentHash"], Hash, m_parentHash)
-    convertStringFromJson(root["sha3Uncles"], Hash, m_uncleHash)
-    convertStringFromJson(root["miner"], Address, m_miner)
-    convertStringFromJson(root["stateRoot"], Hash, m_stateMerkleRoot)
-    convertStringFromJson(root["transactionsRoot"], Hash, m_txMerkleRoot)
-    convertStringFromJson(root["receiptsRoot"], Hash, m_receiptMerkleRoot)
-    convertStringFromJson(root["logsBloom"], LogBloom, m_bloom)
-    convertStringFromJson(root["difficulty"], bigint, m_difficulty)
-    convertStringFromJson(root["number"], bigint, m_number)
-    convertUint64FromJson(root["gasLimit"], m_gasLimit)
-    convertUint64FromJson(root["gasUsed"], m_gasUsed)
-    convertUint64FromJson(root["timestamp"], m_time)
-    if (root["extraData"].empty()) {
-        return false;
-    }
-    value = root["extraData"].asString().substr(2);
-    m_extra = util::hex_to_bytes(value);
-    convertStringFromJson(root["mixHash"], Hash, m_mixDigest)
-    convertStringFromJson(root["nonce"], BlockNonce, m_nonce)
-    if (!root["baseFeePerGas"].empty()) {
-        convertStringFromJson(root["baseFeePerGas"], bigint, m_baseFee)
-        m_isBaseFee = true;
-    }
-    return true;
-}
 
 Hash xeth_block_header_t::parentHash() const {
     return m_parentHash;
@@ -226,10 +189,8 @@ bytes xeth_block_header_t::encode_rlp_withoutseal() {
     }
 
     {
-        if (m_isBaseFee) {
-            auto tmp = RLP::encode(static_cast<u256>(m_baseFee));
-            out.insert(out.end(), tmp.begin(), tmp.end());
-        }
+        auto tmp = RLP::encode(static_cast<u256>(m_baseFee));
+        out.insert(out.end(), tmp.begin(), tmp.end());
     }
 
     {
@@ -333,10 +294,8 @@ bytes xeth_block_header_t::encode_rlp() {
     }
 
     {
-        if (m_isBaseFee) {
-            auto tmp = RLP::encode(static_cast<u256>(m_baseFee));
-            out.insert(out.end(), tmp.begin(), tmp.end());
-        }
+        auto tmp = RLP::encode(static_cast<u256>(m_baseFee));
+        out.insert(out.end(), tmp.begin(), tmp.end());
     }
 
     {
@@ -344,10 +303,6 @@ bytes xeth_block_header_t::encode_rlp() {
     }
     
     return out;
-}
-
-bool xeth_block_header_t::isBaseFee() const {
-    return m_isBaseFee;
 }
 
 std::string xeth_block_header_t::to_string() {
@@ -370,7 +325,6 @@ std::string xeth_block_header_t::to_string() {
     stream << evm_common::toBigEndian(static_cast<u256>(m_baseFee));
     stream << m_hash.asBytes();
     stream << m_hashed;
-    stream << m_isBaseFee;
     return std::string(reinterpret_cast<const char *>(stream.data()), stream.size());
 }
 
@@ -451,15 +405,16 @@ int xeth_block_header_t::from_string(const std::string & s) {
         m_hash = static_cast<Hash>(bytes);
     }
     stream >> m_hashed;
-    stream >> m_isBaseFee;
     const int end_pos = stream.size();
     return (begin_pos - end_pos);
 }
 
 int xeth_block_header_t::from_rlp(const xbytes_t & bytes) {
     auto l = RLP::decodeList(bytes);
+    if (l.decoded.size() != 16) {
+        return -1;
+    }
     if (!l.remainder.empty()) {
-        xassert(false);
         return -1;
     }
     m_parentHash = static_cast<Hash>(l.decoded[0]);
@@ -477,10 +432,7 @@ int xeth_block_header_t::from_rlp(const xbytes_t & bytes) {
     m_extra = l.decoded[12];
     m_mixDigest = static_cast<Hash>(l.decoded[13]);
     m_nonce = static_cast<BlockNonce>(l.decoded[14]);
-    if (l.decoded.size() > 15) {
-        m_isBaseFee = true;
-        m_baseFee = static_cast<bigint>(evm_common::fromBigEndian<u256>(l.decoded[15]));
-    }
+    m_baseFee = static_cast<bigint>(evm_common::fromBigEndian<u256>(l.decoded[15]));
     return l.decoded.size();
 }
 
@@ -488,13 +440,33 @@ std::string xeth_block_header_t::dump() {
     char local_param_buf[256];
     xprintf(local_param_buf,
             sizeof(local_param_buf),
-            "miner: %s, height: %s, hash: %s, basefee: %d, %s",
-            m_miner.hex().c_str(),
+            "height: %s, hash: %s, parent_hash: %s, basefee: %s",
             m_number.str().c_str(),
             hash().hex().c_str(),
-            m_isBaseFee,
+            m_parentHash.hex().c_str(),
             m_baseFee.str().c_str());
     return std::string(local_param_buf);
+}
+
+void xeth_block_header_t::print() {
+    printf("m_parentHash: %s\n", m_parentHash.hex().c_str());
+    printf("m_uncleHash: %s\n", m_uncleHash.hex().c_str());
+    printf("m_miner: %s\n", m_miner.hex().c_str());
+    printf("m_stateMerkleRoot: %s\n", m_stateMerkleRoot.hex().c_str());
+    printf("m_txMerkleRoot: %s\n", m_txMerkleRoot.hex().c_str());
+    printf("m_receiptMerkleRoot: %s\n", m_receiptMerkleRoot.hex().c_str());
+    printf("m_bloom: %s\n", m_bloom.hex().c_str());
+    printf("m_difficulty: %s\n", m_difficulty.str().c_str());
+    printf("m_number: %s\n", m_number.str().c_str());
+    printf("m_gasLimit: %lu\n", m_gasLimit);
+    printf("m_gasUsed: %lu\n", m_gasUsed);
+    printf("m_time: %lu\n", m_time);
+    printf("m_extra: %s\n", top::to_hex(m_extra).c_str());
+    printf("m_mixDigest: %s\n", m_mixDigest.hex().c_str());
+    printf("m_nonce: %s\n", m_nonce.hex().c_str());
+    printf("hash: %s\n", hash().hex().c_str());
+    printf("m_baseFee: %s\n", m_baseFee.str().c_str());
+    printf("m_hashed: %d\n", m_hashed);
 }
 
 xeth_block_header_with_difficulty_t::xeth_block_header_with_difficulty_t(xeth_block_header_t header, bigint difficulty) : m_header{header}, m_difficult_sum{difficulty} {

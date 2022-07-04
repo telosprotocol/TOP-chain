@@ -11,9 +11,11 @@
 #include "xdata/xsystem_contract/xdata_structures.h"
 #include "xevm_common/common_data.h"
 #include "xevm_common/xabi_decoder.h"
-#include "xevm_common/xeth/xeth_difficulty.h"
+#include "xevm_common/xeth/xeth_config.h"
+#include "xevm_common/xeth/xeth_eip1559.h"
+#include "xevm_common/xeth/xeth_gaslimit.h"
 #include "xevm_common/xeth/xeth_header.h"
-#include "xevm_common/xeth/xethash_util.h"
+#include "xevm_common/xeth/xethash.h"
 
 #include <cinttypes>
 
@@ -21,25 +23,12 @@ NS_BEG4(top, contract_runtime, evm, sys_contract)
 
 using namespace top::evm_common;
 
-constexpr uint64_t LondonBlock = 12965000;
-constexpr uint64_t ArrowGlacierBlock = 13773000;
-constexpr uint64_t LondonBombDelay = 9700000;
-constexpr uint64_t ArrowGlacierBombDelay = 10700000;
-
-constexpr uint64_t GasLimitBoundDivisor = 1024;
 constexpr uint64_t MinGasLimit = 5000;
 constexpr uint64_t MaxGasLimit = 0x7fffffffffffffff;
 constexpr uint64_t MaximumExtraDataSize = 32;
-
-constexpr uint64_t ElasticityMultiplier = 2;
-constexpr uint64_t InitialBaseFee = 1000000000;
-constexpr uint64_t BaseFeeChangeDenominator = 8;
-
-static uint64_t cpu_time() {
-    struct timespec time;
-    clock_gettime(CLOCK_THREAD_CPUTIME_ID, &time);
-    return uint64_t(time.tv_sec) * 1000000 + uint64_t(time.tv_nsec) / 1000;
-}
+constexpr uint64_t ConfirmHeight = 25;
+constexpr uint64_t HashReserveNum = 40000;
+constexpr uint64_t BlockReserveNum = 500;
 
 bool xtop_evm_eth_bridge_contract::execute(xbytes_t input,
                                            uint64_t target_gas,
@@ -48,25 +37,18 @@ bool xtop_evm_eth_bridge_contract::execute(xbytes_t input,
                                            observer_ptr<statectx::xstatectx_face_t> state_ctx,
                                            sys_contract_precompile_output & output,
                                            sys_contract_precompile_error & err) {
-    // ERC20 method ids:
+    // method ids:
     //--------------------------------------------------
-    // init_genesis_block_header(bytes, string)     => 78dcb6c7
-    // sync_block_header(bytes)                     => 70243237
-    // getCurrentHeightOfMainChain(uint64)          => daf0c99a
-    // getHeaderIfHeightConfirmed(bytes,uint64)     => 524dfb52
+    // init(bytes,string)                    => 6158600d
+    // sync(bytes)                           => 7eefcfa2
+    // get_height()                          => b15ad2e8
+    // is_confirmed(bytes)                   => 627b0fd2
     //--------------------------------------------------
-    constexpr uint32_t method_id_init{0x78dcb6c7};
-    constexpr uint32_t method_id_sync{0x70243237};
-    constexpr uint32_t method_id_get_current_height{0xdaf0c99a};
-    constexpr uint32_t method_id_get_if_confirmed_height{0x524dfb52};
-    constexpr uint32_t method_id_get_hash{0xd150aa9c};
+    constexpr uint32_t method_id_init{0x6158600d};
+    constexpr uint32_t method_id_sync{0x7eefcfa2};
+    constexpr uint32_t method_id_get_height{0xb15ad2e8};
+    constexpr uint32_t method_id_is_confirmed{0x627b0fd2};
     
-    auto time1 = cpu_time();
-    // debug
-    auto input_str = top::to_hex(input);
-    // printf("xtop_evm_eth_bridge_contract input: \n%s", input_str.c_str());
-    xinfo("xtop_evm_eth_bridge_contract input: \n%s", input_str.c_str());
-
     // check param
     assert(state_ctx);
     m_contract_state = state_ctx->load_unit_state(m_contract_address.vaccount());
@@ -95,7 +77,7 @@ bool xtop_evm_eth_bridge_contract::execute(xbytes_t input,
         xwarn("[xtop_evm_eth_bridge_contract::execute] illegal input function selector");
         return false;
     }
-    xinfo("[xtop_evm_eth_bridge_contract::execute] caller: %s, method_id: %u, input size: %zu", context.caller.to_hex_string().c_str(), function_selector.method_id, input.size());
+    xinfo("[xtop_evm_eth_bridge_contract::execute] caller: %s, method_id: 0x%x, input size: %zu", context.caller.to_hex_string().c_str(), function_selector.method_id, input.size());
 
     switch (function_selector.method_id) {
     case method_id_init: {
@@ -112,14 +94,20 @@ bool xtop_evm_eth_bridge_contract::execute(xbytes_t input,
             xwarn("[xtop_evm_eth_bridge_contract::execute] abi_decoder.extract bytes error");
             return false;
         }
-        auto str = abi_decoder.extract<std::string>(ec);
+        auto verify_str = abi_decoder.extract<std::string>(ec);
         if (ec) {
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
             xwarn("[xtop_evm_eth_bridge_contract::execute] abi_decoder.extract string error");
             return false;
         }
-        if (!init(headers_rlp, str)) {
+        if (!verify(verify_str)) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
+            xwarn("[xtop_evm_eth_bridge_contract::execute] verify string error");
+            return false;
+        }
+        if (!init(headers_rlp)) {
             err.fail_status = precompile_error::Revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             xwarn("[xtop_evm_eth_bridge_contract::execute] init headers error");
@@ -131,8 +119,7 @@ bool xtop_evm_eth_bridge_contract::execute(xbytes_t input,
         output.cost = 0;
         output.exit_status = Returned;
         output.logs.push_back(log);
-        auto time2 = cpu_time();
-        xinfo("[xtop_evm_eth_bridge_contract::execute] init success, time: %lu", time2 - time1);
+        xinfo("[xtop_evm_eth_bridge_contract::execute] init success");
         return true;
     }
     case method_id_sync: {
@@ -161,11 +148,10 @@ bool xtop_evm_eth_bridge_contract::execute(xbytes_t input,
         output.cost = 0;
         output.exit_status = Returned;
         output.logs.push_back(log);
-        auto time2 = cpu_time();
-        xinfo("[xtop_evm_eth_bridge_contract::execute] sync success, time: %lu", time2 - time1);
+        xinfo("[xtop_evm_eth_bridge_contract::execute] sync success");
         return true;
     }
-    case method_id_get_current_height: {
+    case method_id_get_height: {
         bigint height{0};
         if (!get_height(height)) {
             err.fail_status = precompile_error::Fatal;
@@ -179,37 +165,16 @@ bool xtop_evm_eth_bridge_contract::execute(xbytes_t input,
         xinfo("[xtop_evm_eth_bridge_contract::execute] get_height %lu", static_cast<uint64_t>(height));
         return true;
     }
-    case method_id_get_hash: {
-        auto height = abi_decoder.extract<uint64_t>(ec);
-        if (ec) {
-            err.fail_status = precompile_error::Fatal;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
-            xwarn("[xtop_evm_eth_bridge_contract::execute] abi_decoder.extract error");
-            return false;
-        }
-        h256 hash{0};
-        if (!get_hash(height, hash)) {
-            err.fail_status = precompile_error::Fatal;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::CallErrorAsFatal);
-            xwarn("[xtop_evm_eth_bridge_contract::execute] get_hash failed, height: %lu", height);
-            return false;
-        }
-        output.exit_status = Returned;
-        output.cost = 0;
-        output.output = hash.asBytes();
-        xinfo("[xtop_evm_eth_bridge_contract::execute] get_hash %s", hash.hex().c_str());
-        return true;
-    }
-    case method_id_get_if_confirmed_height: {
+    case method_id_is_confirmed: {
         uint32_t confirmed{0};
-        auto headers_rlp = abi_decoder.extract<xbytes_t>(ec);
+        auto hash_bytes = abi_decoder.extract<xbytes_t>(ec);
         if (ec) {
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
             xwarn("[xtop_evm_eth_bridge_contract::execute] abi_decoder.extract bytes error");
             return false;
         }
-        if (is_confirmed(headers_rlp)) {
+        if (is_confirmed(hash_bytes)) {
             confirmed = 1;
         }
         output.exit_status = Returned;
@@ -227,7 +192,7 @@ bool xtop_evm_eth_bridge_contract::execute(xbytes_t input,
     return true;
 }
 
-bool xtop_evm_eth_bridge_contract::init(const xbytes_t & headerContent, std::string emitter) {
+bool xtop_evm_eth_bridge_contract::init(const xbytes_t & rlp_bytes) {
     // step 0: check init
     bigint height{0};
     if (!get_height(height)) {
@@ -238,16 +203,11 @@ bool xtop_evm_eth_bridge_contract::init(const xbytes_t & headerContent, std::str
         xwarn("[xtop_evm_eth_bridge_contract::init] init already");
         return false;
     }
-    // step 1: check emitter
-    if (!verifyOwner(emitter)) {
-        xwarn("[xtop_evm_eth_bridge_contract::init] emitter: %s invalid", emitter.c_str());
-        return false;
-    }
     // step 2: decode
-    auto item = RLP::decode_once(headerContent);
+    auto item = RLP::decode_once(rlp_bytes);
     xassert(item.decoded.size() == 1);
     eth::xeth_block_header_t header;
-    if (!header.from_rlp(item.decoded[0])) {
+    if (header.from_rlp(item.decoded[0]) < 0) {
         xwarn("[xtop_evm_eth_bridge_contract::init] decode header error");
         return false;
     }
@@ -281,7 +241,7 @@ bool xtop_evm_eth_bridge_contract::init(const xbytes_t & headerContent, std::str
     return true;
 }
 
-bool xtop_evm_eth_bridge_contract::sync(const xbytes_t & headerContent) {
+bool xtop_evm_eth_bridge_contract::sync(const xbytes_t & rlp_bytes) {
     // step 1: check init
     bigint last_height{0};
     if (!get_height(last_height)) {
@@ -292,33 +252,55 @@ bool xtop_evm_eth_bridge_contract::sync(const xbytes_t & headerContent) {
         xwarn("[xtop_evm_eth_bridge_contract::sync] not init yet");
         return false;
     }
-    // step 2: decode
-    std::vector<eth::xeth_block_header_t> headers;
-    auto decode_item = RLP::decode_once(headerContent);
-    auto bytes = decode_item.decoded[0];
-    while (!bytes.empty()) {
-        auto item = RLP::decode_once(bytes);
-        bytes = item.remainder;
-        xassert(item.decoded.size() == 1);
-        auto header_bytes = item.decoded[0];
+
+    auto left_bytes = std::move(rlp_bytes);
+    while (left_bytes.size() != 0) {
+        // step 2: decode
+        RLP::DecodedItem item = RLP::decode(left_bytes);
+        left_bytes = std::move(item.remainder);
         eth::xeth_block_header_t header;
-        if (!header.from_rlp(header_bytes)) {
-            xwarn("[xtop_evm_eth_bridge_contract::sync] decode header error");
+        {
+            auto item_header = RLP::decode_once(item.decoded[0]);
+            auto header_bytes = item_header.decoded[0];
+            if (header.from_rlp(header_bytes) < 0) {
+                xwarn("[xtop_evm_eth_bridge_contract::sync] decode header error");
+                return false;
+            }
+        }
+        auto proofs_per_node = static_cast<uint64_t>(evm_common::fromBigEndian<u64>(item.decoded[item.decoded.size() - 1]));
+        std::vector<ethash::double_node_with_merkle_proof> nodes;
+        uint32_t nodes_size{64};
+        if (proofs_per_node * nodes_size + 2 * nodes_size + 3 != item.decoded.size()) {
+            xwarn("[xtop_evm_eth_bridge_contract::sync] param error");
             return false;
         }
-        header.hash();
+        uint32_t nodes_start_index{2};
+        uint32_t proofs_start_index{2 + nodes_size * 2};
+        for (size_t i = 0; i < nodes_size; i++) {
+            ethash::double_node_with_merkle_proof node;
+            node.dag_nodes.emplace_back(static_cast<h512>(item.decoded[nodes_start_index + 2 * i]));
+            node.dag_nodes.emplace_back(static_cast<h512>(item.decoded[nodes_start_index + 2 * i + 1]));
+            for (size_t j = 0; j < proofs_per_node; j++) {
+                node.proof.emplace_back(static_cast<h128>(item.decoded[proofs_start_index + proofs_per_node * i + j]));
+            }
+            nodes.emplace_back(node);
+        }
         // step 3: check exist
         h256 hash{0};
         if (get_hash(header.number(), hash)) {
             xwarn("[xtop_evm_eth_bridge_contract::sync] get_hash existed, height: %s, hash: %s", header.number().str().c_str(), hash.hex().c_str());
             return false;
         }
-        headers.emplace_back(header);
-    }
-    for (auto header : headers) {
         xinfo("[xtop_evm_eth_bridge_contract::sync] header dump: %s", header.dump().c_str());
         if (!get_height(last_height)) {
             xwarn("[xtop_evm_eth_bridge_contract::sync] get last height failed, height: %s", last_height.str().c_str());
+            return false;
+        }
+        if (header.number() + BlockReserveNum < last_height) {
+            xwarn("[xtop_evm_eth_bridge_contract::sync] header is too old height: %s, hash: %s, now height: %s",
+                header.number().str().c_str(),
+                header.hash().hex().c_str(),
+                last_height.str().c_str());
             return false;
         }
         // step 4: get parent header
@@ -328,46 +310,30 @@ bool xtop_evm_eth_bridge_contract::sync(const xbytes_t & headerContent) {
             xwarn("[xtop_evm_eth_bridge_contract::sync] get parent header failed, hash: %s", header.parentHash().hex().c_str());
             return false;
         }
-#if defined(XBUILD_DEV) 
-#elif defined(XBUILD_CI) 
-#elif defined(XBUILD_GALILEO)
-#elif defined(XBUILD_BOUNTY)
-#else
         // step 5: verify header common
-        if (!verifyCommon(parentHeader, header)) {
+        if (!verify_common(parentHeader, header)) {
             xwarn("[xtop_evm_eth_bridge_contract::sync] verify header common failed, header: %s, parrent header: %s", header.hash().hex().c_str(), parentHeader.hash().hex().c_str());
             return false;
         }
-        if (isLondon(header)) {
-            if (!verifyEip1559Header(parentHeader, header)) {
-                xwarn("[xtop_evm_eth_bridge_contract::sync] verifyEip1559Header failed, new: %lu, old: %lu", header.gasLimit(), parentHeader.gasLimit());
-                return false;
-            }
-        } else {
-            if (!verifyGaslimit(parentHeader.gasLimit(), header.gasLimit())) {
-                xwarn("[xtop_evm_eth_bridge_contract::sync] gaslimit mismatch, new: %lu, old: %lu", header.gasLimit(), parentHeader.gasLimit());
-                return false;
-            }
+        if (!eth::config::is_london(header.number())) {
+            xwarn("[xtop_evm_eth_bridge_contract::sync] not london fork");
+            return false;
+        }
+        if (!eth::verify_eip1559_header(parentHeader, header)) {
+            xwarn("[xtop_evm_eth_bridge_contract::sync] verifyEip1559Header failed, new: %lu, old: %lu", header.gasLimit(), parentHeader.gasLimit());
+            return false;
         }
         // step 6: verify difficulty
-        bigint diff;
-        if (isArrowGlacier(header)) {
-            diff = eth::difficulty::calculate(header.time(), &parentHeader, ArrowGlacierBombDelay);
-        } else if (isLondon(header)) {
-            diff = eth::difficulty::calculate(header.time(), &parentHeader, LondonBombDelay);
-        } else {
-            xwarn("[xtop_evm_eth_bridge_contract::sync] unexpected fork");
-            xassert(false);
-        }
+        bigint diff = ethash::xethash_t::instance().calc_difficulty(header.time(), parentHeader);
         if (diff != header.difficulty()) {
+            xwarn("[xtop_evm_eth_bridge_contract::sync] difficulty check mismatch");
             return false;
         }
         // step 7: verify ethash
-        if (!eth::ethash_util::verify(&header)) {
+        if (!ethash::xethash_t::instance().verify_seal(header, nodes)) {
             xwarn("[xtop_evm_eth_bridge_contract::sync] ethash verify failed, header: %s", header.hash().hex().c_str());
             return false;
         }
-#endif
         // step 8: set header
         bigint newSumOfDifficult = preSumOfDifficult + header.difficulty();
         if (!set_header(header, newSumOfDifficult)) {
@@ -408,195 +374,72 @@ bool xtop_evm_eth_bridge_contract::sync(const xbytes_t & headerContent) {
                 }
             }
         }
+        // step 11: release
+        release(header.number());
     }
 
     return true;
 }
 
-#define CONFIRM_HEIGHTS 0
-bool xtop_evm_eth_bridge_contract::is_confirmed(const xbytes_t & headerContent) {
-    // cmp height
-    bigint height{0};
-    if (!get_height(height)) {
-        xwarn("[xtop_evm_eth_bridge_contract::is_confirmed] get height failed, height: %s", height.str().c_str());
-        return false;
-    }
-    auto item = RLP::decode_once(headerContent);
-    xassert(item.decoded.size() == 1);
+bool xtop_evm_eth_bridge_contract::is_confirmed(const xbytes_t & hash_bytes) {
+    h256 hash = static_cast<h256>(hash_bytes);
     eth::xeth_block_header_t header;
-    if (!header.from_rlp(item.decoded[0])) {
-        xwarn("[xtop_evm_eth_bridge_contract::is_confirmed] decode header error");
-        return false;
-    }
-    if (height < header.number() + CONFIRM_HEIGHTS) {
-        xwarn("[xtop_evm_eth_bridge_contract::is_confirmed] height not enough: %s, %s, limit:%d", height.str().c_str(), header.number().str().c_str(), CONFIRM_HEIGHTS);
-        return false;
-    }
-
-    h256 hash;
-    if (!get_hash(header.number(), hash)) {
-        xwarn("[xtop_evm_eth_bridge_contract::is_confirmed] get_hash failed, height: %s", header.number().str().c_str());
-        return false;
-    }
-
-    eth::xeth_block_header_t cur_header;
     bigint sumOfDifficult{0};
-    if (!get_header(hash, cur_header, sumOfDifficult)) {
+    if (!get_header(hash, header, sumOfDifficult)) {
         xwarn("[xtop_evm_eth_bridge_contract::is_confirmed] get_header failed, hash: %s", hash.hex().c_str());
         return false;
     }
-
-    if (header.stateMerkleRoot() != cur_header.stateMerkleRoot()) {
-        xwarn("[xtop_evm_eth_bridge_contract::is_confirmed] state MR mismatch, %s, %s", header.stateMerkleRoot().hex().c_str(), cur_header.stateMerkleRoot().hex().c_str());
+    bigint cur_height{0};
+    if (!get_height(cur_height)) {
+        xwarn("[xtop_evm_eth_bridge_contract::is_confirmed] get current height failed, height");
         return false;
     }
-
-    if (header.txMerkleRoot() != cur_header.txMerkleRoot()) {
-        xwarn("[xtop_evm_eth_bridge_contract::is_confirmed] tx MR mismatch, %s, %s", header.txMerkleRoot().hex().c_str(), cur_header.txMerkleRoot().hex().c_str());
-        return false;
-    }
-
-    if (header.receiptMerkleRoot() != cur_header.receiptMerkleRoot()) {
-        xwarn("[xtop_evm_eth_bridge_contract::is_confirmed] receipt MR mismatch, %s, %s", header.receiptMerkleRoot().hex().c_str(), cur_header.receiptMerkleRoot().hex().c_str());
+    if (cur_height < header.number() + ConfirmHeight) {
+        xwarn("[xtop_evm_eth_bridge_contract::is_confirmed] height not confirmed: %s, %s, limit: %d", cur_height.str().c_str(), header.number().str().c_str(), ConfirmHeight);
         return false;
     }
 
     return true;
 }
 
-bool xtop_evm_eth_bridge_contract::verifyOwner(const std::string & owner) const {
-    // TODO: add whitelist
+bool xtop_evm_eth_bridge_contract::verify(const std::string & verify_str) const {
+    utl::xkeccak256_t hasher;
+    xbytes_t output;
+    hasher.update(verify_str);
+    hasher.get_hash(output);
+    if (to_hex(output) != "030b540da3bab783d3feea2e60320ec6be299e41932a9f40c3965d7cb3b4ab94") {
+        xwarn("[xtop_evm_eth_bridge_contract::verify] %s is not a valid verify str", verify_str.c_str());
+        return false;
+    }
     return true;
 }
 
-bool xtop_evm_eth_bridge_contract::verifyCommon(const eth::xeth_block_header_t & prev_header, const eth::xeth_block_header_t & new_header) const {
+bool xtop_evm_eth_bridge_contract::verify_common(const eth::xeth_block_header_t & prev_header, const eth::xeth_block_header_t & new_header) const {
     if (new_header.number() != prev_header.number() + 1) {
-        xwarn("[xtop_evm_eth_bridge_contract::verifyCommon] height mismatch, new: %s, old: %s", new_header.number().str().c_str(), prev_header.number().str().c_str());
+        xwarn("[xtop_evm_eth_bridge_contract::verify_common] height mismatch, new: %s, old: %s", new_header.number().str().c_str(), prev_header.number().str().c_str());
         return false;
     }
-// #if defined(XBUILD_DEV) 
-// #elif defined(XBUILD_CI) 
-// #elif defined(XBUILD_GALILEO)
-// #elif defined(XBUILD_BOUNTY)
-// #else
     if (new_header.extra().size() > MaximumExtraDataSize) {
-        xwarn("[xtop_evm_eth_bridge_contract::verifyCommon] extra size too big: %zu > 32", new_header.extra().size());
+        xwarn("[xtop_evm_eth_bridge_contract::verify_common] extra size too big: %zu > 32", new_header.extra().size());
         return false;
     }
-// #endif
     if (new_header.time() <= prev_header.time()) {
-        xwarn("[xtop_evm_eth_bridge_contract::verifyCommon] time mismatch, new: %lu, old: %lu", new_header.time(), prev_header.time());
+        xwarn("[xtop_evm_eth_bridge_contract::verify_common] time mismatch, new: %lu, old: %lu", new_header.time(), prev_header.time());
         return false;
     }
     if (new_header.gasLimit() > MaxGasLimit) {
-        xwarn("[xtop_evm_eth_bridge_contract::verifyCommon] gaslimit too big: %lu > 0x7fffffffffffffff", new_header.gasLimit());
+        xwarn("[xtop_evm_eth_bridge_contract::verify_common] gaslimit too big: %lu > 0x7fffffffffffffff", new_header.gasLimit());
         return false;
     }
     if (new_header.gasUsed() > new_header.gasLimit()) {
-        xwarn("[xtop_evm_eth_bridge_contract::verifyCommon] gasUsed: %lu > gasLimit: %lu", new_header.gasUsed(), new_header.gasLimit());
+        xwarn("[xtop_evm_eth_bridge_contract::verify_common] gasUsed: %lu > gasLimit: %lu", new_header.gasUsed(), new_header.gasLimit());
         return false;
     }
     if ((new_header.gasLimit() >= prev_header.gasLimit() * 1025 / 1024) || (new_header.gasLimit() <= prev_header.gasLimit() * 1023 / 1024)) {
-        xwarn("[xtop_evm_eth_bridge_contract::verifyCommon] gaslimit mismatch, new: %lu, old: %lu", new_header.gasLimit(), prev_header.gasLimit());
+        xwarn("[xtop_evm_eth_bridge_contract::verify_common] gaslimit mismatch, new: %lu, old: %lu", new_header.gasLimit(), prev_header.gasLimit());
         return false;
     }
     return true;
-}
-
-// VerifyEip1559Header verifies some header attributes which were changed in EIP-1559,
-// - gas limit check
-// - basefee check
-bool xtop_evm_eth_bridge_contract::verifyEip1559Header(const eth::xeth_block_header_t & parentHeader, const eth::xeth_block_header_t & header) const {
-    // Verify that the gas limit remains within allowed bounds
-    auto parentGasLimit = parentHeader.gasLimit();
-    if (!isLondon(parentHeader)) {
-        parentGasLimit = parentHeader.gasLimit() * ElasticityMultiplier;
-    }
-    if (!verifyGaslimit(parentGasLimit, header.gasLimit())) {
-        xwarn("[xtop_evm_eth_bridge_contract::verifyEip1559Header] gaslimit mismatch, new: %lu, old: %lu", header.gasLimit(), parentHeader.gasLimit());
-        return false;
-    }
-    // Verify the header is not malformed
-    if (!header.isBaseFee()) {
-        xwarn("[xtop_evm_eth_bridge_contract::verifyEip1559Header] is not basefee: %d", header.isBaseFee());
-        return false;
-    }
-    // Verify the baseFee is correct based on the parent header.
-    auto expectedBaseFee = calcBaseFee(parentHeader);
-    if (header.baseFee() != expectedBaseFee) {
-        xwarn("[xtop_evm_eth_bridge_contract::verifyEip1559Header] wrong basefee: %s, should be: %s", header.baseFee().str().c_str(), expectedBaseFee.str().c_str());
-        return false;
-    }
-    return true;
-}
-
-// VerifyGaslimit verifies the header gas limit according increase/decrease
-// in relation to the parent gas limit.
-bool xtop_evm_eth_bridge_contract::verifyGaslimit(const u256 parentGasLimit, const u256 headerGasLimit) const {
-    // Verify that the gas limit remains within allowed bounds
-    bigint diff = bigint(parentGasLimit) - bigint(headerGasLimit);
-    if (diff < 0) {
-        diff *= -1;
-    }
-    bigint limit = parentGasLimit / GasLimitBoundDivisor;
-    if (uint64_t(diff) >= limit) {
-        xwarn("[xtop_evm_eth_bridge_contract::verifyGaslimit] diff: %lu >= limit: %s", uint64_t(diff), limit.str().c_str());
-        return false;
-    }
-
-    if (headerGasLimit < 5000) {
-        xwarn("[xtop_evm_eth_bridge_contract::verifyGaslimit] headerGasLimit: %s too small < 5000", headerGasLimit.str().c_str());
-        return false;
-    }
-    return true;
-}
-
-bool xtop_evm_eth_bridge_contract::isLondon(const eth::xeth_block_header_t & header) const {
-    if (header.number() >= LondonBlock) {
-        xassert(header.isBaseFee());
-        return true;
-    }
-    return false;
-}
-
-bool xtop_evm_eth_bridge_contract::isArrowGlacier(const eth::xeth_block_header_t & header) const {
-    return (header.number() >= ArrowGlacierBlock);
-}
-
-bigint xtop_evm_eth_bridge_contract::calcBaseFee(const eth::xeth_block_header_t & parentHeader) const {
-    if (!isLondon(parentHeader)) {
-        return bigint(InitialBaseFee);
-    }
-    auto parentGasTarget = parentHeader.gasLimit() / ElasticityMultiplier;
-    bigint parentGasTargetBig = parentGasTarget;
-    bigint baseFeeChangeDenominator = BaseFeeChangeDenominator;
-    // If the parent gasUsed is the same as the target, the baseFee remains unchanged.
-    if (parentHeader.gasUsed() == parentGasTarget) {
-        return bigint(parentHeader.baseFee());
-    }
-    if (parentHeader.gasUsed() > parentGasTarget) {
-        bigint gasUsedDelta = bigint(parentHeader.gasUsed() - parentGasTarget);
-        bigint x = parentHeader.baseFee() * gasUsedDelta;
-        bigint y = x / parentGasTargetBig;
-        bigint baseFeeDelta = y / baseFeeChangeDenominator;
-        if (baseFeeDelta < 1) {
-            baseFeeDelta = 1;
-        }
-        return parentHeader.baseFee() + baseFeeDelta;
-    } else {
-        // Otherwise if the parent block used less gas than its target, the baseFee should decrease.
-        bigint gasUsedDelta = bigint(parentGasTarget - parentHeader.gasUsed());
-        bigint x = parentHeader.baseFee() - gasUsedDelta;
-        bigint y = x / parentGasTargetBig;
-        bigint baseFeeDelta = y / baseFeeChangeDenominator;
-        x = parentHeader.baseFee() - baseFeeDelta;
-        if (x < 0) {
-            x = 0;
-        }
-
-        return x;
-    }
-    return 0;
 }
 
 bool xtop_evm_eth_bridge_contract::get_header(const h256 hash, eth::xeth_block_header_t & header, bigint & difficulty) const {
@@ -626,6 +469,14 @@ bool xtop_evm_eth_bridge_contract::set_header(eth::xeth_block_header_t & header,
     return true;
 }
 
+bool xtop_evm_eth_bridge_contract::remove_header(const evm_common::h256 hash) {
+    auto k = hash.asBytes();
+    if (0 != m_contract_state->map_remove(data::system_contract::XPROPERTY_ETH_CHAINS_HEADER, {k.begin(), k.end()})) {
+        return false;
+    }
+    return true;
+}
+
 bool xtop_evm_eth_bridge_contract::get_hash(const bigint height, h256 & hash) const {
     auto k = evm_common::toBigEndian(static_cast<u256>(height));
     auto hash_str = m_contract_state->map_get(data::system_contract::XPROPERTY_ETH_CHAINS_HASH, {k.begin(), k.end()});
@@ -641,6 +492,14 @@ bool xtop_evm_eth_bridge_contract::set_hash(const bigint height, const h256 hash
     auto k = evm_common::toBigEndian(static_cast<u256>(height));
     auto v = hash.asBytes();
     if (0 != m_contract_state->map_set(data::system_contract::XPROPERTY_ETH_CHAINS_HASH, {k.begin(), k.end()}, {v.begin(), v.end()})) {
+        return false;
+    }
+    return true;
+}
+
+bool xtop_evm_eth_bridge_contract::remove_hash(const bigint height) {
+    auto k = evm_common::toBigEndian(static_cast<u256>(height));
+    if (0 != m_contract_state->map_remove(data::system_contract::XPROPERTY_ETH_CHAINS_HASH, {k.begin(), k.end()})) {
         return false;
     }
     return true;
@@ -672,9 +531,8 @@ bool xtop_evm_eth_bridge_contract::rebuild(eth::xeth_block_header_t & current_he
     bigint remove_cnt{0};
 
     if (new_height < current_height) {
-        for (bigint h = new_height + 1; new_height <= current_height; ++h) {
-            auto k = evm_common::toBigEndian(static_cast<u256>(h));
-            if (!m_contract_state->map_remove(data::system_contract::XPROPERTY_ETH_CHAINS_HASH, {k.begin(), k.end()})) {
+        for (bigint h = new_height + 1; h <= current_height; ++h) {
+            if (!remove_hash(h)) {
                 xwarn("[xtop_evm_eth_bridge_contract::rebuild] remove hash error, height: %s", h.str().c_str());
             }
         }
@@ -707,11 +565,11 @@ bool xtop_evm_eth_bridge_contract::rebuild(eth::xeth_block_header_t & current_he
     }
 
     while (new_fork_hash != same_height_hash) {
-        add[evm_common::toBigEndian(static_cast<u256>(new_height))] = new_hash.asBytes();
+        add[evm_common::toBigEndian(static_cast<u256>(new_height))] = new_fork_hash.asBytes();
         new_height--;
         // get previous new_fork_hash
         eth::xeth_block_header_with_difficulty_t h;
-        if (!get_header(new_hash, h.m_header, h.m_difficult_sum)) {
+        if (!get_header(new_fork_hash, h.m_header, h.m_difficult_sum)) {
             xwarn("[xtop_evm_eth_bridge_contract::rebuild] get last header failed, hash: %s", new_hash.hex().c_str());
             return false;
         }
@@ -736,6 +594,42 @@ bool xtop_evm_eth_bridge_contract::rebuild(eth::xeth_block_header_t & current_he
     xinfo("[xtop_evm_eth_bridge_contract::rebuild] rebuild success");
 
     return true;
+}
+
+void xtop_evm_eth_bridge_contract::release(const bigint number) {
+    eth::xeth_block_header_t header;
+    bigint difficulty;
+    h256 hash;
+    if (number > BlockReserveNum) {
+        bigint n = number - BlockReserveNum;
+        for (;;) {
+            if (!get_hash(n, hash)) {
+                break;
+            }
+            if (!get_header(hash, header, difficulty)) {
+                break;
+            }
+            remove_header(hash);
+            if (n == 0) {
+                break;
+            }
+            n -= 1;
+        }
+    }
+    if (number > HashReserveNum) {
+        bigint n = number - HashReserveNum;
+        for (;;) {
+            if (!get_hash(n, hash)) {
+                break;
+
+            }
+            remove_hash(n);
+            if (n == 0) {
+                break;
+            }
+            n -= 1;
+        }
+    }
 }
 
 NS_END4
