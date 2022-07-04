@@ -1105,13 +1105,13 @@ void xrpc_query_manager::getExchangeNodes(xJson::Value & js_req, xJson::Value & 
 
     // todo(next version fork)
     // if (forked standalone_exchange_point) {
-        // std::string const addr = sys_contract_rec_elect_exchange_addr;
-        // auto property_name = top::data::election::get_property_by_group_id(common::xexchange_group_id);
-        // m_xrpc_query_func.query_account_property(j, addr, property_name, xfull_node_compatible_mode_t::incompatible);
-    // } else {
-        std::string const addr = sys_contract_rec_elect_archive_addr;
-        auto property_name = top::data::election::get_property_by_group_id(common::xlegacy_exchange_group_id);
+        std::string const addr = sys_contract_rec_elect_exchange_addr;
+        auto property_name = top::data::election::get_property_by_group_id(common::xexchange_group_id);
         m_xrpc_query_func.query_account_property(j, addr, property_name, xfull_node_compatible_mode_t::incompatible);
+    // } else {
+        // std::string const addr = sys_contract_rec_elect_archive_addr;
+        // auto property_name = top::data::election::get_property_by_group_id(common::xlegacy_exchange_group_id);
+        // m_xrpc_query_func.query_account_property(j, addr, property_name, xfull_node_compatible_mode_t::incompatible);
     // }
 
     if (version == RPC_VERSION_V3) {
@@ -2055,12 +2055,12 @@ void xrpc_query_manager::getElectInfo(xJson::Value & js_req, xJson::Value & js_r
     }
     // todo(next version fork)
     // if (forked standalone_exchange_point) {
-        // addr = sys_contract_rec_elect_exchange_addr;
-        // prop_name = data::election::get_property_by_group_id(common::xexchange_group_id);
-        // m_xrpc_query_func.query_account_property(j, addr, prop_name, xfull_node_compatible_mode_t::incompatible);
-    // } else {
-        prop_name = data::election::get_property_by_group_id(common::xlegacy_exchange_group_id);
+        addr = sys_contract_rec_elect_exchange_addr;
+        prop_name = data::election::get_property_by_group_id(common::xexchange_group_id);
         m_xrpc_query_func.query_account_property(j, addr, prop_name, xfull_node_compatible_mode_t::incompatible);
+    // } else {
+        // prop_name = data::election::get_property_by_group_id(common::xlegacy_exchange_group_id);
+        // m_xrpc_query_func.query_account_property(j, addr, prop_name, xfull_node_compatible_mode_t::incompatible);
     // }
     if (j[common::to_presentation_string(common::xnode_type_t::storage_exchange)].isMember(target)) {
         ev.push_back("exchange");

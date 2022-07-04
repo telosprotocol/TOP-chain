@@ -502,9 +502,9 @@ void xrole_context_t::broadcast(const xblock_ptr_t & block_ptr, common::xnode_ty
             {
                 // todo(next version fork)
                 // if (forked standalone_exchange_point) {
-                //     common::xnode_address_t exchange_dest{common::build_exchange_sharding_address(m_driver->network_id())};
+                    common::xnode_address_t exchange_dest{common::build_exchange_sharding_address(m_driver->network_id())};
                 // } else {
-                    common::xnode_address_t exchange_dest{common::build_legacy_exchange_sharding_address(common::xlegacy_exchange_group_id, m_driver->network_id())};
+                    // common::xnode_address_t exchange_dest{common::build_legacy_exchange_sharding_address(common::xlegacy_exchange_group_id, m_driver->network_id())};
                 // }
                 std::error_code ec;
                 m_driver->broadcast(exchange_dest.xip2(), message, ec);
