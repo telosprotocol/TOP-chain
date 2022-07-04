@@ -1,7 +1,19 @@
+#pragma once
 #include "xdata/xunit_bstate.h"
 #include "xstatectx/xstatectx_face.h"
 
 namespace top {
+
+static std::string evm_to_top_address(std::string const & input) {
+    if (input.substr(0, 2) == "0x") {
+        return "T60004" + input.substr(2);
+    }
+    if (input.substr(0, 6) == "T60004") {
+        return input;
+    }
+    return "T60004" + input;
+}
+
 namespace evm {
 namespace tests {
 

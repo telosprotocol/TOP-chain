@@ -3,7 +3,6 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 //#include "xevm_common/common_data.h"
-//#include "xevm_common/xborsh.hpp"
 #include "xevm_common/rlp.h"
 #include "xevm_common/xtriehash.h"
 #include <iostream>

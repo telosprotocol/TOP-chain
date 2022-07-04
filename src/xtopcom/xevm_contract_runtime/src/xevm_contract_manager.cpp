@@ -4,11 +4,11 @@
 
 #include "xevm_contract_runtime/xevm_contract_manager.h"
 
+#include "xbasic/xhex.h"
 #include "xbasic/xmemory.hpp"
 #include "xdata/xnative_contract_address.h"
 #include "xevm_contract_runtime/sys_contract/xevm_erc20_contract.h"
 #include "xevm_contract_runtime/sys_contract/xevm_eth_bridge_contract.h"
-#include "xevm_contract_runtime/xevm_variant_bytes.h"
 #include "xevm_runner/proto/proto_precompile.pb.h"
 
 #include <cinttypes>
@@ -37,7 +37,7 @@ bool xtop_evm_contract_manager::execute_sys_contract(xbytes_t const & input, obs
         xwarn("[xtop_evm_contract_manager::execute_sys_contract] parse input error");
         return false;
     }
-    std::string contract_address_str = xvariant_bytes{call_args.contract_address().value(), false}.to_hex_string("T60004");
+    std::string contract_address_str = top::to_hex(call_args.contract_address().value().begin(), call_args.contract_address().value().end(), base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN);
     // todo might check address.
     common::xaccount_address_t sys_contract_address{contract_address_str};
     if (m_sys_contract.find(sys_contract_address) == m_sys_contract.end()) {

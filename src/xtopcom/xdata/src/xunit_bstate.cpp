@@ -23,7 +23,6 @@
 #include "xevm/xevm.h"
 #include "xevm_common/fixed_hash.h"
 #include "xevm_common/xcodec/xmsgpack/xboost_u256_codec.h"
-#include "xevm_contract_runtime/xevm_storage.h"
 #include "xmetrics/xmetrics.h"
 #include "xpbase/base/top_utils.h"
 

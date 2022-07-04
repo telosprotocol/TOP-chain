@@ -1,12 +1,12 @@
 #include "tests/xevm_engine_test/evm_test_fixture/xmock_evm_statectx.h"
 #include "tests/xevm_engine_test/evm_test_fixture/xmock_evm_storage.h"
+#include "xbasic/xhex.h"
 #include "xbasic/xmemory.hpp"
 #include "xevm/xevm.h"
 #include "xevm_common/xevm_transaction_result.h"
 #include "xevm_contract_runtime/xevm_context.h"
 #include "xevm_contract_runtime/xevm_logic.h"
 #include "xevm_contract_runtime/xevm_storage.h"
-#include "xevm_contract_runtime/xevm_variant_bytes.h"
 #include "xevm_runner/evm_engine_interface.h"
 #include "xevm_runner/evm_import_instance.h"
 #include "xtxexecutor/xvm_face.h"
@@ -19,7 +19,9 @@ void test_erc_20_contract() {
     xdbg("at child thread");
     std::string contract_address;
     // ./solidity_contracts/erc20.sol
-    xvariant_bytes contract_code{
+
+    std::error_code ec;
+    std::string contract_code{
         "60806040526040518060400160405280600781526020017f4d794572633230000000000000000000000000000000000000000000000000008152506003908051906020019061004f92919061016a565b50604051"
         "8060400160405280600381526020017f53594d00000000000000000000000000000000000000000000000000000000008152506004908051906020019061009b92919061016a565b506012600560006101000a8154"
         "8160ff021916908360ff1602179055503480156100c457600080fd5b50620186a0600081905550600054600160003373ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffff"
@@ -57,9 +59,10 @@ void test_erc_20_contract() {
         "526020019081526020016000206000828254039250508190555081600160008573ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200190815260"
         "2001600020600082825401925050819055508273ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff167fddf252ad1be2c89b69c2b068fc378daa952ba7f1"
         "63c4a11628f55a4df523b3ef846040518082815260200191505060405180910390a36001905092915050565b600260205281600052604060002060205280600052604060002060009150915050548156fea2646970"
-        "667358221220d85b6d67c18cbaefa92cadb028ffbb9d0d410e0960f7466456990c711ab8a77464736f6c63430006040033",
-        true};
-    txexecutor::xvm_para_t vm_param{0, "random_seed", 0, 0};
+        "667358221220d85b6d67c18cbaefa92cadb028ffbb9d0d410e0960f7466456990c711ab8a77464736f6c63430006040033"};
+
+    auto contract_code_bytes = top::from_hex(contract_code, ec);
+    txexecutor::xvm_para_t vm_param{0, "random_seed", 0, 0, 0, common::xaccount_address_t{sys_eth_zero_addr}};
     top::statectx::xstatectx_face_ptr_t statestore{std::make_shared<top::evm::tests::xmock_evm_statectx>()};
     std::string src_address{"T60004001bdc8251890aafc5841b05620c0eab336e3ebc"};
 
@@ -69,7 +72,7 @@ void test_erc_20_contract() {
         uint64_t gas_limit = 3000000;
 
         auto evm_action = top::make_unique<data::xconsensus_action_t<data::xtop_action_type_t::evm>>(
-            common::xaccount_address_t{src_address}, eth_zero_address, value_256, contract_code.to_bytes(), gas_limit);
+            common::xaccount_address_t{src_address}, eth_zero_address, value_256, contract_code_bytes, gas_limit);
 
         auto contract_manager = top::make_observer<contract_runtime::evm::xevm_contract_manager_t>(contract_runtime::evm::xevm_contract_manager_t::instance());
 
@@ -84,11 +87,12 @@ void test_erc_20_contract() {
     // call contract:
     // erc.totalSupply.getData()
     {
-        xvariant_bytes contract_params{"0x18160ddd", true};
+        std::string contract_params{"0x18160ddd"};
+        auto contract_params_bytes = top::from_hex(contract_params, ec);
         evm_common::u256 value_256{0};
         uint64_t gas_limit = 100000;
         auto evm_action = top::make_unique<data::xconsensus_action_t<data::xtop_action_type_t::evm>>(
-            common::xaccount_address_t{src_address}, common::xaccount_address_t{contract_address}, value_256, contract_params.to_bytes(), gas_limit);
+            common::xaccount_address_t{src_address}, common::xaccount_address_t{contract_address}, value_256, contract_params_bytes, gas_limit);
         auto contract_manager = top::make_observer<contract_runtime::evm::xevm_contract_manager_t>(contract_runtime::evm::xevm_contract_manager_t::instance());
 
         top::evm::xtop_evm evm{contract_manager, statestore};
@@ -101,11 +105,12 @@ void test_erc_20_contract() {
 
     // erc.balanceOf.getData("0000000000000000000000000000000000000123")
     {
-        xvariant_bytes contract_params{"0x70a08231000000000000000000000000000000000000000000000000000000000000007b", true};
+        std::string contract_params{"0x70a08231000000000000000000000000000000000000000000000000000000000000007b"};
+        auto contract_params_bytes = top::from_hex(contract_params, ec);
         evm_common::u256 value_256{0};
         uint64_t gas_limit = 100000;
         auto evm_action = top::make_unique<data::xconsensus_action_t<data::xtop_action_type_t::evm>>(
-            common::xaccount_address_t{src_address}, common::xaccount_address_t{contract_address}, value_256, contract_params.to_bytes(), gas_limit);
+            common::xaccount_address_t{src_address}, common::xaccount_address_t{contract_address}, value_256, contract_params_bytes, gas_limit);
         auto contract_manager = top::make_observer<contract_runtime::evm::xevm_contract_manager_t>(contract_runtime::evm::xevm_contract_manager_t::instance());
 
         top::evm::xtop_evm evm{contract_manager, statestore};
@@ -118,12 +123,12 @@ void test_erc_20_contract() {
 
     // erc.transfer.getData("0000000000000000000000000000000000000123",123)
     {
-        xvariant_bytes contract_params{"0xa9059cbb000000000000000000000000000000000000000000000000000000000000007b000000000000000000000000000000000000000000000000000000000000007b",
-                                       true};
+        std::string contract_params{"0xa9059cbb000000000000000000000000000000000000000000000000000000000000007b000000000000000000000000000000000000000000000000000000000000007b"};
+        auto contract_params_bytes = top::from_hex(contract_params, ec);
         evm_common::u256 value_256{0};
         uint64_t gas_limit = 100000;
         auto evm_action = top::make_unique<data::xconsensus_action_t<data::xtop_action_type_t::evm>>(
-            common::xaccount_address_t{src_address}, common::xaccount_address_t{contract_address}, value_256, contract_params.to_bytes(), gas_limit);
+            common::xaccount_address_t{src_address}, common::xaccount_address_t{contract_address}, value_256, contract_params_bytes, gas_limit);
         auto contract_manager = top::make_observer<contract_runtime::evm::xevm_contract_manager_t>(contract_runtime::evm::xevm_contract_manager_t::instance());
 
         top::evm::xtop_evm evm{contract_manager, statestore};
@@ -136,11 +141,12 @@ void test_erc_20_contract() {
 
     // erc.balanceOf.getData("0000000000000000000000000000000000000123")
     {
-        xvariant_bytes contract_params{"0x70a08231000000000000000000000000000000000000000000000000000000000000007b", true};
+        std::string contract_params{"0x70a08231000000000000000000000000000000000000000000000000000000000000007b"};
+        auto contract_params_bytes = top::from_hex(contract_params, ec);
         evm_common::u256 value_256{0};
         uint64_t gas_limit = 100000;
         auto evm_action = top::make_unique<data::xconsensus_action_t<data::xtop_action_type_t::evm>>(
-            common::xaccount_address_t{src_address}, common::xaccount_address_t{contract_address}, value_256, contract_params.to_bytes(), gas_limit);
+            common::xaccount_address_t{src_address}, common::xaccount_address_t{contract_address}, value_256, contract_params_bytes, gas_limit);
         auto contract_manager = top::make_observer<contract_runtime::evm::xevm_contract_manager_t>(contract_runtime::evm::xevm_contract_manager_t::instance());
 
         top::evm::xtop_evm evm{contract_manager, statestore};

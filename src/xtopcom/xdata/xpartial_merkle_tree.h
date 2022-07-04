@@ -18,7 +18,6 @@
 #include "xevm_common/xtriecommon.h"
 #include <openssl/sha.h>
 #include "xevm_common/common_data.h"
-#include "xevm_common/xborsh.hpp"
 
 
 

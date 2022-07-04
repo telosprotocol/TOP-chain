@@ -7,9 +7,7 @@
 #include "xbasic/xbyte_buffer.h"
 #include "xcommon/xeth_address.h"
 #include "xevm_common/common.h"
-#include "xevm_common/xborsh.hpp"
 #include "xevm_common/xevm_transaction_result.h"
-#include "xevm_contract_runtime/xevm_variant_bytes.h"
 #include "xevm_runner/proto/proto_precompile.pb.h"
 
 #if defined(__clang__)
@@ -45,8 +43,7 @@ struct sys_contract_context {
     sys_contract_context(evm_engine::precompile::ContractContext const & proto_context)
       : address{common::xeth_address_t::build_from(top::to_bytes(proto_context.address().value()))}
       , caller{common::xeth_address_t::build_from(top::to_bytes(proto_context.caller().value()))} {
-        evm_common::xBorshDecoder decoder;
-        decoder.getInteger(top::to_bytes(proto_context.apparent_value().data()), apparent_value);
+        apparent_value = evm_common::fromBigEndian<evm_common::u256>(proto_context.apparent_value().data());
     }
 };
 
