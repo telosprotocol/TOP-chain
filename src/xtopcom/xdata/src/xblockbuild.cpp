@@ -120,7 +120,12 @@ void xtableheader_extra_t::set_relay_wrap_info(const std::string & relay_wrap_in
     m_paras[enum_extra_data_type_relay_wrap_info] = relay_wrap_info;
 }
 
-std::string xtableheader_extra_t::build_extra_string(base::xvheader_t* _tableheader, uint64_t tgas_height, uint64_t gmtime, const std::string & eth_header) {
+std::string xtableheader_extra_t::build_extra_string(base::xvheader_t * _tableheader,
+                                                     uint64_t tgas_height,
+                                                     uint64_t gmtime,
+                                                     const std::string & eth_header,
+                                                     const std::string & relay_wrap_data,
+                                                     const std::string & relay_block_data) {
     if (_tableheader->get_height() == 0) {
         // genesis block should not set extra
         return {};
@@ -136,12 +141,16 @@ std::string xtableheader_extra_t::build_extra_string(base::xvheader_t* _tablehea
         header_extra.set_ethheader(eth_header);
     }
 
+    if (!relay_wrap_data.empty() && !relay_block_data.empty()) {
+        header_extra.set_relay_wrap_info(relay_wrap_data);
+        header_extra.set_relay_block_data(relay_block_data);
+    }
+
     // TODO(jimmy) fork check
     std::string extra_string;
     header_extra.serialize_to_string(extra_string);
     return extra_string;
 }
-
 
 int32_t xextra_map_base_t::serialize_to_string(std::string & str) const {
     base::xstream_t _stream(base::xcontext_t::instance());
@@ -462,31 +471,6 @@ base::xauto_ptr<base::xvblock_t> xemptyblock_build_t::create_new_block() {
     return new xemptyblock_t(*get_header(), *get_qcert());
 }
 
-// set relay block data to m_extra_data in xvheader.
-// set evm height to m_comments in xvheader.
-xrelay_block_build_t::xrelay_block_build_t(base::xvblock_t * prev_block,
-                                           const xblock_consensus_para_t & para,
-                                           const std::string & relay_extra_data,
-                                           bool need_relay_prove) {
-    base::enum_xvblock_type _type = get_block_type_from_empty_block(prev_block->get_account());
-    base::xbbuild_para_t build_para(prev_block, base::enum_xvblock_class_nil, _type);
-
-    build_para.set_relay_cert_para(para.get_clock(),
-                                   para.get_viewtoken(),
-                                   para.get_viewid(),
-                                   para.get_validator(),
-                                   para.get_auditor(),
-                                   para.get_drand_height(),
-                                   para.get_justify_cert_hash(),
-                                   need_relay_prove);
-    init_header_qcert(build_para);
-    set_header_extra(relay_extra_data);
-}
-
-base::xauto_ptr<base::xvblock_t> xrelay_block_build_t::create_new_block() {
-    return new xemptyblock_t(*get_header(), *get_qcert());
-}
-
 xrelayblock_build_t::xrelayblock_build_t(base::xvblock_t* curr_block, const std::string & relay_block_data, const std::string & relay_wrap_data,
     const std::string& sign_data, const uint64_t& block_height) {
     base::enum_xvblock_type _type = get_block_type_from_empty_block(curr_block->get_account());
@@ -494,6 +478,7 @@ xrelayblock_build_t::xrelayblock_build_t(base::xvblock_t* curr_block, const std:
 
     base::xbbuild_para_t build_para(xrootblock_t::get_rootblock_chainid(), std::string(sys_contract_relay_block_addr), block_height, //curr_block->get_height()/3,
         base::enum_xvblock_class_nil, base::enum_xvblock_level_table, _type, hash, hash);//xrootblock_t::get_rootblock_hash());
+    // todo(nathan): use set_table_cert_para
     build_para.set_relay_cert_para(curr_block->get_clock(), curr_block->get_viewid(), curr_block->get_viewtoken(), curr_block->get_cert());
     init_header_qcert(build_para);
 
@@ -507,10 +492,12 @@ xrelayblock_build_t::xrelayblock_build_t(const std::string & relay_block_data) {
 
     base::xbbuild_para_t build_para(xrootblock_t::get_rootblock_chainid(), std::string(sys_contract_relay_block_addr), 0,
         base::enum_xvblock_class_nil, base::enum_xvblock_level_table, _type, hash, hash);//xrootblock_t::get_rootblock_hash());
+    // todo(nathan): use set_table_cert_para
     build_para.set_relay_cert_para();
     init_header_qcert(build_para);
     set_header_extra(relay_block_data);
 }
+
 base::xauto_ptr<base::xvblock_t> xrelayblock_build_t::create_new_block() {
     base::xauto_ptr<base::xvblock_t> new_block = new xtop_relay_block_t(*get_header(), *get_qcert(), nullptr, nullptr);
 //    new_block->get_cert()->set_verify_signature(std::string(1, 0));
@@ -569,10 +556,11 @@ xlighttable_build_t::xlighttable_build_t(base::xvblock_t* prev_block, const xtab
     base::xbbuild_para_t build_para(prev_block, base::enum_xvblock_class_light, base::enum_xvblock_type_batch);
 
     build_para.set_table_cert_para(para.get_clock(), para.get_viewtoken(), para.get_viewid(), para.get_validator(), para.get_auditor(),
-                                    para.get_drand_height(), para.get_justify_cert_hash());
+                                    para.get_drand_height(), para.get_justify_cert_hash(), para.need_relay_prove());
     base::xvaccount_t _vaccount(prev_block->get_account());
     init_header_qcert(build_para);
-    std::string _extra_data = xtableheader_extra_t::build_extra_string(get_header(), para.get_tgas_height(), para.get_gmtime(), para.get_ethheader());
+    std::string _extra_data = xtableheader_extra_t::build_extra_string(
+        get_header(), para.get_tgas_height(), para.get_gmtime(), para.get_ethheader(), para.get_relay_wrap_data(), para.get_relay_block_data());
     set_header_extra(_extra_data);
     build_block_body(bodypara, _vaccount, prev_block->get_height() + 1);
 }
@@ -843,7 +831,7 @@ bool xfulltable_build_t::build_block_body(const xfulltable_block_para_t & para, 
     // #1 set input entitys and resources
     base::xvaction_t _action = xblockaction_build_t::make_table_block_action_with_table_prop_prove(BLD_URI_FULL_TABLE, get_header()->get_block_version(), para.get_property_hashs(), account.get_short_table_id(), height);
     set_input_entity(_action);
-    xdbg("xfulltable_build_t::build_block_body，account=%s,height=%ld,version=0x%x", account.get_account().c_str(), height, get_header()->get_block_version());
+    xdbg("xfulltable_build_t::build_block_body,account=%s,height=%ld,version=0x%x", account.get_account().c_str(), height, get_header()->get_block_version());
     // #2 set output entitys and resources
     std::string full_state_bin = para.get_snapshot();
     set_output_full_state(full_state_bin);

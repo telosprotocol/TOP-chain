@@ -25,6 +25,7 @@ NS_BEG2(top, blockmaker)
 // unconfirm rate limit parameters
 #define table_pair_unconfirm_tx_num_max (512)
 #define table_total_unconfirm_tx_num_max  (2048)
+#define RELAY_BLOCK_TXS_PACK_NUM_MAX    (32)
 
 xtable_maker_t::xtable_maker_t(const std::string & account, const xblockmaker_resources_ptr_t & resources)
 : xblock_maker_t(account, resources) {
@@ -62,129 +63,153 @@ void xtable_maker_t::set_packtx_metrics(const xcons_transaction_ptr_t & tx, bool
 
 xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & table_result) {
     const std::vector<xcons_transaction_ptr_t> & input_table_txs = table_para.get_origin_txs();
-    if (input_table_txs.empty()) {
+    if (!is_make_relay_chain() && input_table_txs.empty()) {
         table_result.m_make_block_error_code = xblockmaker_error_no_need_make_table;
         xwarn("xtable_maker_t::make_light_table_v2 fail-no input txs");
         return nullptr;
     }
 
-    // TODO(jimmy) 
-    uint64_t now = (uint64_t)base::xtime_utl::gettimeofday();
-
     // create statectx
     statectx::xstatectx_para_t statectx_para(cs_para.get_clock());
     statectx::xstatectx_ptr_t statectx_ptr = statectx::xstatectx_factory_t::create_latest_cert_statectx(cs_para.get_latest_cert_block().get(), table_para.get_tablestate(), table_para.get_commit_tablestate(), statectx_para);
-    // create batch executor
-    uint64_t gas_limit = XGET_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit);
-    txexecutor::xvm_para_t vmpara(cs_para.get_clock(), cs_para.get_random_seed(), cs_para.get_total_lock_tgas_token(), gas_limit, cs_para.get_table_proposal_height(), cs_para.get_coinbase());
-    txexecutor::xbatchtx_executor_t executor(statectx_ptr, vmpara);
-
-    std::vector<xcons_transaction_ptr_t> input_txs;
-    for (auto & tx : input_table_txs) {
-        if (tx->get_transaction() == nullptr) {
-            if (tx->is_confirm_tx()) {
-                auto raw_tx = get_txpool()->get_raw_tx(tx->get_account_addr(), tx->get_peer_tableid(), tx->get_last_action_receipt_id());
-                if (raw_tx == nullptr) {
-                    XMETRICS_GAUGE(metrics::cons_packtx_fail_load_origintx, 1);
-                    xwarn("xtable_maker_t::make_light_table_v2 fail-tx filtered load origin tx.%s tx=%s", cs_para.dump().c_str(), tx->dump().c_str());
-                    continue;
-                }
-                if (false == tx->set_raw_tx(raw_tx.get())) {
-                    xerror("xtable_maker_t::make_light_table_v2 fail-tx filtered set origin tx.%s tx=%s", cs_para.dump().c_str(), tx->dump().c_str());
-                    continue;
-                }
-            }
-        }
-
-        // TODO(jimmy) leader add sendtx expire check, should do this in txpool future
-        if (is_leader) {
-            if (tx->is_send_or_self_tx()) {
-                if (xsuccess != xverifier::xtx_verifier::verify_tx_fire_expiration(tx->get_transaction(), now, false)) {
-                    xtxpool_v2::tx_info_t txinfo(tx->get_source_addr(), tx->get_tx_hash_256(), tx->get_tx_subtype());
-                    get_txpool()->pop_tx(txinfo);
-                    xwarn("xtable_maker_t::make_light_table_v2 fail-tx filtered expired.is_leader=%d,%s tx=%s", is_leader, cs_para.dump().c_str(), tx->dump().c_str());
-                    continue;
-                }
-            }
-        }
-
-        // update tx flag before execute
-        input_txs.push_back(tx);
-    }
-    if (input_txs.empty()
-        || (!is_leader && input_txs.size() != input_table_txs.size())) {
-        table_result.m_make_block_error_code = xblockmaker_error_no_need_make_table;
-        xwarn("xtable_maker_t::make_light_table_v2 fail tx is filtered.is_leader=%d,%s,txs_size=%zu:%zu", is_leader, cs_para.dump().c_str(), input_txs.size(), input_table_txs.size());
-        return nullptr;
-    }
-
-    // execute all txs
-    txexecutor::xexecute_output_t execute_output;
-    int32_t ret = executor.execute(input_txs, execute_output);
-    if (ret != xsuccess || execute_output.empty()) {
-        table_result.m_make_block_error_code = xblockmaker_error_no_need_make_table;
-        xerror("xtable_maker_t::make_light_table_v2 fail execute all txs.is_leader=%d,%s,txs_size=%zu", is_leader, cs_para.dump().c_str(), input_txs.size());
-        return nullptr;
-    }
-
-    // save txs need packed
-    std::vector<data::xlightunit_tx_info_ptr_t> txs_info;
-    xunitbuildber_txkeys_mgr_t  txkeys_mgr;
     int64_t tgas_balance_change = 0;
-    for (auto & txout : execute_output.pack_outputs) {
-        xinfo("xtable_maker_t::make_light_table_v2 packtx is_leader=%d,%s,tx=%s,txout=%s,action=%s", 
-            is_leader, cs_para.dump().c_str(), txout.m_tx->dump().c_str(), txout.dump().c_str(),txout.m_tx->dump_execute_state().c_str());
-        table_para.push_tx_to_proposal(txout.m_tx);  // set pack origin tx to proposal
-        txs_info.push_back(build_tx_info(txout.m_tx));
-        txkeys_mgr.add_pack_tx(txout.m_tx);
-        tgas_balance_change += txout.m_vm_output.m_tgas_balance_change;
-        for (auto & v : txout.m_vm_output.m_contract_create_txs) {
-            txs_info.push_back(build_tx_info(v));
-            txkeys_mgr.add_pack_tx(v);
-        }
-    }
-
-    for (auto & txout : execute_output.drop_outputs) {
-        xinfo("xtable_maker_t::make_light_table_v2 droptx is_leader=%d,%s,tx=%s,txout=%s,action=%s", 
-            is_leader, cs_para.dump().c_str(), txout.m_tx->dump().c_str(), txout.dump().c_str(),txout.m_tx->dump_execute_state().c_str());        
-        xtxpool_v2::tx_info_t txinfo(txout.m_tx->get_source_addr(), txout.m_tx->get_tx_hash_256(), txout.m_tx->get_tx_subtype());
-        get_txpool()->pop_tx(txinfo);
-    }
-
-    for (auto & txout : execute_output.nopack_outputs) {
-        xinfo("xtable_maker_t::make_light_table_v2 nopacktx is_leader=%d,%s,tx=%s,txout=%s,action=%s", 
-            is_leader, cs_para.dump().c_str(), txout.m_tx->dump().c_str(), txout.dump().c_str(),txout.m_tx->dump_execute_state().c_str());        
-    }
-
-    if (txs_info.empty()) {
-        table_result.m_make_block_error_code = xblockmaker_error_no_need_make_table;
-        xwarn("xtable_maker_t::make_light_table_v2 fail-no pack txs.is_leader=%d,%s,txs_size=%zu", is_leader, cs_para.dump().c_str(), input_txs.size());
-        return nullptr;
-    }
-
-    // create units
-    std::vector<statectx::xunitstate_ctx_ptr_t> unitctxs = statectx_ptr->get_modified_unit_ctx();
-    if (unitctxs.empty()) {
-        xwarn("xtable_maker_t::make_light_table_v2 fail-no unitstates changed.is_leader=%d,%s,txs_size=%zu", is_leader, cs_para.dump().c_str(), input_txs.size());
-    }
     std::vector<xblock_ptr_t> batch_units;
-    for (auto & unitctx : unitctxs) {
-        base::xvtxkey_vec_t txkeys = txkeys_mgr.get_account_txkeys(unitctx->get_unitstate()->get_address());
-        if (txkeys.get_txkeys().empty()) {
-            // will support state change without txkeys for evm tx
-            xwarn("xtable_maker_t::make_light_table_v2 fail-txkeys empty.is_leader=%d,%s,addr=%s,txs_size=%zu", is_leader, cs_para.dump().c_str(), unitctx->get_unitstate()->get_address().c_str(), input_txs.size());
-            // return nullptr;
+    std::vector<data::xlightunit_tx_info_ptr_t> txs_info;
+    std::map<std::string, std::string> property_hashs;
+    txexecutor::xexecute_output_t execute_output;
+
+    if (!input_table_txs.empty()) {
+        // TODO(jimmy) 
+        uint64_t now = (uint64_t)base::xtime_utl::gettimeofday();
+
+        // create batch executor
+        uint64_t gas_limit = XGET_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit);
+        txexecutor::xvm_para_t vmpara(cs_para.get_clock(), cs_para.get_random_seed(), cs_para.get_total_lock_tgas_token(), gas_limit, cs_para.get_table_proposal_height(), cs_para.get_coinbase());
+        txexecutor::xbatchtx_executor_t executor(statectx_ptr, vmpara);
+
+        std::vector<xcons_transaction_ptr_t> input_txs;
+        for (auto & tx : input_table_txs) {
+            if (tx->get_transaction() == nullptr) {
+                if (tx->is_confirm_tx()) {
+                    auto raw_tx = get_txpool()->get_raw_tx(tx->get_account_addr(), tx->get_peer_tableid(), tx->get_last_action_receipt_id());
+                    if (raw_tx == nullptr) {
+                        XMETRICS_GAUGE(metrics::cons_packtx_fail_load_origintx, 1);
+                        xwarn("xtable_maker_t::make_light_table_v2 fail-tx filtered load origin tx.%s tx=%s", cs_para.dump().c_str(), tx->dump().c_str());
+                        continue;
+                    }
+                    if (false == tx->set_raw_tx(raw_tx.get())) {
+                        xerror("xtable_maker_t::make_light_table_v2 fail-tx filtered set origin tx.%s tx=%s", cs_para.dump().c_str(), tx->dump().c_str());
+                        continue;
+                    }
+                }
+            }
+
+            // TODO(jimmy) leader add sendtx expire check, should do this in txpool future
+            if (is_leader) {
+                if (tx->is_send_or_self_tx()) {
+                    if (xsuccess != xverifier::xtx_verifier::verify_tx_fire_expiration(tx->get_transaction(), now, false)) {
+                        xtxpool_v2::tx_info_t txinfo(tx->get_source_addr(), tx->get_tx_hash_256(), tx->get_tx_subtype());
+                        get_txpool()->pop_tx(txinfo);
+                        xwarn("xtable_maker_t::make_light_table_v2 fail-tx filtered expired.is_leader=%d,%s tx=%s", is_leader, cs_para.dump().c_str(), tx->dump().c_str());
+                        continue;
+                    }
+                }
+            }
+
+            // update tx flag before execute
+            input_txs.push_back(tx);
         }
-        xunitbuilder_para_t unit_para(txkeys);
-        data::xblock_ptr_t unitblock = xunitbuilder_t::make_block(unitctx->get_prev_block(), unitctx->get_unitstate(), unit_para, cs_para);
-        if (nullptr == unitblock) {
-            // should not fail
-            xerror("xtable_maker_t::make_light_table_v2 fail-invalid unitstate.is_leader=%d,%s,txs_size=%zu", is_leader, cs_para.dump().c_str(), input_txs.size());
+        if (input_txs.empty()
+            || (!is_leader && input_txs.size() != input_table_txs.size())) {
+            table_result.m_make_block_error_code = xblockmaker_error_no_need_make_table;
+            xwarn("xtable_maker_t::make_light_table_v2 fail tx is filtered.is_leader=%d,%s,txs_size=%zu:%zu", is_leader, cs_para.dump().c_str(), input_txs.size(), input_table_txs.size());
             return nullptr;
         }
-        batch_units.push_back(unitblock);
-        xinfo("xtable_maker_t::make_light_table_v2 succ-make unit.is_leader=%d,unit=%s,txkeys=%zu",is_leader, unitblock->dump().c_str(),txkeys.get_txkeys().size());
-        xtablebuilder_t::update_account_index_property(statectx_ptr->get_table_state(), unitblock, unitctx->get_unitstate());
+
+        // execute all txs
+        int32_t ret = executor.execute(input_txs, execute_output);
+        if (ret != xsuccess || execute_output.empty()) {
+            table_result.m_make_block_error_code = xblockmaker_error_no_need_make_table;
+            xerror("xtable_maker_t::make_light_table_v2 fail execute all txs.is_leader=%d,%s,txs_size=%zu", is_leader, cs_para.dump().c_str(), input_txs.size());
+            return nullptr;
+        }
+
+        // save txs need packed
+        xunitbuildber_txkeys_mgr_t  txkeys_mgr;
+        for (auto & txout : execute_output.pack_outputs) {
+            xinfo("xtable_maker_t::make_light_table_v2 packtx is_leader=%d,%s,tx=%s,txout=%s,action=%s", 
+                is_leader, cs_para.dump().c_str(), txout.m_tx->dump().c_str(), txout.dump().c_str(),txout.m_tx->dump_execute_state().c_str());
+            table_para.push_tx_to_proposal(txout.m_tx);  // set pack origin tx to proposal
+            txs_info.push_back(build_tx_info(txout.m_tx));
+            txkeys_mgr.add_pack_tx(txout.m_tx);
+            tgas_balance_change += txout.m_vm_output.m_tgas_balance_change;
+            for (auto & v : txout.m_vm_output.m_contract_create_txs) {
+                txs_info.push_back(build_tx_info(v));
+                txkeys_mgr.add_pack_tx(v);
+            }
+        }
+
+        for (auto & txout : execute_output.drop_outputs) {
+            xinfo("xtable_maker_t::make_light_table_v2 droptx is_leader=%d,%s,tx=%s,txout=%s,action=%s", 
+                is_leader, cs_para.dump().c_str(), txout.m_tx->dump().c_str(), txout.dump().c_str(),txout.m_tx->dump_execute_state().c_str());        
+            xtxpool_v2::tx_info_t txinfo(txout.m_tx->get_source_addr(), txout.m_tx->get_tx_hash_256(), txout.m_tx->get_tx_subtype());
+            get_txpool()->pop_tx(txinfo);
+        }
+
+        for (auto & txout : execute_output.nopack_outputs) {
+            xinfo("xtable_maker_t::make_light_table_v2 nopacktx is_leader=%d,%s,tx=%s,txout=%s,action=%s", 
+                is_leader, cs_para.dump().c_str(), txout.m_tx->dump().c_str(), txout.dump().c_str(),txout.m_tx->dump_execute_state().c_str());        
+        }
+
+        if (txs_info.empty()) {
+            table_result.m_make_block_error_code = xblockmaker_error_no_need_make_table;
+            xwarn("xtable_maker_t::make_light_table_v2 fail-no pack txs.is_leader=%d,%s,txs_size=%zu", is_leader, cs_para.dump().c_str(), input_txs.size());
+            return nullptr;
+        }
+
+        // create units
+        std::vector<statectx::xunitstate_ctx_ptr_t> unitctxs = statectx_ptr->get_modified_unit_ctx();
+        if (unitctxs.empty()) {
+            xwarn("xtable_maker_t::make_light_table_v2 fail-no unitstates changed.is_leader=%d,%s,txs_size=%zu", is_leader, cs_para.dump().c_str(), input_txs.size());
+        }
+        for (auto & unitctx : unitctxs) {
+            base::xvtxkey_vec_t txkeys = txkeys_mgr.get_account_txkeys(unitctx->get_unitstate()->get_address());
+            if (txkeys.get_txkeys().empty()) {
+                // will support state change without txkeys for evm tx
+                xwarn("xtable_maker_t::make_light_table_v2 fail-txkeys empty.is_leader=%d,%s,addr=%s,txs_size=%zu", is_leader, cs_para.dump().c_str(), unitctx->get_unitstate()->get_address().c_str(), input_txs.size());
+                // return nullptr;
+            }
+            xunitbuilder_para_t unit_para(txkeys);
+            data::xblock_ptr_t unitblock = xunitbuilder_t::make_block(unitctx->get_prev_block(), unitctx->get_unitstate(), unit_para, cs_para);
+            if (nullptr == unitblock) {
+                // should not fail
+                xerror("xtable_maker_t::make_light_table_v2 fail-invalid unitstate.is_leader=%d,%s,txs_size=%zu", is_leader, cs_para.dump().c_str(), input_txs.size());
+                return nullptr;
+            }
+            batch_units.push_back(unitblock);
+            xinfo("xtable_maker_t::make_light_table_v2 succ-make unit.is_leader=%d,unit=%s,txkeys=%zu",is_leader, unitblock->dump().c_str(),txkeys.get_txkeys().size());
+            xtablebuilder_t::update_account_index_property(statectx_ptr->get_table_state(), unitblock, unitctx->get_unitstate());
+        }
+
+        auto self_table_sid = get_short_table_id();
+        auto & receiptid_info_map = table_para.get_receiptid_info_map();
+        std::map<base::xtable_shortid_t, uint64_t> changed_confirm_ids;
+        for (auto & receiptid_info : receiptid_info_map) {
+            auto & peer_table_sid = receiptid_info.first;
+
+            base::xreceiptid_pair_t peer_pair;
+            receiptid_info.second.m_receiptid_state->find_pair(self_table_sid, peer_pair);
+            auto recvid_max = peer_pair.get_recvid_max();
+            changed_confirm_ids[peer_table_sid] = recvid_max;
+        }
+
+        xtablebuilder_t::update_receipt_confirmids(statectx_ptr->get_table_state(), changed_confirm_ids);
+        xtablebuilder_t::make_table_prove_property_hashs(statectx_ptr->get_table_state()->get_bstate().get(), property_hashs);
+    }
+
+    if (!set_relay_para(cs_para, table_para, is_leader)) {
+        table_result.m_make_block_error_code = xblockmaker_error_proposal_bad_header;
+        return nullptr;
     }
 
     // reset justify cert hash para
@@ -196,22 +221,6 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
     }
     cs_para.set_justify_cert_hash(lock_block->get_input_root_hash());
     cs_para.set_parent_height(0);
-
-    auto self_table_sid = get_short_table_id();
-    auto & receiptid_info_map = table_para.get_receiptid_info_map();
-    std::map<base::xtable_shortid_t, uint64_t> changed_confirm_ids;
-    for (auto & receiptid_info : receiptid_info_map) {
-        auto & peer_table_sid = receiptid_info.first;
-
-        base::xreceiptid_pair_t peer_pair;
-        receiptid_info.second.m_receiptid_state->find_pair(self_table_sid, peer_pair);
-        auto recvid_max = peer_pair.get_recvid_max();
-        changed_confirm_ids[peer_table_sid] = recvid_max;
-    }
-
-    xtablebuilder_t::update_receipt_confirmids(statectx_ptr->get_table_state(), changed_confirm_ids);
-    std::map<std::string, std::string> property_hashs;
-    xtablebuilder_t::make_table_prove_property_hashs(statectx_ptr->get_table_state()->get_bstate().get(), property_hashs);
 
     cs_para.set_ethheader(xeth_header_builder::build(cs_para, execute_output.pack_outputs));
 
@@ -327,7 +336,7 @@ xblock_ptr_t xtable_maker_t::make_proposal(xtablemaker_para_t & table_para,
     xassert(table_para.get_tablestate() != nullptr);
 
     bool can_make_empty_table_block = can_make_next_empty_block(cs_para);
-    if (table_para.get_origin_txs().empty() && !can_make_empty_table_block) {
+    if (table_para.get_origin_txs().empty() && !can_make_empty_table_block && !is_make_relay_chain()) {
         xinfo("xtable_maker_t::make_proposal no txs and no need make empty block. %s,cert_height=%" PRIu64 "", cs_para.dump().c_str(), latest_cert_block->get_height());
         return nullptr;
     }
@@ -510,6 +519,9 @@ bool xtable_maker_t::verify_proposal_with_local(base::xvblock_t *proposal_block,
 }
 
 bool xtable_maker_t::can_make_next_empty_block(const data::xblock_consensus_para_t & cs_para) const {
+    if (is_make_relay_chain()) {
+        return false;
+    }
     const xblock_ptr_t & current_block = cs_para.get_latest_cert_block();
     if (current_block->get_height() == 0) {
         return false;
@@ -525,6 +537,248 @@ bool xtable_maker_t::can_make_next_empty_block(const data::xblock_consensus_para
         return true;
     }
     return false;
+}
+
+bool xtable_maker_t::is_make_relay_chain() const {
+    return get_zone_index() == base::enum_chain_zone_relay_index;
+}
+
+bool xtable_maker_t::get_last_relay_info(const data::xblock_consensus_para_t & cs_para,
+                                         uint8_t & wrap_phase,
+                                         relay_wrap_info_t & last_wrap_info,
+                                         std::string & last_relay_block_data,
+                                         data::xrelay_block & last_relay_block) {
+    auto latest_wrap_block = cs_para.get_latest_cert_block();
+    // wrap phase, evm table height, elect height store into wrap block header comments.
+    data::xtableheader_extra_t last_header_extra;
+    if (latest_wrap_block->is_genesis_block()) {
+        wrap_phase = 2;
+        last_wrap_info = relay_wrap_info_t(0, 0, 0);
+        last_relay_block = data::xrootblock_t::get_genesis_relay_block();
+    } else {
+        if (latest_wrap_block->get_block_class() == base::enum_xvblock_class_full) {
+            latest_wrap_block = cs_para.get_latest_locked_block();
+        }
+
+        std::error_code ec;
+        data::xrelay_wrap_info_t wrap_info;
+        data::xblockextract_t::unpack_relaywrapinfo_and_relay_block_data(latest_wrap_block.get(), wrap_info, last_relay_block_data, ec);
+        if (ec) {
+            xerror("xtable_maker_t::get_last_relay_info unpack relay info fail,proposal:%s", latest_wrap_block->dump().c_str());
+            return false;
+        }
+
+        last_relay_block.decodeBytes(to_bytes(last_relay_block_data), ec);
+        if (ec) {
+            xerror("xtable_maker_t::get_last_relay_info decodeBytes error %s; err msg %s", ec.category().name(), ec.message().c_str());
+            return false;
+        }
+        wrap_phase = wrap_info.get_wrap_phase();
+        // todo(nathan): timestamp.
+        last_wrap_info = relay_wrap_info_t(wrap_info.get_evm_height(), wrap_info.get_elect_height(), 0);
+        xdbg("xtable_maker_t::get_last_relay_info wrap_phase:%u,last_wrap_info:evm h:%llu,elect h:%llu,timestamp:%llu",
+             wrap_phase,
+             last_wrap_info.evm_height(),
+             last_wrap_info.elect_height(),
+             last_wrap_info.poly_timestamp());
+    }
+    return true;
+}
+
+bool xtable_maker_t::build_relay_block_data_from_last_block(const data::xblock_consensus_para_t & cs_para, const std::string & last_relay_block_data, data::xrelay_block & last_relay_block, std::string & relay_block_data) {
+    if (cs_para.get_election_round() < last_relay_block.get_inner_header().get_epochID()) {
+        xwarn("xtable_maker_t::build_relay_block_data_from_last_block proposal epoch id fallbehind.relay_block:%s,proposal elect round:%lu", last_relay_block.dump().c_str(), cs_para.get_election_round());
+        return false;
+    }
+
+    if (last_relay_block.get_inner_header().get_epochID() != cs_para.get_election_round()) {
+        if (last_relay_block.get_inner_header().get_epochID() + 1 != cs_para.get_election_round()) {
+            xwarn("xtable_maker_t::build_relay_block_data_from_last_block epochid exception.relay_block:%s,new round:%lu", last_relay_block.dump().c_str(), cs_para.get_election_round());
+            return false;
+        }
+        xwarn("xtable_maker_t::build_relay_block_data_from_last_block epochid changed, should consensus from phase 0 again.relay_block:%s,new round:%lu",
+                last_relay_block.dump().c_str(),
+                cs_para.get_election_round());
+        last_relay_block.get_header().set_epochid(cs_para.get_election_round());
+        last_relay_block.build_finish();
+        xbytes_t rlp_stream = last_relay_block.encodeBytes();
+        relay_block_data = from_bytes<std::string>((xbytes_t)(rlp_stream));
+    } else {
+        relay_block_data = last_relay_block_data;
+    }
+    return true;
+}
+
+bool xtable_maker_t::set_relay_para(const data::xblock_consensus_para_t & cs_para, const xtablemaker_para_t & table_para, bool is_leader) {
+    if (!is_make_relay_chain()) {
+        return true;
+    }
+
+    auto & latest_cert_block = cs_para.get_latest_cert_block();
+    // wrap phase, evm table height, elect height store into wrap block header comments.        
+    uint8_t last_wrap_phase;
+    relay_wrap_info_t last_wrap_info;
+    data::xrelay_block last_relay_block;
+    std::string last_relay_block_data;
+
+    if (!get_last_relay_info(cs_para, last_wrap_phase, last_wrap_info, last_relay_block_data, last_relay_block)) {
+        xerror("xtable_maker_t::set_relay_para get_last_relay_info fail.");
+        return false;
+    }
+
+    base::xstream_t _stream(base::xcontext_t::instance());
+    // wrap phase: 0, 1, 2
+    uint8_t wrap_phase = last_wrap_phase + 1;
+    relay_wrap_info_t new_wrap_info;
+    data::xrelay_block relay_block;
+    std::string relay_block_data;
+    if (wrap_phase > 2) {
+        wrap_phase = 0; 
+        bool ret = true;
+        if (is_leader) {
+            ret = build_relay_block_data_leader(cs_para, last_relay_block, last_wrap_info, new_wrap_info, relay_block);
+        } else {
+            // todo(nathan):timestamp
+            new_wrap_info = relay_wrap_info_t(table_para.get_relay_evm_height(), table_para.get_relay_elect_height(), 0);
+            ret = build_relay_block_data_backup(cs_para, last_relay_block, last_wrap_info, new_wrap_info, relay_block);
+        }
+        if (!ret) {
+            xinfo("xtable_maker_t::set_relay_para make relay block fail.cs_para:%s", cs_para.dump().c_str());
+            return false;
+        }
+        xbytes_t rlp_stream = relay_block.encodeBytes();
+        relay_block_data = from_bytes<std::string>((xbytes_t)(rlp_stream));
+    } else {
+        // todo(nathan):timestamp
+        new_wrap_info = relay_wrap_info_t(last_wrap_info.evm_height(), last_wrap_info.elect_height(), 0);
+        if (!build_relay_block_data_from_last_block(cs_para, last_relay_block_data, last_relay_block, relay_block_data)) {
+            return false;
+        }
+        // todo(nathan): wrap phase should reset to 0.
+        // if (last_relay_block.get_inner_header().get_epochID() + 1 != cs_para.get_election_round()) {
+        //     wrap_phase = 0;
+        // }
+
+        if (wrap_phase == 2) {
+            uint256_t hash256 = from_bytes<uint256_t>(last_relay_block.get_block_hash().to_bytes());
+            cs_para.set_vote_extend_hash(hash256);
+        }
+    }
+    xinfo("xtable_maker_t::set_relay_para make relay block succ.is_leader:%d,cs_para:%s,relay_block:%s,phase:%d,evm_h:%llu,ele_h:%llu",
+            is_leader,
+            cs_para.dump().c_str(),
+            last_relay_block.dump().c_str(),
+            wrap_phase,
+            new_wrap_info.evm_height(),
+            new_wrap_info.elect_height());
+
+    // todo(nathan):timestamp
+    std::string wrap_data = data::xrelay_wrap_info_t::build_relay_wrap_info_string(wrap_phase, new_wrap_info.evm_height(), new_wrap_info.elect_height());
+    cs_para.set_relay_wrap_data(wrap_data);
+    cs_para.set_relay_block_data(relay_block_data);
+    cs_para.set_need_relay_prove(wrap_phase == 2);
+
+    return true;
+}
+
+bool xtable_maker_t::build_relay_block_data_leader(const data::xblock_consensus_para_t & cs_para,
+                                                   const data::xrelay_block & last_relay_block,
+                                                   const relay_wrap_info_t & last_wrap_info,
+                                                   relay_wrap_info_t & new_wrap_info,
+                                                   data::xrelay_block & relay_block) {
+    std::vector<data::xrelay_election_node_t> reley_election;
+    auto ret = get_relay_chain_mgr()->get_elect_cache(last_wrap_info.elect_height() + 1, reley_election);
+    if (ret) {
+        // new election data.build elect relay block
+        new_wrap_info = relay_wrap_info_t(last_wrap_info.evm_height(), last_wrap_info.elect_height() + 1, last_wrap_info.poly_timestamp());
+        data::xrelay_election_group_t reley_election_group;
+        reley_election_group.election_epochID = new_wrap_info.elect_height();
+        reley_election_group.elections_vector = reley_election;
+        relay_block = data::xrelay_block(
+            last_relay_block.get_block_hash(), last_relay_block.get_block_height() + 1, cs_para.get_election_round(), cs_para.get_timestamp(), reley_election_group);
+    } else {
+        // no new election data. try build poly relay block or tx relay block.
+        // todo(nathan):make poly relay block.
+        // if((cs_para.get_timestamp() > last_wrap_info.poly_timestamp() + XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_relay_poly_interval) * 10) && last_relay_block.get_all_receipts().size() > 0) {
+
+        //     xinfo("xrelay_proposal_maker_t::build_relay_block_data_leader time last_poly_timestamp(%ld), timestamp(%ld)",
+        //         last_wrap_info.poly_timestamp(), cs_para.get_timestamp());
+        //     new_wrap_info = relay_wrap_info_t(last_wrap_info.evm_height(), last_wrap_info.elect_height(), cs_para.get_timestamp());
+        //     relay_block = data::xrelay_block(last_relay_block.get_block_hash(), last_relay_block.get_block_height() + 1, cs_para.get_election_round(), cs_para.get_timestamp());
+        // } else {
+            // try build tx relay block
+            uint64_t cur_evm_table_height = 0;
+            std::vector<data::xeth_transaction_t> transactions;
+            std::vector<data::xeth_receipt_t> receipts;
+            auto result = get_relay_chain_mgr()->get_tx_cache_leader(last_wrap_info.evm_height(), cur_evm_table_height, transactions, receipts, RELAY_BLOCK_TXS_PACK_NUM_MAX);
+            if (!result || cur_evm_table_height <= last_wrap_info.evm_height()) {
+                xinfo("xtable_maker_t::build_relay_block_data_leader no cross txs and no new relay election. cs_para:%s,result:%d,cur evm h:%llu,last evm h:%llu",
+                      cs_para.dump().c_str(),
+                      result,
+                      cur_evm_table_height,
+                      last_wrap_info.evm_height());
+                return false;
+            }
+            new_wrap_info = relay_wrap_info_t(cur_evm_table_height, last_wrap_info.elect_height(), last_wrap_info.poly_timestamp());
+            relay_block = data::xrelay_block(
+                last_relay_block.get_block_hash(), last_relay_block.get_block_height() + 1, cs_para.get_election_round(), cs_para.get_timestamp(), transactions, receipts);
+        // }
+    }
+    relay_block.build_finish();
+    xdbg("xtable_maker_t::build_relay_block_data_leader relay_block:%s", relay_block.dump().c_str());
+    return true;
+}
+
+bool xtable_maker_t::build_relay_block_data_backup(const data::xblock_consensus_para_t & cs_para,
+                                                   const data::xrelay_block & last_relay_block,
+                                                   const relay_wrap_info_t & last_wrap_info,
+                                                   const relay_wrap_info_t & new_wrap_info,
+                                                   data::xrelay_block & relay_block) {
+    bool new_elect = (last_wrap_info.elect_height() + 1 == new_wrap_info.elect_height());
+    bool new_txs = (last_wrap_info.evm_height() < new_wrap_info.evm_height());
+    bool poly_block = (last_wrap_info.poly_timestamp() < new_wrap_info.poly_timestamp());
+    uint32_t type_num = (new_elect ? 1:0) + (new_txs ? 1:0) + (poly_block ? 1:0);
+    if (type_num != 1) {
+        xerror("xtable_maker_t::build_relay_block_data_backup invalid wrap info: elect:%llu:%llu,evm:%llu:%llu,poly_tm:%llu:%llu",
+               last_wrap_info.elect_height(),
+               new_wrap_info.elect_height(),
+               last_wrap_info.evm_height(),
+               new_wrap_info.evm_height(),
+               last_wrap_info.poly_timestamp(),
+               new_wrap_info.poly_timestamp());
+        return false;
+    }
+
+    std::vector<data::xeth_transaction_t> transactions;
+    std::vector<data::xeth_receipt_t> receipts;
+    std::vector<data::xrelay_election_node_t> reley_election;
+    if (new_elect) {
+        auto ret = get_relay_chain_mgr()->get_elect_cache(new_wrap_info.elect_height(), reley_election);
+        if (!ret) {
+            xinfo("xtable_maker_t::build_relay_block_data_backup. get elect cache fail. height:%llu", new_wrap_info.elect_height());
+            return false;
+        }
+        data::xrelay_election_group_t reley_election_group;
+        reley_election_group.election_epochID = new_wrap_info.elect_height();
+        reley_election_group.elections_vector = reley_election;
+        relay_block = data::xrelay_block(
+            last_relay_block.get_block_hash(), last_relay_block.get_block_height() + 1, cs_para.get_election_round(), cs_para.get_timestamp(), reley_election_group);
+    } else if (poly_block) {
+        if((cs_para.get_timestamp() < last_wrap_info.poly_timestamp() + XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_relay_poly_interval) * 10) || last_relay_block.get_all_receipts().size() <= 0) {
+            return false;
+        }
+        relay_block = data::xrelay_block(last_relay_block.get_block_hash(), last_relay_block.get_block_height() + 1, cs_para.get_election_round(), cs_para.get_timestamp());
+    } else {
+        auto ret = get_relay_chain_mgr()->get_tx_cache_backup(last_wrap_info.evm_height(), new_wrap_info.evm_height(), transactions, receipts);
+        if (!ret) {
+            return false;
+        }
+        relay_block = data::xrelay_block(
+            last_relay_block.get_block_hash(), last_relay_block.get_block_height() + 1, cs_para.get_election_round(), cs_para.get_timestamp(), transactions, receipts);
+    }
+    relay_block.build_finish();
+    xdbg("xtable_maker_t::build_relay_block_data_backup relay_block:%s", relay_block.dump().c_str());
+    return true;
 }
 
 const std::string xeth_header_builder::build(const xblock_consensus_para_t & cs_para, const std::vector<txexecutor::xatomictx_output_t> & pack_txs_outputs) {

@@ -34,9 +34,7 @@ namespace top
             void    set_unit_cert_para(uint64_t _clock, uint32_t _viewtoken, uint64_t _viewid, const xvip2_t & _validator, const xvip2_t & _auditor, uint64_t _drand_height,
                                         uint64_t _parent_height, const std::string & _justify_hash);
             void    set_table_cert_para(uint64_t _clock, uint32_t _viewtoken, uint64_t _viewid, const xvip2_t & _validator, const xvip2_t & _auditor, uint64_t _drand_height,
-                                        const std::string & _justify_hash);
-            void    set_relay_cert_para(uint64_t _clock, uint32_t _viewtoken, uint64_t _viewid, const xvip2_t & _validator, const xvip2_t & _auditor, uint64_t _drand_height,
-                                        const std::string & _justify_hash, bool need_relay_prove);
+                                        const std::string & _justify_hash, bool need_relay_prove = false);
             void    set_relay_cert_para(uint64_t _clock, uint32_t _viewtoken, uint64_t _viewid, xvqcert_t * cert);
             void    set_relay_cert_para();
             // some optional parameters

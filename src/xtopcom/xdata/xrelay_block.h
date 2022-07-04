@@ -225,7 +225,7 @@ namespace data {
        // void                                set_chain_id(uint64_t chain_id);
 
     public:
-        uint8_t                             &get_block_version() {return m_version;}
+        uint8_t                             get_block_version() const {return m_version;}
         xrelay_block_header                 &get_header() { return m_header;}
         const evm_common::h256              &get_block_hash() const { return m_header.get_block_hash();}
         const xrelay_block_inner_header     &get_inner_header() const {return m_header.get_inner_header(); }
@@ -236,7 +236,7 @@ namespace data {
         const uint64_t                       get_block_height() const { return m_header.get_block_height();}
         const uint64_t                       get_timestamp() const { return m_header.get_timestamp();}
         const std::vector<xeth_receipt_t>   &get_all_receipts() const { return m_receipts;}
-        const std::vector<xeth_transaction_t>   &get_all_transactions() const { return m_transactions ;}
+        const std::vector<xeth_transaction_t>   &get_all_transactions() const { return m_transactions;}
         const xrelay_election_group_t       &get_elections_sets() const {return m_header.get_elections_sets();}
         //const uint64_t                      &get_chain_id()  const{ return m_header.get_chain_id();}
         std::string                         dump() const;

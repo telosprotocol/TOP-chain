@@ -39,6 +39,7 @@ enum enum_xblockmaker_error_type {
     xblockmaker_error_proposal_table_not_match_prev_block,
     xblockmaker_error_proposal_table_state_clone,
     xblockmaker_error_proposal_cannot_connect_to_cp,
+    xblockmaker_error_proposal_bad_header,
     xblockmaker_error_max,
 };
 
@@ -72,6 +73,7 @@ inline std::string xblockmaker_error_to_string(int32_t code) {
         XUNIT_TO_STR(xblockmaker_error_proposal_table_not_match_prev_block),
         XUNIT_TO_STR(xblockmaker_error_proposal_table_state_clone),
         XUNIT_TO_STR(xblockmaker_error_proposal_cannot_connect_to_cp),
+        XUNIT_TO_STR(xblockmaker_error_proposal_bad_header),
     };
     return names[code - xblockmaker_error_base - 1];
 }

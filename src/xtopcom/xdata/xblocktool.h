@@ -43,8 +43,6 @@ class xblocktool_t {
     static base::xvblock_t*   create_next_tableblock(const xtable_block_para_t & bodypara, base::xvblock_t* prev_block, const xblock_consensus_para_t & cs_para);
     static base::xvblock_t*   create_next_fulltable(const xfulltable_block_para_t & bodypara, base::xvblock_t* prev_block, const xblock_consensus_para_t & cs_para);
 
-    static base::xvblock_t*   create_next_relay_block(base::xvblock_t* prev_block, const xblock_consensus_para_t & cs_para, const std::string & relay_extra_data, bool need_relay_prove);
-
  public:
    //  static uint16_t         get_chain_id_from_account(const std::string & account);
     static std::string      make_address_table_account(base::enum_xchain_zone_index zone, uint16_t subaddr);

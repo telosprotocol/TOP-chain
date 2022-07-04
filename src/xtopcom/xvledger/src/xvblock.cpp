@@ -2465,14 +2465,6 @@ namespace top
         const std::string & xvblock_t::get_vote_extend_data() const {
             return m_vote_extend_data;
         }
-
-        void xvblock_t::set_vote_extend_hash(const top::uint256_t & hash) {
-            m_vote_extend_hash = hash;
-        }
-
-        const top::uint256_t & xvblock_t::get_vote_extend_hash() const {
-            return m_vote_extend_hash;
-        }
         
         void xvblock_t::register_object(xcontext_t & _context)
         {

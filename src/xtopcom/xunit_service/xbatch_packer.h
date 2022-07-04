@@ -66,15 +66,20 @@ protected:
     xvip2_t get_child_xip(const xvip2_t & local_xip, const std::string & account);
     void set_xip(data::xblock_consensus_para_t & blockpara, const xvip2_t & leader);
     void    invoke_sync(const std::string & account, const std::string & reason);
+    xresources_face * get_resources();
 
 private:
     bool    connect_to_checkpoint();
     bool    start_proposal(uint32_t min_tx_num);
     bool    verify_proposal_packet(const xvip2_t & from_addr, const xvip2_t & local_addr, const base::xcspdu_t & packet);
-    void make_receipts_and_send(data::xblock_t * commit_block, data::xblock_t * cert_block);
-    uint32_t calculate_min_tx_num(bool first_packing);
     void    check_latest_cert_block(base::xvblock_t* _cert_block, const xconsensus::xcsview_fire* viewfire, std::error_code & ec);
     void    reset_leader_info();
+    void    make_receipts_and_send(data::xblock_t * commit_block, data::xblock_t * cert_block);
+    virtual uint32_t calculate_min_tx_num(bool first_packing);
+    virtual void set_vote_extend_data(base::xvblock_t * proposal_block, const uint256_t & hash, bool is_leader);
+    virtual void clear_for_new_view();
+    virtual void send_receipts(base::xvblock_t *vblock);
+    virtual bool set_election_round(data::xblock_consensus_para_t & proposal_para);
 
 private:
     observer_ptr<mbus::xmessage_bus_face_t>  m_mbus;

@@ -12,6 +12,7 @@
 #include "xdata/xblocktool.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xblockbuild.h"
+#include "xdata/xblockextract.h"
 #include "xmbus/xevent_behind.h"
 #include "xchain_fork/xchain_upgrade_center.h"
 #include "xgasfee/xgas_estimate.h"
@@ -194,11 +195,10 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
     return proposal_block;
 }
 
-int xproposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::xvqcert_t * bind_clock_cert) {
+int xproposal_maker_t::verify_proposal(xblock_consensus_para_t & cs_para, base::xvblock_t * proposal_block, base::xvqcert_t * bind_clock_cert) {
     XMETRICS_TIMER(metrics::cons_verify_proposal_tick);
     xdbg("xproposal_maker_t::verify_proposal enter. proposal=%s", proposal_block->dump().c_str());
     uint64_t gmtime = proposal_block->get_second_level_gmtime();
-    xblock_consensus_para_t cs_para(get_account(), proposal_block->get_clock(), proposal_block->get_viewid(), proposal_block->get_viewtoken(), proposal_block->get_height(), gmtime);
 
     // verify gmtime valid
     uint64_t now = (uint64_t)base::xtime_utl::gettimeofday();
@@ -300,6 +300,13 @@ int xproposal_maker_t::verify_proposal(base::xvblock_t * proposal_block, base::x
     }
 
     xtablemaker_para_t table_para(tablestate, commit_tablestate);
+
+    if (false == verify_proposal_header(proposal_block, table_para)) {
+        xwarn("xproposal_maker_t::verify_proposal fail-proposal header invalid. proposal=%s", proposal_block->dump().c_str());
+        XMETRICS_GAUGE(metrics::cons_table_backup_verify_proposal_succ, 0);
+        return xblockmaker_error_proposal_bad_header;
+    }
+
     if (false == verify_proposal_input(proposal_block, table_para)) {
         xwarn("xproposal_maker_t::verify_proposal fail-proposal input invalid. proposal=%s",
             proposal_block->dump().c_str());
@@ -375,6 +382,10 @@ bool xproposal_maker_t::verify_proposal_input(base::xvblock_t *proposal_block, x
 
     const std::vector<xcons_transaction_ptr_t> & origin_txs = proposal_input->get_input_txs();
     if (origin_txs.empty() && other_accounts.empty()) {
+        if (m_table_maker->is_make_relay_chain()) {
+            xdbg("xproposal_maker_t::verify_proposal_input relay chain has no tx.");
+            return true;
+        }
         xerror("xproposal_maker_t::verify_proposal_input fail-table proposal input empty. proposal=%s",
             proposal_block->dump().c_str());
         return false;
@@ -584,7 +595,7 @@ bool xproposal_maker_t::leader_set_consensus_para(base::xvblock_t* latest_cert_b
 
     common::xaccount_address_t leader_addr;
     if (false == leader_xip_to_leader_address(cs_para.get_leader_xip(), leader_addr)) {
-        xwarn("xtable_maker_t::make_light_table_v2 fail-get leader address. %s", cs_para.dump().c_str());
+        xwarn("xtable_maker_t::leader_set_consensus_para fail-get leader address. %s", cs_para.dump().c_str());
         return false;
     }
     cs_para.set_coinbase(leader_addr);
@@ -645,6 +656,23 @@ bool xproposal_maker_t::backup_set_consensus_para(base::xvblock_t* latest_cert_b
     cs_para.set_coinbase(leader_addr);
     cs_para.set_block_gaslimit(XGET_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit));
     cs_para.set_block_base_price(gasfee::xgas_estimate::base_price());
+    return true;
+}
+
+bool xproposal_maker_t::verify_proposal_header(base::xvblock_t *proposal_block, xtablemaker_para_t & table_para) {
+    if (!m_table_maker->is_make_relay_chain() || proposal_block->get_block_class() == base::enum_xvblock_class_full) {
+        return true;
+    }
+    std::error_code ec;
+    data::xrelay_wrap_info_t wrap_info;
+    data::xblockextract_t::unpack_relaywrapinfo(proposal_block, wrap_info, ec);
+    if (ec) {
+        xerror("xproposal_maker_t::verify_proposal_header unpack_relaywrapinfo fail,proposal:%s", proposal_block->dump().c_str());
+        return false;
+    }
+
+    table_para.set_relay_evm_height(wrap_info.get_evm_height());
+    table_para.set_relay_elect_height(wrap_info.get_elect_height());
     return true;
 }
 

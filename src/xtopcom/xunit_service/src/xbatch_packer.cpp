@@ -116,6 +116,10 @@ void xbatch_packer::invoke_sync(const std::string & account, const std::string &
 #endif
 }
 
+xresources_face * xbatch_packer::get_resources() {
+    return m_para->get_resources();
+}
+
 bool xbatch_packer::start_proposal(uint32_t min_tx_num) {
     if (nullptr == m_leader_cs_para) {
         xassert(false);
@@ -128,6 +132,9 @@ bool xbatch_packer::start_proposal(uint32_t min_tx_num) {
         xunit_dbg("xbatch_packer::start_proposal fail-make_proposal.%s", proposal_para.dump().c_str());  // may has no txs for proposal
         return false;
     }
+
+    set_vote_extend_data(proposal_block.get(), proposal_para.get_vote_extend_hash(), true);
+
     base::xauto_ptr<xconsensus::xproposal_start> _event_obj(new xconsensus::xproposal_start(proposal_block.get()));
     push_event_down(*_event_obj, this, 0, 0);
     // check viewid again, may changed
@@ -220,6 +227,7 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
         XMETRICS_GAUGE(metrics::cons_view_fire_succ, 0);
         return false;
     }
+    clear_for_new_view();
 
     XMETRICS_TIME_RECORD("cons_tableblock_view_change_time_consuming");
     m_last_view_id = view_ev->get_viewid();
@@ -240,7 +248,7 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
 
     auto zone_id = get_zone_id_from_xip2(local_xip);
     if (zone_id != base::enum_chain_zone_consensus_index && zone_id != base::enum_chain_zone_beacon_index && zone_id != base::enum_chain_zone_zec_index &&
-        zone_id != base::enum_chain_zone_evm_index) {
+        zone_id != base::enum_chain_zone_evm_index && zone_id != base::enum_chain_zone_relay_index) {
         xerror("xbatch_packer::on_view_fire fail-wrong zone id. zoneid=%d", zone_id);
         XMETRICS_GAUGE(metrics::cons_view_fire_succ, 0);
         return false;
@@ -292,6 +300,7 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
         return false;
     }
     set_xip(*m_leader_cs_para, local_xip);  // set leader xip
+    set_election_round(*m_leader_cs_para);
 
     m_is_leader = true;
     XMETRICS_GAUGE(metrics::cons_cp_check_succ, 1);
@@ -414,7 +423,14 @@ int xbatch_packer::verify_proposal(base::xvblock_t * proposal_block, base::xvqce
     if (!connect_to_checkpoint()) {
         return blockmaker::xblockmaker_error_proposal_cannot_connect_to_cp;
     }
-    return m_proposal_maker->verify_proposal(proposal_block, bind_clock_cert);
+
+    data::xblock_consensus_para_t proposal_para(get_account(), proposal_block->get_clock(), proposal_block->get_viewid(), proposal_block->get_viewtoken(), proposal_block->get_height(), proposal_block->get_second_level_gmtime());
+    set_election_round(proposal_para);
+    auto ret = m_proposal_maker->verify_proposal(proposal_para, proposal_block, bind_clock_cert);
+    if (ret == xsuccess) {
+        set_vote_extend_data(proposal_block, proposal_para.get_vote_extend_hash(), false);
+    }
+    return ret;
 }
 
 // get parent group xip
@@ -526,12 +542,7 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
         if (is_leader) {
             XMETRICS_GAUGE(metrics::cons_tableblock_leader_succ, 1);
             if (vblock->get_height() > 2) {
-                base::xauto_ptr<base::xvblock_t> commit_block =
-                    m_para->get_resources()->get_vblockstore()->load_block_object(*this, vblock->get_height() - 2, base::enum_xvblock_flag_committed, false, metrics::blockstore_access_from_us_on_proposal_finish);
-                if (commit_block != nullptr) {
-                    m_para->get_resources()->get_vblockstore()->load_block_input(*this, commit_block.get());
-                    make_receipts_and_send(dynamic_cast<data::xblock_t *>(commit_block.get()), dynamic_cast<data::xblock_t *>(vblock));
-                }
+                send_receipts(vblock);
             }
         } else {
             XMETRICS_GAUGE(metrics::cons_tableblock_backup_succ, 1);
@@ -604,5 +615,27 @@ uint32_t xbatch_packer::calculate_min_tx_num(bool first_packing) {
     }
     return min_tx_num;
 }
+
+void xbatch_packer::set_vote_extend_data(base::xvblock_t * proposal_block, const uint256_t & hash, bool is_leader) {
+    // do nothing for normal batch packer
+}
+
+void xbatch_packer::clear_for_new_view() {
+    // do nothing for normal batch packer
+}
+
+void xbatch_packer::send_receipts(base::xvblock_t *vblock) {
+    base::xauto_ptr<base::xvblock_t> commit_block =
+        m_para->get_resources()->get_vblockstore()->load_block_object(*this, vblock->get_height() - 2, base::enum_xvblock_flag_committed, false, metrics::blockstore_access_from_us_on_proposal_finish);
+    if (commit_block != nullptr) {
+        m_para->get_resources()->get_vblockstore()->load_block_input(*this, commit_block.get());
+        make_receipts_and_send(dynamic_cast<data::xblock_t *>(commit_block.get()), dynamic_cast<data::xblock_t *>(vblock));
+    }
+}
+
+bool xbatch_packer::set_election_round(data::xblock_consensus_para_t & proposal_para) {
+    return true;
+}
+
 
 NS_END2

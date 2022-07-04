@@ -127,8 +127,8 @@ void xcross_tx_cache_t::on_evm_db_event(data::xblock_t * block) {
                 // sync evm table on demand
                 xwarn("xcross_tx_cache_t::on_evm_db_event load evm block fail, need sync.height:%llu", h);
                 uint32_t sync_num = 5;
-                mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(
-                    sys_contract_eth_table_block_addr_with_suffix, h, sync_num, false, "lack_of_evm_table_block", false);
+                mbus::xevent_behind_ptr_t ev =
+                    make_object_ptr<mbus::xevent_behind_on_demand_t>(sys_contract_eth_table_block_addr_with_suffix, h, sync_num, false, "lack_of_evm_table_block", false);
                 m_para->get_bus()->push_event(ev);
                 return;
             }
@@ -144,7 +144,7 @@ bool xcross_tx_cache_t::get_tx_cache_leader(uint64_t & upper_height, std::map<ui
     }
 
     uint32_t tx_num = 0;
-    for(auto & cross_tx_map_pair : m_cross_tx_map) {
+    for (auto & cross_tx_map_pair : m_cross_tx_map) {
         auto & height = cross_tx_map_pair.first;
         if (tx_num + cross_tx_map_pair.second.m_txs.size() > max_tx_num && cross_tx_map.size() > 0) {
             xwarn("xcross_tx_cache_t::get_tx_cache_leader too many cross txs.h:%llu,num:%u", height, cross_tx_map_pair.second.m_txs.size());
@@ -190,8 +190,8 @@ void xcross_tx_cache_t::recover_cache() {
                 // sync evm table on demand
                 xwarn("xcross_tx_cache_t::recover_cache load evm block fail, need sync.height:%llu", h);
                 uint32_t sync_num = 5;
-                mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(
-                    sys_contract_eth_table_block_addr_with_suffix, h, sync_num, false, "lack_of_evm_table_block", false);
+                mbus::xevent_behind_ptr_t ev =
+                    make_object_ptr<mbus::xevent_behind_on_demand_t>(sys_contract_eth_table_block_addr_with_suffix, h, sync_num, false, "lack_of_evm_table_block", false);
                 m_para->get_bus()->push_event(ev);
                 block_lack = true;
                 break;
@@ -391,16 +391,56 @@ xrelay_chain_mgr_t::xrelay_chain_mgr_t(const observer_ptr<store::xstore_face_t> 
   : m_para(std::make_shared<xrelay_chain_resources>(store, blockstore, bus)), m_cross_tx_cache(m_para), m_relay_elect_cache(m_para) {
 }
 
-bool xrelay_chain_mgr_t::get_tx_cache_leader(uint64_t lower_height, uint64_t & upper_height, std::map<uint64_t, xcross_txs_t> & cross_tx_map, uint32_t max_tx_num) {
-    std::lock_guard<std::mutex> lck(m_mutex);
-    m_cross_tx_cache.update_last_proc_evm_height(lower_height);
-    return m_cross_tx_cache.get_tx_cache_leader(upper_height, cross_tx_map, max_tx_num);
+void convert_to_xrelay_tx_and_receipts(const std::map<uint64_t, xrelay_chain::xcross_txs_t> & cross_tx_map,
+                                       std::vector<data::xeth_transaction_t> & transactions,
+                                       std::vector<data::xeth_receipt_t> & receipts) {
+    for (auto & cross_tx_map_pair : cross_tx_map) {
+        auto & cross_txs = cross_tx_map_pair.second;
+        for (auto & tx : cross_txs.m_txs) {
+            std::error_code ec;
+            data::xeth_transaction_t relay_tx = tx->to_eth_tx(ec);
+            xinfo("xrelay_proposal_maker_t::convert_to_xrelay_tx_and_receipts tx_info: %s  relay_tx: %ss ", tx->dump().c_str(), relay_tx.dump().c_str());
+            transactions.push_back(relay_tx);
+        }
+
+        for (auto & tx_result : cross_txs.m_tx_results) {
+            data::xeth_receipt_t receipt;
+            receipt.set_tx_status(tx_result.get_tx_status());
+            receipt.set_cumulative_gas_used(tx_result.get_cumulative_gas_used());
+            receipt.set_logs(tx_result.get_logs());
+            receipt.create_bloom();
+            receipts.push_back(receipt);
+        }
+    }
 }
 
-bool xrelay_chain_mgr_t::get_tx_cache_backup(uint64_t lower_height, uint64_t upper_height, std::map<uint64_t, xcross_txs_t> & cross_tx_map) {
+bool xrelay_chain_mgr_t::get_tx_cache_leader(uint64_t lower_height,
+                                             uint64_t & upper_height,
+                                             std::vector<data::xeth_transaction_t> & cross_txs,
+                                             std::vector<data::xeth_receipt_t> & receipts,
+                                             uint32_t max_tx_num) {
     std::lock_guard<std::mutex> lck(m_mutex);
+    std::map<uint64_t, xrelay_chain::xcross_txs_t> cross_tx_map;
     m_cross_tx_cache.update_last_proc_evm_height(lower_height);
-    return m_cross_tx_cache.get_tx_cache_backup(upper_height, cross_tx_map);
+    auto ret = m_cross_tx_cache.get_tx_cache_leader(upper_height, cross_tx_map, max_tx_num);
+    if (ret) {
+        convert_to_xrelay_tx_and_receipts(cross_tx_map, cross_txs, receipts);
+    }
+    return ret;
+}
+
+bool xrelay_chain_mgr_t::get_tx_cache_backup(uint64_t lower_height,
+                                             uint64_t upper_height,
+                                             std::vector<data::xeth_transaction_t> & cross_txs,
+                                             std::vector<data::xeth_receipt_t> & receipts) {
+    std::lock_guard<std::mutex> lck(m_mutex);
+    std::map<uint64_t, xrelay_chain::xcross_txs_t> cross_tx_map;
+    m_cross_tx_cache.update_last_proc_evm_height(lower_height);
+    auto ret = m_cross_tx_cache.get_tx_cache_backup(upper_height, cross_tx_map);
+    if (ret) {
+        convert_to_xrelay_tx_and_receipts(cross_tx_map, cross_txs, receipts);
+    }
+    return ret;
 }
 
 bool xrelay_chain_mgr_t::get_elect_cache(uint64_t elect_height, std::vector<data::xrelay_election_node_t> & reley_election) {
@@ -528,6 +568,45 @@ void xrelay_chain_mgr_t::on_relay_elect_db_event(data::xblock_ptr_t relay_elect_
     std::lock_guard<std::mutex> lck(m_mutex);
     m_relay_elect_cache.on_elect_db_event(relay_elect_block.get());
 }
+
+// bool xrelay_chain_mgr_t::build_genesis_relay_block(data::xrelay_block & genesis_block) {
+//     xdbg("xrelay_chain_mgr_t::build_genesis_relay_block");
+//     std::vector<data::xrelay_election_node_t> reley_election;
+//     auto ret = get_elect_cache(0, reley_election);
+//     if (!ret) {
+//         return false;
+//     }
+
+//     data::xrelay_election_group_t reley_election_group;
+//     reley_election_group.election_epochID = 0;
+//     reley_election_group.elections_vector = reley_election;
+
+//     data::xrelay_block relay_block({}, 0, 0, 0, {}, {}, reley_election_group);
+//     relay_block.build_finish();
+//     genesis_block = relay_block;
+
+// #ifdef DEBUG
+//     reley_election_group.dump();
+//     FILE* file = NULL;
+// #if defined(XBUILD_CI)
+//     file = fopen("ci_genesis_relay_block_header_data.txt", "wb");
+// #elif defined(XBUILD_GALILEO)
+//     file = fopen("galileo_genesis_relay_block_header_data.txt", "wb");
+// #elif defined(XBUILD_DEV)
+//     file = fopen("dev_genesis_relay_block_header_data.txt", "wb");
+// #elif defined(XBUILD_BOUNTY)
+//     file = fopen("bounty_genesis_relay_block_header_data.txt", "wb");
+// #else
+//     file = fopen("mainnet_genesis_relay_block_header_data.txt", "wb");
+// #endif
+//     //todo,  write genesis info file 
+//     xbytes_t rlp_genesis_block_header_data = genesis_block.streamRLP_header_to_contract();
+//     std::string hex_result = top::evm_common::toHex(rlp_genesis_block_header_data);
+//     size_t ws = fwrite(hex_result.c_str(), 1, hex_result.length(), file);
+//     fclose(file);
+// #endif
+//     return true;
+// }
 
 void xrelay_chain_mgr_dispatcher_t::dispatch(base::xcall_t & call) {
     send_call(call);

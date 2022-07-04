@@ -5,15 +5,15 @@
 #pragma once
 
 #include "xbase/xobject_ptr.h"
-#include "xdata/xtransaction.h"
 #include "xdata/xrelay_block.h"
+#include "xdata/xtransaction.h"
+#include "xmbus/xmessage_bus.h"
 #include "xstore/xstore_face.h"
 #include "xvledger/xvblockstore.h"
-#include "xmbus/xmessage_bus.h"
 
 NS_BEG2(top, xrelay_chain)
 
-class xrelay_chain_resources  {
+class xrelay_chain_resources {
 public:
     xrelay_chain_resources(const observer_ptr<store::xstore_face_t> & store,
                            const observer_ptr<base::xvblockstore_t> & blockstore,
@@ -97,10 +97,15 @@ public:
 public:
     void start(int32_t thread_id);
     void stop();
-    bool get_tx_cache_leader(uint64_t lower_height, uint64_t & upper_height, std::map<uint64_t, xcross_txs_t> & cross_tx_map, uint32_t max_tx_num);
-    bool get_tx_cache_backup(uint64_t lower_height, uint64_t upper_height, std::map<uint64_t, xcross_txs_t> & cross_tx_map);
+    bool get_tx_cache_leader(uint64_t lower_height,
+                             uint64_t & upper_height,
+                             std::vector<data::xeth_transaction_t> & cross_txs,
+                             std::vector<data::xeth_receipt_t> & receipts,
+                             uint32_t max_tx_num);
+    bool get_tx_cache_backup(uint64_t lower_height, uint64_t upper_height, std::vector<data::xeth_transaction_t> & cross_txs, std::vector<data::xeth_receipt_t> & receipts);
     bool get_elect_cache(uint64_t elect_height, std::vector<data::xrelay_election_node_t> & reley_election);
     void on_timer();
+    // bool build_genesis_relay_block(data::xrelay_block & genesis_block);
 
 private:
     void on_block_to_db_event(mbus::xevent_ptr_t e);

@@ -23,6 +23,21 @@ using data::xblock_consensus_para_t;
 using data::xtable_block_para_t;
 using data::xfulltable_block_para_t;
 
+class relay_wrap_info_t {
+public:
+   relay_wrap_info_t() {}
+   relay_wrap_info_t(uint64_t evm_height, uint64_t elect_height, uint64_t poly_timestamp) : m_evm_height(evm_height), m_elect_height(elect_height), m_poly_timestamp(poly_timestamp) {}
+   uint64_t evm_height() const {return m_evm_height;}
+   uint64_t elect_height() const {return m_elect_height;}
+   uint64_t poly_timestamp() const {return m_poly_timestamp;}
+   void set_evm_height(uint64_t evm_height) {m_evm_height = evm_height;}
+   void set_elect_height(uint64_t elect_height) {m_elect_height = elect_height;}
+   void set_poly_timestamp(uint64_t poly_timestamp) {m_poly_timestamp = poly_timestamp;}
+private:
+   uint64_t m_evm_height{0};
+   uint64_t m_elect_height{0};
+   uint64_t m_poly_timestamp{0};
+};
 
 class xtable_maker_t : public xblock_maker_t {
  public:
@@ -32,6 +47,7 @@ class xtable_maker_t : public xblock_maker_t {
  public:
     xblock_ptr_t            make_proposal(xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & result);
     int32_t                 verify_proposal(base::xvblock_t* proposal_block, const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para);
+    bool                    is_make_relay_chain() const;
 
  protected:
     int32_t                 check_latest_state(const xblock_ptr_t & latest_block); // check table latest block and state
@@ -48,7 +64,28 @@ class xtable_maker_t : public xblock_maker_t {
     void                    set_packtx_metrics(const xcons_transaction_ptr_t & tx, bool bsucc) const;
     bool                    can_make_next_empty_block(const data::xblock_consensus_para_t & cs_para) const;
 
- private:
+private:
+    bool get_last_relay_info(const data::xblock_consensus_para_t & cs_para,
+                             uint8_t & wrap_phase,
+                             relay_wrap_info_t & wrap_info,
+                             std::string & last_relay_block_data,
+                             data::xrelay_block & last_relay_block);
+    bool build_relay_block_data_from_last_block(const data::xblock_consensus_para_t & cs_para,
+                                                const std::string & last_relay_block_data,
+                                                data::xrelay_block & last_relay_block,
+                                                std::string & relay_block_data);
+    bool build_relay_block_data_leader(const data::xblock_consensus_para_t & cs_para,
+                                       const data::xrelay_block & last_relay_block,
+                                       const relay_wrap_info_t & last_wrap_info,
+                                       relay_wrap_info_t & new_wrap_info,
+                                       data::xrelay_block & relay_block);
+    bool build_relay_block_data_backup(const data::xblock_consensus_para_t & cs_para,
+                                       const data::xrelay_block & last_relay_block,
+                                       const relay_wrap_info_t & last_wrap_info,
+                                       const relay_wrap_info_t & new_wrap_info,
+                                       data::xrelay_block & relay_block);
+    bool set_relay_para(const data::xblock_consensus_para_t & cs_para, const xtablemaker_para_t & table_para, bool is_leader);
+
     static constexpr uint32_t                   m_empty_block_max_num{2};
     uint32_t                                    m_full_table_interval_num;
     xblock_builder_face_ptr_t                   m_fulltable_builder;

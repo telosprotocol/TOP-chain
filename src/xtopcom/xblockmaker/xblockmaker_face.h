@@ -18,6 +18,7 @@
 #include "xblockstore/xblockstore_face.h"
 #include "xtxpool_v2/xtxpool_face.h"
 #include "xblockmaker/xblock_maker_para.h"
+#include "xrelay_chain/xrelay_chain_mgr.h"
 
 NS_BEG2(top, blockmaker)
 
@@ -31,6 +32,7 @@ class xblockmaker_resources_t {
     virtual base::xvblkstatestore_t*    get_xblkstatestore() const = 0;
     virtual base::xvcertauth_t*         get_certauth() const {return m_ca;}
     virtual void                        set_certauth(base::xvcertauth_t* _ca) {m_ca = _ca;}
+    virtual xrelay_chain::xrelay_chain_mgr_t* get_relay_chain_mgr() const = 0;
  private:
     base::xvcertauth_t* m_ca{nullptr};
 };
@@ -41,18 +43,21 @@ class xblockmaker_resources_impl_t : public xblockmaker_resources_t {
     xblockmaker_resources_impl_t(const observer_ptr<store::xstore_face_t> & store,
                                  const observer_ptr<base::xvblockstore_t> & blockstore,
                                  const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool,
-                                 const observer_ptr<mbus::xmessage_bus_face_t> & bus)
-    : m_blockstore(blockstore), m_txpool(txpool), m_bus(bus) {}
+                                 const observer_ptr<mbus::xmessage_bus_face_t> & bus,
+                                 const observer_ptr<xrelay_chain::xrelay_chain_mgr_t> & relay_chain_mgr)
+    : m_blockstore(blockstore), m_txpool(txpool), m_bus(bus), m_relay_chain_mgr(relay_chain_mgr) {}
 
     virtual base::xvblockstore_t*       get_blockstore() const {return m_blockstore.get();}
     virtual xtxpool_v2::xtxpool_face_t* get_txpool() const {return m_txpool.get();}
     virtual mbus::xmessage_bus_face_t*  get_bus() const {return m_bus.get();}
     virtual base::xvblkstatestore_t*    get_xblkstatestore() const {return base::xvchain_t::instance().get_xstatestore()->get_blkstate_store();}
+    virtual xrelay_chain::xrelay_chain_mgr_t* get_relay_chain_mgr() const {return m_relay_chain_mgr.get();}
 
  private:
     observer_ptr<base::xvblockstore_t>          m_blockstore{nullptr};
     observer_ptr<xtxpool_v2::xtxpool_face_t>    m_txpool{nullptr};
     observer_ptr<mbus::xmessage_bus_face_t>     m_bus{nullptr};
+    observer_ptr<xrelay_chain::xrelay_chain_mgr_t> m_relay_chain_mgr{nullptr};
 };
 
 struct xunitmaker_para_t {
@@ -137,6 +142,14 @@ class xtablemaker_para_t {
         m_need_relay_prove = is_need;
     }
 
+    void    set_relay_evm_height(uint64_t height) {
+        m_relay_evm_height = height;
+    }
+
+    void    set_relay_elect_height(uint64_t height) {
+        m_relay_elect_height = height;
+    }
+
     const std::vector<xcons_transaction_ptr_t> &    get_origin_txs() const {return m_origin_txs;}
     const std::map<base::xtable_shortid_t, xtxpool_v2::xreceiptid_state_and_prove> & get_receiptid_info_map() const {return m_receiptid_info_map;}
     const std::vector<std::string> &                get_other_accounts() const {return m_other_accounts;}
@@ -144,7 +157,9 @@ class xtablemaker_para_t {
     const data::xtablestate_ptr_t &                 get_commit_tablestate() const {return m_commit_tablestate;}
     const xtable_proposal_input_ptr_t &             get_proposal() const {return m_proposal;}
     const std::string &                             get_relay_extra_data() const {return m_relay_extra_data;}
-    bool                                            need_relay_prove() const {return m_need_relay_prove;}               
+    bool                                            need_relay_prove() const {return m_need_relay_prove;}
+    uint64_t                                        get_relay_evm_height() const {return m_relay_evm_height;}
+    uint64_t                                        get_relay_elect_height() const {return m_relay_elect_height;}
 
  private:
     std::vector<xcons_transaction_ptr_t>    m_origin_txs;
@@ -152,6 +167,8 @@ class xtablemaker_para_t {
     std::vector<std::string>                m_other_accounts;  // for empty or full unit accounts
     std::string                             m_relay_extra_data;
     bool                                    m_need_relay_prove{false};
+    uint64_t                                m_relay_evm_height;
+    uint64_t                                m_relay_elect_height;
 
     mutable xtable_proposal_input_ptr_t     m_proposal;  // leader should make proposal input; backup should verify proposal input
     mutable data::xtablestate_ptr_t         m_tablestate{nullptr};
@@ -167,6 +184,7 @@ class xblock_maker_t : public base::xvaccount_t {
     base::xvblockstore_t*       get_blockstore() const {return m_resources->get_blockstore();}
     xtxpool_v2::xtxpool_face_t*    get_txpool() const {return m_resources->get_txpool();}
     mbus::xmessage_bus_face_t*  get_bus() const {return m_resources->get_bus();}
+    xrelay_chain::xrelay_chain_mgr_t* get_relay_chain_mgr() const {return m_resources->get_relay_chain_mgr();}
     const xblockmaker_resources_ptr_t & get_resources() const {return m_resources;}
  private:
     xblockmaker_resources_ptr_t             m_resources{nullptr};

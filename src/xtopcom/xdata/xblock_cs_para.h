@@ -47,6 +47,10 @@ class xblock_consensus_para_t {
     void    set_block_base_price(evm_common::u256 const& _price) {m_base_price = _price;}
     void    set_election_round(uint64_t election_round) {m_election_round = election_round;}
     void    set_table_state(xtablestate_ptr_t const& cert_state, xtablestate_ptr_t const& commit_state);
+    void    set_relay_wrap_data(const std::string & relay_wrap_data) const {m_relay_wrap_data = relay_wrap_data;}
+    void    set_relay_block_data(const std::string & relay_block_data) const {m_relay_block_data = relay_block_data;}
+    void    set_need_relay_prove(bool is_need) const {m_need_relay_prove = is_need;}
+    void    set_vote_extend_hash(const uint256_t & hash) const {m_vote_extend_hash = hash;}
 
  public:
     const std::string &     get_random_seed() const {return m_random_seed;}
@@ -79,6 +83,10 @@ class xblock_consensus_para_t {
     uint64_t                get_election_round() const {return m_election_round;}
     xtablestate_ptr_t const& get_cert_table_state() const {return m_cert_tablestate;}
     xtablestate_ptr_t const& get_commit_table_state() const {return m_commit_tablestate;}
+    const std::string &     get_relay_wrap_data() const {return m_relay_wrap_data;}
+    const std::string &     get_relay_block_data() const {return m_relay_block_data;}
+    bool                    need_relay_prove() const {return m_need_relay_prove;}
+    const uint256_t &       get_vote_extend_hash() const {return m_vote_extend_hash;}
 
  private:
     std::string     m_account;
@@ -108,6 +116,10 @@ class xblock_consensus_para_t {
     uint64_t        m_election_round;
     xtablestate_ptr_t         m_cert_tablestate{nullptr};
     xtablestate_ptr_t         m_commit_tablestate{nullptr};
+    mutable std::string     m_relay_wrap_data;
+    mutable std::string     m_relay_block_data;
+    mutable bool            m_need_relay_prove{false};
+    mutable uint256_t       m_vote_extend_hash;
 };
 
 using xblock_consensus_para_ptr_t = std::shared_ptr<xblock_consensus_para_t>;

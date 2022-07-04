@@ -123,21 +123,12 @@ void xblockextract_t::unpack_ethheader(base::xvblock_t* _block, xeth_header_t & 
         return;
     }
 
-    if (_block->get_header()->get_extra_data().empty()) {
-        ec = common::error::xerrc_t::invalid_block;
-        xerror("xblockextract_t::unpack_ethheader fail-extra data empty.block=%s",_block->dump().c_str());
+    data::xtableheader_extra_t header_extra;
+    get_tableheader_extra_from_block(_block, header_extra, ec);
+    if (ec) {
         return;
     }
-
-    const std::string & extra_data = _block->get_header()->get_extra_data();
-    data::xtableheader_extra_t blockheader_extradata;
-    int32_t ret = blockheader_extradata.deserialize_from_string(extra_data);
-    if (ret <= 0) {
-        ec = common::error::xerrc_t::invalid_block;
-        xerror("xblockextract_t::unpack_ethheader fail-extra data invalid.block=%s",_block->dump().c_str());
-        return;
-    }
-    std::string eth_header_str = blockheader_extradata.get_ethheader();
+    std::string eth_header_str = header_extra.get_ethheader();
     if (eth_header_str.empty()) {
         ec = common::error::xerrc_t::invalid_block;
         xerror("xblockextract_t::unpack_ethheader fail-eth_header_str empty.block=%s",_block->dump().c_str());
@@ -171,23 +162,13 @@ xtransaction_ptr_t xblockextract_t::unpack_raw_tx(base::xvblock_t* _block, std::
 }
 
 void xblockextract_t::unpack_relayblock(base::xvblock_t* _block, bool include_sig, xrelay_block & relayblock, std::error_code & ec) {
-    auto & header_extra = _block->get_header()->get_extra_data();
-    xdbg("unpack_relayblock, header_extra: %d, %s", header_extra.size(), top::HexEncode(header_extra).c_str());
-
-    if (header_extra.empty()) {
-        ec = common::error::xerrc_t::invalid_block;
-        xerror("xblockextract_t::unpack_relayblock parameters invalid.");
+    data::xtableheader_extra_t header_extra;
+    get_tableheader_extra_from_block(_block, header_extra, ec);
+    if (ec) {
         return;
     }
 
-    data::xtableheader_extra_t last_header_extra;
-    auto ret = last_header_extra.deserialize_from_string(header_extra);
-    if (ret <= 0) {
-        ec = common::error::xerrc_t::invalid_block;
-        xerror("xblockextract_t::unpack_relayblock header extra data deserialize fail.");
-        return;
-    }
-    auto relay_block_data_str = last_header_extra.get_relay_block_data();
+    auto relay_block_data_str = header_extra.get_relay_block_data();
 
     relayblock.decodeBytes(to_bytes(relay_block_data_str), ec);
     if (ec) {
@@ -225,6 +206,63 @@ void xblockextract_t::unpack_relayblock(base::xvblock_t* _block, bool include_si
             signature_nodes.push_back(signature);
         }
         relayblock.set_signature_nodes(signature_nodes);
+    }
+}
+
+void xblockextract_t::unpack_relaywrapinfo(base::xvblock_t* _block, xrelay_wrap_info_t & wrap_info, std::error_code & ec) {
+    data::xtableheader_extra_t header_extra;
+    get_tableheader_extra_from_block(_block, header_extra, ec);
+    if (ec) {
+        return;
+    }
+
+    auto wrap_data = header_extra.get_relay_wrap_info();
+    if (wrap_data.empty()) {
+        ec = common::error::xerrc_t::invalid_block;
+        xerror("xblockextract_t::unpack_relaywrapinfo wrap data should not empty.proposal_block=%s", _block->dump().c_str());
+        return;
+    }
+
+    wrap_info.serialize_from_string(wrap_data);
+}
+
+void xblockextract_t::unpack_relaywrapinfo_and_relay_block_data(base::xvblock_t* _block, xrelay_wrap_info_t & wrap_info, std::string & relay_block_data, std::error_code & ec) {
+    data::xtableheader_extra_t header_extra;
+    get_tableheader_extra_from_block(_block, header_extra, ec);
+    if (ec) {
+        return;
+    }
+
+    auto wrap_data = header_extra.get_relay_wrap_info();
+    if (wrap_data.empty()) {
+        ec = common::error::xerrc_t::invalid_block;
+        xerror("xblockextract_t::unpack_relaywrapinfo wrap data should not empty.proposal_block=%s", _block->dump().c_str());
+        return;
+    }
+
+    relay_block_data = header_extra.get_relay_block_data();
+    if (relay_block_data.empty()) {
+        ec = common::error::xerrc_t::invalid_block;
+        xerror("xblockextract_t::unpack_relaywrapinfo relay_block_data should not empty.proposal_block=%s", _block->dump().c_str());
+        return;
+    }
+    wrap_info.serialize_from_string(wrap_data);
+}
+
+void xblockextract_t::get_tableheader_extra_from_block(base::xvblock_t* _block, data::xtableheader_extra_t &header_extra, std::error_code & ec) {
+    auto & header_extra_str = _block->get_header()->get_extra_data();
+
+    if (header_extra_str.empty()) {
+        ec = common::error::xerrc_t::invalid_block;
+        xerror("xblockextract_t::unpack_relayblock parameters invalid.");
+        return;
+    }
+
+    auto ret = header_extra.deserialize_from_string(header_extra_str);
+    if (ret <= 0) {
+        ec = common::error::xerrc_t::invalid_block;
+        xerror("xblockextract_t::get_tableheader_extra_from_block header extra data deserialize fail.");
+        return;
     }
 }
 

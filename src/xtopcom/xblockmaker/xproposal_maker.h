@@ -21,7 +21,7 @@ class xproposal_maker_t : public xunit_service::xproposal_maker_face {
  public:
     virtual bool                can_make_proposal(xblock_consensus_para_t & proposal_para) override;
     virtual xblock_ptr_t        make_proposal(xblock_consensus_para_t & proposal_para, uint32_t min_tx_num) override;
-    virtual int                 verify_proposal(base::xvblock_t* proposal_block, base::xvqcert_t * bind_clock_cert) override;
+    virtual int                 verify_proposal(xblock_consensus_para_t & proposal_para, base::xvblock_t* proposal_block, base::xvqcert_t * bind_clock_cert) override;
     virtual void                set_certauth(base::xvcertauth_t* _ca);
     virtual data::xblock_consensus_para_ptr_t   leader_set_consensus_para_basic(base::xvblock_t* _cert_block, uint64_t viewid, uint64_t clock, std::error_code & ec) override;
 
@@ -38,6 +38,7 @@ class xproposal_maker_t : public xunit_service::xproposal_maker_face {
 
     bool                        verify_proposal_drand_block(base::xvblock_t *proposal_block, xblock_ptr_t & drand_block) const;
     bool                        verify_proposal_input(base::xvblock_t *proposal_block, xtablemaker_para_t & table_para);
+    bool                        verify_proposal_header(base::xvblock_t *proposal_block, xtablemaker_para_t & table_para);
 
 private:
     data::xtablestate_ptr_t get_target_tablestate(base::xvblock_t * block);

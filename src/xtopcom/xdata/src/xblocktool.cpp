@@ -212,13 +212,6 @@ base::xvblock_t*  xblocktool_t::create_next_emptyblock(base::xvblock_t* prev_blo
     return _new_block.get();  // TODO(jimmy) xblocktool_t return auto ptr
 }
 
-base::xvblock_t*  xblocktool_t::create_next_relay_block(base::xvblock_t* prev_block, const xblock_consensus_para_t & cs_para, const std::string & relay_extra_data, bool need_relay_prove) {
-    xrelay_block_build_t bbuild(prev_block, cs_para, relay_extra_data, need_relay_prove);
-    base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
-    _new_block->add_ref();
-    return _new_block.get();  // TODO(jimmy) xblocktool_t return auto ptr
-}
-
 base::xvblock_t* xblocktool_t::create_next_lightunit(const xlightunit_block_para_t & bodypara, base::xvblock_t* prev_block, const xblock_consensus_para_t & cs_para) {
     xlightunit_build_t bbuild(prev_block, bodypara, cs_para);
     base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();

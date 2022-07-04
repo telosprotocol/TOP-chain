@@ -60,7 +60,7 @@ data::xblock_ptr_t  xunitbuilder_t::make_block(const data::xblock_ptr_t & prev_b
     std::string binlog = unitstate->take_binlog();
     std::string snapshot = unitstate->take_snapshot();
     if (binlog.empty() || snapshot.empty()) {
-        xerror("xtable_maker_t::make_light_table_v2 fail-invalid unitstate.");
+        xerror("xunitbuilder_t::make_block fail-invalid unitstate.");
         return nullptr;
     }
     data::xunit_block_para_t bodypara;
