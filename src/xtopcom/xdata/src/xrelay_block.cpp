@@ -726,4 +726,50 @@ std::string xrelay_block::dump() const {
     return std::string(local_param_buf);
 }
 
+enum_block_cache_type xrelay_block::check_block_type() const
+{
+    //check type
+    if (!get_elections_sets().empty()) {
+        if (check_poly_block_validity()) {
+            return cache_poly_election_block;
+        }
+        xwarn("xrelay_block::check_block_type block height(%d)  type error", get_block_height());
+        return cache_error_block;
+    } else {
+        if (get_all_transactions().empty() && get_all_receipts().empty()) {
+            return cache_poly_tx_block;
+        }
+        return cache_tx_block;
+    }
+}
+
+bool xrelay_block::check_poly_block_validity() const
+{
+    if ((!get_all_transactions().empty() || !get_all_receipts().empty())) {
+        xwarn("xrelay_block:check_poly_block_validity poly block has  tx_size(%d) and receipt_size(%d) is error",
+                get_all_transactions().size(), get_all_receipts().size());
+        return false;
+    }
+    return true;
+}
+
+std::string xrelay_block::get_block_type_string()
+{
+   enum_block_cache_type block_type = check_block_type();
+   switch (block_type)
+   {
+   case cache_tx_block:
+        return "transactions";
+   case cache_poly_tx_block:
+        return "polymerization";
+    case cache_poly_election_block:
+        return "election";
+   default:
+        xwarn("xrelay_block::get_block_type_string  block type %d error!", block_type);
+        return "error";
+   }
+  
+}
+
+
 NS_END2

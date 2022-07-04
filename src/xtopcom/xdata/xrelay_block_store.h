@@ -17,13 +17,6 @@ namespace top {
 
 namespace data {
 
-    enum enum_block_cache_type {
-        cache_tx_block,
-        cache_poly_tx_block,
-        cache_poly_election_block,
-        cache_error_block,
-    };
-
     struct xrelay_block_save_leaf {
         xrelay_block_save_leaf() = default;
         enum_block_cache_type   m_type;
@@ -43,7 +36,7 @@ namespace data {
         }
 
     public:
-        enum_block_cache_type   check_block_type(const xrelay_block &next_block);
+        
         bool    set_block_merkle_root_from_store(xrelay_block &next_block);
         bool    get_all_poly_block_hash_list_from_cache(const xrelay_block &tx_block, std::vector<evm_common::h256> &leaf_hash_vector);
         bool    get_all_leaf_block_hash_list_from_cache(const xrelay_block &poly_block, std::vector<evm_common::h256> &leaf_hash_vector, bool include_self);
@@ -56,7 +49,6 @@ namespace data {
 
     private:
         bool    check_tx_block_validity(const xrelay_block &next_block);
-        bool    check_poly_block_validity(const xrelay_block &next_block);
        
     private:
          basic::xlru_cache<uint64_t, xrelay_block_save_leaf> m_tx_block_map;  

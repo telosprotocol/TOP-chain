@@ -21,7 +21,7 @@ bool  xrelay_block_store::set_block_merkle_root_from_store(xrelay_block &next_bl
 {
     bool check_result = true;
     h256  block_root_hash{0};
-    enum_block_cache_type block_type = check_block_type(next_block);
+    enum_block_cache_type block_type = next_block.check_block_type();
 
     if (cache_error_block == block_type) {
         return false;
@@ -41,7 +41,7 @@ bool  xrelay_block_store::set_block_merkle_root_from_store(xrelay_block &next_bl
                 _blocks_hash_poly.push_back(block_hash.to_bytes());
             }
             block_root_hash = orderedTrieRoot(_blocks_hash_poly);
-            xinfo(" poly block height(%d) root hash[%s]",next_block.get_block_height(), block_root_hash.hex().c_str());
+            xinfo("set_block_merkle_root_from_store poly block height(%d) root hash[%s]",next_block.get_block_height(), block_root_hash.hex().c_str());
         }
         next_block.set_block_merkle_root_hash(block_root_hash);
         //next_block.set_chain_id(chain_id_set);
@@ -58,7 +58,7 @@ bool xrelay_block_store::load_block_hash_from_cache(uint64_t load_height, xrelay
         base::xvaccount_t _table_addr(sys_contract_relay_block_addr);
         auto _db_block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_table_addr, load_height, base::enum_xvblock_flag_authenticated, false);
         if (_db_block == nullptr) {
-            xwarn("xrelay_block_store::set_block_merkle_root_from_store block height(%d) fail-load", load_height);
+            xwarn("xrelay_block_store::load_block_hash_from_cache block height(%d) fail-load", load_height);
             return false;
         }
 
@@ -66,7 +66,7 @@ bool xrelay_block_store::load_block_hash_from_cache(uint64_t load_height, xrelay
         top::data::xrelay_block  _db_relay_block;
         data::xblockextract_t::unpack_relayblock(_db_block.get(), false, _db_relay_block, ec);    
         if (ec) {
-            xerror("xrelay_block_store:set_block_merkle_root_from_store decodeBytes decodeBytes error %s; err msg %s", ec.category().name(), ec.message().c_str());
+            xerror("xrelay_block_store:load_block_hash_from_cache decodeBytes decodeBytes error %s; err msg %s", ec.category().name(), ec.message().c_str());
             return false;
         }
         
@@ -84,7 +84,7 @@ bool xrelay_block_store::load_block_hash_from_cache(uint64_t load_height, xrelay
 bool xrelay_block_store::get_all_leaf_block_hash_list_from_cache(const xrelay_block &poly_block, std::vector<h256>  &leaf_hash_vector, bool include_self)
 {
     leaf_hash_vector.clear();
-    enum_block_cache_type block_type = check_block_type(poly_block);
+    enum_block_cache_type block_type = poly_block.check_block_type();
 
     if (block_type != cache_poly_tx_block && block_type != cache_poly_election_block) {
         xwarn("xrelay_block_store::get_all_leaf_block_hash_list_from_cache block height(%d) type(%d) error",
@@ -116,7 +116,7 @@ bool xrelay_block_store::get_all_leaf_block_hash_list_from_cache(const xrelay_bl
     }
     
     if (!check_result) {
-         xwarn("xrelay_block_store:set_block_merkle_root_from_store  leaf_hash_vector clear ");
+         xwarn("xrelay_block_store:get_all_leaf_block_hash_list_from_cache  leaf_hash_vector clear ");
          leaf_hash_vector.clear();
     }
     return check_result;
@@ -125,7 +125,7 @@ bool xrelay_block_store::get_all_leaf_block_hash_list_from_cache(const xrelay_bl
 bool xrelay_block_store::get_all_poly_block_hash_list_from_cache(const xrelay_block &tx_block, std::vector<h256>  &leaf_hash_vector)
 {
    leaf_hash_vector.clear();
-    enum_block_cache_type block_type = check_block_type(tx_block);
+    enum_block_cache_type block_type = tx_block.check_block_type();
 
     if (block_type != cache_tx_block) {
         xwarn("xrelay_block_store::get_all_poly_block_hash_list_from_cache block height(%d) type(%d) error",
@@ -145,7 +145,7 @@ bool xrelay_block_store::get_all_poly_block_hash_list_from_cache(const xrelay_bl
             if (_block_leaf.m_type > block_type) {
                 xdbg("xrelay_block_store:get_all_poly_block_hash_list_from_cache  height(%d) poly  height(%d)  type(%d).",
                       tx_block.get_block_height(), last_height, _block_leaf.m_type);
-                leaf_hash_vector.insert(leaf_hash_vector.begin(), _block_leaf.m_block_hash);
+                leaf_hash_vector.insert(leaf_hash_vector.end(), _block_leaf.m_block_hash);
                 block_type = _block_leaf.m_type;
                 //chain_id_set |= _block_leaf.m_chain_id;
                 if (block_type == cache_poly_election_block) {
@@ -170,7 +170,7 @@ bool xrelay_block_store::get_all_poly_block_hash_list_from_cache(const xrelay_bl
 
 bool  xrelay_block_store::save_block_hash_to_store_cache(xrelay_block &next_block)
 {
-    enum_block_cache_type block_typ = check_block_type(next_block);
+    enum_block_cache_type block_typ = next_block.check_block_type();
     if (cache_error_block == block_typ) {
         xwarn("xrelay_block_store::save_block_hash_to_store_cache height(%d) check_block_type type error", next_block.get_block_height());
         return false;
@@ -200,33 +200,9 @@ bool  xrelay_block_store::save_tx_block_hash_to_tx_map(xrelay_block &next_block,
     return true;    
 }
 
-enum_block_cache_type xrelay_block_store::check_block_type(const xrelay_block &next_block)
-{
-    //check type
-    if (!next_block.get_elections_sets().empty()) {
-        if (check_poly_block_validity(next_block)) {
-            return cache_poly_election_block;
-        }
-        xwarn("xrelay_block_store::check_block_type block height(%d)  type error", next_block.get_block_height());
-        return cache_error_block;
-    } else {
-        if (next_block.get_all_transactions().empty() && next_block.get_all_receipts().empty()) {
-            return cache_poly_tx_block;
-        }
-        return cache_tx_block;
-    }
-}
 
 
-bool xrelay_block_store::check_poly_block_validity(const xrelay_block &next_block)
-{
-    if ((!next_block.get_all_transactions().empty() || !next_block.get_all_receipts().empty())) {
-        xwarn("xrelay_block_store:check_block_validity poly block has  tx_size(%d) and receipt_size(%d) is error",
-                next_block.get_all_transactions().size(), next_block.get_all_receipts().size());
-        return false;
-    }
-    return true;
-}
+
 
 bool xrelay_block_store::check_tx_block_validity(const xrelay_block &next_block)
 {

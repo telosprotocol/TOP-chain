@@ -1130,6 +1130,10 @@ int xrpc_eth_query_manager::set_relay_block_result(const xobject_ptr_t<base::xvb
     evm_common::h256 hash = relay_block.get_block_hash();
     std::string block_hash = top::to_hex_prefixed(std::string((char*)hash.data(), hash.size));
 
+    xJson::Value js_block_type;
+    js_block_type["block_type"] = relay_block.get_block_type_string();
+    js_rsp["result"].append(js_block_type);
+
     xJson::Value js_txs;
     js_rsp["result"].append(top::to_hex_prefixed(header_data));
     if (have_txs == 0)
@@ -1193,6 +1197,10 @@ int xrpc_eth_query_manager::set_relay_block_result2(const xobject_ptr_t<base::xv
     js_result["blockRootHash"] = top::to_hex_prefixed(relay_block.get_block_merkle_root_hash());
     xbytes_t data = relay_block.encodeBytes(true);
     js_result["size"] = xrpc::xrpc_eth_parser_t::uint64_to_hex_prefixed(data.size());
+
+    xJson::Value js_block_type;
+    js_block_type["block_type"] = relay_block.get_block_type_string();
+    js_rsp["result"].append(js_block_type);
 
     if (have_txs == 0) {
         js_rsp["result"] = js_result;
@@ -1512,8 +1520,7 @@ void xrpc_eth_query_manager::topRelay_getPolyBlockHashListByHash(xJson::Value & 
         return;
     }
 
-    int load_hash_type = 0;
-    set_relay_block_result_block_hash(block, js_rsp, load_hash_type);
+    set_relay_block_result_block_hash(block, js_rsp, 0);
 }
 
 
@@ -1542,8 +1549,7 @@ void xrpc_eth_query_manager::topRelay_getLeafBlockHashListByHash(xJson::Value & 
         return;
     }
 
-    int load_hash_type = 1;
-    set_relay_block_result_block_hash(block, js_rsp, load_hash_type);
+    set_relay_block_result_block_hash(block, js_rsp, 1);
 }
 
 void xrpc_eth_query_manager::topRelay_getTransactionReceipt(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
