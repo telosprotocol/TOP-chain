@@ -12,6 +12,7 @@
 #include "xdata/xtableblock.h"
 #include "xdata/xrootblock.h"
 #include "xdata/xblock.h"
+#include "xdata/xblock_cs_para.h"
 
 NS_BEG2(top, data)
 
@@ -127,6 +128,13 @@ class xrelay_block_build_t : public base::xvblockmaker_t {
                           const std::string & relay_extra_data,
                           bool need_relay_prove);
      base::xauto_ptr<base::xvblock_t> create_new_block() override;
+};
+class xrelayblock_build_t : public base::xvblockmaker_t {
+ public:
+    xrelayblock_build_t(base::xvblock_t* curr_block, const std::string & relay_block_data, const std::string & relay_wrap_data,
+        const std::string& sign_data, const uint64_t& block_height);
+    xrelayblock_build_t(const std::string & relay_block_data);
+    base::xauto_ptr<base::xvblock_t> create_new_block() override;
 };
 
 class xfullunit_build_t : public base::xvblockmaker_t {

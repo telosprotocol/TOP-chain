@@ -33,7 +33,6 @@ protected:
     bool can_make_next_relay_block() const;
 
 private:
-    static constexpr uint32_t m_keep_latest_blocks_max{3};
     xblock_builder_face_ptr_t m_relay_block_builder;
     xblock_builder_para_ptr_t m_default_builder_para;
     mutable std::mutex m_lock;

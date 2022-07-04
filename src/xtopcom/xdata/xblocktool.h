@@ -20,6 +20,7 @@
 #include "xvledger/xreceiptid.h"
 #include "xvledger/xvpropertyprove.h"
 #include "xdata/xrelay_block.h"
+#include "xdata/xblock_cs_para.h"
 
 NS_BEG2(top, data)
 
@@ -33,6 +34,7 @@ class xblocktool_t {
     static base::xvblock_t*   create_genesis_lightunit(const std::string & account, const xtransaction_ptr_t & genesis_tx, const xtransaction_result_t & result);
     static base::xvblock_t*   create_genesis_lightunit(const xobject_ptr_t<base::xvbstate_t> & state, const xobject_ptr_t<base::xvcanvas_t> & canvas);
     static base::xvblock_t*   create_genesis_root_block(base::enum_xchain_id chainid, const std::string & account, const xrootblock_para_t & bodypara);
+    static xrelay_block*      create_genesis_relay_block(const xrootblock_para_t & bodypara);
 
     static base::xvblock_t*   create_next_emptyblock(base::xvblock_t* prev_block, const xblock_consensus_para_t & cs_para);
     static base::xvblock_t*   create_next_emptyblock(base::xvblock_t* prev_block);

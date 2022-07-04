@@ -9,7 +9,7 @@
 #include <cstdint>
 #include <system_error>
 
-NS_BEG3(top, unit_service, error)
+NS_BEG3(top, xunit_service, error)
 
 enum class xenum_errc {
     ok,
@@ -18,6 +18,8 @@ enum class xenum_errc {
     vnode_already_exist,
     vnode_not_exist,
     serialization_error,
+    packer_cert_block_invalid,
+    packer_view_behind,
 };
 using xerrc_t = xenum_errc;
 
@@ -31,9 +33,9 @@ NS_END3
 NS_BEG1(std)
 
 template <>
-struct is_error_code_enum<top::unit_service::error::xerrc_t> : std::true_type {};
+struct is_error_code_enum<top::xunit_service::error::xerrc_t> : std::true_type {};
 
 template <>
-struct is_error_condition_enum<top::unit_service::error::xerrc_t> : std::true_type {};
+struct is_error_condition_enum<top::xunit_service::error::xerrc_t> : std::true_type {};
 
 NS_END1

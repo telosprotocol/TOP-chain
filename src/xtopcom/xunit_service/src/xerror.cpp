@@ -6,7 +6,7 @@
 
 #include <string>
 
-NS_BEG3(top, unit_service, error)
+NS_BEG3(top, xunit_service, error)
 
 static char const * const errc_to_string(int code) {
     auto const ec = static_cast<xerrc_t>(code);
@@ -23,6 +23,12 @@ static char const * const errc_to_string(int code) {
 
     case xerrc_t::serialization_error:
         return "serialization error";
+
+    case xerrc_t::packer_cert_block_invalid:
+        return "packer_cert_block_invalid";
+
+    case xerrc_t::packer_view_behind:
+        return "packer_view_behind";
 
     default:
         return "unknown unit service module error";

@@ -5,6 +5,7 @@
 #include "xgenesis/xgenesis_manager.h"
 
 #include "xdata/xblocktool.h"
+#include "xdata/xblockbuild.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xrootblock.h"
@@ -17,6 +18,7 @@
 #include "xvm/manager/xcontract_manager.h"
 #include "xvm/xsystem_contracts/deploy/xcontract_deploy.h"
 #include "xvm/xvm_service.h"
+#include "xpbase/base/top_utils.h"
 
 namespace top {
 namespace genesis {
@@ -303,6 +305,15 @@ void xtop_genesis_manager::init_genesis_block(std::error_code & ec) {
             CHECK_EC_RETURN(ec);
         }
     }
+    {
+        common::xaccount_address_t account(sys_contract_relay_block_addr);
+        auto vblock = create_genesis_of_relay_account(base::xvaccount_t{account.value()}, src, ec);
+        CHECK_EC_RETURN(ec);
+        if (vblock != nullptr) {
+            store_block(base::xvaccount_t{account.value()}, vblock.get(), ec);
+            CHECK_EC_RETURN(ec);
+        }
+    }
     // step3: user accounts with data(reset)
     if (false == chain_data::xtop_chain_data_processor::check_state()) {
         for (auto const & pair : m_user_accounts_data) {
@@ -366,6 +377,23 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_block(base
 
     return nullptr;
 }
+base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_relay_account(base::xvaccount_t const & account, xenum_create_src_t src, std::error_code & ec) {
+    xinfo("[xtop_genesis_manager::create_genesis_of_relay_account] account: %s", account.get_account().c_str());
+    auto _relay_block = data::xrootblock_t::get_genesis_relay_block();
 
+    xbytes_t rlp_genesis_block_header_data = _relay_block.encodeBytes(false);
+    std::string data((char*)rlp_genesis_block_header_data.data(), rlp_genesis_block_header_data.size());
+    data::xemptyblock_build_t bbuild(sys_contract_relay_block_addr);
+
+    data::xtableheader_extra_t header_extra_src;
+    header_extra_src.set_relay_block_data(data);
+    std::string extra_data;
+    header_extra_src.serialize_to_string(extra_data);
+
+    bbuild.set_header_extra(extra_data);
+    xdbg("create_genesis_of_relay_account, %d, %s", extra_data.size(), top::HexEncode(extra_data).c_str());
+    base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
+    return _new_block;
+}
 }  // namespace genesis
 }  // namespace top

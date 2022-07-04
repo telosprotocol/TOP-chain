@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include "xdata/xblock_cs_para.h"
 #include "xdata/xblock.h"
 #include "xdata/xtableblock.h"
 #include "xdata/xblocktool.h"

@@ -115,7 +115,12 @@ xtop_account_base_address::xtop_account_base_address(std::string const & base_ad
         m_account_type = t;
 
         break;
-
+    case base::enum_vaccount_addr_type::enum_vaccount_addr_type_relay_block:
+        if (base_address.length() != TABLE_ACCOUNT_LENGTH) {
+            top::error::throw_error(error::xerrc_t::invalid_account_base_address, "invalid base address " + base_address);
+        }
+        m_account_type = t;
+        break;
     default:
         top::error::throw_error(error::xerrc_t::invalid_account_base_address, "invalid base address " + base_address);
         break;

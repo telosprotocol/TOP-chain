@@ -37,6 +37,8 @@ namespace top
                                         const std::string & _justify_hash);
             void    set_relay_cert_para(uint64_t _clock, uint32_t _viewtoken, uint64_t _viewid, const xvip2_t & _validator, const xvip2_t & _auditor, uint64_t _drand_height,
                                         const std::string & _justify_hash, bool need_relay_prove);
+            void    set_relay_cert_para(uint64_t _clock, uint32_t _viewtoken, uint64_t _viewid, xvqcert_t * cert);
+            void    set_relay_cert_para();
             // some optional parameters
             void    set_extra_data(const std::string & _extra_data) {m_extra_data = _extra_data;}
             uint64_t get_clock() const {return m_clock;}

@@ -137,10 +137,9 @@ namespace top
 
             //compatible for old version,e.g read meta and other stuff
             bool                push_event(enum_blockstore_event type,base::xvbindex_t* target);
-
             void                update_bindex(base::xvbindex_t* this_block);
             void                update_bindex_to_committed(base::xvbindex_t* this_block);
-            
+            const std::string   get_cache_block_hash(base::xvbindex_t* index_ptr);
         private:
             virtual bool        init_meta(const base::xvactmeta_t & meta) override;
             bool                recover_meta(const base::xvactmeta_t & _meta);//recover at plugin level if possible;
@@ -149,7 +148,6 @@ namespace top
             bool                clean_blocks(const int keep_blocks_count,bool force_release_unused_block);
             bool                on_block_revoked(base::xvbindex_t* index_ptr);
             bool                on_block_committed(base::xvbindex_t* index_ptr);
-            bool                store_relay_txs(base::xvblock_t * block_ptr);
 
         protected:
             base::xblockmeta_t * m_meta;
@@ -220,6 +218,26 @@ namespace top
             
             virtual bool   store_block(base::xvblock_t* new_raw_block) override;
         };
+        class xrelay_plugin : public xblockacct_t
+        {
+        public:
+            xrelay_plugin(base::xvaccountobj_t & parent_obj,const uint64_t timeout_ms,xvblockdb_t * xvbkdb_ptr);
+        protected:
+            virtual ~xrelay_plugin();
+        private:
+            xrelay_plugin();
+            xrelay_plugin(const xrelay_plugin &);
+            xrelay_plugin & operator = (const xrelay_plugin &);
 
+        protected:
+            virtual base::xvbindex_t*              create_index(base::xvblock_t & new_raw_block) override;
+            virtual std::vector<base::xvbindex_t*> read_index(const uint64_t target_height) override;
+            virtual bool           write_index(base::xvbindex_t* this_index) override;
+            virtual bool           write_block(base::xvbindex_t* index_ptr) override;
+            virtual bool           write_block(base::xvbindex_t* index_ptr,base::xvblock_t * new_block_ptr) override;
+
+            virtual bool   store_block(base::xvblock_t* new_raw_block) override;
+            bool store_relay_txs(base::xvblock_t * block_ptr);
+        };
     };//end of namespace of vstore
 };//end of namespace of top

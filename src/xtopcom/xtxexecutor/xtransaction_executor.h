@@ -9,6 +9,7 @@
 
 #include "xdata/xtransaction.h"
 #include "xdata/xcons_transaction.h"
+#include "xdata/xblock_cs_para.h"
 #include "xstore/xaccount_context.h"
 
 NS_BEG2(top, txexecutor)

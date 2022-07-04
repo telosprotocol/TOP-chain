@@ -52,13 +52,11 @@ protected:
                                          const data::xrelay_election_group_t & reley_election,
                                          uint64_t epochid);
     bool build_relay_block_data_leader(const data::xblock_ptr_t & latest_wrap_block,
-                                       uint64_t timestamp,
-                                       uint64_t last_election_height,
-                                       uint64_t & new_election_height,
-                                       uint64_t last_evm_table_height,
-                                       uint64_t & new_evm_table_height,
-                                       uint64_t epochid,
-                                       std::string & relay_block_data);
+                                        uint64_t timestamp,
+                                        uint64_t &cur_election_height,
+                                        uint64_t &cur_evm_table_height,
+                                        uint64_t epochid,
+                                        std::string & relay_block_data);
     bool build_relay_block_data_backup(evm_common::h256 prev_hash,
                                        uint64_t block_height,
                                        uint64_t last_evm_table_height,
@@ -66,13 +64,14 @@ protected:
                                        uint64_t timestamp,
                                        uint64_t new_election_height,
                                        uint64_t epochid,
-                                       std::string & relay_block_data);
-    bool build_genesis_relay_block(data::xrelay_block & genesis_block);
+                                       std::string & relay_block_data,
+                                       bool tx_empty);
 
 private:
     xblockmaker_resources_ptr_t m_resources{nullptr};
     observer_ptr<xrelay_chain::xrelay_chain_mgr_t> m_relay_chain_mgr;
     xrelay_maker_ptr_t m_relay_maker{nullptr};
+    uint64_t           m_last_poly_timestamp{0};
 };
 
 NS_END2

@@ -13,6 +13,13 @@
 #include "xdata/xgenesis_data.h"
 
 #include "xmetrics/xmetrics.h"
+#include "xdata/xnative_contract_address.h"
+#include "xdata/xblocktool.h"
+#include "xdata/xtop_relay_block.h"
+#include "xdata/xrelay_block.h"
+#include "xdata/xblockbuild.h"
+#include "xpbase/base/top_utils.h"
+
 #define METRICS_TAG(tag, val) XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)tag, val)
 
 
@@ -209,7 +216,9 @@ namespace top
             #else
             
             xblockacct_t * new_plugin = NULL;
-            if(!auto_account_ptr->is_table_address())
+            if (account_address == sys_contract_relay_block_addr)
+                new_plugin =  new xrelay_plugin(*auto_account_ptr,timeout_for_block_plugin,m_xvblockdb_ptr);
+            else if(!auto_account_ptr->is_table_address())
                 new_plugin =  new xunitbkplugin(*auto_account_ptr,timeout_for_block_plugin,m_xvblockdb_ptr);
             else
                 new_plugin =  new xtablebkplugin(*auto_account_ptr,timeout_for_block_plugin,m_xvblockdb_ptr);
@@ -720,6 +729,17 @@ namespace top
             {
                 xwarn("xvblockstore_impl::store_block,fail-store block(%s)", container_block->dump().c_str());
                 // return false;
+            }
+
+            if (container_account->get_account() == std::string(sys_contract_relay_table_block_addr)) {
+                base::xvaccount_t relay_account(sys_contract_relay_block_addr);
+                xobject_ptr_t<base::xvblock_t> relay_block_ptr = create_relay_block(container_block);
+                if (relay_block_ptr != nullptr) {
+                    if (false == store_block(relay_account, relay_block_ptr.get())) {
+                        xwarn("xvblockstore_impl::store_block fail, %s", sys_contract_relay_table_block_addr);
+                    }
+                } else
+                    xdbg("create_relay_block fail.");
             }
 
             bool did_stored = ret;//inited as false
@@ -1351,14 +1371,17 @@ namespace top
             std::string account;
             uint64_t height;
             int ret = load_block_idx_by_hash(hash, account, height);
-            if (ret != 0)
+            if (ret != 0) {
+                xdbg("xvblockstore_impl::get_block_by_hash, load index fail.");
                 return nullptr;
+            }
             
             return load_block_object(account, height, base::enum_xvblock_flag_authenticated, false);
         }
         int xvblockstore_impl::load_block_idx_by_hash(const std::string & hash, std::string & account, uint64_t & height) {
             const std::string key_path = base::xvdbkey_t::create_prunable_blockhash_key(hash);
             std::string block_idx = base::xvchain_t::instance().get_xdbstore()->get_value(key_path);
+            xdbg("xvblockstore_impl::load_block_idx_by_hash, %s", block_idx.c_str());
             std::string::size_type found = block_idx.find("/");
             if (found == std::string::npos)
                 return 1;
@@ -1366,6 +1389,61 @@ namespace top
             height = base::xstring_utl::hex2uint64(block_idx.substr(found + 1));
             xdbg("xtxstoreimpl::load_block_idx_by_hash, %s,%llu", account.c_str(), height);
             return 0;
+        }
+        xobject_ptr_t<base::xvblock_t> xvblockstore_impl::create_relay_block(base::xvblock_t * block_ptr) {
+            if (NULL == block_ptr)
+                return nullptr;
+
+            std::error_code ec;
+            data::xrelay_block relay_block;
+            data::xblockextract_t::unpack_relayblock(block_ptr, false, relay_block, ec);
+            if (ec) {
+                xwarn("xvblockstore_impl::create_relay_block fail. unpack relayblock error %s, msg %s", ec.category().name(), ec.message().c_str());
+                return nullptr;
+            }
+            data::xtableheader_extra_t header_extra;
+            auto extra_str = block_ptr->get_header()->get_extra_data();
+            auto ret = header_extra.deserialize_from_string(extra_str);
+            if (ret <= 0) {
+                xwarn("xrelay_proposal_maker_t::make_proposal header extra data deserialize fail.");
+                return nullptr;
+            }
+
+            auto wrap_data = header_extra.get_relay_wrap_info();
+            if (wrap_data.empty()) {
+                xwarn("xrelay_proposal_maker_t::make_proposal wrap data should not empty.");
+                return nullptr;
+            }
+
+            data::xrelay_wrap_info_t wrap_info;
+            wrap_info.serialize_from_string(wrap_data);
+            uint8_t wrap_phase = wrap_info.get_wrap_phase();
+            if (wrap_phase != 2) {
+                xdbg("xvblockstore_impl::create_relay_block not stroe :%s ,%d", block_ptr->dump().c_str(), wrap_phase);
+                return nullptr;
+            }
+
+            xdbg("xvblockstore_impl::create_relay_block, store txs for block=%s, ", block_ptr->dump().c_str());
+
+            xobject_ptr_t<base::xvblock_t> relay_block_ptr;
+            if (block_ptr->get_height() == 0) {
+                relay_block_ptr = data::xblocktool_t::create_genesis_empty_block(sys_contract_relay_block_addr);
+                relay_block_ptr->set_block_flag(base::enum_xvblock_flag_authenticated);
+            } else {
+                data::xrelayblock_build_t bbuild(block_ptr,  block_ptr->get_header()->get_extra_data(), block_ptr->get_header()->get_comments(),
+                    block_ptr->get_cert()->get_extend_data(), relay_block.get_block_height());
+                relay_block_ptr = bbuild.build_new_block();
+
+                if (!block_ptr->get_cert()->get_verify_signature().empty()) {
+                    relay_block_ptr->set_verify_signature(std::string(1,0));
+                }
+
+                if (!block_ptr->get_cert()->get_audit_signature().empty()) {
+                    relay_block_ptr->set_audit_signature(std::string(1,0));
+                }                           
+                relay_block_ptr->set_block_flag(base::enum_xvblock_flag_authenticated);
+            }
+            return relay_block_ptr;
         }
     };//end of namespace of vstore
 };//end of namespace of top

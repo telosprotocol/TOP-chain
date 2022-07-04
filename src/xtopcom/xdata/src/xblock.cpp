@@ -25,81 +25,11 @@
 #include "xmetrics/xmetrics.h"
 #include "xbasic/xdbg.h"
 #include "xvledger/xvblockbuild.h"
+#include "xdata/xtop_relay_block.h"
 
 #include <cinttypes>
 #include <string>
 NS_BEG2(top, data)
-
-xblock_consensus_para_t::xblock_consensus_para_t(const std::string & _account, uint64_t _clock, uint64_t _viewid, uint32_t _viewtoken, uint64_t _proposal_height, uint64_t _gmtime)
-: m_account(_account), m_clock(_clock), m_viewtoken(_viewtoken), m_viewid(_viewid), m_proposal_height(_proposal_height), m_gmtime(_gmtime) {
-    set_empty_xip2(m_validator);
-    set_empty_xip2(m_auditor);
-    char local_param_buf[128];
-    xprintf(local_param_buf,sizeof(local_param_buf),
-        "{%s,height=%" PRIu64 ",viewid=%" PRIu64 ",viewtoken=%u,clock=%" PRIu64 ",gmt=%" PRIu64 "}",
-        _account.c_str(), _proposal_height, _viewid, _viewtoken, _clock, _gmtime);
-    m_dump_str = std::string(local_param_buf);
-}
-
-xblock_consensus_para_t::xblock_consensus_para_t(const xvip2_t & validator, base::xvblock_t* prev_block) {
-    uint32_t viewtoken = prev_block->get_viewtoken() + 1;
-    if (viewtoken == 0) {
-        viewtoken++;
-    }
-    uint64_t viewid = prev_block->get_viewid() + 1;
-    uint64_t drand_height = 0;
-    xvip2_t auditor_xip;
-    set_empty_xip2(auditor_xip);
-    set_common_consensus_para(prev_block->get_clock() + 1, validator, auditor_xip, viewid, viewtoken, drand_height);
-    m_account = prev_block->get_account();
-    m_proposal_height = prev_block->get_height() + 1;
-}
-void xblock_consensus_para_t::set_xip(const xvip2_t & _validator_xip, const xvip2_t & _auditor_xip) {
-    m_validator = _validator_xip;
-    m_auditor = _auditor_xip;
-}
-
-void xblock_consensus_para_t::set_drand_block(base::xvblock_t* _drand_block) {
-    m_drand_block = xblock_t::raw_vblock_to_object_ptr(_drand_block);
-    m_drand_height = _drand_block->get_height();
-}
-void xblock_consensus_para_t::set_latest_blocks(const base::xblock_mptrs & latest_blocks) {
-    m_account = latest_blocks.get_latest_cert_block()->get_account();
-    m_proposal_height = latest_blocks.get_latest_cert_block()->get_height() + 1;
-    m_latest_cert_block = xblock_t::raw_vblock_to_object_ptr(latest_blocks.get_latest_cert_block());
-    m_latest_locked_block = xblock_t::raw_vblock_to_object_ptr(latest_blocks.get_latest_locked_block());
-    m_latest_committed_block = xblock_t::raw_vblock_to_object_ptr(latest_blocks.get_latest_committed_block());
-}
-void xblock_consensus_para_t::set_common_consensus_para(uint64_t clock,
-                                                        const xvip2_t & validator,
-                                                        const xvip2_t & auditor,
-                                                        uint64_t viewid,
-                                                        uint32_t viewtoken,
-                                                        uint64_t drand_height) {
-    m_clock = clock;
-    m_validator = validator;
-    m_auditor = auditor;
-    m_viewid = viewid;
-    m_viewtoken = viewtoken;
-    m_drand_height = drand_height;
-}
-
-void xblock_consensus_para_t::set_tableblock_consensus_para(uint64_t drand_height,
-                                                            const std::string & random_seed,
-                                                            uint64_t total_lock_tgas_token,
-                                                            uint64_t total_lock_tgas_token_property_height) {
-    m_drand_height = drand_height;
-    m_random_seed = random_seed;
-    m_total_lock_tgas_token = total_lock_tgas_token;
-    m_total_lock_tgas_token_property_height = total_lock_tgas_token_property_height;
-}
-
-xvip2_t xblock_consensus_para_t::get_leader_xip() const {
-    if (m_auditor.high_addr != 0 && m_auditor.low_addr != 0 && get_node_id_from_xip2(m_auditor) != 0x3FF) {
-        return m_auditor;
-    }
-    return m_validator;
-}
 
 xobject_ptr_t<xblock_t> xblock_t::raw_vblock_to_object_ptr(base::xvblock_t* vblock) {
     xblock_ptr_t object_ptr;
@@ -176,6 +106,9 @@ void  xblock_t::register_object(base::xcontext_t & _context) {
     auto lambda_new_property_prove = [](const int type)->xobject_t*{
         return new base::xvproperty_prove_t();
     };
+    auto lambda_new_relaytable = [](const int type)->xobject_t*{
+        return new data::xtop_relay_block_t();
+    };
     base::xcontext_t::register_xobject2(_context,(base::enum_xobject_type)xrootblock_t::get_object_type(),lambda_new_rootblock);
     base::xcontext_t::register_xobject2(_context,(base::enum_xobject_type)xfullunit_block_t::get_object_type(),lambda_new_fullunit);
     base::xcontext_t::register_xobject2(_context,(base::enum_xobject_type)xlightunit_block_t::get_object_type(),lambda_new_lightunit);
@@ -188,6 +121,7 @@ void  xblock_t::register_object(base::xcontext_t & _context) {
     base::xcontext_t::register_xobject2(_context,(base::enum_xobject_type)xtransaction_v2_t::get_object_type(),lambda_new_transactionv2);
     base::xcontext_t::register_xobject2(_context,(base::enum_xobject_type)xtransaction_v3_t::get_object_type(), lambda_new_transactionv3);
     base::xcontext_t::register_xobject2(_context,(base::enum_xobject_type)base::xvproperty_prove_t::get_object_type(),lambda_new_property_prove);
+    base::xcontext_t::register_xobject2(_context,(base::enum_xobject_type)data::xtop_relay_block_t::get_object_type(),lambda_new_relaytable);
     xkinfo("xblock_t::register_object,finish");    
 }
 

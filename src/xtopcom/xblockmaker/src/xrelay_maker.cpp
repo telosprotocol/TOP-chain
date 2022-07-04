@@ -15,7 +15,7 @@
 
 NS_BEG2(top, blockmaker)
 
-xrelay_maker_t::xrelay_maker_t(const std::string & account, const xblockmaker_resources_ptr_t & resources) : xblock_maker_t(account, resources, m_keep_latest_blocks_max) {
+xrelay_maker_t::xrelay_maker_t(const std::string & account, const xblockmaker_resources_ptr_t & resources) : xblock_maker_t(account, resources) {
     xdbg("xrelay_maker_t::xrelay_maker_t create,this=%p,account=%s", this, account.c_str());
     m_relay_block_builder = std::make_shared<xrelay_block_builder_t>();
     m_default_builder_para = std::make_shared<xblock_builder_para_face_t>(resources);
@@ -30,11 +30,6 @@ xblock_ptr_t xrelay_maker_t::make_proposal(xtablemaker_para_t & table_para, cons
     // check table maker state
     const xblock_ptr_t & latest_cert_block = cs_para.get_latest_cert_block();
 
-    if (!load_and_cache_enough_blocks(latest_cert_block)) {
-        xwarn("xrelay_maker_t::make_proposal fail-load_and_cache_enough_blocks.account=%s", get_account().c_str());
-        return nullptr;
-    }
-
     xblock_ptr_t proposal_block = make_relay_table(table_para, cs_para, tablemaker_result.m_make_block_error_code);
     if (proposal_block == nullptr) {
         return nullptr;
@@ -47,11 +42,7 @@ xblock_ptr_t xrelay_maker_t::make_proposal(xtablemaker_para_t & table_para, cons
 
 int32_t xrelay_maker_t::verify_proposal(base::xvblock_t * proposal_block, const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para) {
     const xblock_ptr_t & latest_cert_block = cs_para.get_latest_cert_block();
-    if (!load_and_cache_enough_blocks(latest_cert_block)) {
-        xwarn("xrelay_maker_t::verify_proposal fail-load_and_cache_enough_blocks.account=%s", get_account().c_str());
-        return xblockmaker_error_latest_table_blocks_invalid;
-    }
-    const auto & highest_block = get_highest_height_block();
+    const auto & highest_block = latest_cert_block;
     if (proposal_block->get_last_block_hash() != highest_block->get_block_hash()
         || proposal_block->get_height() != highest_block->get_height() + 1) {
         xwarn("xrelay_maker_t::verify_proposal fail-proposal unmatch last hash.proposal=%s, last_height=%" PRIu64 "",
@@ -59,7 +50,7 @@ int32_t xrelay_maker_t::verify_proposal(base::xvblock_t * proposal_block, const 
         return xblockmaker_error_proposal_table_not_match_prev_block;
     }
 
-    auto lock_block = get_prev_block_from_cache(highest_block);
+    const xblock_ptr_t & lock_block = cs_para.get_latest_locked_block();
     if (lock_block == nullptr) {
         xerror("xrelay_maker_t::verify_proposal fail-get lock block.proposal=%s, last_height=%" PRIu64 "",
             proposal_block->dump().c_str(), highest_block->get_height());
@@ -146,7 +137,7 @@ xblock_ptr_t xrelay_maker_t::make_relay_table(const xtablemaker_para_t & table_p
 
     // reset justify cert hash para
     const xblock_ptr_t & cert_block = cs_para.get_latest_cert_block();
-    xblock_ptr_t lock_block = get_prev_block_from_cache(cert_block);
+    const xblock_ptr_t & lock_block = cs_para.get_latest_locked_block();
     if (lock_block == nullptr) {
         xerror("xrelay_maker_t::make_relay_table fail-get block block.%s", cs_para.dump().c_str());
         return nullptr;
