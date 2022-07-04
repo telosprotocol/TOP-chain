@@ -1186,10 +1186,13 @@ int xrpc_eth_query_manager::set_relay_block_result2(const xobject_ptr_t<base::xv
     js_result["timestamp"] = xrpc::xrpc_eth_parser_t::uint64_to_hex_prefixed(relay_block.get_timestamp());
     js_result["number"] = xrpc::xrpc_eth_parser_t::uint64_to_hex_prefixed(relay_block.get_block_height());
     js_result["hash"] = to_hex_prefixed(relay_block.get_block_hash());
+    js_result["parentHash"] = to_hex_prefixed(relay_block.get_header().get_prev_block_hash());
     js_result["receiptsRootHash"] = top::to_hex_prefixed(relay_block.get_receipts_root_hash());
     js_result["txsRootHash"] = top::to_hex_prefixed(relay_block.get_txs_root_hash());
     js_result["innerHeaderHash"] = top::to_hex_prefixed(relay_block.get_inner_header_hash());
     js_result["blockRootHash"] = top::to_hex_prefixed(relay_block.get_block_merkle_root_hash());
+    xbytes_t data = relay_block.encodeBytes(true);
+    js_result["size"] = xrpc::xrpc_eth_parser_t::uint64_to_hex_prefixed(data.size());
 
     if (have_txs == 0) {
         js_rsp["result"] = js_result;
@@ -1314,7 +1317,7 @@ void xrpc_eth_query_manager::topRelay_getBlockByNumber(xJson::Value & js_req, xJ
     if (!eth::EthErrorCode::check_hex(js_req[0].asString(), js_rsp, 0, eth::enum_rpc_type_block))
         return;
 
-    if (std::strtoul(js_req[0].asString().c_str(), NULL, 16) == 0) {
+/*    if (std::strtoul(js_req[0].asString().c_str(), NULL, 16) == 0) {
         uint64_t epochID = 0;
         evm_common::h256 prev_hash;
         data::xrelay_block relay_block(prev_hash, 0, epochID, 0);
@@ -1336,7 +1339,7 @@ void xrpc_eth_query_manager::topRelay_getBlockByNumber(xJson::Value & js_req, xJ
         js_rsp["result"] = js_result;
         return;
     }
-
+*/
     int have_txs = 0;
     if (js_req.size() >= 2){
         if (!js_req[1].isBool()) {
@@ -1344,9 +1347,7 @@ void xrpc_eth_query_manager::topRelay_getBlockByNumber(xJson::Value & js_req, xJ
             eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_parse_error, msg);
             return;
         }
-        if (!js_req[1].isBool()){
-            have_txs = 0;
-        } if (js_req[1].asBool())
+        if (js_req[1].asBool())
             have_txs = 2;
         else
             have_txs = 1;
