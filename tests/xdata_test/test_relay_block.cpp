@@ -8,7 +8,6 @@
 #include "xbase/xutl.h"
 // TODO(jimmy) #include "xbase/xvledger.h"
 #include "xutility/xhash.h"
-#include "xmutisig/xmutisig.h"
 #include "xcrypto/xckey.h"
 #include "xcertauth/xcertauth_face.h"
 #include <cinttypes>

@@ -5,6 +5,7 @@
 #pragma once
 
 #include "xbasic/xrunnable.h"
+#include "xbasic/xthreading/xthreadsafe_queue.hpp"
 
 #ifdef ENABLE_METRICS
 #include "metrics_handler/basic_handler.h"
@@ -16,6 +17,11 @@
 #include "xmetrics_event.h"
 #include "xmetrics_unit.h"
 #endif
+
+#include <chrono>
+#include <map>
+#include <string>
+#include <thread>
 
 NS_BEG2(top, metrics)
 
