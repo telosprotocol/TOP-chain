@@ -138,7 +138,7 @@ bool xrelay_proposal_maker_t::build_relay_block_data_leader(const data::xblock_p
             m_last_poly_timestamp = timestamp + XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_relay_poly_interval) * 10;
         } 
 
-        if(((timestamp - m_last_poly_timestamp) >= 0) && last_relay_block.get_all_receipts().size() > 0) {
+        if((timestamp > m_last_poly_timestamp) && last_relay_block.get_all_receipts().size() > 0) {
 
             xinfo("xrelay_proposal_maker_t::build_relay_block_data_leader time last_poly_timestamp(%ld), timestamp(%ld)",
                 m_last_poly_timestamp, timestamp);
@@ -153,7 +153,6 @@ bool xrelay_proposal_maker_t::build_relay_block_data_leader(const data::xblock_p
 
             auto result = m_relay_chain_mgr->get_tx_cache_leader(cur_evm_table_height, cur_evm_table_height, cross_tx_map, RELAY_BLOCK_TXS_PACK_NUM_MAX);
             if (!result || cross_tx_map.empty()) {
-                xinfo("xrelay_proposal_maker_t::build_relay_block_data_leader no cross txs and no new relay election.");
                 return false;
             }
             convert_to_xrelay_tx_and_receipts(cross_tx_map, transactions, receipts);
@@ -287,8 +286,8 @@ xblock_ptr_t xrelay_proposal_maker_t::make_proposal(data::xblock_consensus_para_
     std::string relay_block_data;
     if (wrap_phase > 2) {
         wrap_phase = 0;  
-        auto ret = build_relay_block_data_leader(
-            latest_cert_block, proposal_para.get_gmtime(), last_elect_height, last_evm_height,  proposal_para.get_election_round(), relay_block_data);
+        auto ret = build_relay_block_data_leader(  
+            latest_cert_block, proposal_para.get_timestamp(), last_elect_height, last_evm_height,  proposal_para.get_election_round(), relay_block_data);
         if (!ret) {
             xinfo("xrelay_proposal_maker_t::make_proposal fail-no tx for pack.%s", proposal_para.dump().c_str());
             return nullptr;

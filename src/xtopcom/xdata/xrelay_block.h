@@ -35,7 +35,12 @@ namespace data {
        5. save block to map for merkle tree
            save_block_trie()
     */
-
+    enum enum_block_cache_type {
+        cache_tx_block,
+        cache_poly_tx_block,
+        cache_poly_election_block,
+        cache_error_block,
+    };
     struct xrelay_election_node_t {
         xrelay_election_node_t() = default;
         xrelay_election_node_t(const evm_common::h256 & pubkey_x, const evm_common::h256 & pubkey_y) : public_key_x(pubkey_x), public_key_y(pubkey_y) {}
@@ -236,12 +241,15 @@ namespace data {
         const xrelay_election_group_t       &get_elections_sets() const {return m_header.get_elections_sets();}
         //const uint64_t                      &get_chain_id()  const{ return m_header.get_chain_id();}
         std::string                         dump() const;
+        enum_block_cache_type               check_block_type() const;
+        std::string                         get_block_type_string();
 
     protected:
         void                                streamRLP(evm_common::RLPStream &rlp_stream,bool withSignature = false) const;
         void                                decodeRLP(evm_common::RLP const& _r, std::error_code & ec, bool withSignature = false);
 
     private:
+        bool                                check_poly_block_validity() const;
         void                                make_receipts_root_hash();
         void                                make_txs_root_hash();
         void                                make_block_merkle_root_hash();
