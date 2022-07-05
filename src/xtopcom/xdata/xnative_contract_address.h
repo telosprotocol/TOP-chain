@@ -45,6 +45,8 @@ XINLINE_CONSTEXPR char const * sys_eth_zero_addr{"T60004000000000000000000000000
 XINLINE_CONSTEXPR char const * sys_contract_evm_erc20_addr{"T60004ff00000000000000000000000000000000000001"};
 XINLINE_CONSTEXPR char const * sys_contract_evm_eth_bridge_addr{"T60004ff00000000000000000000000000000000000002"};
 
+XINLINE_CONSTEXPR char const * sys_contract_relay_repackage_election_addr{"T2000500000000000000000000000000000000001@0"};
+
 XINLINE_CONSTEXPR char const * sys_contract_beacon_table_block_addr{ "Ta0001" };
 XINLINE_CONSTEXPR char const * sys_contract_zec_table_block_addr{ "Ta0002" };
 XINLINE_CONSTEXPR char const * sys_contract_sharding_table_block_addr{ "Ta0000" };
@@ -97,6 +99,6 @@ extern common::xaccount_address_t const relay_table_address;
 extern common::xaccount_address_t const evm_erc20_contract_address;
 extern common::xaccount_address_t const evm_eth_bridge_contract_address;
 
-extern common::xaccount_address_t const package_relay_election_data_contract_address;
+extern common::xaccount_address_t const relay_repackage_election_data_contract_address;
 
 NS_END1

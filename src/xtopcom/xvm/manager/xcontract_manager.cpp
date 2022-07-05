@@ -42,6 +42,7 @@
 #include "xvm/xsystem_contracts/xelection/xzec/xzec_elect_relay_contract.h"
 #include "xvm/xsystem_contracts/xelection/xzec/xzec_group_association_contract.h"
 #include "xvm/xsystem_contracts/xelection/xzec/xzec_standby_pool_contract.h"
+#include "xvm/xsystem_contracts/xrelay/xrelay_process_election_data_contract.h"
 #include "xvm/xsystem_contracts/xregistration/xrec_registration_contract.h"
 #include "xvm/xsystem_contracts/xreward/xtable_reward_claiming_contract.h"
 #include "xvm/xsystem_contracts/xreward/xtable_vote_contract.h"
@@ -100,6 +101,7 @@ void xtop_contract_manager::instantiate_sys_contracts() {
     // XREGISTER_CONTRACT(top::xvm::xcontract::xtable_statistic_info_collection_contract, sys_contract_eth_table_statistic_info_addr, network_id);
     XREGISTER_CONTRACT(top::xvm::system_contracts::zec::xzec_elect_eth_contract_t, sys_contract_zec_elect_eth_addr, network_id);
     XREGISTER_CONTRACT(top::xvm::system_contracts::zec::xzec_elect_relay_contract_t, sys_contract_zec_elect_relay_addr, network_id);
+    XREGISTER_CONTRACT(top::xvm::system_contracts::relay::xrelay_process_election_data_contract_t, relay_repackage_election_data_contract_address, network_id);
 }
 
 #undef XREGISTER_CONTRACT

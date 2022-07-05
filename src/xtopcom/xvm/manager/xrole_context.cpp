@@ -82,7 +82,7 @@ void xrole_context_t::on_block_to_db(const xblock_ptr_t & block, bool & event_br
         }
 
         auto const is_relay_election_data =
-            m_contract_info->address == zec_elect_relay_contract_address && block_owner.find(sys_contract_zec_table_block_addr) != std::string::npos;
+            m_contract_info->address == relay_repackage_election_data_contract_address && block_owner.find(sys_contract_zec_elect_relay_addr) != std::string::npos;
         if (is_relay_election_data && block->is_lighttable()) {
             // re-package the relay shard election data into the relay chain:
             //  1. get the relay shard election data
@@ -94,7 +94,7 @@ void xrole_context_t::on_block_to_db(const xblock_ptr_t & block, bool & event_br
                 xblocktool_t::get_latest_connectted_state_changed_block(xvchain_t::instance().get_xblockstore(), zec_elect_relay_contract_address.vaccount());
             // zec_elect_relay_blk->get_parent_block_height()
             xobject_ptr_t<xvblock_t> package_relay_election_data_blk =
-                xblocktool_t::get_latest_connectted_state_changed_block(xvchain_t::instance().get_xblockstore(), package_relay_election_data_contract_address.vaccount());
+                xblocktool_t::get_latest_connectted_state_changed_block(xvchain_t::instance().get_xblockstore(), relay_repackage_election_data_contract_address.vaccount());
 
             xobject_ptr_t<xvbstate_t> const zec_elect_relay_state =
                 xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(zec_elect_relay_blk.get(), metrics::statestore_access_from_contract_framework);
@@ -126,29 +126,70 @@ void xrole_context_t::on_block_to_db(const xblock_ptr_t & block, bool & event_br
             xdbg("role_context: process relay election data %s, %" PRIu64 " done", zec_elect_relay_contract_address.c_str(), zec_elect_relay_blk->get_height());
 
             using top::data::election::xelection_result_store_t;
-            auto const & election_result_store = codec::msgpack_decode<xelection_result_store_t>({std::begin(result), std::end(result)});
+
+            std::string current_result;
+            relay_elect_relay_unit_state.string_get(property_name, current_result);
+            if (current_result.empty()) {
+                // even genesis is not empty.
+                xerror("role_context: local packaged relay election data empty. property=%s,block=%s", property_name.c_str(), package_relay_election_data_blk->dump().c_str());
+                return;
+            }
+            auto const & current_election_result_store = codec::msgpack_decode<xelection_result_store_t>({std::begin(current_result), std::end(current_result)});
+
+            auto const & coming_election_result_store = codec::msgpack_decode<xelection_result_store_t>({std::begin(result), std::end(result)});
 
             auto const relay_group_address = common::build_relay_group_address(common::network_id());
             try {
-                auto const & group_result = election_result_store.result_of(relay_group_address.network_id())
-                                                .result_of(common::xnode_type_t::relay)
-                                                .result_of(relay_group_address.cluster_id())
-                                                .result_of(relay_group_address.group_id());
+                auto const & coming_group_result = coming_election_result_store.result_of(relay_group_address.network_id())
+                                                       .result_of(common::xnode_type_t::relay)
+                                                       .result_of(relay_group_address.cluster_id())
+                                                       .result_of(relay_group_address.group_id());
 
-                assert(m_store);
-                m_store->string_get(package_relay_election_data_contract_address.value(), property_name, result);
-                if (result.empty()) {
-                    xwarn("role_context: local packaged relay election data empty");    // empty is not allowed. even genesis is not empty.
+                auto const & current_group_result = current_election_result_store.result_of(relay_group_address.network_id())
+                                                        .result_of(common::xnode_type_t::relay)
+                                                        .result_of(relay_group_address.cluster_id())
+                                                        .result_of(relay_group_address.group_id());
+
+                if (coming_group_result.group_epoch() <= current_group_result.group_epoch()) {
+                    xwarn("coming epoch is older, no need to update, %" PRIu64 " <= % " PRIu64, coming_group_result.group_epoch().value(), current_group_result.group_epoch().value());
                     return;
                 }
+                // create tx to call contract xtop_relay_process_election_data_contract on_recv_election_data
+                {
+                    auto const timestamp = zec_elect_relay_blk->get_timestamp();
+                    xaccount_ptr_t account = m_store->query_account(relay_repackage_election_data_contract_address.value());
+                    if (nullptr == account) {
+                        xerror("xrole_context_t relay election data fail-query account.address=%s", relay_repackage_election_data_contract_address.c_str());
+                        xassert(nullptr != account);
+                        return;
+                    }
 
+                    base::xstream_t stream(base::xcontext_t::instance());
+                    stream << top::to_bytes(result);
+                    std::string action_params = std::string((char *)stream.data(), stream.size());
+
+                    xtransaction_ptr_t tx = xtx_factory::create_sys_contract_call_self_tx(relay_repackage_election_data_contract_address.value(),
+                                                                                          account->account_send_trans_number(),
+                                                                                          account->account_send_trans_hash(),
+                                                                                          "on_recv_election_data",
+                                                                                          action_params,
+                                                                                          timestamp,
+                                                                                          EXPIRE_DURATION);
+
+                    int32_t r = m_unit_service->request_transaction_consensus(tx, true);
+                    xinfo("xrole_context_t relay election data call_contract in consensus mode with return code : %d, %s, %s %s %ld",
+                          r,
+                          tx->get_digest_hex_str().c_str(),
+                          relay_repackage_election_data_contract_address.c_str(),
+                          data::to_hex_str(account->account_send_trans_hash()).c_str(),
+                          account->account_send_trans_number(),
+                          timestamp);
+                }
 
             } catch (std::exception const & eh) {
                 xwarn("fail to get zec elect relay election data. exception msg: %s", eh.what());
                 return;
             }
-
-
         }
     }
 
