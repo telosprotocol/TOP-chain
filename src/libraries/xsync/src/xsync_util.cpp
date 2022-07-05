@@ -43,7 +43,7 @@ bool check_auth(const observer_ptr<base::xvcertauth_t> &certauth, data::xblock_p
     }
 
     block->set_block_flag(base::enum_xvblock_flag_authenticated);
-
+    xdbg("xsync check_auth ok, %s", block->get_account().c_str());
     return true;
 }
 

@@ -39,7 +39,7 @@ public:  // write interface
     bool store_txs(base::xvblock_t * block_ptr) override;
     bool store_tx_bin(const std::string & raw_tx_hash, const std::string & raw_tx_bin) override;
     bool store_tx_obj(const std::string & raw_tx_hash, base::xdataunit_t * raw_tx_obj) override;
-
+    bool check_relay_store() override;
 public: // tx cache
     bool tx_cache_add(std::string const & tx_hash, data::xtransaction_ptr_t tx_ptr) override;
     bool tx_cache_get(std::string const & tx_hash, std::shared_ptr<data::xtransaction_cache_data_t> tx_cache_data_ptr) override;
@@ -55,6 +55,7 @@ private:
     mutable std::mutex m_node_type_mutex{};
     common::xnode_type_t m_combined_node_type;
     common::xbool_strategy_t m_txstore_strategy;
+    common::xbool_strategy_t m_txstore_relay_strategy;
     std::shared_ptr<txexecutor::xtransaction_prepare_mgr> m_tx_prepare_mgr;
     common::xbool_strategy_t m_tx_cache_strategy;
 };
