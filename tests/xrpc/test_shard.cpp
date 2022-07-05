@@ -55,6 +55,7 @@ public:
 
     std::vector<xvnode_address_t> archive_addresses(common::xnode_type_t) const override { return {}; }
     std::vector<common::xnode_address_t> fullnode_addresses(std::error_code & ec) const override { return {}; }
+    std::vector<common::xnode_address_t> relay_addresses(std::error_code & ec) const override { return {}; }
 
     std::vector<std::uint16_t> table_ids() const override { return {}; }
 

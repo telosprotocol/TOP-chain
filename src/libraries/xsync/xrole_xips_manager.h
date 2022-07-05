@@ -119,6 +119,7 @@ public:
     std::vector<common::xnode_address_t> get_rand_full_nodes(uint32_t max_peers);
     std::vector<common::xnode_address_t> get_full_nodes();
     std::vector<common::xnode_address_t> get_edge_archive_list();
+    std::vector<common::xnode_address_t> get_relay_list();
 
     bool get_self_addr(common::xnode_address_t& self_addr) const;
 

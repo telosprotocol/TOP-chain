@@ -20,6 +20,8 @@ xtxstoreimpl::xtxstoreimpl(observer_ptr<mbus::xmessage_bus_face_t> const & mbus,
   , m_txstore_strategy{common::define_bool_strategy(xdefault_strategy_t{xstrategy_value_enum_t::enable, xstrategy_priority_enum_t::low},
                                                     xnode_type_strategy_t{xnode_type_t::consensus, xstrategy_value_enum_t::disable, xstrategy_priority_enum_t::normal},
                                                     xnode_type_strategy_t{xnode_type_t::storage, xstrategy_value_enum_t::enable, xstrategy_priority_enum_t::high})}
+  , m_txstore_relay_strategy{common::define_bool_strategy(xdefault_strategy_t{xstrategy_value_enum_t::disable, xstrategy_priority_enum_t::low},
+                                                    xnode_type_strategy_t{xnode_type_t::storage, xstrategy_value_enum_t::enable, xstrategy_priority_enum_t::normal})}
   , m_tx_prepare_mgr{std::make_shared<txexecutor::xtransaction_prepare_mgr>(mbus, timer_driver)}
   , m_tx_cache_strategy{common::define_bool_strategy(xdefault_strategy_t{xstrategy_value_enum_t::disable, xstrategy_priority_enum_t::low},
                                                      xnode_type_strategy_t{xnode_type_t::storage_exchange, xstrategy_value_enum_t::enable, xstrategy_priority_enum_t::normal})} {
@@ -294,5 +296,9 @@ int xtxstoreimpl::load_block_by_hash(const std::string& hash, std::vector<base::
     }
     return 0;
 }
-
+bool xtxstoreimpl::check_relay_store() {
+    bool ret = strategy_permission(m_txstore_relay_strategy);
+    xdbg("xtxstoreimpl::check_relay_store, allow: %d", ret);
+    return ret;
+}
 NS_END2
