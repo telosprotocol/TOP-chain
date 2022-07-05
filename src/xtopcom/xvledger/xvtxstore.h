@@ -55,7 +55,7 @@ namespace top
             virtual bool                store_txs(xvblock_t * block_ptr) = 0;
             virtual bool                store_tx_bin(const std::string & raw_tx_hash,const std::string & raw_tx_bin) = 0;
             virtual bool                store_tx_obj(const std::string & raw_tx_hash,xdataunit_t * raw_tx_obj) = 0;
-        
+            virtual bool                check_relay_store() = 0;
         public: // tx cache interface
             virtual bool tx_cache_add(std::string const & tx_hash, data::xtransaction_ptr_t tx_ptr) = 0;
             virtual bool tx_cache_get(std::string const & tx_hash, std::shared_ptr<data::xtransaction_cache_data_t> tx_cache_data) = 0;

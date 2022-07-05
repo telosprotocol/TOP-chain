@@ -2634,7 +2634,8 @@ namespace top
 
         bool  xrelay_plugin::store_block(base::xvblock_t* new_raw_block)
         {
-            store_relay_txs(new_raw_block);
+            if (base::xvchain_t::instance().get_xtxstore()->check_relay_store())
+                store_relay_txs(new_raw_block);
             return xblockacct_t::store_block(new_raw_block);
         }
 
@@ -2732,10 +2733,14 @@ namespace top
             if(this_index->check_modified_flag() == false)//nothing changed
                 return true;
 
-            const std::string key_path2 = base::xvdbkey_t::create_prunable_blockhash_key(get_cache_block_hash(this_index));
-            base::xvchain_t::instance().get_xdbstore()->set_value(key_path2, this_index->get_account() + "/" + base::xstring_utl::uint642hex(this_index->get_height()));
-            xdbg("xrelay_plugin::write_index: %s, %s, %s", this_index->get_account().c_str(), HexEncode(this_index->get_extend_data()).c_str(),
-                HexEncode(this_index->get_block_hash()).c_str());
+            if (base::xvchain_t::instance().get_xtxstore()->check_relay_store()) {
+                const std::string key_path2 = base::xvdbkey_t::create_prunable_blockhash_key(get_cache_block_hash(this_index));
+                base::xvchain_t::instance().get_xdbstore()->set_value(key_path2, this_index->get_account() + "/" + base::xstring_utl::uint642hex(this_index->get_height()));
+                xdbg("xrelay_plugin::write_index: %s, %s, %s",
+                     this_index->get_account().c_str(),
+                     HexEncode(this_index->get_extend_data()).c_str(),
+                     HexEncode(this_index->get_block_hash()).c_str());
+            }
 
             return get_blockdb_ptr()->write_index_to_db(this_index);
         }
