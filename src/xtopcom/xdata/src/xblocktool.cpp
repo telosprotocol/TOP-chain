@@ -840,26 +840,6 @@ xrelay_block* xblocktool_t::create_genesis_relay_block(const xrootblock_para_t &
     _relay_block->set_elections_next(_election_group);
     _relay_block->build_finish();
 
-#ifdef DEBUG
-    _election_group.dump();
-    FILE* file = NULL;
-#if defined(XBUILD_CI)
-    file = fopen("ci_genesis_relay_block_header_data.txt", "wb");
-#elif defined(XBUILD_GALILEO)
-    file = fopen("galileo_genesis_relay_block_header_data.txt", "wb");
-#elif defined(XBUILD_DEV)
-    file = fopen("dev_genesis_relay_block_header_data.txt", "wb");
-#elif defined(XBUILD_BOUNTY)
-    file = fopen("bounty_genesis_relay_block_header_data.txt", "wb");
-#else
-    file = fopen("mainnet_genesis_relay_block_header_data.txt", "wb");
-#endif
-    //todo,  write genesis info file 
-    xbytes_t rlp_genesis_block_header_data = _relay_block->streamRLP_header_to_contract();
-    std::string hex_result = top::evm_common::toHex(rlp_genesis_block_header_data);
-    size_t ws = fwrite(hex_result.c_str(), 1, hex_result.length(), file);
-    fclose(file);
-#endif    
     return _relay_block;
 }
 
