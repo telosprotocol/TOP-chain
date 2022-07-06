@@ -31,6 +31,12 @@ static char const * errc_to_message(int const errc) noexcept {
     case xerrc_t::blockmaker_make_table_state_fail:
         return "blockmaker_make_table_state_fail";
 
+    case xerrc_t::blockmaker_create_statectx_fail:
+        return "blockmaker_create_statectx_fail";
+
+    case xerrc_t::blockmaker_make_unit_fail:
+        return "blockmaker_make_unit_fail";
+
     default:  // NOLINT(clang-diagnostic-covered-switch-default)
         return "unknown error";
     }

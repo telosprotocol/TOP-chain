@@ -214,32 +214,44 @@ bool     xtablebuilder_t::update_receipt_confirmids(const data::xtablestate_ptr_
     return true;
 }
 
+void     xtablebuilder_t::make_table_block_para(const std::vector<xblock_ptr_t> & batch_units,
+                                                const data::xtablestate_ptr_t & tablestate,
+                                                txexecutor::xexecute_output_t const& execute_output, 
+                                                data::xtable_block_para_t & lighttable_para) {
+    int64_t tgas_balance_change = 0;
+    std::vector<data::xlightunit_tx_info_ptr_t> txs_info;
+    std::map<std::string, std::string> property_hashs;
 
-data::xblock_ptr_t  xtablebuilder_t::make_light_block(const data::xblock_ptr_t & prev_block, const data::xtablestate_ptr_t & tablestate, const data::xblock_consensus_para_t & cs_para,
-                                                        int64_t tgas_balance_change,
-                                                        const std::vector<xblock_ptr_t> & batch_units,
-                                                        const std::vector<data::xlightunit_tx_info_ptr_t> & txs_info,
-                                                        const std::map<std::string, std::string> & property_hashs) {
+    // change to xvaction and calc tgas balance change
+    for (auto & txout : execute_output.pack_outputs) {
+        txs_info.push_back(data::xblockaction_build_t::build_tx_info(txout.m_tx));
+        tgas_balance_change += txout.m_vm_output.m_tgas_balance_change;
+        for (auto & v : txout.m_vm_output.m_contract_create_txs) {
+            txs_info.push_back(data::xblockaction_build_t::build_tx_info(v));
+        }
+    }
+
+    // make receiptid property hashs
+    xtablebuilder_t::make_table_prove_property_hashs(tablestate->get_bstate().get(), property_hashs);
+
     std::string binlog = tablestate->take_binlog();
     std::string snapshot = tablestate->take_snapshot();
     if (binlog.empty() || snapshot.empty()) {
-        xerror("xtablebuilder_t::make_block fail-invalid tablestate.");
-        return nullptr;
+        xassert(false);
     }
 
-    data::xtable_block_para_t lighttable_para;
     lighttable_para.set_property_binlog(binlog);
     lighttable_para.set_fullstate_bin(snapshot);
     lighttable_para.set_batch_units(batch_units);
     lighttable_para.set_tgas_balance_change(tgas_balance_change);
     lighttable_para.set_property_hashs(property_hashs);
     lighttable_para.set_txs(txs_info);
+}
 
+data::xblock_ptr_t  xtablebuilder_t::make_light_block(const data::xblock_ptr_t & prev_block, const data::xblock_consensus_para_t & cs_para, data::xtable_block_para_t const& lighttable_para) {
     data::xlighttable_build_t bbuild(prev_block.get(), lighttable_para, cs_para);
     base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
     data::xblock_ptr_t proposal_block = data::xblock_t::raw_vblock_to_object_ptr(_new_block.get());
-    xinfo("xtablebuilder_t::make_light_block table=%s,binlog=%zu,snapshot=%zu,records=%zu,batch_units=%zu,property_hashs=%zu,tgas_change=%ld", 
-        proposal_block->dump().c_str(), binlog.size(), snapshot.size(), tablestate->get_canvas_records_size(), batch_units.size(), property_hashs.size(),tgas_balance_change);
     return proposal_block;
 }
 

@@ -44,6 +44,7 @@ private:
     data::xtablestate_ptr_t get_target_tablestate(base::xvblock_t * block);
     bool leader_xip_to_leader_address(xvip2_t _xip, common::xaccount_address_t & _addr) const;
     void update_txpool_table_state(base::xvblock_t* _commit_block, data::xtablestate_ptr_t const& commit_tablestate);
+    int  backup_verify_and_set_consensus_para_basic(xblock_consensus_para_t & cs_para, base::xvblock_t *proposal_block);
 
     xblockmaker_resources_ptr_t     m_resources{nullptr};
     xtable_maker_ptr_t          m_table_maker{nullptr};

@@ -328,7 +328,7 @@ base::xvaction_t xblockaction_build_t::make_table_block_action_with_table_prop_p
     }
 }
 
-xlightunit_tx_info_ptr_t build_tx_info(const xcons_transaction_ptr_t & tx) {
+xlightunit_tx_info_ptr_t xblockaction_build_t::build_tx_info(const xcons_transaction_ptr_t & tx) {
     base::xvaction_t _action = xblockaction_build_t::make_tx_action(tx);
     xlightunit_tx_info_ptr_t txinfo = std::make_shared<xlightunit_tx_info_t>(_action, tx->get_transaction());
     return txinfo;

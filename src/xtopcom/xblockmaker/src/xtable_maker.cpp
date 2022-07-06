@@ -8,6 +8,7 @@
 #include "xblockmaker/xtable_maker.h"
 #include "xblockmaker/xtable_builder.h"
 #include "xblockmaker/xblock_builder.h"
+#include "xblockmaker/xerror/xerror.h"
 #include "xdata/xblocktool.h"
 #include "xdata/xblockbuild.h"
 #include "xdata/xethreceipt.h"
@@ -61,179 +62,201 @@ void xtable_maker_t::set_packtx_metrics(const xcons_transaction_ptr_t & tx, bool
     #endif
 }
 
+std::vector<xcons_transaction_ptr_t> xtable_maker_t::check_input_txs(bool is_leader, const data::xblock_consensus_para_t & cs_para, const std::vector<xcons_transaction_ptr_t> & input_table_txs, uint64_t now) {
+    std::vector<xcons_transaction_ptr_t> input_txs;
+    for (auto & tx : input_table_txs) {
+        if (tx->get_transaction() == nullptr) {
+            if (tx->is_confirm_tx()) {
+                auto raw_tx = get_txpool()->get_raw_tx(tx->get_account_addr(), tx->get_peer_tableid(), tx->get_last_action_receipt_id());
+                if (raw_tx == nullptr) {
+                    XMETRICS_GAUGE(metrics::cons_packtx_fail_load_origintx, 1);
+                    xwarn("xtable_maker_t::check_input_txs fail-tx filtered load origin tx.%s tx=%s", cs_para.dump().c_str(), tx->dump().c_str());
+                    continue;
+                }
+                if (false == tx->set_raw_tx(raw_tx.get())) {
+                    xerror("xtable_maker_t::check_input_txs fail-tx filtered set origin tx.%s tx=%s", cs_para.dump().c_str(), tx->dump().c_str());
+                    continue;
+                }
+            }
+        }
+
+        // TODO(jimmy) leader add sendtx expire check, should do this in txpool future
+        if (is_leader) {
+            if (tx->is_send_or_self_tx()) {
+                if (xsuccess != xverifier::xtx_verifier::verify_tx_fire_expiration(tx->get_transaction(), now, false)) {
+                    xtxpool_v2::tx_info_t txinfo(tx->get_source_addr(), tx->get_tx_hash_256(), tx->get_tx_subtype());
+                    get_txpool()->pop_tx(txinfo);
+                    xwarn("xtable_maker_t::check_input_txs fail-tx filtered expired.is_leader=%d,%s tx=%s", is_leader, cs_para.dump().c_str(), tx->dump().c_str());
+                    continue;
+                }
+            }
+        }
+
+        // update tx flag before execute
+        input_txs.push_back(tx);
+    }
+    return input_txs;
+}
+
+void xtable_maker_t::execute_txs(bool is_leader, const data::xblock_consensus_para_t & cs_para, statectx::xstatectx_ptr_t const& statectx_ptr, const std::vector<xcons_transaction_ptr_t> & input_txs, txexecutor::xexecute_output_t & execute_output, std::error_code & ec) {
+    // create batch executor
+    uint64_t gas_limit = XGET_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit);
+    txexecutor::xvm_para_t vmpara(cs_para.get_clock(), cs_para.get_random_seed(), cs_para.get_total_lock_tgas_token(), gas_limit, cs_para.get_table_proposal_height(), cs_para.get_coinbase());
+    txexecutor::xbatchtx_executor_t executor(statectx_ptr, vmpara);
+
+    // execute all txs
+    executor.execute(input_txs, execute_output);
+
+    for (auto & txout : execute_output.pack_outputs) {
+        xinfo("xtable_maker_t::execute_txs packtx is_leader=%d,%s,tx=%s,txout=%s,action=%s", 
+            is_leader, cs_para.dump().c_str(), txout.m_tx->dump().c_str(), txout.dump().c_str(),txout.m_tx->dump_execute_state().c_str());
+    }
+
+    for (auto & txout : execute_output.drop_outputs) {
+        xinfo("xtable_maker_t::make_light_table_v2 droptx is_leader=%d,%s,tx=%s,txout=%s,action=%s", 
+            is_leader, cs_para.dump().c_str(), txout.m_tx->dump().c_str(), txout.dump().c_str(),txout.m_tx->dump_execute_state().c_str());        
+    }
+
+    for (auto & txout : execute_output.nopack_outputs) {
+        xinfo("xtable_maker_t::make_light_table_v2 nopacktx is_leader=%d,%s,tx=%s,txout=%s,action=%s", 
+            is_leader, cs_para.dump().c_str(), txout.m_tx->dump().c_str(), txout.dump().c_str(),txout.m_tx->dump_execute_state().c_str());        
+    }
+}
+
+std::vector<xblock_ptr_t> xtable_maker_t::make_units(bool is_leader, const data::xblock_consensus_para_t & cs_para, statectx::xstatectx_ptr_t const& statectx_ptr, txexecutor::xexecute_output_t const& execute_output, std::error_code & ec) {
+    std::vector<xblock_ptr_t> batch_units;
+
+    // TODO(jimmy) unit will pack tx hash and type
+    xunitbuildber_txkeys_mgr_t  txkeys_mgr;
+    for (auto & txout : execute_output.pack_outputs) {
+        txkeys_mgr.add_pack_tx(txout.m_tx);
+        for (auto & v : txout.m_vm_output.m_contract_create_txs) {
+            txkeys_mgr.add_pack_tx(v);
+        }
+    }
+
+    // create units
+    std::vector<statectx::xunitstate_ctx_ptr_t> unitctxs = statectx_ptr->get_modified_unit_ctx();
+    if (unitctxs.empty()) {
+        // TODO(jimmy) the confirm tx may not modify state.
+        xwarn("xtable_maker_t::make_units fail-no unitstates changed.is_leader=%d,%s,txs_size=%zu", is_leader, cs_para.dump().c_str(), execute_output.pack_outputs.size());
+    }
+    for (auto & unitctx : unitctxs) {
+        base::xvtxkey_vec_t txkeys = txkeys_mgr.get_account_txkeys(unitctx->get_unitstate()->get_address());
+        if (txkeys.get_txkeys().empty()) {
+            // will support state change without txkeys for evm tx
+            xinfo("xtable_maker_t::make_units xkeys empty.is_leader=%d,%s,addr=%s", is_leader, cs_para.dump().c_str(), unitctx->get_unitstate()->get_address().c_str());
+        }
+        xunitbuilder_para_t unit_para(txkeys);
+        data::xblock_ptr_t unitblock = xunitbuilder_t::make_block(unitctx->get_prev_block(), unitctx->get_unitstate(), unit_para, cs_para);
+        if (nullptr == unitblock) {
+            ec = blockmaker::error::xerrc_t::blockmaker_make_unit_fail;
+            // should not fail
+            xerror("xtable_maker_t::make_units fail-make unit.is_leader=%d,%s,prev=%s", is_leader, cs_para.dump().c_str(), unitctx->get_prev_block()->dump().c_str());
+            return {};
+        }
+        batch_units.push_back(unitblock);
+        xinfo("xtable_maker_t::make_units succ-make unit.is_leader=%d,%s,unit=%s,txkeys=%zu",is_leader, cs_para.dump().c_str(), unitblock->dump().c_str(),txkeys.get_txkeys().size());
+        xtablebuilder_t::update_account_index_property(statectx_ptr->get_table_state(), unitblock, unitctx->get_unitstate());
+    }
+
+    return batch_units;
+}
+
+void xtable_maker_t::update_receiptid_state(const xtablemaker_para_t & table_para, statectx::xstatectx_ptr_t const& statectx_ptr) {
+    auto self_table_sid = get_short_table_id();
+    auto & receiptid_info_map = table_para.get_receiptid_info_map();
+    std::map<base::xtable_shortid_t, uint64_t> changed_confirm_ids;
+    for (auto & receiptid_info : receiptid_info_map) {
+        auto & peer_table_sid = receiptid_info.first;
+
+        base::xreceiptid_pair_t peer_pair;
+        receiptid_info.second.m_receiptid_state->find_pair(self_table_sid, peer_pair);
+        auto recvid_max = peer_pair.get_recvid_max();
+        changed_confirm_ids[peer_table_sid] = recvid_max;
+    }
+
+    xtablebuilder_t::update_receipt_confirmids(statectx_ptr->get_table_state(), changed_confirm_ids);
+}
+
 xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & table_result) {
+    uint64_t now = cs_para.get_gettimeofday_s();
     const std::vector<xcons_transaction_ptr_t> & input_table_txs = table_para.get_origin_txs();
-    if (!is_make_relay_chain() && input_table_txs.empty()) {
+    std::vector<xcons_transaction_ptr_t> input_txs = check_input_txs(is_leader, cs_para, input_table_txs, now);
+    // backup should has same txs with leader
+    if (!is_leader && input_txs.size() != input_table_txs.size()) {
+        table_result.m_make_block_error_code = xblockmaker_error_no_need_make_table;
+        xwarn("xtable_maker_t::make_light_table_v2 fail tx is filtered.is_leader=%d,%s,txs_size=%zu:%zu", is_leader, cs_para.dump().c_str(), input_txs.size(), input_table_txs.size());
+        return nullptr;
+    }
+    // must has txs except relay block
+    if (!is_make_relay_chain() && input_txs.empty()) {
         table_result.m_make_block_error_code = xblockmaker_error_no_need_make_table;
         xwarn("xtable_maker_t::make_light_table_v2 fail-no input txs");
         return nullptr;
     }
 
+    std::error_code ec;
+    data::xtable_block_para_t lighttable_para;
+    txexecutor::xexecute_output_t execute_output;
+    std::vector<xblock_ptr_t> batch_units;
     // create statectx
     statectx::xstatectx_para_t statectx_para(cs_para.get_clock());
     statectx::xstatectx_ptr_t statectx_ptr = statectx::xstatectx_factory_t::create_latest_cert_statectx(cs_para.get_latest_cert_block().get(), table_para.get_tablestate(), table_para.get_commit_tablestate(), statectx_para);
-    int64_t tgas_balance_change = 0;
-    std::vector<xblock_ptr_t> batch_units;
-    std::vector<data::xlightunit_tx_info_ptr_t> txs_info;
-    std::map<std::string, std::string> property_hashs;
-    txexecutor::xexecute_output_t execute_output;
+    if (nullptr == statectx_ptr) {
+        ec = blockmaker::error::xerrc_t::blockmaker_create_statectx_fail;
+        xerror("xtable_maker_t::make_light_table_v2 fail-create statectx is_leader=%d,%s", 
+            is_leader, cs_para.dump().c_str());        
+        return nullptr;
+    }
 
-    if (!input_table_txs.empty()) {
-        // TODO(jimmy) 
-        uint64_t now = (uint64_t)base::xtime_utl::gettimeofday();
-
-        // create batch executor
-        uint64_t gas_limit = XGET_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit);
-        txexecutor::xvm_para_t vmpara(cs_para.get_clock(), cs_para.get_random_seed(), cs_para.get_total_lock_tgas_token(), gas_limit, cs_para.get_table_proposal_height(), cs_para.get_coinbase());
-        txexecutor::xbatchtx_executor_t executor(statectx_ptr, vmpara);
-
-        std::vector<xcons_transaction_ptr_t> input_txs;
-        for (auto & tx : input_table_txs) {
-            if (tx->get_transaction() == nullptr) {
-                if (tx->is_confirm_tx()) {
-                    auto raw_tx = get_txpool()->get_raw_tx(tx->get_account_addr(), tx->get_peer_tableid(), tx->get_last_action_receipt_id());
-                    if (raw_tx == nullptr) {
-                        XMETRICS_GAUGE(metrics::cons_packtx_fail_load_origintx, 1);
-                        xwarn("xtable_maker_t::make_light_table_v2 fail-tx filtered load origin tx.%s tx=%s", cs_para.dump().c_str(), tx->dump().c_str());
-                        continue;
-                    }
-                    if (false == tx->set_raw_tx(raw_tx.get())) {
-                        xerror("xtable_maker_t::make_light_table_v2 fail-tx filtered set origin tx.%s tx=%s", cs_para.dump().c_str(), tx->dump().c_str());
-                        continue;
-                    }
-                }
-            }
-
-            // TODO(jimmy) leader add sendtx expire check, should do this in txpool future
-            if (is_leader) {
-                if (tx->is_send_or_self_tx()) {
-                    if (xsuccess != xverifier::xtx_verifier::verify_tx_fire_expiration(tx->get_transaction(), now, false)) {
-                        xtxpool_v2::tx_info_t txinfo(tx->get_source_addr(), tx->get_tx_hash_256(), tx->get_tx_subtype());
-                        get_txpool()->pop_tx(txinfo);
-                        xwarn("xtable_maker_t::make_light_table_v2 fail-tx filtered expired.is_leader=%d,%s tx=%s", is_leader, cs_para.dump().c_str(), tx->dump().c_str());
-                        continue;
-                    }
-                }
-            }
-
-            // update tx flag before execute
-            input_txs.push_back(tx);
-        }
-        if (input_txs.empty()
-            || (!is_leader && input_txs.size() != input_table_txs.size())) {
-            table_result.m_make_block_error_code = xblockmaker_error_no_need_make_table;
-            xwarn("xtable_maker_t::make_light_table_v2 fail tx is filtered.is_leader=%d,%s,txs_size=%zu:%zu", is_leader, cs_para.dump().c_str(), input_txs.size(), input_table_txs.size());
-            return nullptr;
-        }
-
-        // execute all txs
-        int32_t ret = executor.execute(input_txs, execute_output);
-        if (ret != xsuccess || execute_output.empty()) {
-            table_result.m_make_block_error_code = xblockmaker_error_no_need_make_table;
-            xerror("xtable_maker_t::make_light_table_v2 fail execute all txs.is_leader=%d,%s,txs_size=%zu", is_leader, cs_para.dump().c_str(), input_txs.size());
-            return nullptr;
-        }
-
-        // save txs need packed
-        xunitbuildber_txkeys_mgr_t  txkeys_mgr;
-        for (auto & txout : execute_output.pack_outputs) {
-            xinfo("xtable_maker_t::make_light_table_v2 packtx is_leader=%d,%s,tx=%s,txout=%s,action=%s", 
-                is_leader, cs_para.dump().c_str(), txout.m_tx->dump().c_str(), txout.dump().c_str(),txout.m_tx->dump_execute_state().c_str());
-            table_para.push_tx_to_proposal(txout.m_tx);  // set pack origin tx to proposal
-            txs_info.push_back(build_tx_info(txout.m_tx));
-            txkeys_mgr.add_pack_tx(txout.m_tx);
-            tgas_balance_change += txout.m_vm_output.m_tgas_balance_change;
-            for (auto & v : txout.m_vm_output.m_contract_create_txs) {
-                txs_info.push_back(build_tx_info(v));
-                txkeys_mgr.add_pack_tx(v);
-            }
-        }
-
-        for (auto & txout : execute_output.drop_outputs) {
-            xinfo("xtable_maker_t::make_light_table_v2 droptx is_leader=%d,%s,tx=%s,txout=%s,action=%s", 
-                is_leader, cs_para.dump().c_str(), txout.m_tx->dump().c_str(), txout.dump().c_str(),txout.m_tx->dump_execute_state().c_str());        
+    if (!input_txs.empty()) {      
+        execute_txs(is_leader, cs_para, statectx_ptr, input_txs, execute_output, ec);
+        for (auto & txout : execute_output.drop_outputs) {  // drop tx from txpool
             xtxpool_v2::tx_info_t txinfo(txout.m_tx->get_source_addr(), txout.m_tx->get_tx_hash_256(), txout.m_tx->get_tx_subtype());
             get_txpool()->pop_tx(txinfo);
         }
-
-        for (auto & txout : execute_output.nopack_outputs) {
-            xinfo("xtable_maker_t::make_light_table_v2 nopacktx is_leader=%d,%s,tx=%s,txout=%s,action=%s", 
-                is_leader, cs_para.dump().c_str(), txout.m_tx->dump().c_str(), txout.dump().c_str(),txout.m_tx->dump_execute_state().c_str());        
+        // set pack origin tx to proposal
+        for (auto & txout : execute_output.pack_outputs) {
+            table_para.push_tx_to_proposal(txout.m_tx);
         }
-
-        if (txs_info.empty()) {
+        if (ec || execute_output.pack_outputs.empty()) {
             table_result.m_make_block_error_code = xblockmaker_error_no_need_make_table;
             xwarn("xtable_maker_t::make_light_table_v2 fail-no pack txs.is_leader=%d,%s,txs_size=%zu", is_leader, cs_para.dump().c_str(), input_txs.size());
             return nullptr;
         }
 
-        // create units
-        std::vector<statectx::xunitstate_ctx_ptr_t> unitctxs = statectx_ptr->get_modified_unit_ctx();
-        if (unitctxs.empty()) {
-            xwarn("xtable_maker_t::make_light_table_v2 fail-no unitstates changed.is_leader=%d,%s,txs_size=%zu", is_leader, cs_para.dump().c_str(), input_txs.size());
-        }
-        for (auto & unitctx : unitctxs) {
-            base::xvtxkey_vec_t txkeys = txkeys_mgr.get_account_txkeys(unitctx->get_unitstate()->get_address());
-            if (txkeys.get_txkeys().empty()) {
-                // will support state change without txkeys for evm tx
-                xwarn("xtable_maker_t::make_light_table_v2 fail-txkeys empty.is_leader=%d,%s,addr=%s,txs_size=%zu", is_leader, cs_para.dump().c_str(), unitctx->get_unitstate()->get_address().c_str(), input_txs.size());
-                // return nullptr;
-            }
-            xunitbuilder_para_t unit_para(txkeys);
-            data::xblock_ptr_t unitblock = xunitbuilder_t::make_block(unitctx->get_prev_block(), unitctx->get_unitstate(), unit_para, cs_para);
-            if (nullptr == unitblock) {
-                // should not fail
-                xerror("xtable_maker_t::make_light_table_v2 fail-invalid unitstate.is_leader=%d,%s,txs_size=%zu", is_leader, cs_para.dump().c_str(), input_txs.size());
-                return nullptr;
-            }
-            batch_units.push_back(unitblock);
-            xinfo("xtable_maker_t::make_light_table_v2 succ-make unit.is_leader=%d,unit=%s,txkeys=%zu",is_leader, unitblock->dump().c_str(),txkeys.get_txkeys().size());
-            xtablebuilder_t::update_account_index_property(statectx_ptr->get_table_state(), unitblock, unitctx->get_unitstate());
+        batch_units = make_units(is_leader, cs_para, statectx_ptr, execute_output, ec);
+        if (ec) {
+            table_result.m_make_block_error_code = xblockmaker_error_no_need_make_table;
+            xwarn("xtable_maker_t::make_light_table_v2 fail-make units.is_leader=%d,%s,txs_size=%zu", is_leader, cs_para.dump().c_str(), input_txs.size());
+            return nullptr;
         }
 
-        auto self_table_sid = get_short_table_id();
-        auto & receiptid_info_map = table_para.get_receiptid_info_map();
-        std::map<base::xtable_shortid_t, uint64_t> changed_confirm_ids;
-        for (auto & receiptid_info : receiptid_info_map) {
-            auto & peer_table_sid = receiptid_info.first;
+        // TODO(jimmy) update confirm ids in table state
+        update_receiptid_state(table_para, statectx_ptr);        
 
-            base::xreceiptid_pair_t peer_pair;
-            receiptid_info.second.m_receiptid_state->find_pair(self_table_sid, peer_pair);
-            auto recvid_max = peer_pair.get_recvid_max();
-            changed_confirm_ids[peer_table_sid] = recvid_max;
-        }
-
-        xtablebuilder_t::update_receipt_confirmids(statectx_ptr->get_table_state(), changed_confirm_ids);
-        xtablebuilder_t::make_table_prove_property_hashs(statectx_ptr->get_table_state()->get_bstate().get(), property_hashs);
+        cs_para.set_ethheader(xeth_header_builder::build(cs_para, execute_output.pack_outputs));
     }
 
     if (!set_relay_para(cs_para, table_para, is_leader)) {
         table_result.m_make_block_error_code = xblockmaker_error_proposal_bad_header;
+        xwarn("xtable_maker_t::make_light_table_v2 fail-make relay.is_leader=%d,%s", is_leader, cs_para.dump().c_str());
         return nullptr;
     }
 
     // reset justify cert hash para
     const xblock_ptr_t & cert_block = cs_para.get_latest_cert_block();
     const xblock_ptr_t & lock_block = cs_para.get_latest_locked_block();
-    if (lock_block == nullptr) {
-        xerror("xtable_maker_t::make_light_table_v2 fail-get block block.is_leader=%d,%s", is_leader, cs_para.dump().c_str());
-        return nullptr;
-    }
-    cs_para.set_justify_cert_hash(lock_block->get_input_root_hash());
-    cs_para.set_parent_height(0);
 
-    cs_para.set_ethheader(xeth_header_builder::build(cs_para, execute_output.pack_outputs));
-
+    xtablebuilder_t::make_table_block_para(batch_units, statectx_ptr->get_table_state(), execute_output, lighttable_para);
     data::xblock_ptr_t tableblock = xtablebuilder_t::make_light_block(cs_para.get_latest_cert_block(),
-                                                                        statectx_ptr->get_table_state(),
                                                                         cs_para,
-                                                                        tgas_balance_change,
-                                                                        batch_units,
-                                                                        txs_info,
-                                                                        property_hashs);
+                                                                        lighttable_para);
     if (nullptr != tableblock) {
-        xinfo("xtable_maker_t::make_light_table_v2-succ is_leader=%d,%s,packtxs=%zu,units=%zu,gaspledge=%ld", 
-            is_leader, cs_para.dump().c_str(), txs_info.size(), batch_units.size(), tgas_balance_change);
+        xinfo("xtable_maker_t::make_light_table_v2-succ is_leader=%d,%s,binlog=%zu,snapshot=%zu,batch_units=%zu,property_hashs=%zu,tgas_change=%ld", 
+            is_leader, tableblock->dump().c_str(), lighttable_para.get_property_binlog().size(), lighttable_para.get_fullstate_bin().size(), 
+            lighttable_para.get_account_units().size(), lighttable_para.get_property_hashs().size(),lighttable_para.get_tgas_balance_change());
     }
     return tableblock;
 }
@@ -259,12 +282,6 @@ xblock_ptr_t xtable_maker_t::make_full_table(const xtablemaker_para_t & table_pa
     // reset justify cert hash para
     const xblock_ptr_t & cert_block = cs_para.get_latest_cert_block();
     const xblock_ptr_t & lock_block = cs_para.get_latest_locked_block();
-    if (lock_block == nullptr) {
-        xerror("xtable_maker_t::make_full_table fail-get block block.%s", cs_para.dump().c_str());
-        return nullptr;
-    }
-    cs_para.set_justify_cert_hash(lock_block->get_input_root_hash());
-    cs_para.set_parent_height(0);
     data::xtablestate_ptr_t tablestate = table_para.get_tablestate();
     xassert(nullptr != tablestate);
 
@@ -287,12 +304,6 @@ xblock_ptr_t xtable_maker_t::make_empty_table(const xtablemaker_para_t & table_p
     // reset justify cert hash para
     const xblock_ptr_t & cert_block = cs_para.get_latest_cert_block();
     const xblock_ptr_t & lock_block = cs_para.get_latest_locked_block();
-    if (lock_block == nullptr) {
-        xerror("xtable_maker_t::make_empty_table fail-get block block.%s", cs_para.dump().c_str());
-        return nullptr;
-    }
-    cs_para.set_justify_cert_hash(lock_block->get_input_root_hash());
-    cs_para.set_parent_height(0);
     data::xtablestate_ptr_t tablestate = table_para.get_tablestate();
     xassert(nullptr != tablestate);
 

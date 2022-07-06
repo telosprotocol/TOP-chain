@@ -97,9 +97,8 @@ class xblockaction_build_t {
     static base::xvaction_t make_tx_action(const xcons_transaction_ptr_t & tx);
     static base::xvaction_t make_block_build_action(const std::string & target_uri, const std::map<std::string, std::string> & action_result = {});
     static base::xvaction_t make_table_block_action_with_table_prop_prove(const std::string & target_uri, uint32_t block_version, const std::map<std::string, std::string> & property_hashs, base::xtable_shortid_t tableid, uint64_t height);
+    static xlightunit_tx_info_ptr_t build_tx_info(const xcons_transaction_ptr_t & tx);
 };
-
-xlightunit_tx_info_ptr_t build_tx_info(const xcons_transaction_ptr_t & tx);
 
 class xlightunit_build_t : public base::xvblockmaker_t {
  public:

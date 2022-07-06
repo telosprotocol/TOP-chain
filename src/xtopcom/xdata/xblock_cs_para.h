@@ -14,7 +14,7 @@ NS_BEG2(top, data)
 
 class xblock_consensus_para_t {
  public:
-    xblock_consensus_para_t() = default;
+   //  xblock_consensus_para_t() = default;
 
     xblock_consensus_para_t(const std::string & _account, uint64_t _clock, uint64_t _viewid, uint32_t _viewtoken, uint64_t _proposal_height, uint64_t _gmtime);
     xblock_consensus_para_t(const xvip2_t & validator, base::xvblock_t* prev_block);
@@ -23,9 +23,7 @@ class xblock_consensus_para_t {
     void    set_xip(const xvip2_t & _validator_xip, const xvip2_t & _auditor_xip);
     void    set_drand_block(base::xvblock_t* _drand_block);
     void    set_latest_blocks(const base::xblock_mptrs & latest_blocks);
-    void    update_latest_cert_block(const xblock_ptr_t & proposal_prev_block) {m_latest_cert_block = proposal_prev_block;}
-    void    update_latest_lock_block(const xblock_ptr_t & lock_block) {m_latest_locked_block = lock_block;}
-    void    update_latest_commit_block(const xblock_ptr_t & commit_block) {m_latest_committed_block = commit_block;}
+    void    set_latest_blocks(const xblock_ptr_t & certblock, const xblock_ptr_t & lock_block, const xblock_ptr_t & commit_block);
     void    set_validator(const xvip2_t & validator) {m_validator = validator;}
     void    set_common_consensus_para(uint64_t clock,
                                    const xvip2_t & validator,

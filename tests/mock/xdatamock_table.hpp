@@ -148,9 +148,7 @@ class xdatamock_table : public base::xvaccount_t {
 
     xblock_consensus_para_t  init_consensus_para(uint64_t clock = 10000000) {
         xblock_consensus_para_t cs_para(xcertauth_util::instance().get_leader_xip(), get_cert_block().get());
-        cs_para.update_latest_cert_block(get_cert_block());
-        cs_para.update_latest_lock_block(get_lock_block());
-        cs_para.update_latest_commit_block(get_commit_block());
+        cs_para.set_latest_blocks(get_cert_block(), get_lock_block(), get_commit_block());
         cs_para.set_tableblock_consensus_para(1,"1",1,1);
         cs_para.set_clock(clock);
         return cs_para;

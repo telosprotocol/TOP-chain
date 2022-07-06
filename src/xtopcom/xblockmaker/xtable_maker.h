@@ -14,6 +14,8 @@
 #include "xblockmaker/xblock_maker_para.h"
 #include "xblockmaker/xblockmaker_face.h"
 #include "xtxexecutor/xatomictx_executor.h"
+#include "xtxexecutor/xbatchtx_executor.h"
+#include "xstatectx/xstatectx.h"
 #include "xunit_service/xcons_face.h"
 
 NS_BEG2(top, blockmaker)
@@ -85,6 +87,10 @@ private:
                                        const relay_wrap_info_t & new_wrap_info,
                                        data::xrelay_block & relay_block);
     bool set_relay_para(const data::xblock_consensus_para_t & cs_para, const xtablemaker_para_t & table_para, bool is_leader);
+    std::vector<xcons_transaction_ptr_t> check_input_txs(bool is_leader, const data::xblock_consensus_para_t & cs_para, const std::vector<xcons_transaction_ptr_t> & input_table_txs, uint64_t now);
+    void execute_txs(bool is_leader, const data::xblock_consensus_para_t & cs_para, statectx::xstatectx_ptr_t const& statectx_ptr, const std::vector<xcons_transaction_ptr_t> & input_txs, txexecutor::xexecute_output_t & execute_output, std::error_code & ec);
+    std::vector<xblock_ptr_t> make_units(bool is_leader, const data::xblock_consensus_para_t & cs_para, statectx::xstatectx_ptr_t const& statectx_ptr, txexecutor::xexecute_output_t const& execute_output, std::error_code & ec);
+    void update_receiptid_state(const xtablemaker_para_t & table_para, statectx::xstatectx_ptr_t const& statectx_ptr);
 
     static constexpr uint32_t                   m_empty_block_max_num{2};
     uint32_t                                    m_full_table_interval_num;
