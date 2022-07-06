@@ -126,7 +126,7 @@ void xtop_contract_deploy::deploy_sys_contracts() {
            "all",
            enum_broadcast_policy_t::normal,
            std::string(sys_contract_beacon_timer_addr) + ",on_timer,C," + config::xrelay_election_interval_onchain_goverance_parameter_t::name);
-    deploy(relay_repackage_election_data_contract_address, xnode_type_t::relay, "all", enum_broadcast_policy_t::normal);
+    deploy(relay_repackage_election_data_contract_address, xnode_type_t::relay, "all", enum_broadcast_policy_t::normal, std::string(sys_contract_beacon_timer_addr) + ",sp,C");
 }
 
 bool xtop_contract_deploy::deploy(common::xaccount_address_t const & address,
