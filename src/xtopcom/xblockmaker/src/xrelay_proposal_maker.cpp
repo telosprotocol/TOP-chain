@@ -130,6 +130,7 @@ bool xrelay_proposal_maker_t::build_relay_block_data_leader(const data::xblock_p
     data::xrelay_block new_relay_block;
     //create election block
     if (!reley_election_group.empty()) {
+        m_last_poly_timestamp = 0;
         new_relay_block = data::xrelay_block(last_relay_block.get_block_hash(), last_relay_block.get_block_height() + 1,
                                              epochid, timestamp, reley_election_group);
 

@@ -192,7 +192,6 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_election_committee_size, xgroup_size_t
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_election_committee_size, xgroup_size_t, normal, 8, 8, 512);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_relay_group_size, xgroup_size_t, normal, 6, 6, 32);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_relay_group_size, xgroup_size_t, normal, 8, 8, 512);
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_relay_poly_interval, xinterval_t, normal, 100, 20, 512);
 #elif defined(XBUILD_GALILEO)
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_election_committee_size, xgroup_size_t, normal, 32, 8, 32);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_election_committee_size, xgroup_size_t, normal, 32, 32, 512);
@@ -210,6 +209,7 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_relay_group_size, xgroup_size_t, norma
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_relay_group_size, xgroup_size_t, normal, 32, 32, 512);
 #endif
 
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_relay_poly_interval, xinterval_t, normal, 100, 20, 512);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_auditor_rotation_count, std::uint16_t, normal, 2, 1, 62);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_edge_group_size, std::uint16_t, normal, 512, 64, 1022);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_fullnode_group_size, std::uint16_t, normal, 512, 64, 1022);

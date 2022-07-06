@@ -206,6 +206,7 @@ public:
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(min_relay_group_size);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(relay_election_interval);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(top_eth_base_price);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(max_relay_poly_interval);
 #endif
 
         std::vector<std::string> committee_addrs = xrootblock_t::get_tcc_initial_committee_addr();
