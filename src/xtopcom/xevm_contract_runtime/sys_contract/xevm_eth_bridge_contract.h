@@ -12,7 +12,7 @@ NS_BEG4(top, contract_runtime, evm, sys_contract)
 
 class xtop_evm_eth_bridge_contract : public xevm_syscontract_face_t {
 public:
-    xtop_evm_eth_bridge_contract() = default;
+    xtop_evm_eth_bridge_contract();
     ~xtop_evm_eth_bridge_contract() override = default;
 
     bool execute(xbytes_t input,
@@ -27,8 +27,9 @@ private:
     bool init(const xbytes_t & rlp_bytes);
     bool sync(const xbytes_t & rlp_bytes);
     bool is_confirmed(const xbytes_t & hash_bytes);
+    void reset();
+    std::set<std::string> load_whitelist();
 
-    bool verify(const std::string & owner) const;
     bool verify_common(const evm_common::eth::xeth_block_header_t & prev_header, const evm_common::eth::xeth_block_header_t & new_header) const;
 
     bool get_height(evm_common::bigint & height) const;
@@ -44,6 +45,7 @@ private:
 
     const common::xaccount_address_t m_contract_address{evm_eth_bridge_contract_address};
     std::shared_ptr<data::xunit_bstate_t> m_contract_state{nullptr};
+    std::set<std::string> m_whitelist;
 };
 using xevm_eth_bridge_contract_t = xtop_evm_eth_bridge_contract;
 
