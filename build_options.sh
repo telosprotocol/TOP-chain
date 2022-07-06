@@ -197,6 +197,10 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DCHECKPOINT_TEST=ON"
         echo "BUILD WITH CHECKPOINT_TEST"
     ;;
+    eth_bridge_test)
+        CMAKE_EXTRA_OPTIONS+=" -DETH_BRIDGE_TEST=ON"
+        echo "BUILD WITH ETH_BRIDGE_TEST"
+    ;;
     period_mock)
         CMAKE_EXTRA_OPTIONS+=" -DPERIOD_MOCK=ON"
         echo "BUILD WITH PERIOD_MOCK"
