@@ -350,6 +350,10 @@ if (CHECKPOINT_TEST)
     add_definitions(-DCHECKPOINT_TEST)
 endif()
 
+if (ETH_BRIDGE_TEST)
+    add_definitions(-DETH_BRIDGE_TEST)
+endif()
+
 if (PERIOD_MOCK)
     add_definitions(-DPERIOD_MOCK)
 endif()

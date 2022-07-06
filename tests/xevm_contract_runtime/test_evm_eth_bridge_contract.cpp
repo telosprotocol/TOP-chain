@@ -414,6 +414,13 @@ TEST_F(xcontract_fixture_t, test_rebuild2) {
     EXPECT_EQ(height, 17);
 }
 
+TEST_F(xcontract_fixture_t, execute_input_with_error_account) {
+    contract_runtime::evm::sys_contract_precompile_output output;
+    contract_runtime::evm::sys_contract_precompile_error err;
+    context.caller.build_from("f8a1e199c49c2ae2682ecc5b4a8838b39bab1a39");
+    EXPECT_FALSE(contract.execute({}, 0, context, false, statectx_observer, output, err));
+}
+
 TEST_F(xcontract_fixture_t, execute_input_empty) {
     contract_runtime::evm::sys_contract_precompile_output output;
     contract_runtime::evm::sys_contract_precompile_error err;
