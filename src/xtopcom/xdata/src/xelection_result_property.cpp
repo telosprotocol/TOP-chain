@@ -21,7 +21,8 @@ std::vector<std::string> get_property_name_by_addr(common::xaccount_address_t co
                                                      rec_elect_edge_contract_address,
                                                      rec_elect_fullnode_contract_address,
                                                      zec_elect_eth_contract_address,
-                                                     zec_elect_relay_contract_address};
+                                                     zec_elect_relay_contract_address,
+                                                     relay_repackage_election_data_contract_address};
     assert(std::find(sys_addr.begin(), sys_addr.end(), sys_contract_addr) != sys_addr.end());
 
     std::vector<std::string> property_name;
@@ -39,7 +40,8 @@ std::vector<std::string> get_property_name_by_addr(common::xaccount_address_t co
         }
     } else if (sys_contract_addr == sys_addr[4]) { // rec_elect_exchange_contract_address
         property_name.push_back(get_property_by_group_id(common::xexchange_group_id));
-    } else if (sys_contract_addr == sys_addr[5] || sys_contract_addr == sys_addr[6] || sys_contract_addr == sys_addr[7] || sys_contract_addr == sys_addr[8]) {
+    } else if (sys_contract_addr == sys_addr[5] || sys_contract_addr == sys_addr[6] || sys_contract_addr == sys_addr[7] || sys_contract_addr == sys_addr[8] ||
+               sys_contract_addr == sys_addr[9]) {
         property_name.push_back(get_property_by_group_id(common::xdefault_group_id));
     }
     assert(!property_name.empty());

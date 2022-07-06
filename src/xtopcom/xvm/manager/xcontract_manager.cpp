@@ -1796,7 +1796,8 @@ void xtop_contract_manager::get_election_data(common::xaccount_address_t const &
             contract_address == zec_elect_consensus_contract_address ||
             contract_address == rec_elect_fullnode_contract_address  ||
             contract_address == zec_elect_eth_contract_address       ||
-            contract_address == zec_elect_relay_contract_address);
+            contract_address == zec_elect_relay_contract_address     ||
+            contract_address == relay_repackage_election_data_contract_address);
 
     std::string serialized_value = unitstate->string_get(property_name);
     if (!serialized_value.empty()) {

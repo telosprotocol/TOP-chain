@@ -271,7 +271,7 @@ void xelect_client_process::update_election_status(common::xlogic_time_t current
 #else
         auto const update_relay_interval = consensus_group_update_interval;
 #endif
-        process_election_contract(zec_elect_relay_contract_address, current_time, update_relay_interval);
+        process_election_contract(relay_repackage_election_data_contract_address, current_time, update_relay_interval);
     }
 }
 
