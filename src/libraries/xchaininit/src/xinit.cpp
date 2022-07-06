@@ -21,7 +21,6 @@
 #include "xconfig/xconfig_register.h"
 #include "xloader/xconfig_offchain_loader.h"
 #include "xloader/xconfig_genesis_loader.h"
-#include "xmutisig/xmutisig.h"
 #include "xmetrics/xmetrics.h"
 #include "xapplication/xapplication.h"
 #include "xchaininit/admin_http.h"
