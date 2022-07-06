@@ -20,7 +20,9 @@
 #include "xevm_common/xeth/xeth_header.h"
 #include "xevm_common/xeth/xethash.h"
 
+#ifdef ETH_BRIDGE_TEST
 #include <fstream>
+#endif
 
 NS_BEG4(top, contract_runtime, evm, sys_contract)
 
