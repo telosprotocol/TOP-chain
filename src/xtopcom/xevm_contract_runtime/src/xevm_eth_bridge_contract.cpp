@@ -58,13 +58,13 @@ bool xtop_evm_eth_bridge_contract::execute(xbytes_t input,
     // init(bytes,string)                    => 6158600d
     // sync(bytes)                           => 7eefcfa2
     // get_height()                          => b15ad2e8
-    // is_confirmed(bytes)                   => 627b0fd2
+    // is_confirmed(bytes32)                 => efd8beed
     // reset()                               => d826f88f
     //--------------------------------------------------
     constexpr uint32_t method_id_init{0x6158600d};
     constexpr uint32_t method_id_sync{0x7eefcfa2};
     constexpr uint32_t method_id_get_height{0xb15ad2e8};
-    constexpr uint32_t method_id_is_confirmed{0x627b0fd2};
+    constexpr uint32_t method_id_is_confirmed{0xefd8beed};
     constexpr uint32_t method_id_reset{0xd826f88f};
 
     // check param
@@ -179,7 +179,7 @@ bool xtop_evm_eth_bridge_contract::execute(xbytes_t input,
     }
     case method_id_is_confirmed: {
         uint32_t confirmed{0};
-        auto hash_bytes = abi_decoder.extract<xbytes_t>(ec);
+        auto hash_bytes = abi_decoder.decode_bytes(32, ec);
         if (ec) {
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
