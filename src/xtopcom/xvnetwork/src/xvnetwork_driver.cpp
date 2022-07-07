@@ -231,7 +231,18 @@ std::vector<common::xnode_address_t> xtop_vnetwork_driver::fullnode_addresses(st
 
     return result;
 }
+std::vector<common::xnode_address_t> xtop_vnetwork_driver::relay_addresses(std::error_code & ec) const {
+    assert(m_vhost != nullptr);
+    std::vector<common::xnode_address_t> result;
 
+    common::xelection_round_t election_round;
+    auto tmp = m_vhost->members_info_of_group2(common::build_relay_group_address(network_id()), election_round);
+    std::transform(std::begin(tmp), std::end(tmp), std::back_inserter(result), [](std::pair<common::xslot_id_t const, data::xnode_info_t> & datum) -> common::xnode_address_t {
+        return top::get<data::xnode_info_t>(std::move(datum)).address;
+    });
+
+    return result;
+}
 std::vector<std::uint16_t> xtop_vnetwork_driver::table_ids() const {
     xdbg("[vnetwork driver] getting table ids for %s", address().to_string().c_str());
 
