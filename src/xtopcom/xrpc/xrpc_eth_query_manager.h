@@ -72,9 +72,7 @@ public:
         REGISTER_ETH_QUERY_METHOD(eth_estimateGas);
         REGISTER_ETH_QUERY_METHOD(eth_getStorageAt);
         REGISTER_ETH_QUERY_METHOD(eth_getLogs);
-        REGISTER_ETH_QUERY_METHOD(topRelay_getPolyBlockHashListByHash); 
-        REGISTER_ETH_QUERY_METHOD(topRelay_getLeafBlockHashListByHash);  
-                                  
+        
         REGISTER_ETH_QUERY_METHOD(topRelay_getBlockByNumber);
         REGISTER_ETH_QUERY_METHOD(topRelay_getBlockByHash);
         REGISTER_ETH_QUERY_METHOD(topRelay_blockNumber);
@@ -97,8 +95,6 @@ public:
     void eth_getStorageAt(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
     void eth_getLogs(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
 
-    void topRelay_getPolyBlockHashListByHash(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
-    void topRelay_getLeafBlockHashListByHash(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
     void topRelay_getBlockByNumber(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
     void topRelay_getBlockByHash(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
     void topRelay_blockNumber(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
@@ -115,9 +111,7 @@ private:
     bool check_log_is_match(evm_common::xevm_log_t const& log, const std::vector<std::set<std::string>>& vTopics, const std::set<std::string>& sAddress) const;
     bool check_block_log_bloom(xobject_ptr_t<base::xvblock_t>& block, const std::vector<std::set<std::string>>& vTopics, const std::set<std::string>& sAddress) const;
     int parse_topics(const xJson::Value& t, std::vector<std::set<std::string>>& vTopics, xJson::Value & js_rsp);
-    int set_relay_block_result(const xobject_ptr_t<base::xvblock_t>& block, xJson::Value & js_rsp, int have_txs);
-    //int set_relay_block_result2(const xobject_ptr_t<base::xvblock_t>& block, xJson::Value & js_rsp, int have_txs);
-    int set_relay_block_result_block_hash(const xobject_ptr_t<base::xvblock_t>& block, xJson::Value & js_rsp, int load_hash_type);
+    int set_relay_block_result(const xobject_ptr_t<base::xvblock_t>& block, xJson::Value & js_rsp, int have_txs, int blocklist_type);
 private:
     observer_ptr<store::xstore_face_t> m_store;
     observer_ptr<base::xvblockstore_t> m_block_store;

@@ -45,8 +45,6 @@ public:
         m_supported_method.insert("eth_getTransactionByHash");
         m_supported_method.insert("eth_getTransactionReceipt");
 
-        m_supported_method.insert("topRelay_getPolyBlockHashListByHash");
-        m_supported_method.insert("topRelay_getLeafBlockHashListByHash");
         m_supported_method.insert("topRelay_getBlockByNumber");
         m_supported_method.insert("topRelay_getBlockByHash");
         m_supported_method.insert("topRelay_blockNumber");
