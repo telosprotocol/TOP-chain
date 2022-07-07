@@ -596,7 +596,7 @@ TEST_F(xcontract_fixture_t,  execute_is_confirmed_extract_error) {
     EXPECT_TRUE(contract.execute(sync_param, 0, context, false, statectx_observer, output, err));
 
     std::string str{relayer_hex_output_is_confirmed_tx_data};
-    str = {str.begin(), str.begin() + 136};
+    str = {str.begin(), str.begin() + 70};
     auto is_confirmed_param = top::from_hex(str, ec);
     EXPECT_EQ(ec.value(), 0);
     EXPECT_FALSE(contract.execute(is_confirmed_param, 0, context, false, statectx_observer, output, err));
@@ -632,6 +632,19 @@ TEST_F(xcontract_fixture_t, test_release) {
     for (auto i = 59501; i <= 60000; i++) {
         EXPECT_TRUE(contract.get_header(h256(i), header, difficulty));
     }
+}
+
+TEST_F(xcontract_fixture_t, test_extract_base32) {
+    const char * text = "efd8beed749c4c2c82582cba3489bce142d6c776d50a5c18b3aeaf3cdc68b27650d0a6b6";
+
+    std::error_code ec;
+    auto bytes = top::from_hex(text, ec);
+    evm_common::xabi_decoder_t abi_decoder = evm_common::xabi_decoder_t::build_from(xbytes_t{std::begin(bytes), std::end(bytes)}, ec);
+    auto function_selector = abi_decoder.extract<evm_common::xfunction_selector_t>(ec);
+    function_selector;
+    auto hash_bytes = abi_decoder.decode_bytes(32, ec);
+    h256 hash = static_cast<h256>(hash_bytes);
+    EXPECT_EQ("749c4c2c82582cba3489bce142d6c776d50a5c18b3aeaf3cdc68b27650d0a6b6", hash.hex());
 }
 
 }
