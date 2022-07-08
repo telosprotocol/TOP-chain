@@ -132,6 +132,7 @@ void xtop_contract_deploy::deploy_sys_contracts() {
            "",
            enum_broadcast_policy_t::normal,
            std::string(sys_contract_beacon_timer_addr) + ",on_timer,C," + config::xevm_table_crosschain_txs_collection_interval_configuration_t::name);
+    deploy(relay_make_block_contract_address, xnode_type_t::relay, "all", enum_broadcast_policy_t::normal, std::string(sys_contract_beacon_timer_addr) + ",_,C");
 }
 
 bool xtop_contract_deploy::deploy(common::xaccount_address_t const & address,

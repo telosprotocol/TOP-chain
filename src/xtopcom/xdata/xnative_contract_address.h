@@ -45,7 +45,7 @@ XINLINE_CONSTEXPR char const * sys_contract_eth_table_statistic_info_addr{ "T200
 XINLINE_CONSTEXPR char const * sys_contract_eth_table_cross_chain_txs_collection_addr{"T200040000000000000000000000000000000002@0"};
 
 XINLINE_CONSTEXPR char const * sys_contract_relay_repackage_election_addr{"T2000500000000000000000000000000000000001@0"};
-XINLINE_CONSTEXPR char const * sys_contract_relay_build_block_addr{"T2000500000000000000000000000000000000002@0"};
+XINLINE_CONSTEXPR char const * sys_contract_relay_make_block_addr{"T2000500000000000000000000000000000000002@0"};
 
 // user contracts addresses for solidity
 XINLINE_CONSTEXPR char const * sys_eth_zero_addr{"T600040000000000000000000000000000000000000000"};
@@ -108,6 +108,7 @@ extern common::xaccount_address_t const evm_erc20_contract_address;
 extern common::xaccount_address_t const evm_eth_bridge_contract_address;
 
 extern common::xaccount_address_t const relay_repackage_election_data_contract_address;
-extern common::xaccount_address_t const relay_build_block_contract_address;
+extern common::xaccount_address_t const relay_make_block_contract_address;
+
 
 NS_END1

@@ -78,6 +78,7 @@ void xtable_cross_chain_txs_collection_contract::on_timer(common::xlogic_time_t 
         call_param = all_crosstxs.serialize_to_string();
         // call relay block build contract
         // CALL();
+        CALL(common::xaccount_address_t{sys_contract_relay_make_block_addr}, "on_receive_cross_txs", call_param);
     }
     STRING_SET(XPORPERTY_CONTRACT_PROCESSED_TABLE_BLOCK_HEIGHT, std::to_string(finish_height));
     STRING_SET(XPORPERTY_CONTRACT_PROCESSED_LOGIC_TIME, std::to_string(latest_time));

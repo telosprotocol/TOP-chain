@@ -571,6 +571,8 @@ void xrole_context_t::on_relay_election_data_update(uint64_t block_height, uint6
     }
 }
 
+// todo(nathan):relay出块合约响应跨链交易上报合约块事件，在接收交易中处理
+
 void xrole_context_t::broadcast(const xblock_ptr_t & block_ptr, common::xnode_type_t types) {
     assert(block_ptr != nullptr);
     base::xstream_t stream(base::xcontext_t::instance());

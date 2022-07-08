@@ -46,6 +46,6 @@ common::xaccount_address_t const evm_erc20_contract_address{sys_contract_evm_erc
 common::xaccount_address_t const evm_eth_bridge_contract_address{sys_contract_evm_eth_bridge_addr};
 
 common::xaccount_address_t const relay_repackage_election_data_contract_address{sys_contract_relay_repackage_election_addr};
-common::xaccount_address_t const relay_build_block_contract_address{sys_contract_relay_build_block_addr};
+common::xaccount_address_t const relay_make_block_contract_address{sys_contract_relay_make_block_addr};
 
 NS_END1

@@ -479,12 +479,14 @@ XDECLARE_CONFIGURATION(unitblock_recv_transfer_tx_batch_num, std::uint32_t, 1);
 XDECLARE_CONFIGURATION(unitblock_send_transfer_tx_batch_num, std::uint32_t, 1);
 XDECLARE_CONFIGURATION(tableblock_batch_unitblock_max_num, std::uint32_t, 1);
 XDECLARE_CONFIGURATION(tableblock_batch_tx_max_num, std::int32_t, 1);
+XDECLARE_CONFIGURATION(relayblock_batch_tx_max_num, std::int32_t, 1);
 #else
 XDECLARE_CONFIGURATION(unitblock_confirm_tx_batch_num, std::uint32_t, 8);
 XDECLARE_CONFIGURATION(unitblock_recv_transfer_tx_batch_num, std::uint32_t, 4);
 XDECLARE_CONFIGURATION(unitblock_send_transfer_tx_batch_num, std::uint32_t, 3);
 XDECLARE_CONFIGURATION(tableblock_batch_unitblock_max_num, std::uint32_t, 64);
 XDECLARE_CONFIGURATION(tableblock_batch_tx_max_num, std::int32_t, 64);
+XDECLARE_CONFIGURATION(relayblock_batch_tx_max_num, std::int32_t, 40);
 #endif
 
 #if defined(XBUILD_DEV) || defined(XBUILD_CI)
