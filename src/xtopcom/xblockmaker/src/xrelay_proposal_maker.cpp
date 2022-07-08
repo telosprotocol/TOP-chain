@@ -26,7 +26,7 @@
 
 NS_BEG2(top, blockmaker)
 
-#define RELAY_BLOCK_TXS_PACK_NUM_MAX    (32)
+#define RELAY_BLOCK_TXS_PACK_NUM_MAX    (40)
 
 // REG_XMODULE_LOG(chainbase::enum_xmodule_type::xmodule_type_xblockmaker, xblockmaker_error_to_string, xblockmaker_error_base+1, xblockmaker_error_max);
 

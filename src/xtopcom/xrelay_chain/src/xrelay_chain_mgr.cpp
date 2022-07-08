@@ -146,7 +146,7 @@ bool xcross_tx_cache_t::get_tx_cache_leader(uint64_t & upper_height, std::map<ui
     uint32_t tx_num = 0;
     for(auto & cross_tx_map_pair : m_cross_tx_map) {
         auto & height = cross_tx_map_pair.first;
-        if (tx_num + cross_tx_map_pair.second.m_txs.size() > max_tx_num) {
+        if (tx_num + cross_tx_map_pair.second.m_txs.size() > max_tx_num && cross_tx_map.size() > 0) {
             xwarn("xcross_tx_cache_t::get_tx_cache_leader too many cross txs.h:%llu,num:%u", height, cross_tx_map_pair.second.m_txs.size());
             break;
         }
