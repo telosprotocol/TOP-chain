@@ -187,7 +187,7 @@ xrelay_block next_block_create(evm_common::h256  prev_hash, uint64_t block_heigh
     return _relay_block;
 }
 
-
+#if 0
 TEST_F(test_relay_block_store, store_tx_block_save_test) {
 
     h256 empty_hash{0};
@@ -398,3 +398,5 @@ TEST_F(test_relay_block_store, store_tx_block_serialize)
     
 
 }
+
+#endif 
