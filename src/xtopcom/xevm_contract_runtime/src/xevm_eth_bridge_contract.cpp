@@ -42,7 +42,7 @@ constexpr uint64_t BlockReserveNum = 500;
 xtop_evm_eth_bridge_contract::xtop_evm_eth_bridge_contract() {
     m_whitelist = load_whitelist();
     if (m_whitelist.empty()) {
-        xassert(false);
+        xwarn("[xtop_evm_eth_bridge_contract::xtop_evm_eth_bridge_contract] m_whitelist empty!");
     }
 }
 
