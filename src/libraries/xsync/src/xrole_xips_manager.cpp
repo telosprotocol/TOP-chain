@@ -153,12 +153,16 @@ std::vector<common::xnode_address_t> xrole_xips_manager_t::get_edge_archive_list
     edge_archive_xips = create_archive_xip_vector_ptr(m_vnetwork_driver->archive_addresses(common::xnode_type_t::storage_exchange), m_self_xip);
     return *edge_archive_xips;
 }
-std::vector<common::xnode_address_t> xrole_xips_manager_t::get_relay_list() {
+std::vector<common::xnode_address_t> xrole_xips_manager_t::get_relay_list() const {
     if (m_vnetwork_driver == nullptr)
         return {};
     xip_vector_ptr edge_archive_xips{};
     std::error_code ec;
     edge_archive_xips = create_archive_xip_vector_ptr(m_vnetwork_driver->relay_addresses(ec), m_self_xip);
+    if (ec) {
+        xsync_dbg("xrole_xips_manager_t::get_relay_list fail.");
+        return *edge_archive_xips;
+    }    
     return *edge_archive_xips;
 }
 bool xrole_xips_manager_t::vrf_gossip_with_archive(base::xvblock_t *time_vblock, common::xnode_type_t role_type) {
@@ -215,7 +219,7 @@ xip_vector_ptr xrole_xips_manager_t::create_xip_vector_ptr(const std::vector<com
     return ptr;
 }
 
-xip_vector_ptr xrole_xips_manager_t::create_archive_xip_vector_ptr(const std::vector<common::xnode_address_t>& list, const common::xnode_address_t& self_xip) {
+xip_vector_ptr xrole_xips_manager_t::create_archive_xip_vector_ptr(const std::vector<common::xnode_address_t>& list, const common::xnode_address_t& self_xip) const {
     auto ptr = std::make_shared<std::vector<common::xnode_address_t>>();
     for(auto& addr : list) {
         if (self_xip != addr) {

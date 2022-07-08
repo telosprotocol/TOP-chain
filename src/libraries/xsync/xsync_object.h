@@ -32,9 +32,18 @@
 #include "xsync/xsync_behind_checker.h"
 #include "xsync/xsync_cross_cluster_chain_state.h"
 #include "xsync/xsync_pusher.h"
+#include "xvnetwork/xaddress.h"
 
 NS_BEG2(top, sync)
 
+class xsync_table_data {
+public:
+    xsync_table_data():display(false),total_cur_height(0),total_max_height(0) {}
+    bool display;
+    uint64_t total_cur_height;
+    uint64_t total_max_height;
+    //sync::enum_chain_sync_policy policy;
+};
 class xtop_sync_object final : public xbasic_runnable_t<xtop_sync_object>, public xsync_face_t {
 private:
     observer_ptr<mbus::xmessage_bus_face_t> m_bus;
@@ -100,6 +109,10 @@ public:
 
     void add_vnet(const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> &vnetwork_driver, const common::xminer_type_t miner_type, const bool genesis);
     void remove_vnet(const std::shared_ptr<vnetwork::xvnetwork_driver_face_t> &vnetwork_driver, const common::xminer_type_t miner_type, const bool genesis);
+private:
+    void display_init(std::map<common::xenum_node_type, xsync_table_data>& table_display) const;
+    common::xenum_node_type get_table_type(const vnetwork::xaccount_address_t& account) const;
+    std::string get_title(common::xenum_node_type type) const;
 };
 using xsync_object_t = xtop_sync_object;
 

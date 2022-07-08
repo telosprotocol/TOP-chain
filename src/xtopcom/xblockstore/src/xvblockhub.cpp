@@ -2409,10 +2409,7 @@ namespace top
             if(this_index->check_modified_flag() == false)//nothing changed
                 return true;
 
-            const std::string key_path2 = base::xvdbkey_t::create_prunable_blockhash_key(this_index->get_block_hash());
-            base::xvchain_t::instance().get_xdbstore()->set_value(key_path2, this_index->get_account() + "/" + base::xstring_utl::uint642hex(this_index->get_height()));
-            xdbg("xtablebkplugin::write_index: %s", this_index->get_account().c_str());
-
+            base::xvchain_t::instance().get_xtxstore()->write_relay_index(this_index);
             return get_blockdb_ptr()->write_index_to_db(this_index);
         }
     
@@ -2634,79 +2631,11 @@ namespace top
 
         bool  xrelay_plugin::store_block(base::xvblock_t* new_raw_block)
         {
-            if (base::xvchain_t::instance().get_xtxstore()->check_relay_store())
-                store_relay_txs(new_raw_block);
+            //if (base::xvchain_t::instance().get_xtxstore()->check_relay_store())
+            base::xvchain_t::instance().get_xtxstore()->store_relay_txs(new_raw_block);
             return xblockacct_t::store_block(new_raw_block);
         }
 
-        bool xrelay_plugin::store_relay_txs(base::xvblock_t * block_ptr)
-        {  
-            xassert(block_ptr != NULL);
-            if (NULL == block_ptr)
-                return false;
-
-            if (block_ptr->get_height() == 0) {
-                xdbg("xblockacct_t::store_relay_txs not stroe :%s ", block_ptr->dump().c_str());
-                return true;
-            }
-
-            xdbg("xblockacct_t::store_relay_txs, store txs for block=%s, ",block_ptr->dump().c_str());
-
-            std::error_code ec;
-            top::data::xrelay_block  extra_relay_block;
-            data::xblockextract_t::unpack_relayblock(block_ptr, false, extra_relay_block, ec);
-            if (ec) {
-                xerror("xblockacct_t:store_relay_txs decodeBytes decodeBytes error %s; err msg %s", 
-                ec.category().name(), ec.message().c_str());
-                return false;
-            }
-            extra_relay_block.build_finish();
-            evm_common::h256 hash = extra_relay_block.get_block_hash();
-            std::string block_hash_str((char*)hash.data(), hash.size);
-            //block_ptr->set_vote_extend_data(block_hash_str);
-            xdbg("xblockacct_t::store_relay_txs, hash:%s", HexEncode(block_hash_str).c_str());
-   
-            //get tx hash from txs
-            std::vector<base::xvtxindex_ptr> sub_txs;
-            for ( auto &tx: extra_relay_block.get_all_transactions()) {
-                if (tx.get_tx_hash().empty()) {
-                    xerror("xblockacct_t::store_relay_txs  account: %s, height:%llu tx hash is null! ",block_ptr->get_account().c_str(), block_ptr->get_height());
-                    xassert(false);
-                }
-                std::string tx_hash = std::string(reinterpret_cast<char*>(tx.get_tx_hash().data()), tx.get_tx_hash().size());
-                base::xvtxindex_ptr tx_index = make_object_ptr<base::xvtxindex_t>(*block_ptr, tx_hash, base::enum_transaction_subtype_send);
-                tx_index->set_block_hash(block_hash_str);
-                sub_txs.push_back(tx_index);
-                xinfo("xblockacct_t::store_relay_txs tx_hash:%s, account: %s, height:%llu",  base::xstring_utl::to_hex(tx_hash).c_str(), 
-                     block_ptr->get_account().c_str(), block_ptr->get_height());
-            }
-
-            bool has_error = false;
-            for (auto & v : sub_txs) {
-                base::enum_txindex_type txindex_type = base::xvtxkey_t::transaction_subtype_to_txindex_type(v->get_tx_phase_type());
-                const std::string tx_key = base::xvdbkey_t::create_prunable_relay_tx_index_key(v->get_tx_hash(), txindex_type);
-                std::string tx_bin;
-                v->serialize_to_string(tx_bin);
-                xassert(!tx_bin.empty());
-
-                if (base::xvchain_t::instance().get_xdbstore()->set_value(tx_key, tx_bin) == false) {
-                    xerror("xblockacct_t::store_relay_txs,fail to store tx for block(%s)", block_ptr->dump().c_str());
-                    has_error = true;  // mark it but let do rest work
-                } else {
-                    xdbg("xblockacct_t::store_relay_txs,store tx: %s",
-                    base::xvtxkey_t::transaction_hash_subtype_to_string(v->get_tx_hash(), v->get_tx_phase_type()).c_str());
-                }
-
-/*                // test 
-                const std::string tx_bin_result = base::xvchain_t::instance().get_xdbstore()->get_value(tx_key);
-                if (!tx_bin_result.empty()) {
-                    xdbg("xblockacct_t::store_relay_txs, check save hahs_tx=%s", base::xstring_utl::to_hex(v->get_tx_hash()).c_str());
-                }*/
-            }
-            if (has_error)
-                return false;
-            return true;
-        }
         base::xvbindex_t*  xrelay_plugin::create_index(base::xvblock_t& new_raw_block) {
             base::xvbindex_t* new_index;
             new_index = new base::xvbindex_t(new_raw_block);
@@ -2715,14 +2644,14 @@ namespace top
             top::data::xrelay_block  extra_relay_block;
             data::xblockextract_t::unpack_relayblock(&new_raw_block, false, extra_relay_block, ec);
             if (ec) {
-                xerror("xblockacct_t:store_relay_txs decodeBytes decodeBytes error %s; err msg %s", 
+                xwarn("xrelay_plugin::create_index decodeBytes decodeBytes error %s; err msg %s", 
                 ec.category().name(), ec.message().c_str());
                 return nullptr;
             }
             //extra_relay_block.build_finish();
             evm_common::h256 hash = extra_relay_block.get_block_hash();
             std::string block_hash_str((char*)hash.data(), hash.size);
-
+            xdbg("xrelay_plugin::create_index, %s", HexEncode(block_hash_str).c_str());
             new_index->set_extend_data(block_hash_str);
             return new_index;
         }
@@ -2733,15 +2662,7 @@ namespace top
             if(this_index->check_modified_flag() == false)//nothing changed
                 return true;
 
-            if (base::xvchain_t::instance().get_xtxstore()->check_relay_store()) {
-                const std::string key_path2 = base::xvdbkey_t::create_prunable_blockhash_key(get_cache_block_hash(this_index));
-                base::xvchain_t::instance().get_xdbstore()->set_value(key_path2, this_index->get_account() + "/" + base::xstring_utl::uint642hex(this_index->get_height()));
-                xdbg("xrelay_plugin::write_index: %s, %s, %s",
-                     this_index->get_account().c_str(),
-                     HexEncode(this_index->get_extend_data()).c_str(),
-                     HexEncode(this_index->get_block_hash()).c_str());
-            }
-
+            base::xvchain_t::instance().get_xtxstore()->write_relay_index(this_index);
             return get_blockdb_ptr()->write_index_to_db(this_index);
         }
         bool xrelay_plugin::write_block(base::xvbindex_t * this_index) {

@@ -731,8 +731,8 @@ namespace top
                 // return false;
             }
 
-            if (container_account->get_account() == std::string(sys_contract_relay_table_block_addr) &&
-                base::xvchain_t::instance().get_xtxstore()->check_relay_store()) {
+            if (container_account->get_account() == std::string(sys_contract_relay_table_block_addr)) {
+                //base::xvchain_t::instance().get_xtxstore()->check_relay_store()) {
                 base::xvaccount_t relay_account(sys_contract_relay_block_addr);
                 xobject_ptr_t<base::xvblock_t> relay_block_ptr = create_relay_block(container_block);
                 if (relay_block_ptr != nullptr) {
