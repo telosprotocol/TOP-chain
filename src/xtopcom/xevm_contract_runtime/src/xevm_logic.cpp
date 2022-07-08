@@ -48,7 +48,7 @@ void xtop_evm_logic::read_register(uint64_t register_id, uint64_t ptr) {
 void xtop_evm_logic::sender_address(uint64_t register_id) {
     auto sender = m_context->sender().value();
     std::error_code ec;
-    auto address_bytes = top::from_hex(sender.substr(6), ec); // remove T60004
+    auto address_bytes = top::from_hex(sender.substr(6), ec);  // remove T60004
     xassert(!ec);
     internal_write_register(register_id, address_bytes);
 }
@@ -65,7 +65,7 @@ uint64_t xtop_evm_logic::chain_id() {
 void xtop_evm_logic::block_coinbase(uint64_t register_id) {
     auto coinbase = m_context->block_coinbase();
     std::error_code ec;
-    auto coinbase_bytes = top::from_hex(coinbase.substr(6), ec); // remove T60004
+    auto coinbase_bytes = top::from_hex(coinbase.substr(6), ec);  // remove T60004
     xassert(!ec);
     internal_write_register(register_id, coinbase_bytes);
 }
@@ -244,6 +244,22 @@ xbytes_t xtop_evm_logic::memory_get_vec(uint64_t offset, uint64_t len) {
 
 xbytes_t xtop_evm_logic::internal_read_register(uint64_t register_id) {
     return m_registers.at(register_id);
+}
+
+void xtop_evm_logic::engine_return(uint64_t engine_ptr) {
+    m_engine_ptr = reinterpret_cast<void *>(engine_ptr);
+}
+
+void xtop_evm_logic::executor_return(uint64_t executor_ptr) {
+    m_executor_ptr = reinterpret_cast<void *>(executor_ptr);
+}
+
+void * xtop_evm_logic::engine_ptr() const {
+    return m_engine_ptr;
+}
+
+void * xtop_evm_logic::executor_ptr() const {
+    return m_executor_ptr;
 }
 
 NS_END3

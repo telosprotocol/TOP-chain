@@ -231,6 +231,18 @@ impl crate::io::ContractBridge for Runtime {
             }
         }
     }
+
+    fn engine_return(&self, engine_ptr: u64) {
+        unsafe {
+            exports::evm_engine_return(engine_ptr);
+        }
+    }
+
+    fn executor_return(&self, executor_ptr: u64) {
+        unsafe {
+            exports::evm_executor_return(executor_ptr);
+        }
+    }
 }
 
 pub(crate) mod exports {
@@ -284,5 +296,7 @@ pub(crate) mod exports {
         pub(crate) fn evm_extern_contract_call(args_len: u64, args_ptr: u64) -> bool;
         pub(crate) fn evm_get_result(register_id: u64) -> u64;
         pub(crate) fn evm_get_error(register_id: u64) -> u64;
+        pub(crate) fn evm_engine_return(value_ptr: u64);
+        pub(crate) fn evm_executor_return(value_ptr: u64);
     }
 }
