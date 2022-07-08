@@ -22,7 +22,7 @@ namespace data {
        4.get block hash to signaure
             get_block_hash() 
        5. save block to map for merkle tree
-           save_block_trie()
+
         
        A.create tx block 
        1.create xrelay_block
@@ -33,7 +33,7 @@ namespace data {
        4.get block hash to signaure
             get_block_hash() 
        5. save block to map for merkle tree
-           save_block_trie()
+
     */
     enum enum_block_cache_type {
         cache_tx_block,
@@ -222,7 +222,6 @@ namespace data {
         void                                set_signature_nodes(std::vector<xrelay_signature_node_t> signature_nodes);
         void                                set_block_merkle_root_hash(evm_common::h256 hash);
         bool                                build_finish();
-        void                                save_block_trie();
        // void                                set_chain_id(uint64_t chain_id);
 
     public:

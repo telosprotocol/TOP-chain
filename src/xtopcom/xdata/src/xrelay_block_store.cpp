@@ -53,30 +53,33 @@ bool  xrelay_block_store::set_block_merkle_root_from_store(xrelay_block &next_bl
 bool xrelay_block_store::load_block_hash_from_cache(uint64_t load_height, xrelay_block_save_leaf &block_leaf)
 {
     bool result = true;
-    if (!m_tx_block_map.get(load_height, block_leaf)) {
+    //if (!m_tx_block_map.get(load_height, block_leaf)) {
         //not found, load form db
-        base::xvaccount_t _table_addr(sys_contract_relay_block_addr);
-        auto _db_block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_table_addr, load_height, base::enum_xvblock_flag_authenticated, false);
-        if (_db_block == nullptr) {
-            xwarn("xrelay_block_store::load_block_hash_from_cache block height(%d) fail-load", load_height);
-            return false;
-        }
+    base::xvaccount_t _table_addr(sys_contract_relay_block_addr);
+    auto _db_block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_table_addr, load_height, base::enum_xvblock_flag_authenticated, false);
+    if (_db_block == nullptr) {
+        xwarn("xrelay_block_store::load_block_hash_from_cache block height(%d) fail-load", load_height);
+        return false;
+    }
 
-        std::error_code ec;
-        top::data::xrelay_block  _db_relay_block;
-        data::xblockextract_t::unpack_relayblock(_db_block.get(), false, _db_relay_block, ec);    
-        if (ec) {
-            xerror("xrelay_block_store:load_block_hash_from_cache decodeBytes decodeBytes error %s; err msg %s", ec.category().name(), ec.message().c_str());
-            return false;
-        }
-        
-        result = save_block_hash_to_store_cache(_db_relay_block);
+    std::error_code ec;
+    top::data::xrelay_block  _db_relay_block;
+    data::xblockextract_t::unpack_relayblock(_db_block.get(), false, _db_relay_block, ec);    
+    if (ec) {
+        xerror("xrelay_block_store:load_block_hash_from_cache decodeBytes decodeBytes error %s; err msg %s", ec.category().name(), ec.message().c_str());
+        return false;
+    }
+    
+    block_leaf.m_block_hash = _db_relay_block.get_block_hash();
+    block_leaf.m_type = _db_relay_block.check_block_type();
+
+       /* result = save_block_hash_to_store_cache(_db_relay_block);
         if (!result) {
             return false;
-        }
+        }*/
         
-        result = m_tx_block_map.get(load_height, block_leaf);
-    }
+        //result = m_tx_block_map.get(load_height, block_leaf);
+   // }
     return result;
 }
 
