@@ -51,6 +51,7 @@ XINLINE_CONSTEXPR char const * sys_contract_eth_table_block_addr_with_suffix{"Ta
 
 XINLINE_CONSTEXPR char const * sys_contract_relay_table_block_base_addr{"Ta0005"};
 XINLINE_CONSTEXPR char const * sys_contract_relay_table_block_addr{"Ta0005@0"};
+XINLINE_CONSTEXPR char const * sys_contract_relay_block_base_addr{"Tb0005"};
 XINLINE_CONSTEXPR char const * sys_contract_relay_block_addr{"Tb0005@0"};
 
 XINLINE_CONSTEXPR char const * sys_contract_evm_erc20_addr{ "T60004ff00000000000000000000000000000000000001" };
