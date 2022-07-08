@@ -685,7 +685,7 @@ bool    xrelay_block::build_finish()
     make_block_merkle_root_hash();
     m_header.make_inner_hash();
     make_block_hash();
-    xrelay_block_store::get_instance().save_block_hash_to_store_cache(*this);
+    //xrelay_block_store::get_instance().save_block_hash_to_store_cache(*this);
     return true;
 }
 
@@ -697,11 +697,7 @@ void xrelay_block::set_header(xrelay_block_header &block_hedaer)
 }
 
 
-void  xrelay_block::save_block_trie()
-{
-   // xrelay_block_store::get_instance().save_block_merkle_tree( m_header.m_block_hash, m_block_merkle_tree);
-  //  xrelay_block_store::get_instance().save_block_ordinal_block_hash(m_block_merkle_tree.size(),  m_header.m_block_hash);
-}
+
 
 xbytes_t xrelay_block::streamRLP_header_to_contract()
 {
