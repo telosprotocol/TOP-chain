@@ -36,6 +36,8 @@ XINLINE_CONSTEXPR char const * g_eth_bridge_whitelist =
 XINLINE_CONSTEXPR char const * g_eth_bridge_whitelist =
     R"T(
 {
+    "whitelist": [
+    ]
 }
 )T";
 
@@ -44,6 +46,8 @@ XINLINE_CONSTEXPR char const * g_eth_bridge_whitelist =
 XINLINE_CONSTEXPR char const * g_eth_bridge_whitelist =
     R"T(
 {
+    "whitelist": [
+    ]
 }
 )T";
 
@@ -52,6 +56,8 @@ XINLINE_CONSTEXPR char const * g_eth_bridge_whitelist =
 XINLINE_CONSTEXPR char const * g_eth_bridge_whitelist =
     R"T(
 {
+    "whitelist": [
+    ]
 }
 )T";
 
