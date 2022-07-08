@@ -379,6 +379,7 @@ bool xtop_evm_eth_bridge_contract::sync(const xbytes_t & rlp_bytes) {
             xwarn("[xtop_evm_eth_bridge_contract::sync] verifyEip1559Header failed, new: %lu, old: %lu", header.gasLimit(), parentHeader.gasLimit());
             return false;
         }
+#if !defined(XBUILD_DEV) && !defined(XBUILD_CI) && !defined(XBUILD_BOUNTY) && !defined(XBUILD_GALILEO)
         // step 6: verify difficulty
         bigint diff = ethash::xethash_t::instance().calc_difficulty(header.time(), parentHeader);
         if (diff != header.difficulty()) {
@@ -390,6 +391,7 @@ bool xtop_evm_eth_bridge_contract::sync(const xbytes_t & rlp_bytes) {
             xwarn("[xtop_evm_eth_bridge_contract::sync] ethash verify failed, header: %s", header.hash().hex().c_str());
             return false;
         }
+#endif
         // step 8: set header
         bigint newSumOfDifficult = preSumOfDifficult + header.difficulty();
         if (!set_header(header, newSumOfDifficult)) {
