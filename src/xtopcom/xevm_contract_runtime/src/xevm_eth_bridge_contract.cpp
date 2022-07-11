@@ -459,8 +459,17 @@ bool xtop_evm_eth_bridge_contract::is_confirmed(const u256 height, const xbytes_
         xwarn("[xtop_evm_eth_bridge_contract::is_confirmed] get hash failed");
         return false;
     }
-    if (origin_hash != hash) {
-        xwarn("[xtop_evm_eth_bridge_contract::is_confirmed] hash cmp failed, %s, %s", hash.hex().c_str(), origin_hash.hex().c_str());
+    if (hash != origin_hash) {
+        xwarn("[xtop_evm_eth_bridge_contract::is_confirmed] hash mismatch: %s, %s", hash.hex().c_str(), origin_hash.hex().c_str());
+        return false;
+    }
+    bigint cur_height{0};
+    if (!get_height(cur_height)) {
+        xwarn("[xtop_evm_eth_bridge_contract::is_confirmed] get current height failed, height");
+        return false;
+    }
+    if (cur_height < height + ConfirmHeight) {
+        xwarn("[xtop_evm_eth_bridge_contract::is_confirmed] height not confirmed: %s, %s, limit: %d", cur_height.str().c_str(), height.str().c_str(), ConfirmHeight);
         return false;
     }
 
