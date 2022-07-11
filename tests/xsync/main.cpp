@@ -2,7 +2,7 @@
 #include "xbase/xhash.h"
 #include "xutility/xhash.h"
 #include "xbase/xlog.h"
-#include "xdata/xrootblock.h"
+#include "xblock/xrootblock.h"
 
 class xhashtest_t : public top::base::xhashplugin_t
 {

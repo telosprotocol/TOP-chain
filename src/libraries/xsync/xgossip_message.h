@@ -9,7 +9,7 @@
 #include "xvnetwork/xmessage.h"
 #include "xbasic/xbyte_buffer.h"
 #include "xdata/xdata_common.h"
-#include "xdata/xblock.h"
+#include "xblock/xblock.h"
 
 NS_BEG2(top, sync)
 

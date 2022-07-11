@@ -8,7 +8,7 @@
 #include <unordered_map>
 
 #include "xconfig/xconfig_face.h"
-#include "xdata/xrootblock.h"
+#include "xblock/xrootblock.h"
 
 NS_BEG2(top, loader)
 

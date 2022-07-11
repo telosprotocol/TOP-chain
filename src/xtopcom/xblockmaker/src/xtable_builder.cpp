@@ -7,11 +7,11 @@
 #include "xblockmaker/xtable_builder.h"
 #include "xblockmaker/xblockmaker_error.h"
 #include "xblockmaker/xfulltable_statistics.h"
-#include "xdata/xemptyblock.h"
-#include "xdata/xtableblock.h"
-#include "xdata/xfull_tableblock.h"
-#include "xdata/xblocktool.h"
-#include "xdata/xtable_bstate.h"
+#include "xblock/xemptyblock.h"
+#include "xblock/xtableblock.h"
+#include "xblock/xfull_tableblock.h"
+#include "xblock/xblocktool.h"
+#include "xstatectx/xtable_bstate.h"
 
 NS_BEG2(top, blockmaker)
 

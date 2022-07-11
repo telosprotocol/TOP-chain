@@ -6,7 +6,7 @@
 
 #include "xbasic/xutility.h"
 #include "xcontract_runtime/xblock_sniff_config.h"
-#include "xdata/xfull_tableblock.h"
+#include "xblock/xfull_tableblock.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xtx_factory.h"

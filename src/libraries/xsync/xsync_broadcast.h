@@ -7,7 +7,7 @@
 #include <mutex>
 #include <unordered_map>
 #include "xsync/xsync_sender.h"
-#include "xdata/xblock.h"
+#include "xblock/xblock.h"
 #include "xsync/xrole_xips_manager.h"
 #include "xsync/xsync_peerset.h"
 

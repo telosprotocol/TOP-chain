@@ -22,9 +22,9 @@
 #include "xmbus/xevent_blockfetcher.h"
 #include "xbasic/xutility.h"
 #include "xsyncbase/xmessage_ids.h"
-#include "xdata/xblock.h"
-#include "xdata/xfull_tableblock.h"
-#include "xdata/xtable_bstate.h"
+#include "xblock/xblock.h"
+#include "xblock/xfull_tableblock.h"
+#include "xstatectx/xtable_bstate.h"
 #include "xsync/xsync_prune.h"
 
 NS_BEG2(top, sync)

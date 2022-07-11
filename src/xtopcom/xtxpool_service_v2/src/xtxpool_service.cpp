@@ -6,8 +6,8 @@
 
 #include "xchain_fork/xchain_upgrade_center.h"
 #include "xcommon/xmessage_id.h"
-#include "xdata/xblocktool.h"
-#include "xdata/xtableblock.h"
+#include "xblock/xblocktool.h"
+#include "xblock/xtableblock.h"
 #include "xmbus/xevent_behind.h"
 #include "xmetrics/xmetrics.h"
 #include "xtxpool_service_v2/xreceipt_strategy.h"

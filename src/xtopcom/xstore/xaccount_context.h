@@ -16,7 +16,7 @@
 #include "xcommon/xlogic_time.h"
 #include "xdata/xaction_parse.h"
 #include "xdata/xproperty.h"
-#include "xdata/xlightunit.h"
+#include "xblock/xlightunit.h"
 #include "xstore/xstore.h"
 #include "xevm_common/common.h"
 

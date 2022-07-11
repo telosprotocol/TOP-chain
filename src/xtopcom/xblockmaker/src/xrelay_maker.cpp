@@ -6,7 +6,7 @@
 #include "xblockmaker/xblock_maker_para.h"
 #include "xblockmaker/xblockmaker_error.h"
 #include "xblockmaker/xrelay_proposal_maker.h"
-#include "xdata/xblocktool.h"
+#include "xblock/xblocktool.h"
 #include "xmbus/xevent_behind.h"
 #include "xblockmaker/xtable_builder.h"
 #include "xbase/xcontext.h"

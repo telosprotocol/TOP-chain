@@ -4,7 +4,7 @@
 #include "xcontract_common/xproperties/xproperty_identifier.h"
 
 #include "xbasic/xmemory.hpp"
-#include "xdata/xblocktool.h"
+#include "xblock/xblocktool.h"
 #include "xstore/xstore.h"
 #include "xstore/xstore_face.h"
 

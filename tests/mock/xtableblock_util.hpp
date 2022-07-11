@@ -1,8 +1,8 @@
 #pragma once
 
-#include "xdata/xblock.h"
-#include "xdata/xtableblock.h"
-#include "xdata/xblocktool.h"
+#include "xblock/xblock.h"
+#include "xblock/xtableblock.h"
+#include "xblock/xblocktool.h"
 #include "tests/mock/xcertauth_util.hpp"
 
 namespace top {

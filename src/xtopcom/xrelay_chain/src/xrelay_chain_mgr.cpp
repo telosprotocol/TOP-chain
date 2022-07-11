@@ -4,8 +4,8 @@
 
 #include "xrelay_chain/xrelay_chain_mgr.h"
 
-#include "xdata/xblockbuild.h"
-#include "xdata/xblockextract.h"
+#include "xblock/xblockbuild.h"
+#include "xblock/xblockextract.h"
 #include "xdata/xelection/xelection_result_property.h"
 #include "xdata/xnative_contract_address.h"
 #include "xmbus/xbase_sync_event_monitor.hpp"

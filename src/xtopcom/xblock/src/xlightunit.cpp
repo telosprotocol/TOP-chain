@@ -8,11 +8,11 @@
 #include "xbase/xatom.h"
 #include "xvledger/xvblockbuild.h"
 #include "xdata/xdatautil.h"
-#include "xdata/xlightunit.h"
+#include "xblock/xlightunit.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xaction_parse.h"
-#include "xdata/xrootblock.h"
-#include "xdata/xblockbuild.h"
+#include "xblock/xrootblock.h"
+#include "xblock/xblockbuild.h"
 #include "xvledger/xvledger.h"
 
 NS_BEG2(top, data)

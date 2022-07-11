@@ -5,7 +5,7 @@
 
 #include "gtest/gtest.h"
 #include "xbase/xlog.h"
-#include "xdata/xrootblock.h"
+#include "xblock/xrootblock.h"
 #include "xmetrics/xmetrics.h"
 
 using namespace std;

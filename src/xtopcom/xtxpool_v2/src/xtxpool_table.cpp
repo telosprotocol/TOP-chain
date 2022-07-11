@@ -5,9 +5,9 @@
 #include "xtxpool_v2/xtxpool_table.h"
 
 #include "xbasic/xmodule_type.h"
-#include "xdata/xblocktool.h"
-#include "xdata/xlightunit.h"
-#include "xdata/xtable_bstate.h"
+#include "xblock/xblocktool.h"
+#include "xblock/xlightunit.h"
+#include "xstatectx/xtable_bstate.h"
 #include "xmbus/xevent_behind.h"
 #include "xtxpool_v2/xnon_ready_account.h"
 #include "xtxpool_v2/xtxpool_error.h"

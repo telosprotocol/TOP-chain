@@ -4,7 +4,7 @@
 #include "xbasic/xrunnable.h"
 #include "xcommon/xmessage_category.h"
 #include "xcommon/xsharding_info.h"
-#include "xdata/xelect_transaction.hpp"
+#include "xblock/xelect_transaction.hpp"
 #include "xnetwork/xmessage_transmission_property.h"
 #include "xnetwork/xnode.h"
 #include "xvnetwork/xaddress.h"

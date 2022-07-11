@@ -3,9 +3,9 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xvledger/xvblock.h"
-#include "xdata/xrootblock.h"
-#include "xdata/xblock.h"
-#include "xdata/xblocktool.h"
+#include "xblock/xrootblock.h"
+#include "xblock/xblock.h"
+#include "xblock/xblocktool.h"
 #include "xunit_service/xtimer_block_maker.h"
 
 NS_BEG2(top, xunit_service)

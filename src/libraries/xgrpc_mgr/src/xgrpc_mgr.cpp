@@ -7,7 +7,7 @@
 #include "xgrpcservice/xgrpc_service.h"
 #include "xmbus/xevent_store.h"
 #include "xrpc/xrpc_query_manager.h"
-#include "xdata/xblocktool.h"
+#include "xblock/xblocktool.h"
 
 NS_BEG2(top, grpcmgr)
 

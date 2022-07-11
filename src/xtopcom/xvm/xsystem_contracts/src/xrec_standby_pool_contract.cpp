@@ -20,7 +20,7 @@
 #include "xdata/xelection/xv0/xstandby_node_info.h"
 #include "xdata/xelection/xv1/xstandby_result_store.h"
 #include "xdata/xnative_contract_address.h"
-#include "xdata/xrootblock.h"
+#include "xblock/xrootblock.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
 #include "xvm/xserialization/xserialization.h"
 

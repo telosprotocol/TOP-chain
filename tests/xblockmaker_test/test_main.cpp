@@ -4,7 +4,7 @@
 #include "xbase/xhash.h"
 #include "xblockstore/xblockstore_face.h"
 #include "xutility/xhash.h"
-#include "xdata/xrootblock.h"
+#include "xblock/xrootblock.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xmetrics/xmetrics.h"

@@ -219,7 +219,8 @@ impl<'env, 'bridge, I: IO + Copy, E: Env, CBridge: ContractBridge>
 
         {
             let contract_bridge = &self.contract_bridge;
-            contract_bridge.engine_return(self as *const Engine<'env, 'bridge, I, E, CBridge> as u64);
+            contract_bridge
+                .engine_return(self as *const Engine<'env, 'bridge, I, E, CBridge> as u64);
             contract_bridge.executor_return(executor_ptr as u64);
         }
 

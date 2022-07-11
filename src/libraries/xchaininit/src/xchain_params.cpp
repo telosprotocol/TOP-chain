@@ -14,7 +14,7 @@
 #include "xpbase/base/top_log.h"
 #include "xpbase/base/top_utils.h"
 #include "xconfig/xconfig_register.h"
-#include "xdata/xelect_transaction.hpp"
+#include "xblock/xelect_transaction.hpp"
 #include "xdata/xgenesis_data.h"
 
 

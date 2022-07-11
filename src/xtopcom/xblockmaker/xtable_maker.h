@@ -9,8 +9,8 @@
 #include <vector>
 #include <mutex>
 #include "xdata/xethheader.h"
-#include "xdata/xtableblock.h"
-#include "xdata/xfull_tableblock.h"
+#include "xblock/xtableblock.h"
+#include "xblock/xfull_tableblock.h"
 #include "xblockmaker/xblock_maker_para.h"
 #include "xblockmaker/xblockmaker_face.h"
 #include "xtxexecutor/xatomictx_executor.h"

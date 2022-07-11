@@ -7,7 +7,7 @@
 #include <gtest/gtest.h>
 #include "xdata/xchain_param.h"
 #include "xconfig/xconfig_register.h"
-#include "xdata/xblocktool.h"
+#include "xblock/xblocktool.h"
 #include "xmock_system.h"
 #include "../../xblockstore_test/test_blockmock.hpp"
 #include "../../mock/xtableblock_util.hpp"

@@ -5,7 +5,7 @@
 #pragma once
 
 #include "xdata/xfulltableblock_account_data.h"
-#include "xdata/xfull_tableblock.h"
+#include "xblock/xfull_tableblock.h"
 #include "xvledger/xvcnode.h"
 
 NS_BEG3(top, vnode, components)

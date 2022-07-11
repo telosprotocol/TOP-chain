@@ -2,7 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xdata/xunit_bstate.h"
+#include "xstatectx/xunit_bstate.h"
 
 #include "xbase/xint.h"
 #include "xbase/xmem.h"
@@ -18,7 +18,7 @@
 #include "xdata/xdata_common.h"
 #include "xdata/xdata_error.h"
 #include "xdata/xerror/xerror.h"
-#include "xdata/xfullunit.h"
+#include "xblock/xfullunit.h"
 #include "xdata/xgenesis_data.h"
 #include "xevm/xevm.h"
 #include "xevm_common/fixed_hash.h"

@@ -6,8 +6,8 @@
 #include "xbase/xutl.h"
 // TODO(jimmy) #include "xbase/xvledger.h"
 #include "xbasic/xutility.h"
-#include "xdata/xfull_tableblock.h"
-#include "xdata/xrootblock.h"
+#include "xblock/xfull_tableblock.h"
+#include "xblock/xrootblock.h"
 
 NS_BEG2(top, data)
 

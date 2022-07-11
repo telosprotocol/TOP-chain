@@ -7,9 +7,9 @@
 #include "xbase/xcontext.h"
 
 #include "xdata/xdatautil.h"
-#include "xdata/xemptyblock.h"
-#include "xdata/xblocktool.h"
-#include "xdata/xlightunit.h"
+#include "xblock/xemptyblock.h"
+#include "xblock/xblocktool.h"
+#include "xblock/xlightunit.h"
 #include "xmbus/xevent_store.h"
 #include "xmbus/xmessage_bus.h"
 

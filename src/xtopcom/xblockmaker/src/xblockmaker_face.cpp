@@ -3,8 +3,8 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <string>
-#include "xdata/xblock.h"
-#include "xdata/xblocktool.h"
+#include "xblock/xblock.h"
+#include "xblock/xblocktool.h"
 #include "xdata/xcons_transaction.h"
 #include "xblockmaker/xblockmaker_face.h"
 #include "xmetrics/xmetrics.h"

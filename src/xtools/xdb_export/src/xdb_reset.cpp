@@ -4,7 +4,7 @@
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xproperty.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
-#include "xdata/xunit_bstate.h"
+#include "xstatectx/xunit_bstate.h"
 #include "xvledger/xvledger.h"
 
 #include <fstream>

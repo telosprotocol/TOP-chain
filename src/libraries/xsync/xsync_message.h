@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 #include "xdata/xdata_common.h"
-#include "xdata/xblock.h"
+#include "xblock/xblock.h"
 #include "xdata/xtransaction.h"
 #include "xbase/xint.h"
 #include "xbase/xmem.h"

@@ -10,8 +10,8 @@
 #include "xvledger/xvblock.h"
 #include "xvledger/xvblockstore.h"
 #include "xvledger/xvstatestore.h"
-#include "xdata/xtable_bstate.h"
-#include "xdata/xunit_bstate.h"
+#include "xstatectx/xtable_bstate.h"
+#include "xstatectx/xunit_bstate.h"
 
 NS_BEG2(top, statectx)
 

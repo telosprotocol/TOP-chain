@@ -11,7 +11,7 @@
 // TODO(jimmy) #include "xbase/xvledger.h"
 #include "xdata/xdata_common.h"
 #include "xdata/xdatautil.h"
-#include "xdata/xblock.h"
+#include "xblock/xblock.h"
 #include "xdata/xrelay_block.h"
 
 NS_BEG2(top, data)

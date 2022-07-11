@@ -2,7 +2,7 @@
 #include "test_xtxpool_util.h"
 #include "tests/mock/xdatamock_table.hpp"
 #include "tests/mock/xvchain_creator.hpp"
-#include "xdata/xlightunit.h"
+#include "xblock/xlightunit.h"
 #include "xtxpool_v2/xtxmgr_table.h"
 #include "xtxpool_v2/xtxpool_error.h"
 #include "xverifier/xverifier_utl.h"

@@ -10,7 +10,7 @@
 #include "xdbmigrate.h"
 #include "xblockdb_v2.h"
 #include "xvledger/xvledger.h"
-#include "xdata/xblocktool.h"
+#include "xblock/xblocktool.h"
 #include "xdata/xnative_contract_address.h"
 
 namespace top

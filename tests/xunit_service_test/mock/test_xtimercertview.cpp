@@ -10,7 +10,7 @@
 #include "xcrypto/xckey.h"
 #include "xcertauth/xcertauth_face.h"
 #include "xBFT/test/common/xunitblock.hpp"
-#include "xdata/xemptyblock.h"
+#include "xblock/xemptyblock.h"
 #include "xunit_service/xcons_utl.h"
 #include "../../mock/xmock_auth.hpp"
 #include "../../mock/xmock_network.hpp"

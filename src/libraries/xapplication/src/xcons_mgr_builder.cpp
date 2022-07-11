@@ -6,7 +6,7 @@
 
 #include "xblockstore/xblockstore_face.h"
 #include "xcertauth/xcertauth_face.h"
-#include "xdata/xblocktool.h"
+#include "xblock/xblocktool.h"
 #include "xstore/xstore.h"
 #include "xblockmaker/xproposal_maker_mgr.h"
 #include "xtxpool_v2/xtxpool_face.h"

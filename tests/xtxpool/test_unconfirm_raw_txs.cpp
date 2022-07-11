@@ -2,7 +2,7 @@
 #include "test_xtxpool_util.h"
 #include "tests/mock/xdatamock_table.hpp"
 #include "tests/mock/xvchain_creator.hpp"
-#include "xdata/xlightunit.h"
+#include "xblock/xlightunit.h"
 #include "xtxpool_v2/xunconfirm_raw_txs.h"
 
 using namespace top::xtxpool_v2;

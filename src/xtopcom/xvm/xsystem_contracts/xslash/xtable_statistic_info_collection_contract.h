@@ -5,7 +5,7 @@
 #pragma once
 
 #include "xcommon/xlogic_time.h"
-#include "xdata/xfull_tableblock.h"
+#include "xblock/xfull_tableblock.h"
 #include "xdata/xfulltableblock_account_data.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
 #include "xvledger/xvcnode.h"

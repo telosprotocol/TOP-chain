@@ -21,11 +21,11 @@
 #include "xdata/xelection/xelection_result_property.h"
 #include "xdata/xelection/xelection_result_store.h"
 #include "xdata/xelection/xstandby_result_store.h"
-#include "xdata/xfull_tableblock.h"
+#include "xblock/xfull_tableblock.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xproposal_data.h"
-#include "xdata/xtable_bstate.h"
-#include "xdata/xtableblock.h"
+#include "xstatectx/xtable_bstate.h"
+#include "xblock/xtableblock.h"
 #include "xdata/xtransaction_cache.h"
 #include "xrouter/xrouter.h"
 #include "xrpc/xuint_format.h"
@@ -38,7 +38,7 @@
 #include "xvm/manager/xcontract_address_map.h"
 #include "xvm/manager/xcontract_manager.h"
 #include "xmbus/xevent_behind.h"
-#include "xdata/xblocktool.h"
+#include "xblock/xblocktool.h"
 
 #include <cstdint>
 #include <iostream>

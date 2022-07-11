@@ -4,10 +4,10 @@
 #include <vector>
 #include <map>
 #include "xdata/xblock_cs_para.h"
-#include "xdata/xblock.h"
-#include "xdata/xtableblock.h"
-#include "xdata/xblocktool.h"
-#include "xdata/xblockbuild.h"
+#include "xblock/xblock.h"
+#include "xblock/xtableblock.h"
+#include "xblock/xblocktool.h"
+#include "xblock/xblockbuild.h"
 #include "xdata/xcons_transaction.h"
 #include "xstore/xstore_face.h"
 #include "xblockmaker/xtable_builder.h"

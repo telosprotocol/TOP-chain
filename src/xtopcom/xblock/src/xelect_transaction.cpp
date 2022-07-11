@@ -2,7 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xdata/xelect_transaction.hpp"
+#include "xblock/xelect_transaction.hpp"
 
 NS_BEG2(top, data)
 

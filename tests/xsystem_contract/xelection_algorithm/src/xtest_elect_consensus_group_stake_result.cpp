@@ -4,7 +4,7 @@
 
 #include "tests/xsystem_contract/xelection_algorithm/xtest_elect_group_contract_fixture.h"
 #include "xconfig/xconfig_register.h"
-#include "xdata/xelect_transaction.hpp"
+#include "xblock/xelect_transaction.hpp"
 
 NS_BEG3(top,tests,election)
 

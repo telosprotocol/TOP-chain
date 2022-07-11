@@ -4,7 +4,7 @@
 
 #include "tests/xsystem_contract/xelect_contract/xtest_zec_elect_consensus_contract.h"
 #include "xconfig/xconfig_register.h"
-#include "xdata/xelect_transaction.hpp"
+#include "xblock/xelect_transaction.hpp"
 
 NS_BEG3(top, tests, election)
 

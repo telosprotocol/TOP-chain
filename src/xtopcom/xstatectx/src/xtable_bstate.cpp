@@ -2,9 +2,11 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <string>
+#include "xstatectx/xtable_bstate.h"
+
 #include "xbasic/xmodule_type.h"
-#include "xdata/xtable_bstate.h"
+
+#include <string>
 
 NS_BEG2(top, data)
 

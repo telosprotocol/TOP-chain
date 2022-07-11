@@ -11,10 +11,10 @@
 #include "xbase/xobject_ptr.h"
 #include "xvledger/xdataobj_base.hpp"
 #include "xdata/xblock_paras.h"
-#include "xdata/xblock.h"
+#include "xblock/xblock.h"
 #include "xvledger/xaccountindex.h"
 #include "xdata/xblock_statistics_data.h"
-#include "xdata/xunit_bstate.h"
+#include "xstatectx/xunit_bstate.h"
 
 NS_BEG2(top, data)
 

@@ -4,7 +4,7 @@
 
 #include "xtxpool_service_v2/xreceipt_strategy.h"
 
-#include "xdata/xtableblock.h"
+#include "xblock/xtableblock.h"
 NS_BEG2(top, xtxpool_service_v2)
 
 #define refresh_table_interval (64)             // every 64 seconds refresh table.

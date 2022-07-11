@@ -11,7 +11,7 @@
 #include "xtxexecutor/xunit_service_error.h"
 #include "xtxexecutor/xvm_face.h"
 #include "xtxexecutor/xaccount_vm.h"
-#include "xdata/xblockbuild.h"
+#include "xblock/xblockbuild.h"
 
 NS_BEG2(top, txexecutor)
 

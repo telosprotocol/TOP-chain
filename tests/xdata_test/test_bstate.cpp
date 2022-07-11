@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 #include "xdata/xtransaction_v2.h"
 #include "xdata/xtransaction_v1.h"
-#include "xdata/xbstate_ctx.h"
+#include "xstatectx/xbstate_ctx.h"
 #include "xconfig/xconfig_register.h"
 #include "xbase/xmem.h"
 #include "xbasic/xhex.h"

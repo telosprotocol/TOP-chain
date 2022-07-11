@@ -14,12 +14,12 @@
 #include "xbase/xobject_ptr.h"
 #include "xbasic/xutility.h"
 #include "xcommon/xsharding_info.h"
-#include "xdata/xblock.h"
+#include "xblock/xblock.h"
 #include "xdata/xchain_param.h"
 #include "xdata/xdatautil.h"
-#include "xdata/xelect_transaction.hpp"
+#include "xblock/xelect_transaction.hpp"
 #include "xdata/xgenesis_data.h"
-#include "xdata/xblocktool.h"
+#include "xblock/xblocktool.h"
 #include "xcrypto/xckey.h"
 
 namespace top { namespace data {
@@ -106,7 +106,7 @@ base::xtable_index_t account_map_to_table_id(common::xaccount_address_t const & 
 
 std::string account_address_to_block_address(common::xaccount_address_t const & addr) {
     base::xtable_index_t tableid = account_map_to_table_id(addr);
-    return xblocktool_t::make_address_table_account(tableid.get_zone_index(), tableid.get_subaddr());
+    return base::xvaccount_t::make_table_account_address(tableid.get_zone_index(), tableid.get_subaddr());
 }
 
 bool is_table_address(common::xaccount_address_t const & addr) {

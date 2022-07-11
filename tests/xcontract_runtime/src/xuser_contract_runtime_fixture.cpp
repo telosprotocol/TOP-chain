@@ -2,7 +2,7 @@
 #include "tests/xcontract_runtime/xuser_contract_runtime_fixture.h"
 
 #include "xbasic/xmemory.hpp"
-#include "xdata/xblocktool.h"
+#include "xblock/xblocktool.h"
 #include "xcontract_common/xcontract_state.h"
 
 NS_BEG3(top, tests, contract_runtime)

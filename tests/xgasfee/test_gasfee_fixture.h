@@ -11,8 +11,8 @@
 
 #define private public
 #include "xconfig/xconfig_register.h"
-#include "xdata/xblockbuild.h"
-#include "xdata/xtable_bstate.h"
+#include "xblock/xblockbuild.h"
+#include "xstatectx/xtable_bstate.h"
 #include "xdata/xtransaction.h"
 #include "xdata/xtransaction_v2.h"
 #include "xdata/xtransaction_v3.h"

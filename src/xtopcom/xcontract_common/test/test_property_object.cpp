@@ -10,7 +10,7 @@
 #    pragma warning(push, 0)
 #endif
 
-#include "xdata/xblocktool.h"
+#include "xblock/xblocktool.h"
 #include "xbasic/xmemory.hpp"
 #include "xcontract_common/xbasic_contract.h"
 #include "xcontract_common/xcontract_state_fwd.h"

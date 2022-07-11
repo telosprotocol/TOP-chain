@@ -9,8 +9,8 @@
 #include "xvledger/xaccountindex.h"
 #include "xvledger/xvblockbuild.h"
 #include "xvledger/xvledger.h"
-#include "xdata/xunit_bstate.h"
-#include "xdata/xblocktool.h"
+#include "xstatectx/xunit_bstate.h"
+#include "xblock/xblocktool.h"
 #include "xstatectx/xstatectx_base.h"
 
 NS_BEG2(top, statectx)

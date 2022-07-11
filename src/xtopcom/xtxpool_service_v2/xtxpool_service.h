@@ -8,7 +8,7 @@
 #include "xbasic/xmemory.hpp"
 #include "xbasic/xserialize_face.h"
 #include "xchain_timer/xchain_timer_face.h"
-#include "xdata/xblock.h"
+#include "xblock/xblock.h"
 #include "xdata/xtransaction.h"
 #include "xtxpool_service_v2/xcons_utl.h"
 #include "xtxpool_service_v2/xreceipt_sync.h"

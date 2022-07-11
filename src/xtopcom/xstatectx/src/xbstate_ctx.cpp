@@ -2,16 +2,18 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xdata/xbstate_ctx.h"
+#include "xstatectx/xbstate_ctx.h"
 
 #include "xbase/xobject.h"
 #include "xbasic/xbyte_buffer.h"
 #include "xbasic/xhex.h"
+#include "xcommon/xeth_address.h"
 #include "xdata/xdata_error.h"
 #include "xdata/xproperty.h"
 #include "xevm_common/fixed_hash.h"
 #include "xevm_common/rlp.h"
 #include "xevm_runner/evm_engine_interface.h"
+#include "xevm_runner/evm_import_instance.h"
 #include "xvledger/xvproperty.h"
 #include "xvledger/xvpropertyrules.h"
 

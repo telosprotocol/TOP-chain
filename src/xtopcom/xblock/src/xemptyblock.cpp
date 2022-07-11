@@ -6,8 +6,8 @@
 #include "xvledger/xvblock.h"
 #include "xdata/xdata_common.h"
 #include "xdata/xdatautil.h"
-#include "xdata/xemptyblock.h"
-#include "xdata/xrootblock.h"
+#include "xblock/xemptyblock.h"
+#include "xblock/xrootblock.h"
 
 NS_BEG2(top, data)
 

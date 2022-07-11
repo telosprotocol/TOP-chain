@@ -2,7 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xdata/xrootblock.h"
+#include "xblock/xrootblock.h"
 
 #include "xvledger/xvblock.h"
 #include "xvledger/xvstate.h"
@@ -10,7 +10,7 @@
 #include "xdata/xdata_common.h"
 #include "xdata/xdatautil.h"
 #include "xdata/xnative_contract_address.h"
-#include "xdata/xblocktool.h"
+#include "xblock/xblocktool.h"
 #include "xconfig/xpredefined_configurations.h"
 
 #include <stdexcept>

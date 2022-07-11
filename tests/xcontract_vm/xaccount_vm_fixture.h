@@ -5,7 +5,7 @@
 
 #include "tests/mock/xvchain_creator.hpp"
 #include "xbase/xutl.h"
-#include "xdata/xblock.h"
+#include "xblock/xblock.h"
 #include "xsystem_contract_runtime/xsystem_contract_manager.h"
 #include "xvledger/xvblockstore.h"
 

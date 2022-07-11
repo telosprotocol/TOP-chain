@@ -8,7 +8,7 @@
 #include "xbasic/xmemory.hpp"
 #include "xvledger/xvstate.h"
 #include "xvledger/xvblock.h"
-#include "xdata/xtable_bstate.h"
+#include "xstatectx/xtable_bstate.h"
 
 NS_BEG2(top, statectx)
 

@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "xdata/xemptyblock.h"
+#include "xblock/xemptyblock.h"
 #include "xunit_service/xcons_face.h"
 #include "xunit_service/xcons_utl.h"
 

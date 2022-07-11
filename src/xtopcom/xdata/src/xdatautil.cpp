@@ -12,7 +12,7 @@
 #include "xbase/xutl.h"
 // TODO(jimmy) #include "xbase/xvledger.h"
 #include "xdata/xdatautil.h"
-#include "xdata/xblock.h"
+#include "xblock/xblock.h"
 #include "xdata/xnative_contract_address.h"
 
 namespace top { namespace data {

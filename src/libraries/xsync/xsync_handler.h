@@ -13,7 +13,7 @@
 #include "xmbus/xmessage_bus.h"
 #include "xsync/xsync_message.h"
 #include "xdata/xdatautil.h"
-#include "xdata/xblock.h"
+#include "xblock/xblock.h"
 // TODO(jimmy) #include "xbase/xvledger.h"
 #include "xsync/xsession.h"
 #include "xsync/xrole_chains_mgr.h"

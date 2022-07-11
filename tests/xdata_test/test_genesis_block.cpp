@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 #include "xdata/xtx_factory.h"
-#include "xdata/xblocktool.h"
-#include "xdata/xrootblock.h"
+#include "xblock/xblocktool.h"
+#include "xblock/xrootblock.h"
 
 using namespace top;
 using namespace top::base;

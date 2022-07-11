@@ -15,7 +15,7 @@
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xproperty.h"
-#include "xdata/xrootblock.h"
+#include "xblock/xrootblock.h"
 #include "xmetrics/xmetrics.h"
 #include "xstore/xstore_error.h"
 

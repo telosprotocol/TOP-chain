@@ -10,7 +10,7 @@
 #include "xdata/xrelay_block_store.h"
 #include "xdata/xnative_contract_address.h"
 #include "xvledger/xvledger.h"
-#include "xdata/xblockextract.h"
+#include "xblock/xblockextract.h"
 
 NS_BEG2(top, data)
 

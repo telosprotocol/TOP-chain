@@ -5,9 +5,9 @@
 #pragma once
 
 #include "xbasic/xmemory.hpp"
-#include "xdata/xblock.h"
+#include "xblock/xblock.h"
 #include "xdata/xcons_transaction.h"
-#include "xdata/xblock.h"
+#include "xblock/xblock.h"
 NS_BEG2(top, xtxpool_service_v2)
 
 #define block_clock_height_fall_behind_max (30)

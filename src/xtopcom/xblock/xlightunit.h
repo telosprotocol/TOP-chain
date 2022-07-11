@@ -9,7 +9,7 @@
 #include <map>
 #include "xvledger/xdataobj_base.hpp"
 #include "xvledger/xvtxindex.h"
-#include "xdata/xblock.h"
+#include "xblock/xblock.h"
 #include "xdata/xcons_transaction.h"
 #include "xdata/xlightunit_info.h"
 

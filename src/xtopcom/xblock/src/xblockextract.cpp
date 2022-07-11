@@ -2,14 +2,16 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <string>
-#include "xdata/xblockextract.h"
-#include "xdata/xblockbuild.h"
+#include "xblock/xblockextract.h"
+
+#include "xblock/xblockbuild.h"
 #include "xbase/xutl.h"
 #include "xcommon/xerror/xerror.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xconfig/xconfig_register.h"
 #include "xpbase/base/top_utils.h"
+
+#include <string>
 
 NS_BEG2(top, data)
 

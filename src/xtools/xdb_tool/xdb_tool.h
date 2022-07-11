@@ -1,5 +1,5 @@
 #include <string>
-#include "xdata/xfull_tableblock.h"
+#include "xblock/xfull_tableblock.h"
 #include "xstore/xstore_face.h"
 #include "xcertauth/src/xsigndata.h"
 

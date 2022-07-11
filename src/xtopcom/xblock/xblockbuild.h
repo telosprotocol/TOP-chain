@@ -6,12 +6,12 @@
 
 #include <string>
 #include "xvledger/xvblockbuild.h"
-#include "xdata/xlightunit.h"
-#include "xdata/xfullunit.h"
-#include "xdata/xfull_tableblock.h"
-#include "xdata/xtableblock.h"
-#include "xdata/xrootblock.h"
-#include "xdata/xblock.h"
+#include "xblock/xlightunit.h"
+#include "xblock/xfullunit.h"
+#include "xblock/xfull_tableblock.h"
+#include "xblock/xtableblock.h"
+#include "xblock/xrootblock.h"
+#include "xblock/xblock.h"
 #include "xdata/xblock_cs_para.h"
 
 NS_BEG2(top, data)

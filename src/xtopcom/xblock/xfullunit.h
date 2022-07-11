@@ -9,8 +9,8 @@
 #include "xvledger/xvblock.h"
 #include "xdata/xdata_common.h"
 #include "xdata/xdatautil.h"
-#include "xdata/xblock.h"
-#include "xdata/xlightunit.h"
+#include "xblock/xblock.h"
+#include "xblock/xlightunit.h"
 
 NS_BEG2(top, data)
 

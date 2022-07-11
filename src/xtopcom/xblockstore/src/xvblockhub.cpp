@@ -11,10 +11,10 @@
 #include "xvledger/xvdbkey.h"
 #include "xdata/xcheckpoint.h"
 #include "xdata/xrelay_block.h"
-#include "xdata/xblockextract.h"
+#include "xblock/xblockextract.h"
 #include "xvledger/xvtxindex.h"
 #include "xdata/xnative_contract_address.h"
-#include "xdata/xblocktool.h"
+#include "xblock/xblocktool.h"
 #include "xdata/xtop_relay_block.h"
 #include "xpbase/base/top_utils.h"
 

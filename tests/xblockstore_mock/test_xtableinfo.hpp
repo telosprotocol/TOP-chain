@@ -19,9 +19,9 @@
 // TODO(jimmy) #include "xbase/xvledger.h"
 
 #include "xdata/xdatautil.h"
-#include "xdata/xemptyblock.h"
-#include "xdata/xblocktool.h"
-#include "xdata/xlightunit.h"
+#include "xblock/xemptyblock.h"
+#include "xblock/xblocktool.h"
+#include "xblock/xlightunit.h"
 #include "xdata/tests/test_blockutl.hpp"
 #include "xdata/xtransaction_maker.hpp"
 

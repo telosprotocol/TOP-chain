@@ -9,7 +9,7 @@
 #include "xcontract_common/xserialization/xserialization.h"
 #include "xcontract_vm/xaccount_vm.h"
 #include "xcrypto/xckey.h"
-#include "xdata/xblocktool.h"
+#include "xblock/xblocktool.h"
 #include "xdata/xcodec/xmsgpack/xelection/xstandby_result_store_codec.hpp"
 #include "xdata/xelection/xstandby_result_store.h"
 #include "xdata/xnative_contract_address.h"

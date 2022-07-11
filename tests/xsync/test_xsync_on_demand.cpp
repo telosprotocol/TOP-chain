@@ -7,7 +7,7 @@
 #include "../mock/xmock_auth.hpp"
 #include "../mock/xmock_network_config.hpp"
 #include "../mock/xmock_network.hpp"
-#include "xdata/xblocktool.h"
+#include "xblock/xblocktool.h"
 #include "xdata/tests/test_blockutl.hpp"
 #include "xsync/xsync_util.h"
 #include "xmbus/xmessage_bus.h"

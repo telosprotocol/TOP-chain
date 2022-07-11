@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "xdata/xblock.h"
+#include "xblock/xblock.h"
 #include "xdata/xdata_common.h"
 #include "xvm/xcontract/xcontract_register.h"
 #include "xvm/xsystem_contracts/xelection/xelect_nonconsensus_group_contract.h"

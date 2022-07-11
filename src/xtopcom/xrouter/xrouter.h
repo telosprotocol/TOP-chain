@@ -6,7 +6,7 @@
 
 #include "xcommon/xip.h"
 #include "xcommon/xnode_id.h"
-#include "xdata/xelect_transaction.hpp"
+#include "xblock/xelect_transaction.hpp"
 #include "xrouter/xrouter_face.h"
 
 #include <cstdint>

@@ -2,14 +2,14 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <string>
-#include "xdata/xblockbuild.h"
-#include "xdata/xrootblock.h"
-#include "xdata/xemptyblock.h"
-#include "xdata/xlightunit.h"
-#include "xdata/xfullunit.h"
-#include "xdata/xtableblock.h"
-#include "xdata/xfull_tableblock.h"
+#include "xblock/xblockbuild.h"
+
+#include "xblock/xrootblock.h"
+#include "xblock/xemptyblock.h"
+#include "xblock/xlightunit.h"
+#include "xblock/xfullunit.h"
+#include "xblock/xtableblock.h"
+#include "xblock/xfull_tableblock.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xblockaction.h"
 #include "xvledger/xventity.h"
@@ -17,8 +17,10 @@
 #include "xvledger/xvcontract.h"
 #include "xvledger/xvblock_fork.h"
 #include "xdata/xtop_relay_block.h"
-#include "xdata/xblockextract.h"
+#include "xblock/xblockextract.h"
 #include "xpbase/base/top_utils.h"
+
+#include <string>
 
 NS_BEG2(top, data)
 

@@ -8,7 +8,7 @@
 #include <vector>
 #include "xvledger/xreceiptid.h"
 #include "xblockmaker/xblockmaker_face.h"
-#include "xdata/xlightunit.h"
+#include "xblock/xlightunit.h"
 #include "xtxexecutor/xtransaction_executor.h"
 
 NS_BEG2(top, blockmaker)

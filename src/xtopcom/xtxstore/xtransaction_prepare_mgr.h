@@ -6,7 +6,7 @@
 #include "xbase/xtimer.h"
 #include "xbasic/xmemory.hpp"
 #include "xbasic/xtimer_driver.h"
-#include "xdata/xblock.h"
+#include "xblock/xblock.h"
 #include "xdata/xtransaction_cache.h"
 #include "xmbus/xmessage_bus.h"
 

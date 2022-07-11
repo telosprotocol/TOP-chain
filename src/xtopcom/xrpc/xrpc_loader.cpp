@@ -2,7 +2,7 @@
 #include "xdata/xlightunit_info.h"
 #include "xdata/xtransaction.h"
 #include "xdata/xdatautil.h"
-#include "xdata/xblocktool.h"
+#include "xblock/xblocktool.h"
 #include "xvledger/xvledger.h"
 #include "xvledger/xvtxstore.h"
 #include "xrpc/xrpc_loader.h"

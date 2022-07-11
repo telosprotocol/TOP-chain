@@ -26,7 +26,7 @@
 #include "xdata/xelection/xstandby_result_store.h"
 #include "xdata/xproposal_data.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
-#include "xdata/xtable_bstate.h"
+#include "xstatectx/xtable_bstate.h"
 
 #define XPROPERTY_CONTRACT_ELECTION_RESULT_0_KEY  "@42_0"
 #define XPROPERTY_CONTRACT_ELECTION_RESULT_1_KEY  "@42_1"

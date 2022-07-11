@@ -5,7 +5,7 @@
 #define private public
 #define protected public
 #include "xconfig/xconfig_register.h"
-#include "xdata/xelect_transaction.hpp"
+#include "xblock/xelect_transaction.hpp"
 #include "xdata/xelection/xelection_info_bundle.h"
 #include "xdata/xelection/xstandby_network_result.h"
 #include "xdata/xelection/xstandby_node_info.h"

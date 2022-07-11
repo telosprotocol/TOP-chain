@@ -1,6 +1,6 @@
 #include "xsyncbase/xsync_policy.h"
 #include "xvnetwork/xaddress.h"
-#include "xdata/xblock.h"
+#include "xblock/xblock.h"
 
 #pragma once
 NS_BEG2(top, sync)

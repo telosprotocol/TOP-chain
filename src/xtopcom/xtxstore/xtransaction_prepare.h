@@ -17,7 +17,7 @@
 #include "xdata/xcons_transaction.h"
 #include "xdata/xdata_defines.h"
 #include "xdata/xgenesis_data.h"
-#include "xdata/xlightunit.h"
+#include "xblock/xlightunit.h"
 #include "xstore/xaccount_context.h"
 #include "xstore/xstore_error.h"
 #include "xtxexecutor/xtransaction_context.h"

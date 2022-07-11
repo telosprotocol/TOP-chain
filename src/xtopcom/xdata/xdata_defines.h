@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 #include "xdata/xdata_common.h"
-#include "xdata/xblock.h"
+#include "xblock/xblock.h"
 #include "xbase/xobject_ptr.h"
 
 namespace top { namespace data {

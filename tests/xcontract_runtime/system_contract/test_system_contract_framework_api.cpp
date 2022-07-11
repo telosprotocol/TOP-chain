@@ -8,7 +8,7 @@
 #include "xcontract_common/xcontract_state.h"
 #include "xcontract_common/xproperties/xproperty_access_control.h"
 #include "xcontract_vm/xaccount_vm.h"
-#include "xdata/xblocktool.h"
+#include "xblock/xblocktool.h"
 #include "xdata/xdata_common.h"
 #include "xdata/xtop_action_generator.h"
 #include "xdata/xtransaction_v2.h"

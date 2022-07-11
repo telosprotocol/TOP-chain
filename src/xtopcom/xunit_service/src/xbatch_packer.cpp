@@ -9,7 +9,7 @@
 #include "xcommon/xip.h"
 #include "xcommon/xnode_type.h"
 #include "xdata/xgenesis_data.h"
-#include "xdata/xblocktool.h"
+#include "xblock/xblocktool.h"
 #include "xelection/xdata_accessor_error.h"
 #include "xunit_service/xcons_utl.h"
 #include "xmbus/xevent_consensus.h"

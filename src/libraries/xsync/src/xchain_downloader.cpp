@@ -12,8 +12,8 @@
 #include "xdata/xgenesis_data.h"
 #include "xpbase/base/top_utils.h"
 #include "xsync/xsync_message.h"
-#include "xdata/xfull_tableblock.h"
-#include "xdata/xtable_bstate.h"
+#include "xblock/xfull_tableblock.h"
+#include "xstatectx/xtable_bstate.h"
 #include "xsync/xsync_store_shadow.h"
 #include "xsync/xsync_pusher.h"
 

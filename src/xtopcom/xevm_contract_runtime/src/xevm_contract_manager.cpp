@@ -11,8 +11,6 @@
 #include "xevm_contract_runtime/sys_contract/xevm_eth_bridge_contract.h"
 #include "xevm_runner/proto/proto_precompile.pb.h"
 
-#include <cinttypes>
-
 NS_BEG3(top, contract_runtime, evm)
 
 xtop_evm_contract_manager::xtop_evm_contract_manager() {

@@ -3,7 +3,7 @@
 #include "test_common.hpp"
 
 #include "xvledger/xvpropertyprove.h"
-#include "xdata/xblocktool.h"
+#include "xblock/xblocktool.h"
 #include "xblockmaker/xtable_maker.h"
 #include "tests/mock/xvchain_creator.hpp"
 #include "tests/mock/xdatamock_table.hpp"

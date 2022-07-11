@@ -7,7 +7,7 @@
 #include "xbase/xobject_ptr.h"
 #include "xcommon/xip.h"
 // TODO(jimmy) #include "xbase/xvledger.h"
-#include "xdata/xblock.h"
+#include "xblock/xblock.h"
 #include "xdata/xblock_statistics_data.h"
 
 #include <cstdint>

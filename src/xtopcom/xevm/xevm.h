@@ -6,7 +6,7 @@
 
 #include "xbase/xns_macro.h"
 #include "xbasic/xmemory.hpp"
-#include "xdata/xblock.h"
+#include "xblock/xblock.h"
 #include "xdata/xtop_action_fwd.h"
 #include "xevm_contract_runtime/xevm_action_runtime.h"
 #include "xevm_contract_runtime/xevm_runtime_result.h"

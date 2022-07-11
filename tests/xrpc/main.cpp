@@ -5,7 +5,7 @@
 #include "xstore/xstore.h"
 #include "xdb/xdb_factory.h"
 #include "xbase/xcontext.h"
-#include "xdata/xrootblock.h"
+#include "xblock/xrootblock.h"
 #include "xutility/xhash.h"
 #include "xloader/xconfig_genesis_loader.h"
 

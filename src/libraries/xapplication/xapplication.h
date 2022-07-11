@@ -16,7 +16,7 @@
 #include "xcommon/xnode_info.h"
 #include "xconfig/xconfig_register.h"
 #include "xsystem_contract_runtime/xsystem_contract_manager.h"
-#include "xdata/xblocktool.h"
+#include "xblock/xblocktool.h"
 #include "xelect/client/xelect_client.h"
 #include "xelect_net/include/elect_main.h"
 #include "xelect_net/include/elect_vhost_face.h"

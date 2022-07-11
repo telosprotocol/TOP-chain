@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include "xbase/xlog.h"
-#include "xdata/xrootblock.h"
+#include "xblock/xrootblock.h"
 
 class xhashtest_t : public top::base::xhashplugin_t
 {

@@ -8,7 +8,7 @@
 #include "xcrypto/xckey.h"
 #include "xcrypto/xcrypto_util.h"
 #include "xcertauth/xcertauth_face.h"
-#include "xdata/xtableblock.h"
+#include "xblock/xtableblock.h"
 #include "xrpc/xuint_format.h"
 
 #include <random>

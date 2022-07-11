@@ -5,8 +5,8 @@
 #pragma once
 
 #include "xbase/xobject_ptr.h"
-#include "xdata/xblock.h"
-#include "xdata/xbstate_ctx.h"
+#include "xblock/xblock.h"
+#include "xstatectx/xbstate_ctx.h"
 #include "xdata/xproperty.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
 #include "xvledger/xvstate.h"

@@ -13,7 +13,7 @@
 #include "xdata/xcodec/xmsgpack/xelection/xv0/xelection_result_store_codec.hpp"
 #include "xdata/xcodec/xmsgpack/xelection/xv1/xelection_result_store_codec.hpp"
 #include "xdata/xcodec/xmsgpack/xelection_association_result_store_codec.hpp"
-#include "xdata/xelect_transaction.hpp"
+#include "xblock/xelect_transaction.hpp"
 #include "xdata/xelection/xelection_info_bundle.h"
 #include "xdata/xelection/xelection_result_property.h"
 #include "xdata/xelection/xstandby_node_info.h"

@@ -2,7 +2,7 @@
 
 #include <string>
 #include "xbasic/xserialize_face.h"
-#include "xdata/xblock.h"
+#include "xblock/xblock.h"
 #include "xdata/xtransaction.h"
 #include "xbase/xobject_ptr.h"
 #include "xmetrics/xmetrics.h"

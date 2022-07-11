@@ -5,7 +5,7 @@
 #include "xbase/xmem.h"
 #include "xbase/xcontext.h"
 #include "xutility/xhash.h"
-#include "xdata/xrootblock.h"
+#include "xblock/xrootblock.h"
 #include "xconfig/xconfig_register.h"
 
 //#include "gperftools/heap-profiler.h"

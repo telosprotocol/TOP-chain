@@ -15,7 +15,7 @@
 // #include "xstore/xstore_face.h"
 // #include "xvm/manager/xcontract_manager.h"
 // #include "xtxexecutor/xtransaction_context.h"
-// #include "xdata/xblocktool.h"
+// #include "xblock/xblocktool.h"
 // #include "xvm/xsystem_contracts/xregistration/xrec_registration_contract.h"
 // #include "xvm/xvm_service.h"
 // #include "xvm/xvm_trace.h"

@@ -2,9 +2,9 @@
 
 #include <string>
 #include <vector>
-#include "xdata/xblock.h"
-#include "xdata/xtableblock.h"
-#include "xdata/xblocktool.h"
+#include "xblock/xblock.h"
+#include "xblock/xtableblock.h"
+#include "xblock/xblocktool.h"
 #include "xdata/xcons_transaction.h"
 #include "tests/mock/xcertauth_util.hpp"
 

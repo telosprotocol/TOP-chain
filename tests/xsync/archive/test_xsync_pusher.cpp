@@ -4,7 +4,7 @@
 #include "../../mock/xmock_network_config.hpp"
 #include "../../mock/xmock_network.hpp"
 #include "xdata/xdatautil.h"
-#include "xdata/xblocktool.h"
+#include "xblock/xblocktool.h"
 #include "xdata/xnative_contract_address.h"
 #include "xsync/xsync_util.h"
 

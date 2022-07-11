@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "test_xtxpool_util.h"
-#include "xdata/xblocktool.h"
+#include "xblock/xblocktool.h"
 #include "xtxpool_v2/xreceiptid_state_cache.h"
 
 using namespace top::xtxpool_v2;

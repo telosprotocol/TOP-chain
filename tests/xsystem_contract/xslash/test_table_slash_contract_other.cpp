@@ -13,7 +13,7 @@
 #include "xconfig/xpredefined_configurations.h"
 #include "xdata/xtransaction.h"
 #include "xdata/xnative_contract_address.h"
-#include "xdata/xblocktool.h"
+#include "xblock/xblocktool.h"
 #include "xloader/xconfig_onchain_loader.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
 #include "xstore/xstore_face.h"

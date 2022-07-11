@@ -3,7 +3,7 @@
 #include "xcontract/xdemo_param.h"
 #include "xcontract/xdemo.h"
 #include "xvm/manager/xcontract_manager.h"
-#include "xdata/xrootblock.h"
+#include "xblock/xrootblock.h"
 
 class xhashtest_t : public top::base::xhashplugin_t
 {

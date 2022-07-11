@@ -5,7 +5,7 @@
 #define private public
 #include "xchain_fork/xchain_upgrade_center.h"
 #include "xchain_timer/xchain_timer.h"
-#include "xdata/xblocktool.h"
+#include "xblock/xblocktool.h"
 #include "xdata/xdata_common.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xtop_action_generator.h"

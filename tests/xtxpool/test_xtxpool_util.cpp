@@ -5,7 +5,7 @@
 #include "xconfig/xconfig_register.h"
 #include "xcrypto/xckey.h"
 #include "xcrypto/xcrypto_util.h"
-#include "xdata/xblocktool.h"
+#include "xblock/xblocktool.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xtransaction_maker.hpp"
 #include "xdata/xtransaction_v2.h"

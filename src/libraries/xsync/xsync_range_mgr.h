@@ -7,7 +7,7 @@
 #include "xsync/xchain_info.h"
 #include "xstore/xstore_face.h"
 #include "xmbus/xevent_behind.h"
-#include "xdata/xblock.h"
+#include "xblock/xblock.h"
 
 NS_BEG2(top, sync)
 

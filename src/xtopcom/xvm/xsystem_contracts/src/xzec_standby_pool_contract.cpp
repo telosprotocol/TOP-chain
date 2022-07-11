@@ -9,7 +9,7 @@
 #include "xconfig/xconfig_register.h"
 #include "xdata/xcodec/xmsgpack/xelection/xstandby_result_store_codec.hpp"
 #include "xdata/xelection/xstandby_result_store.h"
-#include "xdata/xelect_transaction.hpp"
+#include "xblock/xelect_transaction.hpp"
 #include "xdata/xelection/xstandby_node_info.h"
 #include "xdata/xnative_contract_address.h"
 #include "xconfig/xpredefined_configurations.h"

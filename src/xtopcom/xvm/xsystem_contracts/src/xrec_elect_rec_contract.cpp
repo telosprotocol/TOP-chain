@@ -16,7 +16,7 @@
 #include "xdata/xelection/xelection_result_property.h"
 #include "xdata/xelection/xstandby_result_store.h"
 #include "xdata/xgenesis_data.h"
-#include "xdata/xrootblock.h"
+#include "xblock/xrootblock.h"
 #include "xvm/xserialization/xserialization.h"
 
 #include <cinttypes>

@@ -6,7 +6,7 @@
 #include "xkeymigrate.h"
 #include "xvledger/xvbindex.h"
 #include "xvledger/xvtxindex.h"
-#include "xdata/xblocktool.h"
+#include "xblock/xblocktool.h"
 
 namespace top
 {

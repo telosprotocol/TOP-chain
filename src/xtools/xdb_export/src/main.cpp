@@ -5,7 +5,7 @@
 #include "xmigrate/xvmigrate.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xconfig/xconfig_register.h"
-#include "xdata/xrootblock.h"
+#include "xblock/xrootblock.h"
 
 using namespace top;
 using namespace top::db_export;

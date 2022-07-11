@@ -3,7 +3,7 @@
 #include "xbase/xlog.h"
 #include "xbase/xhash.h"
 #include "xutility/xhash.h"
-#include "xdata/xrootblock.h"
+#include "xblock/xrootblock.h"
 
 #include "tests/xevm_engine_test/evm_test_fixture/xtest_evm_fixture.h"
 

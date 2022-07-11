@@ -8,8 +8,8 @@
 #include "xbase/xutl.h"
 #include "xcertauth/xcertauth_face.h"
 #include <cinttypes>
-#include "xdata/xblocktool.h"
-#include "xdata/xblockbuild.h"
+#include "xblock/xblocktool.h"
+#include "xblock/xblockbuild.h"
 
 
 using namespace top;

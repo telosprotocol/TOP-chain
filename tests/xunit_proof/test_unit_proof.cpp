@@ -2,7 +2,7 @@
 #include "tests/mock/xdatamock_table.hpp"
 #include "tests/mock/xmock_auth.hpp"
 #include "tests/mock/xvchain_creator.hpp"
-#include "xdata/xlightunit.h"
+#include "xblock/xlightunit.h"
 #include "xsync/xsync_store.h"
 #include "xsync/xsync_on_demand.h"
 #include "xvledger/xunit_proof.h"

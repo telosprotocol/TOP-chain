@@ -13,7 +13,7 @@
 #include "xdata/xaction_parse.h"
 #include "xdata/xdata_defines.h"
 #include "xdata/xchain_param.h"
-#include "xdata/xlightunit.h"
+#include "xblock/xlightunit.h"
 #include "xdata/xcons_transaction.h"
 #include "xstore/xaccount_context.h"
 #include "xvm/xvm_service.h"

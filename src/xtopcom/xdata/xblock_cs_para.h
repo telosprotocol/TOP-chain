@@ -5,10 +5,10 @@
 #pragma once
 
 #include <string>
-#include "xdata/xblock.h"
+#include "xblock/xblock.h"
 #include "xcommon/xaccount_address.h"
 #include "xevm_common/common.h"
-#include "xdata/xtable_bstate.h"
+#include "xstatectx/xtable_bstate.h"
 
 NS_BEG2(top, data)
 

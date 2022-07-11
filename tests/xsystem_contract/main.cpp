@@ -3,7 +3,7 @@
 #include "xbase/xutl.h"
 #include "xmetrics/xmetrics.h"
 #include "xutility/xhash.h"
-#include "xdata/xrootblock.h"
+#include "xblock/xrootblock.h"
 #include "xloader/xconfig_genesis_loader.h"
 
 #include <gtest/gtest.h>

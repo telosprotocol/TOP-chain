@@ -12,10 +12,10 @@
 #include "xvledger/xreceiptid.h"
 #include "xdata/xdata_common.h"
 #include "xdata/xdatautil.h"
-#include "xdata/xblock.h"
+#include "xblock/xblock.h"
 #include "xdata/xcons_transaction.h"
-#include "xdata/xlightunit.h"
-#include "xdata/xfullunit.h"
+#include "xblock/xlightunit.h"
+#include "xblock/xfullunit.h"
 #include "xvledger/xvblockbuild.h"
 
 NS_BEG2(top, data)

@@ -9,7 +9,7 @@
 #include "xvledger/xvstate.h"
 #include "xvledger/xaccountindex.h"
 #include "xvledger/xreceiptid.h"
-#include "xdata/xbstate_ctx.h"
+#include "xstatectx/xbstate_ctx.h"
 
 NS_BEG2(top, data)
 

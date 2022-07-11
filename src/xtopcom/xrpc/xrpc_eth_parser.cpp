@@ -5,7 +5,7 @@
 #include "xcommon/xeth_address.h"
 #include "xcommon/xaddress.h"
 #include "xdata/xethheader.h"
-#include "xdata/xblockextract.h"
+#include "xblock/xblockextract.h"
 #include "xdata/xethreceipt.h"
 #include "xdata/xtx_factory.h"
 #include "xdata/xerror/xerror.h"

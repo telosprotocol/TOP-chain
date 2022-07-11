@@ -3,7 +3,7 @@
 #include "xbase/xhash.h"
 #include "xbase/xutl.h"
 #include "xutility/xhash.h"
-#include "xdata/xrootblock.h"
+#include "xblock/xrootblock.h"
 
 using namespace top;
 class xhashtest_t : public base::xhashplugin_t

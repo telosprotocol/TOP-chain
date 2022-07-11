@@ -7,7 +7,7 @@
 #include "xblockmaker/xblock_maker_para.h"
 #include "xblockmaker/xblockmaker_face.h"
 #include "xblockmaker/xrelay_maker.h"
-#include "xdata/xblock.h"
+#include "xblock/xblock.h"
 #include "xrelay_chain/xrelay_chain_mgr.h"
 #include "xunit_service/xcons_face.h"
 

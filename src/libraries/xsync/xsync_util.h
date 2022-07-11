@@ -1,7 +1,7 @@
 #pragma once
 
 #include "xbase/xmem.h"
-#include "xdata/xblock.h"
+#include "xblock/xblock.h"
 #include "xsync/xsync_store.h"
 #include "xvnetwork/xaddress.h"
 #include "xvledger/xvcnode.h"

@@ -6,7 +6,7 @@
 #include "xsync/xsync_log.h"
 #include "xsync/xsync_util.h"
 #include "xsync/xsync_prune.h"
-#include "xdata/xrootblock.h"
+#include "xblock/xrootblock.h"
 
 NS_BEG2(top, sync)
 

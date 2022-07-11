@@ -7,7 +7,7 @@
 #include "xcontract_common/xbasic_contract.h"
 #include "xcontract_common/xproperties/xproperty_map.h"
 #include "xcontract_runtime/xtop_action_generator.h"
-#include "xdata/xblocktool.h"
+#include "xblock/xblocktool.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xtransaction_v2.h"
 #include "xsystem_contract_runtime/xsystem_contract_manager.h"

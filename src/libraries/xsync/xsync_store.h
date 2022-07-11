@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "xdata/xblock.h"
+#include "xblock/xblock.h"
 #include "xstore/xstore_face.h"
 #include "xbasic/xlru_cache.h"
 // TODO(jimmy) #include "xbase/xvledger.h"

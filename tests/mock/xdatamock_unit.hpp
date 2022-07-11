@@ -2,9 +2,9 @@
 
 #include <string>
 #include <vector>
-#include "xdata/xblock.h"
-#include "xdata/xblocktool.h"
-#include "xdata/xunit_bstate.h"
+#include "xblock/xblock.h"
+#include "xblock/xblocktool.h"
+#include "xstatectx/xunit_bstate.h"
 #include "xdata/xcons_transaction.h"
 #include "xdata/xtransaction_v1.h"
 #include "xblockmaker/xunit_builder.h"

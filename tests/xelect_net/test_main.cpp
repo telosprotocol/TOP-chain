@@ -3,7 +3,7 @@
 #include "xbase/xlog.h"
 #include "xbase/xhash.h"
 #include "xutility/xhash.h"
-#include "xdata/xrootblock.h"
+#include "xblock/xrootblock.h"
 
 using namespace std;
 using namespace top;

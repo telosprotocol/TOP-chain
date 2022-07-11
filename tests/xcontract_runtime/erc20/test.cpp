@@ -5,7 +5,7 @@
 #include "xcontract_common/xcontract_execution_context.h"
 #include "xcontract_runtime/xuser/xwasm/xwasm_engine.h"
 #include "xcontract_runtime/xuser/xwasm/xwasm_rustvm_extern_api.h"
-#include "xdata/xblocktool.h"
+#include "xblock/xblocktool.h"
 
 #include <assert.h>
 

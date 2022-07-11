@@ -6,7 +6,7 @@
 
 #include <string>
 #include <map>
-#include "xdata/xblock.h"
+#include "xblock/xblock.h"
 #include "xblockmaker/xtable_maker.h"
 #include "xblockmaker/xblock_maker_para.h"
 #include "xblockmaker/xblockmaker_face.h"

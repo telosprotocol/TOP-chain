@@ -8,7 +8,7 @@
 #include "xconfig/xpredefined_configurations.h"
 #include "xconfig/xconfig_to_string_helper.h"
 #include "xdata/xchain_param.h"
-#include "xdata/xrootblock.h"
+#include "xblock/xrootblock.h"
 
 #include <map>
 #include <string>

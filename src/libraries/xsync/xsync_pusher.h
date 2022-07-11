@@ -8,7 +8,7 @@
 #include <unordered_map>
 #include "xsync/xsync_sender.h"
 #include "xsync/xsync_store.h"
-#include "xdata/xblock.h"
+#include "xblock/xblock.h"
 #include "xsync/xrole_xips_manager.h"
 #include "xsync/xsync_time_rejecter.h"
 #include "xsync/xrole_chains_mgr.h"

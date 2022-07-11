@@ -6,7 +6,7 @@
 #include "xblockstore/xblockstore_face.h"
 #include "xcontract_common/xcontract_state.h"
 #include "xcontract_vm/xaccount_vm.h"
-#include "xdata/xblocktool.h"
+#include "xblock/xblocktool.h"
 #include "xdata/xdata_common.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xtop_action_generator.h"

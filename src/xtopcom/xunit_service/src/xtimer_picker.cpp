@@ -4,7 +4,7 @@
 
 #include "xunit_service/xtimer_picker.h"
 
-#include "xdata/xemptyblock.h"
+#include "xblock/xemptyblock.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
 #include "xunit_service/xcons_utl.h"
@@ -12,7 +12,7 @@
 #include "xBFT/src/xtimercertview.h"
 #include "xmbus/xevent_timer.h"
 #include "xmetrics/xmetrics.h"
-#include "xdata/xblockbuild.h"
+#include "xblock/xblockbuild.h"
 #include "xelection/xdata_accessor_error.h"
 #include "xcertauth/src/xsigndata.h"
 

@@ -4,7 +4,7 @@
 #include "xbase/xhash.h"
 #include "xblockstore/xblockstore_face.h"
 #include "xutility/xhash.h"
-#include "xdata/xrootblock.h"
+#include "xblock/xrootblock.h"
 #include "xloader/xconfig_genesis_loader.h"
 
 using namespace std;

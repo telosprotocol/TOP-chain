@@ -7,12 +7,12 @@
 #include "xbase/xutl.h"
 #include "xvledger/xvblockbuild.h"
 #include "xvledger/xvledger.h"
-#include "xdata/xlightunit.h"
-#include "xdata/xrootblock.h"
-#include "xdata/xemptyblock.h"
-#include "xdata/xblockbuild.h"
+#include "xblock/xlightunit.h"
+#include "xblock/xrootblock.h"
+#include "xblock/xemptyblock.h"
+#include "xblock/xblockbuild.h"
 #include "xdata/xblockaction.h"
-#include "xdata/xblocktool.h"
+#include "xblock/xblocktool.h"
 
 NS_BEG2(top, data)
 

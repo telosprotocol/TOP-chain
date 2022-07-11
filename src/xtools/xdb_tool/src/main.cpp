@@ -2,7 +2,7 @@
 #include "../xdb_tool.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
-#include "xdata/xrootblock.h"
+#include "xblock/xrootblock.h"
 
 #include <iostream>
 #include <functional>

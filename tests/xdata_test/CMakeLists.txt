@@ -5,10 +5,12 @@ add_compile_options(-static)
 aux_source_directory(./ xdata_test_dir)
 add_executable(xdata_test ${xdata_test_dir})
 
-add_dependencies(xdata_test xblockstore)
+add_dependencies(xdata_test xstatectx xblockstore)
 include_directories(src/xtopcom/xdata/)
 target_link_libraries(xdata_test PRIVATE
+    xblock
     xdata
+    xstatectx
     gtest
 )
 

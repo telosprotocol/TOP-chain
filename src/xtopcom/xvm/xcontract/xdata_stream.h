@@ -6,7 +6,7 @@
 
 #include "xbase/xmem.h"
 #include "xbase/xns_macro.h"
-#include "xdata/xblock.h"
+#include "xblock/xblock.h"
 
 #include <string>
 #include <tuple>

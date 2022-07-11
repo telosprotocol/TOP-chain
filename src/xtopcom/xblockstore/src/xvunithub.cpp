@@ -14,10 +14,10 @@
 
 #include "xmetrics/xmetrics.h"
 #include "xdata/xnative_contract_address.h"
-#include "xdata/xblocktool.h"
+#include "xblock/xblocktool.h"
 #include "xdata/xtop_relay_block.h"
 #include "xdata/xrelay_block.h"
-#include "xdata/xblockbuild.h"
+#include "xblock/xblockbuild.h"
 #include "xpbase/base/top_utils.h"
 
 #define METRICS_TAG(tag, val) XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)tag, val)

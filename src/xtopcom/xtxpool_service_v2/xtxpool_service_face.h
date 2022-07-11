@@ -11,7 +11,7 @@
 #include "xbasic/xmemory.hpp"
 #include "xchain_timer/xchain_timer_face.h"
 #include "xcommon/xfadable.h"
-#include "xdata/xblock.h"
+#include "xblock/xblock.h"
 #include "xdata/xcons_transaction.h"
 #include "xdata/xtransaction.h"
 #include "xrouter/xrouter.h"

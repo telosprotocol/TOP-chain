@@ -2,19 +2,20 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xdata/xblock.h"
+#include "xblock/xblock.h"
+
 #include "xdata/xmemcheck_dbg.h"
-#include "xdata/xfullunit.h"
-#include "xdata/xlightunit.h"
-#include "xdata/xemptyblock.h"
-#include "xdata/xtableblock.h"
-#include "xdata/xfull_tableblock.h"
-#include "xdata/xrootblock.h"
+#include "xblock/xfullunit.h"
+#include "xblock/xlightunit.h"
+#include "xblock/xemptyblock.h"
+#include "xblock/xtableblock.h"
+#include "xblock/xfull_tableblock.h"
+#include "xblock/xrootblock.h"
 #include "xdata/xcons_transaction.h"
 #include "xdata/xtransaction_v1.h"
 #include "xdata/xtransaction_v2.h"
 #include "xdata/xtransaction_v3.h"
-#include "xdata/xblockbuild.h"
+#include "xblock/xblockbuild.h"
 #include "xvledger/xtxreceipt.h"
 #include "xvledger/xvpropertyprove.h"
 

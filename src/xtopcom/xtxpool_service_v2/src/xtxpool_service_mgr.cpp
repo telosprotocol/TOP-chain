@@ -5,10 +5,10 @@
 #include "xtxpool_service_v2/xtxpool_service_mgr.h"
 
 #include "xblockstore/xblockstore_face.h"
-#include "xdata/xblock.h"
-#include "xdata/xblocktool.h"
+#include "xblock/xblock.h"
+#include "xblock/xblocktool.h"
 #include "xdata/xgenesis_data.h"
-#include "xdata/xtableblock.h"
+#include "xblock/xtableblock.h"
 #include "xmbus/xevent_store.h"
 #include "xmbus/xbase_sync_event_monitor.hpp"
 #include "xstore/xstore.h"

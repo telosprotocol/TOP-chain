@@ -8,7 +8,7 @@
 #include <string>
 #include "xmbus/xevent.h"
 #include "xdata/xdata_common.h"
-#include "xdata/xblock.h"
+#include "xblock/xblock.h"
 #include "xvnetwork/xaddress.h"
 #include "xsyncbase/xsync_policy.h"
 #include "xmetrics/xmetrics.h"

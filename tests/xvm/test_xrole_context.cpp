@@ -10,7 +10,7 @@
 #include "xvm/manager/xmessage_ids.h"
 #include "xvm/xcontract/xcontract_exec.h"
 #include "xmbus/xevent_store.h"
-#include "xdata/xblock.h"
+#include "xblock/xblock.h"
 
 using namespace top::contract;
 using namespace top::xvm;

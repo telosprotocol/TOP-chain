@@ -8,7 +8,7 @@
 #include <string>
 #include "xmbus/xevent.h"
 #include "xdata/xdata_common.h"
-#include "xdata/xblock.h"
+#include "xblock/xblock.h"
 
 NS_BEG2(top, mbus)
 

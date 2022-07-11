@@ -16,7 +16,7 @@
 #include "xcontract_common/xcontract_state.h"
 #include "xcontract_common/xbasic_contract.h"
 #include "xbase/xmem.h"
-#include "xdata/xblocktool.h"
+#include "xblock/xblocktool.h"
 #include "xstore/xstore.h"
 #include "xstore/xstore_face.h"
 

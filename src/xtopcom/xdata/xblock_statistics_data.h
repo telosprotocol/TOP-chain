@@ -8,7 +8,7 @@
 #include "xbasic/xserializable_based_on.h"
 #include "xbasic/xutility.h"
 #include "xcommon/xaddress.h"
-#include "xdata/xblock.h"
+#include "xblock/xblock.h"
 
 #include <cstdint>
 #include <set>

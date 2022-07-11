@@ -6,7 +6,7 @@
 
 #include "xbasic/xmemory.hpp"
 #include "xdata/xcons_transaction.h"
-#include "xdata/xtable_bstate.h"
+#include "xstatectx/xtable_bstate.h"
 #include "xtxpool_v2/xnon_ready_account.h"
 #include "xtxpool_v2/xreceipt_state_cache.h"
 #include "xtxpool_v2/xtxmgr_table.h"

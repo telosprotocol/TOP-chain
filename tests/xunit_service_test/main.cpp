@@ -12,7 +12,7 @@
 #include "xbase/xhash.h"
 #include "xblockstore/xblockstore_face.h"
 #include "xutility/xhash.h"
-#include "xdata/xrootblock.h"
+#include "xblock/xrootblock.h"
 
 using namespace top;
 

@@ -6,7 +6,7 @@
 #include "xblockmaker/xblock_builder.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xconfig/xconfig_register.h"
-#include "xdata/xblockbuild.h"
+#include "xblock/xblockbuild.h"
 
 NS_BEG2(top, blockmaker)
 

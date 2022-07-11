@@ -11,9 +11,9 @@
 #include "xbase/xobject.h"
 #include "xbasic/xmemory.hpp"
 #include "xcommon/xaccount_address.h"
-#include "xdata/xblock.h"
+#include "xblock/xblock.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
-#include "xdata/xunit_bstate.h"
+#include "xstatectx/xunit_bstate.h"
 #include "xdb/xdb_face.h"
 #include "xvledger/xvdbstore.h"
 

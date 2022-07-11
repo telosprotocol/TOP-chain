@@ -7,7 +7,7 @@
 #include "xcontract_common/xcontract_execution_result.h"
 #include "xcontract_common/xfollowup_transaction_datum.h"
 #include "xdata/xconsensus_action_stage.h"
-#include "xdata/xunit_bstate.h"
+#include "xstatectx/xunit_bstate.h"
 
 NS_BEG2(top, contract_common)
 

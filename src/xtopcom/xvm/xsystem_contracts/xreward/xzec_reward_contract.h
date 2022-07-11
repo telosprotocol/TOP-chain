@@ -5,7 +5,7 @@
 #pragma once
 
 #include "xdata/xsystem_contract/xdata_structures.h"
-#include "xdata/xtableblock.h"
+#include "xblock/xtableblock.h"
 #include "xvm/xcontract/xcontract_base.h"
 #include "xvm/xcontract/xcontract_exec.h"
 #include "xvm/xcontract_helper.h"
