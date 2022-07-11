@@ -163,7 +163,7 @@ xtransaction_ptr_t xblockextract_t::unpack_raw_tx(base::xvblock_t* _block, std::
 }
 
 std::shared_ptr<xrelay_block> xblockextract_t::unpack_commit_relay_block_from_relay_table(base::xvblock_t* _block, std::error_code & ec) {
-    if (_block->get_account() == sys_contract_relay_table_block_addr) {
+    if (_block->get_account() != sys_contract_relay_table_block_addr) {
         ec = common::error::xerrc_t::invalid_block;
         xerror("xblockextract_t::unpack_commit_relay_block_from_relay_table fail-invalid addr._block=%s", _block->dump().c_str());
         return nullptr;
