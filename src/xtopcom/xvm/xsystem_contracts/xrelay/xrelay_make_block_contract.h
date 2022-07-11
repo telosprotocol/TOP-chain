@@ -30,8 +30,8 @@ public:
     END_CONTRACT_WITH_PARAM
 
 private:
-    void on_receive_cross_txs(xbytes_t const & cross_txs_data);
-    void on_make_block(xbytes_t const & make_block_info);
+    void on_receive_cross_txs(std::string const & cross_txs_data);
+    void on_make_block(std::string const & make_block_info);
 };
 using xrelay_make_block_contract_t = xtop_relay_make_block_contract;
 

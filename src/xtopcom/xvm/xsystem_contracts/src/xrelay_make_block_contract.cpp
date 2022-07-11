@@ -40,12 +40,12 @@ void xtop_relay_make_block_contract::setup() {
     LIST_CREATE(data::system_contract::XPROPERTY_RELAY_BLOCK_HASH_FROM_LAST_POLY_LIST);
 }
 
-void xtop_relay_make_block_contract::on_receive_cross_txs(xbytes_t const & data) {
+void xtop_relay_make_block_contract::on_receive_cross_txs(std::string const & data) {
     // todo(nathan):把跨链交易数据存入属性的list中XPROPERTY_RELAY_CROSS_TXS
     xdbg("xtop_relay_make_block_contract::on_receive_cross_txs in");
     data::xrelayblock_crosstx_infos_t all_crosstxs;
     std::error_code ec;
-    all_crosstxs.serialize_from_string(from_bytes<std::string>(data), ec);
+    all_crosstxs.serialize_from_string(data, ec);
     XCONTRACT_ENSURE(!ec, "xtop_relay_make_block_contract unpack crosstxs fail " + ec.message());
     for (auto & crosstx : all_crosstxs.tx_infos) {
         xdbg("xtop_relay_make_block_contract::on_receive_cross_txs tx hash:%s", top::to_hex_prefixed(top::to_bytes(crosstx.tx.get_tx_hash())).c_str());
@@ -54,7 +54,7 @@ void xtop_relay_make_block_contract::on_receive_cross_txs(xbytes_t const & data)
     }
 }
 
-void xtop_relay_make_block_contract::on_make_block(xbytes_t const & data) {
+void xtop_relay_make_block_contract::on_make_block(std::string const & data) {
     uint64_t cur_time = TIME();
     std::string cur_time_str = std::to_string(cur_time);
     if (!data.empty()) {

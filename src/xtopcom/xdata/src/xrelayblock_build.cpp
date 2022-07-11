@@ -57,9 +57,9 @@ void xrelayblock_crosstx_infos_t::decodeRLP(evm_common::RLP const& _r, std::erro
         return;
     }
     for (size_t i = 0; i < _r.itemCount(); i++) {
-        evm_common::RLP _r = _r[i];
+        evm_common::RLP _r_i = _r[i];
         xrelayblock_crosstx_info_t info;
-        info.decodeRLP(_r, ec);
+        info.decodeRLP(_r_i, ec);
         if (ec) {
             return;
         }
