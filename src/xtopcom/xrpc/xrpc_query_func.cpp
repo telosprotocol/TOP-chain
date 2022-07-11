@@ -87,6 +87,9 @@ bool xrpc_query_func::is_prop_name_not_set_property(const std::string & prop_nam
                                                    data::system_contract::XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY,
                                                    data::system_contract::XPROPERTY_CONTRACT_SLASH_INFO_KEY,
                                                    data::system_contract::XPROPERTY_REWARD_DETAIL,
+                                                   data::system_contract::XPROPERTY_ETH_CHAINS_HASH,
+                                                   data::system_contract::XPROPERTY_ETH_CHAINS_HEADER,
+                                                   data::system_contract::XPROPERTY_ETH_CHAINS_HEIGHT,
                                                    PROPOSAL_MAP_ID,
                                                    VOTE_MAP_ID};
 
