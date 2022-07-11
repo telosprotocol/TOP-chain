@@ -5,15 +5,11 @@
 #include "xvm/xsystem_contracts/xevm/xtable_cross_chain_txs_collection_contract.h"
 
 #include "xbase/xmem.h"
-#include "xcertauth/xcertauth_face.h"
-#include "xchain_fork/xchain_upgrade_center.h"
-#include "xcommon/xip.h"
-#include "xdata/xdata_common.h"
+
 #include "xdata/xnative_contract_address.h"
-#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xdata/xblockextract.h"
 #include "xmetrics/xmetrics.h"
-#include "xvm/manager/xcontract_manager.h"
+// #include "xvm/manager/xcontract_manager.h"
 
 using namespace top::base;
 using namespace top::data;
@@ -21,9 +17,10 @@ using namespace top::data::system_contract;
 
 NS_BEG3(top, xvm, system_contracts)
 
-#define MIN_BLOCKS_NUM  (1)
-#define MIN_CLOCK_INTERVAL  (1)
-#define MAX_TXS_COUNT  (5)
+#define BATCH_PROCESS_BLOCKS_NUM        (10)
+#define BATCH_PROCESS_CLOCK_INTERVAL    (10)   // TODO(jimmy) define para in configurations
+#define BATCH_TXS_COUNT_MAX             (5)
+#define UPDATE_MIN_BLOCKS_NUM           (6) // should larger than 3, avoiding drive self issue
 
 xtable_cross_chain_txs_collection_contract::xtable_cross_chain_txs_collection_contract(common::xnetwork_id_t const & network_id) : xbase_t{network_id} {}
 
@@ -47,15 +44,21 @@ void xtable_cross_chain_txs_collection_contract::on_timer(common::xlogic_time_t 
     auto const last_height = static_cast<std::uint64_t>(std::stoull(STRING_GET(XPORPERTY_CONTRACT_PROCESSED_TABLE_BLOCK_HEIGHT)));
     auto const last_time = static_cast<std::uint64_t>(std::stoull(STRING_GET(XPORPERTY_CONTRACT_PROCESSED_LOGIC_TIME)));
 
-    xdbg("[xtable_cross_chain_txs_collection_contract] latest_height: %" PRIu64 ",last_height: %" PRIu64 ",last_time: %" PRIu64, latest_height,last_height,last_time);
+    bool need_process = false;
+    if (latest_height >= last_height + BATCH_PROCESS_BLOCKS_NUM) {
+        need_process = true;
+    } else if (latest_time >= last_time + BATCH_PROCESS_CLOCK_INTERVAL) {
+        need_process = true;
+    }
 
-    if (latest_height < last_height + MIN_BLOCKS_NUM
-        && latest_time < last_time + MIN_CLOCK_INTERVAL) {        
+    xdbg("[xtable_cross_chain_txs_collection_contract] need_process:%d,height:%" PRIu64 ",%" PRIu64 ",time:%" PRIu64 ",%" PRIu64, 
+        need_process, latest_height,last_height,latest_time,last_time);
+    if (!need_process) {
         return;
     }
     std::error_code ec;
     xrelayblock_crosstx_infos_t all_crosstxs;
-    uint64_t finish_height = 0;
+    uint64_t finish_height = latest_height;  // default read to latest_height
     for (uint64_t i = last_height+1; i <= latest_height; i++) {
         auto _block = get_block_by_height(sys_contract_eth_table_block_addr_with_suffix, i);
         XCONTRACT_ENSURE(nullptr != _block, "xtable_cross_chain_txs_collection_contract block nullptr " + std::to_string(i));
@@ -68,23 +71,30 @@ void xtable_cross_chain_txs_collection_contract::on_timer(common::xlogic_time_t 
             all_crosstxs.tx_infos.insert(all_crosstxs.tx_infos.end(), crosstxs.tx_infos.begin(), crosstxs.tx_infos.end());
             xdbg("[xtable_cross_chain_txs_collection_contract] height: %" PRIu64 ",crosstx count: %" PRIu64 , i,crosstxs.tx_infos.size());
         }
-
-        finish_height = i;
-        if (all_crosstxs.tx_infos.size() >= MAX_TXS_COUNT) {
+        
+        if (all_crosstxs.tx_infos.size() >= BATCH_TXS_COUNT_MAX) {
+            finish_height = i;  // report tx size should not too large
             break;
         }
     }
-    
+
+    if ( (all_crosstxs.tx_infos.size() == 0)
+        && (finish_height < last_height + UPDATE_MIN_BLOCKS_NUM)) {
+        // ignore for avoiding drive self issue
+        xdbg("[xtable_cross_chain_txs_collection_contract] ignore process.finish_height:%" PRIu64 ",last_height:%" PRIu64, finish_height,last_height);
+        return;
+    }
+
     if (all_crosstxs.tx_infos.size() > 0) {
         std::string param_str = all_crosstxs.serialize_to_string();
         xstream_t stream(xcontext_t::instance());
         stream << param_str;
         CALL(common::xaccount_address_t{sys_contract_relay_make_block_addr}, "on_receive_cross_txs", std::string((char *)stream.data(), stream.size()));
-        xdbg("[xtable_cross_chain_txs_collection_contract] called: %" PRIu64 ",latest_time: %" PRIu64 ",param_size: %zu", finish_height,current_time,param_str.size());  
+        xdbg("[xtable_cross_chain_txs_collection_contract] called.tx_size=%zu,param_size: %zu", all_crosstxs.tx_infos.size(),param_str.size());  
     }
     STRING_SET(XPORPERTY_CONTRACT_PROCESSED_TABLE_BLOCK_HEIGHT, std::to_string(finish_height));
-    STRING_SET(XPORPERTY_CONTRACT_PROCESSED_LOGIC_TIME, std::to_string(latest_time));
-    xdbg("[xtable_cross_chain_txs_collection_contract] update.finish_height: %" PRIu64 ",latest_time: %" PRIu64, finish_height,current_time);
+    STRING_SET(XPORPERTY_CONTRACT_PROCESSED_LOGIC_TIME, std::to_string(latest_time));    
+    xdbg("[xtable_cross_chain_txs_collection_contract] update.finish_height: %" PRIu64 ",latest_time: %" PRIu64, finish_height,latest_time);
 }
 
 NS_END3

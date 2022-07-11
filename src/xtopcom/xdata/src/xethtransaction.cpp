@@ -74,12 +74,20 @@ data::xeth_transaction_t  xeth_transaction_t::build_from(std::string const& rawt
     }
 
     _tx.decodeBytes(_rawtx_bs,  ec);
+    if (ec.error_code) {
+        return _tx;
+    }
+    _tx.check_scope(ec);
     return _tx;
 }
 
 data::xeth_transaction_t  xeth_transaction_t::build_from(xbytes_t const& rawtx_bs, eth_error & ec) {
     data::xeth_transaction_t _tx;
     _tx.decodeBytes(rawtx_bs,  ec);
+    if (ec.error_code) {
+        return _tx;
+    }
+    _tx.check_scope(ec);
     return _tx;
 }
 
@@ -126,11 +134,6 @@ void xeth_transaction_t::decodeBytes(bool includesig, xbytes_t const& _d, eth_er
         ec = eth_error(error::xenum_errc::eth_server_error, "transaction type not supported");
         return;
     }
-
-    if (ec.error_code) {
-        return;
-    }
-    check_scope(ec);
 }
 
 void xeth_transaction_t::decodeBytes(xbytes_t const& _d, std::error_code & ec) {

@@ -328,7 +328,7 @@ TEST_F(test_relay_block_store, store_tx_block_and_tx_poly_block_and_election_blo
 
 
 
-TEST_F(test_relay_block_store, test_relay_block_store_bench) {
+TEST_F(test_relay_block_store, test_relay_block_store_BENCH) {
 
     h256 empty_hash{0};
     auto genesis_block = data::xrootblock_t::get_genesis_relay_block();
