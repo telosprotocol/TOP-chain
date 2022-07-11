@@ -74,18 +74,17 @@ void xtable_cross_chain_txs_collection_contract::on_timer(common::xlogic_time_t 
             break;
         }
     }
-
-    std::string call_param;
+    
     if (all_crosstxs.tx_infos.size() > 0) {
-        call_param = all_crosstxs.serialize_to_string();
-        // call relay block build contract
-        // CALL();
-        CALL(common::xaccount_address_t{sys_contract_relay_make_block_addr}, "on_receive_cross_txs", call_param);
-        xdbg("[xtable_cross_chain_txs_collection_contract] called: %" PRIu64 ",latest_time: %" PRIu64 ",param_size: %zu", finish_height,current_time,call_param.size());  
+        std::string param_str = all_crosstxs.serialize_to_string();
+        xstream_t stream(xcontext_t::instance());
+        stream << param_str;
+        CALL(common::xaccount_address_t{sys_contract_relay_make_block_addr}, "on_receive_cross_txs", std::string((char *)stream.data(), stream.size()));
+        xdbg("[xtable_cross_chain_txs_collection_contract] called: %" PRIu64 ",latest_time: %" PRIu64 ",param_size: %zu", finish_height,current_time,param_str.size());  
     }
     STRING_SET(XPORPERTY_CONTRACT_PROCESSED_TABLE_BLOCK_HEIGHT, std::to_string(finish_height));
     STRING_SET(XPORPERTY_CONTRACT_PROCESSED_LOGIC_TIME, std::to_string(latest_time));
-    xdbg("[xtable_cross_chain_txs_collection_contract] update.finish_height: %" PRIu64 ",latest_time: %" PRIu64 ",param_size: %zu", finish_height,current_time,call_param.size());  
+    xdbg("[xtable_cross_chain_txs_collection_contract] update.finish_height: %" PRIu64 ",latest_time: %" PRIu64, finish_height,current_time);
 }
 
 NS_END3
