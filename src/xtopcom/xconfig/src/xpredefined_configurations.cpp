@@ -211,6 +211,7 @@ XDEFINE_CONFIGURATION(local_whitelist);
 XDEFINE_CONFIGURATION(slash_fulltable_interval);
 XDEFINE_CONFIGURATION(slash_table_split_num);
 XDEFINE_CONFIGURATION(prune_reserve_number);
+XDEFINE_CONFIGURATION(evm_table_crosschain_txs_collection_interval);
 
 /* beginning of development parameters */
 XDEFINE_CONFIGURATION(http_port);

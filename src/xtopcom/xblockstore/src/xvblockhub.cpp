@@ -2642,7 +2642,7 @@ namespace top
 
             std::error_code ec;
             top::data::xrelay_block  extra_relay_block;
-            data::xblockextract_t::unpack_relayblock(&new_raw_block, false, extra_relay_block, ec);
+            data::xblockextract_t::unpack_relayblock_from_wrapblock(&new_raw_block, extra_relay_block, ec);
             if (ec) {
                 xwarn("xrelay_plugin::create_index decodeBytes decodeBytes error %s; err msg %s", 
                 ec.category().name(), ec.message().c_str());

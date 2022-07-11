@@ -31,6 +31,7 @@ common::xaccount_address_t const sharding_vote_contract_address{sys_contract_sha
 common::xaccount_address_t const sharding_reward_claiming_contract_address{sys_contract_sharding_reward_claiming_addr};
 common::xaccount_address_t const sharding_statistic_info_contract_address{sys_contract_sharding_statistic_info_addr};
 common::xaccount_address_t const eth_statistic_info_contract_address{sys_contract_eth_table_statistic_info_addr};
+common::xaccount_address_t const eth_table_cross_chain_txs_collection_contract_address{sys_contract_eth_table_cross_chain_txs_collection_addr};
 
 common::xaccount_address_t const eth_zero_address{sys_eth_zero_addr};
 
@@ -45,5 +46,6 @@ common::xaccount_address_t const evm_erc20_contract_address{sys_contract_evm_erc
 common::xaccount_address_t const evm_eth_bridge_contract_address{sys_contract_evm_eth_bridge_addr};
 
 common::xaccount_address_t const relay_repackage_election_data_contract_address{sys_contract_relay_repackage_election_addr};
+common::xaccount_address_t const relay_build_block_contract_address{sys_contract_relay_build_block_addr};
 
 NS_END1

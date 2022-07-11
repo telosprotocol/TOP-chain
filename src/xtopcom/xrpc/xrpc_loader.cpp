@@ -220,7 +220,7 @@ bool xrpc_loader_t::load_relay_tx_indx_detail(const std::string & raw_tx_hash, x
     xdbg("xrpc_loader_t:load_relay_tx_indx_detail  decode relay bock with tx_hash: %s ", base::xstring_utl::to_hex(raw_tx_hash).c_str());
     std::error_code ec;
     top::data::xrelay_block  extra_relay_block;
-    data::xblockextract_t::unpack_relayblock(_block.get(), false, extra_relay_block, ec);    
+    data::xblockextract_t::unpack_relayblock_from_wrapblock(_block.get(), extra_relay_block, ec);    
     if (ec) {
         xerror("xrpc_loader_t:load_relay_tx_indx_detail decodeBytes decodeBytes error %s; err msg %s", ec.category().name(), ec.message().c_str());
         return false;

@@ -502,6 +502,8 @@ XDECLARE_CONFIGURATION(slash_table_split_num, uint16_t, 32);              // spl
 // slash fulltable interval
 XDECLARE_CONFIGURATION(slash_fulltable_interval, xinterval_t, 120); // 20 minutes
 #endif
+XDECLARE_CONFIGURATION(evm_table_crosschain_txs_collection_interval, xinterval_t, 1); // 1 clock  // TODO(jimmy)
+
 
 /* beginning of development parameters */
 XDECLARE_CONFIGURATION(http_port, uint16_t, 19081);

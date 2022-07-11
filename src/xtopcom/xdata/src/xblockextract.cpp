@@ -5,6 +5,7 @@
 #include <string>
 #include "xdata/xblockextract.h"
 #include "xdata/xblockbuild.h"
+#include "xdata/xnative_contract_address.h"
 #include "xbase/xutl.h"
 #include "xcommon/xerror/xerror.h"
 #include "xconfig/xpredefined_configurations.h"
@@ -161,6 +162,135 @@ xtransaction_ptr_t xblockextract_t::unpack_raw_tx(base::xvblock_t* _block, std::
     return tx;
 }
 
+std::shared_ptr<xrelay_block> xblockextract_t::unpack_commit_relay_block_from_relay_table(base::xvblock_t* _block, std::error_code & ec) {
+    if (_block->get_account() == sys_contract_relay_table_block_addr) {
+        ec = common::error::xerrc_t::invalid_block;
+        xerror("xblockextract_t::unpack_commit_relay_block_from_relay_table fail-invalid addr._block=%s", _block->dump().c_str());
+        return nullptr;
+    }
+
+    data::xtableheader_extra_t header_extra;
+    auto extra_str = _block->get_header()->get_extra_data();
+    auto ret = header_extra.deserialize_from_string(extra_str);
+    if (ret <= 0) {
+        ec = common::error::xerrc_t::invalid_block;
+        xerror("xblockextract_t::unpack_commit_relay_block_from_relay_table fail-header extra deserialize fail.");
+        return nullptr;
+    }
+
+    auto wrap_data = header_extra.get_relay_wrap_info();
+    if (wrap_data.empty()) {
+        ec = common::error::xerrc_t::invalid_block;
+        xerror("xblockextract_t::unpack_commit_relay_block_from_relay_table fail-wrap null.");
+        return nullptr;
+    }
+
+    data::xrelay_wrap_info_t wrap_info;
+    wrap_info.serialize_from_string(wrap_data);
+    uint8_t wrap_phase = wrap_info.get_wrap_phase();
+    if (wrap_phase != 2) {
+        xdbg("xblockextract_t::unpack_commit_relay_block_from_relay_table succ-uncommit");
+        return nullptr;
+    }
+
+    auto relay_block_data_str = header_extra.get_relay_block_data();
+    if (relay_block_data_str.empty()) {
+        ec = common::error::xerrc_t::invalid_block;
+        xerror("xblockextract_t::unpack_commit_relay_block_from_relay_table fail-data null.");
+        return nullptr;
+    }
+    std::shared_ptr<xrelay_block> relayblock = std::make_shared<xrelay_block>();
+    relayblock->decodeBytes(to_bytes(relay_block_data_str), ec);
+    if (ec) {
+        xerror("xblockextract_t::unpack_commit_relay_block_from_relay_table fail-decode relayblock。error=%s", ec.message().c_str());
+        return nullptr;
+    }
+
+    std::string sign_list = _block->get_cert()->get_extend_data();
+    if (sign_list.empty()) {
+        ec = common::error::xerrc_t::invalid_block;
+        xerror("xblockextract_t::unpack_commit_relay_block_from_relay_table fail-extend data empty.");
+        return nullptr;
+    }
+
+    std::vector<xrelay_signature_node_t> signature_nodes;
+    base::xstream_t stream{base::xcontext_t::instance(), (uint8_t *)sign_list.data(), static_cast<uint32_t>(sign_list.size())};
+    uint16_t size = 0;
+    stream >> size;
+    for (uint16_t i = 0; i < size; i++) {
+        std::string sign_str;
+        stream >> sign_str;
+
+        if (sign_str == "") {
+            xrelay_signature_node_t signature;
+            signature_nodes.push_back(signature);
+            continue;
+        }
+        if (sign_str.size() != 65) {
+            ec = common::error::xerrc_t::invalid_block;
+            xerror("xblockextract_t::unpack_relayblock extend data empty.");
+            return nullptr;
+        }
+
+        xrelay_signature_node_t signature{sign_str};
+        signature_nodes.push_back(signature);
+    }
+    relayblock->set_signature_nodes(signature_nodes);
+    return relayblock;
+}
+
+xobject_ptr_t<base::xvblock_t> xblockextract_t::pack_relayblock_to_wrapblock(xrelay_block const& relayblock, std::error_code & ec) {
+    xbytes_t _bs = relayblock.encodeBytes(true);
+    std::string bin_data = top::to_string(_bs);
+    xemptyblock_build_t bbuild(sys_contract_relay_block_addr, relayblock.get_block_height(), bin_data);
+    xobject_ptr_t<base::xvblock_t> _new_block = bbuild.build_new_block();
+
+    if (relayblock.get_block_height() != 0) {
+        // mock signature for xvblock rules
+        _new_block->set_verify_signature(std::string(1,0));
+    }
+    // mock block flag for xvblock rules
+    _new_block->set_block_flag(base::enum_xvblock_flag_authenticated);
+    return _new_block;
+}
+void xblockextract_t::unpack_relayblock_from_wrapblock(base::xvblock_t* _block, xrelay_block & relayblock, std::error_code & ec) {
+    if (_block->get_account() != sys_contract_relay_block_addr) {
+        ec = common::error::xerrc_t::invalid_block;
+        xerror("xblockextract_t::unpack_relayblock_from_wrapblock fail-invalid address.");
+        return;
+    }
+    auto relay_block_data_str = _block->get_header()->get_extra_data();
+    if (relay_block_data_str.empty()) {
+        ec = common::error::xerrc_t::invalid_block;
+        xerror("xblockextract_t::unpack_relayblock_from_wrapblock fail-extra data empty.");
+        return;
+    }
+    relayblock.decodeBytes(to_bytes(relay_block_data_str), ec, true);
+    if (ec) {
+        xerror("xblockextract_t::unpack_relayblock_from_wrapblock fail-decode.");
+    }
+    return;
+}
+xobject_ptr_t<base::xvblock_t> xblockextract_t::unpack_wrap_relayblock_from_relay_table(base::xvblock_t* _block, std::error_code & ec) {
+    std::shared_ptr<xrelay_block> relayblock = unpack_commit_relay_block_from_relay_table(_block, ec);
+    if (ec) {
+        ec = common::error::xerrc_t::invalid_block;
+        xerror("xblockextract_t::unpack_wrap_relayblock_from_relay_table fail-unpack commit relayblock.");        
+        return nullptr;
+    }
+    if (nullptr == relayblock) {
+        // it's ok, the table block may not commit
+        return nullptr;
+    }
+    xobject_ptr_t<base::xvblock_t> wrap_relayblock = pack_relayblock_to_wrapblock(*relayblock, ec);
+    if (ec) {
+        ec = common::error::xerrc_t::invalid_block;
+        xerror("xblockextract_t::unpack_wrap_relayblock_from_relay_table fail-pack relayblock.");        
+        return nullptr;
+    }
+    return wrap_relayblock;
+}
+
 void xblockextract_t::unpack_relayblock(base::xvblock_t* _block, bool include_sig, xrelay_block & relayblock, std::error_code & ec) {
     data::xtableheader_extra_t header_extra;
     get_tableheader_extra_from_block(_block, header_extra, ec);
@@ -263,6 +393,105 @@ void xblockextract_t::get_tableheader_extra_from_block(base::xvblock_t* _block, 
         ec = common::error::xerrc_t::invalid_block;
         xerror("xblockextract_t::get_tableheader_extra_from_block header extra data deserialize fail.");
         return;
+    }
+}
+
+void xblockextract_t::unpack_crosschain_txs(base::xvblock_t* _block, xrelayblock_crosstx_infos_t & infos, std::error_code & ec) {
+    data::xblock_t * block = dynamic_cast<data::xblock_t*>(_block);
+    if (nullptr == block) {
+        ec = common::error::xerrc_t::invalid_block;
+        xerror("xblockextract_t::unpack_crosschain_txs block nullptr.");
+        return;
+    }
+
+    xdbg("xblockextract_t::unpack_crosschain_txs process. block:%s", block->dump().c_str());
+    if (_block->get_block_class() == base::enum_xvblock_class_nil) {
+        return;
+    }
+
+    auto input_actions = data::xblockextract_t::unpack_eth_txactions(_block);
+    for (auto & txaction : input_actions) {
+        if (txaction.get_tx_subtype() != base::enum_transaction_subtype_send) {
+            continue;
+        }
+
+        data::xtransaction_ptr_t _rawtx = block->query_raw_transaction(txaction.get_tx_hash());
+        if (nullptr == _rawtx) {
+            ec = common::error::xerrc_t::invalid_block;
+            xerror("xblockextract_t::unpack_crosschain_txs tx nullptr.");
+            return;
+        }
+            // TODO(jimmy): cross chain txs match
+
+        if (_rawtx->get_tx_version() != data::xtransaction_version_3 ||
+            (_rawtx->get_tx_type() != data::xtransaction_type_run_contract)) {
+            continue;
+        }
+
+        data::xeth_store_receipt_t evm_result;
+        auto ret = txaction.get_evm_transaction_receipt(evm_result);
+        if (!ret) {
+            ec = common::error::xerrc_t::invalid_block;
+            xerror("xblockextract_t::unpack_crosschain_txs get evm tx result fail. block:%s", block->dump().c_str());
+            return;
+        }
+
+        if (evm_result.get_tx_status() != data::enum_ethreceipt_status::ethreceipt_status_successful) {
+            xinfo("xblockextract_t::unpack_crosschain_txs filter failtx. tx=%s", _rawtx->dump().c_str());
+            continue;
+        }
+
+        xeth_transaction_t ethtx = _rawtx->to_eth_tx(ec);
+        if (ec) {
+            xerror("xblockextract_t::unpack_crosschain_txs to eth tx fail.");
+            return;
+        }
+        data::xeth_receipt_t receipt;
+        receipt.set_tx_status(evm_result.get_tx_status());
+        receipt.set_cumulative_gas_used(evm_result.get_cumulative_gas_used());
+        receipt.set_logs(evm_result.get_logs());
+        receipt.create_bloom();
+
+        xrelayblock_crosstx_info_t info(ethtx, receipt);
+        infos.tx_infos.push_back(info);
+        xinfo("xblockextract_t::unpack_crosschain_txs succ.block=%s,tx=%s", block->dump().c_str(), _rawtx->dump().c_str());
+    }
+}
+
+void xblockextract_t::unpack_subblocks(base::xvblock_t* _block, std::vector<xobject_ptr_t<base::xvblock_t>> & sublocks, std::error_code & ec) {
+    if (_block->get_block_level() != base::enum_xvblock_level_table) {
+        ec = common::error::xerrc_t::invalid_block;
+        xerror("xblockextract_t::unpack_subblocks should be table level block.");
+        return;
+    }
+
+    if (_block->get_block_class() == base::enum_xvblock_class_nil) {
+        return;
+    }
+
+    // TODO(jimmy) full-table block should be same with light-table in future
+    if (_block->get_block_class() == base::enum_xvblock_class_full) {
+        return;
+    }
+
+    if (!_block->is_input_ready(false)
+        || !_block->is_output_ready(false)) {
+        ec = common::error::xerrc_t::invalid_block;
+        xerror("xblockextract_t::unpack_subblocks input and output should ready.");
+        return;
+    }
+
+    sublocks = xlighttable_build_t::unpack_units_from_table(_block);
+    xdbg("xblockextract_t::unpack_subblocks succ.block=%s,sublocks=%zu",_block->dump().c_str(),sublocks.size());
+    
+    if (_block->get_account() == sys_contract_relay_table_block_addr) {
+        xobject_ptr_t<base::xvblock_t> wrap_relayblock = xblockextract_t::unpack_wrap_relayblock_from_relay_table(_block, ec);
+        if (ec) {
+            xerror("xblockextract_t::unpack_subblocks fail-unpack_wrap_relayblock_from_relay_table.");
+            return;
+        }
+        sublocks.push_back(wrap_relayblock);
+        xdbg("xblockextract_t::unpack_subblocks succ.block=%s,wrapblock=%s",_block->dump().c_str(),wrap_relayblock->dump().c_str());
     }
 }
 

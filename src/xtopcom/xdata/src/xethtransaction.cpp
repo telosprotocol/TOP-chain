@@ -133,6 +133,12 @@ void xeth_transaction_t::decodeBytes(bool includesig, xbytes_t const& _d, eth_er
     check_scope(ec);
 }
 
+void xeth_transaction_t::decodeBytes(xbytes_t const& _d, std::error_code & ec) {
+    eth_error eth_ec;
+    decodeBytes(_d, eth_ec);
+    ec = eth_ec.error_code;
+}
+
 std::string xeth_transaction_t::serialize_to_string() const {
     xbytes_t _bs = encodeBytes();
 

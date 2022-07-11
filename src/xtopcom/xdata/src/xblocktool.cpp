@@ -10,6 +10,7 @@
 #include "xdata/xblockbuild.h"
 #include "xdata/xtable_bstate.h"
 #include "xdata/xtx_factory.h"
+#include "xdata/xblockextract.h"
 #include "xvledger/xvblockstore.h"
 #include "xvledger/xvstate.h"
 #include "xvledger/xvledger.h"
@@ -834,6 +835,18 @@ xrelay_block* xblocktool_t::create_genesis_relay_block(const xrootblock_para_t &
     _relay_block->build_finish();
 
     return _relay_block;
+}
+
+base::xvblock_t* xblocktool_t::create_genesis_wrap_relayblock() {
+    auto _relay_block = data::xrootblock_t::get_genesis_relay_block();
+    std::error_code ec;
+    xobject_ptr_t<base::xvblock_t> wrap_relayblock = data::xblockextract_t::pack_relayblock_to_wrapblock(_relay_block, ec);
+    if (ec) {
+        xerror("");
+        return nullptr;
+    }
+    
+    return wrap_relayblock.get();
 }
 
 NS_END2
