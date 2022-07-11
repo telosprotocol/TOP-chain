@@ -1182,6 +1182,7 @@ int xrpc_eth_query_manager::set_relay_block_result(const xobject_ptr_t<base::xvb
         for (auto hash: block_hash_vector) {
             xJson::Value js_block;
             std::string block_hash = std::string("0x") + hash.hex();
+            js_block["blockHeight"] = xrpc_eth_parser_t::uint64_to_hex_prefixed(relay_block.get_block_height());
             js_block["blockHash"] =  block_hash;
             js_block_list.append(js_block);
             index++;
