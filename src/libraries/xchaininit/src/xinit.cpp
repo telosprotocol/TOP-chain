@@ -404,20 +404,18 @@ bool check_miner_info(const std::string &pub_key, const std::string &node_id, st
     }
 
     top::xtopcl::xtopcl xtop_cl;
-    std::string result;
+    std::ostringstream out_str;
     xtop_cl.api.change_trans_mode(true);
-    std::vector<std::string> param_list;
-    std::string query_cmdline    = "system queryNodeInfo " + g_userinfo.account;
-    xtop_cl.parser_command(query_cmdline, param_list);
-    xtop_cl.do_command(param_list, result);
-    auto query_find = result.find("account_addr");
-    if (query_find == std::string::npos) {
+
+    xtop_cl.api.query_miner_info(g_userinfo.account, out_str);
+    std::string result = out_str.str();
+    if (result.find("account_addr") == std::string::npos) {
         std::cout << g_userinfo.account << " account has not registered miner." << std::endl;
         // std::cout << "result:"<<result<< std::endl;
         return false;
     }
-    // registered
 
+    // registered
     json response;
     try {
         response = json::parse(result);
