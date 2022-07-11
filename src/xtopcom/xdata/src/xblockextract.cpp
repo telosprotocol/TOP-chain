@@ -494,8 +494,10 @@ void xblockextract_t::unpack_subblocks(base::xvblock_t* _block, std::vector<xobj
             xerror("xblockextract_t::unpack_subblocks fail-unpack_wrap_relayblock_from_relay_table.");
             return;
         }
-        sublocks.push_back(wrap_relayblock);
-        xdbg("xblockextract_t::unpack_subblocks succ.block=%s,wrapblock=%s",_block->dump().c_str(),wrap_relayblock->dump().c_str());
+        if (wrap_relayblock != nullptr) {
+            sublocks.push_back(wrap_relayblock);
+            xdbg("xblockextract_t::unpack_subblocks succ.block=%s,wrapblock=%s",_block->dump().c_str(),wrap_relayblock->dump().c_str());            
+        }
     }
 }
 

@@ -104,7 +104,7 @@ void xtxpool_service::set_params(const xvip2_t & xip, const std::shared_ptr<vnet
         m_zone_index = base::enum_chain_zone_evm_index;
         m_node_type = common::xnode_type_t::evm_validator;
     } else if (common::has<common::xnode_type_t::relay>(type)) {
-        m_is_send_receipt_role = false;
+        m_is_send_receipt_role = true;
         m_zone_index = base::enum_chain_zone_relay_index;
         m_node_type = common::xnode_type_t::relay;
     } else {
