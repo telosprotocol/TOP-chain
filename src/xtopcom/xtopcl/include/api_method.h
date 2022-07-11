@@ -22,14 +22,9 @@ static const uint32_t kExpirePeriod = 2 * 60 * 60 * 1000;  // expire  after 2 * 
 
 enum class Command_type : uint8_t { toplevel, get, system, sendtransaction, wallet, subcommands, debug };
 
-class ArgParser;
 
 class ApiMethod final {
 public:
-    using ParamList = std::vector<std::string>;
-    using CommandFunc = std::function<int(const ParamList &, std::ostringstream &)>;
-    using FuncInfoPair = std::pair<std::string, CommandFunc>;
-    using MethodFuncMap = std::map<std::string, FuncInfoPair>;
     using HttpClient = SimpleWeb::Client<SimpleWeb::HTTP>;
 
     ApiMethod();
@@ -143,82 +138,7 @@ public:
     void query_reward(std::string & target, std::ostringstream & out_str);
     void claim_reward(std::ostringstream & out_str);
 
-    int Help(const ParamList & param_list, std::ostringstream & out_str);
-    int KeyStore(const ParamList & param_list);
-    int Random(const ParamList & param_list);
-    int Authorize(const ParamList & param_list);
-    int CreateChainAccount(const ParamList & param_list);
-    int getAccount(const ParamList & param_list, std::ostringstream & out_str);
-    int transfer(const ParamList & param_list, std::ostringstream & out_str);
-    int stakeGas(const ParamList & param_list, std::ostringstream & out_str);
-    int unStakeGas(const ParamList & param_list, std::ostringstream & out_str);
-
-    int getTransaction(const ParamList & param_list, std::ostringstream & out_str);
-    int RequestToken(const ParamList & param_list);
-    int UserInfo(const ParamList & param_list);
-    int ChangeUser(const ParamList & param_list);
-    int Config(const ParamList & param_list);
-    int Key(const ParamList & param_list);
-    int CreateAccount(const ParamList & param_list);
-    //int CreateAccountKeystore(const ParamList & param_list);
-    int attachCreateAccount(const ParamList & param_list, std::ostringstream & out_str);
-    int CreateKey(const ParamList & param_list);
-    int CreateKeypairKeystore(const ParamList & param_list);
-    int attachCreateKey(const ParamList & param_list, std::ostringstream & out_str);
-    int setDefault(const ParamList & param_list);
-    int attachsetDefault(const ParamList & param_list, std::ostringstream & out_str);
     void outAccountBalance(const std::string & account, std::ostringstream & out_str);
-    int ListKey(const ParamList & param_list, std::ostringstream & out_str);
-    int ResetPassword(const ParamList & param_list);
-    int attachResetPassword(const ParamList & param_list, std::ostringstream & out_str);
-    int GetListProperty(const ParamList & param_list);
-    int CreateSubAccount(const ParamList & param_list);
-    int CreateContract(const ParamList & param_list);
-    int deployContract(const ParamList & param_list, std::ostringstream & out_str);
-    int runContract(const ParamList & param_list, std::ostringstream & out_str);
-    int GetVote(const ParamList & param_list);
-    int Vote(const ParamList & param_list);
-    int unVoteNode(const ParamList & param_list, std::ostringstream & out_str);
-    int ReturnVote(const ParamList & param_list);
-    int getBlock(const ParamList & param_list, std::ostringstream & out_str);
-    int CreateAccountTest(const ParamList & param_list);
-    int registerNode(const ParamList & param_list, std::ostringstream & out_str);
-    int unRegisterNode(const ParamList & param_list, std::ostringstream & out_str);
-    int updateNodeType(const ParamList & param_list, std::ostringstream & out_str);
-    int updateNodeInfo(const ParamList & param_list, std::ostringstream & out_str);
-    int stakeNodeDeposit(const ParamList & param_list, std::ostringstream & out_str);
-    int unstakeNodeDeposit(const ParamList & param_list, std::ostringstream & out_str);
-    int setNodeName(const ParamList & param_list, std::ostringstream & out_str);
-    int updateNodeSignKey(const ParamList & param_list, std::ostringstream & out_str);
-    int redeemNodeDeposit(const ParamList & param_list, std::ostringstream & out_str);
-    int setDividendRatio(const ParamList & param_list, std::ostringstream & out_str);
-    int stakeVote(const ParamList & param_list, std::ostringstream & out_str);
-    int unStakeVote(const ParamList & param_list, std::ostringstream & out_str);
-    int voteNode(const ParamList & param_list, std::ostringstream & out_str);
-    int claimNodeReward(const ParamList & param_list, std::ostringstream & out_str);
-    int claimVoterDividend(const ParamList & param_list, std::ostringstream & out_str);
-    int GenerateKeys(const ParamList & param_list);
-    int CheckKeys(const ParamList & param_list);
-    int ActivateAccounts(const ParamList & param_list);
-    int CheckActivateAccounts(const ParamList & param_list);
-    int submitProposal(const ParamList & param_list, std::ostringstream & out_str);
-    int withdrawProposal(const ParamList & param_list, std::ostringstream & out_str);
-    int tccVote(const ParamList & param_list, std::ostringstream & out_str);
-    int getChainInfo(const ParamList & param_list, std::ostringstream & out_str);
-    int queryNodeInfo(const ParamList & param_list, std::ostringstream & out_str);
-    int queryNodeReward(const ParamList & param_list, std::ostringstream & out_str);
-    int listVoteUsed(const ParamList & param_list, std::ostringstream & out_str);
-    int queryVoterDividend(const ParamList & param_list, std::ostringstream & out_str);
-    int queryProposal(const ParamList & param_list, std::ostringstream & out_str);
-    int getCGP(const ParamList & param_list, std::ostringstream & out_str);
-
-    CommandFunc get_method(const std::string & method, std::ostringstream & out_str, Command_type type = Command_type::toplevel);
-
-    // level subcommands
-    int Get(const ParamList & param_list, std::ostringstream & out_str);
-    int system(const ParamList & param_list, std::ostringstream & out_str);
-    int sendtx(const ParamList & param_list, std::ostringstream & out_str);
-    int wallet(const ParamList & param_list, std::ostringstream & out_str);
 
     // helper setting function
     int set_userinfo();
@@ -235,9 +155,6 @@ public:
     int get_account_info(std::ostringstream & out_str, xJson::Value & root);
 
 private:
-    void regist_method(const std::string & method, CommandFunc func, const std::string & info = "", Command_type type = Command_type::debug);
-    int redirect_cli_out(CLI::App & system_app, ArgParser & arg_parser, std::ostringstream & out_str);
-    int parse_cmd(CLI::App & app, const ParamList & param_list, std::ostringstream & out_str, const std::string & cmd_type, const std::string & example);
     void dump_userinfo(const user_info & info);
     std::string input_hiding();
     std::string input_no_hiding();
@@ -246,15 +163,7 @@ private:
     int get_eth_file(std::string& account);
 private:
     api_method_imp api_method_imp_;
-    MethodFuncMap methods_;
-    MethodFuncMap level_methods_;
-    MethodFuncMap get_methods_;
-    MethodFuncMap system_methods_;
-    MethodFuncMap sendtransaction_methods_;
-    MethodFuncMap wallet_methods_;
-    MethodFuncMap debug_methods_;
     std::string cache_pw{" "};
-    std::map<std::string, std::string> cmd_name;
     const std::string empty_pw{" "};
     bool is_account{false};
 
@@ -262,31 +171,5 @@ public:
     bool is_reset_pw{false};
 };
 
-class ArgParser {
-public:
-    ArgParser(const ApiMethod::ParamList & param_list, std::string cmd) : argc(param_list.size() + 1) {
-        argv = new char *[argc + 1];
-        argv[0] = const_cast<char *>(cmd.data());
-        for (size_t i = 0; i < param_list.size(); ++i) {
-            argv[i + 1] = const_cast<char *>(param_list[i].data());
-        }
-    }
-
-    ~ArgParser() {
-        delete[] argv;
-    }
-
-    size_t get_argc() {
-        return argc;
-    }
-
-    const char * const * get_argv() {
-        return argv;
-    }
-
-private:
-    size_t argc;
-    char ** argv;
-};
 
 }  // namespace xChainSDK
