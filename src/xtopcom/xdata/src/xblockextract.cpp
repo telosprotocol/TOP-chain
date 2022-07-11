@@ -242,16 +242,20 @@ std::shared_ptr<xrelay_block> xblockextract_t::unpack_commit_relay_block_from_re
 xobject_ptr_t<base::xvblock_t> xblockextract_t::pack_relayblock_to_wrapblock(xrelay_block const& relayblock, std::error_code & ec) {
     xbytes_t _bs = relayblock.encodeBytes(true);
     std::string bin_data = top::to_string(_bs);
-    xemptyblock_build_t bbuild(sys_contract_relay_block_addr, relayblock.get_block_height(), bin_data);
-    xobject_ptr_t<base::xvblock_t> _new_block = bbuild.build_new_block();
-
-    if (relayblock.get_block_height() != 0) {
-        // mock signature for xvblock rules
-        _new_block->set_verify_signature(std::string(1,0));
+    if (relayblock.get_block_height() == 0) {
+        xemptyblock_build_t bbuild(sys_contract_relay_block_addr);
+        bbuild.set_header_extra(bin_data);
+        xobject_ptr_t<base::xvblock_t> _new_block = bbuild.build_new_block();
+        return _new_block;
+    } else {
+        xemptyblock_build_t bbuild(sys_contract_relay_block_addr, relayblock.get_block_height(), bin_data);
+        xobject_ptr_t<base::xvblock_t> _new_block = bbuild.build_new_block();
+        xvip2_t target_xip{(xvip_t)(1),(uint64_t)1};// mock leader xip for xvblock rules
+        _new_block->get_cert()->set_validator(target_xip); 
+        _new_block->set_verify_signature(std::string(1,0));  // mock signature 
+        _new_block->set_block_flag(base::enum_xvblock_flag_authenticated);
+        return _new_block;
     }
-    // mock block flag for xvblock rules
-    _new_block->set_block_flag(base::enum_xvblock_flag_authenticated);
-    return _new_block;
 }
 void xblockextract_t::unpack_relayblock_from_wrapblock(base::xvblock_t* _block, xrelay_block & relayblock, std::error_code & ec) {
     if (_block->get_account() != sys_contract_relay_block_addr) {

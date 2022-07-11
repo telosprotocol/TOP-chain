@@ -819,7 +819,7 @@ namespace top
         {
             if( (nullptr == block) || (account.get_account() != block->get_account()) )
             {
-                xerror("xvblockstore_impl::store_block,block NOT match account:%",account.get_account().c_str());
+                xerror("xvblockstore_impl::store_block,block NOT match account:%s,%s",account.get_account().c_str(),block->get_account().c_str());
                 return false;
             }
 

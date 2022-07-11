@@ -846,6 +846,7 @@ base::xvblock_t* xblocktool_t::create_genesis_wrap_relayblock() {
         return nullptr;
     }
     
+    wrap_relayblock->add_ref();
     return wrap_relayblock.get();
 }
 
