@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "xdata/xrelay_block.h"
 #include "xvm/xcontract/xcontract_base.h"
 #include "xvm/xcontract/xcontract_exec.h"
 
@@ -32,6 +33,11 @@ public:
 private:
     void on_receive_cross_txs(std::string const & cross_txs_data);
     void on_make_block(std::string const & make_block_info);
+    void proc_created_relay_block(data::xrelay_block & relay_block, uint64_t timestamp);
+    bool build_elect_relay_block(evm_common::h256  prev_hash, uint64_t block_height, uint64_t timestamp, data::xrelay_block & relay_block);
+    bool build_poly_relay_block(evm_common::h256  prev_hash, uint64_t block_height, uint64_t timestamp, data::xrelay_block & relay_block);
+    bool build_tx_relay_block(evm_common::h256  prev_hash, uint64_t block_height, uint64_t timestamp, int32_t min_num, data::xrelay_block & relay_block);
+    void pop_tx_block_hashs(const string& list_key, bool for_poly_block, std::vector<evm_common::h256> & tx_block_hash_vec);
 };
 using xrelay_make_block_contract_t = xtop_relay_make_block_contract;
 
