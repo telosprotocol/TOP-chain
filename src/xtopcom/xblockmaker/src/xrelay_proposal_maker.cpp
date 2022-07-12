@@ -213,6 +213,10 @@ bool xrelay_proposal_maker_t::build_relay_block_data_backup(evm_common::h256 pre
         m_last_poly_timestamp = 0;
     }
 
+    if (tx_empty) {
+        m_last_poly_timestamp = timestamp + XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_relay_poly_interval) * 10;
+    }
+
     data::xrelay_election_group_t reley_election_group;
     reley_election_group.election_epochID = new_election_height;
     reley_election_group.elections_vector = reley_election;
