@@ -1,9 +1,9 @@
 #pragma once
 
+#include <json/value.h>
 #include <string>
-#include <map>
+
 #include "singleton.h"
-#include "json/json.h"
 
 namespace xChainSDK {
 

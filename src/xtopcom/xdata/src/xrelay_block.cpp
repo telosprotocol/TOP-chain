@@ -3,7 +3,6 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xdata/xrelay_block.h"
-#include "base/log.h"
 #include "xevm_common/xtriehash.h"
 #include "xdata/xrelay_block_store.h"
 #include "xcommon/xerror/xerror.h"

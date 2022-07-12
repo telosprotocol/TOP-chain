@@ -1,8 +1,9 @@
 #include "config_file.h"
+
+#include <json/reader.h>
+
 #include <fstream>
 #include <iostream>
-#include "log.h"
-
 
 namespace xChainSDK {
 

@@ -1,6 +1,5 @@
 #include "api_method.h"
 
-#include "base/log.h"
 #include "base/utility.h"
 #include "task/request_task.h"
 #include "task/task_dispatcher.h"
