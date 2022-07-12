@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdint.h>
 #include <string>
 #include <vector>
 
@@ -10,9 +11,6 @@ namespace xChainSDK {
     public:
         static std::string urlencode(const std::string& input) noexcept;
         static std::string urldecode(const std::string& input) noexcept;
-
-        static std::wstring s2ws(const std::string& str);
-        static std::string ws2s(const std::wstring& w_str);
 
         static std::string base64_encode(unsigned char const* str, unsigned int len);
         static std::string base64_decode(const std::string& str);

@@ -4,13 +4,12 @@
 
 #include "xcrypto_util.h"
 
+#include <string.h>
+#include <string>
+
 #include "base/utility.h"
 #include "xcrypto/xckey.h"
 #include "xpbase/base/top_utils.h"
-
-#include <string>
-
-//#include "xbase/xlog.h"
 
 namespace top {
 namespace utl {

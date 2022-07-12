@@ -1,6 +1,5 @@
 #include "api_method_imp.h"
 
-#include "base/log.h"
 #include "base/utility.h"
 #include "global_definition.h"
 #include "task/request_task.h"
@@ -12,7 +11,7 @@
 #include "xcrypto_util.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xtransaction.h"
-#include "xrpc/xuint_format.h"
+#include "xdata/xdatautil.h"
 #include "xvm/xvm_define.h"
 #include "xchain_fork/xchain_upgrade_center.h"
 #include "xbase/xutl.h"
@@ -25,16 +24,21 @@
 using namespace top::utl;
 
 namespace xChainSDK {
-using namespace top::xrpc;
 using namespace top::data;
 using namespace top::xvm;
-using std::cout;
-using std::endl;
 
 uint32_t get_sequence_id() {
     static uint32_t sequence_id = 0;
     return ++sequence_id;
 }
+
+template <typename... Args>
+void log_console(Args... args) {
+    std::ostringstream out;
+    std::cout << out.str().c_str() << std::endl;
+}
+
+#define CONSOLE(...) xChainSDK::log_console(__VA_ARGS__)
 
 template <typename T>
 static void set_user_info(task_info_callback<T> * info,
@@ -99,7 +103,7 @@ bool api_method_imp::validate_key(const std::string & priv, const std::string & 
 
 bool api_method_imp::create_account(const user_info & uinfo, std::function<void(ResultBase *)> func) {
     if (uinfo.account.empty()) {
-        LOG("uinfo.account.empty()=", uinfo.account.empty());
+        CONSOLE("uinfo.account.empty()=", uinfo.account.empty());
         return false;
     }
 
@@ -119,13 +123,13 @@ bool api_method_imp::create_account(const user_info & uinfo, std::function<void(
     task_dispatcher::get_instance()->post_message(msgAddTask, (uint32_t *)info, 0);
 
     auto res = task_dispatcher::get_instance()->get_result();
-    cout << res;
+    std::cout << res;
     return true;
 }
 
 bool api_method_imp::getAccount(const user_info & uinfo, const std::string & account, std::ostringstream & out_str, std::function<void(AccountInfoResult *)> func) {
     if (uinfo.account.empty()) {
-        LOG("uinfo.account.empty()=", uinfo.account.empty());
+        CONSOLE("uinfo.account.empty()=", uinfo.account.empty());
         return false;
     }
 
@@ -310,7 +314,7 @@ bool api_method_imp::getTransaction(const user_info & uinfo,
                                     std::ostringstream & out_str,
                                     std::function<void(AccountTransactionResult *)> func) {
     if (uinfo.account.empty()) {
-        LOG("uinfo.account.empty()=", uinfo.account.empty());
+        CONSOLE("uinfo.account.empty()=", uinfo.account.empty());
         return false;
     }
 
@@ -555,12 +559,12 @@ bool api_method_imp::getElectInfo(const user_info & uinfo, const std::string & t
             auto err_no = jv["errno"].asInt();
             auto errmsg = jv["errmsg"].asString();
             if (errmsg == "OK" && err_no == 0) {
-                cout << "No data!" << endl;
+                std::cout << "No data!" << std::endl;
             } else {
-                cout << "[" << err_no << "]Errmsg: " << errmsg << endl;
+                std::cout << "[" << err_no << "]Errmsg: " << errmsg << std::endl;
             }
         } else {
-            cout << data.asString() << endl;
+            std::cout << data.asString() << std::endl;
         }
     }
 
@@ -586,10 +590,10 @@ bool api_method_imp::getStandbys(const user_info & uinfo, const std::string & ac
     if (reader.parse(rpc_response, jv)) {
         auto data = jv["data"];
         if (data.isNull()) {
-            cout << "The miner has not joined in node-standby-pool, please start node by command 'topio node startnode'." << endl;
+            std::cout << "The miner has not joined in node-standby-pool, please start node by command 'topio node startnode'." << std::endl;
             return false;
         } else {
-            // cout << "The miner has joined in node-standby-pool. ";
+            // std::cout << "The miner has joined in node-standby-pool. ";
         }
     }
 
@@ -734,7 +738,7 @@ bool api_method_imp::getBlock(const user_info & uinfo,
                               std::ostringstream & out_str,
                               std::function<void(GetBlockResult *)> func) {
     if (uinfo.account.empty()) {
-        LOG("uinfo.account.empty()=", uinfo.account.empty(), " uinfo.identity_token.empty()=", uinfo.identity_token.empty());
+        CONSOLE("uinfo.account.empty()=", uinfo.account.empty(), " uinfo.identity_token.empty()=", uinfo.identity_token.empty());
         return false;
     }
 
@@ -760,7 +764,7 @@ bool api_method_imp::getBlocksByHeight(const user_info & uinfo,
                               std::ostringstream & out_str,
                               std::function<void(GetBlockResult *)> func) {
     if (uinfo.account.empty()) {
-        LOG("uinfo.account.empty()=", uinfo.account.empty(), " uinfo.identity_token.empty()=", uinfo.identity_token.empty());
+        CONSOLE("uinfo.account.empty()=", uinfo.account.empty(), " uinfo.identity_token.empty()=", uinfo.identity_token.empty());
         return false;
     }
 
