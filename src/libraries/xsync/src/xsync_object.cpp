@@ -256,7 +256,7 @@ std::string xtop_sync_object::status() const {
         result += "cur_height\t";
         result += "max_height\n";
 
-        for (auto it:tables_progress) {
+        for (auto const &it:tables_progress) {
             if (it.second.empty())
                 continue;
 

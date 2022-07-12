@@ -380,7 +380,7 @@ int xtxstoreimpl::load_block_by_hash(const std::string& hash, std::vector<base::
     }
     return 0;
 }
-bool xtxstoreimpl::check_relay_store() {
+bool xtxstoreimpl::check_relay_store() const {
     bool ret = strategy_permission(m_txstore_strategy);
     xdbg("xtxstoreimpl::check_relay_store, allow: %d", ret);
     return ret;
