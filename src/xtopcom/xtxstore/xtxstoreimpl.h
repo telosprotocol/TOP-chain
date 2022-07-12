@@ -34,12 +34,13 @@ public:  // read & load interface
     base::xauto_ptr<base::xvtxindex_t> load_relay_tx_idx(const std::string & raw_tx_hash, base::enum_transaction_subtype type) override;
     const std::string load_tx_bin(const std::string & raw_tx_hash) override;
     base::xauto_ptr<base::xdataunit_t> load_tx_obj(const std::string & raw_tx_hash) override;
-
+    bool write_relay_index(base::xvbindex_t * this_index) override;
 public:  // write interface
     bool store_txs(base::xvblock_t * block_ptr) override;
     bool store_tx_bin(const std::string & raw_tx_hash, const std::string & raw_tx_bin) override;
     bool store_tx_obj(const std::string & raw_tx_hash, base::xdataunit_t * raw_tx_obj) override;
-
+    bool store_relay_txs(base::xvblock_t * block_ptr) override;
+    bool check_relay_store() const override;
 public: // tx cache
     bool tx_cache_add(std::string const & tx_hash, data::xtransaction_ptr_t tx_ptr) override;
     bool tx_cache_get(std::string const & tx_hash, std::shared_ptr<data::xtransaction_cache_data_t> tx_cache_data_ptr) override;

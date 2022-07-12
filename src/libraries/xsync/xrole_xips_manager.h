@@ -119,6 +119,7 @@ public:
     std::vector<common::xnode_address_t> get_rand_full_nodes(uint32_t max_peers);
     std::vector<common::xnode_address_t> get_full_nodes();
     std::vector<common::xnode_address_t> get_edge_archive_list();
+    std::vector<common::xnode_address_t> get_relay_list() const;
 
     bool get_self_addr(common::xnode_address_t& self_addr) const;
 
@@ -133,7 +134,7 @@ public:
 protected:
 
     xip_vector_ptr create_xip_vector_ptr(const std::vector<common::xnode_address_t>& list, const common::xnode_address_t& self_xip);
-    xip_vector_ptr create_archive_xip_vector_ptr(const std::vector<common::xnode_address_t>& list, const common::xnode_address_t& self_xip);
+    xip_vector_ptr create_archive_xip_vector_ptr(const std::vector<common::xnode_address_t>& list, const common::xnode_address_t& self_xip) const;
 
     std::vector<common::xnode_address_t> get_rand_peers(const xip_vector_ptr& list_ptr, uint32_t max_peers);
 

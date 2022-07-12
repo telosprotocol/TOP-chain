@@ -149,7 +149,11 @@ void xsync_pusher_t::push_newblock_to_archive(const xblock_ptr_t &block) {
     }
 
     for (auto object:objects) {
-        if (!object->empty() && !common::has<common::xnode_type_t::consensus_auditor>(self_addr.type())) {
+        //if (!object->empty() && !common::has<common::xnode_type_t::consensus_auditor>(self_addr.type())) {
+        if (object->empty())
+            continue;
+        if (common::has<common::xnode_type_t::consensus_validator>(self_addr.type()) || common::has<common::xnode_type_t::evm_validator>(self_addr.type()) ||
+            common::has<common::xnode_type_t::relay>(self_addr.type())) {
             std::vector<uint32_t> push_arcs = calc_push_mapping(neighbor_number, object->size(), self_position, random);
             xsync_info("push_newblock_to_archive, src=%u dst=%u push_arcs=%u src %s %s", neighbor_number, object->size(),
                 push_arcs.size(), self_addr.to_string().c_str(), block->dump().c_str());
@@ -167,18 +171,32 @@ void xsync_pusher_t::push_newblock_to_archive(const xblock_ptr_t &block) {
             }
         }
     }
-    
 
     // push edge archive
     std::vector<vnetwork::xvnode_address_t> edge_archive_list = m_role_xips_mgr->get_edge_archive_list();
     if (!edge_archive_list.empty()) {
         std::vector<uint32_t> push_edge_arcs = calc_push_mapping(neighbor_number, edge_archive_list.size(), self_position, random);
-        xsync_info("push_newblock_to_edge_archive src=%u dst=%u push_edge_arcs= %u src %s %s", neighbor_number, edge_archive_list.size(), 
+        xsync_info("push_newblock_to_archive, edge_archive: src=%u dst=%u push_edge_arcs= %u src %s %s", neighbor_number, edge_archive_list.size(), 
             push_edge_arcs.size(), self_addr.to_string().c_str(), block->dump().c_str());
         for (auto &dst_idx: push_edge_arcs) {
             m_sync_sender->push_newblock(block, self_addr, edge_archive_list[dst_idx]);
         }
     }
+
+/*    // push evm to relay
+    std::vector<vnetwork::xvnode_address_t> relay_list = m_role_xips_mgr->get_relay_list();
+    xdbg("get_relay_list: %d", relay_list.size());
+    if (node_type == common::xnode_type_t::evm && !relay_list.empty()) {
+        std::vector<uint32_t> push_relay_list = calc_push_mapping(neighbor_number, relay_list.size(), self_position, random);
+        xsync_info("push_newblock_to_archive, relay: src=%u dst=%u push_relays= %u src %s %s %llu", neighbor_number, relay_list.size(), 
+            push_relay_list.size(), self_addr.to_string().c_str(), block->get_account().c_str(), block->get_height());
+        for (auto &dst_idx: push_relay_list) {
+            auto found = validator_auditor_neighbours.find(relay_list[dst_idx].account_address());
+            if (found == validator_auditor_neighbours.end()) {
+                m_sync_sender->push_newblock(block, self_addr, relay_list[dst_idx]);
+            }
+        }
+    }*/
 }
 int xsync_pusher_t::get_chain_info(const vnetwork::xvnode_address_t &network_self, std::vector<xchain_state_info_t>& info_list) {
     const std::shared_ptr<xrole_chains_t> &role_chains = m_role_chains_mgr->get_role(network_self);
@@ -221,7 +239,8 @@ void xsync_pusher_t::on_timer() {
         node_type = self_addr.type();
 
         if (common::has<common::xnode_type_t::rec>(node_type) || common::has<common::xnode_type_t::zec>(node_type) ||
-            common::has<common::xnode_type_t::consensus>(node_type)) {
+            common::has<common::xnode_type_t::consensus>(node_type) || common::has<common::xnode_type_t::evm>(node_type) ||
+            common::has<common::xnode_type_t::relay>(node_type)) {
             address = self_addr.to_string();
             break;
         } else if (common::has<common::xnode_type_t::storage_archive>(node_type)) {
@@ -274,7 +293,11 @@ void xsync_pusher_t::on_timer() {
         xsync_dbg("xsync_pusher_t, neighbours:%s", n.to_string().c_str());
 
     for (auto object:objects) {
-        if (!object->empty() && !common::has<common::xnode_type_t::consensus_auditor>(self_addr.type())) {
+        //if (!object->empty() && !common::has<common::xnode_type_t::consensus_auditor>(self_addr.type())) {
+        if (object->empty())
+            continue;
+        if (common::has<common::xnode_type_t::consensus_validator>(self_addr.type()) || common::has<common::xnode_type_t::evm_validator>(self_addr.type()) ||
+            common::has<common::xnode_type_t::relay>(self_addr.type())) {
             std::vector<uint32_t> push_arcs = calc_push_mapping(neighbor_number, object->size(), self_position, 0);
             xsync_dbg("xsync_pusher_t, maybe send_query_archive_height src=%u dst=%u push_arcs=%u src %s", neighbor_number, object->size(),
                 push_arcs.size(), self_addr.to_string().c_str());

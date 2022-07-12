@@ -6,6 +6,10 @@
 #include "xvledger/xvledger.h"
 #include "xvledger/xvtxindex.h"
 #include "xmetrics/xmetrics.h"
+#include "xdata/xnative_contract_address.h"
+#include "xdata/xtop_relay_block.h"
+#include "xdata/xblockextract.h"
+#include "xpbase/base/top_utils.h"
 
 NS_BEG2(top, txstore)
 
@@ -17,9 +21,8 @@ using common::xstrategy_value_enum_t;
 
 xtxstoreimpl::xtxstoreimpl(observer_ptr<mbus::xmessage_bus_face_t> const & mbus, observer_ptr<xbase_timer_driver_t> const & timer_driver)
   : base::xvtxstore_t()
-  , m_txstore_strategy{common::define_bool_strategy(xdefault_strategy_t{xstrategy_value_enum_t::enable, xstrategy_priority_enum_t::low},
-                                                    xnode_type_strategy_t{xnode_type_t::consensus, xstrategy_value_enum_t::disable, xstrategy_priority_enum_t::normal},
-                                                    xnode_type_strategy_t{xnode_type_t::storage, xstrategy_value_enum_t::enable, xstrategy_priority_enum_t::high})}
+  , m_txstore_strategy{common::define_bool_strategy(xdefault_strategy_t{xstrategy_value_enum_t::disable, xstrategy_priority_enum_t::low},
+                                                    xnode_type_strategy_t{xnode_type_t::storage, xstrategy_value_enum_t::enable, xstrategy_priority_enum_t::normal})}
   , m_tx_prepare_mgr{std::make_shared<txexecutor::xtransaction_prepare_mgr>(mbus, timer_driver)}
   , m_tx_cache_strategy{common::define_bool_strategy(xdefault_strategy_t{xstrategy_value_enum_t::disable, xstrategy_priority_enum_t::low},
                                                      xnode_type_strategy_t{xnode_type_t::storage_exchange, xstrategy_value_enum_t::enable, xstrategy_priority_enum_t::normal})} {
@@ -76,6 +79,89 @@ base::xauto_ptr<base::xvtxindex_t> xtxstoreimpl::load_relay_tx_idx(const std::st
     }
     txindex->set_tx_hash(raw_tx_hash);
     return txindex;
+}
+bool xtxstoreimpl::write_relay_index(base::xvbindex_t * this_index) {
+    if (!check_relay_store())
+        return false;
+
+    std::string key_path2;
+    if (this_index->get_account() == sys_contract_eth_table_block_addr_with_suffix)
+        key_path2 = base::xvdbkey_t::create_prunable_blockhash_key(this_index->get_block_hash());
+    else if (this_index->get_account() == sys_contract_relay_block_addr)
+        key_path2 = base::xvdbkey_t::create_prunable_blockhash_key(this_index->get_extend_data());
+    else
+        return false;
+
+    base::xvchain_t::instance().get_xdbstore()->set_value(key_path2, this_index->get_account() + "/" + base::xstring_utl::uint642hex(this_index->get_height()));
+    xdbg("xtxstoreimpl::write_relay_index, %s, %s, %s",
+         this_index->get_account().c_str(),
+         base::xstring_utl::to_hex(this_index->get_extend_data()).c_str(),
+         base::xstring_utl::to_hex(this_index->get_block_hash()).c_str());
+    return true;
+}
+bool xtxstoreimpl::store_relay_txs(base::xvblock_t * block_ptr) {
+    xassert(block_ptr != NULL);
+    if (NULL == block_ptr)
+        return false;
+
+    if (block_ptr->get_height() == 0) {
+        xdbg("store_relay_txs not stroe :%s ", block_ptr->dump().c_str());
+        return true;
+    }
+
+    if (!check_relay_store())
+        return false;
+
+    xdbg("store_relay_txs, store txs for block=%s, ", block_ptr->dump().c_str());
+
+    std::error_code ec;
+    top::data::xrelay_block extra_relay_block;
+    data::xblockextract_t::unpack_relayblock(block_ptr, false, extra_relay_block, ec);
+    if (ec) {
+        xerror("store_relay_txs decodeBytes decodeBytes error %s; err msg %s", ec.category().name(), ec.message().c_str());
+        return false;
+    }
+    //extra_relay_block.build_finish();
+    evm_common::h256 hash = extra_relay_block.get_block_hash();
+    std::string block_hash_str((char *)hash.data(), hash.size);
+    xdbg("store_relay_txs, hash:%s", HexEncode(block_hash_str).c_str());
+
+    // get tx hash from txs
+    std::vector<base::xvtxindex_ptr> sub_txs;
+    for (auto & tx : extra_relay_block.get_all_transactions()) {
+        if (tx.get_tx_hash().empty()) {
+            xerror("store_relay_txs  account: %s, height:%llu tx hash is null! ", block_ptr->get_account().c_str(), block_ptr->get_height());
+            xassert(false);
+        }
+        std::string tx_hash = std::string(reinterpret_cast<char *>(tx.get_tx_hash().data()), tx.get_tx_hash().size());
+        base::xvtxindex_ptr tx_index = make_object_ptr<base::xvtxindex_t>(*block_ptr, tx_hash, base::enum_transaction_subtype_send);
+        tx_index->set_block_hash(block_hash_str);
+        sub_txs.push_back(tx_index);
+        xinfo("store_relay_txs tx_hash:%s, account: %s, height:%llu",
+              base::xstring_utl::to_hex(tx_hash).c_str(),
+              block_ptr->get_account().c_str(),
+              block_ptr->get_height());
+    }
+
+    bool has_error = false;
+    for (auto & v : sub_txs) {
+        base::enum_txindex_type txindex_type = base::xvtxkey_t::transaction_subtype_to_txindex_type(v->get_tx_phase_type());
+        const std::string tx_key = base::xvdbkey_t::create_prunable_relay_tx_index_key(v->get_tx_hash(), txindex_type);
+        std::string tx_bin;
+        v->serialize_to_string(tx_bin);
+        xassert(!tx_bin.empty());
+
+        if (base::xvchain_t::instance().get_xdbstore()->set_value(tx_key, tx_bin) == false) {
+            xerror("store_relay_txs,fail to store tx for block(%s)", block_ptr->dump().c_str());
+            has_error = true;  // mark it but let do rest work
+        } else {
+            xdbg("store_relay_txs,store tx: %s", base::xvtxkey_t::transaction_hash_subtype_to_string(v->get_tx_hash(), v->get_tx_phase_type()).c_str());
+        }
+
+    }
+    if (has_error)
+        return false;
+    return true;
 }
 
 const std::string xtxstoreimpl::load_tx_bin(const std::string & raw_tx_hash) {
@@ -294,5 +380,9 @@ int xtxstoreimpl::load_block_by_hash(const std::string& hash, std::vector<base::
     }
     return 0;
 }
-
+bool xtxstoreimpl::check_relay_store() const {
+    bool ret = strategy_permission(m_txstore_strategy);
+    xdbg("xtxstoreimpl::check_relay_store, allow: %d", ret);
+    return ret;
+}
 NS_END2
