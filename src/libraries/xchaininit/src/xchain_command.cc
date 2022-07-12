@@ -23,6 +23,7 @@
 #include "xpbase/base/top_log.h"
 #include "xpbase/base/top_utils.h"
 #include "xtopcl/include/topcl.h"
+#include "xtopcl/include/global_definition.h"
 #include "xtopcl/include/xcrypto.h"
 #include "xconfig/xpredefined_configurations.h"
 

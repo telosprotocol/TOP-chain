@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 #include "xchaininit/xchain_command.h"
 
 

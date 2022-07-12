@@ -1,19 +1,15 @@
 #pragma once
 
-#include <string>
-#include <thread>
-#include <iostream>
-#include <chrono>
-#include <unistd.h>
-
 #ifdef LEAK_TRACER
-#include "leaktracer/MemoryTrace.hpp"
 #include <csignal>
+
+#include "leaktracer/MemoryTrace.hpp"
 #endif
 
 #ifdef ENABLE_GPERF
-#include "gperftools/profiler.h"
 #include <csignal>
+
+#include "gperftools/profiler.h"
 #endif
 
 #ifdef ENABLE_GHPERF
