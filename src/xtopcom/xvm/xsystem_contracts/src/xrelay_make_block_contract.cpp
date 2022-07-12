@@ -5,11 +5,11 @@
 #include "xvm/xsystem_contracts/xrelay/xrelay_make_block_contract.h"
 
 #include "xbasic/xhex.h"
-#include "xcodec/xmsgpack_codec.hpp"
-// #include "xdata/xcodec/xmsgpack/xelection/xelection_result_store_codec.hpp"
-// #include "xdata/xelection/xelection_result_property.h"
 #include "xbasic/xutility.h"
+#include "xcodec/xmsgpack_codec.hpp"
 #include "xdata/xblockextract.h"
+#include "xdata/xcodec/xmsgpack/xelection/xelection_result_store_codec.hpp"
+#include "xdata/xelection/xelection_result_property.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xrootblock.h"
 #include "xvm/xserialization/xserialization.h"
@@ -69,16 +69,18 @@ void xtop_relay_make_block_contract::on_receive_cross_txs(std::string const & da
 
 void xtop_relay_make_block_contract::on_make_block(std::string const & data) {
     auto wrap_phase = STRING_GET(data::system_contract::XPROPERTY_RELAY_WRAP_PHASE);
+    uint64_t last_height = static_cast<std::uint64_t>(std::stoull(STRING_GET(data::system_contract::XPROPERTY_RELAY_LAST_HEIGHT)));
     if (wrap_phase == RELAY_WRAP_PHASE_0) {
         STRING_SET(data::system_contract::XPROPERTY_RELAY_WRAP_PHASE, RELAY_WRAP_PHASE_1);
+        xdbg("xtop_relay_make_block_contract::on_make_block new wrap phase 1 for height:%llu", last_height);
         return;
     } else if (wrap_phase == RELAY_WRAP_PHASE_1) {
         STRING_SET(data::system_contract::XPROPERTY_RELAY_WRAP_PHASE, RELAY_WRAP_PHASE_2);
+        xdbg("xtop_relay_make_block_contract::on_make_block new wrap phase 2 for height:%llu", last_height);
         return;
     }
 
     uint64_t cur_time = TIME() * 10;
-    uint64_t last_height = static_cast<std::uint64_t>(std::stoull(STRING_GET(data::system_contract::XPROPERTY_RELAY_LAST_HEIGHT)));
     auto last_hash_str = STRING_GET(data::system_contract::XPROPERTY_RELAY_LAST_HASH);
     evm_common::h256 last_hash(to_bytes(last_hash_str));
     bool ret;
@@ -94,11 +96,12 @@ void xtop_relay_make_block_contract::on_make_block(std::string const & data) {
     if (last_poly_time + XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_relay_poly_interval) * 10 < cur_time) {
         ret = build_poly_relay_block(last_hash, last_height + 1, cur_time, relay_block);
         if (!ret) {
-            build_tx_relay_block(last_hash, last_height + 1, cur_time, 1, relay_block);
+            ret = build_tx_relay_block(last_hash, last_height + 1, cur_time, 1, relay_block);
         }
     } else {
-        build_tx_relay_block(last_hash, last_height + 1, cur_time, XGET_CONFIG(relayblock_batch_tx_max_num), relay_block);
+        ret = build_tx_relay_block(last_hash, last_height + 1, cur_time, XGET_CONFIG(relayblock_batch_tx_max_num), relay_block);
     }
+    xdbg("xtop_relay_make_block_contract::on_make_block build new relay block height:%llu ret:%d", last_height + 1, ret);
 }
 
 void xtop_relay_make_block_contract::pop_tx_block_hashs(const string & list_key, bool for_poly_block, std::vector<evm_common::h256> & tx_block_hash_vec) {
@@ -137,14 +140,34 @@ void xtop_relay_make_block_contract::proc_created_relay_block(data::xrelay_block
     std::string relay_block_data = from_bytes<std::string>((xbytes_t)(rlp_stream));
     STRING_SET(data::system_contract::XPROPERTY_RELAY_BLOCK_STR, relay_block_data);
     STRING_SET(data::system_contract::XPROPERTY_RELAY_WRAP_PHASE, RELAY_WRAP_PHASE_0);
+    xdbg("xtop_relay_make_block_contract::proc_created_relay_block new relayblock:%s", relay_block.dump().c_str());
 }
 
 bool xtop_relay_make_block_contract::build_elect_relay_block(evm_common::h256 prev_hash, uint64_t block_height, uint64_t timestamp, data::xrelay_block & relay_block) {
-    data::xrelay_election_group_t reley_election_group;
-    // todo(nathan):get relay election group
-
     uint64_t last_epoch_id = static_cast<std::uint64_t>(std::stoull(STRING_GET(data::system_contract::XPROPERTY_RELAY_LAST_EPOCH_ID)));
-    // todo(nathan):check if epoch id is continuous.
+
+    auto election_result_store = serialization::xmsgpack_t<data::election::v2::xelection_result_store_t>::deserialize_from_string_prop(
+        *this, sys_contract_relay_repackage_election_addr, data::election::get_property_by_group_id(common::xdefault_group_id));
+
+    auto const & group_result =
+        election_result_store.result_of(network_id()).result_of(common::xnode_type_t::relay).result_of(common::xdefault_cluster_id).result_of(common::xdefault_group_id);
+
+    uint64_t epoch = group_result.group_epoch().value();
+    xdbg("xtop_relay_make_block_contract::build_elect_relay_block last epoch:%llu,epoch:%llu", last_epoch_id, epoch);
+    if (last_epoch_id + 1 != epoch) {
+        return false;
+    }
+
+    data::xrelay_election_group_t reley_election_group;
+
+    for (auto const & node_info : group_result) {
+        auto const & election_info = top::get<data::election::v2::xelection_info_bundle_t>(node_info).election_info();
+        auto pubkey_str = base::xstring_utl::base64_decode(election_info.consensus_public_key.to_string());
+        xbytes_t bytes_x(pubkey_str.begin() + 1, pubkey_str.begin() + 33);
+        xbytes_t bytes_y(pubkey_str.begin() + 33, pubkey_str.end());
+        reley_election_group.elections_vector.push_back(data::xrelay_election_node_t(evm_common::h256(bytes_x), evm_common::h256(bytes_y)));
+    }
+    reley_election_group.election_epochID = epoch;
 
     std::vector<evm_common::h256> tx_block_hash_vec;
     pop_tx_block_hashs(data::system_contract::XPROPERTY_RELAY_BLOCK_HASH_LAST_ELECT_TO_LAST_POLY_LIST, false, tx_block_hash_vec);
@@ -153,6 +176,7 @@ bool xtop_relay_make_block_contract::build_elect_relay_block(evm_common::h256 pr
     // todo(nathan):remove epoch id
     // todo(nathan):set block root hash
     relay_block = data::xrelay_block(prev_hash, block_height, 0, timestamp, reley_election_group);
+    xdbg("xtop_relay_make_block_contract::build_elect_relay_block new elect block epoch:%llu,height:%llu,tx block hash num:%u", epoch, block_height, tx_block_hash_vec.size());
     proc_created_relay_block(relay_block, timestamp);
     return true;
 }
@@ -168,6 +192,7 @@ bool xtop_relay_make_block_contract::build_poly_relay_block(evm_common::h256 pre
     // todo(nathan):set block root hash
     relay_block = data::xrelay_block(prev_hash, block_height, 0, timestamp);
     proc_created_relay_block(relay_block, timestamp);
+    xdbg("xtop_relay_make_block_contract::build_elect_relay_block new poly block,height:%llu,tx block hash num:%u", block_height, tx_block_hash_vec.size());
     return true;
 }
 
@@ -199,6 +224,7 @@ bool xtop_relay_make_block_contract::build_tx_relay_block(evm_common::h256 prev_
     // todo(nathan):remove epoch id
     relay_block = data::xrelay_block(prev_hash, block_height, 0, timestamp, transactions, receipts);
     proc_created_relay_block(relay_block, timestamp);
+    xdbg("xtop_relay_make_block_contract::build_elect_relay_block new tx block,height:%llu,tx num:%u", block_height, transactions.size());
     return true;
 }
 
