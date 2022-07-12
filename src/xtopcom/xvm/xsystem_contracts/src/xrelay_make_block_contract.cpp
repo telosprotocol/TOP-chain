@@ -80,6 +80,8 @@ void xtop_relay_make_block_contract::on_make_block(std::string const & data) {
         return;
     }
 
+    XCONTRACT_ENSURE((wrap_phase == RELAY_WRAP_PHASE_2) || (wrap_phase == RELAY_WRAP_PHASE_INIT), "wrap phase invalid:" + wrap_phase);
+
     uint64_t cur_time = TIME() * 10;
     auto last_hash_str = STRING_GET(data::system_contract::XPROPERTY_RELAY_LAST_HASH);
     evm_common::h256 last_hash(to_bytes(last_hash_str));
@@ -155,6 +157,10 @@ bool xtop_relay_make_block_contract::build_elect_relay_block(evm_common::h256 pr
     uint64_t epoch = group_result.group_epoch().value();
     xdbg("xtop_relay_make_block_contract::build_elect_relay_block last epoch:%llu,epoch:%llu", last_epoch_id, epoch);
     if (last_epoch_id + 1 != epoch) {
+        XCONTRACT_ENSURE((last_epoch_id == epoch), "epoch id invalid");
+        if (last_epoch_id != epoch) {
+            xerror("xtop_relay_make_block_contract::build_elect_relay_block last epoch:%llu,invalid epoch:%llu", last_epoch_id, epoch);
+        }
         return false;
     }
 
@@ -184,7 +190,8 @@ bool xtop_relay_make_block_contract::build_elect_relay_block(evm_common::h256 pr
 bool xtop_relay_make_block_contract::build_poly_relay_block(evm_common::h256 prev_hash, uint64_t block_height, uint64_t timestamp, data::xrelay_block & relay_block) {
     std::vector<evm_common::h256> tx_block_hash_vec;
     pop_tx_block_hashs(data::system_contract::XPROPERTY_RELAY_BLOCK_HASH_FROM_LAST_POLY_LIST, true, tx_block_hash_vec);
-    if (!tx_block_hash_vec.empty()) {
+    xdbg("xtop_relay_make_block_contract::build_poly_relay_block tx block height:%llu,hash num:%u", block_height,tx_block_hash_vec.size());
+    if (tx_block_hash_vec.empty()) {
         return false;
     }
 
@@ -202,6 +209,7 @@ bool xtop_relay_make_block_contract::build_tx_relay_block(evm_common::h256 prev_
                                                           int32_t min_num,
                                                           data::xrelay_block & relay_block) {
     auto cross_tx_list_size = LIST_SIZE(data::system_contract::XPROPERTY_RELAY_CROSS_TXS);
+    xdbg("xtop_relay_make_block_contract::build_tx_relay_block height:%llu,min_num:%d,cross tx:%d", block_height, min_num, cross_tx_list_size);
     if (cross_tx_list_size < min_num) {
         return false;
     }
