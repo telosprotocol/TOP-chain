@@ -1,6 +1,7 @@
 #include "api_method.h"
 
 #include "base/utility.h"
+#include "base/config_file.h"
 #include "task/request_task.h"
 #include "task/task_dispatcher.h"
 #include "xbase/xutl.h"
@@ -10,6 +11,8 @@
 #include "xcrypto_util.h"
 #include "xdata/xnative_contract_address.h"
 #include "xpbase/base/top_utils.h"
+
+#include "console_log.h"
 
 #include <dirent.h>
 
@@ -29,6 +32,19 @@ using std::endl;
 using std::ifstream;
 using std::ostringstream;
 static const std::string SAFEBOX_ENDPOINT_ENV = "SAFEBOX_ENDPOINT";
+
+// #[deprecated]
+static const std::string DEPRECATED_OLD_DEFAULT_KEY = " ";
+
+// local test
+// #define NEXT_VERSION
+#ifdef NEXT_VERSION
+#    define __compatibility_begin(...) if (false) {
+#    define __compatibility_end(...) }
+#else
+#    define __compatibility_begin(...)
+#    define __compatibility_end(...)
+#endif
 
 bool check_pri_key(const std::string & str_pri) {
     return BASE64_PRI_KEY_LEN == str_pri.size() || HEX_PRI_KEY_LEN == str_pri.size();
@@ -269,21 +285,19 @@ int ApiMethod::set_pw_by_file(const string & pw_path, string & pw) {
     return 0;
 }
 
-void ApiMethod::create_account(const int32_t & pf, const string & pw_path, std::ostringstream & out_str) {
-    is_account = true;
-    cache_pw = empty_pw;
-    if (pf == 1) {
-        if (!check_password()) {
-            return;
-        }
-    }
+void ApiMethod::create_account(const string & pw_path, std::ostringstream & out_str) {
+    std::string new_pw{""};
 
-    if (set_pw_by_file(pw_path, cache_pw) != 0) {
+    auto pswd_type = pw_path.empty() ? password_type::interactive : password_type::file_path;
+    auto result = get_password(keystore_type::account_key, pswd_type, pw_path);
+    if (result.first == false) {
         return;
+    } else {
+        new_pw = result.second;
     }
 
     std::string dir;
-    auto path = create_new_keystore(cache_pw, dir);
+    auto path = create_new_keystore(new_pw, dir);
     out_str << "Successfully create an account locally!\n" << std::endl;
 
     out_str << "Account Address: " << g_userinfo.account << std::endl;
@@ -291,21 +305,20 @@ void ApiMethod::create_account(const int32_t & pf, const string & pw_path, std::
     out_str << "You can share your public key and account address with anyone.Others need them to interact with you!" << std::endl;
     out_str << "You must nerver share the private key or account keystore file with anyone!They control access to your funds!" << std::endl;
     out_str << "You must backup your account keystore file!Without the file, you will not be able to access the funds in your account!" << std::endl;
-    out_str << "You must remember your password!Without the password,it’s impossible to use the keystore file!" << std::endl;
+    out_str << "You must remember your password!Without the password,it's impossible to use the keystore file!" << std::endl;
 
     return;
 }
 
-void ApiMethod::create_key(std::string & owner_account, const int32_t & pf, const string & pw_path, std::ostringstream & out_str) {
-    cache_pw = empty_pw;
-    if (1 == pf) {
-        if (!check_password()) {
-            return;
-        }
-    }
+void ApiMethod::create_key(std::string & owner_account, const string & pw_path, std::ostringstream & out_str) {
+    std::string new_pw{""};
 
-    if (set_pw_by_file(pw_path, cache_pw) != 0) {
+    auto pswd_type = pw_path.empty() ? password_type::interactive : password_type::file_path;
+    auto result = get_password(keystore_type::worker_key, pswd_type, pw_path);
+    if (result.first == false) {
         return;
+    } else {
+        new_pw = result.second;
     }
 
     if (owner_account.size() == 0) {
@@ -318,14 +331,14 @@ void ApiMethod::create_key(std::string & owner_account, const int32_t & pf, cons
     }
 
     std::string dir = "";
-    auto path = create_new_keystore(cache_pw, dir, true, owner_account);
+    auto path = create_new_keystore(new_pw, dir, true, owner_account);
     out_str << "Successfully create an worker keystore file!\n" << std::endl;
     out_str << "Account Address: " << owner_account << std::endl;
     out_str << "Public Key: " << top::utl::xcrypto_util::get_base64_public_key(g_userinfo.private_key) << "\n\n";
     out_str << "You can share your public key with anyone.Others need it to interact with you!" << std::endl;
     out_str << "You must nerver share the private key or keystore file with anyone!They can use them to make the node malicious." << std::endl;
     out_str << "You must backup your keystore file!Without the file,you may not be able to send transactions." << std::endl;
-    out_str << "You must remember your password!Without the password,it’s impossible to use the keystore file!" << std::endl;
+    out_str << "You must remember your password!Without the password,it's impossible to use the keystore file!" << std::endl;
     return;
 }
 
@@ -509,20 +522,23 @@ void ApiMethod::reset_keystore_password(std::string & public_key, std::ostringst
     }
 }
 
-void ApiMethod::import_account(const int32_t & pf, std::ostringstream & out_str) {
-    is_account = true;
-    cache_pw = empty_pw;
-    if (pf == 1) {
-        if (!check_password()) {
-            return;
-        }
+void ApiMethod::import_account(std::string const & pw_path, std::ostringstream & out_str) {
+    std::string new_pw{""};
+
+    auto pswd_type = pw_path.empty() ? password_type::interactive : password_type::file_path;
+    auto result = get_password(keystore_type::account_key, pswd_type, pw_path);
+    if (result.first == false) {
+        return;
+    } else {
+        new_pw = result.second;
     }
+
     std::string pri_str;
     if (input_pri_key(pri_str) != 0)
         return;
 
     std::string dir;
-    std::string path = create_new_keystore(cache_pw, dir, pri_str);
+    std::string path = create_new_keystore(new_pw, dir, pri_str);
     if (path.empty())
         return;
 
@@ -534,63 +550,55 @@ void ApiMethod::import_account(const int32_t & pf, std::ostringstream & out_str)
 
 void ApiMethod::export_account(const std::string & account, std::ostringstream & out_str) {
     if (account.empty()) {
-    /*    std::string account_temp = get_account_from_daemon();
-        if (!account_temp.empty())
-            g_userinfo.account = account_temp;
-        else { */
-            cache_pw = empty_pw;
-            if (!set_default_prikey(out_str))
-            {
-                std::cout << "Please Input Password." << std::endl;
-                cache_pw = input_hiding();
-                if (!set_default_prikey(out_str))
-                    return;
-            }
-     //   }
-    } else {
-        g_userinfo.account = account;
-    }
-
-    if (g_userinfo.account.empty())
-    {
-        out_str << "Please input account address." << std::endl;
+        CONSOLE_INFO("You need to identify the account you want to export.");
+        list_accounts(out_str);
         return;
     }
+
     std::vector<std::string> keys = scan_key_dir(g_keystore_dir);
     if (keys.size() == 0) {
         out_str << "There is no account in wallet." << std::endl;
         return;
     }
     for (size_t i = 0; i < keys.size(); ++i) {
-        if (keys[i] != g_userinfo.account)
+        if (keys[i] != account)
             continue;
-        std::string pw = cache_pw;
-        std::string keystore_file = g_keystore_dir + "/" + keys[i];
-        std::string str_pri = import_existing_keystore(pw, keystore_file, true);
-        if (str_pri.empty())
-        {
-            std::cout << "Please Input Password." << std::endl;
-            pw = input_hiding();
 
-            str_pri = import_existing_keystore(pw, keystore_file);
+        std::string keystore_file = g_keystore_dir + "/" + keys[i];
+
+        std::string str_pri{""};
+        std::string pswd{""};
+
+        __compatibility_begin("try default key first.");
+        pswd = DEPRECATED_OLD_DEFAULT_KEY;
+        str_pri = import_existing_keystore(pswd, keystore_file, true);  // `auto_dec = true` meaning try this without error warning.
+        if (str_pri.empty()) {
+            __compatibility_end();
+            std::cout << "Please Input Password." << std::endl;
+            pswd = input_hiding();
+
+            str_pri = import_existing_keystore(pswd, keystore_file);
             if (str_pri.empty()) {
-                out_str << "Password error！" << std::endl;
+                out_str << "Password error!" << std::endl;
                 return;
             }
+            __compatibility_begin("try default key first.");
         }
+        __compatibility_end();
+
         out_str << "Export successfully.\n" << std::endl;
         out_str << "Keystore file: " << keystore_file << std::endl;
-        out_str << "Account Address: " << g_userinfo.account << std::endl;
+        out_str << "Account Address: " << account << std::endl;
         out_str << "Private-Key: " << str_pri << "\n\n";
 
         std::ifstream keyfile(keystore_file, std::ios::in);
-        if (!keyfile)
-        {
-             return;
+        if (!keyfile) {
+            return;
         }
         out_str << keyfile.rdbuf() << std::endl;
         return;
     }
+
     out_str << "Account address error! The account does not exist." << std::endl;
     return;
 }
@@ -1452,7 +1460,58 @@ std::string ApiMethod::input_no_hiding() {
     return str;
 }
 
-bool ApiMethod::check_password() {
+std::string ApiMethod::input_same_pswd_twice() {
+    std::string pw1 = input_hiding();
+    // todo if we really need some check password format.
+    // check true or "Console_Error" than input_same_pswd_twice() again
+
+    CONSOLE_INFO("Please Input Password Again");
+    std::string pw2 = input_hiding();
+
+    if (pw1 == pw2) {
+        return pw1;
+    } else {
+        CONSOLE_INFO("Passwords are not the same.");
+        CONSOLE_INFO("\nPlease Input Password:");
+        return input_same_pswd_twice();
+    }
+}
+
+std::string ApiMethod::input_pswd_hint() {
+    CONSOLE_INFO("Please set a password hint! If don't, there will be no hint when you forget your password.");
+    return input_no_hiding();
+}
+
+std::pair<bool, std::string> ApiMethod::get_password(keystore_type const & keys_type, password_type const & pswd_type, std::string const & file_path, bool is_reset_pw) {
+    g_pw_hint = "";
+    std::string get_pw = "";
+
+    if (pswd_type == password_type::file_path) {
+        std::ifstream pw_file(file_path, std::ios::in);
+        if (!pw_file) {
+            CONSOLE_ERROR(" Fail to open file: ", file_path);
+            return std::make_pair(false, get_pw);
+        }
+        std::getline(pw_file, get_pw);  //? Without check format
+    } else if (pswd_type == password_type::interactive) {
+        if (is_reset_pw) {
+            CONSOLE_INFO("Please set a new password. The password must consist of Numbers and Letters, 8 to 16 characters. Pressing Ctrl+C can exit the command.");
+        } else if (keys_type == keystore_type::account_key) {
+            CONSOLE_INFO("Please set a password for the account keystore file. The password must consist of Numbers and Letters, 8 to 16 characters.");
+        } else {
+            CONSOLE_INFO("Please set a password for the keystore file. The password must consist of Numbers and Letters, 8 to 16 characters.");
+        }
+        get_pw = input_same_pswd_twice();
+
+        g_pw_hint = input_pswd_hint();
+    } else {
+        xassert(false);
+    }
+    return std::make_pair(true, get_pw);
+}
+
+// #[deprecated]
+bool ApiMethod::check_password(bool is_reset_pw) {
     if (is_reset_pw) {
         cout << "Please set a new password. The password must consist of Numbers and Letters, 8 to 16 characters. Pressing Ctrl+C can exit the command." << endl;
     } else if (is_account) {
