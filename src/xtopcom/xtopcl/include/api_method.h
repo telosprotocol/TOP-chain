@@ -1,7 +1,6 @@
 #pragma once
 #include "CLI11.hpp"
 #include "api_method_imp.h"
-#include "base/config_file.h"
 #include "xtopcl/include/web/client_http.hpp"
 #include "xtopcl/include/xtop/topchain_type.h"
 #include "user_info.h"
@@ -20,8 +19,15 @@ constexpr int INDENT_WIDTH = 4;
 constexpr int HELP_WIDTH = 36;
 static const uint32_t kExpirePeriod = 2 * 60 * 60 * 1000;  // expire  after 2 * 60 * 60 s92h)
 
-enum class Command_type : uint8_t { toplevel, get, system, sendtransaction, wallet, subcommands, debug };
+enum class keystore_type : uint8_t {
+    account_key, 
+    worker_key 
+};
 
+enum class password_type : uint8_t {
+    interactive,
+    file_path,
+};
 
 class ApiMethod final {
 public:
@@ -43,15 +49,14 @@ public:
     /*
      * wallet
      */
-    void create_account(const int32_t & pf, const string & pw_path, std::ostringstream & out_str);
-    void create_key(std::string & owner_account, const int32_t & pf, const string & pw_path, std::ostringstream & out_str);
+    void create_account(const string & pw_path, std::ostringstream & out_str);
+    void create_key(std::string & owner_account, const string & pw_path, std::ostringstream & out_str);
     std::unordered_map<std::string, std::string> queryNodeInfos();
     void list_accounts(std::ostringstream & out_str);
     void set_default_account(const std::string & account, const string & pw_path, std::ostringstream & out_str);
-    void import_keystore(const std::string & keystore, std::ostringstream & out_str);
     void reset_keystore_password(std::string & path, std::ostringstream & out_str);
     int set_default_miner(const std::string & pub_key, const std::string & pw_path, std::ostringstream & out_str);
-    void import_account(const int32_t & pf, std::ostringstream & out_str);
+    void import_account(std::string const & pw_path, std::ostringstream & out_str);
     void export_account(const std::string & account, std::ostringstream & out_str);
     /*
      * debug
@@ -144,7 +149,24 @@ public:
     int set_userinfo();
     void change_trans_mode(bool use_http);
     void set_keystore_path(const std::string & data_dir);
-    bool check_password();
+    bool check_password(bool is_reset_pw = false);
+
+// private:
+    std::string input_same_pswd_twice();
+    std::string input_pswd_hint();
+
+    /**
+     * @brief Get the password from user / password file
+     * 
+     * @param keys_type either `keystore_type::account_key` or `keystore_type::worker_key`
+     * @param pswd_type either `password_type::interactive`(from user) or `password_type::file_path`(from file)
+     * @param file_path (optional) file path if pswd_type == password_type::file_path
+     * @param is_reset_pw (optional) different console infomation hint when called from reset pswd api
+     * @return std::pair<bool, std::string>: { if success get password , password }
+     */
+    std::pair<bool, std::string> get_password(keystore_type const & keys_type, password_type const & pswd_type, std::string const & file_path = "", bool is_reset_pw = false);
+
+    // #[deprecated]
     std::string get_password() {
         return cache_pw;
     }
@@ -163,13 +185,11 @@ private:
     int get_eth_file(std::string& account);
 private:
     api_method_imp api_method_imp_;
+
+    // #[deprecated]
     std::string cache_pw{" "};
     const std::string empty_pw{" "};
     bool is_account{false};
-
-public:
-    bool is_reset_pw{false};
 };
-
 
 }  // namespace xChainSDK

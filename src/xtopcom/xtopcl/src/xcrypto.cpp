@@ -416,7 +416,7 @@ string import_existing_keystore(const string & cache_pw, const string & path, bo
         decrypttext = eth_aes_decrypt(cache_pw, key_info);
     if (decrypttext.empty()) {
         if (!auto_dec) {
-            cout << "Password error！" << endl;
+            cout << "Password error!" << endl;
             cout << "Hint: " << key_info["hint"].asString() << endl;
         }
     }
@@ -646,7 +646,7 @@ int get_eth_ed_key(const string & pw, const xJson::Value & key_info, CryptoPP::b
     }
     else if (key_info["crypto"]["kdf"].asString() == "scrypt")
     {
-        unsigned iterations = key_info["crypto"]["kdfparams"]["n"].asInt();        
+        unsigned iterations = key_info["crypto"]["kdfparams"]["n"].asInt();
         CryptoPP::Scrypt().DeriveKey(
                 key,
                 key_info["crypto"]["kdfparams"]["dklen"].asInt(),
@@ -714,16 +714,17 @@ string reset_keystore_pw(const string & old_pw, const string & key_path) {
     }
 
     ApiMethod api;
-    api.is_reset_pw = true;
-    if (!api.check_password()) {
+    std::string new_pw;
+    // keystore type is not import here. whatever.
+    auto result = api.get_password(keystore_type::account_key, password_type::interactive, "", true);
+    if (result.first == false) {
         return "";
+    } else {
+        new_pw = result.second;
     }
 
     std::ofstream key_file(key_path, std::ios::out | std::ios::trunc);
-    auto new_pw = api.get_password();
 
-    // reset g_userinfo key
-    api_method_imp api_imp;
     if (!set_g_userinfo(decrypttext)) {
         std::cout << "reset private key fail." << std::endl;
         return "";
