@@ -1,6 +1,8 @@
 #pragma once
 
+#include <stdint.h>
 #include <memory>
+#include <string>
 
 #include "simplewebserver/client_http.hpp"
 

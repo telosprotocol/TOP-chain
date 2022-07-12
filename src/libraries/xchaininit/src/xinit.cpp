@@ -24,6 +24,7 @@
 #include "xmetrics/xmetrics.h"
 #include "xapplication/xapplication.h"
 #include "xchaininit/admin_http.h"
+#include "xtopcl/include/global_definition.h"
 #include "xtopcl/include/topcl.h"
 #include "xverifier/xverifier_utl.h"
 #include "xtopcl/include/api_method.h"
