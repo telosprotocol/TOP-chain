@@ -12,15 +12,23 @@ NS_BEG4(top, contract_runtime, evm, sys_contract)
 class xtop_evm_erc20_sys_contract : public xevm_syscontract_face_t {
 public:
     xtop_evm_erc20_sys_contract() = default;
+    xtop_evm_erc20_sys_contract(xtop_evm_erc20_sys_contract const &) = delete;
+    xtop_evm_erc20_sys_contract & operator=(xtop_evm_erc20_sys_contract const &) = delete;
+    xtop_evm_erc20_sys_contract(xtop_evm_erc20_sys_contract &&) = default;
+    xtop_evm_erc20_sys_contract & operator=(xtop_evm_erc20_sys_contract &&) = default;
     ~xtop_evm_erc20_sys_contract() override = default;
 
-    bool execute(xbytes_t input,
-                 uint64_t target_gas,
-                 sys_contract_context const & context,
-                 bool is_static,
-                 observer_ptr<statectx::xstatectx_face_t> state_ctx,
-                 sys_contract_precompile_output & output,
-                 sys_contract_precompile_error & err) override;  
+    XATTRIBUTE_NODISCARD bool execute(xbytes_t input,
+                                      uint64_t target_gas,
+                                      sys_contract_context const & context,
+                                      bool is_static,
+                                      observer_ptr<statectx::xstatectx_face_t> state_ctx,
+                                      sys_contract_precompile_output & output,
+                                      sys_contract_precompile_error & err) override;
+
+private:
+    XATTRIBUTE_NODISCARD bool mint_eth(common::xeth_address_t const & mint_to, evm_common::u256 const & value);
+    XATTRIBUTE_NODISCARD bool burn_eth(common::xeth_address_t const & burn_from, evm_common::u256 const & value);
 };
 
 NS_END4

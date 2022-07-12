@@ -4,13 +4,14 @@
 
 #include "xevm_contract_runtime/sys_contract/xevm_erc20_contract.h"
 
-#include "xbasic/endianness.h"
 #include "xcommon/xaccount_address.h"
 #include "xcommon/xeth_address.h"
 #include "xdata/xnative_contract_address.h"
 #include "xevm_common/common_data.h"
 #include "xevm_common/xabi_decoder.h"
 #include "xevm_common/xfixed_hash.h"
+#include "xevm_contract_runtime/xerror/xerror.h"
+#include "xevm_runner/evm_engine_interface.h"
 
 #include <cinttypes>
 
@@ -713,8 +714,15 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
             return false;
         }
 
-        auto recver_state = state_ctx->load_unit_state(recver_address.vaccount());
-        recver_state->tep_token_deposit(erc20_token_id, value);
+        if (erc20_token_id == common::xtoken_id_t::eth) {
+            if (!mint_eth(recver, value)) {
+                xwarn("mint eth failed");
+                ec = evm_runtime::error::xerrc_t::precompiled_contract_erc20_burn;
+            }
+        } else {
+            auto recver_state = state_ctx->load_unit_state(recver_address.vaccount());
+            recver_state->tep_token_deposit(erc20_token_id, value);
+        }
 
         if (!ec) {
             auto const & contract_address = context.address;
@@ -820,8 +828,15 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
             return false;
         }
 
-        auto recver_state = state_ctx->load_unit_state(burn_from_address.vaccount());
-        recver_state->tep_token_withdraw(erc20_token_id, value);
+        if (erc20_token_id == common::xtoken_id_t::eth) {
+            if (!burn_eth(burn_from, value)) {
+                xwarn("burn eth failed");
+                ec = evm_runtime::error::xerrc_t::precompiled_contract_erc20_burn;
+            }
+        } else {
+            auto recver_state = state_ctx->load_unit_state(burn_from_address.vaccount());
+            recver_state->tep_token_withdraw(erc20_token_id, value);
+        }
 
         if (!ec) {
             auto const & contract_address = context.address;
@@ -1076,5 +1091,20 @@ bool xtop_evm_erc20_sys_contract::execute(xbytes_t input,
     }
     }
 }
+
+bool xtop_evm_erc20_sys_contract::mint_eth(common::xeth_address_t const & mint_to, evm_common::u256 const & value) {
+    auto * engine_ptr = ::evm_engine();
+    auto * executor_ptr = ::evm_executor();
+    assert(engine_ptr != nullptr && executor_ptr != nullptr);
+    return unsafe_eth_mint(engine_ptr, executor_ptr, mint_to.data(), mint_to.size(), value.str().c_str());
+}
+
+bool xtop_evm_erc20_sys_contract::burn_eth(common::xeth_address_t const & burn_from, evm_common::u256 const & value) {
+    auto * engine_ptr = ::evm_engine();
+    auto * executor_ptr = ::evm_executor();
+    assert(engine_ptr != nullptr && executor_ptr != nullptr);
+    return unsafe_eth_burn(engine_ptr, executor_ptr, burn_from.data(), burn_from.size(), value.str().c_str());
+}
+
 
 NS_END4

@@ -3,7 +3,10 @@
 use crate::prelude::*;
 
 mod interface {
-    use crate::engine::*;
+    use std::ffi::{c_void, CStr};
+    use std::os::raw::c_uchar;
+
+    use crate::engine::{self, *};
     use crate::error::EngineErrorKind;
     use crate::prelude::*;
     use crate::{engine::Engine, proto_parameters::FunctionCallArgs};
@@ -19,7 +22,7 @@ mod interface {
         sdk::log("========= deploy_code =========");
         let io = Runtime;
         let input = io.read_input().to_vec();
-        let mut engine = Engine::new(io.sender_address(), io, &io).sdk_unwrap();
+        let mut engine = Engine::new(io.sender_address(), io, &io, &io).sdk_unwrap();
         let args = FunctionCallArgs::parse_from_bytes(&input).sdk_expect("ERR_DESERIALIZE");
         Engine::deploy_code_with_args(&mut engine, args)
             .map(|res| {
@@ -36,13 +39,89 @@ mod interface {
         let bytes = io.read_input().to_vec();
         let args = FunctionCallArgs::parse_from_bytes(&bytes).sdk_expect("ERR_DESERIALIZE");
         sdk::log(format!("{:?}", args).as_str());
-        let mut engine = Engine::new(io.sender_address(), io, &io).sdk_unwrap();
+        let mut engine = Engine::new(io.sender_address(), io, &io, &io).sdk_unwrap();
         Engine::call_with_args(&mut engine, args)
             .map(|res| {
                 sdk::log(format!("[rust_evm][interface]res: {:?}", res).as_str());
                 res.write_to_bytes().sdk_expect("ERR_SERIALIZE")
             })
             .sdk_process()
+    }
+
+    #[no_mangle]
+    pub extern "C" fn unsafe_eth_mint(
+        engine_ptr: *mut c_void,
+        executor_ptr: *mut c_void,
+        address_ptr: *const c_uchar,
+        address_size: u64,
+        value_ptr: *const i8,
+    ) -> bool {
+        sdk::log("========= deposit =========");
+
+        assert!(address_size == 20_u64);
+        let address = H160::from_slice(unsafe {
+            std::slice::from_raw_parts(address_ptr, address_size as usize)
+        });
+
+        let value_str = unsafe { CStr::from_ptr(value_ptr) }.to_str();
+        if value_str.is_err() {
+            return false;
+        }
+        let value_str = value_str.unwrap();
+
+        let value = U256::from_dec_str(value_str);
+        if (value.is_err()) {
+            return false;
+        }
+        let value = value.unwrap();
+
+        Engine::unsafe_deposit(
+            unsafe {
+                &mut *unsafe { engine_ptr as *mut Engine<'_, '_, Runtime, Runtime, Runtime> }
+            },
+            executor_ptr,
+            &Address::new(address),
+            &Wei::new(value),
+        );
+        true
+    }
+
+    #[no_mangle]
+    pub extern "C" fn unsafe_eth_burn(
+        engine_ptr: *mut c_void,
+        executor_ptr: *mut c_void,
+        address_ptr: *const c_uchar,
+        address_size: u64,
+        value_ptr: *const i8,
+    ) -> bool {
+        sdk::log("========= deposit =========");
+
+        assert!(address_size == 20_u64);
+        let address = H160::from_slice(unsafe {
+            std::slice::from_raw_parts(address_ptr, address_size as usize)
+        });
+
+        let value_str = unsafe { CStr::from_ptr(value_ptr) }.to_str();
+        if value_str.is_err() {
+            return false;
+        }
+        let value_str = value_str.unwrap();
+
+        let value = U256::from_dec_str(value_str);
+        if (value.is_err()) {
+            return false;
+        }
+        let value = value.unwrap();
+
+        Engine::unsafe_withdraw(
+            unsafe {
+                &mut *unsafe { engine_ptr as *mut Engine<'_, '_, Runtime, Runtime, Runtime> }
+            },
+            executor_ptr,
+            &Address::new(address),
+            &Wei::new(value),
+        )
+        .is_ok()
     }
 
     #[no_mangle]

@@ -1,8 +1,9 @@
 #pragma once
-#include "stdint.h"
+
 #include "xbase/xlock.h"
 #include "xevm_runner/evm_logic_face.h"
 
+#include <cstdint>
 #include <thread>
 
 namespace top {
@@ -19,8 +20,9 @@ private:
     }
 
     std::map<std::string, std::shared_ptr<top::evm::xevm_logic_face_t>> m_vm_logic_dict;
-    base::xrwlock_t m_rwlock;
-    std::shared_ptr<top::evm::xevm_logic_face_t> current_vm_logic();
+    base::xrwlock_t mutable m_rwlock;
+    std::shared_ptr<top::evm::xevm_logic_face_t> current_vm_logic() const;
+    std::shared_ptr<top::evm::xevm_logic_face_t> current_vm_logic(std::error_code & ec) const;
 
 public:
     // add {thread_id, vm_logic} into evm_instance.
@@ -70,8 +72,10 @@ public:
     uint64_t get_result(uint64_t register_id);
     uint64_t get_error(uint64_t register_id);
 
-    // contract bridge:
-    void call_erc20(uint64_t input_len, uint64_t input_ptr, uint64_t target_gas, uint64_t address_len, uint64_t address_ptr, bool is_static, uint64_t register_id);
+    void * engine_ptr() const;
+    void * executor_ptr() const;
+    void engine_return(uint64_t engine_ptr);
+    void executor_return(uint64_t executor_ptr);
 };
 
 }  // namespace evm

@@ -86,4 +86,7 @@ pub trait ContractBridge {
     fn get_result() -> Option<Self::StorageValue>;
 
     fn get_error() -> Option<Self::StorageValue>;
+
+    fn engine_return(&self, engine_ptr: u64);
+    fn executor_return(&self, executor_ptr: u64);
 }

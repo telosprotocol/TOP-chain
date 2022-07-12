@@ -41,6 +41,9 @@ private:
     xbytes_t m_result_ok;
     xbytes_t m_result_err;
 
+    void * m_engine_ptr{nullptr};
+    void * m_executor_ptr{nullptr};
+
 public:
     // for runtime
     xbytes_t get_return_value() const override;
@@ -83,6 +86,11 @@ public:
     bool extern_contract_call(uint64_t args_len, uint64_t args_ptr) override;
     uint64_t get_result(uint64_t register_id) override;
     uint64_t get_error(uint64_t register_id) override;
+
+    void engine_return(uint64_t engine_ptr) override;
+    void executor_return(uint64_t executor_ptr) override;
+    void * engine_ptr() const override;
+    void * executor_ptr() const override;
 
 private:
     // inner api

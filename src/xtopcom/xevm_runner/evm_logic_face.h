@@ -60,6 +60,11 @@ public:
     virtual bool extern_contract_call(uint64_t args_len, uint64_t args_ptr) = 0;
     virtual uint64_t get_result(uint64_t register_id) = 0;
     virtual uint64_t get_error(uint64_t register_id) = 0;
+
+    virtual void engine_return(uint64_t engine_ptr) = 0;
+    virtual void executor_return(uint64_t executor_ptr) = 0;
+    virtual void * engine_ptr() const = 0;
+    virtual void * executor_ptr() const = 0;
 };
 using xevm_logic_face_t = xtop_evm_logic_face;
 

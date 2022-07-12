@@ -1,7 +1,7 @@
 #include "xevm_runner/evm_import_instance.h"
 
-#include "assert.h"
-#include "stdint.h"
+#include <cassert>
+#include <cassert>
 
 namespace top {
 namespace evm {
@@ -11,12 +11,31 @@ evm_import_instance * evm_import_instance::instance() {
     return &ins;
 }
 
-std::shared_ptr<top::evm::xevm_logic_face_t> evm_import_instance::current_vm_logic() {
+std::shared_ptr<top::evm::xevm_logic_face_t> evm_import_instance::current_vm_logic() const {
     std::shared_ptr<top::evm::xevm_logic_face_t> vm_logic{nullptr};
     auto current_thread_id_hash = std::to_string(std::hash<std::thread::id>{}(std::this_thread::get_id()));
     // xdbg("evm_import_instance::current_vm_logic %s", current_thread_id_hash.c_str());
     m_rwlock.lock_read();
     assert(m_vm_logic_dict.find(current_thread_id_hash) != m_vm_logic_dict.end());
+    vm_logic = m_vm_logic_dict.at(current_thread_id_hash);
+    m_rwlock.release_read();
+    assert(vm_logic != nullptr);
+    return vm_logic;
+}
+
+std::shared_ptr<top::evm::xevm_logic_face_t> evm_import_instance::current_vm_logic(std::error_code & ec) const {
+    std::shared_ptr<top::evm::xevm_logic_face_t> vm_logic{nullptr};
+    auto current_thread_id_hash = std::to_string(std::hash<std::thread::id>{}(std::this_thread::get_id()));
+    // xdbg("evm_import_instance::current_vm_logic %s", current_thread_id_hash.c_str());
+    m_rwlock.lock_read();
+    if (m_vm_logic_dict.find(current_thread_id_hash) == m_vm_logic_dict.end()) {
+        m_rwlock.release_read();
+
+        assert(!ec);
+        ec = make_error_code(std::errc::result_out_of_range);
+        return nullptr;
+    }
+
     vm_logic = m_vm_logic_dict.at(current_thread_id_hash);
     m_rwlock.release_read();
     assert(vm_logic != nullptr);
@@ -134,6 +153,33 @@ uint64_t evm_import_instance::get_error(uint64_t register_id) {
     return current_vm_logic()->get_error(register_id);
 }
 
+void * evm_import_instance::engine_ptr() const {
+    std::error_code ec;
+    auto const logic = current_vm_logic(ec);
+    if (logic == nullptr) {
+        return nullptr;
+    }
+
+    return logic->engine_ptr();
+}
+
+void * evm_import_instance::executor_ptr() const {
+    std::error_code ec;
+    auto const logic = current_vm_logic(ec);
+    if (logic == nullptr) {
+        return nullptr;
+    }
+
+    return logic->executor_ptr();
+}
+
+void evm_import_instance::engine_return(uint64_t engine_ptr) {
+    current_vm_logic()->engine_return(engine_ptr);
+}
+void evm_import_instance::executor_return(uint64_t executor_ptr) {
+    current_vm_logic()->executor_return(executor_ptr);
+}
+
 /// =======================================
 /// RUST CALL C
 /// =======================================
@@ -225,7 +271,25 @@ uint64_t evm_get_result(uint64_t register_id) {
 uint64_t evm_get_error(uint64_t register_id) {
     return evm_import_instance::instance()->get_error(register_id);
 }
+
+void evm_engine_return(uint64_t ptr) {
+    evm_import_instance::instance()->engine_return(ptr);
+}
+
+void evm_executor_return(uint64_t ptr) {
+    evm_import_instance::instance()->executor_return(ptr);
+}
 }
 
 }  // namespace evm
 }  // namespace top
+
+extern "C" {
+void * evm_engine() {
+    return top::evm::evm_import_instance::instance()->engine_ptr();
+}
+
+void * evm_executor() {
+    return top::evm::evm_import_instance::instance()->executor_ptr();
+}
+}

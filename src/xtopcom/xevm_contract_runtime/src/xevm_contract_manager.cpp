@@ -49,7 +49,7 @@ bool xtop_evm_contract_manager::execute_sys_contract(xbytes_t const & input, obs
     sys_contract_precompile_output contract_output;
     sys_contract_precompile_error contract_err;
     try {
-        xdbg("call contract %s with input %s", call_args.contract_address().value().c_str(), to_hex(call_args.input()).c_str());
+        xdbg("call contract %s with input %s", contract_address_str.c_str(), to_hex(call_args.input()).c_str());
         auto result = m_sys_contract.at(sys_contract_address)
                           ->execute(top::to_bytes(call_args.input()),           // NOLINIT
                                     call_args.target_gas(),                     // NOLINIT
