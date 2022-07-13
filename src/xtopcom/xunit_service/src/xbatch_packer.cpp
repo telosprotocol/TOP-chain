@@ -45,14 +45,14 @@ xbatch_packer::xbatch_packer(observer_ptr<mbus::xmessage_bus_face_t> const   &mb
     m_proposal_maker = block_maker->get_proposal_maker(account_id);
     m_proposal_maker->set_certauth(cert_auth);
     m_raw_timer = get_thread()->create_timer((base::xtimersink_t*)this);
-    xunit_dbg("xbatch_packer::xbatch_packer,create,this=%p,account=%s,tableid=%d", this, account_id.c_str(), tableid.to_table_shortid());
+    xunit_info("xbatch_packer::xbatch_packer,create,this=%p,account=%s,tableid=%d", this, account_id.c_str(), tableid.to_table_shortid());
 }
 
 xbatch_packer::~xbatch_packer() {
     if (m_raw_timer != nullptr) {
         m_raw_timer->release_ref();
     }
-    xunit_dbg("xbatch_packer::~xbatch_packer,destory,this=%p", this);
+    xunit_info("xbatch_packer::~xbatch_packer,destory,this=%p", this);
 }
 
 bool xbatch_packer::close(bool force_async) {

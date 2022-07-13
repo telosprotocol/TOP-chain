@@ -83,7 +83,7 @@ namespace top
             void    set_output_resource(const std::string & key, const std::string & value);
 
             std::map<std::string, std::string> const&   get_input_resources() const {return input_resources;}
-            std::map<std::string, std::string> const&   get_output_resources() const {return input_resources;}
+            std::map<std::string, std::string> const&   get_output_resources() const {return output_resources;}
         private:
             // std::map<std::string, std::string>  input_entitys;
             // std::map<std::string, std::string>  output_entitys;

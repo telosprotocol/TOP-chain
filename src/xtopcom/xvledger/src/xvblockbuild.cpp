@@ -156,20 +156,19 @@ namespace top
 
 
         //----------------------------------------xbbuild_body_para_t-------------------------------------//
-
-            void xbbuild_body_para_t::set_resource(bool is_input_resource, const std::string & key, const std::string & value) {
-                if (is_input_resource) {
-                    set_input_resource(key, value);
-                } else {
-                    set_output_resource(key, value);
-                }
+        void xbbuild_body_para_t::set_resource(bool is_input_resource, const std::string & key, const std::string & value) {
+            if (is_input_resource) {
+                set_input_resource(key, value);
+            } else {
+                set_output_resource(key, value);
             }
-            void xbbuild_body_para_t::set_input_resource(const std::string & key, const std::string & value) {
-                input_resources[key] = value;
-            }
-            void xbbuild_body_para_t::set_output_resource(const std::string & key, const std::string & value) {
-                output_resources[key] = value;
-            }
+        }
+        void xbbuild_body_para_t::set_input_resource(const std::string & key, const std::string & value) {
+            input_resources[key] = value;
+        }
+        void xbbuild_body_para_t::set_output_resource(const std::string & key, const std::string & value) {
+            output_resources[key] = value;
+        }
 
 
 

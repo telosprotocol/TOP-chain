@@ -18,11 +18,11 @@ xrelay_packer2::xrelay_packer2(observer_ptr<mbus::xmessage_bus_face_t> const   &
                            base::xcontext_t &                              _context,
                            uint32_t                                        target_thread_id) : xbatch_packer(mb, tableid, account_id, para, block_maker, _context, target_thread_id) {
     para->get_resources()->get_relay_chain_mgr()->start(target_thread_id);
-    xunit_dbg("xrelay_packer2::xrelay_packer,create,this=%p,account=%s", this, account_id.c_str());
+    xunit_info("xrelay_packer2::xrelay_packer,create,this=%p,account=%s", this, account_id.c_str());
 }
 
 xrelay_packer2::~xrelay_packer2() {
-    xunit_dbg("xrelay_packer2::~xrelay_packer,destory,this=%p", this); 
+    xunit_info("xrelay_packer2::~xrelay_packer,destory,this=%p", this); 
 }
 
 bool xrelay_packer2::close(bool force_async) {
@@ -168,16 +168,15 @@ bool xrelay_packer2::proc_vote_complate(base::xvblock_t * proposal_block) {
     }
 
     std::error_code ec;
-    data::xrelay_block relay_block;
-    data::xblockextract_t::unpack_relayblock(proposal_block, false, relay_block, ec);
-    if (ec) {
+    std::shared_ptr<data::xrelay_block> relay_block = data::xblockextract_t::unpack_relay_block_from_table(proposal_block, ec);    
+    if (ec || nullptr == relay_block) {
         xwarn("xrelay_packer2::proc_vote_complate last_relay_block decodeBytes,proposal:%s,error %s; err msg %s",
               proposal_block->dump().c_str(),
               ec.category().name(),
               ec.message().c_str());
         return false;
     }
-    uint64_t election_round = relay_block.get_inner_header().get_epochID();
+    uint64_t election_round = relay_block->get_inner_header().get_epochID();
 
     // order multisign by election info.
     std::vector<data::xrelay_election_node_t> reley_election;
@@ -225,16 +224,15 @@ bool xrelay_packer2::verify_commit_msg_extend_data(base::xvblock_t * block, cons
         return true;
     }
     std::error_code ec;
-    data::xrelay_block relay_block;
-    data::xblockextract_t::unpack_relayblock(block, false, relay_block, ec);
-    if (ec) {
+    std::shared_ptr<data::xrelay_block> relay_block = data::xblockextract_t::unpack_relay_block_from_table(block, ec);    
+    if (ec || nullptr == relay_block) {
         xwarn(
             "xrelay_proposal_maker_t:make_proposal last_relay_block decodeBytes block:%s,error %s; err msg %s", block->dump().c_str(), ec.category().name(), ec.message().c_str());
         return false;
     }
 
-    uint64_t election_round = relay_block.get_inner_header().get_epochID();
-    auto hash = relay_block.get_block_hash();
+    uint64_t election_round = relay_block->get_inner_header().get_epochID();
+    auto hash = relay_block->get_block_hash();
     uint256_t hash256 = from_bytes<uint256_t>(hash.to_bytes());
 
     std::vector<data::xrelay_election_node_t> reley_election;
@@ -249,7 +247,7 @@ bool xrelay_packer2::verify_commit_msg_extend_data(base::xvblock_t * block, cons
     uint16_t size = 0;
     stream >> size;
     if (size != reley_election.size()) {
-        xerror("xrelay_packer2::verify_commit_msg_extend_data block:%,smultisign size not match:%u:%u", block->dump().c_str(), size, reley_election.size());
+        xerror("xrelay_packer2::verify_commit_msg_extend_data block:%s, multisign size not match:%u:%u", block->dump().c_str(), size, reley_election.size());
         return false;
     }
 
@@ -259,7 +257,7 @@ bool xrelay_packer2::verify_commit_msg_extend_data(base::xvblock_t * block, cons
         stream >> signature;
 
         if (signature == "") {
-            xdbg("xrelay_packer2::verify_commit_msg_extend_data,block:%,signature[%u] is empty", block->dump().c_str(), i);
+            xdbg("xrelay_packer2::verify_commit_msg_extend_data,block:%s,signature[%u] is empty", block->dump().c_str(), i);
             continue;
         }
 
@@ -276,7 +274,7 @@ bool xrelay_packer2::verify_commit_msg_extend_data(base::xvblock_t * block, cons
         }
 
         num++;
-        xdbg("xrelay_packer2::verify_commit_msg_extend_data,block:%s,num:%u,signature[%u]:%s", block->dump().c_str(), num, i, signature.c_str());
+        xdbg("xrelay_packer2::verify_commit_msg_extend_data,block:%s,num:%u,signature[%u]", block->dump().c_str(), num, i);
     }
     // todo(nathan): signature number check.
 

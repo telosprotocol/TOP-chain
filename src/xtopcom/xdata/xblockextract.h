@@ -24,13 +24,13 @@ class xblockextract_t {
     static xtransaction_ptr_t                       unpack_raw_tx(base::xvblock_t* _block, std::string const& txhash, std::error_code & ec);
 
     // relay block apis
+    static std::shared_ptr<xrelay_block>            unpack_relay_block_from_table(base::xvblock_t* _block, std::error_code & ec);
     static std::shared_ptr<xrelay_block>            unpack_commit_relay_block_from_relay_table(base::xvblock_t* _block, std::error_code & ec);
     static xobject_ptr_t<base::xvblock_t>           pack_relayblock_to_wrapblock(xrelay_block const& relayblock, std::error_code & ec);
     static xobject_ptr_t<base::xvblock_t>           unpack_wrap_relayblock_from_relay_table(base::xvblock_t* _block, std::error_code & ec);
     static void     unpack_relayblock_from_wrapblock(base::xvblock_t* _block, xrelay_block & relayblock, std::error_code & ec);
 
     static void     unpack_ethheader(base::xvblock_t* _block, xeth_header_t & ethheader, std::error_code & ec);
-    static void     unpack_relayblock(base::xvblock_t* _block, bool include_sig, xrelay_block & relayblock, std::error_code & ec);
     static void     unpack_relaywrapinfo(base::xvblock_t* _block, xrelay_wrap_info_t & wrap_info, std::error_code & ec);
     static void     unpack_relaywrapinfo_and_relay_block_data(base::xvblock_t* _block, xrelay_wrap_info_t & wrap_info, std::string & relay_block_data, std::error_code & ec);
     static void     get_tableheader_extra_from_block(base::xvblock_t* _block, data::xtableheader_extra_t &header_extra, std::error_code & ec);
