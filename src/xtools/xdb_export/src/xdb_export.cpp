@@ -137,6 +137,7 @@ std::vector<std::string> xdb_export_tools_t::get_table_accounts() {
         std::make_pair(std::string{sys_contract_sharding_table_block_addr}, enum_vledger_const::enum_vbucket_has_tables_count),
         std::make_pair(std::string{sys_contract_zec_table_block_addr}, MAIN_CHAIN_ZEC_TABLE_USED_NUM),
         std::make_pair(std::string{sys_contract_beacon_table_block_addr}, MAIN_CHAIN_REC_TABLE_USED_NUM),
+        std::make_pair(std::string{sys_contract_eth_table_block_addr}, MAIN_CHAIN_EVM_TABLE_USED_NUM),
     };
     for (auto const & t : table) {
         for (auto i = 0; i < t.second; i++) {
