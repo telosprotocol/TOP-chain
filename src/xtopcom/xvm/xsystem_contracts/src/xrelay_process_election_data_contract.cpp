@@ -68,6 +68,7 @@ void xtop_relay_process_election_data_contract::on_recv_election_data(xbytes_t c
                                            .result_of(common::xdefault_cluster_id)
                                            .result_of(common::xdefault_group_id);
     
+    xdbg("xtop_relay_process_election_data_contract::on_recv_election_data epoch:%llu", coming_group_result.group_epoch().value());
     for (auto const & node_info: coming_group_result){
         auto const & election_info = top::get<top::data::election::v2::xelection_info_bundle_t>(node_info);
         xdbg("xtop_relay_process_election_data_contract: get node: %s", election_info.account_address().c_str());

@@ -226,12 +226,13 @@ bool xtop_relay_make_block_contract::build_tx_relay_block(evm_common::h256 prev_
         XCONTRACT_ENSURE(!ec, "xtop_relay_make_block_contract unpack crosstxs fail " + ec.message());
         transactions.push_back(cross_tx.tx);
         receipts.push_back(cross_tx.receipt);
+        xdbg("xtop_relay_make_block_contract::build_tx_relay_block height:%llu add tx:%s", block_height, top::to_hex_prefixed(top::to_bytes(cross_tx.tx.get_tx_hash())).c_str());
     }
 
     // todo(nathan):remove epoch id
     relay_block = data::xrelay_block(prev_hash, block_height, 0, timestamp, transactions, receipts);
     proc_created_relay_block(relay_block, timestamp);
-    xdbg("xtop_relay_make_block_contract::build_elect_relay_block new tx block,height:%llu,tx num:%u", block_height, transactions.size());
+    xdbg("xtop_relay_make_block_contract::build_tx_relay_block new tx block,height:%llu,tx num:%u", block_height, transactions.size());
     return true;
 }
 
