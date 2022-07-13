@@ -44,19 +44,21 @@ public:
     insert(value_type && value);
 
     xelection_network_result_t const &
-    result_of(common::xnetwork_id_t const network_id) const;
+    result_of(common::xnetwork_id_t network_id) const;
 
     xelection_network_result_t &
-    result_of(common::xnetwork_id_t const network_id);
+    result_of(common::xnetwork_id_t network_id);
 
     std::size_t
-    size(common::xnetwork_id_t const network_id) const noexcept;
+    size_of(common::xnetwork_id_t network_id) const noexcept;
 
     std::size_t
     size() const noexcept;
 
     bool
     empty() const noexcept;
+
+    bool empty_at(common::xnetwork_id_t network_id) const noexcept;
 
     iterator
     begin() noexcept;

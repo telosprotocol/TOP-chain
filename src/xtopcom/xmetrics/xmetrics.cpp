@@ -505,6 +505,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(statestore_access_from_txpool_refreshtable);
         RETURN_METRICS_NAME(statestore_access_from_blockstore);
         RETURN_METRICS_NAME(statestore_access_from_blkmaker_get_target_tablestate);
+        RETURN_METRICS_NAME(statestore_access_from_contract_framework);
 
         RETURN_METRICS_NAME(statestore_get_unit_state_succ);
         RETURN_METRICS_NAME(statestore_get_unit_state_from_cache);
@@ -654,8 +655,6 @@ void e_metrics::start(const std::string& log_path)
     top::metrics::handler::metrics_log_init(log_path);
     start();
 }
-
-
 
 void e_metrics::start() {
     if (running()) {

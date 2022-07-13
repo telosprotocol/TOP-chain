@@ -3,8 +3,10 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
+
 #include "xbasic/xrunnable.h"
 #include "xbasic/xthreading/xthreadsafe_queue.hpp"
+
 #ifdef ENABLE_METRICS
 #include "metrics_handler/basic_handler.h"
 #include "metrics_handler/array_counter_handler.h"
@@ -16,10 +18,12 @@
 #include "xmetrics_unit.h"
 #endif
 
+#include <atomic>
 #include <chrono>
 #include <map>
 #include <string>
 #include <thread>
+
 NS_BEG2(top, metrics)
 
 enum E_SIMPLE_METRICS_TAG : size_t {
@@ -549,7 +553,8 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     statestore_access_from_txpool_refreshtable,
     statestore_access_from_blockstore,
     statestore_access_from_blkmaker_get_target_tablestate,
-    statestore_access_end = statestore_access_from_blkmaker_get_target_tablestate,
+    statestore_access_from_contract_framework,
+    statestore_access_end = statestore_access_from_contract_framework,
 
     statestore_get_unit_state_succ,
     statestore_get_unit_state_from_cache,

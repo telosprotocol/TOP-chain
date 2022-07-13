@@ -32,52 +32,65 @@ void xtop_election_group_result::associated_group_id(common::xgroup_id_t gid) no
 }
 
 common::xelection_round_t const & xtop_election_group_result::group_version() const noexcept {
-    return m_group_version;
+    return m_group_epoch;
 }
 
 common::xelection_round_t & xtop_election_group_result::group_version() noexcept {
-    return m_group_version;
+    return m_group_epoch;
 }
 
 void xtop_election_group_result::group_version(common::xelection_round_t ver) noexcept {
-    if (m_group_version.empty() && ver.has_value()) {
-        m_group_version = std::move(ver);
-    } else if (m_group_version < ver) {
-        m_group_version = std::move(ver);
+    if (m_group_epoch.empty() && ver.has_value()) {
+        m_group_epoch = std::move(ver);
+    } else if (m_group_epoch < ver) {
+        m_group_epoch = std::move(ver);
+    }
+}
+
+common::xelection_epoch_t const & xtop_election_group_result::group_epoch() const noexcept {
+    return m_group_epoch;
+}
+
+common::xelection_epoch_t & xtop_election_group_result::group_epoch() noexcept {
+    return m_group_epoch;
+}
+void xtop_election_group_result::group_epoch(common::xelection_epoch_t epoch) noexcept {
+    if (m_group_epoch < epoch) {
+        m_group_epoch = std::move(epoch);
     }
 }
 
 common::xelection_round_t const & xtop_election_group_result::associated_group_version() const noexcept {
-    return m_associated_group_version;
+    return m_associated_group_epoch;
 }
 
 void xtop_election_group_result::associated_group_version(common::xelection_round_t associated_gp_ver) noexcept {
-    if (m_associated_group_version != associated_gp_ver) {
-        m_associated_group_version = std::move(associated_gp_ver);
+    if (m_associated_group_epoch != associated_gp_ver) {
+        m_associated_group_epoch = std::move(associated_gp_ver);
     }
 }
 
 common::xelection_round_t const & xtop_election_group_result::cluster_version() const noexcept {
-    return m_cluster_version;
+    return m_cluster_epoch;
 }
 
 void xtop_election_group_result::cluster_version(common::xelection_round_t ver) noexcept {
-    if (m_cluster_version != ver) {
-        m_cluster_version = std::move(ver);
+    if (m_cluster_epoch != ver) {
+        m_cluster_epoch = std::move(ver);
     }
 }
 
 common::xelection_round_t const & xtop_election_group_result::election_committee_version() const noexcept {
-    return m_election_committee_version;
+    return m_election_committee_epoch;
 }
 
 common::xelection_round_t & xtop_election_group_result::election_committee_version() noexcept {
-    return m_election_committee_version;
+    return m_election_committee_epoch;
 }
 
 void xtop_election_group_result::election_committee_version(common::xelection_round_t committee_ver) noexcept {
-    if (m_election_committee_version != committee_ver) {
-        m_election_committee_version = std::move(committee_ver);
+    if (m_election_committee_epoch != committee_ver) {
+        m_election_committee_epoch = std::move(committee_ver);
     }
 }
 
@@ -163,6 +176,15 @@ bool xtop_election_group_result::empty() const noexcept {
     }
 
     return true;
+}
+
+bool xtop_election_group_result::empty_at(common::xslot_id_t const & slot_id) const noexcept {
+    auto const & it = m_nodes.find(slot_id);
+    if (it == std::end(m_nodes)) {
+        return true;
+    }
+
+    return top::get<xelection_info_bundle_t>(*it).account_address().empty();
 }
 
 std::map<common::xslot_id_t, xelection_info_bundle_t> const & xtop_election_group_result::results() const noexcept {
@@ -302,10 +324,10 @@ v1::xelection_group_result_t xtop_election_group_result::v1() const {
     v1::xelection_group_result_t r;
     r.timestamp(m_timestamp);
     r.start_time(m_start_time);
-    r.group_version(m_group_version);
-    r.associated_group_version(m_associated_group_version);
-    r.cluster_version(m_cluster_version);
-    r.election_committee_version(m_election_committee_version);
+    r.group_version(m_group_epoch);
+    r.associated_group_version(m_associated_group_epoch);
+    r.cluster_version(m_cluster_epoch);
+    r.election_committee_version(m_election_committee_epoch);
     r.associated_group_id(m_associated_group_id);
 
     std::transform(std::begin(m_nodes), std::end(m_nodes), std::inserter(r, std::end(r)), [](value_type const & input) -> v1::xelection_group_result_t::value_type {
