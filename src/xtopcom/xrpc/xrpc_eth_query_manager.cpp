@@ -1137,6 +1137,7 @@ int xrpc_eth_query_manager::set_relay_block_result(const xobject_ptr_t<base::xvb
     if (have_txs != 0) {
         const std::vector<xeth_transaction_t> txs = relay_block.get_all_transactions();
         xJson::Value js_txs;
+        js_txs.resize(0);
         uint64_t index = 0;
         for ( auto &tx: txs) {
             std::string tx_hash = std::string(reinterpret_cast<char*>(tx.get_tx_hash().data()), tx.get_tx_hash().size());
@@ -1164,6 +1165,7 @@ int xrpc_eth_query_manager::set_relay_block_result(const xobject_ptr_t<base::xvb
     }
 
     xJson::Value js_block_list;
+    js_block_list.resize(0);
     uint64_t index = 0;
     std::vector<evm_common::h256> block_hash_vector;
     if (blocklist_type == "transaction") {
@@ -1195,8 +1197,16 @@ int xrpc_eth_query_manager::set_relay_block_result(const xobject_ptr_t<base::xvb
 }
 
 void xrpc_eth_query_manager::topRelay_getBlockByHash(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
-    if (js_req.size() == 0)
+    if (js_req.size() == 0) {
+        std::string msg = std::string("missing value for required argument 1");
+        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_invalid_params, msg);
         return;
+    }
+    if (js_req.size() > 3) {
+        std::string msg = std::string("too many arguments, want at most 3");
+        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_invalid_params, msg);
+        return;
+    }
     std::string tx_hash = js_req[0].asString();
     if (!eth::EthErrorCode::check_hex(tx_hash, js_rsp, 0, eth::enum_rpc_type_hash))
         return;
@@ -1231,8 +1241,16 @@ void xrpc_eth_query_manager::topRelay_getBlockByHash(xJson::Value & js_req, xJso
 }
 
 void xrpc_eth_query_manager::topRelay_getBlockByNumber(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
-    if (js_req.size() == 0)
+    if (js_req.size() == 0) {
+        std::string msg = std::string("missing value for required argument 1");
+        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_invalid_params, msg);
         return;
+    }
+    if (js_req.size() > 3) {
+        std::string msg = std::string("too many arguments, want at most 3");
+        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_invalid_params, msg);
+        return;
+    }
     if (!eth::EthErrorCode::check_hex(js_req[0].asString(), js_rsp, 0, eth::enum_rpc_type_block))
         return;
 
