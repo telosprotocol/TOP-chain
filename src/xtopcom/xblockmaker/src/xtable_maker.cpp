@@ -9,10 +9,12 @@
 #include "xblockmaker/xtable_builder.h"
 #include "xblockmaker/xblock_builder.h"
 #include "xblockmaker/xerror/xerror.h"
+#include "xblockmaker/xrelayblock_plugin.h"
 #include "xdata/xblocktool.h"
 #include "xdata/xblockbuild.h"
 #include "xdata/xethreceipt.h"
 #include "xdata/xethbuild.h"
+#include "xdata/xnative_contract_address.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xconfig/xconfig_register.h"
 #include "xchain_fork/xchain_upgrade_center.h"
@@ -35,6 +37,12 @@ xtable_maker_t::xtable_maker_t(const std::string & account, const xblockmaker_re
     m_emptytable_builder = std::make_shared<xemptytable_builder_t>();
     m_default_builder_para = std::make_shared<xblock_builder_para_face_t>(resources);
     m_full_table_interval_num = XGET_CONFIG(fulltable_interval_block_num);
+
+    if (is_make_relay_chain()) {
+        m_resource_plugin = std::make_shared<xrelayblock_plugin_t>();
+    } else {
+        m_resource_plugin = std::make_shared<xblock_resource_plugin_face_t>();
+    }
 }
 
 xtable_maker_t::~xtable_maker_t() {
@@ -179,6 +187,31 @@ void xtable_maker_t::update_receiptid_state(const xtablemaker_para_t & table_par
     xtablebuilder_t::update_receipt_confirmids(statectx_ptr->get_table_state(), changed_confirm_ids);
 }
 
+void xtable_maker_t::resource_plugin_make_txs(bool is_leader, statectx::xstatectx_ptr_t const& statectx_ptr, const data::xblock_consensus_para_t & cs_para, std::vector<xcons_transaction_ptr_t> & input_txs, std::error_code & ec) {
+    m_resource_plugin->init(statectx_ptr, ec);
+    if (ec) {
+        xerror("xtable_maker_t::resource_plugin_make_txs fail-init is_leader=%d,%s,ec=%s", 
+            is_leader,cs_para.dump().c_str(), ec.message().c_str());
+        return;
+    }
+
+    // only leader need create txs
+    if (is_leader) {
+        std::vector<data::xcons_transaction_ptr_t> contract_txs = m_resource_plugin->make_contract_txs(statectx_ptr, cs_para.get_timestamp(), ec);
+        if (ec) {
+            xerror("xtable_maker_t::make_light_table_v2 fail-make_contract_txs %s,ec=%s", 
+                cs_para.dump().c_str(), ec.message().c_str());
+            return;        
+        }
+        if (!contract_txs.empty()) {
+            for (auto & tx : contract_txs) {
+                input_txs.push_back(tx);
+                xinfo("xtable_maker_t::resource_plugin_make_txs %s,tx=%s",cs_para.dump().c_str(),tx->dump().c_str());
+            }
+        }
+    }
+}
+
 xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & table_result) {
     uint64_t now = cs_para.get_gettimeofday_s();
     const std::vector<xcons_transaction_ptr_t> & input_table_txs = table_para.get_origin_txs();
@@ -207,6 +240,13 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
         ec = blockmaker::error::xerrc_t::blockmaker_create_statectx_fail;
         xerror("xtable_maker_t::make_light_table_v2 fail-create statectx is_leader=%d,%s", 
             is_leader, cs_para.dump().c_str());        
+        return nullptr;
+    }
+
+    resource_plugin_make_txs(is_leader, statectx_ptr, cs_para, input_txs, ec);
+    if (ec) {
+        xerror("xtable_maker_t::make_light_table_v2 fail-resource_plugin_make_txs is_leader=%d,%s,ec=%s", 
+            is_leader, cs_para.dump().c_str(), ec.message().c_str());                    
         return nullptr;
     }
 
@@ -239,11 +279,19 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
         cs_para.set_ethheader(xeth_header_builder::build(cs_para, execute_output.pack_outputs));
     }
 
-    if (!set_relay_para(cs_para, table_para, is_leader)) {
-        table_result.m_make_block_error_code = xblockmaker_error_proposal_bad_header;
-        xwarn("xtable_maker_t::make_light_table_v2 fail-make relay.is_leader=%d,%s", is_leader, cs_para.dump().c_str());
-        return nullptr;
+    xblock_resource_description_t block_resource = m_resource_plugin->make_resource(ec);
+    if (ec) {
+        xerror("xtable_maker_t::make_light_table_v2 fail-make_resource is_leader=%d,%s,ec=%s", 
+            is_leader, cs_para.dump().c_str(), ec.message().c_str());        
+        return nullptr;        
     }
+    // TODO(jimmy) put block resource to block
+
+    // if (!set_relay_para(cs_para, table_para, is_leader)) {
+    //     table_result.m_make_block_error_code = xblockmaker_error_proposal_bad_header;
+    //     xwarn("xtable_maker_t::make_light_table_v2 fail-make relay.is_leader=%d,%s", is_leader, cs_para.dump().c_str());
+    //     return nullptr;
+    // }
 
     // reset justify cert hash para
     const xblock_ptr_t & cert_block = cs_para.get_latest_cert_block();

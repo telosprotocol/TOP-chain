@@ -16,6 +16,9 @@
 
 NS_BEG2(top, data)
 
+static XINLINE_CONSTEXPR char const * RESOURCE_NODE_SIGN_STATISTICS     = "2";
+static XINLINE_CONSTEXPR char const * RESOURCE_RELAY_BLOCK              = "1";
+
 // XTODO keep old structure for compatibility
 class xtableheader_extra_t : public xserializable_based_on<void> {
  protected:

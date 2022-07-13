@@ -19,7 +19,7 @@ NS_BEG4(top, xvm, system_contracts, relay)
 #define RELAY_WRAP_PHASE_0 "0"
 #define RELAY_WRAP_PHASE_1 "1"
 #define RELAY_WRAP_PHASE_2 "2"
-#define RELAY_WRAP_PHASE_INIT "255"
+#define RELAY_WRAP_PHASE_INIT "2"
 
 xtop_relay_make_block_contract::xtop_relay_make_block_contract(common::xnetwork_id_t const & network_id) : xbase_t{network_id} {
 }
@@ -70,13 +70,12 @@ void xtop_relay_make_block_contract::on_receive_cross_txs(std::string const & da
 void xtop_relay_make_block_contract::on_make_block(std::string const & data) {
     auto wrap_phase = STRING_GET(data::system_contract::XPROPERTY_RELAY_WRAP_PHASE);
     uint64_t last_height = static_cast<std::uint64_t>(std::stoull(STRING_GET(data::system_contract::XPROPERTY_RELAY_LAST_HEIGHT)));
+    xdbg("xtop_relay_make_block_contract::on_make_block enter. wrap_phase=%s,height:%llu", wrap_phase.c_str(),last_height);
     if (wrap_phase == RELAY_WRAP_PHASE_0) {
         STRING_SET(data::system_contract::XPROPERTY_RELAY_WRAP_PHASE, RELAY_WRAP_PHASE_1);
-        xdbg("xtop_relay_make_block_contract::on_make_block new wrap phase 1 for height:%llu", last_height);
         return;
     } else if (wrap_phase == RELAY_WRAP_PHASE_1) {
         STRING_SET(data::system_contract::XPROPERTY_RELAY_WRAP_PHASE, RELAY_WRAP_PHASE_2);
-        xdbg("xtop_relay_make_block_contract::on_make_block new wrap phase 2 for height:%llu", last_height);
         return;
     }
 

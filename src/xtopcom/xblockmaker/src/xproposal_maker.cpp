@@ -667,19 +667,19 @@ bool xproposal_maker_t::backup_set_consensus_para(base::xvblock_t* latest_cert_b
 }
 
 bool xproposal_maker_t::verify_proposal_header(base::xvblock_t *proposal_block, xtablemaker_para_t & table_para) {
-    if (!m_table_maker->is_make_relay_chain() || proposal_block->get_block_class() == base::enum_xvblock_class_full) {
-        return true;
-    }
-    std::error_code ec;
-    data::xrelay_wrap_info_t wrap_info;
-    data::xblockextract_t::unpack_relaywrapinfo(proposal_block, wrap_info, ec);
-    if (ec) {
-        xerror("xproposal_maker_t::verify_proposal_header unpack_relaywrapinfo fail,proposal:%s", proposal_block->dump().c_str());
-        return false;
-    }
+    // if (!m_table_maker->is_make_relay_chain() || proposal_block->get_block_class() == base::enum_xvblock_class_full) {
+    //     return true;
+    // }
+    // std::error_code ec;
+    // data::xrelay_wrap_info_t wrap_info;
+    // data::xblockextract_t::unpack_relaywrapinfo(proposal_block, wrap_info, ec);
+    // if (ec) {
+    //     xerror("xproposal_maker_t::verify_proposal_header unpack_relaywrapinfo fail,proposal:%s", proposal_block->dump().c_str());
+    //     return false;
+    // }
 
-    table_para.set_relay_evm_height(wrap_info.get_evm_height());
-    table_para.set_relay_elect_height(wrap_info.get_elect_height());
+    // table_para.set_relay_evm_height(wrap_info.get_evm_height());
+    // table_para.set_relay_elect_height(wrap_info.get_elect_height());
     return true;
 }
 

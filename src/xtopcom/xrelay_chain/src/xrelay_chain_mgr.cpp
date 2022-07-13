@@ -462,6 +462,8 @@ void xrelay_chain_mgr_t::stop() {
 }
 
 void xrelay_chain_mgr_t::on_timer() {
+    return;  // TODO(jimmy)
+
     std::lock_guard<std::mutex> lck(m_mutex);
     m_on_timer_count++;
     if (m_on_timer_count % 60 != 0) {
@@ -472,6 +474,8 @@ void xrelay_chain_mgr_t::on_timer() {
 }
 
 void xrelay_chain_mgr_t::on_block_to_db_event(mbus::xevent_ptr_t e) {
+    return;  // TODO(jimmy)
+
     if (e->minor_type != mbus::xevent_store_t::type_block_committed) {
         return;
     }

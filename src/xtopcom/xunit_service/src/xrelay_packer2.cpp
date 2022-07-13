@@ -37,9 +37,10 @@ bool xrelay_packer2::on_timer_fire(const int32_t thread_id,
                                   const int64_t current_time_ms,
                                   const int32_t start_timeout_ms,
                                   int32_t & in_out_cur_interval_ms) {
-    get_resources()->get_relay_chain_mgr()->on_timer();
-    xbatch_packer::on_timer_fire(thread_id, timer_id, current_time_ms, start_timeout_ms, in_out_cur_interval_ms);
-    xdbg("xrelay_packer2::on_timer_fire");
+    // TODO(jimmy) relay-table should be slowly, no need timely try to make proposal                                    
+    // get_resources()->get_relay_chain_mgr()->on_timer();
+    // xbatch_packer::on_timer_fire(thread_id, timer_id, current_time_ms, start_timeout_ms, in_out_cur_interval_ms);
+    // xdbg("xrelay_packer2::on_timer_fire");
     return true;
 }
 

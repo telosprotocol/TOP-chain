@@ -21,6 +21,9 @@ enum class xenum_errc {
     blockmaker_make_table_state_fail,
     blockmaker_create_statectx_fail,
     blockmaker_make_unit_fail,
+    blockmaker_relayblock_unconnect,
+    blockmaker_load_unitstate,
+    blockmaker_property_invalid,
 };
 using xerrc_t = xenum_errc;
 

@@ -425,12 +425,15 @@ void xblockextract_t::unpack_crosschain_txs(base::xvblock_t* _block, xrelayblock
             xerror("xblockextract_t::unpack_crosschain_txs tx nullptr.");
             return;
         }
-            // TODO(jimmy): cross chain txs match
 
-        if (_rawtx->get_tx_version() != data::xtransaction_version_3 ||
-            (_rawtx->get_tx_type() != data::xtransaction_type_run_contract)) {
+        // TODO(jimmy): cross chain txs match
+        // if (_rawtx->get_tx_version() != data::xtransaction_version_3 ||
+        //     (_rawtx->get_tx_type() != data::xtransaction_type_run_contract)) {
+        //     continue;
+        // }
+        if (_rawtx->get_tx_version() != data::xtransaction_version_3) {
             continue;
-        }
+        }        
 
         data::xeth_store_receipt_t evm_result;
         auto ret = txaction.get_evm_transaction_receipt(evm_result);
@@ -488,17 +491,18 @@ void xblockextract_t::unpack_subblocks(base::xvblock_t* _block, std::vector<xobj
     sublocks = xlighttable_build_t::unpack_units_from_table(_block);
     xdbg("xblockextract_t::unpack_subblocks succ.block=%s,sublocks=%zu",_block->dump().c_str(),sublocks.size());
     
-    if (_block->get_account() == sys_contract_relay_table_block_addr) {
-        xobject_ptr_t<base::xvblock_t> wrap_relayblock = xblockextract_t::unpack_wrap_relayblock_from_relay_table(_block, ec);
-        if (ec) {
-            xerror("xblockextract_t::unpack_subblocks fail-unpack_wrap_relayblock_from_relay_table.");
-            return;
-        }
-        if (wrap_relayblock != nullptr) {
-            sublocks.push_back(wrap_relayblock);
-            xdbg("xblockextract_t::unpack_subblocks succ.block=%s,wrapblock=%s",_block->dump().c_str(),wrap_relayblock->dump().c_str());            
-        }
-    }
+    // TODO(jimmy)
+    // if (_block->get_account() == sys_contract_relay_table_block_addr) {
+    //     xobject_ptr_t<base::xvblock_t> wrap_relayblock = xblockextract_t::unpack_wrap_relayblock_from_relay_table(_block, ec);
+    //     if (ec) {
+    //         xerror("xblockextract_t::unpack_subblocks fail-unpack_wrap_relayblock_from_relay_table.");
+    //         return;
+    //     }
+    //     if (wrap_relayblock != nullptr) {
+    //         sublocks.push_back(wrap_relayblock);
+    //         xdbg("xblockextract_t::unpack_subblocks succ.block=%s,wrapblock=%s",_block->dump().c_str(),wrap_relayblock->dump().c_str());            
+    //     }
+    // }
 }
 
 NS_END2
