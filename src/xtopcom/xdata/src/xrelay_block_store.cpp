@@ -125,9 +125,9 @@ bool xrelay_block_store::get_all_leaf_block_hash_list_from_cache(const xrelay_bl
     return check_result;
 }
 
-bool xrelay_block_store::get_all_poly_block_hash_list_from_cache(const xrelay_block &tx_block, std::vector<h256>  &leaf_hash_vector)
+bool xrelay_block_store::get_all_poly_block_hash_list_from_cache(const xrelay_block &tx_block, std::map<uint64_t, evm_common::h256> &block_hash_map)
 {
-   leaf_hash_vector.clear();
+    block_hash_map.clear();
     enum_block_cache_type block_type = tx_block.check_block_type();
 
     if (block_type != cache_tx_block) {
@@ -148,7 +148,7 @@ bool xrelay_block_store::get_all_poly_block_hash_list_from_cache(const xrelay_bl
             if (_block_leaf.m_type > block_type) {
                 xdbg("xrelay_block_store:get_all_poly_block_hash_list_from_cache  height(%d) poly  height(%d)  type(%d).",
                       tx_block.get_block_height(), last_height, _block_leaf.m_type);
-                leaf_hash_vector.insert(leaf_hash_vector.end(), _block_leaf.m_block_hash);
+                block_hash_map.insert(std::make_pair(last_height, _block_leaf.m_block_hash));
                 block_type = _block_leaf.m_type;
                 //chain_id_set |= _block_leaf.m_chain_id;
                 if (block_type == cache_poly_election_block) {
@@ -163,7 +163,7 @@ bool xrelay_block_store::get_all_poly_block_hash_list_from_cache(const xrelay_bl
     }
 
     // tx poly block is build, but election poly block is no, it's ok
-    if (leaf_hash_vector.size() > 0 ) {
+    if (block_hash_map.size() > 0 ) {
         check_result = true;
     }
     
