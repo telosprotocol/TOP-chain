@@ -1167,8 +1167,9 @@ int xrpc_eth_query_manager::set_relay_block_result(const xobject_ptr_t<base::xvb
     xJson::Value js_block_list;
     js_block_list.resize(0);
     uint64_t index = 0;
-    std::vector<evm_common::h256> block_hash_vector;
+    
     if (blocklist_type == "transaction") {
+        std::vector<evm_common::h256> block_hash_vector;
         data::xrelay_block_store::get_instance().get_all_leaf_block_hash_list_from_cache(relay_block, block_hash_vector, true);
         for (auto hash: block_hash_vector) {
             xJson::Value js_block;
@@ -1180,11 +1181,12 @@ int xrpc_eth_query_manager::set_relay_block_result(const xobject_ptr_t<base::xvb
         }
         js_result["blockList"] = js_block_list;
     } else if (blocklist_type == "aggregate") {
-        data::xrelay_block_store::get_instance().get_all_poly_block_hash_list_from_cache(relay_block, block_hash_vector);
-        for (auto hash: block_hash_vector) {
+        std::map<uint64_t, evm_common::h256> block_hash_map;
+        data::xrelay_block_store::get_instance().get_all_poly_block_hash_list_from_cache(relay_block, block_hash_map);
+        for (auto &iter: block_hash_map) {
             xJson::Value js_block;
-            std::string block_hash = std::string("0x") + hash.hex();
-            js_block["blockHeight"] = xrpc_eth_parser_t::uint64_to_hex_prefixed(relay_block.get_block_height());
+            std::string block_hash = std::string("0x") + iter.second.hex();
+            js_block["blockHeight"] = xrpc_eth_parser_t::uint64_to_hex_prefixed(iter.first);
             js_block["blockHash"] =  block_hash;
             js_block_list.append(js_block);
             index++;

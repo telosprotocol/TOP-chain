@@ -38,7 +38,7 @@ namespace data {
     public:
         
         bool    set_block_merkle_root_from_store(xrelay_block &next_block);
-        bool    get_all_poly_block_hash_list_from_cache(const xrelay_block &tx_block, std::vector<evm_common::h256> &leaf_hash_vector);
+        bool    get_all_poly_block_hash_list_from_cache(const xrelay_block &tx_block, std::map<uint64_t, evm_common::h256> &block_hash_map);
         bool    get_all_leaf_block_hash_list_from_cache(const xrelay_block &poly_block, std::vector<evm_common::h256> &leaf_hash_vector, bool include_self);
         bool    save_block_hash_to_store_cache(xrelay_block &next_block);
         bool    load_block_hash_from_cache(uint64_t load_height, xrelay_block_save_leaf &block_leaf);
