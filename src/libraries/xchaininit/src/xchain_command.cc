@@ -1016,20 +1016,20 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
         db_prune::DbPrune::instance().db_convert(std::ref(miner_type), dbdir, out_str);
     });
      
-    /*
-     * debug
-     */
-#ifdef DEBUG
-    auto debug = app.add_subcommand("debug", "Only available in debug mode.");
-    // create
-    auto debug_create = debug->add_subcommand("create", "create an onchain account.");
-    debug_create->callback(std::bind(&ApiMethod::create_chain_account, &topcl.api, std::ref(out_str)));
+//     /*
+//      * debug
+//      */
+// #ifdef DEBUG
+//     auto debug = app.add_subcommand("debug", "Only available in debug mode.");
+//     // create
+//     auto debug_create = debug->add_subcommand("create", "create an onchain account.");
+//     debug_create->callback(std::bind(&ApiMethod::create_chain_account, &topcl.api, std::ref(out_str)));
 
-    auto debug_import_key = debug->add_subcommand("import", "Import private key as default account.");
-    std::string pri_key;
-    debug_import_key->add_option("private_key", pri_key, "base64 private key.")->required();
-    debug_import_key->callback(std::bind(&ApiMethod::import_key, &topcl.api, std::ref(pri_key), std::ref(out_str)));
-#endif
+//     auto debug_import_key = debug->add_subcommand("import", "Import private key as default account.");
+//     std::string pri_key;
+//     debug_import_key->add_option("private_key", pri_key, "base64 private key.")->required();
+//     debug_import_key->callback(std::bind(&ApiMethod::import_key, &topcl.api, std::ref(pri_key), std::ref(out_str)));
+// #endif
 
     int app_ret = 0;
     try {

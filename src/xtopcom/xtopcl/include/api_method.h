@@ -188,7 +188,9 @@ private:
 
     // #[deprecated]
     std::string cache_pw{" "};
+    // #[deprecated]
     const std::string empty_pw{" "};
+    // #[deprecated]
     bool is_account{false};
 };
 
