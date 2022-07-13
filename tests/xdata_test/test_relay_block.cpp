@@ -289,7 +289,7 @@ void  check_signature_compare(xrelay_signature_node_t &signature_dst, xrelay_sig
 void  check_inner_header_compare(const xrelay_block_inner_header &inner_header_dst,const xrelay_block_inner_header &inner_header_src)
 {
     EXPECT_EQ(inner_header_dst.get_block_height(), inner_header_src.get_block_height());
-    EXPECT_EQ(inner_header_dst.get_epochID(), inner_header_src.get_epochID());
+    EXPECT_EQ(inner_header_dst.get_epochid(), inner_header_src.get_epochID());
     EXPECT_EQ(inner_header_dst.get_timestamp(), inner_header_src.get_timestamp());
     EXPECT_EQ(inner_header_dst.get_txs_root_hash(), inner_header_src.get_txs_root_hash());
     EXPECT_EQ(inner_header_dst.get_receipts_root_hash(), inner_header_src.get_receipts_root_hash());

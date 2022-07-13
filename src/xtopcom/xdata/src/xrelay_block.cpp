@@ -173,6 +173,44 @@ void xrelay_signature_node_t::decodeRLP(evm_common::RLP const& _r,  std::error_c
     }
 }
 
+void xrelay_signature_group_t::streamRLP(evm_common::RLPStream &_s)  const {
+    if (signature_vector.size() > 0 ) {
+        _s.appendList(2)  << signature_epochID ;
+        _s.appendList(signature_vector.size());
+        for(auto & signature : signature_vector) {
+            signature.streamRLP(_s);
+        }
+    } else {
+        _s.appendList(0); 
+    }
+}
+
+void xrelay_signature_group_t::decodeRLP(evm_common::RLP const& _r, std::error_code & ec) {
+    
+    if (!_r.isEmpty()) {
+        if (!_r.isList() ||  _r.itemCount() != 2) {
+            ec = common::error::xerrc_t::invalid_rlp_stream;
+            xerror("xrelay_signature_group_t::decodeRLP fail item count,%d", _r.itemCount());
+            return;
+        }
+        signature_epochID = _r[0].toInt<uint64_t>();  
+        evm_common::RLP const& signatureList = RLP(_r[1].data()); 
+
+        unsigned itemCount = signatureList.itemCount();
+        for(unsigned i = 0; i < itemCount; i++ ) {
+            evm_common::RLP const& rlp_signature = RLP(signatureList[i].data());
+            xrelay_signature_node_t signature;
+            signature.decodeRLP(rlp_signature, ec);
+            if (ec) {
+                xerror("xrelay_signature_group_t::decodeRLP  signature fail.");
+                return;
+            }
+            signature_vector.emplace_back(signature);
+        }
+    }
+}
+
+
 
 xbytes_t xrelay_block_inner_header::encodeBytes() const {
     xbytes_t _bytes;
@@ -191,7 +229,6 @@ void xrelay_block_inner_header::streamRLP(evm_common::RLPStream &_s) const {
     _s.appendList(inner_fileds);
 
     _s << m_height;
-    _s << m_epochID;
     _s << m_timestamp;
     _s << m_txs_merkle_root;
     _s << m_receipts_merkle_root;
@@ -226,11 +263,10 @@ void xrelay_block_inner_header::decodeRLP(evm_common::RLP const& _r, std::error_
     }
     
     m_height                = _r[0].toInt<uint64_t>();
-    m_epochID               = _r[1].toInt<uint64_t>();
-    m_timestamp             = _r[2].toInt<uint64_t>();
-    m_txs_merkle_root       = _r[3].toHash<evm_common::h256>();
-    m_receipts_merkle_root  = _r[4].toHash<evm_common::h256>();
-    m_block_merkle_root     = _r[5].toHash<evm_common::h256>();
+    m_timestamp             = _r[1].toInt<uint64_t>();
+    m_txs_merkle_root       = _r[2].toHash<evm_common::h256>();
+    m_receipts_merkle_root  = _r[3].toHash<evm_common::h256>();
+    m_block_merkle_root     = _r[4].toHash<evm_common::h256>();
 }
 
 void xrelay_block_inner_header::make_inner_hash()
@@ -259,11 +295,6 @@ void    xrelay_block_inner_header::set_block_merkle_root_hash(evm_common::h256 h
 void    xrelay_block_inner_header::set_block_height(uint64_t height)
 {
     m_height = height;
-}
-
-void    xrelay_block_inner_header::set_epochid(uint64_t id)
-{
-    m_epochID = id;
 }
 
 void xrelay_block_inner_header::set_timestamp(uint64_t timestamp)
@@ -319,14 +350,11 @@ void xrelay_block_header::streamRLP(evm_common::RLPStream &rlp_stream, bool with
     rlp_stream.appendList(decLen);
     rlp_stream << m_block_hash;
     rlp_stream << m_inner_header.encodeBytes();
-    //rlp_stream << m_chain_id;
+    rlp_stream << m_chain_bits;
     rlp_stream << m_prev_hash;
     m_next_elections_groups.streamRLP(rlp_stream);
     if(withSignature) {
-        rlp_stream.appendList(m_block_signatures_nodes.size());
-        for(auto & signature : m_block_signatures_nodes) {
-            signature.streamRLP(rlp_stream);
-        }
+        m_signatures_groups.streamRLP(rlp_stream);
     }
 }
 
@@ -362,21 +390,15 @@ void xrelay_block_header::decodeRLP(evm_common::RLP const& _r, std::error_code &
     size_t idx = 0;
     m_block_hash = _r[idx].toHash<evm_common::h256>(); idx++;
     m_inner_header.decodeBytes(_r[idx].toBytes(), ec); idx++;
-    //m_chain_id          = _r[idx].toInt<uint64_t>(); idx++;
+    m_chain_bits = _r[idx].toInt<evm_common::u256>(); idx++;
     m_prev_hash = _r[idx].toHash<evm_common::h256>(); idx++;
 
     evm_common::RLP const& rlp_electionsList = RLP(_r[idx].data()); idx++;
     m_next_elections_groups.decodeRLP(rlp_electionsList, ec);
 
     if(withSignature) {
-        evm_common::RLP const& rlp_signaturesList = RLP(_r[idx].data()); idx++;
-        unsigned itemCount = rlp_signaturesList.itemCount();
-        for(unsigned i = 0; i < itemCount; i++ ) {
-            evm_common::RLP const& rlp_signature = RLP(rlp_signaturesList[i].data());
-            xrelay_signature_node_t block_signature_node;
-            block_signature_node.decodeRLP(rlp_signature, ec);
-            m_block_signatures_nodes.emplace_back(block_signature_node);
-        }
+        evm_common::RLP const& rlp_signaturesList = RLP(_r[idx].data()); 
+        m_signatures_groups.decodeRLP(rlp_signaturesList, ec);
     }
 }
 
@@ -392,15 +414,10 @@ xbytes_t xrelay_block_header::streamRLP_header_to_contract()
 
         rlp_stream.appendList(decLen);
         rlp_stream << m_inner_header.encodeBytes();
-        //rlp_stream << m_chain_id;
+        rlp_stream << m_chain_bits;
         rlp_stream << m_prev_hash;
         m_next_elections_groups.streamRLP(rlp_stream);
-
-        rlp_stream.appendList(m_block_signatures_nodes.size());
-        for(auto & signature_node : m_block_signatures_nodes) {
-            signature_node.streamRLP(rlp_stream);
-        }
-        
+        m_signatures_groups.streamRLP(rlp_stream);
         _bytes.insert(_bytes.begin() + 1, rlp_stream.out().begin(), rlp_stream.out().end());
     } else{
          xwarn("xrelay_block_header::streamRLP_header_to_contract block_version %d not support!", m_version);
@@ -431,23 +448,15 @@ void    xrelay_block_header::set_block_height(uint64_t height)
     m_inner_header.set_block_height(height);
 }
 
-void    xrelay_block_header::set_epochid(uint64_t id)
-{
-    m_inner_header.set_epochid(id);
-}
-
 void xrelay_block_header::set_timestamp(uint64_t timestamp)
 {
     m_inner_header.set_timestamp(timestamp);
 }
 
-/*
-void xrelay_block_header::set_chain_id(uint64_t chain_id)
+void xrelay_block_header::set_chain_bits(evm_common::u256 chain_id)
 {
-    m_chain_id = chain_id;
+    m_chain_bits = chain_id;
 }
-*/
-
 
 void xrelay_block_header::set_elections_next(const xrelay_election_group_t &elections)
 {   
@@ -456,12 +465,21 @@ void xrelay_block_header::set_elections_next(const xrelay_election_group_t &elec
         m_next_elections_groups.elections_vector.emplace_back(election);
     }
 }
-
-
-void xrelay_block_header::set_signature_nodes(std::vector<xrelay_signature_node_t> signature_nodes)
+void xrelay_block_header::set_epochid(uint64_t epochid)
 {
-    if (signature_nodes.size() > 0) {
-        m_block_signatures_nodes = signature_nodes;
+    m_signatures_groups.signature_epochID = epochid;
+
+}
+
+void xrelay_block_header::set_signature_nodes(std::vector<xrelay_signature_node_t> &signature_nodes)
+{
+    m_signatures_groups.signature_vector = signature_nodes;
+}
+
+void xrelay_block_header::set_signature_groups(const xrelay_signature_group_t &signature_groups)
+{
+    if (signature_groups.size() > 0) {
+        m_signatures_groups = signature_groups;
     }
 }
 
@@ -470,38 +488,35 @@ void xrelay_block_header::make_inner_hash()
     m_inner_header.make_inner_hash();
 }
 
+
 ///////////////////xrelay_block start /////////
 //todo rank, dele this function
-xrelay_block::xrelay_block(evm_common::h256  prev_hash, uint64_t block_height,
-                          uint64_t epochID, uint64_t timestamp)
+xrelay_block::xrelay_block(evm_common::h256  prev_hash, uint64_t block_height, uint64_t timestamp)
 {
     m_version = RELAY_BLOCK_VERSION;
     m_header.set_prev_hash(prev_hash);
     m_header.set_block_height(block_height);
-    m_header.set_epochid(epochID);
     m_header.set_timestamp(timestamp);
 }
 
-xrelay_block::xrelay_block(evm_common::h256  prev_hash, uint64_t block_height, uint64_t epochID, uint64_t timestamp, 
-                           xrelay_election_group_t &election_group)
+xrelay_block::xrelay_block(evm_common::h256  prev_hash, uint64_t block_height, uint64_t timestamp, xrelay_election_group_t &election_group)
 {
     m_version = RELAY_BLOCK_VERSION;
     m_header.set_prev_hash(prev_hash);
     m_header.set_block_height(block_height);
-    m_header.set_epochid(epochID);
     m_header.set_timestamp(timestamp);
     set_elections_next(election_group);
 }
 
 
-xrelay_block::xrelay_block(evm_common::h256  prev_hash, uint64_t block_height, uint64_t epochID, uint64_t timestamp, 
+xrelay_block::xrelay_block(evm_common::h256  prev_hash, uint64_t block_height, uint64_t timestamp, evm_common::u256 chain_bits,
                      std::vector<xeth_transaction_t> transactions,  std::vector<xeth_receipt_t> &receipts)
 {
     m_version = RELAY_BLOCK_VERSION;
     m_header.set_prev_hash(prev_hash);
     m_header.set_block_height(block_height);
-    m_header.set_epochid(epochID);
     m_header.set_timestamp(timestamp);
+    set_chain_bits(chain_bits);
     set_transactions(transactions);
     set_receipts(receipts);
 }
@@ -525,9 +540,9 @@ void xrelay_block::set_receipts(const std::vector<xeth_receipt_t> &receipts)
     }
 }
 
-void xrelay_block::set_signature_nodes(std::vector<xrelay_signature_node_t> signature_nodes)
+void xrelay_block::set_signature_groups(const xrelay_signature_group_t &signature_groups)
 {
-    m_header.set_signature_nodes(signature_nodes);
+    m_header.set_signature_groups(signature_groups);
 }
 
 void xrelay_block::set_block_merkle_root_hash(evm_common::h256 hash)
@@ -535,12 +550,25 @@ void xrelay_block::set_block_merkle_root_hash(evm_common::h256 hash)
      m_header.set_block_merkle_root_hash(hash);
 }
 
-/*
-void xrelay_block::set_chain_id(uint64_t chain_id)
+void xrelay_block::make_merkle_root_hash(const std::vector<evm_common::h256> &hash_vector)
 {
-     m_header.set_chain_id(chain_id);
-}*/
+    h256  block_root_hash{0};
+    if (hash_vector.size() > 0) {
+        std::vector<bytes> _blocks_hash_poly;
+        for (auto &block_hash : hash_vector) {
+            _blocks_hash_poly.push_back(block_hash.to_bytes());
+        }
+        block_root_hash = orderedTrieRoot(_blocks_hash_poly);
+    }
+    xinfo("xrelay_block::make_merkle_root_hash poly block height(%d) root hash[%s] hash_vector size(%ld)", 
+          get_block_height(), block_root_hash.hex().c_str(), hash_vector.size());
+    set_block_merkle_root_hash(block_root_hash);
+}
 
+void xrelay_block::set_chain_bits(evm_common::u256 chain_bits)
+{
+     m_header.set_chain_bits(chain_bits);
+}
 
 void xrelay_block::make_txs_root_hash()
 {
@@ -557,6 +585,7 @@ void xrelay_block::make_txs_root_hash()
     xdbg("txsRoot root hash[%s]", txsRoot.hex().c_str());
     m_header.set_txs_root_hash(txsRoot);
 }
+
 
 
 void xrelay_block::make_receipts_root_hash()
@@ -658,7 +687,7 @@ void    xrelay_block::make_block_hash()
     evm_common::RLPStream _s(4); 
     _s << m_header.get_header_version();
     _s << m_header.get_inner_header_hash();
-    //_s << m_header.get_chain_id();
+    _s << m_header.get_chain_bits();
     _s << m_header.get_prev_block_hash();
     m_header.get_elections_sets().streamRLP(_s);
 
@@ -667,28 +696,34 @@ void    xrelay_block::make_block_hash()
     xdbg("xrelay_block::make_block_hash  hash[%s]", m_header.m_block_hash.hex().c_str());
 }
 
-void xrelay_block::make_block_merkle_root_hash()
-{
-    //todo 
-    bool result = xrelay_block_store::get_instance().set_block_merkle_root_from_store(*this);
-    if (!result) {
-       xwarn("xrelay_block_header::make_block_merkle_root_hash  block height(%d) merkle root hash error", get_block_height());
-    }
-}
-
-bool    xrelay_block::build_finish()
+bool xrelay_block::build_finish()
 {
     //todo, add checklist later on
     //calc hash 
     make_txs_root_hash();
     make_receipts_root_hash();
-    make_block_merkle_root_hash();
     m_header.make_inner_hash();
     make_block_hash();
-    //xrelay_block_store::get_instance().save_block_hash_to_store_cache(*this);
     return true;
 }
 
+const evm_common::h256  xrelay_block::build_signature_hash()
+{
+    evm_common::h256 signature_hash{0};
+
+    if (m_header.m_block_hash == h256{0}) {
+        make_block_hash();
+    }
+
+    signature_hash = combine_hash(h256(m_header.get_epochid()), m_header.m_block_hash);
+    return signature_hash;
+}
+
+
+void xrelay_block::set_signature_nodes(std::vector<xrelay_signature_node_t> &signature_nodes)
+{
+    m_header.set_signature_nodes(signature_nodes);
+}
 
 
 void xrelay_block::set_header(xrelay_block_header &block_hedaer)
@@ -696,22 +731,17 @@ void xrelay_block::set_header(xrelay_block_header &block_hedaer)
     m_header = block_hedaer;
 }
 
-
-
-
 xbytes_t xrelay_block::streamRLP_header_to_contract()
 {
    return m_header.streamRLP_header_to_contract();
 }
 
-
 std::string xrelay_block::dump() const {
-    char local_param_buf[256];
+    char local_param_buf[512];
     xprintf(local_param_buf,
             sizeof(local_param_buf),
-            "{height:%lu,epochid:%lu,timestamp:%lu,prev_hash:%s,hash:%s,election epoch:%lu size:%u,tx size:%u,receipts size:%u}",
+            "{height:%lu,timestamp:%lu,prev_hash:%s,hash:%s,election epoch:%lu size:%u,tx size:%u,receipts size:%u}",
             m_header.m_inner_header.get_block_height(),
-            m_header.m_inner_header.get_epochID(),
             m_header.m_inner_header.get_timestamp(),
             m_header.m_prev_hash.hex().c_str(),
             m_header.m_block_hash.hex().c_str(),

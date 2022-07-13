@@ -176,7 +176,7 @@ bool xrelay_packer2::proc_vote_complate(base::xvblock_t * proposal_block) {
               ec.message().c_str());
         return false;
     }
-    uint64_t election_round = relay_block->get_inner_header().get_epochID();
+    uint64_t election_round = relay_block->get_header().get_epochid();
 
     // order multisign by election info.
     std::vector<data::xrelay_election_node_t> reley_election;
@@ -231,7 +231,7 @@ bool xrelay_packer2::verify_commit_msg_extend_data(base::xvblock_t * block, cons
         return false;
     }
 
-    uint64_t election_round = relay_block->get_inner_header().get_epochID();
+    uint64_t election_round = relay_block->get_header().get_epochid();
     auto hash = relay_block->get_block_hash();
     uint256_t hash256 = from_bytes<uint256_t>(hash.to_bytes());
 

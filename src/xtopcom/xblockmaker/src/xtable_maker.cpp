@@ -662,13 +662,13 @@ bool xtable_maker_t::get_last_relay_info(const data::xblock_consensus_para_t & c
 }
 
 bool xtable_maker_t::build_relay_block_data_from_last_block(const data::xblock_consensus_para_t & cs_para, const std::string & last_relay_block_data, data::xrelay_block & last_relay_block, std::string & relay_block_data) {
-    if (cs_para.get_election_round() < last_relay_block.get_inner_header().get_epochID()) {
+    if (cs_para.get_election_round() < last_relay_block.get_header().get_epochid()) {
         xwarn("xtable_maker_t::build_relay_block_data_from_last_block proposal epoch id fallbehind.relay_block:%s,proposal elect round:%lu", last_relay_block.dump().c_str(), cs_para.get_election_round());
         return false;
     }
 
-    if (last_relay_block.get_inner_header().get_epochID() != cs_para.get_election_round()) {
-        if (last_relay_block.get_inner_header().get_epochID() + 1 != cs_para.get_election_round()) {
+    if (last_relay_block.get_header().get_epochid() != cs_para.get_election_round()) {
+        if (last_relay_block.get_header().get_epochid() + 1 != cs_para.get_election_round()) {
             xwarn("xtable_maker_t::build_relay_block_data_from_last_block epochid exception.relay_block:%s,new round:%lu", last_relay_block.dump().c_str(), cs_para.get_election_round());
             return false;
         }
@@ -771,7 +771,7 @@ bool xtable_maker_t::build_relay_block_data_leader(const data::xblock_consensus_
         reley_election_group.election_epochID = new_wrap_info.elect_height();
         reley_election_group.elections_vector = reley_election;
         relay_block = data::xrelay_block(
-            last_relay_block.get_block_hash(), last_relay_block.get_block_height() + 1, cs_para.get_election_round(), cs_para.get_timestamp(), reley_election_group);
+            last_relay_block.get_block_hash(), last_relay_block.get_block_height() + 1,  cs_para.get_timestamp(), reley_election_group);
     } else {
         // no new election data. try build poly relay block or tx relay block.
         // todo(nathan):make poly relay block.
@@ -796,8 +796,10 @@ bool xtable_maker_t::build_relay_block_data_leader(const data::xblock_consensus_
                 return false;
             }
             new_wrap_info = relay_wrap_info_t(cur_evm_table_height, last_wrap_info.elect_height(), last_wrap_info.poly_timestamp());
+              //test chain_bit
+            evm_common::u256 chain_bits_test{0x01};
             relay_block = data::xrelay_block(
-                last_relay_block.get_block_hash(), last_relay_block.get_block_height() + 1, cs_para.get_election_round(), cs_para.get_timestamp(), transactions, receipts);
+                last_relay_block.get_block_hash(), last_relay_block.get_block_height() + 1, cs_para.get_timestamp(), chain_bits_test, transactions, receipts);
         // }
     }
     relay_block.build_finish();
@@ -838,19 +840,21 @@ bool xtable_maker_t::build_relay_block_data_backup(const data::xblock_consensus_
         reley_election_group.election_epochID = new_wrap_info.elect_height();
         reley_election_group.elections_vector = reley_election;
         relay_block = data::xrelay_block(
-            last_relay_block.get_block_hash(), last_relay_block.get_block_height() + 1, cs_para.get_election_round(), cs_para.get_timestamp(), reley_election_group);
+            last_relay_block.get_block_hash(), last_relay_block.get_block_height() + 1,  cs_para.get_timestamp(), reley_election_group);
     } else if (poly_block) {
         if((cs_para.get_timestamp() < last_wrap_info.poly_timestamp() + XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_relay_poly_interval) * 10) || last_relay_block.get_all_receipts().size() <= 0) {
             return false;
         }
-        relay_block = data::xrelay_block(last_relay_block.get_block_hash(), last_relay_block.get_block_height() + 1, cs_para.get_election_round(), cs_para.get_timestamp());
+        relay_block = data::xrelay_block(last_relay_block.get_block_hash(), last_relay_block.get_block_height() + 1, cs_para.get_timestamp());
     } else {
         auto ret = get_relay_chain_mgr()->get_tx_cache_backup(last_wrap_info.evm_height(), new_wrap_info.evm_height(), transactions, receipts);
         if (!ret) {
             return false;
         }
+        //test chain_bit
+        evm_common::u256 chain_bits_test{0x01};
         relay_block = data::xrelay_block(
-            last_relay_block.get_block_hash(), last_relay_block.get_block_height() + 1, cs_para.get_election_round(), cs_para.get_timestamp(), transactions, receipts);
+            last_relay_block.get_block_hash(), last_relay_block.get_block_height() + 1,  cs_para.get_timestamp(), chain_bits_test, transactions, receipts);
     }
     relay_block.build_finish();
     xdbg("xtable_maker_t::build_relay_block_data_backup relay_block:%s", relay_block.dump().c_str());

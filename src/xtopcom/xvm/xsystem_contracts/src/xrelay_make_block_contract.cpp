@@ -182,7 +182,7 @@ bool xtop_relay_make_block_contract::build_elect_relay_block(evm_common::h256 pr
 
     // todo(nathan):remove epoch id
     // todo(nathan):set block root hash
-    relay_block = data::xrelay_block(prev_hash, block_height, 0, timestamp, reley_election_group);
+    relay_block = data::xrelay_block(prev_hash, block_height,  timestamp, reley_election_group);
     xdbg("xtop_relay_make_block_contract::build_elect_relay_block new elect block epoch:%llu,height:%llu,tx block hash num:%u", epoch, block_height, tx_block_hash_vec.size());
     proc_created_relay_block(relay_block, timestamp);
     return true;
@@ -198,7 +198,7 @@ bool xtop_relay_make_block_contract::build_poly_relay_block(evm_common::h256 pre
 
     // todo(nathan):remove epoch id
     // todo(nathan):set block root hash
-    relay_block = data::xrelay_block(prev_hash, block_height, 0, timestamp);
+    relay_block = data::xrelay_block(prev_hash, block_height,  timestamp);
     proc_created_relay_block(relay_block, timestamp);
     xdbg("xtop_relay_make_block_contract::build_elect_relay_block new poly block,height:%llu,tx block hash num:%u", block_height, tx_block_hash_vec.size());
     return true;
@@ -232,7 +232,9 @@ bool xtop_relay_make_block_contract::build_tx_relay_block(evm_common::h256 prev_
     }
 
     // todo(nathan):remove epoch id
-    relay_block = data::xrelay_block(prev_hash, block_height, 0, timestamp, transactions, receipts);
+    // add chain_bit 
+     evm_common::u256 chain_bits_test{0x01};
+    relay_block = data::xrelay_block(prev_hash, block_height, timestamp, chain_bits_test, transactions, receipts);
     proc_created_relay_block(relay_block, timestamp);
     xdbg("xtop_relay_make_block_contract::build_tx_relay_block new tx block,height:%llu,tx num:%u", block_height, transactions.size());
     return true;
