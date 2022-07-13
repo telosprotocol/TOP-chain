@@ -95,6 +95,40 @@ class xtable_primary_inentity_extend_t : public xextra_map_base_t {
     void    set_txactions(base::xvactions_t const& txactions);
 };
 
+class xtable_block_para_t : public base::xbbuild_body_para_t {
+ public:
+    xtable_block_para_t() = default;
+    ~xtable_block_para_t() = default;
+    void    add_unit(base::xvblock_t * unit) {
+        unit->add_ref();
+        xblock_t* block_ptr = (xblock_t*)unit;
+        xblock_ptr_t auto_block_ptr;
+        auto_block_ptr.attach(block_ptr);
+        m_account_units.push_back(auto_block_ptr);
+    }
+    void    set_batch_units(const std::vector<xblock_ptr_t> & batch_units) {m_account_units = batch_units;}
+    void    set_txs(const std::vector<xlightunit_tx_info_ptr_t> & txs_info) {m_txs = txs_info;}
+    void    set_property_binlog(const std::string & binlog) {m_property_binlog = binlog;}
+    void    set_fullstate_bin(const std::string & fullstate) {m_fullstate_bin = fullstate;}
+    void    set_tgas_balance_change(const int64_t amount) {m_tgas_balance_change = amount;}
+    void    set_property_hashs(const std::map<std::string, std::string> & hashs) {m_property_hashs = hashs;}
+
+    const std::vector<xblock_ptr_t> & get_account_units() const {return m_account_units;}
+    const std::vector<xlightunit_tx_info_ptr_t> & get_txs() const {return m_txs;}
+    const std::string &             get_property_binlog() const {return m_property_binlog;}
+    const std::string &             get_fullstate_bin() const {return m_fullstate_bin;}
+    int64_t                         get_tgas_balance_change() const {return m_tgas_balance_change;}
+    const std::map<std::string, std::string> &  get_property_hashs() const {return m_property_hashs;}
+
+ private:
+    std::vector<xblock_ptr_t>        m_account_units;
+    std::string                      m_property_binlog;
+    std::string                      m_fullstate_bin;
+    int64_t                          m_tgas_balance_change{0};
+    std::map<std::string, std::string> m_property_hashs;  // need set to table-action for property receipt
+    std::vector<xlightunit_tx_info_ptr_t> m_txs;
+};
+
 class xblockaction_build_t {
  public:
     static base::xvaction_t make_tx_action(const xcons_transaction_ptr_t & tx);

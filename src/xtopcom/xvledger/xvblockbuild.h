@@ -76,6 +76,21 @@ namespace top
             enum_xhash_type             m_hash_type;
         };
 
+        class xbbuild_body_para_t {
+        public:
+            void    set_resource(bool is_input_resource, const std::string & key, const std::string & value);
+            void    set_input_resource(const std::string & key, const std::string & value);
+            void    set_output_resource(const std::string & key, const std::string & value);
+
+            std::map<std::string, std::string> const&   get_input_resources() const {return input_resources;}
+            std::map<std::string, std::string> const&   get_output_resources() const {return input_resources;}
+        private:
+            // std::map<std::string, std::string>  input_entitys;
+            // std::map<std::string, std::string>  output_entitys;
+            std::map<std::string, std::string>  input_resources;
+            std::map<std::string, std::string>  output_resources;
+        };
+
         class xvblockbuild_t {
         public:
             static xauto_ptr<xvheader_t>    build_proposal_header(xvblock_t* block, uint64_t _clock);
@@ -151,6 +166,7 @@ namespace top
             bool    set_input_entity(const std::vector<xvaction_t> & actions, std::string extend_bin = "");
             bool    set_output_entity(const std::string & key, const std::string & value);
             bool    set_input_resource(const std::string & key, const std::string & value);
+            bool    set_output_resource(const std::string & key, const std::string & value);
             bool    set_output_full_state(const std::string & value);
             bool    set_output_binlog(const std::string & value);
             bool    merge_input_resource(const xstrmap_t * src_map);
@@ -172,8 +188,7 @@ namespace top
             inline xvoutentity_t*       get_output_entity()   const {return m_primary_output_entity;}
             inline const std::string &  get_full_state()      const {return m_full_state;}
             inline const std::string &  get_full_state_hash() const {return m_full_state_hash;}
-        private:
-            bool    set_output_resource(const std::string & key, const std::string & value);
+        private:            
             bool    check_block_rules(base::xvblock_t* target_block);
         private:
             xstrmap_t*                  m_input_resource{nullptr}; //resource to hold input 'big data

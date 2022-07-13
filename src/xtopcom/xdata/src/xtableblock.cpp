@@ -169,17 +169,6 @@ bool xtable_block_t::extract_one_sub_block(uint32_t entity_id, const std::string
     return sub_block != nullptr ? true : false;
 }
 
-void xtable_block_t::update_txs_by_actions(const std::vector<base::xvaction_t> & actions, std::vector<xlightunit_tx_info_ptr_t> & txs) const {
-    for (auto & action : actions) {
-        if (action.get_org_tx_hash().empty()) {  // not txaction
-            continue;
-        }
-        xtransaction_ptr_t raw_tx = query_raw_transaction(action.get_org_tx_hash());
-        xlightunit_tx_info_ptr_t txinfo = std::make_shared<xlightunit_tx_info_t>(action, raw_tx.get());
-        txs.push_back(txinfo);
-    }
-}
-
 bool xtable_block_t::extract_sub_txs(std::vector<base::xvtxindex_ptr> & sub_txs) {
     auto tx_actions =  data::xblockextract_t::unpack_txactions(this);
     xdbg("xtable_block_t::extract_sub_txs tx_action size:%zu, account:%s, height:%llu", tx_actions.size(), get_account().c_str(), get_height());

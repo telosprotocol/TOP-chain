@@ -8,6 +8,7 @@
 #include <vector>
 #include "xdata/xblock.h"
 #include "xdata/xtableblock.h"
+#include "xdata/xblockbuild.h"
 #include "xblockmaker/xblock_maker_para.h"
 #include "xblockmaker/xblockmaker_face.h"
 #include "xstatectx/xstatectx.h"  // TODO(jimmy) xstatectx_face

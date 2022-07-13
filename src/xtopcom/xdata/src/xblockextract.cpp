@@ -169,38 +169,51 @@ std::shared_ptr<xrelay_block> xblockextract_t::unpack_commit_relay_block_from_re
         return nullptr;
     }
 
-    data::xtableheader_extra_t header_extra;
-    auto extra_str = _block->get_header()->get_extra_data();
-    auto ret = header_extra.deserialize_from_string(extra_str);
-    if (ret <= 0) {
-        ec = common::error::xerrc_t::invalid_block;
-        xerror("xblockextract_t::unpack_commit_relay_block_from_relay_table fail-header extra deserialize fail.");
+    // data::xtableheader_extra_t header_extra;
+    // auto extra_str = _block->get_header()->get_extra_data();
+    // auto ret = header_extra.deserialize_from_string(extra_str);
+    // if (ret <= 0) {
+    //     ec = common::error::xerrc_t::invalid_block;
+    //     xerror("xblockextract_t::unpack_commit_relay_block_from_relay_table fail-header extra deserialize fail.");
+    //     return nullptr;
+    // }
+
+    // auto wrap_data = header_extra.get_relay_wrap_info();
+    // if (wrap_data.empty()) {
+    //     ec = common::error::xerrc_t::invalid_block;
+    //     xerror("xblockextract_t::unpack_commit_relay_block_from_relay_table fail-wrap null.");
+    //     return nullptr;
+    // }
+
+    // data::xrelay_wrap_info_t wrap_info;
+    // wrap_info.serialize_from_string(wrap_data);
+    // uint8_t wrap_phase = wrap_info.get_wrap_phase();
+    // if (wrap_phase != 2) {
+    //     xdbg("xblockextract_t::unpack_commit_relay_block_from_relay_table succ-uncommit");
+    //     return nullptr;
+    // }
+
+    // auto relay_block_data_str = header_extra.get_relay_block_data();
+    // if (relay_block_data_str.empty()) {
+    //     ec = common::error::xerrc_t::invalid_block;
+    //     xerror("xblockextract_t::unpack_commit_relay_block_from_relay_table fail-data null.");
+    //     return nullptr;
+    // }
+
+    if (!(_block->get_cert()->get_consensus_flags() & base::enum_xconsensus_flag_extend_vote)) {
+        xdbg("xblockextract_t::unpack_commit_relay_block_from_relay_table it's not commit relayblock. %s", _block->dump().c_str());
         return nullptr;
     }
 
-    auto wrap_data = header_extra.get_relay_wrap_info();
-    if (wrap_data.empty()) {
+    std::string relayblock_resource = _block->get_output()->query_resource(data::RESOURCE_RELAY_BLOCK);
+    if (relayblock_resource.empty()) {
         ec = common::error::xerrc_t::invalid_block;
-        xerror("xblockextract_t::unpack_commit_relay_block_from_relay_table fail-wrap null.");
+        xerror("xblockextract_t::unpack_commit_relay_block_from_relay_table fail-relayblock_resource empty._block=%s", _block->dump().c_str());
         return nullptr;
     }
 
-    data::xrelay_wrap_info_t wrap_info;
-    wrap_info.serialize_from_string(wrap_data);
-    uint8_t wrap_phase = wrap_info.get_wrap_phase();
-    if (wrap_phase != 2) {
-        xdbg("xblockextract_t::unpack_commit_relay_block_from_relay_table succ-uncommit");
-        return nullptr;
-    }
-
-    auto relay_block_data_str = header_extra.get_relay_block_data();
-    if (relay_block_data_str.empty()) {
-        ec = common::error::xerrc_t::invalid_block;
-        xerror("xblockextract_t::unpack_commit_relay_block_from_relay_table fail-data null.");
-        return nullptr;
-    }
     std::shared_ptr<xrelay_block> relayblock = std::make_shared<xrelay_block>();
-    relayblock->decodeBytes(to_bytes(relay_block_data_str), ec);
+    relayblock->decodeBytes(to_bytes(relayblock_resource), ec);
     if (ec) {
         xerror("xblockextract_t::unpack_commit_relay_block_from_relay_table fail-decode relayblock。error=%s", ec.message().c_str());
         return nullptr;
@@ -492,17 +505,17 @@ void xblockextract_t::unpack_subblocks(base::xvblock_t* _block, std::vector<xobj
     xdbg("xblockextract_t::unpack_subblocks succ.block=%s,sublocks=%zu",_block->dump().c_str(),sublocks.size());
     
     // TODO(jimmy)
-    // if (_block->get_account() == sys_contract_relay_table_block_addr) {
-    //     xobject_ptr_t<base::xvblock_t> wrap_relayblock = xblockextract_t::unpack_wrap_relayblock_from_relay_table(_block, ec);
-    //     if (ec) {
-    //         xerror("xblockextract_t::unpack_subblocks fail-unpack_wrap_relayblock_from_relay_table.");
-    //         return;
-    //     }
-    //     if (wrap_relayblock != nullptr) {
-    //         sublocks.push_back(wrap_relayblock);
-    //         xdbg("xblockextract_t::unpack_subblocks succ.block=%s,wrapblock=%s",_block->dump().c_str(),wrap_relayblock->dump().c_str());            
-    //     }
-    // }
+    if (_block->get_account() == sys_contract_relay_table_block_addr) {
+        xobject_ptr_t<base::xvblock_t> wrap_relayblock = xblockextract_t::unpack_wrap_relayblock_from_relay_table(_block, ec);
+        if (ec) {
+            xerror("xblockextract_t::unpack_subblocks fail-unpack_wrap_relayblock_from_relay_table.");
+            return;
+        }
+        if (wrap_relayblock != nullptr) {
+            sublocks.push_back(wrap_relayblock);
+            xdbg("xblockextract_t::unpack_subblocks succ.block=%s,wrapblock=%s",_block->dump().c_str(),wrap_relayblock->dump().c_str());            
+        }
+    }
 }
 
 NS_END2

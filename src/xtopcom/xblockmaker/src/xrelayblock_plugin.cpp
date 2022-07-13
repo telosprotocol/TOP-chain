@@ -73,7 +73,7 @@ data::xcons_transaction_ptr_t xrelayblock_plugin_t::make_relay_election_repackag
 }
 
 data::xcons_transaction_ptr_t xrelayblock_plugin_t::make_relay_make_block_contract_tx(statectx::xstatectx_ptr_t const& statectx_ptr, uint64_t timestamp, std::error_code & ec) {
-    if (m_last_phase == "2") {// TODO(jimmy)  use macro
+    if (true) {// TODO(jimmy) always call on_make_block method  use macro  m_last_phase == "2"
         std::string func_name = "on_make_block";
         std::string call_params;  // empty call params now
         base::xstream_t stream(base::xcontext_t::instance());
@@ -95,15 +95,25 @@ xblock_resource_description_t xrelayblock_plugin_t::make_resource(std::error_cod
         std::string prop_relayblock = m_relay_make_block_contract_state->string_get(data::system_contract::XPROPERTY_RELAY_BLOCK_STR);
         if (prop_relayblock.empty()) {
             ec = blockmaker::error::xerrc_t::blockmaker_property_invalid;
+            xerror("xrelayblock_plugin_t::make_resource fail-relayblock property empty.");
+            return {};
+        }
+
+        data::xrelay_block relay_block;
+        relay_block.decodeBytes(top::to_bytes(prop_relayblock), ec, false);
+        if (ec) {
             xerror("xrelayblock_plugin_t::make_resource fail-invalid relayblock property.");
             return {};
         }
+        uint256_t hash256 = from_bytes<uint256_t>(relay_block.get_block_hash().to_bytes());
+
         xblock_resource_description_t resource_desc;
         resource_desc.resource_key_name = data::RESOURCE_RELAY_BLOCK;
         resource_desc.resource_value = prop_relayblock;
-        resource_desc.is_output_resource = true;
+        resource_desc.is_input_resource = false;
         resource_desc.need_signature = true;
-        xdbg_info("xrelayblock_plugin_t::make_resource succ.blocksize=%zu", prop_relayblock.size());
+        resource_desc.signature_hash = hash256;
+        xdbg_info("xrelayblock_plugin_t::make_resource succ.block=%s,blocksize=%zu", relay_block.dump().c_str(),prop_relayblock.size());
         return resource_desc;
     }
     xdbg("xrelayblock_plugin_t::make_resource no need. m_last_phase=%s,after_prop_phase=%s", 

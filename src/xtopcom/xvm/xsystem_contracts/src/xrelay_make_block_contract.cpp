@@ -135,7 +135,7 @@ void xtop_relay_make_block_contract::proc_created_relay_block(data::xrelay_block
     }
 
     STRING_SET(data::system_contract::XPROPERTY_RELAY_LAST_HEIGHT, to_string(relay_block.get_block_height()));
-    STRING_SET(data::system_contract::XPROPERTY_RELAY_LAST_HEIGHT, block_hash);
+    STRING_SET(data::system_contract::XPROPERTY_RELAY_LAST_HASH, block_hash);
 
     xbytes_t rlp_stream = relay_block.encodeBytes();
     std::string relay_block_data = from_bytes<std::string>((xbytes_t)(rlp_stream));

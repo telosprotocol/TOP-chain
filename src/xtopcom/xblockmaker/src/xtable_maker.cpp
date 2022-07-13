@@ -4,6 +4,7 @@
 
 #include <string>
 #include <cinttypes>
+#include "xbasic/xhex.h"
 #include "xblockmaker/xblockmaker_error.h"
 #include "xblockmaker/xtable_maker.h"
 #include "xblockmaker/xtable_builder.h"
@@ -211,6 +212,23 @@ void xtable_maker_t::resource_plugin_make_txs(bool is_leader, statectx::xstatect
         }
     }
 }
+void xtable_maker_t::rerource_plugin_make_resource(bool is_leader, const data::xblock_consensus_para_t & cs_para, data::xtable_block_para_t & lighttable_para, std::error_code & ec) {
+    xblock_resource_description_t block_resource = m_resource_plugin->make_resource(ec);
+    if (ec) {
+        xerror("xtable_maker_t::rerource_plugin_make_resource fail-make_resource is_leader=%d,%s,ec=%s", 
+            is_leader, cs_para.dump().c_str(), ec.message().c_str());        
+        return;
+    }
+    if (!block_resource.resource_key_name.empty()) {
+        lighttable_para.set_resource(block_resource.is_input_resource, block_resource.resource_key_name, block_resource.resource_value);   
+        if (block_resource.need_signature) {
+            cs_para.set_vote_extend_hash(block_resource.signature_hash);
+            cs_para.set_need_relay_prove(true); 
+        }
+        xdbg("xtable_maker_t::rerource_plugin_make_resource succ-make_resource is_leader=%d,%s,resource:%s,%zu,hash=%s", 
+            is_leader, cs_para.dump().c_str(), block_resource.resource_key_name.c_str(), block_resource.resource_value.size(), top::to_hex(top::to_bytes(block_resource.signature_hash)).c_str());
+    }
+}
 
 xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & table_result) {
     uint64_t now = cs_para.get_gettimeofday_s();
@@ -279,13 +297,13 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
         cs_para.set_ethheader(xeth_header_builder::build(cs_para, execute_output.pack_outputs));
     }
 
-    xblock_resource_description_t block_resource = m_resource_plugin->make_resource(ec);
+    xtablebuilder_t::make_table_block_para(batch_units, statectx_ptr->get_table_state(), execute_output, lighttable_para);
+    rerource_plugin_make_resource(is_leader, cs_para, lighttable_para, ec);
     if (ec) {
         xerror("xtable_maker_t::make_light_table_v2 fail-make_resource is_leader=%d,%s,ec=%s", 
             is_leader, cs_para.dump().c_str(), ec.message().c_str());        
         return nullptr;        
     }
-    // TODO(jimmy) put block resource to block
 
     // if (!set_relay_para(cs_para, table_para, is_leader)) {
     //     table_result.m_make_block_error_code = xblockmaker_error_proposal_bad_header;
@@ -297,7 +315,6 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
     const xblock_ptr_t & cert_block = cs_para.get_latest_cert_block();
     const xblock_ptr_t & lock_block = cs_para.get_latest_locked_block();
 
-    xtablebuilder_t::make_table_block_para(batch_units, statectx_ptr->get_table_state(), execute_output, lighttable_para);
     data::xblock_ptr_t tableblock = xtablebuilder_t::make_light_block(cs_para.get_latest_cert_block(),
                                                                         cs_para,
                                                                         lighttable_para);

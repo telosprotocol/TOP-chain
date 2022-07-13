@@ -239,10 +239,11 @@ using xblock_builder_face_ptr_t = std::shared_ptr<xblock_builder_face_t>;
 
 
 struct xblock_resource_description_t {
+    bool            is_input_resource{false};
     std::string     resource_key_name;
     std::string     resource_value;
     bool            need_signature{false};
-    bool            is_output_resource{true};
+    uint256_t       signature_hash; 
 };
 class xblock_resource_plugin_face_t {
  public:

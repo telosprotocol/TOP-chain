@@ -11,6 +11,7 @@
 #include "xdata/xethheader.h"
 #include "xdata/xtableblock.h"
 #include "xdata/xfull_tableblock.h"
+#include "xdata/xblockbuild.h"
 #include "xblockmaker/xblock_maker_para.h"
 #include "xblockmaker/xblockmaker_face.h"
 #include "xtxexecutor/xatomictx_executor.h"
@@ -22,8 +23,6 @@ NS_BEG2(top, blockmaker)
 
 using data::xblock_t;
 using data::xblock_consensus_para_t;
-using data::xtable_block_para_t;
-using data::xfulltable_block_para_t;
 
 class relay_wrap_info_t {
 public:
@@ -92,6 +91,7 @@ private:
     std::vector<xblock_ptr_t> make_units(bool is_leader, const data::xblock_consensus_para_t & cs_para, statectx::xstatectx_ptr_t const& statectx_ptr, txexecutor::xexecute_output_t const& execute_output, std::error_code & ec);
     void update_receiptid_state(const xtablemaker_para_t & table_para, statectx::xstatectx_ptr_t const& statectx_ptr);
     void resource_plugin_make_txs(bool is_leader, statectx::xstatectx_ptr_t const& statectx_ptr, const data::xblock_consensus_para_t & cs_para, std::vector<xcons_transaction_ptr_t> & input_txs, std::error_code & ec);
+    void rerource_plugin_make_resource(bool is_leader, const data::xblock_consensus_para_t & cs_para, data::xtable_block_para_t & lighttable_para, std::error_code & ec);
 
     xblock_resource_plugin_face_ptr_t           m_resource_plugin{nullptr};
     static constexpr uint32_t                   m_empty_block_max_num{2};

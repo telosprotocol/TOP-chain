@@ -634,6 +634,14 @@ bool xlighttable_build_t::build_block_body(const xtable_block_para_t & para, con
     set_output_full_state(full_state);
     std::string tgas_balance_change = base::xstring_utl::tostring(para.get_tgas_balance_change());
     set_output_entity(base::xvoutentity_t::key_name_tgas_pledge_change(), tgas_balance_change);
+
+    for (auto & v : para.get_input_resources()) {
+        set_input_resource(v.first, v.second);
+    }
+    for (auto & v : para.get_output_resources()) {
+        set_output_resource(v.first, v.second);
+    }
+
     return true;
 }
 
