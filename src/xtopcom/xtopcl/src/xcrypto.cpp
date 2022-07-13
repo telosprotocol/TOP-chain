@@ -43,6 +43,19 @@ static bool g_is_key = false;  // false for owner key, true for worker key
 static string g_owner_account;
 const std::string CRYPTO_KDF = "scypt";  // scypt or pbkdf2
 
+// #[deprecated]
+static const std::string DEPRECATED_OLD_DEFAULT_KEY = " ";
+
+// local test
+// #define NEXT_VERSION
+#ifdef NEXT_VERSION
+#    define __compatibility_begin(...) if (false) {
+#    define __compatibility_end(...) }
+#else
+#    define __compatibility_begin(...)
+#    define __compatibility_end(...)
+#endif
+
 std::string get_keystore_filepath(string & dir, const string & account) {
     // create keystore directory
     std::string cmd = "mkdir -p ";
@@ -699,15 +712,40 @@ string reset_keystore_pw(const string & old_pw, const string & key_path) {
     if (account.empty())
         account = key_info["account address"].asString();
 
+    __compatibility_begin("try default key if pw is empty");
+    if (old_pw.empty()) {
+        if (top::base::xvaccount_t::get_addrtype_from_account(account) == top::base::enum_vaccount_addr_type_secp256k1_user_account)
+            decrypttext = aes256_cbc_decrypt(DEPRECATED_OLD_DEFAULT_KEY, key_info);
+        else if (top::base::xvaccount_t::get_addrtype_from_account(account) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
+            decrypttext = eth_aes_decrypt(DEPRECATED_OLD_DEFAULT_KEY, key_info);
+        else
+            return "";
+        if (decrypttext.empty()) {
+            // fail as " "; but worth tring...; continue use empty to decode
+            if (top::base::xvaccount_t::get_addrtype_from_account(account) == top::base::enum_vaccount_addr_type_secp256k1_user_account)
+                decrypttext = aes256_cbc_decrypt(old_pw, key_info);
+            else if (top::base::xvaccount_t::get_addrtype_from_account(account) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
+                decrypttext = eth_aes_decrypt(old_pw, key_info);
+            else
+                return "";
+        } else {
+            // should be old version DEPRECATED_OLD_DEFAULT_KEY
+            // continue to other logic... 
+        }
+    } else {
+    __compatibility_end();
     if (top::base::xvaccount_t::get_addrtype_from_account(account) == top::base::enum_vaccount_addr_type_secp256k1_user_account)
         decrypttext = aes256_cbc_decrypt(old_pw, key_info);
     else if (top::base::xvaccount_t::get_addrtype_from_account(account) == top::base::enum_vaccount_addr_type_secp256k1_eth_user_account)
-        decrypttext = eth_aes_decrypt(old_pw, key_info);    
+        decrypttext = eth_aes_decrypt(old_pw, key_info);
     else
         return "";
+    __compatibility_begin("try default key if pw is empty");
+    }
+    __compatibility_end();
 
     if (decrypttext.empty()) {
-        cout << "Password error！" << endl;
+        cout << "Password error!" << endl;
         cout << "Hint: " << key_info["hint"].asString() << endl;
         cout << "Reset password failed." << endl;
         return "";

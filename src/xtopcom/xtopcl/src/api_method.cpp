@@ -503,9 +503,10 @@ void ApiMethod::reset_keystore_password(std::string & public_key, std::ostringst
 
     std::cout << "Please Input Old Password. If the keystore has no password, press Enter directly." << std::endl;
     auto pw = input_hiding();
-    if (0 == pw.size()) {
-        pw = empty_pw;
-    }
+    
+    // if (0 == pw.size()) {
+    //     pw = empty_pw;
+    // }
 
     auto new_pw = reset_keystore_pw(pw, path);
     if (!new_pw.empty()) {
@@ -1495,11 +1496,11 @@ std::pair<bool, std::string> ApiMethod::get_password(keystore_type const & keys_
         std::getline(pw_file, get_pw);  //? Without check format
     } else if (pswd_type == password_type::interactive) {
         if (is_reset_pw) {
-            CONSOLE_INFO("Please set a new password. The password must consist of Numbers and Letters, 8 to 16 characters. Pressing Ctrl+C can exit the command.");
+            CONSOLE_INFO("Please set a new password. Pressing Ctrl+C can exit the command.");
         } else if (keys_type == keystore_type::account_key) {
-            CONSOLE_INFO("Please set a password for the account keystore file. The password must consist of Numbers and Letters, 8 to 16 characters.");
+            CONSOLE_INFO("Please set a password for the account keystore file.");
         } else {
-            CONSOLE_INFO("Please set a password for the keystore file. The password must consist of Numbers and Letters, 8 to 16 characters.");
+            CONSOLE_INFO("Please set a password for the keystore file.");
         }
         get_pw = input_same_pswd_twice();
 
