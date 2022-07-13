@@ -205,13 +205,13 @@ bool xrelay_packer2::proc_vote_complate(base::xvblock_t * proposal_block) {
         }
         i++;
     }
-    if (num != m_relay_multisign.size()) {
-        xerror("xrelay_packer2::proc_vote_complate relay multisign not match with election.proposal:%s,match num:%u, multisign num:%u",
-               proposal_block->dump().c_str(),
-               num,
-               m_relay_multisign.size());
-        return false;
-    }
+    // if (num != m_relay_multisign.size()) {
+    //     xerror("xrelay_packer2::proc_vote_complate relay multisign not match with election.proposal:%s,match num:%u, multisign num:%u",
+    //            proposal_block->dump().c_str(),
+    //            num,
+    //            m_relay_multisign.size());
+    //     return false;
+    // }
 
     xdbg("xrelay_packer2::proc_vote_complate.proposal:%s,sign num:%u, election num:%u", proposal_block->dump().c_str(), num, reley_election.size());
     std::string extend_data = std::string((char *)_stream.data(), _stream.size());

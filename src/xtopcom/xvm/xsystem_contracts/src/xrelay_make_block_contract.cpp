@@ -70,7 +70,7 @@ void xtop_relay_make_block_contract::on_receive_cross_txs(std::string const & da
 void xtop_relay_make_block_contract::on_make_block(std::string const & data) {
     auto wrap_phase = STRING_GET(data::system_contract::XPROPERTY_RELAY_WRAP_PHASE);
     uint64_t last_height = static_cast<std::uint64_t>(std::stoull(STRING_GET(data::system_contract::XPROPERTY_RELAY_LAST_HEIGHT)));
-    xdbg("xtop_relay_make_block_contract::on_make_block enter. wrap_phase=%s,height:%llu", wrap_phase.c_str(),last_height);
+    xdbg("xtop_relay_make_block_contract::on_make_block enter. wrap_phase=%s,height:%llu", wrap_phase.c_str(), last_height);
     if (wrap_phase == RELAY_WRAP_PHASE_0) {
         STRING_SET(data::system_contract::XPROPERTY_RELAY_WRAP_PHASE, RELAY_WRAP_PHASE_1);
         return;
@@ -108,7 +108,6 @@ void xtop_relay_make_block_contract::on_make_block(std::string const & data) {
 void xtop_relay_make_block_contract::pop_tx_block_hashs(const string & list_key, bool for_poly_block, std::vector<evm_common::h256> & tx_block_hash_vec) {
     auto tx_block_num = LIST_SIZE(list_key);
     if (tx_block_num > 0) {
-        std::vector<evm_common::h256> tx_block_hash_vec;
         for (int32_t i = 0; i < tx_block_num; i++) {
             std::string block_hash_str;
             LIST_POP_FRONT(list_key, block_hash_str);
@@ -127,8 +126,11 @@ void xtop_relay_make_block_contract::proc_created_relay_block(data::xrelay_block
     std::string block_hash = from_bytes<std::string>(relay_block.get_block_hash().to_bytes());
     if (relay_block.get_all_transactions().empty()) {
         STRING_SET(data::system_contract::XPROPERTY_RELAY_LAST_POLY_BLOCK_LOGIC_TIME, std::to_string(timestamp));
+        if (!relay_block.get_elections_sets().empty()) {
+            STRING_SET(data::system_contract::XPROPERTY_RELAY_LAST_EPOCH_ID, std::to_string(relay_block.get_elections_sets().election_epochID));
+        }
     } else {
-        LIST_PUSH_BACK(data::system_contract::XPROPERTY_RELAY_BLOCK_HASH_LAST_ELECT_TO_LAST_POLY_LIST, block_hash);
+        LIST_PUSH_BACK(data::system_contract::XPROPERTY_RELAY_BLOCK_HASH_FROM_LAST_POLY_LIST, block_hash);
         if (relay_block.get_block_height() == 1) {
             STRING_SET(data::system_contract::XPROPERTY_RELAY_LAST_POLY_BLOCK_LOGIC_TIME, std::to_string(timestamp));
         }
@@ -189,7 +191,7 @@ bool xtop_relay_make_block_contract::build_elect_relay_block(evm_common::h256 pr
 bool xtop_relay_make_block_contract::build_poly_relay_block(evm_common::h256 prev_hash, uint64_t block_height, uint64_t timestamp, data::xrelay_block & relay_block) {
     std::vector<evm_common::h256> tx_block_hash_vec;
     pop_tx_block_hashs(data::system_contract::XPROPERTY_RELAY_BLOCK_HASH_FROM_LAST_POLY_LIST, true, tx_block_hash_vec);
-    xdbg("xtop_relay_make_block_contract::build_poly_relay_block tx block height:%llu,hash num:%u", block_height,tx_block_hash_vec.size());
+    xdbg("xtop_relay_make_block_contract::build_poly_relay_block tx block height:%llu,hash num:%u", block_height, tx_block_hash_vec.size());
     if (tx_block_hash_vec.empty()) {
         return false;
     }
