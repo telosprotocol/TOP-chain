@@ -39,4 +39,4 @@ if (BUILD_EVM)
     add_subdirectory(xevm_contract_runtime)
 endif()
 add_subdirectory(xgasfee)
-
+add_subdirectory(xtopcl_test)

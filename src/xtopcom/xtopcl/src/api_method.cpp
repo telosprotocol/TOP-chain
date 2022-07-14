@@ -497,7 +497,7 @@ void ApiMethod::reset_keystore_password(std::string & public_key, std::ostringst
         }
     }
     if (!found) {
-        cout << "No file with public_key " << public_key << endl;
+        out_str << "No file with public_key " << public_key << endl;
         return;
     }
 
@@ -508,7 +508,7 @@ void ApiMethod::reset_keystore_password(std::string & public_key, std::ostringst
     //     pw = empty_pw;
     // }
 
-    auto new_pw = reset_keystore_pw(pw, path);
+    auto new_pw = reset_keystore_pw(pw, path, out_str);
     if (!new_pw.empty()) {
         std::ostringstream oss;
         auto default_account = get_account_from_daemon();
