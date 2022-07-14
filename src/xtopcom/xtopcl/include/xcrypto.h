@@ -55,7 +55,7 @@ string aes256_cbc_decrypt(const string & pw, const xJson::Value & key_info);
 string eth_aes_decrypt(const string & pw, const xJson::Value & key_info);
 
 void attach_reset_keystore_pw(const string & old_pw, const string & pw, const string & path, std::ostringstream & out_str);
-string reset_keystore_pw(const string & pw, const string & path);
+string reset_keystore_pw(const string & pw, const string & path, std::ostringstream & out_str);
 std::vector<std::string> scan_key_dir(const std::string & path);
 bool search_key_by_account(const string & account, const string & dir);
 bool set_g_userinfo(const string & base64_pri);

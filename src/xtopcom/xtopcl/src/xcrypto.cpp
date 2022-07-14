@@ -704,7 +704,7 @@ bool search_key_by_account(const string & account, const string & dir) {
     return key_found;
 }
 
-string reset_keystore_pw(const string & old_pw, const string & key_path) {
+string reset_keystore_pw(const string & old_pw, const string & key_path, std::ostringstream & out_str) {
     xJson::Value key_info = parse_keystore(key_path);
 
     std::string decrypttext;
@@ -769,7 +769,7 @@ string reset_keystore_pw(const string & old_pw, const string & key_path) {
     }
 
     update_keystore_file(new_pw, decrypttext, key_file, key_info);
-    std::cout << "Reset password successfully!." << std::endl;
+    out_str << "Reset password successfully!." << std::endl;
     return new_pw;
 }
 
