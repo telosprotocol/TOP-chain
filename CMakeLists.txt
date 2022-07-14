@@ -483,7 +483,11 @@ if (XENABLE_TESTS)
         set(CMAKE_CXX_FLAGS "-no-pie")
     endif()
     enable_testing()
+    
+    include_directories(SYSTEM src/xtopcom/xdepends/googletest/googletest/include)
+    include_directories(SYSTEM src/xtopcom/xdepends/googletest/googlemock/include)
     include_directories(.)
+
     add_subdirectory(tests)
 
 endif()
