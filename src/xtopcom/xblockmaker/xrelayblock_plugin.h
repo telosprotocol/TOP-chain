@@ -21,13 +21,13 @@ class xrelayblock_plugin_t : public xblock_resource_plugin_face_t {  // TODO(jim
     virtual xblock_resource_description_t          make_resource(uint64_t epochid, std::error_code & ec) const override;
 
  private:
-    std::string get_new_relay_election_data(statectx::xstatectx_ptr_t const& statectx_ptr, uint64_t timestamp);
+    std::string get_new_relay_election_data(statectx::xstatectx_ptr_t const& statectx_ptr, uint64_t timestamp) const;
     data::xcons_transaction_ptr_t   make_relay_make_block_contract_tx(statectx::xstatectx_ptr_t const& statectx_ptr, uint64_t timestamp, std::error_code & ec);
 
  private:   
    data::xunitstate_ptr_t  m_relay_make_block_contract_state{nullptr};
    std::string             m_last_phase;
-   bool                    m_time_to_check_election{false};
+   mutable bool            m_time_to_check_election{false};
 };
 
 NS_END2

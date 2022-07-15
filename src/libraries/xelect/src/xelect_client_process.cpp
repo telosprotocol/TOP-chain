@@ -73,7 +73,7 @@ void xelect_client_process::process_timer(const mbus::xevent_ptr_t & e) {
     m_xchain_timer->update_time(block->get_height(), time::xlogic_timer_update_strategy_t::discard_old_value);
 }
 
-uint64_t xelect_client_process::get_new_election_height(data::xunit_bstate_t const & unitstate, xobject_ptr_t<data::xblock_t> const & block) {
+uint64_t xelect_client_process::get_new_election_height(data::xunit_bstate_t const & unitstate, xobject_ptr_t<data::xblock_t> const & block) const {
     common::xaccount_address_t const contract_address{ block->get_block_owner() };
     if (contract_address == relay_make_block_contract_address) {
         std::string height_str;

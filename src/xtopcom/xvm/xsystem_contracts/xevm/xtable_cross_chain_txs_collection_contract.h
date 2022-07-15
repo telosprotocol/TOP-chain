@@ -13,9 +13,8 @@
 
 NS_BEG3(top, xvm, system_contracts)
 
-XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_CROSSCHAIN_TX_RECEIPT_KEY = "@1";  // TODO(jimmy)
-XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_PROCESSED_TABLE_BLOCK_HEIGHT = "@2";  // TODO(jimmy)
-XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_PROCESSED_LOGIC_TIME = "@3";  // TODO(jimmy)
+XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_PROCESSED_TABLE_BLOCK_HEIGHT = "@1";  // TODO(jimmy)
+XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_PROCESSED_LOGIC_TIME = "@2";  // TODO(jimmy)
 
 class xtable_cross_chain_txs_collection_contract : public xcontract::xcontract_base
 {
