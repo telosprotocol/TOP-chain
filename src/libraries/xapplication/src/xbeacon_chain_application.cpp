@@ -155,7 +155,7 @@ void xtop_beacon_chain_application::load_last_election_data() {
                                                      rec_elect_zec_contract_address,
                                                      zec_elect_consensus_contract_address,
                                                      zec_elect_eth_contract_address,
-                                                     relay_repackage_election_data_contract_address};
+                                                     relay_make_block_contract_address};
 
     std::map<common::xaccount_address_t, common::xzone_id_t> addr_to_zone_id{{rec_elect_rec_contract_address, common::xcommittee_zone_id},
                                                                              {rec_elect_zec_contract_address, common::xzec_zone_id},
@@ -165,7 +165,7 @@ void xtop_beacon_chain_application::load_last_election_data() {
                                                                              {rec_elect_edge_contract_address, common::xedge_zone_id},
                                                                              {zec_elect_consensus_contract_address, common::xdefault_zone_id},
                                                                              {zec_elect_eth_contract_address, common::xevm_zone_id},
-                                                                             {relay_repackage_election_data_contract_address, common::xrelay_zone_id}};
+                                                                             {relay_make_block_contract_address, common::xrelay_zone_id}};
     for (const auto & addr : sys_addr) {
         for (auto const & property : data::election::get_property_name_by_addr(addr)) {
             common::xzone_id_t zone_id = addr_to_zone_id[addr];
@@ -205,7 +205,7 @@ void xtop_beacon_chain_application::load_last_election_data() {
             }
 
             if ((addr == rec_elect_rec_contract_address || addr == rec_elect_zec_contract_address || addr == zec_elect_consensus_contract_address ||
-                 addr == zec_elect_eth_contract_address || addr == relay_repackage_election_data_contract_address) &&
+                 addr == zec_elect_eth_contract_address || addr == relay_make_block_contract_address) &&
                 block_height != 0) {
                 uint64_t prev_block_height = block_height - 1;
                 auto const & before_last_election_result_store = load_election_data(m_application->blockstore(), addr, prev_block_height, property, prev_block_height, ec);

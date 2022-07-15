@@ -214,7 +214,6 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_relay_group_size, xgroup_size_t, norma
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_relay_group_size, xgroup_size_t, normal, 32, 32, 512);
 #endif
 
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_relay_poly_interval, xinterval_t, normal, 100, 20, 512);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_auditor_rotation_count, std::uint16_t, normal, 2, 1, 62);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_edge_group_size, std::uint16_t, normal, 512, 64, 1022);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_fullnode_group_size, std::uint16_t, normal, 512, 64, 1022);
@@ -479,14 +478,12 @@ XDECLARE_CONFIGURATION(unitblock_recv_transfer_tx_batch_num, std::uint32_t, 1);
 XDECLARE_CONFIGURATION(unitblock_send_transfer_tx_batch_num, std::uint32_t, 1);
 XDECLARE_CONFIGURATION(tableblock_batch_unitblock_max_num, std::uint32_t, 1);
 XDECLARE_CONFIGURATION(tableblock_batch_tx_max_num, std::int32_t, 1);
-XDECLARE_CONFIGURATION(relayblock_batch_tx_max_num, std::int32_t, 1);
 #else
 XDECLARE_CONFIGURATION(unitblock_confirm_tx_batch_num, std::uint32_t, 8);
 XDECLARE_CONFIGURATION(unitblock_recv_transfer_tx_batch_num, std::uint32_t, 4);
 XDECLARE_CONFIGURATION(unitblock_send_transfer_tx_batch_num, std::uint32_t, 3);
 XDECLARE_CONFIGURATION(tableblock_batch_unitblock_max_num, std::uint32_t, 64);
 XDECLARE_CONFIGURATION(tableblock_batch_tx_max_num, std::int32_t, 64);
-XDECLARE_CONFIGURATION(relayblock_batch_tx_max_num, std::int32_t, 1); // todo(nathan) 40
 #endif
 
 #if defined(XBUILD_DEV) || defined(XBUILD_CI)
@@ -504,7 +501,11 @@ XDECLARE_CONFIGURATION(slash_table_split_num, uint16_t, 32);              // spl
 // slash fulltable interval
 XDECLARE_CONFIGURATION(slash_fulltable_interval, xinterval_t, 120); // 20 minutes
 #endif
+
+/* relay block parameters */
 XDECLARE_CONFIGURATION(evm_table_crosschain_txs_collection_interval, xinterval_t, 1); // 1 clock  // TODO(jimmy)
+XDECLARE_CONFIGURATION(relayblock_batch_tx_max_num, std::int32_t, 1); // todo(nathan) 40
+XDECLARE_CONFIGURATION(max_relay_poly_interval, int32_t, 100);
 
 
 /* beginning of development parameters */

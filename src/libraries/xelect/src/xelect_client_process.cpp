@@ -17,7 +17,6 @@
 #include "xdata/xelection/xelection_result_store.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
-#include "xdata/xunit_bstate.h"
 #include "xmbus/xevent_store.h"
 #include "xmbus/xevent_timer.h"
 #include "xvledger/xvledger.h"
@@ -74,6 +73,21 @@ void xelect_client_process::process_timer(const mbus::xevent_ptr_t & e) {
     m_xchain_timer->update_time(block->get_height(), time::xlogic_timer_update_strategy_t::discard_old_value);
 }
 
+uint64_t xelect_client_process::get_new_election_height(data::xunit_bstate_t const & unitstate, xobject_ptr_t<data::xblock_t> const & block) {
+    common::xaccount_address_t const contract_address{ block->get_block_owner() };
+    if (contract_address == relay_make_block_contract_address) {
+        std::string height_str;
+        unitstate.string_get(data::system_contract::XPROPERTY_RELAY_ELECT_PACK_HEIGHT, height_str);
+        if (height_str.empty()) {
+            xerror("[zec election] zone elect finish for relay with empty pack height.block=%s", block->dump().c_str());
+            return 0;
+        }
+        return static_cast<std::uint64_t>(std::stoull(height_str));
+    } else {
+        return block->get_height();
+    }
+}
+
 void xelect_client_process::process_election_block(xobject_ptr_t<base::xvblock_t> const& election_data_block, common::xlogic_time_t const current_time) {
     if (election_data_block == nullptr) {
         xwarn("xelect_client_process::process_election_block election block is null");
@@ -114,6 +128,12 @@ void xelect_client_process::process_election_block(xobject_ptr_t<base::xvblock_t
     }
     data::xunit_bstate_t const unitstate(bstate.get());
 
+    uint64_t new_election_height = get_new_election_height(unitstate, block);
+    if (local_height >= new_election_height) {
+        xwarn("xelect_client_process::process_election_block block height is lower,local_height:%llu,new height:%llu,block:%s", local_height, new_election_height, block->dump().c_str());
+        return;
+    }
+
     auto const & property_names = data::election::get_property_name_by_addr(contract_address);
     for (auto const & property : property_names) {
         std::string result;
@@ -150,21 +170,21 @@ void xelect_client_process::process_election_block(xobject_ptr_t<base::xvblock_t
 
                 if (common::has<common::xnode_type_t::consensus>(node_type) || common::has<common::xnode_type_t::consensus_validator>(node_type) ||
                     common::has<common::xnode_type_t::consensus_auditor>(node_type)) {
-                    m_update_handler2(election_result_store, common::xconsensus_zone_id, block->get_height(), false);
+                    m_update_handler2(election_result_store, common::xconsensus_zone_id, new_election_height, false);
                 } else if (common::has<common::xnode_type_t::zec>(node_type)) {
-                    m_update_handler2(election_result_store, common::xzec_zone_id, block->get_height(), false);
+                    m_update_handler2(election_result_store, common::xzec_zone_id, new_election_height, false);
                 } else if (common::has<common::xnode_type_t::committee>(node_type)) {
-                    m_update_handler2(election_result_store, common::xcommittee_zone_id, block->get_height(), false);
+                    m_update_handler2(election_result_store, common::xcommittee_zone_id, new_election_height, false);
                 } else if (common::has<common::xnode_type_t::edge>(node_type)) {
-                    m_update_handler2(election_result_store, common::xedge_zone_id, block->get_height(), false);
+                    m_update_handler2(election_result_store, common::xedge_zone_id, new_election_height, false);
                 } else if (common::has<common::xnode_type_t::storage>(node_type)) {
-                    m_update_handler2(election_result_store, common::xstorage_zone_id, block->get_height(), false);
+                    m_update_handler2(election_result_store, common::xstorage_zone_id, new_election_height, false);
                 } else if (common::has<common::xnode_type_t::fullnode>(node_type)) {
-                    m_update_handler2(election_result_store, common::xfullnode_zone_id, block->get_height(), false);
+                    m_update_handler2(election_result_store, common::xfullnode_zone_id, new_election_height, false);
                 } else if (common::has<common::xnode_type_t::evm>(node_type)) {
-                    m_update_handler2(election_result_store, common::xevm_zone_id, block->get_height(), false);
+                    m_update_handler2(election_result_store, common::xevm_zone_id, new_election_height, false);
                 } else if (common::has<common::xnode_type_t::relay>(node_type)) {
-                    m_update_handler2(election_result_store, common::xrelay_zone_id, block->get_height(), false);
+                    m_update_handler2(election_result_store, common::xrelay_zone_id, new_election_height, false);
                 } else {
                     assert(false);
                 }
@@ -172,7 +192,7 @@ void xelect_client_process::process_election_block(xobject_ptr_t<base::xvblock_t
         }
     }
 
-    top::get<xinternal_election_status_t>(*it).height = block->get_height();
+    top::get<xinternal_election_status_t>(*it).height = new_election_height;
     top::get<xinternal_election_status_t>(*it).last_update_time = current_time;
 }
 
@@ -271,7 +291,7 @@ void xelect_client_process::update_election_status(common::xlogic_time_t current
 #else
         auto const update_relay_interval = consensus_group_update_interval;
 #endif
-        process_election_contract(relay_repackage_election_data_contract_address, current_time, update_relay_interval);
+        process_election_contract(relay_make_block_contract_address, current_time, update_relay_interval);
     }
 }
 

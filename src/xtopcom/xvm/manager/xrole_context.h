@@ -117,7 +117,7 @@ protected:
      * @param block_height 
      * @param block_timestamp 
      */
-    void on_relay_election_data_update(uint64_t block_height, uint64_t block_timestamp);
+    // void on_relay_election_data_update(uint64_t block_height, uint64_t block_timestamp);
 
     /**
      * @brief check if timer is unorder

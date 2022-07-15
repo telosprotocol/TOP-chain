@@ -775,7 +775,7 @@ bool xtable_maker_t::build_relay_block_data_leader(const data::xblock_consensus_
     } else {
         // no new election data. try build poly relay block or tx relay block.
         // todo(nathan):make poly relay block.
-        // if((cs_para.get_timestamp() > last_wrap_info.poly_timestamp() + XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_relay_poly_interval) * 10) && last_relay_block.get_all_receipts().size() > 0) {
+        // if((cs_para.get_timestamp() > last_wrap_info.poly_timestamp() + XGET_CONFIG(max_relay_poly_interval) * 10) && last_relay_block.get_all_receipts().size() > 0) {
 
         //     xinfo("xrelay_proposal_maker_t::build_relay_block_data_leader time last_poly_timestamp(%ld), timestamp(%ld)",
         //         last_wrap_info.poly_timestamp(), cs_para.get_timestamp());
@@ -842,7 +842,7 @@ bool xtable_maker_t::build_relay_block_data_backup(const data::xblock_consensus_
         relay_block = data::xrelay_block(
             last_relay_block.get_block_hash(), last_relay_block.get_block_height() + 1,  cs_para.get_timestamp(), reley_election_group);
     } else if (poly_block) {
-        if((cs_para.get_timestamp() < last_wrap_info.poly_timestamp() + XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_relay_poly_interval) * 10) || last_relay_block.get_all_receipts().size() <= 0) {
+        if((cs_para.get_timestamp() < last_wrap_info.poly_timestamp() + XGET_CONFIG(max_relay_poly_interval) * 10) || last_relay_block.get_all_receipts().size() <= 0) {
             return false;
         }
         relay_block = data::xrelay_block(last_relay_block.get_block_hash(), last_relay_block.get_block_height() + 1, cs_para.get_timestamp());
