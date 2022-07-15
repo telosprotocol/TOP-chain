@@ -150,12 +150,6 @@ namespace data {
         xrelay_block(evm_common::h256  prev_hash, uint64_t block_height, uint64_t timestamp, evm_common::u256 chain_bits,
                      std::vector<xeth_transaction_t> transactions,  std::vector<xeth_receipt_t> &receipts);
 
-        xrelay_block() { }
-        xrelay_block(evm_common::h256 prev_hash, uint64_t block_height, uint64_t timestamp);
-        xrelay_block(evm_common::h256 prev_hash, uint64_t block_height, uint64_t timestamp,
-            xrelay_election_group_t& election_group);
-        xrelay_block(evm_common::h256 prev_hash, uint64_t block_height, uint64_t timestamp, evm_common::u256 chain_bits,
-            std::vector<xeth_transaction_t> transactions, std::vector<xeth_receipt_t>& receipts);
         ~xrelay_block() { }
 
     public:

@@ -17,7 +17,7 @@ using namespace top::base;
 using namespace top::data;
 using namespace top::evm_common;
 using namespace top::common;
-
+#if 0
 
 class test_relay_block_store : public testing::Test {
 protected:
@@ -399,4 +399,5 @@ TEST_F(test_relay_block_store, store_tx_block_serialize)
 
 }
 
+#endif 
 #endif 
