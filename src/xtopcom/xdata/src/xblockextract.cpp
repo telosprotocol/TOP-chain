@@ -193,41 +193,25 @@ std::shared_ptr<xrelay_block> xblockextract_t::unpack_commit_relay_block_from_re
 
     std::shared_ptr<xrelay_block> relayblock = unpack_relay_block_from_table(_block, ec);
     if (nullptr == relayblock) {
-        xerror("xblockextract_t::unpack_commit_relay_block_from_relay_table fail-decode relayblock。error=%s", ec.message().c_str());
+        xerror("xblockextract_t::unpack_commit_relay_block_from_relay_table fail-decode relayblock,block:%s,error=%s", _block->dump().c_str(),ec.message().c_str());
         return nullptr;
     }
 
     // commit relay table must has signature
-    std::string sign_list = _block->get_cert()->get_extend_data();
-    if (sign_list.empty()) {
+    std::string extend_data = _block->get_cert()->get_extend_data();
+    if (extend_data.empty()) {
         ec = common::error::xerrc_t::invalid_block;
         xerror("xblockextract_t::unpack_commit_relay_block_from_relay_table fail-extend data empty.");
         return nullptr;
     }
 
-    std::vector<xrelay_signature_node_t> signature_nodes;
-    base::xstream_t stream{base::xcontext_t::instance(), (uint8_t *)sign_list.data(), static_cast<uint32_t>(sign_list.size())};
-    uint16_t size = 0;
-    stream >> size;
-    for (uint16_t i = 0; i < size; i++) {
-        std::string sign_str;
-        stream >> sign_str;
-
-        if (sign_str == "") {
-            xrelay_signature_node_t signature;
-            signature_nodes.push_back(signature);
-            continue;
-        }
-        if (sign_str.size() != 65) {
-            ec = common::error::xerrc_t::invalid_block;
-            xerror("xblockextract_t::unpack_commit_relay_block_from_relay_table extend data empty.");
-            return nullptr;
-        }
-
-        xrelay_signature_node_t signature{sign_str};
-        signature_nodes.push_back(signature);
+    data::xrelay_signature_group_t siggroup;
+    siggroup.decodeBytes(top::to_bytes(extend_data), ec);
+    if (ec) {
+        xerror("xblockextract_t::unpack_commit_relay_block_from_relay_table fail-decode extend.block:%s", _block->dump().c_str());
+        return nullptr;        
     }
-    relayblock->set_signature_nodes(signature_nodes);
+    relayblock->set_signature_groups(siggroup);
     return relayblock;
 }
 

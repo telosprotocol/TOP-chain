@@ -503,7 +503,7 @@ XDECLARE_CONFIGURATION(slash_fulltable_interval, xinterval_t, 120); // 20 minute
 #endif
 
 /* relay block parameters */
-XDECLARE_CONFIGURATION(evm_table_crosschain_txs_collection_interval, xinterval_t, 1); // 1 clock  // TODO(jimmy)
+XDECLARE_CONFIGURATION(evm_relay_txs_collection_interval, xinterval_t, 1); // 1 clock  // TODO(jimmy)
 XDECLARE_CONFIGURATION(relayblock_batch_tx_max_num, std::int32_t, 1); // todo(nathan) 40
 XDECLARE_CONFIGURATION(max_relay_poly_interval, int32_t, 100);
 

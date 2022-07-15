@@ -66,26 +66,6 @@ class xtable_maker_t : public xblock_maker_t {
     bool                    can_make_next_empty_block(const data::xblock_consensus_para_t & cs_para) const;
 
 private:
-    bool get_last_relay_info(const data::xblock_consensus_para_t & cs_para,
-                             uint8_t & wrap_phase,
-                             relay_wrap_info_t & wrap_info,
-                             std::string & last_relay_block_data,
-                             data::xrelay_block & last_relay_block);
-    bool build_relay_block_data_from_last_block(const data::xblock_consensus_para_t & cs_para,
-                                                const std::string & last_relay_block_data,
-                                                data::xrelay_block & last_relay_block,
-                                                std::string & relay_block_data);
-    bool build_relay_block_data_leader(const data::xblock_consensus_para_t & cs_para,
-                                       const data::xrelay_block & last_relay_block,
-                                       const relay_wrap_info_t & last_wrap_info,
-                                       relay_wrap_info_t & new_wrap_info,
-                                       data::xrelay_block & relay_block);
-    bool build_relay_block_data_backup(const data::xblock_consensus_para_t & cs_para,
-                                       const data::xrelay_block & last_relay_block,
-                                       const relay_wrap_info_t & last_wrap_info,
-                                       const relay_wrap_info_t & new_wrap_info,
-                                       data::xrelay_block & relay_block);
-    bool set_relay_para(const data::xblock_consensus_para_t & cs_para, const xtablemaker_para_t & table_para, bool is_leader);
     std::vector<xcons_transaction_ptr_t> check_input_txs(bool is_leader, const data::xblock_consensus_para_t & cs_para, const std::vector<xcons_transaction_ptr_t> & input_table_txs, uint64_t now);
     void execute_txs(bool is_leader, const data::xblock_consensus_para_t & cs_para, statectx::xstatectx_ptr_t const& statectx_ptr, const std::vector<xcons_transaction_ptr_t> & input_txs, txexecutor::xexecute_output_t & execute_output, std::error_code & ec);
     std::vector<xblock_ptr_t> make_units(bool is_leader, const data::xblock_consensus_para_t & cs_para, statectx::xstatectx_ptr_t const& statectx_ptr, txexecutor::xexecute_output_t const& execute_output, std::error_code & ec);

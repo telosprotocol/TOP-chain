@@ -61,6 +61,7 @@ namespace data {
         xrelay_signature_node_t(const std::string & sign_str);
         void streamRLP(evm_common::RLPStream &_s) const;
         void decodeRLP(evm_common::RLP const& _r, std::error_code & ec);
+        bool is_exist() const {return exist;}
 
         bool                exist{false};          //check signature if exist
         xrelay_signature_t  signature;
@@ -68,6 +69,8 @@ namespace data {
 
     struct xrelay_signature_group_t {
         xrelay_signature_group_t() = default;
+        xbytes_t    encodeBytes() const;
+        void        decodeBytes(xbytes_t const& _d, std::error_code & ec);        
         void    streamRLP(evm_common::RLPStream &_s) const; 
         void    decodeRLP(evm_common::RLP const& _r, std::error_code & ec);
         size_t  size() const { return signature_vector.size();}

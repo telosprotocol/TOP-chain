@@ -78,6 +78,7 @@ base::xauto_ptr<base::xvblock_t> create_new_relay_block(std::string& extra_data)
     extra_data = _extra_data;
     return _new_block;   
 }
+#if 0
 TEST_F(test_relay_block, store_relay_block) {
     std::string extra_data;
     base::xauto_ptr<base::xvblock_t> _new_block = create_new_relay_block(extra_data);
@@ -269,7 +270,7 @@ TEST_F(test_relay_block, store_wrap_block)
         ASSERT_EQ(_block, nullptr);
     }
 }
-
+#endif
 
 
 

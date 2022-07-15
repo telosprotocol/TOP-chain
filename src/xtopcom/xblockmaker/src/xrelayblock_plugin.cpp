@@ -195,7 +195,7 @@ std::string xrelayblock_plugin_t::get_new_relay_election_data(statectx::xstatect
     }
 }
 
-xblock_resource_description_t xrelayblock_plugin_t::make_resource(std::error_code & ec) const {
+xblock_resource_description_t xrelayblock_plugin_t::make_resource(uint64_t epochid, std::error_code & ec) const {
     std::string after_prop_phase = m_relay_make_block_contract_state->string_get(data::system_contract::XPROPERTY_RELAY_WRAP_PHASE);
     if (after_prop_phase != m_last_phase && after_prop_phase == "2") {
         std::string prop_relayblock = m_relay_make_block_contract_state->string_get(data::system_contract::XPROPERTY_RELAY_BLOCK_STR);
@@ -211,12 +211,13 @@ xblock_resource_description_t xrelayblock_plugin_t::make_resource(std::error_cod
             xerror("xrelayblock_plugin_t::make_resource fail-invalid relayblock property.");
             return {};
         }
-        uint256_t hash256 = from_bytes<uint256_t>(relay_block.get_block_hash().to_bytes());
+        relay_block.get_header().set_epochid(epochid);
+        uint256_t hash256 = from_bytes<uint256_t>(relay_block.build_signature_hash().to_bytes());
 
         xblock_resource_description_t resource_desc;
         resource_desc.resource_key_name = data::RESOURCE_RELAY_BLOCK;
         resource_desc.resource_value = prop_relayblock;
-        resource_desc.is_input_resource = false;
+        resource_desc.is_input_resource = false;  // TODO(jimmy) put relayblock to output resource
         resource_desc.need_signature = true;
         resource_desc.signature_hash = hash256;
         xdbg_info("xrelayblock_plugin_t::make_resource succ.block=%s,blocksize=%zu", relay_block.dump().c_str(),prop_relayblock.size());

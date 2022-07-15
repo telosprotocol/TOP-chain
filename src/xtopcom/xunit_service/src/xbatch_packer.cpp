@@ -300,7 +300,7 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
         return false;
     }
     set_xip(*m_leader_cs_para, local_xip);  // set leader xip
-    set_election_round(*m_leader_cs_para);
+    set_election_round(true, *m_leader_cs_para);
 
     m_is_leader = true;
     XMETRICS_GAUGE(metrics::cons_cp_check_succ, 1);
@@ -361,8 +361,8 @@ bool xbatch_packer::on_pdu_event_up(const base::xvevent_t & event, xcsobject_t *
 }
 
 bool xbatch_packer::send_out(const xvip2_t & from_addr, const xvip2_t & to_addr, const base::xcspdu_t & packet, int32_t cur_thread_id, uint64_t timenow_ms) {
-    xunit_info("xbatch_packer::send_out pdu=%s,body_size:%d,node_xip=%s,this:%p",
-                packet.dump().c_str(), packet.get_msg_body().size(), xcons_utl::xip_to_hex(from_addr).c_str(), this);
+    xunit_info("xbatch_packer::send_out pdu=%s,body_size:%d,from_xip=%s,to_xip=%s,node_xip=%s,this:%p",
+                packet.dump().c_str(), packet.get_msg_body().size(), xcons_utl::xip_to_hex(from_addr).c_str(),xcons_utl::xip_to_hex(to_addr).c_str(),xcons_utl::xip_to_hex(from_addr).c_str(), this);
 
     auto network_proxy = m_para->get_resources()->get_network();
     xassert(network_proxy != nullptr);
@@ -399,8 +399,8 @@ bool xbatch_packer::verify_proposal_packet(const xvip2_t & from_addr, const xvip
 }
 
 bool xbatch_packer::recv_in(const xvip2_t & from_addr, const xvip2_t & to_addr, const base::xcspdu_t & packet, int32_t cur_thread_id, uint64_t timenow_ms) {
-    xunit_info("xbatch_packer::recv_in, consensus_tableblock  pdu_recv_in=%s, clock=%llu, viewid=%llu, node_xip=%s.",
-                packet.dump().c_str(), m_last_view_clock, m_last_view_id, xcons_utl::xip_to_hex(get_xip2_addr()).c_str());
+    xunit_info("xbatch_packer::recv_in, consensus_tableblock  pdu_recv_in=%s, clock=%llu, viewid=%llu, from_xip=%s,to_xip=%s,node_xip=%s.",
+                packet.dump().c_str(), m_last_view_clock, m_last_view_id, xcons_utl::xip_to_hex(from_addr).c_str(),xcons_utl::xip_to_hex(to_addr).c_str(),xcons_utl::xip_to_hex(get_xip2_addr()).c_str());
     XMETRICS_TIME_RECORD("cons_tableblock_recv_in_time_consuming");
 
     // proposal should pass to xbft, so xbft could realize local is beind in view/block and do sync
@@ -425,10 +425,10 @@ int xbatch_packer::verify_proposal(base::xvblock_t * proposal_block, base::xvqce
     }
 
     data::xblock_consensus_para_t proposal_para(get_account(), proposal_block->get_clock(), proposal_block->get_viewid(), proposal_block->get_viewtoken(), proposal_block->get_height(), proposal_block->get_second_level_gmtime());
-    set_election_round(proposal_para);
+    set_election_round(false, proposal_para);
     auto ret = m_proposal_maker->verify_proposal(proposal_para, proposal_block, bind_clock_cert);
     if (ret == xsuccess) {
-        set_vote_extend_data(proposal_block, proposal_para.get_vote_extend_hash(), false);
+        ret = set_vote_extend_data(proposal_block, proposal_para.get_vote_extend_hash(), false);
     }
     return ret;
 }
@@ -616,8 +616,9 @@ uint32_t xbatch_packer::calculate_min_tx_num(bool first_packing) {
     return min_tx_num;
 }
 
-void xbatch_packer::set_vote_extend_data(base::xvblock_t * proposal_block, const uint256_t & hash, bool is_leader) {
+int32_t xbatch_packer::set_vote_extend_data(base::xvblock_t * proposal_block, const uint256_t & hash, bool is_leader) {
     // do nothing for normal batch packer
+    return xsuccess;
 }
 
 void xbatch_packer::clear_for_new_view() {
@@ -633,7 +634,7 @@ void xbatch_packer::send_receipts(base::xvblock_t *vblock) {
     }
 }
 
-bool xbatch_packer::set_election_round(data::xblock_consensus_para_t & proposal_para) {
+bool xbatch_packer::set_election_round(bool is_leader, data::xblock_consensus_para_t & proposal_para) {
     return true;
 }
 

@@ -250,7 +250,7 @@ class xblock_resource_plugin_face_t {
     virtual std::string                             get_face_name() const {return std::string();}
     virtual void                                    init(statectx::xstatectx_ptr_t const& statectx_ptr, std::error_code & ec) {}
     virtual std::vector<xcons_transaction_ptr_t>    make_contract_txs(statectx::xstatectx_ptr_t const& statectx_ptr, uint64_t timestamp, std::error_code & ec) {return {};}
-    virtual xblock_resource_description_t           make_resource(std::error_code & ec) const {return {};}
+    virtual xblock_resource_description_t           make_resource(uint64_t epochid, std::error_code & ec) const {return {};}
 };
 using xblock_resource_plugin_face_ptr_t = std::shared_ptr<xblock_resource_plugin_face_t>;
 

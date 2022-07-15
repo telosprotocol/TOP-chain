@@ -210,7 +210,15 @@ void xrelay_signature_group_t::decodeRLP(evm_common::RLP const& _r, std::error_c
     }
 }
 
-
+xbytes_t xrelay_signature_group_t::encodeBytes() const {
+    evm_common::RLPStream _s;
+    streamRLP(_s);
+    return _s.out();
+}
+void xrelay_signature_group_t::decodeBytes(xbytes_t const& _d, std::error_code & ec) {
+    RLP _r(_d);
+    decodeRLP(_r, ec);
+}  
 
 xbytes_t xrelay_block_inner_header::encodeBytes() const {
     xbytes_t _bytes;

@@ -211,7 +211,7 @@ XDEFINE_CONFIGURATION(slash_fulltable_interval);
 XDEFINE_CONFIGURATION(slash_table_split_num);
 XDEFINE_CONFIGURATION(prune_reserve_number);
 
-XDEFINE_CONFIGURATION(evm_table_crosschain_txs_collection_interval);
+XDEFINE_CONFIGURATION(evm_relay_txs_collection_interval);
 XDEFINE_CONFIGURATION(relayblock_batch_tx_max_num);
 XDEFINE_CONFIGURATION(max_relay_poly_interval);
 

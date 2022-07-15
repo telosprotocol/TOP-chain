@@ -76,10 +76,10 @@ private:
     void    reset_leader_info();
     void    make_receipts_and_send(data::xblock_t * commit_block, data::xblock_t * cert_block);
     virtual uint32_t calculate_min_tx_num(bool first_packing);
-    virtual void set_vote_extend_data(base::xvblock_t * proposal_block, const uint256_t & hash, bool is_leader);
+    virtual int32_t set_vote_extend_data(base::xvblock_t * proposal_block, const uint256_t & hash, bool is_leader);
     virtual void clear_for_new_view();
     virtual void send_receipts(base::xvblock_t *vblock);
-    virtual bool set_election_round(data::xblock_consensus_para_t & proposal_para);
+    virtual bool set_election_round(bool is_leader, data::xblock_consensus_para_t & proposal_para);
 
 private:
     observer_ptr<mbus::xmessage_bus_face_t>  m_mbus;

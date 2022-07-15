@@ -32,15 +32,19 @@ public:
     virtual bool verify_commit_msg_extend_data(base::xvblock_t * block, const std::string & extend_data) override;
 
 private:
-    virtual void set_vote_extend_data(base::xvblock_t * proposal_block, const uint256_t & hash, bool is_leader) override;
+    virtual int32_t set_vote_extend_data(base::xvblock_t * proposal_block, const uint256_t & hash, bool is_leader) override;
     virtual void clear_for_new_view() override;
     virtual void send_receipts(base::xvblock_t *vblock) override;
     virtual uint32_t calculate_min_tx_num(bool first_packing) override;
-    virtual bool set_election_round(data::xblock_consensus_para_t & proposal_para) override;
+    virtual bool set_election_round(bool is_leader, data::xblock_consensus_para_t & proposal_para) override;
+    bool    get_election_round(const xvip2_t & xip, uint64_t & election_round);
+    void    get_elect_set(const xvip2_t & xip, xelection_cache_face::elect_set & elect_set);
 
 private:
     std::map<std::string, std::pair<xvip2_t, std::string>> m_relay_multisign;  // key:pubkey string, value: first: xip, second: signature.
-    uint256_t m_relay_hash{};
+    uint256_t                               m_relay_hash{};
+    uint64_t                                m_election_round{0};
+    xelection_cache_face::elect_set         m_local_electset;
 };
 
 NS_END2
