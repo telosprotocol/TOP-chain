@@ -25,7 +25,6 @@
 #include "xmetrics/xmetrics.h"
 #include "xbasic/xdbg.h"
 #include "xvledger/xvblockbuild.h"
-#include "xdata/xtop_relay_block.h"
 
 #include <cinttypes>
 #include <string>
@@ -106,9 +105,6 @@ void  xblock_t::register_object(base::xcontext_t & _context) {
     auto lambda_new_property_prove = [](const int type)->xobject_t*{
         return new base::xvproperty_prove_t();
     };
-    auto lambda_new_relaytable = [](const int type)->xobject_t*{
-        return new data::xtop_relay_block_t();
-    };
     base::xcontext_t::register_xobject2(_context,(base::enum_xobject_type)xrootblock_t::get_object_type(),lambda_new_rootblock);
     base::xcontext_t::register_xobject2(_context,(base::enum_xobject_type)xfullunit_block_t::get_object_type(),lambda_new_fullunit);
     base::xcontext_t::register_xobject2(_context,(base::enum_xobject_type)xlightunit_block_t::get_object_type(),lambda_new_lightunit);
@@ -121,7 +117,6 @@ void  xblock_t::register_object(base::xcontext_t & _context) {
     base::xcontext_t::register_xobject2(_context,(base::enum_xobject_type)xtransaction_v2_t::get_object_type(),lambda_new_transactionv2);
     base::xcontext_t::register_xobject2(_context,(base::enum_xobject_type)xtransaction_v3_t::get_object_type(), lambda_new_transactionv3);
     base::xcontext_t::register_xobject2(_context,(base::enum_xobject_type)base::xvproperty_prove_t::get_object_type(),lambda_new_property_prove);
-    base::xcontext_t::register_xobject2(_context,(base::enum_xobject_type)data::xtop_relay_block_t::get_object_type(),lambda_new_relaytable);
     xkinfo("xblock_t::register_object,finish");    
 }
 

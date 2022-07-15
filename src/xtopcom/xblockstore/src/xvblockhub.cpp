@@ -15,7 +15,6 @@
 #include "xvledger/xvtxindex.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xblocktool.h"
-#include "xdata/xtop_relay_block.h"
 #include "xpbase/base/top_utils.h"
 
 #ifdef __ALLOW_FORK_LOCK__

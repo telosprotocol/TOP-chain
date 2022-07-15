@@ -47,7 +47,6 @@ enum enum_xtopcom_object_type {
     xdata_type_transaction_v2               = 12, // 343
     xdata_type_property_prove               = 13, // 342
     xdata_type_transaction_v3               = 14, // 341
-    xdata_type_relay_block                  = 15,  // 346
 
     xtopcom_object_type_max
 };

@@ -8,8 +8,6 @@
 #include "xblockmaker/xblockmaker_face.h"
 #include "xstatectx/xstatectx.h"
 #include "xdata/xcons_transaction.h"
-#include "xdata/xrelay_block.h"
-#include "xdata/xblock_cs_para.h"
 
 NS_BEG2(top, blockmaker)
 

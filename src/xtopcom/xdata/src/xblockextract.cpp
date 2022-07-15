@@ -271,46 +271,6 @@ xobject_ptr_t<base::xvblock_t> xblockextract_t::unpack_wrap_relayblock_from_rela
     return wrap_relayblock;
 }
 
-void xblockextract_t::unpack_relaywrapinfo(base::xvblock_t* _block, xrelay_wrap_info_t & wrap_info, std::error_code & ec) {
-    data::xtableheader_extra_t header_extra;
-    get_tableheader_extra_from_block(_block, header_extra, ec);
-    if (ec) {
-        return;
-    }
-
-    auto wrap_data = header_extra.get_relay_wrap_info();
-    if (wrap_data.empty()) {
-        ec = common::error::xerrc_t::invalid_block;
-        xerror("xblockextract_t::unpack_relaywrapinfo wrap data should not empty.proposal_block=%s", _block->dump().c_str());
-        return;
-    }
-
-    wrap_info.serialize_from_string(wrap_data);
-}
-
-void xblockextract_t::unpack_relaywrapinfo_and_relay_block_data(base::xvblock_t* _block, xrelay_wrap_info_t & wrap_info, std::string & relay_block_data, std::error_code & ec) {
-    data::xtableheader_extra_t header_extra;
-    get_tableheader_extra_from_block(_block, header_extra, ec);
-    if (ec) {
-        return;
-    }
-
-    auto wrap_data = header_extra.get_relay_wrap_info();
-    if (wrap_data.empty()) {
-        ec = common::error::xerrc_t::invalid_block;
-        xerror("xblockextract_t::unpack_relaywrapinfo wrap data should not empty.proposal_block=%s", _block->dump().c_str());
-        return;
-    }
-
-    relay_block_data = header_extra.get_relay_block_data();
-    if (relay_block_data.empty()) {
-        ec = common::error::xerrc_t::invalid_block;
-        xerror("xblockextract_t::unpack_relaywrapinfo relay_block_data should not empty.proposal_block=%s", _block->dump().c_str());
-        return;
-    }
-    wrap_info.serialize_from_string(wrap_data);
-}
-
 void xblockextract_t::get_tableheader_extra_from_block(base::xvblock_t* _block, data::xtableheader_extra_t &header_extra, std::error_code & ec) {
     auto & header_extra_str = _block->get_header()->get_extra_data();
     if (header_extra_str.empty()) {

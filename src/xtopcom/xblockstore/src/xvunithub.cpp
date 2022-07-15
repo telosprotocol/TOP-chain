@@ -15,8 +15,6 @@
 #include "xmetrics/xmetrics.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xblocktool.h"
-#include "xdata/xtop_relay_block.h"
-#include "xdata/xrelay_block.h"
 #include "xdata/xblockbuild.h"
 #include "xpbase/base/top_utils.h"
 
