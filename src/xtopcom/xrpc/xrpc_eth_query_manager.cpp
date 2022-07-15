@@ -1129,7 +1129,7 @@ int xrpc_eth_query_manager::set_relay_block_result(const xobject_ptr_t<base::xvb
     js_result["txsRootHash"] = top::to_hex_prefixed(relay_block.get_txs_root_hash());
     js_result["innerHeaderHash"] = top::to_hex_prefixed(relay_block.get_inner_header_hash());
     js_result["blockRootHash"] = top::to_hex_prefixed(relay_block.get_block_merkle_root_hash());
-    xbytes_t data = relay_block.encodeBytes(true);
+    xbytes_t data = relay_block.encodeBytes();
     js_result["size"] = xrpc::xrpc_eth_parser_t::uint64_to_hex_prefixed(data.size());
     js_result["blockType"] = relay_block.get_block_type_string();
 

@@ -160,7 +160,7 @@ xrelay_signature_node_t next_signature_node_t_string_create(bool exist)
 xrelay_block next_block_create(evm_common::h256  prev_hash, uint64_t block_height, uint64_t epochID, uint64_t timestamp,
                      uint64_t chainID, enum_block_cache_type type)
 {
-    xrelay_block _relay_block(prev_hash, block_height, epochID, timestamp);
+    xrelay_block _relay_block(prev_hash, block_height,  timestamp);
 
     if (type == cache_tx_block) {
         std::vector<xeth_transaction_t>   xeth_tx_vector;
