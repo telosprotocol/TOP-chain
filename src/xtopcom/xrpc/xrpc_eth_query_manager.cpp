@@ -48,7 +48,6 @@
 #include "xstatectx/xstatectx.h"
 #include "xdata/xrelay_block.h"
 #include "xdata/xblock_cs_para.h"
-#include "xrelay_chain/xrelay_chain_mgr.h"
 #include "xdata/xrelay_block_store.h"
 #include "xgasfee/xgasfee.h"
 

@@ -19,7 +19,6 @@ xrelay_packer2::xrelay_packer2(observer_ptr<mbus::xmessage_bus_face_t> const   &
                            std::shared_ptr<xblock_maker_face> const &      block_maker,
                            base::xcontext_t &                              _context,
                            uint32_t                                        target_thread_id) : xbatch_packer(mb, tableid, account_id, para, block_maker, _context, target_thread_id) {
-    para->get_resources()->get_relay_chain_mgr()->start(target_thread_id);
     xunit_info("xrelay_packer2::xrelay_packer,create,this=%p,account=%s", this, account_id.c_str());
 }
 
@@ -28,7 +27,6 @@ xrelay_packer2::~xrelay_packer2() {
 }
 
 bool xrelay_packer2::close(bool force_async) {
-    get_resources()->get_relay_chain_mgr()->stop();
     xcsaccount_t::close(force_async);
     xunit_dbg("xrelay_packer2::close, this=%p,refcount=%d", this, get_refcount());
     return true;
@@ -39,10 +37,8 @@ bool xrelay_packer2::on_timer_fire(const int32_t thread_id,
                                   const int64_t current_time_ms,
                                   const int32_t start_timeout_ms,
                                   int32_t & in_out_cur_interval_ms) {
-    // TODO(jimmy) relay-table should be slowly, no need timely try to make proposal                                    
-    // get_resources()->get_relay_chain_mgr()->on_timer();
-    // xbatch_packer::on_timer_fire(thread_id, timer_id, current_time_ms, start_timeout_ms, in_out_cur_interval_ms);
-    // xdbg("xrelay_packer2::on_timer_fire");
+    // XTODO relay-table should be slowly, no need timely try to make proposal    
+    // xbatch_packer::on_timer_fire(thread_id, timer_id, current_time_ms, start_timeout_ms, in_out_cur_interval_ms);                             
     return true;
 }
 

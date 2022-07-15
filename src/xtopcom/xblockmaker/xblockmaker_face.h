@@ -18,7 +18,6 @@
 #include "xblockstore/xblockstore_face.h"
 #include "xtxpool_v2/xtxpool_face.h"
 #include "xblockmaker/xblock_maker_para.h"
-#include "xrelay_chain/xrelay_chain_mgr.h"
 #include "xstatectx/xstatectx.h"
 
 NS_BEG2(top, blockmaker)
@@ -33,7 +32,6 @@ class xblockmaker_resources_t {
     virtual base::xvblkstatestore_t*    get_xblkstatestore() const = 0;
     virtual base::xvcertauth_t*         get_certauth() const {return m_ca;}
     virtual void                        set_certauth(base::xvcertauth_t* _ca) {m_ca = _ca;}
-    virtual xrelay_chain::xrelay_chain_mgr_t* get_relay_chain_mgr() const = 0;
  private:
     base::xvcertauth_t* m_ca{nullptr};
 };
@@ -44,21 +42,18 @@ class xblockmaker_resources_impl_t : public xblockmaker_resources_t {
     xblockmaker_resources_impl_t(const observer_ptr<store::xstore_face_t> & store,
                                  const observer_ptr<base::xvblockstore_t> & blockstore,
                                  const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool,
-                                 const observer_ptr<mbus::xmessage_bus_face_t> & bus,
-                                 const observer_ptr<xrelay_chain::xrelay_chain_mgr_t> & relay_chain_mgr)
-    : m_blockstore(blockstore), m_txpool(txpool), m_bus(bus), m_relay_chain_mgr(relay_chain_mgr) {}
+                                 const observer_ptr<mbus::xmessage_bus_face_t> & bus)
+    : m_blockstore(blockstore), m_txpool(txpool), m_bus(bus) {}
 
     virtual base::xvblockstore_t*       get_blockstore() const {return m_blockstore.get();}
     virtual xtxpool_v2::xtxpool_face_t* get_txpool() const {return m_txpool.get();}
     virtual mbus::xmessage_bus_face_t*  get_bus() const {return m_bus.get();}
     virtual base::xvblkstatestore_t*    get_xblkstatestore() const {return base::xvchain_t::instance().get_xstatestore()->get_blkstate_store();}
-    virtual xrelay_chain::xrelay_chain_mgr_t* get_relay_chain_mgr() const {return m_relay_chain_mgr.get();}
 
  private:
     observer_ptr<base::xvblockstore_t>          m_blockstore{nullptr};
     observer_ptr<xtxpool_v2::xtxpool_face_t>    m_txpool{nullptr};
     observer_ptr<mbus::xmessage_bus_face_t>     m_bus{nullptr};
-    observer_ptr<xrelay_chain::xrelay_chain_mgr_t> m_relay_chain_mgr{nullptr};
 };
 
 struct xunitmaker_para_t {
@@ -185,7 +180,6 @@ class xblock_maker_t : public base::xvaccount_t {
     base::xvblockstore_t*       get_blockstore() const {return m_resources->get_blockstore();}
     xtxpool_v2::xtxpool_face_t*    get_txpool() const {return m_resources->get_txpool();}
     mbus::xmessage_bus_face_t*  get_bus() const {return m_resources->get_bus();}
-    xrelay_chain::xrelay_chain_mgr_t* get_relay_chain_mgr() const {return m_resources->get_relay_chain_mgr();}
     const xblockmaker_resources_ptr_t & get_resources() const {return m_resources;}
  private:
     xblockmaker_resources_ptr_t             m_resources{nullptr};

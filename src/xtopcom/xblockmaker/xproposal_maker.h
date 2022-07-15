@@ -38,7 +38,6 @@ class xproposal_maker_t : public xunit_service::xproposal_maker_face {
 
     bool                        verify_proposal_drand_block(base::xvblock_t *proposal_block, xblock_ptr_t & drand_block) const;
     bool                        verify_proposal_input(base::xvblock_t *proposal_block, xtablemaker_para_t & table_para);
-    bool                        verify_proposal_header(base::xvblock_t *proposal_block, xtablemaker_para_t & table_para);
 
 private:
     data::xtablestate_ptr_t get_target_tablestate(base::xvblock_t * block);

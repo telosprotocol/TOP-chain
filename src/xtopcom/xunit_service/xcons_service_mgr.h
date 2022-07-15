@@ -6,7 +6,6 @@
 #include "xbasic/xmemory.hpp"
 #include "xchain_timer/xchain_timer_face.h"
 #include "xmbus/xmessage_bus.h"
-#include "xrelay_chain/xrelay_chain_mgr.h"
 #include "xunit_service/xcons_face.h"
 #include "xunit_service/xcons_utl.h"
 
@@ -33,8 +32,7 @@ xcons_service_mgr_ptr xcons_mgr_build(std::string const & node_account,
                                       xobject_ptr_t<base::xvcertauth_t> const & certauth,
                                       observer_ptr<election::cache::xdata_accessor_face_t> const & accessor,
                                       observer_ptr<mbus::xmessage_bus_face_t> const & mbus,
-                                      observer_ptr<router::xrouter_face_t> const & router,
-                                      observer_ptr<xrelay_chain::xrelay_chain_mgr_t> const & relay_chain_mgr);
+                                      observer_ptr<router::xrouter_face_t> const & router);
 
 class xcons_service_mgr
   : public xcons_service_mgr_face

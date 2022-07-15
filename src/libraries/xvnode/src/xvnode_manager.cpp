@@ -34,8 +34,7 @@ xtop_vnode_manager::xtop_vnode_manager(observer_ptr<elect::ElectMain> const & el
                                        observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
                                        observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
                                        observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
-                                       observer_ptr<base::xvnodesrv_t> const & nodesvr,
-                                       observer_ptr<xrelay_chain::xrelay_chain_mgr_t> const & relay_chain_mgr)
+                                       observer_ptr<base::xvnodesrv_t> const & nodesvr)
   : xtop_vnode_manager{logic_timer,
                        vhost,
                        top::make_unique<xvnode_factory_t>(elect_main,
@@ -51,9 +50,8 @@ xtop_vnode_manager::xtop_vnode_manager(observer_ptr<elect::ElectMain> const & el
                                                           txpool_service_mgr,
                                                           txpool,
                                                           election_cache_data_accessor,
-                                                          nodesvr,
-                                                          relay_chain_mgr),
-                       top::make_unique<xvnode_role_proxy_t>(mbus, store, block_store, txstore, logic_timer, router, certauth, txpool, election_cache_data_accessor, relay_chain_mgr),
+                                                          nodesvr),
+                       top::make_unique<xvnode_role_proxy_t>(mbus, store, block_store, txstore, logic_timer, router, certauth, txpool, election_cache_data_accessor),
                        nullptr // top::make_unique<xvnode_sniff_proxy_t>(mbus)
 
     } {
