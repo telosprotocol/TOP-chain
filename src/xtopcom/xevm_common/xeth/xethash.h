@@ -22,7 +22,7 @@ public:
 
     static xethash_t & instance();
     bigint calc_difficulty(const uint64_t time, const eth::xeth_header_t & parent);
-    bool verify_seal(eth::xeth_header_t & header, const std::vector<double_node_with_merkle_proof> & nodes);
+    bool verify_seal(const eth::xeth_header_t & header, const std::vector<double_node_with_merkle_proof> & nodes);
 
 private:
     xethash_t();

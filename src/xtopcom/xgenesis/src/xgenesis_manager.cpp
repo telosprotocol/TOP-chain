@@ -178,11 +178,13 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_evm_con
         xobject_ptr_t<base::xvbstate_t> bstate =
             make_object_ptr<base::xvbstate_t>(account.get_account(), uint64_t{0}, uint64_t{0}, std::string{}, std::string{}, uint64_t{0}, uint32_t{0}, uint16_t{0});
         xobject_ptr_t<base::xvcanvas_t> canvas = make_object_ptr<base::xvcanvas_t>();
-        bstate->new_string_map_var(data::system_contract::XPROPERTY_ETH_CHAINS_HEADER, canvas.get());
-        bstate->new_string_map_var(data::system_contract::XPROPERTY_ETH_CHAINS_HASH, canvas.get());
-        bstate->new_string_var(data::system_contract::XPROPERTY_ETH_CHAINS_HEIGHT, canvas.get());
-        auto bytes = evm_common::toBigEndian(evm_common::u256(0));
-        bstate->load_string_var(data::system_contract::XPROPERTY_ETH_CHAINS_HEIGHT)->reset({bytes.begin(), bytes.end()}, canvas.get());
+        bstate->new_string_map_var(data::system_contract::XPROPERTY_HEADERS, canvas.get());
+        bstate->new_string_map_var(data::system_contract::XPROPERTY_HEADERS_SUMMARY, canvas.get());
+        bstate->new_string_map_var(data::system_contract::XPROPERTY_ALL_HASHES, canvas.get());
+        bstate->new_string_map_var(data::system_contract::XPROPERTY_EFFECTIVE_HASHES, canvas.get());
+        bstate->new_string_var(data::system_contract::XPROPERTY_LAST_HASH, canvas.get());
+        auto bytes = (evm_common::h256()).asBytes();
+        bstate->load_string_var(data::system_contract::XPROPERTY_LAST_HASH)->reset({bytes.begin(), bytes.end()}, canvas.get());
         // create
         base::xauto_ptr<base::xvblock_t> genesis_block = data::xblocktool_t::create_genesis_lightunit(bstate, canvas);
         xassert(genesis_block != nullptr);
@@ -192,13 +194,12 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_evm_con
                 xinfo("[xtop_genesis_manager::create_genesis_of_evm_contract_account] account %s, genesis block already exists", account.get_account().c_str());
                 return nullptr;
             } else {
-                xerror("[xtop_genesis_manager::create_genesis_of_evm_contract_account] account: %s genesis block exist but hash not match, %s, %s",
-                       account.get_account().c_str(),
-                       base::xstring_utl::to_hex(existed_genesis_block->get_block_hash()).c_str(),
-                       base::xstring_utl::to_hex(genesis_block->get_block_hash()).c_str());
-                xassert(false);
-                ec = error::xenum_errc::genesis_block_hash_mismatch;
-                return nullptr;
+                // just delete it here and store new root block after
+                xwarn("[xtop_genesis_manager::create_genesis_of_evm_contract_account] account: %s genesis block exist but hash not match, replace it, %s, %s",
+                    account.get_account().c_str(),
+                    base::xstring_utl::to_hex(existed_genesis_block->get_block_hash()).c_str(),
+                    base::xstring_utl::to_hex(genesis_block->get_block_hash()).c_str());
+                m_blockstore->delete_block(account, existed_genesis_block.get());
             }
         }
         xinfo("[xtop_genesis_manager::create_genesis_of_contract_account] account: %s, create genesis block success", account.get_account().c_str());
