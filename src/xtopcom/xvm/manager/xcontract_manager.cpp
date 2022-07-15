@@ -2299,40 +2299,40 @@ static void get_eth_chains_header(common::xaccount_address_t const & contract_ad
                                   const xaccount_ptr_t unitstate,
                                   const xjson_format_t json_format,
                                   xJson::Value & json) {
-    std::map<std::string, std::string> headers = unitstate->map_get(property_name);
-    if (headers.empty()) {
-        xdbg("[get_eth_chains_hash] contract_address: %s, property_name: %s, empty", contract_address.to_string().c_str(), property_name.c_str());
-        return;
-    }
-    for (auto pair : headers) {
-        xbytes_t k{std::begin(pair.first), std::end(pair.first)};
-        auto hash = static_cast<evm_common::h256>(k);
-        evm_common:: eth::xeth_block_header_with_difficulty_t header_with_difficulty;
-        if (header_with_difficulty.from_string(pair.second) < 0) {
-            continue;
-        }
-        auto & header = header_with_difficulty.m_header;
-        xJson::Value j_header;
-        j_header["parentHash"] = header.parentHash().hex();
-        j_header["uncleHash"] = header.uncle_hash().hex();
-        j_header["miner"] = header.miner().hex();
-        j_header["stateMerkleRoot"] = header.stateMerkleRoot().hex();
-        j_header["txMerkleRoot"] = header.txMerkleRoot().hex();
-        j_header["receiptMerkleRoot"] = header.receiptMerkleRoot().hex();
-        j_header["bloom"] = header.logBloom().hex();
-        j_header["difficulty"] = header.difficulty().str();
-        j_header["number"] = header.number().str();
-        j_header["gasLimit"] = std::to_string(header.gasLimit());
-        j_header["gasUsed"] = std::to_string(header.gasUsed());
-        j_header["time"] = std::to_string(header.time());
-        j_header["extra"] = top::to_hex(header.extra());
-        j_header["mixDigest"] = header.mixDigest().hex();
-        j_header["nonce"] = header.nonce().hex();
-        j_header["baseFee"] = header.baseFee().str();
-        j_header["hash"] = header.hash().hex();
-        j_header["totalDifficulty"] = header_with_difficulty.m_difficult_sum.str();
-        json[hash.hex()] = j_header;
-    }
+    // std::map<std::string, std::string> headers = unitstate->map_get(property_name);
+    // if (headers.empty()) {
+    //     xdbg("[get_eth_chains_hash] contract_address: %s, property_name: %s, empty", contract_address.to_string().c_str(), property_name.c_str());
+    //     return;
+    // }
+    // for (auto pair : headers) {
+    //     xbytes_t k{std::begin(pair.first), std::end(pair.first)};
+    //     auto hash = static_cast<evm_common::h256>(k);
+    //     evm_common:: eth::xeth_block_header_with_difficulty_t header_with_difficulty;
+    //     if (header_with_difficulty.from_string(pair.second) < 0) {
+    //         continue;
+    //     }
+    //     auto & header = header_with_difficulty.m_header;
+    //     xJson::Value j_header;
+    //     j_header["parentHash"] = header.parentHash().hex();
+    //     j_header["uncleHash"] = header.uncle_hash().hex();
+    //     j_header["miner"] = header.miner().hex();
+    //     j_header["stateMerkleRoot"] = header.stateMerkleRoot().hex();
+    //     j_header["txMerkleRoot"] = header.txMerkleRoot().hex();
+    //     j_header["receiptMerkleRoot"] = header.receiptMerkleRoot().hex();
+    //     j_header["bloom"] = header.logBloom().hex();
+    //     j_header["difficulty"] = header.difficulty().str();
+    //     j_header["number"] = header.number().str();
+    //     j_header["gasLimit"] = std::to_string(header.gasLimit());
+    //     j_header["gasUsed"] = std::to_string(header.gasUsed());
+    //     j_header["time"] = std::to_string(header.time());
+    //     j_header["extra"] = top::to_hex(header.extra());
+    //     j_header["mixDigest"] = header.mixDigest().hex();
+    //     j_header["nonce"] = header.nonce().hex();
+    //     j_header["baseFee"] = header.baseFee().str();
+    //     j_header["hash"] = header.hash().hex();
+    //     j_header["totalDifficulty"] = header_with_difficulty.m_difficult_sum.str();
+    //     json[hash.hex()] = j_header;
+    // }
 }
 
 static void get_eth_chains_hash(common::xaccount_address_t const & contract_address,
@@ -2435,12 +2435,10 @@ void xtop_contract_manager::get_contract_data(common::xaccount_address_t const &
         return get_proposal_map(m_store, contract_address, property_name, json);
     } else if (property_name == VOTE_MAP_ID) {
         return get_proposal_voting_map(m_store, contract_address, property_name, json);
-    } else if (property_name == data::system_contract::XPROPERTY_ETH_CHAINS_HASH) {
+    } else if (property_name == data::system_contract::XPROPERTY_EFFECTIVE_HASHES) {
         return get_eth_chains_hash(contract_address, property_name, unitstate, json_format, json);
-    } else if (property_name == data::system_contract::XPROPERTY_ETH_CHAINS_HEADER) {
+    } else if (property_name == data::system_contract::XPROPERTY_HEADERS) {
         return get_eth_chains_header(contract_address, property_name, unitstate, json_format, json);
-    } else if (property_name == data::system_contract::XPROPERTY_ETH_CHAINS_HEIGHT) {
-        return get_eth_chains_height(contract_address, property_name, unitstate, json_format, json);
     }
 }
 

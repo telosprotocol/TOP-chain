@@ -10,33 +10,33 @@ constexpr uint64_t ElasticityMultiplier = 2;
 constexpr uint64_t InitialBaseFee = 1000000000;
 constexpr uint64_t BaseFeeChangeDenominator = 8;
 
-static bigint calc_baseFee(const eth::xeth_block_header_t & parentHeader) {
-    if (!eth::config::is_london(parentHeader.number())) {
+static bigint calc_baseFee(const eth::xeth_header_t & parentHeader) {
+    if (!eth::config::is_london(parentHeader.number)) {
         return bigint(InitialBaseFee);
     }
-    auto parentGasTarget = parentHeader.gasLimit() / ElasticityMultiplier;
+    auto parentGasTarget = parentHeader.gas_limit / ElasticityMultiplier;
     bigint parentGasTargetBig = parentGasTarget;
     bigint baseFeeChangeDenominator = BaseFeeChangeDenominator;
     // If the parent gasUsed is the same as the target, the baseFee remains unchanged.
-    if (parentHeader.gasUsed() == parentGasTarget) {
-        return bigint(parentHeader.baseFee());
+    if (parentHeader.gas_used == parentGasTarget) {
+        return bigint(parentHeader.base_fee);
     }
-    if (parentHeader.gasUsed() > parentGasTarget) {
-        bigint gasUsedDelta = bigint(parentHeader.gasUsed() - parentGasTarget);
-        bigint x = parentHeader.baseFee() * gasUsedDelta;
+    if (parentHeader.gas_used > parentGasTarget) {
+        bigint gasUsedDelta = bigint(parentHeader.gas_used - parentGasTarget);
+        bigint x = parentHeader.base_fee * gasUsedDelta;
         bigint y = x / parentGasTargetBig;
         bigint baseFeeDelta = y / baseFeeChangeDenominator;
         if (baseFeeDelta < 1) {
             baseFeeDelta = 1;
         }
-        return parentHeader.baseFee() + baseFeeDelta;
+        return parentHeader.base_fee + baseFeeDelta;
     } else {
         // Otherwise if the parent block used less gas than its target, the baseFee should decrease.
-        bigint gasUsedDelta = bigint(parentGasTarget - parentHeader.gasUsed());
-        bigint x = parentHeader.baseFee() * gasUsedDelta;
+        bigint gasUsedDelta = bigint(parentGasTarget - parentHeader.gas_used);
+        bigint x = parentHeader.base_fee * gasUsedDelta;
         bigint y = x / parentGasTargetBig;
         bigint baseFeeDelta = y / baseFeeChangeDenominator;
-        x = parentHeader.baseFee() - baseFeeDelta;
+        x = parentHeader.base_fee - baseFeeDelta;
         if (x < 0) {
             x = 0;
         }
@@ -51,18 +51,18 @@ static bigint calc_baseFee(const eth::xeth_block_header_t & parentHeader) {
 // - basefee check
 bool verify_eip1559_header(const eth::xeth_header_t & parentHeader, const eth::xeth_header_t & header) {
     // Verify that the gas limit remains within allowed bounds
-    auto parentGasLimit = parentHeader.gasLimit();
-    if (!eth::config::is_london(parentHeader.number())) {
-        parentGasLimit = parentHeader.gasLimit() * ElasticityMultiplier;
+    auto parentGasLimit = parentHeader.gas_limit;
+    if (!eth::config::is_london(parentHeader.number)) {
+        parentGasLimit = parentHeader.gas_limit * ElasticityMultiplier;
     }
-    if (!eth::verify_gaslimit(parentGasLimit, header.gasLimit())) {
-        xwarn("[xtop_evm_eth_bridge_contract::verifyEip1559Header] gaslimit mismatch, new: %lu, old: %lu", header.gasLimit(), parentHeader.gasLimit());
+    if (!eth::verify_gaslimit(parentGasLimit, header.gas_limit)) {
+        xwarn("[xtop_evm_eth_bridge_contract::verifyEip1559Header] gaslimit mismatch, new: %lu, old: %lu", header.gas_limit, parentHeader.gas_limit);
         return false;
     }
     // Verify the baseFee is correct based on the parent header.
     auto expectedBaseFee = calc_baseFee(parentHeader);
-    if (header.baseFee() != expectedBaseFee) {
-        xwarn("[xtop_evm_eth_bridge_contract::verifyEip1559Header] wrong basefee: %s, should be: %s", header.baseFee().str().c_str(), expectedBaseFee.str().c_str());
+    if (header.base_fee != expectedBaseFee) {
+        xwarn("[xtop_evm_eth_bridge_contract::verifyEip1559Header] wrong basefee: %s, should be: %s", header.base_fee.str().c_str(), expectedBaseFee.str().c_str());
         return false;
     }
     return true;
