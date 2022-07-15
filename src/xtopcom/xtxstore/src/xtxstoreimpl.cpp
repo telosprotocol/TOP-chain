@@ -7,7 +7,6 @@
 #include "xvledger/xvtxindex.h"
 #include "xmetrics/xmetrics.h"
 #include "xdata/xnative_contract_address.h"
-#include "xdata/xtop_relay_block.h"
 #include "xdata/xblockextract.h"
 #include "xpbase/base/top_utils.h"
 
@@ -105,60 +104,52 @@ bool xtxstoreimpl::store_relay_txs(base::xvblock_t * block_ptr) {
         return false;
 
     if (block_ptr->get_height() == 0) {
-        xdbg("store_relay_txs not stroe :%s ", block_ptr->dump().c_str());
+        xdbg("xtxstoreimpl::store_relay_txs,genesis.block=%s", block_ptr->dump().c_str());
         return true;
     }
 
     if (!check_relay_store())
         return false;
 
-    xdbg("store_relay_txs, store txs for block=%s, ", block_ptr->dump().c_str());
-
     std::error_code ec;
     top::data::xrelay_block extra_relay_block;
-    data::xblockextract_t::unpack_relayblock(block_ptr, false, extra_relay_block, ec);
+    data::xblockextract_t::unpack_relayblock_from_wrapblock(block_ptr, extra_relay_block, ec);
     if (ec) {
-        xerror("store_relay_txs decodeBytes decodeBytes error %s; err msg %s", ec.category().name(), ec.message().c_str());
+        xerror("xtxstoreimpl::store_relay_txs fail-decodeBytes.error:%s", ec.message().c_str());
         return false;
     }
+
+    if (extra_relay_block.get_all_transactions().empty()) {
+        xinfo("xtxstoreimpl::store_relay_txs,no tx block.block=%s", extra_relay_block.dump().c_str());
+        return true;
+    }
+
     //extra_relay_block.build_finish();
     evm_common::h256 hash = extra_relay_block.get_block_hash();
     std::string block_hash_str((char *)hash.data(), hash.size);
-    xdbg("store_relay_txs, hash:%s", HexEncode(block_hash_str).c_str());
 
     // get tx hash from txs
-    std::vector<base::xvtxindex_ptr> sub_txs;
+    bool has_error = false;
     for (auto & tx : extra_relay_block.get_all_transactions()) {
-        if (tx.get_tx_hash().empty()) {
-            xerror("store_relay_txs  account: %s, height:%llu tx hash is null! ", block_ptr->get_account().c_str(), block_ptr->get_height());
-            xassert(false);
-        }
-        std::string tx_hash = std::string(reinterpret_cast<char *>(tx.get_tx_hash().data()), tx.get_tx_hash().size());
+        auto tx_hash_u256 = tx.get_tx_hash();
+        std::string tx_hash = std::string(reinterpret_cast<char *>(tx_hash_u256.data()), tx_hash_u256.size());
         base::xvtxindex_ptr tx_index = make_object_ptr<base::xvtxindex_t>(*block_ptr, tx_hash, base::enum_transaction_subtype_send);
         tx_index->set_block_hash(block_hash_str);
-        sub_txs.push_back(tx_index);
-        xinfo("store_relay_txs tx_hash:%s, account: %s, height:%llu",
-              base::xstring_utl::to_hex(tx_hash).c_str(),
-              block_ptr->get_account().c_str(),
-              block_ptr->get_height());
-    }
 
-    bool has_error = false;
-    for (auto & v : sub_txs) {
-        base::enum_txindex_type txindex_type = base::xvtxkey_t::transaction_subtype_to_txindex_type(v->get_tx_phase_type());
-        const std::string tx_key = base::xvdbkey_t::create_prunable_relay_tx_index_key(v->get_tx_hash(), txindex_type);
+        base::enum_txindex_type txindex_type = base::xvtxkey_t::transaction_subtype_to_txindex_type(tx_index->get_tx_phase_type());
+        const std::string tx_key = base::xvdbkey_t::create_prunable_relay_tx_index_key(tx_index->get_tx_hash(), txindex_type);
         std::string tx_bin;
-        v->serialize_to_string(tx_bin);
-        xassert(!tx_bin.empty());
+        tx_index->serialize_to_string(tx_bin);
 
         if (base::xvchain_t::instance().get_xdbstore()->set_value(tx_key, tx_bin) == false) {
-            xerror("store_relay_txs,fail to store tx for block(%s)", block_ptr->dump().c_str());
+            xerror("txstoreimpl::store_relay_txs,fail to store tx for block(%s)", block_ptr->dump().c_str());
             has_error = true;  // mark it but let do rest work
         } else {
-            xdbg("store_relay_txs,store tx: %s", base::xvtxkey_t::transaction_hash_subtype_to_string(v->get_tx_hash(), v->get_tx_phase_type()).c_str());
-        }
-
+            xinfo("txstoreimpl::store_relay_txs,succ store tx:%s,block=%s",
+                base::xvtxkey_t::transaction_hash_subtype_to_string(tx_index->get_tx_hash(), tx_index->get_tx_phase_type()).c_str(), extra_relay_block.dump().c_str());
+        }        
     }
+
     if (has_error)
         return false;
     return true;
