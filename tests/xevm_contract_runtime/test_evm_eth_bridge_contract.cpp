@@ -143,7 +143,7 @@ TEST_F(xcontract_fixture_t, test_headers_summary_property) {
         info.number = i;
         xeth_header_info_t get_info;
         EXPECT_TRUE(contract.get_header_info(h256(i), get_info));
-        EXPECT_EQ(info.to_string(), get_info.to_string());
+        EXPECT_EQ(info.encode_rlp(), get_info.encode_rlp());
     }
     for (auto i = 0; i < 50; i++) {
         EXPECT_TRUE(contract.remove_header_info(h256(i)));
@@ -157,7 +157,7 @@ TEST_F(xcontract_fixture_t, test_headers_summary_property) {
             info.number = i;
             xeth_header_info_t get_info;
             EXPECT_TRUE(contract.get_header_info(h256(i), get_info));
-            EXPECT_EQ(info.to_string(), get_info.to_string());
+            EXPECT_EQ(info.encode_rlp(), get_info.encode_rlp());
         }
     }
 }

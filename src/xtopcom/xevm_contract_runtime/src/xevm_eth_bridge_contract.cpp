@@ -289,7 +289,7 @@ bool xtop_evm_eth_bridge_contract::init(const xbytes_t & rlp_bytes) {
     auto item = RLP::decode_once(rlp_bytes);
     xassert(item.decoded.size() == 1);
     xeth_header_t header;
-    if (header.decode_rlp(item.decoded[0]) < 0) {
+    if (header.decode_rlp(item.decoded[0]) == false) {
         xwarn("[xtop_evm_eth_bridge_contract::init] decode header error");
         return false;
     }
@@ -337,7 +337,7 @@ bool xtop_evm_eth_bridge_contract::sync(const xbytes_t & rlp_bytes) {
         {
             auto item_header = RLP::decode_once(item.decoded[0]);
             auto header_bytes = item_header.decoded[0];
-            if (header.decode_rlp(header_bytes) < 0) {
+            if (header.decode_rlp(header_bytes) == false) {
                 xwarn("[xtop_evm_eth_bridge_contract::sync] decode header error");
                 return false;
             }
@@ -613,7 +613,7 @@ bool xtop_evm_eth_bridge_contract::get_header(const h256 hash, xeth_header_t & h
         xwarn("[xtop_evm_eth_bridge_contract::get_header] get_header not exist, hash: %s", hash.hex().c_str());
         return false;
     }
-    if (header.decode_rlp({std::begin(header_str), std::end(header_str)}) < 0) {
+    if (header.decode_rlp({std::begin(header_str), std::end(header_str)}) == false) {
         xwarn("[xtop_evm_eth_bridge_contract::get_header] decode_header failed, hash: %s", hash.hex().c_str());
         return false;
     }
@@ -644,7 +644,7 @@ bool xtop_evm_eth_bridge_contract::get_header_info(const h256 hash, xeth_header_
         xwarn("[xtop_evm_eth_bridge_contract::get_header_info] get_header not exist, hash: %s", hash.hex().c_str());
         return false;
     }
-    if (header_info.from_string(info_str) < 0) {
+    if (header_info.decode_rlp({std::begin(info_str), std::end(info_str)}) == false) {
         xwarn("[xtop_evm_eth_bridge_contract::get_header_info] decode_header failed, hash: %s", hash.hex().c_str());
         return false;
     }
@@ -653,7 +653,7 @@ bool xtop_evm_eth_bridge_contract::get_header_info(const h256 hash, xeth_header_
 
 bool xtop_evm_eth_bridge_contract::set_header_info(const h256 hash, const xeth_header_info_t & header_info) {
     auto k = hash.asBytes();
-    auto v = header_info.to_string();
+    auto v = header_info.encode_rlp();
     if (0 != m_contract_state->map_set(data::system_contract::XPROPERTY_HEADERS_SUMMARY, {k.begin(), k.end()}, {v.begin(), v.end()})) {
         return false;
     }
