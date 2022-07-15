@@ -216,7 +216,7 @@ std::shared_ptr<xrelay_block> xblockextract_t::unpack_commit_relay_block_from_re
 }
 
 xobject_ptr_t<base::xvblock_t> xblockextract_t::pack_relayblock_to_wrapblock(xrelay_block const& relayblock, std::error_code & ec) {
-    xbytes_t _bs = relayblock.encodeBytes(true);
+    xbytes_t _bs = relayblock.encodeBytes();
     std::string bin_data = top::to_string(_bs);
     if (relayblock.get_block_height() == 0) {
         xemptyblock_build_t bbuild(sys_contract_relay_block_addr);
@@ -245,7 +245,7 @@ void xblockextract_t::unpack_relayblock_from_wrapblock(base::xvblock_t* _block, 
         xerror("xblockextract_t::unpack_relayblock_from_wrapblock fail-extra data empty.");
         return;
     }
-    relayblock.decodeBytes(to_bytes(relay_block_data_str), ec, true);
+    relayblock.decodeBytes(to_bytes(relay_block_data_str), ec);
     if (ec) {
         xerror("xblockextract_t::unpack_relayblock_from_wrapblock fail-decode.");
     }
