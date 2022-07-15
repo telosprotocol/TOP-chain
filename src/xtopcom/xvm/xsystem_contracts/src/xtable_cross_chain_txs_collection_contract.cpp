@@ -26,7 +26,6 @@ xtable_cross_chain_txs_collection_contract::xtable_cross_chain_txs_collection_co
 
 void xtable_cross_chain_txs_collection_contract::setup() {
     // initialize map key
-    MAP_CREATE(XPORPERTY_CONTRACT_CROSSCHAIN_TX_RECEIPT_KEY);
     STRING_CREATE(XPORPERTY_CONTRACT_PROCESSED_TABLE_BLOCK_HEIGHT);
     STRING_SET(XPORPERTY_CONTRACT_PROCESSED_TABLE_BLOCK_HEIGHT, std::to_string(0));
     STRING_CREATE(XPORPERTY_CONTRACT_PROCESSED_LOGIC_TIME);

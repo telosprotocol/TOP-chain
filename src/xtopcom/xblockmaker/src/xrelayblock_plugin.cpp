@@ -98,7 +98,7 @@ data::xcons_transaction_ptr_t xrelayblock_plugin_t::make_relay_make_block_contra
     }
 }
 
-std::string xrelayblock_plugin_t::get_new_relay_election_data(statectx::xstatectx_ptr_t const& statectx_ptr, uint64_t timestamp) {
+std::string xrelayblock_plugin_t::get_new_relay_election_data(statectx::xstatectx_ptr_t const& statectx_ptr, uint64_t timestamp) const {
     auto const relay_election_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(relay_election_interval);
     auto clock = timestamp/10;
     if (!m_time_to_check_election && (clock == 0 || (clock % (relay_election_interval / 4) != 0))){
@@ -172,27 +172,22 @@ std::string xrelayblock_plugin_t::get_new_relay_election_data(statectx::xstatect
     auto const & coming_election_result_store = codec::msgpack_decode<xelection_result_store_t>({std::begin(result), std::end(result)});
 
     auto const relay_group_address = common::build_relay_group_address(common::network_id());
-    try {
-        auto const & coming_group_result = coming_election_result_store.result_of(relay_group_address.network_id())
-                                               .result_of(common::xnode_type_t::relay)
-                                               .result_of(relay_group_address.cluster_id())
-                                               .result_of(relay_group_address.group_id());
+    auto const & coming_group_result = coming_election_result_store.result_of(relay_group_address.network_id())
+                                            .result_of(common::xnode_type_t::relay)
+                                            .result_of(relay_group_address.cluster_id())
+                                            .result_of(relay_group_address.group_id());
 
-        auto const & current_group_result = current_election_result_store.result_of(relay_group_address.network_id())
-                                                .result_of(common::xnode_type_t::relay)
-                                                .result_of(relay_group_address.cluster_id())
-                                                .result_of(relay_group_address.group_id());
+    auto const & current_group_result = current_election_result_store.result_of(relay_group_address.network_id())
+                                            .result_of(common::xnode_type_t::relay)
+                                            .result_of(relay_group_address.cluster_id())
+                                            .result_of(relay_group_address.group_id());
 
-        if (coming_group_result.group_epoch() <= current_group_result.group_epoch()) {
-            xwarn("coming epoch is older, no need to update, %" PRIu64 " <= % " PRIu64, coming_group_result.group_epoch().value(), current_group_result.group_epoch().value());
-            return {};
-        }
-
-        return result;
-    } catch (std::exception const & eh) {
-        xwarn("fail to get zec elect relay election data. exception msg: %s", eh.what());
+    if (coming_group_result.group_epoch() <= current_group_result.group_epoch()) {
+        xwarn("coming epoch is older, no need to update, %" PRIu64 " <= % " PRIu64, coming_group_result.group_epoch().value(), current_group_result.group_epoch().value());
         return {};
     }
+
+    return result;
 }
 
 xblock_resource_description_t xrelayblock_plugin_t::make_resource(uint64_t epochid, std::error_code & ec) const {

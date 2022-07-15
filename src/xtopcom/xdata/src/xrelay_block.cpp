@@ -499,20 +499,22 @@ void xrelay_block_header::make_inner_hash()
 
 ///////////////////xrelay_block start /////////
 //todo rank, dele this function
-xrelay_block::xrelay_block(evm_common::h256  prev_hash, uint64_t block_height, uint64_t timestamp)
+xrelay_block::xrelay_block(evm_common::h256  prev_hash, uint64_t block_height, uint64_t timestamp, evm_common::u256 chain_bits)
 {
     m_version = RELAY_BLOCK_VERSION;
     m_header.set_prev_hash(prev_hash);
     m_header.set_block_height(block_height);
     m_header.set_timestamp(timestamp);
+    set_chain_bits(chain_bits);
 }
 
-xrelay_block::xrelay_block(evm_common::h256  prev_hash, uint64_t block_height, uint64_t timestamp, xrelay_election_group_t &election_group)
+xrelay_block::xrelay_block(evm_common::h256  prev_hash, uint64_t block_height, uint64_t timestamp, evm_common::u256 chain_bits, xrelay_election_group_t &election_group)
 {
     m_version = RELAY_BLOCK_VERSION;
     m_header.set_prev_hash(prev_hash);
     m_header.set_block_height(block_height);
     m_header.set_timestamp(timestamp);
+    set_chain_bits(chain_bits);
     set_elections_next(election_group);
 }
 
@@ -748,7 +750,7 @@ std::string xrelay_block::dump() const {
     char local_param_buf[512];
     xprintf(local_param_buf,
             sizeof(local_param_buf),
-            "{height:%lu,timestamp:%lu,prev_hash:%s,hash:%s,election epoch:%lu size:%u,tx size:%u,receipts size:%u}",
+            "{height:%lu,timestamp:%lu,prev_hash:%s,hash:%s,election epoch:%lu size:%u,tx size:%u,receipts size:%u,chain_bits:%s}",
             m_header.m_inner_header.get_block_height(),
             m_header.m_inner_header.get_timestamp(),
             m_header.m_prev_hash.hex().c_str(),
@@ -756,7 +758,8 @@ std::string xrelay_block::dump() const {
             m_header.get_elections_sets().election_epochID,
             (uint32_t)m_header.get_elections_sets().elections_vector.size(),
             (uint32_t)m_transactions.size(),
-            (uint32_t)m_receipts.size());
+            (uint32_t)m_receipts.size(),
+            ((evm_common::h256)get_chain_bits()).hex().c_str());
     return std::string(local_param_buf);
 }
 

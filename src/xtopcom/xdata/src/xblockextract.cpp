@@ -288,6 +288,14 @@ void xblockextract_t::get_tableheader_extra_from_block(base::xvblock_t* _block, 
 }
 
 void xblockextract_t::unpack_crosschain_txs(base::xvblock_t* _block, xrelayblock_crosstx_infos_t & infos, std::error_code & ec) {
+#ifndef CROSS_TX_DBG
+    auto eth_cross_addr = XGET_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_addr_for_eth);
+    auto bsc_cross_addr = XGET_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_addr_for_bsc);
+    if (eth_cross_addr.empty() && bsc_cross_addr.empty()) {
+        xdbg("xblockextract_t::unpack_crosschain_txs cross addr empty");
+        return;
+    }
+#endif
     data::xblock_t * block = dynamic_cast<data::xblock_t*>(_block);
     if (nullptr == block) {
         ec = common::error::xerrc_t::invalid_block;
@@ -322,6 +330,12 @@ void xblockextract_t::unpack_crosschain_txs(base::xvblock_t* _block, xrelayblock
             continue;
         }        
 
+#ifndef CROSS_TX_DBG
+        if (_rawtx->get_target_addr() != eth_cross_addr && _rawtx->get_target_addr() != bsc_cross_addr) {
+            xdbg("xblockextract_t::unpack_crosschain_txs tx:%s is not a cross chain tx", _rawtx->dump().c_str());
+            continue;
+        }
+#endif
         data::xeth_store_receipt_t evm_result;
         auto ret = txaction.get_evm_transaction_receipt(evm_result);
         if (!ret) {
