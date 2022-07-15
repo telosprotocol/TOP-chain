@@ -1,9 +1,9 @@
 #pragma once
 
-#include <vector>
 #include "xevm_common/common.h"
 #include "xevm_common/fixed_hash.h"
-#include "xdepends/include/json/reader.h"
+
+#include <vector>
 
 NS_BEG3(top, evm_common, eth)
 
@@ -38,9 +38,9 @@ struct xeth_header_t {
     Hash hash_without_seal() const;
 
     // encode and decode
-    int decode_rlp(const xbytes_t & bytes);
     bytes encode_rlp() const;
     bytes encode_rlp_withoutseal() const;
+    bool decode_rlp(const bytes & bytes);
 
     // debug
     std::string dump();
@@ -51,8 +51,8 @@ struct xeth_header_info_t {
     xeth_header_info_t() = default;
     xeth_header_info_t(bigint difficult_sum_, Hash parent_hash_, bigint number_);
 
-    std::string to_string() const;
-    int from_string(const std::string & s);
+    bytes encode_rlp() const;
+    bool decode_rlp(const bytes & input);
 
     bigint difficult_sum;
     Hash parent_hash;
