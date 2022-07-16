@@ -241,7 +241,8 @@ bool xrelay_packer2::verify_commit_msg_extend_data(base::xvblock_t * block, cons
     }
 
     uint64_t election_round = siggroup.signature_epochID;
-    relay_block->get_header().set_epochid(election_round);
+    relay_block->set_epochid(election_round);
+    relay_block->set_viewid(block->get_viewid());
     uint256_t hash256 = from_bytes<uint256_t>(relay_block->build_signature_hash().to_bytes());
 
     auto local_xip = get_xip2_addr();
@@ -256,7 +257,7 @@ bool xrelay_packer2::verify_commit_msg_extend_data(base::xvblock_t * block, cons
 
     uint32_t num = 0;
     for (uint32_t i = 0; i < siggroup.signature_vector.size(); i++) {
-        if (false == siggroup.signature_vector[i].is_exist()) {
+        if (false == siggroup.signature_vector[i].exist) {
             xdbg("xrelay_packer2::verify_commit_msg_extend_data,block:%s,signature[%u] is empty", block->dump().c_str(), i);
             continue;            
         }

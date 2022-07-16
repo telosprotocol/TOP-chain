@@ -2630,8 +2630,6 @@ namespace top
 
         bool  xrelay_plugin::store_block(base::xvblock_t* new_raw_block)
         {
-            //if (base::xvchain_t::instance().get_xtxstore()->check_relay_store())
-            base::xvchain_t::instance().get_xtxstore()->store_relay_txs(new_raw_block);
             return xblockacct_t::store_block(new_raw_block);
         }
 
@@ -2650,7 +2648,7 @@ namespace top
             //extra_relay_block.build_finish();
             evm_common::h256 hash = extra_relay_block.get_block_hash();
             std::string block_hash_str((char*)hash.data(), hash.size);
-            xdbg("xrelay_plugin::create_index, %s", HexEncode(block_hash_str).c_str());
+            xdbg("xrelay_plugin::create_index, %s", extra_relay_block.dump().c_str());
             new_index->set_extend_data(block_hash_str);
             return new_index;
         }
@@ -2667,13 +2665,13 @@ namespace top
         bool xrelay_plugin::write_block(base::xvbindex_t * this_index) {
             if(this_index->check_block_flag(base::enum_xvblock_flag_stored))
                 return true;
-            
             return write_block(this_index,this_index->get_this_block());
         }
         bool xrelay_plugin::write_block(base::xvbindex_t * index_ptr, base::xvblock_t * new_block_ptr) {
             if(NULL == new_block_ptr)
                 return false;
-
+            xdbg("xrelay_plugin::write_block,block=%s",new_block_ptr->dump().c_str());
+            base::xvchain_t::instance().get_xtxstore()->store_relay_txs(new_block_ptr);
             const int _stored_flags = get_blockdb_ptr()->save_block(index_ptr, new_block_ptr);
             if(_stored_flags > 0)
             {

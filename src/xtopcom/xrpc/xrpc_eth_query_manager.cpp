@@ -1116,7 +1116,7 @@ int xrpc_eth_query_manager::set_relay_block_result(const xobject_ptr_t<base::xvb
         return 1;
     }
 
-    xbytes_t header_data = relay_block.get_header().streamRLP_header_to_contract();
+    xbytes_t header_data = relay_block.streamRLP_header_to_contract();
 
     xJson::Value js_result;
     js_result["header"] = top::to_hex_prefixed(header_data);
@@ -1127,7 +1127,6 @@ int xrpc_eth_query_manager::set_relay_block_result(const xobject_ptr_t<base::xvb
     js_result["parentHash"] = to_hex_prefixed(relay_block.get_header().get_prev_block_hash());
     js_result["receiptsRootHash"] = top::to_hex_prefixed(relay_block.get_receipts_root_hash());
     js_result["txsRootHash"] = top::to_hex_prefixed(relay_block.get_txs_root_hash());
-    js_result["innerHeaderHash"] = top::to_hex_prefixed(relay_block.get_inner_header_hash());
     js_result["blockRootHash"] = top::to_hex_prefixed(relay_block.get_block_merkle_root_hash());
     xbytes_t data = relay_block.encodeBytes();
     js_result["size"] = xrpc::xrpc_eth_parser_t::uint64_to_hex_prefixed(data.size());

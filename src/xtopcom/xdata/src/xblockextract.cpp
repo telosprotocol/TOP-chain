@@ -165,21 +165,21 @@ xtransaction_ptr_t xblockextract_t::unpack_raw_tx(base::xvblock_t* _block, std::
 std::shared_ptr<xrelay_block> xblockextract_t::unpack_relay_block_from_table(base::xvblock_t* _block, std::error_code & ec) {
     if (_block->get_account() != sys_contract_relay_table_block_addr) {
         ec = common::error::xerrc_t::invalid_block;
-        xerror("xblockextract_t::unpack_commit_relay_block_from_relay_table fail-invalid addr._block=%s", _block->dump().c_str());
+        xerror("xblockextract_t::unpack_relay_block_from_table fail-invalid addr._block=%s", _block->dump().c_str());
         return nullptr;
     }
 
     std::string relayblock_resource = _block->get_output()->query_resource(data::RESOURCE_RELAY_BLOCK);
     if (relayblock_resource.empty()) {
         ec = common::error::xerrc_t::invalid_block;
-        xerror("xblockextract_t::unpack_commit_relay_block_from_relay_table fail-relayblock_resource empty._block=%s", _block->dump().c_str());
+        xerror("xblockextract_t::unpack_relay_block_from_table fail-relayblock_resource empty._block=%s", _block->dump().c_str());
         return nullptr;
     }
 
     std::shared_ptr<xrelay_block> relayblock = std::make_shared<xrelay_block>();
     relayblock->decodeBytes(to_bytes(relayblock_resource), ec);
     if (ec) {
-        xerror("xblockextract_t::unpack_commit_relay_block_from_relay_table fail-decode relayblock。error=%s", ec.message().c_str());
+        xerror("xblockextract_t::unpack_relay_block_from_table fail-decode relayblock。error=%s", ec.message().c_str());
         return nullptr;
     }
     return relayblock;
@@ -211,6 +211,8 @@ std::shared_ptr<xrelay_block> xblockextract_t::unpack_commit_relay_block_from_re
         xerror("xblockextract_t::unpack_commit_relay_block_from_relay_table fail-decode extend.block:%s", _block->dump().c_str());
         return nullptr;        
     }
+
+    relayblock->set_viewid(_block->get_viewid());
     relayblock->set_signature_groups(siggroup);
     return relayblock;
 }

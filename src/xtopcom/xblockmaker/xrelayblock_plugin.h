@@ -18,7 +18,7 @@ class xrelayblock_plugin_t : public xblock_resource_plugin_face_t {  // TODO(jim
     virtual std::string                            get_face_name() const override {return "relayblock_plugin";}
     virtual void                                   init(statectx::xstatectx_ptr_t const& statectx_ptr, std::error_code & ec) override;
     virtual std::vector<xcons_transaction_ptr_t>   make_contract_txs(statectx::xstatectx_ptr_t const& statectx_ptr, uint64_t timestamp, std::error_code & ec) override;
-    virtual xblock_resource_description_t          make_resource(uint64_t epochid, std::error_code & ec) const override;
+    virtual xblock_resource_description_t          make_resource(const data::xblock_consensus_para_t & cs_para, std::error_code & ec) const override;
 
  private:
     std::string get_new_relay_election_data(statectx::xstatectx_ptr_t const& statectx_ptr, uint64_t timestamp) const;

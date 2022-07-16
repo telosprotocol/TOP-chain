@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <string>
+#include "xbasic/xhex.h"
 #include "xcommon/xerror/xerror.h"
 #include "xblockmaker/xrelayblock_plugin.h"
 #include "xblockmaker/xerror/xerror.h"
@@ -190,7 +191,7 @@ std::string xrelayblock_plugin_t::get_new_relay_election_data(statectx::xstatect
     return result;
 }
 
-xblock_resource_description_t xrelayblock_plugin_t::make_resource(uint64_t epochid, std::error_code & ec) const {
+xblock_resource_description_t xrelayblock_plugin_t::make_resource(const data::xblock_consensus_para_t & cs_para, std::error_code & ec) const {
     std::string after_prop_phase = m_relay_make_block_contract_state->string_get(data::system_contract::XPROPERTY_RELAY_WRAP_PHASE);
     if (after_prop_phase != m_last_phase && after_prop_phase == "2") {
         std::string prop_relayblock = m_relay_make_block_contract_state->string_get(data::system_contract::XPROPERTY_RELAY_BLOCK_STR);
@@ -201,12 +202,13 @@ xblock_resource_description_t xrelayblock_plugin_t::make_resource(uint64_t epoch
         }
 
         data::xrelay_block relay_block;
-        relay_block.decodeBytes(top::to_bytes(prop_relayblock), ec, false);
+        relay_block.decodeBytes(top::to_bytes(prop_relayblock), ec);
         if (ec) {
             xerror("xrelayblock_plugin_t::make_resource fail-invalid relayblock property.");
             return {};
         }
-        relay_block.get_header().set_epochid(epochid);
+        relay_block.set_epochid(cs_para.get_election_round());
+        relay_block.set_viewid(cs_para.get_viewid());
         uint256_t hash256 = from_bytes<uint256_t>(relay_block.build_signature_hash().to_bytes());
 
         xblock_resource_description_t resource_desc;
@@ -215,7 +217,8 @@ xblock_resource_description_t xrelayblock_plugin_t::make_resource(uint64_t epoch
         resource_desc.is_input_resource = false;  // TODO(jimmy) put relayblock to output resource
         resource_desc.need_signature = true;
         resource_desc.signature_hash = hash256;
-        xdbg_info("xrelayblock_plugin_t::make_resource succ.block=%s,blocksize=%zu", relay_block.dump().c_str(),prop_relayblock.size());
+        xdbg_info("xrelayblock_plugin_t::make_resource succ.block=%s,size=%zu,sighash=%s", 
+            relay_block.dump().c_str(),prop_relayblock.size(),top::to_hex(top::to_bytes(hash256)).c_str());
         return resource_desc;
     }
     xdbg("xrelayblock_plugin_t::make_resource no need. m_last_phase=%s,after_prop_phase=%s", 

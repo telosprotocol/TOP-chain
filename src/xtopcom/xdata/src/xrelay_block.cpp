@@ -644,16 +644,17 @@ std::string xrelay_block::dump() const
     char local_param_buf[512];
     xprintf(local_param_buf,
             sizeof(local_param_buf),
-            "{height:%lu,timestamp:%lu,prev_hash:%s,hash:%s,election epoch:%lu size:%u,tx size:%u,receipts size:%u,chain_bits:%s}",
+            "{height:%lu,timestamp:%lu,viewid:%lu,epoch:%lu,hash:%s->%s,election:%lu,size:%u,txsize:%zu,bits:%s}",
             m_header.get_block_height(),
             m_header.get_timestamp(),
-            m_header.m_prev_hash.hex().c_str(),
+            m_exteend_data.signature_viewID,
+            m_signatures_groups.signature_epochID,
             m_block_hash.hex().c_str(),
+            m_header.m_prev_hash.hex().c_str(),
             m_header.get_elections_sets().election_epochID,
             (uint32_t)m_header.get_elections_sets().elections_vector.size(),
-            (uint32_t)m_transactions.size(),
-            (uint32_t)m_receipts.size(),
-            ((evm_common::h256)get_chain_bits()).hex().c_str());
+            m_transactions.size(),
+            top::to_string(get_chain_bits()).c_str());
     return std::string(local_param_buf);
 }
 

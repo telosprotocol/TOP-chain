@@ -213,7 +213,7 @@ void xtable_maker_t::resource_plugin_make_txs(bool is_leader, statectx::xstatect
     }
 }
 void xtable_maker_t::rerource_plugin_make_resource(bool is_leader, const data::xblock_consensus_para_t & cs_para, data::xtable_block_para_t & lighttable_para, std::error_code & ec) {
-    xblock_resource_description_t block_resource = m_resource_plugin->make_resource(cs_para.get_election_round(), ec);
+    xblock_resource_description_t block_resource = m_resource_plugin->make_resource(cs_para, ec);
     if (ec) {
         xerror("xtable_maker_t::rerource_plugin_make_resource fail-make_resource is_leader=%d,%s,ec=%s", 
             is_leader, cs_para.dump().c_str(), ec.message().c_str());        

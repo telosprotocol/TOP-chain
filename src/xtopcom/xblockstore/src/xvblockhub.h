@@ -237,7 +237,6 @@ namespace top
             virtual bool           write_block(base::xvbindex_t* index_ptr,base::xvblock_t * new_block_ptr) override;
 
             virtual bool   store_block(base::xvblock_t* new_raw_block) override;
-            bool store_relay_txs(base::xvblock_t * block_ptr);
         };
     };//end of namespace of vstore
 };//end of namespace of top
