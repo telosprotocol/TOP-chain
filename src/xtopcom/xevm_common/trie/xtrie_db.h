@@ -80,6 +80,10 @@ public:
     // found in the memory cache.
     xtrie_node_face_ptr_t node(xhash256_t hash);
 
+    // Node retrieves an encoded cached trie node from memory. If it cannot be found
+    // cached, the method queries the persistent database for the content.
+    xbytes_t Node(xhash256_t hash, std::error_code & ec);
+
     xbytes_t preimage(xhash256_t hash) const;
 
     using AfterCommitCallback = std::function<void(xhash256_t const &)>;

@@ -19,6 +19,7 @@ enum class xenum_errc {
     abi_data_value_error,
     trie_db_missing_node_error,
     trie_db_not_provided,
+    trie_db_not_found,
     rlp_canonint,
     rlp_canonsize,
     rlp_uint_overflow,
@@ -27,6 +28,7 @@ enum class xenum_errc {
     rlp_expected_string,
     rlp_expected_list,
     trie_proof_missing,
+    trie_node_unexpected,
 };
 using xerrc_t = xenum_errc;
 

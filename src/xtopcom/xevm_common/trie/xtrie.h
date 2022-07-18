@@ -56,6 +56,10 @@ public:
     // If a node was not found in the database, a MissingNodeError(trie_db_missing_node_error) is returned.
     xbytes_t TryGet(xbytes_t const & key, std::error_code & ec) const;
 
+    // TryGetNode attempts to retrieve a trie node by compact-encoded path. It is not
+    // possible to use keybyte-encoding as the path might contain odd nibbles.
+    std::pair<xbytes_t, std::size_t> TryGetNode(xbytes_t const & path, std::error_code & ec);
+
     // Update associates key with value in the trie. Subsequent calls to
     // Get will return value. If value has length zero, any existing value
     // is deleted from the trie and calls to Get will return nil.
@@ -96,6 +100,8 @@ public:
 
 private:
     std::tuple<xbytes_t, xtrie_node_face_ptr_t, bool> tryGet(xtrie_node_face_ptr_t node, xbytes_t const & key, std::size_t const pos, std::error_code & ec) const;
+
+    std::tuple<xbytes_t, xtrie_node_face_ptr_t, std::size_t> tryGetNode(xtrie_node_face_ptr_t orig_node, xbytes_t const & path, std::size_t const pos, std::error_code & ec) const;
 
 private:
     std::pair<bool, xtrie_node_face_ptr_t> insert(xtrie_node_face_ptr_t node, xbytes_t prefix, xbytes_t key, xtrie_node_face_ptr_t value, std::error_code & ec);

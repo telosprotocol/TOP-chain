@@ -8,6 +8,7 @@
 #include "xevm_common/trie/xtrie_encoding.h"
 #include "xevm_common/trie/xtrie_node.h"
 #include "xevm_common/trie/xtrie_node_coding.h"
+#include "xevm_common/xerror/xerror.h"
 
 NS_BEG3(top, evm_common, trie)
 
@@ -84,6 +85,35 @@ xtrie_node_face_ptr_t xtop_trie_db::node(xhash256_t hash) {
     // put into clean cache
     cleans.insert({hash, enc});
     return xtrie_node_rlp::mustDecodeNode(hash, enc);
+}
+
+xbytes_t xtop_trie_db::Node(xhash256_t hash, std::error_code & ec) {
+    // It doesn't make sense to retrieve the metaroot
+    if (hash == xhash256_t{}) {
+        ec = error::xerrc_t::trie_db_not_found;
+        return xbytes_t{};
+    }
+
+    // Retrieve the node from the clean cache if available
+    if (cleans.find(hash) != cleans.end()) {
+        return cleans.at(hash);
+    }
+
+    // Retrieve the node from the dirty cache if available
+    if (dirties.find(hash) != dirties.end()) {
+        return dirties.at(hash).rlp();
+    }
+
+    // Content unavailable in memory, attempt to retrieve from disk
+    xbytes_t hash_bytes = xbytes_t{hash.begin(), hash.end()};
+    auto enc = diskdb->Get(hash_bytes, ec);
+    if (ec || enc.empty()) {
+        ec = error::xerrc_t::trie_db_not_found;
+        return xbytes_t{};
+    }
+    // put into clean cache
+    cleans.insert({hash, enc});
+    return enc;
 }
 
 xbytes_t xtop_trie_db::preimage(xhash256_t hash) const {

@@ -33,6 +33,9 @@ static char const * const errc_to_string(int code) {
     case xerrc_t::trie_db_not_provided:
         return "trie db not provided";
 
+    case xerrc_t::trie_db_not_found:
+        return "trie db not found";
+
     case xerrc_t::rlp_canonint:
         return "rlp: non-canonical integer format";
 
@@ -56,6 +59,9 @@ static char const * const errc_to_string(int code) {
 
     case xerrc_t::trie_proof_missing:
         return "rlp: trie proof missing";
+
+    case xerrc_t::trie_node_unexpected:
+        return "trie node unexcepted";
 
     default:
         return "unknown evm common error";

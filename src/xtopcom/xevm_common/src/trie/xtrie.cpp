@@ -74,6 +74,23 @@ xbytes_t xtop_trie::TryGet(xbytes_t const & key, std::error_code & ec) const {
     return value;
 }
 
+std::pair<xbytes_t, std::size_t> xtop_trie::TryGetNode(xbytes_t const & path, std::error_code & ec) {
+    xbytes_t item;
+    xtrie_node_face_ptr_t newroot;
+    std::size_t resolved;
+    std::tie(item, newroot, resolved) = tryGetNode(m_root, compactToHex(path), 0, ec);
+    if (ec) {
+        return std::make_pair(xbytes_t{}, resolved);
+    }
+    if (resolved > 0) {
+        m_root = newroot;
+    }
+    if (item.empty()) {
+        return std::make_pair(xbytes_t{}, resolved);
+    }
+    return std::make_pair(item, resolved);
+}
+
 // Update associates key with value in the trie. Subsequent calls to
 // Get will return value. If value has length zero, any existing value
 // is deleted from the trie and calls to Get will return nil.
@@ -294,6 +311,92 @@ std::tuple<xbytes_t, xtrie_node_face_ptr_t, bool> xtop_trie::tryGet(xtrie_node_f
         bool _didResolve;
         std::tie(value, newnode, _didResolve) = tryGet(child, key, pos, ec);
         return std::make_tuple(value, newnode, true);
+    }
+    default: {
+        xassert(false);
+        __builtin_unreachable();
+    }
+    }
+}
+
+std::tuple<xbytes_t, xtrie_node_face_ptr_t, std::size_t> xtop_trie::tryGetNode(xtrie_node_face_ptr_t orig_node,
+                                                                               xbytes_t const & path,
+                                                                               std::size_t const pos,
+                                                                               std::error_code & ec) const {
+    xdbg("tryGetNode path: %s, pos: %zu", top::to_hex(path).c_str(), pos);
+    // If non-existent path requested, abort
+    if (orig_node == nullptr) {
+        return std::make_tuple(xbytes_t{}, nullptr, 0);
+    }
+    // If we reached the requested path, return the current node
+    if (pos >= path.size()) {
+        // Although we most probably have the original node expanded, encoding
+        // that into consensus form can be nasty (needs to cascade down) and
+        // time consuming. Instead, just pull the hash up from disk directly.
+
+        xtrie_hash_node_t hash;
+        if (orig_node->type() == xtrie_node_type_t::hashnode) {
+            hash = *(static_cast<xtrie_hash_node_t *>(orig_node.get()));
+        } else {
+            bool _;
+            std::tie(hash, _) = orig_node->cache();
+        }
+        if (hash.is_null()) {
+            ec = error::xerrc_t::trie_node_unexpected;
+            return std::make_tuple(xbytes_t{}, orig_node, 0);
+        }
+        auto blob = m_db->Node(xhash256_t{hash.data()}, ec);
+        return std::make_tuple(blob, orig_node, 1);
+    }
+    // Path still needs to be traversed, descend into children
+    assert(orig_node != nullptr);
+    switch (orig_node->type()) {
+    case xtrie_node_type_t::valuenode: {
+        // Path prematurely ended, abort
+        return std::make_tuple(xbytes_t{}, nullptr, 0);
+    }
+    case xtrie_node_type_t::shortnode: {
+        auto n = std::make_shared<xtrie_short_node_t>(*(static_cast<xtrie_short_node_t *>(orig_node.get())));
+        if ((path.size() - pos < n->Key.size()) || (!std::equal(n->Key.begin(), n->Key.end(), path.begin() + pos))) {
+            // Path branches off from short node
+            return std::make_tuple(xbytes_t{}, n, 0);
+        }
+        xbytes_t item;
+        xtrie_node_face_ptr_t newnode;
+        std::size_t resolved;
+        std::tie(item, newnode, resolved) = tryGetNode(n->Val, path, pos + n->Key.size(), ec);
+        if (!ec && resolved > 0) {
+            n = n->copy();
+            n->Val = newnode;
+        }
+        return std::make_tuple(item, n, resolved);
+    }
+    case xtrie_node_type_t::fullnode: {
+        auto n = std::make_shared<xtrie_full_node_t>(*(static_cast<xtrie_full_node_t *>(orig_node.get())));
+
+        xbytes_t item;
+        xtrie_node_face_ptr_t newnode;
+        std::size_t resolved;
+        std::tie(item, newnode, resolved) = tryGetNode(n->Children[path[pos]], path, pos + 1, ec);
+        if (!ec && resolved > 0) {
+            n = n->copy();
+            n->Children[path[pos]] = newnode;
+        }
+        return std::make_tuple(item, n, resolved);
+    }
+    case xtrie_node_type_t::hashnode: {
+        auto n = std::make_shared<xtrie_hash_node_t>(*(static_cast<xtrie_hash_node_t *>(orig_node.get())));
+
+        auto child = resolveHash(n, ec);
+        if (ec) {
+            return std::make_tuple(xbytes_t{}, n, 1);
+        }
+
+        xbytes_t item;
+        xtrie_node_face_ptr_t newnode;
+        std::size_t resolved;
+        std::tie(item, newnode, resolved) = tryGetNode(child, path, pos, ec);
+        return std::make_tuple(item, newnode, resolved + 1);
     }
     default: {
         xassert(false);
