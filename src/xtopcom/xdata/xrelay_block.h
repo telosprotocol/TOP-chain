@@ -214,6 +214,5 @@ namespace data {
         xrelay_extend_data m_exteend_data;
     };
 
-    evm_common::h256 combine_hash(evm_common::h256 hash1, evm_common::h256 hash2);
 } // namespace data
 } // namespace top
