@@ -112,8 +112,10 @@ void xtop_evm_storage::storage_set(xbytes_t const & key, xbytes_t const & value)
             top::error::throw_error(ec);
 
         } else if (storage_key.key_type == storage_key_type::Balance) {
+#ifdef DEBUG
             evm_common::u256 balance = evm_common::fromBigEndian<evm_common::u256>(value);
             xdbg("storage_set set balance account:%s, balance:%s", storage_key.address.c_str(), balance.str().c_str());
+#endif
             unit_state->set_tep_balance_bytes(common::xtoken_id_t::eth, value);
 
         } else if (storage_key.key_type == storage_key_type::Code) {
