@@ -166,8 +166,8 @@ int32_t xblock_t::full_block_serialize_to(base::xstream_t & stream) {
         stream << get_output()->get_resources_data();
     }
 
-    xdbg("xblock_t::full_block_serialize_to,succ.block=%s,object_bin=%ld,ir=%ld,or=%ld",
-        dump().c_str(), base::xhash64_t::digest(block_object_bin), base::xhash64_t::digest(get_input()->get_resources_data()), base::xhash64_t::digest(get_output()->get_resources_data()));
+    xdbg("xblock_t::full_block_serialize_to,succ.block=%s,size=%zu,%zu,%zu,%d",
+        dump().c_str(), block_object_bin.size(), get_input()->get_resources_data().size(), get_output()->get_resources_data().size(), stream.size());
     return CALC_LEN();
 }
 

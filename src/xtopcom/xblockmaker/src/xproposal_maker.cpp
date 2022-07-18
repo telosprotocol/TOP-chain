@@ -289,10 +289,13 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
     // add metrics of tx counts / table counts ratio
     XMETRICS_GAUGE(metrics::cons_table_leader_make_unit_count, table_result.m_succ_unit_num);
     XMETRICS_GAUGE(metrics::cons_table_leader_make_tx_count, proposal_input->get_input_txs().size());    
-    xinfo("xproposal_maker_t::make_proposal succ.proposal_block=%s,units_info={total=%d,fail=%d,succ=%d,empty=%d,light=%d,full=%d},txs_info={txpool=%d,ufm=%d,total=%d,self=%d,send=%d,recv=%d,confirm=%d},proposal_input={size=%zu,txs=%zu,accounts=%zu}", 
+
+    std::string block_object_bin;
+    proposal_block->serialize_to_string(block_object_bin);
+    xinfo("xproposal_maker_t::make_proposal succ.block=%s,size=%zu,%zu,%zu,%zu,input={size=%zu,txs=%zu,accounts=%zu}", 
         proposal_block->dump().c_str(),
-        table_result.m_total_unit_num, table_result.m_fail_unit_num, table_result.m_succ_unit_num, table_result.m_empty_unit_num, table_result.m_light_unit_num, table_result.m_full_unit_num,
-        table_para.get_origin_txs().size(), tablestate->get_unconfirm_tx_num(), table_result.m_total_tx_num, table_result.m_self_tx_num, table_result.m_send_tx_num, table_result.m_recv_tx_num, table_result.m_confirm_tx_num,
+        block_object_bin.size()+proposal_block->get_input()->get_resources_data().size()+proposal_block->get_output()->get_resources_data().size(),
+        block_object_bin.size(),proposal_block->get_input()->get_resources_data().size(), proposal_block->get_output()->get_resources_data().size(),
         proposal_input_str.size(), proposal_input->get_input_txs().size(), proposal_input->get_other_accounts().size());
     return proposal_block;
 }
