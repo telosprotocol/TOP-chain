@@ -14,7 +14,7 @@ NS_BEG2(top, data)
 
 class xblock_consensus_para_t {
  public:
-   //  xblock_consensus_para_t() = default;
+    xblock_consensus_para_t() = default;
 
     xblock_consensus_para_t(const std::string & _account, uint64_t _clock, uint64_t _viewid, uint32_t _viewtoken, uint64_t _proposal_height, uint64_t _gmtime);
     xblock_consensus_para_t(const xvip2_t & validator, base::xvblock_t* prev_block);
