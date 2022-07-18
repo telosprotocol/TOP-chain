@@ -643,7 +643,7 @@ std::string xrelay_block::dump() const
             m_header.get_elections_sets().election_epochID,
             (uint32_t)m_header.get_elections_sets().elections_vector.size(),
             m_transactions.size(),
-            top::to_string(get_chain_bits()).c_str());
+            evm_common::toHex((evm_common::h256)get_chain_bits()).c_str());
     return std::string(local_param_buf);
 }
 

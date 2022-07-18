@@ -12,6 +12,7 @@
 #include "xdata/xelection/xelection_result_property.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xrootblock.h"
+#include "xevm_common/rlp.h"
 #include "xvm/xserialization/xserialization.h"
 
 NS_BEG4(top, xvm, system_contracts, relay)
@@ -23,13 +24,14 @@ NS_BEG4(top, xvm, system_contracts, relay)
 #define RELAY_WRAP_PHASE_INIT "2"
 
 // properties of relay wrap block
-XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_LAST_POLY_BLOCK_LOGIC_TIME = "@0";
-XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_LAST_HEIGHT = "@1";
-XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_LAST_HASH = "@2";
-XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_LAST_EPOCH_ID = "@3";
-XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_CROSS_TXS = "@4";
-XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_BLOCK_HASH_LAST_ELECT_TO_LAST_POLY_LIST = "@5";
-XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_BLOCK_HASH_FROM_LAST_POLY_LIST = "@6";
+XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_NEXT_POLY_BLOCK_LOGIC_TIME = "@0";
+XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_NEXT_TX_BLOCK_LOGIC_TIME = "@1";
+XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_LAST_HEIGHT = "@2";
+XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_LAST_HASH = "@3";
+XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_LAST_EPOCH_ID = "@4";
+XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_CROSS_TXS = "@5";
+XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_BLOCK_HASH_LAST_ELECT_TO_LAST_POLY_LIST = "@6";
+XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_BLOCK_HASH_FROM_LAST_POLY_LIST = "@7";
 
 #define RELAY_CHAIN_BIT_ETH (0x01)
 #define RELAY_CHAIN_BIT_BSC (0x02)
@@ -39,9 +41,9 @@ xtop_relay_make_block_contract::xtop_relay_make_block_contract(common::xnetwork_
 
 // same impl as zec_elect_relay setup
 void xtop_relay_make_block_contract::setup() {
-    STRING_CREATE(XPROPERTY_RELAY_LAST_POLY_BLOCK_LOGIC_TIME);
+    STRING_CREATE(XPROPERTY_RELAY_NEXT_POLY_BLOCK_LOGIC_TIME);
     std::string zero_str{"0"};
-    STRING_SET(XPROPERTY_RELAY_LAST_POLY_BLOCK_LOGIC_TIME, zero_str);
+    STRING_SET(XPROPERTY_RELAY_NEXT_POLY_BLOCK_LOGIC_TIME, zero_str);
 
     STRING_CREATE(XPROPERTY_RELAY_LAST_HEIGHT);
     STRING_SET(XPROPERTY_RELAY_LAST_HEIGHT, zero_str);
@@ -68,6 +70,9 @@ void xtop_relay_make_block_contract::setup() {
 
     STRING_CREATE(data::system_contract::XPROPERTY_RELAY_ELECT_PACK_HEIGHT);
     STRING_SET(data::system_contract::XPROPERTY_RELAY_ELECT_PACK_HEIGHT, zero_str);
+
+    STRING_CREATE(XPROPERTY_RELAY_NEXT_TX_BLOCK_LOGIC_TIME);
+    STRING_SET(XPROPERTY_RELAY_NEXT_TX_BLOCK_LOGIC_TIME, zero_str);
 
     data::election::v2::xelection_result_store_t election_result_store;
     common::xelection_round_t group_version{0};
@@ -112,7 +117,12 @@ void xtop_relay_make_block_contract::on_receive_cross_txs(std::string const & da
     data::xrelayblock_crosstx_infos_t all_crosstxs;
     std::error_code ec;
     all_crosstxs.serialize_from_string(data, ec);
-    XCONTRACT_ENSURE(!ec, "xtop_relay_make_block_contract unpack crosstxs fail " + ec.message());
+    XCONTRACT_ENSURE(!ec, "unpack crosstxs fail " + ec.message());
+    XCONTRACT_ENSURE(!all_crosstxs.tx_infos.empty(), "cross txs is empty");
+
+    if (LIST_SIZE(XPROPERTY_RELAY_CROSS_TXS) == 0) {
+        update_next_block_clock_for_a_type(XPROPERTY_RELAY_NEXT_TX_BLOCK_LOGIC_TIME, TIME() + (uint64_t)XGET_CONFIG(max_relay_tx_block_interval));
+    }
     for (auto & crosstx : all_crosstxs.tx_infos) {
         xdbg("xtop_relay_make_block_contract::on_receive_cross_txs tx hash:%s", top::to_hex_prefixed(top::to_bytes(crosstx.tx.get_tx_hash())).c_str());
         auto tx_bytes = crosstx.encodeBytes();
@@ -120,44 +130,51 @@ void xtop_relay_make_block_contract::on_receive_cross_txs(std::string const & da
     }
 }
 
-void xtop_relay_make_block_contract::on_make_block(std::string const & data) {
+void xtop_relay_make_block_contract::update_next_block_clock_for_a_type(const string & key, uint64_t clock) {
+    STRING_SET(key, std::to_string(clock));
+    xdbg("xtop_relay_make_block_contract::update_next_tx_block_clock key:%s, next:%llu", key.c_str() ,clock);
+}
+
+bool xtop_relay_make_block_contract::update_wrap_phase(uint64_t last_height) {
     auto wrap_phase = STRING_GET(data::system_contract::XPROPERTY_RELAY_WRAP_PHASE);
-    uint64_t last_height = static_cast<std::uint64_t>(std::stoull(STRING_GET(XPROPERTY_RELAY_LAST_HEIGHT)));
-    xdbg("xtop_relay_make_block_contract::on_make_block enter. wrap_phase=%s,height:%llu", wrap_phase.c_str(), last_height);
+    xdbg("xtop_relay_make_block_contract::update_wrap_phase. last wrap_phase=%s,height:%llu", wrap_phase.c_str(), last_height);
     if (wrap_phase == RELAY_WRAP_PHASE_0) {
-        XCONTRACT_ENSURE(data.empty(), "wrap phase 0 but data is not empty");
         STRING_SET(data::system_contract::XPROPERTY_RELAY_WRAP_PHASE, RELAY_WRAP_PHASE_1);
-        return;
+        return true;
     } else if (wrap_phase == RELAY_WRAP_PHASE_1) {
-        XCONTRACT_ENSURE(data.empty(), "wrap phase 1 but data is not empty");
         STRING_SET(data::system_contract::XPROPERTY_RELAY_WRAP_PHASE, RELAY_WRAP_PHASE_2);
-        return;
+        return true;
     }
+    if ((wrap_phase != RELAY_WRAP_PHASE_2) || (wrap_phase != RELAY_WRAP_PHASE_INIT)) {
+        xerror("xtop_relay_make_block_contract::update_wrap_phase wrap phase invalid:%s", wrap_phase.c_str());
+    }
+    return false;
+}
 
-    XCONTRACT_ENSURE((wrap_phase == RELAY_WRAP_PHASE_2) || (wrap_phase == RELAY_WRAP_PHASE_INIT), "wrap phase invalid:" + wrap_phase);
-
-    uint64_t cur_time = TIME() * 10;
-    auto last_hash_str = STRING_GET(XPROPERTY_RELAY_LAST_HASH);
-    evm_common::h256 last_hash(to_bytes(last_hash_str));
-    bool ret;
-
-    data::xrelay_block relay_block;
-
-    ret = build_elect_relay_block(last_hash, last_height + 1, cur_time, data, relay_block);
+void xtop_relay_make_block_contract::on_make_block(std::string const & data) {
+    uint64_t last_height = static_cast<std::uint64_t>(std::stoull(STRING_GET(XPROPERTY_RELAY_LAST_HEIGHT)));
+    bool ret = update_wrap_phase(last_height);
     if (ret) {
         return;
     }
 
-    auto last_poly_time = static_cast<std::uint64_t>(std::stoull(STRING_GET(XPROPERTY_RELAY_LAST_POLY_BLOCK_LOGIC_TIME)));
-    if (last_poly_time + XGET_CONFIG(max_relay_poly_interval) * 10 < cur_time) {
-        ret = build_poly_relay_block(last_hash, last_height + 1, cur_time, relay_block);
-        if (!ret) {
-            ret = build_tx_relay_block(last_hash, last_height + 1, cur_time, 1, relay_block);
-        }
-    } else {
-        ret = build_tx_relay_block(last_hash, last_height + 1, cur_time, XGET_CONFIG(relayblock_batch_tx_max_num), relay_block);
+    uint64_t clock = TIME();
+    auto last_hash_str = STRING_GET(XPROPERTY_RELAY_LAST_HASH);
+    evm_common::h256 last_hash(to_bytes(last_hash_str));
+    uint64_t new_height = last_height + 1;
+
+    ret = build_elect_relay_block(last_hash, new_height, clock, data);
+    if (ret) {
+        return;
     }
-    xdbg("xtop_relay_make_block_contract::on_make_block build new relay block height:%llu ret:%d", last_height + 1, ret);
+
+    ret = build_poly_relay_block(last_hash, new_height, clock);
+    if (ret) {
+        return;
+    }
+
+    ret = build_tx_relay_block(last_hash, new_height, clock);
+    xdbg("xtop_relay_make_block_contract::on_make_block build new relay block height:%llu ret:%d", new_height, ret);
 }
 
 void xtop_relay_make_block_contract::pop_tx_block_hashs(const string & list_key,
@@ -181,19 +198,15 @@ void xtop_relay_make_block_contract::pop_tx_block_hashs(const string & list_key,
     }
 }
 
-void xtop_relay_make_block_contract::proc_created_relay_block(data::xrelay_block & relay_block, uint64_t timestamp, const evm_common::u256 & chain_bits) {
+void xtop_relay_make_block_contract::proc_created_relay_block(data::xrelay_block & relay_block, uint64_t clock, const evm_common::u256 & chain_bits) {
     relay_block.build_finish();
 
-    if (relay_block.get_all_transactions().empty()) {
-        STRING_SET(XPROPERTY_RELAY_LAST_POLY_BLOCK_LOGIC_TIME, std::to_string(timestamp));
-        if (!relay_block.get_elections_sets().empty()) {
-            STRING_SET(XPROPERTY_RELAY_LAST_EPOCH_ID, std::to_string(relay_block.get_elections_sets().election_epochID));
+    if (!relay_block.get_all_transactions().empty()) {
+        if (LIST_SIZE(XPROPERTY_RELAY_BLOCK_HASH_FROM_LAST_POLY_LIST) == 0) {
+            update_next_block_clock_for_a_type(XPROPERTY_RELAY_NEXT_POLY_BLOCK_LOGIC_TIME, clock + (uint64_t)XGET_CONFIG(max_relay_poly_interval));
         }
-    } else {
         LIST_PUSH_BACK(XPROPERTY_RELAY_BLOCK_HASH_FROM_LAST_POLY_LIST, block_hash_chainid_to_string(relay_block.get_block_hash(), chain_bits));
-        if (relay_block.get_block_height() == 1) {
-            STRING_SET(XPROPERTY_RELAY_LAST_POLY_BLOCK_LOGIC_TIME, std::to_string(timestamp));
-        }
+        update_next_block_clock_for_a_type(XPROPERTY_RELAY_NEXT_TX_BLOCK_LOGIC_TIME, clock + (uint64_t)XGET_CONFIG(max_relay_tx_block_interval));
     }
 
     STRING_SET(XPROPERTY_RELAY_LAST_HEIGHT, to_string(relay_block.get_block_height()));
@@ -207,11 +220,7 @@ void xtop_relay_make_block_contract::proc_created_relay_block(data::xrelay_block
     xdbg("xtop_relay_make_block_contract::proc_created_relay_block new relayblock:%s", relay_block.dump().c_str());
 }
 
-bool xtop_relay_make_block_contract::build_elect_relay_block(evm_common::h256 prev_hash,
-                                                             uint64_t block_height,
-                                                             uint64_t timestamp,
-                                                             std::string const & data,
-                                                             data::xrelay_block & relay_block) {
+bool xtop_relay_make_block_contract::build_elect_relay_block(const evm_common::h256 & prev_hash, uint64_t block_height, uint64_t clock, std::string const & data) {
     if (data.empty()) {
         xdbg("xtop_relay_process_election_data_contract::on_recv_election_data data empty");
         return false;
@@ -226,13 +235,13 @@ bool xtop_relay_make_block_contract::build_elect_relay_block(evm_common::h256 pr
 
     uint64_t epoch = group_result.group_epoch().value();
     xinfo("xtop_relay_make_block_contract::build_elect_relay_block last epoch:%llu,epoch:%llu", last_epoch_id, epoch);
+    if (last_epoch_id + 1 != epoch) {
+        xerror("xtop_relay_make_block_contract::build_elect_relay_block epoch invalid! last epoch:%llu,epoch:%llu", last_epoch_id, epoch);
+    }
     XCONTRACT_ENSURE((last_epoch_id + 1 == epoch), "epoch id invalid");
 
     serialization::xmsgpack_t<data::election::v2::xelection_result_store_t>::serialize_to_string_prop(
         *this, data::election::get_property_by_group_id(common::xdefault_group_id), coming_election_result_store);
-
-    uint64_t cur_height = get_blockchain_height(sys_contract_relay_make_block_addr) + 1;
-    STRING_SET(data::system_contract::XPROPERTY_RELAY_ELECT_PACK_HEIGHT, to_string(cur_height));
 
     data::xrelay_election_group_t reley_election_group;
 
@@ -252,20 +261,24 @@ bool xtop_relay_make_block_contract::build_elect_relay_block(evm_common::h256 pr
     pop_tx_block_hashs(XPROPERTY_RELAY_BLOCK_HASH_LAST_ELECT_TO_LAST_POLY_LIST, false, tx_block_hash_vec, chain_bits);
     pop_tx_block_hashs(XPROPERTY_RELAY_BLOCK_HASH_FROM_LAST_POLY_LIST, false, tx_block_hash_vec, chain_bits);
 
-    relay_block = data::xrelay_block(prev_hash, block_height, timestamp, chain_bits, reley_election_group);
+    data::xrelay_block relay_block = data::xrelay_block(prev_hash, block_height, clock * 10, chain_bits, reley_election_group);
     if (!tx_block_hash_vec.empty()) {
         relay_block.make_merkle_root_hash(tx_block_hash_vec);
     }
-    xdbg("xtop_relay_make_block_contract::build_elect_relay_block new elect block epoch:%llu,height:%llu,tx block hash num:%u,unit height:%llu",
-         epoch,
-         block_height,
-         tx_block_hash_vec.size(),
-         cur_height);
-    proc_created_relay_block(relay_block, timestamp, 0);
+
+    uint64_t cur_height = get_blockchain_height(sys_contract_relay_make_block_addr) + 1;
+    STRING_SET(data::system_contract::XPROPERTY_RELAY_ELECT_PACK_HEIGHT, to_string(cur_height));
+    STRING_SET(XPROPERTY_RELAY_LAST_EPOCH_ID, std::to_string(epoch));
+    proc_created_relay_block(relay_block, clock, 0);
     return true;
 }
 
-bool xtop_relay_make_block_contract::build_poly_relay_block(evm_common::h256 prev_hash, uint64_t block_height, uint64_t timestamp, data::xrelay_block & relay_block) {
+bool xtop_relay_make_block_contract::build_poly_relay_block(const evm_common::h256 & prev_hash, uint64_t block_height, uint64_t clock) {
+    auto next_tx_block_time = static_cast<std::uint64_t>(std::stoull(STRING_GET(XPROPERTY_RELAY_NEXT_POLY_BLOCK_LOGIC_TIME)));
+    if ((next_tx_block_time == 0) || (clock < next_tx_block_time)) {
+        return false;
+    }
+
     std::vector<evm_common::h256> tx_block_hash_vec;
     evm_common::u256 chain_bits = 0;
     pop_tx_block_hashs(XPROPERTY_RELAY_BLOCK_HASH_FROM_LAST_POLY_LIST, true, tx_block_hash_vec, chain_bits);
@@ -274,25 +287,24 @@ bool xtop_relay_make_block_contract::build_poly_relay_block(evm_common::h256 pre
         return false;
     }
 
-    relay_block = data::xrelay_block(prev_hash, block_height, timestamp, chain_bits);
+    data::xrelay_block relay_block = data::xrelay_block(prev_hash, block_height, clock * 10, chain_bits);
     relay_block.make_merkle_root_hash(tx_block_hash_vec);
-    proc_created_relay_block(relay_block, timestamp, 0);
-    xdbg("xtop_relay_make_block_contract::build_elect_relay_block new poly block,height:%llu,tx block hash num:%u", block_height, tx_block_hash_vec.size());
+    proc_created_relay_block(relay_block, clock, 0);
     return true;
 }
 
-bool xtop_relay_make_block_contract::build_tx_relay_block(evm_common::h256 prev_hash,
-                                                          uint64_t block_height,
-                                                          uint64_t timestamp,
-                                                          int32_t min_num,
-                                                          data::xrelay_block & relay_block) {
+bool xtop_relay_make_block_contract::build_tx_relay_block(const evm_common::h256 & prev_hash, uint64_t block_height, uint64_t clock) {
 #ifndef CROSS_TX_DBG
     auto eth_cross_addr = XGET_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_addr_for_eth);
     auto bsc_cross_addr = XGET_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_addr_for_bsc);
 #endif
+
+    auto next_tx_block_time = static_cast<std::uint64_t>(std::stoull(STRING_GET(XPROPERTY_RELAY_NEXT_TX_BLOCK_LOGIC_TIME)));
+    int32_t min_tx_num = ((next_tx_block_time != 0) && (clock >= next_tx_block_time)) ? 1 : XGET_CONFIG(relayblock_batch_tx_max_num);
+
     auto cross_tx_list_size = LIST_SIZE(XPROPERTY_RELAY_CROSS_TXS);
-    xdbg("xtop_relay_make_block_contract::build_tx_relay_block height:%llu,min_num:%d,cross tx:%d", block_height, min_num, cross_tx_list_size);
-    if (cross_tx_list_size < min_num) {
+    xdbg("xtop_relay_make_block_contract::build_tx_relay_block height:%llu,min_num:%d,cross tx:%d", block_height, min_tx_num, cross_tx_list_size);
+    if (cross_tx_list_size < min_tx_num) {
         return false;
     }
     auto batch_num = XGET_CONFIG(relayblock_batch_tx_max_num);
@@ -328,27 +340,32 @@ bool xtop_relay_make_block_contract::build_tx_relay_block(evm_common::h256 prev_
         xdbg("xtop_relay_make_block_contract::build_tx_relay_block height:%llu add tx:%s", block_height, top::to_hex_prefixed(top::to_bytes(cross_tx.tx.get_tx_hash())).c_str());
     }
 
-    relay_block = data::xrelay_block(prev_hash, block_height, timestamp, chain_bits, transactions, receipts);
-    proc_created_relay_block(relay_block, timestamp, chain_bits);
-    xdbg("xtop_relay_make_block_contract::build_tx_relay_block new tx block,height:%llu,tx num:%u", block_height, transactions.size());
+    data::xrelay_block relay_block = data::xrelay_block(prev_hash, block_height, clock * 10, chain_bits, transactions, receipts);
+    proc_created_relay_block(relay_block, clock, chain_bits);
     return true;
 }
 
 const std::string xtop_relay_make_block_contract::block_hash_chainid_to_string(const evm_common::h256 & block_hash, const evm_common::u256 & chain_bits) {
-    base::xstream_t stream(base::xcontext_t::instance());
-    stream << block_hash.to_bytes();
-    stream << ((evm_common::h256)chain_bits).to_bytes();
-    return std::string((char *)stream.data(), stream.size());
+    xdbg("xtop_relay_make_block_contract::block_hash_chainid_to_string block hash:%s,chain_bits:%s", block_hash.hex().c_str(), evm_common::toHex((evm_common::h256)chain_bits).c_str());
+    evm_common::RLPStream rlp_stream;
+    rlp_stream.appendList(2);
+    rlp_stream << block_hash;
+    rlp_stream << chain_bits;
+    return from_bytes<std::string>(rlp_stream.out());
 }
 
 void xtop_relay_make_block_contract::block_hash_chainid_from_string(const std::string & str, evm_common::h256 & block_hash, evm_common::u256 & chain_bits) {
-    base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)str.data(), str.size());
-    top::xbytes_t block_hash_bytes;
-    stream >> block_hash_bytes;
-    block_hash = evm_common::h256(block_hash_bytes);
-    top::xbytes_t chain_bits_bytes;
-    stream >> chain_bits_bytes;
-    chain_bits = (evm_common::u256)(evm_common::h256(chain_bits_bytes));
+    xbytes_t bytes = to_bytes(str);
+    evm_common::RLP _r(bytes);
+
+    if (!_r.isList() || _r.itemCount() != 2) {
+        xerror("xrelayblock_crosstx_info_t::decodeRLP fail item count,%d", _r.itemCount());
+    }
+    XCONTRACT_ENSURE((_r.isList() && _r.itemCount() == 2), "block hash and chain id decode fail");
+
+    block_hash = (evm_common::h256)_r[0];
+    chain_bits = (evm_common::u256)_r[1];
+    xdbg("xtop_relay_make_block_contract::block_hash_chainid_from_string block hash:%s,chain_bits:%s", block_hash.hex().c_str(), evm_common::toHex((evm_common::h256)chain_bits).c_str());
 }
 
 NS_END4
