@@ -63,25 +63,6 @@ std::vector<data::xcons_transaction_ptr_t>  xrelayblock_plugin_t::make_contract_
     return {};
 }
 
-// data::xcons_transaction_ptr_t xrelayblock_plugin_t::make_relay_election_repackage_contract_tx(statectx::xstatectx_ptr_t const& statectx_ptr, uint64_t timestamp, std::error_code & ec) {
-//     base::xvaccount_t _vaddr(sys_contract_relay_repackage_election_addr);
-//     auto unitstate = statectx_ptr->load_unit_state(_vaddr);    
-//     if (nullptr == unitstate) {
-//         ec = blockmaker::error::xerrc_t::blockmaker_load_unitstate;
-//         xerror("xrelayblock_plugin_t::make_relay_election_repackage_contract_tx fail-load unitstate.%s", 
-//             _vaddr.get_account().c_str());
-//         return nullptr;
-//     }
-
-//     std::string func_name = "on_timer";
-//     data::xtransaction_ptr_t tx = data::xtx_factory::create_sys_contract_call_self_tx(unitstate->get_account(),
-//                                                      unitstate->account_send_trans_number(), unitstate->account_send_trans_hash(),
-//                                                       func_name, std::string(), timestamp, EXPIRE_DURATION); 
-//     data::xcons_transaction_ptr_t contx = make_object_ptr<data::xcons_transaction_t>(tx.get());
-//     xdbg("xrelayblock_plugin_t::make_relay_election_repackage_contract_tx nonce=%ld", unitstate->account_send_trans_number());
-//     return contx;
-// }
-
 data::xcons_transaction_ptr_t xrelayblock_plugin_t::make_relay_make_block_contract_tx(statectx::xstatectx_ptr_t const& statectx_ptr, uint64_t timestamp, std::error_code & ec) {
     if (true) {// TODO(jimmy) always call on_make_block method  use macro  m_last_phase == "2"
         std::string func_name = "on_make_block";

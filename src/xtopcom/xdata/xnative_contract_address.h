@@ -44,8 +44,7 @@ XINLINE_CONSTEXPR char const * sys_contract_sharding_statistic_info_addr{ "T2000
 XINLINE_CONSTEXPR char const * sys_contract_eth_table_statistic_info_addr{ "T200040000000000000000000000000000000001@0" };
 XINLINE_CONSTEXPR char const * sys_contract_eth_table_cross_chain_txs_collection_addr{"T200040000000000000000000000000000000002@0"};
 
-// XINLINE_CONSTEXPR char const * sys_contract_relay_repackage_election_addr{"T2000500000000000000000000000000000000001@0"};
-XINLINE_CONSTEXPR char const * sys_contract_relay_make_block_addr{"T200050000000000000000000000000000000002@0"};
+XINLINE_CONSTEXPR char const * sys_contract_relay_make_block_addr{"T200050000000000000000000000000000000001@0"};
 
 // user contracts addresses for solidity
 XINLINE_CONSTEXPR char const * sys_eth_zero_addr{"T600040000000000000000000000000000000000000000"};

@@ -106,7 +106,6 @@ void xtop_contract_manager::instantiate_sys_contracts() {
     XREGISTER_CONTRACT(top::xvm::system_contracts::xtable_cross_chain_txs_collection_contract_t, sys_contract_eth_table_cross_chain_txs_collection_addr, network_id);
     XREGISTER_CONTRACT(top::xvm::system_contracts::zec::xzec_elect_eth_contract_t, sys_contract_zec_elect_eth_addr, network_id);
     XREGISTER_CONTRACT(top::xvm::system_contracts::zec::xzec_elect_relay_contract_t, sys_contract_zec_elect_relay_addr, network_id);
-    // XREGISTER_CONTRACT(top::xvm::system_contracts::relay::xrelay_process_election_data_contract_t, relay_repackage_election_data_contract_address, network_id);
     XREGISTER_CONTRACT(top::xvm::system_contracts::relay::xrelay_make_block_contract_t, relay_make_block_contract_address, network_id);
 }
 
@@ -611,7 +610,7 @@ static void get_election_result_property_data(const xaccount_ptr_t unitstate,
            contract_address == rec_elect_fullnode_contract_address             || // NOLINT
            contract_address == zec_elect_eth_contract_address                  || // NOLINT
            contract_address == zec_elect_relay_contract_address                || // NOLINT
-           contract_address == relay_repackage_election_data_contract_address);
+           contract_address == relay_make_block_contract_address);
 
     std::string serialized_value = unitstate->string_get(property_name);
     if (!serialized_value.empty()) {
@@ -2386,7 +2385,7 @@ void xtop_contract_manager::get_contract_data(common::xaccount_address_t const &
         contract_address == rec_elect_fullnode_contract_address             || // NOLINT
         contract_address == zec_elect_eth_contract_address                  || // NOLINT
         contract_address == zec_elect_relay_contract_address                || // NOLINT
-        contract_address == relay_repackage_election_data_contract_address) {
+        contract_address == relay_make_block_contract_address) {
         if (contract_address == xaccount_address_t{sys_contract_zec_elect_consensus_addr} && property_name == XPROPERTY_CONTRACT_ELECTION_EXECUTED_KEY) {
             std::string res;
             m_store->string_get(contract_address.value(), property_name, res);
