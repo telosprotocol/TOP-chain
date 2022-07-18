@@ -506,7 +506,7 @@ XDECLARE_CONFIGURATION(slash_fulltable_interval, xinterval_t, 120); // 20 minute
 /* relay block parameters */
 #if defined(XBUILD_DEV) || defined(XBUILD_CI)
 XDECLARE_CONFIGURATION(evm_relay_txs_collection_interval, xinterval_t, 1); // 1 clock  // TODO(jimmy)
-XDECLARE_CONFIGURATION(relayblock_batch_tx_max_num, std::int32_t, 1);
+XDECLARE_CONFIGURATION(relayblock_batch_tx_max_num, std::int32_t, 2);
 XDECLARE_CONFIGURATION(max_relay_poly_interval, int32_t, 60);
 XDECLARE_CONFIGURATION(max_relay_tx_block_interval, int32_t, 10);
 #else
