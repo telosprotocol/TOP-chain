@@ -1897,18 +1897,7 @@ void  xdb_export_tools_t::prune_db(){
     std::string end_key;
     m_store->compact_range(begin_key, end_key);
 }
-void xdb_export_tools_t::output_tx_file(std::vector<std::string> const & tables, const uint32_t thread_num, const std::string& tx_file) {
-    uint32_t threads = 0;
-
-    if (thread_num != 0) {
-        threads = thread_num;
-        std::cout << "use thread num: " << threads << std::endl;
-    } else {
-        // default
-        threads = 4;
-        std::cout << "use default thread num: " << threads << std::endl;
-    }
-
+void xdb_export_tools_t::output_tx_file(std::vector<std::string> const & tables, const std::string& tx_file) {
     std::map<std::string, tx_check_info_t> tx_check_list;
     std::ifstream ifs;
     ifs.open(tx_file.c_str(), std::ifstream::in);
@@ -1933,21 +1922,28 @@ void xdb_export_tools_t::output_tx_file(std::vector<std::string> const & tables,
     ifs.close();
     std::cout << "read tx_file: " << tx_check_list.size() << std::endl;
 
-    asio::thread_pool pool(threads);
+    std::map<std::string, tx_check_result_info_t> tx_result_list;
     for (size_t i = 0; i < tables.size(); i++) {
-        asio::post(pool, std::bind(&xdb_export_tools_t::output_tx_file_internal, this, tables[i], tx_check_list));
+        output_tx_file_internal(tables[i], tx_check_list, tx_result_list);
     }
-    pool.join();
-
-//    for (size_t i = 0; i < tables.size(); i++) {
-//        output_tx_file_internal(tables[i], tx_check_list);
-//    }
-    std::cout << "output check tx file ok." << std::endl;
+    if (tx_result_list.empty())
+        return;
+    std::string check_file = m_outfile_folder + "tx_check.txt";
+    std::ofstream check_stream(check_file);
+    for(const auto& it:tx_result_list) {
+        std::string output = HexEncode(it.first) + '\t' + to_string(it.second.m_test_timestamp) + '\t' + to_string(it.second.m_tx_send_timestamp) + '\t' +
+                             to_string(it.second.m_tx_recv_timestamp) + '\t' + to_string(it.second.m_tx_timestamp) + '\n';
+        check_stream << output;
+    }
+    check_stream.close();
+    std::cout << "output: " << check_file << ", size: " << tx_result_list.size() << std::endl;    
+    //std::cout << "output check tx file ok." << std::endl;
 }
-void xdb_export_tools_t::output_tx_file_internal(std::string const & account, const std::map<std::string, tx_check_info_t>& tx_check_list) {
+void xdb_export_tools_t::output_tx_file_internal(std::string const & account,
+                                                 const std::map<std::string, tx_check_info_t> & tx_check_list,
+                                                 std::map<std::string, tx_check_result_info_t> & tx_result_list) {
     xdbtool_table_info_t table_info;
     std::cout << "checking " << account << "......" << std::endl;
-    std::map<std::string, tx_check_result_info_t> tx_result_list;
 
     auto const block_height = m_blockstore->get_latest_committed_block_height(account);
     for (uint64_t h = 0; h <= block_height; h++) {
@@ -2014,17 +2010,6 @@ void xdb_export_tools_t::output_tx_file_internal(std::string const & account, co
             }
         }
     }
-    if (tx_result_list.empty())
-        return;
-    std::string check_file = m_outfile_folder + account + "_tx_check.txt";
-    std::ofstream check_stream(check_file);
-    for(const auto& it:tx_result_list) {
-        std::string output = HexEncode(it.first) + '\t' + to_string(it.second.m_test_timestamp) + '\t' + to_string(it.second.m_tx_send_timestamp) + '\t' +
-                             to_string(it.second.m_tx_recv_timestamp) + '\t' + to_string(it.second.m_tx_timestamp) + '\n';
-        check_stream << output;
-    }
-    check_stream.close();
-    std::cout << "output: " << check_file << ", size: " << tx_result_list.size() << std::endl;
 }
 bool xdb_export_tools_t::all_table_check_tx_file(const tx_ext_t & tx_ext,
                                                  base::enum_transaction_subtype type,

@@ -54,7 +54,7 @@ public:
     void   db_parse_type_size(const std::string &fileName);
     std::string get_account_key_string(const std::string & key);
     void   prune_db();
-    void  output_tx_file(std::vector<std::string> const & tables, const uint32_t thread_num, const std::string& tx_file);
+    void  output_tx_file(std::vector<std::string> const & tables, const std::string& tx_file);
 private:
     struct tx_ext_t {
         base::xtable_shortid_t  sendtableid;
@@ -281,7 +281,7 @@ private:
     void query_balance(std::string const & table, json & j_unit, json & j_table);
     void query_checkpoint_internal(std::string const & table, std::set<std::string> const & genesis_only, const uint64_t clock, json & j_data);
     void query_archive_db_internal(std::string const & account, enum_query_account_type type, const uint32_t redundancy, std::ofstream & file, uint32_t & errors);
-    void output_tx_file_internal(std::string const & account, const std::map<std::string, tx_check_info_t>& tx_check_list);
+    void output_tx_file_internal(std::string const & account, const std::map<std::string, tx_check_info_t>& tx_check_list, std::map<std::string, tx_check_result_info_t> & tx_result_list);
 
     json set_txinfo_to_json(tx_ext_t const & txinfo);
     json set_confirmed_txinfo_to_json(const tx_ext_sum_t & tx_ext_sum);

@@ -343,19 +343,15 @@ int main(int argc, char ** argv) {
         auto t2 = base::xtime_utl::time_now_ms();
         std::cout << "parse_db total time: " << (t2 - t1) / 1000 << "s." << std::endl;
     } else if (function_name == "check_tx_file") {
-        uint32_t thread_num = 0;
         std::string tx_file;
         if (argc < 4) {
             usage();
             return -1;
         }
-        if (argc >= 5) {
-            thread_num = std::stoi(argv[4]);
-        }
         tx_file = argv[3];
         tools.set_outfile_folder("all_table_tx_info/");
         auto const account_vec = xdb_export_tools_t::get_table_accounts();
-        tools.output_tx_file(account_vec, thread_num, tx_file);
+        tools.output_tx_file(account_vec, tx_file);
     }
     else {
         usage();
