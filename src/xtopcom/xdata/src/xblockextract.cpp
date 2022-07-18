@@ -323,11 +323,6 @@ void xblockextract_t::unpack_crosschain_txs(base::xvblock_t* _block, xrelayblock
             return;
         }
 
-        // TODO(jimmy): cross chain txs match
-        // if (_rawtx->get_tx_version() != data::xtransaction_version_3 ||
-        //     (_rawtx->get_tx_type() != data::xtransaction_type_run_contract)) {
-        //     continue;
-        // }
         if (_rawtx->get_tx_version() != data::xtransaction_version_3) {
             continue;
         }        
