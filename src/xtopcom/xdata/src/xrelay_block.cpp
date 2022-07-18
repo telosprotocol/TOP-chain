@@ -8,6 +8,10 @@
 #include "xdata/xrelay_block_store.h"
 #include "xcommon/xerror/xerror.h"
 #include "xbasic/xhex.h"
+#include "xutility/xhash.h"
+#include "xpbase/base/top_utils.h"
+#include "xcrypto/xckey.h"
+#include "xevm_common/xtriecommon.h"
 
 NS_BEG2(top, data)
 
