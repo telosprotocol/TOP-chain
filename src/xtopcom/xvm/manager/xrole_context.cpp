@@ -571,7 +571,7 @@ void xrole_context_t::on_fulltableblock_event(common::xaccount_address_t const& 
 //     }
 // }
 
-// todo(nathan):relay出块合约响应跨链交易上报合约块事件，在接收交易中处理
+// todo(nathan):relay make contract already do this
 
 void xrole_context_t::broadcast(const xblock_ptr_t & block_ptr, common::xnode_type_t types) {
     assert(block_ptr != nullptr);

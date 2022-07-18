@@ -2408,7 +2408,7 @@ namespace top
             if(this_index->check_modified_flag() == false)//nothing changed
                 return true;
 
-            base::xvchain_t::instance().get_xtxstore()->write_relay_index(this_index);
+            base::xvchain_t::instance().get_xtxstore()->store_blockhash_index(this_index);
             return get_blockdb_ptr()->write_index_to_db(this_index);
         }
     
@@ -2659,7 +2659,7 @@ namespace top
             if(this_index->check_modified_flag() == false)//nothing changed
                 return true;
 
-            base::xvchain_t::instance().get_xtxstore()->write_relay_index(this_index);
+            base::xvchain_t::instance().get_xtxstore()->store_blockhash_index(this_index);
             return get_blockdb_ptr()->write_index_to_db(this_index);
         }
         bool xrelay_plugin::write_block(base::xvbindex_t * this_index) {

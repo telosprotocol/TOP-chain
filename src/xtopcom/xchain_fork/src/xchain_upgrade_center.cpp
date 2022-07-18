@@ -34,6 +34,7 @@ namespace top {
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "enable eth shard"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "enable relay"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "elect exchange alone"},
+                xfork_point_t{xfork_point_type_t::logic_time, 0, "v1.6 version control"},
             };
 
             // !!!change!!! fork time for galileo
@@ -47,6 +48,7 @@ namespace top {
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "enable eth shard"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "enable relay"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "elect exchange alone"},
+                xfork_point_t{xfork_point_type_t::logic_time, 0, "v1.6 version control"},
            };
 
             xchain_fork_config_t default_chain_config {
@@ -59,6 +61,7 @@ namespace top {
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "enable eth shard"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "enable relay"},
                 xfork_point_t{xfork_point_type_t::logic_time, 0, "elect exchange alone"},
+                xfork_point_t{xfork_point_type_t::logic_time, 0, "v1.6 version control"},
             };
 #else   // #if defined(XCHAIN_FORKED_BY_DEFAULT)
         xchain_fork_config_t  mainnet_chain_config{
@@ -71,6 +74,7 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 8224200, "enable eth shard"},// 2022-06-17 10:00:00
             xfork_point_t{xfork_point_type_t::logic_time, 10000000, "enable relay"},
             xfork_point_t{xfork_point_type_t::logic_time, 10000000, "elect exchange alone"},
+            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "v1.6 version control"},
         };
         // !!!change!!! fork time for galileo
         xchain_fork_config_t  testnet_chain_config{
@@ -83,6 +87,7 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 8224200, "enable eth shard"},
             xfork_point_t{xfork_point_type_t::logic_time, 10000000, "enable relay"},
             xfork_point_t{xfork_point_type_t::logic_time, 10000000, "elect exchange alone"},
+            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "v1.6 version control"},
         };
 
         // !!!change!!! fork time for local develop net
@@ -96,6 +101,7 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 8224200, "enable eth shard"},
             xfork_point_t{xfork_point_type_t::logic_time, 10000000, "enable relay"},
             xfork_point_t{xfork_point_type_t::logic_time, 10000000, "elect exchange alone"},
+            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "v1.6 version control"},
         };
 #endif  // #if defined(XCHAIN_FORKED_BY_DEFAULT)
         xchain_fork_config_t const & xtop_chain_fork_config_center::chain_fork_config() noexcept {
@@ -119,7 +125,7 @@ namespace top {
 
         bool xtop_chain_fork_config_center::is_block_forked(uint64_t target) noexcept {
             xchain_fork_config_t const & _fork_config = xtop_chain_fork_config_center::get_chain_fork_config();
-            return  xtop_chain_fork_config_center::is_forked(_fork_config.eth_fork_point, target);
+            return  xtop_chain_fork_config_center::is_forked(_fork_config.v1_6_0_version_point, target);
         }
 
         bool xtop_chain_fork_config_center::is_tx_forked_by_timestamp(uint64_t fire_timestamp) noexcept {
