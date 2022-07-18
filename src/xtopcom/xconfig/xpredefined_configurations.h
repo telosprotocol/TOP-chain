@@ -127,7 +127,7 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(fullnode_election_interval, xinterval_t, n
 #if defined(XBUILD_DEV) || defined(XBUILD_CI)
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(relay_election_interval, xinterval_t, normal, 72, 1, std::numeric_limits<xinterval_t>::max());
 #else
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(relay_election_interval, xinterval_t, normal, 360, 1, std::numeric_limits<xinterval_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(relay_election_interval, xinterval_t, normal, 60480, 1, std::numeric_limits<xinterval_t>::max()); // one week
 #endif
 
 #if defined(XBUILD_DEV) || defined(XBUILD_CI)
@@ -504,9 +504,17 @@ XDECLARE_CONFIGURATION(slash_fulltable_interval, xinterval_t, 120); // 20 minute
 #endif
 
 /* relay block parameters */
+#if defined(XBUILD_DEV) || defined(XBUILD_CI)
 XDECLARE_CONFIGURATION(evm_relay_txs_collection_interval, xinterval_t, 1); // 1 clock  // TODO(jimmy)
-XDECLARE_CONFIGURATION(relayblock_batch_tx_max_num, std::int32_t, 1); // todo(nathan) 40
-XDECLARE_CONFIGURATION(max_relay_poly_interval, int32_t, 100);
+XDECLARE_CONFIGURATION(relayblock_batch_tx_max_num, std::int32_t, 1);
+XDECLARE_CONFIGURATION(max_relay_poly_interval, int32_t, 60);
+XDECLARE_CONFIGURATION(max_relay_tx_block_interval, int32_t, 10);
+#else
+XDECLARE_CONFIGURATION(evm_relay_txs_collection_interval, xinterval_t, 1);
+XDECLARE_CONFIGURATION(relayblock_batch_tx_max_num, std::int32_t, 40);
+XDECLARE_CONFIGURATION(max_relay_poly_interval, int32_t, 2880);     // 8 hours
+XDECLARE_CONFIGURATION(max_relay_tx_block_interval, int32_t, 360);  // 1 hour
+#endif
 
 
 /* beginning of development parameters */
