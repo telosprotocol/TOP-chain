@@ -1131,6 +1131,7 @@ int xrpc_eth_query_manager::set_relay_block_result(const xobject_ptr_t<base::xvb
     xbytes_t data = relay_block.encodeBytes();
     js_result["size"] = xrpc::xrpc_eth_parser_t::uint64_to_hex_prefixed(data.size());
     js_result["blockType"] = relay_block.get_block_type_string();
+    js_result["chainBits"] = std::string("0x") + relay_block.get_chain_bits().str();
 
     if (have_txs != 0) {
         const std::vector<xeth_transaction_t> txs = relay_block.get_all_transactions();
