@@ -8,6 +8,10 @@
 #include "xdata/xrelay_block_store.h"
 #include "xcommon/xerror/xerror.h"
 #include "xbasic/xhex.h"
+#include "xutility/xhash.h"
+#include "xpbase/base/top_utils.h"
+#include "xcrypto/xckey.h"
+#include "xevm_common/xtriecommon.h"
 
 NS_BEG2(top, data)
 
@@ -15,22 +19,7 @@ using namespace top::evm_common;
 
 #define RELAY_BLOCK_VERSION (0)
 
-top::evm_common::h256 combine_hash(top::evm_common::h256 hash1, top::evm_common::h256 hash2)
-{
-    top::evm_common::h256 hash_result { 0 };
-    top::evm_common::h512 hash_512 { 0 };
-    utl::xsha2_256_t hash_calc;
-    std::vector<uint8_t> hash_vector;
 
-    for (int i = 0; i < 32; i++) {
-        hash_512[i] = hash1[i];
-        hash_512[i + 32] = hash2[i];
-    }
-    hash_calc.update(hash_512.data(), 64);
-    hash_calc.get_hash(hash_vector);
-    top::evm_common::bytesConstRef((const unsigned char*)hash_vector.data(), 32).copyTo(hash_result.ref());
-    return hash_result;
-}
 
 void xrelay_election_node_t::streamRLP(evm_common::RLPStream& _s) const
 {
