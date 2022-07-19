@@ -24,7 +24,7 @@ namespace data {
     class xrelay_block_store {
 
     public:
-        xrelay_block_store();
+        xrelay_block_store() = default;
         static xrelay_block_store& get_instance()
         {
             static xrelay_block_store m_instance_store;
