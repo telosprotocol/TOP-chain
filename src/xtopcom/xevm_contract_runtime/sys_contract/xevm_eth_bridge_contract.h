@@ -26,7 +26,7 @@ public:
 private:
     bool init(const xbytes_t & rlp_bytes);
     bool sync(const xbytes_t & rlp_bytes);
-    bool is_confirmed(const xbytes_t & hash_bytes);
+    bool is_confirmed(const evm_common::u256 height, const xbytes_t & hash_bytes);
     void reset();
     std::set<std::string> load_whitelist();
 
