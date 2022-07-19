@@ -35,7 +35,7 @@ public:
 
     ApiMethod();
     ~ApiMethod();
-    bool set_default_prikey(std::ostringstream & out_str, const bool is_query = false);
+    bool set_default_prikey(std::ostringstream & out_str);
     int update_account(std::ostringstream & out_str);
     int update_account(std::ostringstream & out_str, xJson::Value & root);
     xJson::Value get_response_from_daemon();
@@ -58,11 +58,6 @@ public:
     int set_default_miner(const std::string & pub_key, const std::string & pw_path, std::ostringstream & out_str);
     void import_account(std::string const & pw_path, std::ostringstream & out_str);
     void export_account(const std::string & account, std::ostringstream & out_str);
-    /*
-     * debug
-     */
-    void create_chain_account(std::ostringstream & out_str);
-    void import_key(std::string & pri_key, std::ostringstream & out_str);
 
     /*
      * transfer
@@ -154,6 +149,7 @@ public:
 // private:
     std::string input_same_pswd_twice();
     std::string input_pswd_hint();
+    std::string input_hiding_no_empty(std::string const & empty_msg);
 
     /**
      * @brief Get the password from user / password file
@@ -166,10 +162,6 @@ public:
      */
     std::pair<bool, std::string> get_password(keystore_type const & keys_type, password_type const & pswd_type, std::string const & file_path = "", bool is_reset_pw = false);
 
-    // #[deprecated]
-    std::string get_password() {
-        return cache_pw;
-    }
     void reset_tx_deposit() {
         api_method_imp_.reset_tx_deposit();
     }
