@@ -681,7 +681,7 @@ std::string xrelay_block::get_block_type_string()
     case cache_tx_block:
         return "transactions";
     case cache_poly_tx_block:
-        return "polymerization";
+        return "aggregate";
     case cache_poly_election_block:
         return "election";
     default:
