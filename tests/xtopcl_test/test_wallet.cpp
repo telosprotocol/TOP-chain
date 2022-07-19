@@ -4,16 +4,16 @@
 
 #if 0
 
-#define init()                                                                                                                                                                     \
-    xChainSDK::ApiMethod api;                                                                                                                                                      \
-    std::ostringstream outstr;                                                                                                                                                     \
-    api.set_keystore_path("/home/charles/topnetwork");
+#    define init()                                                                                                                                                                 \
+        xChainSDK::ApiMethod api;                                                                                                                                                  \
+        std::ostringstream outstr;                                                                                                                                                 \
+        api.set_keystore_path("/home/charles/topnetwork");
 
-#define reset_output() outstr.str(""), outstr.clear();
+#    define reset_output() outstr.str(""), outstr.clear();
 
-#define PSWD_PATH "./pswd"
+#    define PSWD_PATH "./pswd"
 
-// #define ENABLE_MANUAL
+// #    define ENABLE_MANUAL
 
 /*
 Subcommands:
@@ -28,10 +28,10 @@ Subcommands:
 TEST(test_wallet, wallet_createAccount) {
     init();
 
-#ifdef ENABLE_MANUAL
+#    ifdef ENABLE_MANUAL
     api.create_account("", outstr);
     std::cout << outstr.str() << std::endl;
-#endif
+#    endif
 
     reset_output();
     api.create_account(PSWD_PATH, outstr);
@@ -46,11 +46,11 @@ TEST(test_wallet, wallet_createKey) {
     std::cout << "new_account: " << new_account << std::endl;
     // std::cout << outstr.str() << std::endl;
 
-#ifdef ENABLE_MANUAL
+#    ifdef ENABLE_MANUAL
     reset_output();
     api.create_key(new_account, "", outstr);
     std::cout << outstr.str() << std::endl;
-#endif
+#    endif
 
     reset_output();
     api.create_key(new_account, PSWD_PATH, outstr);
@@ -77,11 +77,11 @@ TEST(test_wallet, wallet_setDefaultAccount) {
     std::cout << outstr.str() << std::endl;
     EXPECT_TRUE(outstr.str().find("Set default account successfully.") != std::string::npos);
 
-#ifdef ENABLE_MANUAL
+#    ifdef ENABLE_MANUAL
     reset_output();
     api.set_default_account(new_account, "", outstr);
     std::cout << outstr.str() << std::endl;
-#endif
+#    endif
 }
 
 TEST(test_wallet, wallet_resetKeystorePwd) {
@@ -100,7 +100,7 @@ TEST(test_wallet, wallet_resetKeystorePwd) {
     std::cout << outstr.str() << std::endl;
     EXPECT_TRUE(outstr.str().find("No file with public_key xxx") != std::string::npos);
 
-#ifdef ENABLE_MANUAL
+#    ifdef ENABLE_MANUAL
     reset_output();
     std::cout << "--------- TEST HELP ----------" << std::endl;    // NOLINT
     std::cout << "-         old is 123         -" << std::endl;    // NOLINT
@@ -109,6 +109,18 @@ TEST(test_wallet, wallet_resetKeystorePwd) {
     api.reset_keystore_password(new_account_pub_key, outstr);
     EXPECT_TRUE(outstr.str().find("Reset password successfully!") != std::string::npos);
 
+    reset_output();
+    std::cout << "--------- TEST HELP ----------" << std::endl;    // NOLINT
+    std::cout << "-        old is \" \"          -" << std::endl;  // NOLINT
+    std::cout << "- press ENTER(compatibility) -" << std::endl;    // NOLINT
+    std::cout << "-    set to `{ENTER}` false  -" << std::endl;    // NOLINT
+    std::cout << "-    set to `123`     ok     -" << std::endl;    // NOLINT
+    std::cout << "------------------------------" << std::endl;    // NOLINT
+    api.reset_keystore_password(new_account_pub_key, outstr);
+    EXPECT_TRUE(outstr.str().find("Reset password successfully!") != std::string::npos);
+
+#        if 0
+    // not allowed empty now
     reset_output();
     std::cout << "--------- TEST HELP ----------" << std::endl;    // NOLINT
     std::cout << "-        old is \" \"          -" << std::endl;  // NOLINT
@@ -125,27 +137,29 @@ TEST(test_wallet, wallet_resetKeystorePwd) {
     std::cout << "-         set to 123         -" << std::endl;  // NOLINT
     std::cout << "------------------------------" << std::endl;  // NOLINT
     api.reset_keystore_password(new_account_pub_key, outstr);
+    std::cout << outstr.str() << std::endl;
     EXPECT_TRUE(outstr.str().find("Reset password successfully!") != std::string::npos);
-#endif
+#        endif
+#    endif
 }
 
 TEST(test_wallet, wallet_importAccount) {
     init();
 
-#ifdef ENABLE_MANUAL
+#    ifdef ENABLE_MANUAL
     api.import_account(PSWD_PATH, outstr);
     std::cout << outstr.str() << std::endl;
 
     reset_output();
     api.import_account("", outstr);
     std::cout << outstr.str() << std::endl;
-#endif
+#    endif
 }
 
 TEST(test_wallet, wallet_exportAccount) {
     init();
 
-#ifdef ENABLE_MANUAL
+#    ifdef ENABLE_MANUAL
     api.create_account(PSWD_PATH, outstr);
     auto new_account = outstr.str().substr(outstr.str().find("Account Address:") + 17, 46);
     std::cout << "new_account: " << new_account << std::endl;
@@ -157,7 +171,7 @@ TEST(test_wallet, wallet_exportAccount) {
     reset_output();
     api.export_account(new_account, outstr);
     std::cout << outstr.str() << std::endl;
-#endif
+#    endif
 }
 
 #endif

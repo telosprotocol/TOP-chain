@@ -118,15 +118,15 @@ string ApiMethod::get_prikey_from_daemon(std::ostringstream & out_str) {
     try {
         auto hex_ed_key = token_response_json["private_key"].asString();
         auto account = token_response_json["account"].asString();
-        string base64_pri;
+        string pri_key;
         if (!hex_ed_key.empty()) {
             top::base::xvaccount_t _vaccount(account);
             if (_vaccount.is_eth_address())
                 get_eth_file(account);
             std::string path = g_keystore_dir + '/' + account;
-            base64_pri = decrypt_keystore_by_key(hex_ed_key, path);
+            decrypt_keystore_file_by_kdf_key(hex_ed_key, path, pri_key);
         }
-        return base64_pri;
+        return pri_key;
     } catch (...) {
         return "";
     }
@@ -172,47 +172,21 @@ int ApiMethod::set_prikey_to_daemon(const string & account, const string & pri_k
     return 0;
 }
 
-bool ApiMethod::set_default_prikey(std::ostringstream & out_str, const bool is_query) {
-    if (g_userinfo.account.size() == 0) {
+bool ApiMethod::set_default_prikey(std::ostringstream & out_str) {
+    if (!g_userinfo.account.empty()) {
+        // already have default account. get prikey:
         std::string str_pri = get_prikey_from_daemon(out_str);
         if (!str_pri.empty()) {
             set_g_userinfo(str_pri);
+            return true;
         } else {
-            std::vector<std::string> files = xChainSDK::xcrypto::scan_key_dir(g_keystore_dir);
-            std::vector<std::string> accounts;
-            for (auto file : files) {
-                if (check_account_address(file))
-                    accounts.push_back(file);
-            }
-            if (accounts.size() < 1) {
-                cout << "You do not have a TOP account, please create an account." << std::endl;
-                return false;
-            }
-            if (accounts.size() > 1) {
-                cout << "There are multiple accounts in your wallet, please set a default account first." << std::endl;
-                return false;
-            }
-            if (is_query) {
-                g_userinfo.account = accounts[0];
-                return true;
-            }
-            // cout << "set_default_prikey:" <<accounts[0] <<endl;
-            std::string str_pri = xChainSDK::xcrypto::import_existing_keystore(cache_pw, g_keystore_dir + "/" + accounts[0]);
-            if (str_pri.empty()) {
-                //cout << "Please set a default account by command `topio wallet setDefaultAccount`." << std::endl;
-                return false;
-            }
-            if (xChainSDK::xcrypto::set_g_userinfo(str_pri)) {
-#ifdef DEBUG
-                cout << "[debug]" << g_userinfo.account << " has been set as the default account." << std::endl;
-#endif
-            } else {
-               // cout << "Please set a default account by command `topio wallet setDefaultAccount`." << std::endl;
-                return false;
-            }
+            CONSOLE_INFO("DefaultAccount Locked! Please unlock by command `topio wallet setDefaultAccount`. ");
+            return false;
         }
     }
-    return true;
+
+    CONSOLE_INFO("Please Set a Default Account by command `topio wallet setDefaultAccount`. ");
+    return false;
 }
 
 void ApiMethod::tackle_null_query(std::ostringstream & out_str, std::string null_out) {
@@ -461,21 +435,54 @@ void ApiMethod::set_default_account(const std::string & account, const string & 
         return;
     }
 
-    std::string ed_key;
-    std::string pw = empty_pw;
-    if (set_pw_by_file(pw_path, pw) != 0) {
+    xJson::Value keystore_info;
+    if (parse_keystore(store_path, keystore_info) == false) {
+        CONSOLE_ERROR("keystore parse error, check keystore file %s", store_path.c_str());
         return;
     }
-    ed_key = get_symmetric_ed_key(pw, store_path);
-    std::string str_pri = import_existing_keystore(pw, store_path, true);
-    if (str_pri.empty()) {
-        std::cout << "Please Input Password." << std::endl;
-        pw = input_hiding();
-        ed_key = get_symmetric_ed_key(pw, store_path);
-        str_pri = import_existing_keystore(pw, store_path);
-    }
 
-    if (!str_pri.empty() && set_prikey_to_daemon(account, ed_key, out_str) == 0) {
+    std::string pri_key;
+    std::string kdf_key;
+    __compatibility_begin("try old empty_pw \" \" ");
+    if (decrypt_keystore_by_password(DEPRECATED_OLD_DEFAULT_KEY, keystore_info, pri_key) == false) {
+        // " " password not right.
+    } else {
+        xassert(!pri_key.empty());
+        // continue to set default.
+        if (decrypt_get_kdf_key(DEPRECATED_OLD_DEFAULT_KEY, keystore_info, kdf_key) == false) {
+            xassert(false);  // not possible.
+            return;
+        }
+    }
+    if (pri_key.empty()) {
+        __compatibility_end();
+        std::string pw;
+        if (pw_path.empty()) {
+            std::cout << "Please Input Password." << std::endl;
+            pw = input_hiding();
+        } else {
+            auto result = get_password(keystore_type::account_key, password_type::file_path, pw_path);
+            if (result.first == false) {
+                return;
+            } else {
+                pw = result.second;
+            }
+        }
+        if (decrypt_keystore_by_password(pw, keystore_info, pri_key) == false) {
+            // password not right.
+            out_str << "Wrong Password, Set Default Account Failed." << std::endl;
+            return;
+        }
+        if (decrypt_get_kdf_key(pw, keystore_info, kdf_key) == false) {
+            xassert(false);  // not possible.
+            return;
+        }
+
+        __compatibility_begin("try old empty_pw \" \" ");
+    }
+    __compatibility_end();
+
+    if (!pri_key.empty() && set_prikey_to_daemon(account, kdf_key, out_str) == 0) {
         out_str << "Set default account successfully." << std::endl;
     } else {
         out_str << "Set default account failed." << std::endl;
@@ -500,27 +507,57 @@ void ApiMethod::reset_keystore_password(std::string & public_key, std::ostringst
         out_str << "No file with public_key " << public_key << endl;
         return;
     }
+    // todo ------------------↑ refactor
+    xJson::Value keystore_info;
+    if (parse_keystore(path, keystore_info) == false) {
+        CONSOLE_ERROR("keystore parse error, check keystore file %s", path.c_str());
+        return;
+    }
 
-    std::cout << "Please Input Old Password. If the keystore has no password, press Enter directly." << std::endl;
+    std::string pri_key;
+
+    std::cout << "Please Input Old Password. [If the keystore has no password, press Enter directly.(empty paswd will be deprecated soon)]" << std::endl;
+
+    // COMPATIBILITY:
     auto pw = input_hiding();
-    
-    // if (0 == pw.size()) {
-    //     pw = empty_pw;
-    // }
-
-    auto new_pw = reset_keystore_pw(pw, path, out_str);
-    if (!new_pw.empty()) {
-        std::ostringstream oss;
-        auto default_account = get_account_from_daemon();
-        if (g_userinfo.account == default_account) {
-            std::string ed_key = get_symmetric_ed_key(new_pw, path);
-            if (set_prikey_to_daemon(default_account, ed_key, oss) == 0) {
-                std::cout << "Reset default account successfully." << std::endl;
-            } else {
-                std::cout << "Reset default account failed." << std::endl;
-            }
+    __compatibility_begin("temporarily allow empty password to reset. if old_pw == empty, try \" \" ");
+    if (pw.empty()) {
+        if (decrypt_keystore_by_password(DEPRECATED_OLD_DEFAULT_KEY, keystore_info, pri_key) == false) {
+            // " " password not right.
+        } else {
+            xassert(!pri_key.empty());
+            // continue to reset password.
         }
     }
+    if (pri_key.empty()) {
+        __compatibility_end();
+        // TODO NEXT_NEXT_VERSION can uncomments: or not , not a big deal.
+        // auto pw = input_hiding_no_empty("Password not allow to be empty!");
+        if (decrypt_keystore_by_password(pw, keystore_info, pri_key) == false) {
+            // password not right.
+            out_str << "Old Password Wrong." << std::endl;
+            return;
+        }
+        __compatibility_begin("temporarily allow empty password to reset. if old_pw == empty, try \" \" ");
+    }
+    __compatibility_end();
+
+    std::string new_password;
+    // keystore type is not import here. whatever.
+    auto result = get_password(keystore_type::account_key, password_type::interactive, "", true);
+    if (result.first == false) {
+        xassert(false); // not possible since not allow to use pswd file when reset.
+        return;
+    } else {
+        new_password = result.second;
+    }
+
+    std::ofstream key_file(path, std::ios::out | std::ios::trunc);
+    update_keystore_file(new_password, pri_key, key_file, keystore_info);
+    out_str << "Reset password successfully!." << std::endl;
+    return;
+
+    // todo reset default account.
 }
 
 void ApiMethod::import_account(std::string const & pw_path, std::ostringstream & out_str) {
@@ -567,30 +604,38 @@ void ApiMethod::export_account(const std::string & account, std::ostringstream &
 
         std::string keystore_file = g_keystore_dir + "/" + keys[i];
 
-        std::string str_pri{""};
-        std::string pswd{""};
+        // todo ------------------↑ refactor
+        xJson::Value keystore_info;
+        if (parse_keystore(keystore_file, keystore_info) == false) {
+            CONSOLE_ERROR("keystore parse error, check keystore file %s", keystore_file.c_str());
+            return;
+        }
 
-        __compatibility_begin("try default key first.");
-        pswd = DEPRECATED_OLD_DEFAULT_KEY;
-        str_pri = import_existing_keystore(pswd, keystore_file, true);  // `auto_dec = true` meaning try this without error warning.
-        if (str_pri.empty()) {
+        std::string pri_key;
+        __compatibility_begin("try old empty_pw \" \" ");
+        if (decrypt_keystore_by_password(DEPRECATED_OLD_DEFAULT_KEY, keystore_info, pri_key) == false) {
+            // " " password not right.
+        } else {
+            xassert(!pri_key.empty());
+        }
+        if (pri_key.empty()) {
             __compatibility_end();
+            std::string pw;
             std::cout << "Please Input Password." << std::endl;
-            pswd = input_hiding();
-
-            str_pri = import_existing_keystore(pswd, keystore_file);
-            if (str_pri.empty()) {
-                out_str << "Password error!" << std::endl;
+            pw = input_hiding();
+            if (decrypt_keystore_by_password(pw, keystore_info, pri_key) == false) {
+                // password not right.
+                out_str << "Wrong Password, Export Account Failed." << std::endl;
                 return;
             }
-            __compatibility_begin("try default key first.");
+            __compatibility_begin("try old empty_pw \" \" ");
         }
         __compatibility_end();
 
         out_str << "Export successfully.\n" << std::endl;
         out_str << "Keystore file: " << keystore_file << std::endl;
         out_str << "Account Address: " << account << std::endl;
-        out_str << "Private-Key: " << str_pri << "\n\n";
+        out_str << "Private-Key: " << pri_key << "\n\n";
 
         std::ifstream keyfile(keystore_file, std::ios::in);
         if (!keyfile) {
@@ -654,26 +699,61 @@ int ApiMethod::set_default_miner(const std::string & pub_key, const std::string 
         return -1;
     }
 
-    std::string base64_pri;
-    std::string hex_pri_token;
-    std::string pw = empty_pw;
-    if (set_pw_by_file(pw_path, pw) != 0) {
+    // todo ------------------↑ refactor
+    xJson::Value keystore_info;
+    if (parse_keystore(target_kf, keystore_info) == false) {
+        CONSOLE_ERROR("keystore parse error, check keystore file %s", target_kf.c_str());
         return -1;
     }
-    // do not store private_key directly, using pri_token instend
-    hex_pri_token = get_symmetric_ed_key(pw, target_kf);
-    base64_pri = import_existing_keystore(pw, target_kf, true);
-    if (base64_pri.empty()) {
-        std::cout << "Please Input Password." << std::endl;
-        pw = input_hiding();
-        hex_pri_token = get_symmetric_ed_key(pw, target_kf);
-        base64_pri = import_existing_keystore(pw, target_kf);
+
+    std::string pri_key;
+    std::string kdf_key;
+    __compatibility_begin("try old empty_pw \" \" ");
+    if (decrypt_keystore_by_password(DEPRECATED_OLD_DEFAULT_KEY, keystore_info, pri_key) == false) {
+        // " " password not right.
+    } else {
+        xassert(!pri_key.empty());
+        // continue to set default.
+        if (decrypt_get_kdf_key(DEPRECATED_OLD_DEFAULT_KEY, keystore_info, kdf_key) == false) {
+            xassert(false);  // not possible.
+            return -1;
+        }
     }
-    if (base64_pri.empty() || hex_pri_token.empty()) {
+    if (pri_key.empty()) {
+        __compatibility_end();
+        std::string pw;
+        if (pw_path.empty()) {
+            std::cout << "Please Input Password." << std::endl;
+            pw = input_hiding();
+        } else {
+            auto result = get_password(keystore_type::account_key, password_type::file_path, pw_path);
+            if (result.first == false) {
+                return -1;
+            } else {
+                pw = result.second;
+            }
+        }
+        if (decrypt_keystore_by_password(pw, keystore_info, pri_key) == false) {
+            // password not right.
+            out_str << "Wrong Password, Set Default Miner Failed." << std::endl;
+            return -1;
+        }
+        if (decrypt_get_kdf_key(pw, keystore_info, kdf_key) == false) {
+            xassert(false);  // not possible.
+            return -1;
+        }
+
+        __compatibility_begin("try old empty_pw \" \" ");
+    }
+    __compatibility_end();
+
+    if (pri_key.empty() || kdf_key.empty()) {
         out_str << "decrypt private token failed" << std::endl;
         out_str << "Set miner key failed." << std::endl;
         return -1;
     }
+
+    // todo ------------------↓ refactor
 
     std::string extra_config = g_data_dir + "/.extra_conf.json";
     xJson::Value key_info_js;
@@ -697,7 +777,7 @@ int ApiMethod::set_default_miner(const std::string & pub_key, const std::string 
     // expired_time = 0 meaning nerver expired
     // if (set_prikey_to_daemon(target_node_id, base64_pri_key, out_str, 0) != 0) {
     // if (set_prikey_to_daemon(target_node_id, hex_pri_token, out_str, 0) != 0) {
-    if (set_prikey_to_daemon(pub_key, hex_pri_token, out_str, 0) != 0) {
+    if (set_prikey_to_daemon(pub_key, kdf_key, out_str, 0) != 0) {
         // if set worker key target_node_id, will confilict with topcl(account)
         out_str << "keep default miner nfo in cache failed" << std::endl;
         out_str << "Set miner key failed." << std::endl;
@@ -717,31 +797,6 @@ int ApiMethod::set_default_miner(const std::string & pub_key, const std::string 
     os.close();
     out_str << "Set miner key successfully." << std::endl;
     return 0;
-}
-
-void ApiMethod::create_chain_account(std::ostringstream & out_str) {
-    cache_pw = " "; // the password of create account is fixed to be one whitespace
-
-    if (!set_default_prikey(out_str)) {
-        return;
-    }
-    get_token();
-
-    api_method_imp_.create_account(g_userinfo);
-}
-
-void ApiMethod::import_key(std::string & base64_pri, std::ostringstream & out_str) {
-    set_g_userinfo(base64_pri);
-    string dir = "";
-    auto path = create_new_keystore(empty_pw, dir, base64_pri, false);
-    std::cout << "Public Key: " << top::utl::xcrypto_util::get_base64_public_key(g_userinfo.private_key) << std::endl;
-    std::cout << "Keystore File Path: " << path << std::endl;
-    auto ed_key = get_symmetric_ed_key(empty_pw, path);
-    if (set_prikey_to_daemon(g_userinfo.account, ed_key, out_str) == 0) {
-        out_str << g_userinfo.account << ": Import private key successfully." << std::endl;
-    } else {
-        out_str << "Import private key failed." << std::endl;
-    }
 }
 
 void ApiMethod::transfer1(std::string & to, std::string & amount_d, std::string & note, std::string & tx_deposit_d, std::ostringstream & out_str) {
@@ -988,7 +1043,7 @@ void ApiMethod::register_node(const std::string & mortgage_d,
 
 void ApiMethod::query_miner_reward(std::string & target, std::ostringstream & out_str) {
     if (target.empty()) {
-        if (!set_default_prikey(out_str, true)) {
+        if (!set_default_prikey(out_str)) {
             return;
         }
         target = g_userinfo.account;
@@ -1454,6 +1509,15 @@ std::string ApiMethod::input_hiding() {
     return str;
 }
 
+std::string ApiMethod::input_hiding_no_empty(std::string const & empty_msg) {
+    auto input = input_hiding();
+    if (input.empty()) {
+        CONSOLE_ERROR(empty_msg);
+        return input_hiding_no_empty(empty_msg);
+    }
+    return input;
+}
+
 std::string ApiMethod::input_no_hiding() {
     std::string str;
     std::getline(std::cin, str, '\n');
@@ -1462,9 +1526,7 @@ std::string ApiMethod::input_no_hiding() {
 }
 
 std::string ApiMethod::input_same_pswd_twice() {
-    std::string pw1 = input_hiding();
-    // todo if we really need some check password format.
-    // check true or "Console_Error" than input_same_pswd_twice() again
+    std::string pw1 = input_hiding_no_empty("Empty Password not allowed!");
 
     CONSOLE_INFO("Please Input Password Again");
     std::string pw2 = input_hiding();
