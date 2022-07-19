@@ -274,23 +274,23 @@ TEST_F(xcontract_fixture_t, test_verify_common_gasused) {
     EXPECT_FALSE(contract.verify_common(h1, h2));
 }
 
-TEST_F(xcontract_fixture_t, test_is_confirmed) {
-    const char * hash1_hex = "13049bb8cfd97fe2333829f06df37c569db68d42c23097fbac64f2c61471f281";
-    const char * hash2_hex = "98941087c5e71acde89189ef750ee08c7ef265a7d3c2303ef4d07ccaec0de42a";
-    std::error_code ec;
-    auto init_param = top::from_hex(relayer_hex_init_12969999, ec);
-    EXPECT_EQ(ec.value(), 0);
-    auto sync_param = top::from_hex(relayer_hex_output_1270000, ec);
-    EXPECT_EQ(ec.value(), 0);
-    auto hash1 = top::from_hex(hash1_hex, ec);
-    EXPECT_EQ(ec.value(), 0);
-    auto hash2 = top::from_hex(hash2_hex, ec);
-    EXPECT_EQ(ec.value(), 0);
-    EXPECT_TRUE(contract.init(init_param));
-    EXPECT_TRUE(contract.sync(sync_param));
-    EXPECT_FALSE(contract.is_confirmed(hash1));
-    EXPECT_FALSE(contract.is_confirmed(hash2));
-}
+// TEST_F(xcontract_fixture_t, test_is_confirmed) {
+//     const char * hash1_hex = "13049bb8cfd97fe2333829f06df37c569db68d42c23097fbac64f2c61471f281";
+//     const char * hash2_hex = "98941087c5e71acde89189ef750ee08c7ef265a7d3c2303ef4d07ccaec0de42a";
+//     std::error_code ec;
+//     auto init_param = top::from_hex(relayer_hex_init_12969999, ec);
+//     EXPECT_EQ(ec.value(), 0);
+//     auto sync_param = top::from_hex(relayer_hex_output_1270000, ec);
+//     EXPECT_EQ(ec.value(), 0);
+//     auto hash1 = top::from_hex(hash1_hex, ec);
+//     EXPECT_EQ(ec.value(), 0);
+//     auto hash2 = top::from_hex(hash2_hex, ec);
+//     EXPECT_EQ(ec.value(), 0);
+//     EXPECT_TRUE(contract.init(init_param));
+//     EXPECT_TRUE(contract.sync(sync_param));
+//     EXPECT_FALSE(contract.is_confirmed(hash1));
+//     EXPECT_FALSE(contract.is_confirmed(hash2));
+// }
 
 static xeth_block_header_t create_header(h256 parent_hash, uint32_t number, uint32_t difficulty) {
     xeth_block_header_t header;
@@ -568,40 +568,40 @@ TEST_F(xcontract_fixture_t,  execute_get_height) {
     EXPECT_EQ(h, 12970000);
 }
 
-TEST_F(xcontract_fixture_t,  execute_is_confirmed) {
-    contract_runtime::evm::sys_contract_precompile_output output;
-    contract_runtime::evm::sys_contract_precompile_error err;
-    std::error_code ec;
-    auto init_param = top::from_hex(relayer_hex_init_12969999, ec);
-    EXPECT_EQ(ec.value(), 0);
-    EXPECT_TRUE(contract.init(init_param));
-    auto sync_param = top::from_hex(relayer_hex_output_sync_1270000_tx_data, ec);
-    EXPECT_EQ(ec.value(), 0);
-    EXPECT_TRUE(contract.execute(sync_param, 0, context, false, statectx_observer, output, err));
-    auto is_confirmed_param = top::from_hex(relayer_hex_output_is_confirmed_tx_data, ec);
-    EXPECT_EQ(ec.value(), 0);
-    EXPECT_TRUE(contract.execute(is_confirmed_param, 0, context, false, statectx_observer, output, err));
-    EXPECT_EQ(evm_common::fromBigEndian<u256>(output.output), 0);
-}
+// TEST_F(xcontract_fixture_t,  execute_is_confirmed) {
+//     contract_runtime::evm::sys_contract_precompile_output output;
+//     contract_runtime::evm::sys_contract_precompile_error err;
+//     std::error_code ec;
+//     auto init_param = top::from_hex(relayer_hex_init_12969999, ec);
+//     EXPECT_EQ(ec.value(), 0);
+//     EXPECT_TRUE(contract.init(init_param));
+//     auto sync_param = top::from_hex(relayer_hex_output_sync_1270000_tx_data, ec);
+//     EXPECT_EQ(ec.value(), 0);
+//     EXPECT_TRUE(contract.execute(sync_param, 0, context, false, statectx_observer, output, err));
+//     auto is_confirmed_param = top::from_hex(relayer_hex_output_is_confirmed_tx_data, ec);
+//     EXPECT_EQ(ec.value(), 0);
+//     EXPECT_TRUE(contract.execute(is_confirmed_param, 0, context, false, statectx_observer, output, err));
+//     EXPECT_EQ(evm_common::fromBigEndian<u256>(output.output), 0);
+// }
 
-TEST_F(xcontract_fixture_t,  execute_is_confirmed_extract_error) {
-    contract_runtime::evm::sys_contract_precompile_output output;
-    contract_runtime::evm::sys_contract_precompile_error err;
-    std::error_code ec;
-    auto init_param = top::from_hex(relayer_hex_init_12969999, ec);
-    EXPECT_EQ(ec.value(), 0);
-    EXPECT_TRUE(contract.init(init_param));
-    auto sync_param = top::from_hex(relayer_hex_output_sync_1270000_tx_data, ec);
-    EXPECT_EQ(ec.value(), 0);
-    EXPECT_TRUE(contract.execute(sync_param, 0, context, false, statectx_observer, output, err));
+// TEST_F(xcontract_fixture_t,  execute_is_confirmed_extract_error) {
+//     contract_runtime::evm::sys_contract_precompile_output output;
+//     contract_runtime::evm::sys_contract_precompile_error err;
+//     std::error_code ec;
+//     auto init_param = top::from_hex(relayer_hex_init_12969999, ec);
+//     EXPECT_EQ(ec.value(), 0);
+//     EXPECT_TRUE(contract.init(init_param));
+//     auto sync_param = top::from_hex(relayer_hex_output_sync_1270000_tx_data, ec);
+//     EXPECT_EQ(ec.value(), 0);
+//     EXPECT_TRUE(contract.execute(sync_param, 0, context, false, statectx_observer, output, err));
 
-    std::string str{relayer_hex_output_is_confirmed_tx_data};
-    str = {str.begin(), str.begin() + 70};
-    auto is_confirmed_param = top::from_hex(str, ec);
-    EXPECT_EQ(ec.value(), 0);
-    EXPECT_FALSE(contract.execute(is_confirmed_param, 0, context, false, statectx_observer, output, err));
-    EXPECT_EQ(evm_common::fromBigEndian<u256>(output.output), 0);
-}
+//     std::string str{relayer_hex_output_is_confirmed_tx_data};
+//     str = {str.begin(), str.begin() + 70};
+//     auto is_confirmed_param = top::from_hex(str, ec);
+//     EXPECT_EQ(ec.value(), 0);
+//     EXPECT_FALSE(contract.execute(is_confirmed_param, 0, context, false, statectx_observer, output, err));
+//     EXPECT_EQ(evm_common::fromBigEndian<u256>(output.output), 0);
+// }
 
 TEST_F(xcontract_fixture_t, test_release) {
     // num = 40000
