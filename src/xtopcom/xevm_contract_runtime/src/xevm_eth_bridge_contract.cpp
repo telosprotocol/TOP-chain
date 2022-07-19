@@ -58,13 +58,13 @@ bool xtop_evm_eth_bridge_contract::execute(xbytes_t input,
     // init(bytes,string)                    => 6158600d
     // sync(bytes)                           => 7eefcfa2
     // get_height()                          => b15ad2e8
-    // is_confirmed(bytes32)                 => efd8beed
+    // is_confirmed(uint256,bytes32)         => d398572f
     // reset()                               => d826f88f
     //--------------------------------------------------
     constexpr uint32_t method_id_init{0x6158600d};
     constexpr uint32_t method_id_sync{0x7eefcfa2};
     constexpr uint32_t method_id_get_height{0xb15ad2e8};
-    constexpr uint32_t method_id_is_confirmed{0xefd8beed};
+    constexpr uint32_t method_id_is_confirmed{0xd398572f};
     constexpr uint32_t method_id_reset{0xd826f88f};
 
     // check param
@@ -178,7 +178,13 @@ bool xtop_evm_eth_bridge_contract::execute(xbytes_t input,
         return true;
     }
     case method_id_is_confirmed: {
-        uint32_t confirmed{0};
+        auto height = abi_decoder.extract<u256>(ec);
+        if (ec) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
+            xwarn("[xtop_evm_eth_bridge_contract::execute] abi_decoder.extract bytes error");
+            return false;
+        }
         auto hash_bytes = abi_decoder.decode_bytes(32, ec);
         if (ec) {
             err.fail_status = precompile_error::Fatal;
@@ -186,7 +192,8 @@ bool xtop_evm_eth_bridge_contract::execute(xbytes_t input,
             xwarn("[xtop_evm_eth_bridge_contract::execute] abi_decoder.extract bytes error");
             return false;
         }
-        if (is_confirmed(hash_bytes)) {
+        uint32_t confirmed{0};
+        if (is_confirmed(height, hash_bytes)) {
             confirmed = 1;
         }
         output.exit_status = Returned;
@@ -445,21 +452,15 @@ void xtop_evm_eth_bridge_contract::reset() {
     set_height(0);
 }
 
-bool xtop_evm_eth_bridge_contract::is_confirmed(const xbytes_t & hash_bytes) {
+bool xtop_evm_eth_bridge_contract::is_confirmed(const u256 height, const xbytes_t & hash_bytes) {
     h256 hash = static_cast<h256>(hash_bytes);
-    eth::xeth_block_header_t header;
-    bigint sumOfDifficult{0};
-    if (!get_header(hash, header, sumOfDifficult)) {
-        xwarn("[xtop_evm_eth_bridge_contract::is_confirmed] get_header failed, hash: %s", hash.hex().c_str());
+    h256 origin_hash;
+    if (!get_hash(height, origin_hash)) {
+        xwarn("[xtop_evm_eth_bridge_contract::is_confirmed] get hash failed");
         return false;
     }
-    bigint cur_height{0};
-    if (!get_height(cur_height)) {
-        xwarn("[xtop_evm_eth_bridge_contract::is_confirmed] get current height failed, height");
-        return false;
-    }
-    if (cur_height < header.number() + ConfirmHeight) {
-        xwarn("[xtop_evm_eth_bridge_contract::is_confirmed] height not confirmed: %s, %s, limit: %d", cur_height.str().c_str(), header.number().str().c_str(), ConfirmHeight);
+    if (origin_hash != hash) {
+        xwarn("[xtop_evm_eth_bridge_contract::is_confirmed] hash cmp failed, %s, %s", hash.hex().c_str(), origin_hash.hex().c_str());
         return false;
     }
 
