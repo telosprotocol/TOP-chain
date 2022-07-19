@@ -14,27 +14,12 @@
 namespace top {
 
 namespace data {
-
-    struct xrelay_block_save_leaf {
-        xrelay_block_save_leaf() = default;
-        enum_block_cache_type m_type;
-        evm_common::h256 m_block_hash;
-    };
-
     class xrelay_block_store {
 
     public:
-        xrelay_block_store() = default;
-        static xrelay_block_store& get_instance()
-        {
-            static xrelay_block_store m_instance_store;
-            return m_instance_store;
-        }
-
-    public:
-        bool get_all_poly_block_hash_list_from_cache(const xrelay_block& tx_block, std::map<uint64_t, evm_common::h256>& block_hash_map);
-        bool get_all_leaf_block_hash_list_from_cache(const xrelay_block& poly_block, std::vector<evm_common::h256>& leaf_hash_vector, bool include_self);
-        bool load_block_hash_from_db(uint64_t load_height, xrelay_block_save_leaf& block_leaf);
+        static bool get_all_poly_block_hash_list_from_cache(const xrelay_block& tx_block, std::map<uint64_t, evm_common::h256>& block_hash_map);
+        static bool get_all_leaf_block_hash_list_from_cache(const xrelay_block& poly_block, std::vector<evm_common::h256>& leaf_hash_vector, bool include_self);
+        static bool load_block_hash_from_db(uint64_t load_height, top::data::xrelay_block  &db_relay_block);
     };
 
 }
