@@ -151,6 +151,7 @@ class xdatamock_table : public base::xvaccount_t {
         cs_para.set_latest_blocks(get_cert_block(), get_lock_block(), get_commit_block());
         cs_para.set_tableblock_consensus_para(1,"1",1,1);
         cs_para.set_clock(clock);
+        cs_para.set_timeofday_s((uint64_t)base::xtime_utl::gettimeofday());
         return cs_para;
     }
 
