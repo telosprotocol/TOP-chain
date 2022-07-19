@@ -132,7 +132,7 @@ void xtop_relay_make_block_contract::on_receive_cross_txs(std::string const & da
 
 void xtop_relay_make_block_contract::update_next_block_clock_for_a_type(const string & key, uint64_t clock) {
     STRING_SET(key, std::to_string(clock));
-    xdbg("xtop_relay_make_block_contract::update_next_tx_block_clock key:%s, next:%llu", key.c_str() ,clock);
+    xdbg("xtop_relay_make_block_contract::update_next_tx_block_clock key:%s, next:%llu", key.c_str(), clock);
 }
 
 bool xtop_relay_make_block_contract::update_wrap_phase(uint64_t last_height) {
@@ -323,16 +323,21 @@ bool xtop_relay_make_block_contract::build_tx_relay_block(const evm_common::h256
         transactions.push_back(cross_tx.tx);
         receipts.push_back(cross_tx.receipt);
 #ifndef CROSS_TX_DBG
-        auto target_addr = common::xaccount_address_t::build_from(cross_tx.tx.get_to(), base::enum_vaccount_addr_type_secp256k1_evm_user_account).to_string();
-        if (target_addr == eth_cross_addr) {
-            chain_bits |= RELAY_CHAIN_BIT_ETH;
-        } else if (target_addr == bsc_cross_addr) {
-            chain_bits |= RELAY_CHAIN_BIT_BSC;
-        } else {
-            XCONTRACT_ENSURE(false, "invalid cross addr:%s" + target_addr);
-            xerror("xtop_relay_make_block_contract::build_tx_relay_block invalid cross addr:%s,tx:%s",
-                   target_addr.c_str(),
-                   top::to_hex_prefixed(top::to_bytes(cross_tx.tx.get_tx_hash())).c_str());
+        bool matched = false;
+        for (auto & log : cross_tx.receipt.get_logs()) {
+            if (log.address.to_hex_string() == eth_cross_addr) {
+                chain_bits |= RELAY_CHAIN_BIT_ETH;
+                matched = true;
+                break;
+            } else if (log.address.to_hex_string() == bsc_cross_addr) {
+                chain_bits |= RELAY_CHAIN_BIT_BSC;
+                matched = true;
+                break;
+            }
+        }
+        if (!matched) {
+            XCONTRACT_ENSURE(false, "invalid cross addr");
+            xerror("xtop_relay_make_block_contract::build_tx_relay_block invalid cross tx:%s", top::to_hex_prefixed(top::to_bytes(cross_tx.tx.get_tx_hash())).c_str());
         }
 #else
         chain_bits |= RELAY_CHAIN_BIT_ETH;
@@ -346,7 +351,9 @@ bool xtop_relay_make_block_contract::build_tx_relay_block(const evm_common::h256
 }
 
 const std::string xtop_relay_make_block_contract::block_hash_chainid_to_string(const evm_common::h256 & block_hash, const evm_common::u256 & chain_bits) {
-    xdbg("xtop_relay_make_block_contract::block_hash_chainid_to_string block hash:%s,chain_bits:%s", block_hash.hex().c_str(), evm_common::toHex((evm_common::h256)chain_bits).c_str());
+    xdbg("xtop_relay_make_block_contract::block_hash_chainid_to_string block hash:%s,chain_bits:%s",
+         block_hash.hex().c_str(),
+         evm_common::toHex((evm_common::h256)chain_bits).c_str());
     evm_common::RLPStream rlp_stream;
     rlp_stream.appendList(2);
     rlp_stream << block_hash;
@@ -365,7 +372,9 @@ void xtop_relay_make_block_contract::block_hash_chainid_from_string(const std::s
 
     block_hash = (evm_common::h256)_r[0];
     chain_bits = (evm_common::u256)_r[1];
-    xdbg("xtop_relay_make_block_contract::block_hash_chainid_from_string block hash:%s,chain_bits:%s", block_hash.hex().c_str(), evm_common::toHex((evm_common::h256)chain_bits).c_str());
+    xdbg("xtop_relay_make_block_contract::block_hash_chainid_from_string block hash:%s,chain_bits:%s",
+         block_hash.hex().c_str(),
+         evm_common::toHex((evm_common::h256)chain_bits).c_str());
 }
 
 NS_END4

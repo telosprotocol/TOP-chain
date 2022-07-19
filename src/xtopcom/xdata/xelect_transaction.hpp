@@ -207,6 +207,7 @@ public:
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(relay_election_interval);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_addr_for_eth);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_addr_for_bsc);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_topic);
 #endif
 
         std::vector<std::string> committee_addrs = xrootblock_t::get_tcc_initial_committee_addr();

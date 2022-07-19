@@ -445,6 +445,7 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(application_contract_code_max_len, std::ui
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(contract_call_contracts_num, std::uint32_t, critical, 25, 1, std::numeric_limits<uint32_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_addr_for_eth, char const *, critical, "", "", "");
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_addr_for_bsc, char const *, critical, "", "", "");
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_topic, char const *, critical, "", "", "");
 
 /* begin of offchain parameters */
 XDECLARE_CONFIGURATION(zone_count, std::uint32_t, 1);

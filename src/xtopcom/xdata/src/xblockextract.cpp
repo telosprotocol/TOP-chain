@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <string>
+#include "xbasic/xhex.h"
 #include "xdata/xblockextract.h"
 #include "xdata/xblockbuild.h"
 #include "xdata/xnative_contract_address.h"
@@ -289,15 +290,27 @@ void xblockextract_t::get_tableheader_extra_from_block(base::xvblock_t* _block, 
     }
 }
 
-void xblockextract_t::unpack_crosschain_txs(base::xvblock_t* _block, xrelayblock_crosstx_infos_t & infos, std::error_code & ec) {
+bool xblockextract_t::is_cross_tx(const data::xeth_store_receipt_t & evm_result, const std::string & cross_topic, const std::string & eth_cross_addr, const std::string & bsc_cross_addr) {
+    if (evm_result.get_tx_status() != data::enum_ethreceipt_status::ethreceipt_status_successful) {
+        return false;
+    }
 #ifndef CROSS_TX_DBG
+    for (auto & log : evm_result.get_logs()) {
+        std::string topic_hex = top::to_hex_prefixed(log.topics[0].asBytes());
+        if ((topic_hex == cross_topic) && (log.address.to_hex_string() == eth_cross_addr || log.address.to_hex_string() == bsc_cross_addr)) {
+            return true;
+        }
+    }
+    return false;
+#else
+    return true;
+#endif
+}
+
+void xblockextract_t::unpack_crosschain_txs(base::xvblock_t* _block, xrelayblock_crosstx_infos_t & infos, std::error_code & ec) {
     auto eth_cross_addr = XGET_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_addr_for_eth);
     auto bsc_cross_addr = XGET_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_addr_for_bsc);
-    if (eth_cross_addr.empty() && bsc_cross_addr.empty()) {
-        xdbg("xblockextract_t::unpack_crosschain_txs cross addr empty");
-        return;
-    }
-#endif
+    auto cross_topic = XGET_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_topic);
     data::xblock_t * block = dynamic_cast<data::xblock_t*>(_block);
     if (nullptr == block) {
         ec = common::error::xerrc_t::invalid_block;
@@ -316,23 +329,6 @@ void xblockextract_t::unpack_crosschain_txs(base::xvblock_t* _block, xrelayblock
             continue;
         }
 
-        data::xtransaction_ptr_t _rawtx = block->query_raw_transaction(txaction.get_tx_hash());
-        if (nullptr == _rawtx) {
-            ec = common::error::xerrc_t::invalid_block;
-            xerror("xblockextract_t::unpack_crosschain_txs tx nullptr.");
-            return;
-        }
-
-        if (_rawtx->get_tx_version() != data::xtransaction_version_3) {
-            continue;
-        }        
-
-#ifndef CROSS_TX_DBG
-        if (_rawtx->get_target_addr() != eth_cross_addr && _rawtx->get_target_addr() != bsc_cross_addr) {
-            xdbg("xblockextract_t::unpack_crosschain_txs tx:%s is not a cross chain tx", _rawtx->dump().c_str());
-            continue;
-        }
-#endif
         data::xeth_store_receipt_t evm_result;
         auto ret = txaction.get_evm_transaction_receipt(evm_result);
         if (!ret) {
@@ -341,9 +337,16 @@ void xblockextract_t::unpack_crosschain_txs(base::xvblock_t* _block, xrelayblock
             return;
         }
 
-        if (evm_result.get_tx_status() != data::enum_ethreceipt_status::ethreceipt_status_successful) {
-            xinfo("xblockextract_t::unpack_crosschain_txs filter failtx. tx=%s", _rawtx->dump().c_str());
+        if (!is_cross_tx(evm_result, cross_topic, eth_cross_addr, bsc_cross_addr)) {
+            xdbg("xblockextract_t::unpack_crosschain_txs topic not match.tx:%s is not a cross chain tx", top::to_hex_prefixed(top::to_bytes(txaction.get_tx_hash())).c_str());
             continue;
+        }
+
+        data::xtransaction_ptr_t _rawtx = block->query_raw_transaction(txaction.get_tx_hash());
+        if (nullptr == _rawtx) {
+            ec = common::error::xerrc_t::invalid_block;
+            xerror("xblockextract_t::unpack_crosschain_txs tx nullptr.");
+            return;
         }
 
         xeth_transaction_t ethtx = _rawtx->to_eth_tx(ec);
