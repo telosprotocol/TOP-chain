@@ -447,6 +447,7 @@ void ApiMethod::set_default_account(const std::string & account, const string & 
         // " " password not right.
     } else {
         xassert(!pri_key.empty());
+        std::cout << "It is recommended to set a password to protect the keystore file!" << std::endl;
         // continue to set default.
         if (decrypt_get_kdf_key(DEPRECATED_OLD_DEFAULT_KEY, keystore_info, kdf_key) == false) {
             xassert(false);  // not possible.
@@ -523,6 +524,7 @@ void ApiMethod::reset_keystore_password(std::string & public_key, std::ostringst
         if (decrypt_keystore_by_password(DEPRECATED_OLD_DEFAULT_KEY, keystore_info, pri_key) == false) {
             // " " password not right.
         } else {
+            std::cout << "It is recommended to set a password to protect the keystore file!" << std::endl;
             xassert(!pri_key.empty());
             // continue to reset password.
         }
@@ -614,6 +616,7 @@ void ApiMethod::export_account(const std::string & account, std::ostringstream &
         if (decrypt_keystore_by_password(DEPRECATED_OLD_DEFAULT_KEY, keystore_info, pri_key) == false) {
             // " " password not right.
         } else {
+            std::cout << "It is recommended to set a password to protect the keystore file!" << std::endl;
             xassert(!pri_key.empty());
         }
         if (pri_key.empty()) {
@@ -710,6 +713,7 @@ int ApiMethod::set_default_miner(const std::string & pub_key, const std::string 
     if (decrypt_keystore_by_password(DEPRECATED_OLD_DEFAULT_KEY, keystore_info, pri_key) == false) {
         // " " password not right.
     } else {
+        std::cout << "It is recommended to set a password to protect the keystore file!" << std::endl;
         xassert(!pri_key.empty());
         // continue to set default.
         if (decrypt_get_kdf_key(DEPRECATED_OLD_DEFAULT_KEY, keystore_info, kdf_key) == false) {
