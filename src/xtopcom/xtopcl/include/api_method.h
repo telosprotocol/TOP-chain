@@ -144,7 +144,6 @@ public:
     int set_userinfo();
     void change_trans_mode(bool use_http);
     void set_keystore_path(const std::string & data_dir);
-    bool check_password(bool is_reset_pw = false);
 
 // private:
     std::string input_same_pswd_twice();
@@ -177,13 +176,6 @@ private:
     int get_eth_file(std::string& account);
 private:
     api_method_imp api_method_imp_;
-
-    // #[deprecated]
-    std::string cache_pw{" "};
-    // #[deprecated]
-    const std::string empty_pw{" "};
-    // #[deprecated]
-    bool is_account{false};
 };
 
 }  // namespace xChainSDK
