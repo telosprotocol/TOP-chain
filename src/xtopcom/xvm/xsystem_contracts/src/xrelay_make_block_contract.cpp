@@ -17,22 +17,6 @@
 
 NS_BEG4(top, xvm, system_contracts, relay)
 
-// relay wrap phase
-#define RELAY_WRAP_PHASE_0 "0"
-#define RELAY_WRAP_PHASE_1 "1"
-#define RELAY_WRAP_PHASE_2 "2"
-#define RELAY_WRAP_PHASE_INIT "2"
-
-// properties of relay wrap block
-XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_NEXT_POLY_BLOCK_LOGIC_TIME = "@0";
-XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_NEXT_TX_BLOCK_LOGIC_TIME = "@1";
-XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_LAST_HEIGHT = "@2";
-XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_LAST_HASH = "@3";
-XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_LAST_EPOCH_ID = "@4";
-XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_CROSS_TXS = "@5";
-XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_BLOCK_HASH_LAST_ELECT_TO_LAST_POLY_LIST = "@6";
-XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_BLOCK_HASH_FROM_LAST_POLY_LIST = "@7";
-
 #define RELAY_CHAIN_BIT_ETH (0x01)
 #define RELAY_CHAIN_BIT_BSC (0x02)
 
@@ -324,6 +308,7 @@ bool xtop_relay_make_block_contract::build_tx_relay_block(const evm_common::h256
         receipts.push_back(cross_tx.receipt);
 #ifndef CROSS_TX_DBG
         bool matched = false;
+        xdbg("eth_cross_addr:%s,bsc_cross_addr:%s",eth_cross_addr.c_str(), bsc_cross_addr.c_str());
         for (auto & log : cross_tx.receipt.get_logs()) {
             if (log.address.to_hex_string() == eth_cross_addr) {
                 chain_bits |= RELAY_CHAIN_BIT_ETH;
@@ -334,10 +319,11 @@ bool xtop_relay_make_block_contract::build_tx_relay_block(const evm_common::h256
                 matched = true;
                 break;
             }
+            xdbg("log.address.to_hex_string():%s,eth_cross_addr:%s,bsc_cross_addr:%s", log.address.to_hex_string().c_str(), eth_cross_addr.c_str(), bsc_cross_addr.c_str());
         }
         if (!matched) {
-            XCONTRACT_ENSURE(false, "invalid cross addr");
             xerror("xtop_relay_make_block_contract::build_tx_relay_block invalid cross tx:%s", top::to_hex_prefixed(top::to_bytes(cross_tx.tx.get_tx_hash())).c_str());
+            XCONTRACT_ENSURE(false, "invalid cross addr");
         }
 #else
         chain_bits |= RELAY_CHAIN_BIT_ETH;
