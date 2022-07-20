@@ -180,7 +180,7 @@ bool ApiMethod::set_default_prikey(std::ostringstream & out_str) {
             set_g_userinfo(str_pri);
             return true;
         } else {
-            CONSOLE_INFO("DefaultAccount Locked! Please unlock by command `topio wallet setDefaultAccount`. ");
+            CONSOLE_INFO("Please Set a Default Account by command `topio wallet setDefaultAccount`. ");
             return false;
         }
     }
@@ -515,8 +515,7 @@ void ApiMethod::reset_keystore_password(std::string & public_key, std::ostringst
 
     std::string pri_key;
 
-    std::cout << "Please Input Old Password. [If the keystore has no password, press Enter directly.(empty paswd will be deprecated soon)]" << std::endl;
-
+    std::cout << "Please Input Old Password. [If the keystore has no password, press Enter directly.(empty password will be deprecated soon)]" << std::endl;
     // COMPATIBILITY:
     auto pw = input_hiding();
     __compatibility_begin("temporarily allow empty password to reset. if old_pw == empty, try \" \" ");
@@ -1572,47 +1571,6 @@ std::pair<bool, std::string> ApiMethod::get_password(keystore_type const & keys_
     return std::make_pair(true, get_pw);
 }
 
-// #[deprecated]
-bool ApiMethod::check_password(bool is_reset_pw) {
-    if (is_reset_pw) {
-        cout << "Please set a new password. The password must consist of Numbers and Letters, 8 to 16 characters. Pressing Ctrl+C can exit the command." << endl;
-    } else if (is_account) {
-        std::cout << "Please set a password for the account keystore file. The password must consist of Numbers and Letters, 8 to 16 characters." << std::endl;
-    } else {
-        std::cout << "Please set a password for the keystore file. The password must consist of Numbers and Letters, 8 to 16 characters." << std::endl;
-    }
-    g_pw_hint = "";  // set to default empty
-    auto pw1 = input_hiding();
-    if (pw1.size() < 8 || pw1.size() > 16) {
-        std::cout << "Password error!" << std::endl;
-        return check_password();
-    }
-    bool digit_included{false};
-    bool letter_included{false};
-    for (auto c : pw1) {
-        if (c >= '0' && c <= '9')
-            digit_included = true;
-        if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
-            letter_included = true;
-    }
-    if (!(digit_included && letter_included)) {
-        std::cout << "Password error!" << std::endl;
-        return check_password();
-    }
-
-    std::cout << "Please Input Password Again" << std::endl;
-    auto pw2 = input_hiding();
-
-    if (pw1 != pw2) {
-        std::cout << "Passwords are not the same." << std::endl;
-        return check_password();
-    } else {
-        cache_pw = pw1;
-        std::cout << "Please set a password hint! If don't, there will be no hint when you forget your password." << std::endl;
-        g_pw_hint = input_no_hiding();
-        return true;
-    }
-}
 int ApiMethod::input_pri_key(std::string& pri_str) {
     cout<<"Please input private key."<<endl;
     std::string pri_key = input_hiding();

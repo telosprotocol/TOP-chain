@@ -453,7 +453,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     std::string miner_default_pub_key;
     std::string miner_pw_path;
     setminerkey->add_option("publickey", miner_default_pub_key, "Public key")->required();
-    setminerkey->add_option("-f,--pwd_file_path", miner_pw_path, "The path of file that contains password string  if you have set it.");
+    setminerkey->add_option("-f,--pwd_file_path", miner_pw_path, "The path of file that contains password string");
     setminerkey->callback(std::bind(&ApiMethod::set_default_miner, &topcl.api, std::ref(miner_default_pub_key), std::ref(miner_pw_path), std::ref(out_str)));
 
     // query miner info
