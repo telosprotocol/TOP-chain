@@ -55,7 +55,7 @@ if [[ ${balance} != "balance: 2999997000.000000 TOP" ]];then
     exit -1
 fi
 sleep 1
-login_info=$(./topio node safebox; ./topio wallet setDefaultAccount T00000Lhj29VReFAT958ZqFWZ2ZdMLot2PS5D5YC)
+login_info=$(./topio node safebox; ./topio wallet setDefaultAccount T00000Lhj29VReFAT958ZqFWZ2ZdMLot2PS5D5YC -f ./ci_pswd)
 login_ret=$(echo "${login_info}"|grep "successfully"|wc -l)
 if [[ ${login_ret} -eq 1 ]];then
     echo "set default account success"
@@ -66,7 +66,7 @@ else
     exit -1
 fi
 sleep 1
-create_info=$(./topio wallet createaccount)
+create_info=$(./topio wallet createaccount -f ./ci_pswd)
 addr=$(echo "${create_info}" | grep -a "Account Address:"|awk -F ':' '{print $2}')
 if [[ -z ${addr} ]];then
     echo "create account fail, see follow output:"
