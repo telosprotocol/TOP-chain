@@ -261,7 +261,7 @@ bool xtop_relay_make_block_contract::build_elect_relay_block(const evm_common::h
     pop_tx_block_hashs(XPROPERTY_RELAY_BLOCK_HASH_LAST_ELECT_TO_LAST_POLY_LIST, false, tx_block_hash_vec, chain_bits);
     pop_tx_block_hashs(XPROPERTY_RELAY_BLOCK_HASH_FROM_LAST_POLY_LIST, false, tx_block_hash_vec, chain_bits);
 
-    data::xrelay_block relay_block = data::xrelay_block(prev_hash, block_height, clock * 10, chain_bits, reley_election_group);
+    data::xrelay_block relay_block = data::xrelay_block(prev_hash, block_height, base::clock_to_gmtime(clock), chain_bits, reley_election_group);
     if (!tx_block_hash_vec.empty()) {
         relay_block.make_merkle_root_hash(tx_block_hash_vec);
     }
@@ -287,7 +287,7 @@ bool xtop_relay_make_block_contract::build_poly_relay_block(const evm_common::h2
         return false;
     }
 
-    data::xrelay_block relay_block = data::xrelay_block(prev_hash, block_height, clock * 10, chain_bits);
+    data::xrelay_block relay_block = data::xrelay_block(prev_hash, block_height, base::clock_to_gmtime(clock), chain_bits);
     relay_block.make_merkle_root_hash(tx_block_hash_vec);
     proc_created_relay_block(relay_block, clock, 0);
     return true;
@@ -345,7 +345,7 @@ bool xtop_relay_make_block_contract::build_tx_relay_block(const evm_common::h256
         xdbg("xtop_relay_make_block_contract::build_tx_relay_block height:%llu add tx:%s", block_height, top::to_hex_prefixed(top::to_bytes(cross_tx.tx.get_tx_hash())).c_str());
     }
 
-    data::xrelay_block relay_block = data::xrelay_block(prev_hash, block_height, clock * 10, chain_bits, transactions, receipts);
+    data::xrelay_block relay_block = data::xrelay_block(prev_hash, block_height, base::clock_to_gmtime(clock), chain_bits, transactions, receipts);
     proc_created_relay_block(relay_block, clock, chain_bits);
     return true;
 }
