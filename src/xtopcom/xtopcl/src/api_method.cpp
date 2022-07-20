@@ -173,8 +173,8 @@ int ApiMethod::set_prikey_to_daemon(const string & account, const string & pri_k
 }
 
 bool ApiMethod::set_default_prikey(std::ostringstream & out_str) {
-    if (!g_userinfo.account.empty()) {
-        // already have default account. get prikey:
+    if (g_userinfo.account.empty()) {
+        // if daemon already have default account. get prikey:
         std::string str_pri = get_prikey_from_daemon(out_str);
         if (!str_pri.empty()) {
             set_g_userinfo(str_pri);
@@ -185,8 +185,7 @@ bool ApiMethod::set_default_prikey(std::ostringstream & out_str) {
         }
     }
 
-    CONSOLE_INFO("Please Set a Default Account by command `topio wallet setDefaultAccount`. ");
-    return false;
+    return true;
 }
 
 void ApiMethod::tackle_null_query(std::ostringstream & out_str, std::string null_out) {
