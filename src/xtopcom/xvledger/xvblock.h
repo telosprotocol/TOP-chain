@@ -115,6 +115,8 @@ namespace top
 
         constexpr uint64_t TOP_BEGIN_GMTIME = 1573189200;//1573189200 == 2019-11-08 05:00:00  UTC
 
+        uint64_t clock_to_gmtime(uint64_t clock);
+
         //The definition of version defintion for binary of node and block:[8:Features][8:MAJOR][8:MINOR][8:PATCH]
             //Features: added new featurs that need most node agree then make it effect,refer BIP8 spec
             //MAJOR： version when make incompatible API changes

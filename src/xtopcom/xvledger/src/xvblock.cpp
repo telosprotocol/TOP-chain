@@ -18,6 +18,9 @@ namespace top
 {
     namespace base
     {
+        uint64_t clock_to_gmtime(uint64_t clock) {
+            return clock * 10 + TOP_BEGIN_GMTIME;
+        }
         //////////////////////////////////xvblock and related implementation /////////////////////////////
         xvheader_t::xvheader_t()  //just use when seralized from db/store
             :xobject_t(enum_xobject_type_vheader)
