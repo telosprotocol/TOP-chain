@@ -87,7 +87,7 @@ xtop_account_base_address::xtop_account_base_address(std::string const & base_ad
             top::error::throw_error(error::xerrc_t::invalid_account_base_address, "invalid base address " + base_address);
         }
 
-        if (m_ledger_id.zone_id() != common::xevm_zone_id) {
+        if (m_ledger_id.zone_id() != common::xevm_zone_id && m_ledger_id.zone_id() != common::xrelay_zone_id) {
             top::error::throw_error(error::xerrc_t::invalid_account_base_address, "invalid base address " + base_address);
         }
 

@@ -1603,7 +1603,7 @@ namespace top
             
 #ifdef DEBUG 
             char local_param_buf[512];
-        xprintf(local_param_buf,sizeof(local_param_buf),"{xvblock:account=%s,height=%" PRIu64 ",viewid=%" PRIu64 ",viewtoken=%u,class=%d,clock=%" PRIu64 ",flags=0x%x,validator=0x%" PRIx64 " : %" PRIx64 ",auditor=0x%" PRIx64 " : %" PRIx64 ",refcount=%d,this=%" PRIx64 ",block_version:%u,block_hash=%s -> last_block=%s}",get_account().c_str(),get_height(),get_viewid(),get_viewtoken(),get_block_class(),get_clock(),get_block_flags(),get_cert()->get_validator().high_addr,get_cert()->get_validator().low_addr,get_cert()->get_auditor().high_addr,get_cert()->get_auditor().low_addr,get_refcount(),(uint64_t)this,get_block_version(),xstring_utl::to_hex(m_cert_hash).c_str(),xstring_utl::to_hex(get_last_block_hash()).c_str());
+        xprintf(local_param_buf,sizeof(local_param_buf),"{xvblock:account=%s,height=%" PRIu64 ",viewid=%" PRIu64 ",viewtoken=%u,class=%d,clock=%" PRIu64 ",flags=0x%x,validator=0x%" PRIx64 " : %" PRIx64 ",auditor=0x%" PRIx64 " : %" PRIx64 ",refcount=%d,this=%" PRIx64 ",block_version:0x%x,block_hash=%s -> last_block=%s}",get_account().c_str(),get_height(),get_viewid(),get_viewtoken(),get_block_class(),get_clock(),get_block_flags(),get_cert()->get_validator().high_addr,get_cert()->get_validator().low_addr,get_cert()->get_auditor().high_addr,get_cert()->get_auditor().low_addr,get_refcount(),(uint64_t)this,get_block_version(),xstring_utl::to_hex(m_cert_hash).c_str(),xstring_utl::to_hex(get_last_block_hash()).c_str());
             
 #else
             if(check_block_flag(enum_xvblock_flag_authenticated) && (false == m_dump_info.empty()) )
@@ -2464,14 +2464,6 @@ namespace top
 
         const std::string & xvblock_t::get_vote_extend_data() const {
             return m_vote_extend_data;
-        }
-
-        void xvblock_t::set_vote_extend_hash(const top::uint256_t & hash) {
-            m_vote_extend_hash = hash;
-        }
-
-        const top::uint256_t & xvblock_t::get_vote_extend_hash() const {
-            return m_vote_extend_hash;
         }
         
         void xvblock_t::register_object(xcontext_t & _context)

@@ -4,7 +4,6 @@
 
 #include <string>
 #include "xblockmaker/xproposal_maker_mgr.h"
-#include "xblockmaker/xrelay_proposal_maker.h"
 
 NS_BEG2(top, blockmaker)
 
@@ -14,10 +13,6 @@ std::shared_ptr<xunit_service::xproposal_maker_face>   xproposal_maker_mgr::get_
     return proposal_maker;
 }
 
-std::shared_ptr<xunit_service::xproposal_maker_face> xrelay_proposal_maker_mgr::get_proposal_maker(const std::string & account) {
-    std::shared_ptr<xunit_service::xproposal_maker_face> proposal_maker = std::make_shared<xrelay_proposal_maker_t>(account, m_resources, m_relay_chain_mgr);
-    return proposal_maker;
-}
 
 std::shared_ptr<xunit_service::xblock_maker_face> xblockmaker_factory::create_table_proposal(const observer_ptr<store::xstore_face_t> & store,
                                                                                             const observer_ptr<base::xvblockstore_t> & blockstore,
@@ -25,16 +20,6 @@ std::shared_ptr<xunit_service::xblock_maker_face> xblockmaker_factory::create_ta
                                                                                             const observer_ptr<mbus::xmessage_bus_face_t> & bus) {
     xblockmaker_resources_ptr_t resources = std::make_shared<xblockmaker_resources_impl_t>(store, blockstore, txpool, bus);
     std::shared_ptr<xunit_service::xblock_maker_face> blockmaker = std::make_shared<xproposal_maker_mgr>(resources);
-    return blockmaker;
-}
-
-std::shared_ptr<xunit_service::xblock_maker_face> xblockmaker_factory::create_relay_proposal(const observer_ptr<store::xstore_face_t> & store,
-                                                                                            const observer_ptr<base::xvblockstore_t> & blockstore,
-                                                                                            const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool,
-                                                                                            const observer_ptr<mbus::xmessage_bus_face_t> & bus,
-                                                                                            const observer_ptr<xrelay_chain::xrelay_chain_mgr_t> & relay_chain_mgr) {
-    xblockmaker_resources_ptr_t resources = std::make_shared<xblockmaker_resources_impl_t>(store, blockstore, txpool, bus);
-    std::shared_ptr<xunit_service::xblock_maker_face> blockmaker = std::make_shared<xrelay_proposal_maker_mgr>(resources, relay_chain_mgr);
     return blockmaker;
 }
 

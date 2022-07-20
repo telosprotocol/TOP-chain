@@ -745,8 +745,6 @@ namespace top
 
             void  set_vote_extend_data(const std::string & vote_data);
             const std::string &  get_vote_extend_data() const;
-            void  set_vote_extend_hash(const top::uint256_t & hash);
-            const top::uint256_t & get_vote_extend_hash() const;
 
         private:
             //generated the unique path of object(like vblock) under store-space(get_store_path()) to store data to DB
@@ -786,7 +784,6 @@ namespace top
             std::string                 m_parent_account;   //container(e.g.tableblock)'account id(refer xvaccount_t::get_xvid())
             uint32_t                    m_parent_entity_id{0};  //entity id of container(like tableblock) that carry this sub-block
             std::string                 m_vote_extend_data;
-            top::uint256_t              m_vote_extend_hash;
         };
         using xvblock_ptr_t = xobject_ptr_t<base::xvblock_t>;
 

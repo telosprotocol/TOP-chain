@@ -11,18 +11,34 @@
 #include "xdata/xethheader.h"
 #include "xdata/xtableblock.h"
 #include "xdata/xfull_tableblock.h"
+#include "xdata/xblockbuild.h"
 #include "xblockmaker/xblock_maker_para.h"
 #include "xblockmaker/xblockmaker_face.h"
 #include "xtxexecutor/xatomictx_executor.h"
+#include "xtxexecutor/xbatchtx_executor.h"
+#include "xstatectx/xstatectx.h"
 #include "xunit_service/xcons_face.h"
 
 NS_BEG2(top, blockmaker)
 
 using data::xblock_t;
 using data::xblock_consensus_para_t;
-using data::xtable_block_para_t;
-using data::xfulltable_block_para_t;
 
+class relay_wrap_info_t {
+public:
+   relay_wrap_info_t() {}
+   relay_wrap_info_t(uint64_t evm_height, uint64_t elect_height, uint64_t poly_timestamp) : m_evm_height(evm_height), m_elect_height(elect_height), m_poly_timestamp(poly_timestamp) {}
+   uint64_t evm_height() const {return m_evm_height;}
+   uint64_t elect_height() const {return m_elect_height;}
+   uint64_t poly_timestamp() const {return m_poly_timestamp;}
+   void set_evm_height(uint64_t evm_height) {m_evm_height = evm_height;}
+   void set_elect_height(uint64_t elect_height) {m_elect_height = elect_height;}
+   void set_poly_timestamp(uint64_t poly_timestamp) {m_poly_timestamp = poly_timestamp;}
+private:
+   uint64_t m_evm_height{0};
+   uint64_t m_elect_height{0};
+   uint64_t m_poly_timestamp{0};
+};
 
 class xtable_maker_t : public xblock_maker_t {
  public:
@@ -32,6 +48,7 @@ class xtable_maker_t : public xblock_maker_t {
  public:
     xblock_ptr_t            make_proposal(xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & result);
     int32_t                 verify_proposal(base::xvblock_t* proposal_block, const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para);
+    bool                    is_make_relay_chain() const;
 
  protected:
     int32_t                 check_latest_state(const xblock_ptr_t & latest_block); // check table latest block and state
@@ -48,7 +65,15 @@ class xtable_maker_t : public xblock_maker_t {
     void                    set_packtx_metrics(const xcons_transaction_ptr_t & tx, bool bsucc) const;
     bool                    can_make_next_empty_block(const data::xblock_consensus_para_t & cs_para) const;
 
- private:
+private:
+    std::vector<xcons_transaction_ptr_t> check_input_txs(bool is_leader, const data::xblock_consensus_para_t & cs_para, const std::vector<xcons_transaction_ptr_t> & input_table_txs, uint64_t now);
+    void execute_txs(bool is_leader, const data::xblock_consensus_para_t & cs_para, statectx::xstatectx_ptr_t const& statectx_ptr, const std::vector<xcons_transaction_ptr_t> & input_txs, txexecutor::xexecute_output_t & execute_output, std::error_code & ec);
+    std::vector<xblock_ptr_t> make_units(bool is_leader, const data::xblock_consensus_para_t & cs_para, statectx::xstatectx_ptr_t const& statectx_ptr, txexecutor::xexecute_output_t const& execute_output, std::error_code & ec);
+    void update_receiptid_state(const xtablemaker_para_t & table_para, statectx::xstatectx_ptr_t const& statectx_ptr);
+    void resource_plugin_make_txs(bool is_leader, statectx::xstatectx_ptr_t const& statectx_ptr, const data::xblock_consensus_para_t & cs_para, std::vector<xcons_transaction_ptr_t> & input_txs, std::error_code & ec);
+    void rerource_plugin_make_resource(bool is_leader, const data::xblock_consensus_para_t & cs_para, data::xtable_block_para_t & lighttable_para, std::error_code & ec);
+
+    xblock_resource_plugin_face_ptr_t           m_resource_plugin{nullptr};
     static constexpr uint32_t                   m_empty_block_max_num{2};
     uint32_t                                    m_full_table_interval_num;
     xblock_builder_face_ptr_t                   m_fulltable_builder;

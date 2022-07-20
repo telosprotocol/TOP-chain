@@ -48,7 +48,6 @@
 #include "xstatectx/xstatectx.h"
 #include "xdata/xrelay_block.h"
 #include "xdata/xblock_cs_para.h"
-#include "xrelay_chain/xrelay_chain_mgr.h"
 #include "xdata/xrelay_block_store.h"
 #include "xgasfee/xgasfee.h"
 
@@ -1110,14 +1109,14 @@ int xrpc_eth_query_manager::set_relay_block_result(const xobject_ptr_t<base::xvb
 
     std::error_code ec;
     data::xrelay_block relay_block;
-    data::xblockextract_t::unpack_relayblock(block.get(), true, relay_block, ec);
+    data::xblockextract_t::unpack_relayblock_from_wrapblock(block.get(), relay_block, ec);
     if (ec) {
         js_rsp["result"] = xJson::Value::null;
         xerror("xrpc_eth_query_manager::set_relay_block_result, fail-unpack relayblock.error %s; err msg %s", ec.category().name(), ec.message().c_str());
         return 1;
     }
 
-    xbytes_t header_data = relay_block.get_header().streamRLP_header_to_contract();
+    xbytes_t header_data = relay_block.streamRLP_header_to_contract();
 
     xJson::Value js_result;
     js_result["header"] = top::to_hex_prefixed(header_data);
@@ -1128,11 +1127,11 @@ int xrpc_eth_query_manager::set_relay_block_result(const xobject_ptr_t<base::xvb
     js_result["parentHash"] = to_hex_prefixed(relay_block.get_header().get_prev_block_hash());
     js_result["receiptsRootHash"] = top::to_hex_prefixed(relay_block.get_receipts_root_hash());
     js_result["txsRootHash"] = top::to_hex_prefixed(relay_block.get_txs_root_hash());
-    js_result["innerHeaderHash"] = top::to_hex_prefixed(relay_block.get_inner_header_hash());
     js_result["blockRootHash"] = top::to_hex_prefixed(relay_block.get_block_merkle_root_hash());
-    xbytes_t data = relay_block.encodeBytes(true);
+    xbytes_t data = relay_block.encodeBytes();
     js_result["size"] = xrpc::xrpc_eth_parser_t::uint64_to_hex_prefixed(data.size());
     js_result["blockType"] = relay_block.get_block_type_string();
+    js_result["chainBits"] = std::string("0x") + relay_block.get_chain_bits().str();
 
     if (have_txs != 0) {
         const std::vector<xeth_transaction_t> txs = relay_block.get_all_transactions();
@@ -1170,7 +1169,7 @@ int xrpc_eth_query_manager::set_relay_block_result(const xobject_ptr_t<base::xvb
     
     if (blocklist_type == "transaction") {
         std::vector<evm_common::h256> block_hash_vector;
-        data::xrelay_block_store::get_instance().get_all_leaf_block_hash_list_from_cache(relay_block, block_hash_vector, true);
+        data::xrelay_block_store::get_all_leaf_block_hash_list_from_cache(relay_block, block_hash_vector, true);
         for (auto hash: block_hash_vector) {
             xJson::Value js_block;
             std::string block_hash = std::string("0x") + hash.hex();
@@ -1182,7 +1181,7 @@ int xrpc_eth_query_manager::set_relay_block_result(const xobject_ptr_t<base::xvb
         js_result["blockList"] = js_block_list;
     } else if (blocklist_type == "aggregate") {
         std::map<uint64_t, evm_common::h256> block_hash_map;
-        data::xrelay_block_store::get_instance().get_all_poly_block_hash_list_from_cache(relay_block, block_hash_map);
+        data::xrelay_block_store::get_all_poly_block_hash_list_from_cache(relay_block, block_hash_map);
         for (auto &iter: block_hash_map) {
             xJson::Value js_block;
             std::string block_hash = std::string("0x") + iter.second.hex();

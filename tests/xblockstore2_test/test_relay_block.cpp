@@ -52,6 +52,7 @@ xeth_transaction_t xrelay_tx_create()
     xeth_transaction_t tx(from_address, to_address, data, test_value, test_value_gas, test_value_gas);
     return tx;
 }
+#if 0
 base::xauto_ptr<base::xvblock_t> create_new_relay_block(std::string& extra_data)
 {
     data::xrelay_block *_relay_block = new data::xrelay_block();
@@ -78,6 +79,7 @@ base::xauto_ptr<base::xvblock_t> create_new_relay_block(std::string& extra_data)
     extra_data = _extra_data;
     return _new_block;   
 }
+
 TEST_F(test_relay_block, store_relay_block) {
     std::string extra_data;
     base::xauto_ptr<base::xvblock_t> _new_block = create_new_relay_block(extra_data);
@@ -269,7 +271,7 @@ TEST_F(test_relay_block, store_wrap_block)
         ASSERT_EQ(_block, nullptr);
     }
 }
-
+#endif
 
 
 

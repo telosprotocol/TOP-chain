@@ -1,6 +1,6 @@
 ﻿#include "xsha256.h"
 
-using top::xmutisig::_hash256;
+NS_BEG2(top, xmutisig)
 
 _hash256::_hash256() {
     reset();
@@ -22,3 +22,5 @@ std::string _hash256::finish() {
     m_output_hash256 = std::string((const char *)output.data(), output.size());
     return m_output_hash256;
 }
+
+NS_END2

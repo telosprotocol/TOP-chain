@@ -16,6 +16,9 @@
 
 NS_BEG2(top, data)
 
+static XINLINE_CONSTEXPR char const * RESOURCE_NODE_SIGN_STATISTICS     = "2";
+static XINLINE_CONSTEXPR char const * RESOURCE_RELAY_BLOCK              = "1";
+
 // XTODO keep old structure for compatibility
 class xtableheader_extra_t : public xserializable_based_on<void> {
  protected:
@@ -23,11 +26,13 @@ class xtableheader_extra_t : public xserializable_based_on<void> {
         enum_extra_data_type_tgas_total_lock_amount_property_height = 0,
         enum_extra_data_type_tgas_second_level_gmtime               = 1,
         enum_extra_data_type_eth_header                             = 2,
-        enum_extra_data_type_relay_block_data                       = 3,
-        enum_extra_data_type_relay_wrap_info                        = 4,
     };
  public:
-    static std::string build_extra_string(base::xvheader_t* _tableheader, uint64_t tgas_height, uint64_t gmtime, const std::string & eth_header);
+     static std::string build_extra_string(base::xvheader_t * _tableheader,
+                                           uint64_t tgas_height,
+                                           uint64_t gmtime,
+                                           const std::string & eth_header);
+
  protected:
     int32_t do_write(base::xstream_t & stream) const override;
     int32_t do_read(base::xstream_t & stream) override;
@@ -42,10 +47,6 @@ class xtableheader_extra_t : public xserializable_based_on<void> {
     void     set_second_level_gmtime(uint64_t gmtime);
     std::string get_ethheader() const;
     void     set_ethheader(const std::string & value);
-    std::string get_relay_block_data() const;
-    void     set_relay_block_data(const std::string & relay_block_data);
-    std::string get_relay_wrap_info() const;
-    void     set_relay_wrap_info(const std::string & relay_wrap_info);
 
  private:
     std::map<uint16_t, std::string>  m_paras;
@@ -86,14 +87,47 @@ class xtable_primary_inentity_extend_t : public xextra_map_base_t {
     void    set_txactions(base::xvactions_t const& txactions);
 };
 
+class xtable_block_para_t : public base::xbbuild_body_para_t {
+ public:
+    xtable_block_para_t() = default;
+    ~xtable_block_para_t() = default;
+    void    add_unit(base::xvblock_t * unit) {
+        unit->add_ref();
+        xblock_t* block_ptr = (xblock_t*)unit;
+        xblock_ptr_t auto_block_ptr;
+        auto_block_ptr.attach(block_ptr);
+        m_account_units.push_back(auto_block_ptr);
+    }
+    void    set_batch_units(const std::vector<xblock_ptr_t> & batch_units) {m_account_units = batch_units;}
+    void    set_txs(const std::vector<xlightunit_tx_info_ptr_t> & txs_info) {m_txs = txs_info;}
+    void    set_property_binlog(const std::string & binlog) {m_property_binlog = binlog;}
+    void    set_fullstate_bin(const std::string & fullstate) {m_fullstate_bin = fullstate;}
+    void    set_tgas_balance_change(const int64_t amount) {m_tgas_balance_change = amount;}
+    void    set_property_hashs(const std::map<std::string, std::string> & hashs) {m_property_hashs = hashs;}
+
+    const std::vector<xblock_ptr_t> & get_account_units() const {return m_account_units;}
+    const std::vector<xlightunit_tx_info_ptr_t> & get_txs() const {return m_txs;}
+    const std::string &             get_property_binlog() const {return m_property_binlog;}
+    const std::string &             get_fullstate_bin() const {return m_fullstate_bin;}
+    int64_t                         get_tgas_balance_change() const {return m_tgas_balance_change;}
+    const std::map<std::string, std::string> &  get_property_hashs() const {return m_property_hashs;}
+
+ private:
+    std::vector<xblock_ptr_t>        m_account_units;
+    std::string                      m_property_binlog;
+    std::string                      m_fullstate_bin;
+    int64_t                          m_tgas_balance_change{0};
+    std::map<std::string, std::string> m_property_hashs;  // need set to table-action for property receipt
+    std::vector<xlightunit_tx_info_ptr_t> m_txs;
+};
+
 class xblockaction_build_t {
  public:
     static base::xvaction_t make_tx_action(const xcons_transaction_ptr_t & tx);
     static base::xvaction_t make_block_build_action(const std::string & target_uri, const std::map<std::string, std::string> & action_result = {});
     static base::xvaction_t make_table_block_action_with_table_prop_prove(const std::string & target_uri, uint32_t block_version, const std::map<std::string, std::string> & property_hashs, base::xtable_shortid_t tableid, uint64_t height);
+    static xlightunit_tx_info_ptr_t build_tx_info(const xcons_transaction_ptr_t & tx);
 };
-
-xlightunit_tx_info_ptr_t build_tx_info(const xcons_transaction_ptr_t & tx);
 
 class xlightunit_build_t : public base::xvblockmaker_t {
  public:
@@ -116,24 +150,8 @@ class xemptyblock_build_t : public base::xvblockmaker_t {
     xemptyblock_build_t(base::xvblock_t* prev_block);  // TODO(jimmy) not valid block
     xemptyblock_build_t(base::xvheader_t* header);
     xemptyblock_build_t(const std::string & tc_account, uint64_t _tc_height);  // for tc block
+    xemptyblock_build_t(const std::string & account, uint64_t height, std::string const& extradata);  // for wrap relay block
 
-
-    base::xauto_ptr<base::xvblock_t> create_new_block() override;
-};
-
-class xrelay_block_build_t : public base::xvblockmaker_t {
- public:
-     xrelay_block_build_t(base::xvblock_t * prev_block,
-                          const xblock_consensus_para_t & para,
-                          const std::string & relay_extra_data,
-                          bool need_relay_prove);
-     base::xauto_ptr<base::xvblock_t> create_new_block() override;
-};
-class xrelayblock_build_t : public base::xvblockmaker_t {
- public:
-    xrelayblock_build_t(base::xvblock_t* curr_block, const std::string & relay_block_data, const std::string & relay_wrap_data,
-        const std::string& sign_data, const uint64_t& block_height);
-    xrelayblock_build_t(const std::string & relay_block_data);
     base::xauto_ptr<base::xvblock_t> create_new_block() override;
 };
 
@@ -184,26 +202,6 @@ class xrootblock_build_t : public base::xvblockmaker_t {
 
  private:
     bool build_block_body(const xrootblock_para_t & para);
-};
-
-class xrelay_wrap_info_t : public xextra_map_base_t {
-protected:
-    static XINLINE_CONSTEXPR char const * KEY_WRAP_PHASE = "a";
-    static XINLINE_CONSTEXPR char const * KEY_EVM_HEIGHT = "b";
-    static XINLINE_CONSTEXPR char const * KEY_ELECT_HEIGHT = "c";
-
-public:
-    static std::string build_relay_wrap_info_string(uint8_t wrap_phase, uint64_t evm_height, uint64_t elect_height);
-
-public:
-    uint8_t get_wrap_phase() const;
-    uint64_t get_evm_height() const;
-    uint64_t get_elect_height() const;
-
-private:
-    void set_wrap_phase(uint8_t phase);
-    void set_evm_height(uint64_t height);
-    void set_elect_height(uint64_t height);
 };
 
 NS_END2

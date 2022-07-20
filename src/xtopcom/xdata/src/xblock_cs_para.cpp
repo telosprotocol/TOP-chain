@@ -41,12 +41,21 @@ void xblock_consensus_para_t::set_drand_block(base::xvblock_t* _drand_block) {
     m_drand_height = _drand_block->get_height();
 }
 void xblock_consensus_para_t::set_latest_blocks(const base::xblock_mptrs & latest_blocks) {
-    m_account = latest_blocks.get_latest_cert_block()->get_account();
-    m_proposal_height = latest_blocks.get_latest_cert_block()->get_height() + 1;
-    m_latest_cert_block = xblock_t::raw_vblock_to_object_ptr(latest_blocks.get_latest_cert_block());
-    m_latest_locked_block = xblock_t::raw_vblock_to_object_ptr(latest_blocks.get_latest_locked_block());
-    m_latest_committed_block = xblock_t::raw_vblock_to_object_ptr(latest_blocks.get_latest_committed_block());
+    set_latest_blocks(xblock_t::raw_vblock_to_object_ptr(latest_blocks.get_latest_cert_block()),
+                      xblock_t::raw_vblock_to_object_ptr(latest_blocks.get_latest_locked_block()),
+                      xblock_t::raw_vblock_to_object_ptr(latest_blocks.get_latest_committed_block()));
 }
+
+void xblock_consensus_para_t::set_latest_blocks(const xblock_ptr_t & certblock, const xblock_ptr_t & lock_block, const xblock_ptr_t & commit_block) {
+    m_proposal_height = certblock->get_height() + 1;
+    m_latest_cert_block = certblock;
+    m_latest_locked_block = lock_block;
+    m_latest_committed_block = commit_block;
+
+    set_justify_cert_hash(lock_block->get_input_root_hash());
+    set_parent_height(0);
+}
+
 void xblock_consensus_para_t::set_common_consensus_para(uint64_t clock,
                                                         const xvip2_t & validator,
                                                         const xvip2_t & auditor,

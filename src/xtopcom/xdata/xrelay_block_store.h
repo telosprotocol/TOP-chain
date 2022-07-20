@@ -5,54 +5,21 @@
 #pragma once
 
 #include "xevm_common/common_data.h"
-#include "xdata/xpartial_merkle_tree.h"
 #include "xdata/xrelay_block.h"
 #include <iostream>
 #include <limits>
-#include <fstream>
-#include "xbasic/xlru_cache.h"
+
 
 
 namespace top {
 
 namespace data {
-
-    struct xrelay_block_save_leaf {
-        xrelay_block_save_leaf() = default;
-        enum_block_cache_type   m_type;
-        //uint64_t                m_chain_id;
-       // evm_common::h256        m_merkle_root_hash;    //election key 
-        evm_common::h256        m_block_hash;
-    };
-
     class xrelay_block_store {
 
     public:
-        xrelay_block_store():m_tx_block_map(100) {};
-        static xrelay_block_store &get_instance()
-        {
-            static xrelay_block_store m_instance_store;
-            return m_instance_store;
-        }
-
-    public:
-        
-        bool    set_block_merkle_root_from_store(xrelay_block &next_block);
-        bool    get_all_poly_block_hash_list_from_cache(const xrelay_block &tx_block, std::map<uint64_t, evm_common::h256> &block_hash_map);
-        bool    get_all_leaf_block_hash_list_from_cache(const xrelay_block &poly_block, std::vector<evm_common::h256> &leaf_hash_vector, bool include_self);
-        bool    save_block_hash_to_store_cache(xrelay_block &next_block);
-        bool    load_block_hash_from_cache(uint64_t load_height, xrelay_block_save_leaf &block_leaf);
-        void    clear_cache();
-
-    protected:
-        bool    save_tx_block_hash_to_tx_map(xrelay_block &next_block, enum_block_cache_type block_typ);
-
-    private:
-        bool    check_tx_block_validity(const xrelay_block &next_block);
-       
-    private:
-         basic::xlru_cache<uint64_t, xrelay_block_save_leaf> m_tx_block_map;  
-          
+        static bool get_all_poly_block_hash_list_from_cache(const xrelay_block& tx_block, std::map<uint64_t, evm_common::h256>& block_hash_map);
+        static bool get_all_leaf_block_hash_list_from_cache(const xrelay_block& poly_block, std::vector<evm_common::h256>& leaf_hash_vector, bool include_self);
+        static bool load_block_hash_from_db(uint64_t load_height, top::data::xrelay_block  &db_relay_block);
     };
 
 }

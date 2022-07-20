@@ -14,6 +14,7 @@
 NS_BEG2(top, txexecutor)
 
 struct xexecute_output_t {
+   int64_t                         tgas_balance_change{0};
    std::vector<xatomictx_output_t> pack_outputs;
    std::vector<xatomictx_output_t> nopack_outputs;
    std::vector<xatomictx_output_t> drop_outputs;

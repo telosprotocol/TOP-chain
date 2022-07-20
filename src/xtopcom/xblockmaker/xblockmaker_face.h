@@ -18,6 +18,7 @@
 #include "xblockstore/xblockstore_face.h"
 #include "xtxpool_v2/xtxpool_face.h"
 #include "xblockmaker/xblock_maker_para.h"
+#include "xstatectx/xstatectx.h"
 
 NS_BEG2(top, blockmaker)
 
@@ -137,6 +138,14 @@ class xtablemaker_para_t {
         m_need_relay_prove = is_need;
     }
 
+    void    set_relay_evm_height(uint64_t height) {
+        m_relay_evm_height = height;
+    }
+
+    void    set_relay_elect_height(uint64_t height) {
+        m_relay_elect_height = height;
+    }
+
     const std::vector<xcons_transaction_ptr_t> &    get_origin_txs() const {return m_origin_txs;}
     const std::map<base::xtable_shortid_t, xtxpool_v2::xreceiptid_state_and_prove> & get_receiptid_info_map() const {return m_receiptid_info_map;}
     const std::vector<std::string> &                get_other_accounts() const {return m_other_accounts;}
@@ -144,7 +153,9 @@ class xtablemaker_para_t {
     const data::xtablestate_ptr_t &                 get_commit_tablestate() const {return m_commit_tablestate;}
     const xtable_proposal_input_ptr_t &             get_proposal() const {return m_proposal;}
     const std::string &                             get_relay_extra_data() const {return m_relay_extra_data;}
-    bool                                            need_relay_prove() const {return m_need_relay_prove;}               
+    bool                                            need_relay_prove() const {return m_need_relay_prove;}
+    uint64_t                                        get_relay_evm_height() const {return m_relay_evm_height;}
+    uint64_t                                        get_relay_elect_height() const {return m_relay_elect_height;}
 
  private:
     std::vector<xcons_transaction_ptr_t>    m_origin_txs;
@@ -152,6 +163,8 @@ class xtablemaker_para_t {
     std::vector<std::string>                m_other_accounts;  // for empty or full unit accounts
     std::string                             m_relay_extra_data;
     bool                                    m_need_relay_prove{false};
+    uint64_t                                m_relay_evm_height;
+    uint64_t                                m_relay_elect_height;
 
     mutable xtable_proposal_input_ptr_t     m_proposal;  // leader should make proposal input; backup should verify proposal input
     mutable data::xtablestate_ptr_t         m_tablestate{nullptr};
@@ -217,5 +230,22 @@ class xblock_builder_face_t {
 };
 
 using xblock_builder_face_ptr_t = std::shared_ptr<xblock_builder_face_t>;
+
+
+struct xblock_resource_description_t {
+    bool            is_input_resource{false};
+    std::string     resource_key_name;
+    std::string     resource_value;
+    bool            need_signature{false};
+    uint256_t       signature_hash; 
+};
+class xblock_resource_plugin_face_t {
+ public:
+    virtual std::string                             get_face_name() const {return std::string();}
+    virtual void                                    init(statectx::xstatectx_ptr_t const& statectx_ptr, std::error_code & ec) {}
+    virtual std::vector<xcons_transaction_ptr_t>    make_contract_txs(statectx::xstatectx_ptr_t const& statectx_ptr, uint64_t timestamp, std::error_code & ec) {return {};}
+    virtual xblock_resource_description_t           make_resource(const data::xblock_consensus_para_t & cs_para, std::error_code & ec) const {return {};}
+};
+using xblock_resource_plugin_face_ptr_t = std::shared_ptr<xblock_resource_plugin_face_t>;
 
 NS_END2

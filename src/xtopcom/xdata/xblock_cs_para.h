@@ -23,9 +23,7 @@ class xblock_consensus_para_t {
     void    set_xip(const xvip2_t & _validator_xip, const xvip2_t & _auditor_xip);
     void    set_drand_block(base::xvblock_t* _drand_block);
     void    set_latest_blocks(const base::xblock_mptrs & latest_blocks);
-    void    update_latest_cert_block(const xblock_ptr_t & proposal_prev_block) {m_latest_cert_block = proposal_prev_block;}
-    void    update_latest_lock_block(const xblock_ptr_t & lock_block) {m_latest_locked_block = lock_block;}
-    void    update_latest_commit_block(const xblock_ptr_t & commit_block) {m_latest_committed_block = commit_block;}
+    void    set_latest_blocks(const xblock_ptr_t & certblock, const xblock_ptr_t & lock_block, const xblock_ptr_t & commit_block);
     void    set_validator(const xvip2_t & validator) {m_validator = validator;}
     void    set_common_consensus_para(uint64_t clock,
                                    const xvip2_t & validator,
@@ -47,6 +45,8 @@ class xblock_consensus_para_t {
     void    set_block_base_price(evm_common::u256 const& _price) {m_base_price = _price;}
     void    set_election_round(uint64_t election_round) {m_election_round = election_round;}
     void    set_table_state(xtablestate_ptr_t const& cert_state, xtablestate_ptr_t const& commit_state);
+    void    set_need_relay_prove(bool is_need) const {m_need_relay_prove = is_need;}
+    void    set_vote_extend_hash(const uint256_t & hash) const {m_vote_extend_hash = hash;}
 
  public:
     const std::string &     get_random_seed() const {return m_random_seed;}
@@ -79,6 +79,8 @@ class xblock_consensus_para_t {
     uint64_t                get_election_round() const {return m_election_round;}
     xtablestate_ptr_t const& get_cert_table_state() const {return m_cert_tablestate;}
     xtablestate_ptr_t const& get_commit_table_state() const {return m_commit_tablestate;}
+    bool                    need_relay_prove() const {return m_need_relay_prove;}
+    const uint256_t &       get_vote_extend_hash() const {return m_vote_extend_hash;}
 
  private:
     std::string     m_account;
@@ -108,6 +110,8 @@ class xblock_consensus_para_t {
     uint64_t        m_election_round;
     xtablestate_ptr_t         m_cert_tablestate{nullptr};
     xtablestate_ptr_t         m_commit_tablestate{nullptr};
+    mutable bool            m_need_relay_prove{false};
+    mutable uint256_t       m_vote_extend_hash;
 };
 
 using xblock_consensus_para_ptr_t = std::shared_ptr<xblock_consensus_para_t>;

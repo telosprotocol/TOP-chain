@@ -13,6 +13,7 @@
 #include "xdata/xblockbuild.h"
 #include "xdata/xblockaction.h"
 #include "xdata/xblocktool.h"
+#include "xdata/xblockextract.h"
 
 NS_BEG2(top, data)
 
@@ -152,25 +153,20 @@ int64_t xtable_block_t::get_pledge_balance_change_tgas() const {
 }
 
 bool  xtable_block_t::extract_sub_blocks(std::vector<xobject_ptr_t<base::xvblock_t>> & sub_blocks) {
-    std::vector<xobject_ptr_t<base::xvblock_t>> _units = xlighttable_build_t::unpack_units_from_table(this);
-    sub_blocks = _units;
+    // std::vector<xobject_ptr_t<base::xvblock_t>> _units = xlighttable_build_t::unpack_units_from_table(this);
+    // sub_blocks = _units;
+
+    std::error_code ec;
+    data::xblockextract_t::unpack_subblocks(this, sub_blocks, ec);
+    if (ec) {
+        return false;
+    }
     return true;
 }
 
 bool xtable_block_t::extract_one_sub_block(uint32_t entity_id, const std::string & extend_cert, const std::string & extend_data, xobject_ptr_t<xvblock_t> & sub_block) {
     sub_block = xlighttable_build_t::unpack_one_unit_from_table(this, entity_id, extend_cert, extend_data);
     return sub_block != nullptr ? true : false;
-}
-
-void xtable_block_t::update_txs_by_actions(const std::vector<base::xvaction_t> & actions, std::vector<xlightunit_tx_info_ptr_t> & txs) const {
-    for (auto & action : actions) {
-        if (action.get_org_tx_hash().empty()) {  // not txaction
-            continue;
-        }
-        xtransaction_ptr_t raw_tx = query_raw_transaction(action.get_org_tx_hash());
-        xlightunit_tx_info_ptr_t txinfo = std::make_shared<xlightunit_tx_info_t>(action, raw_tx.get());
-        txs.push_back(txinfo);
-    }
 }
 
 bool xtable_block_t::extract_sub_txs(std::vector<base::xvtxindex_ptr> & sub_txs) {

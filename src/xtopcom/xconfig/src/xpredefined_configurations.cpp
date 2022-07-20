@@ -30,7 +30,6 @@ XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(exchange_election_interval);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(fullnode_election_interval);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(cluster_election_interval);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(relay_election_interval);
-XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(max_relay_poly_interval);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(election_rotation_count_ratio);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(cluster_election_minimum_rotation_ratio);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(min_auditor_group_size);
@@ -180,6 +179,8 @@ XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(validator_award_creditscore);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(auditor_award_creditscore);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(contract_call_contracts_num);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_addr_for_eth);
+XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_addr_for_bsc);
+XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_topic);
 
 /* begin of offchain parameters */
 XDEFINE_CONFIGURATION(auditor_group_count);
@@ -211,6 +212,11 @@ XDEFINE_CONFIGURATION(local_whitelist);
 XDEFINE_CONFIGURATION(slash_fulltable_interval);
 XDEFINE_CONFIGURATION(slash_table_split_num);
 XDEFINE_CONFIGURATION(prune_reserve_number);
+
+XDEFINE_CONFIGURATION(evm_relay_txs_collection_interval);
+XDEFINE_CONFIGURATION(relayblock_batch_tx_max_num);
+XDEFINE_CONFIGURATION(max_relay_poly_interval);
+XDEFINE_CONFIGURATION(max_relay_tx_block_interval);
 
 /* beginning of development parameters */
 XDEFINE_CONFIGURATION(http_port);

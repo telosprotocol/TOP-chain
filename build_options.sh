@@ -205,6 +205,10 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DPERIOD_MOCK=ON"
         echo "BUILD WITH PERIOD_MOCK"
     ;;
+    cross_tx_dbg)
+        CMAKE_EXTRA_OPTIONS+=" -DCROSS_TX_DBG=ON"
+        echo "BUILD WITH CROSS_TX_DBG"
+    ;;
     *)
         echo "unknown build option: "$option
     ;;

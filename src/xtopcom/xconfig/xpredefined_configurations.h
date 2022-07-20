@@ -123,7 +123,12 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(archive_election_interval, xinterval_t, no
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(exchange_election_interval, xinterval_t, normal, 360, 1, std::numeric_limits<xinterval_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(fullnode_election_interval, xinterval_t, normal, 36, 1, std::numeric_limits<xinterval_t>::max());
 #endif
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(relay_election_interval, xinterval_t, normal, 360, 1, std::numeric_limits<xinterval_t>::max());
+
+#if defined(XBUILD_DEV) || defined(XBUILD_CI)
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(relay_election_interval, xinterval_t, normal, 72, 1, std::numeric_limits<xinterval_t>::max());
+#else
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(relay_election_interval, xinterval_t, normal, 60480, 1, std::numeric_limits<xinterval_t>::max()); // one week
+#endif
 
 #if defined(XBUILD_DEV) || defined(XBUILD_CI)
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(zone_election_trigger_interval, xinterval_t, normal, 5, 1, std::numeric_limits<xinterval_t>::max());
@@ -209,7 +214,6 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_relay_group_size, xgroup_size_t, norma
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_relay_group_size, xgroup_size_t, normal, 32, 32, 512);
 #endif
 
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_relay_poly_interval, xinterval_t, normal, 100, 20, 512);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_auditor_rotation_count, std::uint16_t, normal, 2, 1, 62);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_edge_group_size, std::uint16_t, normal, 512, 64, 1022);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(max_fullnode_group_size, std::uint16_t, normal, 512, 64, 1022);
@@ -439,7 +443,9 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(custom_property_max_number, std::uint32_t,
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(application_contract_code_max_len, std::uint32_t, critical, 32768, 1, std::numeric_limits<uint32_t>::max());
 
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(contract_call_contracts_num, std::uint32_t, critical, 25, 1, std::numeric_limits<uint32_t>::max());
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_addr_for_eth, char const *, critical, "T60004de62bc97222ea3a64997f2b9a3221554af214508", "T60004de62bc97222ea3a64997f2b9a3221554af214508", "T60004de62bc97222ea3a64997f2b9a3221554af214508");
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_addr_for_eth, char const *, critical, "", "", "");
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_addr_for_bsc, char const *, critical, "", "", "");
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_topic, char const *, critical, "", "", "");
 
 /* begin of offchain parameters */
 XDECLARE_CONFIGURATION(zone_count, std::uint32_t, 1);
@@ -497,6 +503,20 @@ XDECLARE_CONFIGURATION(slash_table_split_num, uint16_t, 32);              // spl
 // slash fulltable interval
 XDECLARE_CONFIGURATION(slash_fulltable_interval, xinterval_t, 120); // 20 minutes
 #endif
+
+/* relay block parameters */
+#if defined(XBUILD_DEV) || defined(XBUILD_CI)
+XDECLARE_CONFIGURATION(evm_relay_txs_collection_interval, xinterval_t, 1); // 1 clock  // TODO(jimmy)
+XDECLARE_CONFIGURATION(relayblock_batch_tx_max_num, std::int32_t, 2);
+XDECLARE_CONFIGURATION(max_relay_poly_interval, int32_t, 60);
+XDECLARE_CONFIGURATION(max_relay_tx_block_interval, int32_t, 10);
+#else
+XDECLARE_CONFIGURATION(evm_relay_txs_collection_interval, xinterval_t, 1);
+XDECLARE_CONFIGURATION(relayblock_batch_tx_max_num, std::int32_t, 40);
+XDECLARE_CONFIGURATION(max_relay_poly_interval, int32_t, 2880);     // 8 hours
+XDECLARE_CONFIGURATION(max_relay_tx_block_interval, int32_t, 360);  // 1 hour
+#endif
+
 
 /* beginning of development parameters */
 XDECLARE_CONFIGURATION(http_port, uint16_t, 19081);

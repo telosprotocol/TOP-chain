@@ -108,8 +108,6 @@ void xtop_application::start() {
     m_txpool =
         xtxpool_v2::xtxpool_instance::create_xtxpool_inst(make_observer(m_store), make_observer(m_blockstore.get()), make_observer(m_cert_ptr.get()), make_observer(m_bus.get()));
 
-    m_relay_chain_mgr = std::make_shared<xrelay_chain::xrelay_chain_mgr_t>(make_observer(m_store), make_observer(m_blockstore.get()), make_observer(m_bus.get()));
-
     m_syncstore.attach(new store::xsyncvstore_t(*m_cert_ptr.get(), *m_blockstore.get()));
     contract::xcontract_manager_t::instance().init(make_observer(m_store), m_syncstore);
 
@@ -268,10 +266,6 @@ xtop_application::xthread_pool_t const & xtop_application::thread_pool(xthread_p
 
 observer_ptr<xtxpool_v2::xtxpool_face_t> xtop_application::txpool() const noexcept {
     return make_observer(m_txpool.get());
-}
-
-observer_ptr<xrelay_chain::xrelay_chain_mgr_t> xtop_application::relay_chain_mgr() const noexcept {
-    return make_observer(m_relay_chain_mgr.get());
 }
 
 xobject_ptr_t<base::xvnodesrv_t> xtop_application::node_service() const noexcept {

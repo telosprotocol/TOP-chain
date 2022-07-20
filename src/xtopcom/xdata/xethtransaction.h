@@ -58,6 +58,7 @@ class xeth_transaction_t {
  public:
     xbytes_t    encodeBytes() const {return encodeBytes(true);}
     void        decodeBytes(xbytes_t const& _d, eth_error & ec) {return decodeBytes(true, _d, ec);}
+    void        decodeBytes(xbytes_t const& _d, std::error_code & ec);
     xbytes_t    encodeUnsignHashBytes() const;
     std::string serialize_to_string() const;
     void        serialize_from_string(const std::string & bin_data, eth_error & ec);

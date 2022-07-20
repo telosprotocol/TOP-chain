@@ -358,6 +358,10 @@ if (PERIOD_MOCK)
     add_definitions(-DPERIOD_MOCK)
 endif()
 
+if (CROSS_TX_DBG)
+    add_definitions(-DCROSS_TX_DBG)
+endif()
+
 if (${CMAKE_SYSTEM_NAME} STREQUAL Linux OR ${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
 #  find_package(PkgConfig REQUIRED)
 

@@ -51,6 +51,7 @@ xbytes_t xtop_evm_storage::storage_get(xbytes_t const & key) {
             auto value = sa.get_property<evm_property_type_bytes>(property, ec);
             assert(!ec);
             top::error::throw_error(ec);
+            xdbg("storage_get get code account:%s, size:%zu", storage_key.address.c_str(), value.size());
             return value;
 
         } else if (storage_key.key_type == storage_key_type::Storage) {

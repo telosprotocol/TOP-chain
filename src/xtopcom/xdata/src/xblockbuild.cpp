@@ -16,7 +16,6 @@
 #include "xvledger/xvaction.h"
 #include "xvledger/xvcontract.h"
 #include "xvledger/xvblock_fork.h"
-#include "xdata/xtop_relay_block.h"
 #include "xdata/xblockextract.h"
 #include "xpbase/base/top_utils.h"
 
@@ -96,31 +95,10 @@ void xtableheader_extra_t::set_ethheader(const std::string & value) {
     m_paras[enum_extra_data_type_eth_header] = value;
 }
 
-std::string xtableheader_extra_t::get_relay_block_data() const {
-    auto iter = m_paras.find(enum_extra_data_type_relay_block_data);
-    if (iter == m_paras.end()) {
-        return std::string();
-    }
-    return iter->second;
-}
-
-void xtableheader_extra_t::set_relay_block_data(const std::string & relay_block_data) {
-    m_paras[enum_extra_data_type_relay_block_data] = relay_block_data;
-}
-
-std::string xtableheader_extra_t::get_relay_wrap_info() const {
-    auto iter = m_paras.find(enum_extra_data_type_relay_wrap_info);
-    if (iter == m_paras.end()) {
-        return std::string();
-    }
-    return iter->second;
-}
-
-void xtableheader_extra_t::set_relay_wrap_info(const std::string & relay_wrap_info) {
-    m_paras[enum_extra_data_type_relay_wrap_info] = relay_wrap_info;
-}
-
-std::string xtableheader_extra_t::build_extra_string(base::xvheader_t* _tableheader, uint64_t tgas_height, uint64_t gmtime, const std::string & eth_header) {
+std::string xtableheader_extra_t::build_extra_string(base::xvheader_t * _tableheader,
+                                                     uint64_t tgas_height,
+                                                     uint64_t gmtime,
+                                                     const std::string & eth_header) {
     if (_tableheader->get_height() == 0) {
         // genesis block should not set extra
         return {};
@@ -136,12 +114,10 @@ std::string xtableheader_extra_t::build_extra_string(base::xvheader_t* _tablehea
         header_extra.set_ethheader(eth_header);
     }
 
-    // TODO(jimmy) fork check
     std::string extra_string;
     header_extra.serialize_to_string(extra_string);
     return extra_string;
 }
-
 
 int32_t xextra_map_base_t::serialize_to_string(std::string & str) const {
     base::xstream_t _stream(base::xcontext_t::instance());
@@ -319,7 +295,7 @@ base::xvaction_t xblockaction_build_t::make_table_block_action_with_table_prop_p
     }
 }
 
-xlightunit_tx_info_ptr_t build_tx_info(const xcons_transaction_ptr_t & tx) {
+xlightunit_tx_info_ptr_t xblockaction_build_t::build_tx_info(const xcons_transaction_ptr_t & tx) {
     base::xvaction_t _action = xblockaction_build_t::make_tx_action(tx);
     xlightunit_tx_info_ptr_t txinfo = std::make_shared<xlightunit_tx_info_t>(_action, tx->get_transaction());
     return txinfo;
@@ -429,6 +405,17 @@ xemptyblock_build_t::xemptyblock_build_t(const std::string & tc_account, uint64_
     init_header_qcert(build_para);
 }
 
+xemptyblock_build_t::xemptyblock_build_t(const std::string & account, uint64_t height, std::string const& extradata) {
+    base::enum_xvblock_level _level = get_block_level_from_account(account);
+    base::enum_xvblock_type _type = get_block_type_from_empty_block(account);
+    base::xbbuild_para_t build_para(xrootblock_t::get_rootblock_chainid(), account, height, base::enum_xvblock_class_nil, _level, _type, xrootblock_t::get_rootblock_hash(), xrootblock_t::get_rootblock_hash());
+    xvip2_t _validator;
+    set_empty_xip2(_validator);  // must change for block later
+    build_para.set_basic_cert_para(height, -1, height, _validator);
+    init_header_qcert(build_para);
+    set_header_extra(extradata);
+}
+
 xemptyblock_build_t::xemptyblock_build_t(base::xvblock_t* prev_block, const xblock_consensus_para_t & para) {
     base::enum_xvblock_type _type = get_block_type_from_empty_block(prev_block->get_account());
     base::xbbuild_para_t build_para(prev_block, base::enum_xvblock_class_nil, _type);
@@ -460,64 +447,6 @@ xemptyblock_build_t::xemptyblock_build_t(base::xvheader_t* header)
 
 base::xauto_ptr<base::xvblock_t> xemptyblock_build_t::create_new_block() {
     return new xemptyblock_t(*get_header(), *get_qcert());
-}
-
-// set relay block data to m_extra_data in xvheader.
-// set evm height to m_comments in xvheader.
-xrelay_block_build_t::xrelay_block_build_t(base::xvblock_t * prev_block,
-                                           const xblock_consensus_para_t & para,
-                                           const std::string & relay_extra_data,
-                                           bool need_relay_prove) {
-    base::enum_xvblock_type _type = get_block_type_from_empty_block(prev_block->get_account());
-    base::xbbuild_para_t build_para(prev_block, base::enum_xvblock_class_nil, _type);
-
-    build_para.set_relay_cert_para(para.get_clock(),
-                                   para.get_viewtoken(),
-                                   para.get_viewid(),
-                                   para.get_validator(),
-                                   para.get_auditor(),
-                                   para.get_drand_height(),
-                                   para.get_justify_cert_hash(),
-                                   need_relay_prove);
-    init_header_qcert(build_para);
-    set_header_extra(relay_extra_data);
-}
-
-base::xauto_ptr<base::xvblock_t> xrelay_block_build_t::create_new_block() {
-    return new xemptyblock_t(*get_header(), *get_qcert());
-}
-
-xrelayblock_build_t::xrelayblock_build_t(base::xvblock_t* curr_block, const std::string & relay_block_data, const std::string & relay_wrap_data,
-    const std::string& sign_data, const uint64_t& block_height) {
-    base::enum_xvblock_type _type = get_block_type_from_empty_block(curr_block->get_account());
-    std::string hash(1, 0);
-
-    base::xbbuild_para_t build_para(xrootblock_t::get_rootblock_chainid(), std::string(sys_contract_relay_block_addr), block_height, //curr_block->get_height()/3,
-        base::enum_xvblock_class_nil, base::enum_xvblock_level_table, _type, hash, hash);//xrootblock_t::get_rootblock_hash());
-    build_para.set_relay_cert_para(curr_block->get_clock(), curr_block->get_viewid(), curr_block->get_viewtoken(), curr_block->get_cert());
-    init_header_qcert(build_para);
-
-    get_qcert()->set_extend_data(sign_data);
-    set_header_extra(relay_block_data);
-    set_header_comments(relay_wrap_data);
-}
-xrelayblock_build_t::xrelayblock_build_t(const std::string & relay_block_data) {
-    base::enum_xvblock_type _type = get_block_type_from_empty_block(std::string(sys_contract_relay_block_addr));
-    std::string hash(1, 0);
-
-    base::xbbuild_para_t build_para(xrootblock_t::get_rootblock_chainid(), std::string(sys_contract_relay_block_addr), 0,
-        base::enum_xvblock_class_nil, base::enum_xvblock_level_table, _type, hash, hash);//xrootblock_t::get_rootblock_hash());
-    build_para.set_relay_cert_para();
-    init_header_qcert(build_para);
-    set_header_extra(relay_block_data);
-}
-base::xauto_ptr<base::xvblock_t> xrelayblock_build_t::create_new_block() {
-    base::xauto_ptr<base::xvblock_t> new_block = new xtop_relay_block_t(*get_header(), *get_qcert(), nullptr, nullptr);
-//    new_block->get_cert()->set_verify_signature(std::string(1, 0));
-//    new_block->get_cert()->set_audit_signature(std::string(1, 0));
-
-    xdbg("xrelayblock_build_t::create_new_block: %s", new_block->dump().c_str());
-    return new_block;
 }
 
 xfullunit_build_t::xfullunit_build_t(base::xvblock_t* prev_block, const xfullunit_block_para_t & bodypara, const xblock_consensus_para_t & para) {
@@ -569,10 +498,11 @@ xlighttable_build_t::xlighttable_build_t(base::xvblock_t* prev_block, const xtab
     base::xbbuild_para_t build_para(prev_block, base::enum_xvblock_class_light, base::enum_xvblock_type_batch);
 
     build_para.set_table_cert_para(para.get_clock(), para.get_viewtoken(), para.get_viewid(), para.get_validator(), para.get_auditor(),
-                                    para.get_drand_height(), para.get_justify_cert_hash());
+                                    para.get_drand_height(), para.get_justify_cert_hash(), para.need_relay_prove());
     base::xvaccount_t _vaccount(prev_block->get_account());
     init_header_qcert(build_para);
-    std::string _extra_data = xtableheader_extra_t::build_extra_string(get_header(), para.get_tgas_height(), para.get_gmtime(), para.get_ethheader());
+    std::string _extra_data = xtableheader_extra_t::build_extra_string(
+        get_header(), para.get_tgas_height(), para.get_gmtime(), para.get_ethheader());
     set_header_extra(_extra_data);
     build_block_body(bodypara, _vaccount, prev_block->get_height() + 1);
 }
@@ -635,6 +565,14 @@ bool xlighttable_build_t::build_block_body(const xtable_block_para_t & para, con
     set_output_full_state(full_state);
     std::string tgas_balance_change = base::xstring_utl::tostring(para.get_tgas_balance_change());
     set_output_entity(base::xvoutentity_t::key_name_tgas_pledge_change(), tgas_balance_change);
+
+    for (auto & v : para.get_input_resources()) {
+        set_input_resource(v.first, v.second);
+    }
+    for (auto & v : para.get_output_resources()) {
+        set_output_resource(v.first, v.second);
+    }
+
     return true;
 }
 
@@ -843,7 +781,7 @@ bool xfulltable_build_t::build_block_body(const xfulltable_block_para_t & para, 
     // #1 set input entitys and resources
     base::xvaction_t _action = xblockaction_build_t::make_table_block_action_with_table_prop_prove(BLD_URI_FULL_TABLE, get_header()->get_block_version(), para.get_property_hashs(), account.get_short_table_id(), height);
     set_input_entity(_action);
-    xdbg("xfulltable_build_t::build_block_body，account=%s,height=%ld,version=0x%x", account.get_account().c_str(), height, get_header()->get_block_version());
+    xdbg("xfulltable_build_t::build_block_body,account=%s,height=%ld,version=0x%x", account.get_account().c_str(), height, get_header()->get_block_version());
     // #2 set output entitys and resources
     std::string full_state_bin = para.get_snapshot();
     set_output_full_state(full_state_bin);
@@ -910,58 +848,6 @@ bool xrootblock_build_t::build_block_body(const xrootblock_para_t & para) {
 
 base::xauto_ptr<base::xvblock_t> xrootblock_build_t::create_new_block() {
     return new xrootblock_t(*get_header(), *get_qcert(), get_input(), get_output());
-}
-
-std::string xrelay_wrap_info_t::build_relay_wrap_info_string(uint8_t wrap_phase, uint64_t evm_height, uint64_t elect_height) {
-    xrelay_wrap_info_t relay_wrap_info;
-    relay_wrap_info.set_wrap_phase(wrap_phase);
-    relay_wrap_info.set_evm_height(evm_height);
-    relay_wrap_info.set_elect_height(elect_height);
-    std::string wrap_data;
-    relay_wrap_info.serialize_to_string(wrap_data);
-    return wrap_data;
-}
-
-uint8_t xrelay_wrap_info_t::get_wrap_phase() const {
-    auto str = get_val(KEY_WRAP_PHASE);
-    if (str.empty()) {
-        return 0;
-    } else {
-        return (uint8_t)base::xstring_utl::toint32(str);
-    }
-}
-
-uint64_t xrelay_wrap_info_t::get_evm_height() const {
-    auto str = get_val(KEY_EVM_HEIGHT);
-    if (str.empty()) {
-        return 0;
-    } else {
-        return base::xstring_utl::toint64(str);
-    }
-}
-
-uint64_t xrelay_wrap_info_t::get_elect_height() const {
-    auto str = get_val(KEY_ELECT_HEIGHT);
-    if (str.empty()) {
-        return 0;
-    } else {
-        return base::xstring_utl::toint64(str);
-    }
-}
-
-void xrelay_wrap_info_t::set_wrap_phase(uint8_t phase) {
-    std::string str = base::xstring_utl::tostring(phase);
-    insert(KEY_WRAP_PHASE, str);
-}
-
-void xrelay_wrap_info_t::set_evm_height(uint64_t height) {
-    std::string str = base::xstring_utl::tostring(height);
-    insert(KEY_EVM_HEIGHT, str);
-}
-
-void xrelay_wrap_info_t::set_elect_height(uint64_t height) {
-    std::string str = base::xstring_utl::tostring(height);
-    insert(KEY_ELECT_HEIGHT, str);
 }
 
 NS_END2

@@ -10,6 +10,7 @@
 #include "xdata/xblockbuild.h"
 #include "xdata/xtable_bstate.h"
 #include "xdata/xtx_factory.h"
+#include "xdata/xblockextract.h"
 #include "xvledger/xvblockstore.h"
 #include "xvledger/xvstate.h"
 #include "xvledger/xvledger.h"
@@ -207,13 +208,6 @@ base::xvblock_t*  xblocktool_t::create_next_emptyblock(base::xvblock_t* prev_blo
 
 base::xvblock_t*  xblocktool_t::create_next_emptyblock(base::xvblock_t* prev_block) {
     xemptyblock_build_t bbuild(prev_block);
-    base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
-    _new_block->add_ref();
-    return _new_block.get();  // TODO(jimmy) xblocktool_t return auto ptr
-}
-
-base::xvblock_t*  xblocktool_t::create_next_relay_block(base::xvblock_t* prev_block, const xblock_consensus_para_t & cs_para, const std::string & relay_extra_data, bool need_relay_prove) {
-    xrelay_block_build_t bbuild(prev_block, cs_para, relay_extra_data, need_relay_prove);
     base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
     _new_block->add_ref();
     return _new_block.get();  // TODO(jimmy) xblocktool_t return auto ptr
@@ -841,6 +835,19 @@ xrelay_block* xblocktool_t::create_genesis_relay_block(const xrootblock_para_t &
     _relay_block->build_finish();
 
     return _relay_block;
+}
+
+base::xvblock_t* xblocktool_t::create_genesis_wrap_relayblock() {
+    auto _relay_block = data::xrootblock_t::get_genesis_relay_block();
+    std::error_code ec;
+    xobject_ptr_t<base::xvblock_t> wrap_relayblock = data::xblockextract_t::pack_relayblock_to_wrapblock(_relay_block, ec);
+    if (ec) {
+        xerror("");
+        return nullptr;
+    }
+    
+    wrap_relayblock->add_ref();
+    return wrap_relayblock.get();
 }
 
 NS_END2

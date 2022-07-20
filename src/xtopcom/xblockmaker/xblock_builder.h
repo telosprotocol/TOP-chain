@@ -7,8 +7,12 @@
 #include <string>
 #include <vector>
 #include "xdata/xblock.h"
+#include "xdata/xtableblock.h"
+#include "xdata/xblockbuild.h"
 #include "xblockmaker/xblock_maker_para.h"
 #include "xblockmaker/xblockmaker_face.h"
+#include "xstatectx/xstatectx.h"  // TODO(jimmy) xstatectx_face
+#include "xtxexecutor/xbatchtx_executor.h"// TODO(jimmy) face
 
 NS_BEG2(top, blockmaker)
 
@@ -51,11 +55,12 @@ class xtablebuilder_t {
     static bool     update_receipt_confirmids(const data::xtablestate_ptr_t & tablestate, 
                                                   const std::map<base::xtable_shortid_t, uint64_t> & changed_confirm_ids);
 
-    static data::xblock_ptr_t  make_light_block(const data::xblock_ptr_t & prev_block, const data::xtablestate_ptr_t & tablestate, const data::xblock_consensus_para_t & cs_para,
-                                                int64_t tgas_balance_change,
-                                                const std::vector<xblock_ptr_t> & batch_units,
-                                                const std::vector<data::xlightunit_tx_info_ptr_t> & txs_info,
-                                                const std::map<std::string, std::string> & property_hashs);
+    static void     make_table_block_para(const std::vector<xblock_ptr_t> & batch_units,
+                                          const data::xtablestate_ptr_t & tablestate,
+                                          txexecutor::xexecute_output_t const& execute_output, 
+                                          data::xtable_block_para_t & lighttable_para);
+
+    static data::xblock_ptr_t  make_light_block(const data::xblock_ptr_t & prev_block, const data::xblock_consensus_para_t & cs_para, data::xtable_block_para_t const& lighttable_para);
 };
 
 NS_END2

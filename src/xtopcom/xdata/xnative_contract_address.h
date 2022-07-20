@@ -16,6 +16,7 @@ XINLINE_CONSTEXPR char const * genesis_root_addr_main_chain{"T$000132i21FyYZvjTK
 XINLINE_CONSTEXPR char const * sys_contract_beacon_timer_addr{"Tt00013axZ3Gy8nzi7oNYhTBDb9XMb8KHdqYhw4Kx"};
 XINLINE_CONSTEXPR char const * sys_drand_addr{"Tr00013aFJ3pTJ56d7Nrc3VtwUQPwkXRL1vozEvCh"};
 
+// system contracts
 XINLINE_CONSTEXPR char const * sys_contract_rec_registration_addr{ "T2000138NZjvNJjRNG5iEqVKydpqAqoeNjBuFmNbj@0" };
 XINLINE_CONSTEXPR char const * sys_contract_rec_elect_edge_addr{ "T2000138NpRxYCFQxMHvedTxRpgkb8B7oHt235N2W@0" };
 XINLINE_CONSTEXPR char const * sys_contract_rec_elect_fullnode_addr{ "T2000138HPAUDPz7z5HkEvCkw3Cnyc7eySmNYYDDY@0" };
@@ -39,12 +40,18 @@ XINLINE_CONSTEXPR char const * sys_contract_zec_elect_relay_addr{"T2000200000000
 XINLINE_CONSTEXPR char const * sys_contract_sharding_vote_addr{ "T20000MVfDLsBKVcy1wMp4CoEHWxUeBEAVBL9ZEa" };
 XINLINE_CONSTEXPR char const * sys_contract_sharding_reward_claiming_addr{ "T20000MTotTKfAJRxrfvEwEJvtgCqzH9GkpMmAUg" };
 XINLINE_CONSTEXPR char const * sys_contract_sharding_statistic_info_addr{ "T20000ML7oBZbitBCcXhrJwqBhha2MUimd6SM9Z6" };
-XINLINE_CONSTEXPR char const * sys_contract_eth_table_statistic_info_addr{ "T200040000000000000000000000000000000001" };
 
+XINLINE_CONSTEXPR char const * sys_contract_eth_table_statistic_info_addr{ "T200040000000000000000000000000000000001@0" };
+XINLINE_CONSTEXPR char const * sys_contract_eth_table_cross_chain_txs_collection_addr{"T200040000000000000000000000000000000002@0"};
+
+XINLINE_CONSTEXPR char const * sys_contract_relay_make_block_addr{"T200050000000000000000000000000000000001@0"};
+
+// user contracts addresses for solidity
 XINLINE_CONSTEXPR char const * sys_eth_zero_addr{"T600040000000000000000000000000000000000000000"};
 XINLINE_CONSTEXPR char const * sys_contract_evm_erc20_addr{"T60004ff00000000000000000000000000000000000001"};
 XINLINE_CONSTEXPR char const * sys_contract_evm_eth_bridge_addr{"T60004ff00000000000000000000000000000000000002"};
 
+// Table addresses
 XINLINE_CONSTEXPR char const * sys_contract_beacon_table_block_addr{ "Ta0001" };
 XINLINE_CONSTEXPR char const * sys_contract_zec_table_block_addr{ "Ta0002" };
 XINLINE_CONSTEXPR char const * sys_contract_sharding_table_block_addr{ "Ta0000" };
@@ -85,6 +92,7 @@ extern common::xaccount_address_t const sharding_vote_contract_address;
 extern common::xaccount_address_t const sharding_reward_claiming_contract_address;
 extern common::xaccount_address_t const sharding_statistic_info_contract_address;
 extern common::xaccount_address_t const eth_statistic_info_contract_address;
+extern common::xaccount_address_t const eth_table_cross_chain_txs_collection_contract_address;
 
 extern common::xaccount_address_t const eth_zero_address;
 
@@ -97,5 +105,8 @@ extern common::xaccount_address_t const relay_table_address;
 
 extern common::xaccount_address_t const evm_erc20_contract_address;
 extern common::xaccount_address_t const evm_eth_bridge_contract_address;
+
+extern common::xaccount_address_t const relay_make_block_contract_address;
+
 
 NS_END1

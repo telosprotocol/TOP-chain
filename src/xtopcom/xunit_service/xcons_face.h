@@ -13,7 +13,6 @@
 #include "xmbus/xmessage_bus.h"
 #include "xtxpool_v2/xtxpool_face.h"
 #include "xcommon/xlogic_time.h"
-#include "xrelay_chain/xrelay_chain_mgr.h"
 #include "xunit_service/xunit_log.h"
 #include "xunit_service/xcons_utl.h"
 #include "xrouter/xrouter_face.h"
@@ -131,13 +130,11 @@ public:
     virtual const std::string & get_account() = 0;
     virtual mbus::xmessage_bus_face_t* get_bus() = 0;
     virtual xtxpool_v2::xtxpool_face_t * get_txpool() = 0;
-    virtual xrelay_chain::xrelay_chain_mgr_t * get_relay_chain_mgr() = 0;
 };
 
 enum e_cons_type {
     e_timer,
     e_table,
-    e_relay,
 };
 
 class xproposal_maker_face {
@@ -145,7 +142,7 @@ public:
     virtual data::xblock_consensus_para_ptr_t   leader_set_consensus_para_basic(base::xvblock_t* _cert_block, uint64_t viewid, uint64_t clock, std::error_code & ec) {return nullptr;}
     virtual bool                        can_make_proposal(data::xblock_consensus_para_t & proposal_para) = 0;
     virtual data::xblock_ptr_t make_proposal(data::xblock_consensus_para_t & proposal_para, uint32_t min_tx_num) = 0;
-    virtual int                         verify_proposal(base::xvblock_t* proposal_block, base::xvqcert_t * bind_clock_cert) = 0;
+    virtual int                         verify_proposal(data::xblock_consensus_para_t & proposal_para, base::xvblock_t* proposal_block, base::xvqcert_t * bind_clock_cert) = 0;
     virtual void                        set_certauth(base::xvcertauth_t* _ca) {}
 };
 

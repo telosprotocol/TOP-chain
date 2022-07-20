@@ -15,8 +15,7 @@ xresources::xresources(const std::string & account,
                        observer_ptr<time::xchain_time_face_t> const & timer,
                        observer_ptr<election::cache::xdata_accessor_face_t> const & accessor,
                        observer_ptr<mbus::xmessage_bus_face_t> const & mb,
-                       const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool,
-                       const observer_ptr<xrelay_chain::xrelay_chain_mgr_t> & relay_chain_mgr)
+                       const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool)
   : m_worker_pool(pwork)
   , m_xbft_worker_pool(pwork)
   , m_network(network)
@@ -27,8 +26,7 @@ xresources::xresources(const std::string & account,
   , m_timer(timer)
   , m_accessor(accessor)
   , m_bus(mb)
-  , m_txpool(txpool)
-  , m_relay_chain_mgr(relay_chain_mgr) {}
+  , m_txpool(txpool) {}
 
 xresources::~xresources() {}
 
@@ -83,10 +81,6 @@ mbus::xmessage_bus_face_t * xresources::get_bus() {
 
 xtxpool_v2::xtxpool_face_t * xresources::get_txpool() {
     return m_txpool.get();
-}
-
-xrelay_chain::xrelay_chain_mgr_t * xresources::get_relay_chain_mgr() {
-    return m_relay_chain_mgr.get();
 }
 
 // get pacemaker type

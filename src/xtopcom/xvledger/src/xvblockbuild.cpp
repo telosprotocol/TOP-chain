@@ -118,31 +118,7 @@ namespace top
             m_justify_cert_hash = _justify_hash;
             m_consensus_flag = base::enum_xconsensus_flag_extend_cert;
         }
-        void xbbuild_para_t::set_table_cert_para(uint64_t _clock, uint32_t _viewtoken, uint64_t _viewid, const xvip2_t & _validator, const xvip2_t & _auditor, uint64_t _drand_height,
-                                    const std::string & _justify_hash) {
-            set_default_qcert();
-            m_clock = _clock;
-            m_viewtoken = _viewtoken;
-            m_viewid = _viewid;
-            m_validator = _validator;
-            m_auditor = _auditor;
-            m_drand_height = _drand_height;
-            m_justify_cert_hash = _justify_hash;
-        }
-        void xbbuild_para_t::set_relay_cert_para(uint64_t _clock, uint32_t _viewtoken, uint64_t _viewid, const xvip2_t & _validator, const xvip2_t & _auditor, uint64_t _drand_height,
-                                    const std::string & _justify_hash, bool need_relay_prove) {
-            set_default_qcert();
-            m_clock = _clock;
-            m_viewtoken = _viewtoken;
-            m_viewid = _viewid;
-            m_validator = _validator;
-            m_auditor = _auditor;
-            m_drand_height = _drand_height;
-            m_justify_cert_hash = _justify_hash;
-            if (need_relay_prove) {
-                m_consensus_flag = base::enum_xconsensus_flag_extend_vote;
-            }
-        }
+
         void xbbuild_para_t::set_relay_cert_para(uint64_t _clock, uint32_t _viewtoken, uint64_t _viewid, xvqcert_t * cert) {
             set_default_qcert();
             m_clock = _clock;
@@ -162,6 +138,39 @@ namespace top
             m_validator = xvip2_t({(uint64_t)-1, (uint64_t)-1});
             m_consensus_flag = base::enum_xconsensus_flag_extend_vote;
         }
+
+        void xbbuild_para_t::set_table_cert_para(uint64_t _clock, uint32_t _viewtoken, uint64_t _viewid, const xvip2_t & _validator, const xvip2_t & _auditor, uint64_t _drand_height,
+                                    const std::string & _justify_hash, bool need_relay_prove) {
+            set_default_qcert();
+            m_clock = _clock;
+            m_viewtoken = _viewtoken;
+            m_viewid = _viewid;
+            m_validator = _validator;
+            m_auditor = _auditor;
+            m_drand_height = _drand_height;
+            m_justify_cert_hash = _justify_hash;
+            if (need_relay_prove) {
+                m_consensus_flag = base::enum_xconsensus_flag_extend_vote;
+            }
+        }
+
+
+        //----------------------------------------xbbuild_body_para_t-------------------------------------//
+        void xbbuild_body_para_t::set_resource(bool is_input_resource, const std::string & key, const std::string & value) {
+            if (is_input_resource) {
+                set_input_resource(key, value);
+            } else {
+                set_output_resource(key, value);
+            }
+        }
+        void xbbuild_body_para_t::set_input_resource(const std::string & key, const std::string & value) {
+            input_resources[key] = value;
+        }
+        void xbbuild_body_para_t::set_output_resource(const std::string & key, const std::string & value) {
+            output_resources[key] = value;
+        }
+
+
 
         //----------------------------------------xvblockbuild_t-------------------------------------//
         xvblockbuild_t::xvblockbuild_t() {
@@ -749,20 +758,20 @@ namespace top
                     return false;
                 }
                 // fullstate hash should not same with binlog hash
-                if (target_block->get_fullstate_hash() == target_block->get_binlog_hash()) {
-                    xassert(false);
-                    return false;
-                }
-                // light-block not has state
-                if (!target_block->get_full_state().empty()) {
-                    xassert(false);
-                    return false;
-                }
-                // light-block has binlog
-                if (target_block->get_binlog().empty()) {
-                    xassert(false);
-                    return false;
-                }
+                // if (target_block->get_fullstate_hash() == target_block->get_binlog_hash()) {
+                //     xassert(false);
+                //     return false;
+                // }
+                // // light-block not has state
+                // if (!target_block->get_full_state().empty()) {
+                //     xassert(false);
+                //     return false;
+                // }
+                // // light-block has binlog
+                // if (target_block->get_binlog().empty()) {
+                //     xassert(false);
+                //     return false;
+                // }
             }
             return true;
         }

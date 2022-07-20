@@ -121,11 +121,17 @@ void xtop_contract_deploy::deploy_sys_contracts() {
            "all",
            enum_broadcast_policy_t::normal,
            std::string(sys_contract_beacon_timer_addr) + ",on_timer,C," + config::xeth_election_interval_onchain_goverance_parameter_t::name);
-     deploy(zec_elect_relay_contract_address,
-            xnode_type_t::zec,
-            "all",
-            enum_broadcast_policy_t::normal,
-            std::string(sys_contract_beacon_timer_addr) + ",on_timer,C," + config::xrelay_election_interval_onchain_goverance_parameter_t::name);
+    deploy(zec_elect_relay_contract_address,
+           xnode_type_t::zec,
+           "all",
+           enum_broadcast_policy_t::normal,
+           std::string(sys_contract_beacon_timer_addr) + ",on_timer,C," + config::xrelay_election_interval_onchain_goverance_parameter_t::name);
+    deploy(eth_table_cross_chain_txs_collection_contract_address,
+           xnode_type_t::evm_validator,
+           "",
+           enum_broadcast_policy_t::normal,
+           std::string(sys_contract_beacon_timer_addr) + ",on_timer,C," + config::xevm_relay_txs_collection_interval_configuration_t::name);
+    deploy(relay_make_block_contract_address, xnode_type_t::relay, "all", enum_broadcast_policy_t::normal, std::string(sys_contract_beacon_timer_addr) + ",_,C");
 }
 
 bool xtop_contract_deploy::deploy(common::xaccount_address_t const & address,

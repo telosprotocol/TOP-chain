@@ -14,9 +14,6 @@
 #include "xunit_service/xcons_service_para.h"
 #include "xunit_service/xcons_utl.h"
 #include "xunit_service/xnetwork_proxy.h"
-#include "xunit_service/xrelay_block_service.h"
-#include "xunit_service/xrelay_dispatcher.h"
-#include "xunit_service/xrelay_dispatcher.h"
 #include "xunit_service/xtimer_block_maker.h"
 #include "xunit_service/xtimer_dispatcher.h"
 #include "xunit_service/xworkpool_dispatcher.h"
@@ -30,10 +27,8 @@ xunit_service::xcons_dispatcher_ptr xdispatcher_builder::build(observer_ptr<mbus
     auto block_maker = p_srv_para->get_consensus_para()->get_block_maker(cons_type);
     if (cons_type == xunit_service::e_table) {
         return std::make_shared<xunit_service::xworkpool_dispatcher>(mb, p_srv_para, block_maker);
-    } else if (cons_type == xunit_service::e_timer) {
-        return std::make_shared<xunit_service::xtimer_dispatcher_t>(p_srv_para, block_maker);
     } else {
-        return std::make_shared<xunit_service::xrelay_dispatcher_t>(p_srv_para, block_maker);
+        return std::make_shared<xunit_service::xtimer_dispatcher_t>(p_srv_para, block_maker);
     }
 }
 
@@ -45,8 +40,7 @@ xcons_service_mgr_ptr xcons_mgr_build(std::string const & node_account,
                                       xobject_ptr_t<base::xvcertauth_t> const & certauth,
                                       observer_ptr<election::cache::xdata_accessor_face_t> const & accessor,
                                       observer_ptr<mbus::xmessage_bus_face_t> const & mbus,
-                                      observer_ptr<router::xrouter_face_t> const & router,
-                                      observer_ptr<xrelay_chain::xrelay_chain_mgr_t> const & relay_chain_mgr) {
+                                      observer_ptr<router::xrouter_face_t> const & router) {
     auto work_pool = make_object_ptr<base::xworkerpool_t_impl<3>>(top::base::xcontext_t::instance());
     auto xbft_work_pool = make_object_ptr<base::xworkerpool_t_impl<3>>(top::base::xcontext_t::instance());
 
@@ -55,16 +49,14 @@ xcons_service_mgr_ptr xcons_mgr_build(std::string const & node_account,
     std::shared_ptr<xunit_service::xnetwork_proxy_face> network = std::make_shared<xunit_service::xnetwork_proxy>(face, router);
 
     // global lifecyle
-    auto p_res = new xunit_service::xresources(node_account, work_pool, xbft_work_pool, certauth, blockstore, network, pelection, tx_timer, accessor, mbus, txpool, relay_chain_mgr);
+    auto p_res = new xunit_service::xresources(node_account, work_pool, xbft_work_pool, certauth, blockstore, network, pelection, tx_timer, accessor, mbus, txpool);
     auto p_para = new xunit_service::xconsensus_para(xconsensus::enum_xconsensus_pacemaker_type_clock_cert,  // useless parameter
                                                      base::enum_xconsensus_threshold_2_of_3);
     auto p_srv_para = std::make_shared<xunit_service::xcons_service_para>(p_res, p_para);
 
     auto block_maker = blockmaker::xblockmaker_factory::create_table_proposal(store, make_observer(blockstore.get()), txpool, mbus);
-    auto relay_block_maker = blockmaker::xblockmaker_factory::create_relay_proposal(store, make_observer(blockstore.get()), txpool, mbus, relay_chain_mgr);
     p_para->add_block_maker(xunit_service::e_table, block_maker);
     p_para->add_block_maker(xunit_service::e_timer, std::make_shared<xunit_service::xtimer_block_maker_t>(p_srv_para));
-    p_para->add_block_maker(xunit_service::e_relay, relay_block_maker);
     return std::make_shared<xunit_service::xcons_service_mgr>(mbus, network, std::make_shared<xdispatcher_builder>(), p_srv_para);
 }
 
@@ -114,19 +106,10 @@ void xcons_service_mgr::create(const std::shared_ptr<vnetwork::xvnetwork_driver_
         }
     }
 
-    if (common::has<common::xnode_type_t::relay>(node_type)) {
-        auto relay_dispatcher = m_dispachter_builder->build(m_mbus, m_para, e_relay);
-        xunit_dbg("[xcons_service_mgr::create] create relay service for rec, %" PRIx64 ":%" PRIx64", dispatcher obj %p", xip.high_addr, xip.low_addr, relay_dispatcher.get());
-        if (relay_dispatcher != nullptr) {
-            std::shared_ptr<xcons_service_face> relay_service = std::make_shared<xrelay_block_service>(m_para, relay_dispatcher);
-            services.push_back(relay_service);
-        }
-    } else {
-        auto table_dispatcher = m_dispachter_builder->build(m_mbus, m_para, e_table);
-        if (table_dispatcher != nullptr) {
-            std::shared_ptr<xcons_service_face> table_service = std::make_shared<xtableblockservice>(m_para, table_dispatcher);
-            services.push_back(table_service);
-        }
+    auto table_dispatcher = m_dispachter_builder->build(m_mbus, m_para, e_table);
+    if (table_dispatcher != nullptr) {
+        std::shared_ptr<xcons_service_face> table_service = std::make_shared<xtableblockservice>(m_para, table_dispatcher);
+        services.push_back(table_service);
     }
 
     xassert(!services.empty());

@@ -22,18 +22,7 @@ class xproposal_maker_mgr : public xunit_service::xblock_maker_face{
     xblockmaker_resources_ptr_t m_resources;
 };
 
-class xrelay_proposal_maker_mgr : public xunit_service::xblock_maker_face{
- public:
-    explicit xrelay_proposal_maker_mgr(const xblockmaker_resources_ptr_t & resources, const observer_ptr<xrelay_chain::xrelay_chain_mgr_t> & relay_chain_mgr)
-    : m_resources(resources), m_relay_chain_mgr(relay_chain_mgr) {}
 
- public:
-    virtual std::shared_ptr<xunit_service::xproposal_maker_face>   get_proposal_maker(const std::string & account) override;
-
- private:
-    xblockmaker_resources_ptr_t m_resources;
-    observer_ptr<xrelay_chain::xrelay_chain_mgr_t> m_relay_chain_mgr;
-};
 
 class xblockmaker_factory {
  public:
@@ -41,11 +30,6 @@ class xblockmaker_factory {
                                                                                    const observer_ptr<base::xvblockstore_t> & blockstore,
                                                                                    const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool,
                                                                                    const observer_ptr<mbus::xmessage_bus_face_t> & bus);
-    static std::shared_ptr<xunit_service::xblock_maker_face> create_relay_proposal(const observer_ptr<store::xstore_face_t> & store,
-                                                                                   const observer_ptr<base::xvblockstore_t> & blockstore,
-                                                                                   const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool,
-                                                                                   const observer_ptr<mbus::xmessage_bus_face_t> & bus,
-                                                                                   const observer_ptr<xrelay_chain::xrelay_chain_mgr_t> & relay_chain_mgr);
 };
 
 
