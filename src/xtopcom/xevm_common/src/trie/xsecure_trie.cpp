@@ -33,6 +33,11 @@ xbytes_t xtop_secure_trie::TryGet(xbytes_t const & key, std::error_code & ec) co
     return m_trie.TryGet(hashKey(key), ec);
 }
 
+
+std::pair<xbytes_t, std::size_t> xtop_secure_trie::TryGetNode(xbytes_t const & path, std::error_code & ec){
+    return m_trie.TryGetNode(path, ec);
+}
+
 void xtop_secure_trie::Update(xbytes_t const & key, xbytes_t const & value) {
     std::error_code ec;
     TryUpdate(key, value, ec);

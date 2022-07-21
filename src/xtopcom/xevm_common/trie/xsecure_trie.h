@@ -52,9 +52,18 @@ public:
     // If a node was not found in the database, a MissingNodeError is returned.
     xbytes_t TryGet(xbytes_t const & key, std::error_code & ec) const;
 
-    // todo TryGetNode
+    // TryGetNode attempts to retrieve a trie node by compact-encoded path. It is not
+    // possible to use keybyte-encoding as the path might contain odd nibbles.
+    std::pair<xbytes_t, std::size_t> TryGetNode(xbytes_t const & path, std::error_code & ec);
 
-    // todo TryUpdateAccount
+    // TODO if we need this on this level.
+    void TryUpdateAccount(xbytes_t const & key, /*TODO state account ptr,*/ std::error_code & ec) {
+        assert(false);
+        // auto hk = hashKey(key);
+        // auto data = state account -> rlp();
+        // m_trie.tryUpdate(hk,date);
+        // getSecKeyCache()->at(hk) = key;
+    }
 
     // Update associates key with value in the trie. Subsequent calls to
     // Get will return value. If value has length zero, any existing value

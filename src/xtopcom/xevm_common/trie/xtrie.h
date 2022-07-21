@@ -68,6 +68,13 @@ public:
     // stored in the trie.
     void Update(xbytes_t const & key, xbytes_t const & value);
 
+    // TODO if we need this on this level.
+    void TryUpdateAccount(xbytes_t const & key, /*TODO state account ptr,*/ std::error_code & ec) {
+        assert(false);
+        // data = state account -> rlp();
+        // return tryUpdate(key,date);
+    }
+
     // TryUpdate associates key with value in the trie. Subsequent calls to
     // Get will return value. If value has length zero, any existing value
     // is deleted from the trie and calls to Get will return nil.
