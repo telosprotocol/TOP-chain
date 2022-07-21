@@ -31,9 +31,9 @@ pub(crate) const CROSSCHAIN_CONFIG: Config = Config {
     gas_call: 0,
     gas_expbyte: 50,
     gas_transaction_create: 53000,
-    gas_transaction_call: 1,         // 21000
-    gas_transaction_zero_data: 1,     // 4
-    gas_transaction_non_zero_data: 0, // 16
+    gas_transaction_call: 8000,
+    gas_transaction_zero_data: 0,
+    gas_transaction_non_zero_data: 0,
     gas_access_list_address: 2400,
     gas_access_list_storage_key: 1900,
     gas_account_access_cold: 2600,
@@ -63,6 +63,10 @@ pub(crate) const CROSSCHAIN_CONFIG: Config = Config {
     has_base_fee: true,
     estimate: false,
 };
+
+const ETH_CROSSCHAIN_CONTRACT: &str = "ff00000000000000000000000000000000000002";
+const BSC_CROSSCHAIN_CONTRACT: &str = "ff00000000000000000000000000000000000003";
+const HECO_CROSSCHAIN_CONTRACT: &str = "ff00000000000000000000000000000000000004";
 
 struct StackExecutorParams {
     precompiles: Precompiles,
@@ -257,7 +261,9 @@ impl<'env, 'bridge, I: IO + Copy, E: Env, CBridge: ContractBridge>
     }
 
     fn is_crosschain_contract(&self, contract: &Address) -> bool {
-        *contract == Address::decode("ff00000000000000000000000000000000000002").unwrap()
+        (*contract == Address::decode(ETH_CROSSCHAIN_CONTRACT).unwrap()) || 
+        (*contract == Address::decode(BSC_CROSSCHAIN_CONTRACT).unwrap()) ||
+        (*contract == Address::decode(HECO_CROSSCHAIN_CONTRACT).unwrap())
     }
 
     pub fn call(

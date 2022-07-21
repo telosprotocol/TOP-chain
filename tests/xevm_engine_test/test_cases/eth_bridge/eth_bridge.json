@@ -10,7 +10,7 @@
             "expected": {
                 "status": 0,
                 "extra_message": "",
-                "gas_used": 30956,
+                "gas_used": 8000,
                 "logs": [
                     {
                         "address": "eth_bridge",
@@ -31,7 +31,7 @@
             "expected": {
                 "status": 0,
                 "extra_message": "",
-                "gas_used": 1209328,
+                "gas_used": 8000,
                 "logs": [
                     {
                         "address": "eth_bridge",

@@ -62,6 +62,10 @@ void xtest_evm_fixture::clean_env() {
     static_cast<top::evm::tests::xmock_evm_statectx *>(statestore.get())->m_mock_bstate.clear();
 }
 
+void xtest_evm_fixture::init_env() {
+    deployed_contract_map.insert({"eth_bridge", "0xff00000000000000000000000000000000000002"});
+}
+
 bool xtest_evm_fixture::execute() {
     if (evm_tests_argc <= 1) {
         std::cout << "no enough args. Please set test_cases directory!" << std::endl;
@@ -76,6 +80,7 @@ bool xtest_evm_fixture::execute() {
     std::cout << "==================================" << std::endl;
     for (auto p : res) {
         std::cout << "-- [DO TEST] file: " << p << std::endl;
+        init_env();
         execute_test_case(p);
         // std::cout << "-- finish test_file: " << p << std::endl;
         clean_env();

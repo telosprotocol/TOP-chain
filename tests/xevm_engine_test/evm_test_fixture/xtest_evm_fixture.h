@@ -33,9 +33,7 @@ using json = nlohmann::json;
 
 class xtest_evm_fixture : public testing::Test {
 public:
-    xtest_evm_fixture() {
-        deployed_contract_map.insert({"eth_bridge", "0xff00000000000000000000000000000000000002"});
-    };
+    xtest_evm_fixture() = default;
     xtest_evm_fixture(xtest_evm_fixture const &) = delete;
     xtest_evm_fixture & operator=(xtest_evm_fixture const &) = delete;
     xtest_evm_fixture(xtest_evm_fixture &&) = default;
@@ -47,6 +45,7 @@ public:
     bool execute_test_case(std::string const & json_file_path);
 
 private:
+    void init_env();
     void clean_env();
 
     bool do_deploy_test(json const & each_deploy);
