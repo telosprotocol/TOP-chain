@@ -25,7 +25,7 @@ namespace top
             xvchain_creator() {
                 base::xvchain_t::instance().clean_all(true);
 
-                m_bus = top::make_object_ptr<mbus::xmessage_bus_t>(true, 1000);
+                m_bus = top::make_object_ptr<mbus::xmessage_bus_t>(false, 1000);
                 base::xvchain_t::instance().set_xevmbus(m_bus.get());
 
                 m_db = db::xdb_factory_t::create_memdb();
@@ -44,7 +44,7 @@ namespace top
             xvchain_creator(bool genesis) {
                 base::xvchain_t::instance().clean_all(true);
 
-                m_bus = top::make_object_ptr<mbus::xmessage_bus_t>(true, 1000);
+                m_bus = top::make_object_ptr<mbus::xmessage_bus_t>(false, 1000);
                 base::xvchain_t::instance().set_xevmbus(m_bus.get());
 
                 m_db = db::xdb_factory_t::create_memdb();
