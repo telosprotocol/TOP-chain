@@ -44,6 +44,8 @@ common::xaccount_address_t const relay_table_address{sys_contract_relay_table_bl
 
 common::xaccount_address_t const evm_erc20_contract_address{sys_contract_evm_erc20_addr};
 common::xaccount_address_t const evm_eth_bridge_contract_address{sys_contract_evm_eth_bridge_addr};
+common::xaccount_address_t const evm_bsc_client_contract_address{sys_contract_evm_bsc_client_addr};
+common::xaccount_address_t const evm_heco_client_contract_address{sys_contract_evm_heco_client_addr};
 
 common::xaccount_address_t const relay_make_block_contract_address{sys_contract_relay_make_block_addr};
 

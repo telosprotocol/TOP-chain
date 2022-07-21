@@ -45,6 +45,7 @@ public:
     bool execute_test_case(std::string const & json_file_path);
 
 private:
+    void init_env();
     void clean_env();
 
     bool do_deploy_test(json const & each_deploy);

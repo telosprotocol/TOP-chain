@@ -16,6 +16,58 @@ use sdk::io::ContractBridge;
 
 pub(crate) const CONFIG: &Config = &Config::london();
 
+pub(crate) const CROSSCHAIN_CONFIG: Config = Config {
+    gas_ext_code: 0,
+    gas_ext_code_hash: 0,
+    gas_balance: 0,
+    gas_sload: 100,
+    gas_sload_cold: 2100,
+    gas_sstore_set: 20000,
+    gas_sstore_reset: 2900,
+    refund_sstore_clears: 4800,
+    max_refund_quotient: 5,
+    gas_suicide: 5000,
+    gas_suicide_new_account: 25000,
+    gas_call: 0,
+    gas_expbyte: 50,
+    gas_transaction_create: 53000,
+    gas_transaction_call: 8000,
+    gas_transaction_zero_data: 0,
+    gas_transaction_non_zero_data: 0,
+    gas_access_list_address: 2400,
+    gas_access_list_storage_key: 1900,
+    gas_account_access_cold: 2600,
+    gas_storage_read_warm: 100,
+    sstore_gas_metering: true,
+    sstore_revert_under_stipend: true,
+    increase_state_access_gas: true,
+    decrease_clears_refund: true,
+    disallow_executable_format: true,
+    err_on_call_with_more_gas: false,
+    empty_considered_exists: false,
+    create_increase_nonce: true,
+    call_l64_after_gas: true,
+    stack_limit: 1024,
+    memory_limit: usize::MAX,
+    call_stack_limit: 1024,
+    create_contract_limit: Some(0x6000),
+    call_stipend: 2300,
+    has_delegate_call: true,
+    has_create2: true,
+    has_revert: true,
+    has_return_data: true,
+    has_bitwise_shifting: true,
+    has_chain_id: true,
+    has_self_balance: true,
+    has_ext_code_hash: true,
+    has_base_fee: true,
+    estimate: false,
+};
+
+const ETH_CROSSCHAIN_CONTRACT: &str = "ff00000000000000000000000000000000000002";
+const BSC_CROSSCHAIN_CONTRACT: &str = "ff00000000000000000000000000000000000003";
+const HECO_CROSSCHAIN_CONTRACT: &str = "ff00000000000000000000000000000000000004";
+
 struct StackExecutorParams {
     precompiles: Precompiles,
     gas_limit: u64,
@@ -32,15 +84,27 @@ impl StackExecutorParams {
     fn make_executor<'a, 'env, 'bridge, I: IO + Copy, E: Env, CBridge: ContractBridge>(
         &'a self,
         engine: &'a Engine<'env, 'bridge, I, E, CBridge>,
+        crosschain_config: bool,
     ) -> executor::stack::StackExecutor<
         'static,
         'a,
         executor::stack::MemoryStackState<Engine<'env, 'bridge, I, E, CBridge>>,
         Precompiles,
     > {
-        let metadata = executor::stack::StackSubstateMetadata::new(self.gas_limit, CONFIG);
-        let state = executor::stack::MemoryStackState::new(metadata, engine);
-        executor::stack::StackExecutor::new_with_precompiles(state, CONFIG, &self.precompiles)
+        if crosschain_config == true {
+            let metadata =
+                executor::stack::StackSubstateMetadata::new(self.gas_limit, &CROSSCHAIN_CONFIG);
+            let state = executor::stack::MemoryStackState::new(metadata, engine);
+            executor::stack::StackExecutor::new_with_precompiles(
+                state,
+                &CROSSCHAIN_CONFIG,
+                &self.precompiles,
+            )
+        } else {
+            let metadata = executor::stack::StackSubstateMetadata::new(self.gas_limit, CONFIG);
+            let state = executor::stack::MemoryStackState::new(metadata, engine);
+            executor::stack::StackExecutor::new_with_precompiles(state, CONFIG, &self.precompiles)
+        }
     }
 }
 
@@ -131,7 +195,7 @@ impl<'env, 'bridge, I: IO + Copy, E: Env, CBridge: ContractBridge>
         access_list: Vec<(H160, Vec<H256>)>, // See EIP-2930
     ) -> EngineResult<SubmitResult> {
         let executor_params = StackExecutorParams::new(gas_limit, self.env.random_seed());
-        let mut executor = executor_params.make_executor(self);
+        let mut executor = executor_params.make_executor(self, false);
         let address = executor.create_address(CreateScheme::Legacy {
             caller: origin.raw(),
         });
@@ -196,6 +260,12 @@ impl<'env, 'bridge, I: IO + Copy, E: Env, CBridge: ContractBridge>
         }
     }
 
+    fn is_crosschain_contract(&self, contract: &Address) -> bool {
+        (*contract == Address::decode(ETH_CROSSCHAIN_CONTRACT).unwrap()) || 
+        (*contract == Address::decode(BSC_CROSSCHAIN_CONTRACT).unwrap()) ||
+        (*contract == Address::decode(HECO_CROSSCHAIN_CONTRACT).unwrap())
+    }
+
     pub fn call(
         &mut self,
         origin: &Address,
@@ -206,7 +276,8 @@ impl<'env, 'bridge, I: IO + Copy, E: Env, CBridge: ContractBridge>
         access_list: Vec<(H160, Vec<H256>)>, // See EIP-2930
     ) -> EngineResult<SubmitResult> {
         let executor_params = StackExecutorParams::new(gas_limit, self.env.random_seed());
-        let mut executor = executor_params.make_executor(self);
+        let mut executor =
+            executor_params.make_executor(self, self.is_crosschain_contract(contract));
         let executor_ptr = unsafe {
             &mut executor
                 as *mut StackExecutor<
