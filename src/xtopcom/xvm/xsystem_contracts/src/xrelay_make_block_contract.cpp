@@ -17,25 +17,6 @@
 
 NS_BEG4(top, xvm, system_contracts, relay)
 
-// relay wrap phase
-#define RELAY_WRAP_PHASE_0 "0"
-#define RELAY_WRAP_PHASE_1 "1"
-#define RELAY_WRAP_PHASE_2 "2"
-#define RELAY_WRAP_PHASE_INIT "2"
-
-// properties of relay wrap block
-XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_NEXT_POLY_BLOCK_LOGIC_TIME = "@0";
-XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_NEXT_TX_BLOCK_LOGIC_TIME = "@1";
-XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_LAST_HEIGHT = "@2";
-XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_LAST_HASH = "@3";
-XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_LAST_EPOCH_ID = "@4";
-XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_CROSS_TXS = "@5";
-XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_BLOCK_HASH_LAST_ELECT_TO_LAST_POLY_LIST = "@6";
-XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_BLOCK_HASH_FROM_LAST_POLY_LIST = "@7";
-
-#define RELAY_CHAIN_BIT_ETH (0x01)
-#define RELAY_CHAIN_BIT_BSC (0x02)
-
 xtop_relay_make_block_contract::xtop_relay_make_block_contract(common::xnetwork_id_t const & network_id) : xbase_t{network_id} {
 }
 
@@ -237,8 +218,7 @@ bool xtop_relay_make_block_contract::build_elect_relay_block(const evm_common::h
     xinfo("xtop_relay_make_block_contract::build_elect_relay_block last epoch:%llu,epoch:%llu", last_epoch_id, epoch);
     XCONTRACT_ENSURE((last_epoch_id + 1 == epoch), "epoch id invalid");
 
-    serialization::xmsgpack_t<data::election::v2::xelection_result_store_t>::serialize_to_string_prop(
-        *this, data::election::get_property_by_group_id(common::xdefault_group_id), coming_election_result_store);
+    STRING_SET(data::election::get_property_by_group_id(common::xdefault_group_id), data);
 
     data::xrelay_election_group_t reley_election_group;
 

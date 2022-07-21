@@ -18,6 +18,7 @@
 #include "xdata/xblockbuild.h"
 #include "xvledger/xvledger.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
+#include "xvm/xsystem_contracts/xrelay/xrelay_make_block_contract.h"
 
 NS_BEG2(top, blockmaker)
 
@@ -80,45 +81,16 @@ data::xcons_transaction_ptr_t xrelayblock_plugin_t::make_relay_make_block_contra
     }
 }
 
-std::string xrelayblock_plugin_t::get_new_relay_election_data(statectx::xstatectx_ptr_t const& statectx_ptr, uint64_t timestamp) const {
-    auto const relay_election_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(relay_election_interval);
-    auto clock = timestamp/10;
-    if (!m_time_to_check_election && (clock == 0 || (clock % (relay_election_interval / 4) != 0))){
-        return {};
-    }
-
-    m_time_to_check_election = true;
-
-    if (m_last_phase != "2") {
-        return {};
-    }
-
-    m_time_to_check_election = false; 
-
-    // re-package the relay shard election data into the relay chain:
-    //  1. get the relay shard election data
-    //  2. read the re-package contract data
-    //  3. compare the read relay shard election data epoch and the contract data epoch
-    //  4. epoch of relay election data is newer, generate transaction calling the re-package contract
-
-    xobject_ptr_t<base::xvblock_t> zec_elect_relay_blk =
-        data::xblocktool_t::get_latest_connectted_state_changed_block(base::xvchain_t::instance().get_xblockstore(), zec_elect_relay_contract_address.vaccount());
-    // zec_elect_relay_blk->get_parent_block_height()
-    xobject_ptr_t<base::xvblock_t> relay_make_block_blk =
-        data::xblocktool_t::get_latest_connectted_state_changed_block(base::xvchain_t::instance().get_xblockstore(), relay_make_block_contract_address.vaccount());
-
+std::string xrelayblock_plugin_t::get_relay_election_result(const base::xvaccount_t & account, uint64_t height) const {
     xobject_ptr_t<base::xvbstate_t> const zec_elect_relay_state =
-        base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(zec_elect_relay_blk.get(), metrics::statestore_access_from_contract_framework);
-    xobject_ptr_t<base::xvbstate_t> const relay_make_block_state =
-        base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(relay_make_block_blk.get(), metrics::statestore_access_from_contract_framework);
+        base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_committed_block_state(account, height, metrics::statestore_access_from_contract_framework);
 
-    if (nullptr == zec_elect_relay_state || nullptr == relay_make_block_state) {
+    if (nullptr == zec_elect_relay_state) {
         xwarn("role_context fail to load relay election contract state");
         return {};
     }
 
     data::xunit_bstate_t const zec_elect_relay_unit_state{zec_elect_relay_state.get()};
-    data::xunit_bstate_t const relay_elect_relay_unit_state{relay_make_block_state.get()};
 
     auto const & property_names = data::election::get_property_name_by_addr(zec_elect_relay_contract_address);
     if (property_names.size() != 1) {
@@ -130,46 +102,70 @@ std::string xrelayblock_plugin_t::get_new_relay_election_data(statectx::xstatect
     std::string result;
     zec_elect_relay_unit_state.string_get(property_name, result);
     if (result.empty()) {
-        xerror("role_context: relay election data empty. property=%s,block=%s", property_name.c_str(), zec_elect_relay_blk->dump().c_str());
+        xerror("role_context: relay election data empty. property=%s,height=%llu", property_name.c_str(), height);
         return {};
     }
-
-    xdbg("role_context: process relay election data %s, %" PRIu64 " from clock: %" PRIu64 " %" PRIu64,
-         zec_elect_relay_contract_address.c_str(),
-         zec_elect_relay_blk->get_height(),
-         clock,
-         timestamp);
-
-    using top::data::election::xelection_result_store_t;
-
-    std::string current_result;
-    relay_elect_relay_unit_state.string_get(property_name, current_result);
-    if (current_result.empty()) {
-        // even genesis is not empty.
-        xerror("role_context: local packaged relay election data empty. property=%s,block=%s", property_name.c_str(), relay_make_block_blk->dump().c_str());
-        return {};
-    }
-    auto const & current_election_result_store = codec::msgpack_decode<xelection_result_store_t>({std::begin(current_result), std::end(current_result)});
-
-    auto const & coming_election_result_store = codec::msgpack_decode<xelection_result_store_t>({std::begin(result), std::end(result)});
-
-    auto const relay_group_address = common::build_relay_group_address(common::network_id());
-    auto const & coming_group_result = coming_election_result_store.result_of(relay_group_address.network_id())
-                                            .result_of(common::xnode_type_t::relay)
-                                            .result_of(relay_group_address.cluster_id())
-                                            .result_of(relay_group_address.group_id());
-
-    auto const & current_group_result = current_election_result_store.result_of(relay_group_address.network_id())
-                                            .result_of(common::xnode_type_t::relay)
-                                            .result_of(relay_group_address.cluster_id())
-                                            .result_of(relay_group_address.group_id());
-
-    if (coming_group_result.group_epoch() <= current_group_result.group_epoch()) {
-        xwarn("coming epoch is older, no need to update, %" PRIu64 " <= % " PRIu64, coming_group_result.group_epoch().value(), current_group_result.group_epoch().value());
-        return {};
-    }
-
     return result;
+}
+
+std::string xrelayblock_plugin_t::get_new_relay_election_data(statectx::xstatectx_ptr_t const & statectx_ptr, uint64_t timestamp) const {
+    auto const relay_election_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(relay_election_interval);
+    auto clock = timestamp / 10;
+    if (!m_time_to_check_election && (clock == 0 || (clock % (relay_election_interval / 4) != 0))) {
+        return {};
+    }
+
+    m_time_to_check_election = true;
+
+    if (m_last_phase != "2") {
+        return {};
+    }
+
+    m_time_to_check_election = false;
+
+    // re-package the relay shard election data into the relay chain:
+    //  1. get the relay shard election data
+    //  2. read the re-package contract data
+    //  3. compare the read relay shard election data epoch and the contract data epoch
+    //  4. epoch of relay election data is newer, generate transaction calling the re-package contract
+
+    auto cur_epoch_str = m_relay_make_block_contract_state->string_get(XPROPERTY_RELAY_LAST_EPOCH_ID);
+    uint64_t cur_epoch_id = static_cast<std::uint64_t>(std::stoull(cur_epoch_str));
+
+    xobject_ptr_t<base::xvblock_t> zec_elect_relay_blk =
+        data::xblocktool_t::get_latest_connectted_state_changed_block(base::xvchain_t::instance().get_xblockstore(), zec_elect_relay_contract_address.vaccount());
+    if (zec_elect_relay_blk == nullptr) {
+        return {};
+    }
+
+    uint64_t zec_elect_relay_height = zec_elect_relay_blk->get_height();
+    uint64_t min_height = zec_elect_relay_height > 10 ? zec_elect_relay_height - 10 : 1;
+
+    for (auto height = zec_elect_relay_height; height >= min_height; height--) {
+        auto result = get_relay_election_result(zec_elect_relay_contract_address.vaccount(), height);
+        if (result.empty()) {
+            return {};
+        }
+
+        using top::data::election::xelection_result_store_t;
+        auto const & coming_election_result_store = codec::msgpack_decode<xelection_result_store_t>({std::begin(result), std::end(result)});
+
+        auto const relay_group_address = common::build_relay_group_address(common::network_id());
+        auto const & coming_group_result = coming_election_result_store.result_of(relay_group_address.network_id())
+                                               .result_of(common::xnode_type_t::relay)
+                                               .result_of(relay_group_address.cluster_id())
+                                               .result_of(relay_group_address.group_id());
+        if (coming_group_result.group_epoch().value() <= cur_epoch_id) {
+            xwarn("coming epoch not continuous with cur epoch: %" PRIu64 " , % " PRIu64, coming_group_result.group_epoch().value(), cur_epoch_id);
+            return {};
+        }
+
+        if (coming_group_result.group_epoch().value() == cur_epoch_id + 1) {
+            xwarn("coming epoch not continuous with cur epoch: %" PRIu64 " , % " PRIu64, coming_group_result.group_epoch().value(), cur_epoch_id);
+            return result;
+        }
+    }
+    return {};
 }
 
 xblock_resource_description_t xrelayblock_plugin_t::make_resource(const data::xblock_consensus_para_t & cs_para, std::error_code & ec) const {
