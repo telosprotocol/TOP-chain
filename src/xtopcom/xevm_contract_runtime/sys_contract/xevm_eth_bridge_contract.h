@@ -21,7 +21,7 @@ using evm_common::eth::xeth_header_info_t;
 using evm_common::eth::xeth_header_t;
 using evm_common::ethash::double_node_with_merkle_proof;
 
-class xtop_evm_eth_bridge_contract : public xevm_syscontract_face_t {
+class xtop_evm_eth_bridge_contract : public xevm_crosschain_syscontract_face_t {
 public:
     xtop_evm_eth_bridge_contract();
     ~xtop_evm_eth_bridge_contract() override = default;
@@ -35,12 +35,12 @@ public:
                  sys_contract_precompile_error & err) override;
 
 private:
-    bool init(const xbytes_t & rlp_bytes);
-    bool sync(const xbytes_t & rlp_bytes);
+    bool init(const xbytes_t & rlp_bytes) override;
+    bool sync(const xbytes_t & rlp_bytes) override;
     bool is_known(const u256 height, const xbytes_t & hash_bytes) const;
-    bool is_confirmed(const u256 height, const xbytes_t & hash_bytes) const;
-    bigint get_height() const;
-    void reset();
+    bool is_confirmed(const u256 height, const xbytes_t & hash_bytes) const override;
+    bigint get_height() const override;
+    void reset() override;
 
     bool verify(const xeth_header_t & prev_header, const xeth_header_t & new_header, const std::vector<double_node_with_merkle_proof> & nodes) const;
     bool record(const xeth_header_t & header);
@@ -67,7 +67,6 @@ private:
     bool set_header_info(const h256 hash, const xeth_header_info_t & header_info);
     bool remove_header_info(const h256 hash);
 
-    const common::xaccount_address_t m_contract_address{evm_eth_bridge_contract_address};
     std::shared_ptr<data::xunit_bstate_t> m_contract_state{nullptr};
     std::set<std::string> m_whitelist;
 };

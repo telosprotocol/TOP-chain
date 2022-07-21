@@ -24,10 +24,6 @@
 #include <fstream>
 #endif
 
-// TODO
-// 1 make sure context.address
-
-
 NS_BEG4(top, contract_runtime, evm, sys_contract)
 
 template <class K, class V, class dummy_compare, class A>
@@ -105,7 +101,7 @@ bool xtop_evm_eth_bridge_contract::execute(xbytes_t input,
 
     // check param
     assert(state_ctx);
-    m_contract_state = state_ctx->load_unit_state(m_contract_address.vaccount());
+    m_contract_state = state_ctx->load_unit_state(common::xaccount_address_t::build_from(context.address, base::enum_vaccount_addr_type_secp256k1_evm_user_account).vaccount());
     if (m_contract_state == nullptr) {
         xwarn("[xtop_evm_eth_bridge_contract::execute] state nullptr");
         return false;
