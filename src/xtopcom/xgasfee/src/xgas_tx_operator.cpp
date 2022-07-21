@@ -97,8 +97,8 @@ evm_common::u256 xtop_gas_tx_operator::utop_to_wei(const evm_common::u256 utop) 
     return wei;
 }
 
-uint64_t xtop_gas_tx_operator::tx_fixed_tgas() const {
-    uint64_t fixed_tgas{0};
+evm_common::u256 xtop_gas_tx_operator::tx_fixed_tgas() const {
+    evm_common::u256 fixed_tgas{0};
 #ifndef XENABLE_MOCK_ZEC_STAKE
     if (recver_str().empty()) {
         return 0;
@@ -110,7 +110,7 @@ uint64_t xtop_gas_tx_operator::tx_fixed_tgas() const {
     return fixed_tgas;
 }
 
-uint64_t xtop_gas_tx_operator::tx_bandwith_tgas() const {
+evm_common::u256 xtop_gas_tx_operator::tx_bandwith_tgas() const {
 #ifdef ENABLE_SCALE
     uint16_t amplify = 5;
 #else
@@ -121,10 +121,10 @@ uint64_t xtop_gas_tx_operator::tx_bandwith_tgas() const {
     }
     evm_common::u256 multiple{3};
     evm_common::u256 bandwith_tgas = multiple * amplify * m_tx->get_transaction()->get_tx_len();
-    return static_cast<uint64_t>(bandwith_tgas);
+    return bandwith_tgas;
 }
 
-uint64_t xtop_gas_tx_operator::tx_disk_tgas() const {
+evm_common::u256 xtop_gas_tx_operator::tx_disk_tgas() const {
     if (tx_type() == data::xtransaction_type_transfer) {
         return 0;
     }
@@ -134,19 +134,19 @@ uint64_t xtop_gas_tx_operator::tx_disk_tgas() const {
         multiple = 1200000UL;
     }
     evm_common::u256 disk_tgas = multiple * m_tx->get_transaction()->get_tx_len();
-    return static_cast<uint64_t>(disk_tgas);
+    return disk_tgas;
 }
 
 bool xtop_gas_tx_operator::is_one_stage_tx() const {
     return (m_tx->is_self_tx() || m_tx->get_inner_table_flag());
 }
 
-uint64_t xtop_gas_tx_operator::balance_to_tgas(const uint64_t balance) {
+evm_common::u256 xtop_gas_tx_operator::balance_to_tgas(const evm_common::u256 balance) {
     xassert(XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio) > 0);
     return balance / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio);
 }
 
-uint64_t xtop_gas_tx_operator::tgas_to_balance(const uint64_t tgas) {
+evm_common::u256 xtop_gas_tx_operator::tgas_to_balance(const evm_common::u256 tgas) {
     return tgas * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio);
 }
 
