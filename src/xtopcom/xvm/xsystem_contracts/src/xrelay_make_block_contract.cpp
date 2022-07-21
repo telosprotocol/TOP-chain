@@ -235,9 +235,6 @@ bool xtop_relay_make_block_contract::build_elect_relay_block(const evm_common::h
 
     uint64_t epoch = group_result.group_epoch().value();
     xinfo("xtop_relay_make_block_contract::build_elect_relay_block last epoch:%llu,epoch:%llu", last_epoch_id, epoch);
-    if (last_epoch_id + 1 != epoch) {
-        xerror("xtop_relay_make_block_contract::build_elect_relay_block epoch invalid! last epoch:%llu,epoch:%llu", last_epoch_id, epoch);
-    }
     XCONTRACT_ENSURE((last_epoch_id + 1 == epoch), "epoch id invalid");
 
     serialization::xmsgpack_t<data::election::v2::xelection_result_store_t>::serialize_to_string_prop(
