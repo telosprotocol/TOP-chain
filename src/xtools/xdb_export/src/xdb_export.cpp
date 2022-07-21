@@ -683,30 +683,40 @@ void xdb_export_tools_t::query_archive_db(const uint32_t redundancy) {
     std::cout << "redundancy = " << redundancy << std::endl;
     // step 1: check table
     std::cout << "step 1 ===> checking table accounts..." << std::endl;
+    auto t1 = base::xtime_utl::time_now_ms();
     {
-        asio::thread_pool pool(4);
+        asio::thread_pool pool(8);
         auto const tables = xdb_export_tools_t::get_table_accounts();
         for (size_t i = 0; i < tables.size(); i++) {
             asio::post(pool, std::bind(&xdb_export_tools_t::query_archive_db_internal, this, tables[i], query_account_table, redundancy, std::ref(file), std::ref(total_errors)));
         }
         pool.join();
     }
+    auto t2 = base::xtime_utl::time_now_ms();        
+    std::cout << "time1: " << (t2 - t1) / 1000 << "s." << std::endl;
+    
     // step 2: check unit
     std::cout << "step 2 ===> checking unit accounts..." << std::endl;
     {
-        asio::thread_pool pool(4);
+        asio::thread_pool pool(8);
         auto const units = get_db_unit_accounts();
         for (size_t i = 0; i < units.size(); i++) {
             asio::post(pool, std::bind(&xdb_export_tools_t::query_archive_db_internal, this, units[i], query_account_unit, 0, std::ref(file), std::ref(total_errors)));
         }
         pool.join();
     }
+    auto t3 = base::xtime_utl::time_now_ms();        
+    std::cout << "time2: " << (t3 - t2) / 1000 << "s." << std::endl;
+
     // step 3: check drand
     std::cout << "step 3 ===> checking drand..." << std::endl;
     {
         query_archive_db_internal(sys_drand_addr, query_account_system, redundancy, file, total_errors);
     }
     file.close();
+    auto t4 = base::xtime_utl::time_now_ms();        
+    std::cout << "time3: " << (t4 - t3) / 1000 << "s." << std::endl;
+
     if (total_errors != 0) {
         std::cerr << "total error num: " << total_errors << std::endl;
         std::string filename_error = "check_archive_db_error.log";
