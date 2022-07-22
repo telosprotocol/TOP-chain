@@ -10,26 +10,17 @@
 
 NS_BEG4(top, contract_runtime, evm, sys_contract)
 
-class xtop_evm_bsc_client_contract : public xevm_crosschain_syscontract_face_t {
+class xtop_evm_bsc_client_contract : public xtop_evm_crosschain_syscontract_face<xtop_evm_bsc_client_contract> {
 public:
     xtop_evm_bsc_client_contract();
     ~xtop_evm_bsc_client_contract() override = default;
 
-    bool execute(xbytes_t input,
-                 uint64_t target_gas,
-                 sys_contract_context const & context,
-                 bool is_static,
-                 observer_ptr<statectx::xstatectx_face_t> state_ctx,
-                 sys_contract_precompile_output & output,
-                 sys_contract_precompile_error & err) override;
-
-private:
-    virtual bool init(const xbytes_t & rlp_bytes) override;
-    virtual bool sync(const xbytes_t & rlp_bytes) override;
-    virtual bool is_known(const evm_common::u256 height, const xbytes_t & hash_bytes) const override;
-    virtual bool is_confirmed(const evm_common::u256 height, const xbytes_t & hash_bytes) const override;
-    virtual evm_common::bigint get_height() const override;
-    virtual void reset() override;
+    bool init(const xbytes_t & rlp_bytes);
+    bool sync(const xbytes_t & rlp_bytes);
+    bool is_known(const evm_common::u256 height, const xbytes_t & hash_bytes) const;
+    bool is_confirmed(const evm_common::u256 height, const xbytes_t & hash_bytes) const;
+    evm_common::bigint get_height() const;
+    void reset();
 };
 using xevm_bsc_client_contract_t = xtop_evm_bsc_client_contract;
 

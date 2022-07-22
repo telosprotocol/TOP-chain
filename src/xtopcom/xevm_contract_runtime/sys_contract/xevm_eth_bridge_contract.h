@@ -21,27 +21,19 @@ using evm_common::eth::xeth_header_info_t;
 using evm_common::eth::xeth_header_t;
 using evm_common::ethash::double_node_with_merkle_proof;
 
-class xtop_evm_eth_bridge_contract : public xevm_crosschain_syscontract_face_t {
+class xtop_evm_eth_bridge_contract : public xtop_evm_crosschain_syscontract_face<xtop_evm_eth_bridge_contract> {
 public:
     xtop_evm_eth_bridge_contract();
     ~xtop_evm_eth_bridge_contract() override = default;
 
-    bool execute(xbytes_t input,
-                 uint64_t target_gas,
-                 sys_contract_context const & context,
-                 bool is_static,
-                 observer_ptr<statectx::xstatectx_face_t> state_ctx,
-                 sys_contract_precompile_output & output,
-                 sys_contract_precompile_error & err) override;
+    bool init(const xbytes_t & rlp_bytes);
+    bool sync(const xbytes_t & rlp_bytes);
+    bool is_known(const u256 height, const xbytes_t & hash_bytes) const;
+    bool is_confirmed(const u256 height, const xbytes_t & hash_bytes) const;
+    bigint get_height() const;
+    void reset();
 
 private:
-    bool init(const xbytes_t & rlp_bytes) override;
-    bool sync(const xbytes_t & rlp_bytes) override;
-    bool is_known(const u256 height, const xbytes_t & hash_bytes) const;
-    bool is_confirmed(const u256 height, const xbytes_t & hash_bytes) const override;
-    bigint get_height() const override;
-    void reset() override;
-
     bool verify(const xeth_header_t & prev_header, const xeth_header_t & new_header, const std::vector<double_node_with_merkle_proof> & nodes) const;
     bool record(const xeth_header_t & header);
     bool rebuild(const xeth_header_t & header, const xeth_header_info_t & last_info, const xeth_header_info_t & cur_info);
@@ -66,9 +58,6 @@ private:
     bool get_header_info(const h256 hash, xeth_header_info_t & header_info) const;
     bool set_header_info(const h256 hash, const xeth_header_info_t & header_info);
     bool remove_header_info(const h256 hash);
-
-    std::shared_ptr<data::xunit_bstate_t> m_contract_state{nullptr};
-    std::set<std::string> m_whitelist;
 };
 using xevm_eth_bridge_contract_t = xtop_evm_eth_bridge_contract;
 

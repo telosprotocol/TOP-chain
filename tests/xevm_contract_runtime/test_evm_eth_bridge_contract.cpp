@@ -567,6 +567,8 @@ TEST_F(xcontract_fixture_t, execute_input_invalid) {
     std::error_code ec;
     auto init_param = top::from_hex(relayer_hex_output_init_1269999_tx_data, ec);
     EXPECT_EQ(ec.value(), 0);
+    init_param.insert(init_param.begin(), 0x78);
+    init_param.insert(init_param.begin(), 0x30);
     EXPECT_FALSE(contract.execute(init_param, 0, context, false, statectx_observer, output, err));
 }
 
@@ -616,15 +618,6 @@ TEST_F(xcontract_fixture_t, execute_init_static_error) {
     auto init_param = top::from_hex(relayer_hex_output_init_1269999_tx_data, ec);
     EXPECT_EQ(ec.value(), 0);
     EXPECT_FALSE(contract.execute(init_param, 0, context, true, statectx_observer, output, err));
-}
-
-TEST_F(xcontract_fixture_t, execute_init_verify_error) {
-    contract_runtime::evm::sys_contract_precompile_output output;
-    contract_runtime::evm::sys_contract_precompile_error err;
-    std::error_code ec;
-    auto init_param = top::from_hex(relayer_hex_output_init_1269999_tx_data, ec);
-    EXPECT_EQ(ec.value(), 0);
-    EXPECT_FALSE(contract.execute(init_param, 0, context, false, statectx_observer, output, err));
 }
 
 TEST_F(xcontract_fixture_t,  execute_sync_ok) {
