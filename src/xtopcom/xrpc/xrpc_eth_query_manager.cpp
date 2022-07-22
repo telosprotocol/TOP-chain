@@ -538,6 +538,7 @@ void xrpc_eth_query_manager::eth_call(xJson::Value & js_req, xJson::Value & js_r
     }
 //        unitstate->tep_token_deposit(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH, std::strtoul(value.c_str(), NULL, 16));
     if (!gas.empty() && !gas_price.empty()) {
+        cons_tx->set_inner_table_flag();
         gasfee::xgasfee_t gasfee{unitstate, cons_tx, cs_para.get_clock(), cs_para.get_total_lock_tgas_token()};
         std::error_code ec;
         gasfee.preprocess(ec);
@@ -677,6 +678,7 @@ void xrpc_eth_query_manager::eth_estimateGas(xJson::Value & js_req, xJson::Value
 //        unitstate->tep_token_deposit(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH, std::strtoul(value.c_str(), NULL, 16));
     //evm_common::u256 allowance = unitstate->tep_token_balance(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_TOP);
     if (!gas.empty() && !gas_price.empty()) {
+        cons_tx->set_inner_table_flag();
         gasfee::xgasfee_t gasfee{unitstate, cons_tx, cs_para.get_clock(), cs_para.get_total_lock_tgas_token()};
         std::error_code ec;
         gasfee.preprocess(ec);
