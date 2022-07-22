@@ -127,7 +127,7 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(fullnode_election_interval, xinterval_t, n
 #if defined(XBUILD_DEV) || defined(XBUILD_CI)
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(relay_election_interval, xinterval_t, normal, 72, 1, std::numeric_limits<xinterval_t>::max());
 #else
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(relay_election_interval, xinterval_t, normal, 60480, 1, std::numeric_limits<xinterval_t>::max()); // one week
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(relay_election_interval, xinterval_t, normal, 20000000, 1, std::numeric_limits<xinterval_t>::max()); // a very long time
 #endif
 
 #if defined(XBUILD_DEV) || defined(XBUILD_CI)
