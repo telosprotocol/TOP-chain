@@ -80,13 +80,15 @@ namespace top
                 if ((zone_id == base::enum_chain_zone_zec_index) || (zone_id == base::enum_chain_zone_beacon_index)) {
                     return false;
                 }
+                if ((zone_id == base::enum_chain_zone_evm_index) || (zone_id == base::enum_chain_zone_relay_index)) {
+                    return false;
+                }
 
                 return recycle_unit(account_obj,account_meta);
             } else if(account_obj.is_table_address()) {
                 auto zone_id = account_obj.get_zone_index();
-                // if consensus zone
-                if ((zone_id == base::enum_chain_zone_zec_index) || (zone_id == base::enum_chain_zone_beacon_index)) {
-                    //return false;
+                if ((zone_id == base::enum_chain_zone_evm_index) || (zone_id == base::enum_chain_zone_relay_index)) {
+                    return false;
                 }
                 return recycle_table(account_obj,account_meta);
             } else if(account_obj.is_contract_address()) {
@@ -96,7 +98,6 @@ namespace top
             } else if(account_obj.is_drand_address()){
                 return recycle_drand(account_obj,account_meta);
             }
-            
             return true;
         }
     
