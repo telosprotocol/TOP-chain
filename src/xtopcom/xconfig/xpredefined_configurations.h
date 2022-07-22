@@ -127,7 +127,7 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(fullnode_election_interval, xinterval_t, n
 #if defined(XBUILD_DEV) || defined(XBUILD_CI)
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(relay_election_interval, xinterval_t, normal, 72, 1, std::numeric_limits<xinterval_t>::max());
 #else
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(relay_election_interval, xinterval_t, normal, 60480, 1, std::numeric_limits<xinterval_t>::max()); // one week
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(relay_election_interval, xinterval_t, normal, 20000000, 1, std::numeric_limits<xinterval_t>::max()); // a very long time
 #endif
 
 #if defined(XBUILD_DEV) || defined(XBUILD_CI)
@@ -443,9 +443,9 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(custom_property_max_number, std::uint32_t,
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(application_contract_code_max_len, std::uint32_t, critical, 32768, 1, std::numeric_limits<uint32_t>::max());
 
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(contract_call_contracts_num, std::uint32_t, critical, 25, 1, std::numeric_limits<uint32_t>::max());
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_addr_for_eth, char const *, critical, "", "", "");
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_addr_for_bsc, char const *, critical, "", "", "");
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_topic, char const *, critical, "", "", "");
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_addr_for_eth, char const *, critical, "0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000");
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_addr_for_bsc, char const *, critical, "0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000");
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_topic, char const *, critical, "0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000");
 
 /* begin of offchain parameters */
 XDECLARE_CONFIGURATION(zone_count, std::uint32_t, 1);
