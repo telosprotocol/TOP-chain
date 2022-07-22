@@ -15,6 +15,7 @@ mod interface {
         io::{StorageIntermediate, IO},
         runtime::Runtime,
     };
+    use hex::{encode, ToHex};
     use protobuf::Message;
 
     #[no_mangle]
@@ -49,14 +50,14 @@ mod interface {
     }
 
     #[no_mangle]
-    pub extern "C" fn unsafe_eth_mint(
+    pub extern "C" fn unsafe_mint(
         engine_ptr: *mut c_void,
         executor_ptr: *mut c_void,
         address_ptr: *const c_uchar,
         address_size: u64,
         value_ptr: *const i8,
     ) -> bool {
-        sdk::log("========= deposit =========");
+        sdk::log("========= unsafe_mint =========");
 
         assert!(address_size == 20_u64);
         let address = H160::from_slice(unsafe {
@@ -74,6 +75,14 @@ mod interface {
             return false;
         }
         let value = value.unwrap();
+
+        sdk::log(
+            format!(
+                "{}",
+                format_args!("unsafe_mint to {} with token amount {}", address, value)
+            )
+            .as_str(),
+        );
 
         Engine::unsafe_deposit(
             unsafe {
@@ -87,14 +96,14 @@ mod interface {
     }
 
     #[no_mangle]
-    pub extern "C" fn unsafe_eth_burn(
+    pub extern "C" fn unsafe_burn(
         engine_ptr: *mut c_void,
         executor_ptr: *mut c_void,
         address_ptr: *const c_uchar,
         address_size: u64,
         value_ptr: *const i8,
     ) -> bool {
-        sdk::log("========= deposit =========");
+        sdk::log("========= unsafe_burn =========");
 
         assert!(address_size == 20_u64);
         let address = H160::from_slice(unsafe {
@@ -112,6 +121,14 @@ mod interface {
             return false;
         }
         let value = value.unwrap();
+
+        sdk::log(
+            format!(
+                "{}",
+                format_args!("unsafe_burn from {} with token amount {}", address, value)
+            )
+            .as_str(),
+        );
 
         Engine::unsafe_withdraw(
             unsafe {

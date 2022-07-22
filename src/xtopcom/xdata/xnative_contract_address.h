@@ -3,11 +3,9 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
-#include "xcommon/xaccount_address.h"
-#include "xbase/xcxx_config.h"
-#include "xvledger/xvaccount.h"
 
-#include <cstdint>
+#include "xcommon/xaccount_address.h"
+
 
 NS_BEG1(top)
 

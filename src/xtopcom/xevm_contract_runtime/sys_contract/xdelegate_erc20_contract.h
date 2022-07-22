@@ -8,15 +8,14 @@
 
 NS_BEG4(top, contract_runtime, evm, sys_contract)
 
-// sample code
-class xtop_evm_erc20_sys_contract : public xevm_syscontract_face_t {
+class xtop_delegate_erc20_contract : public xevm_syscontract_face_t {
 public:
-    xtop_evm_erc20_sys_contract() = default;
-    xtop_evm_erc20_sys_contract(xtop_evm_erc20_sys_contract const &) = delete;
-    xtop_evm_erc20_sys_contract & operator=(xtop_evm_erc20_sys_contract const &) = delete;
-    xtop_evm_erc20_sys_contract(xtop_evm_erc20_sys_contract &&) = default;
-    xtop_evm_erc20_sys_contract & operator=(xtop_evm_erc20_sys_contract &&) = default;
-    ~xtop_evm_erc20_sys_contract() override = default;
+    xtop_delegate_erc20_contract() = default;
+    xtop_delegate_erc20_contract(xtop_delegate_erc20_contract const &) = delete;
+    xtop_delegate_erc20_contract & operator=(xtop_delegate_erc20_contract const &) = delete;
+    xtop_delegate_erc20_contract(xtop_delegate_erc20_contract &&) = default;
+    xtop_delegate_erc20_contract & operator=(xtop_delegate_erc20_contract &&) = default;
+    ~xtop_delegate_erc20_contract() override = default;
 
     XATTRIBUTE_NODISCARD bool execute(xbytes_t input,
                                       uint64_t target_gas,
@@ -30,5 +29,6 @@ private:
     XATTRIBUTE_NODISCARD bool mint_eth(common::xeth_address_t const & mint_to, evm_common::u256 const & value);
     XATTRIBUTE_NODISCARD bool burn_eth(common::xeth_address_t const & burn_from, evm_common::u256 const & value);
 };
+using xdelegate_erc20_contract_t = xtop_delegate_erc20_contract;
 
 NS_END4
