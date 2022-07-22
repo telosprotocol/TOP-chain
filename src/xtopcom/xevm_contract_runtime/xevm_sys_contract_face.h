@@ -6,6 +6,7 @@
 
 #include "xbasic/xbyte_buffer.h"
 #include "xcommon/xeth_address.h"
+#include "xdata/xnative_contract_address.h"
 #include "xevm_common/common.h"
 #include "xevm_common/xevm_transaction_result.h"
 #include "xevm_runner/proto/proto_precompile.pb.h"
@@ -127,5 +128,23 @@ public:
                          sys_contract_precompile_error & err) = 0;
 };
 using xevm_syscontract_face_t = xtop_evm_syscontract_face;
+
+class xtop_evm_crosschain_syscontract_face : public xtop_evm_syscontract_face {
+public:
+    xtop_evm_crosschain_syscontract_face() = default;
+    xtop_evm_crosschain_syscontract_face(xtop_evm_crosschain_syscontract_face const &) = delete;
+    xtop_evm_crosschain_syscontract_face & operator=(xtop_evm_crosschain_syscontract_face const &) = delete;
+    xtop_evm_crosschain_syscontract_face(xtop_evm_crosschain_syscontract_face &&) = default;
+    xtop_evm_crosschain_syscontract_face & operator=(xtop_evm_crosschain_syscontract_face &&) = default;
+    ~xtop_evm_crosschain_syscontract_face() override = default;
+
+    virtual bool init(const xbytes_t & rlp_bytes) = 0;
+    virtual bool sync(const xbytes_t & rlp_bytes) = 0;
+    virtual bool is_known(const evm_common::u256 height, const xbytes_t & hash_bytes) const = 0;
+    virtual bool is_confirmed(const evm_common::u256 height, const xbytes_t & hash_bytes) const = 0;
+    virtual evm_common::bigint get_height() const = 0;
+    virtual void reset() = 0;
+};
+using xevm_crosschain_syscontract_face_t = xtop_evm_crosschain_syscontract_face;
 
 NS_END3

@@ -36,16 +36,16 @@ bigint xethash_t::calc_difficulty(const uint64_t time, const eth::xeth_header_t 
     //        ) + 2^(periodCount - 2)
 
     // base difficult
-    bigint target = header.difficulty();
+    bigint target = header.difficulty;
 
     // adjust difficult
     bigint current_time =  bigint(time);
-    bigint parent_time = bigint(header.time());
+    bigint parent_time = bigint(header.time);
     bigint timestampDiff = current_time - parent_time;
     bigint adjFactor;
     bytes out = RLP::encodeList<bytes>({});
     h256 hash = FixedHash<32>(utl::xkeccak256_t::digest(out.data(), out.size()).data(), h256::ConstructFromPointer);
-    if (header.uncle_hash() == hash) {
+    if (header.uncle_hash == hash) {
         adjFactor = 1 - timestampDiff / 9;
     } else {
         adjFactor = 2 - timestampDiff / 9;
@@ -63,8 +63,8 @@ bigint xethash_t::calc_difficulty(const uint64_t time, const eth::xeth_header_t 
 
     // bomb difficult
     bigint numbers = 0;
-    if ((header.number() + 1) >= bomb_delay) {
-        numbers = header.number() + 1 - bomb_delay;
+    if ((header.number + 1) >= bomb_delay) {
+        numbers = header.number + 1 - bomb_delay;
     }
 
     bigint periodCount = numbers / 100000;
@@ -75,7 +75,7 @@ bigint xethash_t::calc_difficulty(const uint64_t time, const eth::xeth_header_t 
 }
 
 bigint xethash_t::calc_difficulty(const uint64_t time, const eth::xeth_header_t & parent) {
-    bigint next{parent.number() + 1};
+    bigint next{parent.number + 1};
     if (eth::config::is_arrow_glacier(next)) {
         return calc_difficulty(time, parent, 10700000);
     } else if (eth::config::is_london(next)) {
@@ -186,15 +186,15 @@ std::pair<hash256, hash256> xethash_t::hashimoto_merkle(const hash256 & header_h
     return hashimoto(header_hash, nonce, ethash_calculate_full_dataset_num_items(epoch), lookup);
 }
 
-bool xethash_t::verify_seal(eth::xeth_block_header_t & header, const std::vector<double_node_with_merkle_proof> & nodes) {
+bool xethash_t::verify_seal(const eth::xeth_header_t & header, const std::vector<double_node_with_merkle_proof> & nodes) {
     hash256 hash;
-    std::memcpy(hash.bytes, header.hashWithoutSeal().data(), 32);
+    std::memcpy(hash.bytes, header.hash_without_seal().data(), 32);
     hash256 mix_hash;
-    std::memcpy(mix_hash.bytes, header.mixDigest().data(), 32);
+    std::memcpy(mix_hash.bytes, header.mix_digest.data(), 32);
     hash256 difficulty;
-    std::memcpy(difficulty.bytes, toBigEndian(static_cast<u256>(header.difficulty())).data(), 32);
-    uint64_t nonce = std::stoull(header.nonce().hex(), nullptr, 16);
-    uint64_t number = static_cast<uint64_t>(header.number());
+    std::memcpy(difficulty.bytes, toBigEndian(static_cast<u256>(header.difficulty)).data(), 32);
+    uint64_t nonce = std::stoull(header.nonce.hex(), nullptr, 16);
+    uint64_t number = static_cast<uint64_t>(header.number);
     auto hashes = hashimoto_merkle(hash, nonce, number, nodes);
     if (!::ethash::equal(hashes.first, mix_hash)) {
         return false;

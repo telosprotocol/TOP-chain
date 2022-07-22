@@ -1,88 +1,62 @@
 #pragma once
 
-#include <vector>
 #include "xevm_common/common.h"
 #include "xevm_common/fixed_hash.h"
-#include "xdepends/include/json/reader.h"
+
+#include <vector>
 
 NS_BEG3(top, evm_common, eth)
 
 // The log bloom's size (2048-bit).
-using namespace top::evm_common;
-using Hash = h256;
-using Address = h160;
-using LogBloom = h2048;
-using BlockNonce = h64;
-class xeth_block_header_t {
-public:
-    xeth_block_header_t(){}
+using Hash = top::evm_common::h256;
+using Address = top::evm_common::h160;
+using LogBloom = top::evm_common::h2048;
+using BlockNonce = top::evm_common::h64;
+
+struct xeth_header_t {
+    Hash parent_hash;
+    Hash uncle_hash;
+    Address miner;
+    Hash state_merkleroot;
+    Hash tx_merkleroot;
+    Hash receipt_merkleroot;
+    LogBloom bloom;
+    bigint difficulty;
+    bigint number;
+    uint64_t gas_limit{0};
+    uint64_t gas_used{0};
+    uint64_t time{0};
+    bytes extra;
+    Hash mix_digest;
+    BlockNonce nonce;
+
+    // base_fee was added by EIP-1559 and is ignored in legacy headers.
+    bigint base_fee;
+
+    // hash
+    Hash hash() const;
+    Hash hash_without_seal() const;
 
     // encode and decode
-    std::string to_string();
-    int from_string(const std::string & s);
-    int from_rlp(const xbytes_t & bytes);
+    bytes encode_rlp() const;
+    bytes encode_rlp_withoutseal() const;
+    bool decode_rlp(const bytes & bytes);
+
+    // debug
     std::string dump();
     void print();
-
-    // member of header
-    Hash parentHash() const;
-    Hash uncle_hash() const;
-    Address miner() const;
-    Hash stateMerkleRoot() const;
-    Hash txMerkleRoot() const;
-    Hash receiptMerkleRoot() const;
-    LogBloom logBloom() const;
-    bigint difficulty() const;
-    bigint number() const;
-    uint64_t gasLimit() const;
-    uint64_t gasUsed() const;
-    uint64_t time() const;
-    bytes extra() const;
-    Hash mixDigest() const;
-    BlockNonce nonce() const;
-    bigint baseFee() const;
-    Hash hash();
-    Hash hashWithoutSeal();
-
-private:
-    bytes encode_rlp();
-    bytes encode_rlp_withoutseal();
-private:
-    Hash m_parentHash;
-    Hash m_uncleHash;
-    Address m_miner;
-    Hash m_stateMerkleRoot;
-    Hash m_txMerkleRoot;
-    Hash m_receiptMerkleRoot;
-    LogBloom m_bloom;
-    bigint m_difficulty;
-    bigint m_number;
-    uint64_t m_gasLimit;
-    uint64_t m_gasUsed;
-    uint64_t m_time;
-    bytes m_extra;
-    Hash m_mixDigest;
-    BlockNonce m_nonce;
-
-    // BaseFee was added by EIP-1559 and is ignored in legacy headers.
-    bigint m_baseFee;
-
-    // Peculiar data
-    Hash m_hash;
-    bool m_hashed = false;
 };
-using xeth_header_t = xeth_block_header_t;
 
-class xeth_block_header_with_difficulty_t {
-public:
-    xeth_block_header_with_difficulty_t() = default;
-    xeth_block_header_with_difficulty_t(xeth_block_header_t header, bigint difficulty);
+struct xeth_header_info_t {
+    xeth_header_info_t() = default;
+    xeth_header_info_t(bigint difficult_sum_, Hash parent_hash_, bigint number_);
 
-    std::string to_string();
-    int from_string(const std::string & s);
+    bytes encode_rlp() const;
+    bool decode_rlp(const bytes & input);
 
-    xeth_block_header_t m_header;
-    bigint m_difficult_sum;
+    bigint difficult_sum;
+    Hash parent_hash;
+    bigint number;
 };
 
 NS_END3

@@ -32,11 +32,13 @@ public:
             top::base::xauto_ptr<top::base::xvbstate_t> bstate(new top::base::xvbstate_t(addr.get_account(), 1, 1, "", "", 0, 0, 0));
             if (addr.get_account() == evm_eth_bridge_contract_address.to_string()) {
                 xobject_ptr_t<base::xvcanvas_t> canvas = make_object_ptr<base::xvcanvas_t>();
-                bstate->new_string_map_var(data::system_contract::XPROPERTY_ETH_CHAINS_HEADER, canvas.get());
-                bstate->new_string_map_var(data::system_contract::XPROPERTY_ETH_CHAINS_HASH, canvas.get());
-                bstate->new_string_var(data::system_contract::XPROPERTY_ETH_CHAINS_HEIGHT, canvas.get());
-                auto bytes = evm_common::toBigEndian(evm_common::u256(0));
-                bstate->load_string_var(data::system_contract::XPROPERTY_ETH_CHAINS_HEIGHT)->reset({bytes.begin(), bytes.end()}, canvas.get());
+                bstate->new_string_map_var(data::system_contract::XPROPERTY_HEADERS, canvas.get());
+                bstate->new_string_map_var(data::system_contract::XPROPERTY_HEADERS_SUMMARY, canvas.get());
+                bstate->new_string_map_var(data::system_contract::XPROPERTY_ALL_HASHES, canvas.get());
+                bstate->new_string_map_var(data::system_contract::XPROPERTY_EFFECTIVE_HASHES, canvas.get());
+                bstate->new_string_var(data::system_contract::XPROPERTY_LAST_HASH, canvas.get());
+                auto bytes = (evm_common::h256()).asBytes();
+                bstate->load_string_var(data::system_contract::XPROPERTY_LAST_HASH)->reset({bytes.begin(), bytes.end()}, canvas.get());
             }
             auto unitstate_ptr = std::make_shared<data::xunit_bstate_t>(bstate.get(), false);
             m_mock_bstate[addr.get_account()] = unitstate_ptr;

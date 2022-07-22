@@ -2294,12 +2294,12 @@ static void get_zec_workload_map(common::xaccount_address_t const & contract_add
     }
 }
 
-static void get_eth_chains_header(common::xaccount_address_t const & contract_address,
-                                  std::string const & property_name,
-                                  const xaccount_ptr_t unitstate,
-                                  const xjson_format_t json_format,
-                                  xJson::Value & json) {
-    std::map<std::string, std::string> headers = unitstate->map_get(property_name);
+static void get_chain_headers(common::xaccount_address_t const & contract_address,
+                              std::string const & property_name,
+                              const xaccount_ptr_t unitstate,
+                              const xjson_format_t json_format,
+                              xJson::Value & json) {
+    auto headers = unitstate->map_get(property_name);
     if (headers.empty()) {
         xdbg("[get_eth_chains_hash] contract_address: %s, property_name: %s, empty", contract_address.to_string().c_str(), property_name.c_str());
         return;
@@ -2307,43 +2307,101 @@ static void get_eth_chains_header(common::xaccount_address_t const & contract_ad
     for (auto pair : headers) {
         xbytes_t k{std::begin(pair.first), std::end(pair.first)};
         auto hash = static_cast<evm_common::h256>(k);
-        evm_common:: eth::xeth_block_header_with_difficulty_t header_with_difficulty;
-        if (header_with_difficulty.from_string(pair.second) < 0) {
+        evm_common::eth::xeth_header_t header;
+        if (header.decode_rlp({pair.second.begin(), pair.second.end()}) == false) {
             continue;
         }
-        auto & header = header_with_difficulty.m_header;
         xJson::Value j_header;
-        j_header["parentHash"] = header.parentHash().hex();
-        j_header["uncleHash"] = header.uncle_hash().hex();
-        j_header["miner"] = header.miner().hex();
-        j_header["stateMerkleRoot"] = header.stateMerkleRoot().hex();
-        j_header["txMerkleRoot"] = header.txMerkleRoot().hex();
-        j_header["receiptMerkleRoot"] = header.receiptMerkleRoot().hex();
-        j_header["bloom"] = header.logBloom().hex();
-        j_header["difficulty"] = header.difficulty().str();
-        j_header["number"] = header.number().str();
-        j_header["gasLimit"] = std::to_string(header.gasLimit());
-        j_header["gasUsed"] = std::to_string(header.gasUsed());
-        j_header["time"] = std::to_string(header.time());
-        j_header["extra"] = top::to_hex(header.extra());
-        j_header["mixDigest"] = header.mixDigest().hex();
-        j_header["nonce"] = header.nonce().hex();
-        j_header["baseFee"] = header.baseFee().str();
+        j_header["parentHash"] = header.parent_hash.hex();
+        j_header["uncleHash"] = header.uncle_hash.hex();
+        j_header["miner"] = header.miner.hex();
+        j_header["stateMerkleRoot"] = header.state_merkleroot.hex();
+        j_header["txMerkleRoot"] = header.tx_merkleroot.hex();
+        j_header["receiptMerkleRoot"] = header.receipt_merkleroot.hex();
+        j_header["bloom"] = header.bloom.hex();
+        j_header["difficulty"] = header.difficulty.str();
+        j_header["number"] = header.number.str();
+        j_header["gasLimit"] = std::to_string(header.gas_limit);
+        j_header["gasUsed"] = std::to_string(header.gas_used);
+        j_header["time"] = std::to_string(header.time);
+        j_header["extra"] = top::to_hex(header.extra);
+        j_header["mixDigest"] = header.mix_digest.hex();
+        j_header["nonce"] = header.nonce.hex();
+        j_header["baseFee"] = header.base_fee.str();
         j_header["hash"] = header.hash().hex();
-        j_header["totalDifficulty"] = header_with_difficulty.m_difficult_sum.str();
         json[hash.hex()] = j_header;
     }
 }
 
-static void get_eth_chains_hash(common::xaccount_address_t const & contract_address,
+static void get_chain_headers_summary(common::xaccount_address_t const & contract_address,
+                              std::string const & property_name,
+                              const xaccount_ptr_t unitstate,
+                              const xjson_format_t json_format,
+                              xJson::Value & json) {
+    auto infos = unitstate->map_get(property_name);
+    if (infos.empty()) {
+        xdbg("[get_chain_headers_summary] contract_address: %s, property_name: %s, empty", contract_address.to_string().c_str(), property_name.c_str());
+        return;
+    }
+    for (auto pair : infos) {
+        xbytes_t k{std::begin(pair.first), std::end(pair.first)};
+        auto hash = static_cast<evm_common::h256>(k);
+        evm_common::eth::xeth_header_info_t info;
+        if (info.decode_rlp({pair.second.begin(), pair.second.end()}) == false) {
+            continue;
+        }
+        xJson::Value j_header;
+        j_header["difficulty_sum"] = info.difficult_sum.str();
+        j_header["parent_hash"] = info.parent_hash.hex();
+        j_header["number"] = info.number.str();
+        json[hash.hex()] = j_header;
+    }
+}
+
+static void get_chain_last_hash(common::xaccount_address_t const & contract_address,
                                 std::string const & property_name,
                                 const xaccount_ptr_t unitstate,
                                 const xjson_format_t json_format,
                                 xJson::Value & json) {
+    auto hash_str = unitstate->string_get(property_name);
+    if (hash_str.empty()) {
+        xdbg("[get_eth_chains_hash] contract_address: %s, property_name: %s, empty", contract_address.to_string().c_str(), property_name.c_str());
+        return;
+    }
+    xbytes_t v{std::begin(hash_str), std::end(hash_str)};
+    auto hash = static_cast<evm_common::h256>(v);
+    json["last_hash"] = hash.hex();
+}
+
+static void get_chain_all_hashes(common::xaccount_address_t const & contract_address,
+                                 std::string const & property_name,
+                                 const xaccount_ptr_t unitstate,
+                                 const xjson_format_t json_format,
+                                 xJson::Value & json) {
+    auto all_hashes_str = unitstate->map_get(property_name);
+    if (all_hashes_str.empty()) {
+        xdbg("[get_chain_all_hashes] contract_address: %s, property_name: %s, empty", contract_address.to_string().c_str(), property_name.c_str());
+        return;
+    }
+    for (auto pair : all_hashes_str) {
+        xbytes_t k{std::begin(pair.first), std::end(pair.first)};
+        evm_common::u256 height = evm_common::fromBigEndian<evm_common::u256>(k);
+        auto item = evm_common::RLP::decodeList({std::begin(pair.second), std::end(pair.second)});
+        for (auto bytes : item.decoded) {
+            json[height.str()].append((static_cast<evm_common::h256>(bytes)).hex());
+        }
+    }
+}
+
+static void get_chain_effective_hash(common::xaccount_address_t const & contract_address,
+                                     std::string const & property_name,
+                                     const xaccount_ptr_t unitstate,
+                                     const xjson_format_t json_format,
+                                     xJson::Value & json) {
     std::map<std::string, std::string> hashs;
     hashs = unitstate->map_get(property_name);
     if (hashs.empty()) {
-        xdbg("[get_eth_chains_hash] contract_address: %s, property_name: %s, empty", contract_address.to_string().c_str(), property_name.c_str());
+        xdbg("[get_chain_effective_hash] contract_address: %s, property_name: %s, empty", contract_address.to_string().c_str(), property_name.c_str());
         return;
     }
     for (auto pair : hashs) {
@@ -2353,21 +2411,6 @@ static void get_eth_chains_hash(common::xaccount_address_t const & contract_addr
         auto hash = static_cast<evm_common::h256>(v);
         json[height.str()] = hash.hex();
     }
-}
-
-static void get_eth_chains_height(common::xaccount_address_t const & contract_address,
-                                  std::string const & property_name,
-                                  const xaccount_ptr_t unitstate,
-                                  const xjson_format_t json_format,
-                                  xJson::Value & json) {
-    std::string height_str = unitstate->string_get(property_name);
-    if (height_str.empty()) {
-        xdbg("[get_eth_chains_height] contract_address: %s, property_name: %s, empty", contract_address.to_string().c_str(), property_name.c_str());
-        return;
-    }
-    xbytes_t v{std::begin(height_str), std::end(height_str)};
-    evm_common::u256 height = evm_common::fromBigEndian<evm_common::u256>(v);
-    json["height"] = height.str();
 }
 
 void xtop_contract_manager::get_contract_data(common::xaccount_address_t const & contract_address,
@@ -2435,12 +2478,16 @@ void xtop_contract_manager::get_contract_data(common::xaccount_address_t const &
         return get_proposal_map(m_store, contract_address, property_name, json);
     } else if (property_name == VOTE_MAP_ID) {
         return get_proposal_voting_map(m_store, contract_address, property_name, json);
-    } else if (property_name == data::system_contract::XPROPERTY_ETH_CHAINS_HASH) {
-        return get_eth_chains_hash(contract_address, property_name, unitstate, json_format, json);
-    } else if (property_name == data::system_contract::XPROPERTY_ETH_CHAINS_HEADER) {
-        return get_eth_chains_header(contract_address, property_name, unitstate, json_format, json);
-    } else if (property_name == data::system_contract::XPROPERTY_ETH_CHAINS_HEIGHT) {
-        return get_eth_chains_height(contract_address, property_name, unitstate, json_format, json);
+    } else if (property_name == data::system_contract::XPROPERTY_LAST_HASH) {
+        return get_chain_last_hash(contract_address, property_name, unitstate, json_format, json);
+    } else if (property_name == data::system_contract::XPROPERTY_ALL_HASHES) {
+        return get_chain_all_hashes(contract_address, property_name, unitstate, json_format, json);
+    } else if (property_name == data::system_contract::XPROPERTY_EFFECTIVE_HASHES) {
+        return get_chain_effective_hash(contract_address, property_name, unitstate, json_format, json);
+    } else if (property_name == data::system_contract::XPROPERTY_HEADERS) {
+        return get_chain_headers(contract_address, property_name, unitstate, json_format, json);
+    } else if (property_name == data::system_contract::XPROPERTY_HEADERS_SUMMARY) {
+        return get_chain_headers_summary(contract_address, property_name, unitstate, json_format, json);
     }
 }
 
