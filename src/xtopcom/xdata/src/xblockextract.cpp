@@ -303,6 +303,9 @@ bool xblockextract_t::is_cross_tx(const data::xeth_store_receipt_t & evm_result,
     }
     return false;
 #else
+    if (evm_result.get_logs().empty()) {
+        return false;
+    }
     return true;
 #endif
 }
