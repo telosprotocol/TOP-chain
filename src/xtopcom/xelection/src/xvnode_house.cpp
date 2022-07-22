@@ -123,7 +123,7 @@ std::string xvnode_house_t::get_elect_address(const xvip2_t & target_group) cons
         elect_address = sys_contract_zec_elect_eth_addr;
     } else if (zone_id == common::xrelay_zone_id_value) {
         assert(cluster_id == common::xdefault_cluster_id_value);
-        assert(group_id = common::xdefault_group_id_value);
+        assert(group_id == common::xdefault_group_id_value);
         elect_address = sys_contract_relay_make_block_addr;
     } else {
         xassert(false);
