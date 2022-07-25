@@ -166,6 +166,7 @@ bool decrypt_keystore_by_kdf_key(std::string const & kdf_key, xJson::Value const
             stfDecryptor.MessageEnd();
         } catch (std::exception & e) {
             // std::cout << "Decryption Error: " << e.what() << std::endl;
+            pri_key.clear(); // or might return same intermiate results.
             return false;
         }
         return true;
