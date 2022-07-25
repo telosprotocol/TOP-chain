@@ -45,6 +45,7 @@ xchain_downloader_t::xchain_downloader_t(std::string vnode_id,
   m_role_chains_mgr(role_chains_mgr) {
     xsync_info("chain_downloader create_chain %s", m_address.c_str());
     XMETRICS_COUNTER_INCREMENT("sync_downloader_chain_count", 1);
+    m_is_elect_chain = is_elect_chain();
 }
 
 xchain_downloader_t::~xchain_downloader_t() {
@@ -154,8 +155,8 @@ void xchain_downloader_t::on_response(std::vector<data::xblock_ptr_t> &blocks, c
         }
     }
 }
-enum_result_code xchain_downloader_t::handle_archive_block(xblock_ptr_t &block, bool is_elect_chain, uint64_t quota_height) {
-    if (is_elect_chain) {
+enum_result_code xchain_downloader_t::handle_archive_block(xblock_ptr_t &block, uint64_t quota_height) {
+    if (m_is_elect_chain) {
         if (!check_auth(m_certauth, block)) {
             xsync_dbg("xchain_downloader_t::handle_block, check_auth fail.");
             return enum_result_code::auth_failed;
@@ -178,6 +179,19 @@ enum_result_code xchain_downloader_t::handle_archive_block(xblock_ptr_t &block, 
 
     return enum_result_code::success;
 }
+bool xchain_downloader_t::is_elect_chain() {
+    bool is_elect_chain = false;
+    std::string account_prefix;
+    uint32_t table_id = 0;
+    data::xdatautil::extract_parts(m_address, account_prefix, table_id);
+
+    if (account_prefix == sys_contract_beacon_table_block_addr || account_prefix == sys_contract_zec_table_block_addr ||
+        account_prefix == sys_contract_relay_table_block_base_addr) {
+        is_elect_chain = true;
+    }
+    return is_elect_chain;
+}
+
 void xchain_downloader_t::on_archive_blocks(std::vector<data::xblock_ptr_t> &blocks, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &from_addr) {
     uint32_t count = blocks.size();
     if (count == 0) {
@@ -187,16 +201,7 @@ void xchain_downloader_t::on_archive_blocks(std::vector<data::xblock_ptr_t> &blo
     xsync_info("chain_downloader on_archive_blocks, %s count(%u) %s",
         m_address.c_str(), count, from_addr.to_string().c_str());
 
-    bool is_elect_chain = false;
-    std::string account_prefix;
-    uint32_t table_id = 0;
-    data::xdatautil::extract_parts(m_address, account_prefix, table_id);
-
-    if (account_prefix==sys_contract_beacon_table_block_addr || account_prefix==sys_contract_zec_table_block_addr) {
-        is_elect_chain = true;
-    }
-
-    if (!is_elect_chain){
+    if (!m_is_elect_chain){
         xblock_ptr_t &block = blocks[count-1];
         if (!check_auth(m_certauth, block)) {
             xsync_info("chain_downloader on_archive_blocks(auth_failed) %s,height=%lu,", m_address.c_str(), block->get_height());
@@ -208,7 +213,7 @@ void xchain_downloader_t::on_archive_blocks(std::vector<data::xblock_ptr_t> &blo
  
     for (uint32_t i = 0; i < count; i++) {
         xblock_ptr_t &block = blocks[i];
-        enum_result_code ret = handle_archive_block(block, is_elect_chain, next_block->get_height());
+        enum_result_code ret = handle_archive_block(block, next_block->get_height());
 
         if (ret == enum_result_code::success) {
             xsync_dbg("chain_downloader on_archive_blocks(succ) %s,height=%lu,viewid=%lu,prev_hash:%s,",
@@ -297,12 +302,11 @@ void xchain_downloader_t::on_block_committed_event(uint64_t height) {
 
 enum_result_code xchain_downloader_t::pre_handle_block(
     std::vector<data::xblock_ptr_t> &blocks,
-    bool is_elect_chain,
     uint64_t quota_height,
     std::vector<base::xvblock_t*> &processed_blocks) {
 
     for (auto block : blocks){
-        if (is_elect_chain) {
+        if (m_is_elect_chain) {
             if (!check_auth(m_certauth, block)) {
                 xsync_warn("chain_downloader check auth fail, block is: %s", block->dump().c_str());
                 return enum_result_code::auth_failed;
@@ -330,8 +334,8 @@ enum_result_code xchain_downloader_t::pre_handle_block(
     return enum_result_code::success;
 }
 
-enum_result_code xchain_downloader_t::handle_block(xblock_ptr_t &block, bool is_elect_chain, uint64_t quota_height) {
-    if (is_elect_chain) {
+enum_result_code xchain_downloader_t::handle_block(xblock_ptr_t &block, uint64_t quota_height) {
+    if (m_is_elect_chain) {
         if (!check_auth(m_certauth, block)) {
             xsync_dbg("xchain_downloader_t::handle_block, check_auth fail.");
             return enum_result_code::auth_failed;
@@ -651,17 +655,7 @@ xsync_command_execute_result xchain_downloader_t::execute_next_download(std::vec
     XMETRICS_COUNTER_INCREMENT("sync_cost_peer_response", total_cost);
 
     // 1.verify shard-table block multi-sign
-    bool is_elect_chain = false;
-
-    std::string account_prefix;
-    uint32_t table_id = 0;
-    data::xdatautil::extract_parts(m_address, account_prefix, table_id);
-
-    if (account_prefix==sys_contract_beacon_table_block_addr || account_prefix==sys_contract_zec_table_block_addr) {
-        is_elect_chain = true;
-    }
-
-    if (!is_elect_chain){
+    if (!m_is_elect_chain){
         xblock_ptr_t &block = blocks[count-1];
         if (!check_auth(m_certauth, block)) {
             xsync_info("chain_downloader on_response(auth_failed) %s,height=%lu,", m_address.c_str(), block->get_height());
@@ -684,7 +678,7 @@ xsync_command_execute_result xchain_downloader_t::execute_next_download(std::vec
     init_committed_event_group();
     #if 0
     std::vector<top::base::xvblock_t *> processed_blocks;
-    enum_result_code ret = pre_handle_block(blocks, is_elect_chain, next_block->get_height(), processed_blocks);
+    enum_result_code ret = pre_handle_block(blocks, m_is_elect_chain, next_block->get_height(), processed_blocks);
     if (ret != enum_result_code::success) {
         init_committed_event_group();
         return abort;
@@ -698,7 +692,7 @@ xsync_command_execute_result xchain_downloader_t::execute_next_download(std::vec
     // compare before and after
     for (uint32_t i = 0; i < count; i++) {
         xblock_ptr_t &block = blocks[i];
-        enum_result_code ret = handle_block(block, is_elect_chain, next_block->get_height());
+        enum_result_code ret = handle_block(block, next_block->get_height());
 
         if (ret == enum_result_code::success) {
             xsync_dbg("chain_downloader on_response(succ) %s,height=%lu,viewid=%lu,prev_hash:%s,",
