@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <string>
+#include "xbase/xutl.h"
 #include "xbasic/xhex.h"
 #include "xdata/xblockextract.h"
 #include "xdata/xblockbuild.h"
@@ -290,30 +291,74 @@ void xblockextract_t::get_tableheader_extra_from_block(base::xvblock_t* _block, 
     }
 }
 
-bool xblockextract_t::is_cross_tx(const data::xeth_store_receipt_t & evm_result, const std::string & cross_topic, const std::string & eth_cross_addr, const std::string & bsc_cross_addr) {
-    if (evm_result.get_tx_status() != data::enum_ethreceipt_status::ethreceipt_status_successful) {
-        return false;
+cross_chain_contract_info xblockextract_t::get_cross_chain_config() {
+    auto cross_chain_config_str = XGET_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_list);
+    std::vector<std::string> str_vec;
+    base::xstring_utl::split_string(cross_chain_config_str, ',', str_vec);
+    if (str_vec.size() <= 0) {
+        return {};
     }
+
+    cross_chain_contract_info cross_chain_config;
+    for (auto & str : str_vec) {
+        std::vector<std::string> config_str_vec;
+        base::xstring_utl::split_string(str, ':', config_str_vec);
+        if (config_str_vec.size() != 3) {
+            xerror("xblockextract_t::get_cross_chain_config cross_chain_contract_list invalid:%s", cross_chain_config_str.c_str());
+            return {};
+        }
+        cross_chain_contract_info info;
+        std::string & addr = config_str_vec[0];
+        std::string & topic = config_str_vec[1];
+        uint32_t chain_bits_shift = static_cast<std::uint32_t>(std::stoi(config_str_vec[2]));
+        evm_common::u256 chain_bits = (1 << chain_bits_shift);
+        cross_chain_config[addr] = std::make_pair(topic, chain_bits);
+    }
+
+    if (str_vec.size() != cross_chain_config.size()) {
+        xerror("xblockextract_t::get_cross_chain_config repeat addresses in cross_chain_contract_list:%s", cross_chain_config_str.c_str());
+    }
+
+    return cross_chain_config;
+}
+
+bool xblockextract_t::is_cross_tx(const evm_common::xevm_logs_t & logs, const cross_chain_contract_info & cross_chain_config) {
 #ifndef CROSS_TX_DBG
-    for (auto & log : evm_result.get_logs()) {
+    for (auto & log : logs) {
+        auto it = cross_chain_config.find(log.address.to_hex_string());
+        if (it == cross_chain_config.end()) {
+            continue;
+        }
+
         std::string topic_hex = top::to_hex_prefixed(log.topics[0].asBytes());
-        if ((topic_hex == cross_topic) && (log.address.to_hex_string() == eth_cross_addr || log.address.to_hex_string() == bsc_cross_addr)) {
+        if ((topic_hex == it->second.first)) {
             return true;
         }
     }
     return false;
 #else
-    if (evm_result.get_logs().empty()) {
+    if (logs.empty()) {
         return false;
     }
     return true;
 #endif
 }
 
+bool xblockextract_t::get_chain_bits(const evm_common::xevm_logs_t & logs, const cross_chain_contract_info & cross_chain_config, evm_common::u256 & chain_bits) {
+    for (auto & log : logs) {
+        auto it = cross_chain_config.find(log.address.to_hex_string());
+        if (it == cross_chain_config.end()) {
+            continue;
+        }
+        chain_bits = it->second.second;
+        return true;
+    }
+    return false;
+}
+
 void xblockextract_t::unpack_crosschain_txs(base::xvblock_t* _block, xrelayblock_crosstx_infos_t & infos, std::error_code & ec) {
-    auto eth_cross_addr = XGET_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_addr_for_eth);
-    auto bsc_cross_addr = XGET_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_addr_for_bsc);
-    auto cross_topic = XGET_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_topic);
+    bool config_loaded = false;
+    cross_chain_contract_info cross_chain_config;
     data::xblock_t * block = dynamic_cast<data::xblock_t*>(_block);
     if (nullptr == block) {
         ec = common::error::xerrc_t::invalid_block;
@@ -340,7 +385,16 @@ void xblockextract_t::unpack_crosschain_txs(base::xvblock_t* _block, xrelayblock
             return;
         }
 
-        if (!is_cross_tx(evm_result, cross_topic, eth_cross_addr, bsc_cross_addr)) {
+        if (evm_result.get_tx_status() != data::enum_ethreceipt_status::ethreceipt_status_successful) {
+            continue;
+        }
+
+        if (!config_loaded) {
+            cross_chain_config = get_cross_chain_config();
+            config_loaded = true;
+        }
+
+        if (!is_cross_tx(evm_result.get_logs(), cross_chain_config)) {
             xdbg("xblockextract_t::unpack_crosschain_txs topic not match.tx:%s is not a cross chain tx", top::to_hex_prefixed(top::to_bytes(txaction.get_tx_hash())).c_str());
             continue;
         }

@@ -15,6 +15,8 @@
 
 NS_BEG2(top, data)
 
+using cross_chain_contract_info = std::map<std::string, std::pair<std::string, evm_common::u256>>;
+
 class xblockextract_t {
  public:
     static uint32_t                                 get_txactions_count(base::xvblock_t* _block);
@@ -31,7 +33,9 @@ class xblockextract_t {
     static void     unpack_ethheader(base::xvblock_t* _block, xeth_header_t & ethheader, std::error_code & ec);
     static void     unpack_crosschain_txs(base::xvblock_t* _block, xrelayblock_crosstx_infos_t & infos, std::error_code & ec);
     static void     unpack_subblocks(base::xvblock_t* _block, std::vector<xobject_ptr_t<base::xvblock_t>> & sublocks, std::error_code & ec);
-    static bool     is_cross_tx(const data::xeth_store_receipt_t & evm_result, const std::string & cross_topic, const std::string & eth_cross_addr, const std::string & bsc_cross_addr);
+    static cross_chain_contract_info get_cross_chain_config();
+    static bool     is_cross_tx(const evm_common::xevm_logs_t & logs, const cross_chain_contract_info & cross_chain_config);
+    static bool     get_chain_bits(const evm_common::xevm_logs_t & logs, const cross_chain_contract_info & cross_chain_config, evm_common::u256 & chain_bits);
 
  private:
     static void     get_tableheader_extra_from_block(base::xvblock_t* _block, data::xtableheader_extra_t &header_extra, std::error_code & ec);
