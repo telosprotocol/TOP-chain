@@ -502,10 +502,27 @@ void xrpc_eth_query_manager::eth_call(xJson::Value & js_req, xJson::Value & js_r
             return;
     }
 
-    evm_common::u256 gas_value = (evm_common::u256)XGET_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit);
-    top::data::xtransaction_ptr_t tx = top::data::xtx_factory::create_ethcall_v3_tx(from, to, data, std::strtoul(value.c_str(), NULL, 16), gas_value, 0);
+    evm_common::u256 gas_u256{0};
+    evm_common::u256 gas_price_u256{0};
+    if (!gas.empty()) {
+        if (!eth::EthErrorCode::check_hex(gas, js_rsp, 0, eth::enum_rpc_type_unknown)) {
+            return;
+        }
+        gas_u256 = evm_common::fromBigEndian<evm_common::u256>(gas);
+    } else {
+        gas_u256 = evm_common::u256(XGET_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit));
+    }
+    if (!gas_price.empty()) {
+        if (!eth::EthErrorCode::check_hex(gas_price, js_rsp, 0, eth::enum_rpc_type_unknown)) {
+            return;
+        } else {
+            gas_price_u256 = evm_common::fromBigEndian<evm_common::u256>(gas_price);
+        }
+    }
+
+    top::data::xtransaction_ptr_t tx = top::data::xtx_factory::create_ethcall_v3_tx(from, to, data, std::strtoul(value.c_str(), NULL, 16), gas_u256, gas_price_u256);
     auto cons_tx = top::make_object_ptr<top::data::xcons_transaction_t>(tx.get());
-    xinfo("xrpc_eth_query_manager::eth_call, %s, %s, %s", jdata.c_str(), value.c_str(), gas_value.str().c_str());
+    xinfo("xrpc_eth_query_manager::eth_call, %s, %s, %s", jdata.c_str(), value.c_str(), gas_u256.str().c_str());
 
     std::string addr = std::string(sys_contract_eth_table_block_addr) + "@0";
     base::xvaccount_t _vaddress(addr);
@@ -536,24 +553,6 @@ void xrpc_eth_query_manager::eth_call(xJson::Value & js_req, xJson::Value & js_r
         eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);        
         return;
     }
-//        unitstate->tep_token_deposit(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH, std::strtoul(value.c_str(), NULL, 16));
-    if (!gas.empty() && !gas_price.empty()) {
-        cons_tx->set_inner_table_flag();
-        gasfee::xgasfee_t gasfee{unitstate, cons_tx, cs_para.get_clock(), cs_para.get_total_lock_tgas_token()};
-        std::error_code ec;
-        gasfee.preprocess(ec);
-        if (ec) {
-            evm_common::u256 fund = unitstate->balance();
-            uint64_t supplied_gas = std::strtoul(gas.c_str(), NULL, 16);
-            evm_common::u256 gasfee = supplied_gas;
-            gasfee *= std::strtoul(gas_price.c_str(), NULL, 16);
-            xwarn("eth_call error, gas: %s,%s,%llu, %s, %s", gas.c_str(), gas_price.c_str(), supplied_gas, fund.str().c_str(), gasfee.str().c_str());
-            std::string msg = std::string("err: insufficient funds for gas * price: address ") + safe_get_json_value(js_req[0], "from")
-                + " have top " + fund.str() + " need gasfee " + gasfee.str() + " (supplied gas " + std::to_string(supplied_gas) + ")";
-            eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);
-            return;
-        }
-    }
 
     uint64_t gas_limit = XGET_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit);
     txexecutor::xvm_para_t vmpara(cs_para.get_clock(), cs_para.get_random_seed(), cs_para.get_total_lock_tgas_token(), gas_limit, cs_para.get_table_proposal_height(), eth_zero_address);
@@ -569,17 +568,13 @@ void xrpc_eth_query_manager::eth_call(xJson::Value & js_req, xJson::Value & js_r
         return;
     }
     xinfo("evm call: %d, %s", output.m_tx_result.status, output.m_tx_result.extra_msg.c_str());
-    if (!gas.empty()) {
-        gas_value = std::strtoul(gas.c_str(), NULL, 16);
-        if (gas_value < output.m_tx_result.used_gas) {
-            std::string msg = std::string("err: intrinsic gas too low: have ") + gas_value.str() + ", want " + std::to_string(output.m_tx_result.used_gas)
-                + " (supplied gas " + gas_value.str() + ")";
-            eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);
-            return;
-        }
-    }
     if (output.m_tx_result.status == evm_common::OutOfFund) {
         std::string msg = "insufficient funds for transfer";
+        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);
+        return;
+    } else if (output.m_tx_result.status == evm_common::OutOfGas) {
+        std::string msg = std::string("err: intrinsic gas too low: have ") + gas_u256.str() + ", want " + std::to_string(output.m_tx_result.used_gas)
+            + " (supplied gas " + gas_u256.str() + ")";
         eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);
         return;
     } else if (output.m_tx_result.status == evm_common::Success) {
@@ -634,19 +629,31 @@ void xrpc_eth_query_manager::eth_estimateGas(xJson::Value & js_req, xJson::Value
     std::string value = safe_get_json_value(js_req[0], "value");
     std::string gas = safe_get_json_value(js_req[0], "gas");
     std::string gas_price = safe_get_json_value(js_req[0], "gasPrice");
+
+    evm_common::u256 gas_u256{0};
+    evm_common::u256 gas_price_u256{0};
     if (!gas.empty()) {
-        if (!eth::EthErrorCode::check_hex(gas, js_rsp, 0, eth::enum_rpc_type_unknown))
+        if (!eth::EthErrorCode::check_hex(gas, js_rsp, 0, eth::enum_rpc_type_unknown)) {
             return;
+        }
+        gas_u256 = evm_common::fromBigEndian<evm_common::u256>(gas);
+        if (gas_u256 > evm_common::u256(XGET_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit))) {
+            gas_u256 = evm_common::u256(XGET_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit));
+        }
+    } else {
+        gas_u256 = evm_common::u256(XGET_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit));
     }
     if (!gas_price.empty()) {
-        if (!eth::EthErrorCode::check_hex(gas_price, js_rsp, 0, eth::enum_rpc_type_unknown))
+        if (!eth::EthErrorCode::check_hex(gas_price, js_rsp, 0, eth::enum_rpc_type_unknown)) {
             return;
+        } else {
+            gas_price_u256 = evm_common::fromBigEndian<evm_common::u256>(gas_price);
+        }
     }
 
-    evm_common::u256 gas_value = (evm_common::u256)XGET_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit);
-    top::data::xtransaction_ptr_t tx = top::data::xtx_factory::create_ethcall_v3_tx(from, to, data, std::strtoul(value.c_str(), NULL, 16), gas_value, 0);
+    top::data::xtransaction_ptr_t tx = top::data::xtx_factory::create_ethcall_v3_tx(from, to, data, std::strtoul(value.c_str(), NULL, 16), gas_u256, gas_price_u256);
     auto cons_tx = top::make_object_ptr<top::data::xcons_transaction_t>(tx.get());
-    xinfo("xrpc_eth_query_manager::eth_estimateGas, %s, %s, %s", jdata.c_str(), value.c_str(), gas_value.str().c_str());
+    xinfo("xrpc_eth_query_manager::eth_estimateGas, %s, %s, %s", jdata.c_str(), value.c_str(), gas_u256.str().c_str());
 
     std::string addr = std::string(sys_contract_eth_table_block_addr) + "@0";
     base::xvaccount_t _vaddress(addr);
@@ -674,25 +681,6 @@ void xrpc_eth_query_manager::eth_estimateGas(xJson::Value & js_req, xJson::Value
         std::string msg = "err: unit state load fail";
         eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);              
         return;
-    }
-//        unitstate->tep_token_deposit(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_ETH, std::strtoul(value.c_str(), NULL, 16));
-    //evm_common::u256 allowance = unitstate->tep_token_balance(data::XPROPERTY_TEP1_BALANCE_KEY, data::XPROPERTY_ASSET_TOP);
-    if (!gas.empty() && !gas_price.empty()) {
-        cons_tx->set_inner_table_flag();
-        gasfee::xgasfee_t gasfee{unitstate, cons_tx, cs_para.get_clock(), cs_para.get_total_lock_tgas_token()};
-        std::error_code ec;
-        gasfee.preprocess(ec);
-        if (ec) {
-            evm_common::u256 fund = unitstate->balance();
-            uint64_t supplied_gas = std::strtoul(gas.c_str(), NULL, 16);
-            evm_common::u256 gasfee = supplied_gas;
-            gasfee *= std::strtoul(gas_price.c_str(), NULL, 16);
-            xwarn("eth_call error, gas: %s,%s,%llu, %s, %s", gas.c_str(), gas_price.c_str(), supplied_gas, fund.str().c_str(), gasfee.str().c_str());
-            std::string msg = std::string("err: insufficient funds for gas * price: address ") + safe_get_json_value(js_req[0], "from")
-                + " have top " + fund.str() + " need gasfee " + gasfee.str() + " (supplied gas " + std::to_string(supplied_gas) + ")";
-            eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);
-            return;
-        }
     }
 
     uint64_t gas_limit = XGET_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit);
