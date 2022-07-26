@@ -39,49 +39,11 @@ xdb_export_tools_t::xdb_export_tools_t(std::string const & db_path) {
     m_timer_driver = make_unique<xbase_timer_driver_t>(io_obj);
     m_bus = top::make_object_ptr<mbus::xmessage_bus_t>(true, 1000);
 
-    int db_path_num = 0;
-    std::vector<db::xdb_path_t> db_data_paths;
-    std::string extra_config = base::xvchain_t::instance().get_data_dir_path();
-    if(extra_config.empty()) {
-        extra_config = ".extra_conf.json"; 
-    } else {
-        extra_config += "/.extra_conf.json"; 
-    }
-    std::ifstream keyfile(extra_config, std::ios::in);
-    xinfo("xdb_export_tools_t::read db start extra_config %s", extra_config.c_str());
-    if (keyfile) {
-        xJson::Value key_info_js;
-        std::stringstream buffer;
-        buffer << keyfile.rdbuf();
-        keyfile.close();
-        std::string key_info = buffer.str();
-        xJson::Reader reader;
-        // ignore any error when parse
-        reader.parse(key_info, key_info_js);
-        if (key_info_js["db_path_num"] > 1) {   
-            db_path_num = key_info_js["db_path_num"].asInt();
-            for (int i = 0; i < db_path_num; i++) {
-                std::string key_db_path = "db_path_" + std::to_string(i+1);
-                std::string key_db_size = "db_path_size_" + std::to_string(i+1);
-                std::string db_path_result =  key_info_js[key_db_path].asString();
-                uint64_t db_size_result = key_info_js[key_db_size].asUInt64(); 
-                if (db_path_result.empty() || db_size_result < 1) {
-                    db_path_num = 1;
-                    xwarn("xtop_application::read db %i path %s size %lld config failed!", i , db_path_result.c_str(), db_size_result);
-                    break;
-                }
-                xinfo("xtop_application::read db  %i path %s size %lld sucess!",i , db_path_result.c_str(), db_size_result);
-                db_data_paths.emplace_back(db_path_result, db_size_result);
-            }
-        }
-    }
-    
-    std::shared_ptr<db::xdb_face_t> db;
-    if (db_path_num > 1)    {
-        db = db::xdb_factory_t::instance(db_path, db_data_paths);
-    } else {
-        db = db::xdb_factory_t::instance(db_path);
-    }
+    int dst_db_kind = top::db::xdb_kind_kvdb;
+    std::vector<db::xdb_path_t> db_data_paths {};
+    base::xvchain_t::instance().get_db_config_custom(db_data_paths, dst_db_kind);
+    std::shared_ptr<db::xdb_face_t> db = top::db::xdb_factory_t::create(dst_db_kind, db_path, db_data_paths);
+
     m_store = top::store::xstore_factory::create_store_with_static_kvdb(db);
    // m_store = top::store::xstore_factory::create_store_with_kvdb(db_path);
     base::xvchain_t::instance().set_xdbstore(m_store.get());
