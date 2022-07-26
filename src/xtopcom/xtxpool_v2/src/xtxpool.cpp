@@ -393,7 +393,7 @@ std::map<std::string, uint64_t> xtxpool_t::get_min_keep_heights() const {
     std::map<std::string, uint64_t> table_height_map;
 
     for (uint16_t i = 0; i < enum_vbucket_has_tables_count; i++) {
-        auto table = get_txpool_table(base::enum_chain_zone_beacon_index, i);
+        auto table = get_txpool_table(base::enum_chain_zone_consensus_index, i);
         if (table != nullptr) {
             std::string table_addr;
             uint64_t height = 0;
