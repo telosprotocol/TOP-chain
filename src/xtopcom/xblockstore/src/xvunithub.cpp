@@ -840,6 +840,24 @@ namespace top
                 // TODO(jimmy) commit tableblock try to update table state
                 base::auto_reference<base::xvblock_t> auto_hold_block_ptr(block);
                 base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->execute_block(block, metrics::statestore_access_from_blockstore);
+
+                if (block->get_account() == sys_contract_eth_table_block_addr) {
+                    LOAD_BLOCKACCOUNT_PLUGIN2(container_block, account);
+
+                    if ((block->get_block_class() == base::enum_xvblock_class_light) // skip nil block
+                        && (block->get_block_level() == base::enum_xvblock_level_table)
+                        && (block->get_height() != 0)) {
+                        base::xauto_ptr<base::xvbindex_t> existing_index(container_block->load_index(block->get_height(), block->get_block_hash()));
+                        if (existing_index) {
+                            std::vector<xobject_ptr_t<base::xvblock_t>> sub_blocks;
+                            if (block->extract_sub_blocks(sub_blocks)) {
+                                base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->execute_sub_block(block, sub_blocks, metrics::statestore_access_from_blockstore);
+                            } else {
+                                xerror("xvblockstore_impl::store_block,fail-extract_sub_blocks for table block(%s)", block->dump().c_str(), (int)sub_blocks.size());
+                            }
+                        }
+                    }
+                }
             }
 
             return ret;

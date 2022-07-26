@@ -428,6 +428,32 @@ namespace top
             try_update_execute_height(target_account);
             return true;
         }
+
+        bool xvblkstatestore_t::execute_sub_block(xvblock_t* target_block, std::vector<xobject_ptr_t<base::xvblock_t>> sub_blocks, const int etag)
+        {
+            xdbg("xvblkstatestore_t::execute_sub_block,table block(%s) carry unit num=%d", target_block->dump().c_str(), (int)sub_blocks.size());
+            for (auto& unit_block : sub_blocks) {
+
+                base::xvaccount_t unit_account(unit_block->get_account());
+                auto bindex = base::xvchain_t::instance().get_xblockstore()->load_block_index(unit_account, unit_block->get_height(), base::enum_xvblock_flag_committed, etag);
+                if (bindex != nullptr && bindex->get_block_hash() == unit_block->get_block_hash()) {
+                    xauto_ptr<xvbstate_t> bstate = get_block_state_internal(unit_account, unit_block.get(), etag);
+                    if (bstate == nullptr) {
+                        // shuold never happen
+                        xerror("xvblkstatestore_t::execute_sub_block fail-execute full-table,block=%s", unit_block->dump().c_str());
+                        return false;
+                    } else {
+                        xinfo("xvblkstatestore_t::execute_sub_block succ-execute full-table,block=%s", target_block->dump().c_str());
+                        set_latest_executed_info(unit_account, unit_block->get_height(), unit_block->get_block_hash());
+                    }
+                } else {
+                    xerror("xvblkstatestore_t::execute_sub_block fail-full-table is not committed,block=%s", unit_block->dump().c_str());
+                    return false;
+                }
+            }
+            return true;
+        }
+
 #if 0
         bool xvblkstatestore_t::execute_block(xvblock_t * target_block, const int etag)
         {

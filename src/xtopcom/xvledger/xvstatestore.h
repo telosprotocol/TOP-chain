@@ -41,7 +41,8 @@ namespace top
             virtual bool                  get_full_block_offsnapshot(xvblock_t * target_block, const int etag=0);
 
             virtual bool                  execute_block(xvblock_t * target_block, const int etag=0);
-
+            virtual bool                  execute_sub_block(xvblock_t* target_block, std::vector<xobject_ptr_t<base::xvblock_t>> sub_blocks, const int etag=0);
+      
         private:
             xauto_ptr<xvbstate_t>     get_block_state_internal(const xvaccount_t & target_account, xvblock_t * target_block, const int etag=0);
             bool                      write_state_to_db(const xvaccount_t & target_account, xvbstate_t & target_state,const std::string & target_block_hash);

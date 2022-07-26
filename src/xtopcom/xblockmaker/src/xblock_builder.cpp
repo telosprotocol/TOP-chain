@@ -7,6 +7,7 @@
 #include "xconfig/xpredefined_configurations.h"
 #include "xconfig/xconfig_register.h"
 #include "xdata/xblockbuild.h"
+#include "xdata/xnative_contract_address.h"
 
 NS_BEG2(top, blockmaker)
 
@@ -69,7 +70,7 @@ data::xblock_ptr_t  xunitbuilder_t::make_block(const data::xblock_ptr_t & prev_b
     bodypara.set_txkeys(unitbuilder_para.get_txkeys());
 
     std::shared_ptr<base::xvblockmaker_t> vblockmaker;
-    if (xunitbuilder_t::can_make_full_unit(prev_block)) {
+    if (xunitbuilder_t::can_make_full_unit(prev_block) && prev_block->get_account() != sys_contract_eth_table_block_addr) {
         vblockmaker = std::make_shared<data::xfullunit_build_t>(prev_block.get(), bodypara, cs_para);
     } else {
         vblockmaker = std::make_shared<data::xlightunit_build_t>(prev_block.get(), bodypara, cs_para);

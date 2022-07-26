@@ -12,6 +12,7 @@
 #include "xvledger/xvblockstore.h"
 #include "xchain_fork/xchain_upgrade_center.h"
 #include "xvledger/xunit_proof.h"
+#include "xdata/xnative_contract_address.h"
 
 NS_BEG2(top, sync)
 
@@ -433,11 +434,20 @@ int xsync_on_demand_t::check(const std::string &account_address) {
         table_address = account_address;
     }
 
-    if (!m_role_chains_mgr->exists(table_address)) {
+    if (!m_role_chains_mgr->exists(table_address) || forbidden_evm_unit(table_address)) {
         return -1;
     }
 
     return 0;
+}
+
+bool xsync_on_demand_t::forbidden_evm_unit(const std::string& table_address)
+{
+    if (table_address == sys_contract_eth_table_block_addr) {
+        xdbg("xsync_on_demand_t::forbidden_evm_unit, table_address:%s ", table_address.c_str());
+        return true;
+    }
+    return false;
 }
 
 int xsync_on_demand_t::check(const std::string &account_address,
@@ -458,6 +468,8 @@ int xsync_on_demand_t::check(const std::string &account_address,
     }
     return 0;
 }
+
+
 
 xsync_download_tracer_mgr* xsync_on_demand_t::download_tracer_mgr() {
     return &m_download_tracer;
