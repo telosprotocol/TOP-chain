@@ -1503,11 +1503,14 @@ ApiMethod::~ApiMethod() {
 }
 
 std::string ApiMethod::input_hiding() {
-    std::system("stty -echo");
+    /// add `< /dev/tty` to work around to support handle password from stdin
+    /// or it will error: `stty: standard input: Inappropriate ioctl for device`
+    /// more infomation reference https://unix.stackexchange.com/questions/157852/echo-test-stty-echo-stty-standard-input-inappropriate-ioctl-for-device
+    std::system("stty -echo < /dev/tty");
     std::string str;
     std::getline(std::cin, str, '\n');
     cin.clear();
-    std::system("stty echo");
+    std::system("stty echo < /dev/tty");
     return str;
 }
 
