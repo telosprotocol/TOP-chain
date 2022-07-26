@@ -95,7 +95,7 @@ namespace top
            
            //block object related
            static const std::string  create_prunable_block_object_key(const xvaccount_t & account,const uint64_t target_heigh);//prunable block object that include input/output as well
-            static const std::string  create_prunable_block_object_key(const xvaccount_t & account,const uint64_t target_heigh,const uint64_t target_viewid);
+           static const std::string  create_prunable_block_object_key(const xvaccount_t & account,const uint64_t target_heigh,const uint64_t target_viewid);
            
            //block input/output related
            static const std::string  create_prunable_block_input_key(const xvaccount_t & account,const uint64_t target_height,const uint64_t target_viewid);
@@ -104,6 +104,7 @@ namespace top
            static const std::string  create_prunable_block_output_resource_key(const xvaccount_t & account,const uint64_t target_height,const uint64_t target_viewid);
            
            static const std::string  create_prunable_unit_proof_key(const xvaccount_t & account, const uint64_t target_height);
+           static const std::string  create_block_execute_key(const xvaccount_t & account);
            static const std::string  get_account_prefix_key(const std::string & key);
        };
 

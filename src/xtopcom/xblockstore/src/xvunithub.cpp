@@ -842,26 +842,82 @@ namespace top
                 base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->execute_block(block, metrics::statestore_access_from_blockstore);
 
                 if (block->get_account() == sys_contract_eth_table_block_addr) {
-                    LOAD_BLOCKACCOUNT_PLUGIN2(container_block, account);
-
-                    if ((block->get_block_class() == base::enum_xvblock_class_light) // skip nil block
-                        && (block->get_block_level() == base::enum_xvblock_level_table)
-                        && (block->get_height() != 0)) {
-                        base::xauto_ptr<base::xvbindex_t> existing_index(container_block->load_index(block->get_height(), block->get_block_hash()));
-                        if (existing_index) {
-                            std::vector<xobject_ptr_t<base::xvblock_t>> sub_blocks;
-                            if (block->extract_sub_blocks(sub_blocks)) {
-                                base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->execute_sub_block(block, sub_blocks, metrics::statestore_access_from_blockstore);
-                            } else {
-                                xerror("xvblockstore_impl::store_block,fail-extract_sub_blocks for table block(%s)", block->dump().c_str(), (int)sub_blocks.size());
-                            }
-                        }
-                    }
+                  
                 }
             }
 
             return ret;
         }
+
+        bool xvblockstore_impl::execute_unit_block(const base::xvaccount_t & account)
+        {
+            uint64_t execute_height = 0;
+            const std::string  execute_key = xvdbkey_t::create_block_execute_key(account);
+            auto  execute_height_str =  base::xvchain_t::instance().get_xdbstore()->get_value(execute_key);
+            if (execute_height_str.empty())
+            {
+                base::xstream_t stream(base::xcontext_t::instance());
+                stream << execute_height;
+                if (!base::xvchain_t::instance().get_xdbstore()->set_value(execute_key, std::string((const char *)stream.data(), stream.size())))
+                    {
+                        xerror("xvblockstore_impl::set_genesis_height key %s,fail to writed into db,index dump(%ld)",execute_key.c_str(), execute_height);
+                        return false;
+                    }
+            } else {
+                base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)execute_height_str.c_str(), execute_height_str.size());
+            stream >> execute_height;
+
+            }
+
+   
+            auto const vblock =  load_block_object(account, execute_height+1, base::enum_xvblock_flag_committed, false);
+       
+
+
+            if (execute_height_str.empty())
+            {
+                xerror("xvblockstore_impl::store_block,fail-extract_sub_blocks for table block(%s)", block->dump().c_str(), (int)sub_blocks.size());
+                return false;
+            }
+   
+     
+
+
+            
+            
+            if ((execute_height + 1) == target_block->get_height()) {
+                  LOAD_BLOCKACCOUNT_PLUGIN2(container_block, account);
+
+                    if ((target_block->get_block_class() == base::enum_xvblock_class_light) // skip nil block
+                        && (target_block->get_block_level() == base::enum_xvblock_level_table)
+                        && (target_block->get_height() != 0)) {
+                        base::xauto_ptr<base::xvbindex_t> existing_index(container_block->load_index(target_block->get_height(), target_block->get_block_hash()));
+                        if (existing_index) {
+                            std::vector<xobject_ptr_t<base::xvblock_t>> sub_blocks;
+                            if (target_block->extract_sub_blocks(sub_blocks)) {
+                                base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->execute_sub_block(target_block, sub_blocks, metrics::statestore_access_from_blockstore);
+                            } else {
+                                xerror("xvblockstore_impl::store_block,fail-extract_sub_blocks for table target_block(%s)", target_block->dump().c_str(), (int)sub_blocks.size());
+                            }
+                        }
+                    }
+            }
+            
+
+
+
+            if (!base::xvchain_t::instance().get_xdbstore()->set_value(execute_key, height))
+            {
+                xerror("xvblockstore_impl::set_genesis_height key %s,fail to writed into db,index dump(%s)",key_path.c_str(), height.c_str());
+                return false;
+            }
+
+
+        }
+
+
+    
+
 
         bool                xvblockstore_impl::store_block_but_not_execute(const base::xvaccount_t & account,base::xvblock_t* block)
         {

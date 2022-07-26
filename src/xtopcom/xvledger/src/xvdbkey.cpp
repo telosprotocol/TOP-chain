@@ -370,6 +370,13 @@ namespace top
             return key_path;
         }
 
+        const std::string  xvdbkey_t::create_block_execute_key(const xvaccount_t & account)
+        {
+            //enum_xdb_cf_type_read_most = 'r'
+            const std::string key_path = "e/" + account.get_storage_key() + "/l";
+            return key_path;
+        }
+
         const std::string xvdbkey_t::get_account_prefix_key(const std::string & key)
         {
             std::vector<std::string> values;
