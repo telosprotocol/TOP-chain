@@ -161,6 +161,7 @@ namespace top
             
             const std::string         get_state_hash() const {return query_value(key_name_state_hash());}
             const std::string         get_binlog_hash() const {return query_value(key_name_binlog_hash());}
+            const std::map<std::string, std::string> &  get_values() const {return m_values;}
             
         protected:
             //return how many bytes readout /writed in, return < 0(enum_xerror_code_type) when have error

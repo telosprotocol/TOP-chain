@@ -105,7 +105,7 @@ int32_t xaccount_context_t::create_user_account(const std::string& address) {
 
     auto old_token = token_balance(data::XPROPERTY_BALANCE_AVAILABLE);
     if (old_token != 0) {
-        xerror("xaccount_context_t::create_user_account fail-token not zero");
+        xwarn("xaccount_context_t::create_user_account fail-token not zero,address:%s,token=%ld",address.c_str(),old_token);
         return -1;
     }
 

@@ -214,7 +214,7 @@ namespace top
             #else
             
             xblockacct_t * new_plugin = NULL;
-            if (account_address == sys_contract_relay_block_addr)
+            if (auto_account_ptr->is_relay_address())
                 new_plugin =  new xrelay_plugin(*auto_account_ptr,timeout_for_block_plugin,m_xvblockdb_ptr);
             else if(!auto_account_ptr->is_table_address())
                 new_plugin =  new xunitbkplugin(*auto_account_ptr,timeout_for_block_plugin,m_xvblockdb_ptr);
