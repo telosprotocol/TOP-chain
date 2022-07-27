@@ -482,6 +482,7 @@ namespace top
             bool                        is_contract_address() const;
             bool                        is_drand_address() const;
             bool                        is_timer_address() const;
+            bool                        is_relay_address() const;
             enum_vaccount_addr_type     get_addr_type()const{return get_addrtype_from_account(m_account_addr);}
         private:
             xvid_t                      m_account_xid;

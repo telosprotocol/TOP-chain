@@ -2641,14 +2641,14 @@ namespace top
             top::data::xrelay_block  extra_relay_block;
             data::xblockextract_t::unpack_relayblock_from_wrapblock(&new_raw_block, extra_relay_block, ec);
             if (ec) {
-                xwarn("xrelay_plugin::create_index decodeBytes decodeBytes error %s; err msg %s", 
-                ec.category().name(), ec.message().c_str());
+                xerror("xrelay_plugin::create_index decodeBytes decodeBytes block=%s,err msg %s", 
+                new_raw_block.dump().c_str(), ec.message().c_str());
                 return nullptr;
             }
             //extra_relay_block.build_finish();
             evm_common::h256 hash = extra_relay_block.get_block_hash();
             std::string block_hash_str((char*)hash.data(), hash.size);
-            xdbg("xrelay_plugin::create_index, %s", extra_relay_block.dump().c_str());
+            xdbg("xrelay_plugin::create_index,block=%s,relay=%s", new_raw_block.dump().c_str(), extra_relay_block.dump().c_str());
             new_index->set_extend_data(block_hash_str);
             return new_index;
         }
