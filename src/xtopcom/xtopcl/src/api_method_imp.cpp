@@ -57,11 +57,11 @@ bool api_method_imp::make_private_key(std::array<uint8_t, PRI_KEY_LEN> & private
     return !address.empty();
 }
 
-bool api_method_imp::make_child_private_key(const std::string & parent_addr, std::array<uint8_t, PRI_KEY_LEN> & private_key, std::string & address) {
-    xcrypto_util::make_private_key(private_key);
-    address = xcrypto_util::make_child_address_by_assigned_key(parent_addr, private_key, top::base::enum_vaccount_addr_type_secp256k1_user_sub_account);
-    return !address.empty();
-}
+//bool api_method_imp::make_child_private_key(const std::string & parent_addr, std::array<uint8_t, PRI_KEY_LEN> & private_key, std::string & address) {
+//    xcrypto_util::make_private_key(private_key);
+//    address = xcrypto_util::make_child_address_by_assigned_key(parent_addr, private_key, top::base::enum_vaccount_addr_type_secp256k1_user_sub_account);
+//    return !address.empty();
+//}
 
 bool api_method_imp::set_private_key(user_info & uinfo, const std::string & private_key) {
     std::vector<uint8_t> keys = hex_to_uint(private_key);
@@ -88,11 +88,11 @@ bool api_method_imp::validate_key(const std::string & priv, const std::string & 
     if (main_addr.empty()) {
         regenerate_addr = ecpub.to_address(top::base::enum_vaccount_addr_type_secp256k1_user_account,
                                            top::base::xvaccount_t::make_ledger_id(top::base::enum_main_chain_id, top::base::enum_chain_zone_consensus_index));
-    } else {
-        regenerate_addr = ecpub.to_address(main_addr,
-                                           top::base::enum_vaccount_addr_type_secp256k1_user_sub_account,
-                                           top::base::xvaccount_t::make_ledger_id(top::base::enum_main_chain_id, top::base::enum_chain_zone_consensus_index));
-    }
+    }// else {
+     //    regenerate_addr = ecpub.to_address(main_addr,
+     //                                       top::base::enum_vaccount_addr_type_secp256k1_user_sub_account,
+     //                                       top::base::xvaccount_t::make_ledger_id(top::base::enum_main_chain_id, top::base::enum_chain_zone_consensus_index));
+     // }
 
     return addr == regenerate_addr;
 }
@@ -472,12 +472,13 @@ std::string api_method_imp::make_account_address(std::array<uint8_t, PRI_KEY_LEN
 
     if (addr_type == top::base::enum_vaccount_addr_type_secp256k1_user_account) {
         address = pub_key_obj.to_address(addr_type, top::base::xvaccount_t::make_ledger_id(top::base::enum_main_chain_id, top::base::enum_chain_zone_consensus_index));
-    } else if (addr_type == top::base::enum_vaccount_addr_type_secp256k1_user_sub_account || addr_type == top::base::enum_vaccount_addr_type_custom_contract) {
-        if (!parent_addr.empty()) {
-            address =
-                pub_key_obj.to_address(parent_addr, addr_type, top::base::xvaccount_t::make_ledger_id(top::base::enum_main_chain_id, top::base::enum_chain_zone_consensus_index));
-        }
-    } else {
+    }//  else if (addr_type == top::base::enum_vaccount_addr_type_secp256k1_user_sub_account || addr_type == top::base::enum_vaccount_addr_type_custom_contract) {
+     //    if (!parent_addr.empty()) {
+     //        address =
+     //            pub_key_obj.to_address(parent_addr, addr_type, top::base::xvaccount_t::make_ledger_id(top::base::enum_main_chain_id, top::base::enum_chain_zone_consensus_index));
+     //    }
+     // }
+     else {
         assert(0);
     }
     return address;
@@ -718,12 +719,12 @@ void api_method_imp::make_keys_base64(std::ostream & out) {
 
         auto sub_priv_str = uint_to_str(sub_privkey.data(), sub_privkey.size());
         auto sub_pub_str = uint_to_str(sub_pubkey.data(), sub_pubkey.size());
-        auto sub_address = sub_pubkey.to_address(main_address,
-                                                 top::base::enum_vaccount_addr_type_secp256k1_user_sub_account,
-                                                 top::base::xvaccount_t::make_ledger_id(top::base::enum_main_chain_id, top::base::enum_chain_zone_consensus_index));
+        //auto sub_address = sub_pubkey.to_address(main_address,
+        //                                         top::base::enum_vaccount_addr_type_secp256k1_user_sub_account,
+        //                                         top::base::xvaccount_t::make_ledger_id(top::base::enum_main_chain_id, top::base::enum_chain_zone_consensus_index));
         out << utility::base64_encode((unsigned char const *)sub_priv_str.data(), (unsigned int)sub_priv_str.size()) << ',';
-        out << sub_pub_str << ',';
-        out << sub_address << '\n';
+        out << sub_pub_str << '\n';
+        // out << sub_address << '\n';
     }
 }
 

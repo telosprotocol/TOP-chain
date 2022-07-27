@@ -871,11 +871,11 @@ uint64_t xtop_contract_execution_context::calc_total_tgas() const {
     auto token_price = calc_token_price();
     auto total_tgas = pledge_token * token_price / TOP_UNIT + calc_free_tgas();
     // contract account, max tgas is different
-    if (data::is_user_contract_address(contract_state()->state_account_address())) {
-        max_tgas = XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_gas_contract);
-    } else {
+    // if (data::is_user_contract_address(contract_state()->state_account_address())) {
+    //     max_tgas = XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_gas_contract);
+    // } else {
         max_tgas = XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_gas_account);
-    }
+    // }
     return std::min(total_tgas, max_tgas);
 }
 

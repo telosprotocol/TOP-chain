@@ -2688,8 +2688,8 @@ int ApiMethod::Key(const ParamList & param_list) {
     if (cmd == "-s") {
         api_method_imp_.make_child_private_key(g_userinfo.account, g_userinfo.child.private_key, g_userinfo.child.account);
     } else if (cmd == "-t") {
-        api_method_imp_.make_private_key(g_userinfo.contract.private_key);
-        g_userinfo.contract.account = api_method_imp_.make_account_address(g_userinfo.contract.private_key, top::base::enum_vaccount_addr_type_custom_contract, g_userinfo.account);
+        // api_method_imp_.make_private_key(g_userinfo.contract.private_key);
+        // g_userinfo.contract.account = api_method_imp_.make_account_address(g_userinfo.contract.private_key, top::base::enum_vaccount_addr_type_custom_contract, g_userinfo.account);
     } else if (cmd == "-i") {
         if (param_list.size() < 3) {
             LOG("Cmd key lost params: base64 private key. param_count=3");

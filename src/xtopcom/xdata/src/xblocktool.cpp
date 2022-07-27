@@ -264,10 +264,10 @@ std::string xblocktool_t::make_address_zec_sys_account(const std::string & publi
 std::string xblocktool_t::make_address_beacon_sys_account(const std::string & public_key_address, uint16_t subaddr) {
     return make_address_native_contract(base::enum_chain_zone_beacon_index, public_key_address, subaddr);
 }
-std::string xblocktool_t::make_address_user_contract(const std::string & public_key_address) {
-    uint16_t ledger_id = base::xvaccount_t::make_ledger_id(base::enum_main_chain_id, base::enum_chain_zone_consensus_index);
-    return base::xvaccount_t::make_account_address(base::enum_vaccount_addr_type_custom_contract, ledger_id, public_key_address);
-}
+//std::string xblocktool_t::make_address_user_contract(const std::string & public_key_address) {
+//    uint16_t ledger_id = base::xvaccount_t::make_ledger_id(base::enum_main_chain_id, base::enum_chain_zone_consensus_index);
+//    return base::xvaccount_t::make_account_address(base::enum_vaccount_addr_type_custom_contract, ledger_id, public_key_address);
+//}
 
 std::vector<std::string> xblocktool_t::make_all_table_addresses() {
     std::vector<std::string> table_addrs;

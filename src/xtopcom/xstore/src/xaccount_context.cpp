@@ -1364,11 +1364,11 @@ void xaccount_context_t::update_latest_create_nonce_hash(const data::xcons_trans
 
 int32_t xaccount_context_t::create_transfer_tx(const std::string & receiver, uint64_t amount) {
     xassert(data::is_contract_address(common::xaccount_address_t{ get_address() }));
-    if (data::is_user_contract_address(common::xaccount_address_t{ get_address() })) {
-        xwarn("xaccount_context_t::create_transfer_tx fail to create user contract transaction from:%s,to:%s,amount:%" PRIu64,
-                get_address().c_str(), receiver.c_str(), amount);
-        return xstore_user_contract_can_not_initiate_transaction;
-    }
+    //if (data::is_user_contract_address(common::xaccount_address_t{ get_address() })) {
+    //    xwarn("xaccount_context_t::create_transfer_tx fail to create user contract transaction from:%s,to:%s,amount:%" PRIu64,
+    //            get_address().c_str(), receiver.c_str(), amount);
+    //    return xstore_user_contract_can_not_initiate_transaction;
+    //}
 
     uint64_t latest_sendtx_nonce;
     uint256_t latest_sendtx_hash;
@@ -1391,11 +1391,11 @@ int32_t xaccount_context_t::create_transfer_tx(const std::string & receiver, uin
 }
 
 int32_t xaccount_context_t::generate_tx(const std::string& target_addr, const std::string& func_name, const std::string& func_param) {
-    if (data::is_user_contract_address(common::xaccount_address_t{ get_address() })) {
-        xwarn("xaccount_context_t::generate_tx from:%s,to:%s,func_name:%s",
-                get_address().c_str(), target_addr.c_str(), func_name.c_str());
-        return xstore_user_contract_can_not_initiate_transaction;
-    }
+    //if (data::is_user_contract_address(common::xaccount_address_t{ get_address() })) {
+    //    xwarn("xaccount_context_t::generate_tx from:%s,to:%s,func_name:%s",
+    //            get_address().c_str(), target_addr.c_str(), func_name.c_str());
+    //    return xstore_user_contract_can_not_initiate_transaction;
+    //}
 
     uint64_t latest_sendtx_nonce;
     uint256_t latest_sendtx_hash;

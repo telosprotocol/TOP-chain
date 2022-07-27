@@ -37,8 +37,6 @@
 
 NS_BEG2(top, common)
 
-using xaccount_address_t = xnode_id_t;
-
 class xtop_cluster_address final : public xhashable_t<xtop_cluster_address> {
     xip_t m_xip{};
     xnode_type_t m_type{ xnode_type_t::invalid };

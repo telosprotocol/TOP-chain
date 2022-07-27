@@ -53,7 +53,7 @@ class xblocktool_t {
     static std::string      make_address_shard_sys_account(const std::string & public_key_address, uint16_t subaddr);
     static std::string      make_address_zec_sys_account(const std::string & public_key_address, uint16_t subaddr);
     static std::string      make_address_beacon_sys_account(const std::string & public_key_address, uint16_t subaddr);
-    static std::string      make_address_user_contract(const std::string & public_key_address);
+    // static std::string      make_address_user_contract(const std::string & public_key_address);
 
     static std::vector<std::string>     make_all_table_addresses();
 

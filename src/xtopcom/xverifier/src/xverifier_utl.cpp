@@ -112,11 +112,11 @@ uint64_t xtx_utl::get_gmttime_s() {
 // judge sendtx whether by normal contract(T-3)
 int32_t  xtx_utl::judge_normal_contract_sendtx(data::xtransaction_ptr_t const& tx_ptr) {
     // filter out T-3 normal contract send trx
-    if (data::is_user_contract_address(common::xaccount_address_t{tx_ptr->get_source_addr()})) {
-        xwarn("[global_trace][xtx_verifier][verify normal contract sendtx][fail]tx hash:%s addr:%s",
-            tx_ptr->get_digest_hex_str().c_str(), tx_ptr->get_source_addr().c_str());
-        return xverifier_error::xverifier_error_sendtx_by_normal_contrwact;
-    }
+    //if (data::is_user_contract_address(common::xaccount_address_t{tx_ptr->get_source_addr()})) {
+    //    xwarn("[global_trace][xtx_verifier][verify normal contract sendtx][fail]tx hash:%s addr:%s",
+    //        tx_ptr->get_digest_hex_str().c_str(), tx_ptr->get_source_addr().c_str());
+    //    return xverifier_error::xverifier_error_sendtx_by_normal_contrwact;
+    //}
 
     return xverifier_error::xverifier_success;
 }

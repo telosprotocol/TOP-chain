@@ -22,4 +22,8 @@ bool is_t6(xaccount_address_t const & account_address) {
     return account_address.type() == base::enum_vaccount_addr_type_secp256k1_evm_user_account;
 }
 
+bool address_at_zone(xaccount_address_t const & account_address, xzone_id_t const & target_zone_id) {
+    return account_address.ledger_id().zone_id() == target_zone_id;
+}
+
 NS_END2
