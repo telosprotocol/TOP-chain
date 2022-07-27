@@ -60,11 +60,11 @@ uint64_t xunit_bstate_t::get_total_tgas(uint32_t token_price) const {
     uint64_t total_tgas = pledge_token * token_price / TOP_UNIT + get_free_tgas();
     uint64_t max_tgas;
     // contract account, max tgas is different
-    if (is_user_contract_address(common::xaccount_address_t{get_account()})) {
-        max_tgas = XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_gas_contract);
-    } else {
+    // if (is_user_contract_address(common::xaccount_address_t{get_account()})) {
+    //     max_tgas = XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_gas_contract);
+    // } else {
         max_tgas = XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_gas_account);
-    }
+    // }
     return std::min(total_tgas, max_tgas);
 }
 
