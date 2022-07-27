@@ -400,7 +400,10 @@ namespace top
         {
             return is_drand_address_type(get_addr_type());
         }
-
+        bool  xvaccount_t::is_relay_address() const
+        {
+            return (get_addr_type() == enum_vaccount_addr_type_relay_block);
+        }
         //------------------------------------account meta-------------------------------------//
         xblockmeta_t::xblockmeta_t()
         {

@@ -165,7 +165,8 @@ std::vector<xblock_ptr_t> xtable_maker_t::make_units(bool is_leader, const data:
             return {};
         }
         batch_units.push_back(unitblock);
-        xinfo("xtable_maker_t::make_units succ-make unit.is_leader=%d,%s,unit=%s,txkeys=%zu",is_leader, cs_para.dump().c_str(), unitblock->dump().c_str(),txkeys.get_txkeys().size());
+        xinfo("xtable_maker_t::make_units succ-make unit.is_leader=%d,%s,unit=%s,txkeys=%zu,size=%zu,%zu",
+            is_leader, cs_para.dump().c_str(), unitblock->dump().c_str(),txkeys.get_txkeys().size(),unitblock->get_input()->get_resources_data().size(),unitblock->get_output()->get_resources_data().size());
         xtablebuilder_t::update_account_index_property(statectx_ptr->get_table_state(), unitblock, unitctx->get_unitstate());
     }
 
