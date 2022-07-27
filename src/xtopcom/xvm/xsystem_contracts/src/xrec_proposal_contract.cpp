@@ -111,8 +111,8 @@ void xrec_proposal_contract::submitProposal(const std::string & target,
     case proposal_type::proposal_update_parameter_incremental_add:
     case proposal_type::proposal_update_parameter_incremental_delete:
         // current only support whitelist/blacklist
-        XCONTRACT_ENSURE(target == "whitelist" || target == "blacklist", "[xrec_proposal_contract::submitProposal] current target cannot support proposal_update_parameter_increamental_add/delete");
-        check_bwlist_proposal(value);
+        XCONTRACT_ENSURE(target == "whitelist" || target == "blacklist" || target == "cross_chain_contract_list", "[xrec_proposal_contract::submitProposal] current target cannot support proposal_update_parameter_increamental_add/delete");
+        if (target == "whitelist" || target == "blacklist") check_bwlist_proposal(value);
         break;
     default:
         xwarn("[xrec_proposal_contract::submitProposal] proposal type %u current not support", type);

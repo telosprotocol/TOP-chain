@@ -443,9 +443,8 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(custom_property_max_number, std::uint32_t,
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(application_contract_code_max_len, std::uint32_t, critical, 32768, 1, std::numeric_limits<uint32_t>::max());
 
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(contract_call_contracts_num, std::uint32_t, critical, 25, 1, std::numeric_limits<uint32_t>::max());
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_addr_for_eth, char const *, critical, "0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000");
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_addr_for_bsc, char const *, critical, "0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000");
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_topic, char const *, critical, "0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000");
+
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_list, char const *, critical, "", "", ""); // format: "cross_addrss1:topic1:chain_bits_shift1,cross_addrss2:topic2:chain_bits_shift2"
 
 /* begin of offchain parameters */
 XDECLARE_CONFIGURATION(zone_count, std::uint32_t, 1);

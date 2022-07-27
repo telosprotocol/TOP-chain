@@ -287,8 +287,12 @@ static xeth_transaction_t create_test_eth() {
 TEST_F(xtop_test_relay_make_block_contract, build_tx_relay_block) {
     PREPAIR
 
-    std::string eth_cross_addr = "0x0000000000000000000000000000000000000000";
-    top::config::config_register.get_instance().set(config::xcross_chain_contract_addr_for_eth_onchain_goverance_parameter_t::name, eth_cross_addr);
+    std::error_code ec;
+    std::string cross_addr = "0xbc9b5f068bc20a5b12030fcb72975d8bddc4e84c";
+    std::string cross_topic_str = "0x342827c97908e5e2f71151c08502a66d44b6f758e3ac2f1de95f02eb95f0a735";
+
+    std::string cross_config_addr = cross_addr + ":" + cross_topic_str + ":1";
+    top::config::config_register.get_instance().set(config::xcross_chain_contract_list_onchain_goverance_parameter_t::name, cross_config_addr);
 
     xrelayblock_crosstx_infos_t txinfos;
     for (uint32_t i = 0; i < 1; i++) {
@@ -296,6 +300,7 @@ TEST_F(xtop_test_relay_make_block_contract, build_tx_relay_block) {
         xeth_receipt_t _receipt;
         evm_common::xevm_logs_t logs;
         evm_common::xevm_log_t log;
+        log.address = common::xtop_eth_address::build_from(cross_addr);
         logs.push_back(log);
         _receipt.set_logs(logs);
         xrelayblock_crosstx_info_t txinfo(_tx, _receipt);

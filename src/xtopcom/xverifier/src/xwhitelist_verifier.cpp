@@ -72,33 +72,6 @@ namespace top {
 
         }
 
-        int  xwhitelist_utl::split_string(const std::string & input,const char split_char, std::vector<std::string> & values)
-        {
-            if(input.empty())
-                return 0;
-
-            std::string::size_type begin_pos = 0;
-            std::string::size_type pos_of_split = input.find_first_of(split_char,begin_pos);
-            while(pos_of_split != std::string::npos)
-            {
-                if(pos_of_split != begin_pos)
-                    values.push_back(input.substr(begin_pos,pos_of_split - begin_pos)); //[)
-                begin_pos = pos_of_split + 1; //skip boundary
-                pos_of_split = input.find_first_of(split_char, begin_pos);
-                if(pos_of_split == std::string::npos) //not find the last split-char
-                {
-                    if(begin_pos < input.size())
-                    {
-                        values.push_back(input.substr(begin_pos)); //put the remaining section
-                    }
-                }
-            }
-            if(values.empty())
-                values.push_back(input);
-
-            return (int)values.size();
-        }
-
         onchain_whitelist xwhitelist_utl::get_whitelist_from_config() {
             auto offchain_config = XGET_CONFIG(local_whitelist);
             auto onchain_config = XGET_ONCHAIN_GOVERNANCE_PARAMETER(whitelist);

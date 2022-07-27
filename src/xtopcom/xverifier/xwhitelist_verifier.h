@@ -49,17 +49,6 @@ public:
      */
     static bool check_whitelist_limit_tx(data::xtransaction_t const * tx);
 
-    /**
-     * @brief split the input string
-     *
-     * @param input  the input string
-     * @param split_char  the seperated char to split the string
-     * @param values  the splited result
-     *
-     * @return int  the size of the result
-     */
-    static int split_string(const std::string & input, const char split_char, std::vector<std::string> & values);
-
     /// helper
     static onchain_whitelist get_whitelist_from_config();
 
