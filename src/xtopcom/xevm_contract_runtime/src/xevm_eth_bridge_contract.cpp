@@ -135,7 +135,7 @@ bool xtop_evm_eth_bridge_contract::execute(xbytes_t input,
 
     switch (function_selector.method_id) {
     case method_id_init: {
-        if (!m_whitelist.count(context.caller.to_hex_string())) {
+        if (!m_whitelist.empty() && !m_whitelist.count(context.caller.to_hex_string())) {
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
             err.cost = 50000;
@@ -252,7 +252,7 @@ bool xtop_evm_eth_bridge_contract::execute(xbytes_t input,
         return true;
     }
     case method_id_reset: {
-        if (!m_whitelist.count(context.caller.to_hex_string())) {
+        if (!m_whitelist.empty() && !m_whitelist.count(context.caller.to_hex_string())) {
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
             err.cost = 50000;
