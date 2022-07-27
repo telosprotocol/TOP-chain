@@ -16,7 +16,7 @@
 
 NS_BEG2(top, common)
 
-xtop_node_id::xtop_node_id(std::string const & v) : m_account_string{v} {
+xtop_node_id::xtop_node_id(std::string value) : m_account_string{std::move(value)} {
     if (!empty()) {
         parse();
     }

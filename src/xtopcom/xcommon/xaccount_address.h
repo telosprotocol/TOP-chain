@@ -14,4 +14,6 @@ bool is_t2(xaccount_address_t const & account_address);
 bool is_t8(xaccount_address_t const & account_address);
 bool is_t6(xaccount_address_t const & account_address);
 
+bool address_at_zone(xaccount_address_t const & account_address, xzone_id_t const & target_zone_id);
+
 NS_END2

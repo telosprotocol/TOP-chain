@@ -44,9 +44,6 @@ std::unique_ptr<data::xbasic_top_action_t const> xtop_action_generator::generate
     case base::enum_vaccount_addr_type_secp256k1_evm_user_account:
         return top::make_unique<data::xevm_consensus_action_t>(tx);
 
-    case base::enum_vaccount_addr_type_custom_contract:
-        return top::make_unique<data::xuser_consensus_action_t>(tx);
-
     default:
         ec = data::error::xenum_errc::action_address_type_error;
         assert(false);

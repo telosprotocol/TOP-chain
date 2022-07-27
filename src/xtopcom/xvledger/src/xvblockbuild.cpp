@@ -327,9 +327,9 @@ namespace top
             case base::enum_vaccount_addr_type_secp256k1_user_account:
             case base::enum_vaccount_addr_type_secp256k1_eth_user_account:
             case base::enum_vaccount_addr_type_secp256k1_evm_user_account:
-            case base::enum_vaccount_addr_type_secp256k1_user_sub_account:
+            // case base::enum_vaccount_addr_type_secp256k1_user_sub_account:
             case base::enum_vaccount_addr_type_native_contract:
-            case base::enum_vaccount_addr_type_custom_contract:
+            // case base::enum_vaccount_addr_type_custom_contract:
             case base::enum_vaccount_addr_type_black_hole:
 
             case base::enum_vaccount_addr_type_block_contract: {

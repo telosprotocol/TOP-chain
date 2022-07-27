@@ -59,7 +59,7 @@ public:
     xtop_node_id & operator=(xtop_node_id &&)      = default;
     ~xtop_node_id()                                = default;
 
-    explicit xtop_node_id(std::string const & value);
+    explicit xtop_node_id(std::string value);
     explicit xtop_node_id(xaccount_base_address_t base_address);
     explicit xtop_node_id(xaccount_base_address_t base_address, uint16_t const table_id_value);
     explicit xtop_node_id(xaccount_base_address_t base_address, xtable_id_t table_id);

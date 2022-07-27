@@ -52,9 +52,9 @@ namespace top {
                  ((trx_ptr->get_target_addr().substr(0, strlen(top::sys_contract_sharding_vote_addr)) == top::sys_contract_sharding_vote_addr) ||
                    trx_ptr->get_target_addr().substr(0, strlen(top::sys_contract_sharding_reward_claiming_addr)) == top::sys_contract_sharding_reward_claiming_addr)) { // vote & claim user reward
                     is_limit_tx = true;
-                } else if (data::is_user_contract_address(common::xaccount_address_t{trx_ptr->get_target_addr()})) { // lua contract
-                    is_limit_tx = true;
-                }
+                } // else if (data::is_user_contract_address(common::xaccount_address_t{trx_ptr->get_target_addr()})) { // lua contract
+                //    is_limit_tx = true;
+                //}
                 break;
             default:
                 break;
