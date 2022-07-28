@@ -138,14 +138,8 @@ public:
     void outAccountBalance(const std::string & account, std::ostringstream & out_str);
 
     // helper setting function
-    int set_userinfo();
     void change_trans_mode(bool use_http);
     void set_keystore_path(const std::string & data_dir);
-
-// private:
-    std::string input_same_pswd_twice();
-    std::string input_pswd_hint();
-    std::string input_hiding_no_empty(std::string const & empty_msg);
 
     /**
      * @brief Get the password from user / password file
@@ -165,7 +159,10 @@ public:
     int get_account_info(std::ostringstream & out_str, xJson::Value & root);
 
 private:
-    void dump_userinfo(const user_info & info);
+    std::string get_keystore_hint(xJson::Value const & keystore_info);
+    std::string input_same_pswd_twice();
+    std::string input_pswd_hint();
+    std::string input_hiding_no_empty(std::string const & empty_msg);
     std::string input_hiding();
     std::string input_no_hiding();
     static int parse_top_double(const std::string &amount, const uint32_t unit, uint64_t &out);
