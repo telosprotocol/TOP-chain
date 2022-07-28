@@ -183,6 +183,10 @@ xtable_id_t const & xtop_node_id::table_id() const noexcept {
     return m_account_base_address.default_table_id();
 }
 
+bool xtop_node_id::has_assigned_table_id() const noexcept {
+    return !m_assigned_table_id.empty();
+}
+
 base::xvaccount_t xtop_node_id::vaccount() const {
     return {to_string()};
 }

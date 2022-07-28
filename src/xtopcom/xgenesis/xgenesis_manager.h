@@ -3,7 +3,6 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #pragma once
 
-#include "xapplication/xerror/xerror.h"
 #include "xbasic/xmemory.hpp"
 #include "xchain_upgrade/xchain_data_processor.h"
 #include "xcommon/xaddress.h"
@@ -50,7 +49,7 @@ private:
     /// @param account Contract account.
     /// @param ec Log the error code.
     /// @return Block created.
-    base::xauto_ptr<base::xvblock_t> create_genesis_of_contract_account(base::xvaccount_t const & account, xenum_create_src_t src, std::error_code & ec);
+    base::xauto_ptr<base::xvblock_t> create_genesis_of_contract_account(common::xaccount_address_t const & account, xenum_create_src_t src, std::error_code & ec);
 
     /// @brief Create genesis block of evm contract account.
     /// @param account Evm contract account.

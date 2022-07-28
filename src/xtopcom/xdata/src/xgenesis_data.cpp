@@ -5,7 +5,11 @@
 #include "xdata/xgenesis_data.h"
 
 #include "xbase/xbase.h"
+#include "xbasic/xerror/xerror.h"
+#include "xdata/xerror/xerror.h"
 #include "xvledger/xvaccount.h"
+
+#include <cinttypes>
 
 NS_BEG2(top, data)
 
@@ -18,7 +22,7 @@ static bool check_address_type_and_zone(common::xaccount_address_t const & addr,
     assert(common::xzone_id_t{static_cast<uint8_t>(get_vledger_zone_index(base::xvaccount_t::get_xid_from_account(addr.value())))} == addr.ledger_id().zone_id());
     // auto              xid = base::xvaccount_t::get_xid_from_account(addr.value());
     // uint8_t           zone_index = get_vledger_zone_index(xid);
-    return check_address_type(addr, type) && address_at_zone(addr, zone_id);
+    return check_address_type(addr, type) && address_belongs_to_zone(addr, zone_id);
 }
 
 bool is_account_address(common::xaccount_address_t const & addr) {
