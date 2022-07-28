@@ -7,6 +7,8 @@
 #include "simplewebserver/server_http.hpp"
 #include "simplewebserver/client_http.hpp"
 
+#include "xbasic/xtimer_driver_fwd.h"
+
 // nlohmann_json
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
@@ -20,7 +22,7 @@ using RequestPtr    = std::shared_ptr<HttpServer::Request>;
 
 namespace safebox {
 
-static const uint32_t kExpirePeriod = 30 * 60 * 1000; // expire  after 30 * 60 s)
+static const uint32_t DefaultExpirePeriod = 30 * 60 * 1000; // expire  after 30 * 60 s)
 const std::string safebox_default_addr = "127.0.0.1";
 const uint16_t    safebox_default_port = 7000;
 
@@ -31,67 +33,68 @@ bool isFileExist (const std::string& name);
 
 class SafeBox {
 public:
-    SafeBox()                            = default;
-    ~SafeBox()                           = default;
-    SafeBox(const SafeBox&)              = delete;
+    SafeBox() = default;
+    ~SafeBox() = default;
+    SafeBox(const SafeBox &) = delete;
     SafeBox & operator=(const SafeBox &) = delete;
-    SafeBox(SafeBox &&)                  = delete;
-    SafeBox & operator=(SafeBox &&)      = delete;
+    SafeBox(SafeBox &&) = delete;
+    SafeBox & operator=(SafeBox &&) = delete;
 
     struct pw_box {
         std::string account;
         std::string private_key;
         std::chrono::steady_clock::time_point t;
-        uint32_t expired_time {kExpirePeriod};
+        std::chrono::milliseconds expired_time{DefaultExpirePeriod};
     };
 
 public:
-    inline bool getAccount(std::string& account, std::string &private_key) {
-        if (pw_sort_.size() == 0) {
-            return false;
+    void expire_account() {
+        std::unique_lock<std::mutex> locak(pw_map_mutex_);
+        for (auto iter = pw_map_.begin(); iter != pw_map_.end();) {
+            auto const & account = iter->first;
+            auto const & box = iter->second;
+            auto now = std::chrono::steady_clock::now();
+            if (box.expired_time != std::chrono::milliseconds::zero() && now - box.t > box.expired_time) {
+                iter = pw_map_.erase(iter);
+            } else {
+                iter++;
+            }
         }
-        const std::string last_account = pw_sort_[pw_sort_.size() - 1];
-        account = last_account;
-        return getAccount(last_account, private_key);
     }
 
-    inline bool getAccount(const std::string &account, std::string &private_key) {
+    inline bool getLastestAccount(std::string & account, std::string & private_key) {
+        if (lastest_account.empty()) {
+            return false;
+        }
+        account = lastest_account;
+        return getAccount(lastest_account, private_key);
+    }
+
+    inline bool getAccount(const std::string & account, std::string & private_key) {
         std::unique_lock<std::mutex> lock(pw_map_mutex_);
         auto ifind = pw_map_.find(account);
         if (ifind == pw_map_.end()) {
             return false;
         }
         auto box = ifind->second;
-        // 0 meaning never expired
-        if (box.expired_time != 0) {
-            auto now = std::chrono::steady_clock::now();
-            if (box.t + std::chrono::milliseconds(kExpirePeriod) < now) {
-                // expire
-                return false;
-            }
-        }
         private_key = box.private_key;
         return true;
     }
 
-    inline bool setAccount(const std::string &account, const std::string &private_key, uint32_t expired_time) {
+    inline bool setAccount(const std::string & account, const std::string & private_key, std::chrono::milliseconds expired_time) {
         if (account.empty() || private_key.empty()) {
             return false;
         }
         std::unique_lock<std::mutex> lock(pw_map_mutex_);
-        if (pw_map_.size() > 500) {
-            pw_map_.clear();
-            pw_sort_.clear();
-        }
         pw_box box;
         box.account = account;
         box.private_key = private_key;
         box.expired_time = expired_time;
         box.t = std::chrono::steady_clock::now();
         pw_map_[account] = box;
-        if (expired_time != 0) {
+        if (expired_time != std::chrono::milliseconds::zero()) {
             // for client
-            pw_sort_.push_back(account);
+            lastest_account = account;
         }
         return true;
     }
@@ -99,13 +102,10 @@ public:
 private:
     // key is account, value is pw_box
     std::map<std::string, pw_box> pw_map_;
-    std::mutex                    pw_map_mutex_;
-    std::vector<std::string>      pw_sort_;
+    std::mutex pw_map_mutex_;
+
+    std::string lastest_account;
 };
-
-
-
-
 
 class HttpBaseHandler {
 public:
@@ -128,8 +128,11 @@ public:
     HttpHandler& operator=(HttpHandler &&)        = delete;
     virtual ~HttpHandler()                        = default;
 
-    HttpHandler();
-    explicit HttpHandler(const std::string& webroot);
+    explicit HttpHandler();
+
+    void expire_safebox() {
+        safebox_.expire_account();
+    }
 
 public:
     bool index(ResponsePtr res, RequestPtr req)              override;
@@ -148,7 +151,7 @@ public:
 private:
     std::string webroot_ {"./"};
     std::string token_ { "" };
-    SafeBox                            safebox_;
+    SafeBox safebox_;
 };
 
 
@@ -161,10 +164,8 @@ public:
     SafeboxHttpServer & operator=(SafeboxHttpServer &&)       = delete;
 
 public:
-    SafeboxHttpServer();
-    explicit SafeboxHttpServer(uint16_t port);
-    SafeboxHttpServer(const std::string& local_ip, uint16_t port);
-    SafeboxHttpServer(const std::string& local_ip, uint16_t port, const std::string& webroot);
+    SafeboxHttpServer(std::string const & local_ip, uint16_t port, std::shared_ptr<top::xbase_timer_driver_t> timer_driver);
+
     virtual  ~SafeboxHttpServer();
 
     void Start();
@@ -172,6 +173,7 @@ public:
 protected:
     void bind_route_callback();
     void bind_route_callback_for_command();
+    void check_expire_safebox();
 
 private:
     HttpServerPtr                      svr_          { nullptr };
@@ -181,6 +183,7 @@ private:
     std::shared_ptr<HttpHandler>       http_handler_ { nullptr };
     std::thread                        svr_th_;
     std::string                        webroot_      { "./" };
+    std::shared_ptr<top::xbase_timer_driver_t> m_timer_driver;
 };
 
 // end of http server
