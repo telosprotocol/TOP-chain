@@ -35,39 +35,38 @@ public:
                  sys_contract_precompile_error & err) override;
 
 private:
-    bool init(const xbytes_t & rlp_bytes) override;
-    bool sync(const xbytes_t & rlp_bytes) override;
-    bool is_known(const u256 height, const xbytes_t & hash_bytes) const;
-    bool is_confirmed(const u256 height, const xbytes_t & hash_bytes) const override;
-    bigint get_height() const override;
-    void reset() override;
+    bool init(const xbytes_t & rlp_bytes, state_ptr state) override;
+    bool sync(const xbytes_t & rlp_bytes, state_ptr state) override;
+    bool is_known(const u256 height, const xbytes_t & hash_bytes, state_ptr state) const;
+    bool is_confirmed(const u256 height, const xbytes_t & hash_bytes, state_ptr state) const override;
+    bigint get_height(state_ptr state) const override;
+    void reset(state_ptr state) override;
 
     bool verify(const xeth_header_t & prev_header, const xeth_header_t & new_header, const std::vector<double_node_with_merkle_proof> & nodes) const;
-    bool record(const xeth_header_t & header);
-    bool rebuild(const xeth_header_t & header, const xeth_header_info_t & last_info, const xeth_header_info_t & cur_info);
-    void release(const bigint number);
+    bool record(const xeth_header_t & header, state_ptr state);
+    bool rebuild(const xeth_header_t & header, const xeth_header_info_t & last_info, const xeth_header_info_t & cur_info, state_ptr state);
+    void release(const bigint number, state_ptr state);
 
     // last hash @160
-    h256 get_last_hash() const;
-    bool set_last_hash(const h256 hash);
+    h256 get_last_hash(state_ptr state) const;
+    bool set_last_hash(const h256 hash, state_ptr state);
     // effective hashes @161
-    h256 get_effective_hash(const bigint height) const;
-    bool set_effective_hash(const bigint height, const h256 hash);
-    bool remove_effective_hash(const bigint height);
+    h256 get_effective_hash(const bigint height, state_ptr state) const;
+    bool set_effective_hash(const bigint height, const h256 hash, state_ptr state);
+    bool remove_effective_hash(const bigint height, state_ptr state);
     // all hashes @162
-    std::set<h256> get_hashes(const bigint height) const;
-    bool set_hashes(const bigint height, const std::set<h256> & hashes);
-    bool remove_hashes(const bigint height);
+    std::set<h256> get_hashes(const bigint height, state_ptr state) const;
+    bool set_hashes(const bigint height, const std::set<h256> & hashes, state_ptr state);
+    bool remove_hashes(const bigint height, state_ptr state);
     // all headers @163
-    bool get_header(const h256 hash, xeth_header_t & header) const;
-    bool set_header(const h256 hash, const xeth_header_t & header);
-    bool remove_header(const h256 hash);
+    bool get_header(const h256 hash, xeth_header_t & header, state_ptr state) const;
+    bool set_header(const h256 hash, const xeth_header_t & header, state_ptr state);
+    bool remove_header(const h256 hash, state_ptr state);
     // headers info @164
-    bool get_header_info(const h256 hash, xeth_header_info_t & header_info) const;
-    bool set_header_info(const h256 hash, const xeth_header_info_t & header_info);
-    bool remove_header_info(const h256 hash);
+    bool get_header_info(const h256 hash, xeth_header_info_t & header_info, state_ptr state) const;
+    bool set_header_info(const h256 hash, const xeth_header_info_t & header_info, state_ptr state);
+    bool remove_header_info(const h256 hash, state_ptr state);
 
-    std::shared_ptr<data::xunit_bstate_t> m_contract_state{nullptr};
     std::set<std::string> m_whitelist;
 };
 using xevm_eth_bridge_contract_t = xtop_evm_eth_bridge_contract;
