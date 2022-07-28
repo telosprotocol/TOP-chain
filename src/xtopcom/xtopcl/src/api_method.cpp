@@ -470,7 +470,7 @@ void ApiMethod::set_default_account(const std::string & account, const string & 
         }
         if (decrypt_keystore_by_password(pw, keystore_info, pri_key) == false) {
             // password not right.
-            out_str << "Wrong Password, Set Default Account Failed." << std::endl;
+            out_str << "Wrong password, set default account failed." << get_keystore_hint(keystore_info) << std::endl;
             return;
         }
         if (decrypt_get_kdf_key(pw, keystore_info, kdf_key) == false) {
@@ -516,7 +516,7 @@ void ApiMethod::reset_keystore_password(std::string & public_key, std::ostringst
 
     std::string pri_key;
 
-    std::cout << "Please Input Old Password. [If the keystore has no password, press Enter directly.(empty password will be deprecated soon)]" << std::endl;
+    std::cout << "Please input old password. [If the keystore has no password, press Enter directly.(empty password will be deprecated soon)]" << std::endl;
     // COMPATIBILITY:
     auto pw = input_hiding();
     __compatibility_begin("temporarily allow empty password to reset. if old_pw == empty, try \" \" ");
@@ -535,7 +535,9 @@ void ApiMethod::reset_keystore_password(std::string & public_key, std::ostringst
         // auto pw = input_hiding_no_empty("Password not allow to be empty!");
         if (decrypt_keystore_by_password(pw, keystore_info, pri_key) == false) {
             // password not right.
-            out_str << "Old Password Wrong." << std::endl;
+            out_str << "Old password wrong," << get_keystore_hint(keystore_info) << std::endl;
+            // out_str << 
+            out_str << "Reset password failed." << std::endl;
             return;
         }
         __compatibility_begin("temporarily allow empty password to reset. if old_pw == empty, try \" \" ");
@@ -626,7 +628,7 @@ void ApiMethod::export_account(const std::string & account, std::ostringstream &
             pw = input_hiding();
             if (decrypt_keystore_by_password(pw, keystore_info, pri_key) == false) {
                 // password not right.
-                out_str << "Wrong Password, Export Account Failed." << std::endl;
+                out_str << "Wrong password, export account failed." << get_keystore_hint(keystore_info) << std::endl;
                 return;
             }
             __compatibility_begin("try old empty_pw \" \" ");
@@ -737,7 +739,7 @@ int ApiMethod::set_default_miner(const std::string & pub_key, const std::string 
         }
         if (decrypt_keystore_by_password(pw, keystore_info, pri_key) == false) {
             // password not right.
-            out_str << "Wrong Password, Set Default Miner Failed." << std::endl;
+            out_str << "Wrong password, set default miner failed." << get_keystore_hint(keystore_info) << std::endl;
             return -1;
         }
         if (decrypt_get_kdf_key(pw, keystore_info, kdf_key) == false) {
@@ -1502,6 +1504,15 @@ ApiMethod::ApiMethod() {
 ApiMethod::~ApiMethod() {
 }
 
+std::string ApiMethod::get_keystore_hint(xJson::Value const & keystore_info) {
+    std::string password_hint = keystore_info["hint"].asString();
+    if (password_hint.empty()) {
+        return "";
+    } else {
+        return "Hint: " + password_hint;
+    }
+}
+
 std::string ApiMethod::input_hiding() {
     /// add `< /dev/tty` to work around to support handle password from stdin
     /// or it will error: `stty: standard input: Inappropriate ioctl for device`
@@ -1614,46 +1625,6 @@ void ApiMethod::outAccountBalance(const std::string & account, std::ostringstrea
             out_str << "nonce: -" << std::endl;
         }
     }
-}
-
-void ApiMethod::dump_userinfo(const user_info & info) {
-    // constexpr static auto key_len = 32;
-
-    std::cout.width(16);
-    std::cout.setf(std::ios::left);
-
-    std::cout << "identity_token: " << info.identity_token << std::endl;
-    std::cout << "account: " << info.account << std::endl;
-    std::cout << "last_hash: " << info.last_hash << std::endl;
-    std::cout << "balance: " << info.balance << std::endl;
-    std::cout << "nonce: " << info.nonce << std::endl;
-#ifdef DEBUG
-// std::cout << "secret_key: " << info.secret_key << std::endl;
-// std::cout << "sign_method: " << info.sign_method << std::endl;
-// std::cout << "sign_version: " << info.sign_version << std::endl;
-// std::string private_key = uint_to_str(info.private_key, uinfo::key_len);
-// std::cout << "private_key: " << private_key.c_str() << std::endl;
-// if (private_key.length() > 2) {
-//     std::cout << "public_key: " << api_method_imp_.get_public_key(info.private_key) << std::endl;
-// }
-
-// std::cout << "child_account: " << info.child.account << std::endl;
-// private_key = uint_to_str(info.child.private_key, uinfo::key_len);
-// std::cout << "child_private_key: " << private_key.c_str() << std::endl;
-
-// std::cout << "contract_account: " << info.contract.account << std::endl;
-// private_key = uint_to_str(info.contract.private_key, uinfo::key_len);
-// std::cout << "contract_private_key: " << private_key.c_str() << std::endl;
-// auto table_id = top::data::xaccount_mapping::account_to_table_id(info.account);
-// std::stringstream ss;
-// ss << "(0x" << std::hex << std::setw(4) << std::setfill('0') << table_id << ")";
-// std::cout << "table id: " << table_id << ss.str() << std::endl;
-#endif
-}
-
-int ApiMethod::set_userinfo() {
-    api_method_imp_.make_private_key(g_userinfo.private_key, g_userinfo.account);
-    return 0;
 }
 
 void ApiMethod::set_keystore_path(const std::string & data_dir) {
