@@ -7,23 +7,16 @@
 #include "xdata/xnative_contract_address.h"
 #include "xevm_common/xeth/xeth_header.h"
 #include "xevm_common/xeth/xethash.h"
-#include "xevm_contract_runtime/xevm_sys_contract_face.h"
+#include "xevm_contract_runtime/xevm_sys_crosschain_contract_face.h"
 
 NS_BEG4(top, contract_runtime, evm, sys_contract)
 
-using evm_common::bigint;
-using evm_common::h128;
-using evm_common::h256;
-using evm_common::h512;
-using evm_common::u256;
-using evm_common::u64;
 using evm_common::eth::xeth_header_info_t;
-using evm_common::eth::xeth_header_t;
 using evm_common::ethash::double_node_with_merkle_proof;
 
 class xtop_evm_eth_bridge_contract : public xtop_evm_crosschain_syscontract_face<xtop_evm_eth_bridge_contract> {
 public:
-    xtop_evm_eth_bridge_contract();
+    xtop_evm_eth_bridge_contract() = default;
     ~xtop_evm_eth_bridge_contract() override = default;
 
     bool init(const xbytes_t & rlp_bytes);

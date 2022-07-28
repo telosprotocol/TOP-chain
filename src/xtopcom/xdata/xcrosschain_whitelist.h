@@ -7,7 +7,7 @@
 namespace top {
 namespace data {
 
-const char * eth_bridge_whitelist();
+const char * crosschain_whitelist();
 
 }
 }  // namespace top
