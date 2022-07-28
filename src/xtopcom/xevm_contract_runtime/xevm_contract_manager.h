@@ -63,7 +63,7 @@ public:
         m_code_cache.put(account, code);
     }
 
-    const std::unordered_map<common::xaccount_address_t, std::unique_ptr<xevm_syscontract_face_t>> & get_sys_contracts();
+    const std::unordered_map<common::xaccount_address_t, std::unique_ptr<xevm_syscontract_face_t>> & get_sys_contracts() const;
 
     void add_sys_contract(common::xaccount_address_t const & contract_address, std::unique_ptr<xevm_syscontract_face_t> contract);
 

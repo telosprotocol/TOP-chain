@@ -55,9 +55,11 @@ void xtop_genesis_manager::load_accounts() {
     // step2: system contract accounts
     auto const & system_contract_map = contract::xcontract_deploy_t::instance().get_map();
     for (auto const & pair : system_contract_map) {
-        if (data::is_sys_sharding_contract_address(pair.first)) {
-            for (auto i = 0; i < enum_vbucket_has_tables_count; i++) {
-                m_contract_accounts.insert(data::make_address_by_prefix_and_subaddr(pair.first.value(), i));
+        auto const & address = top::get<common::xaccount_address_t const>(pair);
+
+        if (is_t2(address) && address_belongs_to_zone(address, common::xconsensus_zone_id)) {
+            for (uint16_t i = 0; i < enum_vbucket_has_tables_count; i++) {
+                m_contract_accounts.insert(append_table_id(address, common::xtable_id_t{i}));
             }
         } else {
             m_contract_accounts.insert(pair.first);
@@ -81,10 +83,10 @@ void xtop_genesis_manager::release_accounts() {
     // lock
     std::lock_guard<std::mutex> guard(m_lock);
     // clear()
-    m_contract_accounts.clear();
     m_evm_contract_accounts.clear();
     m_genesis_accounts_data.clear();
     m_user_accounts_data.clear();
+    m_contract_accounts.clear();
 }
 
 void xtop_genesis_manager::create_genesis_of_root_account(std::error_code & ec) {
@@ -112,24 +114,24 @@ void xtop_genesis_manager::create_genesis_of_root_account(std::error_code & ec) 
     xinfo("[xtop_genesis_manager::create_genesis_of_root_account] account: %s, create rootblock success", account.get_account().c_str());
 }
 
-base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_contract_account(base::xvaccount_t const & account, xenum_create_src_t src, std::error_code & ec) {
+base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_contract_account(common::xaccount_address_t const & account, xenum_create_src_t src, std::error_code & ec) {
 #if 0
     // lock
     std::lock_guard<std::mutex> guard(m_lock);
     // create in contract manager
     contract::xcontract_manager_t::instance().setup_chain(common::xaccount_address_t{account.get_account()}, m_blockstore.get());
 #else
-    xinfo("[xtop_genesis_manager::create_genesis_of_contract_account] account %s", account.get_account().c_str());
+    xinfo("[xtop_genesis_manager::create_genesis_of_contract_account] account %s", account.c_str());
     // lock
     std::lock_guard<std::mutex> guard(m_lock);
     // run setup of contract
     data::xtransaction_ptr_t tx = make_object_ptr<data::xtransaction_v1_t>();
     tx->make_tx_run_contract("setup", "");
-    tx->set_same_source_target_address(account.get_account());
+    tx->set_same_source_target_address(account.to_string());
     tx->set_digest();
     tx->set_len();
     xobject_ptr_t<base::xvbstate_t> bstate =
-        make_object_ptr<base::xvbstate_t>(account.get_account(), uint64_t{0}, uint64_t{0}, std::string{}, std::string{}, uint64_t{0}, uint32_t{0}, uint16_t{0});
+        make_object_ptr<base::xvbstate_t>(account.to_string(), uint64_t{0}, uint64_t{0}, std::string{}, std::string{}, uint64_t{0}, uint32_t{0}, uint16_t{0});
     data::xaccount_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get());
     store::xaccount_context_t ac(unitstate, m_store.get());
     xvm::xvm_service s;
@@ -137,27 +139,27 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_contrac
     store::xtransaction_result_t result;
     ac.get_transaction_result(result);
     // create
-    base::xauto_ptr<base::xvblock_t> genesis_block = data::xblocktool_t::create_genesis_lightunit(account.get_account(), tx, result);
+    base::xauto_ptr<base::xvblock_t> genesis_block = data::xblocktool_t::create_genesis_lightunit(account.to_string(), tx, result);
     xassert(genesis_block != nullptr);
     // check
-    if (src == xenum_create_src_t::init && m_blockstore->exist_genesis_block(account)) {
-        auto const existed_genesis_block = m_blockstore->load_block_object(account, (uint64_t)0, (uint64_t)0, false);
+    if (src == xenum_create_src_t::init && m_blockstore->exist_genesis_block(account.vaccount())) {
+        auto const existed_genesis_block = m_blockstore->load_block_object(account.vaccount(), (uint64_t)0, (uint64_t)0, false);
         if (existed_genesis_block->get_block_hash() == genesis_block->get_block_hash()) {
-            xinfo("[xtop_genesis_manager::create_genesis_of_contract_account] account %s, genesis block already exists", account.get_account().c_str());
+            xinfo("[xtop_genesis_manager::create_genesis_of_contract_account] account %s, genesis block already exists", account.c_str());
             return nullptr;
         }
-        if ((account.get_account().find(sys_contract_rec_elect_fullnode_addr) != std::string::npos) ||
-            (account.get_account().find(sys_contract_rec_elect_exchange_addr) != std::string::npos) ||
-            (account.get_account().find(sys_contract_zec_elect_eth_addr) != std::string::npos)) {
+        if ((account.to_string().find(sys_contract_rec_elect_fullnode_addr) != std::string::npos) ||
+            (account.to_string().find(sys_contract_rec_elect_exchange_addr) != std::string::npos) ||
+            (account.to_string().find(sys_contract_zec_elect_eth_addr) != std::string::npos)) {
             // just delete it here and store new root block after
             xwarn("[xtop_genesis_manager::create_genesis_of_contract_account] account: %s genesis block exist but hash not match, replace it, %s, %s",
-                  account.get_account().c_str(),
+                  account.c_str(),
                   base::xstring_utl::to_hex(existed_genesis_block->get_block_hash()).c_str(),
                   base::xstring_utl::to_hex(genesis_block->get_block_hash()).c_str());
-            m_blockstore->delete_block(account, existed_genesis_block.get());
+            m_blockstore->delete_block(account.vaccount(), existed_genesis_block.get());
         } else {
             xerror("[xtop_genesis_manager::create_genesis_of_contract_account] account: %s genesis block exist but hash not match, %s, %s",
-                   account.get_account().c_str(),
+                   account.c_str(),
                    base::xstring_utl::to_hex(existed_genesis_block->get_block_hash()).c_str(),
                    base::xstring_utl::to_hex(genesis_block->get_block_hash()).c_str());
             xassert(false);
@@ -165,7 +167,7 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_contrac
             return nullptr;
         }
     }
-    xinfo("[xtop_genesis_manager::create_genesis_of_contract_account] account: %s, create genesis block success", account.get_account().c_str());
+    xinfo("[xtop_genesis_manager::create_genesis_of_contract_account] account: %s, create genesis block success", account.c_str());
     return genesis_block;
 #endif
 }
@@ -289,7 +291,7 @@ void xtop_genesis_manager::init_genesis_block(std::error_code & ec) {
     load_accounts();
     // step2: system contract accounts(reset)
     for (auto const & account : m_contract_accounts) {
-        auto vblock = create_genesis_of_contract_account(base::xvaccount_t{account.value()}, src, ec);
+        auto vblock = create_genesis_of_contract_account(account, src, ec);
         CHECK_EC_RETURN(ec);
         if (vblock != nullptr) {
             store_block(base::xvaccount_t{account.value()}, vblock.get(), ec);
@@ -344,27 +346,32 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_block(base
         ec = error::xenum_errc::genesis_root_has_not_ready;
         return nullptr;
     }
+
     if (account.get_account() == data::xrootblock_t::get_rootblock_address()) {
         ec = error::xenum_errc::genesis_account_invalid;
         return nullptr;
     }
-    auto src = xenum_create_src_t::blockstore;
-    common::xaccount_address_t account_address{account.get_account()};
-    if (account.is_contract_address()) {
+
+    auto constexpr src = xenum_create_src_t::blockstore;
+    common::xaccount_address_t const account_address{account.get_account()};
+
+    if (is_t2(account_address)) {
         // check system contract account(reset)
-        return create_genesis_of_contract_account(account, src, ec);
-    } else if (m_user_accounts_data.count(account_address)) {
-        // check user account with data(reset)
-        return create_genesis_of_datauser_account(account, m_user_accounts_data[account_address], src, ec);
-    } else if (m_genesis_accounts_data.count(account_address)) {
-        // check genesis account
-        return create_genesis_of_genesis_account(account, m_genesis_accounts_data[account_address], src, ec);
-    } else {
-        // common account => empty genesis block
-        return create_genesis_of_common_account(account, src, ec);
+        return create_genesis_of_contract_account(account_address, src, ec);
     }
 
-    return nullptr;
+    if (m_user_accounts_data.count(account_address)) {
+        // check user account with data(reset)
+        return create_genesis_of_datauser_account(account, m_user_accounts_data[account_address], src, ec);
+    }
+
+    if (m_genesis_accounts_data.count(account_address)) {
+        // check genesis account
+        return create_genesis_of_genesis_account(account, m_genesis_accounts_data[account_address], src, ec);
+    }
+
+    // common account => empty genesis block
+    return create_genesis_of_common_account(account, src, ec);
 }
 base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_relay_account(base::xvaccount_t const & account, xenum_create_src_t src, std::error_code & ec) {
     xinfo("[xtop_genesis_manager::create_genesis_of_relay_account] account: %s", account.get_account().c_str());

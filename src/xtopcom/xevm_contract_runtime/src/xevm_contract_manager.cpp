@@ -24,7 +24,7 @@ void xtop_evm_contract_manager::add_sys_contract(common::xaccount_address_t cons
     m_sys_contract.insert(std::make_pair(contract_address, std::move(contract)));
 }
 
-const std::unordered_map<common::xaccount_address_t, std::unique_ptr<xevm_syscontract_face_t>> & xtop_evm_contract_manager::get_sys_contracts() {
+const std::unordered_map<common::xaccount_address_t, std::unique_ptr<xevm_syscontract_face_t>> & xtop_evm_contract_manager::get_sys_contracts() const {
     return m_sys_contract;
 }
 

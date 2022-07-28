@@ -30,6 +30,7 @@ enum class xenum_errc {
     invalid_eth_tx,
     invalid_eth_header,
     invalid_bloom,
+    table_id_mismatch,
 };
 using xerrc_t = xenum_errc;
 
