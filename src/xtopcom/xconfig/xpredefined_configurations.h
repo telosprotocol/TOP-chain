@@ -571,8 +571,8 @@ XDECLARE_CONFIGURATION(root_hash, char const *, "a450ce6a875d55024f60b7ac2a1e998
 XDECLARE_CONFIGURATION(chain_name, char const *, chain_name_testnet);
 XDECLARE_CONFIGURATION(platform_public_endpoints,
                        char const *,
-                       "161.35.98.159:9000,137.184.102.85:9000,137.184.68.56:9000,143.198.189.238:9000,147.182.173.6:9000,137.184.106.236:9000,137.184.106.135:9000,137.184.21.161:9000,137.184.66.111:9000,137.184.106.34:9000,138.197.15.200:9000,159.203.163.160:9000,142.93.73.113:9000,142.93.65.231:9000,159.89.184.201:9000,159.89.178.45:9000,159.65.45.247:9000,142.93.73.207:9000,167.71.110.183:9000,142.93.73.67:9000");
-XDECLARE_CONFIGURATION(platform_url_endpoints, char const *, "http://bounty.seed.topnetwork.org/");
+                       "161.35.104.240:9000,161.35.100.219:9000,161.35.55.246:9000,161.35.108.28:9000");
+XDECLARE_CONFIGURATION(platform_url_endpoints, char const *, "");
 XDECLARE_CONFIGURATION(root_hash, char const *, "");
 #else
 XDECLARE_CONFIGURATION(chain_name, char const *, chain_name_mainnet);
