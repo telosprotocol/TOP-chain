@@ -13,11 +13,8 @@
 
 namespace xChainSDK {
 using std::string;
-std::vector<std::string> const COMMAND_LEVEL_FILTER = {"get", "system", "sendtx", "debug", "wallet"};
-std::vector<std::string> const COMMAND_HELP_STRING = {"-h", "--help"};
-constexpr int INDENT_WIDTH = 4;
-constexpr int HELP_WIDTH = 36;
-static const uint32_t kExpirePeriod = 2 * 60 * 60 * 1000;  // expire  after 2 * 60 * 60 s92h)
+
+static const uint32_t kExpirePeriod = 30 * 60 * 1000;  // expire after 30min 
 
 enum class keystore_type : uint8_t {
     account_key, 
