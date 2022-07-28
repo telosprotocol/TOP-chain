@@ -50,5 +50,7 @@ int main(int argc, char **argv) {
     xdbg("------------------------------------------------------------------");
     xinfo("new log start here");
 
-    return RUN_ALL_TESTS();
+    auto ret = RUN_ALL_TESTS();
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+    return ret;
 }
