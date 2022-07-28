@@ -59,8 +59,6 @@ void xtop_genesis_manager::load_accounts() {
             for (auto i = 0; i < enum_vbucket_has_tables_count; i++) {
                 m_contract_accounts.insert(data::make_address_by_prefix_and_subaddr(pair.first.value(), i));
             }
-        } else if (data::is_sys_evm_table_contract_address(pair.first)) {
-            m_contract_accounts.insert(data::make_address_by_prefix_and_subaddr(pair.first.value(), 0));
         } else {
             m_contract_accounts.insert(pair.first);
         }
@@ -339,11 +337,6 @@ void xtop_genesis_manager::init_genesis_block(std::error_code & ec) {
             CHECK_EC_RETURN(ec);
         }
     }
-    // step5: set finish flag
-    m_init_finish = true;
-    // step6: release resource used by step2 and step3
-    chain_data::xchain_data_processor_t::release();
-    release_accounts();
 }
 
 base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_block(base::xvaccount_t const & account, std::error_code & ec) {
@@ -356,23 +349,18 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_block(base
         return nullptr;
     }
     auto src = xenum_create_src_t::blockstore;
-    if (!m_init_finish) {
-        common::xaccount_address_t account_address{account.get_account()};
-        if (account.is_contract_address()) {
-            // check system contract account(reset)
-            return create_genesis_of_contract_account(account, src, ec);
-        } else if (m_user_accounts_data.count(account_address)) {
-            // check user account with data(reset)
-            return create_genesis_of_datauser_account(account, m_user_accounts_data[account_address], src, ec);
-        } else if (m_genesis_accounts_data.count(account_address)) {
-            // check genesis account
-            return create_genesis_of_genesis_account(account, m_genesis_accounts_data[account_address], src, ec);
-        } else {
-            // common account => empty genesis block
-            return create_genesis_of_common_account(account, src, ec);
-        }
+    common::xaccount_address_t account_address{account.get_account()};
+    if (account.is_contract_address()) {
+        // check system contract account(reset)
+        return create_genesis_of_contract_account(account, src, ec);
+    } else if (m_user_accounts_data.count(account_address)) {
+        // check user account with data(reset)
+        return create_genesis_of_datauser_account(account, m_user_accounts_data[account_address], src, ec);
+    } else if (m_genesis_accounts_data.count(account_address)) {
+        // check genesis account
+        return create_genesis_of_genesis_account(account, m_genesis_accounts_data[account_address], src, ec);
     } else {
-        // empty genesis block
+        // common account => empty genesis block
         return create_genesis_of_common_account(account, src, ec);
     }
 
