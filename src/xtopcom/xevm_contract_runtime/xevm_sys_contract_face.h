@@ -131,6 +131,8 @@ using xevm_syscontract_face_t = xtop_evm_syscontract_face;
 
 class xtop_evm_crosschain_syscontract_face : public xtop_evm_syscontract_face {
 public:
+    using state_ptr = std::shared_ptr<data::xunit_bstate_t>;
+
     xtop_evm_crosschain_syscontract_face() = default;
     xtop_evm_crosschain_syscontract_face(xtop_evm_crosschain_syscontract_face const &) = delete;
     xtop_evm_crosschain_syscontract_face & operator=(xtop_evm_crosschain_syscontract_face const &) = delete;
@@ -138,12 +140,12 @@ public:
     xtop_evm_crosschain_syscontract_face & operator=(xtop_evm_crosschain_syscontract_face &&) = default;
     ~xtop_evm_crosschain_syscontract_face() override = default;
 
-    virtual bool init(const xbytes_t & rlp_bytes) = 0;
-    virtual bool sync(const xbytes_t & rlp_bytes) = 0;
-    virtual bool is_known(const evm_common::u256 height, const xbytes_t & hash_bytes) const = 0;
-    virtual bool is_confirmed(const evm_common::u256 height, const xbytes_t & hash_bytes) const = 0;
-    virtual evm_common::bigint get_height() const = 0;
-    virtual void reset() = 0;
+    virtual bool init(const xbytes_t & rlp_bytes, state_ptr state) = 0;
+    virtual bool sync(const xbytes_t & rlp_bytes, state_ptr state) = 0;
+    virtual bool is_known(const evm_common::u256 height, const xbytes_t & hash_bytes, state_ptr state) const = 0;
+    virtual bool is_confirmed(const evm_common::u256 height, const xbytes_t & hash_bytes, state_ptr state) const = 0;
+    virtual evm_common::bigint get_height(state_ptr state) const = 0;
+    virtual void reset(state_ptr state) = 0;
 };
 using xevm_crosschain_syscontract_face_t = xtop_evm_crosschain_syscontract_face;
 

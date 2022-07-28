@@ -61,11 +61,8 @@ public:
         bstate->new_string_var(data::system_contract::XPROPERTY_LAST_HASH, canvas.get());
         auto bytes = (evm_common::h256(0)).asBytes();
         bstate->load_string_var(data::system_contract::XPROPERTY_LAST_HASH)->reset({bytes.begin(), bytes.end()}, canvas.get());
-        if (contract.m_contract_state == nullptr) {
-            contract.m_contract_state = std::make_shared<data::xunit_bstate_t>(bstate.get(), false);
-        }
-        data::xunitstate_ptr_t ustate = std::make_shared<data::xunit_bstate_t>(bstate.get(), false);
-        statectx = make_unique<xmock_statectx_t>(ustate);
+        contract_state = std::make_shared<data::xunit_bstate_t>(bstate.get(), false);
+        statectx = make_unique<xmock_statectx_t>(contract_state);
         statectx_observer = make_observer<statectx::xstatectx_face_t>(statectx.get());
         context.address.build_from("ff00000000000000000000000000000000000002");
         context.caller.build_from("f8a1e199c49c2ae2682ecc5b4a8838b39bab1a38");
@@ -79,6 +76,7 @@ public:
     }
 
     contract_runtime::evm::sys_contract::xevm_eth_bridge_contract_t contract;
+    data::xunitstate_ptr_t contract_state;
     std::unique_ptr<statectx::xstatectx_face_t> statectx;
     observer_ptr<statectx::xstatectx_face_t> statectx_observer;
     contract_runtime::evm::sys_contract_context context;
