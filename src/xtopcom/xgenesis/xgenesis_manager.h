@@ -101,7 +101,6 @@ private:
 
     observer_ptr<base::xvblockstore_t> m_blockstore;
     observer_ptr<store::xstore_face_t> m_store;
-    bool m_init_finish{false};
     bool m_root_finish{false};
     std::mutex m_lock;
 
