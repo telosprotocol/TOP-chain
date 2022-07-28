@@ -180,7 +180,7 @@ bool ApiMethod::set_default_prikey(std::ostringstream & out_str) {
             set_g_userinfo(str_pri);
             return true;
         } else {
-            CONSOLE_INFO("Please Set a Default Account by command `topio wallet setDefaultAccount`. ");
+            CONSOLE_INFO("Please set a default account by command `topio wallet setDefaultAccount`. ");
             return false;
         }
     }
@@ -458,7 +458,7 @@ void ApiMethod::set_default_account(const std::string & account, const string & 
         __compatibility_end();
         std::string pw;
         if (pw_path.empty()) {
-            std::cout << "Please Input Password." << std::endl;
+            std::cout << "Please input password." << std::endl;
             pw = input_hiding();
         } else {
             auto result = get_password(keystore_type::account_key, password_type::file_path, pw_path);
@@ -622,7 +622,7 @@ void ApiMethod::export_account(const std::string & account, std::ostringstream &
         if (pri_key.empty()) {
             __compatibility_end();
             std::string pw;
-            std::cout << "Please Input Password." << std::endl;
+            std::cout << "Please input password." << std::endl;
             pw = input_hiding();
             if (decrypt_keystore_by_password(pw, keystore_info, pri_key) == false) {
                 // password not right.
@@ -725,7 +725,7 @@ int ApiMethod::set_default_miner(const std::string & pub_key, const std::string 
         __compatibility_end();
         std::string pw;
         if (pw_path.empty()) {
-            std::cout << "Please Input Password." << std::endl;
+            std::cout << "Please input password." << std::endl;
             pw = input_hiding();
         } else {
             auto result = get_password(keystore_type::account_key, password_type::file_path, pw_path);
@@ -1531,16 +1531,16 @@ std::string ApiMethod::input_no_hiding() {
 }
 
 std::string ApiMethod::input_same_pswd_twice() {
-    std::string pw1 = input_hiding_no_empty("Empty Password not allowed!");
+    std::string pw1 = input_hiding_no_empty("empty password not allowed!");
 
-    CONSOLE_INFO("Please Input Password Again");
+    CONSOLE_INFO("Please input password again");
     std::string pw2 = input_hiding();
 
     if (pw1 == pw2) {
         return pw1;
     } else {
         CONSOLE_INFO("Passwords are not the same.");
-        CONSOLE_INFO("\nPlease Input Password:");
+        CONSOLE_INFO("\nPlease input password:");
         return input_same_pswd_twice();
     }
 }
