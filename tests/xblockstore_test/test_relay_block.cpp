@@ -5,6 +5,7 @@
 #include "xbase/xobject.h"
 #include "xbase/xmem.h"
 #include "xbase/xcontext.h"
+#include "xbasic/xhex.h"
 #include "xdata/xdatautil.h"
 #include "xdata/xemptyblock.h"
 #include "xdata/xblocktool.h"
@@ -54,11 +55,10 @@ xeth_transaction_t xrelay_tx_create()
     return tx;
 }
 
-data::xrelay_block create_tx_relayblock(uint64_t height, uint64_t viewid) {
+data::xrelay_block create_tx_relayblock(uint64_t height, uint64_t viewid, xeth_transaction_t const& tx) {
     evm_common::h256  prev_hash;
     uint64_t clock = 8676012;
     evm_common::u256 chain_bits = 1;
-    xeth_transaction_t tx = xrelay_tx_create();
     std::vector<xeth_transaction_t> transactions;
     transactions.push_back(tx);
     xeth_receipt_t receipt;
@@ -68,6 +68,11 @@ data::xrelay_block create_tx_relayblock(uint64_t height, uint64_t viewid) {
     relay_block.build_finish();
     relay_block.set_viewid(viewid);
     return relay_block;    
+}
+
+data::xrelay_block create_tx_relayblock(uint64_t height, uint64_t viewid) {
+    xeth_transaction_t tx = xrelay_tx_create();
+    return create_tx_relayblock(height, viewid, tx);    
 }
 
 xobject_ptr_t<base::xvblock_t> create_new_relay_block(uint64_t height, std::string& extra_data)
@@ -87,6 +92,63 @@ xobject_ptr_t<base::xvblock_t> create_new_relay_block(uint64_t height, std::stri
     xobject_ptr_t<base::xvblock_t> wrapblock = data::xblockextract_t::pack_relayblock_to_wrapblock(relay_block, ec);
     xassert(wrapblock != nullptr);
     return wrapblock;   
+}
+
+TEST_F(test_relay_block, store_relay_block_2) {
+    mock::xvchain_creator creator(true);
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+    base::xvaccount_t _table_addr(sys_contract_relay_block_addr);
+
+    base::xvchain_t::instance().get_xtxstore()->update_node_type((uint32_t)(common::xnode_type_t::storage));
+
+    std::error_code ec;
+    xeth_transaction_t ethtx = xrelay_tx_create();
+    data::xrelay_block rblock1 = create_tx_relayblock(100, 100, ethtx);
+    uint256_t txhash = ethtx.get_tx_hash();
+    std::cout << "txhash=" << top::to_hex(top::to_bytes(txhash)) << std::endl;
+
+    std::string rblock_hash = top::to_string(rblock1.get_block_hash().to_bytes());
+    std::cout << "rblockhash=" << top::to_hex(rblock1.get_block_hash().to_bytes()) << std::endl;
+
+    xobject_ptr_t<base::xvblock_t> wrapblock1 = data::xblockextract_t::pack_relayblock_to_wrapblock(rblock1, ec);
+    xassert(wrapblock1 != nullptr);
+
+    ASSERT_TRUE(blockstore->store_block(_table_addr, wrapblock1.get()));    
+
+    {
+        base::enum_transaction_subtype type = base::enum_transaction_subtype_send;
+        std::string txhash_str = top::to_string(top::to_bytes(txhash));
+        base::xauto_ptr<base::xvtxindex_t> txindex = base::xvchain_t::instance().get_xtxstore()->load_relay_tx_idx(txhash_str, type);
+        xassert(nullptr != txindex);
+
+        base::xvaccount_t _vaddress(txindex->get_block_addr());
+        auto _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_vaddress, txindex->get_block_height(), txindex->get_block_hash(), false);
+        xassert(nullptr != _block);
+
+        top::data::xrelay_block  extra_relay_block;
+        data::xblockextract_t::unpack_relayblock_from_wrapblock(_block.get(), extra_relay_block, ec);    
+        if (ec) {
+            xerror("xrpc_loader_t:load_relay_tx_indx_detail decodeBytes decodeBytes error %s; err msg %s", ec.category().name(), ec.message().c_str());
+        }
+        bool findtx = false;
+        for (auto & tx : extra_relay_block.get_all_transactions()) {
+            if (tx.get_tx_hash() == txhash) {
+                findtx = true;
+                break;
+            }
+        }
+        xassert(findtx);
+    }
+
+    {
+        auto _wrapblock = base::xvchain_t::instance().get_xblockstore()->get_block_by_hash(rblock_hash);
+        xassert(nullptr != _wrapblock);
+        top::data::xrelay_block  relay_block2;
+        data::xblockextract_t::unpack_relayblock_from_wrapblock(_wrapblock.get(), relay_block2, ec);    
+        if (ec) {
+            xassert(false);
+        }
+    }
 }
 
 TEST_F(test_relay_block, store_relay_block) {
