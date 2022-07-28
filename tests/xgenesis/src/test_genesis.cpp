@@ -526,7 +526,6 @@ TEST_F(test_genesis, test_create_root_twice) {
 
 TEST_F(test_genesis, test_init_genesis_block_before) {
     EXPECT_EQ(m_genesis_manager->m_root_finish, true);
-    EXPECT_EQ(m_genesis_manager->m_init_finish, false);
 
     uint32_t num{0};
     m_genesis_manager->load_accounts();
@@ -549,7 +548,6 @@ TEST_F(test_genesis, test_init_genesis_block_before) {
 
 TEST_F(test_genesis, test_init_genesis_block) {
     EXPECT_EQ(m_genesis_manager->m_root_finish, true);
-    EXPECT_EQ(m_genesis_manager->m_init_finish, false);
 
     EXPECT_EQ(m_blockstore->exist_genesis_block(base::xvaccount_t{"T00000LNi53Ub726HcPXZfC4z6zLgTo5ks6GzTUp"}), true);
 
@@ -557,11 +555,7 @@ TEST_F(test_genesis, test_init_genesis_block) {
     std::error_code ec;
     m_genesis_manager->init_genesis_block(ec);
     EXPECT_EQ(bool(ec), false);
-    EXPECT_EQ(m_genesis_manager->m_init_finish, true);
     EXPECT_EQ(m_genesis_manager->m_root_finish, true);
-    EXPECT_EQ(m_genesis_manager->m_contract_accounts.size(), 0);
-    EXPECT_EQ(m_genesis_manager->m_user_accounts_data.size(), 0);
-    EXPECT_EQ(m_genesis_manager->m_genesis_accounts_data.size(), 0);
     EXPECT_EQ(true, chain_data::xtop_chain_data_processor::check_state());
 }
 
