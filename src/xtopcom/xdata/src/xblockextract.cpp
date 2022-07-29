@@ -126,6 +126,7 @@ void xblockextract_t::unpack_ethheader(base::xvblock_t* _block, xeth_header_t & 
         return;
     }
 
+    xassert(_block->get_block_level() == base::enum_xvblock_level_table);
     data::xtableheader_extra_t header_extra;
     get_tableheader_extra_from_block(_block, header_extra, ec);
     if (ec) {
