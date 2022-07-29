@@ -257,12 +257,8 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
     xtablemaker_result_t table_result;
     xblock_ptr_t proposal_block = m_table_maker->make_proposal(table_para, proposal_para, table_result);
     if (proposal_block == nullptr) {
-        if (xblockmaker_error_no_need_make_table != table_result.m_make_block_error_code) {
-            XMETRICS_GAUGE(metrics::cons_table_leader_make_proposal_succ, 0);
-            xwarn("xproposal_maker_t::make_proposal fail-make_proposal.%s error_code=%s",
-                proposal_para.dump().c_str(), chainbase::xmodule_error_to_str(table_result.m_make_block_error_code).c_str());
-        } else {
-            XMETRICS_GAUGE(metrics::cons_table_leader_make_proposal_succ, 1);  // TODO(jimmy) no need make tableblock, improve check performance
+        if (xblockmaker_error_no_need_make_table == table_result.m_make_block_error_code) {
+            // XMETRICS_GAUGE(metrics::cons_table_leader_make_proposal_succ, 1);  // TODO(jimmy) no need make tableblock, improve check performance
             xinfo("xproposal_maker_t::make_proposal no need make table.%s",
                 proposal_para.dump().c_str());
         }

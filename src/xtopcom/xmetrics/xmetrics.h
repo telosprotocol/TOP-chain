@@ -96,14 +96,6 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     db_memory_total_size,
 
     // consensus
-    cons_drand_leader_finish_succ,// TODO(jimmy) delete future
-    cons_drand_backup_finish_succ,// TODO(jimmy) delete future
-    cons_drand_leader_finish_fail,// TODO(jimmy) delete future
-    cons_drand_backup_finish_fail,// TODO(jimmy) delete future
-    cons_tableblock_leader_finish_succ,  // TODO(jimmy) delete future
-    cons_tableblock_backup_finish_succ, // TODO(jimmy) delete future
-    cons_tableblock_leader_finish_fail, // TODO(jimmy) delete future
-    cons_tableblock_backup_finish_fail, // TODO(jimmy) delete future
     cons_drand_leader_succ,
     cons_drand_backup_succ,
     cons_tableblock_leader_succ,
@@ -114,8 +106,6 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     cons_table_leader_make_proposal_succ,
     cons_fail_make_proposal_table_state,
     cons_fail_make_proposal_consensus_para,
-    cons_fail_make_proposal_table_check_latest_state,
-    cons_fail_make_proposal_unit_check_state,
     cons_fail_make_proposal_view_changed,
 
     cons_table_backup_verify_proposal_succ,
@@ -123,11 +113,9 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     cons_fail_verify_proposal_table_state_get,
     cons_fail_verify_proposal_drand_invalid,
     cons_fail_verify_proposal_consensus_para_get,
-    cons_fail_verify_proposal_unit_count,
-    cons_fail_verify_proposal_table_check_latest_state,
     cons_fail_verify_proposal_table_with_local,
-    cons_fail_verify_proposal_rise_confirm_id,
     cons_fail_verify_proposal_confirm_id_error,
+    cons_fail_verify_proposal_make_local_block_fail,
 
     cons_view_fire_clock_delay,
     cons_view_fire_succ,
@@ -139,16 +127,12 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     cons_make_fulltable_tick,
     cons_make_lighttable_tick,
     cons_verify_lighttable_tick,
-    cons_make_unit_tick,
     cons_unitbuilder_lightunit_tick,
     cons_unitbuilder_fullunit_tick,
-    cons_unitmaker_check_state_tick,
     cons_tablebuilder_lighttable_tick,
     cons_tablebuilder_fulltable_tick,
     cons_tablemaker_verify_proposal_tick,
     cons_tablemaker_make_proposal_tick,
-    cons_tablemaker_check_state_tick,
-    cons_tablemaker_refresh_cache,
 
     cons_table_leader_get_txpool_tx_count,
     cons_table_leader_get_txpool_sendtx_count,
@@ -156,21 +140,11 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     cons_table_leader_get_txpool_confirmtx_count,
     cons_table_leader_make_tx_count,
     cons_table_leader_make_unit_count,
-    cons_table_total_process_tx_count,
-    cons_table_total_process_unit_count,
 
     cons_packtx_succ,
     cons_packtx_sendtx_succ,
     cons_packtx_recvtx_succ,
     cons_packtx_confirmtx_succ,
-    cons_packtx_fail_unit_check_state,
-    cons_packtx_fail_fullunit_limit,
-    cons_packtx_fail_receiptid_continuous,
-    cons_packtx_fail_rspid_continuous,
-    cons_packtx_fail_total_unconfirm_limit,
-    cons_packtx_fail_table_unconfirm_limit,
-    cons_packtx_fail_nonce_continuous,
-    cons_packtx_fail_transfer_limit, // TODO(jimmy) need delete limit
     cons_packtx_fail_load_origintx,
     cons_packtx_with_threshold,
 

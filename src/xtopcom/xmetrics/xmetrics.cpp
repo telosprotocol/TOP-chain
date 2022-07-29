@@ -78,14 +78,6 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(db_memory_total_size);
 
         // consensus
-        RETURN_METRICS_NAME(cons_drand_leader_finish_succ);
-        RETURN_METRICS_NAME(cons_drand_backup_finish_succ);
-        RETURN_METRICS_NAME(cons_drand_leader_finish_fail);
-        RETURN_METRICS_NAME(cons_drand_backup_finish_fail);
-        RETURN_METRICS_NAME(cons_tableblock_leader_finish_succ);
-        RETURN_METRICS_NAME(cons_tableblock_backup_finish_succ);
-        RETURN_METRICS_NAME(cons_tableblock_leader_finish_fail);
-        RETURN_METRICS_NAME(cons_tableblock_backup_finish_fail);
         RETURN_METRICS_NAME(cons_drand_leader_succ);
         RETURN_METRICS_NAME(cons_drand_backup_succ);
         RETURN_METRICS_NAME(cons_tableblock_leader_succ);
@@ -101,14 +93,10 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(cons_fail_verify_proposal_table_state_get);
         RETURN_METRICS_NAME(cons_fail_verify_proposal_drand_invalid);
         RETURN_METRICS_NAME(cons_fail_verify_proposal_consensus_para_get);
-        RETURN_METRICS_NAME(cons_fail_verify_proposal_unit_count);
-        RETURN_METRICS_NAME(cons_fail_make_proposal_table_check_latest_state);
-        RETURN_METRICS_NAME(cons_fail_verify_proposal_table_check_latest_state);
         RETURN_METRICS_NAME(cons_fail_verify_proposal_table_with_local);
-        RETURN_METRICS_NAME(cons_fail_verify_proposal_rise_confirm_id);
         RETURN_METRICS_NAME(cons_fail_verify_proposal_confirm_id_error);
-        RETURN_METRICS_NAME(cons_fail_make_proposal_unit_check_state);
         RETURN_METRICS_NAME(cons_fail_make_proposal_view_changed);
+        RETURN_METRICS_NAME(cons_fail_verify_proposal_make_local_block_fail);
         RETURN_METRICS_NAME(cons_view_fire_clock_delay);
         RETURN_METRICS_NAME(cons_view_fire_succ);
         RETURN_METRICS_NAME(cons_cp_check_succ);
@@ -119,16 +107,12 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(cons_make_fulltable_tick);
         RETURN_METRICS_NAME(cons_make_lighttable_tick);
         RETURN_METRICS_NAME(cons_verify_lighttable_tick);
-        RETURN_METRICS_NAME(cons_make_unit_tick);
         RETURN_METRICS_NAME(cons_unitbuilder_lightunit_tick);
         RETURN_METRICS_NAME(cons_unitbuilder_fullunit_tick);
-        RETURN_METRICS_NAME(cons_unitmaker_check_state_tick);
         RETURN_METRICS_NAME(cons_tablebuilder_lighttable_tick);
         RETURN_METRICS_NAME(cons_tablebuilder_fulltable_tick);
         RETURN_METRICS_NAME(cons_tablemaker_verify_proposal_tick);
         RETURN_METRICS_NAME(cons_tablemaker_make_proposal_tick);
-        RETURN_METRICS_NAME(cons_tablemaker_check_state_tick);
-        RETURN_METRICS_NAME(cons_tablemaker_refresh_cache);
 
         RETURN_METRICS_NAME(cons_table_leader_get_txpool_tx_count);
         RETURN_METRICS_NAME(cons_table_leader_get_txpool_sendtx_count);
@@ -136,21 +120,11 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(cons_table_leader_get_txpool_confirmtx_count);
         RETURN_METRICS_NAME(cons_table_leader_make_tx_count);
         RETURN_METRICS_NAME(cons_table_leader_make_unit_count);
-        RETURN_METRICS_NAME(cons_table_total_process_tx_count);
-        RETURN_METRICS_NAME(cons_table_total_process_unit_count);
 
         RETURN_METRICS_NAME(cons_packtx_succ);
         RETURN_METRICS_NAME(cons_packtx_sendtx_succ);
         RETURN_METRICS_NAME(cons_packtx_recvtx_succ);
         RETURN_METRICS_NAME(cons_packtx_confirmtx_succ);
-        RETURN_METRICS_NAME(cons_packtx_fail_unit_check_state);
-        RETURN_METRICS_NAME(cons_packtx_fail_fullunit_limit);
-        RETURN_METRICS_NAME(cons_packtx_fail_receiptid_continuous);
-        RETURN_METRICS_NAME(cons_packtx_fail_rspid_continuous);
-        RETURN_METRICS_NAME(cons_packtx_fail_total_unconfirm_limit);
-        RETURN_METRICS_NAME(cons_packtx_fail_table_unconfirm_limit);
-        RETURN_METRICS_NAME(cons_packtx_fail_nonce_continuous);
-        RETURN_METRICS_NAME(cons_packtx_fail_transfer_limit);
         RETURN_METRICS_NAME(cons_packtx_fail_load_origintx);
         RETURN_METRICS_NAME(cons_packtx_with_threshold);
 

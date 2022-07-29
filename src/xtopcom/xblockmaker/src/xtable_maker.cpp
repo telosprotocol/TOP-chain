@@ -119,16 +119,19 @@ void xtable_maker_t::execute_txs(bool is_leader, const data::xblock_consensus_pa
     for (auto & txout : execute_output.pack_outputs) {
         xinfo("xtable_maker_t::execute_txs packtx is_leader=%d,%s,tx=%s,txout=%s,action=%s", 
             is_leader, cs_para.dump().c_str(), txout.m_tx->dump().c_str(), txout.dump().c_str(),txout.m_tx->dump_execute_state().c_str());
+        set_packtx_metrics(txout.m_tx, true);
     }
 
     for (auto & txout : execute_output.drop_outputs) {
         xinfo("xtable_maker_t::make_light_table_v2 droptx is_leader=%d,%s,tx=%s,txout=%s,action=%s", 
-            is_leader, cs_para.dump().c_str(), txout.m_tx->dump().c_str(), txout.dump().c_str(),txout.m_tx->dump_execute_state().c_str());        
+            is_leader, cs_para.dump().c_str(), txout.m_tx->dump().c_str(), txout.dump().c_str(),txout.m_tx->dump_execute_state().c_str());
+        set_packtx_metrics(txout.m_tx, false);
     }
 
     for (auto & txout : execute_output.nopack_outputs) {
         xinfo("xtable_maker_t::make_light_table_v2 nopacktx is_leader=%d,%s,tx=%s,txout=%s,action=%s", 
-            is_leader, cs_para.dump().c_str(), txout.m_tx->dump().c_str(), txout.dump().c_str(),txout.m_tx->dump_execute_state().c_str());        
+            is_leader, cs_para.dump().c_str(), txout.m_tx->dump().c_str(), txout.dump().c_str(),txout.m_tx->dump_execute_state().c_str());       
+        set_packtx_metrics(txout.m_tx, false); 
     }
 }
 
@@ -419,11 +422,7 @@ xblock_ptr_t xtable_maker_t::make_proposal(xtablemaker_para_t & table_para,
     }
 
     if (proposal_block == nullptr) {
-        if (tablemaker_result.m_make_block_error_code != xblockmaker_error_no_need_make_table) {
-            xwarn("xtable_maker_t::make_proposal fail-make table. %s,error_code=%s",
-                cs_para.dump().c_str(), chainbase::xmodule_error_to_str(tablemaker_result.m_make_block_error_code).c_str());
-            return nullptr;
-        } else {
+        if (tablemaker_result.m_make_block_error_code == xblockmaker_error_no_need_make_table) {
             if (can_make_empty_table_block) {
                 proposal_block = make_empty_table(table_para, cs_para, tablemaker_result.m_make_block_error_code);
                 if (proposal_block == nullptr) {
@@ -484,6 +483,7 @@ int32_t xtable_maker_t::verify_proposal(base::xvblock_t* proposal_block, const x
     if (local_block == nullptr) {
         xwarn("xtable_maker_t::verify_proposal fail-make table. proposal=%s,error_code=%s",
             proposal_block->dump().c_str(), chainbase::xmodule_error_to_str(table_result.m_make_block_error_code).c_str());
+        XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_make_local_block_fail, 1);
         return table_result.m_make_block_error_code;
     }
 
