@@ -326,7 +326,7 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
             xassert(false);
 #endif
         }
-    } while(0);
+    } while(false);
 
     if (ret != enum_exec_success) {
         xassert(ret != enum_exec_error_invalid);
