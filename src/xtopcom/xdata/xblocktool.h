@@ -66,7 +66,6 @@ class xblocktool_t {
     static bool             can_make_next_full_table(base::xvblock_t* latest_cert_block, uint32_t max_light_num);
 
  public:
-    static void             alloc_transaction_receiptid(const xcons_transaction_ptr_t & tx, const base::xreceiptid_state_ptr_t & receiptid_state);
     static bool             alloc_transaction_receiptid(const xcons_transaction_ptr_t & tx, base::xreceiptid_pair_t & receiptid_pair);
 
  public:  // txreceipt create

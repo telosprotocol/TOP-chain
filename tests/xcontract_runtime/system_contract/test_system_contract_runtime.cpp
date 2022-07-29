@@ -180,7 +180,7 @@ TEST_F(test_system_contract_runtime, test_asset_api_normal) {
     EXPECT_EQ(token.symbol().to_string(), common::SYMBOL_TOP_TOKEN.to_string());
 }
 
-TEST_F(test_system_contract_runtime, test_asset_api_fail) {
+TEST_F(test_system_contract_runtime, test_asset_api_invalid) {
     auto transfer_contract = std::make_shared<system_contracts::xtop_transfer_contract>();
 
     auto tx = top::make_object_ptr<top::data::xtransaction_v2_t>();

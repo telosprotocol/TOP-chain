@@ -7,7 +7,7 @@
 #include "xdata/xunit_bstate.h"
 #include "xdata/xcons_transaction.h"
 #include "xdata/xtransaction_v1.h"
-#include "xstore/xaccount_context.h"
+// #include "xstore/xaccount_context.h"
 #include "tests/mock/xcertauth_util.hpp"
 #include "tests/mock/xdatamock_address.hpp"
 
@@ -15,7 +15,6 @@ namespace top {
 namespace mock {
 
 using namespace top::data;
-using namespace top::blockmaker;
 
 class xdatamock_unit {
  public:

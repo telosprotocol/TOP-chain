@@ -35,8 +35,7 @@ class xdatamock_table : public base::xvaccount_t {
  public:
     explicit xdatamock_table(uint16_t tableid = 1, uint32_t user_count = 4, bool is_fixed = false)
     : base::xvaccount_t(xblocktool_t::make_address_shard_table_account(tableid)) {
-        m_fulltable_builder = std::make_shared<xfulltable_builder_t>();
-        m_lighttable_builder = std::make_shared<xlighttable_builder_t>();
+        m_fulltable_builder = std::make_shared<blockmaker::xfulltable_builder_t>();
 
         xblock_ptr_t _block = build_genesis_table_block();
         on_table_finish(_block);
@@ -260,7 +259,7 @@ class xdatamock_table : public base::xvaccount_t {
             _form_highest_blocks.push_back(_block);
         }
 
-        xblock_builder_para_ptr_t build_para = std::make_shared<xfulltable_builder_para_t>(m_table_state, _form_highest_blocks, m_default_resources);
+        blockmaker::xblock_builder_para_ptr_t build_para = std::make_shared<blockmaker::xfulltable_builder_para_t>(m_table_state, _form_highest_blocks, m_default_resources);
         xblock_ptr_t proposal_block = m_fulltable_builder->build_block(get_cert_block(), m_table_state->get_bstate(), cs_para, build_para);
         return proposal_block;        
 
@@ -356,7 +355,7 @@ class xdatamock_table : public base::xvaccount_t {
         cs_para.set_justify_cert_hash(get_lock_block()->get_input_root_hash());
         cs_para.set_parent_height(0);
         data::xtable_block_para_t lighttable_para;
-        xtablebuilder_t::make_table_block_para(m_batch_units, proposal_table_state, execute_output, lighttable_para);
+        blockmaker::xtablebuilder_t::make_table_block_para(m_batch_units, proposal_table_state, execute_output, lighttable_para);
         data::xblock_ptr_t proposal_block = blockmaker::xtablebuilder_t::make_light_block(get_cert_block(),
                                                                             cs_para,
                                                                             lighttable_para);
@@ -395,9 +394,8 @@ class xdatamock_table : public base::xvaccount_t {
     std::vector<xblock_ptr_t>       m_history_tables;
     uint32_t                        m_last_generate_send_tx_user_index{0};
     std::vector<xdatamock_unit>     m_mock_units;
-    xblock_builder_face_ptr_t       m_fulltable_builder;
-    xblock_builder_face_ptr_t       m_lighttable_builder;
-    xblockmaker_resources_ptr_t     m_default_resources{nullptr};
+    blockmaker::xblock_builder_face_ptr_t       m_fulltable_builder;
+    blockmaker::xblockmaker_resources_ptr_t     m_default_resources{nullptr};
     uint32_t                        m_config_fulltable_interval{enum_default_full_table_interval_count};
 };
 
