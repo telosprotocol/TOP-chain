@@ -47,6 +47,7 @@ XINLINE_CONSTEXPR char const * g_eth_bridge_whitelist =
     R"T(
 {
     "whitelist": [
+        "0x47fa1b21338764ffe0a8a070d7ae0d30e4d899b4"
     ]
 }
 )T";
