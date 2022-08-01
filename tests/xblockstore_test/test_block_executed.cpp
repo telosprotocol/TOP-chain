@@ -112,7 +112,7 @@ TEST_F(test_block_executed, execute_height_update_1) {
 }
 
 TEST_F(test_block_executed, execute_height_update_2) {
-    uint64_t max_count = 1000;
+    uint64_t max_count = 140;
     mock::xdatamock_table mocktable(1, 4); 
     mocktable.genrate_table_chain(max_count, nullptr);
     const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
