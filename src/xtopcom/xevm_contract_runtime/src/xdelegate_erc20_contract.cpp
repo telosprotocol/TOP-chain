@@ -101,6 +101,13 @@ bool xtop_delegate_erc20_contract::execute(xbytes_t input,
         return false;
     }
 
+    xinfo("predefined erc20 contract called. token id %" PRIu16 " method id %" PRIu32 " contract address %s caller %s value %s",
+          static_cast<uint16_t>(erc20_token_id),
+          function_selector.method_id,
+          context.address.c_str(),
+          context.caller.c_str(),
+          context.apparent_value.str().c_str());
+
     switch (function_selector.method_id) {
     case method_id_decimals: {
         xdbg("predefined erc20 contract: decimals");
@@ -666,12 +673,14 @@ bool xtop_delegate_erc20_contract::execute(xbytes_t input,
         auto const & msg_sender = common::xaccount_address_t::build_from(context.caller, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
         auto const & token_controller = contract_state->tep_token_controller(erc20_token_id);
         if (msg_sender != token_controller) {
-            // err.fail_status = precompile_error::Fatal;
-            // err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
+#if defined(XBUILD_BOUNTY)
+             err.fail_status = precompile_error::Fatal;
+             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            // xwarn("predefined erc20 contract: mint called by non-admin account %s", context.caller.c_str());
+             xwarn("predefined erc20 contract: mint called by non-admin account %s", context.caller.c_str());
 
-            // return false;
+             return false;
+#endif
         }
 
         if (target_gas < mint_gas_cost) {
@@ -780,12 +789,14 @@ bool xtop_delegate_erc20_contract::execute(xbytes_t input,
         auto const & msg_sender = common::xaccount_address_t::build_from(context.caller, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
         auto const & token_controller = contract_state->tep_token_controller(erc20_token_id);
         if (msg_sender != token_controller) {
-            // err.fail_status = precompile_error::Fatal;
-            // err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
+#if defined(XBUILD_BOUNTY)
+             err.fail_status = precompile_error::Fatal;
+             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            // xwarn("predefined erc20 contract: burnFrom called by non-admin account %s", context.caller.c_str());
+             xwarn("predefined erc20 contract: burnFrom called by non-admin account %s", context.caller.c_str());
 
-            // return false;
+             return false;
+#endif
         }
 
         if (target_gas < burn_gas_cost) {
