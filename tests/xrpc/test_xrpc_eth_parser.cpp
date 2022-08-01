@@ -21,21 +21,13 @@ using namespace top;
 class test_xrpc_eth_parser : public testing::Test {
  protected:
     void SetUp() override {
-        m_store = creator.get_xstore();
-        m_block_store = creator.get_blockstore();
-        contract::xcontract_manager_t::instance().init(make_observer(m_store.get()), nullptr);
-        top::utl::xkeyaddress_t pubkey1("");
-
+        top::utl::xkeyaddress_t pubkey1(""); 
     }
 
     void TearDown() override {
         // delete block_handle_ptr;
     }
  public:
-    mock::xvchain_creator creator{true};
-    xobject_ptr_t<store::xstore_face_t> m_store;
-    base::xvblockstore_t* m_block_store;
-    xobject_ptr_t<base::xvnodesrv_t> nodesvr_ptr;
 };
 
 TEST_F(test_xrpc_eth_parser, uint64_to_hex_prefixed) {
