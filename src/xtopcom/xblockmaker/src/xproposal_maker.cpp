@@ -375,6 +375,9 @@ bool xproposal_maker_t::verify_proposal_input(base::xvblock_t *proposal_block, x
         return false;
     }
 
+    //rank
+    proposal_input->dump();
+
     // set other accounts for tableblock
     std::vector<std::string> other_accounts;
     auto unit_headers = proposal_block->get_sub_block_headers();

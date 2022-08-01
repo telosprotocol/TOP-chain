@@ -168,4 +168,46 @@ bool xtable_proposal_input_t::delete_fail_tx(const xcons_transaction_ptr_t & inp
     return false;
 }
 
+
+void     xtable_proposal_input_t::dump()
+{
+    base::xstream_t stream(base::xcontext_t::instance());
+    int32_t begin_size = stream.size();
+
+    uint32_t tx_count = m_input_txs.size();
+    xinfo("xtable_proposal_input_t::dump m_input_txs: count(%ld)", tx_count);
+    stream.write_compact_var(tx_count);
+    for (uint32_t i = 0; i < tx_count; i++) {
+        m_input_txs[i]->dump();
+        m_input_txs[i]->serialize_to(stream);
+        xinfo("xtable_proposal_input_t::dump m_input_txs inputs_tx (%d) size(%ld)", i, (stream.size() - begin_size));
+        begin_size = stream.size();
+    }
+
+    uint32_t prove_count = m_receiptid_state_proves.size();
+    if (prove_count > 0) {
+        xinfo("xtable_proposal_input_t::dump m_receiptid_state_proves: count(%ld)", prove_count);
+        stream.write_compact_var(prove_count);
+        for (uint32_t i = 0; i < prove_count; i++) {
+            m_receiptid_state_proves[i]->serialize_to(stream);
+            xinfo("xtable_proposal_input_t::dump m_receiptid_state_proves receiptid (%d) size(%ld)", i, (stream.size() - begin_size));
+            begin_size = stream.size();
+        }
+    } else {
+        xinfo("xtable_proposal_input_t::dump m_receiptid_state_proves: count(0)");
+    }
+
+    uint32_t account_count = m_other_accounts.size();
+    if (account_count > 0) {
+        xinfo("xtable_proposal_input_t::dump m_other_accounts count: count(%ld)", account_count);
+        stream.write_compact_var(account_count);
+        for (uint32_t i = 0; i < account_count; i++) {
+            xinfo("xtable_proposal_input_t::dump m_other_accounts account (%d) size(%ld)", i, m_other_accounts[i].size());
+        }
+    } else {
+        xinfo("xtable_proposal_input_t::dump m_other_accounts: account_count(0)");
+    }
+
+}
+
 NS_END2

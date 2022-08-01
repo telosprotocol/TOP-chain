@@ -121,7 +121,13 @@ namespace top
  
             return (begin_size - stream.size());
         }
- 
+
+         void   xproposal_msg_t::dump()
+         {
+            xinfo("xproposal_msg_t::dump  start:  m_block_object size(%ld), m_input_proposal size(%ld), m_input_resource(%ld), m_output_resource(%ld), m_last_block_cert(%ld)",
+                m_block_object.size(), m_input_proposal.size(), m_input_resource.size(), m_output_resource.size(),  m_last_block_cert.size());
+         }
+
         xvote_msg_t::xvote_msg_t()
         {
         }

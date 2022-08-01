@@ -18,6 +18,7 @@
 #include "xconfig/xpredefined_configurations.h"
 #include "xchain_fork/xchain_upgrade_center.h"
 #include "xunit_service/xerror/xerror.h"
+#include "xdata/xnative_contract_address.h"
 
 #include <cinttypes>
 NS_BEG2(top, xunit_service)
@@ -415,6 +416,12 @@ bool xbatch_packer::recv_in(const xvip2_t & from_addr, const xvip2_t & to_addr, 
               m_last_view_id, packet.dump().c_str(), xcons_utl::xip_to_hex(to_addr).c_str(), this);
         return false;
     }
+
+    // rank test,
+    if (packet.get_block_account() == sys_contract_relay_table_block_base_addr) {
+        return false;
+    }
+
     return xcsaccount_t::recv_in(from_addr, to_addr, packet, cur_thread_id, timenow_ms);
 }
 

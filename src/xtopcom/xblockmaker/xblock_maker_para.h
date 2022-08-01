@@ -102,6 +102,7 @@ class xtable_proposal_input_t : public xbase_dataunit_t<xtable_proposal_input_t,
     const std::vector<xcons_transaction_ptr_t> &    get_input_txs() const {return m_input_txs;}
     const std::vector<base::xvproperty_prove_ptr_t> &    get_receiptid_state_proves() const {return m_receiptid_state_proves;}
     const std::vector<std::string> &                get_other_accounts() const {return m_other_accounts;}
+    void     dump();
 
  private:
     std::vector<xcons_transaction_ptr_t>    m_input_txs;

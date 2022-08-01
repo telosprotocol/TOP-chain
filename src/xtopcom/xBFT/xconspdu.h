@@ -92,6 +92,7 @@ namespace top
  
             const uint16_t      get_expired_ms() const {return m_expired_ms;}
             void                set_expired_ms(const uint16_t _expired_ms) {m_expired_ms = _expired_ms;}
+            void                dump();
         protected:
             //return how many bytes readout /writed in, return < 0(enum_xerror_code_type) when have error
             virtual int32_t     do_write(base::xstream_t & stream) override;

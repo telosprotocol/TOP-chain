@@ -205,6 +205,10 @@ namespace top
                 std::string last_block_cert;
                 proposal->get_prev_block()->get_cert()->serialize_to_string(last_block_cert);
                 fire_pdu_event_up(xproposal_msg_t::get_msg_type(), msg_stream, 0, self_addr, broadcast_addr, proposal,last_block_cert,latest_clock_cert);
+
+                //rank, test proposal size
+                msg.dump();
+                
             }
             return true;
         }
