@@ -25,8 +25,6 @@ class test_xrpc_top_relay_query_manager : public testing::Test {
 
     void TearDown() override {
         // delete block_handle_ptr;
-        base::xvchain_t::instance().clean_all(true);
-        top::base::xtime_utl::sleep_ms(500);
     }
  public:
     mock::xvchain_creator creator{true};
