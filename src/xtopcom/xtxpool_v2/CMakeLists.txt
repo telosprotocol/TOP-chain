@@ -13,6 +13,7 @@ target_link_libraries(xtxpool_v2 PRIVATE
     xxbase
     xverifier
     xblockstore
+    xchain_config
 )
 
 if (BUILD_METRICS)

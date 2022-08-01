@@ -10,14 +10,14 @@
 #include "xtxpool_v2/xtxpool_log.h"
 #include "xtxpool_v2/xtxpool_para.h"
 #include "xvledger/xvledger.h"
-
+#include "xchain_config/xconfig_center.h"
 namespace top {
 namespace xtxpool_v2 {
 
 using data::xcons_transaction_ptr_t;
 
 xtxpool_t::xtxpool_t(const std::shared_ptr<xtxpool_resources_face> & para) : m_para(para) {
-    for (uint16_t i = 0; i < enum_vbucket_has_tables_count; i++) {
+/*    for (uint16_t i = 0; i < enum_vbucket_has_tables_count; i++) {
         base::xtable_index_t tableindex(base::enum_chain_zone_consensus_index, i);
         m_all_table_sids.insert(tableindex.to_table_shortid());
     }
@@ -46,6 +46,16 @@ xtxpool_t::xtxpool_t(const std::shared_ptr<xtxpool_resources_face> & para) : m_p
         m_all_table_sids.insert(tableindex.to_table_shortid());
     }
     m_tables_mgr.add_tables(base::enum_chain_zone_relay_index, MAIN_CHAIN_RELAY_TABLE_USED_NUM);
+*/
+    auto table_config = config::xconfig_center::instance().get_table_config();
+    for (const auto& it: table_config) {
+        for (uint16_t i = 0; i < it.second.m_used_number; ++i) {
+            base::xtable_index_t tableindex(it.second.m_table_index, i);
+            m_all_table_sids.insert(tableindex.to_table_shortid());
+        }
+
+        m_tables_mgr.add_tables(it.second.m_table_index, it.second.m_used_number);
+    }
 }
 
 bool table_zone_subaddr_check(uint8_t zone, uint16_t subaddr) {
@@ -94,7 +104,7 @@ void xtxpool_t::print_statistic_values() const {
     uint32_t table_receiver_cache_size = 0;
     uint32_t table_height_record_size = 0;
     uint32_t table_unconfirm_raw_txs_size = 0;
-
+/*
     for (uint16_t i = 0; i < enum_vbucket_has_tables_count; i++) {
         auto table = get_txpool_table(base::enum_chain_zone_consensus_index, i);
         if (table != nullptr) {
@@ -164,6 +174,27 @@ void xtxpool_t::print_statistic_values() const {
             unconfirm_raw_txs_size += table_unconfirm_raw_txs_size;
         }
     }
+*/
+    auto table_config = config::xconfig_center::instance().get_table_config();
+    for (const auto& it: table_config) {
+        for (uint16_t i = 0; i < it.second.m_used_number; ++i) {
+            auto table = get_txpool_table(it.second.m_table_index, i);
+            if (table != nullptr) {
+                table->unconfirm_cache_status(table_sender_cache_size, table_receiver_cache_size, table_height_record_size, table_unconfirm_raw_txs_size);
+                xinfo("xtxpool_t::print_statistic_values table:%d,cache size:%u:%u:%u",
+                      table->table_sid(),
+                      table_sender_cache_size,
+                      table_receiver_cache_size,
+                      table_height_record_size,
+                      table_unconfirm_raw_txs_size);
+                sender_cache_size += table_sender_cache_size;
+                receiver_cache_size += table_receiver_cache_size;
+                height_record_size += table_height_record_size;
+                unconfirm_raw_txs_size += table_unconfirm_raw_txs_size;
+            }
+        }
+    }
+
 
     XMETRICS_GAUGE_SET_VALUE(metrics::txpool_sender_unconfirm_cache, sender_cache_size);
     XMETRICS_GAUGE_SET_VALUE(metrics::txpool_receiver_unconfirm_cache, receiver_cache_size);
@@ -391,7 +422,7 @@ void xtxpool_t::update_peer_receipt_id_state(const base::xvproperty_prove_ptr_t 
 
 std::map<std::string, uint64_t> xtxpool_t::get_min_keep_heights() const {
     std::map<std::string, uint64_t> table_height_map;
-
+/*
     for (uint16_t i = 0; i < enum_vbucket_has_tables_count; i++) {
         auto table = get_txpool_table(base::enum_chain_zone_consensus_index, i);
         if (table != nullptr) {
@@ -437,6 +468,19 @@ std::map<std::string, uint64_t> xtxpool_t::get_min_keep_heights() const {
             table_height_map[table_addr] = height;
         }
     }
+*/
+    auto table_config = config::xconfig_center::instance().get_table_config();
+    for (const auto& it: table_config) {
+        for (uint16_t i = 0; i < it.second.m_used_number; ++i) {
+            auto table = get_txpool_table(it.second.m_table_index, i);
+            if (table != nullptr) {
+                std::string table_addr;
+                uint64_t height = 0;
+                table->get_min_keep_height(table_addr, height);
+                table_height_map[table_addr] = height;
+            }
+        }
+    }
     return table_height_map;
 }
 
@@ -478,6 +522,7 @@ void xtxpool_t::build_confirm_tx(base::xtable_shortid_t from_table_sid,
 }
 
 void xtables_mgr::add_tables(uint8_t zone, uint32_t size) {
+    //xdbg("xtables_mgr::add_tables: %d,%d", zone, size);
     m_tables[zone].resize(size);
 }
 

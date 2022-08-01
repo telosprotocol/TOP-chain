@@ -69,6 +69,7 @@ if (BUILD_EVM)
     # add_subdirectory(xevm_common)
 endif()
 add_subdirectory(xgasfee)
+add_subdirectory(xchain_config)
 
 if (XENABLE_TESTS)
 add_subdirectory(xdepends/googletest)
