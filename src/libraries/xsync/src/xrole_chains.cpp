@@ -2,6 +2,7 @@
 
 #include "xdata/xnative_contract_address.h"
 #include "xsync/xsync_log.h"
+#include "xchain_config/xconfig_center.h"
 
 NS_BEG2(top, sync)
 
@@ -34,11 +35,9 @@ xrole_chains_t::xrole_chains_t(const vnetwork::xvnode_address_t & role, const st
 }
 
 void xrole_chains_t::init_chains() {
-
+/*
     add_tables(nt::frozen, sys_contract_beacon_table_block_addr, enum_chain_sync_policy_full);
     add_tables(nt::frozen, sys_contract_zec_table_block_addr, enum_chain_sync_policy_full);
-    //add_chain(nt::frozen, std::string(sys_contract_eth_table_block_addr)+"@0", enum_chain_sync_policy_full);
-    //add_chain(nt::frozen, sys_contract_relay_table_block_addr, enum_chain_sync_policy_full);
 
     add_tables(nt::consensus_auditor | nt::consensus_validator, sys_contract_sharding_table_block_addr, enum_chain_sync_policy_fast);
     add_chain(nt::evm_auditor | nt::evm_validator, sys_contract_eth_table_block_addr_with_suffix, enum_chain_sync_policy_full);
@@ -58,10 +57,21 @@ void xrole_chains_t::init_chains() {
     add_tables(nt::fullnode, sys_contract_sharding_table_block_addr, enum_chain_sync_policy_checkpoint);
     add_chain(nt::fullnode, sys_contract_relay_table_block_addr, enum_chain_sync_policy_full);
     add_chain(nt::fullnode, sys_contract_eth_table_block_addr_with_suffix, enum_chain_sync_policy_full);
+*/
+    auto table_config = config::xconfig_center::instance().get_table_config();
+    for (const auto& it: table_config) {
+        for (const auto& node_sync: it.second.m_sync_config) {
+            if (node_sync.m_addr_type == config::enum_address_chain)
+                add_chain(node_sync.m_node_type, node_sync.m_sync_addr, node_sync.m_sync_policy);
+            else if (node_sync.m_addr_type == config::enum_address_table)
+                add_tables(node_sync.m_node_type, node_sync.m_sync_addr, node_sync.m_sync_policy);
+        }
+    }
 }
 
 void xrole_chains_t::add_chain(common::xnode_type_t allow_types,
                                const std::string & address, enum_chain_sync_policy sync_policy) {
+    xdbg("xrole_chains_t::add_chain, %d, %s, %d", allow_types, address.c_str(), sync_policy);
     if ((m_type & allow_types) == m_type) {
         auto info = xchain_info_t(address, sync_policy);
         m_chains_wrapper.add(address, info);
@@ -70,6 +80,7 @@ void xrole_chains_t::add_chain(common::xnode_type_t allow_types,
 
 void xrole_chains_t::add_tables(common::xnode_type_t allow_types,
                                 const std::string & address, enum_chain_sync_policy sync_policy) {
+    xdbg("xrole_chains_t::add_tables, %d, %s, %d", allow_types, address.c_str(), sync_policy);
     if ((m_type & allow_types) == m_type) {
         if (m_type == nt::frozen) {
             add_rec_or_zec(allow_types, address, sync_policy);

@@ -8,6 +8,7 @@
 #include "xdata/xnative_contract_address.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
+#include "xchain_config/xconfig_center.h"
 
 namespace top
 {
@@ -19,7 +20,7 @@ namespace top
             xassert(enum_reserved_blocks_count > 0);
 
             m_prune_contract.clear();
-            m_prune_contract[sys_contract_rec_registration_addr] = enum_prune_none;
+/*            m_prune_contract[sys_contract_rec_registration_addr] = enum_prune_none;
             m_prune_contract[sys_contract_rec_elect_edge_addr] = enum_prune_none;
             m_prune_contract[sys_contract_rec_elect_fullnode_addr] = enum_prune_none;
             m_prune_contract[sys_contract_rec_elect_archive_addr] = enum_prune_none;
@@ -46,6 +47,20 @@ namespace top
                 addr = std::string(sys_contract_sharding_statistic_info_addr) + "@" + std::to_string(index);
                 m_prune_contract[addr] = enum_prune_fullunit;
             }
+*/
+            auto contract_config = config::xconfig_center::instance().get_contract_config();
+            for (const auto & it : contract_config) {
+                if (it.second.m_used_number == 1) {
+                    m_prune_contract[it.first] = it.second.m_prune_type;
+                    continue;
+                }
+                for (uint32_t index = 0; index < it.second.m_used_number; ++index) {
+                    auto addr = std::string(it.first) + "@" + std::to_string(index);
+                    m_prune_contract[addr] = it.second.m_prune_type;
+                }
+            }
+            for (auto c: m_prune_contract)
+                xdbg("m_prune_contract: %s,%d", c.first.c_str(), c.second);
         }
 
         xvblockprune_impl::~xvblockprune_impl()

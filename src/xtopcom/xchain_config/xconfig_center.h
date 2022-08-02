@@ -53,8 +53,10 @@ public:
     std::vector<std::string> get_table_accounts();
     std::vector<std::string> get_system_contract_accounts();
     const std::map<std::string, xchain_config>& get_table_config() {return m_table_config;}
+    const std::map<std::string, xchain_config>& get_contract_config() {return m_contract_config;}
 private:
     void init_xchain_config();
+    void init_prune_contract();
     void init_prune_table();
 private:
     std::map<std::string, xchain_config> m_table_config;
