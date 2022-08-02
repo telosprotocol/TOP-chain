@@ -500,6 +500,12 @@ bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & propos
     uint16_t confirm_and_recv_txs_max_num = 35;
     uint16_t confirm_txs_max_num = 30;
 
+    if (proposal_para.get_table_account() == sys_contract_eth_table_block_addr_with_suffix || proposal_para.get_table_account() == sys_contract_relay_table_block_addr) {
+        all_txs_max_num = 5;
+        confirm_and_recv_txs_max_num = 4;
+        confirm_txs_max_num = 3;
+    }
+
     std::set<base::xtable_shortid_t> peer_sids_for_confirm_id;
     auto & all_table_sids = get_txpool()->get_all_table_sids();
     std::vector<base::xtable_shortid_t> all_table_sids_vec;
