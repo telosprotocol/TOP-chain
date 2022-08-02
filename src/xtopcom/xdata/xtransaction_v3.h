@@ -110,9 +110,10 @@ class xtransaction_v3_t : public xbase_dataunit_t<xtransaction_v3_t, xdata_type_
     virtual void set_deposit(uint32_t deposit) override {xassert(false);}
     virtual uint32_t get_deposit() const override {return 0;};
     virtual void set_expire_duration(uint16_t duration) override {};
-    virtual uint16_t get_expire_duration() const override {  return 0; }
+    virtual uint16_t get_expire_duration() const override { return 43200; } // 12 hours for eth tx.
     virtual void set_fire_timestamp(uint64_t timestamp) override {};
-    virtual uint64_t get_fire_timestamp() const override {  return 0; };
+    virtual void set_fire_timestamp_ext(uint64_t timestamp) override {if (m_fire_timestamp == 0) {m_fire_timestamp = timestamp;}}
+    virtual uint64_t get_fire_timestamp() const override {  return m_fire_timestamp; };
     virtual void set_amount(uint64_t amount) override{}
     virtual uint64_t get_amount() const noexcept override { xassert(false); return 0; }
     virtual top::evm_common::u256 get_amount_256() const noexcept override { return m_ethtx.get_value(); }
@@ -148,6 +149,8 @@ private:
     enum_xtransaction_type m_transaction_type; // one byte
     std::string     m_authorization;  // serialize with compat_var
     mutable uint32_t m_transaction_len{0};     // max 64KB
+    uint64_t        m_fire_timestamp{0};
+    uint16_t        m_expire_duration{0};
 };
 
 using xtransaction_v3_ptr_t = xobject_ptr_t<xtransaction_v3_t>;

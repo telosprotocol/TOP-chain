@@ -4,8 +4,10 @@
 #include "xblockstore/xblockstore_face.h"
 #include "xdata/xblocktool.h"
 #include "xdata/xlightunit.h"
+#include "xdata/xtx_factory.h"
 #include "xtxpool_v2/xtx_queue.h"
 #include "xtxpool_v2/xtxpool_error.h"
+#include "xverifier/xtx_verifier.h"
 #include "xverifier/xverifier_utl.h"
 
 using namespace top::xtxpool_v2;
@@ -602,4 +604,62 @@ TEST_F(test_send_tx_queue, reached_upper_limit_basic) {
     std::shared_ptr<xtx_entry> tx_ent3 = std::make_shared<xtx_entry>(txs[3], para);
     ret = send_tx_queue.push_tx(tx_ent3, 0);
     ASSERT_EQ(xtxpool_error_table_reached_upper_limit, ret);
+}
+
+TEST_F(test_send_tx_queue, send_tx_queue_too_many_uncontinuous_send_txs) {
+    std::string table_addr = "table_test";
+    xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::consensus_auditor);
+    xtxpool_statistic_t statistic;
+    xtable_state_cache_t table_state_cache(nullptr, table_addr);
+    xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
+    uint256_t last_tx_hash = {};
+    xtx_para_t para;
+    uint64_t now = xverifier::xtx_utl::get_gmttime_s();
+
+    xsend_tx_queue_t send_tx_queue(&table_para);
+
+    uint32_t txs_num_0_1 = 11;
+    std::vector<xcons_transaction_ptr_t> txs_0_1 = test_xtxpool_util_t::create_cons_transfer_txs(0, 1, txs_num_0_1);
+
+    uint32_t txs_num_1_0 = 10;
+    std::vector<xcons_transaction_ptr_t> txs_1_0 = test_xtxpool_util_t::create_cons_transfer_txs(1, 0, txs_num_1_0);
+
+    for (uint32_t i = 1; i < txs_num_0_1; i++) {
+        std::shared_ptr<xtx_entry> tx_ent = std::make_shared<xtx_entry>(txs_0_1[i], para);
+        send_tx_queue.push_tx(tx_ent, 0);
+    }
+
+    top::xobject_ptr_t<xvbstate_t> vbstate;
+    vbstate.attach(new xvbstate_t{table_addr, (uint64_t)1, (uint64_t)1, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0});
+    xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(vbstate.get());
+    auto tx_ents = send_tx_queue.get_txs(10, tablestate);
+    ASSERT_EQ(tx_ents.size(), 0);
+
+    std::shared_ptr<xtx_entry> tx_ent1_0 = std::make_shared<xtx_entry>(txs_1_0[0], para);
+    send_tx_queue.push_tx(tx_ent1_0, 0);
+
+    tx_ents = send_tx_queue.get_txs(10, tablestate);
+    ASSERT_EQ(tx_ents.size(), 1);
+}
+
+TEST_F(test_send_tx_queue, v3_tx_expire) {
+    std::string rawtx_bin = "0x02f8708203ff80822710822710827b0c94b7762d8dbd7e5c023ff99402b78af7c13b01eec1881bc16d674ec8000080c001a0d336694faa98f9cd69792ee30f9979f906f997d7562a0cb86d109f3476643a65a0679a7f510b12d48f9d1637884245229b7037b4f4094d1fb30e0f4f5cc77388ec";
+    data::eth_error ec;
+    data::xeth_transaction_t ethtx = data::xeth_transaction_t::build_from(rawtx_bin,ec);
+    if (ec.error_code) {xassert(false);}
+
+    xtransaction_ptr_t v3tx = xtx_factory::create_v3_tx(ethtx);
+
+    uint64_t fire_timestamp = 10000;
+    v3tx->set_fire_timestamp_ext(fire_timestamp);
+
+    uint32_t trx_fire_tolerance_time = XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_send_timestamp_tolerance);
+
+    auto expire_duration = v3tx->get_expire_duration();
+    EXPECT_EQ(43200, expire_duration);
+    
+    auto ret = xverifier::xtx_verifier::verify_tx_fire_expiration(v3tx.get(), fire_timestamp + expire_duration + trx_fire_tolerance_time, false);
+    EXPECT_EQ(ret , 0);
+    ret = xverifier::xtx_verifier::verify_tx_fire_expiration(v3tx.get(), fire_timestamp + expire_duration + trx_fire_tolerance_time + 1, false);
+    EXPECT_NE(ret , 0);
 }
