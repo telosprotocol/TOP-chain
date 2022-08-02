@@ -1,5 +1,9 @@
 #include "xchaininit/xchain_options.h"
 
+#if defined(ENABLE_TCMALLOC)
+#include <thread>
+#endif
+
 namespace top
 {
 #ifdef LEAK_TRACER
