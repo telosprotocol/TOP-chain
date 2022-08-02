@@ -22,6 +22,7 @@ using namespace top::data;
 void xsend_tx_queue_internal_t::insert_tx(const std::shared_ptr<xtx_entry> & tx_ent) {
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
     tx_ent->get_tx()->set_push_pool_timestamp(now);
+    tx_ent->get_tx()->get_transaction()->set_fire_timestamp_ext(now);
     auto it = m_tx_set.insert(tx_ent);
     auto it_timeout_queue = m_tx_time_order_set.insert(tx_ent);
     xsed_tx_set_iters_t iters(it, it_timeout_queue);
@@ -218,33 +219,46 @@ int32_t xsend_tx_queue_t::push_tx(const std::shared_ptr<xtx_entry> & tx_ent, uin
 }
 
 const std::vector<xcons_transaction_ptr_t> xsend_tx_queue_t::get_txs(uint32_t max_num, const data::xtablestate_ptr_t & table_state) const {
-    std::map<std::string, std::pair<uint64_t, uint64_t>> account_nonce_map; // key:account, value:<lower_nonce, upper_nonce>
+    std::map<std::string, std::vector<xcons_transaction_ptr_t>> account_txs_map;
     std::vector<std::string> ordered_accounts;
     auto & send_txs = m_send_tx_queue_internal.get_queue();
-    uint32_t traversed_tx_num = 0;
-    for (auto it_send_tx = send_txs.begin(); (traversed_tx_num < max_num) && (it_send_tx != send_txs.end()); it_send_tx++) {
+    uint32_t continuous_tx_num = 0;
+    for (auto it_send_tx = send_txs.begin(); (continuous_tx_num < max_num) && (it_send_tx != send_txs.end()); it_send_tx++) {
         auto & account_addr = it_send_tx->get()->get_tx()->get_source_addr();
         uint64_t nonce = it_send_tx->get()->get_tx()->get_transaction()->get_tx_nonce();
         xtxpool_dbg("xsend_tx_queue_t::get_txs tx:%s", it_send_tx->get()->get_tx()->dump().c_str());
-        auto it_account_nonce_map = account_nonce_map.find(account_addr);
-        if (it_account_nonce_map != account_nonce_map.end()) {
-            auto & lower_nonce = it_account_nonce_map->second.first;
-            auto & upper_nonce = it_account_nonce_map->second.second;
-            if (nonce > upper_nonce) {
-                account_nonce_map[account_addr] = std::make_pair(lower_nonce, nonce);
-                xtxpool_dbg("xsend_tx_queue_t::get_txs ordered_accounts size:%u account:%s,nonce:%llu,lower_nonce:%llu", ordered_accounts.size(), account_addr.c_str(), nonce, lower_nonce);
-            }
+
+        auto it_account_txs_map = account_txs_map.find(account_addr);
+        if (it_account_txs_map != account_txs_map.end()) {
+            auto & account_txs = it_account_txs_map->second;
+            auto lower_nonce = account_txs.back()->get_transaction()->get_tx_nonce();
             if (nonce > lower_nonce) {
-                traversed_tx_num++;
+                auto iter_send_tx_account = m_send_tx_accounts.find(account_addr);
+                xassert(iter_send_tx_account != m_send_tx_accounts.end());
+                if (iter_send_tx_account != m_send_tx_accounts.end()) {
+                    auto txs = iter_send_tx_account->second->get_continuous_txs(max_num - continuous_tx_num, nonce, lower_nonce);
+                    if (!txs.empty()) {
+                        account_txs.insert(account_txs.end(), txs.begin(), txs.end());
+                        continuous_tx_num += (txs.size());
+                        xtxpool_dbg("xsend_tx_queue_t::get_txs ordered_accounts size:%u account:%s,nonce:%llu,lower_nonce:%llu", ordered_accounts.size(), account_addr.c_str(), nonce, lower_nonce);
+                    }
+                }
             }
         } else {
             base::xaccount_index_t account_index;
             table_state->get_account_index(account_addr, account_index);
             auto lower_nonce = account_index.get_latest_tx_nonce();
             if (nonce > lower_nonce) {
-                account_nonce_map[account_addr] = std::make_pair(lower_nonce, nonce);
-                ordered_accounts.push_back(account_addr);
-                traversed_tx_num++;
+                auto iter_send_tx_account = m_send_tx_accounts.find(account_addr);
+                xassert(iter_send_tx_account != m_send_tx_accounts.end());
+                if (iter_send_tx_account != m_send_tx_accounts.end()) {
+                    auto txs = iter_send_tx_account->second->get_continuous_txs(max_num - continuous_tx_num, nonce, lower_nonce);
+                    if (!txs.empty()) {
+                        account_txs_map[account_addr] = txs;
+                        continuous_tx_num += txs.size();
+                        ordered_accounts.push_back(account_addr);
+                    }
+                }
                 xtxpool_dbg("xsend_tx_queue_t::get_txs ordered_accounts size:%u account:%s,nonce:%llu,lower_nonce:%llu", ordered_accounts.size(), account_addr.c_str(), nonce, lower_nonce);
             }
         }
@@ -252,22 +266,10 @@ const std::vector<xcons_transaction_ptr_t> xsend_tx_queue_t::get_txs(uint32_t ma
 
     std::vector<xcons_transaction_ptr_t> ret_txs;
     for (auto & account_addr : ordered_accounts) {
-        auto iter = account_nonce_map.find(account_addr);
-        xassert(iter != account_nonce_map.end());
-        if (iter != account_nonce_map.end()) {
-            auto & lower_nonce = iter->second.first;
-            auto & upper_nonce = iter->second.second;
-            auto iter_send_tx_account = m_send_tx_accounts.find(account_addr);
-            xassert(iter_send_tx_account != m_send_tx_accounts.end());
-            if (iter_send_tx_account != m_send_tx_accounts.end()) {
-                auto txs = iter_send_tx_account->second->get_continuous_txs(max_num - ret_txs.size(), upper_nonce, lower_nonce);
-                if (!txs.empty()) {
-                    ret_txs.insert(ret_txs.end(), txs.begin(), txs.end());
-                    if (ret_txs.size() >= max_num) {
-                        break;
-                    }
-                }
-            }
+        auto iter = account_txs_map.find(account_addr);
+        xassert(iter != account_txs_map.end());
+        if (iter != account_txs_map.end()) {
+            ret_txs.insert(ret_txs.end(), iter->second.begin(), iter->second.end());
         }
     }
 
