@@ -44,7 +44,6 @@
 #include "xvm/xsystem_contracts/xelection/xzec/xzec_elect_relay_contract.h"
 #include "xvm/xsystem_contracts/xelection/xzec/xzec_group_association_contract.h"
 #include "xvm/xsystem_contracts/xelection/xzec/xzec_standby_pool_contract.h"
-#include "xvm/xsystem_contracts/xrelay/xrelay_process_election_data_contract.h"
 #include "xvm/xsystem_contracts/xrelay/xrelay_make_block_contract.h"
 #include "xvm/xsystem_contracts/xregistration/xrec_registration_contract.h"
 #include "xvm/xsystem_contracts/xreward/xtable_reward_claiming_contract.h"
@@ -488,7 +487,7 @@ static void get_election_result_property_data(observer_ptr<store::xstore_face_t 
                                 case xjson_format_t::detail: {
                                     xJson::Value j;
                                     j["group_id"] = group_id.value();
-                                    j["stake"] = static_cast<xJson::UInt64>(election_info.stake);
+                                    j["stake"] = static_cast<xJson::UInt64>(election_info.stake());
                                     j["round"] = static_cast<xJson::UInt64>(election_group_result.group_version().value());
                                     jn[node_id.to_string()].append(j);
 
@@ -560,12 +559,12 @@ static void get_election_result_property_data(observer_ptr<store::xstore_face_t 
                             case xjson_format_t::detail: {
                                 xJson::Value j;
                                 j["group_id"] = group_id.value();
-                                j["stake"] = static_cast<xJson::UInt64>(election_info.stake);
+                                j["stake"] = static_cast<xJson::UInt64>(election_info.v1().stake());
                                 j["round"] = static_cast<xJson::UInt64>(election_group_result.group_version().value());
-                                j["public_key"] = election_info.consensus_public_key.to_string();
-                                j["genesis"] = election_info.genesis ? "true" : "false";
-                                j["miner_type"] = common::to_string(election_info.miner_type);
-                                j["credit_score"] = std::to_string(election_info.raw_credit_score);
+                                j["public_key"] = election_info.public_key().to_string();
+                                j["genesis"] = election_info.genesis() ? "true" : "false";
+                                j["miner_type"] = common::to_string(election_info.miner_type());
+                                j["credit_score"] = std::to_string(election_info.raw_credit_score());
                                 jn[node_id.to_string()].append(j);
 
                                 break;
@@ -647,12 +646,12 @@ static void get_election_result_property_data(const xaccount_ptr_t unitstate,
                             case xjson_format_t::detail: {
                                 xJson::Value j;
                                 j["group_id"] = group_id.value();
-                                j["stake"] = static_cast<xJson::UInt64>(election_info.stake);
+                                j["stake"] = static_cast<xJson::UInt64>(election_info.stake());
                                 j["round"] = static_cast<xJson::UInt64>(election_group_result.group_version().value());
-                                j["public_key"] = election_info.consensus_public_key.to_string();
-                                j["genesis"] = election_info.genesis ? "true" : "false";
-                                j["miner_type"] = common::to_string(election_info.miner_type);
-                                j["credit_score"] = std::to_string(election_info.raw_credit_score);
+                                j["public_key"] = election_info.public_key().to_string();
+                                j["genesis"] = election_info.genesis() ? "true" : "false";
+                                j["miner_type"] = common::to_string(election_info.miner_type());
+                                j["credit_score"] = std::to_string(election_info.raw_credit_score());
                                 jn[node_id.to_string()].append(j);
 
                                 break;
@@ -1824,7 +1823,7 @@ void xtop_contract_manager::get_election_data(common::xaccount_address_t const &
                                 continue;
                             }
                             auto const & election_info = top::get<data::election::xelection_info_bundle_t>(node_info).election_info();
-                            election_data.push_back(std::make_pair(election_info.consensus_public_key, election_info.stake));
+                            election_data.push_back(std::make_pair(election_info.public_key(), election_info.stake()));
                         }
                     }
                 }

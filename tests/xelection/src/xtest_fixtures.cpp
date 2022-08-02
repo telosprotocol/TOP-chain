@@ -64,7 +64,7 @@ void xtop_committee_fixure::SetUp() {
 
         xelection_info_t new_election_info{};
         // new_election_info.standby_info = std::move(standby_node_info);
-        new_election_info.joined_version = common::xelection_round_t{0};
+        new_election_info.joined_epoch(common::xelection_round_t{0});
 
         xelection_info_bundle_t election_info_bundle;
 
@@ -112,7 +112,7 @@ void xtop_zec_fixture::SetUp() {
 
         xelection_info_t new_election_info{};
         // new_election_info.standby_info = std::move(standby_node_info);
-        new_election_info.joined_version = common::xelection_round_t{0};
+        new_election_info.joined_epoch(common::xelection_round_t{0});
 
         xelection_info_bundle_t election_info_bundle;
         election_info_bundle.account_address(xnode_id_t{std::to_string(i)});
@@ -159,7 +159,7 @@ void xtop_edge_fixture::SetUp() {
 
         xelection_info_t new_election_info{};
         // new_election_info.standby_info = std::move(standby_node_info);
-        new_election_info.joined_version = common::xelection_round_t{0};
+        new_election_info.joined_epoch(common::xelection_round_t{0});
 
         xelection_info_bundle_t election_info_bundle;
         election_info_bundle.account_address(xnode_id_t{std::to_string(i)});
@@ -206,7 +206,7 @@ void xtop_archive_fixture::SetUp() {
 
         xelection_info_t new_election_info{};
         // new_election_info.standby_info = std::move(standby_node_info);
-        new_election_info.joined_version = common::xelection_round_t{0};
+        new_election_info.joined_epoch(common::xelection_round_t{0});
 
         xelection_info_bundle_t election_info_bundle;
         election_info_bundle.account_address(xnode_id_t{std::to_string(i)});
@@ -260,7 +260,7 @@ void xtop_consensus_fixture::SetUp() {
 
         xelection_info_t new_election_info{};
         // new_election_info.standby_info = std::move(standby_node_info);
-        new_election_info.joined_version = common::xelection_round_t{0};
+        new_election_info.joined_epoch(common::xelection_round_t{0});
 
         xelection_info_bundle_t election_info_bundle;
         election_info_bundle.account_address(xnode_id_t{std::to_string(i)});
@@ -279,7 +279,7 @@ void xtop_consensus_fixture::SetUp() {
 
         xelection_info_t new_election_info{};
         // new_election_info.standby_info = std::move(standby_node_info);
-        new_election_info.joined_version = common::xelection_round_t{0};
+        new_election_info.joined_epoch(common::xelection_round_t{0});
 
         xelection_info_bundle_t election_info_bundle;
         election_info_bundle.account_address(xnode_id_t{std::to_string(i + node_count)});

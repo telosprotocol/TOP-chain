@@ -138,6 +138,8 @@ void xtop_group_element::set_node_elements(std::map<common::xslot_id_t, data::el
     XLOCK(m_node_elements_mutex);
     auto const group_info = address().group_address().to_string();
 
+    xinfo("adding %zu node accounts into group %s at height %" PRIu64, election_data.size(), group_info.c_str(), associated_blk_height());
+
     for (auto const & node_data : election_data) {
         auto const & slot_id = top::get<common::xslot_id_t const>(node_data);
         auto const & election_info_bundle = top::get<data::election::xelection_info_bundle_t>(node_data);

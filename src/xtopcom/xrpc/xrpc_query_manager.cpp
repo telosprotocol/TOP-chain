@@ -1791,9 +1791,9 @@ void xrpc_query_manager::set_addition_info(xJson::Value & body, xblock_t * bp) {
 
                                 xJson::Value j;
                                 j["account"] = node_id.to_string();
-                                j["public_key"] = to_hex_str(election_info.consensus_public_key.to_string());
+                                j["public_key"] = to_hex_str(election_info.public_key().to_string());
                                 j["group_id"] = xip2.group_id().value();
-                                j["stake"] = static_cast<unsigned long long>(election_info.stake);
+                                j["stake"] = static_cast<unsigned long long>(election_info.stake());
                                 j["node_type"] = common::to_presentation_string(node_type);
 
                                 if (group_result.group_version().has_value()) {

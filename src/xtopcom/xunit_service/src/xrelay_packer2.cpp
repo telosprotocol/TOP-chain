@@ -186,7 +186,7 @@ bool xrelay_packer2::proc_vote_complate(base::xvblock_t * proposal_block) {
     uint32_t num = 0;
     uint32_t i = 0;
     for (auto & node : m_local_electset) {
-        std::string raw_pub_key = base::xstring_utl::base64_decode(node.election_info.consensus_public_key.to_string());
+        std::string raw_pub_key = base::xstring_utl::base64_decode(node.election_info.public_key().to_string());
         xassert(raw_pub_key.size() == 65);
         top::utl::xecpubkey_t pub_key_obj(raw_pub_key);
         std::string pubkey_str = std::string((char *)(pub_key_obj.data()), pub_key_obj.size());
@@ -194,14 +194,20 @@ bool xrelay_packer2::proc_vote_complate(base::xvblock_t * proposal_block) {
         if (it == m_relay_multisign.end()) {
             data::xrelay_signature_node_t signature;
             siggroup.signature_vector.push_back(signature);
-            xdbg("xrelay_packer2::proc_vote_complate not found in election.proposal:%s,elect idx:%u,pubkey=%s", proposal_block->dump().c_str(), i, node.election_info.consensus_public_key.to_string().c_str());
+            xdbg("xrelay_packer2::proc_vote_complate not found in election.proposal:%s,elect idx:%u,pubkey=%s",
+                 proposal_block->dump().c_str(),
+                 i,
+                 node.election_info.public_key().to_string().c_str());
         } else {
             data::xrelay_signature_node_t signature{it->second.second};
             siggroup.signature_vector.push_back(signature);
             num++;
-            xdbg("xrelay_packer2::proc_vote_complate found in election.proposal:%s,elect idx:%u,pubkey=%s", proposal_block->dump().c_str(), i, node.election_info.consensus_public_key.to_string().c_str());
+            xdbg("xrelay_packer2::proc_vote_complate found in election.proposal:%s,elect idx:%u,pubkey=%s",
+                 proposal_block->dump().c_str(),
+                 i,
+                 node.election_info.public_key().to_string().c_str());
         }
-        i++;        
+        i++;
     }
 
     if (num != m_relay_multisign.size()) {
@@ -270,7 +276,7 @@ bool xrelay_packer2::verify_commit_msg_extend_data(base::xvblock_t * block, cons
             return false;
         }
 
-        std::string raw_pub_key_str = base::xstring_utl::base64_decode(electset[i].election_info.consensus_public_key.to_string());
+        std::string raw_pub_key_str = base::xstring_utl::base64_decode(electset[i].election_info.public_key().to_string());
         xassert(raw_pub_key_str.size() == 65);
         top::utl::xecpubkey_t pub_key_obj(raw_pub_key_str);
         std::string pubkey_str = std::string((char *)(pub_key_obj.data()), pub_key_obj.size());
@@ -330,7 +336,7 @@ bool xrelay_packer2::set_election_round(bool is_leader, data::xblock_consensus_p
     get_elect_set(local_xip, m_local_electset);
 
     for (auto & node : m_local_electset) {
-        xdbg("xrelay_packer2::set_election_round pubkey=%s", node.election_info.consensus_public_key.to_string().c_str());
+        xdbg("xrelay_packer2::set_election_round pubkey=%s", node.election_info.public_key().to_string().c_str());
     }
 
     xdbg("xrelay_packer2::set_election_round update.xip=%s,round=%ld,electset=%zu",

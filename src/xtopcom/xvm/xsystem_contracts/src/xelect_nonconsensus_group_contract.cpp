@@ -65,10 +65,10 @@ bool xtop_elect_nonconsensus_group_contract::elect_group(common::xzone_id_t cons
         auto const & node_standby_info = top::get<xstandby_node_info_t>(new_node_info);
 
         xelection_info_t new_election_info{};
-        new_election_info.consensus_public_key = node_standby_info.consensus_public_key;
-        new_election_info.stake = node_standby_info.stake(node_type);
-        new_election_info.miner_type = node_standby_info.miner_type;
-        new_election_info.genesis = node_standby_info.genesis;
+        new_election_info.public_key(node_standby_info.consensus_public_key);
+        new_election_info.stake(node_standby_info.stake(node_type));
+        new_election_info.miner_type(node_standby_info.miner_type);
+        new_election_info.genesis(node_standby_info.genesis);
 
         xelection_info_bundle_t election_info_bundle{};
         election_info_bundle.account_address(node_id);

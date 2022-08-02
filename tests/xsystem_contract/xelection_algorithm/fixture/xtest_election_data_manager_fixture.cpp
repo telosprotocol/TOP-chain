@@ -81,10 +81,10 @@ bool xtop_test_election_data_manager_fixture::add_nodes_to_election_result(std::
         common::xnode_id_t node_id = build_account_address(node_id_prefix, index);
 
         data::election::xelection_info_t new_election_info;
-        new_election_info.joined_version = common::xelection_round_t{0};
-        new_election_info.consensus_public_key = top::xpublic_key_t{std::string{"test_publick_key"} + std::to_string(index)};
-        new_election_info.stake = index;
-        new_election_info.comprehensive_stake = index;
+        new_election_info.joined_epoch(common::xelection_round_t{0});
+        new_election_info.public_key(xpublic_key_t{std::string{"test_publick_key"} + std::to_string(index)});
+        new_election_info.stake(index);
+        new_election_info.comprehensive_stake(index);
 
         xelection_info_bundle_t election_info_bundle;
         election_info_bundle.account_address(node_id);
