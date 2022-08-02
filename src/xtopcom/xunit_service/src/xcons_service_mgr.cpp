@@ -128,7 +128,7 @@ void xcons_service_mgr::create(const std::shared_ptr<vnetwork::xvnetwork_driver_
 // must call uninit before
 bool xcons_service_mgr::destroy(const xvip2_t & xip) {
     auto key_ = xcons_utl::erase_version(xip);
-    xunit_info("xcons_service_mgr::destroy %s %p", xcons_utl::xip_to_hex(xip).c_str(), this);
+    xunit_info("xcons_service_mgr::destroy %s key_:%s %p ", xcons_utl::xip_to_hex(xip).c_str(), xcons_utl::xip_to_hex(key_).c_str(), this);
     std::vector<std::shared_ptr<xcons_service_face>> services;
     {
         // erase useless consensus service

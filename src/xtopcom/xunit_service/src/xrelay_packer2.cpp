@@ -23,12 +23,12 @@ xrelay_packer2::xrelay_packer2(observer_ptr<mbus::xmessage_bus_face_t> const   &
 }
 
 xrelay_packer2::~xrelay_packer2() {
-    xunit_info("xrelay_packer2::~xrelay_packer,destory,this=%p", this); 
+    xunit_info("xrelay_packer2::~xrelay_packer,destory,this=%p, account=%s", this, get_account().c_str()); 
 }
 
 bool xrelay_packer2::close(bool force_async) {
-    xcsaccount_t::close(force_async);
-    xunit_dbg("xrelay_packer2::close, this=%p,refcount=%d", this, get_refcount());
+    xbatch_packer::close(force_async);
+    xunit_dbg("xrelay_packer2::close, this=%p,refcount=%d, account=%s", this, get_refcount(),  get_account().c_str());
     return true;
 }
 
