@@ -511,7 +511,7 @@ XDECLARE_CONFIGURATION(max_relay_poly_interval, int32_t, 60);
 XDECLARE_CONFIGURATION(max_relay_tx_block_interval, int32_t, 10);
 #else
 XDECLARE_CONFIGURATION(evm_relay_txs_collection_interval, xinterval_t, 1);
-XDECLARE_CONFIGURATION(relayblock_batch_tx_max_num, std::int32_t, 40);
+XDECLARE_CONFIGURATION(relayblock_batch_tx_max_num, std::int32_t, 5);
 XDECLARE_CONFIGURATION(max_relay_poly_interval, int32_t, 2880);     // 8 hours
 XDECLARE_CONFIGURATION(max_relay_tx_block_interval, int32_t, 360);  // 1 hour
 #endif

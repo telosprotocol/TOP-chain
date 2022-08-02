@@ -52,12 +52,12 @@ xbatch_packer::~xbatch_packer() {
     if (m_raw_timer != nullptr) {
         m_raw_timer->release_ref();
     }
-    xunit_info("xbatch_packer::~xbatch_packer,destory,this=%p", this);
+    xunit_info("xbatch_packer::~xbatch_packer,destory,this=%p,account=%s", this,  get_account().c_str());
 }
 
 bool xbatch_packer::close(bool force_async) {
     xcsaccount_t::close(force_async);
-    // xunit_dbg("xbatch_packer::close, this=%p,refcount=%d", this, get_refcount());
+     xunit_dbg("xbatch_packer::close, this=%p,refcount=%d, account=%s.", this, get_refcount(),  get_account().c_str());
     return true;
 }
 
