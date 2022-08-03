@@ -1349,7 +1349,37 @@ void xrpc_eth_query_manager::topRelay_getTransactionReceipt(xJson::Value & js_re
     return;
 }
 
+void xrpc_eth_query_manager::top_getBalance(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
+    if (!eth::EthErrorCode::check_req(js_req, js_rsp, 2))
+        return;
+    if (!eth::EthErrorCode::check_hex(js_req[0].asString(), js_rsp, 0, eth::enum_rpc_type_address))
+        return;
+    if (!eth::EthErrorCode::check_eth_address(js_req[0].asString(), js_rsp))
+        return;
+    if (!eth::EthErrorCode::check_hex(js_req[1].asString(), js_rsp, 1, eth::enum_rpc_type_block))
+        return;
 
+    std::string account = js_req[0].asString();
+    account = xvaccount_t::to_evm_address(account);
+    xdbg("xrpc_eth_query_manager::top_getBalance account: %s,%s", account.c_str(), js_req[1].asString().c_str());
+
+    ETH_ADDRESS_CHECK_VALID(account)
+
+    xaccount_ptr_t account_ptr;
+    enum_query_result ret = query_account_by_number(account, js_req[1].asString(), account_ptr);
+
+    if (ret == enum_block_not_found) {
+        std::string msg = "header not found";
+        eth::EthErrorCode::deal_error(js_rsp, eth::enum_eth_rpc_execution_reverted, msg);
+        return;
+    } else if (ret == enum_unit_not_found) {
+        js_rsp["result"] = "0x0";
+    } else if (ret == enum_success) {
+        evm_common::u256 balance = account_ptr->balance();
+        js_rsp["result"] = xrpc_eth_parser_t::u256_to_hex_prefixed(balance);
+        xdbg("xrpc_eth_query_manager::top_getBalance address=%s,balance=%s,%s", account.c_str(), balance.str().c_str(), xrpc_eth_parser_t::u256_to_hex_prefixed(balance).c_str());
+    }
+}
 
 
 }  // namespace chain_info

@@ -78,6 +78,8 @@ public:
         REGISTER_ETH_QUERY_METHOD(topRelay_blockNumber);
         REGISTER_ETH_QUERY_METHOD(topRelay_getTransactionByHash);
         REGISTER_ETH_QUERY_METHOD(topRelay_getTransactionReceipt);
+
+        REGISTER_ETH_QUERY_METHOD(top_getBalance);
     }
     void call_method(std::string strMethod, xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     bool handle(std::string & strReq, xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) override;
@@ -100,6 +102,8 @@ public:
     void topRelay_blockNumber(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
     void topRelay_getTransactionByHash(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
     void topRelay_getTransactionReceipt(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
+
+    void top_getBalance(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
 private:
     std::string safe_get_json_value(xJson::Value & json_value, const std::string& key);
     void set_block_result(const xobject_ptr_t<base::xvblock_t>&  block, xJson::Value& js_result, bool fullTx, std::error_code & ec);
