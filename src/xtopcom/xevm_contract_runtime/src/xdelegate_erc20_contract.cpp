@@ -114,7 +114,15 @@ bool xtop_delegate_erc20_contract::execute(xbytes_t input,
             return false;
         }
 
-        evm_common::u256 decimal{6};
+        if (erc20_token_id == common::xtoken_id_t::top) {
+            output.exit_status = Returned;
+            output.cost = 0;
+            output.output = top::to_bytes(evm_common::u256{6});
+
+            return true;
+        }
+
+        evm_common::u256 decimal{18};
         output.exit_status = Returned;
         output.cost = 0;
         output.output = top::to_bytes(decimal);
@@ -156,11 +164,11 @@ bool xtop_delegate_erc20_contract::execute(xbytes_t input,
         evm_common::u256 supply{0};
         switch (erc20_token_id) {
         case common::xtoken_id_t::usdt:
-            supply = 36815220940394632;
+            supply = evm_common::u256{"36815220940394632000000000000"};
             break;
 
         case common::xtoken_id_t::usdc:
-            supply = 45257057549529550;
+            supply = evm_common::u256{"45257057549529550000000000000"};
             break;
 
         case common::xtoken_id_t::top:
