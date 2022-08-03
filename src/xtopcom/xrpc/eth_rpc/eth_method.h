@@ -52,6 +52,8 @@ public:
         m_supported_method.insert("topRelay_blockNumber");
         m_supported_method.insert("topRelay_getTransactionByHash");
         m_supported_method.insert("topRelay_getTransactionReceipt");
+
+        m_supported_method.insert("top_getBalance");
     }
     bool supported_method(const std::string& method) {
         if (m_supported_method.find(method) == m_supported_method.end())
