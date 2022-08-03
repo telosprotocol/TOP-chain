@@ -47,7 +47,7 @@ class xtable_maker_t : public xblock_maker_t {
 
  public:
     xblock_ptr_t            make_proposal(xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & result);
-    int32_t                 verify_proposal(base::xvblock_t* proposal_block, const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para);
+    int32_t                 verify_proposal(base::xvblock_t* proposal_block, const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, std::vector<data::xblock_ptr_t> & batch_units);
     bool                    is_make_relay_chain() const;
 
  protected:

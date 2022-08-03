@@ -140,6 +140,7 @@ namespace top
             static  const std::string   key_name_binlog_hash(){ return std::string("1");}
             static  const std::string   key_name_unconfirm_tx_count(){ return std::string("2");}
             static  const std::string   key_name_tgas_pledge_change(){ return std::string("3");}
+            static  const std::string   key_name_unit_infos(){ return std::string("4");}
             virtual std::string         get_obj_name() const override {return name();}
             enum{enum_obj_type = enum_xobject_type_voutentity};
         public:
@@ -161,6 +162,7 @@ namespace top
             
             const std::string         get_state_hash() const {return query_value(key_name_state_hash());}
             const std::string         get_binlog_hash() const {return query_value(key_name_binlog_hash());}
+            const std::string         get_unit_infos() const {return query_value(key_name_unit_infos());}
             const std::map<std::string, std::string> &  get_values() const {return m_values;}
             
         protected:

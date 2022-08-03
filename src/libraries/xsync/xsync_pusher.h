@@ -21,7 +21,7 @@ extern std::set<uint32_t> calc_push_select(uint32_t dst_count, uint32_t random);
 class xsync_pusher_t {
 public:
     xsync_pusher_t(std::string vnode_id, xrole_xips_manager_t *role_xips_mgr, xsync_sender_t *sync_sender, xrole_chains_mgr_t *role_chains_mgr, xsync_store_face_t *sync_store);
-    void push_newblock_to_archive(const data::xblock_ptr_t &block);
+    void push_newblock_to_archive(const data::xblock_ptr_t &block/*, const std::vector<data::xblock_ptr_t> & unitblocks*/);
     void on_timer();
 private:
     int get_chain_info(const vnetwork::xvnode_address_t &network_self, std::vector<xchain_state_info_t>& info_list);

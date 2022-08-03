@@ -111,15 +111,15 @@ void xrole_context_t::on_block_to_db(const xblock_ptr_t & block, bool & event_br
                 case enum_broadcast_policy_t::normal:
                     xinfo("xrole_context_t::on_block::broadcast, normal, block=%s", block->dump().c_str());
                     // broadcast(((xevent_store_block_to_db_t *)e.get())->block, m_contract_info->broadcast_types);
-                    broadcast(block, m_contract_info->broadcast_types);
+                    // broadcast(block, m_contract_info->broadcast_types);
                     break;
                 case enum_broadcast_policy_t::fullunit:
                     xinfo("xrole_context_t::on_block::broadcast, fullunit, block=%s", block->dump().c_str());
-                    if (block->is_fullunit()) {
-                        assert(false);
-                        // broadcast(((xevent_store_block_to_db_t *)e.get())->block, m_contract_info->broadcast_types);
-                        broadcast(block, m_contract_info->broadcast_types);
-                    }
+                    // if (block->is_fullunit()) {
+                    //     assert(false);
+                    //     // broadcast(((xevent_store_block_to_db_t *)e.get())->block, m_contract_info->broadcast_types);
+                    //     broadcast(block, m_contract_info->broadcast_types);
+                    // }
                     break;
                 default:
                     // no broadcast

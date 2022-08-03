@@ -1249,6 +1249,20 @@ namespace top
             }
             return outentity->get_state_hash();
         }
+
+        const std::string xvoutput_t::get_unit_infos() const
+        {
+            if (get_entitys().empty())
+            {
+                return std::string();
+            }
+            base::xvoutentity_t* outentity = get_primary_entity();
+            if (outentity == nullptr)
+            {
+                return std::string();
+            }
+            return outentity->get_unit_infos();
+        }
         
         std::string xvoutput_t::dump() const
         {
@@ -2685,6 +2699,58 @@ namespace top
             
             block_ptr->dump2(); //genereate dump information before return, to improve performance
             return block_ptr;
+        }
+
+        xtable_unit_info_t::xtable_unit_info_t(const std::string & addr, const std::string & hash, uint64_t height) {
+            m_addr = addr;
+            m_hash = hash;
+            m_height = height;
+        }
+
+        int32_t xtable_unit_infos_t::serialize_to_string(std::string & _str) const {
+            base::xstream_t _raw_stream(base::xcontext_t::instance());
+            int32_t ret = do_write(_raw_stream);
+            _str.assign((const char*)_raw_stream.data(),_raw_stream.size());
+            return ret;
+        }
+
+        int32_t xtable_unit_infos_t::serialize_from_string(const std::string & _str) {
+            base::xstream_t _stream(base::xcontext_t::instance(), (uint8_t *)_str.data(), (int32_t)_str.size());
+            int32_t ret = do_read(_stream);
+            return ret;
+        }
+
+        void xtable_unit_infos_t::add_unit_info(const xtable_unit_info_t & unit_info) {
+            m_unit_infos.push_back(unit_info);
+        }
+
+        int32_t xtable_unit_infos_t::do_write(base::xstream_t & stream) const {
+            const int32_t begin_size = stream.size();
+            const uint32_t count = (uint32_t)m_unit_infos.size();
+            stream << count;
+            for (auto & unit_info : m_unit_infos) {
+                stream << unit_info.get_addr();
+                stream << unit_info.get_hash();
+                stream << unit_info.get_height();
+            }
+            return (stream.size() - begin_size);
+        }
+
+        int32_t xtable_unit_infos_t::do_read(base::xstream_t & stream) {
+            m_unit_infos.clear();
+            const int32_t begin_size = stream.size();
+            uint32_t count = 0;
+            stream >> count;
+            for (uint32_t i = 0; i < count; i++) {
+                std::string addr;
+                std::string hash;
+                uint64_t height;
+                stream >> addr;
+                stream >> hash;
+                stream >> height;
+                m_unit_infos.push_back(xtable_unit_info_t(addr, hash, height));
+            }
+            return (begin_size - stream.size());
         }
 
         // int32_t xrelay_multisign::do_write(base::xstream_t & stream) {
