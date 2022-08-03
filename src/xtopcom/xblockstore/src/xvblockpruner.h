@@ -18,7 +18,6 @@ namespace top
             enum_prune_none,
             enum_prune_fullunit,
             enum_prune_checkpoint,
-            enum_prune_table,
         };
         class xvblockprune_impl : public base::xblockrecycler_t
         {

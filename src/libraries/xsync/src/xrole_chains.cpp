@@ -35,37 +35,12 @@ xrole_chains_t::xrole_chains_t(const vnetwork::xvnode_address_t & role, const st
 }
 
 void xrole_chains_t::init_chains() {
-/*
-    add_tables(nt::frozen, sys_contract_beacon_table_block_addr, enum_chain_sync_policy_full);
-    add_tables(nt::frozen, sys_contract_zec_table_block_addr, enum_chain_sync_policy_full);
-
-    add_tables(nt::consensus_auditor | nt::consensus_validator, sys_contract_sharding_table_block_addr, enum_chain_sync_policy_fast);
-    add_chain(nt::evm_auditor | nt::evm_validator, sys_contract_eth_table_block_addr_with_suffix, enum_chain_sync_policy_full);
-
-    add_tables(nt::storage_archive, sys_contract_sharding_table_block_addr, enum_chain_sync_policy_full);
-    add_chain(nt::storage_archive, sys_contract_relay_table_block_addr, enum_chain_sync_policy_full);
-    add_chain(nt::storage_archive, sys_contract_eth_table_block_addr_with_suffix, enum_chain_sync_policy_full);
-    add_chain(nt::storage_archive, sys_drand_addr, enum_chain_sync_policy_full);
-
-    add_tables(nt::storage_exchange, sys_contract_sharding_table_block_addr, enum_chain_sync_policy_full);
-    add_chain(nt::storage_exchange, sys_contract_relay_table_block_addr, enum_chain_sync_policy_full);
-    add_chain(nt::storage_exchange, sys_contract_eth_table_block_addr_with_suffix, enum_chain_sync_policy_full);
-    add_chain(nt::storage, sys_contract_relay_table_block_addr, enum_chain_sync_policy_full);
-    add_chain(nt::storage, sys_contract_eth_table_block_addr_with_suffix, enum_chain_sync_policy_full);
-    
-    add_chain(nt::fullnode, sys_drand_addr, enum_chain_sync_policy_checkpoint);
-    add_tables(nt::fullnode, sys_contract_sharding_table_block_addr, enum_chain_sync_policy_checkpoint);
-    add_chain(nt::fullnode, sys_contract_relay_table_block_addr, enum_chain_sync_policy_full);
-    add_chain(nt::fullnode, sys_contract_eth_table_block_addr_with_suffix, enum_chain_sync_policy_full);
-*/
-    auto table_config = config::xconfig_center::instance().get_table_config();
-    for (const auto& it: table_config) {
-        for (const auto& node_sync: it.second.m_sync_config) {
-            if (node_sync.m_addr_type == config::enum_address_chain)
-                add_chain(node_sync.m_node_type, node_sync.m_sync_addr, node_sync.m_sync_policy);
-            else if (node_sync.m_addr_type == config::enum_address_table)
-                add_tables(node_sync.m_node_type, node_sync.m_sync_addr, node_sync.m_sync_policy);
-        }
+    auto sync_config = config::xconfig_center::instance().get_sync_config();
+    for (const auto& it: sync_config) {
+        if (it.m_addr_type == config::enum_address_chain)
+            add_chain(it.m_node_type, it.m_sync_addr, it.m_sync_policy);
+        else if (it.m_addr_type == config::enum_address_table)
+            add_tables(it.m_node_type, it.m_sync_addr, it.m_sync_policy);
     }
 }
 

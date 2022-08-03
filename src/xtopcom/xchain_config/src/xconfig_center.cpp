@@ -1,6 +1,7 @@
 #include "xchain_config/xconfig_center.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xgenesis_data.h"
+#include "xbase/xutl.h"
 NS_BEG2(top, config)
 xconfig_center::xconfig_center() {
     init_xchain_config();
@@ -20,31 +21,10 @@ std::vector<std::string> xconfig_center::get_table_accounts() {
     return v;
 }
 
-std::vector<std::string> xconfig_center::get_system_contract_accounts() {
-    std::vector<std::string> v;
-    for (auto const & u : m_contract_config) {
-        if (u.second.m_used_number <= 1) {
-            v.emplace_back(u.first);
-            continue;
-        }
-        for (uint32_t i = 0; i < u.second.m_used_number; i++) {
-            v.emplace_back(data::make_address_by_prefix_and_subaddr(u.first, uint16_t(i)).value());
-        }
-    }
-
-    return v;
-}
-
 void xconfig_center::init_xchain_config() {
     // config beacon
     {
-        xchain_config config;
-        config.m_sync_config.emplace_back(
-            xsync_config{common::xnode_type_t::frozen, sys_contract_beacon_table_block_addr, sync::enum_chain_sync_policy_full, enum_address_table});
-        config.m_sync_config.emplace_back(
-            xsync_config{common::xnode_type_t::storage_archive, sys_drand_addr, sync::enum_chain_sync_policy_full, enum_address_chain});
-        config.m_sync_config.emplace_back(
-            xsync_config{common::xnode_type_t::fullnode, sys_drand_addr, sync::enum_chain_sync_policy_checkpoint, enum_address_chain});
+        xtable_config config;
         config.m_txpool_config[common::xnode_type_t::committee] = xtxpool_config(true, base::enum_chain_zone_beacon_index, common::xnode_type_t::committee);
         config.m_used_number = MAIN_CHAIN_REC_TABLE_USED_NUM;
         config.m_table_index = base::enum_chain_zone_beacon_index;
@@ -52,9 +32,7 @@ void xconfig_center::init_xchain_config() {
     }
     // config zec
     {
-        xchain_config config;
-        config.m_sync_config.emplace_back(
-            xsync_config{common::xnode_type_t::frozen, sys_contract_zec_table_block_addr, sync::enum_chain_sync_policy_full, enum_address_table});
+        xtable_config config;
         config.m_txpool_config[common::xnode_type_t::committee] = xtxpool_config(true, base::enum_chain_zone_zec_index, common::xnode_type_t::committee);
         config.m_used_number = MAIN_CHAIN_ZEC_TABLE_USED_NUM;
         config.m_table_index = base::enum_chain_zone_zec_index;
@@ -63,14 +41,7 @@ void xconfig_center::init_xchain_config() {
     }
     // config sharding
     {
-        xchain_config config;
-        config.m_sync_config.emplace_back(xsync_config{common::xnode_type_t::consensus_auditor | common::xnode_type_t::consensus_validator,
-                                                       sys_contract_sharding_table_block_addr,
-                                                       sync::enum_chain_sync_policy_fast,
-                                                       enum_address_table});
-        config.m_sync_config.emplace_back(xsync_config{common::xnode_type_t::storage_archive, sys_contract_sharding_table_block_addr, sync::enum_chain_sync_policy_full, enum_address_table});
-        config.m_sync_config.emplace_back(xsync_config{common::xnode_type_t::storage_exchange, sys_contract_sharding_table_block_addr, sync::enum_chain_sync_policy_full, enum_address_table});
-        config.m_sync_config.emplace_back(xsync_config{common::xnode_type_t::fullnode, sys_contract_sharding_table_block_addr, sync::enum_chain_sync_policy_checkpoint, enum_address_table});
+        xtable_config config;
         config.m_txpool_config[common::xnode_type_t::consensus_auditor] = xtxpool_config(true, base::enum_chain_zone_consensus_index, common::xnode_type_t::consensus_auditor);
         config.m_txpool_config[common::xnode_type_t::consensus_validator] = xtxpool_config(true, base::enum_chain_zone_consensus_index, common::xnode_type_t::consensus_validator);
         config.m_used_number = enum_vledger_const::enum_vbucket_has_tables_count;  //enum_vledger_const::enum_vbucket_has_books_count * enum_vledger_const::enum_vbook_has_tables_count;
@@ -79,12 +50,7 @@ void xconfig_center::init_xchain_config() {
     }
     // config eth
     {
-        xchain_config config;
-        config.m_sync_config.emplace_back(xsync_config{common::xnode_type_t::evm_auditor | common::xnode_type_t::evm_validator, sys_contract_eth_table_block_addr_with_suffix, sync::enum_chain_sync_policy_full, enum_address_chain});
-        config.m_sync_config.emplace_back(xsync_config{common::xnode_type_t::storage_archive, sys_contract_eth_table_block_addr_with_suffix, sync::enum_chain_sync_policy_full, enum_address_chain});
-        config.m_sync_config.emplace_back(xsync_config{common::xnode_type_t::storage_exchange, sys_contract_eth_table_block_addr_with_suffix, sync::enum_chain_sync_policy_full, enum_address_chain});
-        config.m_sync_config.emplace_back(xsync_config{common::xnode_type_t::storage, sys_contract_eth_table_block_addr_with_suffix, sync::enum_chain_sync_policy_full, enum_address_chain});
-        config.m_sync_config.emplace_back(xsync_config{common::xnode_type_t::fullnode, sys_contract_eth_table_block_addr_with_suffix, sync::enum_chain_sync_policy_full, enum_address_chain});
+        xtable_config config;
         config.m_txpool_config[common::xnode_type_t::evm_auditor] = xtxpool_config(true, base::enum_chain_zone_evm_index, common::xnode_type_t::evm_auditor);
         config.m_txpool_config[common::xnode_type_t::evm_validator] = xtxpool_config(true, base::enum_chain_zone_evm_index, common::xnode_type_t::evm_validator);
         config.m_used_number = MAIN_CHAIN_EVM_TABLE_USED_NUM;
@@ -93,11 +59,7 @@ void xconfig_center::init_xchain_config() {
     }
     // config relay
     {
-        xchain_config config;
-        config.m_sync_config.emplace_back(xsync_config{common::xnode_type_t::storage_archive, sys_contract_relay_table_block_addr, sync::enum_chain_sync_policy_full, enum_address_chain});
-        config.m_sync_config.emplace_back(xsync_config{common::xnode_type_t::storage_exchange, sys_contract_relay_table_block_addr, sync::enum_chain_sync_policy_full, enum_address_chain});
-        config.m_sync_config.emplace_back(xsync_config{common::xnode_type_t::storage, sys_contract_relay_table_block_addr, sync::enum_chain_sync_policy_full, enum_address_chain});
-        config.m_sync_config.emplace_back(xsync_config{common::xnode_type_t::fullnode, sys_contract_relay_table_block_addr, sync::enum_chain_sync_policy_full, enum_address_chain});
+        xtable_config config;
         config.m_txpool_config[common::xnode_type_t::relay] = xtxpool_config(true, base::enum_chain_zone_relay_index, common::xnode_type_t::relay);
         config.m_used_number = MAIN_CHAIN_RELAY_TABLE_USED_NUM;
         config.m_table_index = base::enum_chain_zone_relay_index;
@@ -105,41 +67,78 @@ void xconfig_center::init_xchain_config() {
     }
     init_prune_table();
     init_prune_contract();
+    init_sync_config();
 }
+void xconfig_center::init_sync_config() {
+    m_sync_config.emplace_back(xsync_config{common::xnode_type_t::frozen, sys_contract_beacon_table_block_addr, sync::enum_chain_sync_policy_full, enum_address_table});
+    m_sync_config.emplace_back(xsync_config{common::xnode_type_t::storage_archive, sys_drand_addr, sync::enum_chain_sync_policy_full, enum_address_chain});
+    m_sync_config.emplace_back(xsync_config{common::xnode_type_t::fullnode, sys_drand_addr, sync::enum_chain_sync_policy_checkpoint, enum_address_chain});
 
+    m_sync_config.emplace_back(xsync_config{common::xnode_type_t::frozen, sys_contract_zec_table_block_addr, sync::enum_chain_sync_policy_full, enum_address_table});
+
+    m_sync_config.emplace_back(xsync_config{common::xnode_type_t::consensus_auditor | common::xnode_type_t::consensus_validator,
+                                            sys_contract_sharding_table_block_addr,
+                                            sync::enum_chain_sync_policy_fast,
+                                            enum_address_table});
+    m_sync_config.emplace_back(xsync_config{common::xnode_type_t::storage_archive, sys_contract_sharding_table_block_addr, sync::enum_chain_sync_policy_full, enum_address_table});
+    m_sync_config.emplace_back(xsync_config{common::xnode_type_t::storage_exchange, sys_contract_sharding_table_block_addr, sync::enum_chain_sync_policy_full, enum_address_table});
+    m_sync_config.emplace_back(xsync_config{common::xnode_type_t::fullnode, sys_contract_sharding_table_block_addr, sync::enum_chain_sync_policy_checkpoint, enum_address_table});
+
+    m_sync_config.emplace_back(xsync_config{common::xnode_type_t::evm_auditor | common::xnode_type_t::evm_validator,
+                                            sys_contract_eth_table_block_addr_with_suffix,
+                                            sync::enum_chain_sync_policy_full,
+                                            enum_address_chain});
+    m_sync_config.emplace_back(
+        xsync_config{common::xnode_type_t::storage_archive, sys_contract_eth_table_block_addr_with_suffix, sync::enum_chain_sync_policy_full, enum_address_chain});
+    m_sync_config.emplace_back(
+        xsync_config{common::xnode_type_t::storage_exchange, sys_contract_eth_table_block_addr_with_suffix, sync::enum_chain_sync_policy_full, enum_address_chain});
+    m_sync_config.emplace_back(xsync_config{common::xnode_type_t::storage, sys_contract_eth_table_block_addr_with_suffix, sync::enum_chain_sync_policy_full, enum_address_chain});
+    m_sync_config.emplace_back(xsync_config{common::xnode_type_t::fullnode, sys_contract_eth_table_block_addr_with_suffix, sync::enum_chain_sync_policy_full, enum_address_chain});
+
+    m_sync_config.emplace_back(xsync_config{common::xnode_type_t::storage_archive, sys_contract_relay_table_block_addr, sync::enum_chain_sync_policy_full, enum_address_chain});
+    m_sync_config.emplace_back(xsync_config{common::xnode_type_t::storage_exchange, sys_contract_relay_table_block_addr, sync::enum_chain_sync_policy_full, enum_address_chain});
+    m_sync_config.emplace_back(xsync_config{common::xnode_type_t::storage, sys_contract_relay_table_block_addr, sync::enum_chain_sync_policy_full, enum_address_chain});
+    m_sync_config.emplace_back(xsync_config{common::xnode_type_t::fullnode, sys_contract_relay_table_block_addr, sync::enum_chain_sync_policy_full, enum_address_chain});
+}
 void xconfig_center::init_prune_table() {
-    m_table_config[sys_contract_beacon_table_block_addr].m_prune_type = store::enum_prune_table;
+    m_table_config[sys_contract_beacon_table_block_addr].m_prune_type = enum_prune_table;
     m_table_config[sys_contract_beacon_table_block_addr].m_addr_type = enum_address_table;
-    m_table_config[sys_contract_zec_table_block_addr].m_prune_type = store::enum_prune_table;
+    m_table_config[sys_contract_zec_table_block_addr].m_prune_type = enum_prune_table;
     m_table_config[sys_contract_zec_table_block_addr].m_addr_type = enum_address_table;
-    m_table_config[sys_contract_sharding_table_block_addr].m_prune_type = store::enum_prune_table;
+    m_table_config[sys_contract_sharding_table_block_addr].m_prune_type = enum_prune_table;
     m_table_config[sys_contract_sharding_table_block_addr].m_addr_type = enum_address_table;
-    m_table_config[sys_contract_eth_table_block_addr].m_prune_type = store::enum_prune_none;
+    m_table_config[sys_contract_eth_table_block_addr].m_prune_type = enum_prune_none;
     m_table_config[sys_contract_eth_table_block_addr].m_addr_type = enum_address_table;
-    m_table_config[sys_contract_sharding_table_block_addr].m_prune_type = store::enum_prune_none;
-    m_table_config[sys_contract_sharding_table_block_addr].m_addr_type = enum_address_table;
+    m_table_config[sys_contract_relay_table_block_base_addr].m_prune_type = enum_prune_none;
+    m_table_config[sys_contract_relay_table_block_base_addr].m_addr_type = enum_address_table;
 }
 void xconfig_center::init_prune_contract() {
-    m_contract_config[sys_contract_rec_registration_addr] = xchain_config{store::enum_prune_none, enum_address_contract, 1};
-    m_contract_config[sys_contract_rec_elect_edge_addr] = xchain_config{store::enum_prune_none, enum_address_contract, 1};
-    m_contract_config[sys_contract_rec_elect_fullnode_addr] = xchain_config{store::enum_prune_none, enum_address_contract, 1};
-    m_contract_config[sys_contract_rec_elect_archive_addr] = xchain_config{store::enum_prune_none, enum_address_contract, 1};
-    m_contract_config[sys_contract_rec_elect_exchange_addr] = xchain_config{store::enum_prune_none, enum_address_contract, 1};
-    m_contract_config[sys_contract_rec_elect_rec_addr] = xchain_config{store::enum_prune_none, enum_address_contract, 1};
-    m_contract_config[sys_contract_rec_elect_zec_addr] = xchain_config{store::enum_prune_none, enum_address_contract, 1};
-    m_contract_config[sys_contract_rec_tcc_addr] = xchain_config{store::enum_prune_none, enum_address_contract, 1};
-    m_contract_config[sys_contract_rec_standby_pool_addr] = xchain_config{store::enum_prune_none, enum_address_contract, 1};
+    m_contract_config[sys_contract_rec_registration_addr] = store::enum_prune_none;
+    m_contract_config[sys_contract_rec_elect_edge_addr] = store::enum_prune_none;
+    m_contract_config[sys_contract_rec_elect_fullnode_addr] = store::enum_prune_none;
+    m_contract_config[sys_contract_rec_elect_archive_addr] = store::enum_prune_none;
+    m_contract_config[sys_contract_rec_elect_exchange_addr] = store::enum_prune_none;
+    m_contract_config[sys_contract_rec_elect_rec_addr] = store::enum_prune_none;
+    m_contract_config[sys_contract_rec_elect_zec_addr] = store::enum_prune_none;
+    m_contract_config[sys_contract_rec_tcc_addr] = store::enum_prune_none;
+    m_contract_config[sys_contract_rec_standby_pool_addr] = store::enum_prune_none;
 
-    m_contract_config[sys_contract_zec_workload_addr] = xchain_config{store::enum_prune_none, enum_address_contract, 1};
-    m_contract_config[sys_contract_zec_vote_addr] = xchain_config{store::enum_prune_fullunit, enum_address_contract, 1};
-    m_contract_config[sys_contract_zec_reward_addr] = xchain_config{store::enum_prune_fullunit, enum_address_contract, 1};
-    m_contract_config[sys_contract_zec_slash_info_addr] = xchain_config{store::enum_prune_fullunit, enum_address_contract, 1};
-    m_contract_config[sys_contract_zec_elect_consensus_addr] = xchain_config{store::enum_prune_none, enum_address_contract, 1};
-    m_contract_config[sys_contract_zec_standby_pool_addr] = xchain_config{store::enum_prune_none, enum_address_contract, 1};
-    m_contract_config[sys_contract_zec_group_assoc_addr] = xchain_config{store::enum_prune_none, enum_address_contract, 1};
+    m_contract_config[sys_contract_zec_workload_addr] = store::enum_prune_none;
+    m_contract_config[sys_contract_zec_vote_addr] = store::enum_prune_fullunit;
+    m_contract_config[sys_contract_zec_reward_addr] = store::enum_prune_fullunit;
+    m_contract_config[sys_contract_zec_slash_info_addr] = store::enum_prune_fullunit;
+    m_contract_config[sys_contract_zec_elect_consensus_addr] = store::enum_prune_none;
+    m_contract_config[sys_contract_zec_standby_pool_addr] = store::enum_prune_none;
+    m_contract_config[sys_contract_zec_group_assoc_addr] = store::enum_prune_none;
 
-    m_contract_config[sys_contract_sharding_vote_addr] = xchain_config{store::enum_prune_fullunit, enum_address_contract, enum_vledger_const::enum_vbucket_has_tables_count};
-    m_contract_config[sys_contract_sharding_reward_claiming_addr] = xchain_config{store::enum_prune_fullunit, enum_address_contract, enum_vledger_const::enum_vbucket_has_tables_count};
-    m_contract_config[sys_contract_sharding_statistic_info_addr] = xchain_config{store::enum_prune_fullunit, enum_address_contract, enum_vledger_const::enum_vbucket_has_tables_count};
+    for (auto index = 0; index < enum_vledger_const::enum_vbucket_has_tables_count; ++index) {
+        std::string addr;
+        addr = std::string(sys_contract_sharding_vote_addr) + "@" + std::to_string(index);
+        m_contract_config[addr] = store::enum_prune_fullunit;
+        addr = std::string(sys_contract_sharding_reward_claiming_addr) + "@" + std::to_string(index);
+        m_contract_config[addr] = store::enum_prune_fullunit;
+        addr = std::string(sys_contract_sharding_statistic_info_addr) + "@" + std::to_string(index);
+        m_contract_config[addr] = store::enum_prune_fullunit;
+    }
 }
 NS_END2

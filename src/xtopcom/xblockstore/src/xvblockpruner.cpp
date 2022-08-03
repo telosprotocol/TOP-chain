@@ -20,47 +20,7 @@ namespace top
             xassert(enum_reserved_blocks_count > 0);
 
             m_prune_contract.clear();
-/*            m_prune_contract[sys_contract_rec_registration_addr] = enum_prune_none;
-            m_prune_contract[sys_contract_rec_elect_edge_addr] = enum_prune_none;
-            m_prune_contract[sys_contract_rec_elect_fullnode_addr] = enum_prune_none;
-            m_prune_contract[sys_contract_rec_elect_archive_addr] = enum_prune_none;
-            m_prune_contract[sys_contract_rec_elect_exchange_addr] = enum_prune_none;
-            m_prune_contract[sys_contract_rec_elect_rec_addr] = enum_prune_none;
-            m_prune_contract[sys_contract_rec_elect_zec_addr] = enum_prune_none;
-            m_prune_contract[sys_contract_rec_tcc_addr] = enum_prune_none;
-            m_prune_contract[sys_contract_rec_standby_pool_addr] = enum_prune_none;
-
-            m_prune_contract[sys_contract_zec_workload_addr] = enum_prune_none;
-            m_prune_contract[sys_contract_zec_vote_addr] = enum_prune_fullunit;
-            m_prune_contract[sys_contract_zec_reward_addr] = enum_prune_fullunit;
-            m_prune_contract[sys_contract_zec_slash_info_addr] = enum_prune_fullunit;
-            m_prune_contract[sys_contract_zec_elect_consensus_addr] = enum_prune_none;
-            m_prune_contract[sys_contract_zec_standby_pool_addr] = enum_prune_none;
-            m_prune_contract[sys_contract_zec_group_assoc_addr] = enum_prune_none;
-
-            for (auto index = 0; index < enum_vledger_const::enum_vbucket_has_tables_count; ++index) {
-                std::string addr;
-                addr = std::string(sys_contract_sharding_vote_addr) + "@" + std::to_string(index);
-                m_prune_contract[addr] = enum_prune_fullunit;
-                addr = std::string(sys_contract_sharding_reward_claiming_addr) + "@" + std::to_string(index);
-                m_prune_contract[addr] = enum_prune_fullunit;
-                addr = std::string(sys_contract_sharding_statistic_info_addr) + "@" + std::to_string(index);
-                m_prune_contract[addr] = enum_prune_fullunit;
-            }
-*/
-            auto contract_config = config::xconfig_center::instance().get_contract_config();
-            for (const auto & it : contract_config) {
-                if (it.second.m_used_number == 1) {
-                    m_prune_contract[it.first] = it.second.m_prune_type;
-                    continue;
-                }
-                for (uint32_t index = 0; index < it.second.m_used_number; ++index) {
-                    auto addr = std::string(it.first) + "@" + std::to_string(index);
-                    m_prune_contract[addr] = it.second.m_prune_type;
-                }
-            }
-            for (auto c: m_prune_contract)
-                xdbg("m_prune_contract: %s,%d", c.first.c_str(), c.second);
+            m_prune_contract = config::xconfig_center::instance().get_contract_config();
         }
 
         xvblockprune_impl::~xvblockprune_impl()
@@ -101,10 +61,19 @@ namespace top
 
                 return recycle_unit(account_obj,account_meta);
             } else if(account_obj.is_table_address()) {
-                auto zone_id = account_obj.get_zone_index();
+/*                auto zone_id = account_obj.get_zone_index();
                 if ((zone_id == base::enum_chain_zone_evm_index) || (zone_id == base::enum_chain_zone_relay_index)) {
                     return false;
-                }
+                }*/
+                std::string prefix;
+                uint16_t subaddr;
+                base::xvaccount_t::get_prefix_subaddr_from_account(account_obj.get_address(), prefix, subaddr);
+                auto table_config = config::xconfig_center::instance().get_table_config();
+                xdbg("xvblockprune_impl::recycle, prune_table: %s, %s, %d", account_obj.get_address().c_str(), prefix.c_str(), table_config[prefix].m_prune_type);
+                if (table_config.find(prefix) == table_config.end())
+                    return false;
+                if (table_config[prefix].m_prune_type == config::enum_prune_none)
+                    return false;
                 return recycle_table(account_obj,account_meta);
             } else if(account_obj.is_contract_address()) {
                 return recycle_contract(account_obj,account_meta);
