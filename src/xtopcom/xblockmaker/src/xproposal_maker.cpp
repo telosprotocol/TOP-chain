@@ -213,7 +213,7 @@ data::xtablestate_ptr_t xproposal_maker_t::get_target_tablestate(base::xvblock_t
     return tablestate;
 }
 
-xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & proposal_para, uint32_t min_tx_num) {
+xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & proposal_para, uint32_t min_tx_num, std::vector<xblock_ptr_t> & batch_units) {
     XMETRICS_TIMER(metrics::cons_make_proposal_tick);
     // get tablestate related to latest cert block
     auto & latest_cert_block = proposal_para.get_latest_cert_block();
@@ -302,10 +302,11 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
         block_object_bin.size()+proposal_block->get_input()->get_resources_data().size()+proposal_block->get_output()->get_resources_data().size(),
         block_object_bin.size(),proposal_block->get_input()->get_resources_data().size(), proposal_block->get_output()->get_resources_data().size(),
         proposal_input_str.size(), proposal_input->get_input_txs().size(), proposal_input->get_other_accounts().size());
+    batch_units = table_result.m_batch_units;
     return proposal_block;
 }
 
-int xproposal_maker_t::verify_proposal(xblock_consensus_para_t & cs_para, base::xvblock_t * proposal_block, base::xvqcert_t * bind_clock_cert) {
+int xproposal_maker_t::verify_proposal(xblock_consensus_para_t & cs_para, base::xvblock_t * proposal_block, base::xvqcert_t * bind_clock_cert, std::vector<xblock_ptr_t> & batch_units) {
     XMETRICS_TIMER(metrics::cons_verify_proposal_tick);
     xdbg("xproposal_maker_t::verify_proposal enter. proposal=%s", proposal_block->dump().c_str());
     

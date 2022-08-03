@@ -28,6 +28,7 @@ xobject_ptr_t<base::xvbstate_t> xstatectx_base_t::create_proposal_bstate(base::x
 }
 
 void xstatectx_base_t::sync_unit_block(const base::xvaccount_t & _vaddr, uint64_t end_height) const {
+    // todo(nathan):unit块同步除了commit状态的块之外，非commit状态的块也需要同步。
     base::xaccount_index_t commit_accountindex;
     m_commit_table_state->get_account_index(_vaddr.get_account(), commit_accountindex);
     uint64_t latest_connect_height = get_blockstore()->get_latest_connected_block_height(_vaddr);

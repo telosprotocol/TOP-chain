@@ -85,6 +85,7 @@ class xtablemaker_result_t {
     uint32_t                                m_light_unit_num{0};
     uint32_t                                m_full_unit_num{0};
     std::vector<xcons_transaction_ptr_t>    m_unchange_txs;
+    std::vector<data::xblock_ptr_t>         m_batch_units;
 };
 
 class xtablemaker_para_t {

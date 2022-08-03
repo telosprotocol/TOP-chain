@@ -927,12 +927,12 @@ namespace top
             }
             m_batch_units = _batch_units;
 
-            uint32_t count = (uint32_t)_batch_units.size();
-            for (uint32_t index = 0; index < count; index++) {
-                auto & _unit = _batch_units[index];
-                merge_input_resource(_unit->get_input()->get_resources());
-                merge_output_resource(_unit->get_output()->get_resources());
-            }
+            // uint32_t count = (uint32_t)_batch_units.size();
+            // for (uint32_t index = 0; index < count; index++) {
+            //     auto & _unit = _batch_units[index];
+            //     merge_input_resource(_unit->get_input()->get_resources());
+            //     merge_output_resource(_unit->get_output()->get_resources());
+            // }
             return true;
         }
 
@@ -1014,22 +1014,22 @@ namespace top
             get_input_entity()->add_ref();
             all_input_entities.push_back(get_input_entity());
 
-            const std::vector<xobject_ptr_t<xvblock_t>> & _batch_units = get_batch_units();
-            for (auto & _unit : _batch_units) {
-                auto & unit_input_entitys = _unit->get_input()->get_entitys();
-                std::string extend_bin;
-                xtable_inentity_extend_t extend(_unit->get_header(), _unit->get_cert());
-                extend.serialize_to_string(extend_bin);
+            // const std::vector<xobject_ptr_t<xvblock_t>> & _batch_units = get_batch_units();
+            // for (auto & _unit : _batch_units) {
+            //     auto & unit_input_entitys = _unit->get_input()->get_entitys();
+            //     std::string extend_bin;
+            //     xtable_inentity_extend_t extend(_unit->get_header(), _unit->get_cert());
+            //     extend.serialize_to_string(extend_bin);
 
-                xvinentity_t* new_entity = nullptr;
-                if (unit_input_entitys.empty()) {
-                    new_entity = new xvinentity_t(extend_bin,std::vector<xvaction_t>{});
-                } else {
-                    xassert(unit_input_entitys.size() == 1);
-                    new_entity = new xvinentity_t(extend_bin,((xvinentity_t*)unit_input_entitys[0])->get_actions());
-                }
-                all_input_entities.push_back(new_entity);
-            }
+            //     xvinentity_t* new_entity = nullptr;
+            //     if (unit_input_entitys.empty()) {
+            //         new_entity = new xvinentity_t(extend_bin,std::vector<xvaction_t>{});
+            //     } else {
+            //         xassert(unit_input_entitys.size() == 1);
+            //         new_entity = new xvinentity_t(extend_bin,((xvinentity_t*)unit_input_entitys[0])->get_actions());
+            //     }
+            //     all_input_entities.push_back(new_entity);
+            // }
             xauto_ptr<xvinput_t>input_obj(new xvinput_t(all_input_entities, *get_input_resource()));
             for (auto & v : all_input_entities) {  // should release entitys after make obj
                 v->release_ref();
@@ -1050,18 +1050,18 @@ namespace top
             get_output_entity()->add_ref();
             all_output_entities.push_back(get_output_entity());
 
-            const std::vector<xobject_ptr_t<xvblock_t>> & _batch_units = get_batch_units();
-            for (auto & _unit : _batch_units) {
-                auto & unit_output_entitys = _unit->get_output()->get_entitys();
-                xvoutentity_t* new_entity = nullptr;
-                if (unit_output_entitys.empty()) {
-                    new_entity = new xvoutentity_t();  // must has related output entity with input entity
-                } else {
-                    xassert(unit_output_entitys.size() == 1);
-                    new_entity = new xvoutentity_t(*((xvoutentity_t*)unit_output_entitys[0]));  // table entity is same with unit entity
-                }
-                all_output_entities.push_back(new_entity);//transfered owner of ptr to vector
-            }
+            // const std::vector<xobject_ptr_t<xvblock_t>> & _batch_units = get_batch_units();
+            // for (auto & _unit : _batch_units) {
+            //     auto & unit_output_entitys = _unit->get_output()->get_entitys();
+            //     xvoutentity_t* new_entity = nullptr;
+            //     if (unit_output_entitys.empty()) {
+            //         new_entity = new xvoutentity_t();  // must has related output entity with input entity
+            //     } else {
+            //         xassert(unit_output_entitys.size() == 1);
+            //         new_entity = new xvoutentity_t(*((xvoutentity_t*)unit_output_entitys[0]));  // table entity is same with unit entity
+            //     }
+            //     all_output_entities.push_back(new_entity);//transfered owner of ptr to vector
+            // }
             xauto_ptr<xvoutput_t>output_obj(new xvoutput_t(all_output_entities, *get_output_resource()));
             for (auto & v : all_output_entities) {  // should release entitys after make obj
                 v->release_ref();

@@ -248,16 +248,23 @@ void xsync_handler_t::push_newblock(uint32_t msg_size,
         return;
     }
 
+#if 1
     if (!check_auth(m_certauth, block)) {
         xsync_warn("xsync_handler receive push_newblock(auth failed) %" PRIx64 " %s %s", msg_hash, block->dump().c_str(), from_address.to_string().c_str());
         XMETRICS_GAUGE(metrics::xsync_recv_invalid_block, 1);
         return;
     }
+#endif
 
     xsync_info("xsync_handler receive push_newblock %" PRIx64 " %s %s", msg_hash, block->dump().c_str(), from_address.to_string().c_str());
 
     mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_blockfetcher_block_t>(block, network_self, from_address);
     m_block_fetcher->push_event(ev);
+
+    for (auto & unit : ptr->unit_blocks) {
+        mbus::xevent_ptr_t ev_1 = make_object_ptr<mbus::xevent_blockfetcher_block_t>(unit, network_self, from_address);
+        m_block_fetcher->push_event(ev);
+    }
 }
 
 void xsync_handler_t::push_newblockhash(uint32_t msg_size,
@@ -370,6 +377,7 @@ void xsync_handler_t::blocks(uint32_t msg_size, const vnetwork::xvnode_address_t
     xsync_info("xsync_handler receive blocks %" PRIx64 " wait(%ldms) %s count(%u) code(%u) %s",
         msg_hash, get_time()-recv_time, blocks[0]->get_account().c_str(), count, header->code, from_address.to_string().c_str());
 
+#if 0
     // check continuous
     xvblock_t *successor = nullptr;
     std::vector<data::xblock_ptr_t>::reverse_iterator rit = blocks.rbegin();
@@ -387,12 +395,11 @@ void xsync_handler_t::blocks(uint32_t msg_size, const vnetwork::xvnode_address_t
 
         successor = block.get();
     }
-
     if (!data::is_table_address(common::xaccount_address_t{successor->get_account()}) && !data::is_drand_address(common::xaccount_address_t{successor->get_account()})) {
         xsync_dbg("xsync_handler_t::blocks, address type error: %s", successor->get_account().c_str());
         return;
     }
-
+#endif
     mbus::xevent_ptr_t e = make_object_ptr<mbus::xevent_sync_response_blocks_t>(blocks, network_self, from_address);
     m_downloader->push_event(e);
 }
@@ -1187,9 +1194,10 @@ void xsync_handler_t::recv_archive_blocks(uint32_t msg_size,
         successor = block.get();
     }
 
+#if 0
     if (data::is_unit_address(common::xaccount_address_t{successor->get_account()}))
         return;
-
+#endif
     mbus::xevent_ptr_t e = make_object_ptr<mbus::xevent_sync_archive_blocks_t>(blocks, network_self, from_address);
     m_downloader->push_event(e);        
 }
