@@ -74,7 +74,7 @@ m_sync_store(sync_store) {
 
 }
 
-void xsync_pusher_t::push_newblock_to_archive(const xblock_ptr_t &block) {
+void xsync_pusher_t::push_newblock_to_archive(const xblock_ptr_t &block/*, const std::vector<data::xblock_ptr_t> & unitblocks*/) {
 
     if (block == nullptr)
         return;
@@ -167,6 +167,9 @@ void xsync_pusher_t::push_newblock_to_archive(const xblock_ptr_t &block) {
                         address.c_str(),
                         block->get_height());
                     m_sync_sender->push_newblock(block, self_addr, target_addr);
+                    // for (auto & unitblock : unitblocks) {
+                    //     m_sync_sender->push_newblock(unitblock, self_addr, target_addr);
+                    // }
                 }
             }
         }
@@ -180,6 +183,9 @@ void xsync_pusher_t::push_newblock_to_archive(const xblock_ptr_t &block) {
             push_edge_arcs.size(), self_addr.to_string().c_str(), block->dump().c_str());
         for (auto &dst_idx: push_edge_arcs) {
             m_sync_sender->push_newblock(block, self_addr, edge_archive_list[dst_idx]);
+            // for (auto & unitblock : unitblocks) {
+            //     m_sync_sender->push_newblock(unitblock, self_addr, edge_archive_list[dst_idx]);
+            // }
         }
     }
 

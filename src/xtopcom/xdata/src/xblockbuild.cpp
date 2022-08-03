@@ -553,8 +553,15 @@ bool xlighttable_build_t::build_block_body(const xtable_block_para_t & para, con
     }
 
     std::vector<xobject_ptr_t<base::xvblock_t>> batch_units;
+    uint32_t i = 0;
     for (auto & v : para.get_account_units()) {
+        v->set_parent_block(account.get_account(), i + 1);
+        v->get_cert()->set_parent_height(height);
+        v->get_cert()->set_parent_viewid(get_qcert()->get_viewid());
+        v->set_extend_cert("1");
+        v->set_extend_data("1");
         batch_units.push_back(v);
+        i++;
     }
     set_batch_units(batch_units);
 
@@ -565,6 +572,16 @@ bool xlighttable_build_t::build_block_body(const xtable_block_para_t & para, con
     set_output_full_state(full_state);
     std::string tgas_balance_change = base::xstring_utl::tostring(para.get_tgas_balance_change());
     set_output_entity(base::xvoutentity_t::key_name_tgas_pledge_change(), tgas_balance_change);
+
+    base::xtable_unit_infos_t unit_infos;
+    for (auto & unit : batch_units) {
+        auto hash = unit->get_cert()->build_block_hash();
+        unit_infos.add_unit_info(base::xtable_unit_info_t(unit->get_account(), hash, unit->get_height()));
+        xdbg("xlighttable_build_t::build_block_body unit_infos:%s,hash:%s,hash size:%u,%llu", unit->get_account().c_str(), base::xstring_utl::to_hex(hash).c_str(), unit->get_block_hash().size(), unit->get_height());
+    }
+    std::string unit_infos_str;
+    unit_infos.serialize_to_string(unit_infos_str);
+    set_output_entity(base::xvoutentity_t::key_name_unit_infos(), unit_infos_str);
 
     for (auto & v : para.get_input_resources()) {
         set_input_resource(v.first, v.second);

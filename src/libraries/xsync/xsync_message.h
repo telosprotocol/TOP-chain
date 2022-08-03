@@ -170,8 +170,12 @@ protected:
             }
 
             for (auto &it: vector_entire_block) {
-                if (it->block_ptr != nullptr)
+                if (it->block_ptr != nullptr) {
                     blocks.push_back(it->block_ptr);
+                    for (auto & unit : it->unit_blocks) {
+                        blocks.push_back(unit);
+                    }
+                }
             }
 
             return CALC_LEN();
@@ -225,6 +229,7 @@ protected:
             entire_block->serialize_from(stream);
 
             block = entire_block->block_ptr;
+            unit_blocks = entire_block->unit_blocks;
 
             return CALC_LEN();
         } catch (...) {
@@ -236,6 +241,7 @@ protected:
 
 public:
     data::xblock_ptr_t block{};
+    std::vector<data::xblock_ptr_t> unit_blocks;
 };
 
 struct xsync_message_general_newblockhash_t : public top::basic::xserialize_face_t {
@@ -441,7 +447,12 @@ protected:
 
             for (auto &it: vector_entire_block) {
                 if (it->block_ptr != nullptr)
+                {
                     blocks.push_back(it->block_ptr);
+                    for (auto & unit : it->unit_blocks) {
+                        blocks.push_back(unit);
+                    }
+                }
             }
 
             return CALC_LEN();

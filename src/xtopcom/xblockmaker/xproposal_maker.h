@@ -20,8 +20,8 @@ class xproposal_maker_t : public xunit_service::xproposal_maker_face {
     virtual ~xproposal_maker_t();
  public:
     virtual bool                can_make_proposal(xblock_consensus_para_t & proposal_para) override;
-    virtual xblock_ptr_t        make_proposal(xblock_consensus_para_t & proposal_para, uint32_t min_tx_num) override;
-    virtual int                 verify_proposal(xblock_consensus_para_t & proposal_para, base::xvblock_t* proposal_block, base::xvqcert_t * bind_clock_cert) override;
+    virtual xblock_ptr_t        make_proposal(xblock_consensus_para_t & proposal_para, uint32_t min_tx_num, std::vector<xblock_ptr_t> & batch_units) override;
+    virtual int                 verify_proposal(xblock_consensus_para_t & proposal_para, base::xvblock_t* proposal_block, base::xvqcert_t * bind_clock_cert, std::vector<xblock_ptr_t> & batch_units) override;
     virtual void                set_certauth(base::xvcertauth_t* _ca);
     virtual data::xblock_consensus_para_ptr_t   leader_set_consensus_para_basic(base::xvblock_t* _cert_block, uint64_t viewid, uint64_t clock, std::error_code & ec) override;
 

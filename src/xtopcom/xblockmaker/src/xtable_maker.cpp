@@ -317,6 +317,7 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
         xinfo("xtable_maker_t::make_light_table_v2-succ is_leader=%d,%s,binlog=%zu,snapshot=%zu,batch_units=%zu,property_hashs=%zu,tgas_change=%ld", 
             is_leader, tableblock->dump().c_str(), lighttable_para.get_property_binlog().size(), lighttable_para.get_fullstate_bin().size(), 
             lighttable_para.get_account_units().size(), lighttable_para.get_property_hashs().size(),lighttable_para.get_tgas_balance_change());
+        table_result.m_batch_units = batch_units;
     }
     return tableblock;
 }
@@ -441,7 +442,7 @@ xblock_ptr_t xtable_maker_t::make_proposal(xtablemaker_para_t & table_para,
     return proposal_block;
 }
 
-int32_t xtable_maker_t::verify_proposal(base::xvblock_t* proposal_block, const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para) {
+int32_t xtable_maker_t::verify_proposal(base::xvblock_t* proposal_block, const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, std::vector<data::xblock_ptr_t> & batch_units) {
     XMETRICS_TIMER(metrics::cons_tablemaker_verify_proposal_tick);
     std::lock_guard<std::mutex> l(m_lock);
 
@@ -496,6 +497,8 @@ int32_t xtable_maker_t::verify_proposal(base::xvblock_t* proposal_block, const x
         XMETRICS_GAUGE(metrics::cons_fail_verify_proposal_table_with_local, 1);
         return xblockmaker_error_proposal_not_match_local;
     }
+
+    batch_units = table_result.m_batch_units;
 
     xinfo("xtable_maker_t::verify_proposal succ.proposal=%s",
         proposal_block->dump().c_str());
