@@ -502,7 +502,7 @@ common::xaccount_address_t xunit_bstate_t::tep_token_owner(common::xtoken_id_t c
 #if defined(XBUILD_BOUNTY)
     common::xeth_address_t const & default_owner = common::xeth_address_t::build_from("0xf8a1E199c49C2aE2682Ecc5b4a8838b39BAb1a38");
 #else
-    common::xeth_address_t const & default_owner = common::xeth_address_t::build_from("0x0393B136b79e16360D246450C5bb9D39D8AD1fB6");
+    common::xeth_address_t const & default_owner = common::xeth_address_t::build_from("0xf8a1E199c49C2aE2682Ecc5b4a8838b39BAb1a38");
 #endif
     xkinfo("get TEP token owner: use default token owner %s for token %d", default_owner.c_str(), static_cast<int>(token_id));
 
