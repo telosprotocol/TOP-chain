@@ -44,7 +44,7 @@ void xtop_trie_db::insert(xhash256_t hash, int32_t size, xtrie_node_face_ptr_t n
             this->dirties.at(child).parents++;
         }
     });
-    xdbg("xtop_trie_db::insert %s size:%d", hash.hex_string().c_str(), size);
+    xdbg("xtop_trie_db::insert %s size:%d", hash.as_hex_str(), size);
     dirties.insert({hash, entry});
 
     if (oldest == xhash256_t{}) {
@@ -123,7 +123,7 @@ xbytes_t xtop_trie_db::preimage(xhash256_t hash) const {
     std::error_code ec;
     auto result = diskdb->Get(preimageKey(hash), ec);
     if (ec) {
-        xwarn("xtrie_db Get preimage %s failed: %s", hash.hex_string().c_str(), ec.message().c_str());
+        xwarn("xtrie_db Get preimage %s failed: %s", hash.as_hex_str(), ec.message().c_str());
     }
     return result;
 }
@@ -138,7 +138,7 @@ void xtop_trie_db::Commit(xhash256_t hash, AfterCommitCallback cb, std::error_co
     for (auto const & preimage : preimages) {
         diskdb->Put(preimageKey(preimage.first), preimage.second, ec);
         if (ec) {
-            xwarn("xtrie_db Commit diskdb error at preimage %s, err: %s", preimage.first.hex_string().c_str(), ec.message().c_str());
+            xwarn("xtrie_db Commit diskdb error at preimage %s, err: %s", preimage.first.as_hex_str(), ec.message().c_str());
             // return;
         }
         // todo could add some metrics here.

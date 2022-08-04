@@ -206,7 +206,7 @@ TEST_F(xtest_trie_fixture, test_commit_to_disk) {
 
     // havn't get anything from disk db for now
     ASSERT_TRUE(test_disk_db_ptr->Counter_Get.load() == 0);
-    xdbg("trie->Commit() res: %s", res.hex_string().c_str());
+    xdbg("trie->Commit() res: %s", res.as_hex_str());
     test_trie_db_ptr->Commit(res, nullptr, ec);
 
     // still zero

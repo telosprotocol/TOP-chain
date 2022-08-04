@@ -236,9 +236,9 @@ public:
         return m_data;
     }
 
-    std::string 
-    hex_string() const {
-        return top::to_hex(m_data);
+    const char *
+    as_hex_str() const {
+        return top::to_hex(m_data).c_str();
     }
 
     auto
