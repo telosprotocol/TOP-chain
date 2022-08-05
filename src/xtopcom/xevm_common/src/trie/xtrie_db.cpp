@@ -76,10 +76,8 @@ xtrie_node_face_ptr_t xtop_trie_db::node(xhash256_t hash) {
     // todo mark miss hit
 
     // retrieve from disk db
-    std::error_code ec;
-    xbytes_t hash_bytes = xbytes_t{hash.begin(), hash.end()};
-    auto enc = diskdb->Get(hash_bytes, ec);
-    if (ec || enc.empty()) {
+    auto enc = ReadTrieNode(diskdb, hash);
+    if (enc.empty()) {
         return nullptr;
     }
     // put into clean cache
@@ -105,9 +103,8 @@ xbytes_t xtop_trie_db::Node(xhash256_t hash, std::error_code & ec) {
     }
 
     // Content unavailable in memory, attempt to retrieve from disk
-    xbytes_t hash_bytes = xbytes_t{hash.begin(), hash.end()};
-    auto enc = diskdb->Get(hash_bytes, ec);
-    if (ec || enc.empty()) {
+    auto enc = ReadTrieNode(diskdb, hash);
+    if (enc.empty()) {
         ec = error::xerrc_t::trie_db_not_found;
         return xbytes_t{};
     }
@@ -120,6 +117,7 @@ xbytes_t xtop_trie_db::preimage(xhash256_t hash) const {
     if (preimages.find(hash) != preimages.end()) {
         return preimages.at(hash);
     }
+    // could put this diskdb->Get into trie_kv_db_face :: ReadPreimage
     std::error_code ec;
     auto result = diskdb->Get(preimageKey(hash), ec);
     if (ec) {
@@ -162,12 +160,8 @@ void xtop_trie_db::Commit(xhash256_t hash, AfterCommitCallback cb, std::error_co
     // put it into diskDB
     auto enc = node.rlp();
     auto hash_bytes = xbytes_t{hash.begin(), hash.end()};
-    xdbg("xtop_trie_db::Commit Put in %s %zu", top::to_hex(hash_bytes).c_str(), enc.size());
-    diskdb->Put(hash_bytes, enc, ec);
-    if (ec) {
-        xwarn("trie_db Commit diskdb error: %s", ec.message().c_str());
-        return;
-    }
+    xdbg("xtop_trie_db::Commit write node %s, size %zu", top::to_hex(hash_bytes).c_str(), enc.size());
+    WriteTrieNode(diskdb, hash, enc);
     if (cb) {
         cb(hash);
     }

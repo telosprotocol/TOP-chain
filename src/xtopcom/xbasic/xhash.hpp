@@ -7,6 +7,7 @@
 #include "xbasic/xbyte.h"
 #include "xbasic/xbyte_buffer.h"
 #include "xbasic/xhex.h"
+#include "xbasic/xhash.hpp"
 
 #include <array>
 #include <cstdint>
@@ -234,6 +235,10 @@ public:
     std::array<xbyte_t, Bytes> const &
     as_array() const noexcept {
         return m_data;
+    }
+
+    xbytes_t to_bytes() const {
+        return xbytes_t{const_cast<xbyte_t *>(m_data.data()), const_cast<xbyte_t *>(m_data.data() + m_data.size())};
     }
 
     const char *

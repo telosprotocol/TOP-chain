@@ -1,0 +1,97 @@
+// Copyright (c) 2017-present Telos Foundation & contributors
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+#pragma once
+
+#include "xevm_common/trie/xtrie_encoding.h"
+#include "xevm_common/trie/xtrie_kv_db_face.h"
+
+#include <map>
+#include <vector>
+
+NS_BEG3(top, evm_common, trie)
+
+// SyncPath is a path tuple identifying a particular trie node either in a single
+// trie (account) or a layered trie (account -> storage).
+//
+// Content wise the tuple either has 1 element if it addresses a node in a single
+// trie or 2 elements if it addresses a node in a stacked trie.
+//
+// To support aiming arbitrary trie nodes, the path needs to support odd nibble
+// lengths. To avoid transferring expanded hex form over the network, the last
+// part of the tuple (which needs to index into the middle of a trie) is compact
+// encoded. In case of a 2-tuple, the first item is always 32 bytes so that is
+// simple binary encoded.
+//
+// Examples:
+//   - Path 0x9  -> {0x19}
+//   - Path 0x99 -> {0x0099}
+//   - Path 0x01234567890123456789012345678901012345678901234567890123456789019  -> {0x0123456789012345678901234567890101234567890123456789012345678901, 0x19}
+//   - Path 0x012345678901234567890123456789010123456789012345678901234567890199 -> {0x0123456789012345678901234567890101234567890123456789012345678901, 0x0099}
+using SyncPath = std::vector<xbytes_t>;
+
+SyncPath newSyncPath(xbytes_t const & path);
+
+// SyncResult is a response with requested data along with it's hash.
+struct SyncResult {
+    xhash256_t Hash;  // Hash of the originally unknown trie node
+    xbytes_t Data;    // Data content of the retrieved node
+};
+
+// Sync is the main state trie synchronisation scheduler, which provides yet
+// unknown trie hashes to retrieve, accepts node data associated with said hashes
+// and reconstructs the trie step by step until all is done.
+class Sync {
+private:
+    // request represents a scheduled or already in-flight state retrieval request.
+    struct request {
+        xbytes_t path;     // Merkle path leading to this node for prioritization
+        xhash256_t hash;   // Hash of the node data content to retrieve
+        xbytes_t data;     // Data content of the node, cached until all subtrees complete
+        bool code{false};  // Whether this is a code entry
+
+        std::vector<request *> parents;  // Parent state nodes referencing this entry (notify all upon completion)
+        std::size_t deps;                // Number of dependencies before allowed to commit this node
+        // callback
+
+        request(xbytes_t const & _path, xhash256_t const & _hash) : path{_path}, hash{_hash} {
+        }
+        request(xbytes_t const & _path, xhash256_t const & _hash, bool is_code) : path{_path}, hash{_hash}, code{is_code} {
+        }
+    };
+
+    // syncMemBatch is an in-memory buffer of successfully downloaded but not yet
+    // persisted data items.
+    class syncMemBatch {
+    private:
+        std::map<xhash256_t, xbytes_t> nodes;  // In-memory membatch of recently completed nodes
+        std::map<xhash256_t, xbytes_t> codes;  // In-memory membatch of recently completed codes
+
+    public:
+        inline bool hasNode(xhash256_t const & hash) const {
+            return nodes.find(hash) != nodes.end();
+        }
+        inline bool hasCode(xhash256_t const & hash) const {
+            return codes.find(hash) != codes.end();
+        }
+    };
+
+private:
+    xkv_db_face_ptr_t database{nullptr};       // Persistent database to check for existing entries
+    syncMemBatch membatch;                     // Memory buffer to avoid frequent database writes
+    std::map<xhash256_t, request *> nodeReqs;  // Pending requests pertaining to a trie node hash
+    std::map<xhash256_t, request *> codeReqs;  // Pending requests pertaining to a code hash
+    // priority queue?                                     // Priority queue with the pending requests
+    std::map<std::size_t, std::size_t> fetches;  // Number of active fetches per trie node depth
+
+public:
+    void AddSubTrie(xhash256_t root, xbytes_t path, xhash256_t parent /*callback*/);
+
+    void AddCodeEntry(xhash256_t hash, xbytes_t path, xhash256_t parent);
+
+private:
+    void schedule(request * req);
+};
+
+NS_END3
