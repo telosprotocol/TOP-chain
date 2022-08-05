@@ -54,7 +54,7 @@ public:
     xconfig_center();
     static xconfig_center& instance();
 
-    std::vector<std::string> get_table_accounts();
+    std::set<std::string> get_table_accounts();
     const std::map<std::string, xtable_config>& get_table_config() {return m_table_config;}
     const std::map<std::string, store::prune_type>& get_contract_config() {return m_contract_config;}
     const std::vector<xsync_config>& get_sync_config() {return m_sync_config;}

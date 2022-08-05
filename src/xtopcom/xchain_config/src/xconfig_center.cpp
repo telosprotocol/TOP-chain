@@ -11,14 +11,14 @@ xconfig_center& xconfig_center::instance() {
     return config_center;
 }
 
-std::vector<std::string> xconfig_center::get_table_accounts() {
-    std::vector<std::string> v;
+std::set<std::string> xconfig_center::get_table_accounts() {
+    std::set<std::string> tables;
     for (auto const & t : m_table_config) {
         for (uint32_t i = 0; i < t.second.m_used_number; i++) {
-            v.emplace_back(data::make_address_by_prefix_and_subaddr(t.first, uint16_t(i)).value());
+            tables.insert(data::make_address_by_prefix_and_subaddr(t.first, uint16_t(i)).value());
         }
     }
-    return v;
+    return tables;
 }
 
 void xconfig_center::init_xchain_config() {
