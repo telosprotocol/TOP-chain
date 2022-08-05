@@ -5,6 +5,7 @@
 #pragma once
 
 #include "xbase/xobject_ptr.h"
+#include "xcommon/xchain_uuid.h"
 #include "xdata/xblock.h"
 #include "xdata/xbstate_ctx.h"
 #include "xdata/xproperty.h"
@@ -75,10 +76,10 @@ class xunit_bstate_t : public xbstate_ctx_t {
                           std::error_code & ec);
     void approve(common::xtoken_id_t const token_id, common::xaccount_address_t const & spender, evm_common::u256 const & amount, std::error_code & ec);
 
-    common::xaccount_address_t tep_token_owner(common::xtoken_id_t const token_id) const;
-    void tep_token_owner(common::xtoken_id_t const token_id, common::xaccount_address_t const & new_owner, std::error_code & ec);
-    common::xaccount_address_t tep_token_controller(common::xtoken_id_t const token_id) const;
-    void tep_token_controller(common::xtoken_id_t const token_id, common::xaccount_address_t const & new_controller, std::error_code & ec);
+    common::xaccount_address_t tep_token_owner(common::xchain_uuid_t chain_uuid) const;
+    void tep_token_owner(common::xchain_uuid_t chain_uuid, common::xaccount_address_t const & new_owner, std::error_code & ec);
+    common::xaccount_address_t tep_token_controller(common::xchain_uuid_t chain_uuid) const;
+    void tep_token_controller(common::xchain_uuid_t chain_uuid, common::xaccount_address_t const & new_controller, std::error_code & ec);
 
 private:
     xbytes_t raw_allowance(common::xtoken_id_t const token_id, std::error_code & ec) const;
@@ -91,11 +92,11 @@ private:
     void dec_allowance(common::xtoken_id_t const token_id, common::xaccount_address_t const & spender, evm_common::u256 const & amount, std::error_code & ec);
 
     xobject_ptr_t<base::xmapvar_t<std::string>> raw_owner(std::error_code & ec) const;
-    xbytes_t raw_owner(common::xtoken_id_t const token_id, std::error_code & ec) const;
-    void raw_owner(common::xtoken_id_t const token_id, xbytes_t const & raw_data, std::error_code & ec);
+    xbytes_t raw_owner(common::xchain_uuid_t chain_uuid, std::error_code & ec) const;
+    void raw_owner(common::xchain_uuid_t chain_uuid, xbytes_t const & raw_data, std::error_code & ec);
     xobject_ptr_t<base::xmapvar_t<std::string>> raw_controller(std::error_code & ec) const;
-    xbytes_t raw_controller(common::xtoken_id_t const token_id, std::error_code & ec) const;
-    void raw_controller(common::xtoken_id_t const token_id, xbytes_t const & raw_data, std::error_code & ec);
+    xbytes_t raw_controller(common::xchain_uuid_t chain_uuid, std::error_code & ec) const;
+    void raw_controller(common::xchain_uuid_t chain_uuid, xbytes_t const & raw_data, std::error_code & ec);
 
     common::xaccount_address_t owner_impl(xbytes_t const & owner_account_in_bytes, std::error_code & ec) const;
     common::xaccount_address_t controller_impl(xbytes_t const & controller_account_in_bytes, std::error_code & ec) const;

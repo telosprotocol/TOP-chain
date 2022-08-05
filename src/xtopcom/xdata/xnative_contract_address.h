@@ -46,7 +46,7 @@ XINLINE_CONSTEXPR char const * sys_contract_relay_make_block_addr{"T200050000000
 
 // user contracts addresses for solidity
 XINLINE_CONSTEXPR char const * sys_eth_zero_addr{"T600040000000000000000000000000000000000000000"};
-XINLINE_CONSTEXPR char const * sys_contract_evm_erc20_addr{"T60004ff00000000000000000000000000000000000001"};
+// XINLINE_CONSTEXPR char const * sys_contract_evm_erc20_addr{"T60004ff00000000000000000000000000000000000001"};
 XINLINE_CONSTEXPR char const * sys_contract_evm_eth_bridge_addr{"T60004ff00000000000000000000000000000000000002"};
 XINLINE_CONSTEXPR char const * sys_contract_evm_bsc_client_addr{"T60004ff00000000000000000000000000000000000003"};
 XINLINE_CONSTEXPR char const * sys_contract_evm_heco_client_addr{"T60004ff00000000000000000000000000000000000004"};
@@ -103,10 +103,14 @@ extern common::xaccount_address_t const eth_table_address;
 extern common::xaccount_base_address_t const relay_table_base_address;
 extern common::xaccount_address_t const relay_table_address;
 
-extern common::xaccount_address_t const evm_erc20_contract_address;
+// extern common::xaccount_address_t const evm_erc20_contract_address;
 extern common::xaccount_address_t const evm_eth_bridge_contract_address;
 extern common::xaccount_address_t const evm_bsc_client_contract_address;
 extern common::xaccount_address_t const evm_heco_client_contract_address;
+extern common::xaccount_address_t const evm_top_contract_address;
+extern common::xaccount_address_t const evm_eth_contract_address;
+extern common::xaccount_address_t const evm_usdt_contract_address;
+extern common::xaccount_address_t const evm_usdc_contract_address;
 
 extern common::xaccount_address_t const relay_make_block_contract_address;
 

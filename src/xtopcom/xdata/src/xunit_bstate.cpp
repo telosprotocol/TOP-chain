@@ -469,29 +469,29 @@ void xunit_bstate_t::dec_allowance(common::xtoken_id_t const token_id, common::x
     raw_allowance(token_id, raw_data, ec);
 }
 
-common::xaccount_address_t xunit_bstate_t::tep_token_owner(common::xtoken_id_t const token_id) const {
+common::xaccount_address_t xunit_bstate_t::tep_token_owner(common::xchain_uuid_t const chain_uuid) const {
     std::error_code ec;
 
     do {
-        auto const & raw_data = raw_owner(token_id, ec);
+        auto const & raw_data = raw_owner(chain_uuid, ec);
         if (ec) {
             xwarn("get TEP token owner failed: ec %d msg %s category %s", ec.value(), ec.message().c_str(), ec.category().name());
             break;
         }
 
         if (raw_data.empty()) {
-            xwarn("get TEP token owner failed: empty owner account for token %d", static_cast<int>(token_id));
+            xwarn("get TEP token owner failed: empty owner account for token %d", static_cast<int>(chain_uuid));
             break;
         }
 
         auto owner = owner_impl(raw_data, ec);
         if (ec) {
-            xwarn("get TEP token owner failed: failed to read account data for token %d", static_cast<int>(token_id));
+            xwarn("get TEP token owner failed: failed to read account data for token %d", static_cast<int>(chain_uuid));
             break;
         }
 
         if (owner.empty()) {
-            xwarn("get TEP token owner failed: extracted owner account is empty for token %d", static_cast<int>(token_id));
+            xwarn("get TEP token owner failed: extracted owner account is empty for token %d", static_cast<int>(chain_uuid));
             break;
         }
 
@@ -499,13 +499,13 @@ common::xaccount_address_t xunit_bstate_t::tep_token_owner(common::xtoken_id_t c
     } while (false);
 
     common::xeth_address_t const & default_owner = common::xeth_address_t::build_from("0x0393B136b79e16360D246450C5bb9D39D8AD1fB6");
-    xkinfo("get TEP token owner: use default token owner %s for token %d", default_owner.c_str(), static_cast<int>(token_id));
+    xkinfo("get TEP token owner: use default token owner %s for token %d", default_owner.c_str(), static_cast<int>(chain_uuid));
 
     common::xaccount_address_t default_owner_address = common::xaccount_address_t::build_from(default_owner, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
     return default_owner_address;
 }
 
-void xunit_bstate_t::tep_token_owner(common::xtoken_id_t const token_id, common::xaccount_address_t const & new_owner, std::error_code & ec) {
+void xunit_bstate_t::tep_token_owner(common::xchain_uuid_t const chain_uuid, common::xaccount_address_t const & new_owner, std::error_code & ec) {
     assert(!ec);
     if (new_owner.empty()) {
         ec = common::error::xerrc_t::invalid_account_address;
@@ -515,7 +515,7 @@ void xunit_bstate_t::tep_token_owner(common::xtoken_id_t const token_id, common:
 
     auto const account_bytes = top::to_bytes(new_owner.value());
 
-    raw_owner(token_id, account_bytes, ec);
+    raw_owner(chain_uuid, account_bytes, ec);
 }
 
 xobject_ptr_t<base::xmapvar_t<std::string>> xunit_bstate_t::raw_owner(std::error_code & ec) const {
@@ -538,20 +538,20 @@ xobject_ptr_t<base::xmapvar_t<std::string>> xunit_bstate_t::raw_owner(std::error
     return raw_data;
 }
 
-xbytes_t xunit_bstate_t::raw_owner(common::xtoken_id_t const token_id, std::error_code & ec) const {
+xbytes_t xunit_bstate_t::raw_owner(common::xchain_uuid_t const chain_uuid, std::error_code & ec) const {
     assert(!ec);
 
     xobject_ptr_t<base::xmapvar_t<std::string>> raw_data = raw_owner(ec);
     if (ec) {
-        xwarn("get owner for token %d failed.", static_cast<int>(token_id));
+        xwarn("get owner for token %d failed.", static_cast<int>(chain_uuid));
         return {};
     }
 
     assert(raw_data != nullptr);
-    return top::to_bytes(raw_data->query(top::to_string(token_id)));
+    return top::to_bytes(raw_data->query(top::to_string(chain_uuid)));
 }
 
-void xunit_bstate_t::raw_owner(common::xtoken_id_t const token_id, xbytes_t const & raw_data, std::error_code & ec) {
+void xunit_bstate_t::raw_owner(common::xchain_uuid_t const chain_uuid, xbytes_t const & raw_data, std::error_code & ec) {
     assert(!ec);
 
     xobject_ptr_t<base::xmapvar_t<std::string>> property = raw_owner(ec);
@@ -560,11 +560,11 @@ void xunit_bstate_t::raw_owner(common::xtoken_id_t const token_id, xbytes_t cons
         return;
     }
 
-    if (property->insert(top::to_string(token_id), top::to_string(raw_data), m_canvas.get()) == false) {
+    if (property->insert(top::to_string(chain_uuid), top::to_string(raw_data), m_canvas.get()) == false) {
         ec = error::xerrc_t::update_state_failed;
-        xerror("update XPROPERTY_PRECOMPILED_ERC20_OWNER_KEY failed. token_id %" PRIu32, static_cast<uint32_t>(token_id));
+        xerror("update XPROPERTY_PRECOMPILED_ERC20_OWNER_KEY failed. token_id %" PRIu32, static_cast<uint32_t>(chain_uuid));
     }
-    assert(top::to_bytes(property->query(top::to_string(token_id))) == raw_data);
+    assert(top::to_bytes(property->query(top::to_string(chain_uuid))) == raw_data);
 }
 
 common::xaccount_address_t xunit_bstate_t::owner_impl(xbytes_t const & owner_account_in_bytes, std::error_code & ec) const {
@@ -574,29 +574,29 @@ common::xaccount_address_t xunit_bstate_t::owner_impl(xbytes_t const & owner_acc
     return common::xaccount_address_t::build_from(top::to_string(owner_account_in_bytes), ec);
 }
 
-common::xaccount_address_t xunit_bstate_t::tep_token_controller(common::xtoken_id_t const token_id) const {
+common::xaccount_address_t xunit_bstate_t::tep_token_controller(common::xchain_uuid_t const chain_uuid) const {
     std::error_code ec;
 
     do {
-        auto const & raw_data = raw_controller(token_id, ec);
+        auto const & raw_data = raw_controller(chain_uuid, ec);
         if (ec) {
             xwarn("get TEP token controller failed: ec %d msg %s category %s", ec.value(), ec.message().c_str(), ec.category().name());
             break;
         }
 
         if (raw_data.empty()) {
-            xwarn("get TEP token controller failed: empty owner account for token %d", static_cast<int>(token_id));
+            xwarn("get TEP token controller failed: empty owner account for token %d", static_cast<int>(chain_uuid));
             break;
         }
 
         auto controller = controller_impl(raw_data, ec);
         if (ec) {
-            xwarn("get TEP token controller failed: failed to read account data for token %d", static_cast<int>(token_id));
+            xwarn("get TEP token controller failed: failed to read account data for token %d", static_cast<int>(chain_uuid));
             break;
         }
 
         if (controller.empty()) {
-            xwarn("get TEP token controller failed: extracted owner account is empty for token %d", static_cast<int>(token_id));
+            xwarn("get TEP token controller failed: extracted owner account is empty for token %d", static_cast<int>(chain_uuid));
             break;
         }
 
@@ -604,17 +604,17 @@ common::xaccount_address_t xunit_bstate_t::tep_token_controller(common::xtoken_i
     } while (false);
 
     common::xeth_address_t const & default_controller = common::xeth_address_t::build_from("0x4cA4bBdF750eb2CCe4D3157D8b25CD7280f03E10");
-    xkinfo("get TEP token controller: use default token controller %s for token %d", default_controller.c_str(), static_cast<int>(token_id));
+    xkinfo("get TEP token controller: use default token controller %s for token %d", default_controller.c_str(), static_cast<int>(chain_uuid));
 
     common::xaccount_address_t default_controller_address = common::xaccount_address_t::build_from(default_controller, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
     return default_controller_address;
 }
 
-void xunit_bstate_t::tep_token_controller(common::xtoken_id_t const token_id, common::xaccount_address_t const & new_controller, std::error_code & ec) {
+void xunit_bstate_t::tep_token_controller(common::xchain_uuid_t const chain_uuid, common::xaccount_address_t const & new_controller, std::error_code & ec) {
     assert(!ec);
     auto const account_bytes = new_controller.empty() ? xbytes_t{} : top::to_bytes(new_controller.value());
 
-    raw_controller(token_id, account_bytes, ec);
+    raw_controller(chain_uuid, account_bytes, ec);
 }
 
 xobject_ptr_t<base::xmapvar_t<std::string>> xunit_bstate_t::raw_controller(std::error_code & ec) const {
@@ -637,19 +637,19 @@ xobject_ptr_t<base::xmapvar_t<std::string>> xunit_bstate_t::raw_controller(std::
     return raw_data;
 }
 
-xbytes_t xunit_bstate_t::raw_controller(common::xtoken_id_t const token_id, std::error_code & ec) const {
+xbytes_t xunit_bstate_t::raw_controller(common::xchain_uuid_t const chain_uuid, std::error_code & ec) const {
     assert(!ec);
 
-    xobject_ptr_t<base::xmapvar_t<std::string>> raw_data = raw_controller(ec);
+    xobject_ptr_t<base::xmapvar_t<std::string>> const raw_data = raw_controller(ec);
     if (ec) {
         return {};
     }
 
     assert(raw_data != nullptr);
-    return top::to_bytes(raw_data->query(top::to_string(token_id)));
+    return top::to_bytes(raw_data->query(top::to_string(chain_uuid)));
 }
 
-void xunit_bstate_t::raw_controller(common::xtoken_id_t const token_id, xbytes_t const & raw_data, std::error_code & ec) {
+void xunit_bstate_t::raw_controller(common::xchain_uuid_t const chain_uuid, xbytes_t const & raw_data, std::error_code & ec) {
     assert(!ec);
 
     xobject_ptr_t<base::xmapvar_t<std::string>> property = raw_controller(ec);
@@ -657,11 +657,11 @@ void xunit_bstate_t::raw_controller(common::xtoken_id_t const token_id, xbytes_t
         return;
     }
 
-    if (property->insert(top::to_string(token_id), top::to_string(raw_data), m_canvas.get()) == false) {
+    if (property->insert(top::to_string(chain_uuid), top::to_string(raw_data), m_canvas.get()) == false) {
         ec = error::xerrc_t::update_state_failed;
-        xerror("update XPROPERTY_PRECOMPILED_ERC20_CONTROLLER_KEY failed. token_id %" PRIu32, static_cast<uint32_t>(token_id));
+        xerror("update XPROPERTY_PRECOMPILED_ERC20_CONTROLLER_KEY failed. token_id %" PRIu32, static_cast<uint32_t>(chain_uuid));
     }
-    assert(top::to_bytes(property->query(top::to_string(token_id))) == raw_data);
+    assert(top::to_bytes(property->query(top::to_string(chain_uuid))) == raw_data);
 }
 
 common::xaccount_address_t xunit_bstate_t::controller_impl(xbytes_t const & controller_account_in_bytes, std::error_code & ec) const {
