@@ -27,7 +27,7 @@ struct xeth_header_t {
     uint64_t gas_limit{0};
     uint64_t gas_used{0};
     uint64_t time{0};
-    bytes extra;
+    xbytes_t extra;
     Hash mix_digest;
     BlockNonce nonce;
 
@@ -39,9 +39,9 @@ struct xeth_header_t {
     Hash hash_without_seal() const;
 
     // encode and decode
-    bytes encode_rlp() const;
-    bytes encode_rlp_withoutseal() const;
-    bool decode_rlp(const bytes & bytes);
+    xbytes_t encode_rlp() const;
+    xbytes_t encode_rlp_withoutseal() const;
+    bool decode_rlp(const xbytes_t & bytes);
 
     // debug
     std::string dump() const;
@@ -52,8 +52,8 @@ struct xeth_header_info_t {
     xeth_header_info_t() = default;
     xeth_header_info_t(bigint difficult_sum_, Hash parent_hash_, bigint number_);
 
-    bytes encode_rlp() const;
-    bool decode_rlp(const bytes & input);
+    xbytes_t encode_rlp() const;
+    bool decode_rlp(const xbytes_t & input);
 
     bigint difficult_sum;
     Hash parent_hash;
