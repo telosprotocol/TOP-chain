@@ -22,7 +22,10 @@ use crate::hash::{RIPEMD160, SHA256};
 use crate::identity::Identity;
 use crate::modexp::ModExp;
 // use crate::random::RandomSeed;
-use crate::erc20::Erc20Precompile;
+use crate::erc20::Erc20TopPrecompile;
+use crate::erc20::Erc20UsdcPrecompile;
+use crate::erc20::Erc20UsdtPrecompile;
+use crate::erc20::EthPrecompile;
 use crate::eth_bridge::EthBridgePrecompile;
 use crate::secp256k1::ECRecover;
 use engine_types::{types::Address, types::EthGas, vec, BTreeMap, Borrowed, Box, Vec, H160, H256};
@@ -91,7 +94,10 @@ impl Precompiles {
             Bn128Mul::<Berlin>::ADDRESS,
             Bn128Pair::<Berlin>::ADDRESS,
             Blake2F::ADDRESS,
-            Erc20Precompile::ADDRESS,
+            Erc20TopPrecompile::ADDRESS,
+            EthPrecompile::ADDRESS,
+            Erc20UsdtPrecompile::ADDRESS,
+            Erc20UsdcPrecompile::ADDRESS,
             EthBridgePrecompile::ADDRESS,
         ];
         let fun: Vec<Box<dyn Precompile>> = vec![
@@ -104,7 +110,10 @@ impl Precompiles {
             Box::new(Bn128Mul::<Berlin>::new()),
             Box::new(Bn128Pair::<Berlin>::new()),
             Box::new(Blake2F),
-            Box::new(Erc20Precompile),
+            Box::new(Erc20TopPrecompile),
+            Box::new(EthPrecompile),
+            Box::new(Erc20UsdtPrecompile),
+            Box::new(Erc20UsdcPrecompile),
             Box::new(EthBridgePrecompile),
         ];
         let map: BTreeMap<Address, Box<dyn Precompile>> = addresses.into_iter().zip(fun).collect();
