@@ -43,8 +43,8 @@ struct xeth_header_t {
     bool decode_rlp(const bytes & bytes);
 
     // debug
-    std::string dump();
-    void print();
+    std::string dump() const;
+    void print() const;
 };
 
 struct xeth_header_info_t {

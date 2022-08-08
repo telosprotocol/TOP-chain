@@ -196,7 +196,7 @@ bool xeth_header_t::decode_rlp(const bytes & bytes) {
     return true;
 }
 
-std::string xeth_header_t::dump() {
+std::string xeth_header_t::dump() const {
     char local_param_buf[256];
     xprintf(local_param_buf,
             sizeof(local_param_buf),
@@ -208,7 +208,7 @@ std::string xeth_header_t::dump() {
     return std::string(local_param_buf);
 }
 
-void xeth_header_t::print() {
+void xeth_header_t::print() const {
     printf("parent_hash: %s\n", parent_hash.hex().c_str());
     printf("uncle_hash: %s\n", uncle_hash.hex().c_str());
     printf("miner: %s\n", miner.hex().c_str());
