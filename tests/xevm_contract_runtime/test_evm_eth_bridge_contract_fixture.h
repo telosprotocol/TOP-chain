@@ -6,6 +6,7 @@
 
 #define private public
 #include "xevm_contract_runtime/sys_contract/xevm_eth_bridge_contract.h"
+#include "xevm_contract_runtime/sys_contract/xevm_heco_client_contract.h"
 #include "xdata/xtable_bstate.h"
 
 namespace top {

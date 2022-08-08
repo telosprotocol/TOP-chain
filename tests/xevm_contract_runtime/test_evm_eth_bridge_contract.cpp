@@ -1,4 +1,4 @@
-#include "tests/xevm_contract_runtime/test_vem_eth_bridge_contract_fixture.h"
+#include "tests/xevm_contract_runtime/test_evm_eth_bridge_contract_fixture.h"
 #include "xbasic/xhex.h"
 #include "xevm_common/rlp.h"
 #include "xevm_common/xabi_decoder.h"
@@ -16,35 +16,6 @@ using namespace contract_runtime::evm::sys_contract;
 using namespace evm_common;
 using namespace evm_common::eth;
 using namespace ethash;
-
-void header_rlp_bytes_decode(const char * hex_input) {
-    std::error_code ec;
-    std::vector<xeth_header_t> headers;
-    auto bytes = top::from_hex(hex_input, ec);
-    auto item = RLP::decode_once(bytes);
-    auto header_bytes = item.decoded[0];
-    xeth_header_t header;
-    header.decode_rlp(header_bytes);
-    header.print();
-}
-
-TEST(stream, bytes_encode_decode) {
-    base::xstream_t stream(base::xcontext_t::instance());
-    xbytes_t bytes1{1, 3, 5, 7, 9};
-    xbytes_t bytes2{2, 4, 6, 8, 0};
-    stream << bytes1;
-    stream << bytes2;
-    auto stream_str = std::string(reinterpret_cast<char *>(stream.data()), static_cast<uint32_t>(stream.size()));
-
-    base::xstream_t stream_decode(base::xcontext_t::instance(), (uint8_t *)(stream_str.c_str()), static_cast<uint32_t>(stream_str.size()));
-    xbytes_t bytes1_decode;
-    xbytes_t bytes2_decode;
-    stream_decode >> bytes1_decode;
-    stream_decode >> bytes2_decode;
-
-    EXPECT_EQ(bytes1, bytes1_decode);
-    EXPECT_EQ(bytes2, bytes2_decode);
-}
 
 TEST_F(xcontract_fixture_t, header_encode_decode) {
     evm_common::eth::xeth_header_t header;

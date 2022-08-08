@@ -4,13 +4,10 @@
 
 #include "xevm_contract_runtime/sys_contract/xevm_eth_bridge_contract.h"
 
-#include "nlohmann/fifo_map.hpp"
-#include "nlohmann/json.hpp"
 #include "xbasic/endianness.h"
 #include "xcommon/xaccount_address.h"
 #include "xcommon/xeth_address.h"
 #include "xdata/xdata_common.h"
-#include "xdata/xeth_bridge_whitelist.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
 #include "xevm_common/common_data.h"
 #include "xevm_common/xabi_decoder.h"
@@ -20,15 +17,7 @@
 #include "xevm_common/xeth/xeth_header.h"
 #include "xevm_common/xeth/xethash.h"
 
-#ifdef ETH_BRIDGE_TEST
-#include <fstream>
-#endif
-
 NS_BEG4(top, contract_runtime, evm, sys_contract)
-
-template <class K, class V, class dummy_compare, class A>
-using my_workaround_fifo_map = nlohmann::fifo_map<K, V, nlohmann::fifo_map_compare<K>, A>;
-using json = nlohmann::basic_json<my_workaround_fifo_map>;
 
 using namespace top::evm_common;
 
@@ -38,43 +27,6 @@ constexpr uint64_t MaximumExtraDataSize = 32;
 constexpr uint64_t ConfirmHeight = 25;
 constexpr uint64_t HashReserveNum = 40000;
 constexpr uint64_t BlockReserveNum = 500;
-
-static std::set<std::string> load_whitelist() {
-    json j;
-#ifdef ETH_BRIDGE_TEST
-#    define WHITELIST_FILE "eth_bridge_whitelist.json"
-    xinfo("[xtop_evm_eth_bridge_contract::load_whitelist] load from file %s", WHITELIST_FILE);
-    std::ifstream data_file(WHITELIST_FILE);
-    if (data_file.good()) {
-        data_file >> j;
-        data_file.close();
-    } else {
-        xwarn("[xtop_evm_eth_bridge_contract::load_whitelist] file %s open error", WHITELIST_FILE);
-        return {};
-    }
-#else
-    xinfo("[xtop_chain_checkpoint::load] load from code");
-    j = json::parse(data::eth_bridge_whitelist());
-#endif
-
-    if (!j.count("whitelist")) {
-        xwarn("[xtop_evm_eth_bridge_contract::load_whitelist] load whitelist failed");
-        return {};
-    }
-    std::set<std::string> ret;
-    auto const & list = j["whitelist"];
-    for (auto const item : list) {
-        ret.insert(item.get<std::string>());
-    }
-    return ret;
-}
-
-xtop_evm_eth_bridge_contract::xtop_evm_eth_bridge_contract() {
-    m_whitelist = load_whitelist();
-    if (m_whitelist.empty()) {
-        xwarn("[xtop_evm_eth_bridge_contract::xtop_evm_eth_bridge_contract] m_whitelist empty!");
-    }
-}
 
 bool xtop_evm_eth_bridge_contract::init(const xbytes_t & rlp_bytes, state_ptr state) {
     // step 1: check init
