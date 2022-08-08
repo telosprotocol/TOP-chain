@@ -54,6 +54,7 @@ void xblock_fetcher_event_monitor_t::before_event_pushed(const mbus::xevent_ptr_
         case mbus::xevent_major_type_blockfetcher:
             if (e->minor_type == mbus::xevent_blockfetcher_t::newblock) {
                 auto bme = dynamic_xobject_ptr_cast<mbus::xevent_blockfetcher_block_t>(e);
+                // push blocs to archive nodes, rec and zec blocks are broadcast by role context.
                 // std::string address_prefix;
                 // uint32_t table_id = 0;
 
