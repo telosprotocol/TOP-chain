@@ -33,7 +33,7 @@ common::xaccount_address_t const sharding_statistic_info_contract_address{sys_co
 common::xaccount_address_t const eth_statistic_info_contract_address{sys_contract_eth_table_statistic_info_addr};
 common::xaccount_address_t const eth_table_cross_chain_txs_collection_contract_address{sys_contract_eth_table_cross_chain_txs_collection_addr};
 
-common::xaccount_address_t const eth_zero_address{sys_eth_zero_addr};
+common::xaccount_address_t const eth_zero_address{"T600040000000000000000000000000000000000000000"};
 
 common::xaccount_address_t const rec_table_address{sys_contract_beacon_table_block_addr};
 common::xaccount_address_t const zec_table_address{sys_contract_zec_table_block_addr};

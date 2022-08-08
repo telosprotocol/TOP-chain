@@ -5,7 +5,6 @@
 #include "xdata/xunit_bstate.h"
 
 #include "xbase/xint.h"
-#include "xbase/xmem.h"
 #include "xbase/xutl.h"
 #include "xbasic/xutility.h"
 #include "xcodec/xcodec.h"
@@ -15,11 +14,11 @@
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xdata/xcodec/xmsgpack/xallowance_codec.h"
-#include "xdata/xdata_common.h"
 #include "xdata/xdata_error.h"
 #include "xdata/xerror/xerror.h"
 #include "xdata/xfullunit.h"
 #include "xdata/xgenesis_data.h"
+#include "xdata/xnative_contract_address.h"
 #include "xevm/xevm.h"
 #include "xevm_common/fixed_hash.h"
 #include "xevm_common/xcodec/xmsgpack/xboost_u256_codec.h"
@@ -498,7 +497,7 @@ common::xaccount_address_t xunit_bstate_t::tep_token_owner(common::xchain_uuid_t
         return owner;
     } while (false);
 
-    common::xeth_address_t const & default_owner = common::xeth_address_t::build_from("0x0393B136b79e16360D246450C5bb9D39D8AD1fB6");
+    common::xeth_address_t const & default_owner = common::xeth_address_t::build_from("0xf8a1e199c49c2ae2682ecc5b4a8838b39bab1a38");
     xkinfo("get TEP token owner: use default token owner %s for token %d", default_owner.c_str(), static_cast<int>(chain_uuid));
 
     common::xaccount_address_t default_owner_address = common::xaccount_address_t::build_from(default_owner, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
@@ -541,7 +540,7 @@ xobject_ptr_t<base::xmapvar_t<std::string>> xunit_bstate_t::raw_owner(std::error
 xbytes_t xunit_bstate_t::raw_owner(common::xchain_uuid_t const chain_uuid, std::error_code & ec) const {
     assert(!ec);
 
-    xobject_ptr_t<base::xmapvar_t<std::string>> raw_data = raw_owner(ec);
+    xobject_ptr_t<base::xmapvar_t<std::string>> const raw_data = raw_owner(ec);
     if (ec) {
         xwarn("get owner for token %d failed.", static_cast<int>(chain_uuid));
         return {};
@@ -554,7 +553,7 @@ xbytes_t xunit_bstate_t::raw_owner(common::xchain_uuid_t const chain_uuid, std::
 void xunit_bstate_t::raw_owner(common::xchain_uuid_t const chain_uuid, xbytes_t const & raw_data, std::error_code & ec) {
     assert(!ec);
 
-    xobject_ptr_t<base::xmapvar_t<std::string>> property = raw_owner(ec);
+    xobject_ptr_t<base::xmapvar_t<std::string>> const property = raw_owner(ec);
     if (ec) {
         xwarn("get raw owner property failed.");
         return;
@@ -577,37 +576,29 @@ common::xaccount_address_t xunit_bstate_t::owner_impl(xbytes_t const & owner_acc
 common::xaccount_address_t xunit_bstate_t::tep_token_controller(common::xchain_uuid_t const chain_uuid) const {
     std::error_code ec;
 
-    do {
-        auto const & raw_data = raw_controller(chain_uuid, ec);
-        if (ec) {
-            xwarn("get TEP token controller failed: ec %d msg %s category %s", ec.value(), ec.message().c_str(), ec.category().name());
-            break;
-        }
+    auto const & raw_data = raw_controller(chain_uuid, ec);
+    if (ec) {
+        xwarn("get TEP token controller failed: ec %d msg %s category %s", ec.value(), ec.message().c_str(), ec.category().name());
+        return eth_zero_address;
+    }
 
-        if (raw_data.empty()) {
-            xwarn("get TEP token controller failed: empty owner account for token %d", static_cast<int>(chain_uuid));
-            break;
-        }
+    if (raw_data.empty()) {
+        xwarn("get TEP token controller failed: empty owner account for token %d", static_cast<int>(chain_uuid));
+        return eth_zero_address;
+    }
 
-        auto controller = controller_impl(raw_data, ec);
-        if (ec) {
-            xwarn("get TEP token controller failed: failed to read account data for token %d", static_cast<int>(chain_uuid));
-            break;
-        }
+    auto controller = controller_impl(raw_data, ec);
+    if (ec) {
+        xwarn("get TEP token controller failed: failed to read account data for token %d", static_cast<int>(chain_uuid));
+        return eth_zero_address;
+    }
 
-        if (controller.empty()) {
-            xwarn("get TEP token controller failed: extracted owner account is empty for token %d", static_cast<int>(chain_uuid));
-            break;
-        }
+    if (controller.empty()) {
+        xwarn("get TEP token controller failed: extracted owner account is empty for token %d", static_cast<int>(chain_uuid));
+        return eth_zero_address;
+    }
 
-        return controller;
-    } while (false);
-
-    common::xeth_address_t const & default_controller = common::xeth_address_t::build_from("0x4cA4bBdF750eb2CCe4D3157D8b25CD7280f03E10");
-    xkinfo("get TEP token controller: use default token controller %s for token %d", default_controller.c_str(), static_cast<int>(chain_uuid));
-
-    common::xaccount_address_t default_controller_address = common::xaccount_address_t::build_from(default_controller, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
-    return default_controller_address;
+    return controller;
 }
 
 void xunit_bstate_t::tep_token_controller(common::xchain_uuid_t const chain_uuid, common::xaccount_address_t const & new_controller, std::error_code & ec) {
