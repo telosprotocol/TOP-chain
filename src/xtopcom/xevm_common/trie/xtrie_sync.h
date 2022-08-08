@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "xbasic/xthreading/xthreadsafe_priority_queue.hpp"
 #include "xevm_common/trie/xtrie_encoding.h"
 #include "xevm_common/trie/xtrie_kv_db_face.h"
 
@@ -78,19 +79,32 @@ private:
     };
 
 private:
-    xkv_db_face_ptr_t database{nullptr};       // Persistent database to check for existing entries
-    syncMemBatch membatch;                     // Memory buffer to avoid frequent database writes
-    std::map<xhash256_t, request *> nodeReqs;  // Pending requests pertaining to a trie node hash
-    std::map<xhash256_t, request *> codeReqs;  // Pending requests pertaining to a code hash
-    // priority queue?                                     // Priority queue with the pending requests
-    std::map<std::size_t, std::size_t> fetches;  // Number of active fetches per trie node depth
+    xkv_db_face_ptr_t database{nullptr};                                    // Persistent database to check for existing entries
+    syncMemBatch membatch;                                                  // Memory buffer to avoid frequent database writes
+    std::map<xhash256_t, request *> nodeReqs;                               // Pending requests pertaining to a trie node hash
+    std::map<xhash256_t, request *> codeReqs;                               // Pending requests pertaining to a code hash
+    top::threading::xthreadsafe_priority_queue<xhash256_t, int64_t> queue;  // Priority queue with the pending requests
+    std::map<std::size_t, std::size_t> fetches;                             // Number of active fetches per trie node depth
 
 public:
+    // AddSubTrie registers a new trie to the sync code, rooted at the designated parent.
     void AddSubTrie(xhash256_t root, xbytes_t path, xhash256_t parent /*callback*/);
 
+    // AddCodeEntry schedules the direct retrieval of a contract code that should not
+    // be interpreted as a trie node, but rather accepted and stored into the database
+    // as is.
     void AddCodeEntry(xhash256_t hash, xbytes_t path, xhash256_t parent);
 
+    // Missing retrieves the known missing nodes from the trie for retrieval. To aid
+    // both eth/6x style fast sync and snap/1x style state sync, the paths of trie
+    // nodes are returned too, as well as separate hash list for codes.
+    // return type: <nodes, SyncPath, codes>
+    std::tuple<std::vector<xhash256_t>, SyncPath, std::vector<xhash256_t>> Missing(std::size_t max);
+
 private:
+    // schedule inserts a new state retrieval request into the fetch queue. If there
+    // is already a pending request for this node, the new request will be discarded
+    // and only a parent reference added to the old one.
     void schedule(request * req);
 };
 
