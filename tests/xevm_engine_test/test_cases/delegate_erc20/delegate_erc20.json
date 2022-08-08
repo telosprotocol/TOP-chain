@@ -748,6 +748,44 @@
             }
         },
         {
+            "__comments": "mint_usdt_wrong_controller",
+            "src_address": "T600044ca4bbdf750eb2cce4d3157d8b25cd7280f03e10",
+            "target_address": "erc20_usdt",
+            "data": "0x40c10f190000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea300000000000000000000000000000000000000000000000000000000000004d3",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 5,
+                "extra_message": "",
+                "gas_used": 34000,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "set_controller_for_usdt",
+            "src_address": "T60004f8a1e199c49c2ae2682ecc5b4a8838b39bab1a38",
+            "target_address": "erc20_usdt",
+            "data": "0x92eefe9b0000000000000000000000004ca4bbdf750eb2cce4d3157d8b25cd7280f03e10",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000001",
+                "gas_used": 25012,
+                "logs": [
+                    {
+                        "address": "erc20_usdt",
+                        "topics": [
+                            "0xea4ba01507e54b7b5990927a832da3ab6a71e981b5d53ffad97def0f85fcfb20",
+                            "0x0000000000000000000000000000000000000000000000000000000000000000",
+                            "0x0000000000000000000000004ca4bbdf750eb2cce4d3157d8b25cd7280f03e10"
+                        ],
+                        "data": ""
+                    }
+                ]
+            }
+        },
+        {
             "__comments": "mint_usdt",
             "src_address": "T600044ca4bbdf750eb2cce4d3157d8b25cd7280f03e10",
             "target_address": "erc20_usdt",
@@ -767,6 +805,44 @@
                             "0x0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3"
                         ],
                         "data": "0x00000000000000000000000000000000000000000000000000000000000004d3"
+                    }
+                ]
+            }
+        },
+        {
+            "__comments": "mint_eth_wrong_controller",
+            "src_address": "T600044ca4bbdf750eb2cce4d3157d8b25cd7280f03e10",
+            "target_address": "erc20_eth",
+            "data": "0x40c10f190000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea300000000000000000000000000000000000000000000000000000000000004d3",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 5,
+                "extra_message": "",
+                "gas_used": 34000,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "set_controller_for_eth",
+            "src_address": "T60004f8a1e199c49c2ae2682ecc5b4a8838b39bab1a38",
+            "target_address": "erc20_eth",
+            "data": "0x92eefe9b0000000000000000000000004ca4bbdf750eb2cce4d3157d8b25cd7280f03e10",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000001",
+                "gas_used": 25012,
+                "logs": [
+                    {
+                        "address": "erc20_eth",
+                        "topics": [
+                            "0xea4ba01507e54b7b5990927a832da3ab6a71e981b5d53ffad97def0f85fcfb20",
+                            "0x0000000000000000000000000000000000000000000000000000000000000000",
+                            "0x0000000000000000000000004ca4bbdf750eb2cce4d3157d8b25cd7280f03e10"
+                        ],
+                        "data": ""
                     }
                 ]
             }
@@ -1013,8 +1089,22 @@
             }
         },
         {
-            "__comments": "transferOwnership_eth",
+            "__comments": "transferOwnership_eth_invalid_owner",
             "src_address": "T600040393b136b79e16360d246450c5bb9d39d8ad1fb6",
+            "target_address": "erc20_eth",
+            "data": "0xf2fde38b0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 5,
+                "extra_message": "",
+                "gas_used": 34000,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "transferOwnership_eth",
+            "src_address": "T60004f8a1e199c49c2ae2682ecc5b4a8838b39bab1a38",
             "target_address": "erc20_eth",
             "data": "0xf2fde38b0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3",
             "gas_limit": 34000,
@@ -1028,7 +1118,7 @@
                         "address": "erc20_eth",
                         "topics": [
                             "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0",
-                            "0x0000000000000000000000000393b136b79e16360d246450c5bb9d39d8ad1fb6",
+                            "0x000000000000000000000000f8a1e199c49c2ae2682ecc5b4a8838b39bab1a38",
                             "0x0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3"
                         ],
                         "data": ""
@@ -1051,8 +1141,22 @@
             }
         },
         {
-            "__comments": "transferOwnership_usdt",
+            "__comments": "transferOwnership_usdt_invalid_owner",
             "src_address": "T600040393b136b79e16360d246450c5bb9d39d8ad1fb6",
+            "target_address": "erc20_usdt",
+            "data": "0xf2fde38b0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 5,
+                "extra_message": "",
+                "gas_used": 34000,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "transferOwnership_usdt",
+            "src_address": "T60004f8a1e199c49c2ae2682ecc5b4a8838b39bab1a38",
             "target_address": "erc20_usdt",
             "data": "0xf2fde38b0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3",
             "gas_limit": 34000,
@@ -1066,7 +1170,7 @@
                         "address": "erc20_usdt",
                         "topics": [
                             "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0",
-                            "0x0000000000000000000000000393b136b79e16360d246450c5bb9d39d8ad1fb6",
+                            "0x000000000000000000000000f8a1e199c49c2ae2682ecc5b4a8838b39bab1a38",
                             "0x0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3"
                         ],
                         "data": ""

@@ -45,7 +45,6 @@ XINLINE_CONSTEXPR char const * sys_contract_eth_table_cross_chain_txs_collection
 XINLINE_CONSTEXPR char const * sys_contract_relay_make_block_addr{"T200050000000000000000000000000000000001@0"};
 
 // user contracts addresses for solidity
-XINLINE_CONSTEXPR char const * sys_eth_zero_addr{"T600040000000000000000000000000000000000000000"};
 // XINLINE_CONSTEXPR char const * sys_contract_evm_erc20_addr{"T60004ff00000000000000000000000000000000000001"};
 XINLINE_CONSTEXPR char const * sys_contract_evm_eth_bridge_addr{"T60004ff00000000000000000000000000000000000002"};
 XINLINE_CONSTEXPR char const * sys_contract_evm_bsc_client_addr{"T60004ff00000000000000000000000000000000000003"};

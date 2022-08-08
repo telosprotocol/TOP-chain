@@ -62,7 +62,7 @@ void test_erc_20_contract() {
         "667358221220d85b6d67c18cbaefa92cadb028ffbb9d0d410e0960f7466456990c711ab8a77464736f6c63430006040033"};
 
     auto contract_code_bytes = top::from_hex(contract_code, ec);
-    txexecutor::xvm_para_t vm_param{0, "random_seed", 0, 0, 0, common::xaccount_address_t{sys_eth_zero_addr}};
+    txexecutor::xvm_para_t vm_param{0, "random_seed", 0, 0, 0, eth_zero_address};
     top::statectx::xstatectx_face_ptr_t statestore{std::make_shared<top::evm::tests::xmock_evm_statectx>()};
     std::string src_address{"T60004001bdc8251890aafc5841b05620c0eab336e3ebc"};
 

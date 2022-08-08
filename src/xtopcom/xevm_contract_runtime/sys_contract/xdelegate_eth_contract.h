@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "xevm_contract_runtime/sys_contract/xdelegate_erc20_contract.h"
 #include "xevm_contract_runtime/xevm_sys_contract_face.h"
 
 NS_BEG4(top, contract_runtime, evm, sys_contract)
