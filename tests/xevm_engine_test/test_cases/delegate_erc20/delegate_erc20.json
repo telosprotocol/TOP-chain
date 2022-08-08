@@ -84,7 +84,7 @@
             "expected": {
                 "status": 0,
                 "extra_message": "erc20_usdt",
-                "gas_used": 432527,
+                "gas_used": 423740,
                 "logs": []
             }
         },
@@ -97,7 +97,7 @@
             "expected": {
                 "status": 0,
                 "extra_message": "erc20_top",
-                "gas_used": 432407,
+                "gas_used": 423632,
                 "logs": []
             }
         },
@@ -110,7 +110,7 @@
             "expected": {
                 "status": 0,
                 "extra_message": "erc20_eth",
-                "gas_used": 432323,
+                "gas_used": 423536,
                 "logs": []
             }
         },
@@ -123,7 +123,7 @@
             "expected": {
                 "status": 0,
                 "extra_message": "staticcall_erc20_usdt",
-                "gas_used": 432527,
+                "gas_used": 423740,
                 "logs": []
             }
         },
@@ -136,7 +136,7 @@
             "expected": {
                 "status": 0,
                 "extra_message": "staticcall_erc20_top",
-                "gas_used": 432419,
+                "gas_used": 423632,
                 "logs": []
             }
         },
@@ -149,7 +149,7 @@
             "expected": {
                 "status": 0,
                 "extra_message": "staticcall_erc20_eth",
-                "gas_used": 432323,
+                "gas_used": 423536,
                 "logs": []
             }
         }
