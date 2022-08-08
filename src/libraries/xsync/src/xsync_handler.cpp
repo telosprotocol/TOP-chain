@@ -377,6 +377,7 @@ void xsync_handler_t::blocks(uint32_t msg_size, const vnetwork::xvnode_address_t
     xsync_info("xsync_handler receive blocks %" PRIx64 " wait(%ldms) %s count(%u) code(%u) %s",
         msg_hash, get_time()-recv_time, blocks[0]->get_account().c_str(), count, header->code, from_address.to_string().c_str());
 
+    // unit blocks are mixed in blocks, remove continuous check.
 #if 0
     // check continuous
     xvblock_t *successor = nullptr;
@@ -1194,6 +1195,7 @@ void xsync_handler_t::recv_archive_blocks(uint32_t msg_size,
         successor = block.get();
     }
 
+    // unit blocks are mixed in blocks.
 #if 0
     if (data::is_unit_address(common::xaccount_address_t{successor->get_account()}))
         return;
