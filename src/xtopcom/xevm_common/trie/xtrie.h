@@ -20,6 +20,10 @@ NS_BEG3(top, evm_common, trie)
 
 // emptyRoot is the known root hash of an empty trie.
 static constexpr auto emptyRootBytes = ConstHexBytes<32>("56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421");
+static xhash256_t emptyRoot = xhash256_t{emptyRootBytes};
+
+// callback(paths, hexpath, leaf, parent_hash, ec);
+using LeafCallback = std::function<void(std::vector<xbytes_t> const &, xbytes_t const &, xbytes_t const &, xhash256_t const &, std::error_code &)>;
 
 class xtop_trie {
 private:

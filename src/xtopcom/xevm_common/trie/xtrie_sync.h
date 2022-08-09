@@ -5,6 +5,7 @@
 #pragma once
 
 #include "xbasic/xthreading/xthreadsafe_priority_queue.hpp"
+#include "xevm_common/trie/xtrie.h"
 #include "xevm_common/trie/xtrie_encoding.h"
 #include "xevm_common/trie/xtrie_kv_db_face.h"
 
@@ -54,9 +55,10 @@ private:
 
         std::vector<request *> parents;  // Parent state nodes referencing this entry (notify all upon completion)
         std::size_t deps;                // Number of dependencies before allowed to commit this node
-        // callback
 
-        request(xbytes_t const & _path, xhash256_t const & _hash) : path{_path}, hash{_hash} {
+        LeafCallback callback{nullptr};  // Callback to invoke if a leaf node it reached on this branch
+
+        request(xbytes_t const & _path, xhash256_t const & _hash, LeafCallback _callback) : path{_path}, hash{_hash}, callback{_callback} {
         }
         request(xbytes_t const & _path, xhash256_t const & _hash, bool is_code) : path{_path}, hash{_hash}, code{is_code} {
         }
@@ -65,7 +67,7 @@ private:
     // syncMemBatch is an in-memory buffer of successfully downloaded but not yet
     // persisted data items.
     class syncMemBatch {
-    private:
+    public:
         std::map<xhash256_t, xbytes_t> nodes;  // In-memory membatch of recently completed nodes
         std::map<xhash256_t, xbytes_t> codes;  // In-memory membatch of recently completed codes
 
@@ -75,6 +77,11 @@ private:
         }
         inline bool hasCode(xhash256_t const & hash) const {
             return codes.find(hash) != codes.end();
+        }
+
+        inline void clear() {
+            nodes.clear();
+            codes.clear();
         }
     };
 
@@ -88,12 +95,12 @@ private:
 
 public:
     // AddSubTrie registers a new trie to the sync code, rooted at the designated parent.
-    void AddSubTrie(xhash256_t root, xbytes_t path, xhash256_t parent /*callback*/);
+    void AddSubTrie(xhash256_t const & root, xbytes_t const & path, xhash256_t const & parent, LeafCallback callback);
 
     // AddCodeEntry schedules the direct retrieval of a contract code that should not
     // be interpreted as a trie node, but rather accepted and stored into the database
     // as is.
-    void AddCodeEntry(xhash256_t hash, xbytes_t path, xhash256_t parent);
+    void AddCodeEntry(xhash256_t const & hash, xbytes_t const & path, xhash256_t const & parent);
 
     // Missing retrieves the known missing nodes from the trie for retrieval. To aid
     // both eth/6x style fast sync and snap/1x style state sync, the paths of trie
@@ -101,11 +108,35 @@ public:
     // return type: <nodes, SyncPath, codes>
     std::tuple<std::vector<xhash256_t>, SyncPath, std::vector<xhash256_t>> Missing(std::size_t max);
 
+    // Process injects the received data for requested item. Note it can
+    // happpen that the single response commits two pending requests(e.g.
+    // there are two requests one for code and one for node but the hash
+    // is same). In this case the second response for the same hash will
+    // be treated as "non-requested" item or "already-processed" item but
+    // there is no downside.
+    void Process(SyncResult const & result, std::error_code & ec);
+
+    // Commit flushes the data stored in the internal membatch out to persistent
+    // storage, returning any occurred error.
+    void Commit(xkv_db_face_ptr_t db);
+
+    // Pending returns the number of state entries currently pending for download.
+    std::size_t Pending() const;
+
 private:
     // schedule inserts a new state retrieval request into the fetch queue. If there
     // is already a pending request for this node, the new request will be discarded
     // and only a parent reference added to the old one.
     void schedule(request * req);
+
+    // children retrieves all the missing children of a state trie entry for future
+    // retrieval scheduling.
+    std::vector<request *> children(request * req, xtrie_node_face_ptr_t object, std::error_code & ec);
+
+    // commit finalizes a retrieval request and stores it into the membatch. If any
+    // of the referencing parent requests complete due to this commit, they are also
+    // committed themselves.
+    void commit(request * req, std::error_code & ec);
 };
 
 NS_END3

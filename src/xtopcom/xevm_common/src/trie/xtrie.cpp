@@ -11,8 +11,6 @@
 
 NS_BEG3(top, evm_common, trie)
 
-static xhash256_t emptyRoot = xhash256_t{emptyRootBytes};
-
 std::shared_ptr<xtop_trie> xtop_trie::New(xhash256_t hash, xtrie_db_ptr_t db, std::error_code & ec) {
     if (db == nullptr) {
         xerror("build trie from null db");

@@ -63,6 +63,12 @@ static char const * const errc_to_string(int code) {
     case xerrc_t::trie_node_unexpected:
         return "trie node unexcepted";
 
+    case xerrc_t::trie_sync_not_requested:
+        return "trie sync not requested";
+
+    case xerrc_t::trie_sync_already_processed:
+        return "trie sync already processed";
+
     default:
         return "unknown evm common error";
     }

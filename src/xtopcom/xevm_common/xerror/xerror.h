@@ -29,6 +29,8 @@ enum class xenum_errc {
     rlp_expected_list,
     trie_proof_missing,
     trie_node_unexpected,
+    trie_sync_not_requested,
+    trie_sync_already_processed,
 };
 using xerrc_t = xenum_errc;
 
