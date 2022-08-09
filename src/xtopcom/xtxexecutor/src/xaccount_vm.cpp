@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "xchain_fork/xchain_upgrade_center.h"
 #include "xtxexecutor/xaccount_vm.h"
 #include "xtxexecutor/xunit_service_error.h"
 #include "xtxexecutor/xaccount_vm.h"
@@ -66,7 +67,12 @@ int32_t xaccount_vm_t::exec_tx(store::xaccount_context_t * account_context, cons
     std::vector<xcons_transaction_ptr_t> create_txs = account_context->get_create_txs();
     // exec txs created by origin tx secondly, this tx must be a run contract transaction
     if (!create_txs.empty()) {
-        for (auto & new_tx : create_txs) {
+        for (auto & new_tx : create_txs) {            
+            // TODO(jimmy) cross tx need not confirm now
+            auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();            
+            if (top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.v1_6_0_version_point, account_context->get_timer_height())) {
+                new_tx->set_not_need_confirm();
+            }
             ret = exec_one_tx(account_context, new_tx);
             if (ret != xsuccess) {  // contract create tx send action may not change property, it's ok
                 xwarn("xaccount_vm_t::exec_tx contract create tx fail. input_tx:%s new_tx:%s error:%s",

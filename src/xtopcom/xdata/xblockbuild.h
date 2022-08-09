@@ -150,7 +150,7 @@ class xemptyblock_build_t : public base::xvblockmaker_t {
     xemptyblock_build_t(base::xvblock_t* prev_block);  // TODO(jimmy) not valid block
     xemptyblock_build_t(base::xvheader_t* header);
     xemptyblock_build_t(const std::string & tc_account, uint64_t _tc_height);  // for tc block
-    xemptyblock_build_t(const std::string & account, uint64_t height, std::string const& extradata);  // for wrap relay block
+    xemptyblock_build_t(const std::string & account, uint64_t height, uint64_t viewid, std::string const& extradata);  // for wrap relay block
 
     base::xauto_ptr<base::xvblock_t> create_new_block() override;
 };

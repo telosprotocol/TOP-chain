@@ -405,13 +405,13 @@ xemptyblock_build_t::xemptyblock_build_t(const std::string & tc_account, uint64_
     init_header_qcert(build_para);
 }
 
-xemptyblock_build_t::xemptyblock_build_t(const std::string & account, uint64_t height, std::string const& extradata) {
+xemptyblock_build_t::xemptyblock_build_t(const std::string & account, uint64_t height, uint64_t viewid, std::string const& extradata) {
     base::enum_xvblock_level _level = get_block_level_from_account(account);
     base::enum_xvblock_type _type = get_block_type_from_empty_block(account);
     base::xbbuild_para_t build_para(xrootblock_t::get_rootblock_chainid(), account, height, base::enum_xvblock_class_nil, _level, _type, xrootblock_t::get_rootblock_hash(), xrootblock_t::get_rootblock_hash());
     xvip2_t _validator;
     set_empty_xip2(_validator);  // must change for block later
-    build_para.set_basic_cert_para(height, -1, height, _validator);
+    build_para.set_basic_cert_para(height, -1, viewid, _validator);  // relayblock has different content for different viewid, so should also set viewid
     init_header_qcert(build_para);
     set_header_extra(extradata);
 }
