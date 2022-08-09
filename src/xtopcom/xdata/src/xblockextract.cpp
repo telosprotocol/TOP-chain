@@ -228,7 +228,7 @@ xobject_ptr_t<base::xvblock_t> xblockextract_t::pack_relayblock_to_wrapblock(xre
         xobject_ptr_t<base::xvblock_t> _new_block = bbuild.build_new_block();
         return _new_block;
     } else {
-        xemptyblock_build_t bbuild(sys_contract_relay_block_addr, relayblock.get_block_height(), bin_data);
+        xemptyblock_build_t bbuild(sys_contract_relay_block_addr, relayblock.get_block_height(), relayblock.get_viewid(), bin_data);
         xobject_ptr_t<base::xvblock_t> _new_block = bbuild.build_new_block();
         xvip2_t target_xip{(xvip_t)(1),(uint64_t)1};// mock leader xip for xvblock rules
         _new_block->get_cert()->set_validator(target_xip); 
@@ -272,6 +272,7 @@ xobject_ptr_t<base::xvblock_t> xblockextract_t::unpack_wrap_relayblock_from_rela
         xerror("xblockextract_t::unpack_wrap_relayblock_from_relay_table fail-pack relayblock.");        
         return nullptr;
     }
+    xinfo("xblockextract_t::unpack_wrap_relayblock_from_relay_table,%s,%s",relayblock->dump().c_str(),wrap_relayblock->dump().c_str());
     return wrap_relayblock;
 }
 
@@ -458,7 +459,7 @@ void xblockextract_t::unpack_subblocks(base::xvblock_t* _block, std::vector<xobj
         }
         if (wrap_relayblock != nullptr) {
             sublocks.push_back(wrap_relayblock);
-            xdbg("xblockextract_t::unpack_subblocks succ.block=%s,wrapblock=%s",_block->dump().c_str(),wrap_relayblock->dump().c_str());            
+            xinfo("xblockextract_t::unpack_subblocks succ.block=%s,wrapblock=%s",_block->dump().c_str(),wrap_relayblock->dump().c_str());            
         }
     }
 }

@@ -590,9 +590,6 @@ bool xtable_maker_t::verify_proposal_with_local(base::xvblock_t *proposal_block,
 }
 
 bool xtable_maker_t::can_make_next_empty_block(const data::xblock_consensus_para_t & cs_para) const {
-    if (is_make_relay_chain()) {
-        return false;
-    }
     const xblock_ptr_t & current_block = cs_para.get_latest_cert_block();
     if (current_block->get_height() == 0) {
         return false;

@@ -375,7 +375,7 @@ bool xproposal_maker_t::verify_proposal_input(base::xvblock_t *proposal_block, x
         return false;
     }
 
-    // set other accounts for tableblock
+    // TODO(jimmy) need delete future set other accounts for tableblock
     std::vector<std::string> other_accounts;
     auto unit_headers = proposal_block->get_sub_block_headers();
     for (auto & _unit_header : unit_headers) {
@@ -386,10 +386,6 @@ bool xproposal_maker_t::verify_proposal_input(base::xvblock_t *proposal_block, x
 
     const std::vector<xcons_transaction_ptr_t> & origin_txs = proposal_input->get_input_txs();
     if (origin_txs.empty() && other_accounts.empty()) {
-        if (m_table_maker->is_make_relay_chain()) {
-            xdbg("xproposal_maker_t::verify_proposal_input relay chain has no tx.");
-            return true;
-        }
         xerror("xproposal_maker_t::verify_proposal_input fail-table proposal input empty. proposal=%s",
             proposal_block->dump().c_str());
         return false;
@@ -452,7 +448,7 @@ bool xproposal_maker_t::verify_proposal_input(base::xvblock_t *proposal_block, x
 
     // table_para.set_origin_txs(origin_txs);
     table_para.set_pack_resource(xtxpool_v2::xpack_resource(origin_txs, receiptid_info_map));
-    table_para.set_other_accounts(other_accounts);
+    table_para.set_other_accounts(other_accounts);  // TODO(jimmy) no need future
     return true;
 }
 
