@@ -23,7 +23,7 @@
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xtransaction_v1.h"
-#include "xevm_common/xeth/xeth_header.h"
+#include "xevm_common/xcrosschain/xeth_header.h"
 #include "xmbus/xevent_store.h"
 #include "xmbus/xevent_timer.h"
 #include "xmetrics/xmetrics.h"
@@ -2307,7 +2307,7 @@ static void get_chain_headers(common::xaccount_address_t const & contract_addres
     for (auto pair : headers) {
         xbytes_t k{std::begin(pair.first), std::end(pair.first)};
         auto hash = static_cast<evm_common::h256>(k);
-        evm_common::eth::xeth_header_t header;
+        evm_common::xeth_header_t header;
         if (header.decode_rlp({pair.second.begin(), pair.second.end()}) == false) {
             continue;
         }
@@ -2346,7 +2346,7 @@ static void get_chain_headers_summary(common::xaccount_address_t const & contrac
     for (auto pair : infos) {
         xbytes_t k{std::begin(pair.first), std::end(pair.first)};
         auto hash = static_cast<evm_common::h256>(k);
-        evm_common::eth::xeth_header_info_t info;
+        evm_common::xeth_header_info_t info;
         if (info.decode_rlp({pair.second.begin(), pair.second.end()}) == false) {
             continue;
         }

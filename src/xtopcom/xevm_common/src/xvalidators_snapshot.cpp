@@ -1,18 +1,18 @@
-#include "xevm_common/xcrosschain/xheco_snapshot.h"
+#include "xevm_common/xcrosschain/xvalidators_snapshot.h"
 
 #include "xbasic/xhex.h"
 #include "xcrypto/xckey.h"
 #include "xevm_common/rlp.h"
 #include "xutility/xhash.h"
 
-NS_BEG3(top, evm_common, heco)
+NS_BEG2(top, evm_common)
 
 constexpr uint64_t extraVanity = 32;
 constexpr uint64_t extraSeal = 64 + 1;
 constexpr uint64_t epoch = 200;
 constexpr uint64_t addressLength = 20;
 
-static uint256_t seal_hash(const eth::xeth_header_t & header) {
+static uint256_t seal_hash(const xeth_header_t & header) {
     bytes out;
     {
         auto tmp = RLP::encode(header.parent_hash.asBytes());
@@ -79,9 +79,9 @@ static uint256_t seal_hash(const eth::xeth_header_t & header) {
     return utl::xkeccak256_t::digest(value.data(), value.size());
 }
 
-static xbytes_t ecrecover(const eth::xeth_header_t & header) {
+static xbytes_t ecrecover(const xeth_header_t & header) {
     if (header.extra.size() < extraSeal) {
-        xwarn("[heco::ecrecover] header.extra size %zu < extraSeal %lu", header.extra.size(), extraSeal);
+        xwarn("[ecrecover] header.extra size %zu < extraSeal %lu", header.extra.size(), extraSeal);
         return {};
     }
 
@@ -93,23 +93,23 @@ static xbytes_t ecrecover(const eth::xeth_header_t & header) {
     uint8_t pubkey[65] = {0};
     auto hash = seal_hash(header);
     if (false == utl::xsecp256k1_t::get_publickey_from_signature_directly(sig, hash, pubkey)) {
-        xwarn("[heco::ecrecover] get_publickey_from_signature_directly failed, extra: %s, seal_hash: %s", to_hex(header.extra).c_str(), to_hex(to_bytes(hash)).c_str());
+        xwarn("[ecrecover] get_publickey_from_signature_directly failed, extra: %s, seal_hash: %s", to_hex(header.extra).c_str(), to_hex(to_bytes(hash)).c_str());
         return {};
     }
     auto digest = to_bytes(utl::xkeccak256_t::digest(&pubkey[1], sizeof(pubkey) - 1));
     return {digest.begin() + 12, digest.end()};
 }
 
-bool xheco_snapshot_t::init_with_epoch(const eth::xeth_header_t & header) {
+bool xvalidators_snapshot_t::init_with_epoch(const xeth_header_t & header) {
     if (header.number % epoch != 0) {
-        xwarn("[xheco_snapshot_t::init_with_epoch] not epoch header");
+        xwarn("[xvalidators_snapshot_t::init_with_epoch] not epoch header");
         return false;
     }
     number = static_cast<uint64_t>(header.number);
     hash = header.hash();
     xbytes_t new_validators_bytes{header.extra.begin() + extraVanity, header.extra.end() - extraSeal};
     if (new_validators_bytes.size() % addressLength != 0) {
-        xwarn("[xheco_snapshot_t::init_with_epoch] new_validators_bytes size error: %zu", new_validators_bytes.size());
+        xwarn("[xvalidators_snapshot_t::init_with_epoch] new_validators_bytes size error: %zu", new_validators_bytes.size());
         return false;
     }
     auto new_validators_num = new_validators_bytes.size() / addressLength;
@@ -121,10 +121,10 @@ bool xheco_snapshot_t::init_with_epoch(const eth::xeth_header_t & header) {
     return true;
 }
 
-bool xheco_snapshot_t::apply(const eth::xeth_header_t & header, bool check) {
+bool xvalidators_snapshot_t::apply(const xeth_header_t & header, bool check) {
     auto height = header.number;
     if (height != number + 1) {
-        xwarn("[xheco_snapshot_t::apply] number mismatch %s, %lu", height.str().c_str(), number + 1);
+        xwarn("[xvalidators_snapshot_t::apply] number mismatch %s, %lu", height.str().c_str(), number + 1);
         return false;
     }
     auto limit = validators.size() / 2 + 1;
@@ -132,19 +132,19 @@ bool xheco_snapshot_t::apply(const eth::xeth_header_t & header, bool check) {
         recents.erase(static_cast<uint64_t>(height - limit));
     }
     auto validator = ecrecover(header);
-    xinfo("[xheco_snapshot_t::apply] number: %s, validator: %s", height.str().c_str(), to_hex(validator).c_str());
+    xinfo("[xvalidators_snapshot_t::apply] number: %s, validator: %s", height.str().c_str(), to_hex(validator).c_str());
 
     if (!validators.count(validator)) {
-        xwarn("[xheco_snapshot_t::apply] validator %s not in validators", to_hex(validator).c_str());
+        xwarn("[xvalidators_snapshot_t::apply] validator %s not in validators", to_hex(validator).c_str());
         return false;
     }
     if (static_cast<h160>(validator) != header.miner) {
-        xwarn("[xheco_snapshot_t::apply] validator %s is not miner %s", to_hex(validator).c_str(), header.miner.hex().c_str());
+        xwarn("[xvalidators_snapshot_t::apply] validator %s is not miner %s", to_hex(validator).c_str(), header.miner.hex().c_str());
         return false;
     }
     for (auto r : recents) {
         if (r.second == validator) {
-            xwarn("[xheco_snapshot_t::apply] validator %s is in recent", to_hex(validator).c_str());
+            xwarn("[xvalidators_snapshot_t::apply] validator %s is in recent", to_hex(validator).c_str());
             return false;
         }
     }
@@ -152,7 +152,7 @@ bool xheco_snapshot_t::apply(const eth::xeth_header_t & header, bool check) {
     if (height > 0 && height % epoch == 0) {
         xbytes_t new_validators_bytes{header.extra.begin() + extraVanity + extraSeal, header.extra.end()};
         if (new_validators_bytes.size() % addressLength != 0) {
-            xwarn("[xheco_snapshot_t::apply] new_validators_bytes size error: %zu", new_validators_bytes.size());
+            xwarn("[xvalidators_snapshot_t::apply] new_validators_bytes size error: %zu", new_validators_bytes.size());
             return false;
         }
         auto new_validators_num = new_validators_bytes.size() / addressLength;
@@ -165,7 +165,7 @@ bool xheco_snapshot_t::apply(const eth::xeth_header_t & header, bool check) {
             recents.erase(static_cast<uint64_t>(height - limit - i));
         }
         if (!new_validators.count(validator)) {
-            xwarn("[xheco_snapshot_t::apply] validator %s not in new validators", to_hex(validator).c_str());
+            xwarn("[xvalidators_snapshot_t::apply] validator %s not in new validators", to_hex(validator).c_str());
             return false;
         }
         validators = new_validators;
@@ -177,11 +177,11 @@ bool xheco_snapshot_t::apply(const eth::xeth_header_t & header, bool check) {
     if (check) {
         auto turn = inturn(number, validator);
         if (turn && header.difficulty != diffInTurn) {
-            xwarn("[snapshot::apply] check inturn failed, turn: %d, difficulty: %s", turn, header.difficulty.str().c_str());
+            xwarn("[xvalidators_snapshot_t::apply] check inturn failed, turn: %d, difficulty: %s", turn, header.difficulty.str().c_str());
             return false;
         }
         if (!turn && header.difficulty != diffNoTurn) {
-            xwarn("[snapshot::apply] check inturn failed, turn: %d, difficulty: %s", turn, header.difficulty.str().c_str());
+            xwarn("[xvalidators_snapshot_t::apply] check inturn failed, turn: %d, difficulty: %s", turn, header.difficulty.str().c_str());
             return false;
         }
     }
@@ -190,7 +190,7 @@ bool xheco_snapshot_t::apply(const eth::xeth_header_t & header, bool check) {
     return true;
 }
 
-bool xheco_snapshot_t::inturn(uint64_t number, xbytes_t validator) {
+bool xvalidators_snapshot_t::inturn(uint64_t number, xbytes_t validator) {
     std::vector<h160> addrs;
     for (auto bytes : validators) {
         addrs.emplace_back(static_cast<h160>(bytes));
@@ -206,7 +206,7 @@ bool xheco_snapshot_t::inturn(uint64_t number, xbytes_t validator) {
     return (number % addrs.size()) == index;
 }
 
-h256 xheco_snapshot_t::digest() const {
+h256 xvalidators_snapshot_t::digest() const {
     RLPStream stream;
     stream << number << hash << validators;
     for (auto p : recents) {
@@ -218,7 +218,7 @@ h256 xheco_snapshot_t::digest() const {
     return h256(hash_value.data(), h256::ConstructFromPointer);
 }
 
-void xheco_snapshot_t::print() const {
+void xvalidators_snapshot_t::print() const {
     printf("number: %lu\n", number);
     printf("hash: %s\n", hash.hex().c_str());
     printf("validators:\n");
@@ -232,10 +232,10 @@ void xheco_snapshot_t::print() const {
     printf("digest: %s\n", digest().hex().c_str());
 }
 
-xheco_snap_info_t::xheco_snap_info_t(h256 snap_hash_, h256 parent_hash_, bigint number_) : snap_hash(snap_hash_), parent_hash(parent_hash_), number(number_) {
+xvalidators_snap_info_t::xvalidators_snap_info_t(h256 snap_hash_, h256 parent_hash_, bigint number_) : snap_hash(snap_hash_), parent_hash(parent_hash_), number(number_) {
 }
 
-bytes xheco_snap_info_t::encode_rlp() const {
+bytes xvalidators_snap_info_t::encode_rlp() const {
     bytes out;
     {
         auto tmp = RLP::encode(snap_hash.asBytes());
@@ -252,7 +252,7 @@ bytes xheco_snap_info_t::encode_rlp() const {
     return RLP::encodeList(out);
 }
 
-bool xheco_snap_info_t::decode_rlp(const bytes & input) {
+bool xvalidators_snap_info_t::decode_rlp(const bytes & input) {
     auto l = RLP::decodeList(input);
     if (l.decoded.size() != 3) {
         return false;
@@ -266,4 +266,4 @@ bool xheco_snap_info_t::decode_rlp(const bytes & input) {
     return true;
 }
 
-NS_END3
+NS_END2

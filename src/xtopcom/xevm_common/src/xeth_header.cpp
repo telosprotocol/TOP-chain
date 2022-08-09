@@ -1,4 +1,4 @@
-#include "xevm_common/xeth/xeth_header.h"
+#include "xevm_common/xcrosschain/xeth_header.h"
 
 #if defined(__clang__)
 #    pragma clang diagnostic push
@@ -25,7 +25,7 @@
 #include "xevm_common/rlp.h"
 #include "xutility/xhash.h"
 
-NS_BEG3(top, evm_common, eth)
+NS_BEG2(top, evm_common)
 
 Hash xeth_header_t::hash() const {
     auto value = encode_rlp();
@@ -171,10 +171,7 @@ bytes xeth_header_t::encode_rlp() const {
 
 bool xeth_header_t::decode_rlp(const bytes & bytes) {
     auto l = RLP::decodeList(bytes);
-    if (l.decoded.size() != 16) {
-        return false;
-    }
-    if (!l.remainder.empty()) {
+    if (l.decoded.size() < 15) {
         return false;
     }
     parent_hash = static_cast<Hash>(l.decoded[0]);
@@ -192,7 +189,9 @@ bool xeth_header_t::decode_rlp(const bytes & bytes) {
     extra = l.decoded[12];
     mix_digest = static_cast<Hash>(l.decoded[13]);
     nonce = static_cast<BlockNonce>(l.decoded[14]);
-    base_fee = static_cast<bigint>(evm_common::fromBigEndian<u256>(l.decoded[15]));
+    if (l.decoded.size() >= 16) {
+        base_fee = static_cast<bigint>(evm_common::fromBigEndian<u256>(l.decoded[15]));
+    }
     return true;
 }
 
@@ -262,4 +261,4 @@ bool xeth_header_info_t::decode_rlp(const bytes & input) {
     return true;
 }
 
-NS_END3
+NS_END2

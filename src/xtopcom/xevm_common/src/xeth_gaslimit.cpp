@@ -1,6 +1,6 @@
-#include "xevm_common/xeth/xeth_gaslimit.h"
+#include "xevm_common/xcrosschain/xeth_gaslimit.h"
 
-#include "xevm_common/xeth/xeth_header.h"
+#include "xevm_common/xcrosschain/xeth_header.h"
 
 NS_BEG3(top, evm_common, eth)
 

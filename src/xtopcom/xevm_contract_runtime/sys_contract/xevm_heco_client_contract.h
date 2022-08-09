@@ -5,14 +5,14 @@
 #pragma once
 
 #include "xdata/xnative_contract_address.h"
-#include "xevm_common/xeth/xeth_header.h"
+#include "xevm_common/xcrosschain/xeth_header.h"
+#include "xevm_common/xcrosschain/xvalidators_snapshot.h"
 #include "xevm_contract_runtime/xevm_sys_crosschain_contract_face.h"
-#include "xevm_common/xcrosschain/xheco_snapshot.h"
 
 NS_BEG4(top, contract_runtime, evm, sys_contract)
 
-using evm_common::heco::xheco_snapshot_t;
-using evm_common::heco::xheco_snap_info_t;
+using evm_common::xvalidators_snapshot_t;
+using evm_common::xvalidators_snap_info_t;
 
 class xtop_evm_heco_client_contract : public xtop_evm_crosschain_syscontract_face<xtop_evm_heco_client_contract> {
 public:
@@ -27,9 +27,9 @@ public:
     void reset(state_ptr state);
 
 private:
-    bool verify(const xeth_header_t & prev_header, const xeth_header_t & new_header, xheco_snapshot_t & snap, state_ptr state) const;
-    bool record(const xeth_header_t & header, const xheco_snapshot_t & snap, state_ptr state);
-    bool rebuild(const xeth_header_t & header, const xheco_snap_info_t & last_info, const xheco_snap_info_t & cur_info, state_ptr state);
+    bool verify(const xeth_header_t & prev_header, const xeth_header_t & new_header, xvalidators_snapshot_t & snap, state_ptr state) const;
+    bool record(const xeth_header_t & header, const xvalidators_snapshot_t & snap, state_ptr state);
+    bool rebuild(const xeth_header_t & header, const xvalidators_snap_info_t & last_info, const xvalidators_snap_info_t & cur_info, state_ptr state);
     void release(const bigint number, state_ptr state);
     // last hash @160
     h256 get_last_hash(state_ptr state) const;
@@ -47,8 +47,8 @@ private:
     bool set_header(const h256 hash, const xeth_header_t & header, state_ptr state);
     bool remove_header(const h256 hash, state_ptr state);
     // headers info @164
-    bool get_snap_info(const h256 hash, xheco_snap_info_t & snap_info, state_ptr state) const;
-    bool set_snap_info(const h256 hash, const xheco_snap_info_t & snap_info, state_ptr state);
+    bool get_snap_info(const h256 hash, xvalidators_snap_info_t & snap_info, state_ptr state) const;
+    bool set_snap_info(const h256 hash, const xvalidators_snap_info_t & snap_info, state_ptr state);
     bool remove_snap_info(const h256 hash, state_ptr state);
 };
 using xevm_heco_client_contract_t = xtop_evm_heco_client_contract;

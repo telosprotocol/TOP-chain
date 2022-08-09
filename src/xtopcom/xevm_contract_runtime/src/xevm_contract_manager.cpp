@@ -7,13 +7,14 @@
 #include "xbasic/xhex.h"
 #include "xbasic/xmemory.hpp"
 #include "xdata/xnative_contract_address.h"
-#include "xevm_contract_runtime/sys_contract/xevm_eth_bridge_contract.h"
-#include "xevm_contract_runtime/sys_contract/xdelegate_top_contract.h"
 #include "xevm_contract_runtime/sys_contract/xdelegate_eth_contract.h"
+#include "xevm_contract_runtime/sys_contract/xdelegate_top_contract.h"
 #include "xevm_contract_runtime/sys_contract/xdelegate_usdc_contract.h"
 #include "xevm_contract_runtime/sys_contract/xdelegate_usdt_contract.h"
-#include "xevm_runner/proto/proto_precompile.pb.h"
+#include "xevm_contract_runtime/sys_contract/xevm_bsc_client_contract.h"
+#include "xevm_contract_runtime/sys_contract/xevm_eth_bridge_contract.h"
 #include "xevm_contract_runtime/sys_contract/xevm_heco_client_contract.h"
+#include "xevm_runner/proto/proto_precompile.pb.h"
 
 #include <cinttypes>
 
@@ -25,6 +26,7 @@ xtop_evm_contract_manager::xtop_evm_contract_manager() {
     add_sys_contract(evm_usdc_contract_address, top::make_unique<sys_contract::xdelegate_usdc_contract_t>());
     add_sys_contract(evm_usdt_contract_address, top::make_unique<sys_contract::xdelegate_usdt_contract_t>());
     add_sys_contract(evm_eth_bridge_contract_address, top::make_unique<sys_contract::xtop_evm_eth_bridge_contract>());
+    add_sys_contract(evm_bsc_client_contract_address, top::make_unique<sys_contract::xtop_evm_bsc_client_contract>());
     add_sys_contract(evm_heco_client_contract_address, top::make_unique<sys_contract::xtop_evm_heco_client_contract>());
 }
 

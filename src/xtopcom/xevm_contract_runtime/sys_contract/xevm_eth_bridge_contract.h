@@ -5,14 +5,14 @@
 #pragma once
 
 #include "xdata/xnative_contract_address.h"
-#include "xevm_common/xeth/xeth_header.h"
-#include "xevm_common/xeth/xethash.h"
+#include "xevm_common/xcrosschain/xeth_header.h"
+#include "xevm_common/xcrosschain/xethash.h"
 #include "xevm_contract_runtime/xevm_sys_crosschain_contract_face.h"
 
 NS_BEG4(top, contract_runtime, evm, sys_contract)
 
-using evm_common::eth::xeth_header_info_t;
-using evm_common::ethash::double_node_with_merkle_proof;
+using evm_common::xeth_header_info_t;
+using evm_common::eth::double_node_with_merkle_proof;
 
 class xtop_evm_eth_bridge_contract : public xtop_evm_crosschain_syscontract_face<xtop_evm_eth_bridge_contract> {
 public:

@@ -178,6 +178,7 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_contrac
 base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_evm_contract_account(base::xvaccount_t const & account, xenum_create_src_t src, std::error_code & ec) {
     xinfo("[xtop_genesis_manager::create_genesis_of_evm_contract_account] account %s", account.get_account().c_str());
     if (account.get_account() == evm_eth_bridge_contract_address.value() ||
+        account.get_account() == evm_bsc_client_contract_address.value() ||
         account.get_account() == evm_heco_client_contract_address.value()) {
         xobject_ptr_t<base::xvbstate_t> bstate =
             make_object_ptr<base::xvbstate_t>(account.get_account(), uint64_t{0}, uint64_t{0}, std::string{}, std::string{}, uint64_t{0}, uint32_t{0}, uint16_t{0});

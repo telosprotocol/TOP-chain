@@ -5,7 +5,7 @@
 
 #include <vector>
 
-NS_BEG3(top, evm_common, eth)
+NS_BEG2(top, evm_common)
 
 // The log bloom's size (2048-bit).
 using Hash = top::evm_common::h256;
@@ -59,4 +59,4 @@ struct xeth_header_info_t {
     bigint number;
 };
 
-NS_END3
+NS_END2

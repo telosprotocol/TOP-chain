@@ -1,7 +1,7 @@
-#include "xevm_common/xeth/xeth_eip1559.h"
+#include "xevm_common/xcrosschain/xeth_eip1559.h"
 
-#include "xevm_common/xeth/xeth_config.h"
-#include "xevm_common/xeth/xeth_gaslimit.h"
+#include "xevm_common/xcrosschain/xeth_config.h"
+#include "xevm_common/xcrosschain/xeth_gaslimit.h"
 
 NS_BEG3(top, evm_common, eth)
 
@@ -10,7 +10,7 @@ constexpr uint64_t ElasticityMultiplier = 2;
 constexpr uint64_t InitialBaseFee = 1000000000;
 constexpr uint64_t BaseFeeChangeDenominator = 8;
 
-static bigint calc_baseFee(const eth::xeth_header_t & parentHeader) {
+static bigint calc_baseFee(const xeth_header_t & parentHeader) {
     if (!eth::config::is_london(parentHeader.number)) {
         return bigint(InitialBaseFee);
     }
@@ -49,7 +49,7 @@ static bigint calc_baseFee(const eth::xeth_header_t & parentHeader) {
 // VerifyEip1559Header verifies some header attributes which were changed in EIP-1559,
 // - gas limit check
 // - basefee check
-bool verify_eip1559_header(const eth::xeth_header_t & parentHeader, const eth::xeth_header_t & header) {
+bool verify_eip1559_header(const xeth_header_t & parentHeader, const xeth_header_t & header) {
     // Verify that the gas limit remains within allowed bounds
     auto parentGasLimit = parentHeader.gas_limit;
     if (!eth::config::is_london(parentHeader.number)) {

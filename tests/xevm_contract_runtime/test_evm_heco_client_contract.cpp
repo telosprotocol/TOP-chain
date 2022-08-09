@@ -1,13 +1,11 @@
 #include "tests/xevm_contract_runtime/test_evm_eth_bridge_contract_fixture.h"
 #include "xbasic/xhex.h"
-#include "xdepends/include/ethash/ethash.hpp"
 #include "xevm_common/rlp.h"
 #include "xevm_common/xabi_decoder.h"
-#include "xevm_common/xcrosschain/xheco_snapshot.h"
-#include "xevm_common/xeth/xethash.h"
+#include "xevm_common/xcrosschain/xvalidators_snapshot.h"
 
 #define private public
-#include "xevm_common/xeth/xeth_header.h"
+#include "xevm_common/xcrosschain/xeth_header.h"
 #include "xevm_contract_runtime/xevm_sys_contract_face.h"
 
 namespace top {

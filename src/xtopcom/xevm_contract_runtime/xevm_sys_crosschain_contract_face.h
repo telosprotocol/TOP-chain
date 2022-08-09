@@ -21,7 +21,7 @@ using evm_common::h256;
 using evm_common::h512;
 using evm_common::u256;
 using evm_common::u64;
-using evm_common::eth::xeth_header_t;
+using evm_common::xeth_header_t;
 using state_ptr = std::shared_ptr<data::xunit_bstate_t>;
 
 template <class K, class V, class dummy_compare, class A>

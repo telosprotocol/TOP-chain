@@ -2,11 +2,11 @@
 #include "xbasic/xhex.h"
 #include "xevm_common/rlp.h"
 #include "xevm_common/xabi_decoder.h"
-#include "xevm_common/xeth/xethash.h"
+#include "xevm_common/xcrosschain/xethash.h"
 #include "xdepends/include/ethash/ethash.hpp"
 
 #define private public
-#include "xevm_common/xeth/xeth_header.h"
+#include "xevm_common/xcrosschain/xeth_header.h"
 #include "xevm_contract_runtime/xevm_sys_contract_face.h"
 
 namespace top {
@@ -18,15 +18,15 @@ using namespace evm_common::eth;
 using namespace ethash;
 
 TEST_F(xcontract_fixture_t, header_encode_decode) {
-    evm_common::eth::xeth_header_t header;
-    evm_common::eth::xeth_header_t header_decode;
+    evm_common::xeth_header_t header;
+    evm_common::xeth_header_t header_decode;
     header.parent_hash = static_cast<evm_common::h256>(UINT32_MAX - 1);
     header.uncle_hash = static_cast<evm_common::h256>(UINT32_MAX - 2);
-    header.miner = static_cast<evm_common::eth::Address>(UINT32_MAX - 3);
+    header.miner = static_cast<evm_common::Address>(UINT32_MAX - 3);
     header.state_merkleroot = static_cast<evm_common::h256>(UINT32_MAX - 4);
     header.tx_merkleroot = static_cast<evm_common::h256>(UINT32_MAX - 5);
     header.receipt_merkleroot = static_cast<evm_common::h256>(UINT32_MAX - 6);
-    header.bloom = static_cast<evm_common::eth::LogBloom>(UINT32_MAX - 7);
+    header.bloom = static_cast<evm_common::LogBloom>(UINT32_MAX - 7);
     header.mix_digest = static_cast<evm_common::h256>(UINT32_MAX - 8);
     header.nonce = static_cast<evm_common::h64>(UINT32_MAX - 9);
     header.difficulty = static_cast<evm_common::bigint>(UINT64_MAX - 1);
@@ -324,14 +324,6 @@ TEST_F(xcontract_fixture_t, test_double_init) {
     EXPECT_FALSE(contract.init(init_param, contract_state));
 }
 
-TEST_F(xcontract_fixture_t, test_error_init_param) {
-    const char * hex_init_param = "f90210a0fc40ad4f64dd51d09e94d9b7f1136cdcaaf03fb9a75c32661228bd3212547107a01dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d4934794cf4d39b0edb0b69cd15f687fd45c8fc8eb687daea0be5f8f7c84539b81c621a029b3083c37e0b63dde1372545c38edb792fcb65883a056e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421a056e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421b90100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008302196d65834f24ec8084628f482199d883010a12846765746888676f312e31372e38856c696e7578a0d8f6c88a59b42eafc6bc6e048e257a415bbb17822d57566153b73a72666b297b880afe7b9f331361e7";
-    std::error_code ec;
-    auto init_param = top::from_hex(hex_init_param, ec);
-    EXPECT_EQ(ec.value(), 0);
-    EXPECT_FALSE(contract.init(init_param, contract_state));
-}
-
 TEST_F(xcontract_fixture_t, test_sync_not_init) {
     std::error_code ec;
     auto sync_param = top::from_hex(relayer_hex_output_1270000, ec);
@@ -418,11 +410,11 @@ static xeth_header_t create_header(h256 parent_hash, uint32_t number, uint32_t d
     xeth_header_t header;
     header.parent_hash = parent_hash;
     header.uncle_hash = static_cast<evm_common::h256>(0);
-    header.miner = static_cast<evm_common::eth::Address>(0);
+    header.miner = static_cast<evm_common::Address>(0);
     header.state_merkleroot = static_cast<evm_common::h256>(0);
     header.tx_merkleroot = static_cast<evm_common::h256>(0);
     header.receipt_merkleroot = static_cast<evm_common::h256>(0);
-    header.bloom = static_cast<evm_common::eth::LogBloom>(0);
+    header.bloom = static_cast<evm_common::LogBloom>(0);
     header.mix_digest = static_cast<evm_common::h256>(0);
     header.nonce = static_cast<evm_common::h64>(0);
     header.difficulty = difficulty;

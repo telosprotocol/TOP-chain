@@ -1,6 +1,9 @@
-#include "xevm_common/xeth/xethash.h"
+#include "xbase/xns_macro.h"
 
-NS_BEG3(top, evm_common, ethash)
+#include <string>
+#include <vector>
+
+NS_BEG3(top, evm_common, eth)
 
 static std::vector<std::string> dag_merkle_roots = {
         "0x55b891e842e58f58956a847cbbf67821",

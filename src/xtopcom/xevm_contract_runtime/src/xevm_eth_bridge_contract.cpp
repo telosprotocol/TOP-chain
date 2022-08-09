@@ -11,11 +11,11 @@
 #include "xdata/xsystem_contract/xdata_structures.h"
 #include "xevm_common/common_data.h"
 #include "xevm_common/xabi_decoder.h"
-#include "xevm_common/xeth/xeth_config.h"
-#include "xevm_common/xeth/xeth_eip1559.h"
-#include "xevm_common/xeth/xeth_gaslimit.h"
-#include "xevm_common/xeth/xeth_header.h"
-#include "xevm_common/xeth/xethash.h"
+#include "xevm_common/xcrosschain/xeth_config.h"
+#include "xevm_common/xcrosschain/xeth_eip1559.h"
+#include "xevm_common/xcrosschain/xeth_gaslimit.h"
+#include "xevm_common/xcrosschain/xeth_header.h"
+#include "xevm_common/xcrosschain/xethash.h"
 
 NS_BEG4(top, contract_runtime, evm, sys_contract)
 
@@ -93,7 +93,7 @@ bool xtop_evm_eth_bridge_contract::sync(const xbytes_t & rlp_bytes, state_ptr st
         }
         xinfo("[xtop_evm_eth_bridge_contract::sync] header dump: %s", header.dump().c_str());
         auto proofs_per_node = static_cast<uint64_t>(evm_common::fromBigEndian<u64>(item.decoded[item.decoded.size() - 1]));
-        std::vector<ethash::double_node_with_merkle_proof> nodes;
+        std::vector<double_node_with_merkle_proof> nodes;
         uint32_t nodes_size{64};
         if (proofs_per_node * nodes_size + 2 * nodes_size + 3 != item.decoded.size()) {
             xwarn("[xtop_evm_eth_bridge_contract::sync] param error");
@@ -102,7 +102,7 @@ bool xtop_evm_eth_bridge_contract::sync(const xbytes_t & rlp_bytes, state_ptr st
         uint32_t nodes_start_index{2};
         uint32_t proofs_start_index{2 + nodes_size * 2};
         for (size_t i = 0; i < nodes_size; ++i) {
-            ethash::double_node_with_merkle_proof node;
+            double_node_with_merkle_proof node;
             node.dag_nodes.emplace_back(static_cast<h512>(item.decoded[nodes_start_index + 2 * i]));
             node.dag_nodes.emplace_back(static_cast<h512>(item.decoded[nodes_start_index + 2 * i + 1]));
             for (size_t j = 0; j < proofs_per_node; ++j) {
@@ -181,7 +181,7 @@ bool xtop_evm_eth_bridge_contract::is_confirmed(const u256 height, const xbytes_
     return true;
 }
 
-bool xtop_evm_eth_bridge_contract::verify(const xeth_header_t & prev_header, const xeth_header_t & new_header, const std::vector<ethash::double_node_with_merkle_proof> & nodes) const {
+bool xtop_evm_eth_bridge_contract::verify(const xeth_header_t & prev_header, const xeth_header_t & new_header, const std::vector<double_node_with_merkle_proof> & nodes) const {
     if (new_header.number != prev_header.number + 1) {
         xwarn("[xtop_evm_eth_bridge_contract::verify] height mismatch, new: %s, old: %s", new_header.number.str().c_str(), prev_header.number.str().c_str());
         return false;
@@ -216,13 +216,13 @@ bool xtop_evm_eth_bridge_contract::verify(const xeth_header_t & prev_header, con
     }
 #if !defined(XBUILD_DEV) && !defined(XBUILD_CI) && !defined(XBUILD_BOUNTY) && !defined(XBUILD_GALILEO)
     // step 6: verify difficulty
-    bigint diff = ethash::xethash_t::instance().calc_difficulty(new_header.time, prev_header);
+    bigint diff = eth::xethash_t::instance().calc_difficulty(new_header.time, prev_header);
     if (diff != new_header.difficulty) {
         xwarn("[xtop_evm_eth_bridge_contract::sync] difficulty check mismatch");
         return false;
     }
     // step 7: verify ethash
-    if (!ethash::xethash_t::instance().verify_seal(new_header, nodes)) {
+    if (!eth::xethash_t::instance().verify_seal(new_header, nodes)) {
         xwarn("[xtop_evm_eth_bridge_contract::sync] ethash verify failed, header: %s", new_header.hash().hex().c_str());
         return false;
     }
