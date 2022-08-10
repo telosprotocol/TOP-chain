@@ -79,6 +79,77 @@ static uint256_t seal_hash(const xeth_header_t & header) {
     return utl::xkeccak256_t::digest(value.data(), value.size());
 }
 
+static uint256_t seal_hash(const xeth_header_t & header, const bigint chainid) {
+    bytes out;
+    {
+        auto tmp = RLP::encode(static_cast<u256>(chainid));
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+    {
+        auto tmp = RLP::encode(header.parent_hash.asBytes());
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+    {
+        auto tmp = RLP::encode(header.uncle_hash.asBytes());
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+    {
+        auto tmp = RLP::encode(header.miner.asBytes());
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+    {
+        auto tmp = RLP::encode(header.state_merkleroot.asBytes());
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+    {
+        auto tmp = RLP::encode(header.tx_merkleroot.asBytes());
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+    {
+        auto tmp = RLP::encode(header.receipt_merkleroot.asBytes());
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+    {
+        auto tmp = RLP::encode(header.bloom.asBytes());
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+    {
+        auto tmp = RLP::encode(static_cast<u256>(header.difficulty));
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+    {
+        auto tmp = RLP::encode(static_cast<u256>(header.number));
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+    {
+        auto tmp = RLP::encode(header.gas_limit);
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+    {
+        auto tmp = RLP::encode(header.gas_used);
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+    {
+        auto tmp = RLP::encode(header.time);
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+    {
+        xbytes_t extra{header.extra.begin(), header.extra.begin() + (header.extra.size() - extraSeal)};
+        auto tmp = RLP::encode(extra);
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+    {
+        auto tmp = RLP::encode(header.mix_digest.asBytes());
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+    {
+        auto tmp = RLP::encode(header.nonce.asBytes());
+        out.insert(out.end(), tmp.begin(), tmp.end());
+    }
+    auto value = RLP::encodeList(out);
+    return utl::xkeccak256_t::digest(value.data(), value.size());
+}
+
 static xbytes_t ecrecover(const xeth_header_t & header) {
     if (header.extra.size() < extraSeal) {
         xwarn("[ecrecover] header.extra size %zu < extraSeal %lu", header.extra.size(), extraSeal);
@@ -92,6 +163,27 @@ static xbytes_t ecrecover(const xeth_header_t & header) {
 
     uint8_t pubkey[65] = {0};
     auto hash = seal_hash(header);
+    if (false == utl::xsecp256k1_t::get_publickey_from_signature_directly(sig, hash, pubkey)) {
+        xwarn("[ecrecover] get_publickey_from_signature_directly failed, extra: %s, seal_hash: %s", to_hex(header.extra).c_str(), to_hex(to_bytes(hash)).c_str());
+        return {};
+    }
+    auto digest = to_bytes(utl::xkeccak256_t::digest(&pubkey[1], sizeof(pubkey) - 1));
+    return {digest.begin() + 12, digest.end()};
+}
+
+static xbytes_t ecrecover(const xeth_header_t & header, const bigint chainid) {
+    if (header.extra.size() < extraSeal) {
+        xwarn("[ecrecover] header.extra size %zu < extraSeal %lu", header.extra.size(), extraSeal);
+        return {};
+    }
+
+    uint8_t sig_array[65] = {0};
+    sig_array[0] = header.extra.back();
+    std::memcpy(sig_array + 1, header.extra.data() + header.extra.size() - extraSeal, 64);
+    utl::xecdsasig_t sig(sig_array);
+
+    uint8_t pubkey[65] = {0};
+    auto hash = seal_hash(header, chainid);
     if (false == utl::xsecp256k1_t::get_publickey_from_signature_directly(sig, hash, pubkey)) {
         xwarn("[ecrecover] get_publickey_from_signature_directly failed, extra: %s, seal_hash: %s", to_hex(header.extra).c_str(), to_hex(to_bytes(hash)).c_str());
         return {};
@@ -121,7 +213,7 @@ bool xvalidators_snapshot_t::init_with_epoch(const xeth_header_t & header) {
     return true;
 }
 
-bool xvalidators_snapshot_t::apply(const xeth_header_t & header, bool check) {
+bool xvalidators_snapshot_t::apply(const xeth_header_t & header, bool check_inturn) {
     auto height = header.number;
     if (height != number + 1) {
         xwarn("[xvalidators_snapshot_t::apply] number mismatch %s, %lu", height.str().c_str(), number + 1);
@@ -150,7 +242,7 @@ bool xvalidators_snapshot_t::apply(const xeth_header_t & header, bool check) {
     }
     recents[static_cast<uint64_t>(height)] = validator;
     if (height > 0 && height % epoch == 0) {
-        xbytes_t new_validators_bytes{header.extra.begin() + extraVanity + extraSeal, header.extra.end()};
+        xbytes_t new_validators_bytes{header.extra.begin() + extraVanity, header.extra.end() - extraSeal};
         if (new_validators_bytes.size() % addressLength != 0) {
             xwarn("[xvalidators_snapshot_t::apply] new_validators_bytes size error: %zu", new_validators_bytes.size());
             return false;
@@ -158,15 +250,11 @@ bool xvalidators_snapshot_t::apply(const xeth_header_t & header, bool check) {
         auto new_validators_num = new_validators_bytes.size() / addressLength;
         std::set<xbytes_t> new_validators;
         for (uint32_t i = 0; i < new_validators_num; ++i) {
-            new_validators.insert(xbytes_t{new_validators_bytes.begin() + i * addressLength, new_validators_bytes.begin() + (i + 1) * addressLength - 1});
+            new_validators.insert(xbytes_t{new_validators_bytes.begin() + i * addressLength, new_validators_bytes.begin() + (i + 1) * addressLength});
         }
         auto limit = new_validators.size() / 2 + 1;
         for (auto i = 0; i < int(validators.size() / 2 - new_validators.size() / 2); i++) {
             recents.erase(static_cast<uint64_t>(height - limit - i));
-        }
-        if (!new_validators.count(validator)) {
-            xwarn("[xvalidators_snapshot_t::apply] validator %s not in new validators", to_hex(validator).c_str());
-            return false;
         }
         validators = new_validators;
     }
@@ -174,7 +262,72 @@ bool xvalidators_snapshot_t::apply(const xeth_header_t & header, bool check) {
 
     const bigint diffInTurn = 2;
     const bigint diffNoTurn = 1;
-    if (check) {
+    if (check_inturn) {
+        auto turn = inturn(number, validator);
+        if (turn && header.difficulty != diffInTurn) {
+            xwarn("[xvalidators_snapshot_t::apply] check inturn failed, turn: %d, difficulty: %s", turn, header.difficulty.str().c_str());
+            return false;
+        }
+        if (!turn && header.difficulty != diffNoTurn) {
+            xwarn("[xvalidators_snapshot_t::apply] check inturn failed, turn: %d, difficulty: %s", turn, header.difficulty.str().c_str());
+            return false;
+        }
+    }
+
+    hash = header.hash();
+    return true;
+}
+
+bool xvalidators_snapshot_t::apply_with_chainid(const xeth_header_t & header, const bigint chainid, bool check_inturn) {
+    auto height = header.number;
+    if (height != number + 1) {
+        xwarn("[xvalidators_snapshot_t::apply_with_chainid] number mismatch %s, %lu", height.str().c_str(), number + 1);
+        return false;
+    }
+    auto limit = validators.size() / 2 + 1;
+    if (height >= limit) {
+        recents.erase(static_cast<uint64_t>(height - limit));
+    }
+    auto validator = ecrecover(header, chainid);
+    xinfo("[xvalidators_snapshot_t::apply_with_chainid] number: %s, validator: %s", height.str().c_str(), to_hex(validator).c_str());
+
+    if (!validators.count(validator)) {
+        xwarn("[xvalidators_snapshot_t::apply_with_chainid] validator %s not in validators", to_hex(validator).c_str());
+        return false;
+    }
+    if (static_cast<h160>(validator) != header.miner) {
+        xwarn("[xvalidators_snapshot_t::apply_with_chainid] validator %s is not miner %s", to_hex(validator).c_str(), header.miner.hex().c_str());
+        return false;
+    }
+    for (auto r : recents) {
+        if (r.second == validator) {
+            xwarn("[xvalidators_snapshot_t::apply_with_chainid] validator %s is in recent", to_hex(validator).c_str());
+            return false;
+        }
+    }
+    recents[static_cast<uint64_t>(height)] = validator;
+    if (height > 0 && height % epoch == 0) {
+        xbytes_t new_validators_bytes{header.extra.begin() + extraVanity, header.extra.end() - extraSeal};
+        if (new_validators_bytes.size() % addressLength != 0) {
+            xwarn("[xvalidators_snapshot_t::apply_with_chainid] new_validators_bytes size error: %zu", new_validators_bytes.size());
+            return false;
+        }
+        auto new_validators_num = new_validators_bytes.size() / addressLength;
+        std::set<xbytes_t> new_validators;
+        for (uint32_t i = 0; i < new_validators_num; ++i) {
+            new_validators.insert(xbytes_t{new_validators_bytes.begin() + i * addressLength, new_validators_bytes.begin() + (i + 1) * addressLength});
+        }
+        auto limit = new_validators.size() / 2 + 1;
+        for (auto i = 0; i < int(validators.size() / 2 - new_validators.size() / 2); i++) {
+            recents.erase(static_cast<uint64_t>(height - limit - i));
+        }
+        validators = new_validators;
+    }
+    number += 1;
+
+    const bigint diffInTurn = 2;
+    const bigint diffNoTurn = 1;
+    if (check_inturn) {
         auto turn = inturn(number, validator);
         if (turn && header.difficulty != diffInTurn) {
             xwarn("[xvalidators_snapshot_t::apply] check inturn failed, turn: %d, difficulty: %s", turn, header.difficulty.str().c_str());

@@ -8,6 +8,7 @@ struct xvalidators_snapshot_t {
     bool init_with_epoch(const xeth_header_t & header);
     h256 digest() const;
     bool apply(const xeth_header_t & header, bool check);
+    bool apply_with_chainid(const xeth_header_t & header, const bigint chainid, bool check_inturn);
     bool inturn(uint64_t number, xbytes_t validator);
     void print() const;
 

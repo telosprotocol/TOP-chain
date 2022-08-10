@@ -68,18 +68,14 @@ bool xtop_evm_heco_client_contract::init(const xbytes_t & rlp_bytes, state_ptr s
 
     for (size_t i = 0; i < headers.size(); ++i) {
         auto const & h = headers[i];
-        xinfo("h");
         if (i != 0) {
             if (!snap.apply(h, false)) {
                 xwarn("[xtop_evm_heco_client_contract::init] apply failed");
                 return false;
             }
         }
-        xinfo("apply");
         auto snap_hash = snap.digest();
-        xinfo("snap_hash");
         auto header_hash = h.hash();
-        xinfo("header_hash");
         // step 3: store with no check
         xinfo("[xtop_evm_heco_client_contract::init] header dump: %s, snap_hash: %s", h.dump().c_str(), snap_hash.hex().c_str());
         if (!set_last_hash(header_hash, state)) {

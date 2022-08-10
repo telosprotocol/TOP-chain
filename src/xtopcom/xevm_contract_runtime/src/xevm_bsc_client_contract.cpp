@@ -31,6 +31,7 @@ constexpr uint64_t address_length = 20;
 constexpr uint64_t max_gas_limit = 0x7fffffffffffffff;
 constexpr uint64_t min_gas_limit = 5000;
 constexpr uint64_t gas_limit_bound_divisor = 256;
+constexpr uint64_t bsc_chainid = 56;
 
 auto static empty_unclehash = static_cast<h256>(from_hex("1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347"));
 
@@ -68,18 +69,14 @@ bool xtop_evm_bsc_client_contract::init(const xbytes_t & rlp_bytes, state_ptr st
 
     for (size_t i = 0; i < headers.size(); ++i) {
         auto const & h = headers[i];
-        xinfo("h");
         if (i != 0) {
-            if (!snap.apply(h, false)) {
-                xwarn("[xtop_evm_bsc_client_contract::init] apply failed");
+            if (!snap.apply_with_chainid(h, bsc_chainid, false)) {
+                xwarn("[xtop_evm_bsc_client_contract::init] apply_with_chainid failed");
                 return false;
             }
         }
-        xinfo("apply");
         auto snap_hash = snap.digest();
-        xinfo("snap_hash");
         auto header_hash = h.hash();
-        xinfo("header_hash");
         // step 3: store with no check
         xinfo("[xtop_evm_bsc_client_contract::init] header dump: %s, snap_hash: %s", h.dump().c_str(), snap_hash.hex().c_str());
         if (!set_last_hash(header_hash, state)) {
@@ -269,13 +266,13 @@ bool xtop_evm_bsc_client_contract::verify(const xeth_header_t & prev_header, con
         xwarn("[xtop_evm_bsc_client_contract::verify] gasUsed: %lu > gasLimit: %lu", new_header.gas_used, new_header.gas_limit);
         return false;
     }
-    uint64_t diff = prev_header.gas_limit - new_header.gas_limit;
+    bigint diff = bigint(prev_header.gas_limit) - bigint(new_header.gas_limit);
     if (diff < 0) {
         diff *= -1;
     }
-    uint64_t limit = prev_header.gas_limit / gas_limit_bound_divisor;
+    bigint limit = prev_header.gas_limit / gas_limit_bound_divisor;
     if (uint64_t(diff) >= limit || new_header.gas_limit < min_gas_limit) {
-        xwarn("[xtop_evm_bsc_client_contract::verify] invalid gas limit: have %lu, want %lu + %lu", new_header.gas_limit, prev_header.gas_limit, diff);
+        xwarn("[xtop_evm_bsc_client_contract::verify] invalid gas limit: have %lu, want %lu + %lu", new_header.gas_limit, prev_header.gas_limit, diff.str().c_str());
         return false;
     }
     if (new_header.number != prev_header.number + 1) {
@@ -294,8 +291,8 @@ bool xtop_evm_bsc_client_contract::verify(const xeth_header_t & prev_header, con
         xwarn("[xtop_evm_bsc_client_contract::verify] snap hash mismatch: %s", last_info.snap_hash.hex().c_str(), snap_hash.hex().c_str());
         return false;
     }
-    if (!snap.apply(new_header, true)) {
-        xwarn("[xtop_evm_bsc_client_contract::verify] snap apply failed");
+    if (!snap.apply_with_chainid(new_header, bsc_chainid, true)) {
+        xwarn("[xtop_evm_bsc_client_contract::verify] snap apply_with_chainid failed");
         return false;
     }
     return true;

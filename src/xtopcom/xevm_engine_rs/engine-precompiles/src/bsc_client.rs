@@ -10,7 +10,7 @@ use evm::ExitFatal;
 pub struct BscClientPrecompile;
 
 impl BscClientPrecompile {
-    pub(super) const ADDRESS: Address = crate::make_address(0xff000000, 4);
+    pub(super) const ADDRESS: Address = crate::make_address(0xff000000, 3);
 }
 
 impl Precompile for BscClientPrecompile {
