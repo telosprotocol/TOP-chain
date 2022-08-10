@@ -30,6 +30,8 @@ XINLINE_CONSTEXPR char const * event_hex_string_controller_set{"0xea4ba01507e54b
 // burnFrom(address,uint256)             => 0x79cc6790
 // transferOwnership(address)            => 0xf2fde38b
 // setController(address)                => 0x92eefe9b
+// owner()                               => 0x8da5cb5b
+// controller()                          => 0xf77c4791
 //--------------------------------------------------
 XINLINE_CONSTEXPR uint32_t method_id_decimals{0x313ce567};
 XINLINE_CONSTEXPR uint32_t method_id_total_supply{0x18160ddd};
@@ -42,5 +44,7 @@ XINLINE_CONSTEXPR uint32_t method_id_mint{0x40c10f19};
 XINLINE_CONSTEXPR uint32_t method_id_burn_from{0x79cc6790};
 XINLINE_CONSTEXPR uint32_t method_id_transfer_ownership{0xf2fde38b};
 XINLINE_CONSTEXPR uint32_t method_id_set_controller{0x92eefe9b};
+XINLINE_CONSTEXPR uint32_t method_id_owner{0x8da5cb5b};
+XINLINE_CONSTEXPR uint32_t method_id_controller{0xf77c4791};
 
 NS_END4
