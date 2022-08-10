@@ -890,6 +890,33 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
         return !ec;
     }
 
+    case method_id_owner: {
+        xbytes_t result(32, 0);
+
+        auto contract_state = state_ctx->load_unit_state(evm_usdc_contract_address.vaccount());
+        auto const & token_owner = contract_state->tep_token_owner(chain_uuid);
+        auto const owner = common::xeth_address_t::build_from(token_owner);
+
+        output.cost = 0;
+        output.exit_status = Returned;
+        output.output = owner.to_h256();
+
+        return true;
+    }
+
+    case method_id_controller: {
+        xbytes_t result(32, 0);
+
+        auto contract_state = state_ctx->load_unit_state(evm_usdc_contract_address.vaccount());
+        auto const & controller = common::xeth_address_t::build_from(contract_state->tep_token_controller(chain_uuid));
+
+        output.cost = 0;
+        output.exit_status = Returned;
+        output.output = controller.to_h256();
+
+        return true;
+    }
+
     default: {
         err.fail_status = precompile_error::Fatal;
         err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::NotSupported);
