@@ -17,8 +17,8 @@ bool verify_eip1559_header(const xeth_header_t & parent, const xeth_header_t & h
         return false;
     }
     auto expectedBaseFee = calc_baseFee(parent);
-    if (header.base_fee != expectedBaseFee) {
-        xwarn("[xtop_evm_eth_bridge_contract::verifyEip1559Header] wrong basefee: %s, should be: %s", header.base_fee.str().c_str(), expectedBaseFee.str().c_str());
+    if (header.base_fee.value() != expectedBaseFee) {
+        xwarn("[xtop_evm_eth_bridge_contract::verifyEip1559Header] wrong basefee: %s, should be: %s", header.base_fee.value().str().c_str(), expectedBaseFee.str().c_str());
         return false;
     }
     return true;

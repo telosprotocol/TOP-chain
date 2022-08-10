@@ -19,24 +19,24 @@ static bigint calc_baseFee(const xeth_header_t & parentHeader) {
     bigint baseFeeChangeDenominator = BaseFeeChangeDenominator;
     // If the parent gasUsed is the same as the target, the baseFee remains unchanged.
     if (parentHeader.gas_used == parentGasTarget) {
-        return bigint(parentHeader.base_fee);
+        return bigint(parentHeader.base_fee.value());
     }
     if (parentHeader.gas_used > parentGasTarget) {
         bigint gasUsedDelta = bigint(parentHeader.gas_used - parentGasTarget);
-        bigint x = parentHeader.base_fee * gasUsedDelta;
+        bigint x = parentHeader.base_fee.value() * gasUsedDelta;
         bigint y = x / parentGasTargetBig;
         bigint baseFeeDelta = y / baseFeeChangeDenominator;
         if (baseFeeDelta < 1) {
             baseFeeDelta = 1;
         }
-        return parentHeader.base_fee + baseFeeDelta;
+        return parentHeader.base_fee.value() + baseFeeDelta;
     } else {
         // Otherwise if the parent block used less gas than its target, the baseFee should decrease.
         bigint gasUsedDelta = bigint(parentGasTarget - parentHeader.gas_used);
-        bigint x = parentHeader.base_fee * gasUsedDelta;
+        bigint x = parentHeader.base_fee.value() * gasUsedDelta;
         bigint y = x / parentGasTargetBig;
         bigint baseFeeDelta = y / baseFeeChangeDenominator;
-        x = parentHeader.base_fee - baseFeeDelta;
+        x = parentHeader.base_fee.value() - baseFeeDelta;
         if (x < 0) {
             x = 0;
         }
@@ -61,8 +61,8 @@ bool verify_eip1559_header(const xeth_header_t & parentHeader, const xeth_header
     }
     // Verify the baseFee is correct based on the parent header.
     auto expectedBaseFee = calc_baseFee(parentHeader);
-    if (header.base_fee != expectedBaseFee) {
-        xwarn("[xtop_evm_eth_bridge_contract::verifyEip1559Header] wrong basefee: %s, should be: %s", header.base_fee.str().c_str(), expectedBaseFee.str().c_str());
+    if (header.base_fee.value() != expectedBaseFee) {
+        xwarn("[xtop_evm_eth_bridge_contract::verifyEip1559Header] wrong basefee: %s, should be: %s", header.base_fee.value().str().c_str(), expectedBaseFee.str().c_str());
         return false;
     }
     return true;

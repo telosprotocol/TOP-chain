@@ -2327,7 +2327,9 @@ static void get_chain_headers(common::xaccount_address_t const & contract_addres
         j_header["extra"] = top::to_hex(header.extra);
         j_header["mixDigest"] = header.mix_digest.hex();
         j_header["nonce"] = header.nonce.hex();
-        j_header["baseFee"] = header.base_fee.str();
+        if (header.base_fee.has_value()) {
+            j_header["baseFee"] = header.base_fee.value().str();
+        }
         j_header["hash"] = header.hash().hex();
         json[hash.hex()] = j_header;
     }

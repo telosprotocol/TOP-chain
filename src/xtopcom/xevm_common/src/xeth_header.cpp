@@ -93,8 +93,8 @@ bytes xeth_header_t::encode_rlp_withoutseal() const {
         auto tmp = RLP::encode(extra);
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
-    {
-        auto tmp = RLP::encode(static_cast<u256>(base_fee));
+    if (base_fee.has_value()) {
+        auto tmp = RLP::encode(static_cast<u256>(base_fee.value()));
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     return RLP::encodeList(out);
@@ -162,8 +162,8 @@ bytes xeth_header_t::encode_rlp() const {
         auto tmp = RLP::encode(nonce.asBytes());
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
-    {
-        auto tmp = RLP::encode(static_cast<u256>(base_fee));
+    if (base_fee.has_value()) {
+        auto tmp = RLP::encode(static_cast<u256>(base_fee.value()));
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     return RLP::encodeList(out);
@@ -197,13 +197,7 @@ bool xeth_header_t::decode_rlp(const bytes & bytes) {
 
 std::string xeth_header_t::dump() const {
     char local_param_buf[256];
-    xprintf(local_param_buf,
-            sizeof(local_param_buf),
-            "height: %s, hash: %s, parent_hash: %s, basefee: %s",
-            number.str().c_str(),
-            hash().hex().c_str(),
-            parent_hash.hex().c_str(),
-            base_fee.str().c_str());
+    xprintf(local_param_buf, sizeof(local_param_buf), "height: %s, hash: %s, parent_hash: %s", number.str().c_str(), hash().hex().c_str(), parent_hash.hex().c_str());
     return std::string(local_param_buf);
 }
 
@@ -224,7 +218,9 @@ void xeth_header_t::print() const {
     printf("mix_digest: %s\n", mix_digest.hex().c_str());
     printf("nonce: %s\n", nonce.hex().c_str());
     printf("hash: %s\n", hash().hex().c_str());
-    printf("base_fee: %s\n", base_fee.str().c_str());
+    if (base_fee.has_value()) {
+        printf("base_fee: %s\n", base_fee.value().str().c_str());
+    }
 }
 
 xeth_header_info_t::xeth_header_info_t(bigint difficult_sum_, Hash parent_hash_, bigint number_) : difficult_sum{difficult_sum_}, parent_hash{parent_hash_}, number{number_} {

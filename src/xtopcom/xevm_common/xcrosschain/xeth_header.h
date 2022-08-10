@@ -1,5 +1,6 @@
 #pragma once
 
+#include "xbasic/xoptional.hpp"
 #include "xevm_common/common.h"
 #include "xevm_common/fixed_hash.h"
 
@@ -31,7 +32,7 @@ struct xeth_header_t {
     BlockNonce nonce;
 
     // base_fee was added by EIP-1559 and is ignored in legacy headers.
-    bigint base_fee;
+    optional<bigint> base_fee;
 
     // hash
     Hash hash() const;
