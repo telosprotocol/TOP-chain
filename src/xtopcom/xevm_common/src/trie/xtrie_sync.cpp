@@ -28,6 +28,29 @@ SyncPath newSyncPath(xbytes_t const & path) {
     return res;
 }
 
+Sync::Sync(xhash256_t const & root, xkv_db_face_ptr_t _database, LeafCallback callback) : database{_database} {
+    AddSubTrie(root, xbytes_t{}, xhash256_t{}, callback);
+}
+
+std::shared_ptr<Sync> Sync::NewSync(xhash256_t const & root, xkv_db_face_ptr_t _database, LeafCallback callback) {
+    return std::make_shared<Sync>(root, _database, callback);
+}
+
+Sync::~Sync() {
+    for (auto _p : nodeReqs) {
+        if (_p.second != nullptr) {
+            free(_p.second);
+        }
+    }
+    nodeReqs.clear();
+    for (auto _p : codeReqs) {
+        if (_p.second != nullptr) {
+            free(_p.second);
+        }
+    }
+    codeReqs.clear();
+}
+
 void Sync::AddSubTrie(xhash256_t const & root, xbytes_t const & path, xhash256_t const & parent, LeafCallback callback) {
     if (root == emptyRoot) {
         return;

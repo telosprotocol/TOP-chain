@@ -10,6 +10,7 @@
 #include "xevm_common/trie/xtrie_kv_db_face.h"
 
 #include <map>
+#include <memory>
 #include <vector>
 
 NS_BEG3(top, evm_common, trie)
@@ -92,6 +93,16 @@ private:
     std::map<xhash256_t, request *> codeReqs;                               // Pending requests pertaining to a code hash
     top::threading::xthreadsafe_priority_queue<xhash256_t, int64_t> queue;  // Priority queue with the pending requests
     std::map<std::size_t, std::size_t> fetches;                             // Number of active fetches per trie node depth
+
+public:
+    Sync(xhash256_t const & root, xkv_db_face_ptr_t _database, LeafCallback callback);
+    static std::shared_ptr<Sync> NewSync(xhash256_t const & root, xkv_db_face_ptr_t _database, LeafCallback callback);
+
+    Sync(Sync const &) = delete;
+    Sync & operator=(Sync const &) = delete;
+    Sync(Sync &&) = default;
+    Sync & operator=(Sync &&) = default;
+    ~Sync();
 
 public:
     // AddSubTrie registers a new trie to the sync code, rooted at the designated parent.
