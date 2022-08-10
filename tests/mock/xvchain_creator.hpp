@@ -24,6 +24,7 @@ namespace top
         public:
             xvchain_creator() {
                 base::xvchain_t::instance().clean_all(true);
+                std::error_code ec;
 
                 m_bus = top::make_object_ptr<mbus::xmessage_bus_t>(false, 1000);
                 base::xvchain_t::instance().set_xevmbus(m_bus.get());
@@ -39,6 +40,7 @@ namespace top
                 std::shared_ptr<top::xbase_timer_driver_t> timer_driver = std::make_shared<top::xbase_timer_driver_t>(io_object);
                 base::xvchain_t::instance().set_xtxstore(txstore::create_txstore(make_observer<mbus::xmessage_bus_face_t>(m_bus.get()), timer_driver));
                 m_genesis_manager = make_unique<genesis::xgenesis_manager_t>(top::make_observer(blockstore), make_observer(m_store));
+                m_genesis_manager->init_genesis_block(ec);
             }
 
             xvchain_creator(bool genesis) {

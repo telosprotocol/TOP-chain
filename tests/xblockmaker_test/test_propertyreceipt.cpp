@@ -41,10 +41,7 @@ TEST_F(test_propertyreceipt, propertyreceipt_inner_table_tx) {
     std::string from_addr = unit_addrs[0];
     std::string to_addr = unit_addrs[1];
 
-    std::vector<xblock_ptr_t> all_gene_units = mocktable.get_all_genesis_units();
-    for (auto & v : all_gene_units) {
-        resources->get_blockstore()->store_block(base::xvaccount_t(v->get_account()), v.get());
-    }
+    mocktable.store_genesis_units(resources->get_blockstore());
 
     std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(from_addr, to_addr, 2);
     xtable_maker_ptr_t tablemaker = make_object_ptr<xtable_maker_t>(table_addr, resources);
@@ -106,10 +103,7 @@ TEST_F(test_propertyreceipt, propertyreceipt_between_table_tx) {
     std::string from_addr = unit_addrs[0];
     std::string to_addr = mock::xdatamock_address::make_unit_address(base::enum_chain_zone_consensus_index, 9);
 
-    std::vector<xblock_ptr_t> all_gene_units = mocktable.get_all_genesis_units();
-    for (auto & v : all_gene_units) {
-        resources->get_blockstore()->store_block(base::xvaccount_t(v->get_account()), v.get());
-    }
+    mocktable.store_genesis_units(resources->get_blockstore());
 
     std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(from_addr, to_addr, 2);
     xtable_maker_ptr_t tablemaker = make_object_ptr<xtable_maker_t>(table_addr, resources);

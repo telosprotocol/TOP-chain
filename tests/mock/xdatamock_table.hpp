@@ -11,6 +11,10 @@
 #include "xdata/xcons_transaction.h"
 #include "xstore/xstore_face.h"
 #include "xblockmaker/xtable_builder.h"
+#include "xblockmaker/xblock_builder.h"
+#include "xtxexecutor/xbatchtx_executor.h"
+#include "xtxexecutor/xunit_service_error.h"
+#include "xtxexecutor/xatomictx_executor.h"
 #include "xvledger/xvblockstore.h"
 #include "tests/mock/xcertauth_util.hpp"
 #include "tests/mock/xdatamock_unit.hpp"
@@ -53,7 +57,17 @@ class xdatamock_table : public base::xvaccount_t {
     const xtablestate_ptr_t &           get_table_state() const {return m_table_state;}
     const xtablestate_ptr_t &           get_commit_table_state() const {return m_table_states.front();}
     const std::vector<xblock_ptr_t> &   get_history_tables() const {return m_history_tables;}
-    const std::vector<xdatamock_unit> & get_mock_units() const {return m_mock_units;}    
+    const std::vector<xdatamock_unit> & get_mock_units() const {return m_mock_units;} 
+
+    xdatamock_unit                      find_mock_unit(std::string const& addr) {
+        for (auto & mockunit : m_mock_units) {
+            if (mockunit.get_account() == addr) {
+                return mockunit;
+            }
+        }
+        return xdatamock_unit(addr, 0);
+    }
+
     static uint32_t                     get_full_table_interval_count() {return enum_default_full_table_interval_count;}
     xblock_ptr_t                        get_cert_block() const {return m_history_tables.back();}
     xblock_ptr_t                        get_lock_block() const { return m_history_tables.size() == 1 ? m_history_tables[0] : m_history_tables[m_history_tables.size() - 2];}
@@ -103,29 +117,11 @@ class xdatamock_table : public base::xvaccount_t {
         return all_cons_txs;
     }
 
-    void    push_txs(const std::vector<xcons_transaction_ptr_t> & txs) {        
-        for (auto & tx : txs) {
-            push_tx(tx);
-                xtransaction_ptr_t raw_tx_ptr;
-                auto raw_tx = tx->get_transaction();
-                raw_tx->add_ref();
-                raw_tx_ptr.attach(raw_tx);
-                m_raw_txs[tx->get_tx_hash()] = raw_tx_ptr;
-        }
+    void    push_txs(std::vector<xcons_transaction_ptr_t> const& txs) {
+        m_proposal_txs = txs;
     }
-    void    push_tx(const xcons_transaction_ptr_t & tx) {
-        auto account_addr = tx->get_account_addr();
-        for (auto & mockunit : m_mock_units) {
-            if (account_addr == mockunit.get_account()) {
-                mockunit.push_tx(tx, m_raw_txs);
-                return;
-            }
-        }
-        xdatamock_unit datamock_unit(account_addr, xdatamock_unit::enum_default_init_balance);
-        m_mock_units.push_back(datamock_unit);
-        datamock_unit.push_tx(tx, m_raw_txs);
-    }
-    xblock_ptr_t    generate_one_table() {
+
+    xblock_ptr_t    generate_one_table() {        
         xblock_ptr_t block = generate_tableblock();
         xassert(block != nullptr);
         on_table_finish(block);
@@ -135,9 +131,7 @@ class xdatamock_table : public base::xvaccount_t {
     void    genrate_table_chain(uint64_t max_block_height, base::xvblockstore_t* blockstore) {
         for (uint64_t i = 0; i < max_block_height; i++) {
             generate_send_tx(); // auto generate txs internal
-            xblock_ptr_t block = generate_tableblock();
-            xassert(block != nullptr);
-            on_table_finish(block);
+            generate_one_table();
         }
 
         // store genesis units
@@ -177,6 +171,7 @@ class xdatamock_table : public base::xvaccount_t {
         return proposal_block;
     }
     void on_table_finish(const xblock_ptr_t & block) {
+        // std::cout << "this:" << this << "  on_table_finish:" << block->dump() << std::endl;
         if (block->get_height() > 0) {
             xassert(block->get_account() == get_account());
             xassert(block->get_height() == (m_history_tables.back()->get_height() + 1));
@@ -189,14 +184,13 @@ class xdatamock_table : public base::xvaccount_t {
             std::vector<xobject_ptr_t<base::xvblock_t>> sub_blocks;
             block->extract_sub_blocks(sub_blocks);
             for (auto & unit : sub_blocks) {
+                xassert(!unit->get_block_hash().empty());                           
                 on_unit_finish(unit);
             }
         }
 
-        //clear all unit mock txs
-        for (auto & mockunit : m_mock_units) {
-            mockunit.clear_txs();
-        }
+        m_batch_units.clear();
+        m_proposal_txs.clear();
     }
 
     void on_unit_finish(const xobject_ptr_t<base::xvblock_t> & unit) {
@@ -204,8 +198,12 @@ class xdatamock_table : public base::xvaccount_t {
         for (auto & mockunit : m_mock_units) {
             if (unit->get_account() == mockunit.get_account()) {
                 mockunit.on_unit_finish(_unit_ptr);
+                return;
             }
         }
+        xdatamock_unit s_mockunit = find_mock_unit(unit->get_account());
+        s_mockunit.on_unit_finish(_unit_ptr);
+        m_mock_units.push_back(s_mockunit);
     }
 
  private:
@@ -241,7 +239,7 @@ class xdatamock_table : public base::xvaccount_t {
                 }
             }            
         }
-        m_table_state = std::make_shared<xtable_bstate_t>(current_state.get());
+        m_table_state = std::make_shared<xtable_bstate_t>(current_state.get(), false);
         m_table_states.push_back(m_table_state);
         if (m_table_states.size() > 3) {
             m_table_states.pop_front();
@@ -268,39 +266,107 @@ class xdatamock_table : public base::xvaccount_t {
 
     }
 
+    bool set_tx_table_state(const data::xtablestate_ptr_t & tablestate, const xcons_transaction_ptr_t & tx) {
+        if ((tx->is_self_tx() || tx->get_inner_table_flag())) {
+            xdbg("xatomictx_executor_t::set_tx_table_state not need.tx=%s", tx->dump().c_str());
+            return true;
+        }
+
+        base::xtable_shortid_t peer_tableid = tx->get_peer_tableid();
+        base::xreceiptid_pair_t receiptid_pair;
+        tablestate->find_receiptid_pair(peer_tableid, receiptid_pair);
+
+        if (data::xblocktool_t::alloc_transaction_receiptid(tx, receiptid_pair)) {
+            tablestate->set_receiptid_pair(peer_tableid, receiptid_pair);  // save to modified pairs
+            xinfo("xatomictx_executor_t::set_tx_table_state succ.tx=%s,pair=%s", tx->dump().c_str(), receiptid_pair.dump().c_str());
+        } else {
+            xerror("xatomictx_executor_t::set_tx_table_state fail.tx=%s,pair=%s", tx->dump().c_str(), receiptid_pair.dump().c_str());
+        }
+        return true;
+    }
+
+    data::xtablestate_ptr_t  build_proposal_state() {
+        // create proposal header, clock use to set block version
+        base::xauto_ptr<base::xvheader_t> _temp_header = base::xvblockbuild_t::build_proposal_header(get_cert_block().get(), get_cert_block()->get_clock()+1);
+        // always clone new state
+        xobject_ptr_t<base::xvbstate_t> proposal_bstate = make_object_ptr<base::xvbstate_t>(*_temp_header.get(), *(m_table_state->get_bstate()));
+
+        return std::make_shared<data::xtable_bstate_t>(proposal_bstate.get(), false);
+    }
+
     xblock_ptr_t generate_batch_table(const data::xblock_consensus_para_t & cs_para) {
         const base::xreceiptid_state_ptr_t & receiptid_state = m_table_state->get_receiptid_state();
         receiptid_state->clear_pair_modified();
+        // create units
+        m_batch_units.clear();        
 
-        std::vector<xblock_ptr_t>   units;
-        std::vector<xlightunit_tx_info_ptr_t> txs_info;
-        for (auto & mockunit : m_mock_units) {
-            xblock_ptr_t unit = mockunit.generate_unit(receiptid_state, cs_para);
-            if (unit != nullptr) {
-                units.push_back(unit);
+        data::xtablestate_ptr_t proposal_table_state = build_proposal_state();
+        std::map<std::string, data::xunitstate_ptr_t>  proposal_states;
+
+        txexecutor::xexecute_output_t execute_output;
+        for (auto & tx : m_proposal_txs) {                
+            if (tx->is_send_or_self_tx() || tx->is_confirm_tx())
+            {
+                base::xvaccount_t _source_vaddr(tx->get_source_addr());
+                xdatamock_unit s_mockunit = find_mock_unit(tx->get_source_addr());
+                data::xunitstate_ptr_t pstate;
+                auto iter = proposal_states.find(s_mockunit.get_account());
+                if (iter != proposal_states.end()) {
+                    pstate = iter->second;
+                } else {
+                    pstate = s_mockunit.build_proposal_state();
+                    proposal_states[s_mockunit.get_account()] = pstate;
+                }
+                
+                pstate->token_withdraw(data::XPROPERTY_BALANCE_AVAILABLE, base::vtoken_t(1));        
             }
-            auto txs = mockunit.get_exec_txs();
-            // if (unit != nullptr && unit->get_block_class() == enum_xvblock_class_full) {
-            //     EXPECT_EQ(txs.size(), 1);
-            // }
-            for (auto & tx : txs) {
-                base::xvaction_t _action = data::xblockaction_build_t::make_tx_action(tx);
-                xlightunit_tx_info_ptr_t txinfo = std::make_shared<xlightunit_tx_info_t>(_action, tx->get_transaction());
-                txs_info.push_back(txinfo);
+
+            if (tx->is_recv_tx())
+            {
+                base::xvaccount_t _source_vaddr(tx->get_target_addr());
+                xdatamock_unit s_mockunit = find_mock_unit(tx->get_target_addr());
+                data::xunitstate_ptr_t pstate;
+                auto iter = proposal_states.find(s_mockunit.get_account());
+                if (iter != proposal_states.end()) {
+                    pstate = iter->second;
+                } else {
+                    pstate = s_mockunit.build_proposal_state();
+                    proposal_states[s_mockunit.get_account()] = pstate;
+                }
+
+                pstate->token_deposit(data::XPROPERTY_BALANCE_AVAILABLE, base::vtoken_t(1));      
             }
-            mockunit.clear_exec_txs();
+
+            txexecutor::xatomictx_output_t output;
+            output.m_tx = tx;
+            execute_output.pack_outputs.push_back(output);         
+
+            set_tx_table_state(proposal_table_state, tx);   
         }
-        xassert(units.size() > 0);
+
+        for (auto & v : proposal_states) {
+            xdatamock_unit s_mockunit = find_mock_unit(v.first);
+
+            blockmaker::xunitbuilder_para_t unit_para({});
+            data::xblock_ptr_t unitblock = blockmaker::xunitbuilder_t::make_block(s_mockunit.get_cert_block(), v.second, unit_para, cs_para);
+            xassert(unitblock != nullptr);
+            m_batch_units.push_back(unitblock);          
+        }
 
         cs_para.set_justify_cert_hash(get_lock_block()->get_input_root_hash());
         cs_para.set_parent_height(0);
-        xblock_builder_para_ptr_t build_para = std::make_shared<xlighttable_builder_para_t>(units, m_default_resources, txs_info);
-        xblock_ptr_t proposal_block = m_lighttable_builder->build_block(get_cert_block(), m_table_state->get_bstate(), cs_para, build_para);
+        data::xtable_block_para_t lighttable_para;
+        xtablebuilder_t::make_table_block_para(m_batch_units, proposal_table_state, execute_output, lighttable_para);
+        data::xblock_ptr_t proposal_block = blockmaker::xtablebuilder_t::make_light_block(get_cert_block(),
+                                                                            cs_para,
+                                                                            lighttable_para);
+        xassert(nullptr != proposal_block);                                                                            
         return proposal_block;
     }
 
     void generate_send_tx() {
         xassert(m_mock_units.size() > 1);
+        m_proposal_txs.clear();
         uint32_t txs_count = 0;
         for (uint32_t i = 0; i < m_mock_units.size(); i++) {
             uint32_t send_index = (m_last_generate_send_tx_user_index) % m_mock_units.size();
@@ -308,7 +374,7 @@ class xdatamock_table : public base::xvaccount_t {
             xdatamock_unit & send_mockunit = m_mock_units[send_index];
             xdatamock_unit & recv_mockunit = m_mock_units[recv_index];
             std::vector<xcons_transaction_ptr_t> txs = send_mockunit.generate_transfer_tx(recv_mockunit.get_account(), 1);
-            send_mockunit.push_txs(txs);
+            m_proposal_txs.insert(m_proposal_txs.end(), txs.begin(), txs.end());
 
             m_last_generate_send_tx_user_index = (m_last_generate_send_tx_user_index + 1) % m_mock_units.size();
 
@@ -320,6 +386,9 @@ class xdatamock_table : public base::xvaccount_t {
     }
 
  private:
+    std::vector<xcons_transaction_ptr_t>    m_proposal_txs;
+    std::vector<xblock_ptr_t>               m_batch_units;
+
     std::map<std::string, xtransaction_ptr_t> m_raw_txs;
     xtablestate_ptr_t               m_table_state{nullptr};
     std::deque<xtablestate_ptr_t>   m_table_states;  // save cert/lock/commit table states
