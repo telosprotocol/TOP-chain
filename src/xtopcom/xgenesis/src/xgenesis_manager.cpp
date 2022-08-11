@@ -190,6 +190,8 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_evm_con
         bstate->new_string_var(data::system_contract::XPROPERTY_LAST_HASH, canvas.get());
         auto bytes = (evm_common::h256()).asBytes();
         bstate->load_string_var(data::system_contract::XPROPERTY_LAST_HASH)->reset({bytes.begin(), bytes.end()}, canvas.get());
+        bstate->new_string_var(data::system_contract::XPROPERTY_RESET_FLAG, canvas.get());
+        bstate->load_string_var(data::system_contract::XPROPERTY_RESET_FLAG)->reset(top::to_string(0), canvas.get());
         // create
         base::xauto_ptr<base::xvblock_t> genesis_block = data::xblocktool_t::create_genesis_lightunit(bstate, canvas);
         xassert(genesis_block != nullptr);

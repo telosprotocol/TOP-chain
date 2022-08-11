@@ -68,8 +68,11 @@ public:
     evm_common::bigint get_height(state_ptr state) const {
         return static_cast<const T*>(this)->get_height(state);
     }
-    void reset(state_ptr state) {
+    bool reset(state_ptr state) {
         return static_cast<T*>(this)->reset(state);
+    }
+    bool disable_reset(state_ptr state) {
+        return static_cast<T*>(this)->disable_reset(state);
     }
 
     std::set<std::string> m_whitelist;
@@ -91,6 +94,7 @@ inline bool xtop_evm_crosschain_syscontract_face<T>::execute(xbytes_t input,
     // is_known(uint256,bytes32)             => 6d571daf
     // is_confirmed(uint256,bytes32)         => d398572f
     // reset()                               => d826f88f
+    // disable_reset()                       => b5a61069
     //--------------------------------------------------
     constexpr uint32_t method_id_init{0x6158600d};
     constexpr uint32_t method_id_sync{0x7eefcfa2};
@@ -98,6 +102,7 @@ inline bool xtop_evm_crosschain_syscontract_face<T>::execute(xbytes_t input,
     constexpr uint32_t method_id_is_known{0x6d571daf};
     constexpr uint32_t method_id_is_confirmed{0xd398572f};
     constexpr uint32_t method_id_reset{0xd826f88f};
+    constexpr uint32_t method_id_disable_reset{0xb5a61069};
 
     // check param
     assert(state_ctx);
@@ -267,6 +272,20 @@ inline bool xtop_evm_crosschain_syscontract_face<T>::execute(xbytes_t input,
             return false;
         }
         reset(state);
+        output.exit_status = Returned;
+        output.cost = 0;
+        output.output = evm_common::toBigEndian(static_cast<evm_common::u256>(0));
+        return true;
+    }
+    case method_id_disable_reset: {
+        if (!m_whitelist.empty() && !m_whitelist.count(context.caller.to_hex_string())) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
+            err.cost = 50000;
+            xwarn("[xtop_evm_crosschain_syscontract_face::execute] caller %s not in the list", context.caller.to_hex_string().c_str());
+            return false;
+        }
+        disable_reset(state);
         output.exit_status = Returned;
         output.cost = 0;
         output.output = evm_common::toBigEndian(static_cast<evm_common::u256>(0));

@@ -24,7 +24,8 @@ public:
     bool is_known(const u256 height, const xbytes_t & hash_bytes, state_ptr state) const;
     bool is_confirmed(const u256 height, const xbytes_t & hash_bytes, state_ptr state) const;
     bigint get_height(state_ptr state) const;
-    void reset(state_ptr state);
+    bool reset(state_ptr state);
+    bool disable_reset(state_ptr state);
 
 private:
     bool verify(const xeth_header_t & prev_header, const xeth_header_t & new_header, xvalidators_snapshot_t & snap, state_ptr state) const;
@@ -50,6 +51,9 @@ private:
     bool get_snap_info(const h256 hash, xvalidators_snap_info_t & snap_info, state_ptr state) const;
     bool set_snap_info(const h256 hash, const xvalidators_snap_info_t & snap_info, state_ptr state);
     bool remove_snap_info(const h256 hash, state_ptr state);
+    // flag @165
+    int get_flag(state_ptr state) const;
+    bool set_flag(state_ptr state);
 };
 using xevm_heco_client_contract_t = xtop_evm_heco_client_contract;
 

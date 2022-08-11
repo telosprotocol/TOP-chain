@@ -24,7 +24,8 @@ public:
     bool is_known(const u256 height, const xbytes_t & hash_bytes, state_ptr state) const;
     bool is_confirmed(const u256 height, const xbytes_t & hash_bytes, state_ptr state) const;
     bigint get_height(state_ptr state) const;
-    void reset(state_ptr state);
+    bool reset(state_ptr state);
+    bool disable_reset(state_ptr state);
 
 private:
     bool verify(const xeth_header_t & prev_header, const xeth_header_t & new_header, const std::vector<double_node_with_merkle_proof> & nodes) const;
@@ -51,6 +52,9 @@ private:
     bool get_header_info(const h256 hash, xeth_header_info_t & header_info, state_ptr state) const;
     bool set_header_info(const h256 hash, const xeth_header_info_t & header_info, state_ptr state);
     bool remove_header_info(const h256 hash, state_ptr state);
+    // flag @165
+    int get_flag(state_ptr state) const;
+    bool set_flag(state_ptr state);
 };
 using xevm_eth_bridge_contract_t = xtop_evm_eth_bridge_contract;
 

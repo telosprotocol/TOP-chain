@@ -179,12 +179,21 @@ bool xtop_evm_heco_client_contract::sync(const xbytes_t & rlp_bytes, state_ptr s
     return true;
 }
 
-void xtop_evm_heco_client_contract::reset(state_ptr state) {
+bool xtop_evm_heco_client_contract::reset(state_ptr state) {
+    if (get_flag(state) != 0) {
+        xwarn("[xtop_evm_heco_client_contract::reset] flag not 0");
+        return false;
+    }
     state->map_clear(data::system_contract::XPROPERTY_EFFECTIVE_HASHES);
     state->map_clear(data::system_contract::XPROPERTY_ALL_HASHES);
     state->map_clear(data::system_contract::XPROPERTY_HEADERS);
     state->map_clear(data::system_contract::XPROPERTY_HEADERS_SUMMARY);
     set_last_hash(h256(), state);
+    return true;
+}
+
+bool xtop_evm_heco_client_contract::disable_reset(state_ptr state) {
+    return set_flag(state);
 }
 
 bigint xtop_evm_heco_client_contract::get_height(state_ptr state) const {
@@ -553,6 +562,21 @@ h256 xtop_evm_heco_client_contract::get_last_hash(state_ptr state) const {
 bool xtop_evm_heco_client_contract::set_last_hash(const h256 hash, state_ptr state) {
     auto bytes = hash.asBytes();
     if (0 != state->string_set(data::system_contract::XPROPERTY_LAST_HASH, {bytes.begin(), bytes.end()})) {
+        return false;
+    }
+    return true;
+}
+
+int xtop_evm_heco_client_contract::get_flag(state_ptr state) const {
+    auto flag_str = state->string_get(data::system_contract::XPROPERTY_RESET_FLAG);
+    if (flag_str.empty()) {
+        return -1;
+    }
+    return from_string<int>(flag_str);
+}
+
+bool xtop_evm_heco_client_contract::set_flag(state_ptr state) {
+    if (0 != state->string_set(data::system_contract::XPROPERTY_RESET_FLAG, top::to_string(1))) {
         return false;
     }
     return true;
