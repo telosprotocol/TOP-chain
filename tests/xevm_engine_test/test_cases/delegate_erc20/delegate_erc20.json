@@ -1239,6 +1239,20 @@
             }
         },
         {
+            "__comments": "transferOwnership_eth: owner already transfered",
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "target_address": "erc20_eth",
+            "data": "0xf2fde38b000000000000000000000000f8a1e199c49c2ae2682ecc5b4a8838b39bab1a38",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 1,
+                "extra_message": "",
+                "gas_used": 28695,
+                "logs": []
+            }
+        },
+        {
             "__comments": "transferOwnership_eth_staticcall",
             "src_address": "T600040393b136b79e16360d246450c5bb9d39d8ad1fb6",
             "target_address": "staticcall_erc20_eth",
@@ -1291,6 +1305,20 @@
             }
         },
         {
+            "__comments": "transferOwnership_usdt: owner already transfered",
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "target_address": "erc20_usdt",
+            "data": "0xf2fde38b000000000000000000000000f8a1e199c49c2ae2682ecc5b4a8838b39bab1a38",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 1,
+                "extra_message": "",
+                "gas_used": 28695,
+                "logs": []
+            }
+        },
+        {
             "__comments": "transferOwnership_usdt_staticcall",
             "src_address": "T600040393b136b79e16360d246450c5bb9d39d8ad1fb6",
             "target_address": "staticcall_erc20_usdt",
@@ -1333,27 +1361,17 @@
             }
         },
         {
-            "__comments": "setController_eth",
+            "__comments": "setController_eth: controller already set before",
             "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea3",
             "target_address": "erc20_eth",
             "data": "0x92eefe9b0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3",
             "gas_limit": 34000,
             "value": "0",
             "expected": {
-                "status": 0,
-                "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000001",
-                "gas_used": 25012,
-                "logs": [
-                    {
-                        "address": "erc20_eth",
-                        "topics": [
-                            "0xea4ba01507e54b7b5990927a832da3ab6a71e981b5d53ffad97def0f85fcfb20",
-                            "0x0000000000000000000000000393b136b79e16360d246450c5bb9d39d8ad1fb6",
-                            "0x0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3"
-                        ],
-                        "data": ""
-                    }
-                ]
+                "status": 1,
+                "extra_message": "",
+                "gas_used": 28695,
+                "logs": []
             }
         },
         {
@@ -1385,27 +1403,17 @@
             }
         },
         {
-            "__comments": "setController_usdt",
+            "__comments": "setController_usdt: controller already set before",
             "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea3",
             "target_address": "erc20_usdt",
             "data": "0x92eefe9b0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3",
             "gas_limit": 34000,
             "value": "0",
             "expected": {
-                "status": 0,
-                "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000001",
-                "gas_used": 25012,
-                "logs": [
-                    {
-                        "address": "erc20_usdt",
-                        "topics": [
-                            "0xea4ba01507e54b7b5990927a832da3ab6a71e981b5d53ffad97def0f85fcfb20",
-                            "0x0000000000000000000000000393b136b79e16360d246450c5bb9d39d8ad1fb6",
-                            "0x0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3"
-                        ],
-                        "data": ""
-                    }
-                ]
+                "status": 1,
+                "extra_message": "",
+                "gas_used": 28695,
+                "logs": []
             }
         },
         {

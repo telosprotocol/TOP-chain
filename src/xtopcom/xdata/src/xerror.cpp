@@ -56,6 +56,12 @@ static char const * const errc_to_string(int code) {
     case xerrc_t::erc20_allowance_not_enough:
         return "erc20 allowance not enough";
 
+    case xerrc_t::erc20_controller_already_set:
+        return "erc20 controller already set";
+
+    case xerrc_t::erc20_owner_already_set:
+        return "erc20 owner already set";
+
     case xerrc_t::eth_server_error:
         return "eth transaction server error";
     case xerrc_t::eth_invalid_params:

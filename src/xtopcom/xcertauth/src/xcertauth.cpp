@@ -295,7 +295,7 @@ namespace top
             base::xauto_ptr<base::xvnode_t> verify_node = m_node_service.get_node(signer);
             if(verify_node == nullptr)
             {
-                xerror("xauthcontext_t_impl::verify_sign,fail-found target nodes for signer(%" PRIx64 " : %" PRIx64 ")",signer.high_addr,signer.low_addr);
+                xwarn("xauthcontext_t_impl::verify_sign,fail-found target nodes for signer(%" PRIx64 " : %" PRIx64 ")",signer.high_addr,signer.low_addr);
                 return base::enum_vcert_auth_result::enum_nodes_notfound;
             }
             const uint64_t auth_mutisign_token = test_for_cert->get_viewid() + test_for_cert->get_viewtoken();
