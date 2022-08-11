@@ -129,9 +129,6 @@ bool xtxstoreimpl::store_relay_txs(base::xvblock_t * block_ptr) {
         return true;
     }
 
-    //extra_relay_block.build_finish();
-    evm_common::h256 hash = extra_relay_block.get_block_hash();
-    std::string block_hash_str((char *)hash.data(), hash.size);
 
     // get tx hash from txs
     bool has_error = false;
@@ -139,7 +136,6 @@ bool xtxstoreimpl::store_relay_txs(base::xvblock_t * block_ptr) {
         auto tx_hash_u256 = tx.get_tx_hash();
         std::string tx_hash = std::string(reinterpret_cast<char *>(tx_hash_u256.data()), tx_hash_u256.size());
         base::xvtxindex_ptr tx_index = make_object_ptr<base::xvtxindex_t>(*block_ptr, tx_hash, base::enum_transaction_subtype_send);
-        tx_index->set_block_hash(block_hash_str);
 
         base::enum_txindex_type txindex_type = base::xvtxkey_t::transaction_subtype_to_txindex_type(tx_index->get_tx_phase_type());
         const std::string tx_key = base::xvdbkey_t::create_prunable_relay_tx_index_key(tx_index->get_tx_hash(), txindex_type);

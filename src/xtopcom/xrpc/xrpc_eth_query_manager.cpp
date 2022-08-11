@@ -373,9 +373,15 @@ void xrpc_eth_query_manager::eth_getBlockByNumber(xJson::Value & js_req, xJson::
     return;
 }
 void xrpc_eth_query_manager::set_block_result(const xobject_ptr_t<base::xvblock_t>&  block, xJson::Value& js_result, bool fullTx, std::error_code & ec) {
+    base::xvaccount_t _vaddress(block->get_account());
+    if (!_vaddress.is_table_address()) {
+        ec = common::error::xerrc_t::invalid_db_load;
+        xwarn("xrpc_eth_query_manager::set_block_result,fail invalid input for block:%s", block->dump().c_str());
+        return;
+    }
+
     // TODO(jimmy) block size need load input and output. transactions hash need load input
     if (block->get_block_class() != base::enum_xvblock_class_nil) {
-        base::xvaccount_t _vaddress(block->get_account());
         if (false == base::xvchain_t::instance().get_xblockstore()->load_block_input(_vaddress, block.get())) {
             ec = common::error::xerrc_t::invalid_db_load;
             xerror("xrpc_eth_query_manager::set_block_result,fail to load block input for block:%s", block->dump().c_str());

@@ -126,6 +126,7 @@ void xblockextract_t::unpack_ethheader(base::xvblock_t* _block, xeth_header_t & 
         return;
     }
 
+    xassert(_block->get_block_level() == base::enum_xvblock_level_table);
     data::xtableheader_extra_t header_extra;
     get_tableheader_extra_from_block(_block, header_extra, ec);
     if (ec) {
@@ -450,18 +451,18 @@ void xblockextract_t::unpack_subblocks(base::xvblock_t* _block, std::vector<xobj
     sublocks = xlighttable_build_t::unpack_units_from_table(_block);
     xdbg("xblockextract_t::unpack_subblocks succ.block=%s,sublocks=%zu",_block->dump().c_str(),sublocks.size());
     
-    // TODO(jimmy)
-    if (_block->get_account() == sys_contract_relay_table_block_addr) {
-        xobject_ptr_t<base::xvblock_t> wrap_relayblock = xblockextract_t::unpack_wrap_relayblock_from_relay_table(_block, ec);
-        if (ec) {
-            xerror("xblockextract_t::unpack_subblocks fail-unpack_wrap_relayblock_from_relay_table.");
-            return;
-        }
-        if (wrap_relayblock != nullptr) {
-            sublocks.push_back(wrap_relayblock);
-            xinfo("xblockextract_t::unpack_subblocks succ.block=%s,wrapblock=%s",_block->dump().c_str(),wrap_relayblock->dump().c_str());            
-        }
-    }
+    // // TODO(jimmy)
+    // if (_block->get_account() == sys_contract_relay_table_block_addr) {
+    //     xobject_ptr_t<base::xvblock_t> wrap_relayblock = xblockextract_t::unpack_wrap_relayblock_from_relay_table(_block, ec);
+    //     if (ec) {
+    //         xerror("xblockextract_t::unpack_subblocks fail-unpack_wrap_relayblock_from_relay_table.");
+    //         return;
+    //     }
+    //     if (wrap_relayblock != nullptr) {
+    //         sublocks.push_back(wrap_relayblock);
+    //         xinfo("xblockextract_t::unpack_subblocks succ.block=%s,wrapblock=%s",_block->dump().c_str(),wrap_relayblock->dump().c_str());            
+    //     }
+    // }
 }
 
 NS_END2
