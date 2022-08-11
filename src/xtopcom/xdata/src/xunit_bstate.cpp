@@ -553,17 +553,37 @@ xbytes_t xunit_bstate_t::raw_owner(common::xchain_uuid_t const chain_uuid, std::
 void xunit_bstate_t::raw_owner(common::xchain_uuid_t const chain_uuid, xbytes_t const & raw_data, std::error_code & ec) {
     assert(!ec);
 
-    xobject_ptr_t<base::xmapvar_t<std::string>> const property = raw_owner(ec);
+    xobject_ptr_t<base::xmapvar_t<std::string>> const owner = raw_owner(ec);
     if (ec) {
-        xwarn("get raw owner property failed.");
+        xwarn("set TEP token owner failed: get property failed.");
         return;
     }
 
-    if (property->insert(top::to_string(chain_uuid), top::to_string(raw_data), m_canvas.get()) == false) {
+    do {
+        auto const & owner_account_string = owner->query(top::to_string(chain_uuid));
+        if (owner_account_string.empty()) {
+            break;
+        }
+
+        auto const & owner_account = common::xaccount_address_t::build_from(owner_account_string, ec);
+        if (ec) {
+            break;
+        }
+
+        if (owner_account.empty() || owner_account == eth_zero_address) {
+            break;
+        }
+
+        ec = error::xerrc_t::erc20_owner_already_set;
+        xwarn("set TEP token owner failed: owner already set for chain uuid %" PRIu16 ". input owner account %s", top::to_string(raw_data).c_str());
+        return;
+    } while (false);
+
+    if (owner->insert(top::to_string(chain_uuid), top::to_string(raw_data), m_canvas.get()) == false) {
         ec = error::xerrc_t::update_state_failed;
         xerror("update XPROPERTY_PRECOMPILED_ERC20_OWNER_KEY failed. token_id %" PRIu32, static_cast<uint32_t>(chain_uuid));
     }
-    assert(top::to_bytes(property->query(top::to_string(chain_uuid))) == raw_data);
+    assert(top::to_bytes(owner->query(top::to_string(chain_uuid))) == raw_data);
 }
 
 common::xaccount_address_t xunit_bstate_t::owner_impl(xbytes_t const & owner_account_in_bytes, std::error_code & ec) const {
@@ -603,7 +623,13 @@ common::xaccount_address_t xunit_bstate_t::tep_token_controller(common::xchain_u
 
 void xunit_bstate_t::tep_token_controller(common::xchain_uuid_t const chain_uuid, common::xaccount_address_t const & new_controller, std::error_code & ec) {
     assert(!ec);
-    auto const account_bytes = new_controller.empty() ? xbytes_t{} : top::to_bytes(new_controller.value());
+    if (new_controller.empty()) {
+        ec = common::error::xerrc_t::invalid_account_address;
+        xwarn("set TEP token controller failed: controller account is empty");
+        return;
+    }
+
+    auto const account_bytes = top::to_bytes(new_controller.value());
 
     raw_controller(chain_uuid, account_bytes, ec);
 }
@@ -642,17 +668,38 @@ xbytes_t xunit_bstate_t::raw_controller(common::xchain_uuid_t const chain_uuid, 
 
 void xunit_bstate_t::raw_controller(common::xchain_uuid_t const chain_uuid, xbytes_t const & raw_data, std::error_code & ec) {
     assert(!ec);
+    assert(!raw_data.empty());
 
-    xobject_ptr_t<base::xmapvar_t<std::string>> property = raw_controller(ec);
+    xobject_ptr_t<base::xmapvar_t<std::string>> const controller = raw_controller(ec);
     if (ec) {
         return;
     }
 
-    if (property->insert(top::to_string(chain_uuid), top::to_string(raw_data), m_canvas.get()) == false) {
+    do {
+        auto const & controller_account_string = controller->query(top::to_string(chain_uuid));
+        if (controller_account_string.empty()) {
+            break;
+        }
+
+        auto const & controller_account = common::xaccount_address_t::build_from(controller_account_string, ec);
+        if (ec) {
+            break;
+        }
+
+        if (controller_account.empty() || controller_account == eth_zero_address) {
+            break;
+        }
+
+        ec = error::xerrc_t::erc20_controller_already_set;
+        xwarn("set TEP token controller failed: controller already set for chain uuid %" PRIu16 ". input controller account %s", top::to_string(raw_data).c_str());
+        return;
+    } while (false);
+
+    if (controller->insert(top::to_string(chain_uuid), top::to_string(raw_data), m_canvas.get()) == false) {
         ec = error::xerrc_t::update_state_failed;
         xerror("update XPROPERTY_PRECOMPILED_ERC20_CONTROLLER_KEY failed. token_id %" PRIu32, static_cast<uint32_t>(chain_uuid));
     }
-    assert(top::to_bytes(property->query(top::to_string(chain_uuid))) == raw_data);
+    assert(top::to_bytes(controller->query(top::to_string(chain_uuid))) == raw_data);
 }
 
 common::xaccount_address_t xunit_bstate_t::controller_impl(xbytes_t const & controller_account_in_bytes, std::error_code & ec) const {

@@ -33,6 +33,8 @@ enum class xenum_errc {
 
     erc20_allowance_spender_not_found,
     erc20_allowance_not_enough,
+    erc20_controller_already_set,
+    erc20_owner_already_set,
 
     eth_server_error = -32000,
 
