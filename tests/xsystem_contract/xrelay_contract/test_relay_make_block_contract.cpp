@@ -260,7 +260,7 @@ TEST_F(xtop_test_relay_make_block_contract, build_poly_relay_block) {
     EXPECT_EQ(LIST_SIZE(XPROPERTY_RELAY_BLOCK_HASH_LAST_ELECT_TO_LAST_POLY_LIST), 3);
 }
 
-TEST_F(xtop_test_relay_make_block_contract, on_make_block_fail) {
+TEST_F(xtop_test_relay_make_block_contract, on_make_block_invalid) {
     PREPAIR
 
     on_make_block("");

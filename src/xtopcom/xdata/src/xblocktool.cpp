@@ -437,47 +437,6 @@ bool xblocktool_t::can_make_next_full_table(base::xvblock_t* latest_cert_block, 
     return false;
 }
 
-void xblocktool_t::alloc_transaction_receiptid(const xcons_transaction_ptr_t & tx, const base::xreceiptid_state_ptr_t & receiptid_state) {
-    if (tx->is_self_tx() || tx->get_inner_table_flag()) {
-        return;  // self tx has none receiptid
-    }
-
-    base::xtable_shortid_t self_tableid = tx->get_self_tableid();
-    base::xtable_shortid_t peer_tableid = tx->get_peer_tableid();
-    base::xreceiptid_pair_t receiptid_pair;
-    receiptid_state->find_pair_modified(peer_tableid, receiptid_pair);
-    uint64_t current_receipt_id = 0;
-    uint64_t current_rsp_id = 0;
-    if (tx->is_send_tx()) {
-        // alloc new receipt id for send tx
-        current_receipt_id = receiptid_pair.get_sendid_max() + 1;
-        receiptid_pair.set_sendid_max(current_receipt_id);
-        
-        if (!tx->get_not_need_confirm()) {
-            current_rsp_id = receiptid_pair.get_send_rsp_id_max() + 1;
-            receiptid_pair.set_send_rsp_id_max(current_rsp_id);
-        }
-    } else {
-        // copy last actiion receipt id for recv tx and confirm tx
-        current_receipt_id = tx->get_last_action_receipt_id();
-        current_rsp_id = tx->get_last_action_rsp_id();
-    }
-    // update receipt id info to tx action result
-    tx->set_current_receipt_id(self_tableid, peer_tableid, current_receipt_id);
-    if (current_rsp_id != 0) {
-        tx->set_current_rsp_id(current_rsp_id);
-    }
-    if (tx->is_send_tx()) {
-        tx->set_current_sender_confirmed_receipt_id(receiptid_pair.get_confirmid_max());
-    }
-    // else if (tx->is_recv_tx()) {  //TODO(jimmy) not take for recv tx
-    //     uint64_t sender_confirmed_id = tx->get_last_action_sender_confirmed_receipt_id();
-    //     tx->set_current_sender_confirmed_receipt_id(sender_confirmed_id);
-    // }
-    receiptid_state->add_pair_modified(peer_tableid, receiptid_pair);  // save to modified pairs
-    xdbg("xblocktool_t::alloc_transaction_receiptid tx=%s,receiptid=%ld,confirmid_max=%ld,sender_confirmed_id=%ld", tx->dump().c_str(), current_receipt_id, receiptid_pair.get_confirmid_max(), tx->get_last_action_sender_confirmed_receipt_id());
-}
-
 bool xblocktool_t::alloc_transaction_receiptid(const xcons_transaction_ptr_t & tx, base::xreceiptid_pair_t & receiptid_pair) {
     if (tx->is_self_tx() || tx->get_inner_table_flag()) {
         xassert(false);

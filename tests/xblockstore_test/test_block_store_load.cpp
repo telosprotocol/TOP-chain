@@ -265,8 +265,9 @@ TEST_F(test_block_store_load, mock_table_unit_1) {
 
     std::vector<xcons_transaction_ptr_t> confirm_txs = mocktable.create_receipts(_tableblock2);
     xassert(confirm_txs.size() == send_txs.size());
-    for (auto & tx : confirm_txs) {
-        xassert(tx->is_confirm_tx());
+    for (uint32_t i = 0; i < confirm_txs.size(); i++) {
+        xassert(confirm_txs[i]->is_confirm_tx());
+        confirm_txs[i]->set_raw_tx(send_txs[i]->get_transaction());
     }
     mocktable.push_txs(confirm_txs); 
     xblock_ptr_t _tableblock3 = mocktable.generate_one_table();
@@ -279,42 +280,6 @@ TEST_F(test_block_store_load, mock_table_unit_1) {
         _tableblock3->extract_sub_blocks(sub_blocks);
         xassert(sub_blocks.size() == 1);
     }    
-}
-
-TEST_F(test_block_store_load, mock_table_unit_2) {
-    mock::xvchain_creator creator(true);
-    base::xvblockstore_t* blockstore = creator.get_blockstore();
-
-    mock::xdatamock_table mocktable(1, 4);
-    std::vector<std::string> unit_addrs = mocktable.get_unit_accounts();
-    std::string from_addr = unit_addrs[0];
-    std::string to_addr = unit_addrs[3];
-
-    std::vector<xcons_transaction_ptr_t> send_txs = mocktable.create_send_txs(from_addr, to_addr, 2);
-    mocktable.push_txs(send_txs);
-    xblock_ptr_t _tableblock1 = mocktable.generate_one_table();
-    mocktable.generate_one_table();
-    mocktable.generate_one_table();
-
-    std::vector<xcons_transaction_ptr_t> recv_txs = mocktable.create_receipts(_tableblock1);
-    xassert(recv_txs.size() == send_txs.size());
-    for (auto & tx : recv_txs) {
-        xassert(tx->is_recv_tx());
-    }
-    mocktable.push_txs(recv_txs);    
-    xblock_ptr_t _tableblock2 = mocktable.generate_one_table();
-    mocktable.generate_one_table();
-    mocktable.generate_one_table();    
-
-    std::vector<xcons_transaction_ptr_t> confirm_txs = mocktable.create_receipts(_tableblock2);
-    xassert(confirm_txs.size() == send_txs.size());
-    for (auto & tx : confirm_txs) {
-        xassert(tx->is_confirm_tx());
-    }
-    mocktable.push_txs(confirm_txs); 
-    xblock_ptr_t _tableblock3 = mocktable.generate_one_table();
-    mocktable.generate_one_table();
-    mocktable.generate_one_table();
 }
 
 void print_store_metrics(const db::xdb_meta_t & db_meta) {
