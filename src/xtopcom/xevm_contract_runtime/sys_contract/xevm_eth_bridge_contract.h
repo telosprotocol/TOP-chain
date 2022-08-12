@@ -21,6 +21,12 @@ using evm_common::eth::xeth_header_info_t;
 using evm_common::eth::xeth_header_t;
 using evm_common::ethash::double_node_with_merkle_proof;
 
+enum class xheader_status_t : uint8_t {
+    header_overdue = 0,
+    header_confirmed = 1,
+    header_not_confirmed = 2,
+};
+
 class xtop_evm_eth_bridge_contract : public xevm_crosschain_syscontract_face_t {
 public:
     xtop_evm_eth_bridge_contract();
@@ -40,6 +46,7 @@ private:
     bool is_known(const u256 height, const xbytes_t & hash_bytes, state_ptr state) const;
     bool is_confirmed(const u256 height, const xbytes_t & hash_bytes, state_ptr state) const override;
     bigint get_height(state_ptr state) const override;
+    xheader_status_t query_height(const bigint height, state_ptr state) const;
     void reset(state_ptr state) override;
 
     bool verify(const xeth_header_t & prev_header, const xeth_header_t & new_header, const std::vector<double_node_with_merkle_proof> & nodes) const;

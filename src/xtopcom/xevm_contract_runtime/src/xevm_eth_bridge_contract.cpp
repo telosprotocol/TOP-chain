@@ -88,6 +88,7 @@ bool xtop_evm_eth_bridge_contract::execute(xbytes_t input,
     // init(bytes,string)                    => 6158600d
     // sync(bytes)                           => 7eefcfa2
     // get_height()                          => b15ad2e8
+    // query_height(uint256)                 => 12fdf338
     // is_known(uint256,bytes32)             => 6d571daf
     // is_confirmed(uint256,bytes32)         => d398572f
     // reset()                               => d826f88f
@@ -95,6 +96,7 @@ bool xtop_evm_eth_bridge_contract::execute(xbytes_t input,
     constexpr uint32_t method_id_init{0x6158600d};
     constexpr uint32_t method_id_sync{0x7eefcfa2};
     constexpr uint32_t method_id_get_height{0xb15ad2e8};
+    constexpr uint32_t method_id_query_height{0x12fdf338};
     constexpr uint32_t method_id_is_known{0x6d571daf};
     constexpr uint32_t method_id_is_confirmed{0xd398572f};
     constexpr uint32_t method_id_reset{0xd826f88f};
@@ -201,6 +203,19 @@ bool xtop_evm_eth_bridge_contract::execute(xbytes_t input,
         output.exit_status = Returned;
         output.cost = 0;
         output.output = evm_common::toBigEndian(static_cast<u256>(get_height(state)));
+        return true;
+    }
+    case method_id_query_height: {
+        auto height = abi_decoder.extract<u256>(ec);
+        if (ec) {
+            err.fail_status = precompile_error::Fatal;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
+            xwarn("[xtop_evm_eth_bridge_contract::execute] abi_decoder.extract bytes error");
+            return false;
+        }
+        output.exit_status = Returned;
+        output.cost = 0;
+        output.output = evm_common::toBigEndian(static_cast<u256>(query_height(height, state)));
         return true;
     }
     case method_id_is_known: {
@@ -394,6 +409,20 @@ bigint xtop_evm_eth_bridge_contract::get_height(state_ptr state) const {
     }
     xinfo("[xtop_evm_eth_bridge_contract::get_height] height: %s", info.number.str().c_str());
     return info.number;
+}
+
+xheader_status_t xtop_evm_eth_bridge_contract::query_height(const bigint height, state_ptr state) const {
+    auto now_height = get_height(state);
+    if (now_height == 0) {
+        return xheader_status_t::header_not_confirmed;
+    }
+    if (now_height >= height + HashReserveNum) {
+        return xheader_status_t::header_overdue;
+    }
+    if (now_height <= height + ConfirmHeight) {
+        return xheader_status_t::header_not_confirmed;
+    }
+    return xheader_status_t::header_confirmed;
 }
 
 bool xtop_evm_eth_bridge_contract::is_known(const u256 height, const xbytes_t & hash_bytes, state_ptr state) const {
