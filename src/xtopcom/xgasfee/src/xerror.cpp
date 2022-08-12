@@ -34,6 +34,9 @@ static char const * errc_to_message(int const errc) noexcept {
     case xerrc_t::tx_out_of_gas:
         return "tx out of gas";
 
+    case xerrc_t::invalid_param:
+        return "invalid tx param";
+
     default:  // NOLINT(clang-diagnostic-covered-switch-default)
         return "unknown error";
     }

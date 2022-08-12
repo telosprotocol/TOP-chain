@@ -54,8 +54,6 @@ private:
     evm_common::u256 m_free_tgas_usage{0};
     evm_common::u256 m_converted_tgas{0};
     evm_common::u256 m_converted_tgas_usage{0};
-    evm_common::u256 m_eth_converted_tgas{0};
-    evm_common::u256 m_eth_converted_tgas_usage{0};
 
     // onchain related param
     uint64_t m_time{0};

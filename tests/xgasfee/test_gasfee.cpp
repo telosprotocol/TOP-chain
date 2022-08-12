@@ -76,17 +76,6 @@ TEST_F(xtest_gasfee_fixture_t, test_v2_transfer_init_ok) {
 }
 #endif
 
-TEST_F(xtest_gasfee_fixture_t, test_v3_transfer_T6_to_T6_check_deposit_not_enough) {
-    default_tx_version = data::xtransaction_version_3;
-    default_evm_gas_limit = 0;
-    make_default();
-
-    auto op = make_operator();
-    std::error_code ec;
-    op.check(ec);
-    EXPECT_EQ(ec, make_error_code(gasfee::error::xenum_errc::tx_deposit_not_enough));
-}
-
 TEST_F(xtest_gasfee_fixture_t, test_v3_transfer_T6_to_T6_check_balance_not_enough) {
     default_balance = ASSET_uTOP(99999);
     default_tx_version = data::xtransaction_version_3;
@@ -283,7 +272,6 @@ TEST_F(xtest_gasfee_fixture_t, test_store_in_one_stage_over_limit) {
     EXPECT_EQ(ec.value(), 0);
     op.m_free_tgas_usage = op.m_free_tgas;
     op.m_converted_tgas_usage = evm_common::u256(UINT64_MAX) * 10;
-    op.m_eth_converted_tgas_usage = evm_common::u256(UINT64_MAX) * 10;
     op.store_in_one_stage();
 
     auto detail = op.gasfee_detail();
@@ -292,7 +280,6 @@ TEST_F(xtest_gasfee_fixture_t, test_store_in_one_stage_over_limit) {
     EXPECT_EQ(detail.m_state_used_tgas, XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_gas_account));
     EXPECT_EQ(detail.m_state_last_time, default_onchain_time);
     EXPECT_EQ(detail.m_state_burn_balance, UINT64_MAX);
-    EXPECT_EQ(detail.m_state_burn_eth_balance, op.utop_to_wei(op.tgas_to_balance(evm_common::u256(UINT64_MAX) * 10)));
 }
 
 #if 0
@@ -867,43 +854,6 @@ TEST(test_xtvm_v2, xtvm2_demo_v3_T6_transfer_inner_table) {
     // EXPECT_EQ(sender_unitstate->get_used_tgas(), 1000000);
     // EXPECT_EQ(sender_unitstate->balance(), base::vtoken_t(p_statectx->default_balance - used_deposit));
     // EXPECT_EQ(sender_unitstate->burn_balance(), base::vtoken_t(used_deposit));
-}
-
-TEST(test_xtvm_v2, xtvm2_demo_v3_T6_transfer_inner_table_use_eth) {
-    statectx::xstatectx_face_ptr_t statectx = std::make_shared<xmock_statectx_t>();
-    auto p_statectx = dynamic_cast<xmock_statectx_t *>(statectx.get());
-    p_statectx->default_tx_version = data::xtransaction_version_3;
-    p_statectx->default_evm_gas_limit = 21000;
-    p_statectx->default_balance = 10;
-    p_statectx->default_used_tgas = 1000000;
-    p_statectx->default_last_time = 10000000;
-    p_statectx->default_sender = p_statectx->default_T6_sender;
-    p_statectx->default_recver = p_statectx->default_T6_recver;
-    p_statectx->build_default();
-    base::xvaccount_t sender_vaccount{p_statectx->default_sender};
-    base::xvaccount_t recver_vaccount{p_statectx->default_recver};
-    auto sender_unitstate = statectx->load_unit_state(sender_vaccount);
-    auto recver_unitstate = statectx->load_unit_state(recver_vaccount);
-    sender_unitstate->tep_token_deposit(common::xtoken_id_t::eth, evm_common::u256(2000000000000000ULL));
-    txexecutor::xvm_para_t param{p_statectx->default_onchain_time, "0000", p_statectx->default_onchain_deposit_tgas, UINT64_MAX};
-    txexecutor::xatomictx_executor_t atomictx_executor{statectx, param};
-    txexecutor::xatomictx_output_t output;
-
-    EXPECT_EQ(txexecutor::enum_exec_success, atomictx_executor.vm_execute(p_statectx->default_cons_tx, output));
-
-    auto s_eth_balance = sender_unitstate->tep_token_balance(common::xtoken_id_t::eth);
-    auto r_eth_balance = recver_unitstate->tep_token_balance(common::xtoken_id_t::eth);
-    EXPECT_EQ(s_eth_balance, evm_common::u256(2000000000000000ULL) - p_statectx->default_eth_value);
-    EXPECT_EQ(r_eth_balance, p_statectx->default_eth_value);
-
-    uint64_t tx_size = p_statectx->default_cons_tx->get_transaction()->get_tx_len();
-    uint64_t balance = 3 * tx_size + 21000 * XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_gas_to_tgas_exchange_ratio);
-    evm_common::u256 eth_usage = gasfee::xgas_tx_operator_t::utop_to_wei(gasfee::xgas_tx_operator_t::tgas_to_balance(balance));
-    // EXPECT_EQ(output.m_vm_output.m_gasfee_detail.m_tx_used_deposit, 0);
-    EXPECT_EQ(output.m_vm_output.m_gasfee_detail.m_tx_used_tgas, 0);
-    EXPECT_EQ(output.m_vm_output.m_gasfee_detail.m_state_used_tgas, 1000000);
-    EXPECT_EQ(output.m_vm_output.m_gasfee_detail.m_state_burn_balance, 0);
-    EXPECT_EQ(output.m_vm_output.m_gasfee_detail.m_state_burn_eth_balance, eth_usage);
 }
 
 // TEST(test_xtvm_v2, xtvm2_demo_v3_transfer_diff_table) {
