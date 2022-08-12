@@ -208,6 +208,20 @@ bigint xtop_evm_bsc_client_contract::get_height(state_ptr state) const {
     return info.number;
 }
 
+xheader_status_t xtop_evm_bsc_client_contract::query_height(const u256 height, state_ptr state) const {
+    auto now_height = get_height(state);
+    if (now_height == 0) {
+        return xheader_status_t::header_not_confirmed;
+    }
+    if (now_height >= height + hash_reserve_num) {
+        return xheader_status_t::header_overdue;
+    }
+    if (now_height <= height + confirm_num) {
+        return xheader_status_t::header_not_confirmed;
+    }
+    return xheader_status_t::header_confirmed;
+}
+
 bool xtop_evm_bsc_client_contract::is_known(const u256 height, const xbytes_t & hash_bytes, state_ptr state) const {
     h256 hash = static_cast<h256>(hash_bytes);
     auto hashes = get_hashes(height, state);

@@ -24,6 +24,7 @@ public:
     bool is_known(const u256 height, const xbytes_t & hash_bytes, state_ptr state) const;
     bool is_confirmed(const u256 height, const xbytes_t & hash_bytes, state_ptr state) const;
     bigint get_height(state_ptr state) const;
+    xheader_status_t query_height(const u256 height, state_ptr state) const;
     bool reset(state_ptr state);
     bool disable_reset(state_ptr state);
 
