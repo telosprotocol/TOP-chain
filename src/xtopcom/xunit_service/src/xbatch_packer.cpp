@@ -563,6 +563,16 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
 
                 for (uint32_t i = 0; i < m_batch_units.size(); i++) {
                     auto & _unit = m_batch_units[i];
+
+                    // test: not store unit for test
+                    // if (!data::is_sys_contract_address(common::xaccount_address_t{_unit->get_account()})) {
+                    //     uint64_t rand_num = rand();
+                    //     if (rand_num % 8 == 0) {
+                    //         xwarn("test drop unit=%s", _unit->dump().c_str());
+                    //         continue;
+                    //     }
+                    // }
+
                     if (unit_infos_vec[i].get_addr() == _unit->get_account() && 
                         // unit_infos_vec[i].get_hash() == _unit->get_block_hash() &&
                         unit_infos_vec[i].get_height() == _unit->get_height()) {

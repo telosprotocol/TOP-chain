@@ -273,6 +273,15 @@ base::xauto_ptr<base::xvblock_t>  xsync_store_t::load_block_object(const base::x
 base::xauto_ptr<base::xvblock_t>  xsync_store_t::load_block_object(const base::xvaccount_t & account,const uint64_t height,base::enum_xvblock_flag flag) {
     return m_blockstore->load_block_object(account, height, flag, false);
 }
+
+base::xauto_ptr<base::xvblock_t>  xsync_store_t::load_block_object(const base::xvaccount_t & account,const uint64_t height, const std::string & hash) {
+    return m_blockstore->load_block_object(account, height, hash, true);
+}
+
+base::xauto_ptr<base::xvblock_t>  xsync_store_t::load_block_object(const base::xvaccount_t & account,const uint64_t height, const uint64_t viewid) {
+    return m_blockstore->load_block_object(account, height, viewid, true);
+}
+
 bool xsync_store_t::set_genesis_height(const base::xvaccount_t &account, const std::string &height) {
     return m_blockstore->set_genesis_height(account, height);
 }

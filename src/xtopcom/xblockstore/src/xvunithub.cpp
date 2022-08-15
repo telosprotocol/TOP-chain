@@ -902,6 +902,11 @@ namespace top
             return account_obj->try_update_account_index(height, viewid, update_pre_block);
         }
 
+        bool xvblockstore_impl::try_update_account_index(const base::xvaccount_t & account, uint64_t height, const std::string & hash, bool update_pre_block) {
+            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
+            return account_obj->try_update_account_index(height, hash, update_pre_block);
+        }
+
         base::xauto_ptr<base::xvbindex_t> xvblockstore_impl::recover_and_load_commit_index(const base::xvaccount_t & account, uint64_t height) {
             LOAD_BLOCKACCOUNT_PLUGIN(account_obj,account);
             return account_obj->recover_and_load_commit_index(height);
