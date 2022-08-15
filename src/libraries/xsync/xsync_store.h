@@ -32,6 +32,8 @@ public:
     virtual std::vector<data::xvblock_ptr_t> load_block_objects(const std::string & account, const uint64_t height) = 0;
     virtual std::vector<data::xvblock_ptr_t> load_block_objects(const std::string & tx_hash, const base::enum_transaction_subtype type) = 0;
     virtual base::xauto_ptr<base::xvblock_t>  load_block_object(const base::xvaccount_t & account,const uint64_t height) = 0;
+    virtual base::xauto_ptr<base::xvblock_t>  load_block_object(const base::xvaccount_t & account,const uint64_t height, const std::string & hash) = 0;
+    virtual base::xauto_ptr<base::xvblock_t>  load_block_object(const base::xvaccount_t & account,const uint64_t height, const uint64_t viewid) = 0;
     virtual bool existed(const std::string & account, const uint64_t height, uint64_t viewid = 0) = 0;
 
     virtual void update_latest_genesis_connected_block(const std::string & account) = 0;
@@ -109,6 +111,8 @@ public:
     std::vector<data::xvblock_ptr_t> load_block_objects(const std::string & tx_hash, const base::enum_transaction_subtype type) override;
     base::xauto_ptr<base::xvblock_t>  load_block_object(const base::xvaccount_t & account,const uint64_t height);
     base::xauto_ptr<base::xvblock_t>  load_block_object(const base::xvaccount_t & account,const uint64_t height,base::enum_xvblock_flag flag);
+    base::xauto_ptr<base::xvblock_t>  load_block_object(const base::xvaccount_t & account,const uint64_t height, const std::string & hash);
+    base::xauto_ptr<base::xvblock_t>  load_block_object(const base::xvaccount_t & account,const uint64_t height, const uint64_t viewid);
     bool existed(const std::string & account, const uint64_t height, uint64_t viewid = 0) override;
     virtual void update_latest_genesis_connected_block(const std::string & account) override;
 

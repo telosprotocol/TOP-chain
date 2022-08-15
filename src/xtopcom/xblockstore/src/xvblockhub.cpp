@@ -2613,6 +2613,31 @@ namespace top
             return ret;
         }
 
+        bool   xunitbkplugin::try_update_account_index(uint64_t height, const std::string & hash, bool update_pre_block)
+        {
+            base::xauto_ptr<base::xvbindex_t> exist_cert(load_index(height, hash));
+            if (exist_cert == nullptr) {
+                xinfo("xunitbkplugin::try_update_account_index index not found:account:%s,height:%llu,hash:%s", get_address().c_str(), height, hash.c_str());
+                return false;
+            }
+
+            bool ret = true;
+            if (update_pre_block && height > 1) {
+                base::xauto_ptr<base::xvbindex_t> exist_cert2(load_index(height - 1, exist_cert->get_last_block_hash()));
+                if (exist_cert2 == nullptr) {
+                    xinfo("xunitbkplugin::try_update_account_index index not found:account:%s,height:%llu,hash:%s", get_address().c_str(), height - 1, exist_cert->get_last_block_hash().c_str());
+                    ret = false;
+                } else {
+                    update_bindex_to_committed(exist_cert2.get());
+                    xinfo("xunitbkplugin::try_update_account_index succ:account:%s,height:%llu,hash:%s", get_address().c_str(), height - 1, exist_cert->get_last_block_hash().c_str());
+                }
+            }
+
+            update_bindex_to_committed(exist_cert.get());
+            xinfo("xunitbkplugin::try_update_account_index succ:account:%s,height:%llu,hash:%s", get_address().c_str(), height, hash.c_str());
+            return ret;
+        }
+
         xrelay_plugin::xrelay_plugin(base::xvaccountobj_t & parent_obj,const uint64_t timeout_ms,xvblockdb_t * xvbkdb_ptr)
             :xblockacct_t(parent_obj,timeout_ms,xvbkdb_ptr) {
 

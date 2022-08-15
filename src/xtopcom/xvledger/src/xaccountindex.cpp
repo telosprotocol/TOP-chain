@@ -23,10 +23,13 @@ xaccount_index_t::xaccount_index_t(const xaccount_index_t& left) {
     m_latest_tx_nonce    = left.m_latest_tx_nonce;
     m_latest_unit_height = left.m_latest_unit_height;
     m_latest_unit_viewid = left.m_latest_unit_viewid;
-    m_account_flag = left.m_account_flag;
+    m_account_flag       = left.m_account_flag;
+    m_unit_hash          = left.m_unit_hash;
+    m_state_hash         = left.m_state_hash;
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xaccount_index, 1);
 }
 
+// old version
 xaccount_index_t::xaccount_index_t(base::xvblock_t* unit,
                                     bool has_unconfirm_tx,
                                     enum_xblock_consensus_type _cs_type,
@@ -51,6 +54,38 @@ xaccount_index_t::xaccount_index_t(base::xvblock_t* unit,
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xaccount_index, 1);
 }
 
+// new version
+xaccount_index_t::xaccount_index_t(uint64_t height, std::string const& unithash, std::string const& statehash, uint64_t nonce,
+    base::enum_xvblock_class _unitclass, base::enum_xvblock_type _unittype) {
+    m_latest_tx_nonce    = nonce;
+    m_latest_unit_height = height;
+    m_latest_unit_viewid = 0;
+    m_unit_hash = unithash;
+    xdbg("xaccount_index_t::xaccount_index_t unithash:%s", unithash.c_str());
+    m_state_hash = statehash;
+    set_latest_unit_class(_unitclass);
+    set_latest_unit_type(_unittype);
+    // set_latest_unit_consensus_type(base::enum_xblock_consensus_flag_authenticated);  // XTODO always be cert, no use flag
+    // set_account_index_flag(enum_xaccount_index_flag_has_unconfirm_tx); // XTODO no use flag
+    // set_account_index_flag(enum_xaccount_index_flag_account_destroy);  // XTODO no use flag now
+    set_account_index_flag(enum_xaccount_index_flag_carry_nonce);
+    set_account_index_flag(enum_xaccount_index_flag_carry_unit_hash);
+    
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xaccount_index, 1);
+}
+
+bool xaccount_index_t::operator == (const xaccount_index_t &other) const {
+    if (m_latest_unit_height    == other.m_latest_unit_height
+        && m_latest_unit_viewid == other.m_latest_unit_viewid
+        && m_account_flag       == other.m_account_flag
+        && m_latest_tx_nonce    == other.m_latest_tx_nonce
+        && m_unit_hash          == other.m_unit_hash
+        && m_state_hash         == other.m_state_hash) {
+        return true;
+    }
+    return false;
+}
+
 int32_t xaccount_index_t::do_write(base::xstream_t & stream) const {
     const int32_t begin_size = stream.size();
     stream.write_compact_var(m_latest_unit_height);
@@ -60,7 +95,11 @@ int32_t xaccount_index_t::do_write(base::xstream_t & stream) const {
     if (check_account_index_flag(enum_xaccount_index_flag_carry_nonce)) {
         stream.write_compact_var(m_latest_tx_nonce);
     }
-    
+    if (check_account_index_flag(enum_xaccount_index_flag_carry_unit_hash)) {
+        stream.write_compact_var(m_unit_hash);
+        stream.write_compact_var(m_state_hash);
+    }
+
     return (stream.size() - begin_size);
 }
 
@@ -72,6 +111,10 @@ int32_t xaccount_index_t::do_read(base::xstream_t & stream) {
     
     if (check_account_index_flag(enum_xaccount_index_flag_carry_nonce)) {
         stream.read_compact_var(m_latest_tx_nonce);
+    }
+    if (check_account_index_flag(enum_xaccount_index_flag_carry_unit_hash)) {
+        stream.read_compact_var(m_unit_hash);
+        stream.read_compact_var(m_state_hash);
     }
     
     return (begin_size - stream.size());

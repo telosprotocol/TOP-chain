@@ -460,7 +460,7 @@ void xtxpool_table_t::refresh_table(bool refresh_state_only) {
                 uint64_t sync_from_height = (height > load_height_min + table_sync_on_demand_num_max - 1) ? (height - table_sync_on_demand_num_max + 1) : load_height_min;
                 // try sync table block
                 mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(
-                    m_xtable_info.get_account(), sync_from_height, (uint32_t)(height - sync_from_height + 1), false, "lack_of_table_block", false);
+                    m_xtable_info.get_account(), sync_from_height, (uint32_t)(height - sync_from_height + 1), false, "lack_of_table_block", "", false);
                 m_para->get_bus()->push_event(ev);
                 xtxpool_warn("xtxpool_table_t::refresh_table load table block fail:table:%s,try sync %llu-%llu", m_xtable_info.get_account().c_str(), sync_from_height, height);
                 XMETRICS_GAUGE(metrics::txpool_try_sync_table_block, 1);

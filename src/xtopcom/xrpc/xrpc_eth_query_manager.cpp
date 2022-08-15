@@ -115,17 +115,26 @@ enum_query_result xrpc_eth_query_manager::query_account_by_number(const std::str
     tablestate->get_account_index(unit_address, account_index);
     uint64_t unit_height = account_index.get_latest_unit_height();
     uint64_t unit_view_id = account_index.get_latest_unit_viewid();
+    auto & unit_hash = account_index.get_latest_unit_hash();
+    xobject_ptr_t<xblock_t> unit_block_ptr;
+    if (!unit_hash.empty()) {
+        auto unit_block = base::xvchain_t::instance().get_xblockstore()->load_block_object(
+            _vaddr, unit_height, unit_hash, false, metrics::blockstore_access_from_rpc_get_block_query_propery);
+        unit_block_ptr = xblock_t::raw_vblock_to_object_ptr(unit_block.get());
+    } else {
+        auto unit_block = base::xvchain_t::instance().get_xblockstore()->load_block_object(
+            _vaddr, unit_height, unit_view_id, false, metrics::blockstore_access_from_rpc_get_block_query_propery);
+        unit_block_ptr = xblock_t::raw_vblock_to_object_ptr(unit_block.get());
+    }
 
-    auto unit_block = base::xvchain_t::instance().get_xblockstore()->load_block_object(
-        _vaddr, unit_height, unit_view_id, false, metrics::blockstore_access_from_rpc_get_block_query_propery);
-    if (unit_block == nullptr) {
+    if (unit_block_ptr == nullptr) {
         xwarn("xstore::query_account_by_number fail-load. account=%s", unit_address.c_str());
         return enum_unit_not_found;
     }
     base::xauto_ptr<base::xvbstate_t> unit_state =
-        base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(unit_block.get(), metrics::statestore_access_from_vnodesrv_load_state);
+        base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(unit_block_ptr.get(), metrics::statestore_access_from_vnodesrv_load_state);
     if (unit_state == nullptr) {
-        xwarn("xstore::query_account_by_number fail-load state.block=%s", unit_block->dump().c_str());
+        xwarn("xstore::query_account_by_number fail-load state.block=%s", unit_block_ptr->dump().c_str());
         return enum_unit_not_found;
     }
     ptr = std::make_shared<xunit_bstate_t>(unit_state.get());

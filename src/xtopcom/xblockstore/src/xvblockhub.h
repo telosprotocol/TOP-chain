@@ -54,6 +54,7 @@ namespace top
 
             virtual bool           store_committed_unit_block(base::xvblock_t* new_raw_block) {return true;} // TODO(jimmy)
             virtual bool           try_update_account_index(uint64_t height, uint64_t viewid, bool update_pre_block) {return true;}  // TODO(jimmy)
+            virtual bool           try_update_account_index(uint64_t height, const std::string & hash, bool update_pre_block) {return true;}  // TODO(jimmy)
             virtual bool           set_unit_proof(const std::string& unit_proof, uint64_t height) {return true;}  // TODO(jimmy)
             virtual const std::string       get_unit_proof(uint64_t height) {return std::string();} // TODO(jimmy)
 
@@ -197,6 +198,7 @@ namespace top
 
             virtual bool           store_committed_unit_block(base::xvblock_t* new_raw_block) override;
             virtual bool           try_update_account_index(uint64_t height, uint64_t viewid, bool update_pre_block) override;
+            virtual bool           try_update_account_index(uint64_t height, const std::string & hash, bool update_pre_block) override;
             virtual bool           set_unit_proof(const std::string& unit_proof, uint64_t height) override;
             virtual const std::string       get_unit_proof(uint64_t height) override;        
         };

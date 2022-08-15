@@ -94,6 +94,8 @@ m_cross_cluster_chain_state(cross_cluster_chain_state) {
     register_handler(xmessage_id_sync_query_archive_height, std::bind(&xsync_handler_t::recv_query_archive_height, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
     register_handler(xmessage_id_sync_archive_blocks, std::bind(&xsync_handler_t::recv_archive_blocks, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
     register_handler(xmessage_id_sync_archive_height_list, std::bind(&xsync_handler_t::recv_archive_height_list, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
+    register_handler(xmessage_id_sync_get_on_demand_blocks_with_hash, std::bind(&xsync_handler_t::get_on_demand_blocks_with_hash, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
+    register_handler(xmessage_id_sync_on_demand_blocks_with_hash, std::bind(&xsync_handler_t::on_demand_blocks_with_hash, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5, std::placeholders::_6, std::placeholders::_7));
 }
 
 xsync_handler_t::~xsync_handler_t() {
@@ -485,6 +487,26 @@ void xsync_handler_t::get_on_demand_blocks_with_proof(uint32_t msg_size, const v
    m_sync_on_demand->handle_blocks_request_with_proof(*(ptr.get()), from_address, network_self);
 }
 
+void xsync_handler_t::get_on_demand_blocks_with_hash(uint32_t msg_size, const vnetwork::xvnode_address_t &from_address,
+    const vnetwork::xvnode_address_t &network_self,
+    const xsync_message_header_ptr_t &header,
+    base::xstream_t &stream,
+    xtop_vnetwork_message::hash_result_type msg_hash,
+    int64_t recv_time) {
+
+    XMETRICS_GAUGE(metrics::xsync_recv_get_on_demand_blocks, 1);
+    XMETRICS_GAUGE(metrics::xsync_recv_get_on_demand_blocks_bytes, msg_size);
+
+    auto ptr = make_object_ptr<xsync_message_get_on_demand_blocks_with_hash_t>();
+    auto len = ptr->serialize_from(stream);
+    if (len <= 0) {
+        xerror("xsync_handler_t::get_on_demand_blocks_with_hash deserialize fail");
+        return;
+    }
+
+   m_sync_on_demand->handle_blocks_request_with_hash(*(ptr.get()), from_address, network_self);
+}
+
 void xsync_handler_t::on_demand_blocks(uint32_t msg_size, const vnetwork::xvnode_address_t &from_address,
     const vnetwork::xvnode_address_t &network_self,
     const xsync_message_header_ptr_t &header,
@@ -542,6 +564,31 @@ void xsync_handler_t::on_demand_blocks_with_proof(uint32_t msg_size, const vnetw
     std::string unit_proof_str = ptr->unit_proof_str;
 
     m_sync_on_demand->handle_blocks_response_with_proof(blocks, unit_proof_str, from_address, network_self);
+}
+
+void xsync_handler_t::on_demand_blocks_with_hash(uint32_t msg_size, const vnetwork::xvnode_address_t &from_address,
+    const vnetwork::xvnode_address_t &network_self,
+    const xsync_message_header_ptr_t &header,
+    base::xstream_t &stream,
+    xtop_vnetwork_message::hash_result_type msg_hash,
+    int64_t recv_time) {
+
+    XMETRICS_GAUGE(metrics::xsync_recv_on_demand_blocks, 1);
+    XMETRICS_GAUGE(metrics::xsync_recv_on_demand_blocks_bytes, msg_size);
+
+    auto ptr = make_object_ptr<xsync_message_general_blocks_with_hash_t>();
+    auto len = ptr->serialize_from(stream);
+    if (len <= 0) {
+        xerror("xsync_handler_t::on_demand_blocks_with_hash deserialize fail");
+        return;
+    }
+
+    std::vector<xblock_ptr_t> &blocks = ptr->blocks;
+    xdbg("xsync_handler_t::on_demand_blocks_with_hash blocks size:%u", blocks.size());
+    if (blocks.size() == 0)
+        return;
+
+    m_sync_on_demand->handle_blocks_response_with_hash(blocks, from_address, network_self);
 }
 
 void xsync_handler_t::broadcast_chain_state(uint32_t msg_size, const vnetwork::xvnode_address_t &from_address,

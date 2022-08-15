@@ -36,6 +36,7 @@ void xsync_on_demand_t::on_behind_event(const mbus::xevent_ptr_t &e) {
     bool is_consensus = bme->is_consensus;
     const std::string &reason = bme->reason;
     bool unit_proof = bme->unit_proof;
+    auto & last_unit_hash = bme->last_unit_hash;
 
     if (count == 0)
         return;
@@ -84,9 +85,13 @@ void xsync_on_demand_t::on_behind_event(const mbus::xevent_ptr_t &e) {
         if (!m_sync_store->remove_empty_unit_forked()) {
             m_sync_sender->send_get_on_demand_blocks(address, start_height, count, is_consensus, self_addr, target_addr);
         } else {
-            m_sync_sender->send_get_on_demand_blocks_with_proof(address, start_height, count, is_consensus, unit_proof, self_addr, target_addr);
-            if (unit_proof) {
-                XMETRICS_GAUGE(metrics::xsync_unit_proof_sync_req_send, 1);
+            if (last_unit_hash.empty()) {
+                m_sync_sender->send_get_on_demand_blocks_with_proof(address, start_height, count, is_consensus, unit_proof, self_addr, target_addr);
+                if (unit_proof) {
+                    XMETRICS_GAUGE(metrics::xsync_unit_proof_sync_req_send, 1);
+                }
+            } else {
+                m_sync_sender->send_get_on_demand_blocks_with_hash(address, start_height, count, is_consensus, last_unit_hash, self_addr, target_addr);
             }
         }
         XMETRICS_COUNTER_INCREMENT("xsync_on_demand_download_request_remote", 1);
@@ -225,6 +230,86 @@ void xsync_on_demand_t::handle_blocks_response_with_proof(const std::vector<data
     }
 }
 
+void xsync_on_demand_t::handle_blocks_response_with_hash(const std::vector<data::xblock_ptr_t> &blocks,
+    const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self) {
+
+    xsync_info("xsync_on_demand_t::handle_blocks_response_with_hash receive blocks(on_demand) %s, %s, count %d",
+        network_self.to_string().c_str(), to_address.to_string().c_str(), blocks.size());
+
+    if (!basic_check(blocks, to_address, network_self)) {
+        return;
+    }
+
+    auto & account = blocks[0]->get_account();
+    bool is_table_address = data::is_table_address(common::xaccount_address_t{account});
+
+    if (is_table_address) {
+        xerror("xsync_on_demand_t::handle_blocks_response_with_hash address invalid:%s", account.c_str());
+        return;
+    }
+
+    // todo(nathan):modify check function
+    auto & last_unit_block = blocks[blocks.size() - 1];
+    xvaccount_t vaccount(last_unit_block->get_account());
+    auto table_addr = xvaccount_t::make_table_account_address(xvaccount_t(last_unit_block->get_account()));
+    auto parent_height = last_unit_block->get_parent_block_height();
+    auto parent_viewid = last_unit_block->get_parent_block_viewid();
+
+    auto table_block = m_sync_store->load_block_object(xvaccount_t(table_addr), parent_height, parent_viewid);
+
+    bool found = false;
+    auto unit_infos_str = table_block->get_unit_infos();
+    if (unit_infos_str.empty()) {
+        xerror("xsync_on_demand_t::handle_blocks_response_with_hash table unit_infos_str is empty table block:%s,unit:%s",
+               table_block->dump().c_str(),
+               last_unit_block->dump().c_str());
+        return;
+    }
+    base::xtable_unit_infos_t unit_infos;
+    unit_infos.serialize_from_string(unit_infos_str);
+    auto & unit_infos_vec = unit_infos.get_unit_infos();
+    for (auto & unit_info : unit_infos_vec) {
+        xdbg("xsync_on_demand_t::handle_blocks_response_with_hash unit info:addr:%s,hash:%s,height:%llu.block:%s",
+            unit_info.get_addr().c_str(),
+            unit_info.get_hash().c_str(),
+            unit_info.get_height(),
+            last_unit_block->dump().c_str());
+        if (unit_info.get_addr() == last_unit_block->get_account() && unit_info.get_hash() == last_unit_block->get_block_hash() &&
+            unit_info.get_height() == last_unit_block->get_height()) {
+            found = true;
+            break;
+        }
+    }
+    if (!found) {
+        xerror("xsync_on_demand_t::handle_blocks_response_with_hash table unit info not found unit.table block:%s,unit:%s",
+               table_block->dump().c_str(),
+               last_unit_block->dump().c_str());
+        return;
+    }
+
+    store_on_demand_sync_blocks(blocks, "");
+
+    // if (!m_download_tracer.refresh(account, blocks.rbegin()->get()->get_height())) {
+    //     return;
+    // }
+
+    // xsync_download_tracer tracer;
+    // if (!m_download_tracer.get(account, tracer)){
+    //     return;
+    // }
+
+    // std::map<std::string, std::string> context = tracer.context();
+    // bool is_consensus = std::stoi(context["consensus"]);
+    // int32_t count = tracer.height_interval().second - tracer.trace_height();
+    // if (count > 0) {
+    //     m_sync_sender->send_get_on_demand_blocks_with_proof(account, tracer.trace_height() + 1, count, is_consensus, false, network_self, to_address);
+    //     XMETRICS_COUNTER_INCREMENT("xsync_on_demand_download_request_remote", 1);
+    // } else {
+    //     m_download_tracer.expire(account);
+    //     on_response_event(account);
+    // }
+}
+
 void xsync_on_demand_t::handle_blocks_request(const xsync_message_get_on_demand_blocks_t &block,
     const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self) {
     std::string address = block.address;
@@ -332,6 +417,71 @@ void xsync_on_demand_t::handle_blocks_request_with_proof(const xsync_message_get
     }
 
     m_sync_sender->send_on_demand_blocks_with_proof(blocks, xmessage_id_sync_on_demand_blocks_with_proof, "on_demand_blocks", network_self, to_address, unit_proof_str);
+}
+
+void xsync_on_demand_t::handle_blocks_request_with_hash(const xsync_message_get_on_demand_blocks_with_hash_t &msg,
+    const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self) {
+    auto & address = msg.address;
+    uint64_t start_height = msg.start_height;
+    uint64_t end_height = 0;
+    uint32_t heights = msg.count;
+    bool is_consensus = msg.is_consensus;
+    auto & last_unit_hash = msg.last_unit_hash;
+    bool is_table_address = data::is_table_address(common::xaccount_address_t{address});
+
+    // if ((is_table_address && !last_unit_hash.empty()) || (!is_table_address && last_unit_hash.empty())) {
+    //     xerror("xsync_on_demand_t::handle_blocks_request_with_hash invalid param addr:%s,hash:%s", address.c_str(), last_unit_hash.c_str());
+    //     return;
+    // }
+
+    if (is_table_address) {
+        xerror("xsync_on_demand_t::handle_blocks_request_with_hash invalid param addr:%s,hash:%s", address.c_str(), last_unit_hash.c_str());
+        return;
+    }
+
+    if (heights == 0)
+        return;
+
+    xsync_info("xsync_on_demand_t::handle_blocks_request_with_hash receive request of account %s, start_height %llu, count %u",
+        address.c_str(), start_height, heights);
+
+    std::vector<xblock_ptr_t> blocks;
+
+    end_height = start_height + (uint64_t)heights - 1;
+    xblock_ptr_t start_unit_block = nullptr;
+    if (is_consensus) {
+        base::xauto_ptr<base::xvblock_t> latest_full_block = m_sync_store->get_latest_full_block(address);
+        if (latest_full_block != nullptr && latest_full_block->get_height() >= start_height &&
+            end_height >= latest_full_block->get_height()) {
+                start_unit_block = autoptr_to_blockptr(latest_full_block);
+                start_height = latest_full_block->get_height() + 1;
+        }
+    }
+
+    std::string prev_hash = last_unit_hash;
+    for(uint64_t height = end_height; height >= start_height; height--) {
+        base::xvaccount_t account(address);
+        auto block = m_sync_store->load_block_object(account, height, prev_hash);
+        if (block == nullptr) {
+            xwarn("xsync_on_demand_t::handle_blocks_request_with_hash block load fail account:%s,height:%llu,hash:%s", address.c_str(), height, prev_hash.c_str());
+            return;
+        }
+        xdbg("xsync_on_demand_t::handle_blocks_request_with_hash add block:%s", block->dump().c_str());
+        blocks.insert(blocks.begin(), autoptr_to_blockptr(block));
+        prev_hash = block->get_last_block_hash();
+    }
+    if (start_unit_block != nullptr) {
+        if (!blocks.empty()) {
+            if (start_unit_block->get_block_hash() != blocks[0]->get_last_block_hash()) {
+                xwarn("xsync_on_demand_t::handle_blocks_request_with_hash hash not match");
+                return;
+            }
+        }
+        xdbg("xsync_on_demand_t::handle_blocks_request_with_hash add full block:%s", start_unit_block->dump().c_str());
+        blocks.insert(blocks.begin(), start_unit_block);
+    }
+
+    m_sync_sender->send_on_demand_blocks_with_hash(blocks, xmessage_id_sync_on_demand_blocks_with_hash, "on_demand_blocks", network_self, to_address);
 }
 
 void xsync_on_demand_t::handle_chain_snapshot_meta(xsync_message_chain_snapshot_meta_t &chain_meta,
