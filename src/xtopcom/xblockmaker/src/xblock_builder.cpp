@@ -6,6 +6,7 @@
 #include "xblockmaker/xblock_builder.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xconfig/xconfig_register.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 #include "xdata/xblockbuild.h"
 
 NS_BEG2(top, blockmaker)
@@ -92,6 +93,7 @@ void xtablebuilder_t::make_table_prove_property_hashs(base::xvbstate_t* bstate, 
     }
 }
 
+#if 0
 bool     xtablebuilder_t::update_account_index_property(const data::xtablestate_ptr_t & tablestate, 
                                                         const std::vector<xblock_ptr_t> & batch_units,
                                                         const std::vector<data::xlightunit_tx_info_ptr_t> & txs_info) {
@@ -157,6 +159,7 @@ bool     xtablebuilder_t::update_account_index_property(const data::xtablestate_
     }
     return true;
 }
+#endif
 
 bool     xtablebuilder_t::update_account_index_property(const data::xtablestate_ptr_t & tablestate, 
                                                         const xblock_ptr_t & unit,
@@ -183,7 +186,16 @@ bool     xtablebuilder_t::update_account_index_property(const data::xtablestate_
         }
     }
 
-    base::xaccount_index_t _new_aindex(unit.get(), has_unconfirm_sendtx, _cs_type, false, nonce);
+    auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
+    auto const new_version = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.v1_7_0_version_point, unit->get_clock());
+    data::xaccount_index_t _new_aindex;
+    if (new_version) {
+        auto hash = unit->get_cert()->build_block_hash();
+        _new_aindex = data::xaccount_index_t(unit->get_height(), hash, unit->get_fullstate_hash(), nonce, unit->get_block_class(), unit->get_block_type());
+    } else {
+        _new_aindex = data::xaccount_index_t(unit.get(), has_unconfirm_sendtx, _cs_type, false, nonce);
+    }
+
     tablestate->set_account_index(unit->get_account(), _new_aindex);
     xdbg("xtablebuilder_t::update_account_index_property account:%s,index=%s", unit->get_account().c_str(), _new_aindex.dump().c_str());
     return true;

@@ -52,19 +52,10 @@ xobject_ptr_t<base::xvbstate_t> xstatectx_base_t::load_proposal_block_state(cons
 }
 
 xobject_ptr_t<base::xvbstate_t> xstatectx_base_t::load_inner_table_unit_state(const base::xvaccount_t & addr) const {
-    base::xaccount_index_t account_index;
-    m_table_state->get_account_index(addr.get_address(), account_index);
-
-    auto prev_block = get_blockstore()->load_block_object(
-        addr, account_index.get_latest_unit_height(), account_index.get_latest_unit_viewid(), false);
+    auto prev_block = load_inner_table_unit_block(addr);
     if (prev_block == nullptr) {
-        XMETRICS_GAUGE(metrics::xmetrics_tag_t::statectx_load_block_succ, 0);
-        sync_unit_block(addr, account_index.get_latest_unit_height());
-        xwarn("xstatectx_base_t::load_inner_table_unit_state fail-load unit block.%s,index=%s",
-                addr.get_address().c_str(), account_index.dump().c_str());
         return nullptr;
     }
-    XMETRICS_GAUGE(metrics::xmetrics_tag_t::statectx_load_block_succ, 1);
 
     auto state_ptr = load_proposal_block_state(addr, prev_block.get());
     return state_ptr;
@@ -73,9 +64,21 @@ xobject_ptr_t<base::xvbstate_t> xstatectx_base_t::load_inner_table_unit_state(co
 data::xblock_ptr_t xstatectx_base_t::load_inner_table_unit_block(const base::xvaccount_t & addr) const {
     base::xaccount_index_t account_index;
     m_table_state->get_account_index(addr.get_address(), account_index);
-
-    auto prev_block = get_blockstore()->load_block_object(
-        addr, account_index.get_latest_unit_height(), account_index.get_latest_unit_viewid(), false);
+    auto & unit_hash = account_index.get_latest_unit_hash();
+    xobject_ptr_t<data::xblock_t> prev_block = nullptr;
+    if (!unit_hash.empty()) {
+        auto unit_block = get_blockstore()->load_block_object(
+            addr, account_index.get_latest_unit_height(), unit_hash, false);
+        if (unit_block != nullptr) {
+            prev_block = data::xblock_t::raw_vblock_to_object_ptr(unit_block.get());
+        }
+    } else {
+        auto unit_block = get_blockstore()->load_block_object(
+            addr, account_index.get_latest_unit_height(), account_index.get_latest_unit_viewid(), false);
+        if (unit_block != nullptr) {
+            prev_block = data::xblock_t::raw_vblock_to_object_ptr(unit_block.get());
+        }
+    }
     if (prev_block == nullptr) {
         XMETRICS_GAUGE(metrics::xmetrics_tag_t::statectx_load_block_succ, 0);
         sync_unit_block(addr, account_index.get_latest_unit_height());
@@ -84,7 +87,7 @@ data::xblock_ptr_t xstatectx_base_t::load_inner_table_unit_block(const base::xva
         return nullptr;
     }
     XMETRICS_GAUGE(metrics::xmetrics_tag_t::statectx_load_block_succ, 1);
-    return data::xblock_t::raw_vblock_to_object_ptr(prev_block.get());
+    return prev_block;
 }
 
 xobject_ptr_t<base::xvbstate_t> xstatectx_base_t::load_different_table_unit_state(const base::xvaccount_t & addr) const {

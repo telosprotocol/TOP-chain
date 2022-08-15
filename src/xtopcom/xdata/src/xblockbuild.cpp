@@ -553,15 +553,8 @@ bool xlighttable_build_t::build_block_body(const xtable_block_para_t & para, con
     }
 
     std::vector<xobject_ptr_t<base::xvblock_t>> batch_units;
-    uint32_t i = 0;
     for (auto & v : para.get_account_units()) {
-        v->set_parent_block(account.get_account(), i + 1);
-        v->get_cert()->set_parent_height(height);
-        v->get_cert()->set_parent_viewid(get_qcert()->get_viewid());
-        v->set_extend_cert("1");
-        v->set_extend_data("1");
         batch_units.push_back(v);
-        i++;
     }
     set_batch_units(batch_units);
 
