@@ -3,14 +3,32 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xdata/xtransaction.h"
-
+#include <cinttypes>
 #include "xbase/xutl.h"
 #include "xcommon/xerror/xerror.h"
-#include <cinttypes>
+#include "xconfig/xconfig_register.h"
+#include "xconfig/xpredefined_configurations.h"
 
 namespace top { namespace data {
 
 bool xtransaction_t::transaction_type_check() const {
+    // consortium: disable stake and vote
+    if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(toggle_register_whitelist) == 1) {
+        switch (get_tx_type()) {
+#ifdef ENABLE_CREATE_USER  // debug use
+        case xtransaction_type_create_user_account:
+#endif
+        case xtransaction_type_deploy_evm_contract:
+        case xtransaction_type_run_contract:
+        case xtransaction_type_transfer:
+        case xtransaction_type_pledge_token_tgas:
+        case xtransaction_type_redeem_token_tgas:
+            return true;
+        default:
+            return false;
+        }
+    }
+
     switch (get_tx_type()) {
 #ifdef ENABLE_CREATE_USER  // debug use
         case xtransaction_type_create_user_account:

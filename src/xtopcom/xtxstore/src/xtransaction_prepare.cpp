@@ -70,10 +70,11 @@ int32_t xtransaction_prepare_t::parse() {
 int32_t xtransaction_prepare_t::check() {
     int32_t ret;
     if (m_trans_obj == nullptr) {
-        ret = parse();
-        if (ret != xsuccess) {
-            return ret;
-        }
+        return xsuccess;
+//        ret = parse();
+//        if (ret != xsuccess) {
+//            return ret;
+//        }
     }
 
     ret = m_trans_obj->check();

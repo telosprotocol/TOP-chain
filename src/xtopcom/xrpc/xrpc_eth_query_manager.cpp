@@ -168,6 +168,12 @@ uint64_t xrpc_eth_query_manager::get_block_height(const std::string& table_heigh
     return height;
 }
 void xrpc_eth_query_manager::eth_getBalance(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode) {
+    //consortium: disable eth token
+    if (XGET_CONFIG(enable_eth_token) == false) {
+        top_getBalance(js_req, js_rsp, strResult, nErrorCode);
+        return;
+    }
+
     if (!eth::EthErrorCode::check_req(js_req, js_rsp, 2))
         return;
     if (!eth::EthErrorCode::check_hex(js_req[0].asString(), js_rsp, 0, eth::enum_rpc_type_address))

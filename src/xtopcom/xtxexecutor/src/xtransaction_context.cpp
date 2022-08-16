@@ -323,8 +323,8 @@ int32_t xtransaction_transfer::source_fee_exec() {
                 }
             }
         }
-
-        ret = m_fee.update_tgas_sender();
+        if (XGET_CONFIG(enable_gas_fee))
+            ret = m_fee.update_tgas_sender();
     }
     return ret;
 }
