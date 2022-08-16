@@ -159,7 +159,7 @@ void xeth_transaction_t::streamRLP_eip1599(bool includesig, evm_common::RLPStrea
     _s << m_max_priority_fee_per_gas;
     _s << m_max_fee_per_gas;
     _s << m_gas;
-    if (!m_to.empty()) {
+    if (!m_to.is_zero()) {
         _s << m_to.to_bytes();
     } else {
         _s << "";
@@ -263,7 +263,7 @@ void xeth_transaction_t::decodeRLP_eip1599(bool includesig, evm_common::RLP cons
             m_signS = _r[field = 11].toInt<evm_common::u256>();
         }
 
-        if (m_data.empty() && m_to.empty()) {
+        if (m_data.empty() && m_to.is_zero()) {
             ec = eth_error(error::xenum_errc::eth_server_error, "rlp: input data and to all empty, not valid tx");
             return;
         }
@@ -310,7 +310,7 @@ uint256_t xeth_transaction_t::get_tx_hash() const {
 }
 
 common::xeth_address_t xeth_transaction_t::get_from() const {
-    if (m_from.empty()) {
+    if (m_from.is_zero()) {
         xbytes_t _bytes = encodeUnsignHashBytes();
         std::string _str = top::to_string(_bytes);
         // std::cout << "unsign_bytes=" << top::to_hex(_bytes) << std::endl;
