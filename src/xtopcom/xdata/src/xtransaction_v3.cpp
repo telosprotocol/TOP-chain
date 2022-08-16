@@ -53,13 +53,13 @@ void xtransaction_v3_t::construct_tx(enum_xtransaction_type tx_type,
 void xtransaction_v3_t::update_cache() {
     // TODO(jimmy)
     if (!m_ethtx.get_data().empty()) {
-        if (m_ethtx.get_to().empty()) {
+        if (m_ethtx.get_to().is_zero()) {
             m_transaction_type = xtransaction_type_deploy_evm_contract;
         } else {
             m_transaction_type = xtransaction_type_run_contract;
         }
     } else {
-        if (!m_ethtx.get_to().empty()) {
+        if (!m_ethtx.get_to().is_zero()) {
             m_transaction_type = xtransaction_type_transfer;
         } else {
             xassert(false);

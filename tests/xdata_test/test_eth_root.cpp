@@ -44,7 +44,7 @@ public:
         _s << m_nonce;
         _s << m_gasprice;
         _s << m_gas;
-        if (!m_to.empty()) {
+        if (!m_to.is_zero()) {
             _s << m_to.to_bytes();
         } else {
             _s << "";
