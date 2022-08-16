@@ -61,8 +61,6 @@ namespace top
             inline const uint64_t       get_parent_block_viewid() const {return m_parent_block_viewid;}
             inline const uint32_t       get_parent_block_entity() const {return m_parent_block_entity_id;}
 
-            inline bool                 has_parent_store() const {return get_parent_block_height() != 0 && get_parent_block_viewid() != 0 && get_parent_block_entity() != 0;}
-
             inline const std::string &  get_extend_cert()      const {return m_extend_cert;}
             inline const std::string &  get_extend_data()      const {return m_extend_data;}
             inline void                 set_extend_data(const std::string& data) { m_extend_data = data;}
@@ -89,9 +87,6 @@ namespace top
 
             void                        set_block_character(base::enum_xvblock_character character);
             void                        remove_block_character(base::enum_xvblock_character character);
-            
-            bool is_fulltable() const {return get_block_level() == base::enum_xvblock_level_table && get_block_class() == base::enum_xvblock_class_full;}
-
         public:
             inline xvbindex_t*          get_prev_block() const {return m_prev_index;}
             bool                        reset_prev_block(xvbindex_t * _new_prev_ptr);//return false if hash or height not match

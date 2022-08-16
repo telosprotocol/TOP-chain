@@ -645,61 +645,6 @@ base::xauto_ptr<base::xvoutput_t> xlighttable_build_t::make_unit_output_from_tab
     return _unit_output;
 }
 
-xobject_ptr_t<base::xvblock_t> xlighttable_build_t::unpack_one_unit_from_table(const base::xvblock_t* _tableblock, uint32_t entity_id, const std::string & extend_cert, const std::string & extend_data) {
-    XMETRICS_GAUGE(metrics::data_table_unpack_one_unit, 1);
-    const std::vector<base::xventity_t*> & _table_inentitys = _tableblock->get_input()->get_entitys();
-    const std::vector<base::xventity_t*> & _table_outentitys = _tableblock->get_output()->get_entitys();
-    if (_table_inentitys.size() <= entity_id || entity_id == 0 || _table_inentitys.size() != _table_outentitys.size()) {
-        xassert(false);
-        return nullptr;
-    }
-    base::xvinentity_t* _table_unit_inentity = dynamic_cast<base::xvinentity_t*>(_table_inentitys[entity_id]);
-    base::xvoutentity_t* _table_unit_outentity = dynamic_cast<base::xvoutentity_t*>(_table_outentitys[entity_id]);
-    if (_table_unit_inentity == nullptr || _table_unit_outentity == nullptr) {
-        xassert(false);
-        return nullptr;
-    }
-
-    base::xtable_inentity_extend_t extend;
-    extend.serialize_from_string(_table_unit_inentity->get_extend_data());
-    const xobject_ptr_t<base::xvheader_t> & _unit_header = extend.get_unit_header();
-
-    std::shared_ptr<base::xvblockmaker_t> vbmaker = nullptr;
-    if (_unit_header->get_block_class() == base::enum_xvblock_class_nil) {
-        vbmaker = std::make_shared<xemptyblock_build_t>(_unit_header.get());
-    } else {
-        base::xauto_ptr<base::xvinput_t> _unit_input = make_unit_input_from_table(_tableblock, extend, _table_unit_inentity);
-        base::xauto_ptr<base::xvoutput_t> _unit_output = make_unit_output_from_table(_tableblock, extend, _table_unit_outentity);
-        if (_unit_input == nullptr || _unit_output == nullptr) {
-            xassert(false);
-            return nullptr;
-        }
-        if (_unit_header->get_block_class() == base::enum_xvblock_class_light) {
-            vbmaker = std::make_shared<xlightunit_build_t>(_unit_header.get(), _unit_input.get(), _unit_output.get());
-        } else if (_unit_header->get_block_class() == base::enum_xvblock_class_full) {
-            vbmaker = std::make_shared<xfullunit_build_t>(_unit_header.get(), _unit_input.get(), _unit_output.get());
-        }
-    }
-
-    base::xbbuild_para_t build_para;
-    base::xvqcert_t* tablecert = _tableblock->get_cert();
-    build_para.set_unit_cert_para(tablecert->get_clock(), tablecert->get_viewtoken(), tablecert->get_viewid(), tablecert->get_validator(),
-                                tablecert->get_auditor(), tablecert->get_drand_height(), _tableblock->get_height(), extend.get_unit_justify_hash());
-    vbmaker->init_qcert(build_para);
-    xobject_ptr_t<base::xvblock_t> _unit = vbmaker->build_new_block();
-    xassert(_unit != nullptr);
-    _unit->set_parent_block(_tableblock->get_account(), entity_id);
-    _unit->get_cert()->set_parent_height(_tableblock->get_height());
-    _unit->get_cert()->set_parent_viewid(_tableblock->get_viewid());
-
-    _unit->set_extend_cert(extend_cert);
-    _unit->set_extend_data(extend_data);
-
-    _unit->set_block_flag(base::enum_xvblock_flag_authenticated);
-    xassert(!_unit->get_block_hash().empty());
-    return _unit;
-}
-
 std::vector<xobject_ptr_t<base::xvblock_t>> xlighttable_build_t::unpack_units_from_table(const base::xvblock_t* _tableblock) {
     XMETRICS_GAUGE(metrics::data_table_unpack_units, 1);
 #ifdef DEBUG

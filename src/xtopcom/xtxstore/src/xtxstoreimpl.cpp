@@ -197,31 +197,6 @@ bool xtxstoreimpl::store_txs(base::xvblock_t * block_ptr) {
                       block_ptr->dump().c_str(),
                       base::xvtxkey_t::transaction_hash_subtype_to_string(v->get_tx_hash(), v->get_tx_phase_type()).c_str());
             }
-
-#ifdef LONG_CONFIRM_CHECK
-            if (v->get_tx_phase_type() == base::enum_transaction_subtype_confirm) {
-                base::xauto_ptr<base::xvtxindex_t> send_txindex = base::xvchain_t::instance().get_xtxstore()->load_tx_idx(v->get_tx_hash(), base::enum_transaction_subtype_send);
-                if (send_txindex == nullptr) {
-                    xwarn("xvtxstore_t::store_txs,fail find sendtx index. tx=%s", base::xstring_utl::to_hex(v->get_tx_hash()).c_str());
-                } else {
-                    uint64_t confirmtx_clock = block_ptr->get_clock();
-                    uint64_t sendtx_clock = send_txindex->get_block_clock();
-                    uint64_t delay_time = confirmtx_clock > sendtx_clock ? confirmtx_clock - sendtx_clock : 0;
-                    static std::atomic<uint64_t> max_time{0};
-                    if (max_time < delay_time) {
-                        max_time = delay_time;
-                    }
-
-                    if (delay_time >= 6)  // 6 clock
-                    {
-                        xwarn("xvtxstore_t::store_txs,confirm tx time long.max_time=%ld,time=%ld,tx=%s",
-                              (uint64_t)max_time,
-                              delay_time,
-                              base::xstring_utl::to_hex(v->get_tx_hash()).c_str());
-                    }
-                }
-            }
-#endif
         }
         if (has_error)
             return false;
