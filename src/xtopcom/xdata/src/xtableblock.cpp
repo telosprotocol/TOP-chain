@@ -153,20 +153,12 @@ int64_t xtable_block_t::get_pledge_balance_change_tgas() const {
 }
 
 bool  xtable_block_t::extract_sub_blocks(std::vector<xobject_ptr_t<base::xvblock_t>> & sub_blocks) {
-    // std::vector<xobject_ptr_t<base::xvblock_t>> _units = xlighttable_build_t::unpack_units_from_table(this);
-    // sub_blocks = _units;
-
     std::error_code ec;
     data::xblockextract_t::unpack_subblocks(this, sub_blocks, ec);
     if (ec) {
         return false;
     }
     return true;
-}
-
-bool xtable_block_t::extract_one_sub_block(uint32_t entity_id, const std::string & extend_cert, const std::string & extend_data, xobject_ptr_t<xvblock_t> & sub_block) {
-    sub_block = xlighttable_build_t::unpack_one_unit_from_table(this, entity_id, extend_cert, extend_data);
-    return sub_block != nullptr ? true : false;
 }
 
 bool xtable_block_t::extract_sub_txs(std::vector<base::xvtxindex_ptr> & sub_txs) {
