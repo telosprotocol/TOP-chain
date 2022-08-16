@@ -26,6 +26,9 @@ uint64_t xtgas_singleton::get_cache_total_lock_tgas_token() {
 }
 
 bool xtgas_singleton::get_latest_property(std::string & value, uint64_t & height) {
+    if (!XGET_CONFIG(enable_sharding_contract))
+        return false;
+
     base::xvaccount_t _zec_workload_vaddress(sys_contract_zec_workload_addr);
     auto bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_latest_connectted_block_state(_zec_workload_vaddress, metrics::statestore_access_from_store_tgas);
     if (bstate == nullptr) {
@@ -72,6 +75,11 @@ bool xtgas_singleton::leader_get_total_lock_tgas_token(uint64_t timer_height, ui
 }
 
 bool xtgas_singleton::backup_get_total_lock_tgas_token(uint64_t timer_height, uint64_t property_height, uint64_t & total_lock_tgas_token) {
+    if (!XGET_CONFIG(enable_sharding_contract)) {
+        total_lock_tgas_token = 0;
+        return true;
+    }
+
     if (property_height == 0) {
         total_lock_tgas_token = 0;
         return true;

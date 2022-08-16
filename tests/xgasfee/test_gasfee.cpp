@@ -1,3 +1,5 @@
+#define protected public
+#define private public
 #include "test_gasfee_fixture.h"
 #include "xdata/src/xnative_contract_address.cpp"
 #include "xgasfee/xerror/xerror.h"

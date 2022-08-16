@@ -17,6 +17,7 @@
 #include "xedge_rpc_handler.h"
 #include "xmetrics/xmetrics.h"
 #include "xrpc/xrpc_query_manager.h"
+#include "xrpc/xrpc_eth_query_manager.h"
 #include "xrpc/xerror/xrpc_error.h"
 #include "xrpc/xjson_proc.h"
 #include "xrpc/xrpc_define.h"
@@ -78,6 +79,8 @@ protected:
     unordered_map<pair<string, string>, tx_method_handler> m_edge_tx_method_map;
     unique_ptr<xedge_local_method<T>> m_edge_local_method_ptr;
     std::shared_ptr<xrpc_query_manager> m_rpc_query_mgr;
+    std::shared_ptr<xrpc_eth_query_manager> m_rpc_eth_query_mgr;
+    unique_ptr<xfilter_manager>  m_rule_mgr_ptr;
     observer_ptr<store::xstore_face_t> m_store;
     top::observer_ptr<base::xvtxstore_t> m_txstore;
     bool m_archive_flag{false};  // for local query
@@ -120,16 +123,17 @@ xedge_evm_method_base<T>::xedge_evm_method_base(shared_ptr<xrpc_edge_vhost> edge
                                         observer_ptr<top::election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
   : m_edge_local_method_ptr(top::make_unique<xedge_local_method<T>>(elect_main, xip2))
   , m_rpc_query_mgr(std::make_shared<xrpc_query_manager>(store, block_store, nullptr, xtxpool_service_v2::xtxpool_proxy_face_ptr(nullptr), txstore, archive_flag))
+  , m_rpc_eth_query_mgr(std::make_shared<xrpc_eth_query_manager>(store, block_store, nullptr, xtxpool_service_v2::xtxpool_proxy_face_ptr(nullptr), txstore, archive_flag))
+  , m_rule_mgr_ptr(top::make_unique<xfilter_manager>())
   , m_store(store)
   , m_txstore{txstore}
   , m_archive_flag(archive_flag)
 {
     m_edge_handler_ptr = top::make_unique<T>(edge_vhost, ioc, election_cache_data_accessor);
     m_edge_handler_ptr->init();
-    //EDGE_REGISTER_V1_ACTION(T, sendTransaction);
     m_edge_tx_method_map.emplace(                                                                                                                                                  \
         pair<pair<string, string>, tx_method_handler>{pair<string, string>{"2.0", "eth_sendRawTransaction"}, std::bind(&xedge_evm_method_base<T>::sendTransaction_method, this, _1, _2)});
-
+    m_eth_method.init(archive_flag);
 }
 
 template <class T>
@@ -182,13 +186,22 @@ void xedge_evm_method_base<T>::do_method(shared_ptr<conn_type> & response, xjson
         }
     } else {
         if (m_archive_flag) {
-            xdbg("local arc query method: %s", method.c_str());
-            json_proc.m_request_json["params"]["version"] = version;
+            xdbg("local exchange query method: %s", method.c_str());
+/*            json_proc.m_request_json["params"]["version"] = version;
             string strErrorMsg = RPC_OK_MSG;
             uint32_t nErrorCode = 0;
             m_rpc_query_mgr->call_method(method, json_proc.m_request_json["params"], json_proc.m_response_json["data"], strErrorMsg, nErrorCode);
             json_proc.m_response_json[RPC_ERRNO] = nErrorCode;
-            json_proc.m_response_json[RPC_ERRMSG] = strErrorMsg;
+            json_proc.m_response_json[RPC_ERRMSG] = strErrorMsg;*/
+            m_rule_mgr_ptr->filter_eth(json_proc);
+            const string & version = json_proc.m_request_json["jsonrpc"].asString();
+            string strMethod = json_proc.m_request_json["method"].asString();
+            string strErrorMsg = RPC_OK_MSG;
+            uint32_t nErrorCode = 0;
+            m_rpc_eth_query_mgr->call_method(strMethod, json_proc.m_request_json["params"], json_proc.m_response_json, strErrorMsg, nErrorCode);
+            json_proc.m_response_json["id"] = json_proc.m_request_json["id"];  // edge_msg.m_client_id;
+            json_proc.m_response_json["jsonrpc"] = version;
+
             write_response(response, json_proc.get_response());
             return;
         } else {
@@ -221,6 +234,18 @@ void xedge_evm_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, 
         errinfo["message"] = ec.error_message;
         json_proc.m_response_json["error"] = errinfo;
         return ;
+    }
+    if (json_proc.m_tx_ptr->get_tx_type() == data::xtransaction_type_transfer) {
+        if ((m_archive_flag && !XGET_CONFIG(enable_exchange_rpc_transfer)) || (!m_archive_flag && !XGET_CONFIG(enable_edge_rpc_transfer))) {
+            eth::EthErrorCode::deal_error(json_proc.m_response_json, eth::enum_eth_rpc_method_not_find, "not support transfer.");
+            return;
+        }
+    }
+    if (json_proc.m_tx_ptr->get_tx_type() == data::xtransaction_type_deploy_evm_contract) {
+        if ((m_archive_flag && !XGET_CONFIG(enable_exchange_rpc_deploy_contract)) || (!m_archive_flag && !XGET_CONFIG(enable_edge_rpc_deploy_contract))) {
+            eth::EthErrorCode::deal_error(json_proc.m_response_json, eth::enum_eth_rpc_method_not_find, "not support transfer.");
+            return;
+        }
     }
 
     // TODO(jimmy) refactor tx verifier

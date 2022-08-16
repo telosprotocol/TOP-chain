@@ -587,6 +587,50 @@ XDECLARE_CONFIGURATION(platform_business_port, std::uint16_t, 9000);
 XDECLARE_CONFIGURATION(platform_show_cmd, bool, false);
 XDECLARE_CONFIGURATION(platform_db_path, char const *, "/chain/db_v2/pdb");
 
+//consortium configuration
+/*
+XDECLARE_CONFIGURATION(enable_grpc, bool, false);
+XDECLARE_CONFIGURATION(enable_edge_top_rpc, bool, false);
+XDECLARE_CONFIGURATION(enable_edge_evm_rpc, bool, true);
+XDECLARE_CONFIGURATION(enable_edge_relay_rpc, bool, false);
+XDECLARE_CONFIGURATION(enable_edge_rpc_transfer, bool, false);
+XDECLARE_CONFIGURATION(enable_edge_rpc_deploy_contract, bool, false);
+XDECLARE_CONFIGURATION(enable_exchange_top_rpc, bool, true);
+XDECLARE_CONFIGURATION(enable_exchange_evm_rpc, bool, true);
+XDECLARE_CONFIGURATION(enable_exchange_relay_rpc, bool, true);
+XDECLARE_CONFIGURATION(enable_exchange_rpc_transfer, bool, true);
+XDECLARE_CONFIGURATION(enable_exchange_rpc_deploy_contract, bool, true);
+XDECLARE_CONFIGURATION(enable_sharding_contract, bool, false);
+XDECLARE_CONFIGURATION(enable_gas_fee, bool, false);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(toggle_register_whitelist, bool, normal, true, false, true);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(register_advance_whitelist, char const *, normal, "", "", "");
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(register_validator_whitelist, char const *, normal, "", "", "");
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(register_exchange_whitelist, char const *, normal, "", "", "");
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(register_edge_whitelist, char const *, normal, "", "", "");
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(register_archive_whitelist, char const *, normal, "", "", "");
+*/
+XDECLARE_CONFIGURATION(enable_grpc, bool, true);
+XDECLARE_CONFIGURATION(enable_edge_top_rpc, bool, true);
+XDECLARE_CONFIGURATION(enable_edge_evm_rpc, bool, true);
+XDECLARE_CONFIGURATION(enable_edge_relay_rpc, bool, true);
+XDECLARE_CONFIGURATION(enable_edge_rpc_transfer, bool, true);
+XDECLARE_CONFIGURATION(enable_edge_rpc_deploy_contract, bool, true);
+XDECLARE_CONFIGURATION(enable_exchange_top_rpc, bool, true);
+XDECLARE_CONFIGURATION(enable_exchange_evm_rpc, bool, true);
+XDECLARE_CONFIGURATION(enable_exchange_relay_rpc, bool, true);
+XDECLARE_CONFIGURATION(enable_exchange_rpc_transfer, bool, true);
+XDECLARE_CONFIGURATION(enable_exchange_rpc_deploy_contract, bool, true);
+XDECLARE_CONFIGURATION(enable_sharding_contract, bool, true);
+XDECLARE_CONFIGURATION(enable_gas_fee, bool, true);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(toggle_register_whitelist, std::uint16_t, normal, 0, 0, 1);
+/*XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(register_advance_whitelist, char const *, normal, "", "", "");
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(register_validator_whitelist, char const *, normal, "", "", "");
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(register_exchange_whitelist, char const *, normal, "", "", "");
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(register_edge_whitelist, char const *, normal, "", "", "");
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(register_archive_whitelist, char const *, normal, "", "", "");*/
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(register_whitelist, char const *, normal, "", "", "");
+
+
 #undef XDECLARE_CONFIGURATION
 
 NS_END2

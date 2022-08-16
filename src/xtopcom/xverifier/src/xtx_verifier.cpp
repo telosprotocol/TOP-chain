@@ -231,8 +231,23 @@ int32_t xtx_verifier::sys_contract_tx_check(data::xtransaction_t const * trx_ptr
         return xverifier_error::xverifier_error_contract_not_allowed;
     }
 
+    if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(toggle_register_whitelist) == 1) {
+        if (verify_register_whitelist(source_addr) == false)
+            return xverifier_error::xverifier_error_whitelist_limit;
+    }
+
     xdbg("[global_trace][xtx_verifier][sys_contract_tx_check][success], tx:%s", trx_ptr->dump().c_str());
     return xverifier_error::xverifier_success;
+}
+bool xtx_verifier::verify_register_whitelist(const std::string& account) {
+    std::string nodes = XGET_ONCHAIN_GOVERNANCE_PARAMETER(register_whitelist);
+    std::vector<std::string> node_list;
+    base::xstring_utl::split_string(nodes, ',', node_list);
+
+    if (std::find(std::begin(node_list), std::end(node_list), account) != std::end(node_list))
+        return true;
+    xwarn("xtx_verifier::verify_register_whitelist fail, %s", account.c_str());
+    return false;
 }
 
 int32_t xtx_verifier::verify_account_min_deposit(uint64_t amount) {

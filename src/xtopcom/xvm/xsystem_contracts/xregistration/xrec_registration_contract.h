@@ -265,6 +265,7 @@ private:
      * @param node_info
      */
     void init_node_credit(data::system_contract::xreg_node_info & node_info);
+    bool check_miner_type(const std::string& account, const common::xminer_type_t& miner_type);
 };
 
 
