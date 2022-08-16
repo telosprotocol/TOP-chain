@@ -589,13 +589,12 @@ XDECLARE_CONFIGURATION(platform_db_path, char const *, "/chain/db_v2/pdb");
 
 //consortium configuration
 /*
-XDECLARE_CONFIGURATION(enable_edge_grpc, bool, false);
+XDECLARE_CONFIGURATION(enable_grpc, bool, false);
 XDECLARE_CONFIGURATION(enable_edge_top_rpc, bool, false);
 XDECLARE_CONFIGURATION(enable_edge_evm_rpc, bool, true);
 XDECLARE_CONFIGURATION(enable_edge_relay_rpc, bool, false);
 XDECLARE_CONFIGURATION(enable_edge_rpc_transfer, bool, false);
 XDECLARE_CONFIGURATION(enable_edge_rpc_contract, bool, false);
-XDECLARE_CONFIGURATION(enable_exchange_grpc, bool, false);
 XDECLARE_CONFIGURATION(enable_exchange_top_rpc, bool, true);
 XDECLARE_CONFIGURATION(enable_exchange_evm_rpc, bool, true);
 XDECLARE_CONFIGURATION(enable_exchange_relay_rpc, bool, true);
@@ -604,13 +603,12 @@ XDECLARE_CONFIGURATION(enable_exchange_rpc_contract, bool, true);
 XDECLARE_CONFIGURATION(enable_sharding_contract, bool, false);
 XDECLARE_CONFIGURATION(enable_gas_fee, bool, false);
 */
-XDECLARE_CONFIGURATION(enable_edge_grpc, bool, true);
+XDECLARE_CONFIGURATION(enable_grpc, bool, true);
 XDECLARE_CONFIGURATION(enable_edge_top_rpc, bool, true);
 XDECLARE_CONFIGURATION(enable_edge_evm_rpc, bool, true);
 XDECLARE_CONFIGURATION(enable_edge_relay_rpc, bool, true);
 XDECLARE_CONFIGURATION(enable_edge_rpc_transfer, bool, true);
 XDECLARE_CONFIGURATION(enable_edge_rpc_contract, bool, true);
-XDECLARE_CONFIGURATION(enable_exchange_grpc, bool, true);
 XDECLARE_CONFIGURATION(enable_exchange_top_rpc, bool, true);
 XDECLARE_CONFIGURATION(enable_exchange_evm_rpc, bool, true);
 XDECLARE_CONFIGURATION(enable_exchange_relay_rpc, bool, true);
