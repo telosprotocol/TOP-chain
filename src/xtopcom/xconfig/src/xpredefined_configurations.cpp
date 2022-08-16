@@ -239,7 +239,21 @@ XDEFINE_CONFIGURATION(platform_show_cmd);
 XDEFINE_CONFIGURATION(platform_db_path);
 XDEFINE_CONFIGURATION(platform_url_endpoints);
 
-
+// consortium parameters
+XDEFINE_CONFIGURATION(enable_edge_grpc);
+XDEFINE_CONFIGURATION(enable_edge_top_rpc);
+XDEFINE_CONFIGURATION(enable_edge_evm_rpc);
+XDEFINE_CONFIGURATION(enable_edge_relay_rpc);
+XDEFINE_CONFIGURATION(enable_edge_rpc_transfer);
+XDEFINE_CONFIGURATION(enable_edge_rpc_contract);
+XDEFINE_CONFIGURATION(enable_exchange_grpc);
+XDEFINE_CONFIGURATION(enable_exchange_top_rpc);
+XDEFINE_CONFIGURATION(enable_exchange_evm_rpc);
+XDEFINE_CONFIGURATION(enable_exchange_relay_rpc);
+XDEFINE_CONFIGURATION(enable_exchange_rpc_transfer);
+XDEFINE_CONFIGURATION(enable_exchange_rpc_contract);
+XDEFINE_CONFIGURATION(enable_sharding_contract);
+XDEFINE_CONFIGURATION(enable_gas_fee);
 
 #    undef XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER
 #    undef XDEFINE_CONFIGURATION

@@ -3,17 +3,13 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
-
-#include "xgasfee/xgas_state_operator.h"
-#include "xgasfee/xgas_tx_operator.h"
-#include "xtxexecutor/xvm_face.h"
-
+#include "xgasfee/xgasfee_interface.h"
 #include <iostream>
 
 namespace top {
 namespace gasfee {
 
-class xtop_gasfee : public xgas_state_operator_t, public xgas_tx_operator_t {
+class xtop_gasfee : public xgasfee_interface {
 public:
     xtop_gasfee(std::shared_ptr<data::xunit_bstate_t> const & state, xobject_ptr_t<data::xcons_transaction_t> const & tx, uint64_t time, uint64_t onchain_tgas_deposit);
 
@@ -21,8 +17,7 @@ public:
     void preprocess(std::error_code & ec);
     void postprocess(const evm_common::u256 supplement_gas, std::error_code & ec);
 
-    txexecutor::xvm_gasfee_detail_t gasfee_detail() const;
-
+    evm_common::u256 get_tx_eth_gas_limit() const { return tx_eth_gas_limit();}
 private:
     void preprocess_one_stage(std::error_code & ec);
     void preprocess_send_stage(std::error_code & ec);
@@ -57,12 +52,6 @@ private:
     evm_common::u256 m_eth_converted_tgas{0};
     evm_common::u256 m_eth_converted_tgas_usage{0};
 
-    // onchain related param
-    uint64_t m_time{0};
-    uint64_t m_onchain_tgas_deposit{0};
-
-    // output
-    txexecutor::xvm_gasfee_detail_t m_detail;
 };
 
 using xgasfee_t = xtop_gasfee;

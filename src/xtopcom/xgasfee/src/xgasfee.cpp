@@ -21,9 +21,7 @@ namespace top {
 namespace gasfee {
 
 xtop_gasfee::xtop_gasfee(std::shared_ptr<data::xunit_bstate_t> const & state, xobject_ptr_t<data::xcons_transaction_t> const & tx, uint64_t time, uint64_t onchain_tgas_deposit)
-  : xgas_state_operator_t(state), xgas_tx_operator_t(tx), m_time(time), m_onchain_tgas_deposit(onchain_tgas_deposit) {
-    xassert(state != nullptr);
-    xassert(tx != nullptr);
+  : xgasfee_interface(state, tx, time, onchain_tgas_deposit) {
 }
 
 void xtop_gasfee::check(std::error_code & ec) {
@@ -449,10 +447,6 @@ void xtop_gasfee::postprocess(const evm_common::u256 supplement_gas, std::error_
         // }
     }
     CHECK_EC_RETURN(ec);
-}
-
-txexecutor::xvm_gasfee_detail_t xtop_gasfee::gasfee_detail() const {
-    return m_detail;
 }
 
 }  // namespace gasfee
