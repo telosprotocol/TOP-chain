@@ -132,7 +132,7 @@ bool xtop_evm_eth_bridge_contract::sync(const xbytes_t & rlp_bytes, state_ptr st
 
 bool xtop_evm_eth_bridge_contract::reset(state_ptr state) {
     if (get_flag(state) != 0) {
-        xwarn("[xtop_evm_eth_bridge_contract::reset] flag not 0");
+        xwarn("[xtop_evm_eth_bridge_contract::reset] reset already disabled");
         return false;
     }
     state->map_clear(data::system_contract::XPROPERTY_EFFECTIVE_HASHES);
@@ -140,10 +140,12 @@ bool xtop_evm_eth_bridge_contract::reset(state_ptr state) {
     state->map_clear(data::system_contract::XPROPERTY_HEADERS);
     state->map_clear(data::system_contract::XPROPERTY_HEADERS_SUMMARY);
     set_last_hash(h256(), state);
+    xinfo("[xtop_evm_eth_bridge_contract::reset] reset success");
     return true;
 }
 
 bool xtop_evm_eth_bridge_contract::disable_reset(state_ptr state) {
+    xinfo("[xtop_evm_eth_bridge_contract::disable_reset] disable_reset");
     return set_flag(state);
 }
 
