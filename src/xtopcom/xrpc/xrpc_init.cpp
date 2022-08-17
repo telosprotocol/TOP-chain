@@ -51,11 +51,8 @@ xrpc_init::xrpc_init(std::shared_ptr<xvnetwork_driver_face_t> vhost,
         auto ip = vhost->address().xip2();
 
         xdbg("edge http");
-        if (XGET_CONFIG(enable_edge_top_rpc)) {
-            shared_ptr<xhttp_server> http_server_ptr =
-                std::make_shared<xhttp_server>(m_edge_handler, ip, false, store, block_store, txstore, elect_main, election_cache_data_accessor);
-            http_server_ptr->start(http_port);
-        }
+        shared_ptr<xhttp_server> http_server_ptr = std::make_shared<xhttp_server>(m_edge_handler, ip, false, store, block_store, txstore, elect_main, election_cache_data_accessor);
+        http_server_ptr->start(http_port);
         shared_ptr<xws_server> ws_server_ptr = std::make_shared<xws_server>(m_edge_handler, ip, false, store, block_store, txstore, elect_main, election_cache_data_accessor);
         ws_server_ptr->start(ws_port);
 
