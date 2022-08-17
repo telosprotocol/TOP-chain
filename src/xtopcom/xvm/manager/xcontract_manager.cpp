@@ -23,7 +23,7 @@
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xtransaction_v1.h"
-#include "xevm_common/xeth/xeth_header.h"
+#include "xevm_common/xcrosschain/xeth_header.h"
 #include "xmbus/xevent_store.h"
 #include "xmbus/xevent_timer.h"
 #include "xmetrics/xmetrics.h"
@@ -2307,7 +2307,7 @@ static void get_chain_headers(common::xaccount_address_t const & contract_addres
     for (auto pair : headers) {
         xbytes_t k{std::begin(pair.first), std::end(pair.first)};
         auto hash = static_cast<evm_common::h256>(k);
-        evm_common::eth::xeth_header_t header;
+        evm_common::xeth_header_t header;
         if (header.decode_rlp({pair.second.begin(), pair.second.end()}) == false) {
             continue;
         }
@@ -2327,7 +2327,9 @@ static void get_chain_headers(common::xaccount_address_t const & contract_addres
         j_header["extra"] = top::to_hex(header.extra);
         j_header["mixDigest"] = header.mix_digest.hex();
         j_header["nonce"] = header.nonce.hex();
-        j_header["baseFee"] = header.base_fee.str();
+        if (header.base_fee.has_value()) {
+            j_header["baseFee"] = header.base_fee.value().str();
+        }
         j_header["hash"] = header.hash().hex();
         json[hash.hex()] = j_header;
     }
@@ -2346,7 +2348,7 @@ static void get_chain_headers_summary(common::xaccount_address_t const & contrac
     for (auto pair : infos) {
         xbytes_t k{std::begin(pair.first), std::end(pair.first)};
         auto hash = static_cast<evm_common::h256>(k);
-        evm_common::eth::xeth_header_info_t info;
+        evm_common::xeth_header_info_t info;
         if (info.decode_rlp({pair.second.begin(), pair.second.end()}) == false) {
             continue;
         }

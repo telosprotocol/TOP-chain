@@ -27,181 +27,76 @@ xtop_gasfee::xtop_gasfee(std::shared_ptr<data::xunit_bstate_t> const & state, xo
 }
 
 void xtop_gasfee::check(std::error_code & ec) {
-    // max gas fee
-    const uint64_t max_gasfee = deposit();
+    if (deposit() > 0) {
+        xassert(false);
+        xerror("[xtop_gasfee::check] unreachable code, deposit: %lu", deposit());
+        ec = gasfee::error::xenum_errc::invalid_param;
+        return;
+    }
     // top balance
     const uint64_t balance = account_balance();
-    // top from eth balance
-    const evm_common::u256 balance_from_eth = wei_to_utop(account_eth_balance());
-    // top balance to use
-    evm_common::u256 top_balance_to_use{0};
-    // eth balance to use
-    evm_common::u256 eth_balance_to_use{0};
-    if (max_gasfee > 0) {
-        // unreachable code
-        xassert(false);
-        xerror("[xtop_gasfee::check] unreachable code");
-        // xdbg("[xtop_gasfee::check] not evm tx, gasfee limit(deposit): %lu", max_gasfee);
-        // if (max_gasfee > balance) {
-        //     ec = gasfee::error::xenum_errc::account_balance_not_enough;
-        //     xwarn("[xtop_gasfee::check] account_balance_not_enough, max_gasfee: %lu, balance: %lu", max_gasfee, balance);
-        //     return;
-        // } else {
-        //     top_balance_to_use = max_gasfee;
-        // }
-        // if (max_gasfee < XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit)) {
-        //     ec = gasfee::error::xenum_errc::tx_deposit_not_enough;
-        //     xwarn("[xtop_gasfee::check] tx_deposit_not_enough: %lu", max_gasfee);
-        //     return;
-        // }
-    } else {
-        // evm tx or eth transfer
-        const evm_common::u256 eth_max_gasfee = tx_eth_limited_gasfee();
-        xdbg("[xtop_gasfee::check] evm tx, eth_max_gasfee: %s", eth_max_gasfee.str().c_str());
-        if (eth_max_gasfee > balance) {
-            // need use eth balance
-            if (eth_max_gasfee > balance + balance_from_eth) {
-                ec = gasfee::error::xenum_errc::account_balance_not_enough;
-                xwarn("[xtop_gasfee::check] account_balance_not_enough, eth_max_gasfee: %s, balance: %lu, balance_from_eth: %s",
-                      eth_max_gasfee.str().c_str(),
-                      balance,
-                      balance_from_eth.str().c_str());
-                return;
-            } else {
-                // use extra eth balance
-                top_balance_to_use = balance;
-                eth_balance_to_use = eth_max_gasfee - balance;
-                xinfo("[xtop_gasfee::check] use extra balance from eth, eth_max_gasfee: %s, balance: %lu, balance_from_eth: %s, eth_balance_to_use: %s",
-                      eth_max_gasfee.str().c_str(),
-                      balance,
-                      balance_from_eth.str().c_str(),
-                      eth_balance_to_use.str().c_str());
-            }
-        } else {
-            top_balance_to_use = eth_max_gasfee;
-            xinfo("[xtop_gasfee::check] use only top balance, eth_max_gasfee: %s, balance: %lu, top_balance_to_use: %s",
-                  eth_max_gasfee.str().c_str(),
-                  balance,
-                  top_balance_to_use.str().c_str());
-        }
-        if (eth_max_gasfee < XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit)) {
-            ec = gasfee::error::xenum_errc::tx_deposit_not_enough;
-            xwarn("[xtop_gasfee::check] tx_deposit_not_enough: %s", eth_max_gasfee.str().c_str());
-            return;
-        }
+    // gas fee
+    const evm_common::u256 eth_max_gasfee = tx_eth_limited_gasfee();
+    if (eth_max_gasfee > balance) {
+        // top balance not enough
+        ec = gasfee::error::xenum_errc::account_balance_not_enough;
+        xwarn("[xtop_gasfee::check] account_balance_not_enough, eth_max_gasfee: %s, balance: %lu", eth_max_gasfee.str().c_str(), balance);
+        return;
     }
+    if (eth_max_gasfee == 0) {
+        ec = gasfee::error::xenum_errc::invalid_param;
+        xwarn("[xtop_gasfee::check] invalid gasfee: %s", eth_max_gasfee.str().c_str());
+        return;
+    }
+    xinfo("[xtop_gasfee::check] valid_tx, eth_max_gasfee: %s, balance: %lu", eth_max_gasfee.str().c_str(), balance);
+    return;
 }
 
 void xtop_gasfee::init(std::error_code & ec) {
-    // max gas fee
-    const uint64_t max_gasfee = deposit();
     // top balance
     const uint64_t balance = account_balance();
-    // top from eth balance
-    const evm_common::u256 balance_from_eth = wei_to_utop(account_eth_balance());
-    // top balance to use
-    evm_common::u256 top_balance_to_use{0};
-    // eth balance to use
-    evm_common::u256 eth_balance_to_use{0};
-    if (max_gasfee > 0) {
-        // unreachable code
-        xassert(false);
-        xerror("[xtop_gasfee::init] unreachable code");
-        // xdbg("[xtop_gasfee::init] not evm tx, gasfee limit(deposit): %lu", max_gasfee);
-        // if (max_gasfee > balance) {
-        //     ec = gasfee::error::xenum_errc::account_balance_not_enough;
-        //     xwarn("[xtop_gasfee::init] account_balance_not_enough, max_gasfee: %lu, balance: %lu", max_gasfee, balance);
-        //     return;
-        // } else {
-        //     top_balance_to_use = max_gasfee;
-        // }
-        // if (max_gasfee < XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit)) {
-        //     ec = gasfee::error::xenum_errc::tx_deposit_not_enough;
-        //     xwarn("[xtop_gasfee::init] tx_deposit_not_enough: %lu", max_gasfee);
-        //     return;
-        // }
-    } else {
-        // evm tx or eth transfer
-        const evm_common::u256 eth_max_gasfee = tx_eth_limited_gasfee();
-        xdbg("[xtop_gasfee::init] evm tx, eth_max_gasfee: %s", eth_max_gasfee.str().c_str());
-        if (eth_max_gasfee > balance) {
-            // need use eth balance
-            if (eth_max_gasfee > balance + balance_from_eth) {
-                ec = gasfee::error::xenum_errc::account_balance_not_enough;
-                xwarn("[xtop_gasfee::init] account_balance_not_enough, eth_max_gasfee: %s, balance: %lu, balance_from_eth: %s",
-                      eth_max_gasfee.str().c_str(),
-                      balance,
-                      balance_from_eth.str().c_str());
-                top_balance_to_use = balance;
-                eth_balance_to_use = balance_from_eth;
-            } else {
-                // use extra eth balance
-                top_balance_to_use = balance;
-                eth_balance_to_use = eth_max_gasfee - balance;
-                xinfo("[xtop_gasfee::init] use extra eth balance, eth_max_gasfee: %s, balance: %lu, balance_from_eth: %s, eth_balance_to_use: %s",
-                      eth_max_gasfee.str().c_str(),
-                      balance,
-                      balance_from_eth.str().c_str(),
-                      eth_balance_to_use.str().c_str());
-            }
-        } else {
-            top_balance_to_use = eth_max_gasfee;
-            xinfo("[xtop_gasfee::init] use only top balance, eth_max_gasfee: %s, balance: %lu, top_balance_to_use: %s",
-                  eth_max_gasfee.str().c_str(),
-                  balance,
-                  top_balance_to_use.str().c_str());
-        }
+    // gas fee
+    const evm_common::u256 eth_max_gasfee = tx_eth_limited_gasfee();
+    xdbg("[xtop_gasfee::init] evm tx, eth_max_gasfee: %s", eth_max_gasfee.str().c_str());
+    if (eth_max_gasfee > balance) {
+        // top balance not enough
+        ec = gasfee::error::xenum_errc::account_balance_not_enough;
+        xwarn("[xtop_gasfee::init] account_balance_not_enough, eth_max_gasfee: %s, balance: %lu", eth_max_gasfee.str().c_str(), balance);
+        return;
     }
-    m_converted_tgas = balance_to_tgas(top_balance_to_use);
-    m_eth_converted_tgas = balance_to_tgas(eth_balance_to_use);
+    xinfo("[xtop_gasfee::init] eth_max_gasfee: %s, balance: %lu", eth_max_gasfee.str().c_str(), balance);
+
+    m_converted_tgas = balance_to_tgas(eth_max_gasfee);
     m_free_tgas = account_available_tgas(m_time, m_onchain_tgas_deposit);
-    xinfo("[xtop_gasfee::init] final, m_free_tgas: %s, m_converted_tgas: %s, m_eth_converted_tgas: %s",
-          m_free_tgas.str().c_str(),
-          m_converted_tgas.str().c_str(),
-          m_eth_converted_tgas.str().c_str());
+    xinfo("[xtop_gasfee::init] final, m_free_tgas: %s, m_converted_tgas: %s", m_free_tgas.str().c_str(), m_converted_tgas.str().c_str());
+    return;
 }
 
 void xtop_gasfee::add(const evm_common::u256 tgas, std::error_code & ec) {
     xassert(m_free_tgas >= m_free_tgas_usage);
     xassert(m_converted_tgas >= m_converted_tgas_usage);
-    const evm_common::u256 left_available_tgas = m_free_tgas + m_converted_tgas + m_eth_converted_tgas - m_free_tgas_usage - m_converted_tgas_usage - m_eth_converted_tgas_usage;
-    xdbg(
-        "[xtop_gasfee::add] supplement: %s, m_free_tgas_usage: %s, m_converted_tgas_usage: %s, m_eth_converted_tgas_usage: %s, m_free_tgas: %s, m_converted_tgas: %s, "
-        "m_eth_converted_tgas: %s, left_available_tgas: %s",
-        tgas.str().c_str(),
-        m_free_tgas_usage.str().c_str(),
-        m_converted_tgas_usage.str().c_str(),
-        m_eth_converted_tgas_usage.str().c_str(),
-        m_free_tgas.str().c_str(),
-        m_converted_tgas.str().c_str(),
-        m_eth_converted_tgas.str().c_str(),
-        left_available_tgas.str().c_str());
+    const evm_common::u256 left_available_tgas = m_free_tgas + m_converted_tgas - m_free_tgas_usage - m_converted_tgas_usage;
+    xdbg("[xtop_gasfee::add] supplement: %s, m_free_tgas_usage: %s, m_converted_tgas_usage: %s, m_free_tgas: %s, m_converted_tgas: %s, left_available_tgas: %s",
+         tgas.str().c_str(),
+         m_free_tgas_usage.str().c_str(),
+         m_converted_tgas_usage.str().c_str(),
+         m_free_tgas.str().c_str(),
+         m_converted_tgas.str().c_str(),
+         left_available_tgas.str().c_str());
     if (tgas == 0) {
         return;
     }
     if (tgas > left_available_tgas) {
         m_converted_tgas_usage = m_converted_tgas;
-        m_eth_converted_tgas_usage = m_eth_converted_tgas;
         m_free_tgas_usage = m_free_tgas;
-        xwarn("[xtop_gasfee::add] transaction not enough deposit to tgas, m_converted_tgas_usage to: %s, m_eth_converted_tgas_usage to: %s, m_free_tgas_usage to: %s",
+        xwarn("[xtop_gasfee::add] transaction not enough deposit to tgas, m_converted_tgas_usage to: %s, m_free_tgas_usage to: %s",
               m_converted_tgas_usage.str().c_str(),
-              m_eth_converted_tgas_usage.str().c_str(),
               m_free_tgas_usage.str().c_str());
         ec = gasfee::error::xenum_errc::tx_out_of_gas;
     } else if (tgas > (m_free_tgas - m_free_tgas_usage)) {
-        if (tgas > (m_free_tgas - m_free_tgas_usage + m_converted_tgas - m_converted_tgas_usage)) {
-            m_eth_converted_tgas_usage += tgas - (m_free_tgas - m_free_tgas_usage + m_converted_tgas - m_converted_tgas_usage);
-            m_converted_tgas_usage = m_converted_tgas;
-            m_free_tgas_usage = m_free_tgas;
-            xdbg("[xtop_gasfee::add] m_converted_tgas_usage to: %s, m_free_tgas_usage to: %s, m_eth_converted_tgas_usage to: %s",
-                 m_converted_tgas_usage.str().c_str(),
-                 m_free_tgas_usage.str().c_str(),
-                 m_eth_converted_tgas_usage.str().c_str());
-        } else {
-            m_converted_tgas_usage += tgas - (m_free_tgas - m_free_tgas_usage);
-            m_free_tgas_usage = m_free_tgas;
-            xdbg("[xtop_gasfee::add] m_converted_tgas_usage to: %s, m_free_tgas_usage to: %s", m_converted_tgas_usage.str().c_str(), m_free_tgas_usage.str().c_str());
-        }
+        m_converted_tgas_usage += tgas - (m_free_tgas - m_free_tgas_usage);
+        m_free_tgas_usage = m_free_tgas;
+        xdbg("[xtop_gasfee::add] m_converted_tgas_usage to: %s, m_free_tgas_usage to: %s", m_converted_tgas_usage.str().c_str(), m_free_tgas_usage.str().c_str());
     } else {
         m_free_tgas_usage += tgas;
         xdbg("[xtop_gasfee::add] m_free_tgas_usage to: %s", m_free_tgas_usage.str().c_str());
@@ -252,11 +147,9 @@ void xtop_gasfee::process_calculation_tgas(const evm_common::u256 calculation_ga
         xwarn("[xtop_gasfee::process_calculation_tgas] calculation_gas %s over limit %s", calculation_gas.str().c_str(), gas_limit.str().c_str());
         ec = gasfee::error::xenum_errc::tx_out_of_gas;
         m_converted_tgas_usage = m_converted_tgas;
-        m_eth_converted_tgas_usage = m_eth_converted_tgas;
         m_free_tgas_usage = m_free_tgas;
-        xwarn("[xtop_gasfee::process_calculation_tgas] transaction out of gas, m_converted_tgas_usage to: %s, m_eth_converted_tgas_usage to: %s, m_free_tgas_usage to: %s",
+        xwarn("[xtop_gasfee::process_calculation_tgas] transaction out of gas, m_converted_tgas_usage to: %s, m_free_tgas_usage to: %s",
               m_converted_tgas_usage.str().c_str(),
-              m_eth_converted_tgas_usage.str().c_str(),
               m_free_tgas_usage.str().c_str());
         return;
     }
@@ -285,20 +178,16 @@ void xtop_gasfee::store_in_one_stage() {
         tx_used_tgas = UINT64_MAX;
     }
     m_detail.m_tx_used_tgas = static_cast<uint64_t>(tx_used_tgas);
-    evm_common::u256 eth_usage = utop_to_wei(tgas_to_balance(m_eth_converted_tgas_usage));
-    m_detail.m_state_burn_eth_balance = eth_usage;
-    evm_common::u256 tx_used_deposit = top_usage + tgas_to_balance(m_eth_converted_tgas_usage);
+    evm_common::u256 tx_used_deposit = top_usage;
     if (tx_used_deposit > UINT64_MAX) {
         xwarn("[xtop_gasfee::store_in_one_stage] tx_used_deposit %s over linit", tx_used_deposit.str().c_str());
         tx_used_deposit = UINT64_MAX;
     }
     m_detail.m_tx_used_deposit = static_cast<uint64_t>(tx_used_deposit);
-    xdbg("[xtop_gasfee::store_in_one_stage] m_free_tgas: %s, m_converted_tgas_usage: %s, top_usage: %s, m_eth_converted_tgas_usage: %s, eth_usage: %s",
+    xdbg("[xtop_gasfee::store_in_one_stage] m_free_tgas: %s, m_converted_tgas_usage: %s, top_usage: %s",
          m_free_tgas.str().c_str(),
          m_converted_tgas_usage.str().c_str(),
-         top_usage.str().c_str(),
-         m_eth_converted_tgas_usage.str().c_str(),
-         eth_usage.str().c_str());
+         top_usage.str().c_str());
     xdbg("[xtop_gasfee::store_in_one_stage] gasfee_detail: %s", m_detail.str().c_str());
 }
 
@@ -411,17 +300,7 @@ void xtop_gasfee::preprocess(std::error_code & ec) {
         // unreachable code
         xassert(false);
         xerror("[xtop_gasfee::preprocess] unreachable code");
-        // auto tx_stage = tx_subtype();
-        // if (tx_stage == base::enum_transaction_subtype_send) {
-        //     preprocess_send_stage(ec);
-        // } else if (tx_stage == base::enum_transaction_subtype_recv) {
-        //     preprocess_recv_stage(ec);
-        // } else if (tx_stage == base::enum_transaction_subtype_confirm) {
-        //     preprocess_confirm_stage(ec);
-        // } else {
-        //     xerror("[xtop_gasfee::preprocess] error tx stage: %d", tx_stage);
-        //     xassert(false);
-        // }
+        ec = gasfee::error::xenum_errc::invalid_param;
     }
 }
 
@@ -436,17 +315,7 @@ void xtop_gasfee::postprocess(const evm_common::u256 supplement_gas, std::error_
         // unreachable code
         xassert(false);
         xerror("[xtop_gasfee::postprocess] unreachable code");
-        // auto tx_stage = tx_subtype();
-        // if (tx_stage == base::enum_transaction_subtype_send) {
-        //     postprocess_send_stage(supplement_gas, ec);
-        // } else if (tx_stage == base::enum_transaction_subtype_recv) {
-        //     postprocess_recv_stage(supplement_gas, ec);
-        // } else if (tx_stage == base::enum_transaction_subtype_confirm) {
-        //     postprocess_confirm_stage(supplement_gas, ec);
-        // } else {
-        //     xerror("[xtop_gasfee::postprocess] error tx stage: %d", tx_stage);
-        //     xassert(false);
-        // }
+        ec = gasfee::error::xenum_errc::invalid_param;
     }
     CHECK_EC_RETURN(ec);
 }

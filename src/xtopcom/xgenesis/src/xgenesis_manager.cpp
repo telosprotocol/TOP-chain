@@ -177,7 +177,9 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_contrac
 
 base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_evm_contract_account(base::xvaccount_t const & account, xenum_create_src_t src, std::error_code & ec) {
     xinfo("[xtop_genesis_manager::create_genesis_of_evm_contract_account] account %s", account.get_account().c_str());
-    if (account.get_account() == evm_eth_bridge_contract_address.value()) {
+    if (account.get_account() == evm_eth_bridge_contract_address.value() ||
+        account.get_account() == evm_bsc_client_contract_address.value() ||
+        account.get_account() == evm_heco_client_contract_address.value()) {
         xobject_ptr_t<base::xvbstate_t> bstate =
             make_object_ptr<base::xvbstate_t>(account.get_account(), uint64_t{0}, uint64_t{0}, std::string{}, std::string{}, uint64_t{0}, uint32_t{0}, uint16_t{0});
         xobject_ptr_t<base::xvcanvas_t> canvas = make_object_ptr<base::xvcanvas_t>();
@@ -188,6 +190,8 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_evm_con
         bstate->new_string_var(data::system_contract::XPROPERTY_LAST_HASH, canvas.get());
         auto bytes = (evm_common::h256()).asBytes();
         bstate->load_string_var(data::system_contract::XPROPERTY_LAST_HASH)->reset({bytes.begin(), bytes.end()}, canvas.get());
+        bstate->new_string_var(data::system_contract::XPROPERTY_RESET_FLAG, canvas.get());
+        bstate->load_string_var(data::system_contract::XPROPERTY_RESET_FLAG)->reset(top::to_string(0), canvas.get());
         // create
         base::xauto_ptr<base::xvblock_t> genesis_block = data::xblocktool_t::create_genesis_lightunit(bstate, canvas);
         xassert(genesis_block != nullptr);

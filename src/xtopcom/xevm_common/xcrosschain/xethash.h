@@ -2,9 +2,9 @@
 
 #include "xdepends/include/ethash/ethash.hpp"
 #include "xevm_common/fixed_hash.h"
-#include "xevm_common/xeth/xeth_header.h"
+#include "xevm_common/xcrosschain/xeth_header.h"
 
-NS_BEG3(top, evm_common, ethash)
+NS_BEG3(top, evm_common, eth)
 
 class double_node_with_merkle_proof {
 public:
@@ -21,12 +21,12 @@ public:
     ~xethash_t() = default;
 
     static xethash_t & instance();
-    bigint calc_difficulty(const uint64_t time, const eth::xeth_header_t & parent);
-    bool verify_seal(const eth::xeth_header_t & header, const std::vector<double_node_with_merkle_proof> & nodes);
+    bigint calc_difficulty(const uint64_t time, const xeth_header_t & parent);
+    bool verify_seal(const xeth_header_t & header, const std::vector<double_node_with_merkle_proof> & nodes);
 
 private:
     xethash_t();
-    bigint calc_difficulty(const uint64_t time, const eth::xeth_header_t & header, bigint bomb_delay);
+    bigint calc_difficulty(const uint64_t time, const xeth_header_t & header, bigint bomb_delay);
     std::pair<::ethash::hash256, ::ethash::hash256> hashimoto_merkle(const ::ethash::hash256 & hash,
                                                                  const uint64_t nonce,
                                                                  const uint64_t header_number,

@@ -1,4 +1,4 @@
-#include "xevm_common/xeth/xeth_config.h"
+#include "xevm_common/xcrosschain/xeth_config.h"
 
 NS_BEG4(top, evm_common, eth, config)
 

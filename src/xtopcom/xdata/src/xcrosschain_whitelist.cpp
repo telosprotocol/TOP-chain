@@ -2,7 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xdata/xeth_bridge_whitelist.h"
+#include "xdata/xcrosschain_whitelist.h"
 
 #include "xbase/xcxx_config.h"
 
@@ -11,7 +11,7 @@ namespace data {
 
 #if defined(XBUILD_DEV)
 
-XINLINE_CONSTEXPR char const * g_eth_bridge_whitelist =
+XINLINE_CONSTEXPR char const * g_crosschain_whitelist =
     R"T(
 {
     "whitelist": [
@@ -22,7 +22,7 @@ XINLINE_CONSTEXPR char const * g_eth_bridge_whitelist =
 
 #elif defined(XBUILD_CI)
 
-XINLINE_CONSTEXPR char const * g_eth_bridge_whitelist =
+XINLINE_CONSTEXPR char const * g_crosschain_whitelist =
     R"T(
 {
     "whitelist": [
@@ -33,7 +33,7 @@ XINLINE_CONSTEXPR char const * g_eth_bridge_whitelist =
 
 #elif defined(XBUILD_GALILEO)
 
-XINLINE_CONSTEXPR char const * g_eth_bridge_whitelist =
+XINLINE_CONSTEXPR char const * g_crosschain_whitelist =
     R"T(
 {
     "whitelist": [
@@ -43,7 +43,7 @@ XINLINE_CONSTEXPR char const * g_eth_bridge_whitelist =
 
 #elif defined(XBUILD_BOUNTY)
 
-XINLINE_CONSTEXPR char const * g_eth_bridge_whitelist =
+XINLINE_CONSTEXPR char const * g_crosschain_whitelist =
     R"T(
 {
     "whitelist": [
@@ -53,7 +53,7 @@ XINLINE_CONSTEXPR char const * g_eth_bridge_whitelist =
 
 #else
 
-XINLINE_CONSTEXPR char const * g_eth_bridge_whitelist =
+XINLINE_CONSTEXPR char const * g_crosschain_whitelist =
     R"T(
 {
     "whitelist": [
@@ -63,8 +63,8 @@ XINLINE_CONSTEXPR char const * g_eth_bridge_whitelist =
 
 #endif
 
-const char * eth_bridge_whitelist() {
-    return g_eth_bridge_whitelist;
+const char * crosschain_whitelist() {
+    return g_crosschain_whitelist;
 }
 
 }  // namespace data

@@ -1,4 +1,4 @@
-#include "xevm_common/xeth/xeth_header.h"
+#include "xevm_common/xcrosschain/xeth_header.h"
 
 #if defined(__clang__)
 #    pragma clang diagnostic push
@@ -25,7 +25,7 @@
 #include "xevm_common/rlp.h"
 #include "xutility/xhash.h"
 
-NS_BEG3(top, evm_common, eth)
+NS_BEG2(top, evm_common)
 
 Hash xeth_header_t::hash() const {
     auto value = encode_rlp();
@@ -93,8 +93,8 @@ bytes xeth_header_t::encode_rlp_withoutseal() const {
         auto tmp = RLP::encode(extra);
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
-    {
-        auto tmp = RLP::encode(static_cast<u256>(base_fee));
+    if (base_fee.has_value()) {
+        auto tmp = RLP::encode(static_cast<u256>(base_fee.value()));
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     return RLP::encodeList(out);
@@ -162,8 +162,8 @@ bytes xeth_header_t::encode_rlp() const {
         auto tmp = RLP::encode(nonce.asBytes());
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
-    {
-        auto tmp = RLP::encode(static_cast<u256>(base_fee));
+    if (base_fee.has_value()) {
+        auto tmp = RLP::encode(static_cast<u256>(base_fee.value()));
         out.insert(out.end(), tmp.begin(), tmp.end());
     }
     return RLP::encodeList(out);
@@ -171,10 +171,7 @@ bytes xeth_header_t::encode_rlp() const {
 
 bool xeth_header_t::decode_rlp(const bytes & bytes) {
     auto l = RLP::decodeList(bytes);
-    if (l.decoded.size() != 16) {
-        return false;
-    }
-    if (!l.remainder.empty()) {
+    if (l.decoded.size() < 15) {
         return false;
     }
     parent_hash = static_cast<Hash>(l.decoded[0]);
@@ -192,23 +189,19 @@ bool xeth_header_t::decode_rlp(const bytes & bytes) {
     extra = l.decoded[12];
     mix_digest = static_cast<Hash>(l.decoded[13]);
     nonce = static_cast<BlockNonce>(l.decoded[14]);
-    base_fee = static_cast<bigint>(evm_common::fromBigEndian<u256>(l.decoded[15]));
+    if (l.decoded.size() >= 16) {
+        base_fee = static_cast<bigint>(evm_common::fromBigEndian<u256>(l.decoded[15]));
+    }
     return true;
 }
 
-std::string xeth_header_t::dump() {
+std::string xeth_header_t::dump() const {
     char local_param_buf[256];
-    xprintf(local_param_buf,
-            sizeof(local_param_buf),
-            "height: %s, hash: %s, parent_hash: %s, basefee: %s",
-            number.str().c_str(),
-            hash().hex().c_str(),
-            parent_hash.hex().c_str(),
-            base_fee.str().c_str());
+    xprintf(local_param_buf, sizeof(local_param_buf), "height: %s, hash: %s, parent_hash: %s", number.str().c_str(), hash().hex().c_str(), parent_hash.hex().c_str());
     return std::string(local_param_buf);
 }
 
-void xeth_header_t::print() {
+void xeth_header_t::print() const {
     printf("parent_hash: %s\n", parent_hash.hex().c_str());
     printf("uncle_hash: %s\n", uncle_hash.hex().c_str());
     printf("miner: %s\n", miner.hex().c_str());
@@ -225,7 +218,9 @@ void xeth_header_t::print() {
     printf("mix_digest: %s\n", mix_digest.hex().c_str());
     printf("nonce: %s\n", nonce.hex().c_str());
     printf("hash: %s\n", hash().hex().c_str());
-    printf("base_fee: %s\n", base_fee.str().c_str());
+    if (base_fee.has_value()) {
+        printf("base_fee: %s\n", base_fee.value().str().c_str());
+    }
 }
 
 xeth_header_info_t::xeth_header_info_t(bigint difficult_sum_, Hash parent_hash_, bigint number_) : difficult_sum{difficult_sum_}, parent_hash{parent_hash_}, number{number_} {
@@ -262,4 +257,4 @@ bool xeth_header_info_t::decode_rlp(const bytes & input) {
     return true;
 }
 
-NS_END3
+NS_END2

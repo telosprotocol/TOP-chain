@@ -1,4 +1,4 @@
-#include "xevm_common/xeth/xethash.h"
+#include "xevm_common/xcrosschain/xethash.h"
 
 #include "xbasic/xhex.h"
 #include "xdepends/include/ethash/keccak.hpp"
@@ -6,10 +6,10 @@
 #include "xdepends/include/ethash/src/ethash/ethash-internal.hpp"
 #include "xevm_common/rlp.h"
 #include "xevm_common/src/xethash_data.cpp"
-#include "xevm_common/xeth/xeth_config.h"
+#include "xevm_common/xcrosschain/xeth_config.h"
 #include "xutility/xhash.h"
 
-NS_BEG3(top, evm_common, ethash)
+NS_BEG3(top, evm_common, eth)
 
 using ::ethash::hash1024;
 using ::ethash::hash512;
@@ -29,7 +29,7 @@ xethash_t::xethash_t() {
     }
 }
 
-bigint xethash_t::calc_difficulty(const uint64_t time, const eth::xeth_header_t & header, bigint bomb_delay) {
+bigint xethash_t::calc_difficulty(const uint64_t time, const xeth_header_t & header, bigint bomb_delay) {
     // algorithm:
     // diff = (parent_diff +
     //         (parent_diff / 2048 * max((2 if len(parent.uncles) else 1) - ((timestamp - parent.timestamp) // 9), -99))
@@ -74,7 +74,7 @@ bigint xethash_t::calc_difficulty(const uint64_t time, const eth::xeth_header_t 
     return target;
 }
 
-bigint xethash_t::calc_difficulty(const uint64_t time, const eth::xeth_header_t & parent) {
+bigint xethash_t::calc_difficulty(const uint64_t time, const xeth_header_t & parent) {
     bigint next{parent.number + 1};
     if (eth::config::is_arrow_glacier(next)) {
         return calc_difficulty(time, parent, 10700000);
@@ -164,6 +164,9 @@ std::pair<hash256, hash256> xethash_t::hashimoto_merkle(const hash256 & header_h
     std::unique_ptr<int> index{new int(0)};
     auto epoch = header_number / ETHASH_EPOCH_LENGTH;
     auto merkle_root = m_dag_merkle_roots[epoch];
+    if (epoch >= m_dag_merkle_roots.size()) {
+        return {};
+    }
     auto lookup = [&](uint64_t offset){
         auto node = nodes[*index];
         *index += 1;
@@ -186,7 +189,7 @@ std::pair<hash256, hash256> xethash_t::hashimoto_merkle(const hash256 & header_h
     return hashimoto(header_hash, nonce, ethash_calculate_full_dataset_num_items(epoch), lookup);
 }
 
-bool xethash_t::verify_seal(const eth::xeth_header_t & header, const std::vector<double_node_with_merkle_proof> & nodes) {
+bool xethash_t::verify_seal(const xeth_header_t & header, const std::vector<double_node_with_merkle_proof> & nodes) {
     hash256 hash;
     std::memcpy(hash.bytes, header.hash_without_seal().data(), 32);
     hash256 mix_hash;

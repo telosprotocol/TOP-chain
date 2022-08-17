@@ -1,11 +1,12 @@
 #pragma once
 
+#include "xbasic/xoptional.hpp"
 #include "xevm_common/common.h"
 #include "xevm_common/fixed_hash.h"
 
 #include <vector>
 
-NS_BEG3(top, evm_common, eth)
+NS_BEG2(top, evm_common)
 
 // The log bloom's size (2048-bit).
 using Hash = top::evm_common::h256;
@@ -31,7 +32,7 @@ struct xeth_header_t {
     BlockNonce nonce;
 
     // base_fee was added by EIP-1559 and is ignored in legacy headers.
-    bigint base_fee;
+    optional<bigint> base_fee;
 
     // hash
     Hash hash() const;
@@ -43,8 +44,8 @@ struct xeth_header_t {
     bool decode_rlp(const bytes & bytes);
 
     // debug
-    std::string dump();
-    void print();
+    std::string dump() const;
+    void print() const;
 };
 
 struct xeth_header_info_t {
@@ -59,4 +60,4 @@ struct xeth_header_info_t {
     bigint number;
 };
 
-NS_END3
+NS_END2

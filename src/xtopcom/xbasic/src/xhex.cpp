@@ -49,6 +49,13 @@ xbytes_t from_hex(std::string const & input, std::error_code & ec) {
     return ret;
 }
 
+xbytes_t from_hex(std::string const & input) {
+    std::error_code ec;
+    auto ret = from_hex(input, ec);
+    top::error::throw_error(ec);
+    return ret;
+}
+
 bool is_hex_string(std::string const & input) noexcept {
     auto it = input.begin();
     if (input.compare(0, 2, "0x") == 0)
