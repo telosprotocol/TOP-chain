@@ -164,6 +164,9 @@ std::pair<hash256, hash256> xethash_t::hashimoto_merkle(const hash256 & header_h
     std::unique_ptr<int> index{new int(0)};
     auto epoch = header_number / ETHASH_EPOCH_LENGTH;
     auto merkle_root = m_dag_merkle_roots[epoch];
+    if (epoch >= m_dag_merkle_roots.size()) {
+        return {};
+    }
     auto lookup = [&](uint64_t offset){
         auto node = nodes[*index];
         *index += 1;
