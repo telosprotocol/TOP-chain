@@ -751,6 +751,51 @@ namespace top
             return true; //still return true since tableblock has been stored successful
         }
 
+        bool    xvblockstore_impl::store_block_and_subblocks(base::xauto_ptr<xblockacct_t> & container_account,base::xvblock_t * container_block, std::vector<base::xvblock_ptr_t> sub_blocks)
+        {
+            xdbg("jimmy xvblockstore_impl::store_block_and_subblocks enter,store block(%s), subblock num:%u", container_block->dump().c_str(), sub_blocks.size());
+
+            //first do store block
+            bool ret = container_account->store_block(container_block);
+            if(!ret)
+            {
+                xwarn("xvblockstore_impl::store_block,fail-store block(%s)", container_block->dump().c_str());
+                // return false;
+            }
+
+            //store subblocks first
+            if(  (container_block->get_block_class() == base::enum_xvblock_class_light) //skip nil block
+               &&(container_block->get_block_level() == base::enum_xvblock_level_table)
+               &&(container_block->get_height() != 0) )
+            {
+                base::xauto_ptr<base::xvbindex_t> existing_index(container_account->load_index(container_block->get_height(), container_block->get_block_hash()));
+                if(existing_index && (existing_index->get_block_flags() & base::enum_xvblock_flag_unpacked) == 0) //unpacked yet
+                {
+                    xdbg("xvblockstore_impl::store_block,table block(%s) carry unit num=%d", container_block->dump().c_str(), (int)sub_blocks.size());
+                    for (auto & unit_block : sub_blocks)
+                    {
+                        base::xvaccount_t  unit_account(unit_block->get_account());
+                        if(false == store_block(unit_account,unit_block.get())) //any fail resultin  re-unpack whole table again
+                        {
+                            xwarn("xvblockstore_impl::store_block,fail-store unit-block=%s",unit_block->dump().c_str());
+                        }
+                        else
+                        {
+                            xdbg("xvblockstore_impl::store_block,stored unit-block=%s",unit_block->dump().c_str());
+
+                            on_block_stored(unit_block.get());//throw event for sub blocks
+                        }
+                    }
+
+                    //update to block'flag acccording table_extract_all_unit_successful
+                    existing_index->set_block_flag(base::enum_xvblock_flag_unpacked);
+                    xinfo("xvblockstore_impl::store_block,extract_sub_blocks done for table block, %s", container_block->dump().c_str());
+                }
+            }
+
+            return true; //still return true since tableblock has been stored successful
+        }
+
         bool                xvblockstore_impl::store_block(const base::xvaccount_t & account,base::xvblock_t* block,const int atag)
         {
             if( (nullptr == block) || (account.get_account() != block->get_account()) )
@@ -820,6 +865,37 @@ namespace top
                 }
             }
             return  true;
+        }
+
+        bool                xvblockstore_impl::store_block_and_subblocks(const base::xvaccount_t & account,base::xvblock_t* block, std::vector<base::xvblock_ptr_t> sub_blocks, const int atag) {
+            if( (nullptr == block) || (account.get_account() != block->get_account()) )
+            {
+                xerror("xvblockstore_impl::store_block,block NOT match account:%s,%s",account.get_account().c_str(),block->get_account().c_str());
+                return false;
+            }
+
+            if(block->check_block_flag(base::enum_xvblock_flag_authenticated) == false
+            || (block->get_height() == 0 && block->check_block_flag(base::enum_xvblock_flag_committed) == false))
+            {
+                xerror("xvblockstore_impl::store_block,unauthorized block(%s)",block->dump().c_str());
+                return false;
+            }
+
+            bool ret = false;
+            {
+                LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
+                METRICS_TAG(atag, 1);
+                ret = store_block_and_subblocks(account_obj, block, sub_blocks);
+            }
+
+            // XTODO only tabletable need execute immediately after stored
+            if (block->get_block_level() == base::enum_xvblock_level_table) {
+                // TODO(jimmy) commit tableblock try to update table state
+                base::auto_reference<base::xvblock_t> auto_hold_block_ptr(block);
+                base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->execute_block(block, metrics::statestore_access_from_blockstore);
+            }
+
+            return ret;
         }
 
         bool                xvblockstore_impl::delete_block(const base::xvaccount_t & account,base::xvblock_t* block,const int atag)

@@ -201,6 +201,7 @@ namespace top
 
             //better performance for batch operations
             virtual bool                  store_blocks(const xvaccount_t & account,std::vector<xvblock_t*> & batch_store_blocks,const int atag = 0) = 0;
+            virtual bool                  store_block_and_subblocks(const base::xvaccount_t & account,base::xvblock_t* block, std::vector<base::xvblock_ptr_t> sub_blocks, const int atag = 0) = 0;
 
             virtual bool                  try_update_account_index(const base::xvaccount_t & account, uint64_t height, uint64_t viewid, bool update_pre_block) = 0;
             virtual bool                  try_update_account_index(const base::xvaccount_t & account, uint64_t height, const std::string & hash, bool update_pre_block) = 0;

@@ -24,7 +24,12 @@ public:
 
         if (block_ptr != nullptr) {
             block_ptr->full_block_serialize_to(stream);
-            if (block_ptr->is_tableblock()) {
+            if (carry_unit_blocks) {
+                if (!block_ptr->is_tableblock()) {
+                    xerror("xentire_block_t::do_write not table block,but carry_unit_blocks is true:%s", block_ptr->dump().c_str());
+                    return -1;
+                }
+
                 uint32_t num = 0;
                 std::vector<xblock_ptr_t> blocks;
                 auto unit_infos_str = block_ptr->get_unit_infos();
@@ -46,7 +51,8 @@ public:
                             unit_block_ptr.attach(block);
                             blocks.push_back(unit_block_ptr);
                         } else {
-                            xdbg("xentire_block_t::do_write table block:%s, unit block load fail account:%s,height:%llu,hash:%s,hash size:%u", block_ptr->dump().c_str(), unit_info.get_addr().c_str(), unit_info.get_height(), xstring_utl::to_hex(unit_info.get_hash()).c_str(), unit_info.get_hash().size());
+                            xwarn("xentire_block_t::do_write table block:%s, unit block load fail account:%s,height:%llu,hash:%s,hash size:%u", block_ptr->dump().c_str(), unit_info.get_addr().c_str(), unit_info.get_height(), xstring_utl::to_hex(unit_info.get_hash()).c_str(), unit_info.get_hash().size());
+                            return -1;
                         }
                     }
                 }
@@ -75,14 +81,17 @@ public:
             if (block_ptr->is_tableblock()) {
                 uint32_t num = 0;
                 stream >> num;
-                xdbg("xentire_block_t::do_read table block:%s, num:%d", block_ptr->dump().c_str(), num);
-                for (uint32_t i = 0; i < num; i++) {
-                    xblock_t* _unit = dynamic_cast<xblock_t*>(xblock_t::full_block_read_from(stream));
-                    xblock_ptr_t unit_ptr = nullptr;
-                    unit_ptr.attach(_unit);
-                    unit_ptr->reset_block_flags();
-                    unit_blocks.push_back(unit_ptr);
-                    xdbg("xentire_block_t::do_read table block:%s, unit block:%s", block_ptr->dump().c_str(), unit_ptr->dump().c_str());
+                if (num > 0) {
+                    carry_unit_blocks = true;
+                    xdbg("xentire_block_t::do_read table block:%s, num:%d", block_ptr->dump().c_str(), num);
+                    for (uint32_t i = 0; i < num; i++) {
+                        xblock_t* _unit = dynamic_cast<xblock_t*>(xblock_t::full_block_read_from(stream));
+                        xblock_ptr_t unit_ptr = nullptr;
+                        unit_ptr.attach(_unit);
+                        unit_ptr->reset_block_flags();
+                        unit_blocks.push_back(unit_ptr);
+                        xdbg("xentire_block_t::do_read table block:%s, unit block:%s", block_ptr->dump().c_str(), unit_ptr->dump().c_str());
+                    }
                 }
             }
         }
@@ -97,6 +106,7 @@ private:
 public:
     xblock_ptr_t block_ptr{};
     std::vector<xblock_ptr_t> unit_blocks;
+    bool carry_unit_blocks{false};
 };
 
 using xentire_block_ptr_t = xobject_ptr_t<xentire_block_t>;

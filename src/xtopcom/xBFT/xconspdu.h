@@ -232,6 +232,7 @@ namespace top
             enum_xsync_target_block_object  = 0x01, //include header and certification
             enum_xsync_target_block_input   = 0x02,
             enum_xsync_target_block_output  = 0x04,
+            enum_xsync_target_block_subblocks  = 0x08,
         };
         //each xsync_request_t just only working with one block,only only respond when carry valid proof that qualified to request
         class xsync_request_t : public xcsmsg_t
@@ -286,6 +287,9 @@ namespace top
             const std::string&    get_output_resource()    const {return m_output_resource;}
             void                  set_input_resource(const std::string & input){ m_input_resource = input;}
             void                  set_output_resource(const std::string & output){ m_output_resource = output;}
+            const std::string&    get_subblocks_resource()    const {return m_subblocks_resource;}
+            void                  set_subblocks_resource(const std::string & subblocks){ m_subblocks_resource = subblocks;}
+
 
         protected:
             //return how many bytes readout /writed in, return < 0(enum_xerror_code_type) when have error
@@ -299,6 +303,7 @@ namespace top
             std::string         m_block_object;    //must have as proof,= vblock 'serialized data include header and certification
             std::string         m_input_resource;  //block 'input data,it might be nil  according m_sync_targets
             std::string         m_output_resource; //block 'outut data,it might be nil  according m_sync_targets
+            std::string         m_subblocks_resource;
         };
         
     };//end of namespace of xconsensus
