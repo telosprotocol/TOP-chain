@@ -2482,6 +2482,14 @@ namespace top
         const std::string & xvblock_t::get_vote_extend_data() const {
             return m_vote_extend_data;
         }
+
+        void  xvblock_t::set_subblocks(std::vector<xobject_ptr_t<xvblock_t>> subblocks) {
+            m_subblocks = subblocks;
+        }
+
+        const std::vector<xobject_ptr_t<xvblock_t>> & xvblock_t::get_subblocks() const {
+            return m_subblocks;
+        }
         
         void xvblock_t::register_object(xcontext_t & _context)
         {

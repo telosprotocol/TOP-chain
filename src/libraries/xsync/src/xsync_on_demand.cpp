@@ -252,38 +252,80 @@ void xsync_on_demand_t::handle_blocks_response_with_hash(const std::vector<data:
     auto & last_unit_block = blocks[blocks.size() - 1];
     xvaccount_t vaccount(last_unit_block->get_account());
     auto table_addr = xvaccount_t::make_table_account_address(xvaccount_t(last_unit_block->get_account()));
+
+    bool valid = false;
+
     auto parent_height = last_unit_block->get_parent_block_height();
     auto parent_viewid = last_unit_block->get_parent_block_viewid();
-
     auto table_block = m_sync_store->load_block_object(xvaccount_t(table_addr), parent_height, parent_viewid);
+    if (table_block != nullptr) {
+        auto unit_infos_str = table_block->get_unit_infos();
+        if (unit_infos_str.empty()) {
+            xerror("xsync_on_demand_t::handle_blocks_response_with_hash table unit_infos_str is empty table block:%s,unit:%s",
+                table_block->dump().c_str(),
+                last_unit_block->dump().c_str());
+            return;
+        }
+        base::xtable_unit_infos_t unit_infos;
+        unit_infos.serialize_from_string(unit_infos_str);
+        auto & unit_infos_vec = unit_infos.get_unit_infos();
+        for (auto & unit_info : unit_infos_vec) {
+            xdbg("xsync_on_demand_t::handle_blocks_response_with_hash unit info:addr:%s,hash:%s,height:%llu.block:%s",
+                unit_info.get_addr().c_str(),
+                unit_info.get_hash().c_str(),
+                unit_info.get_height(),
+                last_unit_block->dump().c_str());
+            if (unit_info.get_addr() == last_unit_block->get_account() && unit_info.get_hash() == last_unit_block->get_block_hash() &&
+                unit_info.get_height() == last_unit_block->get_height()) {
+                valid = true;
+                break;
+            }
+        }
+        if (!valid) {
+            xerror("xsync_on_demand_t::handle_blocks_response_with_hash table unit info not found unit.table block:%s,unit:%s",
+                table_block->dump().c_str(),
+                last_unit_block->dump().c_str());
+            return;
+        }
+    } else {
+        auto table_block = base::xvchain_t::instance().get_xblockstore()->get_latest_connected_block(table_addr, metrics::blockstore_access_from_txpool_refresh_table);
+        base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(table_block.get(), metrics::statestore_access_from_blkmaker_get_target_tablestate);
+        if (bstate == nullptr) {
+            xerror("xsync_on_demand_t::handle_blocks_response_with_hash get block state fail.block:%s", table_block->dump().c_str());
+            return;
+        }
+        data::xtablestate_ptr_t tablestate = std::make_shared<data::xtable_bstate_t>(bstate.get());
+        base::xaccount_index_t account_index;
+        bool ret = tablestate->get_account_index(account, account_index);
+        if (!ret) {
+            xerror("xsync_on_demand_t::handle_blocks_response_with_hash get account index fail.block:%s,unit:%s", table_block->dump().c_str(), last_unit_block->dump().c_str());
+            return;
+        }
 
-    bool found = false;
-    auto unit_infos_str = table_block->get_unit_infos();
-    if (unit_infos_str.empty()) {
-        xerror("xsync_on_demand_t::handle_blocks_response_with_hash table unit_infos_str is empty table block:%s,unit:%s",
-               table_block->dump().c_str(),
-               last_unit_block->dump().c_str());
-        return;
-    }
-    base::xtable_unit_infos_t unit_infos;
-    unit_infos.serialize_from_string(unit_infos_str);
-    auto & unit_infos_vec = unit_infos.get_unit_infos();
-    for (auto & unit_info : unit_infos_vec) {
-        xdbg("xsync_on_demand_t::handle_blocks_response_with_hash unit info:addr:%s,hash:%s,height:%llu.block:%s",
-            unit_info.get_addr().c_str(),
-            unit_info.get_hash().c_str(),
-            unit_info.get_height(),
-            last_unit_block->dump().c_str());
-        if (unit_info.get_addr() == last_unit_block->get_account() && unit_info.get_hash() == last_unit_block->get_block_hash() &&
-            unit_info.get_height() == last_unit_block->get_height()) {
-            found = true;
-            break;
+        uint64_t height = account_index.get_latest_unit_height();
+        std::string hash = account_index.get_latest_unit_hash();
+        while (height >= last_unit_block->get_height()) {
+            if (height == last_unit_block->get_height()) {
+                if (hash == last_unit_block->get_block_hash()) {
+                    valid = true;
+                    break;
+                } else {
+                    xerror("xsync_on_demand_t::handle_blocks_response_with_hash hash not match:unit:%s.hash:%s", last_unit_block->dump().c_str(), xstring_utl::to_hex(hash).c_str());
+                    return;
+                }
+            } else {
+                auto unit_block = m_sync_store->load_block_object(account, height, hash);
+                if (unit_block == nullptr) {
+                    xwarn("xsync_on_demand_t::handle_blocks_response_with_hash load block fail:unit:%s.hash:%s", last_unit_block->dump().c_str(), xstring_utl::to_hex(hash).c_str());
+                    return;
+                }
+                height -= 1;
+                hash = unit_block->get_last_block_hash();
+            }
         }
     }
-    if (!found) {
-        xerror("xsync_on_demand_t::handle_blocks_response_with_hash table unit info not found unit.table block:%s,unit:%s",
-               table_block->dump().c_str(),
-               last_unit_block->dump().c_str());
+
+    if (!valid) {
         return;
     }
 

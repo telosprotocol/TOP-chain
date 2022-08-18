@@ -233,7 +233,7 @@ namespace top
                 _batch_blocks[1] = _latest_lock_block;
                 //stored larger height block first for commit prove
                 //get_vblockstore()->store_blocks(*this,_batch_blocks);//save to blockstore
-                get_vblockstore()->store_block(*this,_evt_obj->get_target_block());
+                get_vblockstore()->store_block_and_subblocks(*this,_evt_obj->get_target_block(), _evt_obj->get_target_block()->get_subblocks());
             }
             return true; //stop handle anymore
         }
