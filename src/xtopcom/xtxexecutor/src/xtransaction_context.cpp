@@ -103,8 +103,8 @@ int32_t xtransaction_context_t::check() {
 }
 
 int32_t xtransaction_context_t::source_action_exec() {
-    if (!XGET_CONFIG(enable_gas_fee) && m_trans->get_transaction()->get_tx_type() != data::enum_xtransaction_type::xtransaction_type_transfer)
-        return m_trans_obj->source_action_exec();
+//    if (!XGET_CONFIG(enable_gas_fee) && m_trans->get_transaction()->get_tx_type() != data::enum_xtransaction_type::xtransaction_type_transfer)
+//        return m_trans_obj->source_action_exec();
 
     xassert(m_trans->get_source_addr() == m_account_ctx->get_address());
     int32_t ret = m_trans_obj->source_service_fee_exec();
@@ -119,8 +119,8 @@ int32_t xtransaction_context_t::source_action_exec() {
 }
 
 int32_t xtransaction_context_t::target_action_exec() {
-    if (!XGET_CONFIG(enable_gas_fee) && m_trans->get_transaction()->get_tx_type() != data::enum_xtransaction_type::xtransaction_type_transfer)
-        return m_trans_obj->target_action_exec();
+//    if (!XGET_CONFIG(enable_gas_fee) && m_trans->get_transaction()->get_tx_type() != data::enum_xtransaction_type::xtransaction_type_transfer)
+//        return m_trans_obj->target_action_exec();
 
     xassert((m_trans->get_target_addr() == m_account_ctx->get_address()) || (m_trans->is_self_tx() && data::is_black_hole_address(common::xaccount_address_t{m_trans->get_target_addr()})));
     int32_t ret = m_trans_obj->target_fee_exec();
@@ -134,8 +134,8 @@ int32_t xtransaction_context_t::target_action_exec() {
 }
 
 int32_t xtransaction_context_t::source_confirm_action_exec() {
-    if (!XGET_CONFIG(enable_gas_fee))
-        return xsuccess;
+//    if (!XGET_CONFIG(enable_gas_fee))
+//        return xsuccess;
 
     xassert(m_trans->get_source_addr() == m_account_ctx->get_address());
     int32_t ret = m_trans_obj->source_confirm_fee_exec();
