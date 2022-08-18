@@ -137,6 +137,7 @@ protected:
         for (auto &it: blocks) {
             data::xentire_block_ptr_t entire_block = make_object_ptr<data::xentire_block_t>();
             entire_block->block_ptr = it;
+            entire_block->carry_unit_blocks = true;
             vector_entire_block.push_back(entire_block);
         }
 
@@ -211,6 +212,7 @@ protected:
 
         data::xentire_block_ptr_t entire_block = make_object_ptr<data::xentire_block_t>();
         entire_block->block_ptr = block;
+        entire_block->carry_unit_blocks = true;
 
         if (entire_block != nullptr) {
             entire_block->serialize_to(stream);
@@ -418,6 +420,7 @@ protected:
         for (auto &it: blocks) {
             data::xentire_block_ptr_t entire_block = make_object_ptr<data::xentire_block_t>();
             entire_block->block_ptr = it;
+            entire_block->carry_unit_blocks = true;
             vector_entire_block.push_back(entire_block);
         }
 
@@ -547,6 +550,7 @@ protected:
         for (auto &it: blocks) {
             data::xentire_block_ptr_t entire_block = make_object_ptr<data::xentire_block_t>();
             entire_block->block_ptr = it;
+            entire_block->carry_unit_blocks = true;
             vector_entire_block.push_back(entire_block);
         }
 
@@ -662,6 +666,7 @@ protected:
         for (auto &it: blocks) {
             data::xentire_block_ptr_t entire_block = make_object_ptr<data::xentire_block_t>();
             entire_block->block_ptr = it;
+            entire_block->carry_unit_blocks = true;
             vector_entire_block.push_back(entire_block);
         }
 
