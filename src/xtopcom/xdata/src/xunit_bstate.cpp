@@ -497,7 +497,11 @@ common::xaccount_address_t xunit_bstate_t::tep_token_owner(common::xchain_uuid_t
         return owner;
     } while (false);
 
+#if defined(XBUILD_DEV) || defined(XBUILD_CI) || defined(XBUILD_GALILEO) || defined(XBUILD_BOUNTY)
     common::xeth_address_t const & default_owner = common::xeth_address_t::build_from("0xf8a1e199c49c2ae2682ecc5b4a8838b39bab1a38");
+#else
+    common::xeth_address_t const & default_owner = common::xeth_address_t::build_from("0x8b587045c7fcd6faddf022fdf8e09756f2fd6cc6");
+#endif
     xkinfo("get TEP token owner: use default token owner %s for token %d", default_owner.c_str(), static_cast<int>(chain_uuid));
 
     common::xaccount_address_t default_owner_address = common::xaccount_address_t::build_from(default_owner, base::enum_vaccount_addr_type_secp256k1_evm_user_account);
