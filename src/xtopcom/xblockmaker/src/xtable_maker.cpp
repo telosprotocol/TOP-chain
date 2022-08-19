@@ -171,6 +171,7 @@ std::vector<xblock_ptr_t> xtable_maker_t::make_units(bool is_leader, const data:
         unitblock->get_cert()->set_parent_viewid(cs_para.get_viewid());
         unitblock->set_extend_cert("1");
         unitblock->set_extend_data("1");
+        unitblock->set_block_flag(base::enum_xvblock_flag_authenticated);
         i++;
         batch_units.push_back(unitblock);
         xinfo("xtable_maker_t::make_units succ-make unit.is_leader=%d,%s,unit=%s,txkeys=%zu,size=%zu,%zu",

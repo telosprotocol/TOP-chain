@@ -342,10 +342,9 @@ namespace top
                 }
 
                 if (sync_targets & enum_xsync_target_block_subblocks) {
-                    uint32_t num = 0;
                     std::vector<xobject_ptr_t<base::xvblock_t>> subblocks;
                     auto subblock_infos_str = _local_block->get_unit_infos();
-                    xdbg("xBFTSyncdrv::handle_sync_request_msg table block:%s, unit_infos:%s", _local_block->dump().c_str(), subblock_infos_str.c_str());
+                    xdbg("xBFTSyncdrv::handle_sync_request_msg table block:%s, unit_infos str size:%u", _local_block->dump().c_str(), subblock_infos_str.size());
                     if (!subblock_infos_str.empty()) {
                         base::xtable_unit_infos_t subblock_infos;
                         subblock_infos.serialize_from_string(subblock_infos_str);
@@ -361,19 +360,25 @@ namespace top
                                 xobject_ptr_t<base::xvblock_t> sub_block_ptr = nullptr;
                                 sub_block_ptr.attach(vblock);
                                 subblocks.push_back(sub_block_ptr);
+                                xdbg("xBFTSyncdrv::handle_sync_request_msg unit block load ok block:%s", sub_block_ptr->dump().c_str());
                             } else {
-                                xwarn("xBFTSyncdrv::handle_sync_request_msg table block:%s, unit block load fail account:%s,height:%llu,hash:%s", _local_block->dump().c_str(), subblock_info.get_addr().c_str(), subblock_info.get_height(), base::xstring_utl::to_hex(subblock_info.get_hash()).c_str());
+                                xwarn("xBFTSyncdrv::handle_sync_request_msg table block:%s, unit block load fail account:%s,height:%llu,hash:%s",
+                                      _local_block->dump().c_str(),
+                                      subblock_info.get_addr().c_str(),
+                                      subblock_info.get_height(),
+                                      base::xstring_utl::to_hex(subblock_info.get_hash()).c_str());
                                 return enum_xconsensus_error_not_found;
                             }
                         }
                     }
 
                     base::xautostream_t<1024> _stream(base::xcontext_t::instance());
+                    uint32_t num = subblocks.size();
                     _stream << num;
                     for (auto & block :subblocks) {
                         std::string block_object_str;
                         block->serialize_to_string(block_object_str);
-                        _stream << block_object_bin;
+                        _stream << block_object_str;
                         if (block->get_header()->get_block_class() != base::enum_xvblock_class_nil) {
                             _stream << block->get_input()->get_resources_data();
                             _stream << block->get_output()->get_resources_data();
