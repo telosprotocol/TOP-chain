@@ -88,6 +88,8 @@ class xblocktool_t {
                                               base::xvblock_t * latest_commit_block,
                                               base::xvproperty_prove_ptr_t & property_prove_ptr,
                                               xtablestate_ptr_t & tablestate_ptr);
+
+    static bool get_subblocks(const xblock_ptr_t & block, std::vector<xvblock_ptr_t> &subblocks);
 };
 
 // TODO(jimmy) xblocktool_t split to xblock_utl, xreceipt_utl, xaddress_utl

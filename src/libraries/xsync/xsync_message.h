@@ -174,7 +174,12 @@ protected:
                 if (it->block_ptr != nullptr) {
                     blocks.push_back(it->block_ptr);
                     for (auto & unit : it->unit_blocks) {
-                        blocks.push_back(unit);
+                        unit->add_ref();
+                        base::xvblock_t *vblock = unit.get();
+                        data::xblock_t *block = (data::xblock_t*)vblock;
+                        data::xblock_ptr_t unit_block_ptr = nullptr;
+                        unit_block_ptr.attach(block);
+                        blocks.push_back(unit_block_ptr);
                     }
                 }
             }
@@ -231,7 +236,14 @@ protected:
             entire_block->serialize_from(stream);
 
             block = entire_block->block_ptr;
-            unit_blocks = entire_block->unit_blocks;
+            for (auto unit : entire_block->unit_blocks) {
+                unit->add_ref();
+                base::xvblock_t *vblock = unit.get();
+                data::xblock_t *block = (data::xblock_t*)vblock;
+                data::xblock_ptr_t unit_block_ptr = nullptr;
+                unit_block_ptr.attach(block);
+                unit_blocks.push_back(unit_block_ptr);
+            }
 
             return CALC_LEN();
         } catch (...) {
@@ -453,7 +465,12 @@ protected:
                 {
                     blocks.push_back(it->block_ptr);
                     for (auto & unit : it->unit_blocks) {
-                        blocks.push_back(unit);
+                        unit->add_ref();
+                        base::xvblock_t *vblock = unit.get();
+                        data::xblock_t *block = (data::xblock_t*)vblock;
+                        data::xblock_ptr_t unit_block_ptr = nullptr;
+                        unit_block_ptr.attach(block);
+                        blocks.push_back(unit_block_ptr);
                     }
                 }
             }
