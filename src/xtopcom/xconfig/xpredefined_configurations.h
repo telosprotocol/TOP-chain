@@ -594,7 +594,7 @@ XDECLARE_CONFIGURATION(enable_edge_top_rpc, bool, false);
 XDECLARE_CONFIGURATION(enable_edge_evm_rpc, bool, true);
 XDECLARE_CONFIGURATION(enable_edge_relay_rpc, bool, false);
 XDECLARE_CONFIGURATION(enable_edge_rpc_transfer, bool, false);
-XDECLARE_CONFIGURATION(enable_edge_rpc_contract, bool, false);
+XDECLARE_CONFIGURATION(enable_edge_rpc_contract, bool, true);
 XDECLARE_CONFIGURATION(enable_exchange_top_rpc, bool, true);
 XDECLARE_CONFIGURATION(enable_exchange_evm_rpc, bool, true);
 XDECLARE_CONFIGURATION(enable_exchange_relay_rpc, bool, true);
