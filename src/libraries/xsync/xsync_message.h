@@ -137,6 +137,7 @@ protected:
         for (auto &it: blocks) {
             data::xentire_block_ptr_t entire_block = make_object_ptr<data::xentire_block_t>();
             entire_block->block_ptr = it;
+            entire_block->carry_unit_blocks = true;
             vector_entire_block.push_back(entire_block);
         }
 
@@ -173,7 +174,12 @@ protected:
                 if (it->block_ptr != nullptr) {
                     blocks.push_back(it->block_ptr);
                     for (auto & unit : it->unit_blocks) {
-                        blocks.push_back(unit);
+                        unit->add_ref();
+                        base::xvblock_t *vblock = unit.get();
+                        data::xblock_t *block = (data::xblock_t*)vblock;
+                        data::xblock_ptr_t unit_block_ptr = nullptr;
+                        unit_block_ptr.attach(block);
+                        blocks.push_back(unit_block_ptr);
                     }
                 }
             }
@@ -211,6 +217,7 @@ protected:
 
         data::xentire_block_ptr_t entire_block = make_object_ptr<data::xentire_block_t>();
         entire_block->block_ptr = block;
+        entire_block->carry_unit_blocks = true;
 
         if (entire_block != nullptr) {
             entire_block->serialize_to(stream);
@@ -229,7 +236,14 @@ protected:
             entire_block->serialize_from(stream);
 
             block = entire_block->block_ptr;
-            unit_blocks = entire_block->unit_blocks;
+            for (auto unit : entire_block->unit_blocks) {
+                unit->add_ref();
+                base::xvblock_t *vblock = unit.get();
+                data::xblock_t *block = (data::xblock_t*)vblock;
+                data::xblock_ptr_t unit_block_ptr = nullptr;
+                unit_block_ptr.attach(block);
+                unit_blocks.push_back(unit_block_ptr);
+            }
 
             return CALC_LEN();
         } catch (...) {
@@ -418,6 +432,7 @@ protected:
         for (auto &it: blocks) {
             data::xentire_block_ptr_t entire_block = make_object_ptr<data::xentire_block_t>();
             entire_block->block_ptr = it;
+            entire_block->carry_unit_blocks = true;
             vector_entire_block.push_back(entire_block);
         }
 
@@ -450,7 +465,12 @@ protected:
                 {
                     blocks.push_back(it->block_ptr);
                     for (auto & unit : it->unit_blocks) {
-                        blocks.push_back(unit);
+                        unit->add_ref();
+                        base::xvblock_t *vblock = unit.get();
+                        data::xblock_t *block = (data::xblock_t*)vblock;
+                        data::xblock_ptr_t unit_block_ptr = nullptr;
+                        unit_block_ptr.attach(block);
+                        blocks.push_back(unit_block_ptr);
                     }
                 }
             }
@@ -547,6 +567,7 @@ protected:
         for (auto &it: blocks) {
             data::xentire_block_ptr_t entire_block = make_object_ptr<data::xentire_block_t>();
             entire_block->block_ptr = it;
+            entire_block->carry_unit_blocks = true;
             vector_entire_block.push_back(entire_block);
         }
 
@@ -662,6 +683,7 @@ protected:
         for (auto &it: blocks) {
             data::xentire_block_ptr_t entire_block = make_object_ptr<data::xentire_block_t>();
             entire_block->block_ptr = it;
+            entire_block->carry_unit_blocks = true;
             vector_entire_block.push_back(entire_block);
         }
 

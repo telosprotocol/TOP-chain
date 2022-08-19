@@ -748,6 +748,8 @@ namespace top
 
             void  set_vote_extend_data(const std::string & vote_data);
             const std::string &  get_vote_extend_data() const;
+            void  set_subblocks(std::vector<xobject_ptr_t<xvblock_t>> subblocks);
+            const std::vector<xobject_ptr_t<xvblock_t>> & get_subblocks() const;
 
         private:
             //generated the unique path of object(like vblock) under store-space(get_store_path()) to store data to DB
@@ -787,6 +789,7 @@ namespace top
             std::string                 m_parent_account;   //container(e.g.tableblock)'account id(refer xvaccount_t::get_xvid())
             uint32_t                    m_parent_entity_id{0};  //entity id of container(like tableblock) that carry this sub-block
             std::string                 m_vote_extend_data;
+            std::vector<xobject_ptr_t<xvblock_t>> m_subblocks;
         };
         using xvblock_ptr_t = xobject_ptr_t<base::xvblock_t>;
 

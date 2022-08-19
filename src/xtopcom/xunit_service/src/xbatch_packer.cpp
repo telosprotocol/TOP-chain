@@ -147,7 +147,7 @@ bool xbatch_packer::start_proposal(uint32_t min_tx_num) {
         XMETRICS_GAUGE(metrics::cons_table_leader_make_proposal_succ, 0);
         return false;
     }
-    m_batch_units = batch_units;
+    // m_batch_units = batch_units;
 
     XMETRICS_GAUGE(metrics::cons_table_leader_make_proposal_succ, 1);
     xunit_info("xbatch_packer::start_proposal succ-leader start consensus. block=%s this:%p node:%s xip:%s",
@@ -197,7 +197,7 @@ void xbatch_packer::reset_leader_info() {
     m_is_leader = false;
     m_leader_packed = false;
     m_leader_cs_para = nullptr;
-    m_batch_units.clear();
+    // m_batch_units.clear();
 }
 
 // view updated and the judge is_leader
@@ -434,8 +434,8 @@ int xbatch_packer::verify_proposal(base::xvblock_t * proposal_block, base::xvqce
     auto ret = m_proposal_maker->verify_proposal(proposal_para, proposal_block, bind_clock_cert, batch_units);
     if (ret == xsuccess) {
         ret = set_vote_extend_data(proposal_block, proposal_para.get_vote_extend_hash(), false);
-        m_batch_units.clear();
-        m_batch_units = batch_units;
+        // m_batch_units.clear();
+        // m_batch_units = batch_units;
     }
     return ret;
 }
@@ -543,67 +543,67 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
         xdbgassert(vblock->is_output_ready(true));
 
         // save unit blocks table block
-        auto unit_infos_str = vblock->get_unit_infos();
-        if (!unit_infos_str.empty()) {
-            base::xtable_unit_infos_t unit_infos;
-            unit_infos.serialize_from_string(unit_infos_str);
-            auto &unit_infos_vec = unit_infos.get_unit_infos();
-            if (unit_infos_vec.size() == m_batch_units.size()) {
-                // std::string parent_cert_bin;
-                // vblock->get_cert()->serialize_to_string(parent_cert_bin);
+        // auto unit_infos_str = vblock->get_unit_infos();
+        // if (!unit_infos_str.empty()) {
+        //     base::xtable_unit_infos_t unit_infos;
+        //     unit_infos.serialize_from_string(unit_infos_str);
+        //     auto &unit_infos_vec = unit_infos.get_unit_infos();
+        //     if (unit_infos_vec.size() == m_batch_units.size()) {
+        //         // std::string parent_cert_bin;
+        //         // vblock->get_cert()->serialize_to_string(parent_cert_bin);
 
-                // std::vector<std::string> out_leafs;
-                // for (auto & _unit : m_batch_units) {
-                //     std::string leaf = _unit->get_cert()->get_hash_to_sign();
-                //     xassert(!leaf.empty());
-                //     out_leafs.push_back(leaf);
-                // }
+        //         // std::vector<std::string> out_leafs;
+        //         // for (auto & _unit : m_batch_units) {
+        //         //     std::string leaf = _unit->get_cert()->get_hash_to_sign();
+        //         //     xassert(!leaf.empty());
+        //         //     out_leafs.push_back(leaf);
+        //         // }
 
-                // base::xmerkle_t<utl::xsha2_256_t, uint256_t> merkle(out_leafs);
+        //         // base::xmerkle_t<utl::xsha2_256_t, uint256_t> merkle(out_leafs);
 
-                for (uint32_t i = 0; i < m_batch_units.size(); i++) {
-                    auto & _unit = m_batch_units[i];
+        //         for (uint32_t i = 0; i < m_batch_units.size(); i++) {
+        //             auto & _unit = m_batch_units[i];
 
-                    // test: not store unit for test
-                    // if (!data::is_sys_contract_address(common::xaccount_address_t{_unit->get_account()})) {
-                    //     uint64_t rand_num = rand();
-                    //     if (rand_num % 8 == 0) {
-                    //         xwarn("test drop unit=%s", _unit->dump().c_str());
-                    //         continue;
-                    //     }
-                    // }
+        //             // test: not store unit for test
+        //             // if (!data::is_sys_contract_address(common::xaccount_address_t{_unit->get_account()})) {
+        //             //     uint64_t rand_num = rand();
+        //             //     if (rand_num % 8 == 0) {
+        //             //         xwarn("test drop unit=%s", _unit->dump().c_str());
+        //             //         continue;
+        //             //     }
+        //             // }
 
-                    if (unit_infos_vec[i].get_addr() == _unit->get_account() && 
-                        // unit_infos_vec[i].get_hash() == _unit->get_block_hash() &&
-                        unit_infos_vec[i].get_height() == _unit->get_height()) {
-                        base::xvaccount_t account(unit_infos_vec[i].get_addr());
+        //             if (unit_infos_vec[i].get_addr() == _unit->get_account() && 
+        //                 // unit_infos_vec[i].get_hash() == _unit->get_block_hash() &&
+        //                 unit_infos_vec[i].get_height() == _unit->get_height()) {
+        //                 base::xvaccount_t account(unit_infos_vec[i].get_addr());
 
-                        // _unit->set_parent_block(vblock->get_account(), i + 1);
-                        // _unit->get_cert()->set_parent_height(vblock->get_height());
-                        // _unit->get_cert()->set_parent_viewid(vblock->get_viewid());
+        //                 // _unit->set_parent_block(vblock->get_account(), i + 1);
+        //                 // _unit->get_cert()->set_parent_height(vblock->get_height());
+        //                 // _unit->get_cert()->set_parent_viewid(vblock->get_viewid());
 
-                        // auto const &_leaf = out_leafs[i];
-                        // base::xmerkle_path_256_t path;
-                        // bool ret = base::xvblockmaker_t::calc_merkle_path(_leaf, path, merkle);
-                        // if (!ret) {
-                        //     xerror("xbatch_packer::on_proposal_finish fail calc merkle path");
-                        //     return false;
-                        // }
+        //                 // auto const &_leaf = out_leafs[i];
+        //                 // base::xmerkle_path_256_t path;
+        //                 // bool ret = base::xvblockmaker_t::calc_merkle_path(_leaf, path, merkle);
+        //                 // if (!ret) {
+        //                 //     xerror("xbatch_packer::on_proposal_finish fail calc merkle path");
+        //                 //     return false;
+        //                 // }
 
-                        // _unit->set_extend_cert(parent_cert_bin);
+        //                 // _unit->set_extend_cert(parent_cert_bin);
 
-                        // base::xstream_t _stream(base::xcontext_t::instance());
-                        // path.serialize_to(_stream);
-                        // std::string extend_data = std::string((char *)_stream.data(), _stream.size());
-                        // _unit->set_extend_data(extend_data);
+        //                 // base::xstream_t _stream(base::xcontext_t::instance());
+        //                 // path.serialize_to(_stream);
+        //                 // std::string extend_data = std::string((char *)_stream.data(), _stream.size());
+        //                 // _unit->set_extend_data(extend_data);
 
-                        m_batch_units[i]->set_block_flag(base::enum_xvblock_flag_authenticated);
-                        get_vblockstore()->store_block(account, m_batch_units[i].get());
-                        xdbg("xbatch_packer::on_proposal_finish store unit:%s", m_batch_units[i]->dump().c_str());
-                    }
-                }
-            }
-        }
+        //                 m_batch_units[i]->set_block_flag(base::enum_xvblock_flag_authenticated);
+        //                 get_vblockstore()->store_block(account, m_batch_units[i].get());
+        //                 xdbg("xbatch_packer::on_proposal_finish store unit:%s", m_batch_units[i]->dump().c_str());
+        //             }
+        //         }
+        //     }
+        // }
 
         vblock->add_ref();
         mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_consensus_data_t>(vblock, is_leader);
