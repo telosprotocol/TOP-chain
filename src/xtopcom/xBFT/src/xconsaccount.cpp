@@ -176,9 +176,8 @@ namespace top
                 _batch_blocks[1] = _latest_lock_block;
                 //stored larger height block first for commit prove
                 //get_vblockstore()->store_blocks(*this,_batch_blocks);//save to blockstore
-                // get_vblockstore()->store_block(*this,_target_cert_block); //just store cert only
-                xdbg("xcsaccount_t::on_proposal_finish _target_cert_block:%s,units num:%u", _target_cert_block->dump().c_str(), _target_cert_block->get_subblocks().size());
-                get_vblockstore()->store_block_and_subblocks(*this,_target_cert_block, _target_cert_block->get_subblocks());
+                get_vblockstore()->store_block(*this,_target_cert_block); //just store cert only
+                xdbg("xcsaccount_t::on_proposal_finish _target_cert_block:%s", _target_cert_block->dump().c_str());
             }
             return false;//throw event up again to let txs-pool or other object start new consensus
         }
@@ -237,8 +236,8 @@ namespace top
                 _batch_blocks[1] = _latest_lock_block;
                 //stored larger height block first for commit prove
                 //get_vblockstore()->store_blocks(*this,_batch_blocks);//save to blockstore
-                xdbg("xcsaccount_t::on_replicate_finish _target_cert_block:%s,units num:%u", _target_cert_block->dump().c_str(), _target_cert_block->get_subblocks().size());
-                get_vblockstore()->store_block_and_subblocks(*this,_target_cert_block, _target_cert_block->get_subblocks());
+                xdbg("xcsaccount_t::on_replicate_finish _target_cert_block:%s", _target_cert_block->dump().c_str());
+                get_vblockstore()->store_block(*this,_target_cert_block);
             }
             return true; //stop handle anymore
         }

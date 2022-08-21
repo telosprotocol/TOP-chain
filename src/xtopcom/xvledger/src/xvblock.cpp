@@ -1250,6 +1250,20 @@ namespace top
             return outentity->get_state_hash();
         }
 
+        const std::string xvoutput_t::get_output_offdata_hash()
+        {
+            if (get_entitys().empty())
+            {
+                return std::string();
+            }
+            base::xvoutentity_t* outentity = get_primary_entity();
+            if (outentity == nullptr)
+            {
+                return std::string();
+            }
+            return outentity->get_output_offdata_hash();
+        }
+
         const std::string xvoutput_t::get_unit_infos() const
         {
             if (get_entitys().empty())
@@ -1273,6 +1287,82 @@ namespace top
             return std::string(local_param_buf);
         }
  
+        //---------------------------------xvblock_out_offdata_t---------------------------------//
+        xvblock_out_offdata_t::xvblock_out_offdata_t(const std::vector<xobject_ptr_t<xvblock_t>> & subblocks)
+        : m_subblocks(subblocks) {
+        }
+
+        int32_t xvblock_out_offdata_t::serialize_to_string(std::string & str) const {
+            base::xstream_t _stream(base::xcontext_t::instance());
+            auto size = do_write(_stream);
+            str.clear();
+            str.assign((const char*)_stream.data(), _stream.size());
+            return str.size();
+        }
+
+        int32_t xvblock_out_offdata_t::do_write(base::xstream_t & _stream) const {
+            const int32_t begin_size = _stream.size();
+
+            uint32_t num = m_subblocks.size();
+            _stream.write_compact_var(num);
+            for (auto & block :m_subblocks) {
+                std::string block_object_str;
+                block->serialize_to_string(block_object_str);
+                _stream.write_compact_var(block_object_str);
+                if (block->get_header()->get_block_class() != base::enum_xvblock_class_nil) {
+                    _stream.write_compact_var(block->get_input()->get_resources_data());
+                    _stream.write_compact_var(block->get_output()->get_resources_data());
+                }
+            }
+
+            return (_stream.size() - begin_size);
+        }
+
+        int32_t xvblock_out_offdata_t::serialize_from_string(const std::string & _data) {
+            base::xstream_t _stream(base::xcontext_t::instance(),(uint8_t*)_data.data(),(uint32_t)_data.size());
+            const int result = do_read(_stream);
+            return result;
+        }
+
+        int32_t xvblock_out_offdata_t::do_read(base::xstream_t & _stream) {
+            const int32_t begin_size = _stream.size();
+            uint32_t subblock_num = 0;
+            _stream.read_compact_var(subblock_num);
+            for (uint32_t i = 0; i < subblock_num; ++i) {
+                std::string block_object_str;
+                _stream.read_compact_var(block_object_str);
+                base::xvblock_t* new_block = base::xvblock_t::create_block_object(block_object_str);
+                if (nullptr == new_block) {
+                    xassert(false);
+                    return -1;
+                }
+                xobject_ptr_t<base::xvblock_t> block_ptr = nullptr;
+                block_ptr.attach(new_block);
+
+                if (block_ptr->get_block_class() != base::enum_xvblock_class_nil) {
+                    std::string input_resource_str;
+                    std::string output_resource_str;
+                    _stream.read_compact_var(input_resource_str);
+                    _stream.read_compact_var(output_resource_str);
+                    if (false == block_ptr->set_input_resources(input_resource_str)) {
+                        xassert(false);
+                        return -1;
+                    }
+                    if (false == block_ptr->set_output_resources(output_resource_str)) {
+                        xassert(false);
+                        return -1;
+                    }
+                }
+                m_subblocks.push_back(block_ptr);
+            }
+            return (begin_size - _stream.size());
+        }
+
+        void    xvblock_out_offdata_t::set_subblocks(std::vector<xobject_ptr_t<xvblock_t>> subblocks) {
+            m_subblocks = subblocks;
+        }
+
+
         //---------------------------------xvblock_t---------------------------------//
         const std::string  xvblock_t::create_block_path(const std::string & account,const uint64_t height) //path pointed to vblock at DB/disk
         {
@@ -1858,6 +1948,22 @@ namespace top
             
             return get_output()->set_resources_data(raw_resource_data);
         }
+
+        bool   xvblock_t::set_output_offdata(const std::string & raw_data) //check whether match hash first
+        {
+            if(get_output() == NULL)
+                return false;
+            
+            const std::string hash_to_check = get_cert()->hash(raw_data);
+            if(hash_to_check != get_output_offdata_hash() ) {
+                xassert(false);
+                return false;
+            }
+            
+            m_output_offdata = raw_data;
+            xdbg("xvblock_t::set_output_offdata %s,offdata=%zu", dump().c_str(), raw_data.size());
+            return true;
+        }        
     
         xvinput_t *  xvblock_t::get_input() const
         {
@@ -2481,14 +2587,6 @@ namespace top
 
         const std::string & xvblock_t::get_vote_extend_data() const {
             return m_vote_extend_data;
-        }
-
-        void  xvblock_t::set_subblocks(std::vector<xobject_ptr_t<xvblock_t>> subblocks) {
-            m_subblocks = subblocks;
-        }
-
-        const std::vector<xobject_ptr_t<xvblock_t>> & xvblock_t::get_subblocks() const {
-            return m_subblocks;
         }
         
         void xvblock_t::register_object(xcontext_t & _context)

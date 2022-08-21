@@ -172,6 +172,7 @@ bool xtxstoreimpl::store_txs(base::xvblock_t * block_ptr) {
     std::vector<xobject_ptr_t<base::xvtxindex_t>> sub_txs;
     if (block_ptr->extract_sub_txs(sub_txs)) {
         bool has_error = false;
+        xassert(!sub_txs.empty());
         for (auto & v : sub_txs) {
             base::enum_txindex_type txindex_type = base::xvtxkey_t::transaction_subtype_to_txindex_type(v->get_tx_phase_type());
             const std::string tx_key = base::xvdbkey_t::create_tx_index_key(v->get_tx_hash(), txindex_type);

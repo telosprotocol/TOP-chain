@@ -149,6 +149,9 @@ public:
     bool load_block_output(const base::xvaccount_t &, base::xvblock_t *,const int atag = 0) override {
         return false;
     }
+    bool load_block_output_offdata(const base::xvaccount_t & account,base::xvblock_t* block,const int atag = 0) override {
+        return false;
+    }
 
     bool store_block(const base::xvaccount_t & account, base::xvblock_t * block,const int atag = 0) override {
         return false;

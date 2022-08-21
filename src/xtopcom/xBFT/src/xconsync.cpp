@@ -111,7 +111,7 @@ namespace top
                 }
 
                 std::string msg_stream;
-                xsync_request_t _sync_request(enum_xsync_target_block_object | enum_xsync_target_block_input | enum_xsync_target_block_output | enum_xsync_target_block_subblocks, sync_cookie,target_block_height,target_block_hash);
+                xsync_request_t _sync_request(enum_xsync_target_block_object | enum_xsync_target_block_input | enum_xsync_target_block_output | enum_xsync_target_block_output_offdata, sync_cookie,target_block_height,target_block_hash);
                 _sync_request.serialize_to_string(msg_stream);
 
                 //construct request msg here
@@ -287,7 +287,7 @@ namespace top
                     //return enum_xconsensus_error_outofdate; //note:open for download any block now
                 }
                 
-                bool full_load = (sync_targets & enum_xsync_target_block_input) || (sync_targets & enum_xsync_target_block_output) || (sync_targets & enum_xsync_target_block_subblocks);
+                bool full_load = (sync_targets & enum_xsync_target_block_input) || (sync_targets & enum_xsync_target_block_output) || (sync_targets & enum_xsync_target_block_output_offdata);
                 base::xauto_ptr<base::xvblock_t> target_block = get_vblockstore()->load_block_object(*this, target_block_height,target_block_hash,full_load, metrics::blockstore_access_from_bft_sync);//specific load target block
                 if(target_block == nullptr)
                 {
@@ -324,7 +324,10 @@ namespace top
                     {
                         //_local_block need reload input resource
                         get_vblockstore()->load_block_input(*this, _local_block);
-                        xassert(_local_block->get_input()->has_resource_data());
+                        if (!_local_block->get_input()->has_resource_data()) {
+                            xerror("xBFTSyncdrv::handle_sync_request_msg,fail-load input for packet=%s local-block=%s,at node=0x%llx",packet.dump().c_str(),_local_block->dump().c_str(),get_xip2_low_addr());
+                            return enum_xconsensus_error_bad_packet;
+                        }
                     }
                     respond_msg.set_input_resource(_local_block->get_input()->get_resources_data());
                 }
@@ -336,63 +339,32 @@ namespace top
                     {
                         //_local_block need reload output resource
                         get_vblockstore()->load_block_output(*this, _local_block);
-                        xassert(_local_block->get_output()->has_resource_data());
+                        if (!_local_block->get_output()->has_resource_data()) {
+                            xerror("xBFTSyncdrv::handle_sync_request_msg,fail-load output for packet=%s local-block=%s,at node=0x%llx",packet.dump().c_str(),_local_block->dump().c_str(),get_xip2_low_addr());
+                            return enum_xconsensus_error_bad_packet;
+                        }
                     }
                     respond_msg.set_output_resource(_local_block->get_output()->get_resources_data());
                 }
 
-                if (sync_targets & enum_xsync_target_block_subblocks) {
-                    std::vector<xobject_ptr_t<base::xvblock_t>> subblocks;
-                    auto subblock_infos_str = _local_block->get_unit_infos();
-                    xdbg("xBFTSyncdrv::handle_sync_request_msg table block:%s, unit_infos str size:%u", _local_block->dump().c_str(), subblock_infos_str.size());
-                    if (!subblock_infos_str.empty()) {
-                        base::xtable_unit_infos_t subblock_infos;
-                        subblock_infos.serialize_from_string(subblock_infos_str);
-                        auto &subblock_infos_vec = subblock_infos.get_unit_infos();
-                        xdbg("xBFTSyncdrv::handle_sync_request_msg table block:%s, unit_infos_vec size:%u", _local_block->dump().c_str(), subblock_infos_vec.size());
-
-                        for (auto & subblock_info : subblock_infos_vec) {
-                            base::xvaccount_t account(subblock_info.get_addr());
-                            base::xauto_ptr<base::xvblock_t> sub_block = base::xvchain_t::instance().get_xblockstore()->load_block_object(account, subblock_info.get_height(), subblock_info.get_hash(), true);
-                            if (sub_block != nullptr) {
-                                sub_block->add_ref();
-                                base::xvblock_t *vblock = sub_block.get();
-                                xobject_ptr_t<base::xvblock_t> sub_block_ptr = nullptr;
-                                sub_block_ptr.attach(vblock);
-                                subblocks.push_back(sub_block_ptr);
-                                xdbg("xBFTSyncdrv::handle_sync_request_msg unit block load ok block:%s", sub_block_ptr->dump().c_str());
-                            } else {
-                                xwarn("xBFTSyncdrv::handle_sync_request_msg table block:%s, unit block load fail account:%s,height:%llu,hash:%s",
-                                      _local_block->dump().c_str(),
-                                      subblock_info.get_addr().c_str(),
-                                      subblock_info.get_height(),
-                                      base::xstring_utl::to_hex(subblock_info.get_hash()).c_str());
-                                return enum_xconsensus_error_not_found;
-                            }
+                if (sync_targets & enum_xsync_target_block_output_offdata) {
+                    if(  (_local_block->get_output_offdata_hash().empty() == false) //link offdata data
+                       &&(_local_block->get_output_offdata().empty() == true) ) //but dont have offdata avaiable now
+                    {
+                        //_local_block need reload output offdata
+                        get_vblockstore()->load_block_output_offdata(*this, _local_block);
+                        if (_local_block->get_output_offdata().empty()) {
+                            xerror("xBFTSyncdrv::handle_sync_request_msg,fail-load output offdata for packet=%s local-block=%s,at node=0x%llx",packet.dump().c_str(),_local_block->dump().c_str(),get_xip2_low_addr());
+                            return enum_xconsensus_error_bad_packet;
                         }
                     }
-
-                    base::xautostream_t<1024> _stream(base::xcontext_t::instance());
-                    uint32_t num = subblocks.size();
-                    _stream << num;
-                    for (auto & block :subblocks) {
-                        std::string block_object_str;
-                        block->serialize_to_string(block_object_str);
-                        _stream << block_object_str;
-                        if (block->get_header()->get_block_class() != base::enum_xvblock_class_nil) {
-                            _stream << block->get_input()->get_resources_data();
-                            _stream << block->get_output()->get_resources_data();
-                        }
-                    }
-
-                    std::string subblocks_str = std::string((char *)_stream.data(), _stream.size());
-                    respond_msg.set_subblocks_resource(subblocks_str);
+                    respond_msg.set_output_offdata(_local_block->get_output_offdata());
                 }
 
                 std::string msg_stream;
                 respond_msg.serialize_to_string(msg_stream);
 
-                xinfo("xBFTSyncdrv::handle_sync_request_msg,deliver a block for packet=%s,cert-block=%s,at node=0x%llx",packet.dump().c_str(),_local_block->dump().c_str(),get_xip2_low_addr());
+                xinfo("xBFTSyncdrv::handle_sync_request_msg,deliver a block for packet=%s,cert-block=%s,size=%zu,at node=0x%llx",packet.dump().c_str(),_local_block->dump().c_str(),msg_stream.size(), get_xip2_low_addr());
                 fire_pdu_event_up(xsync_respond_t::get_msg_type(), msg_stream, packet.get_msg_nonce() + 1, to_addr, from_addr, _local_block);
             }
             else
@@ -451,72 +423,9 @@ namespace top
                 return enum_xconsensus_error_bad_block;
             }
 
-            if (_sync_respond_msg.get_sync_targets() & enum_xsync_target_block_subblocks) {
-                uint32_t subblock_num = 0;
-                std::vector<xobject_ptr_t<base::xvblock_t>> subblocks;
-                base::xstream_t _stream(base::xcontext_t::instance(),(uint8_t*)_sync_respond_msg.get_subblocks_resource().data(),(int32_t)_sync_respond_msg.get_subblocks_resource().size());
-                _stream >> subblock_num;
-
-                auto subblock_infos_str = _sync_block->get_unit_infos();
-                if ((subblock_infos_str.empty() && subblock_num > 0) || (!subblock_infos_str.empty() && subblock_num == 0)) {
-                    xerror("xBFTSyncdrv::handle_sync_respond_msg,fail-subblocks num not match from packet=%s vs sync_block=%s,at node=0x%llx,subblocknum:%u",
-                           packet.dump().c_str(),
-                           _sync_block->dump().c_str(),
-                           get_xip2_low_addr(),
-                           subblock_num);
-                    return enum_xconsensus_error_bad_block;
-                }
-
-                if (!subblock_infos_str.empty()) {
-                    base::xtable_unit_infos_t subblock_infos;
-                    subblock_infos.serialize_from_string(subblock_infos_str);
-                    auto &subblock_infos_vec = subblock_infos.get_unit_infos();
-                    if (subblock_infos_vec.size() != subblock_num) {
-                        xerror(
-                            "xBFTSyncdrv::handle_sync_respond_msg,fail-subblocks num not match from packet=%s vs sync_block=%s,at node=0x%llx,subblocknum:%u,subblockinfo num:%u",
-                            packet.dump().c_str(),
-                            _sync_block->dump().c_str(),
-                            get_xip2_low_addr(),
-                            subblock_num,
-                            subblock_infos_vec.size());
-                        return enum_xconsensus_error_bad_block;
-                    }
-
-                    for (uint32_t i = 0; i < subblock_num; i++) {
-                        std::string block_object_str;
-                        _stream >> block_object_str;
-                        base::xvblock_t* new_block = base::xvblock_t::create_block_object(block_object_str);
-                        xobject_ptr_t<base::xvblock_t> block_ptr = nullptr;
-                        block_ptr.attach(new_block);
-
-                        if (subblock_infos_vec[i].get_addr() != block_ptr->get_account() || subblock_infos_vec[i].get_hash() != block_ptr->get_block_hash() ||
-                            subblock_infos_vec[i].get_height() != block_ptr->get_height()) {
-                            xerror(
-                                "xBFTSyncdrv::handle_sync_respond_msg,fail-subblock not match subblock info from packet=%s vs sync_block=%s,at "
-                                "node=0x%llx,subblock:%s,info:account:%s height:%llu,hash:%s",
-                                packet.dump().c_str(),
-                                _sync_block->dump().c_str(),
-                                get_xip2_low_addr(),
-                                block_ptr->dump().c_str(),
-                                subblock_infos_vec[i].get_addr().c_str(),
-                                subblock_infos_vec[i].get_height(),
-                                base::xstring_utl::to_hex(subblock_infos_vec[i].get_hash()).c_str());
-                            return enum_xconsensus_error_bad_block;
-                        }
-
-                        if (block_ptr->get_header()->get_block_class() != base::enum_xvblock_class_nil) {
-                            std::string input_resource_str;
-                            std::string output_resource_str;
-                            _stream >> input_resource_str;
-                            _stream >> output_resource_str;
-                            block_ptr->set_input_resources(input_resource_str);
-                            block_ptr->set_output_resources(output_resource_str);
-                        }
-                        block_ptr->set_block_flag(base::enum_xvblock_flag_authenticated);
-                        subblocks.push_back(block_ptr);
-                    }
-                }
-                _sync_block->set_subblocks(subblocks);
+            if (_sync_block->set_output_offdata(_sync_respond_msg.get_output_offdata()) == false) {
+                xerror("xBFTSyncdrv::handle_sync_respond_msg,fail-block of bad output offdata from packet=%s vs sync_block=%s,at node=0x%llx",packet.dump().c_str(),_sync_block->dump().c_str(),get_xip2_low_addr());
+                return enum_xconsensus_error_bad_block;                    
             }
 
             //step#3: verify request etc to protect from DDOS attack

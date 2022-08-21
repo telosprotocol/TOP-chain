@@ -550,6 +550,7 @@ namespace top
         protected:
             const std::string           get_binlog_hash();
             const std::string           get_state_hash();  // only can be used by xvblock_t, only light-table store state hash in output entity
+            const std::string           get_output_offdata_hash();
             const std::string           get_binlog();
             const std::string           get_unit_infos() const ;
         protected:
@@ -593,6 +594,27 @@ namespace top
 
         //note: xvblock must have associated xvheader_t and xvqcert_t objects
         using xvheader_ptr_t = xobject_ptr_t<base::xvheader_t>;
+
+        class xvblock_out_offdata_t {
+        public:
+            xvblock_out_offdata_t() = default;
+            xvblock_out_offdata_t(const std::vector<xobject_ptr_t<xvblock_t>> & subblocks);
+        public:
+            int32_t serialize_to_string(std::string & str) const;
+            int32_t do_write(base::xstream_t & stream) const;
+            int32_t serialize_from_string(const std::string & _data);
+            int32_t do_read(base::xstream_t & stream);
+        public:
+            void    set_subblocks(std::vector<xobject_ptr_t<xvblock_t>> subblocks);
+
+        public:
+            bool    is_empty() const;                        
+            const std::vector<xobject_ptr_t<xvblock_t>> &   get_subblocks() const {return m_subblocks;}
+
+        private:
+            std::vector<xobject_ptr_t<base::xvblock_t>>     m_subblocks;
+        };
+
         class xvblock_t : public xdataobj_t
         {
             friend class xvbbuild_t;
@@ -708,8 +730,10 @@ namespace top
             const std::string           get_fullstate_hash();
             const std::string           get_unit_infos() const {return get_output()->get_unit_infos();}
             const std::string           get_binlog_hash() {return get_output()->get_binlog_hash();}
+            const std::string           get_output_offdata_hash() {return get_output()->get_output_offdata_hash();}
             const std::string           get_full_state();
             const std::string           get_binlog() {return get_output()->get_binlog();}
+            const std::string &         get_output_offdata() const {return m_output_offdata;}
             bool                        set_offblock_snapshot(const std::string & snapshot);
             bool                        is_full_state_block();  // used for full-block sync
             uint64_t                    get_block_size();
@@ -717,6 +741,7 @@ namespace top
             //check whether match hash of resource first
             bool                        set_input_resources(const std::string & raw_resource_data);
             bool                        set_output_resources(const std::string & raw_resource_data);
+            bool                        set_output_offdata(const std::string & raw_data);
 
             //only open for xvblock_t object to set them after verify singature by CA(xvcertauth_t)
             void                        set_verify_signature(const std::string & proof);
@@ -789,7 +814,7 @@ namespace top
             std::string                 m_parent_account;   //container(e.g.tableblock)'account id(refer xvaccount_t::get_xvid())
             uint32_t                    m_parent_entity_id{0};  //entity id of container(like tableblock) that carry this sub-block
             std::string                 m_vote_extend_data;
-            std::vector<xobject_ptr_t<xvblock_t>> m_subblocks;
+            std::string                 m_output_offdata;
         };
         using xvblock_ptr_t = xobject_ptr_t<base::xvblock_t>;
 

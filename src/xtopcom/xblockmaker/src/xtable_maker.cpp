@@ -323,9 +323,14 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
                                                                         cs_para,
                                                                         lighttable_para);
     if (nullptr != tableblock) {
-        xinfo("xtable_maker_t::make_light_table_v2-succ is_leader=%d,%s,binlog=%zu,snapshot=%zu,batch_units=%zu,property_hashs=%zu,tgas_change=%ld", 
+        xassert(lighttable_para.get_output_offdata().size()>0);
+        if (base::xvblock_fork_t::is_block_match_version(tableblock->get_block_version(), base::enum_xvblock_fork_version_5_0_0)) {
+            tableblock->set_output_offdata(lighttable_para.get_output_offdata());
+        }
+
+        xinfo("xtable_maker_t::make_light_table_v2-succ is_leader=%d,%s,binlog=%zu,snapshot=%zu,batch_units=%zu,property_hashs=%zu,tgas_change=%ld,offdata=%zu", 
             is_leader, tableblock->dump().c_str(), lighttable_para.get_property_binlog().size(), lighttable_para.get_fullstate_bin().size(), 
-            lighttable_para.get_account_units().size(), lighttable_para.get_property_hashs().size(),lighttable_para.get_tgas_balance_change());
+            lighttable_para.get_account_units().size(), lighttable_para.get_property_hashs().size(),lighttable_para.get_tgas_balance_change(),lighttable_para.get_output_offdata().size());
         table_result.m_batch_units = batch_units;
     }
     return tableblock;
@@ -596,6 +601,11 @@ bool xtable_maker_t::verify_proposal_with_local(base::xvblock_t *proposal_block,
     bret = proposal_block->set_input_resources(local_block->get_input()->get_resources_data());
     if (!bret) {
         xerror("xtable_maker_t::verify_proposal_with_local fail-set proposal block input fail");
+        return false;
+    }
+    bret = proposal_block->set_output_offdata(local_block->get_output_offdata());
+    if (!bret) {
+        xerror("xtable_maker_t::verify_proposal_with_local fail-set proposal block output offdata fail.%s",proposal_block->dump().c_str());
         return false;
     }
     return true;
