@@ -46,9 +46,6 @@ class xunitbuilder_t {
 class xtablebuilder_t {
  public:
     static void     make_table_prove_property_hashs(base::xvbstate_t* bstate, std::map<std::string, std::string> & property_hashs);
-   //  static bool     update_account_index_property(const data::xtablestate_ptr_t & tablestate, 
-   //                                                const std::vector<xblock_ptr_t> & batch_units,
-   //                                                const std::vector<data::xlightunit_tx_info_ptr_t> & txs_info);
     static bool     update_account_index_property(const data::xtablestate_ptr_t & tablestate, 
                                                   const xblock_ptr_t & unit,
                                                   const data::xunitstate_ptr_t & unit_state);

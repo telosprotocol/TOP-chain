@@ -103,8 +103,6 @@ private:
     bool                                     m_leader_packed{false};
     uint64_t                                 m_last_view_clock{0};
 
-    std::vector<data::xblock_ptr_t>          m_batch_units;
-
     // fade xip. fade version should not make new proposal
     xvip2_t                                  m_faded_xip2{};
     // record last xip in case of consensus success but leader xip changed.

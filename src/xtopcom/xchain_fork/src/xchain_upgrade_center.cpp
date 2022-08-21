@@ -125,7 +125,7 @@ namespace top {
 
         bool xtop_chain_fork_config_center::is_block_forked(uint64_t target) noexcept {
             xchain_fork_config_t const & _fork_config = xtop_chain_fork_config_center::get_chain_fork_config();
-            return  xtop_chain_fork_config_center::is_forked(_fork_config.v1_7_0_version_point, target);
+            return  xtop_chain_fork_config_center::is_forked(_fork_config.v1_7_0_block_fork_point, target);
         }
 
         bool xtop_chain_fork_config_center::is_tx_forked_by_timestamp(uint64_t fire_timestamp) noexcept {

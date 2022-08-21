@@ -102,7 +102,8 @@ void xrole_context_t::on_block_to_db(const xblock_ptr_t & block, bool & event_br
                 // load full block input and output
                 base::xvaccount_t _vaccount(block->get_account());
                 if (false == base::xvchain_t::instance().get_xblockstore()->load_block_input(_vaccount, block.get())
-                    || false == base::xvchain_t::instance().get_xblockstore()->load_block_output(_vaccount, block.get())) {
+                    || false == base::xvchain_t::instance().get_xblockstore()->load_block_output(_vaccount, block.get())
+                    || false == base::xvchain_t::instance().get_xblockstore()->load_block_output_offdata(_vaccount, block.get())) {
                     xerror("xrole_context_t::on_block_to_db fail-load block input output, block=%s", block->dump().c_str());
                     return;
                 }
@@ -110,9 +111,8 @@ void xrole_context_t::on_block_to_db(const xblock_ptr_t & block, bool & event_br
                 switch (m_contract_info->broadcast_policy) {
                 case enum_broadcast_policy_t::normal:
                     xinfo("xrole_context_t::on_block::broadcast, normal, block=%s", block->dump().c_str());
-                    // table blocks sync with unit blocks by xsync.
                     // broadcast(((xevent_store_block_to_db_t *)e.get())->block, m_contract_info->broadcast_types);
-                    // broadcast(block, m_contract_info->broadcast_types);
+                    broadcast(block, m_contract_info->broadcast_types);
                     break;
                 case enum_broadcast_policy_t::fullunit:
                     xinfo("xrole_context_t::on_block::broadcast, fullunit, block=%s", block->dump().c_str());

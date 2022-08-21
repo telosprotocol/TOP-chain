@@ -93,74 +93,6 @@ void xtablebuilder_t::make_table_prove_property_hashs(base::xvbstate_t* bstate, 
     }
 }
 
-#if 0
-bool     xtablebuilder_t::update_account_index_property(const data::xtablestate_ptr_t & tablestate, 
-                                                        const std::vector<xblock_ptr_t> & batch_units,
-                                                        const std::vector<data::xlightunit_tx_info_ptr_t> & txs_info) {
-    std::map<std::string, uint64_t> account_nonce_map;
-
-    for (auto & tx_info : txs_info) {
-        if (!tx_info->is_send_tx() && !tx_info->is_self_tx()) {
-            continue;
-        }
-        auto & account = tx_info->get_raw_tx()->get_source_addr();
-        auto tx_nonce = tx_info->get_last_trans_nonce() + 1;
-        auto it = account_nonce_map.find(account);
-        if (it == account_nonce_map.end()) {
-            account_nonce_map[account] = tx_nonce;
-        } else {
-            uint64_t & nonce_tmp = it->second;
-            if (tx_nonce > nonce_tmp) {
-                account_nonce_map[account] = tx_nonce;
-            }
-        }
-    }
-
-    // make account index property binlog
-    for (auto & unit : batch_units) {
-        // read old index
-        base::xaccount_index_t _old_aindex;
-        tablestate->get_account_index(unit->get_account(), _old_aindex);
-        // update unconfirm sendtx flag
-        // bool has_unconfirm_sendtx = _old_aindex.is_has_unconfirm_tx();
-        bool has_unconfirm_sendtx = false;  // TODO(jimmy)
-        uint64_t nonce = _old_aindex.get_latest_tx_nonce();
-        // if (unit->get_block_class() == base::enum_xvblock_class_full) {
-        //     has_unconfirm_sendtx = false;
-        // } else if (unit->get_block_class() == base::enum_xvblock_class_light) {
-        //     has_unconfirm_sendtx = unit->get_unconfirm_sendtx_num() != 0;
-        // }
-        // update light-unit consensus flag, light-unit must push to committed status for receipt make
-        base::enum_xblock_consensus_type _cs_type = _old_aindex.get_latest_unit_consensus_type();
-        if (unit->get_block_class() == base::enum_xvblock_class_light) {
-            _cs_type = base::enum_xblock_consensus_flag_authenticated;  // if light-unit, reset to authenticated
-        } else {
-            if (_cs_type == base::enum_xblock_consensus_flag_authenticated) {  // if other-unit, update type
-                _cs_type = base::enum_xblock_consensus_flag_locked;
-            } else if (_cs_type == base::enum_xblock_consensus_flag_locked) {
-                _cs_type = base::enum_xblock_consensus_flag_committed;
-            } else if (_cs_type == base::enum_xblock_consensus_flag_committed) {
-                // do nothing
-            }
-        }
-        
-        auto it = account_nonce_map.find(unit->get_account());
-        if (it != account_nonce_map.end()) {
-            uint64_t & nonce_tmp = it->second;
-            xassert(nonce_tmp > nonce);
-            if (nonce_tmp > nonce) {
-                nonce = nonce_tmp;
-            }
-        }
-
-        base::xaccount_index_t _new_aindex(unit.get(), has_unconfirm_sendtx, _cs_type, false, nonce);
-        tablestate->set_account_index(unit->get_account(), _new_aindex);
-        xdbg("xtablebuilder_t::update_account_index_property account:%s,index=%s", unit->get_account().c_str(), _new_aindex.dump().c_str());
-    }
-    return true;
-}
-#endif
-
 bool     xtablebuilder_t::update_account_index_property(const data::xtablestate_ptr_t & tablestate, 
                                                         const xblock_ptr_t & unit,
                                                         const data::xunitstate_ptr_t & unit_state) {
@@ -187,10 +119,10 @@ bool     xtablebuilder_t::update_account_index_property(const data::xtablestate_
     }
 
     auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
-    auto const new_version = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.v1_7_0_version_point, unit->get_clock());
+    auto const new_version = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.v1_7_0_block_fork_point, unit->get_clock());
     data::xaccount_index_t _new_aindex;
     if (new_version) {
-        auto hash = unit->get_cert()->build_block_hash();
+        auto hash = unit->get_cert()->build_block_hash();  // TODO(jimmy)  get_block_hash()
         _new_aindex = data::xaccount_index_t(unit->get_height(), hash, unit->get_fullstate_hash(), nonce, unit->get_block_class(), unit->get_block_type());
     } else {
         _new_aindex = data::xaccount_index_t(unit.get(), has_unconfirm_sendtx, _cs_type, false, nonce);
