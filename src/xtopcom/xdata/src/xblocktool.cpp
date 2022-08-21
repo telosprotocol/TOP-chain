@@ -817,38 +817,4 @@ base::xvblock_t* xblocktool_t::create_genesis_wrap_relayblock() {
     return wrap_relayblock.get();
 }
 
-bool xblocktool_t::get_subblocks(const xblock_ptr_t & block, std::vector<xvblock_ptr_t> &subblocks) {
-    uint32_t num = 0;
-    auto unit_infos_str = block->get_unit_infos();
-    xdbg("xblocktool_t::get_subblocks table block:%s, unit_infos str size:", block->dump().c_str(), unit_infos_str.size());
-    if (!unit_infos_str.empty()) {
-        base::xtable_unit_infos_t unit_infos;
-        unit_infos.serialize_from_string(unit_infos_str);
-        auto &unit_infos_vec = unit_infos.get_unit_infos();
-        xdbg("xblocktool_t::get_subblocks table block:%s, unit_infos_vec size:%u", block->dump().c_str(), unit_infos_vec.size());
-
-        for (auto & unit_info : unit_infos_vec) {
-            base::xvaccount_t account(unit_info.get_addr());
-            base::xauto_ptr<base::xvblock_t> unit_block = base::xvchain_t::instance().get_xblockstore()->load_block_object(account, unit_info.get_height(), unit_info.get_hash(), true);
-            if (unit_block != nullptr) {
-                unit_block->add_ref();
-                base::xvblock_t *vblock = unit_block.get();
-                data::xvblock_ptr_t unit_block_ptr = nullptr;
-                unit_block_ptr.attach(vblock);
-                subblocks.push_back(unit_block_ptr);
-            } else {
-                xwarn("xblocktool_t::get_subblocks table block:%s, unit block load fail account:%s,height:%llu,hash:%s,hash size:%u",
-                      block->dump().c_str(),
-                      unit_info.get_addr().c_str(),
-                      unit_info.get_height(),
-                      base::xstring_utl::to_hex(unit_info.get_hash()).c_str(),
-                      unit_info.get_hash().size());
-                subblocks.clear();
-                return false;
-            }
-        }
-    }
-    return true;
-}
-
 NS_END2
