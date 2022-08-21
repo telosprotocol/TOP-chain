@@ -204,6 +204,29 @@ namespace top
             xdbg("xvblockdb_t::load_block_output,target index(%s)",target_index->dump().c_str());
             return  read_block_output_from_db(target_index,target_block,get_xdbstore());
         }
+
+        bool xvblockdb_t::load_block_output_offdata(base::xvbindex_t* target_index,base::xvblock_t * target_block) {
+            if( (NULL == target_index) || (NULL == target_block))
+            {
+                xassert(0); //should not happen
+                return false;
+            }
+            
+            if(  (target_index->get_height()    != target_block->get_height())
+               ||(target_index->get_viewid()    != target_block->get_viewid())
+               ||(target_index->get_block_hash()!= target_block->get_block_hash())
+               ||(target_index->get_account()   != target_block->get_account()) )
+            {
+                xerror("xvblockdb_t::load_block_output,fail as index(%s) != block(%s)",target_index->dump().c_str(),target_block->dump().c_str());
+                return false;
+            }
+            
+            if(target_index->get_block_class() == base::enum_xvblock_class_nil)
+                return true;
+            
+            xdbg("xvblockdb_t::load_block_output_offdata,target index(%s)",target_index->dump().c_str());
+            return  read_block_output_offdata_from_db(target_index,target_block,get_xdbstore());
+        }
     
         bool    xvblockdb_t::load_block_object(base::xvbindex_t* index_ptr, const int atag)
         {
@@ -269,6 +292,7 @@ namespace top
             
             const int input_stored_flag  = write_block_input_to_db(index_ptr,block_ptr);
             const int output_stored_flag = write_block_output_to_db(index_ptr,block_ptr);
+            write_block_output_offdata_to_db(index_ptr, block_ptr);  // TODO(jimmy) no stored flags ??
  
             int combined_stored_flags = object_stored_flag;
             if(input_stored_flag > 0)
@@ -318,6 +342,11 @@ namespace top
                 
                 const std::string output_resource_key = create_block_output_resource_key(index_ptr);
                 deleted_key_list.push_back(output_resource_key);
+            }
+            //delete output offdata
+            {
+                const std::string output_offdata_key = create_block_output_offdata_key(index_ptr);
+                deleted_key_list.push_back(output_offdata_key);
             }
             
             return get_xdbstore()->delete_values(deleted_key_list);
@@ -699,7 +728,59 @@ namespace top
             }
             return (block_ptr->get_output() != NULL);
         }
-        
+
+        bool xvblockdb_t::read_block_output_offdata_from_db(base::xvbindex_t* index_ptr,base::xvblock_t * block_ptr,base::xvdbstore_t* from_db) {
+            if(NULL == block_ptr || NULL == index_ptr || NULL == from_db)
+                return false;
+
+            if(  (block_ptr->get_output_offdata_hash().empty() == false) //link resoure data
+                &&(block_ptr->get_output_hash().empty()) ) { //but dont have resource avaiable now 
+                const std::string db_key = create_block_output_offdata_key(index_ptr);
+                const std::string db_value = from_db->get_value(db_key);
+                if (db_value.empty()) //that possible happen actually
+                {
+                    xwarn("xvblockdb_t::read_block_output_offdata_from_db,fail to read from db for index=%s,path(%s)",index_ptr->dump().c_str(), db_key.c_str());
+                    return false;
+                }
+                if (false == block_ptr->set_output_offdata(db_value)) {
+                    xerror("xvblockdb_t::read_block_output_offdata_from_db,fail set offdata for index=%s,path(%s)",index_ptr->dump().c_str(), db_key.c_str());
+                    return false;
+                }
+                xdbg("xvblockdb_t::read_block_output_offdata_from_db,succ to read.index=%s,bin_size=%zu",index_ptr->dump().c_str(), db_value.size());
+                return true;
+            }
+            return true;
+        }
+
+        int    xvblockdb_t::write_block_output_offdata_to_db(base::xvbindex_t* index_ptr,base::xvblock_t * block_ptr)
+        {
+            if(block_ptr == NULL)
+                return -1; //invalid params
+            if (block_ptr->get_output_offdata_hash().empty()) {
+                return 0;
+            }
+            if(block_ptr->get_output_offdata().empty())
+            {
+                xassert(0);
+                return -1; //invalid params
+            }
+
+            const std::string db_key = create_block_output_offdata_key(index_ptr);
+            if(get_xdbstore()->set_value(db_key, block_ptr->get_output_offdata()))
+            {
+                update_block_write_metrics(block_ptr->get_block_level(), block_ptr->get_block_class(), enum_blockstore_metrics_type_block_output_offdata, block_ptr->get_output_offdata().size());
+
+                xdbg("xvblockdb_t::write_block_output_offdata_to_db,store output offdata to DB for block(%s),bin_size=%zu",index_ptr->dump().c_str(), block_ptr->get_output_offdata().size());
+                return base::enum_index_store_flag_output_resource;  // TODO(jimmy)
+            }
+            else
+            {
+                xerror("xvblockdb_t::write_block_output_offdata_to_db,fail to store output offdata for block(%s)",index_ptr->dump().c_str());
+                return -3; //failed
+            }
+            return 0;
+        }
+
         //note: caller need release block ptr
         std::vector<base::xvblock_t*>  xvblockdb_t::read_prunable_block_object_from_db(base::xvaccount_t & account,const uint64_t target_height)
         {
@@ -832,6 +913,10 @@ namespace top
         const std::string  xvblockdb_t::create_block_output_resource_key(base::xvbindex_t * index_ptr)
         {
             return base::xvdbkey_t::create_prunable_block_output_resource_key(*index_ptr,index_ptr->get_height(), index_ptr->get_viewid());
+        }
+        const std::string  xvblockdb_t::create_block_output_offdata_key(base::xvbindex_t * index_ptr)
+        {
+            return base::xvdbkey_t::create_prunable_block_output_offdata_key(*index_ptr,index_ptr->get_height(), index_ptr->get_viewid());
         }
 
         std::vector<base::xvbindex_t*>  xvblockdb_t::load_index_from_db(const std::string & index_db_key_path, const uint64_t target_height)

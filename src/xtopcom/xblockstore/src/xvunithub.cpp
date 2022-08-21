@@ -266,13 +266,25 @@ namespace top
                     
                 }
 
-                if(ask_full_load)
-                {
-                    get_blockdb_ptr()->load_block_input(target_index);
-                    get_blockdb_ptr()->load_block_output(target_index);
-                }
                 if(target_index->get_this_block() != NULL)
                 {
+                    if(ask_full_load)
+                    {
+                        if (false == get_blockdb_ptr()->load_block_input(target_index)) {
+                            xerror("xvblockstore_impl::load_block_from_index fail load block input.%s at store(%s)",target_index->dump().c_str(),m_store_path.c_str());
+                            return nullptr;
+                        }
+                        if (false == get_blockdb_ptr()->load_block_output(target_index)) {
+                            xerror("xvblockstore_impl::load_block_from_index fail load block output.%s at store(%s)",target_index->dump().c_str(),m_store_path.c_str());
+                            return nullptr;                            
+                        }
+                        if (false == load_block_output_offdata(*target_account->get_account_obj(), target_index->get_this_block())) {
+                            xerror("xvblockstore_impl::load_block_from_index fail load block output offdata.%s at store(%s)",target_index->dump().c_str(),m_store_path.c_str());
+                            return nullptr;                                                        
+                        }
+                        xdbg("xvblockstore_impl::load_block_from_index succ-load full block.%s",target_index->get_this_block()->dump().c_str());
+                    }
+
                     //transfer block flags from index to raw block here
     //                xassert(target_index->get_block_flags() == target_index->get_this_block()->get_block_flags());  // TODO(jimmy)
                     //target_index->get_this_block()->reset_block_flags(target_index->get_block_flags());
@@ -646,6 +658,64 @@ namespace top
             return false;
         }
 
+        bool xvblockstore_impl::load_block_output_offdata(const base::xvaccount_t & account,base::xvblock_t* block,const int atag)
+        {
+            if( (nullptr == block) || (account.get_account() != block->get_account()) )
+            {
+                xerror("xvblockstore_impl::load_block_output_offdata,block NOT match account:%s",account.get_account().c_str());
+                return false;
+            }
+            if(  (block->get_block_class() == base::enum_xvblock_class_nil)  // nil block has no input
+               || block->get_output_offdata_hash().empty() ) // hash empty means has no data
+            {
+                return true;
+            }
+            if (!block->get_output_offdata().empty()) {
+                return true;
+            }
+            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
+            METRICS_TAG(atag, 1);
+            
+            base::xauto_ptr<base::xvbindex_t> existing_index(account_obj->load_index(block->get_height(), block->get_block_hash()));
+            if(nullptr == existing_index) {
+                xerror("xvblockstore_impl::load_block_output_offdata,fail-index null %s",block->dump().c_str());
+                return false;
+            }
+
+            // firstly try to load offdata from db
+            if ( (true == get_blockdb_ptr()->load_block_output_offdata(existing_index(),block))
+             && (!block->get_output_offdata().empty()) ) {
+                xinfo("xvblockstore_impl::load_block_output_offdata,succ-load offdata.%s",block->dump().c_str());
+                return true;
+            }
+            
+            // secondly try to load offdata by subblocks
+            std::vector<base::xvblock_ptr_t> subblocks;
+            auto subblock_infos_str = block->get_unit_infos();
+            base::xtable_unit_infos_t subblock_infos;
+            subblock_infos.serialize_from_string(subblock_infos_str);
+            auto &unit_infos_vec = subblock_infos.get_unit_infos();
+            for (auto & unit_info : unit_infos_vec) {
+                base::xvaccount_t _unit_account(unit_info.get_addr());
+                base::xvblock_ptr_t unit_block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_unit_account, unit_info.get_height(), unit_info.get_hash(), true);
+                if (nullptr == unit_block) {
+                    // TODO(jimmy)
+                    xerror("xvblockstore_impl::load_block_output_offdata,fail-load unit. block:%s,",block->dump().c_str());
+                    return false;
+                }
+                subblocks.push_back(unit_block);
+            }
+            base::xvblock_out_offdata_t offdata(subblocks);
+            std::string offdata_bin;
+            offdata.serialize_to_string(offdata_bin);
+            if (false == block->set_output_offdata(offdata_bin)) {
+                xerror("xvblockstore_impl::load_block_output_offdata,fail-unmatch offdata. block:%s,",block->dump().c_str());
+                return false;
+            }
+            xinfo("xvblockstore_impl::load_block_output_offdata,succ-load units.%s",block->dump().c_str());
+            return true;
+        }
+
         bool    xvblockstore_impl::store_committed_unit_block(const base::xvaccount_t & account, base::xvblock_t * container_block) {
             xdbg("xvblockstore_impl::store_committed_unit_block enter store block(%s)", container_block->dump().c_str());
             {
@@ -657,7 +727,7 @@ namespace top
 
         bool    xvblockstore_impl::store_block(base::xauto_ptr<xblockacct_t> & container_account,base::xvblock_t * container_block,bool execute_block) //store table/book blocks if they are
         {
-            xdbg("jimmy xvblockstore_impl::store_block enter,store block(%s)", container_block->dump().c_str());
+            xdbg("xvblockstore_impl::store_block enter,store block(%s)", container_block->dump().c_str());
 
             //first do store block
             bool ret = container_account->store_block(container_block);
@@ -669,70 +739,70 @@ namespace top
 
             bool did_stored = ret;//inited as false
             //then try extract for container if that is
-            // if(  (container_block->get_block_class() == base::enum_xvblock_class_light) //skip nil block
-            //    &&(container_block->get_block_level() == base::enum_xvblock_level_table)
-            //    &&(container_block->get_height() != 0) )
-            // {
-            //     base::xauto_ptr<base::xvbindex_t> existing_index(container_account->load_index(container_block->get_height(), container_block->get_block_hash()));
-            //     if(existing_index && (existing_index->get_block_flags() & base::enum_xvblock_flag_unpacked) == 0) //unpacked yet
-            //     {
-            //         #ifdef DEBUG
-            //         xassert(container_block->is_input_ready(true));
-            //         xassert(container_block->is_output_ready(true));
-            //         #else
-            //         xassert(container_block->is_input_ready(false));
-            //         xassert(container_block->is_output_ready(false));
-            //         #endif
+            if(  (container_block->get_block_class() == base::enum_xvblock_class_light) //skip nil block
+               &&(container_block->get_block_level() == base::enum_xvblock_level_table)
+               &&(container_block->get_height() != 0) )
+            {
+                base::xauto_ptr<base::xvbindex_t> existing_index(container_account->load_index(container_block->get_height(), container_block->get_block_hash()));
+                if(existing_index && (existing_index->get_block_flags() & base::enum_xvblock_flag_unpacked) == 0) //unpacked yet
+                {
+                    #ifdef DEBUG
+                    xassert(container_block->is_input_ready(true));
+                    xassert(container_block->is_output_ready(true));
+                    #else
+                    xassert(container_block->is_input_ready(false));
+                    xassert(container_block->is_output_ready(false));
+                    #endif
 
-            //         std::vector<xobject_ptr_t<base::xvblock_t>> sub_blocks;                    
-            //         if(container_block->extract_sub_blocks(sub_blocks))
-            //         {
-            //             xdbg("xvblockstore_impl::store_block,table block(%s) carry unit num=%d", container_block->dump().c_str(), (int)sub_blocks.size());
+                    std::vector<xobject_ptr_t<base::xvblock_t>> sub_blocks;                    
+                    if(container_block->extract_sub_blocks(sub_blocks))
+                    {
+                        xdbg("xvblockstore_impl::store_block,table block(%s) carry unit num=%d", container_block->dump().c_str(), (int)sub_blocks.size());
 
-            //             bool table_extract_all_unit_successful = true;
-            //             for (auto & unit_block : sub_blocks)
-            //             {
-            //                 base::xvaccount_t  unit_account(unit_block->get_account());
+                        bool table_extract_all_unit_successful = true;
+                        for (auto & unit_block : sub_blocks)
+                        {
+                            base::xvaccount_t  unit_account(unit_block->get_account());
 
-            //                 // // test: not store unit for test
-            //                 // if (!data::is_sys_contract_address(common::xaccount_address_t{unit_account.get_account()})) {
-            //                 //     uint64_t rand_num = rand();
-            //                 //     if (rand_num % 8 == 0) {
-            //                 //         xwarn("test drop unit=%s", unit_block->dump().c_str());
-            //                 //         continue;
-            //                 //     }  
-            //                 // }
+                            // // test: not store unit for test
+                            // if (!data::is_sys_contract_address(common::xaccount_address_t{unit_account.get_account()})) {
+                            //     uint64_t rand_num = rand();
+                            //     if (rand_num % 8 == 0) {
+                            //         xwarn("test drop unit=%s", unit_block->dump().c_str());
+                            //         continue;
+                            //     }  
+                            // }
 
-            //                 if(false == store_block(unit_account,unit_block.get())) //any fail resultin  re-unpack whole table again
-            //                 {
-            //                     //table_extract_all_unit_successful = false;//reset to false for any failure of unit  // TODO(jimmy) always true if stored
-            //                     xwarn("xvblockstore_impl::store_block,fail-store unit-block=%s",unit_block->dump().c_str());
-            //                 }
-            //                 else
-            //                 {
-            //                     xdbg("xvblockstore_impl::store_block,stored unit-block=%s",unit_block->dump().c_str());
+                            if(false == store_block(unit_account,unit_block.get())) //any fail resultin  re-unpack whole table again
+                            {
+                                //table_extract_all_unit_successful = false;//reset to false for any failure of unit  // TODO(jimmy) always true if stored
+                                xwarn("xvblockstore_impl::store_block,fail-store unit-block=%s",unit_block->dump().c_str());
+                            }
+                            else
+                            {
+                                xdbg("xvblockstore_impl::store_block,stored unit-block=%s",unit_block->dump().c_str());
 
-            //                     on_block_stored(unit_block.get());//throw event for sub blocks
-            //                 }
-            //             }
+                                on_block_stored(unit_block.get());//throw event for sub blocks
+                            }
+                        }
 
-            //             //update to block'flag acccording table_extract_all_unit_successful
-            //             if(table_extract_all_unit_successful)
-            //             {
-            //                 existing_index->set_block_flag(base::enum_xvblock_flag_unpacked);
-            //                 xinfo("xvblockstore_impl::store_block,extract_sub_blocks done for table block, %s", container_block->dump().c_str());
-            //             }
-            //         }
-            //         else
-            //         {
-            //             xerror("xvblockstore_impl::store_block,fail-extract_sub_blocks for table block(%s)", container_block->dump().c_str(), (int)sub_blocks.size());
-            //         }
-            //     }
-            //     else
-            //     {
-            //         did_stored = true;
-            //     }
-            // }
+                        //update to block'flag acccording table_extract_all_unit_successful
+                        if(table_extract_all_unit_successful)
+                        {
+                            existing_index->set_block_flag(base::enum_xvblock_flag_unpacked);
+                            xinfo("xvblockstore_impl::store_block,extract_sub_blocks done for table block, %s", container_block->dump().c_str());
+                        }
+                    }
+                    else
+                    {
+                        xerror("xvblockstore_impl::store_block,fail-extract_sub_blocks for table block(%s)", container_block->dump().c_str(), (int)sub_blocks.size());
+                    }
+                }
+                else
+                {
+                    did_stored = true;
+                }
+            }
 
             if(did_stored)
             {
@@ -748,51 +818,6 @@ namespace top
                 container_account->try_execute_all_block(container_block);  // try to push execute block, ignore store result
             }
 #endif
-            return true; //still return true since tableblock has been stored successful
-        }
-
-        bool    xvblockstore_impl::store_block_and_subblocks(base::xauto_ptr<xblockacct_t> & container_account,base::xvblock_t * container_block, std::vector<base::xvblock_ptr_t> sub_blocks)
-        {
-            xdbg("jimmy xvblockstore_impl::store_block_and_subblocks enter,store block(%s), subblock num:%u", container_block->dump().c_str(), sub_blocks.size());
-
-            //first do store block
-            bool ret = container_account->store_block(container_block);
-            if(!ret)
-            {
-                xwarn("xvblockstore_impl::store_block,fail-store block(%s)", container_block->dump().c_str());
-                // return false;
-            }
-
-            //store subblocks first
-            if(  (container_block->get_block_class() == base::enum_xvblock_class_light) //skip nil block
-               &&(container_block->get_block_level() == base::enum_xvblock_level_table)
-               &&(container_block->get_height() != 0) )
-            {
-                base::xauto_ptr<base::xvbindex_t> existing_index(container_account->load_index(container_block->get_height(), container_block->get_block_hash()));
-                if(existing_index && (existing_index->get_block_flags() & base::enum_xvblock_flag_unpacked) == 0) //unpacked yet
-                {
-                    xdbg("xvblockstore_impl::store_block,table block(%s) carry unit num=%d", container_block->dump().c_str(), (int)sub_blocks.size());
-                    for (auto & unit_block : sub_blocks)
-                    {
-                        base::xvaccount_t  unit_account(unit_block->get_account());
-                        if(false == store_block(unit_account,unit_block.get())) //any fail resultin  re-unpack whole table again
-                        {
-                            xwarn("xvblockstore_impl::store_block,fail-store unit-block=%s",unit_block->dump().c_str());
-                        }
-                        else
-                        {
-                            xdbg("xvblockstore_impl::store_block,stored unit-block=%s",unit_block->dump().c_str());
-
-                            on_block_stored(unit_block.get());//throw event for sub blocks
-                        }
-                    }
-
-                    //update to block'flag acccording table_extract_all_unit_successful
-                    existing_index->set_block_flag(base::enum_xvblock_flag_unpacked);
-                    xinfo("xvblockstore_impl::store_block,extract_sub_blocks done for table block, %s", container_block->dump().c_str());
-                }
-            }
-
             return true; //still return true since tableblock has been stored successful
         }
 
@@ -828,28 +853,6 @@ namespace top
             return ret;
         }
 
-        bool                xvblockstore_impl::store_block_but_not_execute(const base::xvaccount_t & account,base::xvblock_t* block)
-        {
-            if( (nullptr == block) || (account.get_account() != block->get_account()) )
-            {
-                xerror("xvblockstore_impl::store_block_but_not_execute,block NOT match account:%",account.get_account().c_str());
-                return false;
-            }
-
-            if(block->check_block_flag(base::enum_xvblock_flag_authenticated) == false)
-            {
-                xerror("xvblockstore_impl::store_block_but_not_execute,unauthorized block(%s)",block->dump().c_str());
-                return false;
-            }
-
-            LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
-            if(store_block(account_obj,block,false))//force to not execute anymore
-            {
-                return true;
-            }
-            return false;
-        }
-
         bool                xvblockstore_impl::store_blocks(const base::xvaccount_t & account,std::vector<base::xvblock_t*> & batch_store_blocks,const int atag)
         {
             if(batch_store_blocks.empty())
@@ -865,37 +868,6 @@ namespace top
                 }
             }
             return  true;
-        }
-
-        bool                xvblockstore_impl::store_block_and_subblocks(const base::xvaccount_t & account,base::xvblock_t* block, std::vector<base::xvblock_ptr_t> sub_blocks, const int atag) {
-            if( (nullptr == block) || (account.get_account() != block->get_account()) )
-            {
-                xerror("xvblockstore_impl::store_block,block NOT match account:%s,%s",account.get_account().c_str(),block->get_account().c_str());
-                return false;
-            }
-
-            if(block->check_block_flag(base::enum_xvblock_flag_authenticated) == false
-            || (block->get_height() == 0 && block->check_block_flag(base::enum_xvblock_flag_committed) == false))
-            {
-                xerror("xvblockstore_impl::store_block,unauthorized block(%s)",block->dump().c_str());
-                return false;
-            }
-
-            bool ret = false;
-            {
-                LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
-                METRICS_TAG(atag, 1);
-                ret = store_block_and_subblocks(account_obj, block, sub_blocks);
-            }
-
-            // XTODO only tabletable need execute immediately after stored
-            if (block->get_block_level() == base::enum_xvblock_level_table) {
-                // TODO(jimmy) commit tableblock try to update table state
-                base::auto_reference<base::xvblock_t> auto_hold_block_ptr(block);
-                base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->execute_block(block, metrics::statestore_access_from_blockstore);
-            }
-
-            return ret;
         }
 
         bool                xvblockstore_impl::delete_block(const base::xvaccount_t & account,base::xvblock_t* block,const int atag)
@@ -1162,15 +1134,20 @@ namespace top
             if(nullptr == index_ptr)
                 return false;
 
-            if(false == index_ptr->check_block_flag(base::enum_xvblock_flag_committed))
+            xdbg("xvblockstore_impl::on_block_committed enter.%s",index_ptr->dump().c_str());
+            if(false == index_ptr->check_block_flag(base::enum_xvblock_flag_committed)) {
+                xassert(false);
                 return false;
+            }
 
             bool ret = store_units_to_db(target_account, index_ptr);
             if (!ret) {
+                xassert(false);
                 return ret;
             }
             ret = store_relayblock_to_db(target_account, index_ptr);
             if (!ret) {
+                xassert(false);
                 return ret;
             }            
             return store_txs_to_db(target_account, index_ptr);
