@@ -141,8 +141,8 @@ class xproposal_maker_face {
 public:
     virtual data::xblock_consensus_para_ptr_t   leader_set_consensus_para_basic(base::xvblock_t* _cert_block, uint64_t viewid, uint64_t clock, std::error_code & ec) {return nullptr;}
     virtual bool                        can_make_proposal(data::xblock_consensus_para_t & proposal_para) = 0;
-    virtual data::xblock_ptr_t make_proposal(data::xblock_consensus_para_t & proposal_para, uint32_t min_tx_num, std::vector<data::xblock_ptr_t> & batch_units) = 0;
-    virtual int                         verify_proposal(data::xblock_consensus_para_t & proposal_para, base::xvblock_t* proposal_block, base::xvqcert_t * bind_clock_cert, std::vector<data::xblock_ptr_t> & batch_units) = 0;
+    virtual data::xblock_ptr_t make_proposal(data::xblock_consensus_para_t & proposal_para, uint32_t min_tx_num) = 0;
+    virtual int                         verify_proposal(data::xblock_consensus_para_t & proposal_para, base::xvblock_t* proposal_block, base::xvqcert_t * bind_clock_cert) = 0;
     virtual void                        set_certauth(base::xvcertauth_t* _ca) {}
 };
 
