@@ -566,15 +566,22 @@ bool xlighttable_build_t::build_block_body(const xtable_block_para_t & para, con
     std::string tgas_balance_change = base::xstring_utl::tostring(para.get_tgas_balance_change());
     set_output_entity(base::xvoutentity_t::key_name_tgas_pledge_change(), tgas_balance_change);
 
-    base::xtable_unit_infos_t unit_infos;
-    for (auto & unit : batch_units) {
-        auto hash = unit->get_cert()->build_block_hash();
-        unit_infos.add_unit_info(base::xtable_unit_info_t(unit->get_account(), hash, unit->get_height()));
-        xdbg("xlighttable_build_t::build_block_body unit_infos:%s,hash:%s,hash size:%u,%llu", unit->get_account().c_str(), base::xstring_utl::to_hex(hash).c_str(), unit->get_block_hash().size(), unit->get_height());
+    if (base::xvblock_fork_t::is_block_match_version(get_header()->get_block_version(), base::enum_xvblock_fork_version_5_0_0)) {
+        base::xtable_unit_infos_t unit_infos;
+        for (auto & unit : batch_units) {
+            auto hash = unit->get_cert()->build_block_hash();
+            unit_infos.add_unit_info(base::xtable_unit_info_t(unit->get_account(), hash, unit->get_height()));
+            xdbg("xlighttable_build_t::build_block_body unit_infos:%s,hash:%s,hash size:%u,%llu", unit->get_account().c_str(), base::xstring_utl::to_hex(hash).c_str(), unit->get_block_hash().size(), unit->get_height());
+        }
+        std::string unit_infos_str;
+        unit_infos.serialize_to_string(unit_infos_str);
+        set_output_entity(base::xvoutentity_t::key_name_unit_infos(), unit_infos_str);
+
+        if (!para.get_output_offdata().empty()) {
+            auto offdata_hash = get_qcert()->hash(para.get_output_offdata());
+            set_output_entity(base::xvoutentity_t::key_name_output_offdata_hash(), offdata_hash);
+        }
     }
-    std::string unit_infos_str;
-    unit_infos.serialize_to_string(unit_infos_str);
-    set_output_entity(base::xvoutentity_t::key_name_unit_infos(), unit_infos_str);
 
     for (auto & v : para.get_input_resources()) {
         set_input_resource(v.first, v.second);

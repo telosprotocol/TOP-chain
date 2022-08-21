@@ -253,6 +253,18 @@ void     xtablebuilder_t::make_table_block_para(const std::vector<xblock_ptr_t> 
         xassert(false);
     }
 
+    if (batch_units.size() > 0) {
+        std::vector<xobject_ptr_t<base::xvblock_t>> subunits;
+        for (auto & v : batch_units) {
+            subunits.push_back(v);
+        }
+
+        base::xvblock_out_offdata_t offdata(subunits);
+        std::string out_offdata_bin;
+        offdata.serialize_to_string(out_offdata_bin);
+        lighttable_para.set_output_offdata(out_offdata_bin);
+    }
+
     lighttable_para.set_property_binlog(binlog);
     lighttable_para.set_fullstate_bin(snapshot);
     lighttable_para.set_batch_units(batch_units);
