@@ -63,8 +63,7 @@ base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_cert_block(const std:
     base::xvaccount_t _vaddress(account);
     
     auto _block = m_blockstore->get_latest_cert_block(_vaddress, metrics::blockstore_access_from_sync_get_latest_cert_block);
-    if (false == m_blockstore->load_block_output(_vaddress, _block.get())
-        || false == m_blockstore->load_block_input(_vaddress, _block.get()) ) {
+    if (false == check_block_full_data(_vaddress, _block.get())) {
         xerror("xsync_store_t::get_latest_cert_block fail-load block input or output. block=%s", _block->dump().c_str());
         return nullptr;
     }
@@ -113,9 +112,8 @@ void xsync_store_t::update_latest_genesis_connected_block(const std::string & ac
 base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_full_block(const std::string & account) {
     base::xvaccount_t _vaddress(account);
     auto _block = m_blockstore->get_latest_committed_full_block(_vaddress, metrics::blockstore_access_from_sync_get_latest_committed_full_block);
-    if (false == m_blockstore->load_block_output(_vaddress, _block.get())
-        || false == m_blockstore->load_block_input(_vaddress, _block.get()) ) {
-        xerror("xsync_store_t::get_latest_full_block fail-load block input or output. block=%s", _block->dump().c_str());
+    if (false == check_block_full_data(_vaddress, _block.get())) {
+        xerror("xsync_store_t::get_latest_full_block fail-load block input or output or offdata. block=%s", _block->dump().c_str());
         return nullptr;
     }
     return _block;
@@ -210,9 +208,8 @@ base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_start_block(const std
     if (sync_policy == enum_chain_sync_policy_fast) {
         base::xauto_ptr<base::xvblock_t> _full_block = m_blockstore->get_latest_committed_full_block(account, metrics::blockstore_access_from_sync_get_latest_committed_full_block);
         if (_full_block != nullptr && _full_block->get_block_level() == base::enum_xvblock_level_table) {
-            if (false == m_blockstore->load_block_output(_vaddress, _full_block.get())
-                || false == m_blockstore->load_block_input(_vaddress, _full_block.get()) ) {
-                xerror("xsync_store_t::load_block_objects fail-load block input or output. block=%s", _full_block->dump().c_str());
+            if (false == check_block_full_data(_vaddress, _full_block.get())) {
+                xerror("xsync_store_t::load_block_objects fail-load block input or output or offdata block=%s", _full_block->dump().c_str());
                 return nullptr;
             }
             if (!_full_block->is_full_state_block()) {
@@ -229,9 +226,8 @@ base::xauto_ptr<base::xvblock_t> xsync_store_t::get_latest_start_block(const std
         return _full_block;
     } else if (sync_policy == enum_chain_sync_policy_full) {
         auto _genesis_block = m_blockstore->get_genesis_block(account, metrics::blockstore_access_from_sync_get_genesis_block);
-        if (false == m_blockstore->load_block_output(_vaddress, _genesis_block.get())
-            || false == m_blockstore->load_block_input(_vaddress, _genesis_block.get()) ) {
-            xerror("xsync_store_t::load_block_objects fail-load block input or output. block=%s", _genesis_block->dump().c_str());
+        if (false == check_block_full_data(_vaddress, _genesis_block.get())) {
+            xerror("xsync_store_t::load_block_objects fail-load block input or output or offdata. genesis_block=%s", _genesis_block->dump().c_str());
             return nullptr;
         }
         return _genesis_block;
@@ -246,27 +242,27 @@ std::vector<data::xvblock_ptr_t> xsync_store_t::load_block_objects(const std::st
     std::vector<base::xvblock_t*> blks_ptr = blks_v.get_vector();
     std::vector<data::xvblock_ptr_t> blocks;
     for (uint32_t j = 0; j < blks_ptr.size(); j++) {
-        if (false == m_blockstore->load_block_output(_vaddress, blks_ptr[j], metrics::blockstore_access_from_sync_load_block_objects_output)
-            || false == m_blockstore->load_block_input(_vaddress, blks_ptr[j], metrics::blockstore_access_from_sync_load_block_objects_input) ) {
-            xerror("xsync_store_t::load_block_objects fail-load block input or output. block=%s", blks_ptr[j]->dump().c_str());
+        if (false == check_block_full_data(_vaddress, blks_ptr[j])) {
+            xerror("xsync_store_t::load_block_objects fail-load block input or output or offdata. block=%s", blks_ptr[j]->dump().c_str());
             return {};
         }
         blocks.push_back(data::xblock_t::raw_vblock_to_object_ptr(blks_ptr[j]));
     }
     return blocks;
 }
-
+/*
 std::vector<data::xvblock_ptr_t> xsync_store_t::load_block_objects(const std::string & tx_hash, const base::enum_transaction_subtype type) {
     auto blocks = m_blockstore->load_block_object(tx_hash, type, metrics::blockstore_access_from_sync_load_tx);
     for (auto & block : blocks) {
         if (false == m_blockstore->load_block_output(base::xvaccount_t(block->get_account()), block.get(), metrics::blockstore_access_from_sync_load_tx_output)
-            || false == m_blockstore->load_block_input(base::xvaccount_t(block->get_account()), block.get(), metrics::blockstore_access_from_sync_load_tx_input)) {
-            xerror("xsync_store_t::load_block_objects for txhash fail-load block input or output. block=%s", block->dump().c_str());
+            || false == m_blockstore->load_block_input(base::xvaccount_t(block->get_account()), block.get(), metrics::blockstore_access_from_sync_load_tx_input)
+            || false == m_blockstore->load_block_output_offdata(base::xvaccount_t(block->get_account()), block.get())) {
+            xerror("xsync_store_t::load_block_objects for txhash fail-load block input or output or offdata. block=%s", block->dump().c_str());
             return {};
         }
     }
     return blocks;
-}
+}*/
 base::xauto_ptr<base::xvblock_t>  xsync_store_t::load_block_object(const base::xvaccount_t & account,const uint64_t height) {
     return m_blockstore->load_block_object(account, height, base::enum_xvblock_flag_committed, false);
 }
@@ -358,6 +354,17 @@ void xsync_store_t::set_fork_point() {
     m_full_node_forked = true;
 
     return;
+}
+
+bool xsync_store_t::check_block_full_data(const base::xvaccount_t & account, base::xvblock_t* block)
+{
+    if (false == m_blockstore->load_block_output(account, block, metrics::blockstore_access_from_sync_load_block_objects_output)
+        || false == m_blockstore->load_block_input(account, block, metrics::blockstore_access_from_sync_load_block_objects_input)
+        || false == m_blockstore->load_block_output_offdata(account, block)) {
+        xerror("xsync_store_t::load_block_objects fail-load block input or output or offdata. block=%s", block->dump().c_str());
+        return false;
+    }
+    return true;
 }
 
 NS_END2
