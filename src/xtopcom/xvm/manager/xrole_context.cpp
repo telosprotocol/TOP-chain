@@ -6,9 +6,15 @@
 
 #include "xchain_fork/xchain_upgrade_center.h"
 #include "xchain_timer/xchain_timer_face.h"
+#include "xcodec/xmsgpack_codec.hpp"
+#include "xdata/xblocktool.h"
+#include "xdata/xcodec/xmsgpack/xelection/xelection_result_store_codec.hpp"
+#include "xdata/xelection/xelection_result_property.h"
+#include "xdata/xelection/xelection_result_store.h"
 #include "xdata/xfull_tableblock.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xtx_factory.h"
+#include "xdata/xelection/xelection_network_result.h"
 #include "xmbus/xevent_store.h"
 #include "xmbus/xevent_timer.h"
 #include "xvledger/xvledger.h"
@@ -34,9 +40,7 @@ xrole_context_t::xrole_context_t(const observer_ptr<xstore_face_t> & store,
 
 xrole_context_t::~xrole_context_t() {
     XMETRICS_COUNTER_INCREMENT("xvm_contract_role_context_counter", -1);
-    if (m_contract_info != nullptr) {
-        delete m_contract_info;
-    }
+    delete m_contract_info;
 }
 
 void xrole_context_t::on_block_to_db(const xblock_ptr_t & block, bool & event_broadcasted) {
@@ -51,12 +55,13 @@ void xrole_context_t::on_block_to_db(const xblock_ptr_t & block, bool & event_br
         bool is_sharding_statistic =
             (m_contract_info->address == sharding_statistic_info_contract_address) && (block_owner.find(sys_contract_sharding_table_block_addr) != std::string::npos);
         bool is_eth_statistic = (m_contract_info->address == eth_statistic_info_contract_address) && (block_owner.find(sys_contract_eth_table_block_addr) != std::string::npos);
+
         if ((is_sharding_statistic || is_eth_statistic) && block->is_fulltable()) {
             auto block_height = block->get_height();
             xdbg("xrole_context_t::on_block_to_db fullblock process, owner: %s, height: %" PRIu64, block->get_block_owner().c_str(), block_height);
             base::xauto_ptr<base::xvblock_t> full_block = base::xvchain_t::instance().get_xblockstore()->load_block_object(base::xvaccount_t{block_owner}, block_height, base::enum_xvblock_flag_committed, true);
 
-            xfull_tableblock_t* full_tableblock = dynamic_cast<xfull_tableblock_t*>(full_block.get());
+            auto const * full_tableblock = dynamic_cast<xfull_tableblock_t*>(full_block.get());
             auto node_service = contract::xcontract_manager_t::instance().get_node_service();
             auto const fulltable_statisitc_data = full_tableblock->get_table_statistics();
             auto const statistic_accounts = fulltableblock_statistic_accounts(fulltable_statisitc_data, node_service);
@@ -135,6 +140,8 @@ void xrole_context_t::on_block_timer(const xevent_ptr_t & e) {
         xblock_ptr_t block{};
         block.attach((xblock_t*) event->time_block);
         xdbg("[xrole_context_t::on_block_timer] %s, %" PRIu64, block->get_account().c_str(), block->get_height());
+
+        // on_relay_election_data_update(block->get_height(),block->get_timestamp());
 
         auto address = common::xaccount_address_t{block->get_account()};
 
@@ -444,6 +451,128 @@ void xrole_context_t::on_fulltableblock_event(common::xaccount_address_t const& 
             timestamp);
 }
 
+// void xrole_context_t::on_relay_election_data_update(uint64_t block_height, uint64_t block_timestamp){
+//     auto const relay_election_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(relay_election_interval);
+//     if (block_height == 0 || (block_height % (relay_election_interval / 4) != 0)){
+//         return;
+//     }
+
+//     if (m_contract_info->address != relay_repackage_election_data_contract_address) {
+//         return;
+//     }
+
+//     // re-package the relay shard election data into the relay chain:
+//     //  1. get the relay shard election data
+//     //  2. read the re-package contract data
+//     //  3. compare the read relay shard election data epoch and the contract data epoch
+//     //  4. epoch of relay election data is newer, generate transaction calling the re-package contract
+
+//     xobject_ptr_t<xvblock_t> zec_elect_relay_blk =
+//         xblocktool_t::get_latest_connectted_state_changed_block(xvchain_t::instance().get_xblockstore(), zec_elect_relay_contract_address.vaccount());
+//     // zec_elect_relay_blk->get_parent_block_height()
+//     xobject_ptr_t<xvblock_t> package_relay_election_data_blk =
+//         xblocktool_t::get_latest_connectted_state_changed_block(xvchain_t::instance().get_xblockstore(), relay_repackage_election_data_contract_address.vaccount());
+
+//     xobject_ptr_t<xvbstate_t> const zec_elect_relay_state =
+//         xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(zec_elect_relay_blk.get(), metrics::statestore_access_from_contract_framework);
+//     xobject_ptr_t<xvbstate_t> const package_relay_election_data_state =
+//         xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(package_relay_election_data_blk.get(), metrics::statestore_access_from_contract_framework);
+
+//     if (nullptr == zec_elect_relay_state || nullptr == package_relay_election_data_state) {
+//         xwarn("role_context fail to load relay election contract state");
+//         return;
+//     }
+
+//     xunit_bstate_t const zec_elect_relay_unit_state{zec_elect_relay_state.get()};
+//     xunit_bstate_t const relay_elect_relay_unit_state{package_relay_election_data_state.get()};
+
+//     auto const & property_names = election::get_property_name_by_addr(zec_elect_relay_contract_address);
+//     if (property_names.size() != 1) {
+//         xerror("role_context: zec_elect_relay_contract property count unexpected");
+//         return;
+//     }
+
+//     auto const & property_name = property_names.front();
+//     std::string result;
+//     zec_elect_relay_unit_state.string_get(property_name, result);
+//     if (result.empty()) {
+//         xerror("role_context: relay election data empty. property=%s,block=%s", property_name.c_str(), zec_elect_relay_blk->dump().c_str());
+//         return;
+//     }
+
+//     xdbg("role_context: process relay election data %s, %" PRIu64 " from block: %" PRIu64 " %" PRIu64,
+//          zec_elect_relay_contract_address.c_str(),
+//          zec_elect_relay_blk->get_height(),
+//          block_height,
+//          block_timestamp);
+
+//     using top::data::election::xelection_result_store_t;
+
+//     std::string current_result;
+//     relay_elect_relay_unit_state.string_get(property_name, current_result);
+//     if (current_result.empty()) {
+//         // even genesis is not empty.
+//         xerror("role_context: local packaged relay election data empty. property=%s,block=%s", property_name.c_str(), package_relay_election_data_blk->dump().c_str());
+//         return;
+//     }
+//     auto const & current_election_result_store = codec::msgpack_decode<xelection_result_store_t>({std::begin(current_result), std::end(current_result)});
+
+//     auto const & coming_election_result_store = codec::msgpack_decode<xelection_result_store_t>({std::begin(result), std::end(result)});
+
+//     auto const relay_group_address = common::build_relay_group_address(common::network_id());
+//     try {
+//         auto const & coming_group_result = coming_election_result_store.result_of(relay_group_address.network_id())
+//                                                .result_of(common::xnode_type_t::relay)
+//                                                .result_of(relay_group_address.cluster_id())
+//                                                .result_of(relay_group_address.group_id());
+
+//         auto const & current_group_result = current_election_result_store.result_of(relay_group_address.network_id())
+//                                                 .result_of(common::xnode_type_t::relay)
+//                                                 .result_of(relay_group_address.cluster_id())
+//                                                 .result_of(relay_group_address.group_id());
+
+//         if (coming_group_result.group_epoch() <= current_group_result.group_epoch()) {
+//             xwarn("coming epoch is older, no need to update, %" PRIu64 " <= % " PRIu64, coming_group_result.group_epoch().value(), current_group_result.group_epoch().value());
+//             return;
+//         }
+
+//         // create tx to call contract xtop_relay_process_election_data_contract on_recv_election_data
+//         xaccount_ptr_t account = m_store->query_account(relay_repackage_election_data_contract_address.value());
+//         if (nullptr == account) {
+//             xerror("xrole_context_t relay election data fail-query account.address=%s", relay_repackage_election_data_contract_address.c_str());
+//             xassert(nullptr != account);
+//             return;
+//         }
+
+//         base::xstream_t stream(base::xcontext_t::instance());
+//         stream << top::to_bytes(result);
+//         std::string action_params = std::string((char *)stream.data(), stream.size());
+
+//         xtransaction_ptr_t tx = xtx_factory::create_sys_contract_call_self_tx(relay_repackage_election_data_contract_address.value(),
+//                                                                               account->account_send_trans_number(),
+//                                                                               account->account_send_trans_hash(),
+//                                                                               "on_recv_election_data",
+//                                                                               action_params,
+//                                                                               block_timestamp,
+//                                                                               EXPIRE_DURATION);
+
+//         int32_t r = m_unit_service->request_transaction_consensus(tx, true);
+//         xinfo("xrole_context_t relay election data call_contract in consensus mode with return code : %d, %s, %s %s %" PRIu64 " %" PRIu64,
+//               r,
+//               tx->get_digest_hex_str().c_str(),
+//               relay_repackage_election_data_contract_address.c_str(),
+//               data::to_hex_str(account->account_send_trans_hash()).c_str(),
+//               account->account_send_trans_number(),
+//               block_timestamp);
+
+//     } catch (std::exception const & eh) {
+//         xwarn("fail to get zec elect relay election data. exception msg: %s", eh.what());
+//         return;
+//     }
+// }
+
+// todo(nathan):relay make contract already do this
+
 void xrole_context_t::broadcast(const xblock_ptr_t & block_ptr, common::xnode_type_t types) {
     assert(block_ptr != nullptr);
     base::xstream_t stream(base::xcontext_t::instance());
@@ -502,9 +631,9 @@ void xrole_context_t::broadcast(const xblock_ptr_t & block_ptr, common::xnode_ty
             {
                 // todo(next version fork)
                 // if (forked standalone_exchange_point) {
-                //     common::xnode_address_t exchange_dest{common::build_exchange_sharding_address(m_driver->network_id())};
+                    common::xnode_address_t exchange_dest{common::build_exchange_sharding_address(m_driver->network_id())};
                 // } else {
-                    common::xnode_address_t exchange_dest{common::build_legacy_exchange_sharding_address(common::xlegacy_exchange_group_id, m_driver->network_id())};
+                    // common::xnode_address_t exchange_dest{common::build_legacy_exchange_sharding_address(common::xlegacy_exchange_group_id, m_driver->network_id())};
                 // }
                 std::error_code ec;
                 m_driver->broadcast(exchange_dest.xip2(), message, ec);

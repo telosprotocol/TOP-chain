@@ -140,6 +140,9 @@ enum class xenum_node_type : std::uint32_t {
     /// @brief eth node zone type
     evm = 0x00020000,
 
+    /// @brief relay chain zone type
+    relay = 0x00040000,
+
     consensus_auditor = consensus | 0x1,
     consensus_validator = consensus | 0x2,
     storage_archive = storage | 0x4,

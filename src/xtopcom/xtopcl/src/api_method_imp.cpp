@@ -1,6 +1,5 @@
 #include "api_method_imp.h"
 
-#include "base/log.h"
 #include "base/utility.h"
 #include "global_definition.h"
 #include "task/request_task.h"
@@ -12,7 +11,7 @@
 #include "xcrypto_util.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xtransaction.h"
-#include "xrpc/xuint_format.h"
+#include "xdata/xdatautil.h"
 #include "xvm/xvm_define.h"
 #include "xchain_fork/xchain_upgrade_center.h"
 #include "xbase/xutl.h"
@@ -25,16 +24,21 @@
 using namespace top::utl;
 
 namespace xChainSDK {
-using namespace top::xrpc;
 using namespace top::data;
 using namespace top::xvm;
-using std::cout;
-using std::endl;
 
 uint32_t get_sequence_id() {
     static uint32_t sequence_id = 0;
     return ++sequence_id;
 }
+
+template <typename... Args>
+void log_console(Args... args) {
+    std::ostringstream out;
+    std::cout << out.str().c_str() << std::endl;
+}
+
+#define CONSOLE(...) xChainSDK::log_console(__VA_ARGS__)
 
 template <typename T>
 static void set_user_info(task_info_callback<T> * info,
@@ -57,11 +61,11 @@ bool api_method_imp::make_private_key(std::array<uint8_t, PRI_KEY_LEN> & private
     return !address.empty();
 }
 
-bool api_method_imp::make_child_private_key(const std::string & parent_addr, std::array<uint8_t, PRI_KEY_LEN> & private_key, std::string & address) {
-    xcrypto_util::make_private_key(private_key);
-    address = xcrypto_util::make_child_address_by_assigned_key(parent_addr, private_key, top::base::enum_vaccount_addr_type_secp256k1_user_sub_account);
-    return !address.empty();
-}
+//bool api_method_imp::make_child_private_key(const std::string & parent_addr, std::array<uint8_t, PRI_KEY_LEN> & private_key, std::string & address) {
+//    xcrypto_util::make_private_key(private_key);
+//    address = xcrypto_util::make_child_address_by_assigned_key(parent_addr, private_key, top::base::enum_vaccount_addr_type_secp256k1_user_sub_account);
+//    return !address.empty();
+//}
 
 bool api_method_imp::set_private_key(user_info & uinfo, const std::string & private_key) {
     std::vector<uint8_t> keys = hex_to_uint(private_key);
@@ -88,18 +92,18 @@ bool api_method_imp::validate_key(const std::string & priv, const std::string & 
     if (main_addr.empty()) {
         regenerate_addr = ecpub.to_address(top::base::enum_vaccount_addr_type_secp256k1_user_account,
                                            top::base::xvaccount_t::make_ledger_id(top::base::enum_main_chain_id, top::base::enum_chain_zone_consensus_index));
-    } else {
-        regenerate_addr = ecpub.to_address(main_addr,
-                                           top::base::enum_vaccount_addr_type_secp256k1_user_sub_account,
-                                           top::base::xvaccount_t::make_ledger_id(top::base::enum_main_chain_id, top::base::enum_chain_zone_consensus_index));
-    }
+    }// else {
+     //    regenerate_addr = ecpub.to_address(main_addr,
+     //                                       top::base::enum_vaccount_addr_type_secp256k1_user_sub_account,
+     //                                       top::base::xvaccount_t::make_ledger_id(top::base::enum_main_chain_id, top::base::enum_chain_zone_consensus_index));
+     // }
 
     return addr == regenerate_addr;
 }
 
 bool api_method_imp::create_account(const user_info & uinfo, std::function<void(ResultBase *)> func) {
     if (uinfo.account.empty()) {
-        LOG("uinfo.account.empty()=", uinfo.account.empty());
+        CONSOLE("uinfo.account.empty()=", uinfo.account.empty());
         return false;
     }
 
@@ -119,13 +123,13 @@ bool api_method_imp::create_account(const user_info & uinfo, std::function<void(
     task_dispatcher::get_instance()->post_message(msgAddTask, (uint32_t *)info, 0);
 
     auto res = task_dispatcher::get_instance()->get_result();
-    cout << res;
+    std::cout << res;
     return true;
 }
 
 bool api_method_imp::getAccount(const user_info & uinfo, const std::string & account, std::ostringstream & out_str, std::function<void(AccountInfoResult *)> func) {
     if (uinfo.account.empty()) {
-        LOG("uinfo.account.empty()=", uinfo.account.empty());
+        CONSOLE("uinfo.account.empty()=", uinfo.account.empty());
         return false;
     }
 
@@ -310,7 +314,7 @@ bool api_method_imp::getTransaction(const user_info & uinfo,
                                     std::ostringstream & out_str,
                                     std::function<void(AccountTransactionResult *)> func) {
     if (uinfo.account.empty()) {
-        LOG("uinfo.account.empty()=", uinfo.account.empty());
+        CONSOLE("uinfo.account.empty()=", uinfo.account.empty());
         return false;
     }
 
@@ -472,12 +476,13 @@ std::string api_method_imp::make_account_address(std::array<uint8_t, PRI_KEY_LEN
 
     if (addr_type == top::base::enum_vaccount_addr_type_secp256k1_user_account) {
         address = pub_key_obj.to_address(addr_type, top::base::xvaccount_t::make_ledger_id(top::base::enum_main_chain_id, top::base::enum_chain_zone_consensus_index));
-    } else if (addr_type == top::base::enum_vaccount_addr_type_secp256k1_user_sub_account || addr_type == top::base::enum_vaccount_addr_type_custom_contract) {
-        if (!parent_addr.empty()) {
-            address =
-                pub_key_obj.to_address(parent_addr, addr_type, top::base::xvaccount_t::make_ledger_id(top::base::enum_main_chain_id, top::base::enum_chain_zone_consensus_index));
-        }
-    } else {
+    }//  else if (addr_type == top::base::enum_vaccount_addr_type_secp256k1_user_sub_account || addr_type == top::base::enum_vaccount_addr_type_custom_contract) {
+     //    if (!parent_addr.empty()) {
+     //        address =
+     //            pub_key_obj.to_address(parent_addr, addr_type, top::base::xvaccount_t::make_ledger_id(top::base::enum_main_chain_id, top::base::enum_chain_zone_consensus_index));
+     //    }
+     // }
+     else {
         assert(0);
     }
     return address;
@@ -554,12 +559,12 @@ bool api_method_imp::getElectInfo(const user_info & uinfo, const std::string & t
             auto err_no = jv["errno"].asInt();
             auto errmsg = jv["errmsg"].asString();
             if (errmsg == "OK" && err_no == 0) {
-                cout << "No data!" << endl;
+                std::cout << "No data!" << std::endl;
             } else {
-                cout << "[" << err_no << "]Errmsg: " << errmsg << endl;
+                std::cout << "[" << err_no << "]Errmsg: " << errmsg << std::endl;
             }
         } else {
-            cout << data.asString() << endl;
+            std::cout << data.asString() << std::endl;
         }
     }
 
@@ -585,10 +590,10 @@ bool api_method_imp::getStandbys(const user_info & uinfo, const std::string & ac
     if (reader.parse(rpc_response, jv)) {
         auto data = jv["data"];
         if (data.isNull()) {
-            cout << "The miner has not joined in node-standby-pool, please start node by command 'topio node startnode'." << endl;
+            std::cout << "The miner has not joined in node-standby-pool, please start node by command 'topio node startnode'." << std::endl;
             return false;
         } else {
-            // cout << "The miner has joined in node-standby-pool. ";
+            // std::cout << "The miner has joined in node-standby-pool. ";
         }
     }
 
@@ -718,12 +723,12 @@ void api_method_imp::make_keys_base64(std::ostream & out) {
 
         auto sub_priv_str = uint_to_str(sub_privkey.data(), sub_privkey.size());
         auto sub_pub_str = uint_to_str(sub_pubkey.data(), sub_pubkey.size());
-        auto sub_address = sub_pubkey.to_address(main_address,
-                                                 top::base::enum_vaccount_addr_type_secp256k1_user_sub_account,
-                                                 top::base::xvaccount_t::make_ledger_id(top::base::enum_main_chain_id, top::base::enum_chain_zone_consensus_index));
+        //auto sub_address = sub_pubkey.to_address(main_address,
+        //                                         top::base::enum_vaccount_addr_type_secp256k1_user_sub_account,
+        //                                         top::base::xvaccount_t::make_ledger_id(top::base::enum_main_chain_id, top::base::enum_chain_zone_consensus_index));
         out << utility::base64_encode((unsigned char const *)sub_priv_str.data(), (unsigned int)sub_priv_str.size()) << ',';
-        out << sub_pub_str << ',';
-        out << sub_address << '\n';
+        out << sub_pub_str << '\n';
+        // out << sub_address << '\n';
     }
 }
 
@@ -733,7 +738,7 @@ bool api_method_imp::getBlock(const user_info & uinfo,
                               std::ostringstream & out_str,
                               std::function<void(GetBlockResult *)> func) {
     if (uinfo.account.empty()) {
-        LOG("uinfo.account.empty()=", uinfo.account.empty(), " uinfo.identity_token.empty()=", uinfo.identity_token.empty());
+        CONSOLE("uinfo.account.empty()=", uinfo.account.empty(), " uinfo.identity_token.empty()=", uinfo.identity_token.empty());
         return false;
     }
 
@@ -759,7 +764,7 @@ bool api_method_imp::getBlocksByHeight(const user_info & uinfo,
                               std::ostringstream & out_str,
                               std::function<void(GetBlockResult *)> func) {
     if (uinfo.account.empty()) {
-        LOG("uinfo.account.empty()=", uinfo.account.empty(), " uinfo.identity_token.empty()=", uinfo.identity_token.empty());
+        CONSOLE("uinfo.account.empty()=", uinfo.account.empty(), " uinfo.identity_token.empty()=", uinfo.identity_token.empty());
         return false;
     }
 

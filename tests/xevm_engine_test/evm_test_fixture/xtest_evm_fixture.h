@@ -7,8 +7,6 @@
 #include "xevm_contract_runtime/xevm_context.h"
 #include "xevm_contract_runtime/xevm_logic.h"
 #include "xevm_contract_runtime/xevm_storage.h"
-#include "xevm_contract_runtime/xevm_type.h"
-#include "xevm_contract_runtime/xevm_variant_bytes.h"
 #include "xevm_runner/evm_engine_interface.h"
 #include "xevm_runner/evm_import_instance.h"
 #include "xevm_runner/proto/proto_basic.pb.h"
@@ -47,6 +45,7 @@ public:
     bool execute_test_case(std::string const & json_file_path);
 
 private:
+    void init_env();
     void clean_env();
 
     bool do_deploy_test(json const & each_deploy);
@@ -73,7 +72,7 @@ private:
 
     using account_id = std::string;
     std::map<std::string, account_id> deployed_contract_map;
-    txexecutor::xvm_para_t vm_param{0, "random_seed", 0, 0};
+    txexecutor::xvm_para_t vm_param{0, "random_seed", 0, 0, 0, eth_zero_address};
     std::shared_ptr<top::evm::tests::xmock_evm_statectx> statestore{std::make_shared<top::evm::tests::xmock_evm_statectx>()};
 
     struct summary_infos {

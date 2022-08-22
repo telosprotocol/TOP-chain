@@ -48,7 +48,7 @@ int32_t xtx_verifier::verify_burn_tx(data::xtransaction_t const * trx) {
         return xverifier_error::xverifier_success;
     }
     // src addr should be user addr; must be transfer type;
-    if ( ( (!data::is_account_address(common::xaccount_address_t{src_addr})) && (!data::is_sub_account_address(common::xaccount_address_t{src_addr})) )
+    if ( ( (!data::is_account_address(common::xaccount_address_t{src_addr})) /* && (!data::is_sub_account_address(common::xaccount_address_t{src_addr}))*/ )
         || (!is_dst_black_hole_addr)
         || (trx->get_tx_type() != data::enum_xtransaction_type::xtransaction_type_transfer) ) {
         xwarn("[global_trace][xtx_verifier][verify_burn_tx] fail, tx:%s", trx->dump().c_str());
@@ -84,7 +84,7 @@ int32_t xtx_verifier::verify_address_type(data::xtransaction_t const * trx) {
     // source addr only can be T0,T8,T2
     if ( (src_addr_type != base::enum_vaccount_addr_type_secp256k1_user_account)
         && (src_addr_type != base::enum_vaccount_addr_type_secp256k1_eth_user_account)
-        // && (src_addr_type != base::enum_vaccount_addr_type_secp256k1_evm_user_account)
+        && (src_addr_type != base::enum_vaccount_addr_type_secp256k1_evm_user_account)
         && (src_addr_type != base::enum_vaccount_addr_type_native_contract) ) {
         xwarn("[global_trace][xtx_verifier][address_verify]src addr invalid, tx:%s", trx->dump().c_str());
         return  xverifier_error::xverifier_error_addr_invalid;
@@ -94,7 +94,7 @@ int32_t xtx_verifier::verify_address_type(data::xtransaction_t const * trx) {
     if ( (dst_addr_type != base::enum_vaccount_addr_type_secp256k1_user_account)
         && (dst_addr_type != base::enum_vaccount_addr_type_native_contract)
         && (dst_addr_type != base::enum_vaccount_addr_type_secp256k1_eth_user_account)
-        // && (dst_addr_type != base::enum_vaccount_addr_type_secp256k1_evm_user_account)
+        && (dst_addr_type != base::enum_vaccount_addr_type_secp256k1_evm_user_account)
         && (dst_addr_type != base::enum_vaccount_addr_type_black_hole) ) {
         xwarn("[global_trace][xtx_verifier][address_verify]dst addr invalid, tx:%s", trx->dump().c_str());
         return  xverifier_error::xverifier_error_addr_invalid;
@@ -125,7 +125,7 @@ int32_t xtx_verifier::verify_address_type(data::xtransaction_t const * trx) {
 
 int32_t xtx_verifier::verify_tx_signature(data::xtransaction_t const * trx, observer_ptr<store::xstore_face_t> const & store) {
     // verify signature
-    if (!data::is_sys_contract_address(common::xaccount_address_t{trx->get_source_addr()}) && !data::is_user_contract_address(common::xaccount_address_t{trx->get_source_addr()})) {
+    if (!data::is_sys_contract_address(common::xaccount_address_t{trx->get_source_addr()}) /*&& !data::is_user_contract_address(common::xaccount_address_t{trx->get_source_addr()})*/) {
         bool check_success = false;
         if (trx->get_target_addr() != sys_contract_rec_standby_pool_addr) {
             xdbg("[global_trace][xtx_verifier][verify_tx_signature][sign_check], tx:%s", trx->dump().c_str());
@@ -218,7 +218,7 @@ int32_t xtx_verifier::sys_contract_tx_check(data::xtransaction_t const * trx_ptr
         return xverifier_error::xverifier_error_t6_not_allowed_to_call_contract;
     }
 
-    bool source_is_user_addr            = data::is_account_address(sender_addr) || data::is_sub_account_address(sender_addr);
+    bool source_is_user_addr            = data::is_account_address(sender_addr); // || data::is_sub_account_address(sender_addr);
     bool target_is_sys_contract_addr    = data::is_sys_contract_address(recver_addr);
     if (source_is_user_addr && target_is_sys_contract_addr) {
         for (const auto & addr : open_sys_contracts) {
@@ -266,7 +266,7 @@ int32_t xtx_verifier::verify_send_tx_source(data::xtransaction_t const * trx_ptr
         }
     } else {
         bool valid_addr_type = (addr_type == base::enum_vaccount_addr_type_secp256k1_user_account)
-                                || (addr_type == base::enum_vaccount_addr_type_secp256k1_user_sub_account)
+                                // || (addr_type == base::enum_vaccount_addr_type_secp256k1_user_sub_account)
                                 || (addr_type == base::enum_vaccount_addr_type_secp256k1_evm_user_account)
                                 || (addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account);
         if (!valid_addr_type) {
@@ -314,14 +314,19 @@ int32_t xtx_verifier::verify_send_tx_validation(data::xtransaction_t const * trx
     if (ret) {
         return ret;
     }
-    ret = verify_shard_contract_addr(trx_ptr);
-    if (ret) {
-        return ret;
-    }
     // verify hash
     if (!trx_ptr->digest_check()) {
-        xwarn("[global_trace][xtx_verifier][verify_send_tx_validation][fail], tx:%s digest check invalid", trx_ptr->dump().c_str());
+        xwarn("xtx_verifier::verify_send_tx_validation, tx:%s digest check invalid", trx_ptr->dump().c_str());
         return xverifier_error::xverifier_error_tx_hash_invalid;
+    }
+    if (xverifier::xblacklist_utl_t::is_black_address(trx_ptr->get_source_addr())) {
+        xwarn("[xtx_verifier::verify_send_tx_validation] in black address,tx:%s", trx_ptr->dump().c_str());
+        return xverifier_error::xverifier_error_tx_blacklist_invalid;
+    }
+
+    if (xwhitelist_utl::check_whitelist_limit_tx(trx_ptr)) {
+        xwarn("[xtx_verifier::verify_send_tx_validation] whitelist limit address,tx:%s", trx_ptr->dump().c_str());
+        return xverifier_error::xverifier_error_tx_whitelist_invalid;
     }
     return xverifier_error::xverifier_success;
 }
@@ -331,14 +336,9 @@ int32_t xtx_verifier::verify_send_tx_legitimacy(data::xtransaction_t const * trx
     if (ret) {
         return ret;
     }
-
-    if (xverifier::xblacklist_utl_t::is_black_address(trx_ptr->get_source_addr())) {
-        xdbg("[xtx_verifier::verify_send_tx_legitimacy] in black address:%s, %s, %s", trx_ptr->get_digest_hex_str().c_str(), trx_ptr->get_target_addr().c_str(), trx_ptr->get_source_addr().c_str());
-        return xverifier_error::xverifier_error_tx_blacklist_invalid;
-    }
-
-    if (xwhitelist_utl::check_whitelist_limit_tx(trx_ptr)) {
-        return xverifier_error::xverifier_error_tx_whitelist_invalid;
+    ret = verify_shard_contract_addr(trx_ptr);
+    if (ret) {
+        return ret;
     }
     return xverifier_error::xverifier_success;
 }

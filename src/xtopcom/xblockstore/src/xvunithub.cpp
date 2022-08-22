@@ -6,6 +6,7 @@
 #include "xbase/xhash.h"
 #include "xbase/xcontext.h"
 #include "xbase/xthread.h"
+#include "xbasic/xhex.h"
 #include "xblockstore/xerror/xerror.h"
 #include "xvunithub.h"
 #include "xvledger/xvdrecycle.h"
@@ -13,6 +14,11 @@
 #include "xdata/xgenesis_data.h"
 
 #include "xmetrics/xmetrics.h"
+#include "xdata/xnative_contract_address.h"
+#include "xdata/xblocktool.h"
+#include "xdata/xblockbuild.h"
+#include "xpbase/base/top_utils.h"
+
 #define METRICS_TAG(tag, val) XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)tag, val)
 
 
@@ -209,7 +215,9 @@ namespace top
             #else
             
             xblockacct_t * new_plugin = NULL;
-            if(!auto_account_ptr->is_table_address())
+            if (auto_account_ptr->is_relay_address())
+                new_plugin =  new xrelay_plugin(*auto_account_ptr,timeout_for_block_plugin,m_xvblockdb_ptr);
+            else if(!auto_account_ptr->is_table_address())
                 new_plugin =  new xunitbkplugin(*auto_account_ptr,timeout_for_block_plugin,m_xvblockdb_ptr);
             else
                 new_plugin =  new xtablebkplugin(*auto_account_ptr,timeout_for_block_plugin,m_xvblockdb_ptr);
@@ -739,7 +747,7 @@ namespace top
                     xassert(container_block->is_output_ready(false));
                     #endif
 
-                    std::vector<xobject_ptr_t<base::xvblock_t>> sub_blocks;
+                    std::vector<xobject_ptr_t<base::xvblock_t>> sub_blocks;                    
                     if(container_block->extract_sub_blocks(sub_blocks))
                     {
                         xdbg("xvblockstore_impl::store_block,table block(%s) carry unit num=%d", container_block->dump().c_str(), (int)sub_blocks.size());
@@ -810,7 +818,7 @@ namespace top
         {
             if( (nullptr == block) || (account.get_account() != block->get_account()) )
             {
-                xerror("xvblockstore_impl::store_block,block NOT match account:%",account.get_account().c_str());
+                xerror("xvblockstore_impl::store_block,block NOT match account:%s,%s",account.get_account().c_str(),block->get_account().c_str());
                 return false;
             }
 
@@ -1143,7 +1151,41 @@ namespace top
             if (!ret) {
                 return ret;
             }
+            ret = store_relayblock_to_db(target_account, index_ptr);
+            if (!ret) {
+                return ret;
+            }            
             return store_txs_to_db(target_account, index_ptr);
+        }
+
+        bool  xvblockstore_impl::store_relayblock_to_db(xblockacct_t* target_account,base::xvbindex_t* index_ptr) {
+            if( (target_account->get_account_obj()->get_zone_index() == base::enum_chain_zone_relay_index)
+                && (index_ptr->get_block_class() == base::enum_xvblock_class_light)
+                && (index_ptr->get_block_level() == base::enum_xvblock_level_table) ) {
+                base::xauto_ptr<base::xvblock_t> container_block = load_block_from_index_for_raw_index(target_account, index_ptr, index_ptr->get_height(), true);
+                if (container_block == nullptr) {
+                    xerror("xvblockstore_impl::store_relayblock_to_db,fail-load tableblock.index=%s",index_ptr->dump().c_str());
+                    return false;
+                }
+
+                std::error_code ec;
+                xobject_ptr_t<base::xvblock_t>  wrap_relayblock = data::xblockextract_t::unpack_wrap_relayblock_from_relay_table(container_block.get(), ec);
+                if (ec) {
+                    xerror("xvblockstore_impl::store_relayblock_to_db,fail-unpack tableblock.index=%s",index_ptr->dump().c_str());
+                    return false;
+                }
+
+                if (nullptr != wrap_relayblock) {
+                    base::xvaccount_t  _account(wrap_relayblock->get_account());
+                    if(false == store_block(_account, wrap_relayblock.get())) {
+                        xerror("xvblockstore_impl::store_relayblock_to_db,fail-store relayblock.index=%s,%s",index_ptr->dump().c_str(),wrap_relayblock->dump().c_str());
+                        return false;                        
+                    }
+                    xinfo("xvblockstore_impl::store_relayblock_to_db succ.table=%s,relay=%s",container_block->dump().c_str(),wrap_relayblock->dump().c_str());
+                }                
+            }
+
+            return true;
         }
 
         bool  xvblockstore_impl::store_units_to_db(xblockacct_t* target_account,base::xvbindex_t* index_ptr)
@@ -1351,14 +1393,30 @@ namespace top
             std::string account;
             uint64_t height;
             int ret = load_block_idx_by_hash(hash, account, height);
-            if (ret != 0)
+            if (ret != 0) {
+                xdbg("xvblockstore_impl::get_block_by_hash, load index fail.");
                 return nullptr;
+            }
             
-            return load_block_object(account, height, base::enum_xvblock_flag_authenticated, false);
+            base::xvbindex_vector bindexs = load_block_index(account, height);
+            for (auto & bindex : bindexs.get_vector()) {
+                std::string blockhash = bindex->get_block_hash();
+                if (bindex->is_relay_address()) {
+                    blockhash = bindex->get_extend_data();
+                }
+                if (blockhash == hash) {
+                    xdbg("xvblockstore_impl::get_block_by_hash find");
+                    return load_block_object(account, height, bindex->get_viewid(), false);
+                }
+            }
+
+            xerror("xvblockstore_impl::get_block_by_hash, fail-load block.account=%s,height=%ld,hash=%s,bindexs=%zu",account.c_str(),height,top::to_hex_prefixed(top::to_bytes(hash)).c_str(),bindexs.get_vector().size());
+            return nullptr;
         }
         int xvblockstore_impl::load_block_idx_by_hash(const std::string & hash, std::string & account, uint64_t & height) {
             const std::string key_path = base::xvdbkey_t::create_prunable_blockhash_key(hash);
             std::string block_idx = base::xvchain_t::instance().get_xdbstore()->get_value(key_path);
+            xdbg("xvblockstore_impl::load_block_idx_by_hash, %s", block_idx.c_str());
             std::string::size_type found = block_idx.find("/");
             if (found == std::string::npos)
                 return 1;

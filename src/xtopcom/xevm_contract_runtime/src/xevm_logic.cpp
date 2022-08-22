@@ -5,11 +5,11 @@
 #include "xevm_contract_runtime/xevm_logic.h"
 
 #include "xbasic/endianness.h"
+#include "xbasic/xhex.h"
 #include "xcommon/xtoken_metadata.h"
 #include "xcontract_runtime/xerror/xerror.h"
 #include "xevm_common/common_data.h"
 #include "xevm_contract_runtime/xevm_memory_tools.h"
-#include "xevm_contract_runtime/xevm_variant_bytes.h"
 #include "xevm_runner/proto/proto_basic.pb.h"
 #include "xevm_runner/proto/proto_parameters.pb.h"
 
@@ -37,34 +37,23 @@ std::pair<uint32_t, uint64_t> xtop_evm_logic::get_return_error() const {
 
 //  =========================== interface to evm_import ===============================
 uint64_t xtop_evm_logic::register_len(uint64_t register_id) {
-    // printf("[debug][register_len] size: %zu request: %lu \n", m_registers.size(), register_id);
     return m_registers.at(register_id).size();
 }
 
 void xtop_evm_logic::read_register(uint64_t register_id, uint64_t ptr) {
     xbytes_t data = internal_read_register(register_id);
-    // printf("[debug][read_register] request: %lu \n ", register_id);
-    // for (auto const & _c : data) {
-    //     printf("%x", _c);
-    // }
-    // printf("\n");
-    // printf("debug %lu \n",ptr);
     memory_set_slice(ptr, data);
 }
 
 void xtop_evm_logic::sender_address(uint64_t register_id) {
-    // printf("[debug][sender_address] request: %lu \n", register_id);
-    // internal_write_register(register_id, m_context->m_sender_address);
     auto sender = m_context->sender().value();
-    xassert(sender.substr(0, 6) == T6_ACCOUNT_PREFIX);
-    xvariant_bytes hex_address{sender.substr(6), true};
-    internal_write_register(register_id, hex_address.to_bytes());
+    std::error_code ec;
+    auto address_bytes = top::from_hex(sender.substr(6), ec);  // remove T60004
+    xassert(!ec);
+    internal_write_register(register_id, address_bytes);
 }
 
 void xtop_evm_logic::input(uint64_t register_id) {
-    // printf("[debug][input] request: %lu\n", register_id);
-    // internal_write_register(register_id, m_context->input());
-
     internal_write_register(register_id, m_context->input_data());
     return;
 }
@@ -75,10 +64,10 @@ uint64_t xtop_evm_logic::chain_id() {
 }
 void xtop_evm_logic::block_coinbase(uint64_t register_id) {
     auto coinbase = m_context->block_coinbase();
-    xassert(coinbase.substr(0, 6) == T6_ACCOUNT_PREFIX);
-    xvariant_bytes hex_coinbase{coinbase.substr(6), true};
-    internal_write_register(register_id, hex_coinbase.to_bytes());
-    return;
+    std::error_code ec;
+    auto coinbase_bytes = top::from_hex(coinbase.substr(6), ec);  // remove T60004
+    xassert(!ec);
+    internal_write_register(register_id, coinbase_bytes);
 }
 uint64_t xtop_evm_logic::block_height() {
     return m_context->block_height();
@@ -89,7 +78,6 @@ uint64_t xtop_evm_logic::block_timestamp() {
 
 // storage:
 uint64_t xtop_evm_logic::storage_read(uint64_t key_len, uint64_t key_ptr, uint64_t register_id) {
-    // printf("[debug][storage_read] request: %lu\n", register_id);
     xbytes_t key = get_vec_from_memory_or_register(key_ptr, key_len);
     xbytes_t read = m_storage_ptr->storage_get(key);
     if (!read.empty()) {
@@ -101,7 +89,6 @@ uint64_t xtop_evm_logic::storage_read(uint64_t key_len, uint64_t key_ptr, uint64
 }
 
 uint64_t xtop_evm_logic::storage_write(uint64_t key_len, uint64_t key_ptr, uint64_t value_len, uint64_t value_ptr, uint64_t register_id) {
-    // printf("[debug][storage_write] request: %lu\n", register_id);
     xbytes_t key = get_vec_from_memory_or_register(key_ptr, key_len);
     xbytes_t value = get_vec_from_memory_or_register(value_ptr, value_len);
 
@@ -118,7 +105,6 @@ uint64_t xtop_evm_logic::storage_write(uint64_t key_len, uint64_t key_ptr, uint6
 }
 
 uint64_t xtop_evm_logic::storage_remove(uint64_t key_len, uint64_t key_ptr, uint64_t register_id) {
-    // printf("[debug][storage_remove] request: %lu\n", register_id);
     xbytes_t key = get_vec_from_memory_or_register(key_ptr, key_len);
     xbytes_t read = m_storage_ptr->storage_get(key);
 
@@ -135,11 +121,6 @@ uint64_t xtop_evm_logic::storage_remove(uint64_t key_len, uint64_t key_ptr, uint
 
 void xtop_evm_logic::value_return(uint64_t key_len, uint64_t key_ptr) {
     m_return_data_value = get_vec_from_memory_or_register(key_ptr, key_len);
-    // printf("[debug][value_return] in hex: ");
-    // for (auto const & _c : m_return_data_value) {
-    //     printf("%x", _c);
-    // }
-    // printf("\n");
 }
 
 void xtop_evm_logic::error_return(uint32_t ec, uint64_t used_gas) {
@@ -181,16 +162,13 @@ void xtop_evm_logic::ripemd160(uint64_t value_len, uint64_t value_ptr, uint64_t 
 
 // MATH API
 void xtop_evm_logic::random_seed(uint64_t register_id) {
-    // internal_write_register(register_id, m_context->random_seed());
     internal_write_register(register_id, top::to_bytes(m_context->random_seed()));
 }
 
 // LOG
 void xtop_evm_logic::log_utf8(uint64_t len, uint64_t ptr) {
     std::string message = get_utf8_string(len, ptr);
-    // todo add xinfo_log.
-    // printf("[log_utf8] EVM_LOG: %s \n", message.c_str());
-    xdbg("[log_utf8] EVM_LOG: %s", message.c_str());
+    xinfo("[log_utf8] EVM_LOG: %s", message.c_str());
 }
 
 // extern contract:
@@ -243,16 +221,7 @@ std::string xtop_evm_logic::get_utf8_string(uint64_t len, uint64_t ptr) {
 }
 
 void xtop_evm_logic::internal_write_register(uint64_t register_id, xbytes_t const & context_input) {
-    // printf("[internal_write_register]before write register size: %zu\n", m_registers.size());
     m_registers[register_id] = context_input;
-    // printf("[internal_write_register]after write register size: %zu\n", m_registers.size());
-    // for (auto const & _p : m_registers) {
-    // printf("[debug][internal_write_register] after debug: %zu : ", _p.first);
-    // for (auto const & _c : _p.second) {
-    //     printf("%x", _c);
-    // }
-    // printf("\n");
-    // }
 }
 
 xbytes_t xtop_evm_logic::get_vec_from_memory_or_register(uint64_t offset, uint64_t len) {
@@ -275,6 +244,22 @@ xbytes_t xtop_evm_logic::memory_get_vec(uint64_t offset, uint64_t len) {
 
 xbytes_t xtop_evm_logic::internal_read_register(uint64_t register_id) {
     return m_registers.at(register_id);
+}
+
+void xtop_evm_logic::engine_return(uint64_t engine_ptr) {
+    m_engine_ptr = reinterpret_cast<void *>(engine_ptr);
+}
+
+void xtop_evm_logic::executor_return(uint64_t executor_ptr) {
+    m_executor_ptr = reinterpret_cast<void *>(executor_ptr);
+}
+
+void * xtop_evm_logic::engine_ptr() const {
+    return m_engine_ptr;
+}
+
+void * xtop_evm_logic::executor_ptr() const {
+    return m_executor_ptr;
 }
 
 NS_END3

@@ -52,7 +52,7 @@ pub trait IO {
     }
 
     /// Convenience function to read a 64-bit unsigned integer from storage
-    /// (assumes little-endian encoding).
+    /// (assumes big-endian encoding).
     fn read_u64(&self, key: &[u8]) -> Result<u64, error::ReadU64Error> {
         let value = self
             .read_storage(key)
@@ -64,7 +64,7 @@ pub trait IO {
 
         let mut result = [0u8; 8];
         value.copy_to_slice(&mut result);
-        Ok(u64::from_le_bytes(result))
+        Ok(u64::from_be_bytes(result))
     }
 
     /// Convenience function to read a 256-bit unsigned integer from storage
@@ -86,4 +86,7 @@ pub trait ContractBridge {
     fn get_result() -> Option<Self::StorageValue>;
 
     fn get_error() -> Option<Self::StorageValue>;
+
+    fn engine_return(&self, engine_ptr: u64);
+    fn executor_return(&self, executor_ptr: u64);
 }

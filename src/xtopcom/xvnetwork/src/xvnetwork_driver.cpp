@@ -198,10 +198,10 @@ std::vector<common::xnode_address_t> xtop_vnetwork_driver::archive_addresses(com
     {
         // todo(next version fork)
         // if (forked standalone_exchange_point) {
-        //     auto const & tmp = m_vhost->members_info_of_group2(common::build_exchange_sharding_address(network_id()), common::xelection_round_t::max());
+            auto const & tmp = m_vhost->members_info_of_group2(common::build_exchange_sharding_address(network_id()), common::xelection_round_t::max());
         // } else {
-            auto const & tmp =
-                m_vhost->members_info_of_group2(common::build_legacy_exchange_sharding_address(common::xlegacy_exchange_group_id, network_id()), common::xelection_round_t::max());
+            // auto const & tmp =
+            //     m_vhost->members_info_of_group2(common::build_legacy_exchange_sharding_address(common::xlegacy_exchange_group_id, network_id()), common::xelection_round_t::max());
         // }
         result.reserve(tmp.size());
 
@@ -231,7 +231,18 @@ std::vector<common::xnode_address_t> xtop_vnetwork_driver::fullnode_addresses(st
 
     return result;
 }
+std::vector<common::xnode_address_t> xtop_vnetwork_driver::relay_addresses(std::error_code & ec) const {
+    assert(m_vhost != nullptr);
+    std::vector<common::xnode_address_t> result;
 
+    common::xelection_round_t election_round;
+    auto tmp = m_vhost->members_info_of_group2(common::build_relay_group_address(network_id()), election_round);
+    std::transform(std::begin(tmp), std::end(tmp), std::back_inserter(result), [](std::pair<common::xslot_id_t const, data::xnode_info_t> & datum) -> common::xnode_address_t {
+        return top::get<data::xnode_info_t>(std::move(datum)).address;
+    });
+
+    return result;
+}
 std::vector<std::uint16_t> xtop_vnetwork_driver::table_ids() const {
     xdbg("[vnetwork driver] getting table ids for %s", address().to_string().c_str());
 
@@ -320,13 +331,14 @@ std::vector<std::uint16_t> xtop_vnetwork_driver::table_ids() const {
         break;
     }
 
-    case common::xnode_type_t::evm_auditor: {
+    case common::xnode_type_t::evm_auditor:
+        XATTRIBUTE_FALLTHROUGH;
+    case common::xnode_type_t::evm_validator:
+        XATTRIBUTE_FALLTHROUGH;
+    case common::xnode_type_t::relay: {
         break;
     }
 
-    case common::xnode_type_t::evm_validator: {
-        break;
-    }
 
     default: {
         assert(false);
@@ -350,6 +362,8 @@ std::vector<std::uint16_t> xtop_vnetwork_driver::table_ids() const {
         table_ids.resize(MAIN_CHAIN_ZEC_TABLE_USED_NUM);
     } else if (common::has<common::xnode_type_t::evm>(type())) {
         table_ids.resize(MAIN_CHAIN_EVM_TABLE_USED_NUM);
+    } else if (common::has<common::xnode_type_t::relay>(type())) {
+        table_ids.resize(MAIN_CHAIN_RELAY_TABLE_USED_NUM);
     }
 
     return table_ids;
@@ -463,6 +477,11 @@ void xtop_vnetwork_driver::on_vhost_message_data_ready(common::xnode_address_t c
             case xmessage_block_broadcast:
             {
                 XMETRICS_GAUGE(metrics::message_block_broadcast, 1);
+                break;
+            }
+            case xmessage_category_relay:
+            {
+                XMETRICS_GAUGE(metrics::message_category_relay, 1);
                 break;
             }
 #if defined(__clang__)

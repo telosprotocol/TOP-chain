@@ -6,6 +6,7 @@
 
 #include "xcommon/xlogic_time.h"
 #include "xdata/xblock.h"
+#include "xdata/xblock_cs_para.h"
 
 NS_BEG2(top, contract_common)
 

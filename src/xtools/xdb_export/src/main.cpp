@@ -42,6 +42,7 @@ void usage() {
     std::cout << "        - check_block_exist <account> <height>" << std::endl;
     std::cout << "        - check_block_info <account> <height|last|all>" << std::endl;
     std::cout << "        - check_tx_info [starttime] [endtime] [threads]" << std::endl;
+    std::cout << "        - check_tx_file [tx_file] [threads]" << std::endl;
     std::cout << "        - check_latest_fullblock" << std::endl;
     std::cout << "        - check_contract_property <account> <property> <height|last|all>" << std::endl;
     std::cout << "        - check_balance" << std::endl;
@@ -65,6 +66,7 @@ int main(int argc, char ** argv) {
     top::config::config_register.get_instance().set(config::xroot_hash_configuration_t::name, std::string{});
     data::xrootblock_para_t para;
     data::xrootblock_t::init(para);
+    top::utl::xkeyaddress_t pubkey1("");  // just init xsecp256k1_t
 
     if (argc < 3) {
         usage();
@@ -340,7 +342,18 @@ int main(int argc, char ** argv) {
         tools.query_table_unit_info(table_account_vec);
         auto t2 = base::xtime_utl::time_now_ms();
         std::cout << "parse_db total time: " << (t2 - t1) / 1000 << "s." << std::endl;
-    } else {
+    } else if (function_name == "check_tx_file") {
+        std::string tx_file;
+        if (argc < 4) {
+            usage();
+            return -1;
+        }
+        tx_file = argv[3];
+        tools.set_outfile_folder("all_table_tx_info/");
+        auto const account_vec = xdb_export_tools_t::get_table_accounts();
+        tools.output_tx_file(account_vec, tx_file);
+    }
+    else {
         usage();
     }
 

@@ -4,8 +4,11 @@
 NS_BEG2(top, db_read)
 
 xdb_read_tools_t::xdb_read_tools_t(std::string const & db_path) {
-    int dst_db_kind = top::db::xdb_kind_kvdb | top::db::xdb_kind_readonly;
-    std::shared_ptr<db::xdb_face_t> db = top::db::xdb_factory_t::create(dst_db_kind, db_path);  
+    int dst_db_kind = 0;
+    std::vector<db::xdb_path_t> db_data_paths {};
+    base::xvchain_t::instance().get_db_config_custom(db_data_paths, dst_db_kind);
+    dst_db_kind |= top::db::xdb_kind_readonly;
+    std::shared_ptr<db::xdb_face_t> db = top::db::xdb_factory_t::create(dst_db_kind, db_path, db_data_paths);
     m_store = top::make_object_ptr<store::xstore>(db);
     m_xvdb_ptr = dynamic_cast<base::xvdbstore_t*>(m_store.get());
     m_xvblockdb_ptr = new store::xvblockdb_t(m_xvdb_ptr);

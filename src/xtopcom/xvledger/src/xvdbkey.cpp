@@ -150,7 +150,13 @@ namespace top
             const std::string key_path = "f/" + org_tx_hash + "/" + xstring_utl::tostring(type);
             return key_path;
         }
-    
+        //relay tx index ->link to block index
+        const std::string  xvdbkey_t::create_prunable_relay_tx_index_key(const std::string & org_tx_hash,const enum_txindex_type type)
+        {
+            //enum_xvdb_cf_type_FIFO = 'f'
+            const std::string key_path = "f/" + org_tx_hash + "/" + xstring_utl::tostring(type) + "/l";
+            return key_path;
+        }
         const std::string  xvdbkey_t::create_prunable_state_key(const xvaccount_t & account,const uint64_t target_height)
         {
             //enum_xdb_cf_type_read_most = 's'

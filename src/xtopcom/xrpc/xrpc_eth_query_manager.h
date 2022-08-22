@@ -72,6 +72,14 @@ public:
         REGISTER_ETH_QUERY_METHOD(eth_estimateGas);
         REGISTER_ETH_QUERY_METHOD(eth_getStorageAt);
         REGISTER_ETH_QUERY_METHOD(eth_getLogs);
+        
+        REGISTER_ETH_QUERY_METHOD(topRelay_getBlockByNumber);
+        REGISTER_ETH_QUERY_METHOD(topRelay_getBlockByHash);
+        REGISTER_ETH_QUERY_METHOD(topRelay_blockNumber);
+        REGISTER_ETH_QUERY_METHOD(topRelay_getTransactionByHash);
+        REGISTER_ETH_QUERY_METHOD(topRelay_getTransactionReceipt);
+
+        REGISTER_ETH_QUERY_METHOD(top_getBalance);
     }
     void call_method(std::string strMethod, xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     bool handle(std::string & strReq, xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) override;
@@ -88,15 +96,26 @@ public:
     void eth_estimateGas(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
     void eth_getStorageAt(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
     void eth_getLogs(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
+
+    void topRelay_getBlockByNumber(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
+    void topRelay_getBlockByHash(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
+    void topRelay_blockNumber(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
+    void topRelay_getTransactionByHash(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
+    void topRelay_getTransactionReceipt(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
+
+    void top_getBalance(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
 private:
     std::string safe_get_json_value(xJson::Value & json_value, const std::string& key);
     void set_block_result(const xobject_ptr_t<base::xvblock_t>&  block, xJson::Value& js_result, bool fullTx, std::error_code & ec);
     enum_query_result query_account_by_number(const std::string &unit_address, const std::string& table_height, xaccount_ptr_t& ptr);
     xobject_ptr_t<base::xvblock_t> query_block_by_height(const std::string& height_str);
+    xobject_ptr_t<base::xvblock_t> query_relay_block_by_height(const std::string& height_str);
     uint64_t get_block_height(const std::string& table_height);
     int get_log(xJson::Value & js_rsp, const uint64_t begin, const uint64_t end, const std::vector<std::set<std::string>>& vTopics, const std::set<std::string>& sAddress);
     bool check_log_is_match(evm_common::xevm_log_t const& log, const std::vector<std::set<std::string>>& vTopics, const std::set<std::string>& sAddress) const;
+    bool check_block_log_bloom(xobject_ptr_t<base::xvblock_t>& block, const std::vector<std::set<std::string>>& vTopics, const std::set<std::string>& sAddress) const;
     int parse_topics(const xJson::Value& t, std::vector<std::set<std::string>>& vTopics, xJson::Value & js_rsp);
+    int set_relay_block_result(const xobject_ptr_t<base::xvblock_t>& block, xJson::Value & js_rsp, int have_txs, std::string blocklist_type);
 private:
     observer_ptr<store::xstore_face_t> m_store;
     observer_ptr<base::xvblockstore_t> m_block_store;

@@ -58,6 +58,8 @@ namespace top
             //note:check from ground: generate/check vbody'hash->  generate/check vheader'hash -> generate/check vqcert'sign-hash-> finally verify multi-signature of group. for safety please check threshold first to see it was ready
             virtual base::enum_vcert_auth_result    verify_muti_sign(const base::xvblock_t * test_for_block) override;
 
+            virtual const std::string get_prikey(const xvip2_t & signer) override;
+
         protected:
             base::enum_vcert_auth_result            verify_validator_mutisig(xauthscheme_t & auth_scheme_obj,const std::string & ask_verify_hash,const base::xvqcert_t * test_for_cert,std::set<std::string> & exclude_accounts,std::set<std::string> & exclude_keys);
             base::enum_vcert_auth_result            verify_auditor_mutisig(xauthscheme_t & auth_scheme_obj,const std::string & ask_verify_hash,const base::xvqcert_t * test_for_cert,std::set<std::string> & exclude_accounts,std::set<std::string> & exclude_keys);
@@ -293,7 +295,7 @@ namespace top
             base::xauto_ptr<base::xvnode_t> verify_node = m_node_service.get_node(signer);
             if(verify_node == nullptr)
             {
-                xerror("xauthcontext_t_impl::verify_sign,fail-found target nodes for signer(%" PRIx64 " : %" PRIx64 ")",signer.high_addr,signer.low_addr);
+                xwarn("xauthcontext_t_impl::verify_sign,fail-found target nodes for signer(%" PRIx64 " : %" PRIx64 ")",signer.high_addr,signer.low_addr);
                 return base::enum_vcert_auth_result::enum_nodes_notfound;
             }
             const uint64_t auth_mutisign_token = test_for_cert->get_viewid() + test_for_cert->get_viewtoken();
@@ -655,6 +657,10 @@ namespace top
             return std::pair<std::string, std::string>(prikey,pubkey);
         }
 
+        const std::string xauthcontext_t_impl::get_prikey(const xvip2_t & signer) {
+            base::xauto_ptr<base::xvnode_t> signer_node = m_node_service.get_node(signer);
+            return signer_node->get_sign_prikey();
+        }
 
         std::vector<base::xvoter>  xauthcontext_t::query_validators(base::xvblock_t & block,base::xvnodesrv_t & node_service)
         {

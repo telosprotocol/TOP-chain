@@ -3,15 +3,70 @@ use crate::parameters::TransactionStatus;
 use crate::prelude::*;
 use crate::proto_parameters::{FunctionCallArgs, SubmitResult};
 use core::cell::RefCell;
+use core::ffi::c_void;
 use engine_precompiles::{Precompile, PrecompileConstructorContext, Precompiles};
 use engine_sdk::dup_cache::{DupCache, PairDupCache};
 use engine_sdk::env::Env;
 use engine_sdk::io::{StorageIntermediate, IO};
 use engine_types::ResultLog;
 use evm::backend::{Apply, ApplyBackend, Backend, Basic, Log};
-use evm::{executor, Config, CreateScheme, ExitError, ExitReason};
+use evm::executor::stack::{MemoryStackState, StackExecutor};
+use evm::{executor, Config, CreateScheme, ExitError, ExitReason, Runtime};
+use sdk::io::ContractBridge;
 
 pub(crate) const CONFIG: &Config = &Config::london();
+
+pub(crate) const CROSSCHAIN_CONFIG: Config = Config {
+    gas_ext_code: 0,
+    gas_ext_code_hash: 0,
+    gas_balance: 0,
+    gas_sload: 100,
+    gas_sload_cold: 2100,
+    gas_sstore_set: 20000,
+    gas_sstore_reset: 2900,
+    refund_sstore_clears: 4800,
+    max_refund_quotient: 5,
+    gas_suicide: 5000,
+    gas_suicide_new_account: 25000,
+    gas_call: 0,
+    gas_expbyte: 50,
+    gas_transaction_create: 53000,
+    gas_transaction_call: 8000,
+    gas_transaction_zero_data: 0,
+    gas_transaction_non_zero_data: 0,
+    gas_access_list_address: 2400,
+    gas_access_list_storage_key: 1900,
+    gas_account_access_cold: 2600,
+    gas_storage_read_warm: 100,
+    sstore_gas_metering: true,
+    sstore_revert_under_stipend: true,
+    increase_state_access_gas: true,
+    decrease_clears_refund: true,
+    disallow_executable_format: true,
+    err_on_call_with_more_gas: false,
+    empty_considered_exists: false,
+    create_increase_nonce: true,
+    call_l64_after_gas: true,
+    stack_limit: 1024,
+    memory_limit: usize::MAX,
+    call_stack_limit: 1024,
+    create_contract_limit: Some(0x6000),
+    call_stipend: 2300,
+    has_delegate_call: true,
+    has_create2: true,
+    has_revert: true,
+    has_return_data: true,
+    has_bitwise_shifting: true,
+    has_chain_id: true,
+    has_self_balance: true,
+    has_ext_code_hash: true,
+    has_base_fee: true,
+    estimate: false,
+};
+
+const ETH_CROSSCHAIN_CONTRACT: &str = "ff00000000000000000000000000000000000002";
+const BSC_CROSSCHAIN_CONTRACT: &str = "ff00000000000000000000000000000000000003";
+const HECO_CROSSCHAIN_CONTRACT: &str = "ff00000000000000000000000000000000000004";
 
 struct StackExecutorParams {
     precompiles: Precompiles,
@@ -26,18 +81,30 @@ impl StackExecutorParams {
         }
     }
 
-    fn make_executor<'a, 'env, I: IO + Copy, E: Env>(
+    fn make_executor<'a, 'env, 'bridge, I: IO + Copy, E: Env, CBridge: ContractBridge>(
         &'a self,
-        engine: &'a Engine<'env, I, E>,
+        engine: &'a Engine<'env, 'bridge, I, E, CBridge>,
+        crosschain_config: bool,
     ) -> executor::stack::StackExecutor<
         'static,
         'a,
-        executor::stack::MemoryStackState<Engine<'env, I, E>>,
+        executor::stack::MemoryStackState<Engine<'env, 'bridge, I, E, CBridge>>,
         Precompiles,
     > {
-        let metadata = executor::stack::StackSubstateMetadata::new(self.gas_limit, CONFIG);
-        let state = executor::stack::MemoryStackState::new(metadata, engine);
-        executor::stack::StackExecutor::new_with_precompiles(state, CONFIG, &self.precompiles)
+        if crosschain_config == true {
+            let metadata =
+                executor::stack::StackSubstateMetadata::new(self.gas_limit, &CROSSCHAIN_CONFIG);
+            let state = executor::stack::MemoryStackState::new(metadata, engine);
+            executor::stack::StackExecutor::new_with_precompiles(
+                state,
+                &CROSSCHAIN_CONFIG,
+                &self.precompiles,
+            )
+        } else {
+            let metadata = executor::stack::StackSubstateMetadata::new(self.gas_limit, CONFIG);
+            let state = executor::stack::MemoryStackState::new(metadata, engine);
+            executor::stack::StackExecutor::new_with_precompiles(state, CONFIG, &self.precompiles)
+        }
     }
 }
 
@@ -61,11 +128,12 @@ impl ExitIntoResult for ExitReason {
     }
 }
 
-pub struct Engine<'env, I: IO, E: Env> {
+pub struct Engine<'env, 'bridge, I: IO, E: Env, CBridge: ContractBridge> {
     origin: Address,
     gas_price: U256,
     io: I,
     env: &'env E,
+    contract_bridge: &'bridge CBridge,
     generation_cache: RefCell<BTreeMap<Address, u32>>,
     account_info_cache: RefCell<DupCache<Address, Basic>>,
     contract_storage_cache: RefCell<PairDupCache<Address, H256, H256>>,
@@ -73,19 +141,32 @@ pub struct Engine<'env, I: IO, E: Env> {
 
 pub type EngineResult<T> = Result<T, EngineError>;
 
-impl<'env, I: IO + Copy, E: Env> Engine<'env, I, E> {
+impl<'env, 'bridge, I: IO + Copy, E: Env, CBridge: ContractBridge>
+    Engine<'env, 'bridge, I, E, CBridge>
+{
     const CURRENT_CALL_ARGS_VERSION: u32 = 1;
 
-    pub fn new(origin: Address, io: I, env: &'env E) -> Result<Self, EngineStateError> {
-        Ok(Self::new_with_default(origin, io, env))
+    pub fn new(
+        origin: Address,
+        io: I,
+        env: &'env E,
+        contract_bridge: &'bridge CBridge,
+    ) -> Result<Self, EngineStateError> {
+        Ok(Self::new_with_default(origin, io, env, contract_bridge))
     }
 
-    pub fn new_with_default(origin: Address, io: I, env: &'env E) -> Self {
+    pub fn new_with_default(
+        origin: Address,
+        io: I,
+        env: &'env E,
+        contract_bridge: &'bridge CBridge,
+    ) -> Self {
         Self {
             origin,
             gas_price: U256::zero(),
             io,
             env,
+            contract_bridge,
             generation_cache: RefCell::new(BTreeMap::new()),
             account_info_cache: RefCell::new(DupCache::default()),
             contract_storage_cache: RefCell::new(PairDupCache::default()),
@@ -114,7 +195,7 @@ impl<'env, I: IO + Copy, E: Env> Engine<'env, I, E> {
         access_list: Vec<(H160, Vec<H256>)>, // See EIP-2930
     ) -> EngineResult<SubmitResult> {
         let executor_params = StackExecutorParams::new(gas_limit, self.env.random_seed());
-        let mut executor = executor_params.make_executor(self);
+        let mut executor = executor_params.make_executor(self, false);
         let address = executor.create_address(CreateScheme::Legacy {
             caller: origin.raw(),
         });
@@ -159,10 +240,6 @@ impl<'env, I: IO + Copy, E: Env> Engine<'env, I, E> {
         let origin = Address::new(self.origin());
         match args.get_version() {
             Self::CURRENT_CALL_ARGS_VERSION => {
-                // let a = args.get_address().get_value();
-                // let b = hex::decode(a).map_err(|_| EngineErrorKind::IncorrectArgs)?.as_slice();
-                // println!("hex::decode: {:?}", b);
-
                 // todo make it into Address methods
                 let contract = Address::try_from_slice(
                     hex::decode(args.get_address().get_value())
@@ -174,11 +251,6 @@ impl<'env, I: IO + Copy, E: Env> Engine<'env, I, E> {
                     EngineErrorKind::IncorrectArgs
                 })?;
 
-                // let contract =
-                //     Address::try_from_slice(args.get_address().get_value()).map_err(|_| {
-                //         println!("{:?}", args.get_address().get_value());
-                //         EngineErrorKind::IncorrectArgs
-                //     })?;
                 let value = args.get_value().clone().into();
                 let input = args.get_input().into();
                 let gas_limit = args.get_gas_limit();
@@ -186,6 +258,12 @@ impl<'env, I: IO + Copy, E: Env> Engine<'env, I, E> {
             }
             _ => Err(EngineErrorKind::IncorrectArgs.into()),
         }
+    }
+
+    fn is_crosschain_contract(&self, contract: &Address) -> bool {
+        (*contract == Address::decode(ETH_CROSSCHAIN_CONTRACT).unwrap()) || 
+        (*contract == Address::decode(BSC_CROSSCHAIN_CONTRACT).unwrap()) ||
+        (*contract == Address::decode(HECO_CROSSCHAIN_CONTRACT).unwrap())
     }
 
     pub fn call(
@@ -198,7 +276,24 @@ impl<'env, I: IO + Copy, E: Env> Engine<'env, I, E> {
         access_list: Vec<(H160, Vec<H256>)>, // See EIP-2930
     ) -> EngineResult<SubmitResult> {
         let executor_params = StackExecutorParams::new(gas_limit, self.env.random_seed());
-        let mut executor = executor_params.make_executor(self);
+        let mut executor =
+            executor_params.make_executor(self, self.is_crosschain_contract(contract));
+        let executor_ptr = unsafe {
+            &mut executor
+                as *mut StackExecutor<
+                    '_,
+                    '_,
+                    MemoryStackState<'_, '_, Engine<'env, 'bridge, I, E, CBridge>>,
+                    Precompiles,
+                > as *mut c_void
+        };
+
+        {
+            let contract_bridge = &self.contract_bridge;
+            contract_bridge.engine_return(self as *const Engine<'env, 'bridge, I, E, CBridge> as u64);
+            contract_bridge.executor_return(executor_ptr as u64);
+        }
+
         sdk::log(
             format!(
                 "call contract at: {:?} from {:?} with input {:?}, value: {:?}, gas: {:?}",
@@ -229,7 +324,51 @@ impl<'env, I: IO + Copy, E: Env> Engine<'env, I, E> {
 
         self.apply(values, Vec::<Log>::new(), true);
 
+        {
+            let contract_bridge = &self.contract_bridge;
+            contract_bridge.engine_return(0);
+            contract_bridge.executor_return(0);
+        }
+
         Ok(SubmitResult::new_proto(status, used_gas, logs))
+    }
+
+    pub(crate) fn unsafe_deposit(&mut self, executor: *mut c_void, address: &Address, amount: &Wei) {
+        let executor = unsafe {
+            &mut *unsafe {
+                executor
+                    as *mut StackExecutor<
+                        '_,
+                        '_,
+                        MemoryStackState<'_, '_, Engine<'env, 'bridge, I, E, CBridge>>,
+                        Precompiles,
+                    >
+            }
+        };
+        executor.state_mut().deposit(address.raw(), amount.raw())
+    }
+
+    pub(crate) fn unsafe_withdraw(
+        &mut self,
+        executor: *mut c_void,
+        address: &Address,
+        amount: &Wei,
+    ) -> Result<(), EngineErrorKind> {
+        let executor = unsafe {
+            &mut *unsafe {
+                executor
+                    as *mut StackExecutor<
+                        '_,
+                        '_,
+                        MemoryStackState<'_, '_, Engine<'env, 'bridge, I, E, CBridge>>,
+                        Precompiles,
+                    >
+            }
+        };
+        executor
+            .state_mut()
+            .withdraw(address.raw(), amount.raw())
+            .map_err(|e| e.into())
     }
 }
 
@@ -311,7 +450,7 @@ pub fn get_code_size<I: IO>(io: &I, address: &Address) -> usize {
 pub fn set_nonce<I: IO>(io: &mut I, address: &Address, nonce: &U256) {
     io.write_storage(
         &address_to_key(KeyPrefix::Nonce, address),
-        &nonce.as_u64().to_le_bytes(),
+        &nonce.as_u64().to_be_bytes(),
     );
 }
 pub fn remove_nonce<I: IO>(io: &mut I, address: &Address) {
@@ -417,7 +556,9 @@ fn remove_all_storage<I: IO>(io: &mut I, address: &Address, generation: u32) {
 }
 
 /// # Engine #
-impl<'env, I: IO + Copy, E: Env> evm::backend::Backend for Engine<'env, I, E> {
+impl<'env, 'bridge, I: IO + Copy, E: Env, CBridge: ContractBridge> evm::backend::Backend
+    for Engine<'env, 'bridge, I, E, CBridge>
+{
     /// Returns the "effective" gas price (as defined by EIP-1559)
     fn gas_price(&self) -> U256 {
         self.gas_price
@@ -529,7 +670,9 @@ impl<'env, I: IO + Copy, E: Env> evm::backend::Backend for Engine<'env, I, E> {
     }
 }
 
-impl<'env, J: IO + Copy, E: Env> ApplyBackend for Engine<'env, J, E> {
+impl<'env, 'bridge, J: IO + Copy, E: Env, CBridge: ContractBridge> ApplyBackend
+    for Engine<'env, 'bridge, J, E, CBridge>
+{
     fn apply<A, I, L>(&mut self, values: A, _logs: L, delete_empty: bool)
     where
         A: IntoIterator<Item = Apply<I>>,

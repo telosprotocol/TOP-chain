@@ -16,6 +16,8 @@
 #include "xvledger/xvaction.h"
 #include "xvledger/xvcontract.h"
 #include "xvledger/xvblock_fork.h"
+#include "xdata/xblockextract.h"
+#include "xpbase/base/top_utils.h"
 
 NS_BEG2(top, data)
 
@@ -93,7 +95,10 @@ void xtableheader_extra_t::set_ethheader(const std::string & value) {
     m_paras[enum_extra_data_type_eth_header] = value;
 }
 
-std::string xtableheader_extra_t::build_extra_string(base::xvheader_t* _tableheader, uint64_t tgas_height, uint64_t gmtime, const std::string & eth_header) {
+std::string xtableheader_extra_t::build_extra_string(base::xvheader_t * _tableheader,
+                                                     uint64_t tgas_height,
+                                                     uint64_t gmtime,
+                                                     const std::string & eth_header) {
     if (_tableheader->get_height() == 0) {
         // genesis block should not set extra
         return {};
@@ -108,11 +113,11 @@ std::string xtableheader_extra_t::build_extra_string(base::xvheader_t* _tablehea
     if (!base::xvblock_fork_t::is_block_older_version(_tableheader->get_block_version(), base::enum_xvblock_fork_version_compatible_eth) && !eth_header.empty()) {
         header_extra.set_ethheader(eth_header);
     }
+
     std::string extra_string;
     header_extra.serialize_to_string(extra_string);
     return extra_string;
 }
-
 
 int32_t xextra_map_base_t::serialize_to_string(std::string & str) const {
     base::xstream_t _stream(base::xcontext_t::instance());
@@ -290,7 +295,7 @@ base::xvaction_t xblockaction_build_t::make_table_block_action_with_table_prop_p
     }
 }
 
-xlightunit_tx_info_ptr_t build_tx_info(const xcons_transaction_ptr_t & tx) {
+xlightunit_tx_info_ptr_t xblockaction_build_t::build_tx_info(const xcons_transaction_ptr_t & tx) {
     base::xvaction_t _action = xblockaction_build_t::make_tx_action(tx);
     xlightunit_tx_info_ptr_t txinfo = std::make_shared<xlightunit_tx_info_t>(_action, tx->get_transaction());
     return txinfo;
@@ -400,6 +405,17 @@ xemptyblock_build_t::xemptyblock_build_t(const std::string & tc_account, uint64_
     init_header_qcert(build_para);
 }
 
+xemptyblock_build_t::xemptyblock_build_t(const std::string & account, uint64_t height, uint64_t viewid, std::string const& extradata) {
+    base::enum_xvblock_level _level = get_block_level_from_account(account);
+    base::enum_xvblock_type _type = get_block_type_from_empty_block(account);
+    base::xbbuild_para_t build_para(xrootblock_t::get_rootblock_chainid(), account, height, base::enum_xvblock_class_nil, _level, _type, xrootblock_t::get_rootblock_hash(), xrootblock_t::get_rootblock_hash());
+    xvip2_t _validator;
+    set_empty_xip2(_validator);  // must change for block later
+    build_para.set_basic_cert_para(height, -1, viewid, _validator);  // relayblock has different content for different viewid, so should also set viewid
+    init_header_qcert(build_para);
+    set_header_extra(extradata);
+}
+
 xemptyblock_build_t::xemptyblock_build_t(base::xvblock_t* prev_block, const xblock_consensus_para_t & para) {
     base::enum_xvblock_type _type = get_block_type_from_empty_block(prev_block->get_account());
     base::xbbuild_para_t build_para(prev_block, base::enum_xvblock_class_nil, _type);
@@ -482,10 +498,11 @@ xlighttable_build_t::xlighttable_build_t(base::xvblock_t* prev_block, const xtab
     base::xbbuild_para_t build_para(prev_block, base::enum_xvblock_class_light, base::enum_xvblock_type_batch);
 
     build_para.set_table_cert_para(para.get_clock(), para.get_viewtoken(), para.get_viewid(), para.get_validator(), para.get_auditor(),
-                                    para.get_drand_height(), para.get_justify_cert_hash());
+                                    para.get_drand_height(), para.get_justify_cert_hash(), para.need_relay_prove());
     base::xvaccount_t _vaccount(prev_block->get_account());
     init_header_qcert(build_para);
-    std::string _extra_data = xtableheader_extra_t::build_extra_string(get_header(), para.get_tgas_height(), para.get_gmtime(), para.get_ethheader());
+    std::string _extra_data = xtableheader_extra_t::build_extra_string(
+        get_header(), para.get_tgas_height(), para.get_gmtime(), para.get_ethheader());
     set_header_extra(_extra_data);
     build_block_body(bodypara, _vaccount, prev_block->get_height() + 1);
 }
@@ -548,6 +565,14 @@ bool xlighttable_build_t::build_block_body(const xtable_block_para_t & para, con
     set_output_full_state(full_state);
     std::string tgas_balance_change = base::xstring_utl::tostring(para.get_tgas_balance_change());
     set_output_entity(base::xvoutentity_t::key_name_tgas_pledge_change(), tgas_balance_change);
+
+    for (auto & v : para.get_input_resources()) {
+        set_input_resource(v.first, v.second);
+    }
+    for (auto & v : para.get_output_resources()) {
+        set_output_resource(v.first, v.second);
+    }
+
     return true;
 }
 
@@ -756,7 +781,7 @@ bool xfulltable_build_t::build_block_body(const xfulltable_block_para_t & para, 
     // #1 set input entitys and resources
     base::xvaction_t _action = xblockaction_build_t::make_table_block_action_with_table_prop_prove(BLD_URI_FULL_TABLE, get_header()->get_block_version(), para.get_property_hashs(), account.get_short_table_id(), height);
     set_input_entity(_action);
-    xdbg("xfulltable_build_t::build_block_body，account=%s,height=%ld,version=0x%x", account.get_account().c_str(), height, get_header()->get_block_version());
+    xdbg("xfulltable_build_t::build_block_body,account=%s,height=%ld,version=0x%x", account.get_account().c_str(), height, get_header()->get_block_version());
     // #2 set output entitys and resources
     std::string full_state_bin = para.get_snapshot();
     set_output_full_state(full_state_bin);

@@ -66,7 +66,7 @@ xtop_account_base_address::xtop_account_base_address(std::string const & base_ad
             if (base_address.length() != LAGACY_SYS_TABLE_CONTRACT_ACCOUNT_LENGTH) {
                 top::error::throw_error(error::xerrc_t::invalid_account_base_address, "invalid base address " + base_address);
             }
-        } else if (m_ledger_id.zone_id() == common::xevm_zone_id) {
+        } else if (m_ledger_id.zone_id() == common::xevm_zone_id || m_ledger_id.zone_id() == common::xrelay_zone_id) {
             if (base_address.length() != LAGACY_SYS_TABLE_CONTRACT_ACCOUNT_LENGTH) {
 #if !defined(XENABLE_TESTS)
                 assert(false);
@@ -87,7 +87,7 @@ xtop_account_base_address::xtop_account_base_address(std::string const & base_ad
             top::error::throw_error(error::xerrc_t::invalid_account_base_address, "invalid base address " + base_address);
         }
 
-        if (m_ledger_id.zone_id() != common::xevm_zone_id) {
+        if (m_ledger_id.zone_id() != common::xevm_zone_id && m_ledger_id.zone_id() != common::xrelay_zone_id) {
             top::error::throw_error(error::xerrc_t::invalid_account_base_address, "invalid base address " + base_address);
         }
 
@@ -115,7 +115,12 @@ xtop_account_base_address::xtop_account_base_address(std::string const & base_ad
         m_account_type = t;
 
         break;
-
+    case base::enum_vaccount_addr_type::enum_vaccount_addr_type_relay_block:
+        if (base_address.length() != TABLE_ACCOUNT_LENGTH) {
+            top::error::throw_error(error::xerrc_t::invalid_account_base_address, "invalid base address " + base_address);
+        }
+        m_account_type = t;
+        break;
     default:
         top::error::throw_error(error::xerrc_t::invalid_account_base_address, "invalid base address " + base_address);
         break;

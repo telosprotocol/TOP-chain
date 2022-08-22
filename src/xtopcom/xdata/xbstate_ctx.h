@@ -34,6 +34,8 @@ public: // common APIs for state basic info
     const xobject_ptr_t<base::xvcanvas_t> & get_canvas() const {return m_canvas;}
     std::string         dump() const;
 
+    common::xaccount_address_t account_address() const;
+
 public:
     bool                do_rollback();
     size_t              do_snapshot();

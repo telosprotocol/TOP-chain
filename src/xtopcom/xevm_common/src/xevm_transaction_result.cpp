@@ -7,9 +7,10 @@
 
 NS_BEG2(top, evm_common)
 
-xevm_log_t::xevm_log_t(common::xeth_address_t const& _address, xh256s_t const& _topics, xbytes_t const& _data)
-: address(_address), topics(_topics), data(_data) {
+xevm_log_t::xevm_log_t(common::xeth_address_t const& _address, xh256s_t const& _topics, xbytes_t const& _data) : address(_address), topics(_topics), data(_data) {
+}
 
+xevm_log_t::xevm_log_t(common::xeth_address_t const & address, xh256s_t topics) : xevm_log_t{address, std::move(topics), {}} {
 }
 
 // TODO(jimmy) remove xstream later

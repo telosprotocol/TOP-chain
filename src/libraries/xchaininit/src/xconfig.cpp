@@ -1,25 +1,20 @@
-#include <string>
-#include <assert.h>
-#include <errno.h>
-#include <string.h>
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <string>
-#include <fcntl.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <ifaddrs.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <fstream>
-
 #include "xchaininit/xconfig.h"
+
 #include "json/value.h"
 #include "xpbase/base/top_log.h"
+
+#include <assert.h>
+#include <json/reader.h>
+#include <json/writer.h>
+#include <stdint.h>
+
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 namespace top{
 

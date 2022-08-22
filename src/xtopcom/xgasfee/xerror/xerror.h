@@ -19,17 +19,10 @@ enum class xenum_errc {
     account_deposit_failed,
     account_property_set_failed,
     account_balance_not_enough,
-
     tx_deposit_not_enough,
-    tx_deposit_to_tgas_not_enough,
-    
-    tx_balance_exceeded,
-    tx_limited_gas_exceeded,
-    tx_limited_gasfee_exceeded,
-    tx_calculation_tgas_exceeded,
-    tx_calculation_gas_over_limit,
-
     tx_out_of_gas,
+
+    invalid_param,
 };
 using xerrc_t = xenum_errc;
 

@@ -24,7 +24,10 @@
 #include "xdb/xdb_factory.h"
 #include "xvledger/xvaccount.h"
 #include "xbase/xhash.h"
+#include "xbase/xutl.h"
 #include "xdata/xcheckpoint.h"
+#include "xpbase/base/top_utils.h"
+
 #define NODE_ID "T00000LgGPqEpiK6XLCKRj9gVPN8Ej1aMbyAb3Hu"
 #define SIGN_KEY "ONhWC2LJtgi9vLUyoa48MF3tiXxqWf7jmT9KtOg/Lwo="
 
@@ -36,49 +39,11 @@ xdb_export_tools_t::xdb_export_tools_t(std::string const & db_path) {
     m_timer_driver = make_unique<xbase_timer_driver_t>(io_obj);
     m_bus = top::make_object_ptr<mbus::xmessage_bus_t>(true, 1000);
 
-    int db_path_num = 0;
-    std::vector<db::xdb_path_t> db_data_paths;
-    std::string extra_config = base::xvchain_t::instance().get_data_dir_path();
-    if(extra_config.empty()) {
-        extra_config = ".extra_conf.json"; 
-    } else {
-        extra_config += "/.extra_conf.json"; 
-    }
-    std::ifstream keyfile(extra_config, std::ios::in);
-    xinfo("xdb_export_tools_t::read db start extra_config %s", extra_config.c_str());
-    if (keyfile) {
-        xJson::Value key_info_js;
-        std::stringstream buffer;
-        buffer << keyfile.rdbuf();
-        keyfile.close();
-        std::string key_info = buffer.str();
-        xJson::Reader reader;
-        // ignore any error when parse
-        reader.parse(key_info, key_info_js);
-        if (key_info_js["db_path_num"] > 1) {   
-            db_path_num = key_info_js["db_path_num"].asInt();
-            for (int i = 0; i < db_path_num; i++) {
-                std::string key_db_path = "db_path_" + std::to_string(i+1);
-                std::string key_db_size = "db_path_size_" + std::to_string(i+1);
-                std::string db_path_result =  key_info_js[key_db_path].asString();
-                uint64_t db_size_result = key_info_js[key_db_size].asUInt64(); 
-                if (db_path_result.empty() || db_size_result < 1) {
-                    db_path_num = 1;
-                    xwarn("xtop_application::read db %i path %s size %lld config failed!", i , db_path_result.c_str(), db_size_result);
-                    break;
-                }
-                xinfo("xtop_application::read db  %i path %s size %lld sucess!",i , db_path_result.c_str(), db_size_result);
-                db_data_paths.emplace_back(db_path_result, db_size_result);
-            }
-        }
-    }
-    
-    std::shared_ptr<db::xdb_face_t> db;
-    if (db_path_num > 1)    {
-        db = db::xdb_factory_t::instance(db_path, db_data_paths);
-    } else {
-        db = db::xdb_factory_t::instance(db_path);
-    }
+    int dst_db_kind = top::db::xdb_kind_kvdb;
+    std::vector<db::xdb_path_t> db_data_paths {};
+    base::xvchain_t::instance().get_db_config_custom(db_data_paths, dst_db_kind);
+    std::shared_ptr<db::xdb_face_t> db = top::db::xdb_factory_t::create(dst_db_kind, db_path, db_data_paths);
+
     m_store = top::store::xstore_factory::create_store_with_static_kvdb(db);
    // m_store = top::store::xstore_factory::create_store_with_kvdb(db_path);
     base::xvchain_t::instance().set_xdbstore(m_store.get());
@@ -137,6 +102,7 @@ std::vector<std::string> xdb_export_tools_t::get_table_accounts() {
         std::make_pair(std::string{sys_contract_sharding_table_block_addr}, enum_vledger_const::enum_vbucket_has_tables_count),
         std::make_pair(std::string{sys_contract_zec_table_block_addr}, MAIN_CHAIN_ZEC_TABLE_USED_NUM),
         std::make_pair(std::string{sys_contract_beacon_table_block_addr}, MAIN_CHAIN_REC_TABLE_USED_NUM),
+        std::make_pair(std::string{sys_contract_eth_table_block_addr}, MAIN_CHAIN_EVM_TABLE_USED_NUM),
     };
     for (auto const & t : table) {
         for (auto i = 0; i < t.second; i++) {
@@ -679,30 +645,40 @@ void xdb_export_tools_t::query_archive_db(const uint32_t redundancy) {
     std::cout << "redundancy = " << redundancy << std::endl;
     // step 1: check table
     std::cout << "step 1 ===> checking table accounts..." << std::endl;
+    auto t1 = base::xtime_utl::time_now_ms();
     {
-        asio::thread_pool pool(4);
+        asio::thread_pool pool(8);
         auto const tables = xdb_export_tools_t::get_table_accounts();
         for (size_t i = 0; i < tables.size(); i++) {
             asio::post(pool, std::bind(&xdb_export_tools_t::query_archive_db_internal, this, tables[i], query_account_table, redundancy, std::ref(file), std::ref(total_errors)));
         }
         pool.join();
     }
+    auto t2 = base::xtime_utl::time_now_ms();        
+    std::cout << "time1: " << (t2 - t1) / 1000 << "s." << std::endl;
+    
     // step 2: check unit
     std::cout << "step 2 ===> checking unit accounts..." << std::endl;
     {
-        asio::thread_pool pool(4);
+        asio::thread_pool pool(8);
         auto const units = get_db_unit_accounts();
         for (size_t i = 0; i < units.size(); i++) {
             asio::post(pool, std::bind(&xdb_export_tools_t::query_archive_db_internal, this, units[i], query_account_unit, 0, std::ref(file), std::ref(total_errors)));
         }
         pool.join();
     }
+    auto t3 = base::xtime_utl::time_now_ms();        
+    std::cout << "time2: " << (t3 - t2) / 1000 << "s." << std::endl;
+
     // step 3: check drand
     std::cout << "step 3 ===> checking drand..." << std::endl;
     {
         query_archive_db_internal(sys_drand_addr, query_account_system, redundancy, file, total_errors);
     }
     file.close();
+    auto t4 = base::xtime_utl::time_now_ms();        
+    std::cout << "time3: " << (t4 - t3) / 1000 << "s." << std::endl;
+
     if (total_errors != 0) {
         std::cerr << "total error num: " << total_errors << std::endl;
         std::string filename_error = "check_archive_db_error.log";
@@ -1892,5 +1868,158 @@ void  xdb_export_tools_t::prune_db(){
     std::string begin_key;
     std::string end_key;
     m_store->compact_range(begin_key, end_key);
+}
+void xdb_export_tools_t::output_tx_file(std::vector<std::string> const & tables, const std::string& tx_file) {
+    std::map<std::string, tx_check_info_t> tx_check_list;
+    std::ifstream ifs;
+    ifs.open(tx_file.c_str(), std::ifstream::in);
+    char data[256];
+    while (1) {
+        ifs.getline(data, 256);
+        if (data[0] == 0)
+            break;
+        std::vector<std::string> values;
+        base::xstring_utl::split_string(std::string(data), '\t', values);
+        if (values.size() < 2) 
+            continue;
+
+        std::string hash = values[0];
+        if (hash.substr(0,2) == "0x" || hash.substr(0,2) == "0X")
+            hash = hash.substr(2);
+        hash = HexDecode(hash);
+        tx_check_info_t tx_check_info(std::strtoul(values[1].c_str(), NULL, 0));
+        tx_check_list[hash] = tx_check_info;
+//        std::cout << "hash: "<< HexEncode(hash) <<std::endl;
+    }
+    ifs.close();
+    std::cout << "read tx_file: " << tx_check_list.size() << std::endl;
+
+    std::map<std::string, tx_check_result_info_t> tx_result_list;
+    for (size_t i = 0; i < tables.size(); i++) {
+        output_tx_file_internal(tables[i], tx_check_list, tx_result_list);
+    }
+    if (tx_result_list.empty())
+        return;
+    std::string check_file = m_outfile_folder + "tx_check.txt";
+    std::ofstream check_stream(check_file);
+    for(const auto& it:tx_result_list) {
+        std::string output = HexEncode(it.first) + '\t' + to_string(it.second.m_test_timestamp) + '\t' + to_string(it.second.m_tx_send_timestamp) + '\t' +
+                             to_string(it.second.m_tx_recv_timestamp) + '\t' + to_string(it.second.m_tx_timestamp) + '\n';
+        check_stream << output;
+    }
+    check_stream.close();
+    std::cout << "output: " << check_file << ", size: " << tx_result_list.size() << std::endl;    
+    //std::cout << "output check tx file ok." << std::endl;
+}
+void xdb_export_tools_t::output_tx_file_internal(std::string const & account,
+                                                 const std::map<std::string, tx_check_info_t> & tx_check_list,
+                                                 std::map<std::string, tx_check_result_info_t> & tx_result_list) {
+    xdbtool_table_info_t table_info;
+    std::cout << "checking " << account << "......" << std::endl;
+
+    auto const block_height = m_blockstore->get_latest_committed_block_height(account);
+    for (uint64_t h = 0; h <= block_height; h++) {
+        auto vblock = m_blockstore->load_block_object(account, h, 0, false);
+        const data::xblock_t * block = dynamic_cast<data::xblock_t *>(vblock.get());
+        if (block == nullptr) {
+            table_info.missing_table_block_num++;
+            std::cerr << account << " ERROR:missing block at height " << h << std::endl;
+            continue;
+        }
+        if (block->get_block_class() == base::enum_xvblock_class_nil) {
+            table_info.empty_table_block_num++;
+            continue;
+        } else if (block->get_block_class() == base::enum_xvblock_class_full) {
+            table_info.full_table_block_num++;
+            continue;
+        } else {
+            table_info.light_table_block_num++;
+            m_blockstore->load_block_input(account, vblock.get());
+        }
+        auto unit_headers = block->get_sub_block_headers();
+        table_info.total_unit_block_num += unit_headers.size();
+        for (auto & _unit_header : unit_headers) {
+            if (_unit_header->get_block_class() == base::enum_xvblock_class_nil) {
+                table_info.empty_unit_block_num++;
+            } else if (_unit_header->get_block_class() == base::enum_xvblock_class_full) {
+                table_info.full_unit_block_num++;
+            } else {
+                table_info.light_unit_block_num++;
+            }
+        }
+        // step all actions
+        auto input_actions = data::xblockextract_t::unpack_txactions(vblock.get());
+        for (auto & txaction : input_actions) {
+            if (txaction.is_self_tx()) {
+                table_info.selftx_num++;
+            } else {
+                if (txaction.is_send_tx()) {
+                    table_info.sendtx_num++;
+                } else if (txaction.is_recv_tx()) {
+                    table_info.recvtx_num++;
+                } else if (txaction.is_confirm_tx()) {
+                    table_info.confirmtx_num++;
+                }
+            }
+
+            auto tx_size = block->query_tx_size(txaction.get_tx_hash());
+            auto tx_ptr = block->query_raw_transaction(txaction.get_tx_hash());
+            if (tx_size > 0) {
+                if (tx_ptr != nullptr) {
+                    if (tx_ptr->get_tx_version() == 2) {
+                        table_info.tx_v2_num++;
+                        table_info.tx_v2_total_size += tx_size;
+                    } else {
+                        table_info.tx_v1_num++;
+                        table_info.tx_v1_total_size += tx_size;
+                    }
+                }
+            }
+            std::vector<tx_ext_t> batch_tx_exts;
+            get_txinfo_from_txaction(txaction, block, tx_ptr, batch_tx_exts);
+            for (auto & tx_ext : batch_tx_exts) {
+                all_table_check_tx_file(tx_ext, txaction.get_tx_subtype() ,tx_check_list, tx_result_list);
+            }
+        }
+    }
+}
+bool xdb_export_tools_t::all_table_check_tx_file(const tx_ext_t & tx_ext,
+                                                 base::enum_transaction_subtype type,
+                                                 const std::map<std::string, tx_check_info_t> & tx_check_list,
+                                                 std::map<std::string, tx_check_result_info_t> & tx_result_list) {
+    std::string hash = tx_ext.hash;
+    if (hash.substr(0,2) == "0x")
+        hash = hash.substr(2);
+    hash = HexDecode(hash);
+    const auto it = tx_check_list.find(hash);
+    if (it == tx_check_list.end()) {
+//        std::cout << "not found: " << tx_ext.hash << std::endl;
+        return false;
+    }
+    //std::cout << "found: " << tx_ext.hash << std::endl;
+    if (tx_result_list.find(hash) == tx_result_list.end()) {
+        tx_check_result_info_t tx_result;
+        if (type == base::enum_transaction_subtype_send)
+            tx_result.m_tx_send_timestamp = tx_ext.timestamp;
+        else if (type == base::enum_transaction_subtype_recv)
+            tx_result.m_tx_recv_timestamp = tx_ext.timestamp;
+        else if (type == base::enum_transaction_subtype_confirm || type == base::enum_transaction_subtype_self)
+            tx_result.m_tx_timestamp = tx_ext.timestamp;
+        else
+            return false;
+        tx_result.m_test_timestamp = it->second.m_test_timestamp;
+        tx_result_list[hash] = tx_result;
+        //std::cout << "set type: " << type << std::endl;
+        return true;
+    }
+
+    if (type == base::enum_transaction_subtype_send)
+        tx_result_list[hash].m_tx_send_timestamp = tx_ext.timestamp;
+    else if (type == base::enum_transaction_subtype_recv)
+        tx_result_list[hash].m_tx_recv_timestamp = tx_ext.timestamp;
+    else if (type == base::enum_transaction_subtype_confirm || type == base::enum_transaction_subtype_self)
+        tx_result_list[hash].m_tx_timestamp = tx_ext.timestamp;
+    //std::cout << "set type2: " << type << std::endl;
+    return true;
 }
 NS_END2

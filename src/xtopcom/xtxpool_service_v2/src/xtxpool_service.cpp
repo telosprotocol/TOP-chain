@@ -96,13 +96,17 @@ void xtxpool_service::set_params(const xvip2_t & xip, const std::shared_ptr<vnet
         m_zone_index = base::enum_chain_zone_consensus_index;
         m_node_type = common::xnode_type_t::consensus_validator;
     } else if (common::has<common::xnode_type_t::evm_auditor>(type)) {
-        m_is_send_receipt_role = false;
+        m_is_send_receipt_role = true;
         m_zone_index = base::enum_chain_zone_evm_index;
         m_node_type = common::xnode_type_t::evm_auditor;
     } else if (common::has<common::xnode_type_t::evm_validator>(type)) {
         m_is_send_receipt_role = false;
         m_zone_index = base::enum_chain_zone_evm_index;
         m_node_type = common::xnode_type_t::evm_validator;
+    } else if (common::has<common::xnode_type_t::relay>(type)) {
+        m_is_send_receipt_role = true;
+        m_zone_index = base::enum_chain_zone_relay_index;
+        m_node_type = common::xnode_type_t::relay;
     } else {
         xassert(0);
     }
@@ -182,10 +186,6 @@ void xtxpool_service::pull_lacking_receipts(uint64_t now, xcovered_tables_t & co
             continue;
         }
         covered_tables.add_covered_table(m_zone_index, table_id);
-
-        if (!m_para->get_txpool()->need_sync_lacking_receipts(m_zone_index, table_id)) {
-            continue;
-        }
 
         std::string self_table_addr = data::xblocktool_t::make_address_table_account((base::enum_xchain_zone_index)m_zone_index, table_id);
 

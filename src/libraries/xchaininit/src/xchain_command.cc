@@ -23,6 +23,7 @@
 #include "xpbase/base/top_log.h"
 #include "xpbase/base/top_utils.h"
 #include "xtopcl/include/topcl.h"
+#include "xtopcl/include/global_definition.h"
 #include "xtopcl/include/xcrypto.h"
 #include "xconfig/xpredefined_configurations.h"
 
@@ -374,24 +375,18 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     auto wallet_app = app.add_subcommand("wallet", "Create and manage accounts and public-private key pairs.");
     // create new account
     auto createAccount = wallet_app->add_subcommand("createAccount", "Create an account.");
-    int32_t pf = 0;
     std::string pw_path;
-    createAccount->callback(std::bind(&ApiMethod::create_account, &topcl.api, std::ref(pf), std::ref(pw_path), std::ref(out_str)));
-    auto createAccount_pw_option = createAccount->add_flag("-p,--password", pf, "An account with password will be created if you add this option.");
-    createAccount->add_option("-f,--pwd_file_path", pw_path, "The path of file that contains password string. An account with password will be created if you add this option.")
-        ->excludes(createAccount_pw_option);
+    createAccount->callback(std::bind(&ApiMethod::create_account, &topcl.api, std::ref(pw_path), std::ref(out_str)));
+    createAccount->add_option("-f,--pwd_file_path", pw_path, "The path of file that contains password string.");
 
     // create new key
     auto createKey = wallet_app->add_subcommand("createKey", "Create a worker key for specific account.");
-    int32_t create_key_pf = 0;
     std::string createKey_pw_path;
     std::string owner_account = g_userinfo.account;
-    createKey->callback(std::bind(&ApiMethod::create_key, &topcl.api, std::ref(owner_account), std::ref(create_key_pf), std::ref(createKey_pw_path), std::ref(out_str)));
+    createKey->callback(std::bind(&ApiMethod::create_key, &topcl.api, std::ref(owner_account), std::ref(createKey_pw_path), std::ref(out_str)));
     createKey->add_option(
         "account_addr", owner_account, "The account address new key belong to.If you do not add this parameter, a worker key will be created for your default account.");
-    auto createKey_pw_option = createKey->add_flag("-p,--password", create_key_pf, "A worker key with password will be created if you add this option.");
-    createKey->add_option("-f,--pwd_file_path", createKey_pw_path, "The path of file that contains password string. A worker key with password will be created if you add this option.")
-        ->excludes(createKey_pw_option);
+    createKey->add_option("-f,--pwd_file_path", createKey_pw_path, "The path of file that contains password string.");
 
     // list all accounts
     auto listAccounts_app = wallet_app->add_subcommand("listAccounts", "List all accounts in wallet.");
@@ -404,7 +399,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     setDefaultAccount_app->callback(
         std::bind(&ApiMethod::set_default_account, &topcl.api, std::ref(setDefaultAccount_account), std::ref(setDefaultAccount_pw_path), std::ref(out_str)));
     setDefaultAccount_app->add_option("account_addr", setDefaultAccount_account, "Account address.")->required();
-    setDefaultAccount_app->add_option("-f,--pwd_file_path", setDefaultAccount_pw_path, "The path of file that contains password string if you have set it.");
+    setDefaultAccount_app->add_option("-f,--pwd_file_path", setDefaultAccount_pw_path, "The path of file that contains password string.");
 
     // reset keystore password
     auto resetPw_app = wallet_app->add_subcommand("resetKeystorePwd", "Reset the password for a keystore file.");
@@ -412,22 +407,17 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     resetPw_app->callback(std::bind(&ApiMethod::reset_keystore_password, &topcl.api, std::ref(resetPw_public_key), std::ref(out_str)));
     resetPw_app->add_option("public_key", resetPw_public_key, "The public key.")->required();
 
-    // import keystore
-    /*
-    auto importKey_app = wallet_app->add_subcommand("importKey", "Import private key into wallet.");
-    std::string importKey_keystore;
-    importKey_app->callback(std::bind(&ApiMethod::import_keystore, &topcl.api, std::ref(importKey_keystore), std::ref(out_str)));
-    importKey_app->add_option("keystore", importKey_keystore, "The keystore file content to import.")->required();
-    */
     // import account
+    std::string importAccount_pw_path;
     auto importAccount_app = wallet_app->add_subcommand("importAccount", "Import private key into wallet.");
-    importAccount_app->callback(std::bind(&ApiMethod::import_account, &topcl.api, std::ref(create_key_pf), std::ref(out_str)));
-    importAccount_app->add_flag("-p,--password", create_key_pf, "Import an account with a password; If you do not add this option, your account will be used without password.");
+    importAccount_app->callback(std::bind(&ApiMethod::import_account, &topcl.api, std::ref(importAccount_pw_path), std::ref(out_str)));
+    importAccount_app->add_option("-f,--pwd_file_path", importAccount_pw_path, "The path of file that contains password string.");
 
     // export account
     auto exportAccount_app = wallet_app->add_subcommand("exportAccount", "Export private key and keystore json file.");
     exportAccount_app->callback(std::bind(&ApiMethod::export_account, &topcl.api, std::ref(owner_account), std::ref(out_str)));
-    exportAccount_app->add_option("account_addr", owner_account, "The account address. If you do not add this parameter, the private key will be printed for your default account.");
+    exportAccount_app->add_option("account_addr", owner_account, "The account address")->required();
+    // todo add option use -f --pwd_file_path to avoid interactive password asked.
 
     /*
      * mining
@@ -463,7 +453,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     std::string miner_default_pub_key;
     std::string miner_pw_path;
     setminerkey->add_option("publickey", miner_default_pub_key, "Public key")->required();
-    setminerkey->add_option("-f,--pwd_file_path", miner_pw_path, "The path of file that contains password string  if you have set it.");
+    setminerkey->add_option("-f,--pwd_file_path", miner_pw_path, "The path of file that contains password string");
     setminerkey->callback(std::bind(&ApiMethod::set_default_miner, &topcl.api, std::ref(miner_default_pub_key), std::ref(miner_pw_path), std::ref(out_str)));
 
     // query miner info
@@ -1025,21 +1015,6 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
         auto dbdir = convert_dir;
         db_prune::DbPrune::instance().db_convert(std::ref(miner_type), dbdir, out_str);
     });
-     
-    /*
-     * debug
-     */
-#ifdef DEBUG
-    auto debug = app.add_subcommand("debug", "Only available in debug mode.");
-    // create
-    auto debug_create = debug->add_subcommand("create", "create an onchain account.");
-    debug_create->callback(std::bind(&ApiMethod::create_chain_account, &topcl.api, std::ref(out_str)));
-
-    auto debug_import_key = debug->add_subcommand("import", "Import private key as default account.");
-    std::string pri_key;
-    debug_import_key->add_option("private_key", pri_key, "base64 private key.")->required();
-    debug_import_key->callback(std::bind(&ApiMethod::import_key, &topcl.api, std::ref(pri_key), std::ref(out_str)));
-#endif
 
     int app_ret = 0;
     try {
@@ -1100,12 +1075,14 @@ bool handle_node_command(const std::pair<std::string, uint16_t> & admin_http, co
 }
 
 std::string decrypt_keystore(const std::string & keystore_path, const std::string & password) {
-    auto private_key = xChainSDK::xcrypto::import_existing_keystore(password, keystore_path);
+    std::string private_key;
+    xChainSDK::xcrypto::decrypt_keystore_file_by_password(password, keystore_path, private_key);
     return private_key;
 }
 
 std::string decrypt_keystore_by_key(const std::string & keystore_path, const std::string & token) {
-    auto private_key = xChainSDK::xcrypto::decrypt_keystore_by_key(token, keystore_path);
+    std::string private_key;
+    xChainSDK::xcrypto::decrypt_keystore_file_by_kdf_key(token, keystore_path, private_key);
     return private_key;
 }
 

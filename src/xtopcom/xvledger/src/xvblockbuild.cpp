@@ -118,8 +118,29 @@ namespace top
             m_justify_cert_hash = _justify_hash;
             m_consensus_flag = base::enum_xconsensus_flag_extend_cert;
         }
+
+        void xbbuild_para_t::set_relay_cert_para(uint64_t _clock, uint32_t _viewtoken, uint64_t _viewid, xvqcert_t * cert) {
+            set_default_qcert();
+            m_clock = _clock;
+            m_viewtoken = _viewtoken;
+            m_viewid = _viewid;
+            m_validator = cert->get_validator();
+            m_auditor = cert->get_auditor();
+            m_drand_height = cert->get_drand_height();
+            m_justify_cert_hash = cert->get_justify_cert_hash();
+            m_consensus_flag = base::enum_xconsensus_flag_extend_vote;
+        }
+        void xbbuild_para_t::set_relay_cert_para() {
+            set_default_qcert();
+            m_clock = 0;
+            m_viewtoken = 1;
+            m_viewid = 0;
+            m_validator = xvip2_t({(uint64_t)-1, (uint64_t)-1});
+            m_consensus_flag = base::enum_xconsensus_flag_extend_vote;
+        }
+
         void xbbuild_para_t::set_table_cert_para(uint64_t _clock, uint32_t _viewtoken, uint64_t _viewid, const xvip2_t & _validator, const xvip2_t & _auditor, uint64_t _drand_height,
-                                    const std::string & _justify_hash) {
+                                    const std::string & _justify_hash, bool need_relay_prove) {
             set_default_qcert();
             m_clock = _clock;
             m_viewtoken = _viewtoken;
@@ -128,7 +149,27 @@ namespace top
             m_auditor = _auditor;
             m_drand_height = _drand_height;
             m_justify_cert_hash = _justify_hash;
+            if (need_relay_prove) {
+                m_consensus_flag = base::enum_xconsensus_flag_extend_vote;
+            }
         }
+
+
+        //----------------------------------------xbbuild_body_para_t-------------------------------------//
+        void xbbuild_body_para_t::set_resource(bool is_input_resource, const std::string & key, const std::string & value) {
+            if (is_input_resource) {
+                set_input_resource(key, value);
+            } else {
+                set_output_resource(key, value);
+            }
+        }
+        void xbbuild_body_para_t::set_input_resource(const std::string & key, const std::string & value) {
+            input_resources[key] = value;
+        }
+        void xbbuild_body_para_t::set_output_resource(const std::string & key, const std::string & value) {
+            output_resources[key] = value;
+        }
+
 
 
         //----------------------------------------xvblockbuild_t-------------------------------------//
@@ -234,6 +275,14 @@ namespace top
             get_header()->set_extra_data(_extra);
         }
 
+        void xvblockbuild_t::set_header_comments(const std::string & comments) {
+            if (get_header() == nullptr) {
+                xassert(false);
+                return;
+            }
+            get_header()->set_comments(comments);
+        }
+
         xauto_ptr<xvheader_t> xvblockbuild_t::build_proposal_header(xvblock_t* block, uint64_t _clock) {
             xbbuild_para_t _para(block, block->get_block_class(), block->get_block_type());
             _para.m_clock = _clock;
@@ -278,9 +327,9 @@ namespace top
             case base::enum_vaccount_addr_type_secp256k1_user_account:
             case base::enum_vaccount_addr_type_secp256k1_eth_user_account:
             case base::enum_vaccount_addr_type_secp256k1_evm_user_account:
-            case base::enum_vaccount_addr_type_secp256k1_user_sub_account:
+            // case base::enum_vaccount_addr_type_secp256k1_user_sub_account:
             case base::enum_vaccount_addr_type_native_contract:
-            case base::enum_vaccount_addr_type_custom_contract:
+            // case base::enum_vaccount_addr_type_custom_contract:
             case base::enum_vaccount_addr_type_black_hole:
 
             case base::enum_vaccount_addr_type_block_contract: {
@@ -709,20 +758,20 @@ namespace top
                     return false;
                 }
                 // fullstate hash should not same with binlog hash
-                if (target_block->get_fullstate_hash() == target_block->get_binlog_hash()) {
-                    xassert(false);
-                    return false;
-                }
-                // light-block not has state
-                if (!target_block->get_full_state().empty()) {
-                    xassert(false);
-                    return false;
-                }
-                // light-block has binlog
-                if (target_block->get_binlog().empty()) {
-                    xassert(false);
-                    return false;
-                }
+                // if (target_block->get_fullstate_hash() == target_block->get_binlog_hash()) {
+                //     xassert(false);
+                //     return false;
+                // }
+                // // light-block not has state
+                // if (!target_block->get_full_state().empty()) {
+                //     xassert(false);
+                //     return false;
+                // }
+                // // light-block has binlog
+                // if (target_block->get_binlog().empty()) {
+                //     xassert(false);
+                //     return false;
+                // }
             }
             return true;
         }

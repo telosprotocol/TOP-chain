@@ -1,9 +1,13 @@
+// Copyright (c) 2017-present Telos Foundation & contributors
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
 #pragma once
 #include "xbasic/xbyte_buffer.h"
 #include "xbasic/xmemory.hpp"
+#include "xevm_contract_runtime/xevm_context.h"
 #include "xevm_contract_runtime/xevm_contract_manager.h"
 #include "xevm_contract_runtime/xevm_storage_face.h"
-#include "xevm_contract_runtime/xevm_type.h"
 #include "xevm_runner/evm_logic_face.h"
 
 #include <cstdint>
@@ -36,6 +40,9 @@ private:
     xbytes_t m_call_contract_args;
     xbytes_t m_result_ok;
     xbytes_t m_result_err;
+
+    void * m_engine_ptr{nullptr};
+    void * m_executor_ptr{nullptr};
 
 public:
     // for runtime
@@ -79,6 +86,11 @@ public:
     bool extern_contract_call(uint64_t args_len, uint64_t args_ptr) override;
     uint64_t get_result(uint64_t register_id) override;
     uint64_t get_error(uint64_t register_id) override;
+
+    void engine_return(uint64_t engine_ptr) override;
+    void executor_return(uint64_t executor_ptr) override;
+    void * engine_ptr() const override;
+    void * executor_ptr() const override;
 
 private:
     // inner api

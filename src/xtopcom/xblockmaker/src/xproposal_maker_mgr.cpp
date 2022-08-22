@@ -13,6 +13,7 @@ std::shared_ptr<xunit_service::xproposal_maker_face>   xproposal_maker_mgr::get_
     return proposal_maker;
 }
 
+
 std::shared_ptr<xunit_service::xblock_maker_face> xblockmaker_factory::create_table_proposal(const observer_ptr<store::xstore_face_t> & store,
                                                                                             const observer_ptr<base::xvblockstore_t> & blockstore,
                                                                                             const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool,

@@ -13,15 +13,16 @@
 #include "xvledger/xvcertauth.h"
 #include "xdata/xblock.h"
 #include "xdata/xtable_bstate.h"
+#include "xdata/xblock_cs_para.h"
 #include "xstore/xstore_face.h"
 #include "xblockstore/xblockstore_face.h"
 #include "xtxpool_v2/xtxpool_face.h"
 #include "xblockmaker/xblock_maker_para.h"
+#include "xstatectx/xstatectx.h"
 
 NS_BEG2(top, blockmaker)
 
 using data::xblock_ptr_t;
-using data::xaccount_ptr_t;
 
 class xblockmaker_resources_t {
  public:
@@ -55,35 +56,6 @@ class xblockmaker_resources_impl_t : public xblockmaker_resources_t {
     observer_ptr<mbus::xmessage_bus_face_t>     m_bus{nullptr};
 };
 
-struct xunitmaker_result_t {
- public:
-    void        add_pack_txs(const std::vector<xcons_transaction_ptr_t> & txs) {
-        for (auto & tx : txs) {
-            if (tx->is_self_tx()) {
-                m_self_tx_num++;
-            } else if (tx->is_send_tx()) {
-                m_send_tx_num++;
-            } else if (tx->is_recv_tx()) {
-                m_recv_tx_num++;
-            } else if (tx->is_confirm_tx()) {
-                m_confirm_tx_num++;
-            }
-        }
-        m_pack_txs = txs;
-    }
-
-    xblock_ptr_t                            m_block{nullptr};
-    int32_t                                 m_make_block_error_code{0};
-    std::vector<xcons_transaction_ptr_t>    m_pack_txs;
-    std::vector<xcons_transaction_ptr_t>    m_fail_txs;
-    std::vector<xcons_transaction_ptr_t>    m_unchange_txs;
-    int64_t                                 m_tgas_balance_change{0};
-    uint32_t                                m_self_tx_num{0};
-    uint32_t                                m_send_tx_num{0};
-    uint32_t                                m_recv_tx_num{0};
-    uint32_t                                m_confirm_tx_num{0};
-};
-
 struct xunitmaker_para_t {
     xunitmaker_para_t(const data::xtablestate_ptr_t & tablestate, bool is_leader)
     : m_tablestate(tablestate), m_is_leader(is_leader) {}
@@ -97,11 +69,8 @@ struct xunitmaker_para_t {
 
 class xtablemaker_result_t {
  public:
-    void add_unit_result(const xunitmaker_result_t & unit_result);
- public:
     xblock_ptr_t                            m_block{nullptr};
     int32_t                                 m_make_block_error_code{0};
-    std::vector<xunitmaker_result_t>        m_unit_results;
 
     uint32_t                                m_total_tx_num{0};
     uint32_t                                m_self_tx_num{0};
@@ -161,17 +130,41 @@ class xtablemaker_para_t {
         m_receiptid_info_map = pack_resource.m_receiptid_info_map;
     }
 
+    void    set_relay_extra_data(const std::string & relay_extra_data) {
+        m_relay_extra_data = relay_extra_data;
+    }
+
+    void    set_need_relay_prove(bool is_need) {
+        m_need_relay_prove = is_need;
+    }
+
+    void    set_relay_evm_height(uint64_t height) {
+        m_relay_evm_height = height;
+    }
+
+    void    set_relay_elect_height(uint64_t height) {
+        m_relay_elect_height = height;
+    }
+
     const std::vector<xcons_transaction_ptr_t> &    get_origin_txs() const {return m_origin_txs;}
     const std::map<base::xtable_shortid_t, xtxpool_v2::xreceiptid_state_and_prove> & get_receiptid_info_map() const {return m_receiptid_info_map;}
     const std::vector<std::string> &                get_other_accounts() const {return m_other_accounts;}
     const data::xtablestate_ptr_t &                 get_tablestate() const {return m_tablestate;}
     const data::xtablestate_ptr_t &                 get_commit_tablestate() const {return m_commit_tablestate;}
     const xtable_proposal_input_ptr_t &             get_proposal() const {return m_proposal;}
+    const std::string &                             get_relay_extra_data() const {return m_relay_extra_data;}
+    bool                                            need_relay_prove() const {return m_need_relay_prove;}
+    uint64_t                                        get_relay_evm_height() const {return m_relay_evm_height;}
+    uint64_t                                        get_relay_elect_height() const {return m_relay_elect_height;}
 
  private:
     std::vector<xcons_transaction_ptr_t>    m_origin_txs;
     std::map<base::xtable_shortid_t, xtxpool_v2::xreceiptid_state_and_prove> m_receiptid_info_map;
     std::vector<std::string>                m_other_accounts;  // for empty or full unit accounts
+    std::string                             m_relay_extra_data;
+    bool                                    m_need_relay_prove{false};
+    uint64_t                                m_relay_evm_height;
+    uint64_t                                m_relay_elect_height;
 
     mutable xtable_proposal_input_ptr_t     m_proposal;  // leader should make proposal input; backup should verify proposal input
     mutable data::xtablestate_ptr_t         m_tablestate{nullptr};
@@ -180,48 +173,18 @@ class xtablemaker_para_t {
 
 class xblock_maker_t : public base::xvaccount_t {
  public:
-    explicit xblock_maker_t(const std::string & account, const xblockmaker_resources_ptr_t & resources, uint32_t latest_blocks_max);
+    explicit xblock_maker_t(const std::string & account, const xblockmaker_resources_ptr_t & resources);
     virtual ~xblock_maker_t();
-
- public:
-    void                        set_latest_block(const xblock_ptr_t & block);
-    void                        reset_latest_cert_block(const xblock_ptr_t & block);
-    bool                        load_and_cache_enough_blocks(const xblock_ptr_t & latest_block, uint64_t & lacked_height_from, uint64_t & lacked_height_to);
-    bool                        load_and_cache_enough_blocks(const xblock_ptr_t & latest_block);
-    bool                        check_latest_blocks(const xblock_ptr_t & latest_block) const;
 
  public:
     base::xvblockstore_t*       get_blockstore() const {return m_resources->get_blockstore();}
     xtxpool_v2::xtxpool_face_t*    get_txpool() const {return m_resources->get_txpool();}
     mbus::xmessage_bus_face_t*  get_bus() const {return m_resources->get_bus();}
     const xblockmaker_resources_ptr_t & get_resources() const {return m_resources;}
-
-    const xaccount_ptr_t &      get_latest_bstate() const {return m_latest_bstate;}
-    const std::map<uint64_t, xblock_ptr_t> & get_latest_blocks() const {return m_latest_blocks;}
-    const xblock_ptr_t &        get_highest_height_block() const;
-    xblock_ptr_t                get_prev_block_from_cache(const xblock_ptr_t & current) const;
-    void                        set_keep_latest_blocks_max(uint32_t keep_latest_blocks_max) {m_keep_latest_blocks_max = keep_latest_blocks_max;}
-
- protected:
-    bool                        update_account_state(const xblock_ptr_t & latest_block);
-    void                        clear_old_blocks();
-
  private:
     xblockmaker_resources_ptr_t             m_resources{nullptr};
-    std::map<uint64_t, xblock_ptr_t>        m_latest_blocks;
-    uint32_t                                m_keep_latest_blocks_max{0};
-    xaccount_ptr_t                          m_latest_bstate{nullptr};
 };
 
-class xblock_rules_face_t {
- public:
-    virtual bool        unit_rules_filter(const xblock_ptr_t & rules_end_block,
-                                            const xaccount_ptr_t & rules_end_state,
-                                            const std::vector<xcons_transaction_ptr_t> & origin_txs,
-                                            std::vector<xcons_transaction_ptr_t> & valid_txs,
-                                            std::vector<xcons_transaction_ptr_t> & pop_txs) = 0;
-};
-using xblock_rules_face_ptr_t = std::shared_ptr<xblock_rules_face_t>;
 
 class xblock_builder_para_face_t {
  public:
@@ -240,6 +203,10 @@ class xblock_builder_para_face_t {
     const std::vector<data::xlightunit_tx_info_ptr_t> & get_txs() const {return m_txs_info;}
     void set_changed_confirm_ids(const std::map<base::xtable_shortid_t, uint64_t> & changed_confirm_ids) {m_changed_confirm_ids = changed_confirm_ids;}
     const std::map<base::xtable_shortid_t, uint64_t> & get_changed_confirm_ids() const {return m_changed_confirm_ids;}
+    void set_relay_extra_data(const std::string & relay_extra_data) {m_relay_extra_data = relay_extra_data;}
+    const std::string & get_relay_extra_data() const {return m_relay_extra_data;}
+    void set_need_relay_prove(bool is_need) {m_need_relay_prove = is_need;}
+    bool need_relay_prove() const {return m_need_relay_prove;}
 
  private:
     xblockmaker_resources_ptr_t m_resources{nullptr};
@@ -247,6 +214,8 @@ class xblock_builder_para_face_t {
     int64_t                     m_tgas_balance_change{0};
     std::vector<data::xlightunit_tx_info_ptr_t> m_txs_info;
     std::map<base::xtable_shortid_t, uint64_t> m_changed_confirm_ids;
+    std::string                 m_relay_extra_data;
+    bool                        m_need_relay_prove{false};
 };
 using xblock_builder_para_ptr_t = std::shared_ptr<xblock_builder_para_face_t>;
 
@@ -256,10 +225,25 @@ class xblock_builder_face_t {
                                                   const xobject_ptr_t<base::xvbstate_t> & prev_bstate,
                                                   const data::xblock_consensus_para_t & cs_para,
                                                   xblock_builder_para_ptr_t & build_para) = 0;
-    void                                alloc_tx_receiptid(const std::vector<xcons_transaction_ptr_t> & input_txs,
-                                                           const base::xreceiptid_state_ptr_t & receiptid_state);
 };
 
 using xblock_builder_face_ptr_t = std::shared_ptr<xblock_builder_face_t>;
+
+
+struct xblock_resource_description_t {
+    bool            is_input_resource{false};
+    std::string     resource_key_name;
+    std::string     resource_value;
+    bool            need_signature{false};
+    uint256_t       signature_hash; 
+};
+class xblock_resource_plugin_face_t {
+ public:
+    virtual std::string                             get_face_name() const {return std::string();}
+    virtual void                                    init(statectx::xstatectx_ptr_t const& statectx_ptr, std::error_code & ec) {}
+    virtual std::vector<xcons_transaction_ptr_t>    make_contract_txs(statectx::xstatectx_ptr_t const& statectx_ptr, uint64_t timestamp, std::error_code & ec) {return {};}
+    virtual xblock_resource_description_t           make_resource(const data::xblock_consensus_para_t & cs_para, std::error_code & ec) const {return {};}
+};
+using xblock_resource_plugin_face_ptr_t = std::shared_ptr<xblock_resource_plugin_face_t>;
 
 NS_END2

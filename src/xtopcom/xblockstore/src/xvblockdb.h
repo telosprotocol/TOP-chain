@@ -24,6 +24,7 @@ namespace top
         {
             friend class xunitbkplugin;
             friend class xtablebkplugin;
+            friend class xrelay_plugin;
         public:
             xvblockdb_t(base::xvdbstore_t* xvdb_ptr);
         public:

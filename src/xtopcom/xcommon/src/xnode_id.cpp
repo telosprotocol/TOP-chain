@@ -16,7 +16,7 @@
 
 NS_BEG2(top, common)
 
-xtop_node_id::xtop_node_id(std::string const & v) : m_account_string{v} {
+xtop_node_id::xtop_node_id(std::string value) : m_account_string{std::move(value)} {
     if (!empty()) {
         parse();
     }
@@ -54,11 +54,11 @@ xtop_node_id xtop_node_id::build_from(xeth_address_t const & eth_address, base::
     assert(!ec);
 
     if (account_addr_type == base::enum_vaccount_addr_type_secp256k1_evm_user_account) {
-        return xtop_node_id::build_from("T60004" + eth_address.to_hex_string().substr(2), ec);
+        return xtop_node_id::build_from(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN + eth_address.to_hex_string().substr(2), ec);
     }
 
     if (account_addr_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account) {
-        return xtop_node_id::build_from("T80000" + eth_address.to_hex_string().substr(2), ec);
+        return xtop_node_id::build_from(base::ADDRESS_PREFIX_ETH_TYPE_IN_MAIN_CHAIN + eth_address.to_hex_string().substr(2), ec);
     }
 
     ec = common::error::xerrc_t::invalid_account_type;
@@ -181,6 +181,10 @@ xtable_id_t const & xtop_node_id::table_id() const noexcept {
     }
 
     return m_account_base_address.default_table_id();
+}
+
+bool xtop_node_id::has_assigned_table_id() const noexcept {
+    return !m_assigned_table_id.empty();
 }
 
 base::xvaccount_t xtop_node_id::vaccount() const {

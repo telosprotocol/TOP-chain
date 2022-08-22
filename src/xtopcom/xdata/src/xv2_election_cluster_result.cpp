@@ -36,6 +36,10 @@ xtop_election_cluster_result::empty() const noexcept {
     return m_group_results.empty();
 }
 
+bool xtop_election_cluster_result::empty_at(common::xgroup_id_t const & group_id) const noexcept {
+    return m_group_results.find(group_id) == std::end(m_group_results);
+}
+
 xtop_election_cluster_result::iterator
 xtop_election_cluster_result::end() noexcept {
     return m_group_results.end();

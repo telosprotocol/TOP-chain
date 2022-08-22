@@ -1,7 +1,6 @@
 #include "gtest/gtest.h"
 #include "xvledger/xvcertauth.h"
 #include "xvledger/xvledger.h"
-#include "xblockmaker/xunit_maker.h"
 #include "xstore/xstore_face.h"
 // #include "xstore/test/test_datamock.hpp"
 #include "xstore/xaccount_context.h"
@@ -99,6 +98,10 @@ public:
 
     const std::string merge_muti_sign(const std::map<xvip2_t,std::string,xvip2_compare> & muti_nodes_signatures,const base::xvblock_t * for_block) override {
         return merge_muti_sign(muti_nodes_signatures, for_block->get_cert());
+    }
+
+    const std::string get_prikey(const xvip2_t & signer) override {
+        return {};
     }
 };
 

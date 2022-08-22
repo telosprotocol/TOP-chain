@@ -23,7 +23,6 @@ private:
     mutable std::string hex_string_;
 
 public:
-    
     xtop_eth_address(xtop_eth_address const &) = default;
     xtop_eth_address & operator=(xtop_eth_address const &) = default;
     xtop_eth_address(xtop_eth_address &&) = default;
@@ -62,6 +61,9 @@ public:
     xbyte_t const * data() const noexcept;
 
     static xeth_address_t const & zero();
+
+    bool operator==(xeth_address_t const & rhs) const noexcept;
+    bool operator!=(xeth_address_t const & rhs) const noexcept;
 };
 
 NS_END2

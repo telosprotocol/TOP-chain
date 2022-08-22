@@ -110,6 +110,15 @@ protected:
      */
     void on_fulltableblock_event(common::xaccount_address_t const& contract_name, std::string const& action_name, std::string const& action_params, uint64_t timestamp, uint16_t table_id);
 
+
+    /**
+     * @brief check if relay election data should update
+     * 
+     * @param block_height 
+     * @param block_timestamp 
+     */
+    // void on_relay_election_data_update(uint64_t block_height, uint64_t block_timestamp);
+
     /**
      * @brief check if timer is unorder
      *

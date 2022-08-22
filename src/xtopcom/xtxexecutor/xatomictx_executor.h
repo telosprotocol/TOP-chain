@@ -19,7 +19,7 @@ class xatomictx_output_t {
     bool                        m_is_state_dirty{false};
     size_t                      m_snapshot_size{0};
     xvm_output_t                m_vm_output;
-    enum_execute_result_type    m_result;
+    enum_execute_result_type    m_result{enum_exec_error_invalid};
     xcons_transaction_ptr_t     m_tx;
 };
 

@@ -74,12 +74,20 @@ data::xeth_transaction_t  xeth_transaction_t::build_from(std::string const& rawt
     }
 
     _tx.decodeBytes(_rawtx_bs,  ec);
+    if (ec.error_code) {
+        return _tx;
+    }
+    _tx.check_scope(ec);
     return _tx;
 }
 
 data::xeth_transaction_t  xeth_transaction_t::build_from(xbytes_t const& rawtx_bs, eth_error & ec) {
     data::xeth_transaction_t _tx;
     _tx.decodeBytes(rawtx_bs,  ec);
+    if (ec.error_code) {
+        return _tx;
+    }
+    _tx.check_scope(ec);
     return _tx;
 }
 
@@ -121,11 +129,17 @@ void xeth_transaction_t::decodeBytes(bool includesig, xbytes_t const& _d, eth_er
     {
     case EIP_1559:
         decodeRLP_eip1599(includesig, _r, ec);
-        return;
+        break;
     default:
         ec = eth_error(error::xenum_errc::eth_server_error, "transaction type not supported");
         return;
     }
+}
+
+void xeth_transaction_t::decodeBytes(xbytes_t const& _d, std::error_code & ec) {
+    eth_error eth_ec;
+    decodeBytes(_d, eth_ec);
+    ec = eth_ec.error_code;
 }
 
 std::string xeth_transaction_t::serialize_to_string() const {
@@ -159,7 +173,7 @@ void xeth_transaction_t::streamRLP_eip1599(bool includesig, evm_common::RLPStrea
         _s << m_signS;
     }
 }
-// TODO(jimmy) eth_error
+
 void xeth_transaction_t::decodeRLP_eip1599(bool includesig, evm_common::RLP const& _r, eth_error & ec) {
     size_t itemcount = includesig ? 12 : 9;
 
@@ -179,10 +193,6 @@ void xeth_transaction_t::decodeRLP_eip1599(bool includesig, evm_common::RLP cons
             return;
         }
         m_chainid = _r[field = 0].toInt<evm_common::u256>();
-        if (m_chainid != XGET_CONFIG(chain_id)) {
-            ec = eth_error(error::xenum_errc::eth_server_error, "invalid sender");
-            return;
-        }
         if (_r[field = 1].size() > 32) {
             ec = eth_error(error::xenum_errc::eth_server_error, "rlp: input string too long for uint64, decoding into (types.DynamicFeeTx).Nonce");
             return;
@@ -203,10 +213,6 @@ void xeth_transaction_t::decodeRLP_eip1599(bool includesig, evm_common::RLP cons
             return;
         }
         m_gas = _r[field = 4].toInt<evm_common::u256>();
-        if (m_gas > XGET_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit)) {
-            ec = eth_error(error::xenum_errc::eth_server_error, "exceeds block gas limit");
-            return;
-        }
 
         if (_r[5].size() != 20 && _r[5].size() != 0) {
             if (_r[5].size() > 20) {
@@ -269,6 +275,29 @@ void xeth_transaction_t::decodeRLP_eip1599(bool includesig, evm_common::RLP cons
     }
 }
 
+void xeth_transaction_t::check_scope(eth_error & ec) const {
+    if (m_chainid != XGET_CONFIG(chain_id)) {
+        ec = eth_error(error::xenum_errc::eth_server_error, "invalid sender");
+        return;
+    }
+    if (m_gas > XGET_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit)) {
+        ec = eth_error(error::xenum_errc::eth_server_error, "exceeds block gas limit");
+        return;
+    }
+    if (0 == m_gas) {
+        ec = eth_error(error::xenum_errc::eth_server_error, "intrinsic gas too low");
+        return;
+    }
+    if (0 == m_max_fee_per_gas) {
+        ec = eth_error(error::xenum_errc::eth_server_error, "transaction underpriced");
+        return;
+    }
+    if (m_max_priority_fee_per_gas > m_max_fee_per_gas) {
+        ec = eth_error(error::xenum_errc::eth_server_error, "max priority fee per gas higher than max fee per ga");
+        return;
+    }
+}
+
 uint256_t xeth_transaction_t::get_tx_hash() const {
     if (m_transaction_hash.empty()) {
         xbytes_t _bytes = encodeBytes();
@@ -293,12 +322,7 @@ common::xeth_address_t xeth_transaction_t::get_from() const {
         memcpy(szSign + 1, (char *)m_signR.data(), m_signR.asBytes().size());
         memcpy(szSign + 33, (char *)m_signS.data(), m_signS.asBytes().size());
 
-        std::string m_authorization;
-        m_authorization.append((char *)szSign, 65);
-        // std::cout << "sig_bytes=" << base::xstring_utl::to_hex(m_authorization) << std::endl;
-
         top::utl::xecdsasig_t sig((uint8_t *)szSign);
-        top::utl::xkeyaddress_t pubkey1("");
         uint8_t szOutput[65] = {0};
         top::utl::xsecp256k1_t::get_publickey_from_signature(sig, m_unsign_hash, szOutput);
         top::utl::xecpubkey_t pubkey(szOutput);
@@ -311,11 +335,20 @@ common::xeth_address_t xeth_transaction_t::get_from() const {
         } else {
             m_from = _from;
         }
-        std::cout << "address=" << _from.to_hex_string() << std::endl;
+        // std::cout << "address=" << _from.to_hex_string() << std::endl;
     }
     return m_from;
 }
 
+std::string xeth_transaction_t::dump() const
+{
+    char local_param_buf[256];
+    auto txhash = get_tx_hash();
+    xbytes_t txhash_bs = top::to_bytes(txhash);
+    xprintf(local_param_buf, sizeof(local_param_buf),"{xeth_transaction_t:hash=%s,from=%s,to=%s}",
+        top::to_hex_prefixed(txhash_bs).c_str(), get_from().to_hex_string().c_str(),  m_to.to_hex_string().c_str());
+    return std::string(local_param_buf);
+}
 
 }  // namespace data
 }  // namespace top

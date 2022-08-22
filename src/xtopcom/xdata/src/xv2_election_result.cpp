@@ -102,4 +102,8 @@ v1::xelection_result_t xtop_election_result::v1() const {
     return r;
 }
 
+bool xelection_result_t::empty_at(common::xcluster_id_t const cluster_id) const noexcept {
+    return m_cluster_results.find(cluster_id) == std::end(m_cluster_results);
+}
+
 NS_END4

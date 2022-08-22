@@ -5,6 +5,7 @@
 #include "xvm/manager/xcontract_manager.h"
 
 #include "xbase/xmem.h"
+#include "xbasic/xhex.h"
 #include "xchain_upgrade/xchain_data_processor.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xcommon/xip.h"
@@ -22,6 +23,7 @@
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xtransaction_v1.h"
+#include "xevm_common/xcrosschain/xeth_header.h"
 #include "xmbus/xevent_store.h"
 #include "xmbus/xevent_timer.h"
 #include "xmetrics/xmetrics.h"
@@ -31,16 +33,19 @@
 #include "xvm/xsystem_contracts/deploy/xcontract_deploy.h"
 #include "xvm/xsystem_contracts/tcc/xrec_proposal_contract.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_archive_contract.h"
-#include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_exchange_contract.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_edge_contract.h"
+#include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_exchange_contract.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_fullnode_contract.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_rec_contract.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_zec_contract.h"
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_standby_pool_contract.h"
 #include "xvm/xsystem_contracts/xelection/xzec/xzec_elect_consensus_group_contract.h"
 #include "xvm/xsystem_contracts/xelection/xzec/xzec_elect_eth_group_contract.h"
+#include "xvm/xsystem_contracts/xelection/xzec/xzec_elect_relay_contract.h"
 #include "xvm/xsystem_contracts/xelection/xzec/xzec_group_association_contract.h"
 #include "xvm/xsystem_contracts/xelection/xzec/xzec_standby_pool_contract.h"
+#include "xvm/xsystem_contracts/xrelay/xrelay_process_election_data_contract.h"
+#include "xvm/xsystem_contracts/xrelay/xrelay_make_block_contract.h"
 #include "xvm/xsystem_contracts/xregistration/xrec_registration_contract.h"
 #include "xvm/xsystem_contracts/xreward/xtable_reward_claiming_contract.h"
 #include "xvm/xsystem_contracts/xreward/xtable_vote_contract.h"
@@ -49,6 +54,7 @@
 #include "xvm/xsystem_contracts/xslash/xtable_statistic_info_collection_contract.h"
 #include "xvm/xsystem_contracts/xslash/xzec_slash_info_contract.h"
 #include "xvm/xsystem_contracts/xworkload/xzec_workload_contract_v2.h"
+#include "xvm/xsystem_contracts/xevm/xtable_cross_chain_txs_collection_contract.h"
 #include "xvm/xvm_service.h"
 
 #include <cinttypes>
@@ -75,7 +81,8 @@ xtop_contract_manager::~xtop_contract_manager() {
     m_contract_register.add<CONTRACT_TYPE>(top::common::xaccount_address_t{CONTRACT_ADDRESS_STR}, CONTRACT_NETWORK_ID)
 
 void xtop_contract_manager::instantiate_sys_contracts() {
-    common::xnetwork_id_t network_id{top::config::to_chainid(XGET_CONFIG(chain_name))};
+    auto const & network_id = common::network_id();
+
     XREGISTER_CONTRACT(top::xstake::xrec_registration_contract, sys_contract_rec_registration_addr, network_id);
     XREGISTER_CONTRACT(top::xvm::system_contracts::xzec_workload_contract_v2, sys_contract_zec_workload_addr, network_id);
     XREGISTER_CONTRACT(top::xstake::xzec_vote_contract, sys_contract_zec_vote_addr, network_id);
@@ -96,7 +103,10 @@ void xtop_contract_manager::instantiate_sys_contracts() {
     XREGISTER_CONTRACT(top::xvm::system_contracts::reward::xtable_reward_claiming_contract_t, sys_contract_sharding_reward_claiming_addr, network_id);
     XREGISTER_CONTRACT(top::xvm::xcontract::xtable_statistic_info_collection_contract, sys_contract_sharding_statistic_info_addr, network_id);
     // XREGISTER_CONTRACT(top::xvm::xcontract::xtable_statistic_info_collection_contract, sys_contract_eth_table_statistic_info_addr, network_id);
+    XREGISTER_CONTRACT(top::xvm::system_contracts::xtable_cross_chain_txs_collection_contract_t, sys_contract_eth_table_cross_chain_txs_collection_addr, network_id);
     XREGISTER_CONTRACT(top::xvm::system_contracts::zec::xzec_elect_eth_contract_t, sys_contract_zec_elect_eth_addr, network_id);
+    XREGISTER_CONTRACT(top::xvm::system_contracts::zec::xzec_elect_relay_contract_t, sys_contract_zec_elect_relay_addr, network_id);
+    XREGISTER_CONTRACT(top::xvm::system_contracts::relay::xrelay_make_block_contract_t, relay_make_block_contract_address, network_id);
 }
 
 #undef XREGISTER_CONTRACT
@@ -191,7 +201,7 @@ void xtop_contract_manager::install_monitors(observer_ptr<xmessage_bus_face_t> c
 }
 
 void xtop_contract_manager::clear() {
-    for (auto & pair : m_map) {
+    for (auto const & pair : m_map) {
         delete pair.second;
     }
     m_map.clear();
@@ -204,7 +214,7 @@ bool xtop_contract_manager::filter_event(const xevent_ptr_t & e) {
     case xevent_major_type_store:
         return e->minor_type == xevent_store_t::type_block_committed;
     case xevent_major_type_vnode:
-        return true;
+        XATTRIBUTE_FALLTHROUGH;
     case xevent_major_type_chain_timer:
         return true;
     default:
@@ -591,14 +601,16 @@ static void get_election_result_property_data(const xaccount_ptr_t unitstate,
                                               xjson_format_t const json_format,
                                               bool compatible_mode,
                                               xJson::Value & json) {
-    assert(contract_address == rec_elect_rec_contract_address       ||  // NOLINT
-           contract_address == rec_elect_zec_contract_address       ||  // NOLINT
-           contract_address == rec_elect_edge_contract_address      ||  // NOLINT
-           contract_address == rec_elect_archive_contract_address   ||  // NOLINT
-           contract_address == rec_elect_exchange_contract_address  ||  // NOLINT
-           contract_address == zec_elect_consensus_contract_address ||  // NOLINT
-           contract_address == rec_elect_fullnode_contract_address  ||  // NOLINT
-           contract_address == zec_elect_eth_contract_address);
+    assert(contract_address == rec_elect_rec_contract_address                  || // NOLINT
+           contract_address == rec_elect_zec_contract_address                  || // NOLINT
+           contract_address == rec_elect_edge_contract_address                 || // NOLINT
+           contract_address == rec_elect_archive_contract_address              || // NOLINT
+           contract_address == rec_elect_exchange_contract_address             || // NOLINT
+           contract_address == zec_elect_consensus_contract_address            || // NOLINT
+           contract_address == rec_elect_fullnode_contract_address             || // NOLINT
+           contract_address == zec_elect_eth_contract_address                  || // NOLINT
+           contract_address == zec_elect_relay_contract_address                || // NOLINT
+           contract_address == relay_make_block_contract_address);
 
     std::string serialized_value = unitstate->string_get(property_name);
     if (!serialized_value.empty()) {
@@ -1778,6 +1790,49 @@ void xtop_contract_manager::get_contract_data(common::xaccount_address_t const &
     }
 }
 
+void xtop_contract_manager::get_election_data(common::xaccount_address_t const & contract_address,
+                                              const xaccount_ptr_t unitstate,
+                                              std::string const & property_name,
+                                              std::vector<std::pair<xpublic_key_t, uint64_t>> & election_data) const {
+    xassert(contract_address == rec_elect_rec_contract_address       ||  // NOLINT
+            contract_address == rec_elect_zec_contract_address       ||  // NOLINT
+            contract_address == rec_elect_edge_contract_address      ||  // NOLINT
+            contract_address == rec_elect_archive_contract_address   ||  // NOLINT
+            contract_address == zec_elect_consensus_contract_address ||
+            contract_address == rec_elect_fullnode_contract_address  ||
+            contract_address == zec_elect_eth_contract_address       ||
+            contract_address == zec_elect_relay_contract_address     ||
+            contract_address == relay_make_block_contract_address);
+
+    std::string serialized_value = unitstate->string_get(property_name);
+    if (!serialized_value.empty()) {
+        auto election_result_store = codec::msgpack_decode<data::election::xelection_result_store_t>({std::begin(serialized_value), std::end(serialized_value)});
+        for (auto const & election_network_result_info : election_result_store) {
+            auto const & election_network_result = top::get<data::election::xelection_network_result_t>(election_network_result_info);
+
+            for (auto const & election_result_info : election_network_result) {
+                auto const & election_result = top::get<data::election::xelection_result_t>(election_result_info);
+                for (auto const & election_cluster_result_info : election_result) {
+                    auto const & election_cluster_result = top::get<data::election::xelection_cluster_result_t>(election_cluster_result_info);
+
+                    for (auto const & group_result_info : election_cluster_result) {
+                        auto const & election_group_result = top::get<data::election::xelection_group_result_t>(group_result_info);
+
+                        for (auto const & node_info : election_group_result) {
+                            auto const & node_id = top::get<data::election::xelection_info_bundle_t>(node_info).account_address();
+                            if (node_id.empty()) {
+                                continue;
+                            }
+                            auto const & election_info = top::get<data::election::xelection_info_bundle_t>(node_info).election_info();
+                            election_data.push_back(std::make_pair(election_info.consensus_public_key, election_info.stake));
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 static void get_rec_nodes_map(common::xaccount_address_t const & contract_address,
                               std::string const & property_name,
                               const xaccount_ptr_t unitstate,
@@ -2239,7 +2294,126 @@ static void get_zec_workload_map(common::xaccount_address_t const & contract_add
     }
 }
 
+static void get_chain_headers(common::xaccount_address_t const & contract_address,
+                              std::string const & property_name,
+                              const xaccount_ptr_t unitstate,
+                              const xjson_format_t json_format,
+                              xJson::Value & json) {
+    auto headers = unitstate->map_get(property_name);
+    if (headers.empty()) {
+        xdbg("[get_eth_chains_hash] contract_address: %s, property_name: %s, empty", contract_address.to_string().c_str(), property_name.c_str());
+        return;
+    }
+    for (auto pair : headers) {
+        xbytes_t k{std::begin(pair.first), std::end(pair.first)};
+        auto hash = static_cast<evm_common::h256>(k);
+        evm_common::xeth_header_t header;
+        if (header.decode_rlp({pair.second.begin(), pair.second.end()}) == false) {
+            continue;
+        }
+        xJson::Value j_header;
+        j_header["parentHash"] = header.parent_hash.hex();
+        j_header["uncleHash"] = header.uncle_hash.hex();
+        j_header["miner"] = header.miner.hex();
+        j_header["stateMerkleRoot"] = header.state_merkleroot.hex();
+        j_header["txMerkleRoot"] = header.tx_merkleroot.hex();
+        j_header["receiptMerkleRoot"] = header.receipt_merkleroot.hex();
+        j_header["bloom"] = header.bloom.hex();
+        j_header["difficulty"] = header.difficulty.str();
+        j_header["number"] = header.number.str();
+        j_header["gasLimit"] = std::to_string(header.gas_limit);
+        j_header["gasUsed"] = std::to_string(header.gas_used);
+        j_header["time"] = std::to_string(header.time);
+        j_header["extra"] = top::to_hex(header.extra);
+        j_header["mixDigest"] = header.mix_digest.hex();
+        j_header["nonce"] = header.nonce.hex();
+        if (header.base_fee.has_value()) {
+            j_header["baseFee"] = header.base_fee.value().str();
+        }
+        j_header["hash"] = header.hash().hex();
+        json[hash.hex()] = j_header;
+    }
+}
 
+static void get_chain_headers_summary(common::xaccount_address_t const & contract_address,
+                              std::string const & property_name,
+                              const xaccount_ptr_t unitstate,
+                              const xjson_format_t json_format,
+                              xJson::Value & json) {
+    auto infos = unitstate->map_get(property_name);
+    if (infos.empty()) {
+        xdbg("[get_chain_headers_summary] contract_address: %s, property_name: %s, empty", contract_address.to_string().c_str(), property_name.c_str());
+        return;
+    }
+    for (auto pair : infos) {
+        xbytes_t k{std::begin(pair.first), std::end(pair.first)};
+        auto hash = static_cast<evm_common::h256>(k);
+        evm_common::xeth_header_info_t info;
+        if (info.decode_rlp({pair.second.begin(), pair.second.end()}) == false) {
+            continue;
+        }
+        xJson::Value j_header;
+        j_header["difficulty_sum"] = info.difficult_sum.str();
+        j_header["parent_hash"] = info.parent_hash.hex();
+        j_header["number"] = info.number.str();
+        json[hash.hex()] = j_header;
+    }
+}
+
+static void get_chain_last_hash(common::xaccount_address_t const & contract_address,
+                                std::string const & property_name,
+                                const xaccount_ptr_t unitstate,
+                                const xjson_format_t json_format,
+                                xJson::Value & json) {
+    auto hash_str = unitstate->string_get(property_name);
+    if (hash_str.empty()) {
+        xdbg("[get_eth_chains_hash] contract_address: %s, property_name: %s, empty", contract_address.to_string().c_str(), property_name.c_str());
+        return;
+    }
+    xbytes_t v{std::begin(hash_str), std::end(hash_str)};
+    auto hash = static_cast<evm_common::h256>(v);
+    json["last_hash"] = hash.hex();
+}
+
+static void get_chain_all_hashes(common::xaccount_address_t const & contract_address,
+                                 std::string const & property_name,
+                                 const xaccount_ptr_t unitstate,
+                                 const xjson_format_t json_format,
+                                 xJson::Value & json) {
+    auto all_hashes_str = unitstate->map_get(property_name);
+    if (all_hashes_str.empty()) {
+        xdbg("[get_chain_all_hashes] contract_address: %s, property_name: %s, empty", contract_address.to_string().c_str(), property_name.c_str());
+        return;
+    }
+    for (auto pair : all_hashes_str) {
+        xbytes_t k{std::begin(pair.first), std::end(pair.first)};
+        evm_common::u256 height = evm_common::fromBigEndian<evm_common::u256>(k);
+        auto item = evm_common::RLP::decodeList({std::begin(pair.second), std::end(pair.second)});
+        for (auto bytes : item.decoded) {
+            json[height.str()].append((static_cast<evm_common::h256>(bytes)).hex());
+        }
+    }
+}
+
+static void get_chain_effective_hash(common::xaccount_address_t const & contract_address,
+                                     std::string const & property_name,
+                                     const xaccount_ptr_t unitstate,
+                                     const xjson_format_t json_format,
+                                     xJson::Value & json) {
+    std::map<std::string, std::string> hashs;
+    hashs = unitstate->map_get(property_name);
+    if (hashs.empty()) {
+        xdbg("[get_chain_effective_hash] contract_address: %s, property_name: %s, empty", contract_address.to_string().c_str(), property_name.c_str());
+        return;
+    }
+    for (auto pair : hashs) {
+        xbytes_t k{std::begin(pair.first), std::end(pair.first)};
+        evm_common::u256 height = evm_common::fromBigEndian<evm_common::u256>(k);
+        xbytes_t v{std::begin(pair.second), std::end(pair.second)};
+        auto hash = static_cast<evm_common::h256>(v);
+        json[height.str()] = hash.hex();
+    }
+}
 
 void xtop_contract_manager::get_contract_data(common::xaccount_address_t const & contract_address,
                                               const xaccount_ptr_t unitstate,
@@ -2247,14 +2421,16 @@ void xtop_contract_manager::get_contract_data(common::xaccount_address_t const &
                                               xjson_format_t const json_format,
                                               bool compatible_mode,
                                               xJson::Value & json) const {
-    if (contract_address == rec_elect_rec_contract_address       || // NOLINT
-        contract_address == rec_elect_zec_contract_address       || // NOLINT
-        contract_address == rec_elect_edge_contract_address      || // NOLINT
-        contract_address == rec_elect_archive_contract_address   || // NOLINT
-        contract_address == rec_elect_exchange_contract_address  || // NOLINT
-        contract_address == zec_elect_consensus_contract_address ||
-        contract_address == rec_elect_fullnode_contract_address  ||
-        contract_address == zec_elect_eth_contract_address) {
+    if (contract_address == rec_elect_rec_contract_address                  || // NOLINT
+        contract_address == rec_elect_zec_contract_address                  || // NOLINT
+        contract_address == rec_elect_edge_contract_address                 || // NOLINT
+        contract_address == rec_elect_archive_contract_address              || // NOLINT
+        contract_address == rec_elect_exchange_contract_address             || // NOLINT
+        contract_address == zec_elect_consensus_contract_address            || // NOLINT
+        contract_address == rec_elect_fullnode_contract_address             || // NOLINT
+        contract_address == zec_elect_eth_contract_address                  || // NOLINT
+        contract_address == zec_elect_relay_contract_address                || // NOLINT
+        contract_address == relay_make_block_contract_address) {
         if (contract_address == xaccount_address_t{sys_contract_zec_elect_consensus_addr} && property_name == XPROPERTY_CONTRACT_ELECTION_EXECUTED_KEY) {
             std::string res;
             m_store->string_get(contract_address.value(), property_name, res);
@@ -2304,6 +2480,16 @@ void xtop_contract_manager::get_contract_data(common::xaccount_address_t const &
         return get_proposal_map(m_store, contract_address, property_name, json);
     } else if (property_name == VOTE_MAP_ID) {
         return get_proposal_voting_map(m_store, contract_address, property_name, json);
+    } else if (property_name == data::system_contract::XPROPERTY_LAST_HASH) {
+        return get_chain_last_hash(contract_address, property_name, unitstate, json_format, json);
+    } else if (property_name == data::system_contract::XPROPERTY_ALL_HASHES) {
+        return get_chain_all_hashes(contract_address, property_name, unitstate, json_format, json);
+    } else if (property_name == data::system_contract::XPROPERTY_EFFECTIVE_HASHES) {
+        return get_chain_effective_hash(contract_address, property_name, unitstate, json_format, json);
+    } else if (property_name == data::system_contract::XPROPERTY_HEADERS) {
+        return get_chain_headers(contract_address, property_name, unitstate, json_format, json);
+    } else if (property_name == data::system_contract::XPROPERTY_HEADERS_SUMMARY) {
+        return get_chain_headers_summary(contract_address, property_name, unitstate, json_format, json);
     }
 }
 

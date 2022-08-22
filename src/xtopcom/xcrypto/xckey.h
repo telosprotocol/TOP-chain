@@ -37,6 +37,7 @@ namespace top
             static bool           verify_signature(xecdsasig_t & signature,const uint256_t & msg_digest,uint8_t verify_publickey[65], bool compress = false);
             //retreive public key from signature
             static bool           get_publickey_from_signature(xecdsasig_t & signature,const uint256_t & msg_digest,uint8_t out_publickey_data[65]);
+            static bool           get_publickey_from_signature_directly(xecdsasig_t & signature,const uint256_t & msg_digest,uint8_t out_publickey_data[65]);
         protected:
             xsecp256k1_t();
             virtual ~xsecp256k1_t(){};

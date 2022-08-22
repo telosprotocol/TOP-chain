@@ -18,6 +18,9 @@ namespace top
 {
     namespace base
     {
+        uint64_t clock_to_gmtime(uint64_t clock) {
+            return clock * 10 + TOP_BEGIN_GMTIME;
+        }
         //////////////////////////////////xvblock and related implementation /////////////////////////////
         xvheader_t::xvheader_t()  //just use when seralized from db/store
             :xobject_t(enum_xobject_type_vheader)
@@ -696,12 +699,12 @@ namespace top
         
         void    xvqcert_t::set_extend_data(const std::string& extention)
         {
-            if(m_extend_data.empty())
-            {
+            // if(m_extend_data.empty())
+            // {
                 m_extend_data = extention;
                 add_modified_count();
                 return;
-            }
+            // }
             xassert(0);
         }
         
@@ -783,18 +786,20 @@ namespace top
                 xerror("xvqcert_t::is_valid,audit and threshold must be empty for non-audit block");
                 return false;
             }
-            if( (get_consensus_flags() & enum_xconsensus_flag_commit_cert) != 0)//not support this flag yet,so not allow use now
-            {
-                xerror("xvqcert_t::is_valid,not support flag of commit_cert at current version");
-                return false;//change behavior once we support basic-mode of xBFT
-            }
+            // if( (get_consensus_flags() & enum_xconsensus_flag_commit_cert) != 0)//not support this flag yet,so not allow use now
+            // {
+            //     xerror("xvqcert_t::is_valid,not support flag of commit_cert at current version");
+            //     return false;//change behavior once we support basic-mode of xBFT
+            // }
             return true;
         }
         
         bool    xvqcert_t::is_deliver()  const
         {
-            if(is_valid() == false)
+            if(is_valid() == false) {
+                xdbg("xvqcert_t::is_deliver, is_valid fail.");
                 return false;
+            }
  
             if( (0 == m_viewid) && (0 == m_clock) ) //genesis block
                 return true;
@@ -814,8 +819,18 @@ namespace top
             }
             else
             {
-                if(m_verify_signature.empty())
+                if( (get_consensus_flags() & enum_xconsensus_flag_extend_vote) != 0)
+                {
+                    if(m_extend_data.empty())
+                    {
+                        xerror("xvqcert_t::is_deliver,has flag_relay_prove but miss extend data");
+                        return false;
+                    }
+                }
+                if(m_verify_signature.empty()) {
+                    xdbg("xvqcert_t::is_deliver, m_verify_signature empty.");
                     return false;
+                }
                 
                 if( (get_consensus_flags() & enum_xconsensus_flag_audit_cert) != 0)//if ask audit but dont have audit proof
                 {
@@ -1527,6 +1542,7 @@ namespace top
             m_vbstate_ptr       = other.m_vbstate_ptr;
             m_parent_account    = other.m_parent_account;
             m_next_next_viewid  = other.m_next_next_viewid;
+            m_vote_extend_data   = other.m_vote_extend_data;
             
             m_next_next_qcert   = other.m_next_next_qcert;
             if(m_next_next_qcert != NULL)
@@ -1590,7 +1606,7 @@ namespace top
             
 #ifdef DEBUG 
             char local_param_buf[512];
-        xprintf(local_param_buf,sizeof(local_param_buf),"{xvblock:account=%s,height=%" PRIu64 ",viewid=%" PRIu64 ",viewtoken=%u,class=%d,clock=%" PRIu64 ",flags=0x%x,validator=0x%" PRIx64 " : %" PRIx64 ",auditor=0x%" PRIx64 " : %" PRIx64 ",refcount=%d,this=%" PRIx64 ",block_version:%u,block_hash=%s -> last_block=%s}",get_account().c_str(),get_height(),get_viewid(),get_viewtoken(),get_block_class(),get_clock(),get_block_flags(),get_cert()->get_validator().high_addr,get_cert()->get_validator().low_addr,get_cert()->get_auditor().high_addr,get_cert()->get_auditor().low_addr,get_refcount(),(uint64_t)this,get_block_version(),xstring_utl::to_hex(m_cert_hash).c_str(),xstring_utl::to_hex(get_last_block_hash()).c_str());
+        xprintf(local_param_buf,sizeof(local_param_buf),"{xvblock:account=%s,height=%" PRIu64 ",viewid=%" PRIu64 ",viewtoken=%u,class=%d,clock=%" PRIu64 ",flags=0x%x,validator=0x%" PRIx64 " : %" PRIx64 ",auditor=0x%" PRIx64 " : %" PRIx64 ",refcount=%d,this=%" PRIx64 ",block_version:0x%x,block_hash=%s -> last_block=%s}",get_account().c_str(),get_height(),get_viewid(),get_viewtoken(),get_block_class(),get_clock(),get_block_flags(),get_cert()->get_validator().high_addr,get_cert()->get_validator().low_addr,get_cert()->get_auditor().high_addr,get_cert()->get_auditor().low_addr,get_refcount(),(uint64_t)this,get_block_version(),xstring_utl::to_hex(m_cert_hash).c_str(),xstring_utl::to_hex(get_last_block_hash()).c_str());
             
 #else
             if(check_block_flag(enum_xvblock_flag_authenticated) && (false == m_dump_info.empty()) )
@@ -2444,6 +2460,14 @@ namespace top
             m_parent_entity_id = parent_entity_id;
             return true;
         }
+
+        void xvblock_t::set_vote_extend_data(const std::string & vote_data) {
+            m_vote_extend_data = vote_data;
+        }
+
+        const std::string & xvblock_t::get_vote_extend_data() const {
+            return m_vote_extend_data;
+        }
         
         void xvblock_t::register_object(xcontext_t & _context)
         {
@@ -2662,8 +2686,38 @@ namespace top
             block_ptr->dump2(); //genereate dump information before return, to improve performance
             return block_ptr;
         }
-        
-    
+
+        // int32_t xrelay_multisign::do_write(base::xstream_t & stream) {
+        //     KEEP_SIZE();
+
+        //     if (!m_multisign.empty()) {
+        //         uint16_t size = m_multisign.size();
+        //         stream << size;
+        //         for (auto & it : m_multisign) {
+        //             stream << it.first;
+        //             stream << it.second;
+        //         }
+        //     }
+
+        //     return CALC_LEN();
+        // }
+
+        // int32_t xrelay_multisign::do_read(base::xstream_t & stream) {
+        //     KEEP_SIZE();
+        //     if (stream.size() != 0) {
+        //         uint16_t size = 0;
+        //         stream >> size;
+        //         for (uint16_t i = 0; i < size; i++) {
+        //             xvip2_t xip;
+        //             std::string vote_data;
+        //             stream >> xip;
+        //             stream >> vote_data;
+        //             m_multisign[xip] = vote_data;
+        //         }
+        //     }
+        //     // restore padding
+        //     return CALC_LEN();
+        // }
 
     };//end of namespace of base
 };//end of namespace of top

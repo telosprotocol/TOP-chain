@@ -166,6 +166,53 @@ namespace top
             return true;
         }
 
+        bool    xsecp256k1_t::get_publickey_from_signature_directly(xecdsasig_t & signature,const uint256_t & msg_digest,uint8_t out_publickey_data[65])
+        {
+            secp256k1_ecdsa_recoverable_signature recover_sigature;
+            if(signature.get_recover_id() > 3)  // the recovery id (0, 1, 2 or 3)
+            {
+                return false;
+            }
+
+            auto secp256k1_context_verify = secp256k1_context_create(SECP256K1_CONTEXT_VERIFY);
+
+            if(secp256k1_ecdsa_recoverable_signature_parse_compact((secp256k1_context*)secp256k1_context_verify, &recover_sigature, signature.get_raw_signature(), signature.get_recover_id()) != 1)
+            {
+                return false;
+            }
+
+            secp256k1_pubkey native_pubkey;
+            if(secp256k1_ecdsa_recover((secp256k1_context*)secp256k1_context_verify, &native_pubkey, &recover_sigature, msg_digest.data()) != 1)
+            {
+                return false;
+            }
+
+            secp256k1_ecdsa_signature normal_signature;
+            if(secp256k1_ecdsa_recoverable_signature_convert((secp256k1_context*)secp256k1_context_verify,&normal_signature,&recover_sigature) != 1)
+            {
+                return false;
+            }
+
+            if(secp256k1_ecdsa_verify((secp256k1_context*)secp256k1_context_verify, &normal_signature, msg_digest.data(), &native_pubkey) != 1)
+            {
+                return false;
+            }
+
+            /*
+             * a pointer to a 65-byte (if compressed==0) or 33-byte (if compressed==1) byte array to place the serialized key
+             * we always use SECP256K1_EC_UNCOMPRESSED
+             */
+            size_t  serialize_pubkey_size = 65;
+            uint8_t serialize_pubkey_data[65] = {0};
+            auto secp256k1_context_sign = secp256k1_context_create(SECP256K1_CONTEXT_SIGN);
+            const int ret = secp256k1_ec_pubkey_serialize((secp256k1_context*)secp256k1_context_sign, serialize_pubkey_data, &serialize_pubkey_size, &native_pubkey,SECP256K1_EC_UNCOMPRESSED);
+            xassert(ret == 1);
+            xassert(serialize_pubkey_size == 65);
+
+            memcpy(out_publickey_data,serialize_pubkey_data,serialize_pubkey_size);
+            return true;
+        }
+
         xkeyaddress_t::xkeyaddress_t(const std::string & account_address)
         {
             m_account_address = account_address;

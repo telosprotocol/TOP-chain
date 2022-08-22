@@ -58,6 +58,7 @@ class xeth_transaction_t {
  public:
     xbytes_t    encodeBytes() const {return encodeBytes(true);}
     void        decodeBytes(xbytes_t const& _d, eth_error & ec) {return decodeBytes(true, _d, ec);}
+    void        decodeBytes(xbytes_t const& _d, std::error_code & ec);
     xbytes_t    encodeUnsignHashBytes() const;
     std::string serialize_to_string() const;
     void        serialize_from_string(const std::string & bin_data, eth_error & ec);
@@ -66,6 +67,7 @@ class xeth_transaction_t {
     enum_ethtx_version      get_tx_version() const {return m_version;}
     uint256_t               get_tx_hash() const;
     common::xeth_address_t  get_from() const;
+    std::string             dump() const;
 
     evm_common::u256 const&    get_chainid() const { return m_chainid; }
     evm_common::u256 const&    get_nonce() const { return m_nonce; }
@@ -98,6 +100,7 @@ class xeth_transaction_t {
     void        decodeRLP_eip1599(bool includesig, evm_common::RLP const& _r, eth_error & ec);
     xbytes_t    encodeBytes(bool includesig) const;
     void        decodeBytes(bool includesig, xbytes_t const& _d, eth_error & ec);
+    void        check_scope(eth_error & ec) const;
 
 
  private:

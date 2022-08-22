@@ -53,7 +53,9 @@ struct xtop_chain_fork_config {
     top::optional<xfork_point_t> add_rsp_id;
     top::optional<xfork_point_t> inner_table_tx;
     top::optional<xfork_point_t> eth_fork_point;
+    top::optional<xfork_point_t> relay_fork_point;
     top::optional<xfork_point_t> standalone_exchange_point;
+    top::optional<xfork_point_t> v1_6_0_version_point;  // for v1.6.0 version control
 };
 using xchain_fork_config_t = xtop_chain_fork_config;
 

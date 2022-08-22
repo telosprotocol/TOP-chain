@@ -29,9 +29,9 @@ public:
                const observer_ptr<base::xvblockstore_t> & blockstore,
                const std::shared_ptr<xnetwork_proxy_face> & network,
                const std::shared_ptr<xleader_election_face> & elect_face,
-               observer_ptr<time::xchain_time_face_t> const & tx_timer,
-               observer_ptr<election::cache::xdata_accessor_face_t> const & accessor,
-               observer_ptr<mbus::xmessage_bus_face_t> const & mb,
+               const observer_ptr<time::xchain_time_face_t> & tx_timer,
+               const observer_ptr<election::cache::xdata_accessor_face_t> & accessor,
+               const observer_ptr<mbus::xmessage_bus_face_t> & mb,
                const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool);
     virtual ~xresources();
 

@@ -63,12 +63,25 @@ XINLINE_CONSTEXPR const char * XPROPERTY_CONTRACT_SLASH_INFO_KEY = "@132";
 XINLINE_CONSTEXPR const char * XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY = "@133";
 XINLINE_CONSTEXPR const char * XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY = "@134";
 
+// reward
 XINLINE_CONSTEXPR const char * XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE = "@141";
 XINLINE_CONSTEXPR const char * XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE_YEARLY = "@142";
 XINLINE_CONSTEXPR const char * XPROPERTY_LAST_READ_REC_REG_CONTRACT_BLOCK_HEIGHT = "@143";
 XINLINE_CONSTEXPR const char * XPROPERTY_LAST_READ_REC_REG_CONTRACT_LOGIC_TIME = "@144";
 XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_VOTE_REPORT_TIME_KEY = "@145";
 XINLINE_CONSTEXPR const char * XPROPERTY_REWARD_DETAIL = "@146";
+
+// crosschain
+XINLINE_CONSTEXPR const char * XPROPERTY_LAST_HASH = "@160";
+XINLINE_CONSTEXPR const char * XPROPERTY_EFFECTIVE_HASHES = "@161";
+XINLINE_CONSTEXPR const char * XPROPERTY_ALL_HASHES = "@162";
+XINLINE_CONSTEXPR const char * XPROPERTY_HEADERS = "@163";
+XINLINE_CONSTEXPR const char * XPROPERTY_HEADERS_SUMMARY = "@164";
+XINLINE_CONSTEXPR const char * XPROPERTY_RESET_FLAG = "@165";
+
+XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_ELECT_PACK_HEIGHT = "@170";
+XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_WRAP_PHASE = "@171";
+XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_BLOCK_STR = "@172";
 
 constexpr char const * XTRANSFER_ACTION{"transfer"};
 constexpr char const * XZEC_WORKLOAD_CLEAR_WORKLOAD_ACTION{"clear_workload"};
@@ -394,6 +407,9 @@ public:
     /// @brief Check to see if this account coule be an evm validator node based on miner type.
     bool could_be_evm_validator() const noexcept;
 
+    /// @brief Check to see if this account could be an relay node based on miner type.
+    bool could_be_relay() const noexcept;
+
     /// @brief Check to see if this node can be an rec based on miner type and other information (e.g. deposit, amount of received tickets).
     bool can_be_rec() const noexcept;
 
@@ -426,6 +442,9 @@ public:
 
     /// @brief Check to see if this account can be an eth based on miner type and other information (e.g. deposit, amount of received tickects).
     bool can_be_evm_validator() const noexcept;
+
+    /// @brief Check to see if this account can be a relayer based on miner type and other information (e.g. deposit, amount of received tickects).
+    bool can_be_relay() const noexcept;
 
     template <common::xminer_type_t MinerTypeV>
     bool has() const noexcept {
@@ -495,6 +514,8 @@ public:
     uint64_t evm_auditor_stake() const noexcept;
 
     uint64_t evm_validator_stake() const noexcept;
+
+    uint64_t relay_stake() const noexcept;
 
     /// @brief Get miner type.
     common::xminer_type_t miner_type() const noexcept;

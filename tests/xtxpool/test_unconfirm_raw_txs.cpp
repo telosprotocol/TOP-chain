@@ -64,6 +64,9 @@ TEST_F(test_unconfirm_raw_txs, unconfirm_raw_txs) {
 
     std::vector<xcons_transaction_ptr_t> confirm_txs = mocktable.create_receipts(_tableblock2);
     xassert(confirm_txs.size() == send_txs.size());
+    for (uint32_t i = 0; i < confirm_txs.size(); i++) {
+        confirm_txs[i]->set_raw_tx(send_txs[i]->get_transaction());
+    }
 
     mocktable.push_txs(confirm_txs);
     xblock_ptr_t _tableblock3 = mocktable.generate_one_table();

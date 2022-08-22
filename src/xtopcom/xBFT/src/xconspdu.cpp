@@ -126,7 +126,7 @@ namespace top
         {
         }
  
-        xvote_msg_t::xvote_msg_t(base::xvqcert_t & agree_by_cert_obj)
+        xvote_msg_t::xvote_msg_t(base::xvqcert_t & agree_by_cert_obj, const std::string & vote_extend_data)
         {
             if(agree_by_cert_obj.is_valid())
             {
@@ -135,6 +135,7 @@ namespace top
                     std::string _bin_data;
                     agree_by_cert_obj.serialize_to_string(_bin_data);
                     m_justify_source = _bin_data;
+                    m_vote_extend_data = vote_extend_data;
                 }
                 else
                 {
@@ -147,7 +148,7 @@ namespace top
             }
         }
         
-        xvote_msg_t::xvote_msg_t(base::xvblock_t & report_by_block_object)
+        xvote_msg_t::xvote_msg_t(base::xvblock_t & report_by_block_object, const std::string & vote_extend_data)
         {
             if(report_by_block_object.is_valid(false))
             {
@@ -156,6 +157,7 @@ namespace top
                     std::string _bin_data;
                     report_by_block_object.get_cert()->serialize_to_string(_bin_data);
                     m_justify_source = _bin_data;
+                    m_vote_extend_data = vote_extend_data;
                 }
                 else
                 {
@@ -178,6 +180,9 @@ namespace top
             const int32_t begin_size = stream.size();
             
             stream.write_short_string(m_justify_source);
+            if (!m_vote_extend_data.empty()) {
+                stream.write_short_string(m_vote_extend_data);
+            }
             
             return (stream.size() - begin_size);
         }
@@ -186,6 +191,9 @@ namespace top
             const int32_t begin_size = stream.size();
 
             stream.read_short_string(m_justify_source);
+            if (stream.size() > 0){
+                stream.read_short_string(m_vote_extend_data);
+            }
             
             return (begin_size - stream.size());
         }

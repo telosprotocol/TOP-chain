@@ -1,5 +1,8 @@
 #include "utility.h"
+
 #include <time.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <chrono>
 #include <sstream>
 #include <memory>
@@ -52,32 +55,6 @@ namespace xChainSDK {
         }
 
         return result;
-    }
-
-    std::wstring s2ws(const std::string& str) {
-        if (str.empty())
-            return L"";
-
-        unsigned len = str.size() + 1;
-        setlocale(LC_CTYPE, "en_US.UTF-8");
-        std::unique_ptr<wchar_t[]> p(new wchar_t[len]);
-        mbstowcs(p.get(), str.c_str(), len);
-        std::wstring w_str(p.get());
-        return w_str;
-    }
-
-
-
-    std::string ws2s(const std::wstring& w_str) {
-        if (w_str.empty())
-            return "";
-
-        unsigned len = w_str.size() * 4 + 1;
-        setlocale(LC_CTYPE, "en_US.UTF-8");
-        std::unique_ptr<char[]> p(new char[len]);
-        wcstombs(p.get(), w_str.c_str(), len);
-        std::string str(p.get());
-        return str;
     }
 
     std::string utility::base64_encode(unsigned char const* str, unsigned int len) {

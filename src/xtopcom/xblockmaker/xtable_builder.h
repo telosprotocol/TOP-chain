@@ -42,20 +42,6 @@ class xfulltable_builder_para_t : public xblock_builder_para_face_t {
     std::vector<xblock_ptr_t>       m_blocks_from_last_full;
 };
 
-class xlighttable_builder_t : public xblock_builder_face_t {
- public:
-    virtual xblock_ptr_t        build_block(const xblock_ptr_t & prev_block,
-                                            const xobject_ptr_t<base::xvbstate_t> & prev_bstate,
-                                            const data::xblock_consensus_para_t & cs_para,
-                                            xblock_builder_para_ptr_t & build_para);
-    void                        make_light_table_binlog(const xobject_ptr_t<base::xvbstate_t> & proposal_bstate,
-                                                        const std::vector<xblock_ptr_t> & units,
-                                                        std::string & property_binlog,
-                                                        std::map<std::string, std::string> & property_hashs,
-                                                        const std::vector<data::xlightunit_tx_info_ptr_t> & txs_info,
-                                                        const std::map<base::xtable_shortid_t, uint64_t> & changed_confirm_ids);
-};
-
 class xfulltable_builder_t : public xblock_builder_face_t {
  public:
     virtual xblock_ptr_t        build_block(const xblock_ptr_t & prev_block,
@@ -71,6 +57,14 @@ protected:
     data::xstatistics_data_t make_block_statistics(const std::vector<xblock_ptr_t> & blocks);
 };
 class xemptytable_builder_t : public xblock_builder_face_t {
+ public:
+    virtual xblock_ptr_t        build_block(const xblock_ptr_t & prev_block,
+                                            const xobject_ptr_t<base::xvbstate_t> & prev_bstate,
+                                            const data::xblock_consensus_para_t & cs_para,
+                                            xblock_builder_para_ptr_t & build_para);
+};
+
+class xrelay_block_builder_t : public xblock_builder_face_t {
  public:
     virtual xblock_ptr_t        build_block(const xblock_ptr_t & prev_block,
                                             const xobject_ptr_t<base::xvbstate_t> & prev_bstate,

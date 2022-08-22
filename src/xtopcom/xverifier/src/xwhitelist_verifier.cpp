@@ -52,9 +52,9 @@ namespace top {
                  ((trx_ptr->get_target_addr().substr(0, strlen(top::sys_contract_sharding_vote_addr)) == top::sys_contract_sharding_vote_addr) ||
                    trx_ptr->get_target_addr().substr(0, strlen(top::sys_contract_sharding_reward_claiming_addr)) == top::sys_contract_sharding_reward_claiming_addr)) { // vote & claim user reward
                     is_limit_tx = true;
-                } else if (data::is_user_contract_address(common::xaccount_address_t{trx_ptr->get_target_addr()})) { // lua contract
-                    is_limit_tx = true;
-                }
+                } // else if (data::is_user_contract_address(common::xaccount_address_t{trx_ptr->get_target_addr()})) { // lua contract
+                //    is_limit_tx = true;
+                //}
                 break;
             default:
                 break;
@@ -70,33 +70,6 @@ namespace top {
 
             return false;
 
-        }
-
-        int  xwhitelist_utl::split_string(const std::string & input,const char split_char, std::vector<std::string> & values)
-        {
-            if(input.empty())
-                return 0;
-
-            std::string::size_type begin_pos = 0;
-            std::string::size_type pos_of_split = input.find_first_of(split_char,begin_pos);
-            while(pos_of_split != std::string::npos)
-            {
-                if(pos_of_split != begin_pos)
-                    values.push_back(input.substr(begin_pos,pos_of_split - begin_pos)); //[)
-                begin_pos = pos_of_split + 1; //skip boundary
-                pos_of_split = input.find_first_of(split_char, begin_pos);
-                if(pos_of_split == std::string::npos) //not find the last split-char
-                {
-                    if(begin_pos < input.size())
-                    {
-                        values.push_back(input.substr(begin_pos)); //put the remaining section
-                    }
-                }
-            }
-            if(values.empty())
-                values.push_back(input);
-
-            return (int)values.size();
         }
 
         onchain_whitelist xwhitelist_utl::get_whitelist_from_config() {

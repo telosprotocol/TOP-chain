@@ -16,6 +16,7 @@
 #include "xunit_service/xunit_log.h"
 #include "xunit_service/xcons_utl.h"
 #include "xrouter/xrouter_face.h"
+#include "xdata/xblock_cs_para.h"
 
 #include <string>
 #include <vector>
@@ -47,6 +48,7 @@ public:
     virtual std::shared_ptr<vnetwork::xvnetwork_driver_face_t> find(const xvip2_t &addr) = 0;
     virtual bool erase(const xvip2_t & addr) = 0;
     virtual void send_receipt_msgs(const xvip2_t & from_addr, const std::vector<data::xcons_transaction_ptr_t> & receipts, std::vector<data::xcons_transaction_ptr_t> & non_shard_cross_receipts) = 0;
+    virtual bool get_election_round(const xvip2_t & xip, uint64_t & election_round) = 0;
 };
 
 //compare function for table index data map
@@ -137,10 +139,11 @@ enum e_cons_type {
 
 class xproposal_maker_face {
 public:
+    virtual data::xblock_consensus_para_ptr_t   leader_set_consensus_para_basic(base::xvblock_t* _cert_block, uint64_t viewid, uint64_t clock, std::error_code & ec) {return nullptr;}
     virtual bool                        can_make_proposal(data::xblock_consensus_para_t & proposal_para) = 0;
     virtual data::xblock_ptr_t make_proposal(data::xblock_consensus_para_t & proposal_para, uint32_t min_tx_num) = 0;
-    virtual int                         verify_proposal(base::xvblock_t* proposal_block, base::xvqcert_t * bind_clock_cert) = 0;
-    virtual void                        set_certauth(base::xvcertauth_t* _ca) = 0;
+    virtual int                         verify_proposal(data::xblock_consensus_para_t & proposal_para, base::xvblock_t* proposal_block, base::xvqcert_t * bind_clock_cert) = 0;
+    virtual void                        set_certauth(base::xvcertauth_t* _ca) {}
 };
 
 // block maker face

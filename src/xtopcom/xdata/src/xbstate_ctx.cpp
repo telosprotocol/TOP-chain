@@ -2,7 +2,6 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-
 #include "xdata/xbstate_ctx.h"
 
 #include "xbase/xobject.h"
@@ -20,33 +19,33 @@
 
 NS_BEG2(top, data)
 
-#define CHECK_PROPERTY_NULL_RETURN(propobj, funcname, propname) \
-do {\
-    if (nullptr == propobj) {\
-        std::string str_funcname = std::string(funcname);\
-        xwarn("%s,fail-property not exist.address=%s,propname=%s", str_funcname.c_str(), get_address().c_str(), propname.c_str());\
-        return xaccount_property_not_create;\
-    }\
-}while(0)
+#define CHECK_PROPERTY_NULL_RETURN(propobj, funcname, propname)                                                                                                                    \
+    do {                                                                                                                                                                           \
+        if (nullptr == propobj) {                                                                                                                                                  \
+            std::string str_funcname = std::string(funcname);                                                                                                                      \
+            xwarn("%s,fail-property not exist.address=%s,propname=%s", str_funcname.c_str(), get_address().c_str(), propname.c_str());                                             \
+            return xaccount_property_not_create;                                                                                                                                   \
+        }                                                                                                                                                                          \
+    } while (0)
 
-#define CHECK_FIND_PROPERTY(bstate, propname) \
-do {\
-    if (false == bstate->find_property(propname)) {\
-        xwarn("xbstate_ctx_t,fail-find property.address=%s,propname=%s", get_address().c_str(), propname.c_str());\
-        return xaccount_property_not_create;\
-    }\
-}while(0)
+#define CHECK_FIND_PROPERTY(bstate, propname)                                                                                                                                      \
+    do {                                                                                                                                                                           \
+        if (false == bstate->find_property(propname)) {                                                                                                                            \
+            xwarn("xbstate_ctx_t,fail-find property.address=%s,propname=%s", get_address().c_str(), propname.c_str());                                                             \
+            return xaccount_property_not_create;                                                                                                                                   \
+        }                                                                                                                                                                          \
+    } while (0)
 
-xbstate_ctx_t::xbstate_ctx_t(base::xvbstate_t* bstate, bool readonly) {
+xbstate_ctx_t::xbstate_ctx_t(base::xvbstate_t * bstate, bool readonly) {
     bstate->add_ref();
     m_bstate.attach(bstate);
 
     if (!readonly) {
         m_canvas = make_object_ptr<base::xvcanvas_t>();
         m_snapshot_canvas_height = 0;
-        base::xvbstate_t* _new_bstate = static_cast<base::xvbstate_t*>(bstate->clone());
+        base::xvbstate_t * _new_bstate = static_cast<base::xvbstate_t *>(bstate->clone());
         xassert(_new_bstate != nullptr);
-        m_snapshot_origin_bstate.attach(_new_bstate); // clone another bstate
+        m_snapshot_origin_bstate.attach(_new_bstate);  // clone another bstate
     }
 }
 
@@ -72,7 +71,7 @@ bool xbstate_ctx_t::do_rollback() {
         m_canvas->rollback(m_snapshot_canvas_height);
         std::deque<base::xvmethod_t> records = m_canvas->clone();
 
-        base::xauto_ptr<base::xvbstate_t> _new_bstate = dynamic_cast<base::xvbstate_t*>(m_snapshot_origin_bstate->clone());
+        base::xauto_ptr<base::xvbstate_t> _new_bstate = dynamic_cast<base::xvbstate_t *>(m_snapshot_origin_bstate->clone());
         bool ret = _new_bstate->apply_changes_of_binlog(std::move(records));
         if (!ret) {
             xerror("xbstate_ctx_t::do_rollback fail-apply_changes_of_binlog");
@@ -98,8 +97,13 @@ bool xbstate_ctx_t::is_state_changed() const {
 
 std::string xbstate_ctx_t::dump() const {
     char local_param_buf[256];
-    xprintf(local_param_buf,sizeof(local_param_buf),"{bstatectx:address=%s,height=%ld,snapshot_h=%" PRIu64 ",records_h=0x%" PRIx64 " :}",
-        get_address().c_str(),get_block_height(),m_snapshot_canvas_height,m_canvas->get_op_records_size());
+    xprintf(local_param_buf,
+            sizeof(local_param_buf),
+            "{bstatectx:address=%s,height=%ld,snapshot_h=%" PRIu64 ",records_h=0x%" PRIx64 " :}",
+            get_address().c_str(),
+            get_block_height(),
+            m_snapshot_canvas_height,
+            m_canvas->get_op_records_size());
     return std::string(local_param_buf);
 }
 
@@ -118,7 +122,7 @@ size_t xbstate_ctx_t::get_canvas_records_size() const {
     return m_canvas->get_op_records_size();
 }
 
-int32_t xbstate_ctx_t::check_create_property(const std::string& key) {
+int32_t xbstate_ctx_t::check_create_property(const std::string & key) {
     if (false == base::xvpropertyrules_t::is_valid_sys_contract_property(key)) {
         xerror("xbstate_ctx_t::check_create_property,property name not valid.key=%s", key.c_str());
         return xaccount_property_create_fail;
@@ -192,7 +196,7 @@ base::xauto_ptr<base::xvintvar_t<uint64_t>> xbstate_ctx_t::load_uin64_for_write(
     xassert(false);
     return nullptr;
 }
-int32_t xbstate_ctx_t::string_create(const std::string& key) {
+int32_t xbstate_ctx_t::string_create(const std::string & key) {
     xdbg("xbstate_ctx_t::string_create,property_modify_enter.address=%s,height=%ld,propname=%s", get_address().c_str(), get_chain_height(), key.c_str());
     auto ret = check_create_property(key);
     if (ret) {
@@ -203,14 +207,14 @@ int32_t xbstate_ctx_t::string_create(const std::string& key) {
 
     return xsuccess;
 }
-int32_t xbstate_ctx_t::string_set(const std::string& key, const std::string& value) {
+int32_t xbstate_ctx_t::string_set(const std::string & key, const std::string & value) {
     xdbg("xbstate_ctx_t::string_set,property_modify_enter.address=%s,height=%ld,propname=%s", get_address().c_str(), get_chain_height(), key.c_str());
     auto propobj = load_string_for_write(key);
     CHECK_PROPERTY_NULL_RETURN(propobj, "xbstate_ctx_t::string_set", key);
     return propobj->reset(value, m_canvas.get()) == true ? xsuccess : xaccount_property_operate_fail;
 }
 
-int32_t xbstate_ctx_t::string_get(const std::string& key, std::string& value) const {
+int32_t xbstate_ctx_t::string_get(const std::string & key, std::string & value) const {
     CHECK_FIND_PROPERTY(get_bstate(), key);
 
     auto propobj = get_bstate()->load_string_var(key);
@@ -220,7 +224,7 @@ int32_t xbstate_ctx_t::string_get(const std::string& key, std::string& value) co
     return xsuccess;
 }
 
-int32_t xbstate_ctx_t::list_create(const std::string& key) {
+int32_t xbstate_ctx_t::list_create(const std::string & key) {
     xdbg("xbstate_ctx_t::list_create,property_modify_enter.address=%s,height=%ld,propname=%s", get_address().c_str(), get_chain_height(), key.c_str());
     auto ret = check_create_property(key);
     if (ret) {
@@ -231,21 +235,20 @@ int32_t xbstate_ctx_t::list_create(const std::string& key) {
     CHECK_PROPERTY_NULL_RETURN(propobj, "xbstate_ctx_t::list_create", key);
     return xsuccess;
 }
-int32_t xbstate_ctx_t::list_push_back(const std::string& key, const std::string& value) {
+int32_t xbstate_ctx_t::list_push_back(const std::string & key, const std::string & value) {
     xdbg("xbstate_ctx_t::list_push_back,property_modify_enter.address=%s,height=%ld,propname=%s", get_address().c_str(), get_chain_height(), key.c_str());
     auto propobj = load_deque_for_write(key);
     CHECK_PROPERTY_NULL_RETURN(propobj, "xbstate_ctx_t::list_push_back", key);
     return propobj->push_back(value, m_canvas.get()) == true ? xsuccess : xaccount_property_operate_fail;
 }
-int32_t xbstate_ctx_t::list_push_front(const std::string& key, const std::string& value) {
+int32_t xbstate_ctx_t::list_push_front(const std::string & key, const std::string & value) {
     xdbg("xbstate_ctx_t::list_push_front,property_modify_enter.address=%s,height=%ld,propname=%s", get_address().c_str(), get_chain_height(), key.c_str());
     auto propobj = load_deque_for_write(key);
     CHECK_PROPERTY_NULL_RETURN(propobj, "xbstate_ctx_t::list_push_front", key);
     return propobj->push_front(value, m_canvas.get()) == true ? xsuccess : xaccount_property_operate_fail;
 }
-int32_t xbstate_ctx_t::list_pop_back(const std::string& key, std::string& value) {
-    xdbg("xbstate_ctx_t::list_pop_back,property_modify_enter.address=%s,height=%ld,propname=%s",
-        get_address().c_str(), get_chain_height(), key.c_str());
+int32_t xbstate_ctx_t::list_pop_back(const std::string & key, std::string & value) {
+    xdbg("xbstate_ctx_t::list_pop_back,property_modify_enter.address=%s,height=%ld,propname=%s", get_address().c_str(), get_chain_height(), key.c_str());
     auto & bstate = get_bstate();
     auto propobj = bstate->load_string_deque_var(key);
     CHECK_PROPERTY_NULL_RETURN(propobj, "xbstate_ctx_t::list_pop_back", key);
@@ -257,7 +260,7 @@ int32_t xbstate_ctx_t::list_pop_back(const std::string& key, std::string& value)
     value = propobj->query_back();
     return propobj->pop_back(m_canvas.get()) == true ? xsuccess : xaccount_property_operate_fail;
 }
-int32_t xbstate_ctx_t::list_pop_front(const std::string& key, std::string& value) {
+int32_t xbstate_ctx_t::list_pop_front(const std::string & key, std::string & value) {
     xdbg("xbstate_ctx_t::list_pop_front,property_modify_enter.address=%s,height=%ld,propname=%s", get_address().c_str(), get_chain_height(), key.c_str());
     auto & bstate = get_bstate();
     auto propobj = bstate->load_string_deque_var(key);
@@ -269,7 +272,7 @@ int32_t xbstate_ctx_t::list_pop_front(const std::string& key, std::string& value
     value = propobj->query_front();
     return propobj->pop_front(m_canvas.get()) == true ? xsuccess : xaccount_property_operate_fail;
 }
-int32_t xbstate_ctx_t::list_clear(const std::string &key) {
+int32_t xbstate_ctx_t::list_clear(const std::string & key) {
     xdbg("xbstate_ctx_t::list_clear,property_modify_enter.address=%s,height=%ld,propname=%s", get_address().c_str(), get_chain_height(), key.c_str());
     auto & bstate = get_bstate();
     auto propobj = bstate->load_string_deque_var(key);
@@ -278,7 +281,7 @@ int32_t xbstate_ctx_t::list_clear(const std::string &key) {
     return xsuccess;
 }
 
-int32_t xbstate_ctx_t::list_get(const std::string& key, const uint32_t pos, std::string & value) {
+int32_t xbstate_ctx_t::list_get(const std::string & key, const uint32_t pos, std::string & value) {
     auto & bstate = get_bstate();
     CHECK_FIND_PROPERTY(bstate, key);
     auto propobj = bstate->load_string_deque_var(key);
@@ -292,7 +295,7 @@ int32_t xbstate_ctx_t::list_get(const std::string& key, const uint32_t pos, std:
     return xsuccess;
 }
 
-int32_t xbstate_ctx_t::list_size(const std::string& key, int32_t& size) {
+int32_t xbstate_ctx_t::list_size(const std::string & key, int32_t & size) {
     auto & bstate = get_bstate();
     CHECK_FIND_PROPERTY(bstate, key);
 
@@ -303,7 +306,7 @@ int32_t xbstate_ctx_t::list_size(const std::string& key, int32_t& size) {
     return xsuccess;
 }
 
-int32_t xbstate_ctx_t::list_copy_get(const std::string &key, std::deque<std::string> & deque) {
+int32_t xbstate_ctx_t::list_copy_get(const std::string & key, std::deque<std::string> & deque) {
     auto & bstate = get_bstate();
     CHECK_FIND_PROPERTY(bstate, key);
     auto propobj = bstate->load_string_deque_var(key);
@@ -312,7 +315,7 @@ int32_t xbstate_ctx_t::list_copy_get(const std::string &key, std::deque<std::str
     return xsuccess;
 }
 
-int32_t xbstate_ctx_t::map_create(const std::string& key) {
+int32_t xbstate_ctx_t::map_create(const std::string & key) {
     xdbg("xbstate_ctx_t::map_create,property_modify_enter.address=%s,height=%ld,propname=%s", get_address().c_str(), get_chain_height(), key.c_str());
     auto ret = check_create_property(key);
     if (ret) {
@@ -370,7 +373,7 @@ int32_t xbstate_ctx_t::map_clear(const std::string & key) {
     CHECK_PROPERTY_NULL_RETURN(propobj, "xbstate_ctx_t::map_clear", key);
     return propobj->clear(m_canvas.get()) == true ? xsuccess : xaccount_property_operate_fail;
 }
-int32_t xbstate_ctx_t::map_size(const std::string & key, int32_t& size) const {
+int32_t xbstate_ctx_t::map_size(const std::string & key, int32_t & size) const {
     auto & bstate = get_bstate();
     CHECK_FIND_PROPERTY(bstate, key);
     auto propobj = bstate->load_string_map_var(key);
@@ -389,7 +392,7 @@ int32_t xbstate_ctx_t::map_copy_get(const std::string & key, std::map<std::strin
     return xsuccess;
 }
 
-uint64_t xbstate_ctx_t::token_balance(const std::string& key) {
+uint64_t xbstate_ctx_t::token_balance(const std::string & key) {
     auto & bstate = get_bstate();
     if (!bstate->find_property(key)) {
         return 0;
@@ -403,7 +406,7 @@ uint64_t xbstate_ctx_t::token_balance(const std::string& key) {
     return (uint64_t)balance;
 }
 
-int32_t xbstate_ctx_t::token_withdraw(const std::string& key, base::vtoken_t sub_token) {
+int32_t xbstate_ctx_t::token_withdraw(const std::string & key, base::vtoken_t sub_token) {
     xdbg("xbstate_ctx_t::token_withdraw,property_modify_enter.address=%s,height=%ld,propname=%s,token=%ld", get_address().c_str(), get_chain_height(), key.c_str(), sub_token);
     auto propobj = load_token_for_write(key);
     CHECK_PROPERTY_NULL_RETURN(propobj, "xbstate_ctx_t::token_withdraw", key);
@@ -418,7 +421,7 @@ int32_t xbstate_ctx_t::token_withdraw(const std::string& key, base::vtoken_t sub
     return xsuccess;
 }
 
-int32_t xbstate_ctx_t::token_deposit(const std::string& key, base::vtoken_t add_token) {
+int32_t xbstate_ctx_t::token_deposit(const std::string & key, base::vtoken_t add_token) {
     xdbg("xbstate_ctx_t::token_deposit,property_modify_enter.address=%s,height=%ld,propname=%s,token=%ld", get_address().c_str(), get_chain_height(), key.c_str(), add_token);
     auto propobj = load_token_for_write(key);
     CHECK_PROPERTY_NULL_RETURN(propobj, "xbstate_ctx_t::token_withdraw", key);
@@ -432,7 +435,7 @@ int32_t xbstate_ctx_t::token_deposit(const std::string& key, base::vtoken_t add_
     return xsuccess;
 }
 
-int32_t xbstate_ctx_t::uint64_add(const std::string& key, uint64_t change) {
+int32_t xbstate_ctx_t::uint64_add(const std::string & key, uint64_t change) {
     if (change == 0) {
         return xsuccess;
     }
@@ -445,7 +448,7 @@ int32_t xbstate_ctx_t::uint64_add(const std::string& key, uint64_t change) {
     xdbg("xbstate_ctx_t::uint64_add property=%s,old_value=%ld,new_value=%ld,change=%ld", key.c_str(), oldvalue, newvalue, change);
     return xsuccess;
 }
-int32_t xbstate_ctx_t::uint64_sub(const std::string& key, uint64_t change) {
+int32_t xbstate_ctx_t::uint64_sub(const std::string & key, uint64_t change) {
     if (change == 0) {
         return xsuccess;
     }
@@ -463,7 +466,7 @@ int32_t xbstate_ctx_t::uint64_sub(const std::string& key, uint64_t change) {
     return xsuccess;
 }
 
-int32_t     xbstate_ctx_t::uint64_set(const std::string& key, uint64_t value) {
+int32_t xbstate_ctx_t::uint64_set(const std::string & key, uint64_t value) {
     xdbg("xbstate_ctx_t::uint64_set,property_modify_enter.address=%s,height=%ld,propname=%s,change=%ld", get_address().c_str(), get_chain_height(), key.c_str(), value);
     auto propobj = load_uin64_for_write(key);
     CHECK_PROPERTY_NULL_RETURN(propobj, "xbstate_ctx_t::uint64_set", key);
@@ -478,7 +481,7 @@ int32_t     xbstate_ctx_t::uint64_set(const std::string& key, uint64_t value) {
 }
 
 //========= // APIs for property operation with property value return ========
-uint64_t xbstate_ctx_t::token_get(const std::string& prop) const {
+uint64_t xbstate_ctx_t::token_get(const std::string & prop) const {
     if (false == get_bstate()->find_property(prop)) {
         return 0;
     }
@@ -491,7 +494,7 @@ uint64_t xbstate_ctx_t::token_get(const std::string& prop) const {
     return (uint64_t)balance;
 }
 
-uint64_t xbstate_ctx_t::uint64_property_get(const std::string& prop) const {
+uint64_t xbstate_ctx_t::uint64_property_get(const std::string & prop) const {
     if (false == get_bstate()->find_property(prop)) {
         return 0;
     }
@@ -508,7 +511,7 @@ std::string xbstate_ctx_t::map_get(const std::string & prop, const std::string &
     return propobj->query(field);
 }
 
-std::map<std::string, std::string>  xbstate_ctx_t::map_get(const std::string & prop) const {
+std::map<std::string, std::string> xbstate_ctx_t::map_get(const std::string & prop) const {
     std::map<std::string, std::string> values;
     map_copy_get(prop, values);
     return values;
@@ -566,7 +569,7 @@ base::xauto_ptr<base::xmapvar_t<std::string>> xbstate_ctx_t::load_tep_token_for_
     return nullptr;
 }
 
-evm_common::u256 xbstate_ctx_t::tep_token_balance(const std::string& token_name) const {
+evm_common::u256 xbstate_ctx_t::tep_token_balance(const std::string & token_name) const {
     assert(token_name.length() == 1);
 
     auto value_rlp = tep_token_balance_bytes(token_name);
@@ -586,7 +589,7 @@ evm_common::u256 xbstate_ctx_t::tep_token_balance(common::xtoken_id_t const toke
     return tep_token_balance(top::to_string(token_id));
 }
 
-top::xbytes_t xbstate_ctx_t::tep_token_balance_bytes(const std::string& token_name) const {
+top::xbytes_t xbstate_ctx_t::tep_token_balance_bytes(const std::string & token_name) const {
     assert(token_name.length() == 1);
 
     auto & bstate = get_bstate();
@@ -611,10 +614,15 @@ top::xbytes_t xbstate_ctx_t::tep_token_balance_bytes(common::xtoken_id_t const t
     return tep_token_balance_bytes(top::to_string(token_id));
 }
 
-int32_t xbstate_ctx_t::tep_token_withdraw(const std::string& token_name, evm_common::u256 sub_token) {
+int32_t xbstate_ctx_t::tep_token_withdraw(const std::string & token_name, evm_common::u256 sub_token) {
     assert(token_name.length() == 1);
 
-    xdbg("xbstate_ctx_t::tep_token_withdraw,property_modify_enter.address=%s,height=%ld,tokenname=%s,token=%s", get_address().c_str(), get_chain_height(), top::to_hex(token_name).c_str(), sub_token.str().c_str());
+    xdbg("xbstate_ctx_t::tep_token_withdraw,property_modify_enter.address=%s,height=%ld,tokenname=%s,token=%s",
+         get_address().c_str(),
+         get_chain_height(),
+         top::to_hex(token_name).c_str(),
+         sub_token.str().c_str());
+
     auto propobj = load_tep_token_for_write();
     CHECK_PROPERTY_NULL_RETURN(propobj, "xbstate_ctx_t::tep_token_withdraw", token_name);
     auto balance_str = propobj->query(token_name);
@@ -628,7 +636,10 @@ int32_t xbstate_ctx_t::tep_token_withdraw(const std::string& token_name, evm_com
     }
 
     if (sub_token <= 0 || sub_token > balance) {
-        xwarn("xbstate_ctx_t::tep_token_withdraw fail-can't do withdraw. token_name=%s,balance=%s,sub_token=%s", top::to_hex(token_name).c_str(), balance.str().c_str(), sub_token.str().c_str());
+        xwarn("xbstate_ctx_t::tep_token_withdraw fail-can't do withdraw. token_name=%s,balance=%s,sub_token=%s",
+              top::to_hex(token_name).c_str(),
+              balance.str().c_str(),
+              sub_token.str().c_str());
         return xaccount_property_operate_fail;
     }
 
@@ -651,10 +662,15 @@ int32_t xbstate_ctx_t::tep_token_withdraw(common::xtoken_id_t const token_id, ev
     return tep_token_withdraw(top::to_string(token_id), sub_token);
 }
 
-int32_t xbstate_ctx_t::tep_token_deposit(const std::string& token_name, evm_common::u256 add_token) {
+int32_t xbstate_ctx_t::tep_token_deposit(const std::string & token_name, evm_common::u256 add_token) {
     assert(token_name.length() == 1);
 
-    xdbg("xbstate_ctx_t::tep_token_deposit,property_modify_enter.address=%s,height=%ld,token_name=%s,token=%s", get_address().c_str(), get_chain_height(), top::to_hex(token_name).c_str(), add_token.str().c_str());
+    xdbg("xbstate_ctx_t::tep_token_deposit,property_modify_enter.address=%s,height=%ld,token_name=%s,token=%s",
+         get_address().c_str(),
+         get_chain_height(),
+         top::to_hex(token_name).c_str(),
+         add_token.str().c_str());
+
     auto propobj = load_tep_token_for_write();
     CHECK_PROPERTY_NULL_RETURN(propobj, "xbstate_ctx_t::tep_token_deposit", token_name);
     auto balance_str = propobj->query(token_name);
@@ -668,7 +684,10 @@ int32_t xbstate_ctx_t::tep_token_deposit(const std::string& token_name, evm_comm
     }
 
     if (add_token <= 0) {
-        xwarn("xbstate_ctx_t::tep_token_withdraw fail-can't do withdraw. token_name=%s,balance=%s,add_token=%s", top::to_hex(token_name).c_str(), balance.str().c_str(), add_token.str().c_str());
+        xwarn("xbstate_ctx_t::tep_token_withdraw fail-can't do withdraw. token_name=%s,balance=%s,add_token=%s",
+              top::to_hex(token_name).c_str(),
+              balance.str().c_str(),
+              add_token.str().c_str());
         return xaccount_property_operate_fail;
     }
 
@@ -698,5 +717,11 @@ int32_t xbstate_ctx_t::set_tep_balance(common::xtoken_id_t const token_id, evm_c
 int32_t xbstate_ctx_t::set_tep_balance_bytes(common::xtoken_id_t const token_id, const top::xbytes_t & new_balance) {
     return set_tep_balance_bytes(top::to_string(token_id), new_balance);
 }
+
+common::xaccount_address_t xbstate_ctx_t::account_address() const {
+    std::error_code ec;
+    return common::xaccount_address_t::build_from(get_account(), ec);
+}
+
 
 NS_END2

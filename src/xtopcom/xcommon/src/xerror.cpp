@@ -64,6 +64,9 @@ static char const * errc_to_string(xerrc_t const errc) noexcept {
     case xerrc_t::invalid_bloom:
         return "invalid bloom";
 
+    case xerrc_t::table_id_mismatch:
+        return "table id mismatched";
+
     default:
         assert(false);
         return "unknown common category error";

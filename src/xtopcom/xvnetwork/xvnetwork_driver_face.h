@@ -161,6 +161,11 @@ public:
     /// @return The fullnodes' addresses.
     virtual std::vector<common::xnode_address_t> fullnode_addresses(std::error_code & ec) const = 0;
 
+    /// @brief Get the relays' addresses
+    /// @param ec Store the error code when getting the data.
+    /// @return The relays' addresses.
+    virtual std::vector<common::xnode_address_t> relay_addresses(std::error_code & ec) const = 0;
+
     /**
      * @brief Get table ids belonging to this zone
      * 

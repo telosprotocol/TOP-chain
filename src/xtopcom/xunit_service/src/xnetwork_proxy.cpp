@@ -331,6 +331,14 @@ void xnetwork_proxy::send_receipt_msgs(const xvip2_t & from_addr,
     }
 }
 
+bool xnetwork_proxy::get_election_round(const xvip2_t & xip, uint64_t & election_round) {
+    auto net_driver = find(xip);
+    if (net_driver == nullptr) {
+        return false;
+    }
+    election_round = net_driver->address().election_round().value();
+    return true;
+}
 
 void xnetwork_proxy::send_receipt_msg(std::shared_ptr<vnetwork::xvnetwork_driver_face_t> net_driver,
                                       const data::xcons_transaction_ptr_t & receipt,
@@ -348,7 +356,8 @@ void xnetwork_proxy::send_receipt_msg(std::shared_ptr<vnetwork::xvnetwork_driver
         auto auditor_cluster_addr =
             m_router->sharding_address_from_tableindex(target_tableindex, net_driver->network_id(), auditor_type);
         xassert(common::has<common::xnode_type_t::consensus_auditor>(auditor_cluster_addr.type()) || common::has<common::xnode_type_t::committee>(auditor_cluster_addr.type()) ||
-                common::has<common::xnode_type_t::zec>(auditor_cluster_addr.type()) || common::has<common::xnode_type_t::evm_auditor>(auditor_cluster_addr.type()));
+                common::has<common::xnode_type_t::zec>(auditor_cluster_addr.type()) || common::has<common::xnode_type_t::evm_auditor>(auditor_cluster_addr.type()) || 
+                common::has<common::xnode_type_t::relay>(auditor_cluster_addr.type()));
 
         if (net_driver->address().cluster_address() == auditor_cluster_addr) {
             xunit_info("xnetwork_proxy::send_receipt_msg broadcast receipt=%s,size=%zu,from_vnode:%s", receipt->dump().c_str(), stream.size(), net_driver->address().to_string().c_str());

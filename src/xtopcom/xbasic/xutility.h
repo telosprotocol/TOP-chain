@@ -262,13 +262,3 @@ NS_END1
 #else
 #   define XSTD_PRINT(...)
 #endif
-
-#if !defined NDEBUG
-#   if defined XENABLE_VERBOSE_DBG
-#       define XVERBOSE_ASSERT(CONDITION)   assert(CONDITION)
-#   else
-#       define XVERBOSE_ASSERT(CONDITION)
-#   endif
-#else
-#   define XVERBOSE_ASSERT(CONDITION)
-#endif

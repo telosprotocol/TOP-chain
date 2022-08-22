@@ -16,7 +16,8 @@ namespace top
     XINLINE_CONSTEXPR uint32_t MAIN_CHAIN_REC_TABLE_USED_NUM{1};
     XINLINE_CONSTEXPR uint32_t MAIN_CHAIN_ZEC_TABLE_USED_NUM{3};
     XINLINE_CONSTEXPR uint32_t MAIN_CHAIN_EVM_TABLE_USED_NUM{1};
-    XINLINE_CONSTEXPR uint32_t TOTAL_TABLE_NUM{MAIN_CHAIN_REC_TABLE_USED_NUM+MAIN_CHAIN_ZEC_TABLE_USED_NUM+MAIN_CHAIN_EVM_TABLE_USED_NUM+enum_vbucket_has_tables_count};
+    XINLINE_CONSTEXPR uint32_t MAIN_CHAIN_RELAY_TABLE_USED_NUM{1};
+    XINLINE_CONSTEXPR uint32_t TOTAL_TABLE_NUM{MAIN_CHAIN_REC_TABLE_USED_NUM+MAIN_CHAIN_ZEC_TABLE_USED_NUM+MAIN_CHAIN_EVM_TABLE_USED_NUM+MAIN_CHAIN_RELAY_TABLE_USED_NUM+enum_vbucket_has_tables_count};
     namespace base
     {
         // account space is divided into netid#->zone#(aka bucket#)->book#->table#->account#
@@ -53,12 +54,13 @@ namespace top
             
             ////////////////////secp256k1 generated key->accoun/////////////////////////////////////////////
             enum_vaccount_addr_type_secp256k1_user_account      = '0',  //secp256k1 generated key->account
-            enum_vaccount_addr_type_secp256k1_user_sub_account  = '1',  //secp256k1 generated key->account
+            // enum_vaccount_addr_type_secp256k1_user_sub_account  = '1',  //secp256k1 generated key->account
             enum_vaccount_addr_type_native_contract             = '2',  //secp256k1 generated key->account
-            enum_vaccount_addr_type_custom_contract             = '3',  //secp256k1 generated key->account
+            // enum_vaccount_addr_type_custom_contract             = '3',  //secp256k1 generated key->account
             enum_vaccount_addr_type_secp256k1_evm_user_account  = '6',
             enum_vaccount_addr_type_secp256k1_eth_user_account  = '8',
             enum_vaccount_addr_type_block_contract              = 'a',  //secp256k1 generated key->account
+            enum_vaccount_addr_type_relay_block                 = 'b',  //secp256k1 generated key->account
         };
         
         //each chain has max 16 zones/buckets, define as below
@@ -69,6 +71,7 @@ namespace top
             enum_chain_zone_zec_index         = 2,  //for election
             enum_chain_zone_frozen_index      = 3,  // for sync
             enum_chain_zone_evm_index         = 4,  // for eth
+            enum_chain_zone_relay_index       = 5,
 
             enum_chain_zone_fullnode_index    = 13,
             enum_chain_zone_storage_index     = 14, //for archive nodes
@@ -107,7 +110,7 @@ namespace top
             xtable_index_t(enum_xchain_zone_index zone_index, uint8_t subaddr) {
                 m_zone_index = zone_index;
                 m_subaddr = subaddr;
-                xassert(m_zone_index <= enum_chain_zone_zec_index || m_zone_index == enum_chain_zone_evm_index);
+                xassert(m_zone_index <= enum_chain_zone_zec_index || (enum_chain_zone_evm_index <= m_zone_index && m_zone_index<= enum_chain_zone_relay_index));
                 xassert(m_subaddr < enum_vbucket_has_tables_count);
             }
         public:
@@ -479,6 +482,7 @@ namespace top
             bool                        is_contract_address() const;
             bool                        is_drand_address() const;
             bool                        is_timer_address() const;
+            bool                        is_relay_address() const;
             enum_vaccount_addr_type     get_addr_type()const{return get_addrtype_from_account(m_account_addr);}
         private:
             xvid_t                      m_account_xid;

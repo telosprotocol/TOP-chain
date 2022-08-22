@@ -19,6 +19,8 @@
 #include "xdata/xblockextract.h"
 #include "xvledger/xreceiptid.h"
 #include "xvledger/xvpropertyprove.h"
+#include "xdata/xrelay_block.h"
+#include "xdata/xblock_cs_para.h"
 
 NS_BEG2(top, data)
 
@@ -30,7 +32,10 @@ class xblocktool_t {
     static base::xvblock_t*   create_genesis_lightunit(const std::string & account, int64_t top_balance);
     static base::xvblock_t*   create_genesis_lightunit(std::string const & account, chain_data::data_processor_t const & data);
     static base::xvblock_t*   create_genesis_lightunit(const std::string & account, const xtransaction_ptr_t & genesis_tx, const xtransaction_result_t & result);
+    static base::xvblock_t*   create_genesis_lightunit(const xobject_ptr_t<base::xvbstate_t> & state, const xobject_ptr_t<base::xvcanvas_t> & canvas);
     static base::xvblock_t*   create_genesis_root_block(base::enum_xchain_id chainid, const std::string & account, const xrootblock_para_t & bodypara);
+    static xrelay_block*      create_genesis_relay_block(const xrootblock_para_t & bodypara);
+    static base::xvblock_t*   create_genesis_wrap_relayblock();
 
     static base::xvblock_t*   create_next_emptyblock(base::xvblock_t* prev_block, const xblock_consensus_para_t & cs_para);
     static base::xvblock_t*   create_next_emptyblock(base::xvblock_t* prev_block);
@@ -48,7 +53,7 @@ class xblocktool_t {
     static std::string      make_address_shard_sys_account(const std::string & public_key_address, uint16_t subaddr);
     static std::string      make_address_zec_sys_account(const std::string & public_key_address, uint16_t subaddr);
     static std::string      make_address_beacon_sys_account(const std::string & public_key_address, uint16_t subaddr);
-    static std::string      make_address_user_contract(const std::string & public_key_address);
+    // static std::string      make_address_user_contract(const std::string & public_key_address);
 
     static std::vector<std::string>     make_all_table_addresses();
 
@@ -61,7 +66,6 @@ class xblocktool_t {
     static bool             can_make_next_full_table(base::xvblock_t* latest_cert_block, uint32_t max_light_num);
 
  public:
-    static void             alloc_transaction_receiptid(const xcons_transaction_ptr_t & tx, const base::xreceiptid_state_ptr_t & receiptid_state);
     static bool             alloc_transaction_receiptid(const xcons_transaction_ptr_t & tx, base::xreceiptid_pair_t & receiptid_pair);
 
  public:  // txreceipt create

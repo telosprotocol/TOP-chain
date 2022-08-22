@@ -182,5 +182,38 @@ xtransaction_ptr_t xtx_factory::create_v3_tx(xeth_transaction_t const& ethtx) {
     return tx;
 }
 
+xtransaction_ptr_t xtx_factory::create_v2_run_contract_tx(common::xaccount_address_t const & address,
+                                                        const uint64_t & latest_sendtx_nonce,
+                                                        std::string const & action_name,
+                                                        std::string const & action_params,
+                                                        const uint64_t fire_timestamp) {
+    auto tx = make_object_ptr<data::xtransaction_v2_t>();
+    tx->make_tx_run_contract(action_name, action_params);
+    tx->set_same_source_target_address(address.value());
+    tx->set_last_nonce(latest_sendtx_nonce);
+    tx->set_fire_timestamp(fire_timestamp);
+    tx->set_expire_duration(300);
+    tx->set_digest();
+    tx->set_len();
+    return tx;
+}
+
+xtransaction_ptr_t xtx_factory::create_v2_run_contract_tx(common::xaccount_address_t const & source_address,
+                                                        common::xaccount_address_t const & target_address,
+                                                        const uint64_t & latest_sendtx_nonce,
+                                                        std::string const & action_name,
+                                                        std::string const & action_params,
+                                                        const uint64_t fire_timestamp) {
+    auto tx = make_object_ptr<data::xtransaction_v2_t>();
+    tx->make_tx_run_contract(action_name, action_params);
+    tx->set_different_source_target_address(source_address.value(), target_address.value());
+    tx->set_last_nonce(latest_sendtx_nonce);
+    tx->set_fire_timestamp(fire_timestamp);
+    tx->set_expire_duration(300);
+    tx->set_digest();
+    tx->set_len();
+    return tx;
+}
+
 }  // namespace data
 }  // namespace top

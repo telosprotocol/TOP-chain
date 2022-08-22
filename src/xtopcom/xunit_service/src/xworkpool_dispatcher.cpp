@@ -9,6 +9,7 @@
 #include "xdata/xnative_contract_address.h"
 #include "xunit_service/xcons_utl.h"
 #include "xblockstore/xblockstore_face.h"
+#include "xunit_service/xrelay_packer2.h"
 
 #include <cinttypes>
 
@@ -25,7 +26,7 @@ xworkpool_dispatcher::~xworkpool_dispatcher() {
     xassert(m_packers.empty());
 }
 
-int16_t xworkpool_dispatcher::get_thread_index(base::xworkerpool_t * pool, base::xtable_index_t& table_id) {
+int16_t xworkpool_dispatcher::get_thread_index(base::xworkerpool_t * pool, base::xtable_index_t & table_id) {
     auto pool_size = pool->get_count();
     if (table_id.get_zone_index() == base::enum_chain_zone_beacon_index || table_id.get_zone_index() == base::enum_chain_zone_zec_index ||
         table_id.get_zone_index() == base::enum_chain_zone_evm_index) {
@@ -40,6 +41,7 @@ int16_t xworkpool_dispatcher::get_thread_index(base::xworkerpool_t * pool, base:
 
 bool xworkpool_dispatcher::dispatch(base::xworkerpool_t * pool, base::xcspdu_t * pdu, const xvip2_t & xip_from, const xvip2_t & xip_to) {
     auto            table_id = get_tableid(pdu->get_block_account());
+    xdbg("xworkpool_dispatcher::dispatch,pdu=%s,", pdu->dump().c_str());
     xbatch_packer * packer = nullptr;
     {
         std::lock_guard<std::mutex> lock(m_mutex);
@@ -210,7 +212,12 @@ bool xworkpool_dispatcher::subscribe(const std::vector<base::xtable_index_t> & t
                 auto account_id = account(table_id);
 
                 // build packer and push to container
-                auto packer_ptr = make_object_ptr<xbatch_packer>(m_mbus, table_id, account_id, m_para, m_blockmaker, base::xcontext_t::instance(), thread_id);
+                xbatch_packer_ptr_t packer_ptr;
+                if (table_id.get_zone_index() == base::enum_chain_zone_relay_index) {
+                    packer_ptr = make_object_ptr<xrelay_packer2>(m_mbus, table_id, account_id, m_para, m_blockmaker, base::xcontext_t::instance(), thread_id);
+                } else {
+                    packer_ptr = make_object_ptr<xbatch_packer>(m_mbus, table_id, account_id, m_para, m_blockmaker, base::xcontext_t::instance(), thread_id);
+                }
                 // packer_ptr->reset_xip_addr(xip);
                 m_packers[table_id] = packer_ptr;
                 reset_packers.push_back(packer_ptr);

@@ -62,11 +62,6 @@ bool xatomictx_executor_t::update_gasfee(const xvm_gasfee_detail_t detail, const
         unitstate->token_withdraw(data::XPROPERTY_BALANCE_AVAILABLE, base::vtoken_t(token));
         unitstate->token_deposit(data::XPROPERTY_BALANCE_BURN, base::vtoken_t(token));
     }
-    if (detail.m_state_burn_eth_balance > 0) {
-        auto balance = unitstate->tep_token_balance(common::xtoken_id_t::eth);
-        auto token = std::min(balance, detail.m_state_burn_eth_balance);
-        unitstate->tep_token_withdraw(common::xtoken_id_t::eth, token);
-    }
     if (detail.m_state_lock_balance > 0) {
         auto balance = unitstate->balance();
         xassert(balance >= detail.m_state_lock_balance);
@@ -271,6 +266,11 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
                         vmoutput.m_tx_result.used_gas = static_cast<uint64_t>(gasfee.tx_eth_gas_limit());
                         xwarn(
                             "xatomictx_executor_t::vm_execute outof gas, ret: %d, evm_status: %d, used_gas: %lu", ret, vmoutput.m_tx_result.status, vmoutput.m_tx_result.used_gas);
+                    } else if (ec == make_error_code(gasfee::error::xenum_errc::account_balance_not_enough)) {
+                        ret = enum_exec_error_estimate_gas;
+                        vmoutput.m_tx_result.status = evm_common::xevm_transaction_status_t::Revert;
+                        vmoutput.m_tx_result.used_gas = static_cast<uint64_t>(gasfee.tx_eth_gas_limit());
+                        xwarn("xatomictx_executor_t::vm_execute balance not enough");
                     } else {
                         xassert(false);
                     }
@@ -308,6 +308,11 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
                     vmoutput.m_tx_result.status = evm_common::xevm_transaction_status_t::OutOfGas;
                     vmoutput.m_tx_result.used_gas = static_cast<uint64_t>(gasfee.tx_eth_gas_limit());
                     xwarn("xatomictx_executor_t::vm_execute outof gas, evm_status: %d", vmoutput.m_tx_result.status);
+                } else if (ec == make_error_code(gasfee::error::xenum_errc::account_balance_not_enough)) {
+                    ret = enum_exec_error_estimate_gas;
+                    vmoutput.m_tx_result.status = evm_common::xevm_transaction_status_t::Revert;
+                    vmoutput.m_tx_result.used_gas = static_cast<uint64_t>(gasfee.tx_eth_gas_limit());
+                    xwarn("xatomictx_executor_t::vm_execute balance not enough");
                 } else {
                     xassert(false);
                 }
@@ -364,6 +369,15 @@ void xatomictx_executor_t::vm_execute_after_process(const data::xunitstate_ptr_t
         update_gasfee(output.m_vm_output.m_gasfee_detail, tx_unitstate, tx);
         is_state_dirty = m_statectx->is_state_dirty();
         tx->set_current_exec_status(data::enum_xunit_tx_exec_status_success);
+    }
+
+    // estimate_gas_error should always not be packed
+    if (vm_result == enum_exec_error_estimate_gas) {
+        m_statectx->do_rollback();
+        output.m_is_state_dirty = false;
+        output.m_is_pack = false;
+        output.m_snapshot_size = 0;
+        return;
     }
 
     // check if pack tx

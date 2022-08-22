@@ -300,7 +300,7 @@ namespace top
             
             bool                fire_verify_cert_job(base::xvqcert_t * target_cert);
             bool                fire_verify_commit_job(base::xvblock_t * target_block,base::xvqcert_t * paired_cert);
-            bool                fire_verify_vote_job(const xvip2_t replica_xip,base::xvqcert_t*replica_cert,xproposal_t * local_proposal,base::xfunction_t &callback);
+            bool                fire_verify_vote_job(const xvip2_t replica_xip,base::xvqcert_t*replica_cert,xproposal_t * local_proposal,base::xfunction_t &callback, const std::string & vote_extend_data);
             bool                fire_verify_proposal_job(const xvip2_t leader_xip,const xvip2_t replica_xip,xproposal_t * target_proposal,base::xfunction_t &callback);
             
             bool                notify_proposal_fail(std::vector<xproposal_t*> & timeout_list,std::vector<xproposal_t*> &outofdate_list);

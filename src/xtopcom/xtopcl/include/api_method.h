@@ -1,7 +1,6 @@
 #pragma once
 #include "CLI11.hpp"
 #include "api_method_imp.h"
-#include "base/config_file.h"
 #include "xtopcl/include/web/client_http.hpp"
 #include "xtopcl/include/xtop/topchain_type.h"
 #include "user_info.h"
@@ -14,27 +13,26 @@
 
 namespace xChainSDK {
 using std::string;
-std::vector<std::string> const COMMAND_LEVEL_FILTER = {"get", "system", "sendtx", "debug", "wallet"};
-std::vector<std::string> const COMMAND_HELP_STRING = {"-h", "--help"};
-constexpr int INDENT_WIDTH = 4;
-constexpr int HELP_WIDTH = 36;
-static const uint32_t kExpirePeriod = 2 * 60 * 60 * 1000;  // expire  after 2 * 60 * 60 s92h)
 
-enum class Command_type : uint8_t { toplevel, get, system, sendtransaction, wallet, subcommands, debug };
+static const uint32_t kExpirePeriod = 30 * 60 * 1000;  // expire after 30min 
 
-class ArgParser;
+enum class keystore_type : uint8_t {
+    account_key, 
+    worker_key 
+};
+
+enum class password_type : uint8_t {
+    interactive,
+    file_path,
+};
 
 class ApiMethod final {
 public:
-    using ParamList = std::vector<std::string>;
-    using CommandFunc = std::function<int(const ParamList &, std::ostringstream &)>;
-    using FuncInfoPair = std::pair<std::string, CommandFunc>;
-    using MethodFuncMap = std::map<std::string, FuncInfoPair>;
     using HttpClient = SimpleWeb::Client<SimpleWeb::HTTP>;
 
     ApiMethod();
     ~ApiMethod();
-    bool set_default_prikey(std::ostringstream & out_str, const bool is_query = false);
+    bool set_default_prikey(std::ostringstream & out_str);
     int update_account(std::ostringstream & out_str);
     int update_account(std::ostringstream & out_str, xJson::Value & root);
     xJson::Value get_response_from_daemon();
@@ -48,21 +46,15 @@ public:
     /*
      * wallet
      */
-    void create_account(const int32_t & pf, const string & pw_path, std::ostringstream & out_str);
-    void create_key(std::string & owner_account, const int32_t & pf, const string & pw_path, std::ostringstream & out_str);
+    void create_account(const string & pw_path, std::ostringstream & out_str);
+    void create_key(std::string & owner_account, const string & pw_path, std::ostringstream & out_str);
     std::unordered_map<std::string, std::string> queryNodeInfos();
     void list_accounts(std::ostringstream & out_str);
     void set_default_account(const std::string & account, const string & pw_path, std::ostringstream & out_str);
-    void import_keystore(const std::string & keystore, std::ostringstream & out_str);
     void reset_keystore_password(std::string & path, std::ostringstream & out_str);
     int set_default_miner(const std::string & pub_key, const std::string & pw_path, std::ostringstream & out_str);
-    void import_account(const int32_t & pf, std::ostringstream & out_str);
+    void import_account(std::string const & pw_path, std::ostringstream & out_str);
     void export_account(const std::string & account, std::ostringstream & out_str);
-    /*
-     * debug
-     */
-    void create_chain_account(std::ostringstream & out_str);
-    void import_key(std::string & pri_key, std::ostringstream & out_str);
 
     /*
      * transfer
@@ -143,91 +135,23 @@ public:
     void query_reward(std::string & target, std::ostringstream & out_str);
     void claim_reward(std::ostringstream & out_str);
 
-    int Help(const ParamList & param_list, std::ostringstream & out_str);
-    int KeyStore(const ParamList & param_list);
-    int Random(const ParamList & param_list);
-    int Authorize(const ParamList & param_list);
-    int CreateChainAccount(const ParamList & param_list);
-    int getAccount(const ParamList & param_list, std::ostringstream & out_str);
-    int transfer(const ParamList & param_list, std::ostringstream & out_str);
-    int stakeGas(const ParamList & param_list, std::ostringstream & out_str);
-    int unStakeGas(const ParamList & param_list, std::ostringstream & out_str);
-
-    int getTransaction(const ParamList & param_list, std::ostringstream & out_str);
-    int RequestToken(const ParamList & param_list);
-    int UserInfo(const ParamList & param_list);
-    int ChangeUser(const ParamList & param_list);
-    int Config(const ParamList & param_list);
-    int Key(const ParamList & param_list);
-    int CreateAccount(const ParamList & param_list);
-    //int CreateAccountKeystore(const ParamList & param_list);
-    int attachCreateAccount(const ParamList & param_list, std::ostringstream & out_str);
-    int CreateKey(const ParamList & param_list);
-    int CreateKeypairKeystore(const ParamList & param_list);
-    int attachCreateKey(const ParamList & param_list, std::ostringstream & out_str);
-    int setDefault(const ParamList & param_list);
-    int attachsetDefault(const ParamList & param_list, std::ostringstream & out_str);
     void outAccountBalance(const std::string & account, std::ostringstream & out_str);
-    int ListKey(const ParamList & param_list, std::ostringstream & out_str);
-    int ResetPassword(const ParamList & param_list);
-    int attachResetPassword(const ParamList & param_list, std::ostringstream & out_str);
-    int GetListProperty(const ParamList & param_list);
-    int CreateSubAccount(const ParamList & param_list);
-    int CreateContract(const ParamList & param_list);
-    int deployContract(const ParamList & param_list, std::ostringstream & out_str);
-    int runContract(const ParamList & param_list, std::ostringstream & out_str);
-    int GetVote(const ParamList & param_list);
-    int Vote(const ParamList & param_list);
-    int unVoteNode(const ParamList & param_list, std::ostringstream & out_str);
-    int ReturnVote(const ParamList & param_list);
-    int getBlock(const ParamList & param_list, std::ostringstream & out_str);
-    int CreateAccountTest(const ParamList & param_list);
-    int registerNode(const ParamList & param_list, std::ostringstream & out_str);
-    int unRegisterNode(const ParamList & param_list, std::ostringstream & out_str);
-    int updateNodeType(const ParamList & param_list, std::ostringstream & out_str);
-    int updateNodeInfo(const ParamList & param_list, std::ostringstream & out_str);
-    int stakeNodeDeposit(const ParamList & param_list, std::ostringstream & out_str);
-    int unstakeNodeDeposit(const ParamList & param_list, std::ostringstream & out_str);
-    int setNodeName(const ParamList & param_list, std::ostringstream & out_str);
-    int updateNodeSignKey(const ParamList & param_list, std::ostringstream & out_str);
-    int redeemNodeDeposit(const ParamList & param_list, std::ostringstream & out_str);
-    int setDividendRatio(const ParamList & param_list, std::ostringstream & out_str);
-    int stakeVote(const ParamList & param_list, std::ostringstream & out_str);
-    int unStakeVote(const ParamList & param_list, std::ostringstream & out_str);
-    int voteNode(const ParamList & param_list, std::ostringstream & out_str);
-    int claimNodeReward(const ParamList & param_list, std::ostringstream & out_str);
-    int claimVoterDividend(const ParamList & param_list, std::ostringstream & out_str);
-    int GenerateKeys(const ParamList & param_list);
-    int CheckKeys(const ParamList & param_list);
-    int ActivateAccounts(const ParamList & param_list);
-    int CheckActivateAccounts(const ParamList & param_list);
-    int submitProposal(const ParamList & param_list, std::ostringstream & out_str);
-    int withdrawProposal(const ParamList & param_list, std::ostringstream & out_str);
-    int tccVote(const ParamList & param_list, std::ostringstream & out_str);
-    int getChainInfo(const ParamList & param_list, std::ostringstream & out_str);
-    int queryNodeInfo(const ParamList & param_list, std::ostringstream & out_str);
-    int queryNodeReward(const ParamList & param_list, std::ostringstream & out_str);
-    int listVoteUsed(const ParamList & param_list, std::ostringstream & out_str);
-    int queryVoterDividend(const ParamList & param_list, std::ostringstream & out_str);
-    int queryProposal(const ParamList & param_list, std::ostringstream & out_str);
-    int getCGP(const ParamList & param_list, std::ostringstream & out_str);
-
-    CommandFunc get_method(const std::string & method, std::ostringstream & out_str, Command_type type = Command_type::toplevel);
-
-    // level subcommands
-    int Get(const ParamList & param_list, std::ostringstream & out_str);
-    int system(const ParamList & param_list, std::ostringstream & out_str);
-    int sendtx(const ParamList & param_list, std::ostringstream & out_str);
-    int wallet(const ParamList & param_list, std::ostringstream & out_str);
 
     // helper setting function
-    int set_userinfo();
     void change_trans_mode(bool use_http);
     void set_keystore_path(const std::string & data_dir);
-    bool check_password();
-    std::string get_password() {
-        return cache_pw;
-    }
+
+    /**
+     * @brief Get the password from user / password file
+     * 
+     * @param keys_type either `keystore_type::account_key` or `keystore_type::worker_key`
+     * @param pswd_type either `password_type::interactive`(from user) or `password_type::file_path`(from file)
+     * @param file_path (optional) file path if pswd_type == password_type::file_path
+     * @param is_reset_pw (optional) different console infomation hint when called from reset pswd api
+     * @return std::pair<bool, std::string>: { if success get password , password }
+     */
+    std::pair<bool, std::string> get_password(keystore_type const & keys_type, password_type const & pswd_type, std::string const & file_path = "", bool is_reset_pw = false);
+
     void reset_tx_deposit() {
         api_method_imp_.reset_tx_deposit();
     }
@@ -235,10 +159,10 @@ public:
     int get_account_info(std::ostringstream & out_str, xJson::Value & root);
 
 private:
-    void regist_method(const std::string & method, CommandFunc func, const std::string & info = "", Command_type type = Command_type::debug);
-    int redirect_cli_out(CLI::App & system_app, ArgParser & arg_parser, std::ostringstream & out_str);
-    int parse_cmd(CLI::App & app, const ParamList & param_list, std::ostringstream & out_str, const std::string & cmd_type, const std::string & example);
-    void dump_userinfo(const user_info & info);
+    std::string get_keystore_hint(xJson::Value const & keystore_info);
+    std::string input_same_pswd_twice();
+    std::string input_pswd_hint();
+    std::string input_hiding_no_empty(std::string const & empty_msg);
     std::string input_hiding();
     std::string input_no_hiding();
     static int parse_top_double(const std::string &amount, const uint32_t unit, uint64_t &out);
@@ -246,47 +170,6 @@ private:
     int get_eth_file(std::string& account);
 private:
     api_method_imp api_method_imp_;
-    MethodFuncMap methods_;
-    MethodFuncMap level_methods_;
-    MethodFuncMap get_methods_;
-    MethodFuncMap system_methods_;
-    MethodFuncMap sendtransaction_methods_;
-    MethodFuncMap wallet_methods_;
-    MethodFuncMap debug_methods_;
-    std::string cache_pw{" "};
-    std::map<std::string, std::string> cmd_name;
-    const std::string empty_pw{" "};
-    bool is_account{false};
-
-public:
-    bool is_reset_pw{false};
-};
-
-class ArgParser {
-public:
-    ArgParser(const ApiMethod::ParamList & param_list, std::string cmd) : argc(param_list.size() + 1) {
-        argv = new char *[argc + 1];
-        argv[0] = const_cast<char *>(cmd.data());
-        for (size_t i = 0; i < param_list.size(); ++i) {
-            argv[i + 1] = const_cast<char *>(param_list[i].data());
-        }
-    }
-
-    ~ArgParser() {
-        delete[] argv;
-    }
-
-    size_t get_argc() {
-        return argc;
-    }
-
-    const char * const * get_argv() {
-        return argv;
-    }
-
-private:
-    size_t argc;
-    char ** argv;
 };
 
 }  // namespace xChainSDK

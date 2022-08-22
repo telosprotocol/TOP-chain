@@ -8,6 +8,7 @@
 #include "xpbase/base/top_log.h"
 #include "xpbase/base/top_utils.h"
 #include "xpbase/base/line_parser.h"
+#include "xbasic/xtimer_driver.h"
 #include <asio/error.hpp>
 
 namespace  top {
@@ -21,62 +22,6 @@ namespace safebox {
 #define SAFEBOX_HTTP_THREAD_POOL_COUNT      1   // thread number of thread pool
 
 HttpHandler::HttpHandler() {
-    /*
-    char buffer[256];
-    getcwd(buffer, sizeof(buffer));
-    webroot_ = std::string(buffer);
-    TOP_INFO("set HttpHandler webroot:%s", webroot_.c_str());
-
-    auto index_html = webroot_ + "/index.html";
-    std::fstream www_file(index_html, std::ios::out);
-    www_file << admin_dashboard_html;
-    www_file.close();
-    TOP_INFO("dump html file: %s", index_html.c_str());
-
-    // TODO(smaug) for now, no using jwt generate token,just using random string
-    auto raw_token = top::RandomString(32);
-    std::string token = top::HexEncode(raw_token);
-    auto token_file = webroot_ + "/token";
-    std::fstream tf(token_file, std::ios::out);
-    tf << token;
-    tf.close();
-    token_ = token;
-    TOP_INFO("dump token:%s to token file:%s", token.c_str(), token_file.c_str());
-    */
-}
-
-HttpHandler::HttpHandler(const std::string& webroot) {
-    /*
-    // TODO(smaug) for now, only considered unix-os
-    std::string tmp_webroot = webroot;
-    if (webroot[webroot.size() - 1] == '/') {
-        tmp_webroot = webroot.substr(0, webroot.size() -1);
-    }
-    if (webroot[0] == '.') {
-        char buffer[256];
-        getcwd(buffer, sizeof(buffer));
-        webroot_ = std::string(buffer) + "/" + tmp_webroot;   // eg. /var/./www
-    } else {
-        webroot_ = tmp_webroot;
-    }
-    TOP_INFO("set HttpHandler webroot:%s", webroot_.c_str());
-
-    auto index_html = webroot_ + "/index.html";
-    std::fstream www_file(index_html, std::ios::out);
-    www_file << admin_dashboard_html;
-    www_file.close();
-    TOP_INFO("dump html file: %s", index_html.c_str());
-
-    // TODO(smaug) for now, no using jwt generate token,just using random string
-    auto raw_token = top::RandomString(32);
-    std::string token = top::HexEncode(raw_token);
-    auto token_file = webroot_ + "/token";
-    std::fstream tf(token_file, std::ios::out);
-    tf << token;
-    tf.close();
-    token_ = token;
-    TOP_INFO("dump token:%s to token file:%s", token.c_str(), token_file.c_str());
-    */
 }
 
 bool HttpHandler::default_not_found(ResponsePtr res, RequestPtr req) {
@@ -311,7 +256,7 @@ bool HttpHandler::handle_command(ResponsePtr res, RequestPtr req) {
                 gstatus = safebox_.getAccount(tmp_account, private_key);
                 account = tmp_account;
             } else {
-                gstatus = safebox_.getAccount(account, private_key);
+                gstatus = safebox_.getLastestAccount(account, private_key);
             }
 
             if (gstatus) {
@@ -329,7 +274,7 @@ bool HttpHandler::handle_command(ResponsePtr res, RequestPtr req) {
             auto account = req_json["account"].get<std::string>();
             private_key = req_json["private_key"].get<std::string>();
             uint32_t expired_time = req_json["expired_time"].get<uint32_t>();
-            if (safebox_.setAccount(account, private_key, expired_time)) {
+            if (safebox_.setAccount(account, private_key, std::chrono::milliseconds(expired_time))) {
                 res_content["status"] = "ok";
             } else {
                 res_content["status"] = "fail";
@@ -366,16 +311,13 @@ bool HttpHandler::handle_command(ResponsePtr res, RequestPtr req) {
 bool HttpHandler::webroot(ResponsePtr res, RequestPtr req) {
     return true;
 }
-
-
-
 // end for HttpHandler
 
 
 
 // begin for SafeboxHttpServer
-
-SafeboxHttpServer::SafeboxHttpServer() {
+SafeboxHttpServer::SafeboxHttpServer(std::string const & local_ip, uint16_t port, std::shared_ptr<top::xbase_timer_driver_t> timer_driver)
+  : local_ip_{local_ip}, listen_port_{port}, m_timer_driver{timer_driver} {
     svr_ = std::make_shared<HttpServer>();
     svr_->config.address = local_ip_;
     svr_->config.port = listen_port_;
@@ -385,56 +327,7 @@ SafeboxHttpServer::SafeboxHttpServer() {
     svr_->config.reuse_address = false; // forbidden binding to same port
     svr_->config.max_request_streambuf_size = 50 * 1024 * 1024; // 50MB
 
-    http_handler_ = std::make_shared<HttpHandler>(webroot_);
-}
-
-
-SafeboxHttpServer::SafeboxHttpServer(uint16_t port) {
-    listen_port_ = port;
-
-    svr_ = std::make_shared<HttpServer>();
-    svr_->config.address = local_ip_;
-    svr_->config.port = listen_port_;
-    svr_->config.thread_pool_size = SAFEBOX_HTTP_THREAD_POOL_COUNT;
-    svr_->config.timeout_request = 5;
-    svr_->config.timeout_content = 300;
-    svr_->config.reuse_address = false; // forbidden binding to same port
-    svr_->config.max_request_streambuf_size = 50 * 1024 * 1024; // 50MB
-
-    http_handler_ = std::make_shared<HttpHandler>(webroot_);
-}
-
-SafeboxHttpServer::SafeboxHttpServer(const std::string& local_ip, uint16_t port) {
-    local_ip_ = local_ip;
-    listen_port_ = port;
-
-    svr_ = std::make_shared<HttpServer>();
-    svr_->config.address = local_ip_;
-    svr_->config.port = listen_port_;
-    svr_->config.thread_pool_size = SAFEBOX_HTTP_THREAD_POOL_COUNT;
-    svr_->config.timeout_request = 5;
-    svr_->config.timeout_content = 300;
-    svr_->config.reuse_address = false; // forbidden binding to same port
-    svr_->config.max_request_streambuf_size = 50 * 1024 * 1024; // 50MB
-
-    http_handler_ = std::make_shared<HttpHandler>(webroot_);
-}
-
-SafeboxHttpServer::SafeboxHttpServer(const std::string& local_ip, uint16_t port, const std::string& webroot) {
-    local_ip_ = local_ip;
-    listen_port_ = port;
-    webroot_ = webroot;
-
-    svr_ = std::make_shared<HttpServer>();
-    svr_->config.address = local_ip_;
-    svr_->config.port = listen_port_;
-    svr_->config.thread_pool_size = SAFEBOX_HTTP_THREAD_POOL_COUNT;
-    svr_->config.timeout_request = 5;
-    svr_->config.timeout_content = 300;
-    svr_->config.reuse_address = false; // forbidden binding to same port
-    svr_->config.max_request_streambuf_size = 50 * 1024 * 1024; // 50MB
-
-    http_handler_ = std::make_shared<HttpHandler>(webroot_);
+    http_handler_ = std::make_shared<HttpHandler>();
 }
 
 SafeboxHttpServer::~SafeboxHttpServer() {
@@ -450,6 +343,9 @@ void SafeboxHttpServer::Start() {
     bind_route_callback();
     bind_route_callback_for_command();
 
+    check_expire_safebox();
+    std::cout << "After safebox start" << std::endl;
+
     svr_->start();
 
     /*
@@ -464,7 +360,17 @@ void SafeboxHttpServer::Start() {
     TOP_INFO("SafeboxHttpServer start with ip:%s port:%u", local_ip_.c_str(), listen_port_);
 }
 
-
+void SafeboxHttpServer::check_expire_safebox() {
+    if (m_timer_driver == nullptr) {
+        return;
+    }
+    auto self = shared_from_this();
+    // every 5 second, try expire safebox.
+    m_timer_driver->schedule(std::chrono::seconds(5), [this](std::chrono::milliseconds) {
+        http_handler_->expire_safebox();
+        check_expire_safebox();
+    });
+}
 
 void SafeboxHttpServer::bind_route_callback() {
     if (!svr_ || !http_handler_) {

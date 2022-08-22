@@ -17,11 +17,12 @@ namespace top
             enum_xvblock_fork_version_unit_opt          = 0x020000,  // 2.0.0 unit block not include txaction but only txhash and state
             enum_xvblock_fork_version_3_0_0             = 0x030000,  // 3.0.0: 1.table-block add second gmtime
             enum_xvblock_fork_version_compatible_eth    = 0x040000,  // 4.0.0: block compatible with eth
+            enum_xvblock_fork_version_4_1_0             = 0x040100,  // 4.1.0: v1.6 support relay-chain
         };
 
         // XTODO need change old and new version when block structure changed
-        constexpr uint32_t TOP_BLOCK_FORK_OLD_VERSION = enum_xvblock_fork_version_3_0_0;
-        constexpr uint32_t TOP_BLOCK_FORK_NEW_VERSION = enum_xvblock_fork_version_compatible_eth;
+        constexpr uint32_t TOP_BLOCK_FORK_OLD_VERSION = enum_xvblock_fork_version_compatible_eth;
+        constexpr uint32_t TOP_BLOCK_FORK_NEW_VERSION = enum_xvblock_fork_version_4_1_0;
 
         typedef std::function<bool(uint64_t clock) noexcept> xvblock_fork_check_fun_t;
 

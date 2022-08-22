@@ -44,6 +44,16 @@ public:
         m_supported_method.insert("eth_getTransactionCount");
         m_supported_method.insert("eth_getTransactionByHash");
         m_supported_method.insert("eth_getTransactionReceipt");
+
+        m_supported_method.insert("topRelay_getPolyBlockHashListByHash");
+        m_supported_method.insert("topRelay_getLeafBlockHashListByHash");
+        m_supported_method.insert("topRelay_getBlockByNumber");
+        m_supported_method.insert("topRelay_getBlockByHash");
+        m_supported_method.insert("topRelay_blockNumber");
+        m_supported_method.insert("topRelay_getTransactionByHash");
+        m_supported_method.insert("topRelay_getTransactionReceipt");
+
+        m_supported_method.insert("top_getBalance");
     }
     bool supported_method(const std::string& method) {
         if (m_supported_method.find(method) == m_supported_method.end())

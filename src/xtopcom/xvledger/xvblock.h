@@ -115,6 +115,8 @@ namespace top
 
         constexpr uint64_t TOP_BEGIN_GMTIME = 1573189200;//1573189200 == 2019-11-08 05:00:00  UTC
 
+        uint64_t clock_to_gmtime(uint64_t clock);
+
         //The definition of version defintion for binary of node and block:[8:Features][8:MAJOR][8:MINOR][8:PATCH]
             //Features: added new featurs that need most node agree then make it effect,refer BIP8 spec
             //MAJOR： version when make incompatible API changes
@@ -273,7 +275,8 @@ namespace top
         {
             //any cert with unspecified flag means just a "prepared-cert" that ask the next 3/2 more certs to proof it
             enum_xconsensus_flag_audit_cert          = 0x01, //audit required
-            enum_xconsensus_flag_commit_cert         = 0x02, //commit certification for a commit block,just use by basic-mode
+            // enum_xconsensus_flag_commit_cert         = 0x02, //commit certification for a commit block,just use by basic-mode
+            enum_xconsensus_flag_extend_vote         = 0x02, //save extend vote data
             enum_xconsensus_flag_extend_cert         = 0x04, //relyon m_extend_cert to proof
         };
 
@@ -742,6 +745,9 @@ namespace top
            
             bool  set_parent_block(const std::string parent_addr, uint32_t parent_entity_id);
 
+            void  set_vote_extend_data(const std::string & vote_data);
+            const std::string &  get_vote_extend_data() const;
+
         private:
             //generated the unique path of object(like vblock) under store-space(get_store_path()) to store data to DB
             //path like :   chainid/account/height/name
@@ -779,6 +785,7 @@ namespace top
             std::string                 m_offblock_snapshot;  // for sync set and cache
             std::string                 m_parent_account;   //container(e.g.tableblock)'account id(refer xvaccount_t::get_xvid())
             uint32_t                    m_parent_entity_id{0};  //entity id of container(like tableblock) that carry this sub-block
+            std::string                 m_vote_extend_data;
         };
         using xvblock_ptr_t = xobject_ptr_t<base::xvblock_t>;
 
@@ -836,7 +843,6 @@ namespace top
                 return (front.get_viewid() > back.get_viewid());
             }
         };
-
     }//end of namespace of base
 
 }//end of namespace top

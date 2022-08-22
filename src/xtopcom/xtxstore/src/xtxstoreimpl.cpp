@@ -6,6 +6,9 @@
 #include "xvledger/xvledger.h"
 #include "xvledger/xvtxindex.h"
 #include "xmetrics/xmetrics.h"
+#include "xdata/xnative_contract_address.h"
+#include "xdata/xblockextract.h"
+#include "xpbase/base/top_utils.h"
 
 NS_BEG2(top, txstore)
 
@@ -17,9 +20,8 @@ using common::xstrategy_value_enum_t;
 
 xtxstoreimpl::xtxstoreimpl(observer_ptr<mbus::xmessage_bus_face_t> const & mbus, observer_ptr<xbase_timer_driver_t> const & timer_driver)
   : base::xvtxstore_t()
-  , m_txstore_strategy{common::define_bool_strategy(xdefault_strategy_t{xstrategy_value_enum_t::enable, xstrategy_priority_enum_t::low},
-                                                    xnode_type_strategy_t{xnode_type_t::consensus, xstrategy_value_enum_t::disable, xstrategy_priority_enum_t::normal},
-                                                    xnode_type_strategy_t{xnode_type_t::storage, xstrategy_value_enum_t::enable, xstrategy_priority_enum_t::high})}
+  , m_txstore_strategy{common::define_bool_strategy(xdefault_strategy_t{xstrategy_value_enum_t::disable, xstrategy_priority_enum_t::low},
+                                                    xnode_type_strategy_t{xnode_type_t::storage, xstrategy_value_enum_t::enable, xstrategy_priority_enum_t::normal})}
   , m_tx_prepare_mgr{std::make_shared<txexecutor::xtransaction_prepare_mgr>(mbus, timer_driver)}
   , m_tx_cache_strategy{common::define_bool_strategy(xdefault_strategy_t{xstrategy_value_enum_t::disable, xstrategy_priority_enum_t::low},
                                                      xnode_type_strategy_t{xnode_type_t::storage_exchange, xstrategy_value_enum_t::enable, xstrategy_priority_enum_t::normal})} {
@@ -60,23 +62,98 @@ base::xauto_ptr<base::xvtxindex_t> xtxstoreimpl::load_tx_idx(const std::string &
     return txindex;
 }
 
-const std::string xtxstoreimpl::load_tx_bin(const std::string & raw_tx_hash) {
-    xassert(raw_tx_hash.empty() == false);
-    if (raw_tx_hash.empty())
-        return std::string();
 
-    const std::string raw_tx_key = base::xvdbkey_t::create_tx_key(raw_tx_hash);
-    xdbg("xvtxstore_t::load_tx_bin, to load raw tx bin for (%s)", base::xstring_utl::to_hex(raw_tx_key).c_str());
-    return base::xvchain_t::instance().get_xdbstore()->get_value(raw_tx_key);
-}
-
-base::xauto_ptr<base::xdataunit_t> xtxstoreimpl::load_tx_obj(const std::string & raw_tx_hash) {
-    const std::string raw_tx_bin = load_tx_bin(raw_tx_hash);
-    if (raw_tx_bin.empty()) {
-        xwarn("xvtxstore_t::load_tx_obj,fail to load raw tx bin for hash(%s)", base::xstring_utl::to_hex(raw_tx_hash).c_str());
+base::xauto_ptr<base::xvtxindex_t> xtxstoreimpl::load_relay_tx_idx(const std::string & raw_tx_hash, base::enum_transaction_subtype type) {
+    base::enum_txindex_type txindex_type = base::xvtxkey_t::transaction_subtype_to_txindex_type(type);
+    const std::string tx_idx_key = base::xvdbkey_t::create_prunable_relay_tx_index_key(raw_tx_hash, txindex_type);
+    const std::string tx_idx_bin = base::xvchain_t::instance().get_xdbstore()->get_value(tx_idx_key);
+    if (tx_idx_bin.empty()) {
+        xwarn("xvtxstore_t::load_relay_tx_idx, index not find for hahs_tx=%s", base::xstring_utl::to_hex(raw_tx_hash).c_str());
         return nullptr;
     }
-    return base::xdataunit_t::read_from(raw_tx_bin);
+    base::xauto_ptr<base::xvtxindex_t> txindex(new base::xvtxindex_t());
+    if (txindex->serialize_from_string(tx_idx_bin) <= 0) {
+        xerror("xvtxstore_t::load_tx_idx,found bad index for hahs_tx=%s", base::xstring_utl::to_hex(raw_tx_hash).c_str());
+        return nullptr;
+    }
+    txindex->set_tx_hash(raw_tx_hash);
+    return txindex;
+}
+bool xtxstoreimpl::store_blockhash_index(base::xvbindex_t * this_index) {
+    // XTODO only evm-table and relay need store blockhash now
+    std::string block_hash;
+    if (this_index->get_account() == sys_contract_eth_table_block_addr_with_suffix)
+        block_hash = this_index->get_block_hash();
+    else if (this_index->get_account() == sys_contract_relay_block_addr)
+        block_hash = this_index->get_extend_data();
+    else
+        return false;
+
+    if (!strategy_permission(m_txstore_strategy)) {
+        xdbg("xtxstoreimpl::store_blockhash_index strategy_permission failed . don't store");
+        return false;
+    }
+
+    xassert(!block_hash.empty());
+    std::string key_path2 = base::xvdbkey_t::create_prunable_blockhash_key(block_hash);
+    base::xvchain_t::instance().get_xdbstore()->set_value(key_path2, this_index->get_account() + "/" + base::xstring_utl::uint642hex(this_index->get_height()));
+    xdbg("xtxstoreimpl::store_blockhash_index, %s,blockhash=%s",
+         this_index->dump().c_str(), base::xstring_utl::to_hex(block_hash).c_str());
+    return true;
+}
+bool xtxstoreimpl::store_relay_txs(base::xvblock_t * block_ptr) {
+    xassert(block_ptr != NULL);
+    if (NULL == block_ptr)
+        return false;
+
+    if (block_ptr->get_height() == 0) {
+        xdbg("xtxstoreimpl::store_relay_txs,genesis.block=%s", block_ptr->dump().c_str());
+        return true;
+    }
+
+    if (!strategy_permission(m_txstore_strategy)) {
+        xdbg("xtxstoreimpl::store_relay_txs strategy_permission failed . don't store");
+        return false;
+    }
+
+    std::error_code ec;
+    top::data::xrelay_block extra_relay_block;
+    data::xblockextract_t::unpack_relayblock_from_wrapblock(block_ptr, extra_relay_block, ec);
+    if (ec) {
+        xerror("xtxstoreimpl::store_relay_txs fail-decodeBytes.error:%s", ec.message().c_str());
+        return false;
+    }
+
+    if (extra_relay_block.get_all_transactions().empty()) {
+        xinfo("xtxstoreimpl::store_relay_txs,no tx block.block=%s", extra_relay_block.dump().c_str());
+        return true;
+    }
+
+
+    // get tx hash from txs
+    bool has_error = false;
+    for (auto & tx : extra_relay_block.get_all_transactions()) {
+        auto tx_hash_u256 = tx.get_tx_hash();
+        std::string tx_hash = std::string(reinterpret_cast<char *>(tx_hash_u256.data()), tx_hash_u256.size());
+        base::xvtxindex_ptr tx_index = make_object_ptr<base::xvtxindex_t>(*block_ptr, tx_hash, base::enum_transaction_subtype_send);
+
+        base::enum_txindex_type txindex_type = base::xvtxkey_t::transaction_subtype_to_txindex_type(tx_index->get_tx_phase_type());
+        const std::string tx_key = base::xvdbkey_t::create_prunable_relay_tx_index_key(tx_index->get_tx_hash(), txindex_type);
+        std::string tx_bin;
+        tx_index->serialize_to_string(tx_bin);
+
+        if (base::xvchain_t::instance().get_xdbstore()->set_value(tx_key, tx_bin) == false) {
+            xerror("txstoreimpl::store_relay_txs,fail to store tx for block(%s)", block_ptr->dump().c_str());
+            has_error = true;  // mark it but let do rest work
+        } else {
+            xinfo("txstoreimpl::store_relay_txs,succ store tx:%s,block=%s",
+                base::xvtxkey_t::transaction_hash_subtype_to_string(tx_index->get_tx_hash(), tx_index->get_tx_phase_type()).c_str(), extra_relay_block.dump().c_str());
+        }        
+    }
+
+    if (has_error)
+        return false;
+    return true;
 }
 
 bool xtxstoreimpl::store_txs(base::xvblock_t * block_ptr) {
@@ -153,44 +230,6 @@ bool xtxstoreimpl::store_txs(base::xvblock_t * block_ptr) {
         xerror("xvtxstore_t::store_txs_index,fail to extract subtxs for block(%s)", block_ptr->dump().c_str());
         return false;
     }
-}
-
-bool xtxstoreimpl::store_tx_bin(const std::string & raw_tx_hash, const std::string & raw_tx_bin) {
-    xassert(raw_tx_hash.empty() == false);
-    xassert(raw_tx_bin.empty() == false);
-    if (raw_tx_hash.empty() || raw_tx_bin.empty())
-        return false;
-
-    const std::string raw_tx_key = base::xvdbkey_t::create_tx_key(raw_tx_hash);
-    const std::string existing_value = base::xvchain_t::instance().get_xdbstore()->get_value(raw_tx_key);
-    if (existing_value == raw_tx_bin)  // has stored already
-        return true;
-
-    // replace by new one
-    XMETRICS_GAUGE(metrics::store_tx_origin, 1);
-    return base::xvchain_t::instance().get_xdbstore()->set_value(raw_tx_key, raw_tx_bin);
-}
-
-bool xtxstoreimpl::store_tx_obj(const std::string & raw_tx_hash, base::xdataunit_t * raw_tx_obj) {
-    xassert(raw_tx_hash.empty() == false);
-    if (raw_tx_hash.empty() || (raw_tx_obj == NULL)) {
-        xdbg("xvtxstore_t::store_tx_obj, null tx hash or tx obj %s", base::xstring_utl::to_hex(raw_tx_hash).c_str());
-        return false;
-    }
-
-    // check whether has stored
-    const std::string raw_tx_key = base::xvdbkey_t::create_tx_key(raw_tx_hash);
-    std::string raw_tx_bin;
-    raw_tx_obj->serialize_to_string(raw_tx_bin);
-
-    const std::string existing_value = base::xvchain_t::instance().get_xdbstore()->get_value(raw_tx_key);
-    if (existing_value == raw_tx_bin)  // nothing changed
-        return true;
-
-    xdbg("xvtxstore_t::store_tx_obj,%s", base::xstring_utl::to_hex(raw_tx_key).c_str());
-    // replace by new one
-    XMETRICS_GAUGE(metrics::store_tx_origin, 1);
-    return base::xvchain_t::instance().get_xdbstore()->set_value(raw_tx_key, raw_tx_bin);
 }
 
 bool xtxstoreimpl::tx_cache_add(std::string const & tx_hash, data::xtransaction_ptr_t tx_ptr) {

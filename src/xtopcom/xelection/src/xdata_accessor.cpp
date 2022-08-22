@@ -95,6 +95,9 @@ std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> xtop_data_a
     case common::xnode_type_t::evm:
         return update_eth_zone(zone_element, election_result_store, associated_blk_height, ec);
 
+    case common::xnode_type_t::relay:
+        return update_relay_zone(zone_element, election_result_store, associated_blk_height, ec);
+
     default:
         ec = xdata_accessor_errc_t::invalid_node_type;
 
@@ -610,7 +613,7 @@ std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> xtop_data_a
         return {};
     }
 
-    for (auto node_type : node_types) {
+    for (auto const node_type : node_types) {
         try {
             auto const & zone_result = election_result_store.result_of(m_network_element->network_id()).result_of(node_type);
 
@@ -775,6 +778,14 @@ std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> xtop_data_a
     }
 
     return ret;
+}
+
+std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> xtop_data_accessor::update_relay_zone(std::shared_ptr<xzone_element_t> const & zone_element,
+                                                                                                           data::election::xelection_result_store_t const & election_result_store,
+                                                                                                           std::uint64_t const associated_blk_height,
+                                                                                                           std::error_code & ec) {
+    assert(!ec);
+    return update_zone(zone_element, election_result_store, associated_blk_height, ec);
 }
 
 std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> xtop_data_accessor::update_cluster(std::shared_ptr<xzone_element_t> const & zone_element,

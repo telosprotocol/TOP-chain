@@ -39,6 +39,8 @@ public:
     bool
     empty() const noexcept;
 
+    bool empty_at(common::xgroup_id_t const & group_id) const noexcept;
+
     std::map<common::xgroup_id_t, xelection_group_result_t> const &
     results() const noexcept;
 

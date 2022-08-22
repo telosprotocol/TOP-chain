@@ -3,12 +3,16 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <string>
+#include "xbase/xutl.h"
+#include "xbasic/xhex.h"
 #include "xdata/xblockextract.h"
 #include "xdata/xblockbuild.h"
+#include "xdata/xnative_contract_address.h"
 #include "xbase/xutl.h"
 #include "xcommon/xerror/xerror.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xconfig/xconfig_register.h"
+#include "xpbase/base/top_utils.h"
 
 NS_BEG2(top, data)
 
@@ -122,21 +126,13 @@ void xblockextract_t::unpack_ethheader(base::xvblock_t* _block, xeth_header_t & 
         return;
     }
 
-    if (_block->get_header()->get_extra_data().empty()) {
-        ec = common::error::xerrc_t::invalid_block;
-        xerror("xblockextract_t::unpack_ethheader fail-extra data empty.block=%s",_block->dump().c_str());
+    xassert(_block->get_block_level() == base::enum_xvblock_level_table);
+    data::xtableheader_extra_t header_extra;
+    get_tableheader_extra_from_block(_block, header_extra, ec);
+    if (ec) {
         return;
     }
-
-    const std::string & extra_data = _block->get_header()->get_extra_data();
-    data::xtableheader_extra_t blockheader_extradata;
-    int32_t ret = blockheader_extradata.deserialize_from_string(extra_data);
-    if (ret <= 0) {
-        ec = common::error::xerrc_t::invalid_block;
-        xerror("xblockextract_t::unpack_ethheader fail-extra data invalid.block=%s",_block->dump().c_str());
-        return;
-    }
-    std::string eth_header_str = blockheader_extradata.get_ethheader();
+    std::string eth_header_str = header_extra.get_ethheader();
     if (eth_header_str.empty()) {
         ec = common::error::xerrc_t::invalid_block;
         xerror("xblockextract_t::unpack_ethheader fail-eth_header_str empty.block=%s",_block->dump().c_str());
@@ -169,5 +165,304 @@ xtransaction_ptr_t xblockextract_t::unpack_raw_tx(base::xvblock_t* _block, std::
     return tx;
 }
 
+std::shared_ptr<xrelay_block> xblockextract_t::unpack_relay_block_from_table(base::xvblock_t* _block, std::error_code & ec) {
+    if (_block->get_account() != sys_contract_relay_table_block_addr) {
+        ec = common::error::xerrc_t::invalid_block;
+        xerror("xblockextract_t::unpack_relay_block_from_table fail-invalid addr._block=%s", _block->dump().c_str());
+        return nullptr;
+    }
+
+    std::string relayblock_resource = _block->get_output()->query_resource(data::RESOURCE_RELAY_BLOCK);
+    if (relayblock_resource.empty()) {
+        ec = common::error::xerrc_t::invalid_block;
+        xerror("xblockextract_t::unpack_relay_block_from_table fail-relayblock_resource empty._block=%s", _block->dump().c_str());
+        return nullptr;
+    }
+
+    std::shared_ptr<xrelay_block> relayblock = std::make_shared<xrelay_block>();
+    relayblock->decodeBytes(to_bytes(relayblock_resource), ec);
+    if (ec) {
+        xerror("xblockextract_t::unpack_relay_block_from_table fail-decode relayblock。error=%s", ec.message().c_str());
+        return nullptr;
+    }
+    return relayblock;
+}
+
+std::shared_ptr<xrelay_block> xblockextract_t::unpack_commit_relay_block_from_relay_table(base::xvblock_t* _block, std::error_code & ec) {
+    if (!(_block->get_cert()->get_consensus_flags() & base::enum_xconsensus_flag_extend_vote)) {
+        xdbg("xblockextract_t::unpack_commit_relay_block_from_relay_table it's not commit relayblock. %s", _block->dump().c_str());
+        return nullptr;
+    }
+
+    std::shared_ptr<xrelay_block> relayblock = unpack_relay_block_from_table(_block, ec);
+    if (nullptr == relayblock) {
+        xerror("xblockextract_t::unpack_commit_relay_block_from_relay_table fail-decode relayblock,block:%s,error=%s", _block->dump().c_str(),ec.message().c_str());
+        return nullptr;
+    }
+
+    // commit relay table must has signature
+    std::string extend_data = _block->get_cert()->get_extend_data();
+    if (extend_data.empty()) {
+        ec = common::error::xerrc_t::invalid_block;
+        xerror("xblockextract_t::unpack_commit_relay_block_from_relay_table fail-extend data empty.");
+        return nullptr;
+    }
+
+    data::xrelay_signature_group_t siggroup;
+    siggroup.decodeBytes(top::to_bytes(extend_data), ec);
+    if (ec) {
+        xerror("xblockextract_t::unpack_commit_relay_block_from_relay_table fail-decode extend.block:%s", _block->dump().c_str());
+        return nullptr;        
+    }
+
+    relayblock->set_viewid(_block->get_viewid());
+    relayblock->set_signature_groups(siggroup);
+    return relayblock;
+}
+
+xobject_ptr_t<base::xvblock_t> xblockextract_t::pack_relayblock_to_wrapblock(xrelay_block const& relayblock, std::error_code & ec) {
+    xbytes_t _bs = relayblock.encodeBytes();
+    std::string bin_data = top::to_string(_bs);
+    if (relayblock.get_block_height() == 0) {
+        xemptyblock_build_t bbuild(sys_contract_relay_block_addr);
+        bbuild.set_header_extra(bin_data);
+        xobject_ptr_t<base::xvblock_t> _new_block = bbuild.build_new_block();
+        return _new_block;
+    } else {
+        xemptyblock_build_t bbuild(sys_contract_relay_block_addr, relayblock.get_block_height(), relayblock.get_viewid(), bin_data);
+        xobject_ptr_t<base::xvblock_t> _new_block = bbuild.build_new_block();
+        xvip2_t target_xip{(xvip_t)(1),(uint64_t)1};// mock leader xip for xvblock rules
+        _new_block->get_cert()->set_validator(target_xip); 
+        _new_block->set_verify_signature(std::string(1,0));  // mock signature 
+        _new_block->set_block_flag(base::enum_xvblock_flag_authenticated);
+        return _new_block;
+    }
+}
+void xblockextract_t::unpack_relayblock_from_wrapblock(base::xvblock_t* _block, xrelay_block & relayblock, std::error_code & ec) {
+    if (_block->get_account() != sys_contract_relay_block_addr) {
+        ec = common::error::xerrc_t::invalid_block;
+        xerror("xblockextract_t::unpack_relayblock_from_wrapblock fail-invalid address.");
+        return;
+    }
+    auto relay_block_data_str = _block->get_header()->get_extra_data();
+    if (relay_block_data_str.empty()) {
+        ec = common::error::xerrc_t::invalid_block;
+        xerror("xblockextract_t::unpack_relayblock_from_wrapblock fail-extra data empty.");
+        return;
+    }
+    relayblock.decodeBytes(to_bytes(relay_block_data_str), ec);
+    if (ec) {
+        xerror("xblockextract_t::unpack_relayblock_from_wrapblock fail-decode.");
+    }
+    return;
+}
+xobject_ptr_t<base::xvblock_t> xblockextract_t::unpack_wrap_relayblock_from_relay_table(base::xvblock_t* _block, std::error_code & ec) {
+    std::shared_ptr<xrelay_block> relayblock = unpack_commit_relay_block_from_relay_table(_block, ec);
+    if (ec) {
+        ec = common::error::xerrc_t::invalid_block;
+        xerror("xblockextract_t::unpack_wrap_relayblock_from_relay_table fail-unpack commit relayblock.");        
+        return nullptr;
+    }
+    if (nullptr == relayblock) {
+        // it's ok, the table block may not commit
+        return nullptr;
+    }
+    xobject_ptr_t<base::xvblock_t> wrap_relayblock = pack_relayblock_to_wrapblock(*relayblock, ec);
+    if (ec) {
+        ec = common::error::xerrc_t::invalid_block;
+        xerror("xblockextract_t::unpack_wrap_relayblock_from_relay_table fail-pack relayblock.");        
+        return nullptr;
+    }
+    xinfo("xblockextract_t::unpack_wrap_relayblock_from_relay_table,%s,%s",relayblock->dump().c_str(),wrap_relayblock->dump().c_str());
+    return wrap_relayblock;
+}
+
+void xblockextract_t::get_tableheader_extra_from_block(base::xvblock_t* _block, data::xtableheader_extra_t &header_extra, std::error_code & ec) {
+    auto & header_extra_str = _block->get_header()->get_extra_data();
+    if (header_extra_str.empty()) {
+        ec = common::error::xerrc_t::invalid_block;
+        xerror("xblockextract_t::get_tableheader_extra_from_block parameters invalid.");
+        return;
+    }
+
+    auto ret = header_extra.deserialize_from_string(header_extra_str);
+    if (ret <= 0) {
+        ec = common::error::xerrc_t::invalid_block;
+        xerror("xblockextract_t::get_tableheader_extra_from_block header extra data deserialize fail.");
+        return;
+    }
+}
+
+cross_chain_contract_info xblockextract_t::get_cross_chain_config() {
+    auto cross_chain_config_str = XGET_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_list);
+    std::vector<std::string> str_vec;
+    base::xstring_utl::split_string(cross_chain_config_str, ',', str_vec);
+    if (str_vec.size() <= 0) {
+        return {};
+    }
+
+    cross_chain_contract_info cross_chain_config;
+    for (auto & str : str_vec) {
+        std::vector<std::string> config_str_vec;
+        base::xstring_utl::split_string(str, ':', config_str_vec);
+        if (config_str_vec.size() != 3) {
+            xerror("xblockextract_t::get_cross_chain_config cross_chain_contract_list invalid:%s", cross_chain_config_str.c_str());
+            return {};
+        }
+        cross_chain_contract_info info;
+        std::string & addr = config_str_vec[0];
+        std::string & topic = config_str_vec[1];
+        uint32_t chain_bits_shift = static_cast<std::uint32_t>(std::stoi(config_str_vec[2]));
+        evm_common::u256 chain_bits = (1 << chain_bits_shift);
+        cross_chain_config[addr] = std::make_pair(topic, chain_bits);
+    }
+
+    if (str_vec.size() != cross_chain_config.size()) {
+        xerror("xblockextract_t::get_cross_chain_config repeat addresses in cross_chain_contract_list:%s", cross_chain_config_str.c_str());
+    }
+
+    return cross_chain_config;
+}
+
+bool xblockextract_t::is_cross_tx(const evm_common::xevm_logs_t & logs, const cross_chain_contract_info & cross_chain_config) {
+#ifndef CROSS_TX_DBG
+    for (auto & log : logs) {
+        auto it = cross_chain_config.find(log.address.to_hex_string());
+        if (it == cross_chain_config.end()) {
+            continue;
+        }
+
+        std::string topic_hex = top::to_hex_prefixed(log.topics[0].asBytes());
+        if ((topic_hex == it->second.first)) {
+            return true;
+        }
+    }
+    return false;
+#else
+    if (logs.empty()) {
+        return false;
+    }
+    return true;
+#endif
+}
+
+bool xblockextract_t::get_chain_bits(const evm_common::xevm_logs_t & logs, const cross_chain_contract_info & cross_chain_config, evm_common::u256 & chain_bits) {
+    for (auto & log : logs) {
+        auto it = cross_chain_config.find(log.address.to_hex_string());
+        if (it == cross_chain_config.end()) {
+            continue;
+        }
+        chain_bits = it->second.second;
+        return true;
+    }
+    return false;
+}
+
+void xblockextract_t::unpack_crosschain_txs(base::xvblock_t* _block, xrelayblock_crosstx_infos_t & infos, std::error_code & ec) {
+    bool config_loaded = false;
+    cross_chain_contract_info cross_chain_config;
+    data::xblock_t * block = dynamic_cast<data::xblock_t*>(_block);
+    if (nullptr == block) {
+        ec = common::error::xerrc_t::invalid_block;
+        xerror("xblockextract_t::unpack_crosschain_txs block nullptr.");
+        return;
+    }
+
+    xdbg("xblockextract_t::unpack_crosschain_txs process. block:%s", block->dump().c_str());
+    if (_block->get_block_class() == base::enum_xvblock_class_nil) {
+        return;
+    }
+
+    auto input_actions = data::xblockextract_t::unpack_eth_txactions(_block);
+    for (auto & txaction : input_actions) {
+        if (txaction.get_tx_subtype() != base::enum_transaction_subtype_send) {
+            continue;
+        }
+
+        data::xeth_store_receipt_t evm_result;
+        auto ret = txaction.get_evm_transaction_receipt(evm_result);
+        if (!ret) {
+            ec = common::error::xerrc_t::invalid_block;
+            xerror("xblockextract_t::unpack_crosschain_txs get evm tx result fail. block:%s", block->dump().c_str());
+            return;
+        }
+
+        if (evm_result.get_tx_status() != data::enum_ethreceipt_status::ethreceipt_status_successful) {
+            continue;
+        }
+
+        if (!config_loaded) {
+            cross_chain_config = get_cross_chain_config();
+            config_loaded = true;
+        }
+
+        if (!is_cross_tx(evm_result.get_logs(), cross_chain_config)) {
+            xdbg("xblockextract_t::unpack_crosschain_txs topic not match.tx:%s is not a cross chain tx", top::to_hex_prefixed(top::to_bytes(txaction.get_tx_hash())).c_str());
+            continue;
+        }
+
+        data::xtransaction_ptr_t _rawtx = block->query_raw_transaction(txaction.get_tx_hash());
+        if (nullptr == _rawtx) {
+            ec = common::error::xerrc_t::invalid_block;
+            xerror("xblockextract_t::unpack_crosschain_txs tx nullptr.");
+            return;
+        }
+
+        xeth_transaction_t ethtx = _rawtx->to_eth_tx(ec);
+        if (ec) {
+            xerror("xblockextract_t::unpack_crosschain_txs to eth tx fail.");
+            return;
+        }
+        data::xeth_receipt_t receipt;
+        receipt.set_tx_status(evm_result.get_tx_status());
+        receipt.set_cumulative_gas_used(evm_result.get_cumulative_gas_used());
+        receipt.set_logs(evm_result.get_logs());
+        receipt.create_bloom();
+
+        xrelayblock_crosstx_info_t info(ethtx, receipt);
+        infos.tx_infos.push_back(info);
+        xinfo("xblockextract_t::unpack_crosschain_txs succ.block=%s,tx=%s", block->dump().c_str(), _rawtx->dump().c_str());
+    }
+}
+
+void xblockextract_t::unpack_subblocks(base::xvblock_t* _block, std::vector<xobject_ptr_t<base::xvblock_t>> & sublocks, std::error_code & ec) {
+    if (_block->get_block_level() != base::enum_xvblock_level_table) {
+        ec = common::error::xerrc_t::invalid_block;
+        xerror("xblockextract_t::unpack_subblocks should be table level block.");
+        return;
+    }
+
+    if (_block->get_block_class() == base::enum_xvblock_class_nil) {
+        return;
+    }
+
+    // TODO(jimmy) full-table block should be same with light-table in future
+    if (_block->get_block_class() == base::enum_xvblock_class_full) {
+        return;
+    }
+
+    if (!_block->is_input_ready(false)
+        || !_block->is_output_ready(false)) {
+        ec = common::error::xerrc_t::invalid_block;
+        xerror("xblockextract_t::unpack_subblocks input and output should ready.");
+        return;
+    }
+
+    sublocks = xlighttable_build_t::unpack_units_from_table(_block);
+    xdbg("xblockextract_t::unpack_subblocks succ.block=%s,sublocks=%zu",_block->dump().c_str(),sublocks.size());
+    
+    // // TODO(jimmy)
+    // if (_block->get_account() == sys_contract_relay_table_block_addr) {
+    //     xobject_ptr_t<base::xvblock_t> wrap_relayblock = xblockextract_t::unpack_wrap_relayblock_from_relay_table(_block, ec);
+    //     if (ec) {
+    //         xerror("xblockextract_t::unpack_subblocks fail-unpack_wrap_relayblock_from_relay_table.");
+    //         return;
+    //     }
+    //     if (wrap_relayblock != nullptr) {
+    //         sublocks.push_back(wrap_relayblock);
+    //         xinfo("xblockextract_t::unpack_subblocks succ.block=%s,wrapblock=%s",_block->dump().c_str(),wrap_relayblock->dump().c_str());            
+    //     }
+    // }
+}
 
 NS_END2

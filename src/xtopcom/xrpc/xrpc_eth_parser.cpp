@@ -68,46 +68,7 @@ void xrpc_eth_parser_t::receipt_to_json(const std::string & tx_hash, xtxindex_de
         xerror("xrpc_eth_parser_t::receipt_to_json fail-to eth tx");
         return;
     }
-
-    js_v["blockNumber"] = txlocation.m_block_number;
-    js_v["blockHash"] = txlocation.m_block_hash;
-    js_v["transactionHash"] = txlocation.m_tx_hash;
-    js_v["transactionIndex"] = txlocation.m_transaction_index;
-
-    js_v["status"] = (evm_tx_receipt.get_tx_status() == data::ethreceipt_status_successful) ?  "0x1" : "0x0";
-    js_v["type"] = uint64_to_hex_prefixed((uint64_t)ethtx.get_tx_version());
-    js_v["gasUsed"] = uint64_to_hex_prefixed(evm_tx_receipt.get_gas_used());
-    js_v["cumulativeGasUsed"] = uint64_to_hex_prefixed(evm_tx_receipt.get_cumulative_gas_used());
-    js_v["effectiveGasPrice"] = xrpc_eth_parser_t::u256_to_hex_prefixed(evm_tx_receipt.get_gas_price());
-
-    uint16_t tx_type = sendindex->get_raw_tx()->get_tx_type();
-    js_v["from"] = _from_addr_str;
-    if (!ethtx.get_to().empty()) {
-        js_v["to"] = ethtx.get_to().to_hex_string();
-        if (!ethtx.get_data().empty()) {
-            js_v["contractAddress"] = ethtx.get_to().to_hex_string();
-        }
-    } else {
-        js_v["to"] = xJson::Value::null;
-        js_v["contractAddress"] = evm_tx_receipt.get_contract_address().to_hex_string();
-    }
-
-    evm_common::xbloom9_t logs_bloom = evm_tx_receipt.bloom();
-    js_v["logsBloom"] = top::to_hex_prefixed(logs_bloom.get_data());
-
-    if (!evm_tx_receipt.get_logs().empty()) {
-        xlog_location_t loglocation(block_hash,block_num,tx_hash,tx_idx);
-        uint64_t index = 0;
-        for (auto & log : evm_tx_receipt.get_logs()) {
-            loglocation.m_log_index = uint64_to_hex_prefixed(index);
-            index++;
-            xJson::Value js_log;
-            log_to_json(loglocation, log, js_log);
-            js_v["logs"].append(js_log);
-        }
-    } else {
-        js_v["logs"].resize(0);
-    }
+    receipt_to_json(txlocation, ethtx, evm_tx_receipt, js_v, ec);
 }
 
 void xrpc_eth_parser_t::transaction_to_json(xtx_location_t const& txlocation, data::xtransaction_ptr_t const& rawtx, xJson::Value & js_v, std::error_code & ec) {
@@ -121,26 +82,8 @@ void xrpc_eth_parser_t::transaction_to_json(xtx_location_t const& txlocation, da
     if (ec) {
         return;
     }
-
-    js_v["from"] = ethtx.get_from().to_hex_string();
-    js_v["gas"] = u256_to_hex_prefixed(ethtx.get_gas());
-    js_v["gasPrice"] = u256_to_hex_prefixed(ethtx.get_max_fee_per_gas());
-    js_v["maxFeePerGas"] = u256_to_hex_prefixed(ethtx.get_max_fee_per_gas());
-    js_v["maxPriorityFeePerGas"] = u256_to_hex_prefixed(ethtx.get_max_priority_fee_per_gas());
-    js_v["input"] = top::to_hex_prefixed(ethtx.get_data());
-    js_v["nonce"] = u256_to_hex_prefixed(ethtx.get_nonce());
-    if (!ethtx.get_to().empty()) {
-        js_v["to"] = ethtx.get_to().to_hex_string();
-    } else {
-        js_v["to"] = xJson::Value::null;
-    }
-    js_v["type"] = uint64_to_hex_prefixed((uint64_t)ethtx.get_tx_version());
-    js_v["value"] = u256_to_hex_prefixed(ethtx.get_value());
-    js_v["v"] = u256_to_hex_prefixed(ethtx.get_signV());
-    js_v["r"] = top::to_hex_prefixed(ethtx.get_signR().asBytes());
-    js_v["s"] = top::to_hex_prefixed(ethtx.get_signS().asBytes());
+    transaction_to_json(txlocation, ethtx, js_v, ec);
 }
-
 void xrpc_eth_parser_t::blockheader_to_json(base::xvblock_t* _block, xJson::Value & js_v, std::error_code & ec) {
     data::xeth_header_t ethheader;
     data::xblockextract_t::unpack_ethheader(_block, ethheader, ec);
@@ -210,6 +153,78 @@ data::xtransaction_ptr_t xrpc_eth_parser_t::json_to_ethtx(xJson::Value const& re
     return tx;
 }
 
+
+
+void xrpc_eth_parser_t::transaction_to_json(xtx_location_t const& txlocation, data::xeth_transaction_t const& ethtx, xJson::Value & js_v, std::error_code & ec) {
+    // txlocation
+    js_v["blockHash"] = txlocation.m_block_hash;
+    js_v["blockNumber"] = txlocation.m_block_number;
+    js_v["hash"] = txlocation.m_tx_hash;
+    js_v["transactionIndex"] = txlocation.m_transaction_index;
+
+    js_v["from"] = ethtx.get_from().to_hex_string();
+    js_v["gas"] = u256_to_hex_prefixed(ethtx.get_gas());
+    js_v["gasPrice"] = u256_to_hex_prefixed(ethtx.get_max_fee_per_gas());
+    js_v["maxPriorityFeePerGas"] = u256_to_hex_prefixed(ethtx.get_max_priority_fee_per_gas());
+    js_v["maxFeePerGas"] = u256_to_hex_prefixed(ethtx.get_max_fee_per_gas());
+    js_v["input"] = top::to_hex_prefixed(ethtx.get_data());
+    js_v["nonce"] = u256_to_hex_prefixed(ethtx.get_nonce());
+    if (!ethtx.get_to().empty()) {
+        js_v["to"] = ethtx.get_to().to_hex_string();
+    } else {
+        js_v["to"] = xJson::Value::null;
+    }
+    js_v["type"] = uint64_to_hex_prefixed((uint64_t)ethtx.get_tx_version());
+    js_v["value"] = u256_to_hex_prefixed(ethtx.get_value());
+    js_v["v"] = u256_to_hex_prefixed(ethtx.get_signV());
+    js_v["r"] = top::to_hex_prefixed(ethtx.get_signR().asBytes());
+    js_v["s"] = top::to_hex_prefixed(ethtx.get_signS().asBytes());
+}
+
+
+void xrpc_eth_parser_t::receipt_to_json(xtx_location_t const& txlocation,  data::xeth_transaction_t const& ethtx,
+                                        data::xeth_store_receipt_t const &evm_tx_receipt,xJson::Value & js_v, std::error_code & ec) {
+
+    js_v["blockNumber"] = txlocation.m_block_number;
+    js_v["blockHash"] = txlocation.m_block_hash;
+    js_v["transactionHash"] = txlocation.m_tx_hash;
+    js_v["transactionIndex"] = txlocation.m_transaction_index;
+
+    js_v["status"] = (evm_tx_receipt.get_tx_status() == data::ethreceipt_status_successful) ?  "0x1" : "0x0";
+    js_v["type"] = uint64_to_hex_prefixed((uint64_t)ethtx.get_tx_version());
+    js_v["gasUsed"] = uint64_to_hex_prefixed(evm_tx_receipt.get_gas_used());
+    js_v["cumulativeGasUsed"] = uint64_to_hex_prefixed(evm_tx_receipt.get_cumulative_gas_used());
+    js_v["effectiveGasPrice"] = xrpc_eth_parser_t::u256_to_hex_prefixed(evm_tx_receipt.get_gas_price());
+
+
+    js_v["from"] =  ethtx.get_from().to_hex_string();
+    if (!ethtx.get_to().empty()) {
+        js_v["to"] = ethtx.get_to().to_hex_string();
+        if (!ethtx.get_data().empty()) {
+            js_v["contractAddress"] = ethtx.get_to().to_hex_string();
+        }
+    } else {
+        js_v["to"] = xJson::Value::null;
+        js_v["contractAddress"] = evm_tx_receipt.get_contract_address().to_hex_string();
+    }
+
+    evm_common::xbloom9_t logs_bloom = evm_tx_receipt.bloom();
+    js_v["logsBloom"] = top::to_hex_prefixed(logs_bloom.get_data());
+
+    if (!evm_tx_receipt.get_logs().empty()) {
+        xlog_location_t loglocation(txlocation.m_block_hash, txlocation.m_block_number, txlocation.m_tx_hash, txlocation.m_transaction_index);
+        uint64_t index = 0;
+        for (auto & log : evm_tx_receipt.get_logs()) {
+            loglocation.m_log_index = uint64_to_hex_prefixed(index);
+            index++;
+            xJson::Value js_log;
+            log_to_json(loglocation, log, js_log);
+            js_v["logs"].append(js_log);
+        }
+    } else {
+        js_v["logs"].resize(0);
+    }
+}
 
 }  // namespace chain_info
 }  // namespace top

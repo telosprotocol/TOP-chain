@@ -19,7 +19,7 @@ public:
 
 public:
     void preprocess(std::error_code & ec);
-    void postprocess(const uint64_t supplement_gas, std::error_code & ec);
+    void postprocess(const evm_common::u256 supplement_gas, std::error_code & ec);
 
     txexecutor::xvm_gasfee_detail_t gasfee_detail() const;
 
@@ -29,10 +29,10 @@ private:
     void preprocess_recv_stage(std::error_code & ec);
     void preprocess_confirm_stage(std::error_code & ec);
 
-    void postprocess_one_stage(const uint64_t supplement_gas, std::error_code & ec);
-    void postprocess_send_stage(const uint64_t supplement_gas, std::error_code & ec);
-    void postprocess_recv_stage(const uint64_t supplement_gas, std::error_code & ec);
-    void postprocess_confirm_stage(const uint64_t supplement_gas, std::error_code & ec);
+    void postprocess_one_stage(const evm_common::u256 supplement_gas, std::error_code & ec);
+    void postprocess_send_stage(const evm_common::u256 supplement_gas, std::error_code & ec);
+    void postprocess_recv_stage(const evm_common::u256 supplement_gas, std::error_code & ec);
+    void postprocess_confirm_stage(const evm_common::u256 supplement_gas, std::error_code & ec);
 
     void store_in_one_stage();
     void store_in_send_stage();
@@ -41,21 +41,19 @@ private:
 
     void check(std::error_code & ec);
     void init(std::error_code & ec);
-    void add(const uint64_t tgas, std::error_code & ec);
-    void calculate(const uint64_t supplement_gas, std::error_code & ec);
+    void add(const evm_common::u256 tgas, std::error_code & ec);
+    void calculate(const evm_common::u256 supplement_gas, std::error_code & ec);
 
     void process_fixed_tgas(std::error_code & ec);
     void process_bandwith_tgas(std::error_code & ec);
     void process_disk_tgas(std::error_code & ec);
-    void process_calculation_tgas(const uint64_t supplement_gas, std::error_code & ec);
+    void process_calculation_tgas(const evm_common::u256 supplement_gas, std::error_code & ec);
 
     // tgas related param
-    uint64_t m_free_tgas{0};
-    uint64_t m_free_tgas_usage{0};
-    uint64_t m_converted_tgas{0};
-    uint64_t m_converted_tgas_usage{0};
-    uint64_t m_eth_converted_tgas{0};
-    uint64_t m_eth_converted_tgas_usage{0};
+    evm_common::u256 m_free_tgas{0};
+    evm_common::u256 m_free_tgas_usage{0};
+    evm_common::u256 m_converted_tgas{0};
+    evm_common::u256 m_converted_tgas_usage{0};
 
     // onchain related param
     uint64_t m_time{0};

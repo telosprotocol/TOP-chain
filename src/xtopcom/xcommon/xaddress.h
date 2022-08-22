@@ -37,8 +37,6 @@
 
 NS_BEG2(top, common)
 
-using xaccount_address_t = xnode_id_t;
-
 class xtop_cluster_address final : public xhashable_t<xtop_cluster_address> {
     xip_t m_xip{};
     xnode_type_t m_type{ xnode_type_t::invalid };
@@ -407,6 +405,9 @@ build_zec_sharding_address(xnetwork_id_t const & network_id);
 
 xgroup_address_t
 build_evm_group_address(xnetwork_id_t const & network_id, common::xnode_type_t const & type);
+
+xgroup_address_t 
+build_relay_group_address(xnetwork_id_t const & network_id);
 
 xgroup_address_t
 build_edge_sharding_address(xnetwork_id_t const & network_id);

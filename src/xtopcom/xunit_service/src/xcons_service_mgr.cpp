@@ -24,11 +24,10 @@ NS_BEG2(top, xunit_service)
 xunit_service::xcons_dispatcher_ptr xdispatcher_builder::build(observer_ptr<mbus::xmessage_bus_face_t> const & mb,
                                                                std::shared_ptr<xunit_service::xcons_service_para_face> const & p_srv_para,
                                                                xunit_service::e_cons_type cons_type) {
+    auto block_maker = p_srv_para->get_consensus_para()->get_block_maker(cons_type);
     if (cons_type == xunit_service::e_table) {
-        auto block_maker = p_srv_para->get_consensus_para()->get_block_maker(cons_type);
         return std::make_shared<xunit_service::xworkpool_dispatcher>(mb, p_srv_para, block_maker);
     } else {
-        auto block_maker = p_srv_para->get_consensus_para()->get_block_maker(cons_type);
         return std::make_shared<xunit_service::xtimer_dispatcher_t>(p_srv_para, block_maker);
     }
 }
@@ -98,7 +97,7 @@ void xcons_service_mgr::create(const std::shared_ptr<vnetwork::xvnetwork_driver_
     // create consensus service for new address without version
     auto                                             node_type = network->type();
     std::vector<std::shared_ptr<xcons_service_face>> services;
-    if ((node_type & common::xnode_type_t::rec) == common::xnode_type_t::rec) {
+    if (common::has<common::xnode_type_t::rec>(node_type)) {
         auto dispatcher = m_dispachter_builder->build(m_mbus, m_para, e_timer);
         xunit_dbg("[xcons_service_mgr::create] create timer service for rec, %" PRIx64 ":%" PRIx64", dispatcher obj %p", xip.high_addr, xip.low_addr, dispatcher.get());
         if (dispatcher != nullptr) {
@@ -107,9 +106,9 @@ void xcons_service_mgr::create(const std::shared_ptr<vnetwork::xvnetwork_driver_
         }
     }
 
-    auto dispatcher = m_dispachter_builder->build(m_mbus, m_para, e_table);
-    if (dispatcher != nullptr) {
-        std::shared_ptr<xcons_service_face> table_service = std::make_shared<xtableblockservice>(m_para, dispatcher);
+    auto table_dispatcher = m_dispachter_builder->build(m_mbus, m_para, e_table);
+    if (table_dispatcher != nullptr) {
+        std::shared_ptr<xcons_service_face> table_service = std::make_shared<xtableblockservice>(m_para, table_dispatcher);
         services.push_back(table_service);
     }
 
@@ -129,7 +128,7 @@ void xcons_service_mgr::create(const std::shared_ptr<vnetwork::xvnetwork_driver_
 // must call uninit before
 bool xcons_service_mgr::destroy(const xvip2_t & xip) {
     auto key_ = xcons_utl::erase_version(xip);
-    xunit_info("xcons_service_mgr::destroy %s %p", xcons_utl::xip_to_hex(xip).c_str(), this);
+    xunit_info("xcons_service_mgr::destroy %s key_:%s %p ", xcons_utl::xip_to_hex(xip).c_str(), xcons_utl::xip_to_hex(key_).c_str(), this);
     std::vector<std::shared_ptr<xcons_service_face>> services;
     {
         // erase useless consensus service

@@ -33,12 +33,12 @@ public:
     uint64_t deposit() const;
     uint64_t tx_last_action_used_deposit() const;
 
-    uint64_t tx_fixed_tgas() const;
-    uint64_t tx_bandwith_tgas() const;
-    uint64_t tx_disk_tgas() const;
+    evm_common::u256 tx_fixed_tgas() const;
+    evm_common::u256 tx_bandwith_tgas() const;
+    evm_common::u256 tx_disk_tgas() const;
 
-    static uint64_t balance_to_tgas(const uint64_t balance);
-    static uint64_t tgas_to_balance(const uint64_t tgas);
+    static evm_common::u256 balance_to_tgas(const evm_common::u256 balance);
+    static evm_common::u256 tgas_to_balance(const evm_common::u256 tgas);
     static evm_common::u256 wei_to_utop(const evm_common::u256 wei);
     static evm_common::u256 utop_to_wei(const evm_common::u256 utop);
 

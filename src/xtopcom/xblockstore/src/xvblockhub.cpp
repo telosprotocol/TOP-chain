@@ -10,6 +10,11 @@
 #include "xvblockhub.h"
 #include "xvledger/xvdbkey.h"
 #include "xdata/xcheckpoint.h"
+#include "xdata/xrelay_block.h"
+#include "xdata/xblockextract.h"
+#include "xvledger/xvtxindex.h"
+#include "xdata/xblocktool.h"
+#include "xpbase/base/top_utils.h"
 
 #ifdef __ALLOW_FORK_LOCK__
     #undef __ALLOW_FORK_LOCK__  // XTODO always allow store multi lock blocks
@@ -563,6 +568,7 @@ namespace top
 
         base::xvbindex_t*  xblockacct_t::query_index(const uint64_t height, const std::string & blockhash)
         {
+            xdbg("xblockacct_t::query_index, %s,%d", get_account().c_str(), m_all_blocks.size());
             if(false == m_all_blocks.empty())
             {
                 auto height_it = m_all_blocks.find(height);
@@ -574,8 +580,10 @@ namespace top
                         if(blockhash == view_it->second->get_block_hash())
                         {
                             view_it->second->add_ref();
+                            xdbg("xblockacct_t::query_index, hash check succ: %s,%s", get_account().c_str(), HexEncode(blockhash).c_str());
                             return view_it->second;
                         }
+                        xdbg("xblockacct_t::query_index, hash check fail: %s,%s", get_account().c_str(), HexEncode(blockhash).c_str());
                     }
                 }
             }
@@ -1155,62 +1163,6 @@ namespace top
             update_bindex(this_block);
         }
 
-        bool    xblockacct_t::store_committed_unit_block(base::xvblock_t* new_raw_block)
-        {
-            base::xauto_ptr<base::xvbindex_t> exist_cert(load_index(new_raw_block->get_height(),new_raw_block->get_block_hash()));
-            if(exist_cert) //found duplicated ones
-            {
-                if (!exist_cert->check_block_flag(base::enum_xvblock_flag_committed)) {
-                    // check if pre block is committed, update it if not.
-                    if (new_raw_block->get_height() > 1) {
-                        base::xauto_ptr<base::xvbindex_t> pre_idx(load_index(new_raw_block->get_height() - 1, new_raw_block->get_last_block_hash()));
-                        if (pre_idx != nullptr && !pre_idx->check_block_flag(base::enum_xvblock_flag_committed)) {
-                            update_bindex_to_committed(pre_idx.get());
-                            xinfo("xblockacct_t::store_committed_unit_block update pre index,store_block,done for pre_idx(%s),dump:%s", pre_idx->dump().c_str(), dump().c_str());
-                        }
-                    }
-
-                    update_bindex_to_committed(exist_cert.get());
-                    xinfo("xblockacct_t::store_committed_unit_block update index,store_block,done for block(%s),dump:%s", new_raw_block->dump().c_str(), dump().c_str());
-                } else {
-                    xwarn("xblockacct_t::store_committed_unit_block already committed,block(%s),dump:%s", new_raw_block->dump().c_str(), dump().c_str());
-                }
-                return true;
-            }
-            //first do store block
-            bool ret = store_block(new_raw_block);
-            if(!ret)
-            {
-                xwarn("xblockacct_t::store_committed_unit_block,fail-store block(%s)", new_raw_block->dump().c_str());
-            }
-            return true;
-        }
-
-        bool   xblockacct_t::try_update_account_index(uint64_t height, uint64_t viewid, bool update_pre_block)
-        {
-            base::xauto_ptr<base::xvbindex_t> exist_cert(load_index(height, viewid));
-            if (exist_cert == nullptr) {
-                xinfo("xblockacct_t::try_update_account_index index not found:account:%s,height:%llu,view:%llu", get_address().c_str(), height, viewid);
-                return false;
-            }
-
-            bool ret = true;
-            if (update_pre_block && height > 1) {
-                base::xauto_ptr<base::xvbindex_t> exist_cert2(load_index(height - 1, exist_cert->get_last_block_hash()));
-                if (exist_cert2 == nullptr) {
-                    xinfo("xblockacct_t::try_update_account_index index not found:account:%s,height:%llu,hash:%s", get_address().c_str(), height - 1, exist_cert->get_last_block_hash().c_str());
-                    ret = false;
-                } else {
-                    update_bindex_to_committed(exist_cert2.get());
-                    xinfo("xblockacct_t::try_update_account_index succ:account:%s,height:%llu,hash:%s", get_address().c_str(), height - 1, exist_cert->get_last_block_hash().c_str());
-                }
-            }
-
-            update_bindex_to_committed(exist_cert.get());
-            xinfo("xblockacct_t::try_update_account_index succ:account:%s,height:%llu,view:%llu", get_address().c_str(), height, viewid);
-            return ret;
-        }
-
         void xblockacct_t::update_bindex(base::xvbindex_t* this_block)
         {
             rebase_chain_at_height(this_block->get_height()); //resolve other block of lower-weight thans this
@@ -1496,7 +1448,7 @@ namespace top
                     //ensure only one valid in the map
                     if(existing_block->get_block_hash() != this_block->get_block_hash())//safety check
                     {
-                        xerror("xblockacct_t::cache_index,fail-hash changed for block with exist height(%" PRIu64 ") and view#=%" PRIu64 " vs new block=%s",this_block->get_height(),existing_block->get_viewid(),this_block->dump().c_str());
+                        xerror("xblockacct_t::cache_index,fail-hash changed.%s,%s",existing_block->dump().c_str(),this_block->dump().c_str());
                         return nullptr;
                     }
 
@@ -2393,10 +2345,7 @@ namespace top
             if(this_index->check_modified_flag() == false)//nothing changed
                 return true;
 
-            const std::string key_path2 = base::xvdbkey_t::create_prunable_blockhash_key(this_index->get_block_hash());
-            base::xvchain_t::instance().get_xdbstore()->set_value(key_path2, this_index->get_account() + "/" + base::xstring_utl::uint642hex(this_index->get_height()));
-            xdbg("xtablebkplugin::write_index: %s", this_index->get_account().c_str());
-
+            base::xvchain_t::instance().get_xtxstore()->store_blockhash_index(this_index);
             return get_blockdb_ptr()->write_index_to_db(this_index);
         }
     
@@ -2593,19 +2542,145 @@ namespace top
             return xchainacct_t::store_block(new_raw_block);
         }
 
-        bool        xblockacct_t::set_unit_proof(const std::string& unit_proof, uint64_t height){
+        bool        xunitbkplugin::set_unit_proof(const std::string& unit_proof, uint64_t height){
             const std::string key_path = base::xvdbkey_t::create_prunable_unit_proof_key(*get_account_obj(), height);
             if (!base::xvchain_t::instance().get_xdbstore()->set_value(key_path, unit_proof)) {
-                xerror("xblockacct_t::set_block_span key %s,fail to writed into db,index dump(%s)",key_path.c_str(), unit_proof.c_str());            
+                xerror("xunitbkplugin::set_unit_proof key %s,fail to writed into db,index dump(%s)",key_path.c_str(), unit_proof.c_str());            
                 return false;
             }
-
+            xdbg("xunitbkplugin::set_unit_proof %s,height=%ld", get_account().c_str(), height);
             return true;
         }
 
-        const std::string xblockacct_t::get_unit_proof(uint64_t height){
+        const std::string xunitbkplugin::get_unit_proof(uint64_t height){
             const std::string key_path = base::xvdbkey_t::create_prunable_unit_proof_key(*get_account_obj(), height);
             return base::xvchain_t::instance().get_xdbstore()->get_value(key_path);
         }
+
+        bool    xunitbkplugin::store_committed_unit_block(base::xvblock_t* new_raw_block)
+        {
+            base::xauto_ptr<base::xvbindex_t> exist_cert(load_index(new_raw_block->get_height(),new_raw_block->get_block_hash()));
+            if(exist_cert) //found duplicated ones
+            {
+                if (!exist_cert->check_block_flag(base::enum_xvblock_flag_committed)) {
+                    // check if pre block is committed, update it if not.
+                    if (new_raw_block->get_height() > 1) {
+                        base::xauto_ptr<base::xvbindex_t> pre_idx(load_index(new_raw_block->get_height() - 1, new_raw_block->get_last_block_hash()));
+                        if (pre_idx != nullptr && !pre_idx->check_block_flag(base::enum_xvblock_flag_committed)) {
+                            update_bindex_to_committed(pre_idx.get());
+                            xinfo("xunitbkplugin::store_committed_unit_block update pre index,store_block,done for pre_idx(%s),dump:%s", pre_idx->dump().c_str(), dump().c_str());
+                        }
+                    }
+
+                    update_bindex_to_committed(exist_cert.get());
+                    xinfo("xunitbkplugin::store_committed_unit_block update index,store_block,done for block(%s),dump:%s", new_raw_block->dump().c_str(), dump().c_str());
+                } else {
+                    xwarn("xunitbkplugin::store_committed_unit_block already committed,block(%s),dump:%s", new_raw_block->dump().c_str(), dump().c_str());
+                }
+                return true;
+            }
+            //first do store block
+            bool ret = store_block(new_raw_block);
+            if(!ret)
+            {
+                xwarn("xunitbkplugin::store_committed_unit_block,fail-store block(%s)", new_raw_block->dump().c_str());
+            }
+            return true;
+        }
+
+        bool   xunitbkplugin::try_update_account_index(uint64_t height, uint64_t viewid, bool update_pre_block)
+        {
+            base::xauto_ptr<base::xvbindex_t> exist_cert(load_index(height, viewid));
+            if (exist_cert == nullptr) {
+                xinfo("xunitbkplugin::try_update_account_index index not found:account:%s,height:%llu,view:%llu", get_address().c_str(), height, viewid);
+                return false;
+            }
+
+            bool ret = true;
+            if (update_pre_block && height > 1) {
+                base::xauto_ptr<base::xvbindex_t> exist_cert2(load_index(height - 1, exist_cert->get_last_block_hash()));
+                if (exist_cert2 == nullptr) {
+                    xinfo("xunitbkplugin::try_update_account_index index not found:account:%s,height:%llu,hash:%s", get_address().c_str(), height - 1, exist_cert->get_last_block_hash().c_str());
+                    ret = false;
+                } else {
+                    update_bindex_to_committed(exist_cert2.get());
+                    xinfo("xunitbkplugin::try_update_account_index succ:account:%s,height:%llu,hash:%s", get_address().c_str(), height - 1, exist_cert->get_last_block_hash().c_str());
+                }
+            }
+
+            update_bindex_to_committed(exist_cert.get());
+            xinfo("xunitbkplugin::try_update_account_index succ:account:%s,height:%llu,view:%llu", get_address().c_str(), height, viewid);
+            return ret;
+        }
+
+        xrelay_plugin::xrelay_plugin(base::xvaccountobj_t & parent_obj,const uint64_t timeout_ms,xvblockdb_t * xvbkdb_ptr)
+            :xblockacct_t(parent_obj,timeout_ms,xvbkdb_ptr) {
+
+        }
+        xrelay_plugin::~xrelay_plugin()
+        {
+        }
+
+        bool  xrelay_plugin::store_block(base::xvblock_t* new_raw_block)
+        {
+            return xblockacct_t::store_block(new_raw_block);
+        }
+
+        base::xvbindex_t*  xrelay_plugin::create_index(base::xvblock_t& new_raw_block) {
+            base::xvbindex_t* new_index;
+            new_index = new base::xvbindex_t(new_raw_block);
+
+            std::error_code ec;
+            top::data::xrelay_block  extra_relay_block;
+            data::xblockextract_t::unpack_relayblock_from_wrapblock(&new_raw_block, extra_relay_block, ec);
+            if (ec) {
+                xerror("xrelay_plugin::create_index decodeBytes decodeBytes block=%s,err msg %s", 
+                new_raw_block.dump().c_str(), ec.message().c_str());
+                return nullptr;
+            }
+            //extra_relay_block.build_finish();
+            evm_common::h256 hash = extra_relay_block.get_block_hash();
+            std::string block_hash_str((char*)hash.data(), hash.size);
+            xdbg("xrelay_plugin::create_index,block=%s,relay=%s", new_raw_block.dump().c_str(), extra_relay_block.dump().c_str());
+            new_index->set_extend_data(block_hash_str);
+            return new_index;
+        }
+        std::vector<base::xvbindex_t*> xrelay_plugin::read_index(const uint64_t target_height) {
+            return get_blockdb_ptr()->read_index_from_db(*get_account_obj(),target_height);
+        }
+        bool xrelay_plugin::write_index(base::xvbindex_t * this_index) {
+            if(this_index->check_modified_flag() == false)//nothing changed
+                return true;
+
+            base::xvchain_t::instance().get_xtxstore()->store_blockhash_index(this_index);
+            return get_blockdb_ptr()->write_index_to_db(this_index);
+        }
+        bool xrelay_plugin::write_block(base::xvbindex_t * this_index) {
+            if(this_index->check_block_flag(base::enum_xvblock_flag_stored))
+                return true;
+            return write_block(this_index,this_index->get_this_block());
+        }
+        bool xrelay_plugin::write_block(base::xvbindex_t * index_ptr, base::xvblock_t * new_block_ptr) {
+            if(NULL == new_block_ptr)
+                return false;
+            xdbg("xrelay_plugin::write_block,block=%s",new_block_ptr->dump().c_str());
+            base::xvchain_t::instance().get_xtxstore()->store_relay_txs(new_block_ptr);
+            const int _stored_flags = get_blockdb_ptr()->save_block(index_ptr, new_block_ptr);
+            if(_stored_flags > 0)
+            {
+                const uint32_t new_total_stored_flags = _stored_flags | index_ptr->get_store_flags();
+                index_ptr->reset_store_flags(new_total_stored_flags);
+     
+                const uint32_t everything_flags = base::enum_index_store_flag_mini_block | base::enum_index_store_flag_input_entity | base::enum_index_store_flag_input_resource | base::enum_index_store_flag_output_entity| base::enum_index_store_flag_output_resource;
+                
+                if(index_ptr->check_store_flags(everything_flags))
+                {
+                    index_ptr->set_block_flag(base::enum_xvblock_flag_stored); //mark as stored everything
+                }
+                return true;
+            }
+            return false;
+        }
+
     };//end of namespace of vstore
 };//end of namespace of top
