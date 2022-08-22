@@ -88,7 +88,7 @@ namespace top
 
             virtual bool                load_block_input(const base::xvaccount_t & account,base::xvblock_t* block,const int atag = 0) override;
             virtual bool                load_block_output(const base::xvaccount_t & account,base::xvblock_t* block,const int atag = 0) override;
-
+            virtual bool                load_block_output_offdata(const base::xvaccount_t & account,base::xvblock_t* block,const int atag = 0) override;
             virtual bool                store_block(const base::xvaccount_t & account,base::xvblock_t* block,const int atag = 0) override;
             virtual bool                delete_block(const base::xvaccount_t & account,base::xvblock_t* block,const int atag = 0) override;
 
@@ -99,7 +99,6 @@ namespace top
         public://batch process api
             virtual base::xblock_mptrs  get_latest_blocks(const base::xvaccount_t & account,const int atag = 0) override;
             virtual bool                store_blocks(const base::xvaccount_t & account,std::vector<base::xvblock_t*> & batch_store_blocks,const int atag = 0) override;
-            virtual bool                store_block_and_subblocks(const base::xvaccount_t & account,base::xvblock_t* block, std::vector<base::xvblock_ptr_t> sub_blocks, const int atag = 0) override;
 
         public: //just query at cached blocks(without persist db involved),mostly used for query cert-only block
             virtual base::xauto_ptr<base::xvblock_t>  query_block(const base::xvaccount_t & account,const uint64_t height,const uint64_t viewid,const int atag = 0) override;
@@ -147,9 +146,6 @@ namespace top
 
             //store table/book blocks if they are
             bool                        store_block(base::xauto_ptr<xblockacct_t> & container_account,base::xvblock_t * container_block,bool execute_block = true);
-            bool                        store_block_and_subblocks(base::xauto_ptr<xblockacct_t> & container_account,base::xvblock_t * container_block, std::vector<base::xvblock_ptr_t> sub_blocks);
-
-            bool                        store_block_but_not_execute(const base::xvaccount_t & account,base::xvblock_t* block);
             bool                        store_committed_unit_block(const base::xvaccount_t & account, base::xvblock_t * container_block);
 
             //a full path to load vblock could be  get_store_path()/create_object_path()/xvblock_t::name()

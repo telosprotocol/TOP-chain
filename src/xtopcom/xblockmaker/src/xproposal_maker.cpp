@@ -286,16 +286,6 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
     bool bret = proposal_block->reset_prev_block(latest_cert_block.get());
     xassert(bret);
 
-    std::vector<data::xvblock_ptr_t> batch_units_tmp;
-    for (auto & unit : table_result.m_batch_units) {
-        unit->add_ref();
-        base::xvblock_t *vblock = unit.get();
-        data::xvblock_ptr_t unit_block_ptr = nullptr;
-        unit_block_ptr.attach(vblock);
-        batch_units_tmp.push_back(unit_block_ptr);
-    }
-    proposal_block->set_subblocks(batch_units_tmp);
-
     // add metrics of tx counts / table counts ratio
     XMETRICS_GAUGE(metrics::cons_table_leader_make_unit_count, table_result.m_succ_unit_num);
     XMETRICS_GAUGE(metrics::cons_table_leader_make_tx_count, proposal_input->get_input_txs().size());    
@@ -356,16 +346,6 @@ int xproposal_maker_t::verify_proposal(xblock_consensus_para_t & cs_para, base::
         XMETRICS_GAUGE(metrics::cons_table_backup_verify_proposal_succ, 0);
         return verify_ret;
     }
-
-    std::vector<data::xvblock_ptr_t> batch_units_tmp;
-    for (auto & unit : batch_units) {
-        unit->add_ref();
-        base::xvblock_t *vblock = unit.get();
-        data::xvblock_ptr_t unit_block_ptr = nullptr;
-        unit_block_ptr.attach(vblock);
-        batch_units_tmp.push_back(unit_block_ptr);
-    }
-    proposal_block->set_subblocks(batch_units_tmp);
 
     XMETRICS_GAUGE(metrics::cons_table_backup_verify_proposal_succ, 1);
     xdbg_info("xproposal_maker_t::verify_proposal succ. proposal=%s",

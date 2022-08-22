@@ -25,24 +25,24 @@ public:
 
         if (block_ptr != nullptr) {
             block_ptr->full_block_serialize_to(stream);
-            if (carry_unit_blocks) {
-                if (!block_ptr->is_tableblock()) {
-                    xerror("xentire_block_t::do_write not table block,but carry_unit_blocks is true:%s", block_ptr->dump().c_str());
-                    return -1;
-                }
+            // if (carry_unit_blocks) {
+            //     if (!block_ptr->is_tableblock()) {
+            //         xerror("xentire_block_t::do_write not table block,but carry_unit_blocks is true:%s", block_ptr->dump().c_str());
+            //         return -1;
+            //     }
                 
-                // todo(nathan):获取unit块放到外面。
-                xblocktool_t::get_subblocks(block_ptr, unit_blocks);
+            //     // todo(nathan):获取unit块放到外面。
+            //     xblocktool_t::get_subblocks(block_ptr, unit_blocks);
 
-                uint32_t num = unit_blocks.size();
-                stream << num;
-                xdbg("xentire_block_t::do_write table block:%s, unit num:%d", block_ptr->dump().c_str(), num);
-                for (auto & unit_block :unit_blocks) {
-                    data::xblock_t *block = (data::xblock_t*)(unit_block.get());
-                    block->full_block_serialize_to(stream);
-                    xdbg("xentire_block_t::do_write succ table block:%s,unit block:%s", block_ptr->dump().c_str(), block->dump().c_str());
-                }
-            }
+            //     uint32_t num = unit_blocks.size();
+            //     stream << num;
+            //     xdbg("xentire_block_t::do_write table block:%s, unit num:%d", block_ptr->dump().c_str(), num);
+            //     for (auto & unit_block :unit_blocks) {
+            //         data::xblock_t *block = (data::xblock_t*)(unit_block.get());
+            //         block->full_block_serialize_to(stream);
+            //         xdbg("xentire_block_t::do_write succ table block:%s,unit block:%s", block_ptr->dump().c_str(), block->dump().c_str());
+            //     }
+            // }
         }
 
         return CALC_LEN();
@@ -56,22 +56,22 @@ public:
             block_ptr.attach(_data_obj);
             block_ptr->reset_block_flags();
 
-            if (block_ptr->is_tableblock()) {
-                uint32_t num = 0;
-                stream >> num;
-                if (num > 0) {
-                    carry_unit_blocks = true;
-                    xdbg("xentire_block_t::do_read table block:%s, num:%d", block_ptr->dump().c_str(), num);
-                    for (uint32_t i = 0; i < num; i++) {
-                        xblock_t* _unit = dynamic_cast<xblock_t*>(xblock_t::full_block_read_from(stream));
-                        xblock_ptr_t unit_ptr = nullptr;
-                        unit_ptr.attach(_unit);
-                        unit_ptr->reset_block_flags();
-                        unit_blocks.push_back(unit_ptr);
-                        xdbg("xentire_block_t::do_read table block:%s, unit block:%s", block_ptr->dump().c_str(), unit_ptr->dump().c_str());
-                    }
-                }
-            }
+            // if (block_ptr->is_tableblock()) {
+            //     uint32_t num = 0;
+            //     stream >> num;
+            //     if (num > 0) {
+            //         carry_unit_blocks = true;
+            //         xdbg("xentire_block_t::do_read table block:%s, num:%d", block_ptr->dump().c_str(), num);
+            //         for (uint32_t i = 0; i < num; i++) {
+            //             xblock_t* _unit = dynamic_cast<xblock_t*>(xblock_t::full_block_read_from(stream));
+            //             xblock_ptr_t unit_ptr = nullptr;
+            //             unit_ptr.attach(_unit);
+            //             unit_ptr->reset_block_flags();
+            //             unit_blocks.push_back(unit_ptr);
+            //             xdbg("xentire_block_t::do_read table block:%s, unit block:%s", block_ptr->dump().c_str(), unit_ptr->dump().c_str());
+            //         }
+            //     }
+            // }
         }
         return CALC_LEN();
     }

@@ -104,6 +104,7 @@ class xtable_block_para_t : public base::xbbuild_body_para_t {
     void    set_fullstate_bin(const std::string & fullstate) {m_fullstate_bin = fullstate;}
     void    set_tgas_balance_change(const int64_t amount) {m_tgas_balance_change = amount;}
     void    set_property_hashs(const std::map<std::string, std::string> & hashs) {m_property_hashs = hashs;}
+    void    set_output_offdata(const std::string & offdata_bin) {m_output_offdata = offdata_bin;}
 
     const std::vector<xblock_ptr_t> & get_account_units() const {return m_account_units;}
     const std::vector<xlightunit_tx_info_ptr_t> & get_txs() const {return m_txs;}
@@ -111,12 +112,14 @@ class xtable_block_para_t : public base::xbbuild_body_para_t {
     const std::string &             get_fullstate_bin() const {return m_fullstate_bin;}
     int64_t                         get_tgas_balance_change() const {return m_tgas_balance_change;}
     const std::map<std::string, std::string> &  get_property_hashs() const {return m_property_hashs;}
+    const std::string &             get_output_offdata() const {return m_output_offdata;}
 
  private:
     std::vector<xblock_ptr_t>        m_account_units;
     std::string                      m_property_binlog;
     std::string                      m_fullstate_bin;
     int64_t                          m_tgas_balance_change{0};
+    std::string                      m_output_offdata;
     std::map<std::string, std::string> m_property_hashs;  // need set to table-action for property receipt
     std::vector<xlightunit_tx_info_ptr_t> m_txs;
 };
