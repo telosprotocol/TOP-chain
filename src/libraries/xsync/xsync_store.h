@@ -30,7 +30,7 @@ public:
     virtual base::xauto_ptr<base::xvblock_t> query_block(const base::xvaccount_t &account, uint64_t height, const std::string &hash) = 0;
     virtual base::xauto_ptr<base::xvblock_t> get_latest_start_block(const std::string & account, enum_chain_sync_policy sync_policy) = 0;
     virtual std::vector<data::xvblock_ptr_t> load_block_objects(const std::string & account, const uint64_t height) = 0;
-    virtual std::vector<data::xvblock_ptr_t> load_block_objects(const std::string & tx_hash, const base::enum_transaction_subtype type) = 0;
+   // virtual std::vector<data::xvblock_ptr_t> load_block_objects(const std::string & tx_hash, const base::enum_transaction_subtype type) = 0;
     virtual base::xauto_ptr<base::xvblock_t>  load_block_object(const base::xvaccount_t & account,const uint64_t height) = 0;
     virtual base::xauto_ptr<base::xvblock_t>  load_block_object(const base::xvaccount_t & account,const uint64_t height, const std::string & hash) = 0;
     virtual base::xauto_ptr<base::xvblock_t>  load_block_object(const base::xvaccount_t & account,const uint64_t height, const uint64_t viewid) = 0;
@@ -76,7 +76,7 @@ public:
     virtual base::xauto_ptr<base::xvblock_t> query_block(const base::xvaccount_t &account, uint64_t height, const std::string &hash) {return nullptr;}
     virtual base::xauto_ptr<base::xvblock_t> get_latest_start_block(const std::string & account, enum_chain_sync_policy sync_policy) {return nullptr;}
     virtual std::vector<data::xvblock_ptr_t> load_block_objects(const std::string & account, const uint64_t height) {return std::vector<data::xvblock_ptr_t>{};}
-    virtual std::vector<data::xvblock_ptr_t> load_block_objects(const std::string & tx_hash, const base::enum_transaction_subtype type) {return std::vector<data::xvblock_ptr_t>{};}
+  //  virtual std::vector<data::xvblock_ptr_t> load_block_objects(const std::string & tx_hash, const base::enum_transaction_subtype type) {return std::vector<data::xvblock_ptr_t>{};}
     virtual bool existed(const std::string & account, const uint64_t height, uint64_t viewid = 0) {return false;}
     virtual xsync_store_shadow_t* get_shadow() {return nullptr;}
     virtual void update_latest_genesis_connected_block(const std::string & account) override;
@@ -108,7 +108,7 @@ public:
     base::xauto_ptr<base::xvblock_t> query_block(const base::xvaccount_t & account, uint64_t height, const std::string &hash) override;
     base::xauto_ptr<base::xvblock_t> get_latest_start_block(const std::string & account, enum_chain_sync_policy sync_policy) override;
     std::vector<data::xvblock_ptr_t> load_block_objects(const std::string & account, const uint64_t height) override;
-    std::vector<data::xvblock_ptr_t> load_block_objects(const std::string & tx_hash, const base::enum_transaction_subtype type) override;
+  //  std::vector<data::xvblock_ptr_t> load_block_objects(const std::string & tx_hash, const base::enum_transaction_subtype type) override;
     base::xauto_ptr<base::xvblock_t>  load_block_object(const base::xvaccount_t & account,const uint64_t height);
     base::xauto_ptr<base::xvblock_t>  load_block_object(const base::xvaccount_t & account,const uint64_t height,base::enum_xvblock_flag flag);
     base::xauto_ptr<base::xvblock_t>  load_block_object(const base::xvaccount_t & account,const uint64_t height, const std::string & hash);
@@ -143,6 +143,7 @@ public:
     base::xauto_ptr<base::xvbindex_t> recover_and_load_commit_index(const base::xvaccount_t & account, uint64_t height) override;
 private:
     void set_fork_point();
+    bool check_block_full_data(const base::xvaccount_t & account, base::xvblock_t* block);
     std::string m_vnode_id;
     observer_ptr<base::xvblockstore_t> m_blockstore{};
     xsync_store_shadow_t *m_shadow;
