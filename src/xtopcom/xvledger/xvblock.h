@@ -595,26 +595,6 @@ namespace top
         //note: xvblock must have associated xvheader_t and xvqcert_t objects
         using xvheader_ptr_t = xobject_ptr_t<base::xvheader_t>;
 
-        class xvblock_out_offdata_t {
-        public:
-            xvblock_out_offdata_t() = default;
-            xvblock_out_offdata_t(const std::vector<xobject_ptr_t<xvblock_t>> & subblocks);
-        public:
-            int32_t serialize_to_string(std::string & str) const;
-            int32_t do_write(base::xstream_t & stream) const;
-            int32_t serialize_from_string(const std::string & _data);
-            int32_t do_read(base::xstream_t & stream);
-        public:
-            void    set_subblocks(std::vector<xobject_ptr_t<xvblock_t>> subblocks);
-
-        public:
-            bool    is_empty() const;                        
-            const std::vector<xobject_ptr_t<xvblock_t>> &   get_subblocks() const {return m_subblocks;}
-
-        private:
-            std::vector<xobject_ptr_t<base::xvblock_t>>     m_subblocks;
-        };
-
         class xvblock_t : public xdataobj_t
         {
             friend class xvbbuild_t;

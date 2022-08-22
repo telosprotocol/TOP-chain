@@ -8,6 +8,7 @@
 #include "xconfig/xconfig_register.h"
 #include "xchain_fork/xchain_upgrade_center.h"
 #include "xdata/xblockbuild.h"
+#include "xvledger/xvblock_offdata.h"
 
 NS_BEG2(top, blockmaker)
 
@@ -77,6 +78,15 @@ data::xblock_ptr_t  xunitbuilder_t::make_block(const data::xblock_ptr_t & prev_b
     }
     base::xauto_ptr<base::xvblock_t> _new_block = vblockmaker->build_new_block();
     data::xblock_ptr_t proposal_block = data::xblock_t::raw_vblock_to_object_ptr(_new_block.get());
+
+    if (base::xvblock_fork_t::is_block_match_version(proposal_block->get_block_version(), base::enum_xvblock_fork_version_5_0_0)) {
+        proposal_block->get_cert()->set_parent_height(cs_para.get_proposal_height());
+        proposal_block->get_cert()->set_parent_viewid(cs_para.get_viewid());
+        proposal_block->set_extend_cert("1");
+        proposal_block->set_extend_data("1");
+        proposal_block->set_block_flag(base::enum_xvblock_flag_authenticated);
+    }
+
     xinfo("xunitbuilder_t::make_block unit=%s,binlog=%zu,snapshot=%zu,records=%zu,size=%zu,%zu", 
         proposal_block->dump().c_str(), binlog.size(), snapshot.size(), unitstate->get_canvas_records_size(),
         proposal_block->get_input()->get_resources_data().size(), proposal_block->get_output()->get_resources_data().size());
@@ -206,9 +216,21 @@ void     xtablebuilder_t::make_table_block_para(const std::vector<xblock_ptr_t> 
 }
 
 data::xblock_ptr_t  xtablebuilder_t::make_light_block(const data::xblock_ptr_t & prev_block, const data::xblock_consensus_para_t & cs_para, data::xtable_block_para_t const& lighttable_para) {
-    data::xlighttable_build_t bbuild(prev_block.get(), lighttable_para, cs_para);
-    base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
+    std::shared_ptr<base::xvblockmaker_t> vbmaker = nullptr;
+    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();                
+    if (top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.v1_7_0_block_fork_point, cs_para.get_clock())) {
+        vbmaker = std::make_shared<data::xtable_build2_t>(prev_block.get(), lighttable_para, cs_para);
+    } else {
+        vbmaker = std::make_shared<data::xlighttable_build_t>(prev_block.get(), lighttable_para, cs_para);
+    }
+
+    auto _new_block = vbmaker->build_new_block();
     data::xblock_ptr_t proposal_block = data::xblock_t::raw_vblock_to_object_ptr(_new_block.get());
+    
+    if (base::xvblock_fork_t::is_block_match_version(proposal_block->get_block_version(), base::enum_xvblock_fork_version_5_0_0)) {
+        proposal_block->set_output_offdata(lighttable_para.get_output_offdata());
+    }
+
     return proposal_block;
 }
 

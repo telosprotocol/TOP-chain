@@ -11,6 +11,7 @@
 #include "xvunithub.h"
 #include "xvledger/xvdrecycle.h"
 #include "xvledger/xunit_proof.h"
+#include "xvledger/xvblock_offdata.h"
 #include "xdata/xgenesis_data.h"
 
 #include "xmetrics/xmetrics.h"
