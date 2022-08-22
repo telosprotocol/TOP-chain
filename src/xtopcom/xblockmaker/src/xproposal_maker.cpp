@@ -213,7 +213,7 @@ data::xtablestate_ptr_t xproposal_maker_t::get_target_tablestate(base::xvblock_t
     return tablestate;
 }
 
-xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & proposal_para, uint32_t min_tx_num, std::vector<xblock_ptr_t> & batch_units) {
+xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & proposal_para, uint32_t min_tx_num) {
     XMETRICS_TIMER(metrics::cons_make_proposal_tick);
     // get tablestate related to latest cert block
     auto & latest_cert_block = proposal_para.get_latest_cert_block();
@@ -297,11 +297,10 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
         block_object_bin.size()+proposal_block->get_input()->get_resources_data().size()+proposal_block->get_output()->get_resources_data().size(),
         block_object_bin.size(),proposal_block->get_input()->get_resources_data().size(), proposal_block->get_output()->get_resources_data().size(),
         proposal_input_str.size(), proposal_input->get_input_txs().size(), proposal_input->get_other_accounts().size());
-    batch_units = table_result.m_batch_units;
     return proposal_block;
 }
 
-int xproposal_maker_t::verify_proposal(xblock_consensus_para_t & cs_para, base::xvblock_t * proposal_block, base::xvqcert_t * bind_clock_cert, std::vector<xblock_ptr_t> & batch_units) {
+int xproposal_maker_t::verify_proposal(xblock_consensus_para_t & cs_para, base::xvblock_t * proposal_block, base::xvqcert_t * bind_clock_cert) {
     XMETRICS_TIMER(metrics::cons_verify_proposal_tick);
     xdbg("xproposal_maker_t::verify_proposal enter. proposal=%s", proposal_block->dump().c_str());
     
@@ -339,14 +338,13 @@ int xproposal_maker_t::verify_proposal(xblock_consensus_para_t & cs_para, base::
         return xblockmaker_error_proposal_bad_consensus_para;
     }
 
-    int32_t verify_ret = m_table_maker->verify_proposal(proposal_block, table_para, cs_para, batch_units);
+    int32_t verify_ret = m_table_maker->verify_proposal(proposal_block, table_para, cs_para);
     if (verify_ret != xsuccess) {
         xwarn("xproposal_maker_t::verify_proposal fail-verify_proposal. proposal=%s,error_code=%s",
             proposal_block->dump().c_str(), chainbase::xmodule_error_to_str(verify_ret).c_str());
         XMETRICS_GAUGE(metrics::cons_table_backup_verify_proposal_succ, 0);
         return verify_ret;
     }
-
     XMETRICS_GAUGE(metrics::cons_table_backup_verify_proposal_succ, 1);
     xdbg_info("xproposal_maker_t::verify_proposal succ. proposal=%s",
         proposal_block->dump().c_str());

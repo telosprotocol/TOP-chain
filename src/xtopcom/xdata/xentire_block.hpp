@@ -3,11 +3,9 @@
 #include <string>
 #include "xbasic/xserialize_face.h"
 #include "xdata/xblock.h"
-#include "xdata/xblocktool.h"
 #include "xdata/xtransaction.h"
 #include "xbase/xobject_ptr.h"
 #include "xmetrics/xmetrics.h"
-#include "xsync/xsync_util.h"
 
 namespace top { namespace data {
 using xdataobj_ptr_t = xobject_ptr_t<base::xdataobj_t>;
@@ -25,24 +23,6 @@ public:
 
         if (block_ptr != nullptr) {
             block_ptr->full_block_serialize_to(stream);
-            // if (carry_unit_blocks) {
-            //     if (!block_ptr->is_tableblock()) {
-            //         xerror("xentire_block_t::do_write not table block,but carry_unit_blocks is true:%s", block_ptr->dump().c_str());
-            //         return -1;
-            //     }
-                
-            //     // todo(nathan):获取unit块放到外面。
-            //     xblocktool_t::get_subblocks(block_ptr, unit_blocks);
-
-            //     uint32_t num = unit_blocks.size();
-            //     stream << num;
-            //     xdbg("xentire_block_t::do_write table block:%s, unit num:%d", block_ptr->dump().c_str(), num);
-            //     for (auto & unit_block :unit_blocks) {
-            //         data::xblock_t *block = (data::xblock_t*)(unit_block.get());
-            //         block->full_block_serialize_to(stream);
-            //         xdbg("xentire_block_t::do_write succ table block:%s,unit block:%s", block_ptr->dump().c_str(), block->dump().c_str());
-            //     }
-            // }
         }
 
         return CALC_LEN();
@@ -55,23 +35,6 @@ public:
         if (_data_obj != nullptr) {
             block_ptr.attach(_data_obj);
             block_ptr->reset_block_flags();
-
-            // if (block_ptr->is_tableblock()) {
-            //     uint32_t num = 0;
-            //     stream >> num;
-            //     if (num > 0) {
-            //         carry_unit_blocks = true;
-            //         xdbg("xentire_block_t::do_read table block:%s, num:%d", block_ptr->dump().c_str(), num);
-            //         for (uint32_t i = 0; i < num; i++) {
-            //             xblock_t* _unit = dynamic_cast<xblock_t*>(xblock_t::full_block_read_from(stream));
-            //             xblock_ptr_t unit_ptr = nullptr;
-            //             unit_ptr.attach(_unit);
-            //             unit_ptr->reset_block_flags();
-            //             unit_blocks.push_back(unit_ptr);
-            //             xdbg("xentire_block_t::do_read table block:%s, unit block:%s", block_ptr->dump().c_str(), unit_ptr->dump().c_str());
-            //         }
-            //     }
-            // }
         }
         return CALC_LEN();
     }
@@ -83,8 +46,6 @@ private:
 
 public:
     xblock_ptr_t block_ptr{};
-    std::vector<xvblock_ptr_t> unit_blocks;
-    bool carry_unit_blocks{false};
 };
 
 using xentire_block_ptr_t = xobject_ptr_t<xentire_block_t>;
