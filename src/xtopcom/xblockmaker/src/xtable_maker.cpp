@@ -150,7 +150,7 @@ std::vector<xblock_ptr_t> xtable_maker_t::make_units(bool is_leader, const data:
         // TODO(jimmy) the confirm tx may not modify state.
         xwarn("xtable_maker_t::make_units fail-no unitstates changed.is_leader=%d,%s,txs_size=%zu", is_leader, cs_para.dump().c_str(), execute_output.pack_outputs.size());
     }
-    uint32_t i = 1;
+
     for (auto & unitctx : unitctxs) {
         base::xvtxkey_vec_t txkeys = txkeys_mgr.get_account_txkeys(unitctx->get_unitstate()->get_address());
         if (txkeys.get_txkeys().empty()) {
@@ -166,13 +166,6 @@ std::vector<xblock_ptr_t> xtable_maker_t::make_units(bool is_leader, const data:
             return {};
         }
 
-        unitblock->set_parent_block(cs_para.get_table_account(), i);
-        unitblock->get_cert()->set_parent_height(cs_para.get_proposal_height());
-        unitblock->get_cert()->set_parent_viewid(cs_para.get_viewid());
-        unitblock->set_extend_cert("1");
-        unitblock->set_extend_data("1");
-        unitblock->set_block_flag(base::enum_xvblock_flag_authenticated);
-        i++;
         batch_units.push_back(unitblock);
         xinfo("xtable_maker_t::make_units succ-make unit.is_leader=%d,%s,unit=%s,txkeys=%zu,size=%zu,%zu",
             is_leader, cs_para.dump().c_str(), unitblock->dump().c_str(),txkeys.get_txkeys().size(),unitblock->get_input()->get_resources_data().size(),unitblock->get_output()->get_resources_data().size());
@@ -323,11 +316,6 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
                                                                         cs_para,
                                                                         lighttable_para);
     if (nullptr != tableblock) {
-        xassert(lighttable_para.get_output_offdata().size()>0);
-        if (base::xvblock_fork_t::is_block_match_version(tableblock->get_block_version(), base::enum_xvblock_fork_version_5_0_0)) {
-            tableblock->set_output_offdata(lighttable_para.get_output_offdata());
-        }
-
         xinfo("xtable_maker_t::make_light_table_v2-succ is_leader=%d,%s,binlog=%zu,snapshot=%zu,batch_units=%zu,property_hashs=%zu,tgas_change=%ld,offdata=%zu", 
             is_leader, tableblock->dump().c_str(), lighttable_para.get_property_binlog().size(), lighttable_para.get_fullstate_bin().size(), 
             lighttable_para.get_account_units().size(), lighttable_para.get_property_hashs().size(),lighttable_para.get_tgas_balance_change(),lighttable_para.get_output_offdata().size());
