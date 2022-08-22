@@ -75,6 +75,7 @@ private:
     xrole_chains_mgr_t *m_role_chains_mgr;
     xrole_xips_manager_t *m_role_xips_mgr;
     xsync_sender_t *m_sync_sender;
+    std::map<std::string, std::string> m_block_hash_account;
     xsync_download_tracer_mgr m_download_tracer{};
 };
 
