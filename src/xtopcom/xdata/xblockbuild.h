@@ -185,6 +185,16 @@ class xlighttable_build_t : public base::xvtableblock_maker_t {
     static base::xauto_ptr<base::xvoutput_t>    make_unit_output_from_table(const base::xvblock_t* _tableblock, const base::xtable_inentity_extend_t & extend, base::xvoutentity_t* _table_unit_outentity);
 };
 
+class xtable_build2_t : public base::xvblockmaker_t {
+ public:
+    xtable_build2_t(base::xvblock_t* prev_block, const xtable_block_para_t & bodypara, const xblock_consensus_para_t & para);
+
+    base::xauto_ptr<base::xvblock_t> create_new_block() override;
+
+ private:
+    bool                build_block_body(const xtable_block_para_t & para, const base::xvaccount_t & account, uint64_t height);
+};
+
 class xfulltable_build_t : public base::xvblockmaker_t {
  public:
     xfulltable_build_t(base::xvblock_t* prev_block, const xfulltable_block_para_t & bodypara, const xblock_consensus_para_t & para);
