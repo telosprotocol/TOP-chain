@@ -136,6 +136,8 @@ bool xtop_group_element::contains(common::xnode_id_t const & node_id) const noex
 
 void xtop_group_element::set_node_elements(std::map<common::xslot_id_t, data::election::xelection_info_bundle_t> const & election_data) {
     XLOCK(m_node_elements_mutex);
+    auto const group_info = address().group_address().to_string();
+
     for (auto const & node_data : election_data) {
         auto const & slot_id = top::get<common::xslot_id_t const>(node_data);
         auto const & election_info_bundle = top::get<data::election::xelection_info_bundle_t>(node_data);
@@ -146,7 +148,7 @@ void xtop_group_element::set_node_elements(std::map<common::xslot_id_t, data::el
             continue;
         }
 
-        xdbg("adding %s %s", account_address.c_str(), common::to_string(node_type_from(zone_id())).c_str());
+        xinfo("adding %s to group %s", account_address.c_str(), group_info.c_str());
         m_node_elements[slot_id] = std::make_shared<xnode_element_t>(account_address, slot_id, election_info, shared_from_this());
     }
     assert(group_size() == m_node_elements.size());

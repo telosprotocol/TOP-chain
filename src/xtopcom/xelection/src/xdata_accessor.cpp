@@ -613,7 +613,7 @@ std::unordered_map<common::xgroup_address_t, xgroup_update_result_t> xtop_data_a
         return {};
     }
 
-    for (auto node_type : node_types) {
+    for (auto const node_type : node_types) {
         try {
             auto const & zone_result = election_result_store.result_of(m_network_element->network_id()).result_of(node_type);
 
