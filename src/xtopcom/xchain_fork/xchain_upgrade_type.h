@@ -57,6 +57,7 @@ struct xtop_chain_fork_config {
     top::optional<xfork_point_t> standalone_exchange_point;
     top::optional<xfork_point_t> v1_6_0_version_point;  // for v1.6.0 version control
     top::optional<xfork_point_t> v1_7_0_block_fork_point;
+    top::optional<xfork_point_t> remove_unit_proof_point;
 };
 using xchain_fork_config_t = xtop_chain_fork_config;
 

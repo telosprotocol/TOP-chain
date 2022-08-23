@@ -204,6 +204,10 @@ namespace top
                 base::xstring_utl::to_hex(next_index->get_last_block_hash()).c_str(), base::xstring_utl::to_hex(next_next_index->get_last_block_hash()).c_str());
             return nullptr;
         }
+
+        xuncommitted_subblock_cache_t & xblockacct_t::get_uncommitted_subblock_cache() {
+            return m_uncommitted_subblock_cache;
+        }
  
         bool  xblockacct_t::close(bool force_async)
         {
@@ -2200,7 +2204,7 @@ namespace top
         xchainacct_t::xchainacct_t(base::xvaccountobj_t & parent_obj,const uint64_t timeout_ms,xvblockdb_t * xvbkdb_ptr)
             :xblockacct_t(parent_obj,timeout_ms,xvbkdb_ptr)
         {
-            _lowest_commit_block_height = 0;
+            // _lowest_commit_block_height = 0;
         }
 
         xchainacct_t::~xchainacct_t()
@@ -2392,7 +2396,7 @@ namespace top
         {
             return xchainacct_t::store_block(new_raw_block);
         }
-    
+   
         xunitbkplugin::xunitbkplugin(base::xvaccountobj_t & parent_obj,const uint64_t timeout_ms,xvblockdb_t * xvbkdb_ptr)
             :xchainacct_t(parent_obj,timeout_ms,xvbkdb_ptr)
         {
@@ -2584,6 +2588,10 @@ namespace top
             if(!ret)
             {
                 xwarn("xunitbkplugin::store_committed_unit_block,fail-store block(%s)", new_raw_block->dump().c_str());
+            } else {
+                base::xauto_ptr<base::xvbindex_t> bindex(load_index(new_raw_block->get_height(),new_raw_block->get_block_hash()));
+                update_bindex_to_committed(bindex.get());
+                xinfo("xunitbkplugin::store_committed_unit_block update index,store_block,done for block(%s),dump:%s", new_raw_block->dump().c_str(), dump().c_str());
             }
             return true;
         }
@@ -2706,6 +2714,5 @@ namespace top
             }
             return false;
         }
-
     };//end of namespace of vstore
 };//end of namespace of top
