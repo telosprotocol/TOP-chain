@@ -70,10 +70,10 @@ private:
 
 class xuncommitted_subblock_cache_t {
 public:
-    uint64_t get_cert_height() const;
+    bool update_height(uint64_t height);
     const std::map<uint64_t, std::map<std::string, base::xvbindex_t *>> & get_lock_cache() const;
     const std::map<uint64_t, std::map<std::string, base::xvbindex_t *>> & get_cert_cache() const;
-    void add_blocks(uint64_t height, const std::vector<base::xvblock_ptr_t> & cert_blocks, const std::vector<base::xvblock_ptr_t> & lock_blocks);
+    void add_blocks(const std::vector<base::xvblock_ptr_t> & cert_blocks, const std::vector<base::xvblock_ptr_t> & lock_blocks);
     base::xblock_vector load_blocks_object(const base::xvaccount_t & account, uint64_t height) const;
     base::xvbindex_vector load_blocks_index(const base::xvaccount_t & account, const uint64_t height) const;
     base::xauto_ptr<base::xvbindex_t> load_block_index(const base::xvaccount_t & account, const xblock_match_base_t & match_func) const;

@@ -163,8 +163,8 @@ namespace top
             virtual bool                on_object_close() override;
             int                         load_block_idx_by_hash(const std::string & hash, std::string & account, uint64_t & height);
 
-            std::vector<base::xvblock_ptr_t> load_diff_blocks(xblockacct_t* target_account, const std::vector<base::xvbindex_t*> & block_list, const std::map<uint64_t, std::map<std::string, base::xvbindex_t*>> & cache);
-            bool                        update_unconfirm_subblock_cache(xblockacct_t* target_account);
+            std::vector<base::xvblock_ptr_t> load_diff_blocks(xblockacct_t* target_account, uint64_t height, const std::map<uint64_t, std::map<std::string, base::xvbindex_t*>> & cache, std::error_code & ec);
+            bool                             update_unconfirm_subblock_cache(xblockacct_t* target_account);
             base::xauto_ptr<base::xvblock_t> load_block_object_from_uncommitted_cache(const base::xvaccount_t & account, const xblock_match_base_t & match_func);
             base::xauto_ptr<base::xvbindex_t> load_block_index_from_uncommitted_cache(const base::xvaccount_t & account,const xblock_match_base_t & match_func);
         private:
