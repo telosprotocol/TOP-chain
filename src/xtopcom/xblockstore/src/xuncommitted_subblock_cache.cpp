@@ -10,8 +10,24 @@
 
 namespace top {
 namespace store {
-uint64_t xuncommitted_subblock_cache_t::get_cert_height() const {
-    return m_cert_height;
+bool xuncommitted_subblock_cache_t::update_height(uint64_t height) {
+    xdbg("xuncommitted_subblock_cache_t::update_height height height update from %llu to %llu", m_cert_height, height);
+    if (height < m_cert_height) {
+        xerror("xuncommitted_subblock_cache_t::update_height height invalid.m_cert_height:%llu,height:%llu", m_cert_height, height);
+        return false;
+    }
+    if (height == m_cert_height) {
+        // do nothing.
+    } else if (height == m_cert_height + 1) {
+        m_lock_cache.clear();
+        m_lock_cache.swap(m_cert_cache);
+        xdbg("xuncommitted_subblock_cache_t::update_height lock cache:%u cert cache:%u", m_lock_cache.size(), m_cert_cache.size());
+    } else {
+        m_lock_cache.clear();
+        m_cert_cache.clear();
+    }
+    m_cert_height = height;
+    return true;
 }
 
 const std::map<uint64_t, std::map<std::string, base::xvbindex_t *>> & xuncommitted_subblock_cache_t::get_lock_cache() const {
@@ -22,26 +38,10 @@ const std::map<uint64_t, std::map<std::string, base::xvbindex_t *>> & xuncommitt
     return m_cert_cache;
 }
 
-void xuncommitted_subblock_cache_t::add_blocks(uint64_t height, const std::vector<base::xvblock_ptr_t> & cert_blocks, const std::vector<base::xvblock_ptr_t> & lock_blocks) {
-    if (height < m_cert_height) {
-        xerror("xuncommitted_subblock_cache_t::add_blocks height invalid.height:%llu,m_cert_height:%llu", height, m_cert_height);
-        return;
-    }
-    if (height == m_cert_height) {
-        // do nothing.
-    } else if (height == m_cert_height + 1) {
-        m_lock_cache.clear();
-        m_lock_cache.swap(m_cert_cache);
-
-    } else {
-        m_lock_cache.clear();
-        m_cert_cache.clear();
-    }
-
-    xdbg("xuncommitted_subblock_cache_t::add_blocks height update from %llu to %llu", m_cert_height, height);
+void xuncommitted_subblock_cache_t::add_blocks(const std::vector<base::xvblock_ptr_t> & cert_blocks, const std::vector<base::xvblock_ptr_t> & lock_blocks) {
+    xdbg("xuncommitted_subblock_cache_t::add_blocks height update from %llu to %llu", m_cert_height, m_cert_height);
     add_blocks_to_cache(cert_blocks, m_cert_cache);
     add_blocks_to_cache(lock_blocks, m_lock_cache);
-    m_cert_height = height;
 }
 
 std::vector<base::xvbindex_t *> xuncommitted_subblock_cache_t::get_block_indexs_from_cache(const std::string & account,
