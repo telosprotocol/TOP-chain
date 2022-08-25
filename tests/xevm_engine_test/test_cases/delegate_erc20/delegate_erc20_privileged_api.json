@@ -1,0 +1,616 @@
+{
+    "pre_data": [
+        {
+            "account": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
+            "balances": {
+                "TOP": "35566166"
+            },
+            "spenders": [
+                {
+                    "spender": "T600044dce5c8961e283786cb31ad7fc072347227d7ea3",
+                    "approve": {
+                        "tUSDT": "123",
+                        "TOP": "2334"
+                    }
+                },
+                {
+                    "spender": "T600044dce5c8961e283786cb31ad7fc072347227d7ea7",
+                    "approve": {
+                        "tUSDT": "321"
+                    }
+                }
+            ]
+        },
+        {
+            "account": "T600044dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "balances": {
+                "tUSDT": "12345678901234567890123456789012345678900"
+            }
+        },
+        {
+            "account": "T600044dce5c8961e283786cb31ad7fc072347227d7ea4",
+            "balances": {
+                "tUSDT": "1234567890123456789012345678901234567890",
+                "TOP": "9876543210"
+            }
+        },
+        {
+            "account": "T600044dce5c8961e283786cb31ad7fc072347227d7ea5",
+            "balances": {
+                "tUSDT": "1234567890123456789012345678901234567890",
+                "TOP": "9876543219",
+                "ETH": "12345678901234567890123456789012345678905"
+            }
+        },
+        {
+            "account": "T600040393b136b79e16360d246450c5bb9d39d8ad1fb6",
+            "balances": {
+                "tUSDT": "1234567890123456789012345678901234567890",
+                "TOP": "9876543219",
+                "ETH": "12345678901234567890123456789012345678905"
+            }
+        },
+        {
+            "account": "T600044ca4bbdf750eb2cce4d3157d8b25cd7280f03e10",
+            "balances": {
+                "tUSDT": "1234567890123456789012345678901234567890",
+                "TOP": "9876543219",
+                "ETH": "12345678901234567890123456789012345678905"
+            }
+        }
+    ],
+    "deploy_contract": [
+        {
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
+            "__comments": "NAME: Wrapped Tether USD; SYMBOL: tUSDT; UUID:0x02",
+            "code_file_path": "delegate_erc20_usdt.bin",
+            "gas_limit": 543721,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "erc20_usdt",
+                "gas_used": 423740,
+                "logs": []
+            }
+        },
+        {
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
+            "__comments": "NAME: TOP Network; SYMBOL: TOP; UUID:0x02",
+            "code_file_path": "delegate_erc20_top.bin",
+            "gas_limit": 543721,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "erc20_top",
+                "gas_used": 423632,
+                "logs": []
+            }
+        },
+        {
+            "src_address": "T600040393b136b79e16360d246450c5bb9d39d8ad1fb6",
+            "__comments": "NAME: ETH; SYMBOL: ETH; UUID:0x02",
+            "code_file_path": "delegate_erc20_eth.bin",
+            "gas_limit": 543721,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "erc20_eth",
+                "gas_used": 423536,
+                "logs": []
+            }
+        },
+        {
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
+            "__comments": "NAME: Wrapped Tether USD; SYMBOL: tUSDT; UUID:0x02",
+            "code_file_path": "staticcall_erc20_usdt.bin",
+            "gas_limit": 543721,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "staticcall_erc20_usdt",
+                "gas_used": 423740,
+                "logs": []
+            }
+        },
+        {
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
+            "__comments": "NAME: TOP Network; SYMBOL: TOP; UUID:0x02",
+            "code_file_path": "staticcall_erc20_top.bin",
+            "gas_limit": 543721,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "staticcall_erc20_top",
+                "gas_used": 423632,
+                "logs": []
+            }
+        },
+        {
+            "src_address": "T600040393b136b79e16360d246450c5bb9d39d8ad1fb6",
+            "__comments": "NAME: ETH; SYMBOL: ETH; UUID:0x02",
+            "code_file_path": "staticcall_erc20_eth.bin",
+            "gas_limit": 543721,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "staticcall_erc20_eth",
+                "gas_used": 423536,
+                "logs": []
+            }
+        }
+    ],
+    "test_cases": [
+        {
+            "__comments": "setController_eth: invalid owner",
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "target_address": "erc20_eth",
+            "data": "0x92eefe9b0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 5,
+                "extra_message": "",
+                "gas_used": 34000,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "setController_eth: by owner",
+            "src_address": "T60004f8a1e199c49c2ae2682ecc5b4a8838b39bab1a38",
+            "target_address": "erc20_eth",
+            "data": "0x92eefe9b0000000000000000000000004ca4bbdf750eb2cce4d3157d8b25cd7280f03e10",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000001",
+                "gas_used": 25012,
+                "logs": [
+                    {
+                        "address": "erc20_eth",
+                        "topics": [
+                            "0xea4ba01507e54b7b5990927a832da3ab6a71e981b5d53ffad97def0f85fcfb20",
+                            "0x0000000000000000000000000000000000000000000000000000000000000000",
+                            "0x0000000000000000000000004ca4bbdf750eb2cce4d3157d8b25cd7280f03e10"
+                        ],
+                        "data": ""
+                    }
+                ]
+            }
+        },
+        {
+            "__comments": "setController_eth: cannot set controller to non-zero address twice",
+            "src_address": "T60004f8a1e199c49c2ae2682ecc5b4a8838b39bab1a38",
+            "target_address": "erc20_eth",
+            "data": "0x92eefe9b0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 1,
+                "extra_message": "",
+                "gas_used": 28695,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "setController_eth: set to zero address",
+            "src_address": "T60004f8a1e199c49c2ae2682ecc5b4a8838b39bab1a38",
+            "target_address": "erc20_eth",
+            "data": "0x92eefe9b0000000000000000000000000000000000000000000000000000000000000000",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "",
+                "gas_used": 24772,
+                "logs": [
+                    {
+                        "address": "erc20_eth",
+                        "topics": [
+                            "0xea4ba01507e54b7b5990927a832da3ab6a71e981b5d53ffad97def0f85fcfb20",
+                            "0x0000000000000000000000004ca4bbdf750eb2cce4d3157d8b25cd7280f03e10",
+                            "0x0000000000000000000000000000000000000000000000000000000000000000"
+                        ],
+                        "data": ""
+                    }
+                ]
+            }
+        },
+        {
+            "__comments": "setController_eth: cannot set controller to non-zero address from zero address",
+            "src_address": "T60004f8a1e199c49c2ae2682ecc5b4a8838b39bab1a38",
+            "target_address": "erc20_eth",
+            "data": "0x92eefe9b0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 1,
+                "extra_message": "",
+                "gas_used": 28695,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "setController_eth_staticcall",
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "target_address": "staticcall_erc20_eth",
+            "data": "0x92eefe9b0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 1,
+                "extra_message": "",
+                "gas_used": 28695,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "setController_usdt: invalid owner",
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "target_address": "erc20_usdt",
+            "data": "0x92eefe9b0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 5,
+                "extra_message": "",
+                "gas_used": 34000,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "setController_usdt: by owner",
+            "src_address": "T60004f8a1e199c49c2ae2682ecc5b4a8838b39bab1a38",
+            "target_address": "erc20_usdt",
+            "data": "0x92eefe9b0000000000000000000000004ca4bbdf750eb2cce4d3157d8b25cd7280f03e10",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000001",
+                "gas_used": 25012,
+                "logs": [
+                    {
+                        "address": "erc20_usdt",
+                        "topics": [
+                            "0xea4ba01507e54b7b5990927a832da3ab6a71e981b5d53ffad97def0f85fcfb20",
+                            "0x0000000000000000000000000000000000000000000000000000000000000000",
+                            "0x0000000000000000000000004ca4bbdf750eb2cce4d3157d8b25cd7280f03e10"
+                        ],
+                        "data": ""
+                    }
+                ]
+            }
+        },
+        {
+            "__comments": "setController_usdt: cannot set controller to non-zero address twice",
+            "src_address": "T60004f8a1e199c49c2ae2682ecc5b4a8838b39bab1a38",
+            "target_address": "erc20_usdt",
+            "data": "0x92eefe9b0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 1,
+                "extra_message": "",
+                "gas_used": 28695,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "setController_usdt: set to zero address",
+            "src_address": "T60004f8a1e199c49c2ae2682ecc5b4a8838b39bab1a38",
+            "target_address": "erc20_usdt",
+            "data": "0x92eefe9b0000000000000000000000000000000000000000000000000000000000000000",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "",
+                "gas_used": 24772,
+                "logs": [
+                    {
+                        "address": "erc20_usdt",
+                        "topics": [
+                            "0xea4ba01507e54b7b5990927a832da3ab6a71e981b5d53ffad97def0f85fcfb20",
+                            "0x0000000000000000000000004ca4bbdf750eb2cce4d3157d8b25cd7280f03e10",
+                            "0x0000000000000000000000000000000000000000000000000000000000000000"
+                        ],
+                        "data": ""
+                    }
+                ]
+            }
+        },
+        {
+            "__comments": "setController_usdt: cannot set controller to non-zero address from zero address",
+            "src_address": "T60004f8a1e199c49c2ae2682ecc5b4a8838b39bab1a38",
+            "target_address": "erc20_usdt",
+            "data": "0x92eefe9b0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 1,
+                "extra_message": "",
+                "gas_used": 28695,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "setController_usdt_staticcall",
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "target_address": "staticcall_erc20_usdt",
+            "data": "0x92eefe9b0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 1,
+                "extra_message": "",
+                "gas_used": 28695,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "setController_top",
+            "src_address": "T600040393b136b79e16360d246450c5bb9d39d8ad1fb6",
+            "target_address": "erc20_top",
+            "data": "0x92eefe9b0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 5,
+                "extra_message": "",
+                "gas_used": 34000,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "setController_top_staticcall",
+            "src_address": "T600040393b136b79e16360d246450c5bb9d39d8ad1fb6",
+            "target_address": "staticcall_erc20_top",
+            "data": "0x92eefe9b0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 5,
+                "extra_message": "",
+                "gas_used": 34000,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "transferOwnership_eth: invalid owner",
+            "src_address": "T600040393b136b79e16360d246450c5bb9d39d8ad1fb6",
+            "target_address": "erc20_eth",
+            "data": "0xf2fde38b0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 5,
+                "extra_message": "",
+                "gas_used": 34000,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "transferOwnership_eth: by owner",
+            "src_address": "T60004f8a1e199c49c2ae2682ecc5b4a8838b39bab1a38",
+            "target_address": "erc20_eth",
+            "data": "0xf2fde38b0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000001",
+                "gas_used": 25012,
+                "logs": [
+                    {
+                        "address": "erc20_eth",
+                        "topics": [
+                            "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0",
+                            "0x000000000000000000000000f8a1e199c49c2ae2682ecc5b4a8838b39bab1a38",
+                            "0x0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3"
+                        ],
+                        "data": ""
+                    }
+                ]
+            }
+        },
+        {
+            "__comments": "transferOwnership_eth: owner already transfered",
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "target_address": "erc20_eth",
+            "data": "0xf2fde38b000000000000000000000000f8a1e199c49c2ae2682ecc5b4a8838b39bab1a38",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 1,
+                "extra_message": "",
+                "gas_used": 28695,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "transferOwnership_eth: set owner to zero address",
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "target_address": "erc20_eth",
+            "data": "0xf2fde38b0000000000000000000000000000000000000000000000000000000000000000",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000001",
+                "gas_used": 24772,
+                "logs": [
+                    {
+                        "address": "erc20_eth",
+                        "topics": [
+                            "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0",
+                            "0x0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3",
+                            "0x0000000000000000000000000000000000000000000000000000000000000000"
+                        ],
+                        "data": ""
+                    }
+                ]
+            }
+        },
+        {
+            "__comments": "transferOwnership_eth: cannot transfer owner by zero address",
+            "src_address": "T600040000000000000000000000000000000000000000",
+            "target_address": "erc20_eth",
+            "data": "0xf2fde38b000000000000000000000000f8a1e199c49c2ae2682ecc5b4a8838b39bab1a38",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 1,
+                "extra_message": "",
+                "gas_used": 28695,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "transferOwnership_eth_staticcall",
+            "src_address": "T600040393b136b79e16360d246450c5bb9d39d8ad1fb6",
+            "target_address": "staticcall_erc20_eth",
+            "data": "0xf2fde38b0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 1,
+                "extra_message": "",
+                "gas_used": 28695,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "transferOwnership_usdt: invalid owner",
+            "src_address": "T600040393b136b79e16360d246450c5bb9d39d8ad1fb6",
+            "target_address": "erc20_usdt",
+            "data": "0xf2fde38b0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 5,
+                "extra_message": "",
+                "gas_used": 34000,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "transferOwnership_usdt: by owner",
+            "src_address": "T60004f8a1e199c49c2ae2682ecc5b4a8838b39bab1a38",
+            "target_address": "erc20_usdt",
+            "data": "0xf2fde38b0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000001",
+                "gas_used": 25012,
+                "logs": [
+                    {
+                        "address": "erc20_usdt",
+                        "topics": [
+                            "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0",
+                            "0x000000000000000000000000f8a1e199c49c2ae2682ecc5b4a8838b39bab1a38",
+                            "0x0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3"
+                        ],
+                        "data": ""
+                    }
+                ]
+            }
+        },
+        {
+            "__comments": "transferOwnership_usdt: owner already transfered",
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "target_address": "erc20_usdt",
+            "data": "0xf2fde38b000000000000000000000000f8a1e199c49c2ae2682ecc5b4a8838b39bab1a38",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 1,
+                "extra_message": "",
+                "gas_used": 28695,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "transferOwnership_usdt: set owner to zero address",
+            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "target_address": "erc20_usdt",
+            "data": "0xf2fde38b0000000000000000000000000000000000000000000000000000000000000000",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 0,
+                "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000001",
+                "gas_used": 24772,
+                "logs": [
+                    {
+                        "address": "erc20_usdt",
+                        "topics": [
+                            "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0",
+                            "0x0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3",
+                            "0x0000000000000000000000000000000000000000000000000000000000000000"
+                        ],
+                        "data": ""
+                    }
+                ]
+            }
+        },
+        {
+            "__comments": "transferOwnership_usdt: cannot transfer owner by zero address",
+            "src_address": "T600040000000000000000000000000000000000000000",
+            "target_address": "erc20_usdt",
+            "data": "0xf2fde38b000000000000000000000000f8a1e199c49c2ae2682ecc5b4a8838b39bab1a38",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 1,
+                "extra_message": "",
+                "gas_used": 28695,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "transferOwnership_usdt_staticcall",
+            "src_address": "T600040393b136b79e16360d246450c5bb9d39d8ad1fb6",
+            "target_address": "staticcall_erc20_usdt",
+            "data": "0xf2fde38b0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 1,
+                "extra_message": "",
+                "gas_used": 28695,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "transferOwnership_top",
+            "src_address": "T600040393b136b79e16360d246450c5bb9d39d8ad1fb6",
+            "target_address": "erc20_top",
+            "data": "0xf2fde38b0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 5,
+                "extra_message": "",
+                "gas_used": 34000,
+                "logs": []
+            }
+        },
+        {
+            "__comments": "transferOwnership_top_staticcall",
+            "src_address": "T600040393b136b79e16360d246450c5bb9d39d8ad1fb6",
+            "target_address": "staticcall_erc20_top",
+            "data": "0xf2fde38b0000000000000000000000004dce5c8961e283786cb31ad7fc072347227d7ea3",
+            "gas_limit": 34000,
+            "value": "0",
+            "expected": {
+                "status": 5,
+                "extra_message": "",
+                "gas_used": 34000,
+                "logs": []
+            }
+        }
+    ]
+}

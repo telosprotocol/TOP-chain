@@ -751,17 +751,6 @@ bool xtop_delegate_usdt_contract::execute(xbytes_t input,
             return false;
         }
 
-        if (new_owner.empty()) {
-            err.fail_status = precompile_error::Revert;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
-            err.cost = transfer_ownership_gas_cost;
-            err.output = result;
-
-            xwarn("predefined usdt contract: transferOwnership reverted. new owner is zero");
-
-            return false;
-        }
-
         contract_state->tep_token_owner(chain_uuid, common::xaccount_address_t::build_from(new_owner, base::enum_vaccount_addr_type_secp256k1_evm_user_account), ec);
         if (!ec) {
             auto const & contract_address = context.address;
@@ -846,17 +835,6 @@ bool xtop_delegate_usdt_contract::execute(xbytes_t input,
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
             xwarn("predefined usdt contract: setController with invalid burn from address");
-
-            return false;
-        }
-
-        if (new_controller.empty()) {
-            err.fail_status = precompile_error::Revert;
-            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
-            err.cost = set_controller_gas_cost;
-            err.output = result;
-
-            xwarn("predefined usdt contract: transferOwnership reverted. new owner is zero");
 
             return false;
         }
