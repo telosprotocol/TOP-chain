@@ -48,9 +48,9 @@ TEST_F(test_uncommitted_subblock_cache, store_and_load) {
     lock_blocks.push_back(_tableblock1);
     cert_blocks.push_back(_tableblock2);
 
-    unconfirm_cache.add_blocks(2, cert_blocks, lock_blocks);
+    unconfirm_cache.update_height(2);
+    unconfirm_cache.add_blocks(cert_blocks, lock_blocks);
 
-    ASSERT_EQ(unconfirm_cache.get_cert_height(), 2);
     ASSERT_EQ(unconfirm_cache.get_lock_cache().size(), 1);
     ASSERT_EQ(unconfirm_cache.get_cert_cache().size(), 1);
 
@@ -125,10 +125,10 @@ TEST_F(test_uncommitted_subblock_cache, store_and_load) {
 
     lock_blocks.clear();
     cert_blocks.clear();
-    lock_blocks.push_back(_tableblock2);
     cert_blocks.push_back(_tableblock3);
 
-    unconfirm_cache.add_blocks(3, cert_blocks, lock_blocks);
+    unconfirm_cache.update_height(3);
+    unconfirm_cache.add_blocks(cert_blocks, lock_blocks);
     {
         auto block1 = unconfirm_cache.load_block_object(account_sender, xblock_match_by_height_t(1));
         ASSERT_EQ(block1, nullptr);

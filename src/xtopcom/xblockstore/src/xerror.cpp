@@ -18,6 +18,8 @@ static char const * errc_to_message(int const errc) noexcept {
 
     case xerrc_t::store_create_genesis_cb_not_register:
         return "store_create_genesis_cb_not_register";
+    case xerrc_t::store_load_block_fail:
+        return "store_load_block_fail";
 
     default:  // NOLINT(clang-diagnostic-covered-switch-default)
         return "unknown error";

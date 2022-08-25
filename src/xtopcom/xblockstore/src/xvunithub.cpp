@@ -1511,7 +1511,13 @@ namespace top
             return 0;
         }
 
-        std::vector<base::xvblock_ptr_t> xvblockstore_impl::load_diff_blocks(xblockacct_t* target_account, const std::vector<base::xvbindex_t*> & block_list, const std::map<uint64_t, std::map<std::string, base::xvbindex_t*>> & cache) {
+        std::vector<base::xvblock_ptr_t> xvblockstore_impl::load_diff_blocks(xblockacct_t* target_account, uint64_t height, const std::map<uint64_t, std::map<std::string, base::xvbindex_t*>> & cache, std::error_code & ec) {
+            if (target_account->load_index(height) <= 0) {
+                xwarn("xtablebkplugin::load_diff_blocks load block fail account:%s height:%llu", target_account->get_account_address().c_str(), height);
+                ec = error::xenum_errc::store_load_block_fail;
+                return {};
+            }
+            std::vector<base::xvbindex_t*> block_list(target_account->query_index(height));
             std::vector<base::xvblock_ptr_t> blocks;
             if (cache.size() < block_list.size())  {
                 for (auto & lock_block : block_list) {
@@ -1530,71 +1536,34 @@ namespace top
         
         bool   xvblockstore_impl::update_unconfirm_subblock_cache(xblockacct_t* target_account) {
             auto cert_height = target_account->get_latest_cert_block_height();
-            auto & unconfirm_cache = target_account->get_uncommitted_subblock_cache();
-            auto unconfirm_cache_height = unconfirm_cache.get_cert_height();
-            std::vector<base::xvblock_ptr_t> cert_blocks;
-            std::vector<base::xvblock_ptr_t> lock_blocks;
-
-            if (cert_height < unconfirm_cache_height) {
-                xerror("xtablebkplugin::update_unconfirm_subblock_cache height wrong cert height:%llu,unconfirm_cache_height:%llu", cert_height, unconfirm_cache_height);
+            if (cert_height <= 0){
                 return false;
-            } else if (cert_height == unconfirm_cache_height) {
-                if (cert_height > 1) {
-                    auto lock_height = cert_height - 1;
-                    if (target_account->load_index(lock_height) <= 0) {
-                        xwarn("xtablebkplugin::update_unconfirm_subblock_cache load block fail account:%s height:%llu", target_account->get_account_address().c_str(), lock_height);
-                        return false;
-                    }
-                    std::vector<base::xvbindex_t*> lock_block_list(target_account->query_index(lock_height));
-                    auto lock_cache = unconfirm_cache.get_lock_cache();
-                    lock_blocks = load_diff_blocks(target_account, lock_block_list, lock_cache);
-                }
-
-                if (cert_height > 0) {
-                    if (target_account->load_index(cert_height) <= 0) {
-                        xwarn("xtablebkplugin::update_unconfirm_subblock_cache load block fail account:%s height:%llu", target_account->get_account_address().c_str(), cert_height);
-                        return false;
-                    }
-                    std::vector<base::xvbindex_t*> cert_block_list(target_account->query_index(cert_height));
-                    auto cert_cache = unconfirm_cache.get_cert_cache();
-                    cert_blocks = load_diff_blocks(target_account, cert_block_list, cert_cache);
-                }
-            } else if (cert_height == unconfirm_cache_height + 1) {
-                if (cert_height > 1) {
-                    auto lock_height = cert_height - 1;
-                    if (target_account->load_index(lock_height) <= 0) {
-                        xwarn("xtablebkplugin::update_unconfirm_subblock_cache load block fail account:%s height:%llu", target_account->get_account_address().c_str(), lock_height);
-                        return false;
-                    }
-                    std::vector<base::xvbindex_t*> lock_block_list(target_account->query_index(lock_height));
-                    auto cert_cache = unconfirm_cache.get_cert_cache();
-                    lock_blocks = load_diff_blocks(target_account, lock_block_list, cert_cache);
-                }
-
-                if (target_account->load_index(cert_height) <= 0) {
-                    xwarn("xtablebkplugin::update_unconfirm_subblock_cache load block fail account:%s height:%llu", target_account->get_account_address().c_str(), cert_height);
-                    return false;
-                }
-                std::vector<base::xvbindex_t*> cert_block_list(target_account->query_index(cert_height));
-                cert_blocks = load_diff_blocks(target_account, cert_block_list, {});
-            } else {
-                auto lock_height = cert_height - 1;
-                if (target_account->load_index(lock_height) <= 0) {
-                    xwarn("xtablebkplugin::update_unconfirm_subblock_cache load block fail account:%s height:%llu", target_account->get_account_address().c_str(), lock_height);
-                    return false;
-                }
-                std::vector<base::xvbindex_t*> lock_block_list(target_account->query_index(lock_height));
-                lock_blocks = load_diff_blocks(target_account, lock_block_list, {});
-
-                if (target_account->load_index(cert_height) <= 0) {
-                    xwarn("xtablebkplugin::update_unconfirm_subblock_cache load block fail account:%s height:%llu", target_account->get_account_address().c_str(), cert_height);
-                    return false;
-                }
-                std::vector<base::xvbindex_t*> cert_block_list(target_account->query_index(cert_height));
-                cert_blocks = load_diff_blocks(target_account, cert_block_list, {});
+            }
+            auto & unconfirm_cache = target_account->get_uncommitted_subblock_cache();
+            auto ret = unconfirm_cache.update_height(cert_height);
+            if (!ret) {
+                return false;
             }
 
-            unconfirm_cache.add_blocks(cert_height, cert_blocks, lock_blocks);
+            std::vector<base::xvblock_ptr_t> cert_blocks;
+            std::vector<base::xvblock_ptr_t> lock_blocks;
+            std::error_code ec;
+
+            auto cert_cache = unconfirm_cache.get_cert_cache();
+            cert_blocks = load_diff_blocks(target_account, cert_height, cert_cache, ec);
+            if (ec) {
+                return false;
+            }
+
+            if (cert_height > 1) {
+                auto lock_cache = unconfirm_cache.get_lock_cache();
+                lock_blocks = load_diff_blocks(target_account, cert_height - 1, lock_cache, ec);
+                if (ec) {
+                    return false;
+                }
+            }
+
+            unconfirm_cache.add_blocks(cert_blocks, lock_blocks);
             return true;
         }
 
