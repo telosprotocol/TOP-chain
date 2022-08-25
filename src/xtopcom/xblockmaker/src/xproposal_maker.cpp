@@ -269,6 +269,11 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
         return nullptr;
     }
 
+    // only invoke sync when make proposal successfully, avoiding too much call
+    if (proposal_para.get_latest_committed_block()->get_height() > 0) {
+        sys_contract_sync(tablestate_commit);
+    }
+
     // need full cert block
     //get_blockstore()->load_block_input(*m_table_maker.get(), latest_cert_block.get());
     //get_blockstore()->load_block_output(*m_table_maker.get(), latest_cert_block.get());
@@ -337,6 +342,8 @@ int xproposal_maker_t::verify_proposal(xblock_consensus_para_t & cs_para, base::
         XMETRICS_GAUGE(metrics::cons_table_backup_verify_proposal_succ, 0);
         return xblockmaker_error_proposal_bad_consensus_para;
     }
+
+    sys_contract_sync(cs_para.get_commit_table_state());
 
     int32_t verify_ret = m_table_maker->verify_proposal(proposal_block, table_para, cs_para);
     if (verify_ret != xsuccess) {
@@ -663,6 +670,25 @@ bool xproposal_maker_t::backup_set_consensus_para(base::xvblock_t* latest_cert_b
     cs_para.set_block_gaslimit(XGET_ONCHAIN_GOVERNANCE_PARAMETER(block_gas_limit));
     cs_para.set_block_base_price(gasfee::xgas_estimate::base_price());
     return true;
+}
+
+void xproposal_maker_t::sys_contract_sync(const data::xtablestate_ptr_t & tablestate) const {
+    // always sync sharding sys contract
+    if (m_table_maker->get_zone_index() != base::enum_chain_zone_consensus_index) {
+        return;  // sync module already do rec and zec table sync
+    }
+    std::string sharding_vote_addr = base::xvaccount_t::make_account_address(sys_contract_sharding_vote_addr, m_table_maker->get_ledger_subaddr());
+    std::string sharding_reward_claiming_addr = base::xvaccount_t::make_account_address(sys_contract_sharding_reward_claiming_addr, m_table_maker->get_ledger_subaddr());
+    check_and_sync_account(tablestate, sharding_vote_addr);
+    check_and_sync_account(tablestate, sharding_reward_claiming_addr);
+}
+
+void xproposal_maker_t::check_and_sync_account(const data::xtablestate_ptr_t & tablestate, const std::string & addr) const {
+    base::xvaccount_t _vaddr(addr);
+    base::xaccount_index_t accountindex;
+    tablestate->get_account_index(addr, accountindex);
+    uint64_t latest_connect_height = get_blockstore()->get_latest_connected_block_height(_vaddr);
+    data::xblocktool_t::check_lacking_unit_and_try_sync(_vaddr, accountindex, latest_connect_height, get_blockstore(), "proposal_maker");
 }
 
 NS_END2
