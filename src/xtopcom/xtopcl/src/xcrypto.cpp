@@ -164,7 +164,7 @@ bool decrypt_keystore_by_kdf_key(std::string const & kdf_key, xJson::Value const
             CryptoPP::StreamTransformationFilter stfDecryptor(cbcDecryption, new CryptoPP::StringSink(pri_key));
             stfDecryptor.Put(reinterpret_cast<const unsigned char *>(ciphertext.c_str()), ciphertext.size());
             stfDecryptor.MessageEnd();
-        } catch (std::exception & e) {
+        } catch (std::exception &) {
             // std::cout << "Decryption Error: " << e.what() << std::endl;
             pri_key.clear(); // or might return same intermiate results.
             return false;
