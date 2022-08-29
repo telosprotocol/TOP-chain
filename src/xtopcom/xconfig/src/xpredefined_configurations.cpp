@@ -242,6 +242,7 @@ XDEFINE_CONFIGURATION(platform_url_endpoints);
 // consortium parameters
 XDEFINE_CONFIGURATION(enable_sharding_contract);
 XDEFINE_CONFIGURATION(enable_gas_fee);
+XDEFINE_CONFIGURATION(enable_free_tgas);
 
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(toggle_register_whitelist);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(register_whitelist);
