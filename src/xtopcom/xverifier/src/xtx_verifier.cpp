@@ -13,7 +13,8 @@
 #include "xverifier/xwhitelist_verifier.h"
 #include "xverifier/xblacklist_verifier.h"
 #include "xvledger/xvblock.h"
-
+#include "xconfig/xconfig_register.h"
+#include "xpbase/base/top_utils.h"
 #include <cinttypes>
 
 NS_BEG2(top, xverifier)
@@ -118,6 +119,17 @@ int32_t xtx_verifier::verify_address_type(data::xtransaction_t const * trx) {
             xwarn("[global_trace][xtx_verifier][address_verify]dst addr invalid , tx:%s", trx->dump().c_str());
             return xverifier_error::xverifier_error_addr_invalid;
         }
+
+        // consortium: check transfer address
+        if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(toggle_register_whitelist) == 1) {
+            std::string nodes = XGET_ONCHAIN_GOVERNANCE_PARAMETER(register_whitelist);
+            std::set<std::string> node_sets;
+            top::SplitString(nodes, ',', node_sets);
+            if (node_sets.find(src_addr) == node_sets.end() && node_sets.find(dst_addr) == node_sets.end() ) {
+                xwarn("[global_trace][xtx_verifier][address_verify] check whitelist address fail, tx:%s", trx->dump().c_str());
+                return xverifier_error::xverifier_error_addr_invalid;
+            }
+        }        
     }
 
     return xverifier_error::xverifier_success;
@@ -245,10 +257,10 @@ int32_t xtx_verifier::sys_contract_tx_check(data::xtransaction_t const * trx_ptr
 }
 bool xtx_verifier::verify_register_whitelist(const std::string& account) {
     std::string nodes = XGET_ONCHAIN_GOVERNANCE_PARAMETER(register_whitelist);
-    std::vector<std::string> node_list;
-    base::xstring_utl::split_string(nodes, ',', node_list);
+    std::set<std::string> node_sets;
+    top::SplitString(nodes, ',', node_sets);
 
-    if (std::find(std::begin(node_list), std::end(node_list), account) != std::end(node_list))
+    if (node_sets.find(account) != node_sets.end())
         return true;
     xwarn("xtx_verifier::verify_register_whitelist fail, %s", account.c_str());
     return false;
