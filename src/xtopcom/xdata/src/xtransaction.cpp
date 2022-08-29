@@ -13,7 +13,7 @@ namespace top { namespace data {
 
 bool xtransaction_t::transaction_type_check() const {
     // consortium: disable stake and vote
-    if (XGET_CONFIG(enable_sharding_contract) == false) {
+    if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(toggle_register_whitelist) == 1)
         switch (get_tx_type()) {
 #ifdef ENABLE_CREATE_USER  // debug use
         case xtransaction_type_create_user_account:
