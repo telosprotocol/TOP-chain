@@ -44,32 +44,32 @@ struct convert<top::data::election::v1::xelection_info_t> final {
         }
 
         case xv1_election_info_genesis_index: {
-            election_info.genesis = o.via.array.ptr[xv1_election_info_genesis_index].as<bool>();
+            election_info.genesis(o.via.array.ptr[xv1_election_info_genesis_index].as<bool>());
             XATTRIBUTE_FALLTHROUGH;
         }
 
         case xv1_election_info_miner_type_index: {
-            election_info.miner_type = o.via.array.ptr[xv1_election_info_miner_type_index].as<top::common::xminer_type_t>();
+            election_info.miner_type(o.via.array.ptr[xv1_election_info_miner_type_index].as<top::common::xminer_type_t>());
             XATTRIBUTE_FALLTHROUGH;
         }
 
         case xv1_election_info_consensus_public_key_index: {
-            election_info.consensus_public_key = o.via.array.ptr[xv1_election_info_consensus_public_key_index].as<top::xpublic_key_t>();
+            election_info.public_key(o.via.array.ptr[xv1_election_info_consensus_public_key_index].as<top::xpublic_key_t>());
             XATTRIBUTE_FALLTHROUGH;
         }
 
         case xv1_election_info_comprehensive_stake_index: {
-            election_info.comprehensive_stake = o.via.array.ptr[xv1_election_info_comprehensive_stake_index].as<uint64_t>();
+            election_info.comprehensive_stake(o.via.array.ptr[xv1_election_info_comprehensive_stake_index].as<uint64_t>());
             XATTRIBUTE_FALLTHROUGH;
         }
 
         case xv1_election_info_stake_index: {
-            election_info.stake = o.via.array.ptr[xv1_election_info_stake_index].as<uint64_t>();
+            election_info.stake(o.via.array.ptr[xv1_election_info_stake_index].as<uint64_t>());
             XATTRIBUTE_FALLTHROUGH;
         }
 
         case xv1_election_info_joined_version_index: {
-            election_info.joined_version = o.via.array.ptr[xv1_election_info_joined_version_index].as<top::common::xelection_round_t>();
+            election_info.joined_epoch(o.via.array.ptr[xv1_election_info_joined_version_index].as<top::common::xelection_round_t>());
             XATTRIBUTE_FALLTHROUGH;
         }
         }
@@ -82,12 +82,12 @@ struct pack<::top::data::election::v1::xelection_info_t> {
     template <typename StreamT>
     msgpack::packer<StreamT> & operator()(msgpack::packer<StreamT> & o, top::data::election::v1::xelection_info_t const & election_info) const {
         o.pack_array(xv1_election_info_field_count);
-        o.pack(election_info.joined_version);
-        o.pack(election_info.stake);
-        o.pack(election_info.comprehensive_stake);
-        o.pack(election_info.consensus_public_key);
-        o.pack(election_info.miner_type);
-        o.pack(election_info.genesis);
+        o.pack(election_info.joined_epoch());
+        o.pack(election_info.stake());
+        o.pack(election_info.comprehensive_stake());
+        o.pack(election_info.public_key());
+        o.pack(election_info.miner_type());
+        o.pack(election_info.genesis());
 
         return o;
     }
@@ -99,12 +99,12 @@ struct object_with_zone<::top::data::election::v1::xelection_info_t> {
         o.type = msgpack::type::ARRAY;
         o.via.array.size = xv1_election_info_field_count;
         o.via.array.ptr = static_cast<msgpack::object *>(o.zone.allocate_align(sizeof(::msgpack::object) * o.via.array.size));
-        o.via.array.ptr[xv1_election_info_joined_version_index] = msgpack::object{election_info.joined_version, o.zone};
-        o.via.array.ptr[xv1_election_info_stake_index] = msgpack::object{election_info.stake, o.zone};
-        o.via.array.ptr[xv1_election_info_comprehensive_stake_index] = msgpack::object{election_info.comprehensive_stake, o.zone};
-        o.via.array.ptr[xv1_election_info_consensus_public_key_index] = msgpack::object{election_info.consensus_public_key, o.zone};
-        o.via.array.ptr[xv1_election_info_miner_type_index] = msgpack::object{election_info.miner_type, o.zone};
-        o.via.array.ptr[xv1_election_info_genesis_index] = msgpack::object{election_info.genesis, o.zone};
+        o.via.array.ptr[xv1_election_info_joined_version_index] = msgpack::object{election_info.joined_epoch(), o.zone};
+        o.via.array.ptr[xv1_election_info_stake_index] = msgpack::object{election_info.stake(), o.zone};
+        o.via.array.ptr[xv1_election_info_comprehensive_stake_index] = msgpack::object{election_info.comprehensive_stake(), o.zone};
+        o.via.array.ptr[xv1_election_info_consensus_public_key_index] = msgpack::object{election_info.public_key(), o.zone};
+        o.via.array.ptr[xv1_election_info_miner_type_index] = msgpack::object{election_info.miner_type(), o.zone};
+        o.via.array.ptr[xv1_election_info_genesis_index] = msgpack::object{election_info.genesis(), o.zone};
     }
 };
 

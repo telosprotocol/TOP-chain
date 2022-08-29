@@ -879,7 +879,7 @@ static void parse_election_result_string(std::string const & str, json & j) {
                         auto const & election_info = top::get<data::election::xelection_info_bundle_t>(node_info).election_info();
                         json jv;
                         jv["group_id"] = group_id.value();
-                        jv["stake"] = election_info.stake;
+                        jv["stake"] = election_info.stake();
                         jv["round"] = election_group_result.group_version().value();
                         jn[node_id.to_string()] += jv;
                     }

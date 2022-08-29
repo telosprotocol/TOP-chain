@@ -390,9 +390,9 @@ public:
             // elect_data.staking = stake[i];
             top::data::xnode_info_t node_info;
             node_info.address = node_addr;
-            node_info.election_info.comprehensive_stake = stake[i];
-            node_info.election_info.joined_version = common::xelection_round_t{0};
-            node_info.election_info.raw_credit_score = 1000000;
+            node_info.election_info.comprehensive_stake(stake[i]);
+            node_info.election_info.joined_epoch(common::xelection_round_t{0});
+            node_info.election_info.raw_credit_score(1000000);
             elect_set.emplace_back(node_info);
             // std::cout << "xip: " << node_addr.xip2().value().high_addr << " " << node_addr.xip2().value().low_addr << std::endl;
         }
@@ -418,7 +418,7 @@ public:
                         std::vector<common::xfts_merkle_tree_t<xvip2_t>::value_type> candidates;
                         // std:cout << "random: " << random << std::endl;
                         for (auto iter = elect_set.begin(); iter != elect_set.end(); iter++) {
-                            candidates.push_back({static_cast<common::xstake_t>(iter->election_info.comprehensive_stake + 1), static_cast<xvip2_t>(iter->address.xip2())});
+                            candidates.push_back({static_cast<common::xstake_t>(iter->election_info.comprehensive_stake() + 1), static_cast<xvip2_t>(iter->address.xip2())});
                             // std::cout << "xip: " << iter->xip.high_addr << " " << iter->xip.low_addr << std::endl;
                         }
                         std::vector<common::xfts_merkle_tree_t<xvip2_t>::value_type> leaders;
@@ -516,9 +516,9 @@ public:
             // elect_data.staking = stake[i];
             top::data::xnode_info_t node_info;
             node_info.address = node_addr;
-            node_info.election_info.comprehensive_stake = stake[i];
-            node_info.election_info.joined_version = common::xelection_round_t{0};
-            node_info.election_info.raw_credit_score = 1000000;
+            node_info.election_info.comprehensive_stake(stake[i]);
+            node_info.election_info.joined_epoch(common::xelection_round_t{0});
+            node_info.election_info.raw_credit_score(1000000);
             elect_set.emplace_back(node_info);
             // std::cout << "xip: " << node_addr.xip2().value().high_addr << " " << node_addr.xip2().value().low_addr << std::endl;
         }
@@ -557,7 +557,7 @@ public:
                     random = base::xhash64_t::digest(base::xstring_utl::to_hex(rand_str(64))) + random;
                     std::vector<common::xfts_merkle_tree_t<xvip2_t>::value_type> candidates;
                     for (auto iter = elect_set.begin(); iter != elect_set.end(); iter++) {
-                        candidates.push_back({static_cast<common::xstake_t>(iter->election_info.comprehensive_stake + 1 + 1), static_cast<xvip2_t>(iter->address.xip2())});
+                        candidates.push_back({static_cast<common::xstake_t>(iter->election_info.comprehensive_stake() + 1 + 1), static_cast<xvip2_t>(iter->address.xip2())});
                         // std::cout << "xip: " << iter->xip.high_addr << " " << iter->xip.low_addr << std::endl;
                     }
                     std::vector<common::xfts_merkle_tree_t<xvip2_t>::value_type> leaders;

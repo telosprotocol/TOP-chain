@@ -77,12 +77,12 @@ void xtop_relay_make_block_contract::setup() {
         common::xnode_id_t node_id{item.m_account};
 
         data::election::v2::xelection_info_t election_info{};
-        election_info.joined_version = group_version;
-        election_info.stake = std::numeric_limits<uint64_t>::max();
-        election_info.consensus_public_key = xpublic_key_t{item.m_publickey};
-        election_info.genesis = true;
-        election_info.miner_type = static_cast<common::xminer_type_t>(std::numeric_limits<uint32_t>::max());
-        election_info.raw_credit_score = std::numeric_limits<uint64_t>::max();
+        election_info.joined_epoch(group_version);
+        election_info.stake(std::numeric_limits<uint64_t>::max());
+        election_info.public_key(xpublic_key_t{item.m_publickey});
+        election_info.genesis(true);
+        election_info.miner_type(static_cast<common::xminer_type_t>(std::numeric_limits<uint32_t>::max()));
+        election_info.raw_credit_score(std::numeric_limits<uint64_t>::max());
 
         data::election::v2::xelection_info_bundle_t election_info_bundle{};
         election_info_bundle.account_address(node_id);
@@ -230,7 +230,7 @@ bool xtop_relay_make_block_contract::build_elect_relay_block(const evm_common::h
         auto const & election_info_bundle = top::get<data::election::v2::xelection_info_bundle_t>(node_info);
         xdbg("xtop_relay_make_block_contract::build_elect_relay_block get node:%s", election_info_bundle.account_address().c_str());
         auto const & election_info = election_info_bundle.election_info();
-        auto pubkey_str = base::xstring_utl::base64_decode(election_info.consensus_public_key.to_string());
+        auto pubkey_str = base::xstring_utl::base64_decode(election_info.public_key().to_string());
         xbytes_t bytes_x(pubkey_str.begin() + 1, pubkey_str.begin() + 33);
         xbytes_t bytes_y(pubkey_str.begin() + 33, pubkey_str.end());
         reley_election_group.elections_vector.push_back(data::xrelay_election_node_t(evm_common::h256(bytes_x), evm_common::h256(bytes_y)));

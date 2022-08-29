@@ -110,8 +110,8 @@ void xtop_chain_application::start() {
     static_sync_group.group_version(common::xelection_round_t::max());
 
     auto & static_sync_node = static_sync_group.result_of(node_id());
-    static_sync_node.joined_version = common::xelection_round_t::max();
-    static_sync_node.stake = 0;
+    static_sync_node.joined_epoch(common::xelection_round_t::max());
+    static_sync_node.stake(0);
 
     assert(static_sync_group.size() == 1);
     on_election_data_updated(election_result_store, frozen_sharding_address.zone_id(), 0);

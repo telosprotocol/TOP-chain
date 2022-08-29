@@ -301,7 +301,7 @@ void xvnode_house_t::add_group(const std::string &elect_address, uint64_t elect_
                         if (m_node_id == bundle.account_address()) {
                             pri_key = DecodePrivateString(m_sign_key);
                         }
-                        auto pub_key = base::xstring_utl::base64_decode(bundle.election_info().consensus_public_key.to_string());
+                        auto pub_key = base::xstring_utl::base64_decode(bundle.election_info().public_key().to_string());
 #if 0
                         xdbg("[add_group222][add_node] account %s publickey:%s",
                             bundle.node_id().value().c_str(),

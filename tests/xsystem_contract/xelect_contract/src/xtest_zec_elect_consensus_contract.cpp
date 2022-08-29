@@ -135,7 +135,7 @@ void xtest_zec_elect_consensus_contract_t::cal_group_stake(std::size_t consensus
                                                          .result_of(auditor_group_id);
         uint64_t auditor_stake{0};
         for (auto & node_info : auditor_election_group_result) {
-            auditor_stake += top::get<xelection_info_bundle_t>(node_info).election_info().stake;
+            auditor_stake += top::get<xelection_info_bundle_t>(node_info).election_info().stake();
         }
         auditor_stake /= auditor_election_group_result.size();
         group_stake_sum[auditor_group_id] += auditor_stake;
@@ -149,7 +149,7 @@ void xtest_zec_elect_consensus_contract_t::cal_group_stake(std::size_t consensus
                                                                .result_of(validator_group_id);
             uint64_t validator_stake{0};
             for (auto & node_info : validaotr_election_group_result) {
-                validator_stake += top::get<xelection_info_bundle_t>(node_info).election_info().stake;
+                validator_stake += top::get<xelection_info_bundle_t>(node_info).election_info().stake();
             }
             validator_stake /= validaotr_election_group_result.size();
             group_stake_sum[validator_group_id] += validator_stake;

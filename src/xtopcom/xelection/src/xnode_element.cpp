@@ -47,17 +47,17 @@ xtop_node_element::hash() const {
 
 common::xelection_round_t const &
 xtop_node_element::joined_election_round() const noexcept {
-    return m_election_info.joined_version;
+    return m_election_info.joined_epoch();
 }
 
 std::uint64_t
 xtop_node_element::staking() const noexcept {
-    return m_election_info.stake;
+    return m_election_info.stake();
 }
 
 std::uint64_t xtop_node_element::raw_credit_score() const noexcept {
-    xdbg("xnode_element_t::raw_credit_score %" PRIu64, m_election_info.raw_credit_score);
-    return m_election_info.raw_credit_score;
+    xdbg("xnode_element_t::raw_credit_score %" PRIu64, m_election_info.raw_credit_score());
+    return m_election_info.raw_credit_score();
 }
 
 bool

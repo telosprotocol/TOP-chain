@@ -54,9 +54,9 @@ void xtop_rec_elect_rec_contract::setup() {
         common::xnode_id_t node_id{item.m_account};
 
         data::election::v0::xelection_info_t election_info{};
-        election_info.joined_version = group_version;
-        election_info.stake = 0;
-        election_info.consensus_public_key = xpublic_key_t{item.m_publickey};
+        election_info.joined_epoch(group_version);
+        election_info.stake(0);
+        election_info.public_key(xpublic_key_t{item.m_publickey});
 
         data::election::v0::xelection_info_bundle_t election_info_bundle{};
         election_info_bundle.node_id(node_id);

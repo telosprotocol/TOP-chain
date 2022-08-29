@@ -37,14 +37,14 @@ TEST(xtest_get_leader, _) {
         for (unsigned int i = 0; i < account_num; i++) {
             xelection_cache_imp::elect_set  elect_set_self;
             data::xnode_info_t node_info;
-            node_info.election_info.joined_version = round_version;
-            node_info.election_info.stake = (100 + i*10) * 10000;
-            node_info.election_info.comprehensive_stake = 10000;
-            node_info.election_info.miner_type =   common::xminer_type_t::validator;
+            node_info.election_info.joined_epoch(round_version);
+            node_info.election_info.stake((100 + i * 10) * 10000);
+            node_info.election_info.comprehensive_stake(10000);
+            node_info.election_info.miner_type(common::xminer_type_t::validator);
             if ((i%2) != 0) {
-                node_info.election_info.raw_credit_score =  100000 * i;
+                node_info.election_info.raw_credit_score(100000 * i);
             } else {
-                node_info.election_info.raw_credit_score =  8000 * i + 100;
+                node_info.election_info.raw_credit_score(8000 * i + 100);
             }
  
             node_info.address  = m_addr_generator.create_validator_addr(i, 10,test_accounts[i]);
