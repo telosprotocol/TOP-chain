@@ -133,7 +133,6 @@ xedge_evm_method_base<T>::xedge_evm_method_base(shared_ptr<xrpc_edge_vhost> edge
     m_edge_handler_ptr->init();
     m_edge_tx_method_map.emplace(                                                                                                                                                  \
         pair<pair<string, string>, tx_method_handler>{pair<string, string>{"2.0", "eth_sendRawTransaction"}, std::bind(&xedge_evm_method_base<T>::sendTransaction_method, this, _1, _2)});
-    m_eth_method.init(archive_flag);
 }
 
 template <class T>
@@ -234,18 +233,6 @@ void xedge_evm_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, 
         errinfo["message"] = ec.error_message;
         json_proc.m_response_json["error"] = errinfo;
         return ;
-    }
-    if (json_proc.m_tx_ptr->get_tx_type() == data::xtransaction_type_transfer) {
-        if ((m_archive_flag && !XGET_CONFIG(enable_exchange_rpc_transfer)) || (!m_archive_flag && !XGET_CONFIG(enable_edge_rpc_transfer))) {
-            eth::EthErrorCode::deal_error(json_proc.m_response_json, eth::enum_eth_rpc_method_not_find, "not support transfer.");
-            return;
-        }
-    }
-    if (json_proc.m_tx_ptr->get_tx_type() == data::xtransaction_type_deploy_evm_contract) {
-        if ((m_archive_flag && !XGET_CONFIG(enable_exchange_rpc_deploy_contract)) || (!m_archive_flag && !XGET_CONFIG(enable_edge_rpc_deploy_contract))) {
-            eth::EthErrorCode::deal_error(json_proc.m_response_json, eth::enum_eth_rpc_method_not_find, "not support transfer.");
-            return;
-        }
     }
 
     // TODO(jimmy) refactor tx verifier

@@ -57,11 +57,8 @@ xrpc_init::xrpc_init(std::shared_ptr<xvnetwork_driver_face_t> vhost,
         ws_server_ptr->start(ws_port);
 
         xdbg("edge evm");
-        if (XGET_CONFIG(enable_edge_evm_rpc)) {
-            shared_ptr<xevm_server> evm_server_ptr =
-                std::make_shared<xevm_server>(m_edge_handler, ip, false, store, block_store, txstore, elect_main, election_cache_data_accessor);
-            evm_server_ptr->start(XGET_CONFIG(evm_port));
-        }
+        shared_ptr<xevm_server> evm_server_ptr = std::make_shared<xevm_server>(m_edge_handler, ip, false, store, block_store, txstore, elect_main, election_cache_data_accessor);
+        evm_server_ptr->start(XGET_CONFIG(evm_port));
         break;
     }
     case common::xnode_type_t::storage_archive:
@@ -77,19 +74,14 @@ xrpc_init::xrpc_init(std::shared_ptr<xvnetwork_driver_face_t> vhost,
         init_rpc_cb_thread();
         m_edge_handler = std::make_shared<xrpc_edge_vhost>(vhost, router_ptr, make_observer(m_thread));
         auto ip = vhost->address().xip2();
-        if (XGET_CONFIG(enable_exchange_top_rpc)) {
-            shared_ptr<xhttp_server> http_server_ptr =
-                std::make_shared<xhttp_server>(m_edge_handler, ip, true, store, block_store, txstore, elect_main, election_cache_data_accessor);
-            http_server_ptr->start(http_port);
-        }
+        shared_ptr<xhttp_server> http_server_ptr = std::make_shared<xhttp_server>(m_edge_handler, ip, true, store, block_store, txstore, elect_main, election_cache_data_accessor);
+        http_server_ptr->start(http_port);
         shared_ptr<xws_server> ws_server_ptr = std::make_shared<xws_server>(m_edge_handler, ip, true, store, block_store, txstore, elect_main, election_cache_data_accessor);
         ws_server_ptr->start(ws_port);
         xdbg("start exchange rpc service.");
 
-        if (XGET_CONFIG(enable_exchange_evm_rpc)) {
-            shared_ptr<xevm_server> evm_server_ptr = std::make_shared<xevm_server>(m_edge_handler, ip, true, store, block_store, txstore, elect_main, election_cache_data_accessor);
-            evm_server_ptr->start(XGET_CONFIG(evm_port));
-        }
+//        shared_ptr<xevm_server> evm_server_ptr = std::make_shared<xevm_server>(m_edge_handler, ip, true, store, block_store, txstore, elect_main, election_cache_data_accessor);
+//        evm_server_ptr->start(XGET_CONFIG(evm_port));
         break;
     }
     case common::xnode_type_t::fullnode: {

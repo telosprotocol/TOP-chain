@@ -25,7 +25,7 @@ class EthMethod {
 
 public:
     EthMethod() {
-/*        m_eth_method_map.emplace(std::make_pair("eth_chainId", std::bind(&EthMethod::eth_chainId, this, std::placeholders::_1, std::placeholders::_2)));
+        m_eth_method_map.emplace(std::make_pair("eth_chainId", std::bind(&EthMethod::eth_chainId, this, std::placeholders::_1, std::placeholders::_2)));
         m_eth_method_map.emplace(std::make_pair("web3_clientVersion", std::bind(&EthMethod::web3_clientVersion, this, std::placeholders::_1, std::placeholders::_2)));
         m_eth_method_map.emplace(std::make_pair("net_version", std::bind(&EthMethod::net_version, this, std::placeholders::_1, std::placeholders::_2)));
         m_eth_method_map.emplace(std::make_pair("eth_gasPrice", std::bind(&EthMethod::eth_gasPrice, this, std::placeholders::_1, std::placeholders::_2)));
@@ -53,10 +53,8 @@ public:
         m_supported_method.insert("topRelay_getTransactionByHash");
         m_supported_method.insert("topRelay_getTransactionReceipt");
 
-        m_supported_method.insert("top_getBalance");*/
+        m_supported_method.insert("top_getBalance");
     }
-    void init(bool archive_flag);
-
     bool supported_method(const std::string& method) {
         if (m_supported_method.find(method) == m_supported_method.end())
             return false;

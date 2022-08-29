@@ -169,9 +169,6 @@ std::string const & xtop_chain_application::sign_key() const noexcept {
 }
 
 void xtop_chain_application::top_grpc_init(uint16_t const grpc_port) {
-    if (!XGET_CONFIG(enable_grpc)) {
-        return;
-    }
     if (enable_grpc_service()) {
         grpcmgr::grpc_init(m_application->store().get(), m_application->blockstore().get(), m_sync_obj.get(), grpc_port);
     }

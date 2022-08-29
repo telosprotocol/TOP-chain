@@ -8,44 +8,7 @@
 #include "xconfig/xpredefined_configurations.h"
 #include "xgasfee/xgas_estimate.h"
 namespace eth {
-void EthMethod::init(bool archive_flag) {
-    m_eth_method_map.clear();
-    m_supported_method.clear();
 
-    m_eth_method_map.emplace(std::make_pair("eth_chainId", std::bind(&EthMethod::eth_chainId, this, std::placeholders::_1, std::placeholders::_2)));
-    m_eth_method_map.emplace(std::make_pair("web3_clientVersion", std::bind(&EthMethod::web3_clientVersion, this, std::placeholders::_1, std::placeholders::_2)));
-    m_eth_method_map.emplace(std::make_pair("net_version", std::bind(&EthMethod::net_version, this, std::placeholders::_1, std::placeholders::_2)));
-    m_eth_method_map.emplace(std::make_pair("web3_sha3", std::bind(&EthMethod::web3_sha3, this, std::placeholders::_1, std::placeholders::_2)));
-
-    m_supported_method.insert("eth_call");
-    m_supported_method.insert("eth_getCode");
-    m_supported_method.insert("eth_getStorageAt");
-    m_supported_method.insert("eth_getLogs");
-    m_supported_method.insert("eth_getTransactionCount");
-    m_supported_method.insert("eth_getTransactionByHash");
-    m_supported_method.insert("eth_getTransactionReceipt");
-
-//    if ((archive_flag && (XGET_CONFIG(enable_exchange_rpc_transfer) || XGET_CONFIG(enable_exchange_rpc_deploy_contract))) ||
-//        (!archive_flag && (XGET_CONFIG(enable_edge_rpc_transfer) || XGET_CONFIG(enable_edge_rpc_deploy_contract)))) {
-    m_eth_method_map.emplace(std::make_pair("eth_gasPrice", std::bind(&EthMethod::eth_gasPrice, this, std::placeholders::_1, std::placeholders::_2)));
-    m_supported_method.insert("eth_getBalance");
-    m_supported_method.insert("eth_blockNumber");
-    m_supported_method.insert("eth_sendRawTransaction");
-    m_supported_method.insert("eth_estimateGas");
-    m_supported_method.insert("eth_getBlockByHash");
-    m_supported_method.insert("eth_getBlockByNumber");
-    m_supported_method.insert("top_getBalance");
-
-    if ((archive_flag && XGET_CONFIG(enable_exchange_relay_rpc)) || (!archive_flag && XGET_CONFIG(enable_edge_relay_rpc))) {
-        m_supported_method.insert("topRelay_getPolyBlockHashListByHash");
-        m_supported_method.insert("topRelay_getLeafBlockHashListByHash");
-        m_supported_method.insert("topRelay_getBlockByNumber");
-        m_supported_method.insert("topRelay_getBlockByHash");
-        m_supported_method.insert("topRelay_blockNumber");
-        m_supported_method.insert("topRelay_getTransactionByHash");
-        m_supported_method.insert("topRelay_getTransactionReceipt");
-    }
-}
 void EthMethod::web3_sha3(const Json::Value & js_req, Json::Value & js_rsp) {
     if (!eth::EthErrorCode::check_req(js_req, js_rsp, 1))
         return;

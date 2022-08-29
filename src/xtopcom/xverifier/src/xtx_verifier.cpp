@@ -220,6 +220,14 @@ int32_t xtx_verifier::sys_contract_tx_check(data::xtransaction_t const * trx_ptr
 
     bool source_is_user_addr            = data::is_account_address(sender_addr); // || data::is_sub_account_address(sender_addr);
     bool target_is_sys_contract_addr    = data::is_sys_contract_address(recver_addr);
+
+    if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(toggle_register_whitelist) == 1) {
+        if (source_is_user_addr && target_addr == sys_contract_rec_registration_addr) {
+            if (verify_register_whitelist(source_addr) == false)
+                return xverifier_error::xverifier_error_whitelist_limit;
+        }
+    }
+
     if (source_is_user_addr && target_is_sys_contract_addr) {
         for (const auto & addr : open_sys_contracts) {
             if (addr == target_addr) {
@@ -229,11 +237,6 @@ int32_t xtx_verifier::sys_contract_tx_check(data::xtransaction_t const * trx_ptr
         }
         xwarn("[global_trace][xtx_verifier][sys_contract_tx_check][fail], tx:%s,target_origin_addr=%s", trx_ptr->dump().c_str(), target_addr.c_str());
         return xverifier_error::xverifier_error_contract_not_allowed;
-    }
-
-    if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(toggle_register_whitelist) == 1) {
-        if (verify_register_whitelist(source_addr) == false)
-            return xverifier_error::xverifier_error_whitelist_limit;
     }
 
     xdbg("[global_trace][xtx_verifier][sys_contract_tx_check][success], tx:%s", trx_ptr->dump().c_str());
