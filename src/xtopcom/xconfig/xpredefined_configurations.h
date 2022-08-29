@@ -591,6 +591,7 @@ XDECLARE_CONFIGURATION(platform_db_path, char const *, "/chain/db_v2/pdb");
 XDECLARE_CONFIGURATION(enable_sharding_contract, bool, false);
 XDECLARE_CONFIGURATION(enable_gas_fee, bool, true);
 XDECLARE_CONFIGURATION(enable_free_tgas, bool, false);
+XDECLARE_CONFIGURATION(enable_eth_token, bool, true);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(toggle_register_whitelist, std::uint16_t, normal, 0, 0, 1);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(register_whitelist, char const *, normal, "", "", "");
 

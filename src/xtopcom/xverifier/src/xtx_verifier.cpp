@@ -221,6 +221,7 @@ int32_t xtx_verifier::sys_contract_tx_check(data::xtransaction_t const * trx_ptr
     bool source_is_user_addr            = data::is_account_address(sender_addr); // || data::is_sub_account_address(sender_addr);
     bool target_is_sys_contract_addr    = data::is_sys_contract_address(recver_addr);
 
+    // consortium: check register whitelist
     if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(toggle_register_whitelist) == 1) {
         if (source_is_user_addr && target_addr == sys_contract_rec_registration_addr) {
             if (verify_register_whitelist(source_addr) == false)

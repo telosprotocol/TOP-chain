@@ -38,6 +38,7 @@ xunit_bstate_t::~xunit_bstate_t() {
 }
 
 uint64_t xunit_bstate_t::get_free_tgas() const {
+    // consortium: disable free tgas
     if (XGET_CONFIG(enable_free_tgas) == false)
         return 0;
 

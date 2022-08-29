@@ -243,6 +243,7 @@ XDEFINE_CONFIGURATION(platform_url_endpoints);
 XDEFINE_CONFIGURATION(enable_sharding_contract);
 XDEFINE_CONFIGURATION(enable_gas_fee);
 XDEFINE_CONFIGURATION(enable_free_tgas);
+XDEFINE_CONFIGURATION(enable_eth_token);
 
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(toggle_register_whitelist);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(register_whitelist);

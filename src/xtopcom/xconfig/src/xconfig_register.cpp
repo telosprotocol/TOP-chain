@@ -130,6 +130,7 @@ void xconfig_register_t::init_static_config() {
     XADD_OFFCHAIN_PARAMETER(enable_sharding_contract);
     XADD_OFFCHAIN_PARAMETER(enable_gas_fee);
     XADD_OFFCHAIN_PARAMETER(enable_free_tgas);
+    XADD_OFFCHAIN_PARAMETER(enable_eth_token);
 
     m_param_lock.release_write();
 }
