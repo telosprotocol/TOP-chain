@@ -3,10 +3,10 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xdata/xtransaction.h"
-
+#include <cinttypes>
 #include "xbase/xutl.h"
 #include "xcommon/xerror/xerror.h"
-#include <cinttypes>
+#include "xconfig/xconfig_register.h"
 
 namespace top { namespace data {
 
