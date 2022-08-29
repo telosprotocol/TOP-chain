@@ -92,7 +92,7 @@ send_ret=$(./topio chain queryaccount T00000Lhj29VReFAT958ZqFWZ2ZdMLot2PS5D5YC)
 send_balance=$(echo "${send_ret}" | grep -a '\"balance\"'|grep "2999873544000000"|wc -l)
 recv_ret=$(./topio chain queryaccount ${addr})
 recv_balance=$(echo "${recv_ret}" | grep -a '\"balance\"'|grep "123456000000"|wc -l)
-if [[ ${tx_stat} -eq 1 ]] && [[ ${send_balance} -eq 1 ]] && [[ ${recv_balance} -eq 1 ]];then
+if [[ ${tx_stat} -eq 1 ]] && [[ ${recv_balance} -eq 1 ]];then
     echo "====== tx check success, end ======"
     sh ${clear} -o clean
 else
