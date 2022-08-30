@@ -6,7 +6,7 @@
 
 #include "xvnetwork/xaddress.h"
 #include "xbase/xthread.h"
-#include "xstore/xstore_face.h"
+
 #include "xmock_transport.h"
 #include "xmock_vnet.hpp"
 #include "xmock_node.h"

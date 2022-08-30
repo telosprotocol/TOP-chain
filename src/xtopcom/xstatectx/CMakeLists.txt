@@ -11,6 +11,7 @@ target_link_libraries(xstatectx PRIVATE
     xvledger
     xblockstore
     xdata
+    xstatestore
     xxbase
 )
 

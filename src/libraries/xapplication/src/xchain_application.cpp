@@ -46,7 +46,7 @@ xtop_chain_application::xtop_chain_application(observer_ptr<xapplication_t> cons
                                                  network_id,
                                                  make_observer(m_election_cache_data_accessor))}
   , m_message_callback_hub{std::make_shared<vnetwork::xmessage_callback_hub_t>(make_observer(m_vhost))}
-  , m_sync_obj{top::make_unique<sync::xsync_object_t>(application->message_bus(), application->store(), make_observer(m_vhost), blockstore, nodesvr_ptr, cert_ptr,
+  , m_sync_obj{top::make_unique<sync::xsync_object_t>(application->message_bus(), make_observer(m_vhost), blockstore, nodesvr_ptr, cert_ptr,
                                                                                         sync_thread, sync_account_thread_pool, sync_handler_thread_pool)}
   , m_grpc_mgr{top::make_unique<grpcmgr::xgrpc_mgr_t>(m_application->message_bus(), grpc_thread)}
 //   , m_cons_mgr{xcons_mgr_builder::build(data::xuser_params::get_instance().account.value(),
@@ -58,15 +58,13 @@ xtop_chain_application::xtop_chain_application(observer_ptr<xapplication_t> cons
 //                                         make_observer(m_election_cache_data_accessor),
 //                                         m_application->message_bus(),
 //                                         m_application->router())}
-  , m_txpool_service_mgr{xtxpool_service_v2::xtxpool_service_mgr_instance::create_xtxpool_service_mgr_inst(m_application->store(),
-                                                                                                        make_observer(m_application->blockstore().get()),
+  , m_txpool_service_mgr{xtxpool_service_v2::xtxpool_service_mgr_instance::create_xtxpool_service_mgr_inst(make_observer(m_application->blockstore().get()),
                                                                                                         m_application->txpool(),
                                                                                                         m_application->thread_pool(xthread_pool_type_t::txpool_service),
                                                                                                         m_application->message_bus(),
                                                                                                         m_application->logic_timer())}
   , m_vnode_manager{std::make_shared<vnode::xvnode_manager_t>(m_application->elect_main(),
                                                               m_application->message_bus(),
-                                                              m_application->store(),
                                                               make_observer(m_application->blockstore().get()),
                                                               m_application->txstore(),
                                                               m_application->logic_timer(),
@@ -84,7 +82,7 @@ xtop_chain_application::xtop_chain_application(observer_ptr<xapplication_t> cons
 
 void xtop_chain_application::start() {
     contract::xcontract_manager_t::instance().install_monitors(
-        m_application->message_bus(), make_observer(m_message_callback_hub.get()), m_application->store(), m_application->syncstore());
+        m_application->message_bus(), make_observer(m_message_callback_hub.get()), m_application->syncstore());
     load_last_election_data();
 
     m_txpool_service_mgr->start();
@@ -170,7 +168,7 @@ std::string const & xtop_chain_application::sign_key() const noexcept {
 
 void xtop_chain_application::top_grpc_init(uint16_t const grpc_port) {
     if (enable_grpc_service()) {
-        grpcmgr::grpc_init(m_application->store().get(), m_application->blockstore().get(), m_sync_obj.get(), grpc_port);
+        grpcmgr::grpc_init(m_application->blockstore().get(), m_sync_obj.get(), grpc_port);
     }
 }
 

@@ -5,9 +5,8 @@
 #pragma once
 
 #include "xdata/xblock.h"
-#include "xstore/xstore_face.h"
 #include "xbasic/xlru_cache.h"
-// TODO(jimmy) #include "xbase/xvledger.h"
+#include "xbasic/xmemory.hpp"
 #include "xblockstore/xblockstore_face.h"
 #include "xvledger/xvblock.h"
 #include "xvledger/xvbindex.h"

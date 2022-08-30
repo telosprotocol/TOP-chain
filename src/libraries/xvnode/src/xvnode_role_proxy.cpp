@@ -8,7 +8,6 @@
 NS_BEG2(top, vnode)
 
 xtop_vnode_role_proxy::xtop_vnode_role_proxy(observer_ptr<mbus::xmessage_bus_face_t> const & mbus,
-                                             observer_ptr<store::xstore_face_t> const & store,
                                              observer_ptr<base::xvblockstore_t> const & block_store,
                                              observer_ptr<base::xvtxstore_t> const & txstore,
                                              observer_ptr<time::xchain_time_face_t> const & logic_timer,
@@ -19,7 +18,7 @@ xtop_vnode_role_proxy::xtop_vnode_role_proxy(observer_ptr<mbus::xmessage_bus_fac
                                              observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
   : m_txstore{txstore} {
     m_cons_mgr = xunit_service::xcons_mgr_build(
-        data::xuser_params::get_instance().account.value(), store, block_store, txpool, logic_timer, certauth, election_cache_data_accessor, mbus, router);
+        data::xuser_params::get_instance().account.value(), block_store, txpool, logic_timer, certauth, election_cache_data_accessor, mbus, router);
     // m_txpool_service_mgr = xtxpool_service_v2::xtxpool_service_mgr_instance::create_xtxpool_service_mgr_inst(store, block_store, txpool, iothreads, mbus, logic_timer);
 }
 

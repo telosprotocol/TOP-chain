@@ -16,6 +16,7 @@
 #include "xstatectx/xunitstate_ctx.h"
 #include "xstatectx/xstatectx_face.h"
 #include "xstatectx/xstatectx.h"
+#include "xstatestore/xstatestore_face.h"
 
 NS_BEG2(top, statectx)
 
@@ -93,6 +94,28 @@ data::xunitstate_ptr_t xstatectx_t::load_unit_state(const base::xvaccount_t & ad
         return unit_ctx->get_unitstate();
     }
     return nullptr;
+}
+
+data::xunitstate_ptr_t xstatectx_t::load_commit_unit_state(const base::xvaccount_t & addr) {
+    bool is_same = is_same_table(addr);
+    data::xunitstate_ptr_t unitstate = nullptr;
+    // TODO(jimmy) load from statestore and invoke sync in statestore same-table should use commit-table
+    if (is_same) {
+        auto bstate = m_statectx_base.load_inner_table_commit_unit_state(addr);
+        if (nullptr == bstate) {
+            xwarn("xstatectx_t::load_commit_unit_state fail-load commit state.addr=%s",addr.get_account().c_str());
+            return nullptr;
+        }
+        unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get(), true);  // readonly-state
+    } else {
+        unitstate = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(common::xaccount_address_t(addr.get_account()));
+    }
+    return unitstate;
+}
+
+data::xunitstate_ptr_t xstatectx_t::load_commit_unit_state(const base::xvaccount_t & addr, uint64_t height) {
+    data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_committed_state(common::xaccount_address_t(addr.get_account()), height);
+    return unitstate;
 }
 
 const data::xtablestate_ptr_t &  xstatectx_t::get_table_state() const {

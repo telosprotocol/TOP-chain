@@ -10,19 +10,15 @@ NS_BEG2(top, xtxpool_v2)
 
 #define TIMER_HEIGHT_PER_DAY (24 * 360)
 
-xtxpool_resources::xtxpool_resources(const observer_ptr<store::xstore_face_t> & store,
-                                     const observer_ptr<base::xvblockstore_t> & blockstore,
+xtxpool_resources::xtxpool_resources(const observer_ptr<base::xvblockstore_t> & blockstore,
                                      const observer_ptr<base::xvcertauth_t> & certauth,
                                      const observer_ptr<mbus::xmessage_bus_face_t> & bus)
-  : m_store(store), m_blockstore(blockstore), m_certauth(certauth), m_bus(bus) {
+  : m_blockstore(blockstore), m_certauth(certauth), m_bus(bus) {
 }
 
 xtxpool_resources::~xtxpool_resources() {
 }
 
-store::xstore_face_t * xtxpool_resources::get_store() const {
-    return m_store.get();
-}
 base::xvblockstore_t * xtxpool_resources::get_vblockstore() const {
     return m_blockstore.get();
 }

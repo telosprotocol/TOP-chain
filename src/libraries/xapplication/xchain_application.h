@@ -16,7 +16,7 @@
 #include "xelection/xcache/xdata_accessor_face.h"
 #include "xgrpc_mgr/xgrpc_mgr.h"
 #include "xmbus/xmessage_bus.h"
-#include "xstore/xstore_face.h"
+
 #include "xsync/xsync_object.h"
 // #include "xunit_service/xcons_face.h"
 #include "xvnetwork/xmessage_callback_hub.h"

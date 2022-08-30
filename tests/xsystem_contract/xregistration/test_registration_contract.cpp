@@ -12,7 +12,7 @@
 // #include "xchain_timer/xchain_timer.h"
 // #include "xdata/xgenesis_data.h"
 // #include "xloader/xconfig_onchain_loader.h"
-// #include "xstore/xstore_face.h"
+// 
 // #include "xvm/manager/xcontract_manager.h"
 // #include "xtxexecutor/xtransaction_context.h"
 // #include "xdata/xblocktool.h"
@@ -183,7 +183,7 @@
 //             return ret;
 //         }
 
-//         xaccount_ptr_t account_ptr  = m_store->query_account(account);
+//         data::xunitstate_ptr_t account_ptr  = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(account);
 //         if (account_ptr == NULL) {
 //             xerror("xtop_application::create_genesis_account execute genesis block fail");
 //             return 1;
@@ -384,7 +384,7 @@
 
 //         std::map<std::string, std::string> map_nodes;
 //         //GET_MAP_PROPERTY(XPORPERTY_CONTRACT_REG_KEY, map_nodes, latest_height, sys_contract_rec_registration_addr);
-//         m_store->get_map_property(sys_contract_rec_registration_addr, latest_height, XPORPERTY_CONTRACT_REG_KEY, map_nodes);
+//         statestore::xstatestore_hub_t::instance()->get_map_property(sys_contract_rec_registration_addr, latest_height, XPORPERTY_CONTRACT_REG_KEY, map_nodes);
 //         xdbg("[xzec_reward_contract::calc_nodes_rewards_v2] map_nodes size: %d", map_nodes.size());
 
 //         auto it = map_nodes.find(node_account);
@@ -403,7 +403,7 @@
 //     std::string value;
 //     // ret = m_vote_account_ctx_ptr->map_get(XPORPERTY_CONTRACT_REG_KEY, node_account, value);
 //     // xaccount_context_t ac(node_account, m_store.get(), {});
-//     ret = m_store->map_get(sys_contract_rec_registration_addr, XPORPERTY_CONTRACT_REG_KEY, node_account, value);
+//     ret = statestore::xstatestore_hub_t::instance()->map_get(sys_contract_rec_registration_addr, XPORPERTY_CONTRACT_REG_KEY, node_account, value);
 //     ASSERT_TRUE(ret == 0);
 
 //     base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)value.c_str(), value.size());
@@ -448,7 +448,7 @@
 
 //     std::string value;
 //     //m_vote_account_ctx_ptr->map_get(XPORPERTY_CONTRACT_REG_KEY, node_account, value);
-//     ret = m_store->map_get(sys_contract_rec_registration_addr, XPORPERTY_CONTRACT_REG_KEY, node_account, value);
+//     ret = statestore::xstatestore_hub_t::instance()->map_get(sys_contract_rec_registration_addr, XPORPERTY_CONTRACT_REG_KEY, node_account, value);
 //     ASSERT_TRUE(ret == 0);
 //     base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)value.c_str(), value.size());
 //     xreg_node_info node_info;
@@ -464,7 +464,7 @@
 
 //         std::string value;
 //         //m_vote_account_ctx_ptr->map_get(XPORPERTY_CONTRACT_REG_KEY, node_account, value);
-//         ret = m_store->map_get(sys_contract_rec_registration_addr, XPORPERTY_CONTRACT_REG_KEY, node_account, value);
+//         ret = statestore::xstatestore_hub_t::instance()->map_get(sys_contract_rec_registration_addr, XPORPERTY_CONTRACT_REG_KEY, node_account, value);
 //         ASSERT_TRUE(ret == 0);
 //         base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)value.c_str(), value.size());
 //         xreg_node_info node_info;
@@ -475,7 +475,7 @@
 
 //         {
 //             value.clear();
-//             ret = m_store->map_get(sys_contract_rec_registration_addr, XPORPERTY_CONTRACT_TICKETS_KEY, table_vote_contract_addr, value);
+//             ret = statestore::xstatestore_hub_t::instance()->map_get(sys_contract_rec_registration_addr, XPORPERTY_CONTRACT_TICKETS_KEY, table_vote_contract_addr, value);
 //             ASSERT_TRUE(ret == 0);
 //             std::map<std::string, std::string> contract_adv_votes;
 //             base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)value.c_str(), value.size());
@@ -492,7 +492,7 @@
 
 //         std::string value;
 //         //m_vote_account_ctx_ptr->map_get(XPORPERTY_CONTRACT_REG_KEY, node_account, value);
-//         ret = m_store->map_get(sys_contract_rec_registration_addr, XPORPERTY_CONTRACT_REG_KEY, node_account, value);
+//         ret = statestore::xstatestore_hub_t::instance()->map_get(sys_contract_rec_registration_addr, XPORPERTY_CONTRACT_REG_KEY, node_account, value);
 //         ASSERT_TRUE(ret == 0);
 //         base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)value.c_str(), value.size());
 //         xreg_node_info node_info;
@@ -503,7 +503,7 @@
 
 //         {
 //             value.clear();
-//             ret = m_store->map_get(sys_contract_rec_registration_addr, XPORPERTY_CONTRACT_TICKETS_KEY, table_vote_contract_addr, value);
+//             ret = statestore::xstatestore_hub_t::instance()->map_get(sys_contract_rec_registration_addr, XPORPERTY_CONTRACT_TICKETS_KEY, table_vote_contract_addr, value);
 //             ASSERT_TRUE(ret == 0);
 //             std::map<std::string, std::string> contract_adv_votes;
 //             base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)value.c_str(), value.size());
@@ -524,7 +524,7 @@
 //     std::string value;
 //     //ret = m_vote_account_ctx_ptr->map_get(XPORPERTY_CONTRACT_REG_KEY, node_account, value);
 //     //ASSERT_TRUE(ret != 0);
-//     ret = m_store->map_get(sys_contract_rec_registration_addr, XPORPERTY_CONTRACT_REG_KEY, node_account, value);
+//     ret = statestore::xstatestore_hub_t::instance()->map_get(sys_contract_rec_registration_addr, XPORPERTY_CONTRACT_REG_KEY, node_account, value);
 //     ASSERT_TRUE(ret != 0);
 
 //     value.clear();
@@ -554,9 +554,9 @@
 
 //     std::string value;
 //     //int32_t ret = m_vote_account_ctx_ptr->map_get(XPORPERTY_CONTRACT_REFUND_KEY, node_account, value);
-//     ret = m_store->map_get(sys_contract_rec_registration_addr, XPORPERTY_CONTRACT_REFUND_KEY, node_account, value);
+//     ret = statestore::xstatestore_hub_t::instance()->map_get(sys_contract_rec_registration_addr, XPORPERTY_CONTRACT_REFUND_KEY, node_account, value);
 //     ASSERT_TRUE(ret != 0);
 
-//     xaccount_ptr_t account_ptr = m_store->query_account(node_account);
+//     data::xunitstate_ptr_t account_ptr = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(node_account);
 //     ASSERT_TRUE(account_ptr->balance() == m_original_balance);*/
 // }

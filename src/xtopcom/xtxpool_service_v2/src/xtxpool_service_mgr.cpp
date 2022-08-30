@@ -11,7 +11,6 @@
 #include "xdata/xtableblock.h"
 #include "xmbus/xevent_store.h"
 #include "xmbus/xbase_sync_event_monitor.hpp"
-#include "xstore/xstore.h"
 #include "xtxpool_service_v2/xcons_utl.h"
 #include "xtxpool_service_v2/xreceipt_strategy.h"
 #include "xtxpool_service_v2/xtxpool_proxy.h"
@@ -30,14 +29,13 @@ NS_BEG2(top, xtxpool_service_v2)
 #define print_txpool_statistic_values_freq (300)  // print txpool statistic values every 5 minites
 #define refresh_block_recycler_rule_for_txpool_freq (300)
 
-xtxpool_service_mgr::xtxpool_service_mgr(const observer_ptr<store::xstore_face_t> & store,
-                                         const observer_ptr<base::xvblockstore_t> & blockstore,
+xtxpool_service_mgr::xtxpool_service_mgr(const observer_ptr<base::xvblockstore_t> & blockstore,
                                          const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool,
                                          const observer_ptr<base::xiothread_t> & iothread_timer,
                                          const observer_ptr<base::xiothread_t> & iothread_dispather,
                                          const observer_ptr<mbus::xmessage_bus_face_t> & mbus,
                                          const observer_ptr<time::xchain_time_face_t> & clock)
-  : m_para(make_object_ptr<xtxpool_svc_para_t>(store, blockstore, txpool, mbus))
+  : m_para(make_object_ptr<xtxpool_svc_para_t>(blockstore, txpool, mbus))
   , m_iothread_timer(iothread_timer)
   , m_iothread_dispatcher(iothread_dispather)
   , m_mbus(mbus)
@@ -287,14 +285,13 @@ void xtxpool_service_mgr::on_timer() {
     }
 }
 
-std::shared_ptr<xtxpool_service_mgr_face> xtxpool_service_mgr_instance::create_xtxpool_service_mgr_inst(const observer_ptr<store::xstore_face_t> & store,
-                                                                                                        const observer_ptr<base::xvblockstore_t> & blockstore,
+std::shared_ptr<xtxpool_service_mgr_face> xtxpool_service_mgr_instance::create_xtxpool_service_mgr_inst(const observer_ptr<base::xvblockstore_t> & blockstore,
                                                                                                         const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool,
                                                                                                         const std::vector<xobject_ptr_t<base::xiothread_t>> & iothreads,
                                                                                                         const observer_ptr<mbus::xmessage_bus_face_t> & mbus,
                                                                                                         const observer_ptr<time::xchain_time_face_t> & clock) {
     xassert(iothreads.size() == 2);
-    auto txpool_service_mgr = std::make_shared<xtxpool_service_mgr>(store, blockstore, txpool, make_observer(iothreads[0].get()), make_observer(iothreads[1].get()), mbus, clock);
+    auto txpool_service_mgr = std::make_shared<xtxpool_service_mgr>(blockstore, txpool, make_observer(iothreads[0].get()), make_observer(iothreads[1].get()), mbus, clock);
     return txpool_service_mgr;
 }
 

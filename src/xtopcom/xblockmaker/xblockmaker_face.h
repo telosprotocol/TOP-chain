@@ -14,7 +14,7 @@
 #include "xdata/xblock.h"
 #include "xdata/xtable_bstate.h"
 #include "xdata/xblock_cs_para.h"
-#include "xstore/xstore_face.h"
+
 #include "xblockstore/xblockstore_face.h"
 #include "xtxpool_v2/xtxpool_face.h"
 #include "xblockmaker/xblock_maker_para.h"
@@ -39,8 +39,7 @@ using xblockmaker_resources_ptr_t = std::shared_ptr<xblockmaker_resources_t>;
 
 class xblockmaker_resources_impl_t : public xblockmaker_resources_t {
  public:
-    xblockmaker_resources_impl_t(const observer_ptr<store::xstore_face_t> & store,
-                                 const observer_ptr<base::xvblockstore_t> & blockstore,
+    xblockmaker_resources_impl_t(const observer_ptr<base::xvblockstore_t> & blockstore,
                                  const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool,
                                  const observer_ptr<mbus::xmessage_bus_face_t> & bus)
     : m_blockstore(blockstore), m_txpool(txpool), m_bus(bus) {}

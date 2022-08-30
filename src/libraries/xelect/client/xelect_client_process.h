@@ -29,9 +29,9 @@ protected:
     void process_timer(const mbus::xevent_ptr_t & e);
     // void process_elect(const mbus::xevent_ptr_t & e);
     void update_election_status(common::xlogic_time_t current_time);
-    void process_election_block(xobject_ptr_t<base::xvblock_t> const& election_data_block, common::xlogic_time_t const current_time);
+    void process_election_block(data::xunitstate_ptr_t const& unitstate, common::xlogic_time_t const current_time);
     void process_election_contract(common::xaccount_address_t const & contract_address, common::xlogic_time_t const current_time, common::xlogic_time_t const update_interval);
-    uint64_t get_new_election_height(data::xunit_bstate_t const & unitstate, xobject_ptr_t<data::xblock_t> const & block) const;
+    uint64_t get_new_election_height(data::xunitstate_ptr_t const& unitstate) const;
 
 private:
     common::xnetwork_id_t m_network_id;

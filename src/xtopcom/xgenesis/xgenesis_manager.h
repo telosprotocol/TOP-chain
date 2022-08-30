@@ -6,7 +6,6 @@
 #include "xbasic/xmemory.hpp"
 #include "xchain_upgrade/xchain_data_processor.h"
 #include "xcommon/xaddress.h"
-#include "xstore/xstore_face.h"
 #include "xvledger/xvblockstore.h"
 
 #include <mutex>
@@ -23,7 +22,7 @@ using xenum_create_src_t = xtop_enum_create_src;
 
 class xtop_genesis_manager {
 public:
-    xtop_genesis_manager(observer_ptr<base::xvblockstore_t> const & blockstore, observer_ptr<store::xstore_face_t> const & store);
+    xtop_genesis_manager(observer_ptr<base::xvblockstore_t> const & blockstore);
     xtop_genesis_manager(xtop_genesis_manager const &) = delete;
     xtop_genesis_manager & operator=(xtop_genesis_manager const &) = delete;
     xtop_genesis_manager(xtop_genesis_manager &&) = default;
@@ -99,7 +98,6 @@ private:
     void release_accounts();
 
     observer_ptr<base::xvblockstore_t> m_blockstore;
-    observer_ptr<store::xstore_face_t> m_store;
     bool m_root_finish{false};
     std::mutex m_lock;
 

@@ -13,7 +13,7 @@
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
 #include "xloader/xconfig_onchain_loader.h"
-#include "xstore/xstore_face.h"
+#include "xdbstore/xstore_face.h"
 #include "xvm/manager/xcontract_manager.h"
 #include "xvm/xsystem_contracts/xregistration/xrec_registration_contract.h"
 #include "xvm/xsystem_contracts/xreward/xtable_vote_contract.h"
@@ -22,6 +22,7 @@
 #include "xvm/xsystem_contracts/xworkload/xzec_workload_contract_v2.h"
 #include "xvm/xvm_service.h"
 #include "xvm/xvm_trace.h"
+#include "xstatestore/xstatestore_face.h"
 
 #include <gtest/gtest.h>
 
@@ -297,7 +298,7 @@ public:
             auto table_owner = common::xaccount_address_t{xdatautil::serialize_owner_str(sys_contract_sharding_table_block_addr, i)};
             {
                 std::string value_str;
-                m_store->map_get(sys_contract_zec_workload_addr, data::system_contract::XPORPERTY_CONTRACT_TABLEBLOCK_HEIGHT_KEY, std::to_string(i), value_str);
+                statestore::xstatestore_hub_t::instance()->map_get(zec_workload_contract_address, data::system_contract::XPORPERTY_CONTRACT_TABLEBLOCK_HEIGHT_KEY, std::to_string(i), value_str);
                 if (!value_str.empty()) {
                     uint32_t last_read_height = base::xstring_utl::touint64(value_str);
                 }
@@ -318,14 +319,14 @@ public:
             }
             {
                 std::string value_str;
-                m_store->map_get(sys_contract_zec_workload_addr, data::system_contract::XPORPERTY_CONTRACT_TABLEBLOCK_HEIGHT_KEY, std::to_string(i), value_str);
+                statestore::xstatestore_hub_t::instance()->map_get(zec_workload_contract_address, data::system_contract::XPORPERTY_CONTRACT_TABLEBLOCK_HEIGHT_KEY, std::to_string(i), value_str);
                 if (!value_str.empty()) {
                     uint32_t last_read_height = base::xstring_utl::touint64(value_str);
                 }
             }
             {
                 std::string value_str;
-                m_store->map_get(sys_contract_zec_workload_addr, data::system_contract::XPORPERTY_CONTRACT_TABLEBLOCK_HEIGHT_KEY, std::to_string(i), value_str);
+                statestore::xstatestore_hub_t::instance()->map_get(zec_workload_contract_address, data::system_contract::XPORPERTY_CONTRACT_TABLEBLOCK_HEIGHT_KEY, std::to_string(i), value_str);
                 if (!value_str.empty()) {
                     uint32_t last_read_height = base::xstring_utl::touint64(value_str);
                 }

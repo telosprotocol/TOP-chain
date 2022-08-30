@@ -9,6 +9,7 @@ add_executable(xblockstore_test ${xblockstore_test_dir})
 add_dependencies(xblockstore_test xblockstore)
 include_directories(src/xtopcom/xblockstore/)
 target_link_libraries(xblockstore_test PRIVATE
+    xdbstore
     xblockstore
     xtxstore
     xblockmaker

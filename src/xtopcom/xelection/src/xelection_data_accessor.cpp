@@ -17,35 +17,9 @@
 
 #include <inttypes.h>
 NS_BEG3(top, election, store)
-using top::data::xblock_ptr_t;
 
-xtop_election_data_accessor::xtop_election_data_accessor(const observer_ptr<top::store::xstore_face_t> & store) : m_store(store), m_cache(64) {}
+xtop_election_data_accessor::xtop_election_data_accessor() : m_cache(64) {}
 
-#if 0
-// todo charles
-// need refactor
-data::election::xelection_result_store_t xtop_election_data_accessor::get_election_result_store(const std::string & elect_addr, const uint64_t block_height, std::error_code & ec) {
-    if (!block_height) {
-        ec = xdata_accessor_errc_t::block_height_error;
-        xwarn("block height error. block owner: %s, %" PRIu64, elect_addr.c_str(), block_height);
-        return {};
-    }
-    base::xauto_ptr<xblock_t> block(m_store->get_block_by_height(elect_addr, block_height));
-    if (block == nullptr) {
-        ec = xdata_accessor_errc_t::block_is_empty;
-        xwarn("block is empty. block owner: %s, height: %" PRIu64, elect_addr.c_str(), block_height);
-        return {};
-    }
-    std::string result;
-    if (block->get_native_property().native_string_get(data::XPROPERTY_CONTRACT_ELECTION_RESULT_KEY, result) || result.empty()) {
-        ec = xdata_accessor_errc_t::election_result_is_empty;
-        xwarn("election_result is empty. block owner: %s, height: %" PRIu64, elect_addr.c_str(), block_height);
-        return {};
-    }
-    auto const & election_result_store = codec::msgpack_decode<data::election::xelection_result_store_t>({std::begin(result), std::end(result)});
-    return election_result_store;
-}
-#endif
 std::pair<common::xcluster_id_t, common::xgroup_id_t> xtop_election_data_accessor::get_cid_gid_from_xip(const common::xip2_t & xip) {
     return {xip.cluster_id(), xip.group_id()};
 }

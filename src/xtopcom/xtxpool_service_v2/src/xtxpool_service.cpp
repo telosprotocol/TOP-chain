@@ -19,6 +19,7 @@
 #include "xvledger/xvblock.h"
 #include "xvnetwork/xvnetwork_error.h"
 #include "xvnetwork/xvnetwork_error2.h"
+#include "xstatestore/xstatestore_face.h"
 
 #include <cinttypes>
 
@@ -720,7 +721,7 @@ void xtxpool_service::send_table_receipt_id_state(uint16_t table_id) {
         auto latest_commit_block = m_para->get_vblockstore()->get_latest_committed_block(vaccount, metrics::blockstore_access_from_txpool_id_state);
 
         data::xtablestate_ptr_t tablestate_ptr = nullptr;
-        auto ret = data::xblocktool_t::get_receiptid_state_and_prove(m_para->get_vblockstore(), vaccount, latest_commit_block.get() , property_prove, tablestate_ptr);
+        auto ret = statestore::xstatestore_hub_t::instance()->get_receiptid_state_and_prove(common::xaccount_address_t(vaccount.get_account()), latest_commit_block.get() , property_prove, tablestate_ptr);
         if (!ret) {
             xwarn("xtxpool_service::send_table_receipt_id_state create receipt state fail.table:%s, commit height:%llu", table_addr.c_str(), latest_commit_block->get_height());
             return;

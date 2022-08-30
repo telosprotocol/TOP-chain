@@ -42,7 +42,7 @@ using namespace top::store;
 
 class test_blockmock_t {
 private:
-    xaccount_cmd_ptr_t modify_list_property(xaccount_ptr_t account, const std::string& name, const std::string& value) {
+    xaccount_cmd_ptr_t modify_list_property(data::xunitstate_ptr_t account, const std::string& name, const std::string& value) {
         assert(account != nullptr);
         auto cmd = std::make_shared<xaccount_cmd>(account.get(), m_store);
 

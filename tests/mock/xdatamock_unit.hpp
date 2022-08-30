@@ -46,7 +46,7 @@ class xdatamock_unit {
     xblock_ptr_t            get_cert_block() const {return m_history_units.back();}
     xblock_ptr_t            get_lock_block() const { return m_history_units.size() == 1 ? m_history_units[0] : m_history_units[m_history_units.size() - 2];}
     const std::vector<xblock_ptr_t> &   get_history_units() const {return m_history_units;}
-    xaccount_ptr_t          get_account_state() const {return m_unit_bstate;}
+    data::xunitstate_ptr_t          get_account_state() const {return m_unit_bstate;}
     data::xunitstate_ptr_t  build_proposal_state() {
         // create proposal header, clock use to set block version
         base::xauto_ptr<base::xvheader_t> _temp_header = base::xvblockbuild_t::build_proposal_header(get_cert_block().get(), get_cert_block()->get_clock()+1);

@@ -2,7 +2,7 @@
 #define private public
 #define protected public
 #include "xblockstore/xblockstore_face.h"
-#include "xstore/xstore_face.h"
+
 #include "xrpc/xrpc_eth_query_manager.h"
 #include "xvm/manager/xcontract_manager.h"
 #include "xelection/xvnode_house.h"
@@ -19,8 +19,8 @@ class test_xrpc_top_relay_query_manager : public testing::Test {
     void SetUp() override {
         m_store = creator.get_xstore();
         m_block_store = creator.get_blockstore();
-        xrpc_eth_query_manager_ptr = new xrpc::xrpc_eth_query_manager(make_observer(m_store.get()), make_observer(m_block_store), nullptr, nullptr);
-        contract::xcontract_manager_t::instance().init(make_observer(m_store.get()), nullptr);
+        xrpc_eth_query_manager_ptr = new xrpc::xrpc_eth_query_manager(make_observer(m_block_store), nullptr, nullptr);
+        contract::xcontract_manager_t::instance().init(nullptr);
     }
 
     void TearDown() override {

@@ -36,6 +36,20 @@ void xstatectx_base_t::sync_unit_block(const base::xvaccount_t & _vaddr, uint64_
     xinfo("xstatectx_base_t::sync_unit_block account=%s,end_h=%ld,connect_h=%ld", _vaddr.get_account().c_str(), end_height, latest_connect_height);
 }
 
+xobject_ptr_t<base::xvblock_t> xstatectx_base_t::load_block_object(const base::xvaccount_t & addr, base::xaccount_index_t const& account_index) const {
+    auto & unit_hash = account_index.get_latest_unit_hash();
+    xobject_ptr_t<base::xvblock_t> unit_block = nullptr;
+    // TODO(jimmy) fork
+    if (!unit_hash.empty()) {
+        unit_block = get_blockstore()->load_block_object(
+            addr, account_index.get_latest_unit_height(), unit_hash, false);
+    } else {
+        unit_block = get_blockstore()->load_block_object(
+            addr, account_index.get_latest_unit_height(), account_index.get_latest_unit_viewid(), false);
+    }
+    return unit_block;
+}
+
 xobject_ptr_t<base::xvbstate_t> xstatectx_base_t::load_proposal_block_state(const base::xvaccount_t & addr, base::xvblock_t* prev_block) const {
     base::xauto_ptr<base::xvbstate_t> prev_bstate = get_xblkstatestore()->get_block_state(prev_block);
     if (prev_bstate == nullptr) {
@@ -64,21 +78,7 @@ xobject_ptr_t<base::xvbstate_t> xstatectx_base_t::load_inner_table_unit_state(co
 data::xblock_ptr_t xstatectx_base_t::load_inner_table_unit_block(const base::xvaccount_t & addr) const {
     base::xaccount_index_t account_index;
     m_table_state->get_account_index(addr.get_address(), account_index);
-    auto & unit_hash = account_index.get_latest_unit_hash();
-    xobject_ptr_t<data::xblock_t> prev_block = nullptr;
-    if (!unit_hash.empty()) {
-        auto unit_block = get_blockstore()->load_block_object(
-            addr, account_index.get_latest_unit_height(), unit_hash, false);
-        if (unit_block != nullptr) {
-            prev_block = data::xblock_t::raw_vblock_to_object_ptr(unit_block.get());
-        }
-    } else {
-        auto unit_block = get_blockstore()->load_block_object(
-            addr, account_index.get_latest_unit_height(), account_index.get_latest_unit_viewid(), false);
-        if (unit_block != nullptr) {
-            prev_block = data::xblock_t::raw_vblock_to_object_ptr(unit_block.get());
-        }
-    }
+    xobject_ptr_t<base::xvblock_t> prev_block = load_block_object(addr, account_index);
     if (prev_block == nullptr) {
         XMETRICS_GAUGE(metrics::xmetrics_tag_t::statectx_load_block_succ, 0);
         sync_unit_block(addr, account_index.get_latest_unit_height());
@@ -87,7 +87,7 @@ data::xblock_ptr_t xstatectx_base_t::load_inner_table_unit_block(const base::xva
         return nullptr;
     }
     XMETRICS_GAUGE(metrics::xmetrics_tag_t::statectx_load_block_succ, 1);
-    return prev_block;
+    return  data::xblock_t::raw_vblock_to_object_ptr(prev_block.get());
 }
 
 xobject_ptr_t<base::xvbstate_t> xstatectx_base_t::load_different_table_unit_state(const base::xvaccount_t & addr) const {
@@ -109,6 +109,29 @@ xobject_ptr_t<base::xvbstate_t> xstatectx_base_t::load_different_table_unit_stat
     }
     XMETRICS_GAUGE(metrics::xmetrics_tag_t::statectx_load_state_succ, 1);
     // the unit state in different table should not be modified, so not need create proposal state
+    return prev_bstate;
+}
+
+xobject_ptr_t<base::xvbstate_t> xstatectx_base_t::load_inner_table_commit_unit_state(const base::xvaccount_t & addr) const {
+    base::xaccount_index_t account_index;
+    m_commit_table_state->get_account_index(addr.get_address(), account_index);
+    xobject_ptr_t<base::xvblock_t> prev_block = load_block_object(addr, account_index);
+    if (prev_block == nullptr) {
+        XMETRICS_GAUGE(metrics::xmetrics_tag_t::statectx_load_block_succ, 0);
+        sync_unit_block(addr, account_index.get_latest_unit_height());
+        xwarn("xstatectx_base_t::load_inner_table_commit_unit_state fail-load unit block.%s,index=%s",
+                addr.get_address().c_str(), account_index.dump().c_str());
+        return nullptr;
+    }
+    xobject_ptr_t<base::xvbstate_t> prev_bstate = get_xblkstatestore()->get_block_state(prev_block.get());
+    if (prev_bstate == nullptr) {
+        XMETRICS_GAUGE(metrics::xmetrics_tag_t::statectx_load_state_succ, 0);
+        sync_unit_block(addr, prev_block->get_height());
+        xwarn("xstatectx_base_t::load_inner_table_commit_unit_state fail-get target state. block=%s",
+            prev_block->dump().c_str());
+        return nullptr;
+    }
+    XMETRICS_GAUGE(metrics::xmetrics_tag_t::statectx_load_block_succ, 1);
     return prev_bstate;
 }
 

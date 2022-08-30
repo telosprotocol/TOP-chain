@@ -8,7 +8,7 @@
 #include "xBFT/xconsobj.h"
 #include "xBFT/xconsaccount.h"
 //#include "xBFT/xconsnode.h"
-#include "xstore/xstore_face.h"
+
 #include "xbase/xhash.h"
 #include "xblockstore/xblockstore_face.h"
 #include "xutility/xhash.h"

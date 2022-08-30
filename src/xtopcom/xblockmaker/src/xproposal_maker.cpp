@@ -16,6 +16,7 @@
 #include "xmbus/xevent_behind.h"
 #include "xchain_fork/xchain_upgrade_center.h"
 #include "xgasfee/xgas_estimate.h"
+#include "xstatestore/xstatestore_face.h"
 
 NS_BEG2(top, blockmaker)
 
@@ -204,13 +205,7 @@ bool xproposal_maker_t::can_make_proposal(data::xblock_consensus_para_t & propos
 }
 
 data::xtablestate_ptr_t xproposal_maker_t::get_target_tablestate(base::xvblock_t * block) {
-    base::xauto_ptr<base::xvbstate_t> bstate = m_resources->get_xblkstatestore()->get_block_state(block,metrics::statestore_access_from_blkmaker_get_target_tablestate);
-    if (bstate == nullptr) {
-        xwarn("xproposal_maker_t::get_target_tablestate fail-get target state.block=%s",block->dump().c_str());
-        return nullptr;
-    }
-    data::xtablestate_ptr_t tablestate = std::make_shared<data::xtable_bstate_t>(bstate.get());
-    return tablestate;
+    return statestore::xstatestore_hub_t::instance()->get_table_state_by_block(block);
 }
 
 xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & proposal_para, uint32_t min_tx_num) {
@@ -488,7 +483,7 @@ void xproposal_maker_t::update_txpool_table_state(base::xvblock_t* _commit_block
     if (_commit_block->get_height() > 0) {
         base::xvproperty_prove_ptr_t property_prove_ptr = nullptr;
         data::xtablestate_ptr_t tablestate_ptr = nullptr;
-        auto ret = data::xblocktool_t::get_receiptid_state_and_prove(get_blockstore(), *m_table_maker, _commit_block, property_prove_ptr, tablestate_ptr);
+        auto ret = statestore::xstatestore_hub_t::instance()->get_receiptid_state_and_prove(common::xaccount_address_t(m_table_maker->get_account()), _commit_block, property_prove_ptr, tablestate_ptr);
         if (!ret) {
             xwarn("xproposal_maker_t::update_txpool_txs create receipt state and prove fail.table:%s, commit height:%llu", get_account().c_str(), _commit_block->get_height());
         }
