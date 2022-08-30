@@ -13,6 +13,7 @@
 #include "xverifier/xwhitelist_verifier.h"
 #include "xverifier/xblacklist_verifier.h"
 #include "xvledger/xvblock.h"
+#include "xstatestore/xstatestore_face.h"
 
 #include <cinttypes>
 
@@ -123,7 +124,22 @@ int32_t xtx_verifier::verify_address_type(data::xtransaction_t const * trx) {
     return xverifier_error::xverifier_success;
 }
 
-int32_t xtx_verifier::verify_tx_signature(data::xtransaction_t const * trx, observer_ptr<store::xstore_face_t> const & store) {
+data::system_contract::xreg_node_info get_reg_info(common::xaccount_address_t const & node_addr) {
+    std::string value_str;
+    int ret = statestore::xstatestore_hub_t::instance()->map_get(rec_registration_contract_address, data::system_contract::XPORPERTY_CONTRACT_REG_KEY, node_addr.value(), value_str);
+    if (ret != xsuccess || value_str.empty()) {
+        xwarn("[get_reg_info] get node register info fail, node_addr: %s", node_addr.value().c_str());
+        return data::system_contract::xreg_node_info{};
+    }
+
+    data::system_contract::xreg_node_info node_info;
+    base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)value_str.c_str(), (uint32_t)value_str.size());
+
+    node_info.serialize_from(stream);
+    return node_info;
+}
+
+int32_t xtx_verifier::verify_tx_signature(data::xtransaction_t const * trx) {
     // verify signature
     if (!data::is_sys_contract_address(common::xaccount_address_t{trx->get_source_addr()}) /*&& !data::is_user_contract_address(common::xaccount_address_t{trx->get_source_addr()})*/) {
         bool check_success = false;
@@ -134,8 +150,7 @@ int32_t xtx_verifier::verify_tx_signature(data::xtransaction_t const * trx, obse
 #ifdef XENABLE_MOCK_ZEC_STAKE
             check_success = true;
 #else
-            assert(store != nullptr);
-            xpublic_key_t pub_key = top::store::get_reg_info(store, common::xaccount_address_t{trx->get_source_addr()}).consensus_public_key;
+            xpublic_key_t pub_key = get_reg_info(common::xaccount_address_t{trx->get_source_addr()}).consensus_public_key;
             xdbg("[global_trace][xtx_verifier][verify_tx_signature][pub_key_sign_check], tx:%s, pub_key(base64):%s", trx->dump().c_str(), pub_key.to_string().c_str());
 
             check_success = !pub_key.empty() && trx->pub_key_sign_check(pub_key);
@@ -331,8 +346,8 @@ int32_t xtx_verifier::verify_send_tx_validation(data::xtransaction_t const * trx
     return xverifier_error::xverifier_success;
 }
 
-int32_t xtx_verifier::verify_send_tx_legitimacy(data::xtransaction_t const * trx_ptr, observer_ptr<store::xstore_face_t> const & store) {
-    int32_t ret = verify_tx_signature(trx_ptr, store);
+int32_t xtx_verifier::verify_send_tx_legitimacy(data::xtransaction_t const * trx_ptr) {
+    int32_t ret = verify_tx_signature(trx_ptr);
     if (ret) {
         return ret;
     }

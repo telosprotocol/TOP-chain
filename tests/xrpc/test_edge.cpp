@@ -10,7 +10,6 @@
 
 using namespace top;
 using namespace top::xrpc;
-using namespace top::store;
 using namespace std;
 
 using HttpClient = SimpleWeb::Client<SimpleWeb::HTTP>;
@@ -26,8 +25,8 @@ class test_edge : public testing::Test {
         m_thread = top::make_observer(base::xiothread_t::create_thread(base::xcontext_t::instance(), 0, -1));
 
         m_edge_handler = std::make_shared<xrpc_edge_vhost>(m_vhost, m_router_ptr, m_thread);
-        m_rpc_service = make_unique<xrpc::xrpc_service<xedge_http_method>>(m_edge_handler, m_vhost->address().xip2(), false, m_store);
-        m_rpc_ws_service = make_unique<xrpc::xrpc_service<xedge_ws_method>>(m_edge_handler, m_vhost->address().xip2(), false, m_store);
+        m_rpc_service = make_unique<xrpc::xrpc_service<xedge_http_method>>(m_edge_handler, m_vhost->address().xip2(), false);
+        m_rpc_ws_service = make_unique<xrpc::xrpc_service<xedge_ws_method>>(m_edge_handler, m_vhost->address().xip2(), false);
         m_pre_request_handler_mgr_ptr = top::make_unique<xpre_request_handler_mgr>();
         m_rule_mgr_ptr = top::make_unique<xfilter_manager>();
     }
@@ -45,7 +44,6 @@ class test_edge : public testing::Test {
 
     config::xtop_http_port_configuration::type m_http_port;
     config::xtop_ws_port_configuration::type m_ws_port;
-    observer_ptr<xstore_face_t> m_store{xstore_factory::create_store_with_memdb().get()};
     unique_ptr<xrpc::xrpc_service<xedge_http_method>> m_rpc_service;
     unique_ptr<xrpc::xrpc_service<xedge_ws_method>> m_rpc_ws_service;
 

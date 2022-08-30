@@ -791,12 +791,6 @@ bool xtable_build2_t::build_block_body(const xtable_block_para_t & para, const b
     std::string tgas_balance_change = base::xstring_utl::tostring(para.get_tgas_balance_change());
     set_output_entity(base::xvoutentity_t::key_name_tgas_pledge_change(), tgas_balance_change);
 
-    std::string output_offdata;
-    if (!output_offdata.empty()) {
-        std::string output_offdata_hash = base::xcontext_t::instance().hash(output_offdata, get_qcert()->get_crypto_hash_type());
-        set_output_entity(base::xvoutentity_t::key_name_output_offdata_hash(), output_offdata_hash);    
-    }
-
     base::xtable_unit_infos_t unit_infos;
     for (auto & unit : batch_units) {
         auto hash = unit->get_block_hash();

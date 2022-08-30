@@ -9,6 +9,7 @@
 #include "xdata/xelection/xstandby_node_info.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xrelayblock_build.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xelection/xcache/xdata_accessor.h"
 #include "xvm/manager/xcontract_manager.h"
 #include "xvm/xcontract_helper.h"

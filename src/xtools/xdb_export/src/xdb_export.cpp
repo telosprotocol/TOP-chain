@@ -1,5 +1,6 @@
 #include "../xdb_export.h"
-
+#include "xdbstore/xstore.h"
+#include "xdbstore/xstore_face.h"
 #include "xbasic/xasio_io_context_wrapper.h"
 #include "xblockstore/xblockstore_face.h"
 #include "xchain_upgrade/xchain_data_processor.h"
@@ -55,8 +56,8 @@ xdb_export_tools_t::xdb_export_tools_t(std::string const & db_path) {
     base::xvchain_t::instance().set_xtxstore(m_txstore.get());
     m_nodesvr_ptr = make_object_ptr<election::xvnode_house_t>(common::xnode_id_t{NODE_ID}, SIGN_KEY, m_blockstore, make_observer(m_bus.get()));
     m_getblock =
-        std::make_shared<xrpc::xrpc_query_manager>(observer_ptr<store::xstore_face_t>(m_store.get()), observer_ptr<base::xvblockstore_t>(m_blockstore.get()), nullptr, nullptr);
-    contract::xcontract_manager_t::instance().init(make_observer(m_store), xobject_ptr_t<store::xsyncvstore_t>{});
+        std::make_shared<xrpc::xrpc_query_manager>(observer_ptr<base::xvblockstore_t>(m_blockstore.get()), nullptr, nullptr);
+    contract::xcontract_manager_t::instance().init(xobject_ptr_t<store::xsyncvstore_t>{});
     contract::xcontract_manager_t::set_nodesrv_ptr(m_nodesvr_ptr);
 }
 

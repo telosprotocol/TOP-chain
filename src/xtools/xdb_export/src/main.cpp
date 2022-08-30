@@ -6,6 +6,7 @@
 #include "xconfig/xpredefined_configurations.h"
 #include "xconfig/xconfig_register.h"
 #include "xdata/xrootblock.h"
+#include "xcrypto/xckey.h"
 
 using namespace top;
 using namespace top::db_export;

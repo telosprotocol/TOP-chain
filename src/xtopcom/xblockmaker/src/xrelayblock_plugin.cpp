@@ -18,6 +18,7 @@
 #include "xdata/xblockbuild.h"
 #include "xvledger/xvledger.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
+#include "xstatestore/xstatestore_face.h"
 
 NS_BEG2(top, blockmaker)
 
@@ -101,24 +102,17 @@ std::string xrelayblock_plugin_t::get_new_relay_election_data(statectx::xstatect
     //  3. compare the read relay shard election data epoch and the contract data epoch
     //  4. epoch of relay election data is newer, generate transaction calling the re-package contract
 
-    xobject_ptr_t<base::xvblock_t> zec_elect_relay_blk =
-        data::xblocktool_t::get_latest_connectted_state_changed_block(base::xvchain_t::instance().get_xblockstore(), zec_elect_relay_contract_address.vaccount());
-    // zec_elect_relay_blk->get_parent_block_height()
-    xobject_ptr_t<base::xvblock_t> relay_make_block_blk =
-        data::xblocktool_t::get_latest_connectted_state_changed_block(base::xvchain_t::instance().get_xblockstore(), relay_make_block_contract_address.vaccount());
-
-    xobject_ptr_t<base::xvbstate_t> const zec_elect_relay_state =
-        base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(zec_elect_relay_blk.get(), metrics::statestore_access_from_contract_framework);
-    xobject_ptr_t<base::xvbstate_t> const relay_make_block_state =
-        base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(relay_make_block_blk.get(), metrics::statestore_access_from_contract_framework);
-
-    if (nullptr == zec_elect_relay_state || nullptr == relay_make_block_state) {
-        xwarn("role_context fail to load relay election contract state");
+    data::xunitstate_ptr_t zec_elect_relay_unit_state = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_change_state(zec_elect_relay_contract_address);
+    if (nullptr == zec_elect_relay_unit_state) {
+        xerror("xrelayblock_plugin_t::get_new_relay_election_data fail-load zec elect state.%s", zec_elect_relay_contract_address.value().c_str());
+        return {};
+    }
+    data::xunitstate_ptr_t relay_elect_relay_unit_state = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_change_state(relay_make_block_contract_address);
+    if (nullptr == relay_elect_relay_unit_state) {
+        xerror("xrelayblock_plugin_t::get_new_relay_election_data fail-load relay elect state.%s", relay_make_block_contract_address.value().c_str());
         return {};
     }
 
-    data::xunit_bstate_t const zec_elect_relay_unit_state{zec_elect_relay_state.get()};
-    data::xunit_bstate_t const relay_elect_relay_unit_state{relay_make_block_state.get()};
 
     auto const & property_names = data::election::get_property_name_by_addr(zec_elect_relay_contract_address);
     if (property_names.size() != 1) {
@@ -128,25 +122,25 @@ std::string xrelayblock_plugin_t::get_new_relay_election_data(statectx::xstatect
 
     auto const & property_name = property_names.front();
     std::string result;
-    zec_elect_relay_unit_state.string_get(property_name, result);
+    zec_elect_relay_unit_state->string_get(property_name, result);
     if (result.empty()) {
-        xerror("role_context: relay election data empty. property=%s,block=%s", property_name.c_str(), zec_elect_relay_blk->dump().c_str());
+        xerror("role_context: relay election data empty. property=%s,block=%s", property_name.c_str(), zec_elect_relay_unit_state->get_bstate()->dump().c_str());
         return {};
     }
 
     xdbg("role_context: process relay election data %s, %" PRIu64 " from clock: %" PRIu64 " %" PRIu64,
          zec_elect_relay_contract_address.c_str(),
-         zec_elect_relay_blk->get_height(),
+         zec_elect_relay_unit_state->get_block_height(),
          clock,
          timestamp);
 
     using top::data::election::xelection_result_store_t;
 
     std::string current_result;
-    relay_elect_relay_unit_state.string_get(property_name, current_result);
+    relay_elect_relay_unit_state->string_get(property_name, current_result);
     if (current_result.empty()) {
         // even genesis is not empty.
-        xerror("role_context: local packaged relay election data empty. property=%s,block=%s", property_name.c_str(), relay_make_block_blk->dump().c_str());
+        xerror("role_context: local packaged relay election data empty. property=%s,block=%s", property_name.c_str(), relay_elect_relay_unit_state->get_bstate()->dump().c_str());
         return {};
     }
     auto const & current_election_result_store = codec::msgpack_decode<xelection_result_store_t>({std::begin(current_result), std::end(current_result)});

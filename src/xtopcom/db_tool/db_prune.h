@@ -7,10 +7,12 @@
 #include "xbase/xobject_ptr.h"
 #include "xvledger/xvstate.h"
 #include "xgrpcservice/xgrpc_service.h"
-#include "xstore/xstore_face.h"
+#include "xdbstore/xstore_face.h"
 #include "xtxstore/xtxstore_face.h"
 #include "xvledger/xvcnode.h"
+#include "xvledger/xvblockstore.h"
 #include "xbasic/xmemory.hpp"
+#include "xutility/xhash.h"
 
 NS_BEG2(top, db_prune)
 class DbPrune {

@@ -23,6 +23,7 @@
 #include "xvledger/xvblockstore.h"
 #include "xvledger/xvledger.h"
 #include "xvledger/xvstate.h"
+#include "xstatestore/xstatestore_face.h"
 
 #include <cinttypes>
 
@@ -188,32 +189,28 @@ void xvnode_house_t::load_group_from_store(const xvip2_t & target_node) {
     uint64_t elect_height = get_network_height_from_xip2(target_node);
 
     // TODO check flag, use committed block?
-    base::xvaccount_t _vaddress(elect_address);
+    common::xaccount_address_t _vaddress(elect_address);
     XMETRICS_GAUGE(metrics::blockstore_access_from_vnodesrv, 1);
-    xauto_ptr<xvblock_t> blk_ptr = m_blockstore->load_block_object(_vaddress, elect_height, base::enum_xvblock_flag_committed, false);
-    if (blk_ptr == nullptr)
-        return;
 
-    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(blk_ptr.get(), metrics::statestore_access_from_vnodesrv_load_state);
-    if (bstate == nullptr) {
-        xwarn("xvnode_house_t::load_group_from_store fail-load state.block=%s", blk_ptr->dump().c_str());
+    data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_committed_state(_vaddress, elect_height);
+    if (unitstate == nullptr) {
+        xwarn("xtop_application::is_beacon_account fail-get state.");
         return;
     }
-    xaccount_ptr_t state = std::make_shared<xunit_bstate_t>(bstate.get());
 
     std::string result;
-    auto property_names = data::election::get_property_name_by_addr(common::xaccount_address_t{blk_ptr->get_account()});
+    auto property_names = data::election::get_property_name_by_addr(common::xaccount_address_t{elect_address});
     using top::data::election::xelection_result_store_t;
     for (auto const & property : property_names) {
-        state->string_get(property, result);
+        unitstate->string_get(property, result);
         if (result.empty()) {
             xwarn("[xvnode_house_t::load_group_from_store] string get null. %s, height=%" PRIu64 ",property=%s",
-                blk_ptr->get_account().c_str(), blk_ptr->get_height(), property.c_str());
+                elect_address.c_str(), elect_height, property.c_str());
             continue;
         }
         auto const & election_result_store = codec::msgpack_decode<xelection_result_store_t>({std::begin(result), std::end(result)});
         if (election_result_store.empty()) {
-            xwarn("[xvnode_house_t::load_group_from_store] elect result is empty! %s, %" PRIu64, blk_ptr->get_account().c_str(), blk_ptr->get_height());
+            xwarn("[xvnode_house_t::load_group_from_store] elect result is empty! %s, %" PRIu64, elect_address.c_str(), elect_height);
             continue;
         }
         xdbg("[xvnode_house_t::load_group_from_store] add_group succ. %s, %" PRIu64 ",property=%s,value_size=%zu",

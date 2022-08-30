@@ -8,7 +8,6 @@
 #include "xbasic/xmemory.hpp"
 #include "xbasic/xrunnable.h"
 #include "xmbus/xmessage_bus.h"
-#include "xstore/xstore_face.h"
 #include "xsync/xdeceit_node_manager.h"
 #include "xsync/xsession.h"
 #include "xsync/xrole_chains_mgr.h"
@@ -84,7 +83,6 @@ public:
     ~xtop_sync_object()                                    = default;
 
     xtop_sync_object(observer_ptr<mbus::xmessage_bus_face_t> const & bus,
-                     observer_ptr<store::xstore_face_t> const & store,
                      observer_ptr<vnetwork::xvhost_face_t> const & vhost,
                      xobject_ptr_t<base::xvblockstore_t> &blockstore,
                      xobject_ptr_t<base::xvnodesrv_t> &nodesvr_ptr,

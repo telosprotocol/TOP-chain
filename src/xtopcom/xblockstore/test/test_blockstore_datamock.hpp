@@ -265,7 +265,7 @@ class test_blockstore_datamock_t {
 #endif
     xblock_ptr_t transfer(const std::string &from, const std::string &to, uint64_t amount) {
 #if 0
-        xaccount_ptr_t account = m_store->clone_account(from);
+        data::xunitstate_ptr_t account = m_store->clone_account(from);
         if (account == nullptr) {
             return nullptr;
         }

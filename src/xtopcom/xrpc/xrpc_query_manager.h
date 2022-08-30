@@ -9,7 +9,6 @@
 #include "xdata/xelection/xelection_result_store.h"
 #include "xdata/xelection/xstandby_result_store.h"
 #include "xgrpcservice/xgrpc_service.h"
-#include "xstore/xstore.h"
 #include "xsyncbase/xsync_face.h"
 #include "xvledger/xvtxstore.h"
 #include "xvledger/xvledger.h"
@@ -58,21 +57,18 @@ public:
 
 class xrpc_query_manager : public rpc::xrpc_handle_face_t {
 public:
-    xrpc_query_manager(observer_ptr<store::xstore_face_t> store,
-                       observer_ptr<base::xvblockstore_t> block_store,
+    xrpc_query_manager(observer_ptr<base::xvblockstore_t> block_store,
                        sync::xsync_face_t * sync,
                        xtxpool_service_v2::xtxpool_proxy_face_ptr const & txpool_service,
                        observer_ptr<base::xvtxstore_t> txstore = nullptr,
                        bool exchange_flag = false)
-        : m_store(store)
-        , m_block_store(block_store)
+        : m_block_store(block_store)
         , m_sync(sync)
         , m_edge_start_height(1)
         , m_arc_start_height(1)
         , m_txpool_service(txpool_service)
         , m_txstore(txstore)
         , m_exchange_flag(exchange_flag) {
-        m_xrpc_query_func.set_store(store);
         REGISTER_QUERY_METHOD(getBlock);
         REGISTER_QUERY_METHOD(getProperty);
         REGISTER_QUERY_METHOD(getAccount);
@@ -117,7 +113,7 @@ public:
     bool handle(std::string & strReq, xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) override;
     xJson::Value get_block_json(data::xblock_t * bp, const std::string & rpc_version = data::RPC_VERSION_V2);
     xJson::Value get_blocks_json(data::xblock_t * bp, const std::string & rpc_version = data::RPC_VERSION_V2);
-    //void query_account_property_base(xJson::Value & jph, const std::string & owner, const std::string & prop_name, top::data::xaccount_ptr_t unitstate, bool compatible_mode);
+    //void query_account_property_base(xJson::Value & jph, const std::string & owner, const std::string & prop_name, top::data::xunitstate_ptr_t unitstate, bool compatible_mode);
     //void query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, xfull_node_compatible_mode_t compatible_mode);
     //void query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, const uint64_t height, xfull_node_compatible_mode_t compatible_mode);
     void getLatestBlock(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
@@ -169,7 +165,7 @@ private:
 
     void get_node_infos();
 
-    void set_redeem_token_num(data::xaccount_ptr_t ac, xJson::Value & value);
+    void set_redeem_token_num(data::xunitstate_ptr_t ac, xJson::Value & value);
 
     void set_proposal_map(xJson::Value & j, std::map<std::string, std::string> & ms);
     void set_proposal_map_v2(xJson::Value & j, std::map<std::string, std::string> & ms);
@@ -230,7 +226,6 @@ private:
                                   uint32_t & nErrorCode);
 
 private:
-    observer_ptr<store::xstore_face_t> m_store;
     observer_ptr<base::xvblockstore_t> m_block_store;
     sync::xsync_face_t * m_sync{nullptr};
     uint64_t m_edge_start_height;

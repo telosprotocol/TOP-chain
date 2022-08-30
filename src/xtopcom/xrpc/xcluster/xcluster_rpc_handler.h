@@ -25,7 +25,6 @@ public:
     xcluster_rpc_handler(std::shared_ptr<xvnetwork_driver_face_t>        cluster_vhost,
                          observer_ptr<xrouter_face_t>                    router_ptr,
                          xtxpool_service_v2::xtxpool_proxy_face_ptr const & txpool_service,
-                         observer_ptr<store::xstore_face_t>              store,
                          observer_ptr<base::xvblockstore_t>              block_store,
                          observer_ptr<base::xvtxstore_t>                 txstore,
                          observer_ptr<top::base::xiothread_t>            thread);

@@ -9,7 +9,6 @@
 #include "xbase/xmem.h"
 
 
-#include "xstore/xstore_face.h"
 #include "xmbus/xmessage_bus.h"
 #include "xsync/xsync_message.h"
 #include "xdata/xdatautil.h"

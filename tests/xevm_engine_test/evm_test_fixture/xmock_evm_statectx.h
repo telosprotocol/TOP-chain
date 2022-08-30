@@ -2,6 +2,7 @@
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xunit_bstate.h"
 #include "xstatectx/xstatectx_face.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 
 namespace top {
 

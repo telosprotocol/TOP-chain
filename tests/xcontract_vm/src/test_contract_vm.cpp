@@ -15,6 +15,7 @@
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xtransaction_v2.h"
 #include "xpbase/base/top_utils.h"
+#include "xstatestore/xstatestore_face.h"
 // #include "xvm/xsystem_contracts/xelection/xrec/xrec_standby_pool_contract_new.h"
 // #include "xvm/xsystem_contracts/xregistration/xrec_registration_contract_new.h"
 
@@ -355,8 +356,9 @@ TEST_F(test_contract_vm, test_recv_tx) {
     std::vector<xcons_transaction_ptr_t> input_txs;
     input_txs.emplace_back(cons_tx);
 
-    auto vblock = xblocktool_t::get_latest_connectted_state_changed_block(m_blockstore, std::string{sys_contract_rec_standby_pool_addr});
-    auto bstate = xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(vblock.get());
+    data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_change_state(rec_standby_pool_contract_address);
+    auto bstate = unitstate->get_bstate();   
+
     EXPECT_EQ(bstate->find_property(data::system_contract::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY), true);
     EXPECT_EQ(bstate->find_property(data::system_contract::XPORPERTY_CONTRACT_REG_KEY), true);
     EXPECT_EQ(bstate->find_property(data::system_contract::XPORPERTY_CONTRACT_TICKETS_KEY), true);
@@ -701,8 +703,9 @@ TEST_F(test_contract_vm, test_async_call) {
     std::vector<xcons_transaction_ptr_t> input_txs;
     input_txs.emplace_back(cons_tx);
 
-    auto vblock = xblocktool_t::get_latest_connectted_state_changed_block(m_blockstore, std::string{sys_contract_rec_standby_pool_addr});
-    auto bstate = xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(vblock.get());
+    data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_change_state(rec_standby_pool_contract_address);
+    auto bstate = unitstate->get_bstate();   
+
     EXPECT_EQ(bstate->find_property(data::system_contract::XPORPERTY_CONTRACT_GENESIS_STAGE_KEY), true);
     EXPECT_EQ(bstate->find_property(data::system_contract::XPORPERTY_CONTRACT_REG_KEY), true);
     EXPECT_EQ(bstate->find_property(data::system_contract::XPORPERTY_CONTRACT_TICKETS_KEY), true);
@@ -871,8 +874,9 @@ TEST_F(test_contract_vm, test_followup_transfer) {
     std::vector<xcons_transaction_ptr_t> input_txs;
     input_txs.emplace_back(cons_tx);
 
-    auto vblock = xblocktool_t::get_latest_connectted_state_changed_block(m_blockstore, std::string{sys_contract_rec_standby_pool_addr});
-    auto bstate = xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(vblock.get());
+    data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_change_state(rec_standby_pool_contract_address);
+    auto bstate = unitstate->get_bstate();   
+
     {
         xobject_ptr_t<xvcanvas_t> canvas = make_object_ptr<xvcanvas_t>();
         if (bstate->find_property(XPROPERTY_TX_INFO) == false) {
@@ -943,8 +947,8 @@ TEST_F(test_contract_vm, test_mock_zec_stake_recv) {
     std::vector<xcons_transaction_ptr_t> input_txs;
     input_txs.emplace_back(cons_tx);
 
-    auto latest_vblock = xblocktool_t::get_latest_connectted_state_changed_block(m_blockstore, std::string{sys_contract_rec_standby_pool_addr});
-    auto bstate = xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_vblock.get());
+    data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_change_state(base::xvaccount_t(std::string{sys_contract_rec_standby_pool_addr}));
+    auto bstate = unitstate->get_bstate();       
     {
         xobject_ptr_t<xvcanvas_t> canvas = make_object_ptr<xvcanvas_t>();
         if (bstate->find_property(XPROPERTY_TX_INFO) == false) {

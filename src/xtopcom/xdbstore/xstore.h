@@ -5,17 +5,11 @@
 #pragma once
 
 #include <string>
-#include <unordered_map>
-#include <vector>
-#include <mutex>
-#include <map>
 
 #include "xbase/xobject.h"
-#include "xdata/xchain_param.h"
 #include "xdb/xdb_face.h"
-#include "xmbus/xmessage_bus.h"
+#include "xdbstore/xstore_face.h"
 
-#include "xstore/xstore_face.h"
 
 namespace top { namespace store {
 
@@ -60,28 +54,6 @@ public:
     virtual std::string         get_store_path() const  override {return m_store_path;}
     virtual bool                open() const override;
     virtual bool                close() const override;
-
- public://other old api
-
-    data::xaccount_ptr_t query_account(const std::string& address) const override;
-    data::xaccount_ptr_t get_target_state(base::xvblock_t * block) const;
-    data::xaccount_ptr_t get_target_state(const std::string & address, uint64_t height) const;
-    bool           string_property_get(base::xvblock_t* block, const std::string& prop, std::string& value) const override;
-
-    uint64_t get_blockchain_height(const std::string& account) override;
-
-    int32_t get_map_property(const std::string& account, uint64_t height, const std::string& name, std::map<std::string, std::string>& value) override;
-    int32_t get_string_property(const std::string& account, uint64_t height, const std::string& name, std::string& value) override;
-
-    // property operation api
-    int32_t string_get(const std::string& account, const std::string& key, std::string& value) const override;
-
-    int32_t list_get_all(const std::string& account, const std::string &key, std::vector<std::string> &values) override;
-    int32_t map_get(const std::string& account, const std::string & key, const std::string & field, std::string & value) override;
-    int32_t map_copy_get(const std::string& account, const std::string & key, std::map<std::string, std::string> & map) const override;
-
-public:
-    virtual bool delete_block_by_path(const std::string & store_path,const std::string & account, uint64_t height, bool has_input_output) override;
 
  private:
     std::string                     m_store_path;

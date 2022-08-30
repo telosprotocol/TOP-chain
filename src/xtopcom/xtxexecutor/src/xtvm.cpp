@@ -30,7 +30,7 @@ enum_execute_result_type xtvm_t::execute(const xvm_input_t & input, xvm_output_t
             xerror("xtvm_t::execute fail-not same table unit state.tx=%s", tx->dump().c_str());
             return enum_exec_error_load_state;
         }
-        xaccount_vm_t accountvm(unitstate, unitstate->get_canvas());  // TODO(jimmy)
+        xaccount_vm_t accountvm(unitstate, input.get_statectx());  // TODO(jimmy)
         int32_t ret = accountvm.execute(input, output);
         if (ret != xsuccess) {
             xwarn("xtvm_t::execute fail-vm execute.tx=%s,ret=%s", tx->dump().c_str(), chainbase::xmodule_error_to_str(ret).c_str());
@@ -59,7 +59,7 @@ enum_execute_result_type xtvm_t::execute(const xvm_input_t & input, xvm_output_t
         xvm_input_t recv_input(input.get_statectx(), input.get_para(), recvtx);
         xvm_output_t recv_output;
 
-        xaccount_vm_t accountvm(unitstate, unitstate->get_canvas());
+        xaccount_vm_t accountvm(unitstate, input.get_statectx());
         int32_t ret = accountvm.execute(recv_input, recv_output);  // TODO(jimmy) ignore recvtx output
         if (ret != xsuccess) {
             xerror("xtvm_t::execute fail-vm execute.tx=%s", tx->dump().c_str());

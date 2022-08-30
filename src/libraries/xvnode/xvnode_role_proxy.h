@@ -10,7 +10,6 @@
 #include "xgrpc_mgr/xgrpc_mgr.h"
 #include "xmbus/xmessage_bus.h"
 #include "xrouter/xrouter_face.h"
-#include "xstore/xstore_face.h"
 #include "xsync/xsync_object.h"
 #include "xtxpool_service_v2/xtxpool_service_face.h"
 #include "xunit_service/xcons_face.h"
@@ -25,7 +24,6 @@ private:
     std::set<common::xnode_address_t> m_node_address_set;
 private:
     // observer_ptr<mbus::xmessage_bus_face_t> const & mbus;
-    // observer_ptr<store::xstore_face_t> const & store;
     // observer_ptr<base::xvblockstore_t> const & block_store;
     // observer_ptr<time::xchain_time_face_t> const & logic_timer;
     // observer_ptr<router::xrouter_face_t> const & router;
@@ -40,7 +38,6 @@ private:
 
 public:
     xtop_vnode_role_proxy(observer_ptr<mbus::xmessage_bus_face_t> const & mbus,
-                          observer_ptr<store::xstore_face_t> const & store,
                           observer_ptr<base::xvblockstore_t> const & block_store,
                           observer_ptr<base::xvtxstore_t> const & txstore,
                           observer_ptr<time::xchain_time_face_t> const & logic_timer,
