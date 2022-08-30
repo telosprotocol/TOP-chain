@@ -63,22 +63,6 @@ TEST_F(TestTopUtils, GetCurrentTimeMsec) {
     ASSERT_TRUE(now_time > 0);
 }
 
-TEST_F(TestTopUtils, IsNum) {
-    ASSERT_TRUE(IsNum("123"));
-    ASSERT_TRUE(IsNum("123.89"));
-    ASSERT_TRUE(IsNum("123462345234523452345234599999"));
-    ASSERT_FALSE(IsNum("12346234523sdfasdf4523452345234599999"));
-    ASSERT_FALSE(IsNum("123.34sdf"));
-    ASSERT_FALSE(IsNum("12334sdf"));
-    ASSERT_FALSE(IsNum("asdfas12334sdf"));
-    ASSERT_FALSE(IsNum("asdfasd"));
-}
-
-TEST_F(TestTopUtils, RandomAscString) {
-    const auto str = RandomAscString(10);
-    ASSERT_EQ(10, str.size());
-}
-
 TEST_F(TestTopUtils, RandomInt32) {
     RandomInt32();
 }
@@ -150,32 +134,27 @@ TEST_F(TestTopUtils, HexSubstr) {
     }
 }
 
-TEST_F(TestTopUtils, IsBigEnd_IsSmallEnd) {
-    const auto both = IsBigEnd() && IsSmallEnd();
-    const auto either = IsBigEnd() || IsSmallEnd();
-    const auto neither = !IsBigEnd() && !IsSmallEnd();
-    ASSERT_FALSE(both);
-    ASSERT_TRUE(either);
-    ASSERT_FALSE(neither);
+TEST_F(TestTopUtils, SplitString1) {
+    std::string nodes("aaaaa");
+    std::set<std::string> node_sets;
+    top::SplitString(nodes, ',', node_sets);
+    ASSERT_NE(node_sets.find("aaaaa"), node_sets.end());
+    ASSERT_EQ(node_sets.find("bbbbb"), node_sets.end());
+    ASSERT_EQ(node_sets.size(), 1);
 }
 
-TEST_F(TestTopUtils, StringHash) {
-    const auto str1 = StringHash("1234");
-    const auto str2 = StringHash("1234");
-    ASSERT_EQ(str1, str2);
+TEST_F(TestTopUtils, SplitString2) {
+    std::string nodes("aaaaa,bbbbb,ccccc");
+    std::set<std::string> node_sets;
+    top::SplitString(nodes, ',', node_sets);
+
+    ASSERT_NE(node_sets.find("aaaaa"), node_sets.end());
+    ASSERT_NE(node_sets.find("bbbbb"), node_sets.end());
+    ASSERT_NE(node_sets.find("ccccc"), node_sets.end());
+    ASSERT_EQ(node_sets.find("ddddd"), node_sets.end());
+    ASSERT_EQ(node_sets.size(), 3);
+
 }
-
-TEST_F(TestTopUtils, GetGlobalXidWithNodeId) {
-    GetGlobalXidWithNodeId("");
-}
-
-TEST_F(TestTopUtils, GetStringSha128) {
-    const auto str1 = GetStringSha128("1234");
-    const auto str2 = GetStringSha128("1234");
-    ASSERT_EQ(str1, str2);
-}
-
-
 }  // namespace test
 
 }  // namespace top

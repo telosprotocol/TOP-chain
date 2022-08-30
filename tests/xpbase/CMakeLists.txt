@@ -4,4 +4,4 @@ aux_source_directory(./ test_src)
 
 add_executable(xpbase_test ${test_src})
 
-target_link_libraries(xpbase_test PRIVATE xxbase gtest pthread jsoncpp)
+target_link_libraries(xpbase_test PRIVATE xpbase xxbase gtest pthread jsoncpp)
