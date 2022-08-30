@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "xstore/xstore_face.h"
 #include "xmbus/xmessage_bus.h"
 #include "xvnetwork/xaddress.h"
 #include "xmbus/xevent_common.h"

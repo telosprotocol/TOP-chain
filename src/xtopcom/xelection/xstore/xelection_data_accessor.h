@@ -7,14 +7,14 @@
 #include "xelection/xelection_data_accessor_face.h"
 #include "xdata/xelection/xelection_info_bundle.h"
 #include "xdata/xelection/xelection_result_store.h"
-#include "xstore/xstore_face.h"
+
 #include "xbasic/xlru_cache.h"
 NS_BEG3(top, election, store)
 using elect_result_t = std::map<common::xslot_id_t, data::election::xelection_info_bundle_t>;
 class xtop_election_data_accessor final : public xelection_data_accessor_face_t {
 
 public:
-    xtop_election_data_accessor(const observer_ptr<top::store::xstore_face_t>& store);
+    xtop_election_data_accessor();
 
 private:
 #if 0
@@ -36,7 +36,6 @@ private:
     std::string get_elec_blockchain_addr(std::string const& owner);
 
 private:
-	observer_ptr<top::store::xstore_face_t> 			    m_store;
 	basic::xlru_cache<common::xip2_t, elect_result_t>		m_cache;
 };
 using xelection_data_accessor_t = xtop_election_data_accessor;

@@ -25,7 +25,9 @@ class xstatectx_t : public xstatectx_face_t {
     xstatectx_t(base::xvblock_t* prev_block, const data::xtablestate_ptr_t & prev_table_state, const data::xtablestate_ptr_t & commit_table_state, const xstatectx_para_t & para);
  public:// APIs for vm & tx executor
     const data::xtablestate_ptr_t &     get_table_state() const override;
-    data::xunitstate_ptr_t              load_unit_state(const base::xvaccount_t & addr) override;    
+    data::xunitstate_ptr_t              load_unit_state(const base::xvaccount_t & addr) override;
+    data::xunitstate_ptr_t              load_commit_unit_state(const base::xvaccount_t & addr) override;
+    data::xunitstate_ptr_t              load_commit_unit_state(const base::xvaccount_t & addr, uint64_t height) override;
     bool                                do_rollback() override;
     size_t                              do_snapshot() override;
     const std::string &                 get_table_address() const override {return m_table_ctx->get_table_address();}

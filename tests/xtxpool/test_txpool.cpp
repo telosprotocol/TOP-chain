@@ -37,20 +37,11 @@ TEST_F(test_xtxpool, sub_unsub) {
     creator.create_blockstore_with_xstore();
     base::xvblockstore_t * blockstore = creator.get_blockstore();
     store::xstore_face_t * xstore = creator.get_xstore();
-    auto para = std::make_shared<xtxpool_resources>(make_observer(xstore), make_observer(blockstore), nullptr, nullptr);
+    auto para = std::make_shared<xtxpool_resources>(make_observer(blockstore), nullptr, nullptr);
     xtxpool_t xtxpool(para);
 
     pthread_t tid;
     pthread_create(&tid, NULL, sub_unsub_thread, &xtxpool);
-
-    for (uint32_t i = 0; i < 1000; i++) {
-        xtxpool.subscribe_tables(0, 0, 0, common::xnode_type_t::consensus_auditor);
-        xtxpool.need_sync_lacking_receipts(0, 0);
-        xtxpool.subscribe_tables(1, 0, 0, common::xnode_type_t::consensus_auditor);
-        xtxpool.need_sync_lacking_receipts(1, 0);
-        xtxpool.subscribe_tables(2, 0, 0, common::xnode_type_t::consensus_auditor);
-        xtxpool.need_sync_lacking_receipts(2, 0);
-    }
 
     pthread_join(tid, NULL);
 }

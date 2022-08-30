@@ -11,7 +11,7 @@
 #include "xdata/xcons_transaction.h"
 #include "xdata/xtable_bstate.h"
 #include "xmbus/xmessage_bus.h"
-#include "xstore/xstore_face.h"
+
 #include "xvledger/xvcertauth.h"
 #include "xvledger/xvpropertyprove.h"
 
@@ -258,7 +258,6 @@ public:
                                   std::vector<xcons_transaction_ptr_t> & receipts) = 0;
     virtual const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t & total_num) const = 0;
     virtual const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_confirm_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t & total_num) const = 0;
-    virtual bool need_sync_lacking_receipts(uint8_t zone, uint16_t subaddr) const = 0;
     virtual void print_statistic_values() const = 0;
     virtual void update_peer_receipt_id_state(const base::xvproperty_prove_ptr_t & property_prove_ptr, const base::xreceiptid_state_ptr_t & receiptid_state) = 0;
     virtual std::map<std::string, uint64_t> get_min_keep_heights() const = 0;
@@ -268,8 +267,7 @@ public:
 
 class xtxpool_instance {
 public:
-    static xobject_ptr_t<xtxpool_face_t> create_xtxpool_inst(const observer_ptr<store::xstore_face_t> & store,
-                                                             const observer_ptr<base::xvblockstore_t> & blockstore,
+    static xobject_ptr_t<xtxpool_face_t> create_xtxpool_inst(const observer_ptr<base::xvblockstore_t> & blockstore,
                                                              const observer_ptr<base::xvcertauth_t> & certauth,
                                                              const observer_ptr<mbus::xmessage_bus_face_t> & bus);
 };

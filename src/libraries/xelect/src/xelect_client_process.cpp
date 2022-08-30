@@ -17,10 +17,12 @@
 #include "xdata/xelection/xelection_result_store.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xmbus/xevent_store.h"
 #include "xmbus/xevent_timer.h"
 #include "xvledger/xvledger.h"
 #include "xvledger/xvstate.h"
+#include "xstatestore/xstatestore_face.h"
 
 #include <cinttypes>
 
@@ -73,85 +75,63 @@ void xelect_client_process::process_timer(const mbus::xevent_ptr_t & e) {
     m_xchain_timer->update_time(block->get_height(), time::xlogic_timer_update_strategy_t::discard_old_value);
 }
 
-uint64_t xelect_client_process::get_new_election_height(data::xunit_bstate_t const & unitstate, xobject_ptr_t<data::xblock_t> const & block) const {
-    common::xaccount_address_t const contract_address{ block->get_block_owner() };
+uint64_t xelect_client_process::get_new_election_height(data::xunitstate_ptr_t const& unitstate) const {
+    common::xaccount_address_t const contract_address{ unitstate->get_account() };
     if (contract_address == relay_make_block_contract_address) {
         std::string height_str;
-        unitstate.string_get(data::system_contract::XPROPERTY_RELAY_ELECT_PACK_HEIGHT, height_str);
+        unitstate->string_get(data::system_contract::XPROPERTY_RELAY_ELECT_PACK_HEIGHT, height_str);
         if (height_str.empty()) {
-            xerror("[zec election] zone elect finish for relay with empty pack height.block=%s", block->dump().c_str());
+            xerror("[zec election] zone elect finish for relay with empty pack height.block=%s", unitstate->get_bstate()->dump().c_str());
             return 0;
         }
         return static_cast<std::uint64_t>(std::stoull(height_str));
     } else {
-        return block->get_height();
+        return unitstate->get_block_height();
     }
 }
 
-void xelect_client_process::process_election_block(xobject_ptr_t<base::xvblock_t> const& election_data_block, common::xlogic_time_t const current_time) {
-    if (election_data_block == nullptr) {
-        xwarn("xelect_client_process::process_election_block election block is null");
-        return;
-    }
-
-    auto const block = dynamic_xobject_ptr_cast<data::xblock_t>(election_data_block);
-    if (block == nullptr) {
-        xwarn("xelect_client_process::process_election_block election block is null");
-        return;
-    }
-
-    common::xaccount_address_t const contract_address{ block->get_block_owner() };
+void xelect_client_process::process_election_block(data::xunitstate_ptr_t const& unitstate, common::xlogic_time_t const current_time) {
+    common::xaccount_address_t const contract_address{ unitstate->get_account() };
     auto const it = m_election_status.find(contract_address);
     if (it == std::end(m_election_status)) {
-        xwarn("xelect_client_process::process_election_block not found in m_election_status,block:%s", block->dump().c_str());
+        xwarn("xelect_client_process::process_election_block not found in m_election_status,block:%s", unitstate->get_bstate()->dump().c_str());
         return;
     }
 
     assert(current_time > m_election_status[contract_address].last_update_time);
 
     auto const local_height = top::get<xinternal_election_status_t>(*it).height;
-    if (local_height >= block->get_height()) {
-        xwarn("xelect_client_process::process_election_block block height is lower,local_height:%llu,block:%s", local_height, block->dump().c_str());
+    if (local_height >= unitstate->get_block_height()) {
+        xwarn("xelect_client_process::process_election_block block height is lower,local_height:%llu,block:%s", local_height, unitstate->get_bstate()->dump().c_str());
         return;
     }
 
-    // only process light unit, others are filtered
-    xassert(block->get_block_class() == base::enum_xvblock_class_light ||
-            (block->get_block_class() == base::enum_xvblock_class_full &&
-             base::xvblock_fork_t::is_block_match_version(block->get_block_version(), base::enum_xvblock_fork_version_unit_opt)));
-    xinfo("xelect_client_process::process_elect %s, %" PRIu64, contract_address.c_str(), block->get_height());
-    // TODO(jimmy) db event must stable and order
-    base::xauto_ptr<base::xvbstate_t> const bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(block.get(), metrics::statestore_access_from_xelect);
-    if (nullptr == bstate) {
-        xerror("xelect_client_process::process_elect get target state fail.block=%s", block->dump().c_str());
-        return;
-    }
-    data::xunit_bstate_t const unitstate(bstate.get());
+    xinfo("xelect_client_process::process_elect %s, %" PRIu64, contract_address.c_str(), unitstate->get_block_height());
 
-    uint64_t new_election_height = get_new_election_height(unitstate, block);
+    uint64_t new_election_height = get_new_election_height(unitstate);
     if (local_height >= new_election_height) {
-        xwarn("xelect_client_process::process_election_block block height is lower,local_height:%llu,new height:%llu,block:%s", local_height, new_election_height, block->dump().c_str());
+        xwarn("xelect_client_process::process_election_block block height is lower,local_height:%llu,new height:%llu,block:%s", local_height, new_election_height, unitstate->get_bstate()->dump().c_str());
         return;
     }
 
     auto const & property_names = data::election::get_property_name_by_addr(contract_address);
     for (auto const & property : property_names) {
         std::string result;
-        unitstate.string_get(property, result);
+        unitstate->string_get(property, result);
         if (result.empty()) {
-            xerror("[zec election] zone elect finish with empty result. property=%s,block=%s", property.c_str(), block->dump().c_str());
+            xerror("[zec election] zone elect finish with empty result. property=%s,block=%s", property.c_str(), unitstate->get_bstate()->dump().c_str());
             continue;
         }
-        xdbg("xelect_client_process::process_elect %s, %" PRIu64 " done", contract_address.c_str(), block->get_height());
+        xdbg("xelect_client_process::process_elect %s, %" PRIu64 " done", contract_address.c_str(), unitstate->get_block_height());
         using top::data::election::xelection_result_store_t;
         auto const& election_result_store = codec::msgpack_decode<xelection_result_store_t>({ std::begin(result), std::end(result) });
         if (election_result_store.empty()) {
             if (!(contract_address == common::xaccount_address_t{sys_contract_rec_elect_archive_addr} &&
                   property == data::election::get_property_by_group_id(common::xlegacy_exchange_group_id))) {
-                if (block->get_height() != 0) {
-                    xerror("xelect_client_process::process_elect decode property empty, block=%s", block->dump().c_str());
+                if (unitstate->get_block_height() != 0) {
+                    xerror("xelect_client_process::process_elect decode property empty, block=%s", unitstate->get_bstate()->dump().c_str());
                 } else {
-                    xwarn("xelect_client_process::process_elect decode property empty, block=%s", block->dump().c_str());
+                    xwarn("xelect_client_process::process_elect decode property empty, block=%s", unitstate->get_bstate()->dump().c_str());
                 }
                 return;
             }
@@ -201,7 +181,14 @@ void xelect_client_process::process_election_contract(common::xaccount_address_t
                                                       common::xlogic_time_t const update_interval) {
     if (current_time > m_election_status[contract_address].last_update_time &&
         current_time - m_election_status[contract_address].last_update_time >= update_interval) {
-        process_election_block(data::xblocktool_t::get_latest_connectted_state_changed_block(base::xvchain_t::instance().get_xblockstore(), base::xvaccount_t{ contract_address.value() }), current_time);
+        
+        data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_change_state(contract_address);
+        if (nullptr == unitstate) {
+            xerror("xelect_client_process::process_election_contract fail-load state.%s", contract_address.value().c_str());
+            return;
+        }
+
+        process_election_block(unitstate, current_time);
     }
 }
 

@@ -7,7 +7,6 @@
 #include "xblockstore/xblockstore_face.h"
 #include "xcertauth/xcertauth_face.h"
 #include "xdata/xblocktool.h"
-#include "xstore/xstore.h"
 #include "xblockmaker/xproposal_maker_mgr.h"
 #include "xtxpool_v2/xtxpool_face.h"
 #include "xunit_service/xcons_service_mgr.h"
@@ -104,7 +103,6 @@ const std::string xschnorrcert_t::merge_muti_sign(const std::map<xvip2_t, std::s
 }
 #if 0
 xunit_service::xcons_service_mgr_ptr xcons_mgr_builder::build(std::string const & node_account,
-                                                              observer_ptr<store::xstore_face_t> const & store,
                                                               observer_ptr<base::xvblockstore_t> const & blockstore,
                                                               observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
                                                               observer_ptr<time::xchain_time_face_t> const & tx_timer,
@@ -129,7 +127,7 @@ xunit_service::xcons_service_mgr_ptr xcons_mgr_builder::build(std::string const 
                                                      base::enum_xconsensus_threshold_2_of_3);
     auto p_srv_para = std::make_shared<xunit_service::xcons_service_para>(p_res, p_para);
 
-    auto block_maker = blockmaker::xblockmaker_factory::create_table_proposal(store, make_observer(blockstore.get()), txpool, mbus);
+    auto block_maker = blockmaker::xblockmaker_factory::create_table_proposal(make_observer(blockstore.get()), txpool, mbus);
     p_para->add_block_maker(xunit_service::e_table, block_maker);
     p_para->add_block_maker(xunit_service::e_timer, std::make_shared<xunit_service::xtimer_block_maker_t>(p_srv_para));
     return std::make_shared<xunit_service::xcons_service_mgr>(mbus, network, std::make_shared<xdispatcher_builder>(), p_srv_para);

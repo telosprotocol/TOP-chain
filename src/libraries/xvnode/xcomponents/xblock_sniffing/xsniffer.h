@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "xstore/xstore_face.h"
+
 #include "xsystem_contract_runtime/xsystem_contract_manager.h"
 #include "xvledger/xvcnode.h"
 #include "xvnode/xcomponents/xblock_sniffing/xsniffer_config.h"
@@ -31,7 +31,6 @@ public:
     using xrole_config_t = xtop_role_config;
 
 private:
-    observer_ptr<store::xstore_face_t> m_store;
     observer_ptr<base::xvnodesrv_t> m_nodesvr;
     observer_ptr<contract_runtime::system::xsystem_contract_manager_t> m_system_contract_manager;
     observer_ptr<xvnode_face_t> m_vnode;
@@ -45,8 +44,7 @@ public:
     xtop_sniffer & operator=(xtop_sniffer &&) = default;
     ~xtop_sniffer() = default;
 
-    xtop_sniffer(observer_ptr<store::xstore_face_t> const & store,
-                 observer_ptr<base::xvnodesrv_t> const & nodesrv,
+    xtop_sniffer(observer_ptr<base::xvnodesrv_t> const & nodesrv,
                  observer_ptr<contract_runtime::system::xsystem_contract_manager_t> const & manager,
                  observer_ptr<xvnode_face_t> const & vnode);
 

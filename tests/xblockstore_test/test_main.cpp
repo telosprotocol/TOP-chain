@@ -24,6 +24,7 @@ private:
 public:
     virtual const std::string hash(const std::string & input,enum_xhash_type type) override
     {
+        // cout << "xhashtest_t::hash" << endl;
         auto hash = top::utl::xsha2_256_t::digest(input);
         return std::string(reinterpret_cast<char*>(hash.data()), hash.size());
     }

@@ -7,7 +7,6 @@
 #include <memory>
 #include <vector>
 #include <mutex>
-#include "xstore/xstore_face.h"
 #include "xchain_timer/xchain_timer_face.h"
 #include "xmbus/xbase_sync_event_monitor.hpp"
 #include "xsync/xsync_handler.h"

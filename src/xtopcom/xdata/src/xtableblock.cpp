@@ -118,13 +118,19 @@ void xtable_block_t::parse_to_json_v2(xJson::Value & root) {
         }
     }
 
-    auto headers = get_sub_block_headers();
-    for (auto _unit_header : headers) {
-        xJson::Value ju;
-        ju["unit_height"] = static_cast<xJson::UInt64>(_unit_header->get_height());
-        ju["account"] = _unit_header->get_account();
-        jv["units"].append(ju);
+    if (base::xvblock_fork_t::is_block_older_version(get_block_version(), base::enum_xvblock_fork_version_5_0_0)) {
+        auto headers = get_sub_block_headers();
+        for (auto _unit_header : headers) {
+            xJson::Value ju;
+            ju["unit_height"] = static_cast<xJson::UInt64>(_unit_header->get_height());
+            ju["account"] = _unit_header->get_account();
+            jv["units"].append(ju);
+        }
+    } else {
+        // TODO(jimmy) get subblocks index
+        
     }
+
     root["tableblock"] = jv;
 }
 

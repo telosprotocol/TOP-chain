@@ -14,7 +14,6 @@
 #include "xverifier/xverifier_utl.h"
 
 using namespace top::xtxpool_v2;
-using namespace top::store;
 using namespace top::data;
 using namespace top;
 using namespace top::base;

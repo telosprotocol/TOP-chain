@@ -23,7 +23,7 @@
 #include "xgenesis/xgenesis_manager.h"
 #include "xmbus/xmessage_bus.h"
 #include "xrouter/xrouter_face.h"
-#include "xstore/xstore_face.h"
+#include "xdbstore/xstore_face.h"
 #include "xsync/xsync_object.h"
 #include "xtxpool_v2/xtxpool_face.h"
 #include "xtxstore/xtxstore_face.h"

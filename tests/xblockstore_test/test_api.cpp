@@ -1,6 +1,5 @@
 #include "gtest/gtest.h"
 #include "xdata/xblocktool.h"
-#include "xstore/xstore.h"
 #include "xblockstore/xblockstore_face.h"
 #include "tests/mock/xdatamock_address.hpp"
 #include "tests/mock/xcertauth_util.hpp"

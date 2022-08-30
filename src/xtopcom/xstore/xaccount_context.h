@@ -17,8 +17,9 @@
 #include "xdata/xaction_parse.h"
 #include "xdata/xproperty.h"
 #include "xdata/xlightunit.h"
-#include "xstore/xstore.h"
+#include "xdata/xunit_bstate.h"
 #include "xevm_common/common.h"
+#include "xstatectx/xstatectx_face.h"
 
 namespace top { namespace store {
 
@@ -32,13 +33,12 @@ const uint64_t EXP_BASE = 104 * 1e4;
 
 class xaccount_context_t {
  public:
-    xaccount_context_t(const data::xaccount_ptr_t & unitstate, const xobject_ptr_t<base::xvcanvas_t> & canvas);
-    xaccount_context_t(const data::xaccount_ptr_t & unitstate);
-    xaccount_context_t(const data::xaccount_ptr_t & unitstate, xstore_face_t* store);
+    xaccount_context_t(const data::xunitstate_ptr_t & unitstate, const statectx::xstatectx_face_ptr_t & statectx);
+    xaccount_context_t(const data::xunitstate_ptr_t & unitstate);
 
     virtual ~xaccount_context_t();
 
-    const data::xaccount_ptr_t & get_blockchain() const {
+    const data::xunitstate_ptr_t & get_blockchain() const {
         return m_account;
     }
     std::string const & get_address() const noexcept {return m_account->get_account();}
@@ -184,14 +184,14 @@ class xaccount_context_t {
     uint32_t m_cur_used_deposit{0};
 
  private:
-    xstore_face_t*      m_store;
-    data::xaccount_ptr_t m_account{nullptr};
+    data::xunitstate_ptr_t m_account{nullptr};
     uint64_t            m_latest_exec_sendtx_nonce{0};  // for exec tx
     uint256_t           m_latest_exec_sendtx_hash;
     uint64_t            m_latest_create_sendtx_nonce{0};  // for contract create tx
     uint256_t           m_latest_create_sendtx_hash;
 
     xobject_ptr_t<base::xvcanvas_t>     m_canvas{nullptr};
+    statectx::xstatectx_face_ptr_t     m_statectx{nullptr};
     data::xcons_transaction_ptr_t m_currect_transaction{nullptr};
     std::vector<data::xcons_transaction_ptr_t> m_contract_txs;
 

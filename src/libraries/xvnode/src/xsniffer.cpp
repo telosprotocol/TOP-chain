@@ -14,16 +14,15 @@
 #include "xvm/manager/xcontract_address_map.h"
 #include "xvnode/xcomponents/xblock_process/xfulltableblock_process.h"
 #include "xvnode/xcomponents/xblock_sniffing/xsniffer_action.h"
-
+#include "xstatestore/xstatestore_face.h"
 #include <cinttypes>
 
 NS_BEG4(top, vnode, components, sniffing)
 
-xtop_sniffer::xtop_sniffer(observer_ptr<store::xstore_face_t> const & store,
-                           observer_ptr<base::xvnodesrv_t> const & nodesrv,
+xtop_sniffer::xtop_sniffer(observer_ptr<base::xvnodesrv_t> const & nodesrv,
                            observer_ptr<contract_runtime::system::xsystem_contract_manager_t> const & manager,
                            observer_ptr<xvnode_face_t> const & vnode)
-  : m_store(store), m_nodesvr(nodesrv), m_system_contract_manager(manager), m_vnode(vnode) {
+  : m_nodesvr(nodesrv), m_system_contract_manager(manager), m_vnode(vnode) {
     sniff_set();
 }
 
@@ -220,7 +219,7 @@ bool xtop_sniffer::is_valid_timer_call(common::xaccount_address_t const & addres
                                                                        common::xaccount_address_t{sys_contract_zec_elect_consensus_addr}};
     bool is_first_block{false};
     if (std::find(std::begin(sys_addr_list), std::end(sys_addr_list), address) != std::end(sys_addr_list)) {
-        if (m_store->query_account(address.value())->get_chain_height() == 0) {
+        if (statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(address)->get_chain_height() == 0) {
             is_first_block = true;
         }
     }
@@ -259,7 +258,7 @@ bool xtop_sniffer::trigger_first_timer_call(common::xaccount_address_t const & a
         return false;
     }
 
-    auto const account = m_store->query_account(address.value());
+    auto const account = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(address);
     xdbg("xtop_vnode_sniff::trigger_first_timer_call: monitored address %s height %" PRIu64, address.c_str(), account->get_chain_height());
     return 0 == account->get_chain_height();
 }
@@ -297,7 +296,7 @@ void xtop_sniffer::normal_timer_func(common::xaccount_address_t const& contract_
 }
 
 void xtop_sniffer::call(common::xaccount_address_t const & address, std::string const & action_name, std::string const & action_params, const uint64_t timestamp) const {
-    data::xaccount_ptr_t account = m_store->query_account(address.value());
+    data::xunitstate_ptr_t account = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(address);
     assert(account != nullptr);
 
     auto tx = data::xtx_factory::create_v2_run_contract_tx(address,
@@ -331,7 +330,7 @@ void xtop_sniffer::call(common::xaccount_address_t const & source_address,
                             std::string const & action_name,
                             std::string const & action_params,
                             uint64_t timestamp) const {
-    data::xaccount_ptr_t account = m_store->query_account(source_address.value());
+    data::xunitstate_ptr_t account = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(source_address);
     assert(account != nullptr);
 
     auto tx = data::xtx_factory::create_v2_run_contract_tx(source_address,

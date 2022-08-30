@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "xstore/xstore_face.h"
+
 #include "xsyncbase/xsync_face.h"
 #include "xgrpcservice/xgrpc_service.h"
 #include "xrpc/xgetblock/get_block.h"

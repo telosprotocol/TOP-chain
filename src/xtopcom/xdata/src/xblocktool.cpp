@@ -17,6 +17,9 @@
 #include "xvledger/xvledger.h"
 #include "xvledger/xvblockbuild.h"
 #include "xmbus/xevent_behind.h"
+#include "xstatestore/xstatestore_face.h"
+#include "xconfig/xconfig_register.h"
+#include "xconfig/xpredefined_configurations.h"
 
 NS_BEG2(top, data)
 
@@ -286,61 +289,6 @@ std::vector<std::string> xblocktool_t::make_all_table_addresses() {
         }
     }
     return table_addrs;
-}
-
-base::xauto_ptr<base::xvblock_t> xblocktool_t::get_latest_connectted_state_changed_block(base::xvblockstore_t* blockstore, const base::xvaccount_t & account) {
-    base::xauto_ptr<base::xvblock_t> vblock = blockstore->get_latest_connected_block(account);
-    if (vblock->get_block_class() == base::enum_xvblock_class_light) {
-        return vblock;
-    }
-    if (vblock->get_block_class() == base::enum_xvblock_class_full &&
-        base::xvblock_fork_t::is_block_match_version(vblock->get_block_version(), base::enum_xvblock_fork_version_unit_opt)) {
-        return vblock;
-    }
-    uint64_t current_height = vblock->get_height();
-    while (current_height > 0) {
-        base::xauto_ptr<base::xvblock_t> prev_vblock = blockstore->load_block_object(account, current_height - 1, base::enum_xvblock_flag_committed, false);
-        if (prev_vblock == nullptr || prev_vblock->get_block_class() == base::enum_xvblock_class_light) {
-            return prev_vblock;
-        }
-        if (prev_vblock->get_block_class() == base::enum_xvblock_class_full &&
-            base::xvblock_fork_t::is_block_match_version(prev_vblock->get_block_version(), base::enum_xvblock_fork_version_unit_opt)) {
-            return prev_vblock;
-        }
-        current_height = prev_vblock->get_height();
-    }
-    return nullptr;
-}
-
-base::xauto_ptr<base::xvblock_t> xblocktool_t::get_committed_state_changed_block(base::xvblockstore_t* blockstore, const std::string & account, uint64_t max_height) {
-    base::xvaccount_t _vaccount(account);
-    // there is mostly two empty units
-    XMETRICS_GAUGE(metrics::blockstore_access_from_application, 1);
-    base::xauto_ptr<base::xvblock_t> vblock = blockstore->load_block_object(_vaccount, max_height, base::enum_xvblock_flag_committed, false);
-    xassert(vblock->check_block_flag(base::enum_xvblock_flag_committed));
-    if (vblock->get_block_class() == base::enum_xvblock_class_light) {
-        return vblock;
-    }
-    if (vblock->get_block_class() == base::enum_xvblock_class_full &&
-        base::xvblock_fork_t::is_block_match_version(vblock->get_block_version(), base::enum_xvblock_fork_version_unit_opt)) {
-        return vblock;
-    }
-
-    uint64_t current_height = vblock->get_height();
-    while (current_height > 0) {
-        XMETRICS_GAUGE(metrics::blockstore_access_from_application, 1);
-        base::xauto_ptr<base::xvblock_t> prev_vblock = blockstore->load_block_object(_vaccount, current_height - 1, base::enum_xvblock_flag_committed, false);
-        if (prev_vblock == nullptr || prev_vblock->get_block_class() == base::enum_xvblock_class_light) {
-            return prev_vblock;
-        }
-        if (prev_vblock->get_block_class() == base::enum_xvblock_class_full &&
-            base::xvblock_fork_t::is_block_match_version(prev_vblock->get_block_version(), base::enum_xvblock_fork_version_unit_opt)) {
-            return prev_vblock;
-        }
-
-        current_height = prev_vblock->get_height();
-    }
-    return nullptr;
 }
 
 bool xblocktool_t::verify_latest_blocks(const base::xblock_mptrs & latest_blocks) {
@@ -659,79 +607,6 @@ base::xreceiptid_state_ptr_t xblocktool_t::get_receiptid_from_property_prove(con
 
     base::xreceiptid_state_ptr_t receiptid = xtable_bstate_t::make_receiptid_from_state(_temp_bstate.get());
     return receiptid;
-}
-
-bool xblocktool_t::get_receiptid_state_and_prove(base::xvblockstore_t * blockstore,
-                                                 const base::xvaccount_t & account,
-                                                 base::xvblock_t * latest_commit_block,
-                                                 base::xvproperty_prove_ptr_t & property_prove_ptr,
-                                                 xtablestate_ptr_t & tablestate_ptr) {
-    base::enum_xvblock_class block_class = latest_commit_block->get_block_class();
-    uint32_t nil_block_num = 0;
-    xvblock_ptr_t non_nil_commit_block = nullptr;
-    uint64_t height = latest_commit_block->get_height();
-    if (block_class != base::enum_xvblock_class_nil) {
-        base::xvblock_t * _block = latest_commit_block;
-        _block->add_ref();
-        non_nil_commit_block.attach(_block);
-    } else {
-        while (block_class == base::enum_xvblock_class_nil && height > 0) {
-            nil_block_num++;
-            if (nil_block_num > 2) {
-                xerror("xblocktool_t::get_receiptid_state_and_prove, continuous nil table block number is more than 2,table:%s,height:%llu", account.get_address().c_str(), height);
-                return false;
-            }
-
-            auto commit_block =
-                blockstore->load_block_object(account, height - 1, base::enum_xvblock_flag_committed, false, metrics::blockstore_access_from_txpool_id_state);
-            if (commit_block == nullptr) {
-                xwarn("xblocktool_t::get_receiptid_state_and_prove load block fail,table:%s,height:%llu", account.get_address().c_str(), height - 1);
-                return false;
-            }
-            height = commit_block->get_height();
-
-            block_class = commit_block->get_block_class();
-            if (block_class != base::enum_xvblock_class_nil) {
-                base::xvblock_t * _block = commit_block.get();
-                _block->add_ref();
-                non_nil_commit_block.attach(_block);
-                break;
-            }
-        }
-    }
-
-    if (non_nil_commit_block == nullptr) {
-        xinfo("xblocktool_t::get_receiptid_state_and_prove latest commit height is 0, no need send receipt id state.table:%s", account.get_address().c_str());
-        return false;
-    }
-
-    auto bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(non_nil_commit_block.get());
-    if (bstate == nullptr) {
-        xwarn("xblocktool_t::get_receiptid_state_and_prove table:%s,height:%llu,get bstate fail", account.get_address().c_str(), non_nil_commit_block->get_height());
-        return false;
-    }
-
-    auto cert_block = blockstore->load_block_object(account, non_nil_commit_block->get_height() + 2, 0, false, metrics::blockstore_access_from_txpool_id_state);
-    if (cert_block == nullptr) {
-        xinfo("xblocktool_t::get_receiptid_state_and_prove cert block load fail.table:%s, cert height:%llu", account.get_address().c_str(), non_nil_commit_block->get_height() + 2);
-        return false;
-    }
-
-    xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(bstate.get());
-    if (tablestate->get_receiptid_state()->get_all_receiptid_pairs()->get_all_pairs().empty()) {
-        xinfo("xblocktool_t::get_receiptid_state_and_prove table have no receipt id pairs.table:%s, commit height:%llu", account.get_address().c_str(), non_nil_commit_block->get_height());
-        return false;
-    }
-
-    auto property_prove = base::xpropertyprove_build_t::create_property_prove(non_nil_commit_block.get(), cert_block.get(), bstate.get(), XPROPERTY_TABLE_RECEIPTID);
-    if (property_prove == nullptr) {
-        xwarn("xblocktool_t::get_receiptid_state_and_prove create receipt state fail 2.table:%s, commit height:%llu", account.get_address().c_str(), non_nil_commit_block->get_height());
-        return false;
-    }
-    xassert(property_prove->is_valid());
-    property_prove_ptr = property_prove;
-    tablestate_ptr = tablestate;
-    return true;
 }
 
 bool xblocktool_t::check_lacking_unit_and_try_sync(const base::xvaccount_t & vaccount,

@@ -16,7 +16,7 @@
 #include "xdata/xblocktool.h"
 #include "xloader/xconfig_onchain_loader.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
-#include "xstore/xstore_face.h"
+#include "xdbstore/xstore_face.h"
 
 #include "xchain_upgrade/xchain_data_galileo.h"
 #include "tests/mock/xdatamock_unit.hpp"
@@ -68,7 +68,7 @@ public:
         top::base::xvchain_t::instance().set_xtxstore(txstore::create_txstore(make_observer<mbus::xmessage_bus_face_t>(mbus.get()), timer_driver));
         auto& config_center = top::config::xconfig_register_t::get_instance();
 
-        config::xconfig_loader_ptr_t loader = std::make_shared<loader::xconfig_onchain_loader_t>(make_observer(m_store), make_observer(mbus.get()), make_observer(chain_timer));
+        config::xconfig_loader_ptr_t loader = std::make_shared<loader::xconfig_onchain_loader_t>(make_observer(mbus.get()), make_observer(chain_timer));
         config_center.add_loader(loader);
         config_center.load();
 
@@ -114,7 +114,7 @@ public:
 TEST_F(test_zec_slash_contract_other, zec_setup_reset_data) {
     using namespace top::mock;
     xdatamock_unit  zec_account{sys_contract_zec_slash_info_addr};
-    m_zec_slash_account_ctx_ptr = make_shared<xaccount_context_t>(zec_account.get_account_state(), m_store.get());
+    m_zec_slash_account_ctx_ptr = make_shared<xaccount_context_t>(zec_account.get_account_state());
     m_zec_slash_account_ctx_ptr->map_create(data::system_contract::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY);
     m_zec_slash_account_ctx_ptr->map_create(data::system_contract::XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY);
 
@@ -136,7 +136,7 @@ TEST_F(test_zec_slash_contract_other, zec_slash_info_summarize) {
     using namespace top::mock;
     xdatamock_unit  zec_account{sys_contract_zec_slash_info_addr};
 
-    m_zec_slash_account_ctx_ptr = make_shared<xaccount_context_t>(zec_account.get_account_state(), m_store.get());
+    m_zec_slash_account_ctx_ptr = make_shared<xaccount_context_t>(zec_account.get_account_state());
     m_zec_slash_account_ctx_ptr->map_create(data::system_contract::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY);
     m_zec_slash_account_ctx_ptr->map_create(data::system_contract::XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY);
 
@@ -168,7 +168,7 @@ TEST_F(test_zec_slash_contract_other, zec_slash_do_slash) {
     using namespace top::mock;
     xdatamock_unit  zec_account{sys_contract_zec_slash_info_addr};
 
-    m_zec_slash_account_ctx_ptr = make_shared<xaccount_context_t>(zec_account.get_account_state(), m_store.get());
+    m_zec_slash_account_ctx_ptr = make_shared<xaccount_context_t>(zec_account.get_account_state());
     m_zec_slash_account_ctx_ptr->map_create(data::system_contract::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY);
     m_zec_slash_account_ctx_ptr->map_create(data::system_contract::XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY);
     m_zec_slash_account_ctx_ptr->map_create(data::system_contract::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY);

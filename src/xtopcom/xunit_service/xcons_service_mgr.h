@@ -25,7 +25,6 @@ public:
 };
 
 xcons_service_mgr_ptr xcons_mgr_build(std::string const & node_account,
-                                      observer_ptr<store::xstore_face_t> const & store,
                                       observer_ptr<base::xvblockstore_t> const & blockstore,
                                       observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
                                       observer_ptr<time::xchain_time_face_t> const & tx_timer,

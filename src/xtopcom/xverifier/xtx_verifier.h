@@ -8,7 +8,7 @@
 #include "xdata/xtransaction.h"
 #include "xconfig/xconfig_register.h"
 #include "xbasic/xmemory.hpp"
-#include "xstore/xstore_face.h"
+
 
 NS_BEG2(top, xverifier)
 
@@ -21,7 +21,7 @@ public:
      * @param store  the store object to get info
      * @return int32_t  see xverifier_errors definition
      */
-    static int32_t verify_tx_signature(data::xtransaction_t const * trx, observer_ptr<store::xstore_face_t> const & store);
+    static int32_t verify_tx_signature(data::xtransaction_t const * trx);
 
     /**
      * @brief verify address whether valid
@@ -96,7 +96,7 @@ public:
      * @param trx_ptr  the transaction to verify
      * @return int32_t  see xverifier_errors definition
      */
-    static int32_t verify_send_tx_legitimacy(data::xtransaction_t const * trx_ptr, observer_ptr<store::xstore_face_t> const & store);
+    static int32_t verify_send_tx_legitimacy(data::xtransaction_t const * trx_ptr);
 
  private:
     static int32_t verify_burn_tx(data::xtransaction_t const * trx);

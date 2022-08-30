@@ -4,10 +4,12 @@
 #include "xdb_util.h"
 #include "xgrpcservice/xgrpc_service.h"
 #include "xmbus/xmessage_bus.h"
-#include "xstore/xstore_face.h"
+#include "xdbstore/xstore_face.h"
 #include "xtxstore/xtxstore_face.h"
 #include "xvledger/xvcnode.h"
 #include "xvledger/xvtxindex.h"
+#include "xdata/xlightunit_info.h"
+#include "xdata/xblock.h"
 
 NS_BEG2(top, db_export)
 class xdb_export_tools_t {

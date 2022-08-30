@@ -21,7 +21,6 @@ NS_BEG2(top, vnode)
 
 xtop_vnode_manager::xtop_vnode_manager(observer_ptr<elect::ElectMain> const & elect_main,
                                        observer_ptr<mbus::xmessage_bus_face_t> const & mbus,
-                                       observer_ptr<store::xstore_face_t> const & store,
                                        observer_ptr<base::xvblockstore_t> const & block_store,
                                        observer_ptr<base::xvtxstore_t> const & txstore,
                                        observer_ptr<time::xchain_time_face_t> const & logic_timer,
@@ -39,7 +38,6 @@ xtop_vnode_manager::xtop_vnode_manager(observer_ptr<elect::ElectMain> const & el
                        vhost,
                        top::make_unique<xvnode_factory_t>(elect_main,
                                                           mbus,
-                                                          store,
                                                           block_store,
                                                           txstore,
                                                           logic_timer,
@@ -51,7 +49,7 @@ xtop_vnode_manager::xtop_vnode_manager(observer_ptr<elect::ElectMain> const & el
                                                           txpool,
                                                           election_cache_data_accessor,
                                                           nodesvr),
-                       top::make_unique<xvnode_role_proxy_t>(mbus, store, block_store, txstore, logic_timer, router, certauth, txpool, election_cache_data_accessor),
+                       top::make_unique<xvnode_role_proxy_t>(mbus, block_store, txstore, logic_timer, router, certauth, txpool, election_cache_data_accessor),
                        nullptr // top::make_unique<xvnode_sniff_proxy_t>(mbus)
 
     } {

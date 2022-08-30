@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "xgrpcservice/src/xrpc.grpc.pb.h"
-#include "xstore/xstore_face.h"
+
 #include "xsyncbase/xsync_face.h"
 #include "xrpc/xgetblock/get_block.h"
 
