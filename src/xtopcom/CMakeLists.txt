@@ -69,6 +69,7 @@ if (BUILD_EVM)
     # add_subdirectory(xevm_common)
 endif()
 add_subdirectory(xgasfee)
+add_subdirectory(xstate_mpt)
 add_subdirectory(xdbstore)
 add_subdirectory(xstatestore)
 
