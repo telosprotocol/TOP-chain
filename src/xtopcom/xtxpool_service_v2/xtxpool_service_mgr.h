@@ -24,8 +24,7 @@ class xtxpool_service_mgr
   : public xtxpool_service_mgr_face
   , public std::enable_shared_from_this<xtxpool_service_mgr> {
 public:
-    explicit xtxpool_service_mgr(const observer_ptr<store::xstore_face_t> & store,
-                                 const observer_ptr<base::xvblockstore_t> & blockstore,
+    explicit xtxpool_service_mgr(const observer_ptr<base::xvblockstore_t> & blockstore,
                                  const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool,
                                  const observer_ptr<base::xiothread_t> & iothread_timer,
                                  const observer_ptr<base::xiothread_t> & iothread_dispather,

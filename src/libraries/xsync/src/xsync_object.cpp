@@ -12,7 +12,6 @@
 NS_BEG2(top, sync)
 
 xtop_sync_object::xtop_sync_object(observer_ptr<mbus::xmessage_bus_face_t> const & bus,
-                                   observer_ptr<store::xstore_face_t> const & store,
                                    observer_ptr<vnetwork::xvhost_face_t> const & vhost,
                                    xobject_ptr_t<base::xvblockstore_t> &blockstore,
                                    xobject_ptr_t<base::xvnodesrv_t> &nodesvr_ptr,

@@ -11,9 +11,7 @@
 #include "xvm_native_func.h"
 #include "xstore/xaccount_context.h"
 NS_BEG2(top, xvm)
-using data::xtransaction_t;
 using store::xaccount_context_t;
-using store::xstore_face_t;
 using basic::xlru_cache;
 
 class xvm_service {

@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "xdata/xtransaction.h"
-#include "xstore/xstore_face.h"
+
 #include "xdata/xaction.h"
 #include "xbase/xmem.h"
 #include "xbase/xcontext.h"

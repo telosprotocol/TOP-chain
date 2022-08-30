@@ -15,7 +15,7 @@
 #include "xdata/xcons_transaction.h"
 #include "xdata/xtransaction.h"
 #include "xrouter/xrouter.h"
-#include "xstore/xstore_face.h"
+
 #include "xtxpool_service_v2/xrequest_tx_receiver_face.h"
 #include "xtxpool_v2/xtxpool_face.h"
 #include "xvnetwork/xvnetwork_driver_face.h"
@@ -89,8 +89,7 @@ public:
 
 class xtxpool_service_mgr_instance {
 public:
-    static std::shared_ptr<xtxpool_service_mgr_face> create_xtxpool_service_mgr_inst(const observer_ptr<store::xstore_face_t> & store,
-                                                                                     const observer_ptr<base::xvblockstore_t> & blockstore,
+    static std::shared_ptr<xtxpool_service_mgr_face> create_xtxpool_service_mgr_inst(const observer_ptr<base::xvblockstore_t> & blockstore,
                                                                                      const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool,
                                                                                      const std::vector<xobject_ptr_t<base::xiothread_t>> & iothreads,
                                                                                      const observer_ptr<mbus::xmessage_bus_face_t> & mbus,

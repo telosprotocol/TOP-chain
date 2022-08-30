@@ -16,12 +16,12 @@
 #include "xdata/xblocktool.h"
 #include "xloader/xconfig_onchain_loader.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
-#include "xstore/xstore_face.h"
+
 
 #include "xchain_upgrade/xchain_data_galileo.h"
 #include "tests/mock/xdatamock_unit.hpp"
 #include "nlohmann/json.hpp"
-
+#include "xdbstore/xstore_face.h"
 #define private public
 #include "tests/xelection/xmocked_vnode_service.h"
 #include "xvm/xsystem_contracts/xslash/xtable_statistic_info_collection_contract.h"
@@ -70,13 +70,13 @@ public:
         top::base::xvchain_t::instance().set_xtxstore(txstore::create_txstore(make_observer<mbus::xmessage_bus_face_t>(mbus.get()), timer_driver));
         auto chain_timer = top::make_object_ptr<time::xchain_timer_t>(timer_driver);
         auto& config_center = top::config::xconfig_register_t::get_instance();
-        std::unique_ptr<genesis::xgenesis_manager_t> m_genesis_manager = make_unique<genesis::xgenesis_manager_t>(top::make_observer(m_blockstore.get()), make_observer(m_store));
+        std::unique_ptr<genesis::xgenesis_manager_t> m_genesis_manager = make_unique<genesis::xgenesis_manager_t>(top::make_observer(m_blockstore.get()));
         contract::xcontract_deploy_t::instance().deploy_sys_contracts();
         contract::xcontract_manager_t::instance().instantiate_sys_contracts();
         contract::xcontract_manager_t::instance().register_address();
         std::error_code ec;
         m_genesis_manager->init_genesis_block(ec);
-        config::xconfig_loader_ptr_t loader = std::make_shared<loader::xconfig_onchain_loader_t>(make_observer(m_store), make_observer(mbus.get()), make_observer(chain_timer));
+        config::xconfig_loader_ptr_t loader = std::make_shared<loader::xconfig_onchain_loader_t>(make_observer(mbus.get()), make_observer(chain_timer));
         config_center.add_loader(loader);
         config_center.load();
     }
@@ -290,7 +290,7 @@ TEST_F(test_table_slash_contract_other, update_slash_statistic_info) {
     using namespace top::mock;
     xdatamock_unit  table_account{shard_table_slash_addr};
 
-    m_table_slash_account_ctx_ptr = make_shared<xaccount_context_t>(table_account.get_account_state(), m_store.get());
+    m_table_slash_account_ctx_ptr = make_shared<xaccount_context_t>(table_account.get_account_state());
     m_table_slash_account_ctx_ptr->map_create(data::system_contract::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY);
     m_table_slash_account_ctx_ptr->map_create(data::system_contract::XPROPERTY_CONTRACT_TABLEBLOCK_NUM_KEY);
     m_table_slash_account_ctx_ptr->map_create(data::system_contract::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY);

@@ -1,12 +1,12 @@
 #pragma once
 
 #include "xdb_util.h"
-#include "xstore/xstore_face.h"
+
 #include "xtxstore/xtxstore_face.h"
 #include "xdb/xdb.h"
 #include "xdb/xdb_factory.h"
 #include "xdb/xdb_face.h"
-#include "xstore/xstore.h"
+#include "xdbstore/xstore_face.h"
 #include "xblockstore/src/xvblockdb.h"
 
 NS_BEG2(top, db_read)

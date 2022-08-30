@@ -11,7 +11,7 @@
 #include "xcommon/xaddress.h"
 #include "xmbus/xbase_sync_event_monitor.hpp"
 #include "xmbus/xevent_vnode.h"
-#include "xstore/xstore_face.h"
+
 #include "xvledger/xvaccount.h"
 #include "xvledger/xvcnode.h"
 #include "xvm/manager/xcontract_register.h"
@@ -54,8 +54,7 @@ public:
      *
      */
     void instantiate_sys_contracts();
-    void init(observer_ptr<store::xstore_face_t> const & store,
-              xobject_ptr_t<store::xsyncvstore_t> const & syncstore);
+    void init(xobject_ptr_t<store::xsyncvstore_t> const & syncstore);
 
     /**
      * @brief register_address
@@ -72,7 +71,6 @@ public:
      */
     void install_monitors(observer_ptr<xmessage_bus_face_t> const &               bus,
                           observer_ptr<vnetwork::xmessage_callback_hub_t> const & msg_callback_hub,
-                          observer_ptr<store::xstore_face_t> const &                     store,
                           xobject_ptr_t<store::xsyncvstore_t> const&              syncstore);
 
     /**
@@ -158,14 +156,14 @@ public:
                            bool compatible_mode,
                            xJson::Value & json) const;
     void get_contract_data(common::xaccount_address_t const & contract_address,
-                           const xaccount_ptr_t unitstate,
+                           const data::xunitstate_ptr_t unitstate,
                            std::string const & property_name,
                            xjson_format_t const json_format,
                            bool compatible_mode,
                            xJson::Value & json) const;
     void get_contract_data(common::xaccount_address_t const & contract_address, std::string const & property_name, std::string const & key, xjson_format_t const json_format, xJson::Value & json) const;
 
-    void get_election_data(common::xaccount_address_t const & contract_address, const xaccount_ptr_t unitstate, std::string const & property_name, std::vector<std::pair<xpublic_key_t, uint64_t>> & election_data) const;
+    void get_election_data(common::xaccount_address_t const & contract_address, const data::xunitstate_ptr_t unitstate, std::string const & property_name, std::vector<std::pair<xpublic_key_t, uint64_t>> & election_data) const;
 private:
     /**
      * @brief filter the event
@@ -233,7 +231,6 @@ private:
 
     std::unordered_map<common::xaccount_address_t, xrole_map_t *>    m_map;
     xcontract_register_t                                             m_contract_register;
-    observer_ptr<xstore_face_t>                                      m_store{};
     observer_ptr<store::xsyncvstore_t>                               m_syncstore{};
     std::unordered_map<common::xaccount_address_t, xcontract_base *> m_contract_inst_map;
     base::xrwlock_t                                                  m_rwlock;

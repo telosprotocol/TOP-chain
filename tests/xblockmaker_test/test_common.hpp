@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 #include "xvledger/xvcertauth.h"
 #include "xvledger/xvledger.h"
-#include "xstore/xstore_face.h"
+
 // #include "xstore/test/test_datamock.hpp"
 #include "xstore/xaccount_context.h"
 #include "xblockstore/xblockstore_face.h"
@@ -116,7 +116,7 @@ class test_xblockmaker_resources_t : public xblockmaker_resources_t {
     test_xblockmaker_resources_t() {
         m_ca = make_object_ptr<test_xmock_auth_t>();
         m_bus = make_object_ptr<mbus::xmessage_bus_t>(true, 1000);
-        m_txpool = xtxpool_instance::create_xtxpool_inst(make_observer(m_creator.get_xstore()), make_observer(get_blockstore()), make_observer(m_ca.get()), make_observer(m_bus.get()));
+        m_txpool = xtxpool_instance::create_xtxpool_inst(make_observer(get_blockstore()), make_observer(m_ca.get()), make_observer(m_bus.get()));
     }
 
     virtual base::xvblockstore_t*       get_blockstore() const {return m_creator.get_blockstore();}

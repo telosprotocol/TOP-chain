@@ -38,7 +38,6 @@ uint64_t xdb_tool::get_blockheight(std::string const& tableblock_addr) const {
         std::cout << "[xdb_tool::get_blockheight] current db_path: " << db_path_ << "\n";
         std::cout << "[xdb_tool::get_blockheight] tableblock address: " << tableblock_addr << "\n";
     #endif
-    // auto height = store_->get_blockchain_height(tableblock_addr);
     auto block = blockstore_->get_latest_committed_block(tableblock_addr);
     auto height = block->get_height();
     std::cout << height << "\n";

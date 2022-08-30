@@ -10,7 +10,6 @@
 #include <map>
 #include <mutex>
 #include "xbase/xint.h"
-#include "xstore/xstore_face.h"
 #include "xdata/xtransaction.h"
 #include "json/json.h"
 

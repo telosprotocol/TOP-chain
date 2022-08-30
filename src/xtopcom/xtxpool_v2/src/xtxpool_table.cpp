@@ -21,6 +21,7 @@
 #include "xvledger/xvcontract.h"
 #include "xvledger/xvledger.h"
 #include "xbase/xutl.h"
+#include "xstatestore/xstatestore_face.h"
 
 namespace top {
 namespace xtxpool_v2 {
@@ -407,12 +408,10 @@ void xtxpool_table_t::refresh_table(bool refresh_state_only) {
 
     uint64_t old_state_height = m_table_state_cache.get_state_height();
     if (old_state_height < latest_committed_block()->get_height()) {
-        base::xauto_ptr<base::xvbstate_t> bstate =
-            base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_committed_block.get(), metrics::statestore_access_from_txpool_refreshtable);
-        if (bstate == nullptr) {
+        data::xtablestate_ptr_t tablestate = statestore::xstatestore_hub_t::instance()->get_table_state_by_block(latest_committed_block.get());
+        if (tablestate == nullptr) {
             xtxpool_warn("xtxpool_table_t::refresh_table fail-get bstate.table=%s,block=%s", m_xtable_info.get_table_addr().c_str(), latest_committed_block->dump().c_str());
         } else {
-            xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(bstate.get());
             update_table_state(tablestate);
         }
     }
@@ -502,7 +501,6 @@ void xtxpool_table_t::refresh_table(bool refresh_state_only) {
 // }
 
 void xtxpool_table_t::update_table_state(const data::xtablestate_ptr_t & table_state) {
-    m_table_state_cache.update(table_state);
     std::lock_guard<std::mutex> lck(m_mgr_mutex);
     m_xtable_info.set_unconfirm_tx_count((int32_t)table_state->get_receiptid_state()->get_unconfirm_tx_num());
 }
@@ -520,31 +518,6 @@ void xtxpool_table_t::remove_role(xtxpool_role_info_t * role) {
 bool xtxpool_table_t::no_role() const {
     std::lock_guard<std::mutex> lck(m_mgr_mutex);
     return m_xtable_info.no_role();
-}
-
-bool xtxpool_table_t::need_sync_lacking_receipts() const {
-    auto cur_height = m_para->get_vblockstore()->get_latest_committed_block_height(m_xtable_info, metrics::blockstore_access_from_txpool_pull_lacking_receipts);
-    auto id_state_cache_height = m_para->get_receiptid_state_cache().get_height(m_xtable_info.get_short_table_id());
-    xtxpool_dbg("xtxpool_table_t::need_sync_lacking_receipts table:%s,cur height:%llu,bc height:%llu", m_xtable_info.get_account().c_str(), cur_height, id_state_cache_height);
-    if (cur_height + table_fail_behind_height_diff_max < id_state_cache_height) {
-        xtxpool_warn("xtxpool_table_t::need_sync_lacking_receipts table:%s fail behind,cur height:%llu,bc height:%llu",
-                     m_xtable_info.get_account().c_str(),
-                     cur_height,
-                     id_state_cache_height);
-        return false;
-    }
-
-    uint64_t now = xverifier::xtx_utl::get_gmttime_s();
-    if (m_table_state_cache.last_update_time() + state_update_too_long_time < now) {
-        xtxpool_warn(
-            "xtxpool_table_t::need_sync_lacking_receipts too long time not update receipt state, not sync lacking receipts. table:%s,update time:%llu,now:%llu,threshold:%d",
-            m_xtable_info.get_table_addr().c_str(),
-            m_table_state_cache.last_update_time(),
-            now,
-            state_update_too_long_time);
-        return false;
-    }
-    return true;
 }
 
 const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxpool_table_t::get_lacking_recv_tx_ids(uint32_t & total_num) const {
@@ -571,7 +544,7 @@ int32_t xtxpool_table_t::verify_send_tx(const xcons_transaction_ptr_t & tx, bool
         return ret;
     }
     // 2. legal check, include hash/signature check and white/black check
-    ret = xverifier::xtx_verifier::verify_send_tx_legitimacy(tx->get_transaction(), make_observer(m_para->get_store()));
+    ret = xverifier::xtx_verifier::verify_send_tx_legitimacy(tx->get_transaction());
     if (ret) {
         return ret;
     }
@@ -616,17 +589,18 @@ int32_t xtxpool_table_t::verify_receipt_tx(const xcons_transaction_ptr_t & tx) c
 
 bool xtxpool_table_t::get_account_latest_nonce(const std::string account_addr, uint64_t & latest_nonce) {
     refresh_table(true);
+
+    common::xaccount_address_t  account_address(account_addr);  // TODO(jimmy)  common::xaccount_address_t include xvaccount_t for performance
+
     base::xaccount_index_t account_index;
-    bool ret = m_table_state_cache.get_account_index(account_addr, account_index);
-    if (!ret) {
-        xtxpool_warn("xtxpool_table_t::get_account_latest_nonce get account index fail account:%s", account_addr.c_str());
-        return false;
+    if (false == statestore::xstatestore_hub_t::instance()->get_accountindex_from_latest_connected_table(account_address, account_index)) {
+        xtxpool_warn("xtxpool_table_t::get_account_latest_nonce fail-get account index.account:%s", account_addr.c_str());
+        return false;        
     }
-    base::xvaccount_t _account_vaddress(account_addr);
 
-    uint64_t latest_connect_height = m_para->get_vblockstore()->get_latest_connected_block_height(_account_vaddress);
+    uint64_t latest_connect_height = m_para->get_vblockstore()->get_latest_connected_block_height(account_address.vaccount());
 
-    xblocktool_t::check_lacking_unit_and_try_sync(_account_vaddress, account_index, latest_connect_height, m_para->get_vblockstore(), "txpool");
+    xblocktool_t::check_lacking_unit_and_try_sync(account_address.vaccount(), account_index, latest_connect_height, m_para->get_vblockstore(), "txpool");
 
     latest_nonce = account_index.get_latest_tx_nonce();
     xtxpool_dbg("xtxpool_table_t::get_account_latest_nonce table:%s,height:%llu,account:%s,nonce:%llu",
@@ -640,15 +614,11 @@ bool xtxpool_table_t::get_account_latest_nonce(const std::string account_addr, u
         return true;
     }
 
-    base::xauto_ptr<base::xvblock_t> _start_block_ptr = m_para->get_vblockstore()->get_latest_committed_block(_account_vaddress);
-    base::xauto_ptr<base::xvbstate_t> account_bstate =
-        base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_start_block_ptr.get(), metrics::statestore_access_from_txpool_get_accountstate);
-    if (account_bstate == nullptr) {
-        xtxpool_warn("xtxpool_table_t::get_account_latest_nonce fail-get unitstate. block=%s", _start_block_ptr->dump().c_str());
+    data::xunitstate_ptr_t account_state = statestore::xstatestore_hub_t::instance()->get_unit_state_by_accountindex(account_address, account_index);
+    if (account_state == nullptr) {
+        xtxpool_warn("xtxpool_table_t::get_account_latest_nonce fail-get unitstate. account_index=%s", account_index.dump().c_str());
         return false;
     }
-
-    xaccount_ptr_t account_state = std::make_shared<xunit_bstate_t>(account_bstate.get());
     latest_nonce = account_state->account_send_trans_number();
     return true;
 }

@@ -5,7 +5,7 @@
 #include <signal.h>
 
 #include "xdb/xdb_factory.h"
-#include "xstore/xstore.h"
+#include "xdbstore/xstore.h"
 #include "xbase/xcontext.h"
 #include "xcommon/xnode_type.h"
 #include "xrpc/xrpc_init.h"

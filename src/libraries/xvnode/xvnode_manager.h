@@ -63,7 +63,6 @@ public:
 
     xtop_vnode_manager(observer_ptr<elect::ElectMain> const & elect_main,
                        observer_ptr<mbus::xmessage_bus_face_t> const & mbus,
-                       observer_ptr<store::xstore_face_t> const & store,
                        observer_ptr<base::xvblockstore_t> const & block_store,
                        observer_ptr<base::xvtxstore_t> const & txstore,
                        observer_ptr<time::xchain_time_face_t> const & logic_timer,

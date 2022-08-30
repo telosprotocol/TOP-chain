@@ -7,7 +7,6 @@
 
 using namespace top;
 using namespace top::xrpc;
-using namespace top::store;
 
 class test_rpc : public testing::Test {
 protected:
@@ -26,7 +25,6 @@ public:
     std::shared_ptr<tests::vnetwork::xdummy_vnetwork_driver_t> m_vhost;
     observer_ptr<xrouter_face_t> m_router_ptr{nullptr};
     xtxpool_service_v2::xtxpool_proxy_face_ptr m_unit_service;
-    observer_ptr<xstore_face_t> m_store{xstore_factory::create_store_with_memdb().get()};
     observer_ptr<base::xvblockstore_t> m_block_store;
     observer_ptr<base::xvtxstore_t> m_txstore;
     observer_ptr<elect::ElectMain> m_elect_main;
@@ -55,7 +53,6 @@ TEST_F(test_rpc, auditor) {
                                                             m_http_port,
                                                             m_ws_port,
                                                             m_unit_service,
-                                                            m_store,
                                                             m_block_store,
                                                             m_txstore,
                                                             m_elect_main,
@@ -70,7 +67,6 @@ TEST_F(test_rpc, validator) {
                                                             m_http_port,
                                                             m_ws_port,
                                                             m_unit_service,
-                                                            m_store,
                                                             m_block_store,
                                                             m_txstore,
                                                             m_elect_main,

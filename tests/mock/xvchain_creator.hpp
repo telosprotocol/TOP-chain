@@ -2,7 +2,7 @@
 #include <string>
 #include "gtest/gtest.h"
 #include "xdb/xdb_factory.h"
-#include "xstore/xstore_face.h"
+#include "xdbstore/xstore_face.h"
 #include "xblockstore/xblockstore_face.h"
 #include "xtxstore/xtxstore_face.h"
 #include "xvledger/xvaccount.h"
@@ -39,7 +39,7 @@ namespace top
                 std::shared_ptr<top::xbase_io_context_wrapper_t> io_object = std::make_shared<top::xbase_io_context_wrapper_t>();
                 std::shared_ptr<top::xbase_timer_driver_t> timer_driver = std::make_shared<top::xbase_timer_driver_t>(io_object);
                 base::xvchain_t::instance().set_xtxstore(txstore::create_txstore(make_observer<mbus::xmessage_bus_face_t>(m_bus.get()), timer_driver));
-                m_genesis_manager = make_unique<genesis::xgenesis_manager_t>(top::make_observer(blockstore), make_observer(m_store));
+                m_genesis_manager = make_unique<genesis::xgenesis_manager_t>(top::make_observer(blockstore));
                 m_genesis_manager->init_genesis_block(ec);
             }
 
@@ -60,7 +60,7 @@ namespace top
                 std::shared_ptr<top::xbase_timer_driver_t> timer_driver = std::make_shared<top::xbase_timer_driver_t>(io_object);
                 base::xvchain_t::instance().set_xtxstore(txstore::create_txstore(make_observer<mbus::xmessage_bus_face_t>(m_bus.get()), timer_driver));
                 if (genesis) {
-                    m_genesis_manager = make_unique<genesis::xgenesis_manager_t>(top::make_observer(blockstore), make_observer(m_store));
+                    m_genesis_manager = make_unique<genesis::xgenesis_manager_t>(top::make_observer(blockstore));
                     contract::xcontract_deploy_t::instance().deploy_sys_contracts();
                     contract::xcontract_manager_t::instance().instantiate_sys_contracts();
                     contract::xcontract_manager_t::instance().register_address();

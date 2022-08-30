@@ -3,9 +3,9 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #include <gtest/gtest.h>
 #include <string>
-
+#include "xbasic/xasio_io_context_wrapper.h"
 #include "xbase/xobject_ptr.h"
-#include "xstore/xstore_face.h"
+#include "xdbstore/xstore_face.h"
 #include "xchain_timer/xchain_timer.h"
 #include "xloader/xconfig_onchain_loader.h"
 #include "xdata/xtransaction.h"
@@ -34,14 +34,14 @@ class test_proposal_contract: public testing::Test {
 public:
 
     static void SetUpTestCase() {
-        auto m_store = xstore_factory::create_store_with_memdb();
+        auto m_store = store::xstore_factory::create_store_with_memdb();
         auto mbus =  top::make_unique<mbus::xmessage_bus_t>(true, 1000);
         std::shared_ptr<xbase_io_context_wrapper_t> io_object = std::make_shared<xbase_io_context_wrapper_t>();
         std::shared_ptr<xbase_timer_driver_t> timer_driver = std::make_shared<xbase_timer_driver_t>(io_object);
         auto chain_timer = top::make_object_ptr<time::xchain_timer_t>(timer_driver);
         auto& config_center = top::config::xconfig_register_t::get_instance();
 
-        config::xconfig_loader_ptr_t loader = std::make_shared<loader::xconfig_onchain_loader_t>(make_observer(m_store), make_observer(mbus), make_observer(chain_timer));
+        config::xconfig_loader_ptr_t loader = std::make_shared<loader::xconfig_onchain_loader_t>(make_observer(mbus), make_observer(chain_timer));
         config_center.add_loader(loader);
         config_center.load();
         config_center.init_static_config();
@@ -49,7 +49,7 @@ public:
         // tcc contract
         xcontract_manager_t::instance().register_contract<xrec_proposal_contract>(common::xaccount_address_t{sys_contract_rec_tcc_addr}, common::xtopchain_network_id);
         xcontract_manager_t::instance().register_contract_cluster_address(common::xaccount_address_t{sys_contract_rec_tcc_addr}, common::xaccount_address_t{sys_contract_rec_tcc_addr});
-        xcontract_manager_t::instance().setup_chain(common::xaccount_address_t{sys_contract_rec_tcc_addr}, m_store.get());
+        xcontract_manager_t::instance().setup_chain(common::xaccount_address_t{sys_contract_rec_tcc_addr});
     }
 
     static data::xtransaction_ptr_t submit_proposal(std::string const& source_param, std::string const& target_param) {

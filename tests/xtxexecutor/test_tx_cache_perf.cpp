@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "xstore/xstore_face.h"
+
 #include "xstore/xaccount_context.h"
 #include "xdata/xaction_parse.h"
 #include "xdata/xtransaction_v1.h"

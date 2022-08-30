@@ -9,7 +9,7 @@
 #include "xdata/xblocktool.h"
 #include "xdata/xblockbuild.h"
 #include "xdata/xcons_transaction.h"
-#include "xstore/xstore_face.h"
+
 #include "xblockmaker/xtable_builder.h"
 #include "xblockmaker/xblock_builder.h"
 #include "xtxexecutor/xbatchtx_executor.h"
