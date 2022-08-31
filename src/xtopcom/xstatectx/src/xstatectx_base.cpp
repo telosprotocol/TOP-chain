@@ -4,6 +4,8 @@
 
 #include <string>
 #include "xbasic/xmemory.hpp"
+#include "xchain_fork/xchain_upgrade_center.h"
+#include "xstate_mpt/xstate_mpt.h"
 #include "xvledger/xvstate.h"
 #include "xvledger/xvblock.h"
 #include "xvledger/xaccountindex.h"
@@ -15,8 +17,12 @@
 
 NS_BEG2(top, statectx)
 
-xstatectx_base_t::xstatectx_base_t(const data::xtablestate_ptr_t & prev_table_state, const data::xtablestate_ptr_t & commit_table_state, uint64_t clock)
+xstatectx_base_t::xstatectx_base_t(base::xvblock_t* prev_block, const data::xtablestate_ptr_t & prev_table_state, base::xvblock_t* commit_block, const data::xtablestate_ptr_t & commit_table_state, uint64_t clock)
 : m_table_state(prev_table_state), m_commit_table_state(commit_table_state), m_clock(clock) {
+    prev_block->add_ref();
+    m_pre_block.attach(prev_block);
+    commit_block->add_ref();
+    m_commit_block.attach(commit_block);
 }
 
 xobject_ptr_t<base::xvbstate_t> xstatectx_base_t::create_proposal_bstate(base::xvblock_t* prev_block, base::xvbstate_t* prev_bstate, uint64_t clock) {
@@ -28,9 +34,11 @@ xobject_ptr_t<base::xvbstate_t> xstatectx_base_t::create_proposal_bstate(base::x
 }
 
 void xstatectx_base_t::sync_unit_block(const base::xvaccount_t & _vaddr, uint64_t end_height) const {
-    // todo(nathan):unit块同步除了commit状态的块之外，非commit状态的块也需要同步。
     base::xaccount_index_t commit_accountindex;
-    m_commit_table_state->get_account_index(_vaddr.get_account(), commit_accountindex);
+    auto ret = get_account_index(m_commit_block, m_commit_table_state, _vaddr.get_account(), commit_accountindex);
+    if (!ret) {
+        return;
+    }
     uint64_t latest_connect_height = get_blockstore()->get_latest_connected_block_height(_vaddr);
     data::xblocktool_t::check_lacking_unit_and_try_sync(_vaddr, commit_accountindex, latest_connect_height, get_blockstore(), "statectx");
     xinfo("xstatectx_base_t::sync_unit_block account=%s,end_h=%ld,connect_h=%ld", _vaddr.get_account().c_str(), end_height, latest_connect_height);
@@ -77,7 +85,10 @@ xobject_ptr_t<base::xvbstate_t> xstatectx_base_t::load_inner_table_unit_state(co
 
 data::xblock_ptr_t xstatectx_base_t::load_inner_table_unit_block(const base::xvaccount_t & addr) const {
     base::xaccount_index_t account_index;
-    m_table_state->get_account_index(addr.get_address(), account_index);
+    auto ret = get_account_index(m_pre_block, m_table_state, addr.get_account(), account_index);
+    if (!ret) {
+        return nullptr;
+    }
     xobject_ptr_t<base::xvblock_t> prev_block = load_block_object(addr, account_index);
     if (prev_block == nullptr) {
         XMETRICS_GAUGE(metrics::xmetrics_tag_t::statectx_load_block_succ, 0);
@@ -114,7 +125,10 @@ xobject_ptr_t<base::xvbstate_t> xstatectx_base_t::load_different_table_unit_stat
 
 xobject_ptr_t<base::xvbstate_t> xstatectx_base_t::load_inner_table_commit_unit_state(const base::xvaccount_t & addr) const {
     base::xaccount_index_t account_index;
-    m_commit_table_state->get_account_index(addr.get_address(), account_index);
+    auto ret = get_account_index(m_commit_block, m_commit_table_state, addr.get_account(), account_index);
+    if (!ret) {
+        return nullptr;
+    }
     xobject_ptr_t<base::xvblock_t> prev_block = load_block_object(addr, account_index);
     if (prev_block == nullptr) {
         XMETRICS_GAUGE(metrics::xmetrics_tag_t::statectx_load_block_succ, 0);
@@ -143,6 +157,37 @@ base::xvblkstatestore_t* xstatectx_base_t::get_xblkstatestore() const {
     return base::xvchain_t::instance().get_xstatestore()->get_blkstate_store();
 }
 
+bool xstatectx_base_t::get_account_index(const data::xvblock_ptr_t & block,
+                                         const data::xtablestate_ptr_t & table_state,
+                                         const base::xvaccount_t & account,
+                                         base::xaccount_index_t & account_index) const {
+    evm_common::xh256_t state_root;
+    auto ret = data::xblockextract_t::get_state_root(block.get(), state_root);
+    if (!ret) {
+        xwarn("xstatectx_base_t::get_account_index get_state_root fail.block:%s", block->dump().c_str());
+        return false;
+    }
 
+    if (state_root != evm_common::xh256_t()) {
+        std::error_code ec;
+        xhash256_t root_hash(state_root.to_bytes()); 
+        auto mpt = state_mpt::xtop_state_mpt::create(root_hash, base::xvchain_t::instance().get_xdbstore(), ec);
+        if (ec) {
+            xwarn("xstatectx_base_t::get_account_index create mpt fail.root hash:%s.state_root:%s.block:%s", root_hash.as_hex_str().c_str(), state_root.hex().c_str(), block->dump().c_str());
+            return false;
+        }
+
+        account_index = mpt->get_account_index(account.get_account(), ec);
+        if (ec) {
+            xwarn("xstatectx_base_t::get_account_index get_account_index from mpt fail.root hash:%s.block:%s", root_hash.as_hex_str().c_str(), block->dump().c_str());
+            return false;
+        }
+        xdbg("xstatectx_base_t::get_account_index succ root hash:%s.account:%s index:%s", root_hash.as_hex_str().c_str(), account.get_account().c_str(), account_index.dump().c_str());
+        return true;
+    }
+
+    table_state->get_account_index(account.get_account(), account_index);
+    return true;
+}
 
 NS_END2

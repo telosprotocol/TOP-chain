@@ -526,6 +526,8 @@ namespace top
             virtual std::string         get_obj_name() const override {return name();}
             enum{enum_obj_type = enum_xobject_type_voutput};//allow xbase create xvoutput_t object from xdataobj_t::read_from()
 
+            static  constexpr char const * RESOURCE_ACCOUNT_INDEXS     = "1";
+
         public:
             xvoutput_t(std::vector<xventity_t*> && entitys,enum_xobject_type type = enum_xobject_type_voutput);
             xvoutput_t(const std::vector<xventity_t*> & entitys,const std::string & raw_resource_data, enum_xobject_type type = enum_xobject_type_voutput);
@@ -552,7 +554,8 @@ namespace top
             const std::string           get_state_hash();  // only can be used by xvblock_t, only light-table store state hash in output entity
             const std::string           get_output_offdata_hash() const;
             const std::string           get_binlog();
-            const std::string           get_unit_infos() const ;
+            // const std::string           get_unit_infos() const ;
+            const std::string           get_account_indexs();
         protected:
             //just carry by object at memory,not included by serialized
             std::string  m_root_hash;  //root of merkle tree constructed by input
@@ -594,6 +597,11 @@ namespace top
 
         //note: xvblock must have associated xvheader_t and xvqcert_t objects
         using xvheader_ptr_t = xobject_ptr_t<base::xvheader_t>;
+
+        class xvblock_excontainer_base {
+        public:
+            virtual void commit(){}
+        };
 
         class xvblock_t : public xdataobj_t
         {
@@ -710,7 +718,8 @@ namespace top
             virtual std::vector<xvheader_ptr_t> get_sub_block_headers() const {return std::vector<xvheader_ptr_t>{};}
 
             const std::string           get_fullstate_hash();
-            const std::string           get_unit_infos() const {return get_output()->get_unit_infos();}
+            // const std::string           get_unit_infos() const {return get_output()->get_unit_infos();}
+            const std::string           get_account_indexs() const {return get_output()->get_account_indexs();}
             const std::string           get_binlog_hash() {return get_output()->get_binlog_hash();}
             const std::string           get_output_offdata_hash() const {return get_output()->get_output_offdata_hash();}
             const std::string           get_full_state();
@@ -758,6 +767,9 @@ namespace top
             void  set_subblocks(std::vector<xobject_ptr_t<xvblock_t>> subblocks);
             const std::vector<xobject_ptr_t<xvblock_t>> & get_subblocks() const;
 
+            void  set_excontainer(std::shared_ptr<xvblock_excontainer_base> excontainer) {m_excontainer = excontainer;}
+            const std::shared_ptr<xvblock_excontainer_base> & get_excontainer() const {return m_excontainer;}
+
         private:
             //generated the unique path of object(like vblock) under store-space(get_store_path()) to store data to DB
             //path like :   chainid/account/height/name
@@ -797,6 +809,7 @@ namespace top
             uint32_t                    m_parent_entity_id{0};  //entity id of container(like tableblock) that carry this sub-block
             std::string                 m_vote_extend_data;
             std::string                 m_output_offdata;
+            std::shared_ptr<xvblock_excontainer_base> m_excontainer{nullptr};
         };
         using xvblock_ptr_t = xobject_ptr_t<base::xvblock_t>;
 
@@ -853,36 +866,6 @@ namespace top
             {
                 return (front.get_viewid() > back.get_viewid());
             }
-        };
-
-        class xtable_unit_info_t {
-        public:
-            xtable_unit_info_t(const std::string & addr, const std::string & hash, uint64_t height);
-            const std::string & get_addr() const {return m_addr;}
-            const std::string & get_hash() const {return m_hash;}
-            uint64_t get_height() const {return m_height;}
-        private:
-            std::string m_addr;
-            std::string m_hash;
-            uint64_t m_height;
-        };
-
-        class xtable_unit_infos_t {
-        public:
-            int32_t serialize_to_string(std::string & _str) const;
-            int32_t serialize_from_string(const std::string & _str);
-
-            void add_unit_info(const xtable_unit_info_t & unit_info);
-            std::vector<xtable_unit_info_t> const & get_unit_infos() const {
-                return m_unit_infos;
-            }
-
-        private:
-            int32_t do_write(base::xstream_t & stream) const;
-            int32_t do_read(base::xstream_t & stream);
-
-        private:
-            std::vector<xtable_unit_info_t> m_unit_infos;
         };
         
     }//end of namespace of base

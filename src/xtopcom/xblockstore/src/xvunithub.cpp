@@ -729,13 +729,16 @@ namespace top
             
             // secondly try to load offdata by subblocks
             std::vector<base::xvblock_ptr_t> subblocks;
-            auto subblock_infos_str = block->get_unit_infos();
-            base::xtable_unit_infos_t subblock_infos;
-            subblock_infos.serialize_from_string(subblock_infos_str);
-            auto &unit_infos_vec = subblock_infos.get_unit_infos();
-            for (auto & unit_info : unit_infos_vec) {
-                base::xvaccount_t _unit_account(unit_info.get_addr());
-                base::xvblock_ptr_t unit_block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_unit_account, unit_info.get_height(), unit_info.get_hash(), true);
+            auto account_indexs_str = block->get_account_indexs();
+            data::xtable_account_indexs_t account_indexs;
+            account_indexs.serialize_from_string(account_indexs_str);
+
+            auto & account_index_map = account_indexs.get_account_indexs();
+            for (auto & account_index_pair : account_index_map) {
+                auto & addr = account_index_pair.first;
+                auto & account_index = account_index_pair.second;
+                base::xvaccount_t _unit_account(addr);
+                base::xvblock_ptr_t unit_block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_unit_account, account_index.get_latest_unit_height(), account_index.get_latest_unit_hash(), true);
                 if (nullptr == unit_block) {
                     // TODO(jimmy)
                     xerror("xvblockstore_impl::load_block_output_offdata,fail-load unit. block:%s,",block->dump().c_str());

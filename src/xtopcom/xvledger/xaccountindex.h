@@ -46,6 +46,8 @@ class xaccount_index_t {
 
     int32_t         serialize_to(std::string & bin_data) const;
     int32_t         serialize_from(const std::string & bin_data);
+    int32_t         do_write(base::xstream_t & stream) const;
+    int32_t         do_read(base::xstream_t & stream);
     std::string     dump() const;    
 
  public:
@@ -71,9 +73,6 @@ class xaccount_index_t {
     void                    set_latest_unit_type(base::enum_xvblock_type _type);
     void                    set_account_index_flag(enum_xaccount_index_flag _flag);
     void                    set_latest_unit_consensus_type(enum_xblock_consensus_type _type);
-
-    int32_t do_write(base::xstream_t & stream) const;
-    int32_t do_read(base::xstream_t & stream);
 
  private:
     uint64_t        m_latest_unit_height{0};
