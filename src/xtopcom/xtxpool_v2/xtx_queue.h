@@ -114,7 +114,7 @@ public:
     xsend_tx_queue_t(xtxpool_table_info_t * xtable_info) : m_send_tx_queue_internal(xtable_info) {
     }
     int32_t push_tx(const std::shared_ptr<xtx_entry> & tx_ent, uint64_t latest_nonce);
-    const std::vector<xcons_transaction_ptr_t> get_txs(uint32_t max_num, const data::xtablestate_ptr_t & table_state) const;
+    const std::vector<xcons_transaction_ptr_t> get_txs(uint32_t max_num, base::xvblock_t * cert_block) const;
     const std::shared_ptr<xtx_entry> pop_tx(const tx_info_t & txinfo, bool clear_follower);
     const std::shared_ptr<xtx_entry> find(const std::string & account_addr, const uint256_t & hash) const;
     void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce);

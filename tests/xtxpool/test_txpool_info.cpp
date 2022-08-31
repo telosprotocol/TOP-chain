@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 #include "test_xtxpool_util.h"
 #include "xtxpool_v2/xtxpool_info.h"
+#include "tests/mock/xdatamock_table.hpp"
 
 using namespace top::xtxpool_v2;
 using namespace top::data;
@@ -8,6 +9,7 @@ using namespace top;
 using namespace top::base;
 using namespace std;
 using namespace top::utl;
+using namespace top::mock;
 
 class test_xtxpool_info : public testing::Test {
 protected:
@@ -21,7 +23,8 @@ protected:
 TEST_F(test_xtxpool_info, txpool_info) {
     xtxpool_role_info_t shard(0, 0, 15, common::xnode_type_t::consensus_auditor);
     xtxpool_statistic_t statistic;
-    xtable_state_cache_t table_state_cache(nullptr, "table_test1");
+    std::string table_addr = xdatamock_address::make_consensus_table_address(1);
+    xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table1("table_test1", &shard, &statistic, &table_state_cache);
     xtxpool_table_info_t table2("table_test2", &shard, &statistic, &table_state_cache);
 

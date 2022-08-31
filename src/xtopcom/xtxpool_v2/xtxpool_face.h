@@ -131,6 +131,7 @@ class xtxs_pack_para_t {
 public:
     xtxs_pack_para_t(const std::string & table_addr,
                      const data::xtablestate_ptr_t & table_state_highqc,
+                     base::xvblock_t * block,
                      //  const std::map<std::string, uint64_t> & locked_nonce_map,
                      uint16_t all_txs_max_num,
                      uint16_t confirm_and_recv_txs_max_num,
@@ -138,6 +139,7 @@ public:
                      std::set<base::xtable_shortid_t> peer_sids_for_confirm_id)
       : m_table_addr(table_addr)
       , m_table_state_highqc(table_state_highqc)
+      , m_cert_block(block)
       //   , m_locked_nonce_map(locked_nonce_map)
       , m_all_txs_max_num(all_txs_max_num)
       , m_confirm_and_recv_txs_max_num(confirm_and_recv_txs_max_num)
@@ -149,6 +151,10 @@ public:
     }
     const data::xtablestate_ptr_t & get_table_state_highqc() const {
         return m_table_state_highqc;
+    }
+
+    base::xvblock_t * get_cert_block() const {
+        return m_cert_block;
     }
 
     uint16_t get_all_txs_max_num() const {
@@ -168,6 +174,7 @@ public:
 private:
     std::string m_table_addr;
     data::xtablestate_ptr_t m_table_state_highqc;
+    base::xvblock_t * m_cert_block;
     // std::map<std::string, uint64_t> m_locked_nonce_map;
     uint16_t m_all_txs_max_num;
     uint16_t m_confirm_and_recv_txs_max_num;

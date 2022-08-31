@@ -146,6 +146,23 @@ void xblockextract_t::unpack_ethheader(base::xvblock_t* _block, xeth_header_t & 
     }
 }
 
+bool xblockextract_t::get_state_root(base::xvblock_t* _block, evm_common::xh256_t & state_root) {
+    if (!base::xvblock_fork_t::is_block_match_version(_block->get_block_version(), base::enum_xvblock_fork_version_5_0_0)) {
+        xdbg("xblockextract_t::get_state_root block is old version block:%s", _block->dump().c_str());
+        state_root = evm_common::xh256_t();
+        return true;
+    }
+
+    data::xeth_header_t ethheader;
+    std::error_code ec;
+    unpack_ethheader(_block, ethheader, ec);
+    if (ec) {
+        return false;
+    }
+    state_root = ethheader.get_state_root();
+    return true;
+}
+
 xtransaction_ptr_t xblockextract_t::unpack_raw_tx(base::xvblock_t* _block, std::string const& txhash, std::error_code & ec) {
     std::string orgtx_bin = _block->get_input()->query_resource(txhash);
     if (orgtx_bin.empty()) {

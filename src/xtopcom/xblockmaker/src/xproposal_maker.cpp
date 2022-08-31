@@ -511,7 +511,7 @@ bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & propos
     peer_sids_for_confirm_id = select_peer_sids_for_confirm_id(all_table_sids_vec, proposal_para.get_proposal_height());
 
     xtxpool_v2::xtxs_pack_para_t txpool_pack_para(
-        proposal_para.get_table_account(), tablestate_highqc, all_txs_max_num, confirm_and_recv_txs_max_num, confirm_txs_max_num, peer_sids_for_confirm_id);
+        proposal_para.get_table_account(), tablestate_highqc, proposal_para.get_latest_cert_block().get(), all_txs_max_num, confirm_and_recv_txs_max_num, confirm_txs_max_num, peer_sids_for_confirm_id);
     // std::vector<xcons_transaction_ptr_t> origin_txs = get_txpool()->get_ready_txs(txpool_pack_para);
 
     auto pack_resource = get_txpool()->get_pack_resource(txpool_pack_para);

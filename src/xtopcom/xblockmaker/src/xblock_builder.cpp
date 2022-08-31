@@ -128,15 +128,7 @@ bool     xtablebuilder_t::update_account_index_property(const data::xtablestate_
         }
     }
 
-    auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
-    auto const new_version = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.v1_7_0_block_fork_point, unit->get_clock());
-    data::xaccount_index_t _new_aindex;
-    if (new_version) {
-        auto hash = unit->get_cert()->build_block_hash();  // TODO(jimmy)  get_block_hash()
-        _new_aindex = data::xaccount_index_t(unit->get_height(), hash, unit->get_fullstate_hash(), nonce, unit->get_block_class(), unit->get_block_type());
-    } else {
-        _new_aindex = data::xaccount_index_t(unit.get(), has_unconfirm_sendtx, _cs_type, false, nonce);
-    }
+    data::xaccount_index_t _new_aindex = data::xaccount_index_t(unit.get(), has_unconfirm_sendtx, _cs_type, false, nonce);
 
     tablestate->set_account_index(unit->get_account(), _new_aindex);
     xdbg("xtablebuilder_t::update_account_index_property account:%s,index=%s", unit->get_account().c_str(), _new_aindex.dump().c_str());
@@ -169,7 +161,7 @@ bool     xtablebuilder_t::update_receipt_confirmids(const data::xtablestate_ptr_
     return true;
 }
 
-void     xtablebuilder_t::make_table_block_para(const std::vector<xblock_ptr_t> & batch_units,
+void     xtablebuilder_t::make_table_block_para(const std::vector<std::pair<xblock_ptr_t, base::xaccount_index_t>> & batch_unit_and_index,
                                                 const data::xtablestate_ptr_t & tablestate,
                                                 txexecutor::xexecute_output_t const& execute_output, 
                                                 data::xtable_block_para_t & lighttable_para) {
@@ -195,10 +187,10 @@ void     xtablebuilder_t::make_table_block_para(const std::vector<xblock_ptr_t> 
         xassert(false);
     }
 
-    if (batch_units.size() > 0) {
+    if (batch_unit_and_index.size() > 0) {
         std::vector<xobject_ptr_t<base::xvblock_t>> subunits;
-        for (auto & v : batch_units) {
-            subunits.push_back(v);
+        for (auto & v : batch_unit_and_index) {
+            subunits.push_back(v.first);
         }
 
         base::xvblock_out_offdata_t offdata(subunits);
@@ -209,7 +201,7 @@ void     xtablebuilder_t::make_table_block_para(const std::vector<xblock_ptr_t> 
 
     lighttable_para.set_property_binlog(binlog);
     lighttable_para.set_fullstate_bin(snapshot);
-    lighttable_para.set_batch_units(batch_units);
+    lighttable_para.set_batch_unit_and_index(batch_unit_and_index);
     lighttable_para.set_tgas_balance_change(tgas_balance_change);
     lighttable_para.set_property_hashs(property_hashs);
     lighttable_para.set_txs(txs_info);

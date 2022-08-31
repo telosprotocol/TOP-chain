@@ -12,6 +12,7 @@ target_link_libraries(xstatestore PRIVATE
     xblockstore
     xdata
     xxbase
+    xstate_mpt
 )
 
 if (BUILD_METRICS)

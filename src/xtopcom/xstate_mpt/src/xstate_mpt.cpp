@@ -38,12 +38,15 @@ base::xaccount_index_t xtop_state_mpt::get_account_index(const std::string & acc
 void xtop_state_mpt::set_account_index(const std::string & account, const base::xaccount_index_t & index, std::error_code & ec) {
     std::string index_str;
     index.serialize_to(index_str);
+    set_account_index(account, index_str, ec);
+}
+
+void xtop_state_mpt::set_account_index(const std::string & account, const std::string & index_str, std::error_code & ec) {
     m_trie->TryUpdate({account.begin(), account.end()}, {index_str.begin(), index_str.end()}, ec);
     if (ec) {
         xwarn("xtop_state_mpt::set_account_index TryUpdate %s error, %s %s", account.c_str(), ec.category().name(), ec.message().c_str());
         return;
     }
-    return;
 }
 
 xhash256_t xtop_state_mpt::get_root_hash() const {

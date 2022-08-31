@@ -52,7 +52,7 @@ class xtablebuilder_t {
     static bool     update_receipt_confirmids(const data::xtablestate_ptr_t & tablestate, 
                                                   const std::map<base::xtable_shortid_t, uint64_t> & changed_confirm_ids);
 
-    static void     make_table_block_para(const std::vector<xblock_ptr_t> & batch_units,
+    static void     make_table_block_para(const std::vector<std::pair<xblock_ptr_t, base::xaccount_index_t>> & batch_unit_and_index,
                                           const data::xtablestate_ptr_t & tablestate,
                                           txexecutor::xexecute_output_t const& execute_output, 
                                           data::xtable_block_para_t & lighttable_para);
