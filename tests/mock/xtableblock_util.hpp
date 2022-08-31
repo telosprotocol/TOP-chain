@@ -22,7 +22,7 @@ class xtableblock_util {
         xblock_consensus_para_t cs_para{xcertauth_util::instance().get_leader_xip(), prev_tableblock};
         xtable_block_para_t table_para;
         for (auto& unit : units) {
-            table_para.add_unit(unit);
+            table_para.add_unit(unit, 1);
         }
 
         base::xvblock_t* proposal_block = xblocktool_t::create_next_tableblock(table_para, cs_para, prev_tableblock);
@@ -43,7 +43,7 @@ class xtableblock_util {
         xblock_consensus_para_t cs_para{leader_xip, prev_tableblock};
         xtable_block_para_t table_para;
         for (auto& unit : units) {
-            table_para.add_unit(unit);
+            table_para.add_unit(unit, 1);
         }
 
         base::xvblock_t* proposal_block = xblocktool_t::create_next_tableblock(table_para, cs_para, prev_tableblock);

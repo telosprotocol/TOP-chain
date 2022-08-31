@@ -20,8 +20,8 @@
 
 NS_BEG2(top, statectx)
 
-xstatectx_t::xstatectx_t(base::xvblock_t* prev_block, const data::xtablestate_ptr_t & prev_table_state, const data::xtablestate_ptr_t & commit_table_state, const xstatectx_para_t & para)
-: m_statectx_base(prev_table_state, commit_table_state, para.m_clock), m_statectx_para(para) {
+xstatectx_t::xstatectx_t(base::xvblock_t* prev_block, const data::xtablestate_ptr_t & prev_table_state, base::xvblock_t* commit_block, const data::xtablestate_ptr_t & commit_table_state, const xstatectx_para_t & para)
+: m_statectx_base(prev_block, prev_table_state, commit_block, commit_table_state, para.m_clock), m_statectx_para(para) {
     // create proposal table state for context
     xobject_ptr_t<base::xvbstate_t> proposal_bstate = xstatectx_base_t::create_proposal_bstate(prev_block, prev_table_state->get_bstate().get(), para.m_clock);
     data::xtablestate_ptr_t proposal_table_state = std::make_shared<data::xtable_bstate_t>(proposal_bstate.get(), false);  // change to modified state
@@ -177,8 +177,8 @@ std::vector<xunitstate_ctx_ptr_t> xstatectx_t::get_modified_unit_ctx() const {
     return unitctxs;
 }
 
-xstatectx_ptr_t xstatectx_factory_t::create_latest_cert_statectx(base::xvblock_t* prev_block, const data::xtablestate_ptr_t & prev_table_state, const data::xtablestate_ptr_t & commit_table_state, const xstatectx_para_t & para) {
-    statectx::xstatectx_ptr_t statectx_ptr = std::make_shared<statectx::xstatectx_t>(prev_block, prev_table_state, commit_table_state, para);
+xstatectx_ptr_t xstatectx_factory_t::create_latest_cert_statectx(base::xvblock_t* prev_block, const data::xtablestate_ptr_t & prev_table_state, base::xvblock_t* commit_block, const data::xtablestate_ptr_t & commit_table_state, const xstatectx_para_t & para) {
+    statectx::xstatectx_ptr_t statectx_ptr = std::make_shared<statectx::xstatectx_t>(prev_block, prev_table_state, commit_block, commit_table_state, para);
     return statectx_ptr;
 }
 
@@ -210,7 +210,7 @@ xstatectx_ptr_t xstatectx_factory_t::create_statectx(const base::xvaccount_t & t
     data::xtablestate_ptr_t commit_tablestate = std::make_shared<data::xtable_bstate_t>(commit_bstate.get());
 
     xstatectx_para_t statectx_para(_block->get_clock()+1);
-    statectx::xstatectx_ptr_t statectx_ptr = std::make_shared<statectx::xstatectx_t>(_block, cert_tablestate, commit_tablestate, statectx_para);
+    statectx::xstatectx_ptr_t statectx_ptr = std::make_shared<statectx::xstatectx_t>(_block, cert_tablestate, _commit_block.get(), commit_tablestate, statectx_para);
     return statectx_ptr;
 }
 

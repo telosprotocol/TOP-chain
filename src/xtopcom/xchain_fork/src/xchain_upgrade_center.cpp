@@ -131,7 +131,7 @@ namespace top {
                 return false;
             }
 
-            xdbg("xtop_chain_fork_config_center::is_forked target:%llu, fork point:%llu", target, fork_point.value().point);
+            xdbg("xtop_chain_fork_config_center::is_forked target:%llu, fork point:%llu, %s", target, fork_point.value().point, fork_point->description.c_str());
             return  target >= fork_point.value().point;
         }
 

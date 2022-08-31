@@ -4,12 +4,16 @@
 
 #include <string>
 #include "xbasic/xmemory.hpp"
+#include "xchain_fork/xchain_upgrade_center.h"
 #include "xvledger/xvblockstore.h"
 #include "xvledger/xvstatestore.h"
+#include "xdata/xblockextract.h"
 #include "xdata/xtable_bstate.h"
 #include "xdata/xunit_bstate.h"
 #include "xbase/xlru_cache.h"
 #include "xstatestore/xstatestore_table.h"
+#include "xstate_mpt/xstate_mpt.h"
+#include "xvledger/xvledger.h"
 
 NS_BEG2(top, statestore)
 
@@ -113,7 +117,31 @@ data::xunitstate_ptr_t xstatestore_table_t::get_unit_state_from_accountindex(com
 }
 
 bool xstatestore_table_t::get_accountindex_from_table_block(common::xaccount_address_t const & account_address, base::xvblock_t * table_block, base::xaccount_index_t & account_index) const {
-    // TODO(jimmy) get accountindex from tablestate, in future will get from mpt state manager
+    evm_common::xh256_t state_root;
+    auto ret = data::xblockextract_t::get_state_root(table_block, state_root);
+    if (!ret) {
+        xwarn("xstatestore_table_t::get_accountindex_from_table_block get_state_root fail.block:%s", table_block->dump().c_str());
+        return false;
+    }
+
+    if (state_root != evm_common::xh256_t()) {
+        std::error_code ec;
+        xhash256_t root_hash(state_root.to_bytes()); 
+        auto mpt = state_mpt::xtop_state_mpt::create(root_hash, base::xvchain_t::instance().get_xdbstore(), ec);
+        if (ec) {
+            xwarn("xstatestore_table_t::get_accountindex_from_table_block create mpt fail.root hash:%s.state_root:%s.block:%s", root_hash.as_hex_str().c_str(), state_root.hex().c_str(), table_block->dump().c_str());
+            return false;
+        }
+
+        account_index = mpt->get_account_index(account_address.value(), ec);
+        if (ec) {
+            xwarn("xstatestore_table_t::get_accountindex_from_table_block get_account_index from mpt fail.root hash:%s.block:%s", root_hash.as_hex_str().c_str(), table_block->dump().c_str());
+            return false;
+        }
+        xdbg("xstatestore_table_t::get_accountindex_from_table_block succ root hash:%s.account:%s index:%s", root_hash.as_hex_str().c_str(), account_address.value().c_str(), account_index.dump().c_str());
+        return true;
+    }
+
     data::xtablestate_ptr_t tablestate = get_table_state_from_block(table_block);
     if (nullptr == tablestate) {
         xwarn("xstatestore_table_t::get_accountindex_from_table_block fail-get table state.%s,block=%s",account_address.value().c_str(), table_block->dump().c_str());
