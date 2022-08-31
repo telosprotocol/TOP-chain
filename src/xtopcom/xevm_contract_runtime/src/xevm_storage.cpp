@@ -44,6 +44,7 @@ xbytes_t xtop_evm_storage::storage_get(xbytes_t const & key) {
             return result;
 
         } else if (storage_key.key_type == storage_key_type::Balance) {
+            xdbg("xtop_evm_storage::storage_get, %d", XGET_CONFIG(enable_eth_token));
             if (XGET_CONFIG(enable_eth_token) == false)
                 return unit_state->tep_token_balance_bytes(common::xtoken_id_t::top);
             else
@@ -120,6 +121,7 @@ void xtop_evm_storage::storage_set(xbytes_t const & key, xbytes_t const & value)
             evm_common::u256 balance = evm_common::fromBigEndian<evm_common::u256>(value);
             xdbg("storage_set set balance account:%s, balance:%s", storage_key.address.c_str(), balance.str().c_str());
 #endif
+            xdbg("xtop_evm_storage::storage_set, %d", XGET_CONFIG(enable_eth_token));
             if (XGET_CONFIG(enable_eth_token) == false)
                 unit_state->set_tep_balance_bytes(common::xtoken_id_t::top, value);
             else
@@ -187,7 +189,11 @@ void xtop_evm_storage::storage_remove(xbytes_t const & key) {
 
         } else if (storage_key.key_type == storage_key_type::Balance) {
             evm_common::u256 value{0};
-            unit_state->set_tep_balance(common::xtoken_id_t::eth, value);
+            xdbg("xtop_evm_storage::storage_remove, %d", XGET_CONFIG(enable_eth_token));
+            if (XGET_CONFIG(enable_eth_token) == false)
+                unit_state->set_tep_balance(common::xtoken_id_t::top, value);
+            else
+                unit_state->set_tep_balance(common::xtoken_id_t::eth, value);
 
         } else if (storage_key.key_type == storage_key_type::Code) {
             auto typeless_property =
