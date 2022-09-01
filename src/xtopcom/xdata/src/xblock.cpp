@@ -152,12 +152,8 @@ int32_t xblock_t::release_ref() {
 #endif
 
 int32_t xblock_t::full_block_serialize_to(base::xstream_t & stream) {
-    if (!is_input_ready(true) || !is_output_ready(true)) {
-        xerror("xblock_t::full_block_serialize_to not valid block.%s", dump().c_str());
-        return -1;
-    }
-    if ( (!get_output_offdata_hash().empty()) && get_output_offdata().empty()) {
-        xerror("xblock_t::full_block_serialize_to has no offdata. block.%s", dump().c_str());
+    if ( false == is_body_and_offdata_ready(false) ) {
+        xerror("xblock_t::full_block_serialize_to not valid block.%s, %d,%d,%d", dump().c_str(), is_input_ready(false), is_output_ready(false), is_output_offdata_ready(false));
         return -1;
     }
 

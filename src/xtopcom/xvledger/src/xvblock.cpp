@@ -1250,7 +1250,7 @@ namespace top
             return outentity->get_state_hash();
         }
 
-        const std::string xvoutput_t::get_output_offdata_hash()
+        const std::string xvoutput_t::get_output_offdata_hash() const
         {
             if (get_entitys().empty())
             {
@@ -2122,15 +2122,17 @@ namespace top
             
             if(get_input()->get_resources_hash().empty())//if no resources
                 return true;
-            
+
+            if (get_input()->get_resources_data().empty()) {
+                xwarn("xvblock_t::is_input_ready fail-resources empty.%s", dump().c_str());
+                return false;
+            }
+
             if(full_check_resources)
             {
                 const std::string _resources_hash = get_cert()->hash(get_input()->get_resources_data());
                 if(_resources_hash != get_input()->get_resources_hash()){
-                    if(_resources_hash.empty())
-                        xwarn("xvblock_t::xvblock_t,empty input_resources vs existing get_resources_hash(%s)",get_input()->get_resources_hash().c_str());
-                    else
-                        xerror("xvblock_t::xvblock_t,bad input_resources with wrong hash,existing-hash(%s) vs new_hash(%s)",get_input()->get_resources_hash().c_str(),_resources_hash.c_str());
+                    xerror("xvblock_t::is_input_ready,unmatch hash. %s vs %s", base::xstring_utl::to_hex(_resources_hash).c_str(), base::xstring_utl::to_hex(get_input()->get_resources_hash()).c_str());
                     return false;
                 }
             }
@@ -2150,20 +2152,50 @@ namespace top
             
             if(get_output()->get_resources_hash().empty())//if no resources
                 return true;
-            
+
+            if (get_output()->get_resources_data().empty()) {
+                xwarn("xvblock_t::is_output_ready fail-resources empty.%s", dump().c_str());
+                return false;
+            }
+
             if(full_check_resources)
             {
                 const std::string _resources_hash = get_cert()->hash(get_output()->get_resources_data());
                 if(_resources_hash != get_output()->get_resources_hash()){
-                    if(_resources_hash.empty())
-                        xwarn("xvblock_t::xvblock_t,empty _voutput_resources vs existing get_resources_hash(%s)",get_output()->get_resources_hash().c_str());
-                    else
-                        xerror("xvblock_t::xvblock_t,bad _voutput_resources with wrong hash,existing-hash(%s) vs new_hash(%s)",get_output()->get_resources_hash().c_str(),_resources_hash.c_str());
+                    xerror("xvblock_t::is_output_ready,unmatch hash. %s vs %s", base::xstring_utl::to_hex(_resources_hash).c_str(), base::xstring_utl::to_hex(get_output()->get_resources_hash()).c_str());
                     return false;
                 }
             }
             
             return true;
+        }
+
+        bool  xvblock_t::is_output_offdata_ready(bool full_check_resources) const {
+            if (get_output_offdata_hash().empty())
+                return true;
+            if (get_output_offdata().empty()) {
+                xwarn("xvblock_t::is_output_offdata_ready fail-offdata empty.%s", dump().c_str());
+                return false;                
+            }
+            if(full_check_resources)
+            {
+                const std::string _resources_hash = get_cert()->hash(get_output_offdata());
+                if(_resources_hash != get_output_offdata_hash()){
+                    xerror("xvblock_t::is_output_offdata_ready,unmatch hash. %s vs %s", base::xstring_utl::to_hex(_resources_hash).c_str(), base::xstring_utl::to_hex(get_output_offdata_hash()).c_str());
+                    return false;
+                }
+            }
+            return true;   
+        }
+
+        bool xvblock_t::is_body_and_offdata_ready(bool full_check_resources) const {
+            if (is_input_ready(full_check_resources)
+                && is_output_ready(full_check_resources)
+                && is_output_offdata_ready(full_check_resources)) {
+                return true;
+            }
+            xwarn("xvblock_t::is_body_and_offdata_ready fail.%s", dump().c_str());
+            return false;
         }
         
         bool  xvblock_t::is_valid(bool deep_test) const  //just check height/view/hash/account and last_hash/last_qc_hash
