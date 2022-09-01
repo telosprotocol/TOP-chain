@@ -1171,7 +1171,7 @@ int32_t xaccount_context_t::token_withdraw(const std::string& key, base::vtoken_
     CHECK_PROPERTY_NULL_RETURN(propobj, "xaccount_context_t::token_withdraw", key);
     auto balance = propobj->get_balance();
     if (sub_token <= 0 || sub_token > balance) {
-        xwarn("xaccount_context_t::token_withdraw fail-can't do withdraw. propname=%ld,balance=%ld,sub_token=%ld", key.c_str(), balance, sub_token);
+        xwarn("xaccount_context_t::token_withdraw fail-can't do withdraw. propname=%s,balance=%ld,sub_token=%ld", key.c_str(), balance, sub_token);
         return xaccount_property_operate_fail;
     }
 

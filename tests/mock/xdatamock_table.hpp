@@ -349,7 +349,9 @@ class xdatamock_table : public base::xvaccount_t {
             blockmaker::xunitbuilder_para_t unit_para({});
             data::xblock_ptr_t unitblock = blockmaker::xunitbuilder_t::make_block(s_mockunit.get_cert_block(), v.second, unit_para, cs_para);
             xassert(unitblock != nullptr);
-            m_batch_units.push_back(unitblock);          
+            // m_batch_units.push_back(unitblock);
+            data::xaccount_index_t aindex = data::xaccount_index_t(unitblock->get_height(), unitblock->get_block_hash(), unitblock->get_fullstate_hash(), 1, unitblock->get_block_class(), unitblock->get_block_type());
+             m_batch_units.push_back(std::make_pair(unitblock, aindex));
         }
 
         cs_para.set_justify_cert_hash(get_lock_block()->get_input_root_hash());
@@ -386,7 +388,7 @@ class xdatamock_table : public base::xvaccount_t {
 
  private:
     std::vector<xcons_transaction_ptr_t>    m_proposal_txs;
-    std::vector<xblock_ptr_t>               m_batch_units;
+    std::vector<std::pair<xblock_ptr_t, data::xaccount_index_t>> m_batch_units;
 
     std::map<std::string, xtransaction_ptr_t> m_raw_txs;
     xtablestate_ptr_t               m_table_state{nullptr};

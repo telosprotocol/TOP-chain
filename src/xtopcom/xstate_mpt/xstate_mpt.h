@@ -21,6 +21,7 @@ public:
 public:
     base::xaccount_index_t get_account_index(const std::string & account, std::error_code & ec);
     void set_account_index(const std::string & account, const base::xaccount_index_t & index, std::error_code & ec);
+    void set_account_index(const std::string & account, const std::string & index_str, std::error_code & ec);
     xhash256_t get_root_hash() const;
     xhash256_t commit(std::error_code & ec);
 
