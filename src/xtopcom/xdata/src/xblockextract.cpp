@@ -442,10 +442,9 @@ void xblockextract_t::unpack_subblocks(base::xvblock_t* _block, std::vector<xobj
         return;
     }
 
-    if (!_block->is_input_ready(false)
-        || !_block->is_output_ready(false)) {
+    if (!_block->is_body_and_offdata_ready(false)) {
         ec = common::error::xerrc_t::invalid_block;
-        xerror("xblockextract_t::unpack_subblocks input and output should ready.");
+        xerror("xblockextract_t::unpack_subblocks input and output should ready. %s", _block->dump().c_str());
         return;
     }
 

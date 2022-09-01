@@ -43,6 +43,7 @@ void xstatestore_table_cache_t::set_latest_connectted_tablestate(data::xtablesta
 
 void xstatestore_table_cache_t::set_tablestate(std::string const& block_hash, data::xtablestate_ptr_t const& state) const {
     m_tablestate_cache.put(block_hash, state);
+    xdbg("xstatestore_table_cache_t::set_tablestate hash=%s,state=%s", base::xstring_utl::to_hex(block_hash).c_str(), state->get_bstate()->dump().c_str());
 }
 
 data::xunitstate_ptr_t xstatestore_table_cache_t::get_unitstate(std::string const& block_hash) const {
@@ -54,6 +55,7 @@ data::xunitstate_ptr_t xstatestore_table_cache_t::get_unitstate(std::string cons
 
 void xstatestore_table_cache_t::set_unitstate(std::string const& block_hash, data::xunitstate_ptr_t const& state) const {
     m_unitstate_cache.put(block_hash, state);
+    xdbg("xstatestore_table_cache_t::set_unitstate hash=%s,state=%s", base::xstring_utl::to_hex(block_hash).c_str(), state->get_bstate()->dump().c_str());
 }
 
 
