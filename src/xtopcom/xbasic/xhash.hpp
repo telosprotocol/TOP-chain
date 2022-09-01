@@ -241,9 +241,9 @@ public:
         return xbytes_t{const_cast<xbyte_t *>(m_data.data()), const_cast<xbyte_t *>(m_data.data() + m_data.size())};
     }
 
-    const char *
+    std::string
     as_hex_str() const {
-        return top::to_hex(m_data).c_str();
+        return top::to_hex(m_data);
     }
 
     auto
