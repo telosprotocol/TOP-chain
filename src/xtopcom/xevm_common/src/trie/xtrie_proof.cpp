@@ -11,12 +11,12 @@
 NS_BEG3(top, evm_common, trie)
 xbytes_t VerifyProof(xhash256_t rootHash, xbytes_t const & _key, xkv_db_face_ptr_t proofDB, std::error_code & ec) {
     auto key = keybytesToHex(_key);
-    xdbg("[VerifyProof]: roothash: %s", rootHash.as_hex_str());
+    xdbg("[VerifyProof]: roothash: %s", rootHash.as_hex_str().c_str());
     xhash256_t wantHash = rootHash;
     for (std::size_t index = 0;; index++) {
         auto buf = proofDB->Get(xbytes_t{wantHash.begin(), wantHash.end()}, ec);
         if (buf.empty()) {
-            xwarn("proof node %zu (hash: %s) missing", index, wantHash.as_hex_str());
+            xwarn("proof node %zu (hash: %s) missing", index, wantHash.as_hex_str().c_str());
             ec = error::xerrc_t::trie_proof_missing;
             return {};
         }

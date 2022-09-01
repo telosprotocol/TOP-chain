@@ -19,7 +19,7 @@ public:
     static std::shared_ptr<xtop_state_mpt> create(xhash256_t root, base::xvdbstore_t * db, std::error_code & ec);
 
 public:
-    base::xaccount_index_t get_account_index(const std::string & account, std::error_code & ec) const;
+    base::xaccount_index_t get_account_index(const std::string & account, std::error_code & ec);
     void set_account_index(const std::string & account, const base::xaccount_index_t & index, std::error_code & ec);
     xhash256_t get_root_hash() const;
     xhash256_t commit(std::error_code & ec);

@@ -71,7 +71,7 @@ void Sync::AddSubTrie(xhash256_t const & root, xbytes_t const & path, xhash256_t
     if (parent != xhash256_t{}) {
         auto ancestor = nodeReqs[parent];
         if (ancestor == nullptr) {
-            xerror("sub-trie ancestor not found %s", parent.as_hex_str());
+            xerror("sub-trie ancestor not found %s", parent.as_hex_str().c_str());
             return;
         }
         ancestor->deps++;
@@ -98,7 +98,7 @@ void Sync::AddCodeEntry(xhash256_t const & hash, xbytes_t const & path, xhash256
     if (parent != xhash256_t{}) {
         auto ancestor = nodeReqs[parent];
         if (ancestor == nullptr) {
-            xerror("raw-entry ancestor not found %s", parent.as_hex_str());
+            xerror("raw-entry ancestor not found %s", parent.as_hex_str().c_str());
         }
         ancestor->deps++;
         req->parents.push_back(ancestor);

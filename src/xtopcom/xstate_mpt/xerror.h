@@ -15,10 +15,10 @@ namespace error {
 enum class xenum_errc {
     ok,
 
-    mpt_get_error,
-    mpt_set_error,
-    mpt_delete_error,
-    mpt_not_found,
+    state_mpt_db_get_error,
+    state_mpt_db_set_error,
+    state_mpt_db_delete_error,
+    state_mpt_db_not_found,
 };
 using xerrc_t = xenum_errc;
 
