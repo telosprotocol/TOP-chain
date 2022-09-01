@@ -37,7 +37,7 @@ TEST_F(test_state_mpt_fixture, test_db) {
 
     ec.clear();
     EXPECT_EQ(mpt_db.Get({k1.begin(), k1.end()}, ec), xbytes_t{});
-    EXPECT_EQ(ec.value(), static_cast<int>(state_mpt::error::xerrc_t::mpt_not_found));
+    EXPECT_EQ(ec.value(), static_cast<int>(state_mpt::error::xerrc_t::state_mpt_db_not_found));
 
     ec.clear();
     mpt_db.Put({k1.begin(), k1.end()}, {v1.begin(), v1.end()}, ec);
@@ -81,15 +81,25 @@ TEST_F(test_state_mpt_fixture, test_db) {
 
     ec.clear();
     EXPECT_EQ(mpt_db.Get({k1.begin(), k1.end()}, ec), xbytes_t{});
-    EXPECT_EQ(ec.value(), static_cast<int>(state_mpt::error::xerrc_t::mpt_not_found));
+    EXPECT_EQ(ec.value(), static_cast<int>(state_mpt::error::xerrc_t::state_mpt_db_not_found));
 
     ec.clear();
     EXPECT_EQ(mpt_db.Get({k2.begin(), k2.end()}, ec), xbytes_t{});
-    EXPECT_EQ(ec.value(), static_cast<int>(state_mpt::error::xerrc_t::mpt_not_found));
+    EXPECT_EQ(ec.value(), static_cast<int>(state_mpt::error::xerrc_t::state_mpt_db_not_found));
 
     ec.clear();
     EXPECT_EQ(mpt_db.Get({k3.begin(), k3.end()}, ec), xbytes_t{});
-    EXPECT_EQ(ec.value(), static_cast<int>(state_mpt::error::xerrc_t::mpt_not_found));
+    EXPECT_EQ(ec.value(), static_cast<int>(state_mpt::error::xerrc_t::state_mpt_db_not_found));
+}
+
+TEST_F(test_state_mpt_fixture, test_get) {
+    std::error_code ec;
+    auto s = state_mpt::xstate_mpt_t::create({}, m_db, ec);
+    EXPECT_EQ(ec.value(), 0);
+
+    ec.clear();
+    s->get_account_index("unknown", ec);
+    EXPECT_EQ(ec.value(), 0);
 }
 
 }

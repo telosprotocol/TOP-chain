@@ -17,17 +17,17 @@ static char const * const errc_to_string(int code) {
     case xerrc_t::ok:
         return "ok";
 
-    case xerrc_t::mpt_get_error:
-        return "mpt get error";
+    case xerrc_t::state_mpt_db_get_error:
+        return "state mpt db get error";
 
-    case xerrc_t::mpt_set_error:
-        return "mpt set error";
+    case xerrc_t::state_mpt_db_set_error:
+        return "state mpt db set error";
 
-    case xerrc_t::mpt_delete_error:
-        return "mpt delete error";
+    case xerrc_t::state_mpt_db_delete_error:
+        return "state mpt db delete error";
 
-    case xerrc_t::mpt_not_found:
-        return "mpt not found";
+    case xerrc_t::state_mpt_db_not_found:
+        return "state mpt db not found";
 
     default:
         return "unknown error";

@@ -20,13 +20,14 @@ std::shared_ptr<xtop_state_mpt> xtop_state_mpt::create(xhash256_t root, base::xv
     return std::make_shared<xtop_state_mpt>(mpt);
 }
 
-base::xaccount_index_t xtop_state_mpt::get_account_index(const std::string & account, std::error_code & ec) const {
+base::xaccount_index_t xtop_state_mpt::get_account_index(const std::string & account, std::error_code & ec) {
     auto index_str = m_trie->TryGet({account.begin(), account.end()}, ec);
-    if (!ec && index_str.empty()) {
-        ec = error::xerrc_t::mpt_not_found;
-    }
     if (ec) {
-        xwarn("xtop_state_mpt::get_account_index TryGet error, %s %s", ec.category().name(), ec.message().c_str());
+        xwarn("xtop_state_mpt::get_account_index TryGet %s error, %s %s", account.c_str(), ec.category().name(), ec.message().c_str());
+        return {};
+    }
+    if (index_str.empty()) {
+        xwarn("xtop_state_mpt::get_account_index TryGet %s empty", account.c_str());
         return {};
     }
     base::xaccount_index_t index;
@@ -39,7 +40,7 @@ void xtop_state_mpt::set_account_index(const std::string & account, const base::
     index.serialize_to(index_str);
     m_trie->TryUpdate({account.begin(), account.end()}, {index_str.begin(), index_str.end()}, ec);
     if (ec) {
-        xwarn("xtop_state_mpt::set_account_index TryUpdate error, %s %s", ec.category().name(), ec.message().c_str());
+        xwarn("xtop_state_mpt::set_account_index TryUpdate %s error, %s %s", account.c_str(), ec.category().name(), ec.message().c_str());
         return;
     }
     return;
@@ -69,7 +70,7 @@ void xtop_state_mpt::init(xhash256_t root, base::xvdbstore_t * db, std::error_co
     m_db = evm_common::trie::xtrie_db_t::NewDatabase(mpt_db);
     m_trie = evm_common::trie::xtrie_t::New(root, m_db, ec);
     if (ec) {
-        xwarn("xtop_state_mpt::xtop_state_mpt generate trie with %s failed: %s, %s", ec.category().name(), ec.message().c_str());
+        xwarn("xtop_state_mpt::init generate trie with %s failed: %s, %s", root.as_hex_str().c_str(), ec.category().name(), ec.message().c_str());
         return;
     }
     return;
