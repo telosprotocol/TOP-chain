@@ -696,6 +696,8 @@ namespace top
                             get_vblockstore()->load_block_output(*this, _target_block);
                             xassert(_target_block->get_output()->has_resource_data());
                         }
+
+                        get_vblockstore()->load_block_output_offdata(*this, _target_block);
        
                         fire_proposal_finish_event(_target_block, NULL, NULL, NULL, NULL);//call on_consensus_finish(block) to driver context layer
                     }
@@ -954,12 +956,12 @@ namespace top
             if( safe_check_for_block(_proposal_block) == false)
                 return false;
             
-            //then ensure input & output are consisten
-            if(false == _proposal_block->is_input_ready(false))  //input resources created after verify_proposal, here may has no input
-            {
-                xerror("xBFTRules::safe_check_for_proposal_block,input is not ready for  block=%s at node=0x%llx",_proposal_block->dump().c_str(),get_xip2_addr().low_addr);
-                return false;
-            }
+            // //then ensure input & output are consisten  -- XTODO backup vote has no input
+            // if(false == _proposal_block->is_input_ready(false))  //input resources created after verify_proposal, here may has no input
+            // {
+            //     xerror("xBFTRules::safe_check_for_proposal_block,input is not ready for  block=%s at node=0x%llx",_proposal_block->dump().c_str(),get_xip2_addr().low_addr);
+            //     return false;
+            // }
             //block 'flags must clean before proposal
             if(_proposal_block->get_block_flags() != 0)
             {
@@ -1255,14 +1257,9 @@ namespace top
             }
             
             //step#3: then test block 'valid or deliver. note:ensure input & output are consisten
-            if(false == _commit_block->is_input_ready(true))
+            if(false == _commit_block->is_body_and_offdata_ready(false))  // XTODO already check resource hash when set resource
             {
                 xerror("xBFTRules::safe_check_for_sync_block,input not ready for block=%s at node=0x%llx",_commit_block->dump().c_str(),get_xip2_addr().low_addr);
-                return false;
-            }
-            if(false == _commit_block->is_output_ready(true))
-            {
-                xerror("xBFTRules::safe_check_for_sync_block,output not ready for block=%s at node=0x%llx",_commit_block->dump().c_str(),get_xip2_addr().low_addr);
                 return false;
             }
             //step#4:now ready to do deep verification for hash based on header and input 'binary data

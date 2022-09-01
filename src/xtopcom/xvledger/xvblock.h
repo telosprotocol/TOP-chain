@@ -550,7 +550,7 @@ namespace top
         protected:
             const std::string           get_binlog_hash();
             const std::string           get_state_hash();  // only can be used by xvblock_t, only light-table store state hash in output entity
-            const std::string           get_output_offdata_hash();
+            const std::string           get_output_offdata_hash() const;
             const std::string           get_binlog();
             const std::string           get_unit_infos() const ;
         protected:
@@ -638,6 +638,8 @@ namespace top
             virtual bool                is_deliver(bool deep_test = false)  const;//test whether has certification ready
             virtual bool                is_input_ready(bool full_check_resources = false)  const;                  //nil-block return true because it dont need input
             virtual bool                is_output_ready(bool full_check_resources = false) const;                  //nil-block return true because it dont need output
+            virtual bool                is_output_offdata_ready(bool full_check_resources = false) const;
+            virtual bool                is_body_and_offdata_ready(bool full_check_resources = false) const;
             virtual bool                is_execute_ready() const {return true;}//check whether ready to execute bin-log
 
             bool                        is_genesis_block() const;                 //test whether it is a genesis block
@@ -710,7 +712,7 @@ namespace top
             const std::string           get_fullstate_hash();
             const std::string           get_unit_infos() const {return get_output()->get_unit_infos();}
             const std::string           get_binlog_hash() {return get_output()->get_binlog_hash();}
-            const std::string           get_output_offdata_hash() {return get_output()->get_output_offdata_hash();}
+            const std::string           get_output_offdata_hash() const {return get_output()->get_output_offdata_hash();}
             const std::string           get_full_state();
             const std::string           get_binlog() {return get_output()->get_binlog();}
             const std::string &         get_output_offdata() const {return m_output_offdata;}

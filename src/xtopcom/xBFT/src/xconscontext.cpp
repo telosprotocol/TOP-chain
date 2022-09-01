@@ -169,10 +169,10 @@ namespace top
             {
                 return false;
             }
-            if(false == _block->is_input_ready(false)) //put warning to identify it,may remove warning at release
-            {
-                xwarn("xBFTcontext_t::safe_check_for_cert_block,input is not ready for block=%s",_block->dump().c_str());
-            }
+            // if(false == _block->is_input_ready(false)) //put warning to identify it,may remove warning at release  XTODO no demand for cert
+            // {
+            //     xwarn("xBFTcontext_t::safe_check_for_cert_block,input is not ready for block=%s",_block->dump().c_str());
+            // }
             
             if(NULL != m_latest_lock_block)
             {

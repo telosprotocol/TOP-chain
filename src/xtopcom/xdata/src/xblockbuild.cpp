@@ -637,13 +637,12 @@ base::xauto_ptr<base::xvoutput_t> xlighttable_build_t::make_unit_output_from_tab
 
 std::vector<xobject_ptr_t<base::xvblock_t>> xlighttable_build_t::unpack_units_from_table(const base::xvblock_t* _tableblock) {
     XMETRICS_GAUGE(metrics::data_table_unpack_units, 1);
-#ifdef DEBUG
-    if (!_tableblock->is_input_ready(true)
-        || !_tableblock->is_output_ready(true)) {
+
+    if (!_tableblock->is_body_and_offdata_ready(false)) {
         xerror("xlighttable_build_t::unpack_units_from_table not ready block. block=%s", _tableblock->dump().c_str());
         return {};
     }
-#endif
+
     base::xvaccount_t _vtable_addr(_tableblock->get_account());
     std::vector<xobject_ptr_t<base::xvblock_t>> _batch_units;
 
