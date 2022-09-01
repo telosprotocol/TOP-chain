@@ -52,7 +52,13 @@ xhash256_t xtop_state_mpt::get_root_hash() const {
 xhash256_t xtop_state_mpt::commit(std::error_code & ec) {
     auto res = m_trie->Commit(ec);
     if (ec) {
-        xwarn("xtop_state_mpt::commit Commit error, %s %s", ec.category().name(), ec.message().c_str());
+        xwarn("xtop_state_mpt::commit trie commit error, %s %s", ec.category().name(), ec.message().c_str());
+        return res.first;
+    }
+    // TODO: should call outside with roles of node
+    m_db->Commit(res.first, nullptr, ec);
+    if (ec) {
+        xwarn("xtop_state_mpt::commit db commit error, %s %s", ec.category().name(), ec.message().c_str());
         return res.first;
     }
     return res.first;
