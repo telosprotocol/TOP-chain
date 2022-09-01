@@ -23,5 +23,13 @@
 #define BOLDWHITE "\033[1m\033[37m"   /* Bold White */
 
 #ifndef DEBUG_INFO
-#    define DEBUG_INFO printf(BOLDRED " %" PRIu64 RESET GREEN " %d " RESET "(%s)\n", xqc_now() % 100000000, __LINE__, __FUNCTION__);
+#    define DEBUG_INFO                                                                                                                                                             \
+        printf(BOLDRED " %" PRIu64 ",%" PRIu64 RESET GREEN " %d " RESET "(%s) \n", (xqc_now() % 100000000) / 1000000, (xqc_now() % 1000000) % 100000000, __LINE__, __FUNCTION__);
+#    define DEBUG_INFO_MSG(msg)                                                                                                                                                    \
+        printf(BOLDRED " %" PRIu64 ",%" PRIu64 RESET GREEN " %d " RESET "(%s) %s \n",                                                                                              \
+               (xqc_now() % 100000000) / 1000000,                                                                                                                                  \
+               (xqc_now() % 1000000) % 100000000,                                                                                                                                  \
+               __LINE__,                                                                                                                                                           \
+               __FUNCTION__,                                                                                                                                                       \
+               msg);
 #endif

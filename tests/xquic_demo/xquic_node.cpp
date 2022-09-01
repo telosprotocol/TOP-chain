@@ -18,7 +18,7 @@ void xquic_node_t::start() {
         m_server.init(std::bind(&xquic_node_t::on_quic_message_ready, shared_from_this(), std::placeholders::_1), m_server_port);
     });
 
-    m_client.init();
+    top::threading::xbackend_thread::spawn([this, self] { m_client.init(); });
 
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
@@ -41,13 +41,26 @@ void xquic_node_t::stop() {
 }
 
 void xquic_node_t::send(std::string addr, uint32_t port, top::xbytes_t const & data) {
-    user_conn_t * conn = m_client.connect((char *)addr.c_str(), port);
+    auto addr_port = addr + std::to_string(port);
+
+    // erase closed connection:
+    if (m_conn_map.find(addr_port) != m_conn_map.end() && m_conn_map.at(addr_port)->cid.cid_len == 0) {
+        m_conn_map.erase(addr_port);
+    }
+
+    if (m_conn_map.find(addr_port) == m_conn_map.end()) {
+        user_conn_t * new_conn = m_client.connect((char *)addr.c_str(), port);
+        m_conn_map.insert({addr_port, new_conn});
+    }
+    user_conn_t * conn = m_conn_map.at(addr_port);
     if (conn == nullptr) {
         // todo add ec return;
+        return;
     }
     assert(conn != nullptr);
     m_client.send(conn, data);
-    m_client.release_connection(conn);
+    // std::this_thread::sleep_for(std::chrono::seconds(2));
+    // m_client.send(conn, data);
 }
 
 void xquic_node_t::on_quic_message_ready(top::xbytes_t const & bytes) {
@@ -74,20 +87,19 @@ int main(int argc, char * argv[]) {
     while ((ch = getopt(argc, argv, "p:t:s:")) != -1) {
         switch (ch) {
         case 'p': {
-            printf("option port :%s\n", optarg);
+            // printf("option port :%s\n", optarg);
             server_port = atoi(optarg);
             node_ptr = std::make_shared<xquic_node_t>(server_port);
             node_ptr->start();
             break;
         }
         case 't': {
-            printf("option port :%s\n", optarg);
             send_cnt = atoi(optarg);
             printf("send count: %zu\n", send_cnt);
             break;
         }
         case 's': {
-            printf("option port :%s\n", optarg);
+            // printf("option port :%s\n", optarg);
             send_port = atoi(optarg);
 
             std::string data{"Message from client to server in demo "};
@@ -95,6 +107,7 @@ int main(int argc, char * argv[]) {
                 auto sdata = data + std::to_string(i);
                 top::xbytes_t send_data{sdata.begin(), sdata.end()};
                 node_ptr->send("127.0.0.1", send_port, send_data);
+                // std::this_thread::sleep_for(std::chrono::seconds(10)); // test timeouted connection
             }
             break;
         }

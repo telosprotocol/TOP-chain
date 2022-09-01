@@ -33,7 +33,7 @@ typedef struct user_conn_s {
     int rebinding_fd;
     struct event * rebinding_ev_socket;
 
-    struct event * ev_timeout;
+    struct event * conn_timeout_event;
 
     unsigned char * token;
     unsigned token_len;
@@ -57,6 +57,8 @@ typedef struct user_stream_s {
     size_t send_body_max;
     char * recv_body;
     size_t recv_body_len;
+
+    struct event * stream_timeout_event;
 
     user_conn_t * user_conn;
 } user_stream_t;
@@ -183,5 +185,6 @@ public:
 public:
     xqc_engine_t * engine;
     struct event_base * eb;
+    struct event * client_alive_timer;
     struct event * ev_engine;
 };
