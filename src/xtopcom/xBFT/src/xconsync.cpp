@@ -259,11 +259,9 @@ namespace top
                     }
                     
                     #ifdef DEBUG
-                    xassert(target_block->is_input_ready(true));
-                    xassert(target_block->is_output_ready(true));
+                    xassert(target_block->is_body_and_offdata_ready(true));
                     #else
-                    xassert(target_block->is_input_ready(false));
-                    xassert(target_block->is_output_ready(false));
+                    xassert(target_block->is_body_and_offdata_ready(false));
                     #endif
                     
                     bool found_matched_proposal = false;

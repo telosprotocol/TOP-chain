@@ -71,8 +71,7 @@ namespace top
             #endif
 
             //try best to do any heavy job before acquired lock
-            if(   (false == target_block->is_input_ready(true))
-               || (false == target_block->is_output_ready(true))
+            if(   (false == target_block->is_body_and_offdata_ready(true))
                || (false == target_block->is_valid(true)) )
             {
                 xerror("xsyncvstore_t::store_block,an unvalid block=%s",target_block->dump().c_str());
@@ -103,8 +102,7 @@ namespace top
                 return false;
             }
             target_block->reset_block_flags(); //No.1 safe rule: clean all flags first when sync/replicated one block
-            if(   (false == target_block->is_input_ready(true))
-               || (false == target_block->is_output_ready(true))
+            if(   (false == target_block->is_body_and_offdata_ready(true))
                || (false == target_block->is_valid(true)) )
             {
                 xerror("xsyncvstore_t::store_block,an unvalid block=%s",target_block->dump().c_str());

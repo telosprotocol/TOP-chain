@@ -124,7 +124,7 @@ void xconfig_onchain_loader_t::update_onchain_param(common::xlogic_time_t time) 
 
     std::map<std::string, std::string> params = unitstate->map_get(ONCHAIN_PARAMS);
     if (params.empty()) {
-        xwarn("xconfig_onchain_loader_t::update_onchain_param, get params map fail.");
+        xerror("xconfig_onchain_loader_t::update_onchain_param, get params map fail.");
         return;
     }
 

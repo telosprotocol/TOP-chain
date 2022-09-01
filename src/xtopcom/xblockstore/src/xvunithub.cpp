@@ -1265,7 +1265,7 @@ namespace top
                 auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
                 auto const remove_unit_proof = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.remove_unit_proof_point, container_block->get_clock());
 
-                base::xvblock_t * cert_block;
+                base::xvblock_t * cert_block = nullptr;
                 if (!remove_unit_proof) {
                     auto cert_blocks = load_block_object(*index_ptr, index_ptr->get_height() + 2);
                     if (cert_blocks.get_vector().empty()) {
@@ -1276,8 +1276,7 @@ namespace top
                     cert_block->add_ref();
                 }
 
-                xassert(container_block->is_input_ready(true));
-                xassert(container_block->is_output_ready(true));
+                xassert(container_block->is_body_and_offdata_ready(false));
 
                 // update index of unit blocks to commit state.
                 // auto unit_infos_str = container_block->get_unit_infos();
