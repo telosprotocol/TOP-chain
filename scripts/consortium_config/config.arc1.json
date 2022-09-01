@@ -42,7 +42,7 @@
     "enable_workload_contract": false,
     "enable_gas_fee": true,
     "enable_free_tgas": false,
-    "enable_eth_token": false,
+    "enable_tep_token": false,
     "toggle_register_whitelist": 0,
     "register_whitelist": "",
     "chain_name": "galileo",

@@ -592,7 +592,8 @@ XDECLARE_CONFIGURATION(enable_reward_contract, bool, true);
 XDECLARE_CONFIGURATION(enable_workload_contract, bool, true);
 XDECLARE_CONFIGURATION(enable_gas_fee, bool, true);
 XDECLARE_CONFIGURATION(enable_free_tgas, bool, true);
-XDECLARE_CONFIGURATION(enable_eth_token, bool, true);
+XDECLARE_CONFIGURATION(enable_tep_token, bool, true);
+XDECLARE_CONFIGURATION(enable_consortium, bool, true);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(toggle_register_whitelist, std::uint16_t, normal, 0, 0, 1);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(register_whitelist, char const *, normal, "", "", "");
 

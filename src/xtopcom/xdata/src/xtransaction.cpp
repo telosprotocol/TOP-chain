@@ -21,8 +21,6 @@ bool xtransaction_t::transaction_type_check() const {
         case xtransaction_type_deploy_evm_contract:
         case xtransaction_type_run_contract:
         case xtransaction_type_transfer:
-        case xtransaction_type_pledge_token_tgas:
-        case xtransaction_type_redeem_token_tgas:
             return true;
         default:
             return false;

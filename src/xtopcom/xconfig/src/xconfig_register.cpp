@@ -131,7 +131,8 @@ void xconfig_register_t::init_static_config() {
     XADD_OFFCHAIN_PARAMETER(enable_workload_contract);
     XADD_OFFCHAIN_PARAMETER(enable_gas_fee);
     XADD_OFFCHAIN_PARAMETER(enable_free_tgas);
-    XADD_OFFCHAIN_PARAMETER(enable_eth_token);
+    XADD_OFFCHAIN_PARAMETER(enable_tep_token);
+    XADD_OFFCHAIN_PARAMETER(enable_consortium);
 
     m_param_lock.release_write();
 }

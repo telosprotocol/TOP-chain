@@ -244,7 +244,8 @@ XDEFINE_CONFIGURATION(enable_reward_contract);
 XDEFINE_CONFIGURATION(enable_workload_contract);
 XDEFINE_CONFIGURATION(enable_gas_fee);
 XDEFINE_CONFIGURATION(enable_free_tgas);
-XDEFINE_CONFIGURATION(enable_eth_token);
+XDEFINE_CONFIGURATION(enable_tep_token);
+XDEFINE_CONFIGURATION(enable_consortium);
 
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(toggle_register_whitelist);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(register_whitelist);

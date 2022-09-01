@@ -115,6 +115,9 @@ int32_t xaccount_context_t::create_user_account(const std::string& address) {
     if (ret != xsuccess) {
         return ret;
     }
+    // consortium: disable tep token
+    if (XGET_CONFIG(enable_tep_token) == false)
+        return ret;
 
     auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
     if (top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.v1_6_0_version_point, get_timer_height())) {
