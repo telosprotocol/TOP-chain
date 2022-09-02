@@ -1,7 +1,6 @@
 #pragma once
 
 #include "common.h"
-#include "platform.h"
 #include "xbasic/xbyte_buffer.h"
 
 #include <errno.h>
@@ -62,6 +61,13 @@ typedef struct user_stream_s {
 
     user_conn_t * user_conn;
 } user_stream_t;
+
+typedef struct client_send_buffer_s {
+    struct event * send_event;
+    unsigned char * send_data;  // bytes array
+    std::size_t send_data_len;
+    user_conn_t * user_conn;
+} client_send_buffer_t;
 
 class xquic_server_t {
 private:

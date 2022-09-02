@@ -107,7 +107,7 @@ int main(int argc, char * argv[]) {
                 auto sdata = data + std::to_string(i);
                 top::xbytes_t send_data{sdata.begin(), sdata.end()};
                 node_ptr->send("127.0.0.1", send_port, send_data);
-                // std::this_thread::sleep_for(std::chrono::seconds(10)); // test timeouted connection
+                // std::this_thread::sleep_for(std::chrono::milliseconds(10));  // test timeouted connection
             }
             break;
         }

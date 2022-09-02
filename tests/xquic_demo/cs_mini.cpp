@@ -9,6 +9,22 @@
 #define g_server_engine_idle_timeout 30 * 1000  // 30s
 #define MAX_BUF_SIZE (100 * 1024 * 1024)
 
+#include <errno.h>
+
+/**
+ * @brief get system last errno
+ *
+ * @return int
+ */
+static int get_last_sys_errno() {
+    int err = 0;
+    err = errno;
+    return err;
+}
+static void set_last_sys_errno(int err) {
+    errno = err;
+}
+
 // log
 void xquic_server_write_log(xqc_log_level_t lvl, const void * buf, size_t count, void * engine_user_data) {
     // printf("xquic_log: %s\n", (char *)buf);
@@ -42,7 +58,7 @@ void xquic_server_set_event_timer(xqc_msec_t wake_after, void * user_data) {
     event_add(server->ev_engine, &tv);
 }
 
-// user_data as xquic_server_t
+// user_data as xquic_client_t
 void xquic_client_set_event_timer(xqc_msec_t wake_after, void * user_data) {
     xquic_client_t * client = (xquic_client_t *)user_data;
     struct timeval tv;
@@ -128,15 +144,15 @@ void xquic_server_conn_update_cid_notify(xqc_connection_t * conn, const xqc_cid_
 }
 
 static void xquic_server_engine_callback(int fd, short what, void * arg) {
-    DEBUG_INFO;
-    printf("timer wakeup now:%" PRIu64 "\n", xqc_now());
+    DEBUG_INFO_MSG("server engine timer wakeup");
+    // printf("server engine timer wakeup now:%" PRIu64 "\n", xqc_now());
     xquic_server_t * server = (xquic_server_t *)arg;
 
     xqc_engine_main_logic(server->engine);
 }
 static void xquic_client_engine_callback(int fd, short what, void * arg) {
-    DEBUG_INFO;
-    printf("timer wakeup now:%" PRIu64 "\n", xqc_now());
+    DEBUG_INFO_MSG("client engine timer wakeup");
+    // printf("timer wakeup now:%" PRIu64 "\n", xqc_now());
     xquic_client_t * client = (xquic_client_t *)arg;
 
     xqc_engine_main_logic(client->engine);
@@ -386,7 +402,7 @@ void xquic_client_conn_ping_acked_notify(xqc_connection_t * conn, const xqc_cid_
 /// client app callbacks
 /// stream write/read/close
 int xquic_client_stream_read_notify(xqc_stream_t * stream, void * user_data) {
-    DEBUG_INFO;
+    // DEBUG_INFO;
     unsigned char fin = 0;
     user_stream_t * user_stream = (user_stream_t *)user_data;
 
@@ -410,7 +426,7 @@ int xquic_client_stream_read_notify(xqc_stream_t * stream, void * user_data) {
 
     } while (read > 0 && !fin);
 
-    printf("xqc_stream_recv read:%zd, offset:%zu, fin:%d\n", read_sum, user_stream->recv_body_len, fin);
+    // printf("xqc_stream_recv read:%zd, offset:%zu, fin:%d\n", read_sum, user_stream->recv_body_len, fin);
 
     // if (fin) {
     // user_stream->recv_fin = 1;
@@ -607,7 +623,7 @@ static int xquic_client_create_socket(int type, user_conn_t * conn) {
 
 /// client conn timeout callback
 static void xquic_client_conn_timeout_callback(int fd, short what, void * arg) {
-    DEBUG_INFO_MSG("client: connection timeout callback check");
+    // DEBUG_INFO_MSG("client: connection timeout callback check");
     user_conn_t * user_conn = (user_conn_t *)arg;
 
     static int restart_after_a_while = 1;
@@ -882,19 +898,6 @@ bool xquic_server_t::init(xquic_message_ready_callback cb, unsigned int const se
     ap_cbs.conn_cbs = conn_cbs;
     ap_cbs.stream_cbs = stream_cbs;
 
-    // xqc_app_proto_callbacks_t ap_cbs = {.conn_cbs =
-    //                                         {
-    //                                             .conn_create_notify = xquic_server_conn_create_notify,
-    //                                             .conn_close_notify = xquic_server_conn_close_notify,
-    //                                             .conn_handshake_finished = xquic_server_conn_handshake_finished,
-    //                                         },
-    //                                     .stream_cbs = {
-    //                                         // .stream_write_notify = xquic_server_stream_write_notify, // unused
-    //                                         .stream_read_notify = xquic_server_stream_read_notify,
-    //                                         .stream_create_notify = xquic_server_stream_create_notify,
-    //                                         .stream_close_notify = xquic_server_stream_close_notify,
-    //                                     }};
-
     xqc_engine_register_alpn(engine, "transport", 9, &ap_cbs);
 
     /* for lb cid generate */
@@ -1132,18 +1135,20 @@ user_conn_t * xquic_client_t::connect(char server_addr[64], uint32_t server_port
     return user_conn;
 }
 
-bool xquic_client_t::send(user_conn_t * user_conn, top::xbytes_t send_data) {
+void xquic_client_do_send_callback(int fd, short what, void * arg) {
     DEBUG_INFO;
+    client_send_buffer_t * send_buffer = (client_send_buffer_t *)arg;
+    user_conn_t * user_conn = send_buffer->user_conn;
     DEBUG_INFO_MSG(xqc_scid_str(&user_conn->cid));
+
     user_stream_t * user_stream = (user_stream_t *)calloc(1, sizeof(user_stream_t));
     memset(user_stream, 0, sizeof(user_stream_t));
     user_stream->user_conn = user_conn;
-    user_stream->stream = xqc_stream_create(engine, &user_conn->cid, user_stream);
+    user_stream->stream = xqc_stream_create(user_conn->client->engine, &user_conn->cid, user_stream);
 
     if (user_stream->stream == nullptr) {
         // todo ec
         DEBUG_INFO_MSG("create stream error");
-        return false;
     } else {
         /// set stream timeout
         user_stream->stream_timeout_event = event_new(user_conn->client->eb, -1, 0, xquic_client_stream_timeout_callback, user_stream);
@@ -1153,13 +1158,31 @@ bool xquic_client_t::send(user_conn_t * user_conn, top::xbytes_t send_data) {
         event_add(user_stream->stream_timeout_event, &tv);
 
         user_stream->send_body_max = MAX_BUF_SIZE;
-        user_stream->send_body = (char *)malloc(send_data.size());
-        user_stream->send_body_len = send_data.size();
-        std::copy(send_data.begin(), send_data.end(), user_stream->send_body);
-        // strncpy(user_stream->send_body, send_data.begin(), send_data.size());
+        user_stream->send_body_len = send_buffer->send_data_len;
+        user_stream->send_body = (char *)malloc(send_buffer->send_data_len);
+        memcpy(user_stream->send_body, send_buffer->send_data, user_stream->send_body_len);
         xquic_client_stream_send(user_stream->stream, user_stream);
     }
-    return true;
+
+    if (send_buffer->send_data) {
+        free(send_buffer->send_data);
+    }
+    event_free(send_buffer->send_event);
+    free(send_buffer);
+}
+
+/// api for quic_node , create a event (`client_send_buffer_t`) and let client thread handle this send data buffer.
+bool xquic_client_t::send(user_conn_t * user_conn, top::xbytes_t send_data) {
+    client_send_buffer_t * send_buffer = (client_send_buffer_t *)calloc(1, sizeof(client_send_buffer_t));
+    send_buffer->send_event = event_new(user_conn->client->eb, -1, 0, xquic_client_do_send_callback, send_buffer);
+    send_buffer->send_data = (unsigned char *)malloc(send_data.size());
+    send_buffer->send_data_len = send_data.size();
+    send_buffer->user_conn = user_conn;
+    std::copy(send_data.begin(), send_data.end(), send_buffer->send_data);
+    int ret = event_add(send_buffer->send_event, NULL);
+    event_active(send_buffer->send_event, 0, 0);
+    // evuser_triggle(send_buffer->send_event);
+    return ret == 0;
 }
 
 void xquic_client_t::release_connection(user_conn_t * user_conn) {
