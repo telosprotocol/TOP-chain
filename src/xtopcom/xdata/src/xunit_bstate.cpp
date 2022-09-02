@@ -483,7 +483,7 @@ common::xaccount_address_t xunit_bstate_t::tep_token_owner(common::xchain_uuid_t
             break;
         }
 
-        auto owner = owner_impl(raw_data, ec);
+        auto owner = common::xaccount_address_t::build_from(top::to_string(raw_data), ec);
         if (ec) {
             xwarn("get TEP token owner failed: failed to read account data for token %d", static_cast<int>(chain_uuid));
             break;
@@ -587,13 +587,6 @@ xbytes_t xunit_bstate_t::raw_owner(common::xchain_uuid_t const chain_uuid, std::
     return top::to_bytes(raw_data->query(top::to_string(chain_uuid)));
 }
 
-common::xaccount_address_t xunit_bstate_t::owner_impl(xbytes_t const & owner_account_in_bytes, std::error_code & ec) const {
-    assert(!ec);
-    assert(!owner_account_in_bytes.empty());
-
-    return common::xaccount_address_t::build_from(top::to_string(owner_account_in_bytes), ec);
-}
-
 common::xaccount_address_t xunit_bstate_t::tep_token_controller(common::xchain_uuid_t const chain_uuid) const {
     std::error_code ec;
 
@@ -604,18 +597,18 @@ common::xaccount_address_t xunit_bstate_t::tep_token_controller(common::xchain_u
     }
 
     if (raw_data.empty()) {
-        xwarn("get TEP token controller failed: empty owner account for token %d", static_cast<int>(chain_uuid));
+        xwarn("get TEP token controller failed: empty controller account for token %d", static_cast<int>(chain_uuid));
         return eth_zero_address;
     }
 
-    auto controller = controller_impl(raw_data, ec);
+    auto controller = common::xaccount_address_t::build_from(top::to_string(raw_data), ec);
     if (ec) {
         xwarn("get TEP token controller failed: failed to read account data for token %d", static_cast<int>(chain_uuid));
         return eth_zero_address;
     }
 
     if (controller.empty()) {
-        xwarn("get TEP token controller failed: extracted owner account is empty for token %d", static_cast<int>(chain_uuid));
+        xwarn("get TEP token controller failed: extracted controller account is empty for token %d", static_cast<int>(chain_uuid));
         return eth_zero_address;
     }
 
@@ -697,13 +690,6 @@ xbytes_t xunit_bstate_t::raw_controller(common::xchain_uuid_t const chain_uuid, 
 
     assert(raw_data != nullptr);
     return top::to_bytes(raw_data->query(top::to_string(chain_uuid)));
-}
-
-common::xaccount_address_t xunit_bstate_t::controller_impl(xbytes_t const & controller_account_in_bytes, std::error_code & ec) const {
-    assert(!ec);
-    assert(!controller_account_in_bytes.empty());
-
-    return common::xaccount_address_t::build_from(top::to_string(controller_account_in_bytes), ec);
 }
 
 }  // namespace data
