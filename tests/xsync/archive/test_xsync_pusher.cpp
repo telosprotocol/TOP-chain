@@ -66,7 +66,7 @@ static xJson::Value build_archives() {
 
     return v;
 }
-
+#if 0
 TEST(xsync_pusher, test_push_block) {
 
     xrole_xips_manager_t role_xips_mgr("");
@@ -164,3 +164,4 @@ TEST(xsync_pusher, test_push_block) {
         ASSERT_EQ(vhost.read_msg(msg, src, dst), false);
     }
 }
+#endif 

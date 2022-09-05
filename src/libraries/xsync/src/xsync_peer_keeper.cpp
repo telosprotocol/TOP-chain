@@ -207,7 +207,7 @@ void xsync_peer_keeper_t::prune_table(const vnetwork::xvnode_address_t &self_add
             base::xvaccount_t _vaddr(address);
             uint64_t min_height;
             bool succ = xsync_prune_sigleton_t::instance().get_height(address, min_height);
-            if (succ && m_sync_store->is_full_node_forked()) {
+            if (succ) {
                 store::refresh_block_recycler_rule(top::chainbase::xmodule_type_xsync, _vaddr, min_height);
                 xsync_info("xsync_peer_keeper walk_role,refresh prune height account %s, height %llu", address.c_str(), min_height);
             }
@@ -241,7 +241,7 @@ void xsync_peer_keeper_t::prune_table(const vnetwork::xvnode_address_t &self_add
 
             uint64_t min_height;
             bool succ = xsync_prune_sigleton_t::instance().get_height(address, min_height);
-            if (succ && m_sync_store->is_full_node_forked()) {
+            if (succ) {
                 store::refresh_block_recycler_rule(top::chainbase::xmodule_type_xsync, _vaddr, min_height);
                 xsync_info("xsync_peer_keeper walk_role frozen,refresh prune height account %s, height %llu", address.c_str(), min_height);
             }
