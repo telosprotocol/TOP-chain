@@ -330,7 +330,11 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
         if (table_mpt == nullptr) {
             return nullptr;
         }
-        auto root_hash = table_mpt->get_root_hash();
+        auto root_hash = table_mpt->get_root_hash(ec);
+        if (ec) {
+            xwarn("xtable_maker_t::make_light_table_v2 get mpt root hash fail.");
+            return nullptr;
+        }
         xdbg("xtable_maker_t::make_light_table_v2 create mpt succ is_leader=%d,%s,root hash:%s", is_leader, cs_para.dump().c_str(), root_hash.as_hex_str().c_str());
         state_root = evm_common::xh256_t(root_hash.to_bytes());
     }
@@ -677,7 +681,7 @@ std::shared_ptr<state_mpt::xtop_state_mpt> xtable_maker_t::create_new_mpt(const 
                                                                        const statectx::xstatectx_ptr_t & table_state_ctx,
                                                                        const std::vector<std::pair<xblock_ptr_t, base::xaccount_index_t>> & batch_unit_and_index) {
     std::error_code ec;
-    auto mpt = state_mpt::xtop_state_mpt::create(last_mpt_root, base::xvchain_t::instance().get_xdbstore(), ec);
+    auto mpt = state_mpt::xtop_state_mpt::create(last_mpt_root, base::xvchain_t::instance().get_xdbstore(), get_account(), ec);
     if (ec) {
         xwarn("xtable_maker_t::create_new_mpt create mpt fail.");
         return nullptr;

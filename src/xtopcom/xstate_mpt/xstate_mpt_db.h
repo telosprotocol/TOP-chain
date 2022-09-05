@@ -12,7 +12,7 @@ namespace state_mpt {
 
 class xtop_state_mpt_db : public evm_common::trie::xkv_db_face_t {
 public:
-    xtop_state_mpt_db(base::xvdbstore_t * db);
+    xtop_state_mpt_db(base::xvdbstore_t * db, std::string table);
     ~xtop_state_mpt_db() = default;
 
     xbytes_t Get(xbytes_t const & key, std::error_code & ec);
@@ -23,6 +23,7 @@ public:
 private:
     base::xvdbstore_t * m_db{nullptr};
     std::mutex m_mutex;
+    std::string m_table;
 };
 using xstate_mpt_db_t = xtop_state_mpt_db;
 
