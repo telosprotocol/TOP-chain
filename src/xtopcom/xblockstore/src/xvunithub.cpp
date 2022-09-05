@@ -84,24 +84,22 @@ namespace top
                     }
                 }
 
-                if (!block_events.empty()) {
-                    for (uint64_t index = block_events.size() - 1; index >= 0; index--) {
-                        auto event = block_events[index];
-                        if(event.get_index() != NULL) //still valid
-                        {
-                            if (event.get_index()->is_timer_address()) {
-                                if (enum_blockstore_event_stored == event.get_type()) {
-                                    m_store_ptr->on_block_prune(event);
-                                    break;
-                                }
-                            } else {
-                                if(enum_blockstore_event_committed == event.get_type())
-                                {
-                                    m_store_ptr->on_block_prune(event);
-                                    break;
-                                }
-                            }                            
-                        }
+                for(auto & event : block_events)
+                {
+                    if(event.get_index() != NULL) //still valid
+                    {
+                        if (event.get_index()->is_timer_address()) {
+                            if (enum_blockstore_event_stored == event.get_type()) {
+                                m_store_ptr->on_block_prune(event);
+                                break;
+                            }
+                        } else {
+                            if(enum_blockstore_event_committed == event.get_type())
+                            {
+                                m_store_ptr->on_block_prune(event);
+                                break;
+                            }
+                        }                            
                     }
                 }
             }
@@ -822,11 +820,11 @@ namespace top
             }
 
             // XTODO only tabletable need execute immediately after stored
-            if (block->get_block_level() == base::enum_xvblock_level_table) {
-                // TODO(jimmy) commit tableblock try to update table state
-                base::auto_reference<base::xvblock_t> auto_hold_block_ptr(block);
-                base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->execute_block(block, metrics::statestore_access_from_blockstore);
-            }
+            // if (block->get_block_level() == base::enum_xvblock_level_table) {
+            //     // TODO(jimmy) commit tableblock try to update table state
+            //     base::auto_reference<base::xvblock_t> auto_hold_block_ptr(block);
+            //     base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->execute_block(block, metrics::statestore_access_from_blockstore);
+            // }
 
             return ret;
         }

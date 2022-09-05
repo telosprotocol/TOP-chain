@@ -61,7 +61,8 @@ xaccount_index_t::xaccount_index_t(uint64_t height, std::string const& unithash,
     m_latest_unit_height = height;
     m_latest_unit_viewid = 0;
     m_unit_hash = unithash;
-    xdbg("xaccount_index_t::xaccount_index_t unithash:%s", unithash.c_str());
+    xdbg("xaccount_index_t::xaccount_index_t unithash:%s", base::xstring_utl::to_hex(unithash).c_str());
+    xassert(!unithash.empty());
     m_state_hash = statehash;
     set_latest_unit_class(_unitclass);
     set_latest_unit_type(_unittype);
@@ -98,6 +99,7 @@ int32_t xaccount_index_t::do_write(base::xstream_t & stream) const {
     if (check_account_index_flag(enum_xaccount_index_flag_carry_unit_hash)) {
         stream.write_compact_var(m_unit_hash);
         stream.write_compact_var(m_state_hash);
+        xassert(!m_unit_hash.empty());
     }
 
     return (stream.size() - begin_size);
@@ -115,6 +117,7 @@ int32_t xaccount_index_t::do_read(base::xstream_t & stream) {
     if (check_account_index_flag(enum_xaccount_index_flag_carry_unit_hash)) {
         stream.read_compact_var(m_unit_hash);
         stream.read_compact_var(m_state_hash);
+        xassert(!m_unit_hash.empty());
     }
     
     return (begin_size - stream.size());
@@ -168,8 +171,8 @@ bool xaccount_index_t::is_match_unit(base::xvblock_t* unit) const {
 
 std::string xaccount_index_t::dump() const {
     char local_param_buf[128];
-    xprintf(local_param_buf,sizeof(local_param_buf),"{height=%" PRIu64 ",viewid=%" PRIu64 ",flag=0x%x,nonce=%" PRIu64 "}",
-        m_latest_unit_height, m_latest_unit_viewid, m_account_flag, m_latest_tx_nonce);
+    xprintf(local_param_buf,sizeof(local_param_buf),"{height=%" PRIu64 ",viewid=%" PRIu64 ",flag=0x%x,nonce=%" PRIu64 ",hash:%s}",
+        m_latest_unit_height, m_latest_unit_viewid, m_account_flag, m_latest_tx_nonce, base::xstring_utl::to_hex(m_unit_hash).c_str());
     return std::string(local_param_buf);
 }
 

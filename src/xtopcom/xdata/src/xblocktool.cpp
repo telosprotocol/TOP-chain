@@ -649,6 +649,13 @@ bool xblocktool_t::check_lacking_unit_and_try_sync(const base::xvaccount_t & vac
             uint32_t sync_num = (uint32_t)(latest_commit_height - latest_connect_height);
             mbus::xevent_behind_ptr_t ev = make_object_ptr<mbus::xevent_behind_on_demand_t>(
                 vaccount.get_address(), from_height, sync_num, true, "account_state_fall_behind", commit_account_index.get_latest_unit_hash(), true);
+
+            xassert(!commit_account_index.get_latest_unit_hash().empty());
+            xinfo("xblocktool_t::check_lacking_unit_and_try_sync try sync account:%s,height:%llu,num:%u,hash:%s",
+                  vaccount.get_address().c_str(),
+                  from_height,
+                  sync_num,
+                  base::xstring_utl::to_hex(commit_account_index.get_latest_unit_hash()).c_str());
             base::xvchain_t::instance().get_xevmbus()->push_event(ev);
         }
         return false;
