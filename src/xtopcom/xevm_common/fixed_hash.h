@@ -75,7 +75,7 @@ public:
     }
 
     /// Explicitly construct, copying from a byte array.
-    explicit FixedHash(bytes const & _b, ConstructFromHashType _t = FailIfDifferent) {
+    explicit FixedHash(xbytes_t const & _b, ConstructFromHashType _t = FailIfDifferent) {
         if (_b.size() == N)
             memcpy(m_data.data(), _b.data(), std::min<unsigned>(_b.size(), N));
         else {
@@ -103,7 +103,7 @@ public:
     }
 
     /// Explicitly construct, copying from a bytes in memory with given pointer.
-    explicit FixedHash(byte const * _bs, ConstructFromPointerType) {
+    explicit FixedHash(xbyte_t const * _bs, ConstructFromPointerType) {
         memcpy(m_data.data(), _bs, N);
     }
 
@@ -119,7 +119,7 @@ public:
 
     /// @returns true iff this is the empty hash.
     explicit operator bool() const {
-        return std::any_of(m_data.begin(), m_data.end(), [](byte _b) { return _b != 0; });
+        return std::any_of(m_data.begin(), m_data.end(), [](xbyte_t _b) { return _b != 0; });
     }
 
     // The obvious comparison operators.
@@ -192,11 +192,11 @@ public:
     }
 
     /// @returns a particular byte from the hash.
-    byte & operator[](unsigned _i) {
+    xbyte_t & operator[](unsigned _i) {
         return m_data[_i];
     }
     /// @returns a particular byte from the hash.
-    byte operator[](unsigned _i) const {
+    xbyte_t operator[](unsigned _i) const {
         return m_data[_i];
     }
 
@@ -226,41 +226,41 @@ public:
     }
 
     /// @returns a mutable byte pointer to the object's data.
-    byte * data() {
+    xbyte_t * data() {
         return m_data.data();
     }
 
     /// @returns a constant byte pointer to the object's data.
-    byte const * data() const {
+    xbyte_t const * data() const {
         return m_data.data();
     }
 
     /// @returns begin iterator.
-    auto begin() const -> typename std::array<byte, N>::const_iterator {
+    auto begin() const -> typename std::array<xbyte_t, N>::const_iterator {
         return m_data.begin();
     }
 
     /// @returns end iterator.
-    auto end() const -> typename std::array<byte, N>::const_iterator {
+    auto end() const -> typename std::array<xbyte_t, N>::const_iterator {
         return m_data.end();
     }
 
     /// @returns a copy of the object's data as a byte vector.
-    bytes asBytes() const {
-        return bytes(data(), data() + N);
+    xbytes_t asBytes() const {
+        return xbytes_t(data(), data() + N);
     }
     /// @returns a copy of the object's data as a byte vector.
-    bytes to_bytes() const {
-        return bytes(data(), data() + N);
+    xbytes_t to_bytes() const {
+        return xbytes_t(data(), data() + N);
     }
 
     /// @returns a mutable reference to the object's data as an STL array.
-    std::array<byte, N> & asArray() {
+    std::array<xbyte_t, N> & asArray() {
         return m_data;
     }
 
     /// @returns a constant reference to the object's data as an STL array.
-    std::array<byte, N> const & asArray() const {
+    std::array<xbyte_t, N> const & asArray() const {
         return m_data;
     }
 
@@ -305,7 +305,7 @@ public:
         static_assert(P * c_bloomBytes <= N, "out of range");
 
         FixedHash<M> ret;
-        byte const * p = data();
+        xbyte_t const * p = data();
         for (unsigned i = 0; i < P; ++i) {
             unsigned index = 0;
             for (unsigned j = 0; j < c_bloomBytes; ++j, ++p)
@@ -335,7 +335,7 @@ public:
     }
 
 private:
-    std::array<byte, N> m_data;  ///< The binary data.
+    std::array<xbyte_t, N> m_data;  ///< The binary data.
 };
 
 /// Fast equality operator for h256.

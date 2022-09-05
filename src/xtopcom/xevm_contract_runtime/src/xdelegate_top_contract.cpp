@@ -30,7 +30,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
         err.fail_status = precompile_error::Fatal;
         err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-        xwarn("predefined top contract: invalid input");
+        xwarn("precompiled top contract: invalid input");
 
         return false;
     }
@@ -40,7 +40,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
         err.fail_status = precompile_error::Fatal;
         err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::NotSupported);
 
-        xwarn("predefined top contract: not supported token: %d", static_cast<int>(chain_uuid));
+        xwarn("precompiled top contract: not supported token: %d", static_cast<int>(chain_uuid));
 
         return false;
     }
@@ -51,7 +51,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
         err.fail_status = precompile_error::Fatal;
         err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-        xwarn("predefined top contract: illegal input data");
+        xwarn("precompiled top contract: illegal input data");
 
         return false;
     }
@@ -61,14 +61,14 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
         err.fail_status = precompile_error::Fatal;
         err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-        xwarn("predefined top contract: illegal input function selector");
+        xwarn("precompiled top contract: illegal input function selector");
 
         return false;
     }
 
     switch (function_selector.method_id) {
     case method_id_decimals: {
-        xdbg("predefined top contract: decimals");
+        xdbg("precompiled top contract: decimals");
 
         output.exit_status = Returned;
         output.cost = 0;
@@ -78,14 +78,14 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
     }
 
     case method_id_total_supply: {
-        xdbg("predefined top contract: totalSupply");
+        xdbg("precompiled top contract: totalSupply");
 
         uint64_t constexpr total_supply_gas_cost = 2538;
         if (target_gas < total_supply_gas_cost) {
             err.fail_status = Error;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
 
-            xwarn("predefined top contract: totalSupply out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, total_supply_gas_cost);
+            xwarn("precompiled top contract: totalSupply out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, total_supply_gas_cost);
 
             return false;
         }
@@ -94,7 +94,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined top contract: totalSupply with non-empty parameter");
+            xwarn("precompiled top contract: totalSupply with non-empty parameter");
 
             return false;
         }
@@ -107,14 +107,14 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
     }
 
     case method_id_balance_of: {
-        xdbg("predefined top contract: balanceOf");
+        xdbg("precompiled top contract: balanceOf");
 
         uint64_t constexpr balance_of_gas_cost = 3268;
         if (target_gas < balance_of_gas_cost) {
             err.fail_status = precompile_error::Error;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
 
-            xwarn("predefined top contract: balanceOf out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, balance_of_gas_cost);
+            xwarn("precompiled top contract: balanceOf out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, balance_of_gas_cost);
 
             return false;
         }
@@ -123,7 +123,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined top contract: balance_of with invalid parameter (parameter count not one)");
+            xwarn("precompiled top contract: balance_of with invalid parameter (parameter count not one)");
 
             return false;
         }
@@ -133,7 +133,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined top contract: balance_of invalid account");
+            xwarn("precompiled top contract: balance_of invalid account");
 
             return false;
         }
@@ -150,7 +150,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
     }
 
     case method_id_transfer: {
-        xdbg("predefined top contract: transfer");
+        xdbg("precompiled top contract: transfer");
 
         uint64_t constexpr transfer_gas_cost = 18446;
         xbytes_t result(32, 0);
@@ -161,7 +161,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
             err.cost = transfer_gas_cost;
             err.output = result;
 
-            xwarn("predefined top contract: transfer is not allowed in static context");
+            xwarn("precompiled top contract: transfer is not allowed in static context");
 
             return false;
         }
@@ -170,7 +170,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Error;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
 
-            xwarn("predefined top contract: transfer out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, transfer_gas_cost);
+            xwarn("precompiled top contract: transfer out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, transfer_gas_cost);
 
             return false;
         }
@@ -179,7 +179,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined top contract: transfer with invalid parameter");
+            xwarn("precompiled top contract: transfer with invalid parameter");
 
             return false;
         }
@@ -189,7 +189,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined top contract: transfer with invalid account");
+            xwarn("precompiled top contract: transfer with invalid account");
 
             return false;
         }
@@ -200,7 +200,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined top contract: transfer with invalid value");
+            xwarn("precompiled top contract: transfer with invalid value");
 
             return false;
         }
@@ -234,14 +234,14 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
             err.cost = transfer_reverted_gas_cost;
             err.output = result;
 
-            xwarn("predefined top contract: transfer reverted. ec %" PRIi32 " category %s msg %s", ec.value(), ec.category().name(), ec.message().c_str());
+            xwarn("precompiled top contract: transfer reverted. ec %" PRIi32 " category %s msg %s", ec.value(), ec.category().name(), ec.message().c_str());
         }
 
         return !ec;
     }
 
     case method_id_transfer_from: {
-        xdbg("predefined top contract: transferFrom");
+        xdbg("precompiled top contract: transferFrom");
 
         uint64_t constexpr transfer_from_gas_cost = 18190;
         xbytes_t result(32, 0);
@@ -252,7 +252,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
             err.cost = transfer_from_gas_cost;
             err.output = result;
 
-            xwarn("predefined top contract: transferFrom is not allowed in static context");
+            xwarn("precompiled top contract: transferFrom is not allowed in static context");
 
             return false;
         }
@@ -261,7 +261,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Error;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
 
-            xwarn("predefined top contract: transferFrom out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, transfer_from_gas_cost);
+            xwarn("precompiled top contract: transferFrom out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, transfer_from_gas_cost);
 
             return false;
         }
@@ -270,7 +270,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined top contract: transferFrom with invalid parameters");
+            xwarn("precompiled top contract: transferFrom with invalid parameters");
 
             return false;
         }
@@ -280,7 +280,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined top contract: transferFrom invalid owner account");
+            xwarn("precompiled top contract: transferFrom invalid owner account");
 
             return false;
         }
@@ -290,7 +290,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined top contract: transferFrom invalid recipient account");
+            xwarn("precompiled top contract: transferFrom invalid recipient account");
 
             return false;
         }
@@ -303,7 +303,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined top contract: transferFrom invalid value");
+            xwarn("precompiled top contract: transferFrom invalid value");
 
             return false;
         }
@@ -344,14 +344,14 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
             err.cost = transfer_from_reverted_gas_cost;
             err.output = result;
 
-            xwarn("predefined top contract: transferFrom reverted. ec %" PRIi32 " category %s msg %s", ec.value(), ec.category().name(), ec.message().c_str());
+            xwarn("precompiled top contract: transferFrom reverted. ec %" PRIi32 " category %s msg %s", ec.value(), ec.category().name(), ec.message().c_str());
         }
 
         return !ec;
     }
 
     case method_id_approve: {
-        xdbg("predefined top contract: approve");
+        xdbg("precompiled top contract: approve");
 
         uint64_t constexpr approve_gas_cost = 18599;
         xbytes_t result(32, 0);
@@ -361,7 +361,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
             err.cost = approve_gas_cost;
             err.output = result;
 
-            xwarn("predefined top contract: approve is not allowed in static context");
+            xwarn("precompiled top contract: approve is not allowed in static context");
 
             return false;
         }
@@ -370,7 +370,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Error;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
 
-            xwarn("predefined top contract: approve out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, approve_gas_cost);
+            xwarn("precompiled top contract: approve out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, approve_gas_cost);
 
             return false;
         }
@@ -379,7 +379,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined top contract: approve with invalid parameter");
+            xwarn("precompiled top contract: approve with invalid parameter");
 
             return false;
         }
@@ -389,7 +389,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined top contract: approve invalid spender account");
+            xwarn("precompiled top contract: approve invalid spender account");
 
             return false;
         }
@@ -400,7 +400,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined top contract: approve invalid value");
+            xwarn("precompiled top contract: approve invalid value");
 
             return false;
         }
@@ -429,21 +429,21 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
             err.cost = approve_gas_cost / 2;
             err.output = result;
 
-            xerror("predefined top contract: approve reverted. ec %" PRIi32 " category %s msg %s", ec.value(), ec.category().name(), ec.message().c_str());
+            xerror("precompiled top contract: approve reverted. ec %" PRIi32 " category %s msg %s", ec.value(), ec.category().name(), ec.message().c_str());
         }
 
         return true;
     }
 
     case method_id_allowance: {
-        xdbg("predefined top contract: allowance");
+        xdbg("precompiled top contract: allowance");
 
         uint64_t constexpr allowance_gas_cost = 3987;
         if (target_gas < allowance_gas_cost) {
             err.fail_status = precompile_error::Error;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
 
-            xwarn("predefined top contract: allowance out of gas. gas remained %" PRIu64 " gas required %" PRIu64, target_gas, allowance_gas_cost);
+            xwarn("precompiled top contract: allowance out of gas. gas remained %" PRIu64 " gas required %" PRIu64, target_gas, allowance_gas_cost);
 
             return false;
         }
@@ -453,7 +453,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined top contract: allowance with invalid parameter");
+            xwarn("precompiled top contract: allowance with invalid parameter");
 
             return false;
         }
@@ -463,7 +463,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined top contract: allowance invalid owner account");
+            xwarn("precompiled top contract: allowance invalid owner account");
 
             return false;
         }
@@ -473,7 +473,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined top contract: allowance invalid spender account");
+            xwarn("precompiled top contract: allowance invalid spender account");
 
             return false;
         }
@@ -496,7 +496,7 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
         err.fail_status = precompile_error::Fatal;
         err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::NotSupported);
 
-        xwarn("predefined top contract: not supported method_id: %" PRIx32, function_selector.method_id);
+        xwarn("precompiled top contract: not supported method_id: %" PRIx32, function_selector.method_id);
 
         return false;
     }

@@ -32,7 +32,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
         err.fail_status = precompile_error::Fatal;
         err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-        xwarn("predefined usdc contract: invalid input");
+        xwarn("precompiled usdc contract: invalid input");
 
         return false;
     }
@@ -42,7 +42,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
         err.fail_status = precompile_error::Fatal;
         err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::NotSupported);
 
-        xwarn("predefined usdc contract: not supported token: %d", static_cast<int>(chain_uuid));
+        xwarn("precompiled usdc contract: not supported token: %d", static_cast<int>(chain_uuid));
 
         return false;
     }
@@ -53,7 +53,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
         err.fail_status = precompile_error::Fatal;
         err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-        xwarn("predefined usdc contract: illegal input data");
+        xwarn("precompiled usdc contract: illegal input data");
 
         return false;
     }
@@ -63,14 +63,14 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
         err.fail_status = precompile_error::Fatal;
         err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-        xwarn("predefined usdc contract: illegal input function selector");
+        xwarn("precompiled usdc contract: illegal input function selector");
 
         return false;
     }
 
     switch (function_selector.method_id) {
     case method_id_decimals: {
-        xdbg("predefined usdc contract: decimals");
+        xdbg("precompiled usdc contract: decimals");
 
         output.exit_status = Returned;
         output.cost = 0;
@@ -80,14 +80,14 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
     }
 
     case method_id_total_supply: {
-        xdbg("predefined usdc contract: totalSupply");
+        xdbg("precompiled usdc contract: totalSupply");
 
         uint64_t constexpr total_supply_gas_cost = 2538;
         if (target_gas < total_supply_gas_cost) {
             err.fail_status = Error;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
 
-            xwarn("predefined usdc contract: totalSupply out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, total_supply_gas_cost);
+            xwarn("precompiled usdc contract: totalSupply out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, total_supply_gas_cost);
 
             return false;
         }
@@ -96,7 +96,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined usdc contract: totalSupply with non-empty parameter");
+            xwarn("precompiled usdc contract: totalSupply with non-empty parameter");
 
             return false;
         }
@@ -110,14 +110,14 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
     }
 
     case method_id_balance_of: {
-        xdbg("predefined usdc contract: balanceOf");
+        xdbg("precompiled usdc contract: balanceOf");
 
         uint64_t constexpr balance_of_gas_cost = 3268;
         if (target_gas < balance_of_gas_cost) {
             err.fail_status = precompile_error::Error;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
 
-            xwarn("predefined usdc contract: balanceOf out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, balance_of_gas_cost);
+            xwarn("precompiled usdc contract: balanceOf out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, balance_of_gas_cost);
 
             return false;
         }
@@ -126,7 +126,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined usdc contract: balance_of with invalid parameter (parameter count not one)");
+            xwarn("precompiled usdc contract: balance_of with invalid parameter (parameter count not one)");
 
             return false;
         }
@@ -136,7 +136,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined usdc contract: balance_of invalid account");
+            xwarn("precompiled usdc contract: balance_of invalid account");
 
             return false;
         }
@@ -153,7 +153,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
     }
 
     case method_id_transfer: {
-        xdbg("predefined usdc contract: transfer");
+        xdbg("precompiled usdc contract: transfer");
 
         uint64_t constexpr transfer_gas_cost = 18446;
         xbytes_t result(32, 0);
@@ -164,7 +164,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.cost = transfer_gas_cost;
             err.output = result;
 
-            xwarn("predefined usdc contract: transfer is not allowed in static context");
+            xwarn("precompiled usdc contract: transfer is not allowed in static context");
 
             return false;
         }
@@ -173,7 +173,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Error;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
 
-            xwarn("predefined usdc contract: transfer out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, transfer_gas_cost);
+            xwarn("precompiled usdc contract: transfer out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, transfer_gas_cost);
 
             return false;
         }
@@ -182,7 +182,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined usdc contract: transfer with invalid parameter");
+            xwarn("precompiled usdc contract: transfer with invalid parameter");
 
             return false;
         }
@@ -192,7 +192,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined usdc contract: transfer with invalid account");
+            xwarn("precompiled usdc contract: transfer with invalid account");
 
             return false;
         }
@@ -203,7 +203,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined usdc contract: transfer with invalid value");
+            xwarn("precompiled usdc contract: transfer with invalid value");
 
             return false;
         }
@@ -237,14 +237,14 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.cost = transfer_reverted_gas_cost;
             err.output = result;
 
-            xwarn("predefined usdc contract: transfer reverted. ec %" PRIi32 " category %s msg %s", ec.value(), ec.category().name(), ec.message().c_str());
+            xwarn("precompiled usdc contract: transfer reverted. ec %" PRIi32 " category %s msg %s", ec.value(), ec.category().name(), ec.message().c_str());
         }
 
         return !ec;
     }
 
     case method_id_transfer_from: {
-        xdbg("predefined usdc contract: transferFrom");
+        xdbg("precompiled usdc contract: transferFrom");
 
         uint64_t constexpr transfer_from_gas_cost = 18190;
         xbytes_t result(32, 0);
@@ -255,7 +255,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.cost = transfer_from_gas_cost;
             err.output = result;
 
-            xwarn("predefined usdc contract: transferFrom is not allowed in static context");
+            xwarn("precompiled usdc contract: transferFrom is not allowed in static context");
 
             return false;
         }
@@ -264,7 +264,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Error;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
 
-            xwarn("predefined usdc contract: transferFrom out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, transfer_from_gas_cost);
+            xwarn("precompiled usdc contract: transferFrom out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, transfer_from_gas_cost);
 
             return false;
         }
@@ -273,7 +273,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined usdc contract: transferFrom with invalid parameters");
+            xwarn("precompiled usdc contract: transferFrom with invalid parameters");
 
             return false;
         }
@@ -283,7 +283,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined usdc contract: transferFrom invalid owner account");
+            xwarn("precompiled usdc contract: transferFrom invalid owner account");
 
             return false;
         }
@@ -293,7 +293,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined usdc contract: transferFrom invalid recipient account");
+            xwarn("precompiled usdc contract: transferFrom invalid recipient account");
 
             return false;
         }
@@ -306,7 +306,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined usdc contract: transferFrom invalid value");
+            xwarn("precompiled usdc contract: transferFrom invalid value");
 
             return false;
         }
@@ -347,14 +347,14 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.cost = transfer_from_reverted_gas_cost;
             err.output = result;
 
-            xwarn("predefined usdc contract: transferFrom reverted. ec %" PRIi32 " category %s msg %s", ec.value(), ec.category().name(), ec.message().c_str());
+            xwarn("precompiled usdc contract: transferFrom reverted. ec %" PRIi32 " category %s msg %s", ec.value(), ec.category().name(), ec.message().c_str());
         }
 
         return !ec;
     }
 
     case method_id_approve: {
-        xdbg("predefined usdc contract: approve");
+        xdbg("precompiled usdc contract: approve");
 
         uint64_t constexpr approve_gas_cost = 18599;
         xbytes_t result(32, 0);
@@ -364,7 +364,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.cost = approve_gas_cost;
             err.output = result;
 
-            xwarn("predefined usdc contract: approve is not allowed in static context");
+            xwarn("precompiled usdc contract: approve is not allowed in static context");
 
             return false;
         }
@@ -373,7 +373,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Error;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
 
-            xwarn("predefined usdc contract: approve out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, approve_gas_cost);
+            xwarn("precompiled usdc contract: approve out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, approve_gas_cost);
 
             return false;
         }
@@ -382,7 +382,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined usdc contract: approve with invalid parameter");
+            xwarn("precompiled usdc contract: approve with invalid parameter");
 
             return false;
         }
@@ -392,7 +392,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined usdc contract: approve invalid spender account");
+            xwarn("precompiled usdc contract: approve invalid spender account");
 
             return false;
         }
@@ -403,7 +403,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined usdc contract: approve invalid value");
+            xwarn("precompiled usdc contract: approve invalid value");
 
             return false;
         }
@@ -432,21 +432,21 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.cost = approve_gas_cost / 2;
             err.output = result;
 
-            xerror("predefined usdc contract: approve reverted. ec %" PRIi32 " category %s msg %s", ec.value(), ec.category().name(), ec.message().c_str());
+            xerror("precompiled usdc contract: approve reverted. ec %" PRIi32 " category %s msg %s", ec.value(), ec.category().name(), ec.message().c_str());
         }
 
         return true;
     }
 
     case method_id_allowance: {
-        xdbg("predefined usdc contract: allowance");
+        xdbg("precompiled usdc contract: allowance");
 
         uint64_t constexpr allowance_gas_cost = 3987;
         if (target_gas < allowance_gas_cost) {
             err.fail_status = precompile_error::Error;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
 
-            xwarn("predefined usdc contract: allowance out of gas. gas remained %" PRIu64 " gas required %" PRIu64, target_gas, allowance_gas_cost);
+            xwarn("precompiled usdc contract: allowance out of gas. gas remained %" PRIu64 " gas required %" PRIu64, target_gas, allowance_gas_cost);
 
             return false;
         }
@@ -456,7 +456,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined usdc contract: allowance with invalid parameter");
+            xwarn("precompiled usdc contract: allowance with invalid parameter");
 
             return false;
         }
@@ -466,7 +466,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined usdc contract: allowance invalid owner account");
+            xwarn("precompiled usdc contract: allowance invalid owner account");
 
             return false;
         }
@@ -476,7 +476,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined usdc contract: allowance invalid spender account");
+            xwarn("precompiled usdc contract: allowance invalid spender account");
 
             return false;
         }
@@ -496,7 +496,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
     }
 
     case method_id_mint: {
-        xdbg("predefined usdc contract: mint");
+        xdbg("precompiled usdc contract: mint");
 
         uint64_t constexpr mint_gas_cost = 3155;
         xbytes_t result(32, 0);
@@ -507,7 +507,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.cost = mint_gas_cost;
             err.output = result;
 
-            xwarn("predefined usdc contract: mint is not allowed in static context");
+            xwarn("precompiled usdc contract: mint is not allowed in static context");
 
             return false;
         }
@@ -520,7 +520,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined usdc contract: mint called by non-admin account %s", context.caller.c_str());
+            xwarn("precompiled usdc contract: mint called by non-admin account %s", context.caller.c_str());
 
             return false;
         }
@@ -529,7 +529,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Error;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
 
-            xwarn("predefined usdc contract: mint out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, mint_gas_cost);
+            xwarn("precompiled usdc contract: mint out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, mint_gas_cost);
 
             return false;
         }
@@ -538,7 +538,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined usdc contract: mint with invalid parameter");
+            xwarn("precompiled usdc contract: mint with invalid parameter");
 
             return false;
         }
@@ -548,7 +548,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined usdc contract: mint with invalid receiver address");
+            xwarn("precompiled usdc contract: mint with invalid receiver address");
 
             return false;
         }
@@ -559,7 +559,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined usdc contract: mint with invalid value");
+            xwarn("precompiled usdc contract: mint with invalid value");
 
             return false;
         }
@@ -588,14 +588,14 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.cost = mint_gas_cost;
             err.output = result;
 
-            xwarn("predefined usdc contract: mint reverted. ec %" PRIi32 " category %s msg %s", ec.value(), ec.category().name(), ec.message().c_str());
+            xwarn("precompiled usdc contract: mint reverted. ec %" PRIi32 " category %s msg %s", ec.value(), ec.category().name(), ec.message().c_str());
         }
 
         return !ec;
     }
 
     case method_id_burn_from: {
-        xdbg("predefined usdc contract: burnFrom");
+        xdbg("precompiled usdc contract: burnFrom");
 
         uint64_t constexpr burn_gas_cost = 3155;
         xbytes_t result(32, 0);
@@ -606,7 +606,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.cost = burn_gas_cost;
             err.output = result;
 
-            xwarn("predefined usdc contract: burnFrom is not allowed in static context");
+            xwarn("precompiled usdc contract: burnFrom is not allowed in static context");
 
             return false;
         }
@@ -618,7 +618,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined usdc contract: burnFrom called by non-admin account %s", context.caller.c_str());
+            xwarn("precompiled usdc contract: burnFrom called by non-admin account %s", context.caller.c_str());
 
             return false;
         }
@@ -627,7 +627,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Error;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
 
-            xwarn("predefined usdc contract: burnFrom out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, burn_gas_cost);
+            xwarn("precompiled usdc contract: burnFrom out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, burn_gas_cost);
 
             return false;
         }
@@ -636,7 +636,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined usdc contract: burnFrom with invalid parameter");
+            xwarn("precompiled usdc contract: burnFrom with invalid parameter");
 
             return false;
         }
@@ -646,7 +646,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined usdc contract: burnFrom with invalid burn from address");
+            xwarn("precompiled usdc contract: burnFrom with invalid burn from address");
 
             return false;
         }
@@ -657,7 +657,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined usdc contract: burnFrom with invalid value");
+            xwarn("precompiled usdc contract: burnFrom with invalid value");
 
             return false;
         }
@@ -685,14 +685,14 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.cost = burn_gas_cost;
             err.output = result;
 
-            xwarn("predefined usdc contract: burnFrom reverted. ec %" PRIi32 " category %s msg %s", ec.value(), ec.category().name(), ec.message().c_str());
+            xwarn("precompiled usdc contract: burnFrom reverted. ec %" PRIi32 " category %s msg %s", ec.value(), ec.category().name(), ec.message().c_str());
         }
 
         return !ec;
     }
 
     case method_id_transfer_ownership: {
-        xdbg("predefined usdc contract: transferOwnership");
+        xdbg("precompiled usdc contract: transferOwnership");
 
         uint64_t constexpr transfer_ownership_gas_cost = 3155;
         xbytes_t result(32, 0);
@@ -703,7 +703,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.cost = transfer_ownership_gas_cost;
             err.output = result;
 
-            xwarn("predefined usdc contract: transferOwnership is not allowed in static context");
+            xwarn("precompiled usdc contract: transferOwnership is not allowed in static context");
 
             return false;
         }
@@ -717,7 +717,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined usdc contract: transferOwnership called by non-admin account %s", context.caller.c_str());
+            xwarn("precompiled usdc contract: transferOwnership called by non-admin account %s", context.caller.c_str());
 
             return false;
         }
@@ -727,7 +727,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Error;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
 
-            xwarn("predefined usdc contract: transferOwnership out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, transfer_ownership_gas_cost);
+            xwarn("precompiled usdc contract: transferOwnership out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, transfer_ownership_gas_cost);
 
             return false;
         }
@@ -736,7 +736,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined usdc contract: transferOwnership with invalid parameter");
+            xwarn("precompiled usdc contract: transferOwnership with invalid parameter");
 
             return false;
         }
@@ -746,7 +746,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined usdc contract: transferOwnership with invalid burn from address");
+            xwarn("precompiled usdc contract: transferOwnership with invalid burn from address");
 
             return false;
         }
@@ -772,14 +772,14 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.cost = transfer_ownership_gas_cost;
             err.output = result;
 
-            xwarn("predefined usdc contract: transferOwnership reverted. ec %" PRIi32 " category %s msg %s", ec.value(), ec.category().name(), ec.message().c_str());
+            xwarn("precompiled usdc contract: transferOwnership reverted. ec %" PRIi32 " category %s msg %s", ec.value(), ec.category().name(), ec.message().c_str());
         }
 
         return !ec;
     }
 
     case method_id_set_controller: {
-        xdbg("predefined usdc contract: setController");
+        xdbg("precompiled usdc contract: setController");
 
         uint64_t constexpr set_controller_gas_cost = 3155;
         xbytes_t result(32, 0);
@@ -790,7 +790,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.cost = set_controller_gas_cost;
             err.output = result;
 
-            xwarn("predefined usdc contract: setController is not allowed in static context");
+            xwarn("precompiled usdc contract: setController is not allowed in static context");
 
             return false;
         }
@@ -805,7 +805,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined usdc contract: setController called by non-admin account %s", context.caller.c_str());
+            xwarn("precompiled usdc contract: setController called by non-admin account %s", context.caller.c_str());
 
             return false;
         }
@@ -815,7 +815,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Error;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitError::OutOfGas);
 
-            xwarn("predefined usdc contract: setController out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, set_controller_gas_cost);
+            xwarn("precompiled usdc contract: setController out of gas, gas remained %" PRIu64 " gas required %" PRIu64, target_gas, set_controller_gas_cost);
 
             return false;
         }
@@ -824,7 +824,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined usdc contract: setController with invalid parameter");
+            xwarn("precompiled usdc contract: setController with invalid parameter");
 
             return false;
         }
@@ -834,7 +834,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.fail_status = precompile_error::Fatal;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::Other);
 
-            xwarn("predefined usdc contract: setController with invalid burn from address");
+            xwarn("precompiled usdc contract: setController with invalid burn from address");
 
             return false;
         }
@@ -862,13 +862,15 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
             err.cost = set_controller_gas_cost;
             err.output = result;
 
-            xwarn("predefined usdc contract: setController reverted. ec %" PRIi32 " category %s msg %s", ec.value(), ec.category().name(), ec.message().c_str());
+            xwarn("precompiled usdc contract: setController reverted. ec %" PRIi32 " category %s msg %s", ec.value(), ec.category().name(), ec.message().c_str());
         }
 
         return !ec;
     }
 
     case method_id_owner: {
+        xdbg("precompiled usdc contract: owner");
+
         xbytes_t result(32, 0);
 
         auto contract_state = state_ctx->load_unit_state(evm_usdc_contract_address.vaccount());
@@ -883,6 +885,8 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
     }
 
     case method_id_controller: {
+        xdbg("precompiled usdc contract: controller");
+
         xbytes_t result(32, 0);
 
         auto contract_state = state_ctx->load_unit_state(evm_usdc_contract_address.vaccount());
@@ -899,7 +903,7 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
         err.fail_status = precompile_error::Fatal;
         err.minor_status = static_cast<uint32_t>(precompile_error_ExitFatal::NotSupported);
 
-        xwarn("predefined usdc contract: not supported method_id: %" PRIx32, function_selector.method_id);
+        xwarn("precompiled usdc contract: not supported method_id: %" PRIx32, function_selector.method_id);
 
         return false;
     }

@@ -10,10 +10,10 @@ namespace top {
 namespace evm_common {
   
 
-	bytes rlp256(BytesMap const& _s);
+	xbytes_t rlp256(BytesMap const & _s);
 	h256 hash256(BytesMap const& _s);
 
-	h256 orderedTrieRoot(std::vector<bytes> const& _data);
+	h256 orderedTrieRoot(std::vector<xbytes_t> const & _data);
 
 	template <class T, class U> inline h256 trieRootOver(unsigned _itemCount, T const& _getKey, U const& _getValue)
 	{
@@ -24,7 +24,7 @@ namespace evm_common {
 	}
 
 	h256 orderedTrieRoot(std::vector<bytesConstRef> const& _data);
-	h256 orderedTrieRoot(std::vector<bytes> const& _data);
+    h256 orderedTrieRoot(std::vector<xbytes_t> const & _data);
 
 
 }

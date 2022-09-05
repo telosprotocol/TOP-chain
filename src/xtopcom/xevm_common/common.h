@@ -5,6 +5,7 @@
 #pragma once
 
 #include "xbase/xns_macro.h"
+#include "xbasic/xbyte_buffer.h"
 
 #include <chrono>
 #include <functional>
@@ -24,16 +25,12 @@
 
 #include "vector_ref.h"
 
-// CryptoPP defines byte in the global namespace, so must we.
-using byte = uint8_t;
-
 NS_BEG2(top, evm_common)
 using namespace boost::multiprecision::literals;
 
 // Binary data types.
-using bytes = std::vector<byte>;
-using bytesRef = vector_ref<byte>;
-using bytesConstRef = vector_ref<byte const>;
+using bytesRef = vector_ref<xbyte_t>;
+using bytesConstRef = vector_ref<xbyte_t const>;
 
 // Numeric types.
 using bigint = boost::multiprecision::number<boost::multiprecision::cpp_int_backend<>>;
@@ -52,9 +49,9 @@ using u160Set = std::set<u160>;
 
 // Map types.
 using StringMap = std::map<std::string, std::string>;
-using BytesMap = std::map<bytes, bytes>;
+using BytesMap = std::map<xbytes_t, xbytes_t>;
 using u256Map = std::map<u256, u256>;
-using HexMap = std::map<bytes, bytes>;
+using HexMap = std::map<xbytes_t, xbytes_t>;
 
 // Hash types.
 using StringHashMap = std::unordered_map<std::string, std::string>;

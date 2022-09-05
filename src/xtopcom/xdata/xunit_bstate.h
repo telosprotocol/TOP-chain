@@ -95,9 +95,6 @@ private:
     xbytes_t raw_owner(common::xchain_uuid_t chain_uuid, std::error_code & ec) const;
     xobject_ptr_t<base::xmapvar_t<std::string>> raw_controller(std::error_code & ec) const;
     xbytes_t raw_controller(common::xchain_uuid_t chain_uuid, std::error_code & ec) const;
-
-    common::xaccount_address_t owner_impl(xbytes_t const & owner_account_in_bytes, std::error_code & ec) const;
-    common::xaccount_address_t controller_impl(xbytes_t const & controller_account_in_bytes, std::error_code & ec) const;
 };
 
 using xaccount_ptr_t = std::shared_ptr<xunit_bstate_t>;  // TODO(jimmy) rename to xunitstate_ptr_t

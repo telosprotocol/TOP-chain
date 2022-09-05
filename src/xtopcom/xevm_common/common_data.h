@@ -59,7 +59,7 @@ std::string toHexPrefixed(T const & _data) {
 /// Converts a (printable) ASCII hex string into the corresponding byte stream.
 /// @example fromHex("41626261") == asBytes("Abba")
 /// If _throw = ThrowType::DontThrow, it replaces bad hex characters with 0's, otherwise it will throw an exception.
-bytes fromHex(std::string const & _s, WhenError _throw = WhenError::DontThrow);
+xbytes_t fromHex(std::string const & _s, WhenError _throw = WhenError::DontThrow);
 
 /// @returns true if @a _s is a hex string.
 bool isHex(std::string const & _s) noexcept;
@@ -72,7 +72,7 @@ static bool isHash(std::string const & _hash) {
 
 /// Converts byte array to a string containing the same (binary) data. Unless
 /// the byte array happens to contain ASCII data, this won't be printable.
-inline std::string asString(bytes const & _b) {
+inline std::string asString(xbytes_t const & _b) {
     return std::string((char const *)_b.data(), (char const *)(_b.data() + _b.size()));
 }
 
@@ -83,13 +83,13 @@ inline std::string asString(bytesConstRef _b) {
 }
 
 /// Converts a string to a byte array containing the string's (byte) data.
-inline bytes asBytes(std::string const & _b) {
-    return bytes((byte const *)_b.data(), (byte const *)(_b.data() + _b.size()));
+inline xbytes_t asBytes(std::string const & _b) {
+    return xbytes_t((xbyte_t const *)_b.data(), (xbyte_t const *)(_b.data() + _b.size()));
 }
 
 /// Converts a string into the big-endian base-16 stream of integers (NOT ASCII).
 /// @example asNibbles("A")[0] == 4 && asNibbles("A")[1] == 1
-bytes asNibbles(bytesConstRef const & _s);
+xbytes_t asNibbles(bytesConstRef const & _s);
 
 // Big-endian to/from host endian conversion functions.
 
@@ -114,7 +114,7 @@ template <class T, class _In>
 inline T fromBigEndian(_In const & _bytes) {
     T ret = (T)0;
     for (auto i : _bytes)
-        ret = (T)((ret << 8) | (byte)(typename std::make_unsigned<decltype(i)>::type)i);
+        ret = (T)((ret << 8) | (xbyte_t)(typename std::make_unsigned<decltype(i)>::type)i);
     return ret;
 }
 
@@ -129,18 +129,18 @@ inline std::string toBigEndianString(u160 _val) {
     toBigEndian(_val, ret);
     return ret;
 }
-inline bytes toBigEndian(u256 _val) {
-    bytes ret(32);
+inline xbytes_t toBigEndian(u256 _val) {
+    xbytes_t ret(32);
     toBigEndian(_val, ret);
     return ret;
 }
-inline bytes toBigEndian(u128 _val) {
-    bytes ret(16);
+inline xbytes_t toBigEndian(u128 _val) {
+    xbytes_t ret(16);
     toBigEndian(_val, ret);
     return ret;
 }
-inline bytes toBigEndian(u160 _val) {
-    bytes ret(20);
+inline xbytes_t toBigEndian(u160 _val) {
+    xbytes_t ret(20);
     toBigEndian(_val, ret);
     return ret;
 }
@@ -150,17 +150,17 @@ inline bytes toBigEndian(u160 _val) {
 /// Convenience function for toBigEndian.
 /// @returns a byte array just big enough to represent @a _val.
 template <class T>
-inline bytes toCompactBigEndian(T _val, unsigned _min = 0) {
+inline xbytes_t toCompactBigEndian(T _val, unsigned _min = 0) {
     static_assert(std::is_same<bigint, T>::value || !std::numeric_limits<T>::is_signed, "only unsigned types or bigint supported");  // bigint does not carry sign bit on shift
     int i = 0;
     for (T v = _val; v; ++i, v >>= 8) {
     }
-    bytes ret(std::max<unsigned>(_min, i), 0);
+    xbytes_t ret(std::max<unsigned>(_min, i), 0);
     toBigEndian(_val, ret);
     return ret;
 }
-inline bytes toCompactBigEndian(byte _val, unsigned _min = 0) {
-    return (_min || _val) ? bytes{_val} : bytes{};
+inline xbytes_t toCompactBigEndian(xbyte_t _val, unsigned _min = 0) {
+    return (_min || _val) ? xbytes_t{_val} : xbytes_t{};
 }
 
 /// Convenience function for toBigEndian.
