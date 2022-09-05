@@ -159,14 +159,11 @@ namespace top
             bool                        on_block_committed(const xblockevent_t & event);
             bool                        on_block_stored(base::xvblock_t* this_block_ptr);//event for block store
             bool                        store_units_to_db(xblockacct_t* target_account,base::xvbindex_t* index_ptr);
+            bool                        store_units_to_db_after_fork(xblockacct_t* target_account,base::xvbindex_t* index_ptr,base::xvblock_t* container_block);
+            bool                        store_units_to_db_before_fork(xblockacct_t* target_account,base::xvbindex_t* index_ptr,base::xvblock_t* container_block);            
             bool                        store_relayblock_to_db(xblockacct_t* target_account,base::xvbindex_t* index_ptr);
             virtual bool                on_object_close() override;
             int                         load_block_idx_by_hash(const std::string & hash, std::string & account, uint64_t & height);
-
-            std::vector<base::xvblock_ptr_t> load_diff_blocks(xblockacct_t* target_account, uint64_t height, const std::map<uint64_t, std::map<std::string, base::xvbindex_t*>> & cache, std::error_code & ec);
-            bool                             update_unconfirm_subblock_cache(xblockacct_t* target_account);
-            base::xauto_ptr<base::xvblock_t> load_block_object_from_uncommitted_cache(const base::xvaccount_t & account, const xblock_match_base_t & match_func);
-            base::xauto_ptr<base::xvbindex_t> load_block_index_from_uncommitted_cache(const base::xvaccount_t & account,const xblock_match_base_t & match_func);
         private:
             xvblockdb_t*                       m_xvblockdb_ptr;
             std::string                        m_store_path;
