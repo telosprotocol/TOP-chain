@@ -4,10 +4,13 @@
 
 #include <string>
 #include "xbasic/xmemory.hpp"
+#include "xmbus/xevent_store.h"
 #include "xvledger/xvledger.h"
 #include "xvledger/xaccountindex.h"
 #include "xstatestore/xstatestore_impl.h"
 #include "xdata/xblocktool.h"
+#include "xmbus/xbase_sync_event_monitor.hpp"
+#include "xmbus/xevent_store.h"
 
 NS_BEG2(top, statestore)
 
@@ -20,7 +23,6 @@ xstatestore_face_t* xstatestore_hub_t::instance() {
     return _static_statestore;
 }
 
-
 xstatestore_impl_t::xstatestore_impl_t() {
     init_all_tablestate();
 }
@@ -31,6 +33,136 @@ void xstatestore_impl_t::init_all_tablestate() {
         xstatestore_table_ptr_t tablestore = std::make_shared<xstatestore_table_t>(common::xaccount_address_t(v));
         m_table_statestore[v] = tablestore;
     }
+}
+
+bool xstatestore_impl_t::start(const xobject_ptr_t<base::xiothread_t> & iothread) {
+    if (m_started) {
+        xerror("xstatestore_impl_t::start already started.");
+        return false;
+    }
+
+    m_timer = new base::xxtimer_t(top::base::xcontext_t::instance(), iothread->get_thread_id());
+
+    m_bus_listen_id = get_mbus()->add_listener(top::mbus::xevent_major_type_store, std::bind(&xstatestore_impl_t::on_block_to_db_event, this, std::placeholders::_1));
+    return false;
+}
+
+void xstatestore_impl_t::on_block_to_db_event(mbus::xevent_ptr_t e) {
+    if (e->minor_type != mbus::xevent_store_t::type_block_committed) {
+        return;
+    }
+
+    mbus::xevent_store_block_committed_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_committed_t>(e);
+
+    if (block_event->blk_level != base::enum_xvblock_level_table) {
+        return;
+    }
+
+    auto event_handler = [this](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
+        mbus::xevent_object_t* _event_obj = dynamic_cast<mbus::xevent_object_t*>(call.get_param1().get_object());
+        xassert(_event_obj != nullptr);
+        mbus::xevent_store_block_committed_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_committed_t>(_event_obj->event);
+        const data::xblock_ptr_t & block = mbus::extract_block_from(block_event, metrics::blockstore_access_from_mbus_txpool_db_event_on_block);
+        evm_common::xh256_t root_hash;
+        excute_table_block(block.get(), root_hash);
+        return true;
+    };
+
+    base::xauto_ptr<mbus::xevent_object_t> event_obj = new mbus::xevent_object_t(e, 0);
+    base::xcall_t asyn_call(event_handler, event_obj.get());
+    m_timer->send_call(asyn_call);
+}
+
+bool xstatestore_impl_t::excute_table_block(base::xvblock_t * block, evm_common::xh256_t & root_hash) {
+    xinfo("xstatestore_impl_t::on_block_confirmed process,level:%d,class:%d,block:%s", block->get_block_level(), block->get_block_class(), block->dump().c_str());
+
+    base::xvaccount_t table_addr(block->get_account());
+
+    evm_common::xh256_t state_root;
+    auto ret = data::xblockextract_t::get_state_root(block, state_root);
+    if (!ret) {
+        xwarn("xstatestore_impl_t::excute_table_block get state root fail. block:%s", block->dump().c_str());
+        return false;
+    }
+
+    std::error_code ec;
+    xhash256_t state_root_hash(state_root.to_bytes());
+
+    if (state_root_hash == xhash256_t()) {
+        root_hash = state_root;
+        return true;
+    }
+
+    std::shared_ptr<state_mpt::xtop_state_mpt> table_mpt = state_mpt::xtop_state_mpt::create(state_root_hash, base::xvchain_t::instance().get_xdbstore(), table_addr.get_account(), ec);
+    if (table_mpt == nullptr || ec) {
+        auto * blkstore = base::xvchain_t::instance().get_xblockstore();
+        uint64_t height = block->get_height() - 1;
+        xobject_ptr_t<base::xvblock_t> pre_block = blkstore->load_block_object(table_addr, height, block->get_last_block_hash(), false);
+        if (nullptr == pre_block) {
+            xwarn("xstatestore_impl_t::excute_table_block: nullptr block,account=%s,height=%ld", table_addr.get_account().c_str(), height);
+            return false;
+        }
+
+        evm_common::xh256_t pre_root_hash;
+        ret = excute_table_block(pre_block.get(), pre_root_hash);
+        if (!ret) {
+            xwarn("xstatestore_impl_t::excute_table_block load pre block mpt fail. pre block:%s", pre_block->dump().c_str());
+            return false;
+        }
+
+        // a state mpt ptr should not commit twice. create mpt again here.
+        xhash256_t pre_state_root_hash(pre_root_hash.to_bytes());
+        ec.clear();
+        auto pre_table_mpt = state_mpt::xtop_state_mpt::create(pre_state_root_hash, base::xvchain_t::instance().get_xdbstore(), table_addr.get_account(), ec);
+        if (pre_table_mpt == nullptr) {
+            xerror("xstatestore_impl_t::excute_table_block create mpt fail. pre hash:%s.pre block:%s", pre_state_root_hash.as_hex_str().c_str(), pre_block->dump().c_str());
+            return false;
+        }
+
+        if (false == base::xvchain_t::instance().get_xblockstore()->load_block_output(table_addr, block, metrics::blockstore_access_from_txpool_on_block_event)) {
+            xerror("xstatestore_impl_t::on_block_to_db_event fail-load block input output, block=%s", block->dump().c_str());
+            return false;
+        }
+        auto account_indexs_str = block->get_account_indexs();
+        if (!account_indexs_str.empty()) {
+            data::xtable_account_indexs_t account_indexs;
+            account_indexs.serialize_from_string(account_indexs_str);
+            ec.clear();
+            for (auto & index : account_indexs.get_account_indexs()) {
+                pre_table_mpt->set_account_index(index.first, index.second, ec);
+                if (ec) {
+                    xerror("xstatestore_impl_t::excute_table_block set account index from table property to mpt fail.block:%s", block->dump().c_str());
+                    return false;
+                }
+            }
+
+            ec.clear();
+            // check if root matches.
+            auto cur_root_hash = pre_table_mpt->get_root_hash(ec);
+            if (cur_root_hash != state_root_hash) {
+                xerror("xstatestore_impl_t::excute_table_block hash not match cur_root_hash:%s,state_root_hash:%s,block:%s",
+                       cur_root_hash.as_hex_str().c_str(),
+                       state_root_hash.as_hex_str().c_str(),
+                       block->dump().c_str());
+                return false;
+            }
+
+            pre_table_mpt->commit(ec);
+            if (ec) {
+                xerror("xstatestore_impl_t::excute_table_block commit mpt fail.block:%s,root_hash:%s", block->dump().c_str(), state_root_hash.as_hex_str().c_str());
+                return false;
+            }
+            xdbg("xstatestore_impl_t::excute_table_block commit mpt succ.block:%s,root_hash:%s", block->dump().c_str(), state_root_hash.as_hex_str().c_str());
+        }
+    }
+
+    xdbg("xstatestore_impl_t::excute_table_block create mpt ok. hash:%s.block:%s", state_root_hash.as_hex_str().c_str(), block->dump().c_str());
+
+    base::auto_reference<base::xvblock_t> auto_hold_block_ptr(block);
+    base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->execute_block(block, metrics::statestore_access_from_blockstore);
+
+    root_hash = state_root;
+    return true;
 }
 
 xstatestore_table_ptr_t xstatestore_impl_t::get_table_statestore_from_unit_addr(common::xaccount_address_t const & account_address) const {
@@ -354,6 +486,10 @@ bool xstatestore_impl_t::get_receiptid_state_and_prove(common::xaccount_address_
 
 base::xvblockstore_t*  xstatestore_impl_t::get_blockstore() const {
     return base::xvchain_t::instance().get_xblockstore();
+}
+
+mbus::xmessage_bus_t * xstatestore_impl_t::get_mbus() const {
+    return (mbus::xmessage_bus_t *)base::xvchain_t::instance().get_xevmbus();
 }
 
 

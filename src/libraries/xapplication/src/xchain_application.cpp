@@ -18,6 +18,7 @@
 #include "xchaininit/xchain_command.h"
 #include "xchaininit/xchain_info_query.h"
 #include "xelect_net/include/multilayer_network_chain_query.h"
+#include "xstatestore/xstatestore_face.h"
 
 #include <cinttypes>
 #include <functional>
@@ -95,6 +96,9 @@ void xtop_chain_application::start() {
     m_sync_obj->start();
 
     top_console_init();
+
+    auto statestore_thp = m_application->thread_pool(xthread_pool_type_t::statestore);
+    statestore::xstatestore_hub_t::instance()->start(statestore_thp[0]);
 
     auto const & frozen_sharding_address = common::build_frozen_sharding_address(m_network_id);
     auto const zone_type = common::node_type_from(frozen_sharding_address.zone_id());

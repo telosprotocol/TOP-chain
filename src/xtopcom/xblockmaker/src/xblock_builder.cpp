@@ -128,7 +128,19 @@ bool     xtablebuilder_t::update_account_index_property(const data::xtablestate_
         }
     }
 
-    data::xaccount_index_t _new_aindex = data::xaccount_index_t(unit.get(), has_unconfirm_sendtx, _cs_type, false, nonce);
+    data::xaccount_index_t _new_aindex;
+    auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
+    auto const new_version = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.v1_7_0_block_fork_point, unit->get_clock());
+    if (!new_version) {
+        _new_aindex = data::xaccount_index_t(unit.get(), has_unconfirm_sendtx, _cs_type, false, nonce);
+    } else {
+        _new_aindex = data::xaccount_index_t(unit->get_height(),
+                                             unit->get_block_hash(),
+                                             unit->get_fullstate_hash(),
+                                             nonce,
+                                             unit->get_block_class(),
+                                             unit->get_block_type());
+    }
 
     tablestate->set_account_index(unit->get_account(), _new_aindex);
     xdbg("xtablebuilder_t::update_account_index_property account:%s,index=%s", unit->get_account().c_str(), _new_aindex.dump().c_str());

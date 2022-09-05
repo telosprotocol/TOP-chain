@@ -178,6 +178,11 @@ std::vector<xunitstate_ctx_ptr_t> xstatectx_t::get_modified_unit_ctx() const {
 }
 
 xstatectx_ptr_t xstatectx_factory_t::create_latest_cert_statectx(base::xvblock_t* prev_block, const data::xtablestate_ptr_t & prev_table_state, base::xvblock_t* commit_block, const data::xtablestate_ptr_t & commit_table_state, const xstatectx_para_t & para) {
+    evm_common::xh256_t root_hash;
+    auto ret = statestore::xstatestore_hub_t::instance()->excute_table_block(prev_block, root_hash);
+    if (!ret) {
+        return nullptr;
+    }
     statectx::xstatectx_ptr_t statectx_ptr = std::make_shared<statectx::xstatectx_t>(prev_block, prev_table_state, commit_block, commit_table_state, para);
     return statectx_ptr;
 }
