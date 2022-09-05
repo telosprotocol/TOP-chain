@@ -13,6 +13,8 @@
 #include "xsync/xrole_xips_manager.h"
 #include "xsync/xsync_message.h"
 #include "xsyncbase/xmessage_ids.h"
+#include "xsync/xsync_store.h"
+#include "xsync/xsync_session_manager.h"
 
 NS_BEG2(top, sync)
 
@@ -32,7 +34,7 @@ public:
     virtual ~xsync_sender_t() {}
 
     xsync_sender_t(std::string vnode_id, const observer_ptr<vnetwork::xvhost_face_t> &vhost, 
-        xrole_xips_manager_t *role_xips_mgr, int min_compress_threshold = DEFAULT_MIN_COMPRESS_THRESHOLD);
+        xrole_xips_manager_t *role_xips_mgr, xsync_store_face_t *sync_store, xsync_session_manager_t *session_mgr, int min_compress_threshold = DEFAULT_MIN_COMPRESS_THRESHOLD);
     void send_gossip(const std::vector<xgossip_chain_info_ptr_t> &info_list, const xbyte_buffer_t &bloom_data, const vnetwork::xvnode_address_t& self_xip, uint32_t max_peers, enum_gossip_target_type target_type);
     void send_gossip_to_target(const std::vector<xgossip_chain_info_ptr_t> &info_list, const xbyte_buffer_t &bloom_data, const vnetwork::xvnode_address_t& self_xip, const vnetwork::xvnode_address_t& target);
     void send_frozen_gossip(const std::vector<xgossip_chain_info_ptr_t> &info_list, const xbyte_buffer_t &bloom_data, const vnetwork::xvnode_address_t& self_xip);
@@ -60,7 +62,7 @@ public:
     void push_newblockhash(const data::xblock_ptr_t &block, const vnetwork::xvnode_address_t& self_addr, const vnetwork::xvnode_address_t& target_addr);
     void broadcast_newblockhash(const data::xblock_ptr_t &block, const vnetwork::xvnode_address_t& self_addr, const vnetwork::xvnode_address_t& target_addr);
 
-    void send_get_blocks_by_hashes(const std::vector<xblock_hash_t> &hashes, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
+    void send_get_blocks_by_hashes(std::vector<xblock_hash_t> &hashes, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
     void send_blocks_by_hashes(const std::vector<data::xblock_ptr_t> &blocks, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
 
     void send_chain_snapshot(const xsync_message_chain_snapshot_t &chain_snapshot, const common::xmessage_id_t msgid, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
@@ -70,13 +72,24 @@ public:
     void send_on_demand_by_hash_blocks(const std::vector<data::xblock_ptr_t> &blocks, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
     void send_archive_height(const xchain_state_info_t& info, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
     void send_query_archive_height(const std::vector<xchain_state_info_t>& info_list, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
-    void send_archive_height_list(const std::vector<xchain_state_info_t>& info_list, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
+    void send_archive_height_list(std::vector<xchain_state_info_t>& info_list, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
+
+    void push_newblock_new(const data::xblock_ptr_t &block, const vnetwork::xvnode_address_t& self_addr, const vnetwork::xvnode_address_t& target_addr);
+    void send_get_on_demand_blocks_with_params(const std::string &address,
+            uint64_t start_height, uint32_t count, bool is_consensus, const std::string & last_unit_hash,
+            const vnetwork::xvnode_address_t &self_addr,
+            const vnetwork::xvnode_address_t &target_addr);
+
+    void send_block_response(const xsync_msg_block_request_ptr_t& request_ptr, const std::vector< data::xblock_ptr_t> &vector_blocks,uint32_t response_extend_option,
+                             std::string extend_data, const vnetwork::xvnode_address_t& self_addr, const vnetwork::xvnode_address_t& target_addr);
 
     bool send_message(xobject_ptr_t<basic::xserialize_face_t> serializer, const common::xmessage_id_t msgid, const std::string metric_key, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr);
 protected:
     std::string m_vnode_id;
     observer_ptr<vnetwork::xvhost_face_t> m_vhost{};
     xrole_xips_manager_t *m_role_xips_mgr{};
+    xsync_store_face_t *m_sync_store;
+    xsync_session_manager_t *m_session_mgr;
     int m_min_compress_threshold{};
 };
 
