@@ -55,6 +55,12 @@ public:
     void handle_blocks_by_hash_response(const std::vector<data::xblock_ptr_t> &blocks, 
         const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self);    
     xsync_download_tracer_mgr* download_tracer_mgr();
+    void handle_blocks_response_with_params(const std::vector<data::xblock_ptr_t>& blocks, 
+            const std::string& unit_proof_str, const vnetwork::xvnode_address_t& to_address, 
+            const vnetwork::xvnode_address_t& network_self);
+    void handle_blocks_response_with_hash(const xsync_msg_block_request_ptr_t& request_ptr, 
+            const std::vector<data::xblock_ptr_t> &blocks,  const vnetwork::xvnode_address_t &to_address, 
+            const vnetwork::xvnode_address_t &network_self);
 
 private:
     int32_t check(const std::string &account_address);
@@ -75,7 +81,6 @@ private:
     xrole_chains_mgr_t *m_role_chains_mgr;
     xrole_xips_manager_t *m_role_xips_mgr;
     xsync_sender_t *m_sync_sender;
-    std::map<std::string, std::string> m_block_hash_account;
     xsync_download_tracer_mgr m_download_tracer{};
 };
 

@@ -59,7 +59,7 @@ public:
     virtual bool set_unit_proof(const base::xvaccount_t & account, const std::string & unit_proof, uint64_t height) = 0;
     virtual const std::string get_unit_proof(const base::xvaccount_t & account, uint64_t height) = 0;
     virtual bool remove_empty_unit_forked() = 0;
-    virtual bool is_full_node_forked() = 0;
+    virtual bool is_sync_protocal_forked() = 0;
     virtual base::xauto_ptr<base::xvbindex_t> recover_and_load_commit_index(const base::xvaccount_t & account, uint64_t height) = 0;
     const static uint64_t m_undeterministic_heights = 2;
 };
@@ -138,7 +138,7 @@ public:
     bool set_unit_proof(const base::xvaccount_t & account, const std::string & unit_proof, uint64_t height) override;
     const std::string get_unit_proof(const base::xvaccount_t & account, uint64_t height) override;
     bool remove_empty_unit_forked() override;
-    bool is_full_node_forked() override;
+    bool is_sync_protocal_forked() override;
     base::xauto_ptr<base::xvbindex_t> recover_and_load_commit_index(const base::xvaccount_t & account, uint64_t height) override;
 private:
     void set_fork_point();
@@ -147,7 +147,7 @@ private:
     observer_ptr<base::xvblockstore_t> m_blockstore{};
     xsync_store_shadow_t *m_shadow;
     bool m_remove_empty_unit_forked{false};
-    bool m_full_node_forked{false};
+    bool m_sync_forked{false};
 };
 
 NS_END2

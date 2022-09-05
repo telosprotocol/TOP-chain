@@ -323,13 +323,13 @@ bool xsync_store_t::remove_empty_unit_forked() {
     return m_remove_empty_unit_forked;
 }
 
-bool xsync_store_t::is_full_node_forked() {
-    if (m_full_node_forked) {
+bool xsync_store_t::is_sync_protocal_forked() {
+    if (m_sync_forked) {
         return true;
     }
 
     set_fork_point();
-    return m_full_node_forked;
+    return m_sync_forked;
 }
 
 base::xauto_ptr<base::xvbindex_t> xsync_store_t::recover_and_load_commit_index(const base::xvaccount_t & account, uint64_t height) {
@@ -350,9 +350,11 @@ void xsync_store_t::set_fork_point() {
         m_remove_empty_unit_forked = true;
     }
 
-    xinfo("xsync_store_t::remove_empty_unit_forked already forked clock:%llu", vb->get_height());
-    m_full_node_forked = true;
-
+    forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.v1_7_0_block_fork_point, vb->get_height());
+    if (forked) {
+        m_sync_forked = true;
+        xinfo("xsync_store_t::block fork point already forked clock:%llu", vb->get_height());
+    }
     return;
 }
 

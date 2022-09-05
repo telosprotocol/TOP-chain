@@ -159,8 +159,11 @@ bool xblockextract_t::get_state_root(base::xvblock_t* _block, evm_common::xh256_
     if (ec) {
         return false;
     }
-    state_root = ethheader.get_state_root();
+
+    state_root = evm_common::xh256_t();
     return true;
+   // state_root = ethheader.get_state_root();
+  //  return true;
 }
 
 xtransaction_ptr_t xblockextract_t::unpack_raw_tx(base::xvblock_t* _block, std::string const& txhash, std::error_code & ec) {
