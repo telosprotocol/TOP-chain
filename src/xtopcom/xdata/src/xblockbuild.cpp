@@ -838,7 +838,7 @@ bool xfulltable_build_t::build_block_body(const xfulltable_block_para_t & para, 
     const xstatistics_data_t & statistics_data = para.get_block_statistics_data();
     auto const & serialized_data = statistics_data.serialize_based_on<base::xstream_t>();
     std::string serialized_data_str = {std::begin(serialized_data), std::end(serialized_data) };
-    set_input_resource(xfull_tableblock_t::RESOURCE_NODE_SIGN_STATISTICS, serialized_data_str);
+    set_input_resource(base::xvinput_t::RESOURCE_NODE_SIGN_STATISTICS, serialized_data_str);
     return true;
 }
 

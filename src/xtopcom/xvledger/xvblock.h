@@ -477,7 +477,6 @@ namespace top
         public:
             static  const std::string   name(){ return std::string("xvinput");}
             static  constexpr char const * RESOURCE_NODE_SIGN_STATISTICS     = "2";
-            static  constexpr char const * RESOURCE_INNER_TABLE_TX_ACTIONS   = "3";
             virtual std::string         get_obj_name() const override {return name();}
             enum{enum_obj_type = enum_xobject_type_vinput};//allow xbase create xvinput_t object from xdataobj_t::read_from()
 
@@ -526,7 +525,8 @@ namespace top
             virtual std::string         get_obj_name() const override {return name();}
             enum{enum_obj_type = enum_xobject_type_voutput};//allow xbase create xvoutput_t object from xdataobj_t::read_from()
 
-            static  constexpr char const * RESOURCE_ACCOUNT_INDEXS     = "1";
+            static  constexpr char const * RESOURCE_RELAY_BLOCK        = "1";            
+            static  constexpr char const * RESOURCE_ACCOUNT_INDEXS     = "2";
 
         public:
             xvoutput_t(std::vector<xventity_t*> && entitys,enum_xobject_type type = enum_xobject_type_voutput);
