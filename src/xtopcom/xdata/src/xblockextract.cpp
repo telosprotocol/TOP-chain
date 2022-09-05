@@ -193,7 +193,7 @@ std::shared_ptr<xrelay_block> xblockextract_t::unpack_relay_block_from_table(bas
         return nullptr;
     }
 
-    std::string relayblock_resource = _block->get_output()->query_resource(data::RESOURCE_RELAY_BLOCK);
+    std::string relayblock_resource = _block->get_output()->query_resource(base::xvoutput_t::RESOURCE_RELAY_BLOCK);
     if (relayblock_resource.empty()) {
         ec = common::error::xerrc_t::invalid_block;
         xerror("xblockextract_t::unpack_relay_block_from_table fail-relayblock_resource empty._block=%s", _block->dump().c_str());

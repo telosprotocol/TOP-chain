@@ -187,7 +187,7 @@ xblock_resource_description_t xrelayblock_plugin_t::make_resource(const data::xb
         uint256_t hash256 = from_bytes<uint256_t>(relay_block.build_signature_hash().to_bytes());
 
         xblock_resource_description_t resource_desc;
-        resource_desc.resource_key_name = data::RESOURCE_RELAY_BLOCK;
+        resource_desc.resource_key_name = base::xvoutput_t::RESOURCE_RELAY_BLOCK;
         resource_desc.resource_value = prop_relayblock;
         resource_desc.is_input_resource = false;  // TODO(jimmy) put relayblock to output resource
         resource_desc.need_signature = true;
