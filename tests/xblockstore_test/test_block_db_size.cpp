@@ -129,9 +129,41 @@ TEST_F(test_block_db_size, table_unit_size) {
     }
 
     db::xdb_meta_t dbmeta = creator.get_xdb()->get_meta();
-    std::cout << "db key size = " << dbmeta.m_db_key_size << std::endl;
-    std::cout << "db value size = " << dbmeta.m_db_value_size << std::endl;
+    std::cout << "dbmeta key_size:" << dbmeta.m_db_key_size
+    << "value_size = " << dbmeta.m_db_value_size
+    << "key_count = " << dbmeta.m_key_count  
+    << "write_count = " << dbmeta.m_write_count
+    << "read_count = " << dbmeta.m_read_count
+    << std::endl;
     std::cout << "hash_calc_count = " << xhashtest_t::hash_calc_count << std::endl;
     xhashtest_t::print_hash_calc = false;
 }
 
+TEST_F(test_block_db_size, table_unit_IO_opt) {
+    mock::xvchain_creator creator(true);
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+
+    xhashtest_t::hash_calc_count = 0;
+    xhashtest_t::print_hash_calc = false;
+    uint64_t max_block_height = 1000;
+    mock::xdatamock_table mocktable(1, 4);
+    mocktable.genrate_table_chain(max_block_height, blockstore);
+    const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
+    xassert(tableblocks.size() == max_block_height + 1);
+
+    xhashtest_t::print_hash_calc = false;
+    for (auto & block : tableblocks) {
+        ASSERT_TRUE(blockstore->store_block(mocktable, block.get()));
+    }
+
+    db::xdb_meta_t dbmeta = creator.get_xdb()->get_meta();
+    std::cout << "dbmeta key_size:" << dbmeta.m_db_key_size
+    << " value_size = " << dbmeta.m_db_value_size
+    << " key_count = " << dbmeta.m_key_count  
+    << " write_count = " << dbmeta.m_write_count
+    << " read_count = " << dbmeta.m_read_count
+    << " erase_count = " << dbmeta.m_erase_count
+    << std::endl;
+    std::cout << "hash_calc_count = " << xhashtest_t::hash_calc_count << std::endl;
+    xhashtest_t::print_hash_calc = false;
+}

@@ -101,9 +101,10 @@ public:
        std::error_code ec;
        auto hash = m_mpt->commit(ec);
        if (ec) {
-           xdbg("xtable_mpt_container::commit fail");
+           xerror("xtable_mpt_container::commit fail hash:%s", hash.as_hex_str().c_str());
+       } else {
+         xdbg("xtable_mpt_container::commit succ hash:%s", hash.as_hex_str().c_str());
        }
-       xdbg("xtable_mpt_container::commit hash:%s", hash.as_hex_str().c_str());
    }
 
 private:
