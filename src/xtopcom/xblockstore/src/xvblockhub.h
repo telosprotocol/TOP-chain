@@ -110,8 +110,6 @@ namespace top
 
             base::xauto_ptr<base::xvbindex_t> recover_and_load_commit_index(uint64_t height);
 
-            xuncommitted_subblock_cache_t & get_uncommitted_subblock_cache();
-
         protected: //help functions
             bool                resort_index_of_store(const uint64_t target_height);
             bool                resort_index_of_store(std::map<uint64_t,base::xvbindex_t*> & target_height_map);
@@ -157,7 +155,6 @@ namespace top
             xvblockdb_t*         m_blockdb_ptr;
             std::deque<xblockevent_t> m_events_queue;  //stored event
             std::map<uint64_t,std::map<uint64_t,base::xvbindex_t*> > m_all_blocks;  // < height#, <view#,block*> > sort from lower to higher
-            xuncommitted_subblock_cache_t m_uncommitted_subblock_cache;
         };
 
         //xchainacct_t transfer block status from lower stage to higher : from cert ->lock->commit
