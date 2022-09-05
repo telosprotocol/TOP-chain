@@ -41,9 +41,6 @@ class xfulltable_block_para_t {
 // input: an array of newest units
 // output: the root of bucket merkle tree of all unit accounts index
 class xfull_tableblock_t : public xblock_t {
- public:
-    static XINLINE_CONSTEXPR char const * RESOURCE_NODE_SIGN_STATISTICS     = "2";
-
  protected:
     enum { object_type_value = enum_xdata_type::enum_xdata_type_max - xdata_type_fulltable_block };
  public:
