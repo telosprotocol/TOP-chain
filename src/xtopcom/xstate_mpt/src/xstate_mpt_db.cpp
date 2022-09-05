@@ -5,17 +5,19 @@
 #include "xstate_mpt/xstate_mpt_db.h"
 
 #include "xstate_mpt/xerror.h"
+#include "xvledger/xvdbkey.h"
 
 namespace top {
 namespace state_mpt {
 
-xtop_state_mpt_db::xtop_state_mpt_db(base::xvdbstore_t * db) : m_db(db) {
+xtop_state_mpt_db::xtop_state_mpt_db(base::xvdbstore_t * db, std::string table) : m_db(db), m_table(table) {
     xassert(db != nullptr);
 }
 
 void xtop_state_mpt_db::Put(xbytes_t const & key, xbytes_t const & value, std::error_code & ec) {
     std::lock_guard<std::mutex> lock(m_mutex);
-    if (m_db->set_value({key.begin(), key.end()}, {value.begin(), value.end()}) == false) {
+    auto db_key = base::xvdbkey_t::create_prunable_mpt_key(base::xvaccount_t{m_table}, {key.begin(), key.end()});
+    if (m_db->set_value(db_key, {value.begin(), value.end()}) == false) {
         xwarn("xtop_state_mpt_db::Put key: %s, value: %s, error", top::to_hex(key).c_str(), top::to_hex(value).c_str());
         ec = error::xerrc_t::state_mpt_db_set_error;
         return;
@@ -26,8 +28,8 @@ void xtop_state_mpt_db::Put(xbytes_t const & key, xbytes_t const & value, std::e
 
 void xtop_state_mpt_db::Delete(xbytes_t const & key, std::error_code & ec) {
     std::lock_guard<std::mutex> lock(m_mutex);
-
-    if (m_db->delete_value({key.begin(), key.end()}) == false) {
+    auto db_key = base::xvdbkey_t::create_prunable_mpt_key(base::xvaccount_t{m_table}, {key.begin(), key.end()});
+    if (m_db->delete_value(db_key) == false) {
         xwarn("xtop_state_mpt_db::Delete key: %s, error", top::to_hex(key).c_str());
         ec = error::xerrc_t::state_mpt_db_delete_error;
         return;
@@ -38,12 +40,14 @@ void xtop_state_mpt_db::Delete(xbytes_t const & key, std::error_code & ec) {
 
 bool xtop_state_mpt_db::Has(xbytes_t const & key, std::error_code & ec) {
     std::lock_guard<std::mutex> lock(m_mutex);
-    return (m_db->get_value({key.begin(), key.end()})) != std::string();
+    auto db_key = base::xvdbkey_t::create_prunable_mpt_key(base::xvaccount_t{m_table}, {key.begin(), key.end()});
+    return (m_db->get_value(db_key)) != std::string();
 }
 
 xbytes_t xtop_state_mpt_db::Get(xbytes_t const & key, std::error_code & ec) {
     std::lock_guard<std::mutex> lock(m_mutex);
-    auto value = m_db->get_value({key.begin(), key.end()});
+    auto db_key = base::xvdbkey_t::create_prunable_mpt_key(base::xvaccount_t{m_table}, {key.begin(), key.end()});
+    auto value = m_db->get_value(db_key);
     if (value == std::string()) {
         xwarn("xtop_state_mpt_db::Get key: %s, not found", top::to_hex(key).c_str());
         ec = error::xerrc_t::state_mpt_db_not_found;
