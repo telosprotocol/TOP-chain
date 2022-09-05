@@ -204,10 +204,6 @@ namespace top
                 base::xstring_utl::to_hex(next_index->get_last_block_hash()).c_str(), base::xstring_utl::to_hex(next_next_index->get_last_block_hash()).c_str());
             return nullptr;
         }
-
-        xuncommitted_subblock_cache_t & xblockacct_t::get_uncommitted_subblock_cache() {
-            return m_uncommitted_subblock_cache;
-        }
  
         bool  xblockacct_t::close(bool force_async)
         {
