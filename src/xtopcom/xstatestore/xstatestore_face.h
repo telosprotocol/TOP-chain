@@ -18,6 +18,7 @@ NS_BEG2(top, statestore)
 // the statestore interface
 class xstatestore_face_t {
  public:
+    virtual bool                    start(const xobject_ptr_t<base::xiothread_t> & iothread) = 0;
     // query accountindex
     virtual bool                    get_accountindex_from_latest_connected_table(common::xaccount_address_t const & account_address, base::xaccount_index_t & account_index) const = 0;
     virtual bool                    get_accountindex_from_table_block(common::xaccount_address_t const & account_address, base::xvblock_t * table_block, base::xaccount_index_t & account_index) const = 0;
@@ -45,7 +46,7 @@ class xstatestore_face_t {
                                               base::xvblock_t * latest_commit_block,
                                               base::xvproperty_prove_ptr_t & property_prove_ptr,
                                               data::xtablestate_ptr_t & tablestate_ptr) const = 0;
-
+    virtual bool excute_table_block(base::xvblock_t * block, evm_common::xh256_t & root_hash) = 0;
 };
 
 class xstatestore_hub_t {

@@ -8,8 +8,10 @@
 #include "xbasic/xmemory.hpp"
 #include "xdata/xtable_bstate.h"
 #include "xdata/xunit_bstate.h"
+#include "xmbus/xmessage_bus.h"
 #include "xstatestore/xstatestore_face.h"
 #include "xstatestore/xstatestore_table.h"
+#include "xstate_mpt/xstate_mpt.h"
 
 NS_BEG2(top, statestore)
 
@@ -20,6 +22,7 @@ class xstatestore_impl_t : public xstatestore_face_t {
    virtual ~xstatestore_impl_t() {}
 
  public:
+    virtual bool                    start(const xobject_ptr_t<base::xiothread_t> & iothread) override;
     // query accountindex
     virtual bool                    get_accountindex_from_latest_connected_table(common::xaccount_address_t const & account_address, base::xaccount_index_t & index) const override;
     virtual bool                    get_accountindex_from_table_block(common::xaccount_address_t const & account_address, base::xvblock_t * table_block, base::xaccount_index_t & account_index) const override;
@@ -46,6 +49,7 @@ class xstatestore_impl_t : public xstatestore_face_t {
                                               base::xvblock_t * latest_commit_block,
                                               base::xvproperty_prove_ptr_t & property_prove_ptr,
                                               data::xtablestate_ptr_t & tablestate_ptr) const override;
+    virtual bool excute_table_block(base::xvblock_t * block, evm_common::xh256_t & root_hash) override;
 
  private:
     static base::xauto_ptr<base::xvblock_t> get_latest_connectted_state_changed_block(base::xvblockstore_t* blockstore, const base::xvaccount_t & account);
@@ -53,12 +57,17 @@ class xstatestore_impl_t : public xstatestore_face_t {
     void    init_all_tablestate();    
     data::xunitstate_ptr_t       get_unit_state_from_block(common::xaccount_address_t const & account_address, base::xvblock_t * target_block) const;
     base::xvblockstore_t*        get_blockstore() const;
+    mbus::xmessage_bus_t *       get_mbus() const;
     xstatestore_table_ptr_t      get_table_statestore_from_unit_addr(common::xaccount_address_t const & account_address) const;
     xstatestore_table_ptr_t      get_table_statestore_from_table_addr(common::xaccount_address_t const & table_address) const;
     data::xtablestate_ptr_t      get_table_state_by_block_internal(common::xaccount_address_t const& table_address, base::xvblock_t * target_block) const;
+    void    on_block_to_db_event(mbus::xevent_ptr_t e);
 
  private:
     std::map<std::string, xstatestore_table_ptr_t> m_table_statestore;
+    base::xxtimer_t * m_timer;
+    uint32_t m_bus_listen_id;
+    bool m_started{false};
 };
 
 NS_END2

@@ -132,7 +132,7 @@ xevent_ptr_t  xmessage_bus_t::create_event_for_revoke_index_to_db(base::xvbindex
     return nullptr;
 }
 
-xevent_ptr_t  xmessage_bus_t::create_event_for_store_block_to_db(base::xvblock_t * this_block_ptr) {
+xevent_ptr_t  xmessage_bus_t::create_event_for_store_block_to_db(base::xvblock_t * target_block) {
     xassert(false);  // no use now
     return nullptr;
 }

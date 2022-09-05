@@ -142,6 +142,10 @@ bool xstatestore_table_t::get_accountindex_from_table_block(common::xaccount_add
         return true;
     }
 
+    auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
+    auto const new_version = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.v1_7_0_block_fork_point, table_block->get_clock());
+    xassert(!new_version || table_block->get_height() == 0);
+
     data::xtablestate_ptr_t tablestate = get_table_state_from_block(table_block);
     if (nullptr == tablestate) {
         xwarn("xstatestore_table_t::get_accountindex_from_table_block fail-get table state.%s,block=%s",account_address.value().c_str(), table_block->dump().c_str());
