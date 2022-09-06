@@ -116,6 +116,9 @@ void xtop_application::start() {
     txpool_service_thp.push_back(make_object_ptr<base::xiothread_t>());
     txpool_service_thp.push_back(make_object_ptr<base::xiothread_t>());
     m_thread_pools[xtop_thread_pool_type::txpool_service] = txpool_service_thp;
+    xthread_pool_t statestore_thp;
+    statestore_thp.push_back(make_object_ptr<base::xiothread_t>());
+    m_thread_pools[xtop_thread_pool_type::statestore] = statestore_thp;
 
     std::vector<observer_ptr<base::xiothread_t>> sync_account_thread_pool;
     for (uint32_t i = 0; i < 2; i++) {
@@ -260,7 +263,7 @@ observer_ptr<router::xrouter_face_t> xtop_application::router() const noexcept {
 
 xtop_application::xthread_pool_t const & xtop_application::thread_pool(xthread_pool_type_t const thread_pool_type) const noexcept {
     assert(thread_pool_type == xthread_pool_type_t::synchronization || thread_pool_type == xthread_pool_type_t::unit_service ||
-           thread_pool_type == xthread_pool_type_t::txpool_service);
+           thread_pool_type == xthread_pool_type_t::txpool_service || thread_pool_type == xthread_pool_type_t::statestore);
 
     return m_thread_pools.at(thread_pool_type);
 }

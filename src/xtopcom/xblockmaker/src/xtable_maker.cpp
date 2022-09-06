@@ -274,7 +274,7 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
     statectx::xstatectx_ptr_t statectx_ptr = statectx::xstatectx_factory_t::create_latest_cert_statectx(cs_para.get_latest_cert_block().get(), table_para.get_tablestate(), cs_para.get_latest_committed_block().get(), table_para.get_commit_tablestate(), statectx_para);
     if (nullptr == statectx_ptr) {
         ec = blockmaker::error::xerrc_t::blockmaker_create_statectx_fail;
-        xerror("xtable_maker_t::make_light_table_v2 fail-create statectx is_leader=%d,%s", 
+        xwarn("xtable_maker_t::make_light_table_v2 fail-create statectx is_leader=%d,%s", 
             is_leader, cs_para.dump().c_str());        
         return nullptr;
     }

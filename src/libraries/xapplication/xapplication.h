@@ -35,7 +35,7 @@
 
 NS_BEG2(top, application)
 
-enum class xtop_thread_pool_type : std::uint8_t { invalid, unit_service, synchronization, txpool_service };
+enum class xtop_thread_pool_type : std::uint8_t { invalid, unit_service, synchronization, txpool_service, statestore };
 using xthread_pool_type_t = xtop_thread_pool_type;
 
 enum class xtop_io_context_type : uint8_t { invalid, general };
