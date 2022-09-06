@@ -587,6 +587,16 @@ XDECLARE_CONFIGURATION(platform_business_port, std::uint16_t, 9000);
 XDECLARE_CONFIGURATION(platform_show_cmd, bool, false);
 XDECLARE_CONFIGURATION(platform_db_path, char const *, "/chain/db_v2/pdb");
 
+//consortium configuration
+XDECLARE_CONFIGURATION(enable_reward_contract, bool, true);
+XDECLARE_CONFIGURATION(enable_workload_contract, bool, true);
+XDECLARE_CONFIGURATION(enable_gas_fee, bool, true);
+XDECLARE_CONFIGURATION(enable_free_tgas, bool, true);
+XDECLARE_CONFIGURATION(enable_tep_token, bool, true);
+XDECLARE_CONFIGURATION(enable_consortium, bool, true);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(toggle_register_whitelist, std::uint16_t, normal, 0, 0, 1);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(register_whitelist, char const *, normal, "", "", "");
+
 #undef XDECLARE_CONFIGURATION
 
 NS_END2

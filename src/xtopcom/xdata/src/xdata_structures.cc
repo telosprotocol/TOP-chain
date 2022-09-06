@@ -418,6 +418,9 @@ bool xreg_node_info::can_be_relay() const noexcept {
 }
 
 bool xreg_node_info::has_enough_tickets() const noexcept {
+    if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(toggle_register_whitelist) == 1)
+        return true;
+
 #if defined(XENABLE_MOCK_ZEC_STAKE)
     return true;
 #else

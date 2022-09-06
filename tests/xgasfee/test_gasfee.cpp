@@ -1,3 +1,5 @@
+#define protected public
+#define private public
 #include "test_gasfee_fixture.h"
 #include "xdata/src/xnative_contract_address.cpp"
 #include "xgasfee/xerror/xerror.h"
@@ -392,6 +394,21 @@ TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v2_transfer_not_use_deposit) {
     // EXPECT_EQ(default_confirm_cons_tx->get_current_used_tgas(), 0);
     // EXPECT_EQ(default_confirm_cons_tx->get_current_used_deposit(), 0);
     // EXPECT_EQ(default_bstate->load_token_var(data::XPROPERTY_BALANCE_AVAILABLE)->get_balance(), base::vtoken_t(default_balance));
+    {
+    make_confirm_cons_tx();
+    gasfee::xconsortium_gasfee op_confirm{default_unit_state, default_confirm_cons_tx, default_onchain_time, default_onchain_deposit_tgas};
+    op_confirm.preprocess(ec);
+    EXPECT_EQ(ec.value(), 0);
+    // ... execute confirm tx
+    op_confirm.postprocess(supplement_gas, ec);
+    EXPECT_EQ(ec.value(), 0);
+    detail = op_confirm.gasfee_detail();
+    // no exec
+    EXPECT_EQ(detail.m_tx_used_tgas, 0);
+    EXPECT_EQ(detail.m_tx_used_deposit, 0);
+    EXPECT_EQ(detail.m_state_used_tgas, 0);
+    EXPECT_EQ(detail.m_state_last_time, 0);        
+    }
 }
 
 TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v2_transfer_use_deposit) {
@@ -456,6 +473,22 @@ TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v2_transfer_use_deposit) {
     // EXPECT_EQ(default_confirm_cons_tx->get_current_used_tgas(), 0);
     // // ignore transfer
     // EXPECT_EQ(default_confirm_cons_tx->get_current_used_deposit(), 0);
+    {
+    make_confirm_cons_tx();
+    gasfee::xconsortium_gasfee op_confirm{default_unit_state, default_confirm_cons_tx, default_onchain_time, default_onchain_deposit_tgas};
+    op_confirm.preprocess(ec);
+    EXPECT_EQ(ec.value(), 0);
+    // ... execute confirm tx
+    op_confirm.postprocess(supplement_gas, ec);
+    EXPECT_EQ(ec.value(), 0);
+    detail = op_confirm.gasfee_detail();
+    // no exec
+    EXPECT_EQ(detail.m_tx_used_tgas, 0);
+    EXPECT_EQ(detail.m_tx_used_deposit, 0);
+    EXPECT_EQ(detail.m_state_used_tgas, 0);
+    EXPECT_EQ(detail.m_state_last_time, 0);
+    EXPECT_EQ(detail.m_state_burn_balance, 0);        
+    }
 }
 
 TEST_F(xtest_gasfee_fixture_t, gasfee_demo_v2_transfer_self) {

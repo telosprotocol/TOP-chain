@@ -23,7 +23,7 @@
 #include "xrpc/xuint_format.h"
 #include "xstore/xstore_face.h"
 #include "xtxstore/xtxstore_face.h"
-#include "xtxstore/xtransaction_prepare.h"
+#include "xverifier/xtx_verifier.h"
 #include "xverifier/xblacklist_verifier.h"
 #include "xverifier/xwhitelist_verifier.h"
 #include "xvledger/xvblock.h"
@@ -212,17 +212,9 @@ void xedge_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, cons
     }
 
     if (m_archive_flag) {
-        data::xcons_transaction_ptr_t cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());
-        txexecutor::xtransaction_prepare_t tx_prepare(nullptr, cons_tx);
-        int32_t ret = tx_prepare.check();
-        if (ret != xsuccess) {
-            XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_prepare", 1);
-            //std::string err = std::string("transaction txpool check error (") + std::to_string(ret) + ")";
-            throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, tx_prepare.get_err_msg(ret)};
-        }
-        // 3. tx duration expire check
+        // tx duration expire check
         uint64_t now = xverifier::xtx_utl::get_gmttime_s();
-        ret = xverifier::xtx_verifier::verify_tx_fire_expiration(tx.get(), now, true);
+        int32_t ret = xverifier::xtx_verifier::verify_tx_fire_expiration(tx.get(), now, true);
         if (ret) {
             XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_expiration", 1);
             throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "duration expiration check failed"};

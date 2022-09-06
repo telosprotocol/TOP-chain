@@ -239,8 +239,16 @@ XDEFINE_CONFIGURATION(platform_show_cmd);
 XDEFINE_CONFIGURATION(platform_db_path);
 XDEFINE_CONFIGURATION(platform_url_endpoints);
 
+// consortium parameters
+XDEFINE_CONFIGURATION(enable_reward_contract);
+XDEFINE_CONFIGURATION(enable_workload_contract);
+XDEFINE_CONFIGURATION(enable_gas_fee);
+XDEFINE_CONFIGURATION(enable_free_tgas);
+XDEFINE_CONFIGURATION(enable_tep_token);
+XDEFINE_CONFIGURATION(enable_consortium);
 
-
+XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(toggle_register_whitelist);
+XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(register_whitelist);
 #    undef XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER
 #    undef XDEFINE_CONFIGURATION
 

@@ -20,6 +20,7 @@
     "dht_port": 19083,
     "msg_port": 19084,
     "ws_port": 19085,
+    "evm_port": 8082,
     "seed_edge_host": "127.0.0.1:19081",
     "seeds": "T00000LNi53Ub726HcPXZfC4z6zLgTo5ks6GzTUp:127.0.0.1;T00000LeXNqW7mCCoj23LEsxEmNcWKs8m6kJH446:127.0.0.2",
     "seed_node_id": "T00000LNi53Ub726HcPXZfC4z6zLgTo5ks6GzTUp:xxxx",
