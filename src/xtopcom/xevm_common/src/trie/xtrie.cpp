@@ -12,11 +12,12 @@
 NS_BEG3(top, evm_common, trie)
 
 std::shared_ptr<xtop_trie> xtop_trie::New(xhash256_t hash, xtrie_db_ptr_t db, std::error_code & ec) {
+    xassert(!ec);
     if (db == nullptr) {
         xerror("build trie from null db");
     }
     auto trie = xtop_trie{db};
-    if (hash != emptyRoot && hash != xhash256_t{}) {
+    if ((hash != emptyRoot) && (hash != xhash256_t{})) {
         // resolve Hash
         auto root_hash = std::make_shared<xtrie_hash_node_t>(hash);
         auto root = trie.resolveHash(root_hash, ec);
@@ -64,6 +65,7 @@ xbytes_t xtop_trie::Get(xbytes_t const & key) const {
 // The value bytes must not be modified by the caller.
 // If a node was not found in the database, a MissingNodeError(trie_db_missing_node_error) is returned.
 xbytes_t xtop_trie::TryGet(xbytes_t const & key, std::error_code & ec) const {
+    xassert(!ec);
     xbytes_t value;
     xtrie_node_face_ptr_t newroot;
     bool didResolve;
@@ -73,6 +75,7 @@ xbytes_t xtop_trie::TryGet(xbytes_t const & key, std::error_code & ec) const {
 }
 
 std::pair<xbytes_t, std::size_t> xtop_trie::TryGetNode(xbytes_t const & path, std::error_code & ec) {
+    xassert(!ec);
     xbytes_t item;
     xtrie_node_face_ptr_t newroot;
     std::size_t resolved;
@@ -114,6 +117,7 @@ void xtop_trie::Update(xbytes_t const & key, xbytes_t const & value) {
 //
 // If a node was not found in the database, a MissingNodeError(trie_db_missing_node_error) is returned.
 void xtop_trie::TryUpdate(xbytes_t const & key, xbytes_t const & value, std::error_code & ec) {
+    xassert(!ec);
     unhashed++;
     auto k = keybytesToHex(key);
     if (value.size() != 0) {
@@ -145,6 +149,7 @@ void xtop_trie::Delete(xbytes_t const & key) {
 // TryDelete removes any existing value for key from the trie.
 // If a node was not found in the database, a MissingNodeError(trie_db_missing_node_error) is returned.
 void xtop_trie::TryDelete(xbytes_t const & key, std::error_code & ec) {
+    xassert(!ec); 
     unhashed++;
     auto k = keybytesToHex(key);
     auto result = erase(m_root, {}, k, ec);
@@ -158,6 +163,7 @@ void xtop_trie::TryDelete(xbytes_t const & key, std::error_code & ec) {
 // Commit writes all nodes to the trie's memory database, tracking the internal
 // and external (for account tries) references.
 std::pair<xhash256_t, int32_t> xtop_trie::Commit(std::error_code & ec) {
+    xassert(!ec);
     // todo LeafCallback
     if (m_db == nullptr) {
         xerror("commit called on trie without database");
@@ -184,6 +190,7 @@ std::pair<xhash256_t, int32_t> xtop_trie::Commit(std::error_code & ec) {
 }
 
 bool xtop_trie::Prove(xbytes_t const & key, uint32_t fromLevel, xkv_db_face_ptr_t proofDB, std::error_code & ec) {
+    xassert(!ec);
     // Collect all nodes on the path to key.
     auto key_path = keybytesToHex(key);
     std::vector<xtrie_node_face_ptr_t> nodes;

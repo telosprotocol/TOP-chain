@@ -23,7 +23,7 @@ public:
 private:
     base::xvdbstore_t * m_db{nullptr};
     std::mutex m_mutex;
-    std::string m_table;
+    std::string m_table;    // store key with table address
 };
 using xstate_mpt_db_t = xtop_state_mpt_db;
 
