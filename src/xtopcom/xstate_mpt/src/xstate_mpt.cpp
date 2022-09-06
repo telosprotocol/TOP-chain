@@ -11,9 +11,13 @@
 namespace top {
 namespace state_mpt {
 
-std::shared_ptr<xtop_state_mpt> xtop_state_mpt::create(xhash256_t root, base::xvdbstore_t * db, std::string table, std::error_code & ec) {
+std::shared_ptr<xtop_state_mpt> xtop_state_mpt::create(const std::string & table,
+                                                       const xhash256_t & root,
+                                                       base::xvdbstore_t * db,
+                                                       xstate_mpt_cache_t * cache,
+                                                       std::error_code & ec) {
     xtop_state_mpt mpt;
-    mpt.init(root, db, table, ec);
+    mpt.init(table, root, db, cache, ec);
     if (ec) {
         xwarn("xtop_state_mpt::create init error, %s %s", ec.category().name(), ec.message().c_str());
         return nullptr;
@@ -48,6 +52,9 @@ void xtop_state_mpt::set_account_index(const std::string & account, const std::s
         return;
     }
     m_journal.append({account, prev_index_str});
+    if (m_lru != nullptr) {
+        m_cache_indexes.insert({account, {index_str.begin(), index_str.end()}});
+    }
     set_account_index_str(account, index_str);
     return;
 }
@@ -56,6 +63,15 @@ std::string xtop_state_mpt::get_account_index_str(const std::string & account, s
     if (m_indexes.count(account)) {
         return {m_indexes[account].begin(), m_indexes[account].end()};
     }
+    // get from cache
+    if (m_lru != nullptr) {
+        auto index_str = xstate_mpt_cache_t::get(m_lru, m_original_root, account);
+        if (!index_str.empty()) {
+            set_account_index_str(account, index_str);
+            return index_str;
+        }
+    }
+    // get from db
     xbytes_t index_bytes;
     {
         XMETRICS_TIME_RECORD("state_mpt_load_db_index");
@@ -68,6 +84,9 @@ std::string xtop_state_mpt::get_account_index_str(const std::string & account, s
     if (index_bytes.empty()) {
         xwarn("xtop_state_mpt::get_account_index_str TryGet %s empty", account.c_str());
         return {};
+    }
+    if (m_lru != nullptr) {
+        m_cache_indexes.insert({account, index_bytes});
     }
     set_account_index_str(account, {index_bytes.begin(), index_bytes.end()});
     return {index_bytes.begin(), index_bytes.end()};
@@ -136,10 +155,14 @@ xhash256_t xtop_state_mpt::commit(std::error_code & ec) {
         xwarn("xtop_state_mpt::commit db commit error, %s %s", ec.category().name(), ec.message().c_str());
         return {};
     }
+    if (m_lru != nullptr) {
+        xstate_mpt_cache_t::set(m_lru, res.first, m_cache_indexes);
+    }
     return res.first;
 }
 
-void xtop_state_mpt::init(xhash256_t root, base::xvdbstore_t * db, std::string table, std::error_code & ec) {
+void xtop_state_mpt::init(const std::string & table, const xhash256_t & root, base::xvdbstore_t * db, xstate_mpt_cache_t * cache, std::error_code & ec) {
+    m_table_address = table;
     auto mpt_db = std::make_shared<xstate_mpt_db_t>(db, table);
     m_db = evm_common::trie::xtrie_db_t::NewDatabase(mpt_db);
     m_trie = evm_common::trie::xtrie_t::New(root, m_db, ec);
@@ -148,6 +171,9 @@ void xtop_state_mpt::init(xhash256_t root, base::xvdbstore_t * db, std::string t
         return;
     }
     m_original_root = root;
+    if (cache != nullptr) {
+        m_lru = cache->get_lru(table);
+    }
     return;
 }
 

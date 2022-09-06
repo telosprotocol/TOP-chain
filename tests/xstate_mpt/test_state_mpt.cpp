@@ -104,7 +104,7 @@ TEST_F(test_state_mpt_fixture, test_db) {
 
 TEST_F(test_state_mpt_fixture, test_example) {
     std::error_code ec;
-    auto s = state_mpt::xstate_mpt_t::create({}, m_db, TABLE_ADDRESS, ec);
+    auto s = state_mpt::xstate_mpt_t::create(TABLE_ADDRESS, {}, m_db, nullptr, ec);
     EXPECT_FALSE(ec);
 
     std::string k1("dog");
@@ -127,7 +127,7 @@ TEST_F(test_state_mpt_fixture, test_example) {
 
 TEST_F(test_state_mpt_fixture, test_get_unknown) {
     std::error_code ec;
-    auto s = state_mpt::xstate_mpt_t::create({}, m_db, TABLE_ADDRESS, ec);
+    auto s = state_mpt::xstate_mpt_t::create(TABLE_ADDRESS, {}, m_db, nullptr, ec);
     EXPECT_EQ(ec.value(), 0);
 
     ec.clear();
@@ -150,7 +150,7 @@ TEST_F(test_state_mpt_fixture, test_create_twice) {
 
 TEST_F(test_state_mpt_fixture, test_basic) {
     std::error_code ec;
-    auto s = state_mpt::xstate_mpt_t::create({}, m_db, TABLE_ADDRESS, ec);
+    auto s = state_mpt::xstate_mpt_t::create(TABLE_ADDRESS, {}, m_db, state_mpt::xstate_mpt_cache_t::instance(), ec);
     EXPECT_EQ(ec.value(), 0);
 
     auto origin_hash = s->m_trie->Hash();
@@ -260,17 +260,26 @@ TEST_F(test_state_mpt_fixture, test_basic) {
         EXPECT_EQ(s->m_journal.index_changes[i - 4].prev_index, std::string());
         EXPECT_TRUE(s->m_journal.dirties.count(data[i].first));
     }
+    EXPECT_EQ(s->m_cache_indexes.size(), 10);
     // commit
-    s->commit(ec);
+    auto hash = s->commit(ec);
     EXPECT_FALSE(ec);
     // cache is not lost
     EXPECT_EQ(s->m_indexes.size(), 10);
     EXPECT_TRUE(s->m_journal.index_changes.empty());
     EXPECT_TRUE(s->m_journal.dirties.empty());
-}
 
-TEST_F(test_state_mpt_fixture, test_double_commit) {
+    EXPECT_EQ(state_mpt::xstate_mpt_cache_t::instance()->m_cache.size(), 1);
+    EXPECT_TRUE(state_mpt::xstate_mpt_cache_t::instance()->m_cache.count(TABLE_ADDRESS));
+    auto & cache = state_mpt::xstate_mpt_cache_t::instance()->m_cache[TABLE_ADDRESS];
 
+    for (auto i = 1; i < 10; i++) {
+        std::string str;
+        cache->get(data[i].first + "@" + hash.as_hex_str().substr(0, 8), str);
+        std::string str2;
+        data[i].second.serialize_to(str2);
+        EXPECT_EQ(str, str2);
+    }
 }
 
 }  // namespace top

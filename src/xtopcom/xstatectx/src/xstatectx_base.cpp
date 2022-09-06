@@ -191,7 +191,7 @@ bool xstatectx_base_t::get_account_index(const data::xvblock_ptr_t & block,
     if (state_root != evm_common::xh256_t()) {
         std::error_code ec;
         xhash256_t root_hash(state_root.to_bytes()); 
-        auto mpt = state_mpt::xtop_state_mpt::create(root_hash, base::xvchain_t::instance().get_xdbstore(), table_state->account_address().to_string(), ec);
+        auto mpt = state_mpt::xtop_state_mpt::create(m_table_state->account_address().to_string(), root_hash, base::xvchain_t::instance().get_xdbstore(), state_mpt::xstate_mpt_cache_t::instance(), ec);
         if (ec) {
             xwarn("xstatectx_base_t::get_account_index create mpt fail.root hash:%s.state_root:%s.block:%s", root_hash.as_hex_str().c_str(), state_root.hex().c_str(), block->dump().c_str());
             return false;

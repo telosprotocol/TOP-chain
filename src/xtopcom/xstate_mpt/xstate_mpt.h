@@ -4,7 +4,9 @@
 
 #pragma once
 
+#include "xbasic/xmemory.hpp"
 #include "xevm_common/trie/xtrie.h"
+#include "xstate_mpt/xstate_mpt_cache.h"
 #include "xstate_mpt/xstate_mpt_db.h"
 #include "xstate_mpt/xstate_mpt_journal.h"
 #include "xvledger/xaccountindex.h"
@@ -19,12 +21,13 @@ public:
 
 public:
     /// @brief Create an state MPT with specific root hash.
+    /// @param table Table address of state MPT.
     /// @param root Root hash of MPT.
     /// @param db Db interface.
-    /// @param table Table address of state MPT.
+    /// @param cache Globle state MPT cache.
     /// @param ec Log the error code.
     /// @return MPT with given root hash. Error occured if cannot find root in db.
-    static std::shared_ptr<xtop_state_mpt> create(xhash256_t root, base::xvdbstore_t * db, std::string table, std::error_code & ec);
+    static std::shared_ptr<xtop_state_mpt> create(const std::string & table, const xhash256_t & root, base::xvdbstore_t * db, xstate_mpt_cache_t * cache, std::error_code & ec);
 
 public:
     /// @brief Get index of specific account.
@@ -61,12 +64,13 @@ public:
 
 private:
     /// @brief Internal interface to init an empty state MPT.
+    /// @param table Table address of state MPT.
     /// @param root Root hash of MPT.
     /// @param db Db interface.
-    /// @param table Table address of state MPT.
+    /// @param cache Globle state MPT cache.
     /// @param ec Log the error code.
     /// @return MPT with given root hash. Error occured if cannot find root in db.
-    void init(xhash256_t root, base::xvdbstore_t * db, std::string table, std::error_code & ec);
+    void init(const std::string & table, const xhash256_t & root, base::xvdbstore_t * db, xstate_mpt_cache_t * cache, std::error_code & ec);
 
     /// @brief Internal interface to get index string..
     /// @param account Account string.
@@ -85,11 +89,15 @@ private:
     /// @brief Clear journals.
     void clear_journal();
 
-    std::shared_ptr<evm_common::trie::xtrie_t> m_trie;
-    std::shared_ptr<evm_common::trie::xtrie_db_t> m_db;
+    std::string m_table_address;
+
+    std::shared_ptr<evm_common::trie::xtrie_t> m_trie{nullptr};
+    std::shared_ptr<evm_common::trie::xtrie_db_t> m_db{nullptr};
+    std::shared_ptr<base::xlru_cache<std::string, std::string>> m_lru{nullptr};
     xhash256_t m_original_root;
 
     std::map<std::string, xbytes_t> m_indexes;
+    std::map<std::string, xbytes_t> m_cache_indexes;
     std::set<std::string> m_pending_indexes;
 
     xstate_journal_t m_journal;

@@ -708,7 +708,7 @@ std::shared_ptr<state_mpt::xtop_state_mpt> xtable_maker_t::create_new_mpt(const 
                                                                        const statectx::xstatectx_ptr_t & table_state_ctx,
                                                                        const std::vector<std::pair<xblock_ptr_t, base::xaccount_index_t>> & batch_unit_and_index) {
     std::error_code ec;
-    auto mpt = state_mpt::xtop_state_mpt::create(last_mpt_root, base::xvchain_t::instance().get_xdbstore(), get_account(), ec);
+    auto mpt = state_mpt::xtop_state_mpt::create(get_account(), last_mpt_root, base::xvchain_t::instance().get_xdbstore(), state_mpt::xstate_mpt_cache_t::instance(), ec);
     if (ec) {
         xwarn("xtable_maker_t::create_new_mpt create mpt fail.");
         return nullptr;
