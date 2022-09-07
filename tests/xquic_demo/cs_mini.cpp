@@ -5,9 +5,17 @@
 #define XQC_PACKET_TMP_BUF_LEN 1500
 #define g_conn_check_timeout 1                  // 1s each check
 #define g_conn_timeout 5                        // 5s
+#define g_stream_handle_timeout 5               // 5s
 #define g_client_engine_idle_timeout 30 * 1000  // 10s
 #define g_server_engine_idle_timeout 30 * 1000  // 30s
 #define MAX_BUF_SIZE (100 * 1024 * 1024)
+
+#define DO_SEND_INTERVAL_MIN 4
+#define DO_SEND_INTERVAL_MAX 32
+
+#define SEND_RECV_BUFF_SIZE 32 * 1024  // 1MB send&&recv buffer
+
+#include "assert.h"
 
 #include <errno.h>
 
@@ -24,6 +32,42 @@ static int get_last_sys_errno() {
 static void set_last_sys_errno(int err) {
     errno = err;
 }
+
+static top::xbytes_t size_to_bytes(std::size_t len) {
+    // auto f = len;
+    top::xbytes_t res(4, (top::xbyte_t)0);
+    for (std::size_t index = 0; index < 4; index++) {
+        res[3 - index] = (top::xbyte_t)(len % 256);
+        len /= 256;
+        if (len == 0)
+            break;
+    }
+    // printf("size_to_bytes %zu %d %d %d %d \n",f, res[0], res[1], res[2], res[3]);
+    return res;
+}
+
+static std::size_t four_bytes_to_size(top::xbytes_t head) {
+    assert(head.size() == 4);
+    std::size_t res = 0;
+    for (std::size_t index = 0; index < 4; index++) {
+        res *= 256;
+        res += head[index];
+    }
+    // printf("four_bytes_to_size %d %d %d %d \n", head[0], head[1], head[2], head[3]);
+    return res;
+}
+
+static uint64_t g_do_send_time{0};
+static uint64_t g_write_notify_time{0};
+static uint64_t g_send_mem_alloc_time{0};
+static uint64_t g_send_mem_cpy_time{0};
+static uint64_t g_send_mem_dealloc_time{0};
+static uint64_t g_qc_stream_send_time{0};
+
+#define __TIME_RECORD_BEGIN(name) auto st_bg_##name = xqc_now();
+#define __TIME_RECORD_END(name, g)                                                                                                                                                 \
+    auto st_ed_##name = xqc_now();                                                                                                                                                 \
+    g += (st_ed_##name - st_bg_##name);
 
 // log
 void xquic_server_write_log(xqc_log_level_t lvl, const void * buf, size_t count, void * engine_user_data) {
@@ -51,6 +95,7 @@ void xquic_server_write_log(xqc_log_level_t lvl, const void * buf, size_t count,
 
 // user_data as xquic_server_t
 void xquic_server_set_event_timer(xqc_msec_t wake_after, void * user_data) {
+    // printf("server wake after: %" PRIu64 "  now: %" PRIu64 " \n", wake_after, xqc_now());
     xquic_server_t * server = (xquic_server_t *)user_data;
     struct timeval tv;
     tv.tv_sec = wake_after / 1000000;
@@ -60,6 +105,7 @@ void xquic_server_set_event_timer(xqc_msec_t wake_after, void * user_data) {
 
 // user_data as xquic_client_t
 void xquic_client_set_event_timer(xqc_msec_t wake_after, void * user_data) {
+    // printf("client wake after: %" PRIu64 "  now: %" PRIu64 " \n", wake_after, xqc_now());
     xquic_client_t * client = (xquic_client_t *)user_data;
     struct timeval tv;
     tv.tv_sec = wake_after / 1000000;
@@ -68,40 +114,38 @@ void xquic_client_set_event_timer(xqc_msec_t wake_after, void * user_data) {
 }
 
 void xquic_client_alive_timer(int fd, short what, void * user_data) {
+    // printf("client try send alive at : %" PRIu64 " \n", xqc_now());
     xquic_client_t * client = (xquic_client_t *)user_data;
-    struct timeval tv;
-    tv.tv_sec = 0;
-    tv.tv_usec = 1000;
-    event_add(client->client_alive_timer, &tv);
+    client->quic_engine_do_send();
 }
 
 /// server transport cbs
 int xquic_server_accept(xqc_engine_t * engine, xqc_connection_t * conn, const xqc_cid_t * cid, void * user_data) {
     DEBUG_INFO;
     xquic_server_t * server = (xquic_server_t *)user_data;
-    user_conn_t * user_conn = (user_conn_t *)calloc(1, sizeof(*user_conn));
-    user_conn->server = server;
-    xqc_conn_set_transport_user_data(conn, user_conn);
+    srv_user_conn_t * srv_user_conn = new srv_user_conn_t;
+    srv_user_conn->server = server;
+    xqc_conn_set_transport_user_data(conn, srv_user_conn);
 
-    xqc_int_t ret = xqc_conn_get_peer_addr(conn, (struct sockaddr *)&user_conn->peer_addr, sizeof(user_conn->peer_addr), &user_conn->peer_addrlen);
+    xqc_int_t ret = xqc_conn_get_peer_addr(conn, (struct sockaddr *)&srv_user_conn->peer_addr, sizeof(srv_user_conn->peer_addr), &srv_user_conn->peer_addrlen);
     if (ret != XQC_OK) {
         return -1;
     }
 
-    memcpy(&user_conn->cid, cid, sizeof(*cid));
+    memcpy(&srv_user_conn->cid, cid, sizeof(*cid));
 
     return 0;
 }
 ssize_t xquic_server_write_socket(const unsigned char * buf, size_t size, const struct sockaddr * peer_addr, socklen_t peer_addrlen, void * user_data) {
-    user_conn_t * user_conn = (user_conn_t *)user_data;  // user_data may be empty when "reset" is sent
+    srv_user_conn_t * srv_user_conn = (srv_user_conn_t *)user_data;  // user_data may be empty when "reset" is sent
     ssize_t res = 0;
-    if (user_conn == nullptr || user_conn->server == nullptr) {
+    if (srv_user_conn == nullptr || srv_user_conn->server == nullptr) {
         DEBUG_INFO;
         return XQC_SOCKET_ERROR;
     }
 
     static ssize_t snd_sum = 0;
-    int fd = user_conn->server->fd;
+    int fd = srv_user_conn->server->fd;
 
     /* COPY to run corruption test cases */
     unsigned char send_buf[XQC_PACKET_TMP_BUF_LEN];
@@ -133,25 +177,25 @@ ssize_t xquic_server_write_socket(const unsigned char * buf, size_t size, const 
 }
 void xquic_server_conn_update_cid_notify(xqc_connection_t * conn, const xqc_cid_t * retire_cid, const xqc_cid_t * new_cid, void * user_data) {
     DEBUG_INFO;
-    user_conn_t * user_conn = (user_conn_t *)user_data;
-    xquic_server_t * server = (xquic_server_t *)user_conn->server;
+    srv_user_conn_t * srv_user_conn = (srv_user_conn_t *)user_data;
+    xquic_server_t * server = (xquic_server_t *)srv_user_conn->server;
 
-    memcpy(&user_conn->cid, new_cid, sizeof(*new_cid));
+    memcpy(&srv_user_conn->cid, new_cid, sizeof(*new_cid));
 
-    printf("====>RETIRE SCID:%s\n", xqc_scid_str(retire_cid));
-    printf("====>SCID:%s\n", xqc_scid_str(new_cid));
-    printf("====>DCID:%s\n", xqc_dcid_str_by_scid(server->engine, new_cid));
+    printf("[server]====>RETIRE SCID:%s\n", xqc_scid_str(retire_cid));
+    printf("[server]====>SCID:%s\n", xqc_scid_str(new_cid));
+    printf("[server]====>DCID:%s\n", xqc_dcid_str_by_scid(server->engine, new_cid));
 }
 
 static void xquic_server_engine_callback(int fd, short what, void * arg) {
-    DEBUG_INFO_MSG("server engine timer wakeup");
+    // DEBUG_INFO_MSG("server engine timer wakeup");
     // printf("server engine timer wakeup now:%" PRIu64 "\n", xqc_now());
     xquic_server_t * server = (xquic_server_t *)arg;
 
     xqc_engine_main_logic(server->engine);
 }
 static void xquic_client_engine_callback(int fd, short what, void * arg) {
-    DEBUG_INFO_MSG("client engine timer wakeup");
+    // DEBUG_INFO_MSG("client engine timer wakeup");
     // printf("timer wakeup now:%" PRIu64 "\n", xqc_now());
     xquic_client_t * client = (xquic_client_t *)arg;
 
@@ -161,14 +205,14 @@ static void xquic_client_engine_callback(int fd, short what, void * arg) {
 /// client tranport cbs
 ssize_t xquic_client_write_socket(const unsigned char * buf, size_t size, const struct sockaddr * peer_addr, socklen_t peer_addrlen, void * user) {
     // DEBUG_INFO;
-    user_conn_t * user_conn = (user_conn_t *)user;
+    cli_user_conn_t * cli_user_conn = (cli_user_conn_t *)user;
     ssize_t res = 0;
-    if (user_conn == nullptr || user_conn->client == nullptr) {
+    if (cli_user_conn == nullptr || cli_user_conn->client == nullptr) {
         DEBUG_INFO;
         return XQC_SOCKET_ERROR;
     }
 
-    int fd = user_conn->fd;
+    int fd = cli_user_conn->fd;
 
     /* COPY to run corruption test cases */
     unsigned char send_buf[XQC_PACKET_TMP_BUF_LEN];
@@ -184,7 +228,7 @@ ssize_t xquic_client_write_socket(const unsigned char * buf, size_t size, const 
     do {
         set_last_sys_errno(0);
 
-        user_conn->last_sock_op_time = xqc_now();
+        cli_user_conn->last_sock_op_time = xqc_now();
 
         res = sendto(fd, send_buf, send_buf_size, 0, peer_addr, peer_addrlen);
         if (res < 0) {
@@ -199,24 +243,23 @@ ssize_t xquic_client_write_socket(const unsigned char * buf, size_t size, const 
 }
 void xquic_client_save_token(const unsigned char * token, unsigned token_len, void * user_data) {
     DEBUG_INFO;
-    user_conn_t * user_conn = (user_conn_t *)user_data;
-    // char *ip = inet_ntoa(((struct sockaddr_in *)&user_conn->peer_addr)->sin_addr);// might add connection address key
-    user_conn->client->xclient_save_token_cb(token, token_len);
+    cli_user_conn_t * cli_user_conn = (cli_user_conn_t *)user_data;
+    // char *ip = inet_ntoa(((struct sockaddr_in *)&cli_user_conn->peer_addr)->sin_addr);// might add connection address key
+    cli_user_conn->client->xclient_save_token_cb(token, token_len);
 }
 void xquic_client_save_session_cb(const char * data, size_t data_len, void * user_data) {
     DEBUG_INFO;
-    user_conn_t * user_conn = (user_conn_t *)user_data;
-    user_conn->client->xclient_save_session_ticket_cb(data, data_len);
+    cli_user_conn_t * cli_user_conn = (cli_user_conn_t *)user_data;
+    cli_user_conn->client->xclient_save_session_ticket_cb(data, data_len);
 }
 void xquic_client_save_tp_cb(const char * data, size_t data_len, void * user_data) {
     DEBUG_INFO;
-    user_conn_t * user_conn = (user_conn_t *)user_data;
-    user_conn->client->xclient_save_transport_parameter_cb(data, data_len);
+    cli_user_conn_t * cli_user_conn = (cli_user_conn_t *)user_data;
+    cli_user_conn->client->xclient_save_transport_parameter_cb(data, data_len);
 }
 int xquic_client_cert_verify(const unsigned char * certs[], const size_t cert_len[], size_t certs_len, void * conn_user_data) {
     /* self-signed cert used in test cases, return >= 0 means success */
     // DEBUG_INFO;
-    // user_conn_t * user_conn = (user_conn_t *)conn_user_data;
     return 0;
 }
 
@@ -233,8 +276,8 @@ int xquic_server_conn_create_notify(xqc_connection_t * conn, const xqc_cid_t * c
 }
 int xquic_server_conn_close_notify(xqc_connection_t * conn, const xqc_cid_t * cid, void * user_data, void * conn_proto_data) {
     DEBUG_INFO;
-    user_conn_t * user_conn = (user_conn_t *)user_data;
-    xquic_server_t * server = (xquic_server_t *)user_conn->server;
+    srv_user_conn_t * srv_user_conn = (srv_user_conn_t *)user_data;
+    xquic_server_t * server = (xquic_server_t *)srv_user_conn->server;
     xqc_conn_stats_t stats = xqc_conn_get_stats(server->engine, cid);
     printf("server: send_count:%u, lost_count:%u, tlp_count:%u, recv_count:%u, srtt:%" PRIu64 " early_data_flag:%d, conn_err:%d, ack_info:%s\n",
            stats.send_count,
@@ -246,12 +289,15 @@ int xquic_server_conn_close_notify(xqc_connection_t * conn, const xqc_cid_t * ci
            stats.conn_err,
            stats.ack_info);
 
-    free(user_conn);
+    delete srv_user_conn;
+    // todo verify
+    // when the peer(client) close connection (peers timeout close or self engine timeout close),
+    // server should callback to erase this no-more-trusted connection.
     return 0;
 }
 void xquic_server_conn_handshake_finished(xqc_connection_t * conn, void * user_data, void * conn_proto_data) {
     DEBUG_INFO;
-    user_conn_t * user_conn = (user_conn_t *)user_data;
+    srv_user_conn_t * srv_user_conn = (srv_user_conn_t *)user_data;
 }
 
 /// server app callbacks
@@ -260,88 +306,130 @@ int xquic_server_stream_create_notify(xqc_stream_t * stream, void * user_data) {
     DEBUG_INFO;
     int ret = 0;
 
-    // get user_conn by user_stream;
+    // get srv_user_conn by stream;
     // so stream read notify could find cb function.
-    user_conn_t * user_conn = (user_conn_t *)xqc_get_conn_user_data_by_stream(stream);
+    srv_user_conn_t * srv_user_conn = (srv_user_conn_t *)xqc_get_conn_user_data_by_stream(stream);
 
-    user_stream_t * user_stream = (user_stream_t *)calloc(1, sizeof(*user_stream));
-    user_stream->stream = stream;
-    user_stream->user_conn = user_conn;
-    xqc_stream_set_user_data(stream, user_stream);
+    srv_user_stream_t * srv_user_stream = new srv_user_stream_t;
+    srv_user_stream->stream = stream;
+    srv_user_stream->srv_user_conn = srv_user_conn;
+    xqc_stream_set_user_data(stream, srv_user_stream);
 
     return 0;
 }
 int xquic_server_stream_read_notify(xqc_stream_t * stream, void * user_data) {
-    DEBUG_INFO;
+    // DEBUG_INFO;
     unsigned char fin = 0;
-    user_stream_t * user_stream = (user_stream_t *)user_data;
 
-    std::string debug_result;
-    top::xbytes_t result;
+    srv_user_stream_t * srv_user_stream = (srv_user_stream_t *)user_data;
 
-    unsigned char buff[4096] = {0};
-    size_t buff_size = 4096;
+    top::xbytes_t & result = srv_user_stream->recv_buffer;
+    bool & has_recv_block_len = srv_user_stream->has_recv_block_len;
+    std::size_t & block_len = srv_user_stream->block_len;
+
+    unsigned char buff[SEND_RECV_BUFF_SIZE] = {0};
+    size_t buff_size = SEND_RECV_BUFF_SIZE;
     ssize_t read;
-    ssize_t read_sum = 0;
     do {
         read = xqc_stream_recv(stream, buff, buff_size, &fin);
+        // printf("recv from stream, size: %zd\n", read);
         if (read == -XQC_EAGAIN) {
             break;
         } else if (read < 0) {
             printf("xqc_stream_recv error %zd\n", read);
             return 0;
         }
-        read_sum += read;
-
-        user_stream->recv_body_len += read;
 
         result.insert(result.end(), buff, buff + read);
+        bool no_more_cb{true};
+        do {
+            no_more_cb = true;
+            if (!has_recv_block_len && result.size() > 4) {
+                no_more_cb = false;
+                block_len = four_bytes_to_size(top::xbytes_t{result.begin(), result.begin() + 4});
+                // printf("data block size: %zu\n", block_len);
+                has_recv_block_len = true;
+                result.erase(result.begin(), result.begin() + 4);
+            }
 
-        debug_result += std::string{(char *)buff, read};
-        printf("stream recv size:%zu", debug_result.size());
+            if (has_recv_block_len && result.size() >= block_len) {
+                no_more_cb = false;
+                // DEBUG_INFO_MSG("recv message");
+                top::xbytes_t cb_buffer = top::xbytes_t{result.begin(), result.begin() + block_len};
+                srv_user_stream->srv_user_conn->server->m_cb(cb_buffer);
+                result.erase(result.begin(), result.begin() + block_len);
+                has_recv_block_len = false;
+                block_len = 0;
+            }
+            // printf("result.size(): %zu block_len: %zu \n", result.size(), block_len);
+        } while (!no_more_cb);
 
     } while (read > 0 && !fin);
 
-    printf("xqc_stream_recv read:%zd, offset:%zu, fin:%d\n", read_sum, user_stream->recv_body_len, fin);
-
     if (fin) {
-        char * ip = inet_ntoa(((struct sockaddr_in *)&user_stream->user_conn->peer_addr)->sin_addr);
-        // std::size_t port = (std::size_t)((struct sockaddr_in *)&user_stream->user_conn->peer_addr)->sin_port; // meaningless
-        printf("stream recv finish size:%zu\n recvdata: from " BOLDBLUE " %s " BOLDYELLOW " %s" RESET "\n", debug_result.size(), ip, debug_result.c_str());
-        user_stream->user_conn->server->m_cb(result);
+        // TODO
+        DEBUG_INFO_MSG("FIN");
+        char * ip = inet_ntoa(((struct sockaddr_in *)&srv_user_stream->srv_user_conn->peer_addr)->sin_addr);
     }
     return 0;
 }
 int xquic_server_stream_close_notify(xqc_stream_t * stream, void * user_data) {
     DEBUG_INFO;
-    user_stream_t * user_stream = (user_stream_t *)user_data;
-    free(user_stream->send_body);
-    free(user_stream->recv_body);
-    free(user_stream);
+    srv_user_stream_t * srv_user_stream = (srv_user_stream_t *)user_data;
+    delete srv_user_stream;
 
     return 0;
 }
 
 /// client send stream
 int xquic_client_stream_send(xqc_stream_t * stream, void * user_data) {
-    DEBUG_INFO;
+    // DEBUG_INFO;
     ssize_t ret;
-    user_stream_t * user_stream = (user_stream_t *)user_data;
+    cli_user_stream_t * cli_user_stream = (cli_user_stream_t *)user_data;
 
-    int fin = 1;
+    printf(" cli_user_stream quque size: %zu\n", cli_user_stream->send_queue.size());
+    while (!cli_user_stream->send_queue.empty()) {
+        // update lastest stream time each time try do send.
+        cli_user_stream->latest_update_time = xqc_now();
 
-    if (user_stream->send_offset < user_stream->send_body_len) {
-        ret = xqc_stream_send(stream, (unsigned char *)user_stream->send_body + user_stream->send_offset, user_stream->send_body_len - user_stream->send_offset, fin);
-        if (ret < 0) {
-            printf("client xqc_stream_send error %zd\n", ret);
-            return 0;
-
-        } else {
-            user_stream->send_offset += ret;
-            printf("client xqc_stream_send offset=%" PRIu64 "\n", user_stream->send_offset);
+        // fill data from queue to buffer
+        while (!cli_user_stream->send_queue.empty() && cli_user_stream->buffer_right_index < cli_user_stream->send_buffer.capacity() - 1) {
+            std::size_t move_size = std::min(cli_user_stream->send_buffer.capacity() - cli_user_stream->buffer_right_index, cli_user_stream->send_queue.size());
+            // printf("move size %zu from queue to buffer \n", move_size);
+            __TIME_RECORD_BEGIN(send_data_copy);
+            std::copy(cli_user_stream->send_queue.begin(),  // NOLINT
+                      cli_user_stream->send_queue.begin() + move_size,
+                      cli_user_stream->send_buffer.begin() + cli_user_stream->buffer_right_index);
+            __TIME_RECORD_END(send_data_copy, g_send_mem_cpy_time);
+            cli_user_stream->buffer_right_index += move_size;
+            __TIME_RECORD_BEGIN(send_erase_buffer);
+            cli_user_stream->send_queue.erase(cli_user_stream->send_queue.begin(), cli_user_stream->send_queue.begin() + move_size);
+            __TIME_RECORD_END(send_erase_buffer, g_send_mem_dealloc_time);
         }
-    }
 
+        auto send_len = cli_user_stream->buffer_right_index - cli_user_stream->send_offset;
+        while (send_len) {
+            __TIME_RECORD_BEGIN(qc_stream_send);
+            ret = xqc_stream_send(stream,
+                                  static_cast<unsigned char *>(&*(cli_user_stream->send_buffer.begin() + cli_user_stream->send_offset)),
+                                  send_len,
+                                  0);  // fin = 0; normal will never end stream.
+            __TIME_RECORD_END(qc_stream_send, g_qc_stream_send_time);
+
+            if (ret < 0) {
+                // DEBUG_INFO;
+                // send fail .
+                return 0;
+            } else {
+                cli_user_stream->send_offset += ret;
+                // printf(BOLDYELLOW ">>>> send data len: %zu/%zu bri:%zu,offset:%zu \n" RESET, ret, send_len, cli_user_stream->buffer_right_index, cli_user_stream->send_offset);
+            }
+            send_len = cli_user_stream->buffer_right_index - cli_user_stream->send_offset;
+        };
+        assert(send_len == 0);
+        cli_user_stream->buffer_right_index = 0;
+        cli_user_stream->send_offset = 0;
+    }
     return 0;
 }
 
@@ -350,8 +438,8 @@ int xquic_client_stream_send(xqc_stream_t * stream, void * user_data) {
 int xquic_client_conn_create_notify(xqc_connection_t * conn, const xqc_cid_t * cid, void * user_data, void * conn_proto_data) {
     DEBUG_INFO;
 
-    user_conn_t * user_conn = (user_conn_t *)user_data;
-    // xqc_conn_set_alp_user_data(conn, user_conn);
+    // cli_user_conn_t * cli_user_conn = (cli_user_conn_t *)user_data;
+    // xqc_conn_set_alp_user_data(conn, cli_user_conn);
 
     printf("xqc_conn_is_ready_to_send_early_data:%d\n", xqc_conn_is_ready_to_send_early_data(conn));
     return 0;
@@ -359,8 +447,8 @@ int xquic_client_conn_create_notify(xqc_connection_t * conn, const xqc_cid_t * c
 int xquic_client_conn_close_notify(xqc_connection_t * conn, const xqc_cid_t * cid, void * user_data, void * conn_proto_data) {
     DEBUG_INFO;
 
-    user_conn_t * user_conn = (user_conn_t *)user_data;
-    xquic_client_t * client = (xquic_client_t *)user_conn->client;
+    cli_user_conn_t * cli_user_conn = (cli_user_conn_t *)user_data;
+    xquic_client_t * client = (xquic_client_t *)cli_user_conn->client;
 
     xqc_conn_stats_t stats = xqc_conn_get_stats(client->engine, cid);
     printf("client: send_count:%u, lost_count:%u, tlp_count:%u, recv_count:%u, srtt:%" PRIu64 " early_data_flag:%d, conn_err:%d, ack_info:%s\n",
@@ -373,21 +461,22 @@ int xquic_client_conn_close_notify(xqc_connection_t * conn, const xqc_cid_t * ci
            stats.conn_err,
            stats.ack_info);
 
-    event_del(user_conn->ev_socket);
-    event_del(user_conn->conn_timeout_event);
-    event_del(user_conn->rebinding_ev_socket);
-    client->release_connection(user_conn);
+    event_del(cli_user_conn->ev_socket);
+    event_del(cli_user_conn->conn_timeout_event);
+    client->release_connection(cli_user_conn);
+    // todo verify
+    // client release connect should callback to quic_node to erase no-more-trusted nodes
     return 0;
 }
 void xquic_client_conn_handshake_finished(xqc_connection_t * conn, void * user_data, void * conn_proto_data) {
     DEBUG_INFO;
-    user_conn_t * user_conn = (user_conn_t *)user_data;
-    xquic_client_t * client = (xquic_client_t *)user_conn->client;
-    xqc_conn_send_ping(client->engine, &user_conn->cid, NULL);
-    // xqc_conn_send_ping(client->engine, &user_conn->cid, &g_ping_id);
+    cli_user_conn_t * cli_user_conn = (cli_user_conn_t *)user_data;
+    xquic_client_t * client = (xquic_client_t *)cli_user_conn->client;
+    xqc_conn_send_ping(client->engine, &cli_user_conn->cid, NULL);
+    // xqc_conn_send_ping(client->engine, &cli_user_conn->cid, &g_ping_id);
 
-    printf("====>DCID:%s\n", xqc_dcid_str_by_scid(client->engine, &user_conn->cid));
-    printf("====>SCID:%s\n", xqc_scid_str(&user_conn->cid));
+    printf("[client]====>DCID:%s\n", xqc_dcid_str_by_scid(client->engine, &cli_user_conn->cid));
+    printf("[client]====>SCID:%s\n", xqc_scid_str(&cli_user_conn->cid));
 }
 void xquic_client_conn_ping_acked_notify(xqc_connection_t * conn, const xqc_cid_t * cid, void * ping_user_data, void * user_data, void * conn_proto_data) {
     DEBUG_INFO;
@@ -402,12 +491,15 @@ void xquic_client_conn_ping_acked_notify(xqc_connection_t * conn, const xqc_cid_
 /// client app callbacks
 /// stream write/read/close
 int xquic_client_stream_read_notify(xqc_stream_t * stream, void * user_data) {
-    // DEBUG_INFO;
+    // todo seemed a little useless.
+    DEBUG_INFO;
+    return 0;
+#if 0
     unsigned char fin = 0;
-    user_stream_t * user_stream = (user_stream_t *)user_data;
+    cli_user_stream_t * cli_user_stream = (cli_user_stream_t *)user_data;
 
-    unsigned char buff[4096] = {0};
-    size_t buff_size = 4096;
+    unsigned char buff[SEND_RECV_BUFF_SIZE] = {0};
+    size_t buff_size = SEND_RECV_BUFF_SIZE;
     ssize_t read;
     ssize_t read_sum = 0;
 
@@ -430,31 +522,31 @@ int xquic_client_stream_read_notify(xqc_stream_t * stream, void * user_data) {
 
     // if (fin) {
     // user_stream->recv_fin = 1;
-    // xqc_msec_t now_us = xqc_now();
-    // printf("\033[33m>>>>>>>> request time cost:%" PRIu64 " us, speed:%" PRIu64
-    //        " K/s \n"
-    //        ">>>>>>>> send_body_size:%zu, recv_body_size:%zu \033[0m\n",
-    //        now_us - user_stream->start_time,
-    //        (user_stream->send_body_len + user_stream->recv_body_len) * 1000 / (now_us - user_stream->start_time),
-    //        user_stream->send_body_len,
-    //        user_stream->recv_body_len);
+    xqc_msec_t now_us = xqc_now();
+    printf("\033[33m>>>>>>>> request time cost:%" PRIu64 " us, speed:%" PRIu64
+           " K/s \n"
+           ">>>>>>>> send_body_size:%zu, recv_body_size:%zu \033[0m\n",
+           now_us - user_stream->start_time,
+           (user_stream->send_body_len + user_stream->recv_body_len) * 1000 / (now_us - user_stream->start_time),
+           user_stream->send_body_len,
+           user_stream->recv_body_len);
     // }
     return 0;
+#endif
 }
 int xquic_client_stream_write_notify(xqc_stream_t * stream, void * user_data) {
-    DEBUG_INFO;
+    // DEBUG_INFO;
     int ret = 0;
-    user_stream_t * user_stream = (user_stream_t *)user_data;
-    ret = xquic_client_stream_send(stream, user_stream);
+    cli_user_stream_t * cli_user_stream = (cli_user_stream_t *)user_data;
+    __TIME_RECORD_BEGIN(strem_write_notify);
+    ret = xquic_client_stream_send(stream, cli_user_stream);
+    __TIME_RECORD_END(strem_write_notify, g_write_notify_time);
     return ret;
 }
 int xquic_client_stream_close_notify(xqc_stream_t * stream, void * user_data) {
-    DEBUG_INFO;
-    user_stream_t * user_stream = (user_stream_t *)user_data;
-
-    free(user_stream->send_body);
-    free(user_stream->recv_body);
-    free(user_stream);
+    // DEBUG_INFO;
+    cli_user_stream_t * cli_user_stream = (cli_user_stream_t *)user_data;
+    delete cli_user_stream;
     return 0;
 }
 
@@ -519,7 +611,7 @@ void xqc_server_socket_write_handler(xquic_server_t * server) {
     DEBUG_INFO;
 }
 void xqc_server_socket_read_handler(xquic_server_t * server) {
-    DEBUG_INFO;
+    // DEBUG_INFO;
     ssize_t recv_sum = 0;
     struct sockaddr_in6 peer_addr;
     socklen_t peer_addrlen = sizeof(struct sockaddr_in);
@@ -558,7 +650,7 @@ void xqc_server_socket_read_handler(xquic_server_t * server) {
         }
     } while (recv_size > 0);
 
-    printf("server socket recv size:%zu\n", recv_sum);
+    // printf("server socket recv size:%zu\n", recv_sum);
     xqc_engine_finish_recv(server->engine);
 }
 static void xqc_server_socket_event_callback(int fd, short what, void * arg) {
@@ -579,7 +671,7 @@ static void xqc_server_socket_event_callback(int fd, short what, void * arg) {
 }
 
 /// client create socket
-static int xquic_client_create_socket(int type, user_conn_t * conn) {
+static int xquic_client_create_socket(int type, cli_user_conn_t * conn) {
     int size;
     int fd = -1;
     int flags;
@@ -624,19 +716,25 @@ static int xquic_client_create_socket(int type, user_conn_t * conn) {
 /// client conn timeout callback
 static void xquic_client_conn_timeout_callback(int fd, short what, void * arg) {
     // DEBUG_INFO_MSG("client: connection timeout callback check");
-    user_conn_t * user_conn = (user_conn_t *)arg;
+    cli_user_conn_t * cli_user_conn = (cli_user_conn_t *)arg;
 
     static int restart_after_a_while = 1;
 
-    if (xqc_now() - user_conn->last_sock_op_time < (uint64_t)g_conn_timeout * 1000000) {
+    if (xqc_now() - cli_user_conn->last_sock_op_time < (uint64_t)g_conn_timeout * 1000000) {
         struct timeval tv;
         tv.tv_sec = g_conn_check_timeout;
         tv.tv_usec = 0;
-        event_add(user_conn->conn_timeout_event, &tv);
+        event_add(cli_user_conn->conn_timeout_event, &tv);
         return;
     }
     DEBUG_INFO_MSG("client: connection do timeout close");
-    int rc = xqc_conn_close(user_conn->client->engine, &user_conn->cid);
+    printf("g_do_send_time: %" PRIu64 " \n", g_do_send_time);
+    printf("g_write_notify_time: %" PRIu64 " \n", g_write_notify_time);
+    printf("g_send_mem_alloc_time: %" PRIu64 " \n", g_send_mem_alloc_time);
+    printf("g_send_mem_cpy_time: %" PRIu64 " \n", g_send_mem_cpy_time);
+    printf("g_send_mem_dealloc_time: %" PRIu64 " \n", g_send_mem_dealloc_time);
+    printf("g_qc_stream_send_time: %" PRIu64 " \n", g_qc_stream_send_time);
+    int rc = xqc_conn_close(cli_user_conn->client->engine, &cli_user_conn->cid);
     if (rc) {
         printf("xqc_conn_close error %d \n", rc);
         return;
@@ -645,20 +743,20 @@ static void xquic_client_conn_timeout_callback(int fd, short what, void * arg) {
 
 /// client stream timeout callback
 static void xquic_client_stream_timeout_callback(int fd, short what, void * arg) {
-    DEBUG_INFO_MSG("client: stream timeout callback check");
-    user_stream_t * user_stream = (user_stream_t *)arg;
+    // DEBUG_INFO_MSG("client: stream timeout callback check");
+    cli_user_stream_t * cli_user_stream = (cli_user_stream_t *)arg;
 
-    if (user_stream->send_offset == 0 || user_stream->send_offset < user_stream->send_body_len) {
-        // send not over.
+    if ((xqc_now() - cli_user_stream->latest_update_time < (uint64_t)g_stream_handle_timeout * 1000000) ||               // not timeout
+        (!cli_user_stream->send_queue.empty() || cli_user_stream->send_offset < cli_user_stream->send_buffer.size())) {  // and not send over
         struct timeval tv;
         tv.tv_sec = g_conn_check_timeout;
         tv.tv_usec = 0;
-        event_add(user_stream->stream_timeout_event, &tv);
+        event_add(cli_user_stream->stream_timeout_event, &tv);
         return;
     }
 
     DEBUG_INFO_MSG("client: stream do timeout close");
-    int rc = xqc_stream_close(user_stream->stream);
+    int rc = xqc_stream_close(cli_user_stream->stream);
     if (rc) {
         printf("xqc_stream_close error %d \n", rc);
         return;
@@ -666,10 +764,10 @@ static void xquic_client_stream_timeout_callback(int fd, short what, void * arg)
 }
 
 /// client socket event
-void xquic_client_socket_write_handler(user_conn_t * user_conn) {
-    xqc_conn_continue_send(user_conn->client->engine, &user_conn->cid);
+void xquic_client_socket_write_handler(cli_user_conn_t * cli_user_conn) {
+    xqc_conn_continue_send(cli_user_conn->client->engine, &cli_user_conn->cid);
 }
-void xquic_client_socket_read_handler(user_conn_t * user_conn, int fd) {
+void xquic_client_socket_read_handler(cli_user_conn_t * cli_user_conn, int fd) {
     ssize_t recv_size = 0;
     ssize_t recv_sum = 0;
 
@@ -679,7 +777,7 @@ void xquic_client_socket_read_handler(user_conn_t * user_conn, int fd) {
     static ssize_t rcv_sum = 0;
 
     do {
-        recv_size = recvfrom(fd, packet_buf, sizeof(packet_buf), 0, &user_conn->peer_addr, &user_conn->peer_addrlen);
+        recv_size = recvfrom(fd, packet_buf, sizeof(packet_buf), 0, &cli_user_conn->peer_addr, &cli_user_conn->peer_addrlen);
         if (recv_size < 0 && get_last_sys_errno() == EAGAIN) {
             break;
         }
@@ -697,31 +795,31 @@ void xquic_client_socket_read_handler(user_conn_t * user_conn, int fd) {
         recv_sum += recv_size;
         rcv_sum += recv_size;
 
-        if (user_conn->get_local_addr == 0) {
-            user_conn->get_local_addr = 1;
+        if (cli_user_conn->get_local_addr == 0) {
+            cli_user_conn->get_local_addr = 1;
             socklen_t tmp = sizeof(struct sockaddr_in6);
-            int ret = getsockname(user_conn->fd, (struct sockaddr *)user_conn->local_addr, &tmp);
+            int ret = getsockname(cli_user_conn->fd, (struct sockaddr *)cli_user_conn->local_addr, &tmp);
             if (ret < 0) {
                 printf("getsockname error, errno: %d\n", get_last_sys_errno());
                 break;
             }
-            user_conn->local_addrlen = tmp;
+            cli_user_conn->local_addrlen = tmp;
         }
 
         uint64_t recv_time = xqc_now();
-        user_conn->last_sock_op_time = recv_time;
+        cli_user_conn->last_sock_op_time = recv_time;
 
         static char copy[XQC_PACKET_TMP_BUF_LEN];
 
-        if (xqc_engine_packet_process(user_conn->client->engine,
+        if (xqc_engine_packet_process(cli_user_conn->client->engine,
                                       packet_buf,
                                       recv_size,
-                                      user_conn->local_addr,
-                                      user_conn->local_addrlen,
-                                      &user_conn->peer_addr,
-                                      user_conn->peer_addrlen,
+                                      cli_user_conn->local_addr,
+                                      cli_user_conn->local_addrlen,
+                                      &cli_user_conn->peer_addr,
+                                      cli_user_conn->peer_addrlen,
                                       (xqc_msec_t)recv_time,
-                                      user_conn) != XQC_OK) {
+                                      cli_user_conn) != XQC_OK) {
             printf("xqc_client_read_handler: packet process err\n");
             return;
         }
@@ -734,18 +832,18 @@ void xquic_client_socket_read_handler(user_conn_t * user_conn, int fd) {
     //     last_rcv_sum = rcv_sum;
     // }
 
-    printf("client socket recv size:%zu\n", recv_sum);
-    xqc_engine_finish_recv(user_conn->client->engine);
+    // printf("client socket recv size:%zu\n", recv_sum);
+    xqc_engine_finish_recv(cli_user_conn->client->engine);
 }
 static void xquic_client_socket_event_callback(int fd, short what, void * arg) {
     // DEBUG_INFO;
-    user_conn_t * user_conn = (user_conn_t *)arg;
+    cli_user_conn_t * cli_user_conn = (cli_user_conn_t *)arg;
 
     if (what & EV_WRITE) {
-        xquic_client_socket_write_handler(user_conn);
+        xquic_client_socket_write_handler(cli_user_conn);
 
     } else if (what & EV_READ) {
-        xquic_client_socket_read_handler(user_conn, fd);
+        xquic_client_socket_read_handler(cli_user_conn, fd);
 
     } else {
         printf("event callback: what=%d\n", what);
@@ -762,47 +860,37 @@ void xquic_convert_addr_text_to_sockaddr(int type, const char * addr_text, unsig
     addr_v4->sin_port = htons(port);
     *saddr_len = sizeof(struct sockaddr_in);
 }
-void xquic_client_init_addr(user_conn_t * user_conn, const char * server_addr, int server_port) {
+void xquic_client_init_addr(cli_user_conn_t * cli_user_conn, const char * server_addr, int server_port) {
     int ip_type = AF_INET;
-    xquic_convert_addr_text_to_sockaddr(ip_type, server_addr, server_port, &user_conn->peer_addr, &user_conn->peer_addrlen);
+    xquic_convert_addr_text_to_sockaddr(ip_type, server_addr, server_port, &cli_user_conn->peer_addr, &cli_user_conn->peer_addrlen);
 
-    user_conn->local_addr = (struct sockaddr *)calloc(1, sizeof(struct sockaddr_in));
-    memset(user_conn->local_addr, 0, sizeof(struct sockaddr_in));
-    user_conn->local_addrlen = sizeof(struct sockaddr_in);
+    cli_user_conn->local_addr = (struct sockaddr *)calloc(1, sizeof(struct sockaddr_in));
+    memset(cli_user_conn->local_addr, 0, sizeof(struct sockaddr_in));
+    cli_user_conn->local_addrlen = sizeof(struct sockaddr_in);
 }
-user_conn_t * xquic_client_user_conn_create(const char * server_addr, int server_port, xquic_client_t * client) {
-    user_conn_t * user_conn = (user_conn_t *)calloc(1, sizeof(user_conn_t));
-    user_conn->client = client;
+cli_user_conn_t * xquic_client_user_conn_create(const char * server_addr, int server_port, xquic_client_t * client) {
+    cli_user_conn_t * cli_user_conn = new cli_user_conn_t;
+    cli_user_conn->client = client;
 
-    user_conn->conn_timeout_event = event_new(client->eb, -1, 0, xquic_client_conn_timeout_callback, user_conn);
+    cli_user_conn->conn_timeout_event = event_new(client->eb, -1, 0, xquic_client_conn_timeout_callback, cli_user_conn);
     /* set connection timeout */
     struct timeval tv;
     tv.tv_sec = g_conn_check_timeout;
     tv.tv_usec = 0;
-    event_add(user_conn->conn_timeout_event, &tv);
+    event_add(cli_user_conn->conn_timeout_event, &tv);
 
     int ip_type = AF_INET;
-    xquic_client_init_addr(user_conn, server_addr, server_port);
+    xquic_client_init_addr(cli_user_conn, server_addr, server_port);
 
-    user_conn->fd = xquic_client_create_socket(ip_type, user_conn);
-    if (user_conn->fd < 0) {
+    cli_user_conn->fd = xquic_client_create_socket(ip_type, cli_user_conn);
+    if (cli_user_conn->fd < 0) {
         printf("xqc_create_socket error\n");
         return NULL;
     }
 
-    user_conn->ev_socket = event_new(client->eb, user_conn->fd, EV_READ | EV_PERSIST, xquic_client_socket_event_callback, user_conn);
-    event_add(user_conn->ev_socket, NULL);
-
-    user_conn->rebinding_fd = xquic_client_create_socket(ip_type, user_conn);
-    if (user_conn->rebinding_fd < 0) {
-        printf("|rebinding|xqc_create_socket error\n");
-        return NULL;
-    }
-
-    user_conn->rebinding_ev_socket = event_new(client->eb, user_conn->rebinding_fd, EV_READ | EV_PERSIST, xquic_client_socket_event_callback, user_conn);
-    event_add(user_conn->rebinding_ev_socket, NULL);
-
-    return user_conn;
+    cli_user_conn->ev_socket = event_new(client->eb, cli_user_conn->fd, EV_READ | EV_PERSIST, xquic_client_socket_event_callback, cli_user_conn);
+    event_add(cli_user_conn->ev_socket, NULL);
+    return cli_user_conn;
 }
 
 bool xquic_server_t::init(xquic_message_ready_callback cb, unsigned int const server_port) {
@@ -1025,26 +1113,14 @@ bool xquic_client_t::init() {
     DEBUG_INFO_MSG("init client");
     event_base_dispatch(eb);
     DEBUG_INFO_MSG("!!!CLIENT DESTROY!!!");
-
-#if 0
-    // todo move it where?
-    event_free(user_conn->ev_socket);
-    event_free(user_conn->conn_timeout_event);
-    event_free(user_conn->rebinding_ev_socket);
-
-    // free(user_conn->peer_addr);
-    free(user_conn->local_addr);
-    free(user_conn);
-
-    // xqc_engine_destroy(engine);
-#endif
+    xqc_engine_destroy(engine);
 
     // xqc_client_close_keylog_file(&ctx);
     // xqc_client_close_log_file(&ctx);
     return true;
 }
 
-user_conn_t * xquic_client_t::connect(char server_addr[64], uint32_t server_port) {
+cli_user_conn_t * xquic_client_t::connect(char server_addr[64], uint32_t server_port) {
     DEBUG_INFO_MSG("new connection");
     xqc_cong_ctrl_callback_t cong_ctrl;
     uint32_t cong_flags = 0;
@@ -1079,8 +1155,8 @@ user_conn_t * xquic_client_t::connect(char server_addr[64], uint32_t server_port
     //     .keyupdate_pkt_threshold = 0,
     // };
 
-    user_conn_t * user_conn = xquic_client_user_conn_create(server_addr, server_port, this);
-    if (user_conn == nullptr) {
+    cli_user_conn_t * cli_user_conn = xquic_client_user_conn_create(server_addr, server_port, this);
+    if (cli_user_conn == nullptr) {
         printf("xquic_client_user_conn_create error\n");
         // todo add ec?
         return nullptr;
@@ -1092,8 +1168,8 @@ user_conn_t * xquic_client_t::connect(char server_addr[64], uint32_t server_port
     xclient_read_token(&token, &token_len);
 
     if (token_len != 0) {
-        user_conn->token = token;
-        user_conn->token_len = token_len;
+        cli_user_conn->token = token;
+        cli_user_conn->token_len = token_len;
     }
 
     xqc_conn_ssl_config_t conn_ssl_config;
@@ -1122,78 +1198,125 @@ user_conn_t * xquic_client_t::connect(char server_addr[64], uint32_t server_port
     }
 
     const xqc_cid_t * cid;
-    cid = xqc_connect(
-        engine, &conn_settings, user_conn->token, user_conn->token_len, server_addr, 0, &conn_ssl_config, &user_conn->peer_addr, user_conn->peer_addrlen, "transport", user_conn);
+    cid = xqc_connect(engine,
+                      &conn_settings,
+                      cli_user_conn->token,
+                      cli_user_conn->token_len,
+                      server_addr,
+                      0,
+                      &conn_ssl_config,
+                      &cli_user_conn->peer_addr,
+                      cli_user_conn->peer_addrlen,
+                      "transport",
+                      cli_user_conn);
     if (cid == nullptr) {
         printf("xqc_connect error\n");
-        free(user_conn->local_addr);
-        free(user_conn);
+        free(cli_user_conn->local_addr);
+        delete cli_user_conn;
         return nullptr;
     }
-    memcpy(&user_conn->cid, cid, sizeof(*cid));
+    memcpy(&cli_user_conn->cid, cid, sizeof(*cid));
 
-    return user_conn;
+    return cli_user_conn;
 }
 
-void xquic_client_do_send_callback(int fd, short what, void * arg) {
-    DEBUG_INFO;
-    client_send_buffer_t * send_buffer = (client_send_buffer_t *)arg;
-    user_conn_t * user_conn = send_buffer->user_conn;
-    DEBUG_INFO_MSG(xqc_scid_str(&user_conn->cid));
+void xquic_client_t::quic_engine_do_send() {
+    // must set next time do_send wake timer before return!
 
-    user_stream_t * user_stream = (user_stream_t *)calloc(1, sizeof(user_stream_t));
-    memset(user_stream, 0, sizeof(user_stream_t));
-    user_stream->user_conn = user_conn;
-    user_stream->stream = xqc_stream_create(user_conn->client->engine, &user_conn->cid, user_stream);
+    // struct timeval tv;
+    // tv.tv_sec = 0;
+    // tv.tv_usec = 1000;
+    // event_add(client->client_alive_timer, &tv);
 
-    if (user_stream->stream == nullptr) {
-        // todo ec
-        DEBUG_INFO_MSG("create stream error");
+    /// input: eval send_queue.size()
+    /// boundary: minimum rest DO_SEND_INTERVAL_MIN us (sec = 0, usec = DO_SEND_INTERVAL_MIN)
+    /// boundary: maximum rest DO_SEND_INTERVAL_MAX us (sec = 0, usec = DO_SEND_INTERVAL_MAX)
+
+    auto qsize = m_send_queue.unsafe_size();
+    if (!qsize) {
+        do_send_interval = std::min((uint64_t)2 * do_send_interval, (uint64_t)DO_SEND_INTERVAL_MAX);
     } else {
-        /// set stream timeout
-        user_stream->stream_timeout_event = event_new(user_conn->client->eb, -1, 0, xquic_client_stream_timeout_callback, user_stream);
-        struct timeval tv;
-        tv.tv_sec = g_conn_check_timeout;
-        tv.tv_usec = 0;
-        event_add(user_stream->stream_timeout_event, &tv);
+        do_send_interval = std::max((uint64_t)DO_SEND_INTERVAL_MIN, (uint64_t)(max_send_queue_size - qsize) * DO_SEND_INTERVAL_MAX / max_send_queue_size);
 
-        user_stream->send_body_max = MAX_BUF_SIZE;
-        user_stream->send_body_len = send_buffer->send_data_len;
-        user_stream->send_body = (char *)malloc(send_buffer->send_data_len);
-        memcpy(user_stream->send_body, send_buffer->send_data, user_stream->send_body_len);
-        xquic_client_stream_send(user_stream->stream, user_stream);
-    }
+        auto all_message = m_send_queue.wait_and_pop_all();
+        printf("quic_engine_do_send: get size %zu ", all_message.size());
 
-    if (send_buffer->send_data) {
-        free(send_buffer->send_data);
+        __TIME_RECORD_BEGIN(do_send);
+        for (auto send_buffer : all_message) {
+            cli_user_conn_t * cli_user_conn = send_buffer->cli_user_conn;
+
+            if (cli_user_conn->cli_user_stream == nullptr) {
+                cli_user_stream_t * cli_user_stream = new cli_user_stream_t;
+                cli_user_stream->send_offset = 0;
+                cli_user_stream->send_buffer.reserve(SEND_RECV_BUFF_SIZE);
+                cli_user_stream->stream = xqc_stream_create(cli_user_conn->client->engine, &cli_user_conn->cid, cli_user_stream);
+
+                if (cli_user_stream->stream == nullptr) {
+                    // todo ec
+                    DEBUG_INFO_MSG("create_stream error");
+                    delete cli_user_stream;
+                    continue;
+                }
+                cli_user_conn->cli_user_stream = cli_user_stream;
+
+                // stream timeout callback
+                cli_user_stream->stream_timeout_event = event_new(cli_user_conn->client->eb, -1, 0, xquic_client_stream_timeout_callback, cli_user_stream);
+                struct timeval tv;
+                tv.tv_sec = g_conn_check_timeout;
+                tv.tv_usec = 0;
+                event_add(cli_user_stream->stream_timeout_event, &tv);
+            }
+            cli_user_stream_t * cli_user_stream = cli_user_conn->cli_user_stream;
+            cli_user_stream->latest_update_time = xqc_now();
+
+            __TIME_RECORD_BEGIN(do_send_add_prefix);
+            auto len_bytes = size_to_bytes(send_buffer->send_data.size());
+            cli_user_stream->send_queue.insert(cli_user_stream->send_queue.end(), len_bytes.begin(), len_bytes.end());
+            cli_user_stream->send_queue.insert(cli_user_stream->send_queue.end(), send_buffer->send_data.begin(), send_buffer->send_data.end());
+            __TIME_RECORD_END(do_send_add_prefix, g_send_mem_alloc_time);
+            send_buffer->send_data.clear();
+        }
+        for (auto send_buffer : all_message) {
+            cli_user_conn_t * cli_user_conn = send_buffer->cli_user_conn;
+            cli_user_stream_t * cli_user_stream = cli_user_conn->cli_user_stream;
+            assert(cli_user_stream != nullptr);
+
+            delete send_buffer;
+            if (cli_user_stream->send_queue.empty()) {
+                continue;
+            }
+            xquic_client_stream_send(cli_user_stream->stream, cli_user_stream);
+        }
+        __TIME_RECORD_END(do_send, g_do_send_time);
     }
-    event_free(send_buffer->send_event);
-    free(send_buffer);
+    // printf("interval set be %" PRIu64 " \n", do_send_interval);
+    struct timeval tv;
+    assert(do_send_interval >= DO_SEND_INTERVAL_MIN && do_send_interval <= 2048);
+    tv.tv_sec = 0;
+    tv.tv_usec = do_send_interval;
+    event_add(client_alive_timer, &tv);
+    return;
 }
 
 /// api for quic_node , create a event (`client_send_buffer_t`) and let client thread handle this send data buffer.
-bool xquic_client_t::send(user_conn_t * user_conn, top::xbytes_t send_data) {
-    client_send_buffer_t * send_buffer = (client_send_buffer_t *)calloc(1, sizeof(client_send_buffer_t));
-    send_buffer->send_event = event_new(user_conn->client->eb, -1, 0, xquic_client_do_send_callback, send_buffer);
-    send_buffer->send_data = (unsigned char *)malloc(send_data.size());
-    send_buffer->send_data_len = send_data.size();
-    send_buffer->user_conn = user_conn;
-    std::copy(send_data.begin(), send_data.end(), send_buffer->send_data);
-    int ret = event_add(send_buffer->send_event, NULL);
-    event_active(send_buffer->send_event, 0, 0);
-    // evuser_triggle(send_buffer->send_event);
-    return ret == 0;
+bool xquic_client_t::send(cli_user_conn_t * cli_user_conn, top::xbytes_t send_data) {
+    client_send_buffer_t * send_buffer = new client_send_buffer_t;
+    send_buffer->send_data = std::move(send_data);
+    send_buffer->cli_user_conn = cli_user_conn;
+
+    m_send_queue.push(send_buffer);
+
+    return true;
 }
 
-void xquic_client_t::release_connection(user_conn_t * user_conn) {
-    DEBUG_INFO_MSG(xqc_scid_str(&user_conn->cid));
-    event_free(user_conn->ev_socket);
-    event_free(user_conn->conn_timeout_event);
-    event_free(user_conn->rebinding_ev_socket);
+void xquic_client_t::release_connection(cli_user_conn_t * cli_user_conn) {
+    DEBUG_INFO_MSG(xqc_scid_str(&cli_user_conn->cid));
+    event_free(cli_user_conn->ev_socket);
+    event_free(cli_user_conn->conn_timeout_event);
 
-    if (user_conn->token) {
-        free(user_conn->token);
+    if (cli_user_conn->token) {
+        free(cli_user_conn->token);
     }
-    free(user_conn->local_addr);
-    memset(&user_conn->cid, 0, sizeof(user_conn->cid));
+    free(cli_user_conn->local_addr);
+    memset(&cli_user_conn->cid, 0, sizeof(cli_user_conn->cid));
 }

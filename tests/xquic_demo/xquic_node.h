@@ -34,7 +34,7 @@ private:
     xquic_server_t m_server;
     xquic_client_t m_client;
 
-    std::unordered_map<std::string, user_conn_t * > m_conn_map;
+    std::unordered_map<std::string, cli_user_conn_t *> m_conn_map;
 
 #if defined DEBUG
     std::thread::id m_quic_node_thread_id{};

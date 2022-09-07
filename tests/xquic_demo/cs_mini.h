@@ -2,6 +2,7 @@
 
 #include "common.h"
 #include "xbasic/xbyte_buffer.h"
+#include "xbasic/xthreading/xthreadsafe_queue.hpp"
 
 #include <errno.h>
 #include <event2/event.h>
@@ -18,6 +19,7 @@
 #include <xquic/xquic.h>
 #include <xquic/xquic_typedef.h>
 
+#include <deque>
 #include <functional>
 #include <string>
 
@@ -26,48 +28,73 @@ class xquic_client_t;
 
 using xquic_message_ready_callback = std::function<void(top::xbytes_t const &)>;
 
-typedef struct user_conn_s {
+class user_stream_t;
+class cli_user_stream_t;
+
+struct srv_user_conn_t {
+    xquic_server_t * server;
+
+    xqc_cid_t cid;
+    struct sockaddr peer_addr;
+    socklen_t peer_addrlen;
+};
+
+struct cli_user_conn_t {
+    xquic_client_t * client;
+
+    event * conn_timeout_event;
+
     int fd;
-    struct event * ev_socket;
-    int rebinding_fd;
-    struct event * rebinding_ev_socket;
 
-    struct event * conn_timeout_event;
+    event * ev_socket;
 
-    unsigned char * token;
-    unsigned token_len;
+    uint64_t last_sock_op_time;
+
+    xqc_cid_t cid;
 
     struct sockaddr peer_addr;
     socklen_t peer_addrlen;
     struct sockaddr * local_addr;
     socklen_t local_addrlen;
     xqc_flag_t get_local_addr;
-    xqc_cid_t cid;
-    xquic_server_t * server;
-    xquic_client_t * client;
-    uint64_t last_sock_op_time;
-} user_conn_t;
 
-typedef struct user_stream_s {
+    unsigned char * token;
+    unsigned token_len;
+
+    cli_user_stream_t * cli_user_stream;
+};
+
+struct cli_user_stream_t {
     xqc_stream_t * stream;
-    uint64_t send_offset;
-    char * send_body;
-    size_t send_body_len;
-    size_t send_body_max;
-    char * recv_body;
-    size_t recv_body_len;
+
+    std::deque<top::xbyte_t> send_queue;
+
+    top::xbytes_t send_buffer;
+
+    std::size_t send_offset{0};  // buffer_l;
+
+    std::size_t buffer_right_index{0};
+
+    xqc_msec_t latest_update_time;
 
     struct event * stream_timeout_event;
 
-    user_conn_t * user_conn;
-} user_stream_t;
+    cli_user_conn_t * cli_user_conn;
+};
 
-typedef struct client_send_buffer_s {
-    struct event * send_event;
-    unsigned char * send_data;  // bytes array
-    std::size_t send_data_len;
-    user_conn_t * user_conn;
-} client_send_buffer_t;
+struct srv_user_stream_t {
+    xqc_stream_t * stream;
+    top::xbytes_t recv_buffer;
+    srv_user_conn_t * srv_user_conn;
+
+    bool has_recv_block_len{false};
+    std::size_t block_len{0};
+};
+
+struct client_send_buffer_t {
+    top::xbytes_t send_data;
+    cli_user_conn_t * cli_user_conn{nullptr};
+};
 
 class xquic_server_t {
 private:
@@ -171,6 +198,10 @@ public:
     }
 
 private:
+    constexpr static std::size_t max_send_queue_size{100000};
+    top::threading::xthreadsafe_queue<client_send_buffer_t *, std::vector<client_send_buffer_t *>> m_send_queue{max_send_queue_size};
+
+private:
     unsigned char * m_token;
     unsigned m_token_len;
     char * m_session;
@@ -178,15 +209,19 @@ private:
     char * m_tp_para;
     unsigned m_tp_para_len;
 
+private:
+    uint64_t do_send_interval{1}; // should be 128us - 2048us
+
 public:
     /// main function from client
     bool init();
 
-    user_conn_t * connect(char server_addr[64], uint32_t server_port);
+    cli_user_conn_t * connect(char server_addr[64], uint32_t server_port);
 
-    bool send(user_conn_t * user_conn, top::xbytes_t send_data);
+    void quic_engine_do_send();
+    bool send(cli_user_conn_t * cli_user_conn, top::xbytes_t send_data);
 
-    void release_connection(user_conn_t * user_conn);
+    void release_connection(cli_user_conn_t * cli_user_conn);
 
 public:
     xqc_engine_t * engine;
