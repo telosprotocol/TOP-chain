@@ -27,6 +27,9 @@ class xstatestore_base_t {
     data::xunitstate_ptr_t     get_unit_state_by_block(base::xvblock_t * target_block) const;
     data::xunitstate_ptr_t     get_unit_state_by_accountindex(common::xaccount_address_t const& account_address, base::xaccount_index_t const& index) const;
 
+ private:
+   data::xunitstate_ptr_t      get_unit_state_by_block_hash(common::xaccount_address_t const& account_address, base::xaccount_index_t const& index) const;
+   data::xunitstate_ptr_t      get_unit_state_by_block_viewid(common::xaccount_address_t const& account_address, base::xaccount_index_t const& index) const;
  public:
     base::xvblockstore_t*       get_blockstore() const;
     base::xvblkstatestore_t*    get_blkstate_store() const;

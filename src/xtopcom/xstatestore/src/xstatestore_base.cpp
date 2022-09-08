@@ -35,19 +35,34 @@ data::xunitstate_ptr_t xstatestore_base_t::get_unit_state_by_block(base::xvblock
     return unitstate;
 }
 
-data::xunitstate_ptr_t xstatestore_base_t::get_unit_state_by_accountindex(common::xaccount_address_t const& account_address, base::xaccount_index_t const& index) const {
-    xobject_ptr_t<base::xvblock_t> unit_block_ptr;
-    if (!index.get_latest_unit_hash().empty()) {
-        unit_block_ptr = get_blockstore()->load_block_object(account_address.vaccount(), index.get_latest_unit_height(), index.get_latest_unit_hash(), false);
-    } else {
-        unit_block_ptr = get_blockstore()->load_block_object(account_address.vaccount(), index.get_latest_unit_height(), index.get_latest_unit_viewid(), false);
+data::xunitstate_ptr_t xstatestore_base_t::get_unit_state_by_block_hash(common::xaccount_address_t const& account_address, base::xaccount_index_t const& index) const {
+    base::xauto_ptr<base::xvbstate_t> bstate = get_blkstate_store()->get_block_state(account_address.vaccount(), index.get_latest_unit_height(), index.get_latest_unit_hash());
+    if (bstate == nullptr) {
+        // TODO(jimmy) invoke sync
+        xwarn("xstatestore_base_t::get_unit_state_by_block_hash fail.addr=%s,index=%s", account_address.value().c_str(), index.dump().c_str());
+        return nullptr;
     }
+
+    data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get());
+    return unitstate;
+}
+data::xunitstate_ptr_t xstatestore_base_t::get_unit_state_by_block_viewid(common::xaccount_address_t const& account_address, base::xaccount_index_t const& index) const {
+    xobject_ptr_t<base::xvblock_t> unit_block_ptr = get_blockstore()->load_block_object(account_address.vaccount(), index.get_latest_unit_height(), index.get_latest_unit_viewid(), false);
     if (unit_block_ptr == nullptr) {
         // TODO(jimmy) sync invoke?
         xwarn("xstatestore_base_t::get_unit_state_by_accountindex fail-load unit. addr=%s,index=%s", account_address.value().c_str(), index.dump().c_str());
         return nullptr;
     }
     return get_unit_state_by_block(unit_block_ptr.get());
+}
+
+data::xunitstate_ptr_t xstatestore_base_t::get_unit_state_by_accountindex(common::xaccount_address_t const& account_address, base::xaccount_index_t const& index) const {
+    if (!index.get_latest_unit_hash().empty()) {
+        // try to load unitstate before unitblock
+        return get_unit_state_by_block_hash(account_address, index);
+    } else {
+        return get_unit_state_by_block_viewid(account_address, index);
+    }
 }
 
 data::xtablestate_ptr_t xstatestore_base_t::get_latest_connectted_table_state(common::xaccount_address_t const& table_addr) const {
