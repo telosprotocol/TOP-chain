@@ -20,6 +20,7 @@
 #include "xdata/xblocktool.h"
 #include "xdata/xblockbuild.h"
 #include "xpbase/base/top_utils.h"
+#include "xstatestore/xstatestore_face.h"
 
 #define METRICS_TAG(tag, val) XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)tag, val)
 
@@ -823,7 +824,8 @@ namespace top
             // if (block->get_block_level() == base::enum_xvblock_level_table) {
             //     // TODO(jimmy) commit tableblock try to update table state
             //     base::auto_reference<base::xvblock_t> auto_hold_block_ptr(block);
-            //     base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->execute_block(block, metrics::statestore_access_from_blockstore);
+            // // base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->execute_block(block, metrics::statestore_access_from_blockstore);
+            //     statestore::xstatestore_hub_t::instance()->execute_table_block(block);
             // }
 
             return ret;
