@@ -106,9 +106,9 @@ void Sync::AddCodeEntry(xhash256_t const & hash, xbytes_t const & path, xhash256
     schedule(req);
 }
 
-std::tuple<std::vector<xhash256_t>, SyncPath, std::vector<xhash256_t>> Sync::Missing(std::size_t max) {
+std::tuple<std::vector<xhash256_t>, std::vector<SyncPath>, std::vector<xhash256_t>> Sync::Missing(std::size_t max) {
     std::vector<xhash256_t> nodeHashes;
-    SyncPath nodePaths;
+    std::vector<SyncPath> nodePaths;
     std::vector<xhash256_t> codeHashes;
 
     while (!queue.empty() && (max == 0 || nodeHashes.size() + codeHashes.size() < max)) {
@@ -128,7 +128,7 @@ std::tuple<std::vector<xhash256_t>, SyncPath, std::vector<xhash256_t>> Sync::Mis
         if (nodeReqs.find(hash) != nodeReqs.end()) {
             nodeHashes.push_back(hash);
             auto new_path = newSyncPath(nodeReqs[hash]->path);
-            nodePaths.insert(nodePaths.end(), new_path.begin(), new_path.end());
+            nodePaths.push_back(new_path);
         } else {
             codeHashes.push_back(hash);
         }

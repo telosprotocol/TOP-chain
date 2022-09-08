@@ -282,4 +282,30 @@ TEST_F(test_state_mpt_fixture, test_basic) {
     }
 }
 
+// TODO: nedd to fix double commit
+TEST_F(test_state_mpt_fixture, test_create_twice_commit_twice) {
+    std::error_code ec;
+    xhash256_t root_hash(random_bytes(32));
+    std::cout << root_hash.as_hex_str() << std::endl;
+    auto s = state_mpt::xstate_mpt_t::create(TABLE_ADDRESS, root_hash, m_db, nullptr, ec);
+    EXPECT_NE(ec.value(), 0);
+
+    xhash256_t root_hash1;
+    std::cout << root_hash1.as_hex_str() << std::endl;
+    ec.clear();
+    auto s1 = state_mpt::xstate_mpt_t::create(TABLE_ADDRESS, root_hash1, m_db, nullptr, ec);
+    EXPECT_EQ(ec.value(), 0);
+    EXPECT_NE(s1, nullptr);
+
+    s1->set_account_index("testaddr1", "testindex1", ec);
+    auto hash1 = s1->commit(ec);
+    EXPECT_EQ(ec.value(), 0);
+    std::cout << "hash1:" << hash1.as_hex_str() << std::endl;
+
+    // s1->set_account_index("testaddr2", "testindex2", ec);
+    // auto hash2 = s1->commit(ec);
+    // EXPECT_EQ(ec.value(), 0);
+    // std::cout << "hash2:" << hash2.as_hex_str() << std::endl;
+}
+
 }  // namespace top
