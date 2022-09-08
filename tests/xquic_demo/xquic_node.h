@@ -20,7 +20,7 @@ public:
     void stop() override;
 
 public:
-    void send(std::string addr, uint32_t port, top::xbytes_t const & data);  // add ec;
+    bool send(std::string addr, uint32_t port, top::xbytes_t data);  // add ec;
 
     void on_quic_message_ready(top::xbytes_t const & bytes);
 

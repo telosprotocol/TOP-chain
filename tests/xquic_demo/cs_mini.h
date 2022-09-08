@@ -61,7 +61,7 @@ struct cli_user_conn_t {
     unsigned char * token;
     unsigned token_len;
 
-    cli_user_stream_t * cli_user_stream;
+    cli_user_stream_t * cli_user_stream{nullptr};
 };
 
 struct cli_user_stream_t {
@@ -134,6 +134,10 @@ public:
 
 class xquic_client_t {
 public:
+    bool send_queue_full() {
+        return m_send_queue.unsafe_size() > 1000;
+    }
+
     void debug_token(bool save) {
         if (save) {
             printf(" ======= save token:");
@@ -210,7 +214,7 @@ private:
     unsigned m_tp_para_len;
 
 private:
-    uint64_t do_send_interval{1}; // should be 128us - 2048us
+    uint64_t do_send_interval{4};  // should be 128us - 2048us
 
 public:
     /// main function from client

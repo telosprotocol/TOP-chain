@@ -50,7 +50,7 @@ static uint64_t g_sleep{0};
     auto st_ed_##name = xqc_now();                                                                                                                                                 \
     g += (st_ed_##name - st_bg_##name);
 
-void xquic_node_t::send(std::string addr, uint32_t port, top::xbytes_t const & data) {
+bool xquic_node_t::send(std::string addr, uint32_t port, top::xbytes_t data) {
     auto addr_port = addr + std::to_string(port);
 
     // erase closed connection:
@@ -59,26 +59,33 @@ void xquic_node_t::send(std::string addr, uint32_t port, top::xbytes_t const & d
     }
 
     if (m_conn_map.find(addr_port) == m_conn_map.end()) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
         cli_user_conn_t * new_conn = m_client.connect((char *)addr.c_str(), port);
+        // printf("new cli_user_conn: (%p) , stream: (%p)\n", new_conn, new_conn->cli_user_stream);
         m_conn_map.insert({addr_port, new_conn});
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
     cli_user_conn_t * conn = m_conn_map.at(addr_port);
-    if (conn == nullptr) {
+    if (conn == nullptr || m_client.send_queue_full()) {
         // todo add ec return;
-        return;
+        return false;
     }
     assert(conn != nullptr);
     __TIME_RECORD_BEGIN(inner_send);
-    m_client.send(conn, data);
+    m_client.send(conn, std::move(data));
     __TIME_RECORD_END(inner_send, g_send_2);
+
+    return true;
 }
 
 static std::size_t global_recv_cnt = 0;
 
 void xquic_node_t::on_quic_message_ready(top::xbytes_t const & bytes) {
     global_recv_cnt++;
-    // printf("quic node recv: %s \n", std::string{bytes.begin(), bytes.end()}.c_str());
-    printf(BOLDBLUE "quic node recv: %zu num:%zu at % " PRIu64 " \n" RESET, bytes.size(), global_recv_cnt, xqc_now());
+    if (global_recv_cnt % 1000 == 0) {
+        // printf("quic node recv: %s \n", std::string{bytes.begin(), bytes.end()}.c_str());
+        printf(BOLDBLUE "quic node recv: %zu num:%zu at % " PRIu64 " \n" RESET, bytes.size(), global_recv_cnt, xqc_now());
+    }
 }
 
 int main(int argc, char * argv[]) {
@@ -94,14 +101,21 @@ int main(int argc, char * argv[]) {
     // std::this_thread::sleep_for(std::chrono::seconds(1));
 
     int ch = 0;
+    char server_addr[64] = "127.0.0.1";
     uint32_t server_port = 9999;
     uint32_t send_port = 9999;
     std::size_t send_cnt = 1;
+    std::size_t dest_cnt = 1;
     std::size_t wait_us = 1;
     std::size_t data_sz = 10;
+    std::string data{"1111111111111111"};
     std::shared_ptr<xquic_node_t> node_ptr;
-    while ((ch = getopt(argc, argv, "p:t:w:s:z:")) != -1) {
+    while ((ch = getopt(argc, argv, "a:p:t:w:s:r:z:")) != -1) {
         switch (ch) {
+        case 'a': {
+            snprintf(server_addr, sizeof(server_addr), optarg);
+            break;
+        }
         case 'p': {
             // printf("option port :%s\n", optarg);
             server_port = atoi(optarg);
@@ -124,10 +138,14 @@ int main(int argc, char * argv[]) {
             send_port = atoi(optarg);
             break;
         }
+        case 'r': {
+            // send_port_range:
+            dest_cnt = atoi(optarg);
+            break;
+        }
 
         case 'z': {
             data_sz = atoi(optarg);
-            std::string data{"1111111111111111"};
             switch (data_sz) {
             case 0:
                 data = _500B_data;
@@ -147,23 +165,33 @@ int main(int argc, char * argv[]) {
             default:
                 break;
             }
-
-            for (auto i = 0; i < send_cnt; ++i) {
+            for (auto i = 0; i < send_cnt;) {
                 // auto sdata = data + std::to_string(i);
                 // auto sdata = data;
-                top::xbytes_t send_data{data.begin(), data.end()};
+                // top::xbytes_t send_data{data.begin(), data.end()};
+                bool res{false};
                 __TIME_RECORD_BEGIN(out_send);
-                node_ptr->send("127.0.0.1", send_port, send_data);
+                do {
+                    for (std::size_t port_detal = 0; port_detal < dest_cnt; ++port_detal) {
+                        res = node_ptr->send(server_addr, send_port + port_detal, {data.begin(), data.end()});
+                        if (res == false)
+                            break;
+                    }
+                    send_cnt++;
+                } while (res);
+                send_cnt--;
                 __TIME_RECORD_END(out_send, g_send_1);
                 __TIME_RECORD_BEGIN(sleep_cnt);
-                
-                std::chrono::microseconds sleep_duration{wait_us};
-                auto now = std::chrono::high_resolution_clock::now();
-                while (true) {
-                    auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - now);
-                    if (elapsed > sleep_duration)
-                        break;
-                }
+                std::this_thread::sleep_for(std::chrono::microseconds(wait_us));
+
+                // use too much cpu.
+                // std::chrono::microseconds sleep_duration{wait_us};
+                // auto now = std::chrono::high_resolution_clock::now();
+                // while (true) {
+                //     auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - now);
+                //     if (elapsed > sleep_duration)
+                //         break;
+                // }
 
                 /// resolution is low. 10us minimum
                 // std::this_thread::sleep_for(std::chrono::microseconds{wait_us});  // test timeouted connection

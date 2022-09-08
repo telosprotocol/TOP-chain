@@ -18,6 +18,7 @@
 #include "assert.h"
 
 #include <errno.h>
+#include <set>
 
 /**
  * @brief get system last errno
@@ -387,7 +388,7 @@ int xquic_client_stream_send(xqc_stream_t * stream, void * user_data) {
     ssize_t ret;
     cli_user_stream_t * cli_user_stream = (cli_user_stream_t *)user_data;
 
-    printf(" cli_user_stream quque size: %zu\n", cli_user_stream->send_queue.size());
+    // printf(" cli_user_stream quque size: %zu\n", cli_user_stream->send_queue.size());
     while (!cli_user_stream->send_queue.empty()) {
         // update lastest stream time each time try do send.
         cli_user_stream->latest_update_time = xqc_now();
@@ -957,7 +958,7 @@ bool xquic_server_t::init(xquic_message_ready_callback cb, unsigned int const se
     if (xqc_engine_get_default_config(&config, XQC_ENGINE_SERVER) < 0) {
         return false;
     }
-    config.cfg_log_level = XQC_LOG_DEBUG;
+    config.cfg_log_level = XQC_LOG_FATAL;
 
     eb = event_base_new();
     ev_engine = event_new(eb, -1, 0, xquic_server_engine_callback, this);
@@ -1056,7 +1057,7 @@ bool xquic_client_t::init() {
     if (xqc_engine_get_default_config(&config, XQC_ENGINE_CLIENT) < 0) {
         return -1;
     }
-    config.cfg_log_level = XQC_LOG_DEBUG;
+    config.cfg_log_level = XQC_LOG_FATAL;
 
     eb = event_base_new();
     ev_engine = event_new(eb, -1, 0, xquic_client_engine_callback, this);
@@ -1156,6 +1157,7 @@ cli_user_conn_t * xquic_client_t::connect(char server_addr[64], uint32_t server_
     // };
 
     cli_user_conn_t * cli_user_conn = xquic_client_user_conn_create(server_addr, server_port, this);
+    // printf("create cli_user_conn: (%p) , stream: (%p)\n", cli_user_conn, cli_user_conn->cli_user_stream);
     if (cli_user_conn == nullptr) {
         printf("xquic_client_user_conn_create error\n");
         // todo add ec?
@@ -1233,13 +1235,14 @@ void xquic_client_t::quic_engine_do_send() {
     /// boundary: maximum rest DO_SEND_INTERVAL_MAX us (sec = 0, usec = DO_SEND_INTERVAL_MAX)
 
     auto qsize = m_send_queue.unsafe_size();
+    std::set<cli_user_conn_t * > send_set; // hold connctions which have new data need to be send.
     if (!qsize) {
         do_send_interval = std::min((uint64_t)2 * do_send_interval, (uint64_t)DO_SEND_INTERVAL_MAX);
     } else {
         do_send_interval = std::max((uint64_t)DO_SEND_INTERVAL_MIN, (uint64_t)(max_send_queue_size - qsize) * DO_SEND_INTERVAL_MAX / max_send_queue_size);
 
         auto all_message = m_send_queue.wait_and_pop_all();
-        printf("quic_engine_do_send: get size %zu ", all_message.size());
+        // printf("quic_engine_do_send: get size %zu ", all_message.size());
 
         __TIME_RECORD_BEGIN(do_send);
         for (auto send_buffer : all_message) {
@@ -1247,6 +1250,7 @@ void xquic_client_t::quic_engine_do_send() {
 
             if (cli_user_conn->cli_user_stream == nullptr) {
                 cli_user_stream_t * cli_user_stream = new cli_user_stream_t;
+                // printf("new cli_user_stream: (%p)\n", cli_user_stream);
                 cli_user_stream->send_offset = 0;
                 cli_user_stream->send_buffer.reserve(SEND_RECV_BUFF_SIZE);
                 cli_user_stream->stream = xqc_stream_create(cli_user_conn->client->engine, &cli_user_conn->cid, cli_user_stream);
@@ -1269,29 +1273,32 @@ void xquic_client_t::quic_engine_do_send() {
             cli_user_stream_t * cli_user_stream = cli_user_conn->cli_user_stream;
             cli_user_stream->latest_update_time = xqc_now();
 
-            __TIME_RECORD_BEGIN(do_send_add_prefix);
-            auto len_bytes = size_to_bytes(send_buffer->send_data.size());
-            cli_user_stream->send_queue.insert(cli_user_stream->send_queue.end(), len_bytes.begin(), len_bytes.end());
-            cli_user_stream->send_queue.insert(cli_user_stream->send_queue.end(), send_buffer->send_data.begin(), send_buffer->send_data.end());
-            __TIME_RECORD_END(do_send_add_prefix, g_send_mem_alloc_time);
-            send_buffer->send_data.clear();
-        }
-        for (auto send_buffer : all_message) {
-            cli_user_conn_t * cli_user_conn = send_buffer->cli_user_conn;
-            cli_user_stream_t * cli_user_stream = cli_user_conn->cli_user_stream;
-            assert(cli_user_stream != nullptr);
-
-            delete send_buffer;
-            if (cli_user_stream->send_queue.empty()) {
-                continue;
+            if (cli_user_stream->send_queue.size() < 10000000) {  // 10MB
+                __TIME_RECORD_BEGIN(do_send_add_prefix);
+                auto len_bytes = size_to_bytes(send_buffer->send_data.size());
+                cli_user_stream->send_queue.insert(cli_user_stream->send_queue.end(), len_bytes.begin(), len_bytes.end());
+                cli_user_stream->send_queue.insert(cli_user_stream->send_queue.end(), send_buffer->send_data.begin(), send_buffer->send_data.end());
+                __TIME_RECORD_END(do_send_add_prefix, g_send_mem_alloc_time);
+            } else {
+                // printf("send_queue full\n");
+                // todo push it back to queue.
             }
+            send_set.insert(cli_user_conn);
+            send_buffer->send_data.clear();
+            delete send_buffer;
+        }
+
+        for (auto _cli_user_conn : send_set) {
+            // cli_user_conn_t * cli_user_conn = send_buffer->cli_user_conn;
+            cli_user_stream_t * cli_user_stream = _cli_user_conn->cli_user_stream;
+            assert(cli_user_stream != nullptr);
             xquic_client_stream_send(cli_user_stream->stream, cli_user_stream);
         }
         __TIME_RECORD_END(do_send, g_do_send_time);
     }
     // printf("interval set be %" PRIu64 " \n", do_send_interval);
     struct timeval tv;
-    assert(do_send_interval >= DO_SEND_INTERVAL_MIN && do_send_interval <= 2048);
+    assert(do_send_interval >= DO_SEND_INTERVAL_MIN && do_send_interval <= DO_SEND_INTERVAL_MAX);
     tv.tv_sec = 0;
     tv.tv_usec = do_send_interval;
     event_add(client_alive_timer, &tv);
