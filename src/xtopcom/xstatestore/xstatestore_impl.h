@@ -11,7 +11,6 @@
 #include "xmbus/xmessage_bus.h"
 #include "xstatestore/xstatestore_face.h"
 #include "xstatestore/xstatestore_table.h"
-#include "xstate_mpt/xstate_mpt.h"
 
 NS_BEG2(top, statestore)
 
@@ -49,7 +48,10 @@ class xstatestore_impl_t : public xstatestore_face_t {
                                               base::xvblock_t * latest_commit_block,
                                               base::xvproperty_prove_ptr_t & property_prove_ptr,
                                               data::xtablestate_ptr_t & tablestate_ptr) const override;
-    virtual bool excute_table_block(base::xvblock_t * block, evm_common::xh256_t & root_hash) override;
+   //  virtual bool execute_one_table_block(base::xvblock_t * block, std::shared_ptr<state_mpt::xtop_state_mpt> mpt) override;
+    virtual uint64_t try_update_execute_height(const base::xvaccount_t & target_account, uint64_t max_count) override;
+    virtual bool execute_table_block(base::xvblock_t * block) override;
+   //  virtual bool execute_table_block(base::xvblock_t * block, evm_common::xh256_t & root_hash) override;
 
  private:
     static base::xauto_ptr<base::xvblock_t> get_latest_connectted_state_changed_block(base::xvblockstore_t* blockstore, const base::xvaccount_t & account);
@@ -62,8 +64,13 @@ class xstatestore_impl_t : public xstatestore_face_t {
     xstatestore_table_ptr_t      get_table_statestore_from_table_addr(common::xaccount_address_t const & table_address) const;
     data::xtablestate_ptr_t      get_table_state_by_block_internal(common::xaccount_address_t const& table_address, base::xvblock_t * target_block) const;
     void    on_block_to_db_event(mbus::xevent_ptr_t e);
+    bool get_mpt(base::xvblock_t * block, xhash256_t & root_hash, std::shared_ptr<state_mpt::xtop_state_mpt> & mpt);
+    void set_latest_executed_info(const base::xvaccount_t & target_account, uint64_t height,const std::string & blockhash);
+    uint64_t get_latest_executed_block_height(const base::xvaccount_t & target_account);
+    bool execute_block_recurse(base::xvblock_t * block, const xhash256_t root_hash, uint64_t min_height);
+    bool set_and_commit_mpt(base::xvblock_t * block, const xhash256_t root_hash, std::shared_ptr<state_mpt::xtop_state_mpt> pre_mpt, bool & mpt_committed);
 
- private:
+private:
     std::map<std::string, xstatestore_table_ptr_t> m_table_statestore;
     base::xxtimer_t * m_timer;
     uint32_t m_bus_listen_id;

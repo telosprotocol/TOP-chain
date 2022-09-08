@@ -11,6 +11,7 @@
 #include "xvledger/xaccountindex.h"
 #include "xvledger/xvpropertyprove.h"
 #include "xcommon/xaccount_address.h"
+#include "xstate_mpt/xstate_mpt.h"
 
 NS_BEG2(top, statestore)
 
@@ -46,7 +47,10 @@ class xstatestore_face_t {
                                               base::xvblock_t * latest_commit_block,
                                               base::xvproperty_prove_ptr_t & property_prove_ptr,
                                               data::xtablestate_ptr_t & tablestate_ptr) const = 0;
-    virtual bool excute_table_block(base::xvblock_t * block, evm_common::xh256_t & root_hash) = 0;
+    // virtual bool execute_one_table_block(base::xvblock_t * block, std::shared_ptr<state_mpt::xtop_state_mpt> mpt) = 0;
+    virtual uint64_t try_update_execute_height(const base::xvaccount_t & target_account, uint64_t max_count) = 0;
+    virtual bool execute_table_block(base::xvblock_t * block) = 0;
+    // virtual bool execute_table_block(base::xvblock_t * block, evm_common::xh256_t & root_hash) = 0;
 };
 
 class xstatestore_hub_t {

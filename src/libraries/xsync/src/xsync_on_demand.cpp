@@ -12,6 +12,7 @@
 #include "xvledger/xvblockstore.h"
 #include "xchain_fork/xchain_upgrade_center.h"
 #include "xvledger/xunit_proof.h"
+#include "xstatestore/xstatestore_face.h"
 
 NS_BEG2(top, sync)
 
@@ -730,15 +731,11 @@ bool xsync_on_demand_t::check_unit_blocks(const std::vector<data::xblock_ptr_t> 
     auto table_addr = account_address_to_block_address(common::xaccount_address_t(account));
 
     auto latest_committed_block = base::xvchain_t::instance().get_xblockstore()->get_latest_committed_block(table_addr, metrics::blockstore_access_from_txpool_refresh_table);
-    base::xauto_ptr<base::xvbstate_t> bstate =
-            base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_committed_block.get(), metrics::statestore_access_from_txpool_refreshtable);
-    if (bstate == nullptr) {
+    auto tablestate = statestore::xstatestore_hub_t::instance()->get_table_state_by_block(latest_committed_block.get());
+    if (tablestate == nullptr) {
         xwarn("xsync_on_demand_t::store_unit_blocks_without_proof get table state fail.table latest commit block:%s", latest_committed_block->dump().c_str());
         return false;
     }
-
-    xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(bstate.get());
-
     base::xaccount_index_t account_index;
     bool result = tablestate->get_account_index(account, account_index);
     if (!result) {
