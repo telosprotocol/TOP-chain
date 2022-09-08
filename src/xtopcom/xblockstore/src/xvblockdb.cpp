@@ -206,6 +206,7 @@ namespace top
         }
 
         bool xvblockdb_t::load_block_output_offdata(base::xvbindex_t* target_index,base::xvblock_t * target_block) {
+            xassert(0); //should not happen
             if( (NULL == target_index) || (NULL == target_block))
             {
                 xassert(0); //should not happen
@@ -292,7 +293,7 @@ namespace top
             
             const int input_stored_flag  = write_block_input_to_db(index_ptr,block_ptr);
             const int output_stored_flag = write_block_output_to_db(index_ptr,block_ptr);
-            write_block_output_offdata_to_db(index_ptr, block_ptr);  // TODO(jimmy) no stored flags ??
+            // write_block_output_offdata_to_db(index_ptr, block_ptr);  // TODO(jimmy) no stored flags ??
  
             int combined_stored_flags = object_stored_flag;
             if(input_stored_flag > 0)

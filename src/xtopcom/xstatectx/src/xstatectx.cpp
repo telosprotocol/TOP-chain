@@ -64,12 +64,28 @@ xunitstate_ctx_ptr_t xstatectx_t::load_unit_ctx(const base::xvaccount_t & addr) 
         return unit_ctx;
     }
     if (is_same) {
-        unitblock = m_statectx_base.load_inner_table_unit_block(addr);
-        if (nullptr != unitblock) {
-            bstate = m_statectx_base.load_proposal_block_state(addr, unitblock.get());
-            if (nullptr != bstate) {
-                data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get(), false);  // modify-state
-                unit_ctx = std::make_shared<xunitstate_ctx_t>(unitstate, unitblock);
+        base::xaccount_index_t account_index;
+        if (false == m_statectx_base.load_account_index(addr, account_index)) {
+            xwarn("xstatectx_t::load_unit_ctx fail-load state.addr=%s", addr.get_address().c_str());
+            return nullptr;
+        }
+        if (account_index.get_latest_unit_hash().empty()) {
+            // TODO(jimmy) before fork, need unit block
+            unitblock = m_statectx_base.load_inner_table_unit_block(addr);
+            if (nullptr != unitblock) {
+                bstate = m_statectx_base.load_proposal_block_state(addr, unitblock.get());
+                if (nullptr != bstate) {
+                    data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get(), false);  // modify-state
+                    unit_ctx = std::make_shared<xunitstate_ctx_t>(unitstate, unitblock);
+                }
+            }
+        } else {
+            data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_accountindex(common::xaccount_address_t(addr.get_account()), account_index);
+            if (nullptr != unitstate) {
+                bstate = m_statectx_base.change_to_proposal_block_state(account_index, unitstate->get_bstate().get());
+                data::xunitstate_ptr_t unitstate_modify = std::make_shared<data::xunit_bstate_t>(bstate.get(), false);  // modify-state
+                unit_ctx = std::make_shared<xunitstate_ctx_t>(unitstate_modify, unitblock);
+                xdbg("xstatectx_t::load_unit_ctx succ-return accountindex unitstate.account=%s,index=%s", addr.get_account().c_str(), account_index.dump().c_str());
             }
         }
     } else { // different table unit state is readonly

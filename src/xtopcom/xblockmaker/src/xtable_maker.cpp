@@ -167,7 +167,36 @@ std::vector<std::pair<xblock_ptr_t, base::xaccount_index_t>> xtable_maker_t::mak
             return {};
         }
 
-        // batch_units.push_back(unitblock);
+        data::xaccount_index_t aindex; // TODO(jimmy) delete future after forked
+        batch_unit_and_index.push_back(std::make_pair(unitblock, aindex));
+        xinfo("xtable_maker_t::make_units succ-make unit.is_leader=%d,%s,unit=%s,txkeys=%zu,size=%zu,%zu",
+            is_leader, cs_para.dump().c_str(), unitblock->dump().c_str(),txkeys.get_txkeys().size(),unitblock->get_input()->get_resources_data().size(),unitblock->get_output()->get_resources_data().size());
+        xtablebuilder_t::update_account_index_property(statectx_ptr->get_table_state(), unitblock, unitctx->get_unitstate());        
+    }
+
+    return batch_unit_and_index;
+}
+
+std::vector<std::pair<xblock_ptr_t, base::xaccount_index_t>> xtable_maker_t::make_units_v2(bool is_leader, const data::xblock_consensus_para_t & cs_para, statectx::xstatectx_ptr_t const& statectx_ptr, txexecutor::xexecute_output_t const& execute_output, std::error_code & ec) {
+    // std::vector<xblock_ptr_t> batch_units;
+    std::vector<std::pair<xblock_ptr_t, base::xaccount_index_t>> batch_unit_and_index;
+
+    // create units
+    std::vector<statectx::xunitstate_ctx_ptr_t> unitctxs = statectx_ptr->get_modified_unit_ctx();
+    if (unitctxs.empty()) {
+        // XTODO the confirm tx may not modify state.
+        xinfo("xtable_maker_t::make_units_v2 no unitstates changed.is_leader=%d,%s,txs_size=%zu", is_leader, cs_para.dump().c_str(), execute_output.pack_outputs.size());
+    }
+
+    for (auto & unitctx : unitctxs) {
+        xunitbuilder_para_t unit_para;  // TODO(jimmy)   put last block hash to unitstate from accountindex    
+        data::xblock_ptr_t unitblock = xunitbuilder_t::make_block_v2(unitctx->get_unitstate(), unit_para, cs_para);
+        if (nullptr == unitblock) {
+            ec = blockmaker::error::xerrc_t::blockmaker_make_unit_fail;
+            // should not fail
+            xerror("xtable_maker_t::make_units_v2 fail-make unit.is_leader=%d,%s,prev=%s", is_leader, cs_para.dump().c_str(), unitctx->get_prev_block()->dump().c_str());
+            return {};
+        }
 
         data::xaccount_index_t aindex = data::xaccount_index_t(unitblock->get_height(),
                                                                unitblock->get_block_hash(),
@@ -176,15 +205,8 @@ std::vector<std::pair<xblock_ptr_t, base::xaccount_index_t>> xtable_maker_t::mak
                                                                unitblock->get_block_class(),
                                                                unitblock->get_block_type());
         batch_unit_and_index.push_back(std::make_pair(unitblock, aindex));
-        xinfo("xtable_maker_t::make_units succ-make unit.is_leader=%d,%s,unit=%s,txkeys=%zu,size=%zu,%zu",
-            is_leader, cs_para.dump().c_str(), unitblock->dump().c_str(),txkeys.get_txkeys().size(),unitblock->get_input()->get_resources_data().size(),unitblock->get_output()->get_resources_data().size());
-
-        // todo(nathan):not update account index property after fork
-        // auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
-        // auto const new_version = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.v1_7_0_block_fork_point, unitblock->get_clock());
-        // if (!new_version) {
-            xtablebuilder_t::update_account_index_property(statectx_ptr->get_table_state(), unitblock, unitctx->get_unitstate());
-        // }
+        xinfo("xtable_maker_t::make_units_v2 succ-make unit.is_leader=%d,%s,unit=%s,size=%zu,%zu",
+            is_leader, cs_para.dump().c_str(), unitblock->dump().c_str(),unitblock->get_input()->get_resources_data().size(),unitblock->get_output()->get_resources_data().size());
     }
 
     return batch_unit_and_index;
@@ -249,6 +271,9 @@ void xtable_maker_t::rerource_plugin_make_resource(bool is_leader, const data::x
 }
 
 xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & table_result) {
+    auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
+    auto const new_version = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.v1_7_0_block_fork_point, cs_para.get_clock());
+
     uint64_t now = cs_para.get_gettimeofday_s();
     const std::vector<xcons_transaction_ptr_t> & input_table_txs = table_para.get_origin_txs();
     std::vector<xcons_transaction_ptr_t> input_txs = check_input_txs(is_leader, cs_para, input_table_txs, now);
@@ -305,7 +330,11 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
         return nullptr;
     }
 
-    batch_unit_and_index = make_units(is_leader, cs_para, statectx_ptr, execute_output, ec);
+    if (new_version) {
+        batch_unit_and_index = make_units_v2(is_leader, cs_para, statectx_ptr, execute_output, ec);
+    } else {
+        batch_unit_and_index = make_units(is_leader, cs_para, statectx_ptr, execute_output, ec);
+    }    
     if (ec) {
         table_result.m_make_block_error_code = xblockmaker_error_no_need_make_table;
         xwarn("xtable_maker_t::make_light_table_v2 fail-make units.is_leader=%d,%s,txs_size=%zu", is_leader, cs_para.dump().c_str(), input_txs.size());
@@ -315,8 +344,6 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
     // TODO(jimmy) update confirm ids in table state
     update_receiptid_state(table_para, statectx_ptr);
 
-    auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
-    auto const new_version = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.v1_7_0_block_fork_point, cs_para.get_clock());
     evm_common::xh256_t state_root;
     std::shared_ptr<state_mpt::xtop_state_mpt> table_mpt = nullptr;
 
@@ -359,7 +386,7 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
     if (nullptr != tableblock) {
         xinfo("xtable_maker_t::make_light_table_v2-succ is_leader=%d,%s,binlog=%zu,snapshot=%zu,batch_units=%zu,property_hashs=%zu,tgas_change=%ld,offdata=%zu", 
             is_leader, tableblock->dump().c_str(), lighttable_para.get_property_binlog().size(), lighttable_para.get_fullstate_bin().size(), 
-            lighttable_para.get_batch_unit_and_index().size(), lighttable_para.get_property_hashs().size(),lighttable_para.get_tgas_balance_change(),lighttable_para.get_output_offdata().size());
+            lighttable_para.get_batch_unit_and_index().size(), lighttable_para.get_property_hashs().size(),lighttable_para.get_tgas_balance_change(),tableblock->get_output_offdata().size());
     }
 
     if (new_version) {

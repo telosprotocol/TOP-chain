@@ -672,8 +672,11 @@ namespace top
                 return true;
             }
             if (!block->get_output_offdata().empty()) {
+                xdbg("xvblockstore_impl::load_block_output_offdata,succ-load cache.%s",block->dump().c_str());
                 return true;
             }
+
+            load_block_output(account, block, atag);  // should load output firstly
             LOAD_BLOCKACCOUNT_PLUGIN2(account_obj,account);
             METRICS_TAG(atag, 1);
             
@@ -682,17 +685,14 @@ namespace top
                 xerror("xvblockstore_impl::load_block_output_offdata,fail-index null %s",block->dump().c_str());
                 return false;
             }
-
-            // firstly try to load offdata from db
-            if ( (true == get_blockdb_ptr()->load_block_output_offdata(existing_index(),block))
-             && (!block->get_output_offdata().empty()) ) {
-                xinfo("xvblockstore_impl::load_block_output_offdata,succ-load offdata.%s",block->dump().c_str());
-                return true;
-            }
             
             // secondly try to load offdata by subblocks
             std::vector<base::xvblock_ptr_t> subblocks;
             auto account_indexs_str = block->get_account_indexs();
+            if(account_indexs_str.empty()) {
+                xerror("xvblockstore_impl::load_block_output_offdata,fail-get account indexs %s",block->dump().c_str());
+                return false;
+            }            
             data::xtable_account_indexs_t account_indexs;
             account_indexs.serialize_from_string(account_indexs_str);
 
@@ -713,7 +713,8 @@ namespace top
             std::string offdata_bin;
             offdata.serialize_to_string(offdata_bin);
             if (false == block->set_output_offdata(offdata_bin)) {
-                xerror("xvblockstore_impl::load_block_output_offdata,fail-unmatch offdata. block:%s,",block->dump().c_str());
+                xerror("xvblockstore_impl::load_block_output_offdata,fail-unmatch offdata. block:%s,offdata_size=%zu,offdata_hash=%s:%s",block->dump().c_str(), offdata_bin.size(),
+                    base::xstring_utl::to_hex(block->get_cert()->hash(offdata_bin)).c_str(), base::xstring_utl::to_hex(block->get_output_offdata_hash()).c_str());
                 return false;
             }
             xinfo("xvblockstore_impl::load_block_output_offdata,succ-load units.%s",block->dump().c_str());
