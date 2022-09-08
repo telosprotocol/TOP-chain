@@ -16,8 +16,10 @@
 #include "xvledger/xvaction.h"
 #include "xvledger/xvcontract.h"
 #include "xvledger/xvblock_fork.h"
+#include "xvledger/xvblock_offdata.h"
 #include "xdata/xblockextract.h"
 #include "xpbase/base/top_utils.h"
+#include "xcommon/xerror/xerror.h"
 
 NS_BEG2(top, data)
 
@@ -379,7 +381,12 @@ bool xlightunit_build_t::build_block_body_v2(const xunit_block_para_t & para) {
     input_actions.push_back(_action);
     set_input_entity(input_actions);
     // #2 set output entitys and resources
-    set_output_full_state(para.get_fullstate_bin());
+    if (!para.get_fullstate_bin_hash().empty()) {
+        set_output_full_state_hash(para.get_fullstate_bin_hash());
+    }
+    if (!para.get_fullstate_bin().empty()) {
+        set_output_full_state(para.get_fullstate_bin());
+    }    
     set_output_binlog(para.get_property_binlog());
     return true;
 }
@@ -491,6 +498,58 @@ bool xfullunit_build_t::build_block_body(const xunit_block_para_t & para) {
 
 base::xauto_ptr<base::xvblock_t> xfullunit_build_t::create_new_block() {
     return new xfullunit_block_t(*get_header(), *get_qcert(), get_input(), get_output());
+}
+
+xunit_build2_t::xunit_build2_t(std::string const& account, uint64_t height, std::string const& last_block_hash, bool is_full_unit, const xunit_block_para_t & bodypara, const xblock_consensus_para_t & para) {
+    base::enum_xvblock_class _class = is_full_unit ? base::enum_xvblock_class_full : base::enum_xvblock_class_light;
+    base::enum_xvblock_level _level = base::enum_xvblock_level_unit;
+    base::enum_xvblock_type  _type = base::enum_xvblock_type_txs;
+    base::xbbuild_para_t build_para(xrootblock_t::get_rootblock_chainid(), account, height, _class, _level, _type, last_block_hash, std::string());
+    // TODO(jimmy) should has no cert members
+    build_para.set_unit_cert_para(para.get_clock(), para.get_viewtoken(), para.get_viewid(), para.get_validator(), para.get_auditor(),
+                                    para.get_drand_height(), para.get_parent_height(), std::string());
+    
+    init_header_qcert(build_para);
+    build_block_body(bodypara);
+}
+
+xunit_build2_t::xunit_build2_t(base::xvheader_t* header, base::xvblock_t* parentblock, const xunit_block_para_t & bodypara) {
+    base::xbbuild_para_t build_para;
+    // TODO(jimmy) should has no cert members
+    build_para.set_unit_cert_para(parentblock->get_clock(), parentblock->get_viewtoken(), parentblock->get_viewid(), parentblock->get_cert()->get_validator(), parentblock->get_cert()->get_auditor(),
+                                  parentblock->get_cert()->get_drand_height(), parentblock->get_height(), std::string());
+    set_header(header);
+    init_qcert(build_para);
+    build_block_body(bodypara);
+}
+
+bool xunit_build2_t::build_block_body(const xunit_block_para_t & para) {
+    // TODO(jimmy) should has no entitys and resources
+    
+    // #1 set input entitys and resources
+    std::vector<base::xvaction_t> input_actions;
+    xdbg("block version:%d, height:%llu, account:%s", get_header()->get_block_version(), get_header()->get_height(), get_header()->get_account().c_str());
+    base::xvaction_t _action = xblockaction_build_t::make_block_build_action(BLD_URI_LIGHT_UNIT);
+    input_actions.push_back(_action);
+    set_input_entity(input_actions);   
+    // #2 set output entitys and resources
+
+    if (get_header()->get_block_class() == base::enum_xvblock_class_light) {
+        set_output_binlog(para.get_property_binlog());
+    }
+    if (!para.get_fullstate_bin().empty()) {
+        set_output_full_state(para.get_fullstate_bin());
+    } else {
+        xassert(!para.get_fullstate_bin_hash().empty());
+        set_output_full_state_hash(para.get_fullstate_bin_hash());
+    }    
+    return true;
+}
+
+base::xauto_ptr<base::xvblock_t> xunit_build2_t::create_new_block() {
+    if (get_header()->get_block_class() == base::enum_xvblock_class_full)
+        return new xfullunit_block_t(*get_header(), *get_qcert(), get_input(), get_output());
+    return new xlightunit_block_t(*get_header(), *get_qcert(), get_input(), get_output());
 }
 
 
@@ -710,6 +769,47 @@ base::xauto_ptr<base::xvblock_t> xlighttable_build_t::create_new_block() {
     return new xtable_block_t(*get_header(), *get_qcert(), get_input(), get_output());
 }
 
+std::vector<xobject_ptr_t<base::xvblock_t>> xtable_build2_t::unpack_units_from_table(base::xvblock_t* _tableblock, std::error_code & ec) {
+    if (_tableblock->get_output_offdata_hash().empty()) {
+        return {};
+    }
+
+    if (_tableblock->get_output_offdata().empty()) {
+        ec = common::error::xerrc_t::invalid_block;
+        xerror("xtable_build2_t::unpack_units_from_table fail-has no output offdata.%s",_tableblock->dump().c_str());
+        return {};
+    }
+
+    base::xvblock_out_offdata_t offdata;
+    offdata.serialize_from_string(_tableblock->get_output_offdata());
+
+    std::vector<xobject_ptr_t<base::xvblock_t>> subblocks;
+    for (auto & subblock_info : offdata.get_subblocks_info()) {
+        base::xauto_ptr<base::xvheader_t>  vheader_ptr = base::xvblock_t::create_header_object(subblock_info.m_header_bin);
+        xassert(vheader_ptr != nullptr); //should has value
+
+        xunit_block_para_t body_para;
+
+        if (vheader_ptr->get_block_class() == base::enum_xvblock_class_full) { 
+            body_para.set_fullstate_bin(subblock_info.m_binlog);
+        } else {
+            body_para.set_binlog(subblock_info.m_binlog);
+        }
+        body_para.set_fullstate_bin_hash(subblock_info.m_fullstate_hash);
+        
+        std::shared_ptr<base::xvblockmaker_t> vblockmaker = std::make_shared<data::xunit_build2_t>(vheader_ptr.get(), _tableblock, body_para);
+        xobject_ptr_t<base::xvblock_t> _new_block = vblockmaker->build_new_block();
+        _new_block->get_cert()->set_parent_height(_tableblock->get_height());
+        _new_block->get_cert()->set_parent_viewid(_tableblock->get_viewid());
+        _new_block->set_extend_cert("1");
+        _new_block->set_extend_data("1");
+        _new_block->set_block_flag(base::enum_xvblock_flag_authenticated);
+        subblocks.push_back(_new_block);
+    }
+    xassert(!subblocks.empty());
+    return subblocks;
+}
+
 xtable_build2_t::xtable_build2_t(base::xvblock_t* prev_block, const xtable_block_para_t & bodypara, const xblock_consensus_para_t & para) {
     base::xbbuild_para_t build_para(prev_block, base::enum_xvblock_class_light, base::enum_xvblock_type_batch);
 
@@ -785,21 +885,30 @@ bool xtable_build2_t::build_block_body(const xtable_block_para_t & para, const b
     std::string tgas_balance_change = base::xstring_utl::tostring(para.get_tgas_balance_change());
     set_output_entity(base::xvoutentity_t::key_name_tgas_pledge_change(), tgas_balance_change);
 
-    xtable_account_indexs_t account_indexs;
-    for (auto & v : para.get_batch_unit_and_index()) {
-        auto & unit = v.first;
-        auto & aindex = v.second;
-        account_indexs.add_account_index(unit->get_account(), aindex);
-        xdbg("xlighttable_build_t::build_block_body account index:%s,hash:%s,height:%llu,nonce:%llu", unit->get_account().c_str(), base::xstring_utl::to_hex(unit->get_block_hash()).c_str(), unit->get_height(), aindex.get_latest_tx_nonce());
-    }
+    if (!para.get_batch_unit_and_index().empty()) {
+        std::vector<xobject_ptr_t<base::xvblock_t>> subunits;
+        std::string out_offdata_bin;
+        xtable_account_indexs_t account_indexs;
+        for (auto & v : para.get_batch_unit_and_index()) {
+            auto & unit = v.first;
+            auto & aindex = v.second;
 
-    std::string account_indexs_str;
-    account_indexs.serialize_to_string(account_indexs_str);
-    set_output_resource(base::xvoutput_t::RESOURCE_ACCOUNT_INDEXS, account_indexs_str);
+            subunits.push_back(unit);
 
-    if (!para.get_output_offdata().empty()) {
-        auto offdata_hash = get_qcert()->hash(para.get_output_offdata());
+            account_indexs.add_account_index(unit->get_account(), aindex);
+            xdbg("xtable_build2_t::build_block_body %s,height=%ld unit:%s,index:%s", account.get_account().c_str(), height, unit->dump().c_str(), aindex.dump().c_str());
+        }
+
+        std::string account_indexs_str;
+        account_indexs.serialize_to_string(account_indexs_str);
+        set_output_resource(base::xvoutput_t::RESOURCE_ACCOUNT_INDEXS, account_indexs_str);
+
+        base::xvblock_out_offdata_t offdata(subunits);
+        offdata.serialize_to_string(out_offdata_bin);
+
+        auto offdata_hash = get_qcert()->hash(out_offdata_bin);
         set_output_entity(base::xvoutentity_t::key_name_output_offdata_hash(), offdata_hash);
+        set_output_offdata(out_offdata_bin);
     }
 
     for (auto & v : para.get_input_resources()) {
@@ -910,7 +1019,7 @@ int32_t xtable_account_indexs_t::serialize_from_string(const std::string & _str)
 }
 
 void xtable_account_indexs_t::add_account_index(const std::string & addr, const top::data::xaccount_index_t & account_index) {
-    m_account_indexs[addr] = account_index;
+    m_account_indexs.push_back(std::make_pair(addr, account_index));
 }
 
 int32_t xtable_account_indexs_t::do_write(base::xstream_t & stream) const {
@@ -934,7 +1043,7 @@ int32_t xtable_account_indexs_t::do_read(base::xstream_t & stream) {
         data::xaccount_index_t account_index;
         stream >> addr;
         account_index.do_read(stream);
-        m_account_indexs[addr] = account_index;
+        m_account_indexs.push_back(std::make_pair(addr, account_index));
     }
     return (begin_size - stream.size());
 }

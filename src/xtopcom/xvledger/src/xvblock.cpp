@@ -127,8 +127,10 @@ namespace top
                 }
                 if(get_last_full_block_hash().empty())
                 {
-                    xerror("xvheader_t::is_valid,last_full_block_hash and last_full_block_height must set as valid value");
-                    return false;
+                    if (get_block_level() != enum_xvblock_level_unit) {  // XTODO unit level can has no last full hash and height
+                        xerror("xvheader_t::is_valid,last_full_block_hash and last_full_block_height must set as valid value");
+                        return false;
+                    }
                 }
             }
             
@@ -392,7 +394,8 @@ namespace top
         {
             char local_param_buf[256];
             #ifdef DEBUG
-            xprintf(local_param_buf,sizeof(local_param_buf),"{xvqcert:viewid=%" PRIu64 ",viewtoken=%u,clock=%" PRIu64 ",validator=0x%" PRIx64 " : %" PRIx64 ",auditor=0x%" PRIx64 " : %" PRIx64 ",parent_height=%" PRIu64 ",refcount=%d,this=%" PRIu64 ",consensus_flags=%x}",get_viewid(),get_viewtoken(),get_clock(),get_validator().high_addr,get_validator().low_addr,get_auditor().high_addr,get_auditor().low_addr,m_parent_height,get_refcount(),(uint64_t)this,get_consensus_flags());
+            xprintf(local_param_buf,sizeof(local_param_buf),"{xvqcert:viewid=%" PRIu64 ",viewtoken=%u,clock=%" PRIu64 ",validator=0x%" PRIx64 " : %" PRIx64 ",auditor=0x%" PRIx64 " : %" PRIx64 ",parent=%" PRIu64 ":%" PRIu64 ",nonce=%ld,expire=%d,drand=%ld,m_cryptos=%d,refcount=%d,this=%" PRIu64 ",consensus_flags=%x}",
+            get_viewid(),get_viewtoken(),get_clock(),get_validator().high_addr,get_validator().low_addr,get_auditor().high_addr,get_auditor().low_addr,m_parent_height,m_parent_viewid,m_nonce,m_expired,m_drand_height,m_cryptos,get_refcount(),(uint64_t)this,get_consensus_flags());
             #else
             
                 xprintf(local_param_buf,sizeof(local_param_buf),"{xvqcert:viewid=%" PRIu64 ",viewtoken=%u,clock=%" PRIu64 ",validator=0x%" PRIx64 " : %" PRIx64 ",auditor=0x%" PRIx64 " : %" PRIx64 ",consensus_flags=%x}",get_viewid(),get_viewtoken(),get_clock(),get_validator().high_addr,get_validator().low_addr,get_auditor().high_addr,get_auditor().low_addr,get_consensus_flags());
@@ -1885,7 +1888,6 @@ namespace top
             
             const std::string hash_to_check = get_cert()->hash(raw_data);
             if(hash_to_check != get_output_offdata_hash() ) {
-                xassert(false);
                 return false;
             }
             

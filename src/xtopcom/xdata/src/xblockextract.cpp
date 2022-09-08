@@ -469,18 +469,7 @@ void xblockextract_t::unpack_subblocks(base::xvblock_t* _block, std::vector<xobj
     if (base::xvblock_fork_t::is_block_older_version(_block->get_block_version(), base::enum_xvblock_fork_version_5_0_0)) {
         sublocks = xlighttable_build_t::unpack_units_from_table(_block);
     } else {
-        if ( (!_block->get_output_offdata_hash().empty()) && _block->get_output_offdata().empty()) {
-            ec = common::error::xerrc_t::invalid_block;
-            xerror("xblockextract_t::unpack_subblocks fail output offdata emtpy.%s,offdata_hash=%s",_block->dump().c_str(),base::xstring_utl::to_hex(_block->get_output_offdata_hash()).c_str());
-            return;
-        }
-        // XTODO offdata may empty in normal case, confirmtx not influence unit
-        if (!_block->get_output_offdata().empty()) {
-            base::xvblock_out_offdata_t offdata;
-            offdata.serialize_from_string(_block->get_output_offdata());
-            sublocks = offdata.get_subblocks();
-            xassert(!sublocks.empty());
-        }
+        sublocks = xtable_build2_t::unpack_units_from_table(_block, ec);
     }
 
     xdbg("xblockextract_t::unpack_subblocks succ.block=%s,sublocks=%zu",_block->dump().c_str(),sublocks.size());

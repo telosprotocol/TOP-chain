@@ -11,6 +11,13 @@ namespace top
 {
     namespace base
     {
+
+        struct subblock_build_info_t {
+            std::string     m_header_bin;  // TODO(jimmy)
+            std::string     m_binlog;
+            std::string     m_fullstate_hash;
+        };
+
         class xvblock_out_offdata_t {
         public:
             xvblock_out_offdata_t() = default;
@@ -20,15 +27,14 @@ namespace top
             int32_t do_write(base::xstream_t & stream) const;
             int32_t serialize_from_string(const std::string & _data);
             int32_t do_read(base::xstream_t & stream);
-        public:
-            void    set_subblocks(std::vector<xobject_ptr_t<xvblock_t>> subblocks);
 
         public:
             bool    is_empty() const;                        
-            const std::vector<xobject_ptr_t<xvblock_t>> &   get_subblocks() const {return m_subblocks;}
+            const std::vector<subblock_build_info_t> &      get_subblocks_info() const {return m_subblocks_info;}
 
         private:
-            std::vector<xobject_ptr_t<base::xvblock_t>>     m_subblocks;
+            uint8_t     m_version{0};
+            std::vector<subblock_build_info_t>              m_subblocks_info;
         };
 
     }//end of namespace of base

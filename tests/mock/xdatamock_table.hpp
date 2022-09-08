@@ -157,6 +157,7 @@ class xdatamock_table : public base::xvaccount_t {
     xblock_ptr_t generate_tableblock() {
         xblock_ptr_t prev_tableblock = get_cert_block();
         xblock_consensus_para_t cs_para = init_consensus_para();
+        cs_para.set_parent_height(prev_tableblock->get_height()+1);
         
         xblock_ptr_t proposal_block = nullptr;
         uint32_t history_table_count = m_history_tables.size();
@@ -346,8 +347,8 @@ class xdatamock_table : public base::xvaccount_t {
         for (auto & v : proposal_states) {
             xdatamock_unit s_mockunit = find_mock_unit(v.first);
 
-            blockmaker::xunitbuilder_para_t unit_para({});
-            data::xblock_ptr_t unitblock = blockmaker::xunitbuilder_t::make_block(s_mockunit.get_cert_block(), v.second, unit_para, cs_para);
+            blockmaker::xunitbuilder_para_t unit_para;
+            data::xblock_ptr_t unitblock = blockmaker::xunitbuilder_t::make_block_v2(v.second, unit_para, cs_para);
             xassert(unitblock != nullptr);
             // m_batch_units.push_back(unitblock);
             data::xaccount_index_t aindex = data::xaccount_index_t(unitblock->get_height(), unitblock->get_block_hash(), unitblock->get_fullstate_hash(), 1, unitblock->get_block_class(), unitblock->get_block_type());
