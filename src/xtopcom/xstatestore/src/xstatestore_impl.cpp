@@ -40,7 +40,9 @@ bool xstatestore_impl_t::start(const xobject_ptr_t<base::xiothread_t> & iothread
         xerror("xstatestore_impl_t::start already started.");
         return false;
     }
+    m_started = true;
 
+    // todo(nathan):use timer to update mpt and table state.
     m_timer = new base::xxtimer_t(top::base::xcontext_t::instance(), iothread->get_thread_id());
 
     m_bus_listen_id = get_mbus()->add_listener(top::mbus::xevent_major_type_store, std::bind(&xstatestore_impl_t::on_block_to_db_event, this, std::placeholders::_1));
@@ -64,7 +66,7 @@ void xstatestore_impl_t::on_block_to_db_event(mbus::xevent_ptr_t e) {
         mbus::xevent_store_block_committed_ptr_t block_event = dynamic_xobject_ptr_cast<mbus::xevent_store_block_committed_t>(_event_obj->event);
         const data::xblock_ptr_t & block = mbus::extract_block_from(block_event, metrics::blockstore_access_from_mbus_txpool_db_event_on_block);
         evm_common::xh256_t root_hash;
-        excute_table_block(block.get(), root_hash);
+        execute_table_block(block.get());
         return true;
     };
 
@@ -73,97 +75,355 @@ void xstatestore_impl_t::on_block_to_db_event(mbus::xevent_ptr_t e) {
     m_timer->send_call(asyn_call);
 }
 
-bool xstatestore_impl_t::excute_table_block(base::xvblock_t * block, evm_common::xh256_t & root_hash) {
-    xinfo("xstatestore_impl_t::on_block_confirmed process,level:%d,class:%d,block:%s", block->get_block_level(), block->get_block_class(), block->dump().c_str());
+void xstatestore_impl_t::set_latest_executed_info(const base::xvaccount_t & table_addr, uint64_t height,const std::string & blockhash)
+{
+    // TODO(jimmy) no need set executed block hash xvchain_t::instance().get_xblockstore()->set_latest_executed_info(table_addr, height, blockhash);
+    base::xauto_ptr<base::xvaccountobj_t> account_obj(base::xvchain_t::instance().get_account(table_addr));
+    account_obj->set_latest_executed_block(height, blockhash);
+}
+uint64_t xstatestore_impl_t::get_latest_executed_block_height(const base::xvaccount_t & table_addr)
+{
+    // base::xvchain_t::instance().get_xblockstore()->get_latest_executed_block_height(table_addr);
+    base::xauto_ptr<base::xvaccountobj_t> account_obj(base::xvchain_t::instance().get_account(table_addr));
+    return account_obj->get_latest_executed_block_height();
+}
 
-    base::xvaccount_t table_addr(block->get_account());
+// bool xstatestore_impl_t::execute_one_table_block(base::xvblock_t * block, std::shared_ptr<state_mpt::xtop_state_mpt> mpt) {
+//     if (mpt != nullptr) {
+//         std::error_code ec;
+//         auto hash = mpt->commit(ec);
+//         if (ec) {
+//             xdbg("xstatestore_impl_t::execute_table_block commit fail");
+//             return false;
+//         }
+//         xdbg("xstatestore_impl_t::execute_table_block commit hash:%s", hash.as_hex_str().c_str());        
+//     }
 
+//     auto state = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(block);
+//     if (state == nullptr) {
+//         return false;
+//     }
+//     return true;
+// }
+
+bool xstatestore_impl_t::get_mpt(base::xvblock_t * block, xhash256_t & root_hash, std::shared_ptr<state_mpt::xtop_state_mpt> & mpt) {
     evm_common::xh256_t state_root;
     auto ret = data::xblockextract_t::get_state_root(block, state_root);
     if (!ret) {
-        xwarn("xstatestore_impl_t::excute_table_block get state root fail. block:%s", block->dump().c_str());
+        xwarn("xstatestore_impl_t::get_mpt get state root fail. block:%s", block->dump().c_str());
+        return false;
+    }
+    std::error_code ec;
+    root_hash = xhash256_t(state_root.to_bytes());
+    mpt = state_mpt::xtop_state_mpt::create(root_hash, base::xvchain_t::instance().get_xdbstore(), block->get_account(), ec);
+    if (ec) {
         return false;
     }
 
-    std::error_code ec;
-    xhash256_t state_root_hash(state_root.to_bytes());
+    return true;
+}
 
-    if (state_root_hash == xhash256_t()) {
-        root_hash = state_root;
-        return true;
+uint64_t xstatestore_impl_t::try_update_execute_height(const base::xvaccount_t & table_addr, uint64_t max_count) {
+    uint64_t old_execute_height = get_latest_executed_block_height(table_addr);
+    uint64_t _highest_commit_block_height = base::xvchain_t::instance().get_xblockstore()->get_latest_committed_block_height(table_addr);
+
+    if (old_execute_height >= _highest_commit_block_height) {
+        return old_execute_height;
     }
 
-    std::shared_ptr<state_mpt::xtop_state_mpt> table_mpt = state_mpt::xtop_state_mpt::create(state_root_hash, base::xvchain_t::instance().get_xdbstore(), table_addr.get_account(), ec);
-    if (table_mpt == nullptr || ec) {
-        auto * blkstore = base::xvchain_t::instance().get_xblockstore();
-        uint64_t height = block->get_height() - 1;
-        xobject_ptr_t<base::xvblock_t> pre_block = blkstore->load_block_object(table_addr, height, block->get_last_block_hash(), false);
-        if (nullptr == pre_block) {
-            xwarn("xstatestore_impl_t::excute_table_block: nullptr block,account=%s,height=%ld", table_addr.get_account().c_str(), height);
-            return false;
+    uint64_t _begin_height = old_execute_height == 0 ? 0 : old_execute_height + 1;
+    uint64_t new_execute_height = old_execute_height;
+    std::string new_execute_hash;
+    uint64_t height = _begin_height;
+
+    xhash256_t pre_root_hash;
+
+    bool ret = false;
+    std::shared_ptr<state_mpt::xtop_state_mpt> pre_mpt = nullptr;
+    bool pre_mpt_committed = false;
+    do {
+        if (height > _highest_commit_block_height) {
+            xdbg("xstatestore_impl_t::try_update_execute_height finish. account=%s,height=%ld,_highest_commit_block_height=%ld,old_execute_height=%ld,new_execute_height=%ld",
+                 table_addr.get_account().c_str(),
+                 height,
+                 _highest_commit_block_height,
+                 old_execute_height,
+                 new_execute_height);
+            break;
         }
 
-        evm_common::xh256_t pre_root_hash;
-        ret = excute_table_block(pre_block.get(), pre_root_hash);
-        if (!ret) {
-            xwarn("xstatestore_impl_t::excute_table_block load pre block mpt fail. pre block:%s", pre_block->dump().c_str());
-            return false;
+        auto block = base::xvchain_t::instance().get_xblockstore()->load_block_object(
+            table_addr, height, base::enum_xvblock_flag::enum_xvblock_flag_committed, false, (int)metrics::blockstore_access_from_statestore_get_commit_state);
+        if (block == nullptr) {
+            xwarn("xstatestore_impl_t::try_update_execute_height fail-load committed block. account=%s,height=%ld", table_addr.get_account().c_str(), height);
+            break;
         }
 
-        // a state mpt ptr should not commit twice. create mpt again here.
-        xhash256_t pre_state_root_hash(pre_root_hash.to_bytes());
-        ec.clear();
-        auto pre_table_mpt = state_mpt::xtop_state_mpt::create(pre_state_root_hash, base::xvchain_t::instance().get_xdbstore(), table_addr.get_account(), ec);
-        if (pre_table_mpt == nullptr) {
-            xerror("xstatestore_impl_t::excute_table_block create mpt fail. pre hash:%s.pre block:%s", pre_state_root_hash.as_hex_str().c_str(), pre_block->dump().c_str());
-            return false;
-        }
-
-        if (false == base::xvchain_t::instance().get_xblockstore()->load_block_output(table_addr, block, metrics::blockstore_access_from_txpool_on_block_event)) {
-            xerror("xstatestore_impl_t::on_block_to_db_event fail-load block input output, block=%s", block->dump().c_str());
-            return false;
-        }
-        auto account_indexs_str = block->get_account_indexs();
-        if (!account_indexs_str.empty()) {
-            data::xtable_account_indexs_t account_indexs;
-            account_indexs.serialize_from_string(account_indexs_str);
-            ec.clear();
-            for (auto & index : account_indexs.get_account_indexs()) {
-                pre_table_mpt->set_account_index(index.first, index.second, ec);
-                if (ec) {
-                    xerror("xstatestore_impl_t::excute_table_block set account index from table property to mpt fail.block:%s", block->dump().c_str());
-                    return false;
+        std::shared_ptr<state_mpt::xtop_state_mpt> mpt;
+        xhash256_t root_hash;
+        ret = get_mpt(block.get(), root_hash, mpt);
+        if (ret) {
+            pre_mpt_committed = false;
+            pre_mpt = mpt;
+        } else {
+            if (height == _begin_height && height > 1) {
+                auto pre_block = base::xvchain_t::instance().get_xblockstore()->load_block_object(
+                    table_addr, height - 1, base::enum_xvblock_flag::enum_xvblock_flag_committed, false, (int)metrics::blockstore_access_from_statestore_get_commit_state);
+                if (pre_block == nullptr) {
+                    xerror("xstatestore_impl_t::try_update_execute_height fail-load committed block. account=%s,height=%ld", table_addr.get_account().c_str(), height - 1);
+                    break;
+                }
+                ret = get_mpt(pre_block.get(), pre_root_hash, pre_mpt);
+                if (!ret) {
+                    xerror("xstatestore_impl_t::try_update_execute_height get_block_and_mpt fail.");
+                    break;
                 }
             }
 
-            ec.clear();
-            // check if root matches.
-            auto cur_root_hash = pre_table_mpt->get_root_hash(ec);
-            if (cur_root_hash != state_root_hash) {
-                xerror("xstatestore_impl_t::excute_table_block hash not match cur_root_hash:%s,state_root_hash:%s,block:%s",
-                       cur_root_hash.as_hex_str().c_str(),
-                       state_root_hash.as_hex_str().c_str(),
-                       block->dump().c_str());
-                return false;
+            std::error_code ec;
+            if (pre_mpt_committed) {
+                pre_mpt = state_mpt::xtop_state_mpt::create(pre_root_hash, base::xvchain_t::instance().get_xdbstore(), table_addr.get_account(), ec);
+                if (ec) {
+                    xerror("xstatestore_impl_t::try_update_execute_height get_block_and_mpt fail.");
+                    break;
+                }
             }
 
-            pre_table_mpt->commit(ec);
-            if (ec) {
-                xerror("xstatestore_impl_t::excute_table_block commit mpt fail.block:%s,root_hash:%s", block->dump().c_str(), state_root_hash.as_hex_str().c_str());
-                return false;
+            ret = set_and_commit_mpt(block.get(), root_hash, pre_mpt, pre_mpt_committed);
+            if (!ret) {
+                break;
             }
-            xdbg("xstatestore_impl_t::excute_table_block commit mpt succ.block:%s,root_hash:%s", block->dump().c_str(), state_root_hash.as_hex_str().c_str());
         }
+
+        auto state = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(block.get());
+        if (state == nullptr) {
+            break;
+        }
+
+        pre_root_hash.clear();
+        pre_root_hash = root_hash;
+        new_execute_height = block->get_height();
+        new_execute_hash = block->get_block_hash();
+        height++;
+    } while (max_count-- > 0);
+
+    if (new_execute_height > old_execute_height) {
+        set_latest_executed_info(table_addr, new_execute_height, new_execute_hash);
+        xinfo("xstatestore_impl_t::try_update_execute_height succ-update. account=%s,height=%ld,old_execute_height=%ld,new_execute_height=%ld,commit_height=%ld",
+              table_addr.get_account().c_str(),
+              _begin_height,
+              old_execute_height,
+              new_execute_height,
+              _highest_commit_block_height);
+    } else {
+        xdbg("xstatestore_impl_t::try_update_execute_height finish2. account=%s,_begin_height=%ld,_highest_commit_block_height=%ld,old_execute_height=%ld,new_execute_height=%ld",
+             table_addr.get_account().c_str(),
+             _begin_height,
+             _highest_commit_block_height,
+             old_execute_height,
+             new_execute_height);
     }
 
-    xdbg("xstatestore_impl_t::excute_table_block create mpt ok. hash:%s.block:%s", state_root_hash.as_hex_str().c_str(), block->dump().c_str());
+    return new_execute_height;
+}
 
-    base::auto_reference<base::xvblock_t> auto_hold_block_ptr(block);
-    base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->execute_block(block, metrics::statestore_access_from_blockstore);
+bool xstatestore_impl_t::set_and_commit_mpt(base::xvblock_t * block, const xhash256_t root_hash, std::shared_ptr<state_mpt::xtop_state_mpt> pre_mpt, bool & mpt_committed) {
+    base::xvaccount_t table_addr(block->get_account());
+    if (false == base::xvchain_t::instance().get_xblockstore()->load_block_output(table_addr, block, metrics::blockstore_access_from_statestore_load_state)) {
+        xerror("xstatestore_impl_t::set_and_commit_mpt fail-load block input output, block=%s", block->dump().c_str());
+        return false;
+    }
 
-    root_hash = state_root;
+    auto account_indexs_str = block->get_account_indexs();
+    if (!account_indexs_str.empty()) {
+        data::xtable_account_indexs_t account_indexs;
+        account_indexs.serialize_from_string(account_indexs_str);
+        std::error_code ec;
+        for (auto & index : account_indexs.get_account_indexs()) {
+            pre_mpt->set_account_index(index.first, index.second, ec);
+            if (ec) {
+                xerror("xstatestore_impl_t::set_and_commit_mpt set account index from table property to mpt fail.block:%s", block->dump().c_str());
+                return false;
+            }
+        }
+
+        ec.clear();
+        // check if root matches.
+        auto cur_root_hash = pre_mpt->get_root_hash(ec);
+        if (ec || cur_root_hash != root_hash) {
+            xerror("xstatestore_impl_t::set_and_commit_mpt hash not match cur_root_hash:%s,state_root_hash:%s,block:%s",
+                cur_root_hash.as_hex_str().c_str(),
+                root_hash.as_hex_str().c_str(),
+                block->dump().c_str());
+            return false;
+        }
+
+        pre_mpt->commit(ec);
+        if (ec) {
+            xdbg("xstatestore_impl_t::set_and_commit_mpt commit fail");
+            return false;
+        }
+        xdbg("xstatestore_impl_t::set_and_commit_mpt commit hash:%s", cur_root_hash.as_hex_str().c_str());
+
+        mpt_committed = true;
+    } else {
+        mpt_committed = false;
+    }
     return true;
 }
+
+bool xstatestore_impl_t::execute_block_recurse(base::xvblock_t * block, const xhash256_t root_hash, uint64_t executed_height) {
+    if (block->get_height() <= executed_height + 1) {
+        return false;
+    }
+
+    base::xvaccount_t table_addr(block->get_account());
+    uint64_t pre_height = block->get_height() - 1;
+    auto pre_block = base::xvchain_t::instance().get_xblockstore()->load_block_object(
+            table_addr, pre_height, block->get_last_block_hash(), false, (int)metrics::blockstore_access_from_statestore_get_block_state);
+    if (pre_block == nullptr) {
+        xwarn("xstatestore_impl_t::execute_block_recurse fail-load committed block. account=%s,height=%ld", table_addr.get_account().c_str(), pre_height);
+        return false;
+    }
+
+    std::shared_ptr<state_mpt::xtop_state_mpt> pre_mpt;
+    xhash256_t pre_root_hash;
+    auto ret = get_mpt(pre_block.get(), pre_root_hash, pre_mpt);
+    if (ret) {
+        bool mpt_committed;
+        ret = set_and_commit_mpt(block, root_hash, pre_mpt, mpt_committed);
+        if (!ret) {
+            return false;
+        }
+        auto state = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(block);
+        if (state == nullptr) {
+            return false;
+        }
+        return true;
+    } else {
+        return execute_block_recurse(pre_block.get(), pre_root_hash, executed_height);
+    }
+}
+
+bool xstatestore_impl_t::execute_table_block(base::xvblock_t * block) {
+    base::xvaccount_t table_addr(block->get_account());
+    uint64_t execute_height = try_update_execute_height(table_addr, 32);
+
+    auto height = block->get_height();
+    if (height <= execute_height) {
+        return true;
+    }
+
+    if (height > execute_height + 2) {
+        xdbg("xstatestore_impl_t::execute_table_block block height(%llu) > execute height(%llu) + 2", height, execute_height);
+        return false;
+    }
+
+    std::shared_ptr<state_mpt::xtop_state_mpt> mpt;
+    xhash256_t root_hash;
+    auto ret = get_mpt(block, root_hash, mpt);
+    if (ret) {
+        auto state = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(block);
+        if (state == nullptr) {
+            return false;
+        }
+        return true;
+    }
+
+    return execute_block_recurse(block, root_hash, execute_height);
+}
+
+// bool xstatestore_impl_t::execute_table_block(base::xvblock_t * block, evm_common::xh256_t & root_hash) {
+//     xinfo("xstatestore_impl_t::on_block_confirmed process,level:%d,class:%d,block:%s", block->get_block_level(), block->get_block_class(), block->dump().c_str());
+
+//     base::xvaccount_t table_addr(block->get_account());
+
+//     evm_common::xh256_t state_root;
+//     auto ret = data::xblockextract_t::get_state_root(block, state_root);
+//     if (!ret) {
+//         xwarn("xstatestore_impl_t::execute_table_block get state root fail. block:%s", block->dump().c_str());
+//         return false;
+//     }
+
+//     std::error_code ec;
+//     xhash256_t state_root_hash(state_root.to_bytes());
+
+//     if (state_root_hash == xhash256_t()) {
+//         root_hash = state_root;
+//         return true;
+//     }
+
+//     std::shared_ptr<state_mpt::xtop_state_mpt> table_mpt = state_mpt::xtop_state_mpt::create(state_root_hash, base::xvchain_t::instance().get_xdbstore(), table_addr.get_account(), ec);
+//     if (table_mpt == nullptr || ec) {
+//         auto * blkstore = base::xvchain_t::instance().get_xblockstore();
+//         uint64_t height = block->get_height() - 1;
+//         xobject_ptr_t<base::xvblock_t> pre_block = blkstore->load_block_object(table_addr, height, block->get_last_block_hash(), false);
+//         if (nullptr == pre_block) {
+//             xwarn("xstatestore_impl_t::execute_table_block: nullptr block,account=%s,height=%ld", table_addr.get_account().c_str(), height);
+//             return false;
+//         }
+
+//         evm_common::xh256_t pre_root_hash;
+//         ret = execute_table_block(pre_block.get(), pre_root_hash);
+//         if (!ret) {
+//             xwarn("xstatestore_impl_t::execute_table_block load pre block mpt fail. pre block:%s", pre_block->dump().c_str());
+//             return false;
+//         }
+
+//         // a state mpt ptr should not commit twice. create mpt again here.
+//         xhash256_t pre_state_root_hash(pre_root_hash.to_bytes());
+//         ec.clear();
+//         auto pre_table_mpt = state_mpt::xtop_state_mpt::create(pre_state_root_hash, base::xvchain_t::instance().get_xdbstore(), table_addr.get_account(), ec);
+//         if (pre_table_mpt == nullptr) {
+//             xerror("xstatestore_impl_t::execute_table_block create mpt fail. pre hash:%s.pre block:%s", pre_state_root_hash.as_hex_str().c_str(), pre_block->dump().c_str());
+//             return false;
+//         }
+
+//         if (false == base::xvchain_t::instance().get_xblockstore()->load_block_output(table_addr, block, metrics::blockstore_access_from_txpool_on_block_event)) {
+//             xerror("xstatestore_impl_t::on_block_to_db_event fail-load block input output, block=%s", block->dump().c_str());
+//             return false;
+//         }
+//         auto account_indexs_str = block->get_account_indexs();
+//         if (!account_indexs_str.empty()) {
+//             data::xtable_account_indexs_t account_indexs;
+//             account_indexs.serialize_from_string(account_indexs_str);
+//             ec.clear();
+//             for (auto & index : account_indexs.get_account_indexs()) {
+//                 pre_table_mpt->set_account_index(index.first, index.second, ec);
+//                 if (ec) {
+//                     xerror("xstatestore_impl_t::execute_table_block set account index from table property to mpt fail.block:%s", block->dump().c_str());
+//                     return false;
+//                 }
+//             }
+
+//             ec.clear();
+//             // check if root matches.
+//             auto cur_root_hash = pre_table_mpt->get_root_hash(ec);
+//             if (cur_root_hash != state_root_hash) {
+//                 xerror("xstatestore_impl_t::execute_table_block hash not match cur_root_hash:%s,state_root_hash:%s,block:%s",
+//                        cur_root_hash.as_hex_str().c_str(),
+//                        state_root_hash.as_hex_str().c_str(),
+//                        block->dump().c_str());
+//                 return false;
+//             }
+
+//             pre_table_mpt->commit(ec);
+//             if (ec) {
+//                 xerror("xstatestore_impl_t::execute_table_block commit mpt fail.block:%s,root_hash:%s", block->dump().c_str(), state_root_hash.as_hex_str().c_str());
+//                 return false;
+//             }
+//             xdbg("xstatestore_impl_t::execute_table_block commit mpt succ.block:%s,root_hash:%s", block->dump().c_str(), state_root_hash.as_hex_str().c_str());
+//         }
+//     }
+
+//     xdbg("xstatestore_impl_t::execute_table_block create mpt ok. hash:%s.block:%s", state_root_hash.as_hex_str().c_str(), block->dump().c_str());
+
+//     base::auto_reference<base::xvblock_t> auto_hold_block_ptr(block);
+//     base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->execute_block(block, metrics::statestore_access_from_blockstore);
+
+//     root_hash = state_root;
+//     return true;
+// }
 
 xstatestore_table_ptr_t xstatestore_impl_t::get_table_statestore_from_unit_addr(common::xaccount_address_t const & account_address) const {
     std::string table_address = base::xvaccount_t::make_table_account_address(account_address.vaccount());
