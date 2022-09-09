@@ -8,19 +8,17 @@
 #include "xbase/xthread.h"
 #include "xbasic/xhex.h"
 #include "xblockstore/xerror/xerror.h"
-#include "xchain_fork/xchain_upgrade_center.h"
 #include "xvunithub.h"
 #include "xvledger/xvdrecycle.h"
 #include "xvledger/xunit_proof.h"
 #include "xvledger/xvblock_offdata.h"
 #include "xdata/xgenesis_data.h"
-
 #include "xmetrics/xmetrics.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xblocktool.h"
 #include "xdata/xblockbuild.h"
 #include "xpbase/base/top_utils.h"
-#include "xstatestore/xstatestore_face.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 
 #define METRICS_TAG(tag, val) XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)tag, val)
 

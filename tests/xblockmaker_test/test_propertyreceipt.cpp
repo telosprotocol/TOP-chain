@@ -174,7 +174,7 @@ TEST_F(test_propertyreceipt, propertyreceipt_between_table_tx) {
     xassert(receiptid_state->get_block_height() == 1);
     xassert(receiptid_state->get_unconfirm_tx_num() == 2);
 }
-
+#if 0 // TODO(jimmy) depend on xstatestore
 TEST_F(test_propertyreceipt, propertyreceipt_3) {
     xblockmaker_resources_ptr_t resources = std::make_shared<test_xblockmaker_resources_t>();
 
@@ -188,6 +188,7 @@ TEST_F(test_propertyreceipt, propertyreceipt_3) {
     for (uint32_t i = 0; i < tableblocks.size(); i++) {
         if (tableblocks[i]->get_block_class() == base::enum_xvblock_class_full) {
             auto tablestate = resources->get_xblkstatestore()->get_block_state(tableblocks[i].get());
+            xassert(tablestate != nullptr);
             xvproperty_prove_ptr_t propreceipt = xblocktool_t::create_receiptid_property_prove(tableblocks[i].get(), tableblocks[i+2].get(), tablestate.get());
             xassert(propreceipt != nullptr);
             xassert(propreceipt->is_valid());
@@ -215,3 +216,4 @@ TEST_F(test_propertyreceipt, propertyreceipt_3) {
     }
     xassert(false);  // not find full-table
 }
+#endif

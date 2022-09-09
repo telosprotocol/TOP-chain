@@ -33,7 +33,7 @@ protected:
     void TearDown() override {
     }
 };
-
+#if 0 // block execute move to xstatestore
 TEST_F(test_block_executed, inorder) {
     mock::xvchain_creator creator;
     base::xvblockstore_t* blockstore = creator.get_blockstore();
@@ -161,6 +161,7 @@ TEST_F(test_block_executed, execute_height_update_2) {
         xassert(blockstore->get_latest_executed_block_height(mocktable) == tableblocks[max_count-2]->get_height());
     }
 }
+#endif
 #if 0 // TODO(jimmy) xacctmeta_t is deleted
 TEST_F(test_block_executed, execute_height_update_3_BENCH) {
     mock::xvchain_creator creator;

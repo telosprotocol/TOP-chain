@@ -9,6 +9,7 @@ add_library(xstatestore STATIC ${src_dir})
 
 target_link_libraries(xstatestore PRIVATE
     xvledger
+    xmbus
     xblockstore
     xdata
     xxbase
