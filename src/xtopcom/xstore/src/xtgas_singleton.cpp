@@ -26,6 +26,9 @@ uint64_t xtgas_singleton::get_cache_total_lock_tgas_token() {
 }
 
 bool xtgas_singleton::get_latest_property(std::string & value, uint64_t & height) {
+    if (!XGET_CONFIG(enable_reward))
+        return false;
+
     auto unitstate = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(zec_workload_contract_address);
     if (nullptr == unitstate) {
         xwarn("xtgas_singleton::get_latest_property fail-load state");
@@ -66,6 +69,11 @@ bool xtgas_singleton::leader_get_total_lock_tgas_token(uint64_t timer_height, ui
 }
 
 bool xtgas_singleton::backup_get_total_lock_tgas_token(uint64_t timer_height, uint64_t property_height, uint64_t & total_lock_tgas_token) {
+    if (!XGET_CONFIG(enable_reward)) {
+        total_lock_tgas_token = 0;
+        return true;
+    }
+
     if (property_height == 0) {
         total_lock_tgas_token = 0;
         return true;
