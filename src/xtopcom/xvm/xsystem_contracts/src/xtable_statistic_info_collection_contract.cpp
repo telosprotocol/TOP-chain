@@ -360,9 +360,10 @@ void xtable_statistic_info_collection_contract::report_summarized_statistic_info
         {
             stream.reset();
             stream << shard_slash_collect;
-            CALL(common::xaccount_address_t{sys_contract_zec_slash_info_addr}, "summarize_slash_info", std::string((char *)stream.data(), stream.size()));
+            if (XGET_CONFIG(enable_slash)) {
+                CALL(common::xaccount_address_t{sys_contract_zec_slash_info_addr}, "summarize_slash_info", std::string((char *)stream.data(), stream.size()));
+            }
         }
-
     }
 
 
@@ -571,7 +572,7 @@ void xtable_statistic_info_collection_contract::process_workload_statistic_data(
     XMETRICS_TIME_RECORD("sysContract_tableStatistic_process_workload_statistic_data");
     XMETRICS_CPU_TIME_RECORD("sysContract_tableStatistic_process_workload_statistic_data");
     auto const & group_workload = get_workload_from_data(statistic_data, statistic_accounts);
-    if (!group_workload.empty()) {
+    if (!group_workload.empty() && XGET_CONFIG(enable_reward)) {
         update_workload(group_workload);
     }
     if (tgas != 0) {
