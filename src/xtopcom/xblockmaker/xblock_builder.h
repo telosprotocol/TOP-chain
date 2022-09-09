@@ -18,6 +18,7 @@ NS_BEG2(top, blockmaker)
 
 class xunitbuilder_para_t {
  public:
+    xunitbuilder_para_t() = default;
     xunitbuilder_para_t(const base::xvtxkey_vec_t & txkeys)
     : m_txkeys(txkeys) {
     }
@@ -39,7 +40,9 @@ class xunitbuildber_txkeys_mgr_t {
 class xunitbuilder_t {
  public:
     static bool    can_make_full_unit(const data::xblock_ptr_t & prev_block);
+    static bool    can_make_full_unit_v2(uint64_t proposal_height);
     static data::xblock_ptr_t  make_block(const data::xblock_ptr_t & prev_block, const data::xunitstate_ptr_t & proposal_state, const xunitbuilder_para_t & unitbuilder_para, const data::xblock_consensus_para_t & cs_para);
+    static data::xblock_ptr_t  make_block_v2(const data::xunitstate_ptr_t & unitstate, const xunitbuilder_para_t & unitbuilder_para, const data::xblock_consensus_para_t & cs_para);
 };
 
 

@@ -22,6 +22,7 @@
 #include "tests/mock/xvchain_creator.hpp"
 #include "tests/mock/xdatamock_table.hpp"
 #include "test_common.hpp"
+#include "xvledger/xvblock_offdata.h"
 
 using namespace top;
 using namespace top::base;
@@ -166,4 +167,114 @@ TEST_F(test_block_db_size, table_unit_IO_opt) {
     << std::endl;
     std::cout << "hash_calc_count = " << xhashtest_t::hash_calc_count << std::endl;
     xhashtest_t::print_hash_calc = false;
+}
+
+
+TEST_F(test_block_db_size, table_unit_offdata_1) {
+    mock::xvchain_creator creator(true);
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+
+    xhashtest_t::hash_calc_count = 0;
+    xhashtest_t::print_hash_calc = false;
+    uint64_t max_block_height = 5;
+    mock::xdatamock_table mocktable(1, 4);
+    mocktable.genrate_table_chain(max_block_height, blockstore);
+    const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
+    xassert(tableblocks.size() == max_block_height + 1);
+
+    auto tableblock = tableblocks[1];
+    
+    std::vector<xobject_ptr_t<xvblock_t>> sub_blocks;
+    tableblock->extract_sub_blocks(sub_blocks);
+    ASSERT_EQ(sub_blocks.size(), 4);
+
+    base::xvblock_out_offdata_t offdata(sub_blocks);
+    std::string offdata_bin;
+    offdata.serialize_to_string(offdata_bin);
+    if (false == tableblock->set_output_offdata(offdata_bin)) {        
+        printf("xvblockstore_impl::load_block_output_offdata,fail-unmatch offdata. block:%s,offdata_size=%zu,offdata_hash=%s:%s",tableblock->dump().c_str(), offdata_bin.size(),
+            base::xstring_utl::to_hex(tableblock->get_cert()->hash(offdata_bin)).c_str(), base::xstring_utl::to_hex(tableblock->get_output_offdata_hash()).c_str());
+        xassert(false);
+    }
+}
+
+TEST_F(test_block_db_size, table_unit_offdata_2) {
+    mock::xvchain_creator creator(true);
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+
+    xhashtest_t::hash_calc_count = 0;
+    xhashtest_t::print_hash_calc = false;
+    uint64_t max_block_height = 1;
+    mock::xdatamock_table mocktable(1, 4);
+    mocktable.genrate_table_chain(max_block_height, blockstore);
+    const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
+    xassert(tableblocks.size() == max_block_height + 1);
+
+    auto tableblock = tableblocks[1];
+
+{
+    std::vector<xobject_ptr_t<xvblock_t>> sub_blocks;
+    tableblock->extract_sub_blocks(sub_blocks);
+    ASSERT_EQ(sub_blocks.size(), 4);
+
+    sub_blocks[0]->set_block_flag(base::enum_xvblock_flag_committed);
+    sub_blocks[1]->set_block_flag(base::enum_xvblock_flag_committed);
+
+    base::xvblock_out_offdata_t offdata(sub_blocks);
+    std::string offdata_bin;
+    offdata.serialize_to_string(offdata_bin);
+    if (false == tableblock->set_output_offdata(offdata_bin)) {        
+        printf("xvblockstore_impl::load_block_output_offdata,fail-unmatch offdata. block:%s,offdata_size=%zu,offdata_hash=%s:%s",tableblock->dump().c_str(), offdata_bin.size(),
+            base::xstring_utl::to_hex(tableblock->get_cert()->hash(offdata_bin)).c_str(), base::xstring_utl::to_hex(tableblock->get_output_offdata_hash()).c_str());
+        xassert(false);
+    }    
+}
+
+{
+    ASSERT_TRUE(blockstore->store_block(mocktable, tableblock.get()));
+
+    auto db_block = blockstore->load_block_object(mocktable, tableblock->get_height(), tableblock->get_block_hash(), true);
+    ASSERT_EQ(db_block->get_block_hash(), tableblock->get_block_hash());
+}
+
+}
+
+TEST_F(test_block_db_size, table_unit_offdata) {
+    mock::xvchain_creator creator(true);
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+
+    xhashtest_t::hash_calc_count = 0;
+    xhashtest_t::print_hash_calc = false;
+    uint64_t max_block_height = 5;
+    mock::xdatamock_table mocktable(1, 4);
+    mocktable.genrate_table_chain(max_block_height, blockstore);
+    const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
+    xassert(tableblocks.size() == max_block_height + 1);
+
+    xhashtest_t::print_hash_calc = false;
+    for (auto & block : tableblocks) {
+        ASSERT_TRUE(blockstore->store_block(mocktable, block.get()));
+    }
+
+    for (uint64_t height = 1; height <= max_block_height; height++) {
+        auto db_block = blockstore->load_block_object(mocktable, tableblocks[height]->get_height(), tableblocks[height]->get_block_hash(), true);
+        ASSERT_EQ(db_block->get_block_hash(), tableblocks[height]->get_block_hash());
+    }
+
+}
+
+
+TEST_F(test_block_db_size, unit_optimize) {
+    {
+        base::xstream_t stream(base::xcontext_t::instance());
+        std::string emtpy_str;
+        stream.write_compact_var(emtpy_str);
+        ASSERT_EQ(stream.size(), 1);
+    }
+    {
+        base::xstream_t stream(base::xcontext_t::instance());
+        std::string emtpy_str;
+        stream << emtpy_str;
+        ASSERT_EQ(stream.size(), 4);
+    }
 }

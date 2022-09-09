@@ -101,7 +101,6 @@ class xtable_block_para_t : public base::xbbuild_body_para_t {
     void    set_fullstate_bin(const std::string & fullstate) {m_fullstate_bin = fullstate;}
     void    set_tgas_balance_change(const int64_t amount) {m_tgas_balance_change = amount;}
     void    set_property_hashs(const std::map<std::string, std::string> & hashs) {m_property_hashs = hashs;}
-    void    set_output_offdata(const std::string & offdata_bin) {m_output_offdata = offdata_bin;}
 
     const std::vector<std::pair<xblock_ptr_t, data::xaccount_index_t>> & get_batch_unit_and_index() const {return m_batch_unit_and_index;}
     const std::vector<xlightunit_tx_info_ptr_t> & get_txs() const {return m_txs;}
@@ -109,14 +108,12 @@ class xtable_block_para_t : public base::xbbuild_body_para_t {
     const std::string &             get_fullstate_bin() const {return m_fullstate_bin;}
     int64_t                         get_tgas_balance_change() const {return m_tgas_balance_change;}
     const std::map<std::string, std::string> &  get_property_hashs() const {return m_property_hashs;}
-    const std::string &             get_output_offdata() const {return m_output_offdata;}
 
  private:
     std::vector<std::pair<xblock_ptr_t, data::xaccount_index_t>> m_batch_unit_and_index;
     std::string                      m_property_binlog;
     std::string                      m_fullstate_bin;
     int64_t                          m_tgas_balance_change{0};
-    std::string                      m_output_offdata;
     std::map<std::string, std::string> m_property_hashs;  // need set to table-action for property receipt
     std::vector<xlightunit_tx_info_ptr_t> m_txs;
 };
@@ -167,6 +164,16 @@ class xfullunit_build_t : public base::xvblockmaker_t {
     bool build_block_body(const xunit_block_para_t & para);
 };
 
+class xunit_build2_t : public base::xvblockmaker_t {
+ public:
+    xunit_build2_t(std::string const& account, uint64_t height, std::string const& last_block_hash, bool is_full_unit, const xunit_block_para_t & bodypara, const xblock_consensus_para_t & para);
+    xunit_build2_t(base::xvheader_t* header, base::xvblock_t* parentblock, const xunit_block_para_t & bodypara);
+
+    base::xauto_ptr<base::xvblock_t> create_new_block() override;
+ private:
+    bool build_block_body(const xunit_block_para_t & para);
+};
+
 class xlighttable_build_t : public base::xvtableblock_maker_t {
  public:
     static std::vector<xobject_ptr_t<base::xvblock_t>> unpack_units_from_table(const base::xvblock_t* _tableblock);
@@ -183,6 +190,8 @@ class xlighttable_build_t : public base::xvtableblock_maker_t {
 };
 
 class xtable_build2_t : public base::xvblockmaker_t {
+ public:
+   static std::vector<xobject_ptr_t<base::xvblock_t>> unpack_units_from_table(base::xvblock_t* _tableblock, std::error_code & ec);
  public:
     xtable_build2_t(base::xvblock_t* prev_block, const xtable_block_para_t & bodypara, const xblock_consensus_para_t & para);
 
@@ -219,7 +228,7 @@ public:
    int32_t serialize_from_string(const std::string & _str);
 
    void add_account_index(const std::string & addr, const data::xaccount_index_t & account_index);
-   std::map<std::string, data::xaccount_index_t> const & get_account_indexs() const {
+   std::vector<std::pair<std::string, data::xaccount_index_t>> const & get_account_indexs() const {
          return m_account_indexs;
    }
 
@@ -228,7 +237,7 @@ private:
    int32_t do_read(base::xstream_t & stream);
 
 private:
-   std::map<std::string, data::xaccount_index_t> m_account_indexs;
+   std::vector<std::pair<std::string, data::xaccount_index_t>> m_account_indexs;
 };
 
 NS_END2

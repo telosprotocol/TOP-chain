@@ -58,6 +58,15 @@ bool xunitbuilder_t::can_make_full_unit(const data::xblock_ptr_t & prev_block) {
     return false;
 }
 
+bool xunitbuilder_t::can_make_full_unit_v2(uint64_t proposal_height) {
+    // XTODO not depend on prev blcok
+    uint64_t max_limit_lightunit_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(fullunit_contain_of_unit_num);
+    if (proposal_height % max_limit_lightunit_count == 0) {
+        return true;
+    }
+    return false;
+}
+
 data::xblock_ptr_t  xunitbuilder_t::make_block(const data::xblock_ptr_t & prev_block, const data::xunitstate_ptr_t & unitstate, const xunitbuilder_para_t & unitbuilder_para, const data::xblock_consensus_para_t & cs_para){
     std::string binlog = unitstate->take_binlog();
     std::string snapshot = unitstate->take_snapshot();
@@ -78,20 +87,42 @@ data::xblock_ptr_t  xunitbuilder_t::make_block(const data::xblock_ptr_t & prev_b
     }
     base::xauto_ptr<base::xvblock_t> _new_block = vblockmaker->build_new_block();
     data::xblock_ptr_t proposal_block = data::xblock_t::raw_vblock_to_object_ptr(_new_block.get());
+    xinfo("xunitbuilder_t::make_block unit=%s,binlog=%zu,snapshot=%zu,records=%zu,size=%zu,%zu", 
+        proposal_block->dump().c_str(), binlog.size(), snapshot.size(), unitstate->get_canvas_records_size(),
+        proposal_block->get_input()->get_resources_data().size(), proposal_block->get_output()->get_resources_data().size());
+    return proposal_block;
+}
 
-    if (base::xvblock_fork_t::is_block_match_version(proposal_block->get_block_version(), base::enum_xvblock_fork_version_5_0_0)) {
-        proposal_block->get_cert()->set_parent_height(cs_para.get_proposal_height());
-        proposal_block->get_cert()->set_parent_viewid(cs_para.get_viewid());
-        proposal_block->set_extend_cert("1");
-        proposal_block->set_extend_data("1");
-        proposal_block->set_block_flag(base::enum_xvblock_flag_authenticated);
+data::xblock_ptr_t  xunitbuilder_t::make_block_v2(const data::xunitstate_ptr_t & unitstate, const xunitbuilder_para_t & unitbuilder_para, const data::xblock_consensus_para_t & cs_para){
+    std::string binlog = unitstate->take_binlog();
+    std::string snapshot = unitstate->take_snapshot();
+    if (binlog.empty() || snapshot.empty()) {
+        xerror("xunitbuilder_t::make_block fail-invalid unitstate.");
+        return nullptr;
     }
+    data::xunit_block_para_t bodypara;
+    bodypara.set_binlog(binlog);
+    bodypara.set_fullstate_bin(snapshot);
+    bodypara.set_txkeys(unitbuilder_para.get_txkeys());
+
+    bool is_full_unit = xunitbuilder_t::can_make_full_unit_v2(unitstate->get_block_height());
+    std::shared_ptr<base::xvblockmaker_t> vblockmaker = std::make_shared<data::xunit_build2_t>(unitstate->get_account(), unitstate->get_block_height(), unitstate->get_bstate()->get_last_block_hash(), is_full_unit, bodypara, cs_para);    
+    base::xauto_ptr<base::xvblock_t> _new_block = vblockmaker->build_new_block();
+    data::xblock_ptr_t proposal_block = data::xblock_t::raw_vblock_to_object_ptr(_new_block.get());
+    xassert(proposal_block->get_cert()->get_justify_cert_hash().empty());
+    proposal_block->get_cert()->set_parent_viewid(cs_para.get_viewid());
+    proposal_block->set_extend_cert("1");
+    proposal_block->set_extend_data("1");
+    proposal_block->set_block_flag(base::enum_xvblock_flag_authenticated);
+    // xdbg("xunitbuilder_t::make_block unit=%s,detail=%s", proposal_block->dump().c_str(), proposal_block->detail_dump().c_str());
+    // xdbg("xunitbuilder_t::make_block unit=%s,qcert=%s", proposal_block->dump().c_str(), proposal_block->get_cert()->dump().c_str());
 
     xinfo("xunitbuilder_t::make_block unit=%s,binlog=%zu,snapshot=%zu,records=%zu,size=%zu,%zu", 
         proposal_block->dump().c_str(), binlog.size(), snapshot.size(), unitstate->get_canvas_records_size(),
         proposal_block->get_input()->get_resources_data().size(), proposal_block->get_output()->get_resources_data().size());
     return proposal_block;
 }
+
 
 void xtablebuilder_t::make_table_prove_property_hashs(base::xvbstate_t* bstate, std::map<std::string, std::string> & property_hashs) {
     std::string property_receiptid_bin = data::xtable_bstate_t::get_receiptid_property_bin(bstate);
@@ -128,20 +159,7 @@ bool     xtablebuilder_t::update_account_index_property(const data::xtablestate_
         }
     }
 
-    data::xaccount_index_t _new_aindex;
-    auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
-    auto const new_version = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.v1_7_0_block_fork_point, unit->get_clock());
-    if (!new_version) {
-        _new_aindex = data::xaccount_index_t(unit.get(), has_unconfirm_sendtx, _cs_type, false, nonce);
-    } else {
-        _new_aindex = data::xaccount_index_t(unit->get_height(),
-                                             unit->get_block_hash(),
-                                             unit->get_fullstate_hash(),
-                                             nonce,
-                                             unit->get_block_class(),
-                                             unit->get_block_type());
-    }
-
+    base::xaccount_index_t _new_aindex(unit.get(), has_unconfirm_sendtx, _cs_type, false, nonce);
     tablestate->set_account_index(unit->get_account(), _new_aindex);
     xdbg("xtablebuilder_t::update_account_index_property account:%s,index=%s", unit->get_account().c_str(), _new_aindex.dump().c_str());
     return true;
@@ -199,18 +217,6 @@ void     xtablebuilder_t::make_table_block_para(const std::vector<std::pair<xblo
         xassert(false);
     }
 
-    if (batch_unit_and_index.size() > 0) {
-        std::vector<xobject_ptr_t<base::xvblock_t>> subunits;
-        for (auto & v : batch_unit_and_index) {
-            subunits.push_back(v.first);
-        }
-
-        base::xvblock_out_offdata_t offdata(subunits);
-        std::string out_offdata_bin;
-        offdata.serialize_to_string(out_offdata_bin);
-        lighttable_para.set_output_offdata(out_offdata_bin);
-    }
-
     lighttable_para.set_property_binlog(binlog);
     lighttable_para.set_fullstate_bin(snapshot);
     lighttable_para.set_batch_unit_and_index(batch_unit_and_index);
@@ -230,10 +236,6 @@ data::xblock_ptr_t  xtablebuilder_t::make_light_block(const data::xblock_ptr_t &
 
     auto _new_block = vbmaker->build_new_block();
     data::xblock_ptr_t proposal_block = data::xblock_t::raw_vblock_to_object_ptr(_new_block.get());
-    
-    if (base::xvblock_fork_t::is_block_match_version(proposal_block->get_block_version(), base::enum_xvblock_fork_version_5_0_0)) {
-        proposal_block->set_output_offdata(lighttable_para.get_output_offdata());
-    }
 
     return proposal_block;
 }
