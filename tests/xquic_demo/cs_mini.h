@@ -19,6 +19,7 @@
 #include <xquic/xquic.h>
 #include <xquic/xquic_typedef.h>
 
+#include <atomic>
 #include <deque>
 #include <functional>
 #include <string>
@@ -39,8 +40,25 @@ struct srv_user_conn_t {
     socklen_t peer_addrlen;
 };
 
+enum class cli_conn_status_t : std::uint8_t {
+    invalid = 0x0,
+    before_connected = 0x1,  // init parse, can send data after connection established.
+    well_connected = 0x2,    // ready , can send data.
+    after_connected = 0x4,   // is about to be release, can not send_data;
+};
+
+#ifdef DEBUG
+#    define BEFORE_WELL_CONNECTED_KEEP_MSG_TIMER 10000  // 0.01s
+#else
+#    define BEFORE_WELL_CONNECTED_KEEP_MSG_TIMER 1000000  // 1s
+#endif
+
 struct cli_user_conn_t {
     xquic_client_t * client;
+
+    std::atomic<cli_conn_status_t> conn_status{cli_conn_status_t::invalid};
+
+    uint64_t conn_create_time;
 
     event * conn_timeout_event;
 
@@ -58,8 +76,7 @@ struct cli_user_conn_t {
     socklen_t local_addrlen;
     xqc_flag_t get_local_addr;
 
-    unsigned char * token;
-    unsigned token_len;
+    std::string token{""};
 
     cli_user_stream_t * cli_user_stream{nullptr};
 };
@@ -78,8 +95,6 @@ struct cli_user_stream_t {
     xqc_msec_t latest_update_time;
 
     struct event * stream_timeout_event;
-
-    cli_user_conn_t * cli_user_conn;
 };
 
 struct srv_user_stream_t {
@@ -138,36 +153,16 @@ public:
         return m_send_queue.unsafe_size() > 1000;
     }
 
-    void debug_token(bool save) {
-        if (save) {
-            printf(" ======= save token:");
-            for (unsigned i = 0; i < m_token_len; ++i) {
-                printf(GREEN " 0x%02x ", m_token[i]);
-            }
-            printf(RESET "\n");
-        } else {
-            printf(" ======= get token:");
-            for (unsigned i = 0; i < m_token_len; ++i) {
-                printf(BLUE " 0x%02x ", m_token[i]);
-            }
-            printf(RESET "\n");
-        }
-    }
-    void xclient_read_token(unsigned char ** token, unsigned * token_len) {
-        if (m_token_len) {
-            *token = (unsigned char *)malloc(m_token_len);
-            memcpy(*token, m_token, m_token_len);
-            *token_len = m_token_len;
-            debug_token(false);
-        }
+    std::string xclient_read_token() {
+        // printf("read_token: %s\n", m_token.c_str());
+        return m_token;
     }
 
     void xclient_save_token_cb(const unsigned char * token, unsigned token_len) {
-        if (token_len) {
-            m_token_len = token_len;
-            m_token = (unsigned char *)malloc(m_token_len);
-            memcpy(m_token, token, m_token_len);
-            debug_token(true);
+        if (token_len > 0) {
+            m_token.clear();
+            m_token.assign((char *)token, static_cast<std::size_t>(token_len));
+            // printf("save_token: %s\n", m_token.c_str());
         }
     }
 
@@ -206,8 +201,7 @@ private:
     top::threading::xthreadsafe_queue<client_send_buffer_t *, std::vector<client_send_buffer_t *>> m_send_queue{max_send_queue_size};
 
 private:
-    unsigned char * m_token;
-    unsigned m_token_len;
+    std::string m_token;
     char * m_session;
     unsigned m_session_len;
     char * m_tp_para;

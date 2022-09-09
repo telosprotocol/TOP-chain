@@ -5,6 +5,14 @@
 
 #include <cassert>
 
+#ifdef LEAK_TRACER
+#    include "leaktracer/MemoryTrace.hpp"
+
+#    include <csignal>
+#    include <fstream>
+#    include <iostream>
+#endif
+
 xquic_node_t::xquic_node_t(unsigned int const _server_port) : m_server_port{_server_port} {
 }
 
@@ -54,22 +62,39 @@ bool xquic_node_t::send(std::string addr, uint32_t port, top::xbytes_t data) {
     auto addr_port = addr + std::to_string(port);
 
     // erase closed connection:
-    if (m_conn_map.find(addr_port) != m_conn_map.end() && m_conn_map.at(addr_port)->cid.cid_len == 0) {
+    if (m_conn_map.find(addr_port) != m_conn_map.end() && m_conn_map.at(addr_port)->conn_status == cli_conn_status_t::after_connected) {
+        delete m_conn_map.at(addr_port);
+        printf("erase closed connections\n");
         m_conn_map.erase(addr_port);
     }
 
     if (m_conn_map.find(addr_port) == m_conn_map.end()) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
         cli_user_conn_t * new_conn = m_client.connect((char *)addr.c_str(), port);
+        if (new_conn == nullptr) {
+            // todo add ec return;
+            printf("try connection error\n");
+            return false;
+        }
+        assert(new_conn);
         // printf("new cli_user_conn: (%p) , stream: (%p)\n", new_conn, new_conn->cli_user_stream);
         m_conn_map.insert({addr_port, new_conn});
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
     cli_user_conn_t * conn = m_conn_map.at(addr_port);
-    if (conn == nullptr || m_client.send_queue_full()) {
+    if (conn == nullptr) {
+        assert(false);
         // todo add ec return;
         return false;
     }
+    if (conn->conn_status == cli_conn_status_t::before_connected && xqc_now() - conn->conn_create_time > BEFORE_WELL_CONNECTED_KEEP_MSG_TIMER) {
+        // printf("not well establish\n");
+        return false;
+    }
+    if (m_client.send_queue_full()) {
+        // todo add ec return;
+        // printf("send_queue_full,  \n");
+        return false;
+    }
+
     assert(conn != nullptr);
     __TIME_RECORD_BEGIN(inner_send);
     m_client.send(conn, std::move(data));
@@ -88,6 +113,22 @@ void xquic_node_t::on_quic_message_ready(top::xbytes_t const & bytes) {
     }
 }
 
+#ifdef LEAK_TRACER
+void export_mem_trace(int signal) {
+    leaktracer::MemoryTrace::GetInstance().stopMonitoringAllocations();
+    leaktracer::MemoryTrace::GetInstance().stopAllMonitoring();
+
+    std::ofstream oleaks;
+
+    oleaks.open("leaks.out", std::ios_base::out);
+    if (oleaks.is_open())
+        leaktracer::MemoryTrace::GetInstance().writeLeaks(oleaks);
+    else
+        std::cerr << "Failed to write to \"leaks.out\"\n";
+
+    oleaks.close();
+}
+#endif
 int main(int argc, char * argv[]) {
     // xquic_node_t node;
     // std::shared_ptr<xquic_node_t> node_ptr = std::make_shared<xquic_node_t>(9999);
@@ -100,6 +141,10 @@ int main(int argc, char * argv[]) {
 
     // std::this_thread::sleep_for(std::chrono::seconds(1));
 
+#ifdef LEAK_TRACER
+    std::signal(SIGUSR1, export_mem_trace);
+    leaktracer::MemoryTrace::GetInstance().startMonitoringAllThreads();
+#endif
     int ch = 0;
     char server_addr[64] = "127.0.0.1";
     uint32_t server_port = 9999;

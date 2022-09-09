@@ -18,6 +18,7 @@
 #include "assert.h"
 
 #include <errno.h>
+
 #include <set>
 
 /**
@@ -462,8 +463,6 @@ int xquic_client_conn_close_notify(xqc_connection_t * conn, const xqc_cid_t * ci
            stats.conn_err,
            stats.ack_info);
 
-    event_del(cli_user_conn->ev_socket);
-    event_del(cli_user_conn->conn_timeout_event);
     client->release_connection(cli_user_conn);
     // todo verify
     // client release connect should callback to quic_node to erase no-more-trusted nodes
@@ -481,6 +480,8 @@ void xquic_client_conn_handshake_finished(xqc_connection_t * conn, void * user_d
 }
 void xquic_client_conn_ping_acked_notify(xqc_connection_t * conn, const xqc_cid_t * cid, void * ping_user_data, void * user_data, void * conn_proto_data) {
     DEBUG_INFO;
+    cli_user_conn_t * cli_user_conn = (cli_user_conn_t *)user_data;
+    cli_user_conn->conn_status = cli_conn_status_t::well_connected;
     if (ping_user_data) {
         printf("====>ping_id:%d\n", *(int *)ping_user_data);
 
@@ -545,8 +546,12 @@ int xquic_client_stream_write_notify(xqc_stream_t * stream, void * user_data) {
     return ret;
 }
 int xquic_client_stream_close_notify(xqc_stream_t * stream, void * user_data) {
-    // DEBUG_INFO;
+    DEBUG_INFO;
     cli_user_stream_t * cli_user_stream = (cli_user_stream_t *)user_data;
+    event_del(cli_user_stream->stream_timeout_event);
+    event_free(cli_user_stream->stream_timeout_event);
+    cli_user_stream->send_buffer.clear();
+    cli_user_stream->send_queue.clear();
     delete cli_user_stream;
     return 0;
 }
@@ -728,6 +733,7 @@ static void xquic_client_conn_timeout_callback(int fd, short what, void * arg) {
         event_add(cli_user_conn->conn_timeout_event, &tv);
         return;
     }
+    printf(GREEN " xqc_now(): %" PRIu64 " , cli_user_conn->last_sock_op_time: %" PRIu64 " \n" RESET, xqc_now(), cli_user_conn->last_sock_op_time);
     DEBUG_INFO_MSG("client: connection do timeout close");
     printf("g_do_send_time: %" PRIu64 " \n", g_do_send_time);
     printf("g_write_notify_time: %" PRIu64 " \n", g_write_notify_time);
@@ -784,6 +790,7 @@ void xquic_client_socket_read_handler(cli_user_conn_t * cli_user_conn, int fd) {
         }
 
         if (recv_size < 0) {
+            // todo connection failed `recvfrom: recvmsg = -1(Connection refused)` . add log && clean connection fallback;? or at xquic_client_conn_close_notify
             printf("recvfrom: recvmsg = %zd(%s)\n", recv_size, strerror(get_last_sys_errno()));
             break;
         }
@@ -872,6 +879,8 @@ void xquic_client_init_addr(cli_user_conn_t * cli_user_conn, const char * server
 cli_user_conn_t * xquic_client_user_conn_create(const char * server_addr, int server_port, xquic_client_t * client) {
     cli_user_conn_t * cli_user_conn = new cli_user_conn_t;
     cli_user_conn->client = client;
+    cli_user_conn->conn_status = cli_conn_status_t::before_connected;
+    cli_user_conn->conn_create_time = xqc_now();
 
     cli_user_conn->conn_timeout_event = event_new(client->eb, -1, 0, xquic_client_conn_timeout_callback, cli_user_conn);
     /* set connection timeout */
@@ -1164,19 +1173,15 @@ cli_user_conn_t * xquic_client_t::connect(char server_addr[64], uint32_t server_
         return nullptr;
     }
 
-    // perf token/st/td 's key
-    unsigned char * token;
-    unsigned token_len = 0;
-    xclient_read_token(&token, &token_len);
-
-    if (token_len != 0) {
-        cli_user_conn->token = token;
-        cli_user_conn->token_len = token_len;
+    std::string read_token = xclient_read_token();
+    if (!read_token.empty()) {
+        cli_user_conn->token = read_token;
     }
 
     xqc_conn_ssl_config_t conn_ssl_config;
     memset(&conn_ssl_config, 0, sizeof(conn_ssl_config));
 
+    // perf read st/td 's key
     char * session_ticket_data;
     unsigned session_ticket_data_len = 0;
     char * tp_data;
@@ -1202,8 +1207,8 @@ cli_user_conn_t * xquic_client_t::connect(char server_addr[64], uint32_t server_
     const xqc_cid_t * cid;
     cid = xqc_connect(engine,
                       &conn_settings,
-                      cli_user_conn->token,
-                      cli_user_conn->token_len,
+                      (unsigned char *)(cli_user_conn->token.c_str()),
+                      cli_user_conn->token.size(),
                       server_addr,
                       0,
                       &conn_ssl_config,
@@ -1235,7 +1240,7 @@ void xquic_client_t::quic_engine_do_send() {
     /// boundary: maximum rest DO_SEND_INTERVAL_MAX us (sec = 0, usec = DO_SEND_INTERVAL_MAX)
 
     auto qsize = m_send_queue.unsafe_size();
-    std::set<cli_user_conn_t * > send_set; // hold connctions which have new data need to be send.
+    std::set<cli_user_conn_t *> send_set;  // hold connctions which have new data need to be send.
     if (!qsize) {
         do_send_interval = std::min((uint64_t)2 * do_send_interval, (uint64_t)DO_SEND_INTERVAL_MAX);
     } else {
@@ -1246,11 +1251,27 @@ void xquic_client_t::quic_engine_do_send() {
 
         __TIME_RECORD_BEGIN(do_send);
         for (auto send_buffer : all_message) {
+            // !  unless pushing send_buffer back to queue, REMEMBER to clean send_buffer->send_data && send_buffer pointer iterself or memory leak.
             cli_user_conn_t * cli_user_conn = send_buffer->cli_user_conn;
+
+            if (cli_user_conn->conn_status != cli_conn_status_t::well_connected) {
+                if (cli_user_conn->conn_status == cli_conn_status_t::before_connected && xqc_now() - cli_user_conn->conn_create_time < BEFORE_WELL_CONNECTED_KEEP_MSG_TIMER) {
+                    // todo add debug log.
+                    // printf("messsage shoule be keep , push it back to queue\n");
+                    m_send_queue.push(send_buffer);
+                    continue;
+                }
+                // connection error, has not established or after_connected.
+                // todo warning log. nothing we can do to tell module.
+                // printf("message(s) for %s discard at quic client engine do send queue\n", inet_ntoa(((struct sockaddr_in *)&cli_user_conn->peer_addr)->sin_addr));
+                send_buffer->send_data.clear();
+                delete send_buffer;
+                continue;
+            }
 
             if (cli_user_conn->cli_user_stream == nullptr) {
                 cli_user_stream_t * cli_user_stream = new cli_user_stream_t;
-                // printf("new cli_user_stream: (%p)\n", cli_user_stream);
+                printf("new cli_user_stream: (%p)\n", cli_user_stream);
                 cli_user_stream->send_offset = 0;
                 cli_user_stream->send_buffer.reserve(SEND_RECV_BUFF_SIZE);
                 cli_user_stream->stream = xqc_stream_create(cli_user_conn->client->engine, &cli_user_conn->cid, cli_user_stream);
@@ -1259,6 +1280,8 @@ void xquic_client_t::quic_engine_do_send() {
                     // todo ec
                     DEBUG_INFO_MSG("create_stream error");
                     delete cli_user_stream;
+                    send_buffer->send_data.clear();
+                    delete send_buffer;
                     continue;
                 }
                 cli_user_conn->cli_user_stream = cli_user_stream;
@@ -1305,6 +1328,7 @@ void xquic_client_t::quic_engine_do_send() {
     return;
 }
 
+/// NOTED: API, this function is used by quic_node thread. so be careful about multi-thread issus.
 /// api for quic_node , create a event (`client_send_buffer_t`) and let client thread handle this send data buffer.
 bool xquic_client_t::send(cli_user_conn_t * cli_user_conn, top::xbytes_t send_data) {
     client_send_buffer_t * send_buffer = new client_send_buffer_t;
@@ -1317,13 +1341,17 @@ bool xquic_client_t::send(cli_user_conn_t * cli_user_conn, top::xbytes_t send_da
 }
 
 void xquic_client_t::release_connection(cli_user_conn_t * cli_user_conn) {
-    DEBUG_INFO_MSG(xqc_scid_str(&cli_user_conn->cid));
+    DEBUG_INFO_MSG(xqc_scid_str(&cli_user_conn->cid));                // todo make it log .
+    cli_user_conn->conn_status = cli_conn_status_t::after_connected;  // ready to be destroy by xquic_node.
+    // do some pre clean work. mostly clean send queue buffer.
+    // cli_user_conn->cli_user_stream
+
+    event_del(cli_user_conn->ev_socket);
+    event_del(cli_user_conn->conn_timeout_event);
     event_free(cli_user_conn->ev_socket);
     event_free(cli_user_conn->conn_timeout_event);
 
-    if (cli_user_conn->token) {
-        free(cli_user_conn->token);
-    }
+    cli_user_conn->token.clear();
+
     free(cli_user_conn->local_addr);
-    memset(&cli_user_conn->cid, 0, sizeof(cli_user_conn->cid));
 }
