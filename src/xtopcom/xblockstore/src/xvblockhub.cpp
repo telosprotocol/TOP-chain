@@ -2189,7 +2189,6 @@ namespace top
         xchainacct_t::xchainacct_t(base::xvaccountobj_t & parent_obj,const uint64_t timeout_ms,xvblockdb_t * xvbkdb_ptr)
             :xblockacct_t(parent_obj,timeout_ms,xvbkdb_ptr)
         {
-            // _lowest_commit_block_height = 0;
         }
 
         xchainacct_t::~xchainacct_t()

@@ -9,7 +9,6 @@
 #include <map>
 #include "xvblockdb.h"
 #include "xbkstoreutl.h"
-#include "xuncommitted_subblock_cache.h"
 
 namespace top
 {
@@ -172,8 +171,6 @@ namespace top
         private:
             virtual bool    process_index(base::xvbindex_t* this_block) override;
             virtual bool    connect_index(base::xvbindex_t* this_block) override;
-        private:
-            // uint64_t  _lowest_commit_block_height;  //clean committed blocks first
         };
     
         class xunitbkplugin : public xchainacct_t

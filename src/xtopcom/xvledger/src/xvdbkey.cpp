@@ -234,11 +234,6 @@ namespace top
             const std::string key_path = "r/" + account.get_storage_key() + "/" + uint64_to_full_hex(target_height) + "/" + xstring_utl::uint642hex(target_viewid) + "/q";
             return key_path;
         }
-        const std::string  xvdbkey_t::create_prunable_block_output_offdata_key(const xvaccount_t & account,const uint64_t target_height,const uint64_t target_viewid)
-        {
-            const std::string key_path = "r/" + account.get_storage_key() + "/" + uint64_to_full_hex(target_height) + "/" + xstring_utl::uint642hex(target_viewid) + "/p";
-            return key_path;
-        }
         
         enum_xdbkey_type   xvdbkey_t::get_dbkey_type(const std::string & key)
         {

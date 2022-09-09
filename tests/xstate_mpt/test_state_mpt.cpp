@@ -137,7 +137,7 @@ TEST_F(test_state_mpt_fixture, test_get_unknown) {
 
 TEST_F(test_state_mpt_fixture, test_create_twice) {
     std::error_code ec;
-    xhash256_t root_hash(xbyte_buffer_t::random_bytes(32));
+    xhash256_t root_hash(random_bytes(32));
     std::cout << root_hash.as_hex_str() << std::endl;
 
     auto s = state_mpt::xstate_mpt_t::create(root_hash, m_db, TABLE_ADDRESS, ec);
