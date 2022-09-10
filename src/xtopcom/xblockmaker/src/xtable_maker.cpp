@@ -714,14 +714,60 @@ std::shared_ptr<state_mpt::xtop_state_mpt> xtable_maker_t::create_new_mpt(const 
         return nullptr;
     }
 
-    if (last_mpt_root == xhash256_t{}) {
+    if (last_mpt_root == xhash256_t{}) {  // TODO(jimmy)  delete in v1.8
         std::map<std::string, std::string> indexes = table_state_ctx->get_table_state()->map_get(data::XPROPERTY_TABLE_ACCOUNT_INDEX);
+        xinfo("xtable_maker_t::create_new_mpt begin to upgrade accountindex.tablestate=%s,index_count=%zu", table_state_ctx->get_table_state()->get_bstate()->dump().c_str(), indexes.size());
+
+        std::map<std::string, std::string> new_indexes;
         for (auto & index : indexes) {
+            base::xvaccount_t unit_vaccount(index.first);
+            base::xaccount_index_t _account_index;
+            _account_index.serialize_from(index.second);
+            auto unit = get_blockstore()->load_block_object(unit_vaccount, _account_index.get_latest_unit_height(), _account_index.get_latest_unit_viewid(), false);
+            if (nullptr == unit) {
+                xwarn("xtable_maker_t::create_new_mpt fail-upgrade for load unit account=%s,index=%s",unit_vaccount.get_account().c_str(), _account_index.dump().c_str());
+                return nullptr;
+            }
+            auto unitbstate = get_resources()->get_xblkstatestore()->get_block_state(unit.get());
+            if (nullptr == unitbstate) {
+                xwarn("xtable_maker_t::create_new_mpt fail-upgrade for load unitstate account=%s,index=%s",unit_vaccount.get_account().c_str(), _account_index.dump().c_str());
+                return nullptr;
+            }
+            data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(unitbstate.get());
+            const auto & unithash = unit->get_block_hash();
+            std::string unitstate_bin;
+            unitbstate->take_snapshot(unitstate_bin);
+            std::string unitstate_hash = unit->get_cert()->hash(unitstate_bin);
+
+            std::string statehash_in_unit = unit->get_fullstate_hash();
+            if (!statehash_in_unit.empty()) {
+                if (statehash_in_unit != unitstate_hash) {
+                    xerror("xtable_maker_t::create_new_mpt fail-upgrade for mismatch statehash. account=%s,index=%s",unit_vaccount.get_account().c_str(), _account_index.dump().c_str());
+                    return nullptr;
+                }
+            }
+
+            // upgrade accountindex for unithash,statehash,txnonce
+            base::xaccount_index_t _new_account_index(unit->get_height(), unithash, unitstate_hash, unitstate->account_send_trans_number(), unit->get_block_class(), unit->get_block_type());
+            std::string _new_account_index_str;
+            _new_account_index.serialize_to(_new_account_index_str); 
+            table_state_ctx->get_table_state()->map_set(data::XPROPERTY_TABLE_ACCOUNT_INDEX, unit->get_account(), _new_account_index_str);
+            new_indexes[unit->get_account()] = _new_account_index_str;
+        }
+        xinfo("xtable_maker_t::create_new_mpt finish to upgrade accountindex.tablestate=%s,index_count=%zu", table_state_ctx->get_table_state()->get_bstate()->dump().c_str(), indexes.size());
+
+        for (auto & index : new_indexes) {
             mpt->set_account_index(index.first, index.second, ec);
             if (ec) {
                 xerror("xtable_maker_t::create_new_mpt set account index from table property to mpt fail.");
                 return nullptr;
             }
+        }
+    } else {  // TODO(jimmy)  delete in v1.8
+        std::map<std::string, std::string> indexes = table_state_ctx->get_table_state()->map_get(data::XPROPERTY_TABLE_ACCOUNT_INDEX);
+        if (!indexes.empty()) {
+            xinfo("xtable_maker_t::create_new_mpt begin to clear accountindex.tablestate=%s,index_count=%zu", table_state_ctx->get_table_state()->get_bstate()->dump().c_str(), indexes.size());
+            table_state_ctx->get_table_state()->map_clear(data::XPROPERTY_TABLE_ACCOUNT_INDEX);
         }
     }
 
