@@ -4,13 +4,13 @@
 
 #pragma once
 
-#include <map>
-#include <mutex>
-
 #include "xbase/xpacket.h"
 #include "xpbase/base/top_utils.h"
-#include "xtransport/proto/transport.pb.h"
 #include "xtransport/message_manager/message_manager_intf.h"
+#include "xtransport/proto/transport.pb.h"
+
+#include <map>
+#include <mutex>
 
 namespace top {
 
@@ -20,13 +20,13 @@ class MessageManager : public MessageManagerIntf {
 public:
     void RegisterMessageProcessor(uint32_t message_type, HandlerProc callback);
     void UnRegisterMessageProcessor(uint32_t message_type);
-    void HandleMessage(transport::protobuf::RoutingMessage& message, base::xpacket_t& packet);
+    void HandleMessage(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet);
 
     MessageManager();
     virtual ~MessageManager();
 
 private:
-    HandlerProc*    m_msg_handlers[enum_xprotocol_type_app_max + 1];
+    HandlerProc * m_msg_handlers[enum_xprotocol_type_app_max + 1];
 
     DISALLOW_COPY_AND_ASSIGN(MessageManager);
 };
