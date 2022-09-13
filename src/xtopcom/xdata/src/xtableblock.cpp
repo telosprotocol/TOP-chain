@@ -118,17 +118,12 @@ void xtable_block_t::parse_to_json_v2(xJson::Value & root) {
         }
     }
 
-    if (base::xvblock_fork_t::is_block_older_version(get_block_version(), base::enum_xvblock_fork_version_5_0_0)) {
-        auto headers = get_sub_block_headers();
-        for (auto _unit_header : headers) {
-            xJson::Value ju;
-            ju["unit_height"] = static_cast<xJson::UInt64>(_unit_header->get_height());
-            ju["account"] = _unit_header->get_account();
-            jv["units"].append(ju);
-        }
-    } else {
-        // TODO(jimmy) get subblocks index
-        
+    auto units_indexes = get_subblocks_index();
+    for (auto unit_index : units_indexes) {
+        xJson::Value ju;
+        ju["unit_height"] = static_cast<xJson::UInt64>(unit_index.get_block_height());
+        ju["account"] = unit_index.get_block_address();
+        jv["units"].append(ju);
     }
 
     root["tableblock"] = jv;
@@ -146,6 +141,35 @@ std::vector<xvheader_ptr_t> xtable_block_t::get_sub_block_headers() const {
         unit_headers.push_back(_unit_header);
     }
     return unit_headers;
+}
+
+std::vector<base::xvsubblock_index_t> xtable_block_t::get_subblocks_index() const {
+    std::vector<base::xvsubblock_index_t>  subblocks_index;
+    if (base::xvblock_fork_t::is_block_older_version(get_block_version(), base::enum_xvblock_fork_version_5_0_0)) {
+        auto headers = get_sub_block_headers();
+        for (auto header : headers) {
+            base::xvsubblock_index_t subblock_index(header->get_account(),header->get_height(),header->get_block_class());
+            subblocks_index.push_back(subblock_index);
+        }
+    } else {
+        // TODO(jimmy) get subblocks index
+        std::vector<base::xvblock_ptr_t> subblocks;
+        auto account_indexs_str = get_account_indexs();
+        if(account_indexs_str.empty()) {
+            xerror("xtable_block_t::get_subblocks_index,fail-get account indexs %s",dump().c_str());
+            return {};
+        }
+        data::xtable_account_indexs_t account_indexs;
+        account_indexs.serialize_from_string(account_indexs_str);
+
+        auto & account_index_map = account_indexs.get_account_indexs();
+        for (auto & iter : account_index_map) {
+            base::xvsubblock_index_t subblock_index(iter.first,iter.second.get_latest_unit_height(),iter.second.get_latest_unit_class());
+            subblocks_index.push_back(subblock_index);
+        }
+    }
+    xassert(!subblocks_index.empty());
+    return subblocks_index;
 }
 
 int64_t xtable_block_t::get_pledge_balance_change_tgas() const {
