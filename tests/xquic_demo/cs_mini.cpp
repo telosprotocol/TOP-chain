@@ -16,6 +16,7 @@
 #define SEND_RECV_BUFF_SIZE 32 * 1024  // 1MB send&&recv buffer
 
 #include "assert.h"
+#include "xbasic/xmemory.hpp"
 
 #include <errno.h>
 
@@ -1250,22 +1251,20 @@ void xquic_client_t::quic_engine_do_send() {
         // printf("quic_engine_do_send: get size %zu ", all_message.size());
 
         __TIME_RECORD_BEGIN(do_send);
-        for (auto send_buffer : all_message) {
-            // !  unless pushing send_buffer back to queue, REMEMBER to clean send_buffer->send_data && send_buffer pointer iterself or memory leak.
-            cli_user_conn_t * cli_user_conn = send_buffer->cli_user_conn;
+        for (auto & send_buffer_ptr : all_message) {
+            cli_user_conn_t * cli_user_conn = send_buffer_ptr->cli_user_conn;
 
             if (cli_user_conn->conn_status != cli_conn_status_t::well_connected) {
                 if (cli_user_conn->conn_status == cli_conn_status_t::before_connected && xqc_now() - cli_user_conn->conn_create_time < BEFORE_WELL_CONNECTED_KEEP_MSG_TIMER) {
                     // todo add debug log.
                     // printf("messsage shoule be keep , push it back to queue\n");
-                    m_send_queue.push(send_buffer);
+                    m_send_queue.push(std::move(send_buffer_ptr));
                     continue;
                 }
                 // connection error, has not established or after_connected.
                 // todo warning log. nothing we can do to tell module.
                 // printf("message(s) for %s discard at quic client engine do send queue\n", inet_ntoa(((struct sockaddr_in *)&cli_user_conn->peer_addr)->sin_addr));
-                send_buffer->send_data.clear();
-                delete send_buffer;
+                send_buffer_ptr->send_data.clear();
                 continue;
             }
 
@@ -1280,8 +1279,7 @@ void xquic_client_t::quic_engine_do_send() {
                     // todo ec
                     DEBUG_INFO_MSG("create_stream error");
                     delete cli_user_stream;
-                    send_buffer->send_data.clear();
-                    delete send_buffer;
+                    send_buffer_ptr->send_data.clear();
                     continue;
                 }
                 cli_user_conn->cli_user_stream = cli_user_stream;
@@ -1298,21 +1296,20 @@ void xquic_client_t::quic_engine_do_send() {
 
             if (cli_user_stream->send_queue.size() < 10000000) {  // 10MB
                 __TIME_RECORD_BEGIN(do_send_add_prefix);
-                auto len_bytes = size_to_bytes(send_buffer->send_data.size());
+                // todo might move this outside of quic_engine thread.
+                auto len_bytes = size_to_bytes(send_buffer_ptr->send_data.size());
                 cli_user_stream->send_queue.insert(cli_user_stream->send_queue.end(), len_bytes.begin(), len_bytes.end());
-                cli_user_stream->send_queue.insert(cli_user_stream->send_queue.end(), send_buffer->send_data.begin(), send_buffer->send_data.end());
+                cli_user_stream->send_queue.insert(cli_user_stream->send_queue.end(), send_buffer_ptr->send_data.begin(), send_buffer_ptr->send_data.end());
                 __TIME_RECORD_END(do_send_add_prefix, g_send_mem_alloc_time);
             } else {
                 // printf("send_queue full\n");
                 // todo push it back to queue.
             }
             send_set.insert(cli_user_conn);
-            send_buffer->send_data.clear();
-            delete send_buffer;
+            send_buffer_ptr->send_data.clear();
         }
 
         for (auto _cli_user_conn : send_set) {
-            // cli_user_conn_t * cli_user_conn = send_buffer->cli_user_conn;
             cli_user_stream_t * cli_user_stream = _cli_user_conn->cli_user_stream;
             assert(cli_user_stream != nullptr);
             xquic_client_stream_send(cli_user_stream->stream, cli_user_stream);
@@ -1331,11 +1328,11 @@ void xquic_client_t::quic_engine_do_send() {
 /// NOTED: API, this function is used by quic_node thread. so be careful about multi-thread issus.
 /// api for quic_node , create a event (`client_send_buffer_t`) and let client thread handle this send data buffer.
 bool xquic_client_t::send(cli_user_conn_t * cli_user_conn, top::xbytes_t send_data) {
-    client_send_buffer_t * send_buffer = new client_send_buffer_t;
-    send_buffer->send_data = std::move(send_data);
-    send_buffer->cli_user_conn = cli_user_conn;
+    std::unique_ptr<client_send_buffer_t> send_buffer_ptr = top::make_unique<client_send_buffer_t>();
+    send_buffer_ptr->send_data = std::move(send_data);
+    send_buffer_ptr->cli_user_conn = cli_user_conn;
 
-    m_send_queue.push(send_buffer);
+    m_send_queue.push(std::move(send_buffer_ptr));
 
     return true;
 }

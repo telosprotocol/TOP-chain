@@ -22,6 +22,7 @@
 #include <atomic>
 #include <deque>
 #include <functional>
+#include <memory>
 #include <string>
 
 class xquic_server_t;
@@ -198,7 +199,7 @@ public:
 
 private:
     constexpr static std::size_t max_send_queue_size{100000};
-    top::threading::xthreadsafe_queue<client_send_buffer_t *, std::vector<client_send_buffer_t *>> m_send_queue{max_send_queue_size};
+    top::threading::xthreadsafe_queue<std::unique_ptr<client_send_buffer_t>, std::vector<std::unique_ptr<client_send_buffer_t>>> m_send_queue{max_send_queue_size};
 
 private:
     std::string m_token;
