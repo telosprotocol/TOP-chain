@@ -252,6 +252,7 @@ int main(int argc, char ** argv) {
 
         tools.set_outfile_folder("all_table_tx_info/");
         auto const account_vec = xdb_export_tools_t::get_table_accounts();
+        tools.read_external_tx_firestamp();
         tools.query_tx_info(account_vec, thread_num, start_timestamp, end_timestamp);
     } else if (function_name == "check_block_exist") {
         if (argc < 5) {
@@ -343,18 +344,7 @@ int main(int argc, char ** argv) {
         tools.query_table_unit_info(table_account_vec);
         auto t2 = base::xtime_utl::time_now_ms();
         std::cout << "parse_db total time: " << (t2 - t1) / 1000 << "s." << std::endl;
-    } else if (function_name == "check_tx_file") {
-        std::string tx_file;
-        if (argc < 4) {
-            usage();
-            return -1;
-        }
-        tx_file = argv[3];
-        tools.set_outfile_folder("all_table_tx_info/");
-        auto const account_vec = xdb_export_tools_t::get_table_accounts();
-        tools.output_tx_file(account_vec, tx_file);
-    }
-    else {
+    } else {
         usage();
     }
 
