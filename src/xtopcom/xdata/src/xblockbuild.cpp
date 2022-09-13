@@ -783,8 +783,9 @@ std::vector<xobject_ptr_t<base::xvblock_t>> xtable_build2_t::unpack_units_from_t
     base::xvblock_out_offdata_t offdata;
     offdata.serialize_from_string(_tableblock->get_output_offdata());
 
+    auto subblocks_info = offdata.get_subblocks_info();
     std::vector<xobject_ptr_t<base::xvblock_t>> subblocks;
-    for (auto & subblock_info : offdata.get_subblocks_info()) {
+    for (auto & subblock_info : subblocks_info) {
         base::xauto_ptr<base::xvheader_t>  vheader_ptr = base::xvblock_t::create_header_object(subblock_info.m_header_bin);
         xassert(vheader_ptr != nullptr); //should has value
 

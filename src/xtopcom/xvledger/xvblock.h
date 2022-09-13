@@ -554,7 +554,6 @@ namespace top
             const std::string           get_state_hash();  // only can be used by xvblock_t, only light-table store state hash in output entity
             const std::string           get_output_offdata_hash() const;
             const std::string           get_binlog();
-            // const std::string           get_unit_infos() const ;
             const std::string           get_account_indexs();
         protected:
             //just carry by object at memory,not included by serialized
@@ -601,6 +600,20 @@ namespace top
         class xvblock_excontainer_base {
         public:
             virtual void commit(){}
+        };
+
+        class xvsubblock_index_t {
+        public:
+            xvsubblock_index_t(std::string const& address, uint64_t height, enum_xvblock_class _class)
+            : m_block_address(address), m_block_height(height), m_block_class(_class) {}
+        public:
+            std::string const&  get_block_address() const {return m_block_address;}
+            uint64_t            get_block_height() const {return m_block_height;}
+            enum_xvblock_class  get_block_class() const {return m_block_class;}
+        private:
+            std::string             m_block_address;
+            uint64_t                m_block_height;
+            enum_xvblock_class      m_block_class;
         };
 
         class xvblock_t : public xdataobj_t
@@ -715,10 +728,9 @@ namespace top
             xvoutput_t*                 get_output() const;//raw ptr of xvoutput_t
             virtual std::vector<base::xvaction_t> get_tx_actions() const {return std::vector<base::xvaction_t>{};}
             virtual std::vector<base::xvaction_t> get_one_tx_action(const std::string & txhash) const {return std::vector<base::xvaction_t>{};}
-            virtual std::vector<xvheader_ptr_t> get_sub_block_headers() const {return std::vector<xvheader_ptr_t>{};}
+            virtual std::vector<xvsubblock_index_t> get_subblocks_index() const {return std::vector<xvsubblock_index_t>{};}
 
             const std::string           get_fullstate_hash();
-            // const std::string           get_unit_infos() const {return get_output()->get_unit_infos();}
             const std::string           get_account_indexs() const {return get_output()->get_account_indexs();}
             const std::string           get_binlog_hash() {return get_output()->get_binlog_hash();}
             const std::string           get_output_offdata_hash() const {return get_output()->get_output_offdata_hash();}

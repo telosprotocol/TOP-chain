@@ -1221,12 +1221,12 @@ void xdb_export_tools_t::query_tx_info_internal(std::string const & account, con
             table_info.light_table_block_num++;
             m_blockstore->load_block_input(account, vblock.get());
         }
-        auto unit_headers = block->get_sub_block_headers();
-        table_info.total_unit_block_num += unit_headers.size();
-        for (auto & _unit_header : unit_headers) {
-            if (_unit_header->get_block_class() == base::enum_xvblock_class_nil) {
+        auto units_index = block->get_subblocks_index();
+        table_info.total_unit_block_num += units_index.size();
+        for (auto & unit_index : units_index) {
+            if (unit_index.get_block_class() == base::enum_xvblock_class_nil) {
                 table_info.empty_unit_block_num++;
-            } else if (_unit_header->get_block_class() == base::enum_xvblock_class_full) {
+            } else if (unit_index.get_block_class() == base::enum_xvblock_class_full) {
                 table_info.full_unit_block_num++;
             } else {
                 table_info.light_unit_block_num++;
@@ -1937,12 +1937,12 @@ void xdb_export_tools_t::output_tx_file_internal(std::string const & account,
             table_info.light_table_block_num++;
             m_blockstore->load_block_input(account, vblock.get());
         }
-        auto unit_headers = block->get_sub_block_headers();
-        table_info.total_unit_block_num += unit_headers.size();
-        for (auto & _unit_header : unit_headers) {
-            if (_unit_header->get_block_class() == base::enum_xvblock_class_nil) {
+        auto units_index = block->get_subblocks_index();
+        table_info.total_unit_block_num += units_index.size();
+        for (auto & unit_index : units_index) {
+            if (unit_index.get_block_class() == base::enum_xvblock_class_nil) {
                 table_info.empty_unit_block_num++;
-            } else if (_unit_header->get_block_class() == base::enum_xvblock_class_full) {
+            } else if (unit_index.get_block_class() == base::enum_xvblock_class_full) {
                 table_info.full_unit_block_num++;
             } else {
                 table_info.light_unit_block_num++;

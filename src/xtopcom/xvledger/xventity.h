@@ -165,7 +165,6 @@ namespace top
             const std::string         get_state_hash() const {return query_value(key_name_state_hash());}
             const std::string         get_binlog_hash() const {return query_value(key_name_binlog_hash());}
             const std::string         get_output_offdata_hash() const {return query_value(key_name_output_offdata_hash());}
-            // const std::string         get_unit_infos() const {return query_value(key_name_unit_infos());}
             const std::string         get_account_indexs_hash() const {return query_value(key_name_account_indexs_hash());}
             const std::map<std::string, std::string> &  get_values() const {return m_values;}
             
