@@ -591,6 +591,7 @@ XDECLARE_CONFIGURATION(platform_db_path, char const *, "/chain/db_v2/pdb");
 XDECLARE_CONFIGURATION(enable_reward, bool, true);
 XDECLARE_CONFIGURATION(enable_slash, bool, true);
 XDECLARE_CONFIGURATION(enable_free_tgas, bool, true);
+XDECLARE_CONFIGURATION(evm_token_type, char const *, "ETH"); //1:top  2:eth
 
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(enable_node_whitelist, std::uint16_t, normal, 0, 0, 1);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(node_whitelist, char const *, normal, "", "", "");

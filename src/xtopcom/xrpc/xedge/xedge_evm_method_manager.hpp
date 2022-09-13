@@ -186,12 +186,6 @@ void xedge_evm_method_base<T>::do_method(shared_ptr<conn_type> & response, xjson
     } else {
         if (m_archive_flag) {
             xdbg("local exchange query method: %s", method.c_str());
-/*            json_proc.m_request_json["params"]["version"] = version;
-            string strErrorMsg = RPC_OK_MSG;
-            uint32_t nErrorCode = 0;
-            m_rpc_query_mgr->call_method(method, json_proc.m_request_json["params"], json_proc.m_response_json["data"], strErrorMsg, nErrorCode);
-            json_proc.m_response_json[RPC_ERRNO] = nErrorCode;
-            json_proc.m_response_json[RPC_ERRMSG] = strErrorMsg;*/
             m_rule_mgr_ptr->filter_eth(json_proc);
             const string & version = json_proc.m_request_json["jsonrpc"].asString();
             string strMethod = json_proc.m_request_json["method"].asString();

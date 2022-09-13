@@ -7,6 +7,7 @@
 #include "xbasic/xbyte_buffer.h"
 #include "xbasic/xmemory.hpp"
 #include "xevm_contract_runtime/xevm_storage_base.h"
+#include "xcommon/xtoken_metadata.h"
 
 #if defined(__clang__)
 #    pragma clang diagnostic push
@@ -32,8 +33,10 @@ NS_BEG3(top, contract_runtime, evm)
 
 class xtop_evm_storage : public xevm_storage_base_t {
 public:
-    explicit xtop_evm_storage(statectx::xstatectx_face_ptr_t const statectx) : m_statectx{statectx} {
-    }
+    explicit xtop_evm_storage(statectx::xstatectx_face_ptr_t const statectx, const std::string &token_type) : m_statectx{statectx} {
+        common::xsymbol_t _symbol(token_type);
+        m_token_id = common::token_id(_symbol);
+    } 
     xtop_evm_storage(xtop_evm_storage const &) = delete;
     xtop_evm_storage & operator=(xtop_evm_storage const &) = delete;
     xtop_evm_storage(xtop_evm_storage &&) = default;
@@ -46,6 +49,7 @@ public:
 
 private:
     statectx::xstatectx_face_ptr_t m_statectx;
+    common::xtoken_id_t            m_token_id;
 };
 using xevm_storage = xtop_evm_storage;
 

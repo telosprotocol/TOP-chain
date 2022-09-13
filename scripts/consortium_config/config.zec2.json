@@ -40,6 +40,7 @@
     "enable_reward": false,
     "enable_slash": true,
     "enable_free_tgas": false,
+    "evm_token_type":"TOP",
     "enable_node_whitelist": 1,
     "node_whitelist": "",
     "chain_name": "galileo",
