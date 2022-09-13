@@ -38,9 +38,6 @@ private:
     void elect_config_nodes(common::xlogic_time_t const current_time);
 #endif
 
-    // before fork point: standalone_exchange_point
-    void elect_storage(const uint64_t current_time);
-
     void elect_archive(const uint64_t current_time);
 
 };

@@ -22,6 +22,7 @@
 #include "xdata/xelection/xstandby_result_store.h"
 #include "xdata/xelection/xv1/xstandby_result_store.h"
 #include "xdata/xgenesis_data.h"
+#include "xdata/xnative_contract_address.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
 #include "xvm/xserialization/xserialization.h"
 
@@ -161,11 +162,10 @@ void xtop_rec_elect_exchange_contract::on_timer(const uint64_t current_time) {
                     current_time,
                     current_time,
                     exchange_group_range,
+                    false,
                     standby_network_result,
                     election_network_result)) {
-        xvm::serialization::xmsgpack_t<xelection_result_store_t>::serialize_to_string_prop(
-            *this, data::election::get_property_by_group_id(exchange_gid), election_result_store);
-        
+        xvm::serialization::xmsgpack_t<xelection_result_store_t>::serialize_to_string_prop(*this, data::election::get_property_by_group_id(exchange_gid), election_result_store);
     }
 }
 

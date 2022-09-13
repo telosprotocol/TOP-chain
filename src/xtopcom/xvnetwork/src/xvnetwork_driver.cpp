@@ -196,13 +196,7 @@ std::vector<common::xnode_address_t> xtop_vnetwork_driver::archive_addresses(com
 
     case common::xnode_type_t::storage_exchange:
     {
-        // todo(next version fork)
-        // if (forked standalone_exchange_point) {
-            auto const & tmp = m_vhost->members_info_of_group2(common::build_exchange_sharding_address(network_id()), common::xelection_round_t::max());
-        // } else {
-            // auto const & tmp =
-            //     m_vhost->members_info_of_group2(common::build_legacy_exchange_sharding_address(common::xlegacy_exchange_group_id, network_id()), common::xelection_round_t::max());
-        // }
+        auto const & tmp = m_vhost->members_info_of_group2(common::build_exchange_sharding_address(network_id()), common::xelection_round_t::max());
         result.reserve(tmp.size());
 
         for (auto const & n : tmp) {
