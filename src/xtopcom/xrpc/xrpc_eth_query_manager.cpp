@@ -153,7 +153,14 @@ void xrpc_eth_query_manager::eth_getBalance(xJson::Value & js_req, xJson::Value 
     } else if (ret == enum_unit_not_found) {
         js_rsp["result"] = "0x0";
     } else if (ret == enum_success) {
-        evm_common::u256 balance = account_ptr->tep_token_balance(common::xtoken_id_t::eth);
+        auto default_token_type = XGET_CONFIG(evm_token_type);
+        evm_common::u256 balance = 0;
+        xdbg("xrpc_eth_query_manager::eth_getBalance token type is %s.", default_token_type.c_str());
+        if (default_token_type == "TOP") {
+            balance = account_ptr->tep_token_balance(common::xtoken_id_t::top);
+        } else {
+            balance = account_ptr->tep_token_balance(common::xtoken_id_t::eth);
+        }
         js_rsp["result"] = xrpc_eth_parser_t::u256_to_hex_prefixed(balance);
         xdbg("xrpc_eth_query_manager::eth_getBalance address=%s,balance=%s,%s", account.c_str(), balance.str().c_str(), xrpc_eth_parser_t::u256_to_hex_prefixed(balance).c_str());
     }

@@ -102,7 +102,19 @@ int32_t xaccount_context_t::create_user_account(const std::string& address) {
     if (ret != xsuccess) {
         return ret;
     }
+    
+    auto default_token_type = XGET_CONFIG(evm_token_type);
+    xinfo("xaccount_context_t::create_user_account token type is %s.", default_token_type.c_str());
+    if (default_token_type.empty()) {
+        xerror("xaccount_context_t::create_user_account  configuration evm token empty");
+        return ret;
+    }
 
+    if (default_token_type == "TOP") {
+        xinfo("xaccount_context_t::create_user_account  configuration evm base token is top");
+        return ret;
+    }
+    
     auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
     if (top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.v1_6_0_version_point, get_timer_height())) {
         evm_common::u256 eth_token = 10000000000000000000ULL;
