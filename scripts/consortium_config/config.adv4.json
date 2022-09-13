@@ -40,6 +40,7 @@
     "enable_reward": false,
     "enable_slash": true,
     "enable_free_tgas": false,
+    "evm_token_type":"TOP",
     "enable_node_whitelist": 1,
     "node_whitelist": "",
     "register_advance_whitelist": "T00000LgGPqEpiK6XLCKRj9gVPN8Ej1aMbyAb3Hu,T00000LPjUsd3k6xsHWTySVK5TKX5N2yVitUGEAB,T00000LhQj9ssirxobP5CLJUkuHwAGYfdrF992RA,T00000LbA82G3mG2js78ER1kxQ2svE8gjVRS2WMh,T00000LXyBDp6AMSDLo3FQ4o4rHkJNWkhnTgf5fZ,T00000LLdW7v6M3KjDrSfAyxq2JRDRuh6hDGcwzZ,T00000LhW4aFFBXQLFCQPFQe7WXDEH5bzypfmTLp,T00000LM9RCTHNbeae4cLD38CwHdK9vHhy5mV6wA,T00000LKt4cgVzKGcEswTag79iUDp3eFMy7Rkf5A,T00000LXqp1NkfooMAw7Bty2iXTxgTCfsygMnxrT,T00000LaFmRAybSKTKjE8UXyf7at2Wcw8iodkoZ8,T00000LhCXUC5iQCREefnRPRFhxwDJTEbufi41EL,T00000LTSip8Xbjutrtm8RkQzsHKqt28g97xdUxg",
