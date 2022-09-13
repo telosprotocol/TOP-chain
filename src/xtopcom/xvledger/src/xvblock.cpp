@@ -1267,20 +1267,6 @@ namespace top
             return outentity->get_output_offdata_hash();
         }
 
-        // const std::string xvoutput_t::get_unit_infos() const
-        // {
-        //     if (get_entitys().empty())
-        //     {
-        //         return std::string();
-        //     }
-        //     base::xvoutentity_t* outentity = get_primary_entity();
-        //     if (outentity == nullptr)
-        //     {
-        //         return std::string();
-        //     }
-        //     return outentity->get_unit_infos();
-        // }
-
         const std::string xvoutput_t::get_account_indexs()
         {
             return query_resource(RESOURCE_ACCOUNT_INDEXS);

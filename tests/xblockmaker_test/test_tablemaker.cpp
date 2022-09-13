@@ -1107,11 +1107,12 @@ TEST_F(test_tablemaker, table_inner_tx) {
             }
         }
 
-        auto headers = proposal_block->get_sub_block_headers();
+        std::vector<xobject_ptr_t<xvblock_t>> sub_blocks;
+        proposal_block->extract_sub_blocks(sub_blocks);
         // EXPECT_EQ(headers.size(), 2);
-        for (auto & header : headers) {
-            EXPECT_EQ(header->get_extra_data().empty(), false);  // not include tx hashs
-            EXPECT_EQ(header->get_block_version(), xvblock_fork_t::get_block_fork_new_version());
+        for (auto & subblock : sub_blocks) {
+            EXPECT_EQ(subblock->get_header()->get_extra_data().empty(), true);  // not include tx hashs
+            EXPECT_EQ(subblock->get_block_version(), xvblock_fork_t::get_block_fork_new_version());
         }
     }
 }
