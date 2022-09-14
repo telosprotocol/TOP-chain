@@ -404,36 +404,12 @@ namespace top
                 -[enum_xid_type  :3bit]
              }
              */
-            static const uint32_t get_index_from_account(const std::string & account_addr)
-            {
-                return (uint32_t)xhash64_t::digest(account_addr);//hash64 better performance than hash32
-            }
-            static const xvid_t  get_xid_from_account(const std::string & account_addr)
-            {
-                uint32_t account_index        = 0;
-                uint32_t ledger_id            = 0;
-                uint16_t ledger_subaddr       = 0;
-                if(get_ledger_fulladdr_from_account(account_addr,ledger_id,ledger_subaddr,account_index))
-                {
-                    xvid_t _xid_from_addr = (ledger_id << 16) | ((ledger_subaddr & enum_vbucket_has_tables_count_mask) << 6) | enum_xid_type_xledger;
-                    _xid_from_addr |= (((uint64_t)account_index) << 32);
-                    return _xid_from_addr; //as default not include account'hash index as performance consideration
-                }
-                return 0; //invalid account
-            }
+            static const uint32_t get_index_from_account(const std::string & account_addr);
+            static const xvid_t  get_xid_from_account(const std::string & account_addr);
             
             //convert to binary/bytes address with compact mode as for DB 'key
             static const std::string  get_storage_key(const xvaccount_t & src_account);
-            static std::string to_evm_address(const std::string& account)
-            {
-                if (account.size() < 2)
-                    return "";
-                std::string value;
-                value.resize(account.size());
-                std::transform(account.begin(), account.end(), value.begin(), ::tolower);
-                value = std::string(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN) + value.substr(2);
-                return value;
-            }
+            static std::string to_evm_address(const std::string& account);
 
         public:
             xvaccount_t(const std::string & account_address);
