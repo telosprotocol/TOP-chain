@@ -26,13 +26,12 @@
 namespace top {
 namespace transport {
 
-using on_receive_callback_t = std::function<std::uint32_t(uint64_t, uint64_t, uint64_t, uint64_t, base::xpacket_t &, int32_t, uint64_t, base::xendpoint_t *)>;
-
 class MultiThreadHandler;
 
 class Transport {
 public:
-    virtual int Start(const std::string & local_ip, uint16_t local_port, MultiThreadHandler * message_handler) = 0;
+    virtual bool Init(std::string const & local_ip, uint16_t local_port, uint16_t xquic_port, MultiThreadHandler * message_handler) = 0;
+    virtual int Start() = 0;
     virtual void Stop() = 0;
     virtual int SendDataWithProp(std::string const & data, const std::string & peer_ip, uint16_t peer_port, UdpPropertyPtr & udp_property, uint16_t priority_flag = 0) = 0;
 
@@ -41,6 +40,7 @@ public:
     virtual int get_socket_status() = 0;
     virtual std::string local_ip() = 0;
     virtual uint16_t local_port() = 0;
+    virtual uint16_t xquic_port() = 0;
 
     virtual void register_on_receive_callback(on_receive_callback_t callback) = 0;
     virtual void unregister_on_receive_callback() = 0;

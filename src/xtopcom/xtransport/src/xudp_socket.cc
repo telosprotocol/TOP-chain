@@ -12,7 +12,7 @@
 #include "xpbase/base/line_parser.h"
 #include "xpbase/base/top_log.h"
 #include "xpbase/base/top_utils.h"
-#include "xtransport/message_manager/multi_message_handler.h"
+#include "xtransport/udp_transport/multi_message_handler.h"
 #include "xtransport/udp_transport/transport_filter.h"
 #include "xtransport/utils/transport_utils.h"
 #include "xutility/xhash.h"
@@ -311,19 +311,6 @@ xslsocket_t * XudpSocket::on_xslsocket_accept(xfd_handle_t handle, xsocket_prope
     }
 #endif
     return xudplisten_t::on_xslsocket_accept(handle, property, cur_thread_id, timenow_ms);
-}
-
-void XudpSocket::register_on_receive_callback(on_receive_callback_t callback) {
-    std::unique_lock<std::mutex> lock(callback_mutex_);
-    assert(callback_ == nullptr);
-    TOP_DBG_INFO("register callback for XudpSocket");
-    callback_ = callback;
-}
-
-void XudpSocket::unregister_on_receive_callback() {
-    std::unique_lock<std::mutex> lock(callback_mutex_);
-    callback_ = nullptr;
-    TOP_DBG_INFO("unregister callback for XudpSocket");
 }
 
 void XudpSocket::Stop() {

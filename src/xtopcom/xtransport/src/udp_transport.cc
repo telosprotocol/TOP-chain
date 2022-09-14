@@ -5,10 +5,11 @@
 #include "xtransport/udp_transport/udp_transport.h"
 
 #include "xbase/xcontext.h"
+#include "xbasic/xmemory.hpp"
 #include "xpbase/base/line_parser.h"
 #include "xpbase/base/top_log.h"
 #include "xpbase/base/top_utils.h"
-#include "xtransport/message_manager/multi_message_handler.h"
+#include "xtransport/udp_transport/multi_message_handler.h"
 #include "xtransport/udp_transport/transport_filter.h"
 #include "xtransport/udp_transport/xudp_socket.h"
 #include "xtransport/utils/transport_utils.h"
@@ -61,20 +62,20 @@ void UdpTransport::SetOptBuffer() {
     TOP_INFO("new send buf: %d KB", send_get / 1024);
 }
 
-int UdpTransport::Start(const std::string & local_ip, uint16_t local_port, MultiThreadHandler * message_handler) {
-    TOP_INFO("UdpTransport::Start(%s:%d) ...", local_ip.c_str(), local_port);
-
-    TOP_INFO("starting thread(UdpTransport) ...");
+bool UdpTransport::Init(std::string const & local_ip, uint16_t local_port, uint16_t xquic_port, MultiThreadHandler * message_handler) {
+    xinfo("UdpTransport::Init(%s:%d - %d) ...", local_ip.c_str(), local_port, xquic_port);
     io_thread_ = top::base::xiothread_t::create_thread(top::base::xcontext_t::instance(), 0, -1);
     if (io_thread_ == NULL) {
         TOP_ERROR("create xio thread failed!");
-        return kTransportFailed;
+        return false;
     }
+    xquic_port_ = xquic_port;
+    quic_node_ = top::make_unique<quic::xquic_node_t>(xquic_port_);  // todo might add wrouter recv callback parameter.
 
     udp_handle_ = base::xsocket_utl::udp_listen("0.0.0.0", local_port);
     if (udp_handle_ <= 0) {
         TOP_ERROR("udp listen failed!");
-        return kTransportFailed;
+        return false;
     }
 #if defined(LINUX) || defined(linux) || defined(__linux) || defined(__linux__)
     SetOptBuffer();
@@ -89,9 +90,19 @@ int UdpTransport::Start(const std::string & local_ip, uint16_t local_port, Multi
 
     udp_socket_ = new XudpSocket(base::xcontext_t::instance(), io_thread_->get_thread_id(), udp_handle_, message_handler_);
 
-    udp_socket_->StartRead();
     local_ip_ = local_ip;
     local_port_ = udp_socket_->GetLocalPort();
+    TOP_INFO("UdpTransport::Init() success[%s:%d]", this->local_ip().c_str(), this->local_port());
+    return true;
+}
+
+int UdpTransport::Start() {
+    TOP_INFO("UdpTransport::Start ...");
+
+    quic_node_->start();
+
+    udp_socket_->StartRead();
+
     TOP_INFO("UdpTransport::Start() success[%s:%d]", this->local_ip().c_str(), this->local_port());
     socket_connected_ = true;
 
@@ -117,6 +128,10 @@ int UdpTransport::SendDataWithProp(std::string const & data, const std::string &
         TOP_ERROR("udp socket is NULL");
         return kTransportFailed;
     }
+
+    // todo add udp_socket alive check.
+    // todo use either udp to send
+    auto ret = quic_node_->send_data(data, peer_ip, peer_port - 2000);  // TODO: how to map port... debug -2000 release -1?
 
     return udp_socket_->SendDataWithProp(data, peer_ip, peer_port, udp_property, priority_flag);
 }
@@ -175,15 +190,19 @@ int UdpTransport::get_socket_status() {
 }
 
 void UdpTransport::register_on_receive_callback(on_receive_callback_t callback) {
-    if (udp_socket_) {
-        udp_socket_->register_on_receive_callback(callback);
-    }
+    assert(message_handler_);
+    message_handler_->register_on_dispatch_callback(callback);
+
+    assert(quic_node_);
+    quic_node_->register_on_receive_callback(callback);
 }
 
 void UdpTransport::unregister_on_receive_callback() {
-    if (udp_socket_) {
-        udp_socket_->unregister_on_receive_callback();
-    }
+    assert(message_handler_);
+    message_handler_->unregister_on_dispatch_callback();
+
+    assert(quic_node_);
+    quic_node_->unregister_on_receive_callback();
 }
 
 int UdpTransport::SendPing(const xbyte_buffer_t & data, const std::string & peer_ip, uint16_t peer_port) {

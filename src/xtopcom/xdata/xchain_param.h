@@ -74,6 +74,7 @@ public:
 
     std::string                           local_ip {};
     uint16_t                              local_port {9000};
+    uint16_t                              xquic_port {7000};
     std::string                           log_path {};
     std::string                           public_endpoints {};
     std::string                           url_endpoints {};

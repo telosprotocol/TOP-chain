@@ -46,9 +46,6 @@ public:
     virtual void AddXip2Header(base::xpacket_t & packet, uint16_t priority_flag = 0) = 0;
     virtual bool GetSocketStatus() = 0;
 
-    virtual void register_on_receive_callback(on_receive_callback_t callback) = 0;
-    virtual void unregister_on_receive_callback() = 0;
-
     virtual void StartRead() = 0;
     virtual void Close() = 0;
     virtual uint16_t GetLocalPort() = 0;

@@ -5,7 +5,7 @@
 #include "xelect_net/include/elect_vhost.h"
 #include "xpbase/base/args_parser.h"
 #include "xpbase/base/top_config.h"
-#include "xtransport/message_manager/multi_message_handler.h"
+#include "xtransport/udp_transport/multi_message_handler.h"
 #include "xtransport/transport.h"
 #include "xwrouter/xwrouter.h"
 
@@ -57,7 +57,6 @@ protected:
 
 private:
     void InitWrouter(top::transport::TransportPtr transport, std::shared_ptr<top::transport::MultiThreadHandler> message_handler);
-    void RegisterCallbackForMultiThreadHandler(std::shared_ptr<top::transport::MultiThreadHandler> multi_thread_message_handler);
     int CreateRootManager(std::shared_ptr<transport::Transport> transport,
                           const top::base::Config & config,
                           const std::set<std::pair<std::string, uint16_t>> & public_endpoints_config);

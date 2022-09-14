@@ -2,7 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xtransport/message_manager/multi_message_handler.h"
+#include "xtransport/udp_transport/multi_message_handler.h"
 
 #include "xbase/xutl.h"
 #include "xmetrics/xmetrics.h"
@@ -47,7 +47,7 @@ bool ThreadHandler::on_databox_open(base::xpacket_t & packet, int32_t cur_thread
     return ThreadHandler::fired_packet(packet, cur_thread_id, time_now_ms, callback_);
 }
 
-bool ThreadHandler::fired_packet(base::xpacket_t & packet, int32_t cur_thread_id, uint64_t time_now_ms, on_dispatch_callback_t & callback_ptr) {
+bool ThreadHandler::fired_packet(base::xpacket_t & packet, int32_t cur_thread_id, uint64_t time_now_ms, on_receive_callback_t & callback_ptr) {
     auto thread_begin_time = GetCurrentTimeMicSec();  // us
     transport::protobuf::RoutingMessage pro_message;
     if (!pro_message.ParseFromArray((const char *)packet.get_body().data() + enum_xbase_header_len, packet.get_body().size() - enum_xbase_header_len)) {
@@ -79,7 +79,7 @@ bool ThreadHandler::fired_packet(base::xpacket_t & packet, int32_t cur_thread_id
     return true;
 }
 
-void ThreadHandler::register_on_dispatch_callback(on_dispatch_callback_t callback) {
+void ThreadHandler::register_on_dispatch_callback(on_receive_callback_t callback) {
     std::unique_lock<std::mutex> lock(callback_mutex_);
     assert(callback_ == nullptr);
     callback_ = callback;
@@ -121,7 +121,7 @@ void MultiThreadHandler::Stop() {
     m_worker_threads.clear();
 }
 
-void MultiThreadHandler::register_on_dispatch_callback(on_dispatch_callback_t callback) {
+void MultiThreadHandler::register_on_dispatch_callback(on_receive_callback_t callback) {
     for (auto & th : m_worker_threads) {
         th->register_on_dispatch_callback(callback);
     }

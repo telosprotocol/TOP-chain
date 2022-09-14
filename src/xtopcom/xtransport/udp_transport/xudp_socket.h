@@ -142,9 +142,6 @@ public:
     void AddXip2Header(base::xpacket_t & packet, uint16_t priority_flag = 0) override;
     bool GetSocketStatus() override;
 
-    void register_on_receive_callback(on_receive_callback_t callback) override;
-    void unregister_on_receive_callback() override;
-
     int AddXudp(const std::string & ip_port, xp2pudp_t * xudp);
     bool CloseXudp(xp2pudp_t * xudp);
 
@@ -221,8 +218,6 @@ private:
 
 private:
     int32_t m_xudpsocket_mgr_thread_id;  // dedicated thread to manage xudpt socket (include keepalive,lifemanagent)
-    on_receive_callback_t callback_;
-    std::mutex callback_mutex_;
     std::promise<void> promise_;
     std::shared_future<void> future_{promise_.get_future()};
     std::string local_ip_;

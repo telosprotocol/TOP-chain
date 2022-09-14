@@ -10,6 +10,7 @@
 #include "xbase/xthread.h"
 #include "xtransport/proto/transport.pb.h"
 #include "xtransport/utils/transport_utils.h"
+#include "xtransport/transport.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -25,7 +26,6 @@
 namespace top {
 
 namespace transport {
-using on_dispatch_callback_t = std::function<void(transport::protobuf::RoutingMessage & message, base::xpacket_t &)>;
 
 class MessageHandler;
 class MultiThreadHandler;
@@ -48,7 +48,7 @@ private:
     ThreadHandler & operator=(const ThreadHandler &);
 
 public:
-    static bool fired_packet(base::xpacket_t & packet, int32_t cur_thread_id, uint64_t time_now_ms, on_dispatch_callback_t & callback_ptr);
+    static bool fired_packet(base::xpacket_t & packet, int32_t cur_thread_id, uint64_t time_now_ms, on_receive_callback_t & callback_ptr);
 
 public:
     base::xiothread_t * get_raw_thread() {
@@ -59,14 +59,14 @@ public:
     // subclass need overwrite this virtual function if they need support signal(xpacket_t) or send(xpacket_t),only allow called internally
     virtual bool on_databox_open(base::xpacket_t & packet, int32_t cur_thread_id, uint64_t time_now_ms) override;
 
-    void register_on_dispatch_callback(on_dispatch_callback_t callback);
+    void register_on_dispatch_callback(on_receive_callback_t callback);
     void unregister_on_dispatch_callback();
 
 private:
     base::xiothread_t * m_raw_thread;
     uint32_t raw_thread_index_;
     std::mutex callback_mutex_;
-    on_dispatch_callback_t callback_;
+    on_receive_callback_t callback_;
 };
 
 class MultiThreadHandler : public std::enable_shared_from_this<MultiThreadHandler> {
@@ -78,13 +78,13 @@ public:
     void Stop();
     void HandleMessage(base::xpacket_t & packet);
 
-    void register_on_dispatch_callback(on_dispatch_callback_t callback);
+    void register_on_dispatch_callback(on_receive_callback_t callback);
     void unregister_on_dispatch_callback();
 
 private:
 #ifdef __DIRECT_PASS_PACKET_WITHOUT_DATABOX__
     std::mutex m_mutex;
-    on_dispatch_callback_t m_callback;
+    on_receive_callback_t m_callback;
     size_t m_woker_threads_count{0};  // if need asynch message-handle,may create 1 threads
 #else
     size_t m_woker_threads_count{2};  // 2 threads are enough to handle messages
