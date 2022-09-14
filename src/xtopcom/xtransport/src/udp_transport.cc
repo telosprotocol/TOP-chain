@@ -4,38 +4,33 @@
 
 #include "xtransport/udp_transport/udp_transport.h"
 
-#include <stdio.h>
-#include <mutex>
-#include <iostream>
-#include <string>
-
 #include "xbase/xcontext.h"
 #include "xpbase/base/line_parser.h"
-#include "xpbase/base/top_utils.h"
 #include "xpbase/base/top_log.h"
-#include "xtransport/udp_transport/xudp_socket.h"
-#include "xtransport/utils/transport_utils.h"
+#include "xpbase/base/top_utils.h"
 #include "xtransport/message_manager/multi_message_handler.h"
 #include "xtransport/udp_transport/transport_filter.h"
+#include "xtransport/udp_transport/xudp_socket.h"
+#include "xtransport/utils/transport_utils.h"
+
+#include <stdio.h>
+
+#include <iostream>
+#include <mutex>
+#include <string>
 
 using namespace top;
 using namespace top::base;
 
 namespace top {
 namespace transport {
-static const uint32_t kDumpBandWidthPeriod = 4 * 1000; // 4 seconds
+static const uint32_t kDumpBandWidthPeriod = 4 * 1000;  // 4 seconds
 
-UdpTransport::UdpTransport()
-        : io_thread_(NULL),
-          udp_socket_(NULL),
-          local_ip_(),
-          local_port_(0),
-          socket_connected_(false),
-          udp_handle_(0),
-          message_handler_(NULL) {}
+UdpTransport::UdpTransport() : io_thread_(NULL), udp_socket_(NULL), local_ip_(), local_port_(0), socket_connected_(false), udp_handle_(0), message_handler_(NULL) {
+}
 
 UdpTransport::~UdpTransport() {
-//    Stop();
+    //    Stop();
 }
 
 void UdpTransport::SetOptBuffer() {
@@ -44,7 +39,7 @@ void UdpTransport::SetOptBuffer() {
         const int recv_get = base::xsocket_utl::get_recv_buffer(udp_handle_) / 2;
         TOP_INFO("initial recv buf size %d KB", recv_get / 1024);
     }
-    const int recv_buf_size = 8 * 1024 * 1024; // 8MB
+    const int recv_buf_size = 8 * 1024 * 1024;  // 8MB
     base::xsocket_utl::set_recv_buffer(udp_handle_, recv_buf_size);
     const int recv_get = base::xsocket_utl::get_recv_buffer(udp_handle_) / 2;
     if (recv_get < recv_buf_size) {
@@ -57,7 +52,7 @@ void UdpTransport::SetOptBuffer() {
         const int send_get = base::xsocket_utl::get_send_buffer(udp_handle_) / 2;
         TOP_INFO("initial send buf size %d KB", send_get / 1024);
     }
-    const int send_buf_size = 8 * 1024 * 1024; // 8MB
+    const int send_buf_size = 8 * 1024 * 1024;  // 8MB
     base::xsocket_utl::set_send_buffer(udp_handle_, send_buf_size);
     const int send_get = base::xsocket_utl::get_send_buffer(udp_handle_) / 2;
     if (send_get < send_buf_size) {
@@ -66,23 +61,17 @@ void UdpTransport::SetOptBuffer() {
     TOP_INFO("new send buf: %d KB", send_get / 1024);
 }
 
-int UdpTransport::Start(
-        const std::string& local_ip,
-        uint16_t local_port,
-        MultiThreadHandler* message_handler) {
+int UdpTransport::Start(const std::string & local_ip, uint16_t local_port, MultiThreadHandler * message_handler) {
     TOP_INFO("UdpTransport::Start(%s:%d) ...", local_ip.c_str(), local_port);
 
     TOP_INFO("starting thread(UdpTransport) ...");
-    io_thread_ = top::base::xiothread_t::create_thread(
-        top::base::xcontext_t::instance(), 0, -1);
+    io_thread_ = top::base::xiothread_t::create_thread(top::base::xcontext_t::instance(), 0, -1);
     if (io_thread_ == NULL) {
         TOP_ERROR("create xio thread failed!");
         return kTransportFailed;
     }
 
-    udp_handle_ = base::xsocket_utl::udp_listen(
-            "0.0.0.0",
-            local_port);
+    udp_handle_ = base::xsocket_utl::udp_listen("0.0.0.0", local_port);
     if (udp_handle_ <= 0) {
         TOP_ERROR("udp listen failed!");
         return kTransportFailed;
@@ -95,7 +84,6 @@ int UdpTransport::Start(
     base::xsocket_utl::set_send_buffer(udp_handle_, send_buf_size);
     base::xsocket_utl::set_recv_buffer(udp_handle_, send_buf_size);  // 4 M for mac
 #endif
-
 
     message_handler_ = message_handler;
 
@@ -140,7 +128,7 @@ int UdpTransport::ReStartServer() {
         TOP_ERROR("udp socket alive, there is no need to restart xbase udp socket");
         return kTransportFailed;
     }
-    if (!udp_socket_){
+    if (!udp_socket_) {
         TOP_ERROR("udp_socket_ not ready yet, ReStartServer forbidden");
         return kTransportFailed;
     }
@@ -151,9 +139,7 @@ int UdpTransport::ReStartServer() {
     udp_socket_ = nullptr;
 
     // then restart
-    udp_handle_ = base::xsocket_utl::udp_listen(
-            "0.0.0.0",
-            local_port_);
+    udp_handle_ = base::xsocket_utl::udp_listen("0.0.0.0", local_port_);
     if (udp_handle_ <= 0) {
         TOP_ERROR("udp listen failed!");
         return kTransportFailed;
@@ -161,13 +147,8 @@ int UdpTransport::ReStartServer() {
 
     // SetOptBuffer();
 
- 
-        udp_socket_ = new XudpSocket(
-            base::xcontext_t::instance(),
-            io_thread_->get_thread_id(),
-            udp_handle_,
-            message_handler_);
-        TOP_FATAL("new socket(%p)", udp_socket_);
+    udp_socket_ = new XudpSocket(base::xcontext_t::instance(), io_thread_->get_thread_id(), udp_handle_, message_handler_);
+    TOP_FATAL("new socket(%p)", udp_socket_);
 
     udp_socket_->StartRead();
     socket_connected_ = true;
@@ -205,10 +186,7 @@ void UdpTransport::unregister_on_receive_callback() {
     }
 }
 
-int UdpTransport::SendPing(
-        const xbyte_buffer_t& data,
-        const std::string& peer_ip,
-        uint16_t peer_port) {
+int UdpTransport::SendPing(const xbyte_buffer_t & data, const std::string & peer_ip, uint16_t peer_port) {
     if (!socket_connected_) {
         TOP_ERROR("udp socket not alive, SendPing failed");
         return kTransportFailed;
@@ -220,7 +198,7 @@ int UdpTransport::SendPing(
     return udp_socket_->SendPing(data, peer_ip, peer_port);
 }
 
-int UdpTransport::SendPing(base::xpacket_t& packet) {
+int UdpTransport::SendPing(base::xpacket_t & packet) {
     if (!socket_connected_) {
         TOP_ERROR("udp socket not alive, SendPing failed");
         return kTransportFailed;
@@ -231,26 +209,25 @@ int UdpTransport::SendPing(base::xpacket_t& packet) {
     }
 
     // TODO(smaug(usually not add header here
-    //udp_socket_->AddXip2Header(packet);
+    // udp_socket_->AddXip2Header(packet);
     return udp_socket_->SendPing(packet);
 }
-int UdpTransport::RegisterOfflineCallback(std::function<void(const std::string& ip, const uint16_t port)> cb) {
+int UdpTransport::RegisterOfflineCallback(std::function<void(const std::string & ip, const uint16_t port)> cb) {
     if (udp_socket_) {
         return udp_socket_->RegisterOfflineCallback(cb);
     }
     return kTransportSuccess;
 }
-int UdpTransport::RegisterNodeCallback(std::function<int32_t(std::string const& node_addr, std::string const& node_sign)> cb) {
+int UdpTransport::RegisterNodeCallback(std::function<int32_t(std::string const & node_addr, std::string const & node_sign)> cb) {
     if (udp_socket_) {
         return udp_socket_->RegisterNodeCallback(cb);
     }
     return kTransportSuccess;
 }
-int UdpTransport::CheckRatelimitMap(const std::string& to_addr)
-{
-	if (udp_socket_)
-		return udp_socket_->CheckRatelimitMap(to_addr);
-	return kTransportSuccess;
+int UdpTransport::CheckRatelimitMap(const std::string & to_addr) {
+    if (udp_socket_)
+        return udp_socket_->CheckRatelimitMap(to_addr);
+    return kTransportSuccess;
 }
 }  // namespace transport
 }  // namespace top
