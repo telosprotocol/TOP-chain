@@ -69,7 +69,3 @@ if (BUILD_EVM)
     # add_subdirectory(xevm_common)
 endif()
 add_subdirectory(xgasfee)
-
-if (XENABLE_TESTS)
-add_subdirectory(xdepends/googletest)
-endif()

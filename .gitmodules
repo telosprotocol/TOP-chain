@@ -4,3 +4,9 @@
 [submodule "src/xtopcom/xdepends/googletest"]
 	path = src/xtopcom/xdepends/googletest
 	url = git@github.com:google/googletest.git
+[submodule "src/xtopcom/xdepends/xquic"]
+	path = src/xtopcom/xdepends/xquic
+	url = git@github.com:alibaba/xquic.git
+[submodule "src/xtopcom/xdepends/boringssl"]
+	path = src/xtopcom/xdepends/boringssl
+	url = git@github.com:google/boringssl.git
