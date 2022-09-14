@@ -128,7 +128,7 @@ void xelect_client_process::process_election_block(xobject_ptr_t<base::xvblock_t
     }
     data::xunit_bstate_t const unitstate(bstate.get());
 
-    uint64_t new_election_height = get_new_election_height(unitstate, block);
+    uint64_t const new_election_height = get_new_election_height(unitstate, block);
     if (local_height >= new_election_height) {
         xwarn("xelect_client_process::process_election_block block height is lower,local_height:%llu,new height:%llu,block:%s", local_height, new_election_height, block->dump().c_str());
         return;

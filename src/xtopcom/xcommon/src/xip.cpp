@@ -796,19 +796,22 @@ xnode_type_t node_type_from(common::xzone_id_t const & zone_id, common::xcluster
     }
 
     case xnode_type_t::storage: {
-        if (cluster_id == xexchange_cluster_id) {
-            assert(group_id == common::xexchange_group_id);
-            node_type |= xnode_type_t::storage_exchange;
-        } else {
-            if (xarchive_group_id == group_id) {
-                node_type |= xnode_type_t::storage_archive;
-            } else if (xlegacy_exchange_group_id == group_id) {
+        do {
+            if (cluster_id == xexchange_cluster_id) {
+                assert(group_id == common::xexchange_group_id);
                 node_type |= xnode_type_t::storage_exchange;
-            } else {
-                assert(false);
-                node_type = xnode_type_t::invalid;
+                break;
             }
-        }
+
+            if (cluster_id == xdefault_cluster_id) {
+                assert(xarchive_group_id == group_id);
+                node_type |= xnode_type_t::storage_archive;
+                break;
+            }
+
+            assert(false);
+            node_type = xnode_type_t::invalid;
+        } while (false);
 
         break;
     }

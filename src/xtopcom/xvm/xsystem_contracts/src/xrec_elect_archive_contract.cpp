@@ -22,6 +22,7 @@
 #include "xdata/xelection/xstandby_result_store.h"
 #include "xdata/xelection/xv1/xstandby_result_store.h"
 #include "xdata/xgenesis_data.h"
+#include "xdata/xnative_contract_address.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
 #include "xvm/xserialization/xserialization.h"
 
@@ -140,83 +141,32 @@ void xtop_rec_elect_archive_contract::on_timer(const uint64_t current_time) {
     XCONTRACT_ENSURE(current_time + XGET_ONCHAIN_GOVERNANCE_PARAMETER(archive_election_interval) / 2 > TIME(), "xrec_elect_archive_contract_t::on_timer retried too many times");
     xinfo("xrec_elect_archive_contract_t::archive_elect %" PRIu64, current_time);
 
-    auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
-    if (chain_fork::xchain_fork_config_center_t::is_forked(fork_config.standalone_exchange_point, current_time)) {
-        elect_archive(current_time);
-    } else {
-        elect_storage(current_time);
-    }
-}
-
-// before fork point: standalone_exchange_point
-void xtop_rec_elect_archive_contract::elect_storage(const uint64_t current_time){
-    xrange_t<config::xgroup_size_t> archive_group_range{ 1, XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_archive_group_size) };
-    xrange_t<config::xgroup_size_t> exchange_group_range{0, XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_archive_group_size)};
-
-    auto standby_result_store =
-        xvm::serialization::xmsgpack_t<xstandby_result_store_t>::deserialize_from_string_prop(*this, sys_contract_rec_standby_pool_addr, data::XPROPERTY_CONTRACT_STANDBYS_KEY);
-    auto standby_network_result = standby_result_store.result_of(network_id()).network_result();
-
-    for (auto index = 0; index < XGET_CONFIG(legacy_archive_group_count); ++index) {
-        top::common::xgroup_id_t archive_gid{ static_cast<top::common::xgroup_id_t::value_type>(common::xarchive_group_id_value_begin + index) };
-        xkinfo("[xrec_elect_archive_contract_t] index: %d, archive_gid: %s, insert %s",
-               index,
-               archive_gid.to_string().c_str(),
-               data::election::get_property_by_group_id(archive_gid).c_str());
-        auto election_result_store =
-            serialization::xmsgpack_t<xelection_result_store_t>::deserialize_from_string_prop(*this, data::election::get_property_by_group_id(archive_gid));
-
-        auto & election_network_result = election_result_store.result_of(network_id());
-
-        auto range = archive_group_range;
-        if (archive_gid == common::xlegacy_exchange_group_id) {
-            range = exchange_group_range;
-        }
-
-        if (elect_group(common::xstorage_zone_id,
-                        common::xdefault_cluster_id,
-                        archive_gid,
-                        current_time,
-                        current_time,
-                        range,
-                        standby_network_result,
-                        election_network_result)) {
-            xvm::serialization::xmsgpack_t<xelection_result_store_t>::serialize_to_string_prop(*this, data::election::get_property_by_group_id(archive_gid), election_result_store);
-        }
-    }
+    elect_archive(current_time);
 }
 
 void xtop_rec_elect_archive_contract::elect_archive(const uint64_t current_time) {
-    xrange_t<config::xgroup_size_t> archive_group_range{1, XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_archive_group_size)};
+    xrange_t<config::xgroup_size_t> const archive_group_range{1, XGET_ONCHAIN_GOVERNANCE_PARAMETER(max_archive_group_size)};
 
     auto standby_result_store =
         xvm::serialization::xmsgpack_t<xstandby_result_store_t>::deserialize_from_string_prop(*this, sys_contract_rec_standby_pool_addr, data::XPROPERTY_CONTRACT_STANDBYS_KEY);
     auto standby_network_result = standby_result_store.result_of(network_id()).network_result();
 
-    top::common::xgroup_id_t archive_gid = common::xarchive_group_id;
-    xkinfo("[xrec_elect_archive_contract_t] archive_gid: %s, insert %s",
-           archive_gid.to_string().c_str(),
-           data::election::get_property_by_group_id(archive_gid).c_str());
+    top::common::xgroup_id_t const & archive_gid = common::xarchive_group_id;
+    xkinfo("[xrec_elect_archive_contract_t] archive_gid: %s, insert %s", archive_gid.to_string().c_str(), data::election::get_property_by_group_id(archive_gid).c_str());
     auto election_result_store = serialization::xmsgpack_t<xelection_result_store_t>::deserialize_from_string_prop(*this, data::election::get_property_by_group_id(archive_gid));
 
     auto & election_network_result = election_result_store.result_of(network_id());
 
-    auto range = archive_group_range;
+    auto const range = archive_group_range;
 
-    if (elect_group(common::xstorage_zone_id, common::xdefault_cluster_id, archive_gid, current_time, current_time, range, standby_network_result, election_network_result)) {
+    auto const pre_election_timestamp =
+        election_network_result.result_of(common::xnode_type_t::storage_archive).result_of(common::xdefault_cluster_id).result_of(archive_gid).timestamp();
+    assert(pre_election_timestamp < current_time);
+    bool const force_update = pre_election_timestamp == static_cast<common::xlogic_time_t>(7481520);  // force update archive. fix ID1002557.
+
+    if (elect_group(
+            common::xstorage_zone_id, common::xdefault_cluster_id, archive_gid, current_time, current_time, range, force_update, standby_network_result, election_network_result)) {
         xvm::serialization::xmsgpack_t<xelection_result_store_t>::serialize_to_string_prop(*this, data::election::get_property_by_group_id(archive_gid), election_result_store);
-    }
-
-    auto exchange_election_result_store = serialization::xmsgpack_t<xelection_result_store_t>::deserialize_from_string_prop(*this, data::election::get_property_by_group_id(common::xlegacy_exchange_group_id));
-    bool clean_exchange_result{false};
-    while (exchange_election_result_store.result_of(network_id()).size()) {
-        exchange_election_result_store.erase(exchange_election_result_store.begin());
-        clean_exchange_result = true;
-    }
-    if (clean_exchange_result) {
-        xkinfo("[xrec_elect_archive_contract_t] clean old exchange election result.");
-        xvm::serialization::xmsgpack_t<xelection_result_store_t>::serialize_to_string_prop(
-            *this, data::election::get_property_by_group_id(common::xlegacy_exchange_group_id), exchange_election_result_store);
     }
 }
 
@@ -229,19 +179,9 @@ common::xnode_type_t xtop_rec_elect_archive_contract::standby_type(common::xzone
 
     assert(zid == common::xstorage_zone_id);
     assert(cid == common::xdefault_cluster_id);
-    assert(gid == common::xarchive_group_id || gid == common::xlegacy_exchange_group_id);
+    assert(gid == common::xarchive_group_id);
 
-    if (gid == common::xarchive_group_id) {
-        return common::xnode_type_t::storage_archive;
-    }
-
-    // todo remove after fork
-    if (gid == common::xlegacy_exchange_group_id) {
-        return common::xnode_type_t::storage_exchange;
-    }
-
-    assert(false);
-    return common::xnode_type_t::invalid;
+    return common::xnode_type_t::storage_archive;
 }
 
 NS_END4

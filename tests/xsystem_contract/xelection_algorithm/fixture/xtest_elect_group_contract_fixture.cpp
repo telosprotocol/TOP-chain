@@ -23,8 +23,8 @@ bool xtop_test_elect_consensus_group_algorithm::test_elect(common::xzone_id_t co
 }
 
 common::xnode_type_t xtop_test_elect_nonconsensus_group_algorithm::standby_type(common::xzone_id_t const & zid,
-                                                                             common::xcluster_id_t const & cid,
-                                                                             common::xgroup_id_t const & gid) const {
+                                                                                common::xcluster_id_t const & cid,
+                                                                                common::xgroup_id_t const & gid) const {
     if (zid == common::xedge_zone_id) {
         return common::xnode_type_t::edge;
     }
@@ -33,7 +33,7 @@ common::xnode_type_t xtop_test_elect_nonconsensus_group_algorithm::standby_type(
         return common::xnode_type_t::storage_archive;
     }
 
-    if (gid == common::xlegacy_exchange_group_id) {
+    if (gid == common::xexchange_group_id) {
         return common::xnode_type_t::storage_exchange;
     }
 
@@ -52,9 +52,10 @@ bool xtop_test_elect_nonconsensus_group_algorithm::test_elect(common::xzone_id_t
                                                               common::xlogic_time_t const election_timestamp,
                                                               common::xlogic_time_t const start_time,
                                                               xrange_t<config::xgroup_size_t> const & group_size_range,
+                                                              bool const force_update,
                                                               data::election::xstandby_network_result_t & standby_network_result,
                                                               data::election::xelection_network_result_t & election_network_result) {
-    return elect_group(zid, cid, gid, election_timestamp, start_time, group_size_range, standby_network_result, election_network_result);
+    return elect_group(zid, cid, gid, election_timestamp, start_time, group_size_range, force_update, standby_network_result, election_network_result);
 }
 
 void xtop_test_elect_group_contract_fixture::SetUp() {}

@@ -60,12 +60,7 @@ common::xsharding_address_t xtop_router::address_of_table_id(std::uint16_t const
     }
 
     if (common::has<common::xnode_type_t::storage_exchange>(type)) {
-        // todo(next version fork)
-        // if (forked standalone_exchange_point) {
-            return common::build_exchange_sharding_address(nid);
-        // } else {
-            // return common::build_legacy_exchange_sharding_address(common::xlegacy_exchange_group_id, nid);
-        // }
+        return common::build_exchange_sharding_address(nid);
     }
 
     if (common::has<common::xnode_type_t::committee>(type)) {
@@ -95,12 +90,7 @@ common::xsharding_address_t xtop_router::address_of_book_id(std::uint16_t const 
     }
 
     if (common::has<common::xnode_type_t::storage_exchange>(type)) {
-        // todo(next version fork)
-        // if (forked standalone_exchange_point) {
-            return common::build_exchange_sharding_address(nid);
-        // } else {
-            // return common::build_legacy_exchange_sharding_address(common::xlegacy_exchange_group_id, nid);
-        // }
+        return common::build_exchange_sharding_address(nid);
     }
 
     if (common::has<common::xnode_type_t::committee>(type)) {

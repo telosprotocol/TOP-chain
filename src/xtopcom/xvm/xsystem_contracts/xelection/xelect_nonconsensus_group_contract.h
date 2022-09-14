@@ -18,26 +18,13 @@ protected:
     explicit xtop_elect_nonconsensus_group_contract(common::xnetwork_id_t const & network_id);
 
 public:
-    /**
-     * @brief elect consensus group
-     *
-     * @param zid Zone id
-     * @param cid Cluster id
-     * @param gid Group id
-     * @param election_timestamp Timestamp that triggers the election
-     * @param start_time The time that this election result starts to work
-     * @param group_size_range Maximum and minimum values for the group
-     * @param standby_network_result Standby pool
-     * @param election_network_result Election result
-     * @return true election successful
-     * @return false election failed
-     */
     bool elect_group(common::xzone_id_t const & zid,
                      common::xcluster_id_t const & cid,
                      common::xgroup_id_t const & gid,
-                     common::xlogic_time_t const election_timestamp,
-                     common::xlogic_time_t const start_time,
+                     common::xlogic_time_t election_timestamp,
+                     common::xlogic_time_t start_time,
                      xrange_t<config::xgroup_size_t> const & group_size_range,
+                     bool force_update,
                      data::election::xstandby_network_result_t & standby_network_result,
                      data::election::xelection_network_result_t & election_network_result) override;
 

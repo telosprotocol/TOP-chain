@@ -14,6 +14,7 @@
 #include "xdata/xelection/xelection_result_property.h"
 #include "xdata/xelection/xstandby_result_store.h"
 #include "xdata/xgenesis_data.h"
+#include "xdata/xnative_contract_address.h"
 #include "xdata/xrootblock.h"
 #include "xvm/xserialization/xserialization.h"
 

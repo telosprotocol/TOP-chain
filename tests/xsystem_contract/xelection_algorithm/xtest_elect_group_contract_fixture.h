@@ -72,6 +72,7 @@ public:
                     common::xlogic_time_t const election_timestamp,
                     common::xlogic_time_t const start_time,
                     xrange_t<config::xgroup_size_t> const & group_size_range,
+                    bool force_udpate,
                     data::election::xstandby_network_result_t & standby_network_result,
                     data::election::xelection_network_result_t & election_network_result);
 

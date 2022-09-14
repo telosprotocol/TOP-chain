@@ -17,6 +17,7 @@
 #include "xdata/xelection/xstandby_result_store.h"
 #include "xdata/xelection/xv1/xstandby_result_store.h"
 #include "xdata/xgenesis_data.h"
+#include "xdata/xnative_contract_address.h"
 #include "xvm/xserialization/xserialization.h"
 
 #include <cinttypes>
