@@ -23,6 +23,7 @@
 #include "xtxexecutor/xbatchtx_executor.h"
 #include "xstatectx/xstatectx.h"
 #include "xverifier/xtx_verifier.h"
+#include "xstatestore/xstatestore_face.h"
 
 NS_BEG2(top, blockmaker)
 
@@ -353,7 +354,7 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
         if (!ret) {
             return nullptr;
         }
-        table_mpt = create_new_mpt(xhash256_t(last_state_root.to_bytes()), statectx_ptr, batch_unit_and_index);
+        table_mpt = create_new_mpt(xhash256_t(last_state_root.to_bytes()), cs_para, statectx_ptr, batch_unit_and_index);
         if (table_mpt == nullptr) {
             return nullptr;
         }
@@ -704,9 +705,194 @@ bool xtable_maker_t::is_make_relay_chain() const {
     return get_zone_index() == base::enum_chain_zone_relay_index;
 }
 
+bool xtable_maker_t::update_new_account_indexes() {
+    uint32_t max_sync_req_num = 50;
+    uint32_t num = 0;
+
+    if (!m_lack_accounts.empty()) {
+        if (m_lack_accounts_pos >= m_lack_accounts.size()) {
+            m_lack_accounts_pos = 0;
+        }
+
+        auto iter = m_lack_accounts.begin() + m_lack_accounts_pos;
+        while (num < max_sync_req_num && iter != m_lack_accounts.end()) {
+            auto & lack_account = *iter;
+            base::xvaccount_t unit_vaccount(lack_account.get_addr());
+            uint64_t latest_connect_height = get_blockstore()->get_latest_connected_block_height(unit_vaccount);
+
+            bool ret = data::xblocktool_t::check_lacking_unit_and_try_sync(unit_vaccount, lack_account.get_account_index(), latest_connect_height, get_blockstore(), "table_maker");
+            // return true means no lacking block.
+            if (ret) {
+                uint64_t height = lack_account.get_account_index().get_latest_unit_height();
+                auto unit = get_blockstore()->load_block_object(unit_vaccount, height, lack_account.get_account_index().get_latest_unit_viewid(), false);
+                if (nullptr == unit) {
+                    xerror("xtable_maker_t::update_new_account_indexes fail-upgrade for load unit account=%s,index=%s",
+                        unit_vaccount.get_account().c_str(),
+                        lack_account.get_account_index().dump().c_str());
+                    return false;
+                }
+
+                auto unitbstate = get_resources()->get_xblkstatestore()->get_block_state(unit.get());
+                if (nullptr == unitbstate) {
+                    xerror("xtable_maker_t::update_new_account_indexes fail-upgrade for load unitstate account=%s,index=%s",
+                        unit_vaccount.get_account().c_str(),
+                        lack_account.get_account_index().dump().c_str());
+                    return false;
+                }
+                data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(unitbstate.get());
+
+                auto nonce = unitstate->account_send_trans_number();
+                std::string unitstate_bin;
+                std::string unithash = unit->get_block_hash();
+                unitbstate->take_snapshot(unitstate_bin);
+                std::string statehash = unit->get_cert()->hash(unitstate_bin);
+                base::xaccount_index_t _new_account_index(unit->get_height(), unithash, statehash, nonce, unit->get_block_class(), unit->get_block_type());
+                m_new_indexes[unit_vaccount.get_account()] = _new_account_index;
+                iter = m_lack_accounts.erase(iter);
+            } else {
+                iter++;
+                num++;
+            }
+        }
+    }
+
+
+    if (m_new_indexes.size() == m_accounts_num) {
+        xassert(m_lack_accounts.empty());
+        return true;
+    }
+    xassert(m_new_indexes.size() + m_lack_accounts.size() == m_accounts_num);
+    return false;
+}
+
+void xtable_maker_t::init_new_account_indexes(const data::xtablestate_ptr_t & commit_table_state) {
+    if (m_fork_height >= commit_table_state->get_block_height()) {
+        return;
+    }
+    m_new_indexes.clear();
+    m_lack_accounts.clear();
+    std::map<std::string, std::string> indexes = commit_table_state->map_get(data::XPROPERTY_TABLE_ACCOUNT_INDEX);
+    for (auto & index : indexes) {
+        base::xaccount_index_t _account_index;
+        _account_index.serialize_from(index.second);
+        m_lack_accounts.push_back(lack_account_info_t(index.first, _account_index));
+    }
+    m_lack_accounts_pos = 0;
+    m_accounts_num = indexes.size();
+    m_fork_height = commit_table_state->get_block_height();
+}
+
+bool xtable_maker_t::account_index_upgrade() {
+    std::lock_guard<std::mutex> l(m_index_upgrade_lock);
+    if (m_account_index_upgrade_finished) {
+        return true;
+    }
+
+    auto latest_committed_block = get_blockstore()->get_latest_committed_block(*this);
+
+    if (m_fork_height < latest_committed_block->get_height()) {
+        auto latest_cert_block = get_blockstore()->get_latest_cert_block(*this);
+        evm_common::xh256_t state_root;
+        auto ret = data::xblockextract_t::get_state_root(latest_cert_block.get(), state_root);
+        if (state_root != evm_common::xh256_t()) {
+            xinfo("xtable_maker_t::account_index_upgrade cert block already have mpt root, upgrade finished.cert block:%s", latest_cert_block->dump().c_str());
+            m_new_indexes.clear();
+            m_lack_accounts.clear();
+            m_lack_accounts_pos = 0;
+            m_accounts_num = 0;
+            m_fork_height = 0;
+            m_account_index_upgrade_finished = true;
+            return true;
+        }
+
+        data::xtablestate_ptr_t commit_table_state = statestore::xstatestore_hub_t::instance()->get_table_state_by_block(latest_committed_block.get());
+        if (commit_table_state == nullptr) {
+            xwarn("xtable_maker_t::account_index_upgrade fail clone commit tablestate. block:%s", latest_committed_block->dump().c_str());
+            return false;
+        }
+
+        init_new_account_indexes(commit_table_state);
+    }
+
+    return update_new_account_indexes();
+}
+
+bool xtable_maker_t::update_new_indexes_by_block(std::map<std::string, base::xaccount_index_t> & new_indexes, const xblock_ptr_t & block) {
+    if ((block->get_block_class() != base::enum_xvblock_class_light) || (block->get_height() == 0)) {
+        return true;
+    }
+
+    base::xvaccount_t vaccount(block->get_account());
+    if (false == get_blockstore()->load_block_input(vaccount, block.get())) {
+        xerror("xtable_maker_t::update_new_indexes_by_block,fail-load tableblock input.block=%s", block->dump().c_str());
+        return false;
+    }
+    if (false == get_blockstore()->load_block_output(vaccount, block.get())) {
+        xerror("xvblockstore_impl::update_new_indexes_by_block,fail-load tableblock output.block=%s", block->dump().c_str());
+        return false;
+    }
+    std::vector<xobject_ptr_t<base::xvblock_t>> sub_blocks;
+    if (!block->extract_sub_blocks(sub_blocks)) {
+        xerror("xvblockstore_impl::update_new_indexes_by_block,fail-extract sub block.block=%s", block->dump().c_str());
+        return false;
+    }
+
+    for (auto & unit : sub_blocks) {
+        auto unitbstate = get_resources()->get_xblkstatestore()->get_block_state(unit.get());
+        if (nullptr == unitbstate) {
+            xerror("xtable_maker_t::update_new_indexes_by_block fail-upgrade for load unitstate unit=%s", unit->dump().c_str());
+            return false;
+        }
+        data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(unitbstate.get());
+
+        auto & addr = unit->get_account();
+        auto nonce = unitstate->account_send_trans_number();
+        std::string unithash = unit->get_block_hash();
+        std::string statehash = unit->get_fullstate_hash();
+        if (statehash.empty()) {
+            auto iter = new_indexes.find(addr);
+            if (iter == new_indexes.end()) {
+                xerror("xtable_maker_t::update_new_indexes_by_block fail-find fail from new_indexes unit=%s", unit->dump().c_str());
+                return false;
+            }
+
+            statehash = iter->second.get_latest_state_hash();
+        }
+
+        base::xaccount_index_t _new_account_index(unit->get_height(), unithash, statehash, nonce, unit->get_block_class(), unit->get_block_type());
+        new_indexes[addr] = _new_account_index;
+    }
+    return true;
+}
+
+bool xtable_maker_t::get_new_account_indexes(const data::xblock_consensus_para_t & cs_para, std::map<std::string, base::xaccount_index_t> & new_indexes) {
+    std::map<std::string, base::xaccount_index_t> new_indexes_tmp;
+    {
+        std::lock_guard<std::mutex> l(m_index_upgrade_lock);
+        if (cs_para.get_latest_committed_block()->get_height() != m_fork_height || m_new_indexes.size() != m_accounts_num) {
+            return false;
+        }
+        new_indexes_tmp = m_new_indexes;
+    }
+
+    bool ret = update_new_indexes_by_block(new_indexes_tmp, cs_para.get_latest_locked_block());
+    if (!ret) {
+        return false;
+    }
+
+    ret = update_new_indexes_by_block(new_indexes_tmp, cs_para.get_latest_cert_block());
+    if (!ret) {
+        return false;
+    }
+
+    new_indexes.swap(new_indexes_tmp);
+    return true;
+}
+
 std::shared_ptr<state_mpt::xtop_state_mpt> xtable_maker_t::create_new_mpt(const xhash256_t & last_mpt_root,
-                                                                       const statectx::xstatectx_ptr_t & table_state_ctx,
-                                                                       const std::vector<std::pair<xblock_ptr_t, base::xaccount_index_t>> & batch_unit_and_index) {
+                                                                          const data::xblock_consensus_para_t & cs_para,
+                                                                          const statectx::xstatectx_ptr_t & table_state_ctx,
+                                                                          const std::vector<std::pair<xblock_ptr_t, base::xaccount_index_t>> & batch_unit_and_index) {
     std::error_code ec;
     auto mpt = state_mpt::xtop_state_mpt::create(last_mpt_root, base::xvchain_t::instance().get_xdbstore(), get_account(), ec);
     if (ec) {
@@ -715,46 +901,12 @@ std::shared_ptr<state_mpt::xtop_state_mpt> xtable_maker_t::create_new_mpt(const 
     }
 
     if (last_mpt_root == xhash256_t{}) {  // TODO(jimmy)  delete in v1.8
-        std::map<std::string, std::string> indexes = table_state_ctx->get_table_state()->map_get(data::XPROPERTY_TABLE_ACCOUNT_INDEX);
-        xinfo("xtable_maker_t::create_new_mpt begin to upgrade accountindex.tablestate=%s,index_count=%zu", table_state_ctx->get_table_state()->get_bstate()->dump().c_str(), indexes.size());
-
-        std::map<std::string, std::string> new_indexes;
-        for (auto & index : indexes) {
-            base::xvaccount_t unit_vaccount(index.first);
-            base::xaccount_index_t _account_index;
-            _account_index.serialize_from(index.second);
-            auto unit = get_blockstore()->load_block_object(unit_vaccount, _account_index.get_latest_unit_height(), _account_index.get_latest_unit_viewid(), false);
-            if (nullptr == unit) {
-                xwarn("xtable_maker_t::create_new_mpt fail-upgrade for load unit account=%s,index=%s",unit_vaccount.get_account().c_str(), _account_index.dump().c_str());
-                return nullptr;
-            }
-            auto unitbstate = get_resources()->get_xblkstatestore()->get_block_state(unit.get());
-            if (nullptr == unitbstate) {
-                xwarn("xtable_maker_t::create_new_mpt fail-upgrade for load unitstate account=%s,index=%s",unit_vaccount.get_account().c_str(), _account_index.dump().c_str());
-                return nullptr;
-            }
-            data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(unitbstate.get());
-            const auto & unithash = unit->get_block_hash();
-            std::string unitstate_bin;
-            unitbstate->take_snapshot(unitstate_bin);
-            std::string unitstate_hash = unit->get_cert()->hash(unitstate_bin);
-
-            std::string statehash_in_unit = unit->get_fullstate_hash();
-            if (!statehash_in_unit.empty()) {
-                if (statehash_in_unit != unitstate_hash) {
-                    xerror("xtable_maker_t::create_new_mpt fail-upgrade for mismatch statehash. account=%s,index=%s",unit_vaccount.get_account().c_str(), _account_index.dump().c_str());
-                    return nullptr;
-                }
-            }
-
-            // upgrade accountindex for unithash,statehash,txnonce
-            base::xaccount_index_t _new_account_index(unit->get_height(), unithash, unitstate_hash, unitstate->account_send_trans_number(), unit->get_block_class(), unit->get_block_type());
-            std::string _new_account_index_str;
-            _new_account_index.serialize_to(_new_account_index_str); 
-            table_state_ctx->get_table_state()->map_set(data::XPROPERTY_TABLE_ACCOUNT_INDEX, unit->get_account(), _new_account_index_str);
-            new_indexes[unit->get_account()] = _new_account_index_str;
+        std::map<std::string, base::xaccount_index_t> new_indexes;
+        auto ret = get_new_account_indexes(cs_para, new_indexes);
+        if (!ret) {
+            xdbg("xtable_maker_t::create_new_mpt no account indexes.");
+            return nullptr;
         }
-        xinfo("xtable_maker_t::create_new_mpt finish to upgrade accountindex.tablestate=%s,index_count=%zu", table_state_ctx->get_table_state()->get_bstate()->dump().c_str(), indexes.size());
 
         for (auto & index : new_indexes) {
             mpt->set_account_index(index.first, index.second, ec);
@@ -763,10 +915,12 @@ std::shared_ptr<state_mpt::xtop_state_mpt> xtable_maker_t::create_new_mpt(const 
                 return nullptr;
             }
         }
-    } else {  // TODO(jimmy)  delete in v1.8
+
         std::map<std::string, std::string> indexes = table_state_ctx->get_table_state()->map_get(data::XPROPERTY_TABLE_ACCOUNT_INDEX);
         if (!indexes.empty()) {
-            xinfo("xtable_maker_t::create_new_mpt begin to clear accountindex.tablestate=%s,index_count=%zu", table_state_ctx->get_table_state()->get_bstate()->dump().c_str(), indexes.size());
+            xinfo("xtable_maker_t::create_new_mpt begin to clear accountindex.tablestate=%s,index_count=%zu",
+                  table_state_ctx->get_table_state()->get_bstate()->dump().c_str(),
+                  indexes.size());
             table_state_ctx->get_table_state()->map_clear(data::XPROPERTY_TABLE_ACCOUNT_INDEX);
         }
     }
