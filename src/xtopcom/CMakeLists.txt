@@ -73,7 +73,3 @@ add_subdirectory(xstate_mpt)
 add_subdirectory(xstate_sync)
 add_subdirectory(xdbstore)
 add_subdirectory(xstatestore)
-
-if (XENABLE_TESTS)
-add_subdirectory(xdepends/googletest)
-endif()
