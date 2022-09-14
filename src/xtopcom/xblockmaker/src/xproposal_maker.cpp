@@ -292,10 +292,11 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
 
     std::string block_object_bin;
     proposal_block->serialize_to_string(block_object_bin);
-    xinfo("xproposal_maker_t::make_proposal succ.block=%s,size=%zu,%zu,%zu,%zu,input={size=%zu,txs=%zu,accounts=%zu}", 
+    xinfo("xproposal_maker_t::make_proposal succ.block=%s,size=%zu,%zu,%zu,%zu,%zu,input={size=%zu,txs=%zu,accounts=%zu}", 
         proposal_block->dump().c_str(),
-        block_object_bin.size()+proposal_block->get_input()->get_resources_data().size()+proposal_block->get_output()->get_resources_data().size(),
+        block_object_bin.size()+proposal_block->get_input()->get_resources_data().size()+proposal_block->get_output()->get_resources_data().size()+proposal_block->get_output_offdata().size(),
         block_object_bin.size(),proposal_block->get_input()->get_resources_data().size(), proposal_block->get_output()->get_resources_data().size(),
+        proposal_block->get_output_offdata().size(),
         proposal_input_str.size(), proposal_input->get_input_txs().size(), proposal_input->get_other_accounts().size());
     return proposal_block;
 }
@@ -488,7 +489,8 @@ bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & propos
     uint16_t confirm_and_recv_txs_max_num = 35;
     uint16_t confirm_txs_max_num = 30;
 
-    if (proposal_para.get_table_account() == sys_contract_eth_table_block_addr_with_suffix || proposal_para.get_table_account() == sys_contract_relay_table_block_addr) {
+    // TODO(jimmy)  proposal_para.get_table_account() == sys_contract_eth_table_block_addr_with_suffix
+    if (proposal_para.get_table_account() == sys_contract_relay_table_block_addr) {
         all_txs_max_num = 5;
         confirm_and_recv_txs_max_num = 4;
         confirm_txs_max_num = 3;
