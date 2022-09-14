@@ -1269,18 +1269,20 @@ namespace top
 
             // update index of unit blocks to commit state.
             auto account_indexs_str = container_block->get_account_indexs();
-            data::xtable_account_indexs_t account_indexs;
-            account_indexs.serialize_from_string(account_indexs_str);
+            if (!account_indexs_str.empty()) {// XTODO tableblock may has no accountsindex for confirmtx
+                data::xtable_account_indexs_t account_indexs;
+                account_indexs.serialize_from_string(account_indexs_str);
 
-            auto & account_index_map = account_indexs.get_account_indexs();
-            for (auto & account_index_pair : account_index_map) {
-                base::xvaccount_t  unit_account(account_index_pair.first);
-                LOAD_BLOCKACCOUNT_PLUGIN2(account_obj, unit_account);
-                account_obj->try_update_account_index(account_index_pair.second.get_latest_unit_height(), container_block->get_viewid(), false);  // TODO(jimmy) use table viewid to update
-                xdbg("xvblockstore_impl::store_units_to_db_after_fork update unit index:account=%s,height:%llu,viewid:%llu",
-                        account_index_pair.first.c_str(),
-                        account_index_pair.second.dump().c_str());
+                auto & account_index_map = account_indexs.get_account_indexs();
+                for (auto & account_index_pair : account_index_map) {
+                    base::xvaccount_t  unit_account(account_index_pair.first);
+                    LOAD_BLOCKACCOUNT_PLUGIN2(account_obj, unit_account);
+                    account_obj->try_update_account_index(account_index_pair.second.get_latest_unit_height(), container_block->get_viewid(), false);  // TODO(jimmy) use table viewid to update
+                    xdbg("xvblockstore_impl::store_units_to_db_after_fork update unit index:account=%s,height:%llu,viewid:%llu",
+                            account_index_pair.first.c_str(),
+                            account_index_pair.second.dump().c_str());
 
+                }
             }
             return true;
         }

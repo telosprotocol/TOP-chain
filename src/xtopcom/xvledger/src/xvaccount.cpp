@@ -143,6 +143,33 @@ namespace top
             }
         }
 
+        const uint32_t xvaccount_t::get_index_from_account(const std::string & account_addr) {
+            XMETRICS_GAUGE(metrics::cpu_hash_64_calc, 1);
+            return (uint32_t)xhash64_t::digest(account_addr);//hash64 better performance than hash32
+        }
+
+        const xvid_t  xvaccount_t::get_xid_from_account(const std::string & account_addr) {
+            uint32_t account_index        = 0;
+            uint32_t ledger_id            = 0;
+            uint16_t ledger_subaddr       = 0;
+            if(get_ledger_fulladdr_from_account(account_addr,ledger_id,ledger_subaddr,account_index))
+            {
+                xvid_t _xid_from_addr = (ledger_id << 16) | ((ledger_subaddr & enum_vbucket_has_tables_count_mask) << 6) | enum_xid_type_xledger;
+                _xid_from_addr |= (((uint64_t)account_index) << 32);
+                return _xid_from_addr; //as default not include account'hash index as performance consideration
+            }
+            return 0; //invalid account
+        }
+        std::string xvaccount_t::to_evm_address(const std::string& account) {
+            if (account.size() < 2)
+                return "";
+            std::string value;
+            value.resize(account.size());
+            std::transform(account.begin(), account.end(), value.begin(), ::tolower);
+            value = std::string(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN) + value.substr(2);
+            return value;
+        }
+
         bool xvaccount_t::is_unit_address_type(enum_vaccount_addr_type addr_type) {
             return (addr_type == enum_vaccount_addr_type_secp256k1_eth_user_account || addr_type == enum_vaccount_addr_type_secp256k1_user_account ||
                     addr_type == enum_vaccount_addr_type_secp256k1_evm_user_account);
