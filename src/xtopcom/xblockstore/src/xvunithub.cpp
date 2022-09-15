@@ -1179,8 +1179,9 @@ namespace top
                 }
 
                 auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
+                bool is_block_fork = base::xvblock_fork_t::is_block_match_version(container_block->get_block_version(), base::enum_xvblock_fork_version_5_0_0);
                 bool remove_unit_proof = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.remove_unit_proof_point, container_block->get_clock());
-                if (!remove_unit_proof) {
+                if ( (false == is_block_fork) && (false == remove_unit_proof)) {
                     return store_units_to_db_before_fork(target_account, index_ptr, container_block.get());
                 } else {
                     return store_units_to_db_after_fork(target_account, index_ptr, container_block.get());

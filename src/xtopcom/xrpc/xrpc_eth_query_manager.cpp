@@ -84,10 +84,11 @@ bool xrpc_eth_query_manager::handle(std::string & strReq, xJson::Value & js_req,
 
 enum_query_result xrpc_eth_query_manager::query_account_by_number(const std::string &unit_address, const std::string& table_height, data::xunitstate_ptr_t& ptr) {
     ptr = statestore::xstatestore_hub_t::instance()->get_unit_state_by_table(common::xaccount_address_t(unit_address), table_height);
+    XMETRICS_GAUGE(metrics::rpc_query_account_succ, nullptr != ptr ? 1 : 0);
     if (nullptr == ptr) {
-        xwarn("xstore::query_account_by_number fail-load. account=%s", unit_address.c_str());
+        xwarn("xstore::query_account_by_number fail-load. account=%s,table_height=%s", unit_address.c_str(),table_height.c_str());
         return enum_block_not_found;        
-    }
+    }    
     return enum_success;
 }
 xobject_ptr_t<base::xvblock_t> xrpc_eth_query_manager::query_block_by_height(const std::string& table_height) {
