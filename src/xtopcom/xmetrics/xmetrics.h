@@ -607,6 +607,8 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     rpc_auditor_query_request,
     rpc_auditor_forward_request,
     rpc_validator_tx_request,
+    rpc_query_account_succ,
+
     // contract
     contract_table_fullblock_event,
     contract_table_statistic_exec_fullblock,

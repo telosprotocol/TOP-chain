@@ -9,13 +9,15 @@
 #include "xdata/xblocktool.h"
 #include "xdata/xblockbuild.h"
 #include "xdata/xcons_transaction.h"
-
+#include "xdata/xethbuild.h"
+#include "xbasic/xhash.hpp"
 #include "xblockmaker/xtable_builder.h"
 #include "xblockmaker/xblock_builder.h"
 #include "xtxexecutor/xbatchtx_executor.h"
 #include "xtxexecutor/xunit_service_error.h"
 #include "xtxexecutor/xatomictx_executor.h"
 #include "xvledger/xvblockstore.h"
+#include "xstate_mpt/xstate_mpt.h"
 #include "tests/mock/xcertauth_util.hpp"
 #include "tests/mock/xdatamock_unit.hpp"
 #include "tests/mock/xdatamock_address.hpp"
@@ -49,6 +51,9 @@ class xdatamock_table : public base::xvaccount_t {
             m_mock_units.push_back(datamock_unit);
         }        
         xassert(m_mock_units.size() == user_count);
+
+        m_db = db::xdb_factory_t::create_memdb();
+        m_store = store::xstore_factory::create_store_with_static_kvdb(m_db);
     }
 
     void                                disable_fulltable() {m_config_fulltable_interval = 0;}
@@ -357,12 +362,41 @@ class xdatamock_table : public base::xvaccount_t {
 
         cs_para.set_justify_cert_hash(get_lock_block()->get_input_root_hash());
         cs_para.set_parent_height(0);
+
+        evm_common::xh256_t last_state_root;
+        auto ret = data::xblockextract_t::get_state_root(get_cert_block().get(), last_state_root);
+        xassert(ret);
+        std::error_code ec;
+        auto table_mpt = state_mpt::xtop_state_mpt::create(top::xhash256_t(last_state_root.to_bytes()), m_store.get(), get_cert_block()->get_account(), ec);
+        if (ec) {
+            xassert(false);
+        }
+
+        for (auto & unit_and_index : m_batch_units) {
+            auto & unit = unit_and_index.first;
+            auto & index = unit_and_index.second;
+            table_mpt->set_account_index(unit->get_account(), index, ec);
+            if (ec) {
+                xassert(false);
+            }
+        }
+        auto root_hash = table_mpt->get_root_hash(ec);
+        if (ec) {
+            xassert(false);
+        }
+        evm_common::xh256_t state_root = evm_common::xh256_t(root_hash.to_bytes());
+        data::xeth_header_t eth_header;
+        eth_header.set_state_root(state_root);
+        std::string _ethheader_str = eth_header.serialize_to_string();
+        cs_para.set_ethheader(_ethheader_str);
+
         data::xtable_block_para_t lighttable_para;
         blockmaker::xtablebuilder_t::make_table_block_para(m_batch_units, proposal_table_state, execute_output, lighttable_para);
         data::xblock_ptr_t proposal_block = blockmaker::xtablebuilder_t::make_light_block(get_cert_block(),
                                                                             cs_para,
                                                                             lighttable_para);
-        xassert(nullptr != proposal_block);                                                                            
+        xassert(nullptr != proposal_block);    
+        table_mpt->commit(ec);                                                           
         return proposal_block;
     }
 
@@ -400,6 +434,9 @@ class xdatamock_table : public base::xvaccount_t {
     blockmaker::xblock_builder_face_ptr_t       m_fulltable_builder;
     blockmaker::xblockmaker_resources_ptr_t     m_default_resources{nullptr};
     uint32_t                        m_config_fulltable_interval{enum_default_full_table_interval_count};
+
+    std::shared_ptr<db::xdb_face_t>      m_db{nullptr};
+    xobject_ptr_t<store::xstore_face_t>  m_store{nullptr};
 };
 
 }
