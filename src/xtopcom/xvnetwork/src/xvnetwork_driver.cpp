@@ -468,6 +468,12 @@ void xtop_vnetwork_driver::on_vhost_message_data_ready(common::xnode_address_t c
                 break;
             }
 
+            case xmessage_category_state_sync:
+            {
+                XMETRICS_GAUGE(metrics::message_category_state_sync, 1);
+                break;
+            }
+
             case xmessage_block_broadcast:
             {
                 XMETRICS_GAUGE(metrics::message_block_broadcast, 1);

@@ -248,6 +248,7 @@ std::vector<Sync::request *> Sync::children(request * req, xtrie_node_face_ptr_t
         combined_path.insert(combined_path.end(), req->path.begin(), req->path.end());
         combined_path.insert(combined_path.end(), key.begin(), key.end());
         children.push_back(std::make_pair(combined_path, node->Val));
+        break;
     }
     case xtrie_node_type_t::fullnode: {
         auto node = std::make_shared<xtrie_full_node_t>(*(static_cast<xtrie_full_node_t *>(object.get())));
@@ -260,9 +261,11 @@ std::vector<Sync::request *> Sync::children(request * req, xtrie_node_face_ptr_t
                 children.push_back(std::make_pair(combined_path, child));
             }
         }
+        break;
     }
     default: {
         xerror("unknown node type :%zu", static_cast<std::size_t>(object->type()));
+        break;
     }
     }
 

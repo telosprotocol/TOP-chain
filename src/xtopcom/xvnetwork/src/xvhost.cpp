@@ -569,6 +569,12 @@ void xtop_vhost::do_handle_network_data() {
                         break;
                     }
 
+                    case xmessage_category_state_sync:
+                    {
+                        XMETRICS_GAUGE(metrics::message_category_state_sync_contains_duplicate, 1);
+                        break;
+                    }
+
                     case xmessage_block_broadcast:
                     {
                         XMETRICS_GAUGE(metrics::message_block_broadcast_contains_duplicate, 1);
