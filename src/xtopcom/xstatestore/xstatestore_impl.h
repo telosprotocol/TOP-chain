@@ -49,9 +49,9 @@ class xstatestore_impl_t : public xstatestore_face_t {
                                               base::xvblock_t * latest_commit_block,
                                               base::xvproperty_prove_ptr_t & property_prove_ptr,
                                               data::xtablestate_ptr_t & tablestate_ptr) const override;
-    virtual bool execute_table_block(base::xvblock_t * block) override;
+    virtual bool execute_table_block(base::xvblock_t * block) const override;
     virtual void update_node_type(common::xnode_type_t combined_node_type) override;
-    void try_update_tables_execute_height();
+    virtual void try_update_tables_execute_height() const override;
 
  private:
     static base::xauto_ptr<base::xvblock_t> get_latest_connectted_state_changed_block(base::xvblockstore_t* blockstore, const base::xvaccount_t & account);
@@ -64,14 +64,14 @@ class xstatestore_impl_t : public xstatestore_face_t {
     xstatestore_table_ptr_t      get_table_statestore_from_table_addr(common::xaccount_address_t const & table_address) const;
     data::xtablestate_ptr_t      get_table_state_by_block_internal(common::xaccount_address_t const& table_address, base::xvblock_t * target_block) const;
     void    on_block_to_db_event(mbus::xevent_ptr_t e);
-    bool get_mpt(base::xvblock_t * block, xhash256_t & root_hash, std::shared_ptr<state_mpt::xtop_state_mpt> & mpt);
-    void set_latest_executed_info(const base::xvaccount_t & target_account, uint64_t height,const std::string & blockhash);
-    uint64_t get_latest_executed_block_height(const base::xvaccount_t & target_account);
-    bool execute_block_recurse(base::xvblock_t * block, const xhash256_t root_hash, uint64_t min_height);
-    bool set_and_commit_mpt(base::xvblock_t * block, const xhash256_t root_hash, std::shared_ptr<state_mpt::xtop_state_mpt> pre_mpt, bool & mpt_committed);
-    uint64_t try_update_execute_height(const base::xvaccount_t & target_account, uint64_t max_count);
-    void push_try_execute_table(std::string table_addr);
-    void pop_try_execute_tables(std::set<std::string> & try_execute_tables);
+    bool get_mpt(base::xvblock_t * block, xhash256_t & root_hash, std::shared_ptr<state_mpt::xtop_state_mpt> & mpt) const;
+    void set_latest_executed_info(const base::xvaccount_t & target_account, uint64_t height,const std::string & blockhash) const;
+    uint64_t get_latest_executed_block_height(const base::xvaccount_t & target_account) const;
+    bool execute_block_recurse(base::xvblock_t * block, const xhash256_t root_hash, uint64_t min_height) const;
+    bool set_and_commit_mpt(base::xvblock_t * block, const xhash256_t root_hash, std::shared_ptr<state_mpt::xtop_state_mpt> pre_mpt, bool & mpt_committed) const;
+    uint64_t try_update_execute_height(const base::xvaccount_t & target_account, uint64_t max_count) const;
+    void push_try_execute_table(std::string table_addr) const;
+    void pop_try_execute_tables(std::set<std::string> & try_execute_tables) const;
     common::xnode_type_t get_node_type() const;
     bool is_archive_node() const;
 
@@ -80,7 +80,7 @@ private:
     xstatestore_timer_t * m_timer;
     uint32_t m_bus_listen_id;
     common::xnode_type_t m_combined_node_type{common::xnode_type_t::invalid};
-    std::set<std::string> m_try_execute_tables;
+    mutable std::set<std::string> m_try_execute_tables;
     mutable std::mutex m_mutex;
     bool m_started{false};
 };

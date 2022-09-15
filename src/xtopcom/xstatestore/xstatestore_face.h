@@ -47,8 +47,9 @@ class xstatestore_face_t {
                                               base::xvblock_t * latest_commit_block,
                                               base::xvproperty_prove_ptr_t & property_prove_ptr,
                                               data::xtablestate_ptr_t & tablestate_ptr) const = 0;
-    virtual bool execute_table_block(base::xvblock_t * block) = 0;
+    virtual bool execute_table_block(base::xvblock_t * block) const = 0;
     virtual void update_node_type(common::xnode_type_t combined_node_type) = 0;
+    virtual void try_update_tables_execute_height() const = 0;
 };
 
 class xstatestore_hub_t {
