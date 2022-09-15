@@ -16,6 +16,9 @@ enum class xenum_errc {
     ok,
 
     state_sync_cancel,
+    state_network_invalid,
+
+    downloader_is_running,
 };
 using xerrc_t = xenum_errc;
 

@@ -33,6 +33,7 @@ XDEFINE_MSG_CATEGORY(xmessage_category_rpc,         0x0004);
 XDEFINE_MSG_CATEGORY(xmessage_category_sync,        0x0005);
 XDEFINE_MSG_CATEGORY(xmessage_block_broadcast,      0x0006);
 XDEFINE_MSG_CATEGORY(xmessage_category_relay,       0x0007);
+XDEFINE_MSG_CATEGORY(xmessage_category_state_sync,  0x0008);
 
 NS_BEG1(std)
 
