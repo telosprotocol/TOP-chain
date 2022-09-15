@@ -14,6 +14,7 @@
 
 NS_BEG2(top, statestore)
 
+class xstatestore_timer_t;
 // the statestore interface
 class xstatestore_impl_t : public xstatestore_face_t {
  public:
@@ -48,10 +49,9 @@ class xstatestore_impl_t : public xstatestore_face_t {
                                               base::xvblock_t * latest_commit_block,
                                               base::xvproperty_prove_ptr_t & property_prove_ptr,
                                               data::xtablestate_ptr_t & tablestate_ptr) const override;
-   //  virtual bool execute_one_table_block(base::xvblock_t * block, std::shared_ptr<state_mpt::xtop_state_mpt> mpt) override;
-    virtual uint64_t try_update_execute_height(const base::xvaccount_t & target_account, uint64_t max_count) override;
     virtual bool execute_table_block(base::xvblock_t * block) override;
-   //  virtual bool execute_table_block(base::xvblock_t * block, evm_common::xh256_t & root_hash) override;
+    virtual void update_node_type(common::xnode_type_t combined_node_type) override;
+    void try_update_tables_execute_height();
 
  private:
     static base::xauto_ptr<base::xvblock_t> get_latest_connectted_state_changed_block(base::xvblockstore_t* blockstore, const base::xvaccount_t & account);
@@ -69,12 +69,37 @@ class xstatestore_impl_t : public xstatestore_face_t {
     uint64_t get_latest_executed_block_height(const base::xvaccount_t & target_account);
     bool execute_block_recurse(base::xvblock_t * block, const xhash256_t root_hash, uint64_t min_height);
     bool set_and_commit_mpt(base::xvblock_t * block, const xhash256_t root_hash, std::shared_ptr<state_mpt::xtop_state_mpt> pre_mpt, bool & mpt_committed);
+    uint64_t try_update_execute_height(const base::xvaccount_t & target_account, uint64_t max_count);
+    void push_try_execute_table(std::string table_addr);
+    void pop_try_execute_tables(std::set<std::string> & try_execute_tables);
+    common::xnode_type_t get_node_type() const;
+    bool is_archive_node() const;
 
 private:
     std::map<std::string, xstatestore_table_ptr_t> m_table_statestore;
-    base::xxtimer_t * m_timer;
+    xstatestore_timer_t * m_timer;
     uint32_t m_bus_listen_id;
+    common::xnode_type_t m_combined_node_type{common::xnode_type_t::invalid};
+    std::set<std::string> m_try_execute_tables;
+    mutable std::mutex m_mutex;
     bool m_started{false};
+};
+
+class xstatestore_timer_t : public top::base::xxtimer_t {
+public:
+    xstatestore_timer_t(base::xcontext_t & _context, int32_t timer_thread_id, xstatestore_impl_t * statestore)
+      : base::xxtimer_t(_context, timer_thread_id), m_statestore(statestore) {
+    }
+
+protected:
+    ~xstatestore_timer_t() override {
+    }
+
+protected:
+    bool on_timer_fire(const int32_t thread_id, const int64_t timer_id, const int64_t current_time_ms, const int32_t start_timeout_ms, int32_t & in_out_cur_interval_ms) override;
+
+private:
+    observer_ptr<xstatestore_impl_t> m_statestore;
 };
 
 NS_END2

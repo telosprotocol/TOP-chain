@@ -97,6 +97,10 @@ data::xblock_consensus_para_ptr_t   xproposal_maker_t::leader_set_consensus_para
     return cs_para;
 }
 
+bool xproposal_maker_t::account_index_upgrade() {
+    return m_table_maker->account_index_upgrade();
+}
+
 int xproposal_maker_t::backup_verify_and_set_consensus_para_basic(xblock_consensus_para_t & cs_para, base::xvblock_t *proposal_block) {
     uint64_t gmtime = proposal_block->get_second_level_gmtime();
     uint64_t now = (uint64_t)base::xtime_utl::gettimeofday();

@@ -43,8 +43,8 @@ bool xstatestore_impl_t::start(const xobject_ptr_t<base::xiothread_t> & iothread
     m_started = true;
 
     // todo(nathan):use timer to update mpt and table state.
-    m_timer = new base::xxtimer_t(top::base::xcontext_t::instance(), iothread->get_thread_id());
-
+    m_timer = new xstatestore_timer_t(top::base::xcontext_t::instance(), iothread->get_thread_id(), this);
+    m_timer->start(0, 1000);
     m_bus_listen_id = get_mbus()->add_listener(top::mbus::xevent_major_type_store, std::bind(&xstatestore_impl_t::on_block_to_db_event, this, std::placeholders::_1));
     return false;
 }
@@ -88,24 +88,6 @@ uint64_t xstatestore_impl_t::get_latest_executed_block_height(const base::xvacco
     return account_obj->get_latest_executed_block_height();
 }
 
-// bool xstatestore_impl_t::execute_one_table_block(base::xvblock_t * block, std::shared_ptr<state_mpt::xtop_state_mpt> mpt) {
-//     if (mpt != nullptr) {
-//         std::error_code ec;
-//         auto hash = mpt->commit(ec);
-//         if (ec) {
-//             xdbg("xstatestore_impl_t::execute_table_block commit fail");
-//             return false;
-//         }
-//         xdbg("xstatestore_impl_t::execute_table_block commit hash:%s", hash.as_hex_str().c_str());        
-//     }
-
-//     auto state = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(block);
-//     if (state == nullptr) {
-//         return false;
-//     }
-//     return true;
-// }
-
 bool xstatestore_impl_t::get_mpt(base::xvblock_t * block, xhash256_t & root_hash, std::shared_ptr<state_mpt::xtop_state_mpt> & mpt) {
     evm_common::xh256_t state_root;
     auto ret = data::xblockextract_t::get_state_root(block, state_root);
@@ -128,6 +110,12 @@ uint64_t xstatestore_impl_t::try_update_execute_height(const base::xvaccount_t &
     uint64_t _highest_commit_block_height = base::xvchain_t::instance().get_xblockstore()->get_latest_committed_block_height(table_addr);
 
     if (old_execute_height >= _highest_commit_block_height) {
+        return old_execute_height;
+    }
+
+    if (!is_archive_node() && _highest_commit_block_height >= old_execute_height + 1000) {
+        xinfo("xstatestore_impl_t::try_update_execute_height fall behind too much. hight:%llu,%llu", _highest_commit_block_height, old_execute_height);
+        // todo(nathan): trigger mpt sync if not archive node, is _highest_commit_block_height >= old_execute_height + 1000
         return old_execute_height;
     }
 
@@ -307,7 +295,7 @@ bool xstatestore_impl_t::execute_block_recurse(base::xvblock_t * block, const xh
 
 bool xstatestore_impl_t::execute_table_block(base::xvblock_t * block) {
     base::xvaccount_t table_addr(block->get_account());
-    uint64_t execute_height = try_update_execute_height(table_addr, 32);
+    uint64_t execute_height = get_latest_executed_block_height(table_addr);
 
     auto height = block->get_height();
     if (height <= execute_height) {
@@ -315,6 +303,7 @@ bool xstatestore_impl_t::execute_table_block(base::xvblock_t * block) {
     }
 
     if (height > execute_height + 2) {
+        push_try_execute_table(block->get_account());
         xdbg("xstatestore_impl_t::execute_table_block block height(%llu) > execute height(%llu) + 2", height, execute_height);
         return false;
     }
@@ -332,98 +321,6 @@ bool xstatestore_impl_t::execute_table_block(base::xvblock_t * block) {
 
     return execute_block_recurse(block, root_hash, execute_height);
 }
-
-// bool xstatestore_impl_t::execute_table_block(base::xvblock_t * block, evm_common::xh256_t & root_hash) {
-//     xinfo("xstatestore_impl_t::on_block_confirmed process,level:%d,class:%d,block:%s", block->get_block_level(), block->get_block_class(), block->dump().c_str());
-
-//     base::xvaccount_t table_addr(block->get_account());
-
-//     evm_common::xh256_t state_root;
-//     auto ret = data::xblockextract_t::get_state_root(block, state_root);
-//     if (!ret) {
-//         xwarn("xstatestore_impl_t::execute_table_block get state root fail. block:%s", block->dump().c_str());
-//         return false;
-//     }
-
-//     std::error_code ec;
-//     xhash256_t state_root_hash(state_root.to_bytes());
-
-//     if (state_root_hash == xhash256_t()) {
-//         root_hash = state_root;
-//         return true;
-//     }
-
-//     std::shared_ptr<state_mpt::xtop_state_mpt> table_mpt = state_mpt::xtop_state_mpt::create(state_root_hash, base::xvchain_t::instance().get_xdbstore(), table_addr.get_account(), ec);
-//     if (table_mpt == nullptr || ec) {
-//         auto * blkstore = base::xvchain_t::instance().get_xblockstore();
-//         uint64_t height = block->get_height() - 1;
-//         xobject_ptr_t<base::xvblock_t> pre_block = blkstore->load_block_object(table_addr, height, block->get_last_block_hash(), false);
-//         if (nullptr == pre_block) {
-//             xwarn("xstatestore_impl_t::execute_table_block: nullptr block,account=%s,height=%ld", table_addr.get_account().c_str(), height);
-//             return false;
-//         }
-
-//         evm_common::xh256_t pre_root_hash;
-//         ret = execute_table_block(pre_block.get(), pre_root_hash);
-//         if (!ret) {
-//             xwarn("xstatestore_impl_t::execute_table_block load pre block mpt fail. pre block:%s", pre_block->dump().c_str());
-//             return false;
-//         }
-
-//         // a state mpt ptr should not commit twice. create mpt again here.
-//         xhash256_t pre_state_root_hash(pre_root_hash.to_bytes());
-//         ec.clear();
-//         auto pre_table_mpt = state_mpt::xtop_state_mpt::create(pre_state_root_hash, base::xvchain_t::instance().get_xdbstore(), table_addr.get_account(), ec);
-//         if (pre_table_mpt == nullptr) {
-//             xerror("xstatestore_impl_t::execute_table_block create mpt fail. pre hash:%s.pre block:%s", pre_state_root_hash.as_hex_str().c_str(), pre_block->dump().c_str());
-//             return false;
-//         }
-
-//         if (false == base::xvchain_t::instance().get_xblockstore()->load_block_output(table_addr, block, metrics::blockstore_access_from_txpool_on_block_event)) {
-//             xerror("xstatestore_impl_t::on_block_to_db_event fail-load block input output, block=%s", block->dump().c_str());
-//             return false;
-//         }
-//         auto account_indexs_str = block->get_account_indexs();
-//         if (!account_indexs_str.empty()) {
-//             data::xtable_account_indexs_t account_indexs;
-//             account_indexs.serialize_from_string(account_indexs_str);
-//             ec.clear();
-//             for (auto & index : account_indexs.get_account_indexs()) {
-//                 pre_table_mpt->set_account_index(index.first, index.second, ec);
-//                 if (ec) {
-//                     xerror("xstatestore_impl_t::execute_table_block set account index from table property to mpt fail.block:%s", block->dump().c_str());
-//                     return false;
-//                 }
-//             }
-
-//             ec.clear();
-//             // check if root matches.
-//             auto cur_root_hash = pre_table_mpt->get_root_hash(ec);
-//             if (cur_root_hash != state_root_hash) {
-//                 xerror("xstatestore_impl_t::execute_table_block hash not match cur_root_hash:%s,state_root_hash:%s,block:%s",
-//                        cur_root_hash.as_hex_str().c_str(),
-//                        state_root_hash.as_hex_str().c_str(),
-//                        block->dump().c_str());
-//                 return false;
-//             }
-
-//             pre_table_mpt->commit(ec);
-//             if (ec) {
-//                 xerror("xstatestore_impl_t::execute_table_block commit mpt fail.block:%s,root_hash:%s", block->dump().c_str(), state_root_hash.as_hex_str().c_str());
-//                 return false;
-//             }
-//             xdbg("xstatestore_impl_t::execute_table_block commit mpt succ.block:%s,root_hash:%s", block->dump().c_str(), state_root_hash.as_hex_str().c_str());
-//         }
-//     }
-
-//     xdbg("xstatestore_impl_t::execute_table_block create mpt ok. hash:%s.block:%s", state_root_hash.as_hex_str().c_str(), block->dump().c_str());
-
-//     base::auto_reference<base::xvblock_t> auto_hold_block_ptr(block);
-//     base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->execute_block(block, metrics::statestore_access_from_blockstore);
-
-//     root_hash = state_root;
-//     return true;
-// }
 
 xstatestore_table_ptr_t xstatestore_impl_t::get_table_statestore_from_unit_addr(common::xaccount_address_t const & account_address) const {
     std::string table_address = base::xvaccount_t::make_table_account_address(account_address.vaccount());
@@ -752,5 +649,53 @@ mbus::xmessage_bus_t * xstatestore_impl_t::get_mbus() const {
     return (mbus::xmessage_bus_t *)base::xvchain_t::instance().get_xevmbus();
 }
 
+void xstatestore_impl_t::update_node_type(common::xnode_type_t combined_node_type) {
+    m_combined_node_type = combined_node_type;
+}
+
+common::xnode_type_t xstatestore_impl_t::get_node_type() const {
+    return m_combined_node_type;
+}
+
+bool xstatestore_impl_t::is_archive_node() const {
+    return common::has<common::xnode_type_t::storage_archive>(get_node_type());
+}
+
+void xstatestore_impl_t::push_try_execute_table(std::string table_addr) {
+    if (!is_archive_node()) {
+        std::lock_guard<std::mutex> lck(m_mutex);
+        m_try_execute_tables.insert(table_addr);
+    }
+}
+
+void xstatestore_impl_t::pop_try_execute_tables(std::set<std::string> & try_execute_tables) {
+    try_execute_tables.clear();
+    if (is_archive_node()) {
+        std::vector<std::string> tables_vec = data::xblocktool_t::make_all_table_addresses();
+        std::set<std::string> tables(tables_vec.begin(), tables_vec.end());
+        try_execute_tables.swap(tables);
+    } else {
+        std::lock_guard<std::mutex> lck(m_mutex);
+        try_execute_tables.swap(m_try_execute_tables);
+    }
+}
+
+void xstatestore_impl_t::try_update_tables_execute_height() {
+    std::set<std::string> try_execute_tables;
+    pop_try_execute_tables(try_execute_tables);
+    for (auto & table : try_execute_tables) {
+        try_update_execute_height(base::xvaccount_t(table), 32);
+    }
+    
+}
+
+bool xstatestore_timer_t::on_timer_fire(const int32_t thread_id,
+                                        const int64_t timer_id,
+                                        const int64_t current_time_ms,
+                                        const int32_t start_timeout_ms,
+                                        int32_t & in_out_cur_interval_ms) {
+    m_statestore->try_update_tables_execute_height();
+    return true;
+}
 
 NS_END2
