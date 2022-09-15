@@ -5,6 +5,8 @@
 #include "xstate_mpt/xstate_mpt_db.h"
 #include "xvledger/xvdbstore.h"
 #include "xvledger/xvledger.h"
+#include "xstate_mpt/xstate_sync.h"
+#include "xevm_common/trie/xtrie_sync.h"
 
 #define private public
 #include "xstate_mpt/xstate_mpt.h"
@@ -104,7 +106,7 @@ TEST_F(test_state_mpt_fixture, test_db) {
 
 TEST_F(test_state_mpt_fixture, test_example) {
     std::error_code ec;
-    auto s = state_mpt::xstate_mpt_t::create({}, m_db, TABLE_ADDRESS, ec);
+    auto s = state_mpt::xstate_mpt_t::create(TABLE_ADDRESS, {}, m_db, nullptr, ec);
     EXPECT_FALSE(ec);
 
     std::string k1("dog");
@@ -121,13 +123,13 @@ TEST_F(test_state_mpt_fixture, test_example) {
     s->set_account_index(k3, index3, ec);
     EXPECT_FALSE(ec);
     auto hash = s->commit(ec);
-    hash;
+    xdbg("hash: %s", to_hex(hash).c_str());
     EXPECT_FALSE(ec);
 }
 
 TEST_F(test_state_mpt_fixture, test_get_unknown) {
     std::error_code ec;
-    auto s = state_mpt::xstate_mpt_t::create({}, m_db, TABLE_ADDRESS, ec);
+    auto s = state_mpt::xstate_mpt_t::create(TABLE_ADDRESS, {}, m_db, nullptr, ec);
     EXPECT_EQ(ec.value(), 0);
 
     ec.clear();
@@ -150,7 +152,7 @@ TEST_F(test_state_mpt_fixture, test_create_twice) {
 
 TEST_F(test_state_mpt_fixture, test_basic) {
     std::error_code ec;
-    auto s = state_mpt::xstate_mpt_t::create({}, m_db, TABLE_ADDRESS, ec);
+    auto s = state_mpt::xstate_mpt_t::create(TABLE_ADDRESS, {}, m_db, state_mpt::xstate_mpt_cache_t::instance(), ec);
     EXPECT_EQ(ec.value(), 0);
 
     auto origin_hash = s->m_trie->Hash();
@@ -260,16 +262,146 @@ TEST_F(test_state_mpt_fixture, test_basic) {
         EXPECT_EQ(s->m_journal.index_changes[i - 4].prev_index, std::string());
         EXPECT_TRUE(s->m_journal.dirties.count(data[i].first));
     }
+    EXPECT_EQ(s->m_cache_indexes.size(), 10);
     // commit
-    s->commit(ec);
+    auto hash = s->commit(ec);
     EXPECT_FALSE(ec);
     // cache is not lost
     EXPECT_EQ(s->m_indexes.size(), 10);
     EXPECT_TRUE(s->m_journal.index_changes.empty());
     EXPECT_TRUE(s->m_journal.dirties.empty());
+
+    EXPECT_EQ(state_mpt::xstate_mpt_cache_t::instance()->m_cache.size(), 1);
+    EXPECT_TRUE(state_mpt::xstate_mpt_cache_t::instance()->m_cache.count(TABLE_ADDRESS));
+    auto & cache = state_mpt::xstate_mpt_cache_t::instance()->m_cache[TABLE_ADDRESS];
+
+    for (auto i = 1; i < 10; i++) {
+        std::string str;
+        cache->get(data[i].first + "@" + hash.as_hex_str().substr(0, 8), str);
+        std::string str2;
+        data[i].second.serialize_to(str2);
+        EXPECT_EQ(str, str2);
+    }
 }
 
-TEST_F(test_state_mpt_fixture, test_double_commit) {
+// TODO: nedd to fix double commit
+TEST_F(test_state_mpt_fixture, test_create_twice_commit_twice) {
+    std::error_code ec;
+    xhash256_t root_hash(random_bytes(32));
+    std::cout << root_hash.as_hex_str() << std::endl;
+    auto s = state_mpt::xstate_mpt_t::create(TABLE_ADDRESS, root_hash, m_db, nullptr, ec);
+    EXPECT_NE(ec.value(), 0);
+
+    xhash256_t root_hash1;
+    std::cout << root_hash1.as_hex_str() << std::endl;
+    ec.clear();
+    auto s1 = state_mpt::xstate_mpt_t::create(TABLE_ADDRESS, root_hash1, m_db, nullptr, ec);
+    EXPECT_EQ(ec.value(), 0);
+    EXPECT_NE(s1, nullptr);
+
+    s1->set_account_index("testaddr1", "testindex1", ec);
+    auto hash1 = s1->commit(ec);
+    EXPECT_EQ(ec.value(), 0);
+    std::cout << "hash1:" << hash1.as_hex_str() << std::endl;
+
+    // s1->set_account_index("testaddr2", "testindex2", ec);
+    // auto hash2 = s1->commit(ec);
+    // EXPECT_EQ(ec.value(), 0);
+    // std::cout << "hash2:" << hash2.as_hex_str() << std::endl;
+}
+
+TEST_F(test_state_mpt_fixture, test_trie_sync) {
+    auto k4 = "6bf0c8abe6bc49f558c591d09cd8639459f93aa70a9da15a0f1a14ee86f63d9c";
+    auto v4 = "e5808080808080cb358902003040020132013280808080808080808089010030400101310131";
+    auto k3 = "e7f27dd05b413bfa74d15bb326398e109780e284e5e7e30722a69c1bedea5a34";
+    auto v3 = "e583006f67a06bf0c8abe6bc49f558c591d09cd8639459f93aa70a9da15a0f1a14ee86f63d9c";
+    auto k2 = "e87f9bf2c49634104763d8674fc0dda3d6267d142ea963c76c04351c9c3d32ec";
+    auto v2 = "f83f808080ce8320617489030030400301330133a0e7f27dd05b413bfa74d15bb326398e109780e284e5e7e30722a69c1bedea5a34808080808080808080808080";
+    auto k1 = "6290c634f8ae9c9ea8dd5e60a563941d0ae70cc5f3bf87d3e101a481a431757e";
+    auto v1 = "e216a0e87f9bf2c49634104763d8674fc0dda3d6267d142ea963c76c04351c9c3d32ec";
+
+    std::error_code ec;
+    auto sched = state_mpt::new_state_sync(TABLE_ADDRESS, xhash256_t(from_hex(k1, ec)), m_db);
+    auto mpt_db = std::make_shared<state_mpt::xstate_mpt_db_t>(m_db, TABLE_ADDRESS);
+    EXPECT_FALSE(ec);
+    size_t fill = 128;
+    // step 1
+    {
+        auto res = sched->Missing(fill);
+        auto nodes = std::get<0>(res);
+        auto paths = std::get<1>(res);
+        auto units = std::get<2>(res);
+        EXPECT_EQ(nodes.size(), 1);
+        EXPECT_TRUE(nodes[0]== xhash256_t(from_hex(k1, ec)));
+        EXPECT_FALSE(ec);
+        EXPECT_EQ(paths.size(), 1);
+        EXPECT_TRUE(units.empty());
+        evm_common::trie::SyncResult data;
+        data.Hash = xhash256_t(from_hex(k1, ec));
+        EXPECT_FALSE(ec);
+        data.Data = from_hex(v1, ec);
+        EXPECT_FALSE(ec);
+        sched->Process(data, ec);
+        EXPECT_FALSE(ec);
+    }
+    // step 2
+    {
+        auto res = sched->Missing(fill);
+        auto nodes = std::get<0>(res);
+        auto paths = std::get<1>(res);
+        auto units = std::get<2>(res);
+        EXPECT_EQ(nodes.size(), 1);
+        EXPECT_TRUE(nodes[0]== xhash256_t(from_hex(k2, ec)));
+        EXPECT_FALSE(ec);
+        EXPECT_EQ(paths.size(), 1);
+        EXPECT_TRUE(units.empty());
+        evm_common::trie::SyncResult data;
+        data.Hash = xhash256_t(from_hex(k2, ec));
+        EXPECT_FALSE(ec);
+        data.Data = from_hex(v2, ec);
+        EXPECT_FALSE(ec);
+        sched->Process(data, ec);
+        EXPECT_FALSE(ec);
+    }
+    // step 3
+    {
+        auto res = sched->Missing(fill);
+        auto nodes = std::get<0>(res);
+        auto paths = std::get<1>(res);
+        auto units = std::get<2>(res);
+        EXPECT_EQ(nodes.size(), 1);
+        EXPECT_TRUE(nodes[0]== xhash256_t(from_hex(k3, ec)));
+        EXPECT_FALSE(ec);
+        EXPECT_EQ(paths.size(), 1);
+        EXPECT_TRUE(units.empty());
+        evm_common::trie::SyncResult data;
+        data.Hash = xhash256_t(from_hex(k3, ec));
+        EXPECT_FALSE(ec);
+        data.Data = from_hex(v3, ec);
+        EXPECT_FALSE(ec);
+        sched->Process(data, ec);
+        EXPECT_FALSE(ec);
+    }
+    // step 4
+    {
+        auto res = sched->Missing(fill);
+        auto nodes = std::get<0>(res);
+        auto paths = std::get<1>(res);
+        auto units = std::get<2>(res);
+        EXPECT_EQ(nodes.size(), 1);
+        EXPECT_TRUE(nodes[0]== xhash256_t(from_hex(k4, ec)));
+        EXPECT_FALSE(ec);
+        EXPECT_EQ(paths.size(), 1);
+        EXPECT_TRUE(units.empty());
+        evm_common::trie::SyncResult data;
+        data.Hash = xhash256_t(from_hex(k4, ec));
+        EXPECT_FALSE(ec);
+        data.Data = from_hex(v4, ec);
+        EXPECT_FALSE(ec);
+        sched->Process(data, ec);
+    }
+    sched->Commit(mpt_db);
+    EXPECT_EQ(sched->Pending(), 0);
 
 }
 

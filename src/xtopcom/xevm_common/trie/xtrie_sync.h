@@ -55,7 +55,7 @@ private:
         bool code{false};  // Whether this is a code entry
 
         std::vector<request *> parents;  // Parent state nodes referencing this entry (notify all upon completion)
-        std::size_t deps;                // Number of dependencies before allowed to commit this node
+        std::size_t deps{0};                // Number of dependencies before allowed to commit this node
 
         LeafCallback callback{nullptr};  // Callback to invoke if a leaf node it reached on this branch
 
@@ -117,7 +117,7 @@ public:
     // both eth/6x style fast sync and snap/1x style state sync, the paths of trie
     // nodes are returned too, as well as separate hash list for codes.
     // return type: <nodes, SyncPath, codes>
-    std::tuple<std::vector<xhash256_t>, SyncPath, std::vector<xhash256_t>> Missing(std::size_t max);
+    std::tuple<std::vector<xhash256_t>, std::vector<SyncPath>, std::vector<xhash256_t>> Missing(std::size_t max);
 
     // Process injects the received data for requested item. Note it can
     // happpen that the single response commits two pending requests(e.g.

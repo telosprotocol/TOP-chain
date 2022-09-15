@@ -8,6 +8,7 @@
 #include "xmbus/xmessage_bus.h"
 #include "xunit_service/xcons_face.h"
 #include "xunit_service/xcons_utl.h"
+#include "xstate_sync/xstate_sync.h"
 
 #include <map>
 #include <mutex>
@@ -31,7 +32,8 @@ xcons_service_mgr_ptr xcons_mgr_build(std::string const & node_account,
                                       xobject_ptr_t<base::xvcertauth_t> const & certauth,
                                       observer_ptr<election::cache::xdata_accessor_face_t> const & accessor,
                                       observer_ptr<mbus::xmessage_bus_face_t> const & mbus,
-                                      observer_ptr<router::xrouter_face_t> const & router);
+                                      observer_ptr<router::xrouter_face_t> const & router,
+                                      std::shared_ptr<state_sync::xstate_sync_t> const & m_state_syncer);
 
 class xcons_service_mgr
   : public xcons_service_mgr_face
@@ -42,7 +44,8 @@ public:
     xcons_service_mgr(observer_ptr<mbus::xmessage_bus_face_t> const & mb,
                       const std::shared_ptr<xnetwork_proxy_face> & network_proxy,
                       const xcons_dispatcher_builder_ptr & dispatcher_builder,
-                      const std::shared_ptr<xcons_service_para_face> & para);
+                      const std::shared_ptr<xcons_service_para_face> & para,
+                      const std::shared_ptr<state_sync::xstate_sync_t> & state_syncer);
     virtual ~xcons_service_mgr();
 
 public:
@@ -70,6 +73,7 @@ protected:
     std::map<xvip2_t, xcons_services, xvip2_compare> m_cons_map;
     std::shared_ptr<xnetwork_proxy_face> m_network_proxy;
     std::shared_ptr<xcons_service_para_face> m_para;
+    std::shared_ptr<state_sync::xstate_sync_t> m_state_syncer;
     std::mutex m_mutex;
 };
 

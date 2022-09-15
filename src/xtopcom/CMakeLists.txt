@@ -70,6 +70,7 @@ if (BUILD_EVM)
 endif()
 add_subdirectory(xgasfee)
 add_subdirectory(xstate_mpt)
+add_subdirectory(xstate_sync)
 add_subdirectory(xdbstore)
 add_subdirectory(xstatestore)
 

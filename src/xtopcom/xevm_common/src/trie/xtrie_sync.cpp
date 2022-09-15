@@ -106,9 +106,9 @@ void Sync::AddCodeEntry(xhash256_t const & hash, xbytes_t const & path, xhash256
     schedule(req);
 }
 
-std::tuple<std::vector<xhash256_t>, SyncPath, std::vector<xhash256_t>> Sync::Missing(std::size_t max) {
+std::tuple<std::vector<xhash256_t>, std::vector<SyncPath>, std::vector<xhash256_t>> Sync::Missing(std::size_t max) {
     std::vector<xhash256_t> nodeHashes;
-    SyncPath nodePaths;
+    std::vector<SyncPath> nodePaths;
     std::vector<xhash256_t> codeHashes;
 
     while (!queue.empty() && (max == 0 || nodeHashes.size() + codeHashes.size() < max)) {
@@ -128,7 +128,7 @@ std::tuple<std::vector<xhash256_t>, SyncPath, std::vector<xhash256_t>> Sync::Mis
         if (nodeReqs.find(hash) != nodeReqs.end()) {
             nodeHashes.push_back(hash);
             auto new_path = newSyncPath(nodeReqs[hash]->path);
-            nodePaths.insert(nodePaths.end(), new_path.begin(), new_path.end());
+            nodePaths.push_back(new_path);
         } else {
             codeHashes.push_back(hash);
         }
@@ -248,6 +248,7 @@ std::vector<Sync::request *> Sync::children(request * req, xtrie_node_face_ptr_t
         combined_path.insert(combined_path.end(), req->path.begin(), req->path.end());
         combined_path.insert(combined_path.end(), key.begin(), key.end());
         children.push_back(std::make_pair(combined_path, node->Val));
+        break;
     }
     case xtrie_node_type_t::fullnode: {
         auto node = std::make_shared<xtrie_full_node_t>(*(static_cast<xtrie_full_node_t *>(object.get())));
@@ -260,9 +261,11 @@ std::vector<Sync::request *> Sync::children(request * req, xtrie_node_face_ptr_t
                 children.push_back(std::make_pair(combined_path, child));
             }
         }
+        break;
     }
     default: {
         xerror("unknown node type :%zu", static_cast<std::size_t>(object->type()));
+        break;
     }
     }
 
