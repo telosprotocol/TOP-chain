@@ -202,7 +202,8 @@ bool xstatectx_base_t::get_account_index(const data::xvblock_ptr_t & block,
             xwarn("xstatectx_base_t::get_account_index get_account_index from mpt fail.root hash:%s.block:%s", root_hash.as_hex_str().c_str(), block->dump().c_str());
             return false;
         }
-        xdbg("xstatectx_base_t::get_account_index succ root hash:%s.account:%s index:%s", root_hash.as_hex_str().c_str(), account.get_account().c_str(), account_index.dump().c_str());
+        xdbg("xstatectx_base_t::get_account_index succ.table=%s,height=%ld,viewid=%ld,root hash:%s.account:%s index:%s", 
+            block->get_account().c_str(), block->get_height(), block->get_viewid(), root_hash.as_hex_str().c_str(), account.get_account().c_str(), account_index.dump().c_str());
         return true;
     }
 
