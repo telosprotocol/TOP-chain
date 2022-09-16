@@ -210,6 +210,9 @@ public:
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(enable_node_whitelist);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(node_whitelist);
 
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(enable_transaction_whitelist);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(transaction_whitelist);
+
         std::vector<std::string> committee_addrs = xrootblock_t::get_tcc_initial_committee_addr();
         for (auto & v : committee_addrs) {
             m_initial_committee.push_back(v);
