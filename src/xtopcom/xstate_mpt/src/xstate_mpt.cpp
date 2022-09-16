@@ -16,6 +16,8 @@ std::shared_ptr<xtop_state_mpt> xtop_state_mpt::create(const std::string & table
                                                        base::xvdbstore_t * db,
                                                        xstate_mpt_cache_t * cache,
                                                        std::error_code & ec) {
+    cache = nullptr;  // TODO(jimmy)
+
     xtop_state_mpt mpt;
     mpt.init(table, root, db, cache, ec);
     if (ec) {

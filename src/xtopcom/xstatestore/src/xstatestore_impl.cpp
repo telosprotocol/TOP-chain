@@ -97,7 +97,7 @@ bool xstatestore_impl_t::get_mpt(base::xvblock_t * block, xhash256_t & root_hash
     }
     std::error_code ec;
     root_hash = xhash256_t(state_root.to_bytes());
-    mpt = state_mpt::xtop_state_mpt::create(root_hash, base::xvchain_t::instance().get_xdbstore(), block->get_account(), ec);
+    mpt = state_mpt::xtop_state_mpt::create(block->get_account(), root_hash, base::xvchain_t::instance().get_xdbstore(), state_mpt::xstate_mpt_cache_t::instance(), ec);
     if (ec) {
         return false;
     }
@@ -170,7 +170,7 @@ uint64_t xstatestore_impl_t::try_update_execute_height(const base::xvaccount_t &
 
             std::error_code ec;
             if (pre_mpt_committed) {
-                pre_mpt = state_mpt::xtop_state_mpt::create(pre_root_hash, base::xvchain_t::instance().get_xdbstore(), table_addr.get_account(), ec);
+                pre_mpt = state_mpt::xtop_state_mpt::create(table_addr.get_account(), pre_root_hash, base::xvchain_t::instance().get_xdbstore(), state_mpt::xstate_mpt_cache_t::instance(), ec);
                 if (ec) {
                     xerror("xstatestore_impl_t::try_update_execute_height get_block_and_mpt fail.");
                     break;

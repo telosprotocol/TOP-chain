@@ -702,7 +702,7 @@ namespace top
                 base::xvblock_ptr_t unit_block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_unit_account, account_index.get_latest_unit_height(), account_index.get_latest_unit_hash(), true);
                 if (nullptr == unit_block) {
                     // TODO(jimmy)
-                    xerror("xvblockstore_impl::load_block_output_offdata,fail-load unit. block:%s,",block->dump().c_str());
+                    xerror("xvblockstore_impl::load_block_output_offdata,fail-load unit. block:%s,account_index=%s,%s",block->dump().c_str(),addr.c_str(),account_index.dump().c_str());
                     return false;
                 }
                 subblocks.push_back(unit_block);

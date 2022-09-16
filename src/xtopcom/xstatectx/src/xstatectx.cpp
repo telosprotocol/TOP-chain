@@ -77,6 +77,7 @@ xunitstate_ctx_ptr_t xstatectx_t::load_unit_ctx(const base::xvaccount_t & addr) 
                 if (nullptr != bstate) {
                     data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get(), false);  // modify-state
                     unit_ctx = std::make_shared<xunitstate_ctx_t>(unitstate, unitblock);
+                    xdbg("xstatectx_t::load_unit_ctx succ-return unit unitstate.table=%s,account=%s,index=%s", m_table_ctx->get_table_state()->get_bstate()->dump().c_str(), addr.get_account().c_str(), account_index.dump().c_str());
                 }
             }
         } else {
@@ -85,7 +86,7 @@ xunitstate_ctx_ptr_t xstatectx_t::load_unit_ctx(const base::xvaccount_t & addr) 
                 bstate = m_statectx_base.change_to_proposal_block_state(account_index, unitstate->get_bstate().get());
                 data::xunitstate_ptr_t unitstate_modify = std::make_shared<data::xunit_bstate_t>(bstate.get(), false);  // modify-state
                 unit_ctx = std::make_shared<xunitstate_ctx_t>(unitstate_modify, unitblock);
-                xdbg("xstatectx_t::load_unit_ctx succ-return accountindex unitstate.account=%s,index=%s", addr.get_account().c_str(), account_index.dump().c_str());
+                xdbg("xstatectx_t::load_unit_ctx succ-return accountindex unitstate.table=%s,account=%s,index=%s", m_table_ctx->get_table_state()->get_bstate()->dump().c_str(), addr.get_account().c_str(), account_index.dump().c_str());
             }
         }
     } else { // different table unit state is readonly
