@@ -171,8 +171,8 @@ namespace top
             virtual void*         query_interface(const int32_t _enum_xobject_type_) override;//caller need to cast (void*) to related ptr
             
         public://read-only
-            inline const uint64_t       get_block_height()          const {return m_block_height;}
-            inline const uint64_t       get_block_viewid()          const {return m_block_viewid;}
+            inline       uint64_t       get_block_height() const noexcept {return m_block_height;}
+            inline       uint64_t       get_block_viewid() const noexcept {return m_block_viewid;}
  
             inline const std::string &  get_last_block_hash()       const {return m_last_block_hash;}
             inline const std::string &  get_last_fullblock_hash()   const {return m_last_full_block_hash;}

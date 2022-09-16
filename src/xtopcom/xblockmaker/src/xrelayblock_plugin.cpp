@@ -69,7 +69,7 @@ data::xcons_transaction_ptr_t xrelayblock_plugin_t::make_relay_make_block_contra
         std::string call_params = get_new_relay_election_data(statectx_ptr, timestamp);
         base::xstream_t stream(base::xcontext_t::instance());
         stream << call_params;
-        data::xtransaction_ptr_t tx = data::xtx_factory::create_sys_contract_call_self_tx(m_relay_make_block_contract_state->get_account(),
+        data::xtransaction_ptr_t tx = data::xtx_factory::create_sys_contract_call_self_tx(m_relay_make_block_contract_state->account_address().value(),
                                                         m_relay_make_block_contract_state->account_send_trans_number(), m_relay_make_block_contract_state->account_send_trans_hash(),
                                                         func_name, std::string((char *)stream.data(), stream.size()), timestamp, EXPIRE_DURATION); 
         data::xcons_transaction_ptr_t contx = make_object_ptr<data::xcons_transaction_t>(tx.get());

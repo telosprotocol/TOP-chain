@@ -81,7 +81,7 @@ bool xtable_state_cache_t::get_account_index(const std::string & account, base::
 
 uint64_t xtable_state_cache_t::get_state_height() const {
     std::lock_guard<std::mutex> lck(m_mutex);
-    return m_table_state == nullptr ? 0 : m_table_state->get_block_height();
+    return m_table_state == nullptr ? 0 : m_table_state->height();
 }
 
 bool xtable_state_cache_t::init_table_state() const {

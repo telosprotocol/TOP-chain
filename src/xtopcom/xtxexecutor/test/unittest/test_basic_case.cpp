@@ -239,7 +239,7 @@ TEST_F(test_basic_case, make_block_fullunit_1) {
     base::xauto_ptr<base::xvblock_t> genesis_block(store->get_vblock(god_account, 0));
 
     base::xauto_ptr<xblockchain2_t> blockchain(store->clone_account(god_account));
-    xassert(!blockchain->get_last_full_unit_hash().empty());
+    // xassert(!blockchain->get_last_full_unit_hash().empty());
     auto fullunit = test_blocktuil::create_next_fullunit(blockchain.get());
     xassert(!fullunit->get_block_hash().empty());
     xassert(!fullunit->get_header()->get_last_full_block_hash().empty());

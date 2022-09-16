@@ -196,7 +196,7 @@ bool     xtablebuilder_t::update_receipt_confirmids(const data::xtablestate_ptr_
              tablestate->get_receiptid_state()->get_self_tableid(),
              confirmid_pair.first,
              confirmid_pair.second,
-             tablestate->get_block_height());
+             tablestate->height());
         base::xreceiptid_pair_t receiptid_pair;
         tablestate->find_receiptid_pair(confirmid_pair.first, receiptid_pair);
         if (confirmid_pair.second > receiptid_pair.get_confirmid_max() && confirmid_pair.second <= receiptid_pair.get_sendid_max()) {
@@ -204,11 +204,11 @@ bool     xtablebuilder_t::update_receipt_confirmids(const data::xtablestate_ptr_
             tablestate->set_receiptid_pair(confirmid_pair.first, receiptid_pair);  // save to modified pairs
         } else {
             xerror("xtablebuilder_t::update_receipt_confirmids set confirmid,self:%d,peer:%d,receiptid:%llu,proposal height:%llu,receiptid_pair=%s",
-                tablestate->get_receiptid_state()->get_self_tableid(),
-                confirmid_pair.first,
-                confirmid_pair.second,
-                tablestate->get_block_height(),
-                receiptid_pair.dump().c_str());
+                   tablestate->get_receiptid_state()->get_self_tableid(),
+                   confirmid_pair.first,
+                   confirmid_pair.second,
+                   tablestate->height(),
+                   receiptid_pair.dump().c_str());
             return false;
         }
     }

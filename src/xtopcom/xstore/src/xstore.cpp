@@ -108,7 +108,7 @@ xaccount_ptr_t xstore::query_account(const std::string &address) const {
 uint64_t xstore::get_blockchain_height(const std::string &owner) {
     xaccount_ptr_t blockchain = query_account(owner);
     if (blockchain != nullptr) {
-        return blockchain->get_block_height();
+        return blockchain->height();
     }
     return 0;
 }
@@ -189,7 +189,7 @@ xaccount_ptr_t xstore::get_target_state(base::xvblock_t* block) const {
         return nullptr;
     }
     xaccount_ptr_t current_state = std::make_shared<xunit_bstate_t>(bstate.get());
-    xassert(current_state->get_block_height() == block->get_height() && current_state->get_block_viewid() == block->get_viewid());
+    xassert(current_state->height() == block->get_height() && current_state->get_block_viewid() == block->get_viewid());
     xdbg("xstore::get_target_state succ-make target state.account=%s,height=%ld,viewid=%ld",
         block->get_account().c_str(), block->get_height(), block->get_viewid());
     return current_state;

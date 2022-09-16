@@ -125,8 +125,8 @@ private:
 
             xfullunit_block_para_t block_para;
             block_para.m_account_state = account->get_account_mstate();
-            block_para.m_first_unit_hash = account->get_last_full_unit_hash();
-            block_para.m_first_unit_height = account->get_last_full_unit_height();
+            // block_para.m_first_unit_hash = account->get_last_full_unit_hash();
+            // block_para.m_first_unit_height = account->get_last_full_unit_height();
             block_para.m_account_propertys = properties;
 
             base::xvblock_t* proposal_block = xblocktool_t::create_next_fullunit(block_para, prev_block);

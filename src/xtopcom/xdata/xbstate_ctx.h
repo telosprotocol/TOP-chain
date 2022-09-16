@@ -10,24 +10,23 @@
 #include "xcommon/xtoken_metadata.h"
 #include "xevm_common/common.h"
 #include "xvledger/xvstate.h"
-#include "xvledger/xvstate.h"
 
 NS_BEG2(top, data)
 
 // bstate with canvas
 class xbstate_ctx_t {
-public:
+protected:
     xbstate_ctx_t(base::xvbstate_t* bstate, bool readonly);
     virtual ~xbstate_ctx_t();
 
 public: // common APIs for state basic info
-    const std::string & get_account()const {return m_bstate->get_account();}
-    const std::string & get_address()const {return m_bstate->get_account();}
-    uint64_t            get_block_height()const {return m_bstate->get_block_height();}
-    uint64_t            get_chain_height() const {return m_bstate->get_block_height();}
+    // const std::string & get_account()const {return m_bstate->get_account();}
+    // const std::string & get_address()const {return m_bstate->get_account();}
+    // uint64_t            get_block_height()const {return m_bstate->get_block_height();}
+    // uint64_t            get_chain_height() const {return m_bstate->get_block_height();}
     uint64_t            get_block_viewid() const {return m_bstate->get_block_viewid();}
-    inline uint64_t     get_last_full_unit_height() const {return m_bstate->get_last_fullblock_height();}
-    inline const std::string & get_last_full_unit_hash() const {return m_bstate->get_last_fullblock_hash();}
+    // inline uint64_t     get_last_full_unit_height() const {return m_bstate->get_last_fullblock_height();}
+    // inline const std::string & get_last_full_unit_hash() const {return m_bstate->get_last_fullblock_hash();}
 
     const xobject_ptr_t<base::xvbstate_t> & get_bstate() const { return m_bstate;}
     const xobject_ptr_t<base::xvbstate_t> & get_origin_bstate() const { return m_snapshot_origin_bstate;}
@@ -35,6 +34,7 @@ public: // common APIs for state basic info
     std::string         dump() const;
 
     common::xaccount_address_t account_address() const;
+    uint64_t height() const noexcept;
 
 public:
     bool                do_rollback();

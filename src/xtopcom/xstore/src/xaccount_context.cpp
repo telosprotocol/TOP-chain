@@ -67,8 +67,7 @@ xaccount_context_t::xaccount_context_t(const data::xaccount_ptr_t & unitstate, c
     m_latest_create_sendtx_nonce = m_latest_exec_sendtx_nonce;
     m_latest_create_sendtx_hash = m_latest_exec_sendtx_hash;
     m_canvas = canvas;
-    xinfo("create context, address:%s,height:%ld,uri=%s",
-        unitstate->get_account().c_str(), unitstate->get_block_height(), m_account->get_bstate()->get_execute_uri().c_str());
+    xinfo("create context, address:%s,height:%ld,uri=%s", unitstate->account_address().c_str(), unitstate->height(), m_account->get_bstate()->get_execute_uri().c_str());
 }
 
 xaccount_context_t::xaccount_context_t(const data::xaccount_ptr_t & unitstate) {
@@ -79,8 +78,7 @@ xaccount_context_t::xaccount_context_t(const data::xaccount_ptr_t & unitstate) {
     m_latest_create_sendtx_nonce = m_latest_exec_sendtx_nonce;
     m_latest_create_sendtx_hash = m_latest_exec_sendtx_hash;
     m_canvas = make_object_ptr<base::xvcanvas_t>();
-    xinfo("create context, address:%s,height:%ld,uri=%s",
-        unitstate->get_account().c_str(), unitstate->get_block_height(), m_account->get_bstate()->get_execute_uri().c_str());
+    xinfo("create context, address:%s,height:%ld,uri=%s", unitstate->account_address().c_str(), unitstate->height(), m_account->get_bstate()->get_execute_uri().c_str());
 }
 
 // TODO(jimmy) this constructor api will be deleted later
@@ -92,8 +90,7 @@ xaccount_context_t::xaccount_context_t(const data::xaccount_ptr_t & unitstate, x
     m_latest_create_sendtx_nonce = m_latest_exec_sendtx_nonce;
     m_latest_create_sendtx_hash = m_latest_exec_sendtx_hash;
     m_canvas = make_object_ptr<base::xvcanvas_t>();
-    xinfo("create context, address:%s,height:%ld,uri=%s",
-        unitstate->get_account().c_str(), unitstate->get_block_height(), m_account->get_bstate()->get_execute_uri().c_str());
+    xinfo("create context, address:%s,height:%ld,uri=%s", unitstate->account_address().c_str(), unitstate->height(), m_account->get_bstate()->get_execute_uri().c_str());
 }
 
 xaccount_context_t::~xaccount_context_t() {
@@ -1471,7 +1468,7 @@ xaccount_context_t::get_blockchain_height(const std::string & owner) const {
     uint64_t height;
     if (owner == get_address()) {
         // m_account is proposal state, should return prev height
-        height = m_account->get_block_height() > 0 ? m_account->get_block_height() - 1 : 0;
+        height = m_account->height() > 0 ? m_account->height() - 1 : 0;
     } else if (owner == m_current_table_addr) {
         height = m_current_table_commit_height;
     } else {

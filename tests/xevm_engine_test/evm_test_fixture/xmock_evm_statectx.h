@@ -54,7 +54,7 @@ public:
         return 0;
     }
 
-    const std::string & get_table_address() const {
+    std::string get_table_address() const {
         return table_address;
     }
 
