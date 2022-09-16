@@ -606,6 +606,9 @@ XDECLARE_CONFIGURATION(evm_token_type, char const *, "ETH"); //1:top  2:eth
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(enable_node_whitelist, std::uint16_t, normal, 0, 0, 1);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(node_whitelist, char const *, normal, "", "", "");
 
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(enable_transaction_whitelist, std::uint16_t, normal, 0, 0, 1);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(transaction_whitelist, char const *, normal, "", "", "");
+
 #undef XDECLARE_CONFIGURATION
 
 NS_END2

@@ -43,6 +43,8 @@
     "evm_token_type":"TOP",
     "enable_node_whitelist": 1,
     "node_whitelist": "",
+    "enable_transaction_whitelist":1,
+    "transaction_whitelist":"",
     "chain_name": "galileo",
     "platform": {
         "business_port": 9903,

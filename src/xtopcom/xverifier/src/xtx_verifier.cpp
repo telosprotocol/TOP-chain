@@ -122,8 +122,8 @@ int32_t xtx_verifier::verify_address_type(data::xtransaction_t const * trx) {
         }
 
         // consortium: check transfer address
-        if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(enable_node_whitelist) == 1) {
-            std::string nodes = XGET_ONCHAIN_GOVERNANCE_PARAMETER(node_whitelist);
+        if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(enable_transaction_whitelist) == 1) {
+            std::string nodes = XGET_ONCHAIN_GOVERNANCE_PARAMETER(transaction_whitelist);
             std::set<std::string> node_sets;
             top::SplitString(nodes, ',', node_sets);
             if (node_sets.find(src_addr) == node_sets.end() && node_sets.find(dst_addr) == node_sets.end() ) {
