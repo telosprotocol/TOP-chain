@@ -85,7 +85,7 @@ void xtop_beacon_chain_application::load_last_election_data() {
                 continue;
             }
 
-            uint64_t block_height = unitstate->get_block_height();
+            uint64_t block_height = unitstate->height();
             auto const & last_election_result_store = codec::msgpack_decode<data::election::xelection_result_store_t>({ std::begin(result), std::end(result) });
             xinfo("xbeacon_chain_application::load_last_election_data load block.addr=%s,height=%ld", addr.c_str(), block_height);
 

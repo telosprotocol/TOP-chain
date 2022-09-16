@@ -219,7 +219,7 @@ bool xtop_sniffer::is_valid_timer_call(common::xaccount_address_t const & addres
                                                                        common::xaccount_address_t{sys_contract_zec_elect_consensus_addr}};
     bool is_first_block{false};
     if (std::find(std::begin(sys_addr_list), std::end(sys_addr_list), address) != std::end(sys_addr_list)) {
-        if (statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(address)->get_chain_height() == 0) {
+        if (statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(address)->height() == 0) {
             is_first_block = true;
         }
     }
@@ -259,8 +259,8 @@ bool xtop_sniffer::trigger_first_timer_call(common::xaccount_address_t const & a
     }
 
     auto const account = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(address);
-    xdbg("xtop_vnode_sniff::trigger_first_timer_call: monitored address %s height %" PRIu64, address.c_str(), account->get_chain_height());
-    return 0 == account->get_chain_height();
+    xdbg("xtop_vnode_sniff::trigger_first_timer_call: monitored address %s height %" PRIu64, address.c_str(), account->height());
+    return 0 == account->height();
 }
 
 void xtop_sniffer::table_timer_func(common::xaccount_address_t const& contract_address, top::contract_runtime::xsniff_timer_config_t const& timer_config,

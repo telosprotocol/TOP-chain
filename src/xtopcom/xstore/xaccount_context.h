@@ -41,7 +41,7 @@ class xaccount_context_t {
     const data::xunitstate_ptr_t & get_blockchain() const {
         return m_account;
     }
-    std::string const & get_address() const noexcept {return m_account->get_account();}
+    std::string get_address() const {return m_account->account_address().value();}
     bool    get_transaction_result(xtransaction_result_t& result);
     bool finish_exec_all_txs(const std::vector<data::xcons_transaction_ptr_t> & txs);
     size_t  get_op_records_size() const;
@@ -55,7 +55,7 @@ class xaccount_context_t {
     void    set_context_pare_current_table(const std::string & table_addr, uint64_t table_committed_height);
     const std::string & get_random_seed() const {return m_random_seed;}
     uint64_t get_timer_height() const {return m_timer_height;}
-    uint64_t get_chain_height() const {return m_account->get_block_height();}
+    uint64_t get_chain_height() const {return m_account->height();}
 
     // property APIs
     int32_t create_user_account(const std::string& address);

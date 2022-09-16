@@ -113,14 +113,14 @@ void xconfig_onchain_loader_t::update_onchain_param(common::xlogic_time_t time) 
         return;
     }
 
-    if (unitstate->get_block_height() < m_last_update_height) {
-        xdbg("xconfig_onchain_loader_t::update_onchain_param, height=%" PRIu64 ", last_update_height: %" PRIu64, unitstate->get_block_height(), m_last_update_height);
+    if (unitstate->height() < m_last_update_height) {
+        xdbg("xconfig_onchain_loader_t::update_onchain_param, height=%" PRIu64 ", last_update_height: %" PRIu64, unitstate->height(), m_last_update_height);
         return;
     }
 
-    xdbg("xconfig_onchain_loader_t::update_onchain_param, current light height=%ld", unitstate->get_block_height());
+    xdbg("xconfig_onchain_loader_t::update_onchain_param, current light height=%ld", unitstate->height());
 
-    m_last_update_height = unitstate->get_block_height();
+    m_last_update_height = unitstate->height();
 
     std::map<std::string, std::string> params = unitstate->map_get(ONCHAIN_PARAMS);
     if (params.empty()) {

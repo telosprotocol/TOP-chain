@@ -322,9 +322,9 @@ void xtxpool_t::refresh_table(uint8_t zone, uint16_t subaddr) {
 // }
 
 void xtxpool_t::update_table_state(const base::xvproperty_prove_ptr_t & property_prove_ptr, const data::xtablestate_ptr_t & table_state) {
-    xtxpool_info("xtxpool_t::update_table_state table:%s height:%llu", table_state->get_account().c_str(), table_state->get_block_height());
+    xtxpool_info("xtxpool_t::update_table_state table:%s height:%llu", table_state->account_address().c_str(), table_state->height());
     XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_update_receiptid_state");
-    auto table = get_txpool_table_by_addr(table_state->get_account().c_str());
+    auto table = get_txpool_table_by_addr(table_state->account_address().c_str());
     if (table == nullptr) {
         return;
     }

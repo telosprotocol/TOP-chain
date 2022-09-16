@@ -30,7 +30,7 @@ class xstatectx_t : public xstatectx_face_t {
     data::xunitstate_ptr_t              load_commit_unit_state(const base::xvaccount_t & addr, uint64_t height) override;
     bool                                do_rollback() override;
     size_t                              do_snapshot() override;
-    const std::string &                 get_table_address() const override {return m_table_ctx->get_table_address();}
+    std::string                         get_table_address() const override {return m_table_ctx->get_table_address();}
     bool                                is_state_dirty() const override;
     base::xtable_shortid_t              get_tableid() const {return m_table_ctx->get_tableid();}
     std::vector<xunitstate_ctx_ptr_t>   get_modified_unit_ctx() const;

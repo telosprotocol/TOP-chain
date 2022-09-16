@@ -105,8 +105,8 @@ data::xblock_ptr_t  xunitbuilder_t::make_block_v2(const data::xunitstate_ptr_t &
     bodypara.set_fullstate_bin(snapshot);
     bodypara.set_txkeys(unitbuilder_para.get_txkeys());
 
-    bool is_full_unit = xunitbuilder_t::can_make_full_unit_v2(unitstate->get_block_height());
-    std::shared_ptr<base::xvblockmaker_t> vblockmaker = std::make_shared<data::xunit_build2_t>(unitstate->get_account(), unitstate->get_block_height(), unitstate->get_bstate()->get_last_block_hash(), is_full_unit, bodypara, cs_para);    
+    bool is_full_unit = xunitbuilder_t::can_make_full_unit_v2(unitstate->height());
+    std::shared_ptr<base::xvblockmaker_t> vblockmaker = std::make_shared<data::xunit_build2_t>(unitstate->account_address().value(), unitstate->height(), unitstate->get_bstate()->get_last_block_hash(), is_full_unit, bodypara, cs_para);    
     base::xauto_ptr<base::xvblock_t> _new_block = vblockmaker->build_new_block();
     data::xblock_ptr_t proposal_block = data::xblock_t::raw_vblock_to_object_ptr(_new_block.get());
     xassert(proposal_block->get_cert()->get_justify_cert_hash().empty());
@@ -172,7 +172,7 @@ bool     xtablebuilder_t::update_receipt_confirmids(const data::xtablestate_ptr_
              tablestate->get_receiptid_state()->get_self_tableid(),
              confirmid_pair.first,
              confirmid_pair.second,
-             tablestate->get_block_height());
+             tablestate->height());
         base::xreceiptid_pair_t receiptid_pair;
         tablestate->find_receiptid_pair(confirmid_pair.first, receiptid_pair);
         if (confirmid_pair.second > receiptid_pair.get_confirmid_max() && confirmid_pair.second <= receiptid_pair.get_sendid_max()) {
@@ -180,11 +180,11 @@ bool     xtablebuilder_t::update_receipt_confirmids(const data::xtablestate_ptr_
             tablestate->set_receiptid_pair(confirmid_pair.first, receiptid_pair);  // save to modified pairs
         } else {
             xerror("xtablebuilder_t::update_receipt_confirmids set confirmid,self:%d,peer:%d,receiptid:%llu,proposal height:%llu,receiptid_pair=%s",
-                tablestate->get_receiptid_state()->get_self_tableid(),
-                confirmid_pair.first,
-                confirmid_pair.second,
-                tablestate->get_block_height(),
-                receiptid_pair.dump().c_str());
+                   tablestate->get_receiptid_state()->get_self_tableid(),
+                   confirmid_pair.first,
+                   confirmid_pair.second,
+                   tablestate->height(),
+                   receiptid_pair.dump().c_str());
             return false;
         }
     }

@@ -36,7 +36,7 @@ bool xtgas_singleton::get_latest_property(std::string & value, uint64_t & height
         xwarn("xtgas_singleton::get_latest_property fail-load property");
         return false;
     }
-    height = unitstate->get_block_height();
+    height = unitstate->height();
     return true;
 }
 

@@ -1,3 +1,6 @@
+#define protected public
+#define private public
+
 #include "gtest/gtest.h"
 #include "xdata/xtransaction_v2.h"
 #include "xdata/xtransaction_v1.h"
