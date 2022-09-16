@@ -1,5 +1,7 @@
 #include "quic_cs_engine.h"
 
+#include <xquic/xquic.h>
+
 #include <string>
 
 #define XQC_PACKET_TMP_BUF_LEN 1500

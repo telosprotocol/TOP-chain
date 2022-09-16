@@ -7,14 +7,14 @@ aux_source_directory(./xquic_node xquic_node_src)
 
 add_library(xtransport ${xtransport_src} ${proto_src} ${xquic_node_src})
 
-target_include_directories(xtransport PUBLIC ${PROJECT_SOURCE_DIR}/src/xtopcom/xdepends/xquic/include)
+# MUST use PRIVATE include
+target_include_directories(xtransport PRIVATE ${PROJECT_SOURCE_DIR}/src/xtopcom/xdepends/xquic/include)
 
-set(SSL_PATH ${PROJECT_SOURCE_DIR}/src/xtopcom/xdepends/boringssl_static_libs/libssl.a;${PROJECT_SOURCE_DIR}/src/xtopcom/xdepends/boringssl_static_libs/libcrypto.a)
+set(SSL_LIB_PATH ${CMAKE_SOURCE_DIR}/src/xtopcom/xdepends/boringssl_static_libs/libbrssl.a;${CMAKE_SOURCE_DIR}/src/xtopcom/xdepends/boringssl_static_libs/libbrcrypto.a)
 
-#add_dependencies(xtransport xpbase xutility xxbase)
-target_link_libraries(xtransport xpbase xutility xxbase protobuf jsoncpp xcrypto xquic-static ${SSL_PATH} -levent -lm -pthread)
+target_link_libraries(xtransport PRIVATE xquic-static ${SSL_LIB_PATH})
+target_link_libraries(xtransport PUBLIC xpbase xutility xxbase protobuf jsoncpp xcrypto -levent -lm -pthread)
 
 if (BUILD_METRICS)
-    #add_dependencies(xtransport xmetrics)
-    target_link_libraries(xtransport xmetrics)
+    target_link_libraries(xtransport PUBLIC xmetrics)
 endif()

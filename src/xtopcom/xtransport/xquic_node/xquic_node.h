@@ -1,5 +1,4 @@
 #pragma once
-#include "quic_cs_engine.h"
 #include "xbase/xpacket.h"
 #include "xbasic/xbyte_buffer.h"
 #include "xbasic/xrunnable.h"
@@ -11,6 +10,11 @@
 #include <mutex>
 #include <thread>
 #include <unordered_map>
+
+// fwd
+class xquic_server_t;
+class xquic_client_t;
+class cli_user_conn_t;
 
 NS_BEG3(top, transport, quic)
 
@@ -40,9 +44,8 @@ private:
 
     on_receive_callback_t m_cb;
 
-private:
-    xquic_server_t m_server;
-    xquic_client_t m_client;
+    std::shared_ptr<xquic_server_t> m_server_ptr;
+    std::shared_ptr<xquic_client_t> m_client_ptr;
 
     std::mutex m_conn_map_mutex;
     std::unordered_map<std::string, cli_user_conn_t *> m_conn_map;

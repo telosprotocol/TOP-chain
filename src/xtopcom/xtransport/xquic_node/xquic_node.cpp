@@ -3,12 +3,16 @@
 #include "xbasic/xbyte_buffer.h"
 #include "xbasic/xthreading/xbackend_thread.hpp"
 #include "xmetrics/xmetrics.h"
+#include "xtransport/xquic_node/quic_cs_engine.h"
+
+#include <xquic/xquic.h>
 
 #include <cassert>
 
 NS_BEG3(top, transport, quic)
 
-xquic_node_t::xquic_node_t(unsigned int const _server_port) : m_server_port{_server_port} {
+xquic_node_t::xquic_node_t(unsigned int const _server_port)
+  : m_server_port{_server_port}, m_server_ptr{std::make_shared<xquic_server_t>()}, m_client_ptr{std::make_shared<xquic_client_t>()} {
 }
 
 void xquic_node_t::start() {
@@ -16,9 +20,9 @@ void xquic_node_t::start() {
 
     auto self = shared_from_this();
     top::threading::xbackend_thread::spawn(
-        [this, self] { m_server.init(std::bind(&xquic_node_t::on_quic_message_ready, shared_from_this(), std::placeholders::_1), m_server_port); });
+        [this, self] { m_server_ptr->init(std::bind(&xquic_node_t::on_quic_message_ready, shared_from_this(), std::placeholders::_1), m_server_port); });
 
-    top::threading::xbackend_thread::spawn([this, self] { m_client.init(); });
+    top::threading::xbackend_thread::spawn([this, self] { m_client_ptr->init(); });
 
     xinfo("xquic_node_t::start quic node start.");
 
@@ -57,7 +61,8 @@ int xquic_node_t::send_data(std::string const & data, std::string const & addr, 
     }
 
     if (m_conn_map.find(addr_port) == m_conn_map.end()) {
-        cli_user_conn_t * new_conn = m_client.connect((char *)addr.c_str(), port);
+        xdbg("xquic_node_t::send_data try connect to %s", addr_port.c_str());
+        cli_user_conn_t * new_conn = m_client_ptr->connect((char *)addr.c_str(), port);
         if (new_conn == nullptr) {
             xwarn("xquic_node_t::send_data error when try connect to %s", addr_port.c_str());
             return 1;
@@ -75,13 +80,13 @@ int xquic_node_t::send_data(std::string const & data, std::string const & addr, 
         xwarn("xquic_node_t::send_data connection not well establish to %s", addr_port.c_str());
         return 1;
     }
-    if (m_client.send_queue_full()) {
+    if (m_client_ptr->send_queue_full()) {
         xwarn("xquic_node_t::send_data send_queue full");
         return 1;
     }
 
     assert(conn != nullptr);
-    m_client.send(conn, std::move(bytes_data));
+    m_client_ptr->send(conn, std::move(bytes_data));
 
     return 0;  // kadmlia::kKadSuccess
 }

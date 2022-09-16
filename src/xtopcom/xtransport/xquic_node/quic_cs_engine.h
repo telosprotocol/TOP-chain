@@ -15,8 +15,6 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
-#include <xquic/xqc_http3.h>
-#include <xquic/xquic.h>
 #include <xquic/xquic_typedef.h>
 
 #include <atomic>
@@ -203,10 +201,10 @@ private:
 
 private:
     std::string m_token;
-    char * m_session;
-    unsigned m_session_len;
-    char * m_tp_para;
-    unsigned m_tp_para_len;
+    char * m_session{nullptr};
+    unsigned m_session_len{0};
+    char * m_tp_para{nullptr};
+    unsigned m_tp_para_len{0};
 
 private:
     uint64_t do_send_interval{4};  // should be 128us - 2048us

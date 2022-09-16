@@ -5,7 +5,6 @@
 #include "xtransport/udp_transport/udp_transport.h"
 
 #include "xbase/xcontext.h"
-#include "xbasic/xmemory.hpp"
 #include "xpbase/base/line_parser.h"
 #include "xpbase/base/top_log.h"
 #include "xpbase/base/top_utils.h"
@@ -70,7 +69,7 @@ bool UdpTransport::Init(std::string const & local_ip, uint16_t local_port, uint1
         return false;
     }
     xquic_port_ = xquic_port;
-    quic_node_ = top::make_unique<quic::xquic_node_t>(xquic_port_);  // todo might add wrouter recv callback parameter.
+    quic_node_ = std::make_shared<quic::xquic_node_t>(xquic_port_);  // todo might add wrouter recv callback parameter.
 
     udp_handle_ = base::xsocket_utl::udp_listen("0.0.0.0", local_port);
     if (udp_handle_ <= 0) {

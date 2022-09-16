@@ -76,7 +76,7 @@ private:
 private:
     base::xiothread_t * io_thread_;
     SocketIntf * udp_socket_;
-    std::unique_ptr<quic::xquic_node_t> quic_node_{nullptr};
+    std::shared_ptr<quic::xquic_node_t> quic_node_{nullptr};
     std::string local_ip_;
     uint16_t local_port_;
     uint16_t xquic_port_;
