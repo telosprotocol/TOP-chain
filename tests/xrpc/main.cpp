@@ -41,6 +41,6 @@ int main(int argc, char * argv[])
     testing::InitGoogleTest(&argc, argv);
     xinit_log("./xrpc_test.log", true, true);
     xset_log_level(enum_xlog_level_debug);
-    XMETRICS_INIT();
+    // XMETRICS_INIT();
     return RUN_ALL_TESTS();
 }

@@ -7,6 +7,9 @@
 #include "xdata/xtransaction_v2.h"
 #include "xdata/xaction_parse.h"
 #include "xelect/client/xelect_client.h"
+#include "xrpc/prerequest/xpre_request_handler_mgr.h"
+#include "xrpc/xhttp/xhttp_server.h"
+#include "xrpc/xerror/xrpc_error.h"
 
 using namespace top;
 using namespace top::xrpc;

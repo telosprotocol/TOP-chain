@@ -8,6 +8,7 @@ add_executable(xrpc_test ${xrpc_test_src})
 
 # add_dependencies(xrpc_test xrpc xchaininit xxbase)
 
+target_include_directories(xrpc_test PRIVATE ${CMAKE_SOURCE_DIR}/src/xtopcom/xdepends/openssl_include/openssl/)
 target_link_libraries(xrpc_test PRIVATE xrpc xvnetwork xelect_net xtxstore xloader xgenesis xxbase 
                       xdb
                       rocksdb zstd snappy bz2 z 

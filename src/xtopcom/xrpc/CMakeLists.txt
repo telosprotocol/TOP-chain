@@ -17,6 +17,7 @@ add_library(xrpc STATIC ${error} ${prerequest} ${edge} ${cluster} ${getblock} ${
 
 add_dependencies(xrpc xevm_contract_runtime xelect_net xtxexecutor xtxstore xconfig xcodec xvnetwork xcommon xrouter xverifier xxbase xxg)
 
+target_include_directories(xrpc PRIVATE ${CMAKE_SOURCE_DIR}/src/xtopcom/xdepends/openssl_include/openssl/)
 target_link_libraries(xrpc PRIVATE xevm_contract_runtime xelect_net xtxexecutor xtxstore xconfig msgpackc xcodec xvnetwork xcommon xrouter xverifier xbasic xxbase xxg crypto pthread)
 
 if (BUILD_METRICS)

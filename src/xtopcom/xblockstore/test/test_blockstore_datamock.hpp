@@ -24,7 +24,7 @@
 #include "xdata/xelection/xelection_result.h"
 #include "xdata/xelection/xelection_result.h"
 
-#include "xmutisig/xschnorr/xschnorr.h"
+#include "xmutisig/xschnorr.h"
 
 #include "xcrypto/xckey.h"
 #include "xcrypto/xcrypto_util.h"
