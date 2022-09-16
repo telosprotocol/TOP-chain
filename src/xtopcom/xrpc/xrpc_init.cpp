@@ -5,6 +5,8 @@
 #include "xrpc_init.h"
 #include "xcommon/xnode_type.h"
 #include "xrpc/xhttp/xevm_server.h"
+#include "xrpc/xhttp/xhttp_server.h"
+#include "xrpc/xws/xws_server.h"
 
 NS_BEG2(top, xrpc)
 

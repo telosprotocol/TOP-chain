@@ -9,7 +9,6 @@
 #include "stat.h"
 #include "thread_queue.h"
 #include "trans_http.h"
-#include "trans_ws.h"
 #include "xelect_net/include/http_client.h"
 #include "xtopcl/include/global_definition.h"
 
@@ -32,6 +31,8 @@ struct Msg {
 struct ResponseContent {
     std::string content;
 };
+
+class trans_ws;
 
 class task_dispatcher {
 public:

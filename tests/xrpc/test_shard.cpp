@@ -7,6 +7,7 @@
 #include "xelect/client/xelect_client.h"
 #include "xrpc/xrpc_init.h"
 #include "xvnetwork/xvnetwork_driver_face.h"
+#include "xrpc/xerror/xrpc_error.h"
 
 using namespace std;
 using namespace top;

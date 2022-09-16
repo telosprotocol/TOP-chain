@@ -3,13 +3,14 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
-#include "xrpc/xhttp/xhttp_server.h"
-#include "xrpc/xws/xws_server.h"
 #include "xrpc/xshard/xshard_rpc_handler.h"
 #include "xrpc/xcluster/xcluster_rpc_handler.h"
+#include "xrpc/xedge/xedge_rpc_vhost.h"
 #include "xrpc/xrpc_handler.h"
 #include "xbase/xobject_ptr.h"
 #include "xtxstore/xtxstore_face.h"
+#include "xelect_net/include/elect_main.h"
+#include "xelection/xcache/xdata_accessor_face.h"
 
 NS_BEG2(top, xrpc)
 class xrpc_init
