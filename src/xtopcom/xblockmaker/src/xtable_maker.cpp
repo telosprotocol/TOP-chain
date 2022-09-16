@@ -572,7 +572,7 @@ int32_t xtable_maker_t::verify_proposal(base::xvblock_t* proposal_block, const x
     if (local_block == nullptr) {
         xwarn("xtable_maker_t::verify_proposal fail-make table. proposal=%s,error_code=%s",
             proposal_block->dump().c_str(), chainbase::xmodule_error_to_str(table_result.m_make_block_error_code).c_str());
-        return table_result.m_make_block_error_code;
+        return xblockmaker_error_proposal_backup_make_block_fail;
     }
 
     local_block->get_cert()->set_nonce(proposal_block->get_cert()->get_nonce());  // TODO(jimmy)
