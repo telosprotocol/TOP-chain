@@ -39,7 +39,7 @@ xunit_bstate_t::~xunit_bstate_t() {
 
 uint64_t xunit_bstate_t::get_free_tgas() const {
     // consortium: disable free tgas
-    if (XGET_CONFIG(enable_free_tgas) == false)
+    if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(enable_free_tgas) == false)
         return 0;
 
     uint64_t total_asset = balance() + lock_balance() + tgas_balance() + disk_balance() + vote_balance();

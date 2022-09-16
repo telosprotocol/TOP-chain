@@ -587,16 +587,15 @@ XDECLARE_CONFIGURATION(platform_business_port, std::uint16_t, 9000);
 XDECLARE_CONFIGURATION(platform_show_cmd, bool, false);
 XDECLARE_CONFIGURATION(platform_db_path, char const *, "/chain/db_v2/pdb");
 
+
 //consortium configuration
-XDECLARE_CONFIGURATION(enable_reward, bool, true);
-XDECLARE_CONFIGURATION(enable_slash, bool, true);
-XDECLARE_CONFIGURATION(enable_free_tgas, bool, true);
-XDECLARE_CONFIGURATION(evm_token_type, char const *, "ETH"); //1:top  2:eth
-
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(enable_node_whitelist, std::uint16_t, normal, 0, 0, 1);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(enable_reward,  bool, normal, true, false, true);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(enable_slash,  bool, normal, true, false, true);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(enable_free_tgas,  bool, normal, true, false, true);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(evm_token_type, char const *, normal, "TOP", "", "");
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(enable_node_whitelist, bool, normal, false, false, true);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(node_whitelist, char const *, normal, "", "", "");
-
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(enable_transaction_whitelist, std::uint16_t, normal, 0, 0, 1);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(enable_transaction_whitelist,  bool, normal, false, false, true);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(transaction_whitelist, char const *, normal, "", "", "");
 
 #undef XDECLARE_CONFIGURATION
