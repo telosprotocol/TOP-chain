@@ -193,7 +193,7 @@ void xrpc_eth_query_manager::eth_getBalance(xJson::Value & js_req, xJson::Value 
     } else if (ret == enum_unit_not_found) {
         js_rsp["result"] = "0x0";
     } else if (ret == enum_success) {
-        auto default_token_type = XGET_CONFIG(evm_token_type);
+        auto default_token_type = XGET_ONCHAIN_GOVERNANCE_PARAMETER(evm_token_type);
         evm_common::u256 balance = 0;
         xdbg("xrpc_eth_query_manager::eth_getBalance token type is %s.", default_token_type.c_str());
         if (default_token_type == "TOP") {
