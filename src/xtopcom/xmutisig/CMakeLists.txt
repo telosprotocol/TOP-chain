@@ -1,15 +1,8 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.8)
 
-aux_source_directory(./ src)
-aux_source_directory(./xschnorr src)
-aux_source_directory(./xsignature src)
-aux_source_directory(./xrand src)
-aux_source_directory(./xkeys src)
-aux_source_directory(./xrand src)
-aux_source_directory(./xhash256 src)
-aux_source_directory(./xserialize src)
-aux_source_directory(./xcommon src)
-add_library (xmutisig ${src})
-#add_dependencies(xmutisig xxbase)
+aux_source_directory(./src xmutisig_src)
+add_library(xmutisig ${xmutisig_src})
 
-target_link_libraries (xmutisig PRIVATE ssl crypto xxbase secp256k1)
+target_link_libraries(xmutisig PRIVATE ssl crypto xxbase secp256k1)
+
+target_include_directories(xmutisig PRIVATE ${CMAKE_SOURCE_DIR}/src/xtopcom/xdepends/openssl_include/openssl/)

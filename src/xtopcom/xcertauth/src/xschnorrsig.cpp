@@ -7,7 +7,7 @@
 #include "xbase/xutl.h"
 #include "xschnorrsig.h"
 #include "xsigndata.h"
-#include "xmutisig/xschnorr/xschnorr.h"
+#include "xmutisig/xschnorr.h"
 #include "xmutisig/xmutisig.h"
 
 
