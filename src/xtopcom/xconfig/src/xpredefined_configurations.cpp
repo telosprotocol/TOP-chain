@@ -183,6 +183,10 @@ XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_list);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(enable_node_whitelist);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(node_whitelist);
 
+XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(enable_transaction_whitelist);
+XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(transaction_whitelist);
+
+
 /* begin of offchain parameters */
 XDEFINE_CONFIGURATION(auditor_group_count);
 XDEFINE_CONFIGURATION(validator_group_count);
