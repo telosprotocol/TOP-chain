@@ -192,12 +192,14 @@ xblock_resource_description_t xrelayblock_plugin_t::make_resource(const data::xb
         resource_desc.is_input_resource = false;  // TODO(jimmy) put relayblock to output resource
         resource_desc.need_signature = true;
         resource_desc.signature_hash = hash256;
-        xdbg_info("xrelayblock_plugin_t::make_resource succ.block=%s,size=%zu,sighash=%s", 
-            relay_block.dump().c_str(),prop_relayblock.size(),top::to_hex(top::to_bytes(hash256)).c_str());
+        xdbg_info("xrelayblock_plugin_t::make_resource succ.cs_para:%s,block=%s,size=%zu,sighash=%s",
+                  cs_para.dump().c_str(),
+                  relay_block.dump().c_str(),
+                  prop_relayblock.size(),
+                  top::to_hex(top::to_bytes(hash256)).c_str());
         return resource_desc;
     }
-    xdbg("xrelayblock_plugin_t::make_resource no need. m_last_phase=%s,after_prop_phase=%s", 
-        m_last_phase.c_str(),after_prop_phase.c_str());
+    xdbg("xrelayblock_plugin_t::make_resource no need. cs_para:%s, m_last_phase=%s,after_prop_phase=%s", cs_para.dump().c_str(), m_last_phase.c_str(), after_prop_phase.c_str());
     return {};
 }
 
