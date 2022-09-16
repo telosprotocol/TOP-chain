@@ -597,16 +597,15 @@ XDECLARE_CONFIGURATION(keep_table_states_max_num, uint64_t, 256);
 XDECLARE_CONFIGURATION(prune_table_state_diff, uint64_t, 512);
 #endif
 
+
 //consortium configuration
-XDECLARE_CONFIGURATION(enable_reward, bool, true);
-XDECLARE_CONFIGURATION(enable_slash, bool, true);
-XDECLARE_CONFIGURATION(enable_free_tgas, bool, true);
-XDECLARE_CONFIGURATION(evm_token_type, char const *, "ETH"); //1:top  2:eth
-
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(enable_node_whitelist, std::uint16_t, normal, 0, 0, 1);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(enable_reward,  bool, normal, true, false, true);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(enable_slash,  bool, normal, true, false, true);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(enable_free_tgas,  bool, normal, true, false, true);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(evm_token_type, char const *, normal, "TOP", "", "");
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(enable_node_whitelist, bool, normal, false, false, true);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(node_whitelist, char const *, normal, "", "", "");
-
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(enable_transaction_whitelist, std::uint16_t, normal, 0, 0, 1);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(enable_transaction_whitelist,  bool, normal, false, false, true);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(transaction_whitelist, char const *, normal, "", "", "");
 
 #undef XDECLARE_CONFIGURATION
