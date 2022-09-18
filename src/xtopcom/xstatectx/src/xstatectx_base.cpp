@@ -14,10 +14,11 @@
 #include "xdata/xunit_bstate.h"
 #include "xdata/xblocktool.h"
 #include "xstatectx/xstatectx_base.h"
+#include "xstatestore/xstatestore_face.h"
 
 NS_BEG2(top, statectx)
 
-xstatectx_base_t::xstatectx_base_t(base::xvblock_t* prev_block, const data::xtablestate_ptr_t & prev_table_state, base::xvblock_t* commit_block, const data::xtablestate_ptr_t & commit_table_state, uint64_t clock)
+xstatectx_base_t::xstatectx_base_t(base::xvblock_t* prev_block, const statestore::xtablestate_ext_ptr_t & prev_table_state, base::xvblock_t* commit_block, const statestore::xtablestate_ext_ptr_t & commit_table_state, uint64_t clock)
 : m_table_state(prev_table_state), m_commit_table_state(commit_table_state), m_clock(clock) {
     prev_block->add_ref();
     m_pre_block.attach(prev_block);
@@ -51,7 +52,7 @@ xobject_ptr_t<base::xvbstate_t> xstatectx_base_t::change_to_proposal_block_state
 
 void xstatectx_base_t::sync_unit_block(const base::xvaccount_t & _vaddr, uint64_t end_height) const {
     base::xaccount_index_t commit_accountindex;
-    auto ret = get_account_index(m_commit_block, m_commit_table_state, _vaddr.get_account(), commit_accountindex);
+    auto ret = get_account_index(m_commit_table_state, _vaddr.get_account(), commit_accountindex);
     if (!ret) {
         return;
     }
@@ -101,7 +102,7 @@ xobject_ptr_t<base::xvbstate_t> xstatectx_base_t::load_inner_table_unit_state(co
 
 data::xblock_ptr_t xstatectx_base_t::load_inner_table_unit_block(const base::xvaccount_t & addr) const {
     base::xaccount_index_t account_index;
-    auto ret = get_account_index(m_pre_block, m_table_state, addr.get_account(), account_index);
+    auto ret = get_account_index(m_table_state, addr.get_account(), account_index);
     if (!ret) {
         return nullptr;
     }
@@ -139,30 +140,22 @@ xobject_ptr_t<base::xvbstate_t> xstatectx_base_t::load_different_table_unit_stat
     return prev_bstate;
 }
 
-xobject_ptr_t<base::xvbstate_t> xstatectx_base_t::load_inner_table_commit_unit_state(const base::xvaccount_t & addr) const {
+data::xunitstate_ptr_t xstatectx_base_t::load_inner_table_commit_unit_state(const common::xaccount_address_t & addr) const {
     base::xaccount_index_t account_index;
-    auto ret = get_account_index(m_commit_block, m_commit_table_state, addr.get_account(), account_index);
+    auto ret = get_account_index(m_commit_table_state, addr.value(), account_index);
     if (!ret) {
         return nullptr;
     }
-    xobject_ptr_t<base::xvblock_t> prev_block = load_block_object(addr, account_index);
-    if (prev_block == nullptr) {
+    data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_accountindex(addr, account_index);
+    if (unitstate == nullptr) {
         XMETRICS_GAUGE(metrics::xmetrics_tag_t::statectx_load_block_succ, 0);
-        sync_unit_block(addr, account_index.get_latest_unit_height());
+        sync_unit_block(addr.vaccount(), account_index.get_latest_unit_height());
         xwarn("xstatectx_base_t::load_inner_table_commit_unit_state fail-load unit block.%s,index=%s",
-                addr.get_address().c_str(), account_index.dump().c_str());
-        return nullptr;
-    }
-    xobject_ptr_t<base::xvbstate_t> prev_bstate = get_xblkstatestore()->get_block_state(prev_block.get());
-    if (prev_bstate == nullptr) {
-        XMETRICS_GAUGE(metrics::xmetrics_tag_t::statectx_load_state_succ, 0);
-        sync_unit_block(addr, prev_block->get_height());
-        xwarn("xstatectx_base_t::load_inner_table_commit_unit_state fail-get target state. block=%s",
-            prev_block->dump().c_str());
+                addr.value().c_str(), account_index.dump().c_str());
         return nullptr;
     }
     XMETRICS_GAUGE(metrics::xmetrics_tag_t::statectx_load_block_succ, 1);
-    return prev_bstate;
+    return unitstate;
 }
 
 base::xvblockstore_t*  xstatectx_base_t::get_blockstore() const {
@@ -174,40 +167,18 @@ base::xvblkstatestore_t* xstatectx_base_t::get_xblkstatestore() const {
 }
 
 bool xstatectx_base_t::load_account_index(const base::xvaccount_t & account, base::xaccount_index_t & account_index) const {
-    return get_account_index(m_pre_block, m_table_state, account, account_index);                                            
+    return get_account_index(m_table_state, account.get_account(), account_index);                                            
 }
 
-bool xstatectx_base_t::get_account_index(const data::xvblock_ptr_t & block,
-                                         const data::xtablestate_ptr_t & table_state,
-                                         const base::xvaccount_t & account,
+bool xstatectx_base_t::get_account_index(const statestore::xtablestate_ext_ptr_t & table_state,
+                                         const std::string & account,
                                          base::xaccount_index_t & account_index) const {
-    evm_common::xh256_t state_root;
-    auto ret = data::xblockextract_t::get_state_root(block.get(), state_root);
-    if (!ret) {
-        xwarn("xstatectx_base_t::get_account_index get_state_root fail.block:%s", block->dump().c_str());
+    std::error_code ec;
+    table_state->get_accountindex(account, account_index, ec);
+    if (ec) {
+        xwarn("xstatectx_base_t::get_account_index fail.account=%s,accountindex=%s,ec=%s",account.c_str(),account_index.dump().c_str(),ec.message().c_str());
         return false;
     }
-
-    if (state_root != evm_common::xh256_t()) {
-        std::error_code ec;
-        xhash256_t root_hash(state_root.to_bytes()); 
-        auto mpt = state_mpt::xtop_state_mpt::create(m_table_state->account_address().to_string(), root_hash, base::xvchain_t::instance().get_xdbstore(), state_mpt::xstate_mpt_cache_t::instance(), ec);
-        if (ec) {
-            xwarn("xstatectx_base_t::get_account_index create mpt fail.root hash:%s.state_root:%s.block:%s", root_hash.as_hex_str().c_str(), state_root.hex().c_str(), block->dump().c_str());
-            return false;
-        }
-
-        account_index = mpt->get_account_index(account.get_account(), ec);
-        if (ec) {
-            xwarn("xstatectx_base_t::get_account_index get_account_index from mpt fail.root hash:%s.block:%s", root_hash.as_hex_str().c_str(), block->dump().c_str());
-            return false;
-        }
-        xdbg("xstatectx_base_t::get_account_index succ.table=%s,height=%ld,viewid=%ld,root hash:%s.account:%s index:%s", 
-            block->get_account().c_str(), block->get_height(), block->get_viewid(), root_hash.as_hex_str().c_str(), account.get_account().c_str(), account_index.dump().c_str());
-        return true;
-    }
-
-    table_state->get_account_index(account.get_account(), account_index);
     return true;
 }
 

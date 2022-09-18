@@ -11,6 +11,8 @@
 #include "xdata/xtable_bstate.h"
 #include "xdata/xunit_bstate.h"
 #include "xcommon/xaccount_address.h"
+#include "xstate_mpt/xstate_mpt.h"
+#include "xstatestore/xtablestate_ext.h"
 
 NS_BEG2(top, statestore)
 
@@ -19,7 +21,6 @@ class xstatestore_base_t {
     xstatestore_base_t() {}
 
  public:
-    data::xtablestate_ptr_t    get_latest_connectted_table_state(common::xaccount_address_t const& table_addr) const;
     data::xtablestate_ptr_t    get_latest_committed_table_state(common::xaccount_address_t const& table_addr) const;
     data::xtablestate_ptr_t    get_genesis_table_state(common::xaccount_address_t const& table_addr) const;
     data::xtablestate_ptr_t    get_table_state_by_block(base::xvblock_t * target_block) const;
@@ -27,12 +28,21 @@ class xstatestore_base_t {
     data::xunitstate_ptr_t     get_unit_state_by_block(base::xvblock_t * target_block) const;
     data::xunitstate_ptr_t     get_unit_state_by_accountindex(common::xaccount_address_t const& account_address, base::xaccount_index_t const& index) const;
 
+    void                       get_tablestate_ext_from_block(base::xvblock_t* block, statestore::xtablestate_ext_ptr_t& tablestate_ext, std::error_code & ec) const;
+    void                       get_mpt_from_block(base::xvblock_t * block, std::shared_ptr<state_mpt::xtop_state_mpt> & mpt, std::error_code & ec) const;
+    xhash256_t                 get_state_root_from_block(base::xvblock_t * block) const;
+
+    uint64_t                   get_latest_executed_block_height(common::xaccount_address_t const& table_addr) const;
+    void                       set_latest_executed_info(common::xaccount_address_t const& table_addr, uint64_t height,const std::string & blockhash) const;
+    uint64_t                   get_latest_committed_block_height(common::xaccount_address_t const& table_addr) const;
+
  private:
-   data::xunitstate_ptr_t      get_unit_state_by_block_hash(common::xaccount_address_t const& account_address, base::xaccount_index_t const& index) const;
-   data::xunitstate_ptr_t      get_unit_state_by_block_viewid(common::xaccount_address_t const& account_address, base::xaccount_index_t const& index) const;
+    data::xunitstate_ptr_t      get_unit_state_by_block_hash(common::xaccount_address_t const& account_address, base::xaccount_index_t const& index) const;
+    data::xunitstate_ptr_t      get_unit_state_by_block_viewid(common::xaccount_address_t const& account_address, base::xaccount_index_t const& index) const;
  public:
     base::xvblockstore_t*       get_blockstore() const;
     base::xvblkstatestore_t*    get_blkstate_store() const;
+    base::xvdbstore_t*          get_dbstore() const;
 };
 
 
