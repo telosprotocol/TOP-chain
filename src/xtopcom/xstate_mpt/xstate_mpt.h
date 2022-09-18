@@ -58,6 +58,8 @@ public:
     /// @return New root hash.
     xhash256_t get_root_hash(std::error_code & ec);
 
+    xhash256_t const& get_origin_root() const {return m_original_root;}
+
     /// @brief Return db object to do actions relay on db.
     /// @return DB object.
     std::shared_ptr<evm_common::trie::xtrie_db_t> get_database() const;

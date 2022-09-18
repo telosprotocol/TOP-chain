@@ -21,6 +21,7 @@
 #include "tests/mock/xcertauth_util.hpp"
 #include "tests/mock/xdatamock_unit.hpp"
 #include "tests/mock/xdatamock_address.hpp"
+#include "xdbstore/xstore_face.h"
 
 namespace top {
 namespace mock {
@@ -264,6 +265,15 @@ class xdatamock_table : public base::xvaccount_t {
             }
             _form_highest_blocks.push_back(_block);
         }
+
+
+        evm_common::xh256_t last_state_root;
+        auto ret = data::xblockextract_t::get_state_root(get_cert_block().get(), last_state_root);
+        xassert(ret);
+        data::xeth_header_t eth_header;
+        eth_header.set_state_root(last_state_root);
+        std::string _ethheader_str = eth_header.serialize_to_string();
+        cs_para.set_ethheader(_ethheader_str);
 
         blockmaker::xblock_builder_para_ptr_t build_para = std::make_shared<blockmaker::xfulltable_builder_para_t>(m_table_state, _form_highest_blocks, m_default_resources);
         xblock_ptr_t proposal_block = m_fulltable_builder->build_block(get_cert_block(), m_table_state->get_bstate(), cs_para, build_para);

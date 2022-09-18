@@ -731,18 +731,12 @@ bool xsync_on_demand_t::check_unit_blocks(const std::vector<data::xblock_ptr_t> 
     auto table_addr = account_address_to_block_address(common::xaccount_address_t(account));
 
     auto latest_committed_block = base::xvchain_t::instance().get_xblockstore()->get_latest_committed_block(table_addr, metrics::blockstore_access_from_txpool_refresh_table);
-    auto tablestate = statestore::xstatestore_hub_t::instance()->get_table_state_by_block(latest_committed_block.get());
-    if (tablestate == nullptr) {
-        xwarn("xsync_on_demand_t::store_unit_blocks_without_proof get table state fail.table latest commit block:%s", latest_committed_block->dump().c_str());
-        return false;
-    }
     base::xaccount_index_t account_index;
-    bool result = tablestate->get_account_index(account, account_index);
-    if (!result) {
-        xwarn("xsync_on_demand_t::store_unit_blocks_without_proof get account index fail account:%s", account.c_str());
+    if (false == statestore::xstatestore_hub_t::instance()->get_accountindex_from_table_block(common::xaccount_address_t{account}, latest_committed_block.get(), account_index)) {
+        xwarn("xsync_on_demand_t::check_unit_blocks get accountindex fail.table latest commit block:%s", latest_committed_block->dump().c_str());
         return false;
     }
-
+    
     uint64_t height = account_index.get_latest_unit_height();
     uint64_t view_id = account_index.get_latest_unit_viewid();
 
