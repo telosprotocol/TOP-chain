@@ -119,6 +119,7 @@ void xquic_client_set_event_timer(xqc_msec_t wake_after, void * user_data) {
 void xquic_client_alive_timer(int fd, short what, void * user_data) {
     // printf("client try send alive at : %" PRIu64 " \n", xqc_now());
     xquic_client_t * client = (xquic_client_t *)user_data;
+    client->quic_engine_do_connect();
     client->quic_engine_do_send();
 }
 
@@ -444,7 +445,7 @@ int xquic_client_conn_create_notify(xqc_connection_t * conn, const xqc_cid_t * c
     // cli_user_conn_t * cli_user_conn = (cli_user_conn_t *)user_data;
     // xqc_conn_set_alp_user_data(conn, cli_user_conn);
 
-    printf("xqc_conn_is_ready_to_send_early_data:%d\n", xqc_conn_is_ready_to_send_early_data(conn));
+    // printf("xqc_conn_is_ready_to_send_early_data:%d\n", xqc_conn_is_ready_to_send_early_data(conn));
     return 0;
 }
 int xquic_client_conn_close_notify(xqc_connection_t * conn, const xqc_cid_t * cid, void * user_data, void * conn_proto_data) {
@@ -1131,8 +1132,28 @@ bool xquic_client_t::init() {
     return true;
 }
 
-cli_user_conn_t * xquic_client_t::connect(char server_addr[64], uint32_t server_port) {
+/// NOTED: API, this function is used by quic_node thread. be careful about multi-thread issus.
+cli_user_conn_t * xquic_client_t::connect(std::string const & server_addr, uint32_t server_port) {
     DEBUG_INFO_MSG("new connection");
+    cli_user_conn_t * cli_user_conn = xquic_client_user_conn_create(server_addr.c_str(), server_port, this);
+    cli_user_conn->server_addr = server_addr;
+    // cli_user_conn->conn_status is before_connected;
+    // printf("create cli_user_conn: (%p) , stream: (%p)\n", cli_user_conn, cli_user_conn->cli_user_stream);
+    if (cli_user_conn == nullptr) {
+        printf("xquic_client_user_conn_create error\n");
+        // todo add ec?
+        return nullptr;
+    }
+    m_conn_queue.push(cli_user_conn);
+    return cli_user_conn;
+}
+
+void xquic_client_t::quic_engine_do_connect() {
+    auto qsize = m_conn_queue.unsafe_size();
+    if (!qsize) {
+        return;
+    }
+
     xqc_cong_ctrl_callback_t cong_ctrl;
     uint32_t cong_flags = 0;
     cong_ctrl = xqc_bbr_cb;
@@ -1155,77 +1176,62 @@ cli_user_conn_t * xquic_client_t::connect(char server_addr[64], uint32_t server_
     conn_settings.keyupdate_pkt_threshold = 0;
     conn_settings.idle_time_out = g_client_engine_idle_timeout;
 
-    // xqc_conn_settings_t conn_settings = {
-    //     .pacing_on = 0,
-    //     .ping_on = 0,
-    //     .cong_ctrl_callback = cong_ctrl,
-    //     .cc_params = {.customize_on = 1, .init_cwnd = 32, .cc_optimization_flags = cong_flags},
-    //     //.so_sndbuf  =   1024*1024,
-    //     .proto_version = XQC_VERSION_V1,
-    //     .spurious_loss_detect_on = 0,
-    //     .keyupdate_pkt_threshold = 0,
-    // };
+    auto all_connection = m_conn_queue.wait_and_pop_all();
+    for (cli_user_conn_t * conn : all_connection) {
+        assert(conn != nullptr);
+        assert(conn->conn_status == cli_conn_status_t::before_connected);
 
-    cli_user_conn_t * cli_user_conn = xquic_client_user_conn_create(server_addr, server_port, this);
-    // printf("create cli_user_conn: (%p) , stream: (%p)\n", cli_user_conn, cli_user_conn->cli_user_stream);
-    if (cli_user_conn == nullptr) {
-        printf("xquic_client_user_conn_create error\n");
-        // todo add ec?
-        return nullptr;
+        std::string read_token = xclient_read_token();
+        if (!read_token.empty()) {
+            conn->token = read_token;
+        }
+
+        xqc_conn_ssl_config_t conn_ssl_config;
+        memset(&conn_ssl_config, 0, sizeof(conn_ssl_config));
+
+        // perf read st/td 's key
+        char * session_ticket_data;
+        unsigned session_ticket_data_len = 0;
+        char * tp_data;
+        unsigned tp_data_len = 0;
+
+        xclient_read_session_ticket(&session_ticket_data, &session_ticket_data_len);
+        xclient_read_transport_parameter(&tp_data, &tp_data_len);
+
+        // open ssl verify.
+        // conn_ssl_config.cert_verify_flag |= XQC_TLS_CERT_FLAG_NEED_VERIFY;
+        // conn_ssl_config.cert_verify_flag |= XQC_TLS_CERT_FLAG_ALLOW_SELF_SIGNED;
+
+        if (session_ticket_data_len == 0 || tp_data_len == 0) {
+            conn_ssl_config.session_ticket_data = NULL;
+            conn_ssl_config.transport_parameter_data = NULL;
+        } else {
+            conn_ssl_config.session_ticket_data = session_ticket_data;
+            conn_ssl_config.session_ticket_len = session_ticket_data_len;
+            conn_ssl_config.transport_parameter_data = tp_data;
+            conn_ssl_config.transport_parameter_data_len = tp_data_len;
+        }
+
+        const xqc_cid_t * cid;
+        cid = xqc_connect(engine,
+                          &conn_settings,
+                          (unsigned char *)(conn->token.c_str()),
+                          conn->token.size(),
+                          conn->server_addr.c_str(),
+                          0,
+                          &conn_ssl_config,
+                          &conn->peer_addr,
+                          conn->peer_addrlen,
+                          "transport",
+                          conn);
+        if (cid == nullptr) {
+            printf("xqc_connect error\n");
+            free(conn->local_addr);
+            delete conn;
+            return;
+        }
+        memcpy(&conn->cid, cid, sizeof(*cid));
     }
-
-    std::string read_token = xclient_read_token();
-    if (!read_token.empty()) {
-        cli_user_conn->token = read_token;
-    }
-
-    xqc_conn_ssl_config_t conn_ssl_config;
-    memset(&conn_ssl_config, 0, sizeof(conn_ssl_config));
-
-    // perf read st/td 's key
-    char * session_ticket_data;
-    unsigned session_ticket_data_len = 0;
-    char * tp_data;
-    unsigned tp_data_len = 0;
-
-    xclient_read_session_ticket(&session_ticket_data, &session_ticket_data_len);
-    xclient_read_transport_parameter(&tp_data, &tp_data_len);
-
-    // open ssl verify.
-    // conn_ssl_config.cert_verify_flag |= XQC_TLS_CERT_FLAG_NEED_VERIFY;
-    // conn_ssl_config.cert_verify_flag |= XQC_TLS_CERT_FLAG_ALLOW_SELF_SIGNED;
-
-    if (session_ticket_data_len == 0 || tp_data_len == 0) {
-        conn_ssl_config.session_ticket_data = NULL;
-        conn_ssl_config.transport_parameter_data = NULL;
-    } else {
-        conn_ssl_config.session_ticket_data = session_ticket_data;
-        conn_ssl_config.session_ticket_len = session_ticket_data_len;
-        conn_ssl_config.transport_parameter_data = tp_data;
-        conn_ssl_config.transport_parameter_data_len = tp_data_len;
-    }
-
-    const xqc_cid_t * cid;
-    cid = xqc_connect(engine,
-                      &conn_settings,
-                      (unsigned char *)(cli_user_conn->token.c_str()),
-                      cli_user_conn->token.size(),
-                      server_addr,
-                      0,
-                      &conn_ssl_config,
-                      &cli_user_conn->peer_addr,
-                      cli_user_conn->peer_addrlen,
-                      "transport",
-                      cli_user_conn);
-    if (cid == nullptr) {
-        printf("xqc_connect error\n");
-        free(cli_user_conn->local_addr);
-        delete cli_user_conn;
-        return nullptr;
-    }
-    memcpy(&cli_user_conn->cid, cid, sizeof(*cid));
-
-    return cli_user_conn;
 }
 
 void xquic_client_t::quic_engine_do_send() {
@@ -1253,6 +1259,12 @@ void xquic_client_t::quic_engine_do_send() {
         __TIME_RECORD_BEGIN(do_send);
         for (auto & send_buffer_ptr : all_message) {
             cli_user_conn_t * cli_user_conn = send_buffer_ptr->cli_user_conn;
+
+            if (cli_user_conn == nullptr || cli_user_conn->conn_status == cli_conn_status_t::after_connected) {
+                // this connection should be clean.
+                send_buffer_ptr->send_data.clear();
+                continue;
+            }
 
             if (cli_user_conn->conn_status != cli_conn_status_t::well_connected) {
                 if (cli_user_conn->conn_status == cli_conn_status_t::before_connected && xqc_now() - cli_user_conn->conn_create_time < BEFORE_WELL_CONNECTED_KEEP_MSG_TIMER) {
@@ -1343,10 +1355,10 @@ void xquic_client_t::release_connection(cli_user_conn_t * cli_user_conn) {
     // do some pre clean work. mostly clean send queue buffer.
     // cli_user_conn->cli_user_stream
 
-    event_del(cli_user_conn->ev_socket);
     event_del(cli_user_conn->conn_timeout_event);
-    event_free(cli_user_conn->ev_socket);
     event_free(cli_user_conn->conn_timeout_event);
+    event_del(cli_user_conn->ev_socket);
+    event_free(cli_user_conn->ev_socket);
 
     cli_user_conn->token.clear();
 

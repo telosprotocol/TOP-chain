@@ -69,6 +69,7 @@ struct cli_user_conn_t {
 
     xqc_cid_t cid;
 
+    std::string server_addr{""};
     struct sockaddr peer_addr;
     socklen_t peer_addrlen;
     struct sockaddr * local_addr;
@@ -196,6 +197,9 @@ public:
     }
 
 private:
+    constexpr static std::size_t max_conn_queue_size{100};
+    top::threading::xthreadsafe_queue<cli_user_conn_t *, std::vector<cli_user_conn_t *>> m_conn_queue{max_conn_queue_size};
+
     constexpr static std::size_t max_send_queue_size{100000};
     top::threading::xthreadsafe_queue<std::unique_ptr<client_send_buffer_t>, std::vector<std::unique_ptr<client_send_buffer_t>>> m_send_queue{max_send_queue_size};
 
@@ -213,8 +217,9 @@ public:
     /// main function from client
     bool init();
 
-    cli_user_conn_t * connect(char server_addr[64], uint32_t server_port);
+    cli_user_conn_t * connect(std::string const & server_addr, uint32_t server_port);
 
+    void quic_engine_do_connect();
     void quic_engine_do_send();
     bool send(cli_user_conn_t * cli_user_conn, top::xbytes_t send_data);
 

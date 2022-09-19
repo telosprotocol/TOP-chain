@@ -69,7 +69,7 @@ bool xquic_node_t::send(std::string addr, uint32_t port, top::xbytes_t data) {
     }
 
     if (m_conn_map.find(addr_port) == m_conn_map.end()) {
-        cli_user_conn_t * new_conn = m_client.connect((char *)addr.c_str(), port);
+        cli_user_conn_t * new_conn = m_client.connect(addr, port);
         if (new_conn == nullptr) {
             // todo add ec return;
             printf("try connection error\n");

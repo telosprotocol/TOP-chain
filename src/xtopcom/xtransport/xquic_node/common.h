@@ -22,6 +22,10 @@
 #define BOLDCYAN "\033[1m\033[36m"    /* Bold Cyan */
 #define BOLDWHITE "\033[1m\033[37m"   /* Bold White */
 
+
+#define DEBUG_INFO 
+#define DEBUG_INFO_MSG
+
 #ifndef DEBUG_INFO
 #    define DEBUG_INFO                                                                                                                                                             \
         printf(BOLDRED " %" PRIu64 ",%" PRIu64 RESET GREEN " %d " RESET "(%s) \n", (xqc_now() % 100000000) / 1000000, (xqc_now() % 1000000) % 100000000, __LINE__, __FUNCTION__);

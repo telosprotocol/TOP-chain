@@ -62,7 +62,7 @@ int xquic_node_t::send_data(std::string const & data, std::string const & addr, 
 
     if (m_conn_map.find(addr_port) == m_conn_map.end()) {
         xdbg("xquic_node_t::send_data try connect to %s", addr_port.c_str());
-        cli_user_conn_t * new_conn = m_client_ptr->connect((char *)addr.c_str(), port);
+        cli_user_conn_t * new_conn = m_client_ptr->connect(addr, port);
         if (new_conn == nullptr) {
             xwarn("xquic_node_t::send_data error when try connect to %s", addr_port.c_str());
             return 1;
