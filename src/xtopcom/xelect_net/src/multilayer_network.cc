@@ -229,6 +229,11 @@ int MultilayerNetwork::HandleParamsAndConfig(const top::data::xplatform_params &
         return 1;
     }
 
+    if (!edge_config.Set("node", "xquic_port", platform_param.xquic_port)) {
+        xerror("set config failed [node][xquic_port][%d]", platform_param.xquic_port);
+        return 1;
+    }
+
     std::string show_cmd_str = (platform_param.show_cmd ? "true" : "false");
     if (!edge_config.Set("node", "show_cmd", show_cmd_str)) {
         xerror("set config failed [node][show_cmd][%s]", show_cmd_str.c_str());

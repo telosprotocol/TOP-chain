@@ -48,7 +48,7 @@ void xquic_node_t::unregister_on_receive_callback() {
 /// NOTED: this API will be used by any thread. need to handle multi-thread issue.
 int xquic_node_t::send_data(std::string const & data, std::string const & addr, uint16_t port) {
     XMETRICS_TIME_RECORD("xquic_node_send");
-    auto addr_port = addr + std::to_string(port);
+    auto addr_port = addr + ":" + std::to_string(port);
     auto bytes_data = top::to_bytes(data);
 
     std::unique_lock<std::mutex> lock(m_conn_map_mutex);
