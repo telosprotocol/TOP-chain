@@ -1,7 +1,7 @@
 #include "xdata/xblocktool.h"
 #include "xdata/xgenesis_data.h"
 #include "xmbus/xmessage_bus.h"
-#include "xstore/xstore_face.h"
+
 #include "xsync/xrole_chains_mgr.h"
 #include "tests/xsync/common.h"
 

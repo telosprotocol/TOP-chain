@@ -9,7 +9,9 @@
 #include "xdata/xblock.h"
 #include "xdata/xbstate_ctx.h"
 #include "xdata/xproperty.h"
-#include "xdata/xsystem_contract/xdata_structures.h"
+#include "xdata/xsystem_contract/xallowance.h"
+#include "xconfig/xconfig_register.h"
+#include "xconfig/xpredefined_configurations.h"
 #include "xvledger/xvstate.h"
 
 #include <string>
@@ -97,7 +99,6 @@ private:
     xbytes_t raw_controller(common::xchain_uuid_t chain_uuid, std::error_code & ec) const;
 };
 
-using xaccount_ptr_t = std::shared_ptr<xunit_bstate_t>;  // TODO(jimmy) rename to xunitstate_ptr_t
 using xunitstate_ptr_t = std::shared_ptr<xunit_bstate_t>;
 
 NS_END2

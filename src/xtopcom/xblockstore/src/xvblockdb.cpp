@@ -204,7 +204,7 @@ namespace top
             xdbg("xvblockdb_t::load_block_output,target index(%s)",target_index->dump().c_str());
             return  read_block_output_from_db(target_index,target_block,get_xdbstore());
         }
-    
+
         bool    xvblockdb_t::load_block_object(base::xvbindex_t* index_ptr, const int atag)
         {
             if(NULL == index_ptr)
@@ -699,7 +699,7 @@ namespace top
             }
             return (block_ptr->get_output() != NULL);
         }
-        
+
         //note: caller need release block ptr
         std::vector<base::xvblock_t*>  xvblockdb_t::read_prunable_block_object_from_db(base::xvaccount_t & account,const uint64_t target_height)
         {

@@ -13,11 +13,6 @@
 
 NS_BEG1(top)
 
-
-xbyte_buffer_t
-from_hex_string(std::string const & str);
-
-
 template<class...> struct conjunction : std::true_type { };
 template<class B1> struct conjunction<B1> : B1 { };
 template<class B1, class... Bn>

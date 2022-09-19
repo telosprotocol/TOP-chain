@@ -26,6 +26,7 @@
 #include "xbase/xhash.h"
 #include "xdata/xcheckpoint.h"
 #include "xbase/xbase.h"
+#include "xstatestore/xstatestore_face.h"
 
 NS_BEG2(top, db_prune)
 
@@ -116,7 +117,7 @@ int DbPrune::db_check(const std::string& node_addr, const std::string& datadir, 
     db_init(datadir);
 
     std::string value_str;
-    int ret = m_store->map_get(sys_contract_rec_registration_addr, top::data::system_contract::XPORPERTY_CONTRACT_REG_KEY, node_addr, value_str);
+    int ret = statestore::xstatestore_hub_t::instance()->map_get(rec_registration_contract_address, top::data::system_contract::XPORPERTY_CONTRACT_REG_KEY, node_addr, value_str);
 
     if (ret == store::xstore_success && !value_str.empty()) {
         data::system_contract::xreg_node_info node_info;

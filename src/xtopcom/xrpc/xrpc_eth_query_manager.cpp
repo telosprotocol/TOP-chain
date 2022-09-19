@@ -50,6 +50,7 @@
 #include "xdata/xblock_cs_para.h"
 #include "xdata/xrelay_block_store.h"
 #include "xgasfee/xgasfee.h"
+#include "xstatestore/xstatestore_face.h"
 
 using namespace top::data;
 
@@ -81,54 +82,13 @@ bool xrpc_eth_query_manager::handle(std::string & strReq, xJson::Value & js_req,
     return true;
 }
 
-enum_query_result xrpc_eth_query_manager::query_account_by_number(const std::string &unit_address, const std::string& table_height, xaccount_ptr_t& ptr) {
-    base::xvaccount_t _vaddr(unit_address);
-    std::string table_address = base::xvaccount_t::make_table_account_address(_vaddr);
-    base::xvaccount_t _table_addr(table_address);
-
-    XMETRICS_GAUGE(metrics::blockstore_access_from_store, 1);
-    xobject_ptr_t<base::xvblock_t> _block;
-    if (table_height == "latest")
-        _block = base::xvchain_t::instance().get_xblockstore()->get_latest_cert_block(_table_addr);
-    else if (table_height == "earliest")
-        _block = base::xvchain_t::instance().get_xblockstore()->get_genesis_block(_table_addr);
-    else if (table_height == "pending")
-        _block = base::xvchain_t::instance().get_xblockstore()->get_latest_cert_block(_table_addr);
-    else {
-        uint64_t height = std::strtoul(table_height.c_str(), NULL, 16);
-        _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_table_addr, height, base::enum_xvblock_flag_authenticated, false, metrics::blockstore_access_from_rpc_get_block_query_propery);
-    }
-
-    if (_block == nullptr) {
-        xwarn("xstore::query_account_by_number fail-load. account=%s", unit_address.c_str());
-        return enum_block_not_found;
-    }
-
-    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_block.get(), metrics::statestore_access_from_vnodesrv_load_state);
-    if (bstate == nullptr) {
-        xwarn("xstore::query_account_by_number fail-load state.block=%s", _block->dump().c_str());
-        return enum_block_not_found;
-    }
-
-    data::xtablestate_ptr_t tablestate = std::make_shared<data::xtable_bstate_t>(bstate.get());
-    base::xaccount_index_t account_index;
-    tablestate->get_account_index(unit_address, account_index);
-    uint64_t unit_height = account_index.get_latest_unit_height();
-    uint64_t unit_view_id = account_index.get_latest_unit_viewid();
-
-    auto unit_block = base::xvchain_t::instance().get_xblockstore()->load_block_object(
-        _vaddr, unit_height, unit_view_id, false, metrics::blockstore_access_from_rpc_get_block_query_propery);
-    if (unit_block == nullptr) {
-        xwarn("xstore::query_account_by_number fail-load. account=%s", unit_address.c_str());
-        return enum_unit_not_found;
-    }
-    base::xauto_ptr<base::xvbstate_t> unit_state =
-        base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(unit_block.get(), metrics::statestore_access_from_vnodesrv_load_state);
-    if (unit_state == nullptr) {
-        xwarn("xstore::query_account_by_number fail-load state.block=%s", unit_block->dump().c_str());
-        return enum_unit_not_found;
-    }
-    ptr = std::make_shared<xunit_bstate_t>(unit_state.get());
+enum_query_result xrpc_eth_query_manager::query_account_by_number(const std::string &unit_address, const std::string& table_height, data::xunitstate_ptr_t& ptr) {
+    ptr = statestore::xstatestore_hub_t::instance()->get_unit_state_by_table(common::xaccount_address_t(unit_address), table_height);
+    XMETRICS_GAUGE(metrics::rpc_query_account_succ, nullptr != ptr ? 1 : 0);
+    if (nullptr == ptr) {
+        xwarn("xstore::query_account_by_number fail-load. account=%s,table_height=%s", unit_address.c_str(),table_height.c_str());
+        return enum_block_not_found;        
+    }    
     return enum_success;
 }
 xobject_ptr_t<base::xvblock_t> xrpc_eth_query_manager::query_block_by_height(const std::string& table_height) {
@@ -183,7 +143,7 @@ void xrpc_eth_query_manager::eth_getBalance(xJson::Value & js_req, xJson::Value 
 
     ETH_ADDRESS_CHECK_VALID(account)
 
-    xaccount_ptr_t account_ptr;
+    data::xunitstate_ptr_t account_ptr;
     enum_query_result ret = query_account_by_number(account, js_req[1].asString(), account_ptr);
 
     if (ret == enum_block_not_found) {
@@ -213,7 +173,7 @@ void xrpc_eth_query_manager::eth_getTransactionCount(xJson::Value & js_req, xJso
 
     // add top address check
     ETH_ADDRESS_CHECK_VALID(account)
-    xaccount_ptr_t account_ptr;
+    data::xunitstate_ptr_t account_ptr;
     enum_query_result ret = query_account_by_number(account, js_req[1].asString(), account_ptr);
     if (ret == enum_block_not_found) {
         std::string msg = "header not found";
@@ -442,7 +402,7 @@ void xrpc_eth_query_manager::eth_getCode(xJson::Value & js_req, xJson::Value & j
     // add top address check
     ETH_ADDRESS_CHECK_VALID(account)
 
-    xaccount_ptr_t account_ptr;
+    data::xunitstate_ptr_t account_ptr;
     enum_query_result ret = query_account_by_number(account, js_req[1].asString(), account_ptr);
     if (ret == enum_block_not_found) {
         std::string msg = "header not found";
@@ -1371,7 +1331,7 @@ void xrpc_eth_query_manager::top_getBalance(xJson::Value & js_req, xJson::Value 
 
     ETH_ADDRESS_CHECK_VALID(account)
 
-    xaccount_ptr_t account_ptr;
+    data::xunitstate_ptr_t account_ptr;
     enum_query_result ret = query_account_by_number(account, js_req[1].asString(), account_ptr);
 
     if (ret == enum_block_not_found) {

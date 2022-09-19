@@ -1206,23 +1206,12 @@ namespace top
                 }
             }
 
-            #ifdef DEBUG
-            if(   (false == new_raw_block->is_input_ready(true))
-               || (false == new_raw_block->is_output_ready(true))
-               || (false == new_raw_block->is_deliver(true)) )//must have full valid data and has mark as enum_xvblock_flag_authenticated
+            if(   (false == new_raw_block->is_body_and_offdata_ready(false))
+               || (false == new_raw_block->is_deliver(true)) )// XTODO must have full valid data and has mark as enum_xvblock_flag_authenticated
             {
-                xwarn("xblockacct_t::store_block,undevlier block=%s",new_raw_block->dump().c_str());
+                xerror("xblockacct_t::store_block,undevlier block=%s",new_raw_block->dump().c_str());
                 return false;
             }
-            #else //quick check for release mode
-            if(   (false == new_raw_block->is_input_ready(false))
-               || (false == new_raw_block->is_output_ready(false))
-               || (false == new_raw_block->is_deliver(true)) )//must have full valid data and has mark as enum_xvblock_flag_authenticated
-            {
-                xwarn("xblockacct_t::store_block,undevlier block=%s",new_raw_block->dump().c_str());
-                return false;
-            }
-            #endif
 
             // TODO(jimmy) should store and execute genesis block
             if(new_raw_block->get_height() == 1 && m_meta->_highest_connect_block_hash.empty())
@@ -2200,7 +2189,6 @@ namespace top
         xchainacct_t::xchainacct_t(base::xvaccountobj_t & parent_obj,const uint64_t timeout_ms,xvblockdb_t * xvbkdb_ptr)
             :xblockacct_t(parent_obj,timeout_ms,xvbkdb_ptr)
         {
-            _lowest_commit_block_height = 0;
         }
 
         xchainacct_t::~xchainacct_t()
@@ -2392,7 +2380,7 @@ namespace top
         {
             return xchainacct_t::store_block(new_raw_block);
         }
-    
+   
         xunitbkplugin::xunitbkplugin(base::xvaccountobj_t & parent_obj,const uint64_t timeout_ms,xvblockdb_t * xvbkdb_ptr)
             :xchainacct_t(parent_obj,timeout_ms,xvbkdb_ptr)
         {
@@ -2584,6 +2572,10 @@ namespace top
             if(!ret)
             {
                 xwarn("xunitbkplugin::store_committed_unit_block,fail-store block(%s)", new_raw_block->dump().c_str());
+            } else {
+                base::xauto_ptr<base::xvbindex_t> bindex(load_index(new_raw_block->get_height(),new_raw_block->get_block_hash()));
+                update_bindex_to_committed(bindex.get());
+                xinfo("xunitbkplugin::store_committed_unit_block update index,store_block,done for block(%s),dump:%s", new_raw_block->dump().c_str(), dump().c_str());
             }
             return true;
         }
@@ -2610,6 +2602,31 @@ namespace top
 
             update_bindex_to_committed(exist_cert.get());
             xinfo("xunitbkplugin::try_update_account_index succ:account:%s,height:%llu,view:%llu", get_address().c_str(), height, viewid);
+            return ret;
+        }
+
+        bool   xunitbkplugin::try_update_account_index(uint64_t height, const std::string & hash, bool update_pre_block)
+        {
+            base::xauto_ptr<base::xvbindex_t> exist_cert(load_index(height, hash));
+            if (exist_cert == nullptr) {
+                xinfo("xunitbkplugin::try_update_account_index index not found:account:%s,height:%llu,hash:%s", get_address().c_str(), height, hash.c_str());
+                return false;
+            }
+
+            bool ret = true;
+            if (update_pre_block && height > 1) {
+                base::xauto_ptr<base::xvbindex_t> exist_cert2(load_index(height - 1, exist_cert->get_last_block_hash()));
+                if (exist_cert2 == nullptr) {
+                    xinfo("xunitbkplugin::try_update_account_index index not found:account:%s,height:%llu,hash:%s", get_address().c_str(), height - 1, exist_cert->get_last_block_hash().c_str());
+                    ret = false;
+                } else {
+                    update_bindex_to_committed(exist_cert2.get());
+                    xinfo("xunitbkplugin::try_update_account_index succ:account:%s,height:%llu,hash:%s", get_address().c_str(), height - 1, exist_cert->get_last_block_hash().c_str());
+                }
+            }
+
+            update_bindex_to_committed(exist_cert.get());
+            xinfo("xunitbkplugin::try_update_account_index succ:account:%s,height:%llu,hash:%s", get_address().c_str(), height, hash.c_str());
             return ret;
         }
 
@@ -2681,6 +2698,5 @@ namespace top
             }
             return false;
         }
-
     };//end of namespace of vstore
 };//end of namespace of top

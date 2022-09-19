@@ -8,9 +8,9 @@
 #include "xbasic/xmemory.hpp"
 #include "xbasic/xrunnable.h"
 #include "xmbus/xmessage_bus.h"
-#include "xstore/xstore_face.h"
 #include "xsync/xdeceit_node_manager.h"
-#include "xsync/xsession.h"
+//#include "xsync/xsession.h"
+#include "xsync/xsync_session_manager.h"
 #include "xsync/xrole_chains_mgr.h"
 #include "xsync/xrole_xips_manager.h"
 #include "xsync/xsync_sender.h"
@@ -52,7 +52,7 @@ private:
     std::unique_ptr<xsync_store_shadow_t> m_store_shadow{};
     std::unique_ptr<sync::xsync_store_face_t> m_sync_store{};
     std::unique_ptr<sync::xdeceit_node_manager_t> m_blacklist{};
-    std::unique_ptr<sync::xsession_manager_t> m_session_mgr{};
+    std::unique_ptr<sync::xsync_session_manager_t> m_session_mgr{};
 
     std::unique_ptr<sync::xrole_chains_mgr_t> m_role_chains_mgr{};
     std::unique_ptr<sync::xrole_xips_manager_t> m_role_xips_mgr{};
@@ -84,7 +84,6 @@ public:
     ~xtop_sync_object()                                    = default;
 
     xtop_sync_object(observer_ptr<mbus::xmessage_bus_face_t> const & bus,
-                     observer_ptr<store::xstore_face_t> const & store,
                      observer_ptr<vnetwork::xvhost_face_t> const & vhost,
                      xobject_ptr_t<base::xvblockstore_t> &blockstore,
                      xobject_ptr_t<base::xvnodesrv_t> &nodesvr_ptr,

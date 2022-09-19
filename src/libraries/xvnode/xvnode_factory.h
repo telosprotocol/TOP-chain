@@ -10,7 +10,6 @@
 #include "xgrpc_mgr/xgrpc_mgr.h"
 #include "xmbus/xmessage_bus.h"
 #include "xrouter/xrouter_face.h"
-#include "xstore/xstore_face.h"
 #include "xsync/xsync_object.h"
 #include "xtxpool_service_v2/xtxpool_service_face.h"
 #include "xunit_service/xcons_face.h"
@@ -26,7 +25,6 @@ class xtop_vnode_factory final : public xtop_vnode_factory_face {
 private:
     observer_ptr<elect::ElectMain> m_elect_main;
     observer_ptr<mbus::xmessage_bus_face_t> m_bus;
-    observer_ptr<store::xstore_face_t> m_store;
     observer_ptr<base::xvblockstore_t> m_block_store;
     observer_ptr<base::xvtxstore_t> m_txstore;
     observer_ptr<time::xchain_time_face_t> m_logic_timer;
@@ -43,7 +41,6 @@ private:
 public:
     xtop_vnode_factory(observer_ptr<elect::ElectMain> elect_main,
                        observer_ptr<mbus::xmessage_bus_face_t> bus,
-                       observer_ptr<store::xstore_face_t> store,
                        observer_ptr<base::xvblockstore_t> blockstore,
                        observer_ptr<base::xvtxstore_t> txstore,
                        observer_ptr<time::xchain_time_face_t> logic_timer,

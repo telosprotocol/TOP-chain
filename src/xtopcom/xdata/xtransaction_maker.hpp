@@ -6,6 +6,7 @@
 
 #include <string>
 
+#include "xdata/xunit_bstate.h"
 #include "xdata/xtransaction_v1.h"
 
 NS_BEG2(top, data)
@@ -26,13 +27,13 @@ class xtransaction_maker {
         tx->set_len();
         return tx;
     } 
-    static xtransaction_ptr_t make_transfer_tx(const xaccount_ptr_t & account, const std::string & to,
+    static xtransaction_ptr_t make_transfer_tx(const data::xunitstate_ptr_t & account, const std::string & to,
         uint64_t amount, uint64_t firestamp, uint16_t duration, uint32_t deposit) {
         return make_transfer_tx(account->get_account(), account->account_send_trans_hash(), account->account_send_trans_number(), to,
         amount, firestamp, duration, deposit);
     }
 
-    static xtransaction_ptr_t make_run_contract_tx(const xaccount_ptr_t & account, const std::string & to,
+    static xtransaction_ptr_t make_run_contract_tx(const data::xunitstate_ptr_t & account, const std::string & to,
         const std::string& func_name, const std::string& func_param, uint64_t amount, uint64_t firestamp,
         uint16_t duration, uint32_t deposit) {
         xtransaction_ptr_t tx = make_object_ptr<xtransaction_v1_t>();

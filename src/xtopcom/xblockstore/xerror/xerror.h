@@ -15,6 +15,7 @@ namespace error {
 enum class xenum_errc {
     ok,
     store_create_genesis_cb_not_register,
+    store_load_block_fail,
 };
 using xerrc_t = xenum_errc;
 

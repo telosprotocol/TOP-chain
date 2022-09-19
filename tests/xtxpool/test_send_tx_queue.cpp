@@ -1,5 +1,6 @@
 #include "gtest/gtest.h"
 #include "test_xtxpool_util.h"
+#include "tests/mock/xdatamock_table.hpp"
 #include "tests/mock/xvchain_creator.hpp"
 #include "xblockstore/xblockstore_face.h"
 #include "xdata/xblocktool.h"
@@ -16,6 +17,7 @@ using namespace top;
 using namespace top::base;
 using namespace std;
 using namespace top::utl;
+using namespace top::mock;
 
 class test_send_tx_queue : public testing::Test {
 protected:
@@ -220,7 +222,7 @@ TEST_F(test_send_tx_queue, uncontinuous_txs_replace) {
 #endif
 
 TEST_F(test_send_tx_queue, send_tx_account_basic) {
-    std::string table_addr = "table_test";
+    std::string table_addr = xdatamock_address::make_consensus_table_address(1);
     xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::consensus_auditor);
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
@@ -301,7 +303,9 @@ TEST_F(test_send_tx_queue, send_tx_account_basic) {
 }
 
 TEST_F(test_send_tx_queue, send_tx_queue_sigle_tx) {
-    std::string table_addr = "table_test";
+    mock::xvchain_creator creator;
+    base::xvblockstore_t * blockstore = creator.get_blockstore();
+    std::string table_addr = xdatamock_address::make_consensus_table_address(1);
     xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::consensus_auditor);
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
@@ -340,24 +344,26 @@ TEST_F(test_send_tx_queue, send_tx_queue_sigle_tx) {
     tx_tmp = send_tx_queue.find(tx->get_transaction()->get_source_addr(), tx->get_transaction()->digest());
     ASSERT_NE(tx_tmp, nullptr);
 
-    top::xobject_ptr_t<xvbstate_t> vbstate;
-    vbstate.attach(new xvbstate_t{table_addr, (uint64_t)1, (uint64_t)1, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0});
-    xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(vbstate.get());
-    auto get_txs = send_tx_queue.get_txs(100, tablestate);
+    base::xauto_ptr<base::xvblock_t> table_genesis_block = xblocktool_t::create_genesis_empty_table(table_addr);
+    blockstore->store_block(base::xvaccount_t(table_addr), table_genesis_block.get());
+
+    auto get_txs = send_tx_queue.get_txs(100, table_genesis_block.get());
     ASSERT_EQ(get_txs.size(), 1);
 
     // ASSERT_EQ(send_tx_queue.is_account_need_update(tx->get_transaction()->get_source_addr()), false);
 
     send_tx_queue.updata_latest_nonce(tx->get_transaction()->get_source_addr(), tx->get_transaction()->get_tx_nonce());
 
-    get_txs = send_tx_queue.get_txs(100, tablestate);
+    get_txs = send_tx_queue.get_txs(100, table_genesis_block.get());
     ASSERT_EQ(get_txs.size(), 0);
 
     // ASSERT_EQ(send_tx_queue.is_account_need_update(tx->get_transaction()->get_source_addr()), false);
 }
 
 TEST_F(test_send_tx_queue, send_tx_queue_continuous_txs) {
-    std::string table_addr = "table_test";
+    mock::xvchain_creator creator;
+    base::xvblockstore_t * blockstore = creator.get_blockstore();
+    std::string table_addr = xdatamock_address::make_consensus_table_address(1);
     xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::consensus_auditor);
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
@@ -380,11 +386,10 @@ TEST_F(test_send_tx_queue, send_tx_queue_continuous_txs) {
         ASSERT_EQ(0, ret);
     }
 
-    top::xobject_ptr_t<xvbstate_t> vbstate;
-    vbstate.attach(new xvbstate_t{table_addr, (uint64_t)1, (uint64_t)1, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0});
-    xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(vbstate.get());
-    // get txs, should be ordered by nonce
-    auto tx_ents = send_tx_queue.get_txs(txs_num, tablestate);
+    base::xauto_ptr<base::xvblock_t> table_genesis_block = xblocktool_t::create_genesis_empty_table(table_addr);
+    blockstore->store_block(base::xvaccount_t(table_addr), table_genesis_block.get());
+
+    auto tx_ents = send_tx_queue.get_txs(txs_num, table_genesis_block.get());
     ASSERT_EQ(tx_ents.size(), txs_num);
     for (uint32_t i = 0; i < tx_ents.size(); i++) {
         ASSERT_EQ(tx_ents[i]->get_transaction()->get_last_nonce(), i);
@@ -400,16 +405,18 @@ TEST_F(test_send_tx_queue, send_tx_queue_continuous_txs) {
     // pop one tx, that will pop txs those nonce are less than the poped tx, and no continuos tx
     tx_info_t txinfo(txs[3]);
     auto tx_tmp = send_tx_queue.pop_tx(txinfo, false);
-    auto tx_ents2 = send_tx_queue.get_txs(txs_num, tablestate);
+    auto tx_ents2 = send_tx_queue.get_txs(txs_num, table_genesis_block.get());
     ASSERT_EQ(tx_ents2.size(), 3);
 
     send_tx_queue.updata_latest_nonce(txs[3]->get_transaction()->get_source_addr(), txs[3]->get_transaction()->get_tx_nonce());
-    tx_ents2 = send_tx_queue.get_txs(txs_num, tablestate);
+    tx_ents2 = send_tx_queue.get_txs(txs_num, table_genesis_block.get());
     ASSERT_EQ(tx_ents2.size(), txs_num - 4);
 }
 
 TEST_F(test_send_tx_queue, send_tx_queue_uncontinuous_send_txs) {
-    std::string table_addr = "table_test";
+    mock::xvchain_creator creator;
+    base::xvblockstore_t * blockstore = creator.get_blockstore();
+    std::string table_addr = xdatamock_address::make_consensus_table_address(1);
     xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::consensus_auditor);
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
@@ -452,22 +459,21 @@ TEST_F(test_send_tx_queue, send_tx_queue_uncontinuous_send_txs) {
     ret = send_tx_queue.push_tx(tx_ent, 0);
     ASSERT_EQ(0, ret);
 
-    top::xobject_ptr_t<xvbstate_t> vbstate;
-    vbstate.attach(new xvbstate_t{table_addr, (uint64_t)1, (uint64_t)1, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0});
-    xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(vbstate.get());
-    auto tx_ents = send_tx_queue.get_txs(10, tablestate);
+    base::xauto_ptr<base::xvblock_t> table_genesis_block = xblocktool_t::create_genesis_empty_table(table_addr);
+    blockstore->store_block(base::xvaccount_t(table_addr), table_genesis_block.get());
+    auto tx_ents = send_tx_queue.get_txs(10, table_genesis_block.get());
     ASSERT_EQ(tx_ents.size(), 1);
 
     tx_ent = std::make_shared<xtx_entry>(txs[1], para);
     ret = send_tx_queue.push_tx(tx_ent, 0);
     ASSERT_EQ(0, ret);
 
-    tx_ents = send_tx_queue.get_txs(10, tablestate);
+    tx_ents = send_tx_queue.get_txs(10, table_genesis_block.get());
     ASSERT_EQ(tx_ents.size(), 7);
 }
 
 TEST_F(test_send_tx_queue, 2_nonce_duplicate_send_tx) {
-    std::string table_addr = "table_test";
+    std::string table_addr = xdatamock_address::make_consensus_table_address(1);
     xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::consensus_auditor);
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
@@ -557,7 +563,7 @@ TEST_F(test_send_tx_queue, update_latest_nonce_hash_not_match) {
 #endif
 
 TEST_F(test_send_tx_queue, reached_upper_limit_basic) {
-    std::string table_addr = "table_test";
+    std::string table_addr = xdatamock_address::make_consensus_table_address(1);
     xtxpool_role_info_t shard(0, 0, 15, common::xnode_type_t::consensus_auditor);
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
@@ -607,7 +613,9 @@ TEST_F(test_send_tx_queue, reached_upper_limit_basic) {
 }
 
 TEST_F(test_send_tx_queue, send_tx_queue_too_many_uncontinuous_send_txs) {
-    std::string table_addr = "table_test";
+    mock::xvchain_creator creator;
+    base::xvblockstore_t * blockstore = creator.get_blockstore();
+    std::string table_addr = xdatamock_address::make_consensus_table_address(1);
     xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::consensus_auditor);
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
@@ -629,16 +637,15 @@ TEST_F(test_send_tx_queue, send_tx_queue_too_many_uncontinuous_send_txs) {
         send_tx_queue.push_tx(tx_ent, 0);
     }
 
-    top::xobject_ptr_t<xvbstate_t> vbstate;
-    vbstate.attach(new xvbstate_t{table_addr, (uint64_t)1, (uint64_t)1, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0});
-    xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(vbstate.get());
-    auto tx_ents = send_tx_queue.get_txs(10, tablestate);
+    base::xauto_ptr<base::xvblock_t> table_genesis_block = xblocktool_t::create_genesis_empty_table(table_addr);
+    blockstore->store_block(base::xvaccount_t(table_addr), table_genesis_block.get());
+    auto tx_ents = send_tx_queue.get_txs(10, table_genesis_block.get());
     ASSERT_EQ(tx_ents.size(), 0);
 
     std::shared_ptr<xtx_entry> tx_ent1_0 = std::make_shared<xtx_entry>(txs_1_0[0], para);
     send_tx_queue.push_tx(tx_ent1_0, 0);
 
-    tx_ents = send_tx_queue.get_txs(10, tablestate);
+    tx_ents = send_tx_queue.get_txs(10, table_genesis_block.get());
     ASSERT_EQ(tx_ents.size(), 1);
 }
 

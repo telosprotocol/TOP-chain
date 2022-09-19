@@ -177,6 +177,7 @@ namespace top
                 //stored larger height block first for commit prove
                 //get_vblockstore()->store_blocks(*this,_batch_blocks);//save to blockstore
                 get_vblockstore()->store_block(*this,_target_cert_block); //just store cert only
+                xdbg("xcsaccount_t::on_proposal_finish _target_cert_block:%s", _target_cert_block->dump().c_str());
             }
             return false;//throw event up again to let txs-pool or other object start new consensus
         }
@@ -197,6 +198,7 @@ namespace top
 
             //stored larger height block first for commit prove
             //get_vblockstore()->store_blocks(*this,_batch_blocks);//save to blockstore
+            xdbg("xcsaccount_t::on_consensus_commit commit block:%s", _evt_obj->get_target_commit()->dump().c_str());
             get_vblockstore()->store_block(*this,_evt_obj->get_target_commit()); //sore commit only
             return false;//throw event up again to let txs-pool or other object start new consensus
         }
@@ -215,6 +217,7 @@ namespace top
             _batch_blocks[1] = _latest_lock_block;
             _batch_blocks[2] = _latest_commit_block;
             //stored larger height block first for commit prove
+            xdbg("xcsaccount_t::on_consensus_update cert:%s,lock:%s,commit:%s", _latest_cert_block->dump().c_str(), _latest_lock_block->dump().c_str(), _latest_commit_block->dump().c_str());
             get_vblockstore()->store_blocks(*this,_batch_blocks);//save to blockstore
             return true;//stop handle anymore
         }
@@ -233,7 +236,8 @@ namespace top
                 _batch_blocks[1] = _latest_lock_block;
                 //stored larger height block first for commit prove
                 //get_vblockstore()->store_blocks(*this,_batch_blocks);//save to blockstore
-                get_vblockstore()->store_block(*this,_evt_obj->get_target_block());
+                xdbg("xcsaccount_t::on_replicate_finish _target_cert_block:%s", _target_cert_block->dump().c_str());
+                get_vblockstore()->store_block(*this,_target_cert_block);
             }
             return true; //stop handle anymore
         }

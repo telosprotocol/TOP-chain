@@ -58,8 +58,6 @@ class xblocktool_t {
     static std::vector<std::string>     make_all_table_addresses();
 
  public:
-    static base::xauto_ptr<base::xvblock_t> get_latest_connectted_state_changed_block(base::xvblockstore_t* blockstore, const base::xvaccount_t & account);
-    static base::xauto_ptr<base::xvblock_t> get_committed_state_changed_block(base::xvblockstore_t* blockstore, const std::string & account, uint64_t max_height);
     static bool             verify_latest_blocks(const base::xblock_mptrs & latest_blocks);
     static bool             verify_latest_blocks(base::xvblock_t* latest_cert_block, base::xvblock_t* lock_block, base::xvblock_t* commited_block);
     static bool             can_make_next_empty_block(const base::xblock_mptrs & latest_blocks, uint32_t max_empty_num);
@@ -83,11 +81,11 @@ class xblocktool_t {
                                                 base::xvblockstore_t * blockstore,
                                                 const std::string & caller);
 
-    static bool get_receiptid_state_and_prove(base::xvblockstore_t * blockstore,
-                                              const base::xvaccount_t & account,
-                                              base::xvblock_t * latest_commit_block,
-                                              base::xvproperty_prove_ptr_t & property_prove_ptr,
-                                              xtablestate_ptr_t & tablestate_ptr);
+   //  static bool get_receiptid_state_and_prove(base::xvblockstore_t * blockstore,
+   //                                            const base::xvaccount_t & account,
+   //                                            base::xvblock_t * latest_commit_block,
+   //                                            base::xvproperty_prove_ptr_t & property_prove_ptr,
+   //                                            xtablestate_ptr_t & tablestate_ptr);
 };
 
 // TODO(jimmy) xblocktool_t split to xblock_utl, xreceipt_utl, xaddress_utl

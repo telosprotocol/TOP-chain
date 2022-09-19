@@ -8,6 +8,7 @@
 #include <map>
 #include <vector>
 #include <mutex>
+#include "xstate_mpt/xstate_mpt.h"
 #include "xdata/xethheader.h"
 #include "xdata/xtableblock.h"
 #include "xdata/xfull_tableblock.h"
@@ -40,6 +41,20 @@ private:
    uint64_t m_poly_timestamp{0};
 };
 
+class lack_account_info_t {
+public:
+    lack_account_info_t() {}
+    lack_account_info_t(const std::string & addr, const base::xaccount_index_t & account_index) : m_addr(addr), m_account_index(account_index) {}
+    const std::string & get_addr() const {return m_addr;}
+    const base::xaccount_index_t & get_account_index() const {return m_account_index;}
+   //  const uint64_t get_start_height() const {return m_start_height;}
+   //  void set_start_height(uint64_t height) {m_start_height = height;}
+private:
+    std::string m_addr;
+    base::xaccount_index_t m_account_index;
+   //  uint64_t m_start_height;
+};
+
 class xtable_maker_t : public xblock_maker_t {
  public:
     explicit xtable_maker_t(const std::string & account, const xblockmaker_resources_ptr_t & resources);
@@ -49,6 +64,7 @@ class xtable_maker_t : public xblock_maker_t {
     xblock_ptr_t            make_proposal(xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & result);
     int32_t                 verify_proposal(base::xvblock_t* proposal_block, const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para);
     bool                    is_make_relay_chain() const;
+    bool                    account_index_upgrade();
 
  protected:
     int32_t                 check_latest_state(const xblock_ptr_t & latest_block); // check table latest block and state
@@ -68,10 +84,19 @@ class xtable_maker_t : public xblock_maker_t {
 private:
     std::vector<xcons_transaction_ptr_t> check_input_txs(bool is_leader, const data::xblock_consensus_para_t & cs_para, const std::vector<xcons_transaction_ptr_t> & input_table_txs, uint64_t now);
     void execute_txs(bool is_leader, const data::xblock_consensus_para_t & cs_para, statectx::xstatectx_ptr_t const& statectx_ptr, const std::vector<xcons_transaction_ptr_t> & input_txs, txexecutor::xexecute_output_t & execute_output, std::error_code & ec);
-    std::vector<xblock_ptr_t> make_units(bool is_leader, const data::xblock_consensus_para_t & cs_para, statectx::xstatectx_ptr_t const& statectx_ptr, txexecutor::xexecute_output_t const& execute_output, std::error_code & ec);
+    std::vector<std::pair<xblock_ptr_t, base::xaccount_index_t>> make_units(bool is_leader, const data::xblock_consensus_para_t & cs_para, statectx::xstatectx_ptr_t const& statectx_ptr, txexecutor::xexecute_output_t const& execute_output, std::error_code & ec);
+    std::vector<std::pair<xblock_ptr_t, base::xaccount_index_t>> make_units_v2(bool is_leader, const data::xblock_consensus_para_t & cs_para, statectx::xstatectx_ptr_t const& statectx_ptr, txexecutor::xexecute_output_t const& execute_output, std::error_code & ec);
     void update_receiptid_state(const xtablemaker_para_t & table_para, statectx::xstatectx_ptr_t const& statectx_ptr);
     void resource_plugin_make_txs(bool is_leader, statectx::xstatectx_ptr_t const& statectx_ptr, const data::xblock_consensus_para_t & cs_para, std::vector<xcons_transaction_ptr_t> & input_txs, std::error_code & ec);
     void rerource_plugin_make_resource(bool is_leader, const data::xblock_consensus_para_t & cs_para, data::xtable_block_para_t & lighttable_para, std::error_code & ec);
+    std::shared_ptr<state_mpt::xtop_state_mpt> create_new_mpt(const xhash256_t & last_mpt_root,
+                                                              const data::xblock_consensus_para_t & cs_para,
+                                                              const statectx::xstatectx_ptr_t & table_state_ctx,
+                                                              const std::vector<std::pair<xblock_ptr_t, base::xaccount_index_t>> & batch_unit_and_index);
+    bool update_new_account_indexes();
+    void init_new_account_indexes(const data::xtablestate_ptr_t & commit_table_state);
+    bool get_new_account_indexes(const data::xblock_consensus_para_t & cs_para, std::map<std::string, base::xaccount_index_t> & new_indexes);
+    bool update_new_indexes_by_block(std::map<std::string, base::xaccount_index_t> & new_indexes, const xblock_ptr_t & block);
 
     xblock_resource_plugin_face_ptr_t           m_resource_plugin{nullptr};
     static constexpr uint32_t                   m_empty_block_max_num{2};
@@ -80,14 +105,38 @@ private:
     xblock_builder_face_ptr_t                   m_emptytable_builder;
     xblock_builder_para_ptr_t                   m_default_builder_para;
     mutable std::mutex                          m_lock;
+    mutable std::mutex                          m_index_upgrade_lock;
+    std::map<std::string, base::xaccount_index_t> m_new_indexes;
+    std::vector<lack_account_info_t>            m_lack_accounts;
+    uint32_t                                    m_lack_accounts_pos{0};
+    uint32_t                                    m_accounts_num{0};
+    uint64_t                                    m_fork_height{0};
+    bool                                        m_account_index_upgrade_finished{false};
 };
 
 class xeth_header_builder {
 public:
-    static const std::string build(const xblock_consensus_para_t & cs_para, const std::vector<txexecutor::xatomictx_output_t> & pack_txs_outputs = {});
+    static const std::string build(const xblock_consensus_para_t & cs_para, const evm_common::xh256_t & state_root, const std::vector<txexecutor::xatomictx_output_t> & pack_txs_outputs = {});
     static bool string_to_eth_header(const std::string & eth_header_str, data::xeth_header_t & eth_header);
 };
 
 using xtable_maker_ptr_t = xobject_ptr_t<xtable_maker_t>;
+
+class xtable_mpt_container : public base::xvblock_excontainer_base {
+public:
+   xtable_mpt_container(std::shared_ptr<state_mpt::xtop_state_mpt> mpt) : m_mpt(mpt) {}
+   virtual void commit() override {
+       std::error_code ec;
+       auto hash = m_mpt->commit(ec);
+       if (ec) {
+           xerror("xtable_mpt_container::commit fail hash:%s", hash.as_hex_str().c_str());
+       } else {
+         xdbg("xtable_mpt_container::commit succ hash:%s", hash.as_hex_str().c_str());
+       }
+   }
+
+private:
+   std::shared_ptr<state_mpt::xtop_state_mpt> m_mpt;
+};
 
 NS_END2

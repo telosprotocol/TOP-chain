@@ -22,7 +22,7 @@
 #include "xrpc/xrpc_define.h"
 #include "xrpc/xrpc_method.h"
 #include "xrpc/xuint_format.h"
-#include "xstore/xstore_face.h"
+
 #include "xtxstore/xtxstore_face.h"
 #include "xtxstore/xtransaction_prepare.h"
 #include "xverifier/xblacklist_verifier.h"
@@ -50,7 +50,6 @@ public:
                       common::xip2_t xip2,
                       shared_ptr<asio::io_service> & ioc,
                       bool archive_flag = false,
-                      observer_ptr<store::xstore_face_t> store = nullptr,
                       observer_ptr<base::xvblockstore_t> block_store = nullptr,
                       observer_ptr<base::xvtxstore_t> txstore = nullptr,
                       observer_ptr<elect::ElectMain> elect_main = nullptr,
@@ -78,7 +77,6 @@ protected:
     unordered_map<pair<string, string>, tx_method_handler> m_edge_tx_method_map;
     unique_ptr<xedge_local_method<T>> m_edge_local_method_ptr;
     std::shared_ptr<xrpc_query_manager> m_rpc_query_mgr;
-    observer_ptr<store::xstore_face_t> m_store;
     top::observer_ptr<base::xvtxstore_t> m_txstore;
     bool m_archive_flag{false};  // for local query
     bool m_enable_sign{true};
@@ -91,12 +89,11 @@ public:
                       common::xip2_t xip2,
                       shared_ptr<asio::io_service> & ioc,
                       bool archive_flag,
-                      observer_ptr<store::xstore_face_t> store,
                       observer_ptr<base::xvblockstore_t> block_store,
                       observer_ptr<base::xvtxstore_t> txstore,
                       observer_ptr<elect::ElectMain> elect_main,
                       observer_ptr<top::election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
-      : xedge_evm_method_base<xedge_evm_http_handler>(edge_vhost, xip2, ioc, archive_flag, store, block_store, txstore, elect_main, election_cache_data_accessor) {
+      : xedge_evm_method_base<xedge_evm_http_handler>(edge_vhost, xip2, ioc, archive_flag, block_store, txstore, elect_main, election_cache_data_accessor) {
     }
     void write_response(shared_ptr<conn_type> & response, const string & content) override {
         response->write(content);
@@ -113,14 +110,12 @@ xedge_evm_method_base<T>::xedge_evm_method_base(shared_ptr<xrpc_edge_vhost> edge
                                         common::xip2_t xip2,
                                         shared_ptr<asio::io_service> & ioc,
                                         bool archive_flag,
-                                        observer_ptr<store::xstore_face_t> store,
                                         observer_ptr<base::xvblockstore_t> block_store,
                                         observer_ptr<base::xvtxstore_t> txstore,
                                         observer_ptr<elect::ElectMain> elect_main,
                                         observer_ptr<top::election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
   : m_edge_local_method_ptr(top::make_unique<xedge_local_method<T>>(elect_main, xip2))
-  , m_rpc_query_mgr(std::make_shared<xrpc_query_manager>(store, block_store, nullptr, xtxpool_service_v2::xtxpool_proxy_face_ptr(nullptr), txstore, archive_flag))
-  , m_store(store)
+  , m_rpc_query_mgr(std::make_shared<xrpc_query_manager>(block_store, nullptr, xtxpool_service_v2::xtxpool_proxy_face_ptr(nullptr), txstore, archive_flag))
   , m_txstore{txstore}
   , m_archive_flag(archive_flag)
 {

@@ -19,6 +19,7 @@ namespace top
             enum_blockstore_metrics_type_block_object       = 2,
             enum_blockstore_metrics_type_block_input_res    = 3,
             enum_blockstore_metrics_type_block_output_res   = 4,
+            enum_blockstore_metrics_type_block_output_offdata   = 5,
         };
     
         base::xvblockstore_t*  get_vblockstore();

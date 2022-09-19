@@ -103,9 +103,6 @@ namespace top
             std::string                 m_tx_hash;      //raw tx 'hash
             uint8_t                     m_tx_phase_type;//refer enum_transaction_subtype
             uint8_t                     m_block_flags;  //refer enum_xvblock_flag,here just stored 8bit to save space
-#ifdef  LONG_CONFIRM_CHECK
-            uint64_t                    m_block_clock;  //associated block 'clock
-#endif
         };
         using xvtxindex_ptr             = xobject_ptr_t<xvtxindex_t>;//define short type
 

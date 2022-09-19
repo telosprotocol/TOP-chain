@@ -1,8 +1,7 @@
 #include <gtest/gtest.h>
 #include "xchaininit/xinit.h"
 #include <memory>
-#include "xstore/xstore_face.h"
-#include "xstore/xstore.h"
+
 #include "xdb/xdb_factory.h"
 #include "xbase/xcontext.h"
 #include "xdata/xrootblock.h"

@@ -19,7 +19,6 @@ bool xws_server::m_is_running = false;
 xws_server::xws_server(shared_ptr<xrpc_edge_vhost> edge_vhost,
                        common::xip2_t xip2,
                        bool archive_flag,
-                       observer_ptr<store::xstore_face_t> store,
                        observer_ptr<base::xvblockstore_t> block_store,
                        observer_ptr<base::xvtxstore_t> txstore,
                        observer_ptr<elect::ElectMain> elect_main,
@@ -28,7 +27,7 @@ xws_server::xws_server(shared_ptr<xrpc_edge_vhost> edge_vhost,
     m_enable_ratelimit = false;
 #endif
     if (m_rpc_service == nullptr) {
-        m_rpc_service = top::make_unique<xrpc_service<xedge_ws_method>>(edge_vhost, xip2, archive_flag, store, block_store, txstore, elect_main, election_cache_data_accessor);
+        m_rpc_service = top::make_unique<xrpc_service<xedge_ws_method>>(edge_vhost, xip2, archive_flag, block_store, txstore, elect_main, election_cache_data_accessor);
     } else {
         m_rpc_service->reset_edge_method_mgr(edge_vhost, xip2);
     }

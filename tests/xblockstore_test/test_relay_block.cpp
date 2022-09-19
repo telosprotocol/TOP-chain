@@ -13,7 +13,6 @@
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xblockextract.h"
 #include "xmetrics/xmetrics.h"
-#include "xstore/xstore.h"
 #include "xverifier/xtx_verifier.h"
 #include "xblockstore/xblockstore_face.h"
 #include "tests/mock/xvchain_creator.hpp"

@@ -203,6 +203,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(message_category_txpool_contains_duplicate);
         RETURN_METRICS_NAME(message_category_rpc_contains_duplicate);
         RETURN_METRICS_NAME(message_category_sync_contains_duplicate);
+        RETURN_METRICS_NAME(message_category_state_sync_contains_duplicate);
         RETURN_METRICS_NAME(message_block_broadcast_contains_duplicate);
         RETURN_METRICS_NAME(message_category_relay_contains_duplicate);
         RETURN_METRICS_NAME(message_category_unknown_contains_duplicate);
@@ -213,6 +214,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(message_category_txpool);
         RETURN_METRICS_NAME(message_category_rpc);
         RETURN_METRICS_NAME(message_category_sync);
+        RETURN_METRICS_NAME(message_category_state_sync);
         RETURN_METRICS_NAME(message_block_broadcast);
         RETURN_METRICS_NAME(message_category_relay);
         RETURN_METRICS_NAME(message_category_unknown);
@@ -553,6 +555,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(rpc_auditor_query_request);
         RETURN_METRICS_NAME(rpc_auditor_forward_request);
         RETURN_METRICS_NAME(rpc_validator_tx_request);
+        RETURN_METRICS_NAME(rpc_query_account_succ);        
         // contract
         RETURN_METRICS_NAME(contract_table_fullblock_event);
         RETURN_METRICS_NAME(contract_table_statistic_exec_fullblock);
@@ -589,6 +592,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
 
         //cpu
         RETURN_METRICS_NAME(cpu_hash_256_calc);
+        RETURN_METRICS_NAME(cpu_hash_64_calc);        
         RETURN_METRICS_NAME(cpu_ca_merge_sign_xbft);
         RETURN_METRICS_NAME(cpu_ca_merge_sign_tc);
         RETURN_METRICS_NAME(cpu_ca_do_sign_xbft);

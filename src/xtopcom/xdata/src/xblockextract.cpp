@@ -5,6 +5,7 @@
 #include <string>
 #include "xbase/xutl.h"
 #include "xbasic/xhex.h"
+#include "xvledger/xvblock_offdata.h"
 #include "xdata/xblockextract.h"
 #include "xdata/xblockbuild.h"
 #include "xdata/xnative_contract_address.h"
@@ -145,6 +146,24 @@ void xblockextract_t::unpack_ethheader(base::xvblock_t* _block, xeth_header_t & 
     }
 }
 
+bool xblockextract_t::get_state_root(base::xvblock_t* _block, evm_common::xh256_t & state_root) {
+    if (_block->get_height() == 0 || !base::xvblock_fork_t::is_block_match_version(_block->get_block_version(), base::enum_xvblock_fork_version_5_0_0)) {
+        xdbg("xblockextract_t::get_state_root block is old version or height = 0 block:%s", _block->dump().c_str());
+        state_root = evm_common::xh256_t();
+        return true;
+    }
+
+    data::xeth_header_t ethheader;
+    std::error_code ec;
+    unpack_ethheader(_block, ethheader, ec);
+    if (ec) {
+        return false;
+    }
+
+   state_root = ethheader.get_state_root();
+   return true;
+}
+
 xtransaction_ptr_t xblockextract_t::unpack_raw_tx(base::xvblock_t* _block, std::string const& txhash, std::error_code & ec) {
     std::string orgtx_bin = _block->get_input()->query_resource(txhash);
     if (orgtx_bin.empty()) {
@@ -172,7 +191,7 @@ std::shared_ptr<xrelay_block> xblockextract_t::unpack_relay_block_from_table(bas
         return nullptr;
     }
 
-    std::string relayblock_resource = _block->get_output()->query_resource(data::RESOURCE_RELAY_BLOCK);
+    std::string relayblock_resource = _block->get_output()->query_resource(base::xvoutput_t::RESOURCE_RELAY_BLOCK);
     if (relayblock_resource.empty()) {
         ec = common::error::xerrc_t::invalid_block;
         xerror("xblockextract_t::unpack_relay_block_from_table fail-relayblock_resource empty._block=%s", _block->dump().c_str());
@@ -441,28 +460,19 @@ void xblockextract_t::unpack_subblocks(base::xvblock_t* _block, std::vector<xobj
         return;
     }
 
-    if (!_block->is_input_ready(false)
-        || !_block->is_output_ready(false)) {
+    if (!_block->is_body_and_offdata_ready(false)) {
         ec = common::error::xerrc_t::invalid_block;
-        xerror("xblockextract_t::unpack_subblocks input and output should ready.");
+        xerror("xblockextract_t::unpack_subblocks input and output should ready. %s", _block->dump().c_str());
         return;
     }
 
-    sublocks = xlighttable_build_t::unpack_units_from_table(_block);
+    if (base::xvblock_fork_t::is_block_older_version(_block->get_block_version(), base::enum_xvblock_fork_version_5_0_0)) {
+        sublocks = xlighttable_build_t::unpack_units_from_table(_block);
+    } else {
+        sublocks = xtable_build2_t::unpack_units_from_table(_block, ec);
+    }
+
     xdbg("xblockextract_t::unpack_subblocks succ.block=%s,sublocks=%zu",_block->dump().c_str(),sublocks.size());
-    
-    // // TODO(jimmy)
-    // if (_block->get_account() == sys_contract_relay_table_block_addr) {
-    //     xobject_ptr_t<base::xvblock_t> wrap_relayblock = xblockextract_t::unpack_wrap_relayblock_from_relay_table(_block, ec);
-    //     if (ec) {
-    //         xerror("xblockextract_t::unpack_subblocks fail-unpack_wrap_relayblock_from_relay_table.");
-    //         return;
-    //     }
-    //     if (wrap_relayblock != nullptr) {
-    //         sublocks.push_back(wrap_relayblock);
-    //         xinfo("xblockextract_t::unpack_subblocks succ.block=%s,wrapblock=%s",_block->dump().c_str(),wrap_relayblock->dump().c_str());            
-    //     }
-    // }
 }
 
 NS_END2

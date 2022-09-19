@@ -23,7 +23,7 @@
 #include "xgenesis/xgenesis_manager.h"
 #include "xmbus/xmessage_bus.h"
 #include "xrouter/xrouter_face.h"
-#include "xstore/xstore_face.h"
+#include "xdbstore/xstore_face.h"
 #include "xsync/xsync_object.h"
 #include "xtxpool_v2/xtxpool_face.h"
 #include "xtxstore/xtxstore_face.h"
@@ -35,7 +35,7 @@
 
 NS_BEG2(top, application)
 
-enum class xtop_thread_pool_type : std::uint8_t { invalid, unit_service, synchronization, txpool_service };
+enum class xtop_thread_pool_type : std::uint8_t { invalid, unit_service, synchronization, txpool_service, statestore };
 using xthread_pool_type_t = xtop_thread_pool_type;
 
 enum class xtop_io_context_type : uint8_t { invalid, general };

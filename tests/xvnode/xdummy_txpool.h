@@ -58,9 +58,7 @@ public:
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_confirm_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t & total_num) const override {
         return {};
     }
-    bool need_sync_lacking_receipts(uint8_t zone, uint16_t subaddr) const override {
-        return false;
-    }
+
     void print_statistic_values() const override{};
     void update_peer_receipt_id_state(const base::xvproperty_prove_ptr_t & property_prove_ptr, const base::xreceiptid_state_ptr_t & receiptid_state) override {
     }

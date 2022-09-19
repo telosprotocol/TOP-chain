@@ -2,7 +2,7 @@
 #define private public
 #define protected public
 #include "xblockstore/xblockstore_face.h"
-#include "xstore/xstore_face.h"
+
 #include "xrpc/xrpc_eth_query_manager.h"
 #include "xvm/manager/xcontract_manager.h"
 #include "xelection/xvnode_house.h"
@@ -25,8 +25,8 @@ class test_xrpc_eth_query_manager : public testing::Test {
     void SetUp() override {
         m_store = creator.get_xstore();
         m_block_store = creator.get_blockstore();
-        xrpc_eth_query_manager_ptr = new xrpc::xrpc_eth_query_manager(make_observer(m_store.get()), make_observer(m_block_store), nullptr, nullptr);
-        contract::xcontract_manager_t::instance().init(make_observer(m_store.get()), nullptr);
+        xrpc_eth_query_manager_ptr = new xrpc::xrpc_eth_query_manager(make_observer(m_block_store), nullptr, nullptr);
+        contract::xcontract_manager_t::instance().init(nullptr);
     }
 
     void TearDown() override {
@@ -57,7 +57,7 @@ TEST_F(test_xrpc_eth_query_manager, illegal_request) {
 }
 
 TEST_F(test_xrpc_eth_query_manager, query_account_by_number) {
-    data::xaccount_ptr_t account_ptr;
+    data::xunitstate_ptr_t account_ptr;
     auto ret = xrpc_eth_query_manager_ptr->query_account_by_number("T60004b7762d8dbd7e5c023ff99402b78af7c13b01eec1", "latest", account_ptr);
     EXPECT_EQ(ret, xrpc::enum_success);
     ret = xrpc_eth_query_manager_ptr->query_account_by_number("T60004b7762d8dbd7e5c023ff99402b78af7c13b01eec1", "earliest", account_ptr);

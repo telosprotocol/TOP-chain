@@ -13,7 +13,6 @@ NS_BEG2(top, vnode)
 
 xtop_vnode_factory::xtop_vnode_factory(observer_ptr<elect::ElectMain> elect_main,
                                        observer_ptr<mbus::xmessage_bus_face_t> bus,
-                                       observer_ptr<store::xstore_face_t> store,
                                        observer_ptr<base::xvblockstore_t> blockstore,
                                        observer_ptr<base::xvtxstore_t> txstore,
                                        observer_ptr<time::xchain_time_face_t> logic_timer,
@@ -28,7 +27,6 @@ xtop_vnode_factory::xtop_vnode_factory(observer_ptr<elect::ElectMain> elect_main
                                        observer_ptr<base::xvnodesrv_t> const & nodesvr)
   : m_elect_main{std::move(elect_main)}
   , m_bus{std::move(bus)}
-  , m_store{std::move(store)}
   , m_block_store{std::move(blockstore)}
   , m_txstore{std::move(txstore)}
   , m_logic_timer{std::move(logic_timer)}
@@ -47,7 +45,6 @@ std::shared_ptr<xvnode_face_t> xtop_vnode_factory::create_vnode_at(std::shared_p
                                       m_vhost,
                                       group,
                                       m_router,
-                                      m_store,
                                       m_block_store,
                                       m_txstore,
                                       m_bus,

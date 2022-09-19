@@ -16,6 +16,7 @@
 #include "xmbus/xevent_behind.h"
 #include "xchain_fork/xchain_upgrade_center.h"
 #include "xgasfee/xgas_estimate.h"
+#include "xstatestore/xstatestore_face.h"
 
 NS_BEG2(top, blockmaker)
 
@@ -94,6 +95,10 @@ data::xblock_consensus_para_ptr_t   xproposal_maker_t::leader_set_consensus_para
     // TODO(jimmy) keep for help txpool clear cache
     update_txpool_table_state(latest_blocks.get_latest_committed_block(), tablestate_commit);
     return cs_para;
+}
+
+bool xproposal_maker_t::account_index_upgrade() {
+    return m_table_maker->account_index_upgrade();
 }
 
 int xproposal_maker_t::backup_verify_and_set_consensus_para_basic(xblock_consensus_para_t & cs_para, base::xvblock_t *proposal_block) {
@@ -204,13 +209,7 @@ bool xproposal_maker_t::can_make_proposal(data::xblock_consensus_para_t & propos
 }
 
 data::xtablestate_ptr_t xproposal_maker_t::get_target_tablestate(base::xvblock_t * block) {
-    base::xauto_ptr<base::xvbstate_t> bstate = m_resources->get_xblkstatestore()->get_block_state(block,metrics::statestore_access_from_blkmaker_get_target_tablestate);
-    if (bstate == nullptr) {
-        xwarn("xproposal_maker_t::get_target_tablestate fail-get target state.block=%s",block->dump().c_str());
-        return nullptr;
-    }
-    data::xtablestate_ptr_t tablestate = std::make_shared<data::xtable_bstate_t>(bstate.get());
-    return tablestate;
+    return statestore::xstatestore_hub_t::instance()->get_table_state_by_block(block);
 }
 
 xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & proposal_para, uint32_t min_tx_num) {
@@ -297,10 +296,11 @@ xblock_ptr_t xproposal_maker_t::make_proposal(data::xblock_consensus_para_t & pr
 
     std::string block_object_bin;
     proposal_block->serialize_to_string(block_object_bin);
-    xinfo("xproposal_maker_t::make_proposal succ.block=%s,size=%zu,%zu,%zu,%zu,input={size=%zu,txs=%zu,accounts=%zu}", 
+    xinfo("xproposal_maker_t::make_proposal succ.block=%s,size=%zu,%zu,%zu,%zu,%zu,input={size=%zu,txs=%zu,accounts=%zu}", 
         proposal_block->dump().c_str(),
-        block_object_bin.size()+proposal_block->get_input()->get_resources_data().size()+proposal_block->get_output()->get_resources_data().size(),
+        block_object_bin.size()+proposal_block->get_input()->get_resources_data().size()+proposal_block->get_output()->get_resources_data().size()+proposal_block->get_output_offdata().size(),
         block_object_bin.size(),proposal_block->get_input()->get_resources_data().size(), proposal_block->get_output()->get_resources_data().size(),
+        proposal_block->get_output_offdata().size(),
         proposal_input_str.size(), proposal_input->get_input_txs().size(), proposal_input->get_other_accounts().size());
     return proposal_block;
 }
@@ -382,17 +382,8 @@ bool xproposal_maker_t::verify_proposal_input(base::xvblock_t *proposal_block, x
         return false;
     }
 
-    // TODO(jimmy) need delete future set other accounts for tableblock
-    std::vector<std::string> other_accounts;
-    auto unit_headers = proposal_block->get_sub_block_headers();
-    for (auto & _unit_header : unit_headers) {
-        if (_unit_header->get_block_class() == base::enum_xvblock_class_nil || _unit_header->get_block_class() == base::enum_xvblock_class_full) {
-            other_accounts.push_back(_unit_header->get_account());
-        }        
-    }
-
     const std::vector<xcons_transaction_ptr_t> & origin_txs = proposal_input->get_input_txs();
-    if (origin_txs.empty() && other_accounts.empty()) {
+    if (origin_txs.empty()) {
         xerror("xproposal_maker_t::verify_proposal_input fail-table proposal input empty. proposal=%s",
             proposal_block->dump().c_str());
         return false;
@@ -455,7 +446,6 @@ bool xproposal_maker_t::verify_proposal_input(base::xvblock_t *proposal_block, x
 
     // table_para.set_origin_txs(origin_txs);
     table_para.set_pack_resource(xtxpool_v2::xpack_resource(origin_txs, receiptid_info_map));
-    table_para.set_other_accounts(other_accounts);  // TODO(jimmy) no need future
     return true;
 }
 
@@ -488,7 +478,7 @@ void xproposal_maker_t::update_txpool_table_state(base::xvblock_t* _commit_block
     if (_commit_block->get_height() > 0) {
         base::xvproperty_prove_ptr_t property_prove_ptr = nullptr;
         data::xtablestate_ptr_t tablestate_ptr = nullptr;
-        auto ret = data::xblocktool_t::get_receiptid_state_and_prove(get_blockstore(), *m_table_maker, _commit_block, property_prove_ptr, tablestate_ptr);
+        auto ret = statestore::xstatestore_hub_t::instance()->get_receiptid_state_and_prove(common::xaccount_address_t(m_table_maker->get_account()), _commit_block, property_prove_ptr, tablestate_ptr);
         if (!ret) {
             xwarn("xproposal_maker_t::update_txpool_txs create receipt state and prove fail.table:%s, commit height:%llu", get_account().c_str(), _commit_block->get_height());
         }
@@ -503,7 +493,8 @@ bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & propos
     uint16_t confirm_and_recv_txs_max_num = 35;
     uint16_t confirm_txs_max_num = 30;
 
-    if (proposal_para.get_table_account() == sys_contract_eth_table_block_addr_with_suffix || proposal_para.get_table_account() == sys_contract_relay_table_block_addr) {
+    // TODO(jimmy)  proposal_para.get_table_account() == sys_contract_eth_table_block_addr_with_suffix
+    if (proposal_para.get_table_account() == sys_contract_relay_table_block_addr) {
         all_txs_max_num = 5;
         confirm_and_recv_txs_max_num = 4;
         confirm_txs_max_num = 3;
@@ -516,7 +507,7 @@ bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & propos
     peer_sids_for_confirm_id = select_peer_sids_for_confirm_id(all_table_sids_vec, proposal_para.get_proposal_height());
 
     xtxpool_v2::xtxs_pack_para_t txpool_pack_para(
-        proposal_para.get_table_account(), tablestate_highqc, all_txs_max_num, confirm_and_recv_txs_max_num, confirm_txs_max_num, peer_sids_for_confirm_id);
+        proposal_para.get_table_account(), tablestate_highqc, proposal_para.get_latest_cert_block().get(), all_txs_max_num, confirm_and_recv_txs_max_num, confirm_txs_max_num, peer_sids_for_confirm_id);
     // std::vector<xcons_transaction_ptr_t> origin_txs = get_txpool()->get_ready_txs(txpool_pack_para);
 
     auto pack_resource = get_txpool()->get_pack_resource(txpool_pack_para);

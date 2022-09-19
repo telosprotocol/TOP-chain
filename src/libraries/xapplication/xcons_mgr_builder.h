@@ -5,7 +5,7 @@
 #pragma once
 // TODO(jimmy) #include "xbase/xvledger.h"
 
-#include "xstore/xstore_face.h"
+
 #include "xtxpool_v2/xtxpool_face.h"
 #include "xunit_service/xcons_face.h"
 #include "xmbus/xmessage_bus.h"
@@ -68,7 +68,6 @@ public:
 class xcons_mgr_builder {
 public:
     static xunit_service::xcons_service_mgr_ptr build(std::string const & node_account,
-                                                      observer_ptr<store::xstore_face_t> const & store,
                                                       observer_ptr<base::xvblockstore_t> const & blockstore,
                                                       observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
                                                       observer_ptr<time::xchain_time_face_t> const & tx_timer,

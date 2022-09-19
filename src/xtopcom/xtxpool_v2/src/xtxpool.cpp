@@ -348,14 +348,6 @@ const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxpool_t::get_lacking_co
     return {};
 }
 
-bool xtxpool_t::need_sync_lacking_receipts(uint8_t zone, uint16_t subaddr) const {
-    auto table = get_txpool_table(zone, subaddr);
-    if (table != nullptr) {
-        return table->need_sync_lacking_receipts();
-    }
-    return false;
-}
-
 std::shared_ptr<xtxpool_table_t> xtxpool_t::get_txpool_table_by_addr(const std::string & address) const {
     base::xvaccount_t _vaddr(address);
     //auto xid = base::xvaccount_t::get_xid_from_account(address);
@@ -376,11 +368,10 @@ std::shared_ptr<xtxpool_table_t> xtxpool_t::get_txpool_table(uint8_t zone, uint1
     return m_tables_mgr.get_table(zone, subaddr);
 }
 
-xobject_ptr_t<xtxpool_face_t> xtxpool_instance::create_xtxpool_inst(const observer_ptr<store::xstore_face_t> & store,
-                                                                    const observer_ptr<base::xvblockstore_t> & blockstore,
+xobject_ptr_t<xtxpool_face_t> xtxpool_instance::create_xtxpool_inst(const observer_ptr<base::xvblockstore_t> & blockstore,
                                                                     const observer_ptr<base::xvcertauth_t> & certauth,
                                                                     const observer_ptr<mbus::xmessage_bus_face_t> & bus) {
-    auto para = std::make_shared<xtxpool_resources>(store, blockstore, certauth, bus);
+    auto para = std::make_shared<xtxpool_resources>(blockstore, certauth, bus);
     auto xtxpool = top::make_object_ptr<xtxpool_t>(para);
     return xtxpool;
 }

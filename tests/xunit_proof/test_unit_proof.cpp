@@ -26,7 +26,7 @@ protected:
     void TearDown() override {
     }
 };
-
+#if 0
 TEST_F(test_unit_proof, store_and_load) {
     mock::xvchain_creator creator;
     base::xvblockstore_t * blockstore = creator.get_blockstore();
@@ -66,7 +66,7 @@ TEST_F(test_unit_proof, store_and_load) {
     ASSERT_EQ(unit_proof_tmp.verify_unit_block(&auth, unit_block), true);
 }
 
-#if 0
+
 TEST_F(test_unit_proof, check_unit_blocks) {
     mock::xvchain_creator creator;
     base::xvblockstore_t * blockstore = creator.get_blockstore();

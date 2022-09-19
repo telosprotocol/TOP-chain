@@ -654,6 +654,16 @@ xsync_command_execute_result xchain_downloader_t::execute_next_download(std::vec
     XMETRICS_COUNTER_INCREMENT("sync_downloader_response", 1);
     XMETRICS_COUNTER_INCREMENT("sync_cost_peer_response", total_cost);
 
+    if (false == sync_blocks_continue_check(blocks, "", false)) {
+        xsync_warn("execute_next_download  blocks(address error) (%s)", blocks[0]->get_account().c_str());
+        return ignore;
+    }
+    if (!data::is_table_address(common::xaccount_address_t {blocks[0]->get_account()}) 
+        && !data::is_drand_address(common::xaccount_address_t { blocks[0]->get_account() })) {
+        xsync_dbg("xsync_handler_t::blocks, address type error: %s", blocks[0]->get_account().c_str());
+        return ignore;
+    }
+
     // 1.verify shard-table block multi-sign
     if (!m_is_elect_chain){
         xblock_ptr_t &block = blocks[count-1];

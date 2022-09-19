@@ -7,7 +7,6 @@
 #include "xchain_timer/xchain_timer_face.h"
 #include "xmbus/xmessage_bus.h"
 #include "xmbus/xevent_store.h"
-#include "xstore/xstore_face.h"
 
 #define private public
 #include "xloader/xconfig_onchain_loader.h"
@@ -24,20 +23,18 @@ protected:
 
 class test_onchain_loader: public xconfig_onchain_loader_t {
 public:
-    test_onchain_loader(top::observer_ptr<top::store::xstore_face_t> const & store_ptr,
-                        top::observer_ptr<top::mbus::xmessage_bus_face_t> const & bus,
-                        top::observer_ptr<top::time::xchain_time_face_t> const & logic_timer): xconfig_onchain_loader_t(store_ptr, bus, logic_timer) {}
+    test_onchain_loader(top::observer_ptr<top::mbus::xmessage_bus_face_t> const & bus,
+                        top::observer_ptr<top::time::xchain_time_face_t> const & logic_timer): xconfig_onchain_loader_t(bus, logic_timer) {}
 };
 
 
 TEST_F(test_loader_api, onchain_loader_filter_changes) {
-    auto store = top::store::xstore_factory::create_store_with_memdb();
     std::shared_ptr<top::xbase_io_context_wrapper_t> io_object = std::make_shared<top::xbase_io_context_wrapper_t>();
     std::shared_ptr<top::xbase_timer_driver_t> timer_driver = std::make_shared<top::xbase_timer_driver_t>(io_object);
     auto chain_timer = top::make_object_ptr<top::time::xchain_timer_t>(timer_driver);
     auto mbus = new top::mbus::xmessage_bus_t();
 
-    test_onchain_loader onchain_loader(top::make_observer(store.get()), top::make_observer(mbus), top::make_observer(chain_timer.get()));
+    test_onchain_loader onchain_loader(top::make_observer(mbus), top::make_observer(chain_timer.get()));
     onchain_loader.m_last_param_map = {{"id1", "test1"}, {"id2", "test2"}, {"id3", "test3"}};
 
     // filter modification
@@ -64,13 +61,12 @@ TEST_F(test_loader_api, onchain_loader_filter_changes) {
 
 
 TEST_F(test_loader_api, onchain_loader_delete_params) {
-    auto store = top::store::xstore_factory::create_store_with_memdb();
     std::shared_ptr<top::xbase_io_context_wrapper_t> io_object = std::make_shared<top::xbase_io_context_wrapper_t>();
     std::shared_ptr<top::xbase_timer_driver_t> timer_driver = std::make_shared<top::xbase_timer_driver_t>(io_object);
     auto chain_timer = top::make_object_ptr<top::time::xchain_timer_t>(timer_driver);
     auto mbus = new top::mbus::xmessage_bus_t();
 
-    test_onchain_loader onchain_loader(top::make_observer(store.get()), top::make_observer(mbus), top::make_observer(chain_timer.get()));
+    test_onchain_loader onchain_loader(top::make_observer(mbus), top::make_observer(chain_timer.get()));
     onchain_loader.m_last_param_map = {{"id1", "test1"}, {"id2", "test2"}, {"id3", "test3"}};
 
     // delete case
@@ -83,13 +79,12 @@ TEST_F(test_loader_api, onchain_loader_delete_params) {
 
 
 TEST_F(test_loader_api, onchain_loader_param_changed) {
-    auto store = top::store::xstore_factory::create_store_with_memdb();
     std::shared_ptr<top::xbase_io_context_wrapper_t> io_object = std::make_shared<top::xbase_io_context_wrapper_t>();
     std::shared_ptr<top::xbase_timer_driver_t> timer_driver = std::make_shared<top::xbase_timer_driver_t>(io_object);
     auto chain_timer = top::make_object_ptr<top::time::xchain_timer_t>(timer_driver);
     auto mbus = new top::mbus::xmessage_bus_t();
 
-    test_onchain_loader onchain_loader(top::make_observer(store.get()), top::make_observer(mbus), top::make_observer(chain_timer.get()));
+    test_onchain_loader onchain_loader(top::make_observer(mbus), top::make_observer(chain_timer.get()));
    onchain_loader.m_last_param_map = {{"id1", "test1"}, {"id2", "test2"}, {"id3", "test3"}};
 
    // not change

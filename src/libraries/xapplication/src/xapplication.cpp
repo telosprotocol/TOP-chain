@@ -39,6 +39,7 @@
 #include "xstore/xstore_error.h"
 #include "xvm/manager/xcontract_manager.h"
 #include "xvm/xsystem_contracts/deploy/xcontract_deploy.h"
+#include "xstatestore/xstatestore_face.h"
 
 #include <stdexcept>
 #include "xapplication/xcons_mgr_builder.h"
@@ -78,7 +79,7 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
     m_cert_ptr.attach(&auth::xauthcontext_t::instance(*m_nodesvr_ptr.get()));
 #endif
     // genesis blocks should init imediately after db created
-    m_genesis_manager = make_unique<genesis::xgenesis_manager_t>(top::make_observer(m_blockstore.get()), make_observer(m_store));
+    m_genesis_manager = make_unique<genesis::xgenesis_manager_t>(top::make_observer(m_blockstore.get()));
 
     if ((m_store == nullptr) || !m_store->open()) {
         xwarn("xtop_application::start db open failed!");
@@ -98,7 +99,7 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
 
 void xtop_application::start() {
     // load configuration first
-    auto loader = std::make_shared<loader::xconfig_onchain_loader_t>(make_observer(m_store), make_observer(m_bus.get()), make_observer(m_logic_timer));
+    auto loader = std::make_shared<loader::xconfig_onchain_loader_t>(make_observer(m_bus.get()), make_observer(m_logic_timer));
     config::xconfig_register_t::get_instance().add_loader(loader);
     config::xconfig_register_t::get_instance().load();
 
@@ -106,15 +107,18 @@ void xtop_application::start() {
     base::xvblock_fork_t::instance().init(chain_fork::xtop_chain_fork_config_center::is_block_forked);
 
     m_txpool =
-        xtxpool_v2::xtxpool_instance::create_xtxpool_inst(make_observer(m_store), make_observer(m_blockstore.get()), make_observer(m_cert_ptr.get()), make_observer(m_bus.get()));
+        xtxpool_v2::xtxpool_instance::create_xtxpool_inst( make_observer(m_blockstore.get()), make_observer(m_cert_ptr.get()), make_observer(m_bus.get()));
 
     m_syncstore.attach(new store::xsyncvstore_t(*m_cert_ptr.get(), *m_blockstore.get()));
-    contract::xcontract_manager_t::instance().init(make_observer(m_store), m_syncstore);
+    contract::xcontract_manager_t::instance().init(m_syncstore);
 
     xthread_pool_t txpool_service_thp;
     txpool_service_thp.push_back(make_object_ptr<base::xiothread_t>());
     txpool_service_thp.push_back(make_object_ptr<base::xiothread_t>());
     m_thread_pools[xtop_thread_pool_type::txpool_service] = txpool_service_thp;
+    xthread_pool_t statestore_thp;
+    statestore_thp.push_back(make_object_ptr<base::xiothread_t>());
+    m_thread_pools[xtop_thread_pool_type::statestore] = statestore_thp;
 
     std::vector<observer_ptr<base::xiothread_t>> sync_account_thread_pool;
     for (uint32_t i = 0; i < 2; i++) {
@@ -259,7 +263,7 @@ observer_ptr<router::xrouter_face_t> xtop_application::router() const noexcept {
 
 xtop_application::xthread_pool_t const & xtop_application::thread_pool(xthread_pool_type_t const thread_pool_type) const noexcept {
     assert(thread_pool_type == xthread_pool_type_t::synchronization || thread_pool_type == xthread_pool_type_t::unit_service ||
-           thread_pool_type == xthread_pool_type_t::txpool_service);
+           thread_pool_type == xthread_pool_type_t::txpool_service || thread_pool_type == xthread_pool_type_t::statestore);
 
     return m_thread_pools.at(thread_pool_type);
 }
@@ -295,7 +299,7 @@ int32_t xtop_application::handle_register_node(std::string const & node_addr, st
 
     // check whether include in register contract
     std::string value_str;
-    int ret = m_store->map_get(sys_contract_rec_registration_addr, top::data::system_contract::XPORPERTY_CONTRACT_REG_KEY, node_addr, value_str);
+    int ret = statestore::xstatestore_hub_t::instance()->map_get(rec_registration_contract_address, top::data::system_contract::XPORPERTY_CONTRACT_REG_KEY, node_addr, value_str);
 
     if (ret != store::xstore_success || value_str.empty()) {
         xwarn("[register_node_callback] get node register info fail, node_addr: %s", node_addr.c_str());
@@ -352,7 +356,7 @@ void xtop_application::update_node_size(uint64_t & node_size, std::error_code & 
 
     data::election::xstandby_result_store_t standby_result_store;
     std::string serialized_value{};
-    if (m_store->string_get(sys_contract_rec_standby_pool_addr, data::XPROPERTY_CONTRACT_STANDBYS_KEY, serialized_value) == 0 && !serialized_value.empty()) {
+    if (statestore::xstatestore_hub_t::instance()->string_get(rec_standby_pool_contract_address, data::XPROPERTY_CONTRACT_STANDBYS_KEY, serialized_value) == 0 && !serialized_value.empty()) {
         auto const & standby_result_store = codec::msgpack_decode<data::election::xstandby_result_store_t>({std::begin(serialized_value), std::end(serialized_value)});
         common::xnetwork_id_t network_id{top::config::to_chainid(XGET_CONFIG(chain_name))};
         auto const & standby_network_storage_result = standby_result_store.result_of(network_id);
@@ -394,19 +398,16 @@ bool xtop_application::is_beacon_account() const noexcept {
         top::common::xnode_id_t node_id = top::common::xnode_id_t{user_params.account};
 
         std::string result;
-        auto latest_vblock = data::xblocktool_t::get_latest_connectted_state_changed_block(m_blockstore.get(), data::xvaccount_t{sys_contract_rec_elect_rec_addr});
-        base::xauto_ptr<base::xvbstate_t> bstate =
-            base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_vblock.get(), metrics::statestore_access_from_application_isbeacon);
-        if (bstate == nullptr) {
+        data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_change_state(rec_elect_rec_contract_address);
+        if (unitstate == nullptr) {
             xerror("xtop_application::is_beacon_account fail-get state.");
             return false;
         }
-        data::xunit_bstate_t unitstate(bstate.get());
 
-        auto property_names = data::election::get_property_name_by_addr(common::xaccount_address_t{sys_contract_rec_elect_rec_addr});
+        auto property_names = data::election::get_property_name_by_addr(rec_elect_rec_contract_address);
         common::xnetwork_id_t network_id{top::config::to_chainid(XGET_CONFIG(chain_name))};
         for (auto const & property : property_names) {
-            result = unitstate.string_get(property);
+            result = unitstate->string_get(property);
             if (result.empty()) {
                 xwarn("xtop_application::is_beacon_account no property %s", property.c_str());
                 continue;

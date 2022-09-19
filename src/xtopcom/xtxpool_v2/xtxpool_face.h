@@ -11,7 +11,7 @@
 #include "xdata/xcons_transaction.h"
 #include "xdata/xtable_bstate.h"
 #include "xmbus/xmessage_bus.h"
-#include "xstore/xstore_face.h"
+
 #include "xvledger/xvcertauth.h"
 #include "xvledger/xvpropertyprove.h"
 
@@ -131,6 +131,7 @@ class xtxs_pack_para_t {
 public:
     xtxs_pack_para_t(const std::string & table_addr,
                      const data::xtablestate_ptr_t & table_state_highqc,
+                     base::xvblock_t * block,
                      //  const std::map<std::string, uint64_t> & locked_nonce_map,
                      uint16_t all_txs_max_num,
                      uint16_t confirm_and_recv_txs_max_num,
@@ -138,6 +139,7 @@ public:
                      std::set<base::xtable_shortid_t> peer_sids_for_confirm_id)
       : m_table_addr(table_addr)
       , m_table_state_highqc(table_state_highqc)
+      , m_cert_block(block)
       //   , m_locked_nonce_map(locked_nonce_map)
       , m_all_txs_max_num(all_txs_max_num)
       , m_confirm_and_recv_txs_max_num(confirm_and_recv_txs_max_num)
@@ -149,6 +151,10 @@ public:
     }
     const data::xtablestate_ptr_t & get_table_state_highqc() const {
         return m_table_state_highqc;
+    }
+
+    base::xvblock_t * get_cert_block() const {
+        return m_cert_block;
     }
 
     uint16_t get_all_txs_max_num() const {
@@ -168,6 +174,7 @@ public:
 private:
     std::string m_table_addr;
     data::xtablestate_ptr_t m_table_state_highqc;
+    base::xvblock_t * m_cert_block;
     // std::map<std::string, uint64_t> m_locked_nonce_map;
     uint16_t m_all_txs_max_num;
     uint16_t m_confirm_and_recv_txs_max_num;
@@ -258,7 +265,6 @@ public:
                                   std::vector<xcons_transaction_ptr_t> & receipts) = 0;
     virtual const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t & total_num) const = 0;
     virtual const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_confirm_tx_ids(uint8_t zone, uint16_t subaddr, uint32_t & total_num) const = 0;
-    virtual bool need_sync_lacking_receipts(uint8_t zone, uint16_t subaddr) const = 0;
     virtual void print_statistic_values() const = 0;
     virtual void update_peer_receipt_id_state(const base::xvproperty_prove_ptr_t & property_prove_ptr, const base::xreceiptid_state_ptr_t & receiptid_state) = 0;
     virtual std::map<std::string, uint64_t> get_min_keep_heights() const = 0;
@@ -268,8 +274,7 @@ public:
 
 class xtxpool_instance {
 public:
-    static xobject_ptr_t<xtxpool_face_t> create_xtxpool_inst(const observer_ptr<store::xstore_face_t> & store,
-                                                             const observer_ptr<base::xvblockstore_t> & blockstore,
+    static xobject_ptr_t<xtxpool_face_t> create_xtxpool_inst(const observer_ptr<base::xvblockstore_t> & blockstore,
                                                              const observer_ptr<base::xvcertauth_t> & certauth,
                                                              const observer_ptr<mbus::xmessage_bus_face_t> & bus);
 };

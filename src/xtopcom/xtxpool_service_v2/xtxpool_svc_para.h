@@ -6,7 +6,7 @@
 
 #include "xbase/xdata.h"
 #include "xbasic/xmemory.hpp"
-#include "xstore/xstore_face.h"
+
 #include "xtxpool_service_v2/xtxpool_service_face.h"
 #include "xtxpool_v2/xtxpool_face.h"
 #include "xvledger/xvtxstore.h"
@@ -18,11 +18,10 @@ NS_BEG2(top, xtxpool_service_v2)
 
 class xtxpool_svc_para_t : public base::xobject_t {
 public:
-    xtxpool_svc_para_t(const observer_ptr<store::xstore_face_t> & store,
-                       const observer_ptr<base::xvblockstore_t> & blockstore,
+    xtxpool_svc_para_t(const observer_ptr<base::xvblockstore_t> & blockstore,
                        const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool,
                        const observer_ptr<mbus::xmessage_bus_face_t> & bus)
-      : m_store(store), m_blockstore(blockstore), m_txpool(txpool), m_bus(bus) {
+      : m_blockstore(blockstore), m_txpool(txpool), m_bus(bus) {
     }
 
 public:
@@ -30,9 +29,6 @@ public:
         m_fast_dispatcher = fast_dispatcher;
         m_slow_dispatcher = slow_dispatcher;
     };
-    store::xstore_face_t * get_store() const {
-        return m_store.get();
-    }
     base::xvblockstore_t * get_vblockstore() const {
         return m_blockstore.get();
     }
@@ -52,7 +48,6 @@ public:
         return base::xvchain_t::instance().get_xtxstore();
     }
 private:
-    observer_ptr<store::xstore_face_t> m_store{nullptr};
     observer_ptr<base::xvblockstore_t> m_blockstore{nullptr};
     observer_ptr<xtxpool_v2::xtxpool_face_t> m_txpool{nullptr};
     observer_ptr<xtxpool_service_dispatcher_t> m_fast_dispatcher{nullptr};

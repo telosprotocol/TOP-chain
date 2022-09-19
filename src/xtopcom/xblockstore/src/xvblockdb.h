@@ -55,7 +55,7 @@ namespace top
             //when successful return the comibned stored-flags, return 0 if nothing changed, but return < 0 when failed
             int                 save_block(base::xvbindex_t* index_ptr);
             int                 save_block(base::xvbindex_t* index_ptr,base::xvblock_t * linked_block_ptr);
-            
+
         public://mulitple threads safe
             const std::string   load_value_by_path(const std::string & full_path_as_key);
             bool                store_value_by_path(const std::string & full_path_as_key,const std::string & value);
@@ -77,7 +77,7 @@ namespace top
             bool                read_block_object_from_db(base::xvbindex_t* index_ptr,base::xvdbstore_t* from_db);
             bool                read_block_input_from_db(base::xvbindex_t* index_ptr,base::xvblock_t * block_ptr,base::xvdbstore_t* from_db);
             bool                read_block_output_from_db(base::xvbindex_t* index_ptr,base::xvblock_t * block_ptr,base::xvdbstore_t* from_db);
-            
+
             std::vector<base::xvblock_t*>  read_prunable_block_object_from_db(base::xvaccount_t & account,const uint64_t target_height);
 
         protected:

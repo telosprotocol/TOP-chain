@@ -369,6 +369,11 @@ namespace top
             const std::string key_path = "r/" + account.get_storage_key()+ "/" + uint64_to_full_hex(target_height) + "/p";
             return key_path;
         }
+        const std::string xvdbkey_t::create_prunable_mpt_key(const xvaccount_t & account, const std::string & key)
+        {
+            const std::string key_path = "r/" + std::to_string(account.get_zone_index()) + "@" + std::to_string(account.get_ledger_id()) + "/" + key;
+            return key_path;
+        }
 
         const std::string xvdbkey_t::get_account_prefix_key(const std::string & key)
         {

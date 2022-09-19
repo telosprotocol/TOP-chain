@@ -118,7 +118,7 @@ std::vector<xcons_transaction_ptr_t> xtxmgr_table_t::get_ready_txs(const xtxs_pa
                                                                                  confirm_tx_num);
     recv_tx_num = ready_txs.size() - confirm_tx_num;
 
-    auto send_txs = m_send_tx_queue.get_txs(pack_para.get_all_txs_max_num() - ready_txs.size(), pack_para.get_table_state_highqc());
+    auto send_txs = m_send_tx_queue.get_txs(pack_para.get_all_txs_max_num() - ready_txs.size(), pack_para.get_cert_block());
     uint32_t send_tx_num = send_txs.size();
     ready_txs.insert(ready_txs.end(), send_txs.begin(), send_txs.end());
 

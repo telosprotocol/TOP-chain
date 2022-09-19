@@ -7,7 +7,6 @@
 #include <stdlib.h>
 
 #include "json/value.h"
-#include "xstore/xstore.h"
 #include "xpbase/base/top_log.h"
 #include "xloader/xconfig_offchain_loader.h"
 

@@ -225,6 +225,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     message_category_txpool_contains_duplicate,
     message_category_rpc_contains_duplicate,
     message_category_sync_contains_duplicate,
+    message_category_state_sync_contains_duplicate,
     message_block_broadcast_contains_duplicate,
     message_category_relay_contains_duplicate,
     message_category_end_contains_duplicate,
@@ -237,6 +238,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     message_category_txpool,
     message_category_rpc,
     message_category_sync,
+    message_category_state_sync,
     message_block_broadcast,
     message_category_relay,
     message_category_unknown,
@@ -607,6 +609,8 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     rpc_auditor_query_request,
     rpc_auditor_forward_request,
     rpc_validator_tx_request,
+    rpc_query_account_succ,
+
     // contract
     contract_table_fullblock_event,
     contract_table_statistic_exec_fullblock,
@@ -644,6 +648,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
 
     //cpu
     cpu_hash_256_calc,
+    cpu_hash_64_calc,
     cpu_ca_merge_sign_xbft,
     cpu_ca_merge_sign_tc,
     cpu_ca_do_sign_xbft,

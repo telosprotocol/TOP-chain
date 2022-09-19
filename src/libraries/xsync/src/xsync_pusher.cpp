@@ -183,20 +183,7 @@ void xsync_pusher_t::push_newblock_to_archive(const xblock_ptr_t &block) {
         }
     }
 
-/*    // push evm to relay
-    std::vector<vnetwork::xvnode_address_t> relay_list = m_role_xips_mgr->get_relay_list();
-    xdbg("get_relay_list: %d", relay_list.size());
-    if (node_type == common::xnode_type_t::evm && !relay_list.empty()) {
-        std::vector<uint32_t> push_relay_list = calc_push_mapping(neighbor_number, relay_list.size(), self_position, random);
-        xsync_info("push_newblock_to_archive, relay: src=%u dst=%u push_relays= %u src %s %s %llu", neighbor_number, relay_list.size(), 
-            push_relay_list.size(), self_addr.to_string().c_str(), block->get_account().c_str(), block->get_height());
-        for (auto &dst_idx: push_relay_list) {
-            auto found = validator_auditor_neighbours.find(relay_list[dst_idx].account_address());
-            if (found == validator_auditor_neighbours.end()) {
-                m_sync_sender->push_newblock(block, self_addr, relay_list[dst_idx]);
-            }
-        }
-    }*/
+
 }
 int xsync_pusher_t::get_chain_info(const vnetwork::xvnode_address_t &network_self, std::vector<xchain_state_info_t>& info_list) {
     const std::shared_ptr<xrole_chains_t> &role_chains = m_role_chains_mgr->get_role(network_self);

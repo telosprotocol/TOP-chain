@@ -425,7 +425,7 @@ namespace top
             }
 
             // XTODO always try update execute height when stored new table block
-            try_update_execute_height(target_account);
+            // try_update_execute_height(target_account);
             return true;
         }
 #if 0
@@ -558,9 +558,9 @@ namespace top
             xwarn("xvblkstatestore_t::get_block_state fail-get block state,block=%s", target_block->dump().c_str());
 
             // XTODO always try update execute height when stored new table block
-            if (target_block->get_block_level() == enum_xvblock_level_table) {
-                try_update_execute_height(target_account);
-            }
+            // if (target_block->get_block_level() == enum_xvblock_level_table) {
+            //     try_update_execute_height(target_account);
+            // }
             return nullptr;
         }
 

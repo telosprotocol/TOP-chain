@@ -477,7 +477,6 @@ namespace top
         public:
             static  const std::string   name(){ return std::string("xvinput");}
             static  constexpr char const * RESOURCE_NODE_SIGN_STATISTICS     = "2";
-            static  constexpr char const * RESOURCE_INNER_TABLE_TX_ACTIONS   = "3";
             virtual std::string         get_obj_name() const override {return name();}
             enum{enum_obj_type = enum_xobject_type_vinput};//allow xbase create xvinput_t object from xdataobj_t::read_from()
 
@@ -526,6 +525,9 @@ namespace top
             virtual std::string         get_obj_name() const override {return name();}
             enum{enum_obj_type = enum_xobject_type_voutput};//allow xbase create xvoutput_t object from xdataobj_t::read_from()
 
+            static  constexpr char const * RESOURCE_RELAY_BLOCK        = "1";            
+            static  constexpr char const * RESOURCE_ACCOUNT_INDEXS     = "2";
+
         public:
             xvoutput_t(std::vector<xventity_t*> && entitys,enum_xobject_type type = enum_xobject_type_voutput);
             xvoutput_t(const std::vector<xventity_t*> & entitys,const std::string & raw_resource_data, enum_xobject_type type = enum_xobject_type_voutput);
@@ -550,7 +552,9 @@ namespace top
         protected:
             const std::string           get_binlog_hash();
             const std::string           get_state_hash();  // only can be used by xvblock_t, only light-table store state hash in output entity
+            const std::string           get_output_offdata_hash() const;
             const std::string           get_binlog();
+            const std::string           get_account_indexs();
         protected:
             //just carry by object at memory,not included by serialized
             std::string  m_root_hash;  //root of merkle tree constructed by input
@@ -592,6 +596,26 @@ namespace top
 
         //note: xvblock must have associated xvheader_t and xvqcert_t objects
         using xvheader_ptr_t = xobject_ptr_t<base::xvheader_t>;
+
+        class xvblock_excontainer_base {
+        public:
+            virtual void commit(){}
+        };
+
+        class xvsubblock_index_t {
+        public:
+            xvsubblock_index_t(std::string const& address, uint64_t height, enum_xvblock_class _class)
+            : m_block_address(address), m_block_height(height), m_block_class(_class) {}
+        public:
+            std::string const&  get_block_address() const {return m_block_address;}
+            uint64_t            get_block_height() const {return m_block_height;}
+            enum_xvblock_class  get_block_class() const {return m_block_class;}
+        private:
+            std::string             m_block_address;
+            uint64_t                m_block_height;
+            enum_xvblock_class      m_block_class;
+        };
+
         class xvblock_t : public xdataobj_t
         {
             friend class xvbbuild_t;
@@ -635,6 +659,8 @@ namespace top
             virtual bool                is_deliver(bool deep_test = false)  const;//test whether has certification ready
             virtual bool                is_input_ready(bool full_check_resources = false)  const;                  //nil-block return true because it dont need input
             virtual bool                is_output_ready(bool full_check_resources = false) const;                  //nil-block return true because it dont need output
+            virtual bool                is_output_offdata_ready(bool full_check_resources = false) const;
+            virtual bool                is_body_and_offdata_ready(bool full_check_resources = false) const;
             virtual bool                is_execute_ready() const {return true;}//check whether ready to execute bin-log
 
             bool                        is_genesis_block() const;                 //test whether it is a genesis block
@@ -689,7 +715,6 @@ namespace top
 
             //note:container(e.g. Table,Book etc) need implement this function as they have mutiple sub blocks inside them,
             virtual bool                extract_sub_blocks(std::vector<xobject_ptr_t<xvblock_t>> & sub_blocks) {return false;}//as default it is none
-            virtual bool                extract_one_sub_block(uint32_t entity_id, const std::string & extend_cert, const std::string & extend_data, xobject_ptr_t<xvblock_t> & sub_block) {return false;}
             //note:container(e.g. Lightunit etc) need implement this function as they have mutiple sub txs inside them,
             virtual bool                extract_sub_txs(std::vector<xvtxindex_ptr> & sub_txs) {return false;}//as default it is none
 
@@ -703,12 +728,15 @@ namespace top
             xvoutput_t*                 get_output() const;//raw ptr of xvoutput_t
             virtual std::vector<base::xvaction_t> get_tx_actions() const {return std::vector<base::xvaction_t>{};}
             virtual std::vector<base::xvaction_t> get_one_tx_action(const std::string & txhash) const {return std::vector<base::xvaction_t>{};}
-            virtual std::vector<xvheader_ptr_t> get_sub_block_headers() const {return std::vector<xvheader_ptr_t>{};}
+            virtual std::vector<xvsubblock_index_t> get_subblocks_index() const {return std::vector<xvsubblock_index_t>{};}
 
             const std::string           get_fullstate_hash();
+            const std::string           get_account_indexs() const {return get_output()->get_account_indexs();}
             const std::string           get_binlog_hash() {return get_output()->get_binlog_hash();}
+            const std::string           get_output_offdata_hash() const {return get_output()->get_output_offdata_hash();}
             const std::string           get_full_state();
             const std::string           get_binlog() {return get_output()->get_binlog();}
+            const std::string &         get_output_offdata() const {return m_output_offdata;}
             bool                        set_offblock_snapshot(const std::string & snapshot);
             bool                        is_full_state_block();  // used for full-block sync
             uint64_t                    get_block_size();
@@ -716,6 +744,7 @@ namespace top
             //check whether match hash of resource first
             bool                        set_input_resources(const std::string & raw_resource_data);
             bool                        set_output_resources(const std::string & raw_resource_data);
+            bool                        set_output_offdata(const std::string & raw_data);
 
             //only open for xvblock_t object to set them after verify singature by CA(xvcertauth_t)
             void                        set_verify_signature(const std::string & proof);
@@ -747,6 +776,11 @@ namespace top
 
             void  set_vote_extend_data(const std::string & vote_data);
             const std::string &  get_vote_extend_data() const;
+            void  set_subblocks(std::vector<xobject_ptr_t<xvblock_t>> subblocks);
+            const std::vector<xobject_ptr_t<xvblock_t>> & get_subblocks() const;
+
+            void  set_excontainer(std::shared_ptr<xvblock_excontainer_base> excontainer) {m_excontainer = excontainer;}
+            const std::shared_ptr<xvblock_excontainer_base> & get_excontainer() const {return m_excontainer;}
 
         private:
             //generated the unique path of object(like vblock) under store-space(get_store_path()) to store data to DB
@@ -786,6 +820,8 @@ namespace top
             std::string                 m_parent_account;   //container(e.g.tableblock)'account id(refer xvaccount_t::get_xvid())
             uint32_t                    m_parent_entity_id{0};  //entity id of container(like tableblock) that carry this sub-block
             std::string                 m_vote_extend_data;
+            std::string                 m_output_offdata;
+            std::shared_ptr<xvblock_excontainer_base> m_excontainer{nullptr};
         };
         using xvblock_ptr_t = xobject_ptr_t<base::xvblock_t>;
 
@@ -843,6 +879,7 @@ namespace top
                 return (front.get_viewid() > back.get_viewid());
             }
         };
+        
     }//end of namespace of base
 
 }//end of namespace top

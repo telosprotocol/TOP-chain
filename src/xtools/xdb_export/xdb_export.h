@@ -4,10 +4,12 @@
 #include "xdb_util.h"
 #include "xgrpcservice/xgrpc_service.h"
 #include "xmbus/xmessage_bus.h"
-#include "xstore/xstore_face.h"
+#include "xdbstore/xstore_face.h"
 #include "xtxstore/xtxstore_face.h"
 #include "xvledger/xvcnode.h"
 #include "xvledger/xvtxindex.h"
+#include "xdata/xlightunit_info.h"
+#include "xdata/xblock.h"
 
 NS_BEG2(top, db_export)
 class xdb_export_tools_t {
@@ -21,6 +23,7 @@ public:
     std::vector<std::string> get_db_unit_accounts();
     void query_all_sync_result(std::vector<std::string> const & accounts_vec, bool is_table);
     void query_table_latest_fullblock();
+    void read_external_tx_firestamp();
     void query_tx_info(std::vector<std::string> const & tables, const uint32_t thread_num, const uint32_t start_timestamp, const uint32_t end_timestamp);
     // query if a specific block is exist(include num)
     void query_block_exist(std::string const & address, const uint64_t height);
@@ -54,7 +57,6 @@ public:
     void   db_parse_type_size(const std::string &fileName);
     std::string get_account_key_string(const std::string & key);
     void   prune_db();
-    void  output_tx_file(std::vector<std::string> const & tables, const std::string& tx_file);
 private:
     struct tx_ext_t {
         base::xtable_shortid_t  sendtableid;
@@ -68,23 +70,19 @@ private:
         uint64_t fire_timestamp{0}; // origin tx fire timestamp
         uint16_t self_table{0};
         uint16_t peer_table{0};
-        bool not_need_confirm{false};
+        bool not_need_confirm{false};        
     };
 
     struct block_info_t {
         uint32_t height{0};
         uint32_t timestamp{0};
-        // uint64_t unit_height{0};
         void copy(const tx_ext_t & tx_ext) {
             height = (uint32_t)tx_ext.height;
             timestamp = (uint32_t)tx_ext.timestamp;
-            // unit_height = tx_ext.unit_height;
         }
     };
 
     struct tx_ext_sum_t {
-        // std::string src{};
-        // std::string target{};
         uint16_t self_table{0};
         uint16_t peer_table{0};
         uint32_t fire_timestamp{0}; // origin tx fire timestamp
@@ -93,6 +91,7 @@ private:
         block_info_t confirm_block_info{};
         std::string hash{};
         bool not_need_confirm{false};
+        bool is_self{false};
 
         tx_ext_sum_t() {
         }
@@ -108,16 +107,21 @@ private:
             }
 
             if (subtype == data::enum_transaction_subtype_send) {
-                // src = tx_ext.src;
-                // target = tx_ext.target;
                 self_table = tx_ext.self_table;
                 peer_table = tx_ext.peer_table;
                 fire_timestamp = (uint32_t)tx_ext.fire_timestamp;   
                 send_block_info.copy(tx_ext);
             } else if (subtype == data::enum_transaction_subtype_recv) {
                 recv_block_info.copy(tx_ext);
-            } else {
+            } else if (subtype == data::enum_transaction_subtype_confirm) {
                 confirm_block_info.copy(tx_ext);
+            } else if (subtype == data::enum_transaction_subtype_self) {
+                not_need_confirm = true;
+                is_self = true;
+                self_table = tx_ext.self_table;
+                peer_table = tx_ext.peer_table;
+                fire_timestamp = (uint32_t)tx_ext.fire_timestamp;                   
+                send_block_info.copy(tx_ext);
             }
         }
 
@@ -132,6 +136,30 @@ private:
 
             return (confirm_block_info.height != 0);
         }
+
+        uint32_t    get_delay_from_send_to_confirm() const {
+            if (is_self) {
+                return 0;
+            } else {
+                uint32_t confirm_time = not_need_confirm ? recv_block_info.timestamp : confirm_block_info.timestamp;
+                // the second level timestamp of confirm block may less than send block
+                return confirm_time > send_block_info.timestamp ? (confirm_time - send_block_info.timestamp) : 0;
+            }            
+        }
+        uint32_t   get_delay_from_fire_to_confirm() const {
+            uint32_t confirm_time;
+            if (is_self) {
+                confirm_time = send_block_info.timestamp;
+            } else {
+                confirm_time = not_need_confirm ? recv_block_info.timestamp : confirm_block_info.timestamp;
+            }
+            // the timestamp of send block may less than the timestamp of tx fire_timestamp
+            uint32_t adjust_tx_fire_timestamp = fire_timestamp < send_block_info.timestamp ? fire_timestamp : send_block_info.timestamp;
+            // the second level timestamp of confirm block may less than send block
+            uint32_t delay_from_fire_to_confirm = confirm_time > adjust_tx_fire_timestamp ? (confirm_time - adjust_tx_fire_timestamp) : 0;
+            return delay_from_fire_to_confirm;
+        }
+
     };
 
     struct xdbtool_table_info_t {
@@ -150,6 +178,7 @@ private:
         int confirmtx_num{0};
         int selftx_num{0};
         int confirmedtx_num{0};
+        int no_firestamptx_num{0};
 
         uint32_t tx_v1_num{0};
         uint64_t tx_v1_total_size{0};
@@ -281,7 +310,6 @@ private:
     void query_balance(std::string const & table, json & j_unit, json & j_table);
     void query_checkpoint_internal(std::string const & table, std::set<std::string> const & genesis_only, const uint64_t clock, json & j_data);
     void query_archive_db_internal(std::string const & account, enum_query_account_type type, const uint32_t redundancy, std::ofstream & file, uint32_t & errors);
-    void output_tx_file_internal(std::string const & account, const std::map<std::string, tx_check_info_t>& tx_check_list, std::map<std::string, tx_check_result_info_t> & tx_result_list);
 
     json set_txinfo_to_json(tx_ext_t const & txinfo);
     json set_confirmed_txinfo_to_json(const tx_ext_sum_t & tx_ext_sum);
@@ -342,5 +370,6 @@ private:
 
     // xdbtool_all_table_info_t m_all_table_info[32];
     xdbtool_all_table_info_t m_all_table_info[TOTAL_TABLE_NUM];
+    std::map<std::string, uint64_t> m_txs_fire_timestamp;
 };
 NS_END2

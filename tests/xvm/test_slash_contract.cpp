@@ -5,7 +5,7 @@
 // #include <string>
 
 // #include "xbase/xobject_ptr.h"
-// #include "xstore/xstore_face.h"
+// 
 // #include "xchain_timer/xchain_timer.h"
 // #include "xloader/xconfig_onchain_loader.h"
 // #include "xdata/xtransaction.h"

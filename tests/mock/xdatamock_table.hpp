@@ -9,16 +9,19 @@
 #include "xdata/xblocktool.h"
 #include "xdata/xblockbuild.h"
 #include "xdata/xcons_transaction.h"
-#include "xstore/xstore_face.h"
+#include "xdata/xethbuild.h"
+#include "xbasic/xhash.hpp"
 #include "xblockmaker/xtable_builder.h"
 #include "xblockmaker/xblock_builder.h"
 #include "xtxexecutor/xbatchtx_executor.h"
 #include "xtxexecutor/xunit_service_error.h"
 #include "xtxexecutor/xatomictx_executor.h"
 #include "xvledger/xvblockstore.h"
+#include "xstate_mpt/xstate_mpt.h"
 #include "tests/mock/xcertauth_util.hpp"
 #include "tests/mock/xdatamock_unit.hpp"
 #include "tests/mock/xdatamock_address.hpp"
+#include "xdbstore/xstore_face.h"
 
 namespace top {
 namespace mock {
@@ -49,6 +52,9 @@ class xdatamock_table : public base::xvaccount_t {
             m_mock_units.push_back(datamock_unit);
         }        
         xassert(m_mock_units.size() == user_count);
+
+        m_db = db::xdb_factory_t::create_memdb();
+        m_store = store::xstore_factory::create_store_with_static_kvdb(m_db);
     }
 
     void                                disable_fulltable() {m_config_fulltable_interval = 0;}
@@ -157,6 +163,7 @@ class xdatamock_table : public base::xvaccount_t {
     xblock_ptr_t generate_tableblock() {
         xblock_ptr_t prev_tableblock = get_cert_block();
         xblock_consensus_para_t cs_para = init_consensus_para();
+        cs_para.set_parent_height(prev_tableblock->get_height()+1);
         
         xblock_ptr_t proposal_block = nullptr;
         uint32_t history_table_count = m_history_tables.size();
@@ -259,6 +266,15 @@ class xdatamock_table : public base::xvaccount_t {
             _form_highest_blocks.push_back(_block);
         }
 
+
+        evm_common::xh256_t last_state_root;
+        auto ret = data::xblockextract_t::get_state_root(get_cert_block().get(), last_state_root);
+        xassert(ret);
+        data::xeth_header_t eth_header;
+        eth_header.set_state_root(last_state_root);
+        std::string _ethheader_str = eth_header.serialize_to_string();
+        cs_para.set_ethheader(_ethheader_str);
+
         blockmaker::xblock_builder_para_ptr_t build_para = std::make_shared<blockmaker::xfulltable_builder_para_t>(m_table_state, _form_highest_blocks, m_default_resources);
         xblock_ptr_t proposal_block = m_fulltable_builder->build_block(get_cert_block(), m_table_state->get_bstate(), cs_para, build_para);
         return proposal_block;        
@@ -346,20 +362,51 @@ class xdatamock_table : public base::xvaccount_t {
         for (auto & v : proposal_states) {
             xdatamock_unit s_mockunit = find_mock_unit(v.first);
 
-            blockmaker::xunitbuilder_para_t unit_para({});
-            data::xblock_ptr_t unitblock = blockmaker::xunitbuilder_t::make_block(s_mockunit.get_cert_block(), v.second, unit_para, cs_para);
+            blockmaker::xunitbuilder_para_t unit_para;
+            data::xblock_ptr_t unitblock = blockmaker::xunitbuilder_t::make_block_v2(v.second, unit_para, cs_para);
             xassert(unitblock != nullptr);
-            m_batch_units.push_back(unitblock);          
+            // m_batch_units.push_back(unitblock);
+            data::xaccount_index_t aindex = data::xaccount_index_t(unitblock->get_height(), unitblock->get_block_hash(), unitblock->get_fullstate_hash(), 1, unitblock->get_block_class(), unitblock->get_block_type());
+             m_batch_units.push_back(std::make_pair(unitblock, aindex));
         }
 
         cs_para.set_justify_cert_hash(get_lock_block()->get_input_root_hash());
         cs_para.set_parent_height(0);
+
+        evm_common::xh256_t last_state_root;
+        auto ret = data::xblockextract_t::get_state_root(get_cert_block().get(), last_state_root);
+        xassert(ret);
+        std::error_code ec;
+        auto table_mpt = state_mpt::xtop_state_mpt::create(get_cert_block()->get_account(), top::xhash256_t(last_state_root.to_bytes()), m_store.get(), state_mpt::xstate_mpt_cache_t::instance(), ec);
+        if (ec) {
+            xassert(false);
+        }
+
+        for (auto & unit_and_index : m_batch_units) {
+            auto & unit = unit_and_index.first;
+            auto & index = unit_and_index.second;
+            table_mpt->set_account_index(unit->get_account(), index, ec);
+            if (ec) {
+                xassert(false);
+            }
+        }
+        auto root_hash = table_mpt->get_root_hash(ec);
+        if (ec) {
+            xassert(false);
+        }
+        evm_common::xh256_t state_root = evm_common::xh256_t(root_hash.to_bytes());
+        data::xeth_header_t eth_header;
+        eth_header.set_state_root(state_root);
+        std::string _ethheader_str = eth_header.serialize_to_string();
+        cs_para.set_ethheader(_ethheader_str);
+
         data::xtable_block_para_t lighttable_para;
         blockmaker::xtablebuilder_t::make_table_block_para(m_batch_units, proposal_table_state, execute_output, lighttable_para);
         data::xblock_ptr_t proposal_block = blockmaker::xtablebuilder_t::make_light_block(get_cert_block(),
                                                                             cs_para,
                                                                             lighttable_para);
-        xassert(nullptr != proposal_block);                                                                            
+        xassert(nullptr != proposal_block);    
+        table_mpt->commit(ec);                                                           
         return proposal_block;
     }
 
@@ -386,7 +433,7 @@ class xdatamock_table : public base::xvaccount_t {
 
  private:
     std::vector<xcons_transaction_ptr_t>    m_proposal_txs;
-    std::vector<xblock_ptr_t>               m_batch_units;
+    std::vector<std::pair<xblock_ptr_t, data::xaccount_index_t>> m_batch_units;
 
     std::map<std::string, xtransaction_ptr_t> m_raw_txs;
     xtablestate_ptr_t               m_table_state{nullptr};
@@ -397,6 +444,9 @@ class xdatamock_table : public base::xvaccount_t {
     blockmaker::xblock_builder_face_ptr_t       m_fulltable_builder;
     blockmaker::xblockmaker_resources_ptr_t     m_default_resources{nullptr};
     uint32_t                        m_config_fulltable_interval{enum_default_full_table_interval_count};
+
+    std::shared_ptr<db::xdb_face_t>      m_db{nullptr};
+    xobject_ptr_t<store::xstore_face_t>  m_store{nullptr};
 };
 
 }
