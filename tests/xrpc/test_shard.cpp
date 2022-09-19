@@ -12,7 +12,6 @@
 using namespace std;
 using namespace top;
 using namespace top::xrpc;
-using namespace top::store;
 
 using top::vnetwork::xmessage_t;
 using top::vnetwork::xvhost_face_t;
