@@ -4,20 +4,15 @@
 
 #include <string>
 #include "xbasic/xmemory.hpp"
-#include "xvledger/xvstate.h"
-#include "xvledger/xvblock.h"
-#include "xvledger/xaccountindex.h"
-#include "xvledger/xvblockbuild.h"
 #include "xvledger/xvledger.h"
-#include "xdata/xblocktool.h"
 #include "xstatectx/xtablestate_ctx.h"
 
 NS_BEG2(top, statectx)
 
 
 // ================ xtablestate_ctx_t =========
-xtablestate_ctx_t::xtablestate_ctx_t(const data::xtablestate_ptr_t & table_state)
-: m_table_state(table_state) {
+xtablestate_ctx_t::xtablestate_ctx_t(const data::xtablestate_ptr_t & table_state, std::shared_ptr<state_mpt::xtop_state_mpt> const& state_mpt)
+: m_table_state(table_state), m_state_mpt(state_mpt) {
     xassert(table_state->get_block_height() > 0);
 }
 

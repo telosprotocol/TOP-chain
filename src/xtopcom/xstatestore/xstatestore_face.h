@@ -12,14 +12,16 @@
 #include "xvledger/xvpropertyprove.h"
 #include "xcommon/xaccount_address.h"
 #include "xstate_mpt/xstate_mpt.h"
+#include "xstatestore/xtablestate_ext.h"
 
 NS_BEG2(top, statestore)
 
-// TODO(jimmy) cache latest commit tablestate
 // the statestore interface
 class xstatestore_face_t {
  public:
     virtual bool                    start(const xobject_ptr_t<base::xiothread_t> & iothread) = 0;
+    virtual xtablestate_ext_ptr_t   get_tablestate_ext_from_block(base::xvblock_t * target_block) const = 0;
+    
     // query accountindex
     virtual bool                    get_accountindex_from_latest_connected_table(common::xaccount_address_t const & account_address, base::xaccount_index_t & account_index) const = 0;
     virtual bool                    get_accountindex_from_table_block(common::xaccount_address_t const & account_address, base::xvblock_t * table_block, base::xaccount_index_t & account_index) const = 0;
@@ -47,9 +49,8 @@ class xstatestore_face_t {
                                               base::xvblock_t * latest_commit_block,
                                               base::xvproperty_prove_ptr_t & property_prove_ptr,
                                               data::xtablestate_ptr_t & tablestate_ptr) const = 0;
-    virtual bool execute_table_block(base::xvblock_t * block) const = 0;
     virtual void update_node_type(common::xnode_type_t combined_node_type) = 0;
-    virtual void try_update_tables_execute_height() const = 0;
+    virtual void on_table_block_committed(base::xvblock_t* block) const = 0;
 };
 
 class xstatestore_hub_t {

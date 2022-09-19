@@ -297,7 +297,7 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
     std::vector<std::pair<xblock_ptr_t, base::xaccount_index_t>> batch_unit_and_index;
     // create statectx
     statectx::xstatectx_para_t statectx_para(cs_para.get_clock());
-    statectx::xstatectx_ptr_t statectx_ptr = statectx::xstatectx_factory_t::create_latest_cert_statectx(cs_para.get_latest_cert_block().get(), table_para.get_tablestate(), cs_para.get_latest_committed_block().get(), table_para.get_commit_tablestate(), statectx_para);
+    statectx::xstatectx_ptr_t statectx_ptr = statectx::xstatectx_factory_t::create_latest_cert_statectx(cs_para.get_latest_cert_block().get(), cs_para.get_latest_committed_block().get(), statectx_para);
     if (nullptr == statectx_ptr) {
         ec = blockmaker::error::xerrc_t::blockmaker_create_statectx_fail;
         xwarn("xtable_maker_t::make_light_table_v2 fail-create statectx is_leader=%d,%s", 

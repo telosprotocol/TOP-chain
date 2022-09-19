@@ -11,6 +11,8 @@
 #include "xbase/xlru_cache.h"
 #include "xcommon/xaccount_address.h"
 #include "xstatestore/xstatestore_base.h"
+#include "xstatestore/xstatestore_exec.h"
+#include "xstatestore/xtablestate_ext.h"
 
 NS_BEG2(top, statestore)
 
@@ -50,7 +52,9 @@ public:
 public:
     common::xaccount_address_t const &  get_table_address() const {return m_table_addr;}
 
+    xtablestate_ext_ptr_t   get_tablestate_ext_from_block(base::xvblock_t* target_block) const;
     bool                    get_accountindex_from_table_block(common::xaccount_address_t const & account_address, base::xvblock_t * table_block, base::xaccount_index_t & account_index) const;
+    void                    on_table_block_committed(base::xvblock_t* block) const;
 
     data::xunitstate_ptr_t  get_unit_state_from_accountindex(common::xaccount_address_t const & account_address, base::xaccount_index_t const& index) const;
     data::xunitstate_ptr_t  get_unit_state_from_block(base::xvblock_t * unit_block) const;
@@ -67,6 +71,7 @@ private:
 private:
     common::xaccount_address_t  m_table_addr;
     xstatestore_table_cache_t   m_table_cache;
+    xstatestore_executor_t      m_table_executor;
     xstatestore_base_t          m_store_base;
 };
 using xstatestore_table_ptr_t = std::shared_ptr<xstatestore_table_t>;
