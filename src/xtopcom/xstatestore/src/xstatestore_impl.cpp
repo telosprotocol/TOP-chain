@@ -218,7 +218,7 @@ uint64_t xstatestore_impl_t::get_blockchain_height(common::xaccount_address_t co
         xwarn("xstatestore_impl_t::map_get fail-find account. account=%s", account_address.value().c_str());
         return 0;
     }
-    return unitstate->get_block_height();
+    return unitstate->height();
 }
 
 int32_t xstatestore_impl_t::map_get(common::xaccount_address_t const & account_address, const std::string &key, const std::string &field, std::string &value) const {

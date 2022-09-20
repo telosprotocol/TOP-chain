@@ -261,7 +261,7 @@ bool xrole_context_t::runtime_stand_alone(const uint64_t timer_round, common::xa
         xassert(nullptr != account);
         return false;
     }
-    return 0 == account->get_chain_height();
+    return 0 == account->height();
 }
 
 bool xrole_context_t::valid_call(const uint64_t onchain_timer_round) {

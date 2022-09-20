@@ -89,7 +89,7 @@ void xstatestore_table_t::init_cache() {
 data::xtablestate_ptr_t xstatestore_table_t::get_latest_connectted_table_state() const {
     data::xtablestate_ptr_t cache_tablestate = m_table_cache.get_latest_connectted_tablestate();
     auto latest_commit_height = m_store_base.get_blockstore()->get_latest_connected_block_height(m_table_addr.vaccount());
-    if (cache_tablestate->get_block_height() >= latest_commit_height) {
+    if (cache_tablestate->height() >= latest_commit_height) {
         return cache_tablestate;
     }
 

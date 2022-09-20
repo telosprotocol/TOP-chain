@@ -468,23 +468,9 @@ xobject_ptr_t<base::xvbstate_t> xtop_state_accessor::state(common::xaccount_addr
     return address_bstate;
 }
 
-uint64_t xtop_state_accessor::state_height(common::xaccount_address_t const & address) const {
+uint64_t xtop_state_accessor::height() const {
     assert(bstate_ != nullptr);
-    if (address.empty()) {
     return bstate_->get_block_height();
-    } else {
-        return base::xvchain_t::instance().get_xblockstore()->get_latest_committed_block_height(base::xvaccount_t(address.to_string()));
-    }
-}
-
-bool xtop_state_accessor::block_exist(common::xaccount_address_t const & address, uint64_t height) const {
-    base::xauto_ptr<base::xvblock_t> _block =
-        base::xvchain_t::instance().get_xblockstore()->load_block_object(base::xvaccount_t(address.to_string()), height, base::enum_xvblock_flag_committed, false);
-    if (_block == nullptr) {
-        return false;
-    } else {
-        return true;
-    }
 }
 
 template <>

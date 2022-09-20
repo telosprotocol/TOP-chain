@@ -154,10 +154,10 @@ std::vector<std::pair<xblock_ptr_t, base::xaccount_index_t>> xtable_maker_t::mak
     }
 
     for (auto & unitctx : unitctxs) {
-        base::xvtxkey_vec_t txkeys = txkeys_mgr.get_account_txkeys(unitctx->get_unitstate()->get_address());
+        base::xvtxkey_vec_t txkeys = txkeys_mgr.get_account_txkeys(unitctx->get_unitstate()->account_address().value());
         if (txkeys.get_txkeys().empty()) {
             // will support state change without txkeys for evm tx
-            xinfo("xtable_maker_t::make_units xkeys empty.is_leader=%d,%s,addr=%s", is_leader, cs_para.dump().c_str(), unitctx->get_unitstate()->get_address().c_str());
+            xinfo("xtable_maker_t::make_units xkeys empty.is_leader=%d,%s,addr=%s", is_leader, cs_para.dump().c_str(), unitctx->get_unitstate()->account_address().c_str());
         }
         xunitbuilder_para_t unit_para(txkeys);
         data::xblock_ptr_t unitblock = xunitbuilder_t::make_block(unitctx->get_prev_block(), unitctx->get_unitstate(), unit_para, cs_para);
@@ -766,7 +766,7 @@ bool xtable_maker_t::update_new_account_indexes() {
 }
 
 void xtable_maker_t::init_new_account_indexes(const data::xtablestate_ptr_t & commit_table_state) {
-    if (m_fork_height >= commit_table_state->get_block_height()) {
+    if (m_fork_height >= commit_table_state->height()) {
         return;
     }
     m_new_indexes.clear();
@@ -779,7 +779,7 @@ void xtable_maker_t::init_new_account_indexes(const data::xtablestate_ptr_t & co
     }
     m_lack_accounts_pos = 0;
     m_accounts_num = indexes.size();
-    m_fork_height = commit_table_state->get_block_height();
+    m_fork_height = commit_table_state->height();
 }
 
 bool xtable_maker_t::account_index_upgrade() {

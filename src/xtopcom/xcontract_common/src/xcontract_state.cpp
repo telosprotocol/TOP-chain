@@ -77,9 +77,9 @@ common::xaccount_address_t xtop_contract_state::state_account_address() const {
     return m_state_accessor->account_address();
 }
 
-uint64_t xtop_contract_state::state_height(common::xaccount_address_t const & address) const {
+uint64_t xtop_contract_state::height() const {
     assert(m_state_accessor != nullptr);
-    return m_state_accessor->state_height(address);
+    return m_state_accessor->height();
 }
 
 common::xtoken_t xtop_contract_state::withdraw(state_accessor::properties::xproperty_identifier_t const & property_id,
@@ -481,11 +481,6 @@ void xtop_contract_state::last_tx_hour(uint64_t hour) {
     last_tx_hour(hour, ec);
     assert(!ec);
     top::error::throw_error(ec);
-}
-
-bool xtop_contract_state::block_exist(common::xaccount_address_t const & user, uint64_t height) const {
-    assert(m_state_accessor != nullptr);
-    return m_state_accessor->block_exist(user, height);
 }
 
 void xtop_contract_state::transfer_internal(state_accessor::properties::xproperty_identifier_t from, state_accessor::properties::xproperty_identifier_t to, uint64_t amount, std::error_code & ec) {

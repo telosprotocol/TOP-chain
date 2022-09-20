@@ -88,15 +88,8 @@ public:
     common::xaccount_address_t state_account_address() const;
 
     /// @brief Get state height.
-    /// @param address Address to check. Check state address if default empty address.
     /// @return State height.
-    uint64_t state_height(common::xaccount_address_t const & address) const;
-
-    /// @brief Check if block object exists or not.
-    /// @param address Address to check.
-    /// @param height block height to check.
-    /// @return 'true' if block object exists; otherwise 'false'.
-    bool block_exist(common::xaccount_address_t const & user, uint64_t height) const;
+    uint64_t height() const;
 
     /// @brief Create property.
     /// @param property_id The property identifier.

@@ -50,7 +50,7 @@ bool xtable_state_cache_t::get_account_index(const std::string & account, base::
 
 uint64_t xtable_state_cache_t::get_state_height() const {
     auto tablestate = statestore::xstatestore_hub_t::instance()->get_table_connectted_state(m_table_address);
-    return tablestate == nullptr ? 0 : tablestate->get_block_height();
+    return tablestate == nullptr ? 0 : tablestate->height();
 }
 
 
