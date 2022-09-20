@@ -176,4 +176,49 @@ std::string xaccount_index_t::dump() const {
     return std::string(local_param_buf);
 }
 
+
+int32_t xaccount_indexs_t::serialize_to_string(std::string & _str) const {
+    base::xstream_t _raw_stream(base::xcontext_t::instance());
+    int32_t ret = do_write(_raw_stream);
+    _str.assign((const char*)_raw_stream.data(),_raw_stream.size());
+    return ret;
+}
+
+int32_t xaccount_indexs_t::serialize_from_string(const std::string & _str) {
+    base::xstream_t _stream(base::xcontext_t::instance(), (uint8_t *)_str.data(), (int32_t)_str.size());
+    int32_t ret = do_read(_stream);
+    return ret;
+}
+
+void xaccount_indexs_t::add_account_index(const std::string & addr, const xaccount_index_t & account_index) {
+    m_account_indexs.push_back(std::make_pair(addr, account_index));
+}
+
+int32_t xaccount_indexs_t::do_write(base::xstream_t & stream) const {
+    const int32_t begin_size = stream.size();
+    const uint32_t count = (uint32_t)m_account_indexs.size();
+    stream.write_compact_var(count);
+    for (auto & account_index_pair : m_account_indexs) {
+        stream.write_compact_var(account_index_pair.first);
+        account_index_pair.second.do_write(stream);
+    }
+    return (stream.size() - begin_size);
+}
+
+int32_t xaccount_indexs_t::do_read(base::xstream_t & stream) {
+    m_account_indexs.clear();
+    const int32_t begin_size = stream.size();
+    uint32_t count = 0;
+    stream.read_compact_var(count);
+    for (uint32_t i = 0; i < count; i++) {
+        std::string addr;
+        xaccount_index_t account_index;
+        stream.read_compact_var(addr);
+        account_index.do_read(stream);
+        m_account_indexs.push_back(std::make_pair(addr, account_index));
+    }
+    return (begin_size - stream.size());
+}
+
+
 NS_END2

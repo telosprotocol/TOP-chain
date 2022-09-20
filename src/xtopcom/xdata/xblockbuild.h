@@ -222,22 +222,4 @@ class xrootblock_build_t : public base::xvblockmaker_t {
     bool build_block_body(const xrootblock_para_t & para);
 };
 
-class xtable_account_indexs_t {
-public:
-   int32_t serialize_to_string(std::string & _str) const;
-   int32_t serialize_from_string(const std::string & _str);
-
-   void add_account_index(const std::string & addr, const data::xaccount_index_t & account_index);
-   std::vector<std::pair<std::string, data::xaccount_index_t>> const & get_account_indexs() const {
-         return m_account_indexs;
-   }
-
-private:
-   int32_t do_write(base::xstream_t & stream) const;
-   int32_t do_read(base::xstream_t & stream);
-
-private:
-   std::vector<std::pair<std::string, data::xaccount_index_t>> m_account_indexs;
-};
-
 NS_END2

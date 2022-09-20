@@ -152,14 +152,17 @@ std::vector<base::xvsubblock_index_t> xtable_block_t::get_subblocks_index() cons
             subblocks_index.push_back(subblock_index);
         }
     } else {
-        // TODO(jimmy) get subblocks index
+        if( get_output_offdata_hash().empty() ) {
+            // has no output offdata, it's normal case
+            return {};
+        }
         std::vector<base::xvblock_ptr_t> subblocks;
         auto account_indexs_str = get_account_indexs();
         if(account_indexs_str.empty()) {
             xerror("xtable_block_t::get_subblocks_index,fail-get account indexs %s",dump().c_str());
             return {};
         }
-        data::xtable_account_indexs_t account_indexs;
+        base::xaccount_indexs_t account_indexs;
         account_indexs.serialize_from_string(account_indexs_str);
 
         auto & account_index_map = account_indexs.get_account_indexs();
@@ -168,7 +171,6 @@ std::vector<base::xvsubblock_index_t> xtable_block_t::get_subblocks_index() cons
             subblocks_index.push_back(subblock_index);
         }
     }
-    xassert(!subblocks_index.empty());
     return subblocks_index;
 }
 
