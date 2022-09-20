@@ -18,6 +18,7 @@
 #include "xconfig/xpredefined_configurations.h"
 #include "xchain_fork/xchain_upgrade_center.h"
 #include "xunit_service/xerror/xerror.h"
+#include "xstatestore/xstatestore_face.h"
 
 #include <cinttypes>
 NS_BEG2(top, xunit_service)
@@ -242,6 +243,10 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     m_last_view_id = view_ev->get_viewid();
     m_last_view_clock = view_ev->get_clock();
     auto _cert_block = m_para->get_resources()->get_vblockstore()->get_latest_cert_block(get_account(), metrics::blockstore_access_from_us_on_view_fire);
+    auto ret = check_state_sync(_cert_block.get());
+    if (!ret) {
+        return false;
+    }
     std::error_code ec;
     check_latest_cert_block(_cert_block.get(), view_ev, ec);
     if (ec) {
@@ -316,6 +321,37 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     m_leader_packed = start_proposal(calculate_min_tx_num(true));
     if (!m_leader_packed) {
         m_raw_timer->start(m_timer_repeat_time_ms, 0);
+    }
+    return true;
+}
+
+bool  xbatch_packer::check_state_sync(base::xvblock_t * latest_cert_block) {
+    if (latest_cert_block == nullptr) {
+        return false;
+    }
+    evm_common::xh256_t state_root;
+    auto ret = data::xblockextract_t::get_state_root(latest_cert_block, state_root);
+    if (!ret) {
+        xerror("xbatch_packer::on_view_fire get state root fail.block:%s", latest_cert_block->dump().c_str());
+        return false;
+    }
+
+    if (state_root == evm_common::xh256_t{}) {
+        return true;
+    }
+
+    uint64_t latest_cert_height = latest_cert_block->get_height();
+    if (statestore::xstatestore_hub_t::instance()->is_need_state_sync(common::xaccount_address_t(get_account()), latest_cert_height)) {
+        // todo(nathan):try sync mpt and table state. get table state root(attention:empty block do not have.)
+        // auto result = get_resources()->get_state_syncer()->run_state_sync(get_account(), xhash256_t(state_root.to_bytes()), base::xvchain_t::instance().get_xdbstore());
+        // if (result == ???) {
+            
+        // }
+
+        // statestore::xstatestore_hub_t::instance()->set_state_sync_info(common::xaccount_address_t(get_account()), statestore::xstate_sync_info_t(latest_cert_height, state_root, ));
+
+
+        return false;
     }
     return true;
 }

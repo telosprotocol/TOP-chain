@@ -98,7 +98,8 @@ xhash256_t xstatestore_base_t::get_state_root_from_block(base::xvblock_t * block
 
 void xstatestore_base_t::get_tablestate_ext_from_block(base::xvblock_t* block, statestore::xtablestate_ext_ptr_t & tablestate_ext, std::error_code & ec) const {
     std::shared_ptr<state_mpt::xtop_state_mpt> mpt = nullptr;
-    get_mpt_from_block(block, mpt, ec);
+    xhash256_t root_hash;
+    get_mpt_from_block(block, mpt, root_hash, ec);
     if (ec) {
         xwarn("xstatestore_base_t::get_tablestate_ext_from_block fail-get mpt. block:%s,ec=%s", block->dump().c_str(),ec.message().c_str());
         return;
@@ -112,7 +113,7 @@ void xstatestore_base_t::get_tablestate_ext_from_block(base::xvblock_t* block, s
     tablestate_ext = std::make_shared<xtablestate_ext_t>(tablestate, mpt);
 }
 
-void xstatestore_base_t::get_mpt_from_block(base::xvblock_t * block, std::shared_ptr<state_mpt::xtop_state_mpt> & mpt, std::error_code & ec) const {
+void xstatestore_base_t::get_mpt_from_block(base::xvblock_t * block, std::shared_ptr<state_mpt::xtop_state_mpt> & mpt, xhash256_t & root_hash, std::error_code & ec) const {
     xassert(!ec);
     evm_common::xh256_t state_root;
     auto ret = data::xblockextract_t::get_state_root(block, state_root);
@@ -121,7 +122,7 @@ void xstatestore_base_t::get_mpt_from_block(base::xvblock_t * block, std::shared
         xerror("xstatestore_base_t::get_mpt_from_block get state root fail. block:%s", block->dump().c_str());
         return;
     }
-    xhash256_t root_hash = xhash256_t(state_root.to_bytes());
+    root_hash = xhash256_t(state_root.to_bytes());
     mpt = state_mpt::xtop_state_mpt::create(block->get_account(), root_hash, base::xvchain_t::instance().get_xdbstore(), state_mpt::xstate_mpt_cache_t::instance(), ec);
 }
 

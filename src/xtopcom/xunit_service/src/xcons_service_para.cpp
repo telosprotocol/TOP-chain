@@ -15,7 +15,8 @@ xresources::xresources(const std::string & account,
                        observer_ptr<time::xchain_time_face_t> const & timer,
                        observer_ptr<election::cache::xdata_accessor_face_t> const & accessor,
                        observer_ptr<mbus::xmessage_bus_face_t> const & mb,
-                       const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool)
+                       const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool,
+                       const std::shared_ptr<state_sync::xstate_sync_t> & stats_syncer)
   : m_worker_pool(pwork)
   , m_xbft_worker_pool(pwork)
   , m_network(network)
@@ -26,7 +27,8 @@ xresources::xresources(const std::string & account,
   , m_timer(timer)
   , m_accessor(accessor)
   , m_bus(mb)
-  , m_txpool(txpool) {}
+  , m_txpool(txpool)
+  , m_state_syncer(stats_syncer) {}
 
 xresources::~xresources() {}
 
@@ -81,6 +83,10 @@ mbus::xmessage_bus_face_t * xresources::get_bus() {
 
 xtxpool_v2::xtxpool_face_t * xresources::get_txpool() {
     return m_txpool.get();
+}
+
+state_sync::xstate_sync_t * xresources::get_state_syncer() {
+    return m_state_syncer.get();
 }
 
 // get pacemaker type

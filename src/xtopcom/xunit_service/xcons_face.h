@@ -17,6 +17,7 @@
 #include "xunit_service/xcons_utl.h"
 #include "xrouter/xrouter_face.h"
 #include "xdata/xblock_cs_para.h"
+#include "xstate_sync/xstate_sync.h"
 
 #include <string>
 #include <vector>
@@ -130,6 +131,7 @@ public:
     virtual const std::string & get_account() = 0;
     virtual mbus::xmessage_bus_face_t* get_bus() = 0;
     virtual xtxpool_v2::xtxpool_face_t * get_txpool() = 0;
+    virtual state_sync::xstate_sync_t * get_state_syncer() = 0;
 };
 
 enum e_cons_type {

@@ -24,6 +24,7 @@ enum class xenum_errc {
     statestore_block_unmatch_prev_err,
     statestore_try_limit_arrive_err,
     statestore_cannot_execute_for_long_distance_err,
+    statestore_need_sync_err,
 };
 using xerrc_t = xenum_errc;
 

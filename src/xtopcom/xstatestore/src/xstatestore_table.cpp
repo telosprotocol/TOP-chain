@@ -195,4 +195,8 @@ data::xtablestate_ptr_t xstatestore_table_t::get_table_state_from_block(base::xv
     return nullptr;
 }
 
+bool xstatestore_table_t::is_need_state_sync(uint64_t height) const {
+    return m_table_executor.is_need_state_sync(height);
+}
+
 NS_END2

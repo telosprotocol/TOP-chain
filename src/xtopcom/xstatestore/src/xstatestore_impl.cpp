@@ -5,12 +5,12 @@
 #include <string>
 #include "xbasic/xmemory.hpp"
 #include "xmbus/xevent_store.h"
+#include "xmbus/xevent_state_sync.h"
 #include "xvledger/xvledger.h"
 #include "xvledger/xaccountindex.h"
 #include "xstatestore/xstatestore_impl.h"
 #include "xdata/xblocktool.h"
 #include "xmbus/xbase_sync_event_monitor.hpp"
-#include "xmbus/xevent_store.h"
 
 NS_BEG2(top, statestore)
 
@@ -45,13 +45,40 @@ bool xstatestore_impl_t::start(const xobject_ptr_t<base::xiothread_t> & iothread
     // todo(nathan):use timer to update mpt and table state.
     m_timer = new xstatestore_timer_t(top::base::xcontext_t::instance(), iothread->get_thread_id(), this);
     m_timer->start(0, 1000);
-    m_bus_listen_id = get_mbus()->add_listener(top::mbus::xevent_major_type_store, std::bind(&xstatestore_impl_t::on_block_to_db_event, this, std::placeholders::_1));
+    m_store_block_listen_id = get_mbus()->add_listener(top::mbus::xevent_major_type_store, std::bind(&xstatestore_impl_t::on_block_to_db_event, this, std::placeholders::_1));
+    m_state_sync_listen_id = get_mbus()->add_listener(top::mbus::xevent_major_type_state_sync, std::bind(&xstatestore_impl_t::on_block_to_db_event, this, std::placeholders::_1));
+
     return false;
 }
 
 void xstatestore_impl_t::on_table_block_committed(base::xvblock_t* block) const {
     xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(block->get_account());
     tablestore->on_table_block_committed(block);
+}
+
+bool xstatestore_impl_t::is_need_state_sync(common::xaccount_address_t const & table_address, uint64_t height) const {
+    xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(table_address.value());
+    return tablestore->is_need_state_sync(height);
+}
+
+bool xstatestore_impl_t::set_state_sync_info(common::xaccount_address_t const & table_address, const xstate_sync_info_t & state_sync_info) {
+    std::lock_guard<std::mutex> l(m_state_sync_infos_lock);
+    m_state_sync_infos[table_address.value()] = state_sync_info;
+    return true;
+}
+
+void xstatestore_impl_t::on_state_sync_event(mbus::xevent_ptr_t e) {
+    if (e->minor_type != mbus::xevent_state_sync_t::none) {
+        return;
+    }
+
+    mbus::xevent_state_sync_ptr_t state_sync_event = dynamic_xobject_ptr_cast<mbus::xevent_state_sync_t>(e);
+
+    // todo(nathan):process state sync event.
+    if (state_sync_event->result == mbus::xevent_state_sync_t::fail) {
+        std::lock_guard<std::mutex> l(m_state_sync_infos_lock);
+        m_state_sync_infos.erase(state_sync_event->table_addr.value());
+    }
 }
 
 void xstatestore_impl_t::on_block_to_db_event(mbus::xevent_ptr_t e) {

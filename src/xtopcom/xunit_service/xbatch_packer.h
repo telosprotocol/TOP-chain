@@ -81,6 +81,8 @@ private:
     virtual void send_receipts(base::xvblock_t *vblock);
     virtual bool set_election_round(bool is_leader, data::xblock_consensus_para_t & proposal_para);
 
+    bool    check_state_sync(base::xvblock_t * latest_cert_block);
+
 private:
     observer_ptr<mbus::xmessage_bus_face_t>  m_mbus;
     base::xtable_index_t                     m_tableid;

@@ -64,6 +64,7 @@ public:
     data::xtablestate_ptr_t get_latest_connectted_table_state() const;
 
     bool                    get_latest_commit_accountindex(common::xaccount_address_t const & account_address, base::xaccount_index_t & index) const;
+    bool                    is_need_state_sync(uint64_t height) const;
 
 private:
     

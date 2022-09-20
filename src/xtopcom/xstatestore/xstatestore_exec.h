@@ -17,6 +17,7 @@ class xstatestore_executor_t {
 public:
     static constexpr uint32_t               execute_demand_limit{10};
     static constexpr uint32_t               execute_update_limit{32};
+    static constexpr uint32_t               execute_height_diff_for_sync{1000};
 
 public:
     xstatestore_executor_t(common::xaccount_address_t const& table_addr);
@@ -26,6 +27,7 @@ public:
     void    execute_and_get_accountindex(base::xvblock_t* block, common::xaccount_address_t const& unit_addr, base::xaccount_index_t & account_index, std::error_code & ec) const;
     void    execute_and_get_tablestate(base::xvblock_t* block, data::xtablestate_ptr_t &tablestate, std::error_code & ec) const;
     void    on_table_block_committed(base::xvblock_t* block) const;
+    bool    is_need_state_sync(uint64_t height) const;
 
 protected:
     void    update_execute_from_execute_height() const;

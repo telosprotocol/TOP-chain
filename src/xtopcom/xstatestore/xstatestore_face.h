@@ -16,6 +16,19 @@
 
 NS_BEG2(top, statestore)
 
+class xstate_sync_info_t {
+public:
+    xstate_sync_info_t() {}
+    xstate_sync_info_t(uint64_t height, const xhash256_t & root_hash, const xhash256_t & table_state_hash) : m_height(height), m_root_hash(root_hash), m_table_state_hash(table_state_hash){}
+    uint64_t get_height() {return m_height;}
+    const xhash256_t & get_root_hash() {return m_root_hash;}
+    const xhash256_t & get_table_state_hash() {return m_table_state_hash;}
+private:
+    uint64_t m_height;
+    xhash256_t m_root_hash;
+    xhash256_t m_table_state_hash;
+};
+
 // the statestore interface
 class xstatestore_face_t {
  public:
@@ -51,6 +64,8 @@ class xstatestore_face_t {
                                               data::xtablestate_ptr_t & tablestate_ptr) const = 0;
     virtual void update_node_type(common::xnode_type_t combined_node_type) = 0;
     virtual void on_table_block_committed(base::xvblock_t* block) const = 0;
+    virtual bool is_need_state_sync(common::xaccount_address_t const & table_address, uint64_t height) const = 0;
+    virtual bool set_state_sync_info(common::xaccount_address_t const & table_address, const xstate_sync_info_t & state_sync_info) = 0;
 };
 
 class xstatestore_hub_t {

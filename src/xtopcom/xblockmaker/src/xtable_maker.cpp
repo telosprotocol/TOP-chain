@@ -894,12 +894,14 @@ std::shared_ptr<state_mpt::xtop_state_mpt> xtable_maker_t::create_new_mpt(const 
                                                                           const statectx::xstatectx_ptr_t & table_state_ctx,
                                                                           const std::vector<std::pair<xblock_ptr_t, base::xaccount_index_t>> & batch_unit_and_index) {
     std::error_code ec;
+    // todo(nathan):add param show that mpt is with unit state.
     auto mpt = state_mpt::xtop_state_mpt::create(get_account(), last_mpt_root, base::xvchain_t::instance().get_xdbstore(), state_mpt::xstate_mpt_cache_t::instance(), ec);
     if (ec) {
         xwarn("xtable_maker_t::create_new_mpt create mpt fail.");
         return nullptr;
     }
 
+    // todo:delete in v1.8
     if (last_mpt_root == xhash256_t{}) {  // TODO(jimmy)  delete in v1.8
         std::map<std::string, base::xaccount_index_t> new_indexes;
         auto ret = get_new_account_indexes(cs_para, new_indexes);
@@ -909,13 +911,20 @@ std::shared_ptr<state_mpt::xtop_state_mpt> xtable_maker_t::create_new_mpt(const 
         }
 
         for (auto & index : new_indexes) {
-            mpt->set_account_index(index.first, index.second, ec);
+            auto & addr = index.first;
+            auto & account_index = index.second;
+            std::string _new_account_index_str;
+            account_index.serialize_to(_new_account_index_str); 
+            // all old indexes set to property, easy to construct mpt by table block(e.g. archive nodes)
+            table_state_ctx->get_table_state()->map_set(data::XPROPERTY_TABLE_ACCOUNT_INDEX, addr, _new_account_index_str);
+            mpt->set_account_index(addr, _new_account_index_str, ec);
             if (ec) {
                 xerror("xtable_maker_t::create_new_mpt set account index from table property to mpt fail.");
                 return nullptr;
             }
         }
-
+    } else {
+        // remove account index after root hash already exist.
         std::map<std::string, std::string> indexes = table_state_ctx->get_table_state()->map_get(data::XPROPERTY_TABLE_ACCOUNT_INDEX);
         if (!indexes.empty()) {
             xinfo("xtable_maker_t::create_new_mpt begin to clear accountindex.tablestate=%s,index_count=%zu",
@@ -928,6 +937,7 @@ std::shared_ptr<state_mpt::xtop_state_mpt> xtable_maker_t::create_new_mpt(const 
     for (auto & unit_and_index : batch_unit_and_index) {
         auto & unit = unit_and_index.first;
         auto & index = unit_and_index.second;
+        // todo(nathan): set unit state.
         mpt->set_account_index(unit->get_account(), index, ec);
         if (ec) {
             xerror("xtable_maker_t::create_new_mpt set account index to mpt fail.");

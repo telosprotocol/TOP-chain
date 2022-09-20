@@ -29,7 +29,7 @@ class xstatestore_base_t {
     data::xunitstate_ptr_t     get_unit_state_by_accountindex(common::xaccount_address_t const& account_address, base::xaccount_index_t const& index) const;
 
     void                       get_tablestate_ext_from_block(base::xvblock_t* block, statestore::xtablestate_ext_ptr_t& tablestate_ext, std::error_code & ec) const;
-    void                       get_mpt_from_block(base::xvblock_t * block, std::shared_ptr<state_mpt::xtop_state_mpt> & mpt, std::error_code & ec) const;
+    void                       get_mpt_from_block(base::xvblock_t * block, std::shared_ptr<state_mpt::xtop_state_mpt> & mpt, xhash256_t & root_hash, std::error_code & ec) const;
     xhash256_t                 get_state_root_from_block(base::xvblock_t * block) const;
 
     uint64_t                   get_latest_executed_block_height(common::xaccount_address_t const& table_addr) const;

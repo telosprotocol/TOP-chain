@@ -40,6 +40,11 @@ void xstatestore_executor_t::on_table_block_committed(base::xvblock_t* block) co
     xdbg("xstatestore_executor_t::on_table_block_committed finish.execute_height old=%ld,new=%ld", old_execute_height, get_latest_executed_block_height());
 }
 
+bool xstatestore_executor_t::is_need_state_sync(uint64_t height) const {
+    uint64_t old_execute_height = get_latest_executed_block_height();
+    return height > old_execute_height + execute_height_diff_for_sync;
+}
+
 void xstatestore_executor_t::try_execute_block_on_demand(base::xvblock_t* block, std::error_code & ec) const {
     uint64_t execute_height = get_latest_executed_block_height();
     uint32_t limit = execute_demand_limit;
@@ -250,12 +255,34 @@ void xstatestore_executor_t::execute_block_with_prev(base::xvblock_t* block, xob
         return;
     }
 
+    // execute current block for tablestate
+    auto state = m_statestore_base.get_blkstate_store()->get_block_state(block);
+    if (state == nullptr) {
+        ec = error::xerrc_t::statestore_tablestate_exec_fail;
+        xerror("xstatestore_executor_t::execute_block_with_prev fail-get_block_state. block=%s", block->dump().c_str());
+        return;
+    }
+
     // load prev state
     std::shared_ptr<state_mpt::xtop_state_mpt> pre_mpt;
-    m_statestore_base.get_mpt_from_block(prev_block.get(), pre_mpt, ec);
+    xhash256_t pre_root_hash;
+    m_statestore_base.get_mpt_from_block(prev_block.get(), pre_mpt, pre_root_hash, ec);
     if (ec) {
         xwarn("xstatestore_executor_t::execute_block_with_prev fail-load prev state. block=%s", block->dump().c_str());
         return;
+    }
+
+    auto block_state_root = m_statestore_base.get_state_root_from_block(block);
+
+    // if pre root is empty and this root is not empty, table is forked from this block.
+    if (block_state_root != xhash256_t() && pre_root_hash == xhash256_t()) {
+        data::xtablestate_ptr_t tablestate = std::make_shared<data::xtable_bstate_t>(state.get());
+        std::map<std::string, std::string> indexes = tablestate->map_get(data::XPROPERTY_TABLE_ACCOUNT_INDEX);
+        for (auto & index_pair : indexes) {
+            auto & account = index_pair.first;
+            auto & account_index = index_pair.second;
+            pre_mpt->set_account_index(account, account_index, ec);
+        }
     }
 
     // execute current block for accountindex mpt state
@@ -278,7 +305,6 @@ void xstatestore_executor_t::execute_block_with_prev(base::xvblock_t* block, xob
         }
 
         // check if root matches.
-        auto block_state_root = m_statestore_base.get_state_root_from_block(block);
         auto cur_root_hash = pre_mpt->get_root_hash(ec);
         if (cur_root_hash != block_state_root) {
             ec = error::xerrc_t::statestore_block_root_unmatch_mpt_root_err;
@@ -295,14 +321,6 @@ void xstatestore_executor_t::execute_block_with_prev(base::xvblock_t* block, xob
             return;
         }
         xdbg("xstatestore_executor_t::execute_block_with_prev mpt committed. block:%s,root:%s,indexs_count=%zu", block->dump().c_str(), cur_root_hash.as_hex_str().c_str(), account_indexs.get_account_indexs().size());
-    }
-
-    // execute current block for tablestate
-    auto state = m_statestore_base.get_blkstate_store()->get_block_state(block);
-    if (state == nullptr) {
-        ec = error::xerrc_t::statestore_tablestate_exec_fail;
-        xerror("xstatestore_executor_t::execute_block_with_prev fail-get_block_state. block=%s", block->dump().c_str());
-        return;
     }
 
     // update execute height
