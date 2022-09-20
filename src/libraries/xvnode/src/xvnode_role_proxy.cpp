@@ -17,7 +17,7 @@ xtop_vnode_role_proxy::xtop_vnode_role_proxy(observer_ptr<mbus::xmessage_bus_fac
                                              //    std::vector<xobject_ptr_t<base::xiothread_t>> const & iothreads,
                                              observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
   : m_txstore{txstore},
-    m_state_syncer{std::make_shared<state_sync::xstate_sync_t>()} {
+    m_downloader{std::make_shared<state_sync::xstate_downloader_t>(base::xvchain_t::instance().get_xdbstore(), mbus)} {
     m_cons_mgr = xunit_service::xcons_mgr_build(data::xuser_params::get_instance().account.value(),
                                                 block_store,
                                                 txpool,
@@ -26,7 +26,7 @@ xtop_vnode_role_proxy::xtop_vnode_role_proxy(observer_ptr<mbus::xmessage_bus_fac
                                                 election_cache_data_accessor,
                                                 mbus,
                                                 router,
-                                                m_state_syncer);
+                                                m_downloader);
 }
 
 bool xtop_vnode_role_proxy::is_edge_archive(common::xnode_type_t const & node_type) const {
@@ -46,7 +46,7 @@ void xtop_vnode_role_proxy::create(vnetwork::xvnetwork_driver_face_ptr_t const &
         m_cons_mgr->create(vnetwork);
     }
     // bind syncer
-    vnetwork->register_message_ready_notify(xmessage_category_state_sync, std::bind(&state_sync::xstate_sync_t::deliver_node_data, m_state_syncer, std::placeholders::_1, vnetwork, std::placeholders::_2, base::xvchain_t::instance().get_xdbstore()));
+    vnetwork->register_message_ready_notify(xmessage_category_state_sync, std::bind(&state_sync::xstate_downloader_t::handle_message, m_downloader, std::placeholders::_1, vnetwork, std::placeholders::_2));
 }
 void xtop_vnode_role_proxy::change(common::xnode_address_t const & address, common::xlogic_time_t start_time) {
     m_node_address_set.insert(address);

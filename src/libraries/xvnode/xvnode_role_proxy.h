@@ -16,7 +16,7 @@
 #include "xvnode/xvnode_role_proxy_face.h"
 #include "xcommon/xnode_type.h"
 #include "xcommon/xaddress.h"
-#include "xstate_sync/xstate_sync.h"
+#include "xstate_sync/xstate_downloader.h"
 
 NS_BEG2(top, vnode)
 
@@ -33,7 +33,7 @@ private:
     // std::vector<xobject_ptr_t<base::xiothread_t>> const & iothreads;
     // observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor;
     observer_ptr<base::xvtxstore_t> m_txstore;
-    std::shared_ptr<state_sync::xstate_sync_t> m_state_syncer;
+    std::shared_ptr<state_sync::xstate_downloader_t> m_downloader;
     xunit_service::xcons_service_mgr_ptr m_cons_mgr;
     // std::shared_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> m_txpool_service_mgr;
 

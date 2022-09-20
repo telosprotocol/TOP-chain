@@ -10,11 +10,12 @@
 
 NS_BEG4(top, evm_common, trie, schema)
 
-static constexpr xbyte_t CodePrefix{'c'};
+static constexpr xbyte_t UnitPrefix{'u'};
 
-inline xbytes_t codeKey(xhash256_t const & hash) {
-    xbytes_t res{CodePrefix};
-    res.insert(res.end(), hash.to_bytes().begin(), hash.to_bytes().end());
+inline xbytes_t unitKey(xhash256_t const & hash) {
+    xbytes_t res{UnitPrefix};
+    auto hash_bytes = hash.to_bytes();
+    res.insert(res.end(), hash_bytes.begin(), hash_bytes.end());
     return res;
 }
 

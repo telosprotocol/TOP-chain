@@ -5,15 +5,13 @@
 #pragma once
 
 #include "xbasic/xmemory.hpp"
-#include "xevm_common/trie/xtrie.h"
 #include "xstate_mpt/xstate_mpt_cache.h"
 #include "xstate_mpt/xstate_mpt_db.h"
 #include "xstate_mpt/xstate_mpt_journal.h"
 #include "xvledger/xaccountindex.h"
-
+#include "xevm_common/trie/xsecure_trie.h"
 namespace top {
 namespace state_mpt {
-
 class xtop_state_mpt {
 public:
     xtop_state_mpt() = default;
@@ -58,7 +56,9 @@ public:
     /// @return New root hash.
     xhash256_t get_root_hash(std::error_code & ec);
 
-    xhash256_t const& get_origin_root() const {return m_original_root;}
+    /// @brief Get original root hash.
+    /// @return Original root hash.
+    xhash256_t get_original_root_hash() const;
 
     /// @brief Return db object to do actions relay on db.
     /// @return DB object.
@@ -93,7 +93,7 @@ private:
 
     std::string m_table_address;
 
-    std::shared_ptr<evm_common::trie::xtrie_t> m_trie{nullptr};
+    std::shared_ptr<evm_common::trie::xsecure_trie_t> m_trie{nullptr};
     std::shared_ptr<evm_common::trie::xtrie_db_t> m_db{nullptr};
     std::shared_ptr<base::xlru_cache<std::string, std::string>> m_lru{nullptr};
     xhash256_t m_original_root;

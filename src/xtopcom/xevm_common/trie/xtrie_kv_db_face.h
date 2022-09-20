@@ -36,10 +36,6 @@ using xkv_db_face_ptr_t = std::shared_ptr<xkv_db_face_t>;
 
 /// Code operations
 
-inline xbytes_t ReadCodeWithPrefix(xkv_db_face_ptr_t db, xhash256_t const & hash) {
-    std::error_code _;
-    return db->Get(schema::codeKey(hash), _);
-}
 // inline xbytes_t ReadCode(xkv_db_face_ptr_t db, xhash256_t hash) {
 //     std::error_code _;
 //     auto data = ReadCodeWithPrefix(db, hash);
@@ -50,24 +46,31 @@ inline xbytes_t ReadCodeWithPrefix(xkv_db_face_ptr_t db, xhash256_t const & hash
 //     return data;
 // }
 
-inline bool HasCodeWithPrefix(xkv_db_face_ptr_t db, xhash256_t const & hash) {
+/// unit operation
+
+inline xbytes_t ReadUnitWithPrefix(xkv_db_face_ptr_t db, xhash256_t const & hash) {
     std::error_code _;
-    return db->Has(schema::codeKey(hash), _);
+    return db->Get(schema::unitKey(hash), _);
 }
 
-inline void WriteCode(xkv_db_face_ptr_t db, xhash256_t const & hash, xbytes_t const & code) {
+inline bool HasUnitWithPrefix(xkv_db_face_ptr_t db, xhash256_t const & hash) {
+    std::error_code _;
+    return db->Has(schema::unitKey(hash), _);
+}
+
+inline void WriteUnit(xkv_db_face_ptr_t db, xhash256_t const & hash, xbytes_t const & code) {
     std::error_code ec;
-    db->Put(schema::codeKey(hash), code, ec);
+    db->Put(schema::unitKey(hash), code, ec);
     if (ec) {
-        xwarn("Failed to store code: %s", ec.message().c_str());
+        xwarn("Failed to store unit: %s", ec.message().c_str());
     }
 }
 
-inline void DeleteCode(xkv_db_face_ptr_t db, xhash256_t const & hash) {
+inline void DeleteUnit(xkv_db_face_ptr_t db, xhash256_t const & hash) {
     std::error_code ec;
-    db->Delete(schema::codeKey(hash), ec);
+    db->Delete(schema::unitKey(hash), ec);
     if (ec) {
-        xwarn("Failed to delete code: %s", ec.message().c_str());
+        xwarn("Failed to delete unit: %s", ec.message().c_str());
     }
 }
 

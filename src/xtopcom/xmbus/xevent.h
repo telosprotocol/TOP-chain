@@ -32,6 +32,7 @@ enum xevent_major_type_t {
     xevent_major_type_role,
     xevent_major_type_blockfetcher,
     xevent_major_type_sync,
+    xevent_major_type_state_sync,
     xevent_major_type_max
 };
 

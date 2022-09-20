@@ -114,6 +114,10 @@ xhash256_t xtop_state_mpt::get_root_hash(std::error_code & ec) {
     return m_trie->Hash();
 }
 
+xhash256_t xtop_state_mpt::get_original_root_hash() const {
+    return m_original_root;
+}
+
 std::shared_ptr<evm_common::trie::xtrie_db_t> xtop_state_mpt::get_database() const {
     return m_db;
 }
@@ -167,7 +171,7 @@ void xtop_state_mpt::init(const std::string & table, const xhash256_t & root, ba
     m_table_address = table;
     auto mpt_db = std::make_shared<xstate_mpt_db_t>(db, table);
     m_db = evm_common::trie::xtrie_db_t::NewDatabase(mpt_db);
-    m_trie = evm_common::trie::xtrie_t::New(root, m_db, ec);
+    m_trie = evm_common::trie::xsecure_trie_t::NewSecure(root, m_db, ec);
     if (ec) {
         xwarn("xtop_state_mpt::init generate trie with %s failed: %s, %s", root.as_hex_str().c_str(), ec.category().name(), ec.message().c_str());
         return;
