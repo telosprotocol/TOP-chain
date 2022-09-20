@@ -267,7 +267,7 @@ void xstatestore_executor_t::execute_block_with_prev(base::xvblock_t* block, xob
 
     auto account_indexs_str = block->get_account_indexs();
     if (!account_indexs_str.empty()) {
-        data::xtable_account_indexs_t account_indexs;
+        base::xaccount_indexs_t account_indexs;
         account_indexs.serialize_from_string(account_indexs_str);
         for (auto & index : account_indexs.get_account_indexs()) {
             pre_mpt->set_account_index(index.first, index.second, ec);

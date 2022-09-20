@@ -691,7 +691,7 @@ namespace top
                 xerror("xvblockstore_impl::load_block_output_offdata,fail-get account indexs %s",block->dump().c_str());
                 return false;
             }            
-            data::xtable_account_indexs_t account_indexs;
+            base::xaccount_indexs_t account_indexs;
             account_indexs.serialize_from_string(account_indexs_str);
 
             auto & account_index_map = account_indexs.get_account_indexs();
@@ -1271,7 +1271,7 @@ namespace top
             // update index of unit blocks to commit state.
             auto account_indexs_str = container_block->get_account_indexs();
             if (!account_indexs_str.empty()) {// XTODO tableblock may has no accountsindex for confirmtx
-                data::xtable_account_indexs_t account_indexs;
+                base::xaccount_indexs_t account_indexs;
                 account_indexs.serialize_from_string(account_indexs_str);
 
                 auto & account_index_map = account_indexs.get_account_indexs();

@@ -83,4 +83,23 @@ class xaccount_index_t {
     std::string     m_state_hash;
 };
 
+class xaccount_indexs_t {
+public:
+   int32_t serialize_to_string(std::string & _str) const;
+   int32_t serialize_from_string(const std::string & _str);
+
+   // XTODO should not add repeat address
+   void add_account_index(const std::string & addr, const xaccount_index_t & account_index);
+   std::vector<std::pair<std::string, xaccount_index_t>> const & get_account_indexs() const {
+         return m_account_indexs;
+   }
+
+private:
+   int32_t do_write(base::xstream_t & stream) const;
+   int32_t do_read(base::xstream_t & stream);
+
+private:
+   std::vector<std::pair<std::string, xaccount_index_t>> m_account_indexs;
+};
+
 NS_END2
