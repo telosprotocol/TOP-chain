@@ -19,6 +19,8 @@ enum class xenum_errc {
     state_mpt_db_set_error,
     state_mpt_db_delete_error,
     state_mpt_db_not_found,
+
+    state_mpt_leaf_empty,
 };
 using xerrc_t = xenum_errc;
 

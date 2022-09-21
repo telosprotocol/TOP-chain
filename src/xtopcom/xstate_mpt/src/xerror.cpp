@@ -29,6 +29,9 @@ static char const * const errc_to_string(int code) {
     case xerrc_t::state_mpt_db_not_found:
         return "state mpt db not found";
 
+    case xerrc_t::state_mpt_leaf_empty:
+        return "state mpt leaf empty";
+
     default:
         return "unknown error";
     }

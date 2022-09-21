@@ -52,7 +52,7 @@ private:
         xbytes_t path;     // Merkle path leading to this node for prioritization
         xhash256_t hash;   // Hash of the node data content to retrieve
         xbytes_t data;     // Data content of the node, cached until all subtrees complete
-        bool code{false};  // Whether this is a code entry
+        bool unit{false};  // Whether this is a unit entry
 
         std::vector<request *> parents;  // Parent state nodes referencing this entry (notify all upon completion)
         std::size_t deps{0};                // Number of dependencies before allowed to commit this node
@@ -61,7 +61,7 @@ private:
 
         request(xbytes_t const & _path, xhash256_t const & _hash, LeafCallback _callback) : path{_path}, hash{_hash}, callback{_callback} {
         }
-        request(xbytes_t const & _path, xhash256_t const & _hash, bool is_code) : path{_path}, hash{_hash}, code{is_code} {
+        request(xbytes_t const & _path, xhash256_t const & _hash, bool is_unit) : path{_path}, hash{_hash}, unit{is_unit} {
         }
     };
 
@@ -70,19 +70,19 @@ private:
     class syncMemBatch {
     public:
         std::map<xhash256_t, xbytes_t> nodes;  // In-memory membatch of recently completed nodes
-        std::map<xhash256_t, xbytes_t> codes;  // In-memory membatch of recently completed codes
+        std::map<xhash256_t, xbytes_t> units;  // In-memory membatch of recently completed codes
 
     public:
         inline bool hasNode(xhash256_t const & hash) const {
             return nodes.find(hash) != nodes.end();
         }
-        inline bool hasCode(xhash256_t const & hash) const {
-            return codes.find(hash) != codes.end();
+        inline bool hasUnit(xhash256_t const & hash) const {
+            return units.find(hash) != units.end();
         }
 
         inline void clear() {
             nodes.clear();
-            codes.clear();
+            units.clear();
         }
     };
 
@@ -90,13 +90,16 @@ private:
     xkv_db_face_ptr_t database{nullptr};                                    // Persistent database to check for existing entries
     syncMemBatch membatch;                                                  // Memory buffer to avoid frequent database writes
     std::map<xhash256_t, request *> nodeReqs;                               // Pending requests pertaining to a trie node hash
-    std::map<xhash256_t, request *> codeReqs;                               // Pending requests pertaining to a code hash
+    std::map<xhash256_t, request *> unitReqs;                               // Pending requests pertaining to a code hash
     top::threading::xthreadsafe_priority_queue<xhash256_t, int64_t> queue;  // Priority queue with the pending requests
     std::map<std::size_t, std::size_t> fetches;                             // Number of active fetches per trie node depth
 
 public:
     Sync(xhash256_t const & root, xkv_db_face_ptr_t _database, LeafCallback callback);
+    Sync(xkv_db_face_ptr_t _database);
+
     static std::shared_ptr<Sync> NewSync(xhash256_t const & root, xkv_db_face_ptr_t _database, LeafCallback callback);
+    static std::shared_ptr<Sync> NewSync(xkv_db_face_ptr_t _database);
 
     Sync(Sync const &) = delete;
     Sync & operator=(Sync const &) = delete;
@@ -105,13 +108,14 @@ public:
     ~Sync();
 
 public:
+    // Init
+    void Init(xhash256_t const & root, LeafCallback callback);
+
     // AddSubTrie registers a new trie to the sync code, rooted at the designated parent.
     void AddSubTrie(xhash256_t const & root, xbytes_t const & path, xhash256_t const & parent, LeafCallback callback);
 
-    // AddCodeEntry schedules the direct retrieval of a contract code that should not
-    // be interpreted as a trie node, but rather accepted and stored into the database
-    // as is.
-    void AddCodeEntry(xhash256_t const & hash, xbytes_t const & path, xhash256_t const & parent);
+    // AddUnitTrie registers unit index.
+    void AddUnitEntry(xhash256_t const & hash, xbytes_t const & path, xhash256_t const & parent);
 
     // Missing retrieves the known missing nodes from the trie for retrieval. To aid
     // both eth/6x style fast sync and snap/1x style state sync, the paths of trie
