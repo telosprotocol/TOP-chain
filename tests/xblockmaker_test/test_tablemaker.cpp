@@ -1,5 +1,8 @@
 #include "gtest/gtest.h"
 
+#define private public
+#define protected public
+
 #include "test_common.hpp"
 #include "xblockmaker/xtable_maker.h"
 #include "xchain_fork/xchain_upgrade_center.h"
@@ -1139,5 +1142,111 @@ TEST_F(test_tablemaker, fullunit) {
                 EXPECT_EQ(tx_hash.empty(), false);
             }
         }
+    }
+}
+
+bool convert_func_all_true(const base::xvaccount_t & account, const base::xaccount_index_t & old_account_index, base::xaccount_index_t & new_account_index) {
+    uint64_t i = old_account_index.get_latest_unit_height() - 10;
+    std::string unit_hash = std::to_string(i + 100);
+    std::string state_hash = std::to_string(i + 200);
+    uint64_t nonce = i%5;
+
+    new_account_index = base::xaccount_index_t(old_account_index.get_latest_unit_height(), unit_hash, state_hash, nonce, enum_xvblock_class_light, enum_xvblock_type_user);
+    return true;
+}
+
+bool convert_func_random_true(const base::xvaccount_t & account, const base::xaccount_index_t & old_account_index, base::xaccount_index_t & new_account_index) {
+    bool ret = (rand()%5 == 0);
+    if (!ret) {
+        return false;
+    }
+    return convert_func_all_true(account, old_account_index, new_account_index);
+}
+
+TEST_F(test_tablemaker, account_index_upgrade) {
+    uint32_t account_num = 1000;
+    uint64_t height = 10000;
+    xaccount_index_upgrade_t account_index_upgrade;
+
+    for (uint32_t test_idx = 0; test_idx < 2; test_idx++) {
+        account_index_converter convert_func = convert_func_all_true;
+        if (test_idx == 1) {
+            account_index_converter convert_func = convert_func_random_true;
+        }
+        account_index_upgrade.init(account_num, height);
+        for (uint32_t i = 0; i < account_num; i++) {
+            std::string account = "test_account" + std::to_string(i);
+            
+            base::xaccount_index_t old_account_index(i+ 10, "x", "x", 0, enum_xvblock_class_light, enum_xvblock_type_user);
+            account_index_upgrade.add_old_index(account, old_account_index);
+        }
+
+        EXPECT_EQ(account_index_upgrade.get_fork_height(), height);
+
+        std::map<std::string, base::xaccount_index_t> new_indexes;
+        while(true) {
+            auto ret = account_index_upgrade.upgrade(convert_func, 50);
+            auto ret1 = account_index_upgrade.get_new_indexes(new_indexes, height);
+            EXPECT_EQ(ret, ret1);
+
+            if (ret) {
+                break;
+            }
+        }
+
+        for (auto & index_pair : new_indexes) {
+            auto & account = index_pair.first;
+            auto & new_account_index = index_pair.second;
+            uint64_t h = new_account_index.get_latest_unit_height() - 10;
+            std::string account_tmp = "test_account" + std::to_string(h);
+            EXPECT_EQ(account_tmp, account);
+            std::string unit_hash = std::to_string(h + 100);
+            std::string state_hash = std::to_string(h + 200);
+            uint64_t nonce = h%5;
+            EXPECT_EQ(new_account_index.get_latest_unit_hash(), unit_hash);
+            EXPECT_EQ(new_account_index.get_latest_state_hash(), state_hash);
+            EXPECT_EQ(new_account_index.get_latest_tx_nonce(), nonce);
+        }
+        account_index_upgrade.clear();
+    }
+}
+
+TEST_F(test_tablemaker, convert_to_new_account_index) {
+    mock::xvchain_creator creator(true);
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+
+    uint64_t max_block_height = 5;
+    mock::xdatamock_table mocktable(1, 4);
+    mocktable.genrate_table_chain(max_block_height, blockstore);
+    const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
+    xassert(tableblocks.size() == max_block_height + 1);
+
+    for (auto & block : tableblocks) {
+        ASSERT_TRUE(blockstore->store_block(mocktable, block.get()));
+    }
+
+    auto tableblock = tableblocks[max_block_height];
+    
+    std::vector<xobject_ptr_t<xvblock_t>> sub_blocks;
+    tableblock->extract_sub_blocks(sub_blocks);
+    ASSERT_EQ(sub_blocks.size(), 4);
+
+    for (auto & sub_block : sub_blocks) {
+        base::xaccount_index_t old_account_index(sub_block.get(), false, enum_xblock_consensus_flag_committed, false, 0);
+        base::xvaccount_t account(sub_block->get_account());
+        base::xaccount_index_t new_account_index;
+        auto ret = xaccount_index_upgrade_tool_t::convert_to_new_account_index(account, old_account_index, new_account_index);
+        EXPECT_EQ(ret, true);
+        EXPECT_EQ(new_account_index.get_latest_unit_height(), sub_block->get_height());
+        EXPECT_EQ(new_account_index.get_latest_unit_hash(), sub_block->get_block_hash());
+        auto unitbstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(sub_block.get());
+        data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(unitbstate.get());
+        auto nonce = unitstate->account_send_trans_number();
+        std::string unitstate_bin;
+        unitbstate->take_snapshot(unitstate_bin);
+        unitbstate->take_snapshot(unitstate_bin);
+        std::string statehash = sub_block->get_cert()->hash(unitstate_bin);
+        EXPECT_EQ(new_account_index.get_latest_state_hash(), statehash);
+        EXPECT_EQ(new_account_index.get_latest_tx_nonce(), nonce);
     }
 }
