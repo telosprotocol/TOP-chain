@@ -6,7 +6,7 @@ target_include_directories(xquic_node PRIVATE ${PROJECT_SOURCE_DIR}/src/xtopcom/
 
 set(SSL_PATH ${CMAKE_SOURCE_DIR}/src/xtopcom/xdepends/boringssl_static_libs/libbrssl.a;${CMAKE_SOURCE_DIR}/src/xtopcom/xdepends/boringssl_static_libs/libbrcrypto.a)
 
-target_link_libraries(xquic_node PRIVATE xquic-static ${SSL_PATH} -levent -lm -pthread)
+target_link_libraries(xquic_node PRIVATE xquic-static xbasic ${SSL_PATH} -levent -lm -pthread)
 
 if(LEAK_TRACER)
     target_link_libraries(xquic_node leaktracer -ldl)

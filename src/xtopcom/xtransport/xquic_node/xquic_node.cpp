@@ -11,7 +11,7 @@
 
 NS_BEG3(top, transport, quic)
 
-xquic_node_t::xquic_node_t(unsigned int const _server_port)
+xquic_node_t::xquic_node_t(std::size_t _server_port)
   : m_server_port{_server_port}, m_server_ptr{std::make_shared<xquic_server_t>()}, m_client_ptr{std::make_shared<xquic_client_t>()} {
 }
 
@@ -19,10 +19,11 @@ void xquic_node_t::start() {
     assert(!running());
 
     auto self = shared_from_this();
-    top::threading::xbackend_thread::spawn(
-        [this, self] { m_server_ptr->init(std::bind(&xquic_node_t::on_quic_message_ready, shared_from_this(), std::placeholders::_1), m_server_port); });
+    top::threading::xbackend_thread::spawn([this, self] {
+        m_server_ptr->init(std::bind(&xquic_node_t::on_quic_message_ready, shared_from_this(), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), m_server_port);
+    });
 
-    top::threading::xbackend_thread::spawn([this, self] { m_client_ptr->init(); });
+    top::threading::xbackend_thread::spawn([this, self] { m_client_ptr->init(m_server_port); });
 
     xinfo("xquic_node_t::start quic node start.");
 
@@ -93,7 +94,7 @@ int xquic_node_t::send_data(std::string const & data, std::string const & addr, 
 
 static std::size_t global_recv_cnt = 0;
 
-void xquic_node_t::on_quic_message_ready(top::xbytes_t const & bytes) {
+void xquic_node_t::on_quic_message_ready(top::xbytes_t const & bytes, std::string const & peer_ip, std::size_t peer_inbound_port) {
     transport::protobuf::RoutingMessage proto_message;
     if (proto_message.ParseFromArray((const char *)bytes.data(), bytes.size()) == false) {
         xwarn("xquic_node_t::on_quic_message_ready parse data to proto message failed, data.size():%zu", bytes.size());
@@ -103,9 +104,8 @@ void xquic_node_t::on_quic_message_ready(top::xbytes_t const & bytes) {
     assert(m_cb);
 
     base::xpacket_t packet;
-    // todo
-    // packet.set_from_ip_addr();
-    // packet.set_from_ip_port(); // this port is meaningless ... but root message need this to reply ...
+    packet.set_from_ip_addr(peer_ip);
+    packet.set_from_ip_port(static_cast<uint16_t>(peer_inbound_port));
 
     assert(m_cb);
     m_cb(proto_message, packet);

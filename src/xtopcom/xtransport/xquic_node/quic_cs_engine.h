@@ -26,7 +26,7 @@
 class xquic_server_t;
 class xquic_client_t;
 
-using xquic_message_ready_callback = std::function<void(top::xbytes_t const &)>;
+using xquic_message_ready_callback = std::function<void(top::xbytes_t const &, std::string const &, std::size_t)>;
 
 class user_stream_t;
 class cli_user_stream_t;
@@ -104,6 +104,11 @@ struct srv_user_stream_t {
 
     bool has_recv_block_len{false};
     std::size_t block_len{0};
+
+    /// srv_user_stream_t need to hold peers inbound ip + port, get from pingpacket.
+    bool has_recv_ping_packet{false};
+    std::string peer_inbound_addr{""};
+    std::size_t peer_inbound_port{0};
 };
 
 struct client_send_buffer_t {
@@ -144,10 +149,13 @@ public:
 public:
     xquic_message_ready_callback m_cb;
     /// main function from server
-    bool init(xquic_message_ready_callback cb, unsigned int const server_port);
+    bool init(xquic_message_ready_callback cb, std::size_t server_port);
 };
 
 class xquic_client_t {
+private:
+    std::size_t m_inbound_port{0};
+
 public:
     bool send_queue_full() {
         return m_send_queue.unsafe_size() > 1000;
@@ -215,7 +223,7 @@ private:
 
 public:
     /// main function from client
-    bool init();
+    bool init(std::size_t server_inbound_port);
 
     cli_user_conn_t * connect(std::string const & server_addr, uint32_t server_port);
 

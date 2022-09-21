@@ -18,6 +18,7 @@
 #define SEND_RECV_BUFF_SIZE 32 * 1024  // 1MB send&&recv buffer
 
 #include "assert.h"
+#include "xbasic/xbyte_buffer.h"
 #include "xbasic/xmemory.hpp"
 
 #include <errno.h>
@@ -36,6 +37,22 @@ static int get_last_sys_errno() {
 }
 static void set_last_sys_errno(int err) {
     errno = err;
+}
+
+const static std::string PINGPACKETVERSION = "V1";
+
+static top::xbytes_t xquic_client_generate_ping_packet_data(std::size_t server_inbound_port) {
+    return top::to_bytes(std::string{PINGPACKETVERSION + std::to_string(server_inbound_port)});
+}
+
+static bool xquic_server_handle_ping_packet_data(top::xbytes_t const & ping_packet, std::size_t & peer_inbound_port) {
+    std::string ping_str{ping_packet.begin(), ping_packet.end()};
+    if (ping_str.size() <= PINGPACKETVERSION.size() || ping_str.substr(0, PINGPACKETVERSION.size()) != PINGPACKETVERSION) {
+        // todo might add debug log.
+        return false;
+    }
+    peer_inbound_port = static_cast<std::size_t>(std::atoi(ping_str.substr(PINGPACKETVERSION.size()).c_str()));
+    return true;
 }
 
 static top::xbytes_t size_to_bytes(std::size_t len) {
@@ -337,8 +354,21 @@ int xquic_server_stream_read_notify(xqc_stream_t * stream, void * user_data) {
             if (has_recv_block_len && result.size() >= block_len) {
                 no_more_cb = false;
                 // DEBUG_INFO_MSG("recv message");
-                top::xbytes_t cb_buffer = top::xbytes_t{result.begin(), result.begin() + block_len};
-                srv_user_stream->srv_user_conn->server->m_cb(cb_buffer);
+                top::xbytes_t data_buffer = top::xbytes_t{result.begin(), result.begin() + block_len};
+                if (srv_user_stream->has_recv_ping_packet == false) {
+                    // handle ping packet
+                    bool res = xquic_server_handle_ping_packet_data(data_buffer, srv_user_stream->peer_inbound_port);
+                    if (!res) {
+                        // xwarn("");
+                        // todo need to close connection
+                    }
+                    srv_user_stream->peer_inbound_addr = std::string(inet_ntoa(((struct sockaddr_in *)&srv_user_stream->srv_user_conn->peer_addr)->sin_addr));
+                    printf("get ping packet: ip: %s, port: %zu\n", srv_user_stream->peer_inbound_addr.c_str(), srv_user_stream->peer_inbound_port);
+                    srv_user_stream->has_recv_ping_packet = true;
+                } else {
+                    // handle module data
+                    srv_user_stream->srv_user_conn->server->m_cb(data_buffer, srv_user_stream->peer_inbound_addr, srv_user_stream->peer_inbound_port);
+                }
                 result.erase(result.begin(), result.begin() + block_len);
                 has_recv_block_len = false;
                 block_len = 0;
@@ -597,7 +627,7 @@ void xqc_server_socket_write_handler(xquic_server_t * server) {
 void xqc_server_socket_read_handler(xquic_server_t * server) {
     // DEBUG_INFO;
     ssize_t recv_sum = 0;
-    struct sockaddr_in6 peer_addr;
+    struct sockaddr_in peer_addr;
     socklen_t peer_addrlen = sizeof(struct sockaddr_in);
     ssize_t recv_size = 0;
     unsigned char packet_buf[XQC_PACKET_TMP_BUF_LEN];
@@ -629,7 +659,7 @@ void xqc_server_socket_read_handler(xquic_server_t * server) {
                                                      server);
 
         if (result != XQC_OK) {
-            printf("xqc_server_read_handler: packet process err\n");
+            printf("xqc_server_read_handler: packet process err %d \n", result);
             return;
         }
     } while (recv_size > 0);
@@ -880,7 +910,7 @@ cli_user_conn_t * xquic_client_user_conn_create(const char * server_addr, int se
     return cli_user_conn;
 }
 
-bool xquic_server_t::init(xquic_message_ready_callback cb, unsigned int const server_port) {
+bool xquic_server_t::init(xquic_message_ready_callback cb, std::size_t server_port) {
     m_cb = cb;
 
     xinfo("xquic_server init at %u", server_port);
@@ -1006,7 +1036,8 @@ bool xquic_server_t::init(xquic_message_ready_callback cb, unsigned int const se
     return true;
 }
 
-bool xquic_client_t::init() {
+bool xquic_client_t::init(std::size_t server_inbound_port) {
+    m_inbound_port = server_inbound_port;
     xqc_engine_ssl_config_t engine_ssl_config;
     memset(&engine_ssl_config, 0, sizeof(engine_ssl_config));
     /* client does not need to fill in private_key_file & cert_file */
@@ -1272,6 +1303,12 @@ void xquic_client_t::quic_engine_do_send() {
                     continue;
                 }
                 cli_user_conn->cli_user_stream = cli_user_stream;
+
+                // generate ping packet to send to server
+                auto ping_bytes = xquic_client_generate_ping_packet_data(m_inbound_port);
+                auto ping_bytes_len_bytes = size_to_bytes(ping_bytes.size());
+                cli_user_stream->send_queue.insert(cli_user_stream->send_queue.end(), ping_bytes_len_bytes.begin(), ping_bytes_len_bytes.end());
+                cli_user_stream->send_queue.insert(cli_user_stream->send_queue.end(), ping_bytes.begin(), ping_bytes.end());
 
                 // stream timeout callback
                 cli_user_stream->stream_timeout_event = event_new(cli_user_conn->client->eb, -1, 0, xquic_client_stream_timeout_callback, cli_user_stream);

@@ -13,7 +13,7 @@
 #    include <iostream>
 #endif
 
-xquic_node_t::xquic_node_t(unsigned int const _server_port) : m_server_port{_server_port} {
+xquic_node_t::xquic_node_t(std::size_t _server_port) : m_server_port{_server_port} {
 }
 
 void xquic_node_t::start() {
@@ -27,7 +27,7 @@ void xquic_node_t::start() {
         m_server.init(std::bind(&xquic_node_t::on_quic_message_ready, shared_from_this(), std::placeholders::_1), m_server_port);
     });
 
-    top::threading::xbackend_thread::spawn([this, self] { m_client.init(); });
+    top::threading::xbackend_thread::spawn([this, self] { m_client.init(m_server_port); });
 
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
