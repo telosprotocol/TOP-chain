@@ -218,6 +218,15 @@ void xsync_gossip_t::handle_message(const std::vector<xgossip_chain_info_ptr_t> 
         uint64_t local_height = m_sync_store->get_latest_end_block_height(info->owner, enum_chain_sync_policy_full);
         update_behind(info->owner, local_height, info->max_height);
 
+        auto all_chain = m_role_chains_mgr->get_all_chains();
+        auto _chain = all_chain.find(info->owner);
+        if (_chain != all_chain.end()) {
+            if (all_chain[info->owner].sync_policy != enum_chain_sync_policy_full) {
+                xsync_dbg("xsync_gossip  %s is sync(%d).", info->owner.c_str(), all_chain[info->owner].sync_policy);
+                continue;
+            }
+        }
+
         if (info->max_height > local_height) {
 
             if (behind_block_count <= max_peer_behind_count) {
