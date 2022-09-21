@@ -40,12 +40,11 @@ class UdpTransport
 public:
     UdpTransport();
     virtual ~UdpTransport() override;
-    virtual bool Init(std::string const & local_ip, uint16_t local_port, uint16_t xquic_port, MultiThreadHandler * message_handler) override;
+    virtual bool Init(std::string const & local_ip, uint16_t local_port, MultiThreadHandler * message_handler) override;
     virtual int Start() override;
     virtual void Stop() override;
     virtual int SendDataWithProp(std::string const & data, const std::string & peer_ip, uint16_t peer_port, UdpPropertyPtr & udp_property, uint16_t priority_flag = 0) override;
 
-    virtual int ReStartServer() override;
     virtual int32_t get_handle() override {
         return static_cast<int32_t>(udp_handle_);
     }
@@ -55,10 +54,6 @@ public:
     }
     virtual uint16_t local_port() override {
         return local_port_;
-    }
-
-    virtual uint16_t xquic_port() override {
-        return xquic_port_;
     }
 
     virtual void register_on_receive_callback(on_receive_callback_t callback) override;
@@ -79,7 +74,6 @@ private:
     std::shared_ptr<quic::xquic_node_t> quic_node_{nullptr};
     std::string local_ip_;
     uint16_t local_port_;
-    uint16_t xquic_port_;
     bool socket_connected_;
     xfd_handle_t udp_handle_;
     MultiThreadHandler * message_handler_;

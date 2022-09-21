@@ -124,11 +124,9 @@ bool MultilayerNetwork::Init(const base::Config & config) {
         return false;
     }
     uint16_t local_port = 0;
-    uint16_t xquic_port = 0;
     config.Get("node", "local_port", local_port);
-    config.Get("node", "xquic_port", xquic_port);
 
-    if (!core_transport_->Init(local_ip, local_port, xquic_port, multi_message_handler_.get())) {
+    if (!core_transport_->Init(local_ip, local_port, multi_message_handler_.get())) {
         xerror("MultilayerNetwork::Init udptransport init failed");
     }
 
@@ -226,11 +224,6 @@ int MultilayerNetwork::HandleParamsAndConfig(const top::data::xplatform_params &
 
     if (!edge_config.Set("node", "local_port", platform_param.local_port)) {
         xerror("set config failed [node][local_port][%d]", platform_param.local_port);
-        return 1;
-    }
-
-    if (!edge_config.Set("node", "xquic_port", platform_param.xquic_port)) {
-        xerror("set config failed [node][xquic_port][%d]", platform_param.xquic_port);
         return 1;
     }
 

@@ -17,6 +17,7 @@
 #include "xpbase/base/top_utils.h"
 #include "xtransport/transport.h"
 #include "xtransport/udp_transport/socket_intf.h"
+#include "xtransport/xquic_node/xquic_node.h"
 
 #include <assert.h>
 #include <stdint.h>
@@ -71,12 +72,7 @@ private:
 
 class xp2pudp_t : public base::xudp_t {
 public:
-    xp2pudp_t(xcontext_t & _context, xendpoint_t * parent, const int32_t target_thread_id, int64_t virtual_handle, xsocket_property & property, XudpSocket * listen_server)
-      : xudp_t(_context, parent, target_thread_id, virtual_handle, property) {
-        m_link_refcount = 0;
-        m_status = top::transport::enum_xudp_status::enum_xudp_init;
-        listen_server_ = listen_server;
-    }
+    xp2pudp_t(xcontext_t & _context, xendpoint_t * parent, const int32_t target_thread_id, int64_t virtual_handle, xsocket_property & property, XudpSocket * listen_server);
 
 protected:
     virtual ~xp2pudp_t() {
@@ -126,13 +122,15 @@ protected:
 private:
     enum_xudp_status m_status;  // 0 init, 1 connecting, 2 connected, 3 closed
     XudpSocket * listen_server_;
+
+    quic::xquic_node_t * quic_node_;
 };
 
 class XudpSocket
   : public base::xudplisten_t
   , public SocketIntf {
 public:
-    XudpSocket(base::xcontext_t & context, int32_t target_thread_id, xfd_handle_t native_handle, MultiThreadHandler * message_handler);
+    XudpSocket(base::xcontext_t & context, int32_t target_thread_id, xfd_handle_t native_handle, MultiThreadHandler * message_handler, quic::xquic_node_t * quic_node);
     virtual ~XudpSocket() override;
     void Stop() override;
     int SendData(base::xpacket_t & packet) override;
@@ -236,6 +234,7 @@ private:
 
 public:
     MultiThreadHandler * multi_thread_message_handler_;
+    quic::xquic_node_t * quic_node_;
     std::function<void(const std::string & ip, const uint16_t port)> m_offline_cb;
     std::function<int32_t(std::string const & node_addr, std::string const & node_sign)> m_register_node_callback;
 };
