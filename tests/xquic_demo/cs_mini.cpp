@@ -138,6 +138,9 @@ int xquic_server_accept(xqc_engine_t * engine, xqc_connection_t * conn, const xq
 
     memcpy(&srv_user_conn->cid, cid, sizeof(*cid));
 
+    printf("[server]====>DCID:%s\n", xqc_dcid_str_by_scid(server->engine, &srv_user_conn->cid));
+    printf("[server]====>SCID:%s\n", xqc_scid_str(&srv_user_conn->cid));
+
     return 0;
 }
 ssize_t xquic_server_write_socket(const unsigned char * buf, size_t size, const struct sockaddr * peer_addr, socklen_t peer_addrlen, void * user_data) {
