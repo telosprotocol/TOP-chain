@@ -69,6 +69,7 @@ xp2pudp_t::xp2pudp_t(xcontext_t & _context, xendpoint_t * parent, const int32_t 
     m_link_refcount = 0;
     m_status = top::transport::enum_xudp_status::enum_xudp_init;
     listen_server_ = listen_server;
+    quic_node_ = listen_server->quic_node_;
 }
 
 int xp2pudp_t::add_linkrefcount() {
@@ -174,6 +175,10 @@ int32_t xp2pudp_t::connect_xudp(const std::string & target_ip, const uint16_t ta
 }
 int xp2pudp_t::send(xpacket_t & packet) {
     XMETRICS_GAUGE(metrics::message_transport_send, 1);
+    if (packet.get_size() > 650) {
+        const std::string src_data((const char *)packet.get_body().data() + enum_xbase_header_len, packet.get_body().size() - enum_xbase_header_len);
+        return quic_node_->send_data(src_data, packet.get_to_ip_addr(), packet.get_to_ip_port() - 2000);  // TODO: how to map port... debug -2000 release -1?
+    }
     if (packet.get_size() > 512) {
         packet.set_process_flag(enum_xpacket_process_flag_compress);  // ask compres
     }
@@ -255,8 +260,8 @@ int32_t xp2pudp_t::recv(uint64_t from_xip_addr_low,
     return xsocket_t::recv(from_xip_addr_low, from_xip_addr_high, to_xip_addr_low, to_xip_addr_high, packet, cur_thread_id, timenow_ms, from_child_end);
 }
 
-XudpSocket::XudpSocket(base::xcontext_t & _context, int32_t target_thread_id, xfd_handle_t native_handle, MultiThreadHandler * message_handler)
-  : xudplisten_t(_context, NULL, target_thread_id, native_handle), multi_thread_message_handler_(message_handler) {
+XudpSocket::XudpSocket(base::xcontext_t & _context, int32_t target_thread_id, xfd_handle_t native_handle, MultiThreadHandler * message_handler, quic::xquic_node_t * quic_node)
+  : xudplisten_t(_context, NULL, target_thread_id, native_handle), multi_thread_message_handler_(message_handler), quic_node_{quic_node} {
     // note: target_thread_id is used for io only(read and write packet from/to system),but m_xudpsocket_mgr_thread_id used to manage xudp_t objects(include
     // keepalive/timer,lifemanage)
     m_xudpsocket_mgr_thread_id = 0;

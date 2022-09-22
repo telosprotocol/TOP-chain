@@ -68,6 +68,7 @@ bool UdpTransport::Init(std::string const & local_ip, uint16_t local_port, Multi
         TOP_ERROR("create xio thread failed!");
         return false;
     }
+    quic_node_ = std::make_shared<quic::xquic_node_t>(local_port - 2000);  // todo make this debug/release static config.
 
     udp_handle_ = base::xsocket_utl::udp_listen("0.0.0.0", local_port);
     if (udp_handle_ <= 0) {
@@ -85,7 +86,7 @@ bool UdpTransport::Init(std::string const & local_ip, uint16_t local_port, Multi
 
     message_handler_ = message_handler;
 
-    udp_socket_ = new XudpSocket(base::xcontext_t::instance(), io_thread_->get_thread_id(), udp_handle_, message_handler_);
+    udp_socket_ = new XudpSocket(base::xcontext_t::instance(), io_thread_->get_thread_id(), udp_handle_, message_handler_, quic_node_.get());
 
     local_ip_ = local_ip;
     local_port_ = udp_socket_->GetLocalPort();
@@ -97,6 +98,8 @@ int UdpTransport::Start() {
     TOP_INFO("UdpTransport::Start ...");
 
     udp_socket_->StartRead();
+
+    quic_node_->start();
 
     TOP_INFO("UdpTransport::Start() success[%s:%d]", this->local_ip().c_str(), this->local_port());
     socket_connected_ = true;
@@ -148,11 +151,17 @@ int UdpTransport::get_socket_status() {
 void UdpTransport::register_on_receive_callback(on_receive_callback_t callback) {
     assert(message_handler_);
     message_handler_->register_on_dispatch_callback(callback);
+
+    assert(quic_node_);
+    quic_node_->register_on_receive_callback(callback);
 }
 
 void UdpTransport::unregister_on_receive_callback() {
     assert(message_handler_);
     message_handler_->unregister_on_dispatch_callback();
+
+    assert(quic_node_);
+    quic_node_->unregister_on_receive_callback();
 }
 
 int UdpTransport::SendPing(const xbyte_buffer_t & data, const std::string & peer_ip, uint16_t peer_port) {

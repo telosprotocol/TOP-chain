@@ -8,6 +8,8 @@ add_library(xtransport ${xtransport_src} ${proto_src})
 # MUST use PRIVATE include
 target_include_directories(xtransport PRIVATE ${PROJECT_SOURCE_DIR}/src/xtopcom/xdepends/xquic/include)
 
+set(SSL_LIB_PATH ${CMAKE_SOURCE_DIR}/src/xtopcom/xdepends/boringssl_static_libs/libbrssl.a;${CMAKE_SOURCE_DIR}/src/xtopcom/xdepends/boringssl_static_libs/libbrcrypto.a)
+target_link_libraries(xtransport PRIVATE xquic-static ${SSL_LIB_PATH})
 target_link_libraries(xtransport PUBLIC xpbase xutility xxbase protobuf jsoncpp xcrypto -levent -lm -pthread)
 
 if (BUILD_METRICS)

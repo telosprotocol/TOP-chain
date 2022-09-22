@@ -16,6 +16,7 @@
 #include "xbasic/xbyte_buffer.h"
 #include "xpbase/base/top_utils.h"
 #include "xtransport/transport.h"
+#include "xtransport/xquic_node/xquic_node.h"
 
 #include <assert.h>
 #include <stdint.h>
@@ -70,6 +71,7 @@ private:
 private:
     base::xiothread_t * io_thread_;
     SocketIntf * udp_socket_;
+    std::shared_ptr<quic::xquic_node_t> quic_node_{nullptr};
     std::string local_ip_;
     uint16_t local_port_;
     bool socket_connected_;
