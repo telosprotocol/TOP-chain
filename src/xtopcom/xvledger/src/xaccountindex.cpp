@@ -171,8 +171,8 @@ bool xaccount_index_t::is_match_unit(base::xvblock_t* unit) const {
 
 std::string xaccount_index_t::dump() const {
     char local_param_buf[128];
-    xprintf(local_param_buf,sizeof(local_param_buf),"{height=%" PRIu64 ",viewid=%" PRIu64 ",flag=0x%x,nonce=%" PRIu64 ",hash:%s}",
-        m_latest_unit_height, m_latest_unit_viewid, m_account_flag, m_latest_tx_nonce, base::xstring_utl::to_hex(m_unit_hash).c_str());
+    xprintf(local_param_buf,sizeof(local_param_buf),"{height=%" PRIu64 ",viewid=%" PRIu64 ",flag=0x%x,nonce=%" PRIu64 ",hash:%s,state:%s}",
+        m_latest_unit_height, m_latest_unit_viewid, m_account_flag, m_latest_tx_nonce, base::xstring_utl::to_hex(m_unit_hash).c_str(), base::xstring_utl::to_hex(m_state_hash).c_str());
     return std::string(local_param_buf);
 }
 

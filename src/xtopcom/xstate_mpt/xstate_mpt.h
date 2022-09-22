@@ -58,7 +58,7 @@ public:
 
     /// @brief Get original root hash.
     /// @return Original root hash.
-    xhash256_t get_original_root_hash() const;
+    const xhash256_t & get_original_root_hash() const;
 
     /// @brief Return db object to do actions relay on db.
     /// @return DB object.

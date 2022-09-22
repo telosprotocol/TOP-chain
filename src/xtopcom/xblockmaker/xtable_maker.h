@@ -47,12 +47,37 @@ public:
     lack_account_info_t(const std::string & addr, const base::xaccount_index_t & account_index) : m_addr(addr), m_account_index(account_index) {}
     const std::string & get_addr() const {return m_addr;}
     const base::xaccount_index_t & get_account_index() const {return m_account_index;}
-   //  const uint64_t get_start_height() const {return m_start_height;}
-   //  void set_start_height(uint64_t height) {m_start_height = height;}
 private:
     std::string m_addr;
     base::xaccount_index_t m_account_index;
-   //  uint64_t m_start_height;
+};
+
+typedef bool (*account_index_converter)(const base::xvaccount_t & account, const base::xaccount_index_t & old_account_index, base::xaccount_index_t & new_account_index);
+
+class xaccount_index_upgrade_t {
+public:
+    void init(uint32_t accounts_num, uint64_t committed_height);
+    void add_old_index(const std::string & addr, const base::xaccount_index_t & account_index);
+    bool upgrade(account_index_converter convert_func, uint32_t max_convert_num);
+    bool get_new_indexes(std::map<std::string, base::xaccount_index_t> & new_indexes, uint64_t committed_height);
+    uint64_t get_fork_height() const;
+    void clear();
+
+private:
+    std::map<std::string, base::xaccount_index_t> m_new_indexes;
+    std::vector<lack_account_info_t> m_lack_accounts;
+    uint32_t m_lack_accounts_pos{0};
+    uint32_t m_accounts_num{0};
+    uint64_t m_fork_height{0};
+};
+
+class xaccount_index_upgrade_tool_t {
+public:
+    static bool convert_to_new_account_index(const base::xvaccount_t & account, const base::xaccount_index_t & old_account_index, base::xaccount_index_t & new_account_index);
+    static bool update_new_indexes_by_block(std::map<std::string, base::xaccount_index_t> & new_indexes, const xblock_ptr_t & block);
+private:
+    static base::xvblockstore_t * get_xblockstore();
+    static base::xvblkstatestore_t* get_blkstate_store();
 };
 
 class xtable_maker_t : public xblock_maker_t {
@@ -93,10 +118,7 @@ private:
                                                               const data::xblock_consensus_para_t & cs_para,
                                                               const statectx::xstatectx_ptr_t & table_state_ctx,
                                                               const std::vector<std::pair<xblock_ptr_t, base::xaccount_index_t>> & batch_unit_and_index);
-    bool update_new_account_indexes();
-    void init_new_account_indexes(const data::xtablestate_ptr_t & commit_table_state);
     bool get_new_account_indexes(const data::xblock_consensus_para_t & cs_para, std::map<std::string, base::xaccount_index_t> & new_indexes);
-    bool update_new_indexes_by_block(std::map<std::string, base::xaccount_index_t> & new_indexes, const xblock_ptr_t & block);
 
     xblock_resource_plugin_face_ptr_t           m_resource_plugin{nullptr};
     static constexpr uint32_t                   m_empty_block_max_num{2};
@@ -106,11 +128,7 @@ private:
     xblock_builder_para_ptr_t                   m_default_builder_para;
     mutable std::mutex                          m_lock;
     mutable std::mutex                          m_index_upgrade_lock;
-    std::map<std::string, base::xaccount_index_t> m_new_indexes;
-    std::vector<lack_account_info_t>            m_lack_accounts;
-    uint32_t                                    m_lack_accounts_pos{0};
-    uint32_t                                    m_accounts_num{0};
-    uint64_t                                    m_fork_height{0};
+    xaccount_index_upgrade_t                    m_account_index_upgrade;
     bool                                        m_account_index_upgrade_finished{false};
 };
 

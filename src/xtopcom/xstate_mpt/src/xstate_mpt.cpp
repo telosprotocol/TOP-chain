@@ -114,7 +114,7 @@ xhash256_t xtop_state_mpt::get_root_hash(std::error_code & ec) {
     return m_trie->Hash();
 }
 
-xhash256_t xtop_state_mpt::get_original_root_hash() const {
+const xhash256_t & xtop_state_mpt::get_original_root_hash() const {
     return m_original_root;
 }
 
