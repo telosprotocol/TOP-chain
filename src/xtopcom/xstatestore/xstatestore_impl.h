@@ -52,6 +52,8 @@ class xstatestore_impl_t : public xstatestore_face_t {
                                               data::xtablestate_ptr_t & tablestate_ptr) const override;
     virtual void update_node_type(common::xnode_type_t combined_node_type) override;
     virtual void on_table_block_committed(base::xvblock_t* block) const override;
+    virtual uint64_t get_latest_executed_block_height(common::xaccount_address_t const & table_address) const override;
+    virtual bool set_state_sync_info(common::xaccount_address_t const & table_address, const xstate_sync_info_t & state_sync_info) override;
 
  private:
     static base::xauto_ptr<base::xvblock_t> get_latest_connectted_state_changed_block(base::xvblockstore_t* blockstore, const base::xvaccount_t & account);
@@ -62,17 +64,22 @@ class xstatestore_impl_t : public xstatestore_face_t {
     mbus::xmessage_bus_t *       get_mbus() const;
     xstatestore_table_ptr_t      get_table_statestore_from_unit_addr(common::xaccount_address_t const & account_address) const;
     xstatestore_table_ptr_t      get_table_statestore_from_table_addr(std::string const & table_addr) const;
-    void                        on_block_to_db_event(mbus::xevent_ptr_t e);
-    common::xnode_type_t        get_node_type() const;
-    bool                        is_archive_node() const;
+    void                         on_block_to_db_event(mbus::xevent_ptr_t e);
+    void                         on_state_sync_event(mbus::xevent_ptr_t e);
+    void                         on_state_sync_result(mbus::xevent_state_sync_ptr_t state_sync_event);
+    common::xnode_type_t         get_node_type() const;
+    bool                         is_archive_node() const;
 
 private:
     std::map<std::string, xstatestore_table_ptr_t> m_table_statestore;
     xstatestore_base_t  m_store_base;
     xstatestore_timer_t * m_timer;
-    uint32_t m_bus_listen_id;
+    uint32_t m_store_block_listen_id;
+    uint32_t m_state_sync_listen_id;
     common::xnode_type_t m_combined_node_type{common::xnode_type_t::invalid};
     bool m_started{false};
+    mutable std::mutex m_state_sync_infos_lock;
+    std::map<std::string, xstate_sync_info_t> m_state_sync_infos;
 };
 
 class xstatestore_timer_t : public top::base::xxtimer_t {

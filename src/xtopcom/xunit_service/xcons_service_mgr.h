@@ -8,7 +8,6 @@
 #include "xmbus/xmessage_bus.h"
 #include "xunit_service/xcons_face.h"
 #include "xunit_service/xcons_utl.h"
-#include "xstate_sync/xstate_downloader.h"
 
 #include <map>
 #include <mutex>
@@ -44,8 +43,7 @@ public:
     xcons_service_mgr(observer_ptr<mbus::xmessage_bus_face_t> const & mb,
                       const std::shared_ptr<xnetwork_proxy_face> & network_proxy,
                       const xcons_dispatcher_builder_ptr & dispatcher_builder,
-                      const std::shared_ptr<xcons_service_para_face> & para,
-                      const std::shared_ptr<state_sync::xstate_downloader_t> & downloader);
+                      const std::shared_ptr<xcons_service_para_face> & para);
     virtual ~xcons_service_mgr();
 
 public:
@@ -73,7 +71,6 @@ protected:
     std::map<xvip2_t, xcons_services, xvip2_compare> m_cons_map;
     std::shared_ptr<xnetwork_proxy_face> m_network_proxy;
     std::shared_ptr<xcons_service_para_face> m_para;
-    std::shared_ptr<state_sync::xstate_downloader_t> m_downloader;
     std::mutex m_mutex;
 };
 
