@@ -39,7 +39,8 @@ class UdpTransport
 public:
     UdpTransport();
     virtual ~UdpTransport() override;
-    virtual int Start(const std::string & local_ip, uint16_t local_port, MultiThreadHandler * message_handler) override;
+    virtual bool Init(std::string const & local_ip, uint16_t local_port, MultiThreadHandler * message_handler) override;
+    virtual int Start() override;
     virtual void Stop() override;
     virtual int SendDataWithProp(std::string const & data, const std::string & peer_ip, uint16_t peer_port, UdpPropertyPtr & udp_property, uint16_t priority_flag = 0) override;
 

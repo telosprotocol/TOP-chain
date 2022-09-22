@@ -64,6 +64,13 @@ void UdpProperty::SetXudp(xp2pudp_t * xudp_in) {
     }
 }
 
+xp2pudp_t::xp2pudp_t(xcontext_t & _context, xendpoint_t * parent, const int32_t target_thread_id, int64_t virtual_handle, xsocket_property & property, XudpSocket * listen_server)
+  : xudp_t(_context, parent, target_thread_id, virtual_handle, property) {
+    m_link_refcount = 0;
+    m_status = top::transport::enum_xudp_status::enum_xudp_init;
+    listen_server_ = listen_server;
+}
+
 int xp2pudp_t::add_linkrefcount() {
     TOP_DBG_INFO("add_linkrefcount:xudp:%p, m_link_refcount:%d, get_refcount:%d", this, m_link_refcount.load(), get_refcount());
     return ++m_link_refcount;
@@ -311,19 +318,6 @@ xslsocket_t * XudpSocket::on_xslsocket_accept(xfd_handle_t handle, xsocket_prope
     }
 #endif
     return xudplisten_t::on_xslsocket_accept(handle, property, cur_thread_id, timenow_ms);
-}
-
-void XudpSocket::register_on_receive_callback(on_receive_callback_t callback) {
-    std::unique_lock<std::mutex> lock(callback_mutex_);
-    assert(callback_ == nullptr);
-    TOP_DBG_INFO("register callback for XudpSocket");
-    callback_ = callback;
-}
-
-void XudpSocket::unregister_on_receive_callback() {
-    std::unique_lock<std::mutex> lock(callback_mutex_);
-    callback_ = nullptr;
-    TOP_DBG_INFO("unregister callback for XudpSocket");
 }
 
 void XudpSocket::Stop() {

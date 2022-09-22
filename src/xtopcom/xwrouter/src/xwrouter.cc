@@ -40,7 +40,7 @@ Wrouter * Wrouter::Instance() {
     return &ins;
 }
 
-void Wrouter::Init(base::xcontext_t & context, const uint32_t thread_id, transport::TransportPtr transport_ptr) {
+void Wrouter::Init(transport::TransportPtr transport_ptr) {
     assert(transport_ptr);
     auto bloom_gossip_ptr = std::make_shared<GossipBloomfilter>(transport_ptr);
     auto bloom_layer_gossip_ptr = nullptr;

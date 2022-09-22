@@ -30,7 +30,8 @@ class MultiThreadHandler;
 
 class Transport {
 public:
-    virtual int Start(const std::string & local_ip, uint16_t local_port, MultiThreadHandler * message_handler) = 0;
+    virtual bool Init(std::string const & local_ip, uint16_t local_port, MultiThreadHandler * message_handler) = 0;
+    virtual int Start() = 0;
     virtual void Stop() = 0;
     virtual int SendDataWithProp(std::string const & data, const std::string & peer_ip, uint16_t peer_port, UdpPropertyPtr & udp_property, uint16_t priority_flag = 0) = 0;
 

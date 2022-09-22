@@ -117,9 +117,6 @@ bool MultilayerNetwork::Init(const base::Config & config) {
         return false;
     }
     multi_message_handler_->Init();
-    RegisterCallbackForMultiThreadHandler(multi_message_handler_);
-    // attention: InitWrouter must put befor core_transport->Start
-    InitWrouter(core_transport_, multi_message_handler_);
 
     std::string local_ip;
     if (!config.Get("node", "local_ip", local_ip)) {
@@ -128,7 +125,16 @@ bool MultilayerNetwork::Init(const base::Config & config) {
     }
     uint16_t local_port = 0;
     config.Get("node", "local_port", local_port);
-    if (core_transport_->Start(local_ip, local_port, multi_message_handler_.get()) != top::kadmlia::kKadSuccess) {
+    if (!core_transport_->Init(local_ip, local_port, multi_message_handler_.get())) {
+        xerror("MultilayerNetwork::Init udptransport init failed");
+        return false;
+    }
+
+    core_transport_->register_on_receive_callback(std::bind(&wrouter::Wrouter::recv, wrouter::Wrouter::Instance(), std::placeholders::_1, std::placeholders::_2));
+    // attention: Wrouter::Instance()->Init must put befor core_transport->Start
+    wrouter::Wrouter::Instance()->Init(core_transport_);
+
+    if (core_transport_->Start() != top::kadmlia::kKadSuccess) {
         xerror("start local udp transport failed!");
         return false;
     }
@@ -296,17 +302,6 @@ int MultilayerNetwork::HandleParamsAndConfig(const top::data::xplatform_params &
     return 0;
 }
 
-void MultilayerNetwork::InitWrouter(top::transport::TransportPtr transport, std::shared_ptr<top::transport::MultiThreadHandler> message_handler) {
-    wrouter::Wrouter::Instance()->Init(base::xcontext_t::instance(),
-                                       // io_thread->get_thread_id(),
-                                       0,
-                                       transport);
-}
-
-void MultilayerNetwork::RegisterCallbackForMultiThreadHandler(std::shared_ptr<top::transport::MultiThreadHandler> multi_thread_message_handler) {
-    multi_thread_message_handler->register_on_dispatch_callback(std::bind(&wrouter::Wrouter::recv, wrouter::Wrouter::Instance(), std::placeholders::_1, std::placeholders::_2));
-}
-
 int MultilayerNetwork::CreateRootManager(std::shared_ptr<transport::Transport> transport,
                                          const top::base::Config & config,
                                          const std::set<std::pair<std::string, uint16_t>> & public_endpoints_config) {
@@ -326,7 +321,7 @@ int MultilayerNetwork::CreateRootManager(std::shared_ptr<transport::Transport> t
     // get kroot id
     assert(!global_node_id.empty());
     base::KadmliaKeyPtr kad_key_ptr = base::GetRootKadmliaKey(global_node_id);
-    xinfo("get root kad key: %s",kad_key_ptr->Get().c_str());
+    xinfo("get root kad key: %s", kad_key_ptr->Get().c_str());
 
     if (wrouter::MultiRouting::Instance()->CreateRootRouting(transport, new_config, kad_key_ptr) != top::kadmlia::kKadSuccess) {
         // if (root_manager_ptr->InitRootRoutingTable(transport, new_config, kad_key_ptr) != top::kadmlia::kKadSuccess) {

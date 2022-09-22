@@ -71,12 +71,7 @@ private:
 
 class xp2pudp_t : public base::xudp_t {
 public:
-    xp2pudp_t(xcontext_t & _context, xendpoint_t * parent, const int32_t target_thread_id, int64_t virtual_handle, xsocket_property & property, XudpSocket * listen_server)
-      : xudp_t(_context, parent, target_thread_id, virtual_handle, property) {
-        m_link_refcount = 0;
-        m_status = top::transport::enum_xudp_status::enum_xudp_init;
-        listen_server_ = listen_server;
-    }
+    xp2pudp_t(xcontext_t & _context, xendpoint_t * parent, const int32_t target_thread_id, int64_t virtual_handle, xsocket_property & property, XudpSocket * listen_server);
 
 protected:
     virtual ~xp2pudp_t() {
@@ -141,9 +136,6 @@ public:
     int SendToLocal(base::xpacket_t & packet) override;
     void AddXip2Header(base::xpacket_t & packet, uint16_t priority_flag = 0) override;
     bool GetSocketStatus() override;
-
-    void register_on_receive_callback(on_receive_callback_t callback) override;
-    void unregister_on_receive_callback() override;
 
     int AddXudp(const std::string & ip_port, xp2pudp_t * xudp);
     bool CloseXudp(xp2pudp_t * xudp);
@@ -221,8 +213,6 @@ private:
 
 private:
     int32_t m_xudpsocket_mgr_thread_id;  // dedicated thread to manage xudpt socket (include keepalive,lifemanagent)
-    on_receive_callback_t callback_;
-    std::mutex callback_mutex_;
     std::promise<void> promise_;
     std::shared_future<void> future_{promise_.get_future()};
     std::string local_ip_;

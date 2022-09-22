@@ -5,10 +5,11 @@ aux_source_directory(./src xtransport_src)
 aux_source_directory(./proto proto_src)
 add_library(xtransport ${xtransport_src} ${proto_src})
 
-#add_dependencies(xtransport xpbase xutility xxbase)
-target_link_libraries(xtransport xpbase xutility xxbase protobuf jsoncpp xcrypto)
+# MUST use PRIVATE include
+target_include_directories(xtransport PRIVATE ${PROJECT_SOURCE_DIR}/src/xtopcom/xdepends/xquic/include)
+
+target_link_libraries(xtransport PUBLIC xpbase xutility xxbase protobuf jsoncpp xcrypto -levent -lm -pthread)
 
 if (BUILD_METRICS)
-    #add_dependencies(xtransport xmetrics)
-    target_link_libraries(xtransport xmetrics)
+    target_link_libraries(xtransport PUBLIC xmetrics)
 endif()

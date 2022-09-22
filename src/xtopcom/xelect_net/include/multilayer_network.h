@@ -56,8 +56,6 @@ protected:
     int ResetRootRouting(std::shared_ptr<transport::Transport> transport, const base::Config & config);
 
 private:
-    void InitWrouter(top::transport::TransportPtr transport, std::shared_ptr<top::transport::MultiThreadHandler> message_handler);
-    void RegisterCallbackForMultiThreadHandler(std::shared_ptr<top::transport::MultiThreadHandler> multi_thread_message_handler);
     int CreateRootManager(std::shared_ptr<transport::Transport> transport,
                           const top::base::Config & config,
                           const std::set<std::pair<std::string, uint16_t>> & public_endpoints_config);
