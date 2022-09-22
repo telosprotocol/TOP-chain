@@ -42,7 +42,7 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     add_compile_options(/utf-8) # input/output as utf-8
 endif()
 
-set(LINK_ARGS secp256k1 trezor-crypto ssl crypto cryptopp)
+set(LINK_ARGS secp256k1 trezor-crypto cryptopp)
 
 if(NOT MSVC)
     set(LINK_ARGS ${LINK_ARGS} pthread)
