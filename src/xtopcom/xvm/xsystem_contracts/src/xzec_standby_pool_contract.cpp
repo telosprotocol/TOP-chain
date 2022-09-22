@@ -67,7 +67,7 @@ void xtop_zec_standby_pool_contract::on_timer(common::xlogic_time_t const curren
 
     XCONTRACT_ENSURE(latest_height >= last_read_height, "xzec_standby_pool_contract_t::on_timer latest_height < last_read_height");
     if (latest_height == last_read_height) {
-        XMETRICS_PACKET_INFO(XZEC_STANDBY "update_status", "next_read_height", last_read_height, "current_time", current_time)
+        XMETRICS_PACKET_INFO(XZEC_STANDBY "update_status", "next_read_height", last_read_height, "current_time", current_time);
         STRING_SET(data::XPROPERTY_LAST_READ_REC_STANDBY_POOL_CONTRACT_LOGIC_TIME, std::to_string(current_time));
         return;
     }
@@ -92,7 +92,7 @@ void xtop_zec_standby_pool_contract::on_timer(common::xlogic_time_t const curren
     }
 
     if (update_rec_standby_pool_contract_read_status) {
-        XMETRICS_PACKET_INFO(XZEC_STANDBY "update_status", "next_read_height", next_read_height, "current_time", current_time)
+        XMETRICS_PACKET_INFO(XZEC_STANDBY "update_status", "next_read_height", next_read_height, "current_time", current_time);
         STRING_SET(data::XPROPERTY_LAST_READ_REC_STANDBY_POOL_CONTRACT_BLOCK_HEIGHT, std::to_string(next_read_height));
         STRING_SET(data::XPROPERTY_LAST_READ_REC_STANDBY_POOL_CONTRACT_LOGIC_TIME, std::to_string(current_time));
     }

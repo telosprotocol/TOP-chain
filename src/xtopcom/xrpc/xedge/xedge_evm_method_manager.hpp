@@ -252,9 +252,8 @@ void xedge_evm_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, 
 
     std::string tx_hash = data::uint_to_str(json_proc.m_tx_ptr->digest().data(), json_proc.m_tx_ptr->digest().size());
     xinfo_rpc("send v3 tx hash:%s", tx_hash.c_str());
-    XMETRICS_PACKET_INFO("rpc_tx_ip",
-                         "tx_hash", tx_hash,
-                         "client_ip", ip);
+
+    XMETRICS_PACKET_INFO("trace_edge", "tx_hash", tx_hash, "chain_id", common::network_id().value(), "from", tx->get_source_addr(), "to", tx->get_target_addr(), "from_ip", ip);
     const auto & from = tx->get_source_addr();
     json_proc.m_account_set.emplace(from);
     json_proc.m_response_json["result"] = tx_hash;
