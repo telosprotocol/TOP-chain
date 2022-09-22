@@ -556,7 +556,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(rpc_auditor_query_request);
         RETURN_METRICS_NAME(rpc_auditor_forward_request);
         RETURN_METRICS_NAME(rpc_validator_tx_request);
-        RETURN_METRICS_NAME(rpc_query_account_succ);        
+        RETURN_METRICS_NAME(rpc_query_account_succ);
         // contract
         RETURN_METRICS_NAME(contract_table_fullblock_event);
         RETURN_METRICS_NAME(contract_table_statistic_exec_fullblock);
