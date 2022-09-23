@@ -3,8 +3,10 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xvdbkey.h"
+#include "xvledger/xvdbkey.h"
+
 #include "xbase/xutl.h"
+#include "xbasic/src/xbyte_buffer.cpp"
 
 namespace top
 {
@@ -369,9 +371,20 @@ namespace top
             const std::string key_path = "r/" + account.get_storage_key()+ "/" + uint64_to_full_hex(target_height) + "/p";
             return key_path;
         }
+
         const std::string xvdbkey_t::create_prunable_mpt_key(const xvaccount_t & account, const std::string & key)
         {
-            const std::string key_path = "r/" + std::to_string(account.get_zone_index()) + "@" + std::to_string(account.get_ledger_id()) + "/" + key;
+            auto zone_bytes = to_bytes(account.get_zone_index());
+            auto ledger_bytes = to_bytes(account.get_ledger_id());
+            auto const key_path = std::string{"r/"} + std::string{zone_bytes.begin(), zone_bytes.end()} + std::string{ledger_bytes.begin(), ledger_bytes.end()}  + "/" + key;
+            return key_path;
+        }
+
+        const std::string xvdbkey_t::create_prunable_mpt_unit_key(const xvaccount_t & account, const std::string & key)
+        {
+            auto zone_bytes = to_bytes(account.get_zone_index());
+            auto ledger_bytes = to_bytes(account.get_ledger_id());
+            auto const key_path = std::string{"r/"} + std::string{zone_bytes.begin(), zone_bytes.end()} + std::string{ledger_bytes.begin(), ledger_bytes.end()}  + "/c" + key;
             return key_path;
         }
 

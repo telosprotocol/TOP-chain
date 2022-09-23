@@ -600,7 +600,8 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     xevent_major_type_role,
     xevent_major_type_blockfetcher,
     xevent_major_type_sync,
-    xevent_end=xevent_major_type_sync,
+    xevent_major_type_state_sync,
+    xevent_end=xevent_major_type_state_sync,
 
     // rpc
     rpc_edge_tx_request,

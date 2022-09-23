@@ -52,6 +52,8 @@ private:
         xbytes_t path;     // Merkle path leading to this node for prioritization
         xhash256_t hash;   // Hash of the node data content to retrieve
         xbytes_t data;     // Data content of the node, cached until all subtrees complete
+
+        xhash256_t unit_key;    // Unit key is different from data hash
         bool unit{false};  // Whether this is a unit entry
 
         std::vector<request *> parents;  // Parent state nodes referencing this entry (notify all upon completion)
@@ -61,7 +63,7 @@ private:
 
         request(xbytes_t const & _path, xhash256_t const & _hash, LeafCallback _callback) : path{_path}, hash{_hash}, callback{_callback} {
         }
-        request(xbytes_t const & _path, xhash256_t const & _hash, bool is_unit) : path{_path}, hash{_hash}, unit{is_unit} {
+        request(xbytes_t const & _path, xhash256_t const & _hash, xhash256_t const & key, bool is_unit) : path{_path}, hash{_hash}, unit_key(key), unit{is_unit} {
         }
     };
 
@@ -115,7 +117,7 @@ public:
     void AddSubTrie(xhash256_t const & root, xbytes_t const & path, xhash256_t const & parent, LeafCallback callback);
 
     // AddUnitTrie registers unit index.
-    void AddUnitEntry(xhash256_t const & hash, xbytes_t const & path, xhash256_t const & parent);
+    void AddUnitEntry(xhash256_t const & hash, xbytes_t const & path, xhash256_t const & key, xhash256_t const & parent);
 
     // Missing retrieves the known missing nodes from the trie for retrieval. To aid
     // both eth/6x style fast sync and snap/1x style state sync, the paths of trie
