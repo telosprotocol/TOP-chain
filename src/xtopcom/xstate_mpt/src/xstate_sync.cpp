@@ -21,10 +21,12 @@ std::shared_ptr<evm_common::trie::Sync> new_state_sync(const std::string & table
         if (sync_unit) {
             base::xaccount_index_t index;
             index.serialize_from({value.begin(), value.end()});
-            auto state_hash = index.get_latest_state_hash();
-            auto hash = static_cast<xhash256_t>(xbytes_t{state_hash.begin(), state_hash.end()});
-            syncer->AddUnitEntry(hash, hexpath, parent);
-            xdbg("state_mpt::new_state_sync value: %s, req: %s, index_hash: %s", to_hex(value).c_str(), parent.as_hex_str().c_str(), hash.as_hex_str().c_str());
+            auto state_hash_str = index.get_latest_state_hash();
+            auto unit_hash_str = index.get_latest_unit_hash();
+            auto hash = static_cast<xhash256_t>(xbytes_t{state_hash_str.begin(), state_hash_str.end()});
+            auto key = static_cast<xhash256_t>(xbytes_t{unit_hash_str.begin(), unit_hash_str.end()});
+            syncer->AddUnitEntry(hash, hexpath, key, parent);
+            xinfo("state_mpt::new_state_sync value: %s, hash: %s, key: %s", to_hex(value).c_str(), hash.as_hex_str().c_str(), key.as_hex_str().c_str());
         }
     };
     syncer->Init(root, callback);

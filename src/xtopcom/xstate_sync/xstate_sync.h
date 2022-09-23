@@ -46,6 +46,8 @@ struct state_res {
     std::vector<xbytes_t> units;
 };
 
+using state_sync_peers_t = std::vector<std::shared_ptr<vnetwork::xvnetwork_driver_face_t>>;
+
 class xtop_state_sync {
 public:
     xtop_state_sync() = default;
@@ -53,21 +55,22 @@ public:
 
     static std::shared_ptr<xtop_state_sync> new_state_sync(const std::string & table,
                                                            const xhash256_t & root,
-                                                           std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network,
+                                                           std::function<state_sync_peers_t()> peers,
                                                            std::function<void(const state_req &)> track_req,
                                                            base::xvdbstore_t * db,
                                                            bool sync_unit);
 
     void run();
     void cancel();
-    std::error_code error();
-    xhash256_t root() const;
     bool is_done() const;
+    std::error_code error() const;
+    common::xaccount_address_t table() const;
+    xhash256_t root() const;
     void push_deliver_req(const state_req & req);
 
 private:
-    void wait();
-    void loop(std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network, std::error_code & ec);
+    void wait() const;
+    void loop(std::error_code & ec);
     void assign_tasks(std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network);
     void fill_tasks(uint32_t n, state_req & req, std::vector<xhash256_t> & nodes, std::vector<xhash256_t> & codes);
     void commit(bool force, std::error_code & ec);
@@ -75,12 +78,13 @@ private:
     xhash256_t process_node_data(xbytes_t & blob, std::error_code & ec);
     xhash256_t process_unit_data(xbytes_t & blob, std::error_code & ec);
     void pop_deliver_req();
+    std::shared_ptr<vnetwork::xvnetwork_driver_face_t> available_network() const;
 
-    std::string m_table;
+    common::xaccount_address_t m_table;
     xhash256_t m_root;
     std::shared_ptr<state_mpt::xstate_mpt_db_t> m_db;
     std::shared_ptr<evm_common::trie::Sync> m_sched;
-    std::shared_ptr<vnetwork::xvnetwork_driver_face_t> m_network_ptr{nullptr};
+    std::function<state_sync_peers_t()> m_peers_func{nullptr};
     std::function<void(const state_req &)> m_track_func{nullptr};
 
     std::map<xhash256_t, trie_task> m_trie_tasks;
@@ -93,7 +97,7 @@ private:
 
     std::list<state_req> m_deliver_list;
     std::mutex m_deliver_mutex;
-    uint32_t m_req_sequence_id;
+    uint32_t m_req_sequence_id{0};
     uint32_t m_num_uncommitted{0};
     uint32_t m_bytes_uncommitted{0};
 };

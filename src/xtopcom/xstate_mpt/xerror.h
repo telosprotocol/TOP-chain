@@ -21,6 +21,8 @@ enum class xenum_errc {
     state_mpt_db_not_found,
 
     state_mpt_leaf_empty,
+
+    state_mpt_unit_hash_mismatch,
 };
 using xerrc_t = xenum_errc;
 

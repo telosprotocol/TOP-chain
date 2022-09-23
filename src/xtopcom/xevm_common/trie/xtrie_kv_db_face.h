@@ -34,18 +34,6 @@ class xtop_kv_db_face
 using xkv_db_face_t = xtop_kv_db_face;
 using xkv_db_face_ptr_t = std::shared_ptr<xkv_db_face_t>;
 
-/// Code operations
-
-// inline xbytes_t ReadCode(xkv_db_face_ptr_t db, xhash256_t hash) {
-//     std::error_code _;
-//     auto data = ReadCodeWithPrefix(db, hash);
-//     if (data.empty()) {
-//         // #[legacy?]
-//         data = db->Get(hash.to_bytes(), _);
-//     }
-//     return data;
-// }
-
 /// unit operation
 
 inline xbytes_t ReadUnitWithPrefix(xkv_db_face_ptr_t db, xhash256_t const & hash) {

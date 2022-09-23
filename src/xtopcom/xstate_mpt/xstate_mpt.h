@@ -5,11 +5,11 @@
 #pragma once
 
 #include "xbasic/xmemory.hpp"
+#include "xevm_common/trie/xsecure_trie.h"
 #include "xstate_mpt/xstate_mpt_cache.h"
 #include "xstate_mpt/xstate_mpt_db.h"
 #include "xstate_mpt/xstate_mpt_journal.h"
-#include "xvledger/xaccountindex.h"
-#include "xevm_common/trie/xsecure_trie.h"
+#include "xstate_mpt/xstate_object.h"
 namespace top {
 namespace state_mpt {
 class xtop_state_mpt {
@@ -34,6 +34,12 @@ public:
     /// @return Account index of given account. Return empty index if not find in db.
     base::xaccount_index_t get_account_index(const std::string & account, std::error_code & ec);
 
+    /// @brief Get unit data of specific account.
+    /// @param account Account string.
+    /// @param ec Log the error code.
+    /// @return Unit data of given account. Return empty data if not find in db.
+    xbytes_t get_unit(const std::string & account, std::error_code & ec);
+
     /// @brief Set index of specific account.
     /// @param account Account string.
     /// @param index Index of account.
@@ -45,6 +51,20 @@ public:
     /// @param index_str Index string of account.
     /// @param ec Log the error code.
     void set_account_index(const std::string & account, const std::string & index_str, std::error_code & ec);
+
+    /// @brief Set index and unit data of specific account.
+    /// @param account Account string.
+    /// @param index Index of account.
+    /// @param unit unit data of account.
+    /// @param ec Log the error code.
+    void set_account_index_with_unit(const std::string & account, const base::xaccount_index_t & index, const xbytes_t & unit, std::error_code & ec);
+
+    /// @brief Set index and unit data of specific account.
+    /// @param account Account string.
+    /// @param index_str Index string of account.
+    /// @param unit unit data of account.
+    /// @param ec Log the error code.
+    void set_account_index_with_unit(const std::string & account, const std::string & index_str, const xbytes_t & unit, std::error_code & ec);
 
     /// @brief Commit all modifies to db.
     /// @param ec Log the error code.
@@ -73,23 +93,45 @@ private:
     /// @param ec Log the error code.
     /// @return MPT with given root hash. Error occured if cannot find root in db.
     void init(const std::string & table, const xhash256_t & root, base::xvdbstore_t * db, xstate_mpt_cache_t * cache, std::error_code & ec);
-
-    /// @brief Internal interface to get index string..
-    /// @param account Account string.
-    /// @param ec Log the error code.
-    /// @return Account index string of given account. Return empty index srting if not find in db.
-    std::string get_account_index_str(const std::string & account, std::error_code & ec);
-
-    /// @brief Internal interface to set index string of to cache.
-    /// @param account Account string.
-    /// @param index_str Index string of account.
-    void set_account_index_str(const std::string & account, const std::string & index_str);
     
     /// @brief Move journals to pending state.
     void finalize();
 
     /// @brief Clear journals.
     void clear_journal();
+
+    /// @brief Get or create state object of specific account.
+    /// @param account Account string.
+    /// @param ec Log the error code.
+    /// @return State object of account.
+    std::shared_ptr<xstate_object_t> get_or_new_state_object(const std::string & account, std::error_code & ec);
+
+    /// @brief Get state object for specific account.
+    /// @param account Account string.
+    /// @param ec Log the error code.
+    /// @return State object of account.
+    std::shared_ptr<xstate_object_t> get_state_object(const std::string & account, std::error_code & ec);
+
+    /// @brief Create state object for specific account.
+    /// @param account Account string.
+    /// @param ec Log the error code.
+    /// @return State object of account.
+    std::shared_ptr<xstate_object_t> create_object(const std::string & account, std::error_code & ec);
+
+    /// @brief Get state object from db.
+    /// @param account Account string.
+    /// @param ec Log the error code.
+    /// @return State object of account.
+    std::shared_ptr<xstate_object_t> get_deleted_state_object(const std::string & account, std::error_code & ec);
+
+    /// @brief Set state object to cache.
+    /// @param obj State object.
+    void set_state_object(std::shared_ptr<xstate_object_t> obj);
+
+    /// @brief Update state object to db.
+    /// @param obj State object.
+    /// @param ec Log the error code.
+    void update_state_object(std::shared_ptr<xstate_object_t> obj, std::error_code & ec);
 
     std::string m_table_address;
 
@@ -98,9 +140,11 @@ private:
     std::shared_ptr<base::xlru_cache<std::string, std::string>> m_lru{nullptr};
     xhash256_t m_original_root;
 
-    std::map<std::string, xbytes_t> m_indexes;
     std::map<std::string, xbytes_t> m_cache_indexes;
-    std::set<std::string> m_pending_indexes;
+
+    std::map<std::string, std::shared_ptr<xstate_object_t>> m_state_objects;
+    std::set<std::string> m_state_objects_pending;
+    std::set<std::string> m_state_objects_dirty;
 
     xstate_journal_t m_journal;
 };

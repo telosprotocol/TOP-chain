@@ -32,6 +32,9 @@ static char const * const errc_to_string(int code) {
     case xerrc_t::state_mpt_leaf_empty:
         return "state mpt leaf empty";
 
+    case xerrc_t::state_mpt_unit_hash_mismatch:
+        return "state mpt unit hash mismatch";
+
     default:
         return "unknown error";
     }

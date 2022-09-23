@@ -91,21 +91,17 @@ void Sync::AddSubTrie(xhash256_t const & root, xbytes_t const & path, xhash256_t
     schedule(req);
 }
 
-void Sync::AddUnitEntry(xhash256_t const & hash, xbytes_t const & path, xhash256_t const & parent) {
-    if (hash == emptyRoot) {
-        return;
-    }
-
-    if (membatch.hasUnit(hash)) {
+void Sync::AddUnitEntry(xhash256_t const & hash, xbytes_t const & path, xhash256_t const & key, xhash256_t const & parent) {
+    if (membatch.hasUnit(key)) {
         return;
     }
     assert(database != nullptr);
     std::error_code ec;
-    if (HasUnitWithPrefix(database, hash)) {
+    if (HasUnitWithPrefix(database, key)) {
         return;
     }
 
-    auto req = new request(path, hash, true);
+    auto req = new request(path, hash, key, true);
     if (parent != xhash256_t{}) {
         auto ancestor = nodeReqs[parent];
         if (ancestor == nullptr) {
@@ -204,9 +200,6 @@ void Sync::Commit(xkv_db_face_ptr_t db) {
     for (auto const & p : membatch.nodes) {
         WriteTrieNode(db, p.first, p.second);
     }
-    // for (auto const & p : membatch.codes) {
-    //     WriteCode(db, p.first, p.second);
-    // }
     for (auto const & p : membatch.units) {
         WriteUnit(db, p.first, p.second);
     }
@@ -332,7 +325,7 @@ std::vector<Sync::request *> Sync::children(request * req, xtrie_node_face_ptr_t
 void Sync::commit(request * req, std::error_code & ec) {
     // Write the node content to the membatch
     if (req->unit) {
-        membatch.units[req->hash] = req->data;
+        membatch.units[req->unit_key] = req->data;
         unitReqs.erase(req->hash);
         fetches[req->path.size()]--;
     } else {

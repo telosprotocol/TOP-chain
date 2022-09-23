@@ -4,6 +4,7 @@
 
 #include "xstate_mpt/xstate_mpt_db.h"
 
+#include "xbasic/xhex.h"
 #include "xstate_mpt/xerror.h"
 #include "xvledger/xvdbkey.h"
 
@@ -18,11 +19,11 @@ void xtop_state_mpt_db::Put(xbytes_t const & key, xbytes_t const & value, std::e
     std::lock_guard<std::mutex> lock(m_mutex);
     auto db_key = base::xvdbkey_t::create_prunable_mpt_key(base::xvaccount_t{m_table}, {key.begin(), key.end()});
     if (m_db->set_value(db_key, {value.begin(), value.end()}) == false) {
-        xwarn("xtop_state_mpt_db::Put key: %s, value: %s, error", top::to_hex(key).c_str(), top::to_hex(value).c_str());
+        xwarn("xtop_state_mpt_db::Put key: %s, value: %s, error", to_hex(key).c_str(), to_hex(value).c_str());
         ec = error::xerrc_t::state_mpt_db_set_error;
         return;
     }
-    xdbg("xtop_state_mpt_db::Put key: %s, value: %s", top::to_hex(key).c_str(), top::to_hex(value).c_str());
+    xdbg("xtop_state_mpt_db::Put key: %s, value: %s", to_hex(key).c_str(), to_hex(value).c_str());
     return;
 }
 

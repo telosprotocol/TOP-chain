@@ -1,16 +1,14 @@
 // #include "tests/mock/xvchain_creator.hpp"
 #include "xcrypto/xcrypto_util.h"
 #include "xdbstore/xstore_face.h"
+#include "xevm_common/trie/xsecure_trie.h"
+#include "xevm_common/trie/xtrie_sync.h"
 #include "xstate_mpt/xerror.h"
 #include "xstate_mpt/xstate_mpt_db.h"
+#include "xstate_mpt/xstate_sync.h"
+#include "xutility/xhash.h"
 #include "xvledger/xvdbstore.h"
 #include "xvledger/xvledger.h"
-#include "xstate_mpt/xstate_sync.h"
-#include "xevm_common/trie/xtrie_sync.h"
-#include "xevm_common/trie/xsecure_trie.h"
-#include "xutility/xhash.h"
-
-#include "xevm_common/rlp.h"
 
 #define private public
 #include "xstate_mpt/xstate_mpt.h"
@@ -164,21 +162,32 @@ TEST_F(test_state_mpt_fixture, test_basic) {
         acc_set.clear();
         for (auto i = 0; i < 10; i++) {
             std::string acc = top::utl::xcrypto_util::make_address_by_random_key(base::enum_vaccount_addr_type_secp256k1_eth_user_account);
-            base::xaccount_index_t index{rand(), std::to_string(rand()), std::to_string(rand()), rand(), base::enum_xvblock_class_light, base::enum_xvblock_type_general};
+            std::string state_str{"state_str" + std::to_string(i)};
+            auto hash = base::xcontext_t::instance().hash(state_str, enum_xhash_type_sha2_256);
+            base::xaccount_index_t index{rand(), hash, hash, rand(), base::enum_xvblock_class_light, base::enum_xvblock_type_general};
             data.emplace_back(std::make_pair(acc, index));
             acc_set.insert(acc);
         }
     }
 
-    for (auto i = 0; i < 5; i++) {
+    for (auto i = 0; i < 2; i++) {
         ec.clear();
         s->set_account_index(data[i].first, data[i].second, ec);
         EXPECT_FALSE(ec);
     }
-    EXPECT_EQ(s->m_indexes.size(), 5);
+    for (auto i = 2; i < 5; i++) {
+        ec.clear();
+        std::string state_str{"state_str" + std::to_string(i)};
+        s->set_account_index_with_unit(data[i].first, data[i].second, {state_str.begin(), state_str.end()}, ec);
+        EXPECT_FALSE(ec);
+    }
+    EXPECT_EQ(s->m_state_objects.size(), 5);
     for (auto i = 0; i < 5; i++) {
         // write in cache
-        EXPECT_TRUE(s->m_indexes.count(data[i].first));
+        EXPECT_TRUE(s->m_state_objects.count(data[i].first));
+        if (i >= 2) {
+            EXPECT_TRUE(s->m_state_objects[data[i].first]->dirty_unit);
+        }
         EXPECT_TRUE(s->m_journal.dirties.count(data[i].first));
         EXPECT_EQ(s->m_journal.index_changes[i].account, data[i].first);
         // not commit in trie
@@ -195,10 +204,10 @@ TEST_F(test_state_mpt_fixture, test_basic) {
     EXPECT_EQ(origin_hash, s->m_trie->Hash());
     EXPECT_TRUE(s->m_journal.dirties.empty());
     EXPECT_TRUE(s->m_journal.index_changes.empty());
-    EXPECT_EQ(s->m_indexes.size(), 5);
-    EXPECT_EQ(s->m_pending_indexes.size(), 5);
+    EXPECT_EQ(s->m_state_objects.size(), 5);
+    EXPECT_EQ(s->m_state_objects_pending.size(), 5);
     for (auto i = 0; i < 5; i++) {
-        EXPECT_TRUE(s->m_pending_indexes.count(data[i].first));
+        EXPECT_TRUE(s->m_state_objects_pending.count(data[i].first));
         // not commit in trie
         auto index_bytes = s->m_trie->TryGet({data[i].first.begin(), data[i].first.end()}, ec);
         EXPECT_FALSE(ec);
@@ -209,7 +218,7 @@ TEST_F(test_state_mpt_fixture, test_basic) {
     EXPECT_FALSE(ec);
     EXPECT_NE(origin_hash, s->m_trie->Hash());
     EXPECT_EQ(prev_hash, s->m_trie->Hash());
-    EXPECT_TRUE(s->m_pending_indexes.empty());
+    EXPECT_TRUE(s->m_state_objects_pending.empty());
     for (auto i = 0; i < 5; i++) {
         // commit in db
         auto index_bytes = s->m_trie->TryGet({data[i].first.begin(), data[i].first.end()}, ec);
@@ -220,21 +229,18 @@ TEST_F(test_state_mpt_fixture, test_basic) {
         EXPECT_EQ(str_bytes, index_bytes);
     }
     // get
-    auto index0_str = s->get_account_index_str(data[0].first, ec);
+    auto index0 = s->get_account_index(data[0].first, ec);
     EXPECT_FALSE(ec);
-    auto index1_str = s->get_account_index_str(data[1].first, ec);
+    auto index1 = s->get_account_index(data[1].first, ec);
     EXPECT_FALSE(ec);
-    EXPECT_EQ(s->m_indexes.size(), 5);
-    xbytes_t index0_bytes{index0_str.begin(), index0_str.end()};
-    xbytes_t index1_bytes{index1_str.begin(), index1_str.end()};
-    EXPECT_EQ(s->m_indexes[data[0].first], index0_bytes);
-    EXPECT_EQ(s->m_indexes[data[1].first], index1_bytes);
+    EXPECT_EQ(s->m_state_objects.size(), 5);
+    EXPECT_EQ(s->m_state_objects[data[0].first]->index, index0);
+    EXPECT_EQ(s->m_state_objects[data[1].first]->index, index1);
     EXPECT_TRUE(s->m_journal.index_changes.empty());
     EXPECT_TRUE(s->m_journal.dirties.empty());
     // set
     // auto new_index0 = index0_str;
-    base::xaccount_index_t new_index0;
-    new_index0.serialize_from({index0_str.begin(), index0_str.end()});
+    base::xaccount_index_t new_index0 = index0;
     new_index0.m_latest_unit_height += 1;
     s->set_account_index(data[0].first, new_index0, ec);
     EXPECT_FALSE(ec);
@@ -242,34 +248,42 @@ TEST_F(test_state_mpt_fixture, test_basic) {
         s->set_account_index(data[i].first, data[i].second, ec);
         EXPECT_FALSE(ec);
     }
-    EXPECT_EQ(s->m_indexes.size(), 10);
+    EXPECT_EQ(s->m_state_objects.size(), 10);
     EXPECT_EQ(s->m_journal.index_changes.size(), 6);
     EXPECT_EQ(s->m_journal.dirties.size(), 6);
-    std::string new_index0_str;
-    new_index0.serialize_to(new_index0_str);
-    xbytes_t new_index0_bytes{new_index0_str.begin(), new_index0_str.end()};
-    EXPECT_EQ(s->m_indexes[data[0].first], new_index0_bytes);
-    EXPECT_EQ(s->m_indexes[data[1].first], index1_bytes);
+    EXPECT_EQ(s->m_state_objects[data[0].first]->index, new_index0);
+    EXPECT_EQ(s->m_state_objects[data[1].first]->index, index1);
     EXPECT_EQ(s->m_journal.index_changes.size(), 6);
     EXPECT_EQ(s->m_journal.index_changes[0].account, data[0].first);
-    EXPECT_EQ(s->m_journal.index_changes[0].prev_index, index0_str);
+    EXPECT_EQ(s->m_journal.index_changes[0].prev_index, index0);
     for (auto i = 5; i < 10; i++) {
-        std::string str;
-        data[i].second.serialize_to(str);
-        xbytes_t b{str.begin(), str.end()};
-        EXPECT_EQ(s->m_indexes[data[i].first], b);
+        EXPECT_EQ(s->m_state_objects[data[i].first]->index, data[i].second);
         EXPECT_EQ(s->m_journal.index_changes[i - 4].account, data[i].first);
-        EXPECT_EQ(s->m_journal.index_changes[i - 4].prev_index, std::string());
+        EXPECT_EQ(s->m_journal.index_changes[i - 4].prev_index, base::xaccount_index_t());
         EXPECT_TRUE(s->m_journal.dirties.count(data[i].first));
     }
+    // error set
+    s->set_account_index(data[2].first, new_index0, ec);
+    EXPECT_EQ(ec, state_mpt::error::make_error_code(state_mpt::error::xerrc_t::state_mpt_unit_hash_mismatch));
+    ec.clear();
     // EXPECT_EQ(s->m_cache_indexes.size(), 10);
     // commit
     s->commit(ec);
     EXPECT_FALSE(ec);
     // cache is not lost
-    EXPECT_EQ(s->m_indexes.size(), 10);
+    EXPECT_EQ(s->m_state_objects.size(), 10);
+    for (auto obj : s->m_state_objects) {
+        EXPECT_FALSE(obj.second->dirty_unit);
+    }
     EXPECT_TRUE(s->m_journal.index_changes.empty());
     EXPECT_TRUE(s->m_journal.dirties.empty());
+    // check code
+    for (auto i = 2; i < 5; i++) {
+        std::string state_str{"state_str" + std::to_string(i)};
+        auto hash = base::xcontext_t::instance().hash(state_str, enum_xhash_type_sha2_256);
+        auto v = ReadUnitWithPrefix(s->m_db->DiskDB(), xhash256_t({hash.begin(), hash.end()}));
+        EXPECT_EQ(to_string(v), state_str);
+    }
 
     // EXPECT_EQ(state_mpt::xstate_mpt_cache_t::instance()->m_cache.size(), 1);
     // EXPECT_TRUE(state_mpt::xstate_mpt_cache_t::instance()->m_cache.count(TABLE_ADDRESS));
@@ -299,10 +313,11 @@ TEST_F(test_state_mpt_fixture, test_create_twice_commit_twice) {
     EXPECT_EQ(ec.value(), 0);
     EXPECT_NE(s1, nullptr);
 
-    s1->set_account_index("testaddr1", "testindex1", ec);
+    s1->set_account_index("testaddr1", base::xaccount_index_t(), ec);
     auto hash1 = s1->commit(ec);
     EXPECT_EQ(ec.value(), 0);
-    std::cout << "hash1:" << hash1.as_hex_str() << std::endl;
+    hash1;
+    // std::cout << "hash1:" << hash1.as_hex_str() << std::endl;
 
     // s1->set_account_index("testaddr2", "testindex2", ec);
     // auto hash2 = s1->commit(ec);
@@ -424,13 +439,15 @@ TEST_F(test_state_mpt_fixture, test_trie_callback) {
         auto bstate = make_object_ptr<base::xvbstate_t>(accounts[i], i + 1, i + 1, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
         std::string bin_str;
         bstate->serialize_to_string(bin_str);
-        auto hash = utl::xkeccak256_t::digest(bin_str);
-        std::string hash_str((char *)hash.data(), hash.size());
-        base::xaccount_index_t index{i + 1, hash_str, hash_str, i + 1, base::enum_xvblock_class_light, base::enum_xvblock_type_general};
+        auto unit_hash = utl::xkeccak256_t::digest(std::to_string(i));
+        std::string unit_hash_str((char *)unit_hash.data(), unit_hash.size());
+        auto state_hash = utl::xkeccak256_t::digest(bin_str);
+        std::string state_hash_str((char *)state_hash.data(), state_hash.size());
+        base::xaccount_index_t index{i + 1, unit_hash_str, state_hash_str, i + 1, base::enum_xvblock_class_light, base::enum_xvblock_type_general};
         std::string index_str;
         index.serialize_to(index_str);
         trie->Update(to_bytes(accounts[i]), to_bytes(index_str));
-        printf("account: %s, value: %s, hash: %s, state: %s\n", accounts[i].c_str(), to_hex(index_str).c_str(), to_hex(hash_str).c_str(), to_hex(bin_str).c_str());
+        printf("account: %s, value: %s, unit_hash: %s, state_hash: %s, state: %s\n", accounts[i].c_str(), to_hex(index_str).c_str(), to_hex(unit_hash_str).c_str(), to_hex(state_hash_str).c_str(), to_hex(bin_str).c_str());
     }
     auto trie_hash = trie->Commit(ec);
     EXPECT_FALSE(ec);
@@ -452,6 +469,7 @@ TEST_F(test_state_mpt_fixture, test_trie_callback) {
             evm_common::trie::SyncResult result;
             result.Hash = xhash256_t(q);
             result.Data = v;
+            printf("node hash: %s, node value: %s\n", to_hex(result.Hash).c_str(), to_hex(result.Data).c_str());
             sched->Process(result, ec);
             EXPECT_FALSE(ec);
         }

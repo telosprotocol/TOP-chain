@@ -45,8 +45,7 @@ void xtop_vnode_role_proxy::create(vnetwork::xvnetwork_driver_face_ptr_t const &
     if (!is_edge_archive(vnetwork->type()) && !is_frozen(vnetwork->type()) && !common::has<common::xnode_type_t::fullnode>(vnetwork->type())) {
         m_cons_mgr->create(vnetwork);
     }
-    // bind syncer
-    vnetwork->register_message_ready_notify(xmessage_category_state_sync, std::bind(&state_sync::xstate_downloader_t::handle_message, m_downloader, std::placeholders::_1, vnetwork, std::placeholders::_2));
+    m_downloader->add_peer(vnetwork->address(), vnetwork);
 }
 void xtop_vnode_role_proxy::change(common::xnode_address_t const & address, common::xlogic_time_t start_time) {
     m_node_address_set.insert(address);
@@ -70,6 +69,7 @@ void xtop_vnode_role_proxy::unreg(common::xnode_address_t const & address) {
     if (!is_edge_archive(address.type()) && !is_frozen(address.type()) && !common::has<common::xnode_type_t::fullnode>(address.type())) {
         m_cons_mgr->unreg(address.xip2());
     }
+    m_downloader->del_peer(address);
 }
 
 void xtop_vnode_role_proxy::destroy(common::xnode_address_t const & address) {
