@@ -10,6 +10,8 @@
 
 NS_BEG4(top, evm_common, trie, schema)
 
+static const char * TrieSyncKey = "TrieSync";
+
 static constexpr xbyte_t UnitPrefix{'u'};
 
 inline xbytes_t unitKey(xhash256_t const & hash) {

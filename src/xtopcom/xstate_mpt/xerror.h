@@ -15,6 +15,7 @@ namespace error {
 enum class xenum_errc {
     ok,
 
+    state_mpt_not_complete,
     state_mpt_leaf_empty,
     state_mpt_unit_hash_mismatch,
 };

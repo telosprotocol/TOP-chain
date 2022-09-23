@@ -24,7 +24,7 @@ struct sync_result {
 
 class xtop_download_executer {
 public:
-    xtop_download_executer(base::xvdbstore_t * db);
+    xtop_download_executer() = default;
     ~xtop_download_executer() = default;
 
     void run_state_sync(std::shared_ptr<xtop_state_sync> syncer, std::function<void(sync_result)> callback, bool sync_unit);
@@ -37,7 +37,6 @@ private:
     void pop_track_req();
     void pop_state_pack();
 
-    base::xvdbstore_t * m_db{nullptr};
     bool m_cancel{false};
     std::list<state_req> m_track_req;
     std::list<state_res> m_state_packs;

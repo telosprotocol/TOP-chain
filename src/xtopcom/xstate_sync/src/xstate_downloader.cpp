@@ -22,7 +22,7 @@ void xtop_state_downloader::sync_state(const common::xaccount_address_t & table,
         ec = error::xerrc_t::downloader_is_running;
         return;
     }
-    auto executer = std::make_shared<xtop_download_executer>(m_db);
+    auto executer = std::make_shared<xtop_download_executer>();
     auto peers_func = std::bind(&xtop_state_downloader::get_peers, this);
     auto track_func = std::bind(&xtop_download_executer::push_track_req, executer, std::placeholders::_1);
     auto syncer = xstate_sync_t::new_state_sync(table, root, peers_func, track_func, m_db, sync_unit);
@@ -147,12 +147,10 @@ void xtop_state_downloader::del_peer(const vnetwork::xvnode_address_t & peer) {
     }
 }
 
-xtop_download_executer::xtop_download_executer(base::xvdbstore_t * db) : m_db(db) {
-}
-
 void xtop_download_executer::run_state_sync(std::shared_ptr<xstate_sync_t> syncer, std::function<void(sync_result)> callback, bool sync_unit) {
     xinfo("xtop_download_executer::run_state_sync sync thread start: %s %s", syncer->table().c_str(), syncer->root().as_hex_str().c_str());
 
+    evm_common::trie::WriteTrieSyncFlag(syncer->db(), syncer->root());
     std::map<uint32_t, state_req, std::less<uint32_t>> active;
     std::thread run_th(&xtop_state_sync::run, syncer);
 
@@ -200,7 +198,17 @@ void xtop_download_executer::run_state_sync(std::shared_ptr<xstate_sync_t> synce
 
     syncer->cancel();
     run_th.join();
-    xinfo("xtop_download_executer::run_state_sync sync thread finish: %s %s", syncer->table().c_str(), syncer->root().as_hex_str().c_str());
+
+    if (syncer->error()) {
+        xwarn("xtop_download_executer::run_state_sync sync thread %s %s finish but error: %s, %s",
+              syncer->table().c_str(),
+              syncer->root().as_hex_str().c_str(),
+              syncer->error().category().name(),
+              syncer->error().message().c_str());
+    } else {
+        evm_common::trie::DeleteTrieSyncFlag(syncer->db(), syncer->root());
+        xinfo("xtop_download_executer::run_state_sync sync thread finish: %s %s", syncer->table().c_str(), syncer->root().as_hex_str().c_str());
+    }
 
     callback({syncer->table(), syncer->root(), syncer->error()});
     return;

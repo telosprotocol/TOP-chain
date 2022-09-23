@@ -64,6 +64,10 @@ xhash256_t xtop_state_sync::root() const {
     return m_root;
 }
 
+evm_common::trie::xkv_db_face_ptr_t xtop_state_sync::db() const {
+    return m_db;
+}
+
 bool xtop_state_sync::is_done() const {
     return m_done;
 }

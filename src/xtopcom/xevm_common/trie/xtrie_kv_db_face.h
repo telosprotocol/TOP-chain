@@ -91,4 +91,29 @@ inline void DeleteTrieNode(xkv_db_face_ptr_t db, xhash256_t const & hash) {
     }
 }
 
+inline bool ReadTrieSyncFlag(xkv_db_face_ptr_t db, xhash256_t const & hash) {
+    std::error_code _;
+    auto k = std::string{schema::TrieSyncKey} + hash.as_hex_str();
+    return db->Has({k.begin(), k.end()}, _);
+}
+
+inline void WriteTrieSyncFlag(xkv_db_face_ptr_t db, xhash256_t const & hash) {
+    std::error_code ec;
+    auto k = std::string{schema::TrieSyncKey} + hash.as_hex_str();
+    auto v = std::string{"1"};
+    db->Put({k.begin(), k.end()}, {v.begin(), v.end()}, ec);
+    if (ec) {
+        xwarn("WriteTrieSyncFlag error: %s, %s", ec.category().name(), ec.message().c_str());
+    }
+}
+
+inline void DeleteTrieSyncFlag(xkv_db_face_ptr_t db, xhash256_t const & hash) {
+    std::error_code ec;
+    auto k = std::string{schema::TrieSyncKey} + hash.as_hex_str();
+    db->Delete({k.begin(), k.end()}, ec);
+    if (ec) {
+        xwarn("DeleteTrieSyncFlag error: %s, %s", ec.category().name(), ec.message().c_str());
+    }
+}
+
 NS_END3

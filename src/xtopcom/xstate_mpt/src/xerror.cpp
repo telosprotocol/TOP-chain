@@ -17,6 +17,9 @@ static char const * const errc_to_string(int code) {
     case xerrc_t::ok:
         return "ok";
 
+    case xerrc_t::state_mpt_not_complete:
+        return "state mpt not complete";
+
     case xerrc_t::state_mpt_leaf_empty:
         return "state mpt leaf empty";
 

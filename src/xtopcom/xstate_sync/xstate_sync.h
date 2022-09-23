@@ -66,6 +66,7 @@ public:
     std::error_code error() const;
     common::xaccount_address_t table() const;
     xhash256_t root() const;
+    evm_common::trie::xkv_db_face_ptr_t db() const;
     void push_deliver_req(const state_req & req);
 
 private:
@@ -82,7 +83,7 @@ private:
 
     common::xaccount_address_t m_table;
     xhash256_t m_root;
-    std::shared_ptr<evm_common::trie::xkv_db_face_t> m_db;
+    evm_common::trie::xkv_db_face_ptr_t m_db;
     std::shared_ptr<evm_common::trie::Sync> m_sched;
     std::function<state_sync_peers_t()> m_peers_func{nullptr};
     std::function<void(const state_req &)> m_track_func{nullptr};
