@@ -20,6 +20,8 @@ enum class xenum_errc {
     trie_db_missing_node_error,
     trie_db_not_provided,
     trie_db_not_found,
+    trie_db_put_error,
+    trie_db_delete_error,
     rlp_canonint,
     rlp_canonsize,
     rlp_uint_overflow,

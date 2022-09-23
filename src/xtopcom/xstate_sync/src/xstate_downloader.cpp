@@ -16,7 +16,7 @@ namespace state_sync {
 xtop_state_downloader::xtop_state_downloader(base::xvdbstore_t * db, const observer_ptr<mbus::xmessage_bus_face_t> & msg_bus) : m_db(db), m_bus(msg_bus) {
 }
 
-void xtop_state_downloader::sync_state(const std::string & table, const xhash256_t & root, bool sync_unit, std::error_code & ec) {
+void xtop_state_downloader::sync_state(const common::xaccount_address_t & table, const xhash256_t & root, bool sync_unit, std::error_code & ec) {
     std::lock_guard<std::mutex> lock(m_dispatch_mutex);
     if (m_running.count(table)) {
         ec = error::xerrc_t::downloader_is_running;
@@ -35,8 +35,8 @@ void xtop_state_downloader::sync_state(const std::string & table, const xhash256
 
 void xtop_state_downloader::process_finish(const sync_result & res) {
     std::lock_guard<std::mutex> lock(m_dispatch_mutex);
-    if (m_running.count(res.table.value())) {
-        m_running.erase(res.table.value());
+    if (m_running.count(res.table)) {
+        m_running.erase(res.table);
         xinfo("xtop_state_downloader::sync_finish table: %s, root: %s out from running task", res.table.c_str(), res.root.as_hex_str().c_str());
         mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_state_sync_t>(res.table, res.root, xhash256_t{}, res.ec);
         m_bus->push_event(ev);
@@ -45,7 +45,7 @@ void xtop_state_downloader::process_finish(const sync_result & res) {
     }
 }
 
-void xtop_state_downloader::sync_cancel(const std::string & table) {
+void xtop_state_downloader::sync_cancel(const common::xaccount_address_t & table) {
     std::lock_guard<std::mutex> lock(m_dispatch_mutex);
     if (m_running.count(table)) {
         m_running[table]->cancel();
@@ -57,7 +57,7 @@ void xtop_state_downloader::handle_message(const vnetwork::xvnode_address_t & se
     if (message.id() == xmessage_id_sync_request) {
         process_request(sender, network, message);
     } else if (message.id() == xmessage_id_sync_response) {
-        process_response(sender, message);
+        process_response(message);
     } else {
         xerror("xtop_state_downloader::handle_message unknown msg id: %lu", static_cast<uint32_t>(message.id()));
     }
@@ -65,7 +65,7 @@ void xtop_state_downloader::handle_message(const vnetwork::xvnode_address_t & se
 
 void xtop_state_downloader::process_request(const vnetwork::xvnode_address_t & sender, std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network, const vnetwork::xmessage_t & message) {
     base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)(message.payload().data()), (uint32_t)message.payload().size());
-    std::string table;
+    common::xaccount_address_t table;
     uint32_t id;
     std::vector<xbytes_t> nodes_hashes;
     std::vector<xbytes_t> nodes_values;
@@ -75,8 +75,8 @@ void xtop_state_downloader::process_request(const vnetwork::xvnode_address_t & s
     stream >> id;
     stream >> nodes_hashes;
     stream >> units_hashes;
-    auto mpt_db = std::make_shared<state_mpt::xstate_mpt_db_t>(m_db, table);
-    auto trie_db = evm_common::trie::xtrie_db_t::NewDatabase(mpt_db);
+    auto kv_db = std::make_shared<evm_common::trie::xkv_db_t>(m_db, table);
+    auto trie_db = evm_common::trie::xtrie_db_t::NewDatabase(kv_db);
     for (auto hash : nodes_hashes) {
         std::error_code ec;
         auto v = trie_db->Node(xhash256_t(hash), ec);
@@ -88,7 +88,7 @@ void xtop_state_downloader::process_request(const vnetwork::xvnode_address_t & s
         nodes_values.push_back(v);
     }
     for (auto hash : units_hashes) {
-        auto v = ReadUnitWithPrefix(mpt_db, xhash256_t(hash));
+        auto v = evm_common::trie::ReadUnitWithPrefix(kv_db, xhash256_t(hash));
         if (v.empty()) {
             xwarn("xtop_state_downloader::process_request not found", to_hex(hash).c_str());
             continue;
@@ -109,7 +109,7 @@ void xtop_state_downloader::process_request(const vnetwork::xvnode_address_t & s
     }
 }
 
-void xtop_state_downloader::process_response(const vnetwork::xvnode_address_t & sender, const vnetwork::xmessage_t & message) {
+void xtop_state_downloader::process_response(const vnetwork::xmessage_t & message) {
     base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)(message.payload().data()), (uint32_t)message.payload().size());
     state_res res;
     stream >> res.table;

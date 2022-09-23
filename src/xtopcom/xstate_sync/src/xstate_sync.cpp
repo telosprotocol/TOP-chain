@@ -20,7 +20,7 @@ namespace state_sync {
 constexpr uint32_t ideal_batch_size = 100 * 1024;
 constexpr uint32_t fetch_num = 64;
 
-std::shared_ptr<xtop_state_sync> xtop_state_sync::new_state_sync(const std::string & table,
+std::shared_ptr<xtop_state_sync> xtop_state_sync::new_state_sync(const common::xaccount_address_t & table,
                                                                  const xhash256_t & root,
                                                                  std::function<state_sync_peers_t()> peers,
                                                                  std::function<void(const state_req &)> track_req,
@@ -32,7 +32,7 @@ std::shared_ptr<xtop_state_sync> xtop_state_sync::new_state_sync(const std::stri
     sync->m_root = root;
     sync->m_peers_func = peers;
     sync->m_track_func = track_req;
-    sync->m_db = std::make_shared<state_mpt::xstate_mpt_db_t>(db, table);
+    sync->m_db = std::make_shared<evm_common::trie::xkv_db_t>(db, table);
     xinfo("xtop_state_sync::new_state_sync table: %s, root: %s", table.c_str(), root.as_hex_str().c_str());
     return sync;
 }

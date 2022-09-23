@@ -5,6 +5,7 @@
 #pragma once
 
 #include "xevm_common/trie/xtrie.h"
+#include "xevm_common/trie/xtrie_face.h"
 
 NS_BEG3(top, evm_common, trie)
 
@@ -18,7 +19,7 @@ NS_BEG3(top, evm_common, trie)
 // the preimage of each key.
 //
 // SecureTrie is not safe for concurrent use.
-class xtop_secure_trie {
+class xtop_secure_trie : public xtrie_face_t {
 private:
     xtrie_t m_trie;
     xbytes_t hashKeyBuf;
@@ -50,7 +51,7 @@ public:
     // TryGet returns the value for key stored in the trie.
     // The value bytes must not be modified by the caller.
     // If a node was not found in the database, a MissingNodeError is returned.
-    xbytes_t TryGet(xbytes_t const & key, std::error_code & ec) const;
+    xbytes_t TryGet(xbytes_t const & key, std::error_code & ec) const override;
 
     // TryGetNode attempts to retrieve a trie node by compact-encoded path. It is not
     // possible to use keybyte-encoding as the path might contain odd nibbles.
@@ -81,14 +82,14 @@ public:
     // stored in the trie.
     //
     // If a node was not found in the database, a MissingNodeError is returned.
-    void TryUpdate(xbytes_t const & key, xbytes_t const & value, std::error_code & ec);
+    void TryUpdate(xbytes_t const & key, xbytes_t const & value, std::error_code & ec) override;
 
     // Delete removes any existing value for key from the trie.
     void Delete(xbytes_t const & key);
 
     // TryDelete removes any existing value for key from the trie.
     // If a node was not found in the database, a MissingNodeError is returned.
-    void TryDelete(xbytes_t const & key, std::error_code & ec);
+    void TryDelete(xbytes_t const & key, std::error_code & ec) override;
 
     // GetKey returns the sha3 preimage of a hashed key that was
     // previously used to store a value.
@@ -99,11 +100,11 @@ public:
     //
     // Committing flushes nodes from memory. Subsequent Get calls will load nodes
     // from the database.
-    std::pair<xhash256_t, int32_t> Commit(std::error_code & ec);
+    std::pair<xhash256_t, int32_t> Commit(std::error_code & ec) override;
 
     // Hash returns the root hash of SecureTrie. It does not write to the
     // database and can be used even if the trie doesn't have one.
-    xhash256_t Hash();
+    xhash256_t Hash() override;
 
     std::shared_ptr<xtop_secure_trie> copy() {
         return std::make_shared<xtop_secure_trie>(*this);
@@ -116,7 +117,7 @@ public:
     // If the trie does not contain a value for key, the returned proof contains all
     // nodes of the longest existing prefix of the key (at least the root node), ending
     // with the node that proves the absence of the key.
-    bool Prove(xbytes_t const & key, uint32_t fromLevel, xkv_db_face_ptr_t proofDB, std::error_code & ec) {
+    bool Prove(xbytes_t const & key, uint32_t fromLevel, xkv_db_face_ptr_t proofDB, std::error_code & ec) override {
         return m_trie.Prove(key, fromLevel, proofDB, ec);
     }
 

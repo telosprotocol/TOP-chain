@@ -34,7 +34,7 @@ void xstatestore_base_t::get_mpt_from_block(base::xvblock_t * block, std::shared
         return;
     }
     xhash256_t root_hash = xhash256_t(state_root.to_bytes());
-    mpt = state_mpt::xtop_state_mpt::create(block->get_account(), root_hash, base::xvchain_t::instance().get_xdbstore(), state_mpt::xstate_mpt_cache_t::instance(), ec);
+    mpt = state_mpt::xtop_state_mpt::create(common::xaccount_address_t{block->get_account()}, root_hash, base::xvchain_t::instance().get_xdbstore(), state_mpt::xstate_mpt_cache_t::instance(), ec);
 }
 
 void xstatestore_base_t::set_latest_executed_info(common::xaccount_address_t const& table_addr, uint64_t height,const std::string & blockhash) const {

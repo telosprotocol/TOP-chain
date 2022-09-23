@@ -5,13 +5,14 @@
 #include "xstate_mpt/xstate_mpt.h"
 
 #include "xdata/xtable_bstate.h"
+#include "xevm_common/trie/xtrie_kv_db.h"
 #include "xmetrics/xmetrics.h"
 #include "xstate_mpt/xerror.h"
 
 namespace top {
 namespace state_mpt {
 
-std::shared_ptr<xtop_state_mpt> xtop_state_mpt::create(const std::string & table,
+std::shared_ptr<xtop_state_mpt> xtop_state_mpt::create(const common::xaccount_address_t & table,
                                                        const xhash256_t & root,
                                                        base::xvdbstore_t * db,
                                                        xstate_mpt_cache_t * cache,
@@ -27,10 +28,10 @@ std::shared_ptr<xtop_state_mpt> xtop_state_mpt::create(const std::string & table
     return std::make_shared<xtop_state_mpt>(mpt);
 }
 
-void xtop_state_mpt::init(const std::string & table, const xhash256_t & root, base::xvdbstore_t * db, xstate_mpt_cache_t * cache, std::error_code & ec) {
+void xtop_state_mpt::init(const common::xaccount_address_t & table, const xhash256_t & root, base::xvdbstore_t * db, xstate_mpt_cache_t * cache, std::error_code & ec) {
     m_table_address = table;
-    auto mpt_db = std::make_shared<xstate_mpt_db_t>(db, table);
-    m_db = evm_common::trie::xtrie_db_t::NewDatabase(mpt_db);
+    auto kv_db = std::make_shared<evm_common::trie::xkv_db_t>(db, table);
+    m_db = evm_common::trie::xtrie_db_t::NewDatabase(kv_db);
     m_trie = evm_common::trie::xsecure_trie_t::NewSecure(root, m_db, ec);
     if (ec) {
         xwarn("xtop_state_mpt::init generate trie with %s failed: %s, %s", root.as_hex_str().c_str(), ec.category().name(), ec.message().c_str());
@@ -38,7 +39,7 @@ void xtop_state_mpt::init(const std::string & table, const xhash256_t & root, ba
     }
     m_original_root = root;
     if (cache != nullptr) {
-        m_lru = cache->get_lru(table);
+        // m_lru = cache->get_lru(table);
     }
     return;
 }

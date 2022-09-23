@@ -52,8 +52,8 @@ public:
     ~xtop_state_downloader() = default;
 
     // sync actions
-    void sync_state(const std::string & table, const xhash256_t & root, bool sync_unit, std::error_code & ec);
-    void sync_cancel(const std::string & table);
+    void sync_state(const common::xaccount_address_t & table, const xhash256_t & root, bool sync_unit, std::error_code & ec);
+    void sync_cancel(const common::xaccount_address_t & table);
     void handle_message(const vnetwork::xvnode_address_t & sender, std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network, const vnetwork::xmessage_t & message);
     
     // peer actions
@@ -63,13 +63,13 @@ public:
 
 private:
     void process_request(const vnetwork::xvnode_address_t & sender, std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network, const vnetwork::xmessage_t & message);
-    void process_response(const vnetwork::xvnode_address_t & sender, const vnetwork::xmessage_t & message);
+    void process_response(const vnetwork::xmessage_t & message);
     void process_finish(const sync_result & res);
 
     base::xvdbstore_t * m_db{nullptr};
     observer_ptr<mbus::xmessage_bus_face_t> m_bus{nullptr};
 
-    std::map<std::string, std::shared_ptr<xdownload_executer_t>> m_running;
+    std::map<common::xaccount_address_t, std::shared_ptr<xdownload_executer_t>> m_running;
     state_sync_peers_t m_peers;
 
     std::mutex m_dispatch_mutex;

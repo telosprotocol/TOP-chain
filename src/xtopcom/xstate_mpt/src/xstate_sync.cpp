@@ -4,15 +4,16 @@
 
 #include "xstate_mpt/xstate_sync.h"
 
+#include "xcommon/xnode_id.h"
+#include "xevm_common/trie/xtrie_kv_db.h"
 #include "xstate_mpt/xerror.h"
-#include "xstate_mpt/xstate_mpt_db.h"
 #include "xvledger/xaccountindex.h"
 
 namespace top {
 namespace state_mpt {
 
-std::shared_ptr<evm_common::trie::Sync> new_state_sync(const std::string & table, const xhash256_t & root, base::xvdbstore_t * db, bool sync_unit) {
-    auto syncer = evm_common::trie::Sync::NewSync(std::make_shared<xstate_mpt_db_t>(db, table));
+std::shared_ptr<evm_common::trie::Sync> new_state_sync(const common::xaccount_address_t & table, const xhash256_t & root, base::xvdbstore_t * db, bool sync_unit) {
+    auto syncer = evm_common::trie::Sync::NewSync(std::make_shared<evm_common::trie::xkv_db_t>(db, table));
     auto callback = [=](std::vector<xbytes_t> const & path, xbytes_t const & hexpath, xbytes_t const & value, xhash256_t const & parent, std::error_code & ec) {
         if (value.empty()) {
             ec = error::xerrc_t::state_mpt_leaf_empty;

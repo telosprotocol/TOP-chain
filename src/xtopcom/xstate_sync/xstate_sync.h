@@ -4,8 +4,8 @@
 
 #pragma once
 
+#include "xevm_common/trie/xtrie_kv_db.h"
 #include "xevm_common/trie/xtrie_sync.h"
-#include "xstate_mpt/xstate_mpt_db.h"
 #include "xvnetwork/xmessage.h"
 #include "xvnetwork/xvnetwork_driver_face.h"
 
@@ -41,7 +41,7 @@ struct state_req {
 
 struct state_res {
     uint32_t id;
-    std::string table;
+    common::xaccount_address_t table;
     std::vector<xbytes_t> nodes;
     std::vector<xbytes_t> units;
 };
@@ -53,7 +53,7 @@ public:
     xtop_state_sync() = default;
     ~xtop_state_sync() = default;
 
-    static std::shared_ptr<xtop_state_sync> new_state_sync(const std::string & table,
+    static std::shared_ptr<xtop_state_sync> new_state_sync(const common::xaccount_address_t & table,
                                                            const xhash256_t & root,
                                                            std::function<state_sync_peers_t()> peers,
                                                            std::function<void(const state_req &)> track_req,
@@ -82,7 +82,7 @@ private:
 
     common::xaccount_address_t m_table;
     xhash256_t m_root;
-    std::shared_ptr<state_mpt::xstate_mpt_db_t> m_db;
+    std::shared_ptr<evm_common::trie::xkv_db_face_t> m_db;
     std::shared_ptr<evm_common::trie::Sync> m_sched;
     std::function<state_sync_peers_t()> m_peers_func{nullptr};
     std::function<void(const state_req &)> m_track_func{nullptr};

@@ -4,11 +4,12 @@
 #include "xevm_common/trie/xsecure_trie.h"
 #include "xevm_common/trie/xtrie_sync.h"
 #include "xstate_mpt/xerror.h"
-#include "xstate_mpt/xstate_mpt_db.h"
+#include "xevm_common/xerror/xerror.h"
 #include "xstate_mpt/xstate_sync.h"
 #include "xutility/xhash.h"
 #include "xvledger/xvdbstore.h"
 #include "xvledger/xvledger.h"
+#include "xevm_common/trie/xtrie_kv_db.h"
 
 #define private public
 #include "xstate_mpt/xstate_mpt.h"
@@ -17,7 +18,7 @@
 
 namespace top {
 
-#define TABLE_ADDRESS "Ta0000@0"
+#define TABLE_ADDRESS common::xaccount_address_t{"Ta0000@0"}
 
 class test_state_mpt_fixture : public testing::Test {
 public:
@@ -36,7 +37,7 @@ public:
 };
 
 TEST_F(test_state_mpt_fixture, test_db) {
-    state_mpt::xstate_mpt_db_t mpt_db(m_db, TABLE_ADDRESS);
+    evm_common::trie::xkv_db_t mpt_db(m_db, TABLE_ADDRESS);
 
     std::string k1{"key1"};
     std::string k2{"key2"};
@@ -51,7 +52,7 @@ TEST_F(test_state_mpt_fixture, test_db) {
 
     ec.clear();
     EXPECT_EQ(mpt_db.Get({k1.begin(), k1.end()}, ec), xbytes_t{});
-    EXPECT_EQ(ec.value(), static_cast<int>(state_mpt::error::xerrc_t::state_mpt_db_not_found));
+    EXPECT_EQ(ec.value(), static_cast<int>(evm_common::error::xerrc_t::trie_db_not_found));
 
     ec.clear();
     mpt_db.Put({k1.begin(), k1.end()}, {v1.begin(), v1.end()}, ec);
@@ -95,15 +96,15 @@ TEST_F(test_state_mpt_fixture, test_db) {
 
     ec.clear();
     EXPECT_EQ(mpt_db.Get({k1.begin(), k1.end()}, ec), xbytes_t{});
-    EXPECT_EQ(ec.value(), static_cast<int>(state_mpt::error::xerrc_t::state_mpt_db_not_found));
+    EXPECT_EQ(ec.value(), static_cast<int>(evm_common::error::xerrc_t::trie_db_not_found));
 
     ec.clear();
     EXPECT_EQ(mpt_db.Get({k2.begin(), k2.end()}, ec), xbytes_t{});
-    EXPECT_EQ(ec.value(), static_cast<int>(state_mpt::error::xerrc_t::state_mpt_db_not_found));
+    EXPECT_EQ(ec.value(), static_cast<int>(evm_common::error::xerrc_t::trie_db_not_found));
 
     ec.clear();
     EXPECT_EQ(mpt_db.Get({k3.begin(), k3.end()}, ec), xbytes_t{});
-    EXPECT_EQ(ec.value(), static_cast<int>(state_mpt::error::xerrc_t::state_mpt_db_not_found));
+    EXPECT_EQ(ec.value(), static_cast<int>(evm_common::error::xerrc_t::trie_db_not_found));
 }
 
 TEST_F(test_state_mpt_fixture, test_example) {
@@ -336,7 +337,6 @@ TEST_F(test_state_mpt_fixture, test_trie_sync) {
     auto v1 = "e216a0e87f9bf2c49634104763d8674fc0dda3d6267d142ea963c76c04351c9c3d32ec";
 
     std::error_code ec;
-    auto mpt_db = std::make_shared<state_mpt::xstate_mpt_db_t>(m_db, TABLE_ADDRESS);
     auto sched = state_mpt::new_state_sync(TABLE_ADDRESS, xhash256_t(from_hex(k1, ec)), m_db, false);
     EXPECT_FALSE(ec);
     size_t fill = 128;
@@ -415,15 +415,15 @@ TEST_F(test_state_mpt_fixture, test_trie_sync) {
         EXPECT_FALSE(ec);
         sched->Process(data, ec);
     }
-    sched->Commit(mpt_db);
+    auto kv_db = std::make_shared<evm_common::trie::xkv_db_t>(m_db, TABLE_ADDRESS);
+    sched->Commit(kv_db);
     EXPECT_EQ(sched->Pending(), 0);
 }
 
 TEST_F(test_state_mpt_fixture, test_trie_callback) {
     std::error_code ec;
-    auto mpt_db = std::make_shared<state_mpt::xstate_mpt_db_t>(m_db, TABLE_ADDRESS);
-    auto trie_db = evm_common::trie::xtrie_db_t::NewDatabase(mpt_db);
-    // auto trie = evm_common::trie::xtrie_t::New({}, trie_db, ec);
+    auto kv_db = std::make_shared<evm_common::trie::xkv_db_t>(m_db, TABLE_ADDRESS);
+    auto trie_db = evm_common::trie::xtrie_db_t::NewDatabase(kv_db);
     auto trie = evm_common::trie::xsecure_trie_t::NewSecure({},trie_db,ec);
     EXPECT_FALSE(ec);
 
@@ -456,7 +456,7 @@ TEST_F(test_state_mpt_fixture, test_trie_callback) {
     auto callback = [&](std::vector<xbytes_t> const & path, xbytes_t const & key, xbytes_t const & value, xhash256_t const & req_hash, std::error_code & ec) {
         printf("on account key: %s, value: %s, req: %s\n", to_hex(key).c_str(), to_hex(value).c_str(), req_hash.as_hex_str().c_str());
     };
-    auto sched = evm_common::trie::Sync::NewSync(trie_hash.first, mpt_db, callback);
+    auto sched = evm_common::trie::Sync::NewSync(trie_hash.first, kv_db, callback);
 
     std::vector<xhash256_t> queue;
     auto res = sched->Missing(1);
@@ -473,7 +473,7 @@ TEST_F(test_state_mpt_fixture, test_trie_callback) {
             sched->Process(result, ec);
             EXPECT_FALSE(ec);
         }
-        sched->Commit(mpt_db);
+        sched->Commit(kv_db);
         EXPECT_FALSE(ec);
         auto miss = sched->Missing(1);
         queue.clear();
