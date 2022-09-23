@@ -548,6 +548,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(xevent_major_type_role);
         RETURN_METRICS_NAME(xevent_major_type_blockfetcher);
         RETURN_METRICS_NAME(xevent_major_type_sync);
+        RETURN_METRICS_NAME(xevent_major_type_state_sync);
 
         RETURN_METRICS_NAME(rpc_edge_tx_request);
         RETURN_METRICS_NAME(rpc_edge_query_request);
