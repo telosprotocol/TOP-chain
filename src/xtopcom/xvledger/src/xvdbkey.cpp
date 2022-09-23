@@ -384,7 +384,7 @@ namespace top
         {
             auto zone_bytes = to_bytes(account.get_zone_index());
             auto ledger_bytes = to_bytes(account.get_ledger_id());
-            auto const key_path = std::string{"r/"} + std::string{zone_bytes.begin(), zone_bytes.end()} + std::string{ledger_bytes.begin(), ledger_bytes.end()}  + "/c" + key;
+            auto const key_path = std::string{"r/"} + std::string{zone_bytes.begin(), zone_bytes.end()} + std::string{ledger_bytes.begin(), ledger_bytes.end()}  + "/u" + key;
             return key_path;
         }
 
