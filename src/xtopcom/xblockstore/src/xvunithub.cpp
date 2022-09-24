@@ -745,7 +745,7 @@ namespace top
 
                     std::vector<xobject_ptr_t<base::xvblock_t>> sub_blocks;  
                     if (false == container_block->extract_sub_blocks(sub_blocks)) {
-                        xerror("xvblockstore_impl::store_block,fail-extract_sub_blocks for table block(%s)", container_block->dump().c_str(), (int)sub_blocks.size());   
+                        xerror("xvblockstore_impl::store_block,fail-extract_sub_blocks for table block(%s)", container_block->dump().c_str());
                         return false;                   
                     }                 
 

@@ -19,11 +19,15 @@ class xunitstate_ctx_t {
     xunitstate_ctx_t(const data::xunitstate_ptr_t & unitstate, const data::xblock_ptr_t & prev_block);
 
  public:
-    std::string                         get_address() const {return m_cur_unitstate->account_address().value();}
+    // common::xaccount_address_t const&   get_address() const {return m_cur_unitstate->account_address();}
     const data::xunitstate_ptr_t &      get_unitstate() const {return m_cur_unitstate;}
     const data::xblock_ptr_t &          get_prev_block() const {return m_prev_block;} 
+    std::string const&                  get_unit_hash() const{return m_unit_hash;}
+
+    void                                set_unit_hash(std::string const& unit_hash);
 
  private:
+    std::string                         m_unit_hash;
     data::xunitstate_ptr_t              m_cur_unitstate{nullptr};
     data::xblock_ptr_t                  m_prev_block{nullptr};
 };

@@ -192,12 +192,14 @@ std::vector<std::pair<xblock_ptr_t, base::xaccount_index_t>> xtable_maker_t::mak
     for (auto & unitctx : unitctxs) {
         xunitbuilder_para_t unit_para;  // TODO(jimmy)   put last block hash to unitstate from accountindex    
         data::xblock_ptr_t unitblock = xunitbuilder_t::make_block_v2(unitctx->get_unitstate(), unit_para, cs_para);
-        if (nullptr == unitblock) {
+        if (nullptr == unitblock || unitblock->get_block_hash().empty()) {
             ec = blockmaker::error::xerrc_t::blockmaker_make_unit_fail;
             // should not fail
             xerror("xtable_maker_t::make_units_v2 fail-make unit.is_leader=%d,%s,prev=%s", is_leader, cs_para.dump().c_str(), unitctx->get_prev_block()->dump().c_str());
             return {};
         }
+
+        unitctx->set_unit_hash(unitblock->get_block_hash());
 
         data::xaccount_index_t aindex = data::xaccount_index_t(unitblock->get_height(),
                                                                unitblock->get_block_hash(),
@@ -391,7 +393,7 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
     }
 
     if (new_version) {
-        tableblock->set_excontainer(std::make_shared<xtable_mpt_container>(table_mpt));
+        tableblock->set_excontainer(std::make_shared<xtable_mpt_container>(statectx_ptr));
     }
 
     return tableblock;
@@ -776,11 +778,13 @@ std::shared_ptr<state_mpt::xtop_state_mpt> xtable_maker_t::create_new_mpt(const 
                                                                           const std::vector<std::pair<xblock_ptr_t, base::xaccount_index_t>> & batch_unit_and_index) {
     std::error_code ec;
     // todo(nathan):add param show that mpt is with unit state.
-    auto mpt = state_mpt::xtop_state_mpt::create(get_account(), last_mpt_root, base::xvchain_t::instance().get_xdbstore(), state_mpt::xstate_mpt_cache_t::instance(), ec);
-    if (ec) {
-        xwarn("xtable_maker_t::create_new_mpt create mpt fail.");
-        return nullptr;
-    }
+    // auto mpt = state_mpt::xtop_state_mpt::create(get_account(), last_mpt_root, base::xvchain_t::instance().get_xdbstore(), state_mpt::xstate_mpt_cache_t::instance(), ec);
+    // if (ec) {
+    //     xwarn("xtable_maker_t::create_new_mpt create mpt fail.");
+    //     return nullptr;
+    // }
+    auto mpt = table_state_ctx->get_prev_tablestate_ext()->get_state_mpt();
+    xassert(nullptr != mpt);
 
     // todo:delete in v1.8
     if (last_mpt_root == xhash256_t{}) {  // TODO(jimmy)  delete in v1.8

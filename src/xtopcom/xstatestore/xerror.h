@@ -19,12 +19,16 @@ enum class xenum_errc {
     statestore_load_tableblock_err,
     statestore_load_tableblock_output_err,
     statestore_load_unitblock_err,
+    statestore_load_tablestate_err,
     statestore_block_root_unmatch_mpt_root_err,
     statestore_tablestate_exec_fail,
     statestore_block_unmatch_prev_err,
     statestore_try_limit_arrive_err,
     statestore_cannot_execute_for_long_distance_err,
-    statestore_need_sync_err,
+    statestore_db_write_err,
+    statestore_db_read_abnormal_err,
+    statestore_binlog_apply_err,
+    statestore_block_invalid_err,
 };
 using xerrc_t = xenum_errc;
 

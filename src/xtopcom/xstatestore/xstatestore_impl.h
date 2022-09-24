@@ -54,6 +54,7 @@ class xstatestore_impl_t : public xstatestore_face_t {
     virtual void on_table_block_committed(base::xvblock_t* block) const override;
     virtual uint64_t get_latest_executed_block_height(common::xaccount_address_t const & table_address) const override;
     virtual bool set_state_sync_info(common::xaccount_address_t const & table_address, const xstate_sync_info_t & state_sync_info) override;
+    virtual xtablestate_ext_ptr_t do_commit_table_all_states(base::xvblock_t* current_block, xtablestate_store_ptr_t const& tablestate_store, std::error_code & ec) const override;
 
  private:
     static base::xauto_ptr<base::xvblock_t> get_latest_connectted_state_changed_block(base::xvblockstore_t* blockstore, const base::xvaccount_t & account);

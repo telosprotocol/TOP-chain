@@ -33,6 +33,8 @@ namespace top
                 XMETRICS_GAUGE(metrics::store_state_unit_write, 1);
             }
             
+            // const std::string state_db_key = xvdbkey_t::create_prunable_state_key(target_account,target_state.get_block_height(),target_block_hash);
+
             std::string state_db_key;
             if (target_state.get_block_level() == enum_xvblock_level_unit) {
                 auto table_addr = xvaccount_t::make_table_account_address(target_account);
@@ -72,8 +74,17 @@ namespace top
         }
         xvbstate_t*     xvblkstatestore_t::read_state_from_db(const xvaccount_t & target_account, uint64_t block_height, const std::string & block_hash)
         {
+
+            std::string state_db_key;
+            if (!target_account.is_table_address()) {
+                auto table_addr = xvaccount_t::make_table_account_address(target_account);
+                state_db_key = xvdbkey_t::create_prunable_mpt_unit_key(table_addr, block_hash);
+            } else {
+                state_db_key = xvdbkey_t::create_prunable_state_key(target_account,block_height,block_hash);
+            }
+
             XMETRICS_GAUGE(metrics::store_state_read, 1);
-            const std::string state_db_key = xvdbkey_t::create_prunable_state_key(target_account,block_height,block_hash);
+            // const std::string state_db_key = xvdbkey_t::create_prunable_state_key(target_account,block_height,block_hash);
             const std::string state_db_bin = xvchain_t::instance().get_xdbstore()->get_value(state_db_key);
             if(state_db_bin.empty())
             {

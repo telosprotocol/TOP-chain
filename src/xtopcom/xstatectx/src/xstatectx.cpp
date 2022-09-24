@@ -21,7 +21,7 @@
 NS_BEG2(top, statectx)
 
 xstatectx_t::xstatectx_t(base::xvblock_t* prev_block, const statestore::xtablestate_ext_ptr_t & prev_table_state, base::xvblock_t* commit_block, const statestore::xtablestate_ext_ptr_t & commit_table_state, const xstatectx_para_t & para)
-: m_statectx_base(prev_block, prev_table_state, commit_block, commit_table_state, para.m_clock), m_statectx_para(para) {
+: m_prev_tablestate_ext(prev_table_state), m_statectx_base(prev_block, prev_table_state, commit_block, commit_table_state, para.m_clock), m_statectx_para(para) {
     // create proposal table state for context
     xobject_ptr_t<base::xvbstate_t> proposal_bstate = xstatectx_base_t::create_proposal_bstate(prev_block, prev_table_state->get_table_state()->get_bstate().get(), para.m_clock);
     data::xtablestate_ptr_t proposal_table_state = std::make_shared<data::xtable_bstate_t>(proposal_bstate.get(), false);  // change to modified state
@@ -165,6 +165,31 @@ size_t xstatectx_t::do_snapshot() {
         snapshot_size += _size;
     }
     return snapshot_size;
+}
+
+void xstatectx_t::do_commit(base::xvblock_t* current_block) {
+    evm_common::xh256_t state_root;
+    auto ret = data::xblockextract_t::get_state_root(current_block, state_root);
+    if (!ret) {  // should not happen
+        xerror("xstatectx_t::do_commit get state root fail. block:%s", current_block->dump().c_str());
+        return;
+    }
+    xhash256_t state_root_hash = xhash256_t(state_root.to_bytes());
+
+    std::vector<std::pair<data::xunitstate_ptr_t, std::string>> unitstate_units;
+    std::vector<statectx::xunitstate_ctx_ptr_t> unitctxs = get_modified_unit_ctx();
+    for (auto & unitctx : unitctxs) {
+        unitstate_units.push_back(std::make_pair(unitctx->get_unitstate(), unitctx->get_unit_hash()));
+    }
+
+    std::error_code ec;
+    statestore::xtablestate_store_ptr_t tablestate_store = std::make_shared<statestore::xtablestate_store_t>(get_table_state(), m_prev_tablestate_ext->get_state_mpt(), state_root_hash, unitstate_units);
+    statestore::xstatestore_hub_t::instance()->do_commit_table_all_states(current_block, tablestate_store, ec);
+    if (ec) {
+        xerror("xstatectx_t::do_commit fail. block:%s", current_block->dump().c_str());
+        return;
+    }
+    xdbg("xstatectx_t::do_commit succ. block:%s", current_block->dump().c_str());
 }
 
 bool xstatectx_t::is_state_dirty() const {

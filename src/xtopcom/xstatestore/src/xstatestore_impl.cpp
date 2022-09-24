@@ -55,6 +55,11 @@ void xstatestore_impl_t::on_table_block_committed(base::xvblock_t* block) const 
     tablestore->on_table_block_committed(block);
 }
 
+xtablestate_ext_ptr_t xstatestore_impl_t::do_commit_table_all_states(base::xvblock_t* current_block, xtablestate_store_ptr_t const& tablestate_store, std::error_code & ec) const {
+    xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(current_block->get_account());
+    return tablestore->do_commit_table_all_states(current_block, tablestate_store, ec);
+}
+
 void xstatestore_impl_t::on_block_to_db_event(mbus::xevent_ptr_t e) {
     if (e->minor_type != mbus::xevent_store_t::type_block_committed) {
         return;
@@ -170,7 +175,7 @@ xstatestore_table_ptr_t xstatestore_impl_t::get_table_statestore_from_table_addr
 
 data::xunitstate_ptr_t xstatestore_impl_t::get_unit_state_from_block(common::xaccount_address_t const & account_address, base::xvblock_t * target_block) const {
     xstatestore_table_ptr_t tablestore = get_table_statestore_from_unit_addr(account_address);
-    return tablestore->get_unit_state_from_block(target_block);
+    return tablestore->get_unit_state_from_block(account_address, target_block);
 }
 
 xtablestate_ext_ptr_t xstatestore_impl_t::get_tablestate_ext_from_block(base::xvblock_t* target_block) const {
@@ -479,15 +484,7 @@ mbus::xmessage_bus_t * xstatestore_impl_t::get_mbus() const {
 }
 
 void xstatestore_impl_t::update_node_type(common::xnode_type_t combined_node_type) {
-    m_combined_node_type = combined_node_type;
-}
-
-common::xnode_type_t xstatestore_impl_t::get_node_type() const {
-    return m_combined_node_type;
-}
-
-bool xstatestore_impl_t::is_archive_node() const {
-    return common::has<common::xnode_type_t::storage_archive>(get_node_type());
+    m_store_base.update_node_type(combined_node_type);
 }
 
 bool xstatestore_timer_t::on_timer_fire(const int32_t thread_id,
