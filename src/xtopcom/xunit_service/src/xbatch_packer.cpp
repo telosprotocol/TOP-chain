@@ -362,7 +362,8 @@ bool xbatch_packer::check_state_sync(base::xvblock_t * latest_committed_block) {
         std::error_code ec;
         xhash256_t root_hash(state_root.to_bytes());
         // todo(nathan): enable unitstate sync
-        get_resources()->get_state_downloader()->sync_state(get_account(), root_hash, false, ec);
+        // TODO: add table state hash
+        get_resources()->get_state_downloader()->sync_state(common::xaccount_address_t{get_account()}, 0, xhash256_t(), root_hash, false, ec);
         xinfo("xbatch_packer::check_state_sync try sync state.table:%s,height:%llu,root:%s ec:%s", get_account().c_str(), latest_committed_height, root_hash.as_hex_str().c_str(), ec.message().c_str());
         if (!ec) {
             statestore::xstatestore_hub_t::instance()->set_state_sync_info(

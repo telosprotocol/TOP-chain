@@ -21,6 +21,8 @@ constexpr uint32_t ideal_batch_size = 100 * 1024;
 constexpr uint32_t fetch_num = 64;
 
 std::shared_ptr<xtop_state_sync> xtop_state_sync::new_state_sync(const common::xaccount_address_t & table,
+                                                                 const uint64_t height,
+                                                                 const xhash256_t & hash,
                                                                  const xhash256_t & root,
                                                                  std::function<state_sync_peers_t()> peers,
                                                                  std::function<void(const state_req &)> track_req,
@@ -28,7 +30,9 @@ std::shared_ptr<xtop_state_sync> xtop_state_sync::new_state_sync(const common::x
                                                                  bool sync_unit) {
     auto sync = std::make_shared<xtop_state_sync>();
     sync->m_sched = state_mpt::new_state_sync(table, root, db, sync_unit);
-    sync->m_table = common::xaccount_address_t{table};
+    sync->m_table = table;
+    sync->m_height = height;
+    sync->m_table_state_hash = hash;
     sync->m_root = root;
     sync->m_peers_func = peers;
     sync->m_track_func = track_req;
@@ -38,8 +42,27 @@ std::shared_ptr<xtop_state_sync> xtop_state_sync::new_state_sync(const common::x
 }
 
 void xtop_state_sync::run() {
-    loop(m_ec);
+    do {
+        if (m_table_state_hash != xhash256_t()) {
+            sync_table(m_ec);
+            if (m_ec) {
+                xwarn("xtop_state_sync::run sync_table error: %s, %s", m_ec.category().name(), m_ec.message().c_str());
+                break;
+            }
+        }
+        loop(m_ec);
+        if (m_ec) {
+            xwarn("xtop_state_sync::run loop error: %s, %s", m_ec.category().name(), m_ec.message().c_str());
+            break;
+        }
+    } while(0);
+
     m_done = true;
+    return;
+}
+
+void xtop_state_sync::sync_table_finish() {
+    m_sync_table_finish = true;
 }
 
 void xtop_state_sync::wait() const {
@@ -82,10 +105,41 @@ void xtop_state_sync::pop_deliver_req() {
     m_deliver_list.pop_back();
 }
 
+void xtop_state_sync::sync_table(std::error_code & ec) {
+    base::xstream_t stream(base::xcontext_t::instance());
+    stream << m_table.value();
+    stream << m_height;
+    stream << m_table_state_hash.to_bytes();
+    stream << rand();   // defend from filter
+
+    uint32_t cnt{0};
+    while (!m_sync_table_finish) {
+        auto network = available_network();
+        if (network == nullptr) {
+            xwarn("xtop_state_sync::sync_table no network availble");
+            ec = error::xerrc_t::state_network_invalid;
+            m_cancel = true;
+            return;
+        }
+        if (cnt % 10 == 0) {
+            send_message(network, {stream.data(), stream.data() + stream.size()}, xmessage_id_sync_table_request);
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        cnt++;
+        if (cnt > 10 * 60) {
+            // 1 min overtime
+            xwarn("xtop_state_sync::sync_table overtime, cnt: %u", cnt);
+            ec = error::xerrc_t::state_sync_overtime;
+            m_cancel = true;
+            return;
+        }
+    }
+}
+
 void xtop_state_sync::loop(std::error_code & ec) {
     xinfo("xtop_state_sync::loop main loop");
-    m_started = true;
 
+    uint32_t cnt{0};
     while (m_sched->Pending() > 0) {
         commit(false, ec);
         if (ec) {
@@ -112,6 +166,14 @@ void xtop_state_sync::loop(std::error_code & ec) {
 
         if (m_deliver_list.empty()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            cnt++;
+            if (cnt > 10 * 60 * 10) {
+                // 10 min overtime
+                xwarn("xtop_state_sync::loop overtime, cnt: %u", cnt);
+                ec = error::xerrc_t::state_sync_overtime;
+                m_cancel = true;
+                return;
+            }
             continue;
         }
         auto req = m_deliver_list.front();
@@ -153,7 +215,7 @@ void xtop_state_sync::assign_tasks(std::shared_ptr<vnetwork::xvnetwork_driver_fa
         return;
     }
     base::xstream_t stream(base::xcontext_t::instance());
-    stream << m_table;
+    stream << m_table.value();
     stream << m_req_sequence_id;
     std::vector<xbytes_t> nodes_bytes;
     std::vector<xbytes_t> units_bytes;
@@ -167,11 +229,19 @@ void xtop_state_sync::assign_tasks(std::shared_ptr<vnetwork::xvnetwork_driver_fa
     }
     stream << nodes_bytes;
     stream << units_bytes;
-    vnetwork::xmessage_t _msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xmessage_id_sync_request);
+    stream << rand();
+    send_message(network, {stream.data(), stream.data() + stream.size()}, xmessage_id_sync_node_request);
+    req.start = base::xtime_utl::time_now_ms();
+    req.id = m_req_sequence_id++;
+    m_track_func(req);
+}
+
+void xtop_state_sync::send_message(std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network, const xbytes_t & msg, common::xmessage_id_t id) {
+    vnetwork::xmessage_t _msg = vnetwork::xmessage_t(msg, id);
     std::error_code ec;
     auto fullnode_list = network->fullnode_addresses(ec);
     if (fullnode_list.empty() || ec) {
-        xwarn("xtop_state_sync::assign_tasks network can not find fullnodes, %s, %s", ec.category().name(), ec.message().c_str());
+        xwarn("xtop_state_sync::send_message network can not find fullnodes, %s, %s", ec.category().name(), ec.message().c_str());
         m_ec = ec ? ec : error::xerrc_t::state_network_invalid;
         m_cancel = true;
         return;
@@ -179,12 +249,10 @@ void xtop_state_sync::assign_tasks(std::shared_ptr<vnetwork::xvnetwork_driver_fa
     auto random_fullnode = fullnode_list.at(RandomUint32() % fullnode_list.size());
     network->send_to(random_fullnode, _msg, ec);
     if (ec) {
-        xwarn("xtop_state_sync::assign_tasks send net error, %s, %s", random_fullnode.account_address().c_str(), network->address().account_address().c_str());
+        xwarn("xtop_state_sync::send_message send net error, %s, %s", random_fullnode.account_address().c_str(), network->address().account_address().c_str());
     }
-    req.start = base::xtime_utl::time_now_ms();
-    req.id = m_req_sequence_id++;
-    m_track_func(req);
 }
+
 
 void xtop_state_sync::fill_tasks(uint32_t n, state_req & req, std::vector<xhash256_t> & nodes_out, std::vector<xhash256_t> & units_out) {
     if (n > m_trie_tasks.size() + m_unit_tasks.size()) {
@@ -236,14 +304,14 @@ void xtop_state_sync::process(state_req & req, std::error_code & ec) {
     }
     for (auto blob : req.units_response) {
         xdbg("xtop_state_sync::process unit blob: %s", to_hex(blob).c_str());
-        auto hash = process_node_data(blob, ec);
+        auto hash = process_unit_data(blob, ec);
         if (ec) {
             if (ec != evm_common::error::make_error_code(evm_common::error::xerrc_t::trie_sync_not_requested) && 
                 ec != evm_common::error::make_error_code(evm_common::error::xerrc_t::trie_sync_already_processed)) {
                 xwarn("xtop_state_sync::process invalid state node: %s, %s %s", hash.as_hex_str().c_str(), ec.category().name(), ec.message().c_str());
                 return;
             }
-            xwarn("xtop_state_sync::process process_node_data abnormal: %s, %s %s", hash.as_hex_str().c_str(), ec.category().name(), ec.message().c_str());
+            xwarn("xtop_state_sync::process process_unit_data abnormal: %s, %s %s", hash.as_hex_str().c_str(), ec.category().name(), ec.message().c_str());
         }
         req.unit_tasks.erase(hash);
     }
@@ -274,7 +342,7 @@ xhash256_t xtop_state_sync::process_unit_data(xbytes_t & blob, std::error_code &
     res.Data = blob;
     m_sched->Process(res, ec);
     if (ec) {
-        xassert(false);
+        xwarn("xtop_state_sync::process_unit_data hash: %s, data: %s, error %s", to_hex(res.Hash).c_str(), to_hex(res.Data).c_str(), ec.message().c_str());
     }
     xinfo("xtop_state_sync::process_unit_data hash: %s, data: %s", res.Hash.as_hex_str().c_str(), to_hex(res.Data).c_str());
     return res.Hash;

@@ -20,6 +20,9 @@ static char const * const errc_to_string(int code) {
     case xerrc_t::state_sync_cancel:
         return "state data download canceled";
 
+    case xerrc_t::state_sync_overtime:
+        return "state sync overtime";
+
     case xerrc_t::state_network_invalid:
         return "state network invalid";
 

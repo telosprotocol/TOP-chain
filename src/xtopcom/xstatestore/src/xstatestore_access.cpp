@@ -163,7 +163,7 @@ xtablestate_ext_ptr_t xstatestore_accessor_t::read_table_bstate_from_cache(commo
 xtablestate_ext_ptr_t xstatestore_accessor_t::read_table_bstate_from_db(common::xaccount_address_t const& address, base::xvblock_t* block) const {
     xhash256_t stateroot = m_store_base.get_state_root_from_block(block);
     std::error_code ec;
-    std::shared_ptr<state_mpt::xtop_state_mpt> mpt = state_mpt::xtop_state_mpt::create(block->get_account(), stateroot, m_store_base.get_dbstore(), state_mpt::xstate_mpt_cache_t::instance(), ec);
+    std::shared_ptr<state_mpt::xtop_state_mpt> mpt = state_mpt::xtop_state_mpt::create(common::xaccount_address_t{block->get_account()}, stateroot, m_store_base.get_dbstore(), state_mpt::xstate_mpt_cache_t::instance(), ec);
     if (ec) {
         xwarn("xstatestore_accessor_t::read_table_bstate_from_db fail-create mpt.block=%s", block->dump().c_str());
         return nullptr;
