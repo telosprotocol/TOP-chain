@@ -7,6 +7,7 @@
 #include "../xvstatestore.h"
 #include "../xvledger.h"
 #include "../xvdbkey.h"
+#include "xvledger/xvaccount.h"
 #include "xmetrics/xmetrics.h"
 
 namespace top
@@ -32,7 +33,13 @@ namespace top
                 XMETRICS_GAUGE(metrics::store_state_unit_write, 1);
             }
             
-            const std::string state_db_key = xvdbkey_t::create_prunable_state_key(target_account,target_state.get_block_height(),target_block_hash);
+            std::string state_db_key;
+            if (target_state.get_block_level() == enum_xvblock_level_unit) {
+                auto table_addr = xvaccount_t::make_table_account_address(target_account);
+                state_db_key = xvdbkey_t::create_prunable_mpt_unit_key(table_addr, target_block_hash);
+            } else {
+                state_db_key = xvdbkey_t::create_prunable_state_key(target_account,target_state.get_block_height(),target_block_hash);
+            }
 
             std::string state_db_bin;
             if(target_state.serialize_to_string(state_db_bin))

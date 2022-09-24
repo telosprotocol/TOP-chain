@@ -6,12 +6,12 @@
 #include "xbasic/xmemory.hpp"
 #include "xdata/xtable_bstate.h"
 #include "xdata/xblockbuild.h"
+#include "xmbus/xevent_behind.h"
 #include "xstatestore/xstatestore_exec.h"
 #include "xstatestore/xerror.h"
+#include "xvledger/xvledger.h"
 
 NS_BEG2(top, statestore)
-
-
 
 xstatestore_executor_t::xstatestore_executor_t(common::xaccount_address_t const& table_addr)
 : m_table_addr{table_addr} {
@@ -223,7 +223,7 @@ void xstatestore_executor_t::update_execute_from_execute_height() const {
         return;     
     }
 
-    for (uint64_t height=old_execute_height+1; height <= max_height; height++) {
+    for (uint64_t height = old_execute_height + 1; height <= max_height; height++) {
         xobject_ptr_t<base::xvblock_t> cur_block = m_statestore_base.get_blockstore()->load_block_object(m_table_addr.vaccount(), height, base::enum_xvblock_flag_committed, false);
         if (nullptr == cur_block) {
             xwarn("xstatestore_executor_t::update_execute_from_execute_height fail-load committed block.account=%s,height=%ld", m_table_addr.value().c_str(), height);
@@ -336,6 +336,33 @@ void xstatestore_executor_t::set_latest_executed_info(uint64_t height,const std:
 uint64_t xstatestore_executor_t::get_latest_executed_block_height() const {
     std::lock_guard<std::mutex> l(m_execute_lock);
     return m_executed_height;
+}
+
+void xstatestore_executor_t::raise_execute_height(const xstate_sync_info_t & sync_info) {
+    // check if root and table state are already stored.
+    std::error_code ec;
+    auto mpt =
+        state_mpt::xtop_state_mpt::create(m_table_addr.to_string(), sync_info.get_root_hash(), m_statestore_base.get_dbstore(), state_mpt::xstate_mpt_cache_t::instance(), ec);
+    if (mpt == nullptr || ec) {
+        xerror("xstatestore_executor_t::raise_execute_height sync result is succ but mpt create fail.table:%s,h:%llu,root:%s",
+               m_table_addr.value().c_str(),
+               sync_info.get_height(),
+               sync_info.get_root_hash().as_hex_str().c_str());
+        return;
+    }
+
+    xobject_ptr_t<base::xvblock_t> block = m_statestore_base.get_blockstore()->load_block_object(m_table_addr.vaccount(), sync_info.get_height(), sync_info.get_blockhash(), false);
+    auto state = m_statestore_base.get_blkstate_store()->get_block_state(block.get());
+    if (state == nullptr) {
+        xwarn("xstatestore_executor_t::raise_execute_height fail-get_block_state. block=%s", block->dump().c_str());
+        return;
+    }
+
+    xinfo("xstatestore_executor_t::raise_execute_height succ.table:%s,h:%llu,root:%s",
+          m_table_addr.value().c_str(),
+          sync_info.get_height(),
+          sync_info.get_root_hash().as_hex_str().c_str());
+    set_latest_executed_info(sync_info.get_height(), sync_info.get_blockhash());
 }
 
 NS_END2

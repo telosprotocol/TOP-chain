@@ -17,7 +17,6 @@
 #include "xunit_service/xtimer_block_maker.h"
 #include "xunit_service/xtimer_dispatcher.h"
 #include "xunit_service/xworkpool_dispatcher.h"
-#include "xstate_sync/xstate_downloader.h"
 
 #include <cinttypes>
 
@@ -50,7 +49,7 @@ xcons_service_mgr_ptr xcons_mgr_build(std::string const & node_account,
     std::shared_ptr<xunit_service::xnetwork_proxy_face> network = std::make_shared<xunit_service::xnetwork_proxy>(face, router);
 
     // global lifecyle
-    auto p_res = new xunit_service::xresources(node_account, work_pool, xbft_work_pool, certauth, blockstore, network, pelection, tx_timer, accessor, mbus, txpool);
+    auto p_res = new xunit_service::xresources(node_account, work_pool, xbft_work_pool, certauth, blockstore, network, pelection, tx_timer, accessor, mbus, txpool, downloader);
     auto p_para = new xunit_service::xconsensus_para(xconsensus::enum_xconsensus_pacemaker_type_clock_cert,  // useless parameter
                                                      base::enum_xconsensus_threshold_2_of_3);
     auto p_srv_para = std::make_shared<xunit_service::xcons_service_para>(p_res, p_para);
@@ -58,15 +57,14 @@ xcons_service_mgr_ptr xcons_mgr_build(std::string const & node_account,
     auto block_maker = blockmaker::xblockmaker_factory::create_table_proposal(make_observer(blockstore.get()), txpool, mbus);
     p_para->add_block_maker(xunit_service::e_table, block_maker);
     p_para->add_block_maker(xunit_service::e_timer, std::make_shared<xunit_service::xtimer_block_maker_t>(p_srv_para));
-    return std::make_shared<xunit_service::xcons_service_mgr>(mbus, network, std::make_shared<xdispatcher_builder>(), p_srv_para, downloader);
+    return std::make_shared<xunit_service::xcons_service_mgr>(mbus, network, std::make_shared<xdispatcher_builder>(), p_srv_para);
 }
 
 xcons_service_mgr::xcons_service_mgr(observer_ptr<mbus::xmessage_bus_face_t> const    &mb,
                                      const std::shared_ptr<xnetwork_proxy_face> &     network_proxy,
                                      const xcons_dispatcher_builder_ptr &             dispatcher_builder,
-                                     const std::shared_ptr<xcons_service_para_face> & para,
-                                     const std::shared_ptr<state_sync::xstate_downloader_t> & downloader)
-  : m_mbus(mb), m_dispachter_builder(dispatcher_builder), m_network_proxy(network_proxy), m_para(para), m_downloader(downloader) {
+                                     const std::shared_ptr<xcons_service_para_face> & para)
+  : m_mbus(mb), m_dispachter_builder(dispatcher_builder), m_network_proxy(network_proxy), m_para(para) {
     xunit_dbg("xcons_service_mgr::xcons_service_mgr,create,this=%p", this);
 }
 
