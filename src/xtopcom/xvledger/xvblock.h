@@ -599,7 +599,7 @@ namespace top
 
         class xvblock_excontainer_base {
         public:
-            virtual void commit(){}
+            virtual void commit(base::xvblock_t* current_block){}
         };
 
         class xvsubblock_index_t {

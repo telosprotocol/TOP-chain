@@ -382,9 +382,22 @@ namespace top
 
         const std::string xvdbkey_t::create_prunable_mpt_unit_key(const xvaccount_t & account, const std::string & key)
         {
+            xassert(account.is_table_address());
             auto zone_bytes = to_bytes(account.get_zone_index());
             auto ledger_bytes = to_bytes(account.get_ledger_id());
             auto const key_path = std::string{"r/"} + std::string{zone_bytes.begin(), zone_bytes.end()} + std::string{ledger_bytes.begin(), ledger_bytes.end()}  + "/u" + key;
+            return key_path;
+        }
+        const std::string xvdbkey_t::create_prunable_mpt_key_prefix(const xvaccount_t & account)
+        {
+            auto zone_bytes = to_bytes(account.get_zone_index());
+            auto ledger_bytes = to_bytes(account.get_ledger_id());
+            auto const key_path_prefix = std::string{"r/"} + std::string{zone_bytes.begin(), zone_bytes.end()} + std::string{ledger_bytes.begin(), ledger_bytes.end()}  + "/u";
+            return key_path_prefix;
+        }
+        const std::string xvdbkey_t::create_prunable_mpt_unit_key(std::string const& prefix, const std::string & key)
+        {
+            auto const key_path = prefix  + key;
             return key_path;
         }
 

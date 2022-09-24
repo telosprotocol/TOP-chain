@@ -611,7 +611,7 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
         xassert(vblock->is_body_and_offdata_ready(false));
 
         if (vblock->get_excontainer() != nullptr) {
-            vblock->get_excontainer()->commit();
+            vblock->get_excontainer()->commit(vblock);
         }
         vblock->add_ref();
         mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_consensus_data_t>(vblock, is_leader);

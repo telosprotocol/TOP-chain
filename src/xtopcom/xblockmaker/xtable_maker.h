@@ -140,21 +140,16 @@ public:
 
 using xtable_maker_ptr_t = xobject_ptr_t<xtable_maker_t>;
 
+// TODO(jimmy) the whold table state do commit
 class xtable_mpt_container : public base::xvblock_excontainer_base {
 public:
-   xtable_mpt_container(std::shared_ptr<state_mpt::xtop_state_mpt> mpt) : m_mpt(mpt) {}
-   virtual void commit() override {
-       std::error_code ec;
-       auto hash = m_mpt->commit(ec);
-       if (ec) {
-           xerror("xtable_mpt_container::commit fail hash:%s", hash.as_hex_str().c_str());
-       } else {
-         xdbg("xtable_mpt_container::commit succ hash:%s", hash.as_hex_str().c_str());
-       }
+   xtable_mpt_container(statectx::xstatectx_face_ptr_t const& _ctx) : m_statectx(_ctx) {}
+   virtual void commit(base::xvblock_t* current_block) override {
+       m_statectx->do_commit(current_block);
    }
 
 private:
-   std::shared_ptr<state_mpt::xtop_state_mpt> m_mpt;
+   statectx::xstatectx_face_ptr_t m_statectx;
 };
 
 NS_END2

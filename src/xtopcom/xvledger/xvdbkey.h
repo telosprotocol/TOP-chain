@@ -106,6 +106,8 @@ namespace top
            static const std::string  create_prunable_unit_proof_key(const xvaccount_t & account, const uint64_t target_height);
            static const std::string  create_prunable_mpt_key(const xvaccount_t & account, const std::string & key);
            static const std::string  create_prunable_mpt_unit_key(const xvaccount_t & account, const std::string & key);
+           static const std::string  create_prunable_mpt_key_prefix(const xvaccount_t & account);
+           static const std::string  create_prunable_mpt_unit_key(std::string const& prefix, const std::string & key);
            static const std::string  get_account_prefix_key(const std::string & key);
        };
 

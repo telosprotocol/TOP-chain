@@ -131,7 +131,8 @@ class xdatamock_unit {
             genesis_unit = xblocktool_t::create_genesis_empty_unit(get_account());
         } else {
             genesis_unit = xblocktool_t::create_genesis_lightunit(get_account(), init_balance);
-        }        
+        }
+        // std::cout << "build_genesis_block " << genesis_unit->dump() << " init_balance " << init_balance << " binlog_size=" << genesis_unit->get_binlog().size() << std::endl;
         xblock_ptr_t block;
         block.attach((xblock_t*)genesis_unit);
         return block;
