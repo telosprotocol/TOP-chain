@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include "assert.h"
 #include "xbase/xns_macro.h"
 #include "xbasic/xhash.hpp"
 #include "xbasic/xhex.h"
@@ -13,6 +12,7 @@
 #include "xevm_common/trie/xtrie_node_coding.h"
 
 #include <algorithm>
+#include <cassert>
 #include <tuple>
 #include <type_traits>
 
@@ -32,10 +32,11 @@ private:
 
     std::size_t unhashed{0};
 
-public:
+protected:
     xtop_trie(xtrie_db_ptr_t db) : m_db{db} {
     }
 
+public:
     xtrie_db_ptr_t trie_db() const {
         return m_db;
     }
@@ -132,8 +133,8 @@ private:
         return (a.size() == b.size()) && std::equal(a.begin(), a.end(), b.begin());
     }
 
-    inline nodeFlag newFlag() {
-        nodeFlag f;
+    inline xnode_flag_t newFlag() {
+        xnode_flag_t f;
         f.dirty = true;
         return f;
     }

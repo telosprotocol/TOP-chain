@@ -67,7 +67,7 @@ uint8_t encodeVarInt(uint64_t size, std::vector<uint8_t> & data);
 /// Decodes an integer as a variable-length integer. See encodeVarInt().
 ///
 /// @returns a tuple with a success indicator and the decoded integer.
-std::tuple<bool, uint64_t> decodeVarInt(const bytes & in, size_t & indexInOut);
+std::tuple<bool, uint64_t> decodeVarInt(const xbytes_t & in, size_t & indexInOut);
 
 /// Encodes a 16-bit big-endian value into the provided buffer.
 inline void encode16BE(uint16_t val, std::vector<uint8_t> & data) {
@@ -109,7 +109,7 @@ void encodeString(const std::string & str, std::vector<uint8_t> & data);
 
 /// Decodes an ASCII string prefixed by its length (varInt)
 /// @returns a tuple with a success indicator and the decoded string.
-std::tuple<bool, std::string> decodeString(const bytes & in, size_t & indexInOut);
+std::tuple<bool, std::string> decodeString(const xbytes_t & in, size_t & indexInOut);
 
 }  // namespace evm_common
 }  // namespace top

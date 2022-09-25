@@ -43,7 +43,7 @@ bigint xethash_t::calc_difficulty(const uint64_t time, const xeth_header_t & hea
     bigint parent_time = bigint(header.time);
     bigint timestampDiff = current_time - parent_time;
     bigint adjFactor;
-    bytes out = RLP::encodeList<bytes>({});
+    xbytes_t out = RLP::encodeList<xbytes_t>({});
     h256 hash = FixedHash<32>(utl::xkeccak256_t::digest(out.data(), out.size()).data(), h256::ConstructFromPointer);
     if (header.uncle_hash == hash) {
         adjFactor = 1 - timestampDiff / 9;

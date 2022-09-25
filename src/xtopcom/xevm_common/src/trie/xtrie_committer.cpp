@@ -39,23 +39,23 @@ std::pair<xtrie_node_face_ptr_t, int32_t> xtop_trie_committer::commit(xtrie_node
     case xtrie_node_type_t::shortnode: {
         auto cn = std::make_shared<xtrie_short_node_t>(*(static_cast<xtrie_short_node_t *>(n.get())));
         // Commit child
-        auto collapsed = cn->copy();
+        auto collapsed = cn->clone();
 
         // If the child is fullNode, recursively commit,
         // otherwise it can only be hashNode or valueNode.
         int32_t childCommitted{0};
-        if (cn->Val->type() == xtrie_node_type_t::fullnode) {
+        if (cn->val->type() == xtrie_node_type_t::fullnode) {
             xtrie_node_face_ptr_t childV;
             int32_t committed;
-            std::tie(childV, committed) = commit(cn->Val, db, ec);
+            std::tie(childV, committed) = commit(cn->val, db, ec);
             if (ec) {
                 return std::make_pair(nullptr, 0);
             }
-            collapsed->Val = childV;
+            collapsed->val = childV;
             childCommitted = committed;
         }
         // The key needs to be copied, since we're delivering it to database
-        collapsed->Key = hexToCompact(cn->Key);
+        collapsed->key = hexToCompact(cn->key);
         auto hashedNode = store(collapsed, db);
         if (hashedNode->type() == xtrie_node_type_t::hashnode) {
             auto hn = std::make_shared<xtrie_hash_node_t>(*(static_cast<xtrie_hash_node_t *>(hashedNode.get())));
@@ -163,7 +163,7 @@ int32_t xtop_trie_committer::estimateSize(xtrie_node_face_ptr_t n) {
     switch (n->type()) {
     case xtrie_node_type_t::shortnode: {
         auto shortnode = std::make_shared<xtrie_short_node_t>(*(static_cast<xtrie_short_node_t *>(n.get())));
-        return 3 + shortnode->Key.size() + estimateSize(shortnode->Val);
+        return 3 + shortnode->key.size() + estimateSize(shortnode->val);
     }
     case xtrie_node_type_t::fullnode: {
         auto fullnode = std::make_shared<xtrie_full_node_t>(*(static_cast<xtrie_full_node_t *>(n.get())));

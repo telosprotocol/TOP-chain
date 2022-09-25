@@ -264,7 +264,7 @@ xtrie_node_face_ptr_t simplifyNode(xtrie_node_face_ptr_t n) {
     switch (n->type()) {
     case xtrie_node_type_t::shortnode: {
         auto node = std::make_shared<xtrie_short_node_t>(*(static_cast<xtrie_short_node_t *>(n.get())));
-        return std::make_shared<xtrie_raw_short_node_t>(node->Key, simplifyNode(node->Val));
+        return std::make_shared<xtrie_raw_short_node_t>(node->key, simplifyNode(node->val));
     }
     case xtrie_node_type_t::fullnode: {
         auto node = std::make_shared<xtrie_full_node_t>(*(static_cast<xtrie_full_node_t *>(n.get())));
@@ -294,11 +294,11 @@ xtrie_node_face_ptr_t expandNode(xtrie_hash_node_t hash, xtrie_node_face_ptr_t n
     switch (n->type()) {
     case xtrie_node_type_t::rawshortnode: {
         auto node = std::make_shared<xtrie_raw_short_node_t>(*(static_cast<xtrie_raw_short_node_t *>(n.get())));
-        return std::make_shared<xtrie_short_node_t>(compactToHex(node->Key), expandNode(xtrie_hash_node_t{}, node->Val), nodeFlag{hash});
+        return std::make_shared<xtrie_short_node_t>(compactToHex(node->Key), expandNode(xtrie_hash_node_t{}, node->Val), xnode_flag_t{hash});
     }
     case xtrie_node_type_t::rawfullnode: {
         auto node = std::make_shared<xtrie_raw_full_node_t>(*(static_cast<xtrie_raw_full_node_t *>(n.get())));
-        auto fullnode_ptr = std::make_shared<xtrie_full_node_t>(nodeFlag{hash});
+        auto fullnode_ptr = std::make_shared<xtrie_full_node_t>(xnode_flag_t{hash});
         for (std::size_t i = 0; i < fullnode_ptr->Children.size(); ++i) {
             if (node->Children[i] != nullptr) {
                 fullnode_ptr->Children[i] = expandNode(xtrie_hash_node_t{}, node->Children[i]);

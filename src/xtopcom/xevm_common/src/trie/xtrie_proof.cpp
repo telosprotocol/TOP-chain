@@ -57,11 +57,11 @@ std::pair<xbytes_t, xtrie_node_face_ptr_t> get(xtrie_node_face_ptr_t tn, xbytes_
         switch (tn->type()) {
         case xtrie_node_type_t::shortnode: {
             auto n = std::make_shared<xtrie_short_node_t>(*(static_cast<xtrie_short_node_t *>(tn.get())));
-            if (key.size() < n->Key.size() || !std::equal(n->Key.begin(), n->Key.end(), key.begin())) {
+            if (key.size() < n->key.size() || !std::equal(n->key.begin(), n->key.end(), key.begin())) {
                 return std::make_pair(xbytes_t{}, nullptr);
             }
-            tn = n->Val;
-            key = xbytes_t{key.begin() + n->Key.size(), key.end()};
+            tn = n->val;
+            key = xbytes_t{key.begin() + n->key.size(), key.end()};
             if (!skipResolved) {
                 return std::make_pair(key, tn);
             }
