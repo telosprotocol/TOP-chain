@@ -36,6 +36,12 @@ static char const * const errc_to_string(int code) {
     case xerrc_t::trie_db_not_found:
         return "trie db not found";
 
+    case xerrc_t::trie_db_put_error:
+        return "trie db put error";
+
+    case xerrc_t::trie_db_delete_error:
+        return "trie db delete error";
+
     case xerrc_t::rlp_canonint:
         return "rlp: non-canonical integer format";
 

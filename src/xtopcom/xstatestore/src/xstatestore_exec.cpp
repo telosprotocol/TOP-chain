@@ -258,7 +258,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_current_table(base
     data::xtablestate_ptr_t table_bstate = std::make_shared<data::xtable_bstate_t>(current_state.get());
     
     xhash256_t stateroot = m_statestore_base.get_state_root_from_block(current_block);
-    std::shared_ptr<state_mpt::xtop_state_mpt> mpt = state_mpt::xtop_state_mpt::create(current_block->get_account(), stateroot, m_statestore_base.get_dbstore(), state_mpt::xstate_mpt_cache_t::instance(), ec);
+    std::shared_ptr<state_mpt::xtop_state_mpt> mpt = state_mpt::xtop_state_mpt::create(common::xaccount_address_t{current_block->get_account()}, stateroot, m_statestore_base.get_dbstore(), state_mpt::xstate_mpt_cache_t::instance(), ec);
     if (ec) {
         xwarn("xstatestore_executor_t::make_state_from_current_table fail-create mpt.block=%s", current_block->dump().c_str());
         return nullptr;
@@ -303,7 +303,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::write_table_all_states(base::xvblo
         }
     }
     
-    std::shared_ptr<state_mpt::xtop_state_mpt> cur_mpt = state_mpt::xtop_state_mpt::create(current_block->get_account(), tablestate_store->get_state_root(), m_statestore_base.get_dbstore(), state_mpt::xstate_mpt_cache_t::instance(), ec);
+    std::shared_ptr<state_mpt::xtop_state_mpt> cur_mpt = state_mpt::xtop_state_mpt::create(common::xaccount_address_t{current_block->get_account()}, tablestate_store->get_state_root(), m_statestore_base.get_dbstore(), state_mpt::xstate_mpt_cache_t::instance(), ec);
     if (ec) {
         xerror("xstatestore_executor_t::write_table_all_states fail-create mpt.block:%s", current_block->dump().c_str());
         return nullptr;            
@@ -472,7 +472,7 @@ void xstatestore_executor_t::raise_execute_height(const xstate_sync_info_t & syn
     // check if root and table state are already stored.
     std::error_code ec;
     auto mpt =
-        state_mpt::xtop_state_mpt::create(m_table_addr.to_string(), sync_info.get_root_hash(), m_statestore_base.get_dbstore(), state_mpt::xstate_mpt_cache_t::instance(), ec);
+        state_mpt::xtop_state_mpt::create(m_table_addr, sync_info.get_root_hash(), m_statestore_base.get_dbstore(), state_mpt::xstate_mpt_cache_t::instance(), ec);
     if (mpt == nullptr || ec) {
         xerror("xstatestore_executor_t::raise_execute_height sync result is succ but mpt create fail.table:%s,h:%llu,root:%s",
                m_table_addr.value().c_str(),

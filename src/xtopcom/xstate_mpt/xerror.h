@@ -15,13 +15,8 @@ namespace error {
 enum class xenum_errc {
     ok,
 
-    state_mpt_db_get_error,
-    state_mpt_db_set_error,
-    state_mpt_db_delete_error,
-    state_mpt_db_not_found,
-
+    state_mpt_not_complete,
     state_mpt_leaf_empty,
-
     state_mpt_unit_hash_mismatch,
 };
 using xerrc_t = xenum_errc;

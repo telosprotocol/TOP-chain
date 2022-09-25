@@ -16,16 +16,21 @@ namespace state_sync {
 xtop_state_downloader::xtop_state_downloader(base::xvdbstore_t * db, const observer_ptr<mbus::xmessage_bus_face_t> & msg_bus) : m_db(db), m_bus(msg_bus) {
 }
 
-void xtop_state_downloader::sync_state(const std::string & table, const xhash256_t & root, bool sync_unit, std::error_code & ec) {
+void xtop_state_downloader::sync_state(const common::xaccount_address_t & table,
+                                       const uint64_t height,
+                                       const xhash256_t & hash,
+                                       const xhash256_t & root,
+                                       bool sync_unit,
+                                       std::error_code & ec) {
     std::lock_guard<std::mutex> lock(m_dispatch_mutex);
     if (m_running.count(table)) {
         ec = error::xerrc_t::downloader_is_running;
         return;
     }
-    auto executer = std::make_shared<xtop_download_executer>(m_db);
+    auto executer = std::make_shared<xtop_download_executer>();
     auto peers_func = std::bind(&xtop_state_downloader::get_peers, this);
     auto track_func = std::bind(&xtop_download_executer::push_track_req, executer, std::placeholders::_1);
-    auto syncer = xstate_sync_t::new_state_sync(table, root, peers_func, track_func, m_db, sync_unit);
+    auto syncer = xstate_sync_t::new_state_sync(table, height, hash, root, peers_func, track_func, m_db, sync_unit);
     auto finish = std::bind(&xtop_state_downloader::process_finish, this, std::placeholders::_1);
     std::thread th(&xtop_download_executer::run_state_sync, executer, syncer, finish, sync_unit);
     th.detach();
@@ -35,9 +40,12 @@ void xtop_state_downloader::sync_state(const std::string & table, const xhash256
 
 void xtop_state_downloader::process_finish(const sync_result & res) {
     std::lock_guard<std::mutex> lock(m_dispatch_mutex);
-    if (m_running.count(res.table.value())) {
-        m_running.erase(res.table.value());
+    if (m_running.count(res.table)) {
+        m_running.erase(res.table);
         xinfo("xtop_state_downloader::sync_finish table: %s, root: %s out from running task", res.table.c_str(), res.root.as_hex_str().c_str());
+        if (res.ec) {
+            xwarn("xtop_state_downloader::sync_finish error: %s, %s", res.ec.category().name(), res.ec.message().c_str());
+        }
         mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_state_sync_t>(res.table, res.root, xhash256_t{}, res.ec);
         m_bus->push_event(ev);
     } else {
@@ -45,7 +53,7 @@ void xtop_state_downloader::process_finish(const sync_result & res) {
     }
 }
 
-void xtop_state_downloader::sync_cancel(const std::string & table) {
+void xtop_state_downloader::sync_cancel(const common::xaccount_address_t & table) {
     std::lock_guard<std::mutex> lock(m_dispatch_mutex);
     if (m_running.count(table)) {
         m_running[table]->cancel();
@@ -54,10 +62,14 @@ void xtop_state_downloader::sync_cancel(const std::string & table) {
 }
 
 void xtop_state_downloader::handle_message(const vnetwork::xvnode_address_t & sender, std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network, const vnetwork::xmessage_t & message) {
-    if (message.id() == xmessage_id_sync_request) {
+    if (message.id() == xmessage_id_sync_node_request) {
         process_request(sender, network, message);
-    } else if (message.id() == xmessage_id_sync_response) {
-        process_response(sender, message);
+    } else if (message.id() == xmessage_id_sync_node_response) {
+        process_response(message);
+    } else if (message.id() == xmessage_id_sync_table_request) {
+        process_table_request(sender, network, message);
+    } else if (message.id() == xmessage_id_sync_table_response) {
+        process_table_response(message);
     } else {
         xerror("xtop_state_downloader::handle_message unknown msg id: %lu", static_cast<uint32_t>(message.id()));
     }
@@ -75,8 +87,8 @@ void xtop_state_downloader::process_request(const vnetwork::xvnode_address_t & s
     stream >> id;
     stream >> nodes_hashes;
     stream >> units_hashes;
-    auto mpt_db = std::make_shared<state_mpt::xstate_mpt_db_t>(m_db, table);
-    auto trie_db = evm_common::trie::xtrie_db_t::NewDatabase(mpt_db);
+    auto kv_db = std::make_shared<evm_common::trie::xkv_db_t>(m_db, common::xaccount_address_t{table});
+    auto trie_db = evm_common::trie::xtrie_db_t::NewDatabase(kv_db);
     for (auto hash : nodes_hashes) {
         std::error_code ec;
         auto v = trie_db->Node(xhash256_t(hash), ec);
@@ -88,7 +100,7 @@ void xtop_state_downloader::process_request(const vnetwork::xvnode_address_t & s
         nodes_values.push_back(v);
     }
     for (auto hash : units_hashes) {
-        auto v = ReadUnitWithPrefix(mpt_db, xhash256_t(hash));
+        auto v = evm_common::trie::ReadUnitWithPrefix(kv_db, xhash256_t(hash));
         if (v.empty()) {
             xwarn("xtop_state_downloader::process_request not found", to_hex(hash).c_str());
             continue;
@@ -101,7 +113,7 @@ void xtop_state_downloader::process_request(const vnetwork::xvnode_address_t & s
     stream_back << id;
     stream_back << nodes_values;
     stream_back << units_values;
-    vnetwork::xmessage_t _msg = vnetwork::xmessage_t({stream_back.data(), stream_back.data() + stream_back.size()}, xmessage_id_sync_response);
+    vnetwork::xmessage_t _msg = vnetwork::xmessage_t({stream_back.data(), stream_back.data() + stream_back.size()}, xmessage_id_sync_node_response);
     std::error_code ec;
     network->send_to(sender, _msg, ec);
     if (ec) {
@@ -109,10 +121,12 @@ void xtop_state_downloader::process_request(const vnetwork::xvnode_address_t & s
     }
 }
 
-void xtop_state_downloader::process_response(const vnetwork::xvnode_address_t & sender, const vnetwork::xmessage_t & message) {
+void xtop_state_downloader::process_response(const vnetwork::xmessage_t & message) {
     base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)(message.payload().data()), (uint32_t)message.payload().size());
+    std::string addr;
     state_res res;
-    stream >> res.table;
+    stream >> addr;
+    res.table = common::xaccount_address_t{addr};
     stream >> res.id;
     stream >> res.nodes;
     stream >> res.units;
@@ -122,6 +136,58 @@ void xtop_state_downloader::process_response(const vnetwork::xvnode_address_t & 
         executer->push_state_pack(res);
     }
     xinfo("xtop_state_downloader::deliver_data table: %s, id: %u, size: %zu, %zu", res.table.c_str(), res.id, res.nodes.size(), res.units.size());
+}
+
+void xtop_state_downloader::process_table_request(const vnetwork::xvnode_address_t & sender, std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network, const vnetwork::xmessage_t & message) {
+    base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)(message.payload().data()), (uint32_t)message.payload().size());
+    std::string table;
+    uint64_t height{0};
+    xbytes_t hash;
+    stream >> table;
+    stream >> height;
+    stream >> hash;
+    auto state_key = base::xvdbkey_t::create_prunable_state_key(base::xvaccount_t{table}, height, {hash.begin(), hash.end()});
+    xinfo("xtop_state_downloader::process_table_request %s, %lu, %s, key: %s", table.c_str(), height, to_hex(hash).c_str(), to_hex(state_key).c_str());
+    auto v = m_db->get_value(state_key);
+    if (v.empty()) {
+        xwarn("xtop_state_downloader::process_table_request find table state %s %s empty", table.c_str(), to_hex(hash).c_str());
+    }
+    base::xstream_t stream_back{top::base::xcontext_t::instance()};
+    stream_back << table;
+    stream_back << height;
+    stream_back << hash;
+    stream_back << xbytes_t{v.begin(), v.end()};
+    vnetwork::xmessage_t _msg = vnetwork::xmessage_t({stream_back.data(), stream_back.data() + stream_back.size()}, xmessage_id_sync_table_response);
+    std::error_code ec;
+    network->send_to(sender, _msg, ec);
+    if (ec) {
+        xwarn("xtop_state_downloader::process_table_request net error, %s", network->address().to_string().c_str());
+    }
+}
+
+void xtop_state_downloader::process_table_response(const vnetwork::xmessage_t & message) {
+    base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)(message.payload().data()), (uint32_t)message.payload().size());
+    std::string table;
+    uint64_t height{0};
+    xbytes_t hash;
+    xbytes_t value;
+    stream >> table;
+    stream >> height;
+    stream >> hash;
+    stream >> value;
+    auto state_key = base::xvdbkey_t::create_prunable_state_key(base::xvaccount_t{table}, height, {hash.begin(), hash.end()});
+    xinfo("xtop_state_downloader::process_table_response %s, %lu, %s, key: %s", table.c_str(), height, to_hex(hash).c_str(), to_hex(state_key).c_str());
+    if (value.empty()) {
+        xwarn("xtop_state_downloader::process_table_response empty %s, %lu, %s, key: %s", table.c_str(), height, to_hex(hash).c_str());
+        return;
+    }
+    m_db->set_value(state_key, {value.begin(), value.end()});
+    auto table_account = common::xaccount_address_t{table};
+    std::lock_guard<std::mutex> lock(m_dispatch_mutex);
+    if (m_running.count(table_account)) {
+        auto executer = m_running[table_account];
+        executer->notify_table_sync_finish();
+    }
 }
 
 state_sync_peers_t xtop_state_downloader::get_peers() {
@@ -147,15 +213,17 @@ void xtop_state_downloader::del_peer(const vnetwork::xvnode_address_t & peer) {
     }
 }
 
-xtop_download_executer::xtop_download_executer(base::xvdbstore_t * db) : m_db(db) {
-}
-
 void xtop_download_executer::run_state_sync(std::shared_ptr<xstate_sync_t> syncer, std::function<void(sync_result)> callback, bool sync_unit) {
     xinfo("xtop_download_executer::run_state_sync sync thread start: %s %s", syncer->table().c_str(), syncer->root().as_hex_str().c_str());
 
+    m_syncer = syncer;
+    evm_common::trie::WriteTrieSyncFlag(syncer->db(), syncer->root());
     std::map<uint32_t, state_req, std::less<uint32_t>> active;
     std::thread run_th(&xtop_state_sync::run, syncer);
+    run_th.detach();
 
+    int cnt{0};
+    std::error_code inner_ec;
     while (!syncer->is_done()) {
         if (!m_track_req.empty()) {
             auto req = m_track_req.front();
@@ -194,15 +262,34 @@ void xtop_download_executer::run_state_sync(std::shared_ptr<xstate_sync_t> synce
             syncer->cancel();
         } else {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            cnt++;
+            if (cnt > 10 * 60 * 10) {
+                xwarn("xtop_download_executer::run_state_sync overtime: %s, %s", syncer->table().c_str(), syncer->root().as_hex_str().c_str());
+                inner_ec = error::xerrc_t::state_sync_overtime;
+                break;
+            }
             continue;
         }
     }
 
-    syncer->cancel();
-    run_th.join();
-    xinfo("xtop_download_executer::run_state_sync sync thread finish: %s %s", syncer->table().c_str(), syncer->root().as_hex_str().c_str());
-
-    callback({syncer->table(), syncer->root(), syncer->error()});
+    if (syncer->is_done()) {
+        syncer->cancel();
+        if (syncer->error()) {
+            xwarn("xtop_download_executer::run_state_sync sync thread %s %s finish but error: %s, %s",
+                syncer->table().c_str(),
+                syncer->root().as_hex_str().c_str(),
+                syncer->error().category().name(),
+                syncer->error().message().c_str());
+        } else {
+            evm_common::trie::DeleteTrieSyncFlag(syncer->db(), syncer->root());
+            xinfo("xtop_download_executer::run_state_sync sync thread finish: %s %s", syncer->table().c_str(), syncer->root().as_hex_str().c_str());
+        }
+        callback({syncer->table(), syncer->root(), syncer->error()});
+    } else {
+        xwarn("xtop_download_executer::run_state_sync child thread overtime, maybe error, exist with %s %s");
+        syncer->cancel();
+        callback({syncer->table(), syncer->root(), inner_ec});
+    }
     return;
 }
 
@@ -228,6 +315,10 @@ void xtop_download_executer::push_state_pack(const state_res & res) {
 void xtop_download_executer::pop_state_pack() {
     std::lock_guard<std::mutex> lock(m_state_pack_mutex);
     m_state_packs.pop_front();
+}
+
+void xtop_download_executer::notify_table_sync_finish() {
+    m_syncer->sync_table_finish();
 }
 
 }  // namespace state_sync

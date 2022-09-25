@@ -5,7 +5,6 @@
 #include "xstate_mpt/xstate_object.h"
 
 #include "xevm_common/trie/xtrie_db.h"
-#include "xstate_mpt/xstate_mpt_db.h"
 
 namespace top {
 namespace state_mpt {

@@ -5,11 +5,13 @@
 #pragma once
 
 #include "xbasic/xmemory.hpp"
+#include "xcommon/xnode_id.h"
 #include "xevm_common/trie/xsecure_trie.h"
 #include "xstate_mpt/xstate_mpt_cache.h"
-#include "xstate_mpt/xstate_mpt_db.h"
 #include "xstate_mpt/xstate_mpt_journal.h"
 #include "xstate_mpt/xstate_object.h"
+#include "xvledger/xvdbstore.h"
+
 namespace top {
 namespace state_mpt {
 class xtop_state_mpt {
@@ -25,7 +27,7 @@ public:
     /// @param cache Globle state MPT cache.
     /// @param ec Log the error code.
     /// @return MPT with given root hash. Error occured if cannot find root in db.
-    static std::shared_ptr<xtop_state_mpt> create(const std::string & table, const xhash256_t & root, base::xvdbstore_t * db, xstate_mpt_cache_t * cache, std::error_code & ec);
+    static std::shared_ptr<xtop_state_mpt> create(const common::xaccount_address_t & table, const xhash256_t & root, base::xvdbstore_t * db, xstate_mpt_cache_t * cache, std::error_code & ec);
 
 public:
     /// @brief Get index of specific account.
@@ -92,7 +94,7 @@ private:
     /// @param cache Globle state MPT cache.
     /// @param ec Log the error code.
     /// @return MPT with given root hash. Error occured if cannot find root in db.
-    void init(const std::string & table, const xhash256_t & root, base::xvdbstore_t * db, xstate_mpt_cache_t * cache, std::error_code & ec);
+    void init(const common::xaccount_address_t & table, const xhash256_t & root, base::xvdbstore_t * db, xstate_mpt_cache_t * cache, std::error_code & ec);
     
     /// @brief Move journals to pending state.
     void finalize();
@@ -133,7 +135,7 @@ private:
     /// @param ec Log the error code.
     void update_state_object(std::shared_ptr<xstate_object_t> obj, std::error_code & ec);
 
-    std::string m_table_address;
+    common::xaccount_address_t m_table_address;
 
     std::shared_ptr<evm_common::trie::xsecure_trie_t> m_trie{nullptr};
     std::shared_ptr<evm_common::trie::xtrie_db_t> m_db{nullptr};
