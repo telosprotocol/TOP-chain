@@ -77,7 +77,7 @@ uint8_t encodeVarInt(uint64_t size, std::vector<uint8_t> & data) {
     return 9;
 }
 
-std::tuple<bool, uint64_t> decodeVarInt(const bytes & in, size_t & indexInOut) {
+std::tuple<bool, uint64_t> decodeVarInt(const xbytes_t & in, size_t & indexInOut) {
     if (in.size() < indexInOut + 1) {
         // too short
         return std::make_tuple(false, 0);
@@ -157,7 +157,7 @@ void encodeString(const std::string & str, std::vector<uint8_t> & data) {
 }
 
 /// Decodes an ASCII string prefixed by its length (varInt)
-std::tuple<bool, std::string> decodeString(const bytes & in, size_t & indexInOut) {
+std::tuple<bool, std::string> decodeString(const xbytes_t & in, size_t & indexInOut) {
     const auto lenTup = decodeVarInt(in, indexInOut);
     if (!std::get<0>(lenTup)) {
         return std::make_tuple(false, "");

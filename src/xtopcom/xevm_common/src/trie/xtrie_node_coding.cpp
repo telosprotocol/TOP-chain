@@ -128,7 +128,7 @@ xtrie_node_face_ptr_t xtop_trie_node_rlp::decodeShort(xtrie_hash_node_t hash, xb
     if (ec) {
         return nullptr;
     }
-    auto flag = nodeFlag{hash};
+    auto flag = xnode_flag_t{hash};
     auto key = compactToHex(kbuf);
     if (hasTerm(key)) {
         // value node
@@ -153,7 +153,7 @@ xtrie_node_face_ptr_t xtop_trie_node_rlp::decodeShort(xtrie_hash_node_t hash, xb
 }
 xtrie_node_face_ptr_t xtop_trie_node_rlp::decodeFull(xtrie_hash_node_t hash, xbytes_t const & elems, std::error_code & ec) {
     auto e = elems;
-    xtrie_full_node_ptr_t n = std::make_shared<xtrie_full_node_t>(nodeFlag{hash});
+    xtrie_full_node_ptr_t n = std::make_shared<xtrie_full_node_t>(xnode_flag_t{hash});
     for (std::size_t i = 0; i < 16; ++i) {
         xtrie_node_face_ptr_t cld;
         xbytes_t rest;
@@ -196,7 +196,7 @@ std::pair<xtrie_node_face_ptr_t, xbytes_t> xtop_trie_node_rlp::decodeRef(xbytes_
             ec = error::xerrc_t::rlp_oversized;
             return std::make_pair(nullptr, buf);
         }
-        auto n = decodeNode(xbytes_t{}, buf, ec);
+        auto n = decodeNode(xtrie_hash_node_t{}, buf, ec);
         return std::make_pair(n, rest);
     } else if (kind == rlp::xrlp_elem_kind::String && val.size() == 0) {
         // emtpy node

@@ -46,8 +46,7 @@ h256 const EmptyTrie = sha3(xrlp(""));
  * [1,2,3,4,T]       0x201234
  */
 
-std::string hexPrefixEncode(bytes const& _hexVector, bool _leaf, int _begin, int _end)
-{
+std::string hexPrefixEncode(xbytes_t const & _hexVector, bool _leaf, int _begin, int _end) {
 	unsigned begin = _begin;
 	unsigned end = _end < 0 ? _hexVector.size() + 1 + _end : _end;
 	bool odd = ((end - begin) % 2) != 0;
@@ -75,7 +74,7 @@ std::string hexPrefixEncode(bytesConstRef _data, bool _leaf, int _beginNibble, i
 	unsigned d = odd ? 1 : 2;
 	for (auto i = begin; i < end; ++i, ++d)
 	{
-		byte n = nibble(_data, i);
+		xbyte_t n = nibble(_data, i);
 		if (d & 1)	// odd
 			ret.back() |= n;		// or the nibble onto the back
 		else
@@ -99,7 +98,7 @@ std::string hexPrefixEncode(bytesConstRef _d1, unsigned _o1, bytesConstRef _d2, 
 	unsigned d = odd ? 1 : 2;
 	for (auto i = begin1; i < end1; ++i, ++d)
 	{
-		byte n = nibble(_d1, i);
+		xbyte_t n = nibble(_d1, i);
 		if (d & 1)	// odd
 			ret.back() |= n;		// or the nibble onto the back
 		else
@@ -107,7 +106,7 @@ std::string hexPrefixEncode(bytesConstRef _d1, unsigned _o1, bytesConstRef _d2, 
 	}
 	for (auto i = begin2; i < end2; ++i, ++d)
 	{
-		byte n = nibble(_d2, i);
+		xbyte_t n = nibble(_d2, i);
 		if (d & 1)	// odd
 			ret.back() |= n;		// or the nibble onto the back
 		else
@@ -116,14 +115,14 @@ std::string hexPrefixEncode(bytesConstRef _d1, unsigned _o1, bytesConstRef _d2, 
 	return ret;
 }
 
-byte uniqueInUse(RLP const& _orig, byte except)
+xbyte_t uniqueInUse(RLP const& _orig, xbyte_t except)
 {
-	byte used = 255;
+	xbyte_t used = 255;
 	for (unsigned i = 0; i < 17; ++i)
 		if (i != except && !_orig[i].isEmpty())
 		{
 			if (used == 255)
-				used = (byte)i;
+				used = (xbyte_t)i;
 			else
 				return 255;
 		}

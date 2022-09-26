@@ -4,13 +4,13 @@
 
 #pragma once
 
-#include "xbase/xns_macro.h"
 #include "xbasic/xbyte_buffer.h"
 #include "xbasic/xhash.hpp"
 #include "xevm_common/rlp/xrlp_encodable.h"
 #include "xevm_common/trie/xtrie_node_fwd.h"
 
 #include <array>
+#include <atomic>
 #include <map>
 #include <memory>
 #include <string>
@@ -42,10 +42,22 @@ enum class xtop_trie_node_type : uint8_t {
 using xtrie_node_type_t = xtop_trie_node_type;
 
 class xtop_trie_node_face {
+private:
+    // std::atomic<int> referenced_cnt_by_parent_{0};
+
 public:
+    xtop_trie_node_face() = default;
+    xtop_trie_node_face(xtop_trie_node_face const &) = default;
+    xtop_trie_node_face & operator=(xtop_trie_node_face const &) = default;
+    xtop_trie_node_face(xtop_trie_node_face &&) = default;
+    xtop_trie_node_face & operator=(xtop_trie_node_face &&) = default;
+    virtual ~xtop_trie_node_face() = default;
+
     virtual std::string fstring(std::string const & ind) = 0;
     virtual std::pair<xtrie_hash_node_t, bool> cache() = 0;
-    virtual xtrie_node_type_t type() = 0;
+    virtual xtrie_node_type_t type() const noexcept = 0;
+
+    
 };
 using xtrie_node_face_t = xtop_trie_node_face;
 using xtrie_node_face_ptr_t = std::shared_ptr<xtrie_node_face_t>;
@@ -53,36 +65,27 @@ using xtrie_node_face_ptr_t = std::shared_ptr<xtrie_node_face_t>;
 // value&&hash node
 class xtop_trie_hash_node : public xtrie_node_face_t {
 private:
-    xbytes_t m_data;
+    xbytes_t m_data{};
 
 public:
-    xtop_trie_hash_node() {
-    }
-    xtop_trie_hash_node(xbytes_t const & data) : m_data{data} {
-    }
-    xtop_trie_hash_node(xhash256_t const & hash) : m_data{hash.begin(), hash.end()} {
-    }
+    xtop_trie_hash_node() = default;
+    xtop_trie_hash_node(xtop_trie_hash_node const &) = default;
+    xtop_trie_hash_node & operator=(xtop_trie_hash_node const &) = default;
+    xtop_trie_hash_node(xtop_trie_hash_node &&) = default;
+    xtop_trie_hash_node & operator=(xtop_trie_hash_node &&) = default;
+    ~xtop_trie_hash_node() override = default;
+
+    explicit xtop_trie_hash_node(xbytes_t data);
+    explicit xtop_trie_hash_node(xhash256_t const & hash);
 
 public:
-    xbytes_t data() const {
-        return m_data;
-    }
-
-    bool is_null() const {
-        return m_data.empty();
-    }
+    xbytes_t const & data() const noexcept;
+    bool is_null() const noexcept;
 
 public:
-    std::string fstring(std::string const & ind) override {
-        // todo;
-        return "";
-    }
-    std::pair<xtrie_hash_node_t, bool> cache() override {
-        return {{}, true};
-    }
-    xtrie_node_type_t type() override {
-        return xtrie_node_type_t::hashnode;
-    }
+    std::string fstring(std::string const & ind) override;
+    std::pair<xtrie_hash_node_t, bool> cache() override;
+    xtrie_node_type_t type() const noexcept override;
 };
 using xtrie_hash_node_t = xtop_trie_hash_node;
 using xtrie_hash_node_ptr_t = std::shared_ptr<xtrie_hash_node_t>;
@@ -92,27 +95,22 @@ private:
     xbytes_t m_data;
 
 public:
-    xtop_trie_value_node() {
-    }
-    xtop_trie_value_node(xbytes_t const & data) : m_data{data} {
-    }
+    xtop_trie_value_node() = default;
+    xtop_trie_value_node(xtop_trie_value_node const &) = default;
+    xtop_trie_value_node & operator=(xtop_trie_value_node const &) = default;
+    xtop_trie_value_node(xtop_trie_value_node &&) = default;
+    xtop_trie_value_node & operator=(xtop_trie_value_node &&) = default;
+    ~xtop_trie_value_node() override = default;
+
+    explicit xtop_trie_value_node(xbytes_t data);
 
 public:
-    xbytes_t data() const {
-        return m_data;
-    }
+    xbytes_t const & data() const noexcept;
 
 public:
-    std::string fstring(std::string const & ind) override {
-        // todo;
-        return "";
-    }
-    std::pair<xtrie_hash_node_t, bool> cache() override {
-        return {{}, true};
-    }
-    xtrie_node_type_t type() override {
-        return xtrie_node_type_t::valuenode;
-    }
+    std::string fstring(std::string const & ind) override;
+    std::pair<xtrie_hash_node_t, bool> cache() override;
+    xtrie_node_type_t type() const noexcept override;
 };
 using xtrie_value_node_t = xtop_trie_value_node;
 using xtrie_value_node_ptr_t = std::shared_ptr<xtrie_value_node_t>;
@@ -121,56 +119,45 @@ using xtrie_value_node_ptr_t = std::shared_ptr<xtrie_value_node_t>;
 // unset children need to serialize correctly.
 static const xtrie_value_node_t nilValueNode{};
 
-struct nodeFlag {
+struct xtop_node_flag {
     xtrie_hash_node_t hash{};
     bool dirty{false};
 
-    nodeFlag() {
-    }
-    nodeFlag(xtrie_hash_node_t _hash) : hash{_hash} {
-    }
+    xtop_node_flag() = default;
+    xtop_node_flag(xtop_node_flag const &) = default;
+    xtop_node_flag & operator=(xtop_node_flag const &) = default;
+    xtop_node_flag(xtop_node_flag &&) = default;
+    xtop_node_flag & operator=(xtop_node_flag &&) = default;
+    ~xtop_node_flag() = default;
 
-    nodeFlag(nodeFlag const & flag) {
-        hash = flag.hash;
-        dirty = flag.dirty;
-    }
-    nodeFlag & operator=(const nodeFlag & flag) {
-        hash = flag.hash;
-        dirty = flag.dirty;
-        return *this;
-    }
+    explicit xtop_node_flag(xtrie_hash_node_t hash);
 };
+using xnode_flag_t = xtop_node_flag;
 
 // for leaf node && extension node
-class xtop_trie_short_node
-  : public xtrie_node_face_t
-  , public rlp::xrlp_encodable_t<xtop_trie_short_node> {
+class xtop_trie_short_node : public xtrie_node_face_t, public rlp::xrlp_encodable_t<xtop_trie_short_node> {
 public:
-    xbytes_t Key;
-    xtrie_node_face_ptr_t Val;
-    nodeFlag flags;
+    xbytes_t key{};
+    xtrie_node_face_ptr_t val{};
+    xnode_flag_t flags{};
 
 public:
-    xtop_trie_short_node(xbytes_t const & key, xtrie_node_face_ptr_t val, nodeFlag const & flag) : Key{key}, Val{val}, flags{flag} {
-    }
+    xtop_trie_short_node() = default;
+    xtop_trie_short_node(xtop_trie_short_node const &) = default;
+    xtop_trie_short_node & operator=(xtop_trie_short_node const &) = default;
+    xtop_trie_short_node(xtop_trie_short_node &&) = default;
+    xtop_trie_short_node & operator=(xtop_trie_short_node &&) = default;
+    ~xtop_trie_short_node() override = default;
 
-private:
-public:
-    std::shared_ptr<xtop_trie_short_node> copy() {
-        return std::make_shared<xtop_trie_short_node>(*this);
-    }
+    xtop_trie_short_node(xbytes_t key, xtrie_node_face_ptr_t val, xnode_flag_t flag);
 
 public:
-    std::string fstring(std::string const & ind) override {
-        // todo;
-        return "";
-    }
-    std::pair<xtrie_hash_node_t, bool> cache() override {
-        return {flags.hash, flags.dirty};
-    }
-    xtrie_node_type_t type() override {
-        return xtrie_node_type_t::shortnode;
-    }
+    std::shared_ptr<xtop_trie_short_node> clone() const;
+
+public:
+    std::string fstring(std::string const & ind) override;
+    std::pair<xtrie_hash_node_t, bool> cache() override;
+    xtrie_node_type_t type() const noexcept override;
 
 public:
     void EncodeRLP(xbytes_t & buf, std::error_code & ec) override;
@@ -185,12 +172,12 @@ class xtop_trie_full_node
   , public rlp::xrlp_encodable_t<xtop_trie_full_node> {
 public:
     std::array<xtrie_node_face_ptr_t, 17> Children;
-    nodeFlag flags;
+    xnode_flag_t flags;
 
 public:
     xtop_trie_full_node() {
     }
-    xtop_trie_full_node(nodeFlag const & f) {
+    xtop_trie_full_node(xnode_flag_t const & f) {
         flags = f;
     }
 
@@ -208,7 +195,7 @@ public:
     std::pair<xtrie_hash_node_t, bool> cache() override {
         return {flags.hash, flags.dirty};
     }
-    xtrie_node_type_t type() override {
+    xtrie_node_type_t type() const noexcept override {
         return xtrie_node_type_t::fullnode;
     }
 
@@ -245,7 +232,7 @@ public:
         // should not used
         return {{}, true};
     }
-    xtrie_node_type_t type() override {
+    xtrie_node_type_t type() const noexcept override {
         return xtrie_node_type_t::rawnode;
     }
 };
@@ -274,7 +261,7 @@ public:
         // should not used
         return {{}, true};
     }
-    xtrie_node_type_t type() override {
+    xtrie_node_type_t type() const noexcept override {
         return xtrie_node_type_t::rawfullnode;
     }
 
@@ -306,7 +293,7 @@ public:
         // should not used
         return {{}, true};
     }
-    xtrie_node_type_t type() override {
+    xtrie_node_type_t type() const noexcept override {
         return xtrie_node_type_t::rawshortnode;
     }
 

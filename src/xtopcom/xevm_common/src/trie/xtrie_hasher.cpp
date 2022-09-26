@@ -8,6 +8,8 @@
 #include "xevm_common/trie/xtrie_encoding.h"
 #include "xutility/xhash.h"
 
+#include <cassert>
+
 NS_BEG3(top, evm_common, trie)
 
 std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> xtop_trie_hasher::hash(xtrie_node_face_ptr_t node, bool force) {
@@ -23,7 +25,8 @@ std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> xtop_trie_hasher::hash(x
         auto result = hashShortNodeChildren(n);
         auto hashed = shortnodeToHash(result.first, force);
         if (hashed->type() == xtrie_node_type_t::hashnode) {
-            result.second->flags.hash = static_cast<xtrie_hash_node_t *>(hashed.get())->data();
+            assert(dynamic_cast<xtrie_hash_node_t *>(hashed.get()) != nullptr);
+            result.second->flags.hash = xtrie_hash_node_t{std::static_pointer_cast<xtrie_hash_node_t>(hashed)->data()};
         } else {
             result.second->flags.hash = {};
         }
@@ -35,7 +38,8 @@ std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> xtop_trie_hasher::hash(x
         auto result = hashFullNodeChildren(n);
         auto hashed = fullnodeToHash(result.first, force);
         if (hashed->type() == xtrie_node_type_t::hashnode) {
-            result.second->flags.hash = static_cast<xtrie_hash_node_t *>(hashed.get())->data();
+            assert(dynamic_cast<xtrie_hash_node_t *>(hashed.get()) != nullptr);
+            result.second->flags.hash = xtrie_hash_node_t{std::static_pointer_cast<xtrie_hash_node_t>(hashed)->data()};
         } else {
             result.second->flags.hash = {};
         }
@@ -88,15 +92,15 @@ std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> xtop_trie_hasher::proofH
 }
 
 std::pair<xtrie_short_node_ptr_t, xtrie_short_node_ptr_t> xtop_trie_hasher::hashShortNodeChildren(xtrie_short_node_ptr_t node) {
-    auto collapsed = node->copy();
-    auto cached = node->copy();
+    auto collapsed = node->clone();
+    auto cached = node->clone();
 
-    collapsed->Key = hexToCompact(node->Key);
+    collapsed->key = hexToCompact(node->key);
 
-    if (node->Val->type() == xtrie_node_type_t::shortnode || node->Val->type() == xtrie_node_type_t::fullnode) {
-        auto res = hash(node->Val, false);
-        collapsed->Val = res.first;
-        cached->Val = res.second;
+    if (node->val->type() == xtrie_node_type_t::shortnode || node->val->type() == xtrie_node_type_t::fullnode) {
+        auto res = hash(node->val, false);
+        collapsed->val = res.first;
+        cached->val = res.second;
     }
 
     return std::make_pair(collapsed, cached);
@@ -129,7 +133,7 @@ xtrie_node_face_ptr_t xtop_trie_hasher::shortnodeToHash(xtrie_short_node_ptr_t n
 
     std::error_code ec;
     node->EncodeRLP(tmp.data(), ec);
-    xdbg("[shortnodeToHash] %s  -> %s ", top::to_hex(node->Key).c_str(), top::to_hex(tmp.data()).c_str());
+    xdbg("[shortnodeToHash] %s  -> %s ", top::to_hex(node->key).c_str(), top::to_hex(tmp.data()).c_str());
     xassert(!ec);
 
     if (tmp.len() < 32 && !force) {

@@ -247,14 +247,14 @@ std::vector<Sync::request *> Sync::children(request * req, xtrie_node_face_ptr_t
     switch (object->type()) {
     case xtrie_node_type_t::shortnode: {
         auto node = std::make_shared<xtrie_short_node_t>(*(static_cast<xtrie_short_node_t *>(object.get())));
-        auto key = node->Key;
+        auto key = node->key;
         if (hasTerm(key)) {
             key = xbytes_t{key.begin(), key.end() - 1};
         }
         xbytes_t combined_path;
         combined_path.insert(combined_path.end(), req->path.begin(), req->path.end());
         combined_path.insert(combined_path.end(), key.begin(), key.end());
-        children.push_back(std::make_pair(combined_path, node->Val));
+        children.push_back(std::make_pair(combined_path, node->val));
         break;
     }
     case xtrie_node_type_t::fullnode: {
