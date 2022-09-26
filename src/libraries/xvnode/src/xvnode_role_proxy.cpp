@@ -18,7 +18,7 @@ xtop_vnode_role_proxy::xtop_vnode_role_proxy(observer_ptr<mbus::xmessage_bus_fac
                                              //    std::vector<xobject_ptr_t<base::xiothread_t>> const & iothreads,
                                              observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
   : m_txstore{txstore},
-    m_downloader{std::make_shared<state_sync::xstate_downloader_t>(base::xvchain_t::instance().get_xdbstore(), mbus)} {
+    m_downloader{std::make_shared<state_sync::xstate_downloader_t>(base::xvchain_t::instance().get_xdbstore(), statestore::xstatestore_hub_t::instance(), mbus)} {
     m_cons_mgr = xunit_service::xcons_mgr_build(data::xuser_params::get_instance().account.value(),
                                                 block_store,
                                                 txpool,

@@ -7,6 +7,7 @@
 #include "xbasic/xhash.hpp"
 #include "xmbus/xmessage_bus.h"
 #include "xstate_sync/xstate_sync.h"
+#include "xstatestore/xstatestore_face.h"
 #include "xvledger/xvdbstore.h"
 #include "xvnetwork/xvnetwork_driver_face.h"
 
@@ -45,7 +46,7 @@ using xdownload_executer_t = xtop_download_executer;
 
 class xtop_state_downloader {
 public:
-    explicit xtop_state_downloader(base::xvdbstore_t * db, const observer_ptr<mbus::xmessage_bus_face_t> & msg_bus);
+    explicit xtop_state_downloader(base::xvdbstore_t * db, statestore::xstatestore_face_t * store, const observer_ptr<mbus::xmessage_bus_face_t> & msg_bus);
     ~xtop_state_downloader() = default;
 
     // sync actions
@@ -72,6 +73,7 @@ private:
     void process_finish(const sync_result & res);
 
     base::xvdbstore_t * m_db{nullptr};
+    statestore::xstatestore_face_t * m_store{nullptr};
     observer_ptr<mbus::xmessage_bus_face_t> m_bus{nullptr};
 
     std::map<common::xaccount_address_t, std::shared_ptr<xdownload_executer_t>> m_running;

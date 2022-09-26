@@ -21,8 +21,10 @@ public:
 
     xevent_state_sync_t(
             const common::xaccount_address_t & _table_addr,
-            const xhash256_t & _root_hash,
+            const uint64_t h,
+            const xhash256_t & _table_block_hash,
             const xhash256_t & _table_state_hash,
+            const xhash256_t & _root_hash,
             std::error_code _ec,
             direction_type dir = to_listener,
             bool _sync = true) :
@@ -31,14 +33,18 @@ public:
     dir,
     _sync),
     table_addr(_table_addr),
-    root_hash(_root_hash),
+    height(h),
+    table_block_hash(_table_block_hash),
     table_state_hash(_table_state_hash),
+    root_hash(_root_hash),
     ec(_ec) {
     }
 
     common::xaccount_address_t table_addr;
-    xhash256_t root_hash;
+    uint64_t height{0};
+    xhash256_t table_block_hash;
     xhash256_t table_state_hash;
+    xhash256_t root_hash;
     std::error_code ec;
 };
 
