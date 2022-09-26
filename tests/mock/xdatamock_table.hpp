@@ -385,7 +385,7 @@ class xdatamock_table : public base::xvaccount_t {
         for (auto & unit_and_index : m_batch_units) {
             auto & unit = unit_and_index.first;
             auto & index = unit_and_index.second;
-            table_mpt->set_account_index(unit->get_account(), index, ec);
+            table_mpt->set_account_index(common::xaccount_address_t{unit->get_account()}, index, ec);
             if (ec) {
                 xassert(false);
             }

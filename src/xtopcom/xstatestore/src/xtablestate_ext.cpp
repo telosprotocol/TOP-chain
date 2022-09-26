@@ -16,7 +16,7 @@ xtablestate_ext_t::xtablestate_ext_t(const data::xtablestate_ptr_t & table_state
 void xtablestate_ext_t::get_accountindex(std::string const & unit_addr, base::xaccount_index_t & account_index, std::error_code & ec) const {
     if (nullptr != m_state_mpt) {
         // new version block state
-        account_index = m_state_mpt->get_account_index(unit_addr, ec);
+        account_index = m_state_mpt->get_account_index(common::xaccount_address_t{unit_addr}, ec);
         return;
     }
     // old version block state

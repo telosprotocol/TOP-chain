@@ -19,13 +19,13 @@ std::shared_ptr<xtop_state_mpt> xtop_state_mpt::create(const common::xaccount_ad
                                                        std::error_code & ec) {
     cache = nullptr;  // TODO(jimmy)
 
-    xtop_state_mpt mpt;
-    mpt.init(table, root, db, cache, ec);
+    auto mpt = std::make_shared<xtop_state_mpt>();
+    mpt->init(table, root, db, cache, ec);
     if (ec) {
         xwarn("xtop_state_mpt::create init error, %s %s", ec.category().name(), ec.message().c_str());
         return nullptr;
     }
-    return std::make_shared<xtop_state_mpt>(mpt);
+    return mpt;
 }
 
 void xtop_state_mpt::init(const common::xaccount_address_t & table, const xhash256_t & root, base::xvdbstore_t * db, xstate_mpt_cache_t * cache, std::error_code & ec) {
@@ -51,7 +51,7 @@ void xtop_state_mpt::init(const common::xaccount_address_t & table, const xhash2
     return;
 }
 
-base::xaccount_index_t xtop_state_mpt::get_account_index(const std::string & account, std::error_code & ec) {
+base::xaccount_index_t xtop_state_mpt::get_account_index(common::xaccount_address_t const & account, std::error_code & ec) {
     auto obj = get_state_object(account, ec);
     if (ec) {
         xwarn("xtop_state_mpt::get_account_index get_state_object %s error: %s %s", account.c_str(), ec.category().name(), ec.message().c_str());
@@ -63,7 +63,7 @@ base::xaccount_index_t xtop_state_mpt::get_account_index(const std::string & acc
     return {};
 }
 
-xbytes_t xtop_state_mpt::get_unit(const std::string & account, std::error_code & ec) {
+xbytes_t xtop_state_mpt::get_unit(common::xaccount_address_t const & account, std::error_code & ec) {
     auto obj = get_state_object(account, ec);
     if (ec) {
         xwarn("xtop_state_mpt::get_unit %s error: %s %s", account.c_str(), ec.category().name(), ec.message().c_str());
@@ -75,13 +75,13 @@ xbytes_t xtop_state_mpt::get_unit(const std::string & account, std::error_code &
     return {};
 }
 
-void xtop_state_mpt::set_account_index(const std::string & account, const std::string & index_str, std::error_code & ec) {
+void xtop_state_mpt::set_account_index(common::xaccount_address_t const & account, const std::string & index_str, std::error_code & ec) {
     base::xaccount_index_t index;
     index.serialize_from(index_str);
     return set_account_index(account, index, ec);
 }
 
-void xtop_state_mpt::set_account_index(const std::string & account, const base::xaccount_index_t & index, std::error_code & ec) {
+void xtop_state_mpt::set_account_index(common::xaccount_address_t const & account, const base::xaccount_index_t & index, std::error_code & ec) {
     auto obj = get_or_new_state_object(account, ec);
     if (ec) {
         xwarn("xtop_state_mpt::set_account_index %s %s", ec.category().name(), ec.message().c_str());
@@ -95,13 +95,13 @@ void xtop_state_mpt::set_account_index(const std::string & account, const base::
     m_journal.append(obj->set_account_index(index));
 }
 
-void xtop_state_mpt::set_account_index_with_unit(const std::string & account, const std::string & index_str, const xbytes_t & unit, std::error_code & ec) {
+void xtop_state_mpt::set_account_index_with_unit(common::xaccount_address_t const & account, const std::string & index_str, const xbytes_t & unit, std::error_code & ec) {
     base::xaccount_index_t index;
     index.serialize_from(index_str);
     return set_account_index_with_unit(account, index, unit, ec);
 }
 
-void xtop_state_mpt::set_account_index_with_unit(const std::string & account, const base::xaccount_index_t & index, const xbytes_t & unit, std::error_code & ec) {
+void xtop_state_mpt::set_account_index_with_unit(common::xaccount_address_t const & account, const base::xaccount_index_t & index, const xbytes_t & unit, std::error_code & ec) {
     auto obj = get_or_new_state_object(account, ec);
     if (ec) {
         xwarn("xtop_state_mpt::set_account_index_with_unit %s %s", ec.category().name(), ec.message().c_str());
@@ -116,7 +116,7 @@ void xtop_state_mpt::set_account_index_with_unit(const std::string & account, co
     m_journal.append(obj->set_account_index_with_unit(index, unit));
 }
 
-std::shared_ptr<xstate_object_t> xtop_state_mpt::get_state_object(const std::string & account, std::error_code & ec) {
+std::shared_ptr<xstate_object_t> xtop_state_mpt::get_state_object(common::xaccount_address_t const & account, std::error_code & ec) {
     auto obj = get_deleted_state_object(account, ec);
     if (ec) {
         xwarn("xtop_state_mpt::get_state_object %s %s", ec.category().name(), ec.message().c_str());
@@ -125,7 +125,7 @@ std::shared_ptr<xstate_object_t> xtop_state_mpt::get_state_object(const std::str
     return obj;
 }
 
-std::shared_ptr<xstate_object_t> xtop_state_mpt::get_deleted_state_object(const std::string & account, std::error_code & ec) {
+std::shared_ptr<xstate_object_t> xtop_state_mpt::get_deleted_state_object(common::xaccount_address_t const & account, std::error_code & ec) {
     if (m_state_objects.count(account)) {
         return m_state_objects[account];
     }
@@ -137,7 +137,7 @@ std::shared_ptr<xstate_object_t> xtop_state_mpt::get_deleted_state_object(const 
     xbytes_t index_bytes;
     {
         XMETRICS_TIME_RECORD("state_mpt_load_db_index");
-        index_bytes = m_trie->TryGet({account.begin(), account.end()}, ec);
+        index_bytes = m_trie->TryGet(to_bytes(account), ec);
     }
     if (ec) {
         xwarn("xtop_state_mpt::get_deleted_state_object TryGet %s error, %s %s", account.c_str(), ec.category().name(), ec.message().c_str());
@@ -162,7 +162,7 @@ void xtop_state_mpt::set_state_object(std::shared_ptr<xstate_object_t> obj) {
     m_state_objects[obj->account] = obj;
 }
 
-std::shared_ptr<xstate_object_t> xtop_state_mpt::get_or_new_state_object(const std::string & account, std::error_code & ec) {
+std::shared_ptr<xstate_object_t> xtop_state_mpt::get_or_new_state_object(common::xaccount_address_t const & account, std::error_code & ec) {
     auto obj = get_state_object(account, ec);
     if (ec) {
         xwarn("xtop_state_mpt::get_or_new_state_object error, %s %s", account.c_str(), ec.category().name(), ec.message().c_str());
@@ -178,7 +178,7 @@ std::shared_ptr<xstate_object_t> xtop_state_mpt::get_or_new_state_object(const s
     return obj;
 }
 
-std::shared_ptr<xstate_object_t> xtop_state_mpt::create_object(const std::string & account, std::error_code & ec) {
+std::shared_ptr<xstate_object_t> xtop_state_mpt::create_object(common::xaccount_address_t const & account, std::error_code & ec) {
     auto prev = get_deleted_state_object(account, ec);
     if (ec) {
         xwarn("xtop_state_mpt::create_object %s error, %s %s", account.c_str(), ec.category().name(), ec.message().c_str());
@@ -199,7 +199,7 @@ void xtop_state_mpt::update_state_object(std::shared_ptr<xstate_object_t> obj, s
     auto acc = obj->account;
     std::string data;
     obj->index.serialize_to(data);
-    m_trie->TryUpdate({acc.begin(), acc.end()}, {data.begin(), data.end()}, ec);
+    m_trie->TryUpdate(to_bytes(acc), {data.begin(), data.end()}, ec);
     if (ec) {
         xwarn("xtop_state_mpt::update_state_object %s error, %s %s", acc.c_str(), ec.category().name(), ec.message().c_str());
         return;

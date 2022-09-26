@@ -362,7 +362,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_tab
                 for (auto & v : indexes) {
                     auto & account = v.first;
                     auto & accoutn_index = v.second;
-                    prev_state->get_state_mpt()->set_account_index(account, accoutn_index, ec);
+                    prev_state->get_state_mpt()->set_account_index(common::xaccount_address_t{account}, accoutn_index, ec);
                     if (ec) {
                         xerror("xstatestore_executor_t::make_state_from_prev_state_and_table fail-set mpt accountindex for block(%s)",current_block->dump().c_str());
                         return nullptr;
@@ -377,7 +377,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_tab
         if (!account_indexs_str.empty()) {            
             account_indexs.serialize_from_string(account_indexs_str);
             for (auto & index : account_indexs.get_account_indexs()) {
-                prev_state->get_state_mpt()->set_account_index(index.first, index.second, ec);
+                prev_state->get_state_mpt()->set_account_index(common::xaccount_address_t{index.first}, index.second, ec);
                 if (ec) {
                     xerror("xstatestore_executor_t::make_state_from_prev_state_and_table fail-set mpt account index.block:%s", current_block->dump().c_str());
                     return nullptr;
@@ -414,12 +414,12 @@ xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_tab
         if (false == current_block->extract_sub_blocks(sub_blocks)) {
             ec = error::xerrc_t::statestore_block_invalid_err;
             xerror("xstatestore_executor_t::make_state_from_prev_state_and_table,fail-extract_sub_blocks for table block(%s)", current_block->dump().c_str());   
-            return false;
+            return nullptr;
         }
         if (account_indexs.get_account_indexs().size() != sub_blocks.size()) {
             ec = error::xerrc_t::statestore_block_invalid_err;
             xerror("xstatestore_executor_t::make_state_from_prev_state_and_table,fail-units count unmatch for table block(%s)", current_block->dump().c_str());   
-            return false;
+            return nullptr;
         }
 
         if (!sub_blocks.empty()) {            
@@ -429,7 +429,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_tab
                 data::xunitstate_ptr_t unitstate = execute_unit_recursive(common::xaccount_address_t(unit->get_account()), unit.get(), limit, ec);
                 if (nullptr == unitstate) {
                     xerror("xstatestore_executor_t::make_state_from_prev_state_and_table,fail-make unitstate for table block(%s),unit=%s", current_block->dump().c_str(),unit->dump().c_str());
-                    return false;
+                    return nullptr;
                 }
 #ifdef DEBUG
                 std::string unitstate_bin = unitstate->take_snapshot();
@@ -437,7 +437,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_tab
                 if (unitstate_hash != account_indexs.get_account_indexs()[i].second.get_latest_state_hash()) {
                     ec = error::xerrc_t::statestore_tablestate_exec_fail;
                     xerror("xstatestore_executor_t::make_state_from_prev_state_and_table,fail-unitstate unmatch hash for table block(%s),unit=%s", current_block->dump().c_str(),unit->dump().c_str());
-                    return false;                    
+                    return nullptr;                    
                 }
 #endif
                 unitstate_units.push_back(std::make_pair(unitstate, unit->get_block_hash()));

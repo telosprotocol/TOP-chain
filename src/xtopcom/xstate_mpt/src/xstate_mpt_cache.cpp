@@ -5,6 +5,7 @@
 #include "xstate_mpt/xstate_mpt_cache.h"
 
 #include "xbasic/xmemory.hpp"
+#include "xcommon/xaccount_address.h"
 
 namespace top {
 namespace state_mpt {
@@ -36,13 +37,13 @@ std::string xtop_state_mpt_cache::get(std::shared_ptr<base::xlru_cache<std::stri
     return v;
 }
 
-void xtop_state_mpt_cache::set(std::shared_ptr<base::xlru_cache<std::string, std::string>> lru, const xhash256_t & root, const std::string & account, const std::string & value) {
-    lru->put({account + "@" + root.as_hex_str().substr(0, 8)}, value);
+void xtop_state_mpt_cache::set(std::shared_ptr<base::xlru_cache<std::string, std::string>> lru, const xhash256_t & root, common::xaccount_address_t const & account, const std::string & value) {
+    lru->put({account.value() + "@" + root.as_hex_str().substr(0, 8)}, value);
 }
 
-void xtop_state_mpt_cache::set(std::shared_ptr<base::xlru_cache<std::string, std::string>> lru, const xhash256_t & root, const std::map<std::string, xbytes_t> & batch) {
+void xtop_state_mpt_cache::set(std::shared_ptr<base::xlru_cache<std::string, std::string>> lru, const xhash256_t & root, const std::map<common::xaccount_address_t, xbytes_t> & batch) {
     for (auto value : batch) {
-        lru->put({value.first + "@" + root.as_hex_str().substr(0, 8)}, {value.second.begin(), value.second.end()});
+        lru->put({value.first.value() + "@" + root.as_hex_str().substr(0, 8)}, {value.second.begin(), value.second.end()});
     }
 }
 

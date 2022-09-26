@@ -9,9 +9,9 @@
 namespace top {
 namespace state_mpt {
 
-xtop_state_object::xtop_state_object(const std::string & _account, const base::xaccount_index_t & _index) : account(_account), index(_index) {}
+xtop_state_object::xtop_state_object(common::xaccount_address_t const & _account, const base::xaccount_index_t & _index) : account(_account), index(_index) {}
 
-std::shared_ptr<xtop_state_object> xtop_state_object::new_object(const std::string & account, const base::xaccount_index_t & new_index) {
+std::shared_ptr<xtop_state_object> xtop_state_object::new_object(common::xaccount_address_t const & account, const base::xaccount_index_t & new_index) {
     return std::make_shared<xtop_state_object>(account, new_index);
 }
 

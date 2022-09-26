@@ -164,4 +164,19 @@ TEST(account_address, invalid_construction_2) {
     EXPECT_THROW(top::common::xaccount_address_t account_address{"T80000f1d16965a3f485af048ebcec8@fd700dc92d54fa7"}, top::error::xtop_error_t);
 }
 
+TEST(account_address, value_address_must_not_changed) {
+    std::string const account_string{"T00000LVgLn3yVd11d2izvJg6znmxddxg8JEShoJ"};
+
+    EXPECT_NO_THROW(top::common::xaccount_address_t account_address{account_string});
+
+    top::common::xaccount_address_t const account_address{account_string};
+    auto const & lstring = account_address.to_string();
+    auto const & rstring = account_address.to_string();
+    ASSERT_EQ(std::addressof(lstring), std::addressof(rstring));
+
+    auto const & lvalue = account_address.value();
+    auto const & rvalue = account_address.value();
+    ASSERT_EQ(std::addressof(lvalue), std::addressof(rstring));
+}
+
 NS_END3
