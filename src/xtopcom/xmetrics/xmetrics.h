@@ -173,6 +173,9 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     cons_packtx_fail_transfer_limit, // TODO(jimmy) need delete limit
     cons_packtx_fail_load_origintx,
     cons_packtx_with_threshold,
+    cons_invoke_sync_state_count,
+    cons_invoke_sync_block_count,
+
 
     clock_aggregate_height,
     clock_leader_broadcast_height,

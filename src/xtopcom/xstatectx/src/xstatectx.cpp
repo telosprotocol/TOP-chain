@@ -21,11 +21,17 @@
 NS_BEG2(top, statectx)
 
 xstatectx_t::xstatectx_t(base::xvblock_t* prev_block, const statestore::xtablestate_ext_ptr_t & prev_table_state, base::xvblock_t* commit_block, const statestore::xtablestate_ext_ptr_t & commit_table_state, const xstatectx_para_t & para)
-: m_prev_tablestate_ext(prev_table_state), m_statectx_base(prev_block, prev_table_state, commit_block, commit_table_state, para.m_clock), m_statectx_para(para) {
+: m_statectx_base(prev_block, prev_table_state, commit_block, commit_table_state, para.m_clock), m_statectx_para(para) {
     // create proposal table state for context
     xobject_ptr_t<base::xvbstate_t> proposal_bstate = xstatectx_base_t::create_proposal_bstate(prev_block, prev_table_state->get_table_state()->get_bstate().get(), para.m_clock);
     data::xtablestate_ptr_t proposal_table_state = std::make_shared<data::xtable_bstate_t>(proposal_bstate.get(), false);  // change to modified state
     m_table_ctx = std::make_shared<xtablestate_ctx_t>(proposal_table_state, prev_table_state->get_state_mpt());
+
+    std::error_code ec;
+    std::shared_ptr<state_mpt::xtop_state_mpt> current_prev_mpt = state_mpt::xtop_state_mpt::create(common::xaccount_address_t(prev_block->get_account()), prev_table_state->get_state_mpt()->get_original_root_hash(), base::xvchain_t::instance().get_xdbstore(), state_mpt::xstate_mpt_cache_t::instance(), ec);    
+    xassert(nullptr != current_prev_mpt);
+    statestore::xtablestate_ext_ptr_t tablestate = std::make_shared<statestore::xtablestate_ext_t>(proposal_table_state, current_prev_mpt);
+    m_prev_tablestate_ext = tablestate;
 }
 
 bool xstatectx_t::is_same_table(const base::xvaccount_t & addr) const {
@@ -79,7 +85,7 @@ xunitstate_ctx_ptr_t xstatectx_t::load_unit_ctx(const base::xvaccount_t & addr) 
                 if (nullptr != bstate) {
                     data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get(), false);  // modify-state
                     unit_ctx = std::make_shared<xunitstate_ctx_t>(unitstate, unitblock);
-                    xdbg("xstatectx_t::load_unit_ctx succ-return unit unitstate.table=%s,account=%s,index=%s", m_table_ctx->get_table_state()->get_bstate()->dump().c_str(), addr.get_account().c_str(), account_index.dump().c_str());
+                    xdbg("xstatectx_t::load_unit_ctx succ-return unit unitstate.table=%s,account=%s,index=%s", m_prev_tablestate_ext->get_table_state()->get_bstate()->dump().c_str(), addr.get_account().c_str(), account_index.dump().c_str());
                 }
             }
         } else {
@@ -88,7 +94,7 @@ xunitstate_ctx_ptr_t xstatectx_t::load_unit_ctx(const base::xvaccount_t & addr) 
                 bstate = m_statectx_base.change_to_proposal_block_state(account_index, unitstate->get_bstate().get());
                 data::xunitstate_ptr_t unitstate_modify = std::make_shared<data::xunit_bstate_t>(bstate.get(), false);  // modify-state
                 unit_ctx = std::make_shared<xunitstate_ctx_t>(unitstate_modify, unitblock);
-                xdbg("xstatectx_t::load_unit_ctx succ-return accountindex unitstate.table=%s,account=%s,index=%s", m_table_ctx->get_table_state()->get_bstate()->dump().c_str(), addr.get_account().c_str(), account_index.dump().c_str());
+                xdbg("xstatectx_t::load_unit_ctx succ-return accountindex unitstate.table=%s,account=%s,index=%s", m_prev_tablestate_ext->get_table_state()->get_bstate()->dump().c_str(), addr.get_account().c_str(), account_index.dump().c_str());
             }
         }
     } else { // different table unit state is readonly
@@ -133,7 +139,7 @@ data::xunitstate_ptr_t xstatectx_t::load_commit_unit_state(const base::xvaccount
 }
 
 const data::xtablestate_ptr_t &  xstatectx_t::get_table_state() const {
-    return m_table_ctx->get_table_state();
+    return m_prev_tablestate_ext->get_table_state();
 }
 
 bool xstatectx_t::do_rollback() {
@@ -168,13 +174,7 @@ size_t xstatectx_t::do_snapshot() {
 }
 
 void xstatectx_t::do_commit(base::xvblock_t* current_block) {
-    evm_common::xh256_t state_root;
-    auto ret = data::xblockextract_t::get_state_root(current_block, state_root);
-    if (!ret) {  // should not happen
-        xerror("xstatectx_t::do_commit get state root fail. block:%s", current_block->dump().c_str());
-        return;
-    }
-    xhash256_t state_root_hash = xhash256_t(state_root.to_bytes());
+    xhash256_t state_root_hash = data::xblockextract_t::get_state_root_from_block(current_block);
 
     std::vector<std::pair<data::xunitstate_ptr_t, std::string>> unitstate_units;
     std::vector<statectx::xunitstate_ctx_ptr_t> unitctxs = get_modified_unit_ctx();
@@ -182,8 +182,12 @@ void xstatectx_t::do_commit(base::xvblock_t* current_block) {
         unitstate_units.push_back(std::make_pair(unitctx->get_unitstate(), unitctx->get_unit_hash()));
     }
 
+    // XTODO create store table bstate by final block
+    xobject_ptr_t<base::xvbstate_t> current_state = make_object_ptr<base::xvbstate_t>(*current_block, *get_table_state()->get_bstate());
+    data::xtablestate_ptr_t table_bstate = std::make_shared<data::xtable_bstate_t>(current_state.get());
+
     std::error_code ec;
-    statestore::xtablestate_store_ptr_t tablestate_store = std::make_shared<statestore::xtablestate_store_t>(get_table_state(), m_prev_tablestate_ext->get_state_mpt(), state_root_hash, unitstate_units);
+    statestore::xtablestate_store_ptr_t tablestate_store = std::make_shared<statestore::xtablestate_store_t>(table_bstate, m_prev_tablestate_ext->get_state_mpt(), state_root_hash, unitstate_units);
     statestore::xstatestore_hub_t::instance()->do_commit_table_all_states(current_block, tablestate_store, ec);
     if (ec) {
         xerror("xstatectx_t::do_commit fail. block:%s", current_block->dump().c_str());

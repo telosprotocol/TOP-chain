@@ -126,6 +126,8 @@ void xconfig_register_t::init_static_config() {
     XADD_OFFCHAIN_PARAMETER(evm_relay_txs_collection_interval);
     XADD_OFFCHAIN_PARAMETER(relayblock_batch_tx_max_num);
 
+    XADD_OFFCHAIN_PARAMETER(sync_table_state_height_gap);
+
     m_param_lock.release_write();
 }
 

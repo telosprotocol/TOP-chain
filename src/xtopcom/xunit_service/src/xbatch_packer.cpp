@@ -25,7 +25,6 @@
 NS_BEG2(top, xunit_service)
 
 #define MIN_TRANSACTION_NUM_FOR_FIRST_PACKING (10)
-#define EXECUTE_HEIGHT_DIFF_FOR_SYNC (30)
 
 xbatch_packer::xbatch_packer(observer_ptr<mbus::xmessage_bus_face_t> const   &mb,
                              base::xtable_index_t                             &tableid,
@@ -244,12 +243,11 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     m_last_view_id = view_ev->get_viewid();
     m_last_view_clock = view_ev->get_clock();
 
-    auto _committed_block = m_para->get_resources()->get_vblockstore()->get_latest_committed_block(get_account(), metrics::blockstore_access_from_us_on_view_fire);
-    auto ret = check_state_sync(_committed_block.get());
+    auto _cert_block = m_para->get_resources()->get_vblockstore()->get_latest_cert_block(get_account(), metrics::blockstore_access_from_us_on_view_fire);
+    auto ret = check_state_sync(_cert_block.get());
     if (!ret) {
         return false;
     }
-    auto _cert_block = m_para->get_resources()->get_vblockstore()->get_latest_cert_block(get_account(), metrics::blockstore_access_from_us_on_view_fire);
     std::error_code ec;
     check_latest_cert_block(_cert_block.get(), view_ev, ec);
     if (ec) {
@@ -328,63 +326,76 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     return true;
 }
 
-bool xbatch_packer::check_state_sync(base::xvblock_t * latest_committed_block) {
-    if (latest_committed_block == nullptr) {
-        return false;
-    }
-    evm_common::xh256_t state_root;
-    auto ret = data::xblockextract_t::get_state_root(latest_committed_block, state_root);
-    if (!ret) {
-        xerror("xbatch_packer::on_view_fire get state root fail.block:%s", latest_committed_block->dump().c_str());
+bool xbatch_packer::check_state_sync(base::xvblock_t * cert_block) {
+    if (cert_block == nullptr) {
+        xassert(false);
         return false;
     }
 
-    if (state_root == evm_common::xh256_t{}) {
+    statestore::xtablestate_ext_ptr_t cert_tablestate = statestore::xstatestore_hub_t::instance()->get_tablestate_ext_from_block(cert_block);
+    if (nullptr != cert_tablestate) {
         return true;
+    }
+
+    uint64_t latest_executed_height = statestore::xstatestore_hub_t::instance()->get_latest_executed_block_height(common::xaccount_address_t(get_account()));
+    if (cert_block->get_last_full_block_height() == 0 || latest_executed_height >= cert_block->get_last_full_block_height()) {
+        // no need sync,execute height will increase selfly
+        xwarn("xbatch_packer::check_state_sync no need sync.block=%s,execute_height=%ld,full_height=%ld",cert_block->dump().c_str(), latest_executed_height, cert_block->get_last_full_block_height());
+        return false;
+    }    
+
+    auto latest_committed_block = m_para->get_resources()->get_vblockstore()->load_block_object(get_account(), cert_block->get_height()-2, base::enum_xvblock_flag_committed, metrics::blockstore_access_from_us_on_view_fire);
+    if (nullptr == latest_committed_block) {
+        // no need sync
+        xwarn("xbatch_packer::check_state_sync fail-load commit block.block=%s",cert_block->dump().c_str());
+        return false;
     }
 
     uint64_t latest_committed_height = latest_committed_block->get_height();
-    uint64_t latest_executed_height = statestore::xstatestore_hub_t::instance()->get_latest_executed_block_height(common::xaccount_address_t(get_account()));
-    if (latest_executed_height == latest_committed_height) {
-        return true;
-    }
-
-    if (latest_executed_height > latest_committed_height) {
-        xassert(false);
-        return true;
-    }
-
-    uint64_t lack_num = latest_committed_height - latest_executed_height;
-
-    if (lack_num > EXECUTE_HEIGHT_DIFF_FOR_SYNC) {
-        // todo(nathan):try sync mpt and table state. get table state root(attention:empty block do not have.)
-        // todo(nathan):sync by latest committed full table block.
-        std::error_code ec;
-        xhash256_t root_hash(state_root.to_bytes());
-        // todo(nathan): enable unitstate sync
-        // TODO: add table state hash
-        get_resources()->get_state_downloader()->sync_state(common::xaccount_address_t{get_account()}, 0, xhash256_t(), root_hash, false, ec);
-        xinfo("xbatch_packer::check_state_sync try sync state.table:%s,height:%llu,root:%s ec:%s", get_account().c_str(), latest_committed_height, root_hash.as_hex_str().c_str(), ec.message().c_str());
-        if (!ec) {
-            statestore::xstatestore_hub_t::instance()->set_state_sync_info(
-                common::xaccount_address_t(get_account()), statestore::xstate_sync_info_t(latest_committed_height, root_hash, xhash256_t(), latest_committed_block->get_block_hash()));
-        }
+    uint64_t latest_full_height = latest_committed_block->get_block_class() == base::enum_xvblock_class_full ? latest_committed_block->get_height() : latest_committed_block->get_last_full_block_height();
+    if (latest_executed_height >= latest_full_height) {
+        // execute height may behind, but no need sync
+        xwarn("xbatch_packer::check_state_sync no need sync.block=%s,execute_height=%ld,commit_full_height=%ld",cert_block->dump().c_str(), latest_executed_height, latest_full_height);
         return false;
     }
 
-    uint64_t latest_connectted_height = get_vblockstore()->get_latest_connected_block_height(get_account());
-    if (latest_connectted_height == latest_committed_height) {
-        return true;
-    }
+    uint64_t _sync_table_state_height_gap = XGET_CONFIG(sync_table_state_height_gap);
+    if (latest_executed_height + _sync_table_state_height_gap < latest_full_height) {
+        auto full_block = get_vblockstore()->load_block_object(*this, latest_full_height, base::enum_xvblock_flag_committed, false);
+        if (nullptr == full_block) {
+            xwarn("xbatch_packer::check_state_sync-fail load full table block.%s,full_height=%ld,commit_height=%ld,execute_height=%ld", get_account().c_str(), latest_full_height, latest_committed_height, latest_executed_height);
+            return false;
+        }
 
-    // try sync table blocks on demand
-    lack_num = latest_committed_height - latest_connectted_height;
-    uint32_t sync_num = lack_num < sync::max_request_block_count ? lack_num : sync::max_request_block_count;
-    mbus::xevent_behind_ptr_t ev =
-        make_object_ptr<mbus::xevent_behind_on_demand_t>(get_account(), latest_connectted_height + 1, sync_num, false, "lack_of_table_block", "", false);
-    base::xvchain_t::instance().get_xevmbus()->push_event(ev);
-    xwarn("xbatch_packer::check_state_sync try sync table blocks.account=%s,try sync h %llu num %u", get_account().c_str(), latest_connectted_height + 1, sync_num);
-    XMETRICS_GAUGE(metrics::txpool_try_sync_table_block, 1);
+        std::error_code ec;
+        xhash256_t state_root = data::xblockextract_t::get_state_root_from_block(full_block.get());
+        if (state_root == xhash256_t{}) {
+            xwarn("xbatch_packer::check_state_sync fail-old version full table block.block:%s", full_block->dump().c_str());
+            return false;
+        }
+        std::string table_bstate_hash_str = full_block->get_fullstate_hash();
+        xassert(!table_bstate_hash_str.empty());
+        xhash256_t table_bstate_hash(top::to_bytes(table_bstate_hash_str));
+        // xhash256_t sync_block_hash(top::to_bytes(full_block->get_block_hash()));
+
+        get_resources()->get_state_downloader()->sync_state(common::xaccount_address_t{get_account()}, latest_full_height, table_bstate_hash, state_root, true, ec);
+        xwarn("xbatch_packer::check_state_sync try sync state.table:%s,height:%llu,root:%s ec:%s", get_account().c_str(), latest_full_height, state_root.as_hex_str().c_str(), ec.message().c_str());
+        if (!ec) {
+            statestore::xstatestore_hub_t::instance()->set_state_sync_info(
+                common::xaccount_address_t(get_account()), statestore::xstate_sync_info_t(latest_full_height, state_root, xhash256_t(), full_block->get_block_hash()));
+        }
+        XMETRICS_GAUGE(metrics::cons_invoke_sync_state_count, 1);
+    } else {
+        // invoke block sync
+        uint64_t lack_num = latest_full_height - latest_executed_height;
+        uint32_t sync_num = lack_num < sync::max_request_block_count ? lack_num : sync::max_request_block_count;
+        mbus::xevent_behind_ptr_t ev =
+            make_object_ptr<mbus::xevent_behind_on_demand_t>(get_account(), latest_executed_height + 1, sync_num, false, "lack_of_table_block", "", false);
+        base::xvchain_t::instance().get_xevmbus()->push_event(ev);
+        xwarn("xbatch_packer::check_state_sync try sync table blocks.account=%s,full_height=%ld,commit_height=%ld,execute_height=%ld,try sync h %llu num %u", 
+            get_account().c_str(), latest_full_height, latest_committed_height, latest_executed_height, latest_executed_height + 1, sync_num);
+        XMETRICS_GAUGE(metrics::cons_invoke_sync_block_count, 1);
+    }
     return false;
 }
 
