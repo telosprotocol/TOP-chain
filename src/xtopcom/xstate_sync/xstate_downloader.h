@@ -13,23 +13,6 @@
 namespace top {
 namespace state_sync {
 
-struct table_detail {
-    common::xaccount_address_t address;
-    uint64_t height{0};
-    xhash256_t hash;
-
-    table_detail(common::xaccount_address_t addr, uint64_t h, xhash256_t _hash) : address(addr), height(h), hash(_hash) {
-    }
-};
-
-struct sync_result {
-    common::xaccount_address_t table;
-    xhash256_t root;
-    std::error_code ec;
-
-    sync_result(common::xaccount_address_t _table, xhash256_t _root, std::error_code _ec) : table(_table), root(_root), ec(_ec) {
-    }
-};
 
 class xtop_download_executer {
 public:
@@ -37,24 +20,26 @@ public:
     ~xtop_download_executer() = default;
 
     void run_state_sync(std::shared_ptr<xtop_state_sync> syncer, std::function<void(sync_result)> callback, bool sync_unit);
-    void notify_table_sync_finish();
     void cancel();
 
     void push_track_req(const state_req & req);
     void push_state_pack(const state_res & res);
+    void push_table_state(const table_state_detail & detail);
 
 private:
     void sync_table_state();
     void pop_track_req();
     void pop_state_pack();
+    void pop_table_state();
 
-    std::shared_ptr<xstate_sync_t> m_syncer{nullptr};
     bool m_cancel{false};
     bool m_notify{false};
     std::list<state_req> m_track_req;
     std::list<state_res> m_state_packs;
+    std::list<table_state_detail> m_table_state;
     std::mutex m_track_mutex;
     std::mutex m_state_pack_mutex;
+    std::mutex m_table_state_mutex;
 };
 using xdownload_executer_t = xtop_download_executer;
 
@@ -64,7 +49,13 @@ public:
     ~xtop_state_downloader() = default;
 
     // sync actions
-    void sync_state(const common::xaccount_address_t & table, const uint64_t height, const xhash256_t & hash, const xhash256_t & root, bool sync_unit, std::error_code & ec);
+    void sync_state(const common::xaccount_address_t & table,
+                    const uint64_t height,
+                    const xhash256_t & block_hash,
+                    const xhash256_t & state_hash,
+                    const xhash256_t & root_hash,
+                    bool sync_unit,
+                    std::error_code & ec);
     void sync_cancel(const common::xaccount_address_t & table);
     void handle_message(const vnetwork::xvnode_address_t & sender, std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network, const vnetwork::xmessage_t & message);
 

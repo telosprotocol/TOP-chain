@@ -14,6 +14,19 @@
 
 namespace top {
 namespace state_mpt {
+
+struct xaccount_info_t {
+public:
+    xaccount_info_t() = default;
+    ~xaccount_info_t() = default;
+
+    std::string encode();
+    void decode(const std::string & str);
+
+    std::string m_account;
+    base::xaccount_index_t m_index;
+};
+
 class xtop_state_mpt {
 public:
     xtop_state_mpt() = default;
@@ -67,6 +80,11 @@ public:
     /// @param unit unit data of account.
     /// @param ec Log the error code.
     void set_account_index_with_unit(common::xaccount_address_t const & account, const std::string & index_str, const xbytes_t & unit, std::error_code & ec);
+
+    /// @brief Prune unit data in db.
+    /// @param account Account string.
+    /// @param ec Log the error code.
+    void prune_unit(const std::string & account, std::error_code & ec);
 
     /// @brief Commit all modifies to db.
     /// @param ec Log the error code.

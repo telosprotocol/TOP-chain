@@ -5,11 +5,14 @@
 #include "xstate_sync/xstate_sync.h"
 
 #include "xcodec/xmsgpack_codec.hpp"
+#include "xdata/xtable_bstate.h"
+#include "xdata/xunit_bstate.h"
 #include "xevm_common/xerror/xerror.h"
 #include "xpbase/base/top_utils.h"
 #include "xstate_mpt/xstate_sync.h"
 #include "xstate_sync/xerror.h"
 #include "xutility/xhash.h"
+#include "xvledger/xvdbkey.h"
 #include "xvnetwork/xvnetwork_message.h"
 
 // #include "xbase/xbase.h"
@@ -22,22 +25,25 @@ constexpr uint32_t fetch_num = 64;
 
 std::shared_ptr<xtop_state_sync> xtop_state_sync::new_state_sync(const common::xaccount_address_t & table,
                                                                  const uint64_t height,
-                                                                 const xhash256_t & hash,
-                                                                 const xhash256_t & root,
+                                                                 const xhash256_t & block_hash,
+                                                                 const xhash256_t & state_hash,
+                                                                 const xhash256_t & root_hash,
                                                                  std::function<state_sync_peers_t()> peers,
                                                                  std::function<void(const state_req &)> track_req,
                                                                  base::xvdbstore_t * db,
                                                                  bool sync_unit) {
     auto sync = std::make_shared<xtop_state_sync>();
-    sync->m_sched = state_mpt::new_state_sync(table, root, db, sync_unit);
+    sync->m_sched = state_mpt::new_state_sync(table, root_hash, db, sync_unit);
     sync->m_table = table;
     sync->m_height = height;
-    sync->m_table_state_hash = hash;
-    sync->m_root = root;
+    sync->m_table_block_hash = block_hash;
+    sync->m_table_state_hash = state_hash;
+    sync->m_root = root_hash;
     sync->m_peers_func = peers;
     sync->m_track_func = track_req;
-    sync->m_db = std::make_shared<evm_common::trie::xkv_db_t>(db, table);
-    xinfo("xtop_state_sync::new_state_sync table: %s, root: %s", table.c_str(), root.as_hex_str().c_str());
+    sync->m_db = db;
+    sync->m_kv_db = std::make_shared<evm_common::trie::xkv_db_t>(db, table);
+    xinfo("xtop_state_sync::new_state_sync table: %s, root: %s", table.c_str(), root_hash.as_hex_str().c_str());
     return sync;
 }
 
@@ -88,7 +94,11 @@ xhash256_t xtop_state_sync::root() const {
 }
 
 evm_common::trie::xkv_db_face_ptr_t xtop_state_sync::db() const {
-    return m_db;
+    return m_kv_db;
+}
+
+sync_result xtop_state_sync::result() {
+    return {m_table, m_height, m_table_block_hash, m_table_state_hash, m_root, m_ec};
 }
 
 bool xtop_state_sync::is_done() const {
@@ -105,12 +115,37 @@ void xtop_state_sync::pop_deliver_req() {
     m_deliver_list.pop_back();
 }
 
+void xtop_state_sync::process_table(const table_state_detail & detail) {
+    if (detail.address != m_table) {
+        xwarn("xtop_state_sync::process_table address mismatch: %s, %s", detail.address.c_str(), m_table.c_str());
+    }
+    if (detail.height != m_height) {
+        xwarn("xtop_state_sync::process_table height mismatch: %lu, %lu", detail.height, m_height);
+    }
+    if (detail.hash != m_table_block_hash) {
+        xwarn("xtop_state_sync::process_table block hash mismatch: %s, %s", detail.hash.as_hex_str().c_str(), m_table_block_hash.as_hex_str().c_str());
+    }
+
+    xinfo("xtop_state_sync::process_table %s %lu %s %s", detail.address.c_str(), detail.height, detail.hash.as_hex_str().c_str(), to_hex(detail.value).c_str());
+    auto bstate = base::xvblock_t::create_state_object({detail.value.begin(), detail.value.end()});
+    auto table_state = std::make_shared<data::xtable_bstate_t>(bstate);
+    auto snapshot = table_state->take_snapshot();
+    auto hash = base::xcontext_t::instance().hash(snapshot, enum_xhash_type_sha2_256);
+    if (xhash256_t{to_bytes(hash)} != m_table_state_hash) {
+        xwarn("xtop_state_sync::process_table state hash mismatch: %s, %s", to_hex(hash).c_str(), to_hex(m_table_state_hash).c_str());
+        return;
+    }
+    m_db->set_value(base::xvdbkey_t::create_prunable_state_key(m_table.value(), m_height, {m_table_block_hash.begin(), m_table_block_hash.end()}),
+                    {detail.value.begin(), detail.value.end()});
+    m_sync_table_finish = true;
+}
+
 void xtop_state_sync::sync_table(std::error_code & ec) {
     base::xstream_t stream(base::xcontext_t::instance());
     stream << m_table.value();
     stream << m_height;
-    stream << m_table_state_hash.to_bytes();
-    stream << rand();   // defend from filter
+    stream << m_table_block_hash.to_bytes();
+    stream << rand();  // defend from filter
 
     uint32_t cnt{0};
     while (!m_sync_table_finish) {
@@ -197,7 +232,7 @@ void xtop_state_sync::commit(bool force, std::error_code & ec) {
     if (!force && m_bytes_uncommitted < ideal_batch_size) {
         return;
     }
-    m_sched->Commit(m_db);
+    m_sched->Commit(m_kv_db);
 	m_num_uncommitted = 0;
 	m_bytes_uncommitted = 0;
     return;
@@ -337,7 +372,10 @@ xhash256_t xtop_state_sync::process_node_data(xbytes_t & blob, std::error_code &
 
 xhash256_t xtop_state_sync::process_unit_data(xbytes_t & blob, std::error_code & ec) {
     evm_common::trie::SyncResult res;
-    auto state_hash = base::xcontext_t::instance().hash({blob.begin(), blob.end()}, enum_xhash_type_sha2_256);
+    auto bstate = base::xvblock_t::create_state_object({blob.begin(), blob.end()});
+    auto unit_state = std::make_shared<data::xunit_bstate_t>(bstate);
+    auto snapshot = unit_state->take_snapshot();
+    auto state_hash = base::xcontext_t::instance().hash(snapshot, enum_xhash_type_sha2_256);
     res.Hash = xhash256_t{xbytes_t{state_hash.begin(), state_hash.end()}};
     res.Data = blob;
     m_sched->Process(res, ec);
