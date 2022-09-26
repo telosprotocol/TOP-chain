@@ -129,10 +129,6 @@ private:
     std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> hashRoot();
 
 private:
-    bool EqualBytes(xbytes_t const & a, xbytes_t const & b) {
-        return (a.size() == b.size()) && std::equal(a.begin(), a.end(), b.begin());
-    }
-
     inline xnode_flag_t newFlag() {
         xnode_flag_t f;
         f.dirty = true;

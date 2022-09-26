@@ -14,7 +14,9 @@ xbytes_t xtop_trie_node_rlp::EncodeToBytes(xtrie_node_face_ptr_t node) {
     // printf("type: %d\n", node->type());
     switch (node->type()) {
     case xtrie_node_type_t::fullnode: {
-        auto fn = std::make_shared<xtrie_full_node_t>(*(static_cast<xtrie_full_node_t *>(node.get())));
+        auto fn = std::dynamic_pointer_cast<xtrie_full_node_t>(node);
+        assert(fn != nullptr);
+
         xbytes_t buf;
         std::error_code ec;
         fn->EncodeRLP(buf, ec);
@@ -22,7 +24,9 @@ xbytes_t xtop_trie_node_rlp::EncodeToBytes(xtrie_node_face_ptr_t node) {
         return buf;
     }
     case xtrie_node_type_t::shortnode: {
-        auto sn = std::make_shared<xtrie_short_node_t>(*(static_cast<xtrie_short_node_t *>(node.get())));
+        auto sn = std::dynamic_pointer_cast<xtrie_short_node_t>(node);
+        assert(sn != nullptr);
+
         xbytes_t buf;
         std::error_code ec;
         sn->EncodeRLP(buf, ec);
@@ -30,15 +34,21 @@ xbytes_t xtop_trie_node_rlp::EncodeToBytes(xtrie_node_face_ptr_t node) {
         return buf;
     }
     case xtrie_node_type_t::hashnode: {
-        auto hn = std::make_shared<xtrie_hash_node_t>(*(static_cast<xtrie_hash_node_t *>(node.get())));
+        auto hn = std::dynamic_pointer_cast<xtrie_hash_node_t>(node);
+        assert(hn != nullptr);
+
         return hn->data();
     }
     case xtrie_node_type_t::valuenode: {
-        auto vn = std::make_shared<xtrie_value_node_t>(*(static_cast<xtrie_value_node_t *>(node.get())));
+        auto vn = std::dynamic_pointer_cast<xtrie_value_node_t>(node);
+        assert(vn != nullptr);
+
         return vn->data();
     }
     case xtrie_node_type_t::rawfullnode: {
-        auto rfn = std::make_shared<xtrie_raw_full_node_t>(*(static_cast<xtrie_raw_full_node_t *>(node.get())));
+        auto rfn = std::dynamic_pointer_cast<xtrie_raw_full_node_t>(node);
+        assert(rfn != nullptr);
+
         xbytes_t buf;
         std::error_code ec;
         rfn->EncodeRLP(buf, ec);
@@ -46,11 +56,15 @@ xbytes_t xtop_trie_node_rlp::EncodeToBytes(xtrie_node_face_ptr_t node) {
         return buf;
     }
     case xtrie_node_type_t::rawnode: {
-        auto rn = std::make_shared<xtrie_raw_node_t>(*(static_cast<xtrie_raw_node_t *>(node.get())));
+        auto rn = std::dynamic_pointer_cast<xtrie_raw_node_t>(node);
+        assert(rn != nullptr);
+
         return rn->data();
     }
     case xtrie_node_type_t::rawshortnode: {
-        auto rsn = std::make_shared<xtrie_raw_short_node_t>(*(static_cast<xtrie_raw_short_node_t *>(node.get())));
+        auto rsn = std::dynamic_pointer_cast<xtrie_raw_short_node_t>(node);
+        assert(rsn != nullptr);
+
         xbytes_t buf;
         std::error_code ec;
         rsn->EncodeRLP(buf, ec);

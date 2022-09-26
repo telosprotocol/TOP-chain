@@ -183,7 +183,7 @@ public:
 
 private:
 public:
-    std::shared_ptr<xtop_trie_full_node> copy() {
+    std::shared_ptr<xtop_trie_full_node> clone() {
         return std::make_shared<xtop_trie_full_node>(*this);
     }
 

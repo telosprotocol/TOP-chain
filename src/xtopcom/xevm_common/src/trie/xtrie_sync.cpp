@@ -246,7 +246,9 @@ std::vector<Sync::request *> Sync::children(request * req, xtrie_node_face_ptr_t
     std::vector<std::pair<xbytes_t, xtrie_node_face_ptr_t>> children;
     switch (object->type()) {
     case xtrie_node_type_t::shortnode: {
-        auto node = std::make_shared<xtrie_short_node_t>(*(static_cast<xtrie_short_node_t *>(object.get())));
+        auto node = std::dynamic_pointer_cast<xtrie_short_node_t>(object);
+        assert(node != nullptr);
+
         auto key = node->key;
         if (hasTerm(key)) {
             key = xbytes_t{key.begin(), key.end() - 1};
@@ -258,7 +260,9 @@ std::vector<Sync::request *> Sync::children(request * req, xtrie_node_face_ptr_t
         break;
     }
     case xtrie_node_type_t::fullnode: {
-        auto node = std::make_shared<xtrie_full_node_t>(*(static_cast<xtrie_full_node_t *>(object.get())));
+        auto node = std::dynamic_pointer_cast<xtrie_full_node_t>(object);
+        assert(node != nullptr);
+
         for (std::size_t i = 0; i < 17; ++i) {
             if (node->Children[i] != nullptr) {
                 auto child = node->Children[i];
@@ -283,7 +287,9 @@ std::vector<Sync::request *> Sync::children(request * req, xtrie_node_face_ptr_t
         // Notify any external watcher of a new key/value node
         if (req->callback != nullptr) {
             if (child_p.second->type() == xtrie_node_type_t::valuenode) {
-                auto node = std::make_shared<xtrie_value_node_t>(*(static_cast<xtrie_value_node_t *>(child_p.second.get())));
+                auto node = std::dynamic_pointer_cast<xtrie_value_node_t>(child_p.second);
+                assert(node != nullptr);
+
                 std::vector<xbytes_t> paths;
                 if (child_p.first.size() == 2 * 32) {
                     paths.push_back(hexToKeybytes(child_p.first));
@@ -301,7 +307,9 @@ std::vector<Sync::request *> Sync::children(request * req, xtrie_node_face_ptr_t
         // If the child references another node, resolve or schedule
         if (child_p.second->type() == xtrie_node_type_t::hashnode) {
             // Try to resolve the node from the local database
-            auto node = std::make_shared<xtrie_hash_node_t>(*(static_cast<xtrie_hash_node_t *>(child_p.second.get())));
+            auto node = std::dynamic_pointer_cast<xtrie_hash_node_t>(child_p.second);
+            assert(node != nullptr);
+
             auto hash = xhash256_t{node->data()};
             if (membatch.hasNode(hash)) {
                 continue;
