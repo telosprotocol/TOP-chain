@@ -22,7 +22,7 @@ class xquic_node_t
   : public top::xbasic_runnable_t<xquic_node_t>
   , public std::enable_shared_from_this<xquic_node_t> {
 public:
-    xquic_node_t(std::size_t _server_port);
+    xquic_node_t(std::size_t _p2p_inbound_port);
 
 private:
     void check_cert_file();
@@ -42,7 +42,7 @@ public:
     void on_quic_message_ready(top::xbytes_t const & bytes, std::string const & peer_ip, std::size_t peer_inbound_port);
 
 private:
-    /// configs:
+    std::size_t m_p2p_inbound_port;
     std::size_t m_server_port;
 
     on_receive_callback_t m_cb;

@@ -28,6 +28,14 @@ using namespace top::base;
 
 namespace top {
 namespace transport {
+
+// same as DEFAULT_QUIC_SERVER_PORT_DETLA in xquic_node.cpp
+#if defined(DEBUG) || defined(XBUILD_CI) || defined(XBUILD_DEV)
+static const std::size_t DEFAULT_QUIC_SERVER_PORT_DETLA = 1000;  // quic_port is greater than p2p_port;
+#else
+static const std::size_t DEFAULT_QUIC_SERVER_PORT_DETLA = 1;  // quic_port is greater than p2p_port;
+#endif
+
 const static uint16_t XUDP_RATELIMIT_INTERVAL = 5;                        //  5 minutes
 const static uint16_t XUDP_RATELIMIT_CONNECTION_TIMES = 10;               //  not more than 5 connection times
 const static uint16_t XUDP_RATELIMIT_CONNECTION_TIMES_WITHIN_MINUTE = 3;  //  not more than 3 connection times within one minute
@@ -175,9 +183,9 @@ int32_t xp2pudp_t::connect_xudp(const std::string & target_ip, const uint16_t ta
 }
 int xp2pudp_t::send(xpacket_t & packet) {
     XMETRICS_GAUGE(metrics::message_transport_send, 1);
-    if (packet.get_size() > 650) {
+    if (packet.get_size() > 10485) {
         const std::string src_data((const char *)packet.get_body().data() + enum_xbase_header_len, packet.get_body().size() - enum_xbase_header_len);
-        return quic_node_->send_data(src_data, packet.get_to_ip_addr(), packet.get_to_ip_port() - 2000);  // TODO: how to map port... debug -2000 release -1?
+        return quic_node_->send_data(src_data, packet.get_to_ip_addr(), packet.get_to_ip_port() + DEFAULT_QUIC_SERVER_PORT_DETLA);  // xquic server port is greater than p2p port
     }
     if (packet.get_size() > 512) {
         packet.set_process_flag(enum_xpacket_process_flag_compress);  // ask compres

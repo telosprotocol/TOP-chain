@@ -13,6 +13,13 @@
 
 NS_BEG3(top, transport, quic)
 
+// same as DEFAULT_QUIC_SERVER_PORT_DETLA in xudp_socket.cc
+#if defined(DEBUG) || defined(XBUILD_CI) || defined(XBUILD_DEV)
+static const std::size_t DEFAULT_QUIC_SERVER_PORT_DETLA = 1000;  // quic_port is greater than p2p_port;
+#else
+static const std::size_t DEFAULT_QUIC_SERVER_PORT_DETLA = 1;  // quic_port is greater than p2p_port;
+#endif
+
 void xquic_node_t::check_cert_file() {
     std::ofstream cert_file_hd;
     cert_file_hd.open("./server.crt");
@@ -25,8 +32,11 @@ void xquic_node_t::check_cert_file() {
     cert_key_hd.close();
 }
 
-xquic_node_t::xquic_node_t(std::size_t _server_port)
-  : m_server_port{_server_port}, m_server_ptr{std::make_shared<xquic_server_t>()}, m_client_ptr{std::make_shared<xquic_client_t>()} {
+xquic_node_t::xquic_node_t(std::size_t _p2p_inbound_port)
+  : m_p2p_inbound_port{_p2p_inbound_port}
+  , m_server_port{m_p2p_inbound_port + DEFAULT_QUIC_SERVER_PORT_DETLA}
+  , m_server_ptr{std::make_shared<xquic_server_t>()}
+  , m_client_ptr{std::make_shared<xquic_client_t>()} {
 }
 
 void xquic_node_t::start() {
@@ -39,7 +49,7 @@ void xquic_node_t::start() {
         m_server_ptr->init(std::bind(&xquic_node_t::on_quic_message_ready, shared_from_this(), std::placeholders::_1, std::placeholders::_2, std::placeholders::_3), m_server_port);
     });
 
-    top::threading::xbackend_thread::spawn([this, self] { m_client_ptr->init(m_server_port); });
+    top::threading::xbackend_thread::spawn([this, self] { m_client_ptr->init(m_p2p_inbound_port); });
 
     xinfo("xquic_node_t::start quic node start.");
 
@@ -120,7 +130,7 @@ void xquic_node_t::on_quic_message_ready(top::xbytes_t const & bytes, std::strin
 
     base::xpacket_t packet;
     packet.set_from_ip_addr(peer_ip);
-    packet.set_from_ip_port(static_cast<uint16_t>(peer_inbound_port) + 2000);  // todo const static 2000 debug/release
+    packet.set_from_ip_port(peer_inbound_port);
 
     assert(m_cb);
     m_cb(proto_message, packet);

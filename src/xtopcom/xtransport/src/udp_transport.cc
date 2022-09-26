@@ -68,7 +68,7 @@ bool UdpTransport::Init(std::string const & local_ip, uint16_t local_port, Multi
         TOP_ERROR("create xio thread failed!");
         return false;
     }
-    quic_node_ = std::make_shared<quic::xquic_node_t>(local_port - 2000);  // todo make this debug/release static config.
+    quic_node_ = std::make_shared<quic::xquic_node_t>(local_port);  // quic node should save p2p inbound port . as it can be user-configured.
 
     udp_handle_ = base::xsocket_utl::udp_listen("0.0.0.0", local_port);
     if (udp_handle_ <= 0) {

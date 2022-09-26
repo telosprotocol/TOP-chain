@@ -46,9 +46,9 @@ enum class cli_conn_status_t : std::uint8_t {
 };
 
 #ifdef DEBUG
-#    define BEFORE_WELL_CONNECTED_KEEP_MSG_TIMER 10000  // 0.01s
-#else
 #    define BEFORE_WELL_CONNECTED_KEEP_MSG_TIMER 1000000  // 1s
+#else
+#    define BEFORE_WELL_CONNECTED_KEEP_MSG_TIMER 3000000  // 3s
 #endif
 
 struct cli_user_conn_t {
@@ -157,7 +157,7 @@ private:
 
 public:
     bool send_queue_full() {
-        return m_send_queue.unsafe_size() > 1000;
+        return m_send_queue.unsafe_size() > 10000;
     }
 
     std::string xclient_read_token() {

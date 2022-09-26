@@ -7,7 +7,7 @@
 #define XQC_PACKET_TMP_BUF_LEN 1500
 #define g_conn_check_timeout 1                  // 1s each check
 #define g_conn_timeout 25                       // 25s
-#define g_stream_handle_timeout 20              // 20s
+#define g_stream_handle_timeout 24              // 24s
 #define g_client_engine_idle_timeout 30 * 1000  // 30s
 #define g_server_engine_idle_timeout 30 * 1000  // 30s
 #define MAX_BUF_SIZE (100 * 1024 * 1024)
@@ -48,7 +48,7 @@ static top::xbytes_t xquic_client_generate_ping_packet_data(std::size_t server_i
 static bool xquic_server_handle_ping_packet_data(top::xbytes_t const & ping_packet, std::size_t & peer_inbound_port) {
     std::string ping_str{ping_packet.begin(), ping_packet.end()};
     if (ping_str.size() <= PINGPACKETVERSION.size() || ping_str.substr(0, PINGPACKETVERSION.size()) != PINGPACKETVERSION) {
-        // todo might add debug log.
+        xwarn("[xquic_server_engine] recv wrong ping packet data. size:%zu, data:%s", ping_str.size(), ping_str.c_str());
         return false;
     }
     peer_inbound_port = static_cast<std::size_t>(std::atoi(ping_str.substr(PINGPACKETVERSION.size()).c_str()));
@@ -126,7 +126,9 @@ int xquic_server_accept(xqc_engine_t * engine, xqc_connection_t * conn, const xq
     }
 
     memcpy(&srv_user_conn->cid, cid, sizeof(*cid));
-    xinfo("[xquic_server_engine]xquic_server_accept success get peer addr, : %s", inet_ntoa(((struct sockaddr_in *)&srv_user_conn->peer_addr)->sin_addr));
+    xinfo("[xquic_server_engine]xquic_server_accept success get peer cid: %s, ip: %s",
+          xqc_scid_str(&srv_user_conn->cid),
+          inet_ntoa(((struct sockaddr_in *)&srv_user_conn->peer_addr)->sin_addr));
 
     return 0;
 }
@@ -269,9 +271,6 @@ int xquic_server_conn_close_notify(xqc_connection_t * conn, const xqc_cid_t * ci
          stats.ack_info);
 
     delete srv_user_conn;
-    // todo verify
-    // when the peer(client) close connection (peers timeout close or self engine timeout close),
-    // server should callback to erase this no-more-trusted connection.
     return 0;
 }
 void xquic_server_conn_handshake_finished(xqc_connection_t * conn, void * user_data, void * conn_proto_data) {
@@ -335,8 +334,13 @@ int xquic_server_stream_read_notify(xqc_stream_t * stream, void * user_data) {
                     // handle ping packet
                     bool res = xquic_server_handle_ping_packet_data(data_buffer, srv_user_stream->peer_inbound_port);
                     if (!res) {
-                        // xwarn("");
-                        // todo need to close connection
+                        xwarn("[xquic_server_engine] ping packet error, close stream");
+                        // need to close connection
+                        int rc = xqc_stream_close(srv_user_stream->stream);
+                        if (rc) {
+                            printf("xqc_stream_close error %d \n", rc);
+                        }
+                        return 0;
                     }
                     srv_user_stream->peer_inbound_addr = std::string(inet_ntoa(((struct sockaddr_in *)&srv_user_stream->srv_user_conn->peer_addr)->sin_addr));
                     xdbg("[xquic_server_engine]get ping packet from ip: %s, port: %zu", srv_user_stream->peer_inbound_addr.c_str(), srv_user_stream->peer_inbound_port);
@@ -354,10 +358,9 @@ int xquic_server_stream_read_notify(xqc_stream_t * stream, void * user_data) {
 
     } while (read > 0 && !fin);
 
-    if (fin) {
-        // TODO
-        char * ip = inet_ntoa(((struct sockaddr_in *)&srv_user_stream->srv_user_conn->peer_addr)->sin_addr);
-    }
+    // if (fin) {
+    //     char * ip = inet_ntoa(((struct sockaddr_in *)&srv_user_stream->srv_user_conn->peer_addr)->sin_addr);
+    // }
     return 0;
 }
 int xquic_server_stream_close_notify(xqc_stream_t * stream, void * user_data) {
@@ -413,7 +416,6 @@ int xquic_client_stream_send(xqc_stream_t * stream, void * user_data) {
 /// client app callbacks
 /// conns: create/close/handshake_finish/ping_acked
 int xquic_client_conn_create_notify(xqc_connection_t * conn, const xqc_cid_t * cid, void * user_data, void * conn_proto_data) {
-
     // cli_user_conn_t * cli_user_conn = (cli_user_conn_t *)user_data;
     // xqc_conn_set_alp_user_data(conn, cli_user_conn);
 
@@ -421,7 +423,6 @@ int xquic_client_conn_create_notify(xqc_connection_t * conn, const xqc_cid_t * c
     return 0;
 }
 int xquic_client_conn_close_notify(xqc_connection_t * conn, const xqc_cid_t * cid, void * user_data, void * conn_proto_data) {
-
     cli_user_conn_t * cli_user_conn = (cli_user_conn_t *)user_data;
     xquic_client_t * client = (xquic_client_t *)cli_user_conn->client;
 
@@ -704,7 +705,6 @@ void xquic_client_socket_read_handler(cli_user_conn_t * cli_user_conn, int fd) {
         }
 
         if (recv_size < 0) {
-            // todo connection failed `recvfrom: recvmsg = -1(Connection refused)` . add log && clean connection fallback;? or at xquic_client_conn_close_notify
             xwarn("[xquic_client_engine]recvfrom: recvmsg = %zd(%s)", recv_size, strerror(get_last_sys_errno()));
             break;
         }
@@ -1038,8 +1038,7 @@ cli_user_conn_t * xquic_client_t::connect(std::string const & server_addr, uint3
     cli_user_conn_t * cli_user_conn = xquic_client_user_conn_create(server_addr.c_str(), server_port, this);
     cli_user_conn->server_addr = server_addr;
     if (cli_user_conn == nullptr) {
-        printf("xquic_client_user_conn_create error\n");
-        // todo add ec?
+        xwarn("[xquic_client_engine] xquic_client_user_conn_create error");
         return nullptr;
     }
     m_conn_queue.push(cli_user_conn);
@@ -1160,15 +1159,13 @@ void xquic_client_t::quic_engine_do_send() {
 
             if (cli_user_conn->conn_status != cli_conn_status_t::well_connected) {
                 if (cli_user_conn->conn_status == cli_conn_status_t::before_connected && xqc_now() - cli_user_conn->conn_create_time < BEFORE_WELL_CONNECTED_KEEP_MSG_TIMER) {
-                    // todo add debug log.
                     xdbg("[xquic_client_engine]quic_engine_do_send: connection not well connected. messsage shoule be keep , push it back to queue");
                     m_send_queue.push(std::move(send_buffer_ptr));
                     continue;
                 }
                 // connection error, has not established or after_connected.
-                // todo warning log. nothing we can do to tell module.
-                xdbg("[xquic_client_engine]quic_engine_do_send: message(s) for %s discard at quic client engine do send queue",
-                     inet_ntoa(((struct sockaddr_in *)&cli_user_conn->peer_addr)->sin_addr));
+                xwarn("[xquic_client_engine]quic_engine_do_send: message(s) for %s discard at quic client engine do send queue",
+                      inet_ntoa(((struct sockaddr_in *)&cli_user_conn->peer_addr)->sin_addr));
                 send_buffer_ptr->send_data.clear();
                 continue;
             }
@@ -1181,7 +1178,6 @@ void xquic_client_t::quic_engine_do_send() {
                 cli_user_stream->stream = xqc_stream_create(cli_user_conn->client->engine, &cli_user_conn->cid, cli_user_stream);
 
                 if (cli_user_stream->stream == nullptr) {
-                    // todo ec
                     xwarn("[xquic_client_engine]quic_engine_do_send create stream error");
                     delete cli_user_stream;
                     send_buffer_ptr->send_data.clear();
@@ -1211,10 +1207,12 @@ void xquic_client_t::quic_engine_do_send() {
                 cli_user_stream->send_queue.insert(cli_user_stream->send_queue.end(), len_bytes.begin(), len_bytes.end());
                 cli_user_stream->send_queue.insert(cli_user_stream->send_queue.end(), send_buffer_ptr->send_data.begin(), send_buffer_ptr->send_data.end());
             } else {
-                // printf("send_queue full\n");
                 xwarn("[xquic_client_engine]quic_engine_do_send: send_queue_full at conn: %s", xqc_scid_str(&cli_user_conn->cid));
-                // todo push it back to queue.
+                m_send_queue.push(std::move(send_buffer_ptr));
+                continue;
             }
+
+            // ready to send
             send_set.insert(cli_user_conn);
             send_buffer_ptr->send_data.clear();
         }
