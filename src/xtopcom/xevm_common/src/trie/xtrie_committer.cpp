@@ -7,6 +7,8 @@
 #include "xevm_common/trie/xtrie_encoding.h"
 #include "xevm_common/xerror/xerror.h"
 
+#include <cassert>
+
 NS_BEG3(top, evm_common, trie)
 
 std::pair<xtrie_hash_node_ptr_t, int32_t> xtop_trie_committer::Commit(xtrie_node_face_ptr_t n, xtrie_db_ptr_t db, std::error_code & ec) {
@@ -21,7 +23,9 @@ std::pair<xtrie_hash_node_ptr_t, int32_t> xtop_trie_committer::Commit(xtrie_node
         return std::make_pair(nullptr, 0);
     }
     xassert(h->type() == xtrie_node_type_t::hashnode);
-    auto hashnode = std::make_shared<xtrie_hash_node_t>(*(static_cast<xtrie_hash_node_t *>(h.get())));
+    auto hashnode = std::dynamic_pointer_cast<xtrie_hash_node_t>(h);
+    assert(hashnode != nullptr);
+
     return std::make_pair(hashnode, committed);
 }
 
@@ -37,7 +41,9 @@ std::pair<xtrie_node_face_ptr_t, int32_t> xtop_trie_committer::commit(xtrie_node
     // Commit children, then parent, and remove remove the dirty flag.
     switch (n->type()) {
     case xtrie_node_type_t::shortnode: {
-        auto cn = std::make_shared<xtrie_short_node_t>(*(static_cast<xtrie_short_node_t *>(n.get())));
+        auto cn = std::dynamic_pointer_cast<xtrie_short_node_t>(n);
+        assert(cn != nullptr);
+
         // Commit child
         auto collapsed = cn->clone();
 
@@ -58,13 +64,17 @@ std::pair<xtrie_node_face_ptr_t, int32_t> xtop_trie_committer::commit(xtrie_node
         collapsed->key = hexToCompact(cn->key);
         auto hashedNode = store(collapsed, db);
         if (hashedNode->type() == xtrie_node_type_t::hashnode) {
-            auto hn = std::make_shared<xtrie_hash_node_t>(*(static_cast<xtrie_hash_node_t *>(hashedNode.get())));
+            auto hn = std::dynamic_pointer_cast<xtrie_hash_node_t>(hashedNode);
+            assert(hn != nullptr);
+
             return std::make_pair(hn, childCommitted + 1);
         }
         return std::make_pair(collapsed, childCommitted);
     }
     case xtrie_node_type_t::fullnode: {
-        auto cn = std::make_shared<xtrie_full_node_t>(*(static_cast<xtrie_full_node_t *>(n.get())));
+        auto cn = std::dynamic_pointer_cast<xtrie_full_node_t>(n);
+        assert(cn != nullptr);
+
         std::array<xtrie_node_face_ptr_t, 17> hashedKids;
         int32_t childCommitted{0};
         std::tie(hashedKids, childCommitted) = commitChildren(cn, db, ec);
@@ -72,18 +82,22 @@ std::pair<xtrie_node_face_ptr_t, int32_t> xtop_trie_committer::commit(xtrie_node
             return std::make_pair(nullptr, 0);
         }
 
-        auto collapsed = cn->copy();
+        auto collapsed = cn->clone();
         collapsed->Children = hashedKids;
 
         auto hashedNode = store(collapsed, db);
         if (hashedNode->type() == xtrie_node_type_t::hashnode) {
-            auto hn = std::make_shared<xtrie_hash_node_t>(*(static_cast<xtrie_hash_node_t *>(hashedNode.get())));
+            auto hn = std::dynamic_pointer_cast<xtrie_hash_node_t>(hashedNode);
+            assert(hn != nullptr);
+
             return std::make_pair(hn, childCommitted + 1);
         }
         return std::make_pair(collapsed, childCommitted);
     }
     case xtrie_node_type_t::hashnode: {
-        auto cn = std::make_shared<xtrie_hash_node_t>(*(static_cast<xtrie_hash_node_t *>(n.get())));
+        auto cn = std::dynamic_pointer_cast<xtrie_hash_node_t>(n);
+        assert(cn != nullptr);
+
         return std::make_pair(cn, 0);
     }
     default:
@@ -106,7 +120,9 @@ std::pair<std::array<xtrie_node_face_ptr_t, 17>, int32_t> xtop_trie_committer::c
         // Note: it's impossible that the child in range [0, 15]
         // is a valueNode.
         if (child->type() == xtrie_node_type_t::hashnode) {
-            auto hn = std::make_shared<xtrie_hash_node_t>(*(static_cast<xtrie_hash_node_t *>(child.get())));
+            auto hn = std::dynamic_pointer_cast<xtrie_hash_node_t>(child);
+            assert(hn != nullptr);
+
             children[index] = hn;
             continue;
         }
@@ -162,11 +178,15 @@ xtrie_node_face_ptr_t xtop_trie_committer::store(xtrie_node_face_ptr_t n, xtrie_
 int32_t xtop_trie_committer::estimateSize(xtrie_node_face_ptr_t n) {
     switch (n->type()) {
     case xtrie_node_type_t::shortnode: {
-        auto shortnode = std::make_shared<xtrie_short_node_t>(*(static_cast<xtrie_short_node_t *>(n.get())));
+        auto shortnode = std::dynamic_pointer_cast<xtrie_short_node_t>(n);
+        assert(shortnode != nullptr);
+
         return 3 + shortnode->key.size() + estimateSize(shortnode->val);
     }
     case xtrie_node_type_t::fullnode: {
-        auto fullnode = std::make_shared<xtrie_full_node_t>(*(static_cast<xtrie_full_node_t *>(n.get())));
+        auto fullnode = std::dynamic_pointer_cast<xtrie_full_node_t>(n);
+        assert(fullnode != nullptr);
+
         int32_t s = 3;
         for (std::size_t index = 0; index < 16; ++index) {
             auto child = fullnode->Children[index];
@@ -179,11 +199,15 @@ int32_t xtop_trie_committer::estimateSize(xtrie_node_face_ptr_t n) {
         return s;
     }
     case xtrie_node_type_t::valuenode: {
-        auto valuenode = std::make_shared<xtrie_value_node_t>(*(static_cast<xtrie_value_node_t *>(n.get())));
+        auto valuenode = std::dynamic_pointer_cast<xtrie_value_node_t>(n);
+        assert(valuenode != nullptr);
+
         return 1 + valuenode->data().size();
     }
     case xtrie_node_type_t::hashnode: {
-        auto hashnode = std::make_shared<xtrie_hash_node_t>(*(static_cast<xtrie_hash_node_t *>(n.get())));
+        auto hashnode = std::dynamic_pointer_cast<xtrie_hash_node_t>(n);
+        assert(hashnode != nullptr);
+
         return 1 + hashnode->data().size();
     }
     default:

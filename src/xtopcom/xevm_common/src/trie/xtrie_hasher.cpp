@@ -21,7 +21,9 @@ std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> xtop_trie_hasher::hash(x
     }
     switch (node->type()) {
     case xtrie_node_type_t::shortnode: {
-        auto n = std::make_shared<xtrie_short_node_t>(*(static_cast<xtrie_short_node_t *>(node.get())));
+        auto n = std::dynamic_pointer_cast<xtrie_short_node_t>(node);
+        assert(n != nullptr);
+
         auto result = hashShortNodeChildren(n);
         auto hashed = shortnodeToHash(result.first, force);
         if (hashed->type() == xtrie_node_type_t::hashnode) {
@@ -34,12 +36,14 @@ std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> xtop_trie_hasher::hash(x
         return std::make_pair(hashed, result.second);
     }
     case xtrie_node_type_t::fullnode: {
-        auto n = std::make_shared<xtrie_full_node_t>(*(static_cast<xtrie_full_node_t *>(node.get())));
+        auto n = std::dynamic_pointer_cast<xtrie_full_node_t>(node);
+        assert(n != nullptr);
+
         auto result = hashFullNodeChildren(n);
         auto hashed = fullnodeToHash(result.first, force);
         if (hashed->type() == xtrie_node_type_t::hashnode) {
             assert(dynamic_cast<xtrie_hash_node_t *>(hashed.get()) != nullptr);
-            result.second->flags.hash = xtrie_hash_node_t{std::static_pointer_cast<xtrie_hash_node_t>(hashed)->data()};
+            result.second->flags.hash = xtrie_hash_node_t{std::dynamic_pointer_cast<xtrie_hash_node_t>(hashed)->data()};
         } else {
             result.second->flags.hash = {};
         }
@@ -71,14 +75,18 @@ xtrie_hash_node_ptr_t xtop_trie_hasher::hashData(xbytes_t input) {
 std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> xtop_trie_hasher::proofHash(xtrie_node_face_ptr_t node) {
     switch (node->type()) {
     case xtrie_node_type_t::shortnode: {
-        auto n = std::make_shared<xtrie_short_node_t>(*(static_cast<xtrie_short_node_t *>(node.get())));
+        auto n = std::dynamic_pointer_cast<xtrie_short_node_t>(node);
+        assert(n != nullptr);
+
         xtrie_short_node_ptr_t sn;
         xtrie_short_node_ptr_t _;
         std::tie(sn, _) = hashShortNodeChildren(n);
         return std::make_pair(sn, shortnodeToHash(sn, false));
     }
     case xtrie_node_type_t::fullnode: {
-        auto n = std::make_shared<xtrie_full_node_t>(*(static_cast<xtrie_full_node_t *>(node.get())));
+        auto n = std::dynamic_pointer_cast<xtrie_full_node_t>(node);
+        assert(n != nullptr);
+
         xtrie_full_node_ptr_t fn;
         xtrie_full_node_ptr_t _;
         std::tie(fn, _) = hashFullNodeChildren(n);
@@ -107,8 +115,8 @@ std::pair<xtrie_short_node_ptr_t, xtrie_short_node_ptr_t> xtop_trie_hasher::hash
 }
 
 std::pair<xtrie_full_node_ptr_t, xtrie_full_node_ptr_t> xtop_trie_hasher::hashFullNodeChildren(xtrie_full_node_ptr_t node) {
-    auto collapsed = node->copy();
-    auto cached = node->copy();
+    auto collapsed = node->clone();
+    auto cached = node->clone();
 
     // todo impl
     // if h.parallel{}

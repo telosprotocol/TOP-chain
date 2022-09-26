@@ -88,21 +88,21 @@ void xtop_trie_short_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
     switch (val->type()) {
     case xtrie_node_type_t::hashnode: {
         assert(dynamic_cast<xtrie_hash_node_t *>(val.get()) != nullptr);
-        append(encoded, RLP::encode(std::static_pointer_cast<xtrie_hash_node_t>(val)->data()));
+        append(encoded, RLP::encode(std::dynamic_pointer_cast<xtrie_hash_node_t>(val)->data()));
 
         break;
     }
 
     case xtrie_node_type_t::valuenode: {
         assert(dynamic_cast<xtrie_value_node_t *>(val.get()) != nullptr);
-        append(encoded, RLP::encode(std::static_pointer_cast<xtrie_value_node_t>(val)->data()));
+        append(encoded, RLP::encode(std::dynamic_pointer_cast<xtrie_value_node_t>(val)->data()));
 
         break;
     }
 
     case xtrie_node_type_t::fullnode: {
         assert(dynamic_cast<xtrie_full_node_t *>(val.get()) != nullptr);
-        std::static_pointer_cast<xtrie_full_node_t>(val)->EncodeRLP(encoded, ec);
+        std::dynamic_pointer_cast<xtrie_full_node_t>(val)->EncodeRLP(encoded, ec);
 
         break;
     }
@@ -128,28 +128,28 @@ void xtop_trie_full_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
         switch (child->type()) {
         case xtrie_node_type_t::hashnode: {
             assert(dynamic_cast<xtrie_hash_node_t *>(child.get()) != nullptr);
-            append(encoded, RLP::encode(std::static_pointer_cast<xtrie_hash_node_t>(child)->data()));
+            append(encoded, RLP::encode(std::dynamic_pointer_cast<xtrie_hash_node_t>(child)->data()));
 
             break;
         }
 
         case xtrie_node_type_t::valuenode: {
             assert(dynamic_cast<xtrie_value_node_t *>(child.get()) != nullptr);
-            append(encoded, RLP::encode(std::static_pointer_cast<xtrie_value_node_t>(child)->data()));
+            append(encoded, RLP::encode(std::dynamic_pointer_cast<xtrie_value_node_t>(child)->data()));
 
             break;
         }
 
         case xtrie_node_type_t::fullnode: {
             assert(dynamic_cast<xtrie_full_node_t *>(child.get()) != nullptr);
-            std::static_pointer_cast<xtrie_full_node_t>(child)->EncodeRLP(encoded, ec);
+            std::dynamic_pointer_cast<xtrie_full_node_t>(child)->EncodeRLP(encoded, ec);
 
             break;
         }
 
         case xtrie_node_type_t::shortnode: {
             assert(dynamic_cast<xtrie_short_node_t *>(child.get()) != nullptr);
-            std::static_pointer_cast<xtrie_short_node_t>(child)->EncodeRLP(encoded, ec);
+            std::dynamic_pointer_cast<xtrie_short_node_t>(child)->EncodeRLP(encoded, ec);
 
             break;
         }
@@ -176,35 +176,35 @@ void xtop_trie_raw_full_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
         switch (child->type()) {
         case xtrie_node_type_t::hashnode: {
             assert(dynamic_cast<xtrie_hash_node_t *>(child.get()) != nullptr);
-            append(encoded, RLP::encode(std::static_pointer_cast<xtrie_hash_node_t>(child)->data()));
+            append(encoded, RLP::encode(std::dynamic_pointer_cast<xtrie_hash_node_t>(child)->data()));
 
             break;
         }
 
         case xtrie_node_type_t::valuenode: {
             assert(dynamic_cast<xtrie_value_node_t *>(child.get()) != nullptr);
-            append(encoded, RLP::encode(std::static_pointer_cast<xtrie_value_node_t>(child)->data()));
+            append(encoded, RLP::encode(std::dynamic_pointer_cast<xtrie_value_node_t>(child)->data()));
 
             break;
         }
 
         case xtrie_node_type_t::fullnode: {
             assert(dynamic_cast<xtrie_full_node_t *>(child.get()) != nullptr);
-            std::static_pointer_cast<xtrie_full_node_t>(child)->EncodeRLP(encoded, ec);
+            std::dynamic_pointer_cast<xtrie_full_node_t>(child)->EncodeRLP(encoded, ec);
 
             break;
         }
 
         case xtrie_node_type_t::shortnode: {
             assert(dynamic_cast<xtrie_short_node_t *>(child.get()) != nullptr);
-            std::static_pointer_cast<xtrie_short_node_t>(child)->EncodeRLP(encoded, ec);
+            std::dynamic_pointer_cast<xtrie_short_node_t>(child)->EncodeRLP(encoded, ec);
 
             break;
         }
 
         case xtrie_node_type_t::rawshortnode: {
             assert(dynamic_cast<xtrie_raw_short_node_t *>(child.get()) != nullptr);
-            std::static_pointer_cast<xtrie_raw_short_node_t>(child)->EncodeRLP(encoded, ec);
+            std::dynamic_pointer_cast<xtrie_raw_short_node_t>(child)->EncodeRLP(encoded, ec);
 
             break;
         }
@@ -227,28 +227,28 @@ void xtop_trie_raw_short_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
     switch (Val->type()) {
     case xtrie_node_type_t::hashnode: {
         assert(dynamic_cast<xtrie_hash_node_t *>(Val.get()) != nullptr);
-        append(encoded, RLP::encode(std::static_pointer_cast<xtrie_hash_node_t>(Val)->data()));
+        append(encoded, RLP::encode(std::dynamic_pointer_cast<xtrie_hash_node_t>(Val)->data()));
 
         break;
     }
 
     case xtrie_node_type_t::valuenode: {
         assert(dynamic_cast<xtrie_value_node_t *>(Val.get()) != nullptr);
-        append(encoded, RLP::encode(std::static_pointer_cast<xtrie_value_node_t>(Val)->data()));
+        append(encoded, RLP::encode(std::dynamic_pointer_cast<xtrie_value_node_t>(Val)->data()));
 
         break;
     }
 
     case xtrie_node_type_t::fullnode: {
         assert(dynamic_cast<xtrie_full_node_t *>(Val.get()) != nullptr);
-        std::static_pointer_cast<xtrie_full_node_t>(Val)->EncodeRLP(encoded, ec);
+        std::dynamic_pointer_cast<xtrie_full_node_t>(Val)->EncodeRLP(encoded, ec);
 
         break;
     }
 
     case xtrie_node_type_t::rawfullnode: {
         assert(dynamic_cast<xtrie_raw_full_node_t *>(Val.get()) != nullptr);
-        std::static_pointer_cast<xtrie_raw_full_node_t>(Val)->EncodeRLP(encoded, ec);
+        std::dynamic_pointer_cast<xtrie_raw_full_node_t>(Val)->EncodeRLP(encoded, ec);
 
         break;
     }

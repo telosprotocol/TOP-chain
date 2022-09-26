@@ -33,12 +33,16 @@ xbytes_t VerifyProof(xhash256_t rootHash, xbytes_t const & _key, xkv_db_face_ptr
         switch (cld->type()) {
         case xtrie_node_type_t::hashnode: {
             key = keyrest;
-            auto cld_n = std::make_shared<xtrie_hash_node_t>(*(static_cast<xtrie_hash_node_t *>(cld.get())));
+            auto cld_n = std::dynamic_pointer_cast<xtrie_hash_node_t>(cld);
+            assert(cld_n != nullptr);
+
             wantHash = xhash256_t{cld_n->data()};
             break;
         }
         case xtrie_node_type_t::valuenode: {
-            auto cld_n = std::make_shared<xtrie_value_node_t>(*(static_cast<xtrie_value_node_t *>(cld.get())));
+            auto cld_n = std::dynamic_pointer_cast<xtrie_value_node_t>(cld);
+            assert(cld_n != nullptr);
+
             return cld_n->data();
         }
         default: {
@@ -56,7 +60,9 @@ std::pair<xbytes_t, xtrie_node_face_ptr_t> get(xtrie_node_face_ptr_t tn, xbytes_
         }
         switch (tn->type()) {
         case xtrie_node_type_t::shortnode: {
-            auto n = std::make_shared<xtrie_short_node_t>(*(static_cast<xtrie_short_node_t *>(tn.get())));
+            auto n = std::dynamic_pointer_cast<xtrie_short_node_t>(tn);
+            assert(n != nullptr);
+
             if (key.size() < n->key.size() || !std::equal(n->key.begin(), n->key.end(), key.begin())) {
                 return std::make_pair(xbytes_t{}, nullptr);
             }
@@ -68,7 +74,9 @@ std::pair<xbytes_t, xtrie_node_face_ptr_t> get(xtrie_node_face_ptr_t tn, xbytes_
             break;
         }
         case xtrie_node_type_t::fullnode: {
-            auto n = std::make_shared<xtrie_full_node_t>(*(static_cast<xtrie_full_node_t *>(tn.get())));
+            auto n = std::dynamic_pointer_cast<xtrie_full_node_t>(tn);
+            assert(n != nullptr);
+
             tn = n->Children[key[0]];
             key = xbytes_t{key.begin() + 1, key.end()};
             if (!skipResolved) {
@@ -77,11 +85,15 @@ std::pair<xbytes_t, xtrie_node_face_ptr_t> get(xtrie_node_face_ptr_t tn, xbytes_
             break;
         }
         case xtrie_node_type_t::hashnode: {
-            auto n = std::make_shared<xtrie_hash_node_t>(*(static_cast<xtrie_hash_node_t *>(tn.get())));
+            auto n = std::dynamic_pointer_cast<xtrie_hash_node_t>(tn);
+            assert(n != nullptr);
+
             return std::make_pair(key, n);
         }
         case xtrie_node_type_t::valuenode: {
-            auto n = std::make_shared<xtrie_value_node_t>(*(static_cast<xtrie_value_node_t *>(tn.get())));
+            auto n = std::dynamic_pointer_cast<xtrie_value_node_t>(tn);
+            assert(n != nullptr);
+
             return std::make_pair(xbytes_t{}, n);
         }
         case xtrie_node_type_t::invalid:{
