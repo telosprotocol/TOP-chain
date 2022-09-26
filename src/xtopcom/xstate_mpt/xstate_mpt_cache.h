@@ -6,6 +6,7 @@
 
 #include "xbase/xlru_cache.h"
 #include "xbasic/xhash.hpp"
+#include "xcommon/xaccount_address_fwd.h"
 
 namespace top {
 namespace state_mpt {
@@ -21,8 +22,8 @@ public:
 
     std::shared_ptr<base::xlru_cache<std::string, std::string>> get_lru(const std::string & table);
     static std::string get(std::shared_ptr<base::xlru_cache<std::string, std::string>> lru, const xhash256_t & root, const std::string & account);
-    static void set(std::shared_ptr<base::xlru_cache<std::string, std::string>> lru, const xhash256_t & root, const std::string & account, const std::string & value);
-    static void set(std::shared_ptr<base::xlru_cache<std::string, std::string>> lru, const xhash256_t & root, const std::map<std::string, xbytes_t> & batch);
+    static void set(std::shared_ptr<base::xlru_cache<std::string, std::string>> lru, const xhash256_t & root, common::xaccount_address_t const & account, const std::string & value);
+    static void set(std::shared_ptr<base::xlru_cache<std::string, std::string>> lru, const xhash256_t & root, const std::map<common::xaccount_address_t, xbytes_t> & batch);
     
 private:
     xtop_state_mpt_cache() = default;

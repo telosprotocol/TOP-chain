@@ -25,13 +25,14 @@
 #    pragma warning(pop)
 #endif
 
+#include "xbasic/xbyte_buffer.h"
+#include "xbasic/xstring.h"
 #include "xcommon/xaccount_address_fwd.h"
 #include "xcommon/xaccount_base_address.h"
 #include "xcommon/xaccount_id.h"
 #include "xcommon/xledger_id.h"
 #include "xcommon/xtable_id.h"
 #include "xeth_address_fwd.h"
-#include "xvledger/xvaccount.h"
 
 #include <cstdint>
 #include <string>
@@ -135,6 +136,16 @@ private:
 using xnode_id_t = xtop_node_id;
 
 NS_END2
+
+NS_BEG1(top)
+
+template <>
+xbytes_t to_bytes<common::xnode_id_t>(common::xnode_id_t const & input);
+
+template <>
+std::string to_string<common::xnode_id_t>(common::xnode_id_t const & input);
+
+NS_END1
 
 NS_BEG1(std)
 

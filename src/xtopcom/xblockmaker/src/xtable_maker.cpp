@@ -802,7 +802,7 @@ std::shared_ptr<state_mpt::xtop_state_mpt> xtable_maker_t::create_new_mpt(const 
             account_index.serialize_to(_new_account_index_str); 
             // all old indexes set to property, easy to construct mpt by table block(e.g. archive nodes)
             table_state_ctx->get_table_state()->map_set(data::XPROPERTY_TABLE_ACCOUNT_INDEX, addr, _new_account_index_str);
-            mpt->set_account_index(addr, _new_account_index_str, ec);
+            mpt->set_account_index(common::xaccount_address_t{addr}, _new_account_index_str, ec);
             if (ec) {
                 xerror("xtable_maker_t::create_new_mpt set account index from table property to mpt fail.");
                 return nullptr;
@@ -823,7 +823,7 @@ std::shared_ptr<state_mpt::xtop_state_mpt> xtable_maker_t::create_new_mpt(const 
         auto & unit = unit_and_index.first;
         auto & index = unit_and_index.second;
         // todo(nathan): set unit state.
-        mpt->set_account_index(unit->get_account(), index, ec);
+        mpt->set_account_index(common::xaccount_address_t{unit->get_account()}, index, ec);
         if (ec) {
             xerror("xtable_maker_t::create_new_mpt set account index to mpt fail.");
             return nullptr;

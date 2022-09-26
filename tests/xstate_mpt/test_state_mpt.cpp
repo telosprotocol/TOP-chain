@@ -112,11 +112,11 @@ TEST_F(test_state_mpt_fixture, test_example) {
     auto s = state_mpt::xstate_mpt_t::create(TABLE_ADDRESS, {}, m_db, nullptr, ec);
     EXPECT_FALSE(ec);
 
-    std::string k1("00001");
-    std::string k2("00010");
-    std::string k3("00100");
-    std::string k4("01000");
-    std::string k5("10000");
+    common::xaccount_address_t k1("T00000LVgLn3yVd11d2izvJg6znmxddxg8JEShoJ");
+    common::xaccount_address_t k2("T00000LVgLn3yVd11d2izvJg6znmxddxg8JEShoK");
+    common::xaccount_address_t k3("T00000LVgLn3yVd11d2izvJg6znmxddxg8JEShoL");
+    common::xaccount_address_t k4("T00000LVgLn3yVd11d2izvJg6znmxddxg8JEShoM");
+    common::xaccount_address_t k5("T00000LVgLn3yVd11d2izvJg6znmxddxg8JEShoN");
     base::xaccount_index_t index1{1, std::to_string(1), std::to_string(1), 1, base::enum_xvblock_class_light, base::enum_xvblock_type_general};
     base::xaccount_index_t index2{2, std::to_string(2), std::to_string(2), 2, base::enum_xvblock_class_light, base::enum_xvblock_type_general};
     base::xaccount_index_t index3{3, std::to_string(3), std::to_string(3), 3, base::enum_xvblock_class_light, base::enum_xvblock_type_general};
@@ -144,7 +144,7 @@ TEST_F(test_state_mpt_fixture, test_get_unknown) {
     EXPECT_EQ(ec.value(), 0);
 
     ec.clear();
-    s->get_account_index("unknown", ec);
+    s->get_account_index(common::xaccount_address_t{"T00000LVgLn3yVd11d2izvJg6znmxddxg8JEShoM"}, ec);
     EXPECT_EQ(ec.value(), 0);
 }
 
@@ -156,13 +156,13 @@ TEST_F(test_state_mpt_fixture, test_basic) {
 
     auto origin_hash = s->m_trie->Hash();
 
-    std::vector<std::pair<std::string, base::xaccount_index_t>> data;
-    std::set<std::string> acc_set;
+    std::vector<std::pair<common::xaccount_address_t, base::xaccount_index_t>> data;
+    std::set<common::xaccount_address_t> acc_set;
     while (acc_set.size() != 10) {
         data.clear();
         acc_set.clear();
         for (auto i = 0; i < 10; i++) {
-            std::string acc = top::utl::xcrypto_util::make_address_by_random_key(base::enum_vaccount_addr_type_secp256k1_eth_user_account);
+            auto acc = common::xaccount_address_t{top::utl::xcrypto_util::make_address_by_random_key(base::enum_vaccount_addr_type_secp256k1_eth_user_account, 0)};
             std::string state_str{"state_str" + std::to_string(i)};
             auto hash = base::xcontext_t::instance().hash(state_str, enum_xhash_type_sha2_256);
             base::xaccount_index_t index{rand(), hash, hash, rand(), base::enum_xvblock_class_light, base::enum_xvblock_type_general};
@@ -192,7 +192,7 @@ TEST_F(test_state_mpt_fixture, test_basic) {
         EXPECT_TRUE(s->m_journal.dirties.count(data[i].first));
         EXPECT_EQ(s->m_journal.index_changes[i].account, data[i].first);
         // not commit in trie
-        auto index_bytes = s->m_trie->TryGet({data[i].first.begin(), data[i].first.end()}, ec);
+        auto index_bytes = s->m_trie->TryGet(top::to_bytes(data[i].first), ec);
         EXPECT_FALSE(ec);
         EXPECT_TRUE(index_bytes.empty());
     }
@@ -210,7 +210,7 @@ TEST_F(test_state_mpt_fixture, test_basic) {
     for (auto i = 0; i < 5; i++) {
         EXPECT_TRUE(s->m_state_objects_pending.count(data[i].first));
         // not commit in trie
-        auto index_bytes = s->m_trie->TryGet({data[i].first.begin(), data[i].first.end()}, ec);
+        auto index_bytes = s->m_trie->TryGet(top::to_bytes(data[i].first), ec);
         EXPECT_FALSE(ec);
         EXPECT_TRUE(index_bytes.empty());
     }
@@ -222,7 +222,7 @@ TEST_F(test_state_mpt_fixture, test_basic) {
     EXPECT_TRUE(s->m_state_objects_pending.empty());
     for (auto i = 0; i < 5; i++) {
         // commit in db
-        auto index_bytes = s->m_trie->TryGet({data[i].first.begin(), data[i].first.end()}, ec);
+        auto index_bytes = s->m_trie->TryGet(to_bytes(data[i].first), ec);
         EXPECT_FALSE(ec);
         std::string str;
         data[i].second.serialize_to(str);
@@ -314,7 +314,7 @@ TEST_F(test_state_mpt_fixture, test_create_twice_commit_twice) {
     EXPECT_EQ(ec.value(), 0);
     EXPECT_NE(s1, nullptr);
 
-    s1->set_account_index("testaddr1", base::xaccount_index_t(), ec);
+    s1->set_account_index(common::xaccount_address_t("T80000f1d16965a3f485af048ebcec8fd700dc92d54fa7"), base::xaccount_index_t(), ec);
     auto hash1 = s1->commit(ec);
     EXPECT_EQ(ec.value(), 0);
     hash1;

@@ -10,16 +10,16 @@ namespace top {
 namespace state_mpt {
 
 struct xstate_index_change_t {
-    std::string account;
+    common::xaccount_address_t account;
     base::xaccount_index_t prev_index;
 
-    xstate_index_change_t(const std::string & acc, const base::xaccount_index_t & index) : account(acc), prev_index(index) {
+    xstate_index_change_t(common::xaccount_address_t const & acc, const base::xaccount_index_t & index) : account(acc), prev_index(index) {
     }
 };
 
 struct xstate_journal_t {
     std::vector<xstate_index_change_t> index_changes;
-    std::map<std::string, int> dirties;
+    std::map<common::xaccount_address_t, int> dirties;
 
     void append(xstate_index_change_t change) {
         index_changes.emplace_back(change);

@@ -235,7 +235,7 @@ void xtop_node_id::parse() {
             top::error::throw_error(error::xerrc_t::invalid_table_id);
         }
 
-        auto assigned_table_id = static_cast<uint16_t>(std::stoi(parts[1]));
+        auto const assigned_table_id = static_cast<uint16_t>(std::stoi(parts[1]));
         if (m_assigned_table_id.empty()) {
             m_assigned_table_id = xtable_id_t{assigned_table_id};
         }
@@ -289,6 +289,20 @@ NS_BEG1(std)
 std::size_t
 hash<top::common::xnode_id_t>::operator()(top::common::xnode_id_t const & id) const noexcept {
     return std::hash<std::string>{}(id.value());
+}
+
+NS_END1
+
+NS_BEG1(top)
+
+template <>
+xbytes_t to_bytes<common::xnode_id_t>(common::xnode_id_t const & input) {
+    return { input.value().begin(), input.value().end() };
+}
+
+template <>
+std::string to_string<common::xnode_id_t>(common::xnode_id_t const & input) {
+    return input.value();
 }
 
 NS_END1
