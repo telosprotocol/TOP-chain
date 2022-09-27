@@ -14,12 +14,12 @@ NS_BEG3(top, evm_common, trie)
 
 std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> xtop_trie_hasher::hash(xtrie_node_face_ptr_t node, bool force) {
     {
-        auto const cached = node->cache();
+        auto const & cached = node->cache();
         if (cached.hash_node() != nullptr) {
             return std::make_pair(cached.hash_node(), node);
         }
     }
-    switch (node->type()) {
+    switch (node->type()) {  // NOLINT(clang-diagnostic-switch-enum)
     case xtrie_node_type_t::shortnode: {
         auto n = std::dynamic_pointer_cast<xtrie_short_node_t>(node);
         assert(n != nullptr);
@@ -55,7 +55,7 @@ std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> xtop_trie_hasher::hash(x
         return {node, node};
     }
     default:
-        assert(false);
+        assert(false);  // NOLINT(clang-diagnostic-disabled-macro-expansion)
         xerror("xtrie_hasher::hash reach unreachable code");
     }
     __builtin_unreachable();
@@ -106,8 +106,8 @@ std::pair<xtrie_short_node_ptr_t, xtrie_short_node_ptr_t> xtop_trie_hasher::hash
 
     if (node->val->type() == xtrie_node_type_t::shortnode || node->val->type() == xtrie_node_type_t::fullnode) {
         auto res = hash(node->val, false);
-        collapsed->val = res.first;
-        cached->val = res.second;
+        collapsed->val = std::move(res.first);
+        cached->val = std::move(res.second);
     }
 
     return std::make_pair(collapsed, cached);
@@ -125,8 +125,8 @@ std::pair<xtrie_full_node_ptr_t, xtrie_full_node_ptr_t> xtop_trie_hasher::hashFu
         auto child = node->Children[index];
         if (child != nullptr) {
             auto res = hash(child, false);
-            collapsed->Children[index] = res.first;
-            cached->Children[index] = res.second;
+            collapsed->Children[index] = std::move(res.first);
+            cached->Children[index] = std::move(res.second);
         } else {
             collapsed->Children[index] = std::make_shared<xtrie_value_node_t>(nilValueNode);
         }

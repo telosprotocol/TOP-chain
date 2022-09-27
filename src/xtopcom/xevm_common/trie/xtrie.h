@@ -46,7 +46,7 @@ public:
 
 public:
     // Reset drops the referenced root node and cleans all internal state.
-    void Reset();
+    void reset();
 
     // Hash returns the root hash of the trie. It does not write to the
     // database and can be used even if the trie doesn't have one.
@@ -121,12 +121,12 @@ private:
     std::pair<bool, xtrie_node_face_ptr_t> erase(xtrie_node_face_ptr_t node, xbytes_t prefix, xbytes_t key, std::error_code & ec);
 
 private:
-    xtrie_node_face_ptr_t resolve(xtrie_node_face_ptr_t n, /*xbytes_t prefix,*/ std::error_code & ec);
+    xtrie_node_face_ptr_t resolve(xtrie_node_face_ptr_t const & n, /*xbytes_t prefix,*/ std::error_code & ec) const;
 
-    xtrie_node_face_ptr_t resolveHash(xtrie_hash_node_ptr_t n, /*xbytes_t prefix,*/ std::error_code & ec) const;
+    xtrie_node_face_ptr_t resolveHash(xtrie_hash_node_ptr_t const & n, /*xbytes_t prefix,*/ std::error_code & ec) const;
 
     // hashRoot calculates the root hash of the given trie
-    std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> hashRoot();
+    std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> hash_root();
 
 private:
     static xnode_flag_t node_dirty();

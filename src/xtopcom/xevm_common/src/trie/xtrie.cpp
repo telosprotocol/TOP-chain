@@ -19,18 +19,18 @@ std::shared_ptr<xtop_trie> xtop_trie::New(xhash256_t hash, xtrie_db_ptr_t db, st
     auto trie = xtop_trie{db};
     if ((hash != emptyRoot) && (hash != xhash256_t{})) {
         // resolve Hash
-        auto root_hash = std::make_shared<xtrie_hash_node_t>(hash);
+        auto const root_hash = std::make_shared<xtrie_hash_node_t>(hash);
         auto root = trie.resolveHash(root_hash, ec);
         if (ec) {
             return nullptr;
         }
-        trie.m_root = root;
+        trie.m_root = std::move(root);
     }
     return std::make_shared<xtop_trie>(trie);
 }
 
 // Reset drops the referenced root node and cleans all internal state.
-void xtop_trie::Reset() {
+void xtop_trie::reset() {
     m_root = nullptr;
     unhashed = 0;
 }
@@ -38,8 +38,8 @@ void xtop_trie::Reset() {
 // Hash returns the root hash of the trie. It does not write to the
 // database and can be used even if the trie doesn't have one.
 xhash256_t xtop_trie::Hash() {
-    auto result = hashRoot();
-    m_root = result.second;
+    auto result = hash_root();
+    m_root = std::move(result.second);
     if (result.first->type() == xtrie_node_type_t::hashnode) {
         assert(dynamic_cast<xtrie_hash_node_t *>(result.first.get()) != nullptr);
         return xhash256_t{std::dynamic_pointer_cast<xtrie_hash_node_t>(result.first)->data()};
@@ -700,17 +700,17 @@ std::pair<bool, xtrie_node_face_ptr_t> xtop_trie::erase(xtrie_node_face_ptr_t no
     }
 }
 
-xtrie_node_face_ptr_t xtop_trie::resolve(xtrie_node_face_ptr_t n, /*xbytes_t prefix,*/ std::error_code & ec) {
+xtrie_node_face_ptr_t xtop_trie::resolve(xtrie_node_face_ptr_t const & n, /*xbytes_t prefix,*/ std::error_code & ec) const {
     if (n->type() == xtrie_node_type_t::hashnode) {
-        auto hash_node_ptr = std::dynamic_pointer_cast<xtrie_hash_node_t>(n);
-        assert(hash_node_ptr != nullptr);
+        auto const hash_node = std::dynamic_pointer_cast<xtrie_hash_node_t>(n);
+        assert(hash_node != nullptr);
 
-        return resolveHash(std::move(hash_node_ptr) /*, prefix*/, ec);
+        return resolveHash(hash_node /*, prefix*/, ec);
     }
     return n;
 }
 
-xtrie_node_face_ptr_t xtop_trie::resolveHash(xtrie_hash_node_ptr_t n, /*xbytes_t prefix,*/ std::error_code & ec) const {
+xtrie_node_face_ptr_t xtop_trie::resolveHash(xtrie_hash_node_ptr_t const & n, /*xbytes_t prefix,*/ std::error_code & ec) const {
     auto const hash = xhash256_t{n->data()};
     auto node = m_db->node(hash);
     if (!node) {
@@ -721,7 +721,7 @@ xtrie_node_face_ptr_t xtop_trie::resolveHash(xtrie_hash_node_ptr_t n, /*xbytes_t
 }
 
 // hashRoot calculates the root hash of the given trie
-std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> xtop_trie::hashRoot() {
+std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> xtop_trie::hash_root() {
     if (m_root == nullptr) {
         return std::make_pair(std::make_shared<xtrie_hash_node_t>(emptyRoot), nullptr);
     }
