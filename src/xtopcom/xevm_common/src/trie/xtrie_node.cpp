@@ -10,6 +10,30 @@
 
 NS_BEG3(top, evm_common, trie)
 
+xtop_node_flag::xtop_node_flag(std::shared_ptr<xtrie_hash_node_t> hash, bool const dirty) : hash_node_{std::move(hash)}, dirty_{dirty} {
+}
+
+xtop_node_flag::xtop_node_flag(std::shared_ptr<xtrie_hash_node_t> hash) : xtop_node_flag{std::move(hash), false} {
+}
+
+xtop_node_flag::xtop_node_flag(bool const dirty) : xtop_node_flag{nullptr, dirty} {
+}
+
+std::shared_ptr<xtrie_hash_node_t> const & xtop_node_flag::hash_node() const noexcept {
+    return hash_node_;
+}
+
+bool xtop_node_flag::dirty() const noexcept {
+    return dirty_;
+}
+
+void xtop_node_flag::hash_node(std::shared_ptr<xtrie_hash_node_t> node) noexcept {
+    hash_node_ = std::move(node);
+}
+void xtop_node_flag::dirty(bool const dirty) noexcept {
+    dirty_ = dirty;
+}
+
 xtop_trie_hash_node::xtop_trie_hash_node(xbytes_t data)
     : m_data{std::move(data)} {
 }
@@ -21,11 +45,11 @@ xbytes_t const & xtop_trie_hash_node::data() const noexcept {
     return m_data;
 }
 
-std::string xtop_trie_hash_node::fstring(std::string const & ind) {
+std::string xtop_trie_hash_node::fstring(std::string const & ind) const {
     return {};
 }
 
-std::pair<std::shared_ptr<xtrie_hash_node_t>, bool> xtop_trie_hash_node::cache() const {
+xtrie_node_cached_data_t xtop_trie_hash_node::cache() const {
     return {nullptr, true};
 }
 
@@ -41,19 +65,16 @@ xbytes_t const & xtop_trie_value_node::data() const noexcept {
     return m_data;
 }
 
-std::string xtop_trie_value_node::fstring(std::string const & ind) {
+std::string xtop_trie_value_node::fstring(std::string const & ind) const {
     return {};
 }
 
-std::pair<std::shared_ptr<xtrie_hash_node_t>, bool> xtop_trie_value_node::cache() const {
+xtrie_node_cached_data_t xtop_trie_value_node::cache() const {
     return {nullptr, true};
 }
 
 xtrie_node_type_t xtop_trie_value_node::type() const noexcept {
     return xtrie_node_type_t::valuenode;
-}
-
-xtop_node_flag::xtop_node_flag(std::shared_ptr<xtrie_hash_node_t> hash) : hash{std::move(hash)} {
 }
 
 xtop_trie_short_node::xtop_trie_short_node(xbytes_t _key, xtrie_node_face_ptr_t _val, xnode_flag_t flag)
@@ -64,12 +85,12 @@ std::shared_ptr<xtop_trie_short_node> xtop_trie_short_node::clone() const {
     return std::make_shared<xtop_trie_short_node>(*this);
 }
 
-std::string xtop_trie_short_node::fstring(std::string const & ind) {
+std::string xtop_trie_short_node::fstring(std::string const & ind) const {
     return {};
 }
 
-std::pair<std::shared_ptr<xtrie_hash_node_t>, bool> xtop_trie_short_node::cache() const {
-    return {flags.hash, flags.dirty};
+xtrie_node_cached_data_t xtop_trie_short_node::cache() const {
+    return flags;
 }
 
 xtrie_node_type_t xtop_trie_short_node::type() const noexcept {
@@ -110,6 +131,18 @@ void xtop_trie_short_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
     }
 
     append(buf, RLP::encodeList(encoded));
+}
+
+std::string xtop_trie_full_node::fstring(std::string const & ind) const {
+    return {};
+}
+
+xtrie_node_cached_data_t xtop_trie_full_node::cache() const {
+    return flags;
+}
+
+xtrie_node_type_t xtop_trie_full_node::type() const noexcept {
+    return xtrie_node_type_t::fullnode;
 }
 
 void xtop_trie_full_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {

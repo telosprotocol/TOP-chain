@@ -14,9 +14,9 @@ NS_BEG3(top, evm_common, trie)
 
 std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> xtop_trie_hasher::hash(xtrie_node_face_ptr_t node, bool force) {
     {
-        auto _cached = node->cache();
-        if (_cached.first != nullptr) {
-            return std::make_pair(_cached.first, node);
+        auto const cached = node->cache();
+        if (cached.hash_node() != nullptr) {
+            return std::make_pair(cached.hash_node(), node);
         }
     }
     switch (node->type()) {
@@ -28,9 +28,9 @@ std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> xtop_trie_hasher::hash(x
         auto hashed = shortnodeToHash(result.first, force);
         if (hashed->type() == xtrie_node_type_t::hashnode) {
             assert(dynamic_cast<xtrie_hash_node_t *>(hashed.get()) != nullptr);
-            result.second->flags.hash = std::dynamic_pointer_cast<xtrie_hash_node_t>(hashed);
+            result.second->flags.hash_node(std::dynamic_pointer_cast<xtrie_hash_node_t>(hashed));
         } else {
-            result.second->flags.hash = nullptr;
+            result.second->flags.hash_node(nullptr);
         }
 
         return std::make_pair(hashed, result.second);
@@ -43,9 +43,9 @@ std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> xtop_trie_hasher::hash(x
         auto hashed = fullnodeToHash(result.first, force);
         if (hashed->type() == xtrie_node_type_t::hashnode) {
             assert(dynamic_cast<xtrie_hash_node_t *>(hashed.get()) != nullptr);
-            result.second->flags.hash = std::dynamic_pointer_cast<xtrie_hash_node_t>(hashed);
+            result.second->flags.hash_node(std::dynamic_pointer_cast<xtrie_hash_node_t>(hashed));
         } else {
-            result.second->flags.hash = nullptr;
+            result.second->flags.hash_node(nullptr);
         }
         return std::make_pair(hashed, result.second);
     }

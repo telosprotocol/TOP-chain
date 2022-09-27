@@ -129,7 +129,7 @@ private:
     std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> hashRoot();
 
 private:
-    static xnode_flag_t new_node_flag();
+    static xnode_flag_t node_dirty();
 };
 using xtrie_t = xtop_trie;
 
