@@ -8,6 +8,8 @@
 #include "xevm_common/trie/xtrie_encoding.h"
 #include "xevm_common/xerror/xerror.h"
 
+#include <cinttypes>
+
 NS_BEG3(top, evm_common, trie)
 xbytes_t xtop_trie_node_rlp::EncodeToBytes(xtrie_node_face_ptr_t node) {
     assert(node);
@@ -72,7 +74,7 @@ xbytes_t xtop_trie_node_rlp::EncodeToBytes(xtrie_node_face_ptr_t node) {
         return buf;
     }
     default:
-        printf("unknonw type: %d", node->type());
+        printf("unknonw type: %" PRIu16, static_cast<uint16_t>(node->type()));
         // xassert(false);
         return {};
     }
@@ -101,10 +103,10 @@ xtrie_node_face_ptr_t xtop_trie_node_rlp::mustDecodeNode(xhash256_t const & hash
 }
 
 xtrie_node_face_ptr_t xtop_trie_node_rlp::decodeNode(xhash256_t const & hash_bytes, xbytes_t const & buf, std::error_code & ec) {
-    return decodeNode(xtrie_hash_node_t{hash_bytes}, buf, ec);
+    return decodeNode(std::make_shared<xtrie_hash_node_t>(hash_bytes), buf, ec);
 }
 
-xtrie_node_face_ptr_t xtop_trie_node_rlp::decodeNode(xtrie_hash_node_t hash, xbytes_t const & buf, std::error_code & ec) {
+xtrie_node_face_ptr_t xtop_trie_node_rlp::decodeNode(std::shared_ptr<xtrie_hash_node_t> hash, xbytes_t const & buf, std::error_code & ec) {
     if (buf.empty()) {
         ec = error::xerrc_t::not_enough_data;
         return nullptr;
@@ -136,7 +138,7 @@ xtrie_node_face_ptr_t xtop_trie_node_rlp::decodeNode(xtrie_hash_node_t hash, xby
     return nullptr;
 }
 
-xtrie_node_face_ptr_t xtop_trie_node_rlp::decodeShort(xtrie_hash_node_t hash, xbytes_t const & elems, std::error_code & ec) {
+xtrie_node_face_ptr_t xtop_trie_node_rlp::decodeShort(std::shared_ptr<xtrie_hash_node_t> hash, xbytes_t const & elems, std::error_code & ec) {
     xbytes_t kbuf, rest;
     std::tie(kbuf, rest) = rlp::SplitString(elems, ec);
     if (ec) {
@@ -165,7 +167,7 @@ xtrie_node_face_ptr_t xtop_trie_node_rlp::decodeShort(xtrie_hash_node_t hash, xb
 
     return nullptr;
 }
-xtrie_node_face_ptr_t xtop_trie_node_rlp::decodeFull(xtrie_hash_node_t hash, xbytes_t const & elems, std::error_code & ec) {
+xtrie_node_face_ptr_t xtop_trie_node_rlp::decodeFull(std::shared_ptr<xtrie_hash_node_t> hash, xbytes_t const & elems, std::error_code & ec) {
     auto e = elems;
     xtrie_full_node_ptr_t n = std::make_shared<xtrie_full_node_t>(xnode_flag_t{hash});
     for (std::size_t i = 0; i < 16; ++i) {
@@ -210,7 +212,7 @@ std::pair<xtrie_node_face_ptr_t, xbytes_t> xtop_trie_node_rlp::decodeRef(xbytes_
             ec = error::xerrc_t::rlp_oversized;
             return std::make_pair(nullptr, buf);
         }
-        auto n = decodeNode(xtrie_hash_node_t{}, buf, ec);
+        auto n = decodeNode(nullptr, buf, ec);
         return std::make_pair(n, rest);
     } else if (kind == rlp::xrlp_elem_kind::String && val.size() == 0) {
         // emtpy node
