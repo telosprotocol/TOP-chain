@@ -106,14 +106,18 @@ private:
     void wait() const;
     void sync_table(std::error_code & ec);
     void loop(std::error_code & ec);
-    void assign_tasks(std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network);
+    void assign_tasks(std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network, const std::vector<common::xnode_address_t> & peers);
     void fill_tasks(uint32_t n, state_req & req, std::vector<xhash256_t> & nodes, std::vector<xhash256_t> & codes);
     void process(state_req & req, std::error_code & ec);
     xhash256_t process_node_data(xbytes_t & blob, std::error_code & ec);
     xhash256_t process_unit_data(xbytes_t & blob, std::error_code & ec);
     void pop_deliver_req();
-    void send_message(std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network, const xbytes_t & msg, common::xmessage_id_t id);
+    void send_message(std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network,
+                      const std::vector<common::xnode_address_t> & peers,
+                      const xbytes_t & msg,
+                      common::xmessage_id_t id);
     std::shared_ptr<vnetwork::xvnetwork_driver_face_t> available_network() const;
+    std::vector<common::xnode_address_t> available_peers(std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network) const;
 
     common::xaccount_address_t m_table;
     uint64_t m_height;
