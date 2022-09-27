@@ -57,11 +57,6 @@ void xtop_state_mpt::init(const common::xaccount_address_t & table, const xhash2
         xwarn("xtop_state_mpt::init trie with %s %s maybe not complete yes", table.c_str(), root.as_hex_str().c_str());
         return;
     }
-    if (evm_common::trie::ReadTrieSyncFlag(kv_db, root)) {
-        xwarn("xtop_state_mpt::init generate trie with %s %s failed: %s, %s", table.c_str(), root.as_hex_str().c_str(), ec.category().name(), ec.message().c_str());
-        ec = error::xerrc_t::state_mpt_not_complete;
-        return;
-    }
     m_original_root = root;
     if (cache != nullptr) {
         // m_lru = cache->get_lru(table);
@@ -286,7 +281,7 @@ void xtop_state_mpt::clear_journal() {
 }
 
 xhash256_t xtop_state_mpt::commit(std::error_code & ec) {
-    auto new_hash = get_root_hash(ec);
+    get_root_hash(ec);
     if (ec) {
         xwarn("xtop_state_mpt::commit get_root_hash error, %s %s", ec.category().name(), ec.message().c_str());
         return {};
@@ -313,8 +308,6 @@ xhash256_t xtop_state_mpt::commit(std::error_code & ec) {
         xwarn("xtop_state_mpt::commit trie commit error, %s %s", ec.category().name(), ec.message().c_str());
         return {};
     }
-    // clear old flag
-    evm_common::trie::DeleteTrieSyncFlag(m_db->DiskDB(), new_hash);
     // TODO: should call outside with roles of node
     m_db->Commit(res.first, nullptr, ec);
     if (ec) {

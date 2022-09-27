@@ -89,6 +89,7 @@ private:
     };
 
 private:
+    xhash256_t syncRoot;
     xkv_db_face_ptr_t database{nullptr};                                    // Persistent database to check for existing entries
     syncMemBatch membatch;                                                  // Memory buffer to avoid frequent database writes
     std::map<xhash256_t, request *> nodeReqs;                               // Pending requests pertaining to a trie node hash

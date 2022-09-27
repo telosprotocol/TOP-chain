@@ -489,13 +489,13 @@ TEST_F(test_state_mpt_fixture, test_trie_callback) {
             sched->Process(result, ec);
             EXPECT_FALSE(ec);
         }
-        sched->Commit(kv_db);
         EXPECT_FALSE(ec);
         auto miss = sched->Missing(1);
         queue.clear();
         auto n = std::get<0>(miss);
         queue.insert(queue.end(), n.begin(), n.end());
     }
+    sched->Commit(kv_db);
 }
 
 }  // namespace top

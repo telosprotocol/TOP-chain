@@ -203,11 +203,6 @@ void xtop_state_sync::loop(std::error_code & ec) {
     uint32_t cnt{0};
     while (m_sched->Pending() > 0) {
         xdbg("xtop_state_sync::loop pending size: %lu, table: %s, height: %lu, root: %s", m_sched->Pending(), m_table.c_str(), m_height, to_hex(m_root).c_str());
-        commit(false, ec);
-        if (ec) {
-            xwarn("xtop_state_sync::loop table: %s commit error: %s %s", m_table.c_str(), ec.category().name(), ec.message().c_str());
-            return;
-        }
         auto network = available_network();
         if (network == nullptr) {
             xwarn("xtop_state_sync::loop no network availble, table: %s, height: %lu, root: %s", m_table.c_str(), m_height, to_hex(m_root).c_str());
@@ -247,21 +242,7 @@ void xtop_state_sync::loop(std::error_code & ec) {
         pop_deliver_req();
     }
 
-    commit(true, ec);
-    if (ec) {
-        xwarn("xtop_state_sync::loop commit error: %s %s", ec.category().name(), ec.message().c_str());
-        return;
-    }
-    return;
-}
-
-void xtop_state_sync::commit(bool force, std::error_code & ec) {
-    if (!force && m_bytes_uncommitted < ideal_batch_size) {
-        return;
-    }
     m_sched->Commit(m_kv_db);
-	m_num_uncommitted = 0;
-	m_bytes_uncommitted = 0;
     return;
 }
 

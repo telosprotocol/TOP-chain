@@ -29,6 +29,7 @@ SyncPath newSyncPath(xbytes_t const & path) {
 }
 
 Sync::Sync(xhash256_t const & root, xkv_db_face_ptr_t _database, LeafCallback callback) : database{_database} {
+    syncRoot = root;
     AddSubTrie(root, xbytes_t{}, xhash256_t{}, callback);
 }
 
@@ -73,13 +74,7 @@ void Sync::AddSubTrie(xhash256_t const & root, xbytes_t const & path, xhash256_t
         return;
     }
 
-    assert(database != nullptr);
-    std::error_code ec;
-
-    if (HasTrieNode(database, root)) {
-        xdbg("Sync::AddSubTrie already hash root: %s in db", root.as_hex_str().c_str());
-        return;
-    }
+    // not find in db because it may left in db with sync interrupt
 
     auto req = new request(path, root, callback);
     if (parent != xhash256_t{}) {
@@ -200,12 +195,20 @@ void Sync::Process(SyncResult const & result, std::error_code & ec) {
 }
 
 void Sync::Commit(xkv_db_face_ptr_t db) {
+    // make sure last write syncRoot, should call once
+    if (!membatch.nodes.count(syncRoot)) {
+        xassert(false);
+    }
+    auto value = membatch.nodes[syncRoot];
+    membatch.nodes.erase(syncRoot);
     for (auto const & p : membatch.nodes) {
         WriteTrieNode(db, p.first, p.second);
     }
     for (auto const & p : membatch.units) {
         WriteUnit(db, p.first, p.second);
     }
+    xdbg("Sync::Commit last write root: %s, value: %s", to_hex(syncRoot).c_str(), to_hex(value).c_str());
+    WriteTrieNode(db, syncRoot, value);
     membatch.clear();
     return;
 }
@@ -319,12 +322,6 @@ std::vector<Sync::request *> Sync::children(request * req, xtrie_node_face_ptr_t
 
             auto hash = xhash256_t{node->data()};
             if (membatch.hasNode(hash)) {
-                continue;
-            }
-
-            // If database says duplicate, then at least the trie node is present
-            // and we hold the assumption that it's NOT legacy contract code.
-            if (HasTrieNode(database, hash)) {
                 continue;
             }
 

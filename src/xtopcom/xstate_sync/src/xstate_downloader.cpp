@@ -11,7 +11,7 @@
 namespace top {
 namespace state_sync {
 
-#define TIMEOUT_MSEC 1000U
+#define TIMEOUT_MSEC 5000U
 
 xtop_state_downloader::xtop_state_downloader(base::xvdbstore_t * db, statestore::xstatestore_face_t * store, const observer_ptr<mbus::xmessage_bus_face_t> & msg_bus)
   : m_db(db), m_store(store), m_bus(msg_bus) {
@@ -257,7 +257,6 @@ void xtop_download_executer::run_state_sync(std::shared_ptr<xstate_sync_t> synce
           syncer->height(),
           syncer->root().as_hex_str().c_str());
 
-    evm_common::trie::WriteTrieSyncFlag(syncer->db(), syncer->root());
     std::map<uint32_t, state_req, std::less<uint32_t>> active;
     std::thread run_th(&xtop_state_sync::run, syncer);
     run_th.detach();
@@ -332,7 +331,6 @@ void xtop_download_executer::run_state_sync(std::shared_ptr<xstate_sync_t> synce
                   syncer->error().category().name(),
                   syncer->error().message().c_str());
         } else {
-            evm_common::trie::DeleteTrieSyncFlag(syncer->db(), syncer->root());
             xinfo("xtop_download_executer::run_state_sync sync thread finish, table: %s, height: %lu, root: %s",
                   syncer->table().c_str(),
                   syncer->height(),

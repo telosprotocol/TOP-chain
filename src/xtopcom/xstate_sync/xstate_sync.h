@@ -108,7 +108,6 @@ private:
     void loop(std::error_code & ec);
     void assign_tasks(std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network);
     void fill_tasks(uint32_t n, state_req & req, std::vector<xhash256_t> & nodes, std::vector<xhash256_t> & codes);
-    void commit(bool force, std::error_code & ec);
     void process(state_req & req, std::error_code & ec);
     xhash256_t process_node_data(xbytes_t & blob, std::error_code & ec);
     xhash256_t process_unit_data(xbytes_t & blob, std::error_code & ec);
@@ -138,8 +137,6 @@ private:
     std::list<state_req> m_deliver_list;
     std::mutex m_deliver_mutex;
     uint32_t m_req_sequence_id{0};
-    uint32_t m_num_uncommitted{0};
-    uint32_t m_bytes_uncommitted{0};
 };
 using xstate_sync_t = xtop_state_sync;
 
