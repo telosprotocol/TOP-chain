@@ -31,11 +31,11 @@ std::pair<xtrie_hash_node_ptr_t, int32_t> xtop_trie_committer::Commit(xtrie_node
 
 std::pair<xtrie_node_face_ptr_t, int32_t> xtop_trie_committer::commit(xtrie_node_face_ptr_t n, xtrie_db_ptr_t db, std::error_code & ec) {
     // if this path is clean, use available cached data
-    xtrie_hash_node_t hash;
+    std::shared_ptr<xtrie_hash_node_t> hash;
     bool dirty;
     std::tie(hash, dirty) = n->cache();
-    if (!hash.is_null() && !dirty) {
-        return std::make_pair(std::make_shared<xtrie_hash_node_t>(hash), 0);
+    if (hash != nullptr && !dirty) {
+        return std::make_pair(hash, 0);
     }
 
     // Commit children, then parent, and remove remove the dirty flag.
@@ -155,7 +155,7 @@ xtrie_node_face_ptr_t xtop_trie_committer::store(xtrie_node_face_ptr_t n, xtrie_
     auto hash = n->cache().first;
     int32_t size{0};
 
-    if (hash.is_null()) {
+    if (hash == nullptr) {
         // This was not generated - must be a small node stored in the parent.
         // In theory, we should apply the leafCall here if it's not nil(embedded
         // node usually contains value). But small value(less than 32bytes) is
@@ -170,9 +170,9 @@ xtrie_node_face_ptr_t xtop_trie_committer::store(xtrie_node_face_ptr_t n, xtrie_
     if (false) {
         // todo leafCh
     } else {
-        db->insert(xhash256_t{hash.data()}, size, n);
+        db->insert(xhash256_t{hash->data()}, size, n);
     }
-    return std::make_shared<xtrie_hash_node_t>(hash);
+    return hash;
 }
 
 int32_t xtop_trie_committer::estimateSize(xtrie_node_face_ptr_t n) {

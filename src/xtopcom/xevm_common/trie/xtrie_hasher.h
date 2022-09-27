@@ -57,7 +57,7 @@ public:
     std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> hash(xtrie_node_face_ptr_t node, bool force);
 
     // hashData hashes the provided data
-    xtrie_hash_node_ptr_t hashData(xbytes_t input);
+    xtrie_hash_node_ptr_t hashData(xbytes_t const & input) const;
 
 public:
     // proofHash is used to construct trie proofs, and returns the 'collapsed'

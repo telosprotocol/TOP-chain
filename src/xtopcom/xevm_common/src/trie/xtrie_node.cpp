@@ -21,16 +21,12 @@ xbytes_t const & xtop_trie_hash_node::data() const noexcept {
     return m_data;
 }
 
-bool xtop_trie_hash_node::is_null() const noexcept {
-    return m_data.empty();
-}
-
 std::string xtop_trie_hash_node::fstring(std::string const & ind) {
     return {};
 }
 
-std::pair<xtrie_hash_node_t, bool> xtop_trie_hash_node::cache() {
-    return {{}, true};
+std::pair<std::shared_ptr<xtrie_hash_node_t>, bool> xtop_trie_hash_node::cache() const {
+    return {nullptr, true};
 }
 
 xtrie_node_type_t xtop_trie_hash_node::type() const noexcept {
@@ -49,16 +45,15 @@ std::string xtop_trie_value_node::fstring(std::string const & ind) {
     return {};
 }
 
-std::pair<xtrie_hash_node_t, bool> xtop_trie_value_node::cache() {
-    return {{}, true};
+std::pair<std::shared_ptr<xtrie_hash_node_t>, bool> xtop_trie_value_node::cache() const {
+    return {nullptr, true};
 }
 
 xtrie_node_type_t xtop_trie_value_node::type() const noexcept {
     return xtrie_node_type_t::valuenode;
 }
 
-xtop_node_flag::xtop_node_flag(xtrie_hash_node_t _hash)
-    : hash{std::move(_hash)} {
+xtop_node_flag::xtop_node_flag(std::shared_ptr<xtrie_hash_node_t> hash) : hash{std::move(hash)} {
 }
 
 xtop_trie_short_node::xtop_trie_short_node(xbytes_t _key, xtrie_node_face_ptr_t _val, xnode_flag_t flag)
@@ -73,7 +68,7 @@ std::string xtop_trie_short_node::fstring(std::string const & ind) {
     return {};
 }
 
-std::pair<xtrie_hash_node_t, bool> xtop_trie_short_node::cache() {
+std::pair<std::shared_ptr<xtrie_hash_node_t>, bool> xtop_trie_short_node::cache() const {
     return {flags.hash, flags.dirty};
 }
 

@@ -216,7 +216,7 @@ xtrie_node_face_ptr_t xtrie_cache_node_t::obj(xhash256_t hash) {
 
         return xtrie_node_rlp::mustDecodeNode(hash, n->data());
     }
-    return expandNode(xtrie_hash_node_t{hash}, node);
+    return expandNode(std::make_shared<xtrie_hash_node_t>(hash), node);
 }
 
 void xtrie_cache_node_t::forChilds(onChildFunc f) {
@@ -304,13 +304,13 @@ xtrie_node_face_ptr_t simplifyNode(xtrie_node_face_ptr_t n) {
     __builtin_unreachable();
 }
 
-xtrie_node_face_ptr_t expandNode(xtrie_hash_node_t hash, xtrie_node_face_ptr_t n) {
+xtrie_node_face_ptr_t expandNode(std::shared_ptr<xtrie_hash_node_t> hash, xtrie_node_face_ptr_t n) {
     switch (n->type()) {
     case xtrie_node_type_t::rawshortnode: {
         auto node = std::dynamic_pointer_cast<xtrie_raw_short_node_t>(n);
         assert(node != nullptr);
 
-        return std::make_shared<xtrie_short_node_t>(compactToHex(node->Key), expandNode(xtrie_hash_node_t{}, node->Val), xnode_flag_t{hash});
+        return std::make_shared<xtrie_short_node_t>(compactToHex(node->Key), expandNode(nullptr, node->Val), xnode_flag_t{hash});
     }
     case xtrie_node_type_t::rawfullnode: {
         auto node = std::dynamic_pointer_cast<xtrie_raw_full_node_t>(n);
@@ -319,7 +319,7 @@ xtrie_node_face_ptr_t expandNode(xtrie_hash_node_t hash, xtrie_node_face_ptr_t n
         auto fullnode_ptr = std::make_shared<xtrie_full_node_t>(xnode_flag_t{hash});
         for (std::size_t i = 0; i < fullnode_ptr->Children.size(); ++i) {
             if (node->Children[i] != nullptr) {
-                fullnode_ptr->Children[i] = expandNode(xtrie_hash_node_t{}, node->Children[i]);
+                fullnode_ptr->Children[i] = expandNode(nullptr, node->Children[i]);
             }
         }
         return fullnode_ptr;

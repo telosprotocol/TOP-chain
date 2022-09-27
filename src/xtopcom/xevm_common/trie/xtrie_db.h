@@ -150,6 +150,6 @@ xtrie_node_face_ptr_t simplifyNode(xtrie_node_face_ptr_t n);
 
 // expandNode traverses the node hierarchy of a collapsed storage node and converts
 // all fields and keys into expanded memory form.
-xtrie_node_face_ptr_t expandNode(xtrie_hash_node_t hash, xtrie_node_face_ptr_t n);
+xtrie_node_face_ptr_t expandNode(std::shared_ptr<xtrie_hash_node_t> hash, xtrie_node_face_ptr_t n);
 
 NS_END3
