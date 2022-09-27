@@ -113,8 +113,24 @@ data::xstatistics_data_t tableblock_statistics(std::vector<xobject_ptr_t<data::x
             xassert(!blks[i]->get_cert()->get_audit_signature().empty());
         }
 
+
         calc_workload_data(leader_xip, txs_count, data);
+        //todo,rank, not used process_vote_info
         process_vote_info(blks[i], data);
+
+        if (!blks[i]->get_header()->get_extra_data().empty()) {
+            const std::string & extra_data = blks[i]->get_header()->get_extra_data();
+            data::xtableheader_extra_t blockheader_extradata;
+            int32_t ret = blockheader_extradata.deserialize_from_string(extra_data);
+            if (ret <= 0) {
+                xerror("tableblock_statistics::get_table_header fail-extra data invalid");
+            }
+            
+            uint64_t blk_burn_gas = blockheader_extradata.get_total_burn_gas();
+            if (blk_burn_gas > 0 ) {
+                data.total_gas_burn += blk_burn_gas;
+            }
+        }
     }
 
     return data;

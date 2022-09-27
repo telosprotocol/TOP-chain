@@ -371,6 +371,22 @@ namespace top
             
             return (vtoken_t)execute(instruction,canvas).get_token();
         }
+
+        const vtoken_t xtokenvar_t::update(const vtoken_t update_token,xvcanvas_t * canvas)
+        {
+            //using state object'locker,here ask parent unit must be set first
+            std::lock_guard<std::recursive_mutex> locker(((xvexegroup_t*)get_parent_unit())->get_mutex());
+            
+            xassert(update_token >= 0);
+            if((int64_t)update_token < 0)
+                return get_balance();
+            
+            xvalue_t withdraw_value(update_token);
+            xvmethod_t instruction(get_execute_uri(),enum_xvinstruct_class_state_function,enum_xvinstruct_state_method_update_token,withdraw_value);
+            
+            return (vtoken_t)execute(instruction,canvas).get_token();
+        }
+
         
         const xvalue_t xtokenvar_t::do_deposit(const xvmethod_t & op,xvcanvas_t * canvas)
         {
@@ -413,6 +429,29 @@ namespace top
                 return xvalue_t(enum_xerror_code_bad_param);
             
             const vtoken_t new_balance = (vtoken_t)(current_balance.get_token() - ask_withdraw);
+            xvalue_t new_value(new_balance);
+            move_from_value(new_value);
+
+            return xvalue_t(new_balance);
+        }
+
+        const xvalue_t  xtokenvar_t::do_update(const xvmethod_t & op,xvcanvas_t * canvas)
+         {
+            if(op.get_method_id() != enum_xvinstruct_state_method_update_token)
+                return xvalue_t(enum_xerror_code_bad_method);
+            
+            if( (op.get_params_count() != 1) || (op.get_method_params().size() != 1) )
+                return xvalue_t(enum_xerror_code_invalid_param_count);
+            
+            const xvalue_t & update_value = op.get_method_params().at(0);
+            if(update_value.get_type() != xvalue_t::enum_xvalue_type_token)
+                return xvalue_t(enum_xerror_code_invalid_param_type);
+            
+            const int64_t ask_update = update_value.get_token();
+            if(ask_update < 0)
+                return xvalue_t(enum_xerror_code_bad_param);
+            
+            const vtoken_t new_balance = (vtoken_t)(ask_update);
             xvalue_t new_value(new_balance);
             move_from_value(new_value);
 

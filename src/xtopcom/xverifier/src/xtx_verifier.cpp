@@ -13,7 +13,9 @@
 #include "xverifier/xwhitelist_verifier.h"
 #include "xverifier/xblacklist_verifier.h"
 #include "xvledger/xvblock.h"
-
+#include "xconfig/xconfig_register.h"
+#include "xpbase/base/top_utils.h"
+#include "xdata/xrootblock.h"
 #include <cinttypes>
 
 NS_BEG2(top, xverifier)
@@ -118,6 +120,22 @@ int32_t xtx_verifier::verify_address_type(data::xtransaction_t const * trx) {
             xwarn("[global_trace][xtx_verifier][address_verify]dst addr invalid , tx:%s", trx->dump().c_str());
             return xverifier_error::xverifier_error_addr_invalid;
         }
+
+        // consortium: check transfer address
+        if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(enable_transaction_whitelist) == 1) {
+            
+            if(verify_check_genesis_account(src_addr) ||  verify_check_genesis_account(dst_addr)) {
+                return xverifier_error::xverifier_success;
+            }
+
+            std::string nodes = XGET_ONCHAIN_GOVERNANCE_PARAMETER(transaction_whitelist);
+            std::set<std::string> node_sets;
+            top::SplitString(nodes, ',', node_sets);
+            if (node_sets.find(src_addr) == node_sets.end() && node_sets.find(dst_addr) == node_sets.end() ) {
+                xwarn("[global_trace][xtx_verifier][address_verify] check whitelist address fail, tx:%s", trx->dump().c_str());
+                return xverifier_error::xverifier_error_addr_invalid;
+            }
+        }        
     }
 
     return xverifier_error::xverifier_success;
@@ -220,6 +238,15 @@ int32_t xtx_verifier::sys_contract_tx_check(data::xtransaction_t const * trx_ptr
 
     bool source_is_user_addr            = data::is_account_address(sender_addr); // || data::is_sub_account_address(sender_addr);
     bool target_is_sys_contract_addr    = data::is_sys_contract_address(recver_addr);
+
+    // consortium: check register whitelist
+    if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(enable_node_whitelist) == 1) {
+        if (source_is_user_addr && target_addr == sys_contract_rec_registration_addr) {
+            if (verify_register_whitelist(source_addr) == false)
+                return xverifier_error::xverifier_error_whitelist_limit;
+        }
+    }
+
     if (source_is_user_addr && target_is_sys_contract_addr) {
         for (const auto & addr : open_sys_contracts) {
             if (addr == target_addr) {
@@ -375,6 +402,28 @@ int32_t xtx_verifier::verify_shard_contract_addr(data::xtransaction_t const * tr
         }
     }
     return xverifier_error::xverifier_success;
+}
+
+bool xtx_verifier::verify_register_whitelist(const std::string& account) {
+    std::string nodes = XGET_ONCHAIN_GOVERNANCE_PARAMETER(node_whitelist);
+    std::set<std::string> node_sets;
+    top::SplitString(nodes, ',', node_sets);
+
+    if (node_sets.find(account) != node_sets.end())
+        return true;
+    xwarn("xtx_verifier::verify_register_whitelist fail, %s", account.c_str());
+    return false;
+}
+
+bool xtx_verifier::verify_check_genesis_account(const std::string& account)
+{
+    std::map<std::string, uint64_t> genesis_accounts = data::xrootblock_t::get_all_genesis_accounts();
+    auto it = genesis_accounts.find(account);
+    if (it != genesis_accounts.end()) {
+        return true;
+    }
+
+    return false;
 }
 
 NS_END2

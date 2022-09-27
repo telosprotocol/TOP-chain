@@ -73,6 +73,7 @@ public: // APIs for property operation with error code return
     uint64_t    token_balance(const std::string& key);
     int32_t     token_deposit(const std::string& key, base::vtoken_t add_token);
     int32_t     token_withdraw(const std::string& key, base::vtoken_t sub_token);
+    int32_t     token_update(const std::string& key, base::vtoken_t update_token);
 
     int32_t     uint64_add(const std::string& key, uint64_t change);
     int32_t     uint64_sub(const std::string& key, uint64_t change);

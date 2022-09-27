@@ -522,6 +522,20 @@ TEST_F(test_tgas_service, gift_tgas) {
     EXPECT_EQ(tgas, XGET_ONCHAIN_GOVERNANCE_PARAMETER(free_gas));
 }
 
+TEST_F(test_tgas_service, consortium_tgas) {
+    ASSERT_TRUE(top::config::xconfig_register_t::get_instance().set(top::config::xtop_enable_free_tgas_onchain_goverance_parameter::name, false));
+
+    m_source_context->get_blockchain()->set_balance(XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_free_gas_asset) - 1);
+    auto tgas = m_source_context->get_blockchain()->get_free_tgas();
+    EXPECT_EQ(tgas, 0);
+
+    m_source_context->get_blockchain()->set_balance(XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_free_gas_asset));
+    tgas = m_source_context->get_blockchain()->get_free_tgas();
+    EXPECT_EQ(tgas, 0);
+
+    ASSERT_TRUE(top::config::xconfig_register_t::get_instance().set(top::config::xtop_enable_free_tgas_onchain_goverance_parameter::name, true));
+}
+
 // TODO(jimmy) this unit test should be modified
 TEST_F(test_tgas_service, DISABLED_deploysc_no_pledge_tgas) {
     xobject_ptr_t<xstore_face_t> store = xstore_factory::create_store_with_memdb();

@@ -115,7 +115,19 @@ int32_t xaccount_context_t::create_user_account(const std::string& address) {
     if (ret != xsuccess) {
         return ret;
     }
+    
+    auto default_token_type = XGET_CONFIG(evm_token_type);
+    xinfo("xaccount_context_t::create_user_account token type is %s.", default_token_type.c_str());
+    if (default_token_type.empty()) {
+        xerror("xaccount_context_t::create_user_account  configuration evm token empty");
+        return ret;
+    }
 
+    if (default_token_type == "TOP") {
+        xinfo("xaccount_context_t::create_user_account  configuration evm base token is top");
+        return ret;
+    }
+    
     auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
     if (top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.v1_6_0_version_point, get_timer_height())) {
         evm_common::u256 eth_token = 10000000000000000000ULL;
@@ -292,7 +304,7 @@ int32_t xaccount_context_t::check_used_tgas(uint64_t &cur_tgas_usage, uint64_t d
           last_hour, m_timer_height, get_used_tgas(), calc_decayed_tgas(), m_account->tgas_balance(), get_token_price(), get_total_tgas(), cur_tgas_usage, deposit);
 
     auto available_tgas = get_available_tgas();
-    xdbg("tgas_disk account: %s, total tgas usage adding this tx : %d", get_address().c_str(), cur_tgas_usage);
+    xdbg("tgas_disk account: %s, total tgas usage adding this tx : %d available_tgas %lu ", get_address().c_str(), cur_tgas_usage, available_tgas);
     if(cur_tgas_usage > (available_tgas + deposit / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio))){
         xdbg("tgas_disk xtransaction_not_enough_pledge_token_tgas");
         deposit_usage = deposit;
@@ -325,6 +337,7 @@ int32_t xaccount_context_t::update_tgas_sender(uint64_t tgas_usage, const uint32
         incr_used_tgas(tgas_usage);
     }
     available_balance_to_other_balance(data::XPROPERTY_BALANCE_BURN, base::vtoken_t(deposit_usage));
+    m_total_gas_burn += deposit_usage;
     xdbg("xaccount_context_t::update_tgas_sender tgas_usage: %llu, deposit: %u, deposit_usage: %llu", tgas_usage, deposit, deposit_usage);
     return ret;
 }
@@ -399,6 +412,7 @@ int32_t xaccount_context_t::calc_resource(uint64_t& tgas, uint32_t deposit, uint
     if (used_deposit > 0) {
         xdbg("xaccount_context_t::calc_resource balance withdraw used_deposit=%u", used_deposit);
         ret = available_balance_to_other_balance(data::XPROPERTY_BALANCE_BURN, base::vtoken_t(used_deposit));
+        m_total_gas_burn += used_deposit;
     }
     return ret;
 }
@@ -1480,6 +1494,11 @@ xaccount_context_t::get_blockchain_height(const std::string & owner) const {
     }
     xdbg("xaccount_context_t::get_blockchain_height owner=%s,height=%" PRIu64 "", owner.c_str(), height);
     return height;
+}
+
+void xaccount_context_t::cacl_total_gas_burn(uint64_t gas)
+{
+    m_total_gas_burn += gas;
 }
 
 }  // namespace store

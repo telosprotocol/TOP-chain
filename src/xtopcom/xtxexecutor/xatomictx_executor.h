@@ -44,7 +44,7 @@ class xatomictx_executor_t {
     bool    check_account_order(const xcons_transaction_ptr_t & tx);
     bool    check_receiptid_order(const xcons_transaction_ptr_t & tx);
     bool    update_nonce_and_hash(const data::xunitstate_ptr_t & unitstate, const xcons_transaction_ptr_t & tx);
-    bool    update_gasfee(const xvm_gasfee_detail_t detail, const data::xunitstate_ptr_t & unitstate, const xcons_transaction_ptr_t & tx);
+    bool    update_gasfee(const xvm_gasfee_detail_t detail, const data::xunitstate_ptr_t & unitstate, const xcons_transaction_ptr_t & tx, uint64_t &total_burn_out);
  private:
     statectx::xstatectx_face_ptr_t  m_statectx{nullptr};
     xvm_para_t                      m_para;
