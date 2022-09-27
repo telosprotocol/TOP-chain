@@ -41,10 +41,34 @@ enum class xtop_trie_node_type : uint8_t {
 };
 using xtrie_node_type_t = xtop_trie_node_type;
 
-class xtop_trie_node_face {
+struct xtop_node_flag {
 private:
-    // std::atomic<int> referenced_cnt_by_parent_{0};
+    std::shared_ptr<xtrie_hash_node_t> hash_node_{nullptr};
+    bool dirty_{false};
 
+public:
+    xtop_node_flag() = default;
+    xtop_node_flag(xtop_node_flag const &) = default;
+    xtop_node_flag & operator=(xtop_node_flag const &) = default;
+    xtop_node_flag(xtop_node_flag &&) = default;
+    xtop_node_flag & operator=(xtop_node_flag &&) = default;
+    ~xtop_node_flag() = default;
+
+    xtop_node_flag(std::shared_ptr<xtrie_hash_node_t> hash, bool dirty);
+    explicit xtop_node_flag(std::shared_ptr<xtrie_hash_node_t> hash);
+    explicit xtop_node_flag(bool dirty);
+
+
+    std::shared_ptr<xtrie_hash_node_t> const & hash_node() const noexcept;
+    bool dirty() const noexcept;
+
+    void hash_node(std::shared_ptr<xtrie_hash_node_t> node) noexcept;
+    void dirty(bool dirty) noexcept;
+};
+using xnode_flag_t = xtop_node_flag;
+using xtrie_node_cached_data_t = xtop_node_flag;
+
+class xtop_trie_node_face {
 public:
     xtop_trie_node_face() = default;
     xtop_trie_node_face(xtop_trie_node_face const &) = default;
@@ -53,8 +77,8 @@ public:
     xtop_trie_node_face & operator=(xtop_trie_node_face &&) = default;
     virtual ~xtop_trie_node_face() = default;
 
-    virtual std::string fstring(std::string const & ind) = 0;
-    virtual std::pair<std::shared_ptr<xtrie_hash_node_t>, bool> cache() const = 0;
+    virtual std::string fstring(std::string const & ind) const = 0;
+    virtual xtrie_node_cached_data_t cache() const = 0;
     virtual xtrie_node_type_t type() const noexcept = 0;
 
     
@@ -82,8 +106,8 @@ public:
     xbytes_t const & data() const noexcept;
 
 public:
-    std::string fstring(std::string const & ind) override;
-    std::pair<std::shared_ptr<xtrie_hash_node_t>, bool> cache() const override;
+    std::string fstring(std::string const & ind) const override;
+    xtrie_node_cached_data_t cache() const override;
     xtrie_node_type_t type() const noexcept override;
 };
 using xtrie_hash_node_t = xtop_trie_hash_node;
@@ -107,8 +131,8 @@ public:
     xbytes_t const & data() const noexcept;
 
 public:
-    std::string fstring(std::string const & ind) override;
-    std::pair<std::shared_ptr<xtrie_hash_node_t>, bool> cache() const override;
+    std::string fstring(std::string const & ind) const override;
+    xtrie_node_cached_data_t cache() const override;
     xtrie_node_type_t type() const noexcept override;
 };
 using xtrie_value_node_t = xtop_trie_value_node;
@@ -117,21 +141,6 @@ using xtrie_value_node_ptr_t = std::shared_ptr<xtrie_value_node_t>;
 // nilValueNode is used when collapsing internal trie nodes for hashing, since
 // unset children need to serialize correctly.
 static const xtrie_value_node_t nilValueNode{};
-
-struct xtop_node_flag {
-    std::shared_ptr<xtrie_hash_node_t> hash{nullptr};
-    bool dirty{false};
-
-    xtop_node_flag() = default;
-    xtop_node_flag(xtop_node_flag const &) = default;
-    xtop_node_flag & operator=(xtop_node_flag const &) = default;
-    xtop_node_flag(xtop_node_flag &&) = default;
-    xtop_node_flag & operator=(xtop_node_flag &&) = default;
-    ~xtop_node_flag() = default;
-
-    explicit xtop_node_flag(std::shared_ptr<xtrie_hash_node_t> hash);
-};
-using xnode_flag_t = xtop_node_flag;
 
 // for leaf node && extension node
 class xtop_trie_short_node : public xtrie_node_face_t, public rlp::xrlp_encodable_t<xtop_trie_short_node> {
@@ -154,8 +163,8 @@ public:
     std::shared_ptr<xtop_trie_short_node> clone() const;
 
 public:
-    std::string fstring(std::string const & ind) override;
-    std::pair<std::shared_ptr<xtrie_hash_node_t>, bool> cache() const override;
+    std::string fstring(std::string const & ind) const override;
+    xtrie_node_cached_data_t cache() const override;
     xtrie_node_type_t type() const noexcept override;
 
 public:
@@ -187,16 +196,9 @@ public:
     }
 
 public:
-    std::string fstring(std::string const & ind) override {
-        // todo;
-        return "";
-    }
-    std::pair<std::shared_ptr<xtrie_hash_node_t>, bool> cache() const override {
-        return {flags.hash, flags.dirty};
-    }
-    xtrie_node_type_t type() const noexcept override {
-        return xtrie_node_type_t::fullnode;
-    }
+    std::string fstring(std::string const & ind) const override;
+    xtrie_node_cached_data_t cache() const override;
+    xtrie_node_type_t type() const noexcept override;
 
 public:
     void EncodeRLP(xbytes_t & buf, std::error_code & ec) override;
@@ -210,23 +212,28 @@ private:
     xbytes_t m_data;
 
 public:
-    xtop_trie_raw_node() {
-    }
-    xtop_trie_raw_node(xbytes_t const & data) : m_data{data} {
+    xtop_trie_raw_node() = default;
+    xtop_trie_raw_node(xtop_trie_raw_node const &) = default;
+    xtop_trie_raw_node & operator=(xtop_trie_raw_node const &) = default;
+    xtop_trie_raw_node(xtop_trie_raw_node &&) = default;
+    xtop_trie_raw_node & operator=(xtop_trie_raw_node &&) = default;
+    ~xtop_trie_raw_node() override = default;
+
+    explicit xtop_trie_raw_node(xbytes_t const & data) : m_data{data} {
     }
 
 public:
-    xbytes_t data() const {
+    xbytes_t const & data() const noexcept {
         return m_data;
     }
 
 public:
-    std::string fstring(std::string const & ind) override {
+    std::string fstring(std::string const & ind) const override {
         xassert(false);
         // should not used
         return "";
     }
-    std::pair<std::shared_ptr<xtrie_hash_node_t>, bool> cache() const override {
+    xtrie_node_cached_data_t cache() const override {
         xassert(false);
         // should not used
         return {{}, true};
@@ -250,12 +257,12 @@ public:
     }
 
 public:
-    std::string fstring(std::string const & ind) override {
+    std::string fstring(std::string const & ind) const override {
         xassert(false);
         // should not used
         return "";
     }
-    std::pair<std::shared_ptr<xtrie_hash_node_t>, bool> cache() const override {
+    xtrie_node_cached_data_t cache() const override {
         xassert(false);
         // should not used
         return {{}, true};
@@ -282,12 +289,12 @@ public:
     }
 
 public:
-    std::string fstring(std::string const & ind) override {
+    std::string fstring(std::string const & ind) const override {
         xassert(false);
         // should not used
         return "";
     }
-    std::pair<std::shared_ptr<xtrie_hash_node_t>, bool> cache() const override {
+    xtrie_node_cached_data_t cache() const override {
         xassert(false);
         // should not used
         return {{}, true};

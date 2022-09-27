@@ -164,7 +164,7 @@ void xtop_trie::TryDelete(xbytes_t const & key, std::error_code & ec) {
 // Commit writes all nodes to the trie's memory database, tracking the internal
 // and external (for account tries) references.
 std::pair<xhash256_t, int32_t> xtop_trie::Commit(std::error_code & ec) {
-    xassert(!ec);
+    assert(!ec);
     // todo LeafCallback
     if (m_db == nullptr) {
         xerror("commit called on trie without database");
@@ -174,7 +174,7 @@ std::pair<xhash256_t, int32_t> xtop_trie::Commit(std::error_code & ec) {
     }
 
     auto rootHash = Hash();
-    if (m_root->cache().second == false) {
+    if (m_root->cache().dirty() == false) {
         return std::make_pair(rootHash, 0);
     }
 
@@ -354,8 +354,7 @@ std::tuple<xbytes_t, xtrie_node_face_ptr_t, std::size_t> xtop_trie::tryGetNode(x
             assert(dynamic_cast<xtrie_hash_node_t *>(orig_node.get()) != nullptr);
             hash = std::dynamic_pointer_cast<xtrie_hash_node_t>(orig_node);
         } else {
-            bool _;
-            std::tie(hash, _) = orig_node->cache();
+            hash = orig_node->cache().hash_node();
         }
         if (hash == nullptr) {
             ec = error::xerrc_t::trie_node_unexpected;
@@ -437,7 +436,7 @@ std::pair<bool, xtrie_node_face_ptr_t> xtop_trie::insert(xtrie_node_face_ptr_t n
     }
 
     if (node == nullptr) {
-        return std::make_pair(true, std::make_shared<xtrie_short_node_t>(key, value, new_node_flag()));
+        return std::make_pair(true, std::make_shared<xtrie_short_node_t>(key, value, node_dirty()));
     }
 
     assert(node != nullptr);
@@ -460,11 +459,11 @@ std::pair<bool, xtrie_node_face_ptr_t> xtop_trie::insert(xtrie_node_face_ptr_t n
             if (!dirty || ec) {
                 return std::make_pair(false, short_node);
             }
-            return std::make_pair(true, std::make_shared<xtrie_short_node_t>(short_node->key, new_node, new_node_flag()));
+            return std::make_pair(true, std::make_shared<xtrie_short_node_t>(short_node->key, new_node, node_dirty()));
         }
 
         // Otherwise branch out at the index where they differ.
-        auto branch = std::make_shared<xtrie_full_node_t>(new_node_flag());
+        auto branch = std::make_shared<xtrie_full_node_t>(node_dirty());
         bool _;
         {
             auto const short_node_key_break_pos = std::next(short_node->key.begin(), matchlen + 1);
@@ -495,7 +494,7 @@ std::pair<bool, xtrie_node_face_ptr_t> xtop_trie::insert(xtrie_node_face_ptr_t n
         }
         // Otherwise, replace it with a short node leading up to the branch.
         xbytes_t short_key = {key.begin(), std::next(key.begin(), matchlen)};
-        return std::make_pair(true, std::make_shared<xtrie_short_node_t>(short_key, branch, new_node_flag()));
+        return std::make_pair(true, std::make_shared<xtrie_short_node_t>(short_key, branch, node_dirty()));
     }
     case xtrie_node_type_t::fullnode: {
         auto full_node = std::dynamic_pointer_cast<xtrie_full_node_t>(node);
@@ -511,12 +510,12 @@ std::pair<bool, xtrie_node_face_ptr_t> xtop_trie::insert(xtrie_node_face_ptr_t n
             return std::make_pair(false, full_node);
         }
         full_node = full_node->clone();
-        full_node->flags = new_node_flag();
+        full_node->flags = node_dirty();
         full_node->Children[tkey] = child;
         return std::make_pair(true, full_node);
     }
     case xtrie_node_type_t::invalid: {
-        return std::make_pair(true, std::make_shared<xtrie_short_node_t>(key, value, new_node_flag()));
+        return std::make_pair(true, std::make_shared<xtrie_short_node_t>(key, value, node_dirty()));
     }
     case xtrie_node_type_t::hashnode: {
         // We've hit a part of the trie that isn't loaded yet. Load
@@ -590,10 +589,10 @@ std::pair<bool, xtrie_node_face_ptr_t> xtop_trie::erase(xtrie_node_face_ptr_t no
 
             xbytes_t cchild_key = short_node->key;
             cchild_key.insert(cchild_key.end(), child_node->key.begin(), child_node->key.end());
-            return std::make_pair(true, std::make_shared<xtrie_short_node_t>(cchild_key, child_node->val, new_node_flag()));
+            return std::make_pair(true, std::make_shared<xtrie_short_node_t>(cchild_key, child_node->val, node_dirty()));
         }
         default: {
-            return std::make_pair(true, std::make_shared<xtrie_short_node_t>(short_node->key, child, new_node_flag()));
+            return std::make_pair(true, std::make_shared<xtrie_short_node_t>(short_node->key, child, node_dirty()));
         }
         }
     }
@@ -614,7 +613,7 @@ std::pair<bool, xtrie_node_face_ptr_t> xtop_trie::erase(xtrie_node_face_ptr_t no
             return std::make_pair(false, full_node);
         }
         full_node = full_node->clone();
-        full_node->flags = new_node_flag();
+        full_node->flags = node_dirty();
         full_node->Children[tkey] = new_node;
 
         // Because n is a full node, it must've contained at least two children
@@ -658,14 +657,14 @@ std::pair<bool, xtrie_node_face_ptr_t> xtop_trie::erase(xtrie_node_face_ptr_t no
                     auto short_child_node = std::dynamic_pointer_cast<xtrie_short_node_t>(cnode);
                     xbytes_t k = short_child_node->key;
                     k.insert(k.begin(), xbyte_t{(xbyte_t)pos});
-                    return std::make_pair(true, std::make_shared<xtrie_short_node_t>(k, short_child_node->val, new_node_flag()));
+                    return std::make_pair(true, std::make_shared<xtrie_short_node_t>(k, short_child_node->val, node_dirty()));
                 }
             }
 
             // Otherwise, n is replaced by a one-nibble short node
             // containing the child.
-            xbytes_t k{(xbyte_t)pos};
-            return std::make_pair(true, std::make_shared<xtrie_short_node_t>(k, full_node->Children[pos], new_node_flag()));
+            xbytes_t k{static_cast<xbyte_t>(pos)};
+            return std::make_pair(true, std::make_shared<xtrie_short_node_t>(k, full_node->Children[pos], node_dirty()));
         }
         // n still contains at least two values and cannot be reduced.
         return std::make_pair(true, full_node);
@@ -734,10 +733,8 @@ std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> xtop_trie::hashRoot() {
     return hash_result;
 }
 
-xnode_flag_t xtop_trie::new_node_flag() {
-    xnode_flag_t f;
-    f.dirty = true;
-    return f;
+xnode_flag_t xtop_trie::node_dirty() {
+    return xnode_flag_t{true};
 }
 
 NS_END3
