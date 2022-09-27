@@ -18,6 +18,28 @@ XDEFINE_MSG_ID(xmessage_category_state_sync, xmessage_id_sync_node_response, 0x0
 XDEFINE_MSG_ID(xmessage_category_state_sync, xmessage_id_sync_table_request, 0x03);
 XDEFINE_MSG_ID(xmessage_category_state_sync, xmessage_id_sync_table_response, 0x04);
 
+struct table_state_detail {
+    common::xaccount_address_t address;
+    uint64_t height{0};
+    xhash256_t hash;
+    xbytes_t value;
+
+    table_state_detail(common::xaccount_address_t addr, uint64_t h, xhash256_t _hash, const xbytes_t & _value) : address(addr), height(h), hash(_hash), value(_value) {
+    }
+};
+
+struct sync_result {
+    common::xaccount_address_t table;
+    uint64_t height{0};
+    xhash256_t block_hash;
+    xhash256_t state_hash;
+    xhash256_t root_hash;
+    std::error_code ec;
+
+    sync_result(common::xaccount_address_t _table, uint64_t h, xhash256_t _block_hash, xhash256_t _state_hash, xhash256_t _root, std::error_code _ec)
+      : table(_table), height(h), block_hash(_block_hash), state_hash(_state_hash), root_hash(_root), ec(_ec) {
+    }
+};
 
 struct trie_task {
     std::vector<xbytes_t> path;
@@ -59,8 +81,9 @@ public:
 
     static std::shared_ptr<xtop_state_sync> new_state_sync(const common::xaccount_address_t & table,
                                                            const uint64_t height,
-                                                           const xhash256_t & hash,
-                                                           const xhash256_t & root,
+                                                           const xhash256_t & block_hash,
+                                                           const xhash256_t & state_hash,
+                                                           const xhash256_t & root_hash,
                                                            std::function<state_sync_peers_t()> peers,
                                                            std::function<void(const state_req &)> track_req,
                                                            base::xvdbstore_t * db,
@@ -71,10 +94,13 @@ public:
     void cancel();
     bool is_done() const;
     std::error_code error() const;
-    common::xaccount_address_t table() const;
-    xhash256_t root() const;
     evm_common::trie::xkv_db_face_ptr_t db() const;
+    common::xaccount_address_t table() const;
+    uint64_t height() const;
+    xhash256_t root() const;
+    void process_table(const table_state_detail & detail);
     void push_deliver_req(const state_req & req);
+    sync_result result();
 
 private:
     void wait() const;
@@ -92,9 +118,11 @@ private:
 
     common::xaccount_address_t m_table;
     uint64_t m_height;
+    xhash256_t m_table_block_hash;
     xhash256_t m_table_state_hash;
     xhash256_t m_root;
-    evm_common::trie::xkv_db_face_ptr_t m_db;
+    base::xvdbstore_t * m_db;
+    evm_common::trie::xkv_db_face_ptr_t m_kv_db;
     std::shared_ptr<evm_common::trie::Sync> m_sched;
     std::function<state_sync_peers_t()> m_peers_func{nullptr};
     std::function<void(const state_req &)> m_track_func{nullptr};

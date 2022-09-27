@@ -376,9 +376,8 @@ bool xbatch_packer::check_state_sync(base::xvblock_t * cert_block) {
         std::string table_bstate_hash_str = full_block->get_fullstate_hash();
         xassert(!table_bstate_hash_str.empty());
         xhash256_t table_bstate_hash(top::to_bytes(table_bstate_hash_str));
-        // xhash256_t sync_block_hash(top::to_bytes(full_block->get_block_hash()));
-
-        get_resources()->get_state_downloader()->sync_state(common::xaccount_address_t{get_account()}, latest_full_height, table_bstate_hash, state_root, true, ec);
+        xhash256_t sync_block_hash(top::to_bytes(full_block->get_block_hash()));
+        get_resources()->get_state_downloader()->sync_state(common::xaccount_address_t{get_account()}, latest_full_height, sync_block_hash, table_bstate_hash, state_root, true, ec);
         xwarn("xbatch_packer::check_state_sync try sync state.table:%s,height:%llu,root:%s ec:%s", get_account().c_str(), latest_full_height, state_root.as_hex_str().c_str(), ec.message().c_str());
         if (!ec) {
             statestore::xstatestore_hub_t::instance()->set_state_sync_info(

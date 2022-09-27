@@ -64,10 +64,12 @@ void Sync::Init(xhash256_t const & root, LeafCallback callback) {
 
 void Sync::AddSubTrie(xhash256_t const & root, xbytes_t const & path, xhash256_t const & parent, LeafCallback callback) {
     if (root == emptyRoot) {
+        xdbg("Sync::AddSubTrie hash root empty: %s", root.as_hex_str().c_str());
         return;
     }
 
     if (membatch.hasNode(root)) {
+        xdbg("Sync::AddSubTrie already hash root: %s in membatch", root.as_hex_str().c_str());
         return;
     }
 
@@ -75,6 +77,7 @@ void Sync::AddSubTrie(xhash256_t const & root, xbytes_t const & path, xhash256_t
     std::error_code ec;
 
     if (HasTrieNode(database, root)) {
+        xdbg("Sync::AddSubTrie already hash root: %s in db", root.as_hex_str().c_str());
         return;
     }
 
@@ -236,7 +239,11 @@ void Sync::schedule(request * req) {
     for (std::size_t i = 0; i < 14 && i < req->path.size(); ++i) {
         prio |= (int64_t)(15 - req->path[i]) << (52 - i * 4);  // 15-nibble => lexicographic order
     }
-    queue.push(req->hash, prio);
+    if (req->unit) {
+        queue.push(req->unit_key, prio);
+    } else {
+        queue.push(req->hash, prio);
+    }
 }
 
 std::vector<Sync::request *> Sync::children(request * req, xtrie_node_face_ptr_t object, std::error_code & ec) {

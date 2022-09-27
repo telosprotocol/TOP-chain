@@ -12,6 +12,24 @@
 namespace top {
 namespace state_mpt {
 
+std::string xaccount_info_t::encode() {
+    base::xstream_t stream(base::xcontext_t::instance());
+    std::string data;
+    m_index.serialize_to(data);
+    stream << m_account;
+    stream << data;
+    return std::string{(const char *)stream.data(), (size_t)stream.size()};
+}
+
+void xaccount_info_t::decode(const std::string & str) {
+    base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)str.data(), (int32_t)str.size());
+    std::string index_str;
+    stream >> m_account;
+    stream >> index_str;
+    m_index.serialize_from(index_str);
+    return;
+}
+
 std::shared_ptr<xtop_state_mpt> xtop_state_mpt::create(const common::xaccount_address_t & table,
                                                        const xhash256_t & root,
                                                        base::xvdbstore_t * db,
@@ -150,10 +168,9 @@ std::shared_ptr<xstate_object_t> xtop_state_mpt::get_deleted_state_object(common
     if (m_lru != nullptr) {
         m_cache_indexes.insert({account, index_bytes});
     }
-    base::xaccount_index_t index;
-    index.serialize_from({index_bytes.begin(), index_bytes.end()});
-
-    auto obj = xstate_object_t::new_object(account, index);
+    xaccount_info_t info;
+    info.decode({index_bytes.begin(), index_bytes.end()});
+    auto obj = xstate_object_t::new_object(account, info.m_index);
     set_state_object(obj);
     return obj;
 }
@@ -197,8 +214,10 @@ std::shared_ptr<xstate_object_t> xtop_state_mpt::create_object(common::xaccount_
 
 void xtop_state_mpt::update_state_object(std::shared_ptr<xstate_object_t> obj, std::error_code & ec) {
     auto acc = obj->account;
-    std::string data;
-    obj->index.serialize_to(data);
+    xaccount_info_t info;
+    info.m_account = acc;
+    info.m_index = obj->index;
+    auto data = info.encode();
     m_trie->TryUpdate(to_bytes(acc), {data.begin(), data.end()}, ec);
     if (ec) {
         xwarn("xtop_state_mpt::update_state_object %s error, %s %s", acc.c_str(), ec.category().name(), ec.message().c_str());
@@ -207,9 +226,25 @@ void xtop_state_mpt::update_state_object(std::shared_ptr<xstate_object_t> obj, s
     return;
 }
 
+void xtop_state_mpt::prune_unit(const common::xaccount_address_t & account, std::error_code & ec) {
+    auto index = get_account_index(account, ec);
+    if (ec) {
+        xwarn("xtop_state_mpt::prune_unit get_account_index error: %s, %s", ec.category().name(), ec.message().c_str());
+        return;
+    }
+    auto hash = index.get_latest_unit_hash();
+    auto key = evm_common::trie::schema::unitKey(xhash256_t(to_bytes(hash)));
+    m_db->DiskDB()->Delete(key, ec);
+    if (ec) {
+        xwarn("xtop_state_mpt::prune_unit db Delete error: %s, %s", ec.category().name(), ec.message().c_str());
+        return;
+    }
+    return;
+}
+
 xhash256_t xtop_state_mpt::get_root_hash(std::error_code & ec) {
     finalize();
-    for (auto acc : m_state_objects_pending) {
+    for (auto & acc : m_state_objects_pending) {
         auto obj = m_state_objects[acc];
         update_state_object(obj, ec);
         if (ec) {
@@ -232,7 +267,7 @@ std::shared_ptr<evm_common::trie::xtrie_db_t> xtop_state_mpt::get_database() con
 }
 
 void xtop_state_mpt::finalize() {
-    for (auto pair : m_journal.dirties) {
+    for (auto & pair : m_journal.dirties) {
         auto acc = pair.first;
         if (!m_state_objects.count(acc)) {
             continue;
@@ -257,7 +292,7 @@ xhash256_t xtop_state_mpt::commit(std::error_code & ec) {
         return {};
     }
 
-    for (auto acc : m_state_objects_dirty) {
+    for (auto & acc : m_state_objects_dirty) {
         auto obj = m_state_objects[acc];
         if (!obj->unit_bytes.empty() && obj->dirty_unit) {
             auto hash = base::xcontext_t::instance().hash({obj->unit_bytes.begin(), obj->unit_bytes.end()}, enum_xhash_type_sha2_256);
