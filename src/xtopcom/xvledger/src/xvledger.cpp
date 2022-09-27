@@ -364,6 +364,18 @@ namespace top
             return atom_copy;
         }
 
+        bool   xvaccountobj_t::set_lowest_executed_block_height(const uint64_t height)
+        {
+            if(is_close())//not allow write anymore at closed status
+                return false;
+            
+            xauto_lock<xspinlock_t> locker(get_spin_lock());
+            xvactmeta_t * meta_ptr = get_meta();
+            const bool result = meta_ptr->set_lowest_executed_block(height);
+
+            return result;
+        }
+
         uint64_t   xvaccountobj_t::get_lowest_executed_block_height()
         {
             //note:meta_ptr never be destroy,it is safe to get it without lock

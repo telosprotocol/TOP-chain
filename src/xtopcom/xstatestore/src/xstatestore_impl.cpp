@@ -4,8 +4,10 @@
 
 #include <string>
 #include "xbasic/xmemory.hpp"
+#include "xblockstore/xblockstore_face.h"
 #include "xmbus/xevent_store.h"
 #include "xmbus/xevent_state_sync.h"
+#include "xverifier/xverifier_utl.h"
 #include "xvledger/xvledger.h"
 #include "xvledger/xaccountindex.h"
 #include "xstatestore/xstatestore_impl.h"
@@ -13,6 +15,8 @@
 #include "xmbus/xbase_sync_event_monitor.hpp"
 
 NS_BEG2(top, statestore)
+
+#define state_prune_freq (10)
 
 xstatestore_face_t* xstatestore_hub_t::instance() {
     static xstatestore_face_t * _static_statestore = nullptr;
@@ -487,11 +491,22 @@ void xstatestore_impl_t::update_node_type(common::xnode_type_t combined_node_typ
     m_store_base.update_node_type(combined_node_type);
 }
 
+void xstatestore_impl_t::prune() {
+    uint64_t now = xverifier::xtx_utl::get_gmttime_s();
+    if ((now % state_prune_freq) == 0)
+    for (auto & table_statestore_pair : m_table_statestore) {
+        auto & table_statestore = table_statestore_pair.second;
+        table_statestore->state_prune();
+    }
+}
+
 bool xstatestore_timer_t::on_timer_fire(const int32_t thread_id,
                                         const int64_t timer_id,
                                         const int64_t current_time_ms,
                                         const int32_t start_timeout_ms,
                                         int32_t & in_out_cur_interval_ms) {
+
+    m_statestore->prune();
     return true;
 }
 

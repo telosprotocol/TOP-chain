@@ -97,6 +97,7 @@ namespace top
             bool                    get_latest_executed_block(uint64_t & block_height,std::string & block_hash);
             const uint64_t          get_latest_executed_block_height();
             uint64_t                get_lowest_executed_block_height();
+            bool                    set_lowest_executed_block_height(const uint64_t height);
 
             bool                    save_meta(bool carry_process_id = true);
             bool                    update_block_meta(xvactplugin_t * plugin);

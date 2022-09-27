@@ -15,13 +15,18 @@
 
 NS_BEG2(top, statestore)
 
+class xexecute_listener_face_t {
+public:
+    virtual void on_executed(uint64_t height) = 0;
+};
+
 class xstatestore_executor_t {
 public:
     static constexpr uint32_t               execute_demand_limit{10};
     static constexpr uint32_t               execute_update_limit{32};
 
 public:
-    xstatestore_executor_t(common::xaccount_address_t const& table_addr);
+    xstatestore_executor_t(common::xaccount_address_t const& table_addr, xexecute_listener_face_t * execute_listener);
 
 public:
     void    execute_and_get_tablestate_ext(base::xvblock_t* target_block, xtablestate_ext_ptr_t & tablestate_ext, std::error_code & ec) const;
@@ -57,6 +62,7 @@ private:
     common::xaccount_address_t  m_table_addr;
     xstatestore_base_t          m_statestore_base;
     xstatestore_accessor_t      m_state_accessor;
+    xexecute_listener_face_t *  m_execute_listener{nullptr};
 };
 
 NS_END2
