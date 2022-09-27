@@ -21,7 +21,7 @@ class xstatestore_base_t {
     xstatestore_base_t() {}
 
  public:
-    void                       get_mpt_from_block(base::xvblock_t * block, std::shared_ptr<state_mpt::xtop_state_mpt> & mpt, std::error_code & ec) const;
+    void                       get_mpt_from_block(base::xvblock_t * block, std::shared_ptr<state_mpt::xstate_mpt_t> & mpt, std::error_code & ec) const;
     xhash256_t                 get_state_root_from_block(base::xvblock_t * block) const;
 
     uint64_t                   get_latest_executed_block_height(common::xaccount_address_t const& table_addr) const;

@@ -21,13 +21,13 @@ NS_BEG3(top, evm_common, trie)
 // SecureTrie is not safe for concurrent use.
 class xtop_secure_trie : public xtrie_face_t {
 private:
-    xtrie_t m_trie;
+    std::shared_ptr<xtrie_t> m_trie;
     xbytes_t hashKeyBuf;
     std::shared_ptr<std::map<std::string, xbytes_t>> secKeyCache;
     xtop_secure_trie * secKeyCacheOwner{nullptr};  // Pointer to self, replace the key cache on mismatch
 
-public:
-    xtop_secure_trie(xtrie_t _trie) : m_trie{_trie} {
+protected:
+    xtop_secure_trie(std::shared_ptr<xtrie_t> trie) : m_trie{std::move(trie)} {
     }
 
 public:
@@ -118,7 +118,8 @@ public:
     // nodes of the longest existing prefix of the key (at least the root node), ending
     // with the node that proves the absence of the key.
     bool Prove(xbytes_t const & key, uint32_t fromLevel, xkv_db_face_ptr_t proofDB, std::error_code & ec) override {
-        return m_trie.Prove(key, fromLevel, proofDB, ec);
+        assert(m_trie != nullptr);
+        return m_trie->Prove(key, fromLevel, proofDB, ec);
     }
 
     // todo NodeIterator

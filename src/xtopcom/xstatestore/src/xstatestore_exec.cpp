@@ -250,7 +250,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_current_table(base
     data::xtablestate_ptr_t table_bstate = std::make_shared<data::xtable_bstate_t>(current_state.get());
     
     xhash256_t stateroot = m_statestore_base.get_state_root_from_block(current_block);
-    std::shared_ptr<state_mpt::xtop_state_mpt> mpt = state_mpt::xtop_state_mpt::create(common::xaccount_address_t{current_block->get_account()}, stateroot, m_statestore_base.get_dbstore(), state_mpt::xstate_mpt_cache_t::instance(), ec);
+    std::shared_ptr<state_mpt::xstate_mpt_t> mpt = state_mpt::xstate_mpt_t::create(common::xaccount_address_t{current_block->get_account()}, stateroot, m_statestore_base.get_dbstore(), state_mpt::xstate_mpt_cache_t::instance(), ec);
     if (ec) {
         xwarn("xstatestore_executor_t::make_state_from_current_table fail-create mpt.block=%s", current_block->dump().c_str());
         return nullptr;
@@ -324,7 +324,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::write_table_all_states(base::xvblo
         }
     }
     
-    std::shared_ptr<state_mpt::xtop_state_mpt> cur_mpt = state_mpt::xtop_state_mpt::create(common::xaccount_address_t{current_block->get_account()}, tablestate_store->get_state_root(), m_statestore_base.get_dbstore(), state_mpt::xstate_mpt_cache_t::instance(), ec);
+    std::shared_ptr<state_mpt::xstate_mpt_t> cur_mpt = state_mpt::xstate_mpt_t::create(common::xaccount_address_t{current_block->get_account()}, tablestate_store->get_state_root(), m_statestore_base.get_dbstore(), state_mpt::xstate_mpt_cache_t::instance(), ec);
     if (ec) {
         xerror("xstatestore_executor_t::write_table_all_states fail-create mpt.block:%s", current_block->dump().c_str());
         return nullptr;            
@@ -348,7 +348,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_tab
 
     // should clone a new state for execute
     xobject_ptr_t<base::xvbstate_t> current_state = make_object_ptr<base::xvbstate_t>(*current_block, *prev_state->get_table_state()->get_bstate());
-    std::shared_ptr<state_mpt::xtop_state_mpt> current_prev_mpt = state_mpt::xtop_state_mpt::create(m_table_addr, prev_state->get_state_mpt()->get_original_root_hash(), m_statestore_base.get_dbstore(), state_mpt::xstate_mpt_cache_t::instance(), ec);        
+    std::shared_ptr<state_mpt::xstate_mpt_t> current_prev_mpt = state_mpt::xstate_mpt_t::create(m_table_addr, prev_state->get_state_mpt()->get_original_root_hash(), m_statestore_base.get_dbstore(), state_mpt::xstate_mpt_cache_t::instance(), ec);        
     xhash256_t block_state_root = m_statestore_base.get_state_root_from_block(current_block);
     base::xaccount_indexs_t account_indexs;
 
@@ -492,7 +492,7 @@ void xstatestore_executor_t::raise_execute_height(const xstate_sync_info_t & syn
     // check if root and table state are already stored.
     std::error_code ec;
     auto mpt =
-        state_mpt::xtop_state_mpt::create(m_table_addr, sync_info.get_root_hash(), m_statestore_base.get_dbstore(), state_mpt::xstate_mpt_cache_t::instance(), ec);
+        state_mpt::xstate_mpt_t::create(m_table_addr, sync_info.get_root_hash(), m_statestore_base.get_dbstore(), state_mpt::xstate_mpt_cache_t::instance(), ec);
     if (mpt == nullptr || ec) {
         xerror("xstatestore_executor_t::raise_execute_height sync result is succ but mpt create fail.table:%s,h:%llu,root:%s",
                m_table_addr.value().c_str(),

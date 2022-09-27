@@ -34,6 +34,7 @@ std::pair<xtrie_node_face_ptr_t, int32_t> xtop_trie_committer::commit(xtrie_node
     // if this path is clean, use available cached data
     auto const cached_data = n->cache();
     if (cached_data.hash_node() != nullptr && !cached_data.dirty()) {
+        std::printf("commit: hash %s\n", xhash256_t{cached_data.hash_node()->data()}.as_hex_str().c_str());
         return std::make_pair(cached_data.hash_node(), 0);
     }
 
@@ -61,10 +62,12 @@ std::pair<xtrie_node_face_ptr_t, int32_t> xtop_trie_committer::commit(xtrie_node
         }
         // The key needs to be copied, since we're delivering it to database
         collapsed->key = hexToCompact(cn->key);
-        auto hashedNode = store(collapsed, db);
-        if (hashedNode->type() == xtrie_node_type_t::hashnode) {
-            auto hn = std::dynamic_pointer_cast<xtrie_hash_node_t>(hashedNode);
+        auto const hashed_node = store(collapsed, db);
+        if (hashed_node != nullptr && hashed_node->type() == xtrie_node_type_t::hashnode) {
+            auto hn = std::dynamic_pointer_cast<xtrie_hash_node_t>(hashed_node);
             assert(hn != nullptr);
+
+            std::printf("commit: hash %s\n", xhash256_t{hn->data()}.as_hex_str().c_str());
 
             return std::make_pair(hn, childCommitted + 1);
         }
@@ -84,20 +87,22 @@ std::pair<xtrie_node_face_ptr_t, int32_t> xtop_trie_committer::commit(xtrie_node
         auto collapsed = cn->clone();
         collapsed->Children = hashedKids;
 
-        auto hashedNode = store(collapsed, db);
-        if (hashedNode->type() == xtrie_node_type_t::hashnode) {
-            auto hn = std::dynamic_pointer_cast<xtrie_hash_node_t>(hashedNode);
+        auto const hashed_node = store(collapsed, db);
+        if (hashed_node != nullptr && hashed_node->type() == xtrie_node_type_t::hashnode) {
+            auto hn = std::dynamic_pointer_cast<xtrie_hash_node_t>(hashed_node);
             assert(hn != nullptr);
+
+            std::printf("commit: hash %s\n", xhash256_t{hn->data()}.as_hex_str().c_str());
 
             return std::make_pair(hn, childCommitted + 1);
         }
         return std::make_pair(collapsed, childCommitted);
     }
     case xtrie_node_type_t::hashnode: {
-        auto cn = std::dynamic_pointer_cast<xtrie_hash_node_t>(n);
-        assert(cn != nullptr);
+        auto hn = std::dynamic_pointer_cast<xtrie_hash_node_t>(n);
+        assert(hn != nullptr);
 
-        return std::make_pair(cn, 0);
+        return std::make_pair(hn, 0);
     }
     default:
         // nil, valuenode shouldn't be committed

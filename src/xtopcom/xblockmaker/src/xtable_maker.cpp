@@ -348,7 +348,7 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
     update_receiptid_state(table_para, statectx_ptr);
 
     evm_common::xh256_t state_root;
-    std::shared_ptr<state_mpt::xtop_state_mpt> table_mpt = nullptr;
+    std::shared_ptr<state_mpt::xstate_mpt_t> table_mpt = nullptr;
 
     if (new_version) {
         evm_common::xh256_t last_state_root;
@@ -780,13 +780,13 @@ bool xtable_maker_t::get_new_account_indexes(const data::xblock_consensus_para_t
     return true;
 }
 
-std::shared_ptr<state_mpt::xtop_state_mpt> xtable_maker_t::create_new_mpt(const xhash256_t & last_mpt_root,
+std::shared_ptr<state_mpt::xstate_mpt_t> xtable_maker_t::create_new_mpt(const xhash256_t & last_mpt_root,
                                                                           const data::xblock_consensus_para_t & cs_para,
                                                                           const statectx::xstatectx_ptr_t & table_state_ctx,
                                                                           const std::vector<std::pair<xblock_ptr_t, base::xaccount_index_t>> & batch_unit_and_index) {
     std::error_code ec;
     // todo(nathan):add param show that mpt is with unit state.
-    // auto mpt = state_mpt::xtop_state_mpt::create(get_account(), last_mpt_root, base::xvchain_t::instance().get_xdbstore(), state_mpt::xstate_mpt_cache_t::instance(), ec);
+    // auto mpt = state_mpt::xstate_mpt_t::create(get_account(), last_mpt_root, base::xvchain_t::instance().get_xdbstore(), state_mpt::xstate_mpt_cache_t::instance(), ec);
     // if (ec) {
     //     xwarn("xtable_maker_t::create_new_mpt create mpt fail.");
     //     return nullptr;
