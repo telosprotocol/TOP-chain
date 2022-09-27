@@ -26,4 +26,5 @@ private:
     static std::pair<xtrie_node_face_ptr_t, xbytes_t> decodeRef(xbytes_t const & buf, std::error_code & ec);
 };
 using xtrie_node_rlp = xtop_trie_node_rlp;
+
 NS_END3

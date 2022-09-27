@@ -10,6 +10,10 @@
 NS_BEG3(top, evm_common, trie)
 
 // fwd:
+class xtop_trie_node_face;
+using xtrie_node_face_t = xtop_trie_node_face;
+using xtrie_node_face_ptr_t = std::shared_ptr<xtrie_node_face_t>;
+
 class xtop_trie_hash_node;
 using xtrie_hash_node_t = xtop_trie_hash_node;
 using xtrie_hash_node_ptr_t = std::shared_ptr<xtrie_hash_node_t>;

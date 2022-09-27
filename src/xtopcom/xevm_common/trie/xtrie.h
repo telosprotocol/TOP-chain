@@ -4,66 +4,65 @@
 
 #pragma once
 
-#include "xbase/xns_macro.h"
 #include "xbasic/xhash.hpp"
-#include "xbasic/xhex.h"
-#include "xevm_common/trie/xtrie_db.h"
-#include "xevm_common/trie/xtrie_node.h"
-#include "xevm_common/trie/xtrie_node_coding.h"
+#include "xtrie_kv_db_face.h"
+#include "xevm_common/trie/xtrie_db_fwd.h"
+#include "xevm_common/trie/xtrie_node_fwd.h"
+#include "xevm_common/trie/xtrie_pruner_fwd.h"
 
-#include <algorithm>
-#include <cassert>
 #include <tuple>
-#include <type_traits>
 
 NS_BEG3(top, evm_common, trie)
 
 // emptyRoot is the known root hash of an empty trie.
-static constexpr auto emptyRootBytes = ConstHexBytes<32>("56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421");
-static xhash256_t emptyRoot = xhash256_t{emptyRootBytes};
+XINLINE_CONSTEXPR auto empty_root_bytes = ConstHexBytes<32>("56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421");
+extern xhash256_t const empty_root;
 
 // callback(paths, hexpath, leaf, parent_hash, ec);
-using LeafCallback = std::function<void(std::vector<xbytes_t> const &, xbytes_t const &, xbytes_t const &, xhash256_t const &, std::error_code &)>;
+using leaf_callback = std::function<void(std::vector<xbytes_t> const &, xbytes_t const &, xbytes_t const &, xhash256_t const &, std::error_code &)>;
 
 class xtop_trie {
 private:
-    xtrie_db_ptr_t m_db;
-    xtrie_node_face_ptr_t m_root;
+    std::shared_ptr<xtrie_db_t> trie_db_;
+    xtrie_node_face_ptr_t trie_root_;
+    std::unique_ptr<xtrie_pruner_t> pruner_;
 
-    std::size_t unhashed{0};
+    std::size_t unhashed_{0};
+
+public:
+    xtop_trie(xtop_trie const &) = delete;
+    xtop_trie & operator=(xtop_trie const &) = delete;
+    xtop_trie(xtop_trie &&) = default;
+    xtop_trie & operator=(xtop_trie &&) = default;
+    ~xtop_trie();
 
 protected:
-    explicit xtop_trie(xtrie_db_ptr_t db) : m_db{std::move(db)} {
-    }
+    explicit xtop_trie(std::shared_ptr<xtrie_db_t> db);
 
 public:
-    xtrie_db_ptr_t trie_db() const {
-        return m_db;
-    }
+    std::shared_ptr<xtrie_db_t> const & trie_db() const noexcept;
 
-public:
-    static std::shared_ptr<xtop_trie> New(xhash256_t hash, xtrie_db_ptr_t db, std::error_code & ec);
+    static std::shared_ptr<xtop_trie> build_from(xhash256_t hash, std::shared_ptr<xtrie_db_t> db, std::error_code & ec);
 
-public:
     // Reset drops the referenced root node and cleans all internal state.
     void reset();
 
     // Hash returns the root hash of the trie. It does not write to the
     // database and can be used even if the trie doesn't have one.
-    xhash256_t Hash();
+    xhash256_t hash();
 
     // Get returns the value for key stored in the trie.
     // The value bytes must not be modified by the caller.
-    xbytes_t Get(xbytes_t const & key) const;
+    xbytes_t get(xbytes_t const & key) const;
 
     // TryGet returns the value for key stored in the trie.
     // The value bytes must not be modified by the caller.
     // If a node was not found in the database, a MissingNodeError(trie_db_missing_node_error) is returned.
-    xbytes_t TryGet(xbytes_t const & key, std::error_code & ec) const;
+    xbytes_t try_get(xbytes_t const & key, std::error_code & ec) const;
 
     // TryGetNode attempts to retrieve a trie node by compact-encoded path. It is not
     // possible to use keybyte-encoding as the path might contain odd nibbles.
-    std::pair<xbytes_t, std::size_t> TryGetNode(xbytes_t const & path, std::error_code & ec);
+    std::pair<xbytes_t, std::size_t> try_get_node(xbytes_t const & path, std::error_code & ec);
 
     // Update associates key with value in the trie. Subsequent calls to
     // Get will return value. If value has length zero, any existing value
@@ -71,14 +70,7 @@ public:
     //
     // The value bytes must not be modified by the caller while they are
     // stored in the trie.
-    void Update(xbytes_t const & key, xbytes_t const & value);
-
-    // TODO if we need this on this level.
-    void TryUpdateAccount(xbytes_t const & key, /*TODO state account ptr,*/ std::error_code & ec) {
-        assert(false);
-        // data = state account -> rlp();
-        // return tryUpdate(key,date);
-    }
+    void update(xbytes_t const & key, xbytes_t const & value);
 
     // TryUpdate associates key with value in the trie. Subsequent calls to
     // Get will return value. If value has length zero, any existing value
@@ -88,18 +80,18 @@ public:
     // stored in the trie.
     //
     // If a node was not found in the database, a MissingNodeError(trie_db_missing_node_error) is returned.
-    void TryUpdate(xbytes_t const & key, xbytes_t const & value, std::error_code & ec);
+    void try_update(xbytes_t const & key, xbytes_t const & value, std::error_code & ec);
 
     // Delete removes any existing value for key from the trie.
     void Delete(xbytes_t const & key);
 
     // TryDelete removes any existing value for key from the trie.
     // If a node was not found in the database, a MissingNodeError(trie_db_missing_node_error) is returned.
-    void TryDelete(xbytes_t const & key, std::error_code & ec);
+    void try_delete(xbytes_t const & key, std::error_code & ec);
 
     // Commit writes all nodes to the trie's memory database, tracking the internal
     // and external (for account tries) references.
-    std::pair<xhash256_t, int32_t> Commit(std::error_code & ec);
+    std::pair<xhash256_t, int32_t> commit(std::error_code & ec);
 
     // Prove constructs a merkle proof for key. The result contains all encoded nodes
     // on the path to the value at key. The value itself is also included in the last
@@ -108,12 +100,14 @@ public:
     // If the trie does not contain a value for key, the returned proof contains all
     // nodes of the longest existing prefix of the key (at least the root node), ending
     // with the node that proves the absence of the key.
-    bool Prove(xbytes_t const & key, uint32_t fromLevel, xkv_db_face_ptr_t proofDB, std::error_code & ec);
+    bool prove(xbytes_t const & key, uint32_t fromLevel, xkv_db_face_ptr_t proofDB, std::error_code & ec);
+
+    void prune(xhash256_t const & old_trie_root_hash, std::error_code & ec);
 
 private:
-    std::tuple<xbytes_t, xtrie_node_face_ptr_t, bool> tryGet(xtrie_node_face_ptr_t node, xbytes_t const & key, std::size_t const pos, std::error_code & ec) const;
+    std::tuple<xbytes_t, xtrie_node_face_ptr_t, bool> try_get(xtrie_node_face_ptr_t node, xbytes_t const & key, std::size_t const pos, std::error_code & ec) const;
 
-    std::tuple<xbytes_t, xtrie_node_face_ptr_t, std::size_t> tryGetNode(xtrie_node_face_ptr_t orig_node, xbytes_t const & path, std::size_t const pos, std::error_code & ec) const;
+    std::tuple<xbytes_t, xtrie_node_face_ptr_t, std::size_t> try_get_node(xtrie_node_face_ptr_t orig_node, xbytes_t const & path, std::size_t const pos, std::error_code & ec) const;
 
 private:
     std::pair<bool, xtrie_node_face_ptr_t> insert(xtrie_node_face_ptr_t node, xbytes_t prefix, xbytes_t key, xtrie_node_face_ptr_t value, std::error_code & ec);
@@ -123,7 +117,7 @@ private:
 private:
     xtrie_node_face_ptr_t resolve(xtrie_node_face_ptr_t const & n, /*xbytes_t prefix,*/ std::error_code & ec) const;
 
-    xtrie_node_face_ptr_t resolveHash(xtrie_hash_node_ptr_t const & n, /*xbytes_t prefix,*/ std::error_code & ec) const;
+    xtrie_node_face_ptr_t resolve_hash(xtrie_hash_node_ptr_t const & n, /*xbytes_t prefix,*/ std::error_code & ec) const;
 
     // hashRoot calculates the root hash of the given trie
     std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> hash_root();

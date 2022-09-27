@@ -176,7 +176,7 @@ TEST_F(test_state_mpt_fixture, test_basic) {
     auto s = state_mpt::xstate_mpt_t::create(TABLE_ADDRESS, {}, m_db, state_mpt::xstate_mpt_cache_t::instance(), ec);
     EXPECT_EQ(ec.value(), 0);
 
-    auto origin_hash = s->m_trie->Hash();
+    auto origin_hash = s->m_trie->hash();
 
     std::vector<std::pair<common::xaccount_address_t, base::xaccount_index_t>> data;
     std::set<common::xaccount_address_t> acc_set;
@@ -214,17 +214,17 @@ TEST_F(test_state_mpt_fixture, test_basic) {
         EXPECT_TRUE(s->m_journal.dirties.count(data[i].first));
         EXPECT_EQ(s->m_journal.index_changes[i].account, data[i].first);
         // not commit in trie
-        auto index_bytes = s->m_trie->TryGet(top::to_bytes(data[i].first), ec);
+        auto index_bytes = s->m_trie->try_get(top::to_bytes(data[i].first), ec);
         EXPECT_FALSE(ec);
         EXPECT_TRUE(index_bytes.empty());
     }
 
     // hash not change
-    EXPECT_EQ(origin_hash, s->m_trie->Hash());
+    EXPECT_EQ(origin_hash, s->m_trie->hash());
 
     // finalize
     s->finalize();
-    EXPECT_EQ(origin_hash, s->m_trie->Hash());
+    EXPECT_EQ(origin_hash, s->m_trie->hash());
     EXPECT_TRUE(s->m_journal.dirties.empty());
     EXPECT_TRUE(s->m_journal.index_changes.empty());
     EXPECT_EQ(s->m_state_objects.size(), 5);
@@ -232,19 +232,19 @@ TEST_F(test_state_mpt_fixture, test_basic) {
     for (auto i = 0; i < 5; i++) {
         EXPECT_TRUE(s->m_state_objects_pending.count(data[i].first));
         // not commit in trie
-        auto index_bytes = s->m_trie->TryGet(top::to_bytes(data[i].first), ec);
+        auto index_bytes = s->m_trie->try_get(top::to_bytes(data[i].first), ec);
         EXPECT_FALSE(ec);
         EXPECT_TRUE(index_bytes.empty());
     }
     // update
     auto prev_hash = s->get_root_hash(ec);
     EXPECT_FALSE(ec);
-    EXPECT_NE(origin_hash, s->m_trie->Hash());
-    EXPECT_EQ(prev_hash, s->m_trie->Hash());
+    EXPECT_NE(origin_hash, s->m_trie->hash());
+    EXPECT_EQ(prev_hash, s->m_trie->hash());
     EXPECT_TRUE(s->m_state_objects_pending.empty());
     for (auto i = 0; i < 5; i++) {
         // commit in db
-        auto index_bytes = s->m_trie->TryGet(to_bytes(data[i].first), ec);
+        auto index_bytes = s->m_trie->try_get(to_bytes(data[i].first), ec);
         EXPECT_FALSE(ec);
         state_mpt::xaccount_info_t info;
         info.m_account = data[i].first;
@@ -342,15 +342,18 @@ TEST_F(test_state_mpt_fixture, test_create_twice_commit_twice) {
     EXPECT_NE(s1, nullptr);
 
     s1->set_account_index(common::xaccount_address_t("T80000f1d16965a3f485af048ebcec8fd700dc92d54fa7"), base::xaccount_index_t(), ec);
+    std::cout << "first commit" << std::endl;
     auto hash1 = s1->commit(ec);
     EXPECT_EQ(ec.value(), 0);
     // hash1;
     std::cout << "hash1:" << hash1.as_hex_str() << std::endl;
 
-    s1->set_account_index(common::xaccount_address_t("T80000f1d16965a3f485af048ebcec8fd700dc92d54fa7"), base::xaccount_index_t(), ec);
+    // s1->set_account_index(common::xaccount_address_t("T80000f1d16965a3f485af048ebcec8fd700dc92d54fa7"), base::xaccount_index_t(), ec);
+    std::cout << "second commit" << std::endl;
     auto hash2 = s1->commit(ec);
     EXPECT_EQ(ec.value(), 0);
     std::cout << "hash2:" << hash2.as_hex_str() << std::endl;
+    ASSERT_EQ(hash1, hash2);
 }
 
 TEST_F(test_state_mpt_fixture, test_trie_sync) {
@@ -451,7 +454,7 @@ TEST_F(test_state_mpt_fixture, test_trie_callback) {
     std::error_code ec;
     auto kv_db = std::make_shared<evm_common::trie::xkv_db_t>(m_db, TABLE_ADDRESS);
     auto trie_db = evm_common::trie::xtrie_db_t::NewDatabase(kv_db);
-    auto trie = evm_common::trie::xsecure_trie_t::NewSecure({},trie_db,ec);
+    auto trie = evm_common::trie::xsecure_trie_t::build_from({},trie_db,ec);
     EXPECT_FALSE(ec);
 
     std::vector<std::string> accounts = {
@@ -495,7 +498,7 @@ TEST_F(test_state_mpt_fixture, test_trie_callback) {
         info.m_account = common::xaccount_address_t(accounts[i]);
         info.m_index = index;
         auto info_str = info.encode();
-        trie->Update(to_bytes(accounts[i]), to_bytes(info_str));
+        trie->update(to_bytes(accounts[i]), to_bytes(info_str));
         printf("unit, account: %s, value: %s, block_hash: %s, state_hash: %s, state: %s\n",
                accounts[i].c_str(),
                to_hex(info_str).c_str(),
@@ -503,7 +506,7 @@ TEST_F(test_state_mpt_fixture, test_trie_callback) {
                to_hex(unit_state_hash_str).c_str(),
                to_hex(unit_state_str).c_str());
     }
-    auto trie_hash = trie->Commit(ec);
+    auto trie_hash = trie->commit(ec);
     EXPECT_FALSE(ec);
     printf("hash: %s\n", to_hex(trie_hash.first).c_str());
 

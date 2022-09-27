@@ -8,6 +8,7 @@
 #include "xevm_common/trie/xtrie_kv_db.h"
 #include "xmetrics/xmetrics.h"
 #include "xstate_mpt/xerror.h"
+#include "xstate_mpt/xstate_mpt_store.h"
 
 namespace top {
 namespace state_mpt {
@@ -50,9 +51,9 @@ void xtop_state_mpt::init(const common::xaccount_address_t & table, const xhash2
     // check sync flag
 
     m_table_address = table;
-    auto kv_db = std::make_shared<evm_common::trie::xkv_db_t>(db, table);
+    auto const kv_db = std::make_shared<evm_common::trie::xkv_db_t>(db, table);
     m_db = evm_common::trie::xtrie_db_t::NewDatabase(kv_db);
-    m_trie = evm_common::trie::xsecure_trie_t::NewSecure(root, m_db, ec);
+    m_trie = evm_common::trie::xsecure_trie_t::build_from(root, m_db, ec);
     if (ec) {
         xwarn("xtop_state_mpt::init trie with %s %s maybe not complete yes", table.c_str(), root.as_hex_str().c_str());
         return;
@@ -150,7 +151,7 @@ std::shared_ptr<xstate_object_t> xtop_state_mpt::get_deleted_state_object(common
     xbytes_t index_bytes;
     {
         XMETRICS_TIME_RECORD("state_mpt_load_db_index");
-        index_bytes = m_trie->TryGet(to_bytes(account), ec);
+        index_bytes = m_trie->try_get(to_bytes(account), ec);
     }
     if (ec) {
         xwarn("xtop_state_mpt::get_deleted_state_object TryGet %s error, %s %s", account.c_str(), ec.category().name(), ec.message().c_str());
@@ -213,7 +214,7 @@ void xtop_state_mpt::update_state_object(std::shared_ptr<xstate_object_t> obj, s
     info.m_account = acc;
     info.m_index = obj->index;
     auto data = info.encode();
-    m_trie->TryUpdate(to_bytes(acc), {data.begin(), data.end()}, ec);
+    m_trie->try_update(to_bytes(acc), {data.begin(), data.end()}, ec);
     if (ec) {
         xwarn("xtop_state_mpt::update_state_object %s error, %s %s", acc.c_str(), ec.category().name(), ec.message().c_str());
         return;
@@ -250,7 +251,7 @@ xhash256_t xtop_state_mpt::get_root_hash(std::error_code & ec) {
     if (m_state_objects_pending.size() > 0) {
         m_state_objects_pending.clear();
     }
-    return m_trie->Hash();
+    return m_trie->hash();
 }
 
 const xhash256_t & xtop_state_mpt::get_original_root_hash() const {
@@ -274,7 +275,7 @@ void xtop_state_mpt::finalize() {
 }
 
 void xtop_state_mpt::clear_journal() {
-    if (m_journal.index_changes.size() > 0) {
+    if (!m_journal.index_changes.empty()) {
         m_journal.index_changes.clear();
         m_journal.dirties.clear();
     }
@@ -297,14 +298,14 @@ xhash256_t xtop_state_mpt::commit(std::error_code & ec) {
             obj->dirty_unit = false;
         }
     }
-    if (m_state_objects_dirty.size() > 0) {
+    if (!m_state_objects_dirty.empty()) {
         m_state_objects_dirty.clear();
     }
 
     std::pair<xhash256_t, int32_t> res;
     {
         XMETRICS_TIME_RECORD("state_mpt_trie_commit");
-        res = m_trie->Commit(ec);
+        res = m_trie->commit(ec);
     }
     if (ec) {
         xwarn("xtop_state_mpt::commit trie commit error, %s %s", ec.category().name(), ec.message().c_str());
@@ -320,6 +321,14 @@ xhash256_t xtop_state_mpt::commit(std::error_code & ec) {
         xstate_mpt_cache_t::set(m_lru, res.first, m_cache_indexes);
     }
     return res.first;
+}
+
+void xtop_state_mpt::load_into(std::unique_ptr<xstate_mpt_store_t> const & state_mpt_store, std::error_code & ec) {
+}
+
+void xtop_state_mpt::prune(xhash256_t const & old_trie_root_hash, std::error_code & ec) const {
+    assert(m_trie != nullptr);
+    m_trie->prune(old_trie_root_hash, ec);
 }
 
 }  // namespace state_mpt

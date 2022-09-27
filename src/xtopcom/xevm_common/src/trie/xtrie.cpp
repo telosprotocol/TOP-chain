@@ -4,42 +4,60 @@
 
 #include "xevm_common/trie/xtrie.h"
 
+#include "xbasic/xmemory.hpp"
 #include "xevm_common/trie/xtrie_committer.h"
 #include "xevm_common/trie/xtrie_encoding.h"
 #include "xevm_common/trie/xtrie_hasher.h"
+#include "xevm_common/trie/xtrie_node_coding.h"
+#include "xevm_common/trie/xtrie_pruner.h"
 #include "xevm_common/xerror/xerror.h"
 
 NS_BEG3(top, evm_common, trie)
 
-std::shared_ptr<xtop_trie> xtop_trie::New(xhash256_t hash, xtrie_db_ptr_t db, std::error_code & ec) {
+xhash256_t const empty_root{empty_root_bytes};
+
+xtop_trie::~xtop_trie() = default;
+
+xtop_trie::xtop_trie(xtrie_db_ptr_t db) : trie_db_{std::move(db)} {
+}
+
+xtrie_db_ptr_t const & xtop_trie::trie_db() const noexcept {
+    return trie_db_;
+}
+
+std::shared_ptr<xtop_trie> xtop_trie::build_from(xhash256_t hash, xtrie_db_ptr_t db, std::error_code & ec) {
     xassert(!ec);
     if (db == nullptr) {
         xerror("build trie from null db");
     }
-    auto trie = xtop_trie{db};
-    if ((hash != emptyRoot) && (hash != xhash256_t{})) {
+    auto trie = std::shared_ptr<xtop_trie>(new xtop_trie{db});
+    if ((hash != empty_root) && (hash != xhash256_t{})) {
         // resolve Hash
         auto const root_hash = std::make_shared<xtrie_hash_node_t>(hash);
-        auto root = trie.resolveHash(root_hash, ec);
+        auto root = trie->resolve_hash(root_hash, ec);
         if (ec) {
             return nullptr;
         }
-        trie.m_root = std::move(root);
+        trie->trie_root_ = std::move(root);
+
     }
-    return std::make_shared<xtop_trie>(trie);
+    return trie;
 }
 
 // Reset drops the referenced root node and cleans all internal state.
 void xtop_trie::reset() {
-    m_root = nullptr;
-    unhashed = 0;
+    trie_root_ = nullptr;
+    unhashed_ = 0;
 }
 
 // Hash returns the root hash of the trie. It does not write to the
 // database and can be used even if the trie doesn't have one.
-xhash256_t xtop_trie::Hash() {
+xhash256_t xtop_trie::hash() {
     auto result = hash_root();
-    m_root = std::move(result.second);
+    if (trie_root_ != result.second) {
+        trie_root_ = std::move(result.second);
+        printf("trie root changed: Hash\n");
+    }
     if (result.first->type() == xtrie_node_type_t::hashnode) {
         assert(dynamic_cast<xtrie_hash_node_t *>(result.first.get()) != nullptr);
         return xhash256_t{std::dynamic_pointer_cast<xtrie_hash_node_t>(result.first)->data()};
@@ -53,9 +71,9 @@ xhash256_t xtop_trie::Hash() {
 
 // Get returns the value for key stored in the trie.
 // The value bytes must not be modified by the caller.
-xbytes_t xtop_trie::Get(xbytes_t const & key) const {
+xbytes_t xtop_trie::get(xbytes_t const & key) const {
     std::error_code ec;
-    auto result = TryGet(key, ec);
+    auto result = try_get(key, ec);
     if (ec) {
         xerror("trie error: %s %s", ec.category().name(), ec.message().c_str());
     }
@@ -65,27 +83,30 @@ xbytes_t xtop_trie::Get(xbytes_t const & key) const {
 // TryGet returns the value for key stored in the trie.
 // The value bytes must not be modified by the caller.
 // If a node was not found in the database, a MissingNodeError(trie_db_missing_node_error) is returned.
-xbytes_t xtop_trie::TryGet(xbytes_t const & key, std::error_code & ec) const {
+xbytes_t xtop_trie::try_get(xbytes_t const & key, std::error_code & ec) const {
     xassert(!ec);
     xbytes_t value;
     xtrie_node_face_ptr_t newroot;
     bool didResolve;
-    std::tie(value, newroot, didResolve) = tryGet(m_root, keybytesToHex(key), 0, ec);
+    std::tie(value, newroot, didResolve) = try_get(trie_root_, keybytesToHex(key), 0, ec);
 
     return value;
 }
 
-std::pair<xbytes_t, std::size_t> xtop_trie::TryGetNode(xbytes_t const & path, std::error_code & ec) {
+std::pair<xbytes_t, std::size_t> xtop_trie::try_get_node(xbytes_t const & path, std::error_code & ec) {
     xassert(!ec);
     xbytes_t item;
     xtrie_node_face_ptr_t newroot;
     std::size_t resolved;
-    std::tie(item, newroot, resolved) = tryGetNode(m_root, compactToHex(path), 0, ec);
+    std::tie(item, newroot, resolved) = try_get_node(trie_root_, compactToHex(path), 0, ec);
     if (ec) {
         return std::make_pair(xbytes_t{}, resolved);
     }
     if (resolved > 0) {
-        m_root = newroot;
+        if (trie_root_ != newroot) {
+            trie_root_ = newroot;
+            printf("trie root changed: TryGetNode\n");
+        }
     }
     if (item.empty()) {
         return std::make_pair(xbytes_t{}, resolved);
@@ -99,10 +120,10 @@ std::pair<xbytes_t, std::size_t> xtop_trie::TryGetNode(xbytes_t const & path, st
 //
 // The value bytes must not be modified by the caller while they are
 // stored in the trie.
-void xtop_trie::Update(xbytes_t const & key, xbytes_t const & value) {
+void xtop_trie::update(xbytes_t const & key, xbytes_t const & value) {
     // printf("update: %s %s\n", top::to_hex(key).c_str(), top::to_hex(value).c_str());
     std::error_code ec;
-    TryUpdate(key, value, ec);
+    try_update(key, value, ec);
     if (ec) {
         xerror("trie error: %s %s", ec.category().name(), ec.message().c_str());
     }
@@ -117,22 +138,28 @@ void xtop_trie::Update(xbytes_t const & key, xbytes_t const & value) {
 // stored in the trie.
 //
 // If a node was not found in the database, a MissingNodeError(trie_db_missing_node_error) is returned.
-void xtop_trie::TryUpdate(xbytes_t const & key, xbytes_t const & value, std::error_code & ec) {
+void xtop_trie::try_update(xbytes_t const & key, xbytes_t const & value, std::error_code & ec) {
     xassert(!ec);
-    unhashed++;
+    unhashed_++;
     auto k = keybytesToHex(key);
     if (!value.empty()) {
-        auto result = insert(m_root, {}, k, std::make_shared<xtrie_value_node_t>(value), ec);
+        auto result = insert(trie_root_, {}, k, std::make_shared<xtrie_value_node_t>(value), ec);
         if (ec) {
             return;
         }
-        m_root = result.second;
+        if (trie_root_ != result.second) {
+            trie_root_ = result.second;
+            printf("trie root changed: insert\n");
+        }
     } else {
-        auto result = erase(m_root, {}, k, ec);
+        auto result = erase(trie_root_, {}, k, ec);
         if (ec) {
             return;
         }
-        m_root = result.second;
+        if (trie_root_ != result.second) {
+            trie_root_ = result.second;
+            printf("trie root changed: erase\n");
+        }
     }
     return;
 }
@@ -140,7 +167,7 @@ void xtop_trie::TryUpdate(xbytes_t const & key, xbytes_t const & value, std::err
 // Delete removes any existing value for key from the trie.
 void xtop_trie::Delete(xbytes_t const & key) {
     std::error_code ec;
-    TryDelete(key, ec);
+    try_delete(key, ec);
     if (ec) {
         xerror("trie error: %s %s", ec.category().name(), ec.message().c_str());
     }
@@ -149,53 +176,60 @@ void xtop_trie::Delete(xbytes_t const & key) {
 
 // TryDelete removes any existing value for key from the trie.
 // If a node was not found in the database, a MissingNodeError(trie_db_missing_node_error) is returned.
-void xtop_trie::TryDelete(xbytes_t const & key, std::error_code & ec) {
+void xtop_trie::try_delete(xbytes_t const & key, std::error_code & ec) {
     xassert(!ec); 
-    unhashed++;
+    unhashed_++;
     auto k = keybytesToHex(key);
-    auto result = erase(m_root, {}, k, ec);
+    auto result = erase(trie_root_, {}, k, ec);
     if (ec) {
         return;
     }
-    m_root = result.second;
+    trie_root_ = result.second;
+    printf("trie root changed: TryDelete\n");
     return;
 }
 
 // Commit writes all nodes to the trie's memory database, tracking the internal
 // and external (for account tries) references.
-std::pair<xhash256_t, int32_t> xtop_trie::Commit(std::error_code & ec) {
+std::pair<xhash256_t, int32_t> xtop_trie::commit(std::error_code & ec) {
     assert(!ec);
     // todo LeafCallback
-    if (m_db == nullptr) {
+    if (trie_db_ == nullptr) {
         xerror("commit called on trie without database");
     }
-    if (m_root == nullptr) {
-        return std::make_pair(emptyRoot, 0);
+    if (trie_root_ == nullptr) {
+        return std::make_pair(empty_root, 0);
     }
 
-    auto rootHash = Hash();
-    if (m_root->cache().dirty() == false) {
-        return std::make_pair(rootHash, 0);
+    auto root_hash = hash();
+    if (!trie_root_->cache().dirty()) {
+        return std::make_pair(root_hash, 0);
     }
 
     xtrie_committer_t h;
 
-    xtrie_hash_node_ptr_t newRoot;
+    xtrie_hash_node_ptr_t new_root;
     int32_t committed;
-    std::tie(newRoot, committed) = h.Commit(m_root, m_db, ec);
+    std::tie(new_root, committed) = h.Commit(trie_root_, trie_db_, ec);
     if (ec) {
         return std::make_pair(xhash256_t{}, 0);
     }
-    m_root = newRoot;
-    return std::make_pair(rootHash, committed);
+    if (new_root->cache().dirty()) {
+        printf("newRoot committed dirty\n");
+    }
+    if (trie_root_ != new_root) {
+        trie_root_ = new_root;
+        printf("trie root changed: Commit\n");
+    }
+    return std::make_pair(root_hash, committed);
 }
 
-bool xtop_trie::Prove(xbytes_t const & key, uint32_t fromLevel, xkv_db_face_ptr_t proofDB, std::error_code & ec) {
+bool xtop_trie::prove(xbytes_t const & key, uint32_t fromLevel, xkv_db_face_ptr_t proofDB, std::error_code & ec) {
     xassert(!ec);
     // Collect all nodes on the path to key.
     auto key_path = keybytesToHex(key);
     std::vector<xtrie_node_face_ptr_t> nodes;
-    auto tn = m_root;
+    auto tn = trie_root_;
     for (; key_path.size() > 0 && tn != nullptr;) {
         xdbg("key: %s", top::to_hex(key_path).c_str());
         switch (tn->type()) {
@@ -226,7 +260,7 @@ bool xtop_trie::Prove(xbytes_t const & key, uint32_t fromLevel, xkv_db_face_ptr_
         case xtrie_node_type_t::hashnode: {
             auto n = std::dynamic_pointer_cast<xtrie_hash_node_t>(tn);
             assert(n != nullptr);
-            tn = resolveHash(n, ec);
+            tn = resolve_hash(n, ec);
             if (ec) {
                 xerror("unhandled trie error %s", ec.message().c_str());
                 return false;
@@ -268,7 +302,7 @@ bool xtop_trie::Prove(xbytes_t const & key, uint32_t fromLevel, xkv_db_face_ptr_
     return true;
 }
 
-std::tuple<xbytes_t, xtrie_node_face_ptr_t, bool> xtop_trie::tryGet(xtrie_node_face_ptr_t node, xbytes_t const & key, std::size_t const pos, std::error_code & ec) const {
+std::tuple<xbytes_t, xtrie_node_face_ptr_t, bool> xtop_trie::try_get(xtrie_node_face_ptr_t node, xbytes_t const & key, std::size_t const pos, std::error_code & ec) const {
     xdbg("tryGet key: %s ,pos: %zu", top::to_hex(key).c_str(), pos);
     if (node == nullptr) {
         return std::make_tuple(xbytes_t{}, nullptr, false);
@@ -293,7 +327,7 @@ std::tuple<xbytes_t, xtrie_node_face_ptr_t, bool> xtop_trie::tryGet(xtrie_node_f
         xbytes_t value;
         xtrie_node_face_ptr_t newnode;
         bool didResolve;
-        std::tie(value, newnode, didResolve) = tryGet(n->val, key, pos + n->key.size(), ec);
+        std::tie(value, newnode, didResolve) = try_get(n->val, key, pos + n->key.size(), ec);
         if (!ec && didResolve) {
             n = n->clone();
             n->val = newnode;
@@ -306,7 +340,7 @@ std::tuple<xbytes_t, xtrie_node_face_ptr_t, bool> xtop_trie::tryGet(xtrie_node_f
         xbytes_t value;
         xtrie_node_face_ptr_t newnode;
         bool didResolve;
-        std::tie(value, newnode, didResolve) = tryGet(n->Children[key[pos]], key, pos + 1, ec);
+        std::tie(value, newnode, didResolve) = try_get(n->Children[key[pos]], key, pos + 1, ec);
         if (!ec && didResolve) {
             n = n->clone();
             n->Children[key[pos]] = newnode;
@@ -316,7 +350,7 @@ std::tuple<xbytes_t, xtrie_node_face_ptr_t, bool> xtop_trie::tryGet(xtrie_node_f
     case xtrie_node_type_t::hashnode: {
         auto n = std::dynamic_pointer_cast<xtrie_hash_node_t>(node);
         assert(n != nullptr);
-        auto child = resolveHash(n, ec);
+        auto child = resolve_hash(n, ec);
         if (ec) {
             xwarn("resolve hash error: at key: %s pos:%zu", top::to_hex(key).c_str(), pos);
             return std::make_tuple(xbytes_t{}, n, true);
@@ -324,7 +358,7 @@ std::tuple<xbytes_t, xtrie_node_face_ptr_t, bool> xtop_trie::tryGet(xtrie_node_f
         xbytes_t value;
         xtrie_node_face_ptr_t newnode;
         bool _didResolve;
-        std::tie(value, newnode, _didResolve) = tryGet(child, key, pos, ec);
+        std::tie(value, newnode, _didResolve) = try_get(child, key, pos, ec);
         return std::make_tuple(value, newnode, true);
     }
     default: {
@@ -334,7 +368,7 @@ std::tuple<xbytes_t, xtrie_node_face_ptr_t, bool> xtop_trie::tryGet(xtrie_node_f
     }
 }
 
-std::tuple<xbytes_t, xtrie_node_face_ptr_t, std::size_t> xtop_trie::tryGetNode(xtrie_node_face_ptr_t orig_node,
+std::tuple<xbytes_t, xtrie_node_face_ptr_t, std::size_t> xtop_trie::try_get_node(xtrie_node_face_ptr_t orig_node,
                                                                                xbytes_t const & path,
                                                                                std::size_t const pos,
                                                                                std::error_code & ec) const {
@@ -360,7 +394,7 @@ std::tuple<xbytes_t, xtrie_node_face_ptr_t, std::size_t> xtop_trie::tryGetNode(x
             ec = error::xerrc_t::trie_node_unexpected;
             return std::make_tuple(xbytes_t{}, orig_node, 0);
         }
-        auto blob = m_db->Node(xhash256_t{hash->data()}, ec);
+        auto blob = trie_db_->Node(xhash256_t{hash->data()}, ec);
         return std::make_tuple(blob, orig_node, 1);
     }
     // Path still needs to be traversed, descend into children
@@ -381,7 +415,7 @@ std::tuple<xbytes_t, xtrie_node_face_ptr_t, std::size_t> xtop_trie::tryGetNode(x
         xbytes_t item;
         xtrie_node_face_ptr_t newnode;
         std::size_t resolved;
-        std::tie(item, newnode, resolved) = tryGetNode(n->val, path, pos + n->key.size(), ec);
+        std::tie(item, newnode, resolved) = try_get_node(n->val, path, pos + n->key.size(), ec);
         if (!ec && resolved > 0) {
             n = n->clone();
             n->val = newnode;
@@ -395,7 +429,7 @@ std::tuple<xbytes_t, xtrie_node_face_ptr_t, std::size_t> xtop_trie::tryGetNode(x
         xbytes_t item;
         xtrie_node_face_ptr_t newnode;
         std::size_t resolved;
-        std::tie(item, newnode, resolved) = tryGetNode(n->Children[path[pos]], path, pos + 1, ec);
+        std::tie(item, newnode, resolved) = try_get_node(n->Children[path[pos]], path, pos + 1, ec);
         if (!ec && resolved > 0) {
             n = n->clone();
             n->Children[path[pos]] = newnode;
@@ -406,7 +440,7 @@ std::tuple<xbytes_t, xtrie_node_face_ptr_t, std::size_t> xtop_trie::tryGetNode(x
         auto n = std::dynamic_pointer_cast<xtrie_hash_node_t>(orig_node);
         assert(n != nullptr);
 
-        auto child = resolveHash(n, ec);
+        auto child = resolve_hash(n, ec);
         if (ec) {
             return std::make_tuple(xbytes_t{}, n, 1);
         }
@@ -414,7 +448,7 @@ std::tuple<xbytes_t, xtrie_node_face_ptr_t, std::size_t> xtop_trie::tryGetNode(x
         xbytes_t item;
         xtrie_node_face_ptr_t newnode;
         std::size_t resolved;
-        std::tie(item, newnode, resolved) = tryGetNode(child, path, pos, ec);
+        std::tie(item, newnode, resolved) = try_get_node(child, path, pos, ec);
         return std::make_tuple(item, newnode, resolved + 1);
     }
     default: {
@@ -523,7 +557,7 @@ std::pair<bool, xtrie_node_face_ptr_t> xtop_trie::insert(xtrie_node_face_ptr_t n
         // the path to the value in the trie.
         auto const hash_node = std::dynamic_pointer_cast<xtrie_hash_node_t>(node);
         assert(hash_node != nullptr);
-        auto real_node = resolveHash(hash_node, ec);
+        auto real_node = resolve_hash(hash_node, ec);
         if (ec) {
             return std::make_pair(false, real_node);
         }
@@ -682,7 +716,7 @@ std::pair<bool, xtrie_node_face_ptr_t> xtop_trie::erase(xtrie_node_face_ptr_t no
         auto hash_node = std::dynamic_pointer_cast<xtrie_hash_node_t>(node);
         assert(hash_node != nullptr);
 
-        auto real_node = resolveHash(hash_node, /*prefix,*/ ec);
+        auto real_node = resolve_hash(hash_node, /*prefix,*/ ec);
         if (ec) {
             return std::make_pair(false, nullptr);
         }
@@ -705,14 +739,14 @@ xtrie_node_face_ptr_t xtop_trie::resolve(xtrie_node_face_ptr_t const & n, /*xbyt
         auto const hash_node = std::dynamic_pointer_cast<xtrie_hash_node_t>(n);
         assert(hash_node != nullptr);
 
-        return resolveHash(hash_node /*, prefix*/, ec);
+        return resolve_hash(hash_node /*, prefix*/, ec);
     }
     return n;
 }
 
-xtrie_node_face_ptr_t xtop_trie::resolveHash(xtrie_hash_node_ptr_t const & n, /*xbytes_t prefix,*/ std::error_code & ec) const {
+xtrie_node_face_ptr_t xtop_trie::resolve_hash(xtrie_hash_node_ptr_t const & n, /*xbytes_t prefix,*/ std::error_code & ec) const {
     auto const hash = xhash256_t{n->data()};
-    auto node = m_db->node(hash);
+    auto node = trie_db_->node(hash);
     if (!node) {
         ec = error::xerrc_t::trie_db_missing_node_error;
         return nullptr;
@@ -722,19 +756,29 @@ xtrie_node_face_ptr_t xtop_trie::resolveHash(xtrie_hash_node_ptr_t const & n, /*
 
 // hashRoot calculates the root hash of the given trie
 std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> xtop_trie::hash_root() {
-    if (m_root == nullptr) {
-        return std::make_pair(std::make_shared<xtrie_hash_node_t>(emptyRoot), nullptr);
+    if (trie_root_ == nullptr) {
+        return std::make_pair(std::make_shared<xtrie_hash_node_t>(empty_root), nullptr);
     }
 
-    auto hasher = xtrie_hasher_t::newHasher(unhashed >= 100u);
+    auto hasher = xtrie_hasher_t::newHasher(unhashed_ >= 100u);
 
-    auto hash_result = hasher.hash(m_root, true);
-    unhashed = 0;
+    auto hash_result = hasher.hash(trie_root_, true);
+    unhashed_ = 0;
     return hash_result;
 }
 
 xnode_flag_t xtop_trie::node_dirty() {
     return xnode_flag_t{true};
 }
+
+void xtop_trie::prune(xhash256_t const & old_trie_root_hash, std::error_code & ec) {
+    if (pruner_ == nullptr) {
+        pruner_ = make_unique<xtrie_pruner_t>();
+        pruner_->init(trie_root_, trie_db_, ec);
+    }
+
+    pruner_->prune(old_trie_root_hash, trie_db_, ec);
+}
+
 
 NS_END3

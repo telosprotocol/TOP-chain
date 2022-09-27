@@ -340,7 +340,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::write_table_all_states(base::xvblo
             tablestate_store->get_state_mpt()->commit(ec);
             if (ec) {
                 xerror("xstatestore_executor_t::write_table_all_states fail-write mpt,block:%s.ec=%s", current_block->dump().c_str(),ec.message().c_str());
-                return nullptr;     
+                return nullptr;
             }
             xdbg("xstatestore_executor_t::write_table_all_states mpt_root=%s.block=%s", tablestate_store->get_state_root().as_hex_str().c_str(), current_block->dump().c_str());
         }

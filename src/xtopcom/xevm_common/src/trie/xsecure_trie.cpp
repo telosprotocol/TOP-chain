@@ -4,15 +4,16 @@
 
 #include "xevm_common/trie/xsecure_trie.h"
 
+#include "xbasic/xstring.h"
 #include "xutility/xhash.h"
 
 NS_BEG3(top, evm_common, trie)
 
-std::shared_ptr<xtop_secure_trie> xtop_secure_trie::NewSecure(xhash256_t root, xtrie_db_ptr_t db, std::error_code & ec) {
+std::shared_ptr<xtop_secure_trie> xtop_secure_trie::build_from(xhash256_t root, xtrie_db_ptr_t db, std::error_code & ec) {
     if (db == nullptr) {
         xerror("build secure trie from null db");
     }
-    auto trie = xtrie_t::New(root, db, ec);
+    auto trie = xtrie_t::build_from(root, db, ec);
     if (ec) {
         xwarn("secure trie new failed: %s", ec.message().c_str());
         return nullptr;
@@ -20,64 +21,65 @@ std::shared_ptr<xtop_secure_trie> xtop_secure_trie::NewSecure(xhash256_t root, x
     return std::shared_ptr<xtop_secure_trie>(new xtop_secure_trie{std::move(trie)});
 }
 
-xbytes_t xtop_secure_trie::Get(xbytes_t const & key) const {
+xbytes_t xtop_secure_trie::get(xbytes_t const & key) const {
     std::error_code ec;
-    auto result = TryGet(key, ec);
+    auto result = try_get(key, ec);
     if (ec) {
         xerror("secure trie error: %s", ec.message().c_str());
     }
     return result;
 }
 
-xbytes_t xtop_secure_trie::TryGet(xbytes_t const & key, std::error_code & ec) const {
+xbytes_t xtop_secure_trie::try_get(xbytes_t const & key, std::error_code & ec) const {
     assert(m_trie != nullptr);
-    return m_trie->TryGet(hashKey(key), ec);
+    return m_trie->try_get(hash_key(key), ec);
 }
 
 
-std::pair<xbytes_t, std::size_t> xtop_secure_trie::TryGetNode(xbytes_t const & path, std::error_code & ec){
+std::pair<xbytes_t, std::size_t> xtop_secure_trie::try_get_node(xbytes_t const & path, std::error_code & ec){
     assert(m_trie != nullptr);
-    return m_trie->TryGetNode(path, ec);
+    return m_trie->try_get_node(path, ec);
 }
 
-void xtop_secure_trie::Update(xbytes_t const & key, xbytes_t const & value) {
+void xtop_secure_trie::update(xbytes_t const & key, xbytes_t const & value) {
     std::error_code ec;
-    TryUpdate(key, value, ec);
+    try_update(key, value, ec);
     if (ec) {
         xerror("secure trie error: %s", ec.message().c_str());
     }
     return;
 }
 
-void xtop_secure_trie::TryUpdate(xbytes_t const & key, xbytes_t const & value, std::error_code & ec) {
-    auto hk = hashKey(key);
+void xtop_secure_trie::try_update(xbytes_t const & key, xbytes_t const & value, std::error_code & ec) {
+    auto const hk = hash_key(key);
     assert(m_trie != nullptr);
-    m_trie->TryUpdate(hk, value, ec);
+
+    m_trie->try_update(hk, value, ec);
     if (ec) {
         return;
     }
-    (*getSecKeyCache())[top::to_string(hk)] = key;
-    return;
+
+    (*get_sec_key_cache())[top::to_string(hk)] = key;
 }
 
 void xtop_secure_trie::Delete(xbytes_t const & key) {
     std::error_code ec;
-    TryDelete(key, ec);
+    try_delete(key, ec);
     if (ec) {
         xerror("secure trie error: %s", ec.message().c_str());
     }
     return;
 }
 
-void xtop_secure_trie::TryDelete(xbytes_t const & key, std::error_code & ec) {
-    auto hk = hashKey(key);
-    getSecKeyCache()->erase(top::to_string(hk));
+void xtop_secure_trie::try_delete(xbytes_t const & key, std::error_code & ec) {
+    auto hk = hash_key(key);
+    get_sec_key_cache()->erase(top::to_string(hk));
     assert(m_trie != nullptr);
-    m_trie->TryDelete(hk, ec);
+    m_trie->try_delete(hk, ec);
 }
 
-xbytes_t xtop_secure_trie::GetKey(xbytes_t const & shaKey) {
-    auto sc = getSecKeyCache();
+xbytes_t xtop_secure_trie::get_key(xbytes_t const & shaKey) {
+    auto sc = get_sec_key_cache();
     if (sc->find(top::to_string(shaKey)) != sc->end()) {
         return sc->at(top::to_string(shaKey));
     }
@@ -86,25 +88,25 @@ xbytes_t xtop_secure_trie::GetKey(xbytes_t const & shaKey) {
     return m_trie->trie_db()->preimage(xhash256_t{shaKey});
 }
 
-std::pair<xhash256_t, int32_t> xtop_secure_trie::Commit(std::error_code & ec) {
+std::pair<xhash256_t, int32_t> xtop_secure_trie::commit(std::error_code & ec) {
     assert(m_trie != nullptr);
     // Write all the pre-images to the actual disk database
-    auto const sc = getSecKeyCache();
+    auto const sc = get_sec_key_cache();
     if (!sc->empty()) {
         for (auto const & scp : *sc) {
             m_trie->trie_db()->insertPreimage(xhash256_t{top::to_bytes(top::get<std::string const>(scp))}, top::get<xbytes_t>(scp));
         }
         sc->clear();
     }
-    return m_trie->Commit(ec);
+    return m_trie->commit(ec);
 }
 
-xhash256_t xtop_secure_trie::Hash() {
+xhash256_t xtop_secure_trie::hash() {
     assert(m_trie != nullptr);
-    return m_trie->Hash();
+    return m_trie->hash();
 }
 
-xbytes_t xtop_secure_trie::hashKey(xbytes_t const & key) const {
+xbytes_t xtop_secure_trie::hash_key(xbytes_t const & key) const {
     xdbg("xtop_secure_trie::hashKey hashData:(%zu) %s ", key.size(), top::to_hex(key).c_str());
     xbytes_t hashbuf;
     utl::xkeccak256_t hasher;
@@ -113,5 +115,12 @@ xbytes_t xtop_secure_trie::hashKey(xbytes_t const & key) const {
     xdbg("xtop_secure_trie::hashKey -> hashed data:(%zu) %s", hashbuf.size(), top::to_hex(hashbuf).c_str());
     return hashbuf;
 }
+
+void xtop_secure_trie::prune(xhash256_t const & old_trie_root_hash, std::error_code & ec) {
+    assert(m_trie != nullptr);
+
+    m_trie->prune(old_trie_root_hash, ec);
+}
+
 
 NS_END3
