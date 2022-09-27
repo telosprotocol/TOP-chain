@@ -742,7 +742,8 @@ bool xtable_maker_t::account_index_upgrade() {
 
         std::map<std::string, std::string> indexes = commit_table_state->map_get(data::XPROPERTY_TABLE_ACCOUNT_INDEX);
         std::vector<lack_account_info_t> lack_accounts;
-        m_account_index_upgrade.init(indexes.size(), commit_table_state->height());        
+        m_account_index_upgrade.init(indexes.size(), commit_table_state->height()); 
+        xdbg("xtable_maker_t::account_index_upgrade table:%s commit block:%s,height:%llu", get_account().c_str(), latest_committed_block->dump().c_str(), commit_table_state->height());       
         for (auto & index : indexes) {
             base::xaccount_index_t _account_index;
             _account_index.serialize_from(index.second);
@@ -750,7 +751,8 @@ bool xtable_maker_t::account_index_upgrade() {
         }
     }
 
-    return m_account_index_upgrade.upgrade(xaccount_index_upgrade_tool_t::convert_to_new_account_index, 50);
+    uint32_t convert_num_once = 50;
+    return m_account_index_upgrade.upgrade(xaccount_index_upgrade_tool_t::convert_to_new_account_index, convert_num_once);
 }
 
 bool xtable_maker_t::get_new_account_indexes(const data::xblock_consensus_para_t & cs_para, std::map<std::string, base::xaccount_index_t> & new_indexes) {

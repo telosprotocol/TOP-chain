@@ -4,8 +4,10 @@
 
 #include <string>
 #include "xbasic/xmemory.hpp"
+#include "xblockstore/xblockstore_face.h"
 #include "xmbus/xevent_store.h"
 #include "xmbus/xevent_state_sync.h"
+#include "xverifier/xverifier_utl.h"
 #include "xvledger/xvledger.h"
 #include "xvledger/xaccountindex.h"
 #include "xstatestore/xstatestore_impl.h"
@@ -33,23 +35,26 @@ xstatestore_face_t* xstatestore_hub_t::reset_instance() {
 
 xstatestore_impl_t::xstatestore_impl_t() {
     xdbg("xstatestore_impl_t::xstatestore_impl_t this=%p",this);
+    m_para = std::make_shared<xstatestore_resources_t>();
     init_all_tablestate();
 }
 
 void xstatestore_impl_t::init_all_tablestate() {
     std::vector<std::string> table_addrs = data::xblocktool_t::make_all_table_addresses();
     for (auto & v : table_addrs) {
-        xstatestore_table_ptr_t tablestore = std::make_shared<xstatestore_table_t>(common::xaccount_address_t(v));
+        xstatestore_table_ptr_t tablestore = std::make_shared<xstatestore_table_t>(common::xaccount_address_t(v), m_para);
         m_table_statestore[v] = tablestore;
     }
 }
 
-bool xstatestore_impl_t::start(const xobject_ptr_t<base::xiothread_t> & iothread) {
+bool xstatestore_impl_t::start(const xobject_ptr_t<base::xiothread_t> & iothread, const xobject_ptr_t<base::xiothread_t> & iothread_for_prune) {
     if (m_started) {
         xerror("xstatestore_impl_t::start already started.");
         return false;
     }
     m_started = true;
+    m_prune_dispather = make_object_ptr<statestore_prune_dispatcher_t>(top::base::xcontext_t::instance(), iothread_for_prune->get_thread_id());
+    m_para->set_prune_dispatcher(make_observer(m_prune_dispather.get()));
 
     // todo(nathan):use timer to update mpt and table state.
     m_timer = new xstatestore_timer_t(top::base::xcontext_t::instance(), iothread->get_thread_id(), this);
@@ -497,11 +502,22 @@ mbus::xmessage_bus_t * xstatestore_impl_t::get_mbus() const {
     return (mbus::xmessage_bus_t *)base::xvchain_t::instance().get_xevmbus();
 }
 
+// void xstatestore_impl_t::prune() {
+//     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
+//     if ((now % state_prune_freq) == 0)
+//     for (auto & table_statestore_pair : m_table_statestore) {
+//         auto & table_statestore = table_statestore_pair.second;
+//         table_statestore->state_prune();
+//     }
+// }
+
 bool xstatestore_timer_t::on_timer_fire(const int32_t thread_id,
                                         const int64_t timer_id,
                                         const int64_t current_time_ms,
                                         const int32_t start_timeout_ms,
                                         int32_t & in_out_cur_interval_ms) {
+
+    // m_statestore->prune();
     return true;
 }
 

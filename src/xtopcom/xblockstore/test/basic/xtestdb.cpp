@@ -145,7 +145,7 @@ namespace top
             return std::string();
         }
         
-        bool  xstoredb_t::delete_values(std::vector<std::string> & to_deleted_keys)
+        bool  xstoredb_t::delete_values(const std::vector<std::string> & to_deleted_keys)
         {
             for(auto & key : to_deleted_keys)
             {

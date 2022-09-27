@@ -27,6 +27,8 @@ class xstatestore_base_t {
     uint64_t                   get_latest_executed_block_height(common::xaccount_address_t const& table_addr) const;
     void                       set_latest_executed_info(common::xaccount_address_t const& table_addr, uint64_t height,const std::string & blockhash) const;
     uint64_t                   get_latest_committed_block_height(common::xaccount_address_t const& table_addr) const;
+    void                       set_lowest_executed_block_height(common::xaccount_address_t const& table_addr, uint64_t height) const;
+    uint64_t                   get_lowest_executed_block_height(common::xaccount_address_t const& table_addr) const;
 
  public:
     base::xvblockstore_t*       get_blockstore() const;

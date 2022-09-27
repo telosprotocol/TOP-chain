@@ -23,14 +23,19 @@ namespace top
     {
         class xvchain_creator {
         public:
-            xvchain_creator() {
+            xvchain_creator(std::string dbpath = std::string()) {
                 base::xvchain_t::instance().clean_all(true);
                 std::error_code ec;
 
                 m_bus = top::make_object_ptr<mbus::xmessage_bus_t>(false, 1000);
                 base::xvchain_t::instance().set_xevmbus(m_bus.get());
 
-                m_db = db::xdb_factory_t::create_memdb();
+                if (dbpath.empty()) {
+                    m_db = db::xdb_factory_t::create_memdb();
+                } else {
+                    m_db = db::xdb_factory_t::create_kvdb(dbpath);
+                }
+                
                 m_store = store::xstore_factory::create_store_with_static_kvdb(m_db);
                 base::xvchain_t::instance().set_xdbstore(m_store.get());
 
@@ -46,13 +51,18 @@ namespace top
                 statestore::xstatestore_hub_t::reset_instance();
             }
 
-            xvchain_creator(bool genesis) {
+            xvchain_creator(bool genesis, std::string dbpath = std::string()) {
                 base::xvchain_t::instance().clean_all(true);
 
                 m_bus = top::make_object_ptr<mbus::xmessage_bus_t>(false, 1000);
                 base::xvchain_t::instance().set_xevmbus(m_bus.get());
 
-                m_db = db::xdb_factory_t::create_memdb();
+                if (dbpath.empty()) {
+                    m_db = db::xdb_factory_t::create_memdb();
+                } else {
+                    m_db = db::xdb_factory_t::create_kvdb(dbpath);
+                }
+
                 m_store = store::xstore_factory::create_store_with_static_kvdb(m_db);
                 base::xvchain_t::instance().set_xdbstore(m_store.get());
 

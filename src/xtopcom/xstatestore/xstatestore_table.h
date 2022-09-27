@@ -14,12 +14,14 @@
 #include "xstatestore/xstatestore_exec.h"
 #include "xstatestore/xtablestate_ext.h"
 #include "xstatestore/xstatestore_access.h"
+#include "xstatestore/xstatestore_prune.h"
+#include "xstatestore/xstatestore_resource.h"
 
 NS_BEG2(top, statestore)
 
-class xstatestore_table_t {
+class xstatestore_table_t : public xexecute_listener_face_t {
 public:
-    xstatestore_table_t(common::xaccount_address_t const&  table_addr);
+    xstatestore_table_t(common::xaccount_address_t const&  table_addr, std::shared_ptr<xstatestore_resources_t> para);
 
 public:
     common::xaccount_address_t const &  get_table_address() const {return m_table_addr;}
@@ -38,6 +40,8 @@ public:
     uint64_t                get_latest_executed_block_height() const;
     uint64_t                get_need_sync_state_block_height() const;
     void                    raise_execute_height(const xstate_sync_info_t & sync_info);
+    // void                    state_prune();
+    virtual void            on_executed(uint64_t height);
 
 private:
 
@@ -45,6 +49,7 @@ private:
     common::xaccount_address_t  m_table_addr;
     xstatestore_executor_t      m_table_executor;
     xstatestore_base_t          m_store_base;
+    std::shared_ptr<xstatestore_prune_t> m_prune;
 };
 using xstatestore_table_ptr_t = std::shared_ptr<xstatestore_table_t>;
 

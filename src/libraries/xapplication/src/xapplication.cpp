@@ -113,6 +113,7 @@ void xtop_application::start() {
     m_thread_pools[xtop_thread_pool_type::txpool_service] = txpool_service_thp;
     xthread_pool_t statestore_thp;
     statestore_thp.push_back(make_object_ptr<base::xiothread_t>());
+    statestore_thp.push_back(make_object_ptr<base::xiothread_t>());
     m_thread_pools[xtop_thread_pool_type::statestore] = statestore_thp;
 
     std::vector<observer_ptr<base::xiothread_t>> sync_account_thread_pool;
@@ -215,7 +216,7 @@ void xtop_application::start() {
         top_console_init();
 
         auto statestore_thp = m_thread_pools.at(xthread_pool_type_t::statestore);
-        statestore::xstatestore_hub_t::instance()->start(statestore_thp[0]);
+        statestore::xstatestore_hub_t::instance()->start(statestore_thp[0], statestore_thp[1]);
 
         auto const & frozen_sharding_address = common::build_frozen_sharding_address(m_network_id);
         auto const zone_type = common::node_type_from(frozen_sharding_address.zone_id());
