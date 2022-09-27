@@ -23,7 +23,7 @@ public:
     std::string encode();
     void decode(const std::string & str);
 
-    std::string m_account;
+    common::xaccount_address_t m_account;
     base::xaccount_index_t m_index;
 };
 
@@ -84,7 +84,7 @@ public:
     /// @brief Prune unit data in db.
     /// @param account Account string.
     /// @param ec Log the error code.
-    void prune_unit(const std::string & account, std::error_code & ec);
+    void prune_unit(common::xaccount_address_t const & account, std::error_code & ec);
 
     /// @brief Commit all modifies to db.
     /// @param ec Log the error code.

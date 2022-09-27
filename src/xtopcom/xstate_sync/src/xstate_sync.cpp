@@ -43,7 +43,7 @@ std::shared_ptr<xtop_state_sync> xtop_state_sync::new_state_sync(const common::x
     sync->m_track_func = track_req;
     sync->m_db = db;
     sync->m_kv_db = std::make_shared<evm_common::trie::xkv_db_t>(db, table);
-    xinfo("xtop_state_sync::new_state_sync table: %s, root: %s", table.c_str(), root_hash.as_hex_str().c_str());
+    xinfo("xtop_state_sync::new_state_sync table: %s, height: %lu, root: %s", table.c_str(), height, root_hash.as_hex_str().c_str());
     return sync;
 }
 
@@ -52,9 +52,16 @@ void xtop_state_sync::run() {
         if (m_table_state_hash != xhash256_t()) {
             sync_table(m_ec);
             if (m_ec) {
-                xwarn("xtop_state_sync::run sync_table error: %s, %s", m_ec.category().name(), m_ec.message().c_str());
+                xwarn("xtop_state_sync::run sync_table error, table: %s, height: %lu, root: %s, %s, %s",
+                      m_table.c_str(),
+                      m_height,
+                      to_hex(m_root).c_str(),
+                      m_ec.category().name(),
+                      m_ec.message().c_str());
                 break;
             }
+        } else {
+            xwarn("xtop_state_sync::run sync_table hash empty: %s", m_table_state_hash.as_hex_str().c_str());
         }
         loop(m_ec);
         if (m_ec) {
@@ -93,6 +100,10 @@ xhash256_t xtop_state_sync::root() const {
     return m_root;
 }
 
+uint64_t xtop_state_sync::height() const {
+    return m_height;
+}
+
 evm_common::trie::xkv_db_face_ptr_t xtop_state_sync::db() const {
     return m_kv_db;
 }
@@ -116,6 +127,10 @@ void xtop_state_sync::pop_deliver_req() {
 }
 
 void xtop_state_sync::process_table(const table_state_detail & detail) {
+    if (m_sync_table_finish) {
+        return;
+    }
+
     if (detail.address != m_table) {
         xwarn("xtop_state_sync::process_table address mismatch: %s, %s", detail.address.c_str(), m_table.c_str());
     }
@@ -126,7 +141,7 @@ void xtop_state_sync::process_table(const table_state_detail & detail) {
         xwarn("xtop_state_sync::process_table block hash mismatch: %s, %s", detail.hash.as_hex_str().c_str(), m_table_block_hash.as_hex_str().c_str());
     }
 
-    xinfo("xtop_state_sync::process_table %s %lu %s %s", detail.address.c_str(), detail.height, detail.hash.as_hex_str().c_str(), to_hex(detail.value).c_str());
+    xinfo("xtop_state_sync::process_table table: %s height: %lu, hash: %s, value: %s", detail.address.c_str(), detail.height, detail.hash.as_hex_str().c_str(), to_hex(detail.value).c_str());
     auto bstate = base::xvblock_t::create_state_object({detail.value.begin(), detail.value.end()});
     auto table_state = std::make_shared<data::xtable_bstate_t>(bstate);
     auto snapshot = table_state->take_snapshot();
@@ -135,35 +150,46 @@ void xtop_state_sync::process_table(const table_state_detail & detail) {
         xwarn("xtop_state_sync::process_table state hash mismatch: %s, %s", to_hex(hash).c_str(), to_hex(m_table_state_hash).c_str());
         return;
     }
-    m_db->set_value(base::xvdbkey_t::create_prunable_state_key(m_table.value(), m_height, {m_table_block_hash.begin(), m_table_block_hash.end()}),
-                    {detail.value.begin(), detail.value.end()});
+    auto key = base::xvdbkey_t::create_prunable_state_key(m_table.value(), m_height, {m_table_block_hash.begin(), m_table_block_hash.end()});
+    std::string value{detail.value.begin(), detail.value.end()};
+    m_db->set_value(key, value);
     m_sync_table_finish = true;
 }
 
 void xtop_state_sync::sync_table(std::error_code & ec) {
+    // check exist
+    auto key = base::xvdbkey_t::create_prunable_state_key(m_table.value(), m_height, {m_table_block_hash.begin(), m_table_block_hash.end()});
+    auto value = m_db->get_value(key);
+    if (!value.empty()) {
+        xinfo("xtop_state_sync::sync_table table: %s, height: %lu, block_hash: %s, state already exist", m_table.c_str(), m_height, to_hex(m_table_block_hash).c_str());
+        m_sync_table_finish = true;
+        return;
+    }
+    // send request
     base::xstream_t stream(base::xcontext_t::instance());
     stream << m_table.value();
     stream << m_height;
     stream << m_table_block_hash.to_bytes();
     stream << rand();  // defend from filter
-
+    xinfo("xtop_state_sync::sync_table, table: %s, height: %lu, block_hash: %s", m_table.c_str(), m_height, to_hex(m_table_block_hash).c_str());
     uint32_t cnt{0};
     while (!m_sync_table_finish) {
         auto network = available_network();
         if (network == nullptr) {
-            xwarn("xtop_state_sync::sync_table no network availble");
+            xwarn("xtop_state_sync::sync_table table: %s, height: %lu, root: %s, no network availble, exit", m_table.c_str(), m_height, to_hex(m_table_block_hash).c_str());
             ec = error::xerrc_t::state_network_invalid;
             m_cancel = true;
             return;
         }
-        if (cnt % 10 == 0) {
+        // resend over 5s
+        if (cnt % 50 == 0) {
             send_message(network, {stream.data(), stream.data() + stream.size()}, xmessage_id_sync_table_request);
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         cnt++;
         if (cnt > 10 * 60) {
             // 1 min overtime
-            xwarn("xtop_state_sync::sync_table overtime, cnt: %u", cnt);
+            xwarn("xtop_state_sync::sync_table table: %s, height: %lu, root: %s, overtime, cnt: %u", m_table.c_str(), m_height, to_hex(m_root).c_str(), cnt);
             ec = error::xerrc_t::state_sync_overtime;
             m_cancel = true;
             return;
@@ -172,18 +198,19 @@ void xtop_state_sync::sync_table(std::error_code & ec) {
 }
 
 void xtop_state_sync::loop(std::error_code & ec) {
-    xinfo("xtop_state_sync::loop main loop");
+    xinfo("xtop_state_sync::loop main loop table: %s, height: %lu, root: %s", m_table.c_str(), m_height, to_hex(m_root).c_str());
 
     uint32_t cnt{0};
     while (m_sched->Pending() > 0) {
+        xdbg("xtop_state_sync::loop pending size: %lu, table: %s, height: %lu, root: %s", m_sched->Pending(), m_table.c_str(), m_height, to_hex(m_root).c_str());
         commit(false, ec);
         if (ec) {
-            xwarn("xtop_state_sync::loop commit error: %s %s", ec.category().name(), ec.message().c_str());
+            xwarn("xtop_state_sync::loop table: %s commit error: %s %s", m_table.c_str(), ec.category().name(), ec.message().c_str());
             return;
         }
         auto network = available_network();
         if (network == nullptr) {
-            xwarn("xtop_state_sync::loop no network availble");
+            xwarn("xtop_state_sync::loop no network availble, table: %s, height: %lu, root: %s", m_table.c_str(), m_height, to_hex(m_root).c_str());
             ec = error::xerrc_t::state_network_invalid;
             m_cancel = true;
             return;
@@ -265,6 +292,7 @@ void xtop_state_sync::assign_tasks(std::shared_ptr<vnetwork::xvnetwork_driver_fa
     stream << nodes_bytes;
     stream << units_bytes;
     stream << rand();
+    xdbg("xtop_state_sync::assign_tasks total %zu, %zu", nodes_bytes.size(), units_bytes.size());
     send_message(network, {stream.data(), stream.data() + stream.size()}, xmessage_id_sync_node_request);
     req.start = base::xtime_utl::time_now_ms();
     req.id = m_req_sequence_id++;
@@ -275,19 +303,24 @@ void xtop_state_sync::send_message(std::shared_ptr<vnetwork::xvnetwork_driver_fa
     vnetwork::xmessage_t _msg = vnetwork::xmessage_t(msg, id);
     std::error_code ec;
     auto fullnode_list = network->fullnode_addresses(ec);
-    if (fullnode_list.empty() || ec) {
+    if (ec || fullnode_list.empty() || (fullnode_list.size() == 1 && fullnode_list[0] == network->address())) {
         xwarn("xtop_state_sync::send_message network can not find fullnodes, %s, %s", ec.category().name(), ec.message().c_str());
         m_ec = ec ? ec : error::xerrc_t::state_network_invalid;
         m_cancel = true;
         return;
     }
-    auto random_fullnode = fullnode_list.at(RandomUint32() % fullnode_list.size());
+    common::xnode_address_t random_fullnode;
+    for (;;) {
+        random_fullnode = fullnode_list.at(RandomUint32() % fullnode_list.size());
+        if (random_fullnode != network->address()) {
+            break;
+        }
+    }
     network->send_to(random_fullnode, _msg, ec);
     if (ec) {
         xwarn("xtop_state_sync::send_message send net error, %s, %s", random_fullnode.account_address().c_str(), network->address().account_address().c_str());
     }
 }
-
 
 void xtop_state_sync::fill_tasks(uint32_t n, state_req & req, std::vector<xhash256_t> & nodes_out, std::vector<xhash256_t> & units_out) {
     if (n > m_trie_tasks.size() + m_unit_tasks.size()) {
@@ -297,9 +330,11 @@ void xtop_state_sync::fill_tasks(uint32_t n, state_req & req, std::vector<xhash2
         auto paths = std::get<1>(res);
         auto units = std::get<2>(res);
         for (size_t i = 0; i < nodes.size(); i++) {
+            xdbg("xtop_state_sync::fill_tasks push missing node: %s", nodes[i].as_hex_str().c_str());
             m_trie_tasks.insert({nodes[i], {paths[i]}});
         }
         for (size_t i = 0; i < units.size(); i++) {
+            xdbg("xtop_state_sync::fill_tasks push missing unit: %s", units[i].as_hex_str().c_str());
             m_unit_tasks.insert({units[i], {}});
         }
     }
@@ -307,6 +342,7 @@ void xtop_state_sync::fill_tasks(uint32_t n, state_req & req, std::vector<xhash2
         if (nodes_out.size() + units_out.size() >= n) {
             break;
         }
+        xdbg("xtop_state_sync::fill_tasks push left node: %s", it->first.as_hex_str().c_str());
         nodes_out.push_back(it->first);
         req.trie_tasks.insert(*it);
         m_trie_tasks.erase(it++);
@@ -315,6 +351,7 @@ void xtop_state_sync::fill_tasks(uint32_t n, state_req & req, std::vector<xhash2
         if (nodes_out.size() + units_out.size() >= n) {
             break;
         }
+        xdbg("xtop_state_sync::fill_tasks push left unit: %s", it->first.as_hex_str().c_str());
         units_out.push_back(it->first);
         req.unit_tasks.insert(*it);
         m_unit_tasks.erase(it++);
@@ -325,7 +362,7 @@ void xtop_state_sync::fill_tasks(uint32_t n, state_req & req, std::vector<xhash2
 
 void xtop_state_sync::process(state_req & req, std::error_code & ec) {
     for (auto blob : req.nodes_response) {
-        xdbg("xtop_state_sync::process node blob: %s", to_hex(blob).c_str());
+        xdbg("xtop_state_sync::process node blob: %s, table: %s, height: %lu, root: %s", to_hex(blob).c_str(), m_table.c_str(), m_height, to_hex(m_root).c_str());
         auto hash = process_node_data(blob, ec);
         if (ec) {
             if (ec != evm_common::error::make_error_code(evm_common::error::xerrc_t::trie_sync_not_requested) && 
@@ -338,7 +375,7 @@ void xtop_state_sync::process(state_req & req, std::error_code & ec) {
         req.trie_tasks.erase(hash);
     }
     for (auto blob : req.units_response) {
-        xdbg("xtop_state_sync::process unit blob: %s", to_hex(blob).c_str());
+        xdbg("xtop_state_sync::process unit blob: %s, table: %s, height: %lu, root: %s", to_hex(blob).c_str(), m_table.c_str(), m_height, to_hex(m_root).c_str());
         auto hash = process_unit_data(blob, ec);
         if (ec) {
             if (ec != evm_common::error::make_error_code(evm_common::error::xerrc_t::trie_sync_not_requested) && 
@@ -399,7 +436,7 @@ std::shared_ptr<vnetwork::xvnetwork_driver_face_t> xtop_state_sync::available_ne
         // fullnode check
         std::error_code ec;
         auto fullnode_list = (*it)->fullnode_addresses(ec);
-        if (fullnode_list.empty() || ec) {
+        if (ec || fullnode_list.empty() || (fullnode_list.size() == 1 && fullnode_list[0] == (*it)->address())) {
             continue;
         }
         return (*it);

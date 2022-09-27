@@ -23,7 +23,6 @@ std::string xaccount_info_t::encode() {
 
 void xaccount_info_t::decode(const std::string & str) {
     base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)str.data(), (int32_t)str.size());
-    std::string account_str;
     std::string index_str;
     stream >> m_account;
     stream >> index_str;
@@ -227,7 +226,7 @@ void xtop_state_mpt::update_state_object(std::shared_ptr<xstate_object_t> obj, s
     return;
 }
 
-void xtop_state_mpt::prune_unit(const std::string & account, std::error_code & ec) {
+void xtop_state_mpt::prune_unit(const common::xaccount_address_t & account, std::error_code & ec) {
     auto index = get_account_index(account, ec);
     if (ec) {
         xwarn("xtop_state_mpt::prune_unit get_account_index error: %s, %s", ec.category().name(), ec.message().c_str());
@@ -245,7 +244,7 @@ void xtop_state_mpt::prune_unit(const std::string & account, std::error_code & e
 
 xhash256_t xtop_state_mpt::get_root_hash(std::error_code & ec) {
     finalize();
-    for (auto acc : m_state_objects_pending) {
+    for (auto & acc : m_state_objects_pending) {
         auto obj = m_state_objects[acc];
         update_state_object(obj, ec);
         if (ec) {
@@ -268,7 +267,7 @@ std::shared_ptr<evm_common::trie::xtrie_db_t> xtop_state_mpt::get_database() con
 }
 
 void xtop_state_mpt::finalize() {
-    for (auto pair : m_journal.dirties) {
+    for (auto & pair : m_journal.dirties) {
         auto acc = pair.first;
         if (!m_state_objects.count(acc)) {
             continue;
@@ -293,7 +292,7 @@ xhash256_t xtop_state_mpt::commit(std::error_code & ec) {
         return {};
     }
 
-    for (auto acc : m_state_objects_dirty) {
+    for (auto & acc : m_state_objects_dirty) {
         auto obj = m_state_objects[acc];
         if (!obj->unit_bytes.empty() && obj->dirty_unit) {
             auto hash = base::xcontext_t::instance().hash({obj->unit_bytes.begin(), obj->unit_bytes.end()}, enum_xhash_type_sha2_256);

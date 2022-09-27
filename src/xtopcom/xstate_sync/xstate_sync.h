@@ -96,6 +96,7 @@ public:
     std::error_code error() const;
     evm_common::trie::xkv_db_face_ptr_t db() const;
     common::xaccount_address_t table() const;
+    uint64_t height() const;
     xhash256_t root() const;
     void process_table(const table_state_detail & detail);
     void push_deliver_req(const state_req & req);
