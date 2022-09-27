@@ -164,6 +164,17 @@ bool xblockextract_t::get_state_root(base::xvblock_t* _block, evm_common::xh256_
    return true;
 }
 
+xhash256_t xblockextract_t::get_state_root_from_block(base::xvblock_t * block) {
+    evm_common::xh256_t state_root;
+    auto ret = data::xblockextract_t::get_state_root(block, state_root);
+    if (!ret) {  // should not happen
+        xerror("xblockextract_t::get_state_root_from_block get state root fail. block:%s", block->dump().c_str());
+        return xhash256_t{};
+    }
+    xhash256_t root_hash = xhash256_t(state_root.to_bytes());
+    return root_hash;
+}
+
 xtransaction_ptr_t xblockextract_t::unpack_raw_tx(base::xvblock_t* _block, std::string const& txhash, std::error_code & ec) {
     std::string orgtx_bin = _block->get_input()->query_resource(txhash);
     if (orgtx_bin.empty()) {

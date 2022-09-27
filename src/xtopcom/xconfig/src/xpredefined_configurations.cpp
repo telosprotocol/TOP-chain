@@ -239,7 +239,7 @@ XDEFINE_CONFIGURATION(platform_show_cmd);
 XDEFINE_CONFIGURATION(platform_db_path);
 XDEFINE_CONFIGURATION(platform_url_endpoints);
 
-
+XDEFINE_CONFIGURATION(sync_table_state_height_gap);
 
 #    undef XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER
 #    undef XDEFINE_CONFIGURATION

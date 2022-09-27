@@ -652,7 +652,15 @@ bool xtable_maker_t::verify_proposal_with_local(base::xvblock_t *proposal_block,
             local_block->dump().c_str());
         return false;
     }
+
     if (local_block->get_header_hash() != proposal_block->get_header_hash()) {
+        auto local_state_root = data::xblockextract_t::get_state_root_from_block(local_block);
+        auto proposal_state_root = data::xblockextract_t::get_state_root_from_block(local_block);
+        if (local_state_root != proposal_state_root) {
+            xerror("xtable_maker_t::verify_proposal_with_local fail-state root not match.%s proposal:%s local:%s",proposal_block->dump().c_str(),local_state_root.as_hex_str().c_str(),proposal_state_root.as_hex_str().c_str());
+            return false;
+        }
+
         xwarn("xtable_maker_t::verify_proposal_with_local fail-header hash not match. %s proposal:%s local:%s",
             proposal_block->dump().c_str(),
             ((data::xblock_t*)proposal_block)->dump_header().c_str(),

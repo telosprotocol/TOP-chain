@@ -57,6 +57,8 @@ void xstatestore_cache_t::set_unitstate(std::string const& block_hash, data::xun
 
 //============================xstatestore_dbaccess_t============================
 void xstatestore_dbaccess_t::write_table_bstate(common::xaccount_address_t const& address, data::xtablestate_ptr_t const& tablestate, const std::string & block_hash, std::error_code & ec) const {
+    if (tablestate->height() > 0)
+        xassert(tablestate->get_block_viewid() != 0);
     // 1.write table bstate to db
     std::string state_db_key = base::xvdbkey_t::create_prunable_state_key(address.vaccount(), tablestate->height(), block_hash);
     std::string state_db_bin;
@@ -205,12 +207,12 @@ void xstatestore_accessor_t::write_table_bstate_to_db(common::xaccount_address_t
     if (ec) {
         return;
     }
-    xdbg("xstatestore_accessor_t::write_table_bstate hash=%s,state=%s", base::xstring_utl::to_hex(block_hash).c_str(), state->get_bstate()->dump().c_str());
+    xdbg("xstatestore_accessor_t::write_table_bstate_to_db hash=%s,state=%s", base::xstring_utl::to_hex(block_hash).c_str(), state->get_bstate()->dump().c_str());
 }
 
 void xstatestore_accessor_t::write_table_bstate_to_cache(common::xaccount_address_t const& address, std::string const& block_hash, xtablestate_ext_ptr_t const& state) const {    
     m_state_cache.set_tablestate(block_hash, state);
-    xdbg("xstatestore_accessor_t::write_table_bstate hash=%s,state=%s", base::xstring_utl::to_hex(block_hash).c_str(), state->get_table_state()->get_bstate()->dump().c_str());
+    xdbg("xstatestore_accessor_t::write_table_bstate_to_cache hash=%s,state=%s", base::xstring_utl::to_hex(block_hash).c_str(), state->get_table_state()->get_bstate()->dump().c_str());
 }
 
 void xstatestore_accessor_t::write_unitstate_to_db(data::xunitstate_ptr_t const& unitstate, const std::string & block_hash, std::error_code & ec) const {

@@ -40,7 +40,7 @@ protected:
     void    update_execute_from_execute_height() const;
     void    try_execute_block_on_demand(base::xvblock_t* block, std::error_code & ec) const;
     void    set_latest_executed_info(uint64_t height,const std::string & blockhash) const;
-
+    void    update_latest_executed_info(base::xvblock_t* block) const;
 
     data::xunitstate_ptr_t make_state_from_current_unit(common::xaccount_address_t const& unit_addr, base::xvblock_t * current_block, std::error_code & ec) const;
     data::xunitstate_ptr_t make_state_from_prev_state_and_unit(common::xaccount_address_t const& unit_addr, base::xvblock_t * current_block, data::xunitstate_ptr_t const& prev_bstate, std::error_code & ec) const;

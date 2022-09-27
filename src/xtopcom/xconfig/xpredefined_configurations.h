@@ -587,6 +587,12 @@ XDECLARE_CONFIGURATION(platform_business_port, std::uint16_t, 9000);
 XDECLARE_CONFIGURATION(platform_show_cmd, bool, false);
 XDECLARE_CONFIGURATION(platform_db_path, char const *, "/chain/db_v2/pdb");
 
+#if defined(XBUILD_CI) || defined(XBUILD_DEV)
+XDECLARE_CONFIGURATION(sync_table_state_height_gap, uint64_t, 30);
+#else
+XDECLARE_CONFIGURATION(sync_table_state_height_gap, uint64_t, 1000);
+#endif
+
 #undef XDECLARE_CONFIGURATION
 
 NS_END2
