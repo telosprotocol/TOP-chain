@@ -22,24 +22,13 @@ xtop_contract_deploy & xtop_contract_deploy::instance() {
 
 void xtop_contract_deploy::deploy_sys_contracts() {
     xdbg("[xtop_contract_deploy::deploy_sys_contracts]");
-    if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(enable_reward)) {
+    
+    if (XGET_CONFIG(node_reward_gas) == false) {
         deploy(common::xaccount_address_t { sys_contract_sharding_vote_addr }, xnode_type_t::consensus_validator);
         deploy(common::xaccount_address_t { sys_contract_zec_vote_addr }, xnode_type_t::zec, "all", enum_broadcast_policy_t::normal);
-        deploy(common::xaccount_address_t { sys_contract_zec_reward_addr },
-            xnode_type_t::zec,
-            "all",
-            enum_broadcast_policy_t::normal,
-            std::string(sys_contract_beacon_timer_addr) + ",on_timer,C," + config::xreward_update_interval_onchain_goverance_parameter_t::name);
-        deploy(common::xaccount_address_t { sys_contract_sharding_reward_claiming_addr }, xnode_type_t::consensus_validator, "", enum_broadcast_policy_t::normal);
-
-        deploy(common::xaccount_address_t { sys_contract_zec_workload_addr },
-            xnode_type_t::zec,
-            "",
-            enum_broadcast_policy_t::normal,
-            std::string(sys_contract_beacon_timer_addr) + ",on_timer,C," + config::xworkload_collection_interval_onchain_goverance_parameter_t::name);
     }
 
-    if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(enable_slash)) {
+    if (XGET_CONFIG(enable_slash)) {
         deploy(common::xaccount_address_t { sys_contract_zec_slash_info_addr },
             xnode_type_t::zec,
             "",
@@ -47,13 +36,25 @@ void xtop_contract_deploy::deploy_sys_contracts() {
             std::string(sys_contract_beacon_timer_addr) + ",do_unqualified_node_slash,C," + config::xpunish_collection_interval_onchain_goverance_parameter_t::name);
     }
 
-    if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(enable_reward) || XGET_ONCHAIN_GOVERNANCE_PARAMETER(enable_slash)) {
-        deploy(common::xaccount_address_t { sys_contract_sharding_statistic_info_addr },
-            xnode_type_t::consensus_validator,
-            "",
-            enum_broadcast_policy_t::normal,
-            std::string(sys_contract_beacon_timer_addr) + ",report_summarized_statistic_info,C," + config::xtable_statistic_report_schedule_interval_onchain_goverance_parameter_t::name);
-    }
+    deploy(common::xaccount_address_t { sys_contract_zec_reward_addr },
+        xnode_type_t::zec,
+        "all",
+        enum_broadcast_policy_t::normal,
+        std::string(sys_contract_beacon_timer_addr) + ",on_timer,C," + config::xreward_update_interval_onchain_goverance_parameter_t::name);
+    deploy(common::xaccount_address_t { sys_contract_sharding_reward_claiming_addr }, xnode_type_t::consensus_validator, "", enum_broadcast_policy_t::normal);
+
+    deploy(common::xaccount_address_t { sys_contract_zec_workload_addr },
+        xnode_type_t::zec,
+        "",
+        enum_broadcast_policy_t::normal,
+        std::string(sys_contract_beacon_timer_addr) + ",on_timer,C," + config::xworkload_collection_interval_onchain_goverance_parameter_t::name);
+
+    deploy(common::xaccount_address_t { sys_contract_sharding_statistic_info_addr },
+        xnode_type_t::consensus_validator,
+        "",
+        enum_broadcast_policy_t::normal,
+        std::string(sys_contract_beacon_timer_addr) + ",report_summarized_statistic_info,C," + config::xtable_statistic_report_schedule_interval_onchain_goverance_parameter_t::name);
+  
 
     deploy(common::xaccount_address_t{sys_contract_rec_registration_addr}, xnode_type_t::committee, "all", enum_broadcast_policy_t::normal);
 

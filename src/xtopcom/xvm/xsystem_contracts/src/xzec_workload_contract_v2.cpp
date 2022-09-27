@@ -37,6 +37,7 @@ void xzec_workload_contract_v2::setup() {
     MAP_CREATE(XPORPERTY_CONTRACT_WORKLOAD_KEY);
     MAP_CREATE(XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY);
     STRING_CREATE(XPORPERTY_CONTRACT_TGAS_KEY);
+    STRING_CREATE(XPORPERTY_CONTRACT_BURN_TGAS_KEY);
 }
 
 bool xzec_workload_contract_v2::is_mainnet_activated() const {
@@ -72,17 +73,21 @@ void xzec_workload_contract_v2::on_receive_workload(std::string const & table_in
     std::map<std::string, std::string> workload_str;
     std::string tgas_str;
     std::string height_str;
+    std::string  burn_tags_str;
     std::map<std::string, std::string> workload_str_new;
     std::string tgas_str_new;
+    std::string burn_tgas_str_new;
+
     {
         XMETRICS_TIME_RECORD(XWORKLOAD_CONTRACT "on_receive_workload_map_get");
         activation_str = STRING_GET2(XPORPERTY_CONTRACT_GENESIS_STAGE_KEY, sys_contract_rec_registration_addr);
         MAP_COPY_GET(XPORPERTY_CONTRACT_WORKLOAD_KEY, workload_str);
         tgas_str = STRING_GET2(XPORPERTY_CONTRACT_TGAS_KEY);
         MAP_GET2(XPORPERTY_CONTRACT_TABLEBLOCK_HEIGHT_KEY, std::to_string(table_id), height_str);
+        burn_tags_str = STRING_GET2(XPORPERTY_CONTRACT_BURN_TGAS_KEY);
     }
 
-    handle_workload_str(activation_str, table_info_str, workload_str, tgas_str, height_str, workload_str_new, tgas_str_new);
+    handle_workload_str(activation_str, table_info_str, workload_str, tgas_str, height_str, workload_str_new, tgas_str_new, burn_tags_str, burn_tgas_str_new);
 
     {
         XMETRICS_TIME_RECORD(XWORKLOAD_CONTRACT "on_receive_workload_map_set");
@@ -91,6 +96,10 @@ void xzec_workload_contract_v2::on_receive_workload(std::string const & table_in
         }
         if (!tgas_str_new.empty() && tgas_str != tgas_str_new) {
             STRING_SET(XPORPERTY_CONTRACT_TGAS_KEY, tgas_str_new);
+        }
+
+        if (!burn_tgas_str_new.empty() && burn_tags_str != burn_tgas_str_new) {
+            STRING_SET(XPORPERTY_CONTRACT_BURN_TGAS_KEY, burn_tgas_str_new);
         }
     }
 }
@@ -101,22 +110,29 @@ void xzec_workload_contract_v2::handle_workload_str(const std::string & activati
                                                     const std::string & tgas_str,
                                                     const std::string & height_str,
                                                     std::map<std::string, std::string> & workload_str_new,
-                                                    std::string & tgas_str_new) {
+                                                    std::string & tgas_str_new,
+                                                    const std::string & burn_tgas_str,
+                                                    std::string & burn_tgas_str_new) {
     XMETRICS_TIME_RECORD(XWORKLOAD_CONTRACT "handle_workload_str");
     std::map<common::xgroup_address_t, xgroup_workload_t> group_workload;
     int64_t table_pledge_balance_change_tgas = 0;
     uint64_t height = 0;
+    std::string gas_uint128_str;
+
     {
         xstream_t stream(xcontext_t::instance(), (uint8_t *)table_info_str.data(), table_info_str.size());
         MAP_OBJECT_DESERIALZE2(stream, group_workload);
         stream >> table_pledge_balance_change_tgas;
         stream >> height;
+        stream >> gas_uint128_str;
     }
-    xinfo("[xzec_workload_contract::handle_workload_str] group_workload size: %zu, table_pledge_balance_change_tgas: %lld, height: %lu, last height: %lu\n",
+    xinfo("[xzec_workload_contract::handle_workload_str] group_workload size: %zu, table_pledge_balance_change_tgas: %lld, height: %lu, last height: %lu burn_tags: %s \n",
           group_workload.size(),
           table_pledge_balance_change_tgas,
           height,
-          xstring_utl::touint64(height_str));
+          xstring_utl::touint64(height_str),
+          gas_uint128_str.c_str());
+
 
     XCONTRACT_ENSURE(xstring_utl::touint64(height_str) < height, "zec_last_read_height >= table_previous_height");
 
@@ -126,6 +142,13 @@ void xzec_workload_contract_v2::handle_workload_str(const std::string & activati
         tgas = xstring_utl::toint64(tgas_str);
     }
     tgas_str_new = xstring_utl::tostring(tgas += table_pledge_balance_change_tgas);
+
+    if (!gas_uint128_str.empty()) {
+        ::uint128_t  table_burn_tgas(gas_uint128_str, 10);
+        ::uint128_t  table_burn_tgas_old(burn_tgas_str, 10);
+        ::uint128_t table_burn_tgas_new =  table_burn_tgas + table_burn_tgas_old;
+        burn_tgas_str_new = table_burn_tgas_new.str();
+    }
 
     xactivation_record record;
     if (!activation_record_str.empty()) {
@@ -490,11 +513,13 @@ void xzec_workload_contract_v2::upload_workload_internal(common::xlogic_time_t c
             xstream_t stream(xcontext_t::instance());
             stream << timestamp;
             stream << group_workload_upload_str;
+            stream << STRING_GET(XPORPERTY_CONTRACT_BURN_TGAS_KEY);
             call_contract_str = std::string((char *)stream.data(), stream.size());
             group_workload_upload.clear();
+            STRING_SET(XPORPERTY_CONTRACT_BURN_TGAS_KEY, "0");
         }
     }
-}
+}       
 
 void xzec_workload_contract_v2::clear_workload() {
     XMETRICS_TIME_RECORD(XWORKLOAD_CONTRACT "XPORPERTY_CONTRACT_WORKLOAD_KEY_SetExecutionTime");

@@ -63,7 +63,9 @@ private:
                              const std::string & tgas_str,
                              const std::string & height_str,
                              std::map<std::string, std::string> & workload_str_new,
-                             std::string & tgas_str_new);
+                             std::string & tgas_str_new,
+                             const std::string & burn_tgas_str,
+                             std::string & burn_tgas_str_new);
 
     /**
      * @brief check if mainnet is activated

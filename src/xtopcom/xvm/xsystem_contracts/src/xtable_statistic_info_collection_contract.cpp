@@ -37,6 +37,8 @@ void xtable_statistic_info_collection_contract::setup() {
     STRING_CREATE(XPORPERTY_CONTRACT_TGAS_KEY);
     STRING_SET(XPORPERTY_CONTRACT_TGAS_KEY, "0");
 
+    STRING_CREATE(XPORPERTY_CONTRACT_BURN_TGAS_KEY);
+    STRING_SET(XPORPERTY_CONTRACT_BURN_TGAS_KEY, "0");
 }
 
 void xtable_statistic_info_collection_contract::on_collect_statistic_info(xstatistics_data_t const& statistic_data,  xfulltableblock_statistic_accounts const& statistic_accounts, uint64_t block_height, int64_t tgas) {
@@ -360,7 +362,7 @@ void xtable_statistic_info_collection_contract::report_summarized_statistic_info
         {
             stream.reset();
             stream << shard_slash_collect;
-            if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(enable_slash)) {
+            if (XGET_CONFIG(enable_slash)) {
                 CALL(common::xaccount_address_t{sys_contract_zec_slash_info_addr}, "summarize_slash_info", std::string((char *)stream.data(), stream.size()));
             }
         }
@@ -543,18 +545,30 @@ void xtable_statistic_info_collection_contract::upload_workload() {
             }
         }
 
+        ::uint128_t burn_tgas = 0;
+        {
+            std::string pledge_tgas_str = STRING_GET2(XPORPERTY_CONTRACT_BURN_TGAS_KEY);
+            if (!pledge_tgas_str.empty()) {
+                burn_tgas = ::uint128_t(pledge_tgas_str, 10);
+            }
+        }
+
+
         std::string group_workload_upload_str;
         {
             xstream_t stream(xcontext_t::instance());
             MAP_OBJECT_SERIALIZE2(stream, group_workload_upload);
             stream << tgas;
             stream << height;
+            stream << burn_tgas.str();
+
             group_workload_upload_str = std::string((char *)stream.data(), stream.size());
-            xinfo("[xtable_statistic_info_collection_contract::upload_workload] %s upload workload to zec reward, group_workload_upload size: %d, tgas: %ld, height: %lu",
+            xinfo("[xtable_statistic_info_collection_contract::upload_workload] %s upload workload to zec reward, group_workload_upload size: %d, tgas: %ld, height: %lu burn_tgas %s",
                   SOURCE_ADDRESS().c_str(),
                   group_workload_upload.size(),
                   tgas,
-                  height);
+                  height,
+                  burn_tgas.str().c_str());
         }
         {
             xstream_t stream(xcontext_t::instance());
@@ -565,6 +579,7 @@ void xtable_statistic_info_collection_contract::upload_workload() {
 
         MAP_CLEAR(XPORPERTY_CONTRACT_WORKLOAD_KEY);
         STRING_SET(XPORPERTY_CONTRACT_TGAS_KEY, "0");
+        STRING_SET(XPORPERTY_CONTRACT_BURN_TGAS_KEY, "0");
     }
 }
 
@@ -572,14 +587,29 @@ void xtable_statistic_info_collection_contract::process_workload_statistic_data(
     XMETRICS_TIME_RECORD("sysContract_tableStatistic_process_workload_statistic_data");
     XMETRICS_CPU_TIME_RECORD("sysContract_tableStatistic_process_workload_statistic_data");
     auto const & group_workload = get_workload_from_data(statistic_data, statistic_accounts);
-    if (!group_workload.empty() && XGET_ONCHAIN_GOVERNANCE_PARAMETER(enable_reward)) {
+    if (!group_workload.empty()) {
         update_workload(group_workload);
     }
     if (tgas != 0) {
         xinfo("[xtable_statistic_info_collection_contract::process_workload_statistic_data] update tgas: %lu", tgas);
         update_tgas(tgas);
     }
+
+    update_burn_tgas(statistic_data);
 }
 
+void xtable_statistic_info_collection_contract::update_burn_tgas(xstatistics_data_t const & statistic_data) {
+    std::string pledge_tgas_str = STRING_GET(XPORPERTY_CONTRACT_BURN_TGAS_KEY);
+    ::uint128_t tgas = 0;
+    if (!pledge_tgas_str.empty()) {
+        tgas =::uint128_t(pledge_tgas_str, 10);
+    }
+
+    if(statistic_data.total_gas_burn > 0 ) {
+        tgas += (::uint128_t)statistic_data.total_gas_burn;
+        xinfo("[xtable_statistic_info_collection_contract::update_burn_tgas] update tgas: %lu", tgas);
+    }
+    STRING_SET(XPORPERTY_CONTRACT_BURN_TGAS_KEY, tgas.str());
+}
 
 NS_END3

@@ -49,7 +49,7 @@ bool xatomictx_executor_t::update_nonce_and_hash(const data::xunitstate_ptr_t & 
     return true;
 }
 
-bool xatomictx_executor_t::update_gasfee(const xvm_gasfee_detail_t detail, const data::xunitstate_ptr_t & unitstate, const xcons_transaction_ptr_t & tx) {
+bool xatomictx_executor_t::update_gasfee(const xvm_gasfee_detail_t detail, const data::xunitstate_ptr_t & unitstate, const xcons_transaction_ptr_t & tx, uint64_t &total_burn_out) {
     if (detail.m_state_unlock_balance > 0) {
         auto lock_balance = unitstate->lock_balance();
         xassert(lock_balance >= detail.m_state_unlock_balance);
@@ -61,6 +61,7 @@ bool xatomictx_executor_t::update_gasfee(const xvm_gasfee_detail_t detail, const
         auto token = std::min(balance, detail.m_state_burn_balance);
         unitstate->token_withdraw(data::XPROPERTY_BALANCE_AVAILABLE, base::vtoken_t(token));
         unitstate->token_deposit(data::XPROPERTY_BALANCE_BURN, base::vtoken_t(token));
+        total_burn_out += token;
     }
     if (detail.m_state_lock_balance > 0) {
         auto balance = unitstate->balance();
@@ -361,12 +362,12 @@ void xatomictx_executor_t::vm_execute_after_process(const data::xunitstate_ptr_t
     bool is_state_dirty = false;
     if (enum_exec_success != vm_result) {
         m_statectx->do_rollback();
-        update_gasfee(output.m_vm_output.m_gasfee_detail, tx_unitstate, tx);
+        update_gasfee(output.m_vm_output.m_gasfee_detail, tx_unitstate, tx, output.m_vm_output.m_total_gas_burn);
         is_state_dirty = m_statectx->is_state_dirty();
         tx->set_current_exec_status(data::enum_xunit_tx_exec_status_fail);
         set_tx_account_state(tx_unitstate, tx);
     } else {
-        update_gasfee(output.m_vm_output.m_gasfee_detail, tx_unitstate, tx);
+        update_gasfee(output.m_vm_output.m_gasfee_detail, tx_unitstate, tx, output.m_vm_output.m_total_gas_burn);
         is_state_dirty = m_statectx->is_state_dirty();
         tx->set_current_exec_status(data::enum_xunit_tx_exec_status_success);
     }

@@ -210,6 +210,7 @@ int32_t xtransaction_fee_t::update_fee_recv_self() {
     }
     if (get_deposit_usage() > 0) {
         ret = m_account_ctx->available_balance_to_other_balance(XPROPERTY_BALANCE_BURN, base::vtoken_t(get_deposit_usage()));
+        m_account_ctx->cacl_total_gas_burn(get_deposit_usage());
         if (xsuccess != ret) {
             return ret;
         }
@@ -226,6 +227,7 @@ int32_t xtransaction_fee_t::update_fee_confirm() {
     int32_t ret = xsuccess;
     if (last_action_used_deposit > 0) {
         ret = m_account_ctx->available_balance_to_other_balance(XPROPERTY_BALANCE_BURN, base::vtoken_t(last_action_used_deposit));
+        m_account_ctx->cacl_total_gas_burn(last_action_used_deposit);
         if (ret != xsuccess) {
             xerror("xtransaction_fee_t::update_fee_confirm fail-top_token_transfer_out last_action_used_deposit=%d", last_action_used_deposit);
             return ret;

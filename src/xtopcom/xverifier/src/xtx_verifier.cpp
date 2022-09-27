@@ -15,6 +15,7 @@
 #include "xvledger/xvblock.h"
 #include "xconfig/xconfig_register.h"
 #include "xpbase/base/top_utils.h"
+#include "xdata/xrootblock.h"
 #include <cinttypes>
 
 NS_BEG2(top, xverifier)
@@ -122,6 +123,11 @@ int32_t xtx_verifier::verify_address_type(data::xtransaction_t const * trx) {
 
         // consortium: check transfer address
         if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(enable_transaction_whitelist) == 1) {
+            
+            if(verify_check_genesis_account(src_addr) ||  verify_check_genesis_account(dst_addr)) {
+                return xverifier_error::xverifier_success;
+            }
+
             std::string nodes = XGET_ONCHAIN_GOVERNANCE_PARAMETER(transaction_whitelist);
             std::set<std::string> node_sets;
             top::SplitString(nodes, ',', node_sets);
@@ -406,6 +412,17 @@ bool xtx_verifier::verify_register_whitelist(const std::string& account) {
     if (node_sets.find(account) != node_sets.end())
         return true;
     xwarn("xtx_verifier::verify_register_whitelist fail, %s", account.c_str());
+    return false;
+}
+
+bool xtx_verifier::verify_check_genesis_account(const std::string& account)
+{
+    std::map<std::string, uint64_t> genesis_accounts = data::xrootblock_t::get_all_genesis_accounts();
+    auto it = genesis_accounts.find(account);
+    if (it != genesis_accounts.end()) {
+        return true;
+    }
+
     return false;
 }
 

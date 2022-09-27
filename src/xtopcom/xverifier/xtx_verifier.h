@@ -98,6 +98,15 @@ public:
      */
     static int32_t verify_send_tx_legitimacy(data::xtransaction_t const * trx_ptr, observer_ptr<store::xstore_face_t> const & store);
 
+    /**
+     * @brief check account if genesis account
+     * 
+     * @param account 
+     * @return true 
+     * @return false 
+     */
+    static bool  verify_check_genesis_account(const std::string& account);
+    
  private:
     static int32_t verify_burn_tx(data::xtransaction_t const * trx);
     static int32_t verify_local_tx(data::xtransaction_t const * trx);

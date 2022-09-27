@@ -82,22 +82,24 @@ xtop_contract_manager::~xtop_contract_manager() {
 void xtop_contract_manager::instantiate_sys_contracts() {
     auto const & network_id = common::network_id();
 
-    if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(enable_reward)) {
+    if(XGET_CONFIG(node_reward_gas) == false){
         XREGISTER_CONTRACT(top::xstake::xtable_vote_contract, sys_contract_sharding_vote_addr, network_id);
         XREGISTER_CONTRACT(top::xstake::xzec_vote_contract, sys_contract_zec_vote_addr, network_id);
-        XREGISTER_CONTRACT(top::xstake::xzec_reward_contract, sys_contract_zec_reward_addr, network_id);
-        XREGISTER_CONTRACT(top::xvm::system_contracts::reward::xtable_reward_claiming_contract_t, sys_contract_sharding_reward_claiming_addr, network_id);
-        XREGISTER_CONTRACT(top::xvm::system_contracts::xzec_workload_contract_v2, sys_contract_zec_workload_addr, network_id);
+    } else {
+          xinfo("xtop_contract_manager::instantiate_sys_contracts node_reward_gas is true.");
     }
 
-    if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(enable_slash)) {
+    if (XGET_CONFIG(enable_slash)) {
         XREGISTER_CONTRACT(top::xvm::xcontract::xzec_slash_info_contract, sys_contract_zec_slash_info_addr, network_id);
+    } else {
+          xinfo("xtop_contract_manager::instantiate_sys_contracts enable_slash is false.");
     }
 
-    if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(enable_reward) || XGET_ONCHAIN_GOVERNANCE_PARAMETER(enable_slash)) {
-        XREGISTER_CONTRACT(top::xvm::xcontract::xtable_statistic_info_collection_contract, sys_contract_sharding_statistic_info_addr, network_id);
-    }
+    XREGISTER_CONTRACT(top::xstake::xzec_reward_contract, sys_contract_zec_reward_addr, network_id);
+    XREGISTER_CONTRACT(top::xvm::system_contracts::reward::xtable_reward_claiming_contract_t, sys_contract_sharding_reward_claiming_addr, network_id);
+    XREGISTER_CONTRACT(top::xvm::system_contracts::xzec_workload_contract_v2, sys_contract_zec_workload_addr, network_id);
 
+    XREGISTER_CONTRACT(top::xvm::xcontract::xtable_statistic_info_collection_contract, sys_contract_sharding_statistic_info_addr, network_id);
     XREGISTER_CONTRACT(top::xstake::xrec_registration_contract, sys_contract_rec_registration_addr, network_id);
     XREGISTER_CONTRACT(top::tcc::xrec_proposal_contract, sys_contract_rec_tcc_addr, network_id);
     XREGISTER_CONTRACT(top::xvm::system_contracts::rec::xrec_elect_edge_contract_t, sys_contract_rec_elect_edge_addr, network_id);

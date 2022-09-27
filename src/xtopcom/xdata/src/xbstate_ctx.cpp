@@ -435,6 +435,22 @@ int32_t xbstate_ctx_t::token_deposit(const std::string & key, base::vtoken_t add
     return xsuccess;
 }
 
+int32_t xbstate_ctx_t::token_update(const std::string& key, base::vtoken_t update_token)
+{
+    xdbg("xbstate_ctx_t::token_update,property_modify_enter.address=%s,height=%ld,propname=%s,token=%ld", get_address().c_str(), get_chain_height(), key.c_str(), update_token);
+    auto propobj = load_token_for_write(key);
+    CHECK_PROPERTY_NULL_RETURN(propobj, "xbstate_ctx_t::token_update", key);
+    if (update_token < 0) {
+        xwarn("xbstate_ctx_t::token_update fail-can't do update. propname=%ld,update_token=%ld", key.c_str(), update_token);
+        return xaccount_property_operate_fail;
+    }
+
+    auto left_token = propobj->update(update_token, m_canvas.get());
+    xassert(left_token >= 0);
+    return xsuccess;
+}
+
+
 int32_t xbstate_ctx_t::uint64_add(const std::string & key, uint64_t change) {
     if (change == 0) {
         return xsuccess;
@@ -493,6 +509,7 @@ uint64_t xbstate_ctx_t::token_get(const std::string & prop) const {
     }
     return (uint64_t)balance;
 }
+
 
 uint64_t xbstate_ctx_t::uint64_property_get(const std::string & prop) const {
     if (false == get_bstate()->find_property(prop)) {
@@ -571,7 +588,7 @@ base::xauto_ptr<base::xmapvar_t<std::string>> xbstate_ctx_t::load_tep_token_for_
 
 evm_common::u256 xbstate_ctx_t::tep_token_balance(const std::string & token_name) const {
     assert(token_name.length() == 1);
-
+    
     auto value_rlp = tep_token_balance_bytes(token_name);
     if (value_rlp.empty()) {
         return 0;
