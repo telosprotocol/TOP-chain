@@ -320,13 +320,13 @@ TEST_F(test_state_mpt_fixture, test_create_twice_commit_twice) {
     s1->set_account_index(common::xaccount_address_t("T80000f1d16965a3f485af048ebcec8fd700dc92d54fa7"), base::xaccount_index_t(), ec);
     auto hash1 = s1->commit(ec);
     EXPECT_EQ(ec.value(), 0);
-    hash1;
-    // std::cout << "hash1:" << hash1.as_hex_str() << std::endl;
+    // hash1;
+    std::cout << "hash1:" << hash1.as_hex_str() << std::endl;
 
-    // s1->set_account_index("testaddr2", "testindex2", ec);
-    // auto hash2 = s1->commit(ec);
-    // EXPECT_EQ(ec.value(), 0);
-    // std::cout << "hash2:" << hash2.as_hex_str() << std::endl;
+    s1->set_account_index(common::xaccount_address_t("T80000f1d16965a3f485af048ebcec8fd700dc92d54fa7"), base::xaccount_index_t(), ec);
+    auto hash2 = s1->commit(ec);
+    EXPECT_EQ(ec.value(), 0);
+    std::cout << "hash2:" << hash2.as_hex_str() << std::endl;
 }
 
 TEST_F(test_state_mpt_fixture, test_trie_sync) {

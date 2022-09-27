@@ -11,11 +11,12 @@
 
 NS_BEG3(top, evm_common, trie)
 
-std::pair<xtrie_hash_node_ptr_t, int32_t> xtop_trie_committer::Commit(xtrie_node_face_ptr_t n, xtrie_db_ptr_t db, std::error_code & ec) {
+std::pair<xtrie_hash_node_ptr_t, int32_t> xtop_trie_committer::Commit(xtrie_node_face_ptr_t const & n, xtrie_db_ptr_t db, std::error_code & ec) {
     if (db == nullptr) {
         ec = error::xerrc_t::trie_db_not_provided;
         return std::make_pair(nullptr, 0);
     }
+
     xtrie_node_face_ptr_t h;
     int32_t committed;
     std::tie(h, committed) = commit(n, db, ec);
@@ -29,7 +30,7 @@ std::pair<xtrie_hash_node_ptr_t, int32_t> xtop_trie_committer::Commit(xtrie_node
     return std::make_pair(hashnode, committed);
 }
 
-std::pair<xtrie_node_face_ptr_t, int32_t> xtop_trie_committer::commit(xtrie_node_face_ptr_t n, xtrie_db_ptr_t db, std::error_code & ec) {
+std::pair<xtrie_node_face_ptr_t, int32_t> xtop_trie_committer::commit(xtrie_node_face_ptr_t const & n, xtrie_db_ptr_t db, std::error_code & ec) {
     // if this path is clean, use available cached data
     auto const cached_data = n->cache();
     if (cached_data.hash_node() != nullptr && !cached_data.dirty()) {
@@ -37,7 +38,7 @@ std::pair<xtrie_node_face_ptr_t, int32_t> xtop_trie_committer::commit(xtrie_node
     }
 
     // Commit children, then parent, and remove remove the dirty flag.
-    switch (n->type()) {
+    switch (n->type()) {  // NOLINT(clang-diagnostic-switch-enum)
     case xtrie_node_type_t::shortnode: {
         auto cn = std::dynamic_pointer_cast<xtrie_short_node_t>(n);
         assert(cn != nullptr);
@@ -159,12 +160,13 @@ xtrie_node_face_ptr_t xtop_trie_committer::store(xtrie_node_face_ptr_t n, xtrie_
         // node usually contains value). But small value(less than 32bytes) is
         // not our target.
         return n;
-    } else {
-        // We have the hash already, estimate the RLP encoding-size of the node.
-        // The size is used for mem tracking, does not need to be exact
-
-        size = estimateSize(n);
     }
+
+    // We have the hash already, estimate the RLP encoding-size of the node.
+    // The size is used for mem tracking, does not need to be exact
+
+    size = estimateSize(n);
+
     if (false) {
         // todo leafCh
     } else {

@@ -101,7 +101,7 @@ void xtop_trie_short_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
     xbytes_t encoded;
     append(encoded, RLP::encode(key));
 
-    switch (val->type()) {
+    switch (val->type()) {  // NOLINT(clang-diagnostic-switch-enum)
     case xtrie_node_type_t::hashnode: {
         assert(dynamic_cast<xtrie_hash_node_t *>(val.get()) != nullptr);
         append(encoded, RLP::encode(std::dynamic_pointer_cast<xtrie_hash_node_t>(val)->data()));
@@ -124,7 +124,7 @@ void xtop_trie_short_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
     }
 
     default:
-        assert(false);
+        assert(false);  // NOLINT(clang-diagnostic-disabled-macro-expansion)
         xwarn("!!!! shortnode not encode type: %d", static_cast<uint8_t>(val->type()));
 
         break;
@@ -153,7 +153,7 @@ void xtop_trie_full_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
             continue;
         }
 
-        switch (child->type()) {
+        switch (child->type()) {  // NOLINT(clang-diagnostic-switch-enum)
         case xtrie_node_type_t::hashnode: {
             assert(dynamic_cast<xtrie_hash_node_t *>(child.get()) != nullptr);
             append(encoded, RLP::encode(std::dynamic_pointer_cast<xtrie_hash_node_t>(child)->data()));
@@ -183,7 +183,7 @@ void xtop_trie_full_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
         }
 
         default:
-            assert(false);
+            assert(false);  // NOLINT(clang-diagnostic-disabled-macro-expansion)
             xwarn("!!! full node not encode child type: %d", static_cast<uint8_t>(child->type()));
 
             break;
@@ -194,14 +194,14 @@ void xtop_trie_full_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
 
 void xtop_trie_raw_full_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
     xbytes_t encoded;
-    ;
+
     for (auto const & child : Children) {
         if (child == nullptr) {
             append(encoded, RLP::encode(nilValueNode.data()));  // 0x80 for empty bytes.
             continue;
         }
 
-        switch (child->type()) {
+        switch (child->type()) {  // NOLINT(clang-diagnostic-switch-enum)
         case xtrie_node_type_t::hashnode: {
             assert(dynamic_cast<xtrie_hash_node_t *>(child.get()) != nullptr);
             append(encoded, RLP::encode(std::dynamic_pointer_cast<xtrie_hash_node_t>(child)->data()));
@@ -238,7 +238,7 @@ void xtop_trie_raw_full_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
         }
 
         default: {
-            assert(false);
+            assert(false);  // NOLINT(clang-diagnostic-disabled-macro-expansion)
             xwarn("!!! raw full node not encode child type: %d", static_cast<uint8_t>(child->type()));
 
             break;
@@ -252,7 +252,7 @@ void xtop_trie_raw_short_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
     xbytes_t encoded;
     append(encoded, RLP::encode(Key));
 
-    switch (Val->type()) {
+    switch (Val->type()) {  // NOLINT(clang-diagnostic-switch-enum)
     case xtrie_node_type_t::hashnode: {
         assert(dynamic_cast<xtrie_hash_node_t *>(Val.get()) != nullptr);
         append(encoded, RLP::encode(std::dynamic_pointer_cast<xtrie_hash_node_t>(Val)->data()));
@@ -282,7 +282,7 @@ void xtop_trie_raw_short_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
     }
 
     default: {
-        assert(false);
+        assert(false);  // NOLINT(clang-diagnostic-disabled-macro-expansion)
         xwarn("!!!! raw short node not encode type: %d", static_cast<uint8_t>(Val->type()));
         break;
     }
