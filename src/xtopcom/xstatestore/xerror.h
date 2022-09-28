@@ -29,6 +29,7 @@ enum class xenum_errc {
     statestore_db_read_abnormal_err,
     statestore_binlog_apply_err,
     statestore_block_invalid_err,
+    statestore_need_state_sync_fail,
 };
 using xerrc_t = xenum_errc;
 

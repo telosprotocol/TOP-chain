@@ -43,8 +43,10 @@ static char const * const errc_to_string(int code) {
     case xerrc_t::statestore_binlog_apply_err:
         return "statestore binlog apply error";
     case xerrc_t::statestore_block_invalid_err:
-        return "statestore block invalid error";        
-
+        return "statestore block invalid error";       
+    case xerrc_t::statestore_need_state_sync_fail:
+        return "statestore state need sync error";  
+         
     default:
         return "unknown error";
     }

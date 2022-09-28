@@ -117,6 +117,9 @@ data::xunitstate_ptr_t xstatestore_table_t::get_unit_state_from_table_block(comm
 uint64_t xstatestore_table_t::get_latest_executed_block_height() const {
     return m_table_executor.get_latest_executed_block_height();
 }
+uint64_t xstatestore_table_t::get_need_sync_state_block_height() const {
+    return m_table_executor.get_need_sync_state_block_height();
+}
 
 void xstatestore_table_t::raise_execute_height(const xstate_sync_info_t & sync_info) {
     return m_table_executor.raise_execute_height(sync_info);

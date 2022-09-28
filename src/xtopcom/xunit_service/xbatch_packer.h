@@ -81,6 +81,7 @@ private:
     virtual void send_receipts(base::xvblock_t *vblock);
     virtual bool set_election_round(bool is_leader, data::xblock_consensus_para_t & proposal_para);
     bool    check_state_sync(base::xvblock_t * latest_committed_block);
+    bool    do_state_sync(uint64_t sync_height);
 
 private:
     observer_ptr<mbus::xmessage_bus_face_t>  m_mbus;
@@ -108,6 +109,7 @@ private:
     xvip2_t                                  m_faded_xip2{};
     // record last xip in case of consensus success but leader xip changed.
     xvip2_t                                  m_last_xip2{};
+    common::xaccount_address_t               m_table_addr;
 };
 
 using xbatch_packer_ptr_t = xobject_ptr_t<xbatch_packer>;
