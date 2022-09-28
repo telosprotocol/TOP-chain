@@ -5,7 +5,6 @@
 #include "xapplication/xchain_application.h"
 
 #include "xapplication/xapplication.h"
-// #include "xapplication/xcons_mgr_builder.h"
 #include "xtxpool_service_v2/xtxpool_service_mgr.h"
 #include "xbase/xlog.h"
 #include "xbase/xutl.h"

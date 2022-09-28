@@ -5,7 +5,6 @@
 #include "xapplication/xapplication.h"
 
 #include "xapplication/xbeacon_chain_application.h"
-#include "xapplication/xcons_mgr_builder.h"
 #include "xapplication/xerror/xerror.h"
 #include "xapplication/xtop_chain_application.h"
 #include "xbasic/xmemory.hpp"
@@ -42,7 +41,6 @@
 #include "xstatestore/xstatestore_face.h"
 
 #include <stdexcept>
-#include "xapplication/xcons_mgr_builder.h"
 
 NS_BEG2(top, application)
 
@@ -73,11 +71,9 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
     base::xvchain_t::instance().set_xtxstore(m_txstore.get());
 
     m_nodesvr_ptr = make_object_ptr<election::xvnode_house_t>(node_id, sign_key, m_blockstore, make_observer(m_bus.get()));
-#ifdef MOCK_CA
-    m_cert_ptr = make_object_ptr<xschnorrcert_t>((uint32_t)1);
-#else
+
     m_cert_ptr.attach(&auth::xauthcontext_t::instance(*m_nodesvr_ptr.get()));
-#endif
+
     // genesis blocks should init imediately after db created
     m_genesis_manager = make_unique<genesis::xgenesis_manager_t>(top::make_observer(m_blockstore.get()));
 

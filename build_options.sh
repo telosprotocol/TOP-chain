@@ -101,10 +101,6 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DMAINNET_ACTIVATED=ON"
         echo "enable mainnet activation by default"
     ;;
-    mock_ca)
-        CMAKE_EXTRA_OPTIONS+=" -DMOCK_CA=ON"
-        echo "BUILD WITH MOCK CA"
-    ;;
     p_stack)
         CMAKE_EXTRA_OPTIONS+=" -DXENABLE_PSTACK=ON"
         echo "BUILD WITH XENABLE_PSTACK"
