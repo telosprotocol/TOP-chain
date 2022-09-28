@@ -1603,6 +1603,19 @@ namespace top
             else
                 m_is_auto_prune = 0;
         }
+        void xvchain_t::set_node_type(bool is_storage, bool is_consenus)
+        {
+            if (m_is_storage_node == is_storage && m_is_consensus_node == is_consenus) {
+                return;
+            }
+            xkinfo("xvchain_t::set_node_type,is_storage=%d->%d,is_consensus=%d->%d",m_is_storage_node,is_storage,m_is_consensus_node,is_consenus);
+            if (m_is_storage_node != is_storage) {
+                m_is_storage_node = is_storage;
+            }
+            if (m_is_consensus_node != is_consenus) {
+                m_is_consensus_node = is_consenus;
+            }
+        }
 
         void    xvchain_t::get_db_config_custom(std::vector<db::xdb_path_t> &extra_db_path, int &extra_db_kind)
         {

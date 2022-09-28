@@ -368,6 +368,11 @@ bool xbatch_packer::check_state_sync(base::xvblock_t * cert_block) {
     }
 
     uint64_t latest_executed_height = statestore::xstatestore_hub_t::instance()->get_latest_executed_block_height(m_table_addr);
+    if (base::xvchain_t::instance().is_storage_node()) {
+        // storage node should not invoke sync, it need produce the whole mpt state
+        xwarn("xbatch_packer::check_state_sync storgage node no need sync.block=%s,execute_height=%ld",cert_block->dump().c_str(), latest_executed_height);
+        return false;
+    }
 
     uint64_t need_state_sync_height = statestore::xstatestore_hub_t::instance()->get_need_sync_state_block_height(m_table_addr);
     if (need_state_sync_height != 0 && latest_executed_height < need_state_sync_height) {

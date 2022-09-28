@@ -683,7 +683,15 @@ namespace top
                 xerror("xvblockstore_impl::load_block_output_offdata,fail-index null %s",block->dump().c_str());
                 return false;
             }
-            
+            if(existing_index)
+            {
+                if (get_blockdb_ptr()->load_block_output_offdata(existing_index(),block)) {
+                    xassert(!block->get_output_offdata().empty());
+                    xdbg("xvblockstore_impl::load_block_output_offdata,succ-load offdata.%s",block->dump().c_str());
+                    return true;
+                }
+            }
+
             // secondly try to load offdata by subblocks
             std::vector<base::xvblock_ptr_t> subblocks;
             auto account_indexs_str = block->get_account_indexs();
@@ -729,12 +737,24 @@ namespace top
         }
 
         bool    xvblockstore_impl::store_block(base::xauto_ptr<xblockacct_t> & container_account,base::xvblock_t * container_block,bool execute_block) //store table/book blocks if they are
-        {
-            xdbg("xvblockstore_impl::store_block enter,store block(%s)", container_block->dump().c_str());
+        {            
+            bool is_store_units = true;
+            if (!container_block->get_output_offdata_hash().empty()) {
+                if (base::xvchain_t::instance().is_storage_node() == false) {
+                    auto zone_index = container_account->get_account_obj()->get_zone_index();
+                    if (zone_index != base::enum_chain_zone_beacon_index
+                        && zone_index != base::enum_chain_zone_zec_index
+                        && zone_index != base::enum_chain_zone_relay_index) {
+                        is_store_units = false;
+                    }
+                }
+            }
+            xdbg("xvblockstore_impl::store_block enter,store block(%s),is_store_units=%d", container_block->dump().c_str(), is_store_units);
 
             //first do store sub-blocks
             bool is_subblocks_store = false;
-            if(  (container_block->get_block_class() == base::enum_xvblock_class_light) //skip nil block
+            if( is_store_units
+               &&(container_block->get_block_class() == base::enum_xvblock_class_light) //skip nil block
                &&(container_block->get_block_level() == base::enum_xvblock_level_table)
                &&(container_block->get_height() != 0) )
             {

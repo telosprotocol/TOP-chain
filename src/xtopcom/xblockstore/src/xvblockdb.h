@@ -45,6 +45,7 @@ namespace top
             
             bool                load_block_output(base::xvbindex_t* target_index);
             bool                load_block_output(base::xvbindex_t* target_index,base::xvblock_t * target_block);
+            bool                load_block_output_offdata(base::xvbindex_t* target_index,base::xvblock_t * target_block);
             
             bool                load_block_object(base::xvbindex_t* index_ptr, const int atag = 0);
 
@@ -77,6 +78,7 @@ namespace top
             bool                read_block_object_from_db(base::xvbindex_t* index_ptr,base::xvdbstore_t* from_db);
             bool                read_block_input_from_db(base::xvbindex_t* index_ptr,base::xvblock_t * block_ptr,base::xvdbstore_t* from_db);
             bool                read_block_output_from_db(base::xvbindex_t* index_ptr,base::xvblock_t * block_ptr,base::xvdbstore_t* from_db);
+            bool                read_block_output_offdata_from_db(base::xvbindex_t* index_ptr,base::xvblock_t * block_ptr,base::xvdbstore_t* from_db);
 
             std::vector<base::xvblock_t*>  read_prunable_block_object_from_db(base::xvaccount_t & account,const uint64_t target_height);
 
@@ -91,6 +93,7 @@ namespace top
             const std::string   create_block_input_resource_key(base::xvbindex_t * index_ptr);
             const std::string   create_block_output_key(base::xvbindex_t * index_ptr);
             const std::string   create_block_output_resource_key(base::xvbindex_t * index_ptr);
+            const std::string   create_block_output_offdata_key(base::xvbindex_t * index_ptr);
             
         private:
              base::xvdbstore_t*  m_xvdb_ptr;

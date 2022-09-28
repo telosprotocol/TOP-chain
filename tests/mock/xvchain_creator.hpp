@@ -15,6 +15,7 @@
 #include "xgenesis/xgenesis_manager.h"
 #include "xvm/xsystem_contracts/deploy/xcontract_deploy.h"
 #include "xvm/manager/xcontract_manager.h"
+#include "xstatestore/xstatestore_face.h"
 
 namespace top
 {
@@ -41,6 +42,8 @@ namespace top
                 base::xvchain_t::instance().set_xtxstore(txstore::create_txstore(make_observer<mbus::xmessage_bus_face_t>(m_bus.get()), timer_driver));
                 m_genesis_manager = make_unique<genesis::xgenesis_manager_t>(top::make_observer(blockstore));
                 m_genesis_manager->init_genesis_block(ec);
+
+                statestore::xstatestore_hub_t::reset_instance();
             }
 
             xvchain_creator(bool genesis) {
@@ -68,6 +71,7 @@ namespace top
                     m_genesis_manager->init_genesis_block(ec);
                     top::error::throw_error(ec);
                 }
+                statestore::xstatestore_hub_t::reset_instance();
             }
 
             void create_blockstore_with_xstore() {

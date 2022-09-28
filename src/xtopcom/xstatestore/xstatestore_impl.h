@@ -50,7 +50,6 @@ class xstatestore_impl_t : public xstatestore_face_t {
                                               base::xvblock_t * latest_commit_block,
                                               base::xvproperty_prove_ptr_t & property_prove_ptr,
                                               data::xtablestate_ptr_t & tablestate_ptr) const override;
-    virtual void update_node_type(common::xnode_type_t combined_node_type) override;
     virtual void on_table_block_committed(base::xvblock_t* block) const override;
     virtual uint64_t get_latest_executed_block_height(common::xaccount_address_t const & table_address) const override;
     virtual uint64_t get_need_sync_state_block_height(common::xaccount_address_t const & table_address) const override;

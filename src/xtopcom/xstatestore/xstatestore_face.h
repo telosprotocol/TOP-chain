@@ -47,6 +47,9 @@ private:
 // the statestore interface
 class xstatestore_face_t {
  public:
+    xstatestore_face_t() = default;
+    virtual ~xstatestore_face_t() {}    
+ public:
     virtual bool                    start(const xobject_ptr_t<base::xiothread_t> & iothread) = 0;
     virtual xtablestate_ext_ptr_t   get_tablestate_ext_from_block(base::xvblock_t * target_block) const = 0;
     
@@ -77,7 +80,6 @@ class xstatestore_face_t {
                                               base::xvblock_t * latest_commit_block,
                                               base::xvproperty_prove_ptr_t & property_prove_ptr,
                                               data::xtablestate_ptr_t & tablestate_ptr) const = 0;
-    virtual void update_node_type(common::xnode_type_t combined_node_type) = 0;
 
     // block execute
     virtual void on_table_block_committed(base::xvblock_t* block) const = 0;
@@ -90,6 +92,9 @@ class xstatestore_face_t {
 class xstatestore_hub_t {
 public:
     static xstatestore_face_t* instance();
+    static xstatestore_face_t* reset_instance();
+private:
+    static xstatestore_face_t * _static_statestore;
 };
 
 NS_END2

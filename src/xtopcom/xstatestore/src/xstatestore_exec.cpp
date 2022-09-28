@@ -16,7 +16,7 @@ NS_BEG2(top, statestore)
 xstatestore_executor_t::xstatestore_executor_t(common::xaccount_address_t const& table_addr)
 : m_table_addr{table_addr},m_state_accessor{table_addr} {
      m_executed_height = m_statestore_base.get_latest_executed_block_height(table_addr);
-     xdbg("xstatestore_executor_t::xstatestore_executor_t execute_height=%ld", m_executed_height);
+     xdbg("xstatestore_executor_t::xstatestore_executor_t table=%s,execute_height=%ld,this=%p", table_addr.value().c_str(), m_executed_height, this);
 }
 
 void xstatestore_executor_t::on_table_block_committed(base::xvblock_t* block) const {
@@ -306,6 +306,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::write_table_all_states(base::xvblo
             return nullptr;
         }
         m_state_accessor.write_unitstate_to_cache(v.first, v.second);
+        xdbg("xstatestore_executor_t::write_table_all_states unitstate=%s.block=%s", v.first->get_bstate()->dump().c_str(), current_block->dump().c_str());
     }
 
     m_state_accessor.write_table_bstate_to_db(m_table_addr, current_block->get_block_hash(), tablestate_store->get_table_state(), ec);
@@ -313,6 +314,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::write_table_all_states(base::xvblo
         xerror("xstatestore_executor_t::write_table_all_states fail-write tablestate,block:%s", current_block->dump().c_str());
         return nullptr;
     }
+    xdbg("xstatestore_executor_t::write_table_all_states tablestate=%s.block=%s", tablestate_store->get_table_state()->get_bstate()->dump().c_str(), current_block->dump().c_str());
     
     if (current_block->get_block_class() != base::enum_xvblock_class_nil) {
         if (tablestate_store->get_state_root() != xhash256_t()) {
@@ -321,6 +323,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::write_table_all_states(base::xvblo
                 xerror("xstatestore_executor_t::write_table_all_states fail-write mpt,block:%s.ec=%s", current_block->dump().c_str(),ec.message().c_str());
                 return nullptr;     
             }
+            xdbg("xstatestore_executor_t::write_table_all_states mpt_root=%s.block=%s", tablestate_store->get_state_root().as_hex_str().c_str(), current_block->dump().c_str());
         }
     }
     
@@ -442,7 +445,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_tab
     }
 
     std::vector<std::pair<data::xunitstate_ptr_t, std::string>> unitstate_units;
-    if (m_statestore_base.need_store_unitstate() && account_indexs.get_account_indexs().size() > 0) {
+    if (base::xvchain_t::instance().is_consensus_node() && account_indexs.get_account_indexs().size() > 0) {
         if (false == m_statestore_base.get_blockstore()->load_block_input(m_table_addr.vaccount(), current_block)) {
             ec = error::xerrc_t::statestore_load_tableblock_err;
             xerror("xstatestore_executor_t::make_state_from_prev_state_and_table fail-load input for block(%s)",current_block->dump().c_str());
@@ -505,7 +508,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_tab
 void xstatestore_executor_t::set_latest_executed_info(uint64_t height,const std::string & blockhash) const {
     std::lock_guard<std::mutex> l(m_execute_height_lock);
     if (m_executed_height < height) {                
-        xinfo("xstatestore_executor_t::set_latest_executed_info succ,account=%s,old=%ld,new=%ld",m_table_addr.value().c_str(),m_executed_height,height);
+        xinfo("xstatestore_executor_t::set_latest_executed_info succ,account=%s,old=%ld,new=%ld,this=%p",m_table_addr.value().c_str(),m_executed_height,height,this);
         m_executed_height = height;
         m_statestore_base.set_latest_executed_info(m_table_addr, height, blockhash);
     }
@@ -519,6 +522,7 @@ void xstatestore_executor_t::set_need_sync_state_block_height(uint64_t height) c
 
 uint64_t xstatestore_executor_t::get_latest_executed_block_height() const {
     std::lock_guard<std::mutex> l(m_execute_height_lock);
+    xinfo("xstatestore_executor_t::get_latest_executed_block_height,account=%s,%ld,this=%p",m_table_addr.value().c_str(),m_executed_height,this);
     return m_executed_height;
 }
 uint64_t xstatestore_executor_t::get_need_sync_state_block_height() const {
