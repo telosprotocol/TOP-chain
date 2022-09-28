@@ -53,7 +53,8 @@ private:
         xhash256_t hash;   // Hash of the node data content to retrieve
         xbytes_t data;     // Data content of the node, cached until all subtrees complete
 
-        xhash256_t unit_key;    // Unit key is different from data hash
+        xbytes_t unit_sync_key;    // Unit key is different from data hash
+        xhash256_t unit_store_key;    // Unit key is different from data hash
         bool unit{false};  // Whether this is a unit entry
 
         std::vector<request *> parents;  // Parent state nodes referencing this entry (notify all upon completion)
@@ -63,7 +64,8 @@ private:
 
         request(xbytes_t const & _path, xhash256_t const & _hash, LeafCallback _callback) : path{_path}, hash{_hash}, callback{_callback} {
         }
-        request(xbytes_t const & _path, xhash256_t const & _hash, xhash256_t const & key, bool is_unit) : path{_path}, hash{_hash}, unit_key(key), unit{is_unit} {
+        request(xbytes_t const & _path, xhash256_t const & _hash, xbytes_t const & _unit_sync_key, xhash256_t const & _unit_store_key, bool is_unit)
+          : path{_path}, hash{_hash}, unit_sync_key(_unit_sync_key), unit_store_key(_unit_store_key), unit{is_unit} {
         }
     };
 
@@ -89,11 +91,13 @@ private:
     };
 
 private:
+    xhash256_t syncRoot;
     xkv_db_face_ptr_t database{nullptr};                                    // Persistent database to check for existing entries
     syncMemBatch membatch;                                                  // Memory buffer to avoid frequent database writes
     std::map<xhash256_t, request *> nodeReqs;                               // Pending requests pertaining to a trie node hash
     std::map<xhash256_t, request *> unitReqs;                               // Pending requests pertaining to a code hash
-    top::threading::xthreadsafe_priority_queue<xhash256_t, int64_t> queue;  // Priority queue with the pending requests
+    std::map<xbytes_t, xhash256_t> unitKeys;
+    top::threading::xthreadsafe_priority_queue<xbytes_t, int64_t> queue;  // Priority queue with the pending requests
     std::map<std::size_t, std::size_t> fetches;                             // Number of active fetches per trie node depth
 
 public:
@@ -117,13 +121,13 @@ public:
     void AddSubTrie(xhash256_t const & root, xbytes_t const & path, xhash256_t const & parent, LeafCallback callback);
 
     // AddUnitTrie registers unit index.
-    void AddUnitEntry(xhash256_t const & hash, xbytes_t const & path, xhash256_t const & key, xhash256_t const & parent);
+    void AddUnitEntry(xhash256_t const & hash, xbytes_t const & path, xbytes_t const & unit_sync_key, xhash256_t const & unit_store_key, xhash256_t const & parent);
 
     // Missing retrieves the known missing nodes from the trie for retrieval. To aid
     // both eth/6x style fast sync and snap/1x style state sync, the paths of trie
     // nodes are returned too, as well as separate hash list for codes.
     // return type: <nodes, SyncPath, codes>
-    std::tuple<std::vector<xhash256_t>, std::vector<SyncPath>, std::vector<xhash256_t>> Missing(std::size_t max);
+    std::tuple<std::vector<xhash256_t>, std::vector<SyncPath>, std::vector<xbytes_t>> Missing(std::size_t max);
 
     // Process injects the received data for requested item. Note it can
     // happpen that the single response commits two pending requests(e.g.
@@ -132,6 +136,9 @@ public:
     // be treated as "non-requested" item or "already-processed" item but
     // there is no downside.
     void Process(SyncResult const & result, std::error_code & ec);
+
+    // ProcessUnit for unit and return special key
+    xbytes_t ProcessUnit(SyncResult const & result, std::error_code & ec);
 
     // Commit flushes the data stored in the internal membatch out to persistent
     // storage, returning any occurred error.

@@ -58,7 +58,7 @@ struct state_req {
     uint32_t id;
     uint32_t n_items{0};
     std::map<xhash256_t, trie_task> trie_tasks;
-    std::map<xhash256_t, unit_task> unit_tasks;
+    std::map<xbytes_t, unit_task> unit_tasks;
     uint64_t start{0};
     uint64_t delivered{0};
     std::vector<xbytes_t> nodes_response;
@@ -106,15 +106,18 @@ private:
     void wait() const;
     void sync_table(std::error_code & ec);
     void loop(std::error_code & ec);
-    void assign_tasks(std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network);
-    void fill_tasks(uint32_t n, state_req & req, std::vector<xhash256_t> & nodes, std::vector<xhash256_t> & codes);
-    void commit(bool force, std::error_code & ec);
+    void assign_tasks(std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network, const std::vector<common::xnode_address_t> & peers);
+    void fill_tasks(uint32_t n, state_req & req, std::vector<xhash256_t> & nodes, std::vector<xbytes_t> & units);
     void process(state_req & req, std::error_code & ec);
     xhash256_t process_node_data(xbytes_t & blob, std::error_code & ec);
-    xhash256_t process_unit_data(xbytes_t & blob, std::error_code & ec);
+    xbytes_t process_unit_data(xbytes_t & blob, std::error_code & ec);
     void pop_deliver_req();
-    void send_message(std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network, const xbytes_t & msg, common::xmessage_id_t id);
+    void send_message(std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network,
+                      const std::vector<common::xnode_address_t> & peers,
+                      const xbytes_t & msg,
+                      common::xmessage_id_t id);
     std::shared_ptr<vnetwork::xvnetwork_driver_face_t> available_network() const;
+    std::vector<common::xnode_address_t> available_peers(std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network) const;
 
     common::xaccount_address_t m_table;
     uint64_t m_height;
@@ -128,7 +131,7 @@ private:
     std::function<void(const state_req &)> m_track_func{nullptr};
 
     std::map<xhash256_t, trie_task> m_trie_tasks;
-    std::map<xhash256_t, unit_task> m_unit_tasks;
+    std::map<xbytes_t, unit_task> m_unit_tasks;
 
     bool m_sync_table_finish{false};
     bool m_done{false};
@@ -138,8 +141,6 @@ private:
     std::list<state_req> m_deliver_list;
     std::mutex m_deliver_mutex;
     uint32_t m_req_sequence_id{0};
-    uint32_t m_num_uncommitted{0};
-    uint32_t m_bytes_uncommitted{0};
 };
 using xstate_sync_t = xtop_state_sync;
 
