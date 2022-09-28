@@ -28,7 +28,6 @@ NS_BEG2(top, application)
 xtop_chain_application::xtop_chain_application(observer_ptr<xapplication_t> const &                 application,
                                                common::xnetwork_id_t const &                        network_id,
                                                xobject_ptr_t<base::xvblockstore_t> &blockstore,
-                                               xobject_ptr_t<base::xvnodesrv_t> &nodesvr_ptr,
                                                xobject_ptr_t<base::xvcertauth_t> &cert_ptr,
                                                observer_ptr<base::xiothread_t> const &              grpc_thread,
                                                observer_ptr<base::xiothread_t> const &              sync_thread,
@@ -47,8 +46,7 @@ xtop_chain_application::xtop_chain_application(observer_ptr<xapplication_t> cons
                                                  network_id,
                                                  make_observer(m_election_cache_data_accessor))}
   , m_message_callback_hub{std::make_shared<vnetwork::xmessage_callback_hub_t>(make_observer(m_vhost))}
-  , m_sync_obj{top::make_unique<sync::xsync_object_t>(application->message_bus(), make_observer(m_vhost), blockstore, nodesvr_ptr, cert_ptr,
-                                                                                        sync_thread, sync_account_thread_pool, sync_handler_thread_pool)}
+  , m_sync_obj{top::make_unique<sync::xsync_object_t>(application->message_bus(), make_observer(m_vhost), blockstore, cert_ptr, sync_thread, sync_account_thread_pool, sync_handler_thread_pool)}
   , m_grpc_mgr{top::make_unique<grpcmgr::xgrpc_mgr_t>(m_application->message_bus(), grpc_thread)}
 //   , m_cons_mgr{xcons_mgr_builder::build(data::xuser_params::get_instance().account.value(),
 //                                         m_application->store(),

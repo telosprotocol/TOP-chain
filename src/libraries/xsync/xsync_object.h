@@ -86,7 +86,6 @@ public:
     xtop_sync_object(observer_ptr<mbus::xmessage_bus_face_t> const & bus,
                      observer_ptr<vnetwork::xvhost_face_t> const & vhost,
                      xobject_ptr_t<base::xvblockstore_t> &blockstore,
-                     xobject_ptr_t<base::xvnodesrv_t> &nodesvr_ptr,
                      xobject_ptr_t<base::xvcertauth_t> &cert_ptr,
                      observer_ptr<base::xiothread_t> const & sync_thread,
                      std::vector<observer_ptr<base::xiothread_t>> const & sync_account_thread_pool,

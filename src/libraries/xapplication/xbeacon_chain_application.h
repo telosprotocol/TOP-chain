@@ -23,7 +23,6 @@ public:
 
     xtop_beacon_chain_application(observer_ptr<xapplication_t> const & application,
                                   xobject_ptr_t<base::xvblockstore_t> &blockstore,
-                                  xobject_ptr_t<base::xvnodesrv_t> &nodesvr_ptr,
                                   xobject_ptr_t<base::xvcertauth_t> &cert_ptr,
                                   observer_ptr<base::xiothread_t> const & grpc_thread,
                                   observer_ptr<base::xiothread_t> const & sync_thread,

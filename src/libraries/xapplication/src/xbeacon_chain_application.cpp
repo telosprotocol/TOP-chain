@@ -23,7 +23,6 @@ NS_BEG2(top, application)
 
 xtop_beacon_chain_application::xtop_beacon_chain_application(observer_ptr<xapplication_t> const & application,
                                                              xobject_ptr_t<base::xvblockstore_t> & blockstore,
-                                                             xobject_ptr_t<base::xvnodesrv_t> & nodesvr_ptr,
                                                              xobject_ptr_t<base::xvcertauth_t> & cert_ptr,
                                                              observer_ptr<base::xiothread_t> const & grpc_thread,
                                                              observer_ptr<base::xiothread_t> const & sync_thread,
@@ -32,7 +31,6 @@ xtop_beacon_chain_application::xtop_beacon_chain_application(observer_ptr<xappli
   : xbase_t{application,
             common::xnetwork_id_t{top::config::to_chainid(XGET_CONFIG(chain_name))},
             blockstore,
-            nodesvr_ptr,
             cert_ptr,
             grpc_thread,
             sync_thread,

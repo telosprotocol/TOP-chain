@@ -136,7 +136,6 @@ void xtop_application::start() {
 
     m_chain_applications.push_back(top::make_unique<xbeacon_chain_application_t>(make_observer(this),
                                                                                  m_blockstore,
-                                                                                 m_nodesvr_ptr,
                                                                                  m_cert_ptr,
                                                                                  make_observer(m_grpc_thread),
                                                                                  make_observer(m_sync_thread),
