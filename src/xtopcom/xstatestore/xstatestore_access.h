@@ -45,13 +45,12 @@ private:
 class xstatestore_dbaccess_t {
  public:
     void    write_table_bstate(common::xaccount_address_t const& address, data::xtablestate_ptr_t const& tablestate, const std::string & block_hash, std::error_code & ec) const;
-    void    write_unit_bstate(data::xunitstate_ptr_t const& unitstate, const std::string & prefix, const std::string & block_hash, std::error_code & ec) const;
+    void    write_unit_bstate(data::xunitstate_ptr_t const& unitstate, const std::string & block_hash, std::error_code & ec) const;
     void    delete_table_bstate(common::xaccount_address_t const& address,uint64_t height,const std::string & block_hash);
-    void    delete_unit_bstate(common::xaccount_address_t const& address,const std::string & prefix, const std::string & block_hash);
 
  public:
     data::xtablestate_ptr_t     read_table_bstate(common::xaccount_address_t const& address, uint64_t height, const std::string & block_hash) const;
-    data::xunitstate_ptr_t      read_unit_bstate(common::xaccount_address_t const& address, const std::string & prefix, const std::string & block_hash) const;
+    data::xunitstate_ptr_t      read_unit_bstate(common::xaccount_address_t const& address, uint64_t height, const std::string & block_hash) const;
 
  private:
     xstatestore_base_t          m_statestore_base;
@@ -77,7 +76,6 @@ public:
 
 private:
     common::xaccount_address_t  m_table_addr;
-    std::string                 m_unit_dbkey_prefix;
     xstatestore_cache_t         m_state_cache;
     xstatestore_dbaccess_t      m_dbaccess;
     xstatestore_base_t          m_store_base;
