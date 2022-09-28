@@ -381,7 +381,7 @@ bool xbatch_packer::check_state_sync(base::xvblock_t * cert_block) {
         xwarn("xbatch_packer::check_state_sync try sync state.table:%s,height:%llu,root:%s ec:%s", get_account().c_str(), latest_full_height, state_root.as_hex_str().c_str(), ec.message().c_str());
         if (!ec) {
             statestore::xstatestore_hub_t::instance()->set_state_sync_info(
-                common::xaccount_address_t(get_account()), statestore::xstate_sync_info_t(latest_full_height, state_root, xhash256_t(), full_block->get_block_hash()));
+                common::xaccount_address_t(get_account()), statestore::xstate_sync_info_t(latest_full_height, state_root, table_bstate_hash, full_block->get_block_hash()));
         }
         XMETRICS_GAUGE(metrics::cons_invoke_sync_state_count, 1);
     } else {

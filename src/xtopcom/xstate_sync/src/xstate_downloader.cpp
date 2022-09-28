@@ -113,17 +113,26 @@ void xtop_state_downloader::process_request(const vnetwork::xvnode_address_t & s
                   to_hex(hash).c_str());
             continue;
         }
-        xinfo("xtop_state_downloader::process_request node request, table: %s, id: %s, hash: %s, data: %s", table.c_str(), id, to_hex(hash).c_str(), to_hex(v).c_str());
+        xinfo("xtop_state_downloader::process_request node request, table: %s, id: %u, hash: %s, data: %s", table.c_str(), id, to_hex(hash).c_str(), to_hex(v).c_str());
         nodes_values.push_back(v);
     }
     for (auto hash : units_hashes) {
-        auto v = evm_common::trie::ReadUnitWithPrefix(kv_db, xhash256_t(hash));
-        if (v.empty()) {
-            xwarn("xtop_state_downloader::process_request unit request not found, table: %s, id: %s, hash: %s", table.c_str(), id, to_hex(hash).c_str());
+        state_mpt::xaccount_info_t info;
+        info.decode({hash.begin(), hash.end()});
+        // auto v = evm_common::trie::ReadUnitWithPrefix(kv_db, xhash256_t(hash));
+        auto unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_accountindex(info.m_account, info.m_index);
+        if (unitstate == nullptr) {
+            xwarn("xtop_state_downloader::process_request unit request not found, table: %s, id: %u, hash: %s", table.c_str(), id, to_hex(hash).c_str());
             continue;
         }
-        xinfo("xtop_state_downloader::process_request unit request, table: %s, id: %s, hash: %s, data: %s", table.c_str(), id, to_hex(hash).c_str(), to_hex(v).c_str());
-        units_values.push_back(v);
+        std::string unit_state_str;
+        unitstate->get_bstate()->serialize_to_string(unit_state_str);
+        if (unit_state_str.empty()) {
+            xwarn("xtop_state_downloader::process_request unit request not found, table: %s, id: %u, hash: %s", table.c_str(), id, to_hex(hash).c_str());
+            continue;
+        }
+        xinfo("xtop_state_downloader::process_request unit request, table: %s, id: %u, hash: %s, data: %s", table.c_str(), id, to_hex(hash).c_str(), to_hex(unit_state_str).c_str());
+        units_values.push_back({unit_state_str.begin(), unit_state_str.end()});
     }
     base::xstream_t stream_back{top::base::xcontext_t::instance()};
     stream_back << table;

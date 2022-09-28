@@ -440,13 +440,18 @@ TEST_F(test_state_mpt_fixture, test_trie_callback) {
 
     // table
     auto table_bstate = make_object_ptr<base::xvbstate_t>(TABLE_ADDRESS.value(), 100, 100, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
-    auto table_unit_state = std::make_shared<data::xtable_bstate_t>(table_bstate.get());
-    auto table_snapshot = table_unit_state->take_snapshot();
+    std::string table_state_str;
+    table_bstate->serialize_to_string(table_state_str);
+    auto table_state = std::make_shared<data::xtable_bstate_t>(table_bstate.get());
+    auto table_snapshot = table_state->take_snapshot();
     auto table_state_hash_str = base::xcontext_t::instance().hash(table_snapshot, enum_xhash_type_sha2_256);
-    auto table_unit_hash = utl::xkeccak256_t::digest(TABLE_ADDRESS.value());
-    std::string table_unit_hash_str((char *)table_unit_hash.data(), table_unit_hash.size());
-    printf("table, account: %s, unit_hash: %s, state_hash: %s, state: %s\n", TABLE_ADDRESS.c_str(), to_hex(table_unit_hash_str).c_str(), to_hex(table_state_hash_str).c_str(), to_hex(table_snapshot).c_str());
-
+    auto table_block_hash = utl::xkeccak256_t::digest(TABLE_ADDRESS.value());
+    std::string table_block_hash_str((char *)table_block_hash.data(), table_block_hash.size());
+    printf("table, account: %s, block_hash: %s, state_hash: %s, state: %s\n",
+           TABLE_ADDRESS.c_str(),
+           to_hex(table_block_hash_str).c_str(),
+           to_hex(table_state_hash_str).c_str(),
+           to_hex(table_state_str).c_str());
     // unit
     for (auto i = 0; i < 5; i++) {
         auto bstate = make_object_ptr<base::xvbstate_t>(accounts[i], i + 1, i + 1, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
@@ -454,16 +459,25 @@ TEST_F(test_state_mpt_fixture, test_trie_callback) {
         bstate->new_string_var(to_string(i), canvas.get());
         auto obj = bstate->load_string_var(to_string(i));
         obj->reset(to_string(i), canvas.get());
+        std::string unit_state_str;
+        bstate->serialize_to_string(unit_state_str);
         auto unit_state = std::make_shared<data::xunit_bstate_t>(bstate.get());
         auto snapshot = unit_state->take_snapshot();
-        auto state_hash_str = base::xcontext_t::instance().hash(snapshot, enum_xhash_type_sha2_256);
-        auto unit_hash = utl::xkeccak256_t::digest(std::to_string(i));
-        std::string unit_hash_str((char *)unit_hash.data(), unit_hash.size());
-        base::xaccount_index_t index{i + 1, unit_hash_str, state_hash_str, i + 1, base::enum_xvblock_class_light, base::enum_xvblock_type_general};
-        std::string index_str;
-        index.serialize_to(index_str);
-        trie->Update(to_bytes(accounts[i]), to_bytes(index_str));
-        printf("unit, account: %s, value: %s, unit_hash: %s, state_hash: %s, state: %s\n", accounts[i].c_str(), to_hex(index_str).c_str(), to_hex(unit_hash_str).c_str(), to_hex(state_hash_str).c_str(), to_hex(snapshot).c_str());
+        auto unit_state_hash_str = base::xcontext_t::instance().hash(snapshot, enum_xhash_type_sha2_256);
+        auto unit_block_hash = utl::xkeccak256_t::digest(std::to_string(i));
+        std::string unit_block_hash_str((char *)unit_block_hash.data(), unit_block_hash.size());
+        base::xaccount_index_t index{i + 1, unit_block_hash_str, unit_state_hash_str, i + 1, base::enum_xvblock_class_light, base::enum_xvblock_type_general};
+        state_mpt::xaccount_info_t info;
+        info.m_account = common::xaccount_address_t(accounts[i]);
+        info.m_index = index;
+        auto info_str = info.encode();
+        trie->Update(to_bytes(accounts[i]), to_bytes(info_str));
+        printf("unit, account: %s, value: %s, block_hash: %s, state_hash: %s, state: %s\n",
+               accounts[i].c_str(),
+               to_hex(info_str).c_str(),
+               to_hex(unit_block_hash_str).c_str(),
+               to_hex(unit_state_hash_str).c_str(),
+               to_hex(unit_state_str).c_str());
     }
     auto trie_hash = trie->Commit(ec);
     EXPECT_FALSE(ec);
@@ -472,7 +486,8 @@ TEST_F(test_state_mpt_fixture, test_trie_callback) {
     auto callback = [&](std::vector<xbytes_t> const & path, xbytes_t const & key, xbytes_t const & value, xhash256_t const & req_hash, std::error_code & ec) {
         printf("on account key: %s, value: %s, req: %s\n", to_hex(key).c_str(), to_hex(value).c_str(), req_hash.as_hex_str().c_str());
     };
-    auto sched = evm_common::trie::Sync::NewSync(trie_hash.first, kv_db, callback);
+    auto sched = evm_common::trie::Sync::NewSync(kv_db);
+    sched->Init(trie_hash.first, callback);
 
     std::vector<xhash256_t> queue;
     auto res = sched->Missing(1);
