@@ -346,11 +346,20 @@ xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_tab
         return nullptr;
     }
 
+    if (get_need_sync_state_block_height() != 0 
+        && current_block->check_block_flag(base::enum_xvblock_flag_committed)
+        && get_need_sync_state_block_height() == current_block->check_block_flag(base::enum_xvblock_flag_committed)) {
+        ec = error::xerrc_t::statestore_need_state_sync_fail;
+        xwarn("xstatestore_executor_t::make_state_from_prev_state_and_table fail-need all state sync.block=%s,height=%ld",current_block->dump().c_str(),m_need_all_state_sync_height);
+        return nullptr;
+    }
+
     // should clone a new state for execute
     xobject_ptr_t<base::xvbstate_t> current_state = make_object_ptr<base::xvbstate_t>(*current_block, *prev_state->get_table_state()->get_bstate());
     std::shared_ptr<state_mpt::xstate_mpt_t> current_prev_mpt = state_mpt::xstate_mpt_t::create(m_table_addr, prev_state->get_state_mpt()->get_original_root_hash(), m_statestore_base.get_dbstore(), state_mpt::xstate_mpt_cache_t::instance(), ec);        
     xhash256_t block_state_root = m_statestore_base.get_state_root_from_block(current_block);
     base::xaccount_indexs_t account_indexs;
+    bool is_first_mpt = (current_prev_mpt->get_original_root_hash() == xhash256_t{}) && (block_state_root != xhash256_t{});
 
     if (current_block->get_block_class() == base::enum_xvblock_class_light) {
         if (false == m_statestore_base.get_blockstore()->load_block_output(m_table_addr.vaccount(), current_block)) {
@@ -371,22 +380,40 @@ xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_tab
         }
 
         // upgrade for first mpt build
-        if (current_prev_mpt->get_original_root_hash() == xhash256_t{}) {
-            auto cur_state_root = m_statestore_base.get_state_root_from_block(current_block);
-            if (cur_state_root != xhash256_t{}) {
-                data::xtablestate_ptr_t cur_table_bstate = std::make_shared<data::xtable_bstate_t>(current_state.get());
-                std::map<std::string, std::string> indexes = cur_table_bstate->map_get(data::XPROPERTY_TABLE_ACCOUNT_INDEX);
-                for (auto & v : indexes) {
-                    auto & account = v.first;
-                    auto & accoutn_index = v.second;
-                    current_prev_mpt->set_account_index(common::xaccount_address_t{account}, accoutn_index, ec);
-                    if (ec) {
-                        xerror("xstatestore_executor_t::make_state_from_prev_state_and_table fail-set mpt accountindex for block(%s)",current_block->dump().c_str());
-                        return nullptr;
-                    }
+        if (is_first_mpt) {            
+            data::xtablestate_ptr_t cur_table_bstate = std::make_shared<data::xtable_bstate_t>(current_state.get());
+            std::map<std::string, std::string> indexes = cur_table_bstate->map_get(data::XPROPERTY_TABLE_ACCOUNT_INDEX);
+            xinfo("xstatestore_executor_t::make_state_from_prev_state_and_table upgrade first mpt begin.indexes_count=%zu.block=%s",indexes.size(), current_block->dump().c_str());
+            for (auto & v : indexes) {
+                common::xaccount_address_t account{v.first};
+                auto & account_index_str = v.second;              
+                current_prev_mpt->set_account_index(account, account_index_str, ec);
+                if (ec) {
+                    xerror("xstatestore_executor_t::make_state_from_prev_state_and_table fail-set mpt accountindex for block(%s)",current_block->dump().c_str());
+                    return nullptr;
                 }
-                xinfo("xstatestore_executor_t::make_state_from_prev_state_and_table upgrade first mpt.indexes_count=%zu.block=%s",indexes.size(), current_block->dump().c_str());
+
+                uint32_t limit = 100;  // TODO(jimmy) for load unitstate by unit delete futrun
+                base::xaccount_index_t accountindex;
+                accountindex.serialize_from(account_index_str);
+                data::xunitstate_ptr_t unitstate = nullptr;
+                build_unitstate_by_accountindex(account, accountindex, unitstate, ec);
+                if (nullptr == unitstate) {
+                    if (current_block->check_block_flag(base::enum_xvblock_flag_committed)) {
+                        set_need_sync_state_block_height(current_block->get_height());
+                    } 
+                    ec = error::xerrc_t::statestore_need_state_sync_fail;
+                    xwarn("xstatestore_executor_t::make_state_from_prev_state_and_table,fail-make unitstate.need do state sync for table block(%s),account=%s,%s", current_block->dump().c_str(),account.value().c_str(),accountindex.dump().c_str());
+                    return nullptr;
+                }
+                m_state_accessor.write_unitstate_to_db(unitstate, accountindex.get_latest_unit_hash(), ec);
+                if (ec) {
+                    xerror("xstatestore_executor_t::make_state_from_prev_state_and_table fail-write unitstate for block(%s),account=%s,%s",current_block->dump().c_str(),account.value().c_str(),accountindex.dump().c_str());
+                    return nullptr;
+                }
+                xinfo("xstatestore_executor_t::make_state_from_prev_state_and_table upgrade write unitstate.block(%s),account=%s,%s",current_block->dump().c_str(),account.value().c_str(),accountindex.dump().c_str());
             }
+            xinfo("xstatestore_executor_t::make_state_from_prev_state_and_table upgrade first mpt finish.indexes_count=%zu.block=%s",indexes.size(), current_block->dump().c_str());
         }
 
         // set changed accountindexs
@@ -484,9 +511,19 @@ void xstatestore_executor_t::set_latest_executed_info(uint64_t height,const std:
     }
 }
 
+void xstatestore_executor_t::set_need_sync_state_block_height(uint64_t height) const {
+    std::lock_guard<std::mutex> l(m_execute_height_lock);
+    xinfo("xstatestore_executor_t::set_need_sync_state_block_height succ,account=%s,old=%ld,new=%ld",m_table_addr.value().c_str(),m_need_all_state_sync_height,height);
+    m_need_all_state_sync_height = height;
+}
+
 uint64_t xstatestore_executor_t::get_latest_executed_block_height() const {
     std::lock_guard<std::mutex> l(m_execute_height_lock);
     return m_executed_height;
+}
+uint64_t xstatestore_executor_t::get_need_sync_state_block_height() const {
+    std::lock_guard<std::mutex> l(m_execute_height_lock);
+    return m_need_all_state_sync_height;
 }
 void xstatestore_executor_t::raise_execute_height(const xstate_sync_info_t & sync_info) {
     // check if root and table state are already stored.
@@ -513,6 +550,9 @@ void xstatestore_executor_t::raise_execute_height(const xstate_sync_info_t & syn
           sync_info.get_height(),
           sync_info.get_root_hash().as_hex_str().c_str());
     set_latest_executed_info(sync_info.get_height(), sync_info.get_blockhash());
+    if (block->get_height() >= get_need_sync_state_block_height()) {
+        set_need_sync_state_block_height(0);
+    }
 }
 
 

@@ -36,6 +36,7 @@ public:
     data::xtablestate_ptr_t get_latest_connectted_table_state() const;
 
     uint64_t                get_latest_executed_block_height() const;
+    uint64_t                get_need_sync_state_block_height() const;
     void                    raise_execute_height(const xstate_sync_info_t & sync_info);
 
 private:

@@ -89,6 +89,10 @@ uint64_t xstatestore_impl_t::get_latest_executed_block_height(common::xaccount_a
     xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(table_address.value());
     return tablestore->get_latest_executed_block_height();
 }
+uint64_t xstatestore_impl_t::get_need_sync_state_block_height(common::xaccount_address_t const & table_address) const {
+    xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(table_address.value());
+    return tablestore->get_need_sync_state_block_height();    
+}
 
 bool xstatestore_impl_t::set_state_sync_info(common::xaccount_address_t const & table_address, const xstate_sync_info_t & state_sync_info) {
     std::lock_guard<std::mutex> l(m_state_sync_infos_lock);

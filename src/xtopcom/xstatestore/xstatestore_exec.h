@@ -33,6 +33,7 @@ public:
 
     void    on_table_block_committed(base::xvblock_t* block) const;
     uint64_t get_latest_executed_block_height() const;
+    uint64_t get_need_sync_state_block_height() const;
     void    raise_execute_height(const xstate_sync_info_t & sync_info);
     xtablestate_ext_ptr_t write_table_all_states(base::xvblock_t* current_block, xtablestate_store_ptr_t const& tablestate_store, std::error_code & ec) const;
 
@@ -40,6 +41,7 @@ protected:
     void    update_execute_from_execute_height() const;
     void    try_execute_block_on_demand(base::xvblock_t* block, std::error_code & ec) const;
     void    set_latest_executed_info(uint64_t height,const std::string & blockhash) const;
+    void    set_need_sync_state_block_height(uint64_t height) const;
     void    update_latest_executed_info(base::xvblock_t* block) const;
 
     data::xunitstate_ptr_t make_state_from_current_unit(common::xaccount_address_t const& unit_addr, base::xvblock_t * current_block, std::error_code & ec) const;
@@ -54,6 +56,7 @@ private:
     mutable std::mutex          m_execute_height_lock;
     mutable uint64_t            m_executed_height{0};
     mutable std::mutex          m_table_state_write_lock;
+    mutable uint64_t            m_need_all_state_sync_height{0};
     common::xaccount_address_t  m_table_addr;
     xstatestore_base_t          m_statestore_base;
     xstatestore_accessor_t      m_state_accessor;
