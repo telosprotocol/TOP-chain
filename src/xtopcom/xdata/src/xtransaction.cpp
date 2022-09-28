@@ -25,7 +25,7 @@ bool xtransaction_t::transaction_type_check() const {
             case xtransaction_type_abolish_vote:
             case xtransaction_type_pledge_token_vote:
             case xtransaction_type_redeem_token_vote: {
-                if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(enable_reward)) {
+                if (XGET_CONFIG(enable_reward) == true) {
                     return true;
                 } else {
                     return false;
@@ -33,7 +33,7 @@ bool xtransaction_t::transaction_type_check() const {
             } break;
             case xtransaction_type_pledge_token_tgas:
             case xtransaction_type_redeem_token_tgas: {
-                if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(enable_free_tgas)) {
+                if (XGET_CONFIG(enable_free_tgas)) {
                     return true;
                 } else {
                     return false;

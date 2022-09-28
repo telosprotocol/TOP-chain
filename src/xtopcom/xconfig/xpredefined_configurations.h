@@ -399,7 +399,7 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(total_gas_shard, uint64_t, normal, 2160000
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_free_gas_asset, uint64_t, normal, ASSET_TOP(100), 1, std::numeric_limits<uint64_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(free_gas, uint64_t, normal, 25000, 1, std::numeric_limits<uint64_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio, uint64_t, normal, 20, 1, std::numeric_limits<uint64_t>::max());
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(eth_to_top_exchange_ratio, uint64_t, normal, 5004220, 1, std::numeric_limits<uint64_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(eth_to_top_exchange_ratio, uint64_t, normal, /*5004220*/ 1, 1, std::numeric_limits<uint64_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(eth_gas_to_tgas_exchange_ratio, uint64_t, normal, 80, 1, std::numeric_limits<uint64_t>::max());
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(top_eth_base_price, uint64_t, normal, 40000000000, 1, std::numeric_limits<uint64_t>::max());
 // how many micro second 1 tgas can consume
@@ -599,14 +599,17 @@ XDECLARE_CONFIGURATION(prune_table_state_diff, uint64_t, 512);
 
 
 //consortium configuration
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(enable_reward,  bool, normal, true, false, true);
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(enable_slash,  bool, normal, true, false, true);
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(enable_free_tgas,  bool, normal, true, false, true);
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(evm_token_type, char const *, normal, "TOP", "", "");
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(enable_node_whitelist, bool, normal, false, false, true);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(node_whitelist, char const *, normal, "", "", "");
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(enable_transaction_whitelist,  bool, normal, false, false, true);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(transaction_whitelist, char const *, normal, "", "", "");
+
+
+XDECLARE_CONFIGURATION(enable_reward, bool, false); 
+XDECLARE_CONFIGURATION(enable_slash, bool, false);  
+XDECLARE_CONFIGURATION(enable_free_tgas, bool, false);  
+XDECLARE_CONFIGURATION(evm_token_type, char const *, "TOP");
+
 
 #undef XDECLARE_CONFIGURATION
 

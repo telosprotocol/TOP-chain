@@ -121,7 +121,8 @@ bool xtest_evm_fixture::execute_test_case(std::string const & json_file_path) {
 
     // std::map<account_id, std::string> pre_data = j.at("pre_data").get<std::map<account_id, std::string>>();
     if (!pre_data.empty()) {
-        auto storage = top::make_unique<contract_runtime::evm::xevm_storage>(statestore);
+        std::string default_token_type = "ETH";
+        auto storage = top::make_unique<evm::xevm_storage>(m_evm_statectx, default_token_type);
         std::shared_ptr<top::evm::xevm_logic_face_t> logic_ptr = std::make_shared<top::contract_runtime::evm::xevm_logic_t>(
             std::move(storage),
             top::make_observer(statestore.get()),

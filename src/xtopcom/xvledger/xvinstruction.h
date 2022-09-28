@@ -103,7 +103,8 @@ namespace top
             enum_xvinstruct_state_method_hashmap_insert     = 0x29,
             enum_xvinstruct_state_method_hashmap_erase      = 0x2a,
 
-            
+            enum_xvinstruct_state_method_update_token       = 0x2b, 
+
             enum_xvinstruct_state_method_max                = INT8_MAX,//7bit,NEVER over this max value
         };
         
