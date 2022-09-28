@@ -8,7 +8,7 @@
 #include "xevm_common/trie/xtrie_kv_db.h"
 #include "xstate_mpt/xerror.h"
 #include "xstate_mpt/xstate_mpt.h"
-#include "xvledger/xaccountindex.h"
+#include "xvledger/xvdbkey.h"
 
 namespace top {
 namespace state_mpt {
@@ -24,17 +24,16 @@ std::shared_ptr<evm_common::trie::Sync> new_state_sync(const common::xaccount_ad
             xaccount_info_t info;
             info.decode({value.begin(), value.end()});
             auto state_hash_str = info.m_index.get_latest_state_hash();
-            auto unit_hash_str = info.m_index.get_latest_unit_hash();
-            xassert(!unit_hash_str.empty());
+            xassert(!info.m_index.get_latest_unit_hash().empty());
             auto hash = static_cast<xhash256_t>(xbytes_t{state_hash_str.begin(), state_hash_str.end()});
-            auto key = static_cast<xhash256_t>(xbytes_t{unit_hash_str.begin(), unit_hash_str.end()});
-            syncer->AddUnitEntry(hash, hexpath, value, key, parent);
-            xinfo("state_mpt::new_state_sync table: %s, root: %s, value: %s, hash: %s, key: %s, index_dump: %s",
+            auto state_key = base::xvdbkey_t::create_prunable_unit_state_key(info.m_account.vaccount(), info.m_index.get_latest_unit_height(), info.m_index.get_latest_unit_hash());
+            syncer->AddUnitEntry(hash, hexpath, value, {state_key.begin(), state_key.end()}, parent);
+            xinfo("state_mpt::new_state_sync table: %s, root: %s, value: %s, hash: %s, state_key: %s, index_dump: %s",
                   table.c_str(),
                   root.as_hex_str().c_str(),
                   to_hex(value).c_str(),
                   hash.as_hex_str().c_str(),
-                  key.as_hex_str().c_str(),
+                  to_hex(state_key).c_str(),
                   info.m_index.dump().c_str());
         }
     };

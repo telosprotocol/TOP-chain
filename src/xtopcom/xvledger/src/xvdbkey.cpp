@@ -6,7 +6,7 @@
 #include "xvledger/xvdbkey.h"
 
 #include "xbase/xutl.h"
-#include "xbasic/src/xbyte_buffer.cpp"
+#include "xbasic/xbyte_buffer.h"
 
 namespace top
 {
@@ -390,7 +390,7 @@ namespace top
             return key_path;
         }
 
-        const std::string xvdbkey_t::create_prunable_mpt_key(const xvaccount_t & account, const std::string & key)
+        const std::string xvdbkey_t::create_prunable_mpt_node_key(const xvaccount_t & account, const std::string & key)
         {
             auto zone_bytes = to_bytes(account.get_zone_index());
             auto ledger_bytes = to_bytes(account.get_ledger_id());

@@ -24,7 +24,8 @@ xbytes_t xtop_state_object::get_unit(evm_common::trie::xkv_db_face_ptr_t db) {
         return unit_bytes;
     }
     auto hash = index.get_latest_state_hash();
-    auto unit = ReadUnitWithPrefix(db, xhash256_t({hash.begin(), hash.end()}));
+    auto key = base::xvdbkey_t::create_prunable_unit_state_key(account.vaccount(), index.get_latest_unit_height(), index.get_latest_unit_hash());
+    auto unit = ReadUnitWithPrefix(db, {key.begin(), key.end()});
     unit_bytes = unit;
     return unit_bytes;
 }

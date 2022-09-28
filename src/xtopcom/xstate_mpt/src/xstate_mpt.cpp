@@ -228,8 +228,8 @@ void xtop_state_mpt::prune_unit(const common::xaccount_address_t & account, std:
         return;
     }
     auto hash = index.get_latest_unit_hash();
-    auto key = evm_common::trie::schema::unitKey(xhash256_t(to_bytes(hash)));
-    m_db->DiskDB()->Delete(key, ec);
+    auto key = base::xvdbkey_t::create_prunable_unit_state_key(base::xvaccount_t{account.value()}, index.get_latest_unit_height(), index.get_latest_unit_hash());
+    m_db->DiskDB()->DeleteWithPrefix({key.begin(), key.end()}, ec);
     if (ec) {
         xwarn("xtop_state_mpt::prune_unit db Delete error: %s, %s", ec.category().name(), ec.message().c_str());
         return;
@@ -291,7 +291,9 @@ xhash256_t xtop_state_mpt::commit(std::error_code & ec) {
         auto obj = m_state_objects[acc];
         if (!obj->unit_bytes.empty() && obj->dirty_unit) {
             auto hash = base::xcontext_t::instance().hash({obj->unit_bytes.begin(), obj->unit_bytes.end()}, enum_xhash_type_sha2_256);
-            WriteUnit(m_db->DiskDB(), xhash256_t({hash.begin(), hash.end()}), obj->unit_bytes);
+            auto unit_key =
+                base::xvdbkey_t::create_prunable_unit_state_key(base::xvaccount_t{obj->account.value()}, obj->index.get_latest_unit_height(), obj->index.get_latest_unit_hash());
+            WriteUnit(m_db->DiskDB(), {unit_key.begin(), unit_key.end()}, obj->unit_bytes);
             obj->dirty_unit = false;
         }
     }

@@ -109,7 +109,7 @@ namespace top
            static const std::string  create_prunable_block_output_offdata_key(const xvaccount_t & account,const uint64_t target_height,const uint64_t target_viewid);
            
            static const std::string  create_prunable_unit_proof_key(const xvaccount_t & account, const uint64_t target_height);
-           static const std::string  create_prunable_mpt_key(const xvaccount_t & account, const std::string & key);
+           static const std::string  create_prunable_mpt_node_key(const xvaccount_t & account, const std::string & key);
            
            static const std::string  get_account_prefix_key(const std::string & key);
        };
