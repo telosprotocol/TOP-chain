@@ -14,8 +14,9 @@
 
 NS_BEG2(top, statestore)
 
+xstatestore_face_t * xstatestore_hub_t::_static_statestore = nullptr;
+
 xstatestore_face_t* xstatestore_hub_t::instance() {
-    static xstatestore_face_t * _static_statestore = nullptr;
     if(_static_statestore)
         return _static_statestore;
 
@@ -23,7 +24,15 @@ xstatestore_face_t* xstatestore_hub_t::instance() {
     return _static_statestore;
 }
 
+xstatestore_face_t* xstatestore_hub_t::reset_instance() {
+    if(_static_statestore)
+        delete _static_statestore;
+    _static_statestore = new xstatestore_impl_t();
+    return _static_statestore;
+}
+
 xstatestore_impl_t::xstatestore_impl_t() {
+    xdbg("xstatestore_impl_t::xstatestore_impl_t this=%p",this);
     init_all_tablestate();
 }
 
@@ -86,6 +95,7 @@ void xstatestore_impl_t::on_block_to_db_event(mbus::xevent_ptr_t e) {
 }
 
 uint64_t xstatestore_impl_t::get_latest_executed_block_height(common::xaccount_address_t const & table_address) const {
+    xdbg("xstatestore_impl_t::get_latest_executed_block_height table:%s,this=%p", table_address.value().c_str(),this);
     xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(table_address.value());
     return tablestore->get_latest_executed_block_height();
 }
@@ -485,10 +495,6 @@ base::xvblockstore_t*  xstatestore_impl_t::get_blockstore() const {
 
 mbus::xmessage_bus_t * xstatestore_impl_t::get_mbus() const {
     return (mbus::xmessage_bus_t *)base::xvchain_t::instance().get_xevmbus();
-}
-
-void xstatestore_impl_t::update_node_type(common::xnode_type_t combined_node_type) {
-    m_store_base.update_node_type(combined_node_type);
 }
 
 bool xstatestore_timer_t::on_timer_fire(const int32_t thread_id,

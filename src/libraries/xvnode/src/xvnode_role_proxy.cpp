@@ -87,7 +87,6 @@ void xtop_vnode_role_proxy::update_modules_node_type() const {
 
     // TODO(jimmy) mbus notify future
     m_txstore->update_node_type(static_cast<std::underlying_type<common::xnode_type_t>::type>(node_type));
-    statestore::xstatestore_hub_t::instance()->update_node_type(node_type);
 }
 
 NS_END2

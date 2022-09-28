@@ -61,19 +61,5 @@ base::xvdbstore_t* xstatestore_base_t::get_dbstore() const {
     return base::xvchain_t::instance().get_xdbstore();
 }
 
-void xstatestore_base_t::update_node_type(common::xnode_type_t combined_node_type) {
-    bool _need_store_unitstate;
-    if (common::has<common::xnode_type_t::storage_archive>(combined_node_type)) {
-        _need_store_unitstate = true;
-    } else {
-        _need_store_unitstate = false;
-    }
-
-    _need_store_unitstate = true;  // TODO(jimmy) always store unitstate now
-    if (_need_store_unitstate != m_need_store_unitstate) {
-        m_need_store_unitstate = _need_store_unitstate;
-        xinfo("xstatestore_base_t::update_node_type changed.need_store_unitstate=%d",m_need_store_unitstate);
-    }
-}
 
 NS_END2

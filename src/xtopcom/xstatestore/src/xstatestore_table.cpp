@@ -19,6 +19,7 @@ NS_BEG2(top, statestore)
 xstatestore_table_t::xstatestore_table_t(common::xaccount_address_t const&  table_addr)
 : m_table_addr(table_addr), m_table_executor(table_addr) {
     init_cache();
+    xdbg("xstatestore_table_t::xstatestore_table_t table=%s,this=%p", table_addr.value().c_str(), this);
 }
 
 void xstatestore_table_t::init_cache() {

@@ -92,6 +92,17 @@ namespace top
                 } else {
                 }
             }
+            else if (metrics_type == enum_blockstore_metrics_type_block_output_offdata)
+            {
+                if (_level == base::enum_xvblock_level_table) {
+                    XMETRICS_GAUGE(metrics::store_block_output_table_write, 1);
+                    if (_class == base::enum_xvblock_class_full) {
+                        XMETRICS_GAUGE(metrics::store_dbsize_block_table_full, bin_size);
+                    } else if (_class == base::enum_xvblock_class_light) {
+                        XMETRICS_GAUGE(metrics::store_dbsize_block_table_light, bin_size);
+                    }
+                }
+            }
         #endif
         }
     
@@ -203,6 +214,30 @@ namespace top
             
             xdbg("xvblockdb_t::load_block_output,target index(%s)",target_index->dump().c_str());
             return  read_block_output_from_db(target_index,target_block,get_xdbstore());
+        }
+
+        bool  xvblockdb_t::load_block_output_offdata(base::xvbindex_t* target_index,base::xvblock_t * target_block)
+        {
+            if( (NULL == target_index) || (NULL == target_block))
+            {
+                xassert(0); //should not happen
+                return false;
+            }
+            
+            if(  (target_index->get_height()    != target_block->get_height())
+               ||(target_index->get_viewid()    != target_block->get_viewid())
+               ||(target_index->get_block_hash()!= target_block->get_block_hash())
+               ||(target_index->get_account()   != target_block->get_account()) )
+            {
+                xerror("xvblockdb_t::load_block_output_offdata,fail as index(%s) != block(%s)",target_index->dump().c_str(),target_block->dump().c_str());
+                return false;
+            }
+            
+            if(target_index->get_block_class() == base::enum_xvblock_class_nil)
+                return true;
+            
+            xdbg("xvblockdb_t::load_block_output_offdata,target index(%s)",target_index->dump().c_str());
+            return  read_block_output_offdata_from_db(target_index,target_block,get_xdbstore());
         }
 
         bool    xvblockdb_t::load_block_object(base::xvbindex_t* index_ptr, const int atag)
@@ -635,6 +670,28 @@ namespace top
             {
                 if(block_ptr->get_output()->get_resources_hash().empty() == false)
                 {
+                    // XTODO write output offdata with output resource
+                    if (block_ptr->get_output_offdata_hash().empty() == false)
+                    {
+                        const std::string output_offdata_bin = block_ptr->get_output_offdata();
+                        if (output_offdata_bin.empty()) {
+                            xerror("xvblockdb_t::write_block_output_to_db,fail output offdata empty for block(%s)",index_ptr->dump().c_str());
+                            return -1; //invalid params                 
+                        }
+                        const std::string output_offdata_key = create_block_output_offdata_key(index_ptr);
+                        if(get_xdbstore()->set_value(output_offdata_key, output_offdata_bin))
+                        {
+                            xdbg("xvblockdb_t::write_block_output_to_db,store output offdata to DB for block(%s),bin_size=%zu",index_ptr->dump().c_str(), output_offdata_bin.size());
+                            update_block_write_metrics(block_ptr->get_block_level(), block_ptr->get_block_class(), enum_blockstore_metrics_type_block_output_offdata, output_offdata_bin.size());
+                        }
+                        else
+                        {
+                            xerror("xvblockdb_t::write_block_output_to_db,fail to store output resource for block(%s)",index_ptr->dump().c_str());
+                            return -3; //failed
+                        }
+                    }
+
+
                     const std::string output_res_bin = block_ptr->get_output()->get_resources_data();
                     if(output_res_bin.empty() == false)
                     {
@@ -699,6 +756,43 @@ namespace top
             }
             return (block_ptr->get_output() != NULL);
         }
+        bool    xvblockdb_t::read_block_output_offdata_from_db(base::xvbindex_t* index_ptr,base::xvblock_t * block_ptr,base::xvdbstore_t* from_db)
+        {
+            if(NULL == block_ptr)
+                return false;
+            
+            if(block_ptr->get_output() != NULL) //now has valid output
+            {
+                if(  (block_ptr->get_output_offdata_hash().empty() == false) //link resoure data
+                   &&(block_ptr->get_output_offdata().empty() == true) ) //but dont have resource avaiable now
+                {
+                    #if defined(ENABLE_METRICS)
+                    XMETRICS_GAUGE(metrics::store_block_output_read, 1);
+                    #endif
+                    //which means resource are stored at seperatedly
+                    const std::string output_resource_key = create_block_output_offdata_key(index_ptr);
+                    
+                    const std::string output_resource_bin = from_db->get_value(output_resource_key);
+                    if(output_resource_bin.empty()) //that possible happen actually
+                    {
+                        xwarn("xvblockdb_t::read_block_output_offdata_from_db,fail to read resource from db for path(%s)",output_resource_key.c_str());
+                        return false;
+                    }
+                    if(block_ptr->get_output_offdata().empty() == true)//double check again
+                    {
+                        //set_output_resources is thread safe as default implementation
+                        //subclass of output need guanree this promise as well
+                        if(block_ptr->set_output_offdata(output_resource_bin) == false)
+                        {
+                            xerror("xvblockdb_t::read_block_output_offdata_from_db,read bad output-resource for key(%s)",output_resource_key.c_str());
+                            return false;
+                        }
+                    }
+                    xdbg("xvblockdb_t::read_block_output_offdata_from_db,read output resource,block(%s) ",block_ptr->dump().c_str());
+                }
+            }
+            return (block_ptr->get_output() != NULL);
+        }        
 
         //note: caller need release block ptr
         std::vector<base::xvblock_t*>  xvblockdb_t::read_prunable_block_object_from_db(base::xvaccount_t & account,const uint64_t target_height)
@@ -832,6 +926,11 @@ namespace top
         const std::string  xvblockdb_t::create_block_output_resource_key(base::xvbindex_t * index_ptr)
         {
             return base::xvdbkey_t::create_prunable_block_output_resource_key(*index_ptr,index_ptr->get_height(), index_ptr->get_viewid());
+        }
+
+        const std::string  xvblockdb_t::create_block_output_offdata_key(base::xvbindex_t * index_ptr)
+        {
+            return base::xvdbkey_t::create_prunable_block_output_offdata_key(*index_ptr,index_ptr->get_height(), index_ptr->get_viewid());
         }
 
         std::vector<base::xvbindex_t*>  xvblockdb_t::load_index_from_db(const std::string & index_db_key_path, const uint64_t target_height)

@@ -28,17 +28,10 @@ class xstatestore_base_t {
     void                       set_latest_executed_info(common::xaccount_address_t const& table_addr, uint64_t height,const std::string & blockhash) const;
     uint64_t                   get_latest_committed_block_height(common::xaccount_address_t const& table_addr) const;
 
-    void                        update_node_type(common::xnode_type_t combined_node_type);
-    bool                        need_store_unitstate() const {return m_need_store_unitstate;}
-
- private:
  public:
     base::xvblockstore_t*       get_blockstore() const;
     base::xvblkstatestore_t*    get_blkstate_store() const;
     base::xvdbstore_t*          get_dbstore() const;
-
- private:
-    bool    m_need_store_unitstate{true}; // XTODO default need store   
 };
 
 
