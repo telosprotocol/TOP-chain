@@ -968,7 +968,7 @@ bool xaccount_index_upgrade_tool_t::convert_to_new_account_index(const base::xva
 
     bool ret = data::xblocktool_t::check_lacking_unit_and_try_sync(account, old_account_index, latest_connect_height, get_xblockstore(), "table_maker");
     if (!ret) {
-        xdbg("xaccount_index_upgrade_tool_t::convert_to_new_account_index fail-lack of units.account:%s,old index:%s,connect height:%llu", account.get_account().c_str(), old_account_index.dump().c_str(), latest_connect_height);
+        xwarn("xtable_maker_t::convert_to_new_account_index fail-lack of units.account:%s,old index:%s,connect height:%llu", account.get_account().c_str(), old_account_index.dump().c_str(), latest_connect_height);
         return false;
     }
 
@@ -986,12 +986,24 @@ bool xaccount_index_upgrade_tool_t::convert_to_new_account_index(const base::xva
     }
     data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(unitbstate.get());
 
+    // should write unitstate with new db key
+    std::string state_db_key = base::xvdbkey_t::create_prunable_unit_state_key(account, unit->get_height(), unit->get_block_hash());
+    std::string state_db_bin;
+    if(unitstate->get_bstate()->serialize_to_string(state_db_bin) < 0) {
+        xerror("xtable_maker_t::convert_to_new_account_index fail-upgrade for serialize unitstate account=%s,index=%s", account.get_account().c_str(), old_account_index.dump().c_str());
+        return false;
+    }
+    if (false == base::xvchain_t::instance().get_xdbstore()->set_value(state_db_key, state_db_bin)) {
+        xerror("xtable_maker_t::convert_to_new_account_index fail-upgrade for write unitstate.state=%s,hash=%s",unitstate->get_bstate()->dump().c_str(),base::xstring_utl::to_hex(unit->get_block_hash()).c_str());
+        return false;
+    }
+
     auto nonce = unitstate->account_send_trans_number();
     std::string unitstate_bin;
     unitbstate->take_snapshot(unitstate_bin);
     std::string statehash = unit->get_cert()->hash(unitstate_bin);
     new_account_index = base::xaccount_index_t(unit->get_height(), unit->get_block_hash(), statehash, nonce, unit->get_block_class(), unit->get_block_type());
-    xdbg("xaccount_index_upgrade_tool_t::convert_to_new_account_index succ.account:%s,old:%s,new:%s", account.get_account().c_str(), old_account_index.dump().c_str(), new_account_index.dump().c_str());
+    xinfo("xtable_maker_t::convert_to_new_account_index succ.account:%s,old:%s,new:%s", account.get_account().c_str(), old_account_index.dump().c_str(), new_account_index.dump().c_str());
     return true;
 }
 
