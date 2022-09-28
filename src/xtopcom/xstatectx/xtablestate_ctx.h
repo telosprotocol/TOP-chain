@@ -17,16 +17,16 @@ NS_BEG2(top, statectx)
 // the table state is a temp state
 class xtablestate_ctx_t {
  public:
-    xtablestate_ctx_t(const data::xtablestate_ptr_t & table_state, std::shared_ptr<state_mpt::xtop_state_mpt> const& state_mpt);
+    xtablestate_ctx_t(const data::xtablestate_ptr_t & table_state, std::shared_ptr<state_mpt::xstate_mpt_t> const& state_mpt);
  public:
     std::string                         get_table_address() const {return m_table_state->account_address().value();}
     base::xtable_shortid_t              get_tableid() const {return m_table_state->get_bstate()->get_short_table_id();}
     uint64_t                            get_table_commit_height() const;
     const data::xtablestate_ptr_t &     get_table_state() const {return m_table_state;}
-    std::shared_ptr<state_mpt::xtop_state_mpt> const&    get_state_mpt() const {return m_state_mpt;}
+    std::shared_ptr<state_mpt::xstate_mpt_t> const&    get_state_mpt() const {return m_state_mpt;}
  private:
     data::xtablestate_ptr_t             m_table_state{nullptr};
-    std::shared_ptr<state_mpt::xtop_state_mpt>  m_state_mpt{nullptr};
+    std::shared_ptr<state_mpt::xstate_mpt_t>  m_state_mpt{nullptr};
 };
 using xtablestate_ctx_ptr_t = std::shared_ptr<xtablestate_ctx_t>;
 

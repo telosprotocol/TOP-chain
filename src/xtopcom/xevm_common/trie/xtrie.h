@@ -33,7 +33,7 @@ private:
     std::size_t unhashed{0};
 
 protected:
-    xtop_trie(xtrie_db_ptr_t db) : m_db{db} {
+    explicit xtop_trie(xtrie_db_ptr_t db) : m_db{std::move(db)} {
     }
 
 public:
