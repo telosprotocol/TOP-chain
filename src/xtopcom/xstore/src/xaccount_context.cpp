@@ -116,7 +116,7 @@ int32_t xaccount_context_t::create_user_account(const std::string& address) {
         return ret;
     }
     
-    auto default_token_type = XGET_ONCHAIN_GOVERNANCE_PARAMETER(evm_token_type);
+    auto default_token_type = XGET_CONFIG(evm_token_type);
     xinfo("xaccount_context_t::create_user_account token type is %s.", default_token_type.c_str());
     if (default_token_type.empty()) {
         xerror("xaccount_context_t::create_user_account  configuration evm token empty");
@@ -304,7 +304,7 @@ int32_t xaccount_context_t::check_used_tgas(uint64_t &cur_tgas_usage, uint64_t d
           last_hour, m_timer_height, get_used_tgas(), calc_decayed_tgas(), m_account->tgas_balance(), get_token_price(), get_total_tgas(), cur_tgas_usage, deposit);
 
     auto available_tgas = get_available_tgas();
-    xdbg("tgas_disk account: %s, total tgas usage adding this tx : %d", get_address().c_str(), cur_tgas_usage);
+    xdbg("tgas_disk account: %s, total tgas usage adding this tx : %d available_tgas %lu ", get_address().c_str(), cur_tgas_usage, available_tgas);
     if(cur_tgas_usage > (available_tgas + deposit / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio))){
         xdbg("tgas_disk xtransaction_not_enough_pledge_token_tgas");
         deposit_usage = deposit;
@@ -1496,11 +1496,6 @@ xaccount_context_t::get_blockchain_height(const std::string & owner) const {
     return height;
 }
 
-/*
-void xaccount_context_t::cacl_total_gas_burn(uint64_t gas)
-{
-    m_total_gas_burn += gas;
-}*/
 
 }  // namespace store
 }  // namespace top

@@ -631,7 +631,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     nodep2paddr->add_option("--admin_http_port", admin_http_port, "admin http server port(default: 8000).");
     nodep2paddr->callback(std::bind(node_call, std::ref(admin_http_addr), std::ref(admin_http_port)));
 
-    if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(enable_reward)) {
+    if (XGET_CONFIG(enable_reward) == false) {
         /*
          * staking
          */
@@ -837,7 +837,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
         std::ref(admin_http_addr), std::ref(admin_http_port)));
     block_prune_app->add_option("on|off", prune_enable, "auto prune data on or off.")->required();
    
-    if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(enable_free_tgas)) {
+    if (XGET_CONFIG(enable_free_tgas)) {
         /*
          * resource
          */

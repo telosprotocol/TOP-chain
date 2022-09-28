@@ -881,7 +881,7 @@ uint64_t xtop_contract_execution_context::calc_total_tgas() const {
 
 uint64_t xtop_contract_execution_context::calc_free_tgas() const {
 
-    if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(enable_free_tgas) == false)
+    if (XGET_CONFIG(enable_free_tgas) == false)
         return 0;
 
     auto const balance = contract_state()->balance(

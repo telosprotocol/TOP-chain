@@ -106,7 +106,13 @@ void xzec_reward_contract::on_timer(const common::xlogic_time_t onchain_timer_ro
         execute_task();
     } else {
         if (reward_is_expire_v2(onchain_timer_round)) {
-            reward(onchain_timer_round, "");
+            //todo,rank
+            if (XGET_CONFIG(enable_reward) == true) {
+                reward(onchain_timer_round, ""); 
+            } else {
+              //  reward_gas(onchain_timer_round, "");
+            }
+
         } else {
             update_reg_contract_read_status(onchain_timer_round);
         }
