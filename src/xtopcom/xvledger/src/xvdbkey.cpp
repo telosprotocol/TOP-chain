@@ -6,7 +6,7 @@
 #include "xvledger/xvdbkey.h"
 
 #include "xbase/xutl.h"
-#include "xbasic/src/xbyte_buffer.cpp"
+#include "xbasic/xbyte_buffer.h"
 
 namespace top
 {
@@ -173,6 +173,18 @@ namespace top
             return key_path;
         }
     
+        const std::string xvdbkey_t::create_prunable_unit_state_key(const xvaccount_t & account, uint64_t target_height,std::string const& block_hash)
+        {
+            // state key should be different with block key, because of batch_delete policy
+            const std::string key_path = "s/" + account.get_storage_key() + "/" + uint64_to_full_hex(target_height) + "/" + block_hash + "/u";
+            return key_path;            
+        }
+        const std::string  xvdbkey_t::create_prunable_unit_state_height_key(const xvaccount_t & account,const uint64_t target_height)
+        {
+            const std::string key_path = "s/" + account.get_storage_key() + "/" + uint64_to_full_hex(target_height) + "/";
+            return key_path;
+        }
+
         const std::string  xvdbkey_t::create_prunable_block_height_key(const xvaccount_t & account,const uint64_t target_height)
         {
             //enum_xdb_cf_type_read_most = 'r'
@@ -242,7 +254,7 @@ namespace top
             const std::string key_path = "r/" + account.get_storage_key() + "/" + uint64_to_full_hex(target_height) + "/" + xstring_utl::uint642hex(target_viewid) + "/p";
             return key_path;
         }
-        
+
         enum_xdbkey_type   xvdbkey_t::get_dbkey_type(const std::string & key)
         {
             enum_xdbkey_type type = enum_xdbkey_type_unknow;
@@ -378,32 +390,11 @@ namespace top
             return key_path;
         }
 
-        const std::string xvdbkey_t::create_prunable_mpt_key(const xvaccount_t & account, const std::string & key)
+        const std::string xvdbkey_t::create_prunable_mpt_node_key(const xvaccount_t & account, const std::string & key)
         {
             auto zone_bytes = to_bytes(account.get_zone_index());
             auto ledger_bytes = to_bytes(account.get_ledger_id());
             auto const key_path = std::string{"r/"} + std::string{zone_bytes.begin(), zone_bytes.end()} + std::string{ledger_bytes.begin(), ledger_bytes.end()}  + "/" + key;
-            return key_path;
-        }
-
-        const std::string xvdbkey_t::create_prunable_mpt_unit_key(const xvaccount_t & account, const std::string & key)
-        {
-            xassert(account.is_table_address());
-            auto zone_bytes = to_bytes(account.get_zone_index());
-            auto ledger_bytes = to_bytes(account.get_ledger_id());
-            auto const key_path = std::string{"r/"} + std::string{zone_bytes.begin(), zone_bytes.end()} + std::string{ledger_bytes.begin(), ledger_bytes.end()}  + "/u" + key;
-            return key_path;
-        }
-        const std::string xvdbkey_t::create_prunable_mpt_key_prefix(const xvaccount_t & account)
-        {
-            auto zone_bytes = to_bytes(account.get_zone_index());
-            auto ledger_bytes = to_bytes(account.get_ledger_id());
-            auto const key_path_prefix = std::string{"r/"} + std::string{zone_bytes.begin(), zone_bytes.end()} + std::string{ledger_bytes.begin(), ledger_bytes.end()}  + "/u";
-            return key_path_prefix;
-        }
-        const std::string xvdbkey_t::create_prunable_mpt_unit_key(std::string const& prefix, const std::string & key)
-        {
-            auto const key_path = prefix  + key;
             return key_path;
         }
 

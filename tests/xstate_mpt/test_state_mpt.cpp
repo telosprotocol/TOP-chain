@@ -281,13 +281,16 @@ TEST_F(test_state_mpt_fixture, test_basic) {
     }
     EXPECT_TRUE(s->m_journal.index_changes.empty());
     EXPECT_TRUE(s->m_journal.dirties.empty());
-    // check code
-    for (auto i = 2; i < 5; i++) {
-        std::string state_str{"state_str" + std::to_string(i)};
-        auto hash = base::xcontext_t::instance().hash(state_str, enum_xhash_type_sha2_256);
-        auto v = ReadUnitWithPrefix(s->m_db->DiskDB(), xhash256_t({hash.begin(), hash.end()}));
-        EXPECT_EQ(to_string(v), state_str);
-    }
+    // // check code
+    // for (auto i = 2; i < 5; i++) {
+    //     std::string state_str{"state_str" + std::to_string(i)};
+    //     auto hash = base::xcontext_t::instance().hash(state_str, enum_xhash_type_sha2_256);
+    //     xbytes_t b{hash.begin(), hash.end()};
+    //     auto state_key = base::xvdbkey_t::create_prunable_unit_state_key(
+    //             base::xvaccount_t{info.m_account.value()}, info.m_index.get_latest_unit_height(), info.m_index.get_latest_unit_hash());
+    //     auto v = ReadUnitWithPrefix(s->m_db->DiskDB(), b);
+    //     EXPECT_EQ(to_string(v), state_str);
+    // }
 
     // EXPECT_EQ(state_mpt::xstate_mpt_cache_t::instance()->m_cache.size(), 1);
     // EXPECT_TRUE(state_mpt::xstate_mpt_cache_t::instance()->m_cache.count(TABLE_ADDRESS));

@@ -34,6 +34,19 @@ public:
         }
     }
 
+    void PutWithPrefix(xbytes_t const & key, xbytes_t const & value, std::error_code & ec) override {
+
+    }
+    void DeleteWithPrefix(xbytes_t const & key, std::error_code & ec) override {
+
+    }
+    bool HasWithPrefix(xbytes_t const & key, std::error_code & ec) override {
+        return false;
+    }
+    xbytes_t GetWithPrefix(xbytes_t const & key, std::error_code & ec) override {
+        return {};
+    }
+
     std::map<xbytes_t, xbytes_t> m;
 
     std::atomic<uint64_t> Counter_Get{0};
@@ -58,6 +71,19 @@ public:
             return xbytes_t{};
         }
         return m[key];
+    }
+
+    void PutWithPrefix(xbytes_t const & key, xbytes_t const & value, std::error_code & ec) override {
+
+    }
+    void DeleteWithPrefix(xbytes_t const & key, std::error_code & ec) override {
+
+    }
+    bool HasWithPrefix(xbytes_t const & key, std::error_code & ec) override {
+        return false;
+    }
+    xbytes_t GetWithPrefix(xbytes_t const & key, std::error_code & ec) override {
+        return {};
     }
 
     std::map<xbytes_t, xbytes_t> m;

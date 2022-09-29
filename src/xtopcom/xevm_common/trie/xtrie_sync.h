@@ -54,7 +54,7 @@ private:
         xbytes_t data;     // Data content of the node, cached until all subtrees complete
 
         xbytes_t unit_sync_key;    // Unit key is different from data hash
-        xhash256_t unit_store_key;    // Unit key is different from data hash
+        xbytes_t unit_store_key;    // Unit key is different from data hash
         bool unit{false};  // Whether this is a unit entry
 
         std::vector<request *> parents;  // Parent state nodes referencing this entry (notify all upon completion)
@@ -64,7 +64,7 @@ private:
 
         request(xbytes_t const & _path, xhash256_t const & _hash, LeafCallback _callback) : path{_path}, hash{_hash}, callback{_callback} {
         }
-        request(xbytes_t const & _path, xhash256_t const & _hash, xbytes_t const & _unit_sync_key, xhash256_t const & _unit_store_key, bool is_unit)
+        request(xbytes_t const & _path, xhash256_t const & _hash, xbytes_t const & _unit_sync_key, xbytes_t const & _unit_store_key, bool is_unit)
           : path{_path}, hash{_hash}, unit_sync_key(_unit_sync_key), unit_store_key(_unit_store_key), unit{is_unit} {
         }
     };
@@ -74,13 +74,13 @@ private:
     class syncMemBatch {
     public:
         std::map<xhash256_t, xbytes_t> nodes;  // In-memory membatch of recently completed nodes
-        std::map<xhash256_t, xbytes_t> units;  // In-memory membatch of recently completed codes
+        std::map<xbytes_t, xbytes_t> units;  // In-memory membatch of recently completed codes
 
     public:
         inline bool hasNode(xhash256_t const & hash) const {
             return nodes.find(hash) != nodes.end();
         }
-        inline bool hasUnit(xhash256_t const & hash) const {
+        inline bool hasUnit(xbytes_t const & hash) const {
             return units.find(hash) != units.end();
         }
 
@@ -121,7 +121,7 @@ public:
     void AddSubTrie(xhash256_t const & root, xbytes_t const & path, xhash256_t const & parent, LeafCallback callback);
 
     // AddUnitTrie registers unit index.
-    void AddUnitEntry(xhash256_t const & hash, xbytes_t const & path, xbytes_t const & unit_sync_key, xhash256_t const & unit_store_key, xhash256_t const & parent);
+    void AddUnitEntry(xhash256_t const & hash, xbytes_t const & path, xbytes_t const & unit_sync_key, xbytes_t const & unit_store_key, xhash256_t const & parent);
 
     // Missing retrieves the known missing nodes from the trie for retrieval. To aid
     // both eth/6x style fast sync and snap/1x style state sync, the paths of trie

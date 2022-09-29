@@ -79,7 +79,11 @@ namespace top
            
            static const std::string  create_prunable_state_key(const xvaccount_t & account,const uint64_t target_height);
            static const std::string  create_prunable_state_key(const xvaccount_t & account,const uint64_t target_height,const std::string & block_hash);
-           
+           // now unit state key, different from block
+           static const std::string  create_prunable_unit_state_key(const xvaccount_t & account, uint64_t target_height,std::string const& block_hash);
+           //all keys under of same height state
+           static const std::string  create_prunable_unit_state_height_key(const xvaccount_t & account,const uint64_t target_height);
+
            //prunable tx and tx index
            static const std::string  create_prunable_tx_key(const std::string & org_tx_hash);
            static const std::string  create_prunable_blockhash_key(const std::string & org_tx_hash);
@@ -105,10 +109,8 @@ namespace top
            static const std::string  create_prunable_block_output_offdata_key(const xvaccount_t & account,const uint64_t target_height,const uint64_t target_viewid);
            
            static const std::string  create_prunable_unit_proof_key(const xvaccount_t & account, const uint64_t target_height);
-           static const std::string  create_prunable_mpt_key(const xvaccount_t & account, const std::string & key);
-           static const std::string  create_prunable_mpt_unit_key(const xvaccount_t & account, const std::string & key);
-           static const std::string  create_prunable_mpt_key_prefix(const xvaccount_t & account);
-           static const std::string  create_prunable_mpt_unit_key(std::string const& prefix, const std::string & key);
+           static const std::string  create_prunable_mpt_node_key(const xvaccount_t & account, const std::string & key);
+           
            static const std::string  get_account_prefix_key(const std::string & key);
        };
 

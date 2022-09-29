@@ -37,8 +37,7 @@ namespace top
 
             std::string state_db_key;
             if (target_state.get_block_level() == enum_xvblock_level_unit) {
-                auto table_addr = xvaccount_t::make_table_account_address(target_account);
-                state_db_key = xvdbkey_t::create_prunable_mpt_unit_key(table_addr, target_block_hash);
+                state_db_key = xvdbkey_t::create_prunable_unit_state_key(target_account, target_state.get_block_height(), target_block_hash);
             } else {
                 state_db_key = xvdbkey_t::create_prunable_state_key(target_account,target_state.get_block_height(),target_block_hash);
             }
@@ -77,8 +76,7 @@ namespace top
 
             std::string state_db_key;
             if (!target_account.is_table_address()) {
-                auto table_addr = xvaccount_t::make_table_account_address(target_account);
-                state_db_key = xvdbkey_t::create_prunable_mpt_unit_key(table_addr, block_hash);
+                state_db_key = xvdbkey_t::create_prunable_unit_state_key(target_account,block_height,block_hash);
             } else {
                 state_db_key = xvdbkey_t::create_prunable_state_key(target_account,block_height,block_hash);
             }

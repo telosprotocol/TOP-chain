@@ -89,7 +89,7 @@ void Sync::AddSubTrie(xhash256_t const & root, xbytes_t const & path, xhash256_t
     schedule(req);
 }
 
-void Sync::AddUnitEntry(xhash256_t const & hash, xbytes_t const & path, xbytes_t const & unit_sync_key, xhash256_t const & unit_store_key, xhash256_t const & parent) {
+void Sync::AddUnitEntry(xhash256_t const & hash, xbytes_t const & path, xbytes_t const & unit_sync_key, xbytes_t const & unit_store_key, xhash256_t const & parent) {
     if (membatch.hasUnit(unit_store_key)) {
         return;
     }
