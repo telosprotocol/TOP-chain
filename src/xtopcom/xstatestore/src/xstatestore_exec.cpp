@@ -97,6 +97,25 @@ void xstatestore_executor_t::execute_and_get_tablestate_ext(base::xvblock_t* blo
     xdbg("xstatestore_executor_t::execute_and_get_tablestate_ext succ get from execute recursive.block=%s", block->dump().c_str());
 }
 
+// XTODO should always get successfully
+xtablestate_ext_ptr_t xstatestore_executor_t::get_latest_executed_tablestate_ext() const {
+    // firstly try to push executed the latest committed block
+    update_execute_from_execute_height();
+
+    uint64_t execute_height = get_latest_executed_block_height();
+    xobject_ptr_t<base::xvblock_t> latest_block = m_statestore_base.get_blockstore()->load_block_object(m_table_addr.vaccount(), execute_height, base::enum_xvblock_flag_committed, false);
+    if (nullptr != latest_block) {
+        xtablestate_ext_ptr_t tablestate_ext = nullptr;
+        std::error_code ec;
+        execute_and_get_tablestate_ext(latest_block.get(), tablestate_ext, ec);
+        if (nullptr != tablestate_ext) {
+            return tablestate_ext;
+        }
+    }
+    xerror("xstatestore_executor_t::get_latest_executed_tablestate_ext fail.table=%s,height=%ld",m_table_addr.value().c_str(),execute_height);
+    return nullptr;
+}
+
 void xstatestore_executor_t::execute_and_get_accountindex(base::xvblock_t* block, common::xaccount_address_t const& unit_addr, base::xaccount_index_t & account_index, std::error_code & ec) const {
     xtablestate_ext_ptr_t tablestate_ext = nullptr;
     execute_and_get_tablestate_ext(block, tablestate_ext, ec);
@@ -155,7 +174,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::execute_block_recursive(base::xvbl
 
     tablestate = make_state_from_prev_state_and_table(block, prev_tablestate, ec);
     if (ec) {
-        xerror("xstatestore_executor_t::execute_block_recursive fail.limit=%d,cur_block=%s", limit,block->dump().c_str());
+        xwarn("xstatestore_executor_t::execute_block_recursive fail.limit=%d,cur_block=%s", limit,block->dump().c_str());
         return nullptr;
     }
 
@@ -202,7 +221,7 @@ void xstatestore_executor_t::update_execute_from_execute_height() const {
         }
         xtablestate_ext_ptr_t tablestate = make_state_from_prev_state_and_table(cur_block.get(), prev_tablestate, ec);
         if (ec) {
-            xerror("xstatestore_executor_t::execute_block_recursive fail.cur_block=%s", cur_block->dump().c_str());
+            xwarn("xstatestore_executor_t::execute_block_recursive fail.cur_block=%s", cur_block->dump().c_str());
             break;
         }
 
@@ -396,7 +415,6 @@ xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_tab
                     return nullptr;
                 }
 
-                uint32_t limit = 100;  // TODO(jimmy) for load unitstate by unit delete futrun
                 base::xaccount_index_t accountindex;
                 accountindex.serialize_from(account_index_str);
                 data::xunitstate_ptr_t unitstate = nullptr;
@@ -472,7 +490,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_tab
         if (!sub_blocks.empty()) {            
             for (uint32_t i=0;i<sub_blocks.size();i++) {
                 auto & unit = sub_blocks[i];
-                uint32_t limit = 2;  // XTODO
+                uint32_t limit = 2;  // XTODO new execution should always successfully
                 data::xunitstate_ptr_t unitstate = execute_unit_recursive(common::xaccount_address_t(unit->get_account()), unit.get(), limit, ec);
                 if (nullptr == unitstate) {
                     xerror("xstatestore_executor_t::make_state_from_prev_state_and_table,fail-make unitstate for table block(%s),unit=%s", current_block->dump().c_str(),unit->dump().c_str());
@@ -570,7 +588,7 @@ void  xstatestore_executor_t::build_unitstate_by_unit(common::xaccount_address_t
     }
 
     // secondly, try make state from current block
-    uint32_t limit = 100;  // XTODO
+    uint32_t limit = execute_unit_limit_demand;  // XTODO
     unitstate = execute_unit_recursive(unit_addr, unit, limit, ec);
     if (nullptr != unitstate) {
         xdbg("xstatestore_executor_t::build_unitstate_by_unit get from current block.block=%s", unit->dump().c_str());
@@ -598,7 +616,7 @@ void xstatestore_executor_t::build_unitstate_by_accountindex(common::xaccount_ad
         return;
     }
     // secondly, try make state from current block
-    uint32_t limit = 100;  // XTODO
+    uint32_t limit = execute_unit_limit_demand;  // XTODO
     unitstate = execute_unit_recursive(unit_addr, _unit.get(), limit, ec);
     if (nullptr != unitstate) {
         xdbg("xstatestore_executor_t::build_unitstate_by_accountindex succ. get from current block.account=%s,accountindex=%s", unit_addr.value().c_str(), account_index.dump().c_str());

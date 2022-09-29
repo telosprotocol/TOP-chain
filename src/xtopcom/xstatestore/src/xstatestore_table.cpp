@@ -18,54 +18,15 @@
 NS_BEG2(top, statestore)
 xstatestore_table_t::xstatestore_table_t(common::xaccount_address_t const&  table_addr)
 : m_table_addr(table_addr), m_table_executor(table_addr) {
-    init_cache();
     xdbg("xstatestore_table_t::xstatestore_table_t table=%s,this=%p", table_addr.value().c_str(), this);
 }
 
-void xstatestore_table_t::init_cache() {
-    xobject_ptr_t<base::xvblock_t> _block = m_store_base.get_blockstore()->get_latest_connected_block(m_table_addr.vaccount());
-    if (nullptr != _block) {
-        std::error_code ec;
-        xtablestate_ext_ptr_t ext_tablestate = nullptr;
-        m_table_executor.execute_and_get_tablestate_ext(_block.get(), ext_tablestate, ec);
-        if (nullptr != ext_tablestate) {
-            m_table_cache.init_latest_connectted_tablestate(ext_tablestate->get_table_state());
-            return;
-        }
-    }
-    xobject_ptr_t<base::xvblock_t> _block2 = m_store_base.get_blockstore()->get_genesis_block(m_table_addr.vaccount());
-    if (nullptr != _block) {
-        std::error_code ec;
-        xtablestate_ext_ptr_t ext_tablestate = nullptr;
-        m_table_executor.execute_and_get_tablestate_ext(_block.get(), ext_tablestate, ec);
-        if (nullptr != ext_tablestate) {
-            m_table_cache.init_latest_connectted_tablestate(ext_tablestate->get_table_state());
-            xwarn("xstatestore_table_t::init_cache with genesis block=%s", _block->dump().c_str());
-            return;
-        }
-    }    
-}
-
 data::xtablestate_ptr_t xstatestore_table_t::get_latest_connectted_table_state() const {
-    data::xtablestate_ptr_t cache_tablestate = m_table_cache.get_latest_connectted_tablestate();
-    auto latest_commit_height = m_store_base.get_blockstore()->get_latest_connected_block_height(m_table_addr.vaccount());
-    if (cache_tablestate->height() >= latest_commit_height) {
-        return cache_tablestate;
-    }
-
-    xobject_ptr_t<base::xvblock_t> _block = m_store_base.get_blockstore()->get_latest_connected_block(m_table_addr.vaccount());
-    if (nullptr == _block) {
-        xassert(false);
-        return nullptr;
-    }
-
-    xtablestate_ext_ptr_t ext_tablestate = get_tablestate_ext_from_block(_block.get());
-    if (nullptr != ext_tablestate) {
-        m_table_cache.set_latest_connectted_tablestate(ext_tablestate->get_table_state());
-        return ext_tablestate->get_table_state();
-    }
-    xwarn("xstatestore_table_t::get_latest_connectted_table_state return old cache tablestate.%s",cache_tablestate->get_bstate()->dump().c_str());
-    return cache_tablestate;
+    xtablestate_ext_ptr_t _tablestate = m_table_executor.get_latest_executed_tablestate_ext();
+    if (nullptr != _tablestate) {
+        return _tablestate->get_table_state();
+    }    
+    return nullptr;
 }
 
 data::xunitstate_ptr_t xstatestore_table_t::get_unit_state_from_block(common::xaccount_address_t const & account_address, base::xvblock_t * target_block) const {
