@@ -34,7 +34,7 @@ std::pair<xtrie_node_face_ptr_t, int32_t> xtop_trie_committer::commit(xtrie_node
     // if this path is clean, use available cached data
     auto const cached_data = n->cache();
     if (cached_data.hash_node() != nullptr && !cached_data.dirty()) {
-        std::printf("commit: hash %s\n", xhash256_t{cached_data.hash_node()->data()}.as_hex_str().c_str());
+        // std::printf("commit: hash %s\n", xhash256_t{cached_data.hash_node()->data()}.as_hex_str().c_str());
         return std::make_pair(cached_data.hash_node(), 0);
     }
 
@@ -67,7 +67,7 @@ std::pair<xtrie_node_face_ptr_t, int32_t> xtop_trie_committer::commit(xtrie_node
             auto hn = std::dynamic_pointer_cast<xtrie_hash_node_t>(hashed_node);
             assert(hn != nullptr);
 
-            std::printf("commit: hash %s\n", xhash256_t{hn->data()}.as_hex_str().c_str());
+            // std::printf("commit: hash %s\n", xhash256_t{hn->data()}.as_hex_str().c_str());
 
             return std::make_pair(hn, childCommitted + 1);
         }
@@ -92,7 +92,7 @@ std::pair<xtrie_node_face_ptr_t, int32_t> xtop_trie_committer::commit(xtrie_node
             auto hn = std::dynamic_pointer_cast<xtrie_hash_node_t>(hashed_node);
             assert(hn != nullptr);
 
-            std::printf("commit: hash %s\n", xhash256_t{hn->data()}.as_hex_str().c_str());
+            // std::printf("commit: hash %s\n", xhash256_t{hn->data()}.as_hex_str().c_str());
 
             return std::make_pair(hn, childCommitted + 1);
         }
