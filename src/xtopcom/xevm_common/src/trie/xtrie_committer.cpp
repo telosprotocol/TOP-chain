@@ -46,6 +46,9 @@ std::pair<xtrie_node_face_ptr_t, int32_t> xtop_trie_committer::commit(xtrie_node
 
         // Commit child
         auto collapsed = cn->clone();
+        if (collapsed->cache().dirty()) {
+            
+        }
 
         // If the child is fullNode, recursively commit,
         // otherwise it can only be hashNode or valueNode.
@@ -63,7 +66,8 @@ std::pair<xtrie_node_face_ptr_t, int32_t> xtop_trie_committer::commit(xtrie_node
         // The key needs to be copied, since we're delivering it to database
         collapsed->key = hexToCompact(cn->key);
         auto const hashed_node = store(collapsed, db);
-        if (hashed_node != nullptr && hashed_node->type() == xtrie_node_type_t::hashnode) {
+        assert(hashed_node != nullptr);
+        if (hashed_node->type() == xtrie_node_type_t::hashnode) {
             auto hn = std::dynamic_pointer_cast<xtrie_hash_node_t>(hashed_node);
             assert(hn != nullptr);
 
@@ -88,7 +92,8 @@ std::pair<xtrie_node_face_ptr_t, int32_t> xtop_trie_committer::commit(xtrie_node
         collapsed->Children = hashedKids;
 
         auto const hashed_node = store(collapsed, db);
-        if (hashed_node != nullptr && hashed_node->type() == xtrie_node_type_t::hashnode) {
+        assert(hashed_node != nullptr);
+        if (hashed_node->type() == xtrie_node_type_t::hashnode) {
             auto hn = std::dynamic_pointer_cast<xtrie_hash_node_t>(hashed_node);
             assert(hn != nullptr);
 

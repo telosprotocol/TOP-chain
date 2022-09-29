@@ -4,10 +4,11 @@
 
 #pragma once
 
-#include "xbasic/xbyte.h"
 #include "xbasic/xbyte_buffer.h"
 #include "xbasic/xhex.h"
-#include "xbasic/xhash.hpp"
+#define XXH_INLINE_ALL              // define it first,then include xxhash.h
+#include "xutility/xxHash/xxhash.h" //from xxhash lib
+#undef XXH_INLINE_ALL
 
 #include <array>
 #include <cstdint>
@@ -294,5 +295,19 @@ template
 class xtop_hash<32>;
 
 using xhash256_t = xhash_t<32>;
+
+NS_END1
+
+NS_BEG1(std)
+
+template <std::size_t Bytes>
+struct hash<top::xhash_t<Bytes>> {
+    size_t operator()(top::xhash_t<Bytes> const & input) const {
+        XXH64_state_t hash;
+        XXH64_reset(&hash, 0);
+        XXH64_update(&hash, input.data(), Bytes);
+        return static_cast<size_t>(XXH64_digest(&hash));
+    }
+};
 
 NS_END1

@@ -60,9 +60,9 @@ private:
         std::vector<request *> parents;  // Parent state nodes referencing this entry (notify all upon completion)
         std::size_t deps{0};                // Number of dependencies before allowed to commit this node
 
-        LeafCallback callback{nullptr};  // Callback to invoke if a leaf node it reached on this branch
+        leaf_callback callback{nullptr};  // Callback to invoke if a leaf node it reached on this branch
 
-        request(xbytes_t const & _path, xhash256_t const & _hash, LeafCallback _callback) : path{_path}, hash{_hash}, callback{_callback} {
+        request(xbytes_t const & _path, xhash256_t const & _hash, leaf_callback _callback) : path{_path}, hash{_hash}, callback{_callback} {
         }
         request(xbytes_t const & _path, xhash256_t const & _hash, xbytes_t const & _unit_sync_key, xbytes_t const & _unit_store_key, bool is_unit)
           : path{_path}, hash{_hash}, unit_sync_key(_unit_sync_key), unit_store_key(_unit_store_key), unit{is_unit} {
@@ -101,10 +101,10 @@ private:
     std::map<std::size_t, std::size_t> fetches;                             // Number of active fetches per trie node depth
 
 public:
-    Sync(xhash256_t const & root, xkv_db_face_ptr_t _database, LeafCallback callback);
+    Sync(xhash256_t const & root, xkv_db_face_ptr_t _database, leaf_callback callback);
     Sync(xkv_db_face_ptr_t _database);
 
-    static std::shared_ptr<Sync> NewSync(xhash256_t const & root, xkv_db_face_ptr_t _database, LeafCallback callback);
+    static std::shared_ptr<Sync> NewSync(xhash256_t const & root, xkv_db_face_ptr_t _database, leaf_callback callback);
     static std::shared_ptr<Sync> NewSync(xkv_db_face_ptr_t _database);
 
     Sync(Sync const &) = delete;
@@ -115,10 +115,10 @@ public:
 
 public:
     // Init
-    void Init(xhash256_t const & root, LeafCallback callback);
+    void Init(xhash256_t const & root, leaf_callback callback);
 
     // AddSubTrie registers a new trie to the sync code, rooted at the designated parent.
-    void AddSubTrie(xhash256_t const & root, xbytes_t const & path, xhash256_t const & parent, LeafCallback callback);
+    void AddSubTrie(xhash256_t const & root, xbytes_t const & path, xhash256_t const & parent, leaf_callback callback);
 
     // AddUnitTrie registers unit index.
     void AddUnitEntry(xhash256_t const & hash, xbytes_t const & path, xbytes_t const & unit_sync_key, xbytes_t const & unit_store_key, xhash256_t const & parent);

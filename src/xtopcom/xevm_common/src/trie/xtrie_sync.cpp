@@ -28,14 +28,14 @@ SyncPath newSyncPath(xbytes_t const & path) {
     return res;
 }
 
-Sync::Sync(xhash256_t const & root, xkv_db_face_ptr_t _database, LeafCallback callback) : database{_database} {
+Sync::Sync(xhash256_t const & root, xkv_db_face_ptr_t _database, leaf_callback callback) : database{_database} {
     AddSubTrie(root, xbytes_t{}, xhash256_t{}, callback);
 }
 
 Sync::Sync(xkv_db_face_ptr_t _database) : database{_database} {
 }
 
-std::shared_ptr<Sync> Sync::NewSync(xhash256_t const & root, xkv_db_face_ptr_t _database, LeafCallback callback) {
+std::shared_ptr<Sync> Sync::NewSync(xhash256_t const & root, xkv_db_face_ptr_t _database, leaf_callback callback) {
     return std::make_shared<Sync>(root, _database, callback);
 }
 
@@ -58,13 +58,13 @@ Sync::~Sync() {
     unitReqs.clear();
 }
 
-void Sync::Init(xhash256_t const & root, LeafCallback callback) {
+void Sync::Init(xhash256_t const & root, leaf_callback callback) {
     syncRoot = root;
     AddSubTrie(root, xbytes_t{}, xhash256_t{}, callback);
 }
 
-void Sync::AddSubTrie(xhash256_t const & root, xbytes_t const & path, xhash256_t const & parent, LeafCallback callback) {
-    if (root == emptyRoot) {
+void Sync::AddSubTrie(xhash256_t const & root, xbytes_t const & path, xhash256_t const & parent, leaf_callback callback) {
+    if (root == empty_root) {
         xdbg("Sync::AddSubTrie hash root empty: %s", root.as_hex_str().c_str());
         return;
     }

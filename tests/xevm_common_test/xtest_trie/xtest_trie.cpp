@@ -2,13 +2,13 @@
 
 NS_BEG4(top, evm_common, trie, tests)
 
-#define UpdateString(trie, key, value) trie->Update(top::to_bytes(std::string{key}), top::to_bytes(std::string{value}));
+#define UpdateString(trie, key, value) trie->update(top::to_bytes(std::string{key}), top::to_bytes(std::string{value}));
 
-#define TESTINTRIE(trie, key, value) ASSERT_EQ(trie->Get(top::to_bytes(std::string{key})), top::to_bytes(std::string{value}));
+#define TESTINTRIE(trie, key, value) ASSERT_EQ(trie->get(top::to_bytes(std::string{key})), top::to_bytes(std::string{value}));
 
 TEST_F(xtest_trie_fixture, test_insert1) {
     std::error_code ec;
-    auto trie = xtrie_t::New({}, test_trie_db_ptr, ec);
+    auto trie = xtrie_t::build_from({}, test_trie_db_ptr, ec);
 
     UpdateString(trie, "doe", "reindeer");
     UpdateString(trie, "dog", "puppy");
@@ -17,30 +17,30 @@ TEST_F(xtest_trie_fixture, test_insert1) {
     auto exp = xhash256_t{top::from_hex("8aad789dff2f538bca5d8ea56e8abe10f4c7ba3a5dea95fea4cd6e7c3a1168d3", ec)};
 
     ASSERT_TRUE(!ec);
-    ASSERT_EQ(exp, trie->Hash());
+    ASSERT_EQ(exp, trie->hash());
 }
 
 TEST_F(xtest_trie_fixture, test_insert2) {
     std::error_code ec;
-    auto trie = xtrie_t::New({}, test_trie_db_ptr, ec);
+    auto trie = xtrie_t::build_from({}, test_trie_db_ptr, ec);
 
     UpdateString(trie, "A", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
     auto exp = xhash256_t{top::from_hex("d23786fb4a010da3ce639d66d5e904a11dbc02746d1ce25029e53290cabf28ab", ec)};
 
     ASSERT_TRUE(!ec);
-    ASSERT_EQ(exp, trie->Hash());
+    ASSERT_EQ(exp, trie->hash());
 }
 
 TEST_F(xtest_trie_fixture, test_insert3) {
     std::error_code ec;
-    auto trie = xtrie_t::New({}, test_trie_db_ptr, ec);
+    auto trie = xtrie_t::build_from({}, test_trie_db_ptr, ec);
 
     UpdateString(trie, "A", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
     auto exp = xhash256_t{top::from_hex("d23786fb4a010da3ce639d66d5e904a11dbc02746d1ce25029e53290cabf28ab", ec)};
 
-    auto res = trie->Commit(ec);
+    auto res = trie->commit(ec);
 
     ASSERT_TRUE(!ec);
     ASSERT_EQ(exp, res.first);
@@ -48,22 +48,22 @@ TEST_F(xtest_trie_fixture, test_insert3) {
 
 TEST_F(xtest_trie_fixture, test_get) {
     std::error_code ec;
-    auto trie = xtrie_t::New({}, test_trie_db_ptr, ec);
+    auto trie = xtrie_t::build_from({}, test_trie_db_ptr, ec);
 
     UpdateString(trie, "doe", "reindeer");
     UpdateString(trie, "dog", "puppy");
     UpdateString(trie, "dogglesworth", "cat");
 
-    auto res = trie->Get(top::to_bytes(std::string{"dog"}));
+    auto res = trie->get(top::to_bytes(std::string{"dog"}));
     ASSERT_EQ(res, top::to_bytes(std::string{"puppy"}));
 
-    auto unknown = trie->Get(top::to_bytes(std::string{"unknown"}));
+    auto unknown = trie->get(top::to_bytes(std::string{"unknown"}));
     ASSERT_EQ(unknown, top::to_bytes(std::string{""}));
 }
 
 TEST_F(xtest_trie_fixture, test_delete) {
     std::error_code ec;
-    auto trie = xtrie_t::New({}, test_trie_db_ptr, ec);
+    auto trie = xtrie_t::build_from({}, test_trie_db_ptr, ec);
 
     UpdateString(trie, "do", "verb");
     UpdateString(trie, "ether", "wookiedoo");
@@ -77,12 +77,12 @@ TEST_F(xtest_trie_fixture, test_delete) {
     auto exp = xhash256_t{top::from_hex("5991bb8c6514148a29db676a14ac506cd2cd5775ace63c30a4fe457715e9ac84", ec)};
 
     ASSERT_TRUE(!ec);
-    ASSERT_EQ(exp, trie->Hash());
+    ASSERT_EQ(exp, trie->hash());
 }
 
 TEST_F(xtest_trie_fixture, test_empty_value_as_delete) {
     std::error_code ec;
-    auto trie = xtrie_t::New({}, test_trie_db_ptr, ec);
+    auto trie = xtrie_t::build_from({}, test_trie_db_ptr, ec);
 
     UpdateString(trie, "do", "verb");
     UpdateString(trie, "ether", "wookiedoo");
@@ -96,12 +96,12 @@ TEST_F(xtest_trie_fixture, test_empty_value_as_delete) {
     auto exp = xhash256_t{top::from_hex("5991bb8c6514148a29db676a14ac506cd2cd5775ace63c30a4fe457715e9ac84", ec)};
 
     ASSERT_TRUE(!ec);
-    ASSERT_EQ(exp, trie->Hash());
+    ASSERT_EQ(exp, trie->hash());
 }
 
 TEST_F(xtest_trie_fixture, test_replication) {
     std::error_code ec;
-    auto trie = xtrie_t::New({}, test_trie_db_ptr, ec);
+    auto trie = xtrie_t::build_from({}, test_trie_db_ptr, ec);
 
     UpdateString(trie, "do", "verb");
     UpdateString(trie, "ether", "wookiedoo");
@@ -112,13 +112,13 @@ TEST_F(xtest_trie_fixture, test_replication) {
     UpdateString(trie, "somethingveryoddindeedthis is", "myothernodedata");
 
     xbytes_t res0;
-    res0 = trie->Get(top::to_bytes(std::string{"do"}));
+    res0 = trie->get(top::to_bytes(std::string{"do"}));
     ASSERT_EQ(res0, top::to_bytes(std::string{"verb"}));
 
-    auto exp = trie->Commit(ec).first;
+    auto exp = trie->commit(ec).first;
 
     //----------new trie from db && root hash
-    auto trie2 = xtrie_t::New(exp, test_trie_db_ptr, ec);
+    auto trie2 = xtrie_t::build_from(exp, test_trie_db_ptr, ec);
     ASSERT_TRUE(!ec);
 
     TESTINTRIE(trie2, "do", "verb");
@@ -132,15 +132,15 @@ TEST_F(xtest_trie_fixture, test_replication) {
 
 TEST_F(xtest_trie_fixture, test_large_value) {
     std::error_code ec;
-    auto trie = xtrie_t::New({}, test_trie_db_ptr, ec);
+    auto trie = xtrie_t::build_from({}, test_trie_db_ptr, ec);
 
-    trie->Update(top::to_bytes(std::string{"key1"}), xbytes_t(4, 99));  //{99,99,99,99}
-    trie->Update(top::to_bytes(std::string{"key2"}), xbytes_t(32, 1));  //{1,1,1,...,1}
+    trie->update(top::to_bytes(std::string{"key1"}), xbytes_t(4, 99));  //{99,99,99,99}
+    trie->update(top::to_bytes(std::string{"key2"}), xbytes_t(32, 1));  //{1,1,1,...,1}
 
     auto exp = xhash256_t{top::from_hex("afebee6cfce72f9d2a7a4f5926ac11f2a79bd75f3a9ae6358a08252ba5dce3be", ec)};
 
     ASSERT_TRUE(!ec);
-    ASSERT_EQ(exp, trie->Hash());
+    ASSERT_EQ(exp, trie->hash());
 }
 
 // Meaningless to encode the entire trie.
@@ -183,7 +183,7 @@ TEST(xtrie, test_encoding_trie) {
 
 TEST_F(xtest_trie_fixture, test_commit_to_disk) {
     std::error_code ec;
-    auto trie = xtrie_t::New({}, test_trie_db_ptr, ec);
+    auto trie = xtrie_t::build_from({}, test_trie_db_ptr, ec);
 
     UpdateString(trie, "do", "verb");
     UpdateString(trie, "ether", "wookiedoo");
@@ -201,7 +201,7 @@ TEST_F(xtest_trie_fixture, test_commit_to_disk) {
     UpdateString(trie, "somethisadngveryoddindeedthis is", "myothernodedata");
 
     ASSERT_TRUE(!ec);
-    auto res = trie->Commit(ec).first;
+    auto res = trie->commit(ec).first;
     ASSERT_TRUE(!ec);
 
     // havn't get anything from disk db for now
@@ -317,7 +317,7 @@ commit:  9a53de09e43869f9ee8bea0535c15924a9f5f5f98c6ec81b4b3f2fc8c7090f8c  >  f8
 
     // use diskdb to rebuild a new trie:
     auto new_clean_trie_db_ptr = xtrie_db_t::NewDatabase(test_disk_db_ptr);
-    auto new_trie = xtrie_t::New(trie->Hash(), new_clean_trie_db_ptr, ec);
+    auto new_trie = xtrie_t::build_from(trie->hash(), new_clean_trie_db_ptr, ec);
     // read once of root hash: +1
     ASSERT_TRUE(test_disk_db_ptr->Counter_Get.load() == 18);
 

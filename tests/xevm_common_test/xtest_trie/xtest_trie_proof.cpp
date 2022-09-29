@@ -2,11 +2,11 @@
 
 NS_BEG4(top, evm_common, trie, tests)
 
-#define UpdateString(trie, key, value) trie->Update(top::to_bytes(std::string{key}), top::to_bytes(std::string{value}));
+#define UpdateString(trie, key, value) trie->update(top::to_bytes(std::string{key}), top::to_bytes(std::string{value}));
 
 TEST_F(xtest_trie_fixture, test_prove_sample) {
     std::error_code ec;
-    auto trie = xtrie_t::New({}, test_trie_db_ptr, ec);
+    auto trie = xtrie_t::build_from({}, test_trie_db_ptr, ec);
 
     UpdateString(trie, "doe", "reindeer");
     UpdateString(trie, "dog", "puppy");
@@ -27,7 +27,7 @@ TEST_F(xtest_trie_fixture, test_prove_sample) {
     UpdateString(trie, "somethingveryoddindeedthis is", "myothernodedata");
     UpdateString(trie, "somethisadngveryoddindeedthis is", "myothernodedata");
 
-    trie->Prove(top::to_bytes(std::string{"doe"}), 0, test_proof_db_ptr, ec);
+    trie->prove(top::to_bytes(std::string{"doe"}), 0, test_proof_db_ptr, ec);
 
 #define ASSERT_PROOF_DB_HAS(key, value)                                                                                                                                            \
     ASSERT_TRUE(test_proof_db_ptr->Get(top::from_hex(std::string{key}, ec), ec) == top::from_hex(std::string{value}, ec));                                                         \
@@ -58,13 +58,13 @@ TEST_F(xtest_trie_fixture, test_prove_sample) {
 
 TEST_F(xtest_trie_fixture, test_verify_one_element_proof) {
     std::error_code ec;
-    auto trie = xtrie_t::New({}, test_trie_db_ptr, ec);
+    auto trie = xtrie_t::build_from({}, test_trie_db_ptr, ec);
 
     UpdateString(trie, "k", "v");
 
-    trie->Prove(top::to_bytes(std::string{"k"}), 0, test_proof_db_ptr, ec);
+    trie->prove(top::to_bytes(std::string{"k"}), 0, test_proof_db_ptr, ec);
 
-    auto result = VerifyProof(trie->Hash(), top::to_bytes(std::string{"k"}), test_proof_db_ptr, ec);
+    auto result = VerifyProof(trie->hash(), top::to_bytes(std::string{"k"}), test_proof_db_ptr, ec);
     ASSERT_TRUE(!ec);
     ASSERT_EQ(result, top::to_bytes(std::string{"v"}));
 }

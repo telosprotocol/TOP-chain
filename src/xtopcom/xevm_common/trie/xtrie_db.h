@@ -5,11 +5,13 @@
 #pragma once
 
 #include "xbasic/xhash.hpp"
+#include "xevm_common/trie/xtrie_db_fwd.h"
 #include "xevm_common/trie/xtrie_kv_db_face.h"
 #include "xevm_common/trie/xtrie_node_fwd.h"
 
 #include <functional>
 #include <map>
+#include <unordered_set>
 
 NS_BEG3(top, evm_common, trie)
 
@@ -32,18 +34,19 @@ using xtrie_cache_node_t = xtop_trie_cache_node;
 class xtop_trie_db {
 private:
     friend class xtop_trie_cache_node;
-    xkv_db_face_ptr_t diskdb;  // Persistent storage for matured trie nodes
+    xkv_db_face_ptr_t diskdb_;  // Persistent storage for matured trie nodes
 
-    std::map<xhash256_t, xbytes_t> cleans;
-    std::map<xhash256_t, xtrie_cache_node_t> dirties;
+    std::map<xhash256_t, xbytes_t> cleans_;
+    std::map<xhash256_t, xtrie_cache_node_t> dirties_;
+    std::unordered_set<xhash256_t> pruned_hashes_;
 
-    xhash256_t oldest;
-    xhash256_t newest;
+    xhash256_t oldest_;
+    xhash256_t newest_;
 
-    std::map<xhash256_t, xbytes_t> preimages;  // Preimages of nodes from the secure trie
+    std::map<xhash256_t, xbytes_t> preimages_;  // Preimages of nodes from the secure trie
 
 public:
-    xtop_trie_db(xkv_db_face_ptr_t _diskdb) : diskdb(_diskdb) {
+    xtop_trie_db(xkv_db_face_ptr_t _diskdb) : diskdb_(_diskdb) {
     }
 
 public:
@@ -59,7 +62,7 @@ public:
 
 public:
     xkv_db_face_ptr_t DiskDB() {
-        return diskdb;
+        return diskdb_;
     }
 
 public:
@@ -67,7 +70,7 @@ public:
     // The blob size must be specified to allow proper size tracking.
     // All nodes inserted by this function will be reference tracked
     // and in theory should only used for **trie nodes** insertion.
-    void insert(xhash256_t hash, int32_t size, xtrie_node_face_ptr_t node);
+    void insert(xhash256_t hash, int32_t size, xtrie_node_face_ptr_t const & node);
 
     // insertPreimage writes a new trie node pre-image to the memory database if it's
     // yet unknown. The method will NOT make a copy of the slice,
@@ -96,6 +99,10 @@ public:
     // concurrently with other mutators.
     void Commit(xhash256_t hash, AfterCommitCallback cb, std::error_code & ec);
 
+    void prune(xhash256_t const & hash, std::error_code & ec);
+
+    void commit_pruned(std::error_code & ec);
+
 private:
     // commit is the private locked version of Commit.
     // void commit(xhash256_t hash, AfterCommitCallback cb, std::error_code & ec);
@@ -109,17 +116,17 @@ class xtop_trie_cache_node {
 private:
     friend class xtop_trie_db;
 
-    xtrie_node_face_ptr_t node;  // Cached collapsed trie node, or raw rlp data
-    uint16_t size;               // Byte size of the useful cached data
+    xtrie_node_face_ptr_t node_;  // Cached collapsed trie node, or raw rlp data
+    uint16_t size_;               // Byte size of the useful cached data
 
-    uint32_t parents;                         // Number of live nodes referencing this one
-    std::map<xhash256_t, uint16_t> children;  // External children referenced by this node
+    uint32_t parents_;                         // Number of live nodes referencing this one
+    std::map<xhash256_t, uint16_t> children_;  // External children referenced by this node
 
-    xhash256_t flushPrev;  // Previous node in the flush-list
-    xhash256_t flushNext;  // Next node in the flush-list
+    xhash256_t flush_prev_;  // Previous node in the flush-list
+    xhash256_t flush_next_;  // Next node in the flush-list
 
 private:
-    xtop_trie_cache_node(xtrie_node_face_ptr_t _node, uint16_t _size, xhash256_t _flushPrev) : node{_node}, size{_size}, flushPrev{_flushPrev} {
+    xtop_trie_cache_node(xtrie_node_face_ptr_t node, uint16_t _size, xhash256_t _flushPrev) : node_{std::move(node)}, size_{_size}, flush_prev_{_flushPrev} {
     }
 
 private:
@@ -136,7 +143,7 @@ private:
     // forChilds invokes the callback for all the tracked children of this node,
     // both the implicit ones from inside the node as well as the explicit ones
     // from outside the node.
-    void forChilds(onChildFunc f);
+    void forChilds(onChildFunc const & f);
 
     // forGatherChildren traverses the node hierarchy of a collapsed storage node and
     // invokes the callback for all the hashnode children.
@@ -146,7 +153,7 @@ using xtrie_cache_node_t = xtop_trie_cache_node;
 
 // simplifyNode traverses the hierarchy of an expanded memory node and discards
 // all the internal caches, returning a node that only contains the raw data.
-xtrie_node_face_ptr_t simplifyNode(xtrie_node_face_ptr_t n);
+xtrie_node_face_ptr_t simplify_node(xtrie_node_face_ptr_t const & n);
 
 // expandNode traverses the node hierarchy of a collapsed storage node and converts
 // all fields and keys into expanded memory form.

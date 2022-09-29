@@ -56,6 +56,14 @@ public:
     std::map<xbytes_t, xbytes_t> m;
 
     std::atomic<uint64_t> Counter_Get{0};
+
+    bool empty() const noexcept {
+        return m.empty();
+    }
+
+    size_t size() const noexcept {
+        return m.size();
+    }
 };
 using xmock_disk_db_ptr = std::shared_ptr<xmock_disk_db>;
 

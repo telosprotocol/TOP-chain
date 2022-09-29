@@ -238,7 +238,7 @@ void xtop_stack_trie::hash() {
         xdbg("xtop_stack_trie hash leafNode buffer: %s", top::to_hex(hash_buffer).c_str());
     }
     case xstack_trie_node_type_t::emptyNode: {
-        m_val = xbytes_t{emptyRootBytes.begin(), emptyRootBytes.end()};
+        m_val = xbytes_t{empty_root_bytes.begin(), empty_root_bytes.end()};
         m_key = xbytes_t{m_key.begin(), m_key.begin()};
         m_type = xstack_trie_node_type_t::hashedNode;
         return;

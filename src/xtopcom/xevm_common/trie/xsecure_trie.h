@@ -42,29 +42,20 @@ public:
     // Loaded nodes are kept around until their 'cache generation' expires.
     // A new cache generation is created by each call to Commit.
     // cachelimit sets the number of past cache generations to keep.
-    static std::shared_ptr<xtop_secure_trie> NewSecure(xhash256_t root, xtrie_db_ptr_t db, std::error_code & ec);
+    static std::shared_ptr<xtop_secure_trie> build_from(xhash256_t root, xtrie_db_ptr_t db, std::error_code & ec);
 
     // Get returns the value for key stored in the trie.
     // The value bytes must not be modified by the caller.
-    xbytes_t Get(xbytes_t const & key) const;
+    xbytes_t get(xbytes_t const & key) const;
 
     // TryGet returns the value for key stored in the trie.
     // The value bytes must not be modified by the caller.
     // If a node was not found in the database, a MissingNodeError is returned.
-    xbytes_t TryGet(xbytes_t const & key, std::error_code & ec) const override;
+    xbytes_t try_get(xbytes_t const & key, std::error_code & ec) const override;
 
     // TryGetNode attempts to retrieve a trie node by compact-encoded path. It is not
     // possible to use keybyte-encoding as the path might contain odd nibbles.
-    std::pair<xbytes_t, std::size_t> TryGetNode(xbytes_t const & path, std::error_code & ec);
-
-    // TODO if we need this on this level.
-    void TryUpdateAccount(xbytes_t const & key, /*TODO state account ptr,*/ std::error_code & ec) {
-        assert(false);
-        // auto hk = hashKey(key);
-        // auto data = state account -> rlp();
-        // m_trie.tryUpdate(hk,date);
-        // getSecKeyCache()->at(hk) = key;
-    }
+    std::pair<xbytes_t, std::size_t> try_get_node(xbytes_t const & path, std::error_code & ec);
 
     // Update associates key with value in the trie. Subsequent calls to
     // Get will return value. If value has length zero, any existing value
@@ -72,7 +63,7 @@ public:
     //
     // The value bytes must not be modified by the caller while they are
     // stored in the trie.
-    void Update(xbytes_t const & key, xbytes_t const & value);
+    void update(xbytes_t const & key, xbytes_t const & value);
 
     // TryUpdate associates key with value in the trie. Subsequent calls to
     // Get will return value. If value has length zero, any existing value
@@ -82,29 +73,29 @@ public:
     // stored in the trie.
     //
     // If a node was not found in the database, a MissingNodeError is returned.
-    void TryUpdate(xbytes_t const & key, xbytes_t const & value, std::error_code & ec) override;
+    void try_update(xbytes_t const & key, xbytes_t const & value, std::error_code & ec) override;
 
     // Delete removes any existing value for key from the trie.
     void Delete(xbytes_t const & key);
 
     // TryDelete removes any existing value for key from the trie.
     // If a node was not found in the database, a MissingNodeError is returned.
-    void TryDelete(xbytes_t const & key, std::error_code & ec) override;
+    void try_delete(xbytes_t const & key, std::error_code & ec) override;
 
     // GetKey returns the sha3 preimage of a hashed key that was
     // previously used to store a value.
-    xbytes_t GetKey(xbytes_t const & shaKey);
+    xbytes_t get_key(xbytes_t const & shaKey);
 
     // Commit writes all nodes and the secure hash pre-images to the trie's database.
     // Nodes are stored with their sha3 hash as the key.
     //
     // Committing flushes nodes from memory. Subsequent Get calls will load nodes
     // from the database.
-    std::pair<xhash256_t, int32_t> Commit(std::error_code & ec) override;
+    std::pair<xhash256_t, int32_t> commit(std::error_code & ec) override;
 
     // Hash returns the root hash of SecureTrie. It does not write to the
     // database and can be used even if the trie doesn't have one.
-    xhash256_t Hash() override;
+    xhash256_t hash() override;
 
     std::shared_ptr<xtop_secure_trie> copy() {
         return std::make_shared<xtop_secure_trie>(*this);
@@ -117,10 +108,12 @@ public:
     // If the trie does not contain a value for key, the returned proof contains all
     // nodes of the longest existing prefix of the key (at least the root node), ending
     // with the node that proves the absence of the key.
-    bool Prove(xbytes_t const & key, uint32_t fromLevel, xkv_db_face_ptr_t proofDB, std::error_code & ec) override {
+    bool prove(xbytes_t const & key, uint32_t fromLevel, xkv_db_face_ptr_t proofDB, std::error_code & ec) override {
         assert(m_trie != nullptr);
-        return m_trie->Prove(key, fromLevel, proofDB, ec);
+        return m_trie->prove(key, fromLevel, proofDB, ec);
     }
+
+    void prune(xhash256_t const & old_trie_root_hash, std::error_code & ec) override;
 
     // todo NodeIterator
 
@@ -128,12 +121,12 @@ private:
     // hashKey returns the hash of key as an ephemeral buffer.
     // The caller must not hold onto the return value because it will become
     // invalid on the next call to hashKey or secKey.
-    xbytes_t hashKey(xbytes_t const & key) const;
+    xbytes_t hash_key(xbytes_t const & key) const;
 
     // getSecKeyCache returns the current secure key cache, creating a new one if
     // ownership changed (i.e. the current secure trie is a copy of another owning
     // the actual cache).
-    std::shared_ptr<std::map<std::string, xbytes_t>> getSecKeyCache() {
+    std::shared_ptr<std::map<std::string, xbytes_t>> get_sec_key_cache() {
         if (secKeyCacheOwner == nullptr || this != secKeyCacheOwner) {
             xdbg("getSecKeyCache new, old is %p", secKeyCacheOwner);
             secKeyCacheOwner = this;

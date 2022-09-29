@@ -14,7 +14,7 @@ NS_BEG3(top, evm_common, trie)
 xbytes_t xtop_trie_node_rlp::EncodeToBytes(xtrie_node_face_ptr_t node) {
     assert(node);
     // printf("type: %d\n", node->type());
-    switch (node->type()) {
+    switch (node->type()) {  // NOLINT(clang-diagnostic-switch-enum)
     case xtrie_node_type_t::fullnode: {
         auto fn = std::dynamic_pointer_cast<xtrie_full_node_t>(node);
         assert(fn != nullptr);
@@ -58,7 +58,7 @@ xbytes_t xtop_trie_node_rlp::EncodeToBytes(xtrie_node_face_ptr_t node) {
         return buf;
     }
     case xtrie_node_type_t::rawnode: {
-        auto rn = std::dynamic_pointer_cast<xtrie_raw_node_t>(node);
+        auto const rn = std::dynamic_pointer_cast<xtrie_raw_node_t>(node);
         assert(rn != nullptr);
 
         return rn->data();
@@ -74,7 +74,7 @@ xbytes_t xtop_trie_node_rlp::EncodeToBytes(xtrie_node_face_ptr_t node) {
         return buf;
     }
     default:
-        printf("unknonw type: %" PRIu16, static_cast<uint16_t>(node->type()));
+        printf("unknown type: %" PRIu16, static_cast<uint16_t>(node->type()));
         // xassert(false);
         return {};
     }
