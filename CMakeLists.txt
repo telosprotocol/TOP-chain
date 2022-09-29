@@ -220,10 +220,6 @@ if (XENABLE_BLOCK_VERIFY)
     add_definitions(-DENABLE_BLOCK_VERIFY)
 endif()
 
-if (MOCK_CA)
-    add_definitions(-DMOCK_CA)
-endif()
-
 if (XSYNC_TEST)
     add_definitions(-DSYNC_TEST)
 endif()

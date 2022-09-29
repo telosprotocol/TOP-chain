@@ -33,6 +33,9 @@
 #include "xdata/xcheckpoint.h"
 #include "xsync/xsync_object.h"
 #include "xevm_contract_runtime/sys_contract/xevm_eth_bridge_contract.h"
+#include "xelect/client/xelect_client.h"
+#include "xgenesis/xgenesis_manager.h"
+#include "xgrpc_mgr/xgrpc_mgr.h"
 
 // nlohmann_json
 #include <nlohmann/json.hpp>
