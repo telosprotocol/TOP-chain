@@ -34,7 +34,8 @@ xtop_node_id::xtop_node_id(xaccount_base_address_t base_address, uint16_t const 
 xtop_node_id::xtop_node_id(xaccount_base_address_t base_address, xtable_id_t table_id)
   : m_account_string{base_address.to_string() + "@" + top::to_string(table_id)}
   , m_account_base_address{std::move(base_address)}
-  , m_assigned_table_id{table_id} {
+  , m_assigned_table_id{table_id}
+  , m_vaccount(m_account_string) {
 }
 
 xtop_node_id xtop_node_id::build_from(std::string const & account_string, std::error_code & ec) {
@@ -104,6 +105,7 @@ void xtop_node_id::clear() {
     m_assigned_table_id.clear();
     m_account_base_address.clear();
     m_account_string.clear();
+    m_vaccount = base::xvaccount_t();
 }
 
 void
@@ -111,6 +113,7 @@ xtop_node_id::swap(xtop_node_id & other) noexcept {
     std::swap(m_account_string, other.m_account_string);
     std::swap(m_account_base_address, other.m_account_base_address);
     std::swap(m_assigned_table_id, other.m_assigned_table_id);
+    std::swap(m_vaccount, other.m_vaccount);
 }
 
 bool
@@ -187,8 +190,8 @@ bool xtop_node_id::has_assigned_table_id() const noexcept {
     return !m_assigned_table_id.empty();
 }
 
-base::xvaccount_t xtop_node_id::vaccount() const {
-    return {to_string()};
+base::xvaccount_t const& xtop_node_id::vaccount() const {
+    return m_vaccount;
 }
 
 int32_t xtop_node_id::serialize_to(base::xstream_t & stream) const {
@@ -247,6 +250,8 @@ void xtop_node_id::parse() {
     }
 
     m_account_id = xaccount_id_t{m_account_string};
+    m_vaccount = base::xvaccount_t(m_account_string);
+    xassert(!m_vaccount.get_account().empty());
 }
 
 std::int32_t

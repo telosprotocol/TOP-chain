@@ -99,7 +99,7 @@ TEST(test_xsync_message, test_xsync_msg_block_response_t) {
     ASSERT_TRUE(1 == ptr->get_extend_bits());
 
     std::vector<data::xblock_ptr_t> block_vec_out = ptr->get_all_xblock_ptr();
-    for(uint32_t i; i< block_vec_out.size(); i++) {
+    for(size_t i=0; i< block_vec_out.size(); i++) {
        ASSERT_TRUE( block_vec_out[i]->get_block_hash() == block_vec[i]->get_block_hash());
     }
 }
@@ -134,7 +134,7 @@ TEST(test_xsync_message, test_xsync_msg_block_push_t) {
     ASSERT_TRUE(msg_blok_push.get_blocks_data().size() == ptr->get_blocks_data().size());
 
     std::vector<data::xblock_ptr_t> block_vec_out = ptr->get_all_xblock_ptr();
-    for(uint32_t i; i< block_vec_out.size(); i++) {
+    for(size_t i=0; i< block_vec_out.size(); i++) {
        ASSERT_TRUE( block_vec_out[i]->get_block_hash() == block_vec[i]->get_block_hash());
     }
 

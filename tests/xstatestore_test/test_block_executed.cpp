@@ -324,6 +324,15 @@ TEST_F(test_block_executed, not_store_units) {
 
 
 TEST_F(test_block_executed, xstatestore_execute_BENCH) {
+// test result in release
+// total time of store blocks: 617 ms
+// dbmeta key_size:1042158 value_size = 6847566 key_count = 17023 write_count = 23531 read_count = 3101
+// hash_calc_count = 22843
+
+// total time of execute blocks: 740 ms
+// dbmeta key_size:1694253 value_size = 8274938 key_count = 26934 write_count = 42299 read_count = 12954
+// hash_calc_count = 16786
+
     mock::xvchain_creator creator;
     base::xvblockstore_t* blockstore = creator.get_blockstore();
     uint64_t max_count = 1000;
@@ -369,6 +378,21 @@ TEST_F(test_block_executed, xstatestore_execute_BENCH) {
     << " read_count = " << dbmeta.m_read_count
     << std::endl;
     std::cout << "hash_calc_count = " << xhashtest_t::hash_calc_count << std::endl;        
+}
+
+}
+
+TEST_F(test_block_executed, xvaccount_BENCH) {
+// total time: 5759 ms  in release    after optimize   total time: 12 ms
+    uint32_t count = 10000000;
+{
+    auto t1 = base::xtime_utl::time_now_ms();
+    common::xaccount_address_t _address{"Ta0000@1"};
+    for (uint32_t i =0;i<count;i++) {
+        _address.vaccount();
+    }
+    auto t2 = base::xtime_utl::time_now_ms();
+    std::cout << "total time: " << t2 - t1 << " ms" << std::endl;
 }
 
 }

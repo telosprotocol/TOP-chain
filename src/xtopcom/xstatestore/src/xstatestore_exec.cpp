@@ -526,9 +526,14 @@ xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_tab
 void xstatestore_executor_t::set_latest_executed_info(uint64_t height,const std::string & blockhash) const {
     std::lock_guard<std::mutex> l(m_execute_height_lock);
     if (m_executed_height < height) {                
-        xinfo("xstatestore_executor_t::set_latest_executed_info succ,account=%s,old=%ld,new=%ld,this=%p",m_table_addr.value().c_str(),m_executed_height,height,this);
+        xinfo("xstatestore_executor_t::set_latest_executed_info succ,account=%s,old=%ld,new=%ld,need_height=%ld,this=%p",m_table_addr.value().c_str(),m_executed_height,height,m_need_all_state_sync_height,this);
         m_executed_height = height;
         m_statestore_base.set_latest_executed_info(m_table_addr, height, blockhash);
+
+        if (m_need_all_state_sync_height != 0 && m_executed_height > m_need_all_state_sync_height) {
+            m_need_all_state_sync_height = 0;
+        }
+
         if (m_execute_listener != nullptr) {
             m_execute_listener->on_executed(height);
         }
@@ -552,32 +557,20 @@ uint64_t xstatestore_executor_t::get_need_sync_state_block_height() const {
 }
 void xstatestore_executor_t::raise_execute_height(const xstate_sync_info_t & sync_info) {
     // check if root and table state are already stored.
-    std::error_code ec;
-    auto mpt =
-        state_mpt::xstate_mpt_t::create(m_table_addr, sync_info.get_root_hash(), m_statestore_base.get_dbstore(), state_mpt::xstate_mpt_cache_t::instance(), ec);
-    if (mpt == nullptr || ec) {
-        xerror("xstatestore_executor_t::raise_execute_height sync result is succ but mpt create fail.table:%s,h:%llu,root:%s",
-               m_table_addr.value().c_str(),
-               sync_info.get_height(),
-               sync_info.get_root_hash().as_hex_str().c_str());
-        return;
-    }
-
     xobject_ptr_t<base::xvblock_t> block = m_statestore_base.get_blockstore()->load_block_object(m_table_addr.vaccount(), sync_info.get_height(), sync_info.get_blockhash(), false);
-    auto state = m_statestore_base.get_blkstate_store()->get_block_state(block.get());
-    if (state == nullptr) {
-        xwarn("xstatestore_executor_t::raise_execute_height fail-get_block_state. block=%s", block->dump().c_str());
+    if (block == nullptr) {
+        xerror("xstatestore_executor_t::raise_execute_height fail-load block. table=%s,height=%ld,hash=%s", m_table_addr.value().c_str(), sync_info.get_height(), base::xstring_utl::to_hex(sync_info.get_blockhash()).c_str());
         return;
     }
 
-    xinfo("xstatestore_executor_t::raise_execute_height succ.table:%s,h:%llu,root:%s",
-          m_table_addr.value().c_str(),
-          sync_info.get_height(),
-          sync_info.get_root_hash().as_hex_str().c_str());
-    set_latest_executed_info(sync_info.get_height(), sync_info.get_blockhash());
-    if (block->get_height() >= get_need_sync_state_block_height()) {
-        set_need_sync_state_block_height(0);
+    auto tablestate = m_state_accessor.read_table_bstate_from_db(m_table_addr, block.get());
+    if (nullptr == tablestate) {
+        xerror("xstatestore_executor_t::raise_execute_height fail-read state. table=%s,height=%ld,hash=%s", m_table_addr.value().c_str(), sync_info.get_height(), base::xstring_utl::to_hex(sync_info.get_blockhash()).c_str());
+        return;        
     }
+
+    xinfo("xstatestore_executor_t::raise_execute_height succ.table=%s,height=%ld,hash=%s,root:%s",m_table_addr.value().c_str(), sync_info.get_height(), base::xstring_utl::to_hex(sync_info.get_blockhash()).c_str(),sync_info.get_root_hash().as_hex_str().c_str());
+    set_latest_executed_info(sync_info.get_height(), sync_info.get_blockhash());
 }
 
 
