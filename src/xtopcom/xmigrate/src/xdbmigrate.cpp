@@ -42,6 +42,11 @@ namespace top
         {
             return m_db_face_ptr->write(key, value);
         }
+
+        bool xmigratedb_t::set_values(const std::map<std::string, std::string> & batch)
+        {
+            return m_db_face_ptr->batch_change(batch, {});
+        }
         
         bool xmigratedb_t::delete_value(const std::string &key)
         {

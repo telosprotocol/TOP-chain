@@ -95,6 +95,11 @@ bool xstore::set_value(const std::string &key, const std::string &value) {
     return m_db->write(key, value);
 }
 
+bool xstore::set_values(const std::map<std::string, std::string> & objs) {
+    std::vector<std::string> empty_delete_keys;
+    return m_db->batch_change(objs, empty_delete_keys);
+}
+
 bool xstore::delete_value(const std::string &key) {
     return m_db->erase(key);
 }

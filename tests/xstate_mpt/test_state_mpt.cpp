@@ -9,6 +9,7 @@
 #include "xutility/xhash.h"
 #include "xvledger/xvdbstore.h"
 #include "xvledger/xvledger.h"
+#include "xcrypto/xckey.h"
 
 #define private public
 #include "xstate_mpt/xstate_mpt.h"
@@ -27,6 +28,25 @@ public:
         base::xvchain_t::instance().clean_all(true);
         std::shared_ptr<db::xdb_face_t> db = db::xdb_factory_t::create_memdb();
         m_store = store::xstore_factory::create_store_with_static_kvdb(db);
+        base::xvchain_t::instance().set_xdbstore(m_store.get());
+        m_db = base::xvchain_t::instance().get_xdbstore();
+    }
+    void TearDown() override {
+    }
+
+    xobject_ptr_t<store::xstore_face_t> m_store{nullptr};
+    base::xvdbstore_t * m_db{nullptr};
+};
+
+class test_state_mpt_bench_fixture : public testing::Test {
+public:
+    void SetUp() override {
+        base::xvchain_t::instance().clean_all(true);
+
+        int dst_db_kind = top::db::xdb_kind_kvdb;
+        std::vector<db::xdb_path_t> db_data_paths {};
+        std::shared_ptr<db::xdb_face_t> db = top::db::xdb_factory_t::create_kvdb("/tmp/mpt_db_test");
+        m_store = top::store::xstore_factory::create_store_with_static_kvdb(db);
         base::xvchain_t::instance().set_xdbstore(m_store.get());
         m_db = base::xvchain_t::instance().get_xdbstore();
     }
@@ -135,6 +155,7 @@ TEST_F(test_state_mpt_fixture, test_example) {
     s->set_account_index(k5, index3, ec);
     EXPECT_FALSE(ec);
     auto hash = s->commit(ec);
+    hash;
     xdbg("hash: %s", to_hex(hash).c_str());
     EXPECT_FALSE(ec);
 }
@@ -514,6 +535,83 @@ TEST_F(test_state_mpt_fixture, test_trie_callback) {
         queue.insert(queue.end(), n.begin(), n.end());
     }
     sched->Commit(kv_db);
+}
+
+std::map<xhash256_t, xbytes_t> create_data(size_t count) {
+    top::common::xnetwork_id_t network_id{top::common::xtopchain_network_id};
+    top::base::enum_vaccount_addr_type account_address_type{top::base::enum_vaccount_addr_type_secp256k1_user_account};
+    top::base::enum_xchain_zone_index zone_index{top::base::enum_chain_zone_consensus_index};
+
+    std::map<xhash256_t, xbytes_t> data;
+    uint16_t ledger_id = top::base::xvaccount_t::make_ledger_id(static_cast<top::base::enum_xchain_id>(network_id.value()), zone_index);
+    for (size_t i = 0; i < count; i++) {
+        top::utl::xecprikey_t private_key;
+        auto public_key = private_key.get_public_key();
+        std::string account_address = private_key.to_account_address(account_address_type, ledger_id);
+        state_mpt::xaccount_info_t info;
+        info.m_account = common::xaccount_address_t{account_address};
+        std::string state_str{"state_str" + std::to_string(i)};
+        auto hash = base::xcontext_t::instance().hash(state_str, enum_xhash_type_sha2_256);
+        base::xaccount_index_t index{rand(), hash, hash, rand(), base::enum_xvblock_class_light, base::enum_xvblock_type_general};
+        info.m_index = index;
+        auto str = info.encode();
+        auto hashvalue = utl::xkeccak256_t::digest(std::to_string(i));
+        xhash256_t key{to_bytes(hashvalue)};
+        data[key] = {str.begin(), str.end()};
+    }
+    return data;
+}
+
+std::map<xbytes_t, xbytes_t> create_bytes_data(size_t count) {
+    top::common::xnetwork_id_t network_id{top::common::xtopchain_network_id};
+    top::base::enum_vaccount_addr_type account_address_type{top::base::enum_vaccount_addr_type_secp256k1_user_account};
+    top::base::enum_xchain_zone_index zone_index{top::base::enum_chain_zone_consensus_index};
+
+    std::map<xbytes_t, xbytes_t> data;
+    uint16_t ledger_id = top::base::xvaccount_t::make_ledger_id(static_cast<top::base::enum_xchain_id>(network_id.value()), zone_index);
+    for (size_t i = 0; i < count; i++) {
+        top::utl::xecprikey_t private_key;
+        auto public_key = private_key.get_public_key();
+        std::string account_address = private_key.to_account_address(account_address_type, ledger_id);
+        state_mpt::xaccount_info_t info;
+        info.m_account = common::xaccount_address_t{account_address};
+        std::string state_str{"state_str" + std::to_string(i)};
+        auto hash = base::xcontext_t::instance().hash(state_str, enum_xhash_type_sha2_256);
+        base::xaccount_index_t index{rand(), hash, hash, rand(), base::enum_xvblock_class_light, base::enum_xvblock_type_general};
+        info.m_index = index;
+        auto str = info.encode();
+        auto hashvalue = utl::xkeccak256_t::digest(std::to_string(i));
+        xhash256_t key{to_bytes(hashvalue)};
+        data[to_bytes(key)] = {str.begin(), str.end()};
+    }
+    return data;
+}
+
+TEST_F(test_state_mpt_bench_fixture, test_cache_node_key_BENCH) {
+    auto data = create_data(1000000);
+
+    auto kv_db = std::make_shared<evm_common::trie::xkv_db_t>(m_db, TABLE_ADDRESS);
+    auto t1 = base::xtime_utl::time_now_ms();
+    for (auto d : data) {
+        evm_common::trie::WriteTrieNode(kv_db, d.first, d.second);
+    }
+    auto t2 = base::xtime_utl::time_now_ms();
+    std::cout << "total time: " << t2 - t1 << " ms" << std::endl;
+}
+
+TEST_F(test_state_mpt_bench_fixture, test_batch_node_BENCH) {
+    std::vector<std::map<xbytes_t, xbytes_t>> data;
+    for (auto i = 0; i < 1000000 / 1000; i++) {
+        data.emplace_back(create_bytes_data(1000));
+    }
+
+    auto kv_db = std::make_shared<evm_common::trie::xkv_db_t>(m_db, TABLE_ADDRESS);
+    auto t1 = base::xtime_utl::time_now_ms();
+    for (auto d : data) {
+        evm_common::trie::WriteTrieNodeBatch(kv_db, d);
+    }
+    auto t2 = base::xtime_utl::time_now_ms();
+    std::cout << "total time: " << t2 - t1 << " ms" << std::endl;
 }
 
 }  // namespace top
