@@ -78,6 +78,7 @@ public:
 private:
     static base::xvblockstore_t * get_xblockstore();
     static base::xvblkstatestore_t* get_blkstate_store();
+    static bool write_unitstate_with_new_dbkey(const base::xvaccount_t & account, data::xunitstate_ptr_t const& unitstate, std::string const& block_hash);
 };
 
 class xtable_maker_t : public xblock_maker_t {

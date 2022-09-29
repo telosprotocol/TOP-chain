@@ -33,18 +33,16 @@ public:
     data::xunitstate_ptr_t  get_unit_state_from_block(common::xaccount_address_t const & account_address, base::xvblock_t * unit_block) const;
     data::xunitstate_ptr_t  get_unit_state_from_table_block(common::xaccount_address_t const & account_address, base::xvblock_t * table_block) const;
 
-    data::xtablestate_ptr_t get_latest_connectted_table_state() const;
+    data::xtablestate_ptr_t get_latest_connectted_table_state() const;// XTODO actually, the latest executed committed table state
 
     uint64_t                get_latest_executed_block_height() const;
     uint64_t                get_need_sync_state_block_height() const;
     void                    raise_execute_height(const xstate_sync_info_t & sync_info);
 
 private:
-    
-    void    init_cache();
+
 private:
     common::xaccount_address_t  m_table_addr;
-    xstatestore_cache_t         m_table_cache;
     xstatestore_executor_t      m_table_executor;
     xstatestore_base_t          m_store_base;
 };
