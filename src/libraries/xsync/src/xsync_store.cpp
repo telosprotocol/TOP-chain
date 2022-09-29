@@ -153,6 +153,7 @@ uint64_t xsync_store_t::get_latest_start_block_height(const std::string & accoun
 uint64_t xsync_store_t::get_latest_end_block_height(const std::string & account, enum_chain_sync_policy sync_policy) {
     base::xvaccount_t _vaddress(account);
     uint64_t connect_height = 0;
+    uint64_t connect_immutable_height = 0;
     if (sync_policy == enum_chain_sync_policy_fast) {
         connect_height = m_blockstore->get_latest_connected_block_height(account);
     } else if (sync_policy == enum_chain_sync_policy_full) {
@@ -160,6 +161,7 @@ uint64_t xsync_store_t::get_latest_end_block_height(const std::string & account,
     } else if (sync_policy == enum_chain_sync_policy_checkpoint) {
         // need to fix: checkpoint
         connect_height = get_latest_mutable_connected_checkpoint_height(account);
+        connect_immutable_height = get_latest_immutable_connected_checkpoint_height(account);
     }
 
     if (connect_height == 0) {
@@ -170,7 +172,12 @@ uint64_t xsync_store_t::get_latest_end_block_height(const std::string & account,
             return 1;
         }
     }
-    return connect_height + 2;
+
+    if (connect_height == connect_immutable_height) {
+        return connect_height;
+    } else {
+        return connect_height + 2;
+    }
 }
 
 uint64_t xsync_store_t::get_latest_immutable_connected_checkpoint_height(const std::string & account) {
