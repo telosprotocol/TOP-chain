@@ -22,10 +22,13 @@ public:
     void Delete(xbytes_t const & key, std::error_code & ec) override;
     bool Has(xbytes_t const & key, std::error_code & ec) override;
 
-    xbytes_t GetWithPrefix(xbytes_t const & key, std::error_code & ec) override;
-    void PutWithPrefix(xbytes_t const & key, xbytes_t const & value, std::error_code & ec) override;
-    void DeleteWithPrefix(xbytes_t const & key, std::error_code & ec) override;
-    bool HasWithPrefix(xbytes_t const & key, std::error_code & ec) override;
+    xbytes_t GetDirect(xbytes_t const & key, std::error_code & ec) override;
+    void PutDirect(xbytes_t const & key, xbytes_t const & value, std::error_code & ec) override;
+    void DeleteDirect(xbytes_t const & key, std::error_code & ec) override;
+    bool HasDirect(xbytes_t const & key, std::error_code & ec) override;
+
+    void PutBatch(std::map<xbytes_t, xbytes_t> const & batch, std::error_code & ec) override;
+    void DeleteBatch(std::vector<xbytes_t> const & batch, std::error_code & ec) override;
 
 private:
     std::string convert_key(xbytes_t const & key);
@@ -33,6 +36,7 @@ private:
     base::xvdbstore_t * m_db{nullptr};
     std::mutex m_mutex;
     common::xaccount_address_t m_table;  // store key with table address
+    std::string m_node_key_prefix;
 };
 using xkv_db_t = xtop_kv_db;
 

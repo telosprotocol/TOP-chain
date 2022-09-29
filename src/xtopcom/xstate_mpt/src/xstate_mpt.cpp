@@ -229,7 +229,7 @@ void xtop_state_mpt::prune_unit(const common::xaccount_address_t & account, std:
     }
     auto hash = index.get_latest_unit_hash();
     auto key = base::xvdbkey_t::create_prunable_unit_state_key(base::xvaccount_t{account.value()}, index.get_latest_unit_height(), index.get_latest_unit_hash());
-    m_db->DiskDB()->DeleteWithPrefix({key.begin(), key.end()}, ec);
+    m_db->DiskDB()->DeleteDirect({key.begin(), key.end()}, ec);
     if (ec) {
         xwarn("xtop_state_mpt::prune_unit db Delete error: %s, %s", ec.category().name(), ec.message().c_str());
         return;
