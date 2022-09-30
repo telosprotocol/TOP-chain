@@ -15,7 +15,7 @@
 #include "rocksdb/slice.h"
 #include "rocksdb/table.h"
 #include "rocksdb/utilities/backupable_db.h"
-#include "xchaininit/admin_http_client.h"
+#include "xchaininit/xchain_command_http_client.h"
 #include "xchaininit/version.h"
 #include "xconfig/xconfig_register.h"
 #include "xpbase/base/check_cast.h"
@@ -1029,15 +1029,9 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
 
 // cmdline: node help
 bool handle_node_command(const std::pair<std::string, uint16_t> & admin_http, const std::string & cmdline, std::string & result) {
-    admin::AdminHttpClientPtr http_cli = nullptr;
-    http_cli = std::make_shared<admin::AdminHttpClient>(std::get<0>(admin_http), std::get<1>(admin_http));
-    if (!http_cli) {
-        result = "create admin http failed";
-        return false;
-    }
-
+    chain_command::ChainCommandFetcher http_fetcher{admin_http};
     std::string http_json_result;
-    http_cli->Request(cmdline, http_json_result);
+    http_fetcher.Request(cmdline,http_json_result);
     if (http_json_result.empty()) {
         return false;
     }
