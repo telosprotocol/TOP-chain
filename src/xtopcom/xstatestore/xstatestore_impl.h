@@ -25,7 +25,7 @@ class xstatestore_impl_t : public xstatestore_face_t {
  public:
     virtual bool                    start(const xobject_ptr_t<base::xiothread_t> & iothread, const xobject_ptr_t<base::xiothread_t> & iothread_for_prune) override;
     // query accountindex
-    virtual bool                    get_accountindex_from_latest_connected_table(common::xaccount_address_t const & account_address, base::xaccount_index_t & index) const override;
+    virtual bool                    get_accountindex_from_latest_connected_table(common::xaccount_address_t const & table_address, common::xaccount_address_t const & account_address, base::xaccount_index_t & index) const override;
     virtual bool                    get_accountindex_from_table_block(common::xaccount_address_t const & account_address, base::xvblock_t * table_block, base::xaccount_index_t & account_index) const override;
 
     // query unitstate

@@ -35,7 +35,7 @@ public:
     data::xunitstate_ptr_t  get_unit_state_from_block(common::xaccount_address_t const & account_address, base::xvblock_t * unit_block) const;
     data::xunitstate_ptr_t  get_unit_state_from_table_block(common::xaccount_address_t const & account_address, base::xvblock_t * table_block) const;
 
-    data::xtablestate_ptr_t get_latest_connectted_table_state() const;// XTODO actually, the latest executed committed table state
+    xtablestate_ext_ptr_t   get_latest_connectted_table_state() const;// XTODO actually, the latest executed committed table state
 
     uint64_t                get_latest_executed_block_height() const;
     uint64_t                get_need_sync_state_block_height() const;

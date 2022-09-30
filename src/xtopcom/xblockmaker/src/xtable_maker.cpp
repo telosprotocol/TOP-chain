@@ -993,12 +993,11 @@ bool xaccount_index_upgrade_tool_t::convert_to_new_account_index(const base::xva
         return false;
     }
 
-    auto unitbstate = get_blkstate_store()->get_block_state(unit.get());
-    if (nullptr == unitbstate) {
+    data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(unit.get());
+    if (nullptr == unitstate) {
         xerror("xtable_maker_t::convert_to_new_account_index fail-upgrade for load unitstate account=%s,index=%s", account.get_account().c_str(), old_account_index.dump().c_str());
         return false;
     }
-    data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(unitbstate.get());
 
     // should write unitstate with new db key
     if (false == write_unitstate_with_new_dbkey(account, unitstate, unit->get_block_hash())) {
@@ -1008,7 +1007,7 @@ bool xaccount_index_upgrade_tool_t::convert_to_new_account_index(const base::xva
 
     auto nonce = unitstate->account_send_trans_number();
     std::string unitstate_bin;
-    unitbstate->take_snapshot(unitstate_bin);
+    unitstate->get_bstate()->take_snapshot(unitstate_bin);
     std::string statehash = unit->get_cert()->hash(unitstate_bin);
     new_account_index = base::xaccount_index_t(unit->get_height(), unit->get_block_hash(), statehash, nonce, unit->get_block_class(), unit->get_block_type());
     xinfo("xtable_maker_t::convert_to_new_account_index succ.account:%s,old:%s,new:%s", account.get_account().c_str(), old_account_index.dump().c_str(), new_account_index.dump().c_str());
@@ -1036,12 +1035,11 @@ bool xaccount_index_upgrade_tool_t::update_new_indexes_by_block(std::map<std::st
     }
 
     for (auto & unit : sub_blocks) {
-        auto unitbstate = get_blkstate_store()->get_block_state(unit.get());
-        if (nullptr == unitbstate) {
+        data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_unit_block(unit.get());
+        if (nullptr == unitstate) {
             xerror("xtable_maker_t::update_new_indexes_by_block fail-upgrade for load unitstate unit=%s", unit->dump().c_str());
             return false;
         }
-        data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(unitbstate.get());
 
         auto & addr = unit->get_account();
         auto nonce = unitstate->account_send_trans_number();
@@ -1064,6 +1062,7 @@ bool xaccount_index_upgrade_tool_t::update_new_indexes_by_block(std::map<std::st
             return false;        
         }
 
+        xinfo("xtable_maker_t::update_new_indexes_by_block succ.account:%s,new:%s", unitstate->account_address().value().c_str(), _new_account_index.dump().c_str());
         new_indexes[addr] = _new_account_index;
     }
     return true;

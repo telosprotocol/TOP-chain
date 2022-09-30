@@ -54,7 +54,7 @@ class xstatestore_face_t {
     virtual xtablestate_ext_ptr_t   get_tablestate_ext_from_block(base::xvblock_t * target_block) const = 0;
     
     // query accountindex
-    virtual bool                    get_accountindex_from_latest_connected_table(common::xaccount_address_t const & account_address, base::xaccount_index_t & account_index) const = 0;
+    virtual bool                    get_accountindex_from_latest_connected_table(common::xaccount_address_t const & table_address, common::xaccount_address_t const & account_address, base::xaccount_index_t & account_index) const = 0;
     virtual bool                    get_accountindex_from_table_block(common::xaccount_address_t const & account_address, base::xvblock_t * table_block, base::xaccount_index_t & account_index) const = 0;
 
     // query unitstate
