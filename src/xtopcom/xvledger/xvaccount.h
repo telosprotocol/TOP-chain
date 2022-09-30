@@ -414,7 +414,6 @@ namespace top
         public:
             xvaccount_t(const std::string & account_address);
             virtual ~xvaccount_t();
-        protected:
             xvaccount_t();
             xvaccount_t(const xvaccount_t & obj);
             xvaccount_t & operator = (const xvaccount_t & obj);
@@ -582,7 +581,6 @@ namespace top
             
         public:
             static xvactmeta_t* load(xvaccount_t & _account,const std::string & meta_serialized_data);
-            void init_cp_connect_meta(xvactmeta_t* meta_ptr, const std::string & account);
 
             const xblockmeta_t   clone_block_meta() const;
             const xstatemeta_t   clone_state_meta() const;

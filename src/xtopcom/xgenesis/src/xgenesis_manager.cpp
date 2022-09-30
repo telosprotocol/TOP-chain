@@ -142,6 +142,7 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_contrac
     base::xauto_ptr<base::xvblock_t> genesis_block = data::xblocktool_t::create_genesis_lightunit(account.to_string(), tx, result);
     xassert(genesis_block != nullptr);
     // check
+    xassert(!account.vaccount().get_account().empty());
     if (src == xenum_create_src_t::init && m_blockstore->exist_genesis_block(account.vaccount())) {
         auto const existed_genesis_block = m_blockstore->load_block_object(account.vaccount(), (uint64_t)0, (uint64_t)0, false);
         if (existed_genesis_block->get_block_hash() == genesis_block->get_block_hash()) {

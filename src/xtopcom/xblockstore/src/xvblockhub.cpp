@@ -14,6 +14,7 @@
 #include "xdata/xblockextract.h"
 #include "xvledger/xvtxindex.h"
 #include "xdata/xblocktool.h"
+#include "xdata/xcheckpoint_data.h"
 #include "xpbase/base/top_utils.h"
 
 #ifdef __ALLOW_FORK_LOCK__
@@ -76,6 +77,24 @@ namespace top
         {
             xvblockplugin_t::init_meta(account_meta);
             m_meta = (base::xblockmeta_t*)get_block_meta();
+
+            std::error_code ec;
+            common::xaccount_address_t addr{get_account()};
+            // bad performance ?
+            auto cp = data::xtop_chain_checkpoint::get_latest_checkpoint(addr, ec);
+            if (ec) {
+                xdbg("xblockacct_t::init_meta fail! account: %s, err: %s", get_account().c_str(), ec.message().c_str());
+            } else {
+                if (cp.height != 0 && cp.height >= m_meta->_highest_cp_connect_block_height) {
+                    if (m_meta->_highest_cp_connect_block_height != cp.height || m_meta->_highest_cp_connect_block_hash != cp.hash) {
+                        xinfo("xblockacct_t::init_meta init cp. account:%s,height:%llu->%llu,hash:%s->%s", 
+                            get_account().c_str(), m_meta->_highest_cp_connect_block_height,cp.height, base::xstring_utl::to_hex(m_meta->_highest_cp_connect_block_hash).c_str(),base::xstring_utl::to_hex(cp.hash).c_str());    
+                        m_meta->_highest_cp_connect_block_height = cp.height;
+                        m_meta->_highest_cp_connect_block_hash = cp.hash;                            
+                    }
+                }
+            }
+
             recover_meta(account_meta);
             
             xinfo("xblockacct_t::init_meta,account=%s objectid=% " PRId64 ",this=% " PRId64 ",meta=%s",

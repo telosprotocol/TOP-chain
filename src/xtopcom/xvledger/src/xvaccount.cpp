@@ -9,7 +9,6 @@
 #include "xbase/xcontext.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
-#include "xdata/xcheckpoint.h"
 #include "xmetrics/xmetrics.h"
 
 namespace top
@@ -651,20 +650,6 @@ namespace top
             return std::string();
         }
 
-        void xvactmeta_t::init_cp_connect_meta(xvactmeta_t* meta_ptr, const std::string & account) {
-            std::error_code ec;
-            common::xaccount_address_t addr{account};
-            // bad performance ?
-            auto cp = data::xtop_chain_checkpoint::get_latest_checkpoint(addr, ec);
-            if (ec) {
-                xinfo("init_cp_connect_meta fail! account: %s, err: %s", account.c_str(), ec.message().c_str());
-                return ;
-            }
-            _highest_cp_connect_block_height = cp.height;
-            _highest_cp_connect_block_hash = cp.hash;
-            xinfo("init_cp_connect_meta account:%s,height:%llu,hash:%s", account.c_str(), _highest_cp_connect_block_height, base::xstring_utl::to_hex(_highest_cp_connect_block_hash).c_str());
-        }
-
         xvactmeta_t*  xvactmeta_t::load(xvaccount_t & _account,const std::string & meta_serialized_data)
         {
             if(meta_serialized_data.empty()) //check first
@@ -692,8 +677,6 @@ namespace top
             #else
             m_account_address = _account.get_xvid_str();
             #endif
-
-            init_cp_connect_meta(this, _account.get_account());
 
             //XTODO,remove below assert when related xbase checked in main-branch
             xassert(__XBASE_MAIN_VERSION_CODE__ >= 1);

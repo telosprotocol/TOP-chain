@@ -12,6 +12,7 @@ add_dependencies(xblockstore xxbase xdbstore)
 target_link_libraries(xblockstore PRIVATE
     xxbase
     xdbstore
+    xdata
 )
 
 if (BUILD_METRICS)

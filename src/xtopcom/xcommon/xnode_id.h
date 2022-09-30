@@ -51,6 +51,7 @@ private:
     xtable_id_t m_assigned_table_id;
 
     xaccount_id_t m_account_id{};
+    base::xvaccount_t   m_vaccount;
 
 public:
     xtop_node_id()                                 = default;
@@ -111,7 +112,7 @@ public:
     xtable_id_t const & table_id() const noexcept;
     bool has_assigned_table_id() const noexcept;
 
-    base::xvaccount_t vaccount() const;
+    base::xvaccount_t const & vaccount() const;
 
     friend std::int32_t operator<<(base::xstream_t & stream, xtop_node_id const & node_id);
     friend std::int32_t operator>>(base::xstream_t & stream, xtop_node_id & node_id);
