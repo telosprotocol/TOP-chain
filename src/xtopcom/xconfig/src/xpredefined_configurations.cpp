@@ -188,8 +188,6 @@ XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(transaction_whitelist);
 
 
 XDEFINE_CONFIGURATION(enable_reward);
-
-
 XDEFINE_CONFIGURATION(enable_slash);
 XDEFINE_CONFIGURATION(enable_free_tgas);
 XDEFINE_CONFIGURATION(evm_token_type);

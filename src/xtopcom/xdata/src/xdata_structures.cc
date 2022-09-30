@@ -418,7 +418,7 @@ bool xreg_node_info::can_be_relay() const noexcept {
 }
 
 bool xreg_node_info::has_enough_tickets() const noexcept {
-    if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(enable_node_whitelist) == 1)
+    if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(enable_node_whitelist) == true)
         return true;
 
 #if defined(XENABLE_MOCK_ZEC_STAKE)

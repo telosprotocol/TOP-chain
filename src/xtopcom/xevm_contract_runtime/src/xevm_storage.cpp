@@ -45,8 +45,11 @@ xbytes_t xtop_evm_storage::storage_get(xbytes_t const & key) {
 
         } else if (storage_key.key_type == storage_key_type::Balance) {
             if (m_token_id == common::xtoken_id_t::top) {
-                auto blance = unit_state->balance();
-                return top::to_bytes(blance);
+                auto _balance = unit_state->balance();
+                top::xbytes_t result_rlp_64 = evm_common::RLP::encode(_balance);
+                std::string result_rlp_str_64 = top::from_bytes<std::string>(result_rlp_64, ec);
+                xdbg("storage_get get Balance account:%s, top_balance:%lu result_rlp_64:%s ", storage_key.address.c_str(), _balance, result_rlp_str_64.c_str());
+                return result_rlp_64;
             } else {
                 return unit_state->tep_token_balance_bytes(m_token_id);
             }
@@ -123,10 +126,13 @@ void xtop_evm_storage::storage_set(xbytes_t const & key, xbytes_t const & value)
             xdbg("storage_set set balance account:%s, balance:%s", storage_key.address.c_str(), balance.str().c_str());
 #endif
             if (m_token_id == common::xtoken_id_t::top) {
-                evm_common::u256 balance_value = evm_common::fromBigEndian<evm_common::u256>(value);
-                uint64_t new_banlance = (uint64_t)balance_value;
-                xdbg("storage_set set balance new_banlance:%lu .", new_banlance);
-                base::vtoken_t new_token = (base::vtoken_t)(ASSET_TOP(new_banlance));
+             //   evm_common::u256 balance_256 = evm_common::fromBigEndian<evm_common::u256>(value);
+                auto  decodeItem = evm_common::RLP::decode(value);
+                std::string str(decodeItem.decoded[0].begin(), decodeItem.decoded[0].end());
+                evm_common::u256 balance_u256 = evm_common::fromBigEndian<top::evm_common::u256>(str);
+                uint64_t new_banlance = evm_common::fromBigEndian<uint64_t>(str);;
+                xdbg("storage_set set balance account:%s,  top_banlance:%lu. balance_u256 %s",storage_key.address.c_str(), new_banlance, balance_u256.str().c_str());
+                base::vtoken_t new_token = base::vtoken_t(new_banlance);
                 unit_state->token_update(data::XPROPERTY_BALANCE_AVAILABLE, new_token);
             } else {
                 unit_state->set_tep_balance_bytes(m_token_id, value);
@@ -193,6 +199,7 @@ void xtop_evm_storage::storage_remove(xbytes_t const & key) {
 
         } else if (storage_key.key_type == storage_key_type::Balance) {
             if (m_token_id == common::xtoken_id_t::top) {
+                xdbg("storage_remove get Balance account:%s, top_balance:%lu rlp_balance:0 ", storage_key.address.c_str());
                 unit_state->token_update(data::XPROPERTY_BALANCE_AVAILABLE,  (base::vtoken_t)(0));
             } else {
                 evm_common::u256 value{0};
