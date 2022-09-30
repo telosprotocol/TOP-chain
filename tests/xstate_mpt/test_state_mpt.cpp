@@ -11,6 +11,16 @@
 #include "xvledger/xvledger.h"
 #include "xcrypto/xckey.h"
 
+#include "nlohmann/fifo_map.hpp"
+#include "nlohmann/json.hpp"
+#include <fstream>
+
+template <class K, class V, class dummy_compare, class A>
+using my_workaround_fifo_map = nlohmann::fifo_map<K, V, nlohmann::fifo_map_compare<K>, A>;
+
+using unordered_json = nlohmann::basic_json<my_workaround_fifo_map>;
+using json = unordered_json;
+
 #define private public
 #include "xstate_mpt/xstate_mpt.h"
 #include "xdata/xtable_bstate.h"
@@ -130,7 +140,7 @@ TEST_F(test_state_mpt_fixture, test_db) {
 
 TEST_F(test_state_mpt_fixture, test_example) {
     std::error_code ec;
-    auto s = state_mpt::xstate_mpt_t::create(TABLE_ADDRESS, {}, m_db, nullptr, ec);
+    auto s = state_mpt::xstate_mpt_t::create(TABLE_ADDRESS, {}, m_db, ec);
     EXPECT_FALSE(ec);
 
     common::xaccount_address_t k1("T00000LVgLn3yVd11d2izvJg6znmxddxg8JEShoJ");
@@ -162,7 +172,7 @@ TEST_F(test_state_mpt_fixture, test_example) {
 
 TEST_F(test_state_mpt_fixture, test_get_unknown) {
     std::error_code ec;
-    auto s = state_mpt::xstate_mpt_t::create(TABLE_ADDRESS, {}, m_db, nullptr, ec);
+    auto s = state_mpt::xstate_mpt_t::create(TABLE_ADDRESS, {}, m_db, ec);
     EXPECT_EQ(ec.value(), 0);
 
     ec.clear();
@@ -173,7 +183,7 @@ TEST_F(test_state_mpt_fixture, test_get_unknown) {
 // TODO: should fix cache
 TEST_F(test_state_mpt_fixture, test_basic) {
     std::error_code ec;
-    auto s = state_mpt::xstate_mpt_t::create(TABLE_ADDRESS, {}, m_db, state_mpt::xstate_mpt_cache_t::instance(), ec);
+    auto s = state_mpt::xstate_mpt_t::create(TABLE_ADDRESS, {}, m_db, ec);
     EXPECT_EQ(ec.value(), 0);
 
     auto origin_hash = s->m_trie->hash();
@@ -331,13 +341,13 @@ TEST_F(test_state_mpt_fixture, test_create_twice_commit_twice) {
     std::error_code ec;
     xhash256_t root_hash(random_bytes(32));
     std::cout << root_hash.as_hex_str() << std::endl;
-    auto s = state_mpt::xstate_mpt_t::create(TABLE_ADDRESS, root_hash, m_db, nullptr, ec);
+    auto s = state_mpt::xstate_mpt_t::create(TABLE_ADDRESS, root_hash, m_db, ec);
     EXPECT_NE(ec.value(), 0);
 
     xhash256_t root_hash1;
     std::cout << root_hash1.as_hex_str() << std::endl;
     ec.clear();
-    auto s1 = state_mpt::xstate_mpt_t::create(TABLE_ADDRESS, root_hash1, m_db, nullptr, ec);
+    auto s1 = state_mpt::xstate_mpt_t::create(TABLE_ADDRESS, root_hash1, m_db, ec);
     EXPECT_EQ(ec.value(), 0);
     EXPECT_NE(s1, nullptr);
 
@@ -540,7 +550,7 @@ TEST_F(test_state_mpt_fixture, test_trie_callback) {
     sched->Commit(kv_db);
 }
 
-std::map<xhash256_t, xbytes_t> create_data(size_t count) {
+std::map<xhash256_t, xbytes_t> create_node_hash_data(size_t count) {
     top::common::xnetwork_id_t network_id{top::common::xtopchain_network_id};
     top::base::enum_vaccount_addr_type account_address_type{top::base::enum_vaccount_addr_type_secp256k1_user_account};
     top::base::enum_xchain_zone_index zone_index{top::base::enum_chain_zone_consensus_index};
@@ -565,7 +575,7 @@ std::map<xhash256_t, xbytes_t> create_data(size_t count) {
     return data;
 }
 
-std::map<xbytes_t, xbytes_t> create_bytes_data(size_t count) {
+std::map<xbytes_t, xbytes_t> create_node_bytes_data(size_t count) {
     top::common::xnetwork_id_t network_id{top::common::xtopchain_network_id};
     top::base::enum_vaccount_addr_type account_address_type{top::base::enum_vaccount_addr_type_secp256k1_user_account};
     top::base::enum_xchain_zone_index zone_index{top::base::enum_chain_zone_consensus_index};
@@ -590,12 +600,53 @@ std::map<xbytes_t, xbytes_t> create_bytes_data(size_t count) {
     return data;
 }
 
+std::map<common::xaccount_address_t, std::pair<base::xaccount_index_t, std::string>> create_mpt_data(size_t count) {
+    top::common::xnetwork_id_t network_id{top::common::xtopchain_network_id};
+    top::base::enum_vaccount_addr_type account_address_type{top::base::enum_vaccount_addr_type_secp256k1_eth_user_account};
+    top::base::enum_xchain_zone_index zone_index{top::base::enum_chain_zone_consensus_index};
+
+    std::map<common::xaccount_address_t, std::pair<base::xaccount_index_t, std::string>> data;
+    uint16_t ledger_id = top::base::xvaccount_t::make_ledger_id(static_cast<top::base::enum_xchain_id>(network_id.value()), zone_index);
+    for (size_t i = 0; i < count; i++) {
+        top::utl::xecprikey_t private_key;
+        auto public_key = private_key.get_public_key();
+        std::string account_address = private_key.to_account_address(account_address_type, ledger_id);
+        std::string state_str{"state_str" + std::to_string(i)};
+        auto hash = base::xcontext_t::instance().hash(state_str, enum_xhash_type_sha2_256);
+        base::xaccount_index_t index{rand(), hash, hash, rand(), base::enum_xvblock_class_light, base::enum_xvblock_type_general};
+        auto bstate = make_object_ptr<base::xvbstate_t>(account_address, i + 1, i + 1, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
+        auto canvas = make_object_ptr<base::xvcanvas_t>();
+        bstate->new_string_var(to_string(i), canvas.get());
+        auto obj = bstate->load_string_var(to_string(i));
+        obj->reset(to_string(i), canvas.get());
+        std::string unit_state_str;
+        bstate->serialize_to_string(unit_state_str);
+        auto p = std::make_pair(index, unit_state_str);
+        data.emplace(std::make_pair(common::xaccount_address_t{account_address}, p));
+    }
+    return data;
+}
+
+void generate_state_mpt_data_file() {
+    auto data = create_mpt_data(1000000);
+    json j;
+    int i{0};
+    for (auto & d : data) {
+        std::string str;
+        d.second.first.serialize_to(str);
+        j[d.first.value()]["index"] = to_hex(str);
+        j[d.first.value()]["state"] = to_hex(d.second.second);
+    }
+    std::ofstream f("state_mpt_data.json");
+    f << std::setw(4) << j;
+}
+
 TEST_F(test_state_mpt_bench_fixture, test_cache_node_key_BENCH) {
-    auto data = create_data(1000000);
+    auto data = create_node_hash_data(1000000);
 
     auto kv_db = std::make_shared<evm_common::trie::xkv_db_t>(m_db, TABLE_ADDRESS);
     auto t1 = base::xtime_utl::time_now_ms();
-    for (auto d : data) {
+    for (auto & d : data) {
         evm_common::trie::WriteTrieNode(kv_db, d.first, d.second);
     }
     auto t2 = base::xtime_utl::time_now_ms();
@@ -605,16 +656,53 @@ TEST_F(test_state_mpt_bench_fixture, test_cache_node_key_BENCH) {
 TEST_F(test_state_mpt_bench_fixture, test_batch_node_BENCH) {
     std::vector<std::map<xbytes_t, xbytes_t>> data;
     for (auto i = 0; i < 1000000 / 1000; i++) {
-        data.emplace_back(create_bytes_data(1000));
+        data.emplace_back(create_node_bytes_data(1000));
     }
 
     auto kv_db = std::make_shared<evm_common::trie::xkv_db_t>(m_db, TABLE_ADDRESS);
     auto t1 = base::xtime_utl::time_now_ms();
-    for (auto d : data) {
+    for (auto & d : data) {
         evm_common::trie::WriteTrieNodeBatch(kv_db, d);
     }
     auto t2 = base::xtime_utl::time_now_ms();
     std::cout << "total time: " << t2 - t1 << " ms" << std::endl;
+}
+
+TEST_F(test_state_mpt_bench_fixture, test_state_mpt_BENCH) {
+
+    std::ifstream stream("state_mpt_data.json");
+    if (stream.bad()) {
+        return;
+    }
+    json j;
+    stream >> j;
+
+    std::error_code ec;
+    std::map<common::xaccount_address_t, std::pair<base::xaccount_index_t, xbytes_t>> data;
+
+    for (auto it = j.begin(); it != j.end(); it++) {
+        auto addr = it.key();
+        auto index_str = from_hex(it->at("index").get<std::string>(), ec);
+        auto state_str = from_hex(it->at("state").get<std::string>(), ec);
+        EXPECT_FALSE(ec);
+        base::xaccount_index_t index;
+        index.serialize_from({index_str.begin(), index_str.end()});
+        auto p = std::make_pair(index, xbytes_t{state_str.begin(), state_str.end()});
+        data.emplace(std::make_pair(common::xaccount_address_t{addr}, p));
+
+    }
+    auto s = state_mpt::xstate_mpt_t::create(TABLE_ADDRESS, {}, m_db, ec);
+    EXPECT_FALSE(ec);
+
+    auto t1 = base::xtime_utl::time_now_ms();
+    for (auto & d : data) {
+        s->set_account_index_with_unit(d.first, d.second.first, d.second.second, ec);
+    }
+    auto t2 = base::xtime_utl::time_now_ms();
+    s->commit(ec);
+    auto t3 = base::xtime_utl::time_now_ms();
+    EXPECT_FALSE(ec);
+    std::cout << "total num: " << data.size() << ", update time: " << t2 - t1 << " ms" << ", commit time: " << t3 - t2 << std::endl;
 }
 
 }  // namespace top

@@ -377,7 +377,7 @@ class xdatamock_table : public base::xvaccount_t {
         auto ret = data::xblockextract_t::get_state_root(get_cert_block().get(), last_state_root);
         xassert(ret);
         std::error_code ec;
-        auto table_mpt = state_mpt::xtop_state_mpt::create(common::xaccount_address_t{get_cert_block()->get_account()}, top::xhash256_t(last_state_root.to_bytes()), m_store.get(), state_mpt::xstate_mpt_cache_t::instance(), ec);
+        auto table_mpt = state_mpt::xtop_state_mpt::create(common::xaccount_address_t{get_cert_block()->get_account()}, top::xhash256_t(last_state_root.to_bytes()), m_store.get(), ec);
         if (ec) {
             xassert(false);
         }

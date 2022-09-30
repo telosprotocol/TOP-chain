@@ -787,7 +787,7 @@ std::shared_ptr<state_mpt::xstate_mpt_t> xtable_maker_t::create_new_mpt(const xh
                                                                           const std::vector<std::pair<xblock_ptr_t, base::xaccount_index_t>> & batch_unit_and_index) {
     std::error_code ec;
     // todo(nathan):add param show that mpt is with unit state.
-    // auto mpt = state_mpt::xstate_mpt_t::create(get_account(), last_mpt_root, base::xvchain_t::instance().get_xdbstore(), state_mpt::xstate_mpt_cache_t::instance(), ec);
+    // auto mpt = state_mpt::xstate_mpt_t::create(get_account(), last_mpt_root, base::xvchain_t::instance().get_xdbstore(), ec);
     // if (ec) {
     //     xwarn("xtable_maker_t::create_new_mpt create mpt fail.");
     //     return nullptr;
