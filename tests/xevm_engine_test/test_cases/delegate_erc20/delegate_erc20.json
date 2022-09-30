@@ -184,20 +184,6 @@
             }
         },
         {
-            "__comments": "decimals",
-            "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
-            "target_address": "erc20_usdt",
-            "data": "0x313ce567",
-            "gas_limit": 34000,
-            "value": "0",
-            "expected": {
-                "status": 0,
-                "extra_message": "0x0000000000000000000000000000000000000000000000000000000000000012",
-                "gas_used": 24563,
-                "logs": []
-            }
-        },
-        {
             "__comments": "balanceOf_balance_empty",
             "src_address": "T600044dce5c8961e283786cb31ad7fc072347227d7ea2",
             "target_address": "erc20_usdt",

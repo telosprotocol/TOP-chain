@@ -70,16 +70,6 @@ bool xtop_delegate_eth_contract::execute(xbytes_t input,
     }
 
     switch (function_selector.method_id) {
-    case method_id_decimals: {
-        xdbg("precompiled eth contract: decimals");
-
-        output.exit_status = Returned;
-        output.cost = 0;
-        output.output = top::to_bytes(evm_common::u256{18});
-
-        return true;
-    }
-
     case method_id_mint: {
         xdbg("precompiled eth contract: mint");
 
