@@ -15,8 +15,6 @@
 #include "xvledger/xvdbkey.h"
 #include "xvnetwork/xvnetwork_message.h"
 
-// #include "xbase/xbase.h"
-
 namespace top {
 namespace state_sync {
 
@@ -39,6 +37,7 @@ std::shared_ptr<xtop_state_sync> xtop_state_sync::new_state_sync(const common::x
     sync->m_table_block_hash = block_hash;
     sync->m_table_state_hash = state_hash;
     sync->m_root = root_hash;
+    sync->m_symbol = "table: " + table.value() + ", height: " + std::to_string(height) + "root: " + root_hash.as_hex_str();
     sync->m_peers_func = peers;
     sync->m_track_func = track_req;
     sync->m_db = db;
@@ -52,10 +51,10 @@ void xtop_state_sync::run() {
         if (m_table_state_hash != xhash256_t()) {
             sync_table(m_ec);
             if (m_ec) {
-                xwarn("xtop_state_sync::run sync_table error, table: %s, height: %lu, root: %s, %s, %s",
+                xwarn("xtop_state_sync::run sync_table error, table: %s, height: %lu, root: %s, error: %s, %s",
                       m_table.c_str(),
                       m_height,
-                      to_hex(m_root).c_str(),
+                      m_root.as_hex_str().c_str(),
                       m_ec.category().name(),
                       m_ec.message().c_str());
                 break;
@@ -74,10 +73,6 @@ void xtop_state_sync::run() {
     return;
 }
 
-void xtop_state_sync::sync_table_finish() {
-    m_sync_table_finish = true;
-}
-
 void xtop_state_sync::wait() const {
     while (!m_done) {}
     return;
@@ -92,23 +87,11 @@ std::error_code xtop_state_sync::error() const {
     return m_ec;
 }
 
-common::xaccount_address_t xtop_state_sync::table() const {
-    return m_table;
+std::string xtop_state_sync::symbol() const {
+    return m_symbol;
 }
 
-xhash256_t xtop_state_sync::root() const {
-    return m_root;
-}
-
-uint64_t xtop_state_sync::height() const {
-    return m_height;
-}
-
-evm_common::trie::xkv_db_face_ptr_t xtop_state_sync::db() const {
-    return m_kv_db;
-}
-
-sync_result xtop_state_sync::result() {
+sync_result xtop_state_sync::result() const {
     return {m_table, m_height, m_table_block_hash, m_table_state_hash, m_root, m_ec};
 }
 
@@ -126,7 +109,7 @@ void xtop_state_sync::pop_deliver_req() {
     m_deliver_list.pop_back();
 }
 
-void xtop_state_sync::process_table(const table_state_detail & detail) {
+void xtop_state_sync::push_deliver_state(const single_state_detail & detail) {
     if (m_sync_table_finish) {
         return;
     }
@@ -325,7 +308,7 @@ void xtop_state_sync::fill_tasks(uint32_t n, state_req & req, std::vector<xhash2
         auto units = std::get<2>(res);
         for (size_t i = 0; i < nodes.size(); i++) {
             xdbg("xtop_state_sync::fill_tasks push missing node: %s", nodes[i].as_hex_str().c_str());
-            m_trie_tasks.insert({nodes[i], {paths[i]}});
+            m_trie_tasks.insert({nodes[i], {}});
         }
         for (size_t i = 0; i < units.size(); i++) {
             xdbg("xtop_state_sync::fill_tasks push missing unit: %s", to_hex(units[i]).c_str());
@@ -417,8 +400,9 @@ xbytes_t xtop_state_sync::process_unit_data(xbytes_t & blob, std::error_code & e
     auto key = m_sched->ProcessUnit(res, ec);
     if (ec) {
         xwarn("xtop_state_sync::process_unit_data hash: %s, data: %s, error %s", to_hex(res.Hash).c_str(), to_hex(res.Data).c_str(), ec.message().c_str());
+    } else {
+        xinfo("xtop_state_sync::process_unit_data hash: %s, data: %s", res.Hash.as_hex_str().c_str(), to_hex(res.Data).c_str());
     }
-    xinfo("xtop_state_sync::process_unit_data hash: %s, data: %s", res.Hash.as_hex_str().c_str(), to_hex(res.Data).c_str());
     return key;
 }
 

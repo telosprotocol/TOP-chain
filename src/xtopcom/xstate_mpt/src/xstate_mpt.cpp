@@ -114,11 +114,11 @@ void xtop_state_mpt::set_account_index_with_unit(common::xaccount_address_t cons
         return;
     }
     auto hash = base::xcontext_t::instance().hash({unit.begin(), unit.end()}, enum_xhash_type_sha2_256);
-    // if (hash != index.get_latest_state_hash()) {
-    //     ec = error::xerrc_t::state_mpt_unit_hash_mismatch;
-    //     xwarn("xtop_state_mpt::set_account_index_with_unit hash mismatch: %s, %s", to_hex(hash).c_str(), to_hex(index.get_latest_state_hash()).c_str());
-    //     return;
-    // }
+    if (hash != index.get_latest_state_hash()) {
+        ec = error::xerrc_t::state_mpt_unit_hash_mismatch;
+        xwarn("xtop_state_mpt::set_account_index_with_unit hash mismatch: %s, %s", to_hex(hash).c_str(), to_hex(index.get_latest_state_hash()).c_str());
+        return;
+    }
     m_journal.append(obj->set_account_index_with_unit(index, unit));
 }
 
@@ -194,10 +194,9 @@ std::shared_ptr<xstate_object_t> xtop_state_mpt::create_object(common::xaccount_
     }
     auto obj = xstate_object_t::new_object(account, {});
     if (prev == nullptr) {
-        // TODO
-        // s.journal.append
+        m_journal.append({account, {}});
     } else {
-
+        m_journal.append({account, prev->index});
     }
     set_state_object(obj);
     return obj;
