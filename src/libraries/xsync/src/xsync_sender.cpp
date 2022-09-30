@@ -392,10 +392,8 @@ void xsync_sender_t::send_get_on_demand_blocks_with_params(const std::string &ad
     }
 
     if (request_param == enum_sync_block_by_height && data::is_unit_address(common::xaccount_address_t { address })) {
-        xwarn("send_get_on_demand_blocks_with_params can't sync unit by height.accout:(%s) height(%ld) count(%d) last_unit_hash(%s)",
+        xwarn("send_get_on_demand_blocks_with_params  sync unit by height.accout:(%s) height(%ld) count(%d) last_unit_hash(%s)",
             address.c_str(), start_height, count, base::xstring_utl::to_hex(last_unit_hash).c_str());
-        assert(false);
-        return;
     }
 
     uint32_t request_option = SYNC_MSG_OPTION_SET(enum_sync_block_request_demand, request_param, enum_sync_data_all, 
