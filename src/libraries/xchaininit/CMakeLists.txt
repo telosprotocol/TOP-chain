@@ -55,6 +55,8 @@ target_link_libraries(xchaininit PRIVATE ${LINK_ARGS}
     xvnetwork
     db_tool
     xxbase
+    xhttp
+    xbasic
     jsoncpp
     -lpthread -ldl)
 
