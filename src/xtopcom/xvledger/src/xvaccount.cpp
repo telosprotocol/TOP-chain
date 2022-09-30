@@ -847,16 +847,36 @@ namespace top
             {
                 _highest_execute_block_height = height;
                 _highest_execute_block_hash   = blockhash;
-                const uint32_t safe_distance = XGET_CONFIG(fulltable_interval_block_num) * 10;
-                if (_highest_execute_block_height > safe_distance) {
-                    _lowest_execute_block_height = _highest_execute_block_height - safe_distance;
-                }
+
+                // _lowest_execute_block_height rewirted by set_lowest_executed_block only. after we use unit state prune.
+                // const uint32_t safe_distance = XGET_CONFIG(fulltable_interval_block_num) * 10;
+                // if (_highest_execute_block_height > safe_distance) {
+                //     _lowest_execute_block_height = _highest_execute_block_height - safe_distance;
+                // }
                 add_modified_count();
                 return true;
             }
             return false;
         }
-    
+
+        bool xvactmeta_t::set_lowest_executed_block(const uint64_t height)
+        {
+            if(height < _lowest_execute_block_height)
+            {
+                // TODO(jimmy) it may happen when set executed height from statestore with multi-threads
+                xwarn("xvactmeta_t::set_latest_executed_block,try overwrited _lowest_execute_block_height(%llu) with old_meta(%llu)",_lowest_execute_block_height,height);
+                return false;
+            }
+            
+            if(height != _lowest_execute_block_height)
+            {
+                _lowest_execute_block_height = height;
+                add_modified_count();
+                return true;
+            }
+            return false;
+        }
+
         bool   xvactmeta_t::set_latest_deleted_block(const uint64_t height)
         {
             if(height <= _highest_deleted_block_height)

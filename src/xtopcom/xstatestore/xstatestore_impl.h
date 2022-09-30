@@ -11,6 +11,7 @@
 #include "xmbus/xmessage_bus.h"
 #include "xstatestore/xstatestore_face.h"
 #include "xstatestore/xstatestore_table.h"
+#include "xstatestore/xstatestore_resource.h"
 
 NS_BEG2(top, statestore)
 
@@ -22,7 +23,7 @@ class xstatestore_impl_t : public xstatestore_face_t {
    virtual ~xstatestore_impl_t() {}
 
  public:
-    virtual bool                    start(const xobject_ptr_t<base::xiothread_t> & iothread) override;
+    virtual bool                    start(const xobject_ptr_t<base::xiothread_t> & iothread, const xobject_ptr_t<base::xiothread_t> & iothread_for_prune) override;
     // query accountindex
     virtual bool                    get_accountindex_from_latest_connected_table(common::xaccount_address_t const & account_address, base::xaccount_index_t & index) const override;
     virtual bool                    get_accountindex_from_table_block(common::xaccount_address_t const & account_address, base::xvblock_t * table_block, base::xaccount_index_t & account_index) const override;
@@ -56,6 +57,8 @@ class xstatestore_impl_t : public xstatestore_face_t {
     virtual bool set_state_sync_info(common::xaccount_address_t const & table_address, const xstate_sync_info_t & state_sync_info) override;
     virtual xtablestate_ext_ptr_t do_commit_table_all_states(base::xvblock_t* current_block, xtablestate_store_ptr_t const& tablestate_store, std::error_code & ec) const override;
 
+    // void prune();
+
  private:
     static base::xauto_ptr<base::xvblock_t> get_latest_connectted_state_changed_block(base::xvblockstore_t* blockstore, const base::xvaccount_t & account);
     static base::xauto_ptr<base::xvblock_t> get_committed_state_changed_block(base::xvblockstore_t* blockstore, const base::xvaccount_t & account, uint64_t max_height);   
@@ -81,6 +84,8 @@ private:
     bool m_started{false};
     mutable std::mutex m_state_sync_infos_lock;
     std::map<std::string, xstate_sync_info_t> m_state_sync_infos;
+    xobject_ptr_t<statestore_prune_dispatcher_t> m_prune_dispather{nullptr};
+    std::shared_ptr<xstatestore_resources_t> m_para;
 };
 
 class xstatestore_timer_t : public top::base::xxtimer_t {

@@ -50,7 +50,7 @@ class xstatestore_face_t {
     xstatestore_face_t() = default;
     virtual ~xstatestore_face_t() {}    
  public:
-    virtual bool                    start(const xobject_ptr_t<base::xiothread_t> & iothread) = 0;
+    virtual bool                    start(const xobject_ptr_t<base::xiothread_t> & iothread, const xobject_ptr_t<base::xiothread_t> & iothread_for_prune) = 0;
     virtual xtablestate_ext_ptr_t   get_tablestate_ext_from_block(base::xvblock_t * target_block) const = 0;
     
     // query accountindex

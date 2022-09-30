@@ -16,8 +16,9 @@
 #include "xvledger/xvledger.h"
 
 NS_BEG2(top, statestore)
-xstatestore_table_t::xstatestore_table_t(common::xaccount_address_t const&  table_addr)
-: m_table_addr(table_addr), m_table_executor(table_addr) {
+xstatestore_table_t::xstatestore_table_t(common::xaccount_address_t const&  table_addr, std::shared_ptr<xstatestore_resources_t> para)
+: m_table_addr(table_addr), m_table_executor(table_addr, this) {
+    m_prune = std::make_shared<xstatestore_prune_t>(table_addr, para);
     xdbg("xstatestore_table_t::xstatestore_table_t table=%s,this=%p", table_addr.value().c_str(), this);
 }
 
@@ -85,6 +86,14 @@ uint64_t xstatestore_table_t::get_need_sync_state_block_height() const {
 
 void xstatestore_table_t::raise_execute_height(const xstate_sync_info_t & sync_info) {
     return m_table_executor.raise_execute_height(sync_info);
+}
+
+// void xstatestore_table_t::state_prune() {
+//     m_prune.prune(get_latest_executed_block_height());
+// }
+
+void xstatestore_table_t::on_executed(uint64_t height) {
+    m_prune->on_table_block_executed(height);
 }
 
 NS_END2

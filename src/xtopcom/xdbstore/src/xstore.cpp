@@ -114,7 +114,7 @@ const std::string xstore::get_value(const std::string &key) const {
     return value;
 }
 
-bool  xstore::delete_values(std::vector<std::string> & to_deleted_keys)
+bool  xstore::delete_values(const std::vector<std::string> & to_deleted_keys)
 {
     std::map<std::string, std::string> empty_put;
     return m_db->batch_change(empty_put, to_deleted_keys);
