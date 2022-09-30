@@ -464,8 +464,8 @@ xtop_trie::update_result::update_result(bool const updated, std::shared_ptr<xtri
 xtop_trie::update_result xtop_trie::insert(xtrie_node_face_ptr_t const & node, xbytes_t prefix, xbytes_t key, xtrie_node_face_ptr_t const & value, std::error_code & ec) {
     if (key.empty()) {
         if (node && node->type() == xtrie_node_type_t::valuenode) {
-            assert(dynamic_cast<xtrie_value_node_t *>(node.get()) != nullptr);
-            assert(dynamic_cast<xtrie_value_node_t *>(value.get()) != nullptr);
+            assert(std::dynamic_pointer_cast<xtrie_value_node_t>(node) != nullptr);
+            assert(std::dynamic_pointer_cast<xtrie_value_node_t>(value) != nullptr);
 
             return {std::dynamic_pointer_cast<xtrie_value_node_t>(node)->data() != std::dynamic_pointer_cast<xtrie_value_node_t>(value)->data(), value};
         }
@@ -776,5 +776,12 @@ void xtop_trie::prune(xhash256_t const & old_trie_root_hash, std::error_code & e
     pruner_->prune(old_trie_root_hash, trie_db_, ec);
 }
 
+std::string xtop_trie::to_string() const {
+    if (trie_root_ != nullptr) {
+        return trie_root_->fstring("");
+    }
+
+    return {};
+}
 
 NS_END3

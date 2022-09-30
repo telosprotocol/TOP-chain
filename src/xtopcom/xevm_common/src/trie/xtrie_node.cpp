@@ -7,8 +7,11 @@
 #include "xevm_common/rlp.h"
 
 #include <cassert>
+#include <sstream>
 
 NS_BEG3(top, evm_common, trie)
+
+static char const * indices[]{"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f", "[17]"};
 
 xtop_node_flag::xtop_node_flag(std::shared_ptr<xtrie_hash_node_t> hash, bool const dirty) : hash_node_{std::move(hash)}, dirty_{dirty} {
 }
@@ -46,7 +49,10 @@ xbytes_t const & xtop_trie_hash_node::data() const noexcept {
 }
 
 std::string xtop_trie_hash_node::fstring(std::string const & ind) const {
-    return {};
+    // return fmt.Sprintf("<%x> ", []byte(n))
+    std::ostringstream resp;
+    resp << "<" << to_hex(m_data) << "> ";
+    return resp.str();
 }
 
 xtrie_node_cached_data_t xtop_trie_hash_node::cache() const {
@@ -66,7 +72,10 @@ xbytes_t const & xtop_trie_value_node::data() const noexcept {
 }
 
 std::string xtop_trie_value_node::fstring(std::string const & ind) const {
-    return {};
+    // return fmt.Sprintf("%x ", []byte(n))
+    std::ostringstream resp;
+    resp << to_hex(m_data) << ' ';
+    return resp.str();
 }
 
 xtrie_node_cached_data_t xtop_trie_value_node::cache() const {
@@ -86,7 +95,10 @@ std::shared_ptr<xtop_trie_short_node> xtop_trie_short_node::clone() const {
 }
 
 std::string xtop_trie_short_node::fstring(std::string const & ind) const {
-    return {};
+    // return fmt.Sprintf("{%x: %v} ", n.Key, n.Val.fstring(ind+"  "))
+    std::ostringstream resp;
+    resp << '{' << to_hex(key) << ": " << val->fstring(ind + "  ") << "} ";
+    return resp.str();
 }
 
 xtrie_node_cached_data_t xtop_trie_short_node::cache() const {
@@ -134,7 +146,29 @@ void xtop_trie_short_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
 }
 
 std::string xtop_trie_full_node::fstring(std::string const & ind) const {
-    return {};
+    /*
+     * resp := fmt.Sprintf("[\n%s  ", ind)
+	for i, node := range &n.Children {
+		if node == nil {
+			resp += fmt.Sprintf("%s: <nil> ", indices[i])
+		} else {
+			resp += fmt.Sprintf("%s: %v", indices[i], node.fstring(ind+"  "))
+		}
+	}
+	return resp + fmt.Sprintf("\n%s] ", ind)
+     */
+    std::ostringstream resp;
+    resp << "[\n  " << ind;
+    for (auto i = 0u; i < Children.size(); ++i) {
+        auto const & child = Children[i];
+        if (child == nullptr) {
+            resp << indices[i] << ": <nil> ";
+        } else {
+            resp << indices[i] << ": " << child->fstring(ind + "  ");
+        }
+    }
+    resp << "\n" << ind << "] ";
+    return resp.str();
 }
 
 xtrie_node_cached_data_t xtop_trie_full_node::cache() const {

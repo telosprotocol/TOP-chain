@@ -104,16 +104,16 @@ public:
 
     void prune(xhash256_t const & old_trie_root_hash, std::error_code & ec);
 
+    std::string to_string() const;
+
 private:
-    std::tuple<xbytes_t, xtrie_node_face_ptr_t, bool> try_get(xtrie_node_face_ptr_t const & node, xbytes_t const & key, std::size_t const pos, std::error_code & ec) const;
+    std::tuple<xbytes_t, xtrie_node_face_ptr_t, bool> try_get(xtrie_node_face_ptr_t const & node, xbytes_t const & key, std::size_t pos, std::error_code & ec) const;
 
-    std::tuple<xbytes_t, xtrie_node_face_ptr_t, std::size_t> try_get_node(xtrie_node_face_ptr_t const & orig_node, xbytes_t const & path, std::size_t const pos, std::error_code & ec) const;
+    std::tuple<xbytes_t, xtrie_node_face_ptr_t, std::size_t> try_get_node(xtrie_node_face_ptr_t const & orig_node, xbytes_t const & path, std::size_t pos, std::error_code & ec) const;
 
-
-    struct update_result {
+    struct update_result {  // NOLINT(clang-diagnostic-padded)
         std::shared_ptr<xtrie_node_face_t> new_node{nullptr};
         bool dirty{false};
-        char padding[7]{0};
 
         update_result() = default;
         update_result(update_result const &) = default;
@@ -137,7 +137,6 @@ private:
 
     update_result erase(xtrie_node_face_ptr_t const & node, xbytes_t const & prefix, xbytes_t key, std::error_code & ec);
 
-private:
     xtrie_node_face_ptr_t resolve(xtrie_node_face_ptr_t const & n, /*xbytes_t prefix,*/ std::error_code & ec) const;
 
     xtrie_node_face_ptr_t resolve_hash(xtrie_hash_node_ptr_t const & n, /*xbytes_t prefix,*/ std::error_code & ec) const;
@@ -145,7 +144,6 @@ private:
     // hashRoot calculates the root hash of the given trie
     std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> hash_root();
 
-private:
     static xnode_flag_t node_dirty();
 };
 using xtrie_t = xtop_trie;

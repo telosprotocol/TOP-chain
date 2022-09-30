@@ -10,8 +10,6 @@
 #include "xevm_common/trie/xtrie_node_fwd.h"
 
 #include <array>
-#include <atomic>
-#include <map>
 #include <memory>
 #include <string>
 
@@ -41,7 +39,7 @@ enum class xtop_trie_node_type : uint8_t {
 };
 using xtrie_node_type_t = xtop_trie_node_type;
 
-struct xtop_node_flag {
+struct xtop_node_flag {  // NOLINT(clang-diagnostic-padded)
 private:
     std::shared_ptr<xtrie_hash_node_t> hash_node_{nullptr};
     bool dirty_{false};
@@ -57,7 +55,6 @@ public:
     xtop_node_flag(std::shared_ptr<xtrie_hash_node_t> hash, bool dirty);
     explicit xtop_node_flag(std::shared_ptr<xtrie_hash_node_t> hash);
     explicit xtop_node_flag(bool dirty);
-
 
     std::shared_ptr<xtrie_hash_node_t> const & hash_node() const noexcept;
     bool dirty() const noexcept;
@@ -80,8 +77,6 @@ public:
     virtual std::string fstring(std::string const & ind) const = 0;
     virtual xtrie_node_cached_data_t cache() const = 0;
     virtual xtrie_node_type_t type() const noexcept = 0;
-
-    
 };
 using xtrie_node_face_t = xtop_trie_node_face;
 using xtrie_node_face_ptr_t = std::shared_ptr<xtrie_node_face_t>;

@@ -8,6 +8,7 @@
 #include "xbasic/xhash.hpp"
 #include "xevm_common/trie/xtrie_node.h"
 
+#include <map>
 #include <memory>
 #include <system_error>
 
