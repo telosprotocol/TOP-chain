@@ -88,7 +88,8 @@ public:
                     xtxpool_role_info_t * shard,
                     xtxpool_statistic_t * statistic,
                     std::set<base::xtable_shortid_t> * all_sid_set = nullptr)
-      : m_para(para)
+      : m_table_address(table_addr)
+      , m_para(para)
       , m_table_state_cache(para, table_addr)
       , m_xtable_info(table_addr, shard, statistic, &m_table_state_cache, all_sid_set)
       , m_txmgr_table(&m_xtable_info, para)
@@ -136,6 +137,7 @@ private:
     void deal_commit_table_block(xblock_t * table_block, bool update_txmgr);
     xcons_transaction_ptr_t build_receipt(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id, uint64_t commit_height, enum_transaction_subtype subtype);
 
+    common::xaccount_address_t m_table_address;
     xtxpool_resources_face * m_para;
     xtable_state_cache_t m_table_state_cache;
     xtxpool_table_info_t m_xtable_info;

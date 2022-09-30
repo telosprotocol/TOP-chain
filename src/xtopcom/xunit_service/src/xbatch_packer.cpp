@@ -635,9 +635,10 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
         auto fork_tag = "cons_table_failed_accu_" + get_account();
         XMETRICS_COUNTER_SET( fork_tag , 0);
 
-        xunit_info("xbatch_packer::on_proposal_finish succ. leader:%d,proposal=%s,at_node:%s,m_last_xip2:%s",
+        xunit_info("xbatch_packer::on_proposal_finish succ. leader:%d,proposal=%s,state_root=%s,at_node:%s,m_last_xip2:%s",
             is_leader,
             _evt_obj->get_target_proposal()->dump().c_str(),
+            data::xblockextract_t::get_state_root_from_block(_evt_obj->get_target_proposal()).as_hex_str().c_str(),
             xcons_utl::xip_to_hex(get_xip2_addr()).c_str(),
             xcons_utl::xip_to_hex(m_last_xip2).c_str());
 

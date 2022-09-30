@@ -22,12 +22,8 @@ xstatestore_table_t::xstatestore_table_t(common::xaccount_address_t const&  tabl
     xdbg("xstatestore_table_t::xstatestore_table_t table=%s,this=%p", table_addr.value().c_str(), this);
 }
 
-data::xtablestate_ptr_t xstatestore_table_t::get_latest_connectted_table_state() const {
-    xtablestate_ext_ptr_t _tablestate = m_table_executor.get_latest_executed_tablestate_ext();
-    if (nullptr != _tablestate) {
-        return _tablestate->get_table_state();
-    }    
-    return nullptr;
+xtablestate_ext_ptr_t xstatestore_table_t::get_latest_connectted_table_state() const {
+    return m_table_executor.get_latest_executed_tablestate_ext();
 }
 
 data::xunitstate_ptr_t xstatestore_table_t::get_unit_state_from_block(common::xaccount_address_t const & account_address, base::xvblock_t * target_block) const {

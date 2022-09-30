@@ -78,33 +78,43 @@ xunitstate_ctx_ptr_t xstatectx_t::load_unit_ctx(const base::xvaccount_t & addr) 
     if (is_same) {
         base::xaccount_index_t account_index;
         if (false == m_statectx_base.load_account_index(addr, account_index)) {
-            xwarn("xstatectx_t::load_unit_ctx fail-load state.addr=%s", addr.get_address().c_str());
+            xerror("xstatectx_t::load_unit_ctx fail-load accountindex.addr=%s", addr.get_address().c_str());
             return nullptr;
         }
-        if (account_index.get_latest_unit_hash().empty()) {
-            // TODO(jimmy) before fork, need unit block
-            unitblock = m_statectx_base.load_inner_table_unit_block(addr);
-            if (nullptr != unitblock) {
-                bstate = m_statectx_base.load_proposal_block_state(addr, unitblock.get());
-                if (nullptr != bstate) {
-                    data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get(), false);  // modify-state
-                    unit_ctx = std::make_shared<xunitstate_ctx_t>(unitstate, unitblock);
-                    xdbg("xstatectx_t::load_unit_ctx succ-return unit unitstate.table=%s,account=%s,index=%s", m_prev_tablestate_ext->get_table_state()->get_bstate()->dump().c_str(), addr.get_account().c_str(), account_index.dump().c_str());
-                }
-            }
-        } else {
-            data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_accountindex(common::xaccount_address_t(addr.get_account()), account_index);
-            if (nullptr != unitstate) {
-                bstate = m_statectx_base.change_to_proposal_block_state(account_index, unitstate->get_bstate().get());
-                data::xunitstate_ptr_t unitstate_modify = std::make_shared<data::xunit_bstate_t>(bstate.get(), false);  // modify-state
-                unit_ctx = std::make_shared<xunitstate_ctx_t>(unitstate_modify, unitblock);
-                xdbg("xstatectx_t::load_unit_ctx succ-return accountindex unitstate.table=%s,account=%s,index=%s", m_prev_tablestate_ext->get_table_state()->get_bstate()->dump().c_str(), addr.get_account().c_str(), account_index.dump().c_str());
-            }
+        data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_accountindex(common::xaccount_address_t(addr.get_account()), account_index);
+        if (nullptr == unitstate) {
+            m_statectx_base.sync_unit_block(addr, account_index.get_latest_unit_height());
+            xwarn("xstatectx_t::load_unit_ctx fail-load unitstate.addr=%s,index=%s", addr.get_address().c_str(),account_index.dump().c_str());
+            return nullptr;
         }
-    } else { // different table unit state is readonly
-        bstate = m_statectx_base.load_different_table_unit_state(addr);
-        if (nullptr != bstate) {
-            data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get(), true);  // readonly-state
+
+        if (account_index.get_latest_unit_hash().empty()) {
+            // XTODO before fork, need unit block
+            auto _unit = m_statectx_base.load_block_object(addr, account_index);
+            if (nullptr == _unit) {
+                m_statectx_base.sync_unit_block(addr, account_index.get_latest_unit_height());
+                xerror("xstatectx_t::load_unit_ctx fail-load unit.addr=%s,index=%s", addr.get_address().c_str(),account_index.dump().c_str());
+                return nullptr;
+            }
+            unitblock = data::xblock_t::raw_vblock_to_object_ptr(_unit.get());
+        }
+
+        if (nullptr != unitblock) {
+            bstate = m_statectx_base.change_to_proposal_block_state(unitblock.get(), unitstate->get_bstate().get());
+        } else {
+            bstate = m_statectx_base.change_to_proposal_block_state(account_index, unitstate->get_bstate().get());
+        }
+        if (nullptr == bstate) {
+            xerror("xstatectx_t::load_unit_ctx fail-change proposal state.addr=%s,index=%s", addr.get_address().c_str(),account_index.dump().c_str());
+            return nullptr;
+        }
+
+        data::xunitstate_ptr_t unitstate_proposal = std::make_shared<data::xunit_bstate_t>(bstate.get(), false);  // modify-state
+        unit_ctx = std::make_shared<xunitstate_ctx_t>(unitstate_proposal, unitblock);
+        xdbg("xstatectx_t::load_unit_ctx succ-return unit unitstate.table=%s,account=%s,index=%s", m_prev_tablestate_ext->get_table_state()->get_bstate()->dump().c_str(), addr.get_account().c_str(), account_index.dump().c_str());
+    } else { // different table unit state is readonly        
+        data::xunitstate_ptr_t unitstate = m_statectx_base.load_different_table_unit_state(addr);
+        if (nullptr != unitstate) {
             unit_ctx = std::make_shared<xunitstate_ctx_t>(unitstate);
         }
     }

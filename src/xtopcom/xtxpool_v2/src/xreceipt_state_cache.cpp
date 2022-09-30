@@ -45,7 +45,7 @@ bool xtable_state_cache_t::is_unconfirmed_num_reach_limit(base::xtable_shortid_t
 
 bool xtable_state_cache_t::get_account_index(const std::string & account, base::xaccount_index_t & account_index) const {
     common::xaccount_address_t account_address(account);
-    return statestore::xstatestore_hub_t::instance()->get_accountindex_from_latest_connected_table(account_address, account_index);
+    return statestore::xstatestore_hub_t::instance()->get_accountindex_from_latest_connected_table(m_table_address, account_address, account_index);
 }
 
 uint64_t xtable_state_cache_t::get_state_height() const {

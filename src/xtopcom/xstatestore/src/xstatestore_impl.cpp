@@ -210,14 +210,21 @@ data::xtablestate_ptr_t xstatestore_impl_t::get_table_state_by_block(base::xvblo
     return nullptr;
 }
 
-bool xstatestore_impl_t::get_accountindex_from_latest_connected_table(common::xaccount_address_t const & account_address, base::xaccount_index_t& account_index) const {
-    xstatestore_table_ptr_t tablestore = get_table_statestore_from_unit_addr(account_address);
-    auto table_block = get_blockstore()->get_latest_connected_block(tablestore->get_table_address().vaccount());
-    if (table_block == nullptr) {
-        xerror("xstatestore_impl_t::get_accountindex_from_latest_connected_table fail-load latest connectted block. account=%s", account_address.value().c_str());
+bool xstatestore_impl_t::get_accountindex_from_latest_connected_table(common::xaccount_address_t const & table_address, common::xaccount_address_t const & account_address, base::xaccount_index_t& account_index) const {
+    xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(table_address.value());
+
+    auto tablestate = tablestore->get_latest_connectted_table_state();
+    if (tablestate == nullptr) {
+        xerror("xstatestore_impl_t::get_accountindex_from_latest_connected_table fail-load latest state. table=%s,account=%s", table_address.value().c_str(), account_address.value().c_str());
         return false;
     }    
-    return get_accountindex_from_table_block(account_address, table_block.get(), account_index);
+    std::error_code ec;
+    tablestate->get_accountindex(account_address.value(), account_index, ec);
+    if (ec) {
+        xerror("xstatestore_impl_t::get_accountindex_from_latest_connected_table fail-load accountindex. table=%s,account=%s", table_address.value().c_str(), account_address.value().c_str());
+        return false;
+    }
+    return true;
 }
 
 bool xstatestore_impl_t::get_accountindex_from_table_block(common::xaccount_address_t const & account_address, base::xvblock_t * table_block, base::xaccount_index_t & account_index) const {
@@ -420,7 +427,11 @@ base::xauto_ptr<base::xvblock_t> xstatestore_impl_t::get_committed_state_changed
 
 data::xtablestate_ptr_t xstatestore_impl_t::get_table_connectted_state(common::xaccount_address_t const & table_address) const {
     xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(table_address.value());
-    return tablestore->get_latest_connectted_table_state();
+    auto tablestate = tablestore->get_latest_connectted_table_state();
+    if (nullptr != tablestate) {
+        return tablestate->get_table_state();
+    }
+    return nullptr;
 }
 
 bool xstatestore_impl_t::get_receiptid_state_and_prove(common::xaccount_address_t const & table_address,
