@@ -9,7 +9,7 @@
 #include "stat.h"
 #include "thread_queue.h"
 #include "trans_http.h"
-#include "xelect_net/include/http_client.h"
+#include "xelect_net/include/http_seed_fetcher.h"
 #include "xtopcl/include/global_definition.h"
 
 #include <map>
@@ -93,7 +93,7 @@ private:
 
     std::shared_ptr<trans_ws> ws_trans_{nullptr};
 
-    top::elect::SeedHttpClient seed_client;
+    top::elect::HttpSeedFetcher seed_fetcher;
     static std::vector<std::string> seeds;
     static std::uint16_t index;
     static std::once_flag m_once_init_flag;
