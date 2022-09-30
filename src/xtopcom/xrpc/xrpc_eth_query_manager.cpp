@@ -198,8 +198,7 @@ void xrpc_eth_query_manager::eth_getBalance(xJson::Value & js_req, xJson::Value 
         xdbg("xrpc_eth_query_manager::eth_getBalance token type is %s.", default_token_type.c_str());
         if (default_token_type == "TOP") {
             uint64_t top_balance = account_ptr->balance();
-
-          //balance = account_ptr->tep_token_balance(common::xtoken_id_t::top);
+            balance = top_balance;
         } else {
             balance = account_ptr->tep_token_balance(common::xtoken_id_t::eth);
         }

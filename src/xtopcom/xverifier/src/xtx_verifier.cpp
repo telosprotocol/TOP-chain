@@ -122,7 +122,7 @@ int32_t xtx_verifier::verify_address_type(data::xtransaction_t const * trx) {
         }
 
         // consortium: check transfer address
-        if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(enable_transaction_whitelist) == 1) {
+        if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(enable_transaction_whitelist) == true) {
             
             if(verify_check_genesis_account(src_addr) ||  verify_check_genesis_account(dst_addr)) {
                 return xverifier_error::xverifier_success;
@@ -240,7 +240,7 @@ int32_t xtx_verifier::sys_contract_tx_check(data::xtransaction_t const * trx_ptr
     bool target_is_sys_contract_addr    = data::is_sys_contract_address(recver_addr);
 
     // consortium: check register whitelist
-    if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(enable_node_whitelist) == 1) {
+    if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(enable_node_whitelist) == true) {
         if (source_is_user_addr && target_addr == sys_contract_rec_registration_addr) {
             if (verify_register_whitelist(source_addr) == false)
                 return xverifier_error::xverifier_error_whitelist_limit;
