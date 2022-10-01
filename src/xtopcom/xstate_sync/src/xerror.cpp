@@ -26,6 +26,9 @@ static char const * const errc_to_string(int code) {
     case xerrc_t::state_network_invalid:
         return "state network invalid";
 
+    case xerrc_t::state_data_invalid:
+        return "state data invalid";        
+
     case xerrc_t::downloader_is_running:
         return "downloader is running";
 

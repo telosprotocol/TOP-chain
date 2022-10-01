@@ -49,6 +49,7 @@ public:
     explicit xtop_state_downloader(base::xvdbstore_t * db, statestore::xstatestore_face_t * store, const observer_ptr<mbus::xmessage_bus_face_t> & msg_bus);
     ~xtop_state_downloader() = default;
 
+    bool is_syncing(const common::xaccount_address_t & table);
     // sync actions
     void sync_state(const common::xaccount_address_t & table,
                     const uint64_t height,

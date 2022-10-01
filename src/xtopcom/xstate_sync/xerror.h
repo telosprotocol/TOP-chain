@@ -18,6 +18,7 @@ enum class xenum_errc {
     state_sync_cancel,
     state_sync_overtime,
     state_network_invalid,
+    state_data_invalid,
 
     downloader_is_running,
 };
