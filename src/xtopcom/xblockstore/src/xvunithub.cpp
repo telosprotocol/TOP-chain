@@ -738,17 +738,7 @@ namespace top
 
         bool    xvblockstore_impl::store_block(base::xauto_ptr<xblockacct_t> & container_account,base::xvblock_t * container_block,bool execute_block) //store table/book blocks if they are
         {            
-            bool is_store_units = true;
-            if (!container_block->get_output_offdata_hash().empty()) {
-                if (base::xvchain_t::instance().is_storage_node() == false) {
-                    auto zone_index = container_account->get_account_obj()->get_zone_index();
-                    if (zone_index != base::enum_chain_zone_beacon_index
-                        && zone_index != base::enum_chain_zone_zec_index
-                        && zone_index != base::enum_chain_zone_relay_index) {
-                        is_store_units = false;
-                    }
-                }
-            }
+            bool is_store_units = should_store_units(container_account->get_account_obj()->get_zone_index());
             xdbg("xvblockstore_impl::store_block enter,store block(%s),is_store_units=%d", container_block->dump().c_str(), is_store_units);
 
             //first do store sub-blocks
@@ -1198,10 +1188,8 @@ namespace top
                     return false;
                 }
 
-                auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
                 bool is_block_fork = base::xvblock_fork_t::is_block_match_version(container_block->get_block_version(), base::enum_xvblock_fork_version_5_0_0);
-                bool remove_unit_proof = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.remove_unit_proof_point, container_block->get_clock());
-                if ( (false == is_block_fork) && (false == remove_unit_proof)) {
+                if ( false == is_block_fork) {
                     return store_units_to_db_before_fork(target_account, index_ptr, container_block.get());
                 } else {
                     return store_units_to_db_after_fork(target_account, index_ptr, container_block.get());
@@ -1281,8 +1269,24 @@ namespace top
             return false;
         } 
 
+        bool xvblockstore_impl::should_store_units(int zone_index) const {
+            bool is_store_units = true;
+            if (base::xvchain_t::instance().is_storage_node() == false) {
+                if (zone_index != base::enum_chain_zone_beacon_index
+                    && zone_index != base::enum_chain_zone_zec_index
+                    && zone_index != base::enum_chain_zone_relay_index) {
+                    is_store_units = false;
+                }
+            }
+            return is_store_units;         
+        }
+
         bool  xvblockstore_impl::store_units_to_db_after_fork(xblockacct_t* target_account,base::xvbindex_t* index_ptr,base::xvblock_t* container_block)
         {
+            if (false == should_store_units(target_account->get_account_obj()->get_zone_index())) {
+                return true;
+            }
+
             if (false == load_block_output(*target_account->get_account_obj(), container_block)) {
                 xerror("xvblockstore_impl::store_units_to_db_after_fork,fail-load tableblock output.index=%s",index_ptr->dump().c_str());
                 return false;                    
@@ -1299,10 +1303,7 @@ namespace top
                     base::xvaccount_t  unit_account(account_index_pair.first);
                     LOAD_BLOCKACCOUNT_PLUGIN2(account_obj, unit_account);
                     account_obj->try_update_account_index(account_index_pair.second.get_latest_unit_height(), container_block->get_viewid(), false);  // TODO(jimmy) use table viewid to update
-                    xdbg("xvblockstore_impl::store_units_to_db_after_fork update unit index:account=%s,height:%llu,viewid:%llu",
-                            account_index_pair.first.c_str(),
-                            account_index_pair.second.dump().c_str());
-
+                    xdbg("xvblockstore_impl::store_units_to_db_after_fork update unit index:account=%s,index=%s",account_index_pair.first.c_str(), account_index_pair.second.dump().c_str());
                 }
             }
             return true;
