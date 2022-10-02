@@ -117,28 +117,28 @@ bool xstatestore_impl_t::set_state_sync_info(common::xaccount_address_t const & 
 
 void xstatestore_impl_t::on_state_sync_result(mbus::xevent_state_sync_ptr_t state_sync_event) {
     auto & table_addr = state_sync_event->table_addr.value();
-    xdbg("xstatestore_impl_t::on_state_sync_result in table:%s", table_addr.c_str());
     xstate_sync_info_t sync_info;
 
     {
         std::lock_guard<std::mutex> l(m_state_sync_infos_lock);
         auto iter = m_state_sync_infos.find(table_addr);
         if (iter == m_state_sync_infos.end()) {
-            xerror("xstatestore_impl_t::on_state_sync_event table not found:%s", table_addr.c_str());
+            xwarn("xstatestore_impl_t::on_state_sync_result fail-table not found:table:%s,height:%llu,root:%s,ec=%s", 
+                table_addr.c_str(),state_sync_event->height,state_sync_event->root_hash.as_hex_str().c_str(), state_sync_event->ec.message().c_str());
             return;
         }
         auto & state_sync_info = iter->second;
         if (state_sync_info.get_root_hash() != state_sync_event->root_hash || state_sync_info.get_table_state_hash() != state_sync_event->table_state_hash) {
-            xerror("xstatestore_impl_t::on_state_sync_event table not found:%s", table_addr.c_str());
+            xwarn("xstatestore_impl_t::on_state_sync_result fail-not match:table:%s,height:%llu,root:%s,ec=%s", 
+                table_addr.c_str(),state_sync_event->height,state_sync_event->root_hash.as_hex_str().c_str(), state_sync_event->ec.message().c_str());
+            m_state_sync_infos.erase(iter);
             return;
         }
 
         // todo(nathan):process state sync event.
         if (state_sync_event->ec) {
-            xwarn("xstatestore_impl_t::on_state_sync_event state sync fail.table:%s,height:%llu,root:%s",
-                table_addr.c_str(),
-                state_sync_info.get_height(),
-                state_sync_info.get_root_hash().as_hex_str().c_str());
+            xwarn("xstatestore_impl_t::on_state_sync_result fail-notify:table:%s,height:%llu,root:%s,ec=%s", 
+                table_addr.c_str(),state_sync_event->height,state_sync_event->root_hash.as_hex_str().c_str(), state_sync_event->ec.message().c_str());
             m_state_sync_infos.erase(iter);
             return;
         }
@@ -146,10 +146,9 @@ void xstatestore_impl_t::on_state_sync_result(mbus::xevent_state_sync_ptr_t stat
         m_state_sync_infos.erase(iter);
     }
 
-    xinfo("xstatestore_impl_t::on_state_sync_event state sync success.table:%s,height:%llu,root:%s",
-          table_addr.c_str(),
-          sync_info.get_height(),
-          sync_info.get_root_hash().as_hex_str().c_str());
+    xinfo("xstatestore_impl_t::on_state_sync_result succ-notify:table:%s,height:%llu,root:%s", 
+        table_addr.c_str(),state_sync_event->height,state_sync_event->root_hash.as_hex_str().c_str());
+
     xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(table_addr);
     tablestore->raise_execute_height(sync_info);
 }
