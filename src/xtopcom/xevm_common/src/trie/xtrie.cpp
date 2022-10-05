@@ -56,16 +56,15 @@ void xtop_trie::reset() {
 // database and can be used even if the trie doesn't have one.
 xhash256_t xtop_trie::hash() {
     auto result = hash_root();
-    if (trie_root_ != result.second) {
+    if (trie_root_.owner_before(result.second) || result.second.owner_before(trie_root_)) {
         trie_root_ = std::move(result.second);
-        printf("trie root changed: Hash\n");
     }
     if (result.first->type() == xtrie_node_type_t::hashnode) {
         assert(dynamic_cast<xtrie_hash_node_t *>(result.first.get()) != nullptr);
         return xhash256_t{std::dynamic_pointer_cast<xtrie_hash_node_t>(result.first)->data()};
     } else {
         // geth: trie.go:522 hash.(hashNode)  what if hash.type() was not hashNode...
-        // ??? normal won't happen. but it do leave the possiblity in code...
+        // ??? normal won't happen. but it do leave the possibility in code...
         assert(false);  // NOLINT(clang-diagnostic-disabled-macro-expansion)
         return {};
     }
@@ -105,9 +104,8 @@ std::pair<xbytes_t, std::size_t> xtop_trie::try_get_node(xbytes_t const & path, 
         return std::make_pair(xbytes_t{}, resolved);
     }
     if (resolved > 0) {
-        if (trie_root_ != newroot) {
+        if (trie_root_.owner_before(newroot) || newroot.owner_before(trie_root_)) {
             trie_root_ = newroot;
-            printf("trie root changed: TryGetNode\n");
         }
     }
     if (item.empty()) {
