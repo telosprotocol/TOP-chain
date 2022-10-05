@@ -221,7 +221,7 @@ void xstatestore_executor_t::update_execute_from_execute_height() const {
         std::error_code ec;
         xtablestate_ext_ptr_t tablestate = execute_block_recursive(cur_block.get(), limit, ec);
         if (nullptr == tablestate) {
-            xerror("xstatestore_executor_t::update_execute_from_execute_height fail-execute block.account=%s,height=%ld", m_table_addr.value().c_str(), height);
+            xwarn("xstatestore_executor_t::update_execute_from_execute_height fail-execute block.account=%s,height=%ld", m_table_addr.value().c_str(), height);
             break;            
         }
 
