@@ -140,8 +140,9 @@ std::shared_ptr<xstate_object_t> xtop_state_mpt::get_state_object(common::xaccou
 }
 
 std::shared_ptr<xstate_object_t> xtop_state_mpt::get_deleted_state_object(common::xaccount_address_t const & account, std::error_code & ec) {
-    if (m_state_objects.count(account)) {
-        return m_state_objects[account];
+    auto cache_obj = query_state_object(account);
+    if (nullptr != cache_obj) {
+        return cache_obj;
     }
     // get from cache
     if (m_lru != nullptr) {
@@ -172,7 +173,17 @@ std::shared_ptr<xstate_object_t> xtop_state_mpt::get_deleted_state_object(common
 }
 
 void xtop_state_mpt::set_state_object(std::shared_ptr<xstate_object_t> obj) {
+    std::lock_guard<std::mutex> l(m_state_objects_lock);
     m_state_objects[obj->account] = obj;
+}
+
+std::shared_ptr<xstate_object_t> xtop_state_mpt::query_state_object(common::xaccount_address_t const& account) const {
+    std::lock_guard<std::mutex> l(m_state_objects_lock);
+    auto iter = m_state_objects.find(account);
+    if (iter != m_state_objects.end()) {
+        return iter->second;
+    }
+    return nullptr;
 }
 
 std::shared_ptr<xstate_object_t> xtop_state_mpt::get_or_new_state_object(common::xaccount_address_t const & account, std::error_code & ec) {
@@ -241,7 +252,7 @@ void xtop_state_mpt::prune_unit(const common::xaccount_address_t & account, std:
 xhash256_t xtop_state_mpt::get_root_hash(std::error_code & ec) {
     finalize();
     for (auto & acc : m_state_objects_pending) {
-        auto obj = m_state_objects[acc];
+        auto obj = query_state_object(acc);
         update_state_object(obj, ec);
         if (ec) {
             xwarn("xtop_state_mpt::get_root_hash update_state_object %s error, %s %s", acc.c_str(), ec.category().name(), ec.message().c_str());
@@ -265,7 +276,8 @@ std::shared_ptr<evm_common::trie::xtrie_db_t> xtop_state_mpt::get_database() con
 void xtop_state_mpt::finalize() {
     for (auto & pair : m_journal.dirties) {
         auto acc = pair.first;
-        if (!m_state_objects.count(acc)) {
+        auto obj = query_state_object(acc);
+        if (nullptr == obj) {
             continue;
         }
         m_state_objects_pending.insert(acc);
@@ -289,11 +301,11 @@ xhash256_t xtop_state_mpt::commit(std::error_code & ec) {
     }
 
     for (auto & acc : m_state_objects_dirty) {
-        auto obj = m_state_objects[acc];
+        auto obj = query_state_object(acc);
         if (!obj->unit_bytes.empty() && obj->dirty_unit) {
             auto hash = base::xcontext_t::instance().hash({obj->unit_bytes.begin(), obj->unit_bytes.end()}, enum_xhash_type_sha2_256);
             auto unit_key =
-                base::xvdbkey_t::create_prunable_unit_state_key(base::xvaccount_t{obj->account.value()}, obj->index.get_latest_unit_height(), obj->index.get_latest_unit_hash());
+                base::xvdbkey_t::create_prunable_unit_state_key(obj->account.vaccount(), obj->index.get_latest_unit_height(), obj->index.get_latest_unit_hash());
             WriteUnit(m_db->DiskDB(), {unit_key.begin(), unit_key.end()}, obj->unit_bytes);
             obj->dirty_unit = false;
         }

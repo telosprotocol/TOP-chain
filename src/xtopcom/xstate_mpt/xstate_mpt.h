@@ -152,6 +152,8 @@ private:
     /// @param obj State object.
     void set_state_object(std::shared_ptr<xstate_object_t> obj);
 
+    std::shared_ptr<xstate_object_t> query_state_object(common::xaccount_address_t const& account) const;
+
     /// @brief Update state object to db.
     /// @param obj State object.
     /// @param ec Log the error code.
@@ -166,6 +168,7 @@ private:
 
     std::map<common::xaccount_address_t, xbytes_t> m_cache_indexes;
 
+    mutable std::mutex m_state_objects_lock;
     std::map<common::xaccount_address_t, std::shared_ptr<xstate_object_t>> m_state_objects;
     std::set<common::xaccount_address_t> m_state_objects_pending;
     std::set<common::xaccount_address_t> m_state_objects_dirty;
