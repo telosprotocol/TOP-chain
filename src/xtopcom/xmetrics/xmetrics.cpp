@@ -25,6 +25,8 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(dataobject_block_empty);
         RETURN_METRICS_NAME(dataobject_tx_receipt_t);
         RETURN_METRICS_NAME(dataobject_unit_state);
+        RETURN_METRICS_NAME(dataobject_table_state);
+        RETURN_METRICS_NAME(dataobject_bstate_ctx);
         RETURN_METRICS_NAME(dataobject_xvtxindex);
         RETURN_METRICS_NAME(dataobject_xvbstate);
         RETURN_METRICS_NAME(dataobject_xvproperty);

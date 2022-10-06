@@ -45,7 +45,7 @@ void xstatestore_cache_t::set_tablestate(std::string const& block_hash, xtablest
 data::xunitstate_ptr_t xstatestore_cache_t::get_unitstate(std::string const& block_hash) const {
     data::xunitstate_ptr_t state = nullptr;
     m_unitstate_cache.get(block_hash, state);
-    XMETRICS_GAUGE(metrics::statestore_get_table_state_from_cache, state != nullptr ? 1 : 0);
+    XMETRICS_GAUGE(metrics::statestore_get_unit_state_from_cache, state != nullptr ? 1 : 0);
     return state;
 }
 

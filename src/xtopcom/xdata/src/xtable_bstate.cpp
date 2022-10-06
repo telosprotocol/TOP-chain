@@ -5,15 +5,18 @@
 #include <string>
 #include "xbasic/xmodule_type.h"
 #include "xdata/xtable_bstate.h"
+#include "xmetrics/xmetrics.h"
 
 NS_BEG2(top, data)
 
 xtable_bstate_t::xtable_bstate_t(base::xvbstate_t* bstate, bool readonly)
 : xbstate_ctx_t(bstate, readonly) {
     cache_receiptid(bstate); // TODO(jimmy) delete future
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_table_state, 1);
 }
 
 xtable_bstate_t::~xtable_bstate_t() {
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_table_state, -1);
 }
 
 bool xtable_bstate_t::set_block_offsnapshot(base::xvblock_t* block, const std::string & snapshot) {

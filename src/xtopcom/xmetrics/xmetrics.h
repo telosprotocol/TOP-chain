@@ -43,6 +43,8 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     dataobject_block_empty,
     dataobject_tx_receipt_t,
     dataobject_unit_state,
+    dataobject_table_state,
+    dataobject_bstate_ctx,
     dataobject_xvtxindex,
     dataobject_xvbstate,
     dataobject_xvproperty,
