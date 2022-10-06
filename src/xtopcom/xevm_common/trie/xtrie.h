@@ -100,21 +100,43 @@ public:
     // If the trie does not contain a value for key, the returned proof contains all
     // nodes of the longest existing prefix of the key (at least the root node), ending
     // with the node that proves the absence of the key.
-    bool prove(xbytes_t const & key, uint32_t fromLevel, xkv_db_face_ptr_t proofDB, std::error_code & ec);
+    bool prove(xbytes_t const & key, uint32_t from_level, xkv_db_face_ptr_t const & proof_db, std::error_code & ec) const;
 
     void prune(xhash256_t const & old_trie_root_hash, std::error_code & ec);
 
-private:
-    std::tuple<xbytes_t, xtrie_node_face_ptr_t, bool> try_get(xtrie_node_face_ptr_t node, xbytes_t const & key, std::size_t const pos, std::error_code & ec) const;
-
-    std::tuple<xbytes_t, xtrie_node_face_ptr_t, std::size_t> try_get_node(xtrie_node_face_ptr_t orig_node, xbytes_t const & path, std::size_t const pos, std::error_code & ec) const;
+    std::string to_string() const;
 
 private:
-    std::pair<bool, xtrie_node_face_ptr_t> insert(xtrie_node_face_ptr_t node, xbytes_t prefix, xbytes_t key, xtrie_node_face_ptr_t value, std::error_code & ec);
+    std::tuple<xbytes_t, xtrie_node_face_ptr_t, bool> try_get(xtrie_node_face_ptr_t const & node, xbytes_t const & key, std::size_t pos, std::error_code & ec) const;
 
-    std::pair<bool, xtrie_node_face_ptr_t> erase(xtrie_node_face_ptr_t node, xbytes_t prefix, xbytes_t key, std::error_code & ec);
+    std::tuple<xbytes_t, xtrie_node_face_ptr_t, std::size_t> try_get_node(xtrie_node_face_ptr_t const & orig_node, xbytes_t const & path, std::size_t pos, std::error_code & ec) const;
 
-private:
+    struct update_result {  // NOLINT(clang-diagnostic-padded)
+        std::shared_ptr<xtrie_node_face_t> new_node{nullptr};
+        bool dirty{false};
+
+        update_result() = default;
+        update_result(update_result const &) = default;
+        update_result & operator=(update_result const &) = default;
+        update_result(update_result &&) = default;
+        update_result & operator=(update_result &&) = default;
+        ~update_result() = default;
+
+        update_result(bool updated, std::shared_ptr<xtrie_node_face_t> n) noexcept;
+    };
+    /**
+     * @brief insert key/value under node.
+     * @param node the root node for this inserted k/v
+     * @param prefix consumed key path
+     * @param key key to be inserted.
+     * @param value value to be inserted.
+     * @param ec record the error in the insert.
+     * @return pair<bool, ptr>, true if insert successful, false otherwise; ptr is the new root after key/value inserted.
+     */
+    update_result insert(xtrie_node_face_ptr_t const & node, xbytes_t prefix, xbytes_t key, xtrie_node_face_ptr_t const & value, std::error_code & ec);
+
+    update_result erase(xtrie_node_face_ptr_t const & node, xbytes_t const & prefix, xbytes_t key, std::error_code & ec);
+
     xtrie_node_face_ptr_t resolve(xtrie_node_face_ptr_t const & n, /*xbytes_t prefix,*/ std::error_code & ec) const;
 
     xtrie_node_face_ptr_t resolve_hash(xtrie_hash_node_ptr_t const & n, /*xbytes_t prefix,*/ std::error_code & ec) const;
@@ -122,7 +144,6 @@ private:
     // hashRoot calculates the root hash of the given trie
     std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> hash_root();
 
-private:
     static xnode_flag_t node_dirty();
 };
 using xtrie_t = xtop_trie;

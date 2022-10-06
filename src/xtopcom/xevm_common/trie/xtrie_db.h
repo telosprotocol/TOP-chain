@@ -5,6 +5,7 @@
 #pragma once
 
 #include "xbasic/xhash.hpp"
+#include "xbasic/xlru_cache_specialize.h"
 #include "xevm_common/trie/xtrie_db_fwd.h"
 #include "xevm_common/trie/xtrie_kv_db_face.h"
 #include "xevm_common/trie/xtrie_node_fwd.h"
@@ -36,7 +37,8 @@ private:
     friend class xtop_trie_cache_node;
     xkv_db_face_ptr_t diskdb_;  // Persistent storage for matured trie nodes
 
-    std::map<xhash256_t, xbytes_t> cleans_;
+    // std::map<xhash256_t, xbytes_t> cleans_;
+    basic::xlru_cache_specialize<xhash256_t, xbytes_t> cleans_{10000};
     std::map<xhash256_t, xtrie_cache_node_t> dirties_;
     std::unordered_set<xhash256_t> pruned_hashes_;
 

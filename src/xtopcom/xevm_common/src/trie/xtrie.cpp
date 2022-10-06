@@ -12,6 +12,8 @@
 #include "xevm_common/trie/xtrie_pruner.h"
 #include "xevm_common/xerror/xerror.h"
 
+#include <cstddef>
+
 NS_BEG3(top, evm_common, trie)
 
 xhash256_t const empty_root{empty_root_bytes};
@@ -30,7 +32,7 @@ std::shared_ptr<xtop_trie> xtop_trie::build_from(xhash256_t hash, xtrie_db_ptr_t
     if (db == nullptr) {
         xerror("build trie from null db");
     }
-    auto trie = std::shared_ptr<xtop_trie>(new xtop_trie{db});
+    auto trie = std::shared_ptr<xtop_trie>(new xtop_trie{std::move(db)});
     if ((hash != empty_root) && (hash != xhash256_t{})) {
         // resolve Hash
         auto const root_hash = std::make_shared<xtrie_hash_node_t>(hash);
@@ -54,17 +56,16 @@ void xtop_trie::reset() {
 // database and can be used even if the trie doesn't have one.
 xhash256_t xtop_trie::hash() {
     auto result = hash_root();
-    if (trie_root_ != result.second) {
+    if (trie_root_.owner_before(result.second) || result.second.owner_before(trie_root_)) {
         trie_root_ = std::move(result.second);
-        printf("trie root changed: Hash\n");
     }
     if (result.first->type() == xtrie_node_type_t::hashnode) {
         assert(dynamic_cast<xtrie_hash_node_t *>(result.first.get()) != nullptr);
         return xhash256_t{std::dynamic_pointer_cast<xtrie_hash_node_t>(result.first)->data()};
     } else {
         // geth: trie.go:522 hash.(hashNode)  what if hash.type() was not hashNode...
-        // ??? normal won't happen. but it do leave the possiblity in code...
-        assert(false);
+        // ??? normal won't happen. but it do leave the possibility in code...
+        assert(false);  // NOLINT(clang-diagnostic-disabled-macro-expansion)
         return {};
     }
 }
@@ -103,9 +104,8 @@ std::pair<xbytes_t, std::size_t> xtop_trie::try_get_node(xbytes_t const & path, 
         return std::make_pair(xbytes_t{}, resolved);
     }
     if (resolved > 0) {
-        if (trie_root_ != newroot) {
+        if (trie_root_.owner_before(newroot) || newroot.owner_before(trie_root_)) {
             trie_root_ = newroot;
-            printf("trie root changed: TryGetNode\n");
         }
     }
     if (item.empty()) {
@@ -141,24 +141,24 @@ void xtop_trie::update(xbytes_t const & key, xbytes_t const & value) {
 void xtop_trie::try_update(xbytes_t const & key, xbytes_t const & value, std::error_code & ec) {
     xassert(!ec);
     unhashed_++;
-    auto k = keybytesToHex(key);
+    auto const k = keybytesToHex(key);
     if (!value.empty()) {
         auto result = insert(trie_root_, {}, k, std::make_shared<xtrie_value_node_t>(value), ec);
         if (ec) {
             return;
         }
-        if (trie_root_ != result.second) {
-            trie_root_ = result.second;
-            printf("trie root changed: insert\n");
+
+        if (trie_root_.owner_before(result.new_node) || result.new_node.owner_before(trie_root_)) {
+            trie_root_ = std::move(result.new_node);
         }
     } else {
         auto result = erase(trie_root_, {}, k, ec);
         if (ec) {
             return;
         }
-        if (trie_root_ != result.second) {
-            trie_root_ = result.second;
-            printf("trie root changed: erase\n");
+
+        if (trie_root_.owner_before(result.new_node) || result.new_node.owner_before(trie_root_)) {
+            trie_root_ = std::move(result.new_node);
         }
     }
     return;
@@ -179,21 +179,22 @@ void xtop_trie::Delete(xbytes_t const & key) {
 void xtop_trie::try_delete(xbytes_t const & key, std::error_code & ec) {
     xassert(!ec); 
     unhashed_++;
-    auto k = keybytesToHex(key);
+    auto const k = keybytesToHex(key);
     auto result = erase(trie_root_, {}, k, ec);
     if (ec) {
         return;
     }
-    trie_root_ = result.second;
-    printf("trie root changed: TryDelete\n");
-    return;
+
+    if (trie_root_.owner_before(result.new_node) || result.new_node.owner_before(trie_root_)) {
+        trie_root_ = std::move(result.new_node);
+    }
 }
 
 // Commit writes all nodes to the trie's memory database, tracking the internal
 // and external (for account tries) references.
 std::pair<xhash256_t, int32_t> xtop_trie::commit(std::error_code & ec) {
     assert(!ec);
-    // todo LeafCallback
+    // todo leaf_callback
     if (trie_db_ == nullptr) {
         xerror("commit called on trie without database");
     }
@@ -214,35 +215,32 @@ std::pair<xhash256_t, int32_t> xtop_trie::commit(std::error_code & ec) {
     if (ec) {
         return std::make_pair(xhash256_t{}, 0);
     }
-    if (new_root->cache().dirty()) {
-        printf("newRoot committed dirty\n");
-    }
-    if (trie_root_ != new_root) {
+
+    if (trie_root_.owner_before(new_root) || new_root.owner_before(trie_root_)) {
         trie_root_ = new_root;
-        printf("trie root changed: Commit\n");
     }
+
     return std::make_pair(root_hash, committed);
 }
 
-bool xtop_trie::prove(xbytes_t const & key, uint32_t fromLevel, xkv_db_face_ptr_t proofDB, std::error_code & ec) {
+bool xtop_trie::prove(xbytes_t const & key, uint32_t from_level, xkv_db_face_ptr_t const & proof_db, std::error_code & ec) const {
     xassert(!ec);
     // Collect all nodes on the path to key.
     auto key_path = keybytesToHex(key);
     std::vector<xtrie_node_face_ptr_t> nodes;
-    auto tn = trie_root_;
-    for (; key_path.size() > 0 && tn != nullptr;) {
+    for (auto tn = trie_root_; !key_path.empty() && tn != nullptr;) {
         xdbg("key: %s", top::to_hex(key_path).c_str());
-        switch (tn->type()) {
+        switch (tn->type()) {  // NOLINT(clang-diagnostic-switch-enum)
         case xtrie_node_type_t::shortnode: {
             auto n = std::dynamic_pointer_cast<xtrie_short_node_t>(tn);
             assert(n != nullptr);
 
-            if (key_path.size() < n->key.size() || !std::equal(key_path.begin(), key_path.begin() + n->key.size(), n->key.begin())) {
+            if (key_path.size() < n->key.size() || !std::equal(key_path.begin(), std::next(key_path.begin(), static_cast<std::ptrdiff_t>(n->key.size())), n->key.begin())) {
                 // The trie doesn't contain the key.
                 tn = nullptr;
             } else {
                 tn = n->val;
-                key_path = {key_path.begin() + n->key.size(), key_path.end()};
+                key_path = {key_path.begin() + static_cast<std::ptrdiff_t>(n->key.size()), key_path.end()};
             }
             nodes.push_back(n);
             xdbg("append shortnode %s", top::to_hex(key_path).c_str());
@@ -268,7 +266,7 @@ bool xtop_trie::prove(xbytes_t const & key, uint32_t fromLevel, xkv_db_face_ptr_
             break;
         }
         default: {
-            xassert(false);
+            xassert(false);  // NOLINT(clang-diagnostic-disabled-macro-expansion)
         }
         }
     }
@@ -276,8 +274,8 @@ bool xtop_trie::prove(xbytes_t const & key, uint32_t fromLevel, xkv_db_face_ptr_
     auto hasher = xtrie_hasher_t::newHasher(false);
     xdbg("nodes.size():%zu", nodes.size());
     for (std::size_t index = 0; index < nodes.size(); ++index) {
-        if (fromLevel > 0) {
-            fromLevel--;
+        if (from_level > 0) {
+            from_level--;
             continue;
         }
         auto n = nodes[index];
@@ -295,20 +293,20 @@ bool xtop_trie::prove(xbytes_t const & key, uint32_t fromLevel, xkv_db_face_ptr_
                 assert(hash != nullptr);
             }
             xdbg("[Prove]: put into db <%s> %s", top::to_hex(hash->data()).c_str(), top::to_hex(enc).c_str());
-            proofDB->Put(hash->data(), enc, ec);
+            proof_db->Put(hash->data(), enc, ec);
         }
     }
 
     return true;
 }
 
-std::tuple<xbytes_t, xtrie_node_face_ptr_t, bool> xtop_trie::try_get(xtrie_node_face_ptr_t node, xbytes_t const & key, std::size_t const pos, std::error_code & ec) const {
+std::tuple<xbytes_t, xtrie_node_face_ptr_t, bool> xtop_trie::try_get(xtrie_node_face_ptr_t const & node, xbytes_t const & key, std::size_t const pos, std::error_code & ec) const {
     xdbg("tryGet key: %s ,pos: %zu", top::to_hex(key).c_str(), pos);
     if (node == nullptr) {
         return std::make_tuple(xbytes_t{}, nullptr, false);
     }
     assert(node != nullptr);
-    switch (node->type()) {
+    switch (node->type()) {  // NOLINT(clang-diagnostic-switch-enum)
     case xtrie_node_type_t::invalid: {
         return std::make_tuple(xbytes_t{}, nullptr, false);
     }
@@ -320,7 +318,7 @@ std::tuple<xbytes_t, xtrie_node_face_ptr_t, bool> xtop_trie::try_get(xtrie_node_
     case xtrie_node_type_t::shortnode: {
         auto n = std::dynamic_pointer_cast<xtrie_short_node_t>(node);
         assert(n != nullptr);
-        if ((key.size() - pos < n->key.size()) || (!std::equal(n->key.begin(), n->key.end(), key.begin() + pos))) {
+        if ((key.size() - pos < n->key.size()) || (!std::equal(n->key.begin(), n->key.end(), std::next(key.begin(), static_cast<std::ptrdiff_t>(pos))))) {
             // key not found in trie
             return std::make_tuple(xbytes_t{}, n, false);
         }
@@ -350,7 +348,7 @@ std::tuple<xbytes_t, xtrie_node_face_ptr_t, bool> xtop_trie::try_get(xtrie_node_
     case xtrie_node_type_t::hashnode: {
         auto n = std::dynamic_pointer_cast<xtrie_hash_node_t>(node);
         assert(n != nullptr);
-        auto child = resolve_hash(n, ec);
+        auto const child = resolve_hash(n, ec);
         if (ec) {
             xwarn("resolve hash error: at key: %s pos:%zu", top::to_hex(key).c_str(), pos);
             return std::make_tuple(xbytes_t{}, n, true);
@@ -362,16 +360,16 @@ std::tuple<xbytes_t, xtrie_node_face_ptr_t, bool> xtop_trie::try_get(xtrie_node_
         return std::make_tuple(value, newnode, true);
     }
     default: {
-        xassert(false);
+        xassert(false);  // NOLINT(clang-diagnostic-disabled-macro-expansion)
         __builtin_unreachable();
     }
     }
 }
 
-std::tuple<xbytes_t, xtrie_node_face_ptr_t, std::size_t> xtop_trie::try_get_node(xtrie_node_face_ptr_t orig_node,
-                                                                               xbytes_t const & path,
-                                                                               std::size_t const pos,
-                                                                               std::error_code & ec) const {
+std::tuple<xbytes_t, xtrie_node_face_ptr_t, std::size_t> xtop_trie::try_get_node(xtrie_node_face_ptr_t const & orig_node,
+                                                                                 xbytes_t const & path,
+                                                                                 std::size_t const pos,
+                                                                                 std::error_code & ec) const {
     xdbg("tryGetNode path: %s, pos: %zu", top::to_hex(path).c_str(), pos);
     // If non-existent path requested, abort
     if (orig_node == nullptr) {
@@ -399,7 +397,7 @@ std::tuple<xbytes_t, xtrie_node_face_ptr_t, std::size_t> xtop_trie::try_get_node
     }
     // Path still needs to be traversed, descend into children
     assert(orig_node != nullptr);
-    switch (orig_node->type()) {
+    switch (orig_node->type()) {  // NOLINT(clang-diagnostic-switch-enum)
     case xtrie_node_type_t::valuenode: {
         // Path prematurely ended, abort
         return std::make_tuple(xbytes_t{}, nullptr, 0);
@@ -408,7 +406,7 @@ std::tuple<xbytes_t, xtrie_node_face_ptr_t, std::size_t> xtop_trie::try_get_node
         auto n = std::dynamic_pointer_cast<xtrie_short_node_t>(orig_node);
         assert(n != nullptr);
 
-        if ((path.size() - pos < n->key.size()) || (!std::equal(n->key.begin(), n->key.end(), path.begin() + pos))) {
+        if ((path.size() - pos < n->key.size()) || (!std::equal(n->key.begin(), n->key.end(), std::next(path.begin(), static_cast<std::ptrdiff_t>(pos))))) {
             // Path branches off from short node
             return std::make_tuple(xbytes_t{}, n, 0);
         }
@@ -440,7 +438,7 @@ std::tuple<xbytes_t, xtrie_node_face_ptr_t, std::size_t> xtop_trie::try_get_node
         auto n = std::dynamic_pointer_cast<xtrie_hash_node_t>(orig_node);
         assert(n != nullptr);
 
-        auto child = resolve_hash(n, ec);
+        auto const child = resolve_hash(n, ec);
         if (ec) {
             return std::make_tuple(xbytes_t{}, n, 1);
         }
@@ -452,29 +450,32 @@ std::tuple<xbytes_t, xtrie_node_face_ptr_t, std::size_t> xtop_trie::try_get_node
         return std::make_tuple(item, newnode, resolved + 1);
     }
     default: {
-        xassert(false);
+        xassert(false);  // NOLINT(clang-diagnostic-disabled-macro-expansion)
         __builtin_unreachable();
     }
     }
 }
 
-std::pair<bool, xtrie_node_face_ptr_t> xtop_trie::insert(xtrie_node_face_ptr_t node, xbytes_t prefix, xbytes_t key, xtrie_node_face_ptr_t value, std::error_code & ec) {
+xtop_trie::update_result::update_result(bool const updated, std::shared_ptr<xtrie_node_face_t> n) noexcept : new_node{std::move(n)}, dirty{updated} {
+}
+
+xtop_trie::update_result xtop_trie::insert(xtrie_node_face_ptr_t const & node, xbytes_t prefix, xbytes_t key, xtrie_node_face_ptr_t const & value, std::error_code & ec) {
     if (key.empty()) {
         if (node && node->type() == xtrie_node_type_t::valuenode) {
-            assert(dynamic_cast<xtrie_value_node_t *>(node.get()) != nullptr);
-            assert(dynamic_cast<xtrie_value_node_t *>(value.get()) != nullptr);
+            assert(std::dynamic_pointer_cast<xtrie_value_node_t>(node) != nullptr);
+            assert(std::dynamic_pointer_cast<xtrie_value_node_t>(value) != nullptr);
 
-            return std::make_pair(std::dynamic_pointer_cast<xtrie_value_node_t>(node)->data() != std::dynamic_pointer_cast<xtrie_value_node_t>(value)->data(), value);
+            return {std::dynamic_pointer_cast<xtrie_value_node_t>(node)->data() != std::dynamic_pointer_cast<xtrie_value_node_t>(value)->data(), value};
         }
-        return std::make_pair(true, value);
+        return {true, value};
     }
 
     if (node == nullptr) {
-        return std::make_pair(true, std::make_shared<xtrie_short_node_t>(key, value, node_dirty()));
+        return {true, std::make_shared<xtrie_short_node_t>(key, value, node_dirty())};
     }
 
     assert(node != nullptr);
-    switch (node->type()) {
+    switch (node->type()) {  // NOLINT(clang-diagnostic-switch-enum)
     case xtrie_node_type_t::shortnode: {
         auto short_node = std::dynamic_pointer_cast<xtrie_short_node_t>(node);
         assert(short_node != nullptr);
@@ -482,74 +483,73 @@ std::pair<bool, xtrie_node_face_ptr_t> xtop_trie::insert(xtrie_node_face_ptr_t n
         // If the whole key matches, keep this short node as is
         // and only update the value.
         if (matchlen == short_node->key.size()) {
-            bool dirty;
-            xtrie_node_face_ptr_t new_node;
-            auto key_break_pos = std::next(key.begin(), matchlen);
+            auto key_break_pos = std::next(key.begin(), static_cast<std::ptrdiff_t>(matchlen));
 
             prefix.insert(prefix.end(), key.begin(), key_break_pos);
             key = {key_break_pos, key.end()};
 
-            std::tie(dirty, new_node) = insert(short_node->val, prefix, key, value, ec);
-            if (!dirty || ec) {
-                return std::make_pair(false, short_node);
+            auto result = insert(short_node->val, prefix, key, value, ec);
+            if (!result.dirty || ec) {
+                return {false, short_node};
             }
-            return std::make_pair(true, std::make_shared<xtrie_short_node_t>(short_node->key, new_node, node_dirty()));
+            return {true, std::make_shared<xtrie_short_node_t>(short_node->key, std::move(result.new_node), node_dirty())};
         }
 
         // Otherwise branch out at the index where they differ.
         auto branch = std::make_shared<xtrie_full_node_t>(node_dirty());
-        bool _;
         {
-            auto const short_node_key_break_pos = std::next(short_node->key.begin(), matchlen + 1);
+            auto const short_node_key_break_pos = std::next(short_node->key.begin(), static_cast<std::ptrdiff_t>(matchlen) + 1);
 
             auto sprefix = prefix;
             sprefix.insert(sprefix.end(), short_node->key.begin(), short_node_key_break_pos);
             auto skey = xbytes_t{short_node_key_break_pos, short_node->key.end()};
 
-            std::tie(_, branch->Children[short_node->key[matchlen]]) = insert(nullptr, sprefix, skey, short_node->val, ec);
+            auto result = insert(nullptr, sprefix, skey, short_node->val, ec);
+            branch->Children[short_node->key[matchlen]] = std::move(result.new_node);
             if (ec) {
-                return std::make_pair(false, nullptr);
+                return {false, nullptr};
             }
         }
         {
-            auto const key_break_pos = std::next(key.begin(), matchlen + 1);
+            auto const key_break_pos = std::next(key.begin(), static_cast<std::ptrdiff_t>(matchlen) + 1);
 
             auto sprefix = prefix;
             sprefix.insert(sprefix.end(), key.begin(), key_break_pos);
             auto const skey = xbytes_t{key_break_pos, key.end()};
-            std::tie(_, branch->Children[key[matchlen]]) = insert(nullptr, sprefix, skey, value, ec);
+            auto result = insert(nullptr, sprefix, skey, value, ec);
+            branch->Children[key[matchlen]] = std::move(result.new_node);
             if (ec) {
-                return std::make_pair(false, nullptr);
+                return {false, nullptr};
             }
         }
         // Replace this shortNode with the branch if it occurs at index 0.
         if (matchlen == 0) {
-            return std::make_pair(true, branch);
+            return {true, branch};
         }
         // Otherwise, replace it with a short node leading up to the branch.
-        xbytes_t short_key = {key.begin(), std::next(key.begin(), matchlen)};
-        return std::make_pair(true, std::make_shared<xtrie_short_node_t>(short_key, branch, node_dirty()));
+        xbytes_t short_key = {key.begin(), std::next(key.begin(), static_cast<std::ptrdiff_t>(matchlen))};
+        return {true, std::make_shared<xtrie_short_node_t>(short_key, branch, node_dirty())};
     }
     case xtrie_node_type_t::fullnode: {
         auto full_node = std::dynamic_pointer_cast<xtrie_full_node_t>(node);
         assert(full_node != nullptr);
 
-        bool dirty;
-        xtrie_node_face_ptr_t child;
         xbyte_t tkey = key[0];
         prefix.insert(prefix.end(), tkey);
         key.erase(key.begin());
-        std::tie(dirty, child) = insert(full_node->Children[tkey], prefix, key, value, ec);
-        if (!dirty || ec) {
-            return std::make_pair(false, full_node);
+        auto result = insert(full_node->Children[tkey], prefix, key, value, ec);
+        if (!result.dirty || ec) {
+            return {false, full_node};
         }
+
         full_node = full_node->clone();
         full_node->flags = node_dirty();
-        full_node->Children[tkey] = child;
-        return std::make_pair(true, full_node);
+        full_node->Children[tkey] = std::move(result.new_node);
+
+        return {true, full_node};
     }
     case xtrie_node_type_t::invalid: {
-        return std::make_pair(true, std::make_shared<xtrie_short_node_t>(key, value, node_dirty()));
+        return {true, std::make_shared<xtrie_short_node_t>(key, value, node_dirty())};
     }
     case xtrie_node_type_t::hashnode: {
         // We've hit a part of the trie that isn't loaded yet. Load
@@ -559,58 +559,54 @@ std::pair<bool, xtrie_node_face_ptr_t> xtop_trie::insert(xtrie_node_face_ptr_t n
         assert(hash_node != nullptr);
         auto real_node = resolve_hash(hash_node, ec);
         if (ec) {
-            return std::make_pair(false, real_node);
+            return {false, real_node};
         }
-        bool dirty;
-        xtrie_node_face_ptr_t new_node;
-        std::tie(dirty, new_node) = insert(real_node, prefix, key, value, ec);
-        if (!dirty || ec) {
-            return std::make_pair(false, real_node);
+        auto result = insert(real_node, prefix, key, value, ec);
+        if (!result.dirty || ec) {
+            return {false, real_node};
         }
-        return std::make_pair(true, new_node);
+        return {true, std::move(result.new_node)};
     }
     default: {
-        xassert(false);
+        xassert(false);  // NOLINT(clang-diagnostic-disabled-macro-expansion)
         __builtin_unreachable();
     }
     }
 }
 
-std::pair<bool, xtrie_node_face_ptr_t> xtop_trie::erase(xtrie_node_face_ptr_t node, xbytes_t prefix, xbytes_t key, std::error_code & ec) {
+xtop_trie::update_result xtop_trie::erase(xtrie_node_face_ptr_t const & node, xbytes_t const & prefix, xbytes_t key, std::error_code & ec) {
     // printf("erase: prefix: %s key: %s\n", top::to_hex(prefix).c_str(), top::to_hex(key).c_str());
     if (node == nullptr) {
-        return std::make_pair(false, nullptr);
+        return {false, nullptr};
     }
     assert(node != nullptr);
 
-    switch (node->type()) {
+    switch (node->type()) {  // NOLINT(clang-diagnostic-switch-enum)
     case xtrie_node_type_t::shortnode: {
         // printf("erase node_type short\n");
         auto short_node = std::dynamic_pointer_cast<xtrie_short_node_t>(node);
         assert(short_node != nullptr);
         auto const matchlen = prefixLen(key, short_node->key);
         if (matchlen < short_node->key.size()) {
-            return std::make_pair(false, short_node);  // don't replace n on mismatch
+            return {false, short_node};  // don't replace n on mismatch
         }
         if (matchlen == key.size()) {
-            return std::make_pair(true, nullptr);  // remove n entirely for whole matches
+            return {true, nullptr};  // remove n entirely for whole matches
         }
         // The key is longer than n.Key. Remove the remaining suffix
         // from the subtrie. Child can never be nil here since the
         // subtrie must contain at least two other values with keys
         // longer than n.Key.
-        bool dirty;
-        xtrie_node_face_ptr_t child;
         xbytes_t child_prefix = prefix;
-        auto const key_break_pos = std::next(key.begin(), short_node->key.size());
+        auto const key_break_pos = std::next(key.begin(), static_cast<std::ptrdiff_t>(short_node->key.size()));
         child_prefix.insert(child_prefix.end(), key.begin(), key_break_pos);
         xbytes_t const child_key = {key_break_pos, key.end()};
-        std::tie(dirty, child) = erase(short_node->val, child_prefix, child_key, ec);
-        if (!dirty || ec) {
-            return std::make_pair(false, short_node);
+        auto const result = erase(short_node->val, child_prefix, child_key, ec);
+        if (!result.dirty || ec) {
+            return {false, short_node};
         }
 
-        switch (child->type()) {
+        switch (result.new_node->type()) {  // NOLINT(clang-diagnostic-switch-enum)
         case xtrie_node_type_t::shortnode: {
             // Deleting from the subtrie reduced it to another
             // short node. Merge the nodes to avoid creating a
@@ -618,15 +614,15 @@ std::pair<bool, xtrie_node_face_ptr_t> xtop_trie::erase(xtrie_node_face_ptr_t no
             // always creates a new slice) instead of append to
             // avoid modifying n.Key since it might be shared with
             // other nodes.
-            auto const child_node = std::dynamic_pointer_cast<xtrie_short_node_t>(child);
+            auto const child_node = std::dynamic_pointer_cast<xtrie_short_node_t>(result.new_node);
             assert(child_node != nullptr);
 
             xbytes_t cchild_key = short_node->key;
             cchild_key.insert(cchild_key.end(), child_node->key.begin(), child_node->key.end());
-            return std::make_pair(true, std::make_shared<xtrie_short_node_t>(cchild_key, child_node->val, node_dirty()));
+            return {true, std::make_shared<xtrie_short_node_t>(cchild_key, child_node->val, node_dirty())};
         }
         default: {
-            return std::make_pair(true, std::make_shared<xtrie_short_node_t>(short_node->key, child, node_dirty()));
+            return {true, std::make_shared<xtrie_short_node_t>(short_node->key, result.new_node, node_dirty())};
         }
         }
     }
@@ -636,26 +632,25 @@ std::pair<bool, xtrie_node_face_ptr_t> xtop_trie::erase(xtrie_node_face_ptr_t no
         auto full_node = std::dynamic_pointer_cast<xtrie_full_node_t>(node);
         assert(full_node != nullptr);
 
-        bool dirty;
-        xtrie_node_face_ptr_t new_node;
-        xbyte_t tkey = key[0];
+        xbyte_t const tkey = key[0];
         xbytes_t nprefix = prefix;
         nprefix.insert(nprefix.end(), tkey);
         key.erase(key.begin());
-        std::tie(dirty, new_node) = erase(full_node->Children[tkey], nprefix, key, ec);
-        if (!dirty || ec) {
-            return std::make_pair(false, full_node);
+        auto const result = erase(full_node->Children[tkey], nprefix, key, ec);
+        if (!result.dirty || ec) {
+            return {false, full_node};
         }
+
         full_node = full_node->clone();
         full_node->flags = node_dirty();
-        full_node->Children[tkey] = new_node;
+        full_node->Children[tkey] = result.new_node;
 
         // Because n is a full node, it must've contained at least two children
         // before the delete operation. If the new child value is non-nil, n still
         // has at least two children after the deletion, and cannot be reduced to
         // a short node.
-        if (new_node != nullptr) {
-            return std::make_pair(true, full_node);
+        if (result.new_node != nullptr) {
+            return {true, full_node};
         }
 
         // Reduction:
@@ -683,53 +678,52 @@ std::pair<bool, xtrie_node_face_ptr_t> xtop_trie::erase(xtrie_node_face_ptr_t no
         }
         if (pos >= 0) {
             if (pos != 16) {
-                auto cnode = resolve(full_node->Children[pos], /*prefix,*/ ec);
+                auto const cnode = resolve(full_node->Children[pos], /*prefix,*/ ec);
                 if (ec) {
-                    return std::make_pair(false, nullptr);
+                    return {false, nullptr};
                 }
                 if (cnode->type() == xtrie_node_type_t::shortnode) {
-                    auto short_child_node = std::dynamic_pointer_cast<xtrie_short_node_t>(cnode);
+                    auto const short_child_node = std::dynamic_pointer_cast<xtrie_short_node_t>(cnode);
                     xbytes_t k = short_child_node->key;
-                    k.insert(k.begin(), xbyte_t{(xbyte_t)pos});
-                    return std::make_pair(true, std::make_shared<xtrie_short_node_t>(k, short_child_node->val, node_dirty()));
+                    k.insert(k.begin(), xbyte_t{static_cast<xbyte_t>(pos)});
+                    return {true, std::make_shared<xtrie_short_node_t>(k, short_child_node->val, node_dirty())};
                 }
             }
 
             // Otherwise, n is replaced by a one-nibble short node
             // containing the child.
             xbytes_t k{static_cast<xbyte_t>(pos)};
-            return std::make_pair(true, std::make_shared<xtrie_short_node_t>(k, full_node->Children[pos], node_dirty()));
+            return {true, std::make_shared<xtrie_short_node_t>(k, full_node->Children[pos], node_dirty())};
         }
         // n still contains at least two values and cannot be reduced.
-        return std::make_pair(true, full_node);
+        return {true, full_node};
     }
     case xtrie_node_type_t::valuenode: {
         // printf("erase node_type value\n");
-        return std::make_pair(true, nullptr);
+        return {true, nullptr};
     }
     case xtrie_node_type_t::invalid: {
         // printf("erase node_type invalid\n");
-        return std::make_pair(false, nullptr);
+        return {false, nullptr};
     }
     case xtrie_node_type_t::hashnode: {
         // printf("erase node_type hash\n");
-        auto hash_node = std::dynamic_pointer_cast<xtrie_hash_node_t>(node);
+        auto const hash_node = std::dynamic_pointer_cast<xtrie_hash_node_t>(node);
         assert(hash_node != nullptr);
 
         auto real_node = resolve_hash(hash_node, /*prefix,*/ ec);
         if (ec) {
-            return std::make_pair(false, nullptr);
+            return {false, nullptr};
         }
-        bool dirty;
-        xtrie_node_face_ptr_t nn;
-        std::tie(dirty, nn) = erase(real_node, prefix, key, ec);
-        if (!dirty || ec) {
-            return std::make_pair(false, real_node);
+
+        auto result = erase(real_node, prefix, key, ec);
+        if (!result.dirty || ec) {
+            return {false, real_node};
         }
-        return std::make_pair(true, nn);
+        return {true, std::move(result.new_node)};
     }
     default:
-        xassert(false);
+        xassert(false);  // NOLINT(clang-diagnostic-disabled-macro-expansion)
         __builtin_unreachable();
     }
 }
@@ -780,5 +774,12 @@ void xtop_trie::prune(xhash256_t const & old_trie_root_hash, std::error_code & e
     pruner_->prune(old_trie_root_hash, trie_db_, ec);
 }
 
+std::string xtop_trie::to_string() const {
+    if (trie_root_ != nullptr) {
+        return trie_root_->fstring("");
+    }
+
+    return {};
+}
 
 NS_END3

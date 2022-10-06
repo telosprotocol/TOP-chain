@@ -66,7 +66,7 @@ void xtop_trie_db::insertPreimage(xhash256_t hash, xbytes_t const & preimage) {
 
 xtrie_node_face_ptr_t xtop_trie_db::node(xhash256_t hash) {
     // todo:
-    if (cleans_.find(hash) != cleans_.end()) {
+    if (cleans_.contains(hash)) {
         // todo clean mark hit
         return xtrie_node_rlp::mustDecodeNode(hash, cleans_.at(hash));
     }
@@ -94,7 +94,7 @@ xbytes_t xtop_trie_db::Node(xhash256_t hash, std::error_code & ec) {
     }
 
     // Retrieve the node from the clean cache if available
-    if (cleans_.find(hash) != cleans_.end()) {
+    if (cleans_.contains(hash)) {
         return cleans_.at(hash);
     }
 
@@ -189,10 +189,7 @@ void xtop_trie_db::prune(xhash256_t const & hash, std::error_code & ec) {
         return;
     }
 
-    auto const it_in_cleans = cleans_.find(hash);
-    if (it_in_cleans != cleans_.end()) {
-        cleans_.erase(it_in_cleans);
-    }
+    cleans_.erase(hash);
 
     assert(dirties_.find(hash) == dirties_.end());
 

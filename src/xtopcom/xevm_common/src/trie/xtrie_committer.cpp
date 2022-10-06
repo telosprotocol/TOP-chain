@@ -46,10 +46,6 @@ std::pair<xtrie_node_face_ptr_t, int32_t> xtop_trie_committer::commit(xtrie_node
 
         // Commit child
         auto collapsed = cn->clone();
-        if (collapsed->cache().dirty()) {
-            
-        }
-
         // If the child is fullNode, recursively commit,
         // otherwise it can only be hashNode or valueNode.
         int32_t childCommitted{0};
