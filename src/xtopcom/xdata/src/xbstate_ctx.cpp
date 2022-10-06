@@ -13,6 +13,7 @@
 #include "xevm_common/rlp.h"
 #include "xvledger/xvproperty.h"
 #include "xvledger/xvpropertyrules.h"
+#include "xmetrics/xmetrics.h"
 
 #include <cinttypes>
 #include <string>
@@ -47,6 +48,7 @@ xbstate_ctx_t::xbstate_ctx_t(base::xvbstate_t * bstate, bool readonly) {
         xassert(_new_bstate != nullptr);
         m_snapshot_origin_bstate.attach(_new_bstate);  // clone another bstate
     }
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_bstate_ctx, 1);
 }
 
 xbstate_ctx_t::~xbstate_ctx_t() {
@@ -58,6 +60,7 @@ xbstate_ctx_t::~xbstate_ctx_t() {
         m_snapshot_origin_bstate->close();  // must do close firstly
         m_snapshot_origin_bstate = nullptr;
     }
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_bstate_ctx, -1);
 }
 
 size_t xbstate_ctx_t::do_snapshot() {

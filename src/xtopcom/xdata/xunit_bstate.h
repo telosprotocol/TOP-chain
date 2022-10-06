@@ -31,6 +31,7 @@ class xunit_bstate_t : public xbstate_ctx_t {
     
     ~xunit_bstate_t();
  private:
+    xunit_bstate_t();
     xunit_bstate_t(const xunit_bstate_t &);
     xunit_bstate_t & operator = (const xunit_bstate_t &);
 

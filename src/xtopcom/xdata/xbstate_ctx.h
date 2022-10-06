@@ -19,6 +19,11 @@ protected:
     xbstate_ctx_t(base::xvbstate_t* bstate, bool readonly);
     virtual ~xbstate_ctx_t();
 
+ private:
+    xbstate_ctx_t();
+    xbstate_ctx_t(const xbstate_ctx_t &);
+    xbstate_ctx_t & operator = (const xbstate_ctx_t &);
+
 public: // common APIs for state basic info
     // const std::string & get_account()const {return m_bstate->get_account();}
     // const std::string & get_address()const {return m_bstate->get_account();}
