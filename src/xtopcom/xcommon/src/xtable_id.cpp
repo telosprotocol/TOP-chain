@@ -13,7 +13,7 @@
 
 NS_BEG2(top, common)
 
-xtop_table_id::xtop_table_id(uint16_t const value) : m_value {value} {
+xtop_table_id::xtop_table_id(uint16_t const value) : m_value{ value } {
     if (m_value >= static_cast<uint16_t>(enum_vbucket_has_tables_count)) {
         top::error::throw_error(std::make_error_code(std::errc::invalid_argument));
     }

@@ -5,6 +5,7 @@
 #include "xbasic/xerror/xerror.h"
 #include "xcommon/xaccount_address.h"
 #include "xdata/xnative_contract_address.h"
+#include "xvledger/xvaccount.h"
 
 #include <gtest/gtest.h>
 
@@ -58,48 +59,48 @@ TEST(account_address, valid_construction_3) {
         ASSERT_EQ(account_address.ledger_id().value(), top::base::xvaccount_t::get_ledgerid_from_account(account_address.value()));
     }
     {
-        // std::string const account_base_string{"T80000f1d16965a3f485af048ebcec8fd700dc92d54fa7"};
-        // std::string const account_string{account_base_string + "@32"};
-        // std::uint16_t table_id_value{32};
+        std::string const account_base_string{"T80000f1d16965a3f485af048ebcec8fd700dc92d54fa7"};
+        std::string const account_string{account_base_string + "@32"};
+        std::uint16_t table_id_value{32};
 
-        // top::common::xaccount_address_t account_address{account_string};
+        top::common::xaccount_address_t account_address{account_string};
 
-        // ASSERT_FALSE(account_address.empty());
-        // EXPECT_EQ(account_address.table_id().value(), table_id_value);
-        // EXPECT_EQ(account_address.table_id().value(), top::base::xvaccount_t::get_ledgersubaddr_from_account(account_string));
-        // ASSERT_EQ(account_address.ledger_id().value(), top::base::xvaccount_t::get_ledgerid_from_account(account_address.value()));
-        // EXPECT_EQ(account_address.base_address().default_table_id().value(), top::base::xvaccount_t::get_ledgersubaddr_from_account(account_base_string));
-        // EXPECT_EQ(account_address.type(), base::enum_vaccount_addr_type::enum_vaccount_addr_type_secp256k1_eth_user_account);
+        ASSERT_FALSE(account_address.empty());
+        EXPECT_EQ(account_address.table_id().value(), table_id_value);
+        EXPECT_EQ(account_address.table_id().value(), top::base::xvaccount_t::get_ledgersubaddr_from_account(account_string));
+        ASSERT_EQ(account_address.ledger_id().value(), top::base::xvaccount_t::get_ledgerid_from_account(account_address.value()));
+        EXPECT_EQ(account_address.base_address().default_table_id().value(), top::base::xvaccount_t::get_ledgersubaddr_from_account(account_base_string));
+        EXPECT_EQ(account_address.type(), base::enum_vaccount_addr_type::enum_vaccount_addr_type_secp256k1_eth_user_account);
     }
 
     {
         // invalid address
-        // std::string const account_string{"T80000f1d16965a3f485af048ebcec8fd700dc92d54fa7"};
-        // std::uint16_t table_id_value{32};
+        std::string const account_string{"T80000f1d16965a3f485af048ebcec8fd700dc92d54fa7"};
+        std::uint16_t table_id_value{32};
 
-        // top::common::xaccount_address_t account_address{top::common::xaccount_base_address_t::build_from(account_string), table_id_value};
+        top::common::xaccount_address_t account_address{top::common::xaccount_base_address_t::build_from(account_string), table_id_value};
 
-        // ASSERT_FALSE(account_address.empty());
-        // EXPECT_EQ(account_address.table_id().value(), table_id_value);
-        // EXPECT_EQ(account_address.table_id().value(), top::base::xvaccount_t::get_ledgersubaddr_from_account(account_address.value()));
-        // ASSERT_EQ(account_address.ledger_id().value(), top::base::xvaccount_t::get_ledgerid_from_account(account_address.value()));
-        // EXPECT_EQ(account_address.base_address().default_table_id().value(), top::base::xvaccount_t::get_ledgersubaddr_from_account(account_string));
-        // EXPECT_EQ(account_address.type(), base::enum_vaccount_addr_type::enum_vaccount_addr_type_secp256k1_eth_user_account);
+        ASSERT_FALSE(account_address.empty());
+        EXPECT_EQ(account_address.table_id().value(), table_id_value);
+        EXPECT_EQ(account_address.table_id().value(), top::base::xvaccount_t::get_ledgersubaddr_from_account(account_address.value()));
+        ASSERT_EQ(account_address.ledger_id().value(), top::base::xvaccount_t::get_ledgerid_from_account(account_address.value()));
+        EXPECT_EQ(account_address.base_address().default_table_id().value(), top::base::xvaccount_t::get_ledgersubaddr_from_account(account_string));
+        EXPECT_EQ(account_address.type(), base::enum_vaccount_addr_type::enum_vaccount_addr_type_secp256k1_eth_user_account);
     }
 
     {
         // invalid address
-        // std::string const account_string{"T00000LXWe8Z1CRrrMB54dVBH9mKn4AJukpEGi9j"};
-        // std::uint16_t table_id_value{3};
+        std::string const account_string{"T00000LXWe8Z1CRrrMB54dVBH9mKn4AJukpEGi9j"};
+        std::uint16_t table_id_value{3};
 
-        // top::common::xaccount_address_t account_address{top::common::xaccount_base_address_t::build_from(account_string), table_id_value};
+        top::common::xaccount_address_t account_address{top::common::xaccount_base_address_t::build_from(account_string), table_id_value};
 
-        // ASSERT_FALSE(account_address.empty());
-        // EXPECT_EQ(account_address.table_id().value(), table_id_value);
-        // EXPECT_EQ(account_address.table_id().value(), top::base::xvaccount_t::get_ledgersubaddr_from_account(account_address.value()));
-        // ASSERT_EQ(account_address.ledger_id().value(), top::base::xvaccount_t::get_ledgerid_from_account(account_address.value()));
-        // EXPECT_EQ(account_address.base_address().default_table_id().value(), top::base::xvaccount_t::get_ledgersubaddr_from_account(account_string));
-        // EXPECT_EQ(account_address.type(), base::enum_vaccount_addr_type::enum_vaccount_addr_type_secp256k1_user_account);
+        ASSERT_FALSE(account_address.empty());
+        EXPECT_EQ(account_address.table_id().value(), table_id_value);
+        EXPECT_EQ(account_address.table_id().value(), top::base::xvaccount_t::get_ledgersubaddr_from_account(account_address.value()));
+        ASSERT_EQ(account_address.ledger_id().value(), top::base::xvaccount_t::get_ledgerid_from_account(account_address.value()));
+        EXPECT_EQ(account_address.base_address().default_table_id().value(), top::base::xvaccount_t::get_ledgersubaddr_from_account(account_string));
+        EXPECT_EQ(account_address.type(), base::enum_vaccount_addr_type::enum_vaccount_addr_type_secp256k1_user_account);
     }
 }
 
@@ -179,6 +180,17 @@ TEST(account_address, value_address_must_not_changed) {
     auto const & lvalue = account_address.value();
     auto const & rvalue = account_address.value();
     ASSERT_EQ(std::addressof(lvalue), std::addressof(rstring));
+    ASSERT_EQ(std::addressof(lvalue), std::addressof(rvalue));
+}
+
+TEST(account_address, size) {
+    EXPECT_TRUE(sizeof(top::common::xaccount_address_t) <= 40);
+    EXPECT_TRUE(sizeof(top::common::xaccount_base_address_t) <= 16);
+    EXPECT_TRUE(sizeof(top::base::xvaccount_t) <= 56);
+
+    EXPECT_EQ(40, sizeof(top::common::xaccount_address_t));
+    EXPECT_EQ(16, sizeof(top::common::xaccount_base_address_t));
+    EXPECT_EQ(56, sizeof(top::base::xvaccount_t));
 }
 
 NS_END3
