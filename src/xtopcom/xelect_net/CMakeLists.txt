@@ -11,8 +11,6 @@ aux_source_directory(./proto xelect_net_proto)
 add_library(xelect_net STATIC ${xelect_net_src} ${xelect_net_proto})
 
 #add_dependencies(xelect_net xwrouter xkad xpbase xcommon xbasic)
-# todo remove this openssl dependency
-target_include_directories(xelect_net PRIVATE ${CMAKE_SOURCE_DIR}/src/xtopcom/xdepends/openssl_include/openssl/)
 target_link_libraries(xelect_net PRIVATE xwrouter xkad xpbase xgossip xtransport xhttp xcommon xbasic)
 
 if (XENABLE_P2P_TEST)
