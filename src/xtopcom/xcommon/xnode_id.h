@@ -46,12 +46,10 @@ std::int32_t operator>>(top::base::xbuffer_t & stream, xtop_node_id & node_id);
 
 class xtop_node_id final {
 private:
-    std::string m_account_string;
     xaccount_base_address_t m_account_base_address;
-    xtable_id_t m_assigned_table_id;
-
+    std::string m_account_string;
     xaccount_id_t m_account_id{};
-    base::xvaccount_t   m_vaccount;
+    xtable_id_t m_assigned_table_id;
 
 public:
     xtop_node_id()                                 = default;
@@ -63,7 +61,7 @@ public:
 
     explicit xtop_node_id(std::string value);
     explicit xtop_node_id(xaccount_base_address_t base_address);
-    explicit xtop_node_id(xaccount_base_address_t base_address, uint16_t const table_id_value);
+    explicit xtop_node_id(xaccount_base_address_t base_address, uint16_t table_id_value);
     explicit xtop_node_id(xaccount_base_address_t base_address, xtable_id_t table_id);
 
     static xtop_node_id build_from(std::string const & input, std::error_code & ec);
@@ -112,7 +110,7 @@ public:
     xtable_id_t const & table_id() const noexcept;
     bool has_assigned_table_id() const noexcept;
 
-    base::xvaccount_t const & vaccount() const;
+    base::xvaccount_t vaccount() const;
 
     friend std::int32_t operator<<(base::xstream_t & stream, xtop_node_id const & node_id);
     friend std::int32_t operator>>(base::xstream_t & stream, xtop_node_id & node_id);
