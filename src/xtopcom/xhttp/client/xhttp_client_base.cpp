@@ -62,6 +62,10 @@ xtop_http_client_base::~xtop_http_client_base() {
     m_client->_.stop();
 }
 
+std::string xtop_http_client_base::percent_encode(std::string const & data){
+    return SimpleWeb::Percent::encode(data);
+}
+
 std::string xtop_http_client_base::request_get() {
     auto res = m_client->_.request("GET", default_request_path);
     return res->content.string();
