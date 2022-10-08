@@ -1211,12 +1211,13 @@ TEST_F(test_tablemaker, account_index_upgrade) {
     }
 }
 
-TEST_F(test_tablemaker, convert_to_new_account_index) {
+TEST_F(test_tablemaker, account_index_upgrade_tool) {
     mock::xvchain_creator creator(true);
     base::xvblockstore_t* blockstore = creator.get_blockstore();
 
-    uint64_t max_block_height = 5;
-    mock::xdatamock_table mocktable(1, 4);
+    uint64_t max_block_height = 10;
+    uint64_t account_num = 4;
+    mock::xdatamock_table mocktable(1, account_num);
     mocktable.genrate_table_chain(max_block_height, blockstore);
     const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
     xassert(tableblocks.size() == max_block_height + 1);
@@ -1225,11 +1226,13 @@ TEST_F(test_tablemaker, convert_to_new_account_index) {
         ASSERT_TRUE(blockstore->store_block(mocktable, block.get()));
     }
 
-    auto tableblock = tableblocks[max_block_height];
+    auto tableblock = tableblocks[max_block_height - 2];
     
     std::vector<xobject_ptr_t<xvblock_t>> sub_blocks;
     tableblock->extract_sub_blocks(sub_blocks);
-    ASSERT_EQ(sub_blocks.size(), 4);
+    ASSERT_EQ(sub_blocks.size(), account_num);
+
+    std::map<std::string, base::xaccount_index_t> new_indexes;
 
     for (auto & sub_block : sub_blocks) {
         base::xaccount_index_t old_account_index(sub_block.get(), false, enum_xblock_consensus_flag_committed, false, 0);
@@ -1248,5 +1251,31 @@ TEST_F(test_tablemaker, convert_to_new_account_index) {
         std::string statehash = sub_block->get_cert()->hash(unitstate_bin);
         EXPECT_EQ(new_account_index.get_latest_state_hash(), statehash);
         EXPECT_EQ(new_account_index.get_latest_tx_nonce(), nonce);
+        new_indexes[sub_block->get_account()] = new_account_index;
+    }
+
+    auto tableblock_lock = tableblocks[max_block_height - 1];
+    xaccount_index_upgrade_tool_t::update_new_indexes_by_block(new_indexes, tableblock_lock);
+
+    std::vector<xobject_ptr_t<xvblock_t>> sub_blocks_lock;
+    tableblock_lock->extract_sub_blocks(sub_blocks_lock);
+    ASSERT_EQ(sub_blocks_lock.size(), account_num);
+
+    for (auto & sub_block : sub_blocks_lock) {
+        base::xvaccount_t account(sub_block->get_account());
+        auto iter = new_indexes.find(sub_block->get_account());
+        EXPECT_NE(iter, new_indexes.end());
+        auto & account_index = iter->second;
+        EXPECT_EQ(account_index.get_latest_unit_height(), sub_block->get_height());
+        EXPECT_EQ(account_index.get_latest_unit_hash(), sub_block->get_block_hash());
+        auto unitbstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(sub_block.get());
+        data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(unitbstate.get());
+        auto nonce = unitstate->account_send_trans_number();
+        std::string unitstate_bin;
+        unitbstate->take_snapshot(unitstate_bin);
+        unitbstate->take_snapshot(unitstate_bin);
+        std::string statehash = sub_block->get_cert()->hash(unitstate_bin);
+        EXPECT_EQ(account_index.get_latest_state_hash(), statehash);
+        EXPECT_EQ(account_index.get_latest_tx_nonce(), nonce);
     }
 }
