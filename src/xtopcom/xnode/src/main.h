@@ -92,7 +92,6 @@ bool isFileExist (const std::string& name);
 std::string get_working_path();
 int load_commandline(config_t &config, int argc, char *argv[]);
 bool get_default_miner(config_t& config,std::map<std::string, std::string> &default_miner);
-std::string get_prikey_from_safebox(const std::string &account);
 
 int StartNodeWithConfig(config_t& config);
 int StartNode(config_t& config);
