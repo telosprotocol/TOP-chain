@@ -4,7 +4,7 @@
 
 #include "base/utility.h"
 #include "xchain_fork/xchain_upgrade_center.h"
-#include "task/task_info.h"
+#include "xtopcl/include/task/task_info.h"
 
 namespace xChainSDK {
 
