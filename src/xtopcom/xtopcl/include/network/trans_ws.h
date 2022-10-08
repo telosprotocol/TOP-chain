@@ -3,9 +3,9 @@
 #define XCHAIN_TRANS_WS
 
 #include <thread>
-#include "trans_base.h"
-#include "client_ws.hpp"
-#include "thread_queue.h"
+#include "xtopcl/include/network/trans_base.h"
+#include "simplewebsocketserver/client_ws.hpp"
+#include "xtopcl/include/base/thread_queue.h"
 
 namespace xChainSDK
 {

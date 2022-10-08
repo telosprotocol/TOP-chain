@@ -7,8 +7,8 @@
 #    define XCHAIN_SDK_PROTOCOL
 
 #    include "json/json.h"
-#    include "request_result_definition.h"
-#    include "task/task_info.h"
+#    include "xtopcl/include/request_result_definition.h"
+#    include "xtopcl/include/task/task_info.h"
 #    include "xdata/xtransaction.h"
 
 #    include <functional>

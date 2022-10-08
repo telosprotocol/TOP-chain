@@ -4,7 +4,7 @@
 #ifndef XCHAIN_TRANS_BASE
 #define XCHAIN_TRANS_BASE
 
-#include "protocol.h"
+#include "xtopcl/include/protocol.h"
 
 
 namespace xChainSDK

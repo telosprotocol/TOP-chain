@@ -1,10 +1,10 @@
 // Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-#include "request_task.h"
+#include "xtopcl/include/task/request_task.h"
 
-#include "global_definition.h"
-#include "network/trans_http.h"
+#include "xtopcl/include/global_definition.h"
+#include "xtopcl/include/network/trans_http.h"
 
 namespace xChainSDK {
 std::string request_task::_req_content = "";

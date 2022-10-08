@@ -52,12 +52,6 @@ endif()
 add_library(xtopcl STATIC ${cppsdk_src})
 add_dependencies(xtopcl xconfig xdata xxbase xelect_net)
 target_include_directories(xtopcl PRIVATE ${CMAKE_SOURCE_DIR}/src/xtopcom/xdepends/openssl_include/openssl/)
-target_include_directories(xtopcl  PUBLIC   ${PROJ_DIR}/include
-                                            ${PROJ_DIR}/include/base
-                                            ${PROJ_DIR}/include/network
-                                            ${PROJ_DIR}/include/task
-                                            ${PROJ_DIR}/include/web
-                                            ${PROJ_DIR}/include/xtop
-)
+
 target_link_libraries(xtopcl PRIVATE ${LINK_ARGS} xconfig xdata xelect_net xxbase jsoncpp)
 
