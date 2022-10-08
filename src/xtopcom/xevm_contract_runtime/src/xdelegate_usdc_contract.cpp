@@ -69,6 +69,16 @@ bool xtop_delegate_usdc_contract::execute(xbytes_t input,
     }
 
     switch (function_selector.method_id) {
+    case method_id_decimals: {
+        xdbg("precompiled usdc contract: decimals");
+
+        output.exit_status = Returned;
+        output.cost = 0;
+        output.output = top::to_bytes(evm_common::u256{18});
+
+        return true;
+    }
+
     case method_id_total_supply: {
         xdbg("precompiled usdc contract: totalSupply");
 
