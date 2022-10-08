@@ -23,6 +23,9 @@ public:
     xtop_http_client_base(std::pair<std::string, uint16_t> const & remote_host_port);
     xtop_http_client_base(std::string const & remote_ip, uint16_t remote_port);
 
+public:
+    std::string percent_encode(std::string const & data);
+
 protected:
     std::string request_get();
 
