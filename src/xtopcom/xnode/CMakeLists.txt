@@ -28,4 +28,4 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 endif()
 
 #add_dependencies(topio xpbase)
-target_link_libraries(topio PRIVATE xbasic xpbase jsoncpp pthread dl)
+target_link_libraries(topio PRIVATE xhttp xbasic xpbase jsoncpp pthread dl)

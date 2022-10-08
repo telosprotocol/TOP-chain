@@ -5,7 +5,6 @@
 #include <iostream>
 
 #include "simplewebserver/server_http.hpp"
-#include "simplewebserver/client_http.hpp"
 
 #include "xbasic/xtimer_driver_fwd.h"
 
