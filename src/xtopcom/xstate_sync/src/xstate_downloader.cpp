@@ -17,6 +17,14 @@ xtop_state_downloader::xtop_state_downloader(base::xvdbstore_t * db, statestore:
   : m_db(db), m_store(store), m_bus(msg_bus) {
 }
 
+bool xtop_state_downloader::is_syncing(const common::xaccount_address_t & table) {
+    std::lock_guard<std::mutex> lock(m_dispatch_mutex);
+    if (m_running.count(table)) {
+        return true;
+    }
+    return false;
+}
+
 void xtop_state_downloader::sync_state(const common::xaccount_address_t & table,
                                        const uint64_t height,
                                        const xhash256_t & block_hash,

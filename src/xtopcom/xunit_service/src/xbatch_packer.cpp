@@ -346,10 +346,7 @@ bool xbatch_packer::do_state_sync(uint64_t sync_height) {
     xhash256_t sync_block_hash(top::to_bytes(sync_block->get_block_hash()));
     xinfo("xbatch_packer::do_state_sync sync state begin.table:%s,height:%llu,root:%s", get_account().c_str(), sync_height, state_root.as_hex_str().c_str());
     get_resources()->get_state_downloader()->sync_state(m_table_addr, sync_height, sync_block_hash, table_bstate_hash, state_root, true, ec);
-    if (!ec) {
-        statestore::xstatestore_hub_t::instance()->set_state_sync_info(
-            m_table_addr, statestore::xstate_sync_info_t(sync_height, state_root, table_bstate_hash, sync_block->get_block_hash()));
-    } else {
+    if (ec) {
         xwarn("xbatch_packer::do_state_sync sync state fail.table:%s,height:%llu,root:%s ec:%s", get_account().c_str(), sync_height, state_root.as_hex_str().c_str(), ec.message().c_str());
     }
     XMETRICS_GAUGE(metrics::cons_invoke_sync_state_count, 1);    
@@ -371,6 +368,11 @@ bool xbatch_packer::check_state_sync(base::xvblock_t * cert_block) {
     if (base::xvchain_t::instance().is_storage_node()) {
         // storage node should not invoke sync, it need produce the whole mpt state
         xwarn("xbatch_packer::check_state_sync storgage node no need sync.block=%s,execute_height=%ld",cert_block->dump().c_str(), latest_executed_height);
+        return false;
+    }
+
+    if (get_resources()->get_state_downloader()->is_syncing(m_table_addr)) {
+        xwarn("xbatch_packer::check_state_sync in syncing.block=%s,execute_height=%ld",cert_block->dump().c_str(), latest_executed_height);
         return false;
     }
 

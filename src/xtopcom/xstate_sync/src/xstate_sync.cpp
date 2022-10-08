@@ -142,8 +142,12 @@ void xtop_state_sync::process_table(const table_state_detail & detail) {
     }
 
     xinfo("xtop_state_sync::process_table table: %s height: %lu, hash: %s, value: %s", detail.address.c_str(), detail.height, detail.hash.as_hex_str().c_str(), to_hex(detail.value).c_str());
-    auto bstate = base::xvblock_t::create_state_object({detail.value.begin(), detail.value.end()});
-    auto table_state = std::make_shared<data::xtable_bstate_t>(bstate);
+    base::xauto_ptr<base::xvbstate_t> bstate = base::xvblock_t::create_state_object({detail.value.begin(), detail.value.end()});
+    if (nullptr == bstate) {
+        xerror("xtop_state_sync::process_table state null");
+        return;
+    }
+    auto table_state = std::make_shared<data::xtable_bstate_t>(bstate.get());
     auto snapshot = table_state->take_snapshot();
     auto hash = base::xcontext_t::instance().hash(snapshot, enum_xhash_type_sha2_256);
     if (xhash256_t{to_bytes(hash)} != m_table_state_hash) {
@@ -399,8 +403,13 @@ xhash256_t xtop_state_sync::process_node_data(xbytes_t & blob, std::error_code &
 
 xbytes_t xtop_state_sync::process_unit_data(xbytes_t & blob, std::error_code & ec) {
     evm_common::trie::SyncResult res;
-    auto bstate = base::xvblock_t::create_state_object({blob.begin(), blob.end()});
-    auto unit_state = std::make_shared<data::xunit_bstate_t>(bstate);
+    base::xauto_ptr<base::xvbstate_t> bstate = base::xvblock_t::create_state_object({blob.begin(), blob.end()});
+    if (nullptr == bstate) {
+        ec = error::xerrc_t::state_data_invalid;
+        xerror("xtop_state_sync::process_unit_data hash: %s, data: %s, error %s", to_hex(res.Hash).c_str(), to_hex(res.Data).c_str(), ec.message().c_str());
+        return {};
+    }
+    auto unit_state = std::make_shared<data::xunit_bstate_t>(bstate.get());
     auto snapshot = unit_state->take_snapshot();
     auto state_hash = base::xcontext_t::instance().hash(snapshot, enum_xhash_type_sha2_256);
     res.Hash = xhash256_t{xbytes_t{state_hash.begin(), state_hash.end()}};
