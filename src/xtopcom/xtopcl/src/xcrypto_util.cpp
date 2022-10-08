@@ -2,12 +2,12 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xcrypto_util.h"
+#include "xtopcl/include/xtop/xcrypto_util.h"
 
 #include <string.h>
 #include <string>
 
-#include "base/utility.h"
+#include "xtopcl/include/base/utility.h"
 #include "xcrypto/xckey.h"
 #include "xpbase/base/top_utils.h"
 

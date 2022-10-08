@@ -3,12 +3,12 @@
 #ifndef XCHAIN_SDK_TASK_DISPATCHER
 #define XCHAIN_SDK_TASK_DISPATCHER
 
-#include "global_definition.h"
-#include "request_result_definition.h"
-#include "request_task.h"
-#include "stat.h"
-#include "thread_queue.h"
-#include "trans_http.h"
+#include "xtopcl/include/global_definition.h"
+#include "xtopcl/include/request_result_definition.h"
+#include "xtopcl/include/task/request_task.h"
+#include "xtopcl/include/base/stat.h"
+#include "xtopcl/include/base/thread_queue.h"
+#include "xtopcl/include/network/trans_http.h"
 #include "xelect_net/include/http_seed_fetcher.h"
 #include "xtopcl/include/global_definition.h"
 

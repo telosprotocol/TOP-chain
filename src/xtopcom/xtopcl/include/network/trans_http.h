@@ -5,8 +5,8 @@
 
 #include <memory>
 #include <thread>
-#include "trans_base.h"
-#include "client_http.hpp"
+#include "xtopcl/include/network/trans_base.h"
+#include "simplewebserver/client_http.hpp"
 
 namespace xChainSDK
 {
