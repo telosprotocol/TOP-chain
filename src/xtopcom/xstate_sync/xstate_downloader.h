@@ -6,6 +6,7 @@
 
 #include "xbasic/xhash.hpp"
 #include "xmbus/xmessage_bus.h"
+#include "xstate_sync/xstate_downloader_executer.h"
 #include "xstate_sync/xstate_sync.h"
 #include "xstatestore/xstatestore_face.h"
 #include "xvledger/xvdbstore.h"
@@ -13,36 +14,6 @@
 
 namespace top {
 namespace state_sync {
-
-
-class xtop_download_executer {
-public:
-    xtop_download_executer() = default;
-    ~xtop_download_executer() = default;
-
-    void run_state_sync(std::shared_ptr<xstate_sync_face_t> syncer, std::function<void(sync_result)> callback);
-    void loop(std::shared_ptr<xstate_sync_face_t> syncer, std::error_code & ec);
-    void cancel();
-
-    void push_track_req(const state_req & req);
-    void push_state_pack(const state_res & res);
-    void push_single_state(const single_state_detail & detail);
-
-private:
-    void pop_track_req();
-    void pop_state_pack();
-    void pop_single_state();
-
-    bool m_cancel{false};
-    bool m_notify{false};
-    std::list<state_req> m_track_req;
-    std::list<state_res> m_state_packs;
-    std::list<single_state_detail> m_single_states;
-    std::mutex m_track_mutex;
-    std::mutex m_state_pack_mutex;
-    std::mutex m_single_state_mutex;
-};
-using xdownload_executer_t = xtop_download_executer;
 
 class xtop_state_downloader {
 public:
@@ -79,6 +50,8 @@ private:
 
     base::xvdbstore_t * m_db{nullptr};
     statestore::xstatestore_face_t * m_store{nullptr};
+    base::xiothread_t * m_table_thread{nullptr};
+    base::xiothread_t * m_unit_thread{nullptr};
     observer_ptr<mbus::xmessage_bus_face_t> m_bus{nullptr};
 
     std::map<common::xaccount_address_t, std::shared_ptr<xdownload_executer_t>> m_running_tables;

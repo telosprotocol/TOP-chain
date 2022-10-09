@@ -113,12 +113,12 @@ void xtop_state_mpt::set_account_index_with_unit(common::xaccount_address_t cons
         xwarn("xtop_state_mpt::set_account_index_with_unit %s %s", ec.category().name(), ec.message().c_str());
         return;
     }
-    auto hash = base::xcontext_t::instance().hash({unit.begin(), unit.end()}, enum_xhash_type_sha2_256);
-    if (hash != index.get_latest_state_hash()) {
-        ec = error::xerrc_t::state_mpt_unit_hash_mismatch;
-        xwarn("xtop_state_mpt::set_account_index_with_unit hash mismatch: %s, %s", to_hex(hash).c_str(), to_hex(index.get_latest_state_hash()).c_str());
-        return;
-    }
+    // auto hash = base::xcontext_t::instance().hash({unit.begin(), unit.end()}, enum_xhash_type_sha2_256);
+    // if (hash != index.get_latest_state_hash()) {
+    //     ec = error::xerrc_t::state_mpt_unit_hash_mismatch;
+    //     xwarn("xtop_state_mpt::set_account_index_with_unit hash mismatch: %s, %s", to_hex(hash).c_str(), to_hex(index.get_latest_state_hash()).c_str());
+    //     return;
+    // }
     m_journal.append(obj->set_account_index_with_unit(index, unit));
 }
 
@@ -295,7 +295,6 @@ xhash256_t xtop_state_mpt::commit(std::error_code & ec) {
         }
         std::map<xbytes_t, xbytes_t> batch;
         if (!obj->unit_bytes.empty() && obj->dirty_unit) {
-            auto hash = base::xcontext_t::instance().hash({obj->unit_bytes.begin(), obj->unit_bytes.end()}, enum_xhash_type_sha2_256);
             auto unit_key =
                 base::xvdbkey_t::create_prunable_unit_state_key(base::xvaccount_t{obj->account.value()}, obj->index.get_latest_unit_height(), obj->index.get_latest_unit_hash());
             batch.emplace(std::make_pair(xbytes_t{unit_key.begin(), unit_key.end()}, obj->unit_bytes));
