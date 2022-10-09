@@ -4,12 +4,6 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# compile definitions
-add_definitions(
-    -DUSE_STANDALONE_ASIO
-    -DASIO_STANDALONE
-)
-
 if( CMAKE_BUILD_TYPE STREQUAL "Debug" )
     add_definitions(-DLOG_CONSOLE)
     if (NOT MSVC)
@@ -51,7 +45,6 @@ endif()
 # SET TARGET
 add_library(xtopcl STATIC ${cppsdk_src})
 add_dependencies(xtopcl xconfig xdata xxbase xelect_net)
-target_include_directories(xtopcl PRIVATE ${CMAKE_SOURCE_DIR}/src/xtopcom/xdepends/openssl_include/openssl/)
 
 target_link_libraries(xtopcl PRIVATE ${LINK_ARGS} xsafebox xconfig xdata xelect_net xxbase jsoncpp)
 
