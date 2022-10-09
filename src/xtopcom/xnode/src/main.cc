@@ -28,14 +28,14 @@
 #include "xmonitor.h"
 #include "generated/version.h"
 #include "topio_setproctitle.h"
-#include "safebox_http_server.h"
 #include "CLI11.hpp"
 #include "xnode/xconfig.h"
 #include "xbasic/xthreading/xbackend_thread.hpp"
 #include "xbasic/xtimer_driver.h"
 #include "xcommon/xrole_type.h"
 #include "xconfig/xpredefined_configurations.h"
-#include "xhttp/xhttp_client_base.h"
+#include "xsafebox/safebox_http_client.h"
+#include "xsafebox/safebox_http_server.h"
 
  // nlohmann_json
  #include <nlohmann/json.hpp>
@@ -737,45 +737,6 @@ bool generate_extra_config(config_t& config) {
     return true;
 }
 
-class QueryPrikeyClient : public top::xhttp::xhttp_client_base_t {
-private:
-    using base_t = top::xhttp::xhttp_client_base_t;
-
-public:
-    QueryPrikeyClient(std::string const & local_host) : base_t{local_host} {};
-
-    std::string Request(std::string const & account) {
-        std::string path = "/api/safebox";
-        json body = json::object();
-        body["method"] = "get";
-        body["account"] = account;
-        std::string result;
-        try {
-            result = request_post_json(path, body.dump());
-        } catch (std::exception const & e) {
-            std::cout << "catch exception:" << e.what() << std::endl;
-            return "";
-        }
-        if (result.empty()) {
-            return "";
-        }
-
-        json response;
-        try {
-            response = json::parse(result);
-        } catch (json::parse_error & e) {
-            std::cout << "json parse failed" << std::endl;
-            return "";
-        }
-
-        auto jfind = response.find("private_key");
-        if (jfind == response.end()) {
-            return "";
-        }
-        return response["private_key"].get<std::string>();
-    }
-};
-
 bool get_default_miner(config_t& config,std::map<std::string, std::string> &default_miner) {
     std::string extra_config = config.datadir + "/.extra_conf.json";
 
@@ -803,8 +764,8 @@ bool get_default_miner(config_t& config,std::map<std::string, std::string> &defa
     in.close();
 
     // get miner private key from mem(safebox)
-    QueryPrikeyClient prikey_cli{"127.0.0.1:7000"};
-    auto prikey = prikey_cli.Request(reader["default_miner_public_key"].get<std::string>());
+    safebox::SafeBoxHttpClient safebox_client{"127.0.0.1:7000"};
+    auto prikey = safebox_client.request_prikey(reader["default_miner_public_key"].get<std::string>());
     if (prikey.empty()) {
         return false;
     }
