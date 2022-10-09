@@ -274,7 +274,7 @@ TEST_F(test_block_executed, latest_executed_state_1) {
 
 }
 
-TEST_F(test_block_executed, not_store_units) {
+TEST_F(test_block_executed, not_store_units_1) {
     {
         mock::xvchain_creator creator;
         base::xvblockstore_t* blockstore = creator.get_blockstore();
@@ -295,7 +295,9 @@ TEST_F(test_block_executed, not_store_units) {
             xassert(nullptr != unit);
         }
     }
+}
 
+TEST_F(test_block_executed, not_store_units_2) {
     {
         mock::xvchain_creator creator;
         base::xvblockstore_t* blockstore = creator.get_blockstore();
@@ -319,7 +321,6 @@ TEST_F(test_block_executed, not_store_units) {
             xassert(unitstate->height() > 1);
         }        
     }
-
 }
 
 

@@ -367,6 +367,7 @@ class xdatamock_table : public base::xvaccount_t {
             xassert(unitblock != nullptr);
             // m_batch_units.push_back(unitblock);
             data::xaccount_index_t aindex = data::xaccount_index_t(unitblock->get_height(), unitblock->get_block_hash(), unitblock->get_fullstate_hash(), 1, unitblock->get_block_class(), unitblock->get_block_type());
+             //std::cout << "proposal_table_state=" << proposal_table_state->get_bstate()->dump() << " aindex=" << aindex.dump() << std::endl;
              m_batch_units.push_back(std::make_pair(unitblock, aindex));
         }
 
