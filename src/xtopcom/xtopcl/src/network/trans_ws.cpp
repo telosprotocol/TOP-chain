@@ -1,3 +1,4 @@
+#if 0
 #include "xtopcl/include/network/trans_ws.h"
 #include <string>
 #include <iostream>
@@ -64,3 +65,4 @@ namespace xChainSDK
 		return shared_from_this();
 	}
 }
+#endif

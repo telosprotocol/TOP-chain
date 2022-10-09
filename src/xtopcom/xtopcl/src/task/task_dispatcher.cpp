@@ -2,7 +2,7 @@
 #include "xtopcl/include/task/task_dispatcher.h"
 
 #include "xtopcl/include/network/trans_http.h"
-#include "xtopcl/include/network/trans_ws.h"
+// #include "xtopcl/include/network/trans_ws.h"
 #include "xtopcl/include/protocol.h"
 #include "xtopcl/include/user_info.h"
 #include "xrpc/xuint_format.h"
@@ -67,7 +67,7 @@ void task_dispatcher::init_thread() {
 void task_dispatcher::regist_transmode() {
     trans_base::regist_create_function(TransMode::HTTP, [](const std::string & host) { return std::make_shared<trans_http>(host); });
 
-    trans_base::regist_create_function(TransMode::WS, [this](const std::string & host) { return get_ws_trans(host); });
+    // trans_base::regist_create_function(TransMode::WS, [this](const std::string & host) { return get_ws_trans(host); });
 }
 
 int task_dispatcher::add_task(request_task::TaskInfoPtr info) {
@@ -211,12 +211,12 @@ void task_dispatcher::handle_get_property_result(GetPropertyResultPtr result) {
     }
 }
 
-std::shared_ptr<trans_ws> task_dispatcher::get_ws_trans(const std::string & host) {
-    if (ws_trans_ == nullptr) {
-        ws_trans_ = std::make_shared<trans_ws>(host);
-    }
-    return ws_trans_->get_ptr();
-}
+// std::shared_ptr<trans_ws> task_dispatcher::get_ws_trans(const std::string & host) {
+//     if (ws_trans_ == nullptr) {
+//         ws_trans_ = std::make_shared<trans_ws>(host);
+//     }
+//     return ws_trans_->get_ptr();
+// }
 
 void task_dispatcher::thread_func() {
     Msg msg;
