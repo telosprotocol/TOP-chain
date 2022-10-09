@@ -28,7 +28,7 @@
 #include "xmonitor.h"
 #include "generated/version.h"
 #include "topio_setproctitle.h"
-#include "safebox_http.h"
+#include "safebox_http_server.h"
 #include "CLI11.hpp"
 #include "xnode/xconfig.h"
 #include "xbasic/xthreading/xbackend_thread.hpp"
@@ -1149,7 +1149,7 @@ int StartNodeSafeBox(const std::string& safebox_addr, uint16_t safebox_port, std
 
     auto io_obj = std::make_shared<top::xbase_io_context_wrapper_t>();
     auto timer_driver = std::make_shared<top::xbase_timer_driver_t>(io_obj);
-    auto safebox_http_server = std::make_shared<safebox::SafeboxHttpServer>(safebox_addr, safebox_port, timer_driver);
+    auto safebox_http_server = std::make_shared<safebox::SafeBoxHttpServer>(safebox_addr, safebox_port, timer_driver);
     if (!safebox_http_server) {
         return -1;
     }
