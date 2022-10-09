@@ -5,8 +5,6 @@ add_executable(topio ${src})
 
 #compile definitions
 add_definitions(
-    -DUSE_STANDALONE_ASIO
-    -DASIO_STANDALONE
     # -D__STRICT_ANSI__
     -DRPC_BUILD
 )
@@ -28,4 +26,4 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 endif()
 
 #add_dependencies(topio xpbase)
-target_link_libraries(topio PRIVATE xhttp xbasic xpbase jsoncpp pthread dl)
+target_link_libraries(topio PRIVATE xsafebox xbasic xpbase jsoncpp pthread dl)
