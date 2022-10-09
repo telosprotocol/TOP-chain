@@ -54,6 +54,9 @@ public:
     }
 
     void PutBatch(std::map<xbytes_t, xbytes_t> const & batch, std::error_code & ec) {
+        for (auto & p : batch) {
+            m[p.first] = p.second;
+        }
     }
 
     void DeleteBatch(std::vector<xbytes_t> const & batch, std::error_code & ec) {

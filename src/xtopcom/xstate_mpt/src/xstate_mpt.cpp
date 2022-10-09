@@ -193,11 +193,6 @@ std::shared_ptr<xstate_object_t> xtop_state_mpt::create_object(common::xaccount_
         return nullptr;
     }
     auto obj = xstate_object_t::new_object(account, {});
-    if (prev == nullptr) {
-        m_journal.append({account, {}});
-    } else {
-        m_journal.append({account, prev->index});
-    }
     set_state_object(obj);
     return obj;
 }
@@ -217,13 +212,23 @@ void xtop_state_mpt::update_state_object(std::shared_ptr<xstate_object_t> obj, s
 }
 
 void xtop_state_mpt::prune_unit(const common::xaccount_address_t & account, std::error_code & ec) {
-    auto index = get_account_index(account, ec);
+    // get from db
+    xbytes_t index_bytes;
+    {
+        XMETRICS_TIME_RECORD("state_mpt_load_db_index");
+        index_bytes = m_trie->try_get(to_bytes(account), ec);
+    }
     if (ec) {
-        xwarn("xtop_state_mpt::prune_unit get_account_index error: %s, %s", ec.category().name(), ec.message().c_str());
+        xwarn("xtop_state_mpt::get_deleted_state_object TryGet %s error, %s %s", account.c_str(), ec.category().name(), ec.message().c_str());
         return;
     }
-    auto hash = index.get_latest_unit_hash();
-    auto key = base::xvdbkey_t::create_prunable_unit_state_key(base::xvaccount_t{account.value()}, index.get_latest_unit_height(), index.get_latest_unit_hash());
+    if (index_bytes.empty()) {
+        return;
+    }
+    xaccount_info_t info;
+    info.decode({index_bytes.begin(), index_bytes.end()});
+    auto hash = info.m_index.get_latest_unit_hash();
+    auto key = base::xvdbkey_t::create_prunable_unit_state_key(base::xvaccount_t{account.value()}, info.m_index.get_latest_unit_height(), info.m_index.get_latest_unit_hash());
     m_db->DiskDB()->DeleteDirect({key.begin(), key.end()}, ec);
     if (ec) {
         xwarn("xtop_state_mpt::prune_unit db Delete error: %s, %s", ec.category().name(), ec.message().c_str());
@@ -285,6 +290,9 @@ xhash256_t xtop_state_mpt::commit(std::error_code & ec) {
 
     for (auto & acc : m_state_objects_dirty) {
         auto obj = query_state_object(acc);
+        if (obj == nullptr) {
+            continue;
+        }
         std::map<xbytes_t, xbytes_t> batch;
         if (!obj->unit_bytes.empty() && obj->dirty_unit) {
             auto hash = base::xcontext_t::instance().hash({obj->unit_bytes.begin(), obj->unit_bytes.end()}, enum_xhash_type_sha2_256);

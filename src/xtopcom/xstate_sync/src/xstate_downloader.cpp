@@ -19,8 +19,8 @@ xtop_state_downloader::xtop_state_downloader(base::xvdbstore_t * db, statestore:
 }
 
 bool xtop_state_downloader::is_syncing(const common::xaccount_address_t & table) {
-    std::lock_guard<std::mutex> lock(m_dispatch_mutex);
-    if (m_running.count(table)) {
+    std::lock_guard<std::mutex> lock(m_table_dispatch);
+    if (m_running_tables.count(table)) {
         return true;
     }
     return false;

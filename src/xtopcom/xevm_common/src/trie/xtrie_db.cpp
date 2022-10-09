@@ -154,6 +154,12 @@ void xtop_trie_db::Commit(xhash256_t hash, AfterCommitCallback cb, std::error_co
     WriteTrieNodeBatch(diskdb_, batch);
     batch.clear();
 
+    // todos: noted to remove size of dirty cache.
+    // todos: change link-list of flush-list Next/Prev Node ptr
+    // for now : we can simplily erase it:
+    newest_ = {};
+    oldest_ = {};
+
     // clean preimages:
     preimages_.clear();
 }
@@ -189,12 +195,6 @@ void xtop_trie_db::commit(xhash256_t hash, std::map<xbytes_t, xbytes_t> & data, 
     }
 
     // clean dirties:
-    // todos: noted to remove size of dirty cache.
-    // todos: change link-list of flush-list Next/Prev Node ptr
-    // for now : we can simplily erase it:
-    newest_ = {};
-    oldest_ = {};
-
     dirties_.erase(hash);
 
     // and move it to cleans:

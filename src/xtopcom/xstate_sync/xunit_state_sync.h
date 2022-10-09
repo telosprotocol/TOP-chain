@@ -33,6 +33,7 @@ public:
     std::string symbol() const override;
     sync_result result() const override;
     void push_deliver_state(const single_state_detail & detail) override;
+    void push_deliver_req(const state_req & req) override;
 
 private:
     void wait() const;

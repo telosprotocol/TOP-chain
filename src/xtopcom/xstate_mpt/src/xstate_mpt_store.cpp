@@ -13,7 +13,7 @@ xtop_state_mpt_store::xtop_state_mpt_store(common::xaccount_address_t table_addr
 }
 
 void xtop_state_mpt_store::load_state(xhash256_t const & root_hash, base::xvdbstore_t * db, std::error_code & ec) {
-    auto state = xstate_mpt_t::create(table_account_address_, root_hash, db, nullptr, ec);
+    auto state = xstate_mpt_t::create(table_account_address_, root_hash, db, ec);
 }
 
 NS_END2

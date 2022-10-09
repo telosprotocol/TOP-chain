@@ -338,29 +338,34 @@ void xtop_state_sync::fill_tasks(uint32_t n, state_req & req, std::vector<xhash2
 }
 
 void xtop_state_sync::process(state_req & req, std::error_code & ec) {
+    std::error_code ec_internal;
     for (auto blob : req.nodes_response) {
-        xdbg("xtop_state_sync::process node blob: %s, table: %s, height: %lu, root: %s", to_hex(blob).c_str(), m_table.c_str(), m_height, to_hex(m_root).c_str());
-        auto hash = process_node_data(blob, ec);
-        if (ec) {
-            if (ec != evm_common::error::make_error_code(evm_common::error::xerrc_t::trie_sync_not_requested) && 
-                ec != evm_common::error::make_error_code(evm_common::error::xerrc_t::trie_sync_already_processed)) {
+        xinfo("xtop_state_sync::process node blob: %s, table: %s, height: %lu, root: %s", to_hex(blob).c_str(), m_table.c_str(), m_height, to_hex(m_root).c_str());
+        auto hash = process_node_data(blob, ec_internal);
+        if (ec_internal) {
+            if (ec_internal != evm_common::error::make_error_code(evm_common::error::xerrc_t::trie_sync_not_requested) &&
+                ec_internal != evm_common::error::make_error_code(evm_common::error::xerrc_t::trie_sync_already_processed)) {
                 xwarn("xtop_state_sync::process invalid state node: %s, %s %s", hash.as_hex_str().c_str(), ec.category().name(), ec.message().c_str());
+                ec = ec_internal;
                 return;
+            } else {
+                xwarn("xtop_state_sync::process process_node_data abnormal: %s, %s %s", hash.as_hex_str().c_str(), ec.category().name(), ec.message().c_str());      
             }
-            xwarn("xtop_state_sync::process process_node_data abnormal: %s, %s %s", hash.as_hex_str().c_str(), ec.category().name(), ec.message().c_str());
         }
         req.trie_tasks.erase(hash);
     }
     for (auto blob : req.units_response) {
-        xdbg("xtop_state_sync::process unit blob: %s, table: %s, height: %lu, root: %s", to_hex(blob).c_str(), m_table.c_str(), m_height, to_hex(m_root).c_str());
-        auto key = process_unit_data(blob, ec);
-        if (ec) {
-            if (ec != evm_common::error::make_error_code(evm_common::error::xerrc_t::trie_sync_not_requested) && 
-                ec != evm_common::error::make_error_code(evm_common::error::xerrc_t::trie_sync_already_processed)) {
+        xinfo("xtop_state_sync::process unit blob: %s, table: %s, height: %lu, root: %s", to_hex(blob).c_str(), m_table.c_str(), m_height, to_hex(m_root).c_str());
+        auto key = process_unit_data(blob, ec_internal);
+        if (ec_internal) {
+            if (ec_internal != evm_common::error::make_error_code(evm_common::error::xerrc_t::trie_sync_not_requested) &&
+                ec_internal != evm_common::error::make_error_code(evm_common::error::xerrc_t::trie_sync_already_processed)) {
                 xwarn("xtop_state_sync::process invalid state node: %s, %s %s", to_hex(key).c_str(), ec.category().name(), ec.message().c_str());
+                ec = ec_internal;
                 return;
+            } else {
+                xwarn("xtop_state_sync::process process_unit_data abnormal: %s, %s %s", to_hex(key).c_str(), ec.category().name(), ec.message().c_str());
             }
-            xwarn("xtop_state_sync::process process_unit_data abnormal: %s, %s %s", to_hex(key).c_str(), ec.category().name(), ec.message().c_str());
         }
         req.unit_tasks.erase(key);
     }

@@ -99,6 +99,12 @@ void xtop_unit_state_sync::push_deliver_state(const single_state_detail & detail
     m_done = true;
 }
 
+void xtop_unit_state_sync::push_deliver_req(const state_req & req) {
+    // not use
+    xassert(false);
+    return;
+}
+
 void xtop_unit_state_sync::sync_unit(std::error_code & ec) {
     // check exist
     auto unitstate = m_store->get_unit_state_by_accountindex(m_account, m_index);
