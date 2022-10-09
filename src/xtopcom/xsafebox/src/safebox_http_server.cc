@@ -1,10 +1,28 @@
-// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Copyright (c) 2017-present Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "safebox_http_server.h"
+#include "xsafebox/safebox_http_server.h"
 
-#include "xbasic/xtimer_driver.h"
+#if defined(__clang__)
+#    pragma clang diagnostic push
+#    pragma clang diagnostic ignored "-Wpedantic"
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic push
+#    pragma GCC diagnostic ignored "-Wpedantic"
+#elif defined(_MSC_VER)
+#    pragma warning(push, 0)
+#endif
+
+#include "xbasic/xtimer_driver.h"  // xbase/xvevent.h:107:6 `extra ;`
+
+#if defined(__clang__)
+#    pragma clang diagnostic pop
+#elif defined(__GNUC__)
+#    pragma GCC diagnostic pop
+#elif defined(_MSC_VER)
+#    pragma warning(pop)
+#endif
 
 // nlohmann_json
 #include <nlohmann/json.hpp>
@@ -83,7 +101,7 @@ void SafeBoxHttpServer::Start() {
                 std::string account;
                 bool gstatus = false;
                 if (req_json.find("account") != req_json.end()) {
-                    // there is an entry with key "foo"
+                    // there is an entry with key "account"
                     const std::string tmp_account = req_json["account"].get<std::string>();
                     gstatus = safebox_.getAccount(tmp_account, private_key);
                     account = tmp_account;
