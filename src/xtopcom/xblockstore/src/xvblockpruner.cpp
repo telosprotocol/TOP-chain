@@ -130,12 +130,12 @@ namespace top
             const std::string end_delete_key = base::xvdbkey_t::create_prunable_block_height_key(account_obj,upper_bound_height);
             if(get_xvdb()->delete_range(begin_delete_key, end_delete_key))//["begin_key", "end_key")
             {
-                xinfo("xvblockprune_impl::recycle contract,succsssful for account %s between %s and %s", account_obj.get_address().c_str(), begin_delete_key.c_str(), end_delete_key.c_str());
+                xinfo("xvblockprune_impl::recycle contract,succsssful for account %s from %llu to %llu", account_obj.get_address().c_str(), lower_bound_height, upper_bound_height);
                 account_meta._highest_deleted_block_height = upper_bound_height - 1;
             }
             else
             {
-                xerror("xvblockprune_impl::recycle contract,failed for account %s between %s and %s", account_obj.get_address().c_str(), begin_delete_key.c_str(), end_delete_key.c_str());
+                xerror("xvblockprune_impl::recycle contract,failed for account %s from %llu to %llu", account_obj.get_address().c_str(), lower_bound_height, upper_bound_height);
             }
             return true;
         }
@@ -173,13 +173,13 @@ namespace top
             const std::string end_delete_key = base::xvdbkey_t::create_prunable_block_height_key(account_obj,upper_bound_height);
             if(get_xvdb()->delete_range(begin_delete_key, end_delete_key))//["begin_key", "end_key")
             {
-                xinfo("xvblockprune_impl::recycle table,succsssful for account %s between %s and %s", account_obj.get_address().c_str(), begin_delete_key.c_str(), end_delete_key.c_str());
+                xinfo("xvblockprune_impl::recycle table,succsssful for account %s from %llu to %llu", account_obj.get_address().c_str(), lower_bound_height, upper_bound_height);
 
                 account_meta._highest_deleted_block_height = upper_bound_height - 1;
             }
             else
             {
-                xerror("xvblockprune_impl::recycle table,failed for account %s between %s and %s", account_obj.get_address().c_str(), begin_delete_key.c_str(), end_delete_key.c_str());
+                xerror("xvblockprune_impl::recycle table,failed for account %s from %llu to %llu", account_obj.get_address().c_str(), lower_bound_height, upper_bound_height);
             }
             return true;
         }
@@ -207,12 +207,12 @@ namespace top
             const std::string end_delete_key = base::xvdbkey_t::create_prunable_block_height_key(account_obj,upper_bound_height);
             if(get_xvdb()->delete_range(begin_delete_key, end_delete_key))//["begin_key", "end_key")
             {
-                xinfo("xvblockprune_impl::recycle,succsssful for account %s between %s and %s", account_obj.get_address().c_str(), begin_delete_key.c_str(), end_delete_key.c_str());
+                xinfo("xvblockprune_impl::recycle,succsssful for account %s from %llu to %llu", account_obj.get_address().c_str(), lower_bound_height, upper_bound_height);
                 account_meta._highest_deleted_block_height = upper_bound_height - 1;
             }
             else
             {
-                xerror("xvblockprune_impl::recycle,failed for account %s between %s and %s", account_obj.get_address().c_str(), begin_delete_key.c_str(), end_delete_key.c_str());
+                xerror("xvblockprune_impl::recycle,failed for account %s from %llu to %llu", account_obj.get_address().c_str(), lower_bound_height, upper_bound_height);
             }
             return true;
         }
@@ -248,12 +248,12 @@ namespace top
             const std::string end_delete_key = base::xvdbkey_t::create_prunable_block_height_key(account_obj,upper_bound_height);
             if(get_xvdb()->delete_range(begin_delete_key, end_delete_key))//["begin_key", "end_key")
             {
-                xinfo("xvblockprune_impl::recycle,succsssful for account %s between %s and %s", account_obj.get_address().c_str(), begin_delete_key.c_str(), end_delete_key.c_str());
+                xinfo("xvblockprune_impl::recycle,succsssful for account %s from %llu to %llu", account_obj.get_address().c_str(), lower_bound_height, upper_bound_height);
                 account_meta._highest_deleted_block_height = upper_bound_height - 1;
             }
             else
             {
-                xerror("xvblockprune_impl::recycle,failed for account %s between %s and %s", account_obj.get_address().c_str(), begin_delete_key.c_str(), end_delete_key.c_str());
+                xerror("xvblockprune_impl::recycle,failed for account %s from %llu to %llu", account_obj.get_address().c_str(), lower_bound_height, upper_bound_height);
             }
             return true;
         }
@@ -283,12 +283,12 @@ namespace top
             const std::string end_delete_key = base::xvdbkey_t::create_prunable_block_height_key(account_obj,upper_bound_height);
             if(get_xvdb()->delete_range(begin_delete_key, end_delete_key))//["begin_key", "end_key")
             {
-                xinfo("xvblockprune_impl::recycle,succsssful for account %s between %s and %s", account_obj.get_address().c_str(), begin_delete_key.c_str(), end_delete_key.c_str());   
+                xinfo("xvblockprune_impl::recycle,succsssful for account %s from %llu to %llu", account_obj.get_address().c_str(), lower_bound_height, upper_bound_height);   
                 account_meta._highest_deleted_block_height = upper_bound_height - 1;
             }
             else
             {
-                xerror("xvblockprune_impl::recycle,failed for account %s between %s and %s", account_obj.get_address().c_str(), begin_delete_key.c_str(), end_delete_key.c_str());
+                xerror("xvblockprune_impl::recycle,failed for account %s from %llu to %llu", account_obj.get_address().c_str(), lower_bound_height, upper_bound_height);
             }
 
             return true;
