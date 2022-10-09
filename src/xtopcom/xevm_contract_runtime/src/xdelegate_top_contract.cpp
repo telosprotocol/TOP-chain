@@ -67,6 +67,16 @@ bool xtop_delegate_top_contract::execute(xbytes_t input,
     }
 
     switch (function_selector.method_id) {
+    case method_id_decimals: {
+        xdbg("precompiled top contract: decimals");
+
+        output.exit_status = Returned;
+        output.cost = 0;
+        output.output = top::to_bytes(evm_common::u256{6});
+
+        return true;
+    }
+
     case method_id_total_supply: {
         xdbg("precompiled top contract: totalSupply");
 
