@@ -1,4 +1,5 @@
 #pragma once
+#if 0
 #ifndef XCHAIN_TRANS_WS
 #define XCHAIN_TRANS_WS
 
@@ -36,3 +37,4 @@ namespace xChainSDK
 	};
 }
 #endif // !XCHAIN_TRANS_WS
+#endif

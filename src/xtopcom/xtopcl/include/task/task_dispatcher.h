@@ -32,7 +32,7 @@ struct ResponseContent {
     std::string content;
 };
 
-class trans_ws;
+// class trans_ws;
 
 class task_dispatcher {
 public:
@@ -68,7 +68,7 @@ public:
     void handle_transfer_result(TransferResultPtr result);
     void handle_get_property_result(GetPropertyResultPtr result);
 
-    std::shared_ptr<trans_ws> get_ws_trans(const std::string & host);
+    // std::shared_ptr<trans_ws> get_ws_trans(const std::string & host);
 
     void thread_func();
 
@@ -91,7 +91,7 @@ private:
     ResultQueue result_queue_;
     std::thread thread_;
 
-    std::shared_ptr<trans_ws> ws_trans_{nullptr};
+    // std::shared_ptr<trans_ws> ws_trans_{nullptr};
 
     top::elect::HttpSeedFetcher seed_fetcher;
     static std::vector<std::string> seeds;
