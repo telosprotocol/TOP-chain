@@ -6,17 +6,17 @@
 
 #include "xcertauth/xcertauth_face.h"
 #include "xchain_timer/xchain_timer_face.h"
+#include "xcommon/xaddress.h"
+#include "xcommon/xnode_type.h"
 #include "xelect_net/include/elect_main.h"
 #include "xgrpc_mgr/xgrpc_mgr.h"
 #include "xmbus/xmessage_bus.h"
 #include "xrouter/xrouter_face.h"
+#include "xstate_sync/xstate_downloader.h"
 #include "xsync/xsync_object.h"
 #include "xtxpool_service_v2/xtxpool_service_face.h"
 #include "xunit_service/xcons_face.h"
 #include "xvnode/xvnode_role_proxy_face.h"
-#include "xcommon/xnode_type.h"
-#include "xcommon/xaddress.h"
-#include "xstate_sync/xstate_downloader.h"
 
 NS_BEG2(top, vnode)
 

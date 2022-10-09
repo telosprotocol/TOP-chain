@@ -2,10 +2,12 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include "xsync/xchain_block_fetcher.h"
+
 #include "xsync/xblock_fetcher.h"
-#include "xsync/xsync_log.h"
 #include "xmbus/xevent_blockfetcher.h"
 #include "xmbus/xevent_executor.h"
+#include "xsync/xsync_log.h"
 #include "xsync/xsync_util.h"
 
 NS_BEG2(top, sync)
@@ -79,14 +81,18 @@ void xchain_block_fetcher_t::on_timer() {
     }
 }
 
-void xchain_block_fetcher_t::on_newblock(data::xblock_ptr_t &block, const vnetwork::xvnode_address_t &network_self, const vnetwork::xvnode_address_t &from_address) {
+void xchain_block_fetcher_t::on_newblock(data::xblock_ptr_t & block, const vnetwork::xvnode_address_t & network_self, const vnetwork::xvnode_address_t & from_address) {
     insert_block(block);
     add_blocks();
 
     if (common::has<common::xnode_type_t::storage_archive>(network_self.type())) {
         uint64_t latest_end_block_height = m_sync_store->get_latest_end_block_height(m_address, enum_chain_sync_policy_full);
         xsync_info("chain_fetcher on_newblock %s,height=%lu,viewid=%lu,hash=%s,%llu",
-            m_address.c_str(), block->get_height(), block->get_viewid(), to_hex_str(block->get_block_hash()).c_str(), latest_end_block_height);
+                   m_address.c_str(),
+                   block->get_height(),
+                   block->get_viewid(),
+                   to_hex_str(block->get_block_hash()).c_str(),
+                   latest_end_block_height);
         xchain_state_info_t info;
         info.address = m_address;
         info.end_height = latest_end_block_height;
