@@ -13,6 +13,7 @@
 #include "xchaininit/xconfig.h"
 #include "xchaininit/xchain_options.h"
 #include "xchaininit/xchain_params.h"
+#include "xchaininit/xchain_command_http_server.h"
 #include "xbase/xutl.h"
 #include "xbase/xhash.h"
 #include "xpbase/base/top_utils.h"
@@ -23,7 +24,6 @@
 #include "xloader/xconfig_genesis_loader.h"
 #include "xmetrics/xmetrics.h"
 #include "xapplication/xapplication.h"
-#include "xchaininit/admin_http.h"
 #include "xtopcl/include/global_definition.h"
 #include "xtopcl/include/topcl.h"
 #include "xverifier/xverifier_utl.h"
@@ -266,30 +266,17 @@ int topchain_start(const std::string& config_file) {
 
     MEMCHECK_INIT();
 
-    // start admin http service
+    // start chain command http server
     {
         uint16_t admin_http_port = 0;
         std::string admin_http_local_ip = "127.0.0.1";
         config_center.get("admin_http_addr", admin_http_local_ip);
         config_center.get<uint16_t>("admin_http_port", admin_http_port);
 
-        std::string webroot;
-#ifdef _WIN32
-        webroot = "C:\\";
-#elif __APPLE__
-        webroot = "/var";
-#elif __linux__
-        webroot = "/var";
-#elif __unix__
-        webroot = "/var";
-#else
-#error  "Unknown compiler"
-#endif
-
-        std::cout << "will start admin http, local_ip:" << admin_http_local_ip << " port:" << admin_http_port << " webroot:" << webroot << std::endl;
-        xinfo("will start admin http, local_ip:%s  port:%d webroot:%s", admin_http_local_ip.c_str(), admin_http_port, webroot.c_str());
-        auto admin_http = std::make_shared<admin::AdminHttpServer>(admin_http_local_ip, admin_http_port, webroot);
-        admin_http->Start();
+        std::cout << "will start chain command http server, local_ip:" << admin_http_local_ip << " port:" << admin_http_port << std::endl;
+        xinfo("will start chain command http server, local_ip:%s port:%d", admin_http_local_ip.c_str(), admin_http_port);
+        auto chain_command_server = std::make_shared<chain_command::ChainCommandServer>(admin_http_local_ip, admin_http_port);
+        chain_command_server->Start();
     }
 
     application::xapplication_t app{user_params.account, xpublic_key_t{user_params.publickey}, user_params.signkey};
