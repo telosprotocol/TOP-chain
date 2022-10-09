@@ -259,7 +259,7 @@ uint64_t xstatestore_prune_t::prune_exec_cons(uint64_t from_height, uint64_t to_
 
     std::error_code ec;
     auto lowest_keep_mpt =
-        state_mpt::xtop_state_mpt::create(get_account(), lowest_keep_root, base::xvchain_t::instance().get_xdbstore(), state_mpt::xstate_mpt_cache_t::instance(), ec);
+        state_mpt::xtop_state_mpt::create(get_account(), lowest_keep_root, base::xvchain_t::instance().get_xdbstore(), ec);
     if (lowest_keep_mpt == nullptr || ec) {
         xinfo("xstatestore_prune_t::prune_exec_cons create mpt fail.block:%s,root:%s", lowest_keep_block->dump().c_str(), lowest_keep_root.as_hex_str().c_str());
         return from_height - 1;

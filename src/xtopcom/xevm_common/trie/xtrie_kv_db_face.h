@@ -17,12 +17,16 @@ NS_BEG3(top, evm_common, trie)
 class xtop_kv_writer_face {
 public:
     virtual void Put(xbytes_t const & key, xbytes_t const & value, std::error_code & ec) = 0;
-    virtual void PutDirect(xbytes_t const & key, xbytes_t const & value, std::error_code & ec) = 0;
-    virtual void Delete(xbytes_t const & key, std::error_code & ec) = 0;
-    virtual void DeleteDirect(xbytes_t const & key, std::error_code & ec) = 0;
-
     virtual void PutBatch(std::map<xbytes_t, xbytes_t> const & batch, std::error_code & ec) = 0;
+
+    virtual void PutDirect(xbytes_t const & key, xbytes_t const & value, std::error_code & ec) = 0;
+    virtual void PutDirectBatch(std::map<xbytes_t, xbytes_t> const & batch, std::error_code & ec) = 0;
+
+    virtual void Delete(xbytes_t const & key, std::error_code & ec) = 0;
     virtual void DeleteBatch(std::vector<xbytes_t> const & batch, std::error_code & ec) = 0;
+
+    virtual void DeleteDirect(xbytes_t const & key, std::error_code & ec) = 0;
+    virtual void DeleteDirectBatch(std::vector<xbytes_t> const & batch, std::error_code & ec) = 0;
 };
 using xkv_writer_face_t = xtop_kv_writer_face;
 
@@ -61,9 +65,25 @@ inline void WriteUnit(xkv_db_face_ptr_t db, xbytes_t const & unit_key, xbytes_t 
     }
 }
 
+inline void WriteUnitBatch(xkv_db_face_ptr_t db, std::map<xbytes_t, xbytes_t> const & batch) {
+    std::error_code ec;
+    db->PutDirectBatch(batch, ec);
+    if (ec) {
+        xwarn("Failed to store trie node: %s", ec.message().c_str());
+    }
+}
+
 inline void DeleteUnit(xkv_db_face_ptr_t db, xbytes_t const & unit_key) {
     std::error_code ec;
     db->DeleteDirect(unit_key, ec);
+    if (ec) {
+        xwarn("Failed to delete unit: %s", ec.message().c_str());
+    }
+}
+
+inline void DeleteUnitBatch(xkv_db_face_ptr_t db, std::vector<xbytes_t> const & batch) {
+    std::error_code ec;
+    db->DeleteDirectBatch(batch, ec);
     if (ec) {
         xwarn("Failed to delete unit: %s", ec.message().c_str());
     }

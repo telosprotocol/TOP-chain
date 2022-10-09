@@ -31,7 +31,6 @@ xstatectx_t::xstatectx_t(base::xvblock_t* prev_block, const statestore::xtablest
     std::shared_ptr<state_mpt::xstate_mpt_t> current_prev_mpt = state_mpt::xstate_mpt_t::create(common::xaccount_address_t(prev_block->get_account()),
                                                                                                 prev_table_state->get_state_mpt()->get_original_root_hash(),
                                                                                                 base::xvchain_t::instance().get_xdbstore(),
-                                                                                                state_mpt::xstate_mpt_cache_t::instance(),
                                                                                                 ec);
     xassert(nullptr != current_prev_mpt);
     auto const tablestate = std::make_shared<statestore::xtablestate_ext_t>(proposal_table_state, current_prev_mpt);

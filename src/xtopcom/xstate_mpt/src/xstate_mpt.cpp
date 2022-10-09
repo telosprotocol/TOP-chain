@@ -34,12 +34,9 @@ void xaccount_info_t::decode(const std::string & str) {
 std::shared_ptr<xtop_state_mpt> xtop_state_mpt::create(const common::xaccount_address_t & table,
                                                        const xhash256_t & root,
                                                        base::xvdbstore_t * db,
-                                                       xstate_mpt_cache_t * cache,
                                                        std::error_code & ec) {
-    cache = nullptr;  // TODO(jimmy)
-
     auto mpt = std::make_shared<xtop_state_mpt>();
-    mpt->init(table, root, db, cache, ec);
+    mpt->init(table, root, db, ec);
     if (ec) {
         xwarn("xtop_state_mpt::create init error, %s %s", ec.category().name(), ec.message().c_str());
         return nullptr;
@@ -47,9 +44,7 @@ std::shared_ptr<xtop_state_mpt> xtop_state_mpt::create(const common::xaccount_ad
     return mpt;
 }
 
-void xtop_state_mpt::init(const common::xaccount_address_t & table, const xhash256_t & root, base::xvdbstore_t * db, xstate_mpt_cache_t * cache, std::error_code & ec) {
-    // check sync flag
-
+void xtop_state_mpt::init(const common::xaccount_address_t & table, const xhash256_t & root, base::xvdbstore_t * db, std::error_code & ec) {
     m_table_address = table;
     auto const kv_db = std::make_shared<evm_common::trie::xkv_db_t>(db, table);
     m_db = evm_common::trie::xtrie_db_t::NewDatabase(kv_db);
@@ -59,9 +54,6 @@ void xtop_state_mpt::init(const common::xaccount_address_t & table, const xhash2
         return;
     }
     m_original_root = root;
-    if (cache != nullptr) {
-        // m_lru = cache->get_lru(table);
-    }
     return;
 }
 
@@ -144,10 +136,6 @@ std::shared_ptr<xstate_object_t> xtop_state_mpt::get_deleted_state_object(common
     if (nullptr != cache_obj) {
         return cache_obj;
     }
-    // get from cache
-    if (m_lru != nullptr) {
-        // TODO
-    }
     // get from db
     xbytes_t index_bytes;
     {
@@ -159,11 +147,7 @@ std::shared_ptr<xstate_object_t> xtop_state_mpt::get_deleted_state_object(common
         return nullptr;
     }
     if (index_bytes.empty()) {
-        xwarn("xtop_state_mpt::get_deleted_state_object TryGet %s empty", account.c_str());
         return nullptr;
-    }
-    if (m_lru != nullptr) {
-        m_cache_indexes.insert({account, index_bytes});
     }
     xaccount_info_t info;
     info.decode({index_bytes.begin(), index_bytes.end()});
@@ -209,12 +193,6 @@ std::shared_ptr<xstate_object_t> xtop_state_mpt::create_object(common::xaccount_
         return nullptr;
     }
     auto obj = xstate_object_t::new_object(account, {});
-    if (prev == nullptr) {
-        // TODO
-        // s.journal.append
-    } else {
-
-    }
     set_state_object(obj);
     return obj;
 }
@@ -234,13 +212,23 @@ void xtop_state_mpt::update_state_object(std::shared_ptr<xstate_object_t> obj, s
 }
 
 void xtop_state_mpt::prune_unit(const common::xaccount_address_t & account, std::error_code & ec) {
-    auto index = get_account_index(account, ec);
+    // get from db
+    xbytes_t index_bytes;
+    {
+        XMETRICS_TIME_RECORD("state_mpt_load_db_index");
+        index_bytes = m_trie->try_get(to_bytes(account), ec);
+    }
     if (ec) {
-        xwarn("xtop_state_mpt::prune_unit get_account_index error: %s, %s", ec.category().name(), ec.message().c_str());
+        xwarn("xtop_state_mpt::get_deleted_state_object TryGet %s error, %s %s", account.c_str(), ec.category().name(), ec.message().c_str());
         return;
     }
-    auto hash = index.get_latest_unit_hash();
-    auto key = base::xvdbkey_t::create_prunable_unit_state_key(base::xvaccount_t{account.value()}, index.get_latest_unit_height(), index.get_latest_unit_hash());
+    if (index_bytes.empty()) {
+        return;
+    }
+    xaccount_info_t info;
+    info.decode({index_bytes.begin(), index_bytes.end()});
+    auto hash = info.m_index.get_latest_unit_hash();
+    auto key = base::xvdbkey_t::create_prunable_unit_state_key(base::xvaccount_t{account.value()}, info.m_index.get_latest_unit_height(), info.m_index.get_latest_unit_hash());
     m_db->DiskDB()->DeleteDirect({key.begin(), key.end()}, ec);
     if (ec) {
         xwarn("xtop_state_mpt::prune_unit db Delete error: %s, %s", ec.category().name(), ec.message().c_str());
@@ -302,11 +290,19 @@ xhash256_t xtop_state_mpt::commit(std::error_code & ec) {
 
     for (auto & acc : m_state_objects_dirty) {
         auto obj = query_state_object(acc);
+        if (obj == nullptr) {
+            continue;
+        }
+        std::map<xbytes_t, xbytes_t> batch;
         if (!obj->unit_bytes.empty() && obj->dirty_unit) {
             auto hash = base::xcontext_t::instance().hash({obj->unit_bytes.begin(), obj->unit_bytes.end()}, enum_xhash_type_sha2_256);
             auto unit_key =
-                base::xvdbkey_t::create_prunable_unit_state_key(obj->account.vaccount(), obj->index.get_latest_unit_height(), obj->index.get_latest_unit_hash());
-            WriteUnit(m_db->DiskDB(), {unit_key.begin(), unit_key.end()}, obj->unit_bytes);
+                base::xvdbkey_t::create_prunable_unit_state_key(base::xvaccount_t{obj->account.value()}, obj->index.get_latest_unit_height(), obj->index.get_latest_unit_hash());
+            batch.emplace(std::make_pair(xbytes_t{unit_key.begin(), unit_key.end()}, obj->unit_bytes));
+            if (batch.size() >= 1024) {
+                WriteUnitBatch(m_db->DiskDB(), batch);
+                batch.clear();
+            }
             obj->dirty_unit = false;
         }
     }
@@ -328,9 +324,6 @@ xhash256_t xtop_state_mpt::commit(std::error_code & ec) {
     if (ec) {
         xwarn("xtop_state_mpt::commit db commit error, %s %s", ec.category().name(), ec.message().c_str());
         return {};
-    }
-    if (m_lru != nullptr) {
-        xstate_mpt_cache_t::set(m_lru, res.first, m_cache_indexes);
     }
     return res.first;
 }

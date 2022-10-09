@@ -21,6 +21,8 @@ enum class xenum_errc {
     state_data_invalid,
 
     downloader_is_running,
+
+    unknown,
 };
 using xerrc_t = xenum_errc;
 

@@ -14,6 +14,8 @@
 
 NS_BEG3(top, evm_common, trie)
 
+constexpr uint32_t IdealBatchSize = 1024;
+
 constexpr auto PreimagePrefix = ConstBytes<11>("secure-key-");
 
 std::shared_ptr<xtop_trie_db> xtop_trie_db::NewDatabase(xkv_db_face_ptr_t diskdb) {
@@ -143,6 +145,26 @@ void xtop_trie_db::Commit(xhash256_t hash, AfterCommitCallback cb, std::error_co
         // todo could add some metrics here.
     }
 
+    std::map<xbytes_t, xbytes_t> batch;
+    commit(hash, batch, cb, ec);
+    if (ec) {
+        xerror("xtop_trie_db::Commit error: %s, %s", ec.category().name(), ec.message().c_str());
+        return;
+    }
+    WriteTrieNodeBatch(diskdb_, batch);
+    batch.clear();
+
+    // todos: noted to remove size of dirty cache.
+    // todos: change link-list of flush-list Next/Prev Node ptr
+    // for now : we can simplily erase it:
+    newest_ = {};
+    oldest_ = {};
+
+    // clean preimages:
+    preimages_.clear();
+}
+
+void xtop_trie_db::commit(xhash256_t hash, std::map<xbytes_t, xbytes_t> & data, AfterCommitCallback cb, std::error_code & ec) {
     // If the node does not exist, it's a previously committed node
     if (dirties_.find(hash) == dirties_.end()) {
         return;
@@ -151,37 +173,33 @@ void xtop_trie_db::Commit(xhash256_t hash, AfterCommitCallback cb, std::error_co
     auto node = dirties_.at(hash);
     node.forChilds([&](xhash256_t child) {
         if (!ec) {
-            this->Commit(child, cb, ec);
+            this->commit(child, data, cb, ec);
         }
     });
     if (ec) {
         return;
     }
 
-    // put it into diskDB
+    // put it into batch
     auto enc = node.rlp();
     auto const hash_bytes = to_bytes(hash);
     xdbg("xtop_trie_db::Commit write node %s, size %zu", top::to_hex(hash_bytes).c_str(), enc.size());
-    WriteTrieNode(diskdb_, hash, enc);
+    data.emplace(std::make_pair(hash.to_bytes(), enc));
+
     if (cb) {
         cb(hash);
     }
+    if (data.size() >= IdealBatchSize) {
+        WriteTrieNodeBatch(diskdb_, data);
+        data.clear();
+    }
 
     // clean dirties:
-    // todos: noted to remove size of dirty cache.
-    // todos: change link-list of flush-list Next/Prev Node ptr
-    // for now : we can simplily erase it:
-    newest_ = {};
-    oldest_ = {};
-
     dirties_.erase(hash);
 
     // and move it to cleans:
     cleans_.insert({hash, enc});
     // todo mark size everywhere with cleans/dirties' insert/erase/...
-
-    // clean preimages:
-    preimages_.clear();
 }
 
 void xtop_trie_db::prune(xhash256_t const & hash, std::error_code & ec) {
@@ -206,7 +224,6 @@ void xtop_trie_db::commit_pruned(std::error_code & ec) {
 
     pruned_hashes_.clear();
 }
-
 
 xbytes_t xtop_trie_db::preimageKey(xhash256_t hash_key) const {
     xbytes_t res;

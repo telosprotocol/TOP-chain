@@ -37,7 +37,13 @@ public:
     void PutDirect(xbytes_t const & key, xbytes_t const & value, std::error_code & ec) override {
 
     }
+    void PutDirectBatch(std::map<xbytes_t, xbytes_t> const & batch, std::error_code & ec) override {
+
+    }
     void DeleteDirect(xbytes_t const & key, std::error_code & ec) override {
+
+    }
+    void DeleteDirectBatch(std::vector<xbytes_t> const & batch, std::error_code & ec) override {
 
     }
     bool HasDirect(xbytes_t const & key, std::error_code & ec) override {
@@ -48,6 +54,9 @@ public:
     }
 
     void PutBatch(std::map<xbytes_t, xbytes_t> const & batch, std::error_code & ec) {
+        for (auto & p : batch) {
+            m[p.first] = p.second;
+        }
     }
 
     void DeleteBatch(std::vector<xbytes_t> const & batch, std::error_code & ec) {
@@ -90,7 +99,13 @@ public:
     void PutDirect(xbytes_t const & key, xbytes_t const & value, std::error_code & ec) override {
 
     }
+    void PutDirectBatch(std::map<xbytes_t, xbytes_t> const & batch, std::error_code & ec) override {
+
+    }
     void DeleteDirect(xbytes_t const & key, std::error_code & ec) override {
+
+    }
+    void DeleteDirectBatch(std::vector<xbytes_t> const & batch, std::error_code & ec) override {
 
     }
     bool HasDirect(xbytes_t const & key, std::error_code & ec) override {
@@ -101,7 +116,6 @@ public:
     }
     void PutBatch(std::map<xbytes_t, xbytes_t> const & batch, std::error_code & ec) {
     }
-
     void DeleteBatch(std::vector<xbytes_t> const & batch, std::error_code & ec) {
     }
 

@@ -74,7 +74,11 @@ void Sync::AddSubTrie(xhash256_t const & root, xbytes_t const & path, xhash256_t
         return;
     }
 
-    // not find in db because it may left in db with sync interrupt
+    assert(database != nullptr);
+    if (HasTrieNode(database, root)) {
+        xdbg("Sync::AddSubTrie already hash root: %s in db", root.as_hex_str().c_str());
+        return;
+    }
 
     auto req = new request(path, root, callback);
     if (parent != xhash256_t{}) {

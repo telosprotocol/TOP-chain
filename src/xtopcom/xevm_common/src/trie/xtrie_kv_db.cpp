@@ -58,6 +58,20 @@ void xtop_kv_db::PutDirect(xbytes_t const & key, xbytes_t const & value, std::er
     return;
 }
 
+void xtop_kv_db::PutDirectBatch(std::map<xbytes_t, xbytes_t> const & batch, std::error_code & ec) {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    std::map<std::string, std::string> convert_batch;
+    for (auto b : batch) {
+        convert_batch.emplace(std::make_pair(std::string{b.first.begin(), b.first.end()}, std::string{b.second.begin(), b.second.end()}));
+    }
+    if (m_db->set_values(convert_batch) == false) {
+        xwarn("xtop_kv_db::PutBatch error");
+        ec = error::xenum_errc::trie_db_put_error;
+        return;
+    }
+    return;
+}
+
 void xtop_kv_db::Delete(xbytes_t const & key, std::error_code & ec) {
     std::lock_guard<std::mutex> lock(m_mutex);
     if (m_db->delete_value(convert_key(key)) == false) {
@@ -91,6 +105,20 @@ void xtop_kv_db::DeleteDirect(xbytes_t const & key, std::error_code & ec) {
         return;
     }
     xdbg("xtop_kv_db::DeleteDirect key: %s", top::to_hex(key).c_str());
+    return;
+}
+
+void xtop_kv_db::DeleteDirectBatch(std::vector<xbytes_t> const & batch, std::error_code & ec) {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    std::vector<std::string> convert_batch;
+    for (auto b : batch) {
+        convert_batch.emplace_back(std::string{b.begin(), b.end()});
+    }
+    if (m_db->delete_values(convert_batch) == false) {
+        xwarn("xtop_kv_db::DeleteDirectBatch error");
+        ec = error::xerrc_t::trie_db_delete_error;
+        return;
+    }
     return;
 }
 
