@@ -62,7 +62,7 @@ xtop_http_client_base::~xtop_http_client_base() {
     m_client->_.stop();
 }
 
-std::string xtop_http_client_base::percent_encode(std::string const & data){
+std::string xtop_http_client_base::percent_encode(std::string const & data) {
     return SimpleWeb::Percent::encode(data);
 }
 
@@ -86,6 +86,28 @@ std::string xtop_http_client_base::request_post_json(std::string const & path, s
     header.insert({"Content-Type", "application/json"});
     auto res = m_client->_.request("POST", path, json_request, header);
     return res->content.string();
+}
+
+xtop_http_client_async_base::xtop_http_client_async_base(std::string const & ip_port) {
+    m_client = std::make_shared<HttpClientWrapper>(ip_port);
+}
+
+xtop_http_client_async_base::~xtop_http_client_async_base() {
+    m_client->_.stop();
+}
+
+void xtop_http_client_async_base::request_post_string(std::string const & path, std::string const & request, std::function<void(std::string const &)> callback) {
+    m_client->_.request("POST", path, request, [callback](std::shared_ptr<HttpClient::Response> response, const SimpleWeb::error_code & ec) {
+        if (!ec) {
+            callback(response->content.string());
+        } else {
+            callback("");
+        }
+    });
+}
+
+void xtop_http_client_async_base::run_io_service() {
+    m_client->_.io_service->run();
 }
 
 NS_END2

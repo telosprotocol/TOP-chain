@@ -1,9 +1,11 @@
 // Copyright (c) 2017-present Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
+#pragma once
 
 #include "xbase/xns_macro.h"
 
+#include <functional>
 #include <map>
 #include <memory>
 #include <string>
@@ -42,5 +44,23 @@ private:
 };
 
 using xhttp_client_base_t = xtop_http_client_base;
+
+/// @brief async http client base
+class xtop_http_client_async_base {
+    // todo could add more interface && base request api
+public:
+    xtop_http_client_async_base() = delete;
+    virtual ~xtop_http_client_async_base();
+
+    xtop_http_client_async_base(std::string const & ip_port);
+
+protected:
+    void request_post_string(std::string const & path, std::string const & request, std::function<void(std::string const &)> callback);
+    void run_io_service();
+
+private:
+    std::shared_ptr<HttpClientWrapper> m_client;
+};
+using xhttp_client_async_base_t = xtop_http_client_async_base;
 
 NS_END2
