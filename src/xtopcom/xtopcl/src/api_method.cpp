@@ -1678,6 +1678,7 @@ void ApiMethod::set_keystore_path(const std::string & data_dir) {
 }
 
 void ApiMethod::change_trans_mode(bool use_http) {
+    assert(use_http == true); // we only use http for now
     if (use_http) {
         g_server_host_port = config_file::instance()->get_string(net_setting, http_host);
         if (g_server_host_port.empty()) {
@@ -1686,11 +1687,11 @@ void ApiMethod::change_trans_mode(bool use_http) {
         trans_base::s_defaule_mode = TransMode::HTTP;
         // std::cout << "Using trans mode - HTTP: " << g_server_host_port << std::endl;
     } else {
-        g_server_host_port = config_file::instance()->get_string(net_setting, ws_host);
-        if (g_server_host_port.empty()) {
-            g_server_host_port = SERVER_HOST_PORT_WS;
-        }
-        trans_base::s_defaule_mode = TransMode::WS;
+        // g_server_host_port = config_file::instance()->get_string(net_setting, ws_host);
+        // if (g_server_host_port.empty()) {
+        //     g_server_host_port = SERVER_HOST_PORT_WS;
+        // }
+        // trans_base::s_defaule_mode = TransMode::WS;
         // std::cout << "Using trans mode - WS: " << g_server_host_port  << std::endl;
     }
 #if  defined(DEBUG) || defined(RELEASEDEBINFO)
