@@ -16,7 +16,7 @@ xresources::xresources(const std::string & account,
                        observer_ptr<election::cache::xdata_accessor_face_t> const & accessor,
                        observer_ptr<mbus::xmessage_bus_face_t> const & mb,
                        const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool,
-                       const std::shared_ptr<state_sync::xstate_downloader_t> & downloader)
+                       const observer_ptr<state_sync::xstate_downloader_t> & downloader)
   : m_worker_pool(pwork)
   , m_xbft_worker_pool(pwork)
   , m_network(network)

@@ -46,7 +46,7 @@ struct state_req {
     uint32_t id;
     uint32_t n_items{0};
     std::map<xhash256_t, std::set<std::string>> trie_tasks;
-    std::map<xbytes_t, std::set<std::string>> unit_tasks;
+    std::map<xhash256_t, std::pair<xbytes_t, std::set<std::string>>> unit_tasks;
     uint64_t start{0};
     uint64_t delivered{0};
     std::vector<xbytes_t> nodes_response;

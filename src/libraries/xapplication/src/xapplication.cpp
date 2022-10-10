@@ -148,6 +148,7 @@ void xtop_application::start() {
 
         m_txpool_service_mgr = xtxpool_service_v2::xtxpool_service_mgr_instance::create_xtxpool_service_mgr_inst(
             make_observer(m_blockstore), make_observer(m_txpool), m_thread_pools.at(xthread_pool_type_t::txpool_service), make_observer(m_bus), make_observer(m_logic_timer));
+        m_downloader = std::make_shared<state_sync::xstate_downloader_t>(base::xvchain_t::instance().get_xdbstore(), statestore::xstatestore_hub_t::instance(), make_observer(m_bus));
         m_vnode_manager = std::make_shared<vnode::xvnode_manager_t>(make_observer(m_elect_main),
                                                                     make_observer(m_bus),
                                                                     make_observer(m_blockstore),
@@ -161,7 +162,8 @@ void xtop_application::start() {
                                                                     make_observer(m_txpool_service_mgr.get()),
                                                                     make_observer(m_txpool),
                                                                     make_observer(m_election_cache_data_accessor),
-                                                                    make_observer(m_nodesvr_ptr));
+                                                                    make_observer(m_nodesvr_ptr),
+                                                                    make_observer(m_downloader.get()));
     }
 
     for (auto & io_context_pool_info : m_io_context_pools) {

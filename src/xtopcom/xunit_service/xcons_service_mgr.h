@@ -32,7 +32,7 @@ xcons_service_mgr_ptr xcons_mgr_build(std::string const & node_account,
                                       observer_ptr<election::cache::xdata_accessor_face_t> const & accessor,
                                       observer_ptr<mbus::xmessage_bus_face_t> const & mbus,
                                       observer_ptr<router::xrouter_face_t> const & router,
-                                      std::shared_ptr<state_sync::xstate_downloader_t> const & downloader);
+                                      observer_ptr<state_sync::xstate_downloader_t> const & downloader);
 
 class xcons_service_mgr
   : public xcons_service_mgr_face

@@ -389,7 +389,6 @@ TEST_F(test_state_mpt_fixture, test_trie_sync) {
         EXPECT_EQ(nodes.size(), 1);
         EXPECT_TRUE(nodes[0]== xhash256_t(from_hex(k1, ec)));
         EXPECT_FALSE(ec);
-        EXPECT_EQ(paths.size(), 1);
         EXPECT_TRUE(units.empty());
         evm_common::trie::SyncResult data;
         data.Hash = xhash256_t(from_hex(k1, ec));
@@ -408,7 +407,6 @@ TEST_F(test_state_mpt_fixture, test_trie_sync) {
         EXPECT_EQ(nodes.size(), 1);
         EXPECT_TRUE(nodes[0]== xhash256_t(from_hex(k2, ec)));
         EXPECT_FALSE(ec);
-        EXPECT_EQ(paths.size(), 1);
         EXPECT_TRUE(units.empty());
         evm_common::trie::SyncResult data;
         data.Hash = xhash256_t(from_hex(k2, ec));
@@ -427,7 +425,6 @@ TEST_F(test_state_mpt_fixture, test_trie_sync) {
         EXPECT_EQ(nodes.size(), 1);
         EXPECT_TRUE(nodes[0]== xhash256_t(from_hex(k3, ec)));
         EXPECT_FALSE(ec);
-        EXPECT_EQ(paths.size(), 1);
         EXPECT_TRUE(units.empty());
         evm_common::trie::SyncResult data;
         data.Hash = xhash256_t(from_hex(k3, ec));
@@ -446,7 +443,6 @@ TEST_F(test_state_mpt_fixture, test_trie_sync) {
         EXPECT_EQ(nodes.size(), 1);
         EXPECT_TRUE(nodes[0]== xhash256_t(from_hex(k4, ec)));
         EXPECT_FALSE(ec);
-        EXPECT_EQ(paths.size(), 1);
         EXPECT_TRUE(units.empty());
         evm_common::trie::SyncResult data;
         data.Hash = xhash256_t(from_hex(k4, ec));

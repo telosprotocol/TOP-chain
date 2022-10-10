@@ -304,15 +304,15 @@ void xtop_state_sync::fill_tasks(uint32_t n, state_req & req, std::vector<xhash2
         auto fill = n - m_trie_tasks.size() - m_unit_tasks.size();
         auto res = m_sched->Missing(fill);
         auto nodes = std::get<0>(res);
-        auto paths = std::get<1>(res);
-        auto units = std::get<2>(res);
+        auto unit_hashes = std::get<1>(res);
+        auto unit_keys = std::get<2>(res);
         for (size_t i = 0; i < nodes.size(); i++) {
             xdbg("xtop_state_sync::fill_tasks push missing node: %s", nodes[i].as_hex_str().c_str());
             m_trie_tasks.insert({nodes[i], {}});
         }
-        for (size_t i = 0; i < units.size(); i++) {
-            xdbg("xtop_state_sync::fill_tasks push missing unit: %s", to_hex(units[i]).c_str());
-            m_unit_tasks.insert({units[i], {}});
+        for (size_t i = 0; i < unit_keys.size(); i++) {
+            xdbg("xtop_state_sync::fill_tasks push missing unit: %s", to_hex(unit_keys[i]).c_str());
+            m_unit_tasks.insert({unit_hashes[i], {unit_keys[i], std::set<std::string>()}});
         }
     }
     for (auto it = m_trie_tasks.begin(); it != m_trie_tasks.end(); ) {
@@ -329,7 +329,7 @@ void xtop_state_sync::fill_tasks(uint32_t n, state_req & req, std::vector<xhash2
             break;
         }
         xdbg("xtop_state_sync::fill_tasks push left unit: %s", to_hex(it->first).c_str());
-        units_out.push_back(it->first);
+        units_out.push_back(it->second.first);
         req.unit_tasks.insert(*it);
         m_unit_tasks.erase(it++);
     }
@@ -349,25 +349,32 @@ void xtop_state_sync::process(state_req & req, std::error_code & ec) {
                 ec = ec_internal;
                 return;
             } else {
-                xwarn("xtop_state_sync::process process_node_data abnormal: %s, %s %s", hash.as_hex_str().c_str(), ec.category().name(), ec.message().c_str());      
+                xwarn("xtop_state_sync::process process_node_data abnormal: %s, %s %s", hash.as_hex_str().c_str(), ec_internal.category().name(), ec_internal.message().c_str());      
             }
         }
         req.trie_tasks.erase(hash);
     }
     for (auto blob : req.units_response) {
         xinfo("xtop_state_sync::process unit blob: %s, table: %s, height: %lu, root: %s", to_hex(blob).c_str(), m_table.c_str(), m_height, to_hex(m_root).c_str());
-        auto key = process_unit_data(blob, ec_internal);
+        auto hash = process_unit_data(blob, ec_internal);
         if (ec_internal) {
             if (ec_internal != evm_common::error::make_error_code(evm_common::error::xerrc_t::trie_sync_not_requested) &&
                 ec_internal != evm_common::error::make_error_code(evm_common::error::xerrc_t::trie_sync_already_processed)) {
-                xwarn("xtop_state_sync::process invalid state node: %s, %s %s", to_hex(key).c_str(), ec.category().name(), ec.message().c_str());
+                xwarn("xtop_state_sync::process invalid state node: %s, %s %s", to_hex(hash).c_str(), ec.category().name(), ec.message().c_str());
                 ec = ec_internal;
                 return;
             } else {
-                xwarn("xtop_state_sync::process process_unit_data abnormal: %s, %s %s", to_hex(key).c_str(), ec.category().name(), ec.message().c_str());
+                xwarn("xtop_state_sync::process process_unit_data abnormal: %s, %s %s", to_hex(hash).c_str(), ec_internal.category().name(), ec_internal.message().c_str());
             }
         }
-        req.unit_tasks.erase(key);
+        // DEBUG
+        if (!req.unit_tasks.count(hash)) {
+            xwarn("xtop_state_sync::process process_unit_data not find key: %s", to_hex(hash).c_str());
+            for (auto t : req.unit_tasks) {
+                xwarn("%s", to_hex(t.first).c_str());
+            }
+        }
+        req.unit_tasks.erase(hash);
     }
     // retry queue
     for (auto pair : req.trie_tasks) {
@@ -389,7 +396,7 @@ xhash256_t xtop_state_sync::process_node_data(xbytes_t & blob, std::error_code &
     return res.Hash;
 }
 
-xbytes_t xtop_state_sync::process_unit_data(xbytes_t & blob, std::error_code & ec) {
+xhash256_t xtop_state_sync::process_unit_data(xbytes_t & blob, std::error_code & ec) {
     evm_common::trie::SyncResult res;
     base::xauto_ptr<base::xvbstate_t> bstate = base::xvblock_t::create_state_object({blob.begin(), blob.end()});
     if (nullptr == bstate) {
@@ -402,13 +409,13 @@ xbytes_t xtop_state_sync::process_unit_data(xbytes_t & blob, std::error_code & e
     auto state_hash = base::xcontext_t::instance().hash(snapshot, enum_xhash_type_sha2_256);
     res.Hash = xhash256_t{xbytes_t{state_hash.begin(), state_hash.end()}};
     res.Data = blob;
-    auto key = m_sched->ProcessUnit(res, ec);
+    m_sched->ProcessUnit(res, ec);
     if (ec) {
         xwarn("xtop_state_sync::process_unit_data hash: %s, data: %s, error %s", to_hex(res.Hash).c_str(), to_hex(res.Data).c_str(), ec.message().c_str());
     } else {
         xinfo("xtop_state_sync::process_unit_data hash: %s, data: %s", res.Hash.as_hex_str().c_str(), to_hex(res.Data).c_str());
     }
-    return key;
+    return res.Hash;
 }
 
 std::shared_ptr<vnetwork::xvnetwork_driver_face_t> xtop_state_sync::available_network() const {

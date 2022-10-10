@@ -45,7 +45,7 @@ private:
     void fill_tasks(uint32_t n, state_req & req, std::vector<xhash256_t> & nodes, std::vector<xbytes_t> & units);
     void process(state_req & req, std::error_code & ec);
     xhash256_t process_node_data(xbytes_t & blob, std::error_code & ec);
-    xbytes_t process_unit_data(xbytes_t & blob, std::error_code & ec);
+    xhash256_t process_unit_data(xbytes_t & blob, std::error_code & ec);
     void pop_deliver_req();
     void send_message(std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network,
                       const std::vector<common::xnode_address_t> & peers,
@@ -67,7 +67,7 @@ private:
     std::function<void(const state_req &)> m_track_func{nullptr};
 
     std::map<xhash256_t, std::set<std::string>> m_trie_tasks;
-    std::map<xbytes_t, std::set<std::string>> m_unit_tasks;
+    std::map<xhash256_t, std::pair<xbytes_t, std::set<std::string>>> m_unit_tasks;
 
     bool m_sync_table_finish{false};
     bool m_done{false};
