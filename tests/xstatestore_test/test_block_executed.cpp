@@ -323,6 +323,35 @@ TEST_F(test_block_executed, not_store_units_2) {
     }
 }
 
+TEST_F(test_block_executed, get_unit_state_by_table_1) {
+    {
+        mock::xvchain_creator creator;
+        base::xvblockstore_t* blockstore = creator.get_blockstore();
+        base::xvchain_t::instance().set_node_type(false, true);
+        uint64_t max_count = 8;
+        mock::xdatamock_table mocktable(1, 4);
+        mocktable.genrate_table_chain(max_count, blockstore);
+        const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
+        xassert(tableblocks.size() == max_count + 1);
+        const std::vector<xdatamock_unit> & mockunits = mocktable.get_mock_units();
+
+        for (auto & block : tableblocks) {
+            ASSERT_TRUE(blockstore->store_block(mocktable, block.get()));
+        }
+
+        common::xaccount_address_t unit_address(mockunits[0].get_account());
+        {
+            auto unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_table(unit_address, "latest");
+            ASSERT_NE(nullptr, unitstate);
+        }
+        for (uint64_t i=0;i<=max_count;i++) {
+            auto unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_table(unit_address, std::to_string(i));
+            ASSERT_NE(nullptr, unitstate);            
+        }
+    }
+}
+
+
 
 TEST_F(test_block_executed, xstatestore_execute_BENCH) {
 // test result in release

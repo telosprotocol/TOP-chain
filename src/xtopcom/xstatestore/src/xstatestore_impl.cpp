@@ -272,7 +272,12 @@ data::xunitstate_ptr_t xstatestore_impl_t::get_unit_state_by_table(common::xacco
         _block = base::xvchain_t::instance().get_xblockstore()->get_latest_cert_block(_table_addr.vaccount());
     else {
         uint64_t height = std::strtoul(table_height.c_str(), NULL, 16);
-        _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_table_addr.vaccount(), height, base::enum_xvblock_flag_committed, false);
+        uint64_t commit_height = base::xvchain_t::instance().get_xblockstore()->get_latest_committed_block_height(_table_addr.vaccount());
+        if (height > commit_height) {
+            _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_table_addr.vaccount(), height, base::enum_xvblock_flag_authenticated, false);
+        } else {
+            _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_table_addr.vaccount(), height, base::enum_xvblock_flag_committed, false);
+        }        
     }
 
     if (nullptr == _block) {
