@@ -34,7 +34,7 @@ public:
     void DeleteDirectBatch(std::vector<xbytes_t> const & batch, std::error_code & ec) override;
 
 private:
-    std::string convert_key(xbytes_t const & key);
+    std::string convert_key(xbytes_t const & key) const;
 
     base::xvdbstore_t * m_db{nullptr};
     std::mutex m_mutex;

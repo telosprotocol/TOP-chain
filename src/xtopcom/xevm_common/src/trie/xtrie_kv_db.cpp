@@ -18,7 +18,7 @@ xtop_kv_db::xtop_kv_db(base::xvdbstore_t * db, common::xaccount_address_t table)
     m_node_key_prefix = base::xvdbkey_t::create_prunable_mpt_node_key(m_table.vaccount(), {});
 }
 
-std::string xtop_kv_db::convert_key(xbytes_t const & key) {
+std::string xtop_kv_db::convert_key(xbytes_t const & key) const {
     return m_node_key_prefix + std::string{key.begin(), key.end()};
 }
 
@@ -84,17 +84,17 @@ void xtop_kv_db::Delete(xbytes_t const & key, std::error_code & ec) {
 }
 
 void xtop_kv_db::DeleteBatch(std::vector<xbytes_t> const & batch, std::error_code & ec) {
+    assert(!ec);
     std::lock_guard<std::mutex> lock(m_mutex);
     std::vector<std::string> convert_batch;
-    for (auto b : batch) {
+    for (auto const & b : batch) {
         convert_batch.emplace_back(convert_key(b));
     }
+
     if (m_db->delete_values(convert_batch) == false) {
         xwarn("xtop_kv_db::DeleteBatch error");
         ec = error::xerrc_t::trie_db_delete_error;
-        return;
     }
-    return;
 }
 
 void xtop_kv_db::DeleteDirect(xbytes_t const & key, std::error_code & ec) {
@@ -111,7 +111,7 @@ void xtop_kv_db::DeleteDirect(xbytes_t const & key, std::error_code & ec) {
 void xtop_kv_db::DeleteDirectBatch(std::vector<xbytes_t> const & batch, std::error_code & ec) {
     std::lock_guard<std::mutex> lock(m_mutex);
     std::vector<std::string> convert_batch;
-    for (auto b : batch) {
+    for (auto const & b : batch) {
         convert_batch.emplace_back(std::string{b.begin(), b.end()});
     }
     if (m_db->delete_values(convert_batch) == false) {
