@@ -16,9 +16,10 @@ xtop_vnode_role_proxy::xtop_vnode_role_proxy(observer_ptr<mbus::xmessage_bus_fac
                                              xobject_ptr_t<base::xvcertauth_t> const & certauth,
                                              observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
                                              //    std::vector<xobject_ptr_t<base::xiothread_t>> const & iothreads,
-                                             observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
-  : m_txstore{txstore},
-    m_downloader{std::make_shared<state_sync::xstate_downloader_t>(base::xvchain_t::instance().get_xdbstore(), statestore::xstatestore_hub_t::instance(), mbus)} {
+                                             observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
+                                             observer_ptr<state_sync::xstate_downloader_t> const & downloader)
+  : m_txstore{txstore} {
+    m_downloader = downloader;
     m_cons_mgr = xunit_service::xcons_mgr_build(data::xuser_params::get_instance().account.value(),
                                                 block_store,
                                                 txpool,
@@ -27,7 +28,7 @@ xtop_vnode_role_proxy::xtop_vnode_role_proxy(observer_ptr<mbus::xmessage_bus_fac
                                                 election_cache_data_accessor,
                                                 mbus,
                                                 router,
-                                                m_downloader);
+                                                downloader);
 }
 
 bool xtop_vnode_role_proxy::is_edge_archive(common::xnode_type_t const & node_type) const {

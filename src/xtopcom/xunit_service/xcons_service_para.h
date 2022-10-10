@@ -34,7 +34,7 @@ public:
                const observer_ptr<election::cache::xdata_accessor_face_t> & accessor,
                const observer_ptr<mbus::xmessage_bus_face_t> & mb,
                const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool,
-               const std::shared_ptr<state_sync::xstate_downloader_t> & downloader);
+               const observer_ptr<state_sync::xstate_downloader_t> & downloader);
     virtual ~xresources();
 
 public:
@@ -72,7 +72,7 @@ private:
     observer_ptr<election::cache::xdata_accessor_face_t> m_accessor;
     observer_ptr<mbus::xmessage_bus_face_t> m_bus{};
     observer_ptr<xtxpool_v2::xtxpool_face_t> m_txpool{};
-    std::shared_ptr<state_sync::xstate_downloader_t> m_downloader;
+    observer_ptr<state_sync::xstate_downloader_t> m_downloader;
 };
 
 // consensuss parameter

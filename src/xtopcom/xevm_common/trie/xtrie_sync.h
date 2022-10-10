@@ -73,11 +73,11 @@ private:
     // persisted data items.
     class syncMemBatch {
     public:
-        std::map<xhash256_t, xbytes_t> nodes;  // In-memory membatch of recently completed nodes
+        std::map<xbytes_t, xbytes_t> nodes;  // In-memory membatch of recently completed nodes
         std::map<xbytes_t, xbytes_t> units;  // In-memory membatch of recently completed codes
 
     public:
-        inline bool hasNode(xhash256_t const & hash) const {
+        inline bool hasNode(xbytes_t const & hash) const {
             return nodes.find(hash) != nodes.end();
         }
         inline bool hasUnit(xbytes_t const & hash) const {
@@ -126,8 +126,7 @@ public:
     // Missing retrieves the known missing nodes from the trie for retrieval. To aid
     // both eth/6x style fast sync and snap/1x style state sync, the paths of trie
     // nodes are returned too, as well as separate hash list for codes.
-    // return type: <nodes, SyncPath, codes>
-    std::tuple<std::vector<xhash256_t>, std::vector<SyncPath>, std::vector<xbytes_t>> Missing(std::size_t max);
+    std::tuple<std::vector<xhash256_t>, std::vector<xhash256_t>, std::vector<xbytes_t>> Missing(std::size_t max);
 
     // Process injects the received data for requested item. Note it can
     // happpen that the single response commits two pending requests(e.g.
@@ -137,12 +136,14 @@ public:
     // there is no downside.
     void Process(SyncResult const & result, std::error_code & ec);
 
-    // ProcessUnit for unit and return special key
-    xbytes_t ProcessUnit(SyncResult const & result, std::error_code & ec);
+    // ProcessUnit for unit
+    void ProcessUnit(SyncResult const & result, std::error_code & ec);
 
     // Commit flushes the data stored in the internal membatch out to persistent
     // storage, returning any occurred error.
     void Commit(xkv_db_face_ptr_t db);
+
+    void CommitUnit(xkv_db_face_ptr_t db);
 
     // Pending returns the number of state entries currently pending for download.
     std::size_t Pending() const;

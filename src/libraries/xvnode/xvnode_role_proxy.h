@@ -33,7 +33,7 @@ private:
     // std::vector<xobject_ptr_t<base::xiothread_t>> const & iothreads;
     // observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor;
     observer_ptr<base::xvtxstore_t> m_txstore;
-    std::shared_ptr<state_sync::xstate_downloader_t> m_downloader;
+    observer_ptr<state_sync::xstate_downloader_t> m_downloader;
     xunit_service::xcons_service_mgr_ptr m_cons_mgr;
     // std::shared_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> m_txpool_service_mgr;
 
@@ -46,7 +46,8 @@ public:
                           xobject_ptr_t<base::xvcertauth_t> const & certauth,
                           observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
                           //  std::vector<xobject_ptr_t<base::xiothread_t>> const & iothreads,
-                          observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor);
+                          observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
+                          observer_ptr<state_sync::xstate_downloader_t> const & downloader);
 
     // void start() override;
     

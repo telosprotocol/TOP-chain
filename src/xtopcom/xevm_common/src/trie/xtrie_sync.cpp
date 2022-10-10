@@ -69,7 +69,7 @@ void Sync::AddSubTrie(xhash256_t const & root, xbytes_t const & path, xhash256_t
         return;
     }
 
-    if (membatch.hasNode(root)) {
+    if (membatch.hasNode(root.to_bytes())) {
         xdbg("Sync::AddSubTrie already hash root: %s in membatch", root.as_hex_str().c_str());
         return;
     }
@@ -114,12 +114,12 @@ void Sync::AddUnitEntry(xhash256_t const & hash, xbytes_t const & path, xbytes_t
     schedule(req);
 }
 
-std::tuple<std::vector<xhash256_t>, std::vector<SyncPath>, std::vector<xbytes_t>> Sync::Missing(std::size_t max) {
+std::tuple<std::vector<xhash256_t>, std::vector<xhash256_t>, std::vector<xbytes_t>> Sync::Missing(std::size_t max) {
     std::vector<xhash256_t> nodeHashes;
-    std::vector<SyncPath> nodePaths;
-    std::vector<xbytes_t> unitHashes;
+    std::vector<xhash256_t> unitHashes;
+    std::vector<xbytes_t> unitSyncKeys;
 
-    while (!queue.empty() && (max == 0 || nodeHashes.size() + unitHashes.size() < max)) {
+    while (!queue.empty() && (max == 0 || nodeHashes.size() + unitSyncKeys.size() < max)) {
         // xhash256_t hash;
         xbytes_t key;
         int64_t prio;
@@ -135,64 +135,54 @@ std::tuple<std::vector<xhash256_t>, std::vector<SyncPath>, std::vector<xbytes_t>
         fetches[depth]++;
 
         if (unitKeys.count(key)) {
-            unitHashes.push_back(key);
+            if (unitReqs.find(unitKeys[key]) == unitReqs.end()) {
+                xassert(false);
+            }
+            unitHashes.push_back(unitKeys[key]);
+            unitSyncKeys.push_back(key);
         } else {
             xhash256_t hash(key);
             if (nodeReqs.find(hash) == nodeReqs.end()) {
                 xassert(false);
             }
             nodeHashes.push_back(hash);
-            auto new_path = newSyncPath(nodeReqs[hash]->path);
-            nodePaths.push_back(new_path);
         }
     }
 
-    return std::make_tuple(nodeHashes, nodePaths, unitHashes);
+    return std::make_tuple(nodeHashes, unitHashes, unitSyncKeys);
 }
 
 void Sync::Process(SyncResult const & result, std::error_code & ec) {
     // If the item was not requested either for code or node, bail out
-    if (nodeReqs.find(result.Hash) == nodeReqs.end() && unitReqs.find(result.Hash) == unitReqs.end()) {
+    if (nodeReqs.find(result.Hash) == nodeReqs.end()) {
         ec = error::xerrc_t::trie_sync_not_requested;
         return;
     }
 
     bool filled{false};
-    // There is an pending code request for this data, commit directly
-    if (unitReqs.find(result.Hash) != unitReqs.end()) {
-        auto req = unitReqs.at(result.Hash);
-        if (req->data.empty()) {
-            filled = true;
-            req->data = result.Data;
-            commit(req, ec);
-        }
+    // There is an pending node request for this data, fill it.
+    auto req = nodeReqs.at(result.Hash);
+    filled = true;
+    // Decode the node data content and update the request
+    auto node = xtrie_node_rlp::decodeNode(result.Hash, result.Data, ec);
+    if (ec) {
+        return;
+    }
+    req->data = result.Data;
+
+    // Create and schedule a request for all the children nodes
+
+    auto requests = children(req, node, ec);
+    if (ec) {
+        return;
     }
 
-    // There is an pending node request for this data, fill it.
-    if (nodeReqs.find(result.Hash) != nodeReqs.end()) {
-        auto req = nodeReqs.at(result.Hash);
-        filled = true;
-        // Decode the node data content and update the request
-        auto node = xtrie_node_rlp::decodeNode(result.Hash, result.Data, ec);
-        if (ec) {
-            return;
-        }
-        req->data = result.Data;
-
-        // Create and schedule a request for all the children nodes
-
-        auto requests = children(req, node, ec);
-        if (ec) {
-            return;
-        }
-
-        if (requests.size() == 0 && req->deps == 0) {
-            commit(req, ec);  // todo commit parameter ec has no error occasion.
-        } else {
-            req->deps += requests.size();
-            for (auto child : requests) {
-                schedule(child);
-            }
+    if (requests.size() == 0 && req->deps == 0) {
+        commit(req, ec);  // todo commit parameter ec has no error occasion.
+    } else {
+        req->deps += requests.size();
+        for (auto child : requests) {
+            schedule(child);
         }
     }
 
@@ -202,15 +192,14 @@ void Sync::Process(SyncResult const & result, std::error_code & ec) {
     }
 }
 
-xbytes_t Sync::ProcessUnit(SyncResult const & result, std::error_code & ec) {
+void Sync::ProcessUnit(SyncResult const & result, std::error_code & ec) {
     // If the item was not requested either for code or node, bail out
     if (unitReqs.find(result.Hash) == unitReqs.end()) {
         xassert(false);
         ec = error::xerrc_t::trie_sync_not_requested;
-        return {};
+        return;
     }
 
-    xbytes_t ret;
     bool filled{false};
     // There is an pending code request for this data, commit directly
     auto req = unitReqs.at(result.Hash);
@@ -219,31 +208,27 @@ xbytes_t Sync::ProcessUnit(SyncResult const & result, std::error_code & ec) {
         req->data = result.Data;
         commit(req, ec);
     }
-    ret = req->unit_sync_key;
 
     if (!filled) {
         ec = error::xerrc_t::trie_sync_already_processed;
-        return {};
+        return;
     }
-    return ret;
 }
 
 void Sync::Commit(xkv_db_face_ptr_t db) {
     // make sure last write syncRoot, should call once
-    if (!membatch.nodes.count(syncRoot)) {
+    if (!membatch.nodes.count(syncRoot.to_bytes())) {
         xassert(false);
     }
-    auto value = membatch.nodes[syncRoot];
-    membatch.nodes.erase(syncRoot);
-    for (auto const & p : membatch.nodes) {
-        WriteTrieNode(db, p.first, p.second);
-    }
-    for (auto const & p : membatch.units) {
-        WriteUnit(db, p.first, p.second);
-    }
-    xdbg("Sync::Commit last write root: %s, value: %s", to_hex(syncRoot).c_str(), to_hex(value).c_str());
-    WriteTrieNode(db, syncRoot, value);
+    WriteTrieNodeBatch(db, membatch.nodes);
+    WriteUnitBatch(db, membatch.units);
     membatch.clear();
+    return;
+}
+
+void Sync::CommitUnit(xkv_db_face_ptr_t db) {
+    WriteUnitBatch(db, membatch.units);
+    membatch.units.clear();
     return;
 }
 
@@ -277,8 +262,8 @@ void Sync::schedule(request * req) {
         prio |= (int64_t)(15 - req->path[i]) << (52 - i * 4);  // 15-nibble => lexicographic order
     }
 
-    unitKeys.emplace(std::make_pair(req->unit_sync_key, req->hash));
     if (req->unit) {
+        unitKeys.emplace(std::make_pair(req->unit_sync_key, req->hash));
         queue.push(req->unit_sync_key, prio);
     } else {
         queue.push(req->hash.to_bytes(), prio);
@@ -357,7 +342,7 @@ std::vector<Sync::request *> Sync::children(request * req, xtrie_node_face_ptr_t
             assert(node != nullptr);
 
             auto hash = xhash256_t{node->data()};
-            if (membatch.hasNode(hash)) {
+            if (membatch.hasNode(hash.to_bytes())) {
                 continue;
             }
 
@@ -375,9 +360,10 @@ void Sync::commit(request * req, std::error_code & ec) {
     if (req->unit) {
         membatch.units[req->unit_store_key] = req->data;
         unitReqs.erase(req->hash);
+        unitKeys.erase(req->unit_sync_key);
         fetches[req->path.size()]--;
     } else {
-        membatch.nodes[req->hash] = req->data;
+        membatch.nodes[req->hash.to_bytes()] = req->data;
         nodeReqs.erase(req->hash);
         fetches[req->path.size()]--;
     }

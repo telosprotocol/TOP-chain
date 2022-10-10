@@ -12,7 +12,7 @@
 namespace top {
 namespace state_sync {
 
-#define TIMEOUT_MSEC 5000U
+#define TIMEOUT_MSEC 15000U
 
 xtop_state_downloader::xtop_state_downloader(base::xvdbstore_t * db, statestore::xstatestore_face_t * store, const observer_ptr<mbus::xmessage_bus_face_t> & msg_bus)
   : m_db(db), m_store(store), m_bus(msg_bus) {
