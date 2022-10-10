@@ -141,7 +141,7 @@ public:
 
     // Commit flushes the data stored in the internal membatch out to persistent
     // storage, returning any occurred error.
-    void Commit(xkv_db_face_ptr_t db);
+    void Commit(const xkv_db_face_ptr_t & db);
 
     void CommitUnit(xkv_db_face_ptr_t db);
 

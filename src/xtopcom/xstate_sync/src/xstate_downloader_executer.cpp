@@ -14,19 +14,25 @@ namespace state_sync {
 
 #define TIMEOUT_MSEC 5000U
 
-xtop_download_executer::xtop_download_executer(const observer_ptr<base::xiothread_t> & thread) {
-    m_thread = thread;
+xtop_download_executer::xtop_download_executer(observer_ptr<base::xiothread_t> thread) : m_syncer_thread{thread} {
 }
 
 void xtop_download_executer::run_state_sync(std::shared_ptr<xstate_sync_face_t> syncer, std::function<void(sync_result)> callback) {
+#if !defined(NDEBUG)
+    if (executor_thread_id_ == std::thread::id{}) {
+        executor_thread_id_ = std::this_thread::get_id();
+    }
+    assert(executor_thread_id_ == std::this_thread::get_id());
+#endif
+
     xinfo("xtop_download_executer::run_state_sync sync thread start, %s", syncer->symbol().c_str());
 
-    auto f = [syncer](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
+    auto f = [syncer](base::xcall_t &, const int32_t, const uint64_t) -> bool {
         syncer->run();
         return true;
     };
     base::xcall_t call(f);
-    m_thread->send_call(call);
+    m_syncer_thread->send_call(call);
 
     std::error_code loop_ec;
     loop(syncer, loop_ec);
@@ -70,7 +76,11 @@ void xtop_download_executer::run_state_sync(std::shared_ptr<xstate_sync_face_t> 
 }
 
 void xtop_download_executer::loop(std::shared_ptr<xstate_sync_face_t> syncer, std::error_code & ec) {
-    std::map<uint32_t, state_req, std::less<uint32_t>> active;
+#if !defined(NDEBUG)
+    assert(executor_thread_id_ == std::this_thread::get_id());
+#endif
+
+    std::map<uint32_t, state_req> active;
     int cnt{0};
 
     while (!syncer->is_done()) {

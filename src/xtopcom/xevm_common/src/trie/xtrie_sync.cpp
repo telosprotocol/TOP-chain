@@ -215,15 +215,14 @@ void Sync::ProcessUnit(SyncResult const & result, std::error_code & ec) {
     }
 }
 
-void Sync::Commit(xkv_db_face_ptr_t db) {
+void Sync::Commit(xkv_db_face_ptr_t const & db) {
     // make sure last write syncRoot, should call once
-    if (!membatch.nodes.count(syncRoot.to_bytes())) {
-        xassert(false);
-    }
+    assert(membatch.nodes.count(syncRoot.to_bytes()));
+
     WriteTrieNodeBatch(db, membatch.nodes);
     WriteUnitBatch(db, membatch.units);
+
     membatch.clear();
-    return;
 }
 
 void Sync::CommitUnit(xkv_db_face_ptr_t db) {

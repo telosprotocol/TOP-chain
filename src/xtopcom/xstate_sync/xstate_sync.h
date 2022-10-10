@@ -10,10 +10,19 @@
 #include "xstate_sync/xstate_sync_face.h"
 #include "xvnetwork/xmessage.h"
 
+#include <atomic>
+#if !defined(NDEBUG)
+#include <thread>
+#endif
+
 namespace top {
 namespace state_sync {
 
 class xtop_state_sync : public xstate_sync_face_t {
+#if !defined(NDEBUG)
+    std::thread::id running_thead_id_;
+#endif
+
 public:
     xtop_state_sync() = default;
     ~xtop_state_sync() override = default;
@@ -69,9 +78,9 @@ private:
     std::map<xhash256_t, std::set<std::string>> m_trie_tasks;
     std::map<xhash256_t, std::pair<xbytes_t, std::set<std::string>>> m_unit_tasks;
 
-    bool m_sync_table_finish{false};
-    bool m_done{false};
-    bool m_cancel{false};
+    std::atomic<bool> m_sync_table_finish{false};
+    std::atomic<bool> m_done{false};
+    std::atomic<bool> m_cancel{false};
     std::error_code m_ec;
 
     std::list<state_req> m_deliver_list;

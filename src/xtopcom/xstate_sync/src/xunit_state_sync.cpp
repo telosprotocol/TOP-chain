@@ -85,16 +85,16 @@ void xtop_unit_state_sync::push_deliver_state(const single_state_detail & detail
         return;
     }
     auto bstate = base::xvblock_t::create_state_object({detail.value.begin(), detail.value.end()});
-    auto table_state = std::make_shared<data::xtable_bstate_t>(bstate);
-    auto snapshot = table_state->take_snapshot();
-    auto hash = base::xcontext_t::instance().hash(snapshot, enum_xhash_type_sha2_256);
+    auto const table_state = std::make_shared<data::xtable_bstate_t>(bstate);
+    auto const snapshot = table_state->take_snapshot();
+    auto const hash = base::xcontext_t::instance().hash(snapshot, enum_xhash_type_sha2_256);
     if (hash != m_index.get_latest_state_hash()) {
         xwarn("xtop_unit_state_sync::push_deliver_state state hash mismatch: %s, %s", to_hex(hash).c_str(), to_hex(m_index.get_latest_state_hash()).c_str());
         return;
     }
     xinfo("xtop_unit_state_sync::push_deliver_state account: %s, index: %s, value: %s", m_account.c_str(), m_index.dump().c_str(), to_hex(detail.value).c_str());
-    auto key = base::xvdbkey_t::create_prunable_unit_state_key(m_account.value(), detail.height, {detail.hash.begin(), detail.hash.end()});
-    std::string value{detail.value.begin(), detail.value.end()};
+    auto const key = base::xvdbkey_t::create_prunable_unit_state_key(m_account.value(), detail.height, {detail.hash.begin(), detail.hash.end()});
+    std::string const value{detail.value.begin(), detail.value.end()};
     m_db->set_value(key, value);
     m_done = true;
 }

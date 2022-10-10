@@ -259,7 +259,7 @@ int xquic_server_conn_create_notify(xqc_connection_t * conn, const xqc_cid_t * c
 int xquic_server_conn_close_notify(xqc_connection_t * conn, const xqc_cid_t * cid, void * user_data, void * conn_proto_data) {
     srv_user_conn_t * srv_user_conn = (srv_user_conn_t *)user_data;
     xquic_server_t * server = (xquic_server_t *)srv_user_conn->server;
-#ifdef DEBUG
+#if defined(DEBUG)
     xqc_conn_stats_t stats = xqc_conn_get_stats(server->engine, cid);
     xdbg("[xquic_server_engine]send_count:%u, lost_count:%u, tlp_count:%u, recv_count:%u, srtt:%" PRIu64 " early_data_flag:%d, conn_err:%d, ack_info:%s",
          stats.send_count,
@@ -271,6 +271,7 @@ int xquic_server_conn_close_notify(xqc_connection_t * conn, const xqc_cid_t * ci
          stats.conn_err,
          stats.ack_info);
 #endif
+
     delete srv_user_conn;
     return 0;
 }
@@ -426,7 +427,7 @@ int xquic_client_conn_create_notify(xqc_connection_t * conn, const xqc_cid_t * c
 int xquic_client_conn_close_notify(xqc_connection_t * conn, const xqc_cid_t * cid, void * user_data, void * conn_proto_data) {
     cli_user_conn_t * cli_user_conn = (cli_user_conn_t *)user_data;
     xquic_client_t * client = (xquic_client_t *)cli_user_conn->client;
-#ifdef DEBUG
+#if defined(DEBUG)
     xqc_conn_stats_t stats = xqc_conn_get_stats(client->engine, cid);
     xdbg("[xquic_client_engine]send_count:%u, lost_count:%u, tlp_count:%u, recv_count:%u, srtt:%" PRIu64 " early_data_flag:%d, conn_err:%d, ack_info:%s",
          stats.send_count,
@@ -438,6 +439,7 @@ int xquic_client_conn_close_notify(xqc_connection_t * conn, const xqc_cid_t * ci
          stats.conn_err,
          stats.ack_info);
 #endif
+
     client->release_connection(cli_user_conn);
     return 0;
 }
