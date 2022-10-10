@@ -12,6 +12,33 @@
 #include "xdata/xblock.h"
 
 NS_BEG2(top, db_export)
+
+class xdb_check_data_func_face_t {
+public:
+    virtual bool is_data_exist(base::xvblockstore_t * blockstore, std::string const & account, uint64_t height) const = 0;
+    virtual std::string data_type() const = 0;
+};
+
+class xdb_check_data_func_block_t : public xdb_check_data_func_face_t {
+    virtual bool is_data_exist(base::xvblockstore_t * blockstore, std::string const & account, uint64_t height) const override;
+    virtual std::string data_type() const override;
+};
+
+class xdb_check_data_func_table_state_t : public xdb_check_data_func_face_t {
+    virtual bool is_data_exist(base::xvblockstore_t * blockstore, std::string const & account, uint64_t height) const override;
+    virtual std::string data_type() const override;
+};
+
+class xdb_check_data_func_unit_state_t : public xdb_check_data_func_face_t {
+    virtual bool is_data_exist(base::xvblockstore_t * blockstore, std::string const & account, uint64_t height) const override;
+    virtual std::string data_type() const override;
+};
+
+class xdb_check_data_func_off_data_t : public xdb_check_data_func_face_t {
+    virtual bool is_data_exist(base::xvblockstore_t * blockstore, std::string const & account, uint64_t height) const override;
+    virtual std::string data_type() const override;
+};
+
 class xdb_export_tools_t {
 public:
     enum enum_query_account_type { query_account_table = 0, query_account_unit, query_account_system};
@@ -21,7 +48,8 @@ public:
     static std::vector<std::string> get_system_contract_accounts();
     static std::vector<std::string> get_table_accounts();
     std::vector<std::string> get_db_unit_accounts();
-    void query_all_sync_result(std::vector<std::string> const & accounts_vec, bool is_table);
+    void query_all_account_data(std::vector<std::string> const & accounts_vec, bool is_table, const xdb_check_data_func_face_t & func);
+    void query_all_table_mpt(std::vector<std::string> const & accounts_vec);
     void query_table_latest_fullblock();
     void read_external_tx_firestamp();
     void query_tx_info(std::vector<std::string> const & tables, const uint32_t thread_num, const uint32_t start_timestamp, const uint32_t end_timestamp);
@@ -296,8 +324,10 @@ private:
         }
     };
 
-    void query_sync_result(std::string const & account,  const uint64_t h_end, std::string & result);
-    void query_sync_result(std::string const & account, json & result_json);
+    void query_account_data(std::string const & account,  const uint64_t h_end, std::string & result, const xdb_check_data_func_face_t & func);
+    void query_account_data(std::string const & account, json & result_json, const xdb_check_data_func_face_t & func);
+    void query_table_mpt(std::string const & account, json & result_json);
+    static bool table_mpt_read_callback(const std::string& key, const std::string& value,void *cookie);
     void query_table_latest_fullblock(std::string const & account, json & j);
     void query_tx_info_internal(std::string const & account, const uint32_t start_timestamp, const uint32_t end_timestamp);
     void query_block_info(std::string const & account, const uint64_t h, xJson::Value & root);

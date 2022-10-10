@@ -12,7 +12,7 @@ using namespace top;
 using namespace top::db_export;
 using namespace top::db_read;
 
-// #define XDB_EXPORT_LOG
+#define XDB_EXPORT_LOG
 
 class xtop_hash_t : public top::base::xhashplugin_t {
 public:
@@ -40,6 +40,9 @@ void usage() {
     std::cout << "    - <function_name>:" << std::endl;
     std::cout << "        - db_migrate_v2_to_v3 new_path" << std::endl;
     std::cout << "        - check_fast_sync <account>" << std::endl;
+    std::cout << "        - check_state_data <account>" << std::endl;
+    std::cout << "        - check_off_data" << std::endl;
+    std::cout << "        - check_mpt" << std::endl;
     std::cout << "        - check_block_exist <account> <height>" << std::endl;
     std::cout << "        - check_block_info <account> <height|last|all>" << std::endl;
     std::cout << "        - check_tx_info [starttime] [endtime] [threads]" << std::endl;
@@ -186,28 +189,48 @@ int main(int argc, char ** argv) {
     }
 
     xdb_export_tools_t tools{db_path};
-    if (function_name == "check_fast_sync") {
+    if (function_name == "check_fast_sync" || function_name == "check_state_data") {
+        bool check_block = (function_name == "check_fast_sync");
         if (argc == 3) {
             auto const table_account_vec = xdb_export_tools_t::get_table_accounts();
-            auto const unit_account_vec = tools.get_db_unit_accounts();
-            tools.query_all_sync_result(table_account_vec, true);
-            tools.query_all_sync_result(unit_account_vec, false);
+            if (check_block) {
+                tools.query_all_account_data(table_account_vec, true, xdb_check_data_func_block_t());
+            } else {
+                tools.query_all_account_data(table_account_vec, true, xdb_check_data_func_table_state_t());
+            }
+            // auto const unit_account_vec = tools.get_db_unit_accounts();
+            // tools.query_all_account_data(unit_account_vec, false);
         } else if (argc == 4) {
             std::string method_name{argv[3]};
             if (method_name == "table") {
                 auto const table_account_vec = xdb_export_tools_t::get_table_accounts();
-                tools.query_all_sync_result(table_account_vec, true);
+                if (check_block) {
+                    tools.query_all_account_data(table_account_vec, true, xdb_check_data_func_block_t());
+                } else {
+                    tools.query_all_account_data(table_account_vec, true, xdb_check_data_func_table_state_t());
+                }
             } else if (method_name == "unit") {
-                auto const unit_account_vec = tools.get_db_unit_accounts();
-                tools.query_all_sync_result(unit_account_vec, false);
+                // auto const unit_account_vec = tools.get_db_unit_accounts();
+                // tools.query_all_sync_result(unit_account_vec, false);
+                std::cout << "not support currently." << std::endl;
             } else if (method_name == "account") {
                 std::vector<std::string> account = {argv[4]};
-                tools.query_all_sync_result(account, false);
+                if (check_block) {
+                    tools.query_all_account_data(account, false, xdb_check_data_func_block_t());
+                } else {
+                    tools.query_all_account_data(account, false, xdb_check_data_func_unit_state_t());
+                }
             }else {
                 usage();
                 return -1;
             }
         }
+    } else if (function_name == "check_off_data") {
+        auto const table_account_vec = xdb_export_tools_t::get_table_accounts();
+        tools.query_all_account_data(table_account_vec, true, xdb_check_data_func_off_data_t());
+    } else if (function_name == "check_mpt") {
+        auto const table_account_vec = xdb_export_tools_t::get_table_accounts();
+        tools.query_all_table_mpt(table_account_vec);
     } else if (function_name == "check_tx_info") {
         uint32_t thread_num = 0;
         uint32_t start_timestamp = 0;
