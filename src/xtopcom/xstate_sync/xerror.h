@@ -21,6 +21,7 @@ enum class xenum_errc {
     state_data_invalid,
 
     downloader_is_running,
+    downloader_param_invalid,
 
     unknown,
 };

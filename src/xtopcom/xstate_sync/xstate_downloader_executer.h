@@ -11,7 +11,7 @@ namespace state_sync {
 
 class xtop_download_executer {
 public:
-    xtop_download_executer();
+    xtop_download_executer(base::xiothread_t * thread);
     ~xtop_download_executer() = default;
 
     void run_state_sync(std::shared_ptr<xstate_sync_face_t> syncer, std::function<void(sync_result)> callback);
