@@ -1,5 +1,5 @@
 #unset cmake cache 
-CMAKE_EXTRA_OPTIONS+=" -UDISABLE_EVM -UDISABLE_RATELIMIT -UDISABLE_REAL_STAKE"
+CMAKE_EXTRA_OPTIONS+=" -UDISABLE_EVM -UDISABLE_RATELIMIT -UDISABLE_REAL_STAKE -UMAINNET_ACTIVATED -USTATIC_CONSENSUS -UELECT_WHEREAFTER -UCONSENSUS_SWAP"
 
 for option in $options
 do
@@ -70,14 +70,6 @@ do
     address_sanitizer)
         CMAKE_EXTRA_OPTIONS+=" -DADDRESS_SANITIZER=ON"
         echo "ADDRESS SANITIZER ON"
-    ;;
-    scale)
-        CMAKE_EXTRA_OPTIONS+=" -DENABLE_SCALE=ON"
-        echo "DECAY REDEEM TGAS DISK ENABLE_SCALE ON"
-    ;;
-    config_check)
-        CMAKE_EXTRA_OPTIONS+=" -DXENABLE_CONFIG_CHECK=ON"
-        echo "enable config check when node boot"
     ;;
     slash_test)
         CMAKE_EXTRA_OPTIONS+=" -DSLASH_TEST=ON"

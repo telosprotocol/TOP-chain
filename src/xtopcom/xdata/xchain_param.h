@@ -30,7 +30,7 @@ public:
         static xuser_params instance;
         return instance;
     }
-    bool is_valid();
+    // bool is_valid();
 
     common::xnode_id_t                    account;                   // account for the node
     std::string                           publickey;                 // node public key(hex)

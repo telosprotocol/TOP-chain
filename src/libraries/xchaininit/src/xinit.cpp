@@ -234,11 +234,6 @@ int topchain_start(const std::string& config_file) {
     global_node_id = user_params.account.value();
     global_node_signkey = DecodePrivateString(user_params.signkey);
 
-#ifdef CONFIG_CHECK
-    // config check
-    if (!user_params.is_valid()) return 1;
-#endif
-
     config_center.dump();
 
     auto const log_level = XGET_CONFIG(log_level);
