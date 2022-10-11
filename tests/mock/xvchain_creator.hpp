@@ -42,9 +42,9 @@ namespace top
                 base::xvblockstore_t * blockstore = store::create_vblockstore(m_store.get());
                 base::xvchain_t::instance().set_xblockstore(blockstore);
 
-                std::shared_ptr<top::xbase_io_context_wrapper_t> io_object = std::make_shared<top::xbase_io_context_wrapper_t>();
-                std::shared_ptr<top::xbase_timer_driver_t> timer_driver = std::make_shared<top::xbase_timer_driver_t>(io_object);
-                base::xvchain_t::instance().set_xtxstore(txstore::create_txstore(make_observer<mbus::xmessage_bus_face_t>(m_bus.get()), timer_driver));
+                // std::shared_ptr<top::xbase_io_context_wrapper_t> io_object = std::make_shared<top::xbase_io_context_wrapper_t>();
+                // std::shared_ptr<top::xbase_timer_driver_t> timer_driver = std::make_shared<top::xbase_timer_driver_t>(io_object);
+                base::xvchain_t::instance().set_xtxstore(txstore::create_txstore(make_observer<mbus::xmessage_bus_face_t>(m_bus.get()), nullptr));
                 m_genesis_manager = make_unique<genesis::xgenesis_manager_t>(top::make_observer(blockstore));
                 m_genesis_manager->init_genesis_block(ec);
 
@@ -69,9 +69,9 @@ namespace top
                 base::xvblockstore_t * blockstore = store::create_vblockstore(m_store.get());
                 base::xvchain_t::instance().set_xblockstore(blockstore);
 
-                std::shared_ptr<top::xbase_io_context_wrapper_t> io_object = std::make_shared<top::xbase_io_context_wrapper_t>();
-                std::shared_ptr<top::xbase_timer_driver_t> timer_driver = std::make_shared<top::xbase_timer_driver_t>(io_object);
-                base::xvchain_t::instance().set_xtxstore(txstore::create_txstore(make_observer<mbus::xmessage_bus_face_t>(m_bus.get()), timer_driver));
+                // std::shared_ptr<top::xbase_io_context_wrapper_t> io_object = std::make_shared<top::xbase_io_context_wrapper_t>();
+                // std::shared_ptr<top::xbase_timer_driver_t> timer_driver = std::make_shared<top::xbase_timer_driver_t>(io_object);
+                base::xvchain_t::instance().set_xtxstore(txstore::create_txstore(make_observer<mbus::xmessage_bus_face_t>(m_bus.get()), nullptr));
                 if (genesis) {
                     m_genesis_manager = make_unique<genesis::xgenesis_manager_t>(top::make_observer(blockstore));
                     contract::xcontract_deploy_t::instance().deploy_sys_contracts();

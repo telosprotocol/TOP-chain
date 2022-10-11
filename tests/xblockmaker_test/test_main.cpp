@@ -62,6 +62,6 @@ int main(int argc, char **argv) {
     auto i = RUN_ALL_TESTS();
     sleep(2);
     XMETRICS_UNINT();
-    sleep(2);
+    sleep(15);  // for xbase exit double free abnormal issue
     return 0;
 }
