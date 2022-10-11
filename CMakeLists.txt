@@ -25,7 +25,10 @@ option(DISABLE_CORE_SIGNAL_CAPTURE "disable core signal capture" OFF)
 option(DISABLE_SIGNAL_CAPTURE "disable all signal capture" OFF)
 option(XUSE_JEMALLOC "using jemalloc" OFF)
 
-set(BUILD_EVM ON) # EVM as default VM for now
+option(DISABLE_EVM "Disable EVM" OFF) # EVM as default VM for now, use build option disable_evm to disable evm.
+if (DISABLE_EVM)
+    message(STATUS "DISABLE WITH EVM ${DISABLE_EVM}")
+endif()
 
 if (XENABLE_TESTS)
     set(XENABLE_BLOCK_VERIFY OFF)
@@ -276,10 +279,6 @@ endif()
 
 if (BUILD_RUSTVM)
     add_definitions(-DBUILD_RUSTVM)
-endif()
-
-if (BUILD_EVM)
-    add_definitions(-DBUILD_EVM)
 endif()
 
 if (LEAK_TRACER)
