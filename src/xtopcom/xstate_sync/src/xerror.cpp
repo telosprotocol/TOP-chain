@@ -31,6 +31,9 @@ static char const * const errc_to_string(int code) {
 
     case xerrc_t::downloader_is_running:
         return "downloader is running";
+    
+    case xerrc_t::downloader_param_invalid:
+        return "downloader param invalid";
 
     default:
         return "unknown error";
