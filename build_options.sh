@@ -1,3 +1,5 @@
+#unset cmake cache 
+CMAKE_EXTRA_OPTIONS+=" -UDISABLE_EVM"
 
 for option in $options
 do
@@ -157,8 +159,8 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DBUILD_RUSTVM=ON"
         echo "BUILD RUSTVM(need cargo toolchain)"
     ;;
-    evm)
-        CMAKE_EXTRA_OPTIONS+=" -DBUILD_EVM=ON"
+    disable_evm)
+        CMAKE_EXTRA_OPTIONS+=" -DDISABLE_EVM=ON"
         echo "BUILD EVM(need cargo toolchain)"
     ;;
     leak_trace)
