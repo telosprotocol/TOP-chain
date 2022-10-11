@@ -1,3 +1,8 @@
+
+if (DISABLE_REAL_STAKE)
+add_definitions(-DXENABLE_MOCK_ZEC_STAKE)
+endif()
+
 aux_source_directory(./ main_src)
 aux_source_directory(./xelection_algorithm/fixture xelection_algorithm_fixture)
 aux_source_directory(./xelection_algorithm/src xelection_algorithm)

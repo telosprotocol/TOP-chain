@@ -3,6 +3,9 @@ cmake_minimum_required(VERSION 3.8)
 aux_source_directory(./src xapplication_src)
 add_library(xapplication STATIC ${xapplication_src})
 
+if (DISABLE_REAL_STAKE)
+    add_definitions(-DXENABLE_MOCK_ZEC_STAKE)
+endif()
 
 add_definitions(
     -DUSE_STANDALONE_ASIO

@@ -1,5 +1,5 @@
 #unset cmake cache 
-CMAKE_EXTRA_OPTIONS+=" -UDISABLE_EVM -UDISABLE_RATELIMIT"
+CMAKE_EXTRA_OPTIONS+=" -UDISABLE_EVM -UDISABLE_RATELIMIT -UDISABLE_REAL_STAKE"
 
 for option in $options
 do
@@ -52,7 +52,7 @@ do
         echo "Disable rate limit"
     ;;
     mock_stake_zec)
-        CMAKE_EXTRA_OPTIONS+=" -DXENABLE_MOCK_ZEC_STAKE=ON"
+        CMAKE_EXTRA_OPTIONS+=" -DDISABLE_REAL_STAKE=ON"
         echo "Enable mocking stake for ZEC"
     ;;
     debug)
