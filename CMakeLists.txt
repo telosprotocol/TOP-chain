@@ -16,7 +16,6 @@ option(BUILD_METRICS "build metrics" OFF)
 if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     set(BUILD_METRICS ON)
 endif()
-option(XDISABLE_RATELIMIT "Disable rate limit" OFF)
 option(XENABLE_CONFIG_CHECK "Enable config check when node boot" OFF)
 option(XENABLE_MOCK_ZEC_STAKE "Enable mocking stake for ZEC" OFF)
 option(XCHAIN_FORKED_BY_DEFAULT "Enable chain forked logic" OFF)
@@ -28,6 +27,11 @@ option(XUSE_JEMALLOC "using jemalloc" OFF)
 option(DISABLE_EVM "Disable EVM" OFF) # EVM as default VM for now, use build option disable_evm to disable evm.
 if (DISABLE_EVM)
     message(STATUS "DISABLE WITH EVM ${DISABLE_EVM}")
+endif()
+
+option(DISABLE_RATELIMIT "Disable rate limit" OFF) # RPC has rate limit as default, use build option noratelimit to disable it.
+if (DISABLE_RATELIMIT)
+    message(STATUS "DISABLE rate limit ${DISABLE_RATELIMIT}")
 endif()
 
 if (XENABLE_TESTS)
@@ -164,10 +168,6 @@ if (BUILD_NTP)
 endif()
 
 #add_definitions(-DEXTERNAL_PROPERTY)
-
-if (XDISABLE_RATELIMIT)
-    add_definitions(-DXDISABLE_RATELIMIT)
-endif()
 
 if (XENABLE_MOCK_ZEC_STAKE)
     add_definitions(-DXENABLE_MOCK_ZEC_STAKE)
@@ -430,7 +430,6 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     # for xg
     find_library(CFLIB CoreFoundation)
     add_definitions(-DGUID_CFUUID)
-    add_definitions(-DXDISABLE_RATELIMIT)
     add_definitions(-DXBUILD_DEV)
     add_definitions(-DXENABLE_MOCK_ZEC_STAKE)
     add_definitions(-DMAINNET_ACTIVATED)

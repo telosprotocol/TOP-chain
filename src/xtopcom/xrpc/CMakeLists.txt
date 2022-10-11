@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.8)
 
+if (DISABLE_RATELIMIT)
+    add_definitions(-DRPC_DISABLE_RATELIMIT)
+endif()
+
 aux_source_directory(./xerror error)
 aux_source_directory(./prerequest prerequest)
 aux_source_directory(./xedge edge)

@@ -1,5 +1,5 @@
 #unset cmake cache 
-CMAKE_EXTRA_OPTIONS+=" -UDISABLE_EVM"
+CMAKE_EXTRA_OPTIONS+=" -UDISABLE_EVM -UDISABLE_RATELIMIT"
 
 for option in $options
 do
@@ -47,20 +47,8 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DTCMALLOC=ON"
         echo "BUILD TCMALLOC mode"
     ;;
-    xmutisign_close)
-        CMAKE_EXTRA_OPTIONS+=" -DMUTI_SIGN_CLOSE=ON"
-        echo "MUTI_SIGN_CLOSE ON"
-    ;;
-    drop_commit)
-        CMAKE_EXTRA_OPTIONS+=" -DDROP_COMMIT_TEST=ON"
-        echo "LEADER_DROP_COMMIT_TEST ON"
-    ;;
-    eherror)
-        CMAKE_EXTRA_OPTIONS+=" -DXENABLE_EXCEPTION_AS_ERROR=ON"
-        echo "Enable XTHROW as an xerror log"
-    ;;
     noratelimit)
-        CMAKE_EXTRA_OPTIONS+=" -DXDISABLE_RATELIMIT=ON"
+        CMAKE_EXTRA_OPTIONS+=" -DDISABLE_RATELIMIT=ON"
         echo "Disable rate limit"
     ;;
     mock_stake_zec)
