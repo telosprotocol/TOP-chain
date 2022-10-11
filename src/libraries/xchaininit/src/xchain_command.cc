@@ -631,7 +631,7 @@ int parse_execute_command(const char * config_file_extra, int argc, char * argv[
     nodep2paddr->add_option("--admin_http_port", admin_http_port, "admin http server port(default: 8000).");
     nodep2paddr->callback(std::bind(node_call, std::ref(admin_http_addr), std::ref(admin_http_port)));
 
-    if (XGET_CONFIG(enable_reward) == false) {
+    if (XGET_CONFIG(node_reward_gas) == false) {
         /*
          * staking
          */

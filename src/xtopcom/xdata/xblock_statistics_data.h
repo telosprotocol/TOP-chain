@@ -165,6 +165,7 @@ int32_t operator<<(base::xbuffer_t & buffer, xelection_related_statistics_data_t
 /// @brief Statistics data grouped by election chain block height.
 struct xtop_statistics_data : public xserializable_based_on<void> {
     std::map<uint64_t, xelection_related_statistics_data_t> detail;
+    uint64_t   total_gas_burn{0};
 
     std::string to_json_string() const;
 

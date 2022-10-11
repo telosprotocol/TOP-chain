@@ -393,7 +393,7 @@ static std::string const g_consortium_genesis_config =
         },
         "timestamp":1599555555
     },
-    "chain_id": 985
+    "chain_name": "consortium"
 }
 )T";
 

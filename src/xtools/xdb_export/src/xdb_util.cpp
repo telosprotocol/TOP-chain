@@ -141,6 +141,7 @@ static std::set<std::string> user_property = {
     CURRENT_VOTED_PROPOSAL,
     XPROPERTY_TABLE_ACCOUNT_INDEX,
     XPROPERTY_TABLE_RECEIPTID,
+    XPORPERTY_CONTRACT_BURN_TGAS_KEY,
 };
 
 static std::set<std::string> tx_info_key = {
@@ -199,7 +200,7 @@ static void user_property_json(xobject_ptr_t<base::xvbstate_t> const & state, st
         property == XPORPERTY_CONTRACT_TIME_KEY || property == XPORPERTY_CONTRACT_GENESIS_STAGE_KEY || property == XPORPERTY_CONTRACT_TGAS_KEY ||
         property == XPROPERTY_CONTRACT_ACCUMULATED_ISSUANCE_YEARLY || property == XPROPERTY_LAST_READ_REC_REG_CONTRACT_BLOCK_HEIGHT ||
         property == XPROPERTY_LAST_READ_REC_REG_CONTRACT_LOGIC_TIME || property == XPROPERTY_REWARD_DETAIL || property == SYSTEM_GENERATED_ID ||
-        property == CURRENT_VOTED_PROPOSAL) {
+        property == CURRENT_VOTED_PROPOSAL || property == XPORPERTY_CONTRACT_BURN_TGAS_KEY) {
         auto const & string_property = state->load_string_var(property);
         auto const & string = string_property->query();
         if (string.empty()) {

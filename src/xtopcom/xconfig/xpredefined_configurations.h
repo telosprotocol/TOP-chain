@@ -267,7 +267,8 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_voter_dividend, uint64_t, important, 0
 #endif
 
 #if defined(XCHAIN_FORKED_BY_DEFAULT) && ((XCHAIN_FORKED_BY_DEFAULT) >= 10206)
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(workload_collection_interval, xinterval_t, normal, 180, 1, std::numeric_limits<xinterval_t>::max());
+//XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(workload_collection_interval, xinterval_t, normal, 180, 1, std::numeric_limits<xinterval_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(workload_collection_interval, xinterval_t, normal, 60, 1, std::numeric_limits<xinterval_t>::max());
 #else
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(workload_collection_interval, xinterval_t, normal, 12, 1, std::numeric_limits<xinterval_t>::max());
 #endif
@@ -604,7 +605,7 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(node_whitelist, char const *, normal, "", 
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(enable_transaction_whitelist,  bool, normal, false, false, true);
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(transaction_whitelist, char const *, normal, "", "", "");
 
-XDECLARE_CONFIGURATION(enable_reward, bool, false); 
+XDECLARE_CONFIGURATION(node_reward_gas, bool, true); 
 XDECLARE_CONFIGURATION(enable_slash, bool, false);  
 XDECLARE_CONFIGURATION(enable_free_tgas, bool, false);  
 XDECLARE_CONFIGURATION(evm_token_type, char const *, "TOP");

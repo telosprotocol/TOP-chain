@@ -151,6 +151,14 @@ private:
      * @brief upload_workload
      */
     void upload_workload();
+
+    /**
+     * @brief update_burn_tgas
+     *
+     * @param  table_burn_gas  gas for talbe interval
+     * 
+     */
+    void update_burn_tgas(top::data::xstatistics_data_t const & statistic_data);
 };
 
 NS_END3

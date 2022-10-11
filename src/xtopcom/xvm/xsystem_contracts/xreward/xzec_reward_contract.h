@@ -71,7 +71,7 @@ public:
      * @param timer_round  the timer round
      * @param workload_str the workload report from workload contract
      */
-    void calculate_reward(common::xlogic_time_t timer_round, std::string const& workload_str);
+    void calculate_reward(common::xlogic_time_t timer_round, std::string const& workload_str, std::string const & burn_gas_str);
 
     BEGIN_CONTRACT_WITH_PARAM(xzec_reward_contract)
         CONTRACT_FUNCTION_PARAM(xzec_reward_contract, on_timer);
@@ -222,7 +222,7 @@ private:
      *
      * @param workload_str
      */
-    void        on_receive_workload(std::string const& workload_str);
+    void        on_receive_workload(std::string const& workload_str, std::string const & burn_gas_str);
 
     /**
      * @brief save workload
@@ -556,6 +556,66 @@ private:
      * @return address
      */
     common::xaccount_address_t calc_table_contract_address(common::xaccount_address_t const & account);
+
+    /**
+     * @brief 
+     * 
+     * @param current_time 
+     * @param workload_str 
+     */
+    void reward_gas(const common::xlogic_time_t current_time, std::string const& workload_str);
+
+    /**
+     * @brief 
+     * 
+     * @param current_time 
+     * @param issue_time_length 
+     * @param onchain_param 
+     * @param property_param 
+     * @param issue_detail 
+     * @param node_reward_detail 
+     */
+    void calc_nodes_rewards_gas(common::xlogic_time_t const current_time,
+                                common::xlogic_time_t const issue_time_length,
+                                xreward_onchain_param_t const& onchain_param,
+                                xreward_property_param_t& property_param,
+                                data::system_contract::xissue_detail_v2& issue_detail,
+                                std::map<common::xaccount_address_t, ::uint128_t>& node_reward_detail);
+
+    /**
+     * @brief 
+     * 
+     * @param node 
+     * @param validator_num 
+     * @param validator_workloads_detail 
+     * @param validator_group_workload_rewards 
+     * @param reward_to_self 
+     * @param all_group_workloads_total 
+     */
+    void calc_validator_workload_rewards_with_gas(data::system_contract::xreg_node_info const& node,
+                                                std::vector<uint32_t> const& validator_num,
+                                                std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> const& validator_workloads_detail,
+                                                const ::uint128_t validator_group_workload_rewards,
+                                                ::uint128_t& reward_to_self,
+                                                uint32_t all_group_workloads_total);
+
+
+    /**
+     * @brief 
+     * 
+     * @param node 
+     * @param eth_num 
+     * @param eth_workloads_detail 
+     * @param eth_group_workload_rewards 
+     * @param reward_to_self 
+     * @param all_group_workloads_total 
+     */
+    void calc_eth_auditor_workload_rewards_gas(data::system_contract::xreg_node_info const & node,
+                                                std::vector<uint32_t> const & eth_num,
+                                                std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> const & eth_workloads_detail,
+                                                const ::uint128_t eth_group_workload_rewards,
+                                                ::uint128_t & reward_to_self,
+                                                uint32_t all_group_workloads_total);
 };
 
 NS_END2
