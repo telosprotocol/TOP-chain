@@ -320,8 +320,14 @@ int topchain_start(const std::string& config_file) {
 
     // make block here
     while (true) {
+        // TODO(jimmy) total 27 threads need optimize
+        xdbg("total xbase threads number %d", base::xcontext_t::instance().get_total_threads());
         base::xvchain_t::instance().get_xdbstore()->GetDBMemStatus();
+#ifdef DEBUG        
+        std::this_thread::sleep_for(std::chrono::seconds(120));
+#else 
         std::this_thread::sleep_for(std::chrono::seconds(1200));
+#endif
     }
     // todo adapter to vnode type
 

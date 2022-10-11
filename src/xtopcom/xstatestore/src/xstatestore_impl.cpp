@@ -131,17 +131,21 @@ void xstatestore_impl_t::on_state_sync_event(mbus::xevent_ptr_t e) {
         return;
     }
 
-    auto event_handler = [this](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
-        mbus::xevent_object_t* _event_obj = dynamic_cast<mbus::xevent_object_t*>(call.get_param1().get_object());
-        xassert(_event_obj != nullptr);
-        mbus::xevent_state_sync_ptr_t state_sync_event = dynamic_xobject_ptr_cast<mbus::xevent_state_sync_t>(_event_obj->event);
-        on_state_sync_result(state_sync_event);
-        return true;
-    };
+    // auto event_handler = [this](base::xcall_t & call, const int32_t cur_thread_id, const uint64_t timenow_ms) -> bool {
+    //     mbus::xevent_object_t* _event_obj = dynamic_cast<mbus::xevent_object_t*>(call.get_param1().get_object());
+    //     xassert(_event_obj != nullptr);
+    //     mbus::xevent_state_sync_ptr_t state_sync_event = dynamic_xobject_ptr_cast<mbus::xevent_state_sync_t>(_event_obj->event);
+    //     on_state_sync_result(state_sync_event);
+    //     return true;
+    // };
 
-    base::xauto_ptr<mbus::xevent_object_t> event_obj = new mbus::xevent_object_t(e, 0);
-    base::xcall_t asyn_call(event_handler, event_obj.get());
-    m_timer->send_call(asyn_call);
+    // base::xauto_ptr<mbus::xevent_object_t> event_obj = new mbus::xevent_object_t(e, 0);
+    // base::xcall_t asyn_call(event_handler, event_obj.get());
+    // m_timer->send_call(asyn_call);
+
+    // XTODO use sync mode to update execute height 
+    mbus::xevent_state_sync_ptr_t state_sync_event = dynamic_xobject_ptr_cast<mbus::xevent_state_sync_t>(e);
+    on_state_sync_result(state_sync_event);
 }
 
 xstatestore_table_ptr_t xstatestore_impl_t::get_table_statestore_from_unit_addr(common::xaccount_address_t const & account_address) const {

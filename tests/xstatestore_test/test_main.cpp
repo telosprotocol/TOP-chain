@@ -35,6 +35,6 @@ int main(int argc, char **argv) {
     xinfo("new log start here");
 
     auto ret = RUN_ALL_TESTS();
-    std::this_thread::sleep_for(std::chrono::seconds(5));
+    sleep(15);  // for xbase exit double free abnormal issue
     return ret;
 }
