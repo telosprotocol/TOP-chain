@@ -10,6 +10,7 @@
 #include "xutility/xxHash/xxhash.h" //from xxhash lib
 #undef XXH_INLINE_ALL
 
+#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <cstring>
@@ -284,6 +285,10 @@ public:
         }
 
         return ret;
+    }
+
+    bool empty() const noexcept {
+        return std::all_of(std::begin(m_data), std::end(m_data), [](xbyte_t const byte) { return byte == 0; });
     }
 };
 
