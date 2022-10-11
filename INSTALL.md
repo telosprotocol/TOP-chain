@@ -103,7 +103,7 @@ if you want to use metrics which collect some important run-time infomation, suc
 if you want to set noratelimit on topio:
 
 ```
--DXDISABLE_RATELIMIT=ON
+-DDISABLE_RATELIMIT=ON
 ```
 
 TODO, other cmake options.
