@@ -55,7 +55,8 @@ void xrole_context_t::on_block_to_db(const xblock_ptr_t & block, bool & event_br
         bool is_sharding_statistic =
             (m_contract_info->address == sharding_statistic_info_contract_address) && (block_owner.find(sys_contract_sharding_table_block_addr) != std::string::npos);
         bool is_eth_statistic = (m_contract_info->address == eth_statistic_info_contract_address) && (block_owner.find(sys_contract_eth_table_block_addr) != std::string::npos);
-
+        xdbg("xrole_context_t::on_block_to_db fullblock process, owner: %s, height: %" PRIu64 " is_sharding_statistic %d  is_eth_statistic %d block->is_fulltable() %d",
+            block->get_block_owner().c_str(),  block->get_height(), is_sharding_statistic, is_eth_statistic, block->is_fulltable());
         if ((is_sharding_statistic || is_eth_statistic) && block->is_fulltable()) {
             auto block_height = block->get_height();
             xdbg("xrole_context_t::on_block_to_db fullblock process, owner: %s, height: %" PRIu64, block->get_block_owner().c_str(), block_height);

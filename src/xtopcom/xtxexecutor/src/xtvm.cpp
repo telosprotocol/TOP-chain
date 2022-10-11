@@ -36,7 +36,8 @@ enum_execute_result_type xtvm_t::execute(const xvm_input_t & input, xvm_output_t
             xwarn("xtvm_t::execute fail-vm execute.tx=%s,ret=%s", tx->dump().c_str(), chainbase::xmodule_error_to_str(ret).c_str());
             return enum_exec_error_vm_execute;
         }
-        xdbg("xtvm_t::execute succ vm execute.tx=%s", tx->dump().c_str());
+        output.m_total_gas_burn = accountvm.get_total_gas_burn();
+        xdbg("xtvm_t::execute succ vm execute.tx=%s burn_gas= %ld", tx->dump().c_str(), output.m_total_gas_burn);
     }
     // execute the second inner table tx
     if (tx->is_send_tx() && tx->get_inner_table_flag()) {  // TODO(jimmy) only transfer now

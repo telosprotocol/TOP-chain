@@ -126,12 +126,10 @@ void xtop_evm_storage::storage_set(xbytes_t const & key, xbytes_t const & value)
             xdbg("storage_set set balance account:%s, balance:%s", storage_key.address.c_str(), balance.str().c_str());
 #endif
             if (m_token_id == common::xtoken_id_t::top) {
-             //   evm_common::u256 balance_256 = evm_common::fromBigEndian<evm_common::u256>(value);
                 auto  decodeItem = evm_common::RLP::decode(value);
                 std::string str(decodeItem.decoded[0].begin(), decodeItem.decoded[0].end());
-                evm_common::u256 balance_u256 = evm_common::fromBigEndian<top::evm_common::u256>(str);
                 uint64_t new_banlance = evm_common::fromBigEndian<uint64_t>(str);;
-                xdbg("storage_set set balance account:%s,  top_banlance:%lu. balance_u256 %s",storage_key.address.c_str(), new_banlance, balance_u256.str().c_str());
+                xdbg("storage_set set balance account:%s,  top_banlance:%lu.",storage_key.address.c_str(), new_banlance);
                 base::vtoken_t new_token = base::vtoken_t(new_banlance);
                 unit_state->token_update(data::XPROPERTY_BALANCE_AVAILABLE, new_token);
             } else {

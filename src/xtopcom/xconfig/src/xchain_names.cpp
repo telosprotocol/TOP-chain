@@ -13,7 +13,10 @@ base::enum_xchain_id to_chainid(std::string const & chain_name) {
         return base::enum_main_chain_id;
     } else if (chain_name == chain_name_testnet) {
         return base::enum_test_chain_id;
-    } else {
+    }  else if (chain_name == chain_name_consortium) {
+        return base::enum_consortium_id; 
+    }
+    else {
         return base::enum_service_chain_id_start_reserved;
     }
 }

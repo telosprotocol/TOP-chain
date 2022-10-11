@@ -172,12 +172,14 @@ std::string xtop_statistics_data::to_json_string() const {
 int32_t xtop_statistics_data::do_read(base::xstream_t & stream) {
     auto const size = stream.size();
     stream >> detail;
+    stream >> total_gas_burn;
     return size - stream.size();
 }
 
 int32_t xtop_statistics_data::do_write(base::xstream_t & stream) const {
     auto const size = stream.size();
     stream << detail;
+    stream << total_gas_burn;
     return stream.size() - size;
 }
 

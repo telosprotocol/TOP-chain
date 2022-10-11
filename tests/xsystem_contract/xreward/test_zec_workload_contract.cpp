@@ -1072,11 +1072,12 @@ TEST_F(xtest_workload_contract_t, test_handle_workload_str) {
     g1.group_total_workload = w1_total;
     g1.m_leader_count = w1;
     group_workload[m_group_addr1] = g1;
-
+    ::uint128_t burn_tgas = 11;
     xstream_t stream(xcontext_t::instance());
     MAP_OBJECT_SERIALIZE2(stream, group_workload);
     stream << uint64_t(10);
     stream << uint64_t(10);
+    stream << burn_tgas.str();
     std::string group_workload_upload_str = std::string((char *)stream.data(), stream.size());
     data::system_contract::xactivation_record record;
     record.activated = 1;
@@ -1089,8 +1090,11 @@ TEST_F(xtest_workload_contract_t, test_handle_workload_str) {
     std::string height_str = "0";
     std::map<std::string, std::string> map_str;
     std::string tgas_str_new = "10";
-    m_workload_contract.handle_workload_str(active_str, group_workload_upload_str, workload_str, tgas_str, height_str, map_str, tgas_str_new);
+    std::string burn_tgas_str = "100";
+    std::string burn_tgas_str_new ;  
+    m_workload_contract.handle_workload_str(active_str, group_workload_upload_str, workload_str, tgas_str, height_str, map_str, tgas_str_new,burn_tgas_str, burn_tgas_str_new);
     EXPECT_EQ(tgas_str_new, "20");
+    EXPECT_EQ(burn_tgas_str_new, "111");
 
     std::map<common::xgroup_address_t, data::system_contract::xgroup_workload_t> map;
     for (auto it = map_str.begin(); it != map_str.end(); it++) {
@@ -1250,6 +1254,8 @@ TEST_F(xtest_workload_contract_t, test_handle_workload_str_multi_thread_time) {
         std::string height_str = "0";
         std::map<std::string, std::string> workload_str;
         std::string tgas_str;
+        std::string burn_tgas_str = "100";
+        std::string burn_tgas_str_new;  
 
         for (;;) {
             // construct data
@@ -1259,7 +1265,7 @@ TEST_F(xtest_workload_contract_t, test_handle_workload_str_multi_thread_time) {
             {
                 auto cpu2_t1 = get_cpu_time2();
                 auto wall_t1 = get_wall_time();
-                m_workload_contract.handle_workload_str(activation_str, group_workload_str, workload_str, tgas_str, height_str, workload_str_new, tgas_str_new);
+                m_workload_contract.handle_workload_str(activation_str, group_workload_str, workload_str, tgas_str, height_str, workload_str_new, tgas_str_new, burn_tgas_str, burn_tgas_str_new);
 
                 auto cpu2_t3 = get_cpu_time2();
                 auto wall_t3 = get_wall_time();
@@ -1369,14 +1375,15 @@ TEST_F(xtest_workload_contract_t, test_handle_workload_str_time) {
 
         std::map<std::string, std::string> workload_str_new;
         std::string tgas_str_new;
-        
+        std::string burn_tgas_str = "100";
+        std::string burn_tgas_str_new;  
 
         // contract add
         int64_t time_s = 0;
         int64_t time_e = 0;
         time_s = xtime_utl::time_now_ms();
         {
-            m_workload_contract.handle_workload_str(activation_str, group_workload_str, workload_str, tgas_str, height_str, workload_str_new, tgas_str_new);
+            m_workload_contract.handle_workload_str(activation_str, group_workload_str, workload_str, tgas_str, height_str, workload_str_new, tgas_str_new,burn_tgas_str,burn_tgas_str_new);
         }
         time_e = xtime_utl::time_now_ms();
         tgas_str = tgas_str_new;

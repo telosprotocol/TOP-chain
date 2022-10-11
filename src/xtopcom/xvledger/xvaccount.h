@@ -84,9 +84,11 @@ namespace top
             enum_rootbeacon_chain_id    = 128,    //root beacon of TOP platform
             
             enum_test_chain_id          = 255,    //for test purpose
-            
+
             //service_chain_id defined as below ,that must >= 256
             enum_service_chain_id_start_reserved = 256,
+
+            enum_consortium_id          = 999,     //for consortium
         };
         
         using xtable_shortid_t = uint16_t;//note: short table_id = [zone_index][book_index][table_index]

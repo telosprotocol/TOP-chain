@@ -25,7 +25,7 @@ bool xtransaction_t::transaction_type_check() const {
             case xtransaction_type_abolish_vote:
             case xtransaction_type_pledge_token_vote:
             case xtransaction_type_redeem_token_vote: {
-                if (XGET_CONFIG(enable_reward) == true) {
+                if (XGET_CONFIG(node_reward_gas) == false) {
                     return true;
                 } else {
                     return false;

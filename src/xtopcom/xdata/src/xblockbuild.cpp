@@ -95,10 +95,25 @@ void xtableheader_extra_t::set_ethheader(const std::string & value) {
     m_paras[enum_extra_data_type_eth_header] = value;
 }
 
+void xtableheader_extra_t::set_total_burn_gas(uint64_t burn_gas) {
+    std::string burn_gas_str = base::xstring_utl::tostring(burn_gas);
+    m_paras[enum_extra_data_type_burn_gas] = burn_gas_str;
+}
+
+uint64_t xtableheader_extra_t::get_total_burn_gas() const {
+    auto iter = m_paras.find(enum_extra_data_type_burn_gas);
+    if (iter == m_paras.end()) {
+        return 0;
+    } else {
+        return base::xstring_utl::touint64(iter->second);
+    }
+}
+
 std::string xtableheader_extra_t::build_extra_string(base::xvheader_t * _tableheader,
                                                      uint64_t tgas_height,
                                                      uint64_t gmtime,
-                                                     const std::string & eth_header) {
+                                                     const std::string & eth_header,
+                                                     uint64_t burn_gas) {
     if (_tableheader->get_height() == 0) {
         // genesis block should not set extra
         return {};
@@ -113,6 +128,8 @@ std::string xtableheader_extra_t::build_extra_string(base::xvheader_t * _tablehe
     if (!base::xvblock_fork_t::is_block_older_version(_tableheader->get_block_version(), base::enum_xvblock_fork_version_compatible_eth) && !eth_header.empty()) {
         header_extra.set_ethheader(eth_header);
     }
+
+    header_extra.set_total_burn_gas(burn_gas);
 
     std::string extra_string;
     header_extra.serialize_to_string(extra_string);
@@ -502,7 +519,7 @@ xlighttable_build_t::xlighttable_build_t(base::xvblock_t* prev_block, const xtab
     base::xvaccount_t _vaccount(prev_block->get_account());
     init_header_qcert(build_para);
     std::string _extra_data = xtableheader_extra_t::build_extra_string(
-        get_header(), para.get_tgas_height(), para.get_gmtime(), para.get_ethheader());
+        get_header(), para.get_tgas_height(), para.get_gmtime(), para.get_ethheader(), para.get_total_burn_gas());
     set_header_extra(_extra_data);
     build_block_body(bodypara, _vaccount, prev_block->get_height() + 1);
 }
