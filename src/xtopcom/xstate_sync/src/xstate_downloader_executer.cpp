@@ -14,7 +14,7 @@ namespace state_sync {
 
 #define TIMEOUT_MSEC 5000U
 
-xtop_download_executer::xtop_download_executer(base::xiothread_t * thread) {
+xtop_download_executer::xtop_download_executer(const observer_ptr<base::xiothread_t> & thread) {
     m_thread = thread;
 }
 

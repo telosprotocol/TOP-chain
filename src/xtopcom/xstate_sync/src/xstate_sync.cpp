@@ -91,12 +91,12 @@ bool xtop_state_sync::is_done() const {
 }
 
 void xtop_state_sync::push_deliver_req(const state_req & req) {
-    std::lock_guard<std::mutex> lock(m_deliver_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
     m_deliver_list.push_back(req);
 }
 
 void xtop_state_sync::pop_deliver_req() {
-    std::lock_guard<std::mutex> lock(m_deliver_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
     m_deliver_list.pop_front();
 }
 
@@ -198,16 +198,16 @@ void xtop_state_sync::loop(std::error_code & ec) {
         return;
     }
     auto peers = available_peers(network);
-    if (peers.empty()) {
-        xwarn("xtop_state_sync::loop peers empty, exit, {%s}", symbol().c_str());
-        ec = error::xerrc_t::state_network_invalid;
-        m_cancel = true;
-        return;
-    }
     uint32_t cnt{0};
     while (m_sched->Pending() > 0) {
         xdbg("xtop_state_sync::loop pending size: %lu, {%s}", m_sched->Pending(), symbol().c_str());
 
+        // step1: commit
+        if (m_unit_bytes_uncommitted >= ideal_batch_size) {
+            m_sched->CommitUnit(m_kv_db);
+            m_unit_bytes_uncommitted = 0;
+        }
+        // step2: check cancel
         if (m_cancel) {
             if (m_ec) {
                 ec = m_ec;
@@ -216,29 +216,32 @@ void xtop_state_sync::loop(std::error_code & ec) {
             }
             return;
         }
-
+        if (peers.empty()) {
+            xwarn("xtop_state_sync::loop peers empty, exit, {%s}", symbol().c_str());
+            ec = error::xerrc_t::state_network_invalid;
+            m_cancel = true;
+            return;
+        }
+        // step3: add tasks
         assign_tasks(network, peers);
 
         if (m_deliver_list.empty()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            cnt++;
-            if (cnt > 10 * 60 * 10) {
-                // 10 min overtime
-                xwarn("xtop_state_sync::loop overtime, cnt: %u, {%s}", cnt, symbol().c_str());
-                ec = error::xerrc_t::state_sync_overtime;
-                m_cancel = true;
-                return;
-            }
             continue;
-        } else {
-            auto req = m_deliver_list.front();
-            process(req, ec);
-            if (ec) {
-                xwarn("xtop_state_sync::loop process error: %s %s, {%s}", ec.category().name(), ec.message().c_str(), symbol().c_str());
-                return;
-            }
-            pop_deliver_req();
         }
+        auto req = m_deliver_list.front();
+        if (req.nodes_response.empty() && req.units_response.empty()) {
+            auto it = std::find(peers.begin(), peers.end(), req.peer);
+            if (it != peers.end()) {
+                peers.erase(it);
+            }
+        }
+        process(req, ec);
+        if (ec) {
+            xwarn("xtop_state_sync::loop process error: %s %s, {%s}", ec.category().name(), ec.message().c_str(), symbol().c_str());
+            return;
+        }
+        pop_deliver_req();
     }
 
     m_sched->Commit(m_kv_db);
@@ -273,13 +276,13 @@ void xtop_state_sync::assign_tasks(std::shared_ptr<vnetwork::xvnetwork_driver_fa
     stream << units_bytes;
     stream << rand();
     xinfo("xtop_state_sync::assign_tasks total %zu, %zu, {%s}", nodes_bytes.size(), units_bytes.size(), symbol().c_str());
-    send_message(network, peers, {stream.data(), stream.data() + stream.size()}, xmessage_id_sync_node_request);
+    req.peer = send_message(network, peers, {stream.data(), stream.data() + stream.size()}, xmessage_id_sync_node_request);
     req.start = base::xtime_utl::time_now_ms();
     req.id = m_req_sequence_id++;
     m_track_func(req);
 }
 
-void xtop_state_sync::send_message(std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network,
+common::xnode_address_t xtop_state_sync::send_message(std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network,
                                    const std::vector<common::xnode_address_t> & peers,
                                    const xbytes_t & msg,
                                    common::xmessage_id_t id) {
@@ -291,6 +294,7 @@ void xtop_state_sync::send_message(std::shared_ptr<vnetwork::xvnetwork_driver_fa
     if (ec) {
         xwarn("xtop_state_sync::send_message send net error, %s, %s", random_fullnode.account_address().c_str(), network->address().account_address().c_str());
     }
+    return random_fullnode;
 }
 
 void xtop_state_sync::fill_tasks(uint32_t n, state_req & req, std::vector<xhash256_t> & nodes_out, std::vector<xbytes_t> & units_out) {
@@ -360,6 +364,8 @@ void xtop_state_sync::process(state_req & req, std::error_code & ec) {
             } else {
                 xwarn("xtop_state_sync::process process_unit_data abnormal: %s, %s %s", to_hex(hash).c_str(), ec_internal.category().name(), ec_internal.message().c_str());
             }
+        } else {
+            m_unit_bytes_uncommitted += blob.size();
         }
         // DEBUG
         if (!req.unit_tasks.count(hash)) {

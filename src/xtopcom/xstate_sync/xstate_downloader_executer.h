@@ -11,7 +11,7 @@ namespace state_sync {
 
 class xtop_download_executer {
 public:
-    xtop_download_executer(base::xiothread_t * thread);
+    explicit xtop_download_executer(const observer_ptr<base::xiothread_t> & thread);
     ~xtop_download_executer() = default;
 
     void run_state_sync(std::shared_ptr<xstate_sync_face_t> syncer, std::function<void(sync_result)> callback);
@@ -27,7 +27,7 @@ private:
     void pop_state_pack();
     void pop_single_state();
 
-    base::xiothread_t * m_thread{nullptr};
+    observer_ptr<base::xiothread_t> m_thread{nullptr};
     bool m_cancel{false};
     bool m_notify{false};
     std::list<state_req> m_track_req;
