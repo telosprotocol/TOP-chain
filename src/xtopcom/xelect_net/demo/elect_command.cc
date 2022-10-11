@@ -56,63 +56,39 @@ void ElectCommands::set_netcard(elect::EcNetcardPtr ec_netcard) {
     ec_netcard_ = ec_netcard;
 }
 // #if 0
-using query_method_handler = std::function<void(void)>;
+using query_method_handler = std::function<void(xJson::Value &, xJson::Value &, std::string &, uint32_t &)>;
 
 #define REGISTER_NET_CMD_METHOD(func_name)                                                                                                                                         \
-    m_query_method_map.emplace(std::pair<std::string, query_method_handler>{std::string{#func_name}, std::bind(&net_cmd_handle::func_name, this)})
+    m_query_method_map.emplace(std::pair<std::string, query_method_handler>{                                                                                                       \
+        std::string{#func_name}, std::bind(&net_cmd_handle::func_name, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4)})
 
 class net_cmd_handle : public top::rpc::xrpc_handle_face_t {
 public:
     net_cmd_handle(top::ElectCommands * elect_cmd) : m_elect_cmd{elect_cmd} {
         REGISTER_NET_CMD_METHOD(p2ptest);
     }
-    void p2ptest() {
+    void p2ptest(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) {
         std::cout << "p2p test" << std::endl;
-        std::string test_cmd = m_js_req["test_cmd"].asString();
-        uint64_t index = m_js_req["index"].asUInt64();
+        std::string test_cmd = js_req["test_cmd"].asString();
+        uint64_t index = js_req["index"].asUInt64();
         std::cout << "p2p test cmd:" << test_cmd << " index: " << index << std::endl;
 
-        m_js_rsp["value"] = m_elect_cmd->ProcessRpcCommand(test_cmd, index);
+        js_rsp["value"] = m_elect_cmd->ProcessRpcCommand(test_cmd, index);
     }
-    bool handle(std::string request) override {
-        std::cout << "handler request" << request << std::endl;
-        m_js_req.clear();
-        m_js_rsp.clear();
-
-        xJson::Reader reader;
-        m_result = "ok";
-
-        if (!reader.parse(request, m_js_req)) {
-            m_result = "json parse error";
-            return true;
-        }
-        std::string action = m_js_req["action"].asString();
+    bool handle(std::string & request, xJson::Value& js_req, xJson::Value& js_rsp, std::string & strResult, uint32_t & nErrorCode) override{
+        std::string action = js_req["action"].asString();
         auto iter = m_query_method_map.find(action);
         if (iter != m_query_method_map.end()) {
-            iter->second();
+            iter->second(js_req, js_rsp, strResult, nErrorCode);
         } else {
-            m_result = "do not have this action";
+            xinfo("p2p_test action:%s not exist!", action.c_str());
+            strResult = "Method not Found!";
             return false;
         }
-
         return true;
-    }
-    std::string get_response() override {
-        m_js_rsp["result"] = m_result;
-        std::string rsp;
-        try {
-            rsp = m_js_rsp.toStyledString();
-        } catch (...) {
-            xdbg("xJson toStyledString error");
-        }
-        return rsp;
     }
 
     top::ElectCommands * m_elect_cmd;
-
-    xJson::Value m_js_req;
-    xJson::Value m_js_rsp;
-    std::string m_result;
 
     std::unordered_map<std::string, query_method_handler> m_query_method_map;
 };

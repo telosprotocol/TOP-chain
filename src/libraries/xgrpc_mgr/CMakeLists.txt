@@ -6,7 +6,7 @@ add_compile_options(-Werror)
 add_library(xgrpc_mgr ${xgrpc_mgr_src})
 
 target_link_libraries(xgrpc_mgr PRIVATE
-    xrpc xgrpcservice grpc grpc++_unsecure grpc_unsecure gpr cares address_sorting ssl crypto
+    xrpc xgrpcservice grpc grpc++_unsecure grpc_unsecure gpr cares address_sorting
 )
 
 if (BUILD_METRICS)

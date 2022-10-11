@@ -7,6 +7,8 @@
 #include "xbasic/xlru_cache_specialize.h"
 #include "xpbase/base/top_utils.h"
 
+#include <mutex>
+
 namespace top {
 
 namespace base {
@@ -24,6 +26,7 @@ public:
     bool HasData(const std::string & header_hash);
 
 private:
+    std::mutex block_cache_mutex_;
     static const uint32_t kMaxBlockCacheSize = 1000u;
     basic::xlru_cache_specialize<std::string, std::pair<std::string, std::chrono::steady_clock::time_point>> block_cache_{kMaxBlockCacheSize};
 
