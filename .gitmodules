@@ -10,3 +10,6 @@
 [submodule "src/xtopcom/xdepends/boringssl"]
 	path = src/xtopcom/xdepends/boringssl
 	url = git@github.com:google/boringssl.git
+[submodule "src/xtopcom/xdepends/libevent"]
+	path = src/xtopcom/xdepends/libevent
+	url = git@github.com:libevent/libevent.git
