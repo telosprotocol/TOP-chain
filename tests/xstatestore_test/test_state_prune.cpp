@@ -284,3 +284,125 @@ TEST_F(test_state_prune, prune_exec_cons) {
         EXPECT_EQ(24, account_obj->get_lowest_executed_block_height());
     }
 }
+
+TEST_F(test_state_prune, prune_height) {
+    mock::xvchain_creator creator(true);
+    std::shared_ptr<xstatestore_resources_t> para;
+    mock::xdatamock_table mocktable(1, 4);
+    xstatestore_prune_t pruner(common::xaccount_address_t(mocktable.get_vaccount().get_account()), para);
+
+    uint64_t keep_table_states_max_num = XGET_CONFIG(keep_table_states_max_num);
+    uint64_t prune_table_state_diff = XGET_CONFIG(prune_table_state_diff);
+
+    uint64_t from_height;
+    uint64_t to_height;
+    bool ret = pruner.need_prune(0);
+    EXPECT_EQ(ret, false);
+    ret = pruner.need_prune(1);
+    EXPECT_EQ(ret, false);
+    ret = pruner.need_prune(keep_table_states_max_num);
+    EXPECT_EQ(ret, false);
+    ret = pruner.need_prune(keep_table_states_max_num - 1);
+    EXPECT_EQ(ret, false);
+    ret = pruner.need_prune(keep_table_states_max_num + 1);
+    EXPECT_EQ(ret, false);
+    ret = pruner.need_prune(prune_table_state_diff - 1);
+    EXPECT_EQ(ret, false);
+    ret = pruner.need_prune(prune_table_state_diff);
+    EXPECT_EQ(ret, true);
+    ret = pruner.need_prune(prune_table_state_diff + 1);
+    EXPECT_EQ(ret, true);
+    
+    ret = pruner.get_prune_section(0, from_height, to_height);
+    EXPECT_EQ(ret, false);
+    ret = pruner.get_prune_section(1, from_height, to_height);
+    EXPECT_EQ(ret, false);
+    ret = pruner.get_prune_section(keep_table_states_max_num, from_height, to_height);
+    EXPECT_EQ(ret, false);
+    ret = pruner.get_prune_section(keep_table_states_max_num - 1, from_height, to_height);
+    EXPECT_EQ(ret, false);
+    ret = pruner.get_prune_section(keep_table_states_max_num + 1, from_height, to_height);
+    EXPECT_EQ(ret, false);
+    ret = pruner.get_prune_section(prune_table_state_diff - 1, from_height, to_height);
+    EXPECT_EQ(ret, false);
+    ret = pruner.get_prune_section(prune_table_state_diff, from_height, to_height);
+    EXPECT_EQ(ret, true);
+    EXPECT_EQ(from_height, 1);
+    EXPECT_EQ(to_height, prune_table_state_diff - keep_table_states_max_num);
+    ret = pruner.get_prune_section(prune_table_state_diff + 1, from_height, to_height);
+    EXPECT_EQ(ret, true);
+    EXPECT_EQ(from_height, 1);
+    EXPECT_EQ(to_height, prune_table_state_diff + 1 - keep_table_states_max_num);
+
+    pruner.set_pruned_height(1);
+    ret = pruner.need_prune(0);
+    EXPECT_EQ(ret, false);
+    ret = pruner.need_prune(1);
+    EXPECT_EQ(ret, false);
+    ret = pruner.need_prune(keep_table_states_max_num);
+    EXPECT_EQ(ret, false);
+    ret = pruner.need_prune(keep_table_states_max_num - 1);
+    EXPECT_EQ(ret, false);
+    ret = pruner.need_prune(keep_table_states_max_num + 1);
+    EXPECT_EQ(ret, false);
+    ret = pruner.need_prune(prune_table_state_diff - 1);
+    EXPECT_EQ(ret, false);
+    ret = pruner.need_prune(prune_table_state_diff);
+    EXPECT_EQ(ret, false);
+    ret = pruner.need_prune(prune_table_state_diff + 1);
+    EXPECT_EQ(ret, true);
+    
+    ret = pruner.get_prune_section(0, from_height, to_height);
+    EXPECT_EQ(ret, false);
+    ret = pruner.get_prune_section(1, from_height, to_height);
+    EXPECT_EQ(ret, false);
+    ret = pruner.get_prune_section(keep_table_states_max_num, from_height, to_height);
+    EXPECT_EQ(ret, false);
+    ret = pruner.get_prune_section(keep_table_states_max_num - 1, from_height, to_height);
+    EXPECT_EQ(ret, false);
+    ret = pruner.get_prune_section(keep_table_states_max_num + 1, from_height, to_height);
+    EXPECT_EQ(ret, false);
+    ret = pruner.get_prune_section(prune_table_state_diff - 1, from_height, to_height);
+    EXPECT_EQ(ret, false);
+    ret = pruner.get_prune_section(prune_table_state_diff, from_height, to_height);
+    EXPECT_EQ(ret, false);
+    ret = pruner.get_prune_section(prune_table_state_diff + 1, from_height, to_height);
+    EXPECT_EQ(ret, true);
+    EXPECT_EQ(from_height, 2);
+    EXPECT_EQ(to_height, prune_table_state_diff + 1 - keep_table_states_max_num);
+
+    pruner.set_pruned_height(256);
+    ret = pruner.need_prune(0);
+    EXPECT_EQ(ret, false);
+    ret = pruner.need_prune(1);
+    EXPECT_EQ(ret, false);
+    ret = pruner.need_prune(keep_table_states_max_num);
+    EXPECT_EQ(ret, false);
+    ret = pruner.need_prune(keep_table_states_max_num - 1);
+    EXPECT_EQ(ret, false);
+    ret = pruner.need_prune(keep_table_states_max_num + 1);
+    EXPECT_EQ(ret, false);
+    ret = pruner.need_prune(prune_table_state_diff - 1);
+    EXPECT_EQ(ret, false);
+    ret = pruner.need_prune(prune_table_state_diff);
+    EXPECT_EQ(ret, false);
+    ret = pruner.need_prune(prune_table_state_diff + 1);
+    EXPECT_EQ(ret, false);
+    
+    ret = pruner.get_prune_section(0, from_height, to_height);
+    EXPECT_EQ(ret, false);
+    ret = pruner.get_prune_section(1, from_height, to_height);
+    EXPECT_EQ(ret, false);
+    ret = pruner.get_prune_section(keep_table_states_max_num, from_height, to_height);
+    EXPECT_EQ(ret, false);
+    ret = pruner.get_prune_section(keep_table_states_max_num - 1, from_height, to_height);
+    EXPECT_EQ(ret, false);
+    ret = pruner.get_prune_section(keep_table_states_max_num + 1, from_height, to_height);
+    EXPECT_EQ(ret, false);
+    ret = pruner.get_prune_section(prune_table_state_diff - 1, from_height, to_height);
+    EXPECT_EQ(ret, false);
+    ret = pruner.get_prune_section(prune_table_state_diff, from_height, to_height);
+    EXPECT_EQ(ret, false);
+    ret = pruner.get_prune_section(prune_table_state_diff + 1, from_height, to_height);
+    EXPECT_EQ(ret, false);
+}

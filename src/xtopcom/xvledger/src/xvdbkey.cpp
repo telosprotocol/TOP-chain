@@ -393,8 +393,8 @@ namespace top
         const std::string xvdbkey_t::create_prunable_mpt_node_key(const xvaccount_t & account, const std::string & key)
         {
             auto zone_bytes = to_bytes(account.get_zone_index());
-            auto ledger_bytes = to_bytes(account.get_ledger_id());
-            auto const key_path = std::string{"r/"} + std::string{zone_bytes.begin(), zone_bytes.end()} + std::string{ledger_bytes.begin(), ledger_bytes.end()}  + "/" + key;
+            auto subaddr_bytes = to_bytes(account.get_ledger_subaddr());
+            auto const key_path = std::string{"r/"} + std::string{zone_bytes.begin(), zone_bytes.end()} + std::string{subaddr_bytes.begin(), subaddr_bytes.end()}  + "/" + key;
             return key_path;
         }
 
