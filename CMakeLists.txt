@@ -17,7 +17,6 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     set(BUILD_METRICS ON)
 endif()
 option(XENABLE_CONFIG_CHECK "Enable config check when node boot" OFF)
-option(XENABLE_MOCK_ZEC_STAKE "Enable mocking stake for ZEC" OFF)
 option(XCHAIN_FORKED_BY_DEFAULT "Enable chain forked logic" OFF)
 option(ENABLE_METRICS_DATAOBJECT "Enable metrics dataobject" OFF)
 option(DISABLE_CORE_SIGNAL_CAPTURE "disable core signal capture" OFF)
@@ -32,6 +31,11 @@ endif()
 option(DISABLE_RATELIMIT "Disable rate limit" OFF) # RPC has rate limit as default, use build option noratelimit to disable it.
 if (DISABLE_RATELIMIT)
     message(STATUS "DISABLE rate limit ${DISABLE_RATELIMIT}")
+endif()
+
+option(DISABLE_REAL_STAKE "Disable real stake require" OFF) # Real Stake requied as default, use build option mock_zec_stake to disable it.
+if(DISABLE_REAL_STAKE)
+    message(STATUS "DISABLE real stake ${DISABLE_REAL_STAKE}")
 endif()
 
 if (XENABLE_TESTS)
@@ -165,12 +169,6 @@ endif()
 
 if (BUILD_NTP)
     add_definitions(-DENABLE_NTP)
-endif()
-
-#add_definitions(-DEXTERNAL_PROPERTY)
-
-if (XENABLE_MOCK_ZEC_STAKE)
-    add_definitions(-DXENABLE_MOCK_ZEC_STAKE)
 endif()
 
 if (ENABLE_SCALE)
@@ -431,7 +429,6 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     find_library(CFLIB CoreFoundation)
     add_definitions(-DGUID_CFUUID)
     add_definitions(-DXBUILD_DEV)
-    add_definitions(-DXENABLE_MOCK_ZEC_STAKE)
     add_definitions(-DMAINNET_ACTIVATED)
     # message("CFLIB: ${CFLIB}")
 

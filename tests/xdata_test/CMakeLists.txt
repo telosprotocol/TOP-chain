@@ -1,6 +1,10 @@
 #add_compile_options(-static -Wall -Werror)
 add_compile_options(-static)
 
+if (DISABLE_REAL_STAKE)
+    add_definitions(-DXENABLE_MOCK_ZEC_STAKE)
+endif()
+
 
 aux_source_directory(./ xdata_test_dir)
 add_executable(xdata_test ${xdata_test_dir})

@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.8)
 include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/proto)
 
+if (DISABLE_REAL_STAKE)
+    add_definitions(-DXENABLE_MOCK_ZEC_STAKE)
+endif()
+
 aux_source_directory(./src xtransport_src)
 aux_source_directory(./proto proto_src)
 add_library(xtransport ${xtransport_src} ${proto_src})
