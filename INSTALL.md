@@ -81,7 +81,7 @@ Or, if you preffer to use **cmake** manually:
 ```
 mkdir cbuild
 cd cbuild
-cmake3 .. -DXENABLE_TESTS=OFF -DXENABLE_CODE_COVERAGE=OFF 
+cmake3 .. -DXBUILD_TEST=OFF -DXENABLE_CODE_COVERAGE=OFF 
 make -j4
 sudo make install
 ```

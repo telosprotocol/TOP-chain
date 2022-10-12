@@ -13,8 +13,3 @@ target_link_libraries(xmigrate PRIVATE
     xdb
     xxbase
 )
-
-# if (XENABLE_TESTS)
-#     enable_testing()
-#     add_subdirectory(test)
-# endif()

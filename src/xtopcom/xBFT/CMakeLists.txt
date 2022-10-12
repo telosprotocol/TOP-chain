@@ -23,7 +23,3 @@ if (BUILD_METRICS)
     target_link_libraries(xBFT PRIVATE xmetrics)
 endif()
 
-if (XENABLE_TESTS)
-    enable_testing()
-    #add_subdirectory(test/basic)
-endif()

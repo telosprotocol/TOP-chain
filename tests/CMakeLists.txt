@@ -1,6 +1,8 @@
 add_compile_options(-Wno-unused-parameter)
 add_compile_options(-Wno-narrowing)
 
+add_definitions(-DXENABLE_TESTS)
+
 add_subdirectory(xbasic)
 add_subdirectory(xcommon)
 add_subdirectory(xrouter)

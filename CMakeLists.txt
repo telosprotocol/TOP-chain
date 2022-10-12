@@ -11,7 +11,6 @@ set(CMAKE_C_EXTENSIONS OFF)
 project(XTOPCHAIN CXX C)
 
 option(XENABLE_CODE_COVERAGE "Enable code coverage" OFF)
-option(XENABLE_TESTS "Enable building tests" OFF)
 option(BUILD_METRICS "build metrics" OFF)
 if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     set(BUILD_METRICS ON)
@@ -21,6 +20,11 @@ option(ENABLE_METRICS_DATAOBJECT "Enable metrics dataobject" OFF)
 option(DISABLE_CORE_SIGNAL_CAPTURE "disable core signal capture" OFF)
 option(DISABLE_SIGNAL_CAPTURE "disable all signal capture" OFF)
 option(XUSE_JEMALLOC "using jemalloc" OFF)
+
+option(XBUILD_TEST "Enable building tests" OFF) # UNIT TEST disabled as default, use build option test to enable it.
+if (XBUILD_TEST)
+    message(STATUS "ENABLE  building tests ${XBUILD_TEST}")
+endif()
 
 option(DISABLE_EVM "Disable EVM" OFF) # EVM as default VM for now, use build option disable_evm to disable evm.
 if (DISABLE_EVM)
@@ -64,14 +68,6 @@ endif()
 option(MAINNET_ACTIVATED "Mainnet activated" OFF) # Mainnet Activated if off as default, use build option mainnet_activated to enable it.
 if (MAINNET_ACTIVATED)
     message(STATUS "Mainnet Activated ${MAINNET_ACTIVATED}")
-endif()
-
-if (XENABLE_TESTS)
-    set(XENABLE_BLOCK_VERIFY OFF)
-    set(XSYNC_TEST ON)
-else()
-    set(XENABLE_BLOCK_VERIFY OFF)
-    set(XSYNC_TEST OFF)
 endif()
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
@@ -209,14 +205,6 @@ if (WORKLOAD_TEST)
     add_definitions(-DWORKLOAD_TEST)
 endif()
 
-if (XENABLE_BLOCK_VERIFY)
-    add_definitions(-DENABLE_BLOCK_VERIFY)
-endif()
-
-if (XSYNC_TEST)
-    add_definitions(-DSYNC_TEST)
-endif()
-
 if (XENABLE_PSTACK)
     add_definitions(-DXENABLE_PSTACK)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -rdynamic")
@@ -248,10 +236,6 @@ endif()
 
 if (DB_CACHE)
     add_definitions(-DDB_CACHE)
-endif()
-
-if (XENABLE_TESTS)
-    add_definitions(-DXENABLE_TESTS)
 endif()
 
 if (XBUILD_CI)
@@ -331,7 +315,7 @@ message(STATUS "CMAKE_BUILD_TYPE:" ${CMAKE_BUILD_TYPE})
 message(STATUS "CMAKE_SYSTEM_NAME:" ${CMAKE_SYSTEM_NAME})
 message(STATUS "CMAKE_CXX_COMPILER_ID:" ${CMAKE_CXX_COMPILER_ID})
 message(STATUS "XENABLE_CODE_COVERAGE:" ${XENABLE_CODE_COVERAGE})
-message(STATUS "XENABLE_TESTS:" ${XENABLE_TESTS})
+message(STATUS "XBUILD_TEST:" ${XBUILD_TEST})
 message(STATUS "BUILD_METRICS:" ${BUILD_METRICS})
 message(STATUS "ADDRESS_SANITIZER:" ${ADDRESS_SANITIZER})
 message(STATUS "XCHAIN_FORKED_BY_DEFAULT:" ${XCHAIN_FORKED_BY_DEFAULT})
@@ -438,7 +422,7 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     add_subdirectory(src)
 endif()
 
-if (XENABLE_TESTS)
+if (XBUILD_TEST)
     file(STRINGS /etc/os-release distro REGEX "^NAME=")
     string(REGEX REPLACE "NAME=\"(.*)\"" "\\1" distro "${distro}")
     message("found ${distro}")

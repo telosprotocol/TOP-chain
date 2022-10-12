@@ -1,5 +1,9 @@
 add_compile_options(-static -Wall -Werror)
 
+if (XBUILD_TEST)
+    add_definitions(-DXENABLE_TESTS)
+endif()
+
 if (DISABLE_REAL_STAKE)
     add_definitions(-DXENABLE_MOCK_ZEC_STAKE)
 endif()
