@@ -47,10 +47,10 @@ private:
     xhash256_t process_node_data(xbytes_t & blob, std::error_code & ec);
     xhash256_t process_unit_data(xbytes_t & blob, std::error_code & ec);
     void pop_deliver_req();
-    void send_message(std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network,
-                      const std::vector<common::xnode_address_t> & peers,
-                      const xbytes_t & msg,
-                      common::xmessage_id_t id);
+    common::xnode_address_t send_message(std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network,
+                                         const std::vector<common::xnode_address_t> & peers,
+                                         const xbytes_t & msg,
+                                         common::xmessage_id_t id);
     std::shared_ptr<vnetwork::xvnetwork_driver_face_t> available_network() const;
     std::vector<common::xnode_address_t> available_peers(std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network) const;
 
@@ -75,8 +75,10 @@ private:
     std::error_code m_ec;
 
     std::list<state_req> m_deliver_list;
-    std::mutex m_deliver_mutex;
+    std::condition_variable m_condition;
+    std::mutex m_mutex;
     uint32_t m_req_sequence_id{0};
+    uint32_t m_unit_bytes_uncommitted{0};
 };
 using xstate_sync_t = xtop_state_sync;
 

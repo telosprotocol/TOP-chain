@@ -50,10 +50,8 @@ private:
 
     base::xvdbstore_t * m_db{nullptr};
     statestore::xstatestore_face_t * m_store{nullptr};
-    base::xiothread_t * m_table_thread{nullptr};
-    base::xiothread_t * m_unit_thread{nullptr};
-    base::xiothread_t * m_table_executer_thread{nullptr};
-    base::xiothread_t * m_unit_executer_thread{nullptr};
+    xobject_ptr_t<base::xiothread_t> m_main_thread{nullptr};
+    xobject_ptr_t<base::xiothread_t> m_executer_thread{nullptr};
     observer_ptr<mbus::xmessage_bus_face_t> m_bus{nullptr};
 
     std::map<common::xaccount_address_t, std::shared_ptr<xdownload_executer_t>> m_running_tables;

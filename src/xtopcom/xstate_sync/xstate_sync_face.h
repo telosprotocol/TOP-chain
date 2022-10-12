@@ -44,6 +44,7 @@ struct sync_result {
 
 struct state_req {
     uint32_t id;
+    common::xnode_address_t peer;
     uint32_t n_items{0};
     std::map<xhash256_t, std::set<std::string>> trie_tasks;
     std::map<xhash256_t, std::pair<xbytes_t, std::set<std::string>>> unit_tasks;
