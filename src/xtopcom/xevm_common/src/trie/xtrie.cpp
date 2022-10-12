@@ -650,6 +650,7 @@ xtop_trie::update_result xtop_trie::erase(xtrie_node_face_ptr_t const & node, xb
         // has at least two children after the deletion, and cannot be reduced to
         // a short node.
         if (result.new_node != nullptr) {
+            assert(std::count_if(std::begin(full_node->Children), std::end(full_node->Children), [](std::shared_ptr<xtrie_node_face_t> const & child) { return child != nullptr; }) >= 2);
             return {true, full_node};
         }
 
@@ -739,13 +740,25 @@ xtrie_node_face_ptr_t xtop_trie::resolve(xtrie_node_face_ptr_t const & n, /*xbyt
 }
 
 xtrie_node_face_ptr_t xtop_trie::resolve_hash(xtrie_hash_node_ptr_t const & n, /*xbytes_t prefix,*/ std::error_code & ec) const {
-    auto const hash = xhash256_t{n->data()};
+    assert(!ec);
+
+    return resolve_hash(xhash256_t{n->data()}, ec);
+}
+
+xtrie_node_face_ptr_t xtop_trie::resolve_hash(xhash256_t const & hash, std::error_code & ec) const {
+    assert(!ec);
+
     auto node = trie_db_->node(hash);
     if (!node) {
         ec = error::xerrc_t::trie_db_missing_node_error;
         return nullptr;
     }
     return node;
+}
+
+xbytes_t xtop_trie::resolve_blob(std::shared_ptr<xtrie_hash_node_t> const & n, std::error_code & ec) {
+    auto const hash = xhash256_t{n->data()};
+    return trie_db_->Node(hash, ec);
 }
 
 // hashRoot calculates the root hash of the given trie
@@ -780,6 +793,10 @@ std::string xtop_trie::to_string() const {
     }
 
     return {};
+}
+
+std::shared_ptr<xtrie_node_face_t> xtop_trie::root() const noexcept {
+    return trie_root_;
 }
 
 NS_END3

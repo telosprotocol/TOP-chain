@@ -244,6 +244,28 @@ get(std::pair<T, U> && pair) noexcept {
 
 #endif
 
+#if !defined(XCXX23_OR_ABOVE)
+
+[[noreturn]] inline void unreachable() {
+#    if defined(__GNUC__)  // GCC, Clang, ICC
+    __builtin_unreachable();
+#    elif defined(_MSC_VER)  // MSVC
+    __assume(false);
+
+#        if defined(_DEBUG)
+    ::abort();
+#        endif  // _DEBUG
+#    endif
+}
+
+#else
+
+[[noreturn]] inline void unreachable() {
+    std::unreachable();
+}
+
+#endif
+
 NS_END1
 
 #if !defined NDEBUG
