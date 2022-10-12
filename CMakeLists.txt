@@ -191,10 +191,6 @@ if (TCMALLOC)
     add_definitions(-DENABLE_TCMALLOC)
 endif()
 
-if (BUILD_NTP)
-    add_definitions(-DENABLE_NTP)
-endif()
-
 # for slash test
 if (SLASH_TEST)
     add_definitions(-DSLASH_TEST)
@@ -224,10 +220,6 @@ endif()
 
 if (ENABLE_CREATE_USER)
     add_definitions(-DENABLE_CREATE_USER)
-endif()
-
-if (LONG_CONFIRM_CHECK)
-    add_definitions(-DLONG_CONFIRM_CHECK)
 endif()
 
 if (DB_KV_STATISTIC)

@@ -119,10 +119,6 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DENABLE_CREATE_USER=ON"
         echo "BUILD WITH ENABLE_CREATE_USER"
     ;;
-    long_confirm_check)
-        CMAKE_EXTRA_OPTIONS+=" -DLONG_CONFIRM_CHECK=ON"
-        echo "BUILD WITH LONG_CONFIRM_CHECK"
-    ;;
     db_kv_statistic)
         CMAKE_EXTRA_OPTIONS+=" -DDB_KV_STATISTIC=ON"
         echo "BUILD WITH DB_KV_STATISTIC"
