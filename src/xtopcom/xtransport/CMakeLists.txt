@@ -15,7 +15,7 @@ target_link_libraries(xtransport PUBLIC xpbase xutility xxbase protobuf jsoncpp 
 add_dependencies(xtransport event_static)
 target_include_directories(xtransport PRIVATE ${CMAKE_SOURCE_DIR}/src/xtopcom/xdepends/libevent/include/) # for libevent header file
 target_include_directories(xtransport PRIVATE ${CMAKE_BINARY_DIR}/src/xtopcom/xdepends/libevent/include/) # for event-config.h
-target_link_libraries(xtransport PRIVATE ${CMAKE_BINARY_DIR}/src/xtopcom/xdepends/libevent/lib/libevent.a) # static library output path
+target_link_libraries(xtransport PRIVATE ${CMAKE_BINARY_DIR}/src/xtopcom/xdepends/libevent/lib/libevent.a ${CMAKE_BINARY_DIR}/src/xtopcom/xdepends/libevent/lib/libevent_pthreads.a) # static library output path
 
 if (BUILD_METRICS)
     target_link_libraries(xtransport PUBLIC xmetrics)

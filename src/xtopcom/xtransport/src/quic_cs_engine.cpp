@@ -1,7 +1,14 @@
 #include "xtransport/xquic_node/quic_cs_engine.h"
 
+#include "xbasic/xbyte_buffer.h"
+#include "xbasic/xmemory.hpp"
+
+#include <event2/thread.h>
 #include <xquic/xquic.h>
 
+#include <cassert>
+#include <cerrno>
+#include <set>
 #include <string>
 
 #define XQC_PACKET_TMP_BUF_LEN 1500
@@ -16,14 +23,6 @@
 #define DO_SEND_INTERVAL_MAX 32
 
 #define SEND_RECV_BUFF_SIZE 32 * 1024  // 32KB send && recv buffer
-
-#include "assert.h"
-#include "xbasic/xbyte_buffer.h"
-#include "xbasic/xmemory.hpp"
-
-#include <errno.h>
-
-#include <set>
 
 /**
  * @brief get system last errno
@@ -947,6 +946,7 @@ bool xquic_server_t::init(xquic_message_ready_callback cb, std::size_t server_po
 
 bool xquic_client_t::init(std::size_t server_inbound_port) {
     xinfo("[xquic_client_engine] xquic client init");
+    evthread_use_pthreads();
 
     m_inbound_port = server_inbound_port;
     xqc_engine_ssl_config_t engine_ssl_config;
