@@ -43,6 +43,3 @@ if (BUILD_METRICS)
     target_link_libraries(xblockmaker PRIVATE xmetrics)
 endif()
 
-if (XENABLE_TESTS)
-    enable_testing()
-endif()
