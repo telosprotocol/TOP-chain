@@ -12,6 +12,8 @@
 #include "xvnetwork/xmessage.h"
 #include "xvnetwork/xvnetwork_driver_face.h"
 
+#include <atomic>
+
 namespace top {
 namespace state_sync {
 
@@ -51,8 +53,8 @@ private:
     statestore::xstatestore_face_t * m_store{nullptr};
     std::function<state_sync_peers_t()> m_peers_func{nullptr};
 
-    bool m_done{false};
-    bool m_cancel{false};
+    std::atomic<bool> m_done{false};
+    std::atomic<bool> m_cancel{false};
     std::error_code m_ec;
 };
 using xunit_state_sync_t = xtop_unit_state_sync;

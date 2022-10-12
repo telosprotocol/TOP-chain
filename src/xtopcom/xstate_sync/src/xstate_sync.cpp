@@ -47,6 +47,13 @@ std::shared_ptr<xtop_state_sync> xtop_state_sync::new_state_sync(const common::x
 }
 
 void xtop_state_sync::run() {
+#if !defined(NDEBUG)
+    if (running_thead_id_ == std::thread::id{}) {
+        running_thead_id_ = std::this_thread::get_id();
+    }
+    assert(running_thead_id_ == std::this_thread::get_id());
+#endif
+
     do {
         sync_table(m_ec);
         if (m_ec) {
@@ -58,7 +65,7 @@ void xtop_state_sync::run() {
             xwarn("xtop_state_sync::run loop error: %s %s, {%s}", m_ec.category().name(), m_ec.message().c_str(), symbol().c_str());
             break;
         }
-    } while (0);
+    } while(false);
 
     m_done = true;
     return;
@@ -91,16 +98,28 @@ bool xtop_state_sync::is_done() const {
 }
 
 void xtop_state_sync::push_deliver_req(const state_req & req) {
+#if !defined(NDEBUG)
+    assert(running_thead_id_ != std::this_thread::get_id());
+#endif
+
     std::lock_guard<std::mutex> lock(m_mutex);
     m_deliver_list.push_back(req);
 }
 
 void xtop_state_sync::pop_deliver_req() {
+#if !defined(NDEBUG)
+    assert(running_thead_id_ == std::this_thread::get_id());
+#endif
+
     std::lock_guard<std::mutex> lock(m_mutex);
     m_deliver_list.pop_front();
 }
 
 void xtop_state_sync::push_deliver_state(const single_state_detail & detail) {
+#if !defined(NDEBUG)
+    assert(running_thead_id_ != std::this_thread::get_id());
+#endif
+
     if (m_sync_table_finish) {
         return;
     }
@@ -138,23 +157,27 @@ void xtop_state_sync::push_deliver_state(const single_state_detail & detail) {
 }
 
 void xtop_state_sync::sync_table(std::error_code & ec) {
+#if !defined(NDEBUG)
+    assert(running_thead_id_ == std::this_thread::get_id());
+#endif
+
     // check exist
-    auto key = base::xvdbkey_t::create_prunable_state_key(m_table.value(), m_height, {m_table_block_hash.begin(), m_table_block_hash.end()});
-    auto value = m_db->get_value(key);
+    auto const key = base::xvdbkey_t::create_prunable_state_key(m_table.value(), m_height, {m_table_block_hash.begin(), m_table_block_hash.end()});
+    auto const value = m_db->get_value(key);
     if (!value.empty()) {
         xinfo("xtop_state_sync::sync_table state already exist, %s, block_hash: %s", symbol().c_str(), to_hex(m_table_block_hash).c_str());
         m_sync_table_finish = true;
         return;
     }
     // send request
-    auto network = available_network();
+    auto const network = available_network();
     if (network == nullptr) {
         xwarn("xtop_state_sync::sync_table no network availble, exit, {%s}", symbol().c_str());
         ec = error::xerrc_t::state_network_invalid;
         m_cancel = true;
         return;
     }
-    auto peers = available_peers(network);
+    auto const peers = available_peers(network);
     if (peers.empty()) {
         xwarn("xtop_state_sync::sync_table peers empty, exit, {%s}", symbol().c_str());
         ec = error::xerrc_t::state_network_invalid;
@@ -188,6 +211,10 @@ void xtop_state_sync::sync_table(std::error_code & ec) {
 }
 
 void xtop_state_sync::loop(std::error_code & ec) {
+#if !defined(NDEBUG)
+    assert(running_thead_id_ == std::this_thread::get_id());
+#endif
+
     xinfo("xtop_state_sync::loop {%s}", symbol().c_str());
 
     auto network = available_network();
@@ -300,10 +327,10 @@ common::xnode_address_t xtop_state_sync::send_message(std::shared_ptr<vnetwork::
 void xtop_state_sync::fill_tasks(uint32_t n, state_req & req, std::vector<xhash256_t> & nodes_out, std::vector<xbytes_t> & units_out) {
     if (n > m_trie_tasks.size() + m_unit_tasks.size()) {
         auto fill = n - m_trie_tasks.size() - m_unit_tasks.size();
-        auto res = m_sched->Missing(fill);
-        auto nodes = std::get<0>(res);
-        auto unit_hashes = std::get<1>(res);
-        auto unit_keys = std::get<2>(res);
+        auto const res = m_sched->Missing(fill);
+        auto const & nodes = std::get<0>(res);
+        auto const & unit_hashes = std::get<1>(res);
+        auto const & unit_keys = std::get<2>(res);
         for (size_t i = 0; i < nodes.size(); i++) {
             xdbg("xtop_state_sync::fill_tasks push missing node: %s", nodes[i].as_hex_str().c_str());
             m_trie_tasks.insert({nodes[i], {}});

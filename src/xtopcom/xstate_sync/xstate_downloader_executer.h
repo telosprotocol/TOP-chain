@@ -6,12 +6,21 @@
 
 #include "xstate_sync/xstate_sync.h"
 
+#include <atomic>
+#if !defined(NDEBUG)
+#include <thread>
+#endif
+
 namespace top {
 namespace state_sync {
 
 class xtop_download_executer {
+#if !defined(NDEBUG)
+    std::thread::id executor_thread_id_;
+#endif
+
 public:
-    explicit xtop_download_executer(const observer_ptr<base::xiothread_t> & thread);
+    explicit xtop_download_executer(observer_ptr<base::xiothread_t> thread);
     ~xtop_download_executer() = default;
 
     void run_state_sync(std::shared_ptr<xstate_sync_face_t> syncer, std::function<void(sync_result)> callback);
@@ -27,15 +36,15 @@ private:
     void pop_state_pack();
     void pop_single_state();
 
-    observer_ptr<base::xiothread_t> m_thread{nullptr};
-    bool m_cancel{false};
-    bool m_notify{false};
+    observer_ptr<base::xiothread_t> m_syncer_thread{nullptr};
+    std::atomic<bool> m_cancel{false};
+    std::atomic<bool> m_notify{false};
     std::list<state_req> m_track_req;
     std::list<state_res> m_state_packs;
     std::list<single_state_detail> m_single_states;
-    std::mutex m_track_mutex;
-    std::mutex m_state_pack_mutex;
-    std::mutex m_single_state_mutex;
+    mutable std::mutex m_track_mutex;
+    mutable std::mutex m_state_pack_mutex;
+    mutable std::mutex m_single_state_mutex;
 };
 using xdownload_executer_t = xtop_download_executer;
 

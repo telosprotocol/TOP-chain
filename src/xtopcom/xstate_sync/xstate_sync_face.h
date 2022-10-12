@@ -25,7 +25,7 @@ struct single_state_detail {
     xhash256_t hash;
     xbytes_t value;
 
-    single_state_detail(common::xaccount_address_t addr, uint64_t h, xhash256_t _hash, const xbytes_t & _value) : address(addr), height(h), hash(_hash), value(_value) {
+    single_state_detail(common::xaccount_address_t addr, uint64_t h, xhash256_t _hash, const xbytes_t & _value) : address(std::move(addr)), height(h), hash(_hash), value(_value) {
     }
 };
 
