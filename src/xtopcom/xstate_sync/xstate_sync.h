@@ -55,8 +55,8 @@ private:
     void fill_tasks(uint32_t n, state_req & req, std::vector<xhash256_t> & nodes, std::vector<xbytes_t> & units);
     void process_table(state_req & req, std::error_code & ec);
     void process_trie(state_req & req, std::error_code & ec);
-    xhash256_t process_node_data(xbytes_t & blob, std::error_code & ec);
-    xhash256_t process_unit_data(xbytes_t & blob, std::error_code & ec);
+    xhash256_t process_node_data(const xbytes_t & blob, std::error_code & ec);
+    xhash256_t process_unit_data(const xbytes_t & blob, std::error_code & ec);
     common::xnode_address_t send_message(const sync_peers & sync_peers, const xbytes_t & msg, common::xmessage_id_t id);
 
     common::xaccount_address_t m_table;

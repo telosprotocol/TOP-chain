@@ -247,11 +247,11 @@ void xtop_state_sync::assign_trie_tasks(const sync_peers & peers) {
     stream << m_req_sequence_id;
     std::vector<xbytes_t> nodes_bytes;
     std::vector<xbytes_t> units_bytes;
-    for (auto hash : nodes) {
+    for (auto const & hash : nodes) {
         nodes_bytes.emplace_back(hash.to_bytes());
         xdbg("xtop_state_sync::assign_trie_tasks nodes %s", hash.as_hex_str().c_str());
     }
-    for (auto key : units) {
+    for (auto const & key : units) {
         units_bytes.emplace_back(key);
         xdbg("xtop_state_sync::assign_trie_tasks units %s", to_hex(key).c_str());
     }
@@ -284,6 +284,7 @@ void xtop_state_sync::fill_tasks(uint32_t n, state_req & req, std::vector<xhash2
         auto const & nodes = std::get<0>(res);
         auto const & unit_hashes = std::get<1>(res);
         auto const & unit_keys = std::get<2>(res);
+        assert(unit_hashes.size() == unit_keys.size());
         for (size_t i = 0; i < nodes.size(); i++) {
             xdbg("xtop_state_sync::fill_tasks push missing node: %s", nodes[i].as_hex_str().c_str());
             m_trie_tasks.insert(nodes[i]);
@@ -354,7 +355,7 @@ void xtop_state_sync::process_trie(state_req & req, std::error_code & ec) {
         return;
     }
     std::error_code ec_internal;
-    for (auto blob : req.nodes_response) {
+    for (auto const & blob : req.nodes_response) {
         xinfo("xtop_state_sync::process_trie node id: %u, blob: %s, {%s}", req.id, to_hex(blob).c_str(), symbol().c_str());
         auto hash = process_node_data(blob, ec_internal);
         if (ec_internal) {
@@ -369,7 +370,7 @@ void xtop_state_sync::process_trie(state_req & req, std::error_code & ec) {
         }
         req.trie_tasks.erase(hash);
     }
-    for (auto blob : req.units_response) {
+    for (auto const & blob : req.units_response) {
         xinfo("xtop_state_sync::process_trie unit id: %u, blob size: %zu, {%s}", req.id, blob.size(), symbol().c_str());
         auto hash = process_unit_data(blob, ec_internal);
         if (ec_internal) {
@@ -403,7 +404,7 @@ void xtop_state_sync::process_trie(state_req & req, std::error_code & ec) {
     return;
 }
 
-xhash256_t xtop_state_sync::process_node_data(xbytes_t & blob, std::error_code & ec) {
+xhash256_t xtop_state_sync::process_node_data(const xbytes_t & blob, std::error_code & ec) {
     evm_common::trie::SyncResult res;
     auto hash_bytes = to_bytes(utl::xkeccak256_t::digest({blob.begin(), blob.end()}));
     res.Hash = xhash256_t{hash_bytes};
@@ -413,7 +414,7 @@ xhash256_t xtop_state_sync::process_node_data(xbytes_t & blob, std::error_code &
     return res.Hash;
 }
 
-xhash256_t xtop_state_sync::process_unit_data(xbytes_t & blob, std::error_code & ec) {
+xhash256_t xtop_state_sync::process_unit_data(const xbytes_t & blob, std::error_code & ec) {
     evm_common::trie::SyncResult res;
     base::xauto_ptr<base::xvbstate_t> bstate = base::xvblock_t::create_state_object({blob.begin(), blob.end()});
     if (nullptr == bstate) {
