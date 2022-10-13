@@ -18,6 +18,7 @@
 #include "assert.h"
 #include "xbasic/xbyte_buffer.h"
 #include "xbasic/xmemory.hpp"
+#include "event2/thread.h"
 
 #include <errno.h>
 
@@ -939,6 +940,7 @@ cli_user_conn_t * xquic_client_user_conn_create(const char * server_addr, int se
 }
 
 bool xquic_server_t::init(xquic_message_ready_callback cb, std::size_t server_port) {
+    evthread_use_pthreads();
     m_cb = cb;
 
     xqc_engine_ssl_config_t engine_ssl_config;
