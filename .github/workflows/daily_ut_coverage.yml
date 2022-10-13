@@ -1,0 +1,39 @@
+name: daily_ut
+
+on:
+  schedule:
+    - cron: '0 18 * * *'
+  workflow_dispatch:
+
+jobs:
+  build:
+    if: github.repository_owner == 'telosprotocol'
+    runs-on: [self-hosted, Linux, X64]
+    
+    steps:
+      - name: Print event
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: |
+          echo "$GITHUB_CONTEXT"
+
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          ref: dev/v1.7_i3 # dev branch
+          submodules: recursive
+
+      - name: Build XTOP DEBUG
+        run: |
+          bash .github/scripts/build_xtop.sh "test build_ci chain_forked_by_default"
+
+      - name: UnitTestCoverage
+        run: |
+          bash ./.github/scripts/ut_coverage.sh ./cbuild/bin/Linux ./ut_report_$(date +'%Y-%m-%d') ./.github/scripts/index.html
+
+      - name: Notify
+        if: always()
+        run: |
+          bash .github/scripts/notify.sh ut_coverage_$(date +'%Y-%m-%d') ${{ job.status }} "Unit Tests Coverage"  "./ut_coverage.tar.gz"
+
+  
