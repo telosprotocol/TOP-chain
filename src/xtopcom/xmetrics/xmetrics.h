@@ -119,6 +119,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     cons_fail_make_proposal_table_check_latest_state,
     cons_fail_make_proposal_unit_check_state,
     cons_fail_make_proposal_view_changed,
+    cons_fail_vote_not_enough,
 
     cons_table_backup_verify_proposal_succ,
     cons_fail_verify_proposal_blocks_invalid,
@@ -134,6 +135,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     cons_view_fire_clock_delay,
     cons_view_fire_succ,
     cons_cp_check_succ,
+    cons_state_check_succ,
     cons_view_fire_is_leader,
     cons_fail_backup_view_not_match,
     cons_make_proposal_tick,
@@ -565,10 +567,17 @@ enum E_SIMPLE_METRICS_TAG : size_t {
 
     statestore_get_unit_state_succ,
     statestore_get_unit_state_from_cache,
+    statestore_get_unit_state_from_db,
     statestore_get_unit_state_with_unit_count,
     statestore_get_table_state_succ,
     statestore_get_table_state_from_cache,
+    statestore_get_table_state_from_db,
     statestore_get_table_state_with_table_count,
+    statestore_load_table_block_succ,
+    statestore_execute_block_recursive_succ,
+    statestore_execute_unit_recursive_succ,
+
+    statestore_sync_succ,
 
     state_load_blk_state_suc,
     state_load_blk_state_cache_suc,
@@ -579,6 +588,9 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     state_load_blk_state_unit_suc,
     state_load_blk_state_unit_fail,
     state_load_blk_state_unit_cache_suc,
+    state_delete_table_data,
+    state_delete_unit_state,
+    state_delete_mpt,
 
     // data structure
     data_table_unpack_units,
@@ -633,6 +645,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     mailbox_txpool_fast_total,
     mailbox_txpool_slow_total,
     mailbox_us_total,
+    mailbox_statestore_total,
     mailbox_grpc_cur,
     mailbox_block_fetcher_cur,
     mailbox_downloader_cur,
@@ -642,6 +655,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     mailbox_txpool_fast_cur,
     mailbox_txpool_slow_cur,
     mailbox_us_cur,
+    mailbox_statestore_cur,
 
     //txdelay
     txdelay_client_timestamp_unmatch,

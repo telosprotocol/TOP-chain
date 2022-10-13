@@ -25,18 +25,17 @@ public:
 public:
     xtablestate_ext_ptr_t   get_tablestate(std::string const& block_hash) const;
     data::xunitstate_ptr_t  get_unitstate(std::string const& block_hash) const;
-    data::xtablestate_ptr_t get_latest_connectted_tablestate() const;
+    xtablestate_ext_ptr_t   get_latest_connectted_tablestate() const;
 
 public:
-    void    init_latest_connectted_tablestate(data::xtablestate_ptr_t const& tablestate) const;
-    void    set_latest_connectted_tablestate(data::xtablestate_ptr_t const& tablestate) const;
+    void    set_latest_connectted_tablestate(xtablestate_ext_ptr_t const& tablestate) const;
     void    set_tablestate(std::string const& block_hash, xtablestate_ext_ptr_t const& tablestate) const;
     void    set_unitstate(std::string const& block_hash, data::xunitstate_ptr_t const& unitstate) const;
 
 private:
    // TODO(jimmy) it is better to use non-lock cache
    mutable std::mutex m_mutex;
-   mutable data::xtablestate_ptr_t m_latest_connectted_tablestate{nullptr};
+   mutable xtablestate_ext_ptr_t    m_latest_connectted_tablestate{nullptr};
    mutable base::xlru_cache<std::string, xtablestate_ext_ptr_t> m_tablestate_cache;  //tablestate cache
    mutable base::xlru_cache<std::string, data::xunitstate_ptr_t> m_unitstate_cache;  //unitstate cache
 };
@@ -46,7 +45,6 @@ class xstatestore_dbaccess_t {
  public:
     void    write_table_bstate(common::xaccount_address_t const& address, data::xtablestate_ptr_t const& tablestate, const std::string & block_hash, std::error_code & ec) const;
     void    write_unit_bstate(data::xunitstate_ptr_t const& unitstate, const std::string & block_hash, std::error_code & ec) const;
-    void    delete_table_bstate(common::xaccount_address_t const& address,uint64_t height,const std::string & block_hash);
 
  public:
     data::xtablestate_ptr_t     read_table_bstate(common::xaccount_address_t const& address, uint64_t height, const std::string & block_hash) const;
@@ -62,13 +60,13 @@ class xstatestore_accessor_t {
  public:
     xstatestore_accessor_t(common::xaccount_address_t const& address);
 public:
-    data::xtablestate_ptr_t     get_latest_connectted_table_state() const;
+    xtablestate_ext_ptr_t       get_latest_connectted_table_state() const;
     xtablestate_ext_ptr_t       read_table_bstate_from_cache(common::xaccount_address_t const& address, uint64_t height, const std::string & block_hash) const;
     xtablestate_ext_ptr_t       read_table_bstate_from_db(common::xaccount_address_t const& address, base::xvblock_t* block) const;
     xtablestate_ext_ptr_t       read_table_bstate(common::xaccount_address_t const& address, base::xvblock_t* block) const;
     data::xunitstate_ptr_t      read_unit_bstate(common::xaccount_address_t const& address, uint64_t height, const std::string & block_hash) const;
 
-    void    set_latest_connectted_tablestate(data::xtablestate_ptr_t const& tablestate) const;
+    void    set_latest_connectted_tablestate(xtablestate_ext_ptr_t const& tablestate) const;
     void    write_table_bstate_to_db(common::xaccount_address_t const& address, std::string const& block_hash, data::xtablestate_ptr_t const& tablestate, std::error_code & ec) const;
     void    write_table_bstate_to_cache(common::xaccount_address_t const& address, std::string const& block_hash, xtablestate_ext_ptr_t const& state) const;
     void    write_unitstate_to_db(data::xunitstate_ptr_t const& unitstate, const std::string & block_hash, std::error_code & e) const;

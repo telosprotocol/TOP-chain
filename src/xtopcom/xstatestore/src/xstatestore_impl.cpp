@@ -18,6 +18,8 @@ NS_BEG2(top, statestore)
 
 xstatestore_face_t * xstatestore_hub_t::_static_statestore = nullptr;
 
+#define statestore_mailbox_limit (8192)
+
 xstatestore_face_t* xstatestore_hub_t::instance() {
     if(_static_statestore)
         return _static_statestore;
@@ -94,6 +96,16 @@ void xstatestore_impl_t::on_block_to_db_event(mbus::xevent_ptr_t e) {
         return true;
     };
 
+    int64_t in, out;
+    int32_t queue_size = m_timer->count_calls(in, out);
+    XMETRICS_GAUGE_SET_VALUE(metrics::mailbox_statestore_cur, queue_size);
+    bool discard = queue_size >= statestore_mailbox_limit;
+    if (discard) {
+        XMETRICS_GAUGE(metrics::mailbox_statestore_total, 0);
+        return;
+    }
+    XMETRICS_GAUGE(metrics::mailbox_statestore_total, 1);
+
     base::xauto_ptr<mbus::xevent_object_t> event_obj = new mbus::xevent_object_t(e, 0);
     base::xcall_t asyn_call(event_handler, event_obj.get());
     m_timer->send_call(asyn_call);
@@ -114,8 +126,10 @@ void xstatestore_impl_t::on_state_sync_result(mbus::xevent_state_sync_ptr_t stat
     if (state_sync_event->ec) {
         xwarn("xstatestore_impl_t::on_state_sync_result fail-notify:table:%s,height:%llu,root:%s,ec=%s", 
             table_addr.c_str(),state_sync_event->height,state_sync_event->root_hash.as_hex_str().c_str(), state_sync_event->ec.message().c_str());
+        XMETRICS_GAUGE(metrics::statestore_sync_succ, 0);
         return;
     }
+    XMETRICS_GAUGE(metrics::statestore_sync_succ, 1);
 
     xstate_sync_info_t sync_info(state_sync_event->height,state_sync_event->root_hash,state_sync_event->table_state_hash, top::to_string(state_sync_event->table_block_hash.to_bytes()));
     xinfo("xstatestore_impl_t::on_state_sync_result succ-notify:table:%s,height:%llu,root:%s", 
@@ -169,12 +183,16 @@ xstatestore_table_ptr_t xstatestore_impl_t::get_table_statestore_from_table_addr
 
 data::xunitstate_ptr_t xstatestore_impl_t::get_unit_state_from_block(common::xaccount_address_t const & account_address, base::xvblock_t * target_block) const {
     xstatestore_table_ptr_t tablestore = get_table_statestore_from_unit_addr(account_address);
-    return tablestore->get_unit_state_from_block(account_address, target_block);
+    auto unitstate = tablestore->get_unit_state_from_block(account_address, target_block);
+    XMETRICS_GAUGE(metrics::statestore_get_unit_state_succ, unitstate != nullptr ? 1 : 0);
+    return unitstate;
 }
 
 xtablestate_ext_ptr_t xstatestore_impl_t::get_tablestate_ext_from_block(base::xvblock_t* target_block) const {
     xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(target_block->get_account());
-    return tablestore->get_tablestate_ext_from_block(target_block);
+    auto tablestate = tablestore->get_tablestate_ext_from_block(target_block);
+    XMETRICS_GAUGE(metrics::statestore_get_table_state_succ, tablestate != nullptr ? 1 : 0);
+    return tablestate;
 }
 
 data::xtablestate_ptr_t xstatestore_impl_t::get_table_state_by_block(base::xvblock_t * target_block) const {
@@ -203,8 +221,16 @@ bool xstatestore_impl_t::get_accountindex_from_latest_connected_table(common::xa
 }
 
 bool xstatestore_impl_t::get_accountindex_from_table_block(common::xaccount_address_t const & account_address, base::xvblock_t * table_block, base::xaccount_index_t & account_index) const {
-    xstatestore_table_ptr_t tablestore = get_table_statestore_from_unit_addr(account_address);
-    return tablestore->get_accountindex_from_table_block(account_address, table_block, account_index);
+    xtablestate_ext_ptr_t tablestate_ext = get_tablestate_ext_from_block(table_block);
+    if (nullptr != tablestate_ext) {
+        std::error_code ec;
+        tablestate_ext->get_accountindex(account_address.value(), account_index, ec);
+        if (ec) {
+            return false;
+        }
+        return true;
+    }
+    return false;
 }
 
 data::xunitstate_ptr_t xstatestore_impl_t::get_unit_latest_connectted_change_state(common::xaccount_address_t const & account_address) const {

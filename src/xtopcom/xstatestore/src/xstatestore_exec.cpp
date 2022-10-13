@@ -15,8 +15,26 @@ NS_BEG2(top, statestore)
 
 xstatestore_executor_t::xstatestore_executor_t(common::xaccount_address_t const& table_addr, xexecute_listener_face_t * execute_listener)
 : m_table_addr{table_addr},m_state_accessor{table_addr},m_execute_listener(execute_listener) {
-     m_executed_height = m_statestore_base.get_latest_executed_block_height(table_addr);
-     xdbg("xstatestore_executor_t::xstatestore_executor_t table=%s,execute_height=%ld,this=%p", table_addr.value().c_str(), m_executed_height, this);
+    m_executed_height = m_statestore_base.get_latest_executed_block_height(table_addr);   
+
+    xobject_ptr_t<base::xvblock_t> latest_block = m_statestore_base.get_blockstore()->load_block_object(m_table_addr.vaccount(), m_executed_height, base::enum_xvblock_flag_committed, false);
+    if (nullptr != latest_block) {
+        xtablestate_ext_ptr_t tablestate_ext = nullptr;
+        std::error_code ec;
+        execute_and_get_tablestate_ext(latest_block.get(), tablestate_ext, ec);
+        if (nullptr != tablestate_ext) {
+            m_state_accessor.set_latest_connectted_tablestate(tablestate_ext);
+            m_state_accessor.write_table_bstate_to_cache(table_addr, latest_block->get_block_hash(), tablestate_ext);
+            xinfo("xstatestore_executor_t::xstatestore_executor_t table=%s,execute_height=%ld,this=%p", table_addr.value().c_str(), m_executed_height, this);
+            return;
+        } else {
+            xerror("xstatestore_executor_t::xstatestore_executor_t fail-make state from execute height. %s,height=%ld", table_addr.value().c_str(), m_executed_height);
+        }
+    } else {
+        if (0 != m_executed_height) {
+            xerror("xstatestore_executor_t::xstatestore_executor_t fail-load block from execute height. %s,height=%ld", table_addr.value().c_str(), m_executed_height);
+        }
+    }
 }
 
 void xstatestore_executor_t::on_table_block_committed(base::xvblock_t* block) const {
@@ -113,17 +131,24 @@ xtablestate_ext_ptr_t xstatestore_executor_t::get_latest_executed_tablestate_ext
     update_execute_from_execute_height();
 
     uint64_t execute_height = get_latest_executed_block_height();
+
+    auto cache_tablestate = m_state_accessor.get_latest_connectted_table_state();
+    if (cache_tablestate->get_table_state()->height() >= execute_height) {
+        return cache_tablestate;
+    }
+
     xobject_ptr_t<base::xvblock_t> latest_block = m_statestore_base.get_blockstore()->load_block_object(m_table_addr.vaccount(), execute_height, base::enum_xvblock_flag_committed, false);
     if (nullptr != latest_block) {
         xtablestate_ext_ptr_t tablestate_ext = nullptr;
         std::error_code ec;
         execute_and_get_tablestate_ext(latest_block.get(), tablestate_ext, ec);
         if (nullptr != tablestate_ext) {
+            m_state_accessor.set_latest_connectted_tablestate(tablestate_ext);
             return tablestate_ext;
         }
     }
-    xerror("xstatestore_executor_t::get_latest_executed_tablestate_ext fail.table=%s,height=%ld",m_table_addr.value().c_str(),execute_height);
-    return nullptr;
+    xerror("xstatestore_executor_t::get_latest_executed_tablestate_ext fail.table=%s,height=%ld,block_exist=%d",m_table_addr.value().c_str(),execute_height,nullptr != latest_block);
+    return cache_tablestate;
 }
 
 void xstatestore_executor_t::execute_and_get_accountindex(base::xvblock_t* block, common::xaccount_address_t const& unit_addr, base::xaccount_index_t & account_index, std::error_code & ec) const {
@@ -146,6 +171,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::execute_block_recursive(base::xvbl
     xassert(!ec);
     xdbg("xstatestore_executor_t::execute_block_recursive enter.block=%s,limit=%d",block->dump().c_str(),limit);
     if (limit == 0) {
+        XMETRICS_GAUGE(metrics::statestore_execute_block_recursive_succ, 0);
         ec = error::xerrc_t::statestore_try_limit_arrive_err;
         xwarn("xstatestore_executor_t::execute_block_recursive fail-limit to zero.block=%s", block->dump().c_str());
         return nullptr;
@@ -155,10 +181,12 @@ xtablestate_ext_ptr_t xstatestore_executor_t::execute_block_recursive(base::xvbl
     // 1.try make state from current table
     xtablestate_ext_ptr_t tablestate = make_state_from_current_table(block, ec);
     if (ec) {
+        XMETRICS_GAUGE(metrics::statestore_execute_block_recursive_succ, 0);
         xwarn("xstatestore_executor_t::execute_block_recursive fail-make_state_from_current_table.limit=%d,block=%s", limit,block->dump().c_str());
         return nullptr;
     }
     if (nullptr != tablestate) {
+        XMETRICS_GAUGE(metrics::statestore_execute_block_recursive_succ, 1);
         xdbg("xstatestore_executor_t::execute_block_recursive succ by make from current.limit=%d,cur_block=%s", limit,block->dump().c_str());
         return tablestate;
     }
@@ -168,7 +196,9 @@ xtablestate_ext_ptr_t xstatestore_executor_t::execute_block_recursive(base::xvbl
     xtablestate_ext_ptr_t prev_tablestate = m_state_accessor.read_table_bstate_from_cache(m_table_addr, block->get_height() - 1, block->get_last_block_hash());
     if (nullptr == prev_tablestate) {
         xobject_ptr_t<base::xvblock_t> prev_block = m_statestore_base.get_blockstore()->load_block_object(m_table_addr.vaccount(), block->get_height()-1, block->get_last_block_hash(), false);
+        XMETRICS_GAUGE(metrics::statestore_load_table_block_succ, nullptr != prev_block ? 1 : 0);
         if (nullptr == prev_block) {
+            XMETRICS_GAUGE(metrics::statestore_execute_block_recursive_succ, 0);
             ec = error::xerrc_t::statestore_load_tableblock_err;
             xwarn("xstatestore_executor_t::execute_block_recursive fail-load prev block.cur_block=%s", block->dump().c_str());
             return nullptr;     
@@ -179,6 +209,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::execute_block_recursive(base::xvbl
 
             prev_tablestate = execute_block_recursive(prev_block.get(), limit, ec);
             if (nullptr == prev_tablestate) {
+                XMETRICS_GAUGE(metrics::statestore_execute_block_recursive_succ, 0);
                 xwarn("xstatestore_executor_t::execute_block_recursive fail-execute prev block.limit=%d,cur_block=%s", limit,block->dump().c_str());
                 return nullptr;
             }
@@ -187,10 +218,12 @@ xtablestate_ext_ptr_t xstatestore_executor_t::execute_block_recursive(base::xvbl
 
     tablestate = make_state_from_prev_state_and_table(block, prev_tablestate, ec);
     if (ec) {
+        XMETRICS_GAUGE(metrics::statestore_execute_block_recursive_succ, 0);
         xwarn("xstatestore_executor_t::execute_block_recursive fail.limit=%d,cur_block=%s", limit,block->dump().c_str());
         return nullptr;
     }
 
+    XMETRICS_GAUGE(metrics::statestore_execute_block_recursive_succ, 1);
     xassert(nullptr != tablestate);
     xdbg("xstatestore_executor_t::execute_block_recursive succ by recursive from prev.limit=%d,cur_block=%s", limit,block->dump().c_str());
     return tablestate;
@@ -212,7 +245,8 @@ void xstatestore_executor_t::update_execute_from_execute_height() const {
 
     for (uint64_t height=old_execute_height+1; height <= max_height; height++) {
         xobject_ptr_t<base::xvblock_t> cur_block = m_statestore_base.get_blockstore()->load_block_object(m_table_addr.vaccount(), height, base::enum_xvblock_flag_committed, false);
-        if (nullptr == cur_block) {
+        XMETRICS_GAUGE(metrics::statestore_load_table_block_succ, nullptr != cur_block ? 1 : 0);
+        if (nullptr == cur_block) {            
             xwarn("xstatestore_executor_t::update_execute_from_execute_height fail-load committed block.account=%s,height=%ld", m_table_addr.value().c_str(), height);
             break;
         }
@@ -361,6 +395,9 @@ xtablestate_ext_ptr_t xstatestore_executor_t::write_table_all_states(base::xvblo
     }
     xtablestate_ext_ptr_t tablestate = std::make_shared<xtablestate_ext_t>(tablestate_store->get_table_state(), cur_mpt);
     m_state_accessor.write_table_bstate_to_cache(m_table_addr, current_block->get_block_hash(), tablestate);
+    if (current_block->check_block_flag(base::enum_xvblock_flag_committed)) {
+        m_state_accessor.set_latest_connectted_tablestate(tablestate);
+    }
 
     // update execute height
     update_latest_executed_info(current_block);
@@ -699,6 +736,7 @@ data::xunitstate_ptr_t xstatestore_executor_t::execute_unit_recursive(common::xa
     xassert(!ec);
     xdbg("xstatestore_executor_t::execute_unit_recursive enter.block=%s,limit=%d",block->dump().c_str(),limit);
     if (limit == 0) {
+        XMETRICS_GAUGE(metrics::statestore_execute_unit_recursive_succ, 0);
         ec = error::xerrc_t::statestore_try_limit_arrive_err;
         xwarn("xstatestore_executor_t::execute_unit_recursive fail-limit to zero.block=%s", block->dump().c_str());
         return nullptr;
@@ -708,10 +746,12 @@ data::xunitstate_ptr_t xstatestore_executor_t::execute_unit_recursive(common::xa
     // 1.try make state from current unit
     data::xunitstate_ptr_t unitstate = make_state_from_current_unit(unit_addr, block, ec);
     if (ec) {
+        XMETRICS_GAUGE(metrics::statestore_execute_unit_recursive_succ, 0);
         xwarn("xstatestore_executor_t::execute_unit_recursive fail-make_state_from_current_unit.limit=%d,block=%s", limit,block->dump().c_str());
         return nullptr;
     }
     if (nullptr != unitstate) {
+        XMETRICS_GAUGE(metrics::statestore_execute_unit_recursive_succ, 1);
         xdbg("xstatestore_executor_t::execute_unit_recursive succ by make from current.limit=%d,cur_block=%s", limit,block->dump().c_str());
         return unitstate;
     }
@@ -724,12 +764,14 @@ data::xunitstate_ptr_t xstatestore_executor_t::execute_unit_recursive(common::xa
         // try load prev-state by recursive
         xobject_ptr_t<base::xvblock_t> prev_block = m_statestore_base.get_blockstore()->load_block_object(unit_addr.vaccount(), block->get_height()-1, block->get_last_block_hash(), false);
         if (nullptr == prev_block) {
+            XMETRICS_GAUGE(metrics::statestore_execute_unit_recursive_succ, 0);
             ec = error::xerrc_t::statestore_load_unitblock_err;
             xwarn("xstatestore_executor_t::execute_unit_recursive fail-load prev block.limit=%d,cur_block=%s", limit,block->dump().c_str());
             return nullptr;     
         }
         prev_unitstate = execute_unit_recursive(unit_addr, prev_block.get(), limit, ec);
         if (nullptr == prev_unitstate) {
+            XMETRICS_GAUGE(metrics::statestore_execute_unit_recursive_succ, 0);
             xwarn("xstatestore_executor_t::execute_unit_recursive fail-execute prev block.limit=%d,cur_block=%s", limit,block->dump().c_str());
             return nullptr;
         }
@@ -737,10 +779,12 @@ data::xunitstate_ptr_t xstatestore_executor_t::execute_unit_recursive(common::xa
 
     unitstate = make_state_from_prev_state_and_unit(unit_addr, block, prev_unitstate, ec);
     if (ec) {
+        XMETRICS_GAUGE(metrics::statestore_execute_unit_recursive_succ, 0);
         xerror("xstatestore_executor_t::execute_unit_recursive fail.limit=%d,cur_block=%s", limit,block->dump().c_str());
         return nullptr;
     }
 
+    XMETRICS_GAUGE(metrics::statestore_execute_unit_recursive_succ, 1);
     xassert(nullptr != unitstate);
     xdbg("xstatestore_executor_t::execute_unit_recursive succ by recursive from prev.limit=%d,cur_block=%s", limit,block->dump().c_str());
     return unitstate;

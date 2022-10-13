@@ -184,10 +184,12 @@ bool xbatch_packer::connect_to_checkpoint() {
         auto latest_connect_height = m_para->get_resources()->get_vblockstore()->get_latest_connected_block_height(get_account());
         if (latest_cp_connect_height != latest_connect_height) {
             xinfo("connect_to_checkpoint checkpoint mismatch! cp_connect:%llu,connect:%llu,account:%s", latest_cp_connect_height, latest_connect_height, get_account().c_str());
+
+            XMETRICS_GAUGE(metrics::cons_cp_check_succ, 0);
             return false;
         }
     }
-
+    XMETRICS_GAUGE(metrics::cons_cp_check_succ, 1);
     return true;
 }
 
@@ -235,6 +237,9 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     if (new_version) {
         auto ret = m_proposal_maker->account_index_upgrade();
         if (!ret) {
+            xunit_warn("xbatch_packer::on_view_fire fail-account index upgrade,account=%s,viewid=%ld,clock=%ld",
+                get_account().c_str(), view_ev->get_viewid(), view_ev->get_clock());        
+            XMETRICS_GAUGE(metrics::cons_view_fire_succ, 0);            
             return false;
         }
     }
@@ -246,6 +251,9 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     auto _cert_block = m_para->get_resources()->get_vblockstore()->get_latest_cert_block(get_account(), metrics::blockstore_access_from_us_on_view_fire);
     auto ret = check_state_sync(_cert_block.get());
     if (!ret) {
+        xunit_warn("xbatch_packer::on_view_fire fail-check state sync,account=%s,viewid=%ld,clock=%ld,cert=%s",
+            get_account().c_str(), view_ev->get_viewid(), view_ev->get_clock(), _cert_block->dump().c_str());        
+        XMETRICS_GAUGE(metrics::cons_view_fire_succ, 0);
         return false;
     }
     std::error_code ec;
@@ -276,18 +284,18 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
         xunit_warn("xbatch_packer::on_view_fire xip=%s version from error", xcons_utl::xip_to_hex(local_xip).c_str());
         XMETRICS_GAUGE(metrics::cons_view_fire_succ, 0);
         return false;
-    }
-    XMETRICS_GAUGE(metrics::cons_view_fire_succ, 1);
+    }    
 
     uint16_t rotate_mode = enum_rotate_mode_rotate_by_view_id;
     xvip2_t leader_xip = leader_election->get_leader_xip(m_last_view_id, get_account(), _cert_block.get(), local_xip, local_xip, election_epoch, rotate_mode);
     bool is_leader_node = xcons_utl::xip_equals(leader_xip, local_xip);
     xunit_info("xbatch_packer::on_view_fire is_leader=%d account=%s,viewid=%ld,clock=%ld,cert_height=%ld,cert_viewid=%ld,this:%p node:%s xip:%s,leader:%s,rotate_mode:%d",
             is_leader_node, get_account().c_str(), view_ev->get_viewid(), view_ev->get_clock(), _cert_block->get_height(),
-            _cert_block->get_clock(), this, node_account.c_str(),
+            _cert_block->get_viewid(), this, node_account.c_str(),
             xcons_utl::xip_to_hex(local_xip).c_str(), xcons_utl::xip_to_hex(leader_xip).c_str(), rotate_mode);
     XMETRICS_GAUGE(metrics::cons_view_fire_is_leader, is_leader_node ? 1 : 0);
     if (!is_leader_node) {
+        XMETRICS_GAUGE(metrics::cons_view_fire_succ, 1);
         return true;
     }
 
@@ -302,8 +310,7 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     if (!connect_to_checkpoint()) {
         xunit_warn("xbatch_packer::on_view_fire fail-connect_to_checkpoint. account=%s,viewid=%ld,clock=%ld,cert_height=%ld", 
             get_account().c_str(), view_ev->get_viewid(), view_ev->get_clock(), _cert_block->get_height());
-        XMETRICS_GAUGE(metrics::cons_view_fire_succ, 0);
-        XMETRICS_GAUGE(metrics::cons_cp_check_succ, 0);
+        XMETRICS_GAUGE(metrics::cons_view_fire_succ, 0);        
         return false;
     }
 
@@ -318,7 +325,6 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     set_election_round(true, *m_leader_cs_para);
 
     m_is_leader = true;
-    XMETRICS_GAUGE(metrics::cons_cp_check_succ, 1);
     m_leader_packed = start_proposal(calculate_min_tx_num(true));
     if (!m_leader_packed) {
         m_raw_timer->start(m_timer_repeat_time_ms, 0);
@@ -361,8 +367,10 @@ bool xbatch_packer::check_state_sync(base::xvblock_t * cert_block) {
 
     statestore::xtablestate_ext_ptr_t cert_tablestate = statestore::xstatestore_hub_t::instance()->get_tablestate_ext_from_block(cert_block);
     if (nullptr != cert_tablestate) {
+        XMETRICS_GAUGE(metrics::cons_state_check_succ, 1);
         return true;
     }
+    XMETRICS_GAUGE(metrics::cons_state_check_succ, 0);
 
     uint64_t latest_executed_height = statestore::xstatestore_hub_t::instance()->get_latest_executed_block_height(m_table_addr);
     if (base::xvchain_t::instance().is_storage_node()) {
@@ -427,7 +435,6 @@ bool  xbatch_packer::on_timer_fire(const int32_t thread_id, const int64_t timer_
     if (!m_is_leader || m_leader_packed) {
         return true;
     }
-    XMETRICS_GAUGE(metrics::cons_cp_check_succ, 1);
     // xunit_dbg("xbatch_packer::on_timer_fire retry start proposal.this:%p node:%s", this, m_para->get_resources()->get_account().c_str());
     m_leader_packed = start_proposal(calculate_min_tx_num(false));
     if (!m_leader_packed) {

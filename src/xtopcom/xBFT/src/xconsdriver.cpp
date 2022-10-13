@@ -1020,6 +1020,7 @@ namespace top
                         _to_remove->get_voted_auditors().size(),_to_remove->get_cert()->get_auditor_threshold(),_to_remove->get_voted_validators().size(),_to_remove->get_cert()->get_validator_threshold());
 
                         fire_pdu_event_up(xcommit_msg_t::get_msg_type(),msg_stream,0,get_xip2_addr(),broadcast_addr,_to_remove->get_block(),_commit_result_cert,std::string());//_commit_result_cert embbed into packet'header
+                        XMETRICS_GAUGE(metrics::cons_fail_vote_not_enough, 1);
                     }
                     else
                     {
