@@ -65,8 +65,10 @@ void xtop_state_downloader::sync_state(const common::xaccount_address_t & table,
     int64_t total_in{0};
     int64_t total_out{0};
     m_executor_thread->count_calls(total_in, total_out);
-    xinfo("xtop_state_downloader::sync_state %s add to running task, table queue cnts: %zu, thread in: %ld, thread out: %ld",
-          syncer->symbol().c_str(),
+    xinfo("xtop_state_downloader::sync_state table: %s, height: %lu, root: %s, add to running task, table queue cnts: %zu, thread in: %ld, thread out: %ld",
+          table.c_str(),
+          height,
+          root_hash.as_hex_str().c_str(),
           m_running_tables.size(),
           total_in,
           total_out);
