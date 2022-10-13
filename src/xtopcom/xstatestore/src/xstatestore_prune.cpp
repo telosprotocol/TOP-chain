@@ -8,6 +8,7 @@
 #include "xdata/xblockbuild.h"
 #include "xdata/xtable_bstate.h"
 #include "xmbus/xevent_behind.h"
+#include "xmetrics/xmetrics.h"
 #include "xstatestore/xerror.h"
 #include "xsync/xsync_on_demand.h"
 #include "xvledger/xvledger.h"
@@ -184,6 +185,7 @@ void xstatestore_prune_t::unitstate_prune_batch(const xaccounts_prune_info_t & a
                    upper_height - 1);
         }
     }
+    XMETRICS_GAUGE(metrics::state_delete_unit_state, accounts_prune_info.get_prune_info().size());
 }
 
 xhash256_t xstatestore_prune_t::get_state_root_from_block(base::xvblock_t * block) const {
@@ -212,6 +214,7 @@ uint64_t xstatestore_prune_t::prune_exec_storage(uint64_t from_height, uint64_t 
 
     base::xvchain_t::instance().get_xdbstore()->delete_values(prune_info.get_tablestate_prune_keys());
     base::xvchain_t::instance().get_xdbstore()->delete_values(prune_info.get_offdata_prune_keys());
+    XMETRICS_GAUGE(metrics::state_delete_table_data, prune_info.get_tablestate_prune_keys().size() + prune_info.get_offdata_prune_keys().size());
     xinfo("xstatestore_prune_t::prune_exec_storage prune tablestate and offdata for table %s from %llu to %llu", m_table_addr.value().c_str(), from_height, height - 1);
     // tablestate_prune_batch(from_height, to_height);
     return height - 1;
@@ -238,6 +241,7 @@ uint64_t xstatestore_prune_t::prune_exec_storage_and_cons(uint64_t from_height, 
     unitstate_prune_batch(accounts_prune_info);
     base::xvchain_t::instance().get_xdbstore()->delete_values(prune_info.get_tablestate_prune_keys());
     base::xvchain_t::instance().get_xdbstore()->delete_values(prune_info.get_offdata_prune_keys());
+    XMETRICS_GAUGE(metrics::state_delete_table_data, prune_info.get_tablestate_prune_keys().size() + prune_info.get_offdata_prune_keys().size());
     xinfo("xstatestore_prune_t::prune_exec_storage_and_cons prune tablestate,offdata,unitstate for table %s from %llu to %llu",
           m_table_addr.value().c_str(),
           from_height,
@@ -269,6 +273,7 @@ uint64_t xstatestore_prune_t::prune_exec_cons(uint64_t from_height, uint64_t to_
     }
 
     xaccounts_prune_info_t accounts_prune_info;
+    uint32_t delete_mpt_num = 0;
     for (uint64_t height = from_height; height <= to_height; height++) {
         // prune include fork blocks.
         auto blocks = base::xvchain_t::instance().get_xblockstore()->load_block_object(get_account().vaccount(), height, false);
@@ -288,6 +293,8 @@ uint64_t xstatestore_prune_t::prune_exec_cons(uint64_t from_height, uint64_t to_
             lowest_keep_mpt->prune(root, ec);
             if (ec) {
                 xwarn("xstatestore_prune_t::prune_exec_cons prune mpt fail.table:%s,height:%llu,root:%s", m_table_addr.value().c_str(), height, root.as_hex_str().c_str());
+            } else {
+                delete_mpt_num++;
             }
             xdbg("xstatestore_prune_t::prune_exec_cons prune mpt after.table:%s,height:%llu,root:%s", m_table_addr.value().c_str(), height, root.as_hex_str().c_str());
             if (block->check_block_flag(base::enum_xvblock_flag_committed)) {
@@ -295,6 +302,7 @@ uint64_t xstatestore_prune_t::prune_exec_cons(uint64_t from_height, uint64_t to_
             }
         }
     }
+    XMETRICS_GAUGE(metrics::state_delete_mpt, delete_mpt_num);
     unitstate_prune_batch(accounts_prune_info);
 
     xinfo("xstatestore_prune_t::prune_exec_cons prune mpt and unitstate for table %s from %llu to %llu", m_table_addr.value().c_str(), from_height, to_height);

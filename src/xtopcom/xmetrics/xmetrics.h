@@ -119,6 +119,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     cons_fail_make_proposal_table_check_latest_state,
     cons_fail_make_proposal_unit_check_state,
     cons_fail_make_proposal_view_changed,
+    cons_fail_vote_not_enough,
 
     cons_table_backup_verify_proposal_succ,
     cons_fail_verify_proposal_blocks_invalid,
@@ -570,6 +571,8 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     statestore_get_table_state_from_cache,
     statestore_get_table_state_with_table_count,
 
+    statestore_sync_succ,
+
     state_load_blk_state_suc,
     state_load_blk_state_cache_suc,
     state_load_blk_state_fail,
@@ -579,6 +582,9 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     state_load_blk_state_unit_suc,
     state_load_blk_state_unit_fail,
     state_load_blk_state_unit_cache_suc,
+    state_delete_table_data,
+    state_delete_unit_state,
+    state_delete_mpt,
 
     // data structure
     data_table_unpack_units,

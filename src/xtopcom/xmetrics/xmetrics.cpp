@@ -111,6 +111,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(cons_fail_verify_proposal_confirm_id_error);
         RETURN_METRICS_NAME(cons_fail_make_proposal_unit_check_state);
         RETURN_METRICS_NAME(cons_fail_make_proposal_view_changed);
+        RETURN_METRICS_NAME(cons_fail_vote_not_enough);
         RETURN_METRICS_NAME(cons_view_fire_clock_delay);
         RETURN_METRICS_NAME(cons_view_fire_succ);
         RETURN_METRICS_NAME(cons_cp_check_succ);
@@ -520,6 +521,8 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(statestore_get_table_state_from_cache);
         RETURN_METRICS_NAME(statestore_get_table_state_with_table_count);
 
+        RETURN_METRICS_NAME(statestore_sync_succ);
+
         RETURN_METRICS_NAME(state_load_blk_state_suc);
         RETURN_METRICS_NAME(state_load_blk_state_cache_suc);
         RETURN_METRICS_NAME(state_load_blk_state_fail);
@@ -529,6 +532,9 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(state_load_blk_state_unit_suc);
         RETURN_METRICS_NAME(state_load_blk_state_unit_fail);
         RETURN_METRICS_NAME(state_load_blk_state_unit_cache_suc);
+        RETURN_METRICS_NAME(state_delete_table_data);
+        RETURN_METRICS_NAME(state_delete_unit_state);
+        RETURN_METRICS_NAME(state_delete_mpt);
 
         RETURN_METRICS_NAME(data_table_unpack_units);
         RETURN_METRICS_NAME(data_table_unpack_one_unit);

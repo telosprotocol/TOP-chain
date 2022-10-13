@@ -114,8 +114,10 @@ void xstatestore_impl_t::on_state_sync_result(mbus::xevent_state_sync_ptr_t stat
     if (state_sync_event->ec) {
         xwarn("xstatestore_impl_t::on_state_sync_result fail-notify:table:%s,height:%llu,root:%s,ec=%s", 
             table_addr.c_str(),state_sync_event->height,state_sync_event->root_hash.as_hex_str().c_str(), state_sync_event->ec.message().c_str());
+        XMETRICS_GAUGE(metrics::statestore_sync_succ, 0);
         return;
     }
+    XMETRICS_GAUGE(metrics::statestore_sync_succ, 1);
 
     xstate_sync_info_t sync_info(state_sync_event->height,state_sync_event->root_hash,state_sync_event->table_state_hash, top::to_string(state_sync_event->table_block_hash.to_bytes()));
     xinfo("xstatestore_impl_t::on_state_sync_result succ-notify:table:%s,height:%llu,root:%s", 
