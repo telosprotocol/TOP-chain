@@ -52,7 +52,7 @@ void xtop_download_executer::run_state_sync(std::shared_ptr<xstate_sync_face_t> 
     } else {
         if (!res.ec && !loop_ec) {
             xwarn("xtop_download_executer::run_state_sync not finish but no error code");
-            xassert(false);
+            assert(false);
         }
         if (loop_ec) {
             xwarn("xtop_download_executer::run_state_sync origin error: %s %s, replace by loop error: %s %s",
@@ -84,16 +84,7 @@ void xtop_download_executer::loop(std::shared_ptr<xstate_sync_face_t> syncer, st
     int cnt{0};
 
     while (!syncer->is_done()) {
-        if (!m_single_states.empty()) {
-            auto detail = m_single_states.front();
-            xdbg("xtop_download_executer::loop push single state, account: %s, height: %lu, hash: %s, value: %s",
-                 detail.address.c_str(),
-                 detail.height,
-                 to_hex(detail.hash).c_str(),
-                 to_hex(detail.value).c_str());
-            syncer->push_deliver_state(detail);
-            pop_single_state();
-        } else if (!m_track_req.empty()) {
+        if (!m_track_req.empty()) {
             auto req = m_track_req.front();
             active[req.id] = req;
             xdbg("xtop_download_executer::loop add active, id: %u", req.id);
@@ -111,7 +102,7 @@ void xtop_download_executer::loop(std::shared_ptr<xstate_sync_face_t> syncer, st
             req.nodes_response = res.nodes;
             req.units_response = res.units;
             req.delivered = base::xtime_utl::gettimeofday();
-            syncer->push_deliver_req(req);
+            syncer->deliver_req(req);
             active.erase(res.id);
             pop_state_pack();
         } else if (!active.empty()) {
@@ -123,7 +114,7 @@ void xtop_download_executer::loop(std::shared_ptr<xstate_sync_face_t> syncer, st
                 }
                 xwarn("xtop_download_executer::loop req: %u timeout %lu, %lu", it->first, it->second.start, time);
                 it->second.delivered = base::xtime_utl::gettimeofday();
-                syncer->push_deliver_req(it->second);
+                syncer->deliver_req(it->second);
                 active.erase(it++);
             }
         } else if (m_cancel) {
@@ -163,16 +154,6 @@ void xtop_download_executer::push_state_pack(const state_res & res) {
 void xtop_download_executer::pop_state_pack() {
     std::lock_guard<std::mutex> lock(m_state_pack_mutex);
     m_state_packs.pop_front();
-}
-
-void xtop_download_executer::push_single_state(const single_state_detail & detail) {
-    std::lock_guard<std::mutex> lock(m_single_state_mutex);
-    m_single_states.emplace_back(detail);
-}
-
-void xtop_download_executer::pop_single_state() {
-    std::lock_guard<std::mutex> lock(m_single_state_mutex);
-    m_single_states.pop_front();
 }
 
 }  // namespace state_sync

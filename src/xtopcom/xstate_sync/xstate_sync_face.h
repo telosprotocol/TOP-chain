@@ -12,22 +12,12 @@
 namespace top {
 namespace state_sync {
 
-XDEFINE_MSG_ID(xmessage_category_state_sync, xmessage_id_sync_node_request, 0x01);
-XDEFINE_MSG_ID(xmessage_category_state_sync, xmessage_id_sync_node_response, 0x02);
+XDEFINE_MSG_ID(xmessage_category_state_sync, xmessage_id_sync_trie_request, 0x01);
+XDEFINE_MSG_ID(xmessage_category_state_sync, xmessage_id_sync_trie_response, 0x02);
 XDEFINE_MSG_ID(xmessage_category_state_sync, xmessage_id_sync_table_request, 0x03);
 XDEFINE_MSG_ID(xmessage_category_state_sync, xmessage_id_sync_table_response, 0x04);
 XDEFINE_MSG_ID(xmessage_category_state_sync, xmessage_id_sync_unit_request, 0x05);
 XDEFINE_MSG_ID(xmessage_category_state_sync, xmessage_id_sync_unit_response, 0x06);
-
-struct single_state_detail {
-    common::xaccount_address_t address;
-    uint64_t height{0};
-    xhash256_t hash;
-    xbytes_t value;
-
-    single_state_detail(common::xaccount_address_t addr, uint64_t h, xhash256_t _hash, const xbytes_t & _value) : address(std::move(addr)), height(h), hash(_hash), value(_value) {
-    }
-};
 
 struct sync_result {
     common::xaccount_address_t account;
@@ -42,12 +32,24 @@ struct sync_result {
     }
 };
 
+struct sync_peers {
+    std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network;
+    std::vector<vnetwork::xvnode_address_t> peers;
+};
+
+enum class state_req_type {
+    enum_state_req_table,
+    enum_state_req_trie,
+    enum_state_req_unit,
+};
+
 struct state_req {
     uint32_t id;
+    state_req_type type;
     common::xnode_address_t peer;
     uint32_t n_items{0};
-    std::map<xhash256_t, std::set<std::string>> trie_tasks;
-    std::map<xhash256_t, std::pair<xbytes_t, std::set<std::string>>> unit_tasks;
+    std::set<xhash256_t> trie_tasks;
+    std::map<xhash256_t, xbytes_t> unit_tasks;
     uint64_t start{0};
     uint64_t delivered{0};
     std::vector<xbytes_t> nodes_response;
@@ -56,12 +58,9 @@ struct state_req {
 
 struct state_res {
     uint32_t id;
-    common::xaccount_address_t table;
     std::vector<xbytes_t> nodes;
     std::vector<xbytes_t> units;
 };
-
-using state_sync_peers_t = std::vector<std::shared_ptr<vnetwork::xvnetwork_driver_face_t>>;
 
 class xtop_state_sync_face {
 public:
@@ -74,8 +73,7 @@ public:
     virtual std::error_code error() const = 0;
     virtual std::string symbol() const = 0;
     virtual sync_result result() const = 0;
-    virtual void push_deliver_state(const single_state_detail & detail) = 0;
-    virtual void push_deliver_req(const state_req & req) = 0;
+    virtual void deliver_req(const state_req & req) = 0;
 };
 using xstate_sync_face_t = xtop_state_sync_face;
 
