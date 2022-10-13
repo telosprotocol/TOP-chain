@@ -1,5 +1,5 @@
 #include "xtransport/xquic_node/quic_cs_engine.h"
-
+#include "event2/thread.h"
 #include <xquic/xquic.h>
 
 #include <string>
@@ -947,6 +947,7 @@ bool xquic_server_t::init(xquic_message_ready_callback cb, std::size_t server_po
 
 bool xquic_client_t::init(std::size_t server_inbound_port) {
     xinfo("[xquic_client_engine] xquic client init");
+    evthread_use_pthreads();
 
     m_inbound_port = server_inbound_port;
     xqc_engine_ssl_config_t engine_ssl_config;
