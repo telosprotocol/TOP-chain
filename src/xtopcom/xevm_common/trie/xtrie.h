@@ -106,6 +106,9 @@ public:
 
     std::string to_string() const;
 
+    std::shared_ptr<xtrie_node_face_t> root() const noexcept;
+    xtrie_node_face_ptr_t resolve_hash(xhash256_t const & hash, std::error_code & ec) const;
+
 private:
     std::tuple<xbytes_t, xtrie_node_face_ptr_t, bool> try_get(xtrie_node_face_ptr_t const & node, xbytes_t const & key, std::size_t pos, std::error_code & ec) const;
 
@@ -140,6 +143,8 @@ private:
     xtrie_node_face_ptr_t resolve(xtrie_node_face_ptr_t const & n, /*xbytes_t prefix,*/ std::error_code & ec) const;
 
     xtrie_node_face_ptr_t resolve_hash(xtrie_hash_node_ptr_t const & n, /*xbytes_t prefix,*/ std::error_code & ec) const;
+
+    xbytes_t resolve_blob(std::shared_ptr<xtrie_hash_node_t> const & n, std::error_code & ec);
 
     // hashRoot calculates the root hash of the given trie
     std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> hash_root();
