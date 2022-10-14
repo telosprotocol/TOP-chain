@@ -103,10 +103,6 @@ public:
     /// @return Original root hash.
     const xhash256_t & get_original_root_hash() const;
 
-    /// @brief Return db object to do actions relay on db.
-    /// @return DB object.
-    std::shared_ptr<evm_common::trie::xtrie_db_t> get_database() const;
-
 private:
     /// @brief Internal interface to init an empty state MPT.
     /// @param table Table address of state MPT.
@@ -151,20 +147,15 @@ private:
 
     std::shared_ptr<xstate_object_t> query_state_object(common::xaccount_address_t const& account) const;
 
-    /// @brief Update state object to db.
-    /// @param obj State object.
-    /// @param ec Log the error code.
-    void update_state_object(std::shared_ptr<xstate_object_t> obj, std::error_code & ec);
-
     common::xaccount_address_t m_table_address;
 
     std::shared_ptr<evm_common::trie::xsecure_trie_t> m_trie{nullptr};
     std::shared_ptr<evm_common::trie::xtrie_db_t> m_db{nullptr};
     xhash256_t m_original_root;
 
-    std::map<common::xaccount_address_t, xbytes_t> m_cache_indexes;
-
     mutable std::mutex m_state_objects_lock;
+    mutable std::mutex m_trie_lock;
+
     std::map<common::xaccount_address_t, std::shared_ptr<xstate_object_t>> m_state_objects;
     std::set<common::xaccount_address_t> m_state_objects_pending;
     std::set<common::xaccount_address_t> m_state_objects_dirty;
