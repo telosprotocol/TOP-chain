@@ -398,16 +398,22 @@ static std::string const g_consortium_genesis_config =
 )T";
 
 const std::string & get_genesis_info() {
-#if defined(XBUILD_CI)
-    return g_ci_genesis_config;
-#elif defined(XBUILD_GALILEO)
-    return g_testnet_genesis_config;
-#elif defined(XBUILD_DEV)
-    return g_dev_genesis_config;
-#elif defined(XBUILD_BOUNTY)
-    return g_bounty_genesis_config;
+
+#if defined(XBUILD_CONSORTIUM_TEST)
+    #include "xgenesis_info_consortium_new_horizons.cpp"
+        return g_consortium_test_genesis_config;
 #else
-    return g_mainnet_genesis_config;
+    #if defined(XBUILD_CI)
+        return g_ci_genesis_config;
+    #elif defined(XBUILD_GALILEO)
+        return g_testnet_genesis_config;
+    #elif defined(XBUILD_DEV)
+        return g_dev_genesis_config;
+    #elif defined(XBUILD_BOUNTY)
+        return g_bounty_genesis_config;
+    #else
+        return g_mainnet_genesis_config;
+    #endif
 #endif
 }
 
