@@ -3,7 +3,7 @@
 IDENT=$1
 STAT=$2
 CONTENT=$3
-ATTACHMENT="./ut_report/report.tar.gz"
+ATTACHMENT=$4
 TO="dev-chain@topnetwork.org"
 CC="xtest@topnetwork.org"
 # TO="aries.zhang@topnetwork.org"
