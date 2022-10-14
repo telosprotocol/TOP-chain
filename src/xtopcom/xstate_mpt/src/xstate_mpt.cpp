@@ -140,6 +140,7 @@ std::shared_ptr<xstate_object_t> xtop_state_mpt::get_deleted_state_object(common
     xbytes_t index_bytes;
     {
         XMETRICS_TIME_RECORD("state_mpt_load_db_index");
+        std::lock_guard<std::mutex> lock(m_trie_lock);
         index_bytes = m_trie->try_get(to_bytes(account), ec);
     }
     if (ec) {
@@ -197,24 +198,11 @@ std::shared_ptr<xstate_object_t> xtop_state_mpt::create_object(common::xaccount_
     return obj;
 }
 
-void xtop_state_mpt::update_state_object(std::shared_ptr<xstate_object_t> obj, std::error_code & ec) {
-    auto acc = obj->account;
-    xaccount_info_t info;
-    info.m_account = acc;
-    info.m_index = obj->index;
-    auto data = info.encode();
-    m_trie->try_update(to_bytes(acc), {data.begin(), data.end()}, ec);
-    if (ec) {
-        xwarn("xtop_state_mpt::update_state_object %s error, %s %s", acc.c_str(), ec.category().name(), ec.message().c_str());
-        return;
-    }
-    return;
-}
-
 void xtop_state_mpt::prune_unit(const common::xaccount_address_t & account, std::error_code & ec) {
     // get from db
     xbytes_t index_bytes;
     {
+        std::lock_guard<std::mutex> lock(m_trie_lock);
         XMETRICS_TIME_RECORD("state_mpt_load_db_index");
         index_bytes = m_trie->try_get(to_bytes(account), ec);
     }
@@ -238,10 +226,15 @@ void xtop_state_mpt::prune_unit(const common::xaccount_address_t & account, std:
 }
 
 xhash256_t xtop_state_mpt::get_root_hash(std::error_code & ec) {
+    std::lock_guard<std::mutex> lock(m_trie_lock);
     finalize();
     for (auto & acc : m_state_objects_pending) {
         auto obj = query_state_object(acc);
-        update_state_object(obj, ec);
+        xaccount_info_t info;
+        info.m_account = acc;
+        info.m_index = obj->index;
+        auto data = info.encode();
+        m_trie->try_update(to_bytes(acc), {data.begin(), data.end()}, ec);
         if (ec) {
             xwarn("xtop_state_mpt::get_root_hash update_state_object %s error, %s %s", acc.c_str(), ec.category().name(), ec.message().c_str());
             return {};
@@ -255,10 +248,6 @@ xhash256_t xtop_state_mpt::get_root_hash(std::error_code & ec) {
 
 const xhash256_t & xtop_state_mpt::get_original_root_hash() const {
     return m_original_root;
-}
-
-std::shared_ptr<evm_common::trie::xtrie_db_t> xtop_state_mpt::get_database() const {
-    return m_db;
 }
 
 void xtop_state_mpt::finalize() {
@@ -309,6 +298,7 @@ xhash256_t xtop_state_mpt::commit(std::error_code & ec) {
         m_state_objects_dirty.clear();
     }
 
+    std::lock_guard<std::mutex> lock(m_trie_lock);
     std::pair<xhash256_t, int32_t> res;
     {
         XMETRICS_TIME_RECORD("state_mpt_trie_commit");
@@ -332,6 +322,7 @@ void xtop_state_mpt::load_into(std::unique_ptr<xstate_mpt_store_t> const & state
 
 void xtop_state_mpt::prune(xhash256_t const & old_trie_root_hash, std::error_code & ec) const {
     assert(m_trie != nullptr);
+    std::lock_guard<std::mutex> lock(m_trie_lock);
     m_trie->prune(old_trie_root_hash, ec);
 }
 
