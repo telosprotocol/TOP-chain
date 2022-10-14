@@ -94,6 +94,8 @@ public:
 
     void prune(xhash256_t const & old_trie_root_hash, std::error_code & ec) const;
 
+    void commit_pruned(std::error_code & ec) const;
+
     /// @brief Update modifies to trie and calculate root hash.
     /// @param ec Log the error code.
     /// @return New root hash.

@@ -321,10 +321,21 @@ void xtop_state_mpt::load_into(std::unique_ptr<xstate_mpt_store_t> const & state
 }
 
 void xtop_state_mpt::prune(xhash256_t const & old_trie_root_hash, std::error_code & ec) const {
+    assert(!ec);
     assert(m_trie != nullptr);
+
     std::lock_guard<std::mutex> lock(m_trie_lock);
     m_trie->prune(old_trie_root_hash, ec);
 }
+
+void xtop_state_mpt::commit_pruned(std::error_code & ec) const {
+    assert(!ec);
+    assert(m_trie != nullptr);
+
+    std::lock_guard<std::mutex> lock{m_trie_lock};
+    m_trie->commit_pruned(ec);
+}
+
 
 }  // namespace state_mpt
 }  // namespace top

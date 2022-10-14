@@ -115,7 +115,7 @@ public:
 
     void prune(xhash256_t const & old_trie_root_hash, std::error_code & ec) override;
 
-    // todo NodeIterator
+    void commit_pruned(std::error_code & ec) override;
 
 private:
     // hashKey returns the hash of key as an ephemeral buffer.

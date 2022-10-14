@@ -117,9 +117,17 @@ xbytes_t xtop_secure_trie::hash_key(xbytes_t const & key) const {
 }
 
 void xtop_secure_trie::prune(xhash256_t const & old_trie_root_hash, std::error_code & ec) {
+    assert(!ec);
     assert(m_trie != nullptr);
 
     m_trie->prune(old_trie_root_hash, ec);
+}
+
+void xtop_secure_trie::commit_pruned(std::error_code & ec) {
+    assert(!ec);
+    assert(m_trie != nullptr);
+
+    m_trie->commit_pruned(ec);
 }
 
 

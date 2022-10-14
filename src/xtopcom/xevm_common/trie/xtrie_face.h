@@ -46,6 +46,7 @@ public:
     virtual bool prove(xbytes_t const & key, uint32_t from_level, xkv_db_face_ptr_t proof_db, std::error_code & ec) = 0;
 
 	virtual void prune(xhash256_t const & old_trie_root_hash, std::error_code & ec) = 0;
+    virtual void commit_pruned(std::error_code & ec) = 0;
 };
 using xtrie_face_t = xtop_trie_face;
 using xtrie_face_ptr_t = std::shared_ptr<xtrie_face_t>;
