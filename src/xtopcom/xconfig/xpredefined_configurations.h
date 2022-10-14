@@ -528,6 +528,8 @@ XDECLARE_CONFIGURATION(evm_port, uint16_t, 8080);
 XDECLARE_CONFIGURATION(log_level, uint16_t, 0);
 #if defined(XBUILD_CI) || defined(XBUILD_DEV) || defined(XBUILD_GALILEO) || defined(XBUILD_BOUNTY)
 XDECLARE_CONFIGURATION(chain_id, uint32_t, 1023);
+#elif defined(XBUILD_CONSORTIUM_TEST)
+//chian_id in genesis file
 #else
 XDECLARE_CONFIGURATION(chain_id, uint32_t, 980);
 #endif

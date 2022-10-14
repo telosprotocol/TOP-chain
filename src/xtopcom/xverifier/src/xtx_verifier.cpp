@@ -258,6 +258,20 @@ int32_t xtx_verifier::sys_contract_tx_check(data::xtransaction_t const * trx_ptr
         return xverifier_error::xverifier_error_contract_not_allowed;
     }
 
+    if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(enable_transaction_whitelist) == true) {
+        if (verify_check_genesis_account(source_addr) || verify_check_genesis_account(target_addr)) {
+            return xverifier_error::xverifier_success;
+        }
+
+        std::string nodes = XGET_ONCHAIN_GOVERNANCE_PARAMETER(transaction_whitelist);
+        std::set<std::string> node_sets;
+        top::SplitString(nodes, ',', node_sets);
+        if (node_sets.find(source_addr) == node_sets.end() && node_sets.find(target_addr) == node_sets.end()) {
+            xwarn("[xtx_verifier][sys_contract_tx_check] check whitelist address fail, tx:%s", trx_ptr->dump().c_str());
+            return xverifier_error::xverifier_error_addr_invalid;
+        }
+    }
+
     xdbg("[global_trace][xtx_verifier][sys_contract_tx_check][success], tx:%s", trx_ptr->dump().c_str());
     return xverifier_error::xverifier_success;
 }

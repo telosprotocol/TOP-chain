@@ -10,6 +10,7 @@
 #include "xstore/xstore.h"
 #include "xpbase/base/top_log.h"
 #include "xloader/xconfig_offchain_loader.h"
+#include "xgenesis_info.h"
 
 NS_BEG2(top, loader)
 
@@ -62,6 +63,32 @@ bool xconfig_offchain_loader_t::fetch_all(std::map<std::string, std::string>& ma
             return false;
         }
     }
+
+#if defined(XBUILD_CONSORTIUM_TEST)
+    if (m_config_file.empty()) {
+        auto config_content = get_genesis_info();
+        if (config_content.empty()) {
+            std::cout << "config consortium content empty" << std::endl;
+            return false;
+        }
+        xJson::Reader reader;
+        xJson::Value other_root;
+        bool ret = reader.parse(config_content, other_root);
+        if (!ret) {
+            std::cout << "parse config consortium content failed" << std::endl;
+            return false;
+        }
+
+        const auto member_names = other_root.getMemberNames();
+        for (const auto& name : member_names) {
+            if (name != "genesis") {
+                json_root[name] = other_root[name];
+                xdbg("xconfig_offchain_loader_t::fetch_all consortium name:%s .", name.c_str());
+            }
+        }
+        xinfo("xconfig_genesis_loader_t::xconfig_genesis_loader_t use  genesis content.");
+    }
+#endif // DEBUG
 
     if (!m_config_extra_file.empty()) {
         xJson::Reader reader_extra;

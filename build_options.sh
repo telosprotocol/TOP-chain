@@ -209,6 +209,10 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DCROSS_TX_DBG=ON"
         echo "BUILD WITH CROSS_TX_DBG"
     ;;
+    build_consortium_test)
+        CMAKE_EXTRA_OPTIONS+=" -DXBUILD_CONSORTIUM_TEST=ON"
+        echo "Build Consortium testnet"
+    ;;
     *)
         echo "unknown build option: "$option
     ;;

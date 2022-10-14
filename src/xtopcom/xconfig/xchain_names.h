@@ -12,7 +12,7 @@ NS_BEG2(top, config)
 
 XINLINE_CONSTEXPR char const * chain_name_mainnet{"new_horizons"};
 XINLINE_CONSTEXPR char const * chain_name_testnet{"galileo"};
-XINLINE_CONSTEXPR char const * chain_name_consortium{"consortium"};
+XINLINE_CONSTEXPR char const * chain_name_consortium{"consortium_test"};
 
 base::enum_xchain_id to_chainid(std::string const & chain_name);
 
