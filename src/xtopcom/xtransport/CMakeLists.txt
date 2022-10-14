@@ -21,3 +21,7 @@ target_link_libraries(xtransport PRIVATE ${CMAKE_BINARY_DIR}/src/xtopcom/xdepend
 if (BUILD_METRICS)
     target_link_libraries(xtransport PUBLIC xmetrics)
 endif()
+
+# if (XENABLE_TESTS)
+#     add_subdirectory(xquic_demo)
+# endif()
