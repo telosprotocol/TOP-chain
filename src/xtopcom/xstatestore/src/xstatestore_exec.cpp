@@ -508,7 +508,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_tab
     }
 
     std::vector<std::pair<data::xunitstate_ptr_t, std::string>> unitstate_units;
-    if (base::xvchain_t::instance().is_consensus_node() && account_indexs.get_account_indexs().size() > 0) {
+    if (false == base::xvchain_t::instance().is_storage_node() && account_indexs.get_account_indexs().size() > 0) {
         if (false == m_statestore_base.get_blockstore()->load_block_input(m_table_addr.vaccount(), current_block)) {
             ec = error::xerrc_t::statestore_load_tableblock_err;
             xerror("xstatestore_executor_t::make_state_from_prev_state_and_table fail-load input for block(%s)",current_block->dump().c_str());
