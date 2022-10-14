@@ -62,7 +62,7 @@ TEST_F(test_state_prune, prune_exec_storage) {
     base::xvblockstore_t* blockstore = creator.get_blockstore();
     auto xdb = creator.get_xdb();
 
-    uint64_t max_block_height = 50;
+    uint64_t max_block_height = 100;
     mock::xdatamock_table mocktable(1, 4);
     mocktable.genrate_table_chain(max_block_height, blockstore);
     const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
@@ -75,6 +75,8 @@ TEST_F(test_state_prune, prune_exec_storage) {
     std::shared_ptr<xstatestore_resources_t> para;
     xstatestore_prune_t pruner(common::xaccount_address_t(mocktable.get_vaccount().get_account()), para);
 
+    base::xvchain_t::instance().set_node_type(true, false);
+
     for (auto & block : tableblocks) {
         auto state_key = base::xvdbkey_t::create_prunable_state_key(mocktable.get_vaccount(), block->get_height(), block->get_block_hash());
         xdb->write(state_key, "test_state" + std::to_string(block->get_height())); // for test.
@@ -82,7 +84,7 @@ TEST_F(test_state_prune, prune_exec_storage) {
         xdb->write(offdata_key, "test_offdata" + std::to_string(block->get_height())); // for test.
     }
 
-    pruner.prune_exec_storage(1, 10);
+    pruner.prune_imp(70);
 
     for (uint64_t h = 1; h <= max_block_height - 2; h++) {
         auto block = blockstore->load_block_object(mocktable.get_vaccount(), h, base::enum_xvblock_flag_committed, false);
@@ -91,13 +93,14 @@ TEST_F(test_state_prune, prune_exec_storage) {
         auto offdata_key = base::xvdbkey_t::create_prunable_block_output_offdata_key(mocktable.get_account(), h, block->get_viewid());
         std::string value_state;
         xdb->read(state_key, value_state);
-        EXPECT_EQ(value_state.empty(), (h <= 10 && block->get_block_class() != base::enum_xvblock_class_full));
+        assert(value_state.empty() == (h <= 30 && block->get_block_class() != base::enum_xvblock_class_full));
+        EXPECT_EQ(value_state.empty(), (h <= 30 && block->get_block_class() != base::enum_xvblock_class_full));
         std::string value_offdata;
         xdb->read(offdata_key, value_offdata);
-        EXPECT_EQ(value_offdata.empty(), (h <= 10 && block->get_block_class() != base::enum_xvblock_class_nil));
+        EXPECT_EQ(value_offdata.empty(), (h <= 30 && block->get_block_class() != base::enum_xvblock_class_nil));
     }
 
-    pruner.prune_exec_storage(11, 25);
+    pruner.prune_imp(95);
 
     for (uint64_t h = 1; h <= max_block_height - 2; h++) {
         auto block = blockstore->load_block_object(mocktable.get_vaccount(), h, base::enum_xvblock_flag_committed, false);
@@ -106,10 +109,10 @@ TEST_F(test_state_prune, prune_exec_storage) {
         auto offdata_key = base::xvdbkey_t::create_prunable_block_output_offdata_key(mocktable.get_account(), h, block->get_viewid());
         std::string value_state;
         xdb->read(state_key, value_state);
-        EXPECT_EQ(value_state.empty(), (h <= 25 && block->get_block_class() != base::enum_xvblock_class_full));
+        EXPECT_EQ(value_state.empty(), (h <= 55 && block->get_block_class() != base::enum_xvblock_class_full));
         std::string value_offdata;
         xdb->read(offdata_key, value_offdata);
-        EXPECT_EQ(value_offdata.empty(), (h <= 25 && block->get_block_class() != base::enum_xvblock_class_nil));
+        EXPECT_EQ(value_offdata.empty(), (h <= 55 && block->get_block_class() != base::enum_xvblock_class_nil));
     }
 }
 
@@ -124,7 +127,7 @@ TEST_F(test_state_prune, prune_exec_storage_and_cons) {
     base::xvblockstore_t* blockstore = creator.get_blockstore();
     auto xdb = creator.get_xdb();
 
-    uint64_t max_block_height = 50;
+    uint64_t max_block_height = 100;
     mock::xdatamock_table mocktable(1, 4);
     mocktable.genrate_table_chain(max_block_height, blockstore);
     const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
@@ -137,6 +140,8 @@ TEST_F(test_state_prune, prune_exec_storage_and_cons) {
     std::shared_ptr<xstatestore_resources_t> para;
     xstatestore_prune_t pruner(common::xaccount_address_t(mocktable.get_vaccount().get_account()), para);
 
+    base::xvchain_t::instance().set_node_type(true, true);
+
     for (auto & block : tableblocks) {
         auto state_key = base::xvdbkey_t::create_prunable_state_key(mocktable.get_vaccount(), block->get_height(), block->get_block_hash());
         xdb->write(state_key, "test_state" + std::to_string(block->get_height())); // for test.
@@ -146,7 +151,7 @@ TEST_F(test_state_prune, prune_exec_storage_and_cons) {
 
     auto mock_units = mocktable.get_mock_units();
 
-    pruner.prune_exec_storage_and_cons(1, 10);
+    pruner.prune_imp(70);
 
     for (uint64_t h = 1; h <= max_block_height - 2; h++) {
         auto block = blockstore->load_block_object(mocktable.get_vaccount(), h, base::enum_xvblock_flag_committed, false);
@@ -155,19 +160,19 @@ TEST_F(test_state_prune, prune_exec_storage_and_cons) {
         auto offdata_key = base::xvdbkey_t::create_prunable_block_output_offdata_key(mocktable.get_account(), h, block->get_viewid());
         std::string value_state;
         xdb->read(state_key, value_state);
-        EXPECT_EQ(value_state.empty(), (h <= 10 && block->get_block_class() != base::enum_xvblock_class_full));
+        EXPECT_EQ(value_state.empty(), (h <= 30 && block->get_block_class() != base::enum_xvblock_class_full));
         std::string value_offdata;
         xdb->read(offdata_key, value_offdata);
-        EXPECT_EQ(value_offdata.empty(), (h <= 10 && block->get_block_class() != base::enum_xvblock_class_nil));
+        EXPECT_EQ(value_offdata.empty(), (h <= 30 && block->get_block_class() != base::enum_xvblock_class_nil));
     }
 
     for (auto & mock_unit : mock_units) {
         auto account = mock_unit.get_account();
         base::xauto_ptr<base::xvaccountobj_t> account_obj(base::xvchain_t::instance().get_account(base::xvaccount_t(account)));
-        EXPECT_EQ(9, account_obj->get_lowest_executed_block_height());
+        EXPECT_EQ(29, account_obj->get_lowest_executed_block_height());
     }
 
-    pruner.prune_exec_storage_and_cons(11, 25);
+    pruner.prune_imp(95);
 
     for (uint64_t h = 1; h <= max_block_height - 2; h++) {
         auto block = blockstore->load_block_object(mocktable.get_vaccount(), h, base::enum_xvblock_flag_committed, false);
@@ -176,16 +181,16 @@ TEST_F(test_state_prune, prune_exec_storage_and_cons) {
         auto offdata_key = base::xvdbkey_t::create_prunable_block_output_offdata_key(mocktable.get_account(), h, block->get_viewid());
         std::string value_state;
         xdb->read(state_key, value_state);
-        EXPECT_EQ(value_state.empty(), (h <= 25 && block->get_block_class() != base::enum_xvblock_class_full));
+        EXPECT_EQ(value_state.empty(), (h <= 55 && block->get_block_class() != base::enum_xvblock_class_full));
         std::string value_offdata;
         xdb->read(offdata_key, value_offdata);
-        EXPECT_EQ(value_offdata.empty(), (h <= 25 && block->get_block_class() != base::enum_xvblock_class_nil));
+        EXPECT_EQ(value_offdata.empty(), (h <= 55 && block->get_block_class() != base::enum_xvblock_class_nil));
     }
 
     for (auto & mock_unit : mock_units) {
         auto account = mock_unit.get_account();
         base::xauto_ptr<base::xvaccountobj_t> account_obj(base::xvchain_t::instance().get_account(base::xvaccount_t(account)));
-        EXPECT_EQ(24, account_obj->get_lowest_executed_block_height());
+        EXPECT_EQ(54, account_obj->get_lowest_executed_block_height());
     }
 }
 
@@ -205,7 +210,7 @@ TEST_F(test_state_prune, prune_exec_cons) {
     base::xvblockstore_t* blockstore = creator.get_blockstore();
     auto xdb = creator.get_xdb();
 
-    uint64_t max_block_height = 50;
+    uint64_t max_block_height = 100;
     mock::xdatamock_table mocktable(1, 4);
     mocktable.genrate_table_chain(max_block_height, blockstore);
     const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
@@ -243,7 +248,9 @@ TEST_F(test_state_prune, prune_exec_cons) {
     xstatestore_prune_t pruner(common::xaccount_address_t(mocktable.get_vaccount().get_account()), para);
     auto mock_units = mocktable.get_mock_units();
 
-    pruner.prune_exec_storage_and_cons(1, 10);
+    base::xvchain_t::instance().set_node_type(false, true);
+
+    pruner.prune_imp(70);
 
     for (uint64_t h = 1; h <= max_block_height - 2; h++) {
         auto block = blockstore->load_block_object(mocktable.get_vaccount(), h, base::enum_xvblock_flag_committed, false);
@@ -254,34 +261,34 @@ TEST_F(test_state_prune, prune_exec_cons) {
 
         std::error_code ec;
         auto mpt = state_mpt::xtop_state_mpt::create(common::xaccount_address_t(mocktable.get_vaccount().get_account()), xhash256_t(root.to_bytes()), base::xvchain_t::instance().get_xdbstore(), ec);
-        EXPECT_EQ(mpt != nullptr, true);
+        EXPECT_EQ(mpt != nullptr, (h > 30));
+        EXPECT_EQ(ec.value() == 0, (h > 30));
     }
 
     for (auto & mock_unit : mock_units) {
         auto account = mock_unit.get_account();
         base::xauto_ptr<base::xvaccountobj_t> account_obj(base::xvchain_t::instance().get_account(base::xvaccount_t(account)));
-        EXPECT_EQ(9, account_obj->get_lowest_executed_block_height());
+        EXPECT_EQ(29, account_obj->get_lowest_executed_block_height());
     }
 
-    pruner.prune_exec_storage_and_cons(11, 25);
+    pruner.prune_imp(95);
 
     for (uint64_t h = 1; h <= max_block_height - 2; h++) {
         auto block = blockstore->load_block_object(mocktable.get_vaccount(), h, base::enum_xvblock_flag_committed, false);
         EXPECT_NE(block, nullptr);
-        auto state_key = base::xvdbkey_t::create_prunable_state_key(mocktable.get_vaccount(), h, block->get_block_hash());
-        auto offdata_key = base::xvdbkey_t::create_prunable_block_output_offdata_key(mocktable.get_account(), h, block->get_viewid());
-        std::string value_state;
-        xdb->read(state_key, value_state);
-        EXPECT_EQ(value_state.empty(), (h <= 25 && block->get_block_class() != base::enum_xvblock_class_full));
-        std::string value_offdata;
-        xdb->read(offdata_key, value_offdata);
-        EXPECT_EQ(value_offdata.empty(), (h <= 25 && block->get_block_class() != base::enum_xvblock_class_nil));
+        evm_common::xh256_t root;
+        auto ret = data::xblockextract_t::get_state_root(block.get(), root);
+        EXPECT_EQ(ret, true);
+
+        std::error_code ec;
+        auto mpt = state_mpt::xtop_state_mpt::create(common::xaccount_address_t(mocktable.get_vaccount().get_account()), xhash256_t(root.to_bytes()), base::xvchain_t::instance().get_xdbstore(), ec);
+        EXPECT_EQ(mpt != nullptr, (h > 55));
     }
 
     for (auto & mock_unit : mock_units) {
         auto account = mock_unit.get_account();
         base::xauto_ptr<base::xvaccountobj_t> account_obj(base::xvchain_t::instance().get_account(base::xvaccount_t(account)));
-        EXPECT_EQ(24, account_obj->get_lowest_executed_block_height());
+        EXPECT_EQ(54, account_obj->get_lowest_executed_block_height());
     }
 }
 
