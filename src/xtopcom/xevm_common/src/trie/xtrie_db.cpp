@@ -212,9 +212,12 @@ void xtop_trie_db::prune(xhash256_t const & hash, std::error_code & ec) {
     assert(dirties_.find(hash) == dirties_.end());
 
     pruned_hashes_.insert(hash);
+    xinfo("hash %s added to be pruned later", hash.as_hex_str().c_str());
 }
 
 void xtop_trie_db::commit_pruned(std::error_code & ec) {
+    assert(!ec);
+
     std::vector<xbytes_t> pruned_keys;
     pruned_keys.reserve(pruned_hashes_.size());
     std::transform(std::begin(pruned_hashes_), std::end(pruned_hashes_), std::back_inserter(pruned_keys), [](xhash256_t const & hash) { return hash.to_bytes(); });
@@ -223,6 +226,8 @@ void xtop_trie_db::commit_pruned(std::error_code & ec) {
         xwarn("pruning MPT nodes failed. %s", ec.message().c_str());
         return;
     }
+
+    xkinfo("%zu keys pruned from disk", pruned_hashes_.size());
 
     pruned_hashes_.clear();
 }

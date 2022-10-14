@@ -779,12 +779,27 @@ xnode_flag_t xtop_trie::node_dirty() {
 }
 
 void xtop_trie::prune(xhash256_t const & old_trie_root_hash, std::error_code & ec) {
+    assert(!ec);
+
     if (pruner_ == nullptr) {
         pruner_ = make_unique<xtrie_pruner_t>();
         pruner_->init(trie_root_, trie_db_, ec);
     }
 
     pruner_->prune(old_trie_root_hash, trie_db_, ec);
+}
+
+void xtop_trie::commit_pruned(std::error_code & ec) {
+    assert(!ec);
+    assert(pruner_);
+
+    trie_db_->commit_pruned(ec);
+    if (ec) {
+        xwarn("commit prune failed");
+        return;
+    }
+
+    pruner_.reset();
 }
 
 std::string xtop_trie::to_string() const {
