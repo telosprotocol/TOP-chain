@@ -20,6 +20,11 @@
 #include "xdepends/include/asio/post.hpp"
 #include "xdepends/include/asio/thread_pool.hpp"
 #include "xelection/xvnode_house.h"
+#include "xevm_common/trie/xtrie.h"
+#include "xevm_common/trie/xtrie_iterator.h"
+#include "xevm_common/trie/xtrie_kv_db.h"
+#include "xevm_common/trie/xsecure_trie.h"
+#include "xstate_mpt/xstate_mpt.h"
 #include "xloader/src/xgenesis_info.h"
 #include "xloader/xconfig_genesis_loader.h"
 #include "xvledger/xvdbkey.h"
@@ -116,14 +121,29 @@ std::vector<std::string> xdb_export_tools_t::get_db_unit_accounts() {
             std::cerr << table << " get_latest_committed_block null!" << std::endl;
             continue;
         }
-        base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_block.get());
-        if (bstate == nullptr) {
-            std::cerr << table << " get_block_state null!" << std::endl;
-            continue;
+
+        evm_common::xh256_t state_root;
+        data::xblockextract_t::get_state_root(latest_block.get(), state_root);
+        xhash256_t root_hash = xhash256_t(state_root.to_bytes());
+        if (root_hash == xhash256_t{}) {
+            base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_block.get());
+            if (bstate == nullptr) {
+                std::cerr << table << " get_block_state null!" << std::endl;
+                continue;
+            }
+            auto table_state = std::make_shared<data::xtable_bstate_t>(bstate.get());
+            auto const & units = table_state->get_all_accounts();
+            accounts.insert(units.cbegin(), units.cend());
+        } else {
+            auto const kv_db = std::make_shared<evm_common::trie::xkv_db_t>(base::xvchain_t::instance().get_xdbstore(), common::xaccount_address_t(table));
+            auto xtrie_db = evm_common::trie::xtrie_db_t::NewDatabase(kv_db);
+            auto const & leafs = top::evm_common::trie::xtrie_simple_iterator_t::trie_leafs(root_hash, make_observer(xtrie_db));
+            for (auto & leaf : leafs) {
+                state_mpt::xaccount_info_t info;
+                info.decode({leaf.begin(), leaf.end()});
+                accounts.insert(info.m_account.value());
+            }
         }
-        auto table_state = std::make_shared<data::xtable_bstate_t>(bstate.get());
-        auto const & units = table_state->get_all_accounts();
-        accounts.insert(units.cbegin(), units.cend());
     }
 
     std::vector<std::string> v;

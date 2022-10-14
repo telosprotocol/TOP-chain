@@ -193,13 +193,14 @@ int main(int argc, char ** argv) {
         bool check_block = (function_name == "check_fast_sync");
         if (argc == 3) {
             auto const table_account_vec = xdb_export_tools_t::get_table_accounts();
+            auto const unit_account_vec = tools.get_db_unit_accounts();
             if (check_block) {
                 tools.query_all_account_data(table_account_vec, true, xdb_check_data_func_block_t());
+                tools.query_all_account_data(unit_account_vec, false, xdb_check_data_func_block_t());
             } else {
                 tools.query_all_account_data(table_account_vec, true, xdb_check_data_func_table_state_t());
+                tools.query_all_account_data(unit_account_vec, false, xdb_check_data_func_unit_state_t());
             }
-            // auto const unit_account_vec = tools.get_db_unit_accounts();
-            // tools.query_all_account_data(unit_account_vec, false);
         } else if (argc == 4) {
             std::string method_name{argv[3]};
             if (method_name == "table") {
@@ -210,8 +211,12 @@ int main(int argc, char ** argv) {
                     tools.query_all_account_data(table_account_vec, true, xdb_check_data_func_table_state_t());
                 }
             } else if (method_name == "unit") {
-                // auto const unit_account_vec = tools.get_db_unit_accounts();
-                // tools.query_all_sync_result(unit_account_vec, false);
+                auto const unit_account_vec = tools.get_db_unit_accounts();
+                if (check_block) {
+                    tools.query_all_account_data(unit_account_vec, false, xdb_check_data_func_block_t());
+                } else {
+                    tools.query_all_account_data(unit_account_vec, false, xdb_check_data_func_unit_state_t());
+                }
                 std::cout << "not support currently." << std::endl;
             } else if (method_name == "account") {
                 std::vector<std::string> account = {argv[4]};
