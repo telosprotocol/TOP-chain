@@ -312,6 +312,13 @@ int xquic_server_stream_read_notify(xqc_stream_t * stream, void * user_data) {
         // printf("recv from stream, size: %zd\n", read);
         if (read == -XQC_EAGAIN) {
             break;
+        } else if (read == -XQC_ESTREAM_RESET){
+            // peers close stream.
+            int rc = xqc_conn_close(srv_user_stream->srv_user_conn->server->engine, &srv_user_stream->srv_user_conn->cid);
+            if (rc) {
+                xwarn("[xquic_server_engine] xqc_conn_close error %d",rc);
+            }
+            break;
         } else if (read < 0) {
             xdbg("[xquic_server_engine]xqc_stream_recv error %zd", read);
             return 0;
@@ -338,9 +345,9 @@ int xquic_server_stream_read_notify(xqc_stream_t * stream, void * user_data) {
                     if (!res) {
                         xwarn("[xquic_server_engine] ping packet error, close stream");
                         // need to close connection
-                        int rc = xqc_stream_close(srv_user_stream->stream);
+                        int rc = xqc_conn_close(srv_user_stream->srv_user_conn->server->engine, &srv_user_stream->srv_user_conn->cid);
                         if (rc) {
-                            printf("xqc_stream_close error %d \n", rc);
+                            xwarn("[xquic_server_engine] xqc_conn_close error %d", rc);
                         }
                         return 0;
                     }
@@ -650,8 +657,7 @@ static int xquic_client_create_socket(int type, cli_user_conn_t * conn) {
 static void xquic_client_conn_timeout_callback(int fd, short what, void * arg) {
     cli_user_conn_t * cli_user_conn = (cli_user_conn_t *)arg;
 
-    static int restart_after_a_while = 1;
-
+    // xdbg("[xquic_client_engine] connection check timeout %" PRIu64 " %" PRIu64 " ", cli_user_conn->last_sock_op_time,xqc_now() - cli_user_conn->last_sock_op_time);
     if (xqc_now() - cli_user_conn->last_sock_op_time < (uint64_t)g_conn_timeout * 1000000) {
         struct timeval tv;
         tv.tv_sec = g_conn_check_timeout;
@@ -791,32 +797,6 @@ void xquic_client_init_addr(cli_user_conn_t * cli_user_conn, const char * server
     cli_user_conn->local_addr = (struct sockaddr *)calloc(1, sizeof(struct sockaddr_in));
     memset(cli_user_conn->local_addr, 0, sizeof(struct sockaddr_in));
     cli_user_conn->local_addrlen = sizeof(struct sockaddr_in);
-}
-cli_user_conn_t * xquic_client_user_conn_create(const char * server_addr, int server_port, xquic_client_t * client) {
-    cli_user_conn_t * cli_user_conn = new cli_user_conn_t;
-    cli_user_conn->client = client;
-    cli_user_conn->conn_status = cli_conn_status_t::before_connected;
-    cli_user_conn->conn_create_time = xqc_now();
-
-    cli_user_conn->conn_timeout_event = event_new(client->eb, -1, 0, xquic_client_conn_timeout_callback, cli_user_conn);
-    /* set connection timeout */
-    struct timeval tv;
-    tv.tv_sec = g_conn_check_timeout;
-    tv.tv_usec = 0;
-    event_add(cli_user_conn->conn_timeout_event, &tv);
-
-    int ip_type = AF_INET;
-    xquic_client_init_addr(cli_user_conn, server_addr, server_port);
-
-    cli_user_conn->fd = xquic_client_create_socket(ip_type, cli_user_conn);
-    if (cli_user_conn->fd < 0) {
-        printf("xqc_create_socket error\n");
-        return NULL;
-    }
-
-    cli_user_conn->ev_socket = event_new(client->eb, cli_user_conn->fd, EV_READ | EV_PERSIST, xquic_client_socket_event_callback, cli_user_conn);
-    event_add(cli_user_conn->ev_socket, NULL);
-    return cli_user_conn;
 }
 
 bool xquic_server_t::init(xquic_message_ready_callback cb, std::size_t server_port) {
@@ -1039,12 +1019,15 @@ bool xquic_client_t::init(std::size_t server_inbound_port) {
 /// NOTED: API, this function is used by quic_node thread. be careful about multi-thread issus.
 cli_user_conn_t * xquic_client_t::connect(std::string const & server_addr, uint32_t server_port) {
     xdbg("[xquic_client_engine] add new connection to %s:%u", server_addr.c_str(), server_port);
-    cli_user_conn_t * cli_user_conn = xquic_client_user_conn_create(server_addr.c_str(), server_port, this);
+
+    cli_user_conn_t * cli_user_conn = new cli_user_conn_t;
+    cli_user_conn->client = this;
+    cli_user_conn->conn_status = cli_conn_status_t::before_connected;
+    cli_user_conn->conn_create_time = xqc_now();
+    xquic_client_init_addr(cli_user_conn, server_addr.c_str(), server_port);
     cli_user_conn->server_addr = server_addr;
-    if (cli_user_conn == nullptr) {
-        xwarn("[xquic_client_engine] xquic_client_user_conn_create error");
-        return nullptr;
-    }
+    assert(cli_user_conn);
+
     m_conn_queue.push(cli_user_conn);
     return cli_user_conn;
 }
@@ -1081,6 +1064,25 @@ void xquic_client_t::quic_engine_do_connect() {
     for (cli_user_conn_t * conn : all_connection) {
         assert(conn != nullptr);
         assert(conn->conn_status == cli_conn_status_t::before_connected);
+
+        int ip_type = AF_INET;
+        conn->fd = xquic_client_create_socket(ip_type, conn);
+        if (conn->fd < 0) {
+            xwarn("[xquic_client_engine]quic_engine_do_connect create socket error");
+            free(conn->local_addr);
+            delete conn;
+            continue;
+        }
+
+        conn->conn_timeout_event = event_new(eb, -1, 0, xquic_client_conn_timeout_callback, conn);
+        /* set connection timeout */
+        struct timeval tv;
+        tv.tv_sec = g_conn_check_timeout;
+        tv.tv_usec = 0;
+        event_add(conn->conn_timeout_event, &tv);
+
+        conn->ev_socket = event_new(eb, conn->fd, EV_READ | EV_PERSIST, xquic_client_socket_event_callback, conn);
+        event_add(conn->ev_socket, NULL);
 
         std::string read_token = xclient_read_token();
         if (!read_token.empty()) {
@@ -1126,10 +1128,10 @@ void xquic_client_t::quic_engine_do_connect() {
                           "transport",
                           conn);
         if (cid == nullptr) {
-            printf("xqc_connect error\n");
+            xwarn("[xquic_client_engine]quic_engine_do_connect xqc_connect error");
             free(conn->local_addr);
             delete conn;
-            return;
+            continue;
         }
         memcpy(&conn->cid, cid, sizeof(*cid));
     }
@@ -1157,6 +1159,8 @@ void xquic_client_t::quic_engine_do_send() {
 
             if (cli_user_conn == nullptr || cli_user_conn->conn_status == cli_conn_status_t::after_connected) {
                 // this connection should be clean.
+                // if this message occurs, mostly the queue is full, can not handle this much packet
+                xwarn("[xquic_client_engine] connection need to be delete");
                 send_buffer_ptr->send_data.clear();
                 continue;
             }
@@ -1252,8 +1256,10 @@ void xquic_client_t::release_connection(cli_user_conn_t * cli_user_conn) {
     xdbg("[xquic_client_engine] release connection scid: %s", xqc_scid_str(&cli_user_conn->cid));
     cli_user_conn->conn_status = cli_conn_status_t::after_connected;  // ready to be destroy by xquic_node.
 
+    assert(cli_user_conn->conn_timeout_event);
     event_del(cli_user_conn->conn_timeout_event);
     event_free(cli_user_conn->conn_timeout_event);
+    assert(cli_user_conn->ev_socket);
     event_del(cli_user_conn->ev_socket);
     event_free(cli_user_conn->ev_socket);
 
