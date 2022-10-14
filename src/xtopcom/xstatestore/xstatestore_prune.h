@@ -48,7 +48,6 @@ private:
     void prune_imp(uint64_t exec_height);
     void unitstate_prune_batch(const xaccounts_prune_info_t & accounts_prune_info);
     common::xaccount_address_t const & get_account() const {return m_table_addr;}
-    xhash256_t get_state_root_from_block(base::xvblock_t * block) const;
     bool need_prune(uint64_t exec_height);
     bool get_prune_section(uint64_t exec_height, uint64_t & from_height, uint64_t & to_height);
     void set_pruned_height(uint64_t pruned_height);
