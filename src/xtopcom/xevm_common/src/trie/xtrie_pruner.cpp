@@ -130,10 +130,9 @@ std::shared_ptr<xtrie_node_face_t> xtop_trie_pruner::load_hash_node(std::shared_
 void xtop_trie_pruner::load_full_node_children(std::shared_ptr<xtrie_full_node_t> const & full_node, std::shared_ptr<xtrie_db_t> const & trie_db, std::error_code & ec) {
     assert(!ec);
 
-    for (std::size_t index = 0; index < 16; ++index) {
-        auto child = full_node->Children[index];
+    for (auto & child : full_node->Children) {
         if (child != nullptr) {
-            full_node->Children[index] = load_trie_node(child, trie_db, ec);
+            child = load_trie_node(child, trie_db, ec);
         }
     }
 }
@@ -214,11 +213,21 @@ void xtop_trie_pruner::try_prune_hash_node(std::shared_ptr<xtrie_hash_node_t> co
 void xtop_trie_pruner::try_prune_short_node(std::shared_ptr<xtrie_short_node_t> const & short_node, std::shared_ptr<xtrie_db_t> const & trie_db, std::error_code & ec) {
     assert(!ec);
 
-    auto const hash = xhash256_t{short_node->cache().hash_node()->data()};
+    auto new_short_node = short_node;
+
+    if (short_node->cache().hash_node() == nullptr) {
+        auto hasher = xtrie_hasher_t::newHasher(false);
+
+        auto const hash_result = hasher.hash(short_node, true);
+        new_short_node = std::dynamic_pointer_cast<xtrie_short_node_t>(hash_result.second);
+        assert(new_short_node != nullptr);
+    }
+
+    auto const hash = xhash256_t{new_short_node->cache().hash_node()->data()};
     assert(!hash.empty());
 
     if (trie_node_hashes_.find(hash) == std::end(trie_node_hashes_)) {
-        try_prune_trie_node(short_node->val, trie_db, ec);
+        try_prune_trie_node(new_short_node->val, trie_db, ec);
 
         trie_db->prune(hash, ec);
     }
@@ -226,13 +235,21 @@ void xtop_trie_pruner::try_prune_short_node(std::shared_ptr<xtrie_short_node_t> 
 
 void xtop_trie_pruner::try_prune_full_node(std::shared_ptr<xtrie_full_node_t> const & full_node, std::shared_ptr<xtrie_db_t> const & trie_db, std::error_code & ec) {
     assert(!ec);
+    auto new_full_node = full_node;
+
+    if (full_node->cache().hash_node() == nullptr) {
+        auto hasher = xtrie_hasher_t::newHasher(false);
+
+        auto const hash_result = hasher.hash(full_node, true);
+        new_full_node = std::dynamic_pointer_cast<xtrie_full_node_t>(hash_result.second);
+        assert(new_full_node != nullptr);
+    }
 
     auto const hash = xhash256_t{full_node->cache().hash_node()->data()};
     assert(!hash.empty());
 
-    if (trie_node_hashes_.find(hash) != std::end(trie_node_hashes_)) {
-        for (std::size_t index = 0; index < 16; ++index) {
-            auto child = full_node->Children[index];
+    if (trie_node_hashes_.find(hash) == std::end(trie_node_hashes_)) {
+        for (auto const & child : new_full_node->Children) {
             if (child != nullptr) {
                 try_prune_trie_node(child, trie_db, ec);
             }

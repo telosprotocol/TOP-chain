@@ -12,7 +12,7 @@
 
 NS_BEG3(top, evm_common, trie)
 
-std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> xtop_trie_hasher::hash(xtrie_node_face_ptr_t node, bool force) {
+std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> xtop_trie_hasher::hash(xtrie_node_face_ptr_t node, bool const force) {
     {
         auto const & cached = node->cache();
         if (cached.hash_node() != nullptr) {
