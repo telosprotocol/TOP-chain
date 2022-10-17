@@ -16,37 +16,8 @@ namespace top {
 namespace state_sync {
 
 class xtop_state_downloader {
-public:
-    xtop_state_downloader(base::xvdbstore_t * db, statestore::xstatestore_face_t * store, const observer_ptr<mbus::xmessage_bus_face_t> & msg_bus);
-    ~xtop_state_downloader() = default;
-
-    bool is_syncing(const common::xaccount_address_t & table);
-    // sync actions
-    void sync_state(const common::xaccount_address_t & table,
-                    const uint64_t height,
-                    const xhash256_t & block_hash,
-                    const xhash256_t & state_hash,
-                    const xhash256_t & root_hash,
-                    bool sync_unit,
-                    std::error_code & ec);
-    void sync_unit_state(const common::xaccount_address_t & account, const base::xaccount_index_t & index, std::error_code & ec);
-    void sync_cancel(const common::xaccount_address_t & table);
-    void handle_message(const vnetwork::xvnode_address_t & sender, std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network, const vnetwork::xmessage_t & message);
-
-    // peer actions
-    state_sync_peers_t get_peers();
-    void add_peer(const vnetwork::xvnode_address_t & peer, std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network);
-    void del_peer(const vnetwork::xvnode_address_t & peer);
-
 private:
-    void process_request(const vnetwork::xvnode_address_t & sender, std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network, const vnetwork::xmessage_t & message);
-    void process_response(const vnetwork::xmessage_t & message);
-    void process_table_request(const vnetwork::xvnode_address_t & sender, std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network, const vnetwork::xmessage_t & message);
-    void process_table_response(const vnetwork::xmessage_t & message);
-    void process_unit_request(const vnetwork::xvnode_address_t & sender, std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network, const vnetwork::xmessage_t & message);
-    void process_unit_response(const vnetwork::xmessage_t & message);
-    void process_finish(const sync_result & res);
-    void process_unit_finish(const sync_result & res);
+    using sync_networks = std::vector<std::shared_ptr<vnetwork::xvnetwork_driver_face_t>>;
 
     base::xvdbstore_t * m_db{nullptr};
     statestore::xstatestore_face_t * m_store{nullptr};
@@ -56,11 +27,47 @@ private:
 
     std::map<common::xaccount_address_t, std::shared_ptr<xdownload_executer_t>> m_running_tables;
     std::map<common::xaccount_address_t, std::shared_ptr<xdownload_executer_t>> m_running_units;
-    state_sync_peers_t m_peers;
+    sync_networks m_networks;
 
-    std::mutex m_table_dispatch;
-    std::mutex m_unit_dispatch;
-    std::mutex m_peers_mutex;
+    mutable std::mutex m_table_dispatch;
+    mutable std::mutex m_unit_dispatch;
+    mutable std::mutex m_mutex;
+
+public:
+    xtop_state_downloader(base::xvdbstore_t * db,
+                          statestore::xstatestore_face_t * store,
+                          const observer_ptr<mbus::xmessage_bus_face_t> & msg_bus,
+                          xobject_ptr_t<base::xiothread_t> executor_thread,
+                          xobject_ptr_t<base::xiothread_t> syncer_thread);
+    ~xtop_state_downloader() = default;
+
+    // sync actions
+    void sync_state(const common::xaccount_address_t & table,
+                    const uint64_t height,
+                    const xhash256_t & block_hash,
+                    const xhash256_t & state_hash,
+                    const xhash256_t & root_hash,
+                    bool sync_unit,
+                    std::error_code & ec);
+    void sync_unit_state(const common::xaccount_address_t & account, const base::xaccount_index_t & index, std::error_code & ec);
+    bool is_syncing(const common::xaccount_address_t & table) const;
+    void sync_cancel(const common::xaccount_address_t & table) const;
+    void handle_message(const vnetwork::xvnode_address_t & sender, std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network, const vnetwork::xmessage_t & message) const;
+
+    // peer actions
+    void add_network(std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network);
+    void del_network(const vnetwork::xvnode_address_t & vnode);
+    sync_peers latest_peers(const common::xtable_id_t & id) const;
+
+private:
+    void process_trie_request(const vnetwork::xvnode_address_t & sender, std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network, const vnetwork::xmessage_t & message) const;
+    void process_trie_response(const vnetwork::xmessage_t & message) const;
+    void process_table_request(const vnetwork::xvnode_address_t & sender, std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network, const vnetwork::xmessage_t & message) const;
+    void process_table_response(const vnetwork::xmessage_t & message) const;
+    void process_unit_request(const vnetwork::xvnode_address_t & sender, std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network, const vnetwork::xmessage_t & message) const;
+    void process_unit_response(const vnetwork::xmessage_t & message) const;
+    void process_trie_finish(const sync_result & res);
+    void process_unit_finish(const sync_result & res);
 };
 using xstate_downloader_t = xtop_state_downloader;
 

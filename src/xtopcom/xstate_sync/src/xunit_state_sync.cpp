@@ -20,7 +20,8 @@ namespace state_sync {
 
 std::shared_ptr<xtop_unit_state_sync> xtop_unit_state_sync::new_state_sync(const common::xaccount_address_t & account,
                                                                            const base::xaccount_index_t & index,
-                                                                           std::function<state_sync_peers_t()> peers,
+                                                                           std::function<sync_peers(const common::xtable_id_t & id)> peers,
+                                                                           std::function<void(const state_req &)> track_req,
                                                                            base::xvdbstore_t * db,
                                                                            statestore::xstatestore_face_t * store) {
     auto sync = std::make_shared<xtop_unit_state_sync>();
@@ -29,13 +30,11 @@ std::shared_ptr<xtop_unit_state_sync> xtop_unit_state_sync::new_state_sync(const
     auto height = index.get_latest_unit_height();
     auto block_hash = index.get_latest_unit_hash();
     auto state_hash = index.get_latest_state_hash();
-    if (block_hash.empty() || state_hash.empty()) {
-        xwarn("xtop_unit_state_sync::xtop_unit_state_sync sync_table hash empty: %s, %s", to_hex(block_hash).c_str(), to_hex(state_hash).c_str());
-        return nullptr;
-    }
     sync->m_peers_func = peers;
+    sync->m_track_func = track_req;
     sync->m_db = db;
     sync->m_store = store;
+    sync->m_symbol = "unit: " + account.value() + ", height: " + std::to_string(height) + ", block_hash: " + index.get_latest_unit_hash();
     xinfo("xtop_unit_state_sync::new_state_sync unit: %s, height: %lu, root: %s", account.c_str(), height, to_hex(block_hash).c_str());
     return sync;
 }
@@ -69,7 +68,7 @@ std::error_code xtop_unit_state_sync::error() const {
 }
 
 std::string xtop_unit_state_sync::symbol() const {
-    return m_index.dump();
+    return m_symbol;
 }
 
 sync_result xtop_unit_state_sync::result() const {
@@ -80,55 +79,35 @@ bool xtop_unit_state_sync::is_done() const {
     return m_done;
 }
 
-void xtop_unit_state_sync::push_deliver_state(const single_state_detail & detail) {
-    if (m_done) {
-        return;
+void xtop_unit_state_sync::deliver_req(const state_req & req) {
+    {
+        std::unique_lock<std::mutex> lock(m_mutex);
+        m_deliver_list.push_back(req);
     }
-    auto bstate = base::xvblock_t::create_state_object({detail.value.begin(), detail.value.end()});
-    auto const table_state = std::make_shared<data::xtable_bstate_t>(bstate);
-    auto const snapshot = table_state->take_snapshot();
-    auto const hash = base::xcontext_t::instance().hash(snapshot, enum_xhash_type_sha2_256);
-    if (hash != m_index.get_latest_state_hash()) {
-        xwarn("xtop_unit_state_sync::push_deliver_state state hash mismatch: %s, %s", to_hex(hash).c_str(), to_hex(m_index.get_latest_state_hash()).c_str());
-        return;
-    }
-    xinfo("xtop_unit_state_sync::push_deliver_state account: %s, index: %s, value: %s", m_account.c_str(), m_index.dump().c_str(), to_hex(detail.value).c_str());
-    auto const key = base::xvdbkey_t::create_prunable_unit_state_key(m_account.value(), detail.height, {detail.hash.begin(), detail.hash.end()});
-    std::string const value{detail.value.begin(), detail.value.end()};
-    m_db->set_value(key, value);
-    m_done = true;
-}
-
-void xtop_unit_state_sync::push_deliver_req(const state_req & req) {
-    // not use
-    xassert(false);
-    return;
+    m_condition.notify_one();
 }
 
 void xtop_unit_state_sync::sync_unit(std::error_code & ec) {
     // check exist
     auto unitstate = m_store->get_unit_state_by_accountindex(m_account, m_index);
     if (unitstate != nullptr) {
-        xinfo("xtop_unit_state_sync::sync_unit index: %s, state already exist in db", m_index.dump().c_str());
+        xinfo("xtop_unit_state_sync::sync_unit state already exist in db, {%s}", symbol().c_str());
         m_done = true;
         return;
     }
+    xinfo("xtop_state_sync::sync_table {%s}", symbol().c_str());
+    auto condition = [this]() -> bool { return !m_sync_unit_finish; };
+    auto add_task = [this](sync_peers const & peers) { return assign_unit_tasks(peers); };
+    auto process_task = [this](state_req & req, std::error_code & ec) { return process_unit(req, ec); };
+    loop(condition, add_task, process_task, ec);
+    if (ec) {
+        xwarn("xtop_state_sync::sync_table loop error: %s %s, exit, {%s}", ec.category().name(), ec.message().c_str(), symbol().c_str());
+        return;
+    }
+    return;
+}
 
-    // send request
-    auto network = available_network();
-    if (network == nullptr) {
-        xwarn("xtop_unit_state_sync::sync_unit index: %s, no network availble, exit", m_index.dump().c_str());
-        ec = error::xerrc_t::state_network_invalid;
-        m_cancel = true;
-        return;
-    }
-    auto peers = available_peers(network);
-    if (peers.empty()) {
-        xwarn("xtop_unit_state_sync::sync_unit index: %s, peers empty, exit", m_index.dump().c_str());
-        ec = error::xerrc_t::state_network_invalid;
-        m_cancel = true;
-        return;
-    }
+void xtop_unit_state_sync::assign_unit_tasks(const sync_peers & peers) {
     base::xstream_t stream(base::xcontext_t::instance());
     state_mpt::xaccount_info_t info;
     info.m_account = m_account;
@@ -136,65 +115,108 @@ void xtop_unit_state_sync::sync_unit(std::error_code & ec) {
     stream << info.encode();
     stream << rand();  // defend from filter
     xbytes_t data{stream.data(), stream.data() + stream.size()};
-    xinfo("xtop_unit_state_sync::sync_unit, account: %s, index: %s", m_account.c_str(), m_index.dump().c_str());
+    xinfo("xtop_unit_state_sync::assign_unit_tasks %s, id: %u, start sync", symbol().c_str(), m_req_sequence_id);
+    state_req req;
+    req.peer = send_message(peers, {stream.data(), stream.data() + stream.size()}, xmessage_id_sync_unit_request);
+    req.start = base::xtime_utl::time_now_ms();
+    req.id = m_req_sequence_id++;
+    req.type = state_req_type::enum_state_req_unit;
+    m_track_func(req);
+}
 
-    uint32_t cnt{0};
-    while (!m_done) {
-        // resend over 5s
-        if (cnt % 50 == 0) {
-            send_message(network, peers, data, xmessage_id_sync_unit_request);
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        cnt++;
-        if (cnt > 10 * 60) {
-            // 1 min overtime
-            xwarn("xtop_unit_state_sync::sync_unit account: %s, index: %s, overtime, cnt: %u", m_account.c_str(), m_index.dump().c_str(), cnt);
-            ec = error::xerrc_t::state_sync_overtime;
-            m_cancel = true;
+void xtop_unit_state_sync::process_unit(state_req & req, std::error_code & ec) {
+    if (req.type != state_req_type::enum_state_req_unit) {
+        return;
+    }
+    if (m_sync_unit_finish) {
+        return;
+    }
+    if (req.units_response.empty()) {
+        xwarn("xtop_state_sync::process_unit empty, %s", symbol().c_str());
+        return;
+    }
+    auto & data = req.units_response.at(0);
+    xinfo("xtop_state_sync::process_unit value size: %zu, {%s}", data.size(), symbol().c_str());
+    {
+        // check state
+        auto bstate = base::xvblock_t::create_state_object({data.begin(), data.end()});
+        auto const table_state = std::make_shared<data::xtable_bstate_t>(bstate);
+        auto const snapshot = table_state->take_snapshot();
+        auto const hash = base::xcontext_t::instance().hash(snapshot, enum_xhash_type_sha2_256);
+        if (hash != m_index.get_latest_state_hash()) {
+            xwarn("xtop_unit_state_sync::process_unit state hash mismatch: %s, %s", to_hex(hash).c_str(), to_hex(m_index.get_latest_state_hash()).c_str());
             return;
         }
     }
+    auto const key = base::xvdbkey_t::create_prunable_unit_state_key(m_account.value(), m_index.get_latest_unit_height(), {data.begin(), data.end()});
+    m_db->set_value(key, {data.begin(), data.end()});
+    m_sync_unit_finish = true;
 }
 
-void xtop_unit_state_sync::send_message(std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network,
-                                   const std::vector<common::xnode_address_t> & peers,
-                                   const xbytes_t & msg,
-                                   common::xmessage_id_t id) {
-    vnetwork::xmessage_t _msg = vnetwork::xmessage_t(msg, id);
-    xassert(!peers.empty());
-    auto random_fullnode = peers.at(RandomUint32() % peers.size());
-    std::error_code ec;
-    network->send_to(random_fullnode, _msg, ec);
-    if (ec) {
-        xwarn("xtop_unit_state_sync::send_message send net error, %s, %s", random_fullnode.account_address().c_str(), network->address().account_address().c_str());
+void xtop_unit_state_sync::loop(std::function<bool()> condition,
+                                std::function<void(sync_peers const &)> add_task,
+                                std::function<void(state_req &, std::error_code &)> process_task,
+                                std::error_code & ec) {
+    auto net = m_peers_func(m_account.table_id());
+    if (net.network == nullptr) {
+        xwarn("xtop_unit_state_sync::loop no network availble, exit, {%s}", symbol().c_str());
+        ec = error::xerrc_t::state_network_invalid;
+        m_cancel = true;
+        return;
     }
-}
-
-std::shared_ptr<vnetwork::xvnetwork_driver_face_t> xtop_unit_state_sync::available_network() const {
-    auto peers = m_peers_func();
-    for (auto it = peers.rbegin(); it != peers.rend(); it++) {
-        std::error_code ec;
-        auto fullnode_list = (*it)->fullnode_addresses(ec);
-        if (ec || fullnode_list.empty() || (fullnode_list.size() == 1 && fullnode_list[0] == (*it)->address())) {
-            continue;
+    while (condition()) {
+        xdbg("xtop_unit_state_sync::loop unit finish: %d, {%s}", m_sync_unit_finish.load(), symbol().c_str());
+        // step2: check peers
+        if (net.peers.empty()) {
+            xwarn("xtop_unit_state_sync::loop peers empty, exit, {%s}", symbol().c_str());
+            ec = error::xerrc_t::state_network_invalid;
+            m_cancel = true;
+            return;
         }
-        return (*it);
+        // step3: add tasks
+        add_task(net);
+        // step4: wait reqs
+        std::vector<state_req> reqs;
+        {
+            std::unique_lock<std::mutex> lock(m_mutex);
+            m_condition.wait(lock, [this] { return m_cancel || !m_deliver_list.empty(); });
+
+            if (m_cancel) {
+                ec = m_ec ? m_ec : error::xerrc_t::state_sync_cancel;
+                return;
+            }
+            while (!m_deliver_list.empty()) {
+                reqs.emplace_back(m_deliver_list.front());
+                m_deliver_list.pop_front();
+            }
+        }
+        // step5: process reqs
+        for (auto & req : reqs) {
+            if (req.nodes_response.empty() && req.units_response.empty()) {
+                auto it = std::find(net.peers.begin(), net.peers.end(), req.peer);
+                if (it != net.peers.end()) {
+                    net.peers.erase(it);
+                    xwarn("xtop_state_sync::loop del zero data peer %s, left: %zu, {%s}", it->to_string().c_str(), net.peers.size(), symbol().c_str());
+                }
+            }
+            process_task(req, ec);
+            if (ec) {
+                xwarn("xtop_state_sync::loop process error: %s %s, {%s}", ec.category().name(), ec.message().c_str(), symbol().c_str());
+                return;
+            }
+        }
     }
-    return nullptr;
 }
 
-std::vector<common::xnode_address_t> xtop_unit_state_sync::available_peers(std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network) const {
+common::xnode_address_t xtop_unit_state_sync::send_message(const sync_peers & peers, const xbytes_t & msg, common::xmessage_id_t id) {
+    vnetwork::xmessage_t _msg = vnetwork::xmessage_t(msg, id);
+    auto random_fullnode = peers.peers.at(RandomUint32() % peers.peers.size());
     std::error_code ec;
-    auto fullnode_list = network->fullnode_addresses(ec);
+    peers.network->send_to(random_fullnode, _msg, ec);
     if (ec) {
-        return {};
+        xwarn("xtop_state_sync::send_message send net error, %s, %s", random_fullnode.account_address().c_str(), peers.network->address().account_address().c_str());
     }
-    auto it = std::find(fullnode_list.begin(), fullnode_list.end(), network->address());
-    if (it != fullnode_list.end()) {
-        fullnode_list.erase(it);
-    }
-    xassert(!fullnode_list.empty());
-    return fullnode_list;
+    return random_fullnode;
 }
 
 }  // namespace state_sync

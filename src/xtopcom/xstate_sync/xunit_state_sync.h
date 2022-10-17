@@ -24,7 +24,8 @@ public:
 
     static std::shared_ptr<xtop_unit_state_sync> new_state_sync(const common::xaccount_address_t & account,
                                                                 const base::xaccount_index_t & index,
-                                                                std::function<state_sync_peers_t()> peers,
+                                                                std::function<sync_peers(const common::xtable_id_t & id)> peers,
+                                                                std::function<void(const state_req &)> track_req,
                                                                 base::xvdbstore_t * db,
                                                                 statestore::xstatestore_face_t * store);
 
@@ -34,28 +35,37 @@ public:
     std::error_code error() const override;
     std::string symbol() const override;
     sync_result result() const override;
-    void push_deliver_state(const single_state_detail & detail) override;
-    void push_deliver_req(const state_req & req) override;
+    void deliver_req(const state_req & req) override;
 
 private:
     void wait() const;
     void sync_unit(std::error_code & ec);
-    void send_message(std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network,
-                      const std::vector<common::xnode_address_t> & peers,
-                      const xbytes_t & msg,
-                      common::xmessage_id_t id);
-    std::shared_ptr<vnetwork::xvnetwork_driver_face_t> available_network() const;
-    std::vector<common::xnode_address_t> available_peers(std::shared_ptr<vnetwork::xvnetwork_driver_face_t> network) const;
+    void assign_unit_tasks(const sync_peers & peers);
+    void process_unit(state_req & req, std::error_code & ec);
+    void loop(std::function<bool()> condition,
+              std::function<void(sync_peers const &)> add_task,
+              std::function<void(state_req &, std::error_code &)> process_task,
+              std::error_code & ec);
+    common::xnode_address_t send_message(const sync_peers & peers, const xbytes_t & msg, common::xmessage_id_t id);
 
     common::xaccount_address_t m_account;
     base::xaccount_index_t m_index;
+    std::string m_symbol;
     base::xvdbstore_t * m_db{nullptr};
     statestore::xstatestore_face_t * m_store{nullptr};
-    std::function<state_sync_peers_t()> m_peers_func{nullptr};
+    std::function<sync_peers(const common::xtable_id_t & id)> m_peers_func{nullptr};
+    std::function<void(const state_req &)> m_track_func{nullptr};
 
     std::atomic<bool> m_done{false};
     std::atomic<bool> m_cancel{false};
+    std::atomic<bool> m_sync_unit_finish{false};
     std::error_code m_ec;
+
+    std::list<state_req> m_deliver_list;
+    std::condition_variable m_condition;
+    std::mutex m_mutex;
+
+    uint32_t m_req_sequence_id{0};
 };
 using xunit_state_sync_t = xtop_unit_state_sync;
 
