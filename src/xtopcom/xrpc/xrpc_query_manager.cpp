@@ -1799,6 +1799,8 @@ void xrpc_query_manager::set_body_info(xJson::Value & body, xblock_t * bp, const
 
     base::xvaccount_t _vaccount(bp->get_account());
     base::xvchain_t::instance().get_xblockstore()->load_block_input(_vaccount, bp, metrics::blockstore_access_from_rpc_get_block_set_table);
+    base::xvchain_t::instance().get_xblockstore()->load_block_output(_vaccount, bp, metrics::blockstore_access_from_rpc_get_block_set_table);
+
     bp->parse_to_json(body, rpc_version);
     if (block_level == base::enum_xvblock_level_unit) {
         set_addition_info(body, bp);
@@ -1822,6 +1824,11 @@ xJson::Value xrpc_query_manager::get_block_json(xblock_t * bp, const std::string
 
     // load input for raw tx get
     if (false == base::xvchain_t::instance().get_xblockstore()->load_block_input(base::xvaccount_t(bp->get_account()), bp, metrics::blockstore_access_from_rpc_get_block_json)) {
+        xassert(false);  // db block should always load input success
+        return root;
+    }
+    // load output for accountindex
+    if (false == base::xvchain_t::instance().get_xblockstore()->load_block_output(base::xvaccount_t(bp->get_account()), bp, metrics::blockstore_access_from_rpc_get_block_json)) {
         xassert(false);  // db block should always load input success
         return root;
     }
@@ -1856,6 +1863,12 @@ xJson::Value xrpc_query_manager::get_blocks_json(xblock_t * bp, const std::strin
         xassert(false);  // db block should always load input success
         return root;
     }
+    // load output for accountindex
+    if (false == base::xvchain_t::instance().get_xblockstore()->load_block_output(base::xvaccount_t(bp->get_account()), bp, metrics::blockstore_access_from_rpc_get_block_json)) {
+        xassert(false);  // db block should always load input success
+        return root;
+    }
+
 
     set_shared_info(root, bp);
 
