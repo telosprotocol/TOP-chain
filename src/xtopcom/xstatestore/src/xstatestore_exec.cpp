@@ -15,26 +15,42 @@ NS_BEG2(top, statestore)
 
 xstatestore_executor_t::xstatestore_executor_t(common::xaccount_address_t const& table_addr, xexecute_listener_face_t * execute_listener)
 : m_table_addr{table_addr},m_state_accessor{table_addr},m_execute_listener(execute_listener) {
-    m_executed_height = m_statestore_base.get_latest_executed_block_height(table_addr);   
+    uint64_t old_executed_height = m_statestore_base.get_latest_executed_block_height(m_table_addr);
+    recover_execute_height(old_executed_height);
+}
 
-    xobject_ptr_t<base::xvblock_t> latest_block = m_statestore_base.get_blockstore()->load_block_object(m_table_addr.vaccount(), m_executed_height, base::enum_xvblock_flag_committed, false);
-    if (nullptr != latest_block) {
-        xtablestate_ext_ptr_t tablestate_ext = nullptr;
+void xstatestore_executor_t::recover_execute_height(uint64_t old_executed_height) {    
+    // XTODO recover execute_height because the state of execute height may be pruned
+    for (uint64_t i = old_executed_height; i < old_executed_height + 512; i++) {
+        xobject_ptr_t<base::xvblock_t> _block = m_statestore_base.get_blockstore()->load_block_object(m_table_addr.vaccount(), i, base::enum_xvblock_flag_committed, false);
+        if (nullptr == _block) {
+            xwarn("xstatestore_executor_t::xstatestore_executor_t fail-load block. table=%s,execute_height=%ld,height=%ld,",m_table_addr.value().c_str(),old_executed_height,i);
+            continue;
+        }
+
         std::error_code ec;
-        execute_and_get_tablestate_ext(latest_block.get(), tablestate_ext, ec);
-        if (nullptr != tablestate_ext) {
-            m_state_accessor.set_latest_connectted_tablestate(tablestate_ext);
-            m_state_accessor.write_table_bstate_to_cache(table_addr, latest_block->get_block_hash(), tablestate_ext);
-            xinfo("xstatestore_executor_t::xstatestore_executor_t table=%s,execute_height=%ld,this=%p", table_addr.value().c_str(), m_executed_height, this);
-            return;
+        xtablestate_ext_ptr_t tablestate_ext;
+        if (i == 0) {
+            // the state of height#0 may not writted to db
+            tablestate_ext = make_state_from_current_table(_block.get(), ec);
         } else {
-            xerror("xstatestore_executor_t::xstatestore_executor_t fail-make state from execute height. %s,height=%ld", table_addr.value().c_str(), m_executed_height);
+            tablestate_ext = m_state_accessor.read_table_bstate_from_db(m_table_addr, _block.get());
         }
-    } else {
-        if (0 != m_executed_height) {
-            xerror("xstatestore_executor_t::xstatestore_executor_t fail-load block from execute height. %s,height=%ld", table_addr.value().c_str(), m_executed_height);
+        if (nullptr == tablestate_ext) {
+            xwarn("xstatestore_executor_t::xstatestore_executor_t fail-load tablestate. table=%s,execute_height=%ld,height=%ld",m_table_addr.value().c_str(),old_executed_height,i);
+            continue;
         }
-    }
+
+        m_executed_height = i;
+        m_state_accessor.set_latest_connectted_tablestate(tablestate_ext);
+        m_state_accessor.write_table_bstate_to_cache(m_table_addr, _block->get_block_hash(), tablestate_ext);
+        update_latest_executed_info(_block.get());
+        xinfo("xstatestore_executor_t::xstatestore_executor_t succ table=%s,execute_height=%ld,%ld", m_table_addr.value().c_str(), old_executed_height, m_executed_height);
+        return;
+    }    
+
+    // XTODO should not happen
+    xwarn("xstatestore_executor_t::xstatestore_executor_t fail-recover execute height. %s,height=%ld", m_table_addr.value().c_str(), old_executed_height);
 }
 
 void xstatestore_executor_t::on_table_block_committed(base::xvblock_t* block) const {

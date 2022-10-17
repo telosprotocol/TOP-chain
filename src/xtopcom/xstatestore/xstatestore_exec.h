@@ -51,6 +51,7 @@ protected:
     void    set_latest_executed_info(uint64_t height,const std::string & blockhash) const;
     void    set_need_sync_state_block_height(uint64_t height) const;
     void    update_latest_executed_info(base::xvblock_t* block) const;
+    void    recover_execute_height(uint64_t old_executed_height);
 
     data::xunitstate_ptr_t make_state_from_current_unit(common::xaccount_address_t const& unit_addr, base::xvblock_t * current_block, std::error_code & ec) const;
     data::xunitstate_ptr_t make_state_from_prev_state_and_unit(common::xaccount_address_t const& unit_addr, base::xvblock_t * current_block, data::xunitstate_ptr_t const& prev_bstate, std::error_code & ec) const;
@@ -60,7 +61,7 @@ protected:
     xtablestate_ext_ptr_t  make_state_from_prev_state_and_table(base::xvblock_t* current_block, xtablestate_ext_ptr_t const& prev_state, std::error_code & ec) const;
     xtablestate_ext_ptr_t  execute_block_recursive(base::xvblock_t* current_block, uint32_t & limit, std::error_code & ec) const;
 
-private:
+protected:
     mutable std::mutex          m_execute_height_lock;
     mutable uint64_t            m_executed_height{0};
     mutable std::mutex          m_table_state_write_lock;

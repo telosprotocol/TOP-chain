@@ -72,6 +72,52 @@ TEST_F(test_block_executed, order_execute_block_1) {
     EXPECT_EQ(statestore::xstatestore_hub_t::instance()->get_latest_executed_block_height(common::xaccount_address_t{mocktable.get_account()}), max_count - 2);    
 }
 
+
+TEST_F(test_block_executed, recover_execute_height) {
+
+    class test_xstatestore_executor_t : public statestore::xstatestore_executor_t {
+    public:
+        test_xstatestore_executor_t(common::xaccount_address_t const& table_addr)
+        : statestore::xstatestore_executor_t(table_addr, nullptr) {}
+        void reset_execute_height(uint64_t height) {
+            m_executed_height = height;
+        }
+        void force_recover_execute_height(uint64_t old_height) {
+            recover_execute_height(old_height);
+        }
+    };
+
+    mock::xvchain_creator creator;
+    base::xvblockstore_t* blockstore = creator.get_blockstore();
+    uint64_t max_count = 100;
+    mock::xdatamock_table mocktable(1, 4);
+    mocktable.genrate_table_chain(max_count, blockstore);
+    const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
+    xassert(tableblocks.size() == max_count + 1);
+
+    for (auto & block : tableblocks) {
+        ASSERT_TRUE(blockstore->store_block(mocktable, block.get()));
+    }
+
+    {
+        test_xstatestore_executor_t state_executor(common::xaccount_address_t{mocktable.get_account()});
+        for (uint64_t i = 0; i <= max_count - 2; i++) {
+            auto _block = blockstore->load_block_object(mocktable, i, base::enum_xvblock_flag_committed, false);
+            state_executor.on_table_block_committed(_block.get());
+        }
+        state_executor.reset_execute_height(max_count/2);        
+        EXPECT_EQ(state_executor.get_latest_executed_block_height(), max_count/2); 
+        for (uint64_t i = max_count/2; i < max_count/2+20; i++) {
+            const std::string state_db_key = base::xvdbkey_t::create_prunable_state_key(common::xaccount_address_t{mocktable.get_account()}.vaccount(), tableblocks[i]->get_height(), tableblocks[i]->get_block_hash());
+            base::xvchain_t::instance().get_xdbstore()->delete_value(state_db_key);
+        }
+        state_executor.force_recover_execute_height(max_count/2);
+        EXPECT_EQ(state_executor.get_latest_executed_block_height(), max_count/2+20); 
+
+        EXPECT_EQ(state_executor.get_latest_executed_tablestate_ext()->get_table_state()->height(), max_count/2+20);        
+    }
+}
+
 class xexecute_listener_test : public xexecute_listener_face_t {
 public:
     void on_executed(uint64_t height) {}
