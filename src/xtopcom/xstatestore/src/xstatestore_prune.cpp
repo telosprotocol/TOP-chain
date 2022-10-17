@@ -116,7 +116,7 @@ void xstatestore_prune_t::prune_imp(uint64_t exec_height) {
 
     xdbg("xstatestore_prune_t::prune_imp in table:%", m_table_addr.value().c_str());
     bool is_storage_node = base::xvchain_t::instance().is_storage_node();
-    bool is_consensus_node = base::xvchain_t::instance().is_consensus_node();
+    bool is_consensus_node = base::xvchain_t::instance().has_other_node();
     uint64_t pruned_height;
     if (is_storage_node && !is_consensus_node) {
         pruned_height = prune_exec_storage(from_height, to_height);
