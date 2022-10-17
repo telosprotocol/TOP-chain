@@ -145,7 +145,7 @@ private:
 
     xtrie_node_face_ptr_t resolve_hash(xtrie_hash_node_ptr_t const & n, /*xbytes_t prefix,*/ std::error_code & ec) const;
 
-    xbytes_t resolve_blob(std::shared_ptr<xtrie_hash_node_t> const & n, std::error_code & ec);
+    xbytes_t resolve_blob(std::shared_ptr<xtrie_hash_node_t> const & n, std::error_code & ec) const;
 
     // hashRoot calculates the root hash of the given trie
     std::pair<xtrie_node_face_ptr_t, xtrie_node_face_ptr_t> hash_root();
