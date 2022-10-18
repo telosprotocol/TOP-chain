@@ -20,7 +20,7 @@ class xtop_download_executer {
 #endif
 
 public:
-    explicit xtop_download_executer(observer_ptr<base::xiothread_t> thread);
+    explicit xtop_download_executer(observer_ptr<base::xiothread_t> thread, uint32_t overtime);
     ~xtop_download_executer() = default;
 
     void run_state_sync(std::shared_ptr<xstate_sync_face_t> syncer, std::function<void(sync_result)> callback);
@@ -35,6 +35,7 @@ private:
     void pop_state_pack();
 
     observer_ptr<base::xiothread_t> m_syncer_thread{nullptr};
+    uint32_t m_overtime{0};
     std::atomic<bool> m_cancel{false};
     std::atomic<bool> m_notify{false};
     std::list<state_req> m_track_req;

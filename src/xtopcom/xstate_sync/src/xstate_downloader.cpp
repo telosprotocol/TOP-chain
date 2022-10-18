@@ -12,6 +12,8 @@
 namespace top {
 namespace state_sync {
 
+constexpr uint32_t execution_overtime = 10 * 60;
+
 xtop_state_downloader::xtop_state_downloader(base::xvdbstore_t * db,
                                              statestore::xstatestore_face_t * store,
                                              const observer_ptr<mbus::xmessage_bus_face_t> & msg_bus,
@@ -47,7 +49,7 @@ void xtop_state_downloader::sync_state(const common::xaccount_address_t & table,
         ec = error::xerrc_t::downloader_is_running;
         return;
     }
-    auto executer = std::make_shared<xtop_download_executer>(make_observer(m_syncer_thread));
+    auto executer = std::make_shared<xtop_download_executer>(make_observer(m_syncer_thread), execution_overtime);
 
     auto peers_func = [this](common::xtable_id_t const & table) { return latest_peers(table); };
     auto track_func = [executer](state_req const & sr) { executer->push_track_req(sr); };
@@ -119,7 +121,7 @@ void xtop_state_downloader::sync_unit_state(const common::xaccount_address_t & a
         return;
     }
 
-    auto executer = std::make_shared<xtop_download_executer>(make_observer(m_syncer_thread));
+    auto executer = std::make_shared<xtop_download_executer>(make_observer(m_syncer_thread), execution_overtime);
     auto peers_func = [this](common::xtop_table_id const & table) { return latest_peers(table); };
     auto track_func = [executer](state_req const & sr) { executer->push_track_req(sr); };
     auto finish = [this](sync_result const & sr) { process_unit_finish(sr); };

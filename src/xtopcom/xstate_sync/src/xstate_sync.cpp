@@ -42,6 +42,7 @@ std::shared_ptr<xtop_state_sync> xtop_state_sync::new_state_sync(const common::x
     sync->m_track_func = track_req;
     sync->m_db = db;
     sync->m_kv_db = std::make_shared<evm_common::trie::xkv_db_t>(db, table);
+    sync->m_items_per_task = fetch_num;
     xinfo("xtop_state_sync::new_state_sync {%s}", sync->symbol().c_str());
     return sync;
 }
@@ -77,7 +78,11 @@ void xtop_state_sync::wait() const {
 }
 
 void xtop_state_sync::cancel() {
-    m_cancel = true;
+    {
+        std::unique_lock<std::mutex> lock(m_mutex);
+        m_cancel = true;
+    }
+    m_condition.notify_one();
     wait();
 }
 
@@ -232,38 +237,40 @@ void xtop_state_sync::assign_table_tasks(const sync_peers & peers) {
 }
 
 void xtop_state_sync::assign_trie_tasks(const sync_peers & peers) {
-    state_req req;
-    std::vector<xhash256_t> nodes;
-    std::vector<xbytes_t> units;
-    fill_tasks(fetch_num, req, nodes, units);
-    if (nodes.size() + units.size() == 0) {
-        return;
+    for (;;) {
+        state_req req;
+        std::vector<xhash256_t> nodes;
+        std::vector<xbytes_t> units;
+        fill_tasks(m_items_per_task, req, nodes, units);
+        if (nodes.size() + units.size() == 0) {
+            return;
+        }
+        if (m_cancel) {
+            return;
+        }
+        base::xstream_t stream(base::xcontext_t::instance());
+        stream << m_table.value();
+        stream << m_req_sequence_id;
+        std::vector<xbytes_t> nodes_bytes;
+        std::vector<xbytes_t> units_bytes;
+        for (auto const & hash : nodes) {
+            nodes_bytes.emplace_back(hash.to_bytes());
+            xdbg("xtop_state_sync::assign_trie_tasks nodes %s", hash.as_hex_str().c_str());
+        }
+        for (auto const & key : units) {
+            units_bytes.emplace_back(key);
+            xdbg("xtop_state_sync::assign_trie_tasks units %s", to_hex(key).c_str());
+        }
+        stream << nodes_bytes;
+        stream << units_bytes;
+        stream << rand();
+        xinfo("xtop_state_sync::assign_trie_tasks total %zu, %zu, {%s}", nodes_bytes.size(), units_bytes.size(), symbol().c_str());
+        req.peer = send_message(peers, {stream.data(), stream.data() + stream.size()}, xmessage_id_sync_trie_request);
+        req.start = base::xtime_utl::time_now_ms();
+        req.id = m_req_sequence_id++;
+        req.type = state_req_type::enum_state_req_trie;
+        m_track_func(req);
     }
-    if (m_cancel) {
-        return;
-    }
-    base::xstream_t stream(base::xcontext_t::instance());
-    stream << m_table.value();
-    stream << m_req_sequence_id;
-    std::vector<xbytes_t> nodes_bytes;
-    std::vector<xbytes_t> units_bytes;
-    for (auto const & hash : nodes) {
-        nodes_bytes.emplace_back(hash.to_bytes());
-        xdbg("xtop_state_sync::assign_trie_tasks nodes %s", hash.as_hex_str().c_str());
-    }
-    for (auto const & key : units) {
-        units_bytes.emplace_back(key);
-        xdbg("xtop_state_sync::assign_trie_tasks units %s", to_hex(key).c_str());
-    }
-    stream << nodes_bytes;
-    stream << units_bytes;
-    stream << rand();
-    xinfo("xtop_state_sync::assign_trie_tasks total %zu, %zu, {%s}", nodes_bytes.size(), units_bytes.size(), symbol().c_str());
-    req.peer = send_message(peers, {stream.data(), stream.data() + stream.size()}, xmessage_id_sync_trie_request);
-    req.start = base::xtime_utl::time_now_ms();
-    req.id = m_req_sequence_id++;
-    req.type = state_req_type::enum_state_req_trie;
-    m_track_func(req);
 }
 
 common::xnode_address_t xtop_state_sync::send_message(const sync_peers & peers, const xbytes_t & msg, common::xmessage_id_t id) {
@@ -382,16 +389,8 @@ void xtop_state_sync::process_trie(state_req & req, std::error_code & ec) {
             } else {
                 xwarn("xtop_state_sync::process_trie process_unit_data abnormal: %s, %s %s", to_hex(hash).c_str(), ec_internal.category().name(), ec_internal.message().c_str());
             }
-        } else {
-            m_unit_bytes_uncommitted += blob.size();
         }
-        // DEBUG
-        if (!req.unit_tasks.count(hash)) {
-            xwarn("xtop_state_sync::process_trie process_unit_data not find key: %s", to_hex(hash).c_str());
-            for (auto t : req.unit_tasks) {
-                xwarn("%s", to_hex(t.first).c_str());
-            }
-        }
+        m_unit_bytes_uncommitted += blob.size();
         req.unit_tasks.erase(hash);
     }
     // retry queue
