@@ -52,6 +52,7 @@ protected:
     void    set_need_sync_state_block_height(uint64_t height) const;
     void    update_latest_executed_info(base::xvblock_t* block) const;
     void    recover_execute_height(uint64_t old_executed_height);
+    bool    need_store_unitstate() const;
 
     data::xunitstate_ptr_t make_state_from_current_unit(common::xaccount_address_t const& unit_addr, base::xvblock_t * current_block, std::error_code & ec) const;
     data::xunitstate_ptr_t make_state_from_prev_state_and_unit(common::xaccount_address_t const& unit_addr, base::xvblock_t * current_block, data::xunitstate_ptr_t const& prev_bstate, std::error_code & ec) const;

@@ -905,6 +905,8 @@ void xaccount_index_upgrade_t::add_old_index(const std::string & addr, const bas
 }
 
 bool xaccount_index_upgrade_t::upgrade(account_index_converter convert_func, uint32_t max_convert_num) {
+    uint32_t max_total_num = max_convert_num * 4; // XTODO
+    uint32_t total_num = 0;
     uint32_t num = 0;
 
     if (!m_lack_accounts.empty()) {
@@ -925,6 +927,12 @@ bool xaccount_index_upgrade_t::upgrade(account_index_converter convert_func, uin
                 iter++;
                 num++;
                 m_lack_accounts_pos++;
+            }
+
+            // TODO(jimmy) add total num control for memory usage
+            total_num++;
+            if (total_num >= max_total_num) {
+                break;
             }
         }
     }

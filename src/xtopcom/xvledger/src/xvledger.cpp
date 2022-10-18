@@ -1615,17 +1615,17 @@ namespace top
             else
                 m_is_auto_prune = 0;
         }
-        void xvchain_t::set_node_type(bool is_storage, bool is_consenus)
+        void xvchain_t::set_node_type(bool is_storage, bool has_other_node)
         {
-            if (m_is_storage_node == is_storage && m_is_consensus_node == is_consenus) {
+            if (m_is_storage_node == is_storage && m_has_other_node == has_other_node) {
                 return;
             }
-            xkinfo("xvchain_t::set_node_type,is_storage=%d->%d,is_consensus=%d->%d",m_is_storage_node,is_storage,m_is_consensus_node,is_consenus);
+            xkinfo("xvchain_t::set_node_type,is_storage=%d->%d,is_consensus=%d->%d",m_is_storage_node,is_storage,m_has_other_node,has_other_node);
             if (m_is_storage_node != is_storage) {
                 m_is_storage_node = is_storage;
             }
-            if (m_is_consensus_node != is_consenus) {
-                m_is_consensus_node = is_consenus;
+            if (m_has_other_node != has_other_node) {
+                m_has_other_node = has_other_node;
             }
         }
 
