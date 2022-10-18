@@ -43,21 +43,6 @@ std::shared_ptr<Sync> Sync::NewSync(xkv_db_face_ptr_t _database) {
     return std::make_shared<Sync>( _database);
 }
 
-Sync::~Sync() {
-    for (auto _p : nodeReqs) {
-        if (_p.second != nullptr) {
-            free(_p.second);
-        }
-    }
-    nodeReqs.clear();
-    for (auto _p : unitReqs) {
-        if (_p.second != nullptr) {
-            free(_p.second);
-        }
-    }
-    unitReqs.clear();
-}
-
 void Sync::Init(xhash256_t const & root, leaf_callback callback) {
     syncRoot = root;
     AddSubTrie(root, xbytes_t{}, xhash256_t{}, callback);
@@ -80,7 +65,7 @@ void Sync::AddSubTrie(xhash256_t const & root, xbytes_t const & path, xhash256_t
         return;
     }
 
-    auto req = new request(path, root, callback);
+    auto req = std::make_shared<request>(path, root, callback);
     if (parent != xhash256_t{}) {
         auto ancestor = nodeReqs[parent];
         if (ancestor == nullptr) {
@@ -102,7 +87,7 @@ void Sync::AddUnitEntry(xhash256_t const & hash, xbytes_t const & path, xbytes_t
         return;
     }
 
-    auto req = new request(path, hash, unit_sync_key, unit_store_key, true);
+    auto req = std::make_shared<request>(path, hash, unit_sync_key, unit_store_key);
     if (parent != xhash256_t{}) {
         auto ancestor = nodeReqs[parent];
         if (ancestor == nullptr) {
@@ -234,7 +219,7 @@ std::size_t Sync::Pending() const {
     return nodeReqs.size() + unitReqs.size();
 }
 
-void Sync::schedule(request * req) {
+void Sync::schedule(std::shared_ptr<request> req) {
     if (req->unit) {
         if (unitReqs.find(req->hash) != unitReqs.end()) {
             unitReqs[req->hash]->parents.insert(unitReqs[req->hash]->parents.begin(), req->parents.begin(), req->parents.end());
@@ -268,7 +253,7 @@ void Sync::schedule(request * req) {
     }
 }
 
-std::vector<Sync::request *> Sync::children(request * req, xtrie_node_face_ptr_t object, std::error_code & ec) {
+std::vector<std::shared_ptr<Sync::request>> Sync::children(std::shared_ptr<request> req, xtrie_node_face_ptr_t object, std::error_code & ec) {
     // Gather all the children of the node, irrelevant whether known or not
 
     // <path, node>
@@ -310,7 +295,7 @@ std::vector<Sync::request *> Sync::children(request * req, xtrie_node_face_ptr_t
     }
 
     // Iterate over the children, and request all unknown ones
-    std::vector<request *> requests;
+    std::vector<std::shared_ptr<request>> requests;
     requests.reserve(children.size());
     for (auto const & child_p : children) {
         // Notify any external watcher of a new key/value node
@@ -344,7 +329,7 @@ std::vector<Sync::request *> Sync::children(request * req, xtrie_node_face_ptr_t
                 continue;
             }
 
-            auto new_req = new request(child_p.first, hash, req->callback);
+            auto new_req = std::make_shared<request>(child_p.first, hash, req->callback);
             new_req->parents.push_back(req);
             requests.push_back(new_req);
         }
@@ -353,7 +338,7 @@ std::vector<Sync::request *> Sync::children(request * req, xtrie_node_face_ptr_t
     return requests;
 }
 
-void Sync::commit(request * req, std::error_code & ec) {
+void Sync::commit(std::shared_ptr<request> req, std::error_code & ec) {
     // Write the node content to the membatch
     if (req->unit) {
         membatch.units[req->unit_store_key] = req->data;
@@ -376,7 +361,6 @@ void Sync::commit(request * req, std::error_code & ec) {
             }
         }
     }
-    free(req);
     return;
 }
 

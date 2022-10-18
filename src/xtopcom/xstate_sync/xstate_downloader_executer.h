@@ -38,8 +38,8 @@ private:
     uint32_t m_overtime{0};
     std::atomic<bool> m_cancel{false};
     std::atomic<bool> m_notify{false};
-    std::list<state_req> m_track_req;
-    std::list<state_res> m_state_packs;
+    std::queue<state_req> m_track_req;
+    std::queue<state_res> m_state_packs;
     mutable std::mutex m_track_mutex;
     mutable std::mutex m_state_pack_mutex;
 };

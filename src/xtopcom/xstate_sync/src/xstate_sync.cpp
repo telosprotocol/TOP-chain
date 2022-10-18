@@ -108,7 +108,7 @@ void xtop_state_sync::deliver_req(const state_req & req) {
 #endif
     {
         std::unique_lock<std::mutex> lock(m_mutex);
-        m_deliver_list.push_back(req);
+        m_deliver_list.push(req);
     }
     m_condition.notify_one();
 }
@@ -198,7 +198,7 @@ void xtop_state_sync::loop(std::function<bool()> condition,
             }
             while (!m_deliver_list.empty()) {
                 reqs.emplace_back(m_deliver_list.front());
-                m_deliver_list.pop_front();
+                m_deliver_list.pop();
             }
         }
         // step5: process reqs
