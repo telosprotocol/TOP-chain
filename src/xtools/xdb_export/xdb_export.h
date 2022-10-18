@@ -85,6 +85,7 @@ public:
     void   db_parse_type_size(const std::string &fileName);
     std::string get_account_key_string(const std::string & key);
     void   prune_db();
+    void   query_all_table_performance(std::vector<std::string> const & accounts_vec);
 private:
     struct tx_ext_t {
         base::xtable_shortid_t  sendtableid;
@@ -360,6 +361,7 @@ private:
                                  base::enum_transaction_subtype type,
                                  const std::map<std::string, tx_check_info_t> & tx_check_list,
                                  std::map<std::string, tx_check_result_info_t> & tx_result_list);
+    void query_table_performance(std::string const & account);
 
     std::unique_ptr<xbase_timer_driver_t> m_timer_driver;
     xobject_ptr_t<mbus::xmessage_bus_face_t> m_bus;

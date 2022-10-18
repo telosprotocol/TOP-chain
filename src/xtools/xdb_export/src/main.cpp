@@ -51,6 +51,7 @@ void usage() {
     std::cout << "        - check_contract_property <account> <property> <height|last|all>" << std::endl;
     std::cout << "        - check_balance" << std::endl;
     std::cout << "        - check_archive_db [redundancy]" << std::endl;
+    std::cout << "        - check_performance" << std::endl;
     std::cout << "        - parse_checkpoint <height>" << std::endl;
     std::cout << "        - parse_db" << std::endl;
     std::cout << "        - db_read_meta  [db_path] <account>" << std::endl;
@@ -236,6 +237,10 @@ int main(int argc, char ** argv) {
     } else if (function_name == "check_mpt") {
         auto const table_account_vec = xdb_export_tools_t::get_table_accounts();
         tools.query_all_table_mpt(table_account_vec);
+    } else if (function_name == "check_performance") {
+        tools.set_outfile_folder("performance_result/");
+        auto const table_account_vec = tools.get_table_accounts();
+        tools.query_all_table_performance(table_account_vec);
     } else if (function_name == "check_tx_info") {
         uint32_t thread_num = 0;
         uint32_t start_timestamp = 0;
