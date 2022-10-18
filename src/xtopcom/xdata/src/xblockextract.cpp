@@ -355,7 +355,6 @@ cross_chain_contract_info xblockextract_t::get_cross_chain_config() {
 }
 
 bool xblockextract_t::is_cross_tx(const evm_common::xevm_logs_t & logs, const cross_chain_contract_info & cross_chain_config) {
-#ifndef CROSS_TX_DBG
     for (auto & log : logs) {
         auto it = cross_chain_config.find(log.address.to_hex_string());
         if (it == cross_chain_config.end()) {
@@ -368,12 +367,6 @@ bool xblockextract_t::is_cross_tx(const evm_common::xevm_logs_t & logs, const cr
         }
     }
     return false;
-#else
-    if (logs.empty()) {
-        return false;
-    }
-    return true;
-#endif
 }
 
 bool xblockextract_t::get_chain_bits(const evm_common::xevm_logs_t & logs, const cross_chain_contract_info & cross_chain_config, evm_common::u256 & chain_bits) {
@@ -405,9 +398,11 @@ void xblockextract_t::unpack_crosschain_txs(base::xvblock_t* _block, xrelayblock
 
     auto input_actions = data::xblockextract_t::unpack_eth_txactions(_block);
     for (auto & txaction : input_actions) {
+#ifndef CROSS_TX_DBG
         if (txaction.get_tx_subtype() != base::enum_transaction_subtype_send) {
             continue;
         }
+#endif
 
         data::xeth_store_receipt_t evm_result;
         auto ret = txaction.get_evm_transaction_receipt(evm_result);
@@ -421,6 +416,7 @@ void xblockextract_t::unpack_crosschain_txs(base::xvblock_t* _block, xrelayblock
             continue;
         }
 
+#ifndef CROSS_TX_DBG
         if (!config_loaded) {
             cross_chain_config = get_cross_chain_config();
             config_loaded = true;
@@ -430,6 +426,7 @@ void xblockextract_t::unpack_crosschain_txs(base::xvblock_t* _block, xrelayblock
             xdbg("xblockextract_t::unpack_crosschain_txs topic not match.tx:%s is not a cross chain tx", top::to_hex_prefixed(top::to_bytes(txaction.get_tx_hash())).c_str());
             continue;
         }
+#endif
 
         data::xtransaction_ptr_t _rawtx = block->query_raw_transaction(txaction.get_tx_hash());
         if (nullptr == _rawtx) {
