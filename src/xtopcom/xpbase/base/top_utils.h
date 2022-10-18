@@ -31,7 +31,7 @@ class KadmliaKey;
 }
 extern std::shared_ptr<base::KadmliaKey> global_xid;
 extern std::string global_node_id;
-extern std::string global_node_signkey;
+extern std::string global_node_pubkey;
 static const uint32_t kRoot = 0xFFFFF; // avoid confilict with xip
 
 static const int kNodeIdSize = 33;

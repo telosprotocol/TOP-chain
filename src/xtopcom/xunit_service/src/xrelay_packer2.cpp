@@ -8,6 +8,7 @@
 #include "xdata/xblockextract.h"
 #include "xverifier/xverifier_utl.h"
 #include "xbasic/xhex.h"
+#include "xsafebox/safebox_proxy.h"
 
 #include <cinttypes>
 NS_BEG2(top, xunit_service)
@@ -66,20 +67,18 @@ int32_t xrelay_packer2::set_vote_extend_data(base::xvblock_t * proposal_block, c
         is_leader, proposal_block->dump().c_str(), xcons_utl::xip_to_hex(leader_xip).c_str(), xcons_utl::xip_to_hex(local_xip).c_str(),
         get_network_height_from_xip2(leader_xip), get_network_height_from_xip2(local_xip));
 
-    auto prikey_str = get_vcertauth()->get_prikey(local_xip);
-    uint8_t priv_content[xverifier::PRIKEY_LEN];
-    memcpy(priv_content, prikey_str.data(), prikey_str.size());
-    top::utl::xecprikey_t ecpriv(priv_content);
+    auto pubkey_str = get_vcertauth()->get_pubkey(local_xip);
 
-    auto signature = ecpriv.sign(hash);
-    std::string signature_str = std::string((char *)signature.get_compact_signature(), signature.get_compact_signature_size());
+    std::string signature_str = safebox::xsafebox_proxy::get_instance().get_proxy_secp256_signature(pubkey_str, hash);
+
     if (is_leader) {
-        top::utl::xecpubkey_t pub_key_obj = ecpriv.get_public_key();
-        std::string pubkey_str = std::string((char *)(pub_key_obj.data()), pub_key_obj.size());        
         m_relay_multisign[pubkey_str] = std::make_pair(local_xip, signature_str);
         m_relay_hash = hash;
         xdbg("xrelay_packer2::set_vote_extend_data leader proposal=%s,hash=%s,xip=%s,pubkey=%s",
-            proposal_block->dump().c_str(), top::to_hex(top::to_bytes(hash)).c_str(), xcons_utl::xip_to_hex(local_xip).c_str(),base::xstring_utl::base64_encode(pub_key_obj.data(), pub_key_obj.size()).c_str());
+             proposal_block->dump().c_str(),
+             top::to_hex(top::to_bytes(hash)).c_str(),
+             xcons_utl::xip_to_hex(local_xip).c_str(),
+             base::xstring_utl::base64_encode((const unsigned char *)pubkey_str.data(), pubkey_str.size()).c_str());
     } else {
         proposal_block->set_vote_extend_data(signature_str);
         xdbg("xrelay_packer2::set_vote_extend_data backup proposal=%s,hash=%s,xip=%s",

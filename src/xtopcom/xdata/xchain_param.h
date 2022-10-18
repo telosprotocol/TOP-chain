@@ -20,6 +20,7 @@
 
 namespace top { namespace data {
 
+// todo try remove this instance
 class xuser_params {
 public:
     xuser_params(xuser_params const &)             = delete;
@@ -34,7 +35,7 @@ public:
 
     common::xnode_id_t                    account;                   // account for the node
     std::string                           publickey;                 // node public key(hex)
-    std::string                           signkey;                 // node private key(hex)
+    // std::string                           signkey;                 // node private key(hex)
 #if defined XENABLE_MOCK_ZEC_STAKE
     common::xminer_type_t                  node_role_type;
 #endif

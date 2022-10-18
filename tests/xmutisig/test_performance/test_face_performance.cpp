@@ -2,7 +2,7 @@
 
 NS_BEG2(top, xmutisig)
 const uint32_t NUM = 10000;
-
+#if 0
 TEST_F(test_schnorr_mutisig, test_sign_face_performance) {
     key_pair_t keypair = xschnorr::instance()->generate_key_pair();
     rand_pair_t rand_pair = xschnorr::instance()->generate_rand_pair();
@@ -65,5 +65,5 @@ TEST_F(test_schnorr_mutisig, test_verify_base_face_performance) {
     std::cout << ms_total << "ms" << std::endl;
     std::cout << "xmutisign::verify_sign_base performance " << NUM / ms_total << "/ms" << std::endl;
 }
-
+#endif
 NS_END2

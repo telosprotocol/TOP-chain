@@ -16,7 +16,6 @@ using namespace top;
 
 int main(int argc, char *argv[]) {
     global_platform_type = kChain;
-    global_node_signkey = RandomString(256);
 
     {
         std::fstream fout("/tmp/test_xelect_net.conf", std::ios::out);

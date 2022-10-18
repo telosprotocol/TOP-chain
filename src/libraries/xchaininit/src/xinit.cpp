@@ -232,7 +232,20 @@ int topchain_start(const std::string& config_file) {
     chain_params.initconfig_using_configcenter();
     auto& user_params = data::xuser_params::get_instance();
     global_node_id = user_params.account.value();
-    global_node_signkey = DecodePrivateString(user_params.signkey);
+    global_node_pubkey = base::xstring_utl::base64_decode(user_params.publickey);
+
+    std::string sign_key;
+    if (!config_center.get("sign_key", sign_key)) {
+        assert(false);
+    }
+
+    auto node_signkey = DecodePrivateString(sign_key);  // will be moved
+
+    // clear cache.
+    sign_key.clear();
+    if (!config_center.set("sign_key", std::string{"***"})) {
+        assert(false);
+    }
 
     config_center.dump();
 
@@ -274,7 +287,7 @@ int topchain_start(const std::string& config_file) {
         chain_command_server->Start();
     }
 
-    application::xapplication_t app{user_params.account, xpublic_key_t{user_params.publickey}, user_params.signkey};
+    application::xapplication_t app{user_params.account, xpublic_key_t{global_node_pubkey}, std::move(node_signkey)};
     std::string v2_db_path = XGET_CONFIG(db_path) + "/db";  // TODO(jimmy) delete in v1.2.8
     if (false == db_migrate(v2_db_path)) {
         return 1;

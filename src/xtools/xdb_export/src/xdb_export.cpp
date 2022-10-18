@@ -65,7 +65,7 @@ xdb_export_tools_t::xdb_export_tools_t(std::string const & db_path) {
         txstore::create_txstore(top::make_observer<mbus::xmessage_bus_face_t>(m_bus.get()), 
                                 top::make_observer<xbase_timer_driver_t>(m_timer_driver.get())));
     base::xvchain_t::instance().set_xtxstore(m_txstore.get());
-    m_nodesvr_ptr = make_object_ptr<election::xvnode_house_t>(common::xnode_id_t{NODE_ID}, SIGN_KEY, m_blockstore, make_observer(m_bus.get()));
+    m_nodesvr_ptr = make_object_ptr<election::xvnode_house_t>(common::xnode_id_t{NODE_ID}, m_blockstore, make_observer(m_bus.get()));
     m_getblock =
         std::make_shared<xrpc::xrpc_query_manager>(observer_ptr<base::xvblockstore_t>(m_blockstore.get()), nullptr, nullptr);
     contract::xcontract_manager_t::instance().init(xobject_ptr_t<store::xsyncvstore_t>{});
