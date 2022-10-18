@@ -34,6 +34,7 @@
 #include "xloader/xconfig_onchain_loader.h"
 #include "xmbus/xmessage_bus.h"
 #include "xrouter/xrouter.h"
+#include "xsafebox/safebox_proxy.h"
 #include "xstore/xstore_error.h"
 #include "xsync/xsync_object.h"
 #include "xvm/manager/xcontract_manager.h"
@@ -43,10 +44,9 @@
 
 NS_BEG2(top, application)
 
-xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_key_t const & public_key, std::string const & sign_key)
+xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_key_t const & public_key, std::string && sign_key) // todo make it right value
   : m_node_id{node_id}
   , m_public_key{public_key}
-  , m_sign_key(sign_key)
   , m_network_id{top::config::to_chainid(XGET_CONFIG(chain_name))}
   , m_io_context_pools{{xio_context_type_t::general, {std::make_shared<xbase_io_context_wrapper_t>()}}}
   , m_timer_driver{std::make_shared<xbase_timer_driver_t>(m_io_context_pools[xio_context_type_t::general].front())}
@@ -57,6 +57,9 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
   , m_grpc_thread{make_object_ptr<base::xiothread_t>()}
   , m_sync_thread{make_object_ptr<base::xiothread_t>()}
   , m_elect_client{top::make_unique<elect::xelect_client_imp>()} {
+
+    safebox::xsafebox_proxy::get_instance().add_key_pair(public_key, std::move(sign_key));
+
     int db_kind = top::db::xdb_kind_kvdb;
     std::vector<db::xdb_path_t> db_data_paths{};
     base::xvchain_t::instance().get_db_config_custom(db_data_paths, db_kind);
@@ -70,7 +73,7 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
         txstore::create_txstore(top::make_observer<mbus::xmessage_bus_face_t>(m_bus.get()), top::make_observer<xbase_timer_driver_t>(m_timer_driver)));
     base::xvchain_t::instance().set_xtxstore(m_txstore.get());
 
-    m_nodesvr_ptr = make_object_ptr<election::xvnode_house_t>(node_id, sign_key, m_blockstore, make_observer(m_bus.get()));
+    m_nodesvr_ptr = make_object_ptr<election::xvnode_house_t>(node_id, m_blockstore, make_observer(m_bus.get()));
 
     m_cert_ptr.attach(&auth::xauthcontext_t::instance(*m_nodesvr_ptr.get()));
 

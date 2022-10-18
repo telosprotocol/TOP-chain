@@ -18,6 +18,7 @@
 #include "xrpc/xerror/xrpc_error_code.h"
 #include "xrpc/xrpc_method.h"
 #include "xrpc/xuint_format.h"
+#include "xsafebox/safebox_proxy.h"
 
 #include <cinttypes>
 
@@ -107,12 +108,11 @@ void xelect_client_imp::bootstrap_node_join() {
                     last_hash = data::hex_to_uint64(last_trans_hash);
                 }
 
-                // get private key and sign
-                // xinfo("xelect_client_imp::bootstrap_node_join,user_params.signkey: %s", user_params.signkey.c_str());
-                std::string sign_key = DecodePrivateString(user_params.signkey);
-
                 uint32_t deposit = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit);
-                xtransaction_ptr_t tx = xtx_factory::create_nodejoin_tx(user_params.account.value(), nonce, last_hash, param, deposit, sign_key);
+                xtransaction_ptr_t tx = xtx_factory::create_nodejoin_tx(user_params.account.value(), nonce, last_hash, param, deposit);
+
+                tx->set_authorization(safebox::xsafebox_proxy::get_instance().get_proxy_secp256_signature(base::xstring_utl::base64_decode(user_params.publickey), tx->digest()));
+                tx->set_len();
 
                 std::string send_tx_request = "version=1.0&target_account_addr=" + user_params.account.value() + "&method=sendTransaction&sequence_id=3&token=" + token;
                 xJson::FastWriter writer;

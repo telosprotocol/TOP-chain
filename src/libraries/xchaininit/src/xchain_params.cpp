@@ -52,12 +52,12 @@ void xchain_params::load_user_config() {
     //user_params.publickey = base::xstring_utl::base64_decode(public_key);
     user_params.publickey = public_key;
 
-    std::string sign_key;
-    if (!config_register.get("sign_key", sign_key)) {
-        assert(0);
-    }
+    // std::string sign_key;
+    // if (!config_register.get("sign_key", sign_key)) {
+    //     assert(0);
+    // }
     //user_params.signkey = base::xstring_utl::base64_decode(sign_key);
-    user_params.signkey = sign_key;
+    // user_params.signkey = sign_key;
 #if defined(XENABLE_MOCK_ZEC_STAKE)
     std::string role_type;
     if(!config_register.get("node_type",role_type)){
