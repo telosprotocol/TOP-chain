@@ -30,6 +30,7 @@ struct sync_result {
     sync_result(common::xaccount_address_t _account, uint64_t h, xhash256_t _block_hash, xhash256_t _state_hash, xhash256_t _root, std::error_code _ec)
       : account(_account), height(h), block_hash(_block_hash), state_hash(_state_hash), root_hash(_root), ec(_ec) {
     }
+    sync_result() = default;
 };
 
 struct sync_peers {

@@ -195,7 +195,6 @@ void Sync::Process(SyncResult const & result, std::error_code & ec) {
 void Sync::ProcessUnit(SyncResult const & result, std::error_code & ec) {
     // If the item was not requested either for code or node, bail out
     if (unitReqs.find(result.Hash) == unitReqs.end()) {
-        xassert(false);
         ec = error::xerrc_t::trie_sync_not_requested;
         return;
     }

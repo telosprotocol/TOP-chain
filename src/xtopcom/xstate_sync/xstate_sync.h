@@ -19,9 +19,37 @@ namespace top {
 namespace state_sync {
 
 class xtop_state_sync : public xstate_sync_face_t {
+private:
 #if !defined(NDEBUG)
     std::thread::id running_thead_id_;
 #endif
+
+    common::xaccount_address_t m_table;
+    uint64_t m_height;
+    xhash256_t m_table_block_hash;
+    xhash256_t m_table_state_hash;
+    xhash256_t m_root;
+    std::string m_symbol;
+    base::xvdbstore_t * m_db{nullptr};
+    evm_common::trie::xkv_db_face_ptr_t m_kv_db{nullptr};
+    std::shared_ptr<evm_common::trie::Sync> m_sched{nullptr};
+    std::function<sync_peers(const common::xtable_id_t & id)> m_peers_func{nullptr};
+    std::function<void(const state_req &)> m_track_func{nullptr};
+
+    std::set<xhash256_t> m_trie_tasks;
+    std::map<xhash256_t, xbytes_t> m_unit_tasks;
+
+    std::atomic<bool> m_sync_table_finish{false};
+    std::atomic<bool> m_done{false};
+    std::atomic<bool> m_cancel{false};
+    std::error_code m_ec;
+
+    std::list<state_req> m_deliver_list;
+    std::condition_variable m_condition;
+    std::mutex m_mutex;
+    uint32_t m_items_per_task{0};
+    uint32_t m_req_sequence_id{0};
+    uint32_t m_unit_bytes_uncommitted{0};
 
 public:
     xtop_state_sync() = default;
@@ -58,32 +86,6 @@ private:
     xhash256_t process_node_data(const xbytes_t & blob, std::error_code & ec);
     xhash256_t process_unit_data(const xbytes_t & blob, std::error_code & ec);
     common::xnode_address_t send_message(const sync_peers & sync_peers, const xbytes_t & msg, common::xmessage_id_t id);
-
-    common::xaccount_address_t m_table;
-    uint64_t m_height;
-    xhash256_t m_table_block_hash;
-    xhash256_t m_table_state_hash;
-    xhash256_t m_root;
-    std::string m_symbol;
-    base::xvdbstore_t * m_db{nullptr};
-    evm_common::trie::xkv_db_face_ptr_t m_kv_db{nullptr};
-    std::shared_ptr<evm_common::trie::Sync> m_sched{nullptr};
-    std::function<sync_peers(const common::xtable_id_t & id)> m_peers_func{nullptr};
-    std::function<void(const state_req &)> m_track_func{nullptr};
-
-    std::set<xhash256_t> m_trie_tasks;
-    std::map<xhash256_t, xbytes_t> m_unit_tasks;
-
-    std::atomic<bool> m_sync_table_finish{false};
-    std::atomic<bool> m_done{false};
-    std::atomic<bool> m_cancel{false};
-    std::error_code m_ec;
-
-    std::list<state_req> m_deliver_list;
-    std::condition_variable m_condition;
-    std::mutex m_mutex;
-    uint32_t m_req_sequence_id{0};
-    uint32_t m_unit_bytes_uncommitted{0};
 };
 using xstate_sync_t = xtop_state_sync;
 

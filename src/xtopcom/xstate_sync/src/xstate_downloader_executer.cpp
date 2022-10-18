@@ -14,7 +14,7 @@ namespace state_sync {
 
 #define TIMEOUT_MSEC 5000U
 
-xtop_download_executer::xtop_download_executer(observer_ptr<base::xiothread_t> thread) : m_syncer_thread{thread} {
+xtop_download_executer::xtop_download_executer(observer_ptr<base::xiothread_t> thread, uint32_t overtime) : m_syncer_thread{thread}, m_overtime(overtime) {
 }
 
 void xtop_download_executer::run_state_sync(std::shared_ptr<xstate_sync_face_t> syncer, std::function<void(sync_result)> callback) {
@@ -81,7 +81,7 @@ void xtop_download_executer::loop(std::shared_ptr<xstate_sync_face_t> syncer, st
 #endif
 
     std::map<uint32_t, state_req> active;
-    int cnt{0};
+    uint32_t cnt{0};
 
     while (!syncer->is_done()) {
         if (!m_track_req.empty()) {
@@ -105,27 +105,30 @@ void xtop_download_executer::loop(std::shared_ptr<xstate_sync_face_t> syncer, st
             syncer->deliver_req(req);
             active.erase(res.id);
             pop_state_pack();
-        } else if (!active.empty()) {
-            // timeout check
-            uint64_t time = base::xtime_utl::time_now_ms();
-            for (auto it = active.begin(); it != active.end();) {
-                if (it->second.start + TIMEOUT_MSEC > time) {
-                    break;
-                }
-                xwarn("xtop_download_executer::loop req: %u timeout %lu, %lu", it->first, it->second.start, time);
-                it->second.delivered = base::xtime_utl::gettimeofday();
-                syncer->deliver_req(it->second);
-                active.erase(it++);
-            }
         } else if (m_cancel) {
             syncer->cancel();
         } else {
+            if (!active.empty()) {
+                // timeout check
+                uint64_t time = base::xtime_utl::time_now_ms();
+                for (auto it = active.begin(); it != active.end();) {
+                    if (it->second.start + TIMEOUT_MSEC > time) {
+                        break;
+                    }
+                    xwarn("xtop_download_executer::loop req: %u timeout %lu, %lu", it->first, it->second.start, time);
+                    it->second.delivered = base::xtime_utl::gettimeofday();
+                    syncer->deliver_req(it->second);
+                    active.erase(it++);
+                }
+            }
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            cnt++;
-            if (cnt > 10 * 60 * 10) {
-                xwarn("xtop_download_executer::loop overtime: %s", syncer->symbol().c_str());
-                ec = error::xerrc_t::state_sync_overtime;
-                break;
+            if (m_overtime > 0) {
+                cnt++;
+                if (cnt > m_overtime * 10) {
+                    xwarn("xtop_download_executer::loop overtime: %s", syncer->symbol().c_str());
+                    ec = error::xerrc_t::state_sync_overtime;
+                    break;
+                }
             }
             continue;
         }
