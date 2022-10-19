@@ -12,14 +12,14 @@
 #include "xBFT/test/common/xunitblock.hpp"
 #include "xdata/xemptyblock.h"
 #include "xunit_service/xcons_utl.h"
-#include "../../mock/xmock_auth.hpp"
-#include "../../mock/xmock_network.hpp"
+// #include "../../mock/xmock_auth.hpp"
+// #include "../../mock/xmock_network.hpp"
 
 using namespace top;
 using namespace top::data;
 using namespace top::base;
 using namespace top::xconsensus;
-using namespace top::mock;
+// using namespace top::mock;
 
 class test_xtimercertview_t : public xconspacemaker_t {
 public:

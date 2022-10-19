@@ -26,6 +26,8 @@ NS_BEG2(top, xunit_service)
 
 #define MIN_TRANSACTION_NUM_FOR_FIRST_PACKING (10)
 
+xindex_upgrade_t xbatch_packer::m_index_upgrade = {};
+
 xbatch_packer::xbatch_packer(observer_ptr<mbus::xmessage_bus_face_t> const   &mb,
                              base::xtable_index_t                             &tableid,
                              const std::string &                              account_id,
@@ -204,6 +206,24 @@ void xbatch_packer::reset_leader_info() {
     m_leader_cs_para = nullptr;
 }
 
+bool xbatch_packer::need_index_upgrade(base::xvblock_t* latest_cert_block, uint64_t clock) {
+    auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
+    auto const new_version = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.v1_7_0_block_fork_point, clock);
+    bool need_upgrade = (new_version && !m_index_upgrade_succ);
+    if (need_upgrade) {
+        if (latest_cert_block->get_height() == 0) {
+            need_upgrade = false;
+        } else {
+            evm_common::xh256_t state_root;
+            auto ret = data::xblockextract_t::get_state_root(latest_cert_block, state_root);
+            if (state_root != evm_common::xh256_t()) {
+                need_upgrade = false;
+            }
+        }
+    }
+    return need_upgrade;
+}
+
 // view updated and the judge is_leader
 // then start new consensus from leader
 bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * from_parent, const int32_t cur_thread_id, const uint64_t timenow_ms) {
@@ -237,14 +257,22 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     }
     clear_for_new_view();
 
-    auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
-    auto const new_version = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.v1_7_0_block_fork_point, view_ev->get_clock());
-    if (new_version) {
-        auto ret = m_proposal_maker->account_index_upgrade();
-        if (!ret) {
-            xunit_warn("xbatch_packer::on_view_fire fail-account index upgrade,account=%s,viewid=%ld,clock=%ld",
-                get_account().c_str(), view_ev->get_viewid(), view_ev->get_clock());        
-            XMETRICS_GAUGE(metrics::cons_view_fire_succ, 0);            
+    auto _cert_block = m_para->get_resources()->get_vblockstore()->get_latest_cert_block(get_account(), metrics::blockstore_access_from_us_on_view_fire);
+    if (need_index_upgrade(_cert_block.get(), view_ev->get_clock())) {
+        if (m_index_upgrade.is_turn_to_upgrade(get_account())) {
+            auto ret = m_proposal_maker->account_index_upgrade();
+            if (!ret) {
+                xunit_warn("xbatch_packer::on_view_fire fail-account index upgrade,account=%s,viewid=%ld,clock=%ld",
+                    get_account().c_str(), view_ev->get_viewid(), view_ev->get_clock());        
+                XMETRICS_GAUGE(metrics::cons_view_fire_succ, 0);            
+                return false;
+            } else {
+                xunit_info("xbatch_packer::on_view_fire index upgrade succ,account=%s,viewid=%ld,clock=%ld",
+                    get_account().c_str(), view_ev->get_viewid(), view_ev->get_clock());    
+                m_index_upgrade_succ = true;
+                m_index_upgrade.set_upgrade_succ(get_account());
+            }
+        } else {
             return false;
         }
     }
@@ -253,7 +281,6 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     m_last_view_id = view_ev->get_viewid();
     m_last_view_clock = view_ev->get_clock();
 
-    auto _cert_block = m_para->get_resources()->get_vblockstore()->get_latest_cert_block(get_account(), metrics::blockstore_access_from_us_on_view_fire);
     auto ret = check_state_sync(_cert_block.get());
     if (!ret) {
         xunit_warn("xbatch_packer::on_view_fire fail-check state sync,account=%s,viewid=%ld,clock=%ld,cert=%s",

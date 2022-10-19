@@ -1,4 +1,4 @@
-#include "../mock/xnetwork_mock.h"
+// #include "../mock/xnetwork_mock.h"
 #include "gtest/gtest.h"
 #include "xunit_service/xnetwork_proxy.h"
 
