@@ -150,6 +150,11 @@ bool xbatch_packer::start_proposal(uint32_t min_tx_num) {
     XMETRICS_GAUGE(metrics::cons_table_leader_make_proposal_succ, 1);
     xunit_info("xbatch_packer::start_proposal succ-leader start consensus. block=%s this:%p node:%s xip:%s",
             proposal_block->dump().c_str(), this, m_para->get_resources()->get_account().c_str(), xcons_utl::xip_to_hex(proposal_para.get_leader_xip()).c_str());
+
+    uint64_t cert_viewid = proposal_para.get_latest_cert_block()->get_viewid();
+    if (cert_viewid + 1 != proposal_para.get_viewid()) {
+        xunit_info("xbatch_packer::start_proposal table:%s no block viewids:%llu-%llu", get_account().c_str(), cert_viewid + 1, proposal_para.get_viewid() - 1);
+    }
     
     XMETRICS_GAUGE(metrics::cons_packtx_with_threshold, (min_tx_num > 0) ? 1 : 0);
     return true;

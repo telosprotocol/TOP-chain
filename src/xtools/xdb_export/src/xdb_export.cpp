@@ -240,6 +240,85 @@ void xdb_export_tools_t::query_table_latest_fullblock() {
     std::cout << "===> " << filename << " generated success!" << std::endl;
 }
 
+std::string get_ave_string(uint64_t numerator, uint64_t denominator) {
+    float ave = ((float)numerator)/((float)denominator);
+    std::string ave_str = std::to_string(ave);
+    return ave_str.substr(0, ave_str.find(".") + 3);
+}
+
+void xdb_export_tools_t::query_table_performance(std::string const & account) {
+    json root;
+    auto const h = m_blockstore->get_latest_committed_block_height(base::xvaccount_t{account});
+    auto const vblock1 = m_blockstore->load_block_object(account, 1, 0, false);
+    if (vblock1 == nullptr) {
+        std::cerr << "account: " << account << ", height: " << h << " block null" << std::endl;
+        return;
+    }
+    const data::xblock_t * block1 = dynamic_cast<data::xblock_t *>(vblock1.get());
+    uint64_t last_viewid = block1->get_viewid();
+    uint64_t last_gmtime = block1->get_second_level_gmtime();
+    auto input_action1 = data::xblockextract_t::unpack_txactions(vblock1.get());
+    uint32_t tx_num1 = input_action1.size();
+
+    std::string result1 = "viewid " + std::to_string(last_viewid) + " intval " + std::to_string(0) + " tx " + std::to_string(tx_num1);
+    root["h1"] = result1;
+
+    std::string no_blocks_viewid;
+    uint32_t no_blocks_viewid_num = 0;
+    uint32_t tx_num_total = tx_num1;
+
+    std::string tps_per_10_blocks;
+    uint32_t tx_num_in_10_blocks = tx_num1;
+    uint64_t gmttime_start_for_10_blocks = last_gmtime;
+    for (size_t i = 2; i <= h; i++) {
+        auto const vblock = m_blockstore->load_block_object(account, i, 0, false);
+        if (vblock == nullptr) {
+            std::cerr << "account: " << account << ", height: " << i << " block null" << std::endl;
+            return;
+        }
+
+        const data::xblock_t * block = dynamic_cast<data::xblock_t *>(vblock.get());
+        uint64_t gmtime = block->get_second_level_gmtime();
+        uint64_t inteval = (gmtime <= last_gmtime) ? 0 : (gmtime - last_gmtime);
+        auto input_actions = data::xblockextract_t::unpack_txactions(vblock.get());
+        uint32_t tx_num = input_actions.size();
+        uint64_t viewid = block->get_viewid();
+
+        std::string result = "viewid " + std::to_string(viewid) + " intval " + std::to_string(inteval) + " tx " + std::to_string(tx_num);
+        root["h" + std::to_string(i)] = result;
+
+        if (viewid != last_viewid + 1) {
+            for (uint64_t id = last_viewid + 1; id < viewid; id++) {
+                no_blocks_viewid += std::to_string(id)+ ',';
+            }
+            no_blocks_viewid_num += (viewid - last_viewid - 1);
+        }
+        last_viewid = viewid;
+        last_gmtime = gmtime;
+        tx_num_total += tx_num;
+        
+        tx_num_in_10_blocks += tx_num;
+        if (i%10 == 0) {
+            tps_per_10_blocks += get_ave_string(tx_num_in_10_blocks, gmtime - gmttime_start_for_10_blocks) + ", ";
+            tx_num_in_10_blocks = 0;
+            gmttime_start_for_10_blocks = gmtime;
+        }
+    }
+    root["no_blocks_viewid"] = no_blocks_viewid;
+    root["no_blocks_viewid_num"] = std::to_string(no_blocks_viewid_num);
+    root["tx_num_total"] = std::to_string(tx_num_total);
+    root["tx_num_per_block"] = get_ave_string(tx_num_total, h);
+    root["tps_per_10_blocks"] = tps_per_10_blocks;
+    generate_json_file(std::string{account + "_perfromance.json"}, root);
+}
+
+void xdb_export_tools_t::query_all_table_performance(std::vector<std::string> const & accounts_vec) {
+    for (auto const & account : accounts_vec) {
+        query_table_performance(account);
+        std::cout << account << " table performance query finish" << std::endl;
+    }
+}
+
 void GetFiles(const std::string& img_dir_path,std::vector<std::string> &img_file_paths)
 {
     DIR* dir;
