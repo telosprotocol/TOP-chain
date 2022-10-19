@@ -806,7 +806,12 @@ bool xfulltable_build_t::build_block_body(const xfulltable_block_para_t & para, 
     std::string tgas_balance_change = base::xstring_utl::tostring(para.get_tgas_balance_change());
     set_output_entity(base::xvoutentity_t::key_name_tgas_pledge_change(), tgas_balance_change);
 
-    const xstatistics_data_t & statistics_data = para.get_block_statistics_data();
+    #ifndef  XBUILD_CONSORTIUM_TEST
+        const xstatistics_data_t & statistics_data = para.get_block_statistics_data();
+    #else
+        const xstatistics_cons_data_t & statistics_data = para.get_block_statistics_cons_data();
+    #endif  
+
     auto const & serialized_data = statistics_data.serialize_based_on<base::xstream_t>();
     std::string serialized_data_str = {std::begin(serialized_data), std::end(serialized_data) };
     set_input_resource(xfull_tableblock_t::RESOURCE_NODE_SIGN_STATISTICS, serialized_data_str);

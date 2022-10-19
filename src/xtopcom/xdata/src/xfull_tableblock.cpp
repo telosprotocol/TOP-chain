@@ -17,6 +17,11 @@ xfulltable_block_para_t::xfulltable_block_para_t(const std::string & snapshot, c
     m_tgas_balance_change = tgas_balance_change;
 }
 
+xfulltable_block_para_t::xfulltable_block_para_t(const std::string & snapshot, const xstatistics_cons_data_t & statistics_data, const int64_t tgas_balance_change) {
+    m_snapshot = snapshot;
+    m_block_statistics_cons_data = statistics_data;
+}
+
 xfull_tableblock_t::xfull_tableblock_t(base::xvheader_t & header, base::xvqcert_t & cert, base::xvinput_t* input, base::xvoutput_t* output)
 : xblock_t(header, cert, input, output, (enum_xdata_type)object_type_value) {
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_block_fulltable, 1);
@@ -56,6 +61,14 @@ std::string xfull_tableblock_t::get_table_statistics_string() const {
     std::string resource_str = get_input()->query_resource(RESOURCE_NODE_SIGN_STATISTICS);
     xassert(!resource_str.empty());
     return resource_str;
+}
+
+xstatistics_cons_data_t xfull_tableblock_t::get_table_statistics_cons_data() const {
+    std::string resource_str = get_input()->query_resource(RESOURCE_NODE_SIGN_STATISTICS);
+    xassert(!resource_str.empty());
+    xstatistics_cons_data_t statistics_data;
+    statistics_data.deserialize_based_on<base::xstream_t>({ std::begin(resource_str), std::end(resource_str) });
+    return statistics_data;
 }
 
 NS_END2

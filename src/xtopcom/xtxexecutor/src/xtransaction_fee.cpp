@@ -39,7 +39,7 @@ int32_t xtransaction_fee_t::update_tgas_disk_sender(const uint64_t amount, bool 
     if (ret != 0) {
         return ret;
     }
-    uint64_t frozen_tgas = std::min((m_trans->get_transaction()->get_deposit() - tgas_used_deposit) / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio),
+    uint64_t frozen_tgas = std::min((m_trans->get_transaction()->get_deposit() - tgas_used_deposit) / g_tx_deposit_fee,
                                      m_account_ctx->get_available_tgas() - m_account_ctx->get_blockchain()->lock_tgas());
     xdbg("tgas_disk sender frozen_tgas: %llu, available_tgas: %llu, lock_tgas: %llu",
           frozen_tgas, m_account_ctx->get_available_tgas(), m_account_ctx->get_blockchain()->lock_tgas());
@@ -73,7 +73,7 @@ int32_t xtransaction_fee_t::update_tgas_disk_sender(const uint64_t amount, bool 
 int32_t xtransaction_fee_t::update_tgas_sender(uint64_t& used_deposit, bool is_contract){
     uint64_t tgas_usage = get_tgas_usage(is_contract);
     auto ret = m_account_ctx->update_tgas_sender(tgas_usage, m_trans->get_transaction()->get_deposit(), used_deposit, is_contract);
-    m_trans->set_current_used_tgas(tgas_usage - used_deposit / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio));
+    m_trans->set_current_used_tgas(tgas_usage - used_deposit / g_tx_deposit_fee);
     m_trans->set_current_used_deposit(used_deposit);
     xdbg("tgas_disk m_used_tgas %d, %d, %s, %s", m_trans->get_current_used_tgas(), used_deposit, m_trans->get_target_addr().c_str(), m_trans->get_digest_hex_str().c_str());
     return ret;
@@ -83,7 +83,7 @@ int32_t xtransaction_fee_t::update_tgas_sender() {
     uint64_t tgas_usage = get_tgas_usage(false);
     uint64_t used_deposit = 0;
     auto ret = m_account_ctx->update_tgas_sender(tgas_usage, m_trans->get_transaction()->get_deposit(), used_deposit);
-    uint64_t used_tgas = tgas_usage - used_deposit / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio);
+    uint64_t used_tgas = tgas_usage - used_deposit / g_tx_deposit_fee;
     m_trans->set_current_used_tgas(used_tgas);
     if (m_trans->get_tx_type() == xtransaction_type_transfer) {
         m_trans->set_current_used_deposit(used_deposit);

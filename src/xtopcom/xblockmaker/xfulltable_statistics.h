@@ -16,6 +16,7 @@ namespace top {
 namespace blockmaker {
 
 data::xstatistics_data_t tableblock_statistics(std::vector<xobject_ptr_t<data::xblock_t>> const & blks);
+data::xstatistics_cons_data_t tableblock_statistics_consortium(std::vector<xobject_ptr_t<data::xblock_t>> const& blks);
 
 }  // namespace data
 }  // namespace top

@@ -114,7 +114,7 @@ class xblock_consensus_para_t {
     xtablestate_ptr_t         m_commit_tablestate{nullptr};
     mutable bool            m_need_relay_prove{false};
     mutable uint256_t       m_vote_extend_hash;
-    mutable uint64_t                m_total_burn_tgas_token{0};
+    mutable uint64_t        m_total_burn_tgas_token{0};
 };
 
 using xblock_consensus_para_ptr_t = std::shared_ptr<xblock_consensus_para_t>;

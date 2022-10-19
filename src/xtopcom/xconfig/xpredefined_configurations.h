@@ -602,6 +602,11 @@ XDECLARE_CONFIGURATION(enable_slash, bool, false);
 XDECLARE_CONFIGURATION(enable_free_tgas, bool, false);  
 XDECLARE_CONFIGURATION(evm_token_type, char const *, "TOP");
 
+#if defined(XBUILD_CONSORTIUM_TEST)
+#define g_tx_deposit_fee (20)
+#else 
+#define g_tx_deposit_fee XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio)
+#endif 
 
 #undef XDECLARE_CONFIGURATION
 

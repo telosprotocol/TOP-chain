@@ -1,3 +1,4 @@
+
 // Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
@@ -82,9 +83,6 @@ XINLINE_CONSTEXPR const char * XPROPERTY_RESET_FLAG = "@165";
 XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_ELECT_PACK_HEIGHT = "@170";
 XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_WRAP_PHASE = "@171";
 XINLINE_CONSTEXPR const char * XPROPERTY_RELAY_BLOCK_STR = "@172";
-
-XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_BURN_TGAS_KEY = "@173";
-XINLINE_CONSTEXPR const char * XPORPERTY_CONTRACT_REWARD_TGAS_KEY = "@174";
 
 constexpr char const * XTRANSFER_ACTION{"transfer"};
 constexpr char const * XZEC_WORKLOAD_CLEAR_WORKLOAD_ACTION{"clear_workload"};
@@ -642,6 +640,30 @@ struct xgroup_workload_t final : public xserializable_based_on<void> {
     std::string group_address_str;
     uint32_t group_total_workload{0};
     std::map<std::string, uint32_t> m_leader_count;
+
+    xgroup_workload_t & operator+=(const xgroup_workload_t & adder);
+
+private:
+    /**
+     * @brief write to stream
+     *
+     * @param stream
+     * @return std::int32_t
+     */
+    std::int32_t do_write(base::xstream_t & stream) const override;
+    /**
+     * @brief read from stream
+     *
+     * @param stream
+     * @return std::int32_t
+     */
+    std::int32_t do_read(base::xstream_t & stream) override;
+};
+
+
+struct xgroup_cons_reward_t final : public xserializable_based_on<void> {
+    std::string group_address_str;
+    std::map<std::string, uint64_t> m_leader_reward;
 
     xgroup_workload_t & operator+=(const xgroup_workload_t & adder);
 

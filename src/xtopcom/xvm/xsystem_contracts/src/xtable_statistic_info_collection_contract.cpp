@@ -37,8 +37,6 @@ void xtable_statistic_info_collection_contract::setup() {
     STRING_CREATE(XPORPERTY_CONTRACT_TGAS_KEY);
     STRING_SET(XPORPERTY_CONTRACT_TGAS_KEY, "0");
 
-    STRING_CREATE(XPORPERTY_CONTRACT_BURN_TGAS_KEY);
-    STRING_SET(XPORPERTY_CONTRACT_BURN_TGAS_KEY, "0");
 }
 
 void xtable_statistic_info_collection_contract::on_collect_statistic_info(xstatistics_data_t const& statistic_data,  xfulltableblock_statistic_accounts const& statistic_accounts, uint64_t block_height, int64_t tgas) {
@@ -55,7 +53,7 @@ void xtable_statistic_info_collection_contract::on_collect_statistic_info(xstati
     XCONTRACT_ENSURE(data::xdatautil::extract_parts(source_addr, base_addr, table_id), "source address extract base_addr or table_id error!");
     xdbg("[xtable_statistic_info_collection_contract][on_collect_statistic_info] self_account %s, source_addr %s, base_addr %s\n", account.c_str(), source_addr.c_str(), base_addr.c_str());
     XCONTRACT_ENSURE(source_addr == account.value(), "invalid source addr's call!");
-    XCONTRACT_ENSURE(base_addr == top::sys_contract_sharding_statistic_info_addr || source_addr == top::sys_contract_eth_table_statistic_info_addr, "invalid source base's call!");
+    XCONTRACT_ENSURE(base_addr == top::sys_contract_sharding_statistic_info_addr || base_addr == top::sys_contract_eth_table_statistic_info_addr, "invalid source addr's call!");
 
     // check if the block processed
     uint64_t cur_statistic_height = 0;
@@ -263,7 +261,7 @@ void xtable_statistic_info_collection_contract::report_summarized_statistic_info
     XCONTRACT_ENSURE(data::xdatautil::extract_parts(source_addr, base_addr, table_id), "source address extract base_addr or table_id error!");
     xdbg("[xtable_statistic_info_collection_contract][report_summarized_statistic_info] self_account %s, source_addr %s, base_addr %s\n", account.c_str(), source_addr.c_str(), base_addr.c_str());
     XCONTRACT_ENSURE(source_addr == account.value(), "invalid source addr's call!");
-    XCONTRACT_ENSURE(base_addr == top::sys_contract_sharding_statistic_info_addr || source_addr == top::sys_contract_eth_table_statistic_info_addr, "invalid source base's call!");
+    XCONTRACT_ENSURE(base_addr == top::sys_contract_sharding_statistic_info_addr || base_addr == top::sys_contract_eth_table_statistic_info_addr, "invalid source addr's call!");
 
     uint32_t summarize_fulltableblock_num = 0;
     std::string value_str;
@@ -362,10 +360,9 @@ void xtable_statistic_info_collection_contract::report_summarized_statistic_info
         {
             stream.reset();
             stream << shard_slash_collect;
-            if (XGET_CONFIG(enable_slash)) {
-                CALL(common::xaccount_address_t{sys_contract_zec_slash_info_addr}, "summarize_slash_info", std::string((char *)stream.data(), stream.size()));
-            }
+            CALL(common::xaccount_address_t{sys_contract_zec_slash_info_addr}, "summarize_slash_info", std::string((char *)stream.data(), stream.size()));
         }
+
     }
 
 
@@ -440,7 +437,7 @@ xgroup_workload_t xtable_statistic_info_collection_contract::get_workload(common
     {
         std::string value_str;
         if (MAP_GET2(XPORPERTY_CONTRACT_WORKLOAD_KEY, group_address_str, value_str)) {
-        xdbg("[xtable_statistic_info_collection_contract::get_workload] group not exist: %s", group_address.to_string().c_str());
+        xdbg("[xtable_statistic_info_collection_contract::update_workload] group not exist: %s", group_address.to_string().c_str());
             total_workload.group_address_str = group_address_str;
         } else {
             xstream_t stream(xcontext_t::instance(), (uint8_t *)value_str.data(), value_str.size());
@@ -537,19 +534,11 @@ void xtable_statistic_info_collection_contract::upload_workload() {
         {
             std::string value_str;
             if (MAP_GET2(XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, FULLTABLE_HEIGHT, value_str)) {
-                xwarn("[xtable_statistic_info_collection_contract::upload_workload] table height not exist!");
+                xwarn("[xtable_statistic_info_collection_contract::update_workload] table height not exist!");
             } else {
                 if (!value_str.empty()) {
                     height = base::xstring_utl::touint64(value_str);
                 }
-            }
-        }
-
-        ::uint128_t burn_tgas = 0;
-        {
-            std::string pledge_tgas_str = STRING_GET(XPORPERTY_CONTRACT_BURN_TGAS_KEY);
-            if (!pledge_tgas_str.empty()) {
-                burn_tgas = ::uint128_t(pledge_tgas_str, 10);
             }
         }
 
@@ -559,15 +548,12 @@ void xtable_statistic_info_collection_contract::upload_workload() {
             MAP_OBJECT_SERIALIZE2(stream, group_workload_upload);
             stream << tgas;
             stream << height;
-            stream << burn_tgas.str();
-
             group_workload_upload_str = std::string((char *)stream.data(), stream.size());
-            xinfo("[xtable_statistic_info_collection_contract::upload_workload] %s upload workload to zec reward, group_workload_upload size: %d, tgas: %ld, height: %lu burn_tgas %s",
+            xinfo("[xtable_statistic_info_collection_contract::upload_workload] %s upload workload to zec reward, group_workload_upload size: %d, tgas: %ld, height: %lu",
                   SOURCE_ADDRESS().c_str(),
                   group_workload_upload.size(),
                   tgas,
-                  height,
-                  burn_tgas.str().c_str());
+                  height);
         }
         {
             xstream_t stream(xcontext_t::instance());
@@ -578,7 +564,6 @@ void xtable_statistic_info_collection_contract::upload_workload() {
 
         MAP_CLEAR(XPORPERTY_CONTRACT_WORKLOAD_KEY);
         STRING_SET(XPORPERTY_CONTRACT_TGAS_KEY, "0");
-        STRING_SET(XPORPERTY_CONTRACT_BURN_TGAS_KEY, "0");
     }
 }
 
@@ -593,22 +578,7 @@ void xtable_statistic_info_collection_contract::process_workload_statistic_data(
         xinfo("[xtable_statistic_info_collection_contract::process_workload_statistic_data] update tgas: %lu", tgas);
         update_tgas(tgas);
     }
-
-    update_burn_tgas(statistic_data);
 }
 
-void xtable_statistic_info_collection_contract::update_burn_tgas(xstatistics_data_t const & statistic_data) {
-    std::string pledge_tgas_str = STRING_GET(XPORPERTY_CONTRACT_BURN_TGAS_KEY);
-    ::uint128_t tgas = 0;
-    if (!pledge_tgas_str.empty()) {
-        tgas =::uint128_t(pledge_tgas_str, 10);
-    }
-
-    if(statistic_data.total_gas_burn > 0 ) {
-        tgas += (::uint128_t)statistic_data.total_gas_burn;
-        xdbg("[xtable_statistic_info_collection_contract::update_burn_tgas] update tgas: %lu", tgas);
-    }
-    STRING_SET(XPORPERTY_CONTRACT_BURN_TGAS_KEY, tgas.str());
-}
 
 NS_END3

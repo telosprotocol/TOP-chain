@@ -160,6 +160,14 @@ protected:
      */
     data::xfulltableblock_statistic_accounts fulltableblock_statistic_accounts(data::xstatistics_data_t const& block_statistic_data, base::xvnodesrv_t * node_service);
 
+    /**
+     * @brief 
+     * 
+     * @param block_statistic_data 
+     * @param node_service 
+     * @return data::xfulltableblock_statistic_accounts 
+     */
+    data::xfulltableblock_statistic_accounts fulltableblock_statistic_cons_accounts(data::xstatistics_cons_data_t const& block_statistic_data, base::xvnodesrv_t * node_service);
 protected:
     observer_ptr<xstore_face_t>                                                 m_store{};
     observer_ptr<store::xsyncvstore_t>                                          m_syncstore{};
