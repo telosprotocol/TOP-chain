@@ -120,7 +120,7 @@ int xquic_node_t::send_data(std::string const & data, std::string const & addr, 
 
 void xquic_node_t::on_quic_message_ready(top::xbytes_t const & bytes, std::string const & peer_ip, std::size_t peer_inbound_port) {
     transport::protobuf::RoutingMessage proto_message;
-    if (proto_message.ParseFromArray((const char *)bytes.data(), bytes.size()) == false) {
+    if (proto_message.ParseFromArray((const char *)bytes.data() + enum_xbase_header_len, bytes.size() - enum_xbase_header_len) == false) {
         xwarn("xquic_node_t::on_quic_message_ready parse data to proto message failed, data.size():%zu", bytes.size());
         return;
     }

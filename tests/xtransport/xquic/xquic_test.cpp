@@ -42,6 +42,11 @@ void randomly_send_thread(std::vector<std::shared_ptr<xquic_node_t>> const & nod
     transport::protobuf::RoutingMessage proto_message;
     proto_message.set_data("message");
     std::string send_data_str = proto_message.SerializeAsString();
+
+    std::string fake_header_str = std::string{"01234567"};
+    EXPECT_EQ(fake_header_str.size(), enum_xbase_header_len);
+
+    send_data_str = fake_header_str + send_data_str;
     for (std::size_t send_cnt = 0; send_cnt < EACH_THREAD_SEND_COUNT; ++send_cnt) {
         std::size_t send_index = rand_num(0, TEST_NODE_COUNT);
         std::size_t recv_index = rand_num(0, TEST_NODE_COUNT);
