@@ -41,11 +41,10 @@ void xstatestore_executor_t::recover_execute_height(uint64_t old_executed_height
             continue;
         }
 
-        m_executed_height = i;
-        m_state_accessor.set_latest_connectted_tablestate(tablestate_ext);
-        m_state_accessor.write_table_bstate_to_cache(m_table_addr, _block->get_block_hash(), tablestate_ext);
         update_latest_executed_info(_block.get());
-        xinfo("xstatestore_executor_t::xstatestore_executor_t succ table=%s,execute_height=%ld,%ld", m_table_addr.value().c_str(), old_executed_height, m_executed_height);
+        m_state_accessor.set_latest_connectted_tablestate(tablestate_ext);
+        m_state_accessor.write_table_bstate_to_cache(m_table_addr, _block->get_block_hash(), tablestate_ext);        
+        xinfo("xstatestore_executor_t::xstatestore_executor_t succ table=%s,execute_height=%ld,%ld", m_table_addr.value().c_str(), old_executed_height, get_latest_executed_block_height());
         return;
     }    
 
