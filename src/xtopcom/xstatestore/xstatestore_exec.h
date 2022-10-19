@@ -28,6 +28,7 @@ public:
 
 public:
     xstatestore_executor_t(common::xaccount_address_t const& table_addr, xexecute_listener_face_t * execute_listener);
+    void    init();
 
 public:
     void    execute_and_get_tablestate_ext(base::xvblock_t* target_block, xtablestate_ext_ptr_t & tablestate_ext, std::error_code & ec) const;

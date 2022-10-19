@@ -15,6 +15,10 @@ NS_BEG2(top, statestore)
 
 xstatestore_executor_t::xstatestore_executor_t(common::xaccount_address_t const& table_addr, xexecute_listener_face_t * execute_listener)
 : m_table_addr{table_addr},m_state_accessor{table_addr},m_execute_listener(execute_listener) {
+
+}
+
+void xstatestore_executor_t::init() {
     uint64_t old_executed_height = m_statestore_base.get_latest_executed_block_height(m_table_addr);
     recover_execute_height(old_executed_height);
 }
