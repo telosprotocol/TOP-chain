@@ -78,7 +78,9 @@ TEST_F(test_block_executed, recover_execute_height) {
     class test_xstatestore_executor_t : public statestore::xstatestore_executor_t {
     public:
         test_xstatestore_executor_t(common::xaccount_address_t const& table_addr)
-        : statestore::xstatestore_executor_t(table_addr, nullptr) {}
+        : statestore::xstatestore_executor_t(table_addr, nullptr) {
+            init();
+        }
         void reset_execute_height(uint64_t height) {
             m_executed_height = height;
         }
