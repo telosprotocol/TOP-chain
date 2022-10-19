@@ -301,12 +301,15 @@ uint64_t xstatestore_prune_t::prune_exec_cons(uint64_t from_height, uint64_t to_
         }
     }
 
-    ec.clear();
-    lowest_keep_mpt->commit_pruned(ec);
-    if (ec) {
-        xwarn("xstatestore_prune_t::prune_exec_cons mpt commit prune fail table %s from %llu to %llu", m_table_addr.value().c_str(), from_height, to_height);
+    if (delete_mpt_num > 0) {
+        ec.clear();
+        lowest_keep_mpt->commit_pruned(ec);
+        if (ec) {
+            xwarn("xstatestore_prune_t::prune_exec_cons mpt commit prune fail table %s from %llu to %llu", m_table_addr.value().c_str(), from_height, to_height);
+        }
+        XMETRICS_GAUGE(metrics::state_delete_mpt, delete_mpt_num);
     }
-    XMETRICS_GAUGE(metrics::state_delete_mpt, delete_mpt_num);
+
     unitstate_prune_batch(accounts_prune_info);
 
     xinfo("xstatestore_prune_t::prune_exec_cons prune mpt and unitstate for table %s from %llu to %llu", m_table_addr.value().c_str(), from_height, to_height);

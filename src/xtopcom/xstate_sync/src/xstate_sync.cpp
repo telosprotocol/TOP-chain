@@ -340,7 +340,7 @@ void xtop_state_sync::process_table(state_req & req, std::error_code & ec) {
         // check state
         base::xauto_ptr<base::xvbstate_t> bstate = base::xvblock_t::create_state_object({data.begin(), data.end()});
         if (nullptr == bstate) {
-            xerror("xtop_state_sync::process_table state null");
+            xwarn("xtop_state_sync::process_table state null");
             return;
         }
         auto table_state = std::make_shared<data::xtable_bstate_t>(bstate.get());
