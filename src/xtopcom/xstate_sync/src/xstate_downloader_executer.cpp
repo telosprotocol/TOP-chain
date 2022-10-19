@@ -141,22 +141,22 @@ void xtop_download_executer::cancel() {
 
 void xtop_download_executer::push_track_req(const state_req & req) {
     std::lock_guard<std::mutex> lock(m_track_mutex);
-    m_track_req.emplace_back(req);
+    m_track_req.push(req);
 }
 
 void xtop_download_executer::pop_track_req() {
     std::lock_guard<std::mutex> lock(m_track_mutex);
-    m_track_req.pop_front();
+    m_track_req.pop();
 }
 
 void xtop_download_executer::push_state_pack(const state_res & res) {
     std::lock_guard<std::mutex> lock(m_state_pack_mutex);
-    m_state_packs.emplace_back(res);
+    m_state_packs.push(res);
 }
 
 void xtop_download_executer::pop_state_pack() {
     std::lock_guard<std::mutex> lock(m_state_pack_mutex);
-    m_state_packs.pop_front();
+    m_state_packs.pop();
 }
 
 }  // namespace state_sync

@@ -44,7 +44,7 @@ private:
     std::atomic<bool> m_cancel{false};
     std::error_code m_ec;
 
-    std::list<state_req> m_deliver_list;
+    std::queue<state_req> m_deliver_list;
     std::condition_variable m_condition;
     std::mutex m_mutex;
     uint32_t m_items_per_task{0};

@@ -49,23 +49,23 @@ class Sync {
 private:
     // request represents a scheduled or already in-flight state retrieval request.
     struct request {
-        xbytes_t path;     // Merkle path leading to this node for prioritization
-        xhash256_t hash;   // Hash of the node data content to retrieve
-        xbytes_t data;     // Data content of the node, cached until all subtrees complete
+        xbytes_t path;    // Merkle path leading to this node for prioritization
+        xhash256_t hash;  // Hash of the node data content to retrieve
+        xbytes_t data;    // Data content of the node, cached until all subtrees complete
 
-        xbytes_t unit_sync_key;    // Unit key is different from data hash
-        xbytes_t unit_store_key;    // Unit key is different from data hash
-        bool unit{false};  // Whether this is a unit entry
+        xbytes_t unit_sync_key;   // Unit key is different from data hash
+        xbytes_t unit_store_key;  // Unit key is different from data hash
+        bool unit{false};         // Whether this is a unit entry
 
-        std::vector<request *> parents;  // Parent state nodes referencing this entry (notify all upon completion)
-        std::size_t deps{0};                // Number of dependencies before allowed to commit this node
+        std::vector<std::shared_ptr<request>> parents;  // Parent state nodes referencing this entry (notify all upon completion)
+        std::size_t deps{0};                            // Number of dependencies before allowed to commit this node
 
         leaf_callback callback{nullptr};  // Callback to invoke if a leaf node it reached on this branch
 
         request(xbytes_t const & _path, xhash256_t const & _hash, leaf_callback _callback) : path{_path}, hash{_hash}, callback{_callback} {
         }
-        request(xbytes_t const & _path, xhash256_t const & _hash, xbytes_t const & _unit_sync_key, xbytes_t const & _unit_store_key, bool is_unit)
-          : path{_path}, hash{_hash}, unit_sync_key(_unit_sync_key), unit_store_key(_unit_store_key), unit{is_unit} {
+        request(xbytes_t const & _path, xhash256_t const & _hash, xbytes_t const & _unit_sync_key, xbytes_t const & _unit_store_key)
+          : path{_path}, hash{_hash}, unit_sync_key(_unit_sync_key), unit_store_key(_unit_store_key), unit{true} {
         }
     };
 
@@ -92,13 +92,13 @@ private:
 
 private:
     xhash256_t syncRoot;
-    xkv_db_face_ptr_t database{nullptr};                                    // Persistent database to check for existing entries
-    syncMemBatch membatch;                                                  // Memory buffer to avoid frequent database writes
-    std::map<xhash256_t, request *> nodeReqs;                               // Pending requests pertaining to a trie node hash
-    std::map<xhash256_t, request *> unitReqs;                               // Pending requests pertaining to a code hash
+    xkv_db_face_ptr_t database{nullptr};                      // Persistent database to check for existing entries
+    syncMemBatch membatch;                                    // Memory buffer to avoid frequent database writes
+    std::map<xhash256_t, std::shared_ptr<request>> nodeReqs;  // Pending requests pertaining to a trie node hash
+    std::map<xhash256_t, std::shared_ptr<request>> unitReqs;  // Pending requests pertaining to a code hash
     std::map<xbytes_t, xhash256_t> unitKeys;
     top::threading::xthreadsafe_priority_queue<xbytes_t, int64_t> queue;  // Priority queue with the pending requests
-    std::map<std::size_t, std::size_t> fetches;                             // Number of active fetches per trie node depth
+    std::map<std::size_t, std::size_t> fetches;                           // Number of active fetches per trie node depth
 
 public:
     Sync(xhash256_t const & root, xkv_db_face_ptr_t _database, leaf_callback callback);
@@ -111,7 +111,7 @@ public:
     Sync & operator=(Sync const &) = delete;
     Sync(Sync &&) = default;
     Sync & operator=(Sync &&) = default;
-    ~Sync();
+    ~Sync() = default;
 
 public:
     // Init
@@ -152,16 +152,16 @@ private:
     // schedule inserts a new state retrieval request into the fetch queue. If there
     // is already a pending request for this node, the new request will be discarded
     // and only a parent reference added to the old one.
-    void schedule(request * req);
+    void schedule(std::shared_ptr<request> req);
 
     // children retrieves all the missing children of a state trie entry for future
     // retrieval scheduling.
-    std::vector<request *> children(request * req, xtrie_node_face_ptr_t object, std::error_code & ec);
+    std::vector<std::shared_ptr<request>> children(std::shared_ptr<request>, xtrie_node_face_ptr_t object, std::error_code & ec);
 
     // commit finalizes a retrieval request and stores it into the membatch. If any
     // of the referencing parent requests complete due to this commit, they are also
     // committed themselves.
-    void commit(request * req, std::error_code & ec);
+    void commit(std::shared_ptr<request>, std::error_code & ec);
 };
 
 NS_END3
