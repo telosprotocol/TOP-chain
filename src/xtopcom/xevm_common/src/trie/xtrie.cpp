@@ -756,7 +756,7 @@ xtrie_node_face_ptr_t xtop_trie::resolve_hash(xhash256_t const & hash, std::erro
     return node;
 }
 
-xbytes_t xtop_trie::resolve_blob(std::shared_ptr<xtrie_hash_node_t> const & n, std::error_code & ec) {
+xbytes_t xtop_trie::resolve_blob(std::shared_ptr<xtrie_hash_node_t> const & n, std::error_code & ec) const {
     auto const hash = xhash256_t{n->data()};
     return trie_db_->Node(hash, ec);
 }
