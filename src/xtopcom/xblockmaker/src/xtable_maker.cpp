@@ -385,9 +385,10 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
                                                                         cs_para,
                                                                         lighttable_para);
     if (nullptr != tableblock) {
-        xinfo("xtable_maker_t::make_light_table_v2-succ is_leader=%d,%s,binlog=%zu,snapshot=%zu,batch_units=%zu,property_hashs=%zu,tgas_change=%ld,offdata=%zu", 
+        xinfo("xtable_maker_t::make_light_table_v2-succ is_leader=%d,%s,binlog=%zu,snapshot=%zu,batch_units=%zu,property_hashs=%zu,tgas_change=%ld,offdata=%zu,txnum=%u", 
             is_leader, tableblock->dump().c_str(), lighttable_para.get_property_binlog().size(), lighttable_para.get_fullstate_bin().size(), 
-            lighttable_para.get_batch_unit_and_index().size(), lighttable_para.get_property_hashs().size(),lighttable_para.get_tgas_balance_change(),tableblock->get_output_offdata().size());
+            lighttable_para.get_batch_unit_and_index().size(), lighttable_para.get_property_hashs().size(),lighttable_para.get_tgas_balance_change(),tableblock->get_output_offdata().size(),
+            lighttable_para.get_txs().size());
     }
 
     if (new_version) {
