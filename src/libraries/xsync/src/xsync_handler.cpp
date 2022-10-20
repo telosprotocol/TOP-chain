@@ -1502,8 +1502,8 @@ void xsync_handler_t::on_block_push_newblock(uint32_t msg_size,
         msg_hash,  msg_push_ptr->get_sessionID(), msg_push_ptr->get_request_type(), 
         network_self.to_string().c_str(), from_address.to_string().c_str());
 
-    if (m_session_mgr->sync_block_push_valid_check(msg_push_ptr)) {
-        xsync_warn("xsync_handler::on_block_push_newblock sync_block_push_valid_check error." PRIx64 "  %s %s",
+    if (!m_session_mgr->sync_block_push_valid_check(msg_push_ptr)) {
+        xsync_warn("xsync_handler::on_block_push_newblock sync_block_push_valid_check error. %" PRIx64 "  %s %s",
             msg_hash, network_self.to_string().c_str(), from_address.to_string().c_str());
         return;
     }
