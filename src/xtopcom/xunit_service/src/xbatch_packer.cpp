@@ -24,7 +24,18 @@
 #include <cinttypes>
 NS_BEG2(top, xunit_service)
 
-#define MIN_TRANSACTION_NUM_FOR_FIRST_PACKING (10)
+#define MIN_TRANSACTION_NUM_FOR_HIGH_TPS (30)
+#define MIN_TRANSACTION_NUM_FOR_MIDDLE_TPS (20)
+#define MIN_TRANSACTION_NUM_FOR_LOW_TPS (10)
+
+#define TRY_MAKE_BLOCK_TIMER_INTERVAL (30)
+#define TRY_HIGH_TPS_TIME_WINDOW (240)
+#define TRY_MIDDLE_TPS_TIME_WINDOW (240)
+#define TRY_LOW_TPS_TIME_WINDOW (240)
+
+#define TRY_HIGH_TPS_TIMES (TRY_HIGH_TPS_TIME_WINDOW/TRY_MAKE_BLOCK_TIMER_INTERVAL)
+#define TRY_MIDDLE_TPS_TIMES (TRY_MIDDLE_TPS_TIME_WINDOW/TRY_MAKE_BLOCK_TIMER_INTERVAL)
+#define TRY_LOW_TPS_TIMES (TRY_LOW_TPS_TIME_WINDOW/TRY_MAKE_BLOCK_TIMER_INTERVAL)
 
 xbatch_packer::xbatch_packer(observer_ptr<mbus::xmessage_bus_face_t> const   &mb,
                              base::xtable_index_t                             &tableid,
@@ -332,7 +343,8 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     m_is_leader = true;
     m_leader_packed = start_proposal(calculate_min_tx_num(true));
     if (!m_leader_packed) {
-        m_raw_timer->start(m_timer_repeat_time_ms, 0);
+        m_try_proposal_times = 0;
+        m_raw_timer->start(TRY_MAKE_BLOCK_TIMER_INTERVAL, 0);
     }
     return true;
 }
@@ -424,7 +436,7 @@ bool xbatch_packer::check_state_sync(base::xvblock_t * cert_block) {
         mbus::xevent_behind_ptr_t ev =
             make_object_ptr<mbus::xevent_behind_on_demand_t>(get_account(), latest_executed_height + 1, sync_num, false, "lack_of_table_block", "", false);
         base::xvchain_t::instance().get_xevmbus()->push_event(ev);
-        xwarn("xbatch_packer::check_state_sync try sync table blocks.account=%s,full_height=%ld,commit_height=%ld,execute_height=%ld,try sync h %llu num %u", 
+        xwarn("xbatch_packer::check_state_sync try sync table blocks.account=%s,full_height=%ld,commit_height=%ld,execute_height=%ld,try sync h %llu num %u",
             get_account().c_str(), latest_full_height, latest_committed_height, latest_executed_height, latest_executed_height + 1, sync_num);
         XMETRICS_GAUGE(metrics::cons_invoke_sync_block_count, 1);
     }
@@ -438,7 +450,7 @@ bool  xbatch_packer::on_timer_fire(const int32_t thread_id, const int64_t timer_
     // xunit_dbg("xbatch_packer::on_timer_fire retry start proposal.this:%p node:%s", this, m_para->get_resources()->get_account().c_str());
     m_leader_packed = start_proposal(calculate_min_tx_num(false));
     if (!m_leader_packed) {
-        m_raw_timer->start(m_timer_repeat_time_ms, 0);
+        m_raw_timer->start(TRY_MAKE_BLOCK_TIMER_INTERVAL, 0);
     }
     return true;
 }
@@ -586,7 +598,18 @@ xvip2_t xbatch_packer::get_child_xip(const xvip2_t & local_xip, const std::strin
 }
 
 bool xbatch_packer::reset_xip_addr(const xvip2_t & new_addr) {
-    reset_leader_info();  // fade xip should not be leader
+    // reset_leader_info();  // fade xip should not be leader
+
+    // for simple, keep leadership. because in most cases,leadership not change when round changed.
+    if (m_is_leader) {
+        xinfo("xbatch_packer::reset_xip_addr round changed,keep leadership,account:%s,old xip:%s,new xip:%s",
+              get_account().c_str(),
+              xcons_utl::xip_to_hex(get_xip2_addr()).c_str(),
+              xcons_utl::xip_to_hex(new_addr).c_str());
+        XMETRICS_GAUGE(metrics::cons_round_changed_keep_leadership, 1);
+        set_xip(*m_leader_cs_para, new_addr);  // set leader xip
+        set_election_round(true, *m_leader_cs_para);
+    }
 
     if (!is_xip2_empty(get_xip2_addr())) {
         m_last_xip2 = get_xip2_addr();
@@ -732,9 +755,14 @@ void xbatch_packer::make_receipts_and_send(data::xblock_t * commit_block, data::
 
 uint32_t xbatch_packer::calculate_min_tx_num(bool first_packing) {
     uint32_t min_tx_num = 0;
-    if (first_packing) {
-        min_tx_num = MIN_TRANSACTION_NUM_FOR_FIRST_PACKING;
+    if (m_try_proposal_times < TRY_HIGH_TPS_TIMES) {
+        min_tx_num = MIN_TRANSACTION_NUM_FOR_HIGH_TPS;
+    } else if (m_try_proposal_times < TRY_HIGH_TPS_TIMES + TRY_MIDDLE_TPS_TIMES) {
+        min_tx_num = MIN_TRANSACTION_NUM_FOR_MIDDLE_TPS;
+    } else if (m_try_proposal_times < TRY_HIGH_TPS_TIMES + TRY_MIDDLE_TPS_TIMES + TRY_LOW_TPS_TIMES) {
+        min_tx_num = MIN_TRANSACTION_NUM_FOR_LOW_TPS;
     }
+    m_try_proposal_times++;
     return min_tx_num;
 }
 

@@ -98,6 +98,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(cons_tableblock_backup_succ);
         RETURN_METRICS_NAME(cons_tableblock_total_succ);
         RETURN_METRICS_NAME(cons_pacemaker_tc_discontinuity);
+        RETURN_METRICS_NAME(cons_round_changed_keep_leadership);
 
         RETURN_METRICS_NAME(cons_table_leader_make_proposal_succ);
         RETURN_METRICS_NAME(cons_table_backup_verify_proposal_succ);

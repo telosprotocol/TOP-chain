@@ -482,6 +482,7 @@ void xproposal_maker_t::update_txpool_table_state(base::xvblock_t* _commit_block
 bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & proposal_para, xtablemaker_para_t & table_para) {
     // get table batch txs for execute and make block
     auto & tablestate_highqc = table_para.get_tablestate();
+    // raise pack tx num thresold. notice proposal size will be enlardged.
     uint16_t all_txs_max_num = 40;  // TODO(jimmy) config paras
     uint16_t confirm_and_recv_txs_max_num = 35;
     uint16_t confirm_txs_max_num = 30;
