@@ -13,6 +13,11 @@ echo "build args: "${fix_args}
 
 ./build.sh ${fix_args}
 
+if [ $? -ne 0 ];then
+    echo "build fail!"
+    exit -1
+fi
+
 if [ ! -f "cbuild/bin/Linux/topio" ];then
     echo "build topio failed!!!"
     exit -1
