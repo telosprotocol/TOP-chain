@@ -92,7 +92,6 @@ private:
     std::shared_ptr<xproposal_maker_face>    m_proposal_maker;
     uint64_t                                 m_cons_start_time_ms;
     static constexpr uint32_t                m_empty_block_max_num{2};
-    static constexpr uint32_t                m_timer_repeat_time_ms{1000};  // check account by every 3 seconds
     std::string                              m_account_id;
     std::string                              m_latest_cert_block_hash;
     bool                                     m_can_make_empty_block{false};
@@ -110,6 +109,7 @@ private:
     // record last xip in case of consensus success but leader xip changed.
     xvip2_t                                  m_last_xip2{};
     common::xaccount_address_t               m_table_addr;
+    uint8_t                                  m_try_proposal_times{0};
 };
 
 using xbatch_packer_ptr_t = xobject_ptr_t<xbatch_packer>;
