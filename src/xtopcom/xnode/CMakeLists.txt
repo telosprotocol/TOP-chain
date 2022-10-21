@@ -3,11 +3,6 @@ add_compile_options(-Wno-unused-parameter)
 aux_source_directory(./src src)
 add_executable(topio ${src})
 
-#compile definitions
-add_definitions(
-    # -D__STRICT_ANSI__
-    -DRPC_BUILD
-)
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     add_compile_options(-Wno-deprecated-declarations)
     add_compile_options(-Wno-write-strings)
