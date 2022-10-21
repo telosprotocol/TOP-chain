@@ -7,13 +7,6 @@ endif()
 aux_source_directory(./src src)
 add_library(xchaininit ${src})
 
-#compile definitions
-add_definitions(
-    -DUSE_STANDALONE_ASIO
-    -DASIO_STANDALONE
-    # -D__STRICT_ANSI__
-    -DRPC_BUILD
-)
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     add_compile_options(-Wno-deprecated-declarations)
     add_compile_options(-Wno-write-strings)
