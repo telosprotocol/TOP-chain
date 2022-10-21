@@ -374,6 +374,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::write_table_all_states(base::xvblo
     std::lock_guard<std::mutex> l(m_table_state_write_lock);
     xtablestate_ext_ptr_t cache_tablestate = m_state_accessor.read_table_bstate(m_table_addr, current_block);
     if (nullptr != cache_tablestate) {
+        update_latest_executed_info(current_block);  // XTODO should update execute height
         xinfo("xstatestore_executor_t::write_table_all_states succ-already writed.block=%s",current_block->dump().c_str());
         return cache_tablestate;
     }

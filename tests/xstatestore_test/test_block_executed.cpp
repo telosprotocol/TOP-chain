@@ -116,7 +116,7 @@ TEST_F(test_block_executed, recover_execute_height) {
         state_executor.force_recover_execute_height(max_count/2);
         EXPECT_EQ(state_executor.get_latest_executed_block_height(), max_count/2+20); 
 
-        EXPECT_EQ(state_executor.get_latest_executed_tablestate_ext()->get_table_state()->height(), max_count/2+20);        
+        EXPECT_EQ(state_executor.get_latest_executed_tablestate_ext()->get_table_state()->height(), max_count - 2);        
     }
 }
 
