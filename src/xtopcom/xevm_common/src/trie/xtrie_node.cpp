@@ -5,6 +5,9 @@
 #include "xevm_common/trie/xtrie_node.h"
 
 #include "xevm_common/rlp.h"
+#if defined(ENABLE_METRICS)
+#include "xmetrics/xmetrics.h"
+#endif
 
 #include <cassert>
 #include <sstream>
@@ -36,6 +39,26 @@ void xtop_node_flag::hash_node(std::shared_ptr<xtrie_hash_node_t> node) noexcept
 void xtop_node_flag::dirty(bool const dirty) noexcept {
     dirty_ = dirty;
 }
+
+#if defined(ENABLE_METRICS)
+
+xtop_trie_node_face::xtop_trie_node_face() noexcept {
+    XMETRICS_COUNTER_INCREMENT("mpt_trie_node_cnt", 1);
+}
+
+xtop_trie_node_face::xtop_trie_node_face(xtop_trie_node_face const &) {
+    XMETRICS_COUNTER_INCREMENT("mpt_trie_node_cnt", 1);
+}
+
+xtop_trie_node_face::xtop_trie_node_face(xtop_trie_node_face &&) noexcept {
+    XMETRICS_COUNTER_INCREMENT("mpt_trie_node_cnt", 1);
+}
+
+xtop_trie_node_face::~xtop_trie_node_face() noexcept {
+    XMETRICS_COUNTER_DECREMENT("mpt_trie_node_cnt", 1);
+}
+
+#endif
 
 xtop_trie_hash_node::xtop_trie_hash_node(xbytes_t data)
     : m_data{std::move(data)} {

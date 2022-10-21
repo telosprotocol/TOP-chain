@@ -67,12 +67,21 @@ using xtrie_node_cached_data_t = xtop_node_flag;
 
 class xtop_trie_node_face {
 public:
+#if defined(ENABLE_METRICS)
+    xtop_trie_node_face() noexcept;
+    xtop_trie_node_face(xtop_trie_node_face const &);
+    xtop_trie_node_face & operator=(xtop_trie_node_face const &) = default;
+    xtop_trie_node_face(xtop_trie_node_face &&) noexcept;
+    xtop_trie_node_face & operator=(xtop_trie_node_face &&) = default;
+    virtual ~xtop_trie_node_face() noexcept;
+#else
     xtop_trie_node_face() = default;
     xtop_trie_node_face(xtop_trie_node_face const &) = default;
     xtop_trie_node_face & operator=(xtop_trie_node_face const &) = default;
     xtop_trie_node_face(xtop_trie_node_face &&) = default;
     xtop_trie_node_face & operator=(xtop_trie_node_face &&) = default;
     virtual ~xtop_trie_node_face() = default;
+#endif
 
     virtual std::string fstring(std::string const & ind) const = 0;
     virtual xtrie_node_cached_data_t cache() const = 0;

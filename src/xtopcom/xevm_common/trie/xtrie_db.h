@@ -48,7 +48,7 @@ private:
     std::map<xhash256_t, xbytes_t> preimages_;  // Preimages of nodes from the secure trie
 
 public:
-    xtop_trie_db(xkv_db_face_ptr_t _diskdb) : diskdb_(_diskdb) {
+    explicit xtop_trie_db(xkv_db_face_ptr_t diskdb) : diskdb_(std::move(diskdb)) {
     }
 
 public:
