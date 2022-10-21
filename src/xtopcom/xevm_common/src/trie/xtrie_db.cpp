@@ -19,22 +19,22 @@ constexpr uint32_t IdealBatchSize = 1024;
 constexpr auto PreimagePrefix = ConstBytes<11>("secure-key-");
 
 std::shared_ptr<xtop_trie_db> xtop_trie_db::NewDatabase(xkv_db_face_ptr_t diskdb) {
-    return NewDatabaseWithConfig(diskdb, nullptr);
+    return NewDatabaseWithConfig(std::move(diskdb), nullptr);
 }
 
-std::shared_ptr<xtop_trie_db> xtop_trie_db::NewDatabaseWithConfig(xkv_db_face_ptr_t diskdb, xtrie_db_config_ptr_t config) {
-    if (config != nullptr && config->Cache_size > 0) {
-        if (config->Journal == "") {
-            // todo
-        } else {
-            // todo
-        }
-    }
+std::shared_ptr<xtop_trie_db> xtop_trie_db::NewDatabaseWithConfig(xkv_db_face_ptr_t diskdb, xtrie_db_config_ptr_t /*config*/) {
+    //if (config != nullptr && config->Cache_size > 0) {
+    //    if (config->Journal.empty()) {
+    //        // todo
+    //    } else {
+    //        // todo
+    //    }
+    //}
 
-    return std::make_shared<xtop_trie_db>(diskdb);
+    return std::make_shared<xtop_trie_db>(std::move(diskdb));
 }
 
-void xtop_trie_db::insert(xhash256_t hash, int32_t size, xtrie_node_face_ptr_t const & node) {
+void xtop_trie_db::insert(xhash256_t hash, int32_t const size, xtrie_node_face_ptr_t const & node) {
     // If the node's already cached, skip
     if (dirties_.find(hash) != dirties_.end()) {
         return;
@@ -90,7 +90,7 @@ xtrie_node_face_ptr_t xtop_trie_db::node(xhash256_t hash) {
 
 xbytes_t xtop_trie_db::Node(xhash256_t hash, std::error_code & ec) {
     // It doesn't make sense to retrieve the metaroot
-    if (hash == xhash256_t{}) {
+    if (hash.empty()) {
         ec = error::xerrc_t::trie_db_not_found;
         return xbytes_t{};
     }
