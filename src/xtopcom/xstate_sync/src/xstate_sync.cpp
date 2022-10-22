@@ -37,7 +37,7 @@ std::shared_ptr<xtop_state_sync> xtop_state_sync::new_state_sync(const common::x
     sync->m_table_block_hash = block_hash;
     sync->m_table_state_hash = state_hash;
     sync->m_root = root_hash;
-    sync->m_symbol = "table: " + table.value() + ", height: " + std::to_string(height) + ", root: " + root_hash.as_hex_str();
+    sync->m_symbol = "table: " + table.to_string() + ", height: " + std::to_string(height) + ", root: " + root_hash.as_hex_str();
     sync->m_peers_func = peers;
     sync->m_track_func = track_req;
     sync->m_db = db;
@@ -118,7 +118,7 @@ void xtop_state_sync::sync_table(std::error_code & ec) {
     assert(running_thead_id_ == std::this_thread::get_id());
 #endif
     // check exist
-    auto const key = base::xvdbkey_t::create_prunable_state_key(m_table.value(), m_height, {m_table_block_hash.begin(), m_table_block_hash.end()});
+    auto const key = base::xvdbkey_t::create_prunable_state_key(m_table.to_string(), m_height, {m_table_block_hash.begin(), m_table_block_hash.end()});
     auto const value = m_db->get_value(key);
     if (!value.empty()) {
         xinfo("xtop_state_sync::sync_table state already exist, %s, block_hash: %s", symbol().c_str(), to_hex(m_table_block_hash).c_str());
@@ -221,7 +221,7 @@ void xtop_state_sync::loop(std::function<bool()> condition,
 
 void xtop_state_sync::assign_table_tasks(const sync_peers & peers) {
     base::xstream_t stream(base::xcontext_t::instance());
-    stream << m_table.value();
+    stream << m_table.to_string();
     stream << m_height;
     stream << m_table_block_hash.to_bytes();
     stream << m_req_sequence_id;
@@ -249,7 +249,7 @@ void xtop_state_sync::assign_trie_tasks(const sync_peers & peers) {
             return;
         }
         base::xstream_t stream(base::xcontext_t::instance());
-        stream << m_table.value();
+        stream << m_table.to_string();
         stream << m_req_sequence_id;
         std::vector<xbytes_t> nodes_bytes;
         std::vector<xbytes_t> units_bytes;
@@ -279,7 +279,9 @@ common::xnode_address_t xtop_state_sync::send_message(const sync_peers & peers, 
     std::error_code ec;
     peers.network->send_to(random_fullnode, _msg, ec);
     if (ec) {
-        xwarn("xtop_state_sync::send_message send net error, %s, %s", random_fullnode.account_address().c_str(), peers.network->address().account_address().c_str());
+        xwarn("xtop_state_sync::send_message send net error, %s, %s",
+              random_fullnode.account_address().to_string().c_str(),
+              peers.network->address().account_address().to_string().c_str());
     }
     return random_fullnode;
 }
@@ -331,7 +333,7 @@ void xtop_state_sync::process_table(state_req & req, std::error_code & ec) {
         return;
     }
     if (req.nodes_response.empty()) {
-        xwarn("xtop_state_sync::process_table empty, table %s, height: %lu, block_hash: %s", m_table.c_str(), m_height, to_hex(m_table_block_hash).c_str());
+        xwarn("xtop_state_sync::process_table empty, table %s, height: %lu, block_hash: %s", m_table.to_string().c_str(), m_height, to_hex(m_table_block_hash).c_str());
         return;
     }
     auto & data = req.nodes_response.at(0);
@@ -351,7 +353,7 @@ void xtop_state_sync::process_table(state_req & req, std::error_code & ec) {
             return;
         }
     }
-    auto key = base::xvdbkey_t::create_prunable_state_key(m_table.value(), m_height, {m_table_block_hash.begin(), m_table_block_hash.end()});
+    auto key = base::xvdbkey_t::create_prunable_state_key(m_table.to_string(), m_height, {m_table_block_hash.begin(), m_table_block_hash.end()});
     std::string value{data.begin(), data.end()};
     m_db->set_value(key, value);
     m_sync_table_finish = true;

@@ -49,7 +49,7 @@ int32_t xtx_utl::address_is_valid(common::xnode_id_t const & addr) {
 
     bool res = true;
     try {
-        top::utl::xkeyaddress_t  keyaddr{ addr.value() };
+        top::utl::xkeyaddress_t keyaddr{addr.to_string()};
         if (!keyaddr.is_valid()) res = false;
 
     } catch (...) {
@@ -57,11 +57,11 @@ int32_t xtx_utl::address_is_valid(common::xnode_id_t const & addr) {
     }
 
     if (!res) {
-        xwarn("[global_trace][xverifier][address_is_valid][fail] address: %s", addr.value().c_str());
+        xwarn("[global_trace][xverifier][address_is_valid][fail] address: %s", addr.to_string().c_str());
         return xverifier_error::xverifier_error_addr_invalid;
     }
 
-    xdbg("[global_trace][xverifier][address_is_valid][success] address: %s", addr.value().c_str());
+    xdbg("[global_trace][xverifier][address_is_valid][success] address: %s", addr.to_string().c_str());
     return xverifier_error::xverifier_success;
 }
 

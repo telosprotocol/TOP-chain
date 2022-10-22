@@ -50,7 +50,7 @@ void xtop_state_mpt::init(const common::xaccount_address_t & table, const xhash2
     m_db = evm_common::trie::xtrie_db_t::NewDatabase(kv_db);
     m_trie = evm_common::trie::xsecure_trie_t::build_from(root, m_db, ec);
     if (ec) {
-        xwarn("xtop_state_mpt::init trie with %s %s maybe not complete yes", table.c_str(), root.as_hex_str().c_str());
+        xwarn("xtop_state_mpt::init trie with %s %s maybe not complete yes", table.to_string().c_str(), root.as_hex_str().c_str());
         return;
     }
     m_original_root = root;
@@ -60,7 +60,7 @@ void xtop_state_mpt::init(const common::xaccount_address_t & table, const xhash2
 base::xaccount_index_t xtop_state_mpt::get_account_index(common::xaccount_address_t const & account, std::error_code & ec) {
     auto obj = get_state_object(account, ec);
     if (ec) {
-        xwarn("xtop_state_mpt::get_account_index get_state_object %s error: %s %s", account.c_str(), ec.category().name(), ec.message().c_str());
+        xwarn("xtop_state_mpt::get_account_index get_state_object %s error: %s %s", account.to_string().c_str(), ec.category().name(), ec.message().c_str());
         return {};
     }
     if (obj != nullptr) {
@@ -72,7 +72,7 @@ base::xaccount_index_t xtop_state_mpt::get_account_index(common::xaccount_addres
 xbytes_t xtop_state_mpt::get_unit(common::xaccount_address_t const & account, std::error_code & ec) {
     auto obj = get_state_object(account, ec);
     if (ec) {
-        xwarn("xtop_state_mpt::get_unit %s error: %s %s", account.c_str(), ec.category().name(), ec.message().c_str());
+        xwarn("xtop_state_mpt::get_unit %s error: %s %s", account.to_string().c_str(), ec.category().name(), ec.message().c_str());
         return {};
     }
     if (obj != nullptr) {
@@ -95,7 +95,7 @@ void xtop_state_mpt::set_account_index(common::xaccount_address_t const & accoun
     }
     if (obj->dirty_unit) {
         ec = error::xerrc_t::state_mpt_unit_hash_mismatch;
-        xwarn("xtop_state_mpt::set_account_index %s unit already dirty", account.c_str());
+        xwarn("xtop_state_mpt::set_account_index %s unit already dirty", account.to_string().c_str());
         return;
     }
     m_journal.append(obj->set_account_index(index));
@@ -144,7 +144,7 @@ std::shared_ptr<xstate_object_t> xtop_state_mpt::get_deleted_state_object(common
         index_bytes = m_trie->try_get(to_bytes(account), ec);
     }
     if (ec) {
-        xwarn("xtop_state_mpt::get_deleted_state_object TryGet %s error, %s %s", account.c_str(), ec.category().name(), ec.message().c_str());
+        xwarn("xtop_state_mpt::get_deleted_state_object TryGet %s error, %s %s", account.to_string().c_str(), ec.category().name(), ec.message().c_str());
         return nullptr;
     }
     if (index_bytes.empty()) {
@@ -174,13 +174,13 @@ std::shared_ptr<xstate_object_t> xtop_state_mpt::query_state_object(common::xacc
 std::shared_ptr<xstate_object_t> xtop_state_mpt::get_or_new_state_object(common::xaccount_address_t const & account, std::error_code & ec) {
     auto obj = get_state_object(account, ec);
     if (ec) {
-        xwarn("xtop_state_mpt::get_or_new_state_object error, %s %s", account.c_str(), ec.category().name(), ec.message().c_str());
+        xwarn("xtop_state_mpt::get_or_new_state_object error, %s %s", account.to_string().c_str(), ec.category().name(), ec.message().c_str());
         return nullptr;
     }
     if (obj == nullptr) {
         obj = create_object(account, ec);
         if (ec) {
-            xwarn("xtop_state_mpt::get_or_new_state_object error, %s %s", account.c_str(), ec.category().name(), ec.message().c_str());
+            xwarn("xtop_state_mpt::get_or_new_state_object error, %s %s", account.to_string().c_str(), ec.category().name(), ec.message().c_str());
             return nullptr;
         }
     }
@@ -190,7 +190,7 @@ std::shared_ptr<xstate_object_t> xtop_state_mpt::get_or_new_state_object(common:
 std::shared_ptr<xstate_object_t> xtop_state_mpt::create_object(common::xaccount_address_t const & account, std::error_code & ec) {
     auto prev = get_deleted_state_object(account, ec);
     if (ec) {
-        xwarn("xtop_state_mpt::create_object %s error, %s %s", account.c_str(), ec.category().name(), ec.message().c_str());
+        xwarn("xtop_state_mpt::create_object %s error, %s %s", account.to_string().c_str(), ec.category().name(), ec.message().c_str());
         return nullptr;
     }
     auto obj = xstate_object_t::new_object(account, {});
@@ -207,7 +207,7 @@ void xtop_state_mpt::prune_unit(const common::xaccount_address_t & account, std:
         index_bytes = m_trie->try_get(to_bytes(account), ec);
     }
     if (ec) {
-        xwarn("xtop_state_mpt::get_deleted_state_object TryGet %s error, %s %s", account.c_str(), ec.category().name(), ec.message().c_str());
+        xwarn("xtop_state_mpt::get_deleted_state_object TryGet %s error, %s %s", account.to_string().c_str(), ec.category().name(), ec.message().c_str());
         return;
     }
     if (index_bytes.empty()) {
@@ -216,7 +216,7 @@ void xtop_state_mpt::prune_unit(const common::xaccount_address_t & account, std:
     xaccount_info_t info;
     info.decode({index_bytes.begin(), index_bytes.end()});
     auto hash = info.m_index.get_latest_unit_hash();
-    auto key = base::xvdbkey_t::create_prunable_unit_state_key(base::xvaccount_t{account.value()}, info.m_index.get_latest_unit_height(), info.m_index.get_latest_unit_hash());
+    auto key = base::xvdbkey_t::create_prunable_unit_state_key(base::xvaccount_t{account.to_string()}, info.m_index.get_latest_unit_height(), info.m_index.get_latest_unit_hash());
     m_db->DiskDB()->DeleteDirect({key.begin(), key.end()}, ec);
     if (ec) {
         xwarn("xtop_state_mpt::prune_unit db Delete error: %s, %s", ec.category().name(), ec.message().c_str());
@@ -236,7 +236,7 @@ xhash256_t xtop_state_mpt::get_root_hash(std::error_code & ec) {
         auto data = info.encode();
         m_trie->try_update(to_bytes(acc), {data.begin(), data.end()}, ec);
         if (ec) {
-            xwarn("xtop_state_mpt::get_root_hash update_state_object %s error, %s %s", acc.c_str(), ec.category().name(), ec.message().c_str());
+            xwarn("xtop_state_mpt::get_root_hash update_state_object %s error, %s %s", acc.to_string().c_str(), ec.category().name(), ec.message().c_str());
             return {};
         }
     }
@@ -284,8 +284,8 @@ xhash256_t xtop_state_mpt::commit(std::error_code & ec) {
         }
         std::map<xbytes_t, xbytes_t> batch;
         if (!obj->unit_bytes.empty() && obj->dirty_unit) {
-            auto unit_key =
-                base::xvdbkey_t::create_prunable_unit_state_key(base::xvaccount_t{obj->account.value()}, obj->index.get_latest_unit_height(), obj->index.get_latest_unit_hash());
+            auto unit_key = base::xvdbkey_t::create_prunable_unit_state_key(
+                base::xvaccount_t{obj->account.to_string()}, obj->index.get_latest_unit_height(), obj->index.get_latest_unit_hash());
             batch.emplace(std::make_pair(xbytes_t{unit_key.begin(), unit_key.end()}, obj->unit_bytes));
             if (batch.size() >= 1024) {
                 WriteUnitBatch(m_db->DiskDB(), batch);

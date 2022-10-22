@@ -29,13 +29,13 @@ TEST(xnetwork, node_address_codec) {
 TEST(xnetwork, node_id_codec) {
     std::string const node_id_value{ "im the node id" };
     common::xnode_id_t const node_id{ node_id_value };
-    EXPECT_EQ(node_id.value(), node_id_value);
+    EXPECT_EQ(node_id.to_string(), node_id_value);
 
     auto const node_id_bytes = codec::xmsgpack_codec_t<common::xnode_id_t>::encode(node_id);
     auto const decoded_node_id = codec::xmsgpack_codec_t<common::xnode_id_t>::decode(node_id_bytes);
     EXPECT_EQ(node_id, decoded_node_id);
-    EXPECT_EQ(decoded_node_id.value(), node_id.value());
-    EXPECT_EQ(decoded_node_id.value(), node_id_value);
+    EXPECT_EQ(decoded_node_id.to_string(), node_id.to_string());
+    EXPECT_EQ(decoded_node_id.to_string(), node_id_value);
 }
 
 TEST(xnetwork, ping_node_codec) {

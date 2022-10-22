@@ -29,7 +29,8 @@ class xtransaction_maker {
     } 
     static xtransaction_ptr_t make_transfer_tx(const data::xunitstate_ptr_t & account, const std::string & to,
         uint64_t amount, uint64_t firestamp, uint16_t duration, uint32_t deposit) {
-        return make_transfer_tx(account->account_address().value(), account->account_send_trans_hash(), account->account_send_trans_number(), to,
+        return make_transfer_tx(
+            account->account_address().to_string(), account->account_send_trans_hash(), account->account_send_trans_number(), to,
         amount, firestamp, duration, deposit);
     }
 
@@ -40,7 +41,7 @@ class xtransaction_maker {
         data::xproperty_asset asset(amount);
         tx->make_tx_run_contract(asset, func_name, func_param);
         tx->set_last_trans_hash_and_nonce(account->account_send_trans_hash(), account->account_send_trans_number());
-        tx->set_different_source_target_address(account->account_address().value(), to);
+        tx->set_different_source_target_address(account->account_address().to_string(), to);
         tx->set_fire_timestamp(firestamp);
         tx->set_expire_duration(duration);
         tx->set_deposit(deposit);

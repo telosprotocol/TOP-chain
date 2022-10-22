@@ -29,7 +29,7 @@ std::shared_ptr<evm_common::trie::Sync> new_state_sync(const common::xaccount_ad
             auto state_key = base::xvdbkey_t::create_prunable_unit_state_key(info.m_account.vaccount(), info.m_index.get_latest_unit_height(), info.m_index.get_latest_unit_hash());
             syncer->AddUnitEntry(hash, hexpath, value, {state_key.begin(), state_key.end()}, parent);
             xinfo("state_mpt::new_state_sync table: %s, root: %s, value: %s, hash: %s, state_key: %s, index_dump: %s",
-                  table.c_str(),
+                  table.to_string().c_str(),
                   root.as_hex_str().c_str(),
                   to_hex(value).c_str(),
                   hash.as_hex_str().c_str(),

@@ -19,7 +19,9 @@ class xtablestate_ctx_t {
  public:
     xtablestate_ctx_t(const data::xtablestate_ptr_t & table_state, std::shared_ptr<state_mpt::xstate_mpt_t> const& state_mpt);
  public:
-    std::string                         get_table_address() const {return m_table_state->account_address().value();}
+    std::string get_table_address() const {
+        return m_table_state->account_address().to_string();
+    }
     base::xtable_shortid_t              get_tableid() const {return m_table_state->get_bstate()->get_short_table_id();}
     uint64_t                            get_table_commit_height() const;
     const data::xtablestate_ptr_t &     get_table_state() const {return m_table_state;}

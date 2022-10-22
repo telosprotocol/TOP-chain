@@ -472,16 +472,16 @@ TEST_F(test_state_mpt_fixture, test_trie_callback) {
     };
 
     // table
-    auto table_bstate = make_object_ptr<base::xvbstate_t>(TABLE_ADDRESS.value(), 100, 100, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
+    auto table_bstate = make_object_ptr<base::xvbstate_t>(TABLE_ADDRESS.to_string(), 100, 100, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
     std::string table_state_str;
     table_bstate->serialize_to_string(table_state_str);
     auto table_state = std::make_shared<data::xtable_bstate_t>(table_bstate.get());
     auto table_snapshot = table_state->take_snapshot();
     auto table_state_hash_str = base::xcontext_t::instance().hash(table_snapshot, enum_xhash_type_sha2_256);
-    auto table_block_hash = utl::xkeccak256_t::digest(TABLE_ADDRESS.value());
+    auto table_block_hash = utl::xkeccak256_t::digest(TABLE_ADDRESS.to_string());
     std::string table_block_hash_str((char *)table_block_hash.data(), table_block_hash.size());
     printf("table, account: %s, block_hash: %s, state_hash: %s, state: %s\n",
-           TABLE_ADDRESS.c_str(),
+           TABLE_ADDRESS.to_string().c_str(),
            to_hex(table_block_hash_str).c_str(),
            to_hex(table_state_hash_str).c_str(),
            to_hex(table_state_str).c_str());
@@ -630,8 +630,8 @@ void generate_state_mpt_data_file() {
     for (auto & d : data) {
         std::string str;
         d.second.first.serialize_to(str);
-        j[d.first.value()]["index"] = to_hex(str);
-        j[d.first.value()]["state"] = to_hex(d.second.second);
+        j[d.first.to_string()]["index"] = to_hex(str);
+        j[d.first.to_string()]["state"] = to_hex(d.second.second);
     }
     std::ofstream f("state_mpt_data.json");
     f << std::setw(4) << j;

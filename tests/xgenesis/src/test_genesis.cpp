@@ -532,13 +532,13 @@ TEST_F(test_genesis, test_init_genesis_block_before) {
     m_genesis_manager->m_user_accounts_data = get_all_user_data();
 
     for (auto const & account : m_genesis_manager->m_contract_accounts) {
-        EXPECT_EQ(m_blockstore->exist_genesis_block(base::xvaccount_t{account.value()}), false);
+        EXPECT_EQ(m_blockstore->exist_genesis_block(base::xvaccount_t{account.to_string()}), false);
     }
     for (auto const & pair : m_genesis_manager->m_user_accounts_data) {
-        if (pair.first.value() == "T00000LNi53Ub726HcPXZfC4z6zLgTo5ks6GzTUp") {
-            EXPECT_EQ(m_blockstore->exist_genesis_block(pair.first.value()), true);
+        if (pair.first.to_string() == "T00000LNi53Ub726HcPXZfC4z6zLgTo5ks6GzTUp") {
+            EXPECT_EQ(m_blockstore->exist_genesis_block(pair.first.to_string()), true);
         } else {
-            EXPECT_EQ(m_blockstore->exist_genesis_block(pair.first.value()), false);
+            EXPECT_EQ(m_blockstore->exist_genesis_block(pair.first.to_string()), false);
         }
     }
     

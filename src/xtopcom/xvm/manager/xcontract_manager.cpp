@@ -114,11 +114,11 @@ void xtop_contract_manager::register_address() {
     for (auto const & pair : xcontract_deploy_t::instance().get_map()) {
         if (data::is_sys_sharding_contract_address(pair.first)) {
             for (auto i = 0; i < enum_vbucket_has_tables_count; i++) {
-                auto addr = data::make_address_by_prefix_and_subaddr(pair.first.value(), i);
+                auto addr = data::make_address_by_prefix_and_subaddr(pair.first.to_string(), i);
                 register_contract_cluster_address(pair.first, addr);
             }
         } else if (data::is_sys_evm_table_contract_address(pair.first)) {
-            auto addr = data::make_address_by_prefix_and_subaddr(pair.first.value(), 0);
+            auto addr = data::make_address_by_prefix_and_subaddr(pair.first.to_string(), 0);
             register_contract_cluster_address(pair.first, addr);
         } else {
             register_contract_cluster_address(pair.first, pair.first);
@@ -366,20 +366,21 @@ void xtop_contract_manager::init(xobject_ptr_t<store::xsyncvstore_t> const& sync
 void xtop_contract_manager::setup_chain(common::xaccount_address_t const & contract_cluster_address, xvblockstore_t * blockstore) {
     assert(contract_cluster_address.has_value());
 
-    if (blockstore->exist_genesis_block(contract_cluster_address.value())) {
-        xdbg("xtop_contract_manager::setup_chain blockchain account %s genesis block exist", contract_cluster_address.c_str());
+    if (blockstore->exist_genesis_block(contract_cluster_address.to_string())) {
+        xdbg("xtop_contract_manager::setup_chain blockchain account %s genesis block exist", contract_cluster_address.to_string().c_str());
         return;
     }
-    xdbg("xtop_contract_manager::setup_chain blockchain account %s genesis block not exist", contract_cluster_address.c_str());
+    xdbg("xtop_contract_manager::setup_chain blockchain account %s genesis block not exist", contract_cluster_address.to_string().c_str());
 
     xtransaction_ptr_t tx = make_object_ptr<xtransaction_v1_t>();
     data::xproperty_asset asset_out{0};
     tx->make_tx_run_contract(asset_out, "setup", "");
-    tx->set_same_source_target_address(contract_cluster_address.value());
+    tx->set_same_source_target_address(contract_cluster_address.to_string());
     tx->set_digest();
     tx->set_len();
 
-    xobject_ptr_t<base::xvbstate_t> bstate = make_object_ptr<base::xvbstate_t>(contract_cluster_address.value(), (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
+    xobject_ptr_t<base::xvbstate_t> bstate =
+        make_object_ptr<base::xvbstate_t>(contract_cluster_address.to_string(), (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
     data::xunitstate_ptr_t unitstate = std::make_shared<xunit_bstate_t>(bstate.get());
     xaccount_context_t ac(unitstate);
 
@@ -389,17 +390,17 @@ void xtop_contract_manager::setup_chain(common::xaccount_address_t const & contr
     store::xtransaction_result_t result;
     ac.get_transaction_result(result);
 
-    base::xauto_ptr<base::xvblock_t> block(data::xblocktool_t::create_genesis_lightunit(contract_cluster_address.value(), tx, result));
+    base::xauto_ptr<base::xvblock_t> block(data::xblocktool_t::create_genesis_lightunit(contract_cluster_address.to_string(), tx, result));
     xassert(block);
 
     base::xvaccount_t _vaddr(block->get_account());
     // m_blockstore->delete_block(_vaddr, genesis_block.get());  // delete default genesis block
     auto ret = blockstore->store_block(_vaddr, block.get());
     if (!ret) {
-        xerror("xtop_contract_manager::setup_chain %s genesis block fail", contract_cluster_address.c_str());
+        xerror("xtop_contract_manager::setup_chain %s genesis block fail", contract_cluster_address.to_string().c_str());
         return;
     }
-    xdbg("[xtop_contract_manager::setup_chain] setup %s, %s", contract_cluster_address.c_str(), ret ? "SUCC" : "FAIL");
+    xdbg("[xtop_contract_manager::setup_chain] setup %s, %s", contract_cluster_address.to_string().c_str(), ret ? "SUCC" : "FAIL");
 }
 
 void xtop_contract_manager::register_contract_cluster_address(common::xaccount_address_t const & address, common::xaccount_address_t const & cluster_address) {
@@ -697,13 +698,13 @@ static void get_rec_standby_pool_property_data(common::xaccount_address_t const 
                     auto const & node_id = top::get<common::xnode_id_t const>(node_info);
                     switch (json_format) {
                     case xjson_format_t::simple:
-                        json[node_type_str].append(node_id.value());
+                        json[node_type_str].append(node_id.to_string());
                         break;
                     case xjson_format_t::detail: {
                         xJson::Value j;
                         auto const & standby_node_info = top::get<data::election::xstandby_node_info_t>(node_info);
                         j["consensus_public_key"] = standby_node_info.consensus_public_key.to_string();
-                        j["node_id"] = node_id.value();
+                        j["node_id"] = node_id.to_string();
                         j["stake"] = static_cast<xJson::UInt64>(standby_node_info.stake(node_type));
                         j["is_genesis_node"] = std::string{standby_node_info.genesis ? "true" : "false"};
                         j["program_version"] = standby_node_info.program_version;
@@ -775,7 +776,7 @@ static void get_rec_nodes_map(common::xaccount_address_t const & contract_addres
         xstream_t stream(xcontext_t::instance(), (uint8_t *)m.second.data(), m.second.size());
         reg_node_info.serialize_from(stream);
         xJson::Value j;
-        j["account_addr"] = reg_node_info.m_account.value();
+        j["account_addr"] = reg_node_info.m_account.to_string();
         j["node_deposit"] = static_cast<unsigned long long>(reg_node_info.m_account_mortgage);
         if (reg_node_info.genesis()) {
             j["registered_node_type"] = std::string{"advance,validator,edge,archive"};
@@ -932,7 +933,7 @@ static void get_table_votes(common::xaccount_address_t const & contract_address,
 static void get_voter_dividend(common::xaccount_address_t const & contract_address,
                                                  std::string const & property_name,
                                                  xJson::Value & json) {
-    xdbg("[get_voter_dividend] contract_address: %s, property_name: %s", contract_address.c_str(), property_name.c_str());
+    xdbg("[get_voter_dividend] contract_address: %s, property_name: %s", contract_address.to_string().c_str(), property_name.c_str());
     std::map<std::string, std::string> voter_dividends;
 
     if(xsuccess != statestore::xstatestore_hub_t::instance()->map_copy_get(contract_address, property_name, voter_dividends)){
@@ -1108,7 +1109,7 @@ static void get_unqualified_node_map(common::xaccount_address_t const & contract
             xJson::Value auditor_info;
             auditor_info["vote_num"] = v.second.block_count;
             auditor_info["subset_num"] = v.second.subset_count;
-            jvn_auditor[v.first.value()] = auditor_info;
+            jvn_auditor[v.first.to_string()] = auditor_info;
         }
 
         xJson::Value jvn_validator;
@@ -1116,7 +1117,7 @@ static void get_unqualified_node_map(common::xaccount_address_t const & contract
             xJson::Value validator_info;
             validator_info["vote_num"] = v.second.block_count;
             validator_info["subset_num"] = v.second.subset_count;
-            jvn_validator[v.first.value()] = validator_info;
+            jvn_validator[v.first.to_string()] = validator_info;
         }
 
         jvn["auditor"] = jvn_auditor;
@@ -1258,7 +1259,7 @@ static void get_sharding_statistic_contract_property(std::string const & shardin
             xJson::Value v;
             auto const & unqualified_data = top::get<data::system_contract::xnode_vote_percent_t>(auditor_data);
 
-            v["account"] = top::get<common::xaccount_address_t const>(auditor_data).value();
+            v["account"] = top::get<common::xaccount_address_t const>(auditor_data).to_string();
             v["block_count"] = unqualified_data.block_count;
             v["subset_count"] = unqualified_data.subset_count;
 
@@ -1269,7 +1270,7 @@ static void get_sharding_statistic_contract_property(std::string const & shardin
             xJson::Value v;
             auto const & unqualified_data = top::get<data::system_contract::xnode_vote_percent_t>(validator_data);
 
-            v["account"] = top::get<common::xaccount_address_t const>(validator_data).value();
+            v["account"] = top::get<common::xaccount_address_t const>(validator_data).to_string();
             v["block_count"] = unqualified_data.block_count;
             v["subset_count"] = unqualified_data.subset_count;
 
@@ -1418,7 +1419,7 @@ static void get_zec_slash_contract_property(std::string const & property_name,
             xJson::Value v;
             auto const & unqualified_data = top::get<data::system_contract::xnode_vote_percent_t>(auditor_data);
 
-            v["account"] = top::get<common::xaccount_address_t const>(auditor_data).value();
+            v["account"] = top::get<common::xaccount_address_t const>(auditor_data).to_string();
             v["block_count"] = unqualified_data.block_count;
             v["subset_count"] = unqualified_data.subset_count;
 
@@ -1429,7 +1430,7 @@ static void get_zec_slash_contract_property(std::string const & property_name,
             xJson::Value v;
             auto const & unqualified_data = top::get<data::system_contract::xnode_vote_percent_t>(validator_data);
 
-            v["account"] = top::get<common::xaccount_address_t const>(validator_data).value();
+            v["account"] = top::get<common::xaccount_address_t const>(validator_data).to_string();
             v["block_count"] = unqualified_data.block_count;
             v["subset_count"] = unqualified_data.subset_count;
 
@@ -1647,21 +1648,21 @@ void xtop_contract_manager::get_contract_data(common::xaccount_address_t const &
                                               xJson::Value & json,
                                               std::error_code & ec) const {
     assert(!ec);
-    if (contract_address.value().find(sys_contract_sharding_statistic_info_addr) != std::string::npos ) {
+    if (contract_address.to_string().find(sys_contract_sharding_statistic_info_addr) != std::string::npos) {
         std::error_code internal_ec;
-        get_sharding_statistic_contract_property(contract_address.value(), data::system_contract::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY, height, json, internal_ec);
+        get_sharding_statistic_contract_property(contract_address.to_string(), data::system_contract::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY, height, json, internal_ec);
         if (internal_ec) {
             xdbg("table_statistic_contract, get data::system_contract::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY failed");
             ec = internal_ec;
             internal_ec.clear();
         }
-        get_sharding_statistic_contract_property(contract_address.value(), data::system_contract::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, height, json, internal_ec);
+        get_sharding_statistic_contract_property(contract_address.to_string(), data::system_contract::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY, height, json, internal_ec);
         if (internal_ec) {
             xdbg("table_statistic_contract, get data::system_contract::XPROPERTY_CONTRACT_EXTENDED_FUNCTION_KEY failed");
             ec = internal_ec;
             internal_ec.clear();
         }
-        get_sharding_statistic_contract_property(contract_address.value(), data::system_contract::XPORPERTY_CONTRACT_WORKLOAD_KEY, height, json, internal_ec);
+        get_sharding_statistic_contract_property(contract_address.to_string(), data::system_contract::XPORPERTY_CONTRACT_WORKLOAD_KEY, height, json, internal_ec);
         if (internal_ec) {
             xdbg("table_statistic_contract, get data::system_contract::XPORPERTY_CONTRACT_WORKLOAD_KEY failed");
             ec = internal_ec;
@@ -1815,7 +1816,7 @@ static void get_rec_nodes_map(common::xaccount_address_t const & contract_addres
         xstream_t stream(xcontext_t::instance(), (uint8_t *)m.second.data(), m.second.size());
         reg_node_info.serialize_from(stream);
         xJson::Value j;
-        j["account_addr"] = reg_node_info.m_account.value();
+        j["account_addr"] = reg_node_info.m_account.to_string();
         j["node_deposit"] = static_cast<unsigned long long>(reg_node_info.m_account_mortgage);
         if (reg_node_info.genesis()) {
             j["registered_node_type"] = std::string{"advance,validator,edge"};
@@ -1906,7 +1907,7 @@ static void get_unqualified_node_map(common::xaccount_address_t const & contract
             xJson::Value auditor_info;
             auditor_info["vote_num"] = v.second.block_count;
             auditor_info["subset_num"] = v.second.subset_count;
-            jvn_auditor[v.first.value()] = auditor_info;
+            jvn_auditor[v.first.to_string()] = auditor_info;
         }
 
         xJson::Value jvn_validator;
@@ -1914,7 +1915,7 @@ static void get_unqualified_node_map(common::xaccount_address_t const & contract
             xJson::Value validator_info;
             validator_info["vote_num"] = v.second.block_count;
             validator_info["subset_num"] = v.second.subset_count;
-            jvn_validator[v.first.value()] = validator_info;
+            jvn_validator[v.first.to_string()] = validator_info;
         }
 
         jvn["auditor"] = jvn_auditor;
@@ -2105,7 +2106,7 @@ static void get_voter_dividend(common::xaccount_address_t const & contract_addre
                               const data::xunitstate_ptr_t unitstate,
                               const xjson_format_t json_format,
                               xJson::Value & json) {
-    xdbg("[get_voter_dividend] contract_address: %s, property_name: %s", contract_address.c_str(), property_name.c_str());
+    xdbg("[get_voter_dividend] contract_address: %s, property_name: %s", contract_address.to_string().c_str(), property_name.c_str());
     std::map<std::string, std::string> voter_dividends = unitstate->map_get(property_name);
 
     if (voter_dividends.empty()) {

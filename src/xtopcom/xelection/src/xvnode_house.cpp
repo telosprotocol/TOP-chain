@@ -304,7 +304,7 @@ void xvnode_house_t::add_group(const std::string &elect_address, uint64_t elect_
                             bundle.node_id().value().c_str(),
                             bundle.election_info().public_key.to_string().c_str());
 #endif
-                        auto * node = new xvnode_wrap_t{bundle.account_address().value(), node_xip2.value(), pub_key, pri_key};
+                        auto * node = new xvnode_wrap_t{bundle.account_address().to_string(), node_xip2.value(), pub_key, pri_key};
 #if 0
                         xdbg("[add_group222][add_node] %lu, %lu -> %lu, %lu",
                             xip2.value().high_addr,

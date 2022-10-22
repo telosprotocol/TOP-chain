@@ -112,17 +112,17 @@ void xstatestore_impl_t::on_block_to_db_event(mbus::xevent_ptr_t e) {
 }
 
 uint64_t xstatestore_impl_t::get_latest_executed_block_height(common::xaccount_address_t const & table_address) const {
-    xdbg("xstatestore_impl_t::get_latest_executed_block_height table:%s,this=%p", table_address.value().c_str(),this);
-    xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(table_address.value());
+    xdbg("xstatestore_impl_t::get_latest_executed_block_height table:%s,this=%p", table_address.to_string().c_str(), this);
+    xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(table_address.to_string());
     return tablestore->get_latest_executed_block_height();
 }
 uint64_t xstatestore_impl_t::get_need_sync_state_block_height(common::xaccount_address_t const & table_address) const {
-    xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(table_address.value());
+    xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(table_address.to_string());
     return tablestore->get_need_sync_state_block_height();    
 }
 
 void xstatestore_impl_t::on_state_sync_result(mbus::xevent_state_sync_ptr_t state_sync_event) {
-    auto & table_addr = state_sync_event->table_addr.value();
+    auto const & table_addr = state_sync_event->table_addr.to_string();
     if (state_sync_event->ec) {
         xwarn("xstatestore_impl_t::on_state_sync_result fail-notify:table:%s,height:%llu,root:%s,ec=%s", 
             table_addr.c_str(),state_sync_event->height,state_sync_event->root_hash.as_hex_str().c_str(), state_sync_event->ec.message().c_str());
@@ -204,17 +204,21 @@ data::xtablestate_ptr_t xstatestore_impl_t::get_table_state_by_block(base::xvblo
 }
 
 bool xstatestore_impl_t::get_accountindex_from_latest_connected_table(common::xaccount_address_t const & table_address, common::xaccount_address_t const & account_address, base::xaccount_index_t& account_index) const {
-    xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(table_address.value());
+    xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(table_address.to_string());
 
     auto tablestate = tablestore->get_latest_connectted_table_state();
     if (tablestate == nullptr) {
-        xerror("xstatestore_impl_t::get_accountindex_from_latest_connected_table fail-load latest state. table=%s,account=%s", table_address.value().c_str(), account_address.value().c_str());
+        xerror("xstatestore_impl_t::get_accountindex_from_latest_connected_table fail-load latest state. table=%s,account=%s",
+               table_address.to_string().c_str(),
+               account_address.to_string().c_str());
         return false;
     }    
     std::error_code ec;
-    tablestate->get_accountindex(account_address.value(), account_index, ec);
+    tablestate->get_accountindex(account_address.to_string(), account_index, ec);
     if (ec) {
-        xerror("xstatestore_impl_t::get_accountindex_from_latest_connected_table fail-load accountindex. table=%s,account=%s", table_address.value().c_str(), account_address.value().c_str());
+        xerror("xstatestore_impl_t::get_accountindex_from_latest_connected_table fail-load accountindex. table=%s,account=%s",
+               table_address.to_string().c_str(),
+               account_address.to_string().c_str());
         return false;
     }
     return true;
@@ -224,7 +228,7 @@ bool xstatestore_impl_t::get_accountindex_from_table_block(common::xaccount_addr
     xtablestate_ext_ptr_t tablestate_ext = get_tablestate_ext_from_block(table_block);
     if (nullptr != tablestate_ext) {
         std::error_code ec;
-        tablestate_ext->get_accountindex(account_address.value(), account_index, ec);
+        tablestate_ext->get_accountindex(account_address.to_string(), account_index, ec);
         if (ec) {
             return false;
         }
@@ -246,12 +250,12 @@ data::xunitstate_ptr_t xstatestore_impl_t::get_unit_latest_connectted_change_sta
 data::xunitstate_ptr_t xstatestore_impl_t::get_unit_latest_connectted_state(common::xaccount_address_t const & account_address) const {
     auto _block = get_blockstore()->get_latest_connected_block(account_address.vaccount());
     if (_block == nullptr) {
-        xerror("xstatestore_impl_t::get_unit_latest_connectted_state fail-load latest connectted block. account=%s", account_address.value().c_str());
+        xerror("xstatestore_impl_t::get_unit_latest_connectted_state fail-load latest connectted block. account=%s", account_address.to_string().c_str());
         return nullptr;
     }
 
     if (_block->is_genesis_block() && _block->get_block_class() == base::enum_xvblock_class_nil) {
-        xwarn("xstatestore_impl_t::get_unit_latest_connectted_state fail-invalid state for empty genesis block. account=%s", account_address.value().c_str());
+        xwarn("xstatestore_impl_t::get_unit_latest_connectted_state fail-invalid state for empty genesis block. account=%s", account_address.to_string().c_str());
         return nullptr;
     }
     return get_unit_state_from_block(account_address, _block.get());
@@ -269,11 +273,11 @@ data::xunitstate_ptr_t  xstatestore_impl_t::get_unit_committed_changed_state(com
 data::xunitstate_ptr_t  xstatestore_impl_t::get_unit_committed_state(common::xaccount_address_t const & account_address, uint64_t height) const {
     auto _block = get_blockstore()->load_block_object(account_address.vaccount(), height, base::enum_xvblock_flag_committed, false);
     if (nullptr == _block) {
-        xwarn("xstatestore_impl_t::get_unit_committed_state fail-get block.%s,height=%ld",account_address.value().c_str(), height);
+        xwarn("xstatestore_impl_t::get_unit_committed_state fail-get block.%s,height=%ld", account_address.to_string().c_str(), height);
         return nullptr;
     }
     if (_block->is_genesis_block() && _block->get_block_class() == base::enum_xvblock_class_nil) {
-        xwarn("xstatestore_impl_t::get_unit_committed_state fail-invalid state for empty genesis block. account=%s", account_address.value().c_str());
+        xwarn("xstatestore_impl_t::get_unit_committed_state fail-invalid state for empty genesis block. account=%s", account_address.to_string().c_str());
         return nullptr;
     }    
     return get_unit_state_from_block(account_address, _block.get());
@@ -311,7 +315,7 @@ data::xunitstate_ptr_t xstatestore_impl_t::get_unit_state_by_table(common::xacco
     }
 
     if (nullptr == _block) {
-        xwarn("xstatestore_impl_t::get_unit_state_by_table fail-get table block.%s,height=%s",account_address.value().c_str(), table_height.c_str());
+        xwarn("xstatestore_impl_t::get_unit_state_by_table fail-get table block.%s,height=%s", account_address.to_string().c_str(), table_height.c_str());
         return nullptr;
     }
 
@@ -322,7 +326,7 @@ data::xunitstate_ptr_t xstatestore_impl_t::get_unit_state_by_table(common::xacco
 uint64_t xstatestore_impl_t::get_blockchain_height(common::xaccount_address_t const & account_address) const {
     auto unitstate = get_unit_latest_connectted_state(account_address);
     if (nullptr == unitstate) {
-        xwarn("xstatestore_impl_t::map_get fail-find account. account=%s", account_address.value().c_str());
+        xwarn("xstatestore_impl_t::map_get fail-find account. account=%s", account_address.to_string().c_str());
         return 0;
     }
     return unitstate->height();
@@ -331,7 +335,7 @@ uint64_t xstatestore_impl_t::get_blockchain_height(common::xaccount_address_t co
 int32_t xstatestore_impl_t::map_get(common::xaccount_address_t const & account_address, const std::string &key, const std::string &field, std::string &value) const {
     auto unitstate = get_unit_latest_connectted_state(account_address);
     if (nullptr == unitstate) {
-        xwarn("xstatestore_impl_t::map_get fail-find account. account=%s", account_address.value().c_str());
+        xwarn("xstatestore_impl_t::map_get fail-find account. account=%s", account_address.to_string().c_str());
         return -1;
     }
     return unitstate->map_get(key, field, value);
@@ -340,7 +344,7 @@ int32_t xstatestore_impl_t::map_get(common::xaccount_address_t const & account_a
 int32_t xstatestore_impl_t::string_get(common::xaccount_address_t const & account_address, const std::string& key, std::string& value) const {
     auto unitstate = get_unit_latest_connectted_state(account_address);
     if (nullptr == unitstate) {
-        xwarn("xstatestore_impl_t::string_get fail-find account. account=%s", account_address.value().c_str());
+        xwarn("xstatestore_impl_t::string_get fail-find account. account=%s", account_address.to_string().c_str());
         return -1;
     }
     return unitstate->string_get(key, value);
@@ -349,7 +353,7 @@ int32_t xstatestore_impl_t::string_get(common::xaccount_address_t const & accoun
 int32_t xstatestore_impl_t::map_copy_get(common::xaccount_address_t const & account_address, const std::string &key, std::map<std::string, std::string> &map) const {
     auto unitstate = get_unit_latest_connectted_state(account_address);
     if (nullptr == unitstate) {
-        xwarn("xstatestore_impl_t::map_copy_get fail-find account. account=%s", account_address.value().c_str());
+        xwarn("xstatestore_impl_t::map_copy_get fail-find account. account=%s", account_address.to_string().c_str());
         return -1;
     }
     return unitstate->map_copy_get(key, map);
@@ -358,7 +362,7 @@ int32_t xstatestore_impl_t::map_copy_get(common::xaccount_address_t const & acco
 int32_t xstatestore_impl_t::get_map_property(common::xaccount_address_t const & account_address, uint64_t height, const std::string &name, std::map<std::string, std::string> &value) const {
     auto unitstate = get_unit_committed_state(account_address, height);
     if (nullptr == unitstate) {
-        xwarn("xstatestore_impl_t::get_map_property fail-find account. account=%s", account_address.value().c_str());
+        xwarn("xstatestore_impl_t::get_map_property fail-find account. account=%s", account_address.to_string().c_str());
         return -1;
     }
 
@@ -368,7 +372,7 @@ int32_t xstatestore_impl_t::get_map_property(common::xaccount_address_t const & 
 int32_t xstatestore_impl_t::get_string_property(common::xaccount_address_t const & account_address, uint64_t height, const std::string &name, std::string &value) const {
     auto unitstate = get_unit_committed_state(account_address, height);
     if (nullptr == unitstate) {
-        xwarn("xstatestore_impl_t::get_string_property fail-find account. account=%s", account_address.value().c_str());
+        xwarn("xstatestore_impl_t::get_string_property fail-find account. account=%s", account_address.to_string().c_str());
         return -1;
     }
 
@@ -432,7 +436,7 @@ base::xauto_ptr<base::xvblock_t> xstatestore_impl_t::get_committed_state_changed
 }
 
 data::xtablestate_ptr_t xstatestore_impl_t::get_table_connectted_state(common::xaccount_address_t const & table_address) const {
-    xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(table_address.value());
+    xstatestore_table_ptr_t tablestore = get_table_statestore_from_table_addr(table_address.to_string());
     auto tablestate = tablestore->get_latest_connectted_table_state();
     if (nullptr != tablestate) {
         return tablestate->get_table_state();
@@ -456,14 +460,16 @@ bool xstatestore_impl_t::get_receiptid_state_and_prove(common::xaccount_address_
         while (block_class == base::enum_xvblock_class_nil && height > 0) {
             nil_block_num++;
             if (nil_block_num > 2) {
-                xerror("xstatestore_impl_t::get_receiptid_state_and_prove, continuous nil table block number is more than 2,table:%s,height:%llu", table_address.value().c_str(), height);
+                xerror("xstatestore_impl_t::get_receiptid_state_and_prove, continuous nil table block number is more than 2,table:%s,height:%llu",
+                       table_address.to_string().c_str(),
+                       height);
                 return false;
             }
 
             auto commit_block =
                 get_blockstore()->load_block_object(table_address.vaccount(), height - 1, base::enum_xvblock_flag_committed, false, metrics::blockstore_access_from_txpool_id_state);
             if (commit_block == nullptr) {
-                xwarn("xstatestore_impl_t::get_receiptid_state_and_prove load block fail,table:%s,height:%llu", table_address.value().c_str(), height - 1);
+                xwarn("xstatestore_impl_t::get_receiptid_state_and_prove load block fail,table:%s,height:%llu", table_address.to_string().c_str(), height - 1);
                 return false;
             }
             height = commit_block->get_height();
@@ -479,30 +485,36 @@ bool xstatestore_impl_t::get_receiptid_state_and_prove(common::xaccount_address_
     }
 
     if (non_nil_commit_block == nullptr) {
-        xinfo("xstatestore_impl_t::get_receiptid_state_and_prove latest commit height is 0, no need send receipt id state.table:%s", table_address.value().c_str());
+        xinfo("xstatestore_impl_t::get_receiptid_state_and_prove latest commit height is 0, no need send receipt id state.table:%s", table_address.to_string().c_str());
         return false;
     }
 
     data::xtablestate_ptr_t tablestate = get_table_state_by_block(non_nil_commit_block.get());
     if (tablestate == nullptr) {
-        xwarn("xstatestore_impl_t::get_receiptid_state_and_prove table:%s,height:%llu,get bstate fail", table_address.value().c_str(), non_nil_commit_block->get_height());
+        xwarn("xstatestore_impl_t::get_receiptid_state_and_prove table:%s,height:%llu,get bstate fail", table_address.to_string().c_str(), non_nil_commit_block->get_height());
         return false;
     }
 
     if (tablestate->get_receiptid_state()->get_all_receiptid_pairs()->get_all_pairs().empty()) {
-        xinfo("xstatestore_impl_t::get_receiptid_state_and_prove table have no receipt id pairs.table:%s, commit height:%llu", table_address.value().c_str(), non_nil_commit_block->get_height());
+        xinfo("xstatestore_impl_t::get_receiptid_state_and_prove table have no receipt id pairs.table:%s, commit height:%llu",
+              table_address.to_string().c_str(),
+              non_nil_commit_block->get_height());
         return false;
     }
 
     auto cert_block = get_blockstore()->load_block_object(table_address.vaccount(), non_nil_commit_block->get_height() + 2, 0, false);
     if (cert_block == nullptr) {
-        xinfo("xstatestore_impl_t::get_receiptid_state_and_prove cert block load fail.table:%s, cert height:%llu", table_address.value().c_str(), non_nil_commit_block->get_height() + 2);
+        xinfo("xstatestore_impl_t::get_receiptid_state_and_prove cert block load fail.table:%s, cert height:%llu",
+              table_address.to_string().c_str(),
+              non_nil_commit_block->get_height() + 2);
         return false;
     }
 
     auto property_prove = base::xpropertyprove_build_t::create_property_prove(non_nil_commit_block.get(), cert_block.get(), tablestate->get_bstate().get(), data::XPROPERTY_TABLE_RECEIPTID);
     if (property_prove == nullptr) {
-        xwarn("xstatestore_impl_t::get_receiptid_state_and_prove create receipt state fail 2.table:%s, commit height:%llu", table_address.value().c_str(), non_nil_commit_block->get_height());
+        xwarn("xstatestore_impl_t::get_receiptid_state_and_prove create receipt state fail 2.table:%s, commit height:%llu",
+              table_address.to_string().c_str(),
+              non_nil_commit_block->get_height());
         return false;
     }
     xassert(property_prove->is_valid());

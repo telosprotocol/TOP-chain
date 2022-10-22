@@ -231,7 +231,7 @@ int topchain_start(const std::string& config_file) {
     // attention: put chain_params.initconfig_using_configcenter behind config_center
     chain_params.initconfig_using_configcenter();
     auto& user_params = data::xuser_params::get_instance();
-    global_node_id = user_params.account.value();
+    global_node_id = user_params.account.to_string();
     global_node_signkey = DecodePrivateString(user_params.signkey);
 
 #ifdef CONFIG_CHECK

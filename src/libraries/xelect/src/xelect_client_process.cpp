@@ -106,7 +106,7 @@ void xelect_client_process::process_election_block(data::xunitstate_ptr_t const&
         return;
     }
 
-    xinfo("xelect_client_process::process_elect %s, %" PRIu64, contract_address.c_str(), unitstate->height());
+    xinfo("xelect_client_process::process_elect %s, %" PRIu64, contract_address.to_string().c_str(), unitstate->height());
 
     uint64_t new_election_height = get_new_election_height(unitstate);
     if (local_height >= new_election_height) {
@@ -122,7 +122,7 @@ void xelect_client_process::process_election_block(data::xunitstate_ptr_t const&
             xerror("[zec election] zone elect finish with empty result. property=%s,block=%s", property.c_str(), unitstate->get_bstate()->dump().c_str());
             continue;
         }
-        xdbg("xelect_client_process::process_elect %s, %" PRIu64 " done", contract_address.c_str(), unitstate->height());
+        xdbg("xelect_client_process::process_elect %s, %" PRIu64 " done", contract_address.to_string().c_str(), unitstate->height());
         using top::data::election::xelection_result_store_t;
         auto const& election_result_store = codec::msgpack_decode<xelection_result_store_t>({ std::begin(result), std::end(result) });
         if (election_result_store.empty()) {
@@ -184,7 +184,7 @@ void xelect_client_process::process_election_contract(common::xaccount_address_t
         
         data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_change_state(contract_address);
         if (nullptr == unitstate) {
-            xerror("xelect_client_process::process_election_contract fail-load state.%s", contract_address.value().c_str());
+            xerror("xelect_client_process::process_election_contract fail-load state.%s", contract_address.to_string().c_str());
             return;
         }
 

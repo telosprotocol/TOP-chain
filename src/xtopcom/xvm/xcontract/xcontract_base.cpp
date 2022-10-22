@@ -138,7 +138,7 @@ void xcontract_base::CLEAR(enum_type_t type, const std::string& prop_key) {
 }
 
 std::string xcontract_base::CALC_CONTRACT_ADDRESS(const std::string& contract_name, const uint32_t& table_id) {
-    return contract::xcontract_address_map_t::calc_cluster_address(common::xaccount_address_t{ contract_name }, table_id).value();
+    return contract::xcontract_address_map_t::calc_cluster_address(common::xaccount_address_t{contract_name}, table_id).to_string();
 }
 
 bool xcontract_base::EXTRACT_TABLE_ID(common::xaccount_address_t const & addr, uint32_t& table_id) const {
@@ -149,7 +149,7 @@ bool xcontract_base::EXTRACT_TABLE_ID(common::xaccount_address_t const & addr, u
     }
 
     if (is_sys_sharding_contract_address(addr)) {
-        return xdatautil::extract_table_id_from_address(addr.value(), table_id);
+        return xdatautil::extract_table_id_from_address(addr.to_string(), table_id);
     }
 
     table_id = data::account_map_to_table_id(addr).get_subaddr();

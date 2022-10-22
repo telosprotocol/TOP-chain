@@ -106,7 +106,8 @@ data::xblock_ptr_t  xunitbuilder_t::make_block_v2(const data::xunitstate_ptr_t &
     bodypara.set_txkeys(unitbuilder_para.get_txkeys());
 
     bool is_full_unit = xunitbuilder_t::can_make_full_unit_v2(unitstate->height());
-    std::shared_ptr<base::xvblockmaker_t> vblockmaker = std::make_shared<data::xunit_build2_t>(unitstate->account_address().value(), unitstate->height(), unitstate->get_bstate()->get_last_block_hash(), is_full_unit, bodypara, cs_para);    
+    std::shared_ptr<base::xvblockmaker_t> vblockmaker = std::make_shared<data::xunit_build2_t>(
+        unitstate->account_address().to_string(), unitstate->height(), unitstate->get_bstate()->get_last_block_hash(), is_full_unit, bodypara, cs_para);    
     base::xauto_ptr<base::xvblock_t> _new_block = vblockmaker->build_new_block();
     data::xblock_ptr_t proposal_block = data::xblock_t::raw_vblock_to_object_ptr(_new_block.get());
     xassert(proposal_block->get_cert()->get_justify_cert_hash().empty());

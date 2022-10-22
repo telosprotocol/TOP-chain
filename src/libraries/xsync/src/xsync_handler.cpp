@@ -971,7 +971,7 @@ int xsync_handler_t::init_prune(const map_chain_info_t &chains, const mbus::xeve
         } 
     }
     for (uint32_t i = 0; i < MAIN_CHAIN_ZEC_TABLE_USED_NUM; i++) {
-        std::string _vaddr = make_address_by_prefix_and_subaddr(sys_contract_zec_table_block_addr, uint16_t(i)).value();
+        std::string _vaddr = make_address_by_prefix_and_subaddr(sys_contract_zec_table_block_addr, uint16_t(i)).to_string();
         std::set<enum_height_type> types;
         types.insert(mutable_checkpoint_height);
         types.insert(latest_state_height);
@@ -987,7 +987,7 @@ int xsync_handler_t::init_prune(const map_chain_info_t &chains, const mbus::xeve
         }
     }
     for (uint32_t i = 0; i < MAIN_CHAIN_REC_TABLE_USED_NUM; i++) {
-        std::string _vaddr = make_address_by_prefix_and_subaddr(sys_contract_beacon_table_block_addr, uint16_t(i)).value();
+        std::string _vaddr = make_address_by_prefix_and_subaddr(sys_contract_beacon_table_block_addr, uint16_t(i)).to_string();
         std::set<enum_height_type> types;
         types.insert(mutable_checkpoint_height);
         types.insert(latest_state_height);

@@ -324,7 +324,7 @@ void xtop_elect_consensus_group_contract::handle_elected_out_data(std::vector<co
                              "group_id",
                              gid.to_string(),
                              "node_id",
-                             top::get<common::xnode_id_t>(out).value(),
+                             top::get<common::xnode_id_t>(out).to_string(),
                              "stake",
                              static_cast<int64_t>(top::get<common::xstake_t>(out)));
 
@@ -361,7 +361,7 @@ void xtop_elect_consensus_group_contract::handle_elected_in_data(std::vector<com
         xkinfo("%s see elected in %s node %s with stake %" PRIu64 " comprehensive stake %" PRIu64 " credit score %" PRIu64,
                log_prefix.c_str(),
                common::to_string(node_type).c_str(),
-               node_id.value().c_str(),
+               node_id.to_string().c_str(),
                elect_in_pos->stake(),
                elect_in_pos->comprehensive_stake(),
                elect_in_pos->raw_credit_score());
@@ -395,7 +395,7 @@ void xtop_elect_consensus_group_contract::handle_elected_in_data(std::vector<com
                              "group_id",
                              gid.to_string(),
                              "node_id",
-                             node_id.value(),
+                             node_id.to_string(),
                              "group_version",
                              election_group_result.group_version().to_string());
     }
@@ -456,7 +456,7 @@ bool xtop_elect_consensus_group_contract::do_normal_election(common::xzone_id_t 
 
 #if defined DEBUG
     for (auto const & standby : fts_standbys) {
-        xdbg("%s fts node id %s stake %" PRIu64, log_prefix.c_str(), top::get<common::xnode_id_t>(standby).value().c_str(), top::get<common::xstake_t>(standby));
+        xdbg("%s fts node id %s stake %" PRIu64, log_prefix.c_str(), top::get<common::xnode_id_t>(standby).to_string().c_str(), top::get<common::xstake_t>(standby));
     }
 #endif
     if (fts_standbys.empty()) {
@@ -498,12 +498,12 @@ bool xtop_elect_consensus_group_contract::do_normal_election(common::xzone_id_t 
                 election_info_bundle.election_info().stake(0);
                 election_info_bundle.election_info().comprehensive_stake(minimum_comprehensive_stake);
 
-                xdbg("%s observes node %s with stake & comprehensive stake 1 (since it's not in the standby pool).", log_prefix.c_str(), node_id.value().c_str());
+                xdbg("%s observes node %s with stake & comprehensive stake 1 (since it's not in the standby pool).", log_prefix.c_str(), node_id.to_string().c_str());
 
                 continue;
             }
 
-            xdbg("%s elects out (reset) node %s", log_prefix.c_str(), node_id.value().c_str());
+            xdbg("%s elects out (reset) node %s", log_prefix.c_str(), node_id.to_string().c_str());
 
             result_nodes.reset(node_id);
             ++unqualified_node_count;
@@ -512,7 +512,7 @@ bool xtop_elect_consensus_group_contract::do_normal_election(common::xzone_id_t 
 
             xdbg("%s observes node %s with stake %" PRIu64 " comprehensive stake %" PRIu64,
                  log_prefix.c_str(),
-                 node_id.value().c_str(),
+                 node_id.to_string().c_str(),
                  election_info_bundle.election_info().stake(),
                  election_info_bundle.election_info().comprehensive_stake());
         }
@@ -577,7 +577,7 @@ bool xtop_elect_consensus_group_contract::do_normal_election(common::xzone_id_t 
         auto const top_stake = top::get<common::xstake_t>(fts_current_nodes.front());
         std::for_each(std::begin(fts_current_nodes), std::end(fts_current_nodes), [&fts_current_nodes, top_stake](common::xfts_merkle_tree_t<common::xnode_id_t>::value_type & v) {
             auto const comprehensive_stake = top::get<common::xstake_t>(v);
-            xdbg("watch_fts_start node:%s stake:%" PRIu64, top::get<common::xnode_id_t>(v).c_str(), comprehensive_stake);
+            xdbg("watch_fts_start node:%s stake:%" PRIu64, top::get<common::xnode_id_t>(v).to_string().c_str(), comprehensive_stake);
             assert(comprehensive_stake > 0);
             top::get<common::xstake_t>(v) = top_stake * basic_comprehensive_stake / comprehensive_stake;
         });
@@ -617,7 +617,7 @@ bool xtop_elect_consensus_group_contract::do_normal_election(common::xzone_id_t 
         xinfo("%s see elected in %s node %s with miner type %s genesis %s credit score %" PRIu64,
               log_prefix.c_str(),
               common::to_string(node_type).c_str(),
-              account_address.c_str(),
+              account_address.to_string().c_str(),
               common::to_string(elect_in_pos->miner_type()).c_str(),
               elect_in_pos->genesis() ? "true" : "false",
               elect_in_pos->raw_credit_score());
@@ -668,7 +668,7 @@ bool xtop_elect_consensus_group_contract::do_shrink_election(common::xzone_id_t 
                 continue;
             }
 
-            xdbg("%s elects out (reset) node %s", log_prefix.c_str(), node_id.value().c_str());
+            xdbg("%s elects out (reset) node %s", log_prefix.c_str(), node_id.to_string().c_str());
 
             result_nodes.reset(node_id);
             ++unqualified_node_count;
@@ -678,7 +678,7 @@ bool xtop_elect_consensus_group_contract::do_shrink_election(common::xzone_id_t 
 
             xdbg("%s observes node %s with stake %" PRIu64 " comprehensive stake %" PRIu64,
                  log_prefix.c_str(),
-                 node_id.value().c_str(),
+                 node_id.to_string().c_str(),
                  election_info_bundle.election_info().stake(),
                  election_info_bundle.election_info().comprehensive_stake());
         }
@@ -700,7 +700,7 @@ bool xtop_elect_consensus_group_contract::do_shrink_election(common::xzone_id_t 
         auto const top_stake = top::get<common::xstake_t>(fts_current_nodes.front());
         std::for_each(std::begin(fts_current_nodes), std::end(fts_current_nodes), [&fts_current_nodes, top_stake](common::xfts_merkle_tree_t<common::xnode_id_t>::value_type & v) {
             auto const comprehensive_stake = top::get<common::xstake_t>(v);
-            xdbg("watch_fts_start node:%s stake:%" PRIu64, top::get<common::xnode_id_t>(v).c_str(), comprehensive_stake);
+            xdbg("watch_fts_start node:%s stake:%" PRIu64, top::get<common::xnode_id_t>(v).to_string().c_str(), comprehensive_stake);
             assert(comprehensive_stake > 0);
             top::get<common::xstake_t>(v) = top_stake * basic_comprehensive_stake / comprehensive_stake;
         });

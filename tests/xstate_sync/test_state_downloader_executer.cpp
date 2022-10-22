@@ -67,12 +67,12 @@ public:
                 state_sync::state_res res;
                 res.id = id;
                 if (type == 2 && (cnt % 2 != 0)) {
-                    if (table == table_account_address.value() && height == table_height && xhash256_t(hash) == block_hash) {
+                    if (table == table_account_address.to_string() && height == table_height && xhash256_t(hash) == block_hash) {
                         res.nodes.emplace_back(mismatch_state_bytes);
                     }
                 } else if (type == 3 && (cnt % 2 != 0)) {
                 } else {
-                    if (table == table_account_address.value() && height == table_height && xhash256_t(hash) == block_hash) {
+                    if (table == table_account_address.to_string() && height == table_height && xhash256_t(hash) == block_hash) {
                         res.nodes.emplace_back(state_bytes);
                     }
                 }
@@ -140,7 +140,7 @@ TEST_F(test_state_downloader_executer_fixture, test_run_state_sync_success) {
     std::thread th(&test_state_downloader_executer_fixture::run_helper, this, 0);
     m_executer->run_state_sync(m_syncer, callback);
     th.join();
-    EXPECT_EQ(res.account.value(), table_account_address.value());
+    EXPECT_EQ(res.account.to_string(), table_account_address.to_string());
     EXPECT_EQ(res.height, table_height);
     EXPECT_EQ(res.block_hash, block_hash);
     EXPECT_EQ(res.state_hash, state_hash);
@@ -172,7 +172,7 @@ TEST_F(test_state_downloader_executer_fixture, test_run_state_sync_in_bad_connec
     std::thread th(&test_state_downloader_executer_fixture::run_helper, this, 1);
     m_executer->run_state_sync(m_syncer, callback);
     th.join();
-    EXPECT_EQ(res.account.value(), table_account_address.value());
+    EXPECT_EQ(res.account.to_string(), table_account_address.to_string());
     EXPECT_EQ(res.height, table_height);
     EXPECT_EQ(res.block_hash, block_hash);
     EXPECT_EQ(res.state_hash, state_hash);
@@ -204,7 +204,7 @@ TEST_F(test_state_downloader_executer_fixture, test_run_state_sync_part_wrong_da
     std::thread th(&test_state_downloader_executer_fixture::run_helper, this, 2);
     m_executer->run_state_sync(m_syncer, callback);
     th.join();
-    EXPECT_EQ(res.account.value(), table_account_address.value());
+    EXPECT_EQ(res.account.to_string(), table_account_address.to_string());
     EXPECT_EQ(res.height, table_height);
     EXPECT_EQ(res.block_hash, block_hash);
     EXPECT_EQ(res.state_hash, state_hash);
@@ -236,7 +236,7 @@ TEST_F(test_state_downloader_executer_fixture, test_run_state_sync_part_empty_da
     std::thread th(&test_state_downloader_executer_fixture::run_helper, this, 3);
     m_executer->run_state_sync(m_syncer, callback);
     th.join();
-    EXPECT_EQ(res.account.value(), table_account_address.value());
+    EXPECT_EQ(res.account.to_string(), table_account_address.to_string());
     EXPECT_EQ(res.height, table_height);
     EXPECT_EQ(res.block_hash, block_hash);
     EXPECT_EQ(res.state_hash, state_hash);
@@ -270,7 +270,7 @@ TEST_F(test_state_downloader_executer_fixture, test_run_state_sync_task_flooding
     m_syncer->m_items_per_task = 4;
     m_executer->run_state_sync(m_syncer, callback);
     th.join();
-    EXPECT_EQ(res.account.value(), table_account_address.value());
+    EXPECT_EQ(res.account.to_string(), table_account_address.to_string());
     EXPECT_EQ(res.height, table_height);
     EXPECT_EQ(res.block_hash, block_hash);
     EXPECT_EQ(res.state_hash, state_hash);
@@ -302,7 +302,7 @@ TEST_F(test_state_downloader_executer_fixture, test_run_state_sync_overtime) {
         res = result;
     };
     executer->run_state_sync(m_syncer, callback);
-    EXPECT_EQ(res.account.value(), table_account_address.value());
+    EXPECT_EQ(res.account.to_string(), table_account_address.to_string());
     EXPECT_EQ(res.height, table_height);
     EXPECT_EQ(res.block_hash, block_hash);
     EXPECT_EQ(res.state_hash, state_hash);
@@ -318,7 +318,7 @@ TEST_F(test_state_downloader_executer_fixture, test_run_state_sync_cancel) {
     std::thread th(&test_state_downloader_executer_fixture::run_cancel_helper, this);
     m_executer->run_state_sync(m_syncer, callback);
     th.join();
-    EXPECT_EQ(res.account.value(), table_account_address.value());
+    EXPECT_EQ(res.account.to_string(), table_account_address.to_string());
     EXPECT_EQ(res.height, table_height);
     EXPECT_EQ(res.block_hash, block_hash);
     EXPECT_EQ(res.state_hash, state_hash);
@@ -334,7 +334,7 @@ TEST_F(test_state_downloader_executer_fixture, test_run_state_sync_no_response) 
         res = result;
     };
     m_executer->run_state_sync(m_syncer, callback);
-    EXPECT_EQ(res.account.value(), table_account_address.value());
+    EXPECT_EQ(res.account.to_string(), table_account_address.to_string());
     EXPECT_EQ(res.height, table_height);
     EXPECT_EQ(res.block_hash, block_hash);
     EXPECT_EQ(res.state_hash, state_hash);

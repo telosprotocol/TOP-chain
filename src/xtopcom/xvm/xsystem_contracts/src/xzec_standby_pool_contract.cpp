@@ -48,8 +48,9 @@ void xtop_zec_standby_pool_contract::setup() {
 void xtop_zec_standby_pool_contract::on_timer(common::xlogic_time_t const current_time) {
     XMETRICS_TIME_RECORD(XZEC_STANDBY "on_timer_all_time");
     // get standby nodes from rec_standby_pool
-    XCONTRACT_ENSURE(SOURCE_ADDRESS() == SELF_ADDRESS().value(), "xzec_standby_pool_contract_t instance is triggled by others");
-    XCONTRACT_ENSURE(SELF_ADDRESS().value() == sys_contract_zec_standby_pool_addr, "xzec_standby_pool_contract_t instance is not triggled by sys_contract_zec_standby_pool_addr");
+    XCONTRACT_ENSURE(SOURCE_ADDRESS() == SELF_ADDRESS().to_string(), "xzec_standby_pool_contract_t instance is triggled by others");
+    XCONTRACT_ENSURE(SELF_ADDRESS().to_string() == sys_contract_zec_standby_pool_addr,
+                     "xzec_standby_pool_contract_t instance is not triggled by sys_contract_zec_standby_pool_addr");
     // XCONTRACT_ENSURE(current_time <= TIME(), "xzec_standby_pool_contract_t::on_timer current_time > consensus leader's time");
 
     xdbg("[xzec_standby_pool_contract_t] on_timer: %" PRIu64, current_time);

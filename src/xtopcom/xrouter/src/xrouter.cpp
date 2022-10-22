@@ -16,9 +16,9 @@ NS_BEG2(top, router)
 common::xsharding_address_t xtop_router::sharding_address_from_account(common::xaccount_address_t const & target_account,
                                                                        common::xnetwork_id_t const & nid,
                                                                        common::xnode_type_t type) const {
-    auto xid = base::xvaccount_t::get_xid_from_account(target_account.value());
+    auto xid = base::xvaccount_t::get_xid_from_account(target_account.to_string());
     base::xtable_index_t tableindex = base::xtable_index_t(xid);
-    xdbg("xtop_router::cluster_address_from_account addr:%s zone_index:%d subaddr:%d", target_account.c_str(), tableindex.get_zone_index(), tableindex.get_subaddr());
+    xdbg("xtop_router::cluster_address_from_account addr:%s zone_index:%d subaddr:%d", target_account.to_string().c_str(), tableindex.get_zone_index(), tableindex.get_subaddr());
     return sharding_address_from_tableindex(tableindex, nid, type);
 }
 

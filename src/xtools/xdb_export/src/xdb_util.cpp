@@ -364,7 +364,7 @@ static void parse_reg_node_map(std::map<std::string, std::string> const & map, j
         base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)m.second.data(), m.second.size());
         reg_node_info.serialize_from(stream);
         json j_node;
-        j_node["account_addr"] = reg_node_info.m_account.value();
+        j_node["account_addr"] = reg_node_info.m_account.to_string();
         j_node["node_deposit"] = static_cast<unsigned long long>(reg_node_info.m_account_mortgage);
         if (reg_node_info.genesis()) {
             j_node["registered_node_type"] = std::string{"advance,validator,edge"};
@@ -596,14 +596,14 @@ static void parse_unqualified_node_map(std::map<std::string, std::string> const 
             json auditor_info;
             auditor_info["vote_num"] = v.second.block_count;
             auditor_info["subset_num"] = v.second.subset_count;
-            jvn_auditor[v.first.value()] = auditor_info;
+            jvn_auditor[v.first.to_string()] = auditor_info;
         }
         json jvn_validator;
         for (auto const & v : summarize_info.validator_info) {
             json validator_info;
             validator_info["vote_num"] = v.second.block_count;
             validator_info["subset_num"] = v.second.subset_count;
-            jvn_validator[v.first.value()] = validator_info;
+            jvn_validator[v.first.to_string()] = validator_info;
         }
         jvn["auditor"] = jvn_auditor;
         jvn["validator"] = jvn_validator;
@@ -841,7 +841,7 @@ static void parse_rec_standby_pool_string(std::string const & str, json & j) {
                 json jn;
                 auto const & standby_node_info = top::get<data::election::xstandby_node_info_t>(node_info);
                 jn["consensus_public_key"] = standby_node_info.consensus_public_key.to_string();
-                jn["node_id"] = node_id.value();
+                jn["node_id"] = node_id.to_string();
                 jn["stake"] = standby_node_info.stake(node_type);
                 jn["is_genesis_node"] = std::string{standby_node_info.genesis ? "true" : "false"};
                 jn["program_version"] = standby_node_info.program_version;

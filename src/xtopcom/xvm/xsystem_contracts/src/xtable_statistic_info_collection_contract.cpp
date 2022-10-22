@@ -51,8 +51,11 @@ void xtable_statistic_info_collection_contract::on_collect_statistic_info(xstati
     uint32_t table_id = 0;
 
     XCONTRACT_ENSURE(data::xdatautil::extract_parts(source_addr, base_addr, table_id), "source address extract base_addr or table_id error!");
-    xdbg("[xtable_statistic_info_collection_contract][on_collect_statistic_info] self_account %s, source_addr %s, base_addr %s\n", account.c_str(), source_addr.c_str(), base_addr.c_str());
-    XCONTRACT_ENSURE(source_addr == account.value(), "invalid source addr's call!");
+    xdbg("[xtable_statistic_info_collection_contract][on_collect_statistic_info] self_account %s, source_addr %s, base_addr %s\n",
+         account.to_string().c_str(),
+         source_addr.c_str(),
+         base_addr.c_str());
+    XCONTRACT_ENSURE(source_addr == account.to_string(), "invalid source addr's call!");
     XCONTRACT_ENSURE(base_addr == top::sys_contract_sharding_statistic_info_addr || base_addr == top::sys_contract_eth_table_statistic_info_addr, "invalid source addr's call!");
 
     // check if the block processed
@@ -122,13 +125,13 @@ void xtable_statistic_info_collection_contract::on_collect_statistic_info(xstati
 static void print_summarize_info(data::system_contract::xunqualified_node_info_v1_t const & summarize_slash_info) {
     std::string out = "";
     for (auto const & item : summarize_slash_info.auditor_info) {
-        out += item.first.value();
+        out += item.first.to_string();
         out += "|" + std::to_string(item.second.block_count);
         out += "|" + std::to_string(item.second.subset_count) + "|";
     }
 
     for (auto const & item : summarize_slash_info.validator_info) {
-        out += item.first.value();
+        out += item.first.to_string();
         out += "|" + std::to_string(item.second.block_count);
         out += "|" + std::to_string(item.second.subset_count) + "|";
     }
@@ -225,7 +228,11 @@ data::system_contract::xunqualified_node_info_v1_t xtable_statistic_info_collect
                     auto const & account_addr = group_accounts.account_data[slotid];
                     res_node_info.auditor_info[common::xnode_id_t{account_addr}].subset_count += group_account_data.account_statistics_data[slotid].vote_data.block_count;
                     res_node_info.auditor_info[common::xnode_id_t{account_addr}].block_count += group_account_data.account_statistics_data[slotid].vote_data.vote_count;
-                    xdbg("[xtable_statistic_info_collection_contract][do_unqualified_node_slash] incremental auditor data: {gourp id: %d, account addr: %s, slot id: %u, subset count: %u, block_count: %u}", group_addr.group_id().value(), account_addr.c_str(),
+                    xdbg(
+                        "[xtable_statistic_info_collection_contract][do_unqualified_node_slash] incremental auditor data: {gourp id: %d, account addr: %s, slot id: %u, subset "
+                        "count: %u, block_count: %u}",
+                        group_addr.group_id().value(),
+                        account_addr.to_string().c_str(),
                         slotid, group_account_data.account_statistics_data[slotid].vote_data.block_count, group_account_data.account_statistics_data[slotid].vote_data.vote_count);
                 }
             } else if (top::common::has<top::common::xnode_type_t::consensus_validator>(group_addr.type()) || top::common::has<top::common::xnode_type_t::evm_validator>(group_addr.type())) {// process validator group
@@ -233,7 +240,11 @@ data::system_contract::xunqualified_node_info_v1_t xtable_statistic_info_collect
                     auto const & account_addr = group_accounts.account_data[slotid];
                     res_node_info.validator_info[common::xnode_id_t{account_addr}].subset_count += group_account_data.account_statistics_data[slotid].vote_data.block_count;
                     res_node_info.validator_info[common::xnode_id_t{account_addr}].block_count += group_account_data.account_statistics_data[slotid].vote_data.vote_count;
-                    xdbg("[xtable_statistic_info_collection_contract][do_unqualified_node_slash] incremental validator data: {gourp id: %d, account addr: %s, slot id: %u, subset count: %u, block_count: %u}", group_addr.group_id().value(), account_addr.c_str(),
+                    xdbg(
+                        "[xtable_statistic_info_collection_contract][do_unqualified_node_slash] incremental validator data: {gourp id: %d, account addr: %s, slot id: %u, subset "
+                        "count: %u, block_count: %u}",
+                        group_addr.group_id().value(),
+                        account_addr.to_string().c_str(),
                         slotid, group_account_data.account_statistics_data[slotid].vote_data.block_count, group_account_data.account_statistics_data[slotid].vote_data.vote_count);
                 }
             } else { // invalid group
@@ -259,8 +270,11 @@ void xtable_statistic_info_collection_contract::report_summarized_statistic_info
     uint32_t table_id = 0;
 
     XCONTRACT_ENSURE(data::xdatautil::extract_parts(source_addr, base_addr, table_id), "source address extract base_addr or table_id error!");
-    xdbg("[xtable_statistic_info_collection_contract][report_summarized_statistic_info] self_account %s, source_addr %s, base_addr %s\n", account.c_str(), source_addr.c_str(), base_addr.c_str());
-    XCONTRACT_ENSURE(source_addr == account.value(), "invalid source addr's call!");
+    xdbg("[xtable_statistic_info_collection_contract][report_summarized_statistic_info] self_account %s, source_addr %s, base_addr %s",
+         account.to_string().c_str(),
+         source_addr.c_str(),
+         base_addr.c_str());
+    XCONTRACT_ENSURE(source_addr == account.to_string(), "invalid source addr's call!");
     XCONTRACT_ENSURE(base_addr == top::sys_contract_sharding_statistic_info_addr || base_addr == top::sys_contract_eth_table_statistic_info_addr, "invalid source addr's call!");
 
     uint32_t summarize_fulltableblock_num = 0;
@@ -344,7 +358,7 @@ void xtable_statistic_info_collection_contract::report_summarized_statistic_info
                 summarize_fulltableblock_num,
                 cur_statistic_height,
                 table_id,
-                account.c_str());
+               account.to_string().c_str());
 
         {
             XMETRICS_TIME_RECORD("sysContract_tableStatistic_remove_property_contract_unqualified_node_key");
@@ -405,7 +419,7 @@ std::map<common::xgroup_address_t, xgroup_workload_t> xtable_statistic_info_coll
                         it2 = ret.first;
                     }
 
-                    it2->second.m_leader_count[account_str.value()] += workload;
+                    it2->second.m_leader_count[account_str.to_string()] += workload;
                 }
 
                 xdbg(
@@ -416,7 +430,7 @@ std::map<common::xgroup_address_t, xgroup_workload_t> xtable_statistic_info_coll
                     group_addr.zone_id().value(),
                     group_addr.cluster_id().value(),
                     group_addr.group_id().value(),
-                    account_str.c_str(),
+                    account_str.to_string().c_str(),
                     workload,
                     block_count,
                     tx_count,

@@ -321,7 +321,7 @@ private:
 
             xvip2_t node_xip = it->m_xip;
             vnetwork::xvnode_address_t &addr = it->m_addr;
-            std::string node_account = addr.account_address().c_str();
+            std::string node_account = addr.account_address().to_string();
 
             uint64_t group_key = get_group_key(node_xip);
             std::string pri_key{""};

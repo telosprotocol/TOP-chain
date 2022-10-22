@@ -183,7 +183,7 @@ void xrec_registration_contract::setup() {
         for (size_t i = 0; i < seed_nodes.size(); i++) {
             node_info_t node_data = seed_nodes[i];
 
-            if (MAP_FIELD_EXIST(data::system_contract::XPORPERTY_CONTRACT_REG_KEY, node_data.m_account.value())) {
+            if (MAP_FIELD_EXIST(data::system_contract::XPORPERTY_CONTRACT_REG_KEY, node_data.m_account.to_string())) {
                 continue;
             }
             node_info.m_account             = node_data.m_account;
@@ -241,7 +241,7 @@ void xrec_registration_contract::registerNode2(const std::string & miner_type_na
 #endif  // #if defined(XENABLE_MOCK_ZEC_STAKE)
     xdbg("[xrec_registration_contract::registerNode2] call xregistration_contract registerNode(), balance: %lld, account: %s, node_types: %s, signing_key: %s, dividend_rate: %u\n",
          GET_BALANCE(),
-         account.c_str(),
+         account.to_string().c_str(),
          miner_type_name.c_str(),
          signing_key.c_str(),
          dividend_rate);
@@ -249,7 +249,7 @@ void xrec_registration_contract::registerNode2(const std::string & miner_type_na
     XCONTRACT_ENSURE(common::is_t0(account) || common::is_t8(account), "only T0 or T8 account is allowed to be registered as node account");
 
     data::system_contract::xreg_node_info node_info;
-    auto ret = get_node_info(account.value(), node_info);
+    auto ret = get_node_info(account.to_string(), node_info);
     XCONTRACT_ENSURE(ret != 0, "xrec_registration_contract::registerNode2: node exist!");
     XCONTRACT_ENSURE(is_valid_name(nickname), "xrec_registration_contract::registerNode: invalid nickname");
     XCONTRACT_ENSURE(dividend_rate >= 0 && dividend_rate <= 100, "xrec_registration_contract::registerNode: dividend_rate must be >=0 and be <= 100");
@@ -297,7 +297,7 @@ void xrec_registration_contract::registerNode2(const std::string & miner_type_na
          trans_ptr->get_source_action_type(),
          asset_out.m_amount,
          min_deposit,
-         account.c_str());
+         account.to_string().c_str());
     //XCONTRACT_ENSURE(asset_out.m_amount >= min_deposit, "xrec_registration_contract::registerNode2: mortgage must be greater than minimum deposit");
     XCONTRACT_ENSURE(node_info.m_account_mortgage >= min_deposit, "xrec_registration_contract::registerNode2: mortgage must be greater than minimum deposit");
 
@@ -507,7 +507,7 @@ void xrec_registration_contract::update_node_info(data::system_contract::xreg_no
     std::string stream_str = std::string((char *)stream.data(), stream.size());
 
     XMETRICS_TIME_RECORD(XREG_CONTRACT "XPORPERTY_CONTRACT_REG_KEY_SetExecutionTime");
-    MAP_SET(data::system_contract::XPORPERTY_CONTRACT_REG_KEY, node_info.m_account.value(), stream_str);
+    MAP_SET(data::system_contract::XPORPERTY_CONTRACT_REG_KEY, node_info.m_account.to_string(), stream_str);
 }
 
 void xrec_registration_contract::delete_node_info(std::string const & account) {
@@ -973,7 +973,10 @@ void xrec_registration_contract::slash_unqualified_node(std::string const & puni
     std::string base_addr = "";
     uint32_t table_id = 0;
     XCONTRACT_ENSURE(data::xdatautil::extract_parts(source_addr, base_addr, table_id), "source address extract base_addr or table_id error!");
-    xdbg("[xrec_registration_contract][slash_unqualified_node] self_account %s, source_addr %s, base_addr %s\n", account.c_str(), source_addr.c_str(), base_addr.c_str());
+    xdbg("[xrec_registration_contract][slash_unqualified_node] self_account %s, source_addr %s, base_addr %s\n",
+         account.to_string().c_str(),
+         source_addr.c_str(),
+         base_addr.c_str());
 
     XCONTRACT_ENSURE(source_addr == top::sys_contract_zec_slash_info_addr, "invalid source addr's call!");
 
@@ -983,7 +986,7 @@ void xrec_registration_contract::slash_unqualified_node(std::string const & puni
     xinfo("[xrec_registration_contract][slash_unqualified_node] do slash unqualified node, size: %zu", node_slash_info.size());
 
     for (auto const & value : node_slash_info) {
-        std::string const & addr = value.node_id.value();
+        std::string const & addr = value.node_id.to_string();
         xdbg("[xrec_registration_contract][slash_unqualified_node] do slash unqualified node, addr: %s", addr.c_str());
         data::system_contract::xreg_node_info reg_node;
         auto ret = get_node_info(addr, reg_node);
@@ -1020,13 +1023,13 @@ void xrec_registration_contract::init_node_credit(data::system_contract::xreg_no
     if (node_info.could_be_validator()) {
         if (node_info.m_validator_credit_numerator == 0 ) {
             node_info.m_validator_credit_numerator = XGET_ONCHAIN_GOVERNANCE_PARAMETER(initial_creditscore);
-            xdbg("validator account %s credit score %" PRIu64, node_info.m_account.c_str(), node_info.m_validator_credit_numerator);
+            xdbg("validator account %s credit score %" PRIu64, node_info.m_account.to_string().c_str(), node_info.m_validator_credit_numerator);
         }
     }
     if (node_info.could_be_auditor()) {
         if (node_info.m_auditor_credit_numerator == 0) {
             node_info.m_auditor_credit_numerator = XGET_ONCHAIN_GOVERNANCE_PARAMETER(initial_creditscore);
-            xdbg("auditor account %s credit score %" PRIu64, node_info.m_account.c_str(), node_info.m_auditor_credit_numerator);
+            xdbg("auditor account %s credit score %" PRIu64, node_info.m_account.to_string().c_str(), node_info.m_auditor_credit_numerator);
         }
     }
 
