@@ -1074,12 +1074,6 @@ bool handle_node_command(const std::pair<std::string, uint16_t> & admin_http, co
     return true;
 }
 
-std::string decrypt_keystore(const std::string & keystore_path, const std::string & password) {
-    std::string private_key;
-    xChainSDK::xcrypto::decrypt_keystore_file_by_password(password, keystore_path, private_key);
-    return private_key;
-}
-
 std::string decrypt_keystore_by_key(const std::string & keystore_path, const std::string & token) {
     std::string private_key;
     xChainSDK::xcrypto::decrypt_keystore_file_by_kdf_key(token, keystore_path, private_key);

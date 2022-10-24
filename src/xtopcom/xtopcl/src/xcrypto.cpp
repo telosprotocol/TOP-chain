@@ -206,14 +206,6 @@ bool decrypt_keystore_by_kdf_key(std::string const & kdf_key, xJson::Value const
     return false;
 }
 
-bool decrypt_keystore_file_by_password(std::string const & password, std::string const & keystore_path, std::string & pri_key) {
-    xJson::Value keystore_info;
-    if (parse_keystore(keystore_path, keystore_info) == false) {
-        return false;
-    }
-    return decrypt_keystore_by_password(password, keystore_info, pri_key);
-}
-
 bool decrypt_keystore_file_by_kdf_key(std::string const & kdf_key, std::string const & keystore_path, std::string & pri_key) {
     xJson::Value keystore_info;
     if (parse_keystore(keystore_path, keystore_info) == false) {
