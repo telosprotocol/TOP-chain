@@ -24,6 +24,7 @@ class xstatestore_executor_t {
 public:
     static constexpr uint32_t               execute_update_limit{100};
     static constexpr uint32_t               execute_unit_limit_demand{100};  // execute unit for unitstate on demand to fullunit
+    static std::mutex   m_global_execute_lock;
 
 public:
     xstatestore_executor_t(common::xaccount_address_t const& table_addr, xexecute_listener_face_t * execute_listener);
@@ -61,6 +62,11 @@ protected:
     xtablestate_ext_ptr_t  make_state_from_current_table(base::xvblock_t* current_block, std::error_code & ec) const;
     xtablestate_ext_ptr_t  make_state_from_prev_state_and_table(base::xvblock_t* current_block, xtablestate_ext_ptr_t const& prev_state, std::error_code & ec) const;
     xtablestate_ext_ptr_t  execute_block_recursive(base::xvblock_t* current_block, uint32_t & limit, std::error_code & ec) const;
+    xtablestate_ext_ptr_t  create_tablestate_ext(base::xvblock_t* current_block, 
+                                                std::shared_ptr<state_mpt::xstate_mpt_t> const& current_prev_mpt, 
+                                                xhash256_t const& block_state_root,
+                                                xobject_ptr_t<base::xvbstate_t> const& current_state,
+                                                std::error_code & ec) const;
 
 protected:
     mutable std::mutex          m_execute_lock;  // protect the whole execution
