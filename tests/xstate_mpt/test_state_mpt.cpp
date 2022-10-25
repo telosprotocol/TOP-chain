@@ -305,8 +305,8 @@ TEST_F(test_state_mpt_fixture, test_basic) {
     // commit
     s->commit(ec);
     EXPECT_FALSE(ec);
-    // cache is not lost
-    EXPECT_EQ(s->m_state_objects.size(), 10);
+    // cache is lost
+    EXPECT_EQ(s->m_state_objects.size(), 0);
     for (auto obj : s->m_state_objects) {
         EXPECT_FALSE(obj.second->dirty_unit);
     }

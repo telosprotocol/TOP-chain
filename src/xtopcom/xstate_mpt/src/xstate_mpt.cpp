@@ -297,6 +297,7 @@ xhash256_t xtop_state_mpt::commit(std::error_code & ec) {
     if (!m_state_objects_dirty.empty()) {
         m_state_objects_dirty.clear();
     }
+    m_state_objects.clear();
 
     std::lock_guard<std::mutex> lock(m_trie_lock);
     std::pair<xhash256_t, int32_t> res;
