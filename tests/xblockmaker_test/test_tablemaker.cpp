@@ -1151,7 +1151,7 @@ bool convert_func_all_true(const base::xvaccount_t & account, const base::xaccou
     std::string state_hash = std::to_string(i + 200);
     uint64_t nonce = i%5;
 
-    new_account_index = base::xaccount_index_t(old_account_index.get_latest_unit_height(), unit_hash, state_hash, nonce, enum_xvblock_class_light, enum_xvblock_type_user);
+    new_account_index = base::xaccount_index_t(old_account_index.get_latest_unit_height(), unit_hash, state_hash, nonce);
     return true;
 }
 
@@ -1177,7 +1177,7 @@ TEST_F(test_tablemaker, account_index_upgrade) {
         for (uint32_t i = 0; i < account_num; i++) {
             std::string account = "test_account" + std::to_string(i);
             
-            base::xaccount_index_t old_account_index(i+ 10, "x", "x", 0, enum_xvblock_class_light, enum_xvblock_type_user);
+            base::xaccount_index_t old_account_index(i+ 10, "x", "x", 0);
             account_index_upgrade.add_old_index(account, old_account_index);
         }
 
@@ -1235,7 +1235,8 @@ TEST_F(test_tablemaker, account_index_upgrade_tool) {
     std::map<std::string, base::xaccount_index_t> new_indexes;
 
     for (auto & sub_block : sub_blocks) {
-        base::xaccount_index_t old_account_index(sub_block.get(), false, enum_xblock_consensus_flag_committed, false, 0);
+        base::xaccount_index_t old_account_index(sub_block->get_height(), sub_block->get_viewid(), 0, enum_xblock_consensus_flag_committed, sub_block->get_block_class(), sub_block->get_block_type(), false, false);
+
         base::xvaccount_t account(sub_block->get_account());
         base::xaccount_index_t new_account_index;
         auto ret = xaccount_index_upgrade_tool_t::convert_to_new_account_index(account, old_account_index, new_account_index);

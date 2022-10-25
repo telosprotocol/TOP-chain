@@ -159,7 +159,7 @@ bool     xtablebuilder_t::update_account_index_property(const data::xtablestate_
         }
     }
 
-    base::xaccount_index_t _new_aindex(unit.get(), has_unconfirm_sendtx, _cs_type, false, nonce);
+    base::xaccount_index_t _new_aindex(unit->get_height(), unit->get_viewid(), nonce, _cs_type, unit->get_block_class(), unit->get_block_type(), has_unconfirm_sendtx, false);
     tablestate->set_account_index(unit->get_account(), _new_aindex);
     xdbg("xtablebuilder_t::update_account_index_property account:%s,index=%s", unit->get_account().c_str(), _new_aindex.dump().c_str());
     return true;

@@ -48,7 +48,7 @@ bool xtable_bstate_t::set_block_offsnapshot(base::xvblock_t* block, const std::s
 
 bool xtable_bstate_t::set_account_index(const std::string & account, const base::xaccount_index_t & account_index, base::xvcanvas_t* canvas) {
     std::string value;
-    account_index.serialize_to(value);
+    account_index.old_serialize_to(value);
 
     if (false == get_bstate()->find_property(XPROPERTY_TABLE_ACCOUNT_INDEX)) {
         auto propobj = get_bstate()->new_string_map_var(XPROPERTY_TABLE_ACCOUNT_INDEX, canvas);
@@ -63,7 +63,7 @@ bool xtable_bstate_t::set_account_index(const std::string & account, const base:
 
 bool xtable_bstate_t::set_account_index(const std::string & account, const base::xaccount_index_t & account_index) {
     std::string value;
-    account_index.serialize_to(value);
+    account_index.old_serialize_to(value);
 
     if (false == get_bstate()->find_property(XPROPERTY_TABLE_ACCOUNT_INDEX)) {
         get_bstate()->new_string_map_var(XPROPERTY_TABLE_ACCOUNT_INDEX, get_canvas().get());
@@ -78,7 +78,7 @@ bool xtable_bstate_t::get_account_index(const std::string & account, base::xacco
     if (value.empty()) {
         return false;
     }
-    account_index.serialize_from(value);
+    account_index.old_serialize_from(value);
     return true;
 }
 
@@ -87,7 +87,7 @@ std::set<std::string> xtable_bstate_t::get_all_accounts() const {
     std::map<std::string,std::string> values = map_get(XPROPERTY_TABLE_ACCOUNT_INDEX);
     for (auto & v : values) {
         base::xaccount_index_t account_index;
-        account_index.serialize_from(v.second);
+        account_index.old_serialize_from(v.second);
         all_accounts.insert(v.first);
     }
     return all_accounts;
