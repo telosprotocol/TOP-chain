@@ -65,10 +65,6 @@ bool handle_node_command(
         const std::string &cmdline,
         std::string &result);
 
-std::string decrypt_keystore(
-        const std::string &keystore_path,
-        const std::string &password);
-
 std::string decrypt_keystore_by_key(
         const std::string &keystore_path,
         const std::string &token);
