@@ -25,6 +25,7 @@ public:
     static constexpr uint32_t               execute_demand_limit{10};
     static constexpr uint32_t               execute_update_limit{32};
     static constexpr uint32_t               execute_unit_limit_demand{100};  // execute unit for unitstate on demand to fullunit
+    static std::mutex   m_global_execute_lock;
 
 public:
     xstatestore_executor_t(common::xaccount_address_t const& table_addr, xexecute_listener_face_t * execute_listener);

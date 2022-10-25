@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <string>
+#include "xbase/xutl.h"
 #include "xbasic/xmemory.hpp"
 #include "xdata/xtable_bstate.h"
 #include "xdata/xblockbuild.h"
@@ -12,6 +13,8 @@
 #include "xvledger/xvledger.h"
 
 NS_BEG2(top, statestore)
+
+std::mutex xstatestore_executor_t::m_global_execute_lock;
 
 xstatestore_executor_t::xstatestore_executor_t(common::xaccount_address_t const& table_addr, xexecute_listener_face_t * execute_listener)
 : m_table_addr{table_addr},m_state_accessor{table_addr},m_execute_listener(execute_listener) {
@@ -427,6 +430,34 @@ xtablestate_ext_ptr_t xstatestore_executor_t::write_table_all_states(base::xvblo
 }
 
 xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_table(base::xvblock_t* current_block, xtablestate_ext_ptr_t const& prev_state, std::error_code & ec) const {
+    class alocker
+    {
+    private:
+        alocker();
+        alocker(const alocker &);
+        alocker & operator = (const alocker &);
+    public:
+        alocker(std::mutex & globl_locker,bool auto_lock)
+            :m_ref_mutex(globl_locker)
+        {
+            m_auto_lock = auto_lock;
+            if(m_auto_lock)
+                m_ref_mutex.lock();
+        }
+
+        ~alocker()
+        {
+            if(m_auto_lock) {
+                m_ref_mutex.unlock();                
+            }
+        }
+
+    private:
+        std::mutex & m_ref_mutex;
+        bool         m_auto_lock;
+    };
+
+
     if (current_block->get_height() != prev_state->get_table_state()->height() + 1) {
         ec = error::xerrc_t::statestore_block_unmatch_prev_err;
         xerror("xstatestore_executor_t::make_state_from_prev_state_and_table fail-block and state unmatch.block=%s,state=%s",current_block->dump().c_str(),prev_state->get_table_state()->get_bstate()->dump().c_str());
@@ -447,6 +478,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_tab
     xhash256_t block_state_root = m_statestore_base.get_state_root_from_block(current_block);
     base::xaccount_indexs_t account_indexs;
     bool is_first_mpt = (current_prev_mpt->get_original_root_hash() == xhash256_t{}) && (block_state_root != xhash256_t{});
+    alocker global_lock(m_global_execute_lock, is_first_mpt);
 
     if (current_block->get_block_class() == base::enum_xvblock_class_light) {
         if (false == m_statestore_base.get_blockstore()->load_block_output(m_table_addr.vaccount(), current_block)) {
@@ -499,6 +531,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_tab
                 }
                 xinfo("xstatestore_executor_t::make_state_from_prev_state_and_table upgrade write unitstate.block(%s),account=%s,%s",current_block->dump().c_str(),account.value().c_str(),accountindex.dump().c_str());
             }
+            base::xtime_utl::sleep_ms(60000); // XTODO sleep 60s to release units
             xinfo("xstatestore_executor_t::make_state_from_prev_state_and_table upgrade first mpt finish.indexes_count=%zu.block=%s",indexes.size(), current_block->dump().c_str());
         }
 
