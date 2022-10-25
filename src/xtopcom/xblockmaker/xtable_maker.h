@@ -56,7 +56,7 @@ typedef bool (*account_index_converter)(const base::xvaccount_t & account, const
 
 class xaccount_index_upgrade_t {
 public:
-    void init(uint32_t accounts_num, uint64_t committed_height);
+    void init(const std::string & table_addr, uint32_t accounts_num, uint64_t committed_height);
     void add_old_index(const std::string & addr, const base::xaccount_index_t & account_index);
     bool upgrade(account_index_converter convert_func, uint32_t max_convert_num);
     bool get_new_indexes(std::map<std::string, base::xaccount_index_t> & new_indexes, uint64_t committed_height);
@@ -64,6 +64,7 @@ public:
     void clear();
 
 private:
+    std::string m_table_address;
     std::map<std::string, base::xaccount_index_t> m_new_indexes;
     std::vector<lack_account_info_t> m_lack_accounts;
     uint32_t m_lack_accounts_pos{0};

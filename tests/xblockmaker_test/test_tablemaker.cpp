@@ -1173,7 +1173,7 @@ TEST_F(test_tablemaker, account_index_upgrade) {
         if (test_idx == 1) {
             account_index_converter convert_func = convert_func_random_true;
         }
-        account_index_upgrade.init(account_num, height);
+        account_index_upgrade.init("Ta0000@0", account_num, height);
         for (uint32_t i = 0; i < account_num; i++) {
             std::string account = "test_account" + std::to_string(i);
             

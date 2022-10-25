@@ -72,18 +72,39 @@ namespace top
         //clock block always pass by higher layer to lower layer
         bool  xcsaccount_t::on_clock_fire(const base::xvevent_t & event,xcsobject_t* from_parent,const int32_t cur_thread_id,const uint64_t timenow_ms)
         {
-            xcsobject_t * child_obj = (xcsobject_t*)get_child_node();
-            if(child_obj == NULL) //create context assocated with as default
-            {
-                base::xauto_ptr<xcsobject_t> ptr_engine_obj(create_engine_object());
-            }
-            base::xauto_ptr<base::xvblock_t>  highest_block(get_vblockstore()->get_latest_cert_block(*this, metrics::blockstore_access_from_bft_on_clock_fire));
-            if(highest_block)
-            {
-                xcsclock_fire * _clock_event = (xcsclock_fire*)&event;
-                _clock_event->reset_latest_block(highest_block()); //carry latest cert block from blockstore ,so that it may sync to xbft
-            }
+            // xcsobject_t * child_obj = (xcsobject_t*)get_child_node();
+            // if(child_obj == NULL) //create context assocated with as default
+            // {
+            //     base::xauto_ptr<xcsobject_t> ptr_engine_obj(create_engine_object());
+            // }
+            // base::xauto_ptr<base::xvblock_t>  highest_block(get_vblockstore()->get_latest_cert_block(*this, metrics::blockstore_access_from_bft_on_clock_fire));
+            // if(highest_block)
+            // {
+            //     xinfo("xcsaccount_t::on_clock_fire block=%s", highest_block->dump().c_str());
+            //     xcsclock_fire * _clock_event = (xcsclock_fire*)&event;
+            //     _clock_event->reset_latest_block(highest_block()); //carry latest cert block from blockstore ,so that it may sync to xbft
+            // } else {
+            //     xerror("xcsaccount_t::on_clock_fire null account=%s", get_account().c_str());
+            // }
             return false; //contiuse let event go down
+        }
+
+        bool   xcsaccount_t::fire_clock(base::xvblock_t & latest_clock_block,int32_t cur_thread_id,uint64_t timenow_ms)
+        {
+             if(get_child_node() != NULL)
+             {
+                base::xauto_ptr<xcsclock_fire>_event_obj(new xcsclock_fire(latest_clock_block));
+                base::xauto_ptr<base::xvblock_t>  highest_block(get_vblockstore()->get_latest_cert_block(*this, metrics::blockstore_access_from_bft_on_clock_fire));
+                if(highest_block)
+                {
+                    xdbg("xcsaccount_t::fire_clock clock=%s,cert=%s", latest_clock_block.dump().c_str(), highest_block->dump().c_str());
+                    _event_obj->reset_latest_block(highest_block.get()); //carry latest cert block from blockstore ,so that it may sync to xbft
+                }
+                return get_child_node()->push_event_down(*_event_obj, this, cur_thread_id, timenow_ms);
+             } else {
+                xerror("xcsaccount_t::fire_clock null child_node");
+             }
+             return false;            
         }
 
         //note: to return false may call child'push_event_down,or stop further routing when return true

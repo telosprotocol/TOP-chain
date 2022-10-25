@@ -56,6 +56,8 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(dataobject_xblockacct_t);
         RETURN_METRICS_NAME(dataobject_xtxpool_table_info_t);
         RETURN_METRICS_NAME(dataobject_xacctmeta_t);
+        RETURN_METRICS_NAME(dataobject_account_address);
+        RETURN_METRICS_NAME(dataobject_mpt_state_object);
 
         // dbkeys
         RETURN_METRICS_NAME(db_key_tx);

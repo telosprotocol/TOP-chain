@@ -10,11 +10,25 @@
 #include "xcommon/xeth_address.h"
 #include "xutility/xhash.h"
 #include "xvledger/xvaccount.h"
+#include "xmetrics/xmetrics.h"
 
 #include <cassert>
 #include <vector>
 
 NS_BEG2(top, common)
+
+metrics_xtop_node_id::metrics_xtop_node_id() {
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_account_address, 1);
+}
+metrics_xtop_node_id::metrics_xtop_node_id(metrics_xtop_node_id const &) {
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_account_address, 1);
+}
+metrics_xtop_node_id::metrics_xtop_node_id(metrics_xtop_node_id &&) {
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_account_address, 1);
+}
+metrics_xtop_node_id::~metrics_xtop_node_id() {
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_account_address, -1);
+}
 
 xtop_node_id::xtop_node_id(std::string value) : m_account_string{std::move(value)} {
     if (!empty()) {

@@ -17,7 +17,7 @@ class xstatestore_cache_t {
 protected:
     enum
     {
-        enum_max_table_state_lru_cache_max     = 8, //max table state lru cache count
+        enum_max_table_state_lru_cache_max     = 4, //max table state lru cache count
         enum_max_unit_state_lru_cache_max      = 32, //max unit state lru cache count
     };
 public:
