@@ -247,11 +247,11 @@ namespace top
         //send clock event to child objects
         bool   xcsobject_t::fire_clock(base::xvblock_t & latest_clock_block,int32_t cur_thread_id,uint64_t timenow_ms)
         {
-             if(get_child_node() != NULL)
-             {
-                 base::xauto_ptr<xcsclock_fire>_event_obj(new xcsclock_fire(latest_clock_block));
-                 return get_child_node()->push_event_down(*_event_obj, this, cur_thread_id, timenow_ms);
-             }
+            //  if(get_child_node() != NULL)
+            //  {
+            //      base::xauto_ptr<xcsclock_fire>_event_obj(new xcsclock_fire(latest_clock_block));
+            //      return get_child_node()->push_event_down(*_event_obj, this, cur_thread_id, timenow_ms);
+            //  }
              return false;
         }
 

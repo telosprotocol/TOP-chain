@@ -79,6 +79,7 @@ namespace top
                         base::xauto_ptr<base::xvblock_t> latest_vblock(get_vblockstore()->get_latest_cert_block(account, metrics::blockstore_access_from_bft_init_blk));
                         if( (latest_vblock) && (latest_vblock->is_deliver(false)))
                         {
+                            xinfo("xclockcert_view::init_vblock %s",latest_vblock->dump().c_str());
                             m_latest_vblock_cert = latest_vblock->get_cert();
                             m_latest_vblock_cert->add_ref();
                         }
@@ -222,6 +223,7 @@ namespace top
             if(false == hqc_block->is_deliver(false))
                 return false;
 
+            xinfo("xclockcert_view::update_vblock_cert %s",hqc_block->dump().c_str());
             return update_vblock_cert(hqc_block->get_cert());
         }
 
@@ -294,8 +296,11 @@ namespace top
             xdbg("xclockcert_view::on_clock_fire,recv new clock=%s at node=0x%llx",_clock_event->get_clock_block()->dump().c_str(),get_xip2_addr().low_addr);
 
             update_clock_cert(_clock_event->get_clock_block());
-            if(_clock_event->get_latest_block() != NULL)
+            if(_clock_event->get_latest_block() != NULL) {
                 update_vblock_cert(_clock_event->get_latest_block());
+            } else {
+                xerror("xclockcert_view::on_clock_fire null");
+            }
             
             return false;//let lower layer continue get notified
         }

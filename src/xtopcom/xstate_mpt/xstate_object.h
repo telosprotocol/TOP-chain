@@ -14,8 +14,13 @@ namespace top {
 namespace state_mpt {
 
 struct xtop_state_object {
+private:
+    xtop_state_object();
+    xtop_state_object(xtop_state_object const &);
+    xtop_state_object(xtop_state_object &&);
+public:
     xtop_state_object(common::xaccount_address_t const & account, const base::xaccount_index_t & new_index);
-    ~xtop_state_object() = default;
+    ~xtop_state_object();
 
     static std::shared_ptr<xtop_state_object> new_object(common::xaccount_address_t const & account, const base::xaccount_index_t & new_index);
 

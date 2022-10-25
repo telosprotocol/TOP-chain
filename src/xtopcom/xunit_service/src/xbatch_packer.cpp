@@ -383,24 +383,15 @@ bool xbatch_packer::check_state_sync(base::xvblock_t * cert_block) {
         xwarn("xbatch_packer::check_state_sync storgage node no need sync.block=%s,execute_height=%ld",cert_block->dump().c_str(), latest_executed_height);
         return false;
     }
-
+    if (cert_block->get_last_full_block_height() == 0) {
+        // no need sync,execute height will increase selfly
+        xwarn("xbatch_packer::check_state_sync no need sync for no full.block=%s,execute_height=%ld,full_height=%ld",cert_block->dump().c_str(), latest_executed_height, cert_block->get_last_full_block_height());
+        return false;
+    }    
     if (get_resources()->get_state_downloader()->is_syncing(m_table_addr)) {
         xwarn("xbatch_packer::check_state_sync in syncing.block=%s,execute_height=%ld",cert_block->dump().c_str(), latest_executed_height);
         return false;
     }
-
-    uint64_t need_state_sync_height = statestore::xstatestore_hub_t::instance()->get_need_sync_state_block_height(m_table_addr);
-    if (need_state_sync_height != 0 && latest_executed_height < need_state_sync_height) {
-        xwarn("xbatch_packer::check_state_sync try sync state for need state sync.block=%s,execute_height=%ld,need_height=%ld",cert_block->dump().c_str(), latest_executed_height, need_state_sync_height);
-        do_state_sync(need_state_sync_height);
-        return false;
-    }
-
-    if (cert_block->get_last_full_block_height() == 0 || latest_executed_height >= cert_block->get_last_full_block_height()) {
-        // no need sync,execute height will increase selfly
-        xwarn("xbatch_packer::check_state_sync no need sync.block=%s,execute_height=%ld,full_height=%ld",cert_block->dump().c_str(), latest_executed_height, cert_block->get_last_full_block_height());
-        return false;
-    }    
 
     auto latest_committed_block = m_para->get_resources()->get_vblockstore()->load_block_object(get_account(), cert_block->get_height()-2, base::enum_xvblock_flag_committed, false, metrics::blockstore_access_from_us_on_view_fire);
     if (nullptr == latest_committed_block) {
@@ -411,15 +402,24 @@ bool xbatch_packer::check_state_sync(base::xvblock_t * cert_block) {
 
     uint64_t latest_committed_height = latest_committed_block->get_height();
     uint64_t latest_full_height = latest_committed_block->get_block_class() == base::enum_xvblock_class_full ? latest_committed_block->get_height() : latest_committed_block->get_last_full_block_height();
+
+    uint64_t need_state_sync_height = statestore::xstatestore_hub_t::instance()->get_need_sync_state_block_height(m_table_addr);
+    if (need_state_sync_height != 0 && latest_executed_height < need_state_sync_height) {
+        uint64_t sync_state_height = latest_full_height > need_state_sync_height ? latest_full_height : need_state_sync_height;
+        xwarn("xbatch_packer::check_state_sync try sync state for need height.block=%s,execute=%ld,need=%ld,full=%ld,sync=%ld",cert_block->dump().c_str(), latest_executed_height, need_state_sync_height,latest_full_height,sync_state_height);
+        do_state_sync(sync_state_height);
+        return false;
+    }
+
     if (latest_executed_height >= latest_full_height) {
         // execute height may behind, but no need sync
-        xwarn("xbatch_packer::check_state_sync no need sync.block=%s,execute_height=%ld,commit_full_height=%ld",cert_block->dump().c_str(), latest_executed_height, latest_full_height);
+        xwarn("xbatch_packer::check_state_sync no need sync for self increase.block=%s,execute_height=%ld,commit_full_height=%ld",cert_block->dump().c_str(), latest_executed_height, latest_full_height);
         return false;
     }
 
     uint64_t _sync_table_state_height_gap = XGET_CONFIG(sync_table_state_height_gap);
     if (latest_executed_height + _sync_table_state_height_gap < latest_full_height) {
-        xwarn("xbatch_packer::check_state_sync try sync state for need state sync.block=%s,execute_height=%ld,need_height=%ld",cert_block->dump().c_str(), latest_executed_height, need_state_sync_height);
+        xwarn("xbatch_packer::check_state_sync try sync state for need state sync.block=%s,execute=%ld,need=%ld,full=%ld",cert_block->dump().c_str(), latest_executed_height, need_state_sync_height,latest_full_height);
         do_state_sync(latest_full_height);
         return false;
     } else {

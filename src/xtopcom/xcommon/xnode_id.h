@@ -39,6 +39,16 @@
 
 NS_BEG2(top, common)
 
+class metrics_xtop_node_id {
+public:
+    metrics_xtop_node_id();
+    metrics_xtop_node_id(metrics_xtop_node_id const &);
+    metrics_xtop_node_id(metrics_xtop_node_id &&);
+    ~metrics_xtop_node_id();
+    metrics_xtop_node_id & operator=(metrics_xtop_node_id const &) = default;
+    metrics_xtop_node_id & operator=(metrics_xtop_node_id &&)      = default;
+};
+
 std::int32_t operator <<(top::base::xstream_t & stream, xtop_node_id const & node_id);
 std::int32_t operator >>(top::base::xstream_t & stream, xtop_node_id & node_id);
 std::int32_t operator<<(top::base::xbuffer_t & stream, xtop_node_id const & node_id);
@@ -50,6 +60,7 @@ private:
     std::string m_account_string;
     xaccount_id_t m_account_id{};
     xtable_id_t m_assigned_table_id;
+    metrics_xtop_node_id m_nouse;
 
 public:
     xtop_node_id()                                 = default;

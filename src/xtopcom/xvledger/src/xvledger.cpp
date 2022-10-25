@@ -433,9 +433,9 @@ namespace top
                 const std::string full_meta_path = base::xvdbkey_t::create_account_meta_key(*this);
                 if(xvchain_t::instance().get_xdbstore()->set_value(full_meta_path,vmeta_bin))
                 {
-                    #ifdef DEBUG_XVLEDGER
+                    // #ifdef DEBUG_XVLEDGER
                     xinfo("xvaccountobj_t::meta->save_meta,meta(%s)",m_meta_ptr->dump().c_str());
-                    #endif
+                    // #endif
                     return true;
                 }
                 else //failure handle

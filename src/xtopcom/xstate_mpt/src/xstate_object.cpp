@@ -5,11 +5,18 @@
 #include "xstate_mpt/xstate_object.h"
 
 #include "xevm_common/trie/xtrie_db.h"
+#include "xmetrics/xmetrics.h"
 
 namespace top {
 namespace state_mpt {
 
-xtop_state_object::xtop_state_object(common::xaccount_address_t const & _account, const base::xaccount_index_t & _index) : account(_account), index(_index) {}
+xtop_state_object::xtop_state_object(common::xaccount_address_t const & _account, const base::xaccount_index_t & _index) : account(_account), index(_index) {
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_mpt_state_object, 1);
+}
+
+xtop_state_object::~xtop_state_object() {
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_mpt_state_object, -1);
+}
 
 std::shared_ptr<xtop_state_object> xtop_state_object::new_object(common::xaccount_address_t const & account, const base::xaccount_index_t & new_index) {
     return std::make_shared<xtop_state_object>(account, new_index);
