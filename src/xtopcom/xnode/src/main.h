@@ -36,7 +36,7 @@ struct config_t {
     std::string  node_id;
     uint16_t     cpu_net_interval { 10 }; // monitor cpu and net, default 10s
     std::string  pid_file;
-    std::string  safebox_pid;
+    std::string  safebox_pid_file;
     std::string  com_log_path;
     std::string  db_target_path;
     std::string  admin_http_addr   { "127.0.0.1" }; // admin http server
