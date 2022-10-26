@@ -16,6 +16,7 @@
 #include "xdata/xtable_bstate.h"
 #include "xsync/xsync_store_shadow.h"
 #include "xsync/xsync_pusher.h"
+#include "xstatestore/xstatestore_face.h"
 
 NS_BEG2(top, sync)
 
@@ -759,7 +760,8 @@ xsync_command_execute_result xchain_downloader_t::execute_next_download(const st
             return abort;
         }
         xsync_dbg("chain_downloader on_snapshot_response valid snapshot. block=%s", current_vblock->dump().c_str());
-        m_sync_store->store_block(current_block.get());
+        statestore::xstatestore_hub_t::instance()->on_table_block_committed(current_block.get());
+        // m_sync_store->store_block(current_block.get());
     }
 
     xsync_info("chain_downloader on_snapshot_response(total) %s,current(height=%lu,viewid=%lu,hash=%s) behind(height=%lu)",
