@@ -491,7 +491,8 @@ void xsync_on_demand_t::handle_chain_snapshot(xsync_message_chain_snapshot_t &ch
             return;
         }
         xsync_dbg("xsync_on_demand_t::handle_chain_snapshot valid snapshot. block=%s", current_vblock->dump().c_str());
-        m_sync_store->store_block(current_block.get());
+        statestore::xstatestore_hub_t::instance()->on_table_block_committed(current_block.get());
+        // m_sync_store->store_block(current_block.get());
     }
 
     xsync_download_tracer tracer;
