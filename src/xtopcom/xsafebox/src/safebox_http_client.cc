@@ -17,7 +17,7 @@ SafeBoxHttpClient::SafeBoxHttpClient(std::string const & local_host) : base_t{lo
 }
 
 std::string SafeBoxHttpClient::request_account(std::string const & account) {
-    auto response_str = request_get();
+    auto response_str = request_get(account);
     json response;
     try {
         response = json::parse(response_str);
@@ -32,7 +32,7 @@ std::string SafeBoxHttpClient::request_account(std::string const & account) {
 }
 
 std::string SafeBoxHttpClient::request_prikey(std::string const & account) {
-    auto response_str = request_get();
+    auto response_str = request_get(account);
     json response;
     try {
         response = json::parse(response_str);

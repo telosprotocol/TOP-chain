@@ -769,9 +769,6 @@ int ApiMethod::set_default_miner(const std::string & pub_key, const std::string 
     // key_info_js["default_miner_private_key"] = base64_pri_key;
     // key_info_js["default_miner_private_key"] = hex_pri_token;
 
-    // expired_time = 0 meaning nerver expired
-    // if (set_prikey_to_daemon(target_node_id, base64_pri_key, out_str, 0) != 0) {
-    // if (set_prikey_to_daemon(target_node_id, hex_pri_token, out_str, 0) != 0) {
     if (set_prikey_to_daemon(pub_key, kdf_key, out_str, 0) != 0) {
         // if set worker key target_node_id, will confilict with topcl(account)
         out_str << "keep default miner nfo in cache failed" << std::endl;
