@@ -50,8 +50,18 @@ xtop_trie_node_face::xtop_trie_node_face(xtop_trie_node_face const &) {
     XMETRICS_COUNTER_INCREMENT("mpt_trie_node_cnt", 1);
 }
 
+xtop_trie_node_face & xtop_trie_node_face::operator=(xtop_trie_node_face const &) {
+    XMETRICS_COUNTER_INCREMENT("mpt_trie_node_cnt", 1);
+    return *this;
+}
+
 xtop_trie_node_face::xtop_trie_node_face(xtop_trie_node_face &&) noexcept {
     XMETRICS_COUNTER_INCREMENT("mpt_trie_node_cnt", 1);
+}
+
+xtop_trie_node_face & xtop_trie_node_face::operator=(xtop_trie_node_face &&) {
+    XMETRICS_COUNTER_INCREMENT("mpt_trie_node_cnt", 1);
+    return *this;
 }
 
 xtop_trie_node_face::~xtop_trie_node_face() noexcept {
