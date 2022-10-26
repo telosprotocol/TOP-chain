@@ -70,9 +70,9 @@ public:
 #if defined(ENABLE_METRICS)
     xtop_trie_node_face() noexcept;
     xtop_trie_node_face(xtop_trie_node_face const &);
-    xtop_trie_node_face & operator=(xtop_trie_node_face const &);
+    xtop_trie_node_face & operator=(xtop_trie_node_face const &) = default;
     xtop_trie_node_face(xtop_trie_node_face &&) noexcept;
-    xtop_trie_node_face & operator=(xtop_trie_node_face &&);
+    xtop_trie_node_face & operator=(xtop_trie_node_face &&) = default;
     virtual ~xtop_trie_node_face() noexcept;
 #else
     xtop_trie_node_face() = default;
