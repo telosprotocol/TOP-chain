@@ -68,6 +68,7 @@ void xtop_state_sync::run() {
         }
     } while(false);
 
+    m_sched->clear();
     m_done = true;
     return;
 }

@@ -27,7 +27,11 @@ void xtop_download_executer::run_state_sync(std::shared_ptr<xstate_sync_face_t> 
 
     xinfo("xtop_download_executer::run_state_sync sync thread start, %s", syncer->symbol().c_str());
 
-    auto f = [syncer](base::xcall_t &, const int32_t, const uint64_t) -> bool {
+    auto f = [weak_syncer = std::weak_ptr<xstate_sync_face_t>(syncer)](base::xcall_t &, const int32_t, const uint64_t) -> bool {
+        auto const syncer = weak_syncer.lock();
+        if (syncer == nullptr) {
+            return false;
+        }
         syncer->run();
         return true;
     };

@@ -7,6 +7,7 @@
 #include "xevm_common/trie/xtrie.h"
 #include "xevm_common/trie/xtrie_node_coding.h"
 #include "xevm_common/xerror/xerror.h"
+#include "xmetrics/xmetrics.h"
 
 #include <assert.h>
 
@@ -33,6 +34,11 @@ Sync::Sync(xhash256_t const & root, xkv_db_face_ptr_t _database, leaf_callback c
 }
 
 Sync::Sync(xkv_db_face_ptr_t _database) : database{_database} {
+    XMETRICS_COUNTER_INCREMENT("trie_sync", 1);
+}
+
+Sync::~Sync() {
+    XMETRICS_COUNTER_DECREMENT("trie_sync", 1);
 }
 
 std::shared_ptr<Sync> Sync::NewSync(xhash256_t const & root, xkv_db_face_ptr_t _database, leaf_callback callback) {
@@ -362,6 +368,17 @@ void Sync::commit(std::shared_ptr<request> req, std::error_code & ec) {
         }
     }
     return;
+}
+
+void Sync::clear() {
+    membatch.clear();
+    nodeReqs.clear();
+    unitReqs.clear();
+    unitKeys.clear();
+    fetches.clear();
+    while (!queue.empty()) {
+        queue.pop();
+    }
 }
 
 NS_END3

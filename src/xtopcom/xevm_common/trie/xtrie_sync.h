@@ -111,7 +111,7 @@ public:
     Sync & operator=(Sync const &) = delete;
     Sync(Sync &&) = default;
     Sync & operator=(Sync &&) = default;
-    ~Sync() = default;
+    ~Sync();
 
 public:
     // Init
@@ -147,6 +147,8 @@ public:
 
     // Pending returns the number of state entries currently pending for download.
     std::size_t Pending() const;
+
+    void clear();
 
 private:
     // schedule inserts a new state retrieval request into the fetch queue. If there
