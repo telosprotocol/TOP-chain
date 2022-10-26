@@ -634,6 +634,15 @@ void xstatestore_executor_t::raise_execute_height(const xstate_sync_info_t & syn
         return;        
     }
 
+    if (!sync_info.get_root_hash().empty()) {
+        std::error_code ec;
+        std::shared_ptr<state_mpt::xstate_mpt_t> cur_mpt = state_mpt::xstate_mpt_t::create(m_table_addr, sync_info.get_root_hash(), m_statestore_base.get_dbstore(), ec);
+        if (ec) {
+            xerror("xstatestore_executor_t::raise_execute_height fail-create mpt.table=%s,height=%ld,hash=%s,root=%s", m_table_addr.value().c_str(), sync_info.get_height(), base::xstring_utl::to_hex(sync_info.get_blockhash()).c_str(),sync_info.get_root_hash().as_hex_str().c_str());
+            return;           
+        }
+    }
+
     xinfo("xstatestore_executor_t::raise_execute_height succ.table=%s,height=%ld,hash=%s,root:%s",m_table_addr.value().c_str(), sync_info.get_height(), base::xstring_utl::to_hex(sync_info.get_blockhash()).c_str(),sync_info.get_root_hash().as_hex_str().c_str());
     set_latest_executed_info(sync_info.get_height(), sync_info.get_blockhash());
 }
