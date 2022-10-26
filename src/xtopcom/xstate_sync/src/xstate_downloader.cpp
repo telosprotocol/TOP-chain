@@ -34,7 +34,7 @@ void xtop_state_downloader::sync_state(const common::xaccount_address_t & table,
                                        const xhash256_t & root_hash,
                                        bool sync_unit,
                                        std::error_code & ec) {
-    if (block_hash.empty() || state_hash.empty() || root_hash.empty()) {
+    if (block_hash.empty() || state_hash.empty()) {
         xwarn("xtop_state_downloader::sync_state table %s param invalid: %s, %s, %s",
               table.c_str(),
               block_hash.as_hex_str().c_str(),

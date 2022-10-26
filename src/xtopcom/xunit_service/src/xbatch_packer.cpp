@@ -237,18 +237,6 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     }
     clear_for_new_view();
 
-    auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
-    auto const new_version = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.v1_7_0_block_fork_point, view_ev->get_clock());
-    if (new_version) {
-        auto ret = m_proposal_maker->account_index_upgrade();
-        if (!ret) {
-            xunit_warn("xbatch_packer::on_view_fire fail-account index upgrade,account=%s,viewid=%ld,clock=%ld",
-                get_account().c_str(), view_ev->get_viewid(), view_ev->get_clock());        
-            XMETRICS_GAUGE(metrics::cons_view_fire_succ, 0);            
-            return false;
-        }
-    }
-
     XMETRICS_TIME_RECORD("cons_tableblock_view_change_time_consuming");
     m_last_view_id = view_ev->get_viewid();
     m_last_view_clock = view_ev->get_clock();
@@ -261,6 +249,19 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
         XMETRICS_GAUGE(metrics::cons_view_fire_succ, 0);
         return false;
     }
+
+    auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
+    auto const new_version = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.v1_7_0_block_fork_point, view_ev->get_clock());
+    if (new_version) {
+        auto ret = m_proposal_maker->account_index_upgrade();
+        if (!ret) {
+            xunit_warn("xbatch_packer::on_view_fire fail-account index upgrade,account=%s,viewid=%ld,clock=%ld,cert_height=%ld",
+                get_account().c_str(), view_ev->get_viewid(), view_ev->get_clock(),_cert_block->get_height());        
+            XMETRICS_GAUGE(metrics::cons_view_fire_succ, 0);            
+            return false;
+        }
+    }
+
     std::error_code ec;
     check_latest_cert_block(_cert_block.get(), view_ev, ec);
     if (ec) {
@@ -346,11 +347,6 @@ bool xbatch_packer::do_state_sync(uint64_t sync_height) {
 
     std::error_code ec;
     xhash256_t state_root = data::xblockextract_t::get_state_root_from_block(sync_block.get());
-    if (state_root == xhash256_t{}) {
-        xwarn("xbatch_packer::do_state_sync fail-old version full table block.block:%s", sync_block->dump().c_str());
-        return false;
-    }
-
     std::string table_bstate_hash_str = sync_block->get_fullstate_hash();
     xassert(!table_bstate_hash_str.empty());
     xhash256_t table_bstate_hash(top::to_bytes(table_bstate_hash_str));

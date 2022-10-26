@@ -141,6 +141,10 @@ void xtop_state_sync::sync_trie(std::error_code & ec) {
 #if !defined(NDEBUG)
     assert(running_thead_id_ == std::this_thread::get_id());
 #endif
+    if (m_root.empty()) {
+        xinfo("xtop_state_sync::sync_trie root empty, skip sync_trie, {%s}", symbol().c_str());
+        return;
+    }
 
     xinfo("xtop_state_sync::sync_trie {%s}", symbol().c_str());
     auto condition = [this]() -> bool { return (m_sched->Pending() > 0); };
