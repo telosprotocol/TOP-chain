@@ -129,7 +129,7 @@ public:
 TEST_F(test_block_executed, xstatestore_executor_t_test_1) {
     mock::xvchain_creator creator;
     base::xvblockstore_t* blockstore = creator.get_blockstore();
-    uint64_t max_count = statestore::xstatestore_executor_t::execute_demand_limit - 1;
+    uint64_t max_count = statestore::xstatestore_executor_t::execute_update_limit - 1;
     mock::xdatamock_table mocktable(1, 4);
     mocktable.genrate_table_chain(max_count, blockstore);
     const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
@@ -176,13 +176,14 @@ TEST_F(test_block_executed, xstatestore_executor_t_test_1) {
 TEST_F(test_block_executed, xstatestore_executor_t_test_2) {
     mock::xvchain_creator creator;
     base::xvblockstore_t* blockstore = creator.get_blockstore();
-    uint64_t max_count = statestore::xstatestore_executor_t::execute_demand_limit + statestore::xstatestore_executor_t::execute_update_limit - 1;
+    uint64_t max_count = statestore::xstatestore_executor_t::execute_update_limit - 1;
     mock::xdatamock_table mocktable(1, 4);
     mocktable.genrate_table_chain(max_count, blockstore);
     const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
     xassert(tableblocks.size() == max_count + 1);
     const std::vector<xdatamock_unit> & mockunits = mocktable.get_mock_units();
 
+    mocktable.store_genesis_units(blockstore);
     for (auto & block : tableblocks) {
         ASSERT_TRUE(blockstore->store_block(mocktable, block.get()));
     }
@@ -204,7 +205,7 @@ TEST_F(test_block_executed, xstatestore_executor_t_test_2) {
 TEST_F(test_block_executed, xstatestore_executor_t_test_3) {
     mock::xvchain_creator creator;
     base::xvblockstore_t* blockstore = creator.get_blockstore();
-    uint64_t max_count = statestore::xstatestore_executor_t::execute_demand_limit + statestore::xstatestore_executor_t::execute_update_limit + 1;
+    uint64_t max_count = statestore::xstatestore_executor_t::execute_update_limit + 5;
     mock::xdatamock_table mocktable(1, 4);
     mocktable.genrate_table_chain(max_count, blockstore);
     const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
@@ -217,19 +218,30 @@ TEST_F(test_block_executed, xstatestore_executor_t_test_3) {
 
     xexecute_listener_test listener_test;
     statestore::xstatestore_executor_t state_executor{common::xaccount_address_t{mocktable.get_account()}, &listener_test};
-    std::error_code ec;
-    base::xaccount_index_t account_index;
-    state_executor.execute_and_get_accountindex(tableblocks[max_count].get(), common::xaccount_address_t{mockunits[0].get_account()}, account_index, ec);
-    if (ec) {
-        
-    } else {
-        xassert(false);
-    }
-    std::cout << "account=" << mockunits[0].get_account() << " index=" << account_index.dump() << std::endl;
 
-    uint64_t expect_height = statestore::xstatestore_executor_t::execute_update_limit;
-    EXPECT_EQ(blockstore->get_latest_executed_block_height(mocktable), expect_height);
-    EXPECT_EQ(state_executor.get_latest_executed_block_height(), expect_height);   
+    {
+        std::error_code ec;
+        base::xaccount_index_t account_index;
+        state_executor.execute_and_get_accountindex(tableblocks[max_count].get(), common::xaccount_address_t{mockunits[0].get_account()}, account_index, ec);
+        if (!ec) {
+            xassert(false);
+        }
+        uint64_t expect_height = statestore::xstatestore_executor_t::execute_update_limit;
+        EXPECT_EQ(blockstore->get_latest_executed_block_height(mocktable), expect_height);
+        EXPECT_EQ(state_executor.get_latest_executed_block_height(), expect_height);   
+    }
+    {
+        // try again
+        std::error_code ec;
+        base::xaccount_index_t account_index;
+        state_executor.execute_and_get_accountindex(tableblocks[max_count].get(), common::xaccount_address_t{mockunits[0].get_account()}, account_index, ec);
+        if (ec) {
+            xassert(false);
+        }
+        std::cout << "account=" << mockunits[0].get_account() << " index=" << account_index.dump() << std::endl;
+        EXPECT_EQ(blockstore->get_latest_executed_block_height(mocktable), max_count-2);
+        EXPECT_EQ(state_executor.get_latest_executed_block_height(), max_count-2);           
+    }
 }
 
 TEST_F(test_block_executed, xstatestore_executor_t_test_5) {

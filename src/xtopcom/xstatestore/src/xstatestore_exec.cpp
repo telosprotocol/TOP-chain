@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <string>
+#include "xbase/xutl.h"
 #include "xbasic/xmemory.hpp"
 #include "xdata/xtable_bstate.h"
 #include "xdata/xblockbuild.h"
@@ -12,6 +13,8 @@
 #include "xvledger/xvledger.h"
 
 NS_BEG2(top, statestore)
+
+std::mutex xstatestore_executor_t::m_global_execute_lock;
 
 xstatestore_executor_t::xstatestore_executor_t(common::xaccount_address_t const& table_addr, xexecute_listener_face_t * execute_listener)
 : m_table_addr{table_addr},m_state_accessor{table_addr},m_execute_listener(execute_listener) {
@@ -62,41 +65,36 @@ void xstatestore_executor_t::on_table_block_committed(base::xvblock_t* block) co
         return;
     }
 
+    std::lock_guard<std::mutex> l(m_execute_lock);
     std::error_code ec;
     uint64_t old_execute_height = get_latest_executed_block_height();
-    if (old_execute_height >= block->get_height()) {
+    if (block->get_height() <= old_execute_height) {
         xdbg("xstatestore_executor_t::on_table_block_committed finish-already done.execute_height old=%ld,block=%s", old_execute_height, block->dump().c_str());
         return;
     }
 
-    xtablestate_ext_ptr_t tablestate_ext = nullptr;
-    // the full state block is synced from other nodes, should execute immediately
-    if ( block->get_block_class() == base::enum_xvblock_class_full && block->is_full_state_block()){
-        xinfo("xstatestore_executor_t::on_table_block_committed full state block.execute_height old=%ld,block=%s,is_fullstate=%d", old_execute_height, block->dump().c_str(),block->is_full_state_block());
-        uint32_t limit = 2;
-        auto tablestate = execute_block_recursive(block, limit, ec);
-        if (nullptr != tablestate) {
-            xinfo("xstatestore_executor_t::on_table_block_committed finish-full block.execute_height old=%ld,new=%ld,block=%s", old_execute_height, get_latest_executed_block_height(), block->dump().c_str());
-            return;
+    xinfo("xstatestore_executor_t::on_table_block_committed enter.execute_height=%ld,block=%s", old_execute_height,block->dump().c_str());
+    if (block->get_height() == old_execute_height + 1) {
+        uint32_t limit = 1;
+        execute_block_recursive(block, limit, ec);
+        if (ec) {
+            xwarn("xstatestore_executor_t::on_table_block_committed fail-execute match block.execute_height=%ld,block=%s", old_execute_height,block->dump().c_str());
         }
+        return;
     }
-    ec.clear();
-    execute_and_get_tablestate_ext(block, tablestate_ext, ec);
-    xdbg("xstatestore_executor_t::on_table_block_committed finish.execute_height old=%ld,new=%ld,block=%s", old_execute_height, get_latest_executed_block_height(), block->dump().c_str());
-}
 
-void xstatestore_executor_t::try_execute_block_on_demand(base::xvblock_t* block, std::error_code & ec) const {
-    uint64_t execute_height = get_latest_executed_block_height();
-    uint32_t limit = execute_demand_limit;
-    if (block->get_height() > execute_height + limit) {
-        // update from execute height firstly
-        update_execute_from_execute_height();
-        execute_height = get_latest_executed_block_height();
-        if (block->get_height() > execute_height + limit) {
-            ec = error::xerrc_t::statestore_cannot_execute_for_long_distance_err;
-            xwarn("xstatestore_executor_t::try_execute_block_on_demand fail-can't execute for long distance.block=%s,execute_height=%ld", 
-                block->dump().c_str(), execute_height, execute_height);
-            return;
+    uint64_t new_execute_height = update_execute_from_execute_height(old_execute_height);
+    if (block->get_height() > new_execute_height) {
+        // TODO(jimmy) still can't execute, for compatibility old version block, the full state block is synced from other nodes, try to jump execute immediately
+        if ( block->get_block_class() == base::enum_xvblock_class_full 
+            && block->is_full_state_block()
+            && m_statestore_base.get_state_root_from_block(block).empty() ) {
+            xinfo("xstatestore_executor_t::on_table_block_committed full state block.execute_height old=%ld,block=%s,is_fullstate=%d", old_execute_height, block->dump().c_str(),block->is_full_state_block());
+            uint32_t limit = 1;
+            execute_block_recursive(block, limit, ec);
+            if (ec) {
+                xwarn("xstatestore_executor_t::on_table_block_committed fail-execute full state block.execute_height=%ld,block=%s", old_execute_height,block->dump().c_str());
+            }
         }
     }
 }
@@ -112,75 +110,87 @@ void xstatestore_executor_t::update_latest_executed_info(base::xvblock_t* block)
     }
 }
 
-void xstatestore_executor_t::execute_and_get_tablestate_ext(base::xvblock_t* block, xtablestate_ext_ptr_t & tablestate_ext, std::error_code & ec) const {
-    // firstly, try get from cache
-    tablestate_ext = m_state_accessor.read_table_bstate_from_cache(m_table_addr, block->get_height(), block->get_block_hash());
-    if (nullptr != tablestate_ext) {
-        update_latest_executed_info(block);
-        xdbg("xstatestore_executor_t::execute_and_get_tablestate_ext succ get from cache.block=%s", block->dump().c_str());
-        return;
+xtablestate_ext_ptr_t xstatestore_executor_t::execute_and_get_tablestate_ext(base::xvblock_t* block, std::error_code & ec) const {
+    std::lock_guard<std::mutex> l(m_execute_lock);
+
+    uint64_t execute_height = get_latest_executed_block_height();
+    xtablestate_ext_ptr_t tablestate_ext = nullptr;
+
+    // 1. read state if block height less than execute height
+    if (block->get_height() <= execute_height) {
+        tablestate_ext = m_state_accessor.read_table_bstate(m_table_addr, block);
+        if (nullptr == tablestate_ext) {
+            ec = error::xerrc_t::statestore_load_tablestate_err;
+            xwarn("xstatestore_executor_t::execute_and_get_tablestate_ext fail-read state.execute_height=%ld,block=%s",execute_height,block->dump().c_str());
+            return nullptr;
+        }
+        xdbg("xstatestore_executor_t::execute_and_get_tablestate_ext succ-read state.execute_height=%ld,block=%s",execute_height,block->dump().c_str());
+        return tablestate_ext;
     }
     
-    // secondly, try to push block execute from execute height
-    try_execute_block_on_demand(block, ec);
-    if (ec) {
-        xwarn("xstatestore_executor_t::execute_and_get_tablestate_ext fail-try_execute_block_on_demand.ec=%s,block=%s", ec.message().c_str(), block->dump().c_str());
-        return;
-    }
-    tablestate_ext = m_state_accessor.read_table_bstate_from_db(m_table_addr, block);
-    if (nullptr != tablestate_ext) {
-        update_latest_executed_info(block);
-        xdbg("xstatestore_executor_t::execute_and_get_tablestate_ext succ get from db.block=%s", block->dump().c_str());
-        return;
+    // 2. try push block execute if long distance from execute height
+    if (block->get_height() > execute_height + 2) {        
+        uint64_t new_execute_height = update_execute_from_execute_height(execute_height);
+        if (block->get_height() > new_execute_height + 2) {
+            ec = error::xerrc_t::statestore_cannot_execute_for_long_distance_err;
+            xwarn("xstatestore_executor_t::execute_and_get_tablestate_ext fail-can't execute for long distance.execute_height=%ld,block=%s", execute_height,block->dump().c_str());
+            return nullptr;
+        }
     }
 
-    uint32_t limit = execute_demand_limit;
-    tablestate_ext = execute_block_recursive(block, limit, ec);
-    if (ec) {
-        xwarn("xstatestore_executor_t::execute_and_get_tablestate_ext fail-execute recursive.block=%s,ec=%s", block->dump().c_str(), ec.message().c_str());
-        return;
+    tablestate_ext = m_state_accessor.read_table_bstate(m_table_addr, block);
+    if (nullptr == tablestate_ext) {
+        uint32_t limit = 2;
+        tablestate_ext = execute_block_recursive(block, limit, ec);
     }
-    xassert(nullptr != tablestate_ext);
-    xdbg("xstatestore_executor_t::execute_and_get_tablestate_ext succ get from execute recursive.block=%s", block->dump().c_str());
+
+    if (nullptr == tablestate_ext) {
+        xwarn("xstatestore_executor_t::execute_and_get_tablestate_ext fail-execute recursive.execute_height=%ld,block=%s",execute_height,block->dump().c_str());
+    } else {
+        xdbg("xstatestore_executor_t::execute_and_get_tablestate_ext succ-execute recursive.execute_height=%ld,block=%s",execute_height,block->dump().c_str());
+    }
+    return tablestate_ext;
 }
 
 // XTODO should always get successfully
 xtablestate_ext_ptr_t xstatestore_executor_t::get_latest_executed_tablestate_ext() const {
-    // firstly try to push executed the latest committed block
-    update_execute_from_execute_height();
+    std::lock_guard<std::mutex> l(m_execute_lock);
 
     uint64_t execute_height = get_latest_executed_block_height();
+    uint64_t new_execute_height = update_execute_from_execute_height(execute_height);
 
     auto cache_tablestate = m_state_accessor.get_latest_connectted_table_state();
-    if (cache_tablestate->get_table_state()->height() >= execute_height) {
+    if (cache_tablestate->get_table_state()->height() >= new_execute_height) {
         return cache_tablestate;
     }
 
-    xobject_ptr_t<base::xvblock_t> latest_block = m_statestore_base.get_blockstore()->load_block_object(m_table_addr.vaccount(), execute_height, base::enum_xvblock_flag_committed, false);
+    xobject_ptr_t<base::xvblock_t> latest_block = m_statestore_base.get_blockstore()->load_block_object(m_table_addr.vaccount(), new_execute_height, base::enum_xvblock_flag_committed, false);
     if (nullptr != latest_block) {
-        xtablestate_ext_ptr_t tablestate_ext = nullptr;
         std::error_code ec;
-        execute_and_get_tablestate_ext(latest_block.get(), tablestate_ext, ec);
+        xtablestate_ext_ptr_t tablestate_ext = execute_and_get_tablestate_ext(latest_block.get(), ec);
         if (nullptr != tablestate_ext) {
             m_state_accessor.set_latest_connectted_tablestate(tablestate_ext);
             return tablestate_ext;
         }
     }
-    xerror("xstatestore_executor_t::get_latest_executed_tablestate_ext fail.table=%s,height=%ld,block_exist=%d",m_table_addr.value().c_str(),execute_height,nullptr != latest_block);
+    xerror("xstatestore_executor_t::get_latest_executed_tablestate_ext fail.table=%s,height=%ld,%ld,block_exist=%d",m_table_addr.value().c_str(),execute_height,new_execute_height,nullptr != latest_block);
     return cache_tablestate;
 }
 
+xtablestate_ext_ptr_t xstatestore_executor_t::do_commit_table_all_states(base::xvblock_t* current_block, xtablestate_store_ptr_t const& tablestate_store, std::error_code & ec) const {
+    std::lock_guard<std::mutex> l(m_execute_lock);
+    return write_table_all_states(current_block, tablestate_store, ec);
+}
+
 void xstatestore_executor_t::execute_and_get_accountindex(base::xvblock_t* block, common::xaccount_address_t const& unit_addr, base::xaccount_index_t & account_index, std::error_code & ec) const {
-    xtablestate_ext_ptr_t tablestate_ext = nullptr;
-    execute_and_get_tablestate_ext(block, tablestate_ext, ec);
+    xtablestate_ext_ptr_t tablestate_ext = execute_and_get_tablestate_ext(block, ec);
     if (nullptr != tablestate_ext) {
         tablestate_ext->get_accountindex(unit_addr.value(), account_index, ec);
     }
 }
 
 void xstatestore_executor_t::execute_and_get_tablestate(base::xvblock_t* block, data::xtablestate_ptr_t &tablestate, std::error_code & ec) const {
-    xtablestate_ext_ptr_t tablestate_ext = nullptr;
-    execute_and_get_tablestate_ext(block, tablestate_ext, ec);
+    xtablestate_ext_ptr_t tablestate_ext = execute_and_get_tablestate_ext(block, ec);
     if (nullptr != tablestate_ext) {
         tablestate = tablestate_ext->get_table_state();
     }
@@ -248,15 +258,14 @@ xtablestate_ext_ptr_t xstatestore_executor_t::execute_block_recursive(base::xvbl
     return tablestate;
 }
 
-void xstatestore_executor_t::update_execute_from_execute_height() const {
-    uint64_t max_count = execute_update_limit;
-
-    uint64_t old_execute_height = get_latest_executed_block_height();
+uint64_t xstatestore_executor_t::update_execute_from_execute_height(uint64_t old_execute_height) const {    
     uint64_t _highest_commit_block_height = m_statestore_base.get_blockstore()->get_latest_committed_block_height(m_table_addr.vaccount());
 
     if (old_execute_height >= _highest_commit_block_height) {
-        return;
+        return old_execute_height;
     }
+    
+    uint64_t max_count = execute_update_limit;
     uint64_t max_height = (old_execute_height + max_count) > _highest_commit_block_height ? _highest_commit_block_height : (old_execute_height + max_count);
 
     std::error_code ec;
@@ -283,6 +292,7 @@ void xstatestore_executor_t::update_execute_from_execute_height() const {
     if (new_execute_height > old_execute_height) {
         xdbg("xstatestore_executor_t::update_execute_from_execute_height updated.account=%s,old_height=%ld,new_height=%ld",m_table_addr.value().c_str(),old_execute_height,new_execute_height);
     }
+    return new_execute_height;
 }
 
 xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_current_table(base::xvblock_t* current_block, std::error_code & ec) const {
@@ -370,15 +380,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::write_table_all_states(base::xvblo
         }
     }
 #endif
-
-    std::lock_guard<std::mutex> l(m_table_state_write_lock);
-    xtablestate_ext_ptr_t cache_tablestate = m_state_accessor.read_table_bstate(m_table_addr, current_block);
-    if (nullptr != cache_tablestate) {
-        update_latest_executed_info(current_block);  // XTODO should update execute height
-        xinfo("xstatestore_executor_t::write_table_all_states succ-already writed.block=%s",current_block->dump().c_str());
-        return cache_tablestate;
-    }
-    
+   
     // write all table "state" to db
     for (auto & v : tablestate_store->get_unitstates()) {
         m_state_accessor.write_unitstate_to_db(v.first, v.second, ec);
@@ -427,6 +429,35 @@ xtablestate_ext_ptr_t xstatestore_executor_t::write_table_all_states(base::xvblo
 }
 
 xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_table(base::xvblock_t* current_block, xtablestate_ext_ptr_t const& prev_state, std::error_code & ec) const {
+    class alocker
+    {
+    private:
+        alocker();
+        alocker(const alocker &);
+        alocker & operator = (const alocker &);
+    public:
+        alocker(std::mutex & globl_locker,bool auto_lock)
+            :m_ref_mutex(globl_locker)
+        {
+            m_auto_lock = auto_lock;
+            if(m_auto_lock)
+                m_ref_mutex.lock();
+        }
+
+        ~alocker()
+        {
+            if(m_auto_lock) {
+                m_ref_mutex.unlock();
+                base::xtime_utl::sleep_ms(60000); // XTODO sleep 60s to release units
+            }
+        }
+
+    private:
+        std::mutex & m_ref_mutex;
+        bool         m_auto_lock;
+    };
+
+
     if (current_block->get_height() != prev_state->get_table_state()->height() + 1) {
         ec = error::xerrc_t::statestore_block_unmatch_prev_err;
         xerror("xstatestore_executor_t::make_state_from_prev_state_and_table fail-block and state unmatch.block=%s,state=%s",current_block->dump().c_str(),prev_state->get_table_state()->get_bstate()->dump().c_str());
@@ -447,6 +478,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_tab
     xhash256_t block_state_root = m_statestore_base.get_state_root_from_block(current_block);
     base::xaccount_indexs_t account_indexs;
     bool is_first_mpt = (current_prev_mpt->get_original_root_hash() == xhash256_t{}) && (block_state_root != xhash256_t{});
+    alocker global_lock(m_global_execute_lock, is_first_mpt);
 
     if (current_block->get_block_class() == base::enum_xvblock_class_light) {
         if (false == m_statestore_base.get_blockstore()->load_block_output(m_table_addr.vaccount(), current_block)) {
@@ -476,7 +508,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_tab
                 auto & account_index_str = v.second;              
                 current_prev_mpt->set_account_index(account, account_index_str, ec);
                 if (ec) {
-                    xerror("xstatestore_executor_t::make_state_from_prev_state_and_table fail-set mpt accountindex for block(%s)",current_block->dump().c_str());
+                    xerror("xstatestore_executor_t::make_state_from_prev_state_and_table upgrade first mpt fail-set mpt accountindex for block(%s)",current_block->dump().c_str());
                     return nullptr;
                 }
 
@@ -489,15 +521,15 @@ xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_tab
                         set_need_sync_state_block_height(current_block->get_height());
                     } 
                     ec = error::xerrc_t::statestore_need_state_sync_fail;
-                    xwarn("xstatestore_executor_t::make_state_from_prev_state_and_table,fail-make unitstate.need do state sync for table block(%s),account=%s,%s", current_block->dump().c_str(),account.value().c_str(),accountindex.dump().c_str());
+                    xwarn("xstatestore_executor_t::make_state_from_prev_state_and_table upgrade first mpt fail-make unitstate.need do state sync for table block(%s),account=%s,%s", current_block->dump().c_str(),account.value().c_str(),accountindex.dump().c_str());
                     return nullptr;
                 }
                 m_state_accessor.write_unitstate_to_db(unitstate, accountindex.get_latest_unit_hash(), ec);
                 if (ec) {
-                    xerror("xstatestore_executor_t::make_state_from_prev_state_and_table fail-write unitstate for block(%s),account=%s,%s",current_block->dump().c_str(),account.value().c_str(),accountindex.dump().c_str());
+                    xerror("xstatestore_executor_t::make_state_from_prev_state_and_table upgrade first mpt fail-write unitstate for block(%s),account=%s,%s",current_block->dump().c_str(),account.value().c_str(),accountindex.dump().c_str());
                     return nullptr;
                 }
-                xinfo("xstatestore_executor_t::make_state_from_prev_state_and_table upgrade write unitstate.block(%s),account=%s,%s",current_block->dump().c_str(),account.value().c_str(),accountindex.dump().c_str());
+                xinfo("xstatestore_executor_t::make_state_from_prev_state_and_table upgrade first mpt write unitstate.block(%s),account=%s,%s",current_block->dump().c_str(),account.value().c_str(),accountindex.dump().c_str());
             }
             xinfo("xstatestore_executor_t::make_state_from_prev_state_and_table upgrade first mpt finish.indexes_count=%zu.block=%s",indexes.size(), current_block->dump().c_str());
         }
@@ -621,6 +653,7 @@ uint64_t xstatestore_executor_t::get_need_sync_state_block_height() const {
     return m_need_all_state_sync_height;
 }
 void xstatestore_executor_t::raise_execute_height(const xstate_sync_info_t & sync_info) {
+    std::lock_guard<std::mutex> l(m_execute_lock);
     // check if root and table state are already stored.
     xobject_ptr_t<base::xvblock_t> block = m_statestore_base.get_blockstore()->load_block_object(m_table_addr.vaccount(), sync_info.get_height(), sync_info.get_blockhash(), false);
     if (block == nullptr) {
@@ -777,10 +810,14 @@ data::xunitstate_ptr_t xstatestore_executor_t::execute_unit_recursive(common::xa
     }
 
     // 2.try load prev-state from cache or db
-    data::xunitstate_ptr_t prev_unitstate = m_state_accessor.read_unit_bstate(unit_addr, block->get_height() - 1, block->get_last_block_hash());
+    data::xunitstate_ptr_t prev_unitstate = nullptr;
+    if (block->get_height() > 1) {
+        prev_unitstate = m_state_accessor.read_unit_bstate(unit_addr, block->get_height() - 1, block->get_last_block_hash());
+        if (nullptr == prev_unitstate) {
+            xwarn("xstatestore_executor_t::execute_unit_recursive fail-read prev state from db.limit=%d,cur_block=%s", limit,block->dump().c_str());
+        }
+    }
     if (nullptr == prev_unitstate) {
-        xwarn("xstatestore_executor_t::execute_unit_recursive fail-read prev state from db.limit=%d,cur_block=%s", limit,block->dump().c_str());
-        
         // try load prev-state by recursive
         xobject_ptr_t<base::xvblock_t> prev_block = m_statestore_base.get_blockstore()->load_block_object(unit_addr.vaccount(), block->get_height()-1, block->get_last_block_hash(), false);
         if (nullptr == prev_block) {
