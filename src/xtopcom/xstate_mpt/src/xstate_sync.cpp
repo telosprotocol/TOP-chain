@@ -15,7 +15,8 @@ namespace state_mpt {
 
 std::shared_ptr<evm_common::trie::Sync> new_state_sync(const common::xaccount_address_t & table, const xhash256_t & root, base::xvdbstore_t * db, bool sync_unit) {
     auto syncer = evm_common::trie::Sync::NewSync(std::make_shared<evm_common::trie::xkv_db_t>(db, table));
-    auto callback = [=](std::vector<xbytes_t> const & path, xbytes_t const & hexpath, xbytes_t const & value, xhash256_t const & parent, std::error_code & ec) {
+    auto callback = [&table, &root, sync_unit, weak_syncer = std::weak_ptr<evm_common::trie::Sync>(syncer)](
+                        std::vector<xbytes_t> const & path, xbytes_t const & hexpath, xbytes_t const & value, xhash256_t const & parent, std::error_code & ec) {
         if (value.empty()) {
             ec = error::xerrc_t::state_mpt_leaf_empty;
             return;
@@ -23,10 +24,14 @@ std::shared_ptr<evm_common::trie::Sync> new_state_sync(const common::xaccount_ad
         if (sync_unit) {
             xaccount_info_t info;
             info.decode({value.begin(), value.end()});
-            auto state_hash_str = info.m_index.get_latest_state_hash();
+            auto const state_hash_str = info.m_index.get_latest_state_hash();
             xassert(!info.m_index.get_latest_unit_hash().empty());
-            auto hash = static_cast<xhash256_t>(xbytes_t{state_hash_str.begin(), state_hash_str.end()});
-            auto state_key = base::xvdbkey_t::create_prunable_unit_state_key(info.m_account.vaccount(), info.m_index.get_latest_unit_height(), info.m_index.get_latest_unit_hash());
+            auto const hash = static_cast<xhash256_t>(xbytes_t{state_hash_str.begin(), state_hash_str.end()});
+            auto const state_key = base::xvdbkey_t::create_prunable_unit_state_key(info.m_account.vaccount(), info.m_index.get_latest_unit_height(), info.m_index.get_latest_unit_hash());
+            auto const syncer = weak_syncer.lock();
+            if (syncer == nullptr) {
+                return;
+            }
             syncer->AddUnitEntry(hash, hexpath, value, {state_key.begin(), state_key.end()}, parent);
             xinfo("state_mpt::new_state_sync table: %s, root: %s, value: %s, hash: %s, state_key: %s, index_dump: %s",
                   table.c_str(),
