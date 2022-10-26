@@ -75,6 +75,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     dataobject_xacctmeta_t,
     dataobject_account_address,
     dataobject_mpt_state_object,
+    dataobject_mpt_trie_node_cnt,
     // db bock key, see xvdbkey for specific info
     // 't/', 'i/', 'b/'
     // 'b/.../h', 'b/.../i', 'b/.../ir', 'b/.../o', 'b/.../or', 'b/.../s', 'b/.../d'
