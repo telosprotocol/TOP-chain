@@ -56,7 +56,11 @@ void xtop_state_downloader::sync_state(const common::xaccount_address_t & table,
     auto finish = [this](sync_result const & result) { process_trie_finish(result); };
     auto syncer = xstate_sync_t::new_state_sync(table, height, block_hash, state_hash, root_hash, std::move(peers_func), std::move(track_func), m_db, sync_unit);
 
-    auto f = [executer, syncer = std::move(syncer), finish = std::move(finish)](base::xcall_t &, const int32_t, const uint64_t) -> bool {
+    auto f = [weak_executer = std::weak_ptr<xdownload_executer_t>(executer), syncer = std::move(syncer), finish = std::move(finish)](base::xcall_t &, const int32_t, const uint64_t) -> bool {
+        auto const executer = weak_executer.lock();
+        if (executer == nullptr) {
+            return false;
+        }
         executer->run_state_sync(syncer, finish);
         return true;
     };
