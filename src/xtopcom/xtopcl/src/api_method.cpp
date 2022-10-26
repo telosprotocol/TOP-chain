@@ -771,7 +771,7 @@ int ApiMethod::set_default_miner(const std::string & pub_key, const std::string 
 
     if (set_prikey_to_daemon(pub_key, kdf_key, out_str, 0) != 0) {
         // if set worker key target_node_id, will confilict with topcl(account)
-        out_str << "keep default miner nfo in cache failed" << std::endl;
+        out_str << "keep default miner info in cache failed" << std::endl;
         out_str << "Set miner key failed." << std::endl;
         return -1;
     }
