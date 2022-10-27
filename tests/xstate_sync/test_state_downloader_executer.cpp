@@ -13,6 +13,7 @@
 #include <gtest/gtest.h>
 
 #define private public
+#include "xstate_sync/xstate_downloader.h"
 #include "xstate_sync/xstate_sync.h"
 #include "xstate_sync/xstate_downloader_executer.h"
 
@@ -351,5 +352,16 @@ TEST_F(test_state_downloader_executer_fixture, test_run_state_sync_no_response) 
     }
     EXPECT_EQ(m_syncer->m_req_sequence_id, test_peer_cnt);
 }
+
+// TEST_F(test_state_downloader_executer_fixture, test_downloader) {
+//     xobject_ptr_t<base::xiothread_t> executor_thread = make_object_ptr<base::xiothread_t>();
+//     xobject_ptr_t<base::xiothread_t> syncer_thread = make_object_ptr<base::xiothread_t>();
+//     auto downloader = std::make_shared<state_sync::xstate_downloader_t>(
+//         m_db, nullptr, nullptr, executor_thread, syncer_thread);
+//     std::error_code ec;
+//     downloader->sync_state(table_account_address, table_height, block_hash, state_hash, root_hash, true, ec);
+
+//     std::this_thread::sleep_for(std::chrono::seconds(5));
+// }
 
 }

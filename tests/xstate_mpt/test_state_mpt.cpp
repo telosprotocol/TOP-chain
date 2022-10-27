@@ -42,6 +42,7 @@ public:
         m_db = base::xvchain_t::instance().get_xdbstore();
     }
     void TearDown() override {
+        base::xvchain_t::instance().clean_all(true);
     }
 
     xobject_ptr_t<store::xstore_face_t> m_store{nullptr};
@@ -56,14 +57,17 @@ public:
         int dst_db_kind = top::db::xdb_kind_kvdb;
         std::vector<db::xdb_path_t> db_data_paths {};
         std::shared_ptr<db::xdb_face_t> db = top::db::xdb_factory_t::create_kvdb("/tmp/mpt_db_test");
+        raw_db = db;
         m_store = top::store::xstore_factory::create_store_with_static_kvdb(db);
         base::xvchain_t::instance().set_xdbstore(m_store.get());
         m_db = base::xvchain_t::instance().get_xdbstore();
     }
     void TearDown() override {
+        base::xvchain_t::instance().clean_all(true);
     }
 
     xobject_ptr_t<store::xstore_face_t> m_store{nullptr};
+    std::shared_ptr<db::xdb_face_t> raw_db{nullptr};
     base::xvdbstore_t * m_db{nullptr};
 };
 
@@ -699,6 +703,39 @@ TEST_F(test_state_mpt_bench_fixture, test_state_mpt_BENCH) {
     auto t3 = base::xtime_utl::time_now_ms();
     EXPECT_FALSE(ec);
     std::cout << "total num: " << data.size() << ", update time: " << t2 - t1 << " ms" << ", commit time: " << t3 - t2 << std::endl;
+}
+
+TEST_F(test_state_mpt_bench_fixture, test_state_mpt_not_commit_memory_leak_BENCH) {
+    {
+        auto data = create_mpt_data(1000000);
+        std::error_code ec;
+        auto s = state_mpt::xstate_mpt_t::create(TABLE_ADDRESS, {}, m_db, ec);
+        EXPECT_FALSE(ec);
+
+        for (auto const & d : data) {
+            s->set_account_index_with_unit(d.first, d.second.first, to_bytes(d.second.second), ec);
+        }
+    }
+    m_db->close();
+}
+
+TEST_F(test_state_mpt_bench_fixture, test_state_mpt_commit_memory_leak_BENCH) {
+    {
+        auto data = create_mpt_data(1000000);
+        std::error_code ec;
+        auto s = state_mpt::xstate_mpt_t::create(TABLE_ADDRESS, {}, m_db, ec);
+        EXPECT_FALSE(ec);
+
+        for (auto const & d : data) {
+            s->set_account_index_with_unit(d.first, d.second.first, to_bytes(d.second.second), ec);
+        }
+        s->commit(ec);
+        EXPECT_FALSE(ec);
+    }
+
+    m_db->close();
+    while (!m_db->is_close());
+    raw_db->close();
 }
 
 }  // namespace top

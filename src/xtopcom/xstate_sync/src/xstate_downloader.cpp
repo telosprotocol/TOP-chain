@@ -50,24 +50,32 @@ void xtop_state_downloader::sync_state(const common::xaccount_address_t & table,
         return;
     }
     auto executer = std::make_shared<xtop_download_executer>(make_observer(m_syncer_thread), execution_overtime);
+    m_running_tables.emplace(table, executer);
 
     auto peers_func = [this](common::xtable_id_t const & table) { return latest_peers(table); };
-    auto track_func = [executer](state_req const & sr) { executer->push_track_req(sr); };
+    auto track_func = [weak_executer = std::weak_ptr<xdownload_executer_t>(executer)](state_req const & sr) {
+        auto const executer = weak_executer.lock();
+        if (executer == nullptr) {
+            return;
+        }
+        executer->push_track_req(sr);
+    };
     auto finish = [this](sync_result const & result) { process_trie_finish(result); };
     auto syncer = xstate_sync_t::new_state_sync(table, height, block_hash, state_hash, root_hash, std::move(peers_func), std::move(track_func), m_db, sync_unit);
 
-    auto f = [weak_executer = std::weak_ptr<xdownload_executer_t>(executer), syncer = std::move(syncer), finish = std::move(finish)](base::xcall_t &, const int32_t, const uint64_t) -> bool {
-        auto const executer = weak_executer.lock();
-        if (executer == nullptr) {
-            return false;
+    auto f = [weak_executer = std::weak_ptr<xdownload_executer_t>(executer), syn = std::move(syncer), fin = std::move(finish)](
+                 base::xcall_t &, const int32_t, const uint64_t) mutable -> bool {
+        {
+            auto const executer = weak_executer.lock();
+            if (executer == nullptr) {
+                return false;
+            }
+            executer->run_state_sync(std::move(syn), std::move(fin));
         }
-        executer->run_state_sync(syncer, finish);
         return true;
     };
-
-    base::xcall_t call(f);
+    base::xcall_t call(std::move(f));
     m_executor_thread->send_call(call);
-    m_running_tables.emplace(table, executer);
 
     int64_t total_in{0};
     int64_t total_out{0};

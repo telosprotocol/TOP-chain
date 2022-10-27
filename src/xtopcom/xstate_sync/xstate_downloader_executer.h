@@ -21,7 +21,7 @@ class xtop_download_executer {
 
 public:
     explicit xtop_download_executer(observer_ptr<base::xiothread_t> thread, uint32_t overtime);
-    ~xtop_download_executer() = default;
+    ~xtop_download_executer();
 
     void run_state_sync(std::shared_ptr<xstate_sync_face_t> syncer, std::function<void(sync_result)> callback);
     void loop(std::shared_ptr<xstate_sync_face_t> syncer, std::error_code & ec);
