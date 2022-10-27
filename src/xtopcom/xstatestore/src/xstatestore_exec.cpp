@@ -13,6 +13,10 @@
 
 NS_BEG2(top, statestore)
 
+
+// #define  TEST_1_WITHOUT_MPT_PROCESS
+#define  TEST_FORCE_WRITE
+
 xstatestore_executor_t::xstatestore_executor_t(common::xaccount_address_t const& table_addr, xexecute_listener_face_t * execute_listener)
 : m_table_addr{table_addr},m_state_accessor{table_addr},m_execute_listener(execute_listener) {
 
@@ -372,12 +376,14 @@ xtablestate_ext_ptr_t xstatestore_executor_t::write_table_all_states(base::xvblo
 #endif
 
     std::lock_guard<std::mutex> l(m_table_state_write_lock);
+    #ifndef TEST_FORCE_WRITE
     xtablestate_ext_ptr_t cache_tablestate = m_state_accessor.read_table_bstate(m_table_addr, current_block);
     if (nullptr != cache_tablestate) {
         update_latest_executed_info(current_block);  // XTODO should update execute height
         xinfo("xstatestore_executor_t::write_table_all_states succ-already writed.block=%s",current_block->dump().c_str());
         return cache_tablestate;
     }
+    #endif
     
     // write all table "state" to db
     for (auto & v : tablestate_store->get_unitstates()) {
@@ -397,6 +403,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::write_table_all_states(base::xvblo
     }
     xdbg("xstatestore_executor_t::write_table_all_states tablestate=%s.block=%s", tablestate_store->get_table_state()->get_bstate()->dump().c_str(), current_block->dump().c_str());
     
+    #ifndef TEST_1_WITHOUT_MPT_PROCESS
     if (current_block->get_block_class() != base::enum_xvblock_class_nil) {
         if (tablestate_store->get_state_root() != xhash256_t()) {
             tablestate_store->get_state_mpt()->commit(ec);
@@ -407,6 +414,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::write_table_all_states(base::xvblo
             xdbg("xstatestore_executor_t::write_table_all_states mpt_root=%s.block=%s", tablestate_store->get_state_root().as_hex_str().c_str(), current_block->dump().c_str());
         }
     }
+    #endif
     
     std::shared_ptr<state_mpt::xstate_mpt_t> cur_mpt = state_mpt::xstate_mpt_t::create(common::xaccount_address_t{current_block->get_account()}, tablestate_store->get_state_root(), m_statestore_base.get_dbstore(), ec);
     if (ec) {
@@ -474,11 +482,13 @@ xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_tab
             for (auto & v : indexes) {
                 common::xaccount_address_t account{v.first};
                 auto & account_index_str = v.second;              
+                #ifndef TEST_1_WITHOUT_MPT_PROCESS
                 current_prev_mpt->set_account_index(account, account_index_str, ec);
                 if (ec) {
                     xerror("xstatestore_executor_t::make_state_from_prev_state_and_table fail-set mpt accountindex for block(%s)",current_block->dump().c_str());
                     return nullptr;
                 }
+                #endif
 
                 base::xaccount_index_t accountindex;
                 accountindex.serialize_from(account_index_str);
@@ -503,6 +513,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_tab
         }
 
         // set changed accountindexs
+        #ifndef TEST_1_WITHOUT_MPT_PROCESS
         auto account_indexs_str = current_block->get_account_indexs();
         if (!account_indexs_str.empty()) {            
             account_indexs.serialize_from_string(account_indexs_str);
@@ -525,6 +536,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_tab
                 return nullptr;
             }
         }
+        #endif
     }
 
     std::vector<std::pair<data::xunitstate_ptr_t, std::string>> unitstate_units;
