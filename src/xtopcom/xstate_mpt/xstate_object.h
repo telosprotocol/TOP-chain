@@ -7,7 +7,6 @@
 #include "xbasic/xbyte_buffer.h"
 #include "xcommon/xaccount_address.h"
 #include "xevm_common/trie/xtrie_kv_db_face.h"
-#include "xstate_mpt/xstate_mpt_journal.h"
 #include "xvledger/xaccountindex.h"
 
 namespace top {
@@ -26,8 +25,8 @@ public:
 
     base::xaccount_index_t get_account_index();
     xbytes_t get_unit(evm_common::trie::xkv_db_face_ptr_t db);
-    xstate_index_change_t set_account_index(const base::xaccount_index_t & new_index);
-    xstate_index_change_t set_account_index_with_unit(const base::xaccount_index_t & new_index, const xbytes_t & unit);
+    void set_account_index(const base::xaccount_index_t & new_index);
+    void set_account_index_with_unit(const base::xaccount_index_t & new_index, const xbytes_t & unit);
 
     common::xaccount_address_t account;
     base::xaccount_index_t index;

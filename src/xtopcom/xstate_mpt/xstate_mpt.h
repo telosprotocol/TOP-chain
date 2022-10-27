@@ -7,7 +7,6 @@
 #include "xbasic/xmemory.hpp"
 #include "xcommon/xnode_id.h"
 #include "xevm_common/trie/xsecure_trie.h"
-#include "xstate_mpt/xstate_mpt_journal.h"
 #include "xstate_mpt/xstate_mpt_store_fwd.h"
 #include "xstate_mpt/xstate_object.h"
 #include "xvledger/xvdbstore.h"
@@ -162,7 +161,7 @@ private:
     std::set<common::xaccount_address_t> m_state_objects_pending;
     std::set<common::xaccount_address_t> m_state_objects_dirty;
 
-    xstate_journal_t m_journal;
+    std::set<common::xaccount_address_t> m_journal;
 };
 using xstate_mpt_t = xtop_state_mpt;
 

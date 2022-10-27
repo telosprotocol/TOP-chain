@@ -37,18 +37,14 @@ xbytes_t xtop_state_object::get_unit(evm_common::trie::xkv_db_face_ptr_t db) {
     return unit_bytes;
 }
 
-xstate_index_change_t xtop_state_object::set_account_index(const base::xaccount_index_t & new_index) {
-    xstate_index_change_t j{account, index};
+void xtop_state_object::set_account_index(const base::xaccount_index_t & new_index) {
     index = new_index;
-    return j;
 }
 
-xstate_index_change_t xtop_state_object::set_account_index_with_unit(const base::xaccount_index_t & new_index, const xbytes_t & unit) {
-    xstate_index_change_t j{account, index};
+void xtop_state_object::set_account_index_with_unit(const base::xaccount_index_t & new_index, const xbytes_t & unit) {
     index = new_index;
     unit_bytes = unit;
     dirty_unit = true;
-    return j;
 }
 
 }
