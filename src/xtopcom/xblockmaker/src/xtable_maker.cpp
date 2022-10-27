@@ -24,6 +24,7 @@
 #include "xstatectx/xstatectx.h"
 #include "xverifier/xtx_verifier.h"
 #include "xstatestore/xstatestore_face.h"
+#include "xstate_reset/xstate_reset.h"
 
 NS_BEG2(top, blockmaker)
 
@@ -315,7 +316,13 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
     if (input_txs.empty()) {
         return nullptr;
     }
- 
+
+    {
+        state_reset::xstate_reseter reseter{
+            statectx_ptr, std::make_shared<std::vector<xcons_transaction_ptr_t>>(input_txs), cs_para.get_clock()};
+        reseter.exec_reset();
+    }
+
     execute_txs(is_leader, cs_para, statectx_ptr, input_txs, execute_output, ec);
     for (auto & txout : execute_output.drop_outputs) {  // drop tx from txpool
         xtxpool_v2::tx_info_t txinfo(txout.m_tx->get_source_addr(), txout.m_tx->get_tx_hash_256(), txout.m_tx->get_tx_subtype());
