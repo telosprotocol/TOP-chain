@@ -5,6 +5,7 @@
 #include "xstate_sync/xstate_downloader_executer.h"
 
 #include "xmbus/xevent_state_sync.h"
+#include "xmetrics/xmetrics.h"
 #include "xstate_sync/xerror.h"
 #include "xstate_sync/xstate_sync.h"
 #include "xstate_sync/xunit_state_sync.h"
@@ -15,6 +16,11 @@ namespace state_sync {
 #define TIMEOUT_MSEC 5000U
 
 xtop_download_executer::xtop_download_executer(observer_ptr<base::xiothread_t> thread, uint32_t overtime) : m_syncer_thread{thread}, m_overtime(overtime) {
+    XMETRICS_COUNTER_INCREMENT("statesync_downloader_executers", 1);
+}
+
+xtop_download_executer::~xtop_download_executer() {
+    XMETRICS_COUNTER_DECREMENT("statesync_downloader_executers", 1);
 }
 
 void xtop_download_executer::run_state_sync(std::shared_ptr<xstate_sync_face_t> syncer, std::function<void(sync_result)> callback) {
@@ -35,7 +41,7 @@ void xtop_download_executer::run_state_sync(std::shared_ptr<xstate_sync_face_t> 
         syncer->run();
         return true;
     };
-    base::xcall_t call(f);
+    base::xcall_t call(std::move(f));
     m_syncer_thread->send_call(call);
 
     std::error_code loop_ec;

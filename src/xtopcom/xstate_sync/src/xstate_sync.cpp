@@ -21,6 +21,14 @@ namespace state_sync {
 constexpr uint32_t ideal_batch_size = 100 * 1024;
 constexpr uint32_t fetch_num = 64;
 
+xtop_state_sync::xtop_state_sync() {
+    XMETRICS_COUNTER_INCREMENT("statesync_syncers", 1);
+}
+
+xtop_state_sync::~xtop_state_sync() {
+    XMETRICS_COUNTER_DECREMENT("statesync_syncers", 1);
+}
+
 std::shared_ptr<xtop_state_sync> xtop_state_sync::new_state_sync(const common::xaccount_address_t & table,
                                                                  const uint64_t height,
                                                                  const xhash256_t & block_hash,
