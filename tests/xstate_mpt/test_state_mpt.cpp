@@ -148,11 +148,11 @@ TEST_F(test_state_mpt_fixture, test_example) {
     common::xaccount_address_t k3("T00000LVgLn3yVd11d2izvJg6znmxddxg8JEShoL");
     common::xaccount_address_t k4("T00000LVgLn3yVd11d2izvJg6znmxddxg8JEShoM");
     common::xaccount_address_t k5("T00000LVgLn3yVd11d2izvJg6znmxddxg8JEShoN");
-    base::xaccount_index_t index1{1, std::to_string(1), std::to_string(1), 1, base::enum_xvblock_class_light, base::enum_xvblock_type_general};
-    base::xaccount_index_t index2{2, std::to_string(2), std::to_string(2), 2, base::enum_xvblock_class_light, base::enum_xvblock_type_general};
-    base::xaccount_index_t index3{3, std::to_string(3), std::to_string(3), 3, base::enum_xvblock_class_light, base::enum_xvblock_type_general};
-    base::xaccount_index_t index4{4, std::to_string(4), std::to_string(4), 4, base::enum_xvblock_class_light, base::enum_xvblock_type_general};
-    base::xaccount_index_t index5{5, std::to_string(5), std::to_string(5), 5, base::enum_xvblock_class_light, base::enum_xvblock_type_general};
+    base::xaccount_index_t index1{1, std::to_string(1), std::to_string(1), 1};
+    base::xaccount_index_t index2{2, std::to_string(2), std::to_string(2), 2};
+    base::xaccount_index_t index3{3, std::to_string(3), std::to_string(3), 3};
+    base::xaccount_index_t index4{4, std::to_string(4), std::to_string(4), 4};
+    base::xaccount_index_t index5{5, std::to_string(5), std::to_string(5), 5};
 
     s->set_account_index(k1, index1, ec);
     EXPECT_FALSE(ec);
@@ -197,7 +197,7 @@ TEST_F(test_state_mpt_fixture, test_basic) {
             auto acc = common::xaccount_address_t{top::utl::xcrypto_util::make_address_by_random_key(base::enum_vaccount_addr_type_secp256k1_eth_user_account, 0)};
             std::string state_str{"state_str" + std::to_string(i)};
             auto hash = base::xcontext_t::instance().hash(state_str, enum_xhash_type_sha2_256);
-            base::xaccount_index_t index{rand(), hash, hash, rand(), base::enum_xvblock_class_light, base::enum_xvblock_type_general};
+            base::xaccount_index_t index{rand(), hash, hash, rand()};
             data.emplace_back(std::make_pair(acc, index));
             acc_set.insert(acc);
         }
@@ -499,7 +499,7 @@ TEST_F(test_state_mpt_fixture, test_trie_callback) {
         auto unit_state_hash_str = base::xcontext_t::instance().hash(snapshot, enum_xhash_type_sha2_256);
         auto unit_block_hash = utl::xkeccak256_t::digest(std::to_string(i));
         std::string unit_block_hash_str((char *)unit_block_hash.data(), unit_block_hash.size());
-        base::xaccount_index_t index{i + 1, unit_block_hash_str, unit_state_hash_str, i + 1, base::enum_xvblock_class_light, base::enum_xvblock_type_general};
+        base::xaccount_index_t index{i + 1, unit_block_hash_str, unit_state_hash_str, i + 1};
         state_mpt::xaccount_info_t info;
         info.m_account = common::xaccount_address_t(accounts[i]);
         info.m_index = index;
@@ -561,7 +561,7 @@ std::map<xhash256_t, xbytes_t> create_node_hash_data(size_t count) {
         info.m_account = common::xaccount_address_t{account_address};
         std::string state_str{"state_str" + std::to_string(i)};
         auto hash = base::xcontext_t::instance().hash(state_str, enum_xhash_type_sha2_256);
-        base::xaccount_index_t index{rand(), hash, hash, rand(), base::enum_xvblock_class_light, base::enum_xvblock_type_general};
+        base::xaccount_index_t index{rand(), hash, hash, rand()};
         info.m_index = index;
         auto str = info.encode();
         auto hashvalue = utl::xkeccak256_t::digest(std::to_string(i));
@@ -586,7 +586,7 @@ std::map<xbytes_t, xbytes_t> create_node_bytes_data(size_t count) {
         info.m_account = common::xaccount_address_t{account_address};
         std::string state_str{"state_str" + std::to_string(i)};
         auto hash = base::xcontext_t::instance().hash(state_str, enum_xhash_type_sha2_256);
-        base::xaccount_index_t index{rand(), hash, hash, rand(), base::enum_xvblock_class_light, base::enum_xvblock_type_general};
+        base::xaccount_index_t index{rand(), hash, hash, rand()};
         info.m_index = index;
         auto str = info.encode();
         auto hashvalue = utl::xkeccak256_t::digest(std::to_string(i));
@@ -609,7 +609,7 @@ std::map<common::xaccount_address_t, std::pair<base::xaccount_index_t, std::stri
         std::string account_address = private_key.to_account_address(account_address_type, ledger_id);
         std::string state_str{"state_str" + std::to_string(i)};
         auto hash = base::xcontext_t::instance().hash(state_str, enum_xhash_type_sha2_256);
-        base::xaccount_index_t index{rand(), hash, hash, rand(), base::enum_xvblock_class_light, base::enum_xvblock_type_general};
+        base::xaccount_index_t index{rand(), hash, hash, rand()};
         auto bstate = make_object_ptr<base::xvbstate_t>(account_address, i + 1, i + 1, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
         auto canvas = make_object_ptr<base::xvcanvas_t>();
         bstate->new_string_var(to_string(i), canvas.get());

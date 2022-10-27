@@ -32,18 +32,24 @@ enum enum_xblock_consensus_type {
 class xaccount_index_t {
  public:
     xaccount_index_t();
-    xaccount_index_t(base::xvblock_t* unit,
-                     bool has_unconfirm_tx,
+    xaccount_index_t(uint64_t height,
+                     uint64_t viewid,
+                     uint64_t nonce,
                      enum_xblock_consensus_type _cs_type,
-                     bool is_account_destroy,
-                     uint64_t latest_tx_nonce);
-    xaccount_index_t(uint64_t height, std::string const& unithash, std::string const& statehash, uint64_t nonce,
-                    base::enum_xvblock_class _unitclass, base::enum_xvblock_type _unittype); // new construct function
+                     base::enum_xvblock_class _unitclass,
+                     base::enum_xvblock_type _unittype,
+                     bool has_unconfirm_tx,
+                     bool is_account_destroy);
+    xaccount_index_t(uint64_t height, std::string const& unithash, std::string const& statehash, uint64_t nonce); // new construct function
 
     ~xaccount_index_t();
     xaccount_index_t(const xaccount_index_t& left);
     bool operator == (const xaccount_index_t &other) const;
 
+    int32_t         old_serialize_to(std::string & bin_data) const;
+    int32_t         old_serialize_from(const std::string & bin_data);
+    int32_t         old_do_write(base::xstream_t & stream) const;
+    int32_t         old_do_read(base::xstream_t & stream);
     int32_t         serialize_to(std::string & bin_data) const;
     int32_t         serialize_from(const std::string & bin_data);
     int32_t         do_write(base::xstream_t & stream) const;
@@ -75,6 +81,7 @@ class xaccount_index_t {
     void                    set_latest_unit_consensus_type(enum_xblock_consensus_type _type);
 
  private:
+    uint8_t         m_version{0};
     uint64_t        m_latest_unit_height{0};
     uint64_t        m_latest_unit_viewid{0};
     uint64_t        m_latest_tx_nonce{0};

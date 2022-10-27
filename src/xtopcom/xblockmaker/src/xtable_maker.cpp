@@ -204,9 +204,7 @@ std::vector<std::pair<xblock_ptr_t, base::xaccount_index_t>> xtable_maker_t::mak
         data::xaccount_index_t aindex = data::xaccount_index_t(unitblock->get_height(),
                                                                unitblock->get_block_hash(),
                                                                unitblock->get_fullstate_hash(),
-                                                               unitctx->get_unitstate()->account_send_trans_number(),
-                                                               unitblock->get_block_class(),
-                                                               unitblock->get_block_type());
+                                                               unitctx->get_unitstate()->account_send_trans_number());
         batch_unit_and_index.push_back(std::make_pair(unitblock, aindex));
         xinfo("xtable_maker_t::make_units_v2 succ-make unit.is_leader=%d,%s,unit=%s,size=%zu,%zu",
             is_leader, cs_para.dump().c_str(), unitblock->dump().c_str(),unitblock->get_input()->get_resources_data().size(),unitblock->get_output()->get_resources_data().size());
@@ -756,7 +754,7 @@ bool xtable_maker_t::account_index_upgrade() {
         xinfo("[account_index_upgrade] begin.commit=%s,height=%ld,count=%zu", latest_committed_block->dump().c_str(), commit_table_state->height(),indexes.size());       
         for (auto & index : indexes) {
             base::xaccount_index_t _account_index;
-            _account_index.serialize_from(index.second);
+            _account_index.old_serialize_from(index.second);
             m_account_index_upgrade.add_old_index(index.first, _account_index);
         }
     }
@@ -1029,7 +1027,7 @@ bool xaccount_index_upgrade_tool_t::convert_to_new_account_index(const base::xva
     std::string unitstate_bin;
     unitstate->get_bstate()->take_snapshot(unitstate_bin);
     std::string statehash = unit->get_cert()->hash(unitstate_bin);
-    new_account_index = base::xaccount_index_t(unit->get_height(), unit->get_block_hash(), statehash, nonce, unit->get_block_class(), unit->get_block_type());
+    new_account_index = base::xaccount_index_t(unit->get_height(), unit->get_block_hash(), statehash, nonce);
     xinfo("xtable_maker_t::convert_to_new_account_index succ.account:%s,old:%s,new:%s", account.get_account().c_str(), old_account_index.dump().c_str(), new_account_index.dump().c_str());
     return true;
 }
@@ -1075,7 +1073,7 @@ bool xaccount_index_upgrade_tool_t::update_new_indexes_by_block(std::map<std::st
             statehash = iter->second.get_latest_state_hash();
         }
 
-        base::xaccount_index_t _new_account_index(unit->get_height(), unithash, statehash, nonce, unit->get_block_class(), unit->get_block_type());
+        base::xaccount_index_t _new_account_index(unit->get_height(), unithash, statehash, nonce);
         // should write unitstate with new db key
         if (false == write_unitstate_with_new_dbkey(unitstate->account_address().vaccount(), unitstate, unit->get_block_hash())) {
             xerror("xtable_maker_t::update_new_indexes_by_block fail-upgrade for write db unitstate account=%s,index=%s", unitstate->account_address().value().c_str(), _new_account_index.dump().c_str());
