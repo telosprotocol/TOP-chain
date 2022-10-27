@@ -317,6 +317,11 @@ void xtop_contract_manager::do_new_vnode(const xevent_vnode_ptr_t & e) {
         xdbg("[xtop_contract_manager::do_new_vnode] add all sharding contracts' rcs");
         add_role_contexts_by_type(e, common::xnode_type_t::consensus_validator, true);  // add sharding rcs, but disable broadcasts
     }
+
+    if (common::has<common::xnode_type_t::evm_auditor>(type)) {
+        xdbg("[xtop_contract_manager::do_new_vnode] add all evm contracts' rcs");
+        add_role_contexts_by_type(e, common::xnode_type_t::evm_validator, true);  // add sharding rcs, but disable broadcasts
+    }
 }
 
 void xtop_contract_manager::add_role_contexts_by_type(const xevent_vnode_ptr_t & e, common::xnode_type_t type, bool disable_broadcasts) {

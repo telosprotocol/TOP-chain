@@ -244,17 +244,28 @@ data::xunitstate_ptr_t xstatestore_impl_t::get_unit_latest_connectted_change_sta
 }
 
 data::xunitstate_ptr_t xstatestore_impl_t::get_unit_latest_connectted_state(common::xaccount_address_t const & account_address) const {
-    auto _block = get_blockstore()->get_latest_connected_block(account_address.vaccount());
-    if (_block == nullptr) {
-        xerror("xstatestore_impl_t::get_unit_latest_connectted_state fail-load latest connectted block. account=%s", account_address.value().c_str());
+    // auto _block = get_blockstore()->get_latest_connected_block(account_address.vaccount());
+    // if (_block == nullptr) {
+    //     xerror("xstatestore_impl_t::get_unit_latest_connectted_state fail-load latest connectted block. account=%s", account_address.value().c_str());
+    //     return nullptr;
+    // }
+
+    // if (_block->is_genesis_block() && _block->get_block_class() == base::enum_xvblock_class_nil) {
+    //     xwarn("xstatestore_impl_t::get_unit_latest_connectted_state fail-invalid state for empty genesis block. account=%s", account_address.value().c_str());
+    //     return nullptr;
+    // }
+    // return get_unit_state_from_block(account_address, _block.get());
+
+    std::string table_address = base::xvaccount_t::make_table_account_address(account_address.vaccount());
+    common::xaccount_address_t _table_addr(table_address);
+
+    base::xaccount_index_t account_index;
+    auto ret = get_accountindex_from_latest_connected_table(_table_addr, account_address, account_index);
+    if (!ret) {
         return nullptr;
     }
 
-    if (_block->is_genesis_block() && _block->get_block_class() == base::enum_xvblock_class_nil) {
-        xwarn("xstatestore_impl_t::get_unit_latest_connectted_state fail-invalid state for empty genesis block. account=%s", account_address.value().c_str());
-        return nullptr;
-    }
-    return get_unit_state_from_block(account_address, _block.get());
+    return get_unit_state_by_accountindex(account_address, account_index);
 }
 
 data::xunitstate_ptr_t  xstatestore_impl_t::get_unit_committed_changed_state(common::xaccount_address_t const & account_address, uint64_t max_height) const {
