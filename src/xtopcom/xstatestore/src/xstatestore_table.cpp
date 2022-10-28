@@ -46,13 +46,12 @@ void xstatestore_table_t::on_table_block_committed(base::xvblock_t* block) const
 }
 
 xtablestate_ext_ptr_t xstatestore_table_t::do_commit_table_all_states(base::xvblock_t* current_block, xtablestate_store_ptr_t const& tablestate_store, std::error_code & ec) const {
-    return m_table_executor.write_table_all_states(current_block, tablestate_store, ec);
+    return m_table_executor.do_commit_table_all_states(current_block, tablestate_store, ec);
 }
 
 xtablestate_ext_ptr_t xstatestore_table_t::get_tablestate_ext_from_block(base::xvblock_t* target_block) const {
     std::error_code ec;
-    xtablestate_ext_ptr_t tablestate = nullptr;
-    m_table_executor.execute_and_get_tablestate_ext(target_block, tablestate, ec);
+    xtablestate_ext_ptr_t tablestate = m_table_executor.execute_and_get_tablestate_ext(target_block, ec);
     return tablestate;
 }
 
