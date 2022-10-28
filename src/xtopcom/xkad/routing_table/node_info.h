@@ -42,7 +42,6 @@ public:
     base::ServiceType service_type{ 0 };
     std::string xid;
     uint64_t hash64{ 0 };
-	transport::UdpPropertyPtr udp_property;
 };
 
 typedef std::shared_ptr<NodeInfo> NodeInfoPtr;

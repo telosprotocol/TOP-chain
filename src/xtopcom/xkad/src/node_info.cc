@@ -29,15 +29,13 @@ NodeInfo::NodeInfo(const NodeInfo& other)
             xid(other.xid)
             {
     hash64 = base::xhash64_t::digest(node_id);
-	udp_property.reset(new top::transport::UdpProperty());	
 }
 
 NodeInfo::NodeInfo(const std::string& id) : node_id(id) {
-	udp_property.reset(new top::transport::UdpProperty());	
 }
 
 NodeInfo::~NodeInfo() {
-	udp_property = nullptr;
+
 }
 
 NodeInfo& NodeInfo::operator=(const NodeInfo& other) {

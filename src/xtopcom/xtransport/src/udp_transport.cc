@@ -117,7 +117,7 @@ void UdpTransport::Stop() {
     socket_connected_ = false;
 }
 
-int UdpTransport::SendDataWithProp(std::string const & data, const std::string & peer_ip, uint16_t peer_port, UdpPropertyPtr & udp_property, uint16_t priority_flag) {
+int UdpTransport::SendDataWithProp(std::string const & data, const std::string & peer_ip, uint16_t peer_port, uint16_t priority_flag) {
     if (!socket_connected_) {
         TOP_ERROR("udp socket not alive, SendData failed");
         return kTransportFailed;
@@ -127,7 +127,7 @@ int UdpTransport::SendDataWithProp(std::string const & data, const std::string &
         return kTransportFailed;
     }
 
-    return udp_socket_->SendDataWithProp(data, peer_ip, peer_port, udp_property, priority_flag);
+    return udp_socket_->SendDataWithProp(data, peer_ip, peer_port, priority_flag);
 }
 
 int UdpTransport::get_socket_status() {

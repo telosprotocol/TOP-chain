@@ -56,20 +56,6 @@ enum class enum_xudp_status {
 class xp2pudp_t;
 class XudpSocket;
 
-class UdpProperty {
-public:
-    ~UdpProperty();
-
-public:
-    xp2pudp_t * GetXudp() {
-        return m_xudp_;
-    }
-    void SetXudp(xp2pudp_t * xudp_in);
-
-private:
-    xp2pudp_t * m_xudp_{nullptr};
-};
-
 class xp2pudp_t : public base::xudp_t {
 public:
     xp2pudp_t(xcontext_t & _context, xendpoint_t * parent, const int32_t target_thread_id, int64_t virtual_handle, xsocket_property & property, XudpSocket * listen_server);
@@ -134,8 +120,8 @@ public:
     virtual ~XudpSocket() override;
     void Stop() override;
     int SendData(base::xpacket_t & packet) override;
-    int SendDataWithProp(std::string const & data, const std::string & peer_ip, uint16_t peer_port, UdpPropertyPtr & udp_property, uint16_t priority_flag = 0);
-    int SendDataWithProp(base::xpacket_t & packet, UdpPropertyPtr & udp_property);
+    int SendDataWithProp(std::string const & data, const std::string & peer_ip, uint16_t peer_port, uint16_t priority_flag = 0);
+    int SendDataWithProp(base::xpacket_t & packet);
     int SendToLocal(base::xpacket_t & packet) override;
     void AddXip2Header(base::xpacket_t & packet, uint16_t priority_flag = 0) override;
     bool GetSocketStatus() override;

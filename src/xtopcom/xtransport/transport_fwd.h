@@ -21,9 +21,6 @@ namespace top {
         }
 
         using on_receive_callback_t = std::function<void(transport::protobuf::RoutingMessage & message, base::xpacket_t &)>;
-
-        class UdpProperty;
-        using UdpPropertyPtr = std::shared_ptr<UdpProperty>;
     }
 
 }

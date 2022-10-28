@@ -44,34 +44,6 @@ const static std::string XUDP_VERSION = "{\"msg_encode_type\": 1}";
 const static std::string SUB_NETWORK_MASK = "255.255.255.0";
 const static uint32_t IP_SEG_MAX_ADDR = 5;  // same ip_seg max addr number
 
-/*
-add_ref,release_ref: use xp2pudp_t, including UdpProperty and xudp_client_map
-add_linkrefcount, release_linkrefcount: relationship with routing_table, including UdpProperty
-*/
-UdpProperty::~UdpProperty() {
-    if (m_xudp_ != nullptr) {
-        TOP_DBG_INFO("~UdpProperty:%p, xudp:%p, get_refcount:%d.call release_ref", this, m_xudp_, m_xudp_->get_refcount());
-        m_xudp_->release_linkrefcount();
-        m_xudp_->release_ref();
-    }
-}
-
-void UdpProperty::SetXudp(xp2pudp_t * xudp_in) {
-    xp2pudp_t * old = base::xatomic_t::xexchange(m_xudp_, xudp_in);
-    if (xudp_in != nullptr) {
-        TOP_DBG_INFO("set xudp:%p, get_refcount:%d.this:%p. call add_ref", xudp_in, xudp_in->get_refcount(), this);
-        xudp_in->add_ref();
-        xudp_in->add_linkrefcount();
-    }
-
-    if (old != nullptr) {
-        TOP_DBG_INFO("set xudp:%p, get_refcount:%d.this:%p. call release_ref.", old, old->get_refcount(), this);
-        old->release_linkrefcount();
-        xcontext_t::instance().delay_release_object(old);
-        //        old->release_ref();
-    }
-}
-
 xp2pudp_t::xp2pudp_t(xcontext_t & _context, xendpoint_t * parent, const int32_t target_thread_id, int64_t virtual_handle, xsocket_property & property, XudpSocket * listen_server)
   : xudp_t(_context, parent, target_thread_id, virtual_handle, property) {
     m_link_refcount = 0;
@@ -358,22 +330,21 @@ int XudpSocket::SendToLocal(base::xpacket_t & packet) {
     return kTransportSuccess;
 }
 
-int XudpSocket::SendDataWithProp(std::string const & data, const std::string & peer_ip, uint16_t peer_port, UdpPropertyPtr & udp_property, uint16_t priority_flag) {
+int XudpSocket::SendDataWithProp(std::string const & data, const std::string & peer_ip, uint16_t peer_port, uint16_t priority_flag) {
     uint8_t local_buf[kUdpPacketBufferSize];
     base::xpacket_t packet(base::xcontext_t::instance(), local_buf, sizeof(local_buf), 0, 0, false);
     packet.get_body().push_back((uint8_t *)data.data(), data.size());  // NOLINT
     packet.set_to_ip_addr(peer_ip);
     packet.set_to_ip_port(peer_port);
     AddXip2Header(packet, priority_flag);
-    return SendDataWithProp(packet, udp_property);
+    return SendDataWithProp(packet);
 }
 
 int XudpSocket::SendData(base::xpacket_t & packet) {
-    UdpPropertyPtr udp_property;
-    return SendDataWithProp(packet, udp_property);
+    return SendDataWithProp(packet);
 }
 
-int XudpSocket::SendDataWithProp(base::xpacket_t & packet, UdpPropertyPtr & udp_property) {
+int XudpSocket::SendDataWithProp(base::xpacket_t & packet) {
     // TOP_FATAL("SendData(from(%s:%d), to(%s:%d), size=%d)", packet.get_from_ip_addr().c_str(), packet.get_from_ip_port(),
     //     packet.get_to_ip_addr().c_str(), packet.get_to_ip_port(), (int)packet.get_size());
 
@@ -386,31 +357,6 @@ int XudpSocket::SendDataWithProp(base::xpacket_t & packet, UdpPropertyPtr & udp_
         SendToLocal(packet);
         TOP_DEBUG("sendto local");
         return kTransportFailed;
-    }
-
-    if (udp_property != nullptr) {
-        xp2pudp_t * prop_xudp_ptr = udp_property->GetXudp();
-        if (prop_xudp_ptr != nullptr) {
-            if (prop_xudp_ptr->GetStatus() != top::transport::enum_xudp_status::enum_xudp_closed &&
-                prop_xudp_ptr->GetStatus() != top::transport::enum_xudp_status::enum_xudp_closed_released && (false == prop_xudp_ptr->is_close())) {
-                if (prop_xudp_ptr->send(packet) != enum_xcode_successful) {
-                    TOP_WARN("send xpacket failed!packet size is :%d\n", packet.get_size());
-                    return kTransportFailed;
-                }
-
-                TOP_DEBUG("send packet using node_ptr,to:%s:%d, size:%d, xudp:%p, prop:%p",
-                          packet.get_to_ip_addr().c_str(),
-                          (int)packet.get_to_ip_port(),
-                          packet.get_size(),
-                          prop_xudp_ptr,
-                          udp_property.get());
-
-                return kTransportSuccess;
-            } else {
-                udp_property->SetXudp(nullptr);
-                // need not delete session map here, udp_property's xudp may not equal to map data.
-            }
-        }
     }
 
     if (packet.get_to_ip_port() == 0) {
@@ -486,13 +432,6 @@ int XudpSocket::SendDataWithProp(base::xpacket_t & packet, UdpPropertyPtr & udp_
             AddToRatelimitMap(to_addr);
             TOP_INFO("reconn %s:%p", to_addr.c_str(), peer_xudp_socket);
         }
-    }
-
-    if (udp_property != nullptr) {
-        udp_property->SetXudp(peer_xudp_socket);
-        TOP_DEBUG("setxudp,udp_property:%p,xudp:%p", udp_property.get(), peer_xudp_socket);
-    } else {
-        TOP_DEBUG("udp_property null");
     }
 
     if (peer_xudp_socket->send(packet) != enum_xcode_successful) {
