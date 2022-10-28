@@ -726,6 +726,7 @@ void xstatestore_executor_t::build_unitstate_by_accountindex(common::xaccount_ad
         xwarn("xstatestore_executor_t::build_unitstate_by_accountindex fail-load unit account=%s,accountindex=%s", unit_addr.value().c_str(), account_index.dump().c_str());
         return;
     }
+
     // secondly, try make state from current block
     uint32_t limit = execute_unit_limit_demand;  // XTODO
     unitstate = execute_unit_recursive(unit_addr, _unit.get(), limit, ec);
