@@ -172,7 +172,7 @@ int RootRoutingTable::SendData(transport::protobuf::RoutingMessage & message, co
         xdbg("RoutingMessage SerializeToString failed!");
         return kKadFailed;
     }
-    return transport_ptr_->SendDataWithProp(data, peer_ip, peer_port, message.priority());
+    return transport_ptr_->TransSendData(data, peer_ip, peer_port, message.priority());
 }
 
 int RootRoutingTable::SendPing(transport::protobuf::RoutingMessage & message, const std::string & peer_ip, uint16_t peer_port) {
@@ -191,7 +191,7 @@ int RootRoutingTable::SendData(transport::protobuf::RoutingMessage & message, No
         xdbg("RoutingMessage SerializeToString failed!");
         return kKadFailed;
     }
-    return transport_ptr_->SendDataWithProp(data, node->public_ip, node->public_port, message.priority());
+    return transport_ptr_->TransSendData(data, node->public_ip, node->public_port, message.priority());
 }
 
 int RootRoutingTable::MultiJoin(const std::set<std::pair<std::string, uint16_t>> & boot_endpoints) {

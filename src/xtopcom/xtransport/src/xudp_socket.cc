@@ -292,21 +292,17 @@ int XudpSocket::SendToLocal(base::xpacket_t & packet) {
     return kTransportSuccess;
 }
 
-int XudpSocket::SendDataWithProp(std::string const & data, const std::string & peer_ip, uint16_t peer_port, uint16_t priority_flag) {
+int XudpSocket::XudpSendData(std::string const & data, const std::string & peer_ip, uint16_t peer_port, uint16_t priority_flag) {
     uint8_t local_buf[kUdpPacketBufferSize];
     base::xpacket_t packet(base::xcontext_t::instance(), local_buf, sizeof(local_buf), 0, 0, false);
     packet.get_body().push_back((uint8_t *)data.data(), data.size());  // NOLINT
     packet.set_to_ip_addr(peer_ip);
     packet.set_to_ip_port(peer_port);
     AddXip2Header(packet, priority_flag);
-    return SendDataWithProp(packet);
+    return XudpSendData(packet);
 }
 
-int XudpSocket::SendData(base::xpacket_t & packet) {
-    return SendDataWithProp(packet);
-}
-
-int XudpSocket::SendDataWithProp(base::xpacket_t & packet) {
+int XudpSocket::XudpSendData(base::xpacket_t & packet) {
     if ((packet.get_to_ip_port() == GetLocalPort()) &&                             // NOLINT
         (GetLocalIp() == packet.get_to_ip_addr() ||                                // NOLINT
          (GetLocalIp() == "0.0.0.0" && packet.get_to_ip_addr() == "127.0.0.1") ||  // NOLINT

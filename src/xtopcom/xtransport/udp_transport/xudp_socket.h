@@ -111,9 +111,8 @@ public:
     XudpSocket(base::xcontext_t & context, int32_t target_thread_id, xfd_handle_t native_handle, MultiThreadHandler * message_handler, quic::xquic_node_t * quic_node);
     virtual ~XudpSocket() override;
     void Stop() override;
-    int SendData(base::xpacket_t & packet) override;
-    int SendDataWithProp(std::string const & data, const std::string & peer_ip, uint16_t peer_port, uint16_t priority_flag = 0);
-    int SendDataWithProp(base::xpacket_t & packet);
+    int XudpSendData(base::xpacket_t & packet) override;
+    int XudpSendData(std::string const & data, const std::string & peer_ip, uint16_t peer_port, uint16_t priority_flag = 0) override;
     int SendToLocal(base::xpacket_t & packet) override;
     void AddXip2Header(base::xpacket_t & packet, uint16_t priority_flag = 0) override;
     bool GetSocketStatus() override;

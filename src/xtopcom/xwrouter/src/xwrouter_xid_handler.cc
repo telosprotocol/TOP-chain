@@ -363,7 +363,7 @@ void WrouterXidHandler::SendData(transport::protobuf::RoutingMessage & message, 
             xwarn("kadmlia::NodeInfoPtr null");
             return;
         }
-        if (kadmlia::kKadSuccess != transport_ptr_->SendDataWithProp(data, node_info_ptr->public_ip, node_info_ptr->public_port)) {
+        if (kadmlia::kKadSuccess != transport_ptr_->TransSendData(data, node_info_ptr->public_ip, node_info_ptr->public_port)) {
             xwarn("SendData to  endpoint(%s:%d) failed", node_info_ptr->public_ip.c_str(), node_info_ptr->public_port);
             return;
         }

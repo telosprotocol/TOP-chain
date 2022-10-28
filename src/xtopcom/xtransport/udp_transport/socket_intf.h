@@ -38,10 +38,8 @@ public:
     virtual ~SocketIntf() {
     }
     virtual void Stop() = 0;
-    virtual int SendData(base::xpacket_t & packet) = 0;
-    virtual int SendDataWithProp(std::string const & data, const std::string & peer_ip, uint16_t peer_port, uint16_t priority_flag = 0) = 0;
-
-    virtual int SendDataWithProp(base::xpacket_t & packet) = 0;
+    virtual int XudpSendData(base::xpacket_t & packet) = 0;
+    virtual int XudpSendData(std::string const & data, const std::string & peer_ip, uint16_t peer_port, uint16_t priority_flag = 0) = 0;
     virtual int SendToLocal(base::xpacket_t & packet) = 0;
     virtual void AddXip2Header(base::xpacket_t & packet, uint16_t priority_flag = 0) = 0;
     virtual bool GetSocketStatus() = 0;

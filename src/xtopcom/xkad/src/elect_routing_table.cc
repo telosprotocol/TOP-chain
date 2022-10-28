@@ -84,7 +84,7 @@ int ElectRoutingTable::SendData(transport::protobuf::RoutingMessage & message, c
         xdbg("RoutingMessage SerializeToString failed!");
         return kKadFailed;
     }
-    return transport_ptr_->SendDataWithProp(data, peer_ip, peer_port, message.priority());
+    return transport_ptr_->TransSendData(data, peer_ip, peer_port, message.priority());
 }
 
 int ElectRoutingTable::SendPing(transport::protobuf::RoutingMessage & message, const std::string & peer_ip, uint16_t peer_port) {
@@ -103,7 +103,7 @@ int ElectRoutingTable::SendData(transport::protobuf::RoutingMessage & message, N
         xdbg("RoutingMessage SerializeToString failed!");
         return kKadFailed;
     }
-    return transport_ptr_->SendDataWithProp(data, node->public_ip, node->public_port, message.priority());
+    return transport_ptr_->TransSendData(data, node->public_ip, node->public_port, message.priority());
 }
 
 std::size_t ElectRoutingTable::nodes_size() {
