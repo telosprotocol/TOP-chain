@@ -279,73 +279,10 @@ namespace top
 
                 uint16_t ledger_id = base::xvaccount_t::get_ledgerid_from_account(account_addr);
                 // table addr judge subaddr size
-                if (addr_type == enum_vaccount_addr_type_block_contract) {
-                    if (ledger_id == enum_chain_zone_consensus_index) {
-                        if (subaddr_int32 < 0 || subaddr_int32 >= enum_vbucket_has_tables_count) {
-                            xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
-                            return false;
-                        }
-                    } else if (ledger_id == enum_chain_zone_beacon_index) {
-                        if (subaddr_int32 < 0 || static_cast<uint32_t>(subaddr_int32) >= MAIN_CHAIN_REC_TABLE_USED_NUM) {
-                            xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
-                            return false;
-                        }
-                    } else if (ledger_id == enum_chain_zone_zec_index) {
-                        if (subaddr_int32 < 0 || static_cast<uint32_t>(subaddr_int32) >= MAIN_CHAIN_ZEC_TABLE_USED_NUM) {
-                            xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
-                            return false;
-                        }
-                    } else if (ledger_id == enum_chain_zone_evm_index) {
-                        if (subaddr_int32 < 0 || static_cast<uint32_t>(subaddr_int32) >= MAIN_CHAIN_EVM_TABLE_USED_NUM) {
-                            xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
-                            return false;
-                        }
-                    } else if (ledger_id == enum_chain_zone_relay_index) {
-                        if (subaddr_int32 < 0 || static_cast<uint32_t>(subaddr_int32) >= MAIN_CHAIN_RELAY_TABLE_USED_NUM) {
-                            xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
-                            return false;
-                        }
-                    } else {
-                        // invalid table addr
-                        assert(false);
-                        xwarn("xvaccount_t::check_address fail-invalid header. header:%s type=%d", parts[0].c_str(), addr_type);
-                        return false;
-                    }
-                    // contracts addr judge subaddr size
-                } else if (addr_type == enum_vaccount_addr_type_native_contract) {
-                    // shard contracts addr judge subaddr size
-                    if (ledger_id == enum_chain_zone_consensus_index) {
-                        if (subaddr_int32 < 0 || subaddr_int32 >= enum_vbucket_has_tables_count) {
-                            xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
-                            return false;
-                        }
-                    // root beacon contracts addr judge subaddr size 
-                    } else if (ledger_id == enum_chain_zone_beacon_index) {
-                        if (subaddr_int32 < 0 || static_cast<uint32_t>(subaddr_int32) >= MAIN_CHAIN_REC_TABLE_USED_NUM) {
-                            xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
-                            return false;
-                        }
-                    // sub beacon contracts addr judge subaddr size 
-                    } else if (ledger_id == enum_chain_zone_zec_index) {
-                        if (subaddr_int32 < 0 || static_cast<uint32_t>(subaddr_int32) >= MAIN_CHAIN_ZEC_TABLE_USED_NUM) {
-                            xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
-                            return false;
-                        }
-                    } else if (ledger_id == enum_chain_zone_evm_index) {
-                        if (subaddr_int32 < 0 || static_cast<uint32_t>(subaddr_int32) >= MAIN_CHAIN_EVM_TABLE_USED_NUM) {
-                            xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
-                            return false;
-                        }
-                    } else if (ledger_id == enum_chain_zone_relay_index) {
-                        if (subaddr_int32 < 0 || static_cast<uint32_t>(subaddr_int32) >= MAIN_CHAIN_RELAY_TABLE_USED_NUM) {
-                            xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
-                            return false;
-                        }
-                    } else {
-                        assert(false);
-                        //invalid contracts addr
-                        xwarn("xvaccount_t::check_address fail-invalid header. header:%s type=%d", parts[0].c_str(), addr_type);
-                        return false;
+                if (addr_type == enum_vaccount_addr_type_block_contract || addr_type == enum_vaccount_addr_type_native_contract) {
+                    if (!valid_zone_and_subaddr((enum_xchain_zone_index)ledger_id, subaddr_int32)){
+                         xwarn("xvaccount_t::check_address fail-subaddr scope invalid.addr_type=%d,subaddr=%d", addr_type, subaddr_int32);
+                         return false;
                     }
                 }
             }
@@ -395,6 +332,36 @@ namespace top
             }
             return true;
         }
+
+        bool xvaccount_t::valid_zone_and_subaddr(enum_xchain_zone_index zone_index, uint16_t subaddr) {
+            if (zone_index == enum_chain_zone_consensus_index) {
+                if (subaddr < 0 || subaddr >= enum_vbucket_has_tables_count) {
+                    return false;
+                }
+            // root beacon contracts addr judge subaddr size 
+            } else if (zone_index == enum_chain_zone_beacon_index) {
+                if (subaddr < 0 || static_cast<uint32_t>(subaddr) >= MAIN_CHAIN_REC_TABLE_USED_NUM) {
+                    return false;
+                }
+            // sub beacon contracts addr judge subaddr size 
+            } else if (zone_index == enum_chain_zone_zec_index) {
+                if (subaddr < 0 || static_cast<uint32_t>(subaddr) >= MAIN_CHAIN_ZEC_TABLE_USED_NUM) {
+                    return false;
+                }
+            } else if (zone_index == enum_chain_zone_evm_index) {
+                if (subaddr < 0 || static_cast<uint32_t>(subaddr) >= MAIN_CHAIN_EVM_TABLE_USED_NUM) {
+                    return false;
+                }
+            } else if (zone_index == enum_chain_zone_relay_index) {
+                if (subaddr < 0 || static_cast<uint32_t>(subaddr) >= MAIN_CHAIN_RELAY_TABLE_USED_NUM) {
+                    return false;
+                }
+            } else {
+                assert(false);
+                return false;
+            }
+            return true;
+        }
     
         bool  xvaccount_t::is_unit_address() const
         {
@@ -430,6 +397,10 @@ namespace top
         {
             return (get_addr_type() == enum_vaccount_addr_type_relay_block);
         }
+        bool  xvaccount_t::has_valid_table_addr() const {
+            return valid_zone_and_subaddr((enum_xchain_zone_index)get_zone_index(), (uint16_t)get_ledger_subaddr());
+        }
+
         //------------------------------------account meta-------------------------------------//
         xblockmeta_t::xblockmeta_t()
         {
