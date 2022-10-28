@@ -351,6 +351,7 @@ namespace top
             static std::string compact_address_to(const std::string & account_addr);
             static std::string compact_address_from(const std::string & data);
             static bool check_address(const std::string & account_addr, bool isTransaction = false);
+            static bool valid_zone_and_subaddr(enum_xchain_zone_index zone_index, uint16_t subaddr);
             static bool is_unit_address_type(enum_vaccount_addr_type addr_type);
             static bool is_eth_address_type(enum_vaccount_addr_type addr_type);
             static bool is_table_address_type(enum_vaccount_addr_type addr_type);
@@ -459,6 +460,7 @@ namespace top
             bool                        is_timer_address() const;
             bool                        is_relay_address() const;
             enum_vaccount_addr_type     get_addr_type()const{return get_addrtype_from_account(m_account_addr);}
+            bool                        has_valid_table_addr() const;
         private:
             xvid_t                      m_account_xid;
             std::string                 m_account_xid_str;//tostring(m_account_xid),cache it as performance improve

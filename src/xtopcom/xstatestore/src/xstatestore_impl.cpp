@@ -163,6 +163,10 @@ void xstatestore_impl_t::on_state_sync_event(mbus::xevent_ptr_t e) {
 }
 
 xstatestore_table_ptr_t xstatestore_impl_t::get_table_statestore_from_unit_addr(common::xaccount_address_t const & account_address) const {
+    base::xvaccount_t vaccount(account_address.vaccount());
+    if (!vaccount.has_valid_table_addr()) {
+        return nullptr;
+    }
     std::string table_address = base::xvaccount_t::make_table_account_address(account_address.vaccount());
     auto iter = m_table_statestore.find(table_address);
     if (iter != m_table_statestore.end()) {
@@ -256,7 +260,11 @@ data::xunitstate_ptr_t xstatestore_impl_t::get_unit_latest_connectted_state(comm
     // }
     // return get_unit_state_from_block(account_address, _block.get());
 
-    std::string table_address = base::xvaccount_t::make_table_account_address(account_address.vaccount());
+    base::xvaccount_t vaccount(account_address.vaccount());
+    if (!vaccount.has_valid_table_addr()) {
+        return nullptr;
+    }
+    std::string table_address = base::xvaccount_t::make_table_account_address(vaccount);
     common::xaccount_address_t _table_addr(table_address);
 
     base::xaccount_index_t account_index;
@@ -301,6 +309,10 @@ data::xunitstate_ptr_t xstatestore_impl_t::get_unit_state_by_unit_block(base::xv
 }
 
 data::xunitstate_ptr_t xstatestore_impl_t::get_unit_state_by_table(common::xaccount_address_t const & account_address, const std::string& table_height) const {
+    base::xvaccount_t vaccount(account_address.vaccount());
+    if (!vaccount.has_valid_table_addr()) {
+        return nullptr;
+    }
     std::string table_address = base::xvaccount_t::make_table_account_address(account_address.vaccount());
     common::xaccount_address_t _table_addr(table_address);
 
