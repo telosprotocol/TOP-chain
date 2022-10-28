@@ -225,8 +225,6 @@ TEST_F(test_state_mpt_fixture, test_basic) {
         if (i >= 2) {
             EXPECT_TRUE(s->m_state_objects[data[i].first]->dirty_unit);
         }
-        EXPECT_TRUE(s->m_journal.count(data[i].first));
-        // EXPECT_EQ(s->m_journal.index_changes[i].account, data[i].first);
         // not commit in trie
         auto index_bytes = s->m_trie->try_get(top::to_bytes(data[i].first), ec);
         EXPECT_FALSE(ec);
@@ -236,11 +234,7 @@ TEST_F(test_state_mpt_fixture, test_basic) {
     // hash not change
     EXPECT_EQ(origin_hash, s->m_trie->hash());
 
-    // finalize
-    s->finalize();
     EXPECT_EQ(origin_hash, s->m_trie->hash());
-    // EXPECT_TRUE(s->m_journal.dirties.empty());
-    EXPECT_TRUE(s->m_journal.empty());
     EXPECT_EQ(s->m_state_objects.size(), 5);
     EXPECT_EQ(s->m_state_objects_pending.size(), 5);
     for (auto i = 0; i < 5; i++) {
@@ -275,8 +269,6 @@ TEST_F(test_state_mpt_fixture, test_basic) {
     EXPECT_EQ(s->m_state_objects.size(), 5);
     EXPECT_EQ(s->m_state_objects[data[0].first]->index, index0);
     EXPECT_EQ(s->m_state_objects[data[1].first]->index, index1);
-    // EXPECT_TRUE(s->m_journal.index_changes.empty());
-    EXPECT_TRUE(s->m_journal.empty());
     // set
     // auto new_index0 = index0_str;
     base::xaccount_index_t new_index0 = index0;
@@ -288,19 +280,8 @@ TEST_F(test_state_mpt_fixture, test_basic) {
         EXPECT_FALSE(ec);
     }
     EXPECT_EQ(s->m_state_objects.size(), 10);
-    // EXPECT_EQ(s->m_journal.index_changes.size(), 6);
-    EXPECT_EQ(s->m_journal.size(), 6);
     EXPECT_EQ(s->m_state_objects[data[0].first]->index, new_index0);
     EXPECT_EQ(s->m_state_objects[data[1].first]->index, index1);
-    // EXPECT_EQ(s->m_journal.index_changes.size(), 6);
-    // EXPECT_EQ(s->m_journal.index_changes[0].account, data[0].first);
-    // EXPECT_EQ(s->m_journal.index_changes[0].prev_index, index0);
-    // for (auto i = 5; i < 10; i++) {
-        // EXPECT_EQ(s->m_state_objects[data[i].first]->index, data[i].second);
-        // EXPECT_EQ(s->m_journal.index_changes[i - 4].account, data[i].first);
-        // EXPECT_EQ(s->m_journal.index_changes[i - 4].prev_index, base::xaccount_index_t());
-        // EXPECT_TRUE(s->m_journal.dirties.count(data[i].first));
-    // }
     // error set
     s->set_account_index(data[2].first, new_index0, ec);
     EXPECT_EQ(ec, state_mpt::error::make_error_code(state_mpt::error::xerrc_t::state_mpt_unit_hash_mismatch));
@@ -314,8 +295,6 @@ TEST_F(test_state_mpt_fixture, test_basic) {
     for (auto obj : s->m_state_objects) {
         EXPECT_FALSE(obj.second->dirty_unit);
     }
-    // EXPECT_TRUE(s->m_journal.index_changes.empty());
-    EXPECT_TRUE(s->m_journal.empty());
     // // check code
     // for (auto i = 2; i < 5; i++) {
     //     std::string state_str{"state_str" + std::to_string(i)};

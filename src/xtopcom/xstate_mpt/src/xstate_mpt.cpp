@@ -99,7 +99,8 @@ void xtop_state_mpt::set_account_index(common::xaccount_address_t const & accoun
         return;
     }
     obj->set_account_index(index);
-    m_journal.emplace(account);
+    m_state_objects_pending.insert(account);
+    m_state_objects_dirty.insert(account);
 }
 
 void xtop_state_mpt::set_account_index_with_unit(common::xaccount_address_t const & account, const std::string & index_str, const xbytes_t & unit, std::error_code & ec) {
@@ -121,7 +122,8 @@ void xtop_state_mpt::set_account_index_with_unit(common::xaccount_address_t cons
     //     return;
     // }
     obj->set_account_index_with_unit(index, unit);
-    m_journal.emplace(account);
+    m_state_objects_pending.insert(account);
+    m_state_objects_dirty.insert(account);
 }
 
 std::shared_ptr<xstate_object_t> xtop_state_mpt::get_state_object(common::xaccount_address_t const & account, std::error_code & ec) {
@@ -229,7 +231,6 @@ void xtop_state_mpt::prune_unit(const common::xaccount_address_t & account, std:
 
 xhash256_t xtop_state_mpt::get_root_hash(std::error_code & ec) {
     std::lock_guard<std::mutex> lock(m_trie_lock);
-    finalize();
     for (auto & acc : m_state_objects_pending) {
         auto obj = query_state_object(acc);
         xaccount_info_t info;
@@ -250,14 +251,6 @@ xhash256_t xtop_state_mpt::get_root_hash(std::error_code & ec) {
 
 const xhash256_t & xtop_state_mpt::get_original_root_hash() const {
     return m_original_root;
-}
-
-void xtop_state_mpt::finalize() {
-    for (auto & acc : m_journal) {
-        m_state_objects_pending.insert(acc);
-        m_state_objects_dirty.insert(acc);
-    }
-    m_journal.clear();
 }
 
 xhash256_t xtop_state_mpt::commit(std::error_code & ec) {

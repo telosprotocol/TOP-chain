@@ -1,10 +1,7 @@
 #include "test_state_sync_data.h"
-#include "xdata/xtable_bstate.h"
-#include "xdata/xunit_bstate.h"
 #include "xdbstore/xstore_face.h"
 #include "xevm_common/trie/xsecure_trie.h"
 #include "xevm_common/xerror/xerror.h"
-#include "xstate_mpt/xstate_mpt.h"
 #include "xstate_sync/xerror.h"
 #include "xutility/xhash.h"
 #include "xvledger/xvledger.h"
@@ -12,7 +9,11 @@
 #include <gtest/gtest.h>
 
 #define private public
+#include "xdata/xtable_bstate.h"
+#include "xdata/xunit_bstate.h"
+#include "xstate_mpt/xstate_mpt.h"
 #include "xstate_sync/xstate_sync.h"
+#include "xvledger/xaccountindex.h"
 
 namespace top {
 
@@ -231,7 +232,6 @@ TEST_F(test_state_sync_fixture, test_process_node_data_error) {
     EXPECT_EQ(ec, make_error_code(evm_common::error::xerrc_t::trie_sync_not_requested));
 }
 
-#if 0
 TEST_F(test_state_sync_fixture, test_process_unit_data_sucess) {
     std::error_code ec;
     while (true) {
@@ -333,7 +333,6 @@ TEST_F(test_state_sync_fixture, test_process_trie_not_found) {
     EXPECT_TRUE(m_syncer->m_unit_tasks.empty());
     EXPECT_FALSE(ec);
 }
-#endif
 
 TEST_F(test_state_sync_fixture, test_process_table_sucess) {
     state_sync::state_req req;
@@ -571,7 +570,9 @@ TEST_F(test_state_sync_fixture, test_assign_table_tasks) {
 
 TEST_F(test_state_sync_fixture, test_loop_network_network_error1) {
     m_peers.network = nullptr;
+#if !defined(NDEBUG)
     m_syncer->running_thead_id_ = std::this_thread::get_id();
+#endif
 
     std::error_code ec;
     m_syncer->sync_table(ec);
@@ -602,7 +603,9 @@ void loop_empty_helper(std::shared_ptr<state_sync::xstate_sync_t> syncer, std::s
 }
 
 TEST_F(test_state_sync_fixture, test_loop_network_network_error2) {
+#if !defined(NDEBUG)
     m_syncer->running_thead_id_ = std::this_thread::get_id();
+#endif
 
     auto th = std::thread(loop_empty_helper, m_syncer, m_peers.network);
 
@@ -616,7 +619,9 @@ TEST_F(test_state_sync_fixture, test_loop_network_network_error2) {
 
 TEST_F(test_state_sync_fixture, test_loop_cancel) {
     m_syncer->m_cancel = true;
+#if !defined(NDEBUG)
     m_syncer->running_thead_id_ = std::this_thread::get_id();
+#endif
 
     std::error_code ec;
     m_syncer->sync_table(ec);
@@ -627,7 +632,9 @@ TEST_F(test_state_sync_fixture, test_loop_cancel) {
 
 TEST_F(test_state_sync_fixture, test_loop_process_error) {
     m_syncer->deliver_req({});
+#if !defined(NDEBUG)
     m_syncer->running_thead_id_ = std::this_thread::get_id();
+#endif
 
     std::error_code ec;
     auto condition = [this]() -> bool { return !m_syncer->m_sync_table_finish; };
@@ -646,8 +653,9 @@ TEST_F(test_state_sync_fixture, test_sync_table_success) {
 
     EXPECT_EQ(m_db->get_value(state_key), std::string());
     EXPECT_FALSE(m_syncer->m_sync_table_finish);
-
+#if !defined(NDEBUG)
     m_syncer->running_thead_id_ = std::this_thread::get_id();
+#endif
 
     std::error_code ec;
     m_syncer->sync_table(ec);
@@ -659,7 +667,9 @@ TEST_F(test_state_sync_fixture, test_sync_table_success) {
 }
 
 TEST_F(test_state_sync_fixture, test_sync_table_existed) {
+#if !defined(NDEBUG)
     m_syncer->running_thead_id_ = std::this_thread::get_id();
+#endif
     m_db->set_value(state_key, to_string(state_bytes));
 
     std::error_code ec;
@@ -670,7 +680,9 @@ TEST_F(test_state_sync_fixture, test_sync_table_existed) {
 
 TEST_F(test_state_sync_fixture, test_sync_table_loop_error) {
     m_peers.network = nullptr;
+#if !defined(NDEBUG)
     m_syncer->running_thead_id_ = std::this_thread::get_id();
+#endif
 
     std::error_code ec;
     m_syncer->sync_table(ec);
@@ -679,12 +691,12 @@ TEST_F(test_state_sync_fixture, test_sync_table_loop_error) {
     EXPECT_EQ(m_syncer->m_cancel, true);
 }
 
-#if 0
 TEST_F(test_state_sync_fixture, test_sync_trie_success) {
     std::error_code ec;
     auto th = std::thread(&test_state_sync_fixture::sync_helper, this);
-
+#if !defined(NDEBUG)
     m_syncer->running_thead_id_ = std::this_thread::get_id();
+#endif
     m_syncer->sync_trie(ec);
     th.join();
     EXPECT_FALSE(ec);
@@ -705,11 +717,12 @@ TEST_F(test_state_sync_fixture, test_sync_trie_success) {
         EXPECT_FALSE(ec);
     }
 }
-#endif
 
 TEST_F(test_state_sync_fixture, test_sync_trie_loop_error) {
     m_peers.network = nullptr;
+#if !defined(NDEBUG)
     m_syncer->running_thead_id_ = std::this_thread::get_id();
+#endif
 
     std::error_code ec;
     m_syncer->sync_trie(ec);
@@ -718,7 +731,6 @@ TEST_F(test_state_sync_fixture, test_sync_trie_loop_error) {
     EXPECT_EQ(m_syncer->m_cancel, true);
 }
 
-#if 0
 TEST_F(test_state_sync_fixture, test_run_success) {
     auto th = std::thread(&test_state_sync_fixture::sync_helper, this);
     m_syncer->run();
@@ -748,7 +760,6 @@ TEST_F(test_state_sync_fixture, test_run_success) {
         EXPECT_FALSE(ec);
     }
 }
-#endif
 
 TEST_F(test_state_sync_fixture, test_run_sync_table_error) {
     m_peers.network = nullptr;

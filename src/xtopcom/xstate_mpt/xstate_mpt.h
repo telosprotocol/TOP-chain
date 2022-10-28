@@ -111,12 +111,6 @@ private:
     /// @param db Db interface.
     /// @param ec Log the error code.
     void init(const common::xaccount_address_t & table, const xhash256_t & root, base::xvdbstore_t * db, std::error_code & ec);
-    
-    /// @brief Move journals to pending state.
-    void finalize();
-
-    /// @brief Clear journals.
-    void clear_journal();
 
     /// @brief Get or create state object of specific account.
     /// @param account Account string.
@@ -160,8 +154,6 @@ private:
     std::map<common::xaccount_address_t, std::shared_ptr<xstate_object_t>> m_state_objects;
     std::set<common::xaccount_address_t> m_state_objects_pending;
     std::set<common::xaccount_address_t> m_state_objects_dirty;
-
-    std::set<common::xaccount_address_t> m_journal;
 };
 using xstate_mpt_t = xtop_state_mpt;
 
