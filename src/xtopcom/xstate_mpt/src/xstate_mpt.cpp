@@ -98,7 +98,9 @@ void xtop_state_mpt::set_account_index(common::xaccount_address_t const & accoun
         xwarn("xtop_state_mpt::set_account_index %s unit already dirty", account.c_str());
         return;
     }
-    m_journal.append(obj->set_account_index(index));
+    obj->set_account_index(index);
+    m_state_objects_pending.insert(account);
+    m_state_objects_dirty.insert(account);
 }
 
 void xtop_state_mpt::set_account_index_with_unit(common::xaccount_address_t const & account, const std::string & index_str, const xbytes_t & unit, std::error_code & ec) {
@@ -119,7 +121,9 @@ void xtop_state_mpt::set_account_index_with_unit(common::xaccount_address_t cons
     //     xwarn("xtop_state_mpt::set_account_index_with_unit hash mismatch: %s, %s", to_hex(hash).c_str(), to_hex(index.get_latest_state_hash()).c_str());
     //     return;
     // }
-    m_journal.append(obj->set_account_index_with_unit(index, unit));
+    obj->set_account_index_with_unit(index, unit);
+    m_state_objects_pending.insert(account);
+    m_state_objects_dirty.insert(account);
 }
 
 std::shared_ptr<xstate_object_t> xtop_state_mpt::get_state_object(common::xaccount_address_t const & account, std::error_code & ec) {
@@ -227,7 +231,6 @@ void xtop_state_mpt::prune_unit(const common::xaccount_address_t & account, std:
 
 xhash256_t xtop_state_mpt::get_root_hash(std::error_code & ec) {
     std::lock_guard<std::mutex> lock(m_trie_lock);
-    finalize();
     for (auto & acc : m_state_objects_pending) {
         auto obj = query_state_object(acc);
         xaccount_info_t info;
@@ -248,26 +251,6 @@ xhash256_t xtop_state_mpt::get_root_hash(std::error_code & ec) {
 
 const xhash256_t & xtop_state_mpt::get_original_root_hash() const {
     return m_original_root;
-}
-
-void xtop_state_mpt::finalize() {
-    for (auto & pair : m_journal.dirties) {
-        auto acc = pair.first;
-        auto obj = query_state_object(acc);
-        if (nullptr == obj) {
-            continue;
-        }
-        m_state_objects_pending.insert(acc);
-        m_state_objects_dirty.insert(acc);
-    }
-    clear_journal();
-}
-
-void xtop_state_mpt::clear_journal() {
-    if (!m_journal.index_changes.empty()) {
-        m_journal.index_changes.clear();
-        m_journal.dirties.clear();
-    }
 }
 
 xhash256_t xtop_state_mpt::commit(std::error_code & ec) {
@@ -297,7 +280,10 @@ xhash256_t xtop_state_mpt::commit(std::error_code & ec) {
     if (!m_state_objects_dirty.empty()) {
         m_state_objects_dirty.clear();
     }
-    m_state_objects.clear();
+    {
+        std::lock_guard<std::mutex> l(m_state_objects_lock);
+        m_state_objects.clear();
+    }
 
     std::lock_guard<std::mutex> lock(m_trie_lock);
     std::pair<xhash256_t, int32_t> res;

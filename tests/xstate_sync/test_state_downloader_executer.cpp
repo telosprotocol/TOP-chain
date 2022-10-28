@@ -133,7 +133,6 @@ public:
     state_sync::sync_peers m_peers;
 };
 
-#if 0
 TEST_F(test_state_downloader_executer_fixture, test_run_state_sync_success) {
     state_sync::sync_result res;
     auto callback = [&](state_sync::sync_result result) {
@@ -295,7 +294,6 @@ TEST_F(test_state_downloader_executer_fixture, test_run_state_sync_task_flooding
         EXPECT_FALSE(ec);
     }
 }
-#endif
 
 TEST_F(test_state_downloader_executer_fixture, test_run_state_sync_overtime) {
     auto th = make_object_ptr<base::xiothread_t>();
