@@ -99,7 +99,7 @@ void xrpc_query_manager::getAccount(xJson::Value & js_req, xJson::Value & js_rsp
 xJson::Value xrpc_query_manager::parse_account(const std::string & account, string & strResult, uint32_t & nErrorCode) {
     xJson::Value result_json;
     data::xunitstate_ptr_t account_ptr = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(common::xaccount_address_t(account));
-    if (account_ptr != nullptr && (account_ptr->get_bstate()->get_block_height() != 0 || account_ptr->get_bstate()->get_block_class() != base::enum_xvblock_class_nil)) {
+    if (account_ptr != nullptr && (!account_ptr->is_empty_state())) {
         // string freeze_fee{};
         result_json["account_addr"] = account;
         result_json["created_time"] = static_cast<xJson::UInt64>(account_ptr->get_account_create_time());

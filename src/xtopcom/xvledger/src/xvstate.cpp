@@ -159,6 +159,11 @@ namespace top
             }
             return names;
         }
+
+        int xvexestate_t::get_property_num() const {
+            std::lock_guard<std::recursive_mutex> locker(get_mutex());
+            return (int)get_child_units().size();
+        }
     
         bool  xvexestate_t::find_property(const std::string & property_name) const //check whether property already existing
         {
