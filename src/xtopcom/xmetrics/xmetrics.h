@@ -704,6 +704,9 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     statectx_load_state_succ,
     statectx_sync_invoke_count,
 
+    mpt_total_pruned_trie_node_cnt,
+    mpt_cached_pruned_trie_node_cnt,
+
     e_simple_total,
 };
 using xmetrics_tag_t = E_SIMPLE_METRICS_TAG;

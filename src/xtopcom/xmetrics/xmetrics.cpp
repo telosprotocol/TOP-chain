@@ -647,6 +647,9 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(statectx_load_state_succ);
         RETURN_METRICS_NAME(statectx_sync_invoke_count);
 
+        RETURN_METRICS_NAME(mpt_total_pruned_trie_node_cnt);
+        RETURN_METRICS_NAME(mpt_cached_pruned_trie_node_cnt);
+
         default: assert(false); return nullptr;
     }
 }

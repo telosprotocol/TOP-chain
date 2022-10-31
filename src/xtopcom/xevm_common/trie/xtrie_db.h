@@ -111,7 +111,7 @@ private:
     // commit is the private locked version of Commit.
     // void commit(xhash256_t hash, AfterCommitCallback cb, std::error_code & ec);
 
-    xbytes_t preimageKey(xhash256_t hash_key) const;
+    xbytes_t preimage_key(xhash256_t const & hash_key) const;
 };
 using xtrie_db_t = xtop_trie_db;
 using xtrie_db_ptr_t = std::shared_ptr<xtrie_db_t>;
