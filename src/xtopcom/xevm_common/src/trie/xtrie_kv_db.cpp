@@ -85,7 +85,6 @@ void xtop_kv_db::Delete(xbytes_t const & key, std::error_code & ec) {
         return;
     }
     xdbg("xtop_kv_db::Delete key: %s", top::to_hex(key).c_str());
-    return;
 }
 
 void xtop_kv_db::DeleteBatch(std::vector<xbytes_t> const & batch, std::error_code & ec) {

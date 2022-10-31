@@ -9,6 +9,7 @@
 #include "xevm_common/trie/xtrie_node.h"
 #include "xevm_common/trie/xtrie_node_coding.h"
 #include "xevm_common/xerror/xerror.h"
+#include "xmetrics/xmetrics.h"
 
 #include <cassert>
 
@@ -122,7 +123,7 @@ xbytes_t xtop_trie_db::preimage(xhash256_t hash) const {
     }
     // could put this diskdb->Get into trie_kv_db_face :: ReadPreimage
     std::error_code ec;
-    auto result = diskdb_->Get(preimageKey(hash), ec);
+    auto result = diskdb_->Get(preimage_key(hash), ec);
     if (ec) {
         xwarn("xtrie_db Get preimage %s failed: %s", hash.as_hex_str().c_str(), ec.message().c_str());
     }
@@ -137,7 +138,7 @@ void xtop_trie_db::Commit(xhash256_t hash, AfterCommitCallback cb, std::error_co
 
     // 0. first, Move all of the accumulated preimages in.
     for (auto const & preimage : preimages_) {
-        diskdb_->Put(preimageKey(preimage.first), preimage.second, ec);
+        diskdb_->Put(preimage_key(preimage.first), preimage.second, ec);
         if (ec) {
             xwarn("xtrie_db Commit diskdb error at preimage %s, err: %s", preimage.first.as_hex_str().c_str(), ec.message().c_str());
             // return;
@@ -213,6 +214,7 @@ void xtop_trie_db::prune(xhash256_t const & hash, std::error_code & ec) {
 
     pruned_hashes_.insert(hash);
     xinfo("hash %s added to be pruned later", hash.as_hex_str().c_str());
+    XMETRICS_GAUGE(metrics::mpt_cached_pruned_trie_node_cnt, 1);
 }
 
 void xtop_trie_db::commit_pruned(std::error_code & ec) {
@@ -228,11 +230,13 @@ void xtop_trie_db::commit_pruned(std::error_code & ec) {
     }
 
     xkinfo("%zu keys pruned from disk", pruned_hashes_.size());
+    XMETRICS_GAUGE(metrics::mpt_total_pruned_trie_node_cnt, pruned_hashes_.size());
+    XMETRICS_GAUGE(metrics::mpt_cached_pruned_trie_node_cnt, -static_cast<int32_t>(pruned_hashes_.size()));
 
     pruned_hashes_.clear();
 }
 
-xbytes_t xtop_trie_db::preimageKey(xhash256_t hash_key) const {
+xbytes_t xtop_trie_db::preimage_key(xhash256_t const & hash_key) const {
     xbytes_t res;
     res.insert(res.begin(), PreimagePrefix.begin(), PreimagePrefix.end());
     res.insert(res.end(), hash_key.begin(), hash_key.end());
