@@ -37,6 +37,9 @@ xunit_bstate_t::~xunit_bstate_t() {
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_unit_state, -1);
 }
 
+bool xunit_bstate_t::is_empty_state() const {
+    return get_bstate()->get_property_num() == 0;
+}
 uint64_t xunit_bstate_t::get_free_tgas() const {
     uint64_t total_asset = balance() + lock_balance() + tgas_balance() + disk_balance() + vote_balance();
     if (total_asset >= XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_free_gas_asset)) {

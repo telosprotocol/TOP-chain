@@ -33,6 +33,7 @@ namespace top
             bool                        find_property(const std::string & property_name) const;
             virtual xvproperty_t*       get_property_object(const std::string & name) const;
             std::set<std::string>       get_all_property_names() const;
+            int                         get_property_num() const;
 
             bool                        take_snapshot(std::string & to_full_state_bin);
             xauto_ptr<xvcanvas_t>       take_snapshot();

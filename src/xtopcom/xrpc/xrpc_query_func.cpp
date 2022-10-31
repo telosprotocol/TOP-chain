@@ -191,7 +191,7 @@ bool xrpc_query_func::query_special_property(xJson::Value & jph, const std::stri
 }
 
 void xrpc_query_func::query_account_property_base(xJson::Value & jph, const std::string & owner, const std::string & prop_name, data::xunitstate_ptr_t unitstate, bool compatible_mode) {
-    if (unitstate == nullptr || (unitstate->get_bstate()->get_block_height() == 0 && unitstate->get_bstate()->get_block_class() != base::enum_xvblock_class_nil)) {
+    if (unitstate == nullptr || unitstate->is_empty_state()) {
         xwarn("xrpc_query_manager::query_account_property fail-query unit state.account=%s", owner.c_str());
         return;
     }

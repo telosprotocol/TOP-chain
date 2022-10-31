@@ -36,6 +36,7 @@ class xunit_bstate_t : public xbstate_ctx_t {
     xunit_bstate_t & operator = (const xunit_bstate_t &);
 
  public:  // for unit account
+    bool                is_empty_state() const;
     inline uint64_t     balance()const {return token_get(XPROPERTY_BALANCE_AVAILABLE);}
     inline uint64_t     burn_balance()const {return token_get(XPROPERTY_BALANCE_BURN);}
     inline uint64_t     tgas_balance() const {return token_get(XPROPERTY_BALANCE_PLEDGE_TGAS);}
