@@ -22,6 +22,10 @@ if (BUILD_METRICS)
     target_link_libraries(xtransport PUBLIC xmetrics)
 endif()
 
+if (XENABLE_P2P_TEST)
+    target_compile_definitions(xtransport PRIVATE XENABLE_P2P_TEST)
+endif()
+
 # if (XENABLE_TESTS)
 #     add_subdirectory(xquic_demo)
 # endif()

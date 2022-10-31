@@ -7,6 +7,12 @@
 
 #include <atomic>
 
+#ifdef LEAK_TRACER
+#include "leaktracer/MemoryTrace.hpp"
+#include <csignal>
+#include <fstream>
+#endif
+
 using namespace top;
 
 namespace top {
@@ -22,12 +28,36 @@ void SignalCatch(int sig_no) {
 }  // namespace top
 using namespace top;
 
+#ifdef LEAK_TRACER
+void export_mem_trace(int signal)
+{
+    leaktracer::MemoryTrace::GetInstance().stopMonitoringAllocations();
+    leaktracer::MemoryTrace::GetInstance().stopAllMonitoring();
+
+    std::ofstream oleaks;
+
+    oleaks.open(global_node_id + "_leaks.out", std::ios_base::out);
+    if (oleaks.is_open())
+        leaktracer::MemoryTrace::GetInstance().writeLeaks(oleaks);
+    else
+        std::cerr << "Failed to write to \"leaks.out\"\n";
+
+    oleaks.close();
+    leaktracer::MemoryTrace::GetInstance().startMonitoringAllThreads();
+}
+#endif
+
 int main(int argc, char ** argv) {
     // register signal
     if (signal(SIGPIPE, SIG_IGN) == SIG_ERR || signal(SIGTERM, top::SignalCatch) == SIG_ERR || signal(SIGINT, top::SignalCatch) == SIG_ERR) {
         xerror("signal failed");
         return 1;
     }
+
+#ifdef LEAK_TRACER
+    std::signal(SIGUSR1, export_mem_trace);
+    leaktracer::MemoryTrace::GetInstance().startMonitoringAllThreads();
+#endif
 
     global_node_signkey = RandomString(256);
 

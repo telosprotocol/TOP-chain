@@ -75,6 +75,13 @@ bool xp2pudp_t::on_endpoint_open(const int32_t error_code, const int32_t cur_thr
     m_status = top::transport::enum_xudp_status::enum_xudp_ok;
     listen_server_->AddXudp(xslsocket_t::get_peer_ip_address() + ":" + std::to_string(xslsocket_t::get_peer_real_port()), this);
 
+#ifdef XENABLE_P2P_TEST
+    // #test
+    if (global_node_id == std::string{"T00000Lgv7jLC3DQ3i3guTVLEVhGaStR4RaUJVwA"} && get_peer_real_port() > 9126) {
+        listen_server_->CloseXudp(this);
+    }
+#endif
+
     return result;
 }
 // when associated io-object close happen,post the event to receiver
@@ -389,6 +396,13 @@ int XudpSocket::XudpSendData(base::xpacket_t & packet) {
          packet.get_to_ip_addr().c_str(),
          packet.get_to_ip_port());
 
+#ifdef XENABLE_P2P_TEST
+    // #test
+    if ( global_node_id == std::string{"T00000Lgv7jLC3DQ3i3guTVLEVhGaStR4RaUJVwA"} && packet.get_to_ip_port() > 9126) {
+        CloseXudp(peer_xudp_socket);
+    }
+#endif
+
     return kTransportSuccess;
 }
 
@@ -430,7 +444,6 @@ bool XudpSocket::GetSocketStatus() {
 
 void XudpSocket::AddXudp(const std::string & ip_port, xp2pudp_t * new_xudp) {
     assert(new_xudp != nullptr);
-    assert(new_xudp->GetStatus() == top::transport::enum_xudp_status::enum_xudp_ok);
 
     xp2pudp_t * existing_ptr = nullptr;
     {
