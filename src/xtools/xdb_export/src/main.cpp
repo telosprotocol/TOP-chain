@@ -10,7 +10,6 @@
 
 using namespace top;
 using namespace top::db_export;
-using namespace top::db_read;
 
 #define XDB_EXPORT_LOG
 
@@ -55,6 +54,7 @@ void usage() {
     std::cout << "        - parse_checkpoint <height>" << std::endl;
     std::cout << "        - parse_db" << std::endl;
     std::cout << "        - db_read_meta  [db_path] <account>" << std::endl;
+    std::cout << "        - db_data_parse [db_path] " << std::endl; // ./xdb_export ./db_v3/ db_data_parse
     std::cout << "        - db_compact_db [db_path]" << std::endl;
     std::cout << "        - db_parse_type_size [db_path] " << std::endl;
     std::cout << "        - db_read_block [db_path] <account> <height> " << std::endl;
@@ -127,7 +127,16 @@ int main(int argc, char ** argv) {
         xdb_read_tools_t read_tools{db_path};
         read_tools.db_read_meta(address);
         return 0;
-    }  else if (function_name == "db_compact_db") {
+    } else if (function_name == "db_data_parse") {
+        if (argc != 3) {
+            xassert(false);
+            usage();
+            return -1;
+        }
+        xdb_read_tools_t read_tools{db_path};
+        read_tools.db_data_parse();
+        return 0;
+    } else if (function_name == "db_compact_db") {
         if (argc != 4) {
             usage();
             return -1;
