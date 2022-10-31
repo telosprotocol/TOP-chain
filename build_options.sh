@@ -205,6 +205,10 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DCROSS_TX_DBG=ON"
         echo "BUILD WITH CROSS_TX_DBG"
     ;;
+    use_jemalloc)
+        CMAKE_EXTRA_OPTIONS+=" -DXUSE_JEMALLOC=ON"
+        echo "BUILD WITH XUSE_JEMALLOC"
+    ;;
     *)
         echo "unknown build option: "$option
     ;;

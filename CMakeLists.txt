@@ -23,6 +23,7 @@ option(XCHAIN_FORKED_BY_DEFAULT "Enable chain forked logic" OFF)
 option(ENABLE_METRICS_DATAOBJECT "Enable metrics dataobject" OFF)
 option(DISABLE_CORE_SIGNAL_CAPTURE "disable core signal capture" OFF)
 option(DISABLE_SIGNAL_CAPTURE "disable all signal capture" OFF)
+option(XUSE_JEMALLOC "using jemalloc" OFF)
 
 set(BUILD_EVM ON) # EVM as default VM for now
 
@@ -344,8 +345,12 @@ message(STATUS "ADDRESS_SANITIZER:" ${ADDRESS_SANITIZER})
 message(STATUS "XCHAIN_FORKED_BY_DEFAULT:" ${XCHAIN_FORKED_BY_DEFAULT})
 message(STATUS "DISABLE_CORE_SIGNAL_CAPTURE:" ${DISABLE_CORE_SIGNAL_CAPTURE})
 message(STATUS "DISABLE_SIGNAL_CAPTURE:" ${DISABLE_SIGNAL_CAPTURE})
+message(STATUS "XUSE_JEMALLOC:" ${XUSE_JEMALLOC})
 
 find_package(Threads REQUIRED)
+if (XUSE_JEMALLOC)
+    link_libraries(jemalloc)
+endif()
 
 include_directories(src/xtopcom)  # xtopcom build warning will not print
 include_directories(SYSTEM src/xtopcom/third_party)
