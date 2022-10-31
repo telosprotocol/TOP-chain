@@ -24,7 +24,7 @@
 #include "xstatectx/xstatectx.h"
 #include "xverifier/xtx_verifier.h"
 #include "xstatestore/xstatestore_face.h"
-#include "xstate_reset/xstate_reset.h"
+#include "xstate_reset/xstate_reseter.h"
 
 NS_BEG2(top, blockmaker)
 

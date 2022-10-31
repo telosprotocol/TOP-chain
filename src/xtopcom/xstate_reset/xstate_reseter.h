@@ -30,6 +30,7 @@ private:
     bool check_tx_contains_contract();
 
 private:
+    bool m_need_fork{true};  // TODO set false for normal case. to make performance influences minimum.
     statectx::xstatectx_face_ptr_t m_statectx_ptr;
     std::shared_ptr<std::vector<data::xcons_transaction_ptr_t>> m_txs_ptr;
     base::xvaccount_t m_table_account;  // todo use xtable_address_t

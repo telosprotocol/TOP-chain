@@ -2,10 +2,12 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xstate_reset/xstate_reset.h"
+#include "xstate_reset/xstate_reseter.h"
 
-// #include "xchain_fork/xchain_upgrade_center.h"
+#include "xbasic/xmemory.hpp"
+#include "xchain_fork/xchain_upgrade_center.h"
 #include "xdata/xnative_contract_address.h"
+#include "xstate_reset/xstate_tablestate_reseter_sample.h"
 #include "xstatectx/xstatectx.h"
 
 NS_BEG2(top, state_reset)
@@ -20,6 +22,7 @@ xstate_reseter::xstate_reseter(statectx::xstatectx_face_ptr_t statectx_ptr, std:
         // shard 1-4
         m_corresponse_contract_address =
             base::xvaccount_t::make_account_address(std::string{sys_contract_sharding_fork_info_addr}, static_cast<uint16_t>(m_table_account.get_ledger_subaddr()));
+        m_need_fork = true;
         break;
     }
     case base::enum_chain_zone_evm_index: {
@@ -28,6 +31,7 @@ xstate_reseter::xstate_reseter(statectx::xstatectx_face_ptr_t statectx_ptr, std:
         //     base::xvaccount_t::make_account_address(std::string{sys_contract_eth_fork_info_addr}, static_cast<uint16_t>(m_table_account.get_ledger_subaddr()));
         m_corresponse_contract_address = std::string{sys_contract_eth_fork_info_addr};  // this const char* already have table id `@0`
         assert(m_table_account.get_ledger_subaddr() == 0);
+        m_need_fork = true;
         break;
     }
     default:
@@ -37,34 +41,62 @@ xstate_reseter::xstate_reseter(statectx::xstatectx_face_ptr_t statectx_ptr, std:
 }
 
 bool xstate_reseter::exec_reset() {
-    // 1. check fork time
-    // auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
-    // auto if_forked = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.__TODO__SOME_FORK_POINT, m_current_time_block_height);
-    // if (!if_forked) {
-    //     return false;
-    // }
-
-    // 2. check contain contract self-tx
+    // 0. if constructor well . might exit more early.
+    if (!m_need_fork) {
+        return false;
+    }
+    // 1. check contain contract self-tx. each table && each fork need this check.
     if (!check_tx_contains_contract()) {
         xinfo("xstate_reseter:check_tx_contains_contract false");
         return false;
     }
 
-    // 3. check contract properties is unset.
-    assert(m_statectx_ptr != nullptr);
-    xdbg("xstate_reseter: [DEBUG] %s", m_statectx_ptr->get_table_address().c_str());  // if this exist. constructor can be easier.
+    /// TODO : 2 && 3 fork time && contract properties should be linked,
+    /// as each fork-time corresponse a extra properties sring value changed from A to B
+    /// so this code shoud be used multi-time and each fork chooses a fork point one after another.
+    /// sample code:
+    // // 2. check fork time
+    // auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
+    // auto if_forked = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.__TODO__SOME_FORK_POINT, m_current_time_block_height);
+    // if (!if_forked) {
+    //     return false;
+    // }
+    // // 3. check contract properties is unset.
+    // assert(m_statectx_ptr != nullptr);
+    // auto fork_info_contract_unit_state = m_statectx_ptr->load_unit_state(base::xvaccount_t{m_corresponse_contract_address});
+    // if (fork_info_contract_unit_state == nullptr) {
+    //     return false;
+    // }
+    // auto fork_properties = fork_info_contract_unit_state->string_get(std::string{data::XPROPERTY_CONTRACT_TABLE_FORK_INFO_KEY});
+    // if (fork_properties != "") {
+    //     xinfo("xstate_reseter:check_contract_properties false");
+    //     return false;
+    // }
+
+    /// used like this:
+    assert(!m_corresponse_contract_address.empty());
     auto fork_info_contract_unit_state = m_statectx_ptr->load_unit_state(base::xvaccount_t{m_corresponse_contract_address});
     if (fork_info_contract_unit_state == nullptr) {
         return false;
     }
     auto fork_properties = fork_info_contract_unit_state->string_get(std::string{data::XPROPERTY_CONTRACT_TABLE_FORK_INFO_KEY});
-    // todo this should be some kind of fork version, use some greater-equal than \ less than operator.
-    if (fork_properties != "") {
-        xinfo("xstate_reseter:check_contract_properties false");
-        return false;
-    }
+    auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
 
-    return true;
+#define IS_FORK_POINT_FROM(from_properties, fork_point)                                                                                                                            \
+    (chain_fork::xchain_fork_config_center_t::is_forked(fork_config.fork_point, m_current_time_block_height) && fork_properties == from_properties)
+
+    if (IS_FORK_POINT_FROM("", v1_7_0_sync_point)) {  // use last fork point as sample code
+        // test_fork_reset
+        xstate_tablestate_reseter_base_ptr reseter_ptr = top::make_unique<xstate_tablestate_reseter_sample>(m_statectx_ptr, "TEST_FORK");
+        reseter_ptr->exec_reset_tablestate();
+    }
+    // else if(IS_FORK_POINT_FROM...) { // every fork point code should be keeped.
+    //   ...
+    // }
+
+    return false;
+
+#undef IS_FORK_POINT_FROM
 }
 
 bool xstate_reseter::check_tx_contains_contract() {
