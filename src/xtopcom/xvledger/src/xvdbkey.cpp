@@ -251,80 +251,49 @@ namespace top
 
         const std::string  xvdbkey_t::create_prunable_block_output_offdata_key(const xvaccount_t & account,const uint64_t target_height,const uint64_t target_viewid)
         {
-            const std::string key_path = "r/" + account.get_storage_key() + "/" + uint64_to_full_hex(target_height) + "/" + xstring_utl::uint642hex(target_viewid) + "/p";
+            const std::string key_path = "r/" + account.get_storage_key() + "/" + uint64_to_full_hex(target_height) + "/" + xstring_utl::uint642hex(target_viewid) + "/f";
             return key_path;
         }
 
-        enum_xdbkey_type   xvdbkey_t::get_dbkey_type(const std::string & key)
-        {
-            enum_xdbkey_type type = enum_xdbkey_type_unknow;
-            const int key_length = (const int)key.size();
-            if(key_length < 4)
-                return type;
-            else if(key[1] != '/')
-                return enum_xdbkey_type_unknow;
-            
-            type = enum_xdbkey_type_keyvalue;//at least a valid key
-            
-            const char first_char = key[0];
-            const char last_char  = key[key_length - 1];
-            if(first_char == 'r') //new version
+        enum_xdbkey_type xvdbkey_t::get_dbkey_type_v2(const std::string & key, const char first_char, const char last_char, const int key_length) {
+            struct xvdbkey_first_last_char_type_t
             {
-                if(key[key_length - 2] != '/')
-                    return enum_xdbkey_type_unknow;
-                
-                switch(last_char)
-                {
-                    case 'h':
-                        type = enum_xdbkey_type_block_index;
-                        break;
-                
-                    case 'b':
-                        type = enum_xdbkey_type_block_object;
-                        break;
+                enum_xdbkey_type type;
+                char first;
+                char last;
+            };
 
-                    case 'l':
-                        type = enum_xdbkey_type_block_input_resource;
-                        break;
-                        
-                    case 'q':
-                        type = enum_xdbkey_type_block_output_resource;
-                        break;
-                        
-                    case 'a':
-                        type = enum_xdbkey_type_account_span;
-                        break;
-                    
-                    case 's':
-                        type = enum_xdbkey_type_state_object;
-                        break;
+            static  std::vector<xvdbkey_first_last_char_type_t> _fist_last_relations = {
+                {enum_xdbkey_type_account_meta,         'u', 'm'},
+                {enum_xdbkey_type_account_span_height,  'u', 'g'},
+                {enum_xdbkey_type_transaction,          'f', 'h'},
+                {enum_xdbkey_type_relaytx_index,        'f', 'l'},
 
-                    case 'p':
-                        type = enum_xdbkey_type_unit_proof;
-                        break;
+                {enum_xdbkey_type_unitstate_new,        's', 'u'},
+
+                {enum_xdbkey_type_account_span,         'r', 'a'},
+                {enum_xdbkey_type_block_object,         'r', 'b'},
+                {enum_xdbkey_type_block_out_offdata,    'r', 'f'},
+                {enum_xdbkey_type_block_index,          'r', 'h'},
+                {enum_xdbkey_type_block_input_resource, 'r', 'l'},                
+                {enum_xdbkey_type_mptnode,              's', 'm'},
+                {enum_xdbkey_type_unit_proof,           'r', 'p'},
+                {enum_xdbkey_type_block_output_resource,'r', 'q'},
+                {enum_xdbkey_type_state_object,         'r', 's'},
+            };
+
+            for (auto & v : _fist_last_relations) {
+                if (v.first == first_char && v.last == last_char) {
+                    return v.type;
                 }
             }
-            else if(first_char == 's')//new version
-            {
-                if(key[key_length - 2] != '/')
-                    return enum_xdbkey_type_unknow;
-                
-                if(last_char == 's')
-                    return enum_xdbkey_type_state_object;
-            }
-            else if(first_char == 'u')//new version
-            {
-                if(key[key_length - 2] != '/')
-                    return enum_xdbkey_type_unknow;
-                
-                if(last_char == 'm')
-                    type = enum_xdbkey_type_account_meta;
-                else if(last_char == 'a')
-                    type = enum_xdbkey_type_account_span;
-                else if(last_char == 'g')
-                    type = enum_xdbkey_type_account_span_height;
-            }
-            else if(first_char == 'f')//new version
+
+            return enum_xdbkey_type_unknow;
+        }
+
+        enum_xdbkey_type xvdbkey_t::get_dbkey_type_v1(const std::string & key, const char first_char, const char last_char, const int key_length) {
+            enum_xdbkey_type type = enum_xdbkey_type_unknow;
+            if(first_char == 'f')//new version
             {
                 type = enum_xdbkey_type_transaction;
             }
@@ -373,6 +342,31 @@ namespace top
             return type;
         }
 
+        enum_xdbkey_type   xvdbkey_t::get_dbkey_type(const std::string & key)
+        {
+            enum_xdbkey_type type = enum_xdbkey_type_unknow;
+            const int key_length = (const int)key.size();
+            if(key_length < 4)
+                return type;
+            else if(key[1] != '/')
+                return enum_xdbkey_type_unknow;
+            
+            type = enum_xdbkey_type_keyvalue;//at least a valid key
+            
+            const char first_char = key[0];
+            const char last_char  = key[key_length - 1];            
+
+            type = get_dbkey_type_v2(key, first_char, last_char, key_length);
+            if (type != enum_xdbkey_type_unknow) {
+                return type;
+            }
+            type = get_dbkey_type_v1(key, first_char, last_char, key_length);
+            if (type != enum_xdbkey_type_unknow) {
+                return type;
+            }
+            return enum_xdbkey_type_unknow;
+        }
+
         const std::string xvdbkey_t::get_dbkey_type_name(enum_xdbkey_type type)
         {
             static std::string key_name_array[enum_xdbkey_type_max] = {"unknow", "keyvalue", "block_index", "block_object",
@@ -394,7 +388,7 @@ namespace top
         {
             auto zone_bytes = to_bytes(account.get_zone_index());
             auto subaddr_bytes = to_bytes(account.get_ledger_subaddr());
-            auto const key_path = std::string{"r/"} + std::string{zone_bytes.begin(), zone_bytes.end()} + std::string{subaddr_bytes.begin(), subaddr_bytes.end()}  + "/" + key;
+            auto const key_path = std::string{"s/"} + std::string{zone_bytes.begin(), zone_bytes.end()} + std::string{subaddr_bytes.begin(), subaddr_bytes.end()}  + "/" + key + "/m";
             return key_path;
         }
 

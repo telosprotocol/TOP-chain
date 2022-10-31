@@ -1052,7 +1052,7 @@ bool xdb::delete_range(const std::string& begin_key,const std::string& end_key)
 {
     XMETRICS_TIMER(metrics::db_delete_tick);
     auto ret = m_db_impl->delete_range(begin_key, end_key);
-    XMETRICS_GAUGE(metrics::db_delete, ret ? 1 : 0);
+    XMETRICS_GAUGE(metrics::db_delete_range, ret ? 1 : 0);
     return ret;
 }
 

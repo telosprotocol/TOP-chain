@@ -34,8 +34,13 @@ namespace top
            enum_xdbkey_type_block_output_resource  = 0x0009,
            enum_xdbkey_type_account_span_height    = 0x000a, //account span height
            enum_xdbkey_type_unit_proof             = 0x000b, //unit proof
+           enum_xdbkey_type_block_out_offdata      = 0x000c,
+           enum_xdbkey_type_relaytx_index          = 0x000d,
+
+           enum_xdbkey_type_unitstate_new          = 0x000e,
+           enum_xdbkey_type_mptnode                = 0x000f,
            
-           enum_xdbkey_type_max             = 0x000F, //not over this max value
+           enum_xdbkey_type_max             = 0x00FF, //not over this max value
        };
  
        class xvdbkey_t
@@ -48,6 +53,8 @@ namespace top
            static const std::string  get_constractstore_version_key()   {return "/constractstore/version";}
            
            static enum_xdbkey_type   get_dbkey_type(const std::string & key);
+           static enum_xdbkey_type   get_dbkey_type_v2(const std::string & key, const char first_char, const char last_char, const int key_length);
+           static enum_xdbkey_type   get_dbkey_type_v1(const std::string & key, const char first_char, const char last_char, const int key_length);
            static const std::string  get_dbkey_type_name(enum_xdbkey_type type);
         public://old definition,put here just for compatible purpose
            //tx index ->link to block index

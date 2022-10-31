@@ -91,6 +91,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     db_read,
     db_write,
     db_delete,
+    db_delete_range,
     db_read_size,
     db_write_size,
     db_read_tick,
@@ -706,7 +707,13 @@ enum E_SIMPLE_METRICS_TAG : size_t {
 
     mpt_total_pruned_trie_node_cnt,
     mpt_cached_pruned_trie_node_cnt,
-
+    //prune
+    prune_block_table,
+    prune_block_unit,
+    prune_block_drand,
+    prune_block_timer,
+    prune_block_contract,
+    prune_state_unitstate,
     e_simple_total,
 };
 using xmetrics_tag_t = E_SIMPLE_METRICS_TAG;
