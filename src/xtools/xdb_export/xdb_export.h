@@ -280,7 +280,8 @@ private:
                 || type == base::enum_xdbkey_type_block_output_resource
                 || type == base::enum_xdbkey_type_unit_proof
                 || type == base::enum_xdbkey_type_block_index
-                || type == base::enum_xdbkey_type_state_object) {
+                || type == base::enum_xdbkey_type_state_object
+                || type == base::enum_xdbkey_type_block_out_offdata) {
                 if (key.find("Ta") != std::string::npos) {
                     add_table_key_type(value_size);
                 } else {

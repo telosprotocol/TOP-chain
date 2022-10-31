@@ -73,6 +73,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(db_read);
         RETURN_METRICS_NAME(db_write);
         RETURN_METRICS_NAME(db_delete);
+        RETURN_METRICS_NAME(db_delete_range);
         RETURN_METRICS_NAME(db_read_size);
         RETURN_METRICS_NAME(db_write_size);
         RETURN_METRICS_NAME(db_read_tick);
@@ -649,6 +650,13 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
 
         RETURN_METRICS_NAME(mpt_total_pruned_trie_node_cnt);
         RETURN_METRICS_NAME(mpt_cached_pruned_trie_node_cnt);
+        //prune
+        RETURN_METRICS_NAME(prune_block_table);
+        RETURN_METRICS_NAME(prune_block_unit);
+        RETURN_METRICS_NAME(prune_block_drand);
+        RETURN_METRICS_NAME(prune_block_timer);
+        RETURN_METRICS_NAME(prune_block_contract);
+        RETURN_METRICS_NAME(prune_state_unitstate);
 
         default: assert(false); return nullptr;
     }

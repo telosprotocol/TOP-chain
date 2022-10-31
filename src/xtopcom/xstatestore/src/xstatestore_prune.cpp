@@ -174,6 +174,7 @@ void xstatestore_prune_t::unitstate_prune_batch(const xaccounts_prune_info_t & a
         const std::string begin_delete_key = base::xvdbkey_t::create_prunable_unit_state_height_key(account_addr.vaccount(), account_pruned_height + 1);
         const std::string end_delete_key = base::xvdbkey_t::create_prunable_unit_state_height_key(account_addr.vaccount(), upper_height);
         //["begin_key", "end_key")
+        XMETRICS_GAUGE(metrics::xmetrics_tag_t::prune_state_unitstate, upper_height-account_pruned_height);
         if (base::xvchain_t::instance().get_xdbstore()->delete_range(begin_delete_key, end_delete_key)) {
             xinfo(
                 "xstatestore_prune_t::unitstate_prune_batch unitstate prune succ %s from %llu to %llu", account_addr.value().c_str(), account_pruned_height + 1, upper_height - 1);
