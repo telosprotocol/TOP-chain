@@ -246,15 +246,34 @@ TEST_F(test_state_prune, prune_exec_cons) {
 
     std::shared_ptr<xstatestore_resources_t> para;
     xstatestore_prune_t pruner(common::xaccount_address_t(mocktable.get_vaccount().get_account()), para);
+    base::xvchain_t::instance().set_node_type(false, true);
+
+    for (auto & block : tableblocks) {
+        auto state_key = base::xvdbkey_t::create_prunable_state_key(mocktable.get_vaccount(), block->get_height(), block->get_block_hash());
+        xdb->write(state_key, "test_state" + std::to_string(block->get_height())); // for test.
+        auto offdata_key = base::xvdbkey_t::create_prunable_block_output_offdata_key(mocktable.get_account(), block->get_height(), block->get_viewid());
+        xdb->write(offdata_key, "test_offdata" + std::to_string(block->get_height())); // for test.
+    }
+
     auto mock_units = mocktable.get_mock_units();
 
-    base::xvchain_t::instance().set_node_type(false, true);
+
 
     pruner.prune_imp(70);
 
     for (uint64_t h = 1; h <= max_block_height - 2; h++) {
         auto block = blockstore->load_block_object(mocktable.get_vaccount(), h, base::enum_xvblock_flag_committed, false);
         EXPECT_NE(block, nullptr);
+
+        auto state_key = base::xvdbkey_t::create_prunable_state_key(mocktable.get_vaccount(), h, block->get_block_hash());
+        auto offdata_key = base::xvdbkey_t::create_prunable_block_output_offdata_key(mocktable.get_account(), h, block->get_viewid());
+        std::string value_state;
+        xdb->read(state_key, value_state);
+        EXPECT_EQ(value_state.empty(), (h <= 30 && block->get_block_class() != base::enum_xvblock_class_full));
+        std::string value_offdata;
+        xdb->read(offdata_key, value_offdata);
+        EXPECT_EQ(value_offdata.empty(), (h <= 30 && block->get_block_class() != base::enum_xvblock_class_nil));
+
         evm_common::xh256_t root;
         auto ret = data::xblockextract_t::get_state_root(block.get(), root);
         EXPECT_EQ(ret, true);
@@ -276,6 +295,15 @@ TEST_F(test_state_prune, prune_exec_cons) {
     for (uint64_t h = 1; h <= max_block_height - 2; h++) {
         auto block = blockstore->load_block_object(mocktable.get_vaccount(), h, base::enum_xvblock_flag_committed, false);
         EXPECT_NE(block, nullptr);
+        auto state_key = base::xvdbkey_t::create_prunable_state_key(mocktable.get_vaccount(), h, block->get_block_hash());
+        auto offdata_key = base::xvdbkey_t::create_prunable_block_output_offdata_key(mocktable.get_account(), h, block->get_viewid());
+        std::string value_state;
+        xdb->read(state_key, value_state);
+        EXPECT_EQ(value_state.empty(), (h <= 55 && block->get_block_class() != base::enum_xvblock_class_full));
+        std::string value_offdata;
+        xdb->read(offdata_key, value_offdata);
+        EXPECT_EQ(value_offdata.empty(), (h <= 55 && block->get_block_class() != base::enum_xvblock_class_nil));
+
         evm_common::xh256_t root;
         auto ret = data::xblockextract_t::get_state_root(block.get(), root);
         EXPECT_EQ(ret, true);
