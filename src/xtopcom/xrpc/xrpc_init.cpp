@@ -80,7 +80,7 @@ xrpc_init::xrpc_init(std::shared_ptr<xvnetwork_driver_face_t> vhost,
         ws_server_ptr->start(ws_port);
         xdbg("start exchange rpc service.");
 
-        shared_ptr<xevm_server> evm_server_ptr = std::make_shared<xevm_server>(m_edge_handler, ip, true, store, block_store, txstore, elect_main, election_cache_data_accessor);
+        shared_ptr<xevm_server> evm_server_ptr = std::make_shared<xevm_server>(m_edge_handler, ip, true, block_store, txstore, elect_main, election_cache_data_accessor);
         evm_server_ptr->start(XGET_CONFIG(evm_port));
         break;
     }

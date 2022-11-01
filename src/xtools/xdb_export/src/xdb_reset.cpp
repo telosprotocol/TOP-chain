@@ -27,6 +27,7 @@ std::vector<std::pair<std::string, std::string>> stake_map_string_string_pair_li
     std::make_pair(sys_contract_zec_reward_addr, XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY),
     std::make_pair(sys_contract_zec_slash_info_addr, XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY),
     std::make_pair(sys_contract_zec_vote_addr, XPORPERTY_CONTRACT_TICKETS_KEY),
+    //todo, consortium address
 };
 
 std::vector<std::pair<std::string, std::string>> stake_string_pair_list = {

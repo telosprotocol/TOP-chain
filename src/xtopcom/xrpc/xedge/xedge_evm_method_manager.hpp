@@ -23,7 +23,7 @@
 #include "xrpc/xrpc_define.h"
 #include "xrpc/xrpc_method.h"
 #include "xrpc/xuint_format.h"
-
+#include "xdbstore/xstore_face.h"
 #include "xtxstore/xtxstore_face.h"
 #include "xverifier/xtx_verifier.h"
 #include "xverifier/xblacklist_verifier.h"
@@ -80,7 +80,7 @@ protected:
     std::shared_ptr<xrpc_query_manager> m_rpc_query_mgr;
     std::shared_ptr<xrpc_eth_query_manager> m_rpc_eth_query_mgr;
     unique_ptr<xfilter_manager>  m_rule_mgr_ptr;
-    observer_ptr<store::xstore_face_t> m_store;
+    //observer_ptr<store::xstore_face_t> m_store;
     top::observer_ptr<base::xvtxstore_t> m_txstore;
     bool m_archive_flag{false};  // for local query
     bool m_enable_sign{true};
@@ -119,17 +119,16 @@ xedge_evm_method_base<T>::xedge_evm_method_base(shared_ptr<xrpc_edge_vhost> edge
                                         observer_ptr<elect::ElectMain> elect_main,
                                         observer_ptr<top::election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
   : m_edge_local_method_ptr(top::make_unique<xedge_local_method<T>>(elect_main, xip2))
-  , m_rpc_query_mgr(std::make_shared<xrpc_query_manager>(store, block_store, nullptr, xtxpool_service_v2::xtxpool_proxy_face_ptr(nullptr), txstore, archive_flag))
-  , m_rpc_eth_query_mgr(std::make_shared<xrpc_eth_query_manager>(store, block_store, nullptr, xtxpool_service_v2::xtxpool_proxy_face_ptr(nullptr), txstore, archive_flag))
-  , m_rule_mgr_ptr(top::make_unique<xfilter_manager>())
-  , m_store(store)
+  , m_rpc_query_mgr(std::make_shared<xrpc_query_manager>(block_store, nullptr, xtxpool_service_v2::xtxpool_proxy_face_ptr(nullptr), txstore, archive_flag))
   , m_txstore{txstore}
   , m_archive_flag(archive_flag)
 {
     m_edge_handler_ptr = top::make_unique<T>(edge_vhost, ioc, election_cache_data_accessor);
     m_edge_handler_ptr->init();
+    //EDGE_REGISTER_V1_ACTION(T, sendTransaction);
     m_edge_tx_method_map.emplace(                                                                                                                                                  \
         pair<pair<string, string>, tx_method_handler>{pair<string, string>{"2.0", "eth_sendRawTransaction"}, std::bind(&xedge_evm_method_base<T>::sendTransaction_method, this, _1, _2)});
+
 }
 
 template <class T>

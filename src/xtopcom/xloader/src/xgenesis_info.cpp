@@ -398,11 +398,12 @@ static std::string const g_consortium_genesis_config =
 )T";
 
 const std::string & get_genesis_info() {
-
+/*
 #if defined(XBUILD_CONSORTIUM_TEST)
     #include "xgenesis_info_consortium_new_horizons.cpp"
         return g_consortium_test_genesis_config;
 #else
+*/
     #if defined(XBUILD_CI)
         return g_ci_genesis_config;
     #elif defined(XBUILD_GALILEO)
@@ -414,7 +415,7 @@ const std::string & get_genesis_info() {
     #else
         return g_mainnet_genesis_config;
     #endif
-#endif
+//#endif
 }
 
 }  // namespace top

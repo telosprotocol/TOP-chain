@@ -441,7 +441,7 @@ int32_t xbstate_ctx_t::token_deposit(const std::string & key, base::vtoken_t add
 
 int32_t xbstate_ctx_t::token_update(const std::string& key, base::vtoken_t update_token)
 {
-    xdbg("xbstate_ctx_t::token_update,property_modify_enter.address=%s,height=%ld,propname=%s,token=%ld", get_address().c_str(), get_chain_height(), key.c_str(), update_token);
+    xdbg("xbstate_ctx_t::token_update,property_modify_enter.address=%s,height=%ld,propname=%s,token=%ld", account_address().c_str(), height(), key.c_str(), update_token);
     auto propobj = load_token_for_write(key);
     CHECK_PROPERTY_NULL_RETURN(propobj, "xbstate_ctx_t::token_update", key);
     if (update_token < 0) {
