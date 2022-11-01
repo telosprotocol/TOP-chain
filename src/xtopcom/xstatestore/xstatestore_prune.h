@@ -57,7 +57,7 @@ private:
     // virtual uint64_t prune_exec(uint64_t from_height, uint64_t to_height) = 0;
     uint64_t prune_exec_storage(uint64_t from_height, uint64_t to_height);
     uint64_t prune_exec_storage_and_cons(uint64_t from_height, uint64_t to_height);
-    uint64_t prune_exec_cons(uint64_t from_height, uint64_t to_height);
+    uint64_t prune_exec_cons(uint64_t from_height, uint64_t to_height, uint64_t exec_height);
 
 private:
     mutable std::mutex m_prune_lock;

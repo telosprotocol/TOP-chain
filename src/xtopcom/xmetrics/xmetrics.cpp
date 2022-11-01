@@ -545,6 +545,8 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(state_delete_table_data);
         RETURN_METRICS_NAME(state_delete_unit_state);
         RETURN_METRICS_NAME(state_delete_mpt);
+        RETURN_METRICS_NAME(state_delete_by_full_table);
+        RETURN_METRICS_NAME(state_delete_create_mpt_fail);
 
         RETURN_METRICS_NAME(data_table_unpack_units);
         RETURN_METRICS_NAME(data_table_unpack_one_unit);
