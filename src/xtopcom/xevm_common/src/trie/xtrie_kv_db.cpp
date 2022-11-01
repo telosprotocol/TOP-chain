@@ -16,11 +16,11 @@ namespace trie {
 
 xtop_kv_db::xtop_kv_db(base::xvdbstore_t * db, common::xaccount_address_t table) : m_db(db), m_table(table) {
     xassert(db != nullptr);
-    m_node_key_prefix = base::xvdbkey_t::create_prunable_mpt_node_key(m_table.vaccount(), {});
+    m_node_key_prefix = base::xvdbkey_t::create_prunable_mpt_node_key_prefix(m_table.vaccount());
 }
 
 std::string xtop_kv_db::convert_key(xbytes_t const & key) const {
-    return m_node_key_prefix + std::string{key.begin(), key.end()};
+    return base::xvdbkey_t::create_prunable_mpt_node_key(m_node_key_prefix, std::string{key.begin(), key.end()});
 }
 
 void xtop_kv_db::Put(xbytes_t const & key, xbytes_t const & value, std::error_code & ec) {

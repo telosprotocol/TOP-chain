@@ -36,11 +36,10 @@ namespace top
            enum_xdbkey_type_unit_proof             = 0x000b, //unit proof
            enum_xdbkey_type_block_out_offdata      = 0x000c,
            enum_xdbkey_type_relaytx_index          = 0x000d,
-
-           enum_xdbkey_type_unitstate_new          = 0x000e,
+           enum_xdbkey_type_unitstate_v2           = 0x000e,
            enum_xdbkey_type_mptnode                = 0x000f,
            
-           enum_xdbkey_type_max             = 0x00FF, //not over this max value
+           enum_xdbkey_type_max, //not over this max value
        };
  
        class xvdbkey_t
@@ -117,8 +116,11 @@ namespace top
            
            static const std::string  create_prunable_unit_proof_key(const xvaccount_t & account, const uint64_t target_height);
            static const std::string  create_prunable_mpt_node_key(const xvaccount_t & account, const std::string & key);
+           static const std::string  create_prunable_mpt_node_key_prefix(const xvaccount_t & account);
+           static const std::string  create_prunable_mpt_node_key(const std::string & prefix, const std::string & key);
            
            static const std::string  get_account_prefix_key(const std::string & key);
+           static const std::string  get_account_address_from_key(const std::string & key);
        };
 
     }//end of namespace of base

@@ -254,7 +254,30 @@ namespace top
             const std::string key_path = "r/" + account.get_storage_key() + "/" + uint64_to_full_hex(target_height) + "/" + xstring_utl::uint642hex(target_viewid) + "/f";
             return key_path;
         }
+        const std::string  xvdbkey_t::create_prunable_unit_proof_key(const xvaccount_t & account, const uint64_t target_height)
+        {
+            //enum_xdb_cf_type_read_most = 'r'
+            const std::string key_path = "r/" + account.get_storage_key()+ "/" + uint64_to_full_hex(target_height) + "/p";
+            return key_path;
+        }
 
+        const std::string xvdbkey_t::create_prunable_mpt_node_key(const xvaccount_t & account, const std::string & key)
+        {
+            std::string prefix = create_prunable_mpt_node_key_prefix(account);
+            return create_prunable_mpt_node_key(prefix, key);
+        }
+        const std::string xvdbkey_t::create_prunable_mpt_node_key_prefix(const xvaccount_t & account)
+        {
+            auto zone_bytes = to_bytes(account.get_zone_index());
+            auto subaddr_bytes = to_bytes(account.get_ledger_subaddr());
+            auto const key_path = std::string{"s/"} + std::string{zone_bytes.begin(), zone_bytes.end()} + std::string{subaddr_bytes.begin(), subaddr_bytes.end()}  + "/";
+            return key_path;
+        }        
+        const std::string xvdbkey_t::create_prunable_mpt_node_key(const std::string & prefix, const std::string & key)
+        {
+            auto const key_path = prefix + key + "/m";
+            return key_path;
+        }
         enum_xdbkey_type xvdbkey_t::get_dbkey_type_v2(const std::string & key, const char first_char, const char last_char, const int key_length) {
             struct xvdbkey_first_last_char_type_t
             {
@@ -269,14 +292,14 @@ namespace top
                 {enum_xdbkey_type_transaction,          'f', 'h'},
                 {enum_xdbkey_type_relaytx_index,        'f', 'l'},
 
-                {enum_xdbkey_type_unitstate_new,        's', 'u'},
+                {enum_xdbkey_type_unitstate_v2,         's', 'u'},
+                {enum_xdbkey_type_mptnode,              's', 'm'},
 
                 {enum_xdbkey_type_account_span,         'r', 'a'},
                 {enum_xdbkey_type_block_object,         'r', 'b'},
                 {enum_xdbkey_type_block_out_offdata,    'r', 'f'},
                 {enum_xdbkey_type_block_index,          'r', 'h'},
                 {enum_xdbkey_type_block_input_resource, 'r', 'l'},                
-                {enum_xdbkey_type_mptnode,              's', 'm'},
                 {enum_xdbkey_type_unit_proof,           'r', 'p'},
                 {enum_xdbkey_type_block_output_resource,'r', 'q'},
                 {enum_xdbkey_type_state_object,         'r', 's'},
@@ -371,25 +394,11 @@ namespace top
         {
             static std::string key_name_array[enum_xdbkey_type_max] = {"unknow", "keyvalue", "block_index", "block_object",
                             "state_object", "account_meta", "account_span", "transaction", "input_resource",
-                            "output_resource",  "span_height", "unit_proof", "unknow", "unknow", "unknow"};
+                            "output_resource",  "span_height", "unit_proof", "out_offdata", "trelayx_index", "unitstate_v2", "mptnode"};
             if (type >= enum_xdbkey_type_max) {
-                return {};
+                return "unknow_2";
             }
             return key_name_array[type];
-        }
-        const std::string  xvdbkey_t::create_prunable_unit_proof_key(const xvaccount_t & account, const uint64_t target_height)
-        {
-            //enum_xdb_cf_type_read_most = 'r'
-            const std::string key_path = "r/" + account.get_storage_key()+ "/" + uint64_to_full_hex(target_height) + "/p";
-            return key_path;
-        }
-
-        const std::string xvdbkey_t::create_prunable_mpt_node_key(const xvaccount_t & account, const std::string & key)
-        {
-            auto zone_bytes = to_bytes(account.get_zone_index());
-            auto subaddr_bytes = to_bytes(account.get_ledger_subaddr());
-            auto const key_path = std::string{"s/"} + std::string{zone_bytes.begin(), zone_bytes.end()} + std::string{subaddr_bytes.begin(), subaddr_bytes.end()}  + "/" + key + "/m";
-            return key_path;
         }
 
         const std::string xvdbkey_t::get_account_prefix_key(const std::string & key)
@@ -403,5 +412,15 @@ namespace top
             }
             return key;
         }
+        const std::string xvdbkey_t::get_account_address_from_key(const std::string & key)
+        {
+            std::vector<std::string> values;
+            base::xstring_utl::split_string(key, '/', values);
+            if (values.size() >= 2) {
+                const std::string addr = xvaccount_t::compact_address_from(values[2]);
+                return addr;
+            }
+            return key;
+        }        
     }//end of namespace of base
 }//end of namespace top

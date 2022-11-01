@@ -1739,19 +1739,17 @@ std::string xdb_export_tools_t::get_account_key_string(const std::string& key)
 
 bool xdb_export_tools_t::db_scan_key_callback(const std::string& key, const std::string& value)
 {
-    std::string key_name_array[base::enum_xdbkey_type_unit_proof + 1] = { "unknow", "keyvalue", "block_index", "block_object",
-        "state_object", "account_meta", "account_span", "transaction", "block_input_resource",
-        "output_resource", "account_span_height", "unit_proof" };
-
     base::enum_xdbkey_type db_key_type = base::xvdbkey_t::get_dbkey_type(key);
 
     m_dbsize_info.add_key_type(key, db_key_type, key.size(), value.size());
+
+    std::string key_name = base::xvdbkey_t::get_dbkey_type_name(db_key_type);
 
     switch (db_key_type) {
         case base::enum_xdbkey_type_unknow:
         case base::enum_xdbkey_type_keyvalue:
         case base::enum_xdbkey_type_transaction: {
-                auto iter = m_db_parse_info.find(key_name_array[db_key_type]);
+                auto iter = m_db_parse_info.find(key_name);
                 if (iter != m_db_parse_info.end()) {
                     auto& info = iter->second;
                     info.count++;
@@ -1760,7 +1758,7 @@ bool xdb_export_tools_t::db_scan_key_callback(const std::string& key, const std:
                     xdbtool_parse_info_t parse_info { 0 };
                     parse_info.count = 1;
                     parse_info.size = value.length();
-                    m_db_parse_info.insert({ key_name_array[db_key_type], parse_info });
+                    m_db_parse_info.insert({ key_name, parse_info });
                 }
             } 
         break;
@@ -1770,7 +1768,8 @@ bool xdb_export_tools_t::db_scan_key_callback(const std::string& key, const std:
         case base::enum_xdbkey_type_block_output_resource:
         case base::enum_xdbkey_type_unit_proof:
         case base::enum_xdbkey_type_block_index:
-        case base::enum_xdbkey_type_state_object: {
+        case base::enum_xdbkey_type_state_object:
+        case base::enum_xdbkey_type_block_out_offdata: {
                 const std::string key_name = base::xvdbkey_t::get_account_prefix_key(key);
                 //std::cout << "db_key_type" << db_key_type << "key is "<< key << " key_name is " << key_name.c_str() <<std::endl;
                 auto iter = m_db_parse_info.find(key_name);
