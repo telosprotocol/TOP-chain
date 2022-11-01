@@ -277,21 +277,21 @@ uint64_t xstatestore_prune_t::prune_exec_cons(uint64_t from_height, uint64_t to_
             xobject_ptr_t<base::xvblock_t> latest_exec_block =
                 base::xvchain_t::instance().get_xblockstore()->load_block_object(get_account().vaccount(), exec_height, base::enum_xvblock_flag_committed, false);
             if (latest_exec_block == nullptr) {
-                xerror("xstatestore_prune_t::prune_exec_cons table:%s load latest exec block fail.height:%llu", get_account().value().c_str(), exec_height);
+                xerror("xstatestore_prune_t::prune_exec_cons table:%s load latest exec block fail.height:%llu", get_account().to_string().c_str(), exec_height);
                 return from_height - 1;
             }
 
             // use last full block's mpt to prune old mpt.
             uint64_t latest_full_height = latest_exec_block->get_last_full_block_height();
             if (latest_full_height < to_height) {
-                xerror("xstatestore_prune_t::prune_exec_cons table:%s lastest full height:%llu lower than prune to height:%llu,not prune this time.", get_account().value().c_str(), latest_full_height, to_height);
+                xerror("xstatestore_prune_t::prune_exec_cons table:%s lastest full height:%llu lower than prune to height:%llu,not prune this time.", get_account().to_string().c_str(), latest_full_height, to_height);
                 return from_height - 1;
             }
             auto & latest_full_hash = latest_exec_block->get_last_full_block_hash();
             xobject_ptr_t<base::xvblock_t> latest_full_block =
                 base::xvchain_t::instance().get_xblockstore()->load_block_object(get_account().vaccount(), exec_height, latest_full_hash, false);
             if (latest_full_block == nullptr) {
-                xwarn("xstatestore_prune_t::prune_exec_cons table:%s load latest full block fail.height:%llu", get_account().value().c_str(), latest_full_height);
+                xwarn("xstatestore_prune_t::prune_exec_cons table:%s load latest full block fail.height:%llu", get_account().to_string().c_str(), latest_full_height);
                 XMETRICS_GAUGE(metrics::state_delete_by_full_table, 0);
                 return from_height - 1;
             }
