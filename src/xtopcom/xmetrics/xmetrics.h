@@ -595,6 +595,8 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     state_delete_table_data,
     state_delete_unit_state,
     state_delete_mpt,
+    state_delete_by_full_table,
+    state_delete_create_mpt_fail,
 
     // data structure
     data_table_unpack_units,
