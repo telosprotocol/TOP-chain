@@ -2,6 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#pragma once
+
 #include "xstate_reset/xstate_json_parser.h"
 #include "xstate_reset/xstate_tablestate_reseter_base.h"
 #include "xstatectx/xstatectx_face.h"

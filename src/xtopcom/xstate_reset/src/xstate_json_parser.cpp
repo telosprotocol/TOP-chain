@@ -84,13 +84,19 @@ xstate_json_parser::xstate_json_parser(base::xvaccount_t const & table_account, 
     CONCAT_SHARDING_VARIABLE_NAME(FORK_NAME, 63);
 
 #define ADD_ONE_FORK(FORK_NAME)                                                                                                                                                    \
-    switch (table_account.get_zone_index()) {                                                                                                                                      \
+    switch (m_table_account.get_zone_index()) {                                                                                                                                    \
     case base::enum_chain_zone_consensus_index: {                                                                                                                                  \
         auto table_id = static_cast<uint16_t>(m_table_account.get_ledger_subaddr());                                                                                               \
-        switch (table_id) { SHARDING_SWITCH_CASE_64(FORK_NAME) }                                                                                                                   \
+        switch (table_id) {                                                                                                                                                        \
+            SHARDING_SWITCH_CASE_64(FORK_NAME)                                                                                                                                     \
+        default:                                                                                                                                                                   \
+            xerror("unknonw table_id %u", table_id);                                                                                                                               \
+        }                                                                                                                                                                          \
+        break;                                                                                                                                                                     \
     }                                                                                                                                                                              \
     case base::enum_chain_zone_evm_index: {                                                                                                                                        \
         m_json_data = json::parse(FORK_NAME##_Ta0004_0);                                                                                                                           \
+        break;                                                                                                                                                                     \
     }                                                                                                                                                                              \
     default: {                                                                                                                                                                     \
         xerror("not support this table for now : %s", m_table_account.get_address().c_str());                                                                                      \
