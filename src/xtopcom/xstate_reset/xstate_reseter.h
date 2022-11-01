@@ -2,6 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#pragma once
+
 #include "xbase/xns_macro.h"
 #include "xdata/xcons_transaction.h"
 #include "xstatectx/xstatectx_face.h"
