@@ -77,8 +77,8 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 8224200, "enable eth shard"},// 2022-06-17 10:00:00
             xfork_point_t{xfork_point_type_t::logic_time, 8820360, "enable relay"},
             xfork_point_t{xfork_point_type_t::logic_time, 8820360, "v1.6 version control"},
-            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "v1.7 version control"},
-            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "v1.7 sync protocal fork"},
+            xfork_point_t{xfork_point_type_t::logic_time, 9459720, "v1.7 version control"},
+            xfork_point_t{xfork_point_type_t::logic_time, 9460080, "v1.7 sync protocal fork"},
         };
         // !!!change!!! fork time for galileo
         xchain_fork_config_t  testnet_chain_config{
@@ -91,8 +91,8 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 8224200, "enable eth shard"},
             xfork_point_t{xfork_point_type_t::logic_time, 8820360, "enable relay"},
             xfork_point_t{xfork_point_type_t::logic_time, 8820360, "v1.6 version control"},
-            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "v1.7 version control"},
-            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "v1.7 sync protocal fork"},
+            xfork_point_t{xfork_point_type_t::logic_time, 9459720, "v1.7 version control"},
+            xfork_point_t{xfork_point_type_t::logic_time, 9460080, "v1.7 sync protocal fork"},
         };
 
         // !!!change!!! fork time for local develop net
@@ -106,8 +106,8 @@ namespace top {
             xfork_point_t{xfork_point_type_t::logic_time, 8224200, "enable eth shard"},
             xfork_point_t{xfork_point_type_t::logic_time, 8820360, "enable relay"},
             xfork_point_t{xfork_point_type_t::logic_time, 8820360, "v1.6 version control"},
-            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "v1.7 version control"},
-            xfork_point_t{xfork_point_type_t::logic_time, 10000000, "v1.7 sync protocal fork"},
+            xfork_point_t{xfork_point_type_t::logic_time, 9459720, "v1.7 version control"},//"2022-11-7 10:00:00"
+            xfork_point_t{xfork_point_type_t::logic_time, 9460080, "v1.7 sync protocal fork"},//"2022-11-7 11:00:00"
         };
 #endif  // #if defined(XCHAIN_FORKED_BY_DEFAULT)
         xchain_fork_config_t const & xtop_chain_fork_config_center::chain_fork_config() noexcept {
