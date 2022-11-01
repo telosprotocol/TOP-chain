@@ -2187,15 +2187,24 @@ std::unordered_map<common::xaccount_address_t, uint64_t> xdb_export_tools_t::get
         auto const kv_db = std::make_shared<evm_common::trie::xkv_db_t>(base::xvchain_t::instance().get_xdbstore(), table_address);
         auto xtrie_db = evm_common::trie::xtrie_db_t::NewDatabase(kv_db);
         auto const & leafs = top::evm_common::trie::xtrie_simple_iterator_t::trie_leafs(root_hash, make_observer(xtrie_db));
-        std::for_each(std::begin(leafs), std::end(leafs), [&qualified, &result](xbytes_t const & bytes) {
-            state_mpt::xaccount_info_t info;
-            info.decode({std::begin(bytes), std::end(bytes)});
+        if (qualified.empty()) {
+            std::for_each(std::begin(leafs), std::end(leafs), [&result](xbytes_t const & bytes) {
+                state_mpt::xaccount_info_t info;
+                info.decode({std::begin(bytes), std::end(bytes)});
 
-            if (std::find_if(std::begin(qualified), std::end(qualified), [&info](common::xaccount_address_t const & acc) { return acc == info.m_account; }) !=
-                std::end(qualified)) {
                 result.emplace(info.m_account, info.m_index.get_latest_unit_height());
-            }
-        });
+            });
+        } else {
+            std::for_each(std::begin(leafs), std::end(leafs), [&qualified, &result](xbytes_t const & bytes) {
+                state_mpt::xaccount_info_t info;
+                info.decode({std::begin(bytes), std::end(bytes)});
+
+                if (std::find_if(std::begin(qualified), std::end(qualified), [&info](common::xaccount_address_t const & acc) { return acc == info.m_account; }) !=
+                    std::end(qualified)) {
+                    result.emplace(info.m_account, info.m_index.get_latest_unit_height());
+                }
+            });
+        }
     }
 
     return result;
