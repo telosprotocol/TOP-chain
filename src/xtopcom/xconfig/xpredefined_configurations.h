@@ -597,6 +597,8 @@ XDECLARE_CONFIGURATION(keep_table_states_max_num, uint64_t, 256);
 XDECLARE_CONFIGURATION(prune_table_state_diff, uint64_t, 512);
 #endif
 
+XDECLARE_CONFIGURATION(table_fork_info_interval, xinterval_t, 10);
+
 #undef XDECLARE_CONFIGURATION
 
 NS_END2

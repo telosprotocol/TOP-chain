@@ -116,6 +116,18 @@ void xtop_contract_deploy::deploy_sys_contracts() {
 
     deploy(common::xaccount_address_t{sys_contract_sharding_reward_claiming_addr}, xnode_type_t::consensus_validator, "", enum_broadcast_policy_t::normal);
 
+    deploy(sharding_fork_info_contract_address,
+           xnode_type_t::consensus_validator,
+           "",
+           enum_broadcast_policy_t::normal,
+           std::string(sys_contract_beacon_timer_addr) + ",on_timer,C," + config::xtable_fork_info_interval_configuration_t::name);
+
+    deploy(eth_fork_info_contract_address,
+           xnode_type_t::evm_validator,
+           "",
+           enum_broadcast_policy_t::normal,
+           std::string(sys_contract_beacon_timer_addr) + ",on_timer,C," + config::xtable_fork_info_interval_configuration_t::name);
+
     deploy(zec_elect_eth_contract_address,
            xnode_type_t::zec,
            "all",
