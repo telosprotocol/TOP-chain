@@ -44,6 +44,8 @@
 #include "xvm/xsystem_contracts/xelection/xzec/xzec_elect_relay_contract.h"
 #include "xvm/xsystem_contracts/xelection/xzec/xzec_group_association_contract.h"
 #include "xvm/xsystem_contracts/xelection/xzec/xzec_standby_pool_contract.h"
+#include "xvm/xsystem_contracts/xfork/xsharding_fork_info_contract.h"
+#include "xvm/xsystem_contracts/xfork/xeth_fork_info_contract.h"
 #include "xvm/xsystem_contracts/xrelay/xrelay_make_block_contract.h"
 #include "xvm/xsystem_contracts/xregistration/xrec_registration_contract.h"
 #include "xvm/xsystem_contracts/xreward/xtable_reward_claiming_contract.h"
@@ -106,6 +108,8 @@ void xtop_contract_manager::instantiate_sys_contracts() {
     XREGISTER_CONTRACT(top::xvm::system_contracts::zec::xzec_elect_eth_contract_t, sys_contract_zec_elect_eth_addr, network_id);
     XREGISTER_CONTRACT(top::xvm::system_contracts::zec::xzec_elect_relay_contract_t, sys_contract_zec_elect_relay_addr, network_id);
     XREGISTER_CONTRACT(top::xvm::system_contracts::relay::xrelay_make_block_contract_t, relay_make_block_contract_address, network_id);
+    XREGISTER_CONTRACT(top::xvm::system_contracts::fork::xsharding_fork_info_contract_t, sys_contract_sharding_fork_info_addr, network_id);
+    XREGISTER_CONTRACT(top::xvm::system_contracts::fork::xeth_fork_info_contract_t, sys_contract_eth_fork_info_addr, network_id);
 }
 
 #undef XREGISTER_CONTRACT
