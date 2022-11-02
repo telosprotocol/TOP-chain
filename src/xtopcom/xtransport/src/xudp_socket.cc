@@ -12,6 +12,7 @@
 #include "xpbase/base/line_parser.h"
 #include "xpbase/base/top_log.h"
 #include "xpbase/base/top_utils.h"
+#include "xsafebox/safebox_proxy.h"
 #include "xtransport/udp_transport/multi_message_handler.h"
 #include "xtransport/udp_transport/transport_filter.h"
 #include "xtransport/utils/transport_utils.h"
@@ -509,7 +510,7 @@ int XudpSocket::SendDataWithProp(base::xpacket_t & packet, UdpPropertyPtr & udp_
     return kTransportSuccess;
 }
 int XudpSocket::GetSign(std::string & node_sign) {
-    if (global_node_id.empty() || global_node_signkey.empty())
+    if (global_node_id.empty() || global_node_pubkey.empty())
         return enum_xerror_code_fail;
 
     uint256_t hash_value;
@@ -519,12 +520,9 @@ int XudpSocket::GetSign(std::string & node_sign) {
     XMETRICS_GAUGE(metrics::cpu_hash_256_XudpSocket_calc, 1);
     //    node_sign.assign(hash_value.data(), hash_value.size());
 
-    top::utl::xecprikey_t pri_key_obj((uint8_t *)global_node_signkey.data());
-    //  top::uint256_t digest(hash);
-    top::utl::xecdsasig_t signature_obj = pri_key_obj.sign(hash_value);
-    node_sign.assign((char *)signature_obj.get_compact_signature(), signature_obj.get_compact_signature_size());
+    node_sign = top::safebox::xsafebox_proxy::get_instance().get_proxy_secp256_signature(global_node_pubkey, hash_value);
 
-    TOP_INFO("node_id:%s,signkey:%s,node_sign:%s", global_node_id.c_str(), HexEncode(global_node_signkey).c_str(), HexEncode(node_sign).c_str());
+    TOP_INFO("node_id:%s,node_sign:%s", global_node_id.c_str(), HexEncode(node_sign).c_str());
     return enum_xcode_successful;
 }
 bool XudpSocket::CloseXudp(xp2pudp_t * xudpobj_ptr) {

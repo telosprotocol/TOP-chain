@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include "topcl.h"
-#include "user_info.h"
 #include "xconfig/xpredefined_configurations.h"
+#include "xtopcl/include/topcl.h"
+#include "xtopcl/include/user_info.h"
 
 #include <string>
 

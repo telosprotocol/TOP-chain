@@ -11,6 +11,7 @@ public:
     xsignature() = default;
     xsignature(const xsignature &);
     xsignature(const std::string &);
+    // todo remove this construct, should not use prikey as parameter to generator signature here
     xsignature(const xsecret_rand & rand, BIGNUM * object, const xprikey & prikey, xschnorr * _schnorr);
     xsignature & operator=(const xsignature &);
 };

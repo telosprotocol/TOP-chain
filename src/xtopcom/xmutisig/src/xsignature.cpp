@@ -23,6 +23,7 @@ xsignature & xsignature::operator=(const xsignature & sign) {
 }
 
 xsignature::xsignature(const xsecret_rand & rand, BIGNUM * object, const xprikey & prikey, xschnorr * _schnorr) {
+    // todo move this logic to safebox.
     // sign = rand - object * prikey
     std::unique_ptr<BN_CTX, void (*)(BN_CTX *)> ctx(BN_CTX_new(), BN_CTX_free);
     assert(nullptr != ctx);

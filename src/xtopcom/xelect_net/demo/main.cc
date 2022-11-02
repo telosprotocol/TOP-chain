@@ -29,8 +29,6 @@ int main(int argc, char ** argv) {
         return 1;
     }
 
-    global_node_signkey = RandomString(256);
-
     elect::MulNetDemo demo;
     top::base::Config config;
     if (demo.HandleParamsAndConfig(argc, argv, config) != 0) {

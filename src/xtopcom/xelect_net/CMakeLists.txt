@@ -1,18 +1,11 @@
 cmake_minimum_required(VERSION 3.8)
 
-#compile definitions
-add_definitions(
-    -DUSE_STANDALONE_ASIO
-    -DASIO_STANDALONE
-)
-
 aux_source_directory(./src xelect_net_src)
 aux_source_directory(./proto xelect_net_proto)
 add_library(xelect_net STATIC ${xelect_net_src} ${xelect_net_proto})
 
 #add_dependencies(xelect_net xwrouter xkad xpbase xcommon xbasic)
-target_include_directories(xelect_net PRIVATE ${CMAKE_SOURCE_DIR}/src/xtopcom/xdepends/openssl_include/openssl/)
-target_link_libraries(xelect_net PRIVATE xwrouter xkad xpbase xgossip xtransport xcommon xbasic)
+target_link_libraries(xelect_net PRIVATE xwrouter xkad xpbase xgossip xtransport xhttp xcommon xbasic)
 
 if (XENABLE_P2P_TEST)
     target_compile_definitions(xelect_net PRIVATE XENABLE_P2P_TEST)

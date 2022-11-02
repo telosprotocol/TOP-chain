@@ -9,16 +9,16 @@ namespace top {
 
 namespace data {
 
-bool xuser_params::is_valid() {
+// bool xuser_params::is_valid() {
 
-    if (!top::xverifier::xtx_utl::address_is_valid(account) || !top::xverifier::xtx_utl::privkey_pubkey_is_match(signkey, publickey)) {
-        xwarn("[global_trace][xuser_params][fail], xuser params config check fail!");
-        return false;
-    }
+//     if (!top::xverifier::xtx_utl::address_is_valid(account) || !top::xverifier::xtx_utl::privkey_pubkey_is_match(signkey, publickey)) {
+//         xwarn("[global_trace][xuser_params][fail], xuser params config check fail!");
+//         return false;
+//     }
 
-    xdbg("[global_trace][xuser_params][success], xuser params config check success!");
-    return true;
-}
+//     xdbg("[global_trace][xuser_params][success], xuser params config check success!");
+//     return true;
+// }
 
 
 xstaticec_params::xstaticec_params()

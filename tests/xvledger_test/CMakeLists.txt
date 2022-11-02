@@ -12,10 +12,6 @@ target_link_libraries(xvledger_test PRIVATE
     gtest
 )
 
-if (XENABLE_TESTS)
-    enable_testing()
-endif()
-
 if (BUILD_METRICS)
     target_link_libraries(xvledger_test PRIVATE xmetrics)
 endif()

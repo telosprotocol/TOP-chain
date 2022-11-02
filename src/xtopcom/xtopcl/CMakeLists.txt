@@ -1,14 +1,12 @@
 add_compile_options(-static -Wall -Werror)
 
+if (DISABLE_REAL_STAKE)
+    add_definitions(-DXENABLE_MOCK_ZEC_STAKE)
+endif()
+
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-
-# compile definitions
-add_definitions(
-    -DUSE_STANDALONE_ASIO
-    -DASIO_STANDALONE
-)
 
 if( CMAKE_BUILD_TYPE STREQUAL "Debug" )
     add_definitions(-DLOG_CONSOLE)
@@ -51,13 +49,6 @@ endif()
 # SET TARGET
 add_library(xtopcl STATIC ${cppsdk_src})
 add_dependencies(xtopcl xconfig xdata xxbase xelect_net)
-target_include_directories(xtopcl PRIVATE ${CMAKE_SOURCE_DIR}/src/xtopcom/xdepends/openssl_include/openssl/)
-target_include_directories(xtopcl  PUBLIC   ${PROJ_DIR}/include
-                                            ${PROJ_DIR}/include/base
-                                            ${PROJ_DIR}/include/network
-                                            ${PROJ_DIR}/include/task
-                                            ${PROJ_DIR}/include/web
-                                            ${PROJ_DIR}/include/xtop
-)
-target_link_libraries(xtopcl PRIVATE ${LINK_ARGS} xconfig xdata xelect_net xxbase jsoncpp)
+
+target_link_libraries(xtopcl PRIVATE ${LINK_ARGS} xsafebox xconfig xdata xelect_net xxbase jsoncpp)
 

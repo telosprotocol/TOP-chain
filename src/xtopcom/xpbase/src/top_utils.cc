@@ -34,7 +34,7 @@ namespace top {
 
 std::shared_ptr<base::KadmliaKey> global_xid;
 std::string global_node_id("");
-std::string global_node_signkey("");
+std::string global_node_pubkey("");
 
 using byte = unsigned char;
 const char kHexAlphabet[] = "0123456789abcdef";

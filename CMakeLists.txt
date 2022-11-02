@@ -11,28 +11,63 @@ set(CMAKE_C_EXTENSIONS OFF)
 project(XTOPCHAIN CXX C)
 
 option(XENABLE_CODE_COVERAGE "Enable code coverage" OFF)
-option(XENABLE_TESTS "Enable building tests" OFF)
 option(BUILD_METRICS "build metrics" OFF)
 if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     set(BUILD_METRICS ON)
 endif()
-option(XDISABLE_RATELIMIT "Disable rate limit" OFF)
-option(XENABLE_CONFIG_CHECK "Enable config check when node boot" OFF)
-option(XENABLE_MOCK_ZEC_STAKE "Enable mocking stake for ZEC" OFF)
 option(XCHAIN_FORKED_BY_DEFAULT "Enable chain forked logic" OFF)
 option(ENABLE_METRICS_DATAOBJECT "Enable metrics dataobject" OFF)
 option(DISABLE_CORE_SIGNAL_CAPTURE "disable core signal capture" OFF)
 option(DISABLE_SIGNAL_CAPTURE "disable all signal capture" OFF)
 option(XUSE_JEMALLOC "using jemalloc" OFF)
 
-set(BUILD_EVM ON) # EVM as default VM for now
+option(XBUILD_TEST "Enable building tests" OFF) # UNIT TEST disabled as default, use build option test to enable it.
+if (XBUILD_TEST)
+    message(STATUS "ENABLE  building tests ${XBUILD_TEST}")
+endif()
 
-if (XENABLE_TESTS)
-    set(XENABLE_BLOCK_VERIFY OFF)
-    set(XSYNC_TEST ON)
-else()
-    set(XENABLE_BLOCK_VERIFY OFF)
-    set(XSYNC_TEST OFF)
+option(DISABLE_EVM "Disable EVM" OFF) # EVM as default VM for now, use build option disable_evm to disable evm.
+if (DISABLE_EVM)
+    message(STATUS "DISABLE WITH EVM ${DISABLE_EVM}")
+endif()
+
+option(DISABLE_RATELIMIT "Disable rate limit" OFF) # RPC has rate limit as default, use build option noratelimit to disable it.
+if (DISABLE_RATELIMIT)
+    message(STATUS "DISABLE rate limit ${DISABLE_RATELIMIT}")
+endif()
+
+option(DISABLE_REAL_STAKE "Disable real stake require" OFF) # Real Stake requied as default, use build option mock_zec_stake to disable it.
+if(DISABLE_REAL_STAKE)
+    message(STATUS "DISABLE real stake ${DISABLE_REAL_STAKE}")
+endif()
+
+option(STATIC_CONSENSUS "Enable static consensus" OFF)
+if (STATIC_CONSENSUS)
+    if (NOT DISABLE_REAL_STAKE)
+        message(FATAL_ERROR "should define mock_stake_zec before static_consensus")
+    endif()
+    message(STATUS "Enable static consensus ${STATIC_CONSENSUS}")
+endif()
+
+option(ELECT_WHEREAFTER "Enable static consensus, than continue election " OFF)
+if (ELECT_WHEREAFTER)
+    if (NOT STATIC_CONSENSUS)
+        message(FATAL_ERROR "should define static_consensus before elect_whereafter")
+    endif()
+    message(STATUS "Enable static consensus, than continue election ${ELECT_WHEREAFTER}")
+endif()
+
+option(CONSENSUS_SWAP "Enable static consensus, than swap consensus group nodes" OFF)
+if (CONSENSUS_SWAP)
+    if (NOT ELECT_WHEREAFTER)
+        message(FATAL_ERROR "should define elect_whereafter before consensus_swap")
+    endif()
+    message(STATUS "Enable static consensus, than swap consensus group nodes${CONSENSUS_SWAP}")
+endif()
+
+option(MAINNET_ACTIVATED "Mainnet activated" OFF) # Mainnet Activated if off as default, use build option mainnet_activated to enable it.
+if (MAINNET_ACTIVATED)
+    message(STATUS "Mainnet Activated ${MAINNET_ACTIVATED}")
 endif()
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
@@ -156,28 +191,6 @@ if (TCMALLOC)
     add_definitions(-DENABLE_TCMALLOC)
 endif()
 
-if (BUILD_NTP)
-    add_definitions(-DENABLE_NTP)
-endif()
-
-#add_definitions(-DEXTERNAL_PROPERTY)
-
-if (XDISABLE_RATELIMIT)
-    add_definitions(-DXDISABLE_RATELIMIT)
-endif()
-
-if (XENABLE_MOCK_ZEC_STAKE)
-    add_definitions(-DXENABLE_MOCK_ZEC_STAKE)
-endif()
-
-if (ENABLE_SCALE)
-    add_definitions(-DENABLE_SCALE)
-endif()
-
-if (XENABLE_CONFIG_CHECK)
-    add_definitions(-DCONFIG_CHECK)
-endif()
-
 # for slash test
 if (SLASH_TEST)
     add_definitions(-DSLASH_TEST)
@@ -188,18 +201,6 @@ if (WORKLOAD_TEST)
     add_definitions(-DWORKLOAD_TEST)
 endif()
 
-if (MAINNET_ACTIVATED)
-    add_definitions(-DMAINNET_ACTIVATED)
-endif()
-
-if (XENABLE_BLOCK_VERIFY)
-    add_definitions(-DENABLE_BLOCK_VERIFY)
-endif()
-
-if (XSYNC_TEST)
-    add_definitions(-DSYNC_TEST)
-endif()
-
 if (XENABLE_PSTACK)
     add_definitions(-DXENABLE_PSTACK)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -rdynamic")
@@ -207,27 +208,6 @@ endif()
 
 if (XENABLE_MEMCHECK_DBG)
     add_definitions(-DXENABLE_MEMCHECK_DBG)
-endif()
-
-if (STATIC_CONSENSUS)
-    if (NOT XENABLE_MOCK_ZEC_STAKE)
-        message(FATAL_ERROR "should define mock_stake_zec before static_consensus")
-    endif()
-    add_definitions(-DSTATIC_CONSENSUS)
-endif()
-
-if (ELECT_WHEREAFTER)
-    if (NOT STATIC_CONSENSUS)
-        message(FATAL_ERROR "should define static_consensus before elect_whereafter")
-    endif()
-    add_definitions(-DELECT_WHEREAFTER)
-endif()
-
-if (CONSENSUS_SWAP)
-    if (NOT ELECT_WHEREAFTER)
-        message(FATAL_ERROR "should define elect_whereafter before consensus_swap")
-    endif()
-    add_definitions(-DCONSENSUS_SWAP)
 endif()
 
 if (XENABLE_P2P_BENDWIDTH)
@@ -242,20 +222,12 @@ if (ENABLE_CREATE_USER)
     add_definitions(-DENABLE_CREATE_USER)
 endif()
 
-if (LONG_CONFIRM_CHECK)
-    add_definitions(-DLONG_CONFIRM_CHECK)
-endif()
-
 if (DB_KV_STATISTIC)
     add_definitions(-DDB_KV_STATISTIC)
 endif()
 
 if (DB_CACHE)
     add_definitions(-DDB_CACHE)
-endif()
-
-if (XENABLE_TESTS)
-    add_definitions(-DXENABLE_TESTS)
 endif()
 
 if (XBUILD_CI)
@@ -276,10 +248,6 @@ endif()
 
 if (BUILD_RUSTVM)
     add_definitions(-DBUILD_RUSTVM)
-endif()
-
-if (BUILD_EVM)
-    add_definitions(-DBUILD_EVM)
 endif()
 
 if (LEAK_TRACER)
@@ -339,7 +307,7 @@ message(STATUS "CMAKE_BUILD_TYPE:" ${CMAKE_BUILD_TYPE})
 message(STATUS "CMAKE_SYSTEM_NAME:" ${CMAKE_SYSTEM_NAME})
 message(STATUS "CMAKE_CXX_COMPILER_ID:" ${CMAKE_CXX_COMPILER_ID})
 message(STATUS "XENABLE_CODE_COVERAGE:" ${XENABLE_CODE_COVERAGE})
-message(STATUS "XENABLE_TESTS:" ${XENABLE_TESTS})
+message(STATUS "XBUILD_TEST:" ${XBUILD_TEST})
 message(STATUS "BUILD_METRICS:" ${BUILD_METRICS})
 message(STATUS "ADDRESS_SANITIZER:" ${ADDRESS_SANITIZER})
 message(STATUS "XCHAIN_FORKED_BY_DEFAULT:" ${XCHAIN_FORKED_BY_DEFAULT})
@@ -431,10 +399,7 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     # for xg
     find_library(CFLIB CoreFoundation)
     add_definitions(-DGUID_CFUUID)
-    add_definitions(-DXDISABLE_RATELIMIT)
     add_definitions(-DXBUILD_DEV)
-    add_definitions(-DXENABLE_MOCK_ZEC_STAKE)
-    add_definitions(-DMAINNET_ACTIVATED)
     # message("CFLIB: ${CFLIB}")
 
     # link_directories(src/externals/libs/${CMAKE_SYSTEM_NAME}/)
@@ -449,7 +414,7 @@ elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     add_subdirectory(src)
 endif()
 
-if (XENABLE_TESTS)
+if (XBUILD_TEST)
     file(STRINGS /etc/os-release distro REGEX "^NAME=")
     string(REGEX REPLACE "NAME=\"(.*)\"" "\\1" distro "${distro}")
     message("found ${distro}")

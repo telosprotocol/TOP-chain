@@ -1,7 +1,7 @@
 ﻿#include "../test_common.h"
 
 NS_BEG2(top, xmutisig)
-
+#if 0
 TEST_F(test_schnorr_mutisig, sign_verfiy_str) {
 
     assert(nullptr != m_data);
@@ -30,5 +30,5 @@ TEST_F(test_schnorr_mutisig, sign_verfiy_str) {
     EXPECT_TRUE(check);
 
 }
-
+#endif
 NS_END2

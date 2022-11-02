@@ -1,11 +1,10 @@
 #pragma once
-
+#if 0
 #include <memory>
 #include <functional>
 #include <iostream>
 
 #include "simplewebserver/server_http.hpp"
-#include "simplewebserver/client_http.hpp"
 
 // nlohmann_json
 #include <nlohmann/json.hpp>
@@ -106,3 +105,4 @@ private:
 } // namespace admin
 
 } // namespace top
+#endif

@@ -1,6 +1,27 @@
 cmake_minimum_required(VERSION 3.8)
 add_compile_options(-static -Wall -Werror)
 
+if (XBUILD_TEST)
+    add_definitions(-DXENABLE_TESTS)
+endif()
+
+if (DISABLE_REAL_STAKE)
+    add_definitions(-DXENABLE_MOCK_ZEC_STAKE)
+endif()
+if (MAINNET_ACTIVATED)
+    add_definitions(-DMAINNET_ACTIVATED)
+endif()
+
+if (STATIC_CONSENSUS)
+    add_definitions(-DSTATIC_CONSENSUS)
+endif()
+if (ELECT_WHEREAFTER)
+    add_definitions(-DELECT_WHEREAFTER)
+endif()
+if (CONSENSUS_SWAP)
+    add_definitions(-DCONSENSUS_SWAP)
+endif()
+
 aux_source_directory(./ xvm)
 aux_source_directory(./manager manager)
 aux_source_directory(./xcontract xcontract)

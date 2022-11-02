@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.8)
 
+if (XBUILD_TEST)
+    add_definitions(-DXENABLE_TESTS)
+endif()
+
 aux_source_directory(./src xbasic_src)
 add_library(xbasic STATIC ${xbasic_src})
 # IF (CMAKE_SYSTEM_NAME MATCHES "Darwin")

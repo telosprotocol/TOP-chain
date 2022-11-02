@@ -36,7 +36,7 @@ struct config_t {
     std::string  node_id;
     uint16_t     cpu_net_interval { 10 }; // monitor cpu and net, default 10s
     std::string  pid_file;
-    std::string  safebox_pid;
+    std::string  safebox_pid_file;
     std::string  com_log_path;
     std::string  db_target_path;
     std::string  admin_http_addr   { "127.0.0.1" }; // admin http server
@@ -92,7 +92,6 @@ bool isFileExist (const std::string& name);
 std::string get_working_path();
 int load_commandline(config_t &config, int argc, char *argv[]);
 bool get_default_miner(config_t& config,std::map<std::string, std::string> &default_miner);
-std::string get_prikey_from_safebox(const std::string &account);
 
 int StartNodeWithConfig(config_t& config);
 int StartNode(config_t& config);

@@ -21,7 +21,3 @@ if (BUILD_METRICS)
     target_link_libraries(xtxpoolsvr_v2 PRIVATE xmetrics)
 endif()
 
-#if (XENABLE_TESTS)
-#    enable_testing()
-#    add_subdirectory(test/unittest)
-#endif()
