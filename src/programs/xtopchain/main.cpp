@@ -56,9 +56,7 @@ void ntp_thread_proc() {
 }
 
 int start_monitor_thread() {
-#ifdef ENABLE_NTP
     // std::thread(ntp_thread_proc).detach();
-#endif
     return 0;
 }
 

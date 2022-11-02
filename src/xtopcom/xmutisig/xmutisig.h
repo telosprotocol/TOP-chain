@@ -16,21 +16,6 @@ private:
     void operator=(xmutisig const &) = delete;
 
 public:
-    /*
-     * get sign pair<sign, point>
-     * msg: biz message
-     * prikey: node private key
-     * sign: signature serialize str
-     * point: point serialize str
-     */
-
-    static uint32_t sign(const std::string & msg,
-                         const xprikey & prikey,
-                         std::string & sign,
-                         // std::string &point,
-                         xsecret_rand & rand,
-                         xrand_point & point,
-                         xschnorr * _schnorr);
 
     /*
      * verify sign pair<sign, point>, include muti_sign/muti_point

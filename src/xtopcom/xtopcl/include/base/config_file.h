@@ -3,7 +3,7 @@
 #include <json/value.h>
 #include <string>
 
-#include "singleton.h"
+#include "xtopcl/include/base/singleton.h"
 
 namespace xChainSDK {
 

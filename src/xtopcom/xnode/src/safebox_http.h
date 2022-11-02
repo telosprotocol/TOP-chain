@@ -1,11 +1,10 @@
 #pragma once
-
+#if 0
 #include <memory>
 #include <functional>
 #include <iostream>
 
 #include "simplewebserver/server_http.hpp"
-#include "simplewebserver/client_http.hpp"
 
 #include "xbasic/xtimer_driver_fwd.h"
 
@@ -191,3 +190,4 @@ private:
 } // namespace safebox 
 
 } // namespace top
+#endif

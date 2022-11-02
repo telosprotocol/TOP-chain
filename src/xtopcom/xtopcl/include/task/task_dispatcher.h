@@ -3,13 +3,13 @@
 #ifndef XCHAIN_SDK_TASK_DISPATCHER
 #define XCHAIN_SDK_TASK_DISPATCHER
 
-#include "global_definition.h"
-#include "request_result_definition.h"
-#include "request_task.h"
-#include "stat.h"
-#include "thread_queue.h"
-#include "trans_http.h"
-#include "xelect_net/include/http_client.h"
+#include "xtopcl/include/global_definition.h"
+#include "xtopcl/include/request_result_definition.h"
+#include "xtopcl/include/task/request_task.h"
+#include "xtopcl/include/base/stat.h"
+#include "xtopcl/include/base/thread_queue.h"
+#include "xtopcl/include/network/trans_http.h"
+#include "xelect_net/include/http_seed_fetcher.h"
 #include "xtopcl/include/global_definition.h"
 
 #include <map>
@@ -32,7 +32,7 @@ struct ResponseContent {
     std::string content;
 };
 
-class trans_ws;
+// class trans_ws;
 
 class task_dispatcher {
 public:
@@ -68,7 +68,7 @@ public:
     void handle_transfer_result(TransferResultPtr result);
     void handle_get_property_result(GetPropertyResultPtr result);
 
-    std::shared_ptr<trans_ws> get_ws_trans(const std::string & host);
+    // std::shared_ptr<trans_ws> get_ws_trans(const std::string & host);
 
     void thread_func();
 
@@ -91,9 +91,9 @@ private:
     ResultQueue result_queue_;
     std::thread thread_;
 
-    std::shared_ptr<trans_ws> ws_trans_{nullptr};
+    // std::shared_ptr<trans_ws> ws_trans_{nullptr};
 
-    top::elect::SeedHttpClient seed_client;
+    top::elect::HttpSeedFetcher seed_fetcher;
     static std::vector<std::string> seeds;
     static std::uint16_t index;
     static std::once_flag m_once_init_flag;

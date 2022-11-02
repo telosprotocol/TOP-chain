@@ -26,16 +26,16 @@
 #include <sstream>
 
 #include "xmonitor.h"
-#include "simplewebserver/client_http.hpp"
 #include "generated/version.h"
 #include "topio_setproctitle.h"
-#include "safebox_http.h"
 #include "CLI11.hpp"
 #include "xnode/xconfig.h"
 #include "xbasic/xthreading/xbackend_thread.hpp"
 #include "xbasic/xtimer_driver.h"
 #include "xcommon/xrole_type.h"
 #include "xconfig/xpredefined_configurations.h"
+#include "xsafebox/safebox_http_client.h"
+#include "xsafebox/safebox_http_server.h"
 
  // nlohmann_json
  #include <nlohmann/json.hpp>
@@ -51,7 +51,7 @@ static std::atomic<bool> child_reap{false};
 static std::atomic<uint32_t> child_exit_code {0};
 static pid_t child_pid = -1;
 static std::string pid_file;
-static std::string safebox_pid;
+static std::string safebox_pid_file;
 static std::vector<std::string> support_cmd_vec = {
     "help", "version", "node", "mining", "staking",
     "chain","transfer", "govern", "resource", "wallet", "db", "debug"};
@@ -545,8 +545,8 @@ void signal_handler(int signo) {
                     remove(pid_file.c_str());
                 }
             }
-        } else if (!safebox_pid.empty()){
-            std::ifstream in_pid(safebox_pid);
+        } else if (!safebox_pid_file.empty()){
+            std::ifstream in_pid(safebox_pid_file);
             if (in_pid.is_open()) {
                 char buff[16];
                 bzero(buff, sizeof(buff));
@@ -554,7 +554,7 @@ void signal_handler(int signo) {
                 uint32_t pid = std::stoi(std::string(buff));
                 auto runing_safebox_pid = static_cast<uint32_t>(getpid());
                 if (pid == runing_safebox_pid) {
-                    remove(safebox_pid.c_str());
+                    remove(safebox_pid_file.c_str());
                 }
             }
         }
@@ -764,7 +764,8 @@ bool get_default_miner(config_t& config,std::map<std::string, std::string> &defa
     in.close();
 
     // get miner private key from mem(safebox)
-    auto prikey = get_prikey_from_safebox(reader["default_miner_public_key"].get<std::string>());
+    safebox::SafeBoxHttpClient safebox_client{"127.0.0.1:7000"};
+    auto prikey = safebox_client.request_prikey(reader["default_miner_public_key"].get<std::string>());
     if (prikey.empty()) {
         return false;
     }
@@ -778,40 +779,6 @@ bool get_default_miner(config_t& config,std::map<std::string, std::string> &defa
 
     return true;
 }
-
-std::string get_prikey_from_safebox(const std::string &account) {
-    using HttpClient = SimpleWeb::Client<SimpleWeb::HTTP>;
-    std::string daemon_host = "127.0.0.1:7000";
-    HttpClient client(daemon_host);
-    json body = json::object();
-    body["method"] = "get";
-    body["account"] = account;
-    std::string token_request = body.dump();
-    std::string token_response_str;
-    try {
-        SimpleWeb::CaseInsensitiveMultimap header;
-        header.insert({"Content-Type", "application/json"});
-        auto token_response = client.request("POST", "/api/safebox", token_request, header);
-        token_response_str = token_response->content.string();
-    } catch (std::exception & e) {
-        std::cout << "catch exception:" << e.what() << std::endl;
-        return "";
-    }
-
-    json response;
-    try {
-        response = json::parse(token_response_str);
-    } catch (json::parse_error& e) {
-        std::cout << "json parse failed" << std::endl;
-        return "";
-    }
-    auto jfind = response.find("private_key");
-    if (jfind == response.end()) {
-        return "";
-    }
-    return response["private_key"].get<std::string>();
-}
-
 
 void block_loop() {
     while (true) {
@@ -980,7 +947,7 @@ bool datadir_check_init(config_t& config) {
     std::string log_path = config.datadir + "/log";
     config.com_log_path = log_path;
     config.pid_file = config.datadir + "/topio.pid";
-    config.safebox_pid = config.datadir + "/safebox.pid";
+    config.safebox_pid_file = config.datadir + "/safebox.pid";
 
     if (!isDirExist(config.datadir)) {
         int mk_status = mkdir(config.datadir.c_str(), 0755);
@@ -1042,7 +1009,7 @@ int StartNodeSafeBox(const std::string& safebox_addr, uint16_t safebox_port, std
     out_pid << std::to_string(pid);
     out_pid.flush();
     out_pid.close();
-    safebox_pid = pid_file;
+    safebox_pid_file = pid_file;
 
     // set process title
     std::string new_title = "node safebox process";
@@ -1054,7 +1021,7 @@ int StartNodeSafeBox(const std::string& safebox_addr, uint16_t safebox_port, std
 
     auto io_obj = std::make_shared<top::xbase_io_context_wrapper_t>();
     auto timer_driver = std::make_shared<top::xbase_timer_driver_t>(io_obj);
-    auto safebox_http_server = std::make_shared<safebox::SafeboxHttpServer>(safebox_addr, safebox_port, timer_driver);
+    auto safebox_http_server = std::make_shared<safebox::SafeBoxHttpServer>(safebox_addr, safebox_port, timer_driver);
     if (!safebox_http_server) {
         return -1;
     }
@@ -1367,8 +1334,12 @@ int filter_node_commandline(config_t &config, int argc, char *argv[]) {
     safeboxnode->add_option("--http_addr", safebox_addr, "safebox http server addr(default: 127.0.0.1)");
     safeboxnode->add_option("--http_port", safebox_port, "safebox http server port(default: 7000)");
     safeboxnode->callback([&]() -> int {
-            return StartNodeSafeBox(safebox_addr, safebox_port, config.safebox_pid);
-            });
+        if (check_process_running(config.safebox_pid_file)) {
+            std::cout << "safebox already running" << std::endl;
+            return -1;
+        }
+        return StartNodeSafeBox(safebox_addr, safebox_port, config.safebox_pid_file);
+    });
 
     try {
         app.parse(argc, argv);
@@ -1400,9 +1371,9 @@ int main(int argc, char * argv[]) {
     // handle other(topcl/xnode/db) commands
     auto estatus  = ExecuteCommands(argc, argv, config);
 
-    if (!check_process_running(config.safebox_pid)) {
+    if (!check_process_running(config.safebox_pid_file)) {
         // every command will try to load safebox http server
-        StartNodeSafeBox(safebox::safebox_default_addr, safebox::safebox_default_port, config.safebox_pid);
+        StartNodeSafeBox(safebox::safebox_default_addr, safebox::safebox_default_port, config.safebox_pid_file);
     }
 
     return estatus;

@@ -1,3 +1,4 @@
+#if 0
 #include "xchaininit/admin_http.h"
 
 #include <iostream>
@@ -600,3 +601,4 @@ void AdminHttpServer::bind_route_callback_for_command() {
 } // namespace admin
 
 } // namespace top
+#endif

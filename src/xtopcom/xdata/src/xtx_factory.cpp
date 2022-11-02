@@ -134,8 +134,7 @@ xtransaction_ptr_t xtx_factory::create_nodejoin_tx(const std::string & sender,
                                                    const uint64_t & latest_sendtx_nonce,
                                                    const uint64_t & latest_sendtx_hash,
                                                    const std::string & func_param,
-                                                   const uint32_t deposit,
-                                                   const std::string & sign_key) {
+                                                   const uint32_t deposit) {
     xtransaction_ptr_t tx;
     auto fire_time = xtransaction_t::get_gmttime_s();
     if (top::chain_fork::xtop_chain_fork_config_center::is_tx_forked_by_timestamp(fire_time)) {
@@ -152,11 +151,6 @@ xtransaction_ptr_t xtx_factory::create_nodejoin_tx(const std::string & sender,
     tx->set_deposit(deposit);
     tx->set_digest();
 
-    utl::xecprikey_t pri_key_obj((uint8_t*)sign_key.data());
-    utl::xecdsasig_t signature_obj = pri_key_obj.sign(tx->digest());
-    auto signature = std::string(reinterpret_cast<char *>(signature_obj.get_compact_signature()), signature_obj.get_compact_signature_size());
-    tx->set_authorization(signature);
-    tx->set_len();
     return tx;
 }
 

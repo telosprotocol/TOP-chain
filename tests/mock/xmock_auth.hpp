@@ -94,7 +94,7 @@ public:
         return merge_muti_sign(muti_nodes_signatures, for_block->get_cert());
     }
 
-    const std::string get_prikey(const xvip2_t & signer) override {
+    const std::string get_pubkey(const xvip2_t & signer) override {
         return {};
     }
 

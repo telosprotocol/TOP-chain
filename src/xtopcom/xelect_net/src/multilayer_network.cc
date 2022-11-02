@@ -4,8 +4,8 @@
 #include "xelect_net/include/multilayer_network.h"
 
 #include "xdb/xdb_factory.h"
-#include "xelect_net/include/http_client.h"
-#include "xelect_net/include/https_client.h"
+#include "xelect_net/include/http_seed_fetcher.h"
+#include "xelect_net/include/https_seed_fetcher.h"
 #include "xkad/routing_table/routing_utils.h"
 #include "xtransport/udp_transport/udp_transport.h"
 #include "xwrouter/multi_routing/multi_routing.h"
@@ -255,22 +255,14 @@ int MultilayerNetwork::HandleParamsAndConfig(const top::data::xplatform_params &
 
     std::vector<std::string> url_seeds;
     if (platform_param.url_endpoints.find("https://") != std::string::npos) {
-        auto seed_http_client = std::make_shared<SeedHttpsClient>(platform_param.url_endpoints);
-        if (!seed_http_client) {
-            xwarn("[seeds] create seed_http_client failed");
-            return endpoints_status;
-        }
-        if (!seed_http_client->GetSeeds(url_seeds)) {
+        HttpsSeedFetcher seed_fetcher{platform_param.url_endpoints};
+        if (!seed_fetcher.GetSeeds(url_seeds)) {
             xwarn("[seeds] get public endpoints failed from url:%s", platform_param.url_endpoints.c_str());
             return endpoints_status;
         }
     } else {  // http scheme
-        auto seed_http_client = std::make_shared<SeedHttpClient>(platform_param.url_endpoints);
-        if (!seed_http_client) {
-            xwarn("[seeds] create seed_http_client failed");
-            return endpoints_status;
-        }
-        if (!seed_http_client->GetSeeds(url_seeds)) {
+        HttpSeedFetcher seed_fetcher{platform_param.url_endpoints};
+        if (!seed_fetcher.GetSeeds(url_seeds)) {
             xwarn("[seeds] get public endpoints failed from url:%s", platform_param.url_endpoints.c_str());
             return endpoints_status;
         }

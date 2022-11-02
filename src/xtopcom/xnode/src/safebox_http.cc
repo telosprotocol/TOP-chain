@@ -1,3 +1,4 @@
+#if 0
 #include "safebox_http.h"
 
 #include <iostream>
@@ -440,3 +441,4 @@ void SafeboxHttpServer::bind_route_callback_for_command() {
 } // namespace admin
 
 } // namespace top
+#endif

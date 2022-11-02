@@ -13,12 +13,3 @@ target_link_libraries(xblockmaker_test PRIVATE
     xvm xcertauth xvnetwork xchain_upgrade xdata xloader xgenesis
     gtest
 )
-
-# if (BUILD_METRICS)
-#     add_dependencies(xblockmaker_test xmetrics)
-#     target_link_libraries(xblockmaker_test PRIVATE xmetrics)
-# endif()
-
-if (XENABLE_TESTS)
-    enable_testing()
-endif()

@@ -11,7 +11,3 @@ target_link_libraries(xmigrate_test PRIVATE
     xbase
     gtest
 )
-
-if (XENABLE_TESTS)
-    enable_testing()
-endif()

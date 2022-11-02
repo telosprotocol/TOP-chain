@@ -32,13 +32,8 @@ NS_BEG2(top, election)
 using namespace base;
 using namespace data;
 
-xvnode_house_t::xvnode_house_t(common::xnode_id_t const & node_id, std::string const & sign_key,
-        xobject_ptr_t<base::xvblockstore_t> const & blockstore, observer_ptr<mbus::xmessage_bus_face_t> const & bus):
-xvnodesrv_t(),
-m_node_id(node_id),
-m_sign_key(sign_key),
-m_blockstore(blockstore),
-m_bus(bus) {
+xvnode_house_t::xvnode_house_t(common::xnode_id_t const & node_id, xobject_ptr_t<base::xvblockstore_t> const & blockstore, observer_ptr<mbus::xmessage_bus_face_t> const & bus)
+  : xvnodesrv_t(), m_node_id(node_id), m_blockstore(blockstore), m_bus(bus) {
 }
 
 base::xauto_ptr<base::xvnode_t> xvnode_house_t::get_node(const xvip2_t & target_node) const {
@@ -294,17 +289,13 @@ void xvnode_house_t::add_group(const std::string &elect_address, uint64_t elect_
                             xip2.size(),
                             xip2.height()
                         };
-                        std::string pri_key{""};
-                        if (m_node_id == bundle.account_address()) {
-                            pri_key = DecodePrivateString(m_sign_key);
-                        }
                         auto pub_key = base::xstring_utl::base64_decode(bundle.election_info().public_key().to_string());
 #if 0
                         xdbg("[add_group222][add_node] account %s publickey:%s",
                             bundle.node_id().value().c_str(),
                             bundle.election_info().public_key.to_string().c_str());
 #endif
-                        auto * node = new xvnode_wrap_t{bundle.account_address().value(), node_xip2.value(), pub_key, pri_key};
+                        auto * node = new xvnode_wrap_t{bundle.account_address().value(), node_xip2.value(), pub_key};
 #if 0
                         xdbg("[add_group222][add_node] %lu, %lu -> %lu, %lu",
                             xip2.value().high_addr,

@@ -290,7 +290,7 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
                 set_tx_account_state(unitstate, tx);
             }
         } else {
-#ifdef BUILD_EVM
+#ifdef TXEXECUTOR_ENABLE_EVM
             gasfee.preprocess(ec);
             if (ec) {
                 vmoutput.m_ec = ec;

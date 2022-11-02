@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.8)
 include_directories(SYSTEM ${CMAKE_CURRENT_SOURCE_DIR}/proto)
 
+if (DISABLE_REAL_STAKE)
+    add_definitions(-DXENABLE_MOCK_ZEC_STAKE)
+endif()
+
 aux_source_directory(./src xtransport_src)
 aux_source_directory(./proto proto_src)
 add_library(xtransport ${xtransport_src} ${proto_src})
@@ -10,7 +14,7 @@ target_include_directories(xtransport PRIVATE ${PROJECT_SOURCE_DIR}/src/xtopcom/
 
 set(SSL_LIB_PATH ${CMAKE_SOURCE_DIR}/src/xtopcom/xdepends/boringssl_static_libs/libbrssl.a;${CMAKE_SOURCE_DIR}/src/xtopcom/xdepends/boringssl_static_libs/libbrcrypto.a)
 target_link_libraries(xtransport PRIVATE xquic-static ${SSL_LIB_PATH})
-target_link_libraries(xtransport PUBLIC xpbase xutility xxbase protobuf jsoncpp xcrypto -lm -pthread)
+target_link_libraries(xtransport PUBLIC xsafebox xpbase xutility xxbase protobuf jsoncpp xcrypto -lm -pthread)
 
 add_dependencies(xtransport event_static)
 target_include_directories(xtransport PRIVATE ${CMAKE_SOURCE_DIR}/src/xtopcom/xdepends/libevent/include/) # for libevent header file
