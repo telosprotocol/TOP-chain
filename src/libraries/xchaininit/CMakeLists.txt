@@ -1,15 +1,12 @@
 cmake_minimum_required(VERSION 3.8)
 
+if (DISABLE_REAL_STAKE)
+    add_definitions(-DXENABLE_MOCK_ZEC_STAKE)
+endif()
+
 aux_source_directory(./src src)
 add_library(xchaininit ${src})
 
-#compile definitions
-add_definitions(
-    -DUSE_STANDALONE_ASIO
-    -DASIO_STANDALONE
-    # -D__STRICT_ANSI__
-    -DRPC_BUILD
-)
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     add_compile_options(-Wno-deprecated-declarations)
     add_compile_options(-Wno-write-strings)
@@ -55,6 +52,8 @@ target_link_libraries(xchaininit PRIVATE ${LINK_ARGS}
     xvnetwork
     db_tool
     xxbase
+    xhttp
+    xbasic
     jsoncpp
     -lpthread -ldl)
 

@@ -1,6 +1,14 @@
 #add_compile_options(-static -Wall -Werror)
 add_compile_options(-static)
 
+if (NOT DISABLE_EVM)
+    add_definitions(-DTXEXECUTOR_ENABLE_EVM)
+endif()
+
+if (DISABLE_REAL_STAKE)
+    add_definitions(-DXENABLE_MOCK_ZEC_STAKE)
+endif()
+
 include_directories(.)
 include_directories(./xcontract)
 include_directories(./xerror)
@@ -21,7 +29,7 @@ target_link_libraries(xtxexecutor PRIVATE
     xxbase
 )
 
-if (BUILD_EVM)
+if (NOT DISABLE_EVM)
     target_link_libraries(xtxexecutor PRIVATE xevm)
 endif()
 

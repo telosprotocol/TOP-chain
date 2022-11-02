@@ -5,8 +5,8 @@
 #include <string>
 #include <memory>
 #include <iostream>
-#include "trans_base.h"
-#include "task_info.h"
+#include "xtopcl/include/network/trans_base.h"
+#include "xtopcl/include/task/task_info.h"
 
 
 namespace xChainSDK

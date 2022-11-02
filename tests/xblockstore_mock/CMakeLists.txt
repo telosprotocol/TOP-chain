@@ -10,7 +10,3 @@ target_link_libraries(xblockstore_mock PRIVATE
     xblockstore
     xmetrics
 )
-
-if (XENABLE_TESTS)
-    enable_testing()
-endif()

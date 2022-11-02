@@ -1,29 +1,24 @@
 // Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-#ifndef ASIO_STANDALONE
-#define ASIO_STANDALONE
-#endif
-#ifndef USE_STANDALONE_ASIO
-#define USE_STANDALONE_ASIO
-#endif
 
 #include "xelect/client/xelect_client.h"
 
 #include "generated/version.h"
-#include "simplewebserver/client_http.hpp"
 #include "xbase/xutl.h"
 #include "xbasic/xutility.h"
 #include "xconfig/xconfig_register.h"
 #include "xdata/xchain_param.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xtx_factory.h"
+#include "xhttp/xhttp_client_base.h"
 #include "xmbus/xevent_store.h"
 #include "xpbase/base/top_log.h"
+#include "xpbase/base/top_utils.h"
 #include "xrpc/xerror/xrpc_error_code.h"
 #include "xrpc/xrpc_method.h"
 #include "xrpc/xuint_format.h"
-#include "xpbase/base/top_utils.h"
+#include "xsafebox/safebox_proxy.h"
 
 #include <cinttypes>
 
@@ -31,8 +26,17 @@ using namespace top::data;
 
 NS_BEG2(top, elect)
 
-using namespace base;           // NOLINT
-using HttpClient = SimpleWeb::Client<SimpleWeb::HTTP>;
+class BootstrapClient : public xhttp::xhttp_client_base_t {
+private:
+    using base_t = xhttp::xhttp_client_base_t;
+
+public:
+    BootstrapClient(std::string const & seed_edge_host) : base_t{seed_edge_host} {};
+
+    std::string Request(std::string const & request) {
+        return request_post_string("/", request);
+    }
+};
 
 void xelect_client_imp::bootstrap_node_join() {
     auto & config_register = top::config::xconfig_register_t::get_instance();
@@ -56,16 +60,15 @@ void xelect_client_imp::bootstrap_node_join() {
     size_t success_count{0};
     xinfo("enter bootstrap_node_join");
     for (auto i = 0u; i < try_count; ++i) {
-        for (auto& item : seed_edge_host_set) {
+        for (auto & item : seed_edge_host_set) {
             std::string seed_edge_host = item + ":" + http_port;
-            HttpClient client(seed_edge_host);
+            BootstrapClient client{seed_edge_host};
             xdbg("bootstrap to %s", seed_edge_host.c_str());
 
             try {
                 std::string token_request = "version=1.0&target_account_addr=" + user_params.account.value() + "&method=requestToken&sequence_id=1";
                 xdbg("token_request:%s", token_request.c_str());
-                auto token_response = client.request("POST", "/", token_request);
-                const auto& token_response_str = token_response->content.string();
+                auto token_response_str = client.Request(token_request);
                 xdbg("token_response:%s", token_response_str.c_str());
                 xJson::Reader reader;
                 xJson::Value token_response_json;
@@ -76,17 +79,16 @@ void xelect_client_imp::bootstrap_node_join() {
                 }
                 std::string token = token_response_json["data"][xrpc::RPC_TOKEN].asString();
 
-                //get last hash and nonce
-                std::string account_info_request = "version=1.0&target_account_addr=" + user_params.account.value() + "&method=getAccount&sequence_id=2&identity_token=" + token
-                    + "&body=" + SimpleWeb::Percent::encode("{\"params\": {\"account_addr\": \"" + user_params.account.value() + "\"}}");
+                // get last hash and nonce
+                std::string account_info_request = "version=1.0&target_account_addr=" + user_params.account.value() + "&method=getAccount&sequence_id=2&identity_token=" + token +
+                                                   "&body=" + client.percent_encode("{\"params\": {\"account_addr\": \"" + user_params.account.value() + "\"}}");
                 xdbg("account_info_request:%s", account_info_request.c_str());
-                auto account_info_response = client.request("POST", "/", account_info_request);
-                const auto& account_info_response_str = account_info_response->content.string();
+                auto account_info_response_str = client.Request(account_info_request);
                 xdbg("account_info_response:%s", account_info_response_str.c_str());
 
                 top::base::xstream_t param_stream(base::xcontext_t::instance());
                 param_stream << user_params.account;
-                param_stream << common::xnetwork_id_t{ static_cast<common::xnetwork_id_t::value_type>(top::config::to_chainid(XGET_CONFIG(chain_name))) };
+                param_stream << common::xnetwork_id_t{static_cast<common::xnetwork_id_t::value_type>(top::config::to_chainid(XGET_CONFIG(chain_name)))};
 #if defined XENABLE_MOCK_ZEC_STAKE
                 ENUM_SERIALIZE(param_stream, user_params.node_role_type);
                 param_stream << user_params.publickey;
@@ -106,12 +108,11 @@ void xelect_client_imp::bootstrap_node_join() {
                     last_hash = data::hex_to_uint64(last_trans_hash);
                 }
 
-                // get private key and sign
-                // xinfo("xelect_client_imp::bootstrap_node_join,user_params.signkey: %s", user_params.signkey.c_str());
-                std::string sign_key = DecodePrivateString(user_params.signkey);
-
                 uint32_t deposit = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit);
-                xtransaction_ptr_t tx = xtx_factory::create_nodejoin_tx(user_params.account.value(), nonce, last_hash, param, deposit, sign_key);
+                xtransaction_ptr_t tx = xtx_factory::create_nodejoin_tx(user_params.account.value(), nonce, last_hash, param, deposit);
+
+                tx->set_authorization(safebox::xsafebox_proxy::get_instance().get_proxy_secp256_signature(base::xstring_utl::base64_decode(user_params.publickey), tx->digest()));
+                tx->set_len();
 
                 std::string send_tx_request = "version=1.0&target_account_addr=" + user_params.account.value() + "&method=sendTransaction&sequence_id=3&token=" + token;
                 xJson::FastWriter writer;
@@ -124,17 +125,15 @@ void xelect_client_imp::bootstrap_node_join() {
 
                 tx_json["params"]["authorization"] = data::uint_to_str(tx->get_authorization().data(), tx->get_authorization().size());
                 xdbg("tx_json: %s", writer.write(tx_json).c_str());
-                send_tx_request += "&body=" + SimpleWeb::Percent::encode(writer.write(tx_json));
+                send_tx_request += "&body=" + client.percent_encode(writer.write(tx_json));
                 xdbg("send_tx_request: %s", send_tx_request.c_str());
 
-                auto send_tx_response = client.request("POST", "/", send_tx_request);
-                xkinfo("send_tx_response: %s", send_tx_response->content.string().c_str());
+                auto send_tx_response_str = client.Request(send_tx_request);
+                xkinfo("send_tx_response: %s", send_tx_response_str.c_str());
                 if (++success_count >= 3) {
                     break;
                 }
-            } catch(const SimpleWeb::system_error &e) {
-                xwarn("Client request error: %s", e.what());
-            } catch (const std::exception &e) {
+            } catch (const std::exception & e) {
                 xerror("Client exception error: %s", e.what());
             }
         }
@@ -151,7 +150,6 @@ void xelect_client_imp::bootstrap_node_join() {
         std::cout << "join chain network transaction ok" << std::endl;
         xinfo("join chain network transaction ok");
     }
-
 }
 
 NS_END2

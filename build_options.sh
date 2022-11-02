@@ -1,3 +1,5 @@
+#unset cmake cache 
+CMAKE_EXTRA_OPTIONS+=" -UXBUILD_TEST -UDISABLE_EVM -UDISABLE_RATELIMIT -UDISABLE_REAL_STAKE -UMAINNET_ACTIVATED -USTATIC_CONSENSUS -UELECT_WHEREAFTER -UCONSENSUS_SWAP"
 
 for option in $options
 do
@@ -19,7 +21,7 @@ do
         echo "Build Bounty testnet"
     ;;
     test)
-        CMAKE_EXTRA_OPTIONS+=" -DXENABLE_TESTS=ON"
+        CMAKE_EXTRA_OPTIONS+=" -DXBUILD_TEST=ON"
         if [ $osname == "Linux" ]; then
             CMAKE_EXTRA_OPTIONS+=" -DXENABLE_CODE_COVERAGE=ON"
         fi
@@ -45,24 +47,12 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DTCMALLOC=ON"
         echo "BUILD TCMALLOC mode"
     ;;
-    xmutisign_close)
-        CMAKE_EXTRA_OPTIONS+=" -DMUTI_SIGN_CLOSE=ON"
-        echo "MUTI_SIGN_CLOSE ON"
-    ;;
-    drop_commit)
-        CMAKE_EXTRA_OPTIONS+=" -DDROP_COMMIT_TEST=ON"
-        echo "LEADER_DROP_COMMIT_TEST ON"
-    ;;
-    eherror)
-        CMAKE_EXTRA_OPTIONS+=" -DXENABLE_EXCEPTION_AS_ERROR=ON"
-        echo "Enable XTHROW as an xerror log"
-    ;;
     noratelimit)
-        CMAKE_EXTRA_OPTIONS+=" -DXDISABLE_RATELIMIT=ON"
+        CMAKE_EXTRA_OPTIONS+=" -DDISABLE_RATELIMIT=ON"
         echo "Disable rate limit"
     ;;
     mock_stake_zec)
-        CMAKE_EXTRA_OPTIONS+=" -DXENABLE_MOCK_ZEC_STAKE=ON"
+        CMAKE_EXTRA_OPTIONS+=" -DDISABLE_REAL_STAKE=ON"
         echo "Enable mocking stake for ZEC"
     ;;
     debug)
@@ -80,14 +70,6 @@ do
     address_sanitizer)
         CMAKE_EXTRA_OPTIONS+=" -DADDRESS_SANITIZER=ON"
         echo "ADDRESS SANITIZER ON"
-    ;;
-    scale)
-        CMAKE_EXTRA_OPTIONS+=" -DENABLE_SCALE=ON"
-        echo "DECAY REDEEM TGAS DISK ENABLE_SCALE ON"
-    ;;
-    config_check)
-        CMAKE_EXTRA_OPTIONS+=" -DXENABLE_CONFIG_CHECK=ON"
-        echo "enable config check when node boot"
     ;;
     slash_test)
         CMAKE_EXTRA_OPTIONS+=" -DSLASH_TEST=ON"
@@ -137,10 +119,6 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DENABLE_CREATE_USER=ON"
         echo "BUILD WITH ENABLE_CREATE_USER"
     ;;
-    long_confirm_check)
-        CMAKE_EXTRA_OPTIONS+=" -DLONG_CONFIRM_CHECK=ON"
-        echo "BUILD WITH LONG_CONFIRM_CHECK"
-    ;;
     db_kv_statistic)
         CMAKE_EXTRA_OPTIONS+=" -DDB_KV_STATISTIC=ON"
         echo "BUILD WITH DB_KV_STATISTIC"
@@ -157,8 +135,8 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DBUILD_RUSTVM=ON"
         echo "BUILD RUSTVM(need cargo toolchain)"
     ;;
-    evm)
-        CMAKE_EXTRA_OPTIONS+=" -DBUILD_EVM=ON"
+    disable_evm)
+        CMAKE_EXTRA_OPTIONS+=" -DDISABLE_EVM=ON"
         echo "BUILD EVM(need cargo toolchain)"
     ;;
     leak_trace)

@@ -13,8 +13,3 @@ target_link_libraries(xvledger PRIVATE
     xconfig
     jsoncpp
 )
-
-# if (XENABLE_TESTS)
-#     enable_testing()
-#     add_subdirectory(test)
-# endif()

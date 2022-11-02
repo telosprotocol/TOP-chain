@@ -1,4 +1,4 @@
-#include "global_definition.h"
+#include "xtopcl/include/global_definition.h"
 
 xChainSDK::user_info g_userinfo;
 xChainSDK::user_info copy_g_userinfo;

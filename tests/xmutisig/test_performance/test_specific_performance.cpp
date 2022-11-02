@@ -5,6 +5,7 @@
 NS_BEG2(top, xmutisig)
 const uint32_t NUM = 10000;
 
+#if 0
 TEST_F(test_schnorr_mutisig, test_EC_POINT_mul_performance) {
     key_pair_t keypair = xschnorr::instance()->generate_key_pair();
     rand_pair_t rand_pair = xschnorr::instance()->generate_rand_pair();
@@ -33,5 +34,5 @@ TEST_F(test_schnorr_mutisig, test_EC_POINT_mul_performance) {
     std::cout << ms_total << "ms" << std::endl;
     std::cout << "xmutisign::EC_POINT_mul performance " << NUM / ms_total << "/ms" << std::endl;
 }
-
+#endif
 NS_END2

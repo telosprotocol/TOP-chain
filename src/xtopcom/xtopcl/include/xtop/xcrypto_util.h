@@ -7,7 +7,7 @@
 #include <array>
 #include <string>
 
-#include "user_info.h"
+#include "xtopcl/include/user_info.h"
 #include "xbase/xint.h"
 
 namespace top {

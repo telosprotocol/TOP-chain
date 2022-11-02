@@ -13,6 +13,7 @@
 #include "xchaininit/xconfig.h"
 #include "xchaininit/xchain_options.h"
 #include "xchaininit/xchain_params.h"
+#include "xchaininit/xchain_command_http_server.h"
 #include "xbase/xutl.h"
 #include "xbase/xhash.h"
 #include "xpbase/base/top_utils.h"
@@ -23,7 +24,6 @@
 #include "xloader/xconfig_genesis_loader.h"
 #include "xmetrics/xmetrics.h"
 #include "xapplication/xapplication.h"
-#include "xchaininit/admin_http.h"
 #include "xtopcl/include/global_definition.h"
 #include "xtopcl/include/topcl.h"
 #include "xverifier/xverifier_utl.h"
@@ -232,12 +232,20 @@ int topchain_start(const std::string& config_file) {
     chain_params.initconfig_using_configcenter();
     auto& user_params = data::xuser_params::get_instance();
     global_node_id = user_params.account.value();
-    global_node_signkey = DecodePrivateString(user_params.signkey);
+    global_node_pubkey = base::xstring_utl::base64_decode(user_params.publickey);
 
-#ifdef CONFIG_CHECK
-    // config check
-    if (!user_params.is_valid()) return 1;
-#endif
+    std::string sign_key;
+    if (!config_center.get("sign_key", sign_key)) {
+        assert(false);
+    }
+
+    auto node_signkey = DecodePrivateString(sign_key);  // will be moved
+
+    // clear cache.
+    sign_key.clear();
+    if (!config_center.set("sign_key", std::string{"***"})) {
+        assert(false);
+    }
 
     config_center.dump();
 
@@ -266,33 +274,20 @@ int topchain_start(const std::string& config_file) {
 
     MEMCHECK_INIT();
 
-    // start admin http service
+    // start chain command http server
     {
         uint16_t admin_http_port = 0;
         std::string admin_http_local_ip = "127.0.0.1";
         config_center.get("admin_http_addr", admin_http_local_ip);
         config_center.get<uint16_t>("admin_http_port", admin_http_port);
 
-        std::string webroot;
-#ifdef _WIN32
-        webroot = "C:\\";
-#elif __APPLE__
-        webroot = "/var";
-#elif __linux__
-        webroot = "/var";
-#elif __unix__
-        webroot = "/var";
-#else
-#error  "Unknown compiler"
-#endif
-
-        std::cout << "will start admin http, local_ip:" << admin_http_local_ip << " port:" << admin_http_port << " webroot:" << webroot << std::endl;
-        xinfo("will start admin http, local_ip:%s  port:%d webroot:%s", admin_http_local_ip.c_str(), admin_http_port, webroot.c_str());
-        auto admin_http = std::make_shared<admin::AdminHttpServer>(admin_http_local_ip, admin_http_port, webroot);
-        admin_http->Start();
+        std::cout << "will start chain command http server, local_ip:" << admin_http_local_ip << " port:" << admin_http_port << std::endl;
+        xinfo("will start chain command http server, local_ip:%s port:%d", admin_http_local_ip.c_str(), admin_http_port);
+        auto chain_command_server = std::make_shared<chain_command::ChainCommandServer>(admin_http_local_ip, admin_http_port);
+        chain_command_server->Start();
     }
 
-    application::xapplication_t app{user_params.account, xpublic_key_t{user_params.publickey}, user_params.signkey};
+    application::xapplication_t app{user_params.account, xpublic_key_t{global_node_pubkey}, std::move(node_signkey)};
     std::string v2_db_path = XGET_CONFIG(db_path) + "/db";  // TODO(jimmy) delete in v1.2.8
     if (false == db_migrate(v2_db_path)) {
         return 1;

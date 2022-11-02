@@ -16,7 +16,6 @@ using namespace top;
 int main(int argc, char* argv[]) {
     global_platform_type = kPlatform;
     global_node_id = RandomString(kNodeIdSize);
-    global_node_signkey = RandomString(kNodeIdSize);
     global_node_id_hash = std::string("");
 
     // load argv

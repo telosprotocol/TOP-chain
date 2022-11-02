@@ -1,12 +1,12 @@
 // Copyright (c) 2017-2018 Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-#include "protocol.h"
+#include "xtopcl/include/protocol.h"
 
-#include "base/utility.h"
-#include "global_definition.h"
-#include "task/task_dispatcher.h"
-#include "user_info.h"
+#include "xtopcl/include/base/utility.h"
+#include "xtopcl/include/global_definition.h"
+#include "xtopcl/include/task/task_dispatcher.h"
+#include "xtopcl/include/user_info.h"
 #include "xrpc/xuint_format.h"
 
 #include <assert.h>

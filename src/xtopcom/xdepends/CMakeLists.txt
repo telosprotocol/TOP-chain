@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.8)
 
 message("========== thrid-party BEGIN ============")
 
-if(XENABLE_TESTS)
+if(XBUILD_TEST)
     add_subdirectory(googletest)
 endif()
 

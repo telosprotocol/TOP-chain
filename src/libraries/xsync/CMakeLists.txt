@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 3.8)
 
 add_compile_options(-static)
 
+if (XBUILD_TEST)
+    add_definitions(-DSYNC_TEST)
+endif()
+
 aux_source_directory(./ src_dir)
 aux_source_directory(./src src_dir)
 

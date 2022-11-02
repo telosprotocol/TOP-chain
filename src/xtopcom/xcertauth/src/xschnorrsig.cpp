@@ -9,6 +9,7 @@
 #include "xsigndata.h"
 #include "xmutisig/xschnorr.h"
 #include "xmutisig/xmutisig.h"
+#include "xsafebox/safebox_proxy.h"
 
 
 namespace top
@@ -41,37 +42,18 @@ namespace top
                 xerror("xmutisig::do_sign,fail-bad params for signer(%s)",signer.get_account().c_str());
                 return std::string();
             }
-            if(signer.get_sign_prikey().empty())
-            {
-                xerror("xmutisig::do_sign,fail-an empty private key for signer(%s)",signer.get_account().c_str());
-                return std::string();
-            }
-            xmutisig::xprikey _singer_private_key(signer.get_sign_prikey());
-            if(_singer_private_key.bn_value() == nullptr)
-            {
-                xerror("xmutisig::do_sign,fail-an invalid private key for signer(%s)",signer.get_account().c_str());
-                return std::string();
-            }
-            xmutisig::xecc_rand_t * onetime_rand = new xmutisig::xecc_rand_t();
-            std::string schnorr_signature;
-            xmutisig::xmutisig::sign(sign_target_hash,
-                                     _singer_private_key,
-                                     schnorr_signature,
-                                     onetime_rand->_ecc_secret,
-                                     onetime_rand->_ecc_point,
-                                     xmutisig::xschnorr::instance());
+
+            auto signature_result = safebox::xsafebox_proxy::get_instance().get_proxy_signature(signer.get_sign_pubkey(), sign_target_hash);
             
-            if (schnorr_signature.empty())
+            if (signature_result.second.empty())
             {
                 xerror("xmutisig::do_sign,fail-sign for for signer(%s)",signer.get_account().c_str());
-                onetime_rand->release_ref();
                 return std::string();
             }
-            
-            xmutisigdata_t schnorr_sig_data(onetime_rand->_ecc_point.get_serialize_str(),schnorr_signature,get_group_nodes_count_from_xip2(signer.get_xip2_addr()),auth_mutisign_token);
+
+            xmutisigdata_t schnorr_sig_data(signature_result.first, signature_result.second, get_group_nodes_count_from_xip2(signer.get_xip2_addr()), auth_mutisign_token);
             schnorr_sig_data.get_nodebitset().set(get_node_id_from_xip2(signer.get_xip2_addr()));//mark who sign it
             
-            onetime_rand->release_ref();
             return schnorr_sig_data.serialize_to_string();//convert to string
         }
         

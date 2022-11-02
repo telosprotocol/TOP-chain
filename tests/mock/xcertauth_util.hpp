@@ -9,6 +9,7 @@
 #include "xcertauth/xcertauth_face.h"
 #include "xdata/xtableblock.h"
 #include "xrpc/xuint_format.h"
+#include "xsafebox/safebox_proxy.h"
 
 #include <random>
 #include <cinttypes>
@@ -42,8 +43,11 @@ private:
             utl::xecprikey_t node_prv_key;
             std::string _node_prv_key_str((const char*)node_prv_key.data(),node_prv_key.size());
             std::string _node_pub_key_str = node_prv_key.get_compress_public_key();
-            const std::string node_account  = node_prv_key.to_account_address('0', 0);
-            m_consensus_nodes.push_back(new base::xvnode_t(node_account,node_addr,_node_pub_key_str,_node_prv_key_str));
+            
+            safebox::xsafebox_proxy::get_instance().add_key_pair(xpublic_key_t{_node_pub_key_str}, std::move(_node_prv_key_str));
+
+            const std::string node_account = node_prv_key.to_account_address('0', 0);
+            m_consensus_nodes.push_back(new base::xvnode_t(node_account, node_addr, _node_pub_key_str));
         }
         m_consensus_group = new base::xvnodegroup_t(_shard_xipaddr,0,m_consensus_nodes);
         m_nodesvr->add_group(m_consensus_group);

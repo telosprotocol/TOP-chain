@@ -1,9 +1,8 @@
 #pragma once
 #include "CLI11.hpp"
-#include "api_method_imp.h"
-#include "xtopcl/include/web/client_http.hpp"
+#include "xtopcl/include/api_method_imp.h"
+#include "xtopcl/include/user_info.h"
 #include "xtopcl/include/xtop/topchain_type.h"
-#include "user_info.h"
 
 #include <functional>
 #include <map>
@@ -28,16 +27,13 @@ enum class password_type : uint8_t {
 
 class ApiMethod final {
 public:
-    using HttpClient = SimpleWeb::Client<SimpleWeb::HTTP>;
-
     ApiMethod();
     ~ApiMethod();
     bool set_default_prikey(std::ostringstream & out_str);
     int update_account(std::ostringstream & out_str);
     int update_account(std::ostringstream & out_str, xJson::Value & root);
-    xJson::Value get_response_from_daemon();
     string get_account_from_daemon();
-    string get_prikey_from_daemon(std::ostringstream & out_str);
+    string get_prikey_from_daemon();
     int set_prikey_to_daemon(const string & account, const string & pri_key, std::ostringstream & out_str, uint32_t expired_time = kExpirePeriod);
     int set_pw_by_file(const string & pw_path, string & pw);
     void tackle_null_query(std::ostringstream & out_str, std::string null_out = "");

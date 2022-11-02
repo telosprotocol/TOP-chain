@@ -1,5 +1,9 @@
 add_compile_options(-Wpedantic)
 
+if (DISABLE_REAL_STAKE)
+    add_definitions(-DXENABLE_MOCK_ZEC_STAKE)
+endif()
+
 aux_source_directory(./src src_dir)
 add_library(xcontract_common STATIC ${src_dir})
 
