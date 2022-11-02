@@ -203,6 +203,10 @@ base::xvaccount_t xtop_node_id::vaccount() const {
     return base::xvaccount_t{m_account_string};
 }
 
+xtable_address_t xtop_node_id::table_address() const {
+    return xtable_address_t::build_from(base::xvaccount_t::make_table_account_address(vaccount()));
+}
+
 int32_t xtop_node_id::serialize_to(base::xstream_t & stream) const {
     return do_write(stream);
 }
