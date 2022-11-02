@@ -697,5 +697,25 @@ xbytes_t xunit_bstate_t::raw_controller(common::xchain_uuid_t const chain_uuid, 
     return top::to_bytes(raw_data->query(top::to_string(chain_uuid)));
 }
 
+int32_t xunit_bstate_t::balance(uint64_t new_balance) {
+    return set_token_balance(XPROPERTY_BALANCE_AVAILABLE, static_cast<base::vtoken_t>(new_balance));
+}
+
+int32_t xunit_bstate_t::burn_balance(uint64_t new_burn_balance) {
+    return set_token_balance(XPROPERTY_BALANCE_BURN, static_cast<base::vtoken_t>(new_burn_balance));
+}
+
+int32_t xunit_bstate_t::tgas_balance(uint64_t new_tgas_balance) {
+    return set_token_balance(XPROPERTY_BALANCE_PLEDGE_TGAS, static_cast<base::vtoken_t>(new_tgas_balance));
+}
+
+int32_t xunit_bstate_t::vote_balance(uint64_t new_vote_balance) {
+    return set_token_balance(XPROPERTY_BALANCE_PLEDGE_VOTE, static_cast<base::vtoken_t>(new_vote_balance));
+}
+
+int32_t xunit_bstate_t::lock_balance(uint64_t new_lock_balance) {
+    return set_token_balance(XPROPERTY_BALANCE_LOCK, static_cast<base::vtoken_t>(new_lock_balance));
+}
+
 }  // namespace data
 }  // namespace top
