@@ -62,6 +62,12 @@ class xunit_bstate_t : public xbstate_ctx_t {
     std::string         get_storage(const std::string& index_str) const;
     uint64_t            available_tgas(uint64_t timer_height, uint64_t onchain_total_gas_deposit) const;
 
+    int32_t balance(uint64_t new_balance);
+    int32_t burn_balance(uint64_t new_burn_balance);
+    int32_t tgas_balance(uint64_t new_tgas_balance);
+    int32_t vote_balance(uint64_t new_vote_balance);
+    int32_t lock_balance(uint64_t new_lock_balance);
+
  public: // Set APIs
     int32_t     set_account_create_time(uint64_t clock);
     int32_t     set_tx_info_latest_sendtx_num(uint64_t num);
