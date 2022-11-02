@@ -20,7 +20,8 @@ xtop_vnode_role_proxy::xtop_vnode_role_proxy(observer_ptr<mbus::xmessage_bus_fac
                                              observer_ptr<state_sync::xstate_downloader_t> const & downloader)
   : m_txstore{txstore} {
     m_downloader = downloader;
-    m_cons_mgr = xunit_service::xcons_mgr_build(data::xuser_params::get_instance().account.value(),
+    m_cons_mgr = xunit_service::xcons_mgr_build(
+        data::xuser_params::get_instance().account.to_string(),
                                                 block_store,
                                                 txpool,
                                                 logic_timer,

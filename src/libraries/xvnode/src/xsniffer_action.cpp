@@ -28,7 +28,7 @@ void xtop_sniffer_action::call(observer_ptr<xtxpool_service_v2::xtxpool_proxy_fa
     xinfo("[xrole_context_t] call_contract in consensus mode with return code : %d, %s, %s %s %ld, %lld",
           r,
           tx->get_digest_hex_str().c_str(),
-          address.value().c_str(),
+          address.to_string().c_str(),
           data::to_hex_str(account->account_send_trans_hash()).c_str(),
           account->account_send_trans_number(),
           timestamp);
@@ -53,7 +53,7 @@ void xtop_sniffer_action::call(observer_ptr<xtxpool_service_v2::xtxpool_proxy_fa
     xinfo("[xrole_context_t::fulltableblock_event] call_contract in consensus mode with return code : %d, %s, %s %s %ld, %lld",
             r,
             tx->get_digest_hex_str().c_str(),
-            source_address.c_str(),
+          source_address.to_string().c_str(),
             data::to_hex_str(account->account_send_trans_hash()).c_str(),
             account->account_send_trans_number(),
             timestamp);

@@ -52,7 +52,7 @@ bool xtop_evm_contract_manager::execute_sys_contract(xbytes_t const & input, obs
     common::xaccount_address_t sys_contract_address{contract_address_str};
     if (m_sys_contract.find(sys_contract_address) == m_sys_contract.end()) {
         // todo need to add return err into output;
-        xwarn("[xtop_evm_contract_manager::execute_sys_contract] cannot find sys_contract: %s", sys_contract_address.value().c_str());
+        xwarn("[xtop_evm_contract_manager::execute_sys_contract] cannot find sys_contract: %s", sys_contract_address.to_string().c_str());
         return false;
     }
 
@@ -87,7 +87,7 @@ bool xtop_evm_contract_manager::execute_sys_contract(xbytes_t const & input, obs
                 }
             }
             output = top::to_bytes(return_output.SerializeAsString());
-            xdbg("[xtop_evm_contract_manager::execute_sys_contract] sys_contract: %s execute success", sys_contract_address.value().c_str());
+            xdbg("[xtop_evm_contract_manager::execute_sys_contract] sys_contract: %s execute success", sys_contract_address.to_string().c_str());
             return true;
         } else {
             top::evm_engine::precompile::PrecompileFailure return_error;
@@ -96,7 +96,7 @@ bool xtop_evm_contract_manager::execute_sys_contract(xbytes_t const & input, obs
             return_error.set_cost(contract_err.cost);
             return_error.set_output(top::to_string(contract_err.output));
             output = top::to_bytes(return_error.SerializeAsString());
-            xdbg("[xtop_evm_contract_manager::execute_sys_contract] sys_contract: %s execute error", sys_contract_address.value().c_str());
+            xdbg("[xtop_evm_contract_manager::execute_sys_contract] sys_contract: %s execute error", sys_contract_address.to_string().c_str());
             return false;
         }
     } catch (top::error::xtop_error_t const & eh) {

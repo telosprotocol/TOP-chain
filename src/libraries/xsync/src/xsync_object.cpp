@@ -18,8 +18,8 @@ xtop_sync_object::xtop_sync_object(observer_ptr<mbus::xmessage_bus_face_t> const
                                    observer_ptr<base::xiothread_t> const & sync_thread,
                                    std::vector<observer_ptr<base::xiothread_t>> const & sync_account_thread_pool,
                                    std::vector<observer_ptr<base::xiothread_t>> const & sync_handler_thread_pool):
-    m_bus{ bus },
-    m_instance(vhost->host_node_id().c_str()),
+    m_bus{ bus }, m_instance(vhost->host_node_id().to_string().c_str())
+  ,
     m_store_shadow(top::make_unique<sync::xsync_store_shadow_t>()),
     m_sync_store(top::make_unique<sync::xsync_store_t>(m_instance, make_observer(blockstore), m_store_shadow.get())),
     m_blacklist(top::make_unique<sync::xdeceit_node_manager_t>()),
@@ -136,7 +136,7 @@ common::xenum_node_type xtop_sync_object::get_table_type(const vnetwork::xaccoun
     } else if (account.base_address() == relay_table_address.base_address()) {
         return common::xnode_type_t::relay;
     }
-    xdbg("unknown table type: %s", account.c_str());
+    xdbg("unknown table type: %s", account.to_string().c_str());
     return common::xnode_type_t::invalid;
 }
 std::string xtop_sync_object::get_title(common::xenum_node_type type) const {

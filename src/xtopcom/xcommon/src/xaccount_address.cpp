@@ -47,7 +47,7 @@ xaccount_address_t append_table_id(xaccount_address_t const & address, xtable_id
     }
 
     ec = error::xerrc_t::table_id_mismatch;
-    xerror("append wrong table id %" PRIu16 " to address %s", table_id.value(), address.c_str());
+    xerror("append wrong table id %" PRIu16 " to address %s", table_id.value(), address.to_string().c_str());
 
     return {};
 }

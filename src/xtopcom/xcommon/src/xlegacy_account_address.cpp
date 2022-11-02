@@ -17,7 +17,7 @@ xtop_legacy_account_address::xtop_legacy_account_address(char const * v) : id_ba
 xtop_legacy_account_address::xtop_legacy_account_address(std::string v) : id_base_t{std::move(v)} {
 }
 
-xtop_legacy_account_address::xtop_legacy_account_address(xaccount_address_t const & address) : id_base_t{address.value()} {
+xtop_legacy_account_address::xtop_legacy_account_address(xaccount_address_t const & address) : id_base_t{address.to_string()} {
 }
 
 void xtop_legacy_account_address::swap(xtop_legacy_account_address & other) noexcept {

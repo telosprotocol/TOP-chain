@@ -610,9 +610,9 @@ xcontract_execution_fee_t xtop_contract_execution_context::action_preprocess(std
 
 xcontract_execution_fee_t xtop_contract_execution_context::execute_default_source_action(std::error_code & ec) {
     xassert(sender() == contract_state()->state_account_address());
-    xdbg("[xtop_contract_execution_context::execute_default_source_action] %s to %s", sender().value().c_str(), recver().value().c_str());
+    xdbg("[xtop_contract_execution_context::execute_default_source_action] %s to %s", sender().to_string().c_str(), recver().to_string().c_str());
 
-    if (sender().value() == sys_contract_zec_reward_addr) {
+    if (sender().to_string() == sys_contract_zec_reward_addr) {
         xdbg("[xtop_contract_execution_context::execute_default_source_action] reward contract issue, ignore");
         return {};
     }
@@ -682,7 +682,7 @@ xcontract_execution_fee_t xtop_contract_execution_context::execute_default_sourc
 xcontract_execution_fee_t xtop_contract_execution_context::execute_default_target_action(std::error_code & ec) {
     xassert((recver() == m_contract_state->state_account_address()) ||
             (consensus_action_stage() == data::xconsensus_action_stage_t::self && data::is_black_hole_address(common::xaccount_address_t{recver()})));
-    xdbg("[xtop_contract_execution_context::execute_default_target_action] %s to %s", sender().value().c_str(), recver().value().c_str());
+    xdbg("[xtop_contract_execution_context::execute_default_target_action] %s to %s", sender().to_string().c_str(), recver().to_string().c_str());
 
     xcontract_execution_fee_t fee_change;
     // step1: fee
@@ -716,7 +716,7 @@ xcontract_execution_fee_t xtop_contract_execution_context::execute_default_targe
 
 xcontract_execution_fee_t xtop_contract_execution_context::execute_default_confirm_action(std::error_code & ec) {
     xassert(sender() == contract_state()->state_account_address());
-    xdbg("[xtop_contract_execution_context::execute_default_confirm_action] %s to %s", sender().value().c_str(), recver().value().c_str());
+    xdbg("[xtop_contract_execution_context::execute_default_confirm_action] %s to %s", sender().to_string().c_str(), recver().to_string().c_str());
 
     xcontract_execution_fee_t fee_change;
     if (consensus_action_stage() == data::xconsensus_action_stage_t::self) {
@@ -776,8 +776,8 @@ void xtop_contract_execution_context::update_tgas_disk_sender(bool is_contract, 
     auto const min_tx_deposit = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit);
     if (!data::is_sys_contract_address(sender()) && tx_deposit < min_tx_deposit) {
         xwarn("[xtop_contract_execution_context::update_tgas_disk_sender] not_enough_deposit, sender: %s, recver: %s, deposit: %" PRIu64 ", min_deposit %" PRIu64,
-              sender().value().c_str(),
-              recver().value().c_str(),
+              sender().to_string().c_str(),
+              recver().to_string().c_str(),
               tx_deposit,
               min_tx_deposit);
         ec = error::xenum_errc::transaction_not_enough_deposit;

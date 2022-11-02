@@ -34,8 +34,8 @@ std::shared_ptr<xtop_unit_state_sync> xtop_unit_state_sync::new_state_sync(const
     sync->m_track_func = track_req;
     sync->m_db = db;
     sync->m_store = store;
-    sync->m_symbol = "unit: " + account.value() + ", height: " + std::to_string(height) + ", block_hash: " + index.get_latest_unit_hash();
-    xinfo("xtop_unit_state_sync::new_state_sync unit: %s, height: %lu, root: %s", account.c_str(), height, to_hex(block_hash).c_str());
+    sync->m_symbol = "unit: " + account.to_string() + ", height: " + std::to_string(height) + ", block_hash: " + index.get_latest_unit_hash();
+    xinfo("xtop_unit_state_sync::new_state_sync unit: %s, height: %lu, root: %s", account.to_string().c_str(), height, to_hex(block_hash).c_str());
     return sync;
 }
 
@@ -43,7 +43,7 @@ void xtop_unit_state_sync::run() {
     sync_unit(m_ec);
     if (m_ec) {
         xwarn("xtop_unit_state_sync::run sync_unit error, unit: %s, index: %s, error: %s, %s",
-              m_account.c_str(),
+              m_account.to_string().c_str(),
               m_index.dump().c_str(),
               m_ec.category().name(),
               m_ec.message().c_str());
@@ -148,7 +148,7 @@ void xtop_unit_state_sync::process_unit(state_req & req, std::error_code & ec) {
             return;
         }
     }
-    auto const key = base::xvdbkey_t::create_prunable_unit_state_key(m_account.value(), m_index.get_latest_unit_height(), {data.begin(), data.end()});
+    auto const key = base::xvdbkey_t::create_prunable_unit_state_key(m_account.to_string(), m_index.get_latest_unit_height(), {data.begin(), data.end()});
     m_db->set_value(key, {data.begin(), data.end()});
     m_sync_unit_finish = true;
 }
@@ -214,7 +214,9 @@ common::xnode_address_t xtop_unit_state_sync::send_message(const sync_peers & pe
     std::error_code ec;
     peers.network->send_to(random_fullnode, _msg, ec);
     if (ec) {
-        xwarn("xtop_state_sync::send_message send net error, %s, %s", random_fullnode.account_address().c_str(), peers.network->address().account_address().c_str());
+        xwarn("xtop_state_sync::send_message send net error, %s, %s",
+              random_fullnode.account_address().to_string().c_str(),
+              peers.network->address().account_address().to_string().c_str());
     }
     return random_fullnode;
 }

@@ -282,7 +282,7 @@ public:
       : m_account{std::move(account)}, m_publickey{std::move(public_key)} {}
 
     void serialize(base::xstream_t & stream) {
-        stream << m_account.value();
+        stream << m_account.to_string();
         stream << m_publickey;
     }
 
