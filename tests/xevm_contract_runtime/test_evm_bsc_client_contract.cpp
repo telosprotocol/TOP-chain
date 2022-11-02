@@ -21,7 +21,8 @@ public:
     }
 
     void init() {
-        auto bstate = make_object_ptr<base::xvbstate_t>(evm_eth_bridge_contract_address.value(), (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
+        auto bstate = make_object_ptr<base::xvbstate_t>(
+            evm_eth_bridge_contract_address.to_string(), (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
         auto canvas = make_object_ptr<base::xvcanvas_t>();
         bstate->new_string_map_var(data::system_contract::XPROPERTY_HEADERS, canvas.get());
         bstate->new_string_map_var(data::system_contract::XPROPERTY_HEADERS_SUMMARY, canvas.get());

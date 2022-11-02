@@ -546,15 +546,15 @@ void xunit_bstate_t::tep_token_owner(common::xchain_uuid_t const chain_uuid, com
         }
 
         ec = error::xerrc_t::erc20_owner_already_set;
-        xwarn("set TEP token owner failed: owner already set for chain uuid %" PRIu16 ". input owner account %s", static_cast<uint16_t>(chain_uuid), new_owner.c_str());
+        xwarn("set TEP token owner failed: owner already set for chain uuid %" PRIu16 ". input owner account %s", static_cast<uint16_t>(chain_uuid), new_owner.to_string().c_str());
         return;
     } while (false);
 
-    if (owner->insert(key, new_owner.value(), m_canvas.get()) == false) {
+    if (owner->insert(key, new_owner.to_string(), m_canvas.get()) == false) {
         ec = error::xerrc_t::update_state_failed;
         xerror("update XPROPERTY_PRECOMPILED_ERC20_OWNER_KEY failed. token_id %" PRIu32, static_cast<uint32_t>(chain_uuid));
     }
-    assert(owner->query(key) == new_owner.value());
+    assert(owner->query(key) == new_owner.to_string());
 }
 
 xobject_ptr_t<base::xmapvar_t<std::string>> xunit_bstate_t::raw_owner(std::error_code & ec) const {
@@ -652,15 +652,17 @@ void xunit_bstate_t::tep_token_controller(common::xchain_uuid_t const chain_uuid
         }
 
         ec = error::xerrc_t::erc20_controller_already_set;
-        xwarn("set TEP token controller failed: controller already set for chain uuid %" PRIu16 ". input controller account %s", static_cast<uint16_t>(chain_uuid), new_controller.c_str());
+        xwarn("set TEP token controller failed: controller already set for chain uuid %" PRIu16 ". input controller account %s",
+              static_cast<uint16_t>(chain_uuid),
+              new_controller.to_string().c_str());
         return;
     } while (false);
 
-    if (controller->insert(key, new_controller.value(), m_canvas.get()) == false) {
+    if (controller->insert(key, new_controller.to_string(), m_canvas.get()) == false) {
         ec = error::xerrc_t::update_state_failed;
         xerror("update XPROPERTY_PRECOMPILED_ERC20_CONTROLLER_KEY failed. token_id %" PRIu32, static_cast<uint32_t>(chain_uuid));
     }
-    assert(controller->query(key) == new_controller.value());
+    assert(controller->query(key) == new_controller.to_string());
 }
 
 xobject_ptr_t<base::xmapvar_t<std::string>> xunit_bstate_t::raw_controller(std::error_code & ec) const {

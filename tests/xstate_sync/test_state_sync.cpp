@@ -116,22 +116,22 @@ void test_state_sync_fixture::generate_state_mpt() {
 }
 
 void test_state_sync_fixture::generate_table_state() {
-    auto table_bstate = make_object_ptr<base::xvbstate_t>(table_account_address.value(), 100, 100, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
+    auto table_bstate = make_object_ptr<base::xvbstate_t>(table_account_address.to_string(), 100, 100, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
     {
         auto canvas = make_object_ptr<base::xvcanvas_t>();
-        table_bstate->new_string_var(table_account_address.value(), canvas.get());
-        auto obj = table_bstate->load_string_var(table_account_address.value());
-        obj->reset(table_account_address.value(), canvas.get());
+        table_bstate->new_string_var(table_account_address.to_string(), canvas.get());
+        auto obj = table_bstate->load_string_var(table_account_address.to_string());
+        obj->reset(table_account_address.to_string(), canvas.get());
     }
     std::string table_state_str;
     table_bstate->serialize_to_string(table_state_str);
     auto table_state = std::make_shared<data::xtable_bstate_t>(table_bstate.get());
     auto table_snapshot = table_state->take_snapshot();
     auto table_state_hash_str = base::xcontext_t::instance().hash(table_snapshot, enum_xhash_type_sha2_256);
-    auto table_block_hash = utl::xkeccak256_t::digest(table_account_address.value());
+    auto table_block_hash = utl::xkeccak256_t::digest(table_account_address.to_string());
     std::string table_block_hash_str((char *)table_block_hash.data(), table_block_hash.size());
 
-    auto table_bstate2 = make_object_ptr<base::xvbstate_t>(table_account_address.value(), 101, 101, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
+    auto table_bstate2 = make_object_ptr<base::xvbstate_t>(table_account_address.to_string(), 101, 101, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
     std::string table_state_str2;
     table_bstate2->serialize_to_string(table_state_str2);
     auto table_state2 = std::make_shared<data::xtable_bstate_t>(table_bstate2.get());
@@ -168,7 +168,7 @@ void test_state_sync_fixture::sync_helper() {
             stream >> id;
             std::error_code ec;
             auto req = m_track_reqs.at(id);
-            if (table == table_account_address.value() && height == table_height && xhash256_t(hash) == block_hash) {
+            if (table == table_account_address.to_string() && height == table_height && xhash256_t(hash) == block_hash) {
                 req.nodes_response.emplace_back(state_bytes);
             }
             m_syncer->deliver_req(req);
@@ -411,7 +411,7 @@ TEST_F(test_state_sync_fixture, test_assign_trie_tasks) {
     stream >> id;
     stream >> nodes_bytes;
     stream >> units_bytes;
-    EXPECT_EQ(table, table_account_address.value());
+    EXPECT_EQ(table, table_account_address.to_string());
     EXPECT_EQ(id, 100);
     EXPECT_EQ(nodes_bytes[0], root_hash.to_bytes());
     EXPECT_EQ(nodes_bytes.size(), 1);
@@ -491,7 +491,7 @@ TEST_F(test_state_sync_fixture, test_process_table_hash_mismatch) {
 
 TEST_F(test_state_sync_fixture, test_send_message) {
     base::xstream_t stream(base::xcontext_t::instance());
-    stream << table_account_address.value();
+    stream << table_account_address.to_string();
     stream << 100;
     std::vector<xbytes_t> nodes_bytes;
     std::vector<xbytes_t> units_bytes;
@@ -515,7 +515,7 @@ TEST_F(test_state_sync_fixture, test_send_message) {
 
 TEST_F(test_state_sync_fixture, test_send_message_error) {
     base::xstream_t stream(base::xcontext_t::instance());
-    stream << table_account_address.value();
+    stream << table_account_address.to_string();
     stream << 100;
     std::vector<xbytes_t> nodes_bytes;
     std::vector<xbytes_t> units_bytes;
@@ -562,7 +562,7 @@ TEST_F(test_state_sync_fixture, test_assign_table_tasks) {
     stream >> height;
     stream >> hash;
     stream >> id;
-    EXPECT_EQ(table, table_account_address.value());
+    EXPECT_EQ(table, table_account_address.to_string());
     EXPECT_EQ(hash, block_hash.to_bytes());
     EXPECT_EQ(height, table_height);
     EXPECT_EQ(id, 100);
@@ -737,7 +737,7 @@ TEST_F(test_state_sync_fixture, test_run_success) {
     th.join();
     EXPECT_EQ(m_syncer->is_done(), true);
     auto res = m_syncer->result();
-    EXPECT_EQ(res.account.value(), table_account_address.value());
+    EXPECT_EQ(res.account.to_string(), table_account_address.to_string());
     EXPECT_EQ(res.height, table_height);
     EXPECT_EQ(res.block_hash, block_hash);
     EXPECT_EQ(res.state_hash, state_hash);
@@ -767,7 +767,7 @@ TEST_F(test_state_sync_fixture, test_run_sync_table_error) {
     EXPECT_EQ(m_syncer->m_cancel, true);
     EXPECT_EQ(m_syncer->is_done(), true);
     auto res = m_syncer->result();
-    EXPECT_EQ(res.account.value(), table_account_address.value());
+    EXPECT_EQ(res.account.to_string(), table_account_address.to_string());
     EXPECT_EQ(res.height, table_height);
     EXPECT_EQ(res.block_hash, block_hash);
     EXPECT_EQ(res.state_hash, state_hash);
@@ -781,7 +781,7 @@ TEST_F(test_state_sync_fixture, test_run_cancel) {
     th.join();
     EXPECT_EQ(m_syncer->is_done(), true);
     auto res = m_syncer->result();
-    EXPECT_EQ(res.account.value(), table_account_address.value());
+    EXPECT_EQ(res.account.to_string(), table_account_address.to_string());
     EXPECT_EQ(res.height, table_height);
     EXPECT_EQ(res.block_hash, block_hash);
     EXPECT_EQ(res.state_hash, state_hash);

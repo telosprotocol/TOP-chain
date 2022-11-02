@@ -70,7 +70,7 @@ data::xcons_transaction_ptr_t xrelayblock_plugin_t::make_relay_make_block_contra
         std::string call_params = get_new_relay_election_data(statectx_ptr, timestamp);
         base::xstream_t stream(base::xcontext_t::instance());
         stream << call_params;
-        data::xtransaction_ptr_t tx = data::xtx_factory::create_sys_contract_call_self_tx(m_relay_make_block_contract_state->account_address().value(),
+        data::xtransaction_ptr_t tx = data::xtx_factory::create_sys_contract_call_self_tx(m_relay_make_block_contract_state->account_address().to_string(),
                                                         m_relay_make_block_contract_state->account_send_trans_number(), m_relay_make_block_contract_state->account_send_trans_hash(),
                                                         func_name, std::string((char *)stream.data(), stream.size()), timestamp, EXPIRE_DURATION); 
         data::xcons_transaction_ptr_t contx = make_object_ptr<data::xcons_transaction_t>(tx.get());
@@ -104,12 +104,12 @@ std::string xrelayblock_plugin_t::get_new_relay_election_data(statectx::xstatect
 
     data::xunitstate_ptr_t zec_elect_relay_unit_state = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_change_state(zec_elect_relay_contract_address);
     if (nullptr == zec_elect_relay_unit_state) {
-        xerror("xrelayblock_plugin_t::get_new_relay_election_data fail-load zec elect state.%s", zec_elect_relay_contract_address.value().c_str());
+        xerror("xrelayblock_plugin_t::get_new_relay_election_data fail-load zec elect state.%s", zec_elect_relay_contract_address.to_string().c_str());
         return {};
     }
     data::xunitstate_ptr_t relay_elect_relay_unit_state = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_change_state(relay_make_block_contract_address);
     if (nullptr == relay_elect_relay_unit_state) {
-        xerror("xrelayblock_plugin_t::get_new_relay_election_data fail-load relay elect state.%s", relay_make_block_contract_address.value().c_str());
+        xerror("xrelayblock_plugin_t::get_new_relay_election_data fail-load relay elect state.%s", relay_make_block_contract_address.to_string().c_str());
         return {};
     }
 
@@ -129,7 +129,7 @@ std::string xrelayblock_plugin_t::get_new_relay_election_data(statectx::xstatect
     }
 
     xdbg("role_context: process relay election data %s, %" PRIu64 " from clock: %" PRIu64 " %" PRIu64,
-         zec_elect_relay_contract_address.c_str(),
+         zec_elect_relay_contract_address.to_string().c_str(),
          zec_elect_relay_unit_state->height(),
          clock,
          timestamp);

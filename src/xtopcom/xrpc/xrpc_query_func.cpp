@@ -177,9 +177,9 @@ bool xrpc_query_func::query_special_property(xJson::Value & jph, const std::stri
                 auto const & spender = top::get<common::xaccount_address_t const>(a);
                 auto const & value = top::get<evm_common::u256>(a);
 
-                xdbg("found allowance: symbol %s spender %s value %s", symbol.c_str(), spender.c_str(), value.str().c_str());
+                xdbg("found allowance: symbol %s spender %s value %s", symbol.c_str(), spender.to_string().c_str(), value.str().c_str());
 
-                spenderJson[spender.value()] = value.str();
+                spenderJson[spender.to_string()] = value.str();
             }
 
             j[symbol.to_string()] = spenderJson;

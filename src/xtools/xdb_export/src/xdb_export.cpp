@@ -105,7 +105,7 @@ std::vector<std::string> xdb_export_tools_t::get_system_contract_accounts() {
     }
     for (auto const & t : table) {
         for (auto i = 0; i < enum_vledger_const::enum_vbucket_has_tables_count; i++) {
-            v.emplace_back(data::make_address_by_prefix_and_subaddr(t, uint16_t(i)).value());
+            v.emplace_back(data::make_address_by_prefix_and_subaddr(t, uint16_t(i)).to_string());
         }
     }
     return v;
@@ -144,7 +144,7 @@ std::vector<std::string> xdb_export_tools_t::get_db_unit_accounts() {
             for (auto & leaf : leafs) {
                 state_mpt::xaccount_info_t info;
                 info.decode({leaf.begin(), leaf.end()});
-                accounts.insert(info.m_account.value());
+                accounts.insert(info.m_account.to_string());
             }
         }
     }
@@ -638,8 +638,8 @@ void xdb_export_tools_t::query_table_unit_info(std::vector<std::string> const & 
     }
     auto const seed_nodes = rootblock_para.m_genesis_nodes;
     for (auto const & node : seed_nodes) {
-        if (!accounts_set.count(node.m_account.value())) {
-            genesis_only.insert(node.m_account.value());
+        if (!accounts_set.count(node.m_account.to_string())) {
+            genesis_only.insert(node.m_account.to_string());
         }
     }
 
@@ -1922,7 +1922,7 @@ std::set<std::string> xdb_export_tools_t::get_special_genesis_accounts() {
         accounts_set.insert(account.first);
     }
     for (auto const & node : rootblock_para.m_genesis_nodes) {
-        accounts_set.insert(node.m_account.value());
+        accounts_set.insert(node.m_account.to_string());
     }
     return accounts_set;
 }

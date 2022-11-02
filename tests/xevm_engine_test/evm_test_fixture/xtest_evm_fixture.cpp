@@ -344,8 +344,8 @@ bool xtest_evm_fixture::expected_logs(std::vector<evm_common::xevm_log_t> const 
 }
 
 void xtest_evm_fixture::mock_add_balance(common::xaccount_address_t const & account, std::string token_symbol, evm_common::u256 amount) {
-    assert(account.value().substr(0, 6) == base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN);
-    std::string eth_address = account.value().substr(6);
+    assert(account.to_string().substr(0, 6) == base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN);
+    std::string eth_address = account.to_string().substr(6);
     assert(eth_address.size() == 40);
 
     auto state = statestore->load_unit_state(account.vaccount());
@@ -360,8 +360,8 @@ void xtest_evm_fixture::mock_add_approve(common::xaccount_address_t const & owne
                                          common::xaccount_address_t const & spender,
                                          std::string const & symbol,
                                          evm_common::u256 amount) {
-    assert(owner.value().substr(0, 6) == base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN);
-    std::string eth_address = owner.value().substr(6);
+    assert(owner.to_string().substr(0, 6) == base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN);
+    std::string eth_address = owner.to_string().substr(6);
     assert(eth_address.size() == 40);
 
     std::error_code ec;

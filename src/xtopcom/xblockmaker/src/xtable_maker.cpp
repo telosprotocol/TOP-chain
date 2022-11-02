@@ -155,10 +155,13 @@ std::vector<std::pair<xblock_ptr_t, base::xaccount_index_t>> xtable_maker_t::mak
     }
 
     for (auto & unitctx : unitctxs) {
-        base::xvtxkey_vec_t txkeys = txkeys_mgr.get_account_txkeys(unitctx->get_unitstate()->account_address().value());
+        base::xvtxkey_vec_t txkeys = txkeys_mgr.get_account_txkeys(unitctx->get_unitstate()->account_address().to_string());
         if (txkeys.get_txkeys().empty()) {
             // will support state change without txkeys for evm tx
-            xinfo("xtable_maker_t::make_units xkeys empty.is_leader=%d,%s,addr=%s", is_leader, cs_para.dump().c_str(), unitctx->get_unitstate()->account_address().c_str());
+            xinfo("xtable_maker_t::make_units xkeys empty.is_leader=%d,%s,addr=%s",
+                  is_leader,
+                  cs_para.dump().c_str(),
+                  unitctx->get_unitstate()->account_address().to_string().c_str());
         }
         xunitbuilder_para_t unit_para(txkeys);
         data::xblock_ptr_t unitblock = xunitbuilder_t::make_block(unitctx->get_prev_block(), unitctx->get_unitstate(), unit_para, cs_para);
@@ -1081,11 +1084,13 @@ bool xaccount_index_upgrade_tool_t::update_new_indexes_by_block(std::map<std::st
         base::xaccount_index_t _new_account_index(unit->get_height(), unithash, statehash, nonce);
         // should write unitstate with new db key
         if (false == write_unitstate_with_new_dbkey(unitstate->account_address().vaccount(), unitstate, unit->get_block_hash())) {
-            xerror("xtable_maker_t::update_new_indexes_by_block fail-upgrade for write db unitstate account=%s,index=%s", unitstate->account_address().value().c_str(), _new_account_index.dump().c_str());
+            xerror("xtable_maker_t::update_new_indexes_by_block fail-upgrade for write db unitstate account=%s,index=%s",
+                   unitstate->account_address().to_string().c_str(),
+                   _new_account_index.dump().c_str());
             return false;        
         }
 
-        xinfo("xtable_maker_t::update_new_indexes_by_block succ.account:%s,new:%s", unitstate->account_address().value().c_str(), _new_account_index.dump().c_str());
+        xinfo("xtable_maker_t::update_new_indexes_by_block succ.account:%s,new:%s", unitstate->account_address().to_string().c_str(), _new_account_index.dump().c_str());
         new_indexes[addr] = _new_account_index;
     }
     return true;

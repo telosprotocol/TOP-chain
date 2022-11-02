@@ -28,7 +28,7 @@ void xtable_vote_contract::setup() {
     const int old_tables_count = 256;
     uint32_t table_id = 0;
     if (!EXTRACT_TABLE_ID(SELF_ADDRESS(), table_id)) {
-        xwarn("[xtable_vote_contract::setup] EXTRACT_TABLE_ID failed, node reward pid: %d, account: %s\n", getpid(), SELF_ADDRESS().c_str());
+        xwarn("[xtable_vote_contract::setup] EXTRACT_TABLE_ID failed, node reward pid: %d, account: %s\n", getpid(), SELF_ADDRESS().to_string().c_str());
         return;
     }
 
@@ -93,7 +93,11 @@ void xtable_vote_contract::voteNode(vote_info_map_t const & vote_info) {
     XMETRICS_TIME_RECORD("sysContract_tableVote_vote_node");
 
     auto const & account = common::xaccount_address_t{SOURCE_ADDRESS()};
-    xinfo("[xtable_vote_contract::voteNode] timer round: %" PRIu64 ", src_addr: %s, self addr: %s, pid: %d\n", TIME(), account.c_str(), SELF_ADDRESS().c_str(), getpid());
+    xinfo("[xtable_vote_contract::voteNode] timer round: %" PRIu64 ", src_addr: %s, self addr: %s, pid: %d\n",
+          TIME(),
+          account.to_string().c_str(),
+          SELF_ADDRESS().to_string().c_str(),
+          getpid());
 
     XCONTRACT_ENSURE(common::is_t0(account) || common::is_t8(account), "only T0 or T8 account can vote for an account");
 
@@ -109,7 +113,7 @@ void xtable_vote_contract::unvoteNode(vote_info_map_t const & vote_info) {
     XMETRICS_TIME_RECORD("sysContract_tableVote_unvote_node");
 
     auto const & account = common::xaccount_address_t{SOURCE_ADDRESS()};
-    xinfo("[xtable_vote_contract::unvoteNode] timer round: %" PRIu64 ", src_addr: %s, self addr: %s", TIME(), account.c_str(), SELF_ADDRESS().c_str());
+    xinfo("[xtable_vote_contract::unvoteNode] timer round: %" PRIu64 ", src_addr: %s, self addr: %s", TIME(), account.to_string().c_str(), SELF_ADDRESS().to_string().c_str());
 
     XCONTRACT_ENSURE(common::is_t0(account) || common::is_t8(account), "only T0 or T8 can withdraw votes from an account");
 
@@ -151,7 +155,7 @@ void xtable_vote_contract::commit_stake() {
 }
 
 int32_t xtable_vote_contract::get_node_info(const common::xaccount_address_t & account, data::system_contract::xreg_node_info & reg_node_info) {
-    xdbg("[xtable_vote_contract::get_node_info] node account: %s, pid: %d\n", account.c_str(), getpid());
+    xdbg("[xtable_vote_contract::get_node_info] node account: %s, pid: %d\n", account.to_string().c_str(), getpid());
 
     std::string reg_node_str;
     int32_t ret = MAP_GET2(data::system_contract::XPORPERTY_CONTRACT_REG_KEY, account.to_string(), reg_node_str, sys_contract_rec_registration_addr);
@@ -176,7 +180,7 @@ std::map<std::string, uint64_t> xtable_vote_contract::get_table_votes_detail(com
         std::string vote_info_str;
         // here if not success, means account has no vote info yet, so vote_info_str is empty, using above default votes_table directly
         if (MAP_GET2(property, account.to_string(), vote_info_str)){
-            xwarn("[xtable_vote_contract::handle_votes] get property empty, account %s", account.c_str());
+            xwarn("[xtable_vote_contract::handle_votes] get property empty, account %s", account.to_string().c_str());
         }
         if (!vote_info_str.empty()) {
             base::xstream_t stream(base::xcontext_t::instance(), (uint8_t *)vote_info_str.c_str(), (uint32_t)vote_info_str.size());
@@ -195,8 +199,7 @@ void xtable_vote_contract::handle_votes(common::xaccount_address_t const & accou
         auto const & votes = entity.second;
 
         xdbg("[xtable_vote_contract::handle_votes] b_vote: %d, voter: %s, node: %s, votes: %u, pid: %d\n",
-             b_vote,
-             account.c_str(),
+             b_vote, account.to_string().c_str(),
              adv_account.c_str(),
              votes,
              pid);
@@ -259,7 +262,7 @@ void xtable_vote_contract::update_table_votes_detail(common::xaccount_address_t 
 }
 
 void xtable_vote_contract::add_advance_tickets(common::xaccount_address_t const & advance_account, uint64_t tickets) {
-    xdbg("[xtable_vote_contract::add_advance_tickets] adv account: %s, tickets: %llu, pid:%d\n", advance_account.c_str(), tickets, getpid());
+    xdbg("[xtable_vote_contract::add_advance_tickets] adv account: %s, tickets: %llu, pid:%d\n", advance_account.to_string().c_str(), tickets, getpid());
 
     if (tickets == 0) {
         XMETRICS_TIME_RECORD("sysContract_tableVote_remove_property_contract_pollable_key");

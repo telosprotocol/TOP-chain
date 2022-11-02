@@ -109,7 +109,7 @@ void xconfig_onchain_loader_t::update_onchain_param(common::xlogic_time_t time) 
     std::lock_guard<std::mutex> lock(m_action_param_mutex);
     data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_change_state(rec_tcc_contract_address);
     if (nullptr == unitstate) {
-        xerror("xconfig_onchain_loader_t::update_onchain_param fail-load state.%s", rec_tcc_contract_address.value().c_str());
+        xerror("xconfig_onchain_loader_t::update_onchain_param fail-load state.%s", rec_tcc_contract_address.to_string().c_str());
         return;
     }
 

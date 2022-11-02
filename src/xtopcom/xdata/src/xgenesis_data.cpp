@@ -14,12 +14,12 @@
 NS_BEG2(top, data)
 
 static bool check_address_type(common::xaccount_address_t const & addr, base::enum_vaccount_addr_type const type) {
-    assert(base::xvaccount_t::get_addrtype_from_account(addr.value()) == addr.type());
+    assert(base::xvaccount_t::get_addrtype_from_account(addr.to_string()) == addr.type());
     return type == addr.type();
 }
 
 static bool check_address_type_and_zone(common::xaccount_address_t const & addr, base::enum_vaccount_addr_type const type, common::xzone_id_t const & zone_id) {
-    assert(common::xzone_id_t{static_cast<uint8_t>(get_vledger_zone_index(base::xvaccount_t::get_xid_from_account(addr.value())))} == addr.ledger_id().zone_id());
+    assert(common::xzone_id_t{static_cast<uint8_t>(get_vledger_zone_index(base::xvaccount_t::get_xid_from_account(addr.to_string())))} == addr.ledger_id().zone_id());
     // auto              xid = base::xvaccount_t::get_xid_from_account(addr.value());
     // uint8_t           zone_index = get_vledger_zone_index(xid);
     return check_address_type(addr, type) && address_belongs_to_zone(addr, zone_id);
@@ -86,7 +86,7 @@ common::xaccount_address_t make_address_by_prefix_and_subaddr(const std::string 
 }
 
 base::xtable_index_t account_map_to_table_id(common::xaccount_address_t const & addr) {
-    const std::string & account = addr.value();
+    const std::string & account = addr.to_string();
     base::xvaccount_t const vaddr(account);
     return vaddr.get_tableid();
 }

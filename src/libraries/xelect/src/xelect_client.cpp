@@ -66,7 +66,7 @@ void xelect_client_imp::bootstrap_node_join() {
             xdbg("bootstrap to %s", seed_edge_host.c_str());
 
             try {
-                std::string token_request = "version=1.0&target_account_addr=" + user_params.account.value() + "&method=requestToken&sequence_id=1";
+                std::string token_request = "version=1.0&target_account_addr=" + user_params.account.to_string() + "&method=requestToken&sequence_id=1";
                 xdbg("token_request:%s", token_request.c_str());
                 auto token_response_str = client.Request(token_request);
                 xdbg("token_response:%s", token_response_str.c_str());
@@ -80,8 +80,8 @@ void xelect_client_imp::bootstrap_node_join() {
                 std::string token = token_response_json["data"][xrpc::RPC_TOKEN].asString();
 
                 // get last hash and nonce
-                std::string account_info_request = "version=1.0&target_account_addr=" + user_params.account.value() + "&method=getAccount&sequence_id=2&identity_token=" + token +
-                                                   "&body=" + client.percent_encode("{\"params\": {\"account_addr\": \"" + user_params.account.value() + "\"}}");
+                std::string account_info_request = "version=1.0&target_account_addr=" + user_params.account.to_string() + "&method=getAccount&sequence_id=2&identity_token=" + token +
+                                                   "&body=" + client.percent_encode("{\"params\": {\"account_addr\": \"" + user_params.account.to_string() + "\"}}");
                 xdbg("account_info_request:%s", account_info_request.c_str());
                 auto account_info_response_str = client.Request(account_info_request);
                 xdbg("account_info_response:%s", account_info_response_str.c_str());
@@ -109,12 +109,12 @@ void xelect_client_imp::bootstrap_node_join() {
                 }
 
                 uint32_t deposit = XGET_ONCHAIN_GOVERNANCE_PARAMETER(min_tx_deposit);
-                xtransaction_ptr_t tx = xtx_factory::create_nodejoin_tx(user_params.account.value(), nonce, last_hash, param, deposit);
+                xtransaction_ptr_t tx = xtx_factory::create_nodejoin_tx(user_params.account.to_string(), nonce, last_hash, param, deposit);
 
                 tx->set_authorization(safebox::xsafebox_proxy::get_instance().get_proxy_secp256_signature(base::xstring_utl::base64_decode(user_params.publickey), tx->digest()));
                 tx->set_len();
 
-                std::string send_tx_request = "version=1.0&target_account_addr=" + user_params.account.value() + "&method=sendTransaction&sequence_id=3&token=" + token;
+                std::string send_tx_request = "version=1.0&target_account_addr=" + user_params.account.to_string() + "&method=sendTransaction&sequence_id=3&token=" + token;
                 xJson::FastWriter writer;
                 xJson::Value tx_json;
                 if (tx->get_tx_version() == xtransaction_version_2) {

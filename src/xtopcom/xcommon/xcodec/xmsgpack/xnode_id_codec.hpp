@@ -57,7 +57,7 @@ struct pack<top::common::xnode_id_t>
         if (node_id.empty()) {
             o.pack_nil();
         } else {
-            o.pack(node_id.value());
+            o.pack(node_id.to_string());
         }
 
         return o;
@@ -85,7 +85,7 @@ struct object_with_zone<top::common::xnode_id_t>
         if (node_id.empty()) {
             o.type = msgpack::type::NIL;
         } else {
-            msgpack::adaptor::object_with_zone<std::string>()(o, node_id.value());
+            msgpack::adaptor::object_with_zone<std::string>()(o, node_id.to_string());
         }
     }
 };

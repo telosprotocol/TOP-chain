@@ -120,7 +120,7 @@ void xtop_basic_contract::call(common::xaccount_address_t const & target_addr,
     data::xtransaction_ptr_t tx = make_object_ptr<data::xtransaction_v2_t>();
 
     tx->make_tx_run_contract(data::xproperty_asset{0}, method_name, method_params);
-    tx->set_different_source_target_address(address().value(), target_addr.value());
+    tx->set_different_source_target_address(address().to_string(), target_addr.to_string());
     data::xcons_transaction_ptr_t cons_tx;
     if (type == xfollowup_transaction_schedule_type_t::immediately) {
         // delay type need process nonce final
@@ -133,7 +133,10 @@ void xtop_basic_contract::call(common::xaccount_address_t const & target_addr,
         contract_state()->latest_followup_tx_hash(cons_tx->get_tx_hash_256());
         contract_state()->latest_followup_tx_nonce(cons_tx->get_tx_nonce());
         xdbg_info("xtop_basic_contract::call tx:%s,from:%s,to:%s,amount:%ld,nonce:%ld",
-            tx->get_digest_hex_str().c_str(), address().value().c_str(), target_addr.value().c_str(), tx->get_tx_nonce());
+                  tx->get_digest_hex_str().c_str(),
+                  address().to_string().c_str(),
+                  target_addr.to_string().c_str(),
+                  tx->get_tx_nonce());
     } else {
         cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());
     }
@@ -154,7 +157,7 @@ void xtop_basic_contract::call(common::xaccount_address_t const & target_addr,
     tx->set_source_action_name(source_method_name);
     tx->set_source_action_para(source_method_params);
     tx->make_tx_run_contract(data::xproperty_asset{0}, target_method_name, target_method_params);
-    tx->set_different_source_target_address(address().value(), target_addr.value());
+    tx->set_different_source_target_address(address().to_string(), target_addr.to_string());
     data::xcons_transaction_ptr_t cons_tx;
     if (type == xfollowup_transaction_schedule_type_t::immediately) {
         // delay type need process nonce final
@@ -198,7 +201,7 @@ void xtop_basic_contract::sync_call(common::xaccount_address_t const & target_ad
     data::xcons_transaction_ptr_t cons_tx;
     data::xtransaction_ptr_t tx = make_object_ptr<data::xtransaction_v2_t>();
     tx->make_tx_run_contract(data::xproperty_asset{0}, method_name, method_params);
-    tx->set_different_source_target_address(address().value(), target_addr.value());
+    tx->set_different_source_target_address(address().to_string(), target_addr.to_string());
     cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());
     std::unique_ptr<data::xbasic_top_action_t const> action = top::make_unique<data::xsystem_consensus_action_t>(cons_tx);
     // exec
@@ -246,7 +249,7 @@ void xtop_basic_contract::sync_call(common::xaccount_address_t const & target_ad
     tx->set_source_action_name(source_method_name);
     tx->set_source_action_para(source_method_params);
     tx->make_tx_run_contract(data::xproperty_asset{0}, method_name, method_params);
-    tx->set_different_source_target_address(address().value(), target_addr.value());
+    tx->set_different_source_target_address(address().to_string(), target_addr.to_string());
     cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());
     std::unique_ptr<data::xbasic_top_action_t const> action = top::make_unique<data::xsystem_consensus_action_t>(cons_tx);
     // exec
@@ -277,7 +280,7 @@ void xtop_basic_contract::transfer(common::xaccount_address_t const & target_add
     data::xtransaction_ptr_t tx = make_object_ptr<data::xtransaction_v2_t>();
     data::xproperty_asset asset(amount);
     tx->make_tx_transfer(asset);
-    tx->set_different_source_target_address(address().value(), target_addr.value());
+    tx->set_different_source_target_address(address().to_string(), target_addr.to_string());
     tx->set_deposit(0);
     tx->set_fire_timestamp(timestamp());
     tx->set_expire_duration(0);
@@ -293,7 +296,11 @@ void xtop_basic_contract::transfer(common::xaccount_address_t const & target_add
         contract_state()->latest_followup_tx_hash(cons_tx->get_tx_hash_256());
         contract_state()->latest_followup_tx_nonce(cons_tx->get_tx_nonce());
         xdbg_info("xtop_basic_contract::transfer tx:%s,from:%s,to:%s,amount:%ld,nonce:%ld",
-            tx->get_digest_hex_str().c_str(), address().value().c_str(), target_addr.value().c_str(), amount, tx->get_tx_nonce());
+                  tx->get_digest_hex_str().c_str(),
+                  address().to_string().c_str(),
+                  target_addr.to_string().c_str(),
+                  amount,
+                  tx->get_tx_nonce());
     } else {
         cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());
     }
@@ -311,7 +318,7 @@ void xtop_basic_contract::transfer(common::xaccount_address_t const & target_add
 void xtop_basic_contract::delay_followup(xfollowup_transaction_delay_param_t const & param) {
     data::system_contract::xreward_dispatch_task task;
     task.onchain_timer_round = param.time;
-    task.contract = param.target_address.value();
+    task.contract = param.target_address.to_string();
     task.action = param.method_name;
     if (task.action == data::system_contract::XTRANSFER_ACTION) {
         std::map<std::string, uint64_t> map;
@@ -330,7 +337,7 @@ void xtop_basic_contract::delay_followup(std::vector<xfollowup_transaction_delay
     for (auto const & param : params) {
         data::system_contract::xreward_dispatch_task task;
         task.onchain_timer_round = param.time;
-        task.contract = param.target_address.value();
+        task.contract = param.target_address.to_string();
         task.action = param.method_name;
         if (task.action == data::system_contract::XTRANSFER_ACTION) {
             std::map<std::string, uint64_t> map;

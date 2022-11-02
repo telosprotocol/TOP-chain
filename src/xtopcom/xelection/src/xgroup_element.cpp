@@ -107,7 +107,7 @@ std::shared_ptr<xnode_element_t> xtop_group_element::node_element(common::xnode_
           static_cast<std::uint16_t>(zone_id().value()),
           static_cast<std::uint16_t>(cluster_id().value()),
           static_cast<std::uint16_t>(group_id().value()),
-          node_id.value().c_str());
+          node_id.to_string().c_str());
 
     return {};
 }
@@ -150,7 +150,7 @@ void xtop_group_element::set_node_elements(std::map<common::xslot_id_t, data::el
             continue;
         }
 
-        xinfo("adding %s to group %s", account_address.c_str(), group_info.c_str());
+        xinfo("adding %s to group %s", account_address.to_string().c_str(), group_info.c_str());
         m_node_elements[slot_id] = std::make_shared<xnode_element_t>(account_address, slot_id, election_info, shared_from_this());
     }
     assert(group_size() == m_node_elements.size());

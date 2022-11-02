@@ -114,7 +114,7 @@ void xtop_rec_standby_pool_contract::nodeJoinNetwork2(common::xaccount_address_t
     MAP_COPY_GET(top::data::system_contract::XPORPERTY_CONTRACT_REG_KEY, map_nodes, sys_contract_rec_registration_addr);
     XCONTRACT_ENSURE(!map_nodes.empty(), "[xrec_standby_pool_contract_t][nodeJoinNetwork] fail: did not get the MAP");
 
-    auto const iter = map_nodes.find(node_id.value());
+    auto const iter = map_nodes.find(node_id.to_string());
     XCONTRACT_ENSURE(iter != map_nodes.end(), "[xrec_standby_pool_contract_t][nodeJoinNetwork] fail: did not find the node in contract map");
 
     auto const & value_str = iter->second;
@@ -127,7 +127,7 @@ void xtop_rec_standby_pool_contract::nodeJoinNetwork2(common::xaccount_address_t
 
     auto standby_result_store = serialization::xmsgpack_t<xstandby_result_store_t>::deserialize_from_string_prop(*this, XPROPERTY_CONTRACT_STANDBYS_KEY);
     if (nodeJoinNetworkImpl(program_version, node, standby_result_store)) {
-        XMETRICS_PACKET_INFO(XREC_STANDBY "nodeJoinNetwork", "node_id", node_id.value(), "miner_type", common::to_string(node.miner_type()));
+        XMETRICS_PACKET_INFO(XREC_STANDBY "nodeJoinNetwork", "node_id", node_id.to_string(), "miner_type", common::to_string(node.miner_type()));
         serialization::xmsgpack_t<xstandby_result_store_t>::serialize_to_string_prop(*this, XPROPERTY_CONTRACT_STANDBYS_KEY, standby_result_store);
     }
 
@@ -166,7 +166,7 @@ void xtop_rec_standby_pool_contract::nodeJoinNetwork2(common::xaccount_address_t
     param_stream << static_cast<uint32_t>(0);
     param_stream << node_id;
     xdbg("[xrec_standby_pool_contract_t][nodeJoinNetwork][mock_zec_stake to registration] node_id:%s,miner_type:%s",
-         node_id.c_str(),
+         node_id.to_string().c_str(),
          role_type_string.c_str(),
          consensus_public_key.c_str());
     CALL(common::xaccount_address_t{sys_contract_rec_registration_addr},
@@ -175,7 +175,7 @@ void xtop_rec_standby_pool_contract::nodeJoinNetwork2(common::xaccount_address_t
     xdbg("[xrec_standby_pool_contract_t][nodeJoinNetwork][mock_zec_stake to registration] finish CALL registration contract");
     XCONTRACT_ENSURE(miner_type != common::xminer_type_t::invalid, "[xrec_standby_pool_contract_t][nodeJoinNetwork] fail: find invalid role in MAP");
 
-    xdbg("[xrec_standby_pool_contract_t][nodeJoinNetwork] %s", node_id.c_str());
+    xdbg("[xrec_standby_pool_contract_t][nodeJoinNetwork] %s", node_id.to_string().c_str());
 
     auto standby_result_store = serialization::xmsgpack_t<xstandby_result_store_t>::deserialize_from_string_prop(*this, XPROPERTY_CONTRACT_STANDBYS_KEY);
 
@@ -249,7 +249,7 @@ void xtop_rec_standby_pool_contract::nodeJoinNetwork2(common::xaccount_address_t
     }
 
     if (new_node) {
-        XMETRICS_PACKET_INFO(XREC_STANDBY "nodeJoinNetwork", "node_id", node_id.value(), "miner_type", common::to_string(miner_type));
+        XMETRICS_PACKET_INFO(XREC_STANDBY "nodeJoinNetwork", "node_id", node_id.to_string(), "miner_type", common::to_string(miner_type));
         serialization::xmsgpack_t<xstandby_result_store_t>::serialize_to_string_prop(*this, XPROPERTY_CONTRACT_STANDBYS_KEY, standby_result_store);
     }
 #endif
@@ -330,10 +330,10 @@ bool xtop_rec_standby_pool_contract::nodeJoinNetworkImpl(std::string const & pro
     auto const miner_type = node.miner_type();
     XCONTRACT_ENSURE(miner_type != common::xminer_type_t::invalid, "[xrec_standby_pool_contract_t][nodeJoinNetwork] fail: find invalid role in MAP");
     XCONTRACT_ENSURE(node.get_required_min_deposit() <= node.deposit(),
-                     "[xrec_standby_pool_contract_t][nodeJoinNetwork] account mortgage < required_min_deposit fail: " + node.m_account.value() +
+                     "[xrec_standby_pool_contract_t][nodeJoinNetwork] account mortgage < required_min_deposit fail: " + node.m_account.to_string() +
                          ", miner_type : " + common::to_string(miner_type));
 
-    xdbg("[xrec_standby_pool_contract_t][nodeJoinNetwork] %s", node.m_account.c_str());
+    xdbg("[xrec_standby_pool_contract_t][nodeJoinNetwork] %s", node.m_account.to_string().c_str());
 
     xstandby_node_info_t new_node_info;
 
@@ -369,7 +369,7 @@ bool xtop_rec_standby_pool_contract::nodeJoinNetworkImpl(std::string const & pro
 
         if (archive) {
             new_node_info.stake_container[common::xnode_type_t::storage_archive] = archive_stake;
-            xdbg("archive standby: %s", node.m_account.c_str());
+            xdbg("archive standby: %s", node.m_account.to_string().c_str());
         }
 
         if (exchange) {
@@ -422,14 +422,14 @@ bool xtop_rec_standby_pool_contract::update_standby_node(data::system_contract::
     if (reg_node.can_be_auditor()) {
         new_node_info.stake_container.insert({ common::xnode_type_t::consensus_auditor, reg_node.auditor_stake() });
         xdbg("xrec_standby_pool_contract_t::update_standby_node account %s credit score %" PRIu64,
-             reg_node.m_account.c_str(),
+             reg_node.m_account.to_string().c_str(),
              reg_node.raw_credit_score_data(common::xnode_type_t::consensus_auditor));
         new_node_info.raw_credit_score(common::xnode_type_t::consensus_auditor, reg_node.raw_credit_score_data(top::common::xnode_type_t::consensus_auditor));
     }
     if (reg_node.can_be_validator()) {
         new_node_info.stake_container.insert({ common::xnode_type_t::consensus_validator, reg_node.validator_stake() });
         xdbg("xrec_standby_pool_contract_t::update_standby_node account %s credit score %" PRIu64,
-             reg_node.m_account.c_str(),
+             reg_node.m_account.to_string().c_str(),
              reg_node.raw_credit_score_data(common::xnode_type_t::consensus_validator));
         new_node_info.raw_credit_score(common::xnode_type_t::consensus_validator, reg_node.raw_credit_score_data(top::common::xnode_type_t::consensus_validator));
     }
@@ -442,21 +442,21 @@ bool xtop_rec_standby_pool_contract::update_standby_node(data::system_contract::
     if (evm_enabled && reg_node.can_be_evm_auditor()) {
         new_node_info.stake_container.insert({common::xnode_type_t::evm_auditor, reg_node.evm_auditor_stake()});
         xdbg("xrec_standby_pool_contract_t::update_standby_node account %s credit score %" PRIu64,
-             reg_node.m_account.c_str(),
+             reg_node.m_account.to_string().c_str(),
              reg_node.raw_credit_score_data(common::xnode_type_t::consensus_auditor));
         new_node_info.raw_credit_score(common::xnode_type_t::evm_auditor, reg_node.raw_credit_score_data(top::common::xnode_type_t::consensus_auditor));
     }
     if (evm_enabled && reg_node.can_be_evm_validator()) {
         new_node_info.stake_container.insert({common::xnode_type_t::evm_validator, reg_node.evm_validator_stake()});
         xdbg("xrec_standby_pool_contract_t::update_standby_node account %s credit score %" PRIu64,
-             reg_node.m_account.c_str(),
+             reg_node.m_account.to_string().c_str(),
              reg_node.raw_credit_score_data(common::xnode_type_t::consensus_validator));
         new_node_info.raw_credit_score(common::xnode_type_t::evm_validator, reg_node.raw_credit_score_data(top::common::xnode_type_t::consensus_validator));
     }
     if (relay_enabled && reg_node.can_be_relay()) {
         new_node_info.stake_container.insert({common::xnode_type_t::relay, reg_node.relay_stake()});
         xdbg("xrec_standby_pool_contract_t::update_standby_node account %s credit score %" PRIu64,
-             reg_node.m_account.c_str(),
+             reg_node.m_account.to_string().c_str(),
              reg_node.raw_credit_score_data(common::xnode_type_t::relay));
         new_node_info.raw_credit_score(common::xnode_type_t::relay, reg_node.raw_credit_score_data(top::common::xnode_type_t::relay));
     }
@@ -469,11 +469,11 @@ bool xtop_rec_standby_pool_contract::update_standby_node(data::system_contract::
     if (new_node_info == standby_node_info) {
 #if defined(DEBUG)
         for (auto const & score_info : new_node_info.raw_credit_scores) {
-            xdbg("xrec_standby_pool_contract_t::update_standby_node same new account %s credit score %" PRIu64, reg_node.m_account.c_str(), score_info.second);
+            xdbg("xrec_standby_pool_contract_t::update_standby_node same new account %s credit score %" PRIu64, reg_node.m_account.to_string().c_str(), score_info.second);
         }
 
         for (auto const & score_info : standby_node_info.raw_credit_scores) {
-            xdbg("xrec_standby_pool_contract_t::update_standby_node same old account %s credit score %" PRIu64, reg_node.m_account.c_str(), score_info.second);
+            xdbg("xrec_standby_pool_contract_t::update_standby_node same old account %s credit score %" PRIu64, reg_node.m_account.to_string().c_str(), score_info.second);
         }
 #endif        
         return false;
@@ -481,11 +481,11 @@ bool xtop_rec_standby_pool_contract::update_standby_node(data::system_contract::
 
 #if defined(DEBUG)
     for (auto const & score_info : new_node_info.raw_credit_scores) {
-        xdbg("xrec_standby_pool_contract_t::update_standby_node diff new account %s credit score %" PRIu64, reg_node.m_account.c_str(), score_info.second);
+        xdbg("xrec_standby_pool_contract_t::update_standby_node diff new account %s credit score %" PRIu64, reg_node.m_account.to_string().c_str(), score_info.second);
     }
 
     for (auto const & score_info : standby_node_info.raw_credit_scores) {
-        xdbg("xrec_standby_pool_contract_t::update_standby_node diff old account %s credit score %" PRIu64, reg_node.m_account.c_str(), score_info.second);
+        xdbg("xrec_standby_pool_contract_t::update_standby_node diff old account %s credit score %" PRIu64, reg_node.m_account.to_string().c_str(), score_info.second);
     }
 #endif
 
@@ -494,22 +494,22 @@ bool xtop_rec_standby_pool_contract::update_standby_node(data::system_contract::
 #if defined(DEBUG)
     if (reg_node.can_be_validator()) {
         xdbg("xrec_standby_pool_contract_t::update_standby_node account %s updated credit score %" PRIu64,
-             reg_node.m_account.c_str(),
+             reg_node.m_account.to_string().c_str(),
              reg_node.raw_credit_score_data(common::xnode_type_t::consensus_validator));
     }
     if (reg_node.can_be_auditor()) {
         xdbg("xrec_standby_pool_contract_t::update_standby_node account %s updated credit score %" PRIu64,
-             reg_node.m_account.c_str(),
+             reg_node.m_account.to_string().c_str(),
              reg_node.raw_credit_score_data(common::xnode_type_t::consensus_auditor));
     }
     if (reg_node.can_be_evm_validator()) {
         xdbg("xrec_standby_pool_contract_t::update_standby_node account %s updated credit score %" PRIu64,
-             reg_node.m_account.c_str(),
+             reg_node.m_account.to_string().c_str(),
              reg_node.raw_credit_score_data(common::xnode_type_t::consensus_validator));
     }
     if (reg_node.can_be_evm_auditor()) {
         xdbg("xrec_standby_pool_contract_t::update_standby_node account %s updated credit score %" PRIu64,
-             reg_node.m_account.c_str(),
+             reg_node.m_account.to_string().c_str(),
              reg_node.raw_credit_score_data(common::xnode_type_t::consensus_auditor));
     }
 #endif
@@ -576,8 +576,8 @@ void xtop_rec_standby_pool_contract::on_timer(common::xlogic_time_t const curren
 #endif
     XMETRICS_TIME_RECORD(XREC_STANDBY "on_timer_all_time");
     XMETRICS_CPU_TIME_RECORD(XREC_STANDBY "on_timer_cpu_time");
-    XCONTRACT_ENSURE(SOURCE_ADDRESS() == SELF_ADDRESS().value(), "xrec_standby_pool_contract_t instance is triggled by others");
-    XCONTRACT_ENSURE(SELF_ADDRESS().value() == sys_contract_rec_standby_pool_addr, "xrec_standby_pool_contract_t instance is not triggled by xrec_standby_pool_contract_t");
+    XCONTRACT_ENSURE(SOURCE_ADDRESS() == SELF_ADDRESS().to_string(), "xrec_standby_pool_contract_t instance is triggled by others");
+    XCONTRACT_ENSURE(SELF_ADDRESS().to_string() == sys_contract_rec_standby_pool_addr, "xrec_standby_pool_contract_t instance is not triggled by xrec_standby_pool_contract_t");
     // XCONTRACT_ENSURE(current_time <= TIME(), "xrec_standby_pool_contract_t::on_timer current_time > consensus leader's time");
 
     std::map<std::string, std::string> reg_node_info;  // key is the account string, value is the serialized data
