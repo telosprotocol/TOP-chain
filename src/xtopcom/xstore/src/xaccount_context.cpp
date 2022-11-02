@@ -66,8 +66,7 @@ xaccount_context_t::xaccount_context_t(const data::xunitstate_ptr_t & unitstate,
     m_latest_create_sendtx_hash = m_latest_exec_sendtx_hash;
     m_canvas = unitstate->get_canvas();
     m_statectx = statectx;
-    xinfo("create context, address:%s,height:%ld,uri=%s",
-        unitstate->account_address().c_str(), unitstate->height(), m_account->get_bstate()->get_execute_uri().c_str());
+    xinfo("create context, address:%s,height:%ld,uri=%s", unitstate->account_address().to_string().c_str(), unitstate->height(), m_account->get_bstate()->get_execute_uri().c_str());
 }
 
 xaccount_context_t::xaccount_context_t(const data::xunitstate_ptr_t & unitstate) {
@@ -78,7 +77,8 @@ xaccount_context_t::xaccount_context_t(const data::xunitstate_ptr_t & unitstate)
     m_latest_create_sendtx_nonce = m_latest_exec_sendtx_nonce;
     m_latest_create_sendtx_hash = m_latest_exec_sendtx_hash;
     m_canvas = make_object_ptr<base::xvcanvas_t>();
-    xinfo("create context, address:%s,height:%ld,uri=%s", unitstate->account_address().c_str(), unitstate->height(), m_account->get_bstate()->get_execute_uri().c_str());
+    xinfo(
+        "create context, address:%s,height:%ld,uri=%s", unitstate->account_address().to_string().c_str(), unitstate->height(), m_account->get_bstate()->get_execute_uri().c_str());
 }
 
 xaccount_context_t::~xaccount_context_t() {
@@ -124,17 +124,17 @@ int32_t xaccount_context_t::create_user_account(const std::string& address) {
             // just for test debug
             ret = m_account->tep_token_deposit(common::xtoken_id_t::eth, eth_token);
             if (ret) {
-                xerror("mint eth for new account failed. %s", m_account->account_address().c_str());
+                xerror("mint eth for new account failed. %s", m_account->account_address().to_string().c_str());
                 break;
             }
             ret = m_account->tep_token_deposit(common::xtoken_id_t::usdt, usd_token);
             if (ret) {
-                xerror("mint usdt for new account failed. %s", m_account->account_address().c_str());
+                xerror("mint usdt for new account failed. %s", m_account->account_address().to_string().c_str());
                 break;
             }
             ret = m_account->tep_token_deposit(common::xtoken_id_t::usdc, usd_token);
             if (ret) {
-                xerror("mint usdc for new account failed. %s", m_account->account_address().c_str());
+                xerror("mint usdc for new account failed. %s", m_account->account_address().to_string().c_str());
                 break;
             }
         } while (false);
@@ -150,7 +150,7 @@ int32_t xaccount_context_t::create_user_account(const std::string& address) {
             // just for test debug
             ret = m_account->tep_token_deposit(common::xtoken_id_t::eth, eth_token);
             if (ret) {
-                xerror("mint eth for new account failed. %s", m_account->account_address().c_str());
+                xerror("mint eth for new account failed. %s", m_account->account_address().to_string().c_str());
                 break;
             }
         } while (false);

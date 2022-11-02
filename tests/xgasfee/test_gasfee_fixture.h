@@ -284,7 +284,7 @@ public:
     data::xunitstate_ptr_t recver{nullptr};
     xobject_ptr_t<base::xvbstate_t> sender_bstate{nullptr};
     xobject_ptr_t<base::xvbstate_t> recver_bstate{nullptr};
-    std::string table_address{eth_table_address.value()};
+    std::string table_address{eth_table_address.to_string()};
 };
 
 }  // namespace tests

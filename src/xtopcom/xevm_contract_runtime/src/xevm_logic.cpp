@@ -46,7 +46,7 @@ void xtop_evm_logic::read_register(uint64_t register_id, uint64_t ptr) {
 }
 
 void xtop_evm_logic::sender_address(uint64_t register_id) {
-    auto sender = m_context->sender().value();
+    auto sender = m_context->sender().to_string();
     std::error_code ec;
     auto address_bytes = top::from_hex(sender.substr(6), ec);  // remove T60004
     xassert(!ec);

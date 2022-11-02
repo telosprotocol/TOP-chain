@@ -34,7 +34,7 @@ std::shared_ptr<evm_common::trie::Sync> new_state_sync(const common::xaccount_ad
             }
             syncer->AddUnitEntry(hash, hexpath, value, {state_key.begin(), state_key.end()}, parent);
             xinfo("state_mpt::new_state_sync table: %s, root: %s, value: %s, hash: %s, state_key: %s, index_dump: %s",
-                  table.c_str(),
+                  table.to_string().c_str(),
                   root.as_hex_str().c_str(),
                   to_hex(value).c_str(),
                   hash.as_hex_str().c_str(),

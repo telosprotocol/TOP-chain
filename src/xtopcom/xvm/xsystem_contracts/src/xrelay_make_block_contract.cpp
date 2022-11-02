@@ -230,7 +230,7 @@ bool xtop_relay_make_block_contract::build_elect_relay_block(const evm_common::h
 
     for (auto const & node_info : group_result) {
         auto const & election_info_bundle = top::get<data::election::v2::xelection_info_bundle_t>(node_info);
-        xdbg("xtop_relay_make_block_contract::build_elect_relay_block get node:%s", election_info_bundle.account_address().c_str());
+        xdbg("xtop_relay_make_block_contract::build_elect_relay_block get node:%s", election_info_bundle.account_address().to_string().c_str());
         auto const & election_info = election_info_bundle.election_info();
         auto pubkey_str = base::xstring_utl::base64_decode(election_info.public_key().to_string());
         xbytes_t bytes_x(pubkey_str.begin() + 1, pubkey_str.begin() + 33);

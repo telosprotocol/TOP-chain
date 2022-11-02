@@ -93,7 +93,7 @@ std::pair<std::vector<common::xip2_t>, std::vector<common::xip2_t>> xtop_vnode_m
     assert(!election_data.empty());
 
     auto const & host_node_id = m_vhost->host_node_id();
-    xdbg("[vnode mgr] host %s sees election data size %zu", host_node_id.value().c_str(), election_data.size());
+    xdbg("[vnode mgr] host %s sees election data size %zu", host_node_id.to_string().c_str(), election_data.size());
 
     std::vector<common::xip2_t> purely_outdated_xips;
     std::vector<common::xip2_t> logical_outdated_xips;

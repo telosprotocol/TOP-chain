@@ -307,9 +307,9 @@ void xcontract_helper::get_string_property(const std::string& key, std::string& 
 void xcontract_helper::generate_tx(common::xaccount_address_t const & target_addr, const string& func_name, const string& func_param) {
     if (m_contract_account == target_addr) {
         std::error_code ec{ enum_xvm_error_code::enum_vm_exception };
-        top::error::throw_error(ec, "can't send to self " + target_addr.value());
+        top::error::throw_error(ec, "can't send to self " + target_addr.to_string());
     }
-    int32_t ret = m_account_context->generate_tx(target_addr.value(), func_name, func_param);
+    int32_t ret = m_account_context->generate_tx(target_addr.to_string(), func_name, func_param);
     if (ret) {
         std::error_code ec{ enum_xvm_error_code::enum_vm_exception };
         top::error::throw_error(ec, "generate tx fail " + store::xstore_error_to_string(ret));

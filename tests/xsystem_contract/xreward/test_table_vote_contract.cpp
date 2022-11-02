@@ -45,7 +45,7 @@ TEST_F(xtest_table_vote_contract_t, test_calc_advance_tickets1){
     std::map<std::string, uint64_t> votes_table;
     for(int i = 0; i < 100; i++){
         auto account_address = build_account_address(account_prefix, i);
-        votes_table.insert(std::make_pair(account_address.value(), 10));
+        votes_table.insert(std::make_pair(account_address.to_string(), 10));
     }
     uint64_t node_total_votes = 100;
     EXPECT_THROW(calc_advance_tickets(build_account_address(account_prefix, 0), 0, votes_table, true, node_total_votes), std::runtime_error);
@@ -56,12 +56,12 @@ TEST_F(xtest_table_vote_contract_t, test_calc_advance_tickets2){
     std::map<std::string, uint64_t> votes_table;
     for(int i = 0; i < 100; i++){
         auto account_address = build_account_address(account_prefix, i);
-        votes_table.insert(std::make_pair(account_address.value(), 10));
+        votes_table.insert(std::make_pair(account_address.to_string(), 10));
     }
     uint64_t node_total_votes = 100;
     calc_advance_tickets(build_account_address(account_prefix, 0), 50, votes_table, true, node_total_votes);
     EXPECT_EQ(node_total_votes, 100+50);
-    EXPECT_EQ(votes_table[build_account_address(account_prefix, 0).value()], 10 + 50);
+    EXPECT_EQ(votes_table[build_account_address(account_prefix, 0).to_string()], 10 + 50);
 }
 
 TEST_F(xtest_table_vote_contract_t, test_calc_advance_tickets3){
@@ -69,7 +69,7 @@ TEST_F(xtest_table_vote_contract_t, test_calc_advance_tickets3){
     std::map<std::string, uint64_t> votes_table;
     for(int i = 0; i < 100; i++){
         auto account_address = build_account_address(account_prefix, i);
-        votes_table.insert(std::make_pair(account_address.value(), 10));
+        votes_table.insert(std::make_pair(account_address.to_string(), 10));
     }
     uint64_t node_total_votes = 100;
     EXPECT_THROW(calc_advance_tickets(build_account_address(account_prefix, 101), 10, votes_table, false, node_total_votes), std::runtime_error);
@@ -80,7 +80,7 @@ TEST_F(xtest_table_vote_contract_t, test_calc_advance_tickets4){
     std::map<std::string, uint64_t> votes_table;
     for(int i = 0; i < 100; i++){
         auto account = build_account_address(account_prefix, i);
-        votes_table.insert(std::make_pair(account.value(), 10));
+        votes_table.insert(std::make_pair(account.to_string(), 10));
     }
     uint64_t node_total_votes = 100;
     EXPECT_THROW(calc_advance_tickets(build_account_address(account_prefix, 0), 101, votes_table, false, node_total_votes), std::runtime_error);
@@ -91,7 +91,7 @@ TEST_F(xtest_table_vote_contract_t, test_calc_advance_tickets5){
     std::map<std::string, uint64_t> votes_table;
     for(int i = 0; i < 100; i++){
         auto account = build_account_address(account_prefix, i);
-        votes_table.insert(std::make_pair(account.value(), 10));
+        votes_table.insert(std::make_pair(account.to_string(), 10));
     }
     uint64_t node_total_votes = 100;
     EXPECT_THROW(calc_advance_tickets(build_account_address(account_prefix, 0), 20, votes_table, false, node_total_votes), std::runtime_error);
@@ -102,12 +102,12 @@ TEST_F(xtest_table_vote_contract_t, test_calc_advance_tickets6){
     std::map<std::string, uint64_t> votes_table;
     for(int i = 0; i < 100; i++){
        auto account = build_account_address(account_prefix, i);
-        votes_table.insert(std::make_pair(account.value(), 20));
+        votes_table.insert(std::make_pair(account.to_string(), 20));
     }
     uint64_t node_total_votes = 100;
     calc_advance_tickets(build_account_address(account_prefix, 0), 10, votes_table, false, node_total_votes);
     EXPECT_EQ(node_total_votes, 90);
-    EXPECT_EQ(votes_table[build_account_address(account_prefix, 0).value()], 10);
+    EXPECT_EQ(votes_table[build_account_address(account_prefix, 0).to_string()], 10);
 }
 
 TEST_F(xtest_table_vote_contract_t, test_calc_advance_tickets7){
@@ -115,11 +115,11 @@ TEST_F(xtest_table_vote_contract_t, test_calc_advance_tickets7){
     std::map<std::string, uint64_t> votes_table;
     for(int i = 0; i < 100; i++){
        auto account = build_account_address(account_prefix, i);
-        votes_table.insert(std::make_pair(account.value(), 10));
+        votes_table.insert(std::make_pair(account.to_string(), 10));
     }
     uint64_t node_total_votes = 100;
     calc_advance_tickets(build_account_address(account_prefix, 0), 10, votes_table, false, node_total_votes);
     EXPECT_EQ(node_total_votes, 90);
-    EXPECT_EQ(votes_table.count(build_account_address(account_prefix, 0).value()), 0);
+    EXPECT_EQ(votes_table.count(build_account_address(account_prefix, 0).to_string()), 0);
 }
 
