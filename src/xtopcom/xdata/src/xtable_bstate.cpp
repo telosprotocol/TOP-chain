@@ -93,6 +93,18 @@ std::set<std::string> xtable_bstate_t::get_all_accounts() const {
     return all_accounts;
 }
 
+std::vector<std::pair<common::xaccount_address_t, base::xaccount_index_t>> xtable_bstate_t::all_accounts() const {
+    std::vector<std::pair<common::xaccount_address_t, base::xaccount_index_t>> all_accounts;
+    auto const & values = map_get(XPROPERTY_TABLE_ACCOUNT_INDEX);
+    for (auto const & v : values) {
+        base::xaccount_index_t account_index;
+        account_index.serialize_from(v.second);
+        all_accounts.emplace_back(common::xaccount_address_t::build_from(v.first), std::move(account_index));
+    }
+
+    return all_accounts;
+}
+
 int32_t xtable_bstate_t::get_account_size() const {
     int32_t size = 0;
     map_size(XPROPERTY_TABLE_ACCOUNT_INDEX, size);

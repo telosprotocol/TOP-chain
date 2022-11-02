@@ -59,6 +59,7 @@ void usage() {
     std::cout << "        - db_parse_type_size [db_path] " << std::endl;
     std::cout << "        - db_read_block [db_path] <account> <height> " << std::endl;
     std::cout << "        - db_prune [db_path] " << std::endl;
+    std::cout << "        - export <exported.json> <table_address0:height0[,table_address1:height1,...]> [account0[,account1,...]]" << std::endl;
     std::cout << "-------  end  -------" << std::endl;
 }
 
@@ -127,7 +128,9 @@ int main(int argc, char ** argv) {
         xdb_read_tools_t read_tools{db_path};
         read_tools.db_read_meta(address);
         return 0;
-    } else if (function_name == "db_data_parse") {
+    }
+
+    if (function_name == "db_data_parse") {
         if (argc != 3) {
             xassert(false);
             usage();
@@ -136,7 +139,9 @@ int main(int argc, char ** argv) {
         xdb_read_tools_t read_tools{db_path};
         read_tools.db_data_parse();
         return 0;
-    } else if (function_name == "db_compact_db") {
+    }
+    
+    if (function_name == "db_compact_db") {
         if (argc != 4) {
             usage();
             return -1;
@@ -145,7 +150,9 @@ int main(int argc, char ** argv) {
         xdb_export_tools_t tools_v3{v3_db_path};
         tools_v3.compact_db();
         return 0;
-    } else if (function_name == "db_prune") {
+    }
+
+    if (function_name == "db_prune") {
         if (argc != 4) {
             usage();
             return -1;
@@ -155,7 +162,9 @@ int main(int argc, char ** argv) {
         std::cout << "db_prune start" << std::endl;
         tools_v3.prune_db();
         return 0;
-    } else if (function_name == "db_read_block") {
+    }
+
+    if (function_name == "db_read_block") {
         if (argc != 5) {
             usage();
             return -1;
@@ -176,6 +185,7 @@ int main(int argc, char ** argv) {
         base::db_migrate_v2_to_v3(v2_db_path, v3_db_path);
         return 0;
     }
+
     if(function_name == "db_parse_type_size") {
         if (argc != 4) {
             xassert(false);
@@ -386,6 +396,57 @@ int main(int argc, char ** argv) {
         tools.query_table_unit_info(table_account_vec);
         auto t2 = base::xtime_utl::time_now_ms();
         std::cout << "parse_db total time: " << (t2 - t1) / 1000 << "s." << std::endl;
+    } else if (function_name == "export") {
+        // xdb_export db_path export exported.json table0:height0,table1:height1,... [account0,[account1,...]]
+
+        if (argc < 5) {
+            usage();
+            return -1;
+        }
+
+        auto const & exported_file_path = argv[3];
+        auto const & table_query = argv[4];
+        std::string account_string;
+        if (argc == 6) {
+            account_string = argv[5];
+        }
+
+        std::vector<std::string> table_info;
+        top::base::xstring_utl::split_string(table_query, ',', table_info);
+        std::map<common::xtable_address_t, uint64_t> table_query_criteria;
+        for (auto const & t : table_info) {
+            std::vector<std::string> pair;
+            top::base::xstring_utl::split_string(t, ':', pair);
+
+            table_query_criteria.emplace(common::xtable_address_t::build_from(pair[0]), std::stoull(pair[1]));
+        }
+
+        std::vector<common::xaccount_address_t> queried_accounts;
+        if (!account_string.empty()) {
+            std::vector<std::string> accounts;
+            base::xstring_utl::split_string(account_string, ',', accounts);
+            std::transform(std::begin(accounts), std::end(accounts), std::back_inserter(queried_accounts), [](std::string const & acc) { return common::xaccount_address_t::build_from(acc);
+            });
+        }
+
+        std::unordered_map<common::xaccount_address_t, uint64_t> accounts_info;
+        std::error_code ec;
+        for (auto const & tbl : table_query_criteria) {
+            ec.clear();
+
+            auto const & table_address = top::get<common::xtable_address_t const>(tbl);
+            auto const table_height = top::get<uint64_t>(tbl);
+            auto units = tools.get_unit_accounts(table_address, table_height, queried_accounts, ec);
+            if (ec) {
+                std::cerr << "get_unit_accounts on table " << table_address.to_string() << " at height " << table_height << " failed with error code " << ec.value() << " msg "
+                          << ec.message() << std::endl;
+                continue;
+            }
+
+            auto const result = tools.get_account_data(
+                units, {common::xtoken_id_t::top, common::xtoken_id_t::eth, common::xtoken_id_t::usdt, common::xtoken_id_t::usdc}, {{"$06", xdb_export_tools_t::map}}, ec);
+            tools.append_to_json(table_address, table_height, result, exported_file_path, ec);
+        }
     } else {
         usage();
     }

@@ -33,6 +33,7 @@
 #include "xcommon/xledger_id.h"
 #include "xcommon/xtable_id.h"
 #include "xeth_address_fwd.h"
+#include "xtable_address.h"
 
 #include <cstdint>
 #include <string>
@@ -122,6 +123,8 @@ public:
     bool has_assigned_table_id() const noexcept;
 
     base::xvaccount_t vaccount() const;
+
+    xtable_address_t table_address() const;
 
     friend std::int32_t operator<<(base::xstream_t & stream, xtop_node_id const & node_id);
     friend std::int32_t operator>>(base::xstream_t & stream, xtop_node_id & node_id);
