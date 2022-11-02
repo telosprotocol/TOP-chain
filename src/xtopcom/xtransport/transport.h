@@ -33,7 +33,7 @@ public:
     virtual bool Init(std::string const & local_ip, uint16_t local_port, MultiThreadHandler * message_handler) = 0;
     virtual int Start() = 0;
     virtual void Stop() = 0;
-    virtual int SendDataWithProp(std::string const & data, const std::string & peer_ip, uint16_t peer_port, UdpPropertyPtr & udp_property, uint16_t priority_flag = 0) = 0;
+    virtual int TransSendData(std::string const & data, const std::string & peer_ip, uint16_t peer_port, uint16_t priority_flag = 0) = 0;
 
     virtual int32_t get_handle() = 0;
     virtual int get_socket_status() = 0;

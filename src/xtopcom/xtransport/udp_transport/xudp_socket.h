@@ -46,29 +46,12 @@ class UdpTransport;
 class SocketIntf;
 
 enum class enum_xudp_status {
-    enum_xudp_init,
-    enum_xudp_connecting,
-    enum_xudp_connected,
-    enum_xudp_closed,           // closed, not released
-    enum_xudp_closed_released,  // closed, released
+    enum_xudp_ok,
+    enum_xudp_closed,
 };
 
 class xp2pudp_t;
 class XudpSocket;
-
-class UdpProperty {
-public:
-    ~UdpProperty();
-
-public:
-    xp2pudp_t * GetXudp() {
-        return m_xudp_;
-    }
-    void SetXudp(xp2pudp_t * xudp_in);
-
-private:
-    xp2pudp_t * m_xudp_{nullptr};
-};
 
 class xp2pudp_t : public base::xudp_t {
 public:
@@ -76,7 +59,8 @@ public:
 
 protected:
     virtual ~xp2pudp_t() {
-        xassert(m_link_refcount == 0);
+        listen_server_ = nullptr;
+        quic_node_ = nullptr;
     };
 
 private:
@@ -114,15 +98,9 @@ public:
         m_status = s;
     }
 
-    int add_linkrefcount();
-    int release_linkrefcount();
-
-protected:
-    std::atomic<int> m_link_refcount;  // indicate how many routing table linked this socket
 private:
     enum_xudp_status m_status;  // 0 init, 1 connecting, 2 connected, 3 closed
     XudpSocket * listen_server_;
-
     quic::xquic_node_t * quic_node_;
 };
 
@@ -133,15 +111,14 @@ public:
     XudpSocket(base::xcontext_t & context, int32_t target_thread_id, xfd_handle_t native_handle, MultiThreadHandler * message_handler, quic::xquic_node_t * quic_node);
     virtual ~XudpSocket() override;
     void Stop() override;
-    int SendData(base::xpacket_t & packet) override;
-    int SendDataWithProp(std::string const & data, const std::string & peer_ip, uint16_t peer_port, UdpPropertyPtr & udp_property, uint16_t priority_flag = 0);
-    int SendDataWithProp(base::xpacket_t & packet, UdpPropertyPtr & udp_property);
+    int XudpSendData(base::xpacket_t & packet) override;
+    int XudpSendData(std::string const & data, const std::string & peer_ip, uint16_t peer_port, uint16_t priority_flag = 0) override;
     int SendToLocal(base::xpacket_t & packet) override;
     void AddXip2Header(base::xpacket_t & packet, uint16_t priority_flag = 0) override;
     bool GetSocketStatus() override;
 
-    int AddXudp(const std::string & ip_port, xp2pudp_t * xudp);
-    bool CloseXudp(xp2pudp_t * xudp);
+    void AddXudp(const std::string & ip_port, xp2pudp_t * xudp);
+    void CloseXudp(xp2pudp_t * xudp);
 
     virtual void StartRead() override {
         base::xudplisten_t::start_read(0);

@@ -86,7 +86,7 @@ void GossipInterface::Send(transport::protobuf::RoutingMessage & message, const 
 
         METRICS_SEND_RECORD(message);
 
-        if (kadmlia::kKadSuccess != transport_ptr_->SendDataWithProp(data, node_info_ptr->public_ip, node_info_ptr->public_port, node_info_ptr->udp_property)) {
+        if (kadmlia::kKadSuccess != transport_ptr_->TransSendData(data, node_info_ptr->public_ip, node_info_ptr->public_port)) {
             TOP_WARN2("SendData to  endpoint(%s:%d) failed", node_info_ptr->public_ip.c_str(), node_info_ptr->public_port);
             return false;
         }
@@ -114,7 +114,7 @@ void GossipInterface::MutableSend(transport::protobuf::RoutingMessage & message,
 
         METRICS_SEND_RECORD(message);
 
-        if (kadmlia::kKadSuccess != transport_ptr_->SendDataWithProp(data, node_info_ptr->public_ip, node_info_ptr->public_port, node_info_ptr->udp_property)) {
+        if (kadmlia::kKadSuccess != transport_ptr_->TransSendData(data, node_info_ptr->public_ip, node_info_ptr->public_port)) {
             TOP_WARN2("SendData to  endpoint(%s:%d) failed", node_info_ptr->public_ip.c_str(), node_info_ptr->public_port);
             return false;
         }
@@ -142,7 +142,7 @@ void GossipInterface::MutableSendHash(transport::protobuf::RoutingMessage & mess
 
         METRICS_SEND_RECORD(message);
 
-        if (kadmlia::kKadSuccess != transport_ptr_->SendDataWithProp(data, node_info_ptr->public_ip, node_info_ptr->public_port, node_info_ptr->udp_property)) {
+        if (kadmlia::kKadSuccess != transport_ptr_->TransSendData(data, node_info_ptr->public_ip, node_info_ptr->public_port)) {
             TOP_WARN2("SendData to  endpoint(%s:%d) failed", node_info_ptr->public_ip.c_str(), node_info_ptr->public_port);
             return false;
         }
@@ -186,7 +186,7 @@ void GossipInterface::SendDispatch(transport::protobuf::RoutingMessage & message
 
         METRICS_SEND_RECORD(message);
 
-        if (kadmlia::kKadSuccess != transport_ptr_->SendDataWithProp(data, node_info_ptr->public_ip, node_info_ptr->public_port, node_info_ptr->udp_property)) {
+        if (kadmlia::kKadSuccess != transport_ptr_->TransSendData(data, node_info_ptr->public_ip, node_info_ptr->public_port)) {
             xinfo("SendDispatch send to (%s:%d) failed % " PRIu64 " % " PRIu64,
                   node_info_ptr->public_ip.c_str(),
                   node_info_ptr->public_port,
