@@ -32,7 +32,6 @@ public:
     xevm_rpc_service(shared_ptr<xrpc_edge_vhost> edge_vhost,
                  common::xip2_t xip2,
                  bool archive_flag = false,
-                 observer_ptr<store::xstore_face_t> store = nullptr,
                  observer_ptr<base::xvblockstore_t> block_store = nullptr,
                  observer_ptr<base::xvtxstore_t> txstore = nullptr,
                  observer_ptr<elect::ElectMain> elect_main = nullptr,
@@ -54,14 +53,13 @@ template <typename T>
 xevm_rpc_service<T>::xevm_rpc_service(shared_ptr<xrpc_edge_vhost> edge_vhost,
                               common::xip2_t xip2,
                               bool archive_flag,
-                              observer_ptr<store::xstore_face_t> store,
                               observer_ptr<base::xvblockstore_t> block_store,
                               observer_ptr<base::xvtxstore_t> txstore,
                               observer_ptr<elect::ElectMain> elect_main,
                               observer_ptr<top::election::cache::xdata_accessor_face_t> const & election_cache_data_accessor) {
     m_rule_mgr_ptr = top::make_unique<xfilter_manager>();
     m_io_service = std::make_shared<asio::io_service>();
-    m_edge_method_mgr_ptr = top::make_unique<T>(edge_vhost, xip2, m_io_service, archive_flag, store, block_store, txstore, elect_main, election_cache_data_accessor);
+    m_edge_method_mgr_ptr = top::make_unique<T>(edge_vhost, xip2, m_io_service, archive_flag, block_store, txstore, elect_main, election_cache_data_accessor);
     m_pre_request_handler_mgr_ptr = top::make_unique<xpre_request_handler_mgr>();
     call_once(m_once_flag, [this](){
         clean_token_timeout(CLEAN_TIME);

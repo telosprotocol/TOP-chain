@@ -151,7 +151,11 @@ inline bool xtop_evm_crosschain_syscontract_face<T>::execute(xbytes_t input,
 
     switch (function_selector.method_id) {
     case method_id_init: {
+#if !defined(XBUILD_DEV) && !defined(XBUILD_CI) && !defined(XBUILD_BOUNTY) && !defined(XBUILD_GALILEO)
+        if (!m_whitelist.count(context.caller.to_hex_string())) {
+#else
         if (!m_whitelist.empty() && !m_whitelist.count(context.caller.to_hex_string())) {
+#endif
             err.fail_status = precompile_error::Revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             err.cost = 50000;
@@ -188,7 +192,11 @@ inline bool xtop_evm_crosschain_syscontract_face<T>::execute(xbytes_t input,
         return true;
     }
     case method_id_sync: {
+#if !defined(XBUILD_DEV) && !defined(XBUILD_CI) && !defined(XBUILD_BOUNTY) && !defined(XBUILD_GALILEO)
+        if (!m_whitelist.count(context.caller.to_hex_string())) {
+#else
         if (!m_whitelist.empty() && !m_whitelist.count(context.caller.to_hex_string())) {
+#endif
             err.fail_status = precompile_error::Revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             err.cost = 50000;
@@ -291,7 +299,11 @@ inline bool xtop_evm_crosschain_syscontract_face<T>::execute(xbytes_t input,
         return true;
     }
     case method_id_reset: {
+#if !defined(XBUILD_DEV) && !defined(XBUILD_CI) && !defined(XBUILD_BOUNTY) && !defined(XBUILD_GALILEO)
+        if (!m_whitelist.count(context.caller.to_hex_string())) {
+#else
         if (!m_whitelist.empty() && !m_whitelist.count(context.caller.to_hex_string())) {
+#endif
             err.fail_status = precompile_error::Revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             err.cost = 50000;
@@ -311,7 +323,11 @@ inline bool xtop_evm_crosschain_syscontract_face<T>::execute(xbytes_t input,
         return true;
     }
     case method_id_disable_reset: {
+#if !defined(XBUILD_DEV) && !defined(XBUILD_CI) && !defined(XBUILD_BOUNTY) && !defined(XBUILD_GALILEO)
+        if (!m_whitelist.count(context.caller.to_hex_string())) {
+#else
         if (!m_whitelist.empty() && !m_whitelist.count(context.caller.to_hex_string())) {
+#endif
             err.fail_status = precompile_error::Revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
             err.cost = 50000;

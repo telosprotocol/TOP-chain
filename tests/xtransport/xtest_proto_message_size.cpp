@@ -2,7 +2,7 @@
 #include "xbase/xcontext.h"
 
 #include <gtest/gtest.h>
-
+#if 0
 using top::transport::protobuf::RoutingMessage;
 
 #define COUT_SIZE(name, packet) std::cout << name << " size : " << packet.get_size() << std::endl;
@@ -153,3 +153,4 @@ TEST(test_,msg_size_simple_hash){
     message.mutable_gossip()->set_msg_hash(12341556);
     SIZE;
 }
+#endif

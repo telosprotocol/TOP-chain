@@ -38,7 +38,7 @@ namespace top
             virtual bool                set_value(const std::string & key, const std::string& value) override;
             virtual bool                delete_value(const std::string & key) override;
             virtual const std::string   get_value(const std::string & key) const override;
-            virtual bool                delete_values(std::vector<std::string> & to_deleted_keys) override;
+            virtual bool                delete_values(const std::vector<std::string> & to_deleted_keys) override;
             
             virtual bool                execute_block(base::xvblock_t* block);
             

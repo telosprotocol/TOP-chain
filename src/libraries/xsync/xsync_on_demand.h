@@ -37,9 +37,13 @@ public:
         const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self);
     void handle_blocks_request_with_proof(const xsync_message_get_on_demand_blocks_with_proof_t &block,
         const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self);
+    void handle_blocks_request_with_hash(const xsync_message_get_on_demand_blocks_with_hash_t &msg,
+        const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self);
     void handle_blocks_response(const std::vector<data::xblock_ptr_t> &blocks,
         const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self);
     void handle_blocks_response_with_proof(const std::vector<data::xblock_ptr_t> &blocks, const std::string& unit_proof_str,
+        const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self);
+    void handle_blocks_response_with_hash(const std::vector<data::xblock_ptr_t> &blocks,
         const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self);
     void handle_chain_snapshot_meta(xsync_message_chain_snapshot_meta_t &chain_meta, 
         const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self);
@@ -51,6 +55,12 @@ public:
     void handle_blocks_by_hash_response(const std::vector<data::xblock_ptr_t> &blocks, 
         const vnetwork::xvnode_address_t &to_address, const vnetwork::xvnode_address_t &network_self);    
     xsync_download_tracer_mgr* download_tracer_mgr();
+    void handle_blocks_response_with_params(const std::vector<data::xblock_ptr_t>& blocks, 
+            const std::string& unit_proof_str, const vnetwork::xvnode_address_t& to_address, 
+            const vnetwork::xvnode_address_t& network_self);
+    void handle_blocks_response_with_hash(const xsync_msg_block_request_ptr_t& request_ptr, 
+            const std::vector<data::xblock_ptr_t> &blocks,  const vnetwork::xvnode_address_t &to_address, 
+            const vnetwork::xvnode_address_t &network_self);
 
 private:
     int32_t check(const std::string &account_address);

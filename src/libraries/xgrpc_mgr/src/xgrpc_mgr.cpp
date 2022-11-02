@@ -145,7 +145,7 @@ bool handler_mgr::handle(std::string & request, xJson::Value& js_req, xJson::Val
     return false;
 }
 
-int grpc_init(store::xstore_face_t * store, base::xvblockstore_t * block_store, sync::xsync_face_t * sync, uint16_t grpc_port) {
+int grpc_init(base::xvblockstore_t * block_store, sync::xsync_face_t * sync, uint16_t grpc_port) {
     // updating node infos periodically
     // elect::ElectMockReporterIntf::Instance()->RegCallback(on_report_node);
 
@@ -153,7 +153,7 @@ int grpc_init(store::xstore_face_t * store, base::xvblockstore_t * block_store, 
 
     static std::shared_ptr<handler_mgr> handle_mgr = std::make_shared<handler_mgr>();
     static std::shared_ptr<xrpc_handle_face_t> handle_store =
-        std::make_shared<top::xrpc::xrpc_query_manager>(observer_ptr<store::xstore_face_t>(store), observer_ptr<base::xvblockstore_t>(block_store), sync, nullptr);
+        std::make_shared<top::xrpc::xrpc_query_manager>(observer_ptr<base::xvblockstore_t>(block_store), sync, nullptr);
     handle_mgr->add_handler(handle_store);
 
     grpc_srv->register_handle(handle_mgr);

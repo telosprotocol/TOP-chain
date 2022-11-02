@@ -565,11 +565,11 @@ xtop_routing_table::make_distance(common::xnode_id_t const & left, common::xnode
     memcpy(rhash.data(), hash.data(), hash.size());
 
     std::size_t distance{ 0 };
-    xuint256_t result{ lhash ^ rhash };
-    while (result) {
-        distance++;
-        result >>= 1;
-    }
+    //xuint256_t result{ lhash ^ rhash };
+    //while (result) {
+    //    distance++;
+    //    result >>= 1;
+    //}
 
     return xdistance_t{ distance };
 }

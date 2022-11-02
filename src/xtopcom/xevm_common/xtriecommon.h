@@ -20,8 +20,7 @@ inline h256 sha3(bytesConstRef _input) noexcept
     return ret;
 }
 
-inline h256 sha3(bytes const& _input) noexcept
-{
+inline h256 sha3(xbytes_t const & _input) noexcept {
     return  sha3(bytesConstRef(&_input));
 }
 
@@ -37,7 +36,7 @@ inline h256 sha3(h256 const& _input) noexcept
 
 extern const h256 EmptyTrie;
 
-inline byte nibble(bytesConstRef _data, unsigned _i)
+inline xbyte_t nibble(bytesConstRef _data, unsigned _i)
 {
 	return (_i & 1) ? (_data[_i / 2] & 15) : (_data[_i / 2] >> 4);
 }
@@ -65,7 +64,7 @@ struct NibbleSlice
 	unsigned offset;
 
 	NibbleSlice(bytesConstRef _data = bytesConstRef(), unsigned _offset = 0): data(_data), offset(_offset) {}
-	byte operator[](unsigned _index) const { return nibble(data, offset + _index); }
+	xbyte_t operator[](unsigned _index) const { return nibble(data, offset + _index); }
 	unsigned size() const { return data.size() * 2 - offset; }
 	bool empty() const { return !size(); }
 	NibbleSlice mid(unsigned _index) const { return NibbleSlice(data, offset + _index); }
@@ -127,8 +126,8 @@ inline NibbleSlice keyOf(RLP const& _twoItem)
 	return keyOf(_twoItem[0].payload());
 }
 */
-byte uniqueInUse(RLP const& _orig, byte except);
-std::string hexPrefixEncode(bytes const& _hexVector, bool _leaf = false, int _begin = 0, int _end = -1);
+xbyte_t uniqueInUse(RLP const& _orig, xbyte_t except);
+std::string hexPrefixEncode(xbytes_t const & _hexVector, bool _leaf = false, int _begin = 0, int _end = -1);
 std::string hexPrefixEncode(bytesConstRef _data, bool _leaf, int _beginNibble, int _endNibble, unsigned _offset);
 std::string hexPrefixEncode(bytesConstRef _d1, unsigned _o1, bytesConstRef _d2, unsigned _o2, bool _leaf);
 

@@ -36,9 +36,10 @@ namespace top
         public://key-value manage
             virtual const std::string get_value(const std::string & key) const = 0;
             virtual bool              set_value(const std::string & key, const std::string& value) = 0;
+            virtual bool              set_values(const std::map<std::string, std::string> & objs) = 0;
             virtual bool              delete_value(const std::string & key) = 0;
             //batch deleted keys
-            virtual bool              delete_values(std::vector<std::string> & to_deleted_keys) = 0;
+            virtual bool              delete_values(const std::vector<std::string> & to_deleted_keys) = 0;
 
         public://old API, here just for compatible
             virtual bool             set_vblock(const std::string & store_path,xvblock_t* block) = 0;

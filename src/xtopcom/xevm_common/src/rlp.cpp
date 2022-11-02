@@ -15,8 +15,8 @@ using namespace std;
 namespace top {
 namespace evm_common {
 
-bytes RLPNull = xrlp("");
-bytes RLPEmptyList = rlpList();
+xbytes_t RLPNull = xrlp("");
+xbytes_t RLPEmptyList = rlpList();
 
 
 RLP::RLP(bytesConstRef _d, Strictness _s):
@@ -104,7 +104,7 @@ void RLP::requireGood() const
 {
     if (isNull())
         assert(true);
-    byte n = m_data[0];
+    xbyte_t n = m_data[0];
     if (n != c_rlpDataImmLenStart + 1)
         return;
     if (m_data.size() < 2)
@@ -118,7 +118,7 @@ bool RLP::isInt() const
     if (isNull())
         return false;
     requireGood();
-    byte n = m_data[0];
+    xbyte_t n = m_data[0];
     if (n < c_rlpDataImmLenStart)
         return !!n;
     else if (n == c_rlpDataImmLenStart)
@@ -146,7 +146,7 @@ size_t RLP::length() const
         return 0;
     requireGood();
     size_t ret = 0;
-    byte const n = m_data[0];
+    xbyte_t const n = m_data[0];
     if (n < c_rlpDataImmLenStart)
         return 1;
     else if (n <= c_rlpDataIndLenZero)
@@ -212,10 +212,10 @@ size_t RLP::items() const
 }
 
 
-bytes RLP::encode(const u256 & value) noexcept {
+xbytes_t RLP::encode(const u256 & value) noexcept {
     using boost::multiprecision::cpp_int;
 
-    bytes bytes;
+    xbytes_t bytes;
     export_bits(value, std::back_inserter(bytes), 8);
 
     if (bytes.empty() || ((bytes.size() == 1) && (bytes[0] == 0))) {
@@ -225,14 +225,14 @@ bytes RLP::encode(const u256 & value) noexcept {
     return encode(bytes);
 }
 
-bytes RLP::encodeList(const bytes & encoded) noexcept {
+xbytes_t RLP::encodeList(const xbytes_t & encoded) noexcept {
     auto result = encodeHeader(encoded.size(), 0xc0, 0xf7);
     result.reserve(result.size() + encoded.size());
     result.insert(result.end(), encoded.begin(), encoded.end());
     return result;
 }
 
-bytes RLP::encode(const bytes & data) noexcept {
+xbytes_t RLP::encode(const xbytes_t & data) noexcept {
     if (data.size() == 1 && data[0] <= 0x7f) {
         // Fits in single byte, no header
         return data;
@@ -243,22 +243,22 @@ bytes RLP::encode(const bytes & data) noexcept {
     return encoded;
 }
 
-bytes RLP::encodeHeader(uint64_t size, uint8_t smallTag, uint8_t largeTag) noexcept {
+xbytes_t RLP::encodeHeader(uint64_t size, uint8_t smallTag, uint8_t largeTag) noexcept {
     if (size < 56) {
         return {static_cast<uint8_t>(smallTag + size)};
     }
 
     const auto sizeData = putVarInt(size);
 
-    auto header = bytes();
+    auto header = xbytes_t();
     header.reserve(1 + sizeData.size());
     header.push_back(largeTag + static_cast<uint8_t>(sizeData.size()));
     header.insert(header.end(), sizeData.begin(), sizeData.end());
     return header;
 }
 
-bytes RLP::putVarInt(uint64_t i) {
-    bytes bytes;  // accumulate bytes here, in reverse order
+xbytes_t RLP::putVarInt(uint64_t i) {
+    xbytes_t bytes;  // accumulate bytes here, in reverse order
     do {
         // take LSB byte, append
         bytes.push_back(i & 0xff);
@@ -272,7 +272,7 @@ bytes RLP::putVarInt(uint64_t i) {
     return bytes;
 }
 
-uint64_t RLP::parseVarInt(size_t size, const bytes & data, size_t index) {
+uint64_t RLP::parseVarInt(size_t size, const xbytes_t & data, size_t index) {
     if (size < 1 || size > 8) {
         throw std::invalid_argument("invalid length length");
     }
@@ -290,7 +290,7 @@ uint64_t RLP::parseVarInt(size_t size, const bytes & data, size_t index) {
     return static_cast<size_t>(val);
 }
 
-RLP::DecodedItem RLP::decodeList(const bytes & input) {
+RLP::DecodedItem RLP::decodeList(const xbytes_t & input) {
     RLP::DecodedItem item;
     auto remainder = input;
     while (true) {
@@ -300,7 +300,7 @@ RLP::DecodedItem RLP::decodeList(const bytes & input) {
                 item.decoded.push_back(decoded);
             }
         } else {
-            item.decoded.push_back(bytes());
+            item.decoded.push_back(xbytes_t());
         }
         if (listItem.remainder.size() == 0) {
             break;
@@ -311,7 +311,7 @@ RLP::DecodedItem RLP::decodeList(const bytes & input) {
     return item;
 }
 
-RLP::DecodedItem RLP::decode(const bytes & input) {
+RLP::DecodedItem RLP::decode(const xbytes_t & input) {
     if (input.size() == 0) {
         throw std::invalid_argument("can't decode empty rlp data");
     }
@@ -320,7 +320,7 @@ RLP::DecodedItem RLP::decode(const bytes & input) {
     auto prefix = input[0];
     if (prefix <= 0x7f) {
         // 00--7f: a single byte whose value is in the [0x00, 0x7f] range, that byte is its own RLP encoding.
-        item.decoded.push_back(bytes{input[0]});
+        item.decoded.push_back(xbytes_t{input[0]});
         item.remainder = subData(input, 1);
         return item;
     }
@@ -331,7 +331,7 @@ RLP::DecodedItem RLP::decode(const bytes & input) {
 
         // empty string
         if (prefix == 0x80) {
-            item.decoded.emplace_back(bytes());
+            item.decoded.emplace_back(xbytes_t());
             item.remainder = subData(input, 1);
             return item;
         }
@@ -400,7 +400,7 @@ RLP::DecodedItem RLP::decode(const bytes & input) {
     return item;
 }
 
-RLP::DecodedItem RLP::decode_once(const bytes & input) {
+RLP::DecodedItem RLP::decode_once(const xbytes_t & input) {
     if (input.size() == 0) {
         throw std::invalid_argument("can't decode empty rlp data");
     }
@@ -409,7 +409,7 @@ RLP::DecodedItem RLP::decode_once(const bytes & input) {
     auto prefix = input[0];
     if (prefix <= 0x7f) {
         // 00--7f: a single byte whose value is in the [0x00, 0x7f] range, that byte is its own RLP encoding.
-        item.decoded.push_back(bytes{input[0]});
+        item.decoded.push_back(xbytes_t{input[0]});
         item.remainder = subData(input, 1);
         return item;
     }
@@ -420,7 +420,7 @@ RLP::DecodedItem RLP::decode_once(const bytes & input) {
 
         // empty string
         if (prefix == 0x80) {
-            item.decoded.emplace_back(bytes());
+            item.decoded.emplace_back(xbytes_t());
             item.remainder = subData(input, 1);
             return item;
         }
@@ -513,13 +513,13 @@ void RLPStream::noteAppended(size_t _itemCount)
             m_out.resize(os + encodeSize);
             memmove(m_out.data() + p + encodeSize, m_out.data() + p, os - p);
             if (s < c_rlpListImmLenCount)
-                m_out[p] = (byte)(c_rlpListStart + s);
+                m_out[p] = (xbyte_t)(c_rlpListStart + s);
             else if (c_rlpListIndLenZero + brs <= 0xff)
             {
-                m_out[p] = (byte)(c_rlpListIndLenZero + brs);
-                byte* b = &(m_out[p + brs]);
+                m_out[p] = (xbyte_t)(c_rlpListIndLenZero + brs);
+                xbyte_t* b = &(m_out[p + brs]);
                 for (; s; s >>= 8)
-                    *(b--) = (byte)s;
+                    *(b--) = (xbyte_t)s;
             }
             else
                 assert(true);
@@ -534,14 +534,14 @@ RLPStream& RLPStream::appendList(size_t _items)
     if (_items)
         m_listStack.push_back(std::make_pair(_items, m_out.size()));
     else
-        appendList(bytes());
+        appendList(xbytes_t());
     return *this;
 }
 
 RLPStream& RLPStream::appendList(bytesConstRef _rlp)
 {
     if (_rlp.size() < c_rlpListImmLenCount)
-        m_out.push_back((byte)(_rlp.size() + c_rlpListStart));
+        m_out.push_back((xbyte_t)(_rlp.size() + c_rlpListStart));
     else
         pushCount(_rlp.size(), c_rlpListIndLenZero);
     appendRaw(_rlp, 1);
@@ -551,7 +551,7 @@ RLPStream& RLPStream::appendList(bytesConstRef _rlp)
 RLPStream& RLPStream::append(bytesConstRef _s, bool _compact)
 {
     size_t s = _s.size();
-    byte const* d = _s.data();
+    xbyte_t const* d = _s.data();
     if (_compact)
         for (size_t i = 0; i < _s.size() && !*d; ++i, --s, ++d) {}
 
@@ -560,7 +560,7 @@ RLPStream& RLPStream::append(bytesConstRef _s, bool _compact)
     else
     {
         if (s < c_rlpDataImmLenCount)
-            m_out.push_back((byte)(s + c_rlpDataImmLenStart));
+            m_out.push_back((xbyte_t)(s + c_rlpDataImmLenStart));
         else
             pushCount(s, c_rlpDataIndLenZero);
         appendRaw(bytesConstRef(d, s), 0);
@@ -574,18 +574,18 @@ RLPStream& RLPStream::append(bigint _i)
     if (!_i)
         m_out.push_back(c_rlpDataImmLenStart);
     else if (_i < c_rlpDataImmLenStart)
-        m_out.push_back((byte)_i);
+        m_out.push_back((xbyte_t)_i);
     else
     {
         unsigned br = bytesRequired(_i);
         if (br < c_rlpDataImmLenCount)
-            m_out.push_back((byte)(br + c_rlpDataImmLenStart));
+            m_out.push_back((xbyte_t)(br + c_rlpDataImmLenStart));
         else
         {
             auto brbr = bytesRequired(br);
             if (c_rlpDataIndLenZero + brbr > 0xff)
                 assert(true);
-            m_out.push_back((byte)(c_rlpDataIndLenZero + brbr));
+            m_out.push_back((xbyte_t)(c_rlpDataIndLenZero + brbr));
             pushInt(br, brbr);
         }
         pushInt(_i, br);
@@ -594,12 +594,12 @@ RLPStream& RLPStream::append(bigint _i)
     return *this;
 }
 
-void RLPStream::pushCount(size_t _count, byte _base)
+void RLPStream::pushCount(size_t _count, xbyte_t _base)
 {
     auto br = bytesRequired(_count);
     if (int(br) + _base > 0xff)
         assert(true);
-    m_out.push_back((byte)(br + _base));	// max 8 bytes.
+    m_out.push_back((xbyte_t)(br + _base));	// max 8 bytes.
     pushInt(_count, br);
 }
 

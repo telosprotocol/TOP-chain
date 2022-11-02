@@ -9,7 +9,6 @@
 #include "xbase/xcontext.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
-#include "xdata/xcheckpoint.h"
 #include "xmetrics/xmetrics.h"
 
 namespace top
@@ -143,6 +142,33 @@ namespace top
             }
         }
 
+        const uint32_t xvaccount_t::get_index_from_account(const std::string & account_addr) {
+            XMETRICS_GAUGE(metrics::cpu_hash_64_calc, 1);
+            return (uint32_t)xhash64_t::digest(account_addr);//hash64 better performance than hash32
+        }
+
+        const xvid_t  xvaccount_t::get_xid_from_account(const std::string & account_addr) {
+            uint32_t account_index        = 0;
+            uint32_t ledger_id            = 0;
+            uint16_t ledger_subaddr       = 0;
+            if(get_ledger_fulladdr_from_account(account_addr,ledger_id,ledger_subaddr,account_index))
+            {
+                xvid_t _xid_from_addr = (ledger_id << 16) | ((ledger_subaddr & enum_vbucket_has_tables_count_mask) << 6) | enum_xid_type_xledger;
+                _xid_from_addr |= (((uint64_t)account_index) << 32);
+                return _xid_from_addr; //as default not include account'hash index as performance consideration
+            }
+            return 0; //invalid account
+        }
+        std::string xvaccount_t::to_evm_address(const std::string& account) {
+            if (account.size() < 2)
+                return "";
+            std::string value;
+            value.resize(account.size());
+            std::transform(account.begin(), account.end(), value.begin(), ::tolower);
+            value = std::string(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN) + value.substr(2);
+            return value;
+        }
+
         bool xvaccount_t::is_unit_address_type(enum_vaccount_addr_type addr_type) {
             return (addr_type == enum_vaccount_addr_type_secp256k1_eth_user_account || addr_type == enum_vaccount_addr_type_secp256k1_user_account ||
                     addr_type == enum_vaccount_addr_type_secp256k1_evm_user_account);
@@ -253,73 +279,10 @@ namespace top
 
                 uint16_t ledger_id = base::xvaccount_t::get_ledgerid_from_account(account_addr);
                 // table addr judge subaddr size
-                if (addr_type == enum_vaccount_addr_type_block_contract) {
-                    if (ledger_id == enum_chain_zone_consensus_index) {
-                        if (subaddr_int32 < 0 || subaddr_int32 >= enum_vbucket_has_tables_count) {
-                            xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
-                            return false;
-                        }
-                    } else if (ledger_id == enum_chain_zone_beacon_index) {
-                        if (subaddr_int32 < 0 || static_cast<uint32_t>(subaddr_int32) >= MAIN_CHAIN_REC_TABLE_USED_NUM) {
-                            xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
-                            return false;
-                        }
-                    } else if (ledger_id == enum_chain_zone_zec_index) {
-                        if (subaddr_int32 < 0 || static_cast<uint32_t>(subaddr_int32) >= MAIN_CHAIN_ZEC_TABLE_USED_NUM) {
-                            xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
-                            return false;
-                        }
-                    } else if (ledger_id == enum_chain_zone_evm_index) {
-                        if (subaddr_int32 < 0 || static_cast<uint32_t>(subaddr_int32) >= MAIN_CHAIN_EVM_TABLE_USED_NUM) {
-                            xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
-                            return false;
-                        }
-                    } else if (ledger_id == enum_chain_zone_relay_index) {
-                        if (subaddr_int32 < 0 || static_cast<uint32_t>(subaddr_int32) >= MAIN_CHAIN_RELAY_TABLE_USED_NUM) {
-                            xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
-                            return false;
-                        }
-                    } else {
-                        // invalid table addr
-                        assert(false);
-                        xwarn("xvaccount_t::check_address fail-invalid header. header:%s type=%d", parts[0].c_str(), addr_type);
-                        return false;
-                    }
-                    // contracts addr judge subaddr size
-                } else if (addr_type == enum_vaccount_addr_type_native_contract) {
-                    // shard contracts addr judge subaddr size
-                    if (ledger_id == enum_chain_zone_consensus_index) {
-                        if (subaddr_int32 < 0 || subaddr_int32 >= enum_vbucket_has_tables_count) {
-                            xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
-                            return false;
-                        }
-                    // root beacon contracts addr judge subaddr size 
-                    } else if (ledger_id == enum_chain_zone_beacon_index) {
-                        if (subaddr_int32 < 0 || static_cast<uint32_t>(subaddr_int32) >= MAIN_CHAIN_REC_TABLE_USED_NUM) {
-                            xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
-                            return false;
-                        }
-                    // sub beacon contracts addr judge subaddr size 
-                    } else if (ledger_id == enum_chain_zone_zec_index) {
-                        if (subaddr_int32 < 0 || static_cast<uint32_t>(subaddr_int32) >= MAIN_CHAIN_ZEC_TABLE_USED_NUM) {
-                            xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
-                            return false;
-                        }
-                    } else if (ledger_id == enum_chain_zone_evm_index) {
-                        if (subaddr_int32 < 0 || static_cast<uint32_t>(subaddr_int32) >= MAIN_CHAIN_EVM_TABLE_USED_NUM) {
-                            xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
-                            return false;
-                        }
-                    } else if (ledger_id == enum_chain_zone_relay_index) {
-                        if (subaddr_int32 < 0 || static_cast<uint32_t>(subaddr_int32) >= MAIN_CHAIN_RELAY_TABLE_USED_NUM) {
-                            xwarn("xvaccount_t::check_address fail-subaddr scope invalid.subaddr=%d", subaddr_int32);
-                            return false;
-                        }
-                    } else {
-                        assert(false);
-                        //invalid contracts addr
-                        xwarn("xvaccount_t::check_address fail-invalid header. header:%s type=%d", parts[0].c_str(), addr_type);
-                        return false;
+                if (addr_type == enum_vaccount_addr_type_block_contract || addr_type == enum_vaccount_addr_type_native_contract) {
+                    if (!valid_zone_and_subaddr((enum_xchain_zone_index)ledger_id, subaddr_int32)){
+                         xwarn("xvaccount_t::check_address fail-subaddr scope invalid.addr_type=%d,subaddr=%d", addr_type, subaddr_int32);
+                         return false;
                     }
                 }
             }
@@ -369,6 +332,36 @@ namespace top
             }
             return true;
         }
+
+        bool xvaccount_t::valid_zone_and_subaddr(enum_xchain_zone_index zone_index, uint16_t subaddr) {
+            if (zone_index == enum_chain_zone_consensus_index) {
+                if (subaddr < 0 || subaddr >= enum_vbucket_has_tables_count) {
+                    return false;
+                }
+            // root beacon contracts addr judge subaddr size 
+            } else if (zone_index == enum_chain_zone_beacon_index) {
+                if (subaddr < 0 || static_cast<uint32_t>(subaddr) >= MAIN_CHAIN_REC_TABLE_USED_NUM) {
+                    return false;
+                }
+            // sub beacon contracts addr judge subaddr size 
+            } else if (zone_index == enum_chain_zone_zec_index) {
+                if (subaddr < 0 || static_cast<uint32_t>(subaddr) >= MAIN_CHAIN_ZEC_TABLE_USED_NUM) {
+                    return false;
+                }
+            } else if (zone_index == enum_chain_zone_evm_index) {
+                if (subaddr < 0 || static_cast<uint32_t>(subaddr) >= MAIN_CHAIN_EVM_TABLE_USED_NUM) {
+                    return false;
+                }
+            } else if (zone_index == enum_chain_zone_relay_index) {
+                if (subaddr < 0 || static_cast<uint32_t>(subaddr) >= MAIN_CHAIN_RELAY_TABLE_USED_NUM) {
+                    return false;
+                }
+            } else {
+                assert(false);
+                return false;
+            }
+            return true;
+        }
     
         bool  xvaccount_t::is_unit_address() const
         {
@@ -404,6 +397,10 @@ namespace top
         {
             return (get_addr_type() == enum_vaccount_addr_type_relay_block);
         }
+        bool  xvaccount_t::has_valid_table_addr() const {
+            return valid_zone_and_subaddr((enum_xchain_zone_index)get_zone_index(), (uint16_t)get_ledger_subaddr());
+        }
+
         //------------------------------------account meta-------------------------------------//
         xblockmeta_t::xblockmeta_t()
         {
@@ -624,20 +621,6 @@ namespace top
             return std::string();
         }
 
-        void xvactmeta_t::init_cp_connect_meta(xvactmeta_t* meta_ptr, const std::string & account) {
-            std::error_code ec;
-            common::xaccount_address_t addr{account};
-            // bad performance ?
-            auto cp = data::xtop_chain_checkpoint::get_latest_checkpoint(addr, ec);
-            if (ec) {
-                xinfo("init_cp_connect_meta fail! account: %s, err: %s", account.c_str(), ec.message().c_str());
-                return ;
-            }
-            _highest_cp_connect_block_height = cp.height;
-            _highest_cp_connect_block_hash = cp.hash;
-            xinfo("init_cp_connect_meta account:%s,height:%llu,hash:%s", account.c_str(), _highest_cp_connect_block_height, base::xstring_utl::to_hex(_highest_cp_connect_block_hash).c_str());
-        }
-
         xvactmeta_t*  xvactmeta_t::load(xvaccount_t & _account,const std::string & meta_serialized_data)
         {
             if(meta_serialized_data.empty()) //check first
@@ -665,8 +648,6 @@ namespace top
             #else
             m_account_address = _account.get_xvid_str();
             #endif
-
-            init_cp_connect_meta(this, _account.get_account());
 
             //XTODO,remove below assert when related xbase checked in main-branch
             xassert(__XBASE_MAIN_VERSION_CODE__ >= 1);
@@ -820,16 +801,36 @@ namespace top
             {
                 _highest_execute_block_height = height;
                 _highest_execute_block_hash   = blockhash;
-                const uint32_t safe_distance = XGET_CONFIG(fulltable_interval_block_num) * 10;
-                if (_highest_execute_block_height > safe_distance) {
-                    _lowest_execute_block_height = _highest_execute_block_height - safe_distance;
-                }
+
+                // _lowest_execute_block_height rewirted by set_lowest_executed_block only. after we use unit state prune.
+                // const uint32_t safe_distance = XGET_CONFIG(fulltable_interval_block_num) * 10;
+                // if (_highest_execute_block_height > safe_distance) {
+                //     _lowest_execute_block_height = _highest_execute_block_height - safe_distance;
+                // }
                 add_modified_count();
                 return true;
             }
             return false;
         }
-    
+
+        bool xvactmeta_t::set_lowest_executed_block(const uint64_t height)
+        {
+            if(height < _lowest_execute_block_height)
+            {
+                // TODO(jimmy) it may happen when set executed height from statestore with multi-threads
+                xwarn("xvactmeta_t::set_latest_executed_block,try overwrited _lowest_execute_block_height(%llu) with old_meta(%llu)",_lowest_execute_block_height,height);
+                return false;
+            }
+            
+            if(height != _lowest_execute_block_height)
+            {
+                _lowest_execute_block_height = height;
+                add_modified_count();
+                return true;
+            }
+            return false;
+        }
+
         bool   xvactmeta_t::set_latest_deleted_block(const uint64_t height)
         {
             if(height <= _highest_deleted_block_height)

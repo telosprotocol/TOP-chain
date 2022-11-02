@@ -55,7 +55,7 @@ std::string escaped(std::string const & _s, bool _all) {
     return ret;
 }
 
-bytes fromHex(std::string const & _s, WhenError _throw) {
+xbytes_t fromHex(std::string const & _s, WhenError _throw) {
     unsigned s = (_s.size() >= 2 && _s[0] == '0' && _s[1] == 'x') ? 2 : 0;
     std::vector<uint8_t> ret;
     ret.reserve((_s.size() - s + 1) / 2);
@@ -69,24 +69,24 @@ bytes fromHex(std::string const & _s, WhenError _throw) {
             throw("");
         // BOOST_THROW_EXCEPTION(BadHexCharacter());
         else
-            return bytes();
+            return xbytes_t();
     }
     for (unsigned i = s; i < _s.size(); i += 2) {
         int h = fromHexChar(_s[i]);
         int l = fromHexChar(_s[i + 1]);
         if (h != -1 && l != -1)
-            ret.push_back((byte)(h * 16 + l));
+            ret.push_back((xbyte_t)(h * 16 + l));
         else if (_throw == WhenError::Throw)
             // todo
             throw("");
         // BOOST_THROW_EXCEPTION(BadHexCharacter());
         else
-            return bytes();
+            return xbytes_t();
     }
     return ret;
 }
 
-bytes asNibbles(bytesConstRef const & _s) {
+xbytes_t asNibbles(bytesConstRef const & _s) {
     std::vector<uint8_t> ret;
     ret.reserve(_s.size() * 2);
     for (auto i : _s) {

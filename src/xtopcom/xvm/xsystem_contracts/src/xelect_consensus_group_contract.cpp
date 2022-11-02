@@ -373,13 +373,13 @@ void xtop_elect_consensus_group_contract::handle_elected_in_data(std::vector<com
         }
 
         xelection_info_t new_election_info{};
-        new_election_info.joined_version = election_group_result.group_version();
-        new_election_info.stake = elect_in_pos->stake();
-        new_election_info.comprehensive_stake = elect_in_pos->comprehensive_stake();
-        new_election_info.consensus_public_key = elect_in_pos->public_key();
-        new_election_info.miner_type = elect_in_pos->miner_type();
-        new_election_info.genesis = elect_in_pos->genesis();
-        new_election_info.raw_credit_score = elect_in_pos->raw_credit_score();
+        new_election_info.joined_epoch(election_group_result.group_version());
+        new_election_info.stake(elect_in_pos->stake());
+        new_election_info.comprehensive_stake(elect_in_pos->comprehensive_stake());
+        new_election_info.public_key(elect_in_pos->public_key());
+        new_election_info.miner_type(elect_in_pos->miner_type());
+        new_election_info.genesis(elect_in_pos->genesis());
+        new_election_info.raw_credit_score(elect_in_pos->raw_credit_score());
 
         xelection_info_bundle_t election_info_bundle{};
         election_info_bundle.account_address(node_id);
@@ -443,9 +443,9 @@ bool xtop_elect_consensus_group_contract::do_normal_election(common::xzone_id_t 
         if (top::get<bool>(current_group_nodes.find(standby_node_id))) {
             // update the corresponding node in the group
             auto & node_election_info = current_group_nodes.result_of(standby_node_id);
-            node_election_info.comprehensive_stake = comprehensive_stake;
-            node_election_info.stake = it->stake();
-            node_election_info.consensus_public_key = it->public_key();
+            node_election_info.comprehensive_stake(comprehensive_stake);
+            node_election_info.stake(it->stake());
+            node_election_info.public_key(it->public_key());
 
             it = effective_standby_result.erase(it);
         } else {
@@ -495,8 +495,8 @@ bool xtop_elect_consensus_group_contract::do_normal_election(common::xzone_id_t 
 
                 // keep this node but reset fields.
                 // the only valid operations are: clear the stake & comprehensive stake, but not the public key.
-                election_info_bundle.election_info().stake = 0;
-                election_info_bundle.election_info().comprehensive_stake = minimum_comprehensive_stake;
+                election_info_bundle.election_info().stake(0);
+                election_info_bundle.election_info().comprehensive_stake(minimum_comprehensive_stake);
 
                 xdbg("%s observes node %s with stake & comprehensive stake 1 (since it's not in the standby pool).", log_prefix.c_str(), node_id.value().c_str());
 
@@ -508,13 +508,13 @@ bool xtop_elect_consensus_group_contract::do_normal_election(common::xzone_id_t 
             result_nodes.reset(node_id);
             ++unqualified_node_count;
         } else {
-            fts_current_nodes.push_back({static_cast<common::xstake_t>(election_info_bundle.election_info().comprehensive_stake), node_id});
+            fts_current_nodes.push_back({static_cast<common::xstake_t>(election_info_bundle.election_info().comprehensive_stake()), node_id});
 
             xdbg("%s observes node %s with stake %" PRIu64 " comprehensive stake %" PRIu64,
                  log_prefix.c_str(),
                  node_id.value().c_str(),
-                 election_info_bundle.election_info().stake,
-                 election_info_bundle.election_info().comprehensive_stake);
+                 election_info_bundle.election_info().stake(),
+                 election_info_bundle.election_info().comprehensive_stake());
         }
     }
     assert(fts_current_nodes.size() == result_nodes.size());
@@ -623,12 +623,12 @@ bool xtop_elect_consensus_group_contract::do_normal_election(common::xzone_id_t 
               elect_in_pos->raw_credit_score());
 
         auto & election_info = election_info_bundle.election_info();
-        election_info.stake = elect_in_pos->stake();
-        election_info.comprehensive_stake = elect_in_pos->comprehensive_stake();
-        election_info.consensus_public_key = elect_in_pos->public_key();
-        election_info.miner_type = elect_in_pos->miner_type();
-        election_info.genesis = elect_in_pos->genesis();
-        election_info.raw_credit_score = elect_in_pos->raw_credit_score();
+        election_info.stake(elect_in_pos->stake());
+        election_info.comprehensive_stake(elect_in_pos->comprehensive_stake());
+        election_info.public_key(elect_in_pos->public_key());
+        election_info.miner_type(elect_in_pos->miner_type());
+        election_info.genesis(elect_in_pos->genesis());
+        election_info.raw_credit_score(elect_in_pos->raw_credit_score());
     }
 
     current_group_nodes = result_nodes;
@@ -663,8 +663,8 @@ bool xtop_elect_consensus_group_contract::do_shrink_election(common::xzone_id_t 
 
                 // keep this node but reset fields.
                 // the only valid operations are: clear the stake & comprehensive stake, but not the public key.
-                election_info_bundle.election_info().stake = 0;
-                election_info_bundle.election_info().comprehensive_stake = minimum_comprehensive_stake;
+                election_info_bundle.election_info().stake(0);
+                election_info_bundle.election_info().comprehensive_stake(minimum_comprehensive_stake);
                 continue;
             }
 
@@ -673,13 +673,14 @@ bool xtop_elect_consensus_group_contract::do_shrink_election(common::xzone_id_t 
             result_nodes.reset(node_id);
             ++unqualified_node_count;
         } else {
-            fts_current_nodes.push_back({static_cast<common::xstake_t>(std::max(election_info_bundle.election_info().comprehensive_stake, minimum_comprehensive_stake)), node_id});
+            fts_current_nodes.push_back(
+                {static_cast<common::xstake_t>(std::max(election_info_bundle.election_info().comprehensive_stake(), minimum_comprehensive_stake)), node_id});
 
             xdbg("%s observes node %s with stake %" PRIu64 " comprehensive stake %" PRIu64,
                  log_prefix.c_str(),
                  node_id.value().c_str(),
-                 election_info_bundle.election_info().stake,
-                 election_info_bundle.election_info().comprehensive_stake);
+                 election_info_bundle.election_info().stake(),
+                 election_info_bundle.election_info().comprehensive_stake());
         }
     }
 

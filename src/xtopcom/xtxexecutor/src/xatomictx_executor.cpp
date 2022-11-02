@@ -85,7 +85,7 @@ bool xatomictx_executor_t::update_gasfee(const xvm_gasfee_detail_t detail, const
 
 bool xatomictx_executor_t::set_tx_account_state(const data::xunitstate_ptr_t & unitstate, const xcons_transaction_ptr_t & tx) {
     // update account create time propertys
-    if (unitstate->get_block_height() < 2) {
+    if (unitstate->height() < 2) {
         unitstate->set_account_create_time(m_para.get_clock());
     }
     return update_nonce_and_hash(unitstate, tx);
@@ -326,7 +326,7 @@ enum_execute_result_type xatomictx_executor_t::vm_execute(const xcons_transactio
             xassert(false);
 #endif
         }
-    } while(0);
+    } while(false);
 
     if (ret != enum_exec_success) {
         xassert(ret != enum_exec_error_invalid);

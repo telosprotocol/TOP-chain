@@ -50,7 +50,7 @@ const h256 test_public_key_y { "b72d55c76bd8f477f4b251763c33f75e6f5f5dd8af071e71
 // const uint64_t  test_stake = 0x12345678;
 const h256 test_r { "4f89ece0f576ba39123456789123456781604b97cf3baa922b010a758d303842" };
 const h256 test_s { "4f812345678abcdef1234ba19a44d94601604b97cf3baa922b010a758d303842" };
-const byte test_v = 0x1;
+const xbyte_t test_v = 0x1;
 const uint8_t test_version = 0;
 const h256 test_inner_hash { "5e173f6ac3c669587538e7727cf19b782a4f2fda07c1eaa662c593e5e85e3051" };
 const uint64_t test_height = 1;
@@ -88,7 +88,7 @@ xevm_log_t xrelay_evm_log_create()
     topics.push_back(test_topics4);
     std::string test_str = "000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000a4ba11f3f36b12c71f2aef775583b306a3cf784a";
     std::string log_data = top::HexDecode(test_str);
-    xbytes_t data = bytes(log_data.begin(), log_data.end());
+    xbytes_t data = xbytes_t(log_data.begin(), log_data.end());
 
     xevm_log_t _evm_log(address, topics, data);
     return _evm_log;
@@ -117,7 +117,7 @@ xeth_transaction_t xrelay_tx_create()
     xeth_address_t to_address = xtop_eth_address::build_from(test_to_address);
     std::string test_str = "000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000a4ba11f3f36b12c71f2aef775583b306a3cf784a";
     std::string log_data = top::HexDecode(test_str);
-    xbytes_t data = bytes(log_data.begin(), log_data.end());
+    xbytes_t data = xbytes_t(log_data.begin(), log_data.end());
 
     xeth_transaction_t tx(from_address, to_address, data, test_value, test_value_gas, test_value_gas);
     return tx;
@@ -337,7 +337,7 @@ TEST_F(test_relay_block, serialize_election_set_push)
 
     RLPStream rlp_election;
     election_set_src.streamRLP(rlp_election);
-    bytes rlp_bytes = rlp_election.out();
+    xbytes_t rlp_bytes = rlp_election.out();
 
     xrelay_election_group_t election_set_dst;
     election_set_dst.decodeRLP(RLP(rlp_bytes), ec);
@@ -352,7 +352,7 @@ TEST_F(test_relay_block, serialize_election_set_empty)
 
     RLPStream rlp_election;
     election_set_src.streamRLP(rlp_election);
-    bytes rlp_bytes = rlp_election.out();
+    xbytes_t rlp_bytes = rlp_election.out();
 
     xrelay_election_group_t election_set_dst;
     election_set_dst.decodeRLP(RLP(rlp_bytes), ec);
@@ -369,7 +369,7 @@ TEST_F(test_relay_block, serialize_receipt_log)
 
     RLPStream rlp_log;
     log_src.streamRLP(rlp_log);
-    bytes rlp_bytes = rlp_log.out();
+    xbytes_t rlp_bytes = rlp_log.out();
 
     xevm_log_t log_dst;
     RLP rlp_dst = RLP(rlp_bytes);
@@ -413,7 +413,7 @@ TEST_F(test_relay_block, serialize_xrelay_election)
 
     RLPStream rlp_election;
     election_src.streamRLP(rlp_election);
-    bytes rlp_bytes = rlp_election.out();
+    xbytes_t rlp_bytes = rlp_election.out();
     RLP rlp_dst = RLP(rlp_bytes);
 
     xrelay_election_node_t election_dst;
@@ -431,7 +431,7 @@ TEST_F(test_relay_block, serialize_xrelay_signature)
 
     RLPStream rlp_signature;
     signature_src.streamRLP(rlp_signature);
-    bytes rlp_bytes = rlp_signature.out();
+    xbytes_t rlp_bytes = rlp_signature.out();
     RLP rlp_dst = RLP(rlp_bytes);
 
     xrelay_signature_node_t signature_dst;
@@ -447,7 +447,7 @@ TEST_F(test_relay_block, serialize_xrelay_signature_empty)
 
     RLPStream rlp_signature;
     signature_src.streamRLP(rlp_signature);
-    bytes rlp_bytes = rlp_signature.out();
+    xbytes_t rlp_bytes = rlp_signature.out();
     RLP rlp_dst = RLP(rlp_bytes);
 
     xrelay_signature_node_t signature_dst;
@@ -464,7 +464,7 @@ TEST_F(test_relay_block, serialize_xrelay_signature_string)
 
     RLPStream rlp_signature;
     signature_src.streamRLP(rlp_signature);
-    bytes rlp_bytes = rlp_signature.out();
+    xbytes_t rlp_bytes = rlp_signature.out();
     RLP rlp_dst = RLP(rlp_bytes);
 
     xrelay_signature_node_t signature_dst;
@@ -481,7 +481,7 @@ TEST_F(test_relay_block, serialize_xrelay_signature_string_empty)
 
     RLPStream rlp_signature;
     signature_src.streamRLP(rlp_signature);
-    bytes rlp_bytes = rlp_signature.out();
+    xbytes_t rlp_bytes = rlp_signature.out();
     RLP rlp_dst = RLP(rlp_bytes);
 
     xrelay_signature_node_t signature_dst;

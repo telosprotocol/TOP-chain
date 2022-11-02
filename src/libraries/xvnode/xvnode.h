@@ -17,7 +17,7 @@
 #include "xmbus/xmessage_bus.h"
 #include "xrouter/xrouter.h"
 #include "xrpc/xrpc_init.h"
-#include "xstore/xstore_face.h"
+
 #include "xsync/xsync_object.h"
 #include "xtxpool_service_v2/xtxpool_service_face.h"
 #include "xtxpool_v2/xtxpool_face.h"
@@ -28,7 +28,6 @@
 #include "xvnode/xcomponents/xblock_sniffing/xsniffer.h"
 #include "xvnode/xcomponents/xprune_data/xprune_data.h"
 #include "xvnode/xvnode_face.h"
-
 #include <memory>
 
 NS_BEG2(top, vnode)
@@ -38,7 +37,6 @@ class xtop_vnode final : public xbasic_vnode_t
 private:
     observer_ptr<elect::ElectMain> m_elect_main;
     observer_ptr<router::xrouter_face_t> m_router;
-    observer_ptr<store::xstore_face_t> m_store;
     observer_ptr<base::xvblockstore_t> m_block_store;
     observer_ptr<base::xvtxstore_t> m_txstore;
     observer_ptr<mbus::xmessage_bus_face_t> m_bus;
@@ -69,7 +67,6 @@ public:
                observer_ptr<vnetwork::xvhost_face_t> const & vhost,
                std::shared_ptr<election::cache::xgroup_element_t> group_info,
                observer_ptr<router::xrouter_face_t> const & router,
-               observer_ptr<store::xstore_face_t> const & store,
                observer_ptr<base::xvblockstore_t> const & block_store,
                observer_ptr<base::xvtxstore_t> const & txstore,
                observer_ptr<mbus::xmessage_bus_face_t> const & bus,
@@ -93,7 +90,6 @@ public:
                std::uint64_t const associated_blk_height,
                observer_ptr<vnetwork::xvhost_face_t> const & vhost,
                observer_ptr<router::xrouter_face_t> const & router,
-               observer_ptr<store::xstore_face_t> const & store,
                observer_ptr<base::xvblockstore_t> const & block_store,
                observer_ptr<base::xvtxstore_t> const & txstore,
                observer_ptr<mbus::xmessage_bus_face_t> const & bus,

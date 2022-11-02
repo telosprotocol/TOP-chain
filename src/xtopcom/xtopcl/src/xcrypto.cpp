@@ -164,7 +164,7 @@ bool decrypt_keystore_by_kdf_key(std::string const & kdf_key, xJson::Value const
             CryptoPP::StreamTransformationFilter stfDecryptor(cbcDecryption, new CryptoPP::StringSink(pri_key));
             stfDecryptor.Put(reinterpret_cast<const unsigned char *>(ciphertext.c_str()), ciphertext.size());
             stfDecryptor.MessageEnd();
-        } catch (std::exception & e) {
+        } catch (std::exception &) {
             // std::cout << "Decryption Error: " << e.what() << std::endl;
             pri_key.clear(); // or might return same intermiate results.
             return false;
@@ -204,14 +204,6 @@ bool decrypt_keystore_by_kdf_key(std::string const & kdf_key, xJson::Value const
         return true;
     }
     return false;
-}
-
-bool decrypt_keystore_file_by_password(std::string const & password, std::string const & keystore_path, std::string & pri_key) {
-    xJson::Value keystore_info;
-    if (parse_keystore(keystore_path, keystore_info) == false) {
-        return false;
-    }
-    return decrypt_keystore_by_password(password, keystore_info, pri_key);
 }
 
 bool decrypt_keystore_file_by_kdf_key(std::string const & kdf_key, std::string const & keystore_path, std::string & pri_key) {

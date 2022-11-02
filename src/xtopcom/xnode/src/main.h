@@ -33,7 +33,6 @@ struct config_t {
     std::string  token; // generated from password
     std::string  datadir;
     std::string  keystore_path;
-    std::string  password { " " }; // default password is  one blank
     std::string  node_id;
     uint16_t     cpu_net_interval { 10 }; // monitor cpu and net, default 10s
     std::string  pid_file;

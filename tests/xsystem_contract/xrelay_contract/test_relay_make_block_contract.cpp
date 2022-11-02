@@ -9,6 +9,7 @@
 #include "xdata/xelection/xstandby_node_info.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xrelayblock_build.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xelection/xcache/xdata_accessor.h"
 #include "xvm/manager/xcontract_manager.h"
 #include "xvm/xcontract_helper.h"
@@ -199,8 +200,8 @@ TEST_F(xtop_test_relay_make_block_contract, build_elect_relay_block) {
 
     for (auto i = 0u; i < 8u; ++i) {
         xelection_info_t new_election_info{};
-        new_election_info.joined_version = top::common::xelection_round_t{1};
-        new_election_info.consensus_public_key = top::xpublic_key_t{"BNRHeRGw4YZnTHeNGxYtuAsvSslTV7THMs3A9RJM+1Vg63gyQ4XmK2i8HW+f3IaM7KavcH7JMhTPFzKtWp7IXW4="};
+        new_election_info.joined_epoch(top::common::xelection_round_t{1});
+        new_election_info.public_key(top::xpublic_key_t{"BNRHeRGw4YZnTHeNGxYtuAsvSslTV7THMs3A9RJM+1Vg63gyQ4XmK2i8HW+f3IaM7KavcH7JMhTPFzKtWp7IXW4="});
 
         xelection_info_bundle_t election_info_bundle;
         election_info_bundle.account_address(build_account_address(i));

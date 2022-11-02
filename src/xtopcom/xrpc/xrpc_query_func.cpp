@@ -41,6 +41,7 @@
 #include "xvledger/xvledger.h"
 #include "xvm/manager/xcontract_address_map.h"
 #include "xvm/manager/xcontract_manager.h"
+#include "xstatestore/xstatestore_face.h"
 
 #include <cstdint>
 #include <iostream>
@@ -102,7 +103,7 @@ bool xrpc_query_func::is_prop_name_not_set_property(const std::string & prop_nam
     return false;
 }
 
-bool xrpc_query_func::query_special_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, data::xaccount_ptr_t unitstate, bool compatible_mode) {
+bool xrpc_query_func::query_special_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, data::xunitstate_ptr_t unitstate, bool compatible_mode) {
     if (is_prop_name_already_set_property(prop_name)) {
         top::contract::xcontract_manager_t::instance().get_contract_data(
             top::common::xaccount_address_t{owner}, unitstate, prop_name, top::contract::xjson_format_t::detail, compatible_mode, jph);
@@ -189,8 +190,8 @@ bool xrpc_query_func::query_special_property(xJson::Value & jph, const std::stri
     return false;
 }
 
-void xrpc_query_func::query_account_property_base(xJson::Value & jph, const std::string & owner, const std::string & prop_name, data::xaccount_ptr_t unitstate, bool compatible_mode) {
-    if (unitstate == nullptr) {
+void xrpc_query_func::query_account_property_base(xJson::Value & jph, const std::string & owner, const std::string & prop_name, data::xunitstate_ptr_t unitstate, bool compatible_mode) {
+    if (unitstate == nullptr || unitstate->is_empty_state()) {
         xwarn("xrpc_query_manager::query_account_property fail-query unit state.account=%s", owner.c_str());
         return;
     }
@@ -234,9 +235,7 @@ void xrpc_query_func::query_account_property_base(xJson::Value & jph, const std:
 void xrpc_query_func::query_account_property(xJson::Value & jph, const std::string & owner, const std::string & prop_name, xfull_node_compatible_mode_t compatible_mode) {
     xdbg("xrpc_query_manager::query_account_property account=%s,prop_name=%s", owner.c_str(), prop_name.c_str());
     // load newest account state
-    if (m_store == nullptr)
-        return;
-    data::xaccount_ptr_t unitstate = m_store->query_account(owner);
+    data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(common::xaccount_address_t(owner));
     query_account_property_base(jph, owner, prop_name, unitstate, compatible_mode == xfull_node_compatible_mode_t::compatible);
 }
 
@@ -246,24 +245,10 @@ void xrpc_query_func::query_account_property(xJson::Value & jph,
                                               const uint64_t height,
                                               xfull_node_compatible_mode_t compatible_mode) {
     xdbg("xrpc_query_manager::query_account_property account=%s,prop_name=%s,height=%llu", owner.c_str(), prop_name.c_str(), height);
-    // load newest account state
-    base::xvaccount_t _vaddr(owner);
-    auto _block = base::xvchain_t::instance().get_xblockstore()->load_block_object(_vaddr, height, 0, false, metrics::blockstore_access_from_rpc_get_block_query_propery);
-    if (_block == nullptr) {
-        xdbg("xrpc_query_manager::query_account_property block %s, height %llu, not exist", owner.c_str(), height);
+    data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_committed_state(common::xaccount_address_t(owner), height);
+    if (unitstate == nullptr) {
+        xdbg("xrpc_query_manager::query_account_property account %s, height %llu, not exist", owner.c_str(), height);
         return;
-    }
-
-    if (_block->is_genesis_block() && _block->get_block_class() == base::enum_xvblock_class_nil) {
-        xdbg("xrpc_query_manager::query_account_property %s, height %llu, genesis or nil block", owner.c_str(), height);
-        return;
-    }
-
-    base::xauto_ptr<base::xvbstate_t> bstate =
-        base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(_block.get(), metrics::statestore_access_from_rpc_query_propery);
-    data::xaccount_ptr_t unitstate = nullptr;
-    if (bstate != nullptr) {
-        unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get());
     }
 
     query_account_property_base(jph, owner, prop_name, unitstate, compatible_mode == xfull_node_compatible_mode_t::compatible);

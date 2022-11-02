@@ -7,7 +7,7 @@
 namespace top {
 namespace evm_common {
 
-bytes subData(const bytes & indata, size_t index, size_t length) {
+xbytes_t subData(const xbytes_t & indata, size_t index, size_t length) {
     size_t subLength = length;
     if (index + subLength > indata.size()) {
         subLength = indata.size() - index;
@@ -15,9 +15,9 @@ bytes subData(const bytes & indata, size_t index, size_t length) {
     return data(indata.data() + index, subLength);
 }
 
-bytes subData(const bytes & indata, size_t startIndex) {
+xbytes_t subData(const xbytes_t & indata, size_t startIndex) {
     if (startIndex >= indata.size()) {
-        return bytes();
+        return xbytes_t();
     }
     size_t subLength = indata.size() - startIndex;
     return data(indata.data() + startIndex, subLength);

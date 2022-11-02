@@ -72,7 +72,7 @@ void xeth_header_t::streamRLP(evm_common::RLPStream& _s) const {
     _s << m_gaslimit;
     _s << m_baseprice;
     _s << m_gasused;
-    if (!m_coinbase.empty()) {
+    if (!m_coinbase.is_zero()) {
         _s << m_coinbase.to_bytes();
     } else {
         _s << "";

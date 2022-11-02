@@ -104,9 +104,9 @@ xrelay_signature_t::xrelay_signature_t(const std::string& sign_str)
     uint8_t compact_signature[65];
     memcpy(compact_signature, sign_str.data(), sign_str.size());
     v = compact_signature[0];
-    top::evm_common::bytes r_bytes(compact_signature + 1, compact_signature + 33);
+    xbytes_t r_bytes(compact_signature + 1, compact_signature + 33);
     r = top::evm_common::fromBigEndian<top::evm_common::u256>(r_bytes);
-    top::evm_common::bytes s_bytes(compact_signature + 33, compact_signature + 65);
+    xbytes_t s_bytes(compact_signature + 33, compact_signature + 65);
     s = top::evm_common::fromBigEndian<top::evm_common::u256>(s_bytes);
 }
 
@@ -407,7 +407,7 @@ void xrelay_block::make_merkle_root_hash(const std::vector<evm_common::h256>& ha
 {
     h256 block_root_hash { 0 };
     if (hash_vector.size() > 0) {
-        std::vector<bytes> _blocks_hash_poly;
+        std::vector<xbytes_t> _blocks_hash_poly;
         for (auto& block_hash : hash_vector) {
             _blocks_hash_poly.push_back(block_hash.to_bytes());
         }
@@ -438,7 +438,7 @@ void xrelay_block::make_txs_root_hash()
     h256 txsRoot { 0x0 };
 
     if (m_transactions.size() > 0) {
-        std::vector<bytes> rlp_txs;
+        std::vector<xbytes_t> rlp_txs;
         for (auto& tx : m_transactions) {
             rlp_txs.push_back(tx.encodeBytes());
         }
@@ -453,7 +453,7 @@ void xrelay_block::make_receipts_root_hash()
     h256 receiptsRoot { 0x0 };
 
     if (m_receipts.size() > 0) {
-        std::vector<bytes> rlp_receipts;
+        std::vector<xbytes_t> rlp_receipts;
         for (auto& receipt : m_receipts) {
             rlp_receipts.push_back(receipt.encodeBytes());
         }
@@ -547,8 +547,8 @@ void xrelay_block::decodeRLP(evm_common::RLP const& _r, std::error_code& ec)
 
 void xrelay_block::make_block_hash()
 {
-    bytes hash_input;
-    bytes inner_hash_bytes = to_bytes(m_header.get_header_hash());
+    xbytes_t hash_input;
+    xbytes_t inner_hash_bytes = to_bytes(m_header.get_header_hash());
     hash_input.push_back(m_header.get_header_version());
     hash_input.insert(hash_input.end(), inner_hash_bytes.begin(), inner_hash_bytes.end());
 
@@ -583,9 +583,9 @@ void xrelay_extend_data::decodeRLP(evm_common::RLP const& _r, std::error_code& e
 evm_common::h256 xrelay_extend_data::build_additional_hash()
 {
     evm_common::h256 additional_hash { 0 };
-    bytes additional_hash_data;
-    bytes chain_bytes = to_bytes(chain_bits);
-    bytes viewID_bytes(8);
+    xbytes_t additional_hash_data;
+    xbytes_t chain_bytes = to_bytes(chain_bits);
+    xbytes_t viewID_bytes(8);
     evm_common::toBigEndian(signature_viewID, viewID_bytes);
 
     additional_hash_data.insert(additional_hash_data.end(), viewID_bytes.begin(), viewID_bytes.end());
@@ -599,13 +599,13 @@ evm_common::h256 xrelay_extend_data::build_additional_hash()
 const evm_common::h256 xrelay_block::build_signature_hash()
 {
     evm_common::h256 signature_hash { 0 };
-    bytes signature_hash_data;
+    xbytes_t signature_hash_data;
 
     assert(m_block_hash);
     evm_common::h256 additional_hash = m_exteend_data.build_additional_hash();
-    bytes block_hash_bytes = to_bytes(m_block_hash);
-    bytes additional_hash_bytes = to_bytes(additional_hash);
-    bytes epochID_bytes(8);
+    xbytes_t block_hash_bytes = to_bytes(m_block_hash);
+    xbytes_t additional_hash_bytes = to_bytes(additional_hash);
+    xbytes_t epochID_bytes(8);
     evm_common::toBigEndian(m_signatures_groups.signature_epochID, epochID_bytes);
 
     signature_hash_data.insert(signature_hash_data.end(), block_hash_bytes.begin(), block_hash_bytes.end());

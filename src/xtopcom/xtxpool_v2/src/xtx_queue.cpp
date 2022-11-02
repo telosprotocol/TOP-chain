@@ -7,10 +7,13 @@
 #include "xbasic/xmodule_type.h"
 #include "xdata/xdatautil.h"
 #include "xdata/xtransaction.h"
+#include "xstate_mpt/xstate_mpt.h"
+#include "xstatestore/xstatestore_face.h"
 #include "xtxpool_v2/xtxpool_error.h"
 #include "xtxpool_v2/xtxpool_log.h"
 #include "xverifier/xtx_verifier.h"
 #include "xverifier/xverifier_utl.h"
+#include "xvledger/xvledger.h"
 
 namespace top {
 namespace xtxpool_v2 {
@@ -218,11 +221,12 @@ int32_t xsend_tx_queue_t::push_tx(const std::shared_ptr<xtx_entry> & tx_ent, uin
     return ret;
 }
 
-const std::vector<xcons_transaction_ptr_t> xsend_tx_queue_t::get_txs(uint32_t max_num, const data::xtablestate_ptr_t & table_state) const {
+const std::vector<xcons_transaction_ptr_t> xsend_tx_queue_t::get_txs(uint32_t max_num, base::xvblock_t * cert_block) const {
     std::map<std::string, std::vector<xcons_transaction_ptr_t>> account_txs_map;
     std::vector<std::string> ordered_accounts;
     auto & send_txs = m_send_tx_queue_internal.get_queue();
     uint32_t continuous_tx_num = 0;
+
     for (auto it_send_tx = send_txs.begin(); (continuous_tx_num < max_num) && (it_send_tx != send_txs.end()); it_send_tx++) {
         auto & account_addr = it_send_tx->get()->get_tx()->get_source_addr();
         uint64_t nonce = it_send_tx->get()->get_tx()->get_transaction()->get_tx_nonce();
@@ -246,7 +250,11 @@ const std::vector<xcons_transaction_ptr_t> xsend_tx_queue_t::get_txs(uint32_t ma
             }
         } else {
             base::xaccount_index_t account_index;
-            table_state->get_account_index(account_addr, account_index);
+            auto ret = statestore::xstatestore_hub_t::instance()->get_accountindex_from_table_block(common::xaccount_address_t(account_addr), cert_block, account_index);
+            if (!ret) {
+                xwarn("xsend_tx_queue_t::get_txs mpt get account index fail account:%s", account_addr.c_str());
+                continue;
+            }
             auto lower_nonce = account_index.get_latest_tx_nonce();
             if (nonce > lower_nonce) {
                 auto iter_send_tx_account = m_send_tx_accounts.find(account_addr);

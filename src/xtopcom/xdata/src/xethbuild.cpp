@@ -36,7 +36,7 @@ evm_common::h256 xeth_build_t::build_receipts_root(const xeth_receipts_t & recei
     return receiptsRoot;
 }
 
-void xeth_build_t::build_ethheader(xethheader_para_t const& para, const xeth_transactions_t & ethtxs, const xeth_store_receipts_t & storage_receipts, xeth_header_t & ethheader) {
+void xeth_build_t::build_ethheader(xethheader_para_t const& para, const xeth_transactions_t & ethtxs, const xeth_store_receipts_t & storage_receipts, const evm_common::xh256_t state_root, xeth_header_t & ethheader) {
     xeth_receipts_t receipts;
     uint32_t count = (uint32_t)ethtxs.size();
     xassert(ethtxs.size() == storage_receipts.size());
@@ -53,10 +53,10 @@ void xeth_build_t::build_ethheader(xethheader_para_t const& para, const xeth_tra
         receipts.push_back(receipt);
     }
 
-    build_ethheader(para, ethtxs, receipts, ethheader);
+    build_ethheader(para, ethtxs, receipts, state_root, ethheader);
 }
 
-void xeth_build_t::build_ethheader(xethheader_para_t const& para, const xeth_transactions_t & ethtxs, const xeth_receipts_t & receipts, xeth_header_t & ethheader) {
+void xeth_build_t::build_ethheader(xethheader_para_t const& para, const xeth_transactions_t & ethtxs, const xeth_receipts_t & receipts, const evm_common::xh256_t state_root, xeth_header_t & ethheader) {
     uint64_t block_gas_used = 0;
     evm_common::xbloom9_t block_logs_bloom;
     for (auto & v : receipts) {
@@ -68,6 +68,7 @@ void xeth_build_t::build_ethheader(xethheader_para_t const& para, const xeth_tra
     ethheader.set_baseprice(para.m_baseprice);
     ethheader.set_coinbase(para.m_coinbase);
     ethheader.set_gasused(block_gas_used);
+    ethheader.set_state_root(state_root);
     xassert(block_gas_used <= para.m_gaslimit);
 
     if (!receipts.empty()) {

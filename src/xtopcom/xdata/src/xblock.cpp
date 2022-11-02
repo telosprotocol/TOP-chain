@@ -152,8 +152,8 @@ int32_t xblock_t::release_ref() {
 #endif
 
 int32_t xblock_t::full_block_serialize_to(base::xstream_t & stream) {
-    if (!is_input_ready(true) || !is_output_ready(true)) {
-        xerror("xblock_t::full_block_serialize_to not valid block.%s", dump().c_str());
+    if ( false == is_body_and_offdata_ready(false) ) {
+        xerror("xblock_t::full_block_serialize_to not valid block.%s, %d,%d,%d", dump().c_str(), is_input_ready(false), is_output_ready(false), is_output_offdata_ready(false));
         return -1;
     }
 
@@ -164,10 +164,13 @@ int32_t xblock_t::full_block_serialize_to(base::xstream_t & stream) {
     if (get_header()->get_block_class() != base::enum_xvblock_class_nil) {
         stream << get_input()->get_resources_data();
         stream << get_output()->get_resources_data();
+        if (!get_output_offdata_hash().empty()) {
+            stream << get_output_offdata();
+        }
     }
 
-    xdbg("xblock_t::full_block_serialize_to,succ.block=%s,size=%zu,%zu,%zu,%d",
-        dump().c_str(), block_object_bin.size(), get_input()->get_resources_data().size(), get_output()->get_resources_data().size(), stream.size());
+    xdbg("xblock_t::full_block_serialize_to,succ.block=%s,size=%zu,%zu,%zu,%zu,%d",
+        dump().c_str(), block_object_bin.size(), get_input()->get_resources_data().size(), get_output()->get_resources_data().size(), get_output_offdata().size(), stream.size());
     return CALC_LEN();
 }
 
@@ -195,6 +198,21 @@ base::xvblock_t* xblock_t::full_block_read_from(base::xstream_t & stream) {
             xerror("xblock_t::full_block_read_from set_output_resources failblock=%s,or=%ld",new_block->dump().c_str(),base::xhash64_t::digest(_output_content));
             new_block->release_ref();
             return nullptr;
+        }
+
+        if (!new_block->get_output_offdata_hash().empty()) {
+            if (stream.size() == 0) {
+                xerror("xblock_t::full_block_read_from not include output offdata failblock=%s",new_block->dump().c_str());
+                new_block->release_ref();
+                return nullptr;
+            }
+            std::string _out_offdata;
+            stream >> _out_offdata;
+            if (false == new_block->set_output_offdata(_out_offdata)) {
+                xerror("xblock_t::full_block_read_from set_output_offdata failblock=%s,offdata_size=%zu",new_block->dump().c_str(),_out_offdata.size());
+                new_block->release_ref();
+                return nullptr;
+            }
         }
     }
     return new_block;

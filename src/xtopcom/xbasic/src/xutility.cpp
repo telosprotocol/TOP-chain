@@ -6,9 +6,4 @@
 
 NS_BEG1(top)
 
-xbyte_buffer_t
-from_hex_string(std::string const &) {
-    return {};
-}
-
 NS_END1

@@ -5,7 +5,7 @@
 #include <signal.h>
 
 #include "xdb/xdb_factory.h"
-#include "xstore/xstore.h"
+#include "xdbstore/xstore.h"
 #include "xbase/xcontext.h"
 #include "xcommon/xnode_type.h"
 #include "xrpc/xrpc_init.h"
@@ -33,6 +33,9 @@
 #include "xdata/xcheckpoint.h"
 #include "xsync/xsync_object.h"
 #include "xevm_contract_runtime/sys_contract/xevm_eth_bridge_contract.h"
+#include "xelect/client/xelect_client.h"
+#include "xgenesis/xgenesis_manager.h"
+#include "xgrpc_mgr/xgrpc_mgr.h"
 
 // nlohmann_json
 #include <nlohmann/json.hpp>
@@ -317,8 +320,14 @@ int topchain_start(const std::string& config_file) {
 
     // make block here
     while (true) {
+        // TODO(jimmy) total 27 threads need optimize
+        xinfo("total xbase threads number %d", base::xcontext_t::instance().get_total_threads());
         base::xvchain_t::instance().get_xdbstore()->GetDBMemStatus();
-        std::this_thread::sleep_for(std::chrono::seconds(1200));
+#ifdef DEBUG        
+        std::this_thread::sleep_for(std::chrono::seconds(120));
+#else 
+        std::this_thread::sleep_for(std::chrono::seconds(300));
+#endif
     }
     // todo adapter to vnode type
 

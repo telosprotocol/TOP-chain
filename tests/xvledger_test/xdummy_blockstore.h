@@ -149,6 +149,9 @@ public:
     bool load_block_output(const base::xvaccount_t &, base::xvblock_t *,const int atag = 0) override {
         return false;
     }
+    bool load_block_output_offdata(const base::xvaccount_t & account,base::xvblock_t* block,const int atag = 0) override {
+        return false;
+    }
 
     bool store_block(const base::xvaccount_t & account, base::xvblock_t * block,const int atag = 0) override {
         return false;
@@ -163,6 +166,10 @@ public:
     }
 
     bool try_update_account_index(const base::xvaccount_t & account, uint64_t height, uint64_t viewid, bool update_pre_block) override {
+        return false;
+    }
+
+    bool try_update_account_index(const base::xvaccount_t & account, uint64_t height, const std::string & hash, bool update_pre_block) override {
         return false;
     }
 

@@ -118,8 +118,7 @@ namespace top
                     proposal->get_cert()->set_justify_cert_hash(get_lock_block()->get_input_root_hash());
                 }
 
-                if(   (false == proposal->is_input_ready(true))  //leader should has full block
-                   || (false == proposal->is_output_ready(true))
+                if(   (false == proposal->is_body_and_offdata_ready(false))  //leader should has full block  XTODO no need check resource hash
                    || (false == proposal->is_valid(true))
                    || (false == proposal->get_cert_hash().empty()) //proposal should not have build cert hash before verify muti-sign
                    || (proposal->check_block_flag(base::enum_xvblock_flag_authenticated)) )//proposal should not add authenticated flag
@@ -324,8 +323,8 @@ namespace top
                || (_peer_block->get_account() != packet.get_block_account())
                || (_peer_block->get_viewid()  != packet.get_block_viewid())
                || (_peer_block->get_viewtoken() != packet.get_block_viewtoken())
-               || (_peer_block->is_input_ready() == false)  //input must be present right now
-               || (_peer_block->is_output_ready() == false) //output must be present right now
+            //    || (_peer_block->is_input_ready() == false)  //input must be present right now  XTODO not ready now
+            //    || (_peer_block->is_output_ready() == false) //output must be present right now  XTODO not ready now
                )
             {
                 xerror("xBFTdriver_t::handle_proposal_msg,fail-invalid proposal=%s <!=> packet=%s,at node=0x%llx",_peer_block->dump().c_str(),packet.dump().c_str(),get_xip2_low_addr());
@@ -430,8 +429,7 @@ namespace top
                        ||(prev_proposal->get_viewid() != _prev_block_cert->get_viewid())
                        ||(prev_proposal->get_viewtoken() != _prev_block_cert->get_viewtoken())
                        ||(prev_proposal->get_block()->get_header_hash() != _prev_block_cert->get_header_hash())
-                       ||(prev_proposal->get_block()->is_input_ready(true) == false)
-                       ||(prev_proposal->get_block()->is_output_ready(true) == false) )
+                       ||(prev_proposal->get_block()->is_body_and_offdata_ready(false) == false) )
                     {
                         send_sync_request(get_xip2_addr(),peer_addr, (_peer_block->get_height() - 1),_peer_block->get_last_block_hash(),new_proposal->get_last_block_cert() ,(_peer_block->get_height() - 1),get_lastest_clock() + 2,_peer_block->get_chainid());
                         //sync missed cert block completely
@@ -631,8 +629,7 @@ namespace top
                 {
                     xinfo("xBFTdriver_t::handle_vote_msg,finish voted for proposal block:%s at node=0x%llx",_local_proposal->dump().c_str(),get_xip2_addr().low_addr);
  
-                    xdbgassert(_local_proposal->get_block()->is_input_ready(true));
-                    xdbgassert(_local_proposal->get_block()->is_output_ready(true));
+                    xdbgassert(_local_proposal->get_block()->is_body_and_offdata_ready(true));
                     
                     bool found_matched_proposal = false;
                     //step#8: call on_consensus_finish() to let upper layer know it
@@ -721,14 +718,9 @@ namespace top
                 //only check input & output for successful case
                 if(_commit_msg.get_commit_error_code() == enum_xconsensus_code_successful)
                 {
-                    if (!_local_proposal_block->get_block()->is_input_ready(true)) //proposal have no input, that means verify proposal fail. us should make input TODO(jimmy)
+                    if (!_local_proposal_block->get_block()->is_body_and_offdata_ready(false)) //proposal have no input, that means verify proposal fail. us should make input TODO(jimmy)
                     {
                         xwarn("xBFTdriver_t::handle_commit_msg, empty input for this proposal=%s,at node=0x%llx", _local_proposal_block->dump().c_str(), get_xip2_low_addr());
-                        is_match_local_proposal = false;
-                    }
-                    if (!_local_proposal_block->get_block()->is_output_ready(true)) //proposal have no output, that means verify proposal fail
-                    {
-                        xwarn("xBFTdriver_t::handle_commit_msg, empty output for this proposal=%s,at node=0x%llx", _local_proposal_block->dump().c_str(), get_xip2_low_addr());
                         is_match_local_proposal = false;
                     }
                 }
@@ -777,8 +769,7 @@ namespace top
                         return enum_xconsensus_error_bad_commit; //possible attack
                     }
 
-                    xdbgassert(_local_proposal_block->get_block()->is_input_ready(true));
-                    xdbgassert(_local_proposal_block->get_block()->is_output_ready(true));
+                    xdbgassert(_local_proposal_block->get_block()->is_body_and_offdata_ready(true));
 
                     xdbg("xBFTdriver_t::handle_commit_msg,a matched commit ,goto fire_verify_commit_job for commit=%s,at node=0x%llx",_local_proposal_block->dump().c_str(),get_xip2_low_addr(),_peer_commit_cert.get());
                     //step#6: verify certificdation completely. it is a realy heavy job that run at worker thread
@@ -1029,6 +1020,7 @@ namespace top
                         _to_remove->get_voted_auditors().size(),_to_remove->get_cert()->get_auditor_threshold(),_to_remove->get_voted_validators().size(),_to_remove->get_cert()->get_validator_threshold());
 
                         fire_pdu_event_up(xcommit_msg_t::get_msg_type(),msg_stream,0,get_xip2_addr(),broadcast_addr,_to_remove->get_block(),_commit_result_cert,std::string());//_commit_result_cert embbed into packet'header
+                        XMETRICS_GAUGE(metrics::cons_fail_vote_not_enough, 1);
                     }
                     else
                     {
@@ -1122,8 +1114,7 @@ namespace top
                        &&(target_proposal->get_viewid()    == _target_cert_->get_viewid())
                        &&(target_proposal->get_viewtoken() == _target_cert_->get_viewtoken())
                        &&(target_proposal->get_block()->get_header_hash() == _target_cert_->get_header_hash())
-                       &&(target_proposal->get_block()->is_input_ready(true))
-                       &&(target_proposal->get_block()->is_output_ready(true))
+                       &&(target_proposal->get_block()->is_body_and_offdata_ready(false))  // XTODO no need check resource hash
                        &&(target_proposal->get_block()->merge_cert(*_target_cert_)) )
                     {
                         xinfo("xBFTdriver_t::_after_verify_cert_job,Valid Certification for proposal(%s) at node=0x%llx",target_proposal->dump().c_str(),get_xip2_addr().low_addr);
@@ -1196,8 +1187,7 @@ namespace top
                         _full_block_->get_cert()->set_unit_flag(base::enum_xvblock_flag_authenticated);
                         _full_block_->set_block_flag(base::enum_xvblock_flag_authenticated);
                         
-                        xdbgassert(_full_block_->is_input_ready(true));
-                        xdbgassert(_full_block_->is_output_ready(true));
+                        xdbgassert(_full_block_->is_body_and_offdata_ready(true));
                     }
                 }
        

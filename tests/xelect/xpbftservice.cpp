@@ -10,7 +10,7 @@
 #include "xcommon/xnode_type.h"
 #include "xcommon/xnode_id.h"
 #include "xmutisig/xmutisig.h"
-#include "xmutisig/xschnorr/xschnorr.h"
+#include "xmutisig/xschnorr.h"
 #include "xbase/xutl.h"
 
 

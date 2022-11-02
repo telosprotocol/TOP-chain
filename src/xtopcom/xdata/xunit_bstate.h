@@ -9,7 +9,9 @@
 #include "xdata/xblock.h"
 #include "xdata/xbstate_ctx.h"
 #include "xdata/xproperty.h"
-#include "xdata/xsystem_contract/xdata_structures.h"
+#include "xdata/xsystem_contract/xallowance.h"
+#include "xconfig/xconfig_register.h"
+#include "xconfig/xpredefined_configurations.h"
 #include "xvledger/xvstate.h"
 
 #include <string>
@@ -29,10 +31,12 @@ class xunit_bstate_t : public xbstate_ctx_t {
     
     ~xunit_bstate_t();
  private:
+    xunit_bstate_t();
     xunit_bstate_t(const xunit_bstate_t &);
     xunit_bstate_t & operator = (const xunit_bstate_t &);
 
  public:  // for unit account
+    bool                is_empty_state() const;
     inline uint64_t     balance()const {return token_get(XPROPERTY_BALANCE_AVAILABLE);}
     inline uint64_t     burn_balance()const {return token_get(XPROPERTY_BALANCE_BURN);}
     inline uint64_t     tgas_balance() const {return token_get(XPROPERTY_BALANCE_PLEDGE_TGAS);}
@@ -93,16 +97,10 @@ private:
 
     xobject_ptr_t<base::xmapvar_t<std::string>> raw_owner(std::error_code & ec) const;
     xbytes_t raw_owner(common::xchain_uuid_t chain_uuid, std::error_code & ec) const;
-    void raw_owner(common::xchain_uuid_t chain_uuid, xbytes_t const & raw_data, std::error_code & ec);
     xobject_ptr_t<base::xmapvar_t<std::string>> raw_controller(std::error_code & ec) const;
     xbytes_t raw_controller(common::xchain_uuid_t chain_uuid, std::error_code & ec) const;
-    void raw_controller(common::xchain_uuid_t chain_uuid, xbytes_t const & raw_data, std::error_code & ec);
-
-    common::xaccount_address_t owner_impl(xbytes_t const & owner_account_in_bytes, std::error_code & ec) const;
-    common::xaccount_address_t controller_impl(xbytes_t const & controller_account_in_bytes, std::error_code & ec) const;
 };
 
-using xaccount_ptr_t = std::shared_ptr<xunit_bstate_t>;  // TODO(jimmy) rename to xunitstate_ptr_t
 using xunitstate_ptr_t = std::shared_ptr<xunit_bstate_t>;
 
 NS_END2

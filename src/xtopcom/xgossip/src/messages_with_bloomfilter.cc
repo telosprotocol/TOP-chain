@@ -60,6 +60,10 @@ void MessageWithBloomfilter::UpdateHandle(MessageKey const & message_key, uint64
     sit1 |= exist_value.first;
     sit2 |= exist_value.second;
 
+    if (sit1 == 0 && sit2 == 0) {
+        // node at first round , should not avoid all relay responsibility.
+        return;
+    }
     message_dispatch_map_.put(message_key, std::make_pair(exist_value.first | (~sit1), exist_value.second | (~sit2)));
 
     message_dispatch_map_.get(message_key, exist_value);

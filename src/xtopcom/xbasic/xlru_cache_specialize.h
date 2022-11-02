@@ -3,80 +3,120 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #pragma once
-#include <string>
-#include <unordered_map>
+
+#include "xbase/xns_macro.h"
+
+#include <cassert>
 #include <list>
 #include <mutex>
-#include "xbase/xns_macro.h"
+#include <stdexcept>
+#include <unordered_map>
 
 NS_BEG2(top, basic)
 // from https://stackoverflow.com/questions/2504178/lru-cache-design
-template<typename key, typename value>
+template<typename KeyT, typename ValueT>
 class xlru_cache_specialize {
- public:
-    using key_value = std::pair<key, value>;
+private:
+    std::list<std::pair<KeyT, ValueT>> item_list_;
+    std::unordered_map<KeyT, typename std::list<std::pair<KeyT, ValueT>>::iterator> item_map_;
+    size_t const max_size_;
+    mutable std::mutex mutex_;
 
-    xlru_cache_specialize(size_t max_size) :
-        m_max_size(max_size) {
+public:
+    xlru_cache_specialize(size_t const max_size) : max_size_{max_size} {
     }
 
-    void put(const key& k, const value& v) {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        auto it = m_item_map.find(k);
-        if (it != m_item_map.end()) {
-            m_item_list.erase(it->second);
-            m_item_map.erase(it);
+    void put(const KeyT& key, const ValueT& value) {
+        std::lock_guard<std::mutex> lock(mutex_);
+
+        auto it = item_map_.find(key);
+        if (it != item_map_.end()) {
+            item_list_.erase(it->second);
+            item_map_.erase(it);
         }
-        m_item_list.push_front(std::make_pair(k, v));
-        m_item_map.insert(std::make_pair(k, m_item_list.begin()));
-        clean();
+        item_list_.push_front({key, value});
+        item_map_.insert({key, item_list_.begin()});
+        clean_with_lock_hold();
     }
 
-    bool get(const key& k, value& v) {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        auto it = m_item_map.find(k);
-        if (it == m_item_map.end()) {
+    void insert(std::pair<KeyT, ValueT> const & item) {
+        std::lock_guard<std::mutex> lock(mutex_);
+
+        auto it = item_map_.find(item.first);
+        if (it != item_map_.end()) {
+            item_list_.erase(it->second);
+            item_map_.erase(it);
+        }
+
+        item_list_.push_front(item);
+        item_map_.insert({item.first, item_list_.begin()});
+        clean_with_lock_hold();
+    }
+
+    bool get(const KeyT& key, ValueT& value) const {
+        std::lock_guard<std::mutex> lock(mutex_);
+
+        auto it = item_map_.find(key);
+        if (it == item_map_.end()) {
             return false;
-        } else {
-            v = it->second->second;
-            return true;
         }
-    }
 
-    bool back(key& k, value& v) {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        if (m_item_list.empty()) {
-            return false;
-        }
-        const auto& item = m_item_list.back();
-        k = item.first;
-        v = item.second;
+        assert(key == it->second->first);
+
+        value = it->second->second;
         return true;
     }
 
-    void erase(const key& k) {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        auto it = m_item_map.find(k);
-        if (it != m_item_map.end()) {
-            m_item_list.erase(it->second);
-            m_item_map.erase(it);
+    bool back(KeyT& key, ValueT& value) const {
+        std::lock_guard<std::mutex> lock{mutex_};
+
+        if (item_list_.empty()) {
+            return false;
+        }
+
+        const auto& item = item_list_.back();
+        key = item.first;
+        value = item.second;
+
+        return true;
+    }
+
+    void erase(const KeyT& key) {
+        std::lock_guard<std::mutex> lock{mutex_};
+        auto it = item_map_.find(key);
+        if (it != item_map_.end()) {
+            item_list_.erase(it->second);
+            item_map_.erase(it);
         }
     }
 
- private:
-    void clean() {
-        while (m_item_map.size() > m_max_size) {
-            auto last_it = m_item_list.end();
-            last_it--;
-            m_item_map.erase(last_it->first);
-            m_item_list.pop_back();
-        }
+    bool contains(KeyT const & key) const {
+        std::lock_guard<std::mutex> lock{mutex_};
+        return item_map_.find(key) != std::end(item_map_);
     }
 
- private:
-    std::list<key_value> m_item_list;
-    std::unordered_map<key, decltype(m_item_list.begin())> m_item_map;
-    size_t m_max_size;
-    std::mutex m_mutex;
+    ValueT const & at(KeyT const & key) const {
+        std::lock_guard<std::mutex> lock(mutex_);
+
+        auto it = item_map_.find(key);
+        if (it == item_map_.end()) {
+            throw std::out_of_range{"lru cache out of range "};  // NOLINT(cert-err60-cpp)
+        }
+
+        assert(key == it->second->first);
+
+        return it->second->second;
+    }
+
+private:
+    void clean_with_lock_hold() {
+        while (item_map_.size() > max_size_) {
+            auto last_it = item_list_.end();
+            --last_it;
+            item_map_.erase(last_it->first);
+            item_list_.pop_back();
+        }
+    }
 };
+
 NS_END2

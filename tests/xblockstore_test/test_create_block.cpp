@@ -12,7 +12,6 @@
 #include "xdata/xlightunit.h"
 #include "xdata/xtransaction_maker.hpp"
 
-#include "xstore/xstore.h"
 #include "xblockstore/xblockstore_face.h"
 #include "tests/mock/xcertauth_util.hpp"
 #include "tests/mock/xvchain_creator.hpp"
@@ -38,6 +37,18 @@ protected:
 
 };
 
+TEST_F(test_create_block, table_unit_hash_calc) {
+    mock::xvchain_creator creator(true);
+
+    uint64_t max_block_height = 1;
+    std::cout << "1111111111111111111111111111111" << std::endl;
+    mock::xdatamock_table mocktable(1, 2);
+
+    std::cout << "22222222222222222222222222222222" << std::endl;
+    mocktable.genrate_table_chain(max_block_height, nullptr);
+}
+
+
 TEST_F(test_create_block, create_time_clock) {
     mock::xvchain_creator creator;
     base::xvblockstore_t* blockstore = creator.get_blockstore();
@@ -57,7 +68,7 @@ TEST_F(test_create_block, create_time_clock) {
         auto propobj = bstate()->new_uint64_var(XPROPERTY_ACCOUNT_CREATE_TIME, nullptr);
         propobj->set(clock_height, nullptr);
 
-        xaccount_ptr_t account = std::make_shared<xunit_bstate_t>(bstate.get());
+        data::xunitstate_ptr_t account = std::make_shared<xunit_bstate_t>(bstate.get());
         auto create_time = account->get_account_create_time();
         EXPECT_EQ(create_time, clock_height * 10 + TOP_BEGIN_GMTIME);
     }
@@ -82,7 +93,7 @@ TEST_F(test_create_block, create_time_gmt) {
         auto propobj = bstate()->new_uint64_var(XPROPERTY_ACCOUNT_CREATE_TIME, nullptr);
         propobj->set(gmt, nullptr);
 
-        xaccount_ptr_t account = std::make_shared<xunit_bstate_t>(bstate.get());
+        data::xunitstate_ptr_t account = std::make_shared<xunit_bstate_t>(bstate.get());
         auto create_time = account->get_account_create_time();
         EXPECT_EQ(create_time, gmt);
     }
@@ -140,13 +151,13 @@ TEST_F(test_create_block, tableblock_with_unit_multi_sign) {
     std::string addr1 = xblocktool_t::make_address_user_account("11111111111111111111");
     std::string to_addr = xblocktool_t::make_address_user_account("111111111111111111113");
     base::xauto_ptr<base::xvblock_t> account1_genesis_block = xblocktool_t::create_genesis_empty_unit(addr1);
-    xaccount_ptr_t account_1 = make_object_ptr<xblockchain2_t>(addr1);
+    data::xunitstate_ptr_t account_1 = make_object_ptr<xblockchain2_t>(addr1);
     xtransaction_ptr_t tx1 = xtransaction_maker::make_transfer_tx(account_1, to_addr, 1, 10000, 100, 1000);
 
     // create unit2
     std::string addr2 = xblocktool_t::make_address_user_account("11111111111111111112");
     base::xauto_ptr<base::xvblock_t> account2_genesis_block = xblocktool_t::create_genesis_empty_unit(addr2);
-    xaccount_ptr_t account_2 = make_object_ptr<xblockchain2_t>(addr2);
+    data::xunitstate_ptr_t account_2 = make_object_ptr<xblockchain2_t>(addr2);
     xtransaction_ptr_t tx2 = xtransaction_maker::make_transfer_tx(account_2, to_addr, 1, 10000, 100, 1000);
 
     {

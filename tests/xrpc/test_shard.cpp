@@ -7,11 +7,11 @@
 #include "xelect/client/xelect_client.h"
 #include "xrpc/xrpc_init.h"
 #include "xvnetwork/xvnetwork_driver_face.h"
+#include "xrpc/xerror/xrpc_error.h"
 
 using namespace std;
 using namespace top;
 using namespace top::xrpc;
-using namespace top::store;
 
 using top::vnetwork::xmessage_t;
 using top::vnetwork::xvhost_face_t;
@@ -78,8 +78,6 @@ class test_shard : public testing::Test {
 protected:
     void SetUp() override {
         m_vhost = std::make_shared<xdummy_vnetwork_driver_t>();
-        m_store_obj = xstore_factory::create_store_with_memdb();
-        m_store = make_observer<xstore_face_t>(m_store_obj.get());
         m_unit_service = std::make_shared<xtop_dummy_txpool_proxy_face>();
         m_thread = top::make_observer(base::xiothread_t::create_thread(base::xcontext_t::instance(), 0, -1));
         m_shard_handler = std::make_shared<xshard_rpc_handler>(m_vhost, m_unit_service, m_thread);
@@ -90,9 +88,7 @@ protected:
 public:
     std::shared_ptr<xdummy_vnetwork_driver_t> m_vhost;
     xtxpool_service_v2::xtxpool_proxy_face_ptr m_unit_service;
-    observer_ptr<xstore_face_t> m_store;
     observer_ptr<base::xvblockstore_t> m_block_store;
-    xobject_ptr_t<store::xstore_face_t> m_store_obj;
     shared_ptr<xshard_rpc_handler> m_shard_handler;
     observer_ptr<top::base::xiothread_t> m_thread;
 };

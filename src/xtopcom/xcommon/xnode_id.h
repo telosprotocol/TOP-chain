@@ -25,18 +25,29 @@
 #    pragma warning(pop)
 #endif
 
+#include "xbasic/xbyte_buffer.h"
+#include "xbasic/xstring.h"
 #include "xcommon/xaccount_address_fwd.h"
 #include "xcommon/xaccount_base_address.h"
 #include "xcommon/xaccount_id.h"
 #include "xcommon/xledger_id.h"
 #include "xcommon/xtable_id.h"
 #include "xeth_address_fwd.h"
-#include "xvledger/xvaccount.h"
 
 #include <cstdint>
 #include <string>
 
 NS_BEG2(top, common)
+
+class metrics_xtop_node_id {
+public:
+    metrics_xtop_node_id();
+    metrics_xtop_node_id(metrics_xtop_node_id const &);
+    metrics_xtop_node_id(metrics_xtop_node_id &&);
+    ~metrics_xtop_node_id();
+    metrics_xtop_node_id & operator=(metrics_xtop_node_id const &) = default;
+    metrics_xtop_node_id & operator=(metrics_xtop_node_id &&)      = default;
+};
 
 std::int32_t operator <<(top::base::xstream_t & stream, xtop_node_id const & node_id);
 std::int32_t operator >>(top::base::xstream_t & stream, xtop_node_id & node_id);
@@ -45,11 +56,11 @@ std::int32_t operator>>(top::base::xbuffer_t & stream, xtop_node_id & node_id);
 
 class xtop_node_id final {
 private:
-    std::string m_account_string;
     xaccount_base_address_t m_account_base_address;
-    xtable_id_t m_assigned_table_id;
-
+    std::string m_account_string;
     xaccount_id_t m_account_id{};
+    xtable_id_t m_assigned_table_id;
+    metrics_xtop_node_id m_nouse;
 
 public:
     xtop_node_id()                                 = default;
@@ -61,7 +72,7 @@ public:
 
     explicit xtop_node_id(std::string value);
     explicit xtop_node_id(xaccount_base_address_t base_address);
-    explicit xtop_node_id(xaccount_base_address_t base_address, uint16_t const table_id_value);
+    explicit xtop_node_id(xaccount_base_address_t base_address, uint16_t table_id_value);
     explicit xtop_node_id(xaccount_base_address_t base_address, xtable_id_t table_id);
 
     static xtop_node_id build_from(std::string const & input, std::error_code & ec);
@@ -135,6 +146,16 @@ private:
 using xnode_id_t = xtop_node_id;
 
 NS_END2
+
+NS_BEG1(top)
+
+template <>
+xbytes_t to_bytes<common::xnode_id_t>(common::xnode_id_t const & input);
+
+template <>
+std::string to_string<common::xnode_id_t>(common::xnode_id_t const & input);
+
+NS_END1
 
 NS_BEG1(std)
 

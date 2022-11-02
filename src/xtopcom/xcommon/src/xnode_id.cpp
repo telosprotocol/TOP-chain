@@ -10,11 +10,25 @@
 #include "xcommon/xeth_address.h"
 #include "xutility/xhash.h"
 #include "xvledger/xvaccount.h"
+#include "xmetrics/xmetrics.h"
 
 #include <cassert>
 #include <vector>
 
 NS_BEG2(top, common)
+
+metrics_xtop_node_id::metrics_xtop_node_id() {
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_account_address, 1);
+}
+metrics_xtop_node_id::metrics_xtop_node_id(metrics_xtop_node_id const &) {
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_account_address, 1);
+}
+metrics_xtop_node_id::metrics_xtop_node_id(metrics_xtop_node_id &&) {
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_account_address, 1);
+}
+metrics_xtop_node_id::~metrics_xtop_node_id() {
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_account_address, -1);
+}
 
 xtop_node_id::xtop_node_id(std::string value) : m_account_string{std::move(value)} {
     if (!empty()) {
@@ -22,7 +36,7 @@ xtop_node_id::xtop_node_id(std::string value) : m_account_string{std::move(value
     }
 }
 
-xtop_node_id::xtop_node_id(xaccount_base_address_t base_address) : m_account_string {base_address.to_string()}, m_account_base_address{std::move(base_address)} {
+xtop_node_id::xtop_node_id(xaccount_base_address_t base_address) : m_account_base_address{std::move(base_address)}, m_account_string{m_account_base_address.to_string()} {
     if (!empty()) {
         parse();
     }
@@ -31,10 +45,8 @@ xtop_node_id::xtop_node_id(xaccount_base_address_t base_address) : m_account_str
 xtop_node_id::xtop_node_id(xaccount_base_address_t base_address, uint16_t const table_id_value) : xtop_node_id{std::move(base_address), xtable_id_t{table_id_value}} {
 }
 
-xtop_node_id::xtop_node_id(xaccount_base_address_t base_address, xtable_id_t table_id)
-  : m_account_string{base_address.to_string() + "@" + top::to_string(table_id)}
-  , m_account_base_address{std::move(base_address)}
-  , m_assigned_table_id{table_id} {
+xtop_node_id::xtop_node_id(xaccount_base_address_t base_address, xtable_id_t const table_id)
+  : m_account_base_address{std::move(base_address)}, m_account_string{m_account_base_address.to_string() + "@" + top::to_string(table_id)}, m_assigned_table_id{table_id} {
 }
 
 xtop_node_id xtop_node_id::build_from(std::string const & account_string, std::error_code & ec) {
@@ -188,7 +200,7 @@ bool xtop_node_id::has_assigned_table_id() const noexcept {
 }
 
 base::xvaccount_t xtop_node_id::vaccount() const {
-    return {to_string()};
+    return base::xvaccount_t{m_account_string};
 }
 
 int32_t xtop_node_id::serialize_to(base::xstream_t & stream) const {
@@ -235,7 +247,7 @@ void xtop_node_id::parse() {
             top::error::throw_error(error::xerrc_t::invalid_table_id);
         }
 
-        auto assigned_table_id = static_cast<uint16_t>(std::stoi(parts[1]));
+        auto const assigned_table_id = static_cast<uint16_t>(std::stoi(parts[1]));
         if (m_assigned_table_id.empty()) {
             m_assigned_table_id = xtable_id_t{assigned_table_id};
         }
@@ -289,6 +301,20 @@ NS_BEG1(std)
 std::size_t
 hash<top::common::xnode_id_t>::operator()(top::common::xnode_id_t const & id) const noexcept {
     return std::hash<std::string>{}(id.value());
+}
+
+NS_END1
+
+NS_BEG1(top)
+
+template <>
+xbytes_t to_bytes<common::xnode_id_t>(common::xnode_id_t const & input) {
+    return { input.value().begin(), input.value().end() };
+}
+
+template <>
+std::string to_string<common::xnode_id_t>(common::xnode_id_t const & input) {
+    return input.value();
 }
 
 NS_END1

@@ -22,6 +22,7 @@
 #include "xvm/manager/xcontract_manager.h"
 #include "xvm/manager/xmessage_ids.h"
 #include "xvm/xvm_service.h"
+#include "xstatestore/xstatestore_face.h"
 
 #include <cinttypes>
 #include <cmath>
@@ -29,12 +30,11 @@
 NS_BEG2(top, contract)
 using base::xstring_utl;
 const uint16_t EXPIRE_DURATION = 300;
-xrole_context_t::xrole_context_t(const observer_ptr<xstore_face_t> & store,
-                                 const observer_ptr<store::xsyncvstore_t> & syncstore,
+xrole_context_t::xrole_context_t(const observer_ptr<store::xsyncvstore_t> & syncstore,
                                  const std::shared_ptr<xtxpool_service_v2::xrequest_tx_receiver_face> & unit_service,
                                  const std::shared_ptr<xvnetwork_driver_face_t> & driver,
                                  xcontract_info_t * info)
-  : m_store(store), m_syncstore(syncstore), m_unit_service(unit_service), m_driver(driver), m_contract_info(info) {
+  : m_syncstore(syncstore), m_unit_service(unit_service), m_driver(driver), m_contract_info(info) {
     XMETRICS_COUNTER_INCREMENT("xvm_contract_role_context_counter", 1);
   }
 
@@ -102,7 +102,8 @@ void xrole_context_t::on_block_to_db(const xblock_ptr_t & block, bool & event_br
                 // load full block input and output
                 base::xvaccount_t _vaccount(block->get_account());
                 if (false == base::xvchain_t::instance().get_xblockstore()->load_block_input(_vaccount, block.get())
-                    || false == base::xvchain_t::instance().get_xblockstore()->load_block_output(_vaccount, block.get())) {
+                    || false == base::xvchain_t::instance().get_xblockstore()->load_block_output(_vaccount, block.get())
+                    || false == base::xvchain_t::instance().get_xblockstore()->load_block_output_offdata(_vaccount, block.get())) {
                     xerror("xrole_context_t::on_block_to_db fail-load block input output, block=%s", block->dump().c_str());
                     return;
                 }
@@ -115,11 +116,12 @@ void xrole_context_t::on_block_to_db(const xblock_ptr_t & block, bool & event_br
                     break;
                 case enum_broadcast_policy_t::fullunit:
                     xinfo("xrole_context_t::on_block::broadcast, fullunit, block=%s", block->dump().c_str());
-                    if (block->is_fullunit()) {
-                        assert(false);
-                        // broadcast(((xevent_store_block_to_db_t *)e.get())->block, m_contract_info->broadcast_types);
-                        broadcast(block, m_contract_info->broadcast_types);
-                    }
+                    // table blocks sync with unit blocks by xsync.
+                    // if (block->is_fullunit()) {
+                    //     assert(false);
+                    //     // broadcast(((xevent_store_block_to_db_t *)e.get())->block, m_contract_info->broadcast_types);
+                    //     broadcast(block, m_contract_info->broadcast_types);
+                    // }
                     break;
                 default:
                     // no broadcast
@@ -253,13 +255,13 @@ bool xrole_context_t::runtime_stand_alone(const uint64_t timer_round, common::xa
         return false;
     }
 
-    auto account = m_store->query_account(sys_addr.value());
+    auto account = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(sys_addr);
     if (nullptr == account) {
         xerror("xrole_context_t::runtime_stand_alone fail-query account.address=%s", sys_addr.value().c_str());
         xassert(nullptr != account);
         return false;
     }
-    return 0 == account->get_chain_height();
+    return 0 == account->height();
 }
 
 bool xrole_context_t::valid_call(const uint64_t onchain_timer_round) {
@@ -358,7 +360,7 @@ void xrole_context_t::call_contract(const std::string & action_params, uint64_t 
             continue;
         }
 
-        xaccount_ptr_t account = m_store->query_account(address.value());
+        data::xunitstate_ptr_t account = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(address);
         if (nullptr == account) {
             xerror("xrole_context_t::call_contract fail-query account.address=%s", address.value().c_str());
             xassert(nullptr != account);
@@ -396,7 +398,7 @@ void xrole_context_t::call_contract(const std::string & action_params, uint64_t 
         return;
     }
 
-    xaccount_ptr_t account = m_store->query_account(address.value());
+    data::xunitstate_ptr_t account = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(address);
     if (nullptr == account) {
         xerror("xrole_context_t::call_contract fail-query account.address=%s", address.value().c_str());
         xassert(nullptr != account);
@@ -427,7 +429,7 @@ void xrole_context_t::call_contract(const std::string & action_params, uint64_t 
 
 void xrole_context_t::on_fulltableblock_event(common::xaccount_address_t const& contract_name, std::string const& action_name, std::string const& action_params, uint64_t timestamp, uint16_t table_id) {
     auto const address = xcontract_address_map_t::calc_cluster_address(contract_name, table_id);
-    xaccount_ptr_t account = m_store->query_account(address.value());
+    data::xunitstate_ptr_t account = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(address);
     if (nullptr == account) {
         xerror("xrole_context_t::on_fulltableblock_event fail-query account.address=%s", address.c_str());
         xassert(nullptr != account);
@@ -537,7 +539,7 @@ void xrole_context_t::on_fulltableblock_event(common::xaccount_address_t const& 
 //         }
 
 //         // create tx to call contract xtop_relay_process_election_data_contract on_recv_election_data
-//         xaccount_ptr_t account = m_store->query_account(relay_repackage_election_data_contract_address.value());
+//         data::xunitstate_ptr_t account = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(relay_repackage_election_data_contract_address.value());
 //         if (nullptr == account) {
 //             xerror("xrole_context_t relay election data fail-query account.address=%s", relay_repackage_election_data_contract_address.c_str());
 //             xassert(nullptr != account);
@@ -629,12 +631,8 @@ void xrole_context_t::broadcast(const xblock_ptr_t & block_ptr, common::xnode_ty
                 }
             }
             {
-                // todo(next version fork)
-                // if (forked standalone_exchange_point) {
-                    common::xnode_address_t exchange_dest{common::build_exchange_sharding_address(m_driver->network_id())};
-                // } else {
-                    // common::xnode_address_t exchange_dest{common::build_legacy_exchange_sharding_address(common::xlegacy_exchange_group_id, m_driver->network_id())};
-                // }
+                common::xnode_address_t exchange_dest{common::build_exchange_sharding_address(m_driver->network_id())};
+
                 std::error_code ec;
                 m_driver->broadcast(exchange_dest.xip2(), message, ec);
                 if (ec) {

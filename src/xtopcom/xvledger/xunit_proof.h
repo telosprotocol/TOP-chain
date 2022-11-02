@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include "xdata/xgenesis_data.h"
 #include "xprovecert.h"
 #include "xvledger/xvcertauth.h"
+#include "xvledger/xvaccount.h"
 
 #include <mutex>
 
@@ -41,7 +41,7 @@ public:
         }
 
         std::string account = unit_block->get_account();
-        std::string table_account = data::account_address_to_block_address(common::xaccount_address_t(account));
+        std::string table_account = base::xvaccount_t::make_table_account_address(base::xvaccount_t(account));
 
         base::enum_vcert_auth_result auth_result = certauth->verify_muti_sign(table_qcert.get(), table_account);
         if (auth_result != base::enum_vcert_auth_result::enum_successful) {

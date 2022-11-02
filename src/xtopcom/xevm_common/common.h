@@ -5,6 +5,7 @@
 #pragma once
 
 #include "xbase/xns_macro.h"
+#include "xbasic/xbyte_buffer.h"
 
 #include <chrono>
 #include <functional>
@@ -24,80 +25,12 @@
 
 #include "vector_ref.h"
 
-// CryptoPP defines byte in the global namespace, so must we.
-using byte = uint8_t;
-
 NS_BEG2(top, evm_common)
 using namespace boost::multiprecision::literals;
 
 // Binary data types.
-using bytes = std::vector<byte>;
-using bytesRef = vector_ref<byte>;
-using bytesConstRef = vector_ref<byte const>;
-
-template <class T>
-class secure_vector {
-public:
-    secure_vector() {
-    }
-    secure_vector(secure_vector<T> const & /*_c*/) = default;  // See https://github.com/ethereum/libweb3core/pull/44
-    explicit secure_vector(size_t _size) : m_data(_size) {
-    }
-    explicit secure_vector(size_t _size, T _item) : m_data(_size, _item) {
-    }
-    explicit secure_vector(std::vector<T> const & _c) : m_data(_c) {
-    }
-    explicit secure_vector(vector_ref<T> _c) : m_data(_c.data(), _c.data() + _c.size()) {
-    }
-    explicit secure_vector(vector_ref<const T> _c) : m_data(_c.data(), _c.data() + _c.size()) {
-    }
-    ~secure_vector() {
-        ref().cleanse();
-    }
-
-    secure_vector<T> & operator=(secure_vector<T> const & _c) {
-        if (&_c == this)
-            return *this;
-
-        ref().cleanse();
-        m_data = _c.m_data;
-        return *this;
-    }
-    std::vector<T> & writable() {
-        clear();
-        return m_data;
-    }
-    std::vector<T> const & makeInsecure() const {
-        return m_data;
-    }
-
-    void clear() {
-        ref().cleanse();
-    }
-
-    vector_ref<T> ref() {
-        return vector_ref<T>(&m_data);
-    }
-    vector_ref<T const> ref() const {
-        return vector_ref<T const>(&m_data);
-    }
-
-    size_t size() const {
-        return m_data.size();
-    }
-    bool empty() const {
-        return m_data.empty();
-    }
-
-    void swap(secure_vector<T> & io_other) {
-        m_data.swap(io_other.m_data);
-    }
-
-private:
-    std::vector<T> m_data;
-};
-
-using bytesSec = secure_vector<byte>;
+using bytesRef = vector_ref<xbyte_t>;
+using bytesConstRef = vector_ref<xbyte_t const>;
 
 // Numeric types.
 using bigint = boost::multiprecision::number<boost::multiprecision::cpp_int_backend<>>;
@@ -116,9 +49,9 @@ using u160Set = std::set<u160>;
 
 // Map types.
 using StringMap = std::map<std::string, std::string>;
-using BytesMap = std::map<bytes, bytes>;
+using BytesMap = std::map<xbytes_t, xbytes_t>;
 using u256Map = std::map<u256, u256>;
-using HexMap = std::map<bytes, bytes>;
+using HexMap = std::map<xbytes_t, xbytes_t>;
 
 // Hash types.
 using StringHashMap = std::unordered_map<std::string, std::string>;

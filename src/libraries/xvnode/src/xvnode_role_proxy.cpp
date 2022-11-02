@@ -5,10 +5,10 @@
 #include "xvnode/xvnode_role_proxy.h"
 
 #include "xunit_service/xcons_service_mgr.h"
+#include "xstatestore/xstatestore_face.h"
 NS_BEG2(top, vnode)
 
 xtop_vnode_role_proxy::xtop_vnode_role_proxy(observer_ptr<mbus::xmessage_bus_face_t> const & mbus,
-                                             observer_ptr<store::xstore_face_t> const & store,
                                              observer_ptr<base::xvblockstore_t> const & block_store,
                                              observer_ptr<base::xvtxstore_t> const & txstore,
                                              observer_ptr<time::xchain_time_face_t> const & logic_timer,
@@ -16,11 +16,19 @@ xtop_vnode_role_proxy::xtop_vnode_role_proxy(observer_ptr<mbus::xmessage_bus_fac
                                              xobject_ptr_t<base::xvcertauth_t> const & certauth,
                                              observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
                                              //    std::vector<xobject_ptr_t<base::xiothread_t>> const & iothreads,
-                                             observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor)
+                                             observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
+                                             observer_ptr<state_sync::xstate_downloader_t> const & downloader)
   : m_txstore{txstore} {
-    m_cons_mgr = xunit_service::xcons_mgr_build(
-        data::xuser_params::get_instance().account.value(), store, block_store, txpool, logic_timer, certauth, election_cache_data_accessor, mbus, router);
-    // m_txpool_service_mgr = xtxpool_service_v2::xtxpool_service_mgr_instance::create_xtxpool_service_mgr_inst(store, block_store, txpool, iothreads, mbus, logic_timer);
+    m_downloader = downloader;
+    m_cons_mgr = xunit_service::xcons_mgr_build(data::xuser_params::get_instance().account.value(),
+                                                block_store,
+                                                txpool,
+                                                logic_timer,
+                                                certauth,
+                                                election_cache_data_accessor,
+                                                mbus,
+                                                router,
+                                                downloader);
 }
 
 bool xtop_vnode_role_proxy::is_edge_archive(common::xnode_type_t const & node_type) const {
@@ -39,6 +47,7 @@ void xtop_vnode_role_proxy::create(vnetwork::xvnetwork_driver_face_ptr_t const &
     if (!is_edge_archive(vnetwork->type()) && !is_frozen(vnetwork->type()) && !common::has<common::xnode_type_t::fullnode>(vnetwork->type())) {
         m_cons_mgr->create(vnetwork);
     }
+    m_downloader->add_network(vnetwork);
 }
 void xtop_vnode_role_proxy::change(common::xnode_address_t const & address, common::xlogic_time_t start_time) {
     m_node_address_set.insert(address);
@@ -62,6 +71,7 @@ void xtop_vnode_role_proxy::unreg(common::xnode_address_t const & address) {
     if (!is_edge_archive(address.type()) && !is_frozen(address.type()) && !common::has<common::xnode_type_t::fullnode>(address.type())) {
         m_cons_mgr->unreg(address.xip2());
     }
+    m_downloader->del_network(address);
 }
 
 void xtop_vnode_role_proxy::destroy(common::xnode_address_t const & address) {
@@ -76,6 +86,7 @@ void xtop_vnode_role_proxy::update_modules_node_type() const {
         node_type |= address.type();
     }
 
+    // TODO(jimmy) mbus notify future
     m_txstore->update_node_type(static_cast<std::underlying_type<common::xnode_type_t>::type>(node_type));
 }
 

@@ -11,6 +11,7 @@ target_link_libraries(xstore PRIVATE
     xxbase
     xmbus
     xdata
+    xstatectx
     xdb
 )
 

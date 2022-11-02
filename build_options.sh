@@ -101,10 +101,6 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DMAINNET_ACTIVATED=ON"
         echo "enable mainnet activation by default"
     ;;
-    mock_ca)
-        CMAKE_EXTRA_OPTIONS+=" -DMOCK_CA=ON"
-        echo "BUILD WITH MOCK CA"
-    ;;
     p_stack)
         CMAKE_EXTRA_OPTIONS+=" -DXENABLE_PSTACK=ON"
         echo "BUILD WITH XENABLE_PSTACK"
@@ -208,6 +204,10 @@ do
     cross_tx_dbg)
         CMAKE_EXTRA_OPTIONS+=" -DCROSS_TX_DBG=ON"
         echo "BUILD WITH CROSS_TX_DBG"
+    ;;
+    use_jemalloc)
+        CMAKE_EXTRA_OPTIONS+=" -DXUSE_JEMALLOC=ON"
+        echo "BUILD WITH XUSE_JEMALLOC"
     ;;
     *)
         echo "unknown build option: "$option

@@ -8,12 +8,7 @@ NS_BEG4(top, data, election, v1)
 
 bool
 xtop_election_info::operator==(xtop_election_info const & other) const noexcept {
-    return joined_version       == other.joined_version       &&
-           stake                == other.stake                &&
-           comprehensive_stake  == other.comprehensive_stake  &&
-           consensus_public_key == other.consensus_public_key &&
-           miner_type           == other.miner_type           &&
-           genesis              == other.genesis;
+    return v0_ == other.v0_ && miner_type_ == other.miner_type_ && genesis_ == other.genesis_;
 }
 
 bool
@@ -23,22 +18,64 @@ xtop_election_info::operator!=(xtop_election_info const & other) const noexcept 
 
 void
 xtop_election_info::swap(xtop_election_info & other) noexcept {
-    joined_version.swap(other.joined_version);
-    std::swap(stake, other.stake);
-    std::swap(comprehensive_stake, other.comprehensive_stake);
-    consensus_public_key.swap(other.consensus_public_key);
-    std::swap(miner_type, other.miner_type);
-    std::swap(genesis, other.genesis);
+    v0_.swap(other.v0_);
+    std::swap(miner_type_, other.miner_type_);
+    std::swap(genesis_, other.genesis_);
 }
 
-v0::xelection_info_t xtop_election_info::v0() const {
-    v0::xelection_info_t r;
-    r.joined_version = joined_version;
-    r.stake = stake;
-    r.comprehensive_stake = comprehensive_stake;
-    r.consensus_public_key = consensus_public_key;
+v0::xelection_info_t const & xtop_election_info::v0() const noexcept {
+    return v0_;
+}
 
-    return r;
+v0::xelection_info_t & xtop_election_info::v0() noexcept {
+    return v0_;
+}
+
+common::xelection_epoch_t const & xtop_election_info::joined_epoch() const noexcept {
+    return v0().joined_epoch();
+}
+
+void xtop_election_info::joined_epoch(common::xelection_epoch_t joined_epoch) {
+    v0().joined_epoch(std::move(joined_epoch));
+}
+
+uint64_t xtop_election_info::stake() const noexcept {
+    return v0().stake();
+}
+
+void xtop_election_info::stake(uint64_t const stake) noexcept {
+    v0().stake(stake);
+}
+
+uint64_t xtop_election_info::comprehensive_stake() const noexcept {
+    return v0().comprehensive_stake();
+}
+
+void xtop_election_info::comprehensive_stake(uint64_t const stake) noexcept {
+    v0().comprehensive_stake(stake);
+}
+
+xpublic_key_t const & xtop_election_info::public_key() const noexcept {
+    return v0().public_key();
+}
+
+void xtop_election_info::public_key(xpublic_key_t pubkey) noexcept {
+    v0().public_key(std::move(pubkey));
+}
+
+common::xminer_type_t xtop_election_info::miner_type() const noexcept {
+    return miner_type_;
+}
+
+void xtop_election_info::miner_type(common::xminer_type_t const type) noexcept {
+    miner_type_ = type;
+}
+
+bool xtop_election_info::genesis() const noexcept {
+    return genesis_;
+}
+void xtop_election_info::genesis(bool const v) noexcept {
+    genesis_ = v;
 }
 
 NS_END4

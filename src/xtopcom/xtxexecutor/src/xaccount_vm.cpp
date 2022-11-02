@@ -13,8 +13,8 @@
 
 NS_BEG2(top, txexecutor)
 
-xaccount_vm_t::xaccount_vm_t(const data::xunitstate_ptr_t & unitstate, const xobject_ptr_t<base::xvcanvas_t> & canvas) {
-    m_account_context = std::make_shared<store::xaccount_context_t>(unitstate, canvas);
+xaccount_vm_t::xaccount_vm_t(const data::xunitstate_ptr_t & unitstate, const statectx::xstatectx_face_ptr_t & statectx) {
+    m_account_context = std::make_shared<store::xaccount_context_t>(unitstate, statectx);
 }
 
 int32_t xaccount_vm_t::exec_one_tx(store::xaccount_context_t * account_context, const xcons_transaction_ptr_t & tx) {
@@ -95,7 +95,7 @@ int32_t xaccount_vm_t::execute(const xvm_input_t & input, xvm_output_t & output)
     m_account_context->set_context_para(input.get_para().get_clock(), input.get_para().get_random_seed(), input.get_para().get_timestamp(), input.get_para().get_lock_tgas_token());
     const std::string & table_address = input.get_statectx()->get_table_address();
     xassert(!table_address.empty());
-    uint64_t table_proposal_height = input.get_statectx()->get_table_state()->get_block_height();
+    uint64_t table_proposal_height = input.get_statectx()->get_table_state()->height();
     uint64_t table_committed_height = (table_proposal_height <= 3) ? 0 : (table_proposal_height - 3);
     m_account_context->set_context_pare_current_table(table_address, table_committed_height);
 

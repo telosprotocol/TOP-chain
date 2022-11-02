@@ -80,8 +80,7 @@ void hash256aux(HexMap const& _s, HexMap::const_iterator _begin, HexMap::const_i
 		_rlp << sha3(rlp.out());
 }
 
-bytes rlp256(BytesMap const& _s)
-{
+xbytes_t rlp256(BytesMap const & _s) {
 	// build patricia tree.
 	if (_s.empty())
 		return xrlp("");
@@ -98,8 +97,7 @@ h256 hash256(BytesMap const& _s)
 	return sha3(rlp256(_s));
 }
 
-h256 orderedTrieRoot(std::vector<bytes> const& _data)
-{
+h256 orderedTrieRoot(std::vector<xbytes_t> const & _data) {
 	BytesMap m;
 	unsigned j = 0;
 	for (auto i: _data)

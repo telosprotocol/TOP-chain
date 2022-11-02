@@ -6,12 +6,12 @@
 #include "xconfig/xpredefined_configurations.h"
 #include "xconfig/xconfig_register.h"
 #include "xdata/xrootblock.h"
+#include "xcrypto/xckey.h"
 
 using namespace top;
 using namespace top::db_export;
-using namespace top::db_read;
 
-// #define XDB_EXPORT_LOG
+#define XDB_EXPORT_LOG
 
 class xtop_hash_t : public top::base::xhashplugin_t {
 public:
@@ -39,6 +39,9 @@ void usage() {
     std::cout << "    - <function_name>:" << std::endl;
     std::cout << "        - db_migrate_v2_to_v3 new_path" << std::endl;
     std::cout << "        - check_fast_sync <account>" << std::endl;
+    std::cout << "        - check_state_data <account>" << std::endl;
+    std::cout << "        - check_off_data" << std::endl;
+    std::cout << "        - check_mpt" << std::endl;
     std::cout << "        - check_block_exist <account> <height>" << std::endl;
     std::cout << "        - check_block_info <account> <height|last|all>" << std::endl;
     std::cout << "        - check_tx_info [starttime] [endtime] [threads]" << std::endl;
@@ -47,9 +50,11 @@ void usage() {
     std::cout << "        - check_contract_property <account> <property> <height|last|all>" << std::endl;
     std::cout << "        - check_balance" << std::endl;
     std::cout << "        - check_archive_db [redundancy]" << std::endl;
+    std::cout << "        - check_performance" << std::endl;
     std::cout << "        - parse_checkpoint <height>" << std::endl;
     std::cout << "        - parse_db" << std::endl;
     std::cout << "        - db_read_meta  [db_path] <account>" << std::endl;
+    std::cout << "        - db_data_parse [db_path] " << std::endl; // ./xdb_export ./db_v3/ db_data_parse
     std::cout << "        - db_compact_db [db_path]" << std::endl;
     std::cout << "        - db_parse_type_size [db_path] " << std::endl;
     std::cout << "        - db_read_block [db_path] <account> <height> " << std::endl;
@@ -122,7 +127,16 @@ int main(int argc, char ** argv) {
         xdb_read_tools_t read_tools{db_path};
         read_tools.db_read_meta(address);
         return 0;
-    }  else if (function_name == "db_compact_db") {
+    } else if (function_name == "db_data_parse") {
+        if (argc != 3) {
+            xassert(false);
+            usage();
+            return -1;
+        }
+        xdb_read_tools_t read_tools{db_path};
+        read_tools.db_data_parse();
+        return 0;
+    } else if (function_name == "db_compact_db") {
         if (argc != 4) {
             usage();
             return -1;
@@ -185,28 +199,57 @@ int main(int argc, char ** argv) {
     }
 
     xdb_export_tools_t tools{db_path};
-    if (function_name == "check_fast_sync") {
+    if (function_name == "check_fast_sync" || function_name == "check_state_data") {
+        bool check_block = (function_name == "check_fast_sync");
         if (argc == 3) {
             auto const table_account_vec = xdb_export_tools_t::get_table_accounts();
             auto const unit_account_vec = tools.get_db_unit_accounts();
-            tools.query_all_sync_result(table_account_vec, true);
-            tools.query_all_sync_result(unit_account_vec, false);
+            if (check_block) {
+                tools.query_all_account_data(table_account_vec, true, xdb_check_data_func_block_t());
+                tools.query_all_account_data(unit_account_vec, false, xdb_check_data_func_block_t());
+            } else {
+                tools.query_all_account_data(table_account_vec, true, xdb_check_data_func_table_state_t());
+                tools.query_all_account_data(unit_account_vec, false, xdb_check_data_func_unit_state_t());
+            }
         } else if (argc == 4) {
             std::string method_name{argv[3]};
             if (method_name == "table") {
                 auto const table_account_vec = xdb_export_tools_t::get_table_accounts();
-                tools.query_all_sync_result(table_account_vec, true);
+                if (check_block) {
+                    tools.query_all_account_data(table_account_vec, true, xdb_check_data_func_block_t());
+                } else {
+                    tools.query_all_account_data(table_account_vec, true, xdb_check_data_func_table_state_t());
+                }
             } else if (method_name == "unit") {
                 auto const unit_account_vec = tools.get_db_unit_accounts();
-                tools.query_all_sync_result(unit_account_vec, false);
+                if (check_block) {
+                    tools.query_all_account_data(unit_account_vec, false, xdb_check_data_func_block_t());
+                } else {
+                    tools.query_all_account_data(unit_account_vec, false, xdb_check_data_func_unit_state_t());
+                }
+                std::cout << "not support currently." << std::endl;
             } else if (method_name == "account") {
                 std::vector<std::string> account = {argv[4]};
-                tools.query_all_sync_result(account, false);
+                if (check_block) {
+                    tools.query_all_account_data(account, false, xdb_check_data_func_block_t());
+                } else {
+                    tools.query_all_account_data(account, false, xdb_check_data_func_unit_state_t());
+                }
             }else {
                 usage();
                 return -1;
             }
         }
+    } else if (function_name == "check_off_data") {
+        auto const table_account_vec = xdb_export_tools_t::get_table_accounts();
+        tools.query_all_account_data(table_account_vec, true, xdb_check_data_func_off_data_t());
+    } else if (function_name == "check_mpt") {
+        auto const table_account_vec = xdb_export_tools_t::get_table_accounts();
+        tools.query_all_table_mpt(table_account_vec);
+    } else if (function_name == "check_performance") {
+        tools.set_outfile_folder("performance_result/");
+        auto const table_account_vec = tools.get_table_accounts();
+        tools.query_all_table_performance(table_account_vec);
     } else if (function_name == "check_tx_info") {
         uint32_t thread_num = 0;
         uint32_t start_timestamp = 0;
@@ -251,6 +294,7 @@ int main(int argc, char ** argv) {
 
         tools.set_outfile_folder("all_table_tx_info/");
         auto const account_vec = xdb_export_tools_t::get_table_accounts();
+        tools.read_external_tx_firestamp();
         tools.query_tx_info(account_vec, thread_num, start_timestamp, end_timestamp);
     } else if (function_name == "check_block_exist") {
         if (argc < 5) {
@@ -342,18 +386,7 @@ int main(int argc, char ** argv) {
         tools.query_table_unit_info(table_account_vec);
         auto t2 = base::xtime_utl::time_now_ms();
         std::cout << "parse_db total time: " << (t2 - t1) / 1000 << "s." << std::endl;
-    } else if (function_name == "check_tx_file") {
-        std::string tx_file;
-        if (argc < 4) {
-            usage();
-            return -1;
-        }
-        tx_file = argv[3];
-        tools.set_outfile_folder("all_table_tx_info/");
-        auto const account_vec = xdb_export_tools_t::get_table_accounts();
-        tools.output_tx_file(account_vec, tx_file);
-    }
-    else {
+    } else {
         usage();
     }
 

@@ -4,44 +4,44 @@
 
 #pragma once
 
+#include "xbasic/xbyte_buffer.h"
+
 #include <algorithm>
 #include <array>
 #include <cstdint>
 #include <string>
 #include <vector>
-namespace top {
-namespace evm_common {
 
-using byte = std::uint8_t;
-using bytes = std::vector<byte>;
 
-inline void pad_left(bytes & data, const uint32_t size) {
+NS_BEG2(top, evm_common)
+
+inline void pad_left(xbytes_t & data, const uint32_t size) {
     data.insert(data.begin(), size - data.size(), 0);
 }
 
-inline bytes data(const std::string & data) {
-    return std::vector<byte>(data.begin(), data.end());
+inline xbytes_t data(const std::string & data) {
+    return std::vector<xbyte_t>{data.begin(), data.end()};
 }
 
-inline bytes data(const byte * data, size_t size) {
-    return std::vector<byte>(data, data + size);
+inline xbytes_t data(const xbyte_t * data, size_t const size) {
+    return std::vector<xbyte_t>{data, data + size};
 }
 
-inline void append(bytes & data, const bytes & suffix) {
+inline void append(xbytes_t & data, const xbytes_t & suffix) {
     data.insert(data.end(), suffix.begin(), suffix.end());
 }
 
-inline void append(bytes & data, const byte suffix) {
+inline void append(xbytes_t & data, const xbyte_t suffix) {
     data.push_back(suffix);
 }
 
 /// Return a part (subdata) of the requested size of the input data.
-bytes subData(const bytes & data, size_t index, size_t length);
+xbytes_t subData(const xbytes_t & data, size_t index, size_t length);
 
-bytes subData(const bytes & data, size_t startIndex);
-    /// Determines if a byte array has a specific prefix.
+xbytes_t subData(const xbytes_t & data, size_t startIndex);
+    /// Determines if a xbyte_t array has a specific prefix.
 template <typename T>
-inline bool has_prefix(const bytes & data, T & prefix) {
+inline bool has_prefix(const xbytes_t & data, T & prefix) {
     return std::equal(prefix.begin(), prefix.end(), data.begin(), data.begin() + std::min(data.size(), prefix.size()));
 }
 
@@ -58,5 +58,4 @@ inline uint32_t to_uint32(const std::string & input) {
     return *(uint32_t *)output.data();
 }
 
-}  // namespace evm_common
-}  // namespace top
+NS_END2

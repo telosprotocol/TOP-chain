@@ -23,6 +23,7 @@ option(XCHAIN_FORKED_BY_DEFAULT "Enable chain forked logic" OFF)
 option(ENABLE_METRICS_DATAOBJECT "Enable metrics dataobject" OFF)
 option(DISABLE_CORE_SIGNAL_CAPTURE "disable core signal capture" OFF)
 option(DISABLE_SIGNAL_CAPTURE "disable all signal capture" OFF)
+option(XUSE_JEMALLOC "using jemalloc" OFF)
 
 set(BUILD_EVM ON) # EVM as default VM for now
 
@@ -79,45 +80,21 @@ set(EXECUTABLE_OUTPUT_PATH ${XTOPCHAIN_BINARY_DIR}/bin/${CMAKE_SYSTEM_NAME}/)
 set(LIBRARY_OUTPUT_PATH ${XTOPCHAIN_BINARY_DIR}/lib/${CMAKE_SYSTEM_NAME}/)
 
 if (${CMAKE_CXX_COMPILER_ID} STREQUAL GNU)
-    # set common options for GNUCXX
-
-    add_compile_options(
-        $<$<STREQUAL:$<TARGET_PROPERTY:LINKER_LANGUAGE>,CXX>:-fexceptions>  # https://gcc.gnu.org/onlinedocs/gcc-7.3.0/gcc/Code-Gen-Options.html#index-fexceptions
-        $<$<STREQUAL:$<TARGET_PROPERTY:LINKER_LANGUAGE>,CXX>:-frtti>        # https://gcc.gnu.org/onlinedocs/gcc-7.3.0/gcc/C_002b_002b-Dialect-Options.html#index-fno-rtti
-    )
-
     # common compiling options
     add_compile_options(
         -fno-strict-aliasing
-        -fthreadsafe-statics
+
+        # -fthreadsafe-statics
         -pthread
         -fstack-protector-strong
         -fno-short-enums
         -fPIC
     )
 
-    if (ADDRESS_SANITIZER)
-        add_compile_options(-fsanitize=address)
-    endif()
-
-    # set warnings
-    add_compile_options(
-        -Wall               # https://gcc.gnu.org/onlinedocs/gcc-4.8.5/gcc/Warning-Options.html#index-Wall-263
-        -Werror             # https://gcc.gnu.org/onlinedocs/gcc-4.8.5/gcc/Warning-Options.html#index-Werror-254
-#        -Wextra             # https://gcc.gnu.org/onlinedocs/gcc-4.8.5/gcc/Warning-Options.html#index-Wextra-266
-#        -Wpedantic          # https://gcc.gnu.org/onlinedocs/gcc-4.8.5/gcc/Warning-Options.html#index-Wpedantic-261
-#        -Wconversion        # https://gcc.gnu.org/onlinedocs/gcc-4.8.5/gcc/Warning-Options.html#index-Wconversion-426
-#        -Wempty-body
-        -Wfatal-errors
-#        -Wshadow
-#        -Wzero-as-null-pointer-constant
-        -Wunreachable-code
-        -Wno-missing-field-initializers
-        -Werror=return-type
-        -Werror=write-strings
-        -Werror=unused-label
-        -Werror=switch
-    )
+    # CXX only
+    add_compile_options($<$<STREQUAL:$<TARGET_PROPERTY:LINKER_LANGUAGE>,CXX>:-frtti>)
+    add_compile_options($<$<STREQUAL:$<TARGET_PROPERTY:LINKER_LANGUAGE>,CXX>:-fexceptions>)
+    add_compile_options($<$<STREQUAL:$<TARGET_PROPERTY:LINKER_LANGUAGE>,CXX>:-fthreadsafe-statics>)
 
     add_definitions(-D_GNU_SOURCE)
 
@@ -125,11 +102,6 @@ if (${CMAKE_CXX_COMPILER_ID} STREQUAL GNU)
         # add_compile_options(-Wabstract-final-class -Wshift-overflow -Wint-to-void-pointer-cast)
         add_compile_options(-Werror=self-assign
                             -Werror=exceptions)
-    endif()
-
-    if (${CMAKE_CXX_COMPILER_ID} STREQUAL GNU)
-        # add_compile_options(-Wsuggest-final-methods -Wsuggest-final-types -Wsuggest-override)
-        # add_compile_options(-fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free)  // for tcmalloc
     endif()
 
     #==============================================================================
@@ -158,6 +130,10 @@ if (${CMAKE_CXX_COMPILER_ID} STREQUAL GNU)
     add_compile_options($<$<CONFIG:RelWithDebInfo>:-ggdb>)
 else()
     message(FATAL_ERROR "Not supported C++ Compiler: " ${CMAKE_CXX_COMPILER_ID})
+endif()
+
+if (ADDRESS_SANITIZER)
+    add_compile_options(-fsanitize=address)
 endif()
 
 if (BUILD_METRICS)
@@ -220,10 +196,6 @@ if (XENABLE_BLOCK_VERIFY)
     add_definitions(-DENABLE_BLOCK_VERIFY)
 endif()
 
-if (MOCK_CA)
-    add_definitions(-DMOCK_CA)
-endif()
-
 if (XSYNC_TEST)
     add_definitions(-DSYNC_TEST)
 endif()
@@ -260,10 +232,6 @@ endif()
 
 if (XENABLE_P2P_BENDWIDTH)
     add_definitions(-DXENABLE_P2P_BENDWIDTH)
-endif()
-
-if (XENABLE_P2P_TEST)
-    add_definitions(-DXENABLE_P2P_TEST)
 endif()
 
 if (NO_TX_BATCH)
@@ -377,8 +345,12 @@ message(STATUS "ADDRESS_SANITIZER:" ${ADDRESS_SANITIZER})
 message(STATUS "XCHAIN_FORKED_BY_DEFAULT:" ${XCHAIN_FORKED_BY_DEFAULT})
 message(STATUS "DISABLE_CORE_SIGNAL_CAPTURE:" ${DISABLE_CORE_SIGNAL_CAPTURE})
 message(STATUS "DISABLE_SIGNAL_CAPTURE:" ${DISABLE_SIGNAL_CAPTURE})
+message(STATUS "XUSE_JEMALLOC:" ${XUSE_JEMALLOC})
 
 find_package(Threads REQUIRED)
+if (XUSE_JEMALLOC)
+    link_libraries(jemalloc)
+endif()
 
 include_directories(src/xtopcom)  # xtopcom build warning will not print
 include_directories(SYSTEM src/xtopcom/third_party)

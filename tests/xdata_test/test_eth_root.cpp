@@ -44,7 +44,7 @@ public:
         _s << m_nonce;
         _s << m_gasprice;
         _s << m_gas;
-        if (!m_to.empty()) {
+        if (!m_to.is_zero()) {
             _s << m_to.to_bytes();
         } else {
             _s << "";
@@ -428,7 +428,7 @@ TEST_F(test_eth_root, transfer_three_tx) {
     header_para.m_gaslimit = (uint64_t)test_ethtx_tool::jsToU256("0x7a1200");
     header_para.m_baseprice = test_ethtx_tool::jsToU256("0x7");
     header_para.m_coinbase = common::xeth_address_t::build_from("0x0000000000000000000000000000000000000000");
-    xeth_build_t::build_ethheader(header_para, txs, receipts, ethheader);
+    xeth_build_t::build_ethheader(header_para, txs, receipts, {}, ethheader);
     ASSERT_EQ(top::to_hex_prefixed(ethheader.get_receipts_root().asBytes()), "0x25e6b7af647c519a27cc13276a1e6abc46154b51414d174b072698df1f6c19df");
     ASSERT_EQ(top::to_hex_prefixed(ethheader.get_transactions_root().asBytes()), "0xe9d5f517609edf2dcbdc9442f1aba582db5b365a06444424bee401c4ead4e57f");
     ASSERT_EQ(top::to_hex_prefixed(ethheader.get_logBloom().to_bytes()), "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
@@ -565,7 +565,7 @@ TEST_F(test_eth_root, contract_call_one_tx_2) {
     header_para.m_gaslimit = (uint64_t)test_ethtx_tool::jsToU256("0x7a1200");
     header_para.m_baseprice = test_ethtx_tool::jsToU256("0x7");
     header_para.m_coinbase = common::xeth_address_t::build_from("0x0000000000000000000000000000000000000000");
-    xeth_build_t::build_ethheader(header_para, txs, receipts, ethheader);
+    xeth_build_t::build_ethheader(header_para, txs, receipts, {}, ethheader);
     ASSERT_EQ(top::to_hex_prefixed(ethheader.get_receipts_root().asBytes()), "0x860bf9acb9f14c96d685c6f040a4339c755a35a3d59a634ba02aec2ba578d026");
     ASSERT_EQ(top::to_hex_prefixed(ethheader.get_transactions_root().asBytes()), "0x36c818f84049135b96ab9e5e424349ec5b904c6378fc95277eec7f1cac353f9f");
     ASSERT_EQ(top::to_hex_prefixed(ethheader.get_logBloom().to_bytes()), "0x00000000000000000000010000000000000000000400000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000000000000800000000000000000000000000000000000000000000000020000000000000000000800000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000040000002000000000000000000020004000000000000000000000000000000000000000000000000000000000000000");

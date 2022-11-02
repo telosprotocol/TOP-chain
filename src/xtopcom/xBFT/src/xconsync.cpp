@@ -5,6 +5,7 @@
 
 #include <cinttypes>
 #include "xconsdriver.h"
+#include "xbase/xutl.h"
 
 #include "xmetrics/xmetrics.h"
 
@@ -110,7 +111,7 @@ namespace top
                 }
 
                 std::string msg_stream;
-                xsync_request_t _sync_request(enum_xsync_target_block_object | enum_xsync_target_block_input | enum_xsync_target_block_output, sync_cookie,target_block_height,target_block_hash);
+                xsync_request_t _sync_request(enum_xsync_target_block_object | enum_xsync_target_block_input | enum_xsync_target_block_output | enum_xsync_target_block_output_offdata, sync_cookie,target_block_height,target_block_hash);
                 _sync_request.serialize_to_string(msg_stream);
 
                 //construct request msg here
@@ -258,11 +259,9 @@ namespace top
                     }
                     
                     #ifdef DEBUG
-                    xassert(target_block->is_input_ready(true));
-                    xassert(target_block->is_output_ready(true));
+                    xassert(target_block->is_body_and_offdata_ready(true));
                     #else
-                    xassert(target_block->is_input_ready(false));
-                    xassert(target_block->is_output_ready(false));
+                    xassert(target_block->is_body_and_offdata_ready(false));
                     #endif
                     
                     bool found_matched_proposal = false;
@@ -286,7 +285,7 @@ namespace top
                     //return enum_xconsensus_error_outofdate; //note:open for download any block now
                 }
                 
-                bool full_load = (sync_targets & enum_xsync_target_block_input) || (sync_targets & enum_xsync_target_block_output);
+                bool full_load = (sync_targets & enum_xsync_target_block_input) || (sync_targets & enum_xsync_target_block_output) || (sync_targets & enum_xsync_target_block_output_offdata);
                 base::xauto_ptr<base::xvblock_t> target_block = get_vblockstore()->load_block_object(*this, target_block_height,target_block_hash,full_load, metrics::blockstore_access_from_bft_sync);//specific load target block
                 if(target_block == nullptr)
                 {
@@ -323,7 +322,10 @@ namespace top
                     {
                         //_local_block need reload input resource
                         get_vblockstore()->load_block_input(*this, _local_block);
-                        xassert(_local_block->get_input()->has_resource_data());
+                        if (!_local_block->get_input()->has_resource_data()) {
+                            xerror("xBFTSyncdrv::handle_sync_request_msg,fail-load input for packet=%s local-block=%s,at node=0x%llx",packet.dump().c_str(),_local_block->dump().c_str(),get_xip2_low_addr());
+                            return enum_xconsensus_error_bad_packet;
+                        }
                     }
                     respond_msg.set_input_resource(_local_block->get_input()->get_resources_data());
                 }
@@ -335,15 +337,32 @@ namespace top
                     {
                         //_local_block need reload output resource
                         get_vblockstore()->load_block_output(*this, _local_block);
-                        xassert(_local_block->get_output()->has_resource_data());
+                        if (!_local_block->get_output()->has_resource_data()) {
+                            xerror("xBFTSyncdrv::handle_sync_request_msg,fail-load output for packet=%s local-block=%s,at node=0x%llx",packet.dump().c_str(),_local_block->dump().c_str(),get_xip2_low_addr());
+                            return enum_xconsensus_error_bad_packet;
+                        }
                     }
                     respond_msg.set_output_resource(_local_block->get_output()->get_resources_data());
+                }
+
+                if (sync_targets & enum_xsync_target_block_output_offdata) {
+                    if(  (_local_block->get_output_offdata_hash().empty() == false) //link offdata data
+                       &&(_local_block->get_output_offdata().empty() == true) ) //but dont have offdata avaiable now
+                    {
+                        //_local_block need reload output offdata
+                        get_vblockstore()->load_block_output_offdata(*this, _local_block);
+                        if (_local_block->get_output_offdata().empty()) {
+                            xerror("xBFTSyncdrv::handle_sync_request_msg,fail-load output offdata for packet=%s local-block=%s,at node=0x%llx",packet.dump().c_str(),_local_block->dump().c_str(),get_xip2_low_addr());
+                            return enum_xconsensus_error_bad_packet;
+                        }
+                    }
+                    respond_msg.set_output_offdata(_local_block->get_output_offdata());
                 }
 
                 std::string msg_stream;
                 respond_msg.serialize_to_string(msg_stream);
 
-                xinfo("xBFTSyncdrv::handle_sync_request_msg,deliver a block for packet=%s,cert-block=%s,at node=0x%llx",packet.dump().c_str(),_local_block->dump().c_str(),get_xip2_low_addr());
+                xinfo("xBFTSyncdrv::handle_sync_request_msg,deliver a block for packet=%s,cert-block=%s,size=%zu,at node=0x%llx",packet.dump().c_str(),_local_block->dump().c_str(),msg_stream.size(), get_xip2_low_addr());
                 fire_pdu_event_up(xsync_respond_t::get_msg_type(), msg_stream, packet.get_msg_nonce() + 1, to_addr, from_addr, _local_block);
             }
             else
@@ -400,6 +419,11 @@ namespace top
             {
                 xerror("xBFTSyncdrv::handle_sync_respond_msg,fail-block of bad output from packet=%s vs sync_block=%s,at node=0x%llx",packet.dump().c_str(),_sync_block->dump().c_str(),get_xip2_low_addr());
                 return enum_xconsensus_error_bad_block;
+            }
+
+            if (_sync_block->set_output_offdata(_sync_respond_msg.get_output_offdata()) == false) {
+                xerror("xBFTSyncdrv::handle_sync_respond_msg,fail-block of bad output offdata from packet=%s vs sync_block=%s,at node=0x%llx",packet.dump().c_str(),_sync_block->dump().c_str(),get_xip2_low_addr());
+                return enum_xconsensus_error_bad_block;                    
             }
 
             //step#3: verify request etc to protect from DDOS attack

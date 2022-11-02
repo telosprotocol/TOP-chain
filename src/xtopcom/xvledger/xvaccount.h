@@ -351,6 +351,7 @@ namespace top
             static std::string compact_address_to(const std::string & account_addr);
             static std::string compact_address_from(const std::string & data);
             static bool check_address(const std::string & account_addr, bool isTransaction = false);
+            static bool valid_zone_and_subaddr(enum_xchain_zone_index zone_index, uint16_t subaddr);
             static bool is_unit_address_type(enum_vaccount_addr_type addr_type);
             static bool is_eth_address_type(enum_vaccount_addr_type addr_type);
             static bool is_table_address_type(enum_vaccount_addr_type addr_type);
@@ -404,41 +405,16 @@ namespace top
                 -[enum_xid_type  :3bit]
              }
              */
-            static const uint32_t get_index_from_account(const std::string & account_addr)
-            {
-                return (uint32_t)xhash64_t::digest(account_addr);//hash64 better performance than hash32
-            }
-            static const xvid_t  get_xid_from_account(const std::string & account_addr)
-            {
-                uint32_t account_index        = 0;
-                uint32_t ledger_id            = 0;
-                uint16_t ledger_subaddr       = 0;
-                if(get_ledger_fulladdr_from_account(account_addr,ledger_id,ledger_subaddr,account_index))
-                {
-                    xvid_t _xid_from_addr = (ledger_id << 16) | ((ledger_subaddr & enum_vbucket_has_tables_count_mask) << 6) | enum_xid_type_xledger;
-                    _xid_from_addr |= (((uint64_t)account_index) << 32);
-                    return _xid_from_addr; //as default not include account'hash index as performance consideration
-                }
-                return 0; //invalid account
-            }
+            static const uint32_t get_index_from_account(const std::string & account_addr);
+            static const xvid_t  get_xid_from_account(const std::string & account_addr);
             
             //convert to binary/bytes address with compact mode as for DB 'key
             static const std::string  get_storage_key(const xvaccount_t & src_account);
-            static std::string to_evm_address(const std::string& account)
-            {
-                if (account.size() < 2)
-                    return "";
-                std::string value;
-                value.resize(account.size());
-                std::transform(account.begin(), account.end(), value.begin(), ::tolower);
-                value = std::string(base::ADDRESS_PREFIX_EVM_TYPE_IN_MAIN_CHAIN) + value.substr(2);
-                return value;
-            }
+            static std::string to_evm_address(const std::string& account);
 
         public:
             xvaccount_t(const std::string & account_address);
             virtual ~xvaccount_t();
-        protected:
             xvaccount_t();
             xvaccount_t(const xvaccount_t & obj);
             xvaccount_t & operator = (const xvaccount_t & obj);
@@ -484,6 +460,7 @@ namespace top
             bool                        is_timer_address() const;
             bool                        is_relay_address() const;
             enum_vaccount_addr_type     get_addr_type()const{return get_addrtype_from_account(m_account_addr);}
+            bool                        has_valid_table_addr() const;
         private:
             xvid_t                      m_account_xid;
             std::string                 m_account_xid_str;//tostring(m_account_xid),cache it as performance improve
@@ -606,7 +583,6 @@ namespace top
             
         public:
             static xvactmeta_t* load(xvaccount_t & _account,const std::string & meta_serialized_data);
-            void init_cp_connect_meta(xvactmeta_t* meta_ptr, const std::string & account);
 
             const xblockmeta_t   clone_block_meta() const;
             const xstatemeta_t   clone_state_meta() const;
@@ -623,6 +599,7 @@ namespace top
             bool    set_index_meta(const xindxmeta_t & new_meta);
             bool    set_sync_meta(const xsyncmeta_t & new_meta);
             bool    set_latest_executed_block(const uint64_t height, const std::string & blockhash);
+            bool    set_lowest_executed_block(const uint64_t height);
                   
             xblockmeta_t &  get_block_meta();
             xstatemeta_t &  get_state_meta();

@@ -437,12 +437,8 @@ std::string const & xtop_basic_contract::random_seed() const noexcept {
     return m_associated_execution_context->contract_state()->random_seed();
 }
 
-uint64_t xtop_basic_contract::state_height(common::xaccount_address_t const & address) const {
-    return m_associated_execution_context->contract_state()->state_height(address);
-}
-
-bool xtop_basic_contract::block_exist(common::xaccount_address_t const & address, uint64_t height) const {
-    return m_associated_execution_context->contract_state()->block_exist(address, height);
+uint64_t xtop_basic_contract::height() const {
+    return m_associated_execution_context->contract_state()->height();
 }
 
 NS_END2

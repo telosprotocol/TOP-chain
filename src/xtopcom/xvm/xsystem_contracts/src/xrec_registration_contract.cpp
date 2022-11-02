@@ -999,7 +999,7 @@ void xrec_registration_contract::slash_unqualified_node(std::string const & puni
             slash_staking_time(addr);
         } else {
             xkinfo("[xrec_registration_contract][slash_unqualified_node] effective award credit, node addr: %s", addr.c_str());
-            XMETRICS_PACKET_INFO("sysContract_zecSlash", "effective award credit, node addr", addr)
+            XMETRICS_PACKET_INFO("sysContract_zecSlash", "effective award credit, node addr", addr);
             reg_node.award_credit_score(value.node_type);
         }
 

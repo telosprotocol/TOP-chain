@@ -23,20 +23,26 @@ xaccount_index_t::xaccount_index_t(const xaccount_index_t& left) {
     m_latest_tx_nonce    = left.m_latest_tx_nonce;
     m_latest_unit_height = left.m_latest_unit_height;
     m_latest_unit_viewid = left.m_latest_unit_viewid;
-    m_account_flag = left.m_account_flag;
+    m_account_flag       = left.m_account_flag;
+    m_unit_hash          = left.m_unit_hash;
+    m_state_hash         = left.m_state_hash;
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xaccount_index, 1);
 }
 
-xaccount_index_t::xaccount_index_t(base::xvblock_t* unit,
-                                    bool has_unconfirm_tx,
-                                    enum_xblock_consensus_type _cs_type,
-                                    bool is_account_destroy,
-                                    uint64_t latest_tx_nonce) {
-    m_latest_tx_nonce    = latest_tx_nonce;
-    m_latest_unit_height = unit->get_height();
-    m_latest_unit_viewid = unit->get_viewid();
-    set_latest_unit_class(unit->get_block_class());
-    set_latest_unit_type(unit->get_block_type());
+// old version
+xaccount_index_t::xaccount_index_t(uint64_t height,
+                                   uint64_t viewid,
+                                   uint64_t nonce,
+                                   enum_xblock_consensus_type _cs_type,
+                                   base::enum_xvblock_class _unitclass,
+                                   base::enum_xvblock_type _unittype,
+                                   bool has_unconfirm_tx,
+                                   bool is_account_destroy) {
+    m_latest_tx_nonce    = nonce;
+    m_latest_unit_height = height;
+    m_latest_unit_viewid = viewid;
+    set_latest_unit_class(_unitclass);
+    set_latest_unit_type(_unittype);
     set_latest_unit_consensus_type(_cs_type);
     if (has_unconfirm_tx) {
         set_account_index_flag(enum_xaccount_index_flag_has_unconfirm_tx);
@@ -47,11 +53,34 @@ xaccount_index_t::xaccount_index_t(base::xvblock_t* unit,
     if (m_latest_tx_nonce > 0) {
         set_account_index_flag(enum_xaccount_index_flag_carry_nonce);
     }
-    
     XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xaccount_index, 1);
 }
 
-int32_t xaccount_index_t::do_write(base::xstream_t & stream) const {
+// new version
+xaccount_index_t::xaccount_index_t(uint64_t height, std::string const& unithash, std::string const& statehash, uint64_t nonce) {
+    m_latest_tx_nonce    = nonce;
+    m_latest_unit_height = height;
+    m_latest_unit_viewid = 0;
+    m_unit_hash = unithash;
+    xdbg("xaccount_index_t::xaccount_index_t unithash:%s", base::xstring_utl::to_hex(unithash).c_str());
+    xassert(!unithash.empty());
+    m_state_hash = statehash;
+    XMETRICS_GAUGE_DATAOBJECT(metrics::dataobject_xaccount_index, 1);
+}
+
+bool xaccount_index_t::operator == (const xaccount_index_t &other) const {
+    if (m_latest_unit_height    == other.m_latest_unit_height
+        && m_latest_unit_viewid == other.m_latest_unit_viewid
+        && m_account_flag       == other.m_account_flag
+        && m_latest_tx_nonce    == other.m_latest_tx_nonce
+        && m_unit_hash          == other.m_unit_hash
+        && m_state_hash         == other.m_state_hash) {
+        return true;
+    }
+    return false;
+}
+
+int32_t xaccount_index_t::old_do_write(base::xstream_t & stream) const {
     const int32_t begin_size = stream.size();
     stream.write_compact_var(m_latest_unit_height);
     stream.write_compact_var(m_latest_unit_viewid);
@@ -60,11 +89,14 @@ int32_t xaccount_index_t::do_write(base::xstream_t & stream) const {
     if (check_account_index_flag(enum_xaccount_index_flag_carry_nonce)) {
         stream.write_compact_var(m_latest_tx_nonce);
     }
-    
+    if (check_account_index_flag(enum_xaccount_index_flag_carry_unit_hash)) {
+        xassert(0);
+    }
+
     return (stream.size() - begin_size);
 }
 
-int32_t xaccount_index_t::do_read(base::xstream_t & stream) {
+int32_t xaccount_index_t::old_do_read(base::xstream_t & stream) {
     const int32_t begin_size = stream.size();
     stream.read_compact_var(m_latest_unit_height);
     stream.read_compact_var(m_latest_unit_viewid);
@@ -73,8 +105,27 @@ int32_t xaccount_index_t::do_read(base::xstream_t & stream) {
     if (check_account_index_flag(enum_xaccount_index_flag_carry_nonce)) {
         stream.read_compact_var(m_latest_tx_nonce);
     }
+    if (check_account_index_flag(enum_xaccount_index_flag_carry_unit_hash)) {
+        xassert(0);
+    }
     
     return (begin_size - stream.size());
+}
+
+int32_t xaccount_index_t::old_serialize_to(std::string & bin_data) const {
+    base::xautostream_t<1024> _stream(base::xcontext_t::instance());
+    int32_t result = old_do_write(_stream);
+    if(result > 0)
+        bin_data.assign((const char*)_stream.data(),_stream.size());
+    xassert(result > 0);
+    return result;
+}
+
+int32_t xaccount_index_t::old_serialize_from(const std::string & bin_data) {
+    base::xstream_t _stream(base::xcontext_t::instance(),(uint8_t*)bin_data.data(),(uint32_t)bin_data.size());
+    int32_t result = old_do_read(_stream);
+    xassert(result > 0);
+    return result;
 }
 
 int32_t xaccount_index_t::serialize_to(std::string & bin_data) const {
@@ -91,6 +142,32 @@ int32_t xaccount_index_t::serialize_from(const std::string & bin_data) {
     int32_t result = do_read(_stream);
     xassert(result > 0);
     return result;
+}
+
+int32_t xaccount_index_t::do_write(base::xstream_t & stream) const {
+    const int32_t begin_size = stream.size();
+    stream.write_compact_var(m_version);
+    stream.write_compact_var(m_latest_unit_height);
+    stream.write_compact_var(m_latest_tx_nonce);
+    stream.write_compact_var(m_unit_hash);
+    stream.write_compact_var(m_state_hash);
+
+    return (stream.size() - begin_size);
+}
+
+int32_t xaccount_index_t::do_read(base::xstream_t & stream) {
+    const int32_t begin_size = stream.size();
+    stream.read_compact_var(m_version);
+    xassert(m_version == 0);
+    if (m_version != 0){
+        return 0;
+    }
+    stream.read_compact_var(m_latest_unit_height);
+    stream.read_compact_var(m_latest_tx_nonce);
+    stream.read_compact_var(m_unit_hash);
+    stream.read_compact_var(m_state_hash);
+    
+    return (begin_size - stream.size());
 }
 
 // [enum_xvblock_class 3bit][enum_xvblock_type 7bit][enum_xaccount_index_flag 4bit][enum_xblock_consensus_type 2bit] = 16bits
@@ -125,9 +202,54 @@ bool xaccount_index_t::is_match_unit(base::xvblock_t* unit) const {
 
 std::string xaccount_index_t::dump() const {
     char local_param_buf[128];
-    xprintf(local_param_buf,sizeof(local_param_buf),"{height=%" PRIu64 ",viewid=%" PRIu64 ",flag=0x%x,nonce=%" PRIu64 "}",
-        m_latest_unit_height, m_latest_unit_viewid, m_account_flag, m_latest_tx_nonce);
+    xprintf(local_param_buf,sizeof(local_param_buf),"{height=%" PRIu64 ",viewid=%" PRIu64 ",flag=0x%x,nonce=%" PRIu64 ",hash:%s,state:%s}",
+        m_latest_unit_height, m_latest_unit_viewid, m_account_flag, m_latest_tx_nonce, base::xstring_utl::to_hex(m_unit_hash).c_str(), base::xstring_utl::to_hex(m_state_hash).c_str());
     return std::string(local_param_buf);
 }
+
+
+int32_t xaccount_indexs_t::serialize_to_string(std::string & _str) const {
+    base::xstream_t _raw_stream(base::xcontext_t::instance());
+    int32_t ret = do_write(_raw_stream);
+    _str.assign((const char*)_raw_stream.data(),_raw_stream.size());
+    return ret;
+}
+
+int32_t xaccount_indexs_t::serialize_from_string(const std::string & _str) {
+    base::xstream_t _stream(base::xcontext_t::instance(), (uint8_t *)_str.data(), (int32_t)_str.size());
+    int32_t ret = do_read(_stream);
+    return ret;
+}
+
+void xaccount_indexs_t::add_account_index(const std::string & addr, const xaccount_index_t & account_index) {
+    m_account_indexs.push_back(std::make_pair(addr, account_index));
+}
+
+int32_t xaccount_indexs_t::do_write(base::xstream_t & stream) const {
+    const int32_t begin_size = stream.size();
+    const uint32_t count = (uint32_t)m_account_indexs.size();
+    stream.write_compact_var(count);
+    for (auto & account_index_pair : m_account_indexs) {
+        stream.write_compact_var(account_index_pair.first);
+        account_index_pair.second.do_write(stream);
+    }
+    return (stream.size() - begin_size);
+}
+
+int32_t xaccount_indexs_t::do_read(base::xstream_t & stream) {
+    m_account_indexs.clear();
+    const int32_t begin_size = stream.size();
+    uint32_t count = 0;
+    stream.read_compact_var(count);
+    for (uint32_t i = 0; i < count; i++) {
+        std::string addr;
+        xaccount_index_t account_index;
+        stream.read_compact_var(addr);
+        account_index.do_read(stream);
+        m_account_indexs.push_back(std::make_pair(addr, account_index));
+    }
+    return (begin_size - stream.size());
+}
+
 
 NS_END2

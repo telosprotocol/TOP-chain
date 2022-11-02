@@ -42,7 +42,7 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     add_compile_options(/utf-8) # input/output as utf-8
 endif()
 
-set(LINK_ARGS secp256k1 trezor-crypto ssl crypto cryptopp)
+set(LINK_ARGS secp256k1 trezor-crypto cryptopp)
 
 if(NOT MSVC)
     set(LINK_ARGS ${LINK_ARGS} pthread)
@@ -51,6 +51,7 @@ endif()
 # SET TARGET
 add_library(xtopcl STATIC ${cppsdk_src})
 add_dependencies(xtopcl xconfig xdata xxbase xelect_net)
+target_include_directories(xtopcl PRIVATE ${CMAKE_SOURCE_DIR}/src/xtopcom/xdepends/openssl_include/openssl/)
 target_include_directories(xtopcl  PUBLIC   ${PROJ_DIR}/include
                                             ${PROJ_DIR}/include/base
                                             ${PROJ_DIR}/include/network

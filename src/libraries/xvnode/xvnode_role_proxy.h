@@ -6,17 +6,17 @@
 
 #include "xcertauth/xcertauth_face.h"
 #include "xchain_timer/xchain_timer_face.h"
+#include "xcommon/xaddress.h"
+#include "xcommon/xnode_type.h"
 #include "xelect_net/include/elect_main.h"
 #include "xgrpc_mgr/xgrpc_mgr.h"
 #include "xmbus/xmessage_bus.h"
 #include "xrouter/xrouter_face.h"
-#include "xstore/xstore_face.h"
+#include "xstate_sync/xstate_downloader.h"
 #include "xsync/xsync_object.h"
 #include "xtxpool_service_v2/xtxpool_service_face.h"
 #include "xunit_service/xcons_face.h"
 #include "xvnode/xvnode_role_proxy_face.h"
-#include "xcommon/xnode_type.h"
-#include "xcommon/xaddress.h"
 
 NS_BEG2(top, vnode)
 
@@ -25,7 +25,6 @@ private:
     std::set<common::xnode_address_t> m_node_address_set;
 private:
     // observer_ptr<mbus::xmessage_bus_face_t> const & mbus;
-    // observer_ptr<store::xstore_face_t> const & store;
     // observer_ptr<base::xvblockstore_t> const & block_store;
     // observer_ptr<time::xchain_time_face_t> const & logic_timer;
     // observer_ptr<router::xrouter_face_t> const & router;
@@ -33,14 +32,13 @@ private:
     // observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool;
     // std::vector<xobject_ptr_t<base::xiothread_t>> const & iothreads;
     // observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor;
-
-    xunit_service::xcons_service_mgr_ptr m_cons_mgr;
     observer_ptr<base::xvtxstore_t> m_txstore;
+    observer_ptr<state_sync::xstate_downloader_t> m_downloader;
+    xunit_service::xcons_service_mgr_ptr m_cons_mgr;
     // std::shared_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> m_txpool_service_mgr;
 
 public:
     xtop_vnode_role_proxy(observer_ptr<mbus::xmessage_bus_face_t> const & mbus,
-                          observer_ptr<store::xstore_face_t> const & store,
                           observer_ptr<base::xvblockstore_t> const & block_store,
                           observer_ptr<base::xvtxstore_t> const & txstore,
                           observer_ptr<time::xchain_time_face_t> const & logic_timer,
@@ -48,7 +46,8 @@ public:
                           xobject_ptr_t<base::xvcertauth_t> const & certauth,
                           observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
                           //  std::vector<xobject_ptr_t<base::xiothread_t>> const & iothreads,
-                          observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor);
+                          observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
+                          observer_ptr<state_sync::xstate_downloader_t> const & downloader);
 
     // void start() override;
     

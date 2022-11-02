@@ -33,14 +33,14 @@ xunit_service::xcons_dispatcher_ptr xdispatcher_builder::build(observer_ptr<mbus
 }
 
 xcons_service_mgr_ptr xcons_mgr_build(std::string const & node_account,
-                                      observer_ptr<store::xstore_face_t> const & store,
                                       observer_ptr<base::xvblockstore_t> const & blockstore,
                                       observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
                                       observer_ptr<time::xchain_time_face_t> const & tx_timer,
                                       xobject_ptr_t<base::xvcertauth_t> const & certauth,
                                       observer_ptr<election::cache::xdata_accessor_face_t> const & accessor,
                                       observer_ptr<mbus::xmessage_bus_face_t> const & mbus,
-                                      observer_ptr<router::xrouter_face_t> const & router) {
+                                      observer_ptr<router::xrouter_face_t> const & router,
+                                      observer_ptr<state_sync::xstate_downloader_t> const & downloader) {
     auto work_pool = make_object_ptr<base::xworkerpool_t_impl<3>>(top::base::xcontext_t::instance());
     auto xbft_work_pool = make_object_ptr<base::xworkerpool_t_impl<3>>(top::base::xcontext_t::instance());
 
@@ -49,12 +49,12 @@ xcons_service_mgr_ptr xcons_mgr_build(std::string const & node_account,
     std::shared_ptr<xunit_service::xnetwork_proxy_face> network = std::make_shared<xunit_service::xnetwork_proxy>(face, router);
 
     // global lifecyle
-    auto p_res = new xunit_service::xresources(node_account, work_pool, xbft_work_pool, certauth, blockstore, network, pelection, tx_timer, accessor, mbus, txpool);
+    auto p_res = new xunit_service::xresources(node_account, work_pool, xbft_work_pool, certauth, blockstore, network, pelection, tx_timer, accessor, mbus, txpool, downloader);
     auto p_para = new xunit_service::xconsensus_para(xconsensus::enum_xconsensus_pacemaker_type_clock_cert,  // useless parameter
                                                      base::enum_xconsensus_threshold_2_of_3);
     auto p_srv_para = std::make_shared<xunit_service::xcons_service_para>(p_res, p_para);
 
-    auto block_maker = blockmaker::xblockmaker_factory::create_table_proposal(store, make_observer(blockstore.get()), txpool, mbus);
+    auto block_maker = blockmaker::xblockmaker_factory::create_table_proposal(make_observer(blockstore.get()), txpool, mbus);
     p_para->add_block_maker(xunit_service::e_table, block_maker);
     p_para->add_block_maker(xunit_service::e_timer, std::make_shared<xunit_service::xtimer_block_maker_t>(p_srv_para));
     return std::make_shared<xunit_service::xcons_service_mgr>(mbus, network, std::make_shared<xdispatcher_builder>(), p_srv_para);

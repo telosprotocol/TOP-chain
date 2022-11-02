@@ -13,12 +13,13 @@
 #include "xdata/xtransaction_v2.h"
 #include "xdb/xdb_face.h"
 #include "xdb/xdb_factory.h"
-#include "xstore/xstore_face.h"
+
 #include "xsystem_contract_runtime/xsystem_action_runtime.h"
 #include "xsystem_contract_runtime/xsystem_contract_manager.h"
 #include "xsystem_contracts/xtransfer_contract.h"
 #include "xvledger/xvledger.h"
 #include "xvledger/xvstate.h"
+#include "xstatestore/xstatestore_face.h"
 // #include "xvm/xsystem_contracts/xelection/xrec/xrec_standby_pool_contract_new.h"
 // #include "xvm/xsystem_contracts/xregistration/xrec_registration_contract_new.h"
 
@@ -121,9 +122,8 @@ TEST_F(test_system_contract_runtime, deploy_system_contract) {
     system_contract_manager_->deploy_system_contract<system_contracts::xtop_transfer_contract>(
         common::xaccount_address_t{contract_address}, {}, {}, {}, {}, {}, make_observer(blockstore));
 
-    auto latest_vblock = data::xblocktool_t::get_latest_connectted_state_changed_block(blockstore, contract_address);
-    base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_vblock.get(), metrics::statestore_access_from_application_isbeacon);
-    assert(bstate != nullptr);
+    data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_change_state(common::xaccount_address_t{contract_address});
+    auto bstate = unitstate->get_bstate();   
 
     state_accessor::properties::xproperty_identifier_t propety_identifier("$0", state_accessor::properties::xproperty_type_t::token, state_accessor::properties::xenum_property_category::system);
     EXPECT_TRUE(bstate->find_property(propety_identifier.full_name()));

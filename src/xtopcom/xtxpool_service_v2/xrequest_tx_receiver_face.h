@@ -5,7 +5,7 @@
 #pragma once
 
 #include "xdata/xtransaction.h"
-
+#include "xdata/xcons_transaction.h"
 #include <string>
 
 NS_BEG2(top, xtxpool_service_v2)

@@ -5,7 +5,6 @@
 #pragma once
 
 #include "xsync/xchain_info.h"
-#include "xstore/xstore_face.h"
 #include "xmbus/xevent_behind.h"
 #include "xdata/xblock.h"
 

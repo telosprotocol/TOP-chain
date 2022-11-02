@@ -75,7 +75,7 @@ public:
     }
 
     /// Explicitly construct, copying from a byte array.
-    explicit FixedHash(bytes const & _b, ConstructFromHashType _t = FailIfDifferent) {
+    explicit FixedHash(xbytes_t const & _b, ConstructFromHashType _t = FailIfDifferent) {
         if (_b.size() == N)
             memcpy(m_data.data(), _b.data(), std::min<unsigned>(_b.size(), N));
         else {
@@ -103,7 +103,7 @@ public:
     }
 
     /// Explicitly construct, copying from a bytes in memory with given pointer.
-    explicit FixedHash(byte const * _bs, ConstructFromPointerType) {
+    explicit FixedHash(xbyte_t const * _bs, ConstructFromPointerType) {
         memcpy(m_data.data(), _bs, N);
     }
 
@@ -119,7 +119,7 @@ public:
 
     /// @returns true iff this is the empty hash.
     explicit operator bool() const {
-        return std::any_of(m_data.begin(), m_data.end(), [](byte _b) { return _b != 0; });
+        return std::any_of(m_data.begin(), m_data.end(), [](xbyte_t _b) { return _b != 0; });
     }
 
     // The obvious comparison operators.
@@ -192,11 +192,11 @@ public:
     }
 
     /// @returns a particular byte from the hash.
-    byte & operator[](unsigned _i) {
+    xbyte_t & operator[](unsigned _i) {
         return m_data[_i];
     }
     /// @returns a particular byte from the hash.
-    byte operator[](unsigned _i) const {
+    xbyte_t operator[](unsigned _i) const {
         return m_data[_i];
     }
 
@@ -226,41 +226,41 @@ public:
     }
 
     /// @returns a mutable byte pointer to the object's data.
-    byte * data() {
+    xbyte_t * data() {
         return m_data.data();
     }
 
     /// @returns a constant byte pointer to the object's data.
-    byte const * data() const {
+    xbyte_t const * data() const {
         return m_data.data();
     }
 
     /// @returns begin iterator.
-    auto begin() const -> typename std::array<byte, N>::const_iterator {
+    auto begin() const -> typename std::array<xbyte_t, N>::const_iterator {
         return m_data.begin();
     }
 
     /// @returns end iterator.
-    auto end() const -> typename std::array<byte, N>::const_iterator {
+    auto end() const -> typename std::array<xbyte_t, N>::const_iterator {
         return m_data.end();
     }
 
     /// @returns a copy of the object's data as a byte vector.
-    bytes asBytes() const {
-        return bytes(data(), data() + N);
+    xbytes_t asBytes() const {
+        return xbytes_t(data(), data() + N);
     }
     /// @returns a copy of the object's data as a byte vector.
-    bytes to_bytes() const {
-        return bytes(data(), data() + N);
+    xbytes_t to_bytes() const {
+        return xbytes_t(data(), data() + N);
     }
 
     /// @returns a mutable reference to the object's data as an STL array.
-    std::array<byte, N> & asArray() {
+    std::array<xbyte_t, N> & asArray() {
         return m_data;
     }
 
     /// @returns a constant reference to the object's data as an STL array.
-    std::array<byte, N> const & asArray() const {
+    std::array<xbyte_t, N> const & asArray() const {
         return m_data;
     }
 
@@ -305,7 +305,7 @@ public:
         static_assert(P * c_bloomBytes <= N, "out of range");
 
         FixedHash<M> ret;
-        byte const * p = data();
+        xbyte_t const * p = data();
         for (unsigned i = 0; i < P; ++i) {
             unsigned index = 0;
             for (unsigned j = 0; j < c_bloomBytes; ++j, ++p)
@@ -335,158 +335,7 @@ public:
     }
 
 private:
-    std::array<byte, N> m_data;  ///< The binary data.
-};
-
-template <unsigned T>
-class SecureFixedHash : private FixedHash<T> {
-public:
-    using ConstructFromHashType = typename FixedHash<T>::ConstructFromHashType;
-    using ConstructFromStringType = typename FixedHash<T>::ConstructFromStringType;
-    using ConstructFromPointerType = typename FixedHash<T>::ConstructFromPointerType;
-    SecureFixedHash() = default;
-    SecureFixedHash(SecureFixedHash const &) = default;
-    explicit SecureFixedHash(bytes const & _b, ConstructFromHashType _t = FixedHash<T>::FailIfDifferent) : FixedHash<T>(_b, _t) {
-    }
-    explicit SecureFixedHash(bytesConstRef _b, ConstructFromHashType _t = FixedHash<T>::FailIfDifferent) : FixedHash<T>(_b, _t) {
-    }
-    explicit SecureFixedHash(bytesSec const & _b, ConstructFromHashType _t = FixedHash<T>::FailIfDifferent) : FixedHash<T>(_b.ref(), _t) {
-    }
-    template <unsigned M>
-    explicit SecureFixedHash(FixedHash<M> const & _h, ConstructFromHashType _t = FixedHash<T>::AlignLeft) : FixedHash<T>(_h, _t) {
-    }
-    template <unsigned M>
-    explicit SecureFixedHash(SecureFixedHash<M> const & _h, ConstructFromHashType _t = FixedHash<T>::AlignLeft) : FixedHash<T>(_h.makeInsecure(), _t) {
-    }
-    explicit SecureFixedHash(std::string const & _s, ConstructFromStringType _t = FixedHash<T>::FromHex, ConstructFromHashType _ht = FixedHash<T>::FailIfDifferent)
-      : FixedHash<T>(_s, _t, _ht) {
-    }
-    explicit SecureFixedHash(byte const * _d, ConstructFromPointerType _t) : FixedHash<T>(_d, _t) {
-    }
-    ~SecureFixedHash() {
-        ref().cleanse();
-    }
-
-    SecureFixedHash<T> & operator=(SecureFixedHash<T> const & _c) {
-        if (&_c == this)
-            return *this;
-        ref().cleanse();
-        FixedHash<T>::operator=(static_cast<FixedHash<T> const &>(_c));
-        return *this;
-    }
-
-    using FixedHash<T>::size;
-
-    bytesSec asBytesSec() const {
-        return bytesSec(ref());
-    }
-
-    FixedHash<T> const & makeInsecure() const {
-        return static_cast<FixedHash<T> const &>(*this);
-    }
-    FixedHash<T> & writable() {
-        clear();
-        return static_cast<FixedHash<T> &>(*this);
-    }
-
-    using FixedHash<T>::operator bool;
-
-    // The obvious comparison operators.
-    bool operator==(SecureFixedHash const & _c) const {
-        return static_cast<FixedHash<T> const &>(*this).operator==(static_cast<FixedHash<T> const &>(_c));
-    }
-    bool operator!=(SecureFixedHash const & _c) const {
-        return static_cast<FixedHash<T> const &>(*this).operator!=(static_cast<FixedHash<T> const &>(_c));
-    }
-    bool operator<(SecureFixedHash const & _c) const {
-        return static_cast<FixedHash<T> const &>(*this).operator<(static_cast<FixedHash<T> const &>(_c));
-    }
-    bool operator>=(SecureFixedHash const & _c) const {
-        return static_cast<FixedHash<T> const &>(*this).operator>=(static_cast<FixedHash<T> const &>(_c));
-    }
-    bool operator<=(SecureFixedHash const & _c) const {
-        return static_cast<FixedHash<T> const &>(*this).operator<=(static_cast<FixedHash<T> const &>(_c));
-    }
-    bool operator>(SecureFixedHash const & _c) const {
-        return static_cast<FixedHash<T> const &>(*this).operator>(static_cast<FixedHash<T> const &>(_c));
-    }
-
-    using FixedHash<T>::operator==;
-    using FixedHash<T>::operator!=;
-    using FixedHash<T>::operator<;
-    using FixedHash<T>::operator>=;
-    using FixedHash<T>::operator<=;
-    using FixedHash<T>::operator>;
-
-    // The obvious binary operators.
-    SecureFixedHash & operator^=(FixedHash<T> const & _c) {
-        static_cast<FixedHash<T> &>(*this).operator^=(_c);
-        return *this;
-    }
-    SecureFixedHash operator^(FixedHash<T> const & _c) const {
-        return SecureFixedHash(*this) ^= _c;
-    }
-    SecureFixedHash & operator|=(FixedHash<T> const & _c) {
-        static_cast<FixedHash<T> &>(*this).operator^=(_c);
-        return *this;
-    }
-    SecureFixedHash operator|(FixedHash<T> const & _c) const {
-        return SecureFixedHash(*this) |= _c;
-    }
-    SecureFixedHash & operator&=(FixedHash<T> const & _c) {
-        static_cast<FixedHash<T> &>(*this).operator^=(_c);
-        return *this;
-    }
-    SecureFixedHash operator&(FixedHash<T> const & _c) const {
-        return SecureFixedHash(*this) &= _c;
-    }
-
-    SecureFixedHash & operator^=(SecureFixedHash const & _c) {
-        static_cast<FixedHash<T> &>(*this).operator^=(static_cast<FixedHash<T> const &>(_c));
-        return *this;
-    }
-    SecureFixedHash operator^(SecureFixedHash const & _c) const {
-        return SecureFixedHash(*this) ^= _c;
-    }
-    SecureFixedHash & operator|=(SecureFixedHash const & _c) {
-        static_cast<FixedHash<T> &>(*this).operator^=(static_cast<FixedHash<T> const &>(_c));
-        return *this;
-    }
-    SecureFixedHash operator|(SecureFixedHash const & _c) const {
-        return SecureFixedHash(*this) |= _c;
-    }
-    SecureFixedHash & operator&=(SecureFixedHash const & _c) {
-        static_cast<FixedHash<T> &>(*this).operator^=(static_cast<FixedHash<T> const &>(_c));
-        return *this;
-    }
-    SecureFixedHash operator&(SecureFixedHash const & _c) const {
-        return SecureFixedHash(*this) &= _c;
-    }
-    SecureFixedHash operator~() const {
-        auto r = ~static_cast<FixedHash<T> const &>(*this);
-        return static_cast<SecureFixedHash const &>(r);
-    }
-
-    using FixedHash<T>::abridged;
-    using FixedHash<T>::abridgedMiddle;
-
-    bytesConstRef ref() const {
-        return FixedHash<T>::ref();
-    }
-    byte const * data() const {
-        return FixedHash<T>::data();
-    }
-
-    static SecureFixedHash<T> random() {
-        SecureFixedHash<T> ret;
-        ret.randomize(s_fixedHashEngine);
-        return ret;
-    }
-    using FixedHash<T>::firstBitSet;
-
-    void clear() {
-        ref().cleanse();
-    }
+    std::array<xbyte_t, N> m_data;  ///< The binary data.
 };
 
 /// Fast equality operator for h256.
@@ -517,13 +366,6 @@ inline std::istream & operator>>(std::istream & _in, FixedHash<N> & o_h) {
     _in >> s;
     o_h = FixedHash<N>(s, FixedHash<N>::FromHex, FixedHash<N>::AlignRight);
     return _in;
-}
-
-/// Stream I/O for the SecureFixedHash class.
-template <unsigned N>
-inline std::ostream & operator<<(std::ostream & _out, SecureFixedHash<N> const & _h) {
-    _out << "SecureFixedHash#" << std::hex << typename FixedHash<N>::hash()(_h.makeInsecure()) << std::dec;
-    return _out;
 }
 
 // Common types of FixedHash.

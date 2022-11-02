@@ -20,7 +20,7 @@ TEST(test_mpt, test_mpt_test) {
  
     {
         const  h256 goResult{"92b220a2a01703e1fd89ab22f00d6983631852090209416f1508b84175455c3d"};
-        std::vector<bytes> mpt_data { {0xc0, 0x41} };
+        std::vector<top::xbytes_t> mpt_data{{0xc0, 0x41}};
         h256  hashResult = orderedTrieRoot(mpt_data);
         std::cout << " MPT Root Hash: " << hashResult.hex() << std::endl;
         ASSERT_EQ(hashResult, goResult);
@@ -30,7 +30,7 @@ TEST(test_mpt, test_mpt_test) {
         const h256 goResult{"92b220a2a01703e1fd89ab22f00d6983631852090209416f1508b84175455c3d"};
         std::string str1 ="c041";
         std::string hexdata = top::HexDecode(str1);
-        std::vector<bytes> mpt_data { bytes(hexdata.begin(), hexdata.end())};
+        std::vector<top::xbytes_t> mpt_data{top::xbytes_t(hexdata.begin(), hexdata.end())};
         h256  hashResult = orderedTrieRoot(mpt_data);
         std::cout << "MPT Root Hash: " <<  hashResult.hex()  << std::endl;
         ASSERT_EQ(hashResult, goResult);
@@ -40,10 +40,10 @@ TEST(test_mpt, test_mpt_test) {
     {
         const h256 goResult{"40fbc1f71e148f995456177f25366e04f31d618b16272394601774e4cf69d249"};
         std::string str2[] = {"f04cf757812428b0763112efb33b6f4fad7deb445e", "f04cf757812428b0763112efb33b6f4fad7deb445e"};
-        std::vector<bytes> mpt_data;
+        std::vector<top::xbytes_t> mpt_data;
         for (auto  str: str2) {
              std::string hexdata = top::HexDecode(str);
-             mpt_data.push_back( bytes(hexdata.begin(), hexdata.end()));
+            mpt_data.push_back(top::xbytes_t(hexdata.begin(), hexdata.end()));
         }
         h256  hashResult = orderedTrieRoot(mpt_data);
         std::cout << "MPT Root Hash: " <<  hashResult.hex()  << std::endl;
@@ -57,10 +57,10 @@ TEST(test_mpt, test_mpt_test) {
                                 "6cd850eca0a7ac46bb1748d7b9cb88aa3bd21c57d852c28198ad8fa422c4595032e88a4494b4778b36b944fe47a52b8c5cd312910139dfcb4147ab8e972cc456bcb063f25dd78f54c4d34679e03142c42c662af52947d45bdb6e555751334ace76a5080ab5a0256a1d259855dfc5c0b8023b25befbb13fd3684f9f755cbd3d63544c78ee2001452dd54633a7593ade0b183891a0a4e9c7844e1254005fbe592b1b89149a502c24b6e1dca44c158aebedf01beae9c30cabe16a",
                                 "14abd5c47c0be87b0454596baad2",
                                 "ca410605310cdc3bb8d4977ae4f0143df54a724ed873457e2272f39d66e0460e971d9d" };
-        std::vector<bytes> mpt_data;
+       std::vector<top::xbytes_t> mpt_data;
         for (auto  str: str2) {
             std::string hexdata = top::HexDecode(str);
-            mpt_data.push_back( bytes(hexdata.begin(), hexdata.end()));
+            mpt_data.push_back(top::xbytes_t(hexdata.begin(), hexdata.end()));
         }
         h256  hashResult = orderedTrieRoot(mpt_data);
         std::cout << "MPT Root Hash: " <<  hashResult.hex()  << std::endl;
@@ -73,7 +73,7 @@ TEST(test_mpt, test_mpt_test) {
             //address of the contract that transaction execution
             h160                m_contract_address;
             // supplied by the contract, usually ABI-encoded
-            bytes               m_data;
+            top::xbytes_t m_data;
             // list of topics provided by the contract
             h256s               m_topics;
         };
@@ -103,7 +103,7 @@ TEST(test_mpt, test_mpt_test) {
         log1.m_topics.push_back(h256 {"000000000000000000000000009b5f068bc20a5b12030fcb72975d8bddc4e84c"});
         std::string str1 = "00000000000000000000000000000000000000000000000000000000000003de";
         std::string log_data1 = top::HexDecode(str1);
-        log1.m_data = bytes(log_data1.begin(), log_data1.end());
+        log1.m_data = top::xbytes_t(log_data1.begin(), log_data1.end());
         receipt.m_logs.push_back(log1);
 
         xrelay_receipt_log log2;
@@ -113,7 +113,7 @@ TEST(test_mpt, test_mpt_test) {
         log2.m_topics.push_back(h256 {"0000000000000000000000000000000000000000000000000000000000000000"});
         std::string   str2 = "000000000000000000000000000000000000000000000000000000000000000a";
         std::string log_data2 = top::HexDecode(str2);
-        log2.m_data = bytes(log_data2.begin(), log_data2.end());
+        log2.m_data = top::xbytes_t(log_data2.begin(), log_data2.end());
         receipt.m_logs.push_back(log2);
 
         xrelay_receipt_log log3;
@@ -124,10 +124,10 @@ TEST(test_mpt, test_mpt_test) {
         log3.m_topics.push_back(h256 {"000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266"});
         std::string str3 = "000000000000000000000000000000000000000000000000000000000000000a000000000000000000000000a4ba11f3f36b12c71f2aef775583b306a3cf784a";
         std::string log_data3 = top::HexDecode(str3);
-        log3.m_data = bytes(log_data3.begin(), log_data3.end());
+        log3.m_data = top::xbytes_t(log_data3.begin(), log_data3.end());
         receipt.m_logs.push_back(log3);
 
-        std::vector<bytes> receipt_vector;
+        std::vector<top::xbytes_t> receipt_vector;
 
         //RLP receipt
         RLPStream receiptrlp;
@@ -139,7 +139,7 @@ TEST(test_mpt, test_mpt_test) {
             receiptrlp.appendList(3)  << log.m_contract_address << log.m_topics << log.m_data;
         }
         //get rlp bytes
-        bytes receiptOut = receiptrlp.out();
+        top::xbytes_t receiptOut = receiptrlp.out();
        // std::cout << "encoded  " << toHex(receiptOut.begin(), receiptOut.end(), "") <<std::endl;
         receipt_vector.push_back(receiptOut);
         

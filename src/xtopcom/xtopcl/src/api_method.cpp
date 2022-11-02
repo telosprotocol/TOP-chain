@@ -711,45 +711,91 @@ int ApiMethod::set_default_miner(const std::string & pub_key, const std::string 
 
     std::string pri_key;
     std::string kdf_key;
-    __compatibility_begin("try old empty_pw \" \" ");
-    if (decrypt_keystore_by_password(DEPRECATED_OLD_DEFAULT_KEY, keystore_info, pri_key) == false) {
-        // " " password not right.
-    } else {
-        std::cout << "It is recommended to set a password to protect the keystore file!" << std::endl;
-        xassert(!pri_key.empty());
-        // continue to set default.
-        if (decrypt_get_kdf_key(DEPRECATED_OLD_DEFAULT_KEY, keystore_info, kdf_key) == false) {
-            xassert(false);  // not possible.
-            return -1;
-        }
-    }
-    if (pri_key.empty()) {
-        __compatibility_end();
-        std::string pw;
-        if (pw_path.empty()) {
-            std::cout << "Please input password." << std::endl;
-            pw = input_hiding();
-        } else {
-            auto result = get_password(keystore_type::account_key, password_type::file_path, pw_path);
-            if (result.first == false) {
-                return -1;
-            } else {
-                pw = result.second;
-            }
-        }
-        if (decrypt_keystore_by_password(pw, keystore_info, pri_key) == false) {
-            // password not right.
-            out_str << "Wrong password, set default miner failed." << get_keystore_hint(keystore_info) << std::endl;
-            return -1;
-        }
-        if (decrypt_get_kdf_key(pw, keystore_info, kdf_key) == false) {
-            xassert(false);  // not possible.
+    std::string password;
+    bool const try_compatibility{pw_path.empty()};
+
+    if (!try_compatibility) {
+        auto result = get_password(keystore_type::account_key, password_type::file_path, pw_path);
+        if (result.first == false) {
+            xwarn("read password file failed");
+            std::cerr << "read password file failed";
+
             return -1;
         }
 
-        __compatibility_begin("try old empty_pw \" \" ");
+        password = result.second;
+    } else {
+        // in compatibility mode (no password file path specified)
+        // first try to decrypt keystore with deprecated password. if it works, it means that user hasn't set password yet.
+        // if deprecated password fails to work, ask user to input password.
+
+        if (decrypt_keystore_by_password(DEPRECATED_OLD_DEFAULT_KEY, keystore_info, pri_key) == false) {
+            // " " password not right.
+        } else {
+            xassert(!pri_key.empty());
+            std::cout << "It is recommended to set a password to protect the keystore file!" << std::endl;
+            // continue to set default.
+            if (decrypt_get_kdf_key(DEPRECATED_OLD_DEFAULT_KEY, keystore_info, kdf_key) == false) {
+                xassert(false);  // not possible.
+                return -1;
+            }
+        }
+
+        pri_key.clear();
+
+        std::cout << "Please input password." << std::endl;
+        password = input_hiding();
     }
-    __compatibility_end();
+
+    if (decrypt_keystore_by_password(password, keystore_info, pri_key) == false) {
+        // password not right.
+        out_str << "Wrong password, set default account failed." << get_keystore_hint(keystore_info) << std::endl;
+        xkinfo("Wrong password, set default account failed.");
+        return -1;
+    }
+    if (decrypt_get_kdf_key(password, keystore_info, kdf_key) == false) {
+        xassert(false);  // not possible.
+        return -1;
+    }
+    //__compatibility_begin("try old empty_pw \" \" ");
+    //if (decrypt_keystore_by_password(DEPRECATED_OLD_DEFAULT_KEY, keystore_info, pri_key) == false) {
+    //    // " " password not right.
+    //} else {
+    //    std::cout << "It is recommended to set a password to protect the keystore file!" << std::endl;
+    //    xassert(!pri_key.empty());
+    //    // continue to set default.
+    //    if (decrypt_get_kdf_key(DEPRECATED_OLD_DEFAULT_KEY, keystore_info, kdf_key) == false) {
+    //        xassert(false);  // not possible.
+    //        return -1;
+    //    }
+    //}
+    //if (pri_key.empty()) {
+    //    __compatibility_end();
+    //    std::string pw;
+    //    if (pw_path.empty()) {
+    //        std::cout << "Please input password." << std::endl;
+    //        pw = input_hiding();
+    //    } else {
+    //        auto result = get_password(keystore_type::account_key, password_type::file_path, pw_path);
+    //        if (result.first == false) {
+    //            return -1;
+    //        } else {
+    //            pw = result.second;
+    //        }
+    //    }
+    //    if (decrypt_keystore_by_password(pw, keystore_info, pri_key) == false) {
+    //        // password not right.
+    //        out_str << "Wrong password, set default miner failed." << get_keystore_hint(keystore_info) << std::endl;
+    //        return -1;
+    //    }
+    //    if (decrypt_get_kdf_key(pw, keystore_info, kdf_key) == false) {
+    //        xassert(false);  // not possible.
+    //        return -1;
+    //    }
+
+    //    __compatibility_begin("try old empty_pw \" \" ");
+    //}
+    //__compatibility_end();
 
     if (pri_key.empty() || kdf_key.empty()) {
         out_str << "decrypt private token failed" << std::endl;

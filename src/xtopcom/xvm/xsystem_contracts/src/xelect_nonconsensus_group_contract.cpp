@@ -36,6 +36,7 @@ bool xtop_elect_nonconsensus_group_contract::elect_group(common::xzone_id_t cons
                                                          common::xlogic_time_t const election_timestamp,
                                                          common::xlogic_time_t const start_time,
                                                          xrange_t<config::xgroup_size_t> const & group_size_range,
+                                                         bool const force_update,
                                                          data::election::xstandby_network_result_t & standby_network_result,
                                                          data::election::xelection_network_result_t & election_network_result) {
     assert(!broadcast(cid) && !broadcast(gid));
@@ -65,10 +66,10 @@ bool xtop_elect_nonconsensus_group_contract::elect_group(common::xzone_id_t cons
         auto const & node_standby_info = top::get<xstandby_node_info_t>(new_node_info);
 
         xelection_info_t new_election_info{};
-        new_election_info.consensus_public_key = node_standby_info.consensus_public_key;
-        new_election_info.stake = node_standby_info.stake(node_type);
-        new_election_info.miner_type = node_standby_info.miner_type;
-        new_election_info.genesis = node_standby_info.genesis;
+        new_election_info.public_key(node_standby_info.consensus_public_key);
+        new_election_info.stake(node_standby_info.stake(node_type));
+        new_election_info.miner_type(node_standby_info.miner_type);
+        new_election_info.genesis(node_standby_info.genesis);
 
         xelection_info_bundle_t election_info_bundle{};
         election_info_bundle.account_address(node_id);
@@ -81,7 +82,7 @@ bool xtop_elect_nonconsensus_group_contract::elect_group(common::xzone_id_t cons
 
         new_group_result.insert(std::move(election_info_bundle));
     }
-    node_change = (new_group_result != current_group);
+    node_change = (new_group_result != current_group) || force_update;
     if (node_change) {
         for (auto & node_info : new_group_result) {
             auto const node_id = top::get<xelection_info_bundle_t>(node_info).account_address();

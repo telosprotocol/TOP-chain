@@ -1,6 +1,6 @@
 #include <string>
 #include "xdata/xfull_tableblock.h"
-#include "xstore/xstore_face.h"
+
 #include "xcertauth/src/xsigndata.h"
 
 class xdb_tool {

@@ -18,11 +18,6 @@ extern "C" {
             const char *config_file_extra);
 	int get_version();
     int parse_execute_command(const char *config_file_extra, int argc, char **argv);
-    int decrypt_keystore(
-            const char *keystore_path,
-            const char *password,
-            uint8_t *pri_key,
-            uint32_t &pri_key_size);
     int decrypt_keystore_by_key(
             const char *keystore_path,
             const char *token,
@@ -65,21 +60,6 @@ int get_version() {
 
 int parse_execute_command(const char *config_file_extra, int argc, char **argv) {
     return top::parse_execute_command(config_file_extra, argc, argv);
-}
-
-int decrypt_keystore(
-        const char *keystore_path,
-        const char *password,
-        uint8_t *pri_key,
-        uint32_t &pri_key_size) {
-    auto private_key = top::decrypt_keystore(keystore_path, password);
-    if (private_key.empty()) {
-        pri_key_size = 0;
-        return -1;
-    }
-    memcpy(pri_key, private_key.data(), private_key.size());
-    pri_key_size = private_key.size();
-    return 0;
 }
 
 int decrypt_keystore_by_key(

@@ -4,9 +4,13 @@
 
 #pragma once
 
-#include "xbasic/xbyte.h"
 #include "xbasic/xbyte_buffer.h"
+#include "xbasic/xhex.h"
+#define XXH_INLINE_ALL              // define it first,then include xxhash.h
+#include "xutility/xxHash/xxhash.h" //from xxhash lib
+#undef XXH_INLINE_ALL
 
+#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <cstring>
@@ -235,6 +239,15 @@ public:
         return m_data;
     }
 
+    xbytes_t to_bytes() const {
+        return xbytes_t{const_cast<xbyte_t *>(m_data.data()), const_cast<xbyte_t *>(m_data.data() + m_data.size())};
+    }
+
+    std::string
+    as_hex_str() const {
+        return top::to_hex(m_data);
+    }
+
     auto
     begin() const -> typename std::array<xbyte_t, Bytes>::const_iterator {
         return m_data.begin();
@@ -273,6 +286,10 @@ public:
 
         return ret;
     }
+
+    bool empty() const noexcept {
+        return std::all_of(std::begin(m_data), std::end(m_data), [](xbyte_t const byte) { return byte == 0; });
+    }
 };
 
 template <std::size_t Bytes>
@@ -283,5 +300,19 @@ template
 class xtop_hash<32>;
 
 using xhash256_t = xhash_t<32>;
+
+NS_END1
+
+NS_BEG1(std)
+
+template <std::size_t Bytes>
+struct hash<top::xhash_t<Bytes>> {
+    size_t operator()(top::xhash_t<Bytes> const & input) const {
+        XXH64_state_t hash;
+        XXH64_reset(&hash, 0);
+        XXH64_update(&hash, input.data(), Bytes);
+        return static_cast<size_t>(XXH64_digest(&hash));
+    }
+};
 
 NS_END1

@@ -14,6 +14,7 @@
 #include "xmbus/xmessage_bus.h"
 #include "xunit_service/xcons_face.h"
 #include "xvnetwork/xvnetwork_driver_face.h"
+#include "xstate_sync/xstate_downloader.h"
 
 #include <string>
 #include <vector>
@@ -32,7 +33,8 @@ public:
                const observer_ptr<time::xchain_time_face_t> & tx_timer,
                const observer_ptr<election::cache::xdata_accessor_face_t> & accessor,
                const observer_ptr<mbus::xmessage_bus_face_t> & mb,
-               const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool);
+               const observer_ptr<xtxpool_v2::xtxpool_face_t> & txpool,
+               const observer_ptr<state_sync::xstate_downloader_t> & downloader);
     virtual ~xresources();
 
 public:
@@ -56,6 +58,7 @@ public:
     virtual const std::string & get_account();
     virtual mbus::xmessage_bus_face_t * get_bus();
     virtual xtxpool_v2::xtxpool_face_t * get_txpool();
+    virtual state_sync::xstate_downloader_t * get_state_downloader();
 
 private:
     xobject_ptr_t<base::xworkerpool_t> m_worker_pool;
@@ -69,6 +72,7 @@ private:
     observer_ptr<election::cache::xdata_accessor_face_t> m_accessor;
     observer_ptr<mbus::xmessage_bus_face_t> m_bus{};
     observer_ptr<xtxpool_v2::xtxpool_face_t> m_txpool{};
+    observer_ptr<state_sync::xstate_downloader_t> m_downloader;
 };
 
 // consensuss parameter

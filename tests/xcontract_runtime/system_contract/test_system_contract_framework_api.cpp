@@ -14,7 +14,7 @@
 #include "xdata/xtransaction_v2.h"
 #include "xdb/xdb_face.h"
 #include "xdb/xdb_factory.h"
-#include "xstore/xstore_face.h"
+
 #include "xsystem_contract_runtime/xsystem_action_runtime.h"
 #include "xsystem_contract_runtime/xsystem_contract_manager.h"
 #include "xsystem_contracts/xtransfer_contract.h"

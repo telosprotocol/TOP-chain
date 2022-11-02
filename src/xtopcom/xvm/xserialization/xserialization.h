@@ -6,9 +6,7 @@
 
 #include "xbase/xutl.h"
 #include "xcodec/xmsgpack_codec.hpp"
-#include "xdata/xnative_contract_address.h"
 #include "xvm/xcontract/xcontract_base.h"
-#include "xvm/xerror/xvm_error.h"
 
 #include <string>
 
@@ -23,9 +21,9 @@ struct xtop_msgpack final {
             auto string_value = contract.STRING_GET(property_name);
             if (string_value.empty()) {
                 return T{};
-            } else {
-                return codec::msgpack_decode<T>({ std::begin(string_value), std::end(string_value) });
             }
+
+            return codec::msgpack_decode<T>({std::begin(string_value), std::end(string_value)});
         } catch (top::error::xtop_error_t const & eh) {
             xwarn("[xvm] deserialize %s failed. error category: %s: msg: %s", property_name.c_str(), eh.code().category().name(), eh.what());
             throw;
@@ -41,9 +39,9 @@ struct xtop_msgpack final {
             auto string_value = contract.QUERY(xcontract::enum_type_t::string, property_name, "", another_contract_address);
             if (string_value.empty()) {
                 return T{};
-            } else {
-                return codec::msgpack_decode<T>({ std::begin(string_value), std::end(string_value) });
             }
+
+            return codec::msgpack_decode<T>({std::begin(string_value), std::end(string_value)});
         } catch (top::error::xtop_error_t const & eh) {
             xwarn("[xvm] deserialize %s failed. category: %s; msg: %s", property_name.c_str(), eh.code().category().name(), eh.what());
             throw;

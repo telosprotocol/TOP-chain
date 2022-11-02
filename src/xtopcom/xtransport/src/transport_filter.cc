@@ -4,17 +4,17 @@
 
 #include "xtransport/udp_transport/transport_filter.h"
 
-#include <cassert>
-
+#include "xpbase/base/kad_key/kadmlia_key.h"
 #include "xpbase/base/top_log.h"
 #include "xpbase/base/top_timer.h"
-#include "xpbase/base/kad_key/kadmlia_key.h"
+
+#include <cassert>
 
 namespace top {
 
 namespace transport {
 
-TransportFilter* TransportFilter::Instance() {
+TransportFilter * TransportFilter::Instance() {
     static TransportFilter ins;
     return &ins;
 }
@@ -23,22 +23,20 @@ bool TransportFilter::Init() {
     if (inited_) {
         return true;
     }
-    #if defined(XENABLE_P2P_BENDWIDTH) || defined(ENABLE_XSECURITY)
+#if defined(XENABLE_P2P_BENDWIDTH) || defined(ENABLE_XSECURITY)
     dump_timer_ = std::make_shared<base::TimerRepeated>(base::TimerManager::Instance(), "TransportFilter::Dump");
-    dump_timer_->Start(
-            500ll * 1000ll,
-            kDumpPeriod,
-            std::bind(&TransportFilter::Dump, this));
-    #endif
+    dump_timer_->Start(500ll * 1000ll, kDumpPeriod, std::bind(&TransportFilter::Dump, this));
+#endif
     inited_ = true;
     TOP_INFO("TransportFilter::Init ok");
     return true;
 }
 
-TransportFilter::TransportFilter() {}
+TransportFilter::TransportFilter() {
+}
 
 TransportFilter::~TransportFilter() {
-//    dump_timer_->Join();
+    //    dump_timer_->Join();
     dump_timer_ = nullptr;
 }
 
@@ -52,33 +50,33 @@ void TransportFilter::Dump() {
         }
 
         uint32_t send_packet = aryinfo_[i].send_packet;
-        uint32_t send_band    = aryinfo_[i].send_band;
+        uint32_t send_band = aryinfo_[i].send_band;
         uint32_t recv_packet = aryinfo_[i].recv_packet;
-        uint32_t recv_band   = aryinfo_[i].recv_band;
+        uint32_t recv_band = aryinfo_[i].recv_band;
 
-        auto send_packet_step  = (send_packet - last_aryinfo[i].send_packet)  / time_step;
-        auto send_band_step    = (send_band - last_aryinfo[i].send_band) / time_step;
-        auto recv_packet_step  = (recv_packet - last_aryinfo[i].recv_packet) / time_step;
-        auto recv_band_step    = (recv_band - last_aryinfo[i].recv_band) / time_step;
-        TOP_DEBUG("transportfilter: type:%d send_packet:%d recv_packet:%d send_band:%d recv_band:%d"
-                " ##send_packet_step:%.2f recv_packet_step:%.2f send_band_step:%.2f recv_band_step:%.2f",
-                i,
-                send_packet,
-                recv_packet,
-                send_band,
-                recv_band,
-                send_packet_step,
-                recv_packet_step,
-                send_band_step,
-                recv_band_step);
+        auto send_packet_step = (send_packet - last_aryinfo[i].send_packet) / time_step;
+        auto send_band_step = (send_band - last_aryinfo[i].send_band) / time_step;
+        auto recv_packet_step = (recv_packet - last_aryinfo[i].recv_packet) / time_step;
+        auto recv_band_step = (recv_band - last_aryinfo[i].recv_band) / time_step;
+        TOP_DEBUG(
+            "transportfilter: type:%d send_packet:%d recv_packet:%d send_band:%d recv_band:%d"
+            " ##send_packet_step:%.2f recv_packet_step:%.2f send_band_step:%.2f recv_band_step:%.2f",
+            i,
+            send_packet,
+            recv_packet,
+            send_band,
+            recv_band,
+            send_packet_step,
+            recv_packet_step,
+            send_band_step,
+            recv_band_step);
 
         last_aryinfo[i].send_packet = send_packet;
         last_aryinfo[i].recv_packet = recv_packet;
         last_aryinfo[i].send_band = send_band;
         last_aryinfo[i].recv_band = recv_band;
-    } // end for
+    }  // end for
 #endif
-
 
 #ifdef ENABLE_XSECURITY
     std::vector<std::string> black_ip_vec;
@@ -89,10 +87,10 @@ void TransportFilter::Dump() {
             if (dptr->last_total_recv_band == 0) {
                 // this first dump time
                 dptr->last_total_recv_band.store(dptr->total_recv_band.load());
-                ++ it;
+                ++it;
                 continue;
             }
-            auto recv_band_rate = static_cast<uint32_t>((dptr->total_recv_band - dptr->last_total_recv_band)  / time_step);
+            auto recv_band_rate = static_cast<uint32_t>((dptr->total_recv_band - dptr->last_total_recv_band) / time_step);
             dptr->last_total_recv_band.store(dptr->total_recv_band.load());
 
             if (recv_band_rate == 0) {
@@ -100,18 +98,18 @@ void TransportFilter::Dump() {
                 it = ddos_bandwidth_map_.erase(it);
                 continue;
             }
-            
+
             if (recv_band_rate < kDdosBandRateThreshold) {
                 while (dptr->latest_band_rate.size() > 0) {
                     dptr->latest_band_rate.pop_front();
                 }
-                ++ it;
+                ++it;
                 continue;
             }
             // recv_band_rate larger than kDdosBandRateThresholdt, than put it in deque
             dptr->latest_band_rate.push_back(recv_band_rate);
             if (dptr->latest_band_rate.size() < kDdosBandRateLatestNum) {
-                ++ it;
+                ++it;
                 continue;
             }
 
@@ -119,17 +117,17 @@ void TransportFilter::Dump() {
             while (dptr->latest_band_rate.size() >= kDdosBandRateLatestNum) {
                 dptr->latest_band_rate.pop_front();
             }
-            ++ it;
-            // put in blacklist 
+            ++it;
+            // put in blacklist
             black_ip_vec.push_back(it->first);
-        } // end for (auto it...
+        }  // end for (auto it...
     }
 
     auto now = std::chrono::steady_clock::now();
     // add black_ip
     {
         std::unique_lock<std::mutex> block(ddos_blacklist_mutex_);
-        for (const auto& item : black_ip_vec) {
+        for (const auto & item : black_ip_vec) {
             ddos_blacklist_[item] = now;
             TOP_INFO("add ip:%s to ddos black_list", item.c_str());
         }
@@ -144,13 +142,12 @@ void TransportFilter::Dump() {
                 it = ddos_blacklist_.erase(it);
             }
         }
-
     }
 #endif
 }
 
 #ifdef ENABLE_XSECURITY
-bool TransportFilter::BlackIpCheck(const std::string& ip) {
+bool TransportFilter::BlackIpCheck(const std::string & ip) {
     {
         std::unique_lock<std::mutex> block(ddos_blacklist_mutex_);
         auto ifind = ddos_blacklist_.find(ip);
@@ -162,7 +159,7 @@ bool TransportFilter::BlackIpCheck(const std::string& ip) {
     return true;
 }
 
-bool TransportFilter::AddTrafficData(uint32_t size, const std::string& ip) {
+bool TransportFilter::AddTrafficData(uint32_t size, const std::string & ip) {
     {
         std::unique_lock<std::mutex> lock(ddos_bandwidth_map_mutex_);
         auto ifind = ddos_bandwidth_map_.find(ip);
@@ -175,7 +172,7 @@ bool TransportFilter::AddTrafficData(uint32_t size, const std::string& ip) {
         }
     }
     TOP_DEBUG("add traffic data for ddos ip:%s", ip.c_str());
-    return  true;
+    return true;
 }
 #endif
 
@@ -197,8 +194,6 @@ bool TransportFilter::AddTrafficData(bool send, uint32_t type, uint32_t size) {
 }
 #endif
 
+}  // end namespace transport
 
-
-} // end namespace transport 
-
-} // end namespace top
+}  // end namespace top

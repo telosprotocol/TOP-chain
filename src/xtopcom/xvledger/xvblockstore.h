@@ -195,6 +195,7 @@ namespace top
 
             virtual bool                  load_block_input(const xvaccount_t & account,xvblock_t* block,const int atag = 0) = 0;
             virtual bool                  load_block_output(const xvaccount_t & account,xvblock_t* block,const int atag = 0) = 0;
+            virtual bool                  load_block_output_offdata(const xvaccount_t & account,xvblock_t* block,const int atag = 0) = 0;
 
             virtual bool                  store_block(const xvaccount_t & account,xvblock_t* block,const int atag = 0)  = 0;
             virtual bool                  delete_block(const xvaccount_t & account,xvblock_t* block,const int atag = 0) = 0;
@@ -203,6 +204,7 @@ namespace top
             virtual bool                  store_blocks(const xvaccount_t & account,std::vector<xvblock_t*> & batch_store_blocks,const int atag = 0) = 0;
 
             virtual bool                  try_update_account_index(const base::xvaccount_t & account, uint64_t height, uint64_t viewid, bool update_pre_block) = 0;
+            virtual bool                  try_update_account_index(const base::xvaccount_t & account, uint64_t height, const std::string & hash, bool update_pre_block) = 0;
             virtual base::xauto_ptr<base::xvbindex_t> recover_and_load_commit_index(const base::xvaccount_t & account, uint64_t height) = 0;
 
         public://note:load_index may work with both persist db and cache layer

@@ -60,7 +60,7 @@ std::string HexDecode(const std::string & str) {
     return non_hex_output;
 }
 TEST(test_rlp, encode) {
-    bytes encoded = bytes();
+    top::xbytes_t encoded;
     append(encoded, RLP::encode(0x010203040506));
     append(encoded, RLP::encode(0x030405));
     append(encoded, RLP::encode(0x0102030405060708));

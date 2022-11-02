@@ -25,6 +25,8 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(dataobject_block_empty);
         RETURN_METRICS_NAME(dataobject_tx_receipt_t);
         RETURN_METRICS_NAME(dataobject_unit_state);
+        RETURN_METRICS_NAME(dataobject_table_state);
+        RETURN_METRICS_NAME(dataobject_bstate_ctx);
         RETURN_METRICS_NAME(dataobject_xvtxindex);
         RETURN_METRICS_NAME(dataobject_xvbstate);
         RETURN_METRICS_NAME(dataobject_xvproperty);
@@ -54,6 +56,9 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(dataobject_xblockacct_t);
         RETURN_METRICS_NAME(dataobject_xtxpool_table_info_t);
         RETURN_METRICS_NAME(dataobject_xacctmeta_t);
+        RETURN_METRICS_NAME(dataobject_account_address);
+        RETURN_METRICS_NAME(dataobject_mpt_state_object);
+        RETURN_METRICS_NAME(dataobject_mpt_trie_node_cnt);
 
         // dbkeys
         RETURN_METRICS_NAME(db_key_tx);
@@ -68,6 +73,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(db_read);
         RETURN_METRICS_NAME(db_write);
         RETURN_METRICS_NAME(db_delete);
+        RETURN_METRICS_NAME(db_delete_range);
         RETURN_METRICS_NAME(db_read_size);
         RETURN_METRICS_NAME(db_write_size);
         RETURN_METRICS_NAME(db_read_tick);
@@ -109,9 +115,11 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(cons_fail_verify_proposal_confirm_id_error);
         RETURN_METRICS_NAME(cons_fail_make_proposal_unit_check_state);
         RETURN_METRICS_NAME(cons_fail_make_proposal_view_changed);
+        RETURN_METRICS_NAME(cons_fail_vote_not_enough);
         RETURN_METRICS_NAME(cons_view_fire_clock_delay);
         RETURN_METRICS_NAME(cons_view_fire_succ);
         RETURN_METRICS_NAME(cons_cp_check_succ);
+        RETURN_METRICS_NAME(cons_state_check_succ);
         RETURN_METRICS_NAME(cons_view_fire_is_leader);
         RETURN_METRICS_NAME(cons_fail_backup_view_not_match);
         RETURN_METRICS_NAME(cons_make_proposal_tick);
@@ -153,6 +161,8 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(cons_packtx_fail_transfer_limit);
         RETURN_METRICS_NAME(cons_packtx_fail_load_origintx);
         RETURN_METRICS_NAME(cons_packtx_with_threshold);
+        RETURN_METRICS_NAME(cons_invoke_sync_state_count);
+        RETURN_METRICS_NAME(cons_invoke_sync_block_count);
 
         RETURN_METRICS_NAME(clock_aggregate_height);
         RETURN_METRICS_NAME(clock_leader_broadcast_height);
@@ -203,6 +213,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(message_category_txpool_contains_duplicate);
         RETURN_METRICS_NAME(message_category_rpc_contains_duplicate);
         RETURN_METRICS_NAME(message_category_sync_contains_duplicate);
+        RETURN_METRICS_NAME(message_category_state_sync_contains_duplicate);
         RETURN_METRICS_NAME(message_block_broadcast_contains_duplicate);
         RETURN_METRICS_NAME(message_category_relay_contains_duplicate);
         RETURN_METRICS_NAME(message_category_unknown_contains_duplicate);
@@ -213,6 +224,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(message_category_txpool);
         RETURN_METRICS_NAME(message_category_rpc);
         RETURN_METRICS_NAME(message_category_sync);
+        RETURN_METRICS_NAME(message_category_state_sync);
         RETURN_METRICS_NAME(message_block_broadcast);
         RETURN_METRICS_NAME(message_category_relay);
         RETURN_METRICS_NAME(message_category_unknown);
@@ -509,10 +521,17 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
 
         RETURN_METRICS_NAME(statestore_get_unit_state_succ);
         RETURN_METRICS_NAME(statestore_get_unit_state_from_cache);
+        RETURN_METRICS_NAME(statestore_get_unit_state_from_db);        
         RETURN_METRICS_NAME(statestore_get_unit_state_with_unit_count);
         RETURN_METRICS_NAME(statestore_get_table_state_succ);
         RETURN_METRICS_NAME(statestore_get_table_state_from_cache);
+        RETURN_METRICS_NAME(statestore_get_table_state_from_db);
         RETURN_METRICS_NAME(statestore_get_table_state_with_table_count);
+        RETURN_METRICS_NAME(statestore_load_table_block_succ);
+        RETURN_METRICS_NAME(statestore_execute_block_recursive_succ);
+        RETURN_METRICS_NAME(statestore_execute_unit_recursive_succ);        
+
+        RETURN_METRICS_NAME(statestore_sync_succ);
 
         RETURN_METRICS_NAME(state_load_blk_state_suc);
         RETURN_METRICS_NAME(state_load_blk_state_cache_suc);
@@ -523,6 +542,11 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(state_load_blk_state_unit_suc);
         RETURN_METRICS_NAME(state_load_blk_state_unit_fail);
         RETURN_METRICS_NAME(state_load_blk_state_unit_cache_suc);
+        RETURN_METRICS_NAME(state_delete_table_data);
+        RETURN_METRICS_NAME(state_delete_unit_state);
+        RETURN_METRICS_NAME(state_delete_mpt);
+        RETURN_METRICS_NAME(state_delete_by_full_table);
+        RETURN_METRICS_NAME(state_delete_create_mpt_fail);
 
         RETURN_METRICS_NAME(data_table_unpack_units);
         RETURN_METRICS_NAME(data_table_unpack_one_unit);
@@ -546,6 +570,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(xevent_major_type_role);
         RETURN_METRICS_NAME(xevent_major_type_blockfetcher);
         RETURN_METRICS_NAME(xevent_major_type_sync);
+        RETURN_METRICS_NAME(xevent_major_type_state_sync);
 
         RETURN_METRICS_NAME(rpc_edge_tx_request);
         RETURN_METRICS_NAME(rpc_edge_query_request);
@@ -553,6 +578,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(rpc_auditor_query_request);
         RETURN_METRICS_NAME(rpc_auditor_forward_request);
         RETURN_METRICS_NAME(rpc_validator_tx_request);
+        RETURN_METRICS_NAME(rpc_query_account_succ);
         // contract
         RETURN_METRICS_NAME(contract_table_fullblock_event);
         RETURN_METRICS_NAME(contract_table_statistic_exec_fullblock);
@@ -568,6 +594,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(mailbox_txpool_fast_total);
         RETURN_METRICS_NAME(mailbox_txpool_slow_total);
         RETURN_METRICS_NAME(mailbox_us_total);
+        RETURN_METRICS_NAME(mailbox_statestore_total);
         RETURN_METRICS_NAME(mailbox_grpc_cur);
         RETURN_METRICS_NAME(mailbox_block_fetcher_cur);
         RETURN_METRICS_NAME(mailbox_downloader_cur);
@@ -577,6 +604,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(mailbox_txpool_fast_cur);
         RETURN_METRICS_NAME(mailbox_txpool_slow_cur);
         RETURN_METRICS_NAME(mailbox_us_cur);
+        RETURN_METRICS_NAME(mailbox_statestore_cur);
 
         //txdelay
         RETURN_METRICS_NAME(txdelay_client_timestamp_unmatch);
@@ -589,6 +617,7 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
 
         //cpu
         RETURN_METRICS_NAME(cpu_hash_256_calc);
+        RETURN_METRICS_NAME(cpu_hash_64_calc);        
         RETURN_METRICS_NAME(cpu_ca_merge_sign_xbft);
         RETURN_METRICS_NAME(cpu_ca_merge_sign_tc);
         RETURN_METRICS_NAME(cpu_ca_do_sign_xbft);
@@ -620,6 +649,16 @@ char const * matrics_name(xmetrics_tag_t const tag) noexcept {
         RETURN_METRICS_NAME(statectx_load_block_succ);
         RETURN_METRICS_NAME(statectx_load_state_succ);
         RETURN_METRICS_NAME(statectx_sync_invoke_count);
+
+        RETURN_METRICS_NAME(mpt_total_pruned_trie_node_cnt);
+        RETURN_METRICS_NAME(mpt_cached_pruned_trie_node_cnt);
+        //prune
+        RETURN_METRICS_NAME(prune_block_table);
+        RETURN_METRICS_NAME(prune_block_unit);
+        RETURN_METRICS_NAME(prune_block_drand);
+        RETURN_METRICS_NAME(prune_block_timer);
+        RETURN_METRICS_NAME(prune_block_contract);
+        RETURN_METRICS_NAME(prune_state_unitstate);
 
         default: assert(false); return nullptr;
     }

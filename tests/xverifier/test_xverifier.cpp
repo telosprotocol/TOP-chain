@@ -1,7 +1,7 @@
 #include "gtest/gtest.h"
 #include "xtxexecutor/xunit_service_error.h"
 
-#include "xstore/xstore_face.h"
+
 #include "xconfig/xconfig_face.h"
 #include "xloader/xconfig_onchain_loader.h"
 #include "xdata/xtransaction_maker.hpp"
@@ -18,7 +18,6 @@
 using namespace top;
 using namespace top::xverifier;
 using namespace top::utl;
-using namespace top::store;
 
 class test_xverifier : public testing::Test {
 protected:
@@ -403,9 +402,9 @@ TEST_F(test_xverifier, trx_verifier_signature_1) {
     std::string src_addr = trx_ptr->get_source_addr();
     std::string dst_addr = trx_ptr->get_target_addr();
     // signature empty
-    ASSERT_NE(xtx_verifier::verify_tx_signature(trx_ptr.get(), nullptr), xverifier_error::xverifier_success);
+    ASSERT_NE(xtx_verifier::verify_tx_signature(trx_ptr.get()), xverifier_error::xverifier_success);
     trx_ptr->set_authorization("111");
-    ASSERT_NE(xtx_verifier::verify_tx_signature(trx_ptr.get(), nullptr), xverifier_error::xverifier_success);
+    ASSERT_NE(xtx_verifier::verify_tx_signature(trx_ptr.get()), xverifier_error::xverifier_success);
 
     uint8_t addr_type = base::enum_vaccount_addr_type_secp256k1_user_account;
     uint16_t ledger_id = base::xvaccount_t::make_ledger_id(base::enum_main_chain_id, base::enum_chain_zone_consensus_index);
@@ -419,7 +418,7 @@ TEST_F(test_xverifier, trx_verifier_signature_1) {
     utl::xecdsasig_t signature_obj = pri_key_obj.sign(trx_ptr->digest());
     auto signature = std::string(reinterpret_cast<char *>(signature_obj.get_compact_signature()), signature_obj.get_compact_signature_size());
     trx_ptr->set_authorization(signature);
-    ASSERT_EQ(xtx_verifier::verify_tx_signature(trx_ptr.get(), nullptr), xverifier_error::xverifier_success);
+    ASSERT_EQ(xtx_verifier::verify_tx_signature(trx_ptr.get()), xverifier_error::xverifier_success);
 }
 
 TEST_F(test_xverifier, trx_verifier_legitimac_1) {
@@ -427,9 +426,9 @@ TEST_F(test_xverifier, trx_verifier_legitimac_1) {
     std::string src_addr = trx_ptr->get_source_addr();
     std::string dst_addr = trx_ptr->get_target_addr();
     // signature empty
-    ASSERT_NE(xtx_verifier::verify_send_tx_legitimacy(trx_ptr.get(), nullptr), xverifier_error::xverifier_success);
+    ASSERT_NE(xtx_verifier::verify_send_tx_legitimacy(trx_ptr.get()), xverifier_error::xverifier_success);
     trx_ptr->set_authorization("111");
-    ASSERT_NE(xtx_verifier::verify_send_tx_legitimacy(trx_ptr.get(), nullptr), xverifier_error::xverifier_success);
+    ASSERT_NE(xtx_verifier::verify_send_tx_legitimacy(trx_ptr.get()), xverifier_error::xverifier_success);
 
     uint8_t addr_type = base::enum_vaccount_addr_type_secp256k1_user_account;
     uint16_t ledger_id = base::xvaccount_t::make_ledger_id(base::enum_main_chain_id, base::enum_chain_zone_consensus_index);
@@ -443,7 +442,7 @@ TEST_F(test_xverifier, trx_verifier_legitimac_1) {
     utl::xecdsasig_t signature_obj = pri_key_obj.sign(trx_ptr->digest());
     auto signature = std::string(reinterpret_cast<char *>(signature_obj.get_compact_signature()), signature_obj.get_compact_signature_size());
     trx_ptr->set_authorization(signature);
-    ASSERT_EQ(xtx_verifier::verify_send_tx_legitimacy(trx_ptr.get(), nullptr), xverifier_error::xverifier_success);
+    ASSERT_EQ(xtx_verifier::verify_send_tx_legitimacy(trx_ptr.get()), xverifier_error::xverifier_success);
 }
 TEST_F(test_xverifier, address_is_valid) {
     ASSERT_EQ(top::xverifier::xverifier_success , top::xverifier::xtx_utl::address_is_valid ("T80000968927100f3cb7b23e8d477298311648978d8613"));   

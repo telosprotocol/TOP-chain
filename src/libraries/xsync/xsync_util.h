@@ -14,4 +14,7 @@ bool check_auth(const observer_ptr<base::xvcertauth_t> &certauth, data::xblock_p
 uint32_t vrf_value(const std::string& hash);
 // vnetwork::xvnode_address_t build_address_from_vnode(const xvip2_t &group_xip2, const std::vector<base::xvnode_t*> &nodes, int32_t slot_id);
 uint64_t derministic_height(uint64_t my_height, std::pair<uint64_t, uint64_t> neighbor_heights);
+std::vector<std::string> convert_blocks_to_stream(uint32_t data_type, const std::vector<data::xblock_ptr_t> &block_vec);
+std::vector<data::xblock_ptr_t> convert_stream_to_blocks(uint32_t data_type,const std::vector<std::string>& blocks_data);
+bool sync_blocks_continue_check(const std::vector<data::xblock_ptr_t> &block_vec, const std::string account, bool check_hash);
 NS_END2

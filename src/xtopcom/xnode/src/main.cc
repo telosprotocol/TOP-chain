@@ -205,26 +205,6 @@ int load_lib(config_t& config) {
             dlclose(component_handle);
             return -1;
         }
-    } else if (config.so_func_name == "decrypt_keystore") {
-        typedef int (*init_component_function_t)(const char*, const char*, uint8_t*, uint32_t&);
-        init_component_function_t init_function_ptr = nullptr;
-        init_function_ptr = (init_component_function_t)dlsym(component_handle, config.so_func_name.c_str());
-        if (init_function_ptr == nullptr) {
-            //fprintf(stderr, "topio found no function named:%s in lib:%s\n", config.so_func_name.c_str(), target_component_solib.c_str());
-            dlclose(component_handle);
-            return -1;
-        }
-        uint8_t prikey[4096];
-        bzero(prikey, sizeof(prikey));
-        uint32_t prikey_size;
-        init_res = (*init_function_ptr)(config.keystore_path.c_str(), config.password.c_str(), prikey, prikey_size);
-        //fprintf(stdout, "prikeysize:%u\n", prikey_size);
-        config.pri_key = std::string((char*)prikey, prikey_size);
-        if (init_res != 0) {
-            //fprintf(stderr,"topio load function named:%s fail in lib:%s\n", config.so_func_name.c_str(), target_component_solib.c_str());
-            dlclose(component_handle);
-            return -1;
-        }
     } else if (config.so_func_name == "decrypt_keystore_by_key") {
         typedef int (*init_component_function_t)(const char*, const char*, uint8_t*, uint32_t&);
         init_component_function_t init_function_ptr = nullptr;
@@ -770,6 +750,7 @@ bool get_default_miner(config_t& config,std::map<std::string, std::string> &defa
         in >> reader;
         default_miner["path"]        = reader["default_miner_keystore"].get<std::string>();
         if (!isFileExist(default_miner.at("path"))) {
+            std::cout << "can't find default miner keystore file " << reader["default_miner_keystore"].get<std::string>() << std::endl;
             return false;
         }
 
@@ -922,40 +903,6 @@ bool update_component_config_file(config_t& config) {
     return true;
 }
 
-bool setminerkey(config_t& config) {
-    if (config.datadir.empty()) {
-        std::cout << "error:datadir empty" << std::endl;
-        return false;
-    }
-    if (config.pub_key.empty()) {
-        std::cout << "publickey is required to setminerkey" << std::endl;
-        return false;
-    }
-
-    auto keystore_dir = config.datadir + "/keystore";
-    std::vector<std::map<std::string, std::string>> keystore_vec;
-    scan_keystore_dir(keystore_dir, keystore_vec);
-    for (const auto& v : keystore_vec) {
-        if (v.at("public_key") == config.pub_key) {
-            config.keystore_path = v.at("path");
-            break;
-        }
-    }
-    if (config.keystore_path.empty()) {
-        std::cout << "The key does not exist in wallet." << std::endl;
-        return false;
-    }
-    // keystore_path and password
-
-    config.so_func_name = "decrypt_keystore";
-    int libret = load_lib(config);
-    if (libret != 0) {
-        std::cout << "decrypt keystore:" << config.keystore_path << " failed" << std::endl;
-        return false;
-    }
-    return true;
-}
-
 bool load_keystore(config_t& config) {
     if (config.datadir.empty()) {
         std::cout << "error:datadir empty" << std::endl;
@@ -982,44 +929,8 @@ bool load_keystore(config_t& config) {
         return true;
     }
 
-    bool default_key_flag = false;
-    if (default_miner.size() >= 3 && !default_miner.at("node_id").empty() && !default_miner.at("public_key").empty() && !default_miner.at("path").empty()) {
-        // maybe already setminer key, but get private_key from safebox failed, try decrypt using empty password
-        config.node_id = default_miner.at("node_id");
-        config.pub_key = default_miner.at("public_key");
-        config.keystore_path = default_miner.at("path");
-    } else {
-        auto keystore_dir = config.datadir + "/keystore";
-        std::vector<std::map<std::string, std::string>> keystore_vec;
-        if (!scan_keystore_dir(keystore_dir, keystore_vec)) {
-            std::cout << "No Account found, please using 'topio wallet createKey' to create account first" << std::endl;
-            return false;
-        }
-
-        if (keystore_vec.size() > 1) {
-            std::cout << "Please set a miner key by command 'topio mining setMinerKey'." << std::endl;
-            return false;
-        }
-
-        // only one keystore file found, than that is the default keystore
-        config.node_id       = keystore_vec[0].at("account");
-        config.pub_key       = keystore_vec[0].at("public_key");
-        config.keystore_path = keystore_vec[0].at("path");
-        default_key_flag = true;
-    }
-
-    config.so_func_name = "decrypt_keystore";
-    int libret = load_lib(config);
-    if (libret != 0) {
-        if (default_key_flag) {
-            std::cout << "Please set a miner key by command 'topio mining setMinerKey'" << std::endl;
-        } else {
-            std::cout << "decrypt keystore:" << config.keystore_path << " failed" << std::endl;
-        }
-        return false;
-    }
-
-    return true;
+    std::cout << "Please set a miner key by command 'topio mining setMinerKey'" << std::endl;
+    return false;
 }
 
 
@@ -1250,8 +1161,7 @@ int StartNode(config_t& config) {
             return -1;
         }
         if (!load_keystore(config)) {
-                //std::cout << "decrypt_keystore failed, exit" << std::endl;
-                return -1;
+            return -1;
         }
 
         if (!config.genesis) {

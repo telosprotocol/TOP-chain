@@ -24,7 +24,7 @@
 #include "xdata/xelection/xelection_result.h"
 #include "xdata/xelection/xelection_result.h"
 
-#include "xmutisig/xschnorr/xschnorr.h"
+#include "xmutisig/xschnorr.h"
 
 #include "xcrypto/xckey.h"
 #include "xcrypto/xcrypto_util.h"
@@ -112,8 +112,8 @@ class test_blockstore_datamock_t {
 
             xfullunit_block_para_t block_para;
             block_para.m_account_state = account->get_account_mstate();  // TODO(jimmy) account ptr pass for performance
-            block_para.m_first_unit_hash = account->get_last_full_unit_hash();
-            block_para.m_first_unit_height = account->get_last_full_unit_height();
+            // block_para.m_first_unit_hash = account->get_last_full_unit_hash();
+            // block_para.m_first_unit_height = account->get_last_full_unit_height();
 
             base::xvblock_t* proposal_block = nullptr;
 
@@ -265,7 +265,7 @@ class test_blockstore_datamock_t {
 #endif
     xblock_ptr_t transfer(const std::string &from, const std::string &to, uint64_t amount) {
 #if 0
-        xaccount_ptr_t account = m_store->clone_account(from);
+        data::xunitstate_ptr_t account = m_store->clone_account(from);
         if (account == nullptr) {
             return nullptr;
         }

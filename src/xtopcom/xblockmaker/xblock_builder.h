@@ -18,6 +18,7 @@ NS_BEG2(top, blockmaker)
 
 class xunitbuilder_para_t {
  public:
+    xunitbuilder_para_t() = default;
     xunitbuilder_para_t(const base::xvtxkey_vec_t & txkeys)
     : m_txkeys(txkeys) {
     }
@@ -39,7 +40,9 @@ class xunitbuildber_txkeys_mgr_t {
 class xunitbuilder_t {
  public:
     static bool    can_make_full_unit(const data::xblock_ptr_t & prev_block);
+    static bool    can_make_full_unit_v2(uint64_t proposal_height);
     static data::xblock_ptr_t  make_block(const data::xblock_ptr_t & prev_block, const data::xunitstate_ptr_t & proposal_state, const xunitbuilder_para_t & unitbuilder_para, const data::xblock_consensus_para_t & cs_para);
+    static data::xblock_ptr_t  make_block_v2(const data::xunitstate_ptr_t & unitstate, const xunitbuilder_para_t & unitbuilder_para, const data::xblock_consensus_para_t & cs_para);
 };
 
 
@@ -47,15 +50,12 @@ class xtablebuilder_t {
  public:
     static void     make_table_prove_property_hashs(base::xvbstate_t* bstate, std::map<std::string, std::string> & property_hashs);
     static bool     update_account_index_property(const data::xtablestate_ptr_t & tablestate, 
-                                                  const std::vector<xblock_ptr_t> & batch_units,
-                                                  const std::vector<data::xlightunit_tx_info_ptr_t> & txs_info);
-    static bool     update_account_index_property(const data::xtablestate_ptr_t & tablestate, 
                                                   const xblock_ptr_t & unit,
                                                   const data::xunitstate_ptr_t & unit_state);
     static bool     update_receipt_confirmids(const data::xtablestate_ptr_t & tablestate, 
                                                   const std::map<base::xtable_shortid_t, uint64_t> & changed_confirm_ids);
 
-    static void     make_table_block_para(const std::vector<xblock_ptr_t> & batch_units,
+    static void     make_table_block_para(const std::vector<std::pair<xblock_ptr_t, base::xaccount_index_t>> & batch_unit_and_index,
                                           const data::xtablestate_ptr_t & tablestate,
                                           txexecutor::xexecute_output_t const& execute_output, 
                                           data::xtable_block_para_t & lighttable_para);

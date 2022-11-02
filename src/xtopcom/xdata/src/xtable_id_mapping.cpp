@@ -37,7 +37,7 @@ std::vector<uint16_t> get_table_ids(common::xzone_id_t const & zone_id,
     }
 
     case common::xnode_type_t::zec: {
-        uint32_t zone_count = XGET_CONFIG(zone_count);
+        uint32_t const zone_count = XGET_CONFIG(zone_count);
         auto const zone_range = data::book_ids_belonging_to_zone(zone_id, zone_count, {0, static_cast<std::uint16_t>(enum_vbucket_has_books_count)});
         for (auto i = zone_range.first; i < zone_range.second; ++i) {
             book_ids.push_back(i);
@@ -47,8 +47,8 @@ std::vector<uint16_t> get_table_ids(common::xzone_id_t const & zone_id,
     }
 
     case common::xnode_type_t::consensus_auditor: {
-        uint32_t zone_count = XGET_CONFIG(zone_count);
-        uint32_t cluster_count = XGET_CONFIG(cluster_count);
+        uint32_t const zone_count = XGET_CONFIG(zone_count);
+        uint32_t const cluster_count = XGET_CONFIG(cluster_count);
 
         auto const auditor_group_count = XGET_CONFIG(auditor_group_count);
 
@@ -64,8 +64,8 @@ std::vector<uint16_t> get_table_ids(common::xzone_id_t const & zone_id,
 
     case common::xnode_type_t::consensus_validator: {
         try {
-            std::uint16_t zone_count = XGET_CONFIG(zone_count);
-            std::uint16_t cluster_count = XGET_CONFIG(cluster_count);
+            std::uint16_t const zone_count = XGET_CONFIG(zone_count);
+            std::uint16_t const cluster_count = XGET_CONFIG(cluster_count);
 
             auto const auditor_group_count = XGET_CONFIG(auditor_group_count);
 

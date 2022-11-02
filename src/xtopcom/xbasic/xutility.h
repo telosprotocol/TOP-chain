@@ -13,11 +13,6 @@
 
 NS_BEG1(top)
 
-
-xbyte_buffer_t
-from_hex_string(std::string const & str);
-
-
 template<class...> struct conjunction : std::true_type { };
 template<class B1> struct conjunction<B1> : B1 { };
 template<class B1, class... Bn>
@@ -245,6 +240,28 @@ constexpr
 U &&
 get(std::pair<T, U> && pair) noexcept {
     return std::get<U>(std::move(pair));
+}
+
+#endif
+
+#if !defined(XCXX23_OR_ABOVE)
+
+[[noreturn]] inline void unreachable() {
+#    if defined(__GNUC__)  // GCC, Clang, ICC
+    __builtin_unreachable();
+#    elif defined(_MSC_VER)  // MSVC
+    __assume(false);
+
+#        if defined(_DEBUG)
+    ::abort();
+#        endif  // _DEBUG
+#    endif
+}
+
+#else
+
+[[noreturn]] inline void unreachable() {
+    std::unreachable();
 }
 
 #endif

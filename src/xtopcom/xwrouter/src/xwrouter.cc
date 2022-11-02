@@ -40,7 +40,7 @@ Wrouter * Wrouter::Instance() {
     return &ins;
 }
 
-void Wrouter::Init(base::xcontext_t & context, const uint32_t thread_id, transport::TransportPtr transport_ptr) {
+void Wrouter::Init(transport::TransportPtr transport_ptr) {
     assert(transport_ptr);
     auto bloom_gossip_ptr = std::make_shared<GossipBloomfilter>(transport_ptr);
     auto bloom_layer_gossip_ptr = nullptr;
@@ -95,7 +95,8 @@ void Wrouter::send(transport::protobuf::RoutingMessage & message, std::error_cod
     return;
 }
 
-// called by MultilayerNetwork::RegisterCallbackForMultiThreadHandler
+/// register callback at `bool MultilayerNetwork::Init`
+/// which is called at `ThreadHandler::fired_packet` && `xquic_node_t::on_quic_message_ready`
 int32_t Wrouter::recv(transport::protobuf::RoutingMessage & message, base::xpacket_t & packet) {
     if (message.hop_num() >= kHopToLive) {
         xwarn(

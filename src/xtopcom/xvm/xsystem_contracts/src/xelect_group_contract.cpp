@@ -29,6 +29,7 @@ bool xtop_elect_group_contract::elect_group(common::xzone_id_t const &,
                                             common::xlogic_time_t const,
                                             common::xlogic_time_t const,
                                             xrange_t<config::xgroup_size_t> const &,
+                                            bool const,
                                             data::election::xstandby_network_result_t &,
                                             data::election::xelection_network_result_t &) {
     assert(false);

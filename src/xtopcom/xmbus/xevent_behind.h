@@ -96,6 +96,7 @@ public:
             const uint32_t _count,
             const bool _is_consensus,
             const std::string &_reason,
+            const std::string & _last_unit_hash,
             bool _unit_proof = false,
             direction_type dir = to_listener,
             bool _sync = true):
@@ -105,6 +106,7 @@ public:
     count(_count),
     is_consensus(_is_consensus),
     reason(_reason),
+    last_unit_hash(_last_unit_hash),
     unit_proof(_unit_proof) {
         XMETRICS_GAUGE(metrics::xsync_behind_on_demand, 1);
     }
@@ -114,6 +116,7 @@ public:
     uint32_t count;
     bool is_consensus;
     std::string reason;
+    std::string last_unit_hash;
     bool unit_proof;
 };
 
