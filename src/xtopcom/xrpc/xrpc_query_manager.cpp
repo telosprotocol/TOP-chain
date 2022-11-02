@@ -2213,48 +2213,6 @@ void xrpc_query_manager::getConsortiumReward(xJson::Value & js_req, xJson::Value
         if (version == RPC_VERSION_V3) {
             xJson::Value node_reward_json;
             node_reward_json["account_addr"] = node_reward.first;
-           /* {
-                std::stringstream ss;
-                ss << static_cast<uint64_t>(node_reward.second.m_edge_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
-                   << static_cast<uint32_t>(node_reward.second.m_edge_reward % data::system_contract::REWARD_PRECISION);
-                node_reward_json["edge_reward"] = ss.str();
-            }
-            {
-                std::stringstream ss;
-                ss << static_cast<uint64_t>(node_reward.second.m_archive_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
-                   << static_cast<uint32_t>(node_reward.second.m_archive_reward % data::system_contract::REWARD_PRECISION);
-                node_reward_json["archive_reward"] = ss.str();
-            }
-            {
-                std::stringstream ss;
-                ss << static_cast<uint64_t>(node_reward.second.m_validator_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
-                   << static_cast<uint32_t>(node_reward.second.m_validator_reward % data::system_contract::REWARD_PRECISION);
-                node_reward_json["validator_reward"] = ss.str();
-            }
-            {
-                std::stringstream ss;
-                ss << static_cast<uint64_t>(node_reward.second.m_auditor_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
-                   << static_cast<uint32_t>(node_reward.second.m_auditor_reward % data::system_contract::REWARD_PRECISION);
-                node_reward_json["auditor_reward"] = ss.str();
-            }
-            {
-                std::stringstream ss;
-                ss << static_cast<uint64_t>(node_reward.second.m_evm_validator_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
-                   << static_cast<uint32_t>(node_reward.second.m_evm_validator_reward % data::system_contract::REWARD_PRECISION);
-                node_reward_json["evm_validator_reward"] = ss.str();
-            }
-            {
-                std::stringstream ss;
-                ss << static_cast<uint64_t>(node_reward.second.m_evm_auditor_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
-                   << static_cast<uint32_t>(node_reward.second.m_evm_auditor_reward % data::system_contract::REWARD_PRECISION);
-                node_reward_json["evm_auditor_reward"] = ss.str();
-            }
-            {
-                std::stringstream ss;
-                ss << static_cast<uint64_t>(node_reward.second.m_vote_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')
-                   << static_cast<uint32_t>(node_reward.second.m_vote_reward % data::system_contract::REWARD_PRECISION);
-                node_reward_json["voter_reward"] = ss.str();
-            }*/
             {
                 std::stringstream ss;
                 ss << static_cast<uint64_t>(node_reward.second.m_self_reward / data::system_contract::REWARD_PRECISION) << "." << std::setw(6) << std::setfill('0')

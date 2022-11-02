@@ -128,6 +128,10 @@ int32_t xtx_verifier::verify_address_type(data::xtransaction_t const * trx) {
             if(verify_check_genesis_account(src_addr) ||  verify_check_genesis_account(dst_addr)) {
                 return xverifier_error::xverifier_success;
             }
+             auto const sender_addr = common::xaccount_address_t{src_addr};
+            if (data::is_sys_contract_address(sender_addr)) {
+                return xverifier_error::xverifier_success;
+            }
 
             std::string nodes = XGET_ONCHAIN_GOVERNANCE_PARAMETER(transaction_whitelist);
             std::set<std::string> node_sets;
@@ -262,19 +266,12 @@ int32_t xtx_verifier::sys_contract_tx_check(data::xtransaction_t const * trx_ptr
         }
     }
 
-    if (source_is_user_addr && target_is_sys_contract_addr) {
-        for (const auto & addr : open_sys_contracts) {
-            if (addr == target_addr) {
-                xdbg("[global_trace][xtx_verifier][sys_contract_tx_check][success], tx:%s", trx_ptr->dump().c_str());
-                return xverifier_error::xverifier_success;
-            }
-        }
-        xwarn("[global_trace][xtx_verifier][sys_contract_tx_check][fail], tx:%s,target_origin_addr=%s", trx_ptr->dump().c_str(), target_addr.c_str());
-        return xverifier_error::xverifier_error_contract_not_allowed;
-    }
-
     if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(enable_transaction_whitelist) == true) {
         if (verify_check_genesis_account(source_addr) || verify_check_genesis_account(target_addr)) {
+            return xverifier_error::xverifier_success;
+        }
+
+        if (data::is_sys_contract_address(sender_addr)) {
             return xverifier_error::xverifier_success;
         }
 
@@ -285,6 +282,17 @@ int32_t xtx_verifier::sys_contract_tx_check(data::xtransaction_t const * trx_ptr
             xwarn("[xtx_verifier][sys_contract_tx_check] check whitelist address fail, tx:%s", trx_ptr->dump().c_str());
             return xverifier_error::xverifier_error_addr_invalid;
         }
+    }
+
+    if (source_is_user_addr && target_is_sys_contract_addr) {
+        for (const auto & addr : open_sys_contracts) {
+            if (addr == target_addr) {
+                xdbg("[global_trace][xtx_verifier][sys_contract_tx_check][success], tx:%s", trx_ptr->dump().c_str());
+                return xverifier_error::xverifier_success;
+            }
+        }
+        xwarn("[global_trace][xtx_verifier][sys_contract_tx_check][fail], tx:%s,target_origin_addr=%s", trx_ptr->dump().c_str(), target_addr.c_str());
+        return xverifier_error::xverifier_error_contract_not_allowed;
     }
 
     xdbg("[global_trace][xtx_verifier][sys_contract_tx_check][success], tx:%s", trx_ptr->dump().c_str());
