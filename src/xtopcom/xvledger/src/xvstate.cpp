@@ -127,7 +127,7 @@ namespace top
             return new_canvas;
         }
   
-        std::string  xvexestate_t::get_property_value(const std::string & name)
+        std::string  xvexestate_t::get_property_value(const std::string & name) const
         {
             std::lock_guard<std::recursive_mutex> locker(get_mutex());
             
@@ -138,7 +138,17 @@ namespace top
 
             return bin_data;
         }
-        
+
+        void xvexestate_t::set_property_value(std::string const & name, std::string const & bin_data, xvcanvas_t * canvas) {
+            //std::lock_guard<std::recursive_mutex> locker(get_mutex());
+
+            //xvproperty_t * target = get_property_object(name);
+            //if (target != nullptr) {
+            //    target->clear_value(canvas);
+            //    target->serialize_from_string(bin_data);
+            //}
+        }
+
         xvproperty_t*   xvexestate_t::get_property_object(const std::string & name) const
         {
             xvexeunit_t * target = find_child_unit(name);
@@ -1133,6 +1143,16 @@ namespace top
         const int    xvbstate_t::get_block_type() const
         {
             return xvheader_t::cal_block_type(m_block_types);
+        }
+
+        std::vector<uint8_t> xvbstate_t::get_property_value_in_bytes(std::string const & property_name) const {
+            auto const & value_data = get_property_value(property_name);
+            return {std::begin(value_data), std::end(value_data)};
+        }
+
+        void xvbstate_t::set_property_value_from_bytes(std::string const & name, std::vector<uint8_t> const & bin_data, xvcanvas_t * canvas) {
+            //std::string const & value_data = {std::begin(bin_data), std::end(bin_data)};
+            //set_property_value(name, value_data, canvas);
         }
 
         //subclass extend behavior and load more information instead of a raw one

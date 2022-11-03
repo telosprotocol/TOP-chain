@@ -122,6 +122,8 @@ public:
                                                                       common::xaccount_address_t const & address,
                                                                       std::error_code & ec) const;
 
+    xbytes_t get_property_serialized_value(properties::xtypeless_property_identifier_t const & property_id, std::error_code & ec) const;
+
     /// @brief Set property.
     /// @param property_id Property ID.
     /// @param value Value to be set.
@@ -133,6 +135,8 @@ public:
     /// @param property_id Property ID.
     /// @param ec Log the error code in the operation.
     void clear_property(properties::xproperty_identifier_t const & property_id, std::error_code & ec);
+
+    void set_property_by_serialized_value(properties::xtypeless_property_identifier_t const & property_id, xbytes_t const & serialized_data, std::error_code & ec);
 
     /// @brief Update property cell value. Only map and deque are supported.
     /// @param proprty_id Property ID.
