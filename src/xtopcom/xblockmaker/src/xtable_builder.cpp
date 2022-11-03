@@ -7,7 +7,7 @@
 #include "xblockmaker/xtable_builder.h"
 #include "xblockmaker/xblockmaker_error.h"
 #include "xblockmaker/xfulltable_statistics.h"
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xdata/xemptyblock.h"
 #include "xdata/xtableblock.h"
 #include "xdata/xfull_tableblock.h"

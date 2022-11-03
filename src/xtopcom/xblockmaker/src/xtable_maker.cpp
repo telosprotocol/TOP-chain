@@ -18,7 +18,7 @@
 #include "xdata/xnative_contract_address.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xconfig/xconfig_register.h"
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xgasfee/xgas_estimate.h"
 #include "xtxexecutor/xbatchtx_executor.h"
 #include "xstatectx/xstatectx.h"
@@ -273,8 +273,7 @@ void xtable_maker_t::rerource_plugin_make_resource(bool is_leader, const data::x
 }
 
 xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & table_result) {
-    auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
-    auto const new_version = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.v1_7_0_block_fork_point, cs_para.get_clock());
+    auto const new_version = chain_fork::xutility_t::is_forked(fork_points::v1_7_0_block_fork_point, cs_para.get_clock());
 
     uint64_t now = cs_para.get_gettimeofday_s();
     const std::vector<xcons_transaction_ptr_t> & input_table_txs = table_para.get_origin_txs();
@@ -851,8 +850,7 @@ std::shared_ptr<state_mpt::xstate_mpt_t> xtable_maker_t::create_new_mpt(const xh
 }
 
 const std::string xeth_header_builder::build(const xblock_consensus_para_t & cs_para, const evm_common::xh256_t & state_root, const std::vector<txexecutor::xatomictx_output_t> & pack_txs_outputs) {
-    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-    if (!top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.eth_fork_point, cs_para.get_clock())) {
+    if (!top::chain_fork::xutility_t::is_forked(fork_points::eth_fork_point, cs_para.get_clock())) {
         return {};
     }
     

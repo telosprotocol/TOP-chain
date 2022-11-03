@@ -4,7 +4,7 @@
 
 #include "xvm/xsystem_contracts/xslash/xzec_slash_info_contract.h"
 
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xchain_upgrade/xchain_data_processor.h"
 #include "xcommon/xip.h"
 #include "xdata/xfull_tableblock.h"
@@ -88,8 +88,7 @@ void xzec_slash_info_contract::summarize_slash_info(std::string const & slash_in
                                      summarize_info, summarize_tableblock_count, cur_statistic_height)) {
         // set summarize info
         base::xstream_t stream(base::xcontext_t::instance());
-        auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-        if (top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.eth_fork_point, TIME())) {
+        if (top::chain_fork::xutility_t::is_forked(fork_points::eth_fork_point, TIME())) {
         summarize_info.serialize_to(stream);
         } else {
             auto summarize_info_v1 = static_cast<data::system_contract::xunqualified_node_info_v1_t>(summarize_info);

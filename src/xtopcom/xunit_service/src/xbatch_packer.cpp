@@ -16,7 +16,7 @@
 #include "xmbus/xevent_behind.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xunit_service/xerror/xerror.h"
 #include "xstatestore/xstatestore_face.h"
 #include "xsync/xsync_on_demand.h"
@@ -250,8 +250,7 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
         return false;
     }
 
-    auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
-    auto const new_version = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.v1_7_0_block_fork_point, view_ev->get_clock());
+    auto const new_version = chain_fork::xutility_t::is_forked(fork_points::v1_7_0_block_fork_point, view_ev->get_clock());
     if (new_version) {
         auto ret = m_proposal_maker->account_index_upgrade();
         if (!ret) {

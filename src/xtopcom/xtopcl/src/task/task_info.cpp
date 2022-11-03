@@ -3,7 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "base/utility.h"
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xtopcl/include/task/task_info.h"
 
 namespace xChainSDK {
@@ -16,8 +16,7 @@ namespace xChainSDK {
         use_transaction = false;
 
         auto fire_time = get_timestamp();
-        top::chain_fork::xtop_chain_fork_config_center::init();
-        if (top::chain_fork::xtop_chain_fork_config_center::is_tx_forked_by_timestamp(fire_time)) {
+        if (top::chain_fork::xutility_t::is_tx_forked_by_timestamp(fire_time)) {
             trans_action = top::data::xtx_factory::create_tx(top::data::xtransaction_version_2);
         } else {
             trans_action = top::data::xtx_factory::create_tx(top::data::xtransaction_version_1);

@@ -7,7 +7,7 @@
 #include "generated/version.h"
 #include "xbasic/xcrypto_key.h"
 #include "xbasic/xutility.h"
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xcommon/xrole_type.h"
 #include "xconfig/xpredefined_configurations.h"
@@ -258,13 +258,12 @@ void xtop_rec_standby_pool_contract::nodeJoinNetwork2(common::xaccount_address_t
 bool xtop_rec_standby_pool_contract::nodeJoinNetworkImpl(std::string const & program_version,
                                                          data::system_contract::xreg_node_info const & node,
                                                          data::election::xstandby_result_store_t & standby_result_store) {
-    auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
 #if defined(XENABLE_TESTS)
     auto const evm_enabled = true;
     auto const relay_enabled = true;
 #else
-    auto const evm_enabled = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.eth_fork_point, TIME());
-    auto const relay_enabled = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.relay_fork_point, TIME());
+    auto const evm_enabled = chain_fork::xutility_t::is_forked(fork_points::eth_fork_point, TIME());
+    auto const relay_enabled = chain_fork::xutility_t::is_forked(fork_points::relay_fork_point, TIME());
 #endif
 
     std::set<common::xnetwork_id_t> network_ids = node.m_network_ids;
@@ -404,10 +403,8 @@ bool xtop_rec_standby_pool_contract::nodeJoinNetworkImpl(std::string const & pro
 bool xtop_rec_standby_pool_contract::update_standby_node(data::system_contract::xreg_node_info const & reg_node,
                                                          xstandby_node_info_t & standby_node_info,
                                                          common::xlogic_time_t const current_logic_time) const {
-    auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
-
-    auto const evm_enabled = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.eth_fork_point, current_logic_time);
-    auto const relay_enabled = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.relay_fork_point, current_logic_time);
+    auto const evm_enabled = chain_fork::xutility_t::is_forked(fork_points::eth_fork_point, current_logic_time);
+    auto const relay_enabled = chain_fork::xutility_t::is_forked(fork_points::relay_fork_point, current_logic_time);
 
     election::xstandby_node_info_t new_node_info;
     if (reg_node.can_be_rec()) {
@@ -610,7 +607,6 @@ void xtop_rec_standby_pool_contract::on_timer(common::xlogic_time_t const curren
     if (update_standby_result_store(registration_data, standby_result_store, activation_record, current_time)) {
         xdbg("[xrec_standby_pool_contract_t][on_timer] standby pool updated");
 
-        auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
         serialization::xmsgpack_t<xstandby_result_store_t>::serialize_to_string_prop(*this, XPROPERTY_CONTRACT_STANDBYS_KEY, standby_result_store);
     }
 }

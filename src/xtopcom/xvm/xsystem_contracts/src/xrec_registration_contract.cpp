@@ -9,7 +9,7 @@
 #include "xbase/xmem.h"
 #include "xbase/xutl.h"
 #include "xbasic/xutility.h"
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xchain_upgrade/xchain_data_processor.h"
 #include "xcommon/xrole_type.h"
 #include "xdata/xgenesis_data.h"

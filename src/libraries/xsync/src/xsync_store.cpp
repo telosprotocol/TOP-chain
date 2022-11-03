@@ -9,7 +9,7 @@
 #include "xsync/xsync_log.h"
 #include "xmbus/xmessage_bus.h"
 #include "xsync/xsync_store_shadow.h"
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xdata/xcheckpoint.h"
 NS_BEG2(top, sync)
 
@@ -350,14 +350,13 @@ void xsync_store_t::set_fork_point() {
     }
 
     xdbg("xsync_store_t::forked clock:%llu", vb->get_height());
-    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-    bool forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.block_fork_point, vb->get_height());
+    bool forked = chain_fork::xutility_t::is_forked(fork_points::block_fork_point, vb->get_height());
     if (forked) {
         xinfo("xsync_store_t::remove_empty_unit_forked already forked clock:%llu", vb->get_height());
         m_remove_empty_unit_forked = true;
     }
 
-    forked = chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.v1_7_0_sync_point, vb->get_height());
+    forked = chain_fork::xutility_t::is_forked(fork_points::v1_7_0_sync_point, vb->get_height());
     if (forked) {
         m_sync_forked = true;
         xinfo("xsync_store_t::block fork point already forked clock:%llu", vb->get_height());

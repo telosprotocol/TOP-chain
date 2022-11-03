@@ -5,7 +5,7 @@
 #include "xcontract_helper.h"
 
 #include "xbasic/xerror/xerror.h"
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xstore/xstore_error.h"
 #include "xvm/xerror/xvm_error.h"
 

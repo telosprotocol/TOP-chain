@@ -2,7 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xtxexecutor/xtransaction_fee.h"
 #include "xdata/xgenesis_data.h"
 #include "xtxexecutor/xunit_service_error.h"
