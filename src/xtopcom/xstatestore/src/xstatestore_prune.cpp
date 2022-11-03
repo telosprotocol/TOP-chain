@@ -51,13 +51,13 @@ void xaccounts_prune_info_t::get_account_indexs(base::xvblock_t * table_block, b
     }
 }
 
-void xtablestate_and_offdata_prune_info_t::insert_from_tableblock(base::xvblock_t * table_block) {
+void xtablestate_and_offdata_prune_info_t::insert_from_tableblock(base::xvblock_t * table_block, bool pune_offdata) {
     if (table_block->get_block_class() != base::enum_xvblock_class_full) {
         const std::string delete_key = base::xvdbkey_t::create_prunable_state_key(table_block->get_account(), table_block->get_height(), table_block->get_block_hash());
         m_tablestate_keys.push_back(delete_key);
     }
 
-    if (table_block->get_block_class() != base::enum_xvblock_class_nil) {
+    if (pune_offdata && table_block->get_block_class() != base::enum_xvblock_class_nil) {
         const std::string delete_key = base::xvdbkey_t::create_prunable_block_output_offdata_key(table_block->get_account(), table_block->get_height(), table_block->get_viewid());
         m_offdata_keys.push_back(delete_key);
     }
@@ -320,7 +320,7 @@ uint64_t xstatestore_prune_t::prune_exec_cons(uint64_t from_height, uint64_t to_
             continue;
         }
         for (auto block : blocks.get_vector()) {
-            prune_info.insert_from_tableblock(block);
+            prune_info.insert_from_tableblock(block, false);
             if (lowest_keep_mpt != nullptr) {
                 auto root = m_statestore_base.get_state_root_from_block(block);
                 if (root == xhash256_t{}) {
@@ -354,8 +354,8 @@ uint64_t xstatestore_prune_t::prune_exec_cons(uint64_t from_height, uint64_t to_
     }
 
     base::xvchain_t::instance().get_xdbstore()->delete_values(prune_info.get_tablestate_prune_keys());
-    base::xvchain_t::instance().get_xdbstore()->delete_values(prune_info.get_offdata_prune_keys());
-    XMETRICS_GAUGE(metrics::state_delete_table_data, prune_info.get_tablestate_prune_keys().size() + prune_info.get_offdata_prune_keys().size());
+    // prune offdata with tableblock for non strorage nodes.
+    XMETRICS_GAUGE(metrics::state_delete_table_data, prune_info.get_tablestate_prune_keys().size());
     unitstate_prune_batch(accounts_prune_info);
 
     xinfo("xstatestore_prune_t::prune_exec_cons prune mpt tablestate and unitstate for table %s from %llu to %llu", m_table_addr.value().c_str(), from_height, to_height);
