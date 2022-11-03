@@ -8,10 +8,8 @@
 #include "xstore/xstore_error.h"
 #include "xstore/xaccount_context.h"
 
-#include "xbase/xlog.h"
 #include "xbase/xobject_ptr.h"
-#include "xbasic/xutility.h"
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xchain_timer/xchain_timer_face.h"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
@@ -103,8 +101,7 @@ int32_t xaccount_context_t::create_user_account(const std::string& address) {
         return ret;
     }
 
-    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-    if (top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.v1_6_0_version_point, get_timer_height())) {
+    if (top::chain_fork::xutility_t::is_forked(fork_points::v1_6_0_version_point, get_timer_height())) {
         evm_common::u256 eth_token = 10000000000000000000ULL;
         evm_common::u256 usd_token{"1000000000000000000000"};
         auto old_token_256 = m_account->tep_token_balance(common::xtoken_id_t::eth);

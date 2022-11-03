@@ -18,7 +18,7 @@
 #include "xdata/xblocktool.h"
 #include "xdata/xblockbuild.h"
 #include "xpbase/base/top_utils.h"
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 
 #define METRICS_TAG(tag, val) XMETRICS_GAUGE((top::metrics::E_SIMPLE_METRICS_TAG)tag, val)
 

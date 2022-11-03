@@ -3,7 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 #include <sstream>
 #define private public
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xchain_timer/xchain_timer.h"
 #include "xdata/xblocktool.h"
 #include "xdata/xdata_common.h"

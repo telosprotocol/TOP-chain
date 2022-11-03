@@ -5,7 +5,7 @@
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_fullnode_contract.h"
 
 #include "xbasic/xutility.h"
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xcommon/xnode_id.h"
 #include "xconfig/xconfig_register.h"

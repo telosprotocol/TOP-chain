@@ -5,7 +5,7 @@
 
 #include "xbase/xutl.h"
 #include "xbasic/xmodule_type.h"
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xsystem_contract/xdata_structures.h"

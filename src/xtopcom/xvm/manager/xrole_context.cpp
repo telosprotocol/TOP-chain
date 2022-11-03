@@ -4,7 +4,7 @@
 
 #include "xvm/manager/xrole_context.h"
 
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xchain_timer/xchain_timer_face.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xdata/xblocktool.h"
@@ -208,8 +208,7 @@ void xrole_context_t::on_block_timer(const xevent_ptr_t & e) {
                     } else if ((m_contract_info->address == eth_statistic_info_contract_address) && valid_call(onchain_timer_round)) {
                         // default size = 1
                         auto call_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_statistic_report_schedule_interval);
-                        auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-                        if (top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.eth_fork_point, onchain_timer_round)) {
+                        if (top::chain_fork::xutility_t::is_forked(fork_points::eth_fork_point, onchain_timer_round)) {
                             if (call_interval != 0 && onchain_timer_round != 0 && onchain_timer_round % call_interval == 0) {
                                 xinfo("xrole_context_t::on_block_timer table contract schedule, contract address %s, timer %" PRIu64 ", interval: %lu",
                                     m_contract_info->address.value().c_str(),
