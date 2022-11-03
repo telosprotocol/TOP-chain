@@ -6,7 +6,7 @@
 
 #include "xbase/xmem.h"
 #include "xcertauth/xcertauth_face.h"
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xcommon/xip.h"
 #include "xdata/xdata_common.h"
 #include "xdata/xnative_contract_address.h"
@@ -166,11 +166,10 @@ void xtable_statistic_info_collection_contract::collect_slash_statistic_info(xst
 void xtable_statistic_info_collection_contract::update_slash_statistic_info(data::system_contract::xunqualified_node_info_v1_t const & summarize_info,
                                                                             uint32_t summarize_fulltableblock_num,
                                                                             uint64_t block_height) {
-    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
     {
         XMETRICS_TIME_RECORD("sysContract_tableStatistic_set_property_contract_unqualified_node_key");
         base::xstream_t stream(base::xcontext_t::instance());
-        if (top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.eth_fork_point, TIME())) {
+        if (top::chain_fork::xutility_t::is_forked(fork_points::eth_fork_point, TIME())) {
         summarize_info.serialize_to(stream);
         } else {
             auto summarize_info_v1 = static_cast<data::system_contract::xunqualified_node_info_v1_t>(summarize_info);
@@ -329,8 +328,7 @@ void xtable_statistic_info_collection_contract::report_summarized_statistic_info
 
 
         base::xstream_t stream(base::xcontext_t::instance());
-        auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-        if (top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.eth_fork_point, timestamp)) {
+        if (top::chain_fork::xutility_t::is_forked(fork_points::eth_fork_point, timestamp)) {
         summarize_info.serialize_to(stream);
         } else {
             auto summarize_info_v1 = static_cast<data::system_contract::xunqualified_node_info_v1_t>(summarize_info);

@@ -14,7 +14,7 @@
 #include "xdata/xblockbuild.h"
 #include "xdata/xblockextract.h"
 #include "xmbus/xevent_behind.h"
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xgasfee/xgas_estimate.h"
 #include "xstatestore/xstatestore_face.h"
 

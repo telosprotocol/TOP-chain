@@ -4,7 +4,7 @@
 
 #include "xvm/xsystem_contracts/xelection/xzec/xzec_elect_relay_contract.h"
 
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"

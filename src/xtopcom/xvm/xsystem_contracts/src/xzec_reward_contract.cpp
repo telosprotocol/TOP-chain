@@ -7,7 +7,7 @@
 #include "xbase/xutl.h"
 #include "xbasic/xuint.hpp"
 #include "xbasic/xutility.h"
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xchain_upgrade/xchain_data_processor.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
@@ -698,8 +698,7 @@ void xzec_reward_contract::update_issuance_detail(data::system_contract::xissue_
             issue_detail.m_vote_reward_ratio,
             issue_detail.m_governance_reward_ratio);
     std::string issue_detail_str;
-    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-    if (top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.eth_fork_point, TIME())) {
+    if (top::chain_fork::xutility_t::is_forked(fork_points::eth_fork_point, TIME())) {
         issue_detail_str = issue_detail.to_string();
     } else {
         auto issue_detail_old = static_cast<data::system_contract::xissue_detail_v1>(issue_detail);
@@ -737,8 +736,8 @@ void xzec_reward_contract::get_reward_param(const common::xlogic_time_t current_
     onchain_param.governance_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(governance_reward_ratio);
     onchain_param.auditor_group_zero_workload = XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_group_zero_workload);
     onchain_param.validator_group_zero_workload = XGET_ONCHAIN_GOVERNANCE_PARAMETER(validator_group_zero_workload);
-    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-    if (top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.eth_fork_point, current_time)) {
+
+    if (top::chain_fork::xutility_t::is_forked(fork_points::eth_fork_point, current_time)) {
         onchain_param.evm_auditor_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(evm_auditor_reward_ratio);
         onchain_param.evm_validator_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(evm_validator_reward_ratio);
         onchain_param.evm_auditor_group_zero_workload = XGET_ONCHAIN_GOVERNANCE_PARAMETER(evm_auditor_group_zero_workload);

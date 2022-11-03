@@ -8,7 +8,7 @@
 #include "xbasic/xtimer_driver.h"
 #include "xblockstore/xblockstore_face.h"
 #include "xchain_timer/xchain_timer.h"
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xdata/xblocktool.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"

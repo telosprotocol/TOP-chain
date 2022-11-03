@@ -4,7 +4,7 @@
 
 #include <string>
 #include "xbasic/xmemory.hpp"
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xvledger/xvblockstore.h"
 #include "xvledger/xvstatestore.h"
 #include "xdata/xblockextract.h"

@@ -10,7 +10,7 @@
 #include "xbasic/xtimer_driver.h"
 #include "xblockstore/xblockstore_face.h"
 #include "xcertauth/xcertauth_face.h"
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xchain_timer/xchain_timer.h"
 #include "xchaininit/xchain_command.h"
 #include "xchaininit/xchain_info_query.h"
@@ -102,8 +102,7 @@ void xtop_application::start() {
     config::xconfig_register_t::get_instance().add_loader(loader);
     config::xconfig_register_t::get_instance().load();
 
-    chain_fork::xtop_chain_fork_config_center::init();
-    base::xvblock_fork_t::instance().init(chain_fork::xtop_chain_fork_config_center::is_block_forked);
+    base::xvblock_fork_t::instance().init(chain_fork::xutility_t::is_block_forked);
 
     m_txpool = xtxpool_v2::xtxpool_instance::create_xtxpool_inst(make_observer(m_blockstore), make_observer(m_cert_ptr), make_observer(m_bus));
 
