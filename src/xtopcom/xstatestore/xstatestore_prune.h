@@ -27,7 +27,7 @@ private:
 
 class xtablestate_and_offdata_prune_info_t {
 public:
-    void insert_from_tableblock(base::xvblock_t * table_block);
+    void insert_from_tableblock(base::xvblock_t * table_block, bool pune_offdata = true);
     const std::vector<std::string> & get_tablestate_prune_keys() const;
     const std::vector<std::string> & get_offdata_prune_keys() const;
 
