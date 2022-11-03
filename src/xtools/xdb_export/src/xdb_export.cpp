@@ -65,7 +65,7 @@ xdb_export_tools_t::xdb_export_tools_t(std::string const & db_path) {
     base::xvchain_t::instance().set_xevmbus(m_bus.get());
     m_blockstore.attach(store::get_vblockstore());
     m_txstore = xobject_ptr_t<base::xvtxstore_t>(
-        txstore::create_txstore(top::make_observer<mbus::xmessage_bus_face_t>(m_bus.get()), 
+        txstore::create_txstore(top::make_observer<mbus::xmessage_bus_face_t>(m_bus.get()),
                                 top::make_observer<xbase_timer_driver_t>(m_timer_driver.get())));
     base::xvchain_t::instance().set_xtxstore(m_txstore.get());
     m_nodesvr_ptr = make_object_ptr<election::xvnode_house_t>(common::xnode_id_t{NODE_ID}, m_blockstore, make_observer(m_bus.get()));
@@ -194,7 +194,7 @@ void xdb_export_tools_t::query_all_account_data(std::vector<std::string> const &
         for (auto i = 0U; i < thread_num; i++) {
             all_thread[i].join();
         }
-        for (auto const & j : j_vec) {            
+        for (auto const & j : j_vec) {
             for (auto acc = j.begin(); acc != j.end(); acc++) {
                 result_json[acc.key()] = acc.value();
             }
@@ -299,7 +299,7 @@ void xdb_export_tools_t::query_table_performance(std::string const & account) {
         last_viewid = viewid;
         last_gmtime = gmtime;
         tx_num_total += tx_num;
-        
+
         tx_num_in_10_blocks += tx_num;
         if (i%10 == 0) {
             tps_per_10_blocks += get_ave_string(tx_num_in_10_blocks, gmtime - gmttime_start_for_10_blocks) + ", ";
@@ -344,8 +344,8 @@ void GetFiles(const std::string& img_dir_path,std::vector<std::string> &img_file
 
 void xdb_export_tools_t::read_external_tx_firestamp() {
     std::vector<std::string> files;
-    GetFiles("./tx_fire_files", files);   
-    
+    GetFiles("./tx_fire_files", files);
+
     for (auto & tx_file : files) {
         std::ifstream ifs;
         ifs.open(tx_file.c_str(), std::ifstream::in);
@@ -366,7 +366,7 @@ void xdb_export_tools_t::read_external_tx_firestamp() {
         }
         ifs.close();
     }
-    std::cout << "read tx_file: " << m_txs_fire_timestamp.size() << std::endl;    
+    std::cout << "read tx_file: " << m_txs_fire_timestamp.size() << std::endl;
 
     sleep(5);
 }
@@ -412,7 +412,7 @@ void xdb_export_tools_t::query_block_exist(std::string const & address, const ui
         } else {
             std::cerr << "exist one null block!!!" << std::endl;
         }
-    }    
+    }
 }
 
 void xdb_export_tools_t::query_block_info(std::string const & account, std::string const & param) {
@@ -661,7 +661,7 @@ void xdb_export_tools_t::query_table_unit_info(std::string const & account) {
     query_state_basic(account, h, root["state"]);
     query_meta(account, root["meta"]);
     generate_json_file(std::string{account + "_basic_info.json"}, root);
-    
+
     auto const vblock = m_blockstore->load_block_object(account, h, 0, false);
     if (vblock == nullptr) {
         std::cerr << "account: " << account << ", height: " << h << " block null" << std::endl;
@@ -814,9 +814,9 @@ void xdb_export_tools_t::query_archive_db(const uint32_t redundancy) {
         }
         pool.join();
     }
-    auto t2 = base::xtime_utl::time_now_ms();        
+    auto t2 = base::xtime_utl::time_now_ms();
     std::cout << "time1: " << (t2 - t1) / 1000 << "s." << std::endl;
-    
+
     // step 2: check unit
     std::cout << "step 2 ===> checking unit accounts..." << std::endl;
     {
@@ -827,7 +827,7 @@ void xdb_export_tools_t::query_archive_db(const uint32_t redundancy) {
         }
         pool.join();
     }
-    auto t3 = base::xtime_utl::time_now_ms();        
+    auto t3 = base::xtime_utl::time_now_ms();
     std::cout << "time2: " << (t3 - t2) / 1000 << "s." << std::endl;
 
     // step 3: check drand
@@ -836,7 +836,7 @@ void xdb_export_tools_t::query_archive_db(const uint32_t redundancy) {
         query_archive_db_internal(sys_drand_addr, query_account_system, redundancy, file, total_errors);
     }
     file.close();
-    auto t4 = base::xtime_utl::time_now_ms();        
+    auto t4 = base::xtime_utl::time_now_ms();
     std::cout << "time3: " << (t4 - t3) / 1000 << "s." << std::endl;
 
     if (total_errors != 0) {
@@ -1282,7 +1282,7 @@ void xdb_export_tools_t::print_all_table_txinfo_to_file() {
             } else if (tx_ext_sum.recv_block_info.height != 0) {
                 if (tx_ext_sum.not_need_confirm) {
                     j["recv only detail"][tx_ext_sum.hash] = set_unconfirmed_txinfo_to_json(tx_ext_sum);
-                    recv_only_count++;    
+                    recv_only_count++;
                 }
             } else {
                 j["confirm only detail"][tx_ext_sum.hash] = set_unconfirmed_txinfo_to_json(tx_ext_sum);
@@ -1308,7 +1308,7 @@ void xdb_export_tools_t::print_all_table_txinfo_to_file() {
 bool xdb_export_tools_t::all_table_set_txinfo(const tx_ext_t & tx_ext, base::enum_transaction_subtype subtype, tx_ext_sum_t & tx_ext_sum) {
     // uint32_t r = (uint32_t)base::xhash64_t::digest(tx_ext.hash);
     base::xtable_index_t tableindex(tx_ext.sendtableid);
-    uint32_t r = tableindex.to_total_table_index();    
+    uint32_t r = tableindex.to_total_table_index();
     return m_all_table_info[r].all_table_set_txinfo(tx_ext, subtype, tx_ext_sum);
 }
 
@@ -1447,7 +1447,7 @@ void xdb_export_tools_t::query_tx_info_internal(std::string const & account, con
                     }
                 }
             }
-       
+
             // statistic
             // construct tx_ext info
             std::vector<tx_ext_t> batch_tx_exts;
@@ -1460,7 +1460,7 @@ void xdb_export_tools_t::query_tx_info_internal(std::string const & account, con
                 if (confirmed) {
                     if (tx_ext_sum.fire_timestamp == 0) {
                         table_info.no_firestamptx_num++;
-                    } else {                        
+                    } else {
                         table_info.confirmedtx_num++;
                         j[tx_ext.hash] = set_confirmed_txinfo_to_json(tx_ext_sum);
                         normal_stream << std::setw(4) << j << std::endl;
@@ -1762,7 +1762,7 @@ bool xdb_export_tools_t::db_scan_key_callback(const std::string& key, const std:
                     parse_info.size = value.length();
                     m_db_parse_info.insert({ key_name, parse_info });
                 }
-            } 
+            }
         break;
 
         case base::enum_xdbkey_type_block_object:
@@ -1800,7 +1800,7 @@ bool xdb_export_tools_t::db_scan_key_callback(const std::string& key, const std:
                     parse_info_set(parse_info, db_key_type, value.length());
                     m_db_sum_info.insert({ key_real_str, parse_info });
                 }
-            } 
+            }
         break;
         default:
         break;
@@ -1876,19 +1876,19 @@ void xdb_export_tools_t::db_parse_type_size(const std::string &fileName) {
     pxstore->read_range_callback("",  db_scan_key_callback, this);
 
     std::cout << "start write json " << std::endl;
-    //write json 
+    //write json
     json root_sum;
     json root_detail;
 
     //count db size
     m_dbsize_info.to_json(root_sum);
-    vector_to_json(m_db_sum_info, root_sum); 
+    vector_to_json(m_db_sum_info, root_sum);
     std::string fileNameSum = fileName + "_sum.json";
     generate_json_file(fileNameSum, root_sum);
     std::string fileNameDetail = fileName + "_detail.json";
     vector_to_json(m_db_parse_info, root_detail);
     generate_json_file(fileNameDetail, root_detail);
-   
+
 }
 
 std::set<std::string> xdb_export_tools_t::get_db_unit_accounts_v2() {
@@ -1975,7 +1975,7 @@ void  xdb_export_tools_t::prune_db(){
         }
 
         base::xvaccount_t account_obj{sys_account[i]};
-        //prune 
+        //prune
         const std::string begin_delete_key = base::xvdbkey_t::create_prunable_block_height_key(account_obj, 1);
         const uint64_t target_height = block->get_height()-100;
         const std::string end_delete_key = base::xvdbkey_t::create_prunable_block_height_key(account_obj, target_height);
@@ -1997,12 +1997,12 @@ void  xdb_export_tools_t::prune_db(){
         }
 
         base::xvaccount_t account_obj{unit_account};
-        //prune 
+        //prune
         const std::string begin_delete_key = base::xvdbkey_t::create_prunable_block_height_key(account_obj, 1);
         const std::string end_delete_key = base::xvdbkey_t::create_prunable_block_height_key(account_obj, block->get_height());
         m_store->delete_range(begin_delete_key, end_delete_key);
     }
-    
+
     //prune table
     std::cout << " start table account!" << std::endl;
     auto const tables = get_table_accounts();
@@ -2212,7 +2212,7 @@ std::unordered_map<common::xaccount_address_t, uint64_t> xdb_export_tools_t::get
 
 std::vector<xdb_export_tools_t::exported_account_data> xdb_export_tools_t::get_account_data(std::unordered_map<common::xaccount_address_t, uint64_t> const & accounts,
                                                                                             std::vector<common::xtoken_id_t> const & queried_tokens,
-                                                                                            std::unordered_map<std::string, xproperty_type_t> const & queried_properties,
+                                                                                            std::vector<std::string> const & queried_properties,
                                                                                             std::error_code & ec) const {
     assert(!ec);
     assert(m_blockstore != nullptr);
@@ -2273,62 +2273,15 @@ std::vector<xdb_export_tools_t::exported_account_data> xdb_export_tools_t::get_a
             }
         }
 
-        for (auto const & property_datum : queried_properties) {
-            auto const & property_name = top::get<std::string const>(property_datum);
-            auto const property_type = top::get<xproperty_type_t>(property_datum);
-
-            auto const prop_value = unit_bstate->get_bstate()->get_property_object(property_name);
-            base::xstream_t stream{base::xcontext_t::instance()};
-            prop_value->serialize_to(stream);
-            xbytes_t bytes{stream.data(), stream.data() + stream.size()};
-
-            data.properties[property_type].emplace(property_name, std::move(bytes));
+        for (auto const & property_name : queried_properties) {
+            auto bytes = unit_bstate->get_bstate()->get_property_value_in_bytes(property_name);
+            data.properties.emplace(property_name, std::move(bytes));
         }
 
         result.emplace_back(std::move(data));
     }
 
     return result;
-}
-
-void xdb_export_tools_t::export_to_json(std::vector<exported_account_data> const & data, std::string const & file_path, std::error_code & /*ec*/) const {
-    nlohmann::json root;
-
-    for (auto const & account_datum : data) {
-        auto const & account_address = account_datum.account_address;
-        auto const & top_asset = account_datum.assets[0];
-        auto const & tep1_asset = account_datum.assets[1];
-        auto const & properties = account_datum.properties;
-
-        nlohmann::json account_json;
-
-        for (auto const & top_balance_datum : top_asset) {
-            account_json["TOP"][top::get<std::string const>(top_balance_datum)] = top::get<evm_common::u256>(top_balance_datum).str();
-        }
-
-        for (auto const & tep1_balance_datum : tep1_asset) {
-            account_json["TEP1"][top::get<std::string const>(tep1_balance_datum)] = top::get<evm_common::u256>(tep1_balance_datum).str();
-        }
-
-        for (auto const & property_datum : properties) {
-            auto const property_type = top::get<xproperty_type_t const >(property_datum);
-            auto const & property_data = top::get<std::unordered_map<std::string, xbytes_t>>(property_datum);
-
-            for (auto const & property : property_data) {
-                auto const & property_name = top::get<std::string const>(property);
-                auto const & property_value = top::get<xbytes_t>(property);
-
-                account_json["properties"][property_name]["data"] = to_hex(std::begin(property_value), std::end(property_value), "0x");
-                account_json["properties"][property_name]["type"] = to_string(property_type);
-            }
-        }
-
-        root[account_address.to_string()] = account_json;
-    }
-
-    std::ofstream out{file_path};
-    out << std::setw(4) << root;
-    out.close();
 }
 
 void xdb_export_tools_t::append_to_json(common::xtable_address_t const & table_address,
@@ -2341,7 +2294,6 @@ void xdb_export_tools_t::append_to_json(common::xtable_address_t const & table_a
 
     auto & table_json = root[table_address.to_string()];
     table_json["account_count"] = data.size();
-    table_json["height"] = table_height;
 
     for (auto const & account_datum : data) {
         auto const & account_address = account_datum.account_address;
@@ -2353,6 +2305,8 @@ void xdb_export_tools_t::append_to_json(common::xtable_address_t const & table_a
 
         nlohmann::json account_json;
 
+        account_json["table_height"] = table_height;
+
         for (auto const & top_balance_datum : top_asset) {
             account_json["TOP"][top::get<std::string const>(top_balance_datum)] = top::get<evm_common::u256>(top_balance_datum).str();
         }
@@ -2362,16 +2316,10 @@ void xdb_export_tools_t::append_to_json(common::xtable_address_t const & table_a
         }
 
         for (auto const & property_datum : properties) {
-            auto const property_type = top::get<xproperty_type_t const>(property_datum);
-            auto const & property_data = top::get<std::unordered_map<std::string, xbytes_t>>(property_datum);
+            auto const & property_name = top::get<std::string const>(property_datum);
+            auto const & property_value = top::get<xbytes_t>(property_datum);
 
-            for (auto const & property : property_data) {
-                auto const & property_name = top::get<std::string const>(property);
-                auto const & property_value = top::get<xbytes_t>(property);
-
-                account_json["properties"][property_name]["data"] = to_hex(std::begin(property_value), std::end(property_value), "0x");
-                account_json["properties"][property_name]["type"] = to_string(property_type);
-            }
+            account_json["properties"][property_name] = to_hex(std::begin(property_value), std::end(property_value), "0x");
         }
 
         table_json[account_address.to_string()] = account_json;
@@ -2379,23 +2327,6 @@ void xdb_export_tools_t::append_to_json(common::xtable_address_t const & table_a
 
     out << std::setw(4) << root;
     out.close();
-}
-
-std::string to_string(xdb_export_tools_t::xproperty_type_t const type) {
-    switch (type) {
-    case xdb_export_tools_t::xproperty_type_t::map:
-        return "map";
-
-    case xdb_export_tools_t::xproperty_type_t::list:
-        return "lst";
-
-    case xdb_export_tools_t::xproperty_type_t::integer:
-        return "int";
-
-    default:
-        assert(false);
-        return "nil";
-    }
 }
 
 NS_END2
