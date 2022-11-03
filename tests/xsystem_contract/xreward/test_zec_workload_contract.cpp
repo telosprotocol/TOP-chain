@@ -8,7 +8,7 @@
 #include "xbasic/xtimer_driver.h"
 #include "xblockstore/xblockstore_face.h"
 #include "xchain_timer/xchain_timer.h"
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xdata/xblocktool.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
@@ -185,21 +185,21 @@ public:
         uint64_t last_read_height = 0;
         // get block
         std::vector<xobject_ptr_t<data::xblock_t>> res;
-        auto latest_block = m_blockstore->get_latest_committed_block(table_owner.value());
+        auto latest_block = m_blockstore->get_latest_committed_block(table_owner.to_string());
         data::xblock_t * block = dynamic_cast<data::xblock_t *>(latest_block.get());
         if (latest_block == nullptr) {
-            std::cout << "account " << table_owner.value() << "latest committed block is null" << std::endl;
+            std::cout << "account " << table_owner.to_string() << "latest committed block is null" << std::endl;
             return res;
         }
         auto cur_height = latest_block->get_height();
         // std::cout << table_owner.value() << " height " << cur_height << std::endl;
         auto time_interval = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::minutes{5}).count() / XGLOBAL_TIMER_INTERVAL_IN_SECONDS;
-        xobject_ptr_t<data::xblock_t> cur_tableblock = get_block_by_height(table_owner.value(), cur_height);
+        xobject_ptr_t<data::xblock_t> cur_tableblock = get_block_by_height(table_owner.to_string(), cur_height);
         while (cur_tableblock == nullptr) {
             if (cur_height > 0) {
-                cur_tableblock = get_block_by_height(table_owner.value(), --cur_height);
+                cur_tableblock = get_block_by_height(table_owner.to_string(), --cur_height);
             } else {
-                xwarn("[xzec_workload_contract_v2::get_fullblock] no_block_is_available. table %s at time %" PRIu64, table_owner.c_str(), timestamp);
+                xwarn("[xzec_workload_contract_v2::get_fullblock] no_block_is_available. table %s at time %" PRIu64, table_owner.to_string().c_str(), timestamp);
                 return res;
             }
         }
@@ -207,7 +207,7 @@ public:
         while (last_full_block_height != 0 && last_read_height < last_full_block_height) {
             xdbg("[xzec_workload_contract_v2::get_fullblock] last_full_block_height %lu", last_full_block_height);
             // get full block, assume that all full table blocks are in time order
-            xobject_ptr_t<data::xblock_t> last_full_block = get_block_by_height(table_owner.value(), last_full_block_height);
+            xobject_ptr_t<data::xblock_t> last_full_block = get_block_by_height(table_owner.to_string(), last_full_block_height);
             if (last_full_block == nullptr) {
                 xwarn("[xzec_workload_contract_v2::get_fullblock] full block empty");
                 break;
@@ -218,7 +218,7 @@ public:
             if (0) {
                 if (cur_read_height != 0) {
                     xwarn("[xzec_workload_contract_v2::get_fullblock] full table block may not in order. table %s at time %, " PRIu64 "front height %lu, rear height %lu",
-                        table_owner.c_str(),
+                          table_owner.to_string().c_str(),
                         timestamp,
                         last_full_block_height,
                         cur_read_height);
@@ -235,14 +235,17 @@ public:
                 }
             }
             last_full_block_height = last_full_block->get_last_full_block_height();
-            xdbg("[xzec_workload_contract_v2::get_fullblock] table %s last block height in cycle : " PRIu64, table_owner.c_str(), last_full_block_height);
+            xdbg("[xzec_workload_contract_v2::get_fullblock] table %s last block height in cycle : " PRIu64, table_owner.to_string().c_str(), last_full_block_height);
         }
 
         // update table address height
         // if (cur_read_height > last_read_height) {
         //     update_table_height(table_owner, cur_read_height);
         // }
-        xinfo("[xzec_workload_contract_v2::get_fullblock] table table_owner address: %s, last height: %lu, cur height: %lu\n", table_owner.c_str(), last_read_height, cur_read_height);
+        xinfo("[xzec_workload_contract_v2::get_fullblock] table table_owner address: %s, last height: %lu, cur height: %lu\n",
+              table_owner.to_string().c_str(),
+              last_read_height,
+              cur_read_height);
 
         return res;
     }

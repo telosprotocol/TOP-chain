@@ -17,7 +17,7 @@
 #include "xtxpool_service_v2/xtxpool_service.h"
 #include "xtxpool_v2/xreceipt_resend.h"
 #include "xtxpool_v2/xtxpool_error.h"
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 
 #include <cinttypes>
 

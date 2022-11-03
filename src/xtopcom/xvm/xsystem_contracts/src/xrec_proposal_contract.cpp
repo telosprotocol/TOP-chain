@@ -70,7 +70,11 @@ void xrec_proposal_contract::submitProposal(const std::string & target,
 
     auto const src_account = common::xaccount_address_t{SOURCE_ADDRESS()};
     xdbg("[xrec_proposal_contract::submitProposal] account: %s, target: %s, value: %s, type: %d, effective_timer_height: %" PRIu64,
-         src_account.c_str(), target.c_str(), value.c_str(), type, effective_timer_height);
+         src_account.to_string().c_str(),
+         target.c_str(),
+         value.c_str(),
+         type,
+         effective_timer_height);
 
     XCONTRACT_ENSURE(common::is_t0(src_account) || common::is_t8(src_account), "only T0 or T8 account is allowed to submit proposal");
 
@@ -160,7 +164,7 @@ void xrec_proposal_contract::submitProposal(const std::string & target,
     proposal.type = type;
     // proposal.modification_description = modification_description;
     proposal.effective_timer_height = effective_timer_height;
-    proposal.proposal_client_address = src_account.value();
+    proposal.proposal_client_address = src_account.to_string();
     proposal.end_time = TIME() + proposal_expire_time;
     proposal.priority = priority_critical;
 
@@ -216,13 +220,13 @@ void xrec_proposal_contract::tccVote(std::string & proposal_id, bool option) {
     XMETRICS_TIME_RECORD("sysContract_recTccProposal_tcc_vote");
     XMETRICS_CPU_TIME_RECORD("sysContract_recTccProposal_tcc_vote_cpu");
     auto const src_account = common::xaccount_address_t{SOURCE_ADDRESS()};
-    xdbg("[xrec_proposal_contract::tccVote] tccVote start, proposal_id: %s, account: %s vote: %d", proposal_id.c_str(), src_account.c_str(), option);
+    xdbg("[xrec_proposal_contract::tccVote] tccVote start, proposal_id: %s, account: %s vote: %d", proposal_id.c_str(), src_account.to_string().c_str(), option);
 
     XCONTRACT_ENSURE(common::is_t0(src_account) || common::is_t8(src_account), "only T0 or T8 account is allowed to vote for a proposal");
 
     // check if the voting client address exists in initial comittee
-    if (!voter_in_committee(src_account.value())) {
-        xwarn("[xrec_proposal_contract::tccVote] source addr is not a commitee voter: %s", src_account.c_str());
+    if (!voter_in_committee(src_account.to_string())) {
+        xwarn("[xrec_proposal_contract::tccVote] source addr is not a commitee voter: %s", src_account.to_string().c_str());
         std::error_code ec{ xvm::enum_xvm_error_code::enum_vm_exception };
         top::error::throw_error(ec);
     }
@@ -291,14 +295,14 @@ void xrec_proposal_contract::tccVote(std::string & proposal_id, bool option) {
              proposal.voting_status);
 
     } else {
-        auto it = voting_result.find(src_account.value());
+        auto it = voting_result.find(src_account.to_string());
         if (it != voting_result.end()) {
-            xinfo("[xrec_proposal_contract::tccVote] client addr(%s) already voted", src_account.c_str());
+            xinfo("[xrec_proposal_contract::tccVote] client addr(%s) already voted", src_account.to_string().c_str());
             std::error_code ec{ xvm::enum_xvm_error_code::enum_vm_exception };
             top::error::throw_error(ec);
         }
         // record the voting for this client address
-        voting_result.insert({src_account.value(), option});
+        voting_result.insert({src_account.to_string(), option});
         uint32_t yes_voters = 0;
         uint32_t no_voters = 0;
         uint32_t not_yet_voters = 0;

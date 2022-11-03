@@ -38,6 +38,9 @@
 #include "xbase/xutl.h"
 #include "xdata/xcheckpoint.h"
 #include "xpbase/base/top_utils.h"
+#include "../xerror.h"
+#include "xbasic/xutility.h"
+#include "xdata/xunit_bstate.h"
 
 #define NODE_ID "T00000LgGPqEpiK6XLCKRj9gVPN8Ej1aMbyAb3Hu"
 #define SIGN_KEY "ONhWC2LJtgi9vLUyoa48MF3tiXxqWf7jmT9KtOg/Lwo="
@@ -102,7 +105,7 @@ std::vector<std::string> xdb_export_tools_t::get_system_contract_accounts() {
     }
     for (auto const & t : table) {
         for (auto i = 0; i < enum_vledger_const::enum_vbucket_has_tables_count; i++) {
-            v.emplace_back(data::make_address_by_prefix_and_subaddr(t, uint16_t(i)).value());
+            v.emplace_back(data::make_address_by_prefix_and_subaddr(t, uint16_t(i)).to_string());
         }
     }
     return v;
@@ -141,7 +144,7 @@ std::vector<std::string> xdb_export_tools_t::get_db_unit_accounts() {
             for (auto & leaf : leafs) {
                 state_mpt::xaccount_info_t info;
                 info.decode({leaf.begin(), leaf.end()});
-                accounts.insert(info.m_account.value());
+                accounts.insert(info.m_account.to_string());
             }
         }
     }
@@ -635,8 +638,8 @@ void xdb_export_tools_t::query_table_unit_info(std::vector<std::string> const & 
     }
     auto const seed_nodes = rootblock_para.m_genesis_nodes;
     for (auto const & node : seed_nodes) {
-        if (!accounts_set.count(node.m_account.value())) {
-            genesis_only.insert(node.m_account.value());
+        if (!accounts_set.count(node.m_account.to_string())) {
+            genesis_only.insert(node.m_account.to_string());
         }
     }
 
@@ -1079,9 +1082,8 @@ void xdb_export_tools_t::query_checkpoint_internal(std::string const & table, st
 
 void xdb_export_tools_t::query_account_data(std::string const & account,  const uint64_t h_end, std::string & result, const xdb_check_data_func_face_t & func) {
     uint64_t  num = 0;
-    base::xvdbstore_t* xvdbstore =  base::xvchain_t::instance().get_xdbstore();
     for(uint64_t index = 0; index <= h_end; index++) {
-        bool exist = func.is_data_exist(m_blockstore.get(), account, index);
+        bool const exist = func.is_data_exist(m_blockstore.get(), account, index);
         if (!exist) {
             if(num != 0) {
                 result += std::to_string(index-num) + '-' + std::to_string(index-1) + ',';
@@ -1920,7 +1922,7 @@ std::set<std::string> xdb_export_tools_t::get_special_genesis_accounts() {
         accounts_set.insert(account.first);
     }
     for (auto const & node : rootblock_para.m_genesis_nodes) {
-        accounts_set.insert(node.m_account.value());
+        accounts_set.insert(node.m_account.to_string());
     }
     return accounts_set;
 }
@@ -2121,6 +2123,279 @@ bool xdb_check_data_func_off_data_t::is_data_exist(base::xvblockstore_t * blocks
 }
 std::string xdb_check_data_func_off_data_t::data_type() const {
     return "off_data";
+}
+
+std::unordered_map<common::xaccount_address_t, uint64_t> xdb_export_tools_t::get_unit_accounts(common::xaccount_address_t const & table_address,
+                                                                                               std::uint64_t const table_height,
+                                                                                               std::vector<common::xaccount_address_t> const & designated,
+                                                                                               std::error_code & ec) const {
+    assert(!ec);
+
+    std::unordered_map<common::xaccount_address_t, uint64_t> result;
+
+    if (table_address.base_address().type() != top::base::enum_vaccount_addr_type_block_contract) {
+        ec = top::db_export::xerrc_t::invalid_table_address;
+        return result;
+    }
+
+    std::vector<common::xaccount_address_t> qualified;
+    std::copy_if(std::begin(designated), std::end(designated), std::back_inserter(qualified), [&table_address](common::xaccount_address_t const & address) {
+        return address.table_address() == table_address;
+    });
+
+    assert(m_blockstore != nullptr);
+    auto const table_block = m_blockstore->load_block_object(table_address.vaccount(), table_height, base::enum_xvblock_flag_committed, true);
+    if (table_block == nullptr) {
+        ec = xerrc_t::table_block_not_found;
+        std::cerr << "table block at address " << table_address.to_string() << ":" << table_height << " not found" << std::endl;
+        return result;
+    }
+
+    evm_common::xh256_t state_root;
+    data::xblockextract_t::get_state_root(table_block.get(), state_root);
+    xhash256_t const root_hash{state_root.to_bytes()};
+
+    if (root_hash.empty()) {
+        base::xauto_ptr<base::xvbstate_t> const bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(table_block.get());
+        if (bstate == nullptr) {
+            ec = xerrc_t::table_state_not_found;
+            std::cerr << table_address.to_string() << " get_block_state null!" << std::endl;
+
+            return result;
+        }
+
+        auto const table_state = std::make_shared<data::xtable_bstate_t>(bstate.get());
+        auto const & account_data = table_state->all_accounts();
+        if (qualified.empty()) {
+            std::transform(std::begin(account_data),
+                           std::end(account_data),
+                           std::inserter(result, std::end(result)),
+                           [](std::pair<common::xaccount_address_t, base::xaccount_index_t> const & account_datum) {
+                    return std::make_pair(top::get<common::xaccount_address_t>(account_datum), top::get<base::xaccount_index_t>(account_datum).get_latest_unit_height());
+                });
+        } else {
+            std::for_each(
+                std::begin(account_data), std::end(account_data), [&qualified, &result](std::pair<common::xaccount_address_t, base::xaccount_index_t> const & account_datum) {
+                    if (std::find_if(std::begin(qualified), std::end(qualified), [&account_datum](common::xaccount_address_t const & allowed) {
+                            return allowed == top::get<common::xaccount_address_t>(account_datum);
+                        }) != std::end(qualified)) {
+                        result.emplace(top::get<common::xaccount_address_t>(account_datum), top::get<base::xaccount_index_t>(account_datum).get_latest_unit_height());
+                    }
+                });
+        }
+    } else {
+        auto const kv_db = std::make_shared<evm_common::trie::xkv_db_t>(base::xvchain_t::instance().get_xdbstore(), table_address);
+        auto xtrie_db = evm_common::trie::xtrie_db_t::NewDatabase(kv_db);
+        auto const & leafs = top::evm_common::trie::xtrie_simple_iterator_t::trie_leafs(root_hash, make_observer(xtrie_db));
+        if (qualified.empty()) {
+            std::for_each(std::begin(leafs), std::end(leafs), [&result](xbytes_t const & bytes) {
+                state_mpt::xaccount_info_t info;
+                info.decode({std::begin(bytes), std::end(bytes)});
+
+                result.emplace(info.m_account, info.m_index.get_latest_unit_height());
+            });
+        } else {
+            std::for_each(std::begin(leafs), std::end(leafs), [&qualified, &result](xbytes_t const & bytes) {
+                state_mpt::xaccount_info_t info;
+                info.decode({std::begin(bytes), std::end(bytes)});
+
+                if (std::find_if(std::begin(qualified), std::end(qualified), [&info](common::xaccount_address_t const & acc) { return acc == info.m_account; }) !=
+                    std::end(qualified)) {
+                    result.emplace(info.m_account, info.m_index.get_latest_unit_height());
+                }
+            });
+        }
+    }
+
+    return result;
+}
+
+std::vector<xdb_export_tools_t::exported_account_data> xdb_export_tools_t::get_account_data(std::unordered_map<common::xaccount_address_t, uint64_t> const & accounts,
+                                                                                            std::vector<common::xtoken_id_t> const & queried_tokens,
+                                                                                            std::unordered_map<std::string, xproperty_type_t> const & queried_properties,
+                                                                                            std::error_code & ec) const {
+    assert(!ec);
+    assert(m_blockstore != nullptr);
+
+    std::vector<exported_account_data> result;
+    for (auto const & account_datum : accounts) {
+        auto const & account_address = top::get<common::xaccount_address_t const>(account_datum);
+        auto const account_height = top::get<uint64_t>(account_datum);
+
+        auto unit_vblock = m_blockstore->load_block_object(account_address.vaccount(), account_height, base::enum_xvblock_flag_committed, true);
+        if (unit_vblock == nullptr) {
+            ec = xerrc_t::account_data_not_found;
+            xwarn("account %s at height %" PRIu64 " with committed state not found. xdb_export_tools_t::get_account_data returns {}",
+                  account_address.to_string().c_str(),
+                  account_height);
+            return {};
+        }
+
+        auto unit_vbstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(unit_vblock.get());
+        if (unit_vbstate == nullptr) {
+            ec = xerrc_t::account_data_not_found;
+            xwarn("account %s at height %" PRIu64 " state not found. xdb_export_tools_t::get_account_data returns {}", account_address.to_string().c_str(), account_height);
+            return {};
+        }
+
+        auto const unit_bstate = top::make_unique<data::xunit_bstate_t>(unit_vbstate.get());
+
+        exported_account_data data;
+        data.account_address = account_address;
+
+        for (auto const token_id : queried_tokens) {
+            switch (token_id) {  // NOLINT(clang-diagnostic-switch-enum)
+            case common::xtoken_id_t::top: {
+                data.assets[0][data::XPROPERTY_BALANCE_AVAILABLE] = unit_bstate->balance();
+                data.assets[0][data::XPROPERTY_BALANCE_LOCK] = unit_bstate->lock_balance();
+                data.assets[0][data::XPROPERTY_BALANCE_PLEDGE_TGAS] = unit_bstate->tgas_balance();
+                data.assets[0][data::XPROPERTY_BALANCE_PLEDGE_VOTE] = unit_bstate->vote_balance();
+                data.assets[0][data::XPROPERTY_BALANCE_BURN] = unit_bstate->burn_balance();
+
+                break;
+            }
+
+            case common::xtoken_id_t::eth:  // NOLINT(bugprone-branch-clone)
+                XATTRIBUTE_FALLTHROUGH;
+            case common::xtoken_id_t::usdt:
+                XATTRIBUTE_FALLTHROUGH;
+            case common::xtoken_id_t::usdc: {
+                std::string token_id_string{static_cast<char>('0' + static_cast<int>(token_id))};
+                data.assets[1][token_id_string] = unit_bstate->tep_token_balance(token_id);
+                break;
+            }
+
+            default: {
+                assert(false);
+                ec = xerrc_t::unknown_token;
+                break;
+            }
+            }
+        }
+
+        for (auto const & property_datum : queried_properties) {
+            auto const & property_name = top::get<std::string const>(property_datum);
+            auto const property_type = top::get<xproperty_type_t>(property_datum);
+
+            auto const prop_value = unit_bstate->get_bstate()->get_property_object(property_name);
+            base::xstream_t stream{base::xcontext_t::instance()};
+            prop_value->serialize_to(stream);
+            xbytes_t bytes{stream.data(), stream.data() + stream.size()};
+
+            data.properties[property_type].emplace(property_name, std::move(bytes));
+        }
+
+        result.emplace_back(std::move(data));
+    }
+
+    return result;
+}
+
+void xdb_export_tools_t::export_to_json(std::vector<exported_account_data> const & data, std::string const & file_path, std::error_code & /*ec*/) const {
+    nlohmann::json root;
+
+    for (auto const & account_datum : data) {
+        auto const & account_address = account_datum.account_address;
+        auto const & top_asset = account_datum.assets[0];
+        auto const & tep1_asset = account_datum.assets[1];
+        auto const & properties = account_datum.properties;
+
+        nlohmann::json account_json;
+
+        for (auto const & top_balance_datum : top_asset) {
+            account_json["TOP"][top::get<std::string const>(top_balance_datum)] = top::get<evm_common::u256>(top_balance_datum).str();
+        }
+
+        for (auto const & tep1_balance_datum : tep1_asset) {
+            account_json["TEP1"][top::get<std::string const>(tep1_balance_datum)] = top::get<evm_common::u256>(tep1_balance_datum).str();
+        }
+
+        for (auto const & property_datum : properties) {
+            auto const property_type = top::get<xproperty_type_t const >(property_datum);
+            auto const & property_data = top::get<std::unordered_map<std::string, xbytes_t>>(property_datum);
+
+            for (auto const & property : property_data) {
+                auto const & property_name = top::get<std::string const>(property);
+                auto const & property_value = top::get<xbytes_t>(property);
+
+                account_json["properties"][property_name]["data"] = to_hex(std::begin(property_value), std::end(property_value), "0x");
+                account_json["properties"][property_name]["type"] = to_string(property_type);
+            }
+        }
+
+        root[account_address.to_string()] = account_json;
+    }
+
+    std::ofstream out{file_path};
+    out << std::setw(4) << root;
+    out.close();
+}
+
+void xdb_export_tools_t::append_to_json(common::xtable_address_t const & table_address,
+                                        uint64_t const table_height,
+                                        std::vector<exported_account_data> const & data,
+                                        std::string const & file_path,
+                                        std::error_code & /*ec*/) const {
+    nlohmann::json root;
+    std::ofstream out{file_path, std::ios::out | std::ios::app};
+
+    auto & table_json = root[table_address.to_string()];
+    table_json["account_count"] = data.size();
+    table_json["height"] = table_height;
+
+    for (auto const & account_datum : data) {
+        auto const & account_address = account_datum.account_address;
+        auto const & top_asset = account_datum.assets[0];
+        auto const & tep1_asset = account_datum.assets[1];
+        auto const & properties = account_datum.properties;
+
+        assert(account_address.table_address() == table_address);
+
+        nlohmann::json account_json;
+
+        for (auto const & top_balance_datum : top_asset) {
+            account_json["TOP"][top::get<std::string const>(top_balance_datum)] = top::get<evm_common::u256>(top_balance_datum).str();
+        }
+
+        for (auto const & tep1_balance_datum : tep1_asset) {
+            account_json["TEP1"][top::get<std::string const>(tep1_balance_datum)] = top::get<evm_common::u256>(tep1_balance_datum).str();
+        }
+
+        for (auto const & property_datum : properties) {
+            auto const property_type = top::get<xproperty_type_t const>(property_datum);
+            auto const & property_data = top::get<std::unordered_map<std::string, xbytes_t>>(property_datum);
+
+            for (auto const & property : property_data) {
+                auto const & property_name = top::get<std::string const>(property);
+                auto const & property_value = top::get<xbytes_t>(property);
+
+                account_json["properties"][property_name]["data"] = to_hex(std::begin(property_value), std::end(property_value), "0x");
+                account_json["properties"][property_name]["type"] = to_string(property_type);
+            }
+        }
+
+        table_json[account_address.to_string()] = account_json;
+    }
+
+    out << std::setw(4) << root;
+    out.close();
+}
+
+std::string to_string(xdb_export_tools_t::xproperty_type_t const type) {
+    switch (type) {
+    case xdb_export_tools_t::xproperty_type_t::map:
+        return "map";
+
+    case xdb_export_tools_t::xproperty_type_t::list:
+        return "lst";
+
+    case xdb_export_tools_t::xproperty_type_t::integer:
+        return "int";
+
+    default:
+        assert(false);
+        return "nil";
+    }
 }
 
 NS_END2

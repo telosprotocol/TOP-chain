@@ -4,7 +4,7 @@
 
 #include <string>
 #include "xbasic/xmemory.hpp"
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xstate_mpt/xstate_mpt.h"
 #include "xvledger/xvstate.h"
 #include "xvledger/xvblock.h"
@@ -102,7 +102,7 @@ data::xunitstate_ptr_t xstatectx_base_t::load_different_table_unit_state(const b
 
 data::xunitstate_ptr_t xstatectx_base_t::load_inner_table_commit_unit_state(const common::xaccount_address_t & addr) const {
     base::xaccount_index_t account_index;
-    auto ret = get_account_index(m_commit_table_state, addr.value(), account_index);
+    auto ret = get_account_index(m_commit_table_state, addr.to_string(), account_index);
     if (!ret) {
         return nullptr;
     }
@@ -110,8 +110,7 @@ data::xunitstate_ptr_t xstatectx_base_t::load_inner_table_commit_unit_state(cons
     if (unitstate == nullptr) {
         XMETRICS_GAUGE(metrics::xmetrics_tag_t::statectx_load_block_succ, 0);
         sync_unit_block(addr.vaccount(), account_index.get_latest_unit_height());
-        xwarn("xstatectx_base_t::load_inner_table_commit_unit_state fail-load unit block.%s,index=%s",
-                addr.value().c_str(), account_index.dump().c_str());
+        xwarn("xstatectx_base_t::load_inner_table_commit_unit_state fail-load unit block.%s,index=%s", addr.to_string().c_str(), account_index.dump().c_str());
         return nullptr;
     }
     XMETRICS_GAUGE(metrics::xmetrics_tag_t::statectx_load_block_succ, 1);

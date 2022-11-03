@@ -4,7 +4,7 @@
 
 #include "xvm/xsystem_contracts/xelection/xrec/xrec_elect_zec_contract.h"
 
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
@@ -126,8 +126,8 @@ void xtop_rec_elect_zec_contract::on_timer(common::xlogic_time_t const current_t
 #endif
     XMETRICS_TIME_RECORD(XZEC_ELECT "on_timer_all_time");
     XMETRICS_CPU_TIME_RECORD(XZEC_ELECT "on_timer_cpu_time");
-    XCONTRACT_ENSURE(SOURCE_ADDRESS() == SELF_ADDRESS().value(), "xrec_elect_zec_contract_t instance is triggled by others");
-    XCONTRACT_ENSURE(SELF_ADDRESS().value() == sys_contract_rec_elect_zec_addr, "xrec_elect_zec_contract_t instance is not triggled by sys_contract_rec_elect_zec_addr");
+    XCONTRACT_ENSURE(SOURCE_ADDRESS() == SELF_ADDRESS().to_string(), "xrec_elect_zec_contract_t instance is triggled by others");
+    XCONTRACT_ENSURE(SELF_ADDRESS().to_string() == sys_contract_rec_elect_zec_addr, "xrec_elect_zec_contract_t instance is not triggled by sys_contract_rec_elect_zec_addr");
     // XCONTRACT_ENSURE(current_time <= TIME(), "xrec_elect_zec_contract_t::on_timer current_time > consensus leader's time");
     XCONTRACT_ENSURE(current_time + XGET_ONCHAIN_GOVERNANCE_PARAMETER(zec_election_interval) / 2 > TIME(),
                      "xrec_elect_zec_contract_t::on_timer retried too many times. TX generated time " + std::to_string(current_time) + " TIME() " + std::to_string(TIME()));

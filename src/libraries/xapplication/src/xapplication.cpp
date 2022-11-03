@@ -10,7 +10,7 @@
 #include "xbasic/xtimer_driver.h"
 #include "xblockstore/xblockstore_face.h"
 #include "xcertauth/xcertauth_face.h"
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xchain_timer/xchain_timer.h"
 #include "xchaininit/xchain_command.h"
 #include "xchaininit/xchain_info_query.h"
@@ -102,8 +102,7 @@ void xtop_application::start() {
     config::xconfig_register_t::get_instance().add_loader(loader);
     config::xconfig_register_t::get_instance().load();
 
-    chain_fork::xtop_chain_fork_config_center::init();
-    base::xvblock_fork_t::instance().init(chain_fork::xtop_chain_fork_config_center::is_block_forked);
+    base::xvblock_fork_t::instance().init(chain_fork::xutility_t::is_block_forked);
 
     m_txpool = xtxpool_v2::xtxpool_instance::create_xtxpool_inst(make_observer(m_blockstore), make_observer(m_cert_ptr), make_observer(m_bus));
 
@@ -328,9 +327,9 @@ void xtop_application::load_last_election_data() {
             using top::data::election::xelection_result_store_t;
             std::error_code ec;
 
-            xwarn("xbeacon_chain_application::load_last_election_data begin. contract %s; property %s", addr.c_str(), property.c_str());
+            xwarn("xbeacon_chain_application::load_last_election_data begin. contract %s; property %s", addr.to_string().c_str(), property.c_str());
             xscope_executer_t loading_result_logger{
-                [&ec, &addr, property] { xwarn("xbeacon_chain_application::load_last_election_data end. contract %s; property %s", addr.c_str(), property.c_str()); }};
+                [&ec, &addr, property] { xwarn("xbeacon_chain_application::load_last_election_data end. contract %s; property %s", addr.to_string().c_str(), property.c_str()); }};
 
             data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_change_state(addr);
             if (unitstate == nullptr) {
@@ -347,7 +346,7 @@ void xtop_application::load_last_election_data() {
 
             uint64_t block_height = unitstate->height();
             auto const & last_election_result_store = codec::msgpack_decode<data::election::xelection_result_store_t>({std::begin(result), std::end(result)});
-            xinfo("xbeacon_chain_application::load_last_election_data load block.addr=%s,height=%ld", addr.c_str(), block_height);
+            xinfo("xbeacon_chain_application::load_last_election_data load block.addr=%s,height=%ld", addr.to_string().c_str(), block_height);
 
             if ((addr == rec_elect_rec_contract_address || addr == rec_elect_zec_contract_address || addr == zec_elect_consensus_contract_address ||
                  addr == zec_elect_eth_contract_address || addr == relay_make_block_contract_address) &&
@@ -471,12 +470,12 @@ bool xtop_application::is_genesis_node() const noexcept {
 
     for (auto const & item : seeds) {
         if (user_params.account == common::xnode_id_t{item.m_account}) {
-            xinfo("xtop_application::is_genesis_node is genesis node %s", node_id.c_str());
+            xinfo("xtop_application::is_genesis_node is genesis node %s", node_id.to_string().c_str());
             return true;
         }
     }
 
-    xwarn("xtop_application::is_genesis_node not genesis node %s", node_id.c_str());
+    xwarn("xtop_application::is_genesis_node not genesis node %s", node_id.to_string().c_str());
     return false;
 }
 
@@ -508,12 +507,12 @@ bool xtop_application::is_beacon_account() const noexcept {
                                              .result_of(common::xcommittee_group_id);
 
             if (top::get<bool>(current_group_nodes.find(node_id))) {
-                xinfo("xtop_application::is_beacon_account is genesis node. %s", node_id.c_str());
+                xinfo("xtop_application::is_beacon_account is genesis node. %s", node_id.to_string().c_str());
                 return true;
             }
         }
 
-        xwarn("xtop_application::is_beacon_account not genesis %s", node_id.c_str());
+        xwarn("xtop_application::is_beacon_account not genesis %s", node_id.to_string().c_str());
         return false;
     } catch (top::error::xtop_error_t const & eh) {
         std::cerr << "application start failed. exception: " << eh.what() << "; error: " << eh.code().message() << "; category: " << eh.code().category().name() << std::endl;

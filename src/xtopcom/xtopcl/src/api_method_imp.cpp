@@ -12,7 +12,7 @@
 #include "xdata/xtransaction.h"
 #include "xdata/xdatautil.h"
 #include "xvm/xvm_define.h"
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xbase/xutl.h"
 #include "xvledger/xvblock.h"
 

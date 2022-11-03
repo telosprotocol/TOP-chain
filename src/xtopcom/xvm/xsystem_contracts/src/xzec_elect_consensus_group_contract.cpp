@@ -4,7 +4,7 @@
 
 #include "xvm/xsystem_contracts/xelection/xzec/xzec_elect_consensus_group_contract.h"
 
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xconfig/xconfig_register.h"
 #include "xconfig/xpredefined_configurations.h"
@@ -296,8 +296,8 @@ void xtop_zec_elect_consensus_group_contract::on_timer(common::xlogic_time_t con
         return;
     }
 #endif
-    XCONTRACT_ENSURE(SOURCE_ADDRESS() == SELF_ADDRESS().value(), "xzec_elect_consensus_group_contract_t instance is triggled by others");
-    XCONTRACT_ENSURE(SELF_ADDRESS().value() == sys_contract_zec_elect_consensus_addr,
+    XCONTRACT_ENSURE(SOURCE_ADDRESS() == SELF_ADDRESS().to_string(), "xzec_elect_consensus_group_contract_t instance is triggled by others");
+    XCONTRACT_ENSURE(SELF_ADDRESS().to_string() == sys_contract_zec_elect_consensus_addr,
                      "xzec_elect_consensus_group_contract_t instance is not triggled by sys_contract_zec_elect_consensus_addr");
     // XCONTRACT_ENSURE(current_time <= TIME(), "xzec_elect_consensus_group_contract_t::on_timer current_time > consensus leader's time");
     XCONTRACT_ENSURE(current_time + XGET_ONCHAIN_GOVERNANCE_PARAMETER(cluster_election_interval) / 2 > TIME(),
@@ -547,7 +547,7 @@ bool xtop_zec_elect_consensus_group_contract::elect_auditor_validator(common::xz
 
             auto it = effective_auditor_standbys.find(validator_node_id);
             if (it != std::end(effective_auditor_standbys)) {
-                xdbg("group %s kicks out associator validator %s from auditor standby pool", auditor_group_id.to_string().c_str(), validator_node_id.value().c_str());
+                xdbg("group %s kicks out associator validator %s from auditor standby pool", auditor_group_id.to_string().c_str(), validator_node_id.to_string().c_str());
                 effective_auditor_standbys.erase(it);
             }
         }
@@ -578,7 +578,7 @@ bool xtop_zec_elect_consensus_group_contract::elect_auditor_validator(common::xz
                 xdbg("group %s kicks out other group %s auditor %s from auditor standby pool",
                      auditor_group_id.to_string().c_str(),
                      other_auditor_group_id.to_string().c_str(),
-                     auditor_node_id.value().c_str());
+                     auditor_node_id.to_string().c_str());
                 effective_auditor_standbys.erase(it);
             }
         }
@@ -620,7 +620,7 @@ bool xtop_zec_elect_consensus_group_contract::elect_auditor_validator(common::xz
 
             auto it = effective_validator_standbys.find(auditor_node_id);
             if (it != std::end(effective_validator_standbys)) {
-                xdbg("group %s kicks out associated auditor %s from validator standby pool", validator_group_id.to_string().c_str(), auditor_node_id.value().c_str());
+                xdbg("group %s kicks out associated auditor %s from validator standby pool", validator_group_id.to_string().c_str(), auditor_node_id.to_string().c_str());
                 effective_validator_standbys.erase(it);
             }
         }
@@ -645,7 +645,7 @@ bool xtop_zec_elect_consensus_group_contract::elect_auditor_validator(common::xz
                     xdbg("group %s kicks out other group %s validator from validator standby pool %s",
                          validator_group_id.to_string().c_str(),
                          other_validator_group_id.to_string().c_str(),
-                         validator_node_id.value().c_str());
+                         validator_node_id.to_string().c_str());
                     effective_validator_standbys.erase(it);
                 }
             }

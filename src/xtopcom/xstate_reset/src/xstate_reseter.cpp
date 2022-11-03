@@ -5,7 +5,7 @@
 #include "xstate_reset/xstate_reseter.h"
 
 #include "xbasic/xmemory.hpp"
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xdata/xnative_contract_address.h"
 #include "xstate_reset/xstate_tablestate_reseter_sample.h"
 #include "xstatectx/xstatectx.h"
@@ -80,10 +80,9 @@ bool xstate_reseter::exec_reset() {
         return false;
     }
     auto fork_properties = fork_info_contract_unit_state->string_get(std::string{data::XPROPERTY_CONTRACT_TABLE_FORK_INFO_KEY});
-    auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
 
 #define IS_FORK_POINT_FROM(from_properties, fork_point)                                                                                                                            \
-    (chain_fork::xchain_fork_config_center_t::is_forked(fork_config.fork_point, m_current_time_block_height) && fork_properties == from_properties)
+    (chain_fork::xutility_t::is_forked(fork_points::fork_point, m_current_time_block_height) && fork_properties == from_properties)
 
     // if (IS_FORK_POINT_FROM("", v1_7_0_sync_point)) {  // use last fork point as sample code
     //     // test_fork_reset

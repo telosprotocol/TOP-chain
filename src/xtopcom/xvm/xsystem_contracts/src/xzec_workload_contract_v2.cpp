@@ -149,9 +149,9 @@ std::vector<xobject_ptr_t<data::xblock_t>> xzec_workload_contract_v2::get_fullbl
     std::vector<xobject_ptr_t<data::xblock_t>> res;
     uint64_t time_interval = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::minutes{10}).count() / XGLOBAL_TIMER_INTERVAL_IN_SECONDS;
     while (true) {
-        base::xauto_ptr<data::xblock_t> next_block = get_next_fullblock(table_owner.value(), cur_read_height);
+        base::xauto_ptr<data::xblock_t> next_block = get_next_fullblock(table_owner.to_string(), cur_read_height);
         if (nullptr == next_block) {
-            xdbg("[xzec_workload_contract_v2::get_fullblock] table %s next full block is empty, last read height: %lu", table_owner.value().c_str(), last_read_height);
+            xdbg("[xzec_workload_contract_v2::get_fullblock] table %s next full block is empty, last read height: %lu", table_owner.to_string().c_str(), last_read_height);
             break;
         }
         auto block_height = next_block->get_height();
@@ -160,12 +160,12 @@ std::vector<xobject_ptr_t<data::xblock_t>> xzec_workload_contract_v2::get_fullbl
         if (timestamp < next_block->get_clock() || timestamp < (next_block->get_clock() + time_interval)) {
             xdbg("[xzec_workload_contract_v2::get_fullblock] clock interval not statisfy, timestamp: %lu, table: %s, full block height: %" PRIu64 ", block clock: %" PRIu64,
                  timestamp,
-                 table_owner.value().c_str(),
+                 table_owner.to_string().c_str(),
                  block_height,
                  next_block->get_clock());
             break;
         } else {
-            xdbg("[xzec_workload_contract_v2::get_fullblock] table: %s, block height: %" PRIu64 " push in", table_owner.value().c_str(), block_height);
+            xdbg("[xzec_workload_contract_v2::get_fullblock] table: %s, block height: %" PRIu64 " push in", table_owner.to_string().c_str(), block_height);
             cur_read_height = block_height;
             res.push_back(std::move(next_block));
         }

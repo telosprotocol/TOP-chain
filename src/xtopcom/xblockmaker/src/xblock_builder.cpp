@@ -6,7 +6,7 @@
 #include "xblockmaker/xblock_builder.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xconfig/xconfig_register.h"
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xdata/xblockbuild.h"
 #include "xvledger/xvblock_offdata.h"
 
@@ -106,7 +106,8 @@ data::xblock_ptr_t  xunitbuilder_t::make_block_v2(const data::xunitstate_ptr_t &
     bodypara.set_txkeys(unitbuilder_para.get_txkeys());
 
     bool is_full_unit = xunitbuilder_t::can_make_full_unit_v2(unitstate->height());
-    std::shared_ptr<base::xvblockmaker_t> vblockmaker = std::make_shared<data::xunit_build2_t>(unitstate->account_address().value(), unitstate->height(), unitstate->get_bstate()->get_last_block_hash(), is_full_unit, bodypara, cs_para);    
+    std::shared_ptr<base::xvblockmaker_t> vblockmaker = std::make_shared<data::xunit_build2_t>(
+        unitstate->account_address().to_string(), unitstate->height(), unitstate->get_bstate()->get_last_block_hash(), is_full_unit, bodypara, cs_para);    
     base::xauto_ptr<base::xvblock_t> _new_block = vblockmaker->build_new_block();
     data::xblock_ptr_t proposal_block = data::xblock_t::raw_vblock_to_object_ptr(_new_block.get());
     xassert(proposal_block->get_cert()->get_justify_cert_hash().empty());
@@ -227,8 +228,7 @@ void     xtablebuilder_t::make_table_block_para(const std::vector<std::pair<xblo
 
 data::xblock_ptr_t  xtablebuilder_t::make_light_block(const data::xblock_ptr_t & prev_block, const data::xblock_consensus_para_t & cs_para, data::xtable_block_para_t const& lighttable_para) {
     std::shared_ptr<base::xvblockmaker_t> vbmaker = nullptr;
-    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();                
-    if (top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.v1_7_0_block_fork_point, cs_para.get_clock())) {
+    if (top::chain_fork::xutility_t::is_forked(fork_points::v1_7_0_block_fork_point, cs_para.get_clock())) {
         vbmaker = std::make_shared<data::xtable_build2_t>(prev_block.get(), lighttable_para, cs_para);
     } else {
         vbmaker = std::make_shared<data::xlighttable_build_t>(prev_block.get(), lighttable_para, cs_para);

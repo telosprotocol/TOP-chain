@@ -25,11 +25,11 @@ static xobject_ptr_t<base::xvbstate_t> state(common::xaccount_address_t const & 
     xobject_ptr_t<base::xvbstate_t> address_bstate =
         base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_latest_connectted_block_state(_vaddr, metrics::statestore_access_from_store_bstate);
     if (address_bstate == nullptr) {
-        xerror("[xtop_state_accessor::get_property] get latest connectted state none, account=%s", address.c_str());
+        xerror("[xtop_state_accessor::get_property] get latest connectted state none, account=%s", address.to_string().c_str());
         top::error::throw_error(error::xenum_errc::load_account_state_failed);
         return nullptr;
     }
-    xdbg("[xtop_state_accessor::get_property] get latest connectted state success, account=%s, height=%ld", address.c_str(), address_bstate->get_block_height());
+    xdbg("[xtop_state_accessor::get_property] get latest connectted state success, account=%s, height=%ld", address.to_string().c_str(), address_bstate->get_block_height());
     return address_bstate;
 }
 
@@ -37,11 +37,11 @@ static xobject_ptr_t<base::xvbstate_t> state(common::xaccount_address_t const & 
     base::xvaccount_t _vaddr(address.to_string());
     xobject_ptr_t<base::xvbstate_t> address_bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_committed_block_state(_vaddr, height);
     if (address_bstate == nullptr) {
-        xerror("[xtop_state_accessor::get_property] get committed state none at height %" PRIu64 ", account=%s", height, address.c_str());
+        xerror("[xtop_state_accessor::get_property] get committed state none at height %" PRIu64 ", account=%s", height, address.to_string().c_str());
         top::error::throw_error(error::xenum_errc::load_account_state_failed);
         return nullptr;
     }
-    xdbg("[xtop_state_accessor::get_property] get latest connectted state success, account=%s, height=%ld", address.c_str(), address_bstate->get_block_height());
+    xdbg("[xtop_state_accessor::get_property] get latest connectted state success, account=%s, height=%ld", address.to_string().c_str(), address_bstate->get_block_height());
     return address_bstate;
 }
 
@@ -460,11 +460,11 @@ xobject_ptr_t<base::xvbstate_t> xtop_state_accessor::state(common::xaccount_addr
     xobject_ptr_t<base::xvbstate_t> address_bstate =
         base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_latest_connectted_block_state(_vaddr, metrics::statestore_access_from_store_bstate);
     if (address_bstate == nullptr) {
-        xerror("[xtop_state_accessor::get_property] get latest connectted state none, account=%s", address.c_str());
+        xerror("[xtop_state_accessor::get_property] get latest connectted state none, account=%s", address.to_string().c_str());
         ec = error::xenum_errc::load_account_state_failed;
         return nullptr;
     }
-    xdbg("[xtop_state_accessor::get_property] get latest connectted state success, account=%s, height=%ld", address.c_str(), address_bstate->get_block_height());
+    xdbg("[xtop_state_accessor::get_property] get latest connectted state success, account=%s, height=%ld", address.to_string().c_str(), address_bstate->get_block_height());
     return address_bstate;
 }
 

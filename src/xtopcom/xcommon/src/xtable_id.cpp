@@ -115,6 +115,9 @@ NS_BEG1(top)
 
 template <>
 std::string to_string<common::xtable_id_t>(common::xtable_id_t const & table_id) {
+    if (table_id.empty()) {
+        return {};
+    }
     return std::to_string(table_id.value());
 }
 

@@ -158,7 +158,7 @@ bool xtop_contract_deploy::deploy(common::xaccount_address_t const & address,
 
     xcontract_info_t * info = new xcontract_info_t(address, _roles);  // force : no broadcast allowed
     if (is_sys_contract_address(common::xaccount_address_t{address})) {
-        xdbg("[xtop_contract_deploy::deploy] add monitor for %s", address.c_str());
+        xdbg("[xtop_contract_deploy::deploy] add monitor for %s", address.to_string().c_str());
         // boradcast policy
         info->broadcast_policy = _broadcast_policy;
         info->broadcast_types = str_to_broadcast_types(_broadcast_types);
@@ -190,14 +190,14 @@ bool xtop_contract_deploy::deploy(common::xaccount_address_t const & address,
                                         time_interval,
                                         conf_interval);
                 xdbg("[xtop_contract_deploy::deploy] add timer monitor for %s, %s, interval %d, config interval %s",
-                     address.c_str(),
+                     address.to_string().c_str(),
                      monitor_info[0].c_str(),
                      time_interval,
                      conf_interval.c_str());
             }
         }
     }
-    xdbg("[xtop_contract_deploy::deploy] add done for %s", address.c_str());
+    xdbg("[xtop_contract_deploy::deploy] add done for %s", address.to_string().c_str());
     m_info_map[address] = info;
     return true;
 }

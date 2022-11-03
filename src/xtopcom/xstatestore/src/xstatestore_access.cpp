@@ -72,22 +72,28 @@ data::xtablestate_ptr_t xstatestore_dbaccess_t::read_table_bstate(common::xaccou
     const std::string state_db_bin = m_statestore_base.get_dbstore()->get_value(state_db_key);
     if(state_db_bin.empty()) {
         XMETRICS_GAUGE(metrics::statestore_get_table_state_from_db, 0);
-        xwarn("xstatestore_dbaccess_t::read_table_bstate,fail to read from db for account=%s,height=%ld,hash=%s",address.value().c_str(), height, base::xstring_utl::to_hex(block_hash).c_str());
+        xwarn("xstatestore_dbaccess_t::read_table_bstate,fail to read from db for account=%s,height=%ld,hash=%s",
+              address.to_string().c_str(),
+              height,
+              base::xstring_utl::to_hex(block_hash).c_str());
         return nullptr;
     }
 
     base::xauto_ptr<base::xvbstate_t> state_ptr = base::xvblock_t::create_state_object(state_db_bin);
     if(nullptr == state_ptr) {//remove the error data for invalid data
         m_statestore_base.get_dbstore()->delete_value(state_db_key);
-        xerror("xstatestore_dbaccess_t::read_table_bstate,fail invalid data at db for account=%s,height=%ld,hash=%s",address.value().c_str(), height, base::xstring_utl::to_hex(block_hash).c_str());
+        xerror("xstatestore_dbaccess_t::read_table_bstate,fail invalid data at db for account=%s,height=%ld,hash=%s",
+               address.to_string().c_str(),
+               height,
+               base::xstring_utl::to_hex(block_hash).c_str());
         return nullptr;
     }
-    if(state_ptr->get_address() != address.value()) {
-        xerror("xstatestore_dbaccess_t::read_table_bstate,fail bad state(%s) vs ask(account:%s) ",state_ptr->dump().c_str(),address.value().c_str());
+    if (state_ptr->get_address() != address.to_string()) {
+        xerror("xstatestore_dbaccess_t::read_table_bstate,fail bad state(%s) vs ask(account:%s) ", state_ptr->dump().c_str(), address.to_string().c_str());
         return nullptr;
     }
     XMETRICS_GAUGE(metrics::statestore_get_table_state_from_db, 1);
-    xdbg("xstatestore_dbaccess_t::read_table_bstate succ.account=%s,height=%ld,hash=%s",address.value().c_str(), height, base::xstring_utl::to_hex(block_hash).c_str());
+    xdbg("xstatestore_dbaccess_t::read_table_bstate succ.account=%s,height=%ld,hash=%s", address.to_string().c_str(), height, base::xstring_utl::to_hex(block_hash).c_str());
     data::xtablestate_ptr_t tablestate = std::make_shared<data::xtable_bstate_t>(state_ptr.get());
     return tablestate;
 }
@@ -112,22 +118,23 @@ data::xunitstate_ptr_t xstatestore_dbaccess_t::read_unit_bstate(common::xaccount
     const std::string state_db_bin = m_statestore_base.get_dbstore()->get_value(state_db_key);
     if(state_db_bin.empty()) {
         XMETRICS_GAUGE(metrics::statestore_get_unit_state_from_db, 0);
-        xwarn("xstatestore_dbaccess_t::read_unit_bstate,fail to read from db for account=%s,hash=%s",address.value().c_str(), base::xstring_utl::to_hex(block_hash).c_str());
+        xwarn("xstatestore_dbaccess_t::read_unit_bstate,fail to read from db for account=%s,hash=%s", address.to_string().c_str(), base::xstring_utl::to_hex(block_hash).c_str());
         return nullptr;
     }
 
     base::xauto_ptr<base::xvbstate_t> state_ptr = base::xvblock_t::create_state_object(state_db_bin);
     if(nullptr == state_ptr) {//remove the error data for invalid data
         m_statestore_base.get_dbstore()->delete_value(state_db_key);
-        xerror("xstatestore_dbaccess_t::read_unit_bstate,fail invalid data at db for account=%s,hash=%s",address.value().c_str(), base::xstring_utl::to_hex(block_hash).c_str());
+        xerror(
+            "xstatestore_dbaccess_t::read_unit_bstate,fail invalid data at db for account=%s,hash=%s", address.to_string().c_str(), base::xstring_utl::to_hex(block_hash).c_str());
         return nullptr;
     }
-    if(state_ptr->get_address() != address.value()) {
-        xerror("xstatestore_dbaccess_t::read_unit_bstate,fail bad state(%s) vs ask(account:%s) ",state_ptr->dump().c_str(),address.value().c_str());
+    if (state_ptr->get_address() != address.to_string()) {
+        xerror("xstatestore_dbaccess_t::read_unit_bstate,fail bad state(%s) vs ask(account:%s) ", state_ptr->dump().c_str(), address.to_string().c_str());
         return nullptr;
     }
     XMETRICS_GAUGE(metrics::statestore_get_unit_state_from_db, 1);
-    xdbg("xstatestore_dbaccess_t::read_unit_bstate succ.account=%s,hash=%s",address.value().c_str(),  base::xstring_utl::to_hex(block_hash).c_str());
+    xdbg("xstatestore_dbaccess_t::read_unit_bstate succ.account=%s,hash=%s", address.to_string().c_str(), base::xstring_utl::to_hex(block_hash).c_str());
     data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(state_ptr.get());
     return unitstate;
 }

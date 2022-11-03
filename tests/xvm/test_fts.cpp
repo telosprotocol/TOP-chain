@@ -160,7 +160,7 @@ TEST(fts, select_possibility) {
         auto const & lhs_node_id = top::get<top::common::xnode_id_t>(lhs);
         auto const & rhs_node_id = top::get<top::common::xnode_id_t>(rhs);
 
-        if (lhs_node_id.value().length() != rhs_node_id.value().length()) {
+        if (lhs_node_id.to_string().length() != rhs_node_id.to_string().length()) {
             return lhs_node_id.value().length() > rhs_node_id.value().length();
         }
 

@@ -27,7 +27,7 @@ public:
      */
     static common::xaccount_address_t calc_cluster_address(common::xaccount_address_t const &address, const uint32_t table_id) {
         if (is_sys_contract_address(address)) {
-            return data::make_address_by_prefix_and_subaddr(address.value(), (uint16_t)table_id);
+            return data::make_address_by_prefix_and_subaddr(address.to_string(), (uint16_t)table_id);
         }
         return address;
     }
@@ -45,8 +45,8 @@ public:
             return true;
         }
 
-        if (cluster_address.value().size() == monitor_address.value().size() + TOP_ADDR_TABLE_ID_SUFFIX_LENGTH) {
-            return cluster_address.value().find(monitor_address.value()) == 0;
+        if (cluster_address.to_string().size() == monitor_address.to_string().size() + TOP_ADDR_TABLE_ID_SUFFIX_LENGTH) {
+            return cluster_address.to_string().find(monitor_address.to_string()) == 0;
         }
 
         return false;

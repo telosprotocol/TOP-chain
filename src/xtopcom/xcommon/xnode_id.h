@@ -33,6 +33,7 @@
 #include "xcommon/xledger_id.h"
 #include "xcommon/xtable_id.h"
 #include "xeth_address_fwd.h"
+#include "xtable_address.h"
 
 #include <cstdint>
 #include <string>
@@ -57,7 +58,7 @@ std::int32_t operator>>(top::base::xbuffer_t & stream, xtop_node_id & node_id);
 class xtop_node_id final {
 private:
     xaccount_base_address_t m_account_base_address;
-    std::string m_account_string;
+    // std::string m_account_string;
     xaccount_id_t m_account_id{};
     xtable_id_t m_assigned_table_id;
     metrics_xtop_node_id m_nouse;
@@ -70,22 +71,22 @@ public:
     xtop_node_id & operator=(xtop_node_id &&)      = default;
     ~xtop_node_id()                                = default;
 
-    explicit xtop_node_id(std::string value);
+    explicit xtop_node_id(std::string const & value);
     explicit xtop_node_id(xaccount_base_address_t base_address);
     explicit xtop_node_id(xaccount_base_address_t base_address, uint16_t table_id_value);
     explicit xtop_node_id(xaccount_base_address_t base_address, xtable_id_t table_id);
 
-    static xtop_node_id build_from(std::string const & input, std::error_code & ec);
-    static xtop_node_id build_from(std::string const & input);
+    static xtop_node_id build_from(std::string const & account_string, std::error_code & ec);
+    static xtop_node_id build_from(std::string const & account_string);
     static xtop_node_id build_from(xeth_address_t const & eth_address, base::enum_vaccount_addr_type vaccount_addr_type, std::error_code & ec);
     static xtop_node_id build_from(xeth_address_t const & eth_address, base::enum_vaccount_addr_type vaccount_addr_type);
 
     bool empty() const noexcept;
     bool has_value() const noexcept;
-    std::string const & value() const noexcept;
+    //std::string value() const;
     xaccount_base_address_t const & base_address() const noexcept;
     uint64_t hash() const;
-    std::string const & to_string() const noexcept;
+    std::string to_string() const;
     void clear();
 
     explicit operator bool() const noexcept;
@@ -100,8 +101,8 @@ public:
     bool operator>=(xtop_node_id const & other) const noexcept;
     bool operator<=(xtop_node_id const & other) const noexcept;
 
-    void
-    random();
+    //void
+    //random();
 
     std::size_t
     length() const noexcept;
@@ -109,8 +110,8 @@ public:
     std::size_t
     size() const noexcept;
 
-    char const *
-    c_str() const noexcept;
+    //char const *
+    //c_str() const noexcept;
 
     base::enum_vaccount_addr_type type(std::error_code & ec) const;
     base::enum_vaccount_addr_type type() const;
@@ -123,6 +124,8 @@ public:
 
     base::xvaccount_t vaccount() const;
 
+    xtable_address_t table_address() const;
+
     friend std::int32_t operator<<(base::xstream_t & stream, xtop_node_id const & node_id);
     friend std::int32_t operator>>(base::xstream_t & stream, xtop_node_id & node_id);
     friend std::int32_t operator<<(base::xbuffer_t & stream, xtop_node_id const & node_id);
@@ -134,7 +137,7 @@ public:
     std::int32_t serialize_from(base::xbuffer_t & buffer);
 
 private:
-    void parse();
+    void parse(std::string const & account_string);
 
     std::int32_t
     do_read(base::xstream_t & stream);

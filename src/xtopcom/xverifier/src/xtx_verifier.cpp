@@ -5,7 +5,7 @@
 
 #include "xbase/xutl.h"
 #include "xbasic/xmodule_type.h"
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
@@ -126,9 +126,10 @@ int32_t xtx_verifier::verify_address_type(data::xtransaction_t const * trx) {
 
 data::system_contract::xreg_node_info get_reg_info(common::xaccount_address_t const & node_addr) {
     std::string value_str;
-    int ret = statestore::xstatestore_hub_t::instance()->map_get(rec_registration_contract_address, data::system_contract::XPORPERTY_CONTRACT_REG_KEY, node_addr.value(), value_str);
+    int ret =
+        statestore::xstatestore_hub_t::instance()->map_get(rec_registration_contract_address, data::system_contract::XPORPERTY_CONTRACT_REG_KEY, node_addr.to_string(), value_str);
     if (ret != xsuccess || value_str.empty()) {
-        xwarn("[get_reg_info] get node register info fail, node_addr: %s", node_addr.value().c_str());
+        xwarn("[get_reg_info] get node register info fail, node_addr: %s", node_addr.to_string().c_str());
         return data::system_contract::xreg_node_info{};
     }
 

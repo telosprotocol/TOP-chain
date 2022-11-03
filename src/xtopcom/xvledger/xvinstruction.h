@@ -86,7 +86,8 @@ namespace top
             enum_xvinstruct_state_method_key_deploy         = 0x1b,  //deploy a key
             enum_xvinstruct_state_method_key_disable        = 0x1c,  //disable the key,once disable not allow reenable
             enum_xvinstruct_state_method_key_deactive       = 0x1d,  //deactive a key
-            
+
+            enum_xvinstruct_state_method_set_balance_token  = 0x1e,  //set balance
             
             //map = std::deque<xxx>
             enum_xvinstruct_state_method_queue_push_front   = 0x20,

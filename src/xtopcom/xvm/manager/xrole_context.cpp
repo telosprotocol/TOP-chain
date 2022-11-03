@@ -4,7 +4,7 @@
 
 #include "xvm/manager/xrole_context.h"
 
-#include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 #include "xchain_timer/xchain_timer_face.h"
 #include "xcodec/xmsgpack_codec.hpp"
 #include "xdata/xblocktool.h"
@@ -192,14 +192,24 @@ void xrole_context_t::on_block_timer(const xevent_ptr_t & e) {
                             if (schedule_info.cur_interval == schedule_info.target_interval) {
                                 schedule_info.cur_table = m_driver->table_ids().at(0) +  static_cast<uint16_t>((onchain_timer_round / clock_interval) % table_num);
                                 xinfo("xrole_context_t::on_block_timer: table contract schedule, contract address %s, timer %" PRIu64 ", schedule info:[%hu, %hu, %hu %hu]",
-                                    m_contract_info->address.value().c_str(), onchain_timer_round, schedule_info.cur_interval, schedule_info.target_interval, schedule_info.clock_or_table, schedule_info.cur_table);
+                                      m_contract_info->address.to_string().c_str(),
+                                      onchain_timer_round,
+                                      schedule_info.cur_interval,
+                                      schedule_info.target_interval,
+                                      schedule_info.clock_or_table,
+                                      schedule_info.cur_table);
                                 call_contract(onchain_timer_round, info, block_timestamp, schedule_info.cur_table);
                                 schedule_info.cur_interval = 0;
                             }
                         } else { // have not schedule yet
                             xtable_schedule_info_t schedule_info(clock_interval, m_driver->table_ids().at(0) + static_cast<uint16_t>((onchain_timer_round / clock_interval) % table_num));
                             xinfo("xrole_context_t::on_block_timer: table contract schedule initial, contract address %s, timer %" PRIu64 ", schedule info:[%hu, %hu, %hu %hu]",
-                                    m_contract_info->address.value().c_str(), onchain_timer_round, schedule_info.cur_interval, schedule_info.target_interval, schedule_info.clock_or_table, schedule_info.cur_table);
+                                  m_contract_info->address.to_string().c_str(),
+                                  onchain_timer_round,
+                                  schedule_info.cur_interval,
+                                  schedule_info.target_interval,
+                                  schedule_info.clock_or_table,
+                                  schedule_info.cur_table);
                             call_contract(onchain_timer_round, info, block_timestamp, schedule_info.cur_table);
                             m_table_contract_schedule[m_contract_info->address] = schedule_info;
                         }
@@ -208,11 +218,10 @@ void xrole_context_t::on_block_timer(const xevent_ptr_t & e) {
                     } else if ((m_contract_info->address == eth_statistic_info_contract_address) && valid_call(onchain_timer_round)) {
                         // default size = 1
                         auto call_interval = XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_statistic_report_schedule_interval);
-                        auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
-                        if (top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.eth_fork_point, onchain_timer_round)) {
+                        if (top::chain_fork::xutility_t::is_forked(fork_points::eth_fork_point, onchain_timer_round)) {
                             if (call_interval != 0 && onchain_timer_round != 0 && onchain_timer_round % call_interval == 0) {
                                 xinfo("xrole_context_t::on_block_timer table contract schedule, contract address %s, timer %" PRIu64 ", interval: %lu",
-                                    m_contract_info->address.value().c_str(),
+                                      m_contract_info->address.to_string().c_str(),
                                     onchain_timer_round,
                                     call_interval);
                                 call_contract(onchain_timer_round, info, block_timestamp, 0);
@@ -230,13 +239,16 @@ void xrole_context_t::on_block_timer(const xevent_ptr_t & e) {
                     //     ((round % time_interval) != 0 && !runtime_stand_alone(onchain_timer_round, m_contract_info->address))) {
                     //     do_call = false;
                     // }
-                    xdbg("==== get timer2 transaction %s, %llu, %u, %d", m_contract_info->address.value().c_str(), onchain_timer_round, time_interval, do_call);
+                    xdbg("==== get timer2 transaction %s, %llu, %u, %d", m_contract_info->address.to_string().c_str(), onchain_timer_round, time_interval, do_call);
                 } else {
                     assert(0);
                 }
             }
             if (do_call && valid_call(onchain_timer_round)) {
-                xinfo("xrole_context_t::on_block_timer call_contract : %s , %llu ,%d", m_contract_info->address.value().c_str(), onchain_timer_round, static_cast<int32_t>(info->type));
+                xinfo("xrole_context_t::on_block_timer call_contract : %s , %llu ,%d",
+                      m_contract_info->address.to_string().c_str(),
+                      onchain_timer_round,
+                      static_cast<int32_t>(info->type));
                 call_contract(onchain_timer_round, info, block_timestamp);
             }
         }
@@ -257,7 +269,7 @@ bool xrole_context_t::runtime_stand_alone(const uint64_t timer_round, common::xa
 
     auto account = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(sys_addr);
     if (nullptr == account) {
-        xerror("xrole_context_t::runtime_stand_alone fail-query account.address=%s", sys_addr.value().c_str());
+        xerror("xrole_context_t::runtime_stand_alone fail-query account.address=%s", sys_addr.to_string().c_str());
         xassert(nullptr != account);
         return false;
     }
@@ -336,7 +348,7 @@ void xrole_context_t:: call_contract(const uint64_t onchain_timer_round, xblock_
 
 bool xrole_context_t::is_timer_unorder(common::xaccount_address_t const & address, uint64_t timestamp) {
     if (address == timer_system_address) {
-        auto block = m_syncstore->get_vblockstore()->get_latest_committed_block(address.value());
+        auto block = m_syncstore->get_vblockstore()->get_latest_committed_block(address.to_string());
         if (abs((int64_t)(((xblock_t *)block.get())->get_timestamp() - timestamp)) <= 3) {
             return true;
         }
@@ -356,17 +368,18 @@ void xrole_context_t::call_contract(const std::string & action_params, uint64_t 
     xproperty_asset asset_out{0};
     for (auto & address : addresses) {
         if (is_timer_unorder(address, timestamp)) {
-            xinfo("[xrole_context_t] call_contract in consensus mode, address timer unorder, not create tx", address.value().c_str());
+            xinfo("[xrole_context_t] call_contract in consensus mode, address timer unorder, not create tx", address.to_string().c_str());
             continue;
         }
 
         data::xunitstate_ptr_t account = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(address);
         if (nullptr == account) {
-            xerror("xrole_context_t::call_contract fail-query account.address=%s", address.value().c_str());
+            xerror("xrole_context_t::call_contract fail-query account.address=%s", address.to_string().c_str());
             xassert(nullptr != account);
             return;
         }
-        xtransaction_ptr_t tx = xtx_factory::create_sys_contract_call_self_tx(address.value(),
+        xtransaction_ptr_t tx = xtx_factory::create_sys_contract_call_self_tx(
+            address.to_string(),
                                                          account->account_send_trans_number(), account->account_send_trans_hash(),
                                                          info->action, action_params, timestamp, EXPIRE_DURATION);
 
@@ -375,7 +388,7 @@ void xrole_context_t::call_contract(const std::string & action_params, uint64_t 
             xinfo("[xrole_context_t] call_contract in consensus mode with return code : %d, %s, %s %s %ld, %lld",
                   r,
                   tx->get_digest_hex_str().c_str(),
-                  address.value().c_str(),
+                  address.to_string().c_str(),
                   data::to_hex_str(account->account_send_trans_hash()).c_str(),
                   account->account_send_trans_number(),
                   timestamp);
@@ -394,17 +407,18 @@ void xrole_context_t::call_contract(const std::string & action_params, uint64_t 
     auto const address = xcontract_address_map_t::calc_cluster_address(m_contract_info->address, table_id);
 
     if (is_timer_unorder(address, timestamp)) {
-        xinfo("[xrole_context_t] call_contract in consensus mode, address timer unorder, not create tx", address.c_str());
+        xinfo("[xrole_context_t] call_contract in consensus mode, address timer unorder, not create tx", address.to_string().c_str());
         return;
     }
 
     data::xunitstate_ptr_t account = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(address);
     if (nullptr == account) {
-        xerror("xrole_context_t::call_contract fail-query account.address=%s", address.value().c_str());
+        xerror("xrole_context_t::call_contract fail-query account.address=%s", address.to_string().c_str());
         xassert(nullptr != account);
         return;
     }
-    xtransaction_ptr_t tx = xtx_factory::create_sys_contract_call_self_tx(address.value(),
+    xtransaction_ptr_t tx = xtx_factory::create_sys_contract_call_self_tx(
+        address.to_string(),
                                                      account->account_send_trans_number(), account->account_send_trans_hash(),
                                                      info->action, action_params, timestamp, EXPIRE_DURATION);
 
@@ -413,7 +427,7 @@ void xrole_context_t::call_contract(const std::string & action_params, uint64_t 
         xinfo("[xrole_context_t] call_contract in consensus mode with return code : %d, %s, %s %s %ld, %lld",
               r,
               tx->get_digest_hex_str().c_str(),
-              address.c_str(),
+              address.to_string().c_str(),
               data::to_hex_str(account->account_send_trans_hash()).c_str(),
               account->account_send_trans_number(),
               timestamp);
@@ -431,12 +445,12 @@ void xrole_context_t::on_fulltableblock_event(common::xaccount_address_t const& 
     auto const address = xcontract_address_map_t::calc_cluster_address(contract_name, table_id);
     data::xunitstate_ptr_t account = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(address);
     if (nullptr == account) {
-        xerror("xrole_context_t::on_fulltableblock_event fail-query account.address=%s", address.c_str());
+        xerror("xrole_context_t::on_fulltableblock_event fail-query account.address=%s", address.to_string().c_str());
         xassert(nullptr != account);
         return;
     }
     xtransaction_ptr_t tx = xtx_factory::create_sys_contract_call_self_tx(
-        address.value(), account->account_send_trans_number(), account->account_send_trans_hash(), action_name, action_params, timestamp, EXPIRE_DURATION);
+        address.to_string(), account->account_send_trans_number(), account->account_send_trans_hash(), action_name, action_params, timestamp, EXPIRE_DURATION);
 
     auto const & driver_ids = m_driver->table_ids();
     auto result = find(driver_ids.begin(), driver_ids.end(), table_id);
@@ -447,7 +461,7 @@ void xrole_context_t::on_fulltableblock_event(common::xaccount_address_t const& 
     xinfo("[xrole_context_t::fulltableblock_event] call_contract in consensus mode with return code : %d, %s, %s %s %ld, %lld",
             r,
             tx->get_digest_hex_str().c_str(),
-            address.c_str(),
+          address.to_string().c_str(),
             data::to_hex_str(account->account_send_trans_hash()).c_str(),
             account->account_send_trans_number(),
             timestamp);
