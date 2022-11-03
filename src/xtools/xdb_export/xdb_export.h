@@ -93,20 +93,17 @@ public:
                                                                                std::vector<common::xaccount_address_t> const & designated,
                                                                                std::error_code & ec) const;
 
-    typedef enum { invalid, map, list, integer } xproperty_type_t;
-
     struct exported_account_data {
         common::xaccount_address_t account_address;
         std::array<std::unordered_map<std::string, evm_common::u256>, 2> assets;    // index 0: TOP, index 1: TEP1
-        std::map<xproperty_type_t, std::unordered_map<std::string, xbytes_t>> properties;
+        std::unordered_map<std::string, xbytes_t> properties;
     };
 
     std::vector<exported_account_data> get_account_data(std::unordered_map<common::xaccount_address_t, uint64_t> const & accounts,
                                                         std::vector<common::xtoken_id_t> const & queried_tokens,
-                                                        std::unordered_map<std::string, xproperty_type_t> const & queried_properties,
+                                                        std::vector<std::string> const & queried_properties,
                                                         std::error_code & ec) const;
 
-    void export_to_json(std::vector<exported_account_data> const & data, std::string const & file_path, std::error_code & ec) const;
     void append_to_json(common::xtable_address_t const & table_address, uint64_t table_height, std::vector<exported_account_data> const & data, std::string const & file_path, std::error_code & ec) const;
 
 private:
@@ -428,7 +425,5 @@ private:
     xdbtool_all_table_info_t m_all_table_info[TOTAL_TABLE_NUM];
     std::map<std::string, uint64_t> m_txs_fire_timestamp;
 };
-
-std::string to_string(xdb_export_tools_t::xproperty_type_t type);
 
 NS_END2

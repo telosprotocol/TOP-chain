@@ -444,7 +444,7 @@ int main(int argc, char ** argv) {
             }
 
             auto const result = tools.get_account_data(
-                units, {common::xtoken_id_t::top, common::xtoken_id_t::eth, common::xtoken_id_t::usdt, common::xtoken_id_t::usdc}, {{"$06", xdb_export_tools_t::map}}, ec);
+                units, {common::xtoken_id_t::top, common::xtoken_id_t::eth, common::xtoken_id_t::usdt, common::xtoken_id_t::usdc}, {"$06"}, ec);
             tools.append_to_json(table_address, table_height, result, exported_file_path, ec);
         }
     } else {
