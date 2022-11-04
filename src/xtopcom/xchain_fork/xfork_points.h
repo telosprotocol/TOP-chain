@@ -42,5 +42,6 @@ extern top::optional<xfork_point_t> relay_fork_point;
 extern top::optional<xfork_point_t> v1_6_0_version_point;  // for v1.6.0 version control
 extern top::optional<xfork_point_t> v1_7_0_block_fork_point;
 extern top::optional<xfork_point_t> v1_7_0_sync_point;
+extern top::optional<xfork_point_t> TEST_FORK;
 
 NS_END2

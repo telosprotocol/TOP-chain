@@ -38,9 +38,9 @@ XINLINE_CONSTEXPR char const * sys_contract_zec_elect_relay_addr{"T2000200000000
 XINLINE_CONSTEXPR char const * sys_contract_sharding_vote_addr{ "T20000MVfDLsBKVcy1wMp4CoEHWxUeBEAVBL9ZEa" };
 XINLINE_CONSTEXPR char const * sys_contract_sharding_reward_claiming_addr{ "T20000MTotTKfAJRxrfvEwEJvtgCqzH9GkpMmAUg" };
 XINLINE_CONSTEXPR char const * sys_contract_sharding_statistic_info_addr{ "T20000ML7oBZbitBCcXhrJwqBhha2MUimd6SM9Z6" };
-XINLINE_CONSTEXPR char const * sys_contract_sharding_fork_info_addr{ "T200000000000000000000000000000000000000" };
+XINLINE_CONSTEXPR char const * sys_contract_sharding_fork_info_addr{ "T200000000000000000000000000000000000010" };
 
-XINLINE_CONSTEXPR char const * sys_contract_eth_fork_info_addr{"T200040000000000000000000000000000000000@0"};
+XINLINE_CONSTEXPR char const * sys_contract_eth_fork_info_addr{"T200040000000000000000000000000000000010@0"};
 XINLINE_CONSTEXPR char const * sys_contract_eth_table_statistic_info_addr{ "T200040000000000000000000000000000000001@0" };
 XINLINE_CONSTEXPR char const * sys_contract_eth_table_cross_chain_txs_collection_addr{"T200040000000000000000000000000000000002@0"};
 
