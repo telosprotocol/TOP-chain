@@ -12,13 +12,12 @@
 #include <cinttypes>
 NS_BEG2(top, xunit_service)
 
-xrelay_packer2::xrelay_packer2(observer_ptr<mbus::xmessage_bus_face_t> const   &mb,
-                           base::xtable_index_t &                          tableid,
+xrelay_packer2::xrelay_packer2(base::xtable_index_t &                          tableid,
                            const std::string &                             account_id,
                            std::shared_ptr<xcons_service_para_face> const &para,
                            std::shared_ptr<xblock_maker_face> const &      block_maker,
                            base::xcontext_t &                              _context,
-                           uint32_t                                        target_thread_id) : xbatch_packer(mb, tableid, account_id, para, block_maker, _context, target_thread_id) {
+                           uint32_t                                        target_thread_id) : xbatch_packer(tableid, account_id, para, block_maker, _context, target_thread_id) {
     xunit_info("xrelay_packer2::xrelay_packer,create,this=%p,account=%s", this, account_id.c_str());
 }
 
@@ -98,7 +97,7 @@ void xrelay_packer2::send_receipts(base::xvblock_t *vblock) {
     // relay chain have no receipts.
 }
 
-uint32_t xrelay_packer2::calculate_min_tx_num(bool first_packing) {
+uint32_t xrelay_packer2::calculate_min_tx_num(bool first_packing, uint64_t time_ms) {
     return 0;
 }
 

@@ -19,8 +19,7 @@ NS_BEG2(top, xunit_service)
 
 class xdispatcher_builder : public xunit_service::xcons_dispatcher_builder_face {
 public:
-    xunit_service::xcons_dispatcher_ptr build(observer_ptr<mbus::xmessage_bus_face_t> const & mb,
-                                              std::shared_ptr<xunit_service::xcons_service_para_face> const &,
+    xunit_service::xcons_dispatcher_ptr build(std::shared_ptr<xunit_service::xcons_service_para_face> const &,
                                               xunit_service::e_cons_type cons_type) override;
 };
 

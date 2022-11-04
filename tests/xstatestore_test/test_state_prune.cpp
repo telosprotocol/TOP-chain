@@ -270,9 +270,9 @@ TEST_F(test_state_prune, prune_exec_cons) {
         std::string value_state;
         xdb->read(state_key, value_state);
         EXPECT_EQ(value_state.empty(), (h <= 30 && block->get_block_class() != base::enum_xvblock_class_full));
-        std::string value_offdata;
-        xdb->read(offdata_key, value_offdata);
-        EXPECT_EQ(value_offdata.empty(), (h <= 30 && block->get_block_class() != base::enum_xvblock_class_nil));
+        // std::string value_offdata;
+        // xdb->read(offdata_key, value_offdata);
+        // EXPECT_EQ(value_offdata.empty(), (h <= 30 && block->get_block_class() != base::enum_xvblock_class_nil));
 
         evm_common::xh256_t root;
         auto ret = data::xblockextract_t::get_state_root(block.get(), root);
@@ -300,9 +300,9 @@ TEST_F(test_state_prune, prune_exec_cons) {
         std::string value_state;
         xdb->read(state_key, value_state);
         EXPECT_EQ(value_state.empty(), (h <= 55 && block->get_block_class() != base::enum_xvblock_class_full));
-        std::string value_offdata;
-        xdb->read(offdata_key, value_offdata);
-        EXPECT_EQ(value_offdata.empty(), (h <= 55 && block->get_block_class() != base::enum_xvblock_class_nil));
+        // std::string value_offdata;
+        // xdb->read(offdata_key, value_offdata);
+        // EXPECT_EQ(value_offdata.empty(), (h <= 55 && block->get_block_class() != base::enum_xvblock_class_nil));
 
         evm_common::xh256_t root;
         auto ret = data::xblockextract_t::get_state_root(block.get(), root);
