@@ -21,12 +21,11 @@
 #include <cinttypes>
 
 NS_BEG2(top, xunit_service)
-xunit_service::xcons_dispatcher_ptr xdispatcher_builder::build(observer_ptr<mbus::xmessage_bus_face_t> const & mb,
-                                                               std::shared_ptr<xunit_service::xcons_service_para_face> const & p_srv_para,
+xunit_service::xcons_dispatcher_ptr xdispatcher_builder::build(std::shared_ptr<xunit_service::xcons_service_para_face> const & p_srv_para,
                                                                xunit_service::e_cons_type cons_type) {
     auto block_maker = p_srv_para->get_consensus_para()->get_block_maker(cons_type);
     if (cons_type == xunit_service::e_table) {
-        return std::make_shared<xunit_service::xworkpool_dispatcher>(mb, p_srv_para, block_maker);
+        return std::make_shared<xunit_service::xworkpool_dispatcher>(p_srv_para, block_maker);
     } else {
         return std::make_shared<xunit_service::xtimer_dispatcher_t>(p_srv_para, block_maker);
     }
@@ -98,7 +97,7 @@ void xcons_service_mgr::create(const std::shared_ptr<vnetwork::xvnetwork_driver_
     auto                                             node_type = network->type();
     std::vector<std::shared_ptr<xcons_service_face>> services;
     if (common::has<common::xnode_type_t::rec>(node_type)) {
-        auto dispatcher = m_dispachter_builder->build(m_mbus, m_para, e_timer);
+        auto dispatcher = m_dispachter_builder->build(m_para, e_timer);
         xunit_dbg("[xcons_service_mgr::create] create timer service for rec, %" PRIx64 ":%" PRIx64", dispatcher obj %p", xip.high_addr, xip.low_addr, dispatcher.get());
         if (dispatcher != nullptr) {
             std::shared_ptr<xcons_service_face> timer_service = std::make_shared<xtimer_service_t>(m_para, dispatcher);
@@ -106,7 +105,7 @@ void xcons_service_mgr::create(const std::shared_ptr<vnetwork::xvnetwork_driver_
         }
     }
 
-    auto table_dispatcher = m_dispachter_builder->build(m_mbus, m_para, e_table);
+    auto table_dispatcher = m_dispachter_builder->build(m_para, e_table);
     if (table_dispatcher != nullptr) {
         std::shared_ptr<xcons_service_face> table_service = std::make_shared<xtableblockservice>(m_para, table_dispatcher);
         services.push_back(table_service);

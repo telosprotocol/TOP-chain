@@ -15,8 +15,8 @@
 
 NS_BEG2(top, xunit_service)
 #define WORK_DISPATCH_WATCHER "table_dispatch_timer"
-xworkpool_dispatcher::xworkpool_dispatcher(observer_ptr<mbus::xmessage_bus_face_t> const &mb, std::shared_ptr<xcons_service_para_face> const & p_para, std::shared_ptr<xblock_maker_face> const & block_maker)
-  : xcons_dispatcher(e_table), m_mbus(mb), m_para(p_para), m_blockmaker(block_maker) {
+xworkpool_dispatcher::xworkpool_dispatcher(std::shared_ptr<xcons_service_para_face> const & p_para, std::shared_ptr<xblock_maker_face> const & block_maker)
+  : xcons_dispatcher(e_table), m_para(p_para), m_blockmaker(block_maker) {
     xunit_info("xworkpool_dispatcher::xworkpool_dispatcher,create,this=%p", this);
 
 }
@@ -214,9 +214,9 @@ bool xworkpool_dispatcher::subscribe(const std::vector<base::xtable_index_t> & t
                 // build packer and push to container
                 xbatch_packer_ptr_t packer_ptr;
                 if (table_id.get_zone_index() == base::enum_chain_zone_relay_index) {
-                    packer_ptr = make_object_ptr<xrelay_packer2>(m_mbus, table_id, account_id, m_para, m_blockmaker, base::xcontext_t::instance(), thread_id);
+                    packer_ptr = make_object_ptr<xrelay_packer2>(table_id, account_id, m_para, m_blockmaker, base::xcontext_t::instance(), thread_id);
                 } else {
-                    packer_ptr = make_object_ptr<xbatch_packer>(m_mbus, table_id, account_id, m_para, m_blockmaker, base::xcontext_t::instance(), thread_id);
+                    packer_ptr = make_object_ptr<xbatch_packer>(table_id, account_id, m_para, m_blockmaker, base::xcontext_t::instance(), thread_id);
                 }
                 // packer_ptr->reset_xip_addr(xip);
                 m_packers[table_id] = packer_ptr;
