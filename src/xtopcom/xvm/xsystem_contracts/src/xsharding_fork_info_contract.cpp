@@ -4,7 +4,7 @@
 
 #include "xvm/xsystem_contracts/xfork/xsharding_fork_info_contract.h"
 
-// #include "xchain_fork/xchain_upgrade_center.h"
+#include "xchain_fork/xutility.h"
 
 NS_BEG4(top, xvm, system_contracts, fork)
 
@@ -21,11 +21,10 @@ void xtop_sharding_fork_info_contract::setup() {
 void xtop_sharding_fork_info_contract::on_timer(common::xlogic_time_t const current_time) {
     xinfo("xtop_sharding_fork_info_contract::on_timer % " PRIu64 "", current_time);
 
-    // auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
-    // auto if_forked = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.__TODO__SOME_FORK_POINT, current_time);
-    // if (if_forked && STRING_GET(data::XPROPERTY_CONTRACT_TABLE_FORK_INFO_KEY) == "__TODO__LAST_FORK_POINT_STRING") {
-    //     STRING_SET(data::XPROPERTY_CONTRACT_TABLE_FORK_INFO_KEY, "__TODO__THIS_FORK_POINT_STRING")
-    // }
+    if (chain_fork::xutility_t::is_forked(fork_points::TEST_FORK, current_time) && STRING_GET(data::XPROPERTY_CONTRACT_TABLE_FORK_INFO_KEY) == "") {
+        xinfo("xtop_sharding_fork_info_contract::do_fork: TEST_FORK");
+        STRING_SET(data::XPROPERTY_CONTRACT_TABLE_FORK_INFO_KEY, "fork_info");
+    }
 }
 
 NS_END4

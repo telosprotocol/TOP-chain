@@ -84,11 +84,11 @@ bool xstate_reseter::exec_reset() {
 #define IS_FORK_POINT_FROM(from_properties, fork_point)                                                                                                                            \
     (chain_fork::xutility_t::is_forked(fork_points::fork_point, m_current_time_block_height) && fork_properties == from_properties)
 
-    // if (IS_FORK_POINT_FROM("", v1_7_0_sync_point)) {  // use last fork point as sample code
-    //     // test_fork_reset
-    //     xstate_tablestate_reseter_base_ptr reseter_ptr = top::make_unique<xstate_tablestate_reseter_sample>(m_statectx_ptr, "TEST_FORK");
-    //     return reseter_ptr->exec_reset_tablestate();
-    // }
+    if (IS_FORK_POINT_FROM("", TEST_FORK)) {  // use last fork point as sample code
+        // test_fork_reset
+        xstate_tablestate_reseter_base_ptr reseter_ptr = top::make_unique<xstate_tablestate_reseter_sample>(m_statectx_ptr, "TEST_FORK");
+        return reseter_ptr->exec_reset_tablestate();
+    }
     // else if(IS_FORK_POINT_FROM...) { // every fork point code should be keeped.
     //   ...
     // }

@@ -12,6 +12,10 @@ xstate_json_parser::xstate_json_parser(base::xvaccount_t const & table_account, 
 #define CONCAT_SHARDING_VARIABLE_NAME(FORK_NAME, num)                                                                                                                              \
     case num: {                                                                                                                                                                    \
         m_json_data = json::parse(FORK_NAME##_Ta0000_##num);                                                                                                                       \
+        if (!m_json_data.empty()) {                                                                                                                                                \
+            assert(m_json_data.find(m_table_account.get_account()) != m_json_data.end());                                                                                          \
+            m_json_data = m_json_data.at(m_table_account.get_account());                                                                                                           \
+        }                                                                                                                                                                          \
         break;                                                                                                                                                                     \
     }
 
@@ -96,6 +100,10 @@ xstate_json_parser::xstate_json_parser(base::xvaccount_t const & table_account, 
     }                                                                                                                                                                              \
     case base::enum_chain_zone_evm_index: {                                                                                                                                        \
         m_json_data = json::parse(FORK_NAME##_Ta0004_0);                                                                                                                           \
+        if (!m_json_data.empty()) {                                                                                                                                                \
+            assert(m_json_data.find(m_table_account.get_account()) != m_json_data.end());                                                                                          \
+            m_json_data = m_json_data.at(m_table_account.get_account());                                                                                                           \
+        }                                                                                                                                                                          \
         break;                                                                                                                                                                     \
     }                                                                                                                                                                              \
     default: {                                                                                                                                                                     \
