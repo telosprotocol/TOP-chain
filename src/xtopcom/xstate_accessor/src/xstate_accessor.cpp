@@ -21,6 +21,19 @@ constexpr size_t xtop_state_accessor::property_name_max_length;
 constexpr size_t xtop_state_accessor::property_name_min_length;
 
 static xobject_ptr_t<base::xvbstate_t> state(common::xaccount_address_t const & address) {
+
+#if defined(XENABLE_TESTS)
+    // auto * bstate = new base::xvbstate_t{address.to_string(), 0, 0, "", "", 0, 0, 0};
+    xobject_ptr_t<base::xvbstate_t> address_bstate = make_object_ptr<base::xvbstate_t>(address.to_string(),
+                                                                                       static_cast<uint64_t>(0),
+                                                                                       static_cast<uint64_t>(0),
+                                                                                       std::string{},
+                                                                                       std::string{},
+                                                                                       static_cast<uint64_t>(0),
+                                                                                       static_cast<uint32_t>(0),
+                                                                                       static_cast<uint16_t>(0));
+    return address_bstate;
+#else
     xobject_ptr_t<base::xvbstate_t> address_bstate =
         base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_latest_connectted_block_state(address.vaccount(), metrics::statestore_access_from_store_bstate);
     if (address_bstate == nullptr) {
@@ -30,6 +43,7 @@ static xobject_ptr_t<base::xvbstate_t> state(common::xaccount_address_t const & 
     }
     xdbg("[state_accessor::state] get latest connectted state success, account=%s, height=%ld", address.to_string().c_str(), address_bstate->get_block_height());
     return address_bstate;
+#endif
 }
 
 static xobject_ptr_t<base::xvbstate_t> state(common::xaccount_address_t const & address, uint64_t const height) {
@@ -218,7 +232,7 @@ void xtop_state_accessor::deposit(properties::xproperty_identifier_t const & pro
     token.clear();
 }
 
-evm_common::u256 xtop_state_accessor::balance(properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol, std::error_code & ec) const {
+evm_common::u256 xtop_state_accessor::balance(properties::xproperty_identifier_t const & property_id, std::error_code & ec) const {
     assert(!ec);
 
     if (property_id.type() != properties::xproperty_type_t::token) {
@@ -231,20 +245,51 @@ evm_common::u256 xtop_state_accessor::balance(properties::xproperty_identifier_t
         return 0;
     }
 
-    auto const & property_name = token_property_name(property_id, symbol);
+    auto const & property_name = property_id.full_name();
     if (!bstate_->find_property(property_name)) {
         return 0;
     }
 
-    auto token_property = bstate_->load_string_var(property_name);
+    auto const token_property = bstate_->load_token_var(property_name);
     if (token_property == nullptr) {
         ec = error::xerrc_t::load_property_failed;
         return 0;
     }
 
-    auto const balance_string = token_property->query();
-    evm_common::u256 balance = evm_common::fromBigEndian<evm_common::u256>(balance_string);
-    return balance;
+    return evm_common::u256{token_property->get_balance()};
+}
+
+evm_common::u256 xtop_state_accessor::balance(properties::xproperty_identifier_t const & property_id, evm_common::u256 const & new_balance, std::error_code & ec) {
+    assert(!ec);
+
+    if (property_id.type() != properties::xproperty_type_t::token) {
+        ec = error::xerrc_t::invalid_property_type;
+        return 0;
+    }
+
+    if (!write_permitted(property_id)) {
+        ec = error::xerrc_t::property_access_denied;
+        return 0;
+    }
+
+    auto const & property_name = property_id.full_name();
+    if (!bstate_->find_property(property_name)) {
+        if (!properties::system_property(property_id)) {
+            ec = error::xerrc_t::invalid_property_type;
+            return 0;
+        }
+
+        bstate_->new_token_var(property_name, canvas_.get());
+    }
+
+    auto const token_property = bstate_->load_token_var(property_name);
+    if (token_property == nullptr) {
+        ec = error::xerrc_t::load_property_failed;
+        return 0;
+    }
+
+    auto const new_balance_data = token_property->set(static_cast<base::vtoken_t>(new_balance.convert_to<uint64_t>()), canvas_.get());
+    return evm_common::u256{new_balance_data};
 }
 
 void xtop_state_accessor::create_property(properties::xproperty_identifier_t const & property_id, std::error_code & ec) {

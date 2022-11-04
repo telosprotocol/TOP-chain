@@ -34,7 +34,7 @@ xtop_token_property::xtop_token_property(contract_common::xcontract_face_t * con
 
 evm_common::u256 xtop_token_property::amount() const {
     assert(associated_state() != nullptr);
-    return associated_state()->balance(id(), m_symbol);
+    return associated_state()->balance(id());
 }
 
 common::xtoken_t xtop_token_property::withdraw(evm_common::u256 amount) {

@@ -182,17 +182,16 @@ void xtop_contract_state::deploy_bin_code(state_accessor::properties::xproperty_
 }
 
 evm_common::u256 xtop_contract_state::balance(state_accessor::properties::xproperty_identifier_t const & property_id,
-                                              common::xsymbol_t const & symbol,
                                               std::error_code & ec) const {
     assert(m_state_accessor != nullptr);
     assert(!ec);
 
-    return m_state_accessor->balance(property_id, symbol, ec);
+    return m_state_accessor->balance(property_id, ec);
 }
 
-evm_common::u256 xtop_contract_state::balance(state_accessor::properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol) const {
+evm_common::u256 xtop_contract_state::balance(state_accessor::properties::xproperty_identifier_t const & property_id) const {
     std::error_code ec;
-    auto const r = balance(property_id, symbol, ec);
+    auto const r = balance(property_id, ec);
     assert(!ec);
     top::error::throw_error(ec);
     return r;
