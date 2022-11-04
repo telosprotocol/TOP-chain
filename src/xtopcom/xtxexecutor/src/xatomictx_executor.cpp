@@ -345,10 +345,10 @@ enum_execute_result_type xatomictx_executor_t::vm_execute_before_process(const x
         return enum_exec_error_receiptid_mismatch;
     }
     
-    if (m_statectx->is_state_dirty()) {
-        xerror("xatomictx_executor_t::execute fail-state dirty.tx=%s", tx->dump().c_str());
-        return enum_exec_error_state_dirty;
-    }
+    //if (m_statectx->is_state_dirty()) {
+    //    xerror("xatomictx_executor_t::execute fail-state dirty.tx=%s", tx->dump().c_str());
+    //    return enum_exec_error_state_dirty;
+    //}
     return enum_exec_success;
 }
 

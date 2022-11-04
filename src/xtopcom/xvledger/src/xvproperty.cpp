@@ -7,6 +7,8 @@
 #include "../xvproperty.h"
 #include "xmetrics/xmetrics.h"
 
+#include <cassert>
+
 namespace top
 {
     namespace base
