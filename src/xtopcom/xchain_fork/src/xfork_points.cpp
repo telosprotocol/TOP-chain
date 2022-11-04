@@ -27,6 +27,7 @@ optional<xfork_point_t> relay_fork_point            = xfork_point_t{xfork_point_
 optional<xfork_point_t> v1_6_0_version_point        = xfork_point_t{xfork_point_type_t::logic_time, 0, "v1.6 version control"};  // for v1.6.0 version control
 optional<xfork_point_t> v1_7_0_block_fork_point     = xfork_point_t{xfork_point_type_t::logic_time, 0, "v1.7 version control"};
 optional<xfork_point_t> v1_7_0_sync_point           = xfork_point_t{xfork_point_type_t::logic_time, 0, "v1.7 sync protocol fork"};
+optional<xfork_point_t> TEST_FORK                   = xfork_point_t{xfork_point_type_t::logic_time, 9428100, "test fork"};
 #else
 optional<xfork_point_t> block_fork_point            = xfork_point_t{xfork_point_type_t::logic_time, 6859080, "block fork point"};
 optional<xfork_point_t> V3_0_0_0_block_fork_point   = xfork_point_t{xfork_point_type_t::logic_time, 7126740, "v3 block fork point"};
@@ -39,6 +40,7 @@ optional<xfork_point_t> relay_fork_point            = xfork_point_t{xfork_point_
 optional<xfork_point_t> v1_6_0_version_point        = xfork_point_t{xfork_point_type_t::logic_time, 8820360, "v1.6 version control"};
 optional<xfork_point_t> v1_7_0_block_fork_point     = xfork_point_t{xfork_point_type_t::logic_time, 9459720, "v1.7 version control"};
 optional<xfork_point_t> v1_7_0_sync_point           = xfork_point_t{xfork_point_type_t::logic_time, 9460080, "v1.7 sync protocol fork"};
+optional<xfork_point_t> TEST_FORK                   = xfork_point_t{xfork_point_type_t::logic_time, 9428100, "test fork"};
 #endif
 
 NS_END2

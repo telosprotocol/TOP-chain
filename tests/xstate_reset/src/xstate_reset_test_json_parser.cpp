@@ -2,6 +2,7 @@
 #include "gtest/gtest.h"
 #include "xstate_reset/xstate_tablestate_reseter_sample.h"
 #include "xstatectx/xstatectx_face.h"
+#include "xstatectx/xunitstate_ctx.h"
 
 NS_BEG3(top, state_reset, tests)
 
@@ -33,10 +34,21 @@ class xmock_statectx_t : public statectx::xstatectx_face_t {
         return;
     }
     std::string get_table_address() const override {
-        return "Ta0000@1";
+        return "Ta0000@49";
     }
     bool is_state_dirty() const override {
-        return true;
+        // return true;
+        // if (get_table_state()->is_state_dirty()) {
+        //     xdbg("xstatectx_t::is_state_dirty table dirty. %s", get_table_state()->dump().c_str());
+        //     return true;
+        // }
+        for (auto & unitctx : m_mock_bstate) {
+            if (unitctx.second->is_state_dirty()) {
+                xdbg("xstatectx_t::is_state_dirty unit dirty. %s", unitctx.second->dump().c_str());
+                return true;
+            }
+        }
+        return false;
     }
 
     data::xtablestate_ptr_t m_tablestate_ptr;
@@ -47,6 +59,7 @@ TEST(test_state_reset, json_parser) {
     statectx::xstatectx_face_ptr_t mock_state = std::make_shared<xmock_statectx_t>();
     xstate_tablestate_reseter_sample reseter{mock_state, "TEST_FORK"};
     reseter.exec_reset_tablestate();
+    // EXPECT_FALSE(mock_state->is_state_dirty());
 }
 
 NS_END3
