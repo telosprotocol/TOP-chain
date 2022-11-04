@@ -29,12 +29,13 @@ void xstate_tablestate_reseter_base::account_set_top_balance(std::string const &
         xwarn("xstate_tablestate_reseter_base::account_set_top_balance find empty unit state object of account %s", account_address.c_str());
         return;
     }
-    auto origin_balance = unit_state->token_balance(property_name);
-    if (origin_balance > property_value) {
-        unit_state->token_withdraw(property_name, (base::vtoken_t)(origin_balance - property_value));
-    } else if (origin_balance < property_value) {
-        unit_state->token_deposit(property_name, (base::vtoken_t)(property_value - origin_balance));
-    }
+    // auto origin_balance = unit_state->token_balance(property_name);
+    // if (origin_balance > property_value) {
+    //     unit_state->token_withdraw(property_name, (base::vtoken_t)(origin_balance - property_value));
+    // } else if (origin_balance < property_value) {
+    //     unit_state->token_deposit(property_name, (base::vtoken_t)(property_value - origin_balance));
+    // }
+    unit_state->set_token_balance(property_name, (base::vtoken_t)property_value);
 }
 
 void xstate_tablestate_reseter_base::account_set_property(std::string const & account_address,
@@ -47,6 +48,7 @@ void xstate_tablestate_reseter_base::account_set_property(std::string const & ac
         xwarn("xstate_tablestate_reseter_base::account_set_property find empty unit state object of account %s", account_address.c_str());
         return;
     }
+    // unit_state->get_bstate()->get_property_value
     if (property_type == "map") {
         // TODO
         // unit_state->map_set(property_name,)
