@@ -226,4 +226,12 @@ unsigned long long from_bytes<unsigned long long>(xbytes_t const & input, std::e
     return top::from_string<unsigned long long>(string, ec);
 }
 
+xtop_bytes_helper::xtop_bytes_helper(xbytes_t const & bytes) noexcept : bytes_{bytes} {
+}
+
+bool xtop_bytes_helper::start_with(xbytes_t const & prefix) const noexcept {
+    return bytes_.size() >= prefix.size() && std::equal(std::begin(prefix), std::end(prefix), std::begin(bytes_));
+}
+
+
 NS_END1

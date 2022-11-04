@@ -271,7 +271,7 @@ public:
         return 0;
     }
 
-    const std::string & get_table_address() const override {
+    std::string get_table_address() const override {
         return table_address;
     }
 

@@ -11,6 +11,7 @@
 #include "xdata/xrootblock.h"
 #include "xdata/xtransaction_v1.h"
 #include "xdata/xunit_bstate.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xevm_common/common_data.h"
 #include "xevm_contract_runtime/xevm_contract_manager.h"
 #include "xgenesis/xerror/xerror.h"
@@ -38,10 +39,9 @@ namespace genesis {
         return;                                                                                                                                                                    \
     } while (0)
 
-xtop_genesis_manager::xtop_genesis_manager(observer_ptr<base::xvblockstore_t> const & blockstore, observer_ptr<store::xstore_face_t> const & store)
-  : m_blockstore{blockstore}, m_store{store} {
+xtop_genesis_manager::xtop_genesis_manager(observer_ptr<base::xvblockstore_t> const & blockstore)
+  : m_blockstore{blockstore} {
     xassert(m_blockstore != nullptr);
-    xassert(store != nullptr);
     m_blockstore->register_create_genesis_callback(std::bind(&xgenesis_manager_t::create_genesis_block, this, std::placeholders::_1, std::placeholders::_2));
 
     if (m_blockstore->exist_genesis_block(data::xrootblock_t::get_rootblock_address())) {
@@ -132,8 +132,8 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_contrac
     tx->set_len();
     xobject_ptr_t<base::xvbstate_t> bstate =
         make_object_ptr<base::xvbstate_t>(account.to_string(), uint64_t{0}, uint64_t{0}, std::string{}, std::string{}, uint64_t{0}, uint32_t{0}, uint16_t{0});
-    data::xaccount_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get());
-    store::xaccount_context_t ac(unitstate, m_store.get());
+    data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get());
+    store::xaccount_context_t ac(unitstate);
     xvm::xvm_service s;
     s.deal_transaction(tx, &ac);
     store::xtransaction_result_t result;
@@ -142,6 +142,7 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_contrac
     base::xauto_ptr<base::xvblock_t> genesis_block = data::xblocktool_t::create_genesis_lightunit(account.to_string(), tx, result);
     xassert(genesis_block != nullptr);
     // check
+    xassert(!account.vaccount().get_account().empty());
     if (src == xenum_create_src_t::init && m_blockstore->exist_genesis_block(account.vaccount())) {
         auto const existed_genesis_block = m_blockstore->load_block_object(account.vaccount(), (uint64_t)0, (uint64_t)0, false);
         if (existed_genesis_block->get_block_hash() == genesis_block->get_block_hash()) {

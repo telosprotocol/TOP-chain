@@ -152,7 +152,7 @@ void xzec_reward_contract::update_reg_contract_read_status(const uint64_t cur_ti
         latest_height);
     XCONTRACT_ENSURE(latest_height >= last_read_height, u8"xzec_reward_contract::update_reg_contract_read_status latest_height < last_read_height");
     if (latest_height == last_read_height) {
-        XMETRICS_PACKET_INFO(XREWARD_CONTRACT "update_status", "next_read_height", last_read_height, "current_time", cur_time)
+        XMETRICS_PACKET_INFO(XREWARD_CONTRACT "update_status", "next_read_height", last_read_height, "current_time", cur_time);
         STRING_SET(data::system_contract::XPROPERTY_LAST_READ_REC_REG_CONTRACT_LOGIC_TIME, std::to_string(cur_time));
         return;
     }
@@ -166,7 +166,7 @@ void xzec_reward_contract::update_reg_contract_read_status(const uint64_t cur_ti
     if (update_rec_reg_contract_read_status) {
         base::xauto_ptr<xblock_t> block_ptr = get_block_by_height(sys_contract_rec_registration_addr, next_read_height);
         XCONTRACT_ENSURE(block_ptr != nullptr, "fail to get the rec_reg data");
-        XMETRICS_PACKET_INFO(XREWARD_CONTRACT "update_status", "next_read_height", next_read_height, "current_time", cur_time)
+        XMETRICS_PACKET_INFO(XREWARD_CONTRACT "update_status", "next_read_height", next_read_height, "current_time", cur_time);
         STRING_SET(data::system_contract::XPROPERTY_LAST_READ_REC_REG_CONTRACT_BLOCK_HEIGHT, std::to_string(next_read_height));
         STRING_SET(data::system_contract::XPROPERTY_LAST_READ_REC_REG_CONTRACT_LOGIC_TIME, std::to_string(cur_time));
     }
@@ -177,7 +177,7 @@ void xzec_reward_contract::calculate_reward(common::xlogic_time_t current_time, 
     std::string source_address = SOURCE_ADDRESS();
     xinfo("[xzec_reward_contract::calculate_reward] called from address: %s", source_address.c_str());
     if (sys_contract_zec_workload_addr != source_address) {
-        xwarn("[xzec_reward_contract::calculate_reward] from invalid address: %s\n", source_address.c_str());
+        xwarn("[xzec_reward_contract::calculate_reward] from invalid address: %s", source_address.c_str());
         return;
     }
     on_receive_workload(workload_str);

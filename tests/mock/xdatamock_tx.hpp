@@ -15,20 +15,19 @@ class xdatamock_tx {
     void init_account_context() {
         {
             xobject_ptr_t<base::xvbstate_t> bstate = make_object_ptr<base::xvbstate_t>(m_source_account, (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
-            data::xaccount_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get());
-            m_source_context = std::make_shared<xaccount_context_t>(xaccount_context_t(unitstate, m_store.get()));
+            data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get());
+            m_source_context = std::make_shared<xaccount_context_t>(xaccount_context_t(unitstate));
         }
 
         {
             xobject_ptr_t<base::xvbstate_t> bstate = make_object_ptr<base::xvbstate_t>(m_target_account, (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
-            data::xaccount_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get());
-            m_target_context = std::make_shared<xaccount_context_t>(xaccount_context_t(unitstate, m_store.get()));
+            data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get());
+            m_target_context = std::make_shared<xaccount_context_t>(xaccount_context_t(unitstate));
         }
     }
 
     // only for transfer now
     void construct_tx(data::xtransaction_ptr_t & tx, bool is_eth_tx = false) {
-        m_store = xstore_factory::create_store_with_memdb();
         init_account_context();
         data::xproperty_asset asset{m_transfer_out_amount};
         if (is_eth_tx) {
@@ -48,7 +47,6 @@ class xdatamock_tx {
     void set_target_account(const std::string & target_account) {m_target_account = target_account;}
 
 private:
-    xobject_ptr_t<xstore_face_t> m_store;
     std::string m_source_account{"T8000037d4fbc08bf4513a68a287ed218b0adbd497ef30"};
     std::string m_target_account{"T80000fb8f4c7c8f3c1d58adf2173372a6ccda1350d10b"};
     std::shared_ptr<xaccount_context_t> m_source_context;

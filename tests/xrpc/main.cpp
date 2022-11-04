@@ -1,8 +1,7 @@
 #include <gtest/gtest.h>
 #include "xchaininit/xinit.h"
 #include <memory>
-#include "xstore/xstore_face.h"
-#include "xstore/xstore.h"
+
 #include "xdb/xdb_factory.h"
 #include "xbase/xcontext.h"
 #include "xdata/xrootblock.h"
@@ -42,5 +41,7 @@ int main(int argc, char * argv[])
     xinit_log("./xrpc_test.log", true, true);
     xset_log_level(enum_xlog_level_debug);
     // XMETRICS_INIT();
-    return RUN_ALL_TESTS();
+    int ret = RUN_ALL_TESTS();
+    sleep(15);  // for xbase exit double free abnormal issue
+    return ret;
 }

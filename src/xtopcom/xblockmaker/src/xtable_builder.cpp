@@ -7,6 +7,7 @@
 #include "xblockmaker/xtable_builder.h"
 #include "xblockmaker/xblockmaker_error.h"
 #include "xblockmaker/xfulltable_statistics.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 #include "xdata/xemptyblock.h"
 #include "xdata/xtableblock.h"
 #include "xdata/xfull_tableblock.h"
@@ -51,7 +52,6 @@ xblock_ptr_t        xfulltable_builder_t::build_block(const xblock_ptr_t & prev_
     xassert(fulltable_build_para != nullptr);
 
     auto & blocks = fulltable_build_para->get_blocks_from_last_full();
-    data::xstatistics_data_t block_statistics = make_block_statistics(blocks);
 
     base::xauto_ptr<base::xvheader_t> _temp_header = base::xvblockbuild_t::build_proposal_header(prev_block.get(), cs_para.get_clock());
 
@@ -70,8 +70,15 @@ xblock_ptr_t        xfulltable_builder_t::build_block(const xblock_ptr_t & prev_
             }
         }
     }
+    
+    #ifndef  XBUILD_CONSORTIUM_TEST
+        data::xstatistics_data_t block_statistics = make_block_statistics(blocks);
+        data::xfulltable_block_para_t fulltable_para(property_binlog, block_statistics, tgas_balance_change_total);
+    #else
+        data::xstatistics_cons_data_t block_statistics = make_block_statistics_cons(blocks);
+        data::xfulltable_block_para_t fulltable_para(property_binlog, block_statistics, tgas_balance_change_total);
+    #endif
 
-    data::xfulltable_block_para_t fulltable_para(property_binlog, block_statistics, tgas_balance_change_total);
     fulltable_para.set_property_hashs(property_hashs);
     base::xvblock_t* _proposal_block = data::xblocktool_t::create_next_fulltable(fulltable_para, prev_block.get(), cs_para);
     xblock_ptr_t proposal_table;
@@ -97,6 +104,10 @@ xblock_ptr_t        xemptytable_builder_t::build_block(const xblock_ptr_t & prev
     xblock_ptr_t proposal_table;
     proposal_table.attach((data::xblock_t*)_proposal_block);
     return proposal_table;
+}
+ data::xstatistics_cons_data_t xfulltable_builder_t::make_block_statistics_cons(const std::vector<xblock_ptr_t> & blocks){
+    data::xstatistics_cons_data_t _statistics_data = tableblock_statistics_consortium(blocks);
+    return _statistics_data;
 }
 
 NS_END2

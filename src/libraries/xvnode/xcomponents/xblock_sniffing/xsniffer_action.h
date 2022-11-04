@@ -6,7 +6,7 @@
 
 #include "xbasic/xmemory.hpp"
 #include "xcommon/xaddress.h"
-#include "xstore/xstore_face.h"
+
 #include "xtxpool_service_v2/xtxpool_service_face.h"
 #include "xvnode/xvnode_face.h"
 
@@ -14,14 +14,12 @@ NS_BEG4(top, vnode, components, sniffing)
 
 class xtop_sniffer_action {
 public:
-    static void call(observer_ptr<store::xstore_face_t> store,
-                     observer_ptr<xtxpool_service_v2::xtxpool_proxy_face> const & txpool,
+    static void call(observer_ptr<xtxpool_service_v2::xtxpool_proxy_face> const & txpool,
                      common::xaccount_address_t const & address,
                      std::string const & action_name,
                      std::string const & action_params,
                      const uint64_t timestamp);
-    static void call(observer_ptr<store::xstore_face_t> store,
-                     observer_ptr<xtxpool_service_v2::xtxpool_proxy_face> const & txpool,
+    static void call(observer_ptr<xtxpool_service_v2::xtxpool_proxy_face> const & txpool,
                      common::xaccount_address_t const & source_address,
                      common::xaccount_address_t const & target_address,
                      std::string const & action_name,

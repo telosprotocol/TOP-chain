@@ -33,9 +33,12 @@ class xstatectx_face_t {
  public:
     virtual const data::xtablestate_ptr_t &     get_table_state() const = 0;
     virtual data::xunitstate_ptr_t  load_unit_state(const base::xvaccount_t & addr) = 0;
+    virtual data::xunitstate_ptr_t  load_commit_unit_state(const base::xvaccount_t & addr) {return nullptr;}  // TODO(jimmy) just for accountcontext
+    virtual data::xunitstate_ptr_t  load_commit_unit_state(const base::xvaccount_t & addr, uint64_t height) {return nullptr;}  // TODO(jimmy) just for accountcontext
     virtual bool                    do_rollback() = 0;
     virtual size_t                  do_snapshot() = 0;
-    virtual const std::string &     get_table_address() const = 0;
+    virtual void                    do_commit(base::xvblock_t* current_block) {return;}  // TODO(jimmy) do commit changed state to db
+    virtual std::string             get_table_address() const = 0;
     virtual bool                    is_state_dirty() const = 0;
 };
 using xstatectx_face_ptr_t = std::shared_ptr<xstatectx_face_t>;

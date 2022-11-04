@@ -118,13 +118,14 @@ void xtable_block_t::parse_to_json_v2(xJson::Value & root) {
         }
     }
 
-    auto headers = get_sub_block_headers();
-    for (auto _unit_header : headers) {
+    auto units_indexes = get_subblocks_index();
+    for (auto unit_index : units_indexes) {
         xJson::Value ju;
-        ju["unit_height"] = static_cast<xJson::UInt64>(_unit_header->get_height());
-        ju["account"] = _unit_header->get_account();
+        ju["unit_height"] = static_cast<xJson::UInt64>(unit_index.get_block_height());
+        ju["account"] = unit_index.get_block_address();
         jv["units"].append(ju);
     }
+
     root["tableblock"] = jv;
 }
 
@@ -142,6 +143,37 @@ std::vector<xvheader_ptr_t> xtable_block_t::get_sub_block_headers() const {
     return unit_headers;
 }
 
+std::vector<base::xvsubblock_index_t> xtable_block_t::get_subblocks_index() const {
+    std::vector<base::xvsubblock_index_t>  subblocks_index;
+    if (base::xvblock_fork_t::is_block_older_version(get_block_version(), base::enum_xvblock_fork_version_5_0_0)) {
+        auto headers = get_sub_block_headers();
+        for (auto header : headers) {
+            base::xvsubblock_index_t subblock_index(header->get_account(),header->get_height(),header->get_block_class());
+            subblocks_index.push_back(subblock_index);
+        }
+    } else {
+        if( get_output_offdata_hash().empty() ) {
+            // has no output offdata, it's normal case
+            return {};
+        }
+        std::vector<base::xvblock_ptr_t> subblocks;
+        auto account_indexs_str = get_account_indexs();
+        if(account_indexs_str.empty()) {
+            xerror("xtable_block_t::get_subblocks_index,fail-get account indexs %s",dump().c_str());
+            return {};
+        }
+        base::xaccount_indexs_t account_indexs;
+        account_indexs.serialize_from_string(account_indexs_str);
+
+        auto & account_index_map = account_indexs.get_account_indexs();
+        for (auto & iter : account_index_map) {
+            base::xvsubblock_index_t subblock_index(iter.first,iter.second.get_latest_unit_height(),iter.second.get_latest_unit_class());
+            subblocks_index.push_back(subblock_index);
+        }
+    }
+    return subblocks_index;
+}
+
 int64_t xtable_block_t::get_pledge_balance_change_tgas() const {
     auto out_entity = get_output()->get_primary_entity();
     xassert(out_entity != nullptr);
@@ -153,9 +185,6 @@ int64_t xtable_block_t::get_pledge_balance_change_tgas() const {
 }
 
 bool  xtable_block_t::extract_sub_blocks(std::vector<xobject_ptr_t<base::xvblock_t>> & sub_blocks) {
-    // std::vector<xobject_ptr_t<base::xvblock_t>> _units = xlighttable_build_t::unpack_units_from_table(this);
-    // sub_blocks = _units;
-
     std::error_code ec;
     data::xblockextract_t::unpack_subblocks(this, sub_blocks, ec);
     if (ec) {
@@ -164,14 +193,10 @@ bool  xtable_block_t::extract_sub_blocks(std::vector<xobject_ptr_t<base::xvblock
     return true;
 }
 
-bool xtable_block_t::extract_one_sub_block(uint32_t entity_id, const std::string & extend_cert, const std::string & extend_data, xobject_ptr_t<xvblock_t> & sub_block) {
-    sub_block = xlighttable_build_t::unpack_one_unit_from_table(this, entity_id, extend_cert, extend_data);
-    return sub_block != nullptr ? true : false;
-}
-
 bool xtable_block_t::extract_sub_txs(std::vector<base::xvtxindex_ptr> & sub_txs) {
     auto tx_actions =  data::xblockextract_t::unpack_txactions(this);
-    xdbg("xtable_block_t::extract_sub_txs tx_action size:%zu, account:%s, height:%llu", tx_actions.size(), get_account().c_str(), get_height());
+    xassert(!tx_actions.empty());
+    xdbg("xtable_block_t::extract_sub_txs tx_action size:%zu, %s", tx_actions.size(), dump().c_str());
     for (auto & txaction : tx_actions) {
         base::xvtxindex_ptr tx_index = make_object_ptr<base::xvtxindex_t>(*this, txaction.get_org_tx_hash(), txaction.get_tx_subtype());
         sub_txs.push_back(tx_index);

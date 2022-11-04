@@ -364,6 +364,18 @@ namespace top
             return atom_copy;
         }
 
+        bool   xvaccountobj_t::set_lowest_executed_block_height(const uint64_t height)
+        {
+            if(is_close())//not allow write anymore at closed status
+                return false;
+            
+            xauto_lock<xspinlock_t> locker(get_spin_lock());
+            xvactmeta_t * meta_ptr = get_meta();
+            const bool result = meta_ptr->set_lowest_executed_block(height);
+
+            return result;
+        }
+
         uint64_t   xvaccountobj_t::get_lowest_executed_block_height()
         {
             //note:meta_ptr never be destroy,it is safe to get it without lock
@@ -421,9 +433,9 @@ namespace top
                 const std::string full_meta_path = base::xvdbkey_t::create_account_meta_key(*this);
                 if(xvchain_t::instance().get_xdbstore()->set_value(full_meta_path,vmeta_bin))
                 {
-                    #ifdef DEBUG_XVLEDGER
+                    // #ifdef DEBUG_XVLEDGER
                     xinfo("xvaccountobj_t::meta->save_meta,meta(%s)",m_meta_ptr->dump().c_str());
-                    #endif
+                    // #endif
                     return true;
                 }
                 else //failure handle
@@ -1602,6 +1614,19 @@ namespace top
                 m_is_auto_prune = 1;
             else
                 m_is_auto_prune = 0;
+        }
+        void xvchain_t::set_node_type(bool is_storage, bool has_other_node)
+        {
+            if (m_is_storage_node == is_storage && m_has_other_node == has_other_node) {
+                return;
+            }
+            xkinfo("xvchain_t::set_node_type,is_storage=%d->%d,is_consensus=%d->%d",m_is_storage_node,is_storage,m_has_other_node,has_other_node);
+            if (m_is_storage_node != is_storage) {
+                m_is_storage_node = is_storage;
+            }
+            if (m_has_other_node != has_other_node) {
+                m_has_other_node = has_other_node;
+            }
         }
 
         void    xvchain_t::get_db_config_custom(std::vector<db::xdb_path_t> &extra_db_path, int &extra_db_kind)

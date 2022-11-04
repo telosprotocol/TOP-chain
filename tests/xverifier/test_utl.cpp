@@ -68,4 +68,9 @@ TEST_F(test_utl, address_valid_2) {
     EXPECT_EQ(top::base::xvaccount_t::check_address("Ta0001@0"), true);
     EXPECT_EQ(top::base::xvaccount_t::check_address("Ta0002@1"), true);
     EXPECT_EQ(top::base::xvaccount_t::check_address("T80000d00e5539d4306fa4e0e274bc4a795e863d44e2b0"), true);
+    EXPECT_EQ(top::base::xvaccount_t::check_address("T!000131R4UAjgF6ZBWnwZESMWx4nCnqL1GhM3nT3"), true);
+
+    top::base::xvaccount_t vaccount("T!000131R4UAjgF6ZBWnwZESMWx4nCnqL1GhM3nT3");
+
+    EXPECT_EQ(vaccount.has_valid_table_addr(), false);
 }

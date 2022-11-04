@@ -63,7 +63,6 @@ public:
 
     xtop_vnode_manager(observer_ptr<elect::ElectMain> const & elect_main,
                        observer_ptr<mbus::xmessage_bus_face_t> const & mbus,
-                       observer_ptr<store::xstore_face_t> const & store,
                        observer_ptr<base::xvblockstore_t> const & block_store,
                        observer_ptr<base::xvtxstore_t> const & txstore,
                        observer_ptr<time::xchain_time_face_t> const & logic_timer,
@@ -76,7 +75,8 @@ public:
                        observer_ptr<xtxpool_service_v2::xtxpool_service_mgr_face> const & txpool_service_mgr,
                        observer_ptr<xtxpool_v2::xtxpool_face_t> const & txpool,
                        observer_ptr<election::cache::xdata_accessor_face_t> const & election_cache_data_accessor,
-                       observer_ptr<base::xvnodesrv_t> const & nodesvr);
+                       observer_ptr<base::xvnodesrv_t> const & nodesvr,
+                       observer_ptr<state_sync::xstate_downloader_t> const & downloader);
 
     xtop_vnode_manager(observer_ptr<time::xchain_time_face_t> const & logic_timer,
                        observer_ptr<vnetwork::xvhost_face_t> const & vhost,
@@ -128,11 +128,12 @@ private:
                     m_vnode_proxy->change(vnode->address(), vnode->start_time());
                     // m_sniff_proxy->reg(vnode->address(), vnode->sniff_config());
 
-                    xwarn("[vnode mgr] vnode (%p) at address %s starts at logic time %" PRIu64 " current logic time %" PRIu64,
+                    xwarn("[vnode mgr] vnode (%p) at address %s starts at logic time %" PRIu64 " current logic time %" PRIu64 " %s",
                           vnode.get(),
-                          vnode->address().to_string().c_str(),
+                          vnode->address().to_string().c_str(),                          
                           vnode->start_time(),
-                          time);
+                          time,
+                          vnode->address().xip2().to_string().c_str());
                 }
                 break;
             }

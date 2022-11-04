@@ -56,7 +56,6 @@ xtop_account_base_address::xtop_account_base_address(std::string const & base_ad
         if (m_ledger_id.zone_id() != common::xconsensus_zone_id) {
             top::error::throw_error(error::xerrc_t::invalid_account_base_address, "invalid base address " + base_address);
         }
-
         m_account_type = t;
 
         break;
@@ -90,7 +89,6 @@ xtop_account_base_address::xtop_account_base_address(std::string const & base_ad
         if (m_ledger_id.zone_id() != common::xevm_zone_id && m_ledger_id.zone_id() != common::xrelay_zone_id) {
             top::error::throw_error(error::xerrc_t::invalid_account_base_address, "invalid base address " + base_address);
         }
-
         m_account_type = t;
 
         break;
@@ -103,7 +101,6 @@ xtop_account_base_address::xtop_account_base_address(std::string const & base_ad
         if (m_ledger_id.zone_id() != common::xconsensus_zone_id) {
             top::error::throw_error(error::xerrc_t::invalid_account_base_address, "invalid base address " + base_address);
         }
-
         m_account_type = t;
 
         break;
@@ -115,12 +112,15 @@ xtop_account_base_address::xtop_account_base_address(std::string const & base_ad
         m_account_type = t;
 
         break;
+
     case base::enum_vaccount_addr_type::enum_vaccount_addr_type_relay_block:
         if (base_address.length() != TABLE_ACCOUNT_LENGTH) {
             top::error::throw_error(error::xerrc_t::invalid_account_base_address, "invalid base address " + base_address);
         }
         m_account_type = t;
+
         break;
+
     default:
         top::error::throw_error(error::xerrc_t::invalid_account_base_address, "invalid base address " + base_address);
         break;
@@ -132,9 +132,9 @@ xtop_account_base_address::xtop_account_base_address(std::string const & base_ad
 
     m_base_address_str = base_address;
 
-    auto account_index = base::xvaccount_t::get_index_from_account(m_base_address_str);
     if (m_account_type == base::enum_vaccount_addr_type_secp256k1_user_account || m_account_type == base::enum_vaccount_addr_type_native_contract ||
         m_account_type == base::enum_vaccount_addr_type_secp256k1_eth_user_account) {
+        auto const account_index = base::xvaccount_t::get_index_from_account(m_base_address_str);
         m_default_table_id = xtable_id_t{static_cast<uint16_t>(account_index % static_cast<uint16_t>(enum_vbucket_has_tables_count))};
     }
 }
@@ -178,6 +178,10 @@ void xtop_account_base_address::clear() {
     m_ledger_id.clear();
     m_account_type = base::enum_vaccount_addr_type::enum_vaccount_addr_type_invalid;
     m_base_address_str.clear();
+}
+
+size_t xtop_account_base_address::size() const noexcept {
+    return m_base_address_str.size();
 }
 
 base::enum_vaccount_addr_type xtop_account_base_address::type(std::error_code & ec) const {

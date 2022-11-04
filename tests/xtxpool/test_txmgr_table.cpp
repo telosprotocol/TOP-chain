@@ -31,7 +31,7 @@ TEST_F(test_txmgr_table, sigle_send_tx) {
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
-    xtxpool_resources resource(nullptr, nullptr, nullptr, nullptr);
+    xtxpool_resources resource(nullptr, nullptr, nullptr);
     xtxmgr_table_t txmgr_table(&table_para, &resource);
     uint256_t last_tx_hash = {};
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
@@ -77,7 +77,7 @@ TEST_F(test_txmgr_table, sigle_account_multi_send_tx) {
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
-    xtxpool_resources resource(nullptr, nullptr, nullptr, nullptr);
+    xtxpool_resources resource(nullptr, nullptr, nullptr);
     xtxmgr_table_t txmgr_table(&table_para, &resource);
     uint256_t last_tx_hash = {};
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
@@ -96,12 +96,14 @@ TEST_F(test_txmgr_table, sigle_account_multi_send_tx) {
 }
 
 TEST_F(test_txmgr_table, duplicate_send_tx_to_pending) {
+    mock::xvchain_creator creator;
+    base::xvblockstore_t * blockstore = creator.get_blockstore();
     std::string table_addr = xdatamock_address::make_consensus_table_address(1);
     xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::consensus_auditor);
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
-    xtxpool_resources resource(nullptr, nullptr, nullptr, nullptr);
+    xtxpool_resources resource(nullptr, nullptr, nullptr);
     xtxmgr_table_t txmgr_table(&table_para, &resource);
     uint256_t last_tx_hash = {};
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
@@ -130,11 +132,14 @@ TEST_F(test_txmgr_table, duplicate_send_tx_to_pending) {
     ret = txmgr_table.push_send_tx(tx_ent2a, 0);
     ASSERT_EQ(0, ret);
 
+    base::xauto_ptr<base::xvblock_t> table_genesis_block = xblocktool_t::create_genesis_empty_table(table_addr);
+    blockstore->store_block(base::xvaccount_t(table_addr), table_genesis_block.get());
+
     top::xobject_ptr_t<xvbstate_t> vbstate;
     vbstate.attach(new xvbstate_t{table_addr, (uint64_t)1, (uint64_t)1, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0});
     xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(vbstate.get());
     std::set<base::xtable_shortid_t> peer_sids_for_confirm_id;
-    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, tablestate, 40, 35, 30, peer_sids_for_confirm_id);
+    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, tablestate, table_genesis_block.get(), 40, 35, 30, peer_sids_for_confirm_id);
 
     xunconfirm_id_height id_height_map(1);
     auto ready_txs = txmgr_table.get_ready_txs(txpool_pack_para, id_height_map);
@@ -180,12 +185,14 @@ TEST_F(test_txmgr_table, duplicate_send_tx_to_pending) {
 }
 
 TEST_F(test_txmgr_table, duplicate_send_tx_to_pending_2) {
+    mock::xvchain_creator creator;
+    base::xvblockstore_t * blockstore = creator.get_blockstore();
     std::string table_addr = xdatamock_address::make_consensus_table_address(1);
     xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::consensus_auditor);
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
-    xtxpool_resources resource(nullptr, nullptr, nullptr, nullptr);
+    xtxpool_resources resource(nullptr, nullptr, nullptr);
     xtxmgr_table_t txmgr_table(&table_para, &resource);
     uint256_t last_tx_hash = {};
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
@@ -237,11 +244,14 @@ TEST_F(test_txmgr_table, duplicate_send_tx_to_pending_2) {
     ret = txmgr_table.push_send_tx(tx_ent2b, 1);
     ASSERT_EQ(0, ret);
 
+    base::xauto_ptr<base::xvblock_t> table_genesis_block = xblocktool_t::create_genesis_empty_table(table_addr);
+    blockstore->store_block(base::xvaccount_t(table_addr), table_genesis_block.get());
+
     top::xobject_ptr_t<xvbstate_t> vbstate;
     vbstate.attach(new xvbstate_t{table_addr, (uint64_t)1, (uint64_t)1, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0});
     xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(vbstate.get());
     std::set<base::xtable_shortid_t> peer_sids_for_confirm_id;
-    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, tablestate, 40, 35, 30, peer_sids_for_confirm_id);
+    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, tablestate, table_genesis_block.get(), 40, 35, 30, peer_sids_for_confirm_id);
     xunconfirm_id_height id_height_map(1);
     auto ready_txs = txmgr_table.get_ready_txs(txpool_pack_para, id_height_map);
     ASSERT_EQ(3, ready_txs.size());
@@ -251,12 +261,14 @@ TEST_F(test_txmgr_table, duplicate_send_tx_to_pending_2) {
 }
 
 TEST_F(test_txmgr_table, send_tx_clear_follower) {
+    mock::xvchain_creator creator;
+    base::xvblockstore_t * blockstore = creator.get_blockstore();
     std::string table_addr = xdatamock_address::make_consensus_table_address(1);
     xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::consensus_auditor);
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
-    xtxpool_resources resource(nullptr, nullptr, nullptr, nullptr);
+    xtxpool_resources resource(nullptr, nullptr, nullptr);
     xtxmgr_table_t txmgr_table(&table_para, &resource);
     uint256_t last_tx_hash = {};
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
@@ -273,11 +285,14 @@ TEST_F(test_txmgr_table, send_tx_clear_follower) {
         ASSERT_EQ(0, ret);
     }
 
+    base::xauto_ptr<base::xvblock_t> table_genesis_block = xblocktool_t::create_genesis_empty_table(table_addr);
+    blockstore->store_block(base::xvaccount_t(table_addr), table_genesis_block.get());
+
     top::xobject_ptr_t<xvbstate_t> vbstate;
     vbstate.attach(new xvbstate_t{table_addr, (uint64_t)1, (uint64_t)1, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0});
     xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(vbstate.get());
     std::set<base::xtable_shortid_t> peer_sids_for_confirm_id;
-    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, tablestate, 40, 35, 30, peer_sids_for_confirm_id);
+    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, tablestate, table_genesis_block.get(), 40, 35, 30, peer_sids_for_confirm_id);
     xunconfirm_id_height id_height_map(1);
     auto ready_txs = txmgr_table.get_ready_txs(txpool_pack_para, id_height_map);
     ASSERT_EQ(10, ready_txs.size());
@@ -289,12 +304,14 @@ TEST_F(test_txmgr_table, send_tx_clear_follower) {
     ASSERT_EQ(0, ready_txs2.size());
 }
 TEST_F(test_txmgr_table, sigle_account_uncontinuous_send_txs) {
+    mock::xvchain_creator creator;
+    base::xvblockstore_t * blockstore = creator.get_blockstore();
     std::string table_addr = xdatamock_address::make_consensus_table_address(1);
     xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::consensus_auditor);
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
-    xtxpool_resources resource(nullptr, nullptr, nullptr, nullptr);
+    xtxpool_resources resource(nullptr, nullptr, nullptr);
     xtxmgr_table_t txmgr_table(&table_para, &resource);
     uint256_t last_tx_hash = {};
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
@@ -338,11 +355,14 @@ TEST_F(test_txmgr_table, sigle_account_uncontinuous_send_txs) {
         ASSERT_NE(tx_tmp, nullptr);
     }
 
+    base::xauto_ptr<base::xvblock_t> table_genesis_block = xblocktool_t::create_genesis_empty_table(table_addr);
+    blockstore->store_block(base::xvaccount_t(table_addr), table_genesis_block.get());
+
     top::xobject_ptr_t<xvbstate_t> vbstate;
     vbstate.attach(new xvbstate_t{table_addr, (uint64_t)1, (uint64_t)1, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0});
     xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(vbstate.get());
     std::set<base::xtable_shortid_t> peer_sids_for_confirm_id;
-    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, tablestate, 40, 35, 30, peer_sids_for_confirm_id);
+    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, tablestate, table_genesis_block.get(), 40, 35, 30, peer_sids_for_confirm_id);
     xunconfirm_id_height id_height_map(1);
     auto ready_txs = txmgr_table.get_ready_txs(txpool_pack_para, id_height_map);
     ASSERT_EQ(0, ready_txs.size());
@@ -396,12 +416,14 @@ TEST_F(test_txmgr_table, sigle_account_uncontinuous_send_txs) {
 }
 
 TEST_F(test_txmgr_table, expired_tx) {
+    mock::xvchain_creator creator;
+    base::xvblockstore_t * blockstore = creator.get_blockstore();
     std::string table_addr = xdatamock_address::make_consensus_table_address(1);
     xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::consensus_auditor);
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
-    xtxpool_resources resource(nullptr, nullptr, nullptr, nullptr);
+    xtxpool_resources resource(nullptr, nullptr, nullptr);
     xtxmgr_table_t txmgr_table(&table_para, &resource);
     uint256_t last_tx_hash = {};
     uint64_t now = xverifier::xtx_utl::get_gmttime_s();
@@ -424,11 +446,15 @@ TEST_F(test_txmgr_table, expired_tx) {
     ASSERT_EQ(q_tx, nullptr);
 
     sleep(1);
+
+    base::xauto_ptr<base::xvblock_t> table_genesis_block = xblocktool_t::create_genesis_empty_table(table_addr);
+    blockstore->store_block(base::xvaccount_t(table_addr), table_genesis_block.get());
+
     top::xobject_ptr_t<xvbstate_t> vbstate;
     vbstate.attach(new xvbstate_t{table_addr, (uint64_t)1, (uint64_t)1, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0});
     xtablestate_ptr_t tablestate = std::make_shared<xtable_bstate_t>(vbstate.get());
     std::set<base::xtable_shortid_t> peer_sids_for_confirm_id;
-    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, tablestate, 40, 35, 30, peer_sids_for_confirm_id);
+    xtxpool_v2::xtxs_pack_para_t txpool_pack_para(table_addr, tablestate, table_genesis_block.get(), 40, 35, 30, peer_sids_for_confirm_id);
     xunconfirm_id_height id_height_map(1);
     auto ready_txs = txmgr_table.get_ready_txs(txpool_pack_para, id_height_map);
     ASSERT_EQ(1, ready_txs.size());
@@ -448,7 +474,7 @@ TEST_F(test_txmgr_table, repeat_receipt) {
     xtxpool_statistic_t statistic;
     xtable_state_cache_t table_state_cache(nullptr, table_addr);
     xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
-    xtxpool_resources resource(nullptr, nullptr, nullptr, nullptr);
+    xtxpool_resources resource(nullptr, nullptr, nullptr);
     xtxmgr_table_t txmgr_table(&table_para, &resource);
     xtx_para_t para;
 

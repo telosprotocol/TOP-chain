@@ -6,7 +6,9 @@
 #include "xblockmaker/xblock_builder.h"
 #include "xconfig/xpredefined_configurations.h"
 #include "xconfig/xconfig_register.h"
+#include "xchain_fork/xchain_upgrade_center.h"
 #include "xdata/xblockbuild.h"
+#include "xvledger/xvblock_offdata.h"
 
 NS_BEG2(top, blockmaker)
 
@@ -56,6 +58,15 @@ bool xunitbuilder_t::can_make_full_unit(const data::xblock_ptr_t & prev_block) {
     return false;
 }
 
+bool xunitbuilder_t::can_make_full_unit_v2(uint64_t proposal_height) {
+    // XTODO not depend on prev blcok
+    uint64_t max_limit_lightunit_count = XGET_ONCHAIN_GOVERNANCE_PARAMETER(fullunit_contain_of_unit_num);
+    if (proposal_height % max_limit_lightunit_count == 0) {
+        return true;
+    }
+    return false;
+}
+
 data::xblock_ptr_t  xunitbuilder_t::make_block(const data::xblock_ptr_t & prev_block, const data::xunitstate_ptr_t & unitstate, const xunitbuilder_para_t & unitbuilder_para, const data::xblock_consensus_para_t & cs_para){
     std::string binlog = unitstate->take_binlog();
     std::string snapshot = unitstate->take_snapshot();
@@ -82,6 +93,37 @@ data::xblock_ptr_t  xunitbuilder_t::make_block(const data::xblock_ptr_t & prev_b
     return proposal_block;
 }
 
+data::xblock_ptr_t  xunitbuilder_t::make_block_v2(const data::xunitstate_ptr_t & unitstate, const xunitbuilder_para_t & unitbuilder_para, const data::xblock_consensus_para_t & cs_para){
+    std::string binlog = unitstate->take_binlog();
+    std::string snapshot = unitstate->take_snapshot();
+    if (binlog.empty() || snapshot.empty()) {
+        xerror("xunitbuilder_t::make_block fail-invalid unitstate.");
+        return nullptr;
+    }
+    data::xunit_block_para_t bodypara;
+    bodypara.set_binlog(binlog);
+    bodypara.set_fullstate_bin(snapshot);
+    bodypara.set_txkeys(unitbuilder_para.get_txkeys());
+
+    bool is_full_unit = xunitbuilder_t::can_make_full_unit_v2(unitstate->height());
+    std::shared_ptr<base::xvblockmaker_t> vblockmaker = std::make_shared<data::xunit_build2_t>(unitstate->account_address().value(), unitstate->height(), unitstate->get_bstate()->get_last_block_hash(), is_full_unit, bodypara, cs_para);    
+    base::xauto_ptr<base::xvblock_t> _new_block = vblockmaker->build_new_block();
+    data::xblock_ptr_t proposal_block = data::xblock_t::raw_vblock_to_object_ptr(_new_block.get());
+    xassert(proposal_block->get_cert()->get_justify_cert_hash().empty());
+    proposal_block->get_cert()->set_parent_viewid(cs_para.get_viewid());
+    proposal_block->set_extend_cert("1");
+    proposal_block->set_extend_data("1");
+    proposal_block->set_block_flag(base::enum_xvblock_flag_authenticated);
+    // xdbg("xunitbuilder_t::make_block unit=%s,detail=%s", proposal_block->dump().c_str(), proposal_block->detail_dump().c_str());
+    // xdbg("xunitbuilder_t::make_block unit=%s,qcert=%s", proposal_block->dump().c_str(), proposal_block->get_cert()->dump().c_str());
+
+    xinfo("xunitbuilder_t::make_block unit=%s,binlog=%zu,snapshot=%zu,records=%zu,size=%zu,%zu", 
+        proposal_block->dump().c_str(), binlog.size(), snapshot.size(), unitstate->get_canvas_records_size(),
+        proposal_block->get_input()->get_resources_data().size(), proposal_block->get_output()->get_resources_data().size());
+    return proposal_block;
+}
+
+
 void xtablebuilder_t::make_table_prove_property_hashs(base::xvbstate_t* bstate, std::map<std::string, std::string> & property_hashs) {
     std::string property_receiptid_bin = data::xtable_bstate_t::get_receiptid_property_bin(bstate);
     if (!property_receiptid_bin.empty()) {
@@ -90,72 +132,6 @@ void xtablebuilder_t::make_table_prove_property_hashs(base::xvbstate_t* bstate, 
         std::string prophash = std::string(reinterpret_cast<char*>(hash.data()), hash.size());
         property_hashs[data::xtable_bstate_t::get_receiptid_property_name()] = prophash;
     }
-}
-
-bool     xtablebuilder_t::update_account_index_property(const data::xtablestate_ptr_t & tablestate, 
-                                                        const std::vector<xblock_ptr_t> & batch_units,
-                                                        const std::vector<data::xlightunit_tx_info_ptr_t> & txs_info) {
-    std::map<std::string, uint64_t> account_nonce_map;
-
-    for (auto & tx_info : txs_info) {
-        if (!tx_info->is_send_tx() && !tx_info->is_self_tx()) {
-            continue;
-        }
-        auto & account = tx_info->get_raw_tx()->get_source_addr();
-        auto tx_nonce = tx_info->get_last_trans_nonce() + 1;
-        auto it = account_nonce_map.find(account);
-        if (it == account_nonce_map.end()) {
-            account_nonce_map[account] = tx_nonce;
-        } else {
-            uint64_t & nonce_tmp = it->second;
-            if (tx_nonce > nonce_tmp) {
-                account_nonce_map[account] = tx_nonce;
-            }
-        }
-    }
-
-    // make account index property binlog
-    for (auto & unit : batch_units) {
-        // read old index
-        base::xaccount_index_t _old_aindex;
-        tablestate->get_account_index(unit->get_account(), _old_aindex);
-        // update unconfirm sendtx flag
-        // bool has_unconfirm_sendtx = _old_aindex.is_has_unconfirm_tx();
-        bool has_unconfirm_sendtx = false;  // TODO(jimmy)
-        uint64_t nonce = _old_aindex.get_latest_tx_nonce();
-        // if (unit->get_block_class() == base::enum_xvblock_class_full) {
-        //     has_unconfirm_sendtx = false;
-        // } else if (unit->get_block_class() == base::enum_xvblock_class_light) {
-        //     has_unconfirm_sendtx = unit->get_unconfirm_sendtx_num() != 0;
-        // }
-        // update light-unit consensus flag, light-unit must push to committed status for receipt make
-        base::enum_xblock_consensus_type _cs_type = _old_aindex.get_latest_unit_consensus_type();
-        if (unit->get_block_class() == base::enum_xvblock_class_light) {
-            _cs_type = base::enum_xblock_consensus_flag_authenticated;  // if light-unit, reset to authenticated
-        } else {
-            if (_cs_type == base::enum_xblock_consensus_flag_authenticated) {  // if other-unit, update type
-                _cs_type = base::enum_xblock_consensus_flag_locked;
-            } else if (_cs_type == base::enum_xblock_consensus_flag_locked) {
-                _cs_type = base::enum_xblock_consensus_flag_committed;
-            } else if (_cs_type == base::enum_xblock_consensus_flag_committed) {
-                // do nothing
-            }
-        }
-        
-        auto it = account_nonce_map.find(unit->get_account());
-        if (it != account_nonce_map.end()) {
-            uint64_t & nonce_tmp = it->second;
-            xassert(nonce_tmp > nonce);
-            if (nonce_tmp > nonce) {
-                nonce = nonce_tmp;
-            }
-        }
-
-        base::xaccount_index_t _new_aindex(unit.get(), has_unconfirm_sendtx, _cs_type, false, nonce);
-        tablestate->set_account_index(unit->get_account(), _new_aindex);
-        xdbg("xtablebuilder_t::update_account_index_property account:%s,index=%s", unit->get_account().c_str(), _new_aindex.dump().c_str());
-    }
-    return true;
 }
 
 bool     xtablebuilder_t::update_account_index_property(const data::xtablestate_ptr_t & tablestate, 
@@ -183,7 +159,7 @@ bool     xtablebuilder_t::update_account_index_property(const data::xtablestate_
         }
     }
 
-    base::xaccount_index_t _new_aindex(unit.get(), has_unconfirm_sendtx, _cs_type, false, nonce);
+    base::xaccount_index_t _new_aindex(unit->get_height(), unit->get_viewid(), nonce, _cs_type, unit->get_block_class(), unit->get_block_type(), has_unconfirm_sendtx, false);
     tablestate->set_account_index(unit->get_account(), _new_aindex);
     xdbg("xtablebuilder_t::update_account_index_property account:%s,index=%s", unit->get_account().c_str(), _new_aindex.dump().c_str());
     return true;
@@ -196,7 +172,7 @@ bool     xtablebuilder_t::update_receipt_confirmids(const data::xtablestate_ptr_
              tablestate->get_receiptid_state()->get_self_tableid(),
              confirmid_pair.first,
              confirmid_pair.second,
-             tablestate->get_block_height());
+             tablestate->height());
         base::xreceiptid_pair_t receiptid_pair;
         tablestate->find_receiptid_pair(confirmid_pair.first, receiptid_pair);
         if (confirmid_pair.second > receiptid_pair.get_confirmid_max() && confirmid_pair.second <= receiptid_pair.get_sendid_max()) {
@@ -204,18 +180,18 @@ bool     xtablebuilder_t::update_receipt_confirmids(const data::xtablestate_ptr_
             tablestate->set_receiptid_pair(confirmid_pair.first, receiptid_pair);  // save to modified pairs
         } else {
             xerror("xtablebuilder_t::update_receipt_confirmids set confirmid,self:%d,peer:%d,receiptid:%llu,proposal height:%llu,receiptid_pair=%s",
-                tablestate->get_receiptid_state()->get_self_tableid(),
-                confirmid_pair.first,
-                confirmid_pair.second,
-                tablestate->get_block_height(),
-                receiptid_pair.dump().c_str());
+                   tablestate->get_receiptid_state()->get_self_tableid(),
+                   confirmid_pair.first,
+                   confirmid_pair.second,
+                   tablestate->height(),
+                   receiptid_pair.dump().c_str());
             return false;
         }
     }
     return true;
 }
 
-void     xtablebuilder_t::make_table_block_para(const std::vector<xblock_ptr_t> & batch_units,
+void     xtablebuilder_t::make_table_block_para(const std::vector<std::pair<xblock_ptr_t, base::xaccount_index_t>> & batch_unit_and_index,
                                                 const data::xtablestate_ptr_t & tablestate,
                                                 txexecutor::xexecute_output_t const& execute_output, 
                                                 data::xtable_block_para_t & lighttable_para) {
@@ -243,16 +219,24 @@ void     xtablebuilder_t::make_table_block_para(const std::vector<xblock_ptr_t> 
 
     lighttable_para.set_property_binlog(binlog);
     lighttable_para.set_fullstate_bin(snapshot);
-    lighttable_para.set_batch_units(batch_units);
+    lighttable_para.set_batch_unit_and_index(batch_unit_and_index);
     lighttable_para.set_tgas_balance_change(tgas_balance_change);
     lighttable_para.set_property_hashs(property_hashs);
     lighttable_para.set_txs(txs_info);
 }
 
 data::xblock_ptr_t  xtablebuilder_t::make_light_block(const data::xblock_ptr_t & prev_block, const data::xblock_consensus_para_t & cs_para, data::xtable_block_para_t const& lighttable_para) {
-    data::xlighttable_build_t bbuild(prev_block.get(), lighttable_para, cs_para);
-    base::xauto_ptr<base::xvblock_t> _new_block = bbuild.build_new_block();
+    std::shared_ptr<base::xvblockmaker_t> vbmaker = nullptr;
+    auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();                
+    if (top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.v1_7_0_block_fork_point, cs_para.get_clock())) {
+        vbmaker = std::make_shared<data::xtable_build2_t>(prev_block.get(), lighttable_para, cs_para);
+    } else {
+        vbmaker = std::make_shared<data::xlighttable_build_t>(prev_block.get(), lighttable_para, cs_para);
+    }
+
+    auto _new_block = vbmaker->build_new_block();
     data::xblock_ptr_t proposal_block = data::xblock_t::raw_vblock_to_object_ptr(_new_block.get());
+
     return proposal_block;
 }
 

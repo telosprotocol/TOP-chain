@@ -13,6 +13,7 @@
 #include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
 #include "xdata/xrootblock.h"
+#include "xdata/xsystem_contract/xdata_structures.h"
 #include "xevm_common/rlp.h"
 #include "xvm/xserialization/xserialization.h"
 

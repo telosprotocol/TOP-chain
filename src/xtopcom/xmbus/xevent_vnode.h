@@ -5,7 +5,7 @@
 #pragma once
 
 #include "xmbus/xevent.h"
-#include "xstore/xstore_face.h"
+
 #include "xtxpool_service_v2/xrequest_tx_receiver_face.h"
 #include "xvnetwork/xvnetwork_driver_face.h"
 

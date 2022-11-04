@@ -19,6 +19,7 @@ IF (CMAKE_SYSTEM_NAME MATCHES "Darwin")
         xdata
         xxbase
         xcontract_vm
+        xstate_mpt
     )
 ELSE()
     target_link_libraries(xblockmaker PRIVATE
@@ -34,6 +35,7 @@ ELSE()
         xxbase
         intel_aes64
         xcontract_vm
+        xstate_mpt
     )
 ENDIF()
 

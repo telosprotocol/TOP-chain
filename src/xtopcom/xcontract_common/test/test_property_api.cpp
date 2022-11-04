@@ -6,7 +6,7 @@
 #include "xbasic/xmemory.hpp"
 #include "xdata/xblocktool.h"
 #include "xstore/xstore.h"
-#include "xstore/xstore_face.h"
+
 
 using namespace top::common;
 using namespace top::base;

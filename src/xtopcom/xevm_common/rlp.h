@@ -9,6 +9,7 @@
 #include "vector_ref.h"
 #include "xevm_common/common.h"
 #include "xevm_common/data.h"
+
 #include <array>
 #include <exception>
 #include <iomanip>
@@ -27,14 +28,14 @@ template <> struct intTraits<u160> { static const unsigned maxSize = 20; };
 template <> struct intTraits<u256> { static const unsigned maxSize = 32; };
 template <> struct intTraits<bigint> { static const unsigned maxSize = ~(unsigned)0; };
 
-static const byte c_rlpMaxLengthBytes = 8;
-static const byte c_rlpDataImmLenStart = 0x80;
-static const byte c_rlpListStart = 0xc0;
+static const xbyte_t c_rlpMaxLengthBytes = 8;
+static const xbyte_t c_rlpDataImmLenStart = 0x80;
+static const xbyte_t c_rlpListStart = 0xc0;
 
-static const byte c_rlpDataImmLenCount = c_rlpListStart - c_rlpDataImmLenStart - c_rlpMaxLengthBytes;
-static const byte c_rlpDataIndLenZero = c_rlpDataImmLenStart + c_rlpDataImmLenCount - 1;
-static const byte c_rlpListImmLenCount = 256 - c_rlpListStart - c_rlpMaxLengthBytes;
-static const byte c_rlpListIndLenZero = c_rlpListStart + c_rlpListImmLenCount - 1;
+static const xbyte_t c_rlpDataImmLenCount = c_rlpListStart - c_rlpDataImmLenStart - c_rlpMaxLengthBytes;
+static const xbyte_t c_rlpDataIndLenZero = c_rlpDataImmLenStart + c_rlpDataImmLenCount - 1;
+static const xbyte_t c_rlpListImmLenCount = 256 - c_rlpListStart - c_rlpMaxLengthBytes;
+static const xbyte_t c_rlpListIndLenZero = c_rlpListStart + c_rlpListImmLenCount - 1;
 
 template <class T> struct Converter { static T convert(RLP const&, int) {  } };
 
@@ -65,13 +66,15 @@ public:
     explicit RLP(bytesConstRef _d, Strictness _s = VeryStrict);
 
     /// Construct a node of value given in the bytes.
-    explicit RLP(bytes const& _d, Strictness _s = VeryStrict): RLP(&_d, _s) {}
+    explicit RLP(xbytes_t const& _d, Strictness _s = VeryStrict): RLP(&_d, _s) {}
 
     /// Construct a node to read RLP data in the bytes given.
-    RLP(byte const* _b, unsigned _s, Strictness _st = VeryStrict): RLP(bytesConstRef(_b, _s), _st) {}
+    RLP(xbyte_t const * _b, unsigned _s, Strictness _st = VeryStrict) : RLP(bytesConstRef(_b, _s), _st) {
+    }
 
     /// Construct a node to read RLP data in the string.
-    explicit RLP(std::string const& _s, Strictness _st = VeryStrict): RLP(bytesConstRef((byte const*)_s.data(), _s.size()), _st) {}
+    explicit RLP(std::string const & _s, Strictness _st = VeryStrict) : RLP(bytesConstRef((xbyte_t const *)_s.data(), _s.size()), _st) {
+    }
 
     /// The bare data of the RLP.
     bytesConstRef data() const { return m_data; }
@@ -156,7 +159,9 @@ public:
 
     /// Best-effort conversion operators.
     explicit operator std::string() const { return toString(); }
-    explicit operator bytes() const { return toBytes(); }
+    explicit operator xbytes_t() const {
+        return toBytes();
+    }
     explicit operator uint8_t() const { return toInt<uint8_t>(); }
     explicit operator uint16_t() const { return toInt<uint16_t>(); }
     explicit operator uint32_t() const { return toInt<uint32_t>(); }
@@ -171,7 +176,15 @@ public:
     template <class T, size_t N> explicit operator std::array<T, N>() const { return toArray<T, N>(); }
 
     /// Converts to bytearray. @returns the empty byte array if not a string.
-    bytes toBytes(int _flags = LaissezFaire) const { if (!isData()) { if (_flags & ThrowOnFail) assert(true); else return bytes(); } return bytes(payload().data(), payload().data() + length()); }
+    xbytes_t toBytes(int _flags = LaissezFaire) const {
+        if (!isData()) {
+            if (_flags & ThrowOnFail)
+                assert(true);
+            else
+                return xbytes_t();
+        }
+        return xbytes_t(payload().data(), payload().data() + length());
+    }
     /// Converts to bytearray. @returns the empty byte array if not a string.
     bytesConstRef toBytesConstRef(int _flags = LaissezFaire) const { if (!isData()) { if (_flags & ThrowOnFail) assert(true); else return bytesConstRef(); } return payload().cropped(0, length()); }
     /// Converts to string. @returns the empty string if not a string.
@@ -310,52 +323,52 @@ public:
 
 
 public:
-    static bytes encode(const std::string & string) noexcept {
-        return encode(bytes(string.begin(), string.end()));
+    static xbytes_t encode(const std::string & string) noexcept {
+        return encode(xbytes_t(string.begin(), string.end()));
     }
 
-    static bytes encode(uint8_t number) noexcept {
+    static xbytes_t encode(uint8_t number) noexcept {
         return encode(uint64_t(number));
     }
 
-    static bytes encode(uint16_t number) noexcept {
+    static xbytes_t encode(uint16_t number) noexcept {
         return encode(uint64_t(number));
     }
 
-    static bytes encode(int32_t number) noexcept {
+    static xbytes_t encode(int32_t number) noexcept {
         if (number < 0) {
             return {};  // RLP cannot encode negative numbers
         }
         return encode(static_cast<uint32_t>(number));
     }
 
-    static bytes encode(uint32_t number) noexcept {
+    static xbytes_t encode(uint32_t number) noexcept {
         return encode(uint64_t(number));
     }
 
-    static bytes encode(int64_t number) noexcept {
+    static xbytes_t encode(int64_t number) noexcept {
         if (number < 0) {
             return {};  // RLP cannot encode negative numbers
         }
         return encode(static_cast<uint64_t>(number));
     }
-    static bytes encode(uint64_t number) noexcept {
-        bytes data = top::evm_common::toCompactBigEndian(number);
+    static xbytes_t encode(uint64_t number) noexcept {
+        auto data = top::evm_common::toCompactBigEndian(number);
         u256 udata = top::evm_common::fromBigEndian<u256>(data);
         return encode(udata);
     }
 
-    static bytes encode(const u256 & number) noexcept;
+    static xbytes_t encode(const u256 & number) noexcept;
 
     /// Wraps encoded data as a list.
-    static bytes encodeList(const bytes & encoded) noexcept;
+    static xbytes_t encodeList(const xbytes_t & encoded) noexcept;
 
     /// Encodes a block of data.
-    static bytes encode(const bytes & data) noexcept;
+    static xbytes_t encode(const xbytes_t & data) noexcept;
 
     /// Encodes a static array.
     template <std::size_t N>
-    static bytes encode(const std::array<uint8_t, N> & data) noexcept {
+    static xbytes_t encode(const std::array<uint8_t, N> & data) noexcept {
         if (N == 1 && data[0] <= 0x7f) {
             // Fits in single byte, no header
             return bytes(data.begin(), data.end());
@@ -368,8 +381,8 @@ public:
 
     /// Encodes a list of elements.
     template <typename T>
-    static bytes encodeList(T elements) noexcept {
-        auto encodedData = bytes();
+    static xbytes_t encodeList(T elements) noexcept {
+        auto encodedData = xbytes_t();
         for (const auto & el : elements) {
             auto encoded = encode(el);
             if (encoded.empty()) {
@@ -384,27 +397,28 @@ public:
     }
 
     /// Encodes a list header.
-    static bytes encodeHeader(uint64_t size, uint8_t smallTag, uint8_t largeTag) noexcept;
+    static xbytes_t encodeHeader(uint64_t size, uint8_t smallTag, uint8_t largeTag) noexcept;
 
     /// Returns the representation of an integer using the least number of bytes
     /// needed.
-    static bytes putVarInt(uint64_t i);
-    static uint64_t parseVarInt(size_t size, const bytes & data, size_t index);
+    static xbytes_t putVarInt(uint64_t i);
+    static uint64_t parseVarInt(size_t size, const xbytes_t & data, size_t index);
 
     struct DecodedItem {
-        std::vector<bytes> decoded;
-        bytes remainder;
+        std::vector<xbytes_t> decoded;
+        xbytes_t remainder;
     };
 
-    static DecodedItem decodeList(const bytes & input);
-    static uint64_t decodeLength(const bytes & data);
+    static DecodedItem decodeList(const xbytes_t & input);
+    static uint64_t decodeLength(const xbytes_t & data);
     /// Decodes data, remainder from RLP encoded data
-    static DecodedItem decode(const bytes & data);
-    static DecodedItem decode_once(const bytes & input);
+    static DecodedItem decode(const xbytes_t & data);
+    static DecodedItem decode_once(const xbytes_t & input);
 
 private:
     /// Disable construction from rvalue
-    explicit RLP(bytes const&&) {}
+    explicit RLP(xbytes_t const &&) {
+    }
 
     /// Throws if is non-canonical data (i.e. single byte done in two bytes that could be done in one).
     void requireGood() const;
@@ -440,7 +454,12 @@ private:
 };
 
 template <> struct Converter<std::string> { static std::string convert(RLP const& _r, int _flags) { return _r.toString(_flags); } };
-template <> struct Converter<bytes> { static bytes convert(RLP const& _r, int _flags) { return _r.toBytes(_flags); } };
+template <>
+struct Converter<xbytes_t> {
+    static xbytes_t convert(RLP const & _r, int _flags) {
+        return _r.toBytes(_flags);
+    }
+};
 template <> struct Converter<uint8_t> { static uint8_t convert(RLP const& _r, int _flags) { return _r.toInt<uint8_t>(_flags); } };
 template <> struct Converter<uint16_t> { static uint16_t convert(RLP const& _r, int _flags) { return _r.toInt<uint16_t>(_flags); } };
 template <> struct Converter<uint32_t> { static uint32_t convert(RLP const& _r, int _flags) { return _r.toInt<uint32_t>(_flags); } };
@@ -477,7 +496,9 @@ public:
     RLPStream& append(u256 _s) { return append(bigint(_s)); }
     RLPStream& append(bigint _s);
     RLPStream& append(bytesConstRef _s, bool _compact = false);
-    RLPStream& append(bytes const& _s) { return append(bytesConstRef(&_s)); }
+    RLPStream & append(xbytes_t const & _s) {
+        return append(bytesConstRef(&_s));
+    }
     RLPStream& append(std::string const& _s) { return append(bytesConstRef(_s)); }
     RLPStream& append(char const* _s) { return append(std::string(_s)); }
     template <unsigned N> RLPStream& append(FixedHash<N> _s, bool _compact = false, bool _allOrNothing = false) { return _allOrNothing && !_s ? append(bytesConstRef()) : append(_s.ref(), _compact); }
@@ -496,12 +517,16 @@ public:
     /// Appends a list.
     RLPStream& appendList(size_t _items);
     RLPStream& appendList(bytesConstRef _rlp);
-    RLPStream& appendList(bytes const& _rlp) { return appendList(&_rlp); }
+    RLPStream & appendList(xbytes_t const & _rlp) {
+        return appendList(&_rlp);
+    }
     RLPStream& appendList(RLPStream const& _s) { return appendList(&_s.out()); }
 
     /// Appends raw (pre-serialised) RLP data. Use with caution.
     RLPStream& appendRaw(bytesConstRef _rlp, size_t _itemCount = 1);
-    RLPStream& appendRaw(bytes const& _rlp, size_t _itemCount = 1) { return appendRaw(&_rlp, _itemCount); }
+    RLPStream & appendRaw(xbytes_t const & _rlp, size_t _itemCount = 1) {
+        return appendRaw(&_rlp, _itemCount);
+    }
 
     /// Shift operators for appending data items.
     template <class T> RLPStream& operator<<(T _data) { return append(_data); }
@@ -510,32 +535,44 @@ public:
     void clear() { m_out.clear(); m_listStack.clear(); }
 
     /// Read the byte stream.
-    bytes const& out() const { if(!m_listStack.empty())   assert(true);  return m_out; }
+    xbytes_t const & out() const {
+        if (!m_listStack.empty())
+            assert(true);
+        return m_out;
+    }
 
     /// Invalidate the object and steal the output byte stream.
-    bytes&& invalidate() { if(!m_listStack.empty())  assert(true); return std::move(m_out); }
+    xbytes_t && invalidate() {
+        if (!m_listStack.empty())
+            assert(true);
+        return std::move(m_out);
+    }
 
     /// Swap the contents of the output stream out for some other byte array.
-    void swapOut(bytes& _dest) { if(!m_listStack.empty())  assert(true);  swap(m_out, _dest); }
+    void swapOut(xbytes_t & _dest) {
+        if (!m_listStack.empty())
+            assert(true);
+        swap(m_out, _dest);
+    }
 
 private:
     void noteAppended(size_t _itemCount = 1);
 
     /// Push the node-type byte (using @a _base) along with the item count @a _count.
     /// @arg _count is number of characters for strings, data-bytes for ints, or items for lists.
-    void pushCount(size_t _count, byte _offset);
+    void pushCount(size_t _count, xbyte_t _offset);
 
     /// Push an integer as a raw big-endian byte-stream.
     template <class _T> void pushInt(_T _i, size_t _br)
     {
         m_out.resize(m_out.size() + _br);
-        byte* b = &m_out.back();
+        xbyte_t * b = &m_out.back();
         for (; _i; _i >>= 8)
-            *(b--) = (byte)(_i & 0xff);
+            *(b--) = (xbyte_t)(_i & 0xff);
     }
 
     /// Our output byte stream.
-    bytes m_out;
+    xbytes_t m_out;
 
     std::vector<std::pair<size_t, size_t>> m_listStack;
 };
@@ -544,22 +581,27 @@ template <class _T> void rlpListAux(RLPStream& _out, _T _t) { _out << _t; }
 template <class _T, class ... _Ts> void rlpListAux(RLPStream& _out, _T _t, _Ts ... _ts) { rlpListAux(_out << _t, _ts...); }
 
 /// Export a single item in RLP format, returning a byte array.
-template <class _T> bytes xrlp(_T _t) { return (RLPStream() << _t).out(); }
+template <class _T>
+xbytes_t xrlp(_T _t) {
+    return (RLPStream() << _t).out();
+}
 
 /// Export a list of items in RLP format, returning a byte array.
-inline bytes rlpList() { return RLPStream(0).out(); }
-template <class ... _Ts> bytes rlpList(_Ts ... _ts)
-{
+inline xbytes_t rlpList() {
+    return RLPStream(0).out();
+}
+template <class... _Ts>
+xbytes_t rlpList(_Ts... _ts) {
     RLPStream out(sizeof ...(_Ts));
     rlpListAux(out, _ts...);
     return out.out();
 }
 
 /// The empty string in RLP format.
-extern bytes RLPNull;
+extern xbytes_t RLPNull;
 
 /// The empty list in RLP format.
-extern bytes RLPEmptyList;
+extern xbytes_t RLPEmptyList;
 
 /// Human readable version of RLP.
 std::ostream& operator<<(std::ostream& _out, RLP const& _d);

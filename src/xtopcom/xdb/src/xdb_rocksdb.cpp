@@ -726,6 +726,7 @@ bool xdb::xdb_impl::write(const std::map<std::string, std::string>& batches) {
     rocksdb::WriteBatch batch;
     for (const auto& entry: batches) {
         rocksdb::ColumnFamilyHandle* target_cf = get_cf_handle(entry.first);
+        XMETRICS_GAUGE(metrics::db_write_size, entry.second.size());
         batch.Put(target_cf, entry.first, entry.second);
     }
     rocksdb::Status s = m_db->Write(rocksdb::WriteOptions(), &batch);
@@ -763,10 +764,12 @@ bool xdb::xdb_impl::batch_change(const std::map<std::string, std::string>& objs,
     rocksdb::WriteBatch batch;
     for (const auto& entry: objs) {
         rocksdb::ColumnFamilyHandle* target_cf = get_cf_handle(entry.first);
+        XMETRICS_GAUGE(metrics::db_write_size, entry.second.size());
         batch.Put(target_cf, entry.first, entry.second);
     }
     for (const auto& key: delete_keys) {
         rocksdb::ColumnFamilyHandle* target_cf = get_cf_handle(key);
+        XMETRICS_GAUGE(metrics::db_delete, 1);
         batch.Delete(target_cf, key);
     }
     rocksdb::Status s = m_db->Write(rocksdb::WriteOptions(), &batch);
@@ -1052,7 +1055,7 @@ bool xdb::delete_range(const std::string& begin_key,const std::string& end_key)
 {
     XMETRICS_TIMER(metrics::db_delete_tick);
     auto ret = m_db_impl->delete_range(begin_key, end_key);
-    XMETRICS_GAUGE(metrics::db_delete, ret ? 1 : 0);
+    XMETRICS_GAUGE(metrics::db_delete_range, ret ? 1 : 0);
     return ret;
 }
 

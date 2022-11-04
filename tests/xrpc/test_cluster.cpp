@@ -37,7 +37,7 @@ public:
 };
 
 TEST_F(test_cluster, basic) {
-    auto m_cluster_handler = std::make_shared<xrpc_handler>(m_vhost, m_router_ptr, nullptr, nullptr, nullptr, nullptr, m_thread);
+    auto m_cluster_handler = std::make_shared<xrpc_handler>(m_vhost, m_router_ptr, nullptr, nullptr, nullptr, m_thread);
     xvnode_address_t edge_sender;
     xmessage_t message;
     m_cluster_handler->on_message(edge_sender, message);

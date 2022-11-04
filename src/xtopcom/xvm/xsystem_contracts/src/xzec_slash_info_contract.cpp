@@ -51,7 +51,7 @@ void xzec_slash_info_contract::summarize_slash_info(std::string const & slash_in
     uint32_t table_id = 0;
     XCONTRACT_ENSURE(data::xdatautil::extract_parts(source_addr, base_addr, table_id), "source address extract base_addr or table_id error!");
     xdbg("[xzec_slash_info_contract][summarize_slash_info] self_account %s, source_addr %s, base_addr %s\n", account.c_str(), source_addr.c_str(), base_addr.c_str());
-    XCONTRACT_ENSURE(base_addr == top::sys_contract_sharding_statistic_info_addr || base_addr == top::sys_contract_eth_table_statistic_info_addr, "invalid source addr's call!");
+    XCONTRACT_ENSURE(base_addr == top::sys_contract_sharding_statistic_info_addr || source_addr == top::sys_contract_eth_table_statistic_info_addr, "invalid source addr's call!");
 
     xinfo("[xzec_slash_info_contract][summarize_slash_info] enter table contract report slash info, SOURCE_ADDRESS: %s", source_addr.c_str());
 

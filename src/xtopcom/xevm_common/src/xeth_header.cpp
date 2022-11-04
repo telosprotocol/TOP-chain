@@ -39,8 +39,8 @@ Hash xeth_header_t::hash_without_seal() const {
     return FixedHash<32>(hashValue.data(), h256::ConstructFromPointer);
 }
 
-bytes xeth_header_t::encode_rlp_withoutseal() const {
-    bytes out;
+xbytes_t xeth_header_t::encode_rlp_withoutseal() const {
+    xbytes_t out;
     {
         auto tmp = RLP::encode(parent_hash.asBytes());
         out.insert(out.end(), tmp.begin(), tmp.end());
@@ -100,8 +100,8 @@ bytes xeth_header_t::encode_rlp_withoutseal() const {
     return RLP::encodeList(out);
 }
 
-bytes xeth_header_t::encode_rlp() const {
-    bytes out;
+xbytes_t xeth_header_t::encode_rlp() const {
+    xbytes_t out;
     {
         auto tmp = RLP::encode(parent_hash.asBytes());
         out.insert(out.end(), tmp.begin(), tmp.end());
@@ -169,7 +169,7 @@ bytes xeth_header_t::encode_rlp() const {
     return RLP::encodeList(out);
 }
 
-bool xeth_header_t::decode_rlp(const bytes & bytes) {
+bool xeth_header_t::decode_rlp(const xbytes_t & bytes) {
     auto l = RLP::decodeList(bytes);
     if (l.decoded.size() < 15) {
         return false;
@@ -226,8 +226,8 @@ void xeth_header_t::print() const {
 xeth_header_info_t::xeth_header_info_t(bigint difficult_sum_, Hash parent_hash_, bigint number_) : difficult_sum{difficult_sum_}, parent_hash{parent_hash_}, number{number_} {
 }
 
-bytes xeth_header_info_t::encode_rlp() const {
-    bytes out;
+xbytes_t xeth_header_info_t::encode_rlp() const {
+    xbytes_t out;
     {
         auto tmp = RLP::encode(static_cast<u256>(difficult_sum));
         out.insert(out.end(), tmp.begin(), tmp.end());
@@ -243,7 +243,7 @@ bytes xeth_header_info_t::encode_rlp() const {
     return RLP::encodeList(out);
 }
 
-bool xeth_header_info_t::decode_rlp(const bytes & input) {
+bool xeth_header_info_t::decode_rlp(const xbytes_t & input) {
     auto l = RLP::decodeList(input);
     if (l.decoded.size() != 3) {
         return false;

@@ -5,6 +5,7 @@
 #include "xbasic/xerror/xerror.h"
 #include "xcommon/xaccount_address.h"
 #include "xdata/xnative_contract_address.h"
+#include "xvledger/xvaccount.h"
 
 #include <gtest/gtest.h>
 
@@ -73,6 +74,7 @@ TEST(account_address, valid_construction_3) {
     }
 
     {
+        // invalid address
         std::string const account_string{"T80000f1d16965a3f485af048ebcec8fd700dc92d54fa7"};
         std::uint16_t table_id_value{32};
 
@@ -87,6 +89,7 @@ TEST(account_address, valid_construction_3) {
     }
 
     {
+        // invalid address
         std::string const account_string{"T00000LXWe8Z1CRrrMB54dVBH9mKn4AJukpEGi9j"};
         std::uint16_t table_id_value{3};
 
@@ -162,6 +165,32 @@ TEST(account_address, invalid_construction_2) {
     EXPECT_THROW(top::common::xaccount_address_t account_address{"T80000f1d16965a3f485af048ebcec8fd700dc92d54fa7@64"}, top::error::xtop_error_t);
     EXPECT_THROW(top::common::xaccount_address_t account_address{"T80000f1d16965a3f485af048ebcec8fd700dc92d54fa7@-1"}, top::error::xtop_error_t);
     EXPECT_THROW(top::common::xaccount_address_t account_address{"T80000f1d16965a3f485af048ebcec8@fd700dc92d54fa7"}, top::error::xtop_error_t);
+}
+
+TEST(account_address, value_address_must_not_changed) {
+    std::string const account_string{"T00000LVgLn3yVd11d2izvJg6znmxddxg8JEShoJ"};
+
+    EXPECT_NO_THROW(top::common::xaccount_address_t account_address{account_string});
+
+    top::common::xaccount_address_t const account_address{account_string};
+    auto const & lstring = account_address.to_string();
+    auto const & rstring = account_address.to_string();
+    ASSERT_EQ(std::addressof(lstring), std::addressof(rstring));
+
+    auto const & lvalue = account_address.value();
+    auto const & rvalue = account_address.value();
+    ASSERT_EQ(std::addressof(lvalue), std::addressof(rstring));
+    ASSERT_EQ(std::addressof(lvalue), std::addressof(rvalue));
+}
+
+TEST(account_address, size) {
+    EXPECT_TRUE(sizeof(top::common::xaccount_address_t) <= 40);
+    EXPECT_TRUE(sizeof(top::common::xaccount_base_address_t) <= 16);
+    EXPECT_TRUE(sizeof(top::base::xvaccount_t) <= 56);
+
+    EXPECT_EQ(40, sizeof(top::common::xaccount_address_t));
+    EXPECT_EQ(16, sizeof(top::common::xaccount_base_address_t));
+    EXPECT_EQ(56, sizeof(top::base::xvaccount_t));
 }
 
 NS_END3

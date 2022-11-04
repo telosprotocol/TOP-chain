@@ -50,6 +50,7 @@ public:
 
     bool empty() const noexcept;
     void clear();
+    size_t size() const noexcept;
 
     base::enum_vaccount_addr_type type(std::error_code & ec) const;
     base::enum_vaccount_addr_type type() const;

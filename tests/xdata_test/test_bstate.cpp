@@ -1,7 +1,12 @@
+#define protected public
+#define private public
+
 #include "gtest/gtest.h"
 #include "xdata/xtransaction_v2.h"
 #include "xdata/xtransaction_v1.h"
 #include "xdata/xbstate_ctx.h"
+#include "xdata/xblocktool.h"
+#include "xdata/xunit_bstate.h"
 #include "xconfig/xconfig_register.h"
 #include "xbase/xmem.h"
 #include "xbasic/xhex.h"
@@ -89,4 +94,24 @@ TEST_F(test_bstate, token_id_1) {
 
     auto token_name = top::to_string(common::xtoken_id_t::eth);
     ASSERT_EQ(top::to_hex(token_name), "02");
+}
+
+TEST_F(test_bstate, empty_state) {
+{
+    std::string account = "T000000000000000000000000000";
+    base::xauto_ptr<base::xvblock_t> unit = data::xblocktool_t::create_genesis_empty_unit(account);
+    xobject_ptr_t<base::xvbstate_t> current_state = make_object_ptr<base::xvbstate_t>(*unit);
+    data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(current_state.get());
+    ASSERT_TRUE(unitstate->is_empty_state());
+}
+{
+    std::string account = "T000000000000000000000000000";
+    base::xauto_ptr<base::xvblock_t> unit = data::xblocktool_t::create_genesis_lightunit(account, 10000);
+    xobject_ptr_t<base::xvbstate_t> current_state = make_object_ptr<base::xvbstate_t>(*unit);
+    std::string binlog = unit->get_binlog();
+    ASSERT_TRUE(current_state->apply_changes_of_binlog(binlog));
+
+    data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(current_state.get());
+    ASSERT_FALSE(unitstate->is_empty_state());
+}
 }

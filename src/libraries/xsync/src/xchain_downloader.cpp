@@ -16,6 +16,7 @@
 #include "xdata/xtable_bstate.h"
 #include "xsync/xsync_store_shadow.h"
 #include "xsync/xsync_pusher.h"
+#include "xstatestore/xstatestore_face.h"
 
 NS_BEG2(top, sync)
 
@@ -654,6 +655,16 @@ xsync_command_execute_result xchain_downloader_t::execute_next_download(std::vec
     XMETRICS_COUNTER_INCREMENT("sync_downloader_response", 1);
     XMETRICS_COUNTER_INCREMENT("sync_cost_peer_response", total_cost);
 
+    if (false == sync_blocks_continue_check(blocks, "", false)) {
+        xsync_warn("execute_next_download  blocks(address error) (%s)", blocks[0]->get_account().c_str());
+        return ignore;
+    }
+    if (!data::is_table_address(common::xaccount_address_t {blocks[0]->get_account()}) 
+        && !data::is_drand_address(common::xaccount_address_t { blocks[0]->get_account() })) {
+        xsync_dbg("xsync_handler_t::blocks, address type error: %s", blocks[0]->get_account().c_str());
+        return ignore;
+    }
+
     // 1.verify shard-table block multi-sign
     if (!m_is_elect_chain){
         xblock_ptr_t &block = blocks[count-1];
@@ -749,7 +760,8 @@ xsync_command_execute_result xchain_downloader_t::execute_next_download(const st
             return abort;
         }
         xsync_dbg("chain_downloader on_snapshot_response valid snapshot. block=%s", current_vblock->dump().c_str());
-        m_sync_store->store_block(current_block.get());
+        statestore::xstatestore_hub_t::instance()->on_table_block_committed(current_block.get());
+        // m_sync_store->store_block(current_block.get());
     }
 
     xsync_info("chain_downloader on_snapshot_response(total) %s,current(height=%lu,viewid=%lu,hash=%s) behind(height=%lu)",

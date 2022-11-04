@@ -42,7 +42,7 @@ using namespace top::store;
 
 class test_blockmock_t {
 private:
-    xaccount_cmd_ptr_t modify_list_property(xaccount_ptr_t account, const std::string& name, const std::string& value) {
+    xaccount_cmd_ptr_t modify_list_property(data::xunitstate_ptr_t account, const std::string& name, const std::string& value) {
         assert(account != nullptr);
         auto cmd = std::make_shared<xaccount_cmd>(account.get(), m_store);
 
@@ -125,8 +125,8 @@ private:
 
             xfullunit_block_para_t block_para;
             block_para.m_account_state = account->get_account_mstate();
-            block_para.m_first_unit_hash = account->get_last_full_unit_hash();
-            block_para.m_first_unit_height = account->get_last_full_unit_height();
+            // block_para.m_first_unit_hash = account->get_last_full_unit_hash();
+            // block_para.m_first_unit_height = account->get_last_full_unit_height();
             block_para.m_account_propertys = properties;
 
             base::xvblock_t* proposal_block = xblocktool_t::create_next_fullunit(block_para, prev_block);

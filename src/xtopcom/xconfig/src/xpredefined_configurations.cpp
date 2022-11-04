@@ -180,6 +180,18 @@ XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(auditor_award_creditscore);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(contract_call_contracts_num);
 XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_list);
 
+// consortium parameters
+XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(enable_node_whitelist);
+XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(node_whitelist);
+XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(enable_transaction_whitelist);
+XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER(transaction_whitelist);
+
+XDEFINE_CONFIGURATION(node_reward_gas);
+XDEFINE_CONFIGURATION(enable_slash);
+XDEFINE_CONFIGURATION(enable_free_tgas);
+XDEFINE_CONFIGURATION(evm_token_type);
+
+
 /* begin of offchain parameters */
 XDEFINE_CONFIGURATION(auditor_group_count);
 XDEFINE_CONFIGURATION(validator_group_count);
@@ -239,6 +251,9 @@ XDEFINE_CONFIGURATION(platform_show_cmd);
 XDEFINE_CONFIGURATION(platform_db_path);
 XDEFINE_CONFIGURATION(platform_url_endpoints);
 
+XDEFINE_CONFIGURATION(sync_table_state_height_gap);
+XDEFINE_CONFIGURATION(keep_table_states_max_num);
+XDEFINE_CONFIGURATION(prune_table_state_diff);
 
 
 #    undef XDEFINE_ONCHAIN_GOVERNANCE_PARAMETER

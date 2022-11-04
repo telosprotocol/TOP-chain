@@ -322,9 +322,9 @@ void xtxpool_t::refresh_table(uint8_t zone, uint16_t subaddr) {
 // }
 
 void xtxpool_t::update_table_state(const base::xvproperty_prove_ptr_t & property_prove_ptr, const data::xtablestate_ptr_t & table_state) {
-    xtxpool_info("xtxpool_t::update_table_state table:%s height:%llu", table_state->get_account().c_str(), table_state->get_block_height());
+    xtxpool_info("xtxpool_t::update_table_state table:%s height:%llu", table_state->account_address().c_str(), table_state->height());
     XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_update_receiptid_state");
-    auto table = get_txpool_table_by_addr(table_state->get_account().c_str());
+    auto table = get_txpool_table_by_addr(table_state->account_address().c_str());
     if (table == nullptr) {
         return;
     }
@@ -348,14 +348,6 @@ const std::vector<xtxpool_table_lacking_receipt_ids_t> xtxpool_t::get_lacking_co
     return {};
 }
 
-bool xtxpool_t::need_sync_lacking_receipts(uint8_t zone, uint16_t subaddr) const {
-    auto table = get_txpool_table(zone, subaddr);
-    if (table != nullptr) {
-        return table->need_sync_lacking_receipts();
-    }
-    return false;
-}
-
 std::shared_ptr<xtxpool_table_t> xtxpool_t::get_txpool_table_by_addr(const std::string & address) const {
     base::xvaccount_t _vaddr(address);
     //auto xid = base::xvaccount_t::get_xid_from_account(address);
@@ -376,11 +368,10 @@ std::shared_ptr<xtxpool_table_t> xtxpool_t::get_txpool_table(uint8_t zone, uint1
     return m_tables_mgr.get_table(zone, subaddr);
 }
 
-xobject_ptr_t<xtxpool_face_t> xtxpool_instance::create_xtxpool_inst(const observer_ptr<store::xstore_face_t> & store,
-                                                                    const observer_ptr<base::xvblockstore_t> & blockstore,
+xobject_ptr_t<xtxpool_face_t> xtxpool_instance::create_xtxpool_inst(const observer_ptr<base::xvblockstore_t> & blockstore,
                                                                     const observer_ptr<base::xvcertauth_t> & certauth,
                                                                     const observer_ptr<mbus::xmessage_bus_face_t> & bus) {
-    auto para = std::make_shared<xtxpool_resources>(store, blockstore, certauth, bus);
+    auto para = std::make_shared<xtxpool_resources>(blockstore, certauth, bus);
     auto xtxpool = top::make_object_ptr<xtxpool_t>(para);
     return xtxpool;
 }

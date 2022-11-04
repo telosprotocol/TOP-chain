@@ -11,7 +11,7 @@
 #include "xdata/xtop_action_generator.h"
 #include "xdata/xtransaction_v2.h"
 #include "xloader/xconfig_onchain_loader.h"
-#include "xstore/xstore_face.h"
+
 // #include "xvm/xsystem_contracts/xreward/xzec_reward_contract_new.h"
 #include "xdata/xnative_contract_address.h"
 

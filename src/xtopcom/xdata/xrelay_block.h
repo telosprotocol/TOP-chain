@@ -55,7 +55,7 @@ namespace data {
 
         evm_common::h256 r;
         evm_common::h256 s;
-        evm_common::byte v { 0 };
+        xbyte_t v { 0 };
     };
 
     struct xrelay_signature_node_t {

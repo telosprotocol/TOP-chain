@@ -27,6 +27,7 @@ std::vector<std::pair<std::string, std::string>> stake_map_string_string_pair_li
     std::make_pair(sys_contract_zec_reward_addr, XPORPERTY_CONTRACT_VALIDATOR_WORKLOAD_KEY),
     std::make_pair(sys_contract_zec_slash_info_addr, XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY),
     std::make_pair(sys_contract_zec_vote_addr, XPORPERTY_CONTRACT_TICKETS_KEY),
+    //todo, consortium address
 };
 
 std::vector<std::pair<std::string, std::string>> stake_string_pair_list = {
@@ -215,7 +216,7 @@ void xdb_reset_t::get_unit_set_property(std::vector<std::string> const & sys_con
             std::cout << account << " height " << 0 << " bstate null!" << std::endl;
             continue;
         }
-        data::xaccount_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get());
+        data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get());
         if (unitstate == nullptr) {
             std::cout << account << " height " << 0 << " unitstate null!" << std::endl;
             continue;
@@ -307,7 +308,7 @@ void xdb_reset_t::get_contract_stake_property_string(json & stake_json) {
             std::cout << addr << " height " << 0 << " bstate null!" << std::endl;
             continue;
         }
-        data::xaccount_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get());
+        data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get());
         if (unitstate == nullptr) {
             std::cout << addr << " height " << 0 << " unitstate null!" << std::endl;
             continue;
@@ -361,7 +362,7 @@ void xdb_reset_t::get_contract_stake_property_map_string_string(json & stake_jso
             std::cout << addr << " height " << 0 << " bstate null!" << std::endl;
             continue;
         }
-        data::xaccount_ptr_t unitstate = std::make_shared<xunit_bstate_t>(bstate.get());
+        data::xunitstate_ptr_t unitstate = std::make_shared<xunit_bstate_t>(bstate.get());
         if (unitstate == nullptr) {
             std::cout << addr << " height " << 0 << " unitstate null!" << std::endl;
             continue;
@@ -558,7 +559,7 @@ void xdb_reset_t::get_contract_table_stake_property_map_string_string(json & sta
                 std::cout << table_addr << " height " << 0 << " bstate null!" << std::endl;
                 continue;
             }
-            data::xaccount_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get());
+            data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(bstate.get());
             if (unitstate == nullptr) {
                 std::cout << table_addr << " height " << 0 << " unitstate null!" << std::endl;
                 continue;

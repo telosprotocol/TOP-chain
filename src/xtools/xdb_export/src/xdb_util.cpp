@@ -747,7 +747,7 @@ static void parse_table_account_index_map(std::map<std::string, std::string> con
     for (auto const & pair : map) {
         json j_index;
         base::xaccount_index_t account_index;
-        account_index.serialize_from(pair.second);
+        account_index.old_serialize_from(pair.second);
         j_index["latest_unit_height"] = account_index.get_latest_unit_height();
         j_index["latest_unit_viewid"] = account_index.get_latest_unit_viewid();
         j_index["latest_tx_nonce"] = account_index.get_latest_tx_nonce();

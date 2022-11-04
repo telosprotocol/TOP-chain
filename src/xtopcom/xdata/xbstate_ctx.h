@@ -10,31 +10,36 @@
 #include "xcommon/xtoken_metadata.h"
 #include "xevm_common/common.h"
 #include "xvledger/xvstate.h"
-#include "xvledger/xvstate.h"
 
 NS_BEG2(top, data)
 
 // bstate with canvas
 class xbstate_ctx_t {
-public:
+protected:
     xbstate_ctx_t(base::xvbstate_t* bstate, bool readonly);
     virtual ~xbstate_ctx_t();
 
+ private:
+    xbstate_ctx_t();
+    xbstate_ctx_t(const xbstate_ctx_t &);
+    xbstate_ctx_t & operator = (const xbstate_ctx_t &);
+
 public: // common APIs for state basic info
-    const std::string & get_account()const {return m_bstate->get_account();}
-    const std::string & get_address()const {return m_bstate->get_account();}
-    uint64_t            get_block_height()const {return m_bstate->get_block_height();}
-    uint64_t            get_chain_height() const {return m_bstate->get_block_height();}
+    // const std::string & get_account()const {return m_bstate->get_account();}
+    // const std::string & get_address()const {return m_bstate->get_account();}
+    // uint64_t            get_block_height()const {return m_bstate->get_block_height();}
+    // uint64_t            get_chain_height() const {return m_bstate->get_block_height();}
     uint64_t            get_block_viewid() const {return m_bstate->get_block_viewid();}
-    inline uint64_t     get_last_full_unit_height() const {return m_bstate->get_last_fullblock_height();}
-    inline const std::string & get_last_full_unit_hash() const {return m_bstate->get_last_fullblock_hash();}
+    // inline uint64_t     get_last_full_unit_height() const {return m_bstate->get_last_fullblock_height();}
+    // inline const std::string & get_last_full_unit_hash() const {return m_bstate->get_last_fullblock_hash();}
 
     const xobject_ptr_t<base::xvbstate_t> & get_bstate() const { return m_bstate;}
     const xobject_ptr_t<base::xvbstate_t> & get_origin_bstate() const { return m_snapshot_origin_bstate;}
     const xobject_ptr_t<base::xvcanvas_t> & get_canvas() const {return m_canvas;}
     std::string         dump() const;
 
-    common::xaccount_address_t account_address() const;
+    common::xaccount_address_t const & account_address() const;
+    uint64_t height() const noexcept;
 
 public:
     bool                do_rollback();
@@ -73,6 +78,7 @@ public: // APIs for property operation with error code return
     uint64_t    token_balance(const std::string& key);
     int32_t     token_deposit(const std::string& key, base::vtoken_t add_token);
     int32_t     token_withdraw(const std::string& key, base::vtoken_t sub_token);
+    int32_t     token_update(const std::string& key, base::vtoken_t update_token);
 
     int32_t     uint64_add(const std::string& key, uint64_t change);
     int32_t     uint64_sub(const std::string& key, uint64_t change);
@@ -115,6 +121,7 @@ protected:
 private:
     xobject_ptr_t<base::xvbstate_t>     m_snapshot_origin_bstate{nullptr};
     size_t                              m_snapshot_canvas_height{0};
+    mutable common::xaccount_address_t m_account_address_cached;
 };
 
 

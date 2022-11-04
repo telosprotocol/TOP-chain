@@ -123,9 +123,6 @@ namespace top
             m_block_flags = 0;
             m_block_height = 0;
             m_tx_phase_type = 0;
-#ifdef  LONG_CONFIRM_CHECK
-            m_block_clock   = 0;
-#endif
         }
 
         xvtxindex_t::xvtxindex_t(xvblock_t & owner, const std::string & txhash, enum_transaction_subtype type)
@@ -138,9 +135,6 @@ namespace top
             m_tx_hash       = txhash;
             m_tx_phase_type = type;
             m_block_flags   = (owner.get_block_flags() >> 8); //lowest 8bit is meaning less,so just skip it
-#ifdef  LONG_CONFIRM_CHECK
-            m_block_clock   = owner.get_clock();
-#endif
         }
 
         xvtxindex_t::~xvtxindex_t()
@@ -170,9 +164,6 @@ namespace top
 
             stream << m_tx_phase_type;
             stream << m_block_flags;
-#ifdef  LONG_CONFIRM_CHECK
-            stream.write_compact_var(m_block_clock);
-#endif
             return (stream.size() - begin_size);
         }
 
@@ -188,19 +179,12 @@ namespace top
 
             stream >> m_tx_phase_type;
             stream >> m_block_flags;
-#ifdef  LONG_CONFIRM_CHECK
-            stream.read_compact_var(m_block_clock);
-#endif
             return (begin_size - stream.size());
         }
 
         const uint64_t xvtxindex_t::get_block_clock()   const
         {
-#ifdef  LONG_CONFIRM_CHECK
-            return m_block_clock;
-#else
             return 0;
-#endif
         }
 
     };//end of namespace of base

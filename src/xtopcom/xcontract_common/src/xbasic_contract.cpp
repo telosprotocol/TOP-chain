@@ -348,7 +348,8 @@ void xtop_basic_contract::delay_followup(std::vector<xfollowup_transaction_delay
 
 void xtop_basic_contract::exec_delay_followup() {
     // only for reward contract now
-    if (m_associated_execution_context->recver() != common::xaccount_address_t{sys_contract_zec_reward_addr}) {
+    if (m_associated_execution_context->recver() != common::xaccount_address_t{sys_contract_zec_reward_addr}
+     || m_associated_execution_context->recver() != common::xaccount_address_t{sys_contract_zec_consortium_reward_addr}) {
         return;
     }
     state_accessor::properties::xtypeless_property_identifier_t property{data::system_contract::XPORPERTY_CONTRACT_TASK_KEY};
@@ -437,12 +438,8 @@ std::string const & xtop_basic_contract::random_seed() const noexcept {
     return m_associated_execution_context->contract_state()->random_seed();
 }
 
-uint64_t xtop_basic_contract::state_height(common::xaccount_address_t const & address) const {
-    return m_associated_execution_context->contract_state()->state_height(address);
-}
-
-bool xtop_basic_contract::block_exist(common::xaccount_address_t const & address, uint64_t height) const {
-    return m_associated_execution_context->contract_state()->block_exist(address, height);
+uint64_t xtop_basic_contract::height() const {
+    return m_associated_execution_context->contract_state()->height();
 }
 
 NS_END2

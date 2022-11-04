@@ -289,6 +289,15 @@ namespace top
             return create_header(_para);
         }
 
+        xauto_ptr<xvheader_t> xvblockbuild_t::build_proposal_header(std::string const& account, uint64_t height, std::string const& last_block_hash, uint64_t _clock) {
+            xbbuild_para_t _para;
+            _para.m_account = account;
+            _para.m_height = height;
+            _para.m_last_block_hash = last_block_hash;
+            _para.m_clock = _clock;
+            return create_header(_para);
+        }
+
         void xvblockbuild_t::init_header_qcert(const xbbuild_para_t & _para) {
             init_header(_para);
             init_qcert(_para);
@@ -503,6 +512,15 @@ namespace top
             return true;
         }
 
+        bool xvblockmaker_t::set_output_full_state_hash(const std::string & value) {
+            if (value.empty() || get_header()->get_block_class() == enum_xvblock_class_nil) {
+                xassert(false);
+                return false;
+            }
+            m_full_state_hash = value;
+            return true;
+        }
+
         bool xvblockmaker_t::set_output_full_state(const std::string & value) {
             if (value.empty() || get_header()->get_block_class() == enum_xvblock_class_nil) {
                 xassert(false);
@@ -523,6 +541,11 @@ namespace top
             std::string binlog_hash = base::xcontext_t::instance().hash(value, get_qcert()->get_crypto_hash_type());
             set_output_entity(xvoutentity_t::key_name_binlog_hash(), binlog_hash);
             set_output_resource(binlog_hash, value);
+            return true;
+        }
+
+        bool xvblockmaker_t::set_output_offdata(const std::string & value) {
+            m_output_offdata = value;
             return true;
         }
 
@@ -805,6 +828,13 @@ namespace top
             }
             set_block_flags(_block_ptr.get());
             set_block(_block_ptr.get());
+            
+            if (!get_output_offdata().empty()) {
+                if (false == _block_ptr->set_output_offdata(get_output_offdata())) {
+                    xassert(false);
+                    return nullptr;
+                }
+            }
 
 #ifdef VBLOCKBUILD_CHECK_ENALBE // debug for check
             xdbg_info("xvblockmaker_t::build_new_block,done for block=%s,detail=%s",
@@ -818,9 +848,10 @@ namespace top
                 return nullptr;
             }
 
-            xinfo("xvblockmaker_t::build_new_block,done,%s,ir=%s,jc=%s,input=%s,output=%s,binlog=%zu,fullstate=%zu",
+            xinfo("xvblockmaker_t::build_new_block,done,%s,ir=%s,jc=%s,input=%s,output=%s,binlog=%zu,fullstate=%zu,offdata=%zu,%s",
                 get_block()->dump().c_str(), base::xstring_utl::to_hex(get_block()->get_input_root_hash()).c_str(), base::xstring_utl::to_hex(get_block()->get_justify_cert_hash()).c_str(),
-                get_block()->get_input()->dump().c_str(), get_block()->get_output()->dump().c_str(), get_block()->get_binlog().size(), get_block()->get_full_state().size());
+                get_block()->get_input()->dump().c_str(), get_block()->get_output()->dump().c_str(), get_block()->get_binlog().size(), get_block()->get_full_state().size(),
+                get_output_offdata().size(),base::xstring_utl::to_hex(get_block()->get_output_offdata_hash()).c_str());
             return _block_ptr;
         }
 

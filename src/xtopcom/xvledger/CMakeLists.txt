@@ -10,7 +10,8 @@ endif()
 
 target_link_libraries(xvledger PRIVATE
     xxbase
-    xdata
+    xconfig
+    jsoncpp
 )
 
 # if (XENABLE_TESTS)

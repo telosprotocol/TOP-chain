@@ -16,9 +16,6 @@
 
 NS_BEG2(top, data)
 
-static XINLINE_CONSTEXPR char const * RESOURCE_NODE_SIGN_STATISTICS     = "2";
-static XINLINE_CONSTEXPR char const * RESOURCE_RELAY_BLOCK              = "1";
-
 // XTODO keep old structure for compatibility
 class xtableheader_extra_t : public xserializable_based_on<void> {
  protected:
@@ -26,12 +23,14 @@ class xtableheader_extra_t : public xserializable_based_on<void> {
         enum_extra_data_type_tgas_total_lock_amount_property_height = 0,
         enum_extra_data_type_tgas_second_level_gmtime               = 1,
         enum_extra_data_type_eth_header                             = 2,
+        enum_extra_data_type_burn_gas                               = 3,
     };
  public:
      static std::string build_extra_string(base::xvheader_t * _tableheader,
                                            uint64_t tgas_height,
                                            uint64_t gmtime,
-                                           const std::string & eth_header);
+                                           const std::string & eth_header,
+                                           uint64_t burn_gas = 0);
 
  protected:
     int32_t do_write(base::xstream_t & stream) const override;
@@ -47,6 +46,8 @@ class xtableheader_extra_t : public xserializable_based_on<void> {
     void     set_second_level_gmtime(uint64_t gmtime);
     std::string get_ethheader() const;
     void     set_ethheader(const std::string & value);
+    uint64_t get_total_burn_gas() const;
+    void     set_total_burn_gas(uint64_t burn_gas);
 
  private:
     std::map<uint16_t, std::string>  m_paras;
@@ -91,21 +92,21 @@ class xtable_block_para_t : public base::xbbuild_body_para_t {
  public:
     xtable_block_para_t() = default;
     ~xtable_block_para_t() = default;
-    void    add_unit(base::xvblock_t * unit) {
+    void    add_unit(base::xvblock_t * unit, data::xaccount_index_t account_index) {
         unit->add_ref();
         xblock_t* block_ptr = (xblock_t*)unit;
         xblock_ptr_t auto_block_ptr;
         auto_block_ptr.attach(block_ptr);
-        m_account_units.push_back(auto_block_ptr);
+        m_batch_unit_and_index.push_back(std::make_pair(auto_block_ptr, account_index));
     }
-    void    set_batch_units(const std::vector<xblock_ptr_t> & batch_units) {m_account_units = batch_units;}
+    void    set_batch_unit_and_index(const std::vector<std::pair<xblock_ptr_t, data::xaccount_index_t>> & batch_unit_and_index) {m_batch_unit_and_index = batch_unit_and_index;}
     void    set_txs(const std::vector<xlightunit_tx_info_ptr_t> & txs_info) {m_txs = txs_info;}
     void    set_property_binlog(const std::string & binlog) {m_property_binlog = binlog;}
     void    set_fullstate_bin(const std::string & fullstate) {m_fullstate_bin = fullstate;}
     void    set_tgas_balance_change(const int64_t amount) {m_tgas_balance_change = amount;}
     void    set_property_hashs(const std::map<std::string, std::string> & hashs) {m_property_hashs = hashs;}
 
-    const std::vector<xblock_ptr_t> & get_account_units() const {return m_account_units;}
+    const std::vector<std::pair<xblock_ptr_t, data::xaccount_index_t>> & get_batch_unit_and_index() const {return m_batch_unit_and_index;}
     const std::vector<xlightunit_tx_info_ptr_t> & get_txs() const {return m_txs;}
     const std::string &             get_property_binlog() const {return m_property_binlog;}
     const std::string &             get_fullstate_bin() const {return m_fullstate_bin;}
@@ -113,7 +114,7 @@ class xtable_block_para_t : public base::xbbuild_body_para_t {
     const std::map<std::string, std::string> &  get_property_hashs() const {return m_property_hashs;}
 
  private:
-    std::vector<xblock_ptr_t>        m_account_units;
+    std::vector<std::pair<xblock_ptr_t, data::xaccount_index_t>> m_batch_unit_and_index;
     std::string                      m_property_binlog;
     std::string                      m_fullstate_bin;
     int64_t                          m_tgas_balance_change{0};
@@ -167,10 +168,19 @@ class xfullunit_build_t : public base::xvblockmaker_t {
     bool build_block_body(const xunit_block_para_t & para);
 };
 
+class xunit_build2_t : public base::xvblockmaker_t {
+ public:
+    xunit_build2_t(std::string const& account, uint64_t height, std::string const& last_block_hash, bool is_full_unit, const xunit_block_para_t & bodypara, const xblock_consensus_para_t & para);
+    xunit_build2_t(base::xvheader_t* header, base::xvblock_t* parentblock, const xunit_block_para_t & bodypara);
+
+    base::xauto_ptr<base::xvblock_t> create_new_block() override;
+ private:
+    bool build_block_body(const xunit_block_para_t & para);
+};
+
 class xlighttable_build_t : public base::xvtableblock_maker_t {
  public:
     static std::vector<xobject_ptr_t<base::xvblock_t>> unpack_units_from_table(const base::xvblock_t* _tableblock);
-    static xobject_ptr_t<base::xvblock_t> unpack_one_unit_from_table(const base::xvblock_t* _tableblock, uint32_t entity_id, const std::string & extend_cert, const std::string & extend_data);
  public:
     xlighttable_build_t(base::xvblock_t* prev_block, const xtable_block_para_t & bodypara, const xblock_consensus_para_t & para);
 
@@ -181,6 +191,18 @@ class xlighttable_build_t : public base::xvtableblock_maker_t {
     base::xvaction_t    make_action(const std::vector<xobject_ptr_t<base::xvblock_t>> & batch_units);
     static base::xauto_ptr<base::xvinput_t>     make_unit_input_from_table(const base::xvblock_t* _tableblock, const base::xtable_inentity_extend_t & extend, base::xvinentity_t* _table_unit_inentity);
     static base::xauto_ptr<base::xvoutput_t>    make_unit_output_from_table(const base::xvblock_t* _tableblock, const base::xtable_inentity_extend_t & extend, base::xvoutentity_t* _table_unit_outentity);
+};
+
+class xtable_build2_t : public base::xvblockmaker_t {
+ public:
+   static std::vector<xobject_ptr_t<base::xvblock_t>> unpack_units_from_table(base::xvblock_t* _tableblock, std::error_code & ec);
+ public:
+    xtable_build2_t(base::xvblock_t* prev_block, const xtable_block_para_t & bodypara, const xblock_consensus_para_t & para);
+
+    base::xauto_ptr<base::xvblock_t> create_new_block() override;
+
+ private:
+    bool                build_block_body(const xtable_block_para_t & para, const base::xvaccount_t & account, uint64_t height);
 };
 
 class xfulltable_build_t : public base::xvblockmaker_t {

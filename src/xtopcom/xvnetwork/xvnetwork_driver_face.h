@@ -9,24 +9,19 @@
 
 #pragma once
 
-#include "xbasic/xcrypto_key.h"
 #include "xbasic/xmemory.hpp"
 #include "xbasic/xrunnable.h"
 #include "xcommon/xaddress.h"
 #include "xcommon/xip.h"
-#include "xcommon/xlogic_time.h"
 #include "xcommon/xmessage_category.h"
 #include "xcommon/xnode_info.h"
-#include "xcommon/xrole_type.h"
 #include "xdata/xnode_info.h"
 #include "xcommon/xnode_type.h"
-#include "xnetwork/xmessage_transmission_property.h"
 #include "xvnetwork/xmessage_ready_callback.h"
 #include "xvnetwork/xvhost_face_fwd.h"
 
 #include <map>
 #include <memory>
-#include <set>
 
 NS_BEG2(top, vnetwork)
 
@@ -35,9 +30,9 @@ public:
     xtop_vnetwork_driver_face() = default;
     xtop_vnetwork_driver_face(xtop_vnetwork_driver_face const &) = delete;
     xtop_vnetwork_driver_face & operator=(xtop_vnetwork_driver_face const &) = delete;
-    xtop_vnetwork_driver_face(xtop_vnetwork_driver_face &&) = default;
-    xtop_vnetwork_driver_face & operator=(xtop_vnetwork_driver_face &&) = default;
-    virtual ~xtop_vnetwork_driver_face() = default;
+    xtop_vnetwork_driver_face(xtop_vnetwork_driver_face &&) = delete;
+    xtop_vnetwork_driver_face & operator=(xtop_vnetwork_driver_face &&) = delete;
+    ~xtop_vnetwork_driver_face() override = default;
 
     /**
      * @brief Register the message for a specified message category.
@@ -73,12 +68,12 @@ public:
      * 
      * @param to The destination address to send
      * @param message The message to send
-     * @param transmission_property The transport properties of the message
+     * @param ec Record error code.
      */
     virtual void send_to(xvnode_address_t const & to, xmessage_t const & message, std::error_code & ec) = 0;
 
     /**
-     * @brief 
+     * @brief Send message to other via xip.
      * 
      * @param to The destination xip address to send
      * @param message The message to send to
@@ -87,7 +82,7 @@ public:
     virtual void send_to(common::xip2_t const & to, xmessage_t const & message, std::error_code & ec) = 0;
 
     /**
-     * @brief 
+     * @brief Broadcast message to other via xip.
      * 
      * @param to The destination xip address to broadcast
      * @param message The message to broadcast

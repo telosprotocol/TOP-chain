@@ -220,15 +220,8 @@ public:
     common::xaccount_address_t account_address() const;
 
     /// @brief Get the state associated chain height.
-    /// @param address Address to get.
     /// @return The state associated chain height.
-    uint64_t state_height(common::xaccount_address_t const & address) const;
-
-    /// @brief Check if block object exists or not.
-    /// @param address Address to check.
-    /// @param height block height to check.
-    /// @return 'true' if block object exists; otherwise 'false'.
-    bool block_exist(common::xaccount_address_t const & address, uint64_t height) const;
+    uint64_t height() const;
 
 private:
     bool read_permitted(properties::xproperty_identifier_t const & property_id) const noexcept;

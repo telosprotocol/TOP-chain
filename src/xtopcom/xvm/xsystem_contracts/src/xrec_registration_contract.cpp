@@ -291,7 +291,7 @@ void xrec_registration_contract::registerNode2(const std::string & miner_type_na
 
     uint64_t const min_deposit = node_info.get_required_min_deposit();
     xdbg("[xrec_registration_contract::registerNode2] call xregistration_contract registerNode() pid:%d, transaction_type:%d, source action type: %d, m_deposit: %" PRIu64
-         ", min_deposit: %" PRIu64 ", account: %s",
+         ", min_deposit: %" PRIu64 ", account: %s", 
          getpid(),
          trans_ptr->get_tx_type(),
          trans_ptr->get_source_action_type(),
@@ -999,7 +999,7 @@ void xrec_registration_contract::slash_unqualified_node(std::string const & puni
             slash_staking_time(addr);
         } else {
             xkinfo("[xrec_registration_contract][slash_unqualified_node] effective award credit, node addr: %s", addr.c_str());
-            XMETRICS_PACKET_INFO("sysContract_zecSlash", "effective award credit, node addr", addr)
+            XMETRICS_PACKET_INFO("sysContract_zecSlash", "effective award credit, node addr", addr);
             reg_node.award_credit_score(value.node_type);
         }
 

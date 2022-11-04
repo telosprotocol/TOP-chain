@@ -7,7 +7,7 @@
 #include "xbase/xobject_ptr.h"
 #include "xbasic/xasio_io_context_wrapper.h"
 #include "xbasic/xtimer_driver.h"
-#include "xstore/xstore_face.h"
+
 #include "xchain_timer/xchain_timer.h"
 #include "xloader/xconfig_onchain_loader.h"
 #include "xblockstore/xblockstore_face.h"
@@ -17,7 +17,7 @@
 #include "xdata/xsystem_contract/xdata_structures.h"
 #include "xconfig/xconfig_update_parameter_action.h"
 #include "xchain_fork/xchain_upgrade_center.h"
-
+#include "xdbstore/xstore_face.h"
 #define private public
 #include "xvm/xsystem_contracts/tcc/xrec_proposal_contract.h"
 #include "xvm/xvm_service.h"
@@ -45,7 +45,7 @@ public:
         para.m_tcc_accounts = {"T00000LfhWJA5JPcKPJovoBVtN4seYnnsVjx2VuB", "T00000LNEZSwcYJk6w8zWbR78Nhw8gbT2X944CBy", "T00000LfVA4mibYtKsGqGpGRxf8VZYHmdwriuZNo"};
         top::data::xrootblock_t::init(para);
 
-        auto m_store = xstore_factory::create_store_with_memdb();
+        auto m_store = store::xstore_factory::create_store_with_memdb();
         top::base::xvchain_t::instance().set_xdbstore(m_store.get());
         xobject_ptr_t<base::xvblockstore_t> m_blockstore;
         m_blockstore.attach(top::store::get_vblockstore());
@@ -55,7 +55,7 @@ public:
         auto chain_timer = top::make_object_ptr<time::xchain_timer_t>(timer_driver);
         auto& config_center = top::config::xconfig_register_t::get_instance();
 
-        config::xconfig_loader_ptr_t loader = std::make_shared<loader::xconfig_onchain_loader_t>(make_observer(m_store), make_observer(mbus), make_observer(chain_timer));
+        config::xconfig_loader_ptr_t loader = std::make_shared<loader::xconfig_onchain_loader_t>(make_observer(mbus), make_observer(chain_timer));
         config_center.add_loader(loader);
         config_center.load();
         config_center.init_static_config();
@@ -104,8 +104,8 @@ shared_ptr<xaccount_context_t> test_proposal_contract::m_tcc_proposal_account_ct
 TEST_F(test_proposal_contract, submit_param_proposal) {
 
     top::base::xvbstate_t* bstate = new top::base::xvbstate_t(std::string{sys_contract_rec_tcc_addr}, (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
-    xaccount_ptr_t account_state = std::make_shared<xunit_bstate_t>(bstate);
-    m_tcc_proposal_account_ctx_ptr = make_shared<xaccount_context_t>(account_state, store::xstore_factory::create_store_with_memdb().get());
+    data::xunitstate_ptr_t account_state = std::make_shared<xunit_bstate_t>(bstate);
+    m_tcc_proposal_account_ctx_ptr = make_shared<xaccount_context_t>(account_state);
 
     xtcc_transaction_ptr_t tcc_genesis = std::make_shared<xtcc_transaction_t>();
     m_tcc_proposal_account_ctx_ptr->map_create(ONCHAIN_PARAMS);
@@ -137,8 +137,8 @@ TEST_F(test_proposal_contract, submit_param_proposal) {
 TEST_F(test_proposal_contract, submit_community_proposal) {
 
     top::base::xvbstate_t* bstate = new top::base::xvbstate_t(std::string{sys_contract_rec_tcc_addr}, (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
-    xaccount_ptr_t account_state = std::make_shared<xunit_bstate_t>(bstate);
-    m_tcc_proposal_account_ctx_ptr = make_shared<xaccount_context_t>(account_state, store::xstore_factory::create_store_with_memdb().get());
+    data::xunitstate_ptr_t account_state = std::make_shared<xunit_bstate_t>(bstate);
+    m_tcc_proposal_account_ctx_ptr = make_shared<xaccount_context_t>(account_state);
 
     xtcc_transaction_ptr_t tcc_genesis = std::make_shared<xtcc_transaction_t>();
     m_tcc_proposal_account_ctx_ptr->map_create(ONCHAIN_PARAMS);
@@ -171,8 +171,8 @@ TEST_F(test_proposal_contract, withdraw_proposal) {
 
     // first sumbmit proposal
     top::base::xvbstate_t* bstate = new top::base::xvbstate_t(std::string{sys_contract_rec_tcc_addr}, (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
-    xaccount_ptr_t account_state = std::make_shared<xunit_bstate_t>(bstate);
-    m_tcc_proposal_account_ctx_ptr = make_shared<xaccount_context_t>(account_state, store::xstore_factory::create_store_with_memdb().get());
+    data::xunitstate_ptr_t account_state = std::make_shared<xunit_bstate_t>(bstate);
+    m_tcc_proposal_account_ctx_ptr = make_shared<xaccount_context_t>(account_state);
 
     xtcc_transaction_ptr_t tcc_genesis = std::make_shared<xtcc_transaction_t>();
     m_tcc_proposal_account_ctx_ptr->map_create(ONCHAIN_PARAMS);
@@ -213,8 +213,8 @@ TEST_F(test_proposal_contract, vote_proposal) {
 
     // first sumbmit proposal
     top::base::xvbstate_t* bstate = new top::base::xvbstate_t(std::string{sys_contract_rec_tcc_addr}, (uint64_t)0, (uint64_t)0, std::string(), std::string(), (uint64_t)0, (uint32_t)0, (uint16_t)0);
-    xaccount_ptr_t account_state = std::make_shared<xunit_bstate_t>(bstate);
-    m_tcc_proposal_account_ctx_ptr = make_shared<xaccount_context_t>(account_state, store::xstore_factory::create_store_with_memdb().get());
+    data::xunitstate_ptr_t account_state = std::make_shared<xunit_bstate_t>(bstate);
+    m_tcc_proposal_account_ctx_ptr = make_shared<xaccount_context_t>(account_state);
 
     xtcc_transaction_ptr_t tcc_genesis = std::make_shared<xtcc_transaction_t>();
     m_tcc_proposal_account_ctx_ptr->map_create(ONCHAIN_PARAMS);

@@ -15,5 +15,6 @@ target_include_directories(xelect_net PRIVATE ${CMAKE_SOURCE_DIR}/src/xtopcom/xd
 target_link_libraries(xelect_net PRIVATE xwrouter xkad xpbase xgossip xtransport xcommon xbasic)
 
 if (XENABLE_P2P_TEST)
+    target_compile_definitions(xelect_net PRIVATE XENABLE_P2P_TEST)
     add_subdirectory(demo)
 endif()

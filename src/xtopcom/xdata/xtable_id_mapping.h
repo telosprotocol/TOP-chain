@@ -2,10 +2,11 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#pragma once
+
 #include "xcommon/xaddress.h"
 
 #include <cstdint>
-#include <utility>
 #include <vector>
 
 NS_BEG2(top, data)

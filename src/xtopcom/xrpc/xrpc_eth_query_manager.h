@@ -8,8 +8,8 @@
 #include "xdata/xelection/xelection_cluster_result.h"
 #include "xdata/xelection/xelection_result_store.h"
 #include "xdata/xelection/xstandby_result_store.h"
+#include "xdata/xunit_bstate.h"
 #include "xgrpcservice/xgrpc_service.h"
-#include "xstore/xstore.h"
 #include "xsyncbase/xsync_face.h"
 #include "xvledger/xvtxstore.h"
 #include "xvledger/xvledger.h"
@@ -45,14 +45,12 @@ enum enum_query_result {
 };
 class xrpc_eth_query_manager : public rpc::xrpc_handle_face_t {
 public:
-    xrpc_eth_query_manager(observer_ptr<store::xstore_face_t> store,
-                       observer_ptr<base::xvblockstore_t> block_store,
+    xrpc_eth_query_manager(observer_ptr<base::xvblockstore_t> block_store,
                        sync::xsync_face_t * sync,
                        xtxpool_service_v2::xtxpool_proxy_face_ptr const & txpool_service,
                        observer_ptr<base::xvtxstore_t> txstore = nullptr,
                        bool exchange_flag = false)
-        : m_store(store)
-        , m_block_store(block_store)
+        : m_block_store(block_store)
         , m_sync(sync)
         , m_edge_start_height(1)
         , m_arc_start_height(1)
@@ -107,7 +105,7 @@ public:
 private:
     std::string safe_get_json_value(xJson::Value & json_value, const std::string& key);
     void set_block_result(const xobject_ptr_t<base::xvblock_t>&  block, xJson::Value& js_result, bool fullTx, std::error_code & ec);
-    enum_query_result query_account_by_number(const std::string &unit_address, const std::string& table_height, xaccount_ptr_t& ptr);
+    enum_query_result query_account_by_number(const std::string &unit_address, const std::string& table_height, data::xunitstate_ptr_t& ptr);
     xobject_ptr_t<base::xvblock_t> query_block_by_height(const std::string& height_str);
     xobject_ptr_t<base::xvblock_t> query_relay_block_by_height(const std::string& height_str);
     uint64_t get_block_height(const std::string& table_height);
@@ -117,7 +115,6 @@ private:
     int parse_topics(const xJson::Value& t, std::vector<std::set<std::string>>& vTopics, xJson::Value & js_rsp);
     int set_relay_block_result(const xobject_ptr_t<base::xvblock_t>& block, xJson::Value & js_rsp, int have_txs, std::string blocklist_type);
 private:
-    observer_ptr<store::xstore_face_t> m_store;
     observer_ptr<base::xvblockstore_t> m_block_store;
     sync::xsync_face_t * m_sync{nullptr};
     uint64_t m_edge_start_height;

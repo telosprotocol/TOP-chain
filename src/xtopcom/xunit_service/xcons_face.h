@@ -17,6 +17,7 @@
 #include "xunit_service/xcons_utl.h"
 #include "xrouter/xrouter_face.h"
 #include "xdata/xblock_cs_para.h"
+#include "xstate_sync/xstate_downloader.h"
 
 #include <string>
 #include <vector>
@@ -130,6 +131,7 @@ public:
     virtual const std::string & get_account() = 0;
     virtual mbus::xmessage_bus_face_t* get_bus() = 0;
     virtual xtxpool_v2::xtxpool_face_t * get_txpool() = 0;
+    virtual state_sync::xstate_downloader_t * get_state_downloader() = 0;
 };
 
 enum e_cons_type {
@@ -144,6 +146,7 @@ public:
     virtual data::xblock_ptr_t make_proposal(data::xblock_consensus_para_t & proposal_para, uint32_t min_tx_num) = 0;
     virtual int                         verify_proposal(data::xblock_consensus_para_t & proposal_para, base::xvblock_t* proposal_block, base::xvqcert_t * bind_clock_cert) = 0;
     virtual void                        set_certauth(base::xvcertauth_t* _ca) {}
+    virtual bool                        account_index_upgrade() = 0;
 };
 
 // block maker face

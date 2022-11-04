@@ -34,7 +34,6 @@ bool parse_keystore(std::string const & keystore_path, xJson::Value & keystore_i
 bool decrypt_get_kdf_key(std::string const & password, xJson::Value const & keystore_info, std::string & kdf_key);
 bool decrypt_keystore_by_password(std::string const & password, xJson::Value const & keystore_info, std::string & pri_key);
 bool decrypt_keystore_by_kdf_key(std::string const & kdf_key, xJson::Value const & keystore_info, std::string & pri_key);
-bool decrypt_keystore_file_by_password(std::string const & password, std::string const & keystore_path, std::string & pri_key);
 bool decrypt_keystore_file_by_kdf_key(std::string const & kdf_key, std::string const & keystore_path, std::string & pri_key);
 
 // todo ref ↓

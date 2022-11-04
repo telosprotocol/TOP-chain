@@ -481,7 +481,7 @@ void xsync_store_shadow_t::save() {
 }
 void xsync_store_shadow_t::xsync_event_cb(mbus::xevent_ptr_t e) {
     if (e->minor_type != mbus::xevent_store_t::type_block_committed) {
-        xdbg("xsync_event_cb type error: %s", e->minor_type);
+        xdbg("xsync_event_cb type error: %d", e->minor_type);
         return;
     }
 

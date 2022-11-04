@@ -2,22 +2,27 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include "xbase/xutl.h"
 #include "xcommon/xnode_type.h"
 #include "xsync/xsync_sender.h"
 #include "xsync/xsync_log.h"
 #include "xmetrics/xmetrics.h"
 #include "xdata/xdatautil.h"
 #include "xsyncbase/xmessage_ids.h"
+#include "xsync/xsync_util.h"
+#include <inttypes.h>
 
 NS_BEG2(top, sync)
 
 using namespace data;
 
 xsync_sender_t::xsync_sender_t(std::string vnode_id, const observer_ptr<vnetwork::xvhost_face_t> &vhost,
-            xrole_xips_manager_t *role_xips_mgr, int min_compress_threshold):
+            xrole_xips_manager_t *role_xips_mgr, xsync_store_face_t *sync_store,xsync_session_manager_t *session_mgr,  int min_compress_threshold):
 m_vnode_id(vnode_id),
 m_vhost(vhost),
 m_role_xips_mgr(role_xips_mgr),
+m_sync_store(sync_store),
+m_session_mgr(session_mgr),
 m_min_compress_threshold(min_compress_threshold) {
 }
 
@@ -101,8 +106,18 @@ bool xsync_sender_t::send_get_blocks(const std::string &address,
             uint64_t start_height, uint32_t count,
             const vnetwork::xvnode_address_t &self_addr,
             const vnetwork::xvnode_address_t &target_addr) {
-    auto body = make_object_ptr<xsync_message_get_blocks_t>(address, start_height, count);
-    return send_message(body, xmessage_id_sync_get_blocks, "getblocks", self_addr, target_addr);
+    if (!m_sync_store->is_sync_protocal_forked()) {
+        auto body = make_object_ptr<xsync_message_get_blocks_t>(address, start_height, count);
+        return send_message(body, xmessage_id_sync_get_blocks, "getblocks", self_addr, target_addr);
+    } else {
+        uint32_t request_option = SYNC_MSG_OPTION_SET(enum_sync_block_request_ontime, enum_sync_block_by_height, enum_sync_data_all, enum_sync_block_object_xvblock, 0);
+        auto body = make_object_ptr<xsync_msg_block_request_t>(address, request_option, start_height, count, "");
+        if(m_session_mgr->sync_block_request_insert(body)) {
+            xsync_dbg("send_get_blocks sessionid(%lx) %s send to %s", body->get_sessionID(), self_addr.to_string().c_str(), target_addr.to_string().c_str());
+            return send_message(body, xmessage_id_sync_block_request, "getblocks", self_addr, target_addr);
+        }
+        return false;
+    }
 }
 
 void xsync_sender_t::send_blocks(xsync_msg_err_code_t code, const std::string &address, const std::vector<data::xblock_ptr_t> &blocks, const vnetwork::xvnode_address_t& self_addr, const vnetwork::xvnode_address_t& target_addr) {
@@ -154,6 +169,26 @@ void xsync_sender_t::send_on_demand_blocks_with_proof(const std::vector<data::xb
     auto body = make_object_ptr<xsync_message_general_blocks_with_proof_t>(blocks, unit_proof_str);
     send_message(body, msgid, metric_key, self_addr, target_addr);
     xsync_dbg("xsync_sender_t on_demand_blocks send to target %s", target_addr.to_string().c_str());
+}
+
+void xsync_sender_t::send_get_on_demand_blocks_with_hash(const std::string &address,
+            uint64_t start_height, uint32_t count, bool is_consensus, const std::string & last_unit_hash,
+            const vnetwork::xvnode_address_t &self_addr,
+            const vnetwork::xvnode_address_t &target_addr) {
+
+    xsync_dbg("xsync_sender_t %s get_on_demand_blocks send to %s", address.c_str(), target_addr.to_string().c_str());
+    auto body = make_object_ptr<xsync_message_get_on_demand_blocks_with_hash_t>(address, start_height, count, is_consensus, last_unit_hash);
+    send_message(body, xmessage_id_sync_get_on_demand_blocks_with_hash, "get_on_demand_blocks", self_addr, target_addr);
+}
+
+void xsync_sender_t::send_on_demand_blocks_with_hash(const std::vector<data::xblock_ptr_t> & blocks,
+                                                     const common::xmessage_id_t msgid,
+                                                     const std::string metric_key,
+                                                     const vnetwork::xvnode_address_t & self_addr,
+                                                     const vnetwork::xvnode_address_t & target_addr) {
+    auto body = make_object_ptr<xsync_message_general_blocks_with_hash_t>(blocks);
+    send_message(body, msgid, metric_key, self_addr, target_addr);
+    xsync_dbg("xsync_sender_t send_on_demand_blocks_with_hash send to target %s", target_addr.to_string().c_str());
 }
 
 void xsync_sender_t::send_broadcast_chain_state(const std::vector<xchain_state_info_t> &info_list, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr) {
@@ -210,8 +245,18 @@ void xsync_sender_t::send_cross_cluster_chain_state(const std::vector<xchain_sta
 }
 
 void xsync_sender_t::push_newblock(const data::xblock_ptr_t &block, const vnetwork::xvnode_address_t& self_addr, const vnetwork::xvnode_address_t& target_addr) {
-    auto body = make_object_ptr<xsync_message_push_newblock_t>(block);
-    send_message(body, xmessage_id_sync_push_newblock, "push_newblock", self_addr, target_addr);
+    if (!m_sync_store->is_sync_protocal_forked()) {
+        auto body = make_object_ptr<xsync_message_push_newblock_t>(block);
+        send_message(body, xmessage_id_sync_push_newblock, "push_newblock", self_addr, target_addr);
+    } else {
+        std::vector<data::xblock_ptr_t> block_vec{block};
+        uint32_t request_option = SYNC_MSG_OPTION_SET(enum_sync_block_request_push, 0, enum_sync_data_all, enum_sync_block_object_xvblock, 0);
+        auto block_str_vec = convert_blocks_to_stream(enum_sync_data_all, block_vec);
+        auto body = make_object_ptr<xsync_msg_block_push_t>(block->get_account(), request_option, block_str_vec);
+        xsync_dbg("push_newblock sessionid(%lx) %s send to %s", body->get_sessionID(), self_addr.to_string().c_str(), target_addr.to_string().c_str());
+        send_message(body, xmessage_id_sync_newblock_push, "newblock_push", self_addr, target_addr);
+    }     
+
     xsync_dbg("xsync_sender_t send push_newblock %s,height=%lu,viewid=%lu,hash=%s, src %s dst %s", 
         block->get_account().c_str(), block->get_height(), block->get_viewid(), to_hex_str(block->get_block_hash()).c_str(), self_addr.to_string().c_str(), target_addr.to_string().c_str());
 }
@@ -230,9 +275,28 @@ void xsync_sender_t::broadcast_newblockhash(const data::xblock_ptr_t &block, con
         block->get_account().c_str(), block->get_height(), to_hex_str(block->get_block_hash()).c_str(), self_addr.to_string().c_str(), target_addr.to_string().c_str());
 }
 
-void xsync_sender_t::send_get_blocks_by_hashes(const std::vector<xblock_hash_t> &hashes, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr) {
-    auto body = make_object_ptr<xsync_message_get_blocks_by_hashes_t>(hashes);
-    send_message(body, xmessage_id_sync_get_blocks_by_hashes, "getblocks_by_hashes", self_addr, target_addr);
+void xsync_sender_t::send_get_blocks_by_hashes( std::vector<xblock_hash_t>& hashes, const vnetwork::xvnode_address_t& self_addr, const vnetwork::xvnode_address_t& target_addr)
+{
+    if (!m_sync_store->is_sync_protocal_forked()) {
+        auto body = make_object_ptr<xsync_message_get_blocks_by_hashes_t>(hashes);
+        send_message(body, xmessage_id_sync_get_blocks_by_hashes, "getblocks_by_hashes", self_addr, target_addr);
+    } else {
+        base::xstream_t stream(base::xcontext_t::instance());
+
+        SERIALIZE_CONTAINER(hashes)
+        {
+            item.serialize_to(stream);
+        }
+        std::string hashs_param((char*)stream.data(), stream.size());
+        uint32_t request_option = SYNC_MSG_OPTION_SET(enum_sync_block_request_ontime, enum_sync_block_by_hash, enum_sync_data_all,
+            enum_sync_block_object_xvblock, 0);
+        //address, 1 ,1 is not used
+        auto body = make_object_ptr<xsync_msg_block_request_t>(hashes[0].address, request_option, (uint64_t)1, (uint32_t)1, hashs_param);
+        if(m_session_mgr->sync_block_request_insert(body)) {
+             xsync_dbg("send_get_blocks_by_hashes sessionid(%lx) %s send to %s", body->get_sessionID(), self_addr.to_string().c_str(), target_addr.to_string().c_str());
+            send_message(body, xmessage_id_sync_block_request, "send_get_on_demand_blocks_with_params", self_addr, target_addr);
+        }
+    }
 }
 
 void xsync_sender_t::send_blocks_by_hashes(const std::vector<data::xblock_ptr_t> &blocks, const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr) {
@@ -252,19 +316,35 @@ void xsync_sender_t::send_chain_snapshot(const xsync_message_chain_snapshot_t &c
     send_message(body, msgid, "chain_snapshot_detail", self_addr, target_addr);
 }
 
-void xsync_sender_t::send_get_on_demand_by_hash_blocks(const std::string &address, const std::string &hash,
-            const vnetwork::xvnode_address_t &self_addr,
-            const vnetwork::xvnode_address_t &target_addr) {
-
-    auto body = make_object_ptr<xsync_message_get_on_demand_by_hash_blocks_t>(address, hash);
-    send_message(body, xmessage_id_sync_get_on_demand_by_hash_blocks, "get_on_demand_by_hash_blocks", self_addr, target_addr);
+void xsync_sender_t::send_get_on_demand_by_hash_blocks(const std::string& address, const std::string& hash, const vnetwork::xvnode_address_t& self_addr, const vnetwork::xvnode_address_t& target_addr)
+{
+    if (!m_sync_store->is_sync_protocal_forked()) {
+        auto body = make_object_ptr<xsync_message_get_on_demand_by_hash_blocks_t>(address, hash);
+        send_message(body, xmessage_id_sync_get_on_demand_by_hash_blocks, "get_on_demand_by_hash_blocks", self_addr, target_addr);
+    } else {
+        uint32_t request_option = SYNC_MSG_OPTION_SET(enum_sync_block_request_demand, enum_sync_block_by_txhash, enum_sync_data_all,
+            enum_sync_block_object_xvblock, 0);
+        // 1,1 is not used
+        auto body = make_object_ptr<xsync_msg_block_request_t>(address, request_option, (uint64_t)1, (uint32_t)1, hash);
+        if(m_session_mgr->sync_block_request_insert(body)) {
+            xsync_dbg("send_get_on_demand_by_hash_blocks sessionid(%lx) %s send to %s", body->get_sessionID(), self_addr.to_string().c_str(), target_addr.to_string().c_str());
+            send_message(body, xmessage_id_sync_block_request, "send_get_on_demand_by_hash_blocks", self_addr, target_addr);
+        }
+    }
 }
 
 void xsync_sender_t::send_archive_height(const xchain_state_info_t& info,
     const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr) {
-    auto body = make_object_ptr<xchain_state_info_t>(info);
-    send_message(body, xmessage_id_sync_archive_height, "archive_height", self_addr, target_addr);
-    xsync_dbg("xsync_sender_t send_archive_height: %s, %llu, src %s dst %s", info.address.c_str(), info.end_height, self_addr.to_string().c_str(), target_addr.to_string().c_str());
+
+    if (!m_sync_store->is_sync_protocal_forked()) {
+        auto body = make_object_ptr<xchain_state_info_t>(info);
+        send_message(body, xmessage_id_sync_archive_height, "archive_height", self_addr, target_addr);
+        xsync_dbg("xsync_sender_t send_archive_height: %s, %llu, src %s dst %s", info.address.c_str(), info.end_height, self_addr.to_string().c_str(), target_addr.to_string().c_str());
+    } else {
+        std::vector<xchain_state_info_t> info_list;
+        info_list.push_back(info);
+        send_archive_height_list(info_list, self_addr, target_addr);
+    }
 }
 
 void xsync_sender_t::send_query_archive_height(const std::vector<xchain_state_info_t>& info_list,
@@ -274,11 +354,67 @@ void xsync_sender_t::send_query_archive_height(const std::vector<xchain_state_in
     xsync_dbg("xsync_sender_t send_query_archive_height: %d, src %s dst %s", info_list.size(), self_addr.to_string().c_str(), target_addr.to_string().c_str());
 }
 
-void xsync_sender_t::send_archive_height_list(const std::vector<xchain_state_info_t>& info_list,
+void xsync_sender_t::send_archive_height_list(std::vector<xchain_state_info_t>& info_list,
     const vnetwork::xvnode_address_t &self_addr, const vnetwork::xvnode_address_t &target_addr) {
-    auto body = make_object_ptr<xsync_message_chain_state_info_t>(info_list);
-    send_message(body, xmessage_id_sync_archive_height_list, "archive_height_list", self_addr, target_addr);
-    xsync_dbg("xsync_sender_t send_archive_height_list: %d, src %s dst %s", info_list.size(), self_addr.to_string().c_str(), target_addr.to_string().c_str());
+    
+    if (!m_sync_store->is_sync_protocal_forked()) {
+        auto body = make_object_ptr<xsync_message_chain_state_info_t>(info_list);
+        send_message(body, xmessage_id_sync_archive_height_list, "archive_height_list", self_addr, target_addr);
+        xsync_dbg("xsync_sender_t send_archive_height_list: %d, src %s dst %s", info_list.size(), self_addr.to_string().c_str(), target_addr.to_string().c_str());
+    } else {
+        base::xstream_t stream(base::xcontext_t::instance());
+        SERIALIZE_CONTAINER(info_list)
+        {
+            item.serialize_to(stream);
+        }
+        std::string hashs_param((char *)stream.data(), stream.size());
+
+        uint32_t request_option = SYNC_MSG_OPTION_SET(enum_sync_block_request_ontime, enum_sync_block_by_height_lists, enum_sync_data_all, 
+                                                      enum_sync_block_object_xvblock,  0);
+        //address, 1 ,1 is not used
+        auto body = make_object_ptr<xsync_msg_block_request_t>(info_list[0].address, request_option, (uint64_t)1, (uint32_t)1, hashs_param);
+        send_message(body, xmessage_id_sync_block_request, "send_get_on_demand_blocks_with_params", self_addr, target_addr);
+        xsync_dbg("send_archive_height_list  sessionid(%lx) list: %d ,%s send to %s", body->get_sessionID(), info_list.size(), self_addr.to_string().c_str(), target_addr.to_string().c_str());
+        xsync_dbg("xsync_sender_t send_archive_height_list: %d, src %s dst %s", info_list.size(), self_addr.to_string().c_str(), target_addr.to_string().c_str());
+        //one request, but response much perhaps,so no add it to cache
+         /// sync_block_request_insert(body);
+    }
+
+}
+
+void xsync_sender_t::send_get_on_demand_blocks_with_params(const std::string &address,
+            uint64_t start_height, uint32_t count, bool is_consensus, const std::string & last_unit_hash,
+            const vnetwork::xvnode_address_t &self_addr,
+            const vnetwork::xvnode_address_t &target_addr) {
+
+    uint32_t request_param = enum_sync_block_by_height; 
+    if (!last_unit_hash.empty()) {
+        request_param = enum_sync_block_by_hash; 
+    }
+
+    if (request_param == enum_sync_block_by_height && data::is_unit_address(common::xaccount_address_t { address })) {
+        xwarn("send_get_on_demand_blocks_with_params  sync unit by height.accout:(%s) height(%ld) count(%d) last_unit_hash(%s)",
+            address.c_str(), start_height, count, base::xstring_utl::to_hex(last_unit_hash).c_str());
+    }
+
+    uint32_t request_option = SYNC_MSG_OPTION_SET(enum_sync_block_request_demand, request_param, enum_sync_data_all, 
+                                            enum_sync_block_object_xvblock, (is_consensus == true ? 1: 0));
+    auto body = make_object_ptr<xsync_msg_block_request_t>(address, request_option, start_height, count, last_unit_hash);
+    if (m_session_mgr->sync_block_request_insert(body)) {
+        send_message(body, xmessage_id_sync_block_request, "send_get_on_demand_blocks_with_params", self_addr, target_addr);
+        xsync_dbg("send_get_on_demand_blocks_with_params sessionid(%lx) %s send to %s", body->get_sessionID(), self_addr.to_string().c_str(), target_addr.to_string().c_str());
+    }
+}
+
+void xsync_sender_t::send_block_response(const xsync_msg_block_request_ptr_t& request_ptr, const std::vector<xblock_ptr_t> &vector_blocks, uint32_t response_extend_option, 
+                            std::string extend_data, const vnetwork::xvnode_address_t& self_addr, const vnetwork::xvnode_address_t& target_addr) 
+{
+    auto block_str_vec = convert_blocks_to_stream(request_ptr->get_data_type(), vector_blocks); 
+    auto body = make_object_ptr<xsync_msg_block_response_t>(request_ptr->get_sessionID(), request_ptr->get_address(), request_ptr->get_option(),
+                 block_str_vec, response_extend_option, extend_data);
+    send_message(body, xmessage_id_sync_block_response, "xmessage_id_sync_block_response", self_addr, target_addr);
+    xsync_dbg("send_block_response sessionid(%lx) %s send to %s. block size(%ld), response_option(%ld), extend_data(%s). ", 
+            request_ptr->get_sessionID(), self_addr.to_string().c_str(), target_addr.to_string().c_str(), vector_blocks.size(), response_extend_option, extend_data.c_str());
 }
 
 bool xsync_sender_t::send_message(
@@ -288,7 +424,7 @@ bool xsync_sender_t::send_message(
             const vnetwork::xvnode_address_t &self_addr,
             const vnetwork::xvnode_address_t &target_addr) {
 
-    xsync_dbg("xsync_sender_t %s %s send to %s", self_addr.to_string().c_str(), metric_key.c_str(),target_addr.to_string().c_str());
+
 
     base::xstream_t stream(base::xcontext_t::instance());
     auto header = make_object_ptr<xsync_message_header_t>(RandomUint64());
@@ -298,6 +434,9 @@ bool xsync_sender_t::send_message(
 
     xmessage_t msg;
     xmessage_pack_t::pack_message(_msg, ((int) _msg.payload().size()) >= m_min_compress_threshold, msg);
+
+    xsync_dbg("xsync_sender_t %s %s send to %s message id  with message id %" PRIx32, self_addr.to_string().c_str(), 
+            metric_key.c_str(),target_addr.to_string().c_str(),  static_cast<std::uint32_t>(msg.id()));
 
     std::string pkg_metric_name = "sync_pkgs_" + metric_key + "_send";
     std::string bytes_metric_name = "sync_pkgs_" + metric_key + "_send";

@@ -7,6 +7,7 @@
 #include "xbasic/xmemory.hpp"
 #include "xdata/xcons_transaction.h"
 #include "xdata/xtable_bstate.h"
+#include "xdata/xunit_bstate.h"
 #include "xtxpool_v2/xnon_ready_account.h"
 #include "xtxpool_v2/xreceipt_state_cache.h"
 #include "xtxpool_v2/xtxmgr_table.h"
@@ -36,7 +37,7 @@ public:
     void set_account_index(const base::xaccount_index_t & index) {
         m_account_index = index;
     }
-    void set_latest_state(const xaccount_ptr_t & state) {
+    void set_latest_state(const data::xunitstate_ptr_t & state) {
         m_latest_state = state;
     }
     void set_sync_height_start(uint64_t height) {
@@ -47,7 +48,7 @@ public:
     }
 
     //  const xblock_ptr_t &            get_latest_block() const {return m_latest_block;}
-    const xaccount_ptr_t & get_latest_state() const {
+    const data::xunitstate_ptr_t & get_latest_state() const {
         return m_latest_state;
     }
     const base::xaccount_index_t & get_accout_index() const {
@@ -62,7 +63,7 @@ public:
 
 private:
     //  xblock_ptr_t            m_latest_block{nullptr};
-    xaccount_ptr_t m_latest_state{nullptr};
+    data::xunitstate_ptr_t m_latest_state{nullptr};
     base::xaccount_index_t m_account_index;
     uint64_t m_sync_height_start{0};
     uint32_t m_sync_num{0};
@@ -87,7 +88,8 @@ public:
                     xtxpool_role_info_t * shard,
                     xtxpool_statistic_t * statistic,
                     std::set<base::xtable_shortid_t> * all_sid_set = nullptr)
-      : m_para(para)
+      : m_table_address(table_addr)
+      , m_para(para)
       , m_table_state_cache(para, table_addr)
       , m_xtable_info(table_addr, shard, statistic, &m_table_state_cache, all_sid_set)
       , m_txmgr_table(&m_xtable_info, para)
@@ -106,7 +108,6 @@ public:
     // void update_non_ready_accounts();
     void update_table_state(const data::xtablestate_ptr_t & table_state);
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_recv_tx_ids(uint32_t & total_num) const;
-    bool need_sync_lacking_receipts() const;
     void add_role(xtxpool_role_info_t * shard);
     void remove_role(xtxpool_role_info_t * shard);
     bool no_role() const;
@@ -136,6 +137,7 @@ private:
     void deal_commit_table_block(xblock_t * table_block, bool update_txmgr);
     xcons_transaction_ptr_t build_receipt(base::xtable_shortid_t peer_table_sid, uint64_t receipt_id, uint64_t commit_height, enum_transaction_subtype subtype);
 
+    common::xaccount_address_t m_table_address;
     xtxpool_resources_face * m_para;
     xtable_state_cache_t m_table_state_cache;
     xtxpool_table_info_t m_xtable_info;

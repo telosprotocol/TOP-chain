@@ -88,11 +88,12 @@ namespace top
 
             virtual bool                load_block_input(const base::xvaccount_t & account,base::xvblock_t* block,const int atag = 0) override;
             virtual bool                load_block_output(const base::xvaccount_t & account,base::xvblock_t* block,const int atag = 0) override;
-
+            virtual bool                load_block_output_offdata(const base::xvaccount_t & account,base::xvblock_t* block,const int atag = 0) override;
             virtual bool                store_block(const base::xvaccount_t & account,base::xvblock_t* block,const int atag = 0) override;
             virtual bool                delete_block(const base::xvaccount_t & account,base::xvblock_t* block,const int atag = 0) override;
 
             virtual bool                try_update_account_index(const base::xvaccount_t & account, uint64_t height, uint64_t viewid, bool update_pre_block) override;
+            virtual bool                try_update_account_index(const base::xvaccount_t & account, uint64_t height, const std::string & hash, bool update_pre_block) override;
             virtual base::xauto_ptr<base::xvbindex_t> recover_and_load_commit_index(const base::xvaccount_t & account, uint64_t height) override;
 
         public://batch process api
@@ -145,8 +146,6 @@ namespace top
 
             //store table/book blocks if they are
             bool                        store_block(base::xauto_ptr<xblockacct_t> & container_account,base::xvblock_t * container_block,bool execute_block = true);
-
-            bool                        store_block_but_not_execute(const base::xvaccount_t & account,base::xvblock_t* block);
             bool                        store_committed_unit_block(const base::xvaccount_t & account, base::xvblock_t * container_block);
 
             //a full path to load vblock could be  get_store_path()/create_object_path()/xvblock_t::name()
@@ -160,9 +159,12 @@ namespace top
             bool                        on_block_committed(const xblockevent_t & event);
             bool                        on_block_stored(base::xvblock_t* this_block_ptr);//event for block store
             bool                        store_units_to_db(xblockacct_t* target_account,base::xvbindex_t* index_ptr);
+            bool                        store_units_to_db_after_fork(xblockacct_t* target_account,base::xvbindex_t* index_ptr,base::xvblock_t* container_block);
+            bool                        store_units_to_db_before_fork(xblockacct_t* target_account,base::xvbindex_t* index_ptr,base::xvblock_t* container_block);            
             bool                        store_relayblock_to_db(xblockacct_t* target_account,base::xvbindex_t* index_ptr);
             virtual bool                on_object_close() override;
             int                         load_block_idx_by_hash(const std::string & hash, std::string & account, uint64_t & height);
+            bool                        should_store_units(int zone_index) const;
         private:
             xvblockdb_t*                       m_xvblockdb_ptr;
             std::string                        m_store_path;

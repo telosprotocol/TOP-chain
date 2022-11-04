@@ -94,6 +94,7 @@ namespace top
         class xvblockbuild_t {
         public:
             static xauto_ptr<xvheader_t>    build_proposal_header(xvblock_t* block, uint64_t _clock);
+            static xauto_ptr<xvheader_t>    build_proposal_header(std::string const& account, uint64_t height, std::string const& last_block_hash, uint64_t _clock); // for new unitblock
         
         protected:
             static xauto_ptr<xvheader_t>    create_header(const xbbuild_para_t & _para);
@@ -168,7 +169,10 @@ namespace top
             bool    set_input_resource(const std::string & key, const std::string & value);
             bool    set_output_resource(const std::string & key, const std::string & value);
             bool    set_output_full_state(const std::string & value);
+            bool    set_output_full_state_hash(const std::string & value);
             bool    set_output_binlog(const std::string & value);
+            bool    set_output_offdata(const std::string & value);
+
             bool    merge_input_resource(const xstrmap_t * src_map);
             bool    merge_output_resource(const xstrmap_t * src_map);
 
@@ -188,6 +192,7 @@ namespace top
             inline xvoutentity_t*       get_output_entity()   const {return m_primary_output_entity;}
             inline const std::string &  get_full_state()      const {return m_full_state;}
             inline const std::string &  get_full_state_hash() const {return m_full_state_hash;}
+            inline const std::string &  get_output_offdata()  const {return m_output_offdata;}
         private:            
             bool    check_block_rules(base::xvblock_t* target_block);
         private:
@@ -198,6 +203,7 @@ namespace top
             xvoutentity_t*              m_primary_output_entity{nullptr};//#0 is primary output entity
             std::string                 m_full_state;
             std::string                 m_full_state_hash;
+            std::string                 m_output_offdata;
         };
 
 

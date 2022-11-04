@@ -22,4 +22,8 @@ xunitstate_ctx_t::xunitstate_ctx_t(const data::xunitstate_ptr_t & unitstate, con
 : m_cur_unitstate(unitstate), m_prev_block(prev_block) {
 }
 
+void xunitstate_ctx_t::set_unit_hash(std::string const& unit_hash) {
+    m_unit_hash = unit_hash;
+}
+
 NS_END2

@@ -43,6 +43,8 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     dataobject_block_empty,
     dataobject_tx_receipt_t,
     dataobject_unit_state,
+    dataobject_table_state,
+    dataobject_bstate_ctx,
     dataobject_xvtxindex,
     dataobject_xvbstate,
     dataobject_xvproperty,
@@ -71,6 +73,9 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     dataobject_xblockacct_t,
     dataobject_xtxpool_table_info_t,
     dataobject_xacctmeta_t,
+    dataobject_account_address,
+    dataobject_mpt_state_object,
+    dataobject_mpt_trie_node_cnt,
     // db bock key, see xvdbkey for specific info
     // 't/', 'i/', 'b/'
     // 'b/.../h', 'b/.../i', 'b/.../ir', 'b/.../o', 'b/.../or', 'b/.../s', 'b/.../d'
@@ -86,6 +91,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     db_read,
     db_write,
     db_delete,
+    db_delete_range,
     db_read_size,
     db_write_size,
     db_read_tick,
@@ -117,6 +123,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     cons_fail_make_proposal_table_check_latest_state,
     cons_fail_make_proposal_unit_check_state,
     cons_fail_make_proposal_view_changed,
+    cons_fail_vote_not_enough,
 
     cons_table_backup_verify_proposal_succ,
     cons_fail_verify_proposal_blocks_invalid,
@@ -132,6 +139,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     cons_view_fire_clock_delay,
     cons_view_fire_succ,
     cons_cp_check_succ,
+    cons_state_check_succ,
     cons_view_fire_is_leader,
     cons_fail_backup_view_not_match,
     cons_make_proposal_tick,
@@ -173,6 +181,9 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     cons_packtx_fail_transfer_limit, // TODO(jimmy) need delete limit
     cons_packtx_fail_load_origintx,
     cons_packtx_with_threshold,
+    cons_invoke_sync_state_count,
+    cons_invoke_sync_block_count,
+
 
     clock_aggregate_height,
     clock_leader_broadcast_height,
@@ -225,6 +236,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     message_category_txpool_contains_duplicate,
     message_category_rpc_contains_duplicate,
     message_category_sync_contains_duplicate,
+    message_category_state_sync_contains_duplicate,
     message_block_broadcast_contains_duplicate,
     message_category_relay_contains_duplicate,
     message_category_end_contains_duplicate,
@@ -237,6 +249,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     message_category_txpool,
     message_category_rpc,
     message_category_sync,
+    message_category_state_sync,
     message_block_broadcast,
     message_category_relay,
     message_category_unknown,
@@ -558,10 +571,17 @@ enum E_SIMPLE_METRICS_TAG : size_t {
 
     statestore_get_unit_state_succ,
     statestore_get_unit_state_from_cache,
+    statestore_get_unit_state_from_db,
     statestore_get_unit_state_with_unit_count,
     statestore_get_table_state_succ,
     statestore_get_table_state_from_cache,
+    statestore_get_table_state_from_db,
     statestore_get_table_state_with_table_count,
+    statestore_load_table_block_succ,
+    statestore_execute_block_recursive_succ,
+    statestore_execute_unit_recursive_succ,
+
+    statestore_sync_succ,
 
     state_load_blk_state_suc,
     state_load_blk_state_cache_suc,
@@ -572,6 +592,11 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     state_load_blk_state_unit_suc,
     state_load_blk_state_unit_fail,
     state_load_blk_state_unit_cache_suc,
+    state_delete_table_data,
+    state_delete_unit_state,
+    state_delete_mpt,
+    state_delete_by_full_table,
+    state_delete_create_mpt_fail,
 
     // data structure
     data_table_unpack_units,
@@ -598,7 +623,8 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     xevent_major_type_role,
     xevent_major_type_blockfetcher,
     xevent_major_type_sync,
-    xevent_end=xevent_major_type_sync,
+    xevent_major_type_state_sync,
+    xevent_end=xevent_major_type_state_sync,
 
     // rpc
     rpc_edge_tx_request,
@@ -607,6 +633,8 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     rpc_auditor_query_request,
     rpc_auditor_forward_request,
     rpc_validator_tx_request,
+    rpc_query_account_succ,
+
     // contract
     contract_table_fullblock_event,
     contract_table_statistic_exec_fullblock,
@@ -623,6 +651,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     mailbox_txpool_fast_total,
     mailbox_txpool_slow_total,
     mailbox_us_total,
+    mailbox_statestore_total,
     mailbox_grpc_cur,
     mailbox_block_fetcher_cur,
     mailbox_downloader_cur,
@@ -632,6 +661,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     mailbox_txpool_fast_cur,
     mailbox_txpool_slow_cur,
     mailbox_us_cur,
+    mailbox_statestore_cur,
 
     //txdelay
     txdelay_client_timestamp_unmatch,
@@ -644,6 +674,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
 
     //cpu
     cpu_hash_256_calc,
+    cpu_hash_64_calc,
     cpu_ca_merge_sign_xbft,
     cpu_ca_merge_sign_tc,
     cpu_ca_do_sign_xbft,
@@ -676,6 +707,15 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     statectx_load_state_succ,
     statectx_sync_invoke_count,
 
+    mpt_total_pruned_trie_node_cnt,
+    mpt_cached_pruned_trie_node_cnt,
+    //prune
+    prune_block_table,
+    prune_block_unit,
+    prune_block_drand,
+    prune_block_timer,
+    prune_block_contract,
+    prune_state_unitstate,
     e_simple_total,
 };
 using xmetrics_tag_t = E_SIMPLE_METRICS_TAG;
@@ -913,11 +953,11 @@ public:
 
 #define XMETRICS_PACKET_INFO(metrics_name, ...)                                                                                                                                \
     top::metrics::handler::metrics_pack_unit STR_CONCAT(packet_info_auto_, __LINE__){metrics_name, "real_time"};                                                               \
-    top::metrics::handler::metrics_packet_impl(STR_CONCAT(packet_info_auto_, __LINE__), __VA_ARGS__);
+    top::metrics::handler::metrics_packet_impl(STR_CONCAT(packet_info_auto_, __LINE__), __VA_ARGS__)
 
 #define XMETRICS_PACKET_ALARM(metrics_name, ...)                                                                                                                               \
     top::metrics::handler::metrics_pack_unit STR_CONCAT(packet_info_auto_, __LINE__){metrics_name, "alarm"};                                                                   \
-    top::metrics::handler::metrics_packet_impl(STR_CONCAT(packet_info_auto_, __LINE__), __VA_ARGS__);
+    top::metrics::handler::metrics_packet_impl(STR_CONCAT(packet_info_auto_, __LINE__), __VA_ARGS__)
 
 
 #define XMETRICS_GAUGE(TAG, value) top::metrics::e_metrics::get_instance().gauge(TAG, value)

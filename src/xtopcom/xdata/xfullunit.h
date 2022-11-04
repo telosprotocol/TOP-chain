@@ -16,8 +16,8 @@ NS_BEG2(top, data)
 
 class xfullunit_block_para_t : public xlightunit_block_para_t {
 public:
-    uint64_t                            m_first_unit_height{0};
-    std::string                         m_first_unit_hash;
+    // uint64_t                            m_first_unit_height{0};
+    // std::string                         m_first_unit_hash;
 };
 class xfullunit_block_t : public xblock_t {
  protected:

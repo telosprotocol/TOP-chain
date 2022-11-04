@@ -1,47 +1,45 @@
-// Copyright (c) 2017-2018 Telos Foundation & contributors
+// Copyright (c) 2017-present Telos Foundation & contributors
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xapplication/xapplication.h"
 
-#include "xapplication/xbeacon_chain_application.h"
-#include "xapplication/xcons_mgr_builder.h"
 #include "xapplication/xerror/xerror.h"
-#include "xapplication/xtop_chain_application.h"
 #include "xbasic/xmemory.hpp"
-#include "xbasic/xutility.h"
+#include "xbasic/xscope_executer.h"
+#include "xbasic/xtimer_driver.h"
 #include "xblockstore/xblockstore_face.h"
 #include "xcertauth/xcertauth_face.h"
 #include "xchain_fork/xchain_upgrade_center.h"
 #include "xchain_timer/xchain_timer.h"
-#include "xchain_upgrade/xchain_data_processor.h"
+#include "xchaininit/xchain_command.h"
+#include "xchaininit/xchain_info_query.h"
 #include "xcodec/xmsgpack_codec.hpp"
-#include "xcommon/xip.h"
-#include "xconfig/xpredefined_configurations.h"
+#include "xconfig/xconfig_register.h"
 #include "xconfig/xutility.h"
-#include "xdata/xblocktool.h"
-#include "xdata/xcheckpoint.h"
 #include "xdata/xcodec/xmsgpack/xelection/xelection_result_store_codec.hpp"
 #include "xdata/xcodec/xmsgpack/xelection/xstandby_result_store_codec.hpp"
-#include "xdata/xelect_transaction.hpp"
 #include "xdata/xelection/xelection_result_property.h"
-#include "xdata/xelection/xelection_result_store.h"
 #include "xdata/xelection/xstandby_result_store.h"
-#include "xdata/xgenesis_data.h"
 #include "xdata/xnative_contract_address.h"
-#include "xdata/xrootblock.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
-#include "xdb/xdb_factory.h"
+#include "xelect/client/xelect_client.h"
+#include "xelect_net/include/multilayer_network.h"
+#include "xelect_net/include/multilayer_network_chain_query.h"
+#include "xelection/xcache/xdata_accessor.h"
+#include "xelection/xdata_accessor_error.h"
 #include "xelection/xvnode_house.h"
-#include "xloader/xconfig_genesis_loader.h"
+#include "xgenesis/xgenesis_manager.h"
+#include "xgrpc_mgr/xgrpc_mgr.h"
 #include "xloader/xconfig_onchain_loader.h"
+#include "xmbus/xmessage_bus.h"
 #include "xrouter/xrouter.h"
 #include "xstore/xstore_error.h"
+#include "xsync/xsync_object.h"
 #include "xvm/manager/xcontract_manager.h"
 #include "xvm/xsystem_contracts/deploy/xcontract_deploy.h"
-
-#include <stdexcept>
-#include "xapplication/xcons_mgr_builder.h"
+#include "xvnetwork/xvhost.h"
+#include "xvnode/xvnode_manager.h"
 
 NS_BEG2(top, application)
 
@@ -49,9 +47,10 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
   : m_node_id{node_id}
   , m_public_key{public_key}
   , m_sign_key(sign_key)
+  , m_network_id{top::config::to_chainid(XGET_CONFIG(chain_name))}
   , m_io_context_pools{{xio_context_type_t::general, {std::make_shared<xbase_io_context_wrapper_t>()}}}
   , m_timer_driver{std::make_shared<xbase_timer_driver_t>(m_io_context_pools[xio_context_type_t::general].front())}
-  , m_elect_main{top::make_unique<elect::ElectMain>(node_id, std::set<uint32_t>({static_cast<uint32_t>(top::config::to_chainid(XGET_CONFIG(chain_name)))}))}
+  , m_elect_main{top::make_unique<elect::ElectMain>(node_id, std::set<uint32_t>({static_cast<uint32_t>(m_network_id)}))}
   , m_router{top::make_unique<router::xrouter_t>()}
   , m_bus{top::make_object_ptr<mbus::xmessage_bus_t>(true, 1000)}
   , m_logic_timer{make_object_ptr<time::xchain_timer_t>(m_timer_driver)}
@@ -59,7 +58,7 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
   , m_sync_thread{make_object_ptr<base::xiothread_t>()}
   , m_elect_client{top::make_unique<elect::xelect_client_imp>()} {
     int db_kind = top::db::xdb_kind_kvdb;
-    std::vector<db::xdb_path_t> db_data_paths {};
+    std::vector<db::xdb_path_t> db_data_paths{};
     base::xvchain_t::instance().get_db_config_custom(db_data_paths, db_kind);
     std::shared_ptr<db::xdb_face_t> db = db::xdb_factory_t::create(db_kind, XGET_CONFIG(db_path), db_data_paths);
     m_store = store::xstore_factory::create_store_with_static_kvdb(db);
@@ -72,13 +71,11 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
     base::xvchain_t::instance().set_xtxstore(m_txstore.get());
 
     m_nodesvr_ptr = make_object_ptr<election::xvnode_house_t>(node_id, sign_key, m_blockstore, make_observer(m_bus.get()));
-#ifdef MOCK_CA
-    m_cert_ptr = make_object_ptr<xschnorrcert_t>((uint32_t)1);
-#else
+
     m_cert_ptr.attach(&auth::xauthcontext_t::instance(*m_nodesvr_ptr.get()));
-#endif
+
     // genesis blocks should init imediately after db created
-    m_genesis_manager = make_unique<genesis::xgenesis_manager_t>(top::make_observer(m_blockstore.get()), make_observer(m_store));
+    m_genesis_manager = make_unique<genesis::xgenesis_manager_t>(top::make_observer(m_blockstore.get()));
 
     if ((m_store == nullptr) || !m_store->open()) {
         xwarn("xtop_application::start db open failed!");
@@ -98,23 +95,26 @@ xtop_application::xtop_application(common::xnode_id_t const & node_id, xpublic_k
 
 void xtop_application::start() {
     // load configuration first
-    auto loader = std::make_shared<loader::xconfig_onchain_loader_t>(make_observer(m_store), make_observer(m_bus.get()), make_observer(m_logic_timer));
+    auto loader = std::make_shared<loader::xconfig_onchain_loader_t>(make_observer(m_bus.get()), make_observer(m_logic_timer));
     config::xconfig_register_t::get_instance().add_loader(loader);
     config::xconfig_register_t::get_instance().load();
 
     chain_fork::xtop_chain_fork_config_center::init();
     base::xvblock_fork_t::instance().init(chain_fork::xtop_chain_fork_config_center::is_block_forked);
 
-    m_txpool =
-        xtxpool_v2::xtxpool_instance::create_xtxpool_inst(make_observer(m_store), make_observer(m_blockstore.get()), make_observer(m_cert_ptr.get()), make_observer(m_bus.get()));
+    m_txpool = xtxpool_v2::xtxpool_instance::create_xtxpool_inst(make_observer(m_blockstore), make_observer(m_cert_ptr), make_observer(m_bus));
 
     m_syncstore.attach(new store::xsyncvstore_t(*m_cert_ptr.get(), *m_blockstore.get()));
-    contract::xcontract_manager_t::instance().init(make_observer(m_store), m_syncstore);
+    contract::xcontract_manager_t::instance().init(m_syncstore);
 
     xthread_pool_t txpool_service_thp;
     txpool_service_thp.push_back(make_object_ptr<base::xiothread_t>());
     txpool_service_thp.push_back(make_object_ptr<base::xiothread_t>());
     m_thread_pools[xtop_thread_pool_type::txpool_service] = txpool_service_thp;
+    xthread_pool_t statestore_thp;
+    statestore_thp.push_back(make_object_ptr<base::xiothread_t>());
+    statestore_thp.push_back(make_object_ptr<base::xiothread_t>());
+    m_thread_pools[xtop_thread_pool_type::statestore] = statestore_thp;
 
     std::vector<observer_ptr<base::xiothread_t>> sync_account_thread_pool;
     for (uint32_t i = 0; i < 2; i++) {
@@ -130,14 +130,44 @@ void xtop_application::start() {
         sync_handler_thread_pool.push_back(make_observer(thread));
     }
 
-    m_chain_applications.push_back(top::make_unique<xbeacon_chain_application_t>(make_observer(this),
-                                                                                 m_blockstore,
-                                                                                 m_nodesvr_ptr,
-                                                                                 m_cert_ptr,
-                                                                                 make_observer(m_grpc_thread),
-                                                                                 make_observer(m_sync_thread),
-                                                                                 sync_account_thread_pool,
-                                                                                 sync_handler_thread_pool));
+    // construct
+    {
+        m_elect_client_process = std::make_shared<elect::xelect_client_process>(
+            m_network_id,
+            make_observer(m_bus),
+            std::bind(&xtop_application::on_election_data_updated, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
+            make_observer(m_logic_timer));
+
+        m_election_cache_data_accessor = top::make_unique<election::cache::xdata_accessor_t>(m_network_id, make_observer(m_logic_timer));
+        m_vhost = std::make_shared<vnetwork::xvhost_t>(
+            make_observer(m_elect_main->GetEcVhost(m_network_id.value()).get()), make_observer(m_logic_timer), m_network_id, make_observer(m_election_cache_data_accessor));
+        m_message_callback_hub = std::make_shared<vnetwork::xmessage_callback_hub_t>(make_observer(m_vhost));
+        m_sync_obj = top::make_unique<sync::xsync_object_t>(
+            make_observer(m_bus), make_observer(m_vhost), m_blockstore, m_cert_ptr, make_observer(m_sync_thread), sync_account_thread_pool, sync_handler_thread_pool);
+        m_grpc_mgr = top::make_unique<grpcmgr::xgrpc_mgr_t>(make_observer(m_bus), make_observer(m_grpc_thread));
+
+        m_txpool_service_mgr = xtxpool_service_v2::xtxpool_service_mgr_instance::create_xtxpool_service_mgr_inst(
+            make_observer(m_blockstore), make_observer(m_txpool), m_thread_pools.at(xthread_pool_type_t::txpool_service), make_observer(m_bus), make_observer(m_logic_timer));
+        xobject_ptr_t<base::xiothread_t> executor_thread = make_object_ptr<base::xiothread_t>();
+        xobject_ptr_t<base::xiothread_t> syncer_thread = make_object_ptr<base::xiothread_t>();
+        m_downloader = std::make_shared<state_sync::xstate_downloader_t>(
+            base::xvchain_t::instance().get_xdbstore(), statestore::xstatestore_hub_t::instance(), make_observer(m_bus), executor_thread, syncer_thread);
+        m_vnode_manager = std::make_shared<vnode::xvnode_manager_t>(make_observer(m_elect_main),
+                                                                    make_observer(m_bus),
+                                                                    make_observer(m_blockstore),
+                                                                    make_observer(m_txstore),
+                                                                    make_observer(m_logic_timer),
+                                                                    make_observer(m_router),
+                                                                    m_cert_ptr,
+                                                                    make_observer(m_vhost),
+                                                                    make_observer(m_sync_obj),
+                                                                    make_observer(m_grpc_mgr),
+                                                                    make_observer(m_txpool_service_mgr.get()),
+                                                                    make_observer(m_txpool),
+                                                                    make_observer(m_election_cache_data_accessor),
+                                                                    make_observer(m_nodesvr_ptr),
+                                                                    make_observer(m_downloader.get()));
+    }
 
     for (auto & io_context_pool_info : m_io_context_pools) {
         auto & io_context_pool = top::get<xio_context_pool_t>(io_context_pool_info);
@@ -158,7 +188,7 @@ void xtop_application::start() {
         throw std::logic_error{"update node size callback failed!"};
     }
 
-    contract::xcontract_manager_t::set_nodesrv_ptr(node_service());
+    contract::xcontract_manager_t::set_nodesrv_ptr(m_nodesvr_ptr);
 
     auto const last_logic_time = this->last_logic_time()->get_height();
     do {
@@ -174,9 +204,40 @@ void xtop_application::start() {
         }
     } while (false);
 
-    for (auto i = 0u; i < m_chain_applications.size(); ++i) {
-        auto const & chain_app = m_chain_applications[i];
-        chain_app->start();
+    // start
+    {
+        contract::xcontract_manager_t::instance().install_monitors(make_observer(m_bus), make_observer(m_message_callback_hub.get()), m_syncstore);
+        load_last_election_data();
+
+        m_txpool_service_mgr->start();
+        m_vhost->start();
+        m_message_callback_hub->start();
+        m_vnode_manager->start();
+
+        grpcmgr::grpc_init(m_blockstore.get(), m_sync_obj.get(), XGET_CONFIG(grpc_port));
+
+        m_sync_obj->start();
+
+        top_console_init();
+
+        auto statestore_thp = m_thread_pools.at(xthread_pool_type_t::statestore);
+        statestore::xstatestore_hub_t::instance()->start(statestore_thp[0], statestore_thp[1]);
+
+        auto const & frozen_sharding_address = common::build_frozen_sharding_address(m_network_id);
+        auto const zone_type = common::node_type_from(frozen_sharding_address.zone_id());
+
+        data::election::xelection_result_store_t election_result_store{};
+        auto & static_sync_group =
+            election_result_store.result_of(m_network_id).result_of(zone_type).result_of(frozen_sharding_address.cluster_id()).result_of(frozen_sharding_address.group_id());
+        static_sync_group.start_time(0);
+        static_sync_group.group_version(common::xelection_round_t::max());
+
+        auto & static_sync_node = static_sync_group.result_of(m_node_id);
+        static_sync_node.joined_epoch(common::xelection_round_t::max());
+        static_sync_node.stake(0);
+
+        assert(static_sync_group.size() == 1);
+        on_election_data_updated(election_result_store, frozen_sharding_address.zone_id(), 0);
     }
 
     m_logic_timer->update_time(last_logic_time, time::xlogic_timer_update_strategy_t::force);
@@ -188,9 +249,12 @@ void xtop_application::start() {
 }
 
 void xtop_application::stop() {
-    for (auto i = m_chain_applications.size(); i > 0; --i) {
-        auto const & chain_app = m_chain_applications[i - 1];
-        chain_app->stop();
+    // stop
+    {
+        m_sync_obj->stop();
+        m_vnode_manager->stop();
+        m_message_callback_hub->stop();
+        m_vhost->stop();
     }
 
     m_elect_main->stop();
@@ -204,85 +268,109 @@ void xtop_application::stop() {
     }
 }
 
-common::xnode_id_t const & xtop_application::node_id() const noexcept {
-    return m_node_id;
+void xtop_application::on_election_data_updated(data::election::xelection_result_store_t const & election_result_store,
+                                                common::xzone_id_t const & zid,
+                                                std::uint64_t const associated_blk_height) {
+    std::error_code ec{election::xdata_accessor_errc_t::success};
+    auto const & updated_election_data2 = m_election_cache_data_accessor->update_zone(zid, election_result_store, associated_blk_height, ec);
+
+    if (ec) {
+        xwarn("%s network %" PRIu32 " update zone(zid:%d) is not fully successful %s",
+              ec.category().name(),
+              static_cast<std::uint32_t>(m_network_id.value()),
+              zid.value(),
+              ec.message().c_str());
+    }
+
+    if (!updated_election_data2.empty()) {
+        auto outdated_xips_pair = m_vnode_manager->handle_election_data(updated_election_data2);
+        for (const auto & xip : outdated_xips_pair.first) {
+            m_elect_main->GetElectManager()->OnElectQuit(xip);
+        }
+        for (const auto & xip : outdated_xips_pair.second) {
+            // m_cons_mgr->destroy({xip.raw_low_part(), xip.raw_high_part()});
+            m_txpool_service_mgr->destroy({xip.raw_low_part(), xip.raw_high_part()});
+        }
+        if (zid != common::xfrozen_zone_id) {
+            m_elect_main->GetElectManager()->OnElectUpdated(election_result_store, zid, associated_blk_height);
+        }
+    } else {
+        xinfo("[xchain_application] network %" PRIu32 " empty election data.  it may be from synchronization", static_cast<std::uint32_t>(m_network_id.value()));
+    }
 }
 
-xpublic_key_t const & xtop_application::public_key() const noexcept {
-    return m_public_key;
-}
+void xtop_application::load_last_election_data() {
+    std::vector<common::xaccount_address_t> sys_addr{rec_elect_rec_contract_address,
+                                                     rec_elect_archive_contract_address,
+                                                     rec_elect_exchange_contract_address,
+                                                     rec_elect_fullnode_contract_address,
+                                                     rec_elect_edge_contract_address,
+                                                     rec_elect_zec_contract_address,
+                                                     zec_elect_consensus_contract_address,
+                                                     zec_elect_eth_contract_address,
+                                                     relay_make_block_contract_address};
 
-std::string const & xtop_application::sign_key() const noexcept {
-    return m_sign_key;
-}
+    std::map<common::xaccount_address_t, common::xzone_id_t> addr_to_zone_id{{rec_elect_rec_contract_address, common::xcommittee_zone_id},
+                                                                             {rec_elect_zec_contract_address, common::xzec_zone_id},
+                                                                             {rec_elect_archive_contract_address, common::xstorage_zone_id},
+                                                                             {rec_elect_exchange_contract_address, common::xstorage_zone_id},
+                                                                             {rec_elect_fullnode_contract_address, common::xfullnode_zone_id},
+                                                                             {rec_elect_edge_contract_address, common::xedge_zone_id},
+                                                                             {zec_elect_consensus_contract_address, common::xdefault_zone_id},
+                                                                             {zec_elect_eth_contract_address, common::xevm_zone_id},
+                                                                             {relay_make_block_contract_address, common::xrelay_zone_id}};
+    for (const auto & addr : sys_addr) {
+        for (auto const & property : data::election::get_property_name_by_addr(addr)) {
+            common::xzone_id_t zone_id = addr_to_zone_id[addr];
+            using top::data::election::xelection_result_store_t;
+            std::error_code ec;
 
-observer_ptr<xbase_timer_driver_t> xtop_application::timer_driver() const noexcept {
-    return make_observer(m_timer_driver.get());
-}
+            xwarn("xbeacon_chain_application::load_last_election_data begin. contract %s; property %s", addr.c_str(), property.c_str());
+            xscope_executer_t loading_result_logger{
+                [&ec, &addr, property] { xwarn("xbeacon_chain_application::load_last_election_data end. contract %s; property %s", addr.c_str(), property.c_str()); }};
 
-observer_ptr<elect::xnetwork_driver_face_t> xtop_application::network_driver(common::xnetwork_id_t const & network_id) const noexcept {
-    return make_observer(m_elect_main->GetEcVhost(network_id.value()).get());
-}
+            data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_change_state(addr);
+            if (unitstate == nullptr) {
+                xerror("xtop_application::load_last_election_data fail-get state.");
+                top::error::throw_error(ec);
+                continue;
+            }
+            std::string result;
+            if (xsuccess != unitstate->string_get(property, result)) {
+                xerror("xtop_application::load_last_election_data fail-get property.");
+                top::error::throw_error(ec);
+                continue;
+            }
 
-std::shared_ptr<top::elect::ElectManager> xtop_application::elect_manager() const noexcept {
-    return m_elect_main->GetElectManager();
-}
+            uint64_t block_height = unitstate->height();
+            auto const & last_election_result_store = codec::msgpack_decode<data::election::xelection_result_store_t>({std::begin(result), std::end(result)});
+            xinfo("xbeacon_chain_application::load_last_election_data load block.addr=%s,height=%ld", addr.c_str(), block_height);
 
-observer_ptr<elect::ElectMain> xtop_application::elect_main() const noexcept {
-    return make_observer(m_elect_main.get());
-}
-
-observer_ptr<time::xchain_time_face_t> xtop_application::logic_timer() const noexcept {
-    assert(m_logic_timer != nullptr);
-    return make_observer(m_logic_timer.get());
-}
-
-observer_ptr<mbus::xmessage_bus_face_t> xtop_application::message_bus() const noexcept {
-    return make_observer(m_bus.get());
-}
-
-observer_ptr<store::xstore_face_t> xtop_application::store() const noexcept {
-    return make_observer(m_store.get());
-}
-
-observer_ptr<base::xvblockstore_t> xtop_application::blockstore() const noexcept {
-    return make_observer(m_blockstore.get());
-}
-
-observer_ptr<base::xvtxstore_t> xtop_application::txstore() const noexcept {
-    return make_observer(m_txstore.get());
-}
-
-observer_ptr<router::xrouter_face_t> xtop_application::router() const noexcept {
-    return make_observer(m_router.get());
-}
-
-xtop_application::xthread_pool_t const & xtop_application::thread_pool(xthread_pool_type_t const thread_pool_type) const noexcept {
-    assert(thread_pool_type == xthread_pool_type_t::synchronization || thread_pool_type == xthread_pool_type_t::unit_service ||
-           thread_pool_type == xthread_pool_type_t::txpool_service);
-
-    return m_thread_pools.at(thread_pool_type);
-}
-
-observer_ptr<xtxpool_v2::xtxpool_face_t> xtop_application::txpool() const noexcept {
-    return make_observer(m_txpool.get());
-}
-
-xobject_ptr_t<base::xvnodesrv_t> xtop_application::node_service() const noexcept {
-    return m_nodesvr_ptr;
-}
-
-xobject_ptr_t<base::xvcertauth_t> xtop_application::cert_serivce() const noexcept {
-    return m_cert_ptr;
-}
-
-xobject_ptr_t<store::xsyncvstore_t> xtop_application::syncstore() const noexcept {
-    return m_syncstore;
+            if ((addr == rec_elect_rec_contract_address || addr == rec_elect_zec_contract_address || addr == zec_elect_consensus_contract_address ||
+                 addr == zec_elect_eth_contract_address || addr == relay_make_block_contract_address) &&
+                block_height != 0) {
+                uint64_t prev_block_height = block_height - 1;
+                data::xunitstate_ptr_t unitstate2 = statestore::xstatestore_hub_t::instance()->get_unit_committed_changed_state(addr, prev_block_height);
+                if (unitstate == nullptr) {
+                    xwarn("xtop_application::load_last_election_data fail-get state.");
+                } else {
+                    if (xsuccess != unitstate2->string_get(property, result)) {
+                        xerror("xtop_application::load_last_election_data fail-get property.");
+                        top::error::throw_error(ec);
+                        continue;
+                    }
+                    auto const & before_last_election_result_store = codec::msgpack_decode<data::election::xelection_result_store_t>({std::begin(result), std::end(result)});
+                    on_election_data_updated(before_last_election_result_store, zone_id, prev_block_height);  // TODO(jimmy) use state->get_block_height() ?
+                }
+            }
+            on_election_data_updated(last_election_result_store, zone_id, block_height);
+        }
+    }
 }
 
 base::xauto_ptr<top::base::xvblock_t> xtop_application::last_logic_time() const {
     XMETRICS_GAUGE(metrics::blockstore_access_from_application, 1);
-    return blockstore()->get_latest_cert_block(base::xvaccount_t(sys_contract_beacon_timer_addr));
+    return m_blockstore->get_latest_cert_block(base::xvaccount_t(sys_contract_beacon_timer_addr));
 }
 
 int32_t xtop_application::handle_register_node(std::string const & node_addr, std::string const & node_sign) {
@@ -295,7 +383,7 @@ int32_t xtop_application::handle_register_node(std::string const & node_addr, st
 
     // check whether include in register contract
     std::string value_str;
-    int ret = m_store->map_get(sys_contract_rec_registration_addr, top::data::system_contract::XPORPERTY_CONTRACT_REG_KEY, node_addr, value_str);
+    int ret = statestore::xstatestore_hub_t::instance()->map_get(rec_registration_contract_address, top::data::system_contract::XPORPERTY_CONTRACT_REG_KEY, node_addr, value_str);
 
     if (ret != store::xstore_success || value_str.empty()) {
         xwarn("[register_node_callback] get node register info fail, node_addr: %s", node_addr.c_str());
@@ -352,7 +440,8 @@ void xtop_application::update_node_size(uint64_t & node_size, std::error_code & 
 
     data::election::xstandby_result_store_t standby_result_store;
     std::string serialized_value{};
-    if (m_store->string_get(sys_contract_rec_standby_pool_addr, data::XPROPERTY_CONTRACT_STANDBYS_KEY, serialized_value) == 0 && !serialized_value.empty()) {
+    if (statestore::xstatestore_hub_t::instance()->string_get(rec_standby_pool_contract_address, data::XPROPERTY_CONTRACT_STANDBYS_KEY, serialized_value) == 0 &&
+        !serialized_value.empty()) {
         auto const & standby_result_store = codec::msgpack_decode<data::election::xstandby_result_store_t>({std::begin(serialized_value), std::end(serialized_value)});
         common::xnetwork_id_t network_id{top::config::to_chainid(XGET_CONFIG(chain_name))};
         auto const & standby_network_storage_result = standby_result_store.result_of(network_id);
@@ -394,19 +483,16 @@ bool xtop_application::is_beacon_account() const noexcept {
         top::common::xnode_id_t node_id = top::common::xnode_id_t{user_params.account};
 
         std::string result;
-        auto latest_vblock = data::xblocktool_t::get_latest_connectted_state_changed_block(m_blockstore.get(), data::xvaccount_t{sys_contract_rec_elect_rec_addr});
-        base::xauto_ptr<base::xvbstate_t> bstate =
-            base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_vblock.get(), metrics::statestore_access_from_application_isbeacon);
-        if (bstate == nullptr) {
+        data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_change_state(rec_elect_rec_contract_address);
+        if (unitstate == nullptr) {
             xerror("xtop_application::is_beacon_account fail-get state.");
             return false;
         }
-        data::xunit_bstate_t unitstate(bstate.get());
 
-        auto property_names = data::election::get_property_name_by_addr(common::xaccount_address_t{sys_contract_rec_elect_rec_addr});
+        auto property_names = data::election::get_property_name_by_addr(rec_elect_rec_contract_address);
         common::xnetwork_id_t network_id{top::config::to_chainid(XGET_CONFIG(chain_name))};
         for (auto const & property : property_names) {
-            result = unitstate.string_get(property);
+            result = unitstate->string_get(property);
             if (result.empty()) {
                 xwarn("xtop_application::is_beacon_account no property %s", property.c_str());
                 continue;
@@ -414,9 +500,9 @@ bool xtop_application::is_beacon_account() const noexcept {
             using top::data::election::xelection_result_store_t;
             auto const & election_result_store = codec::msgpack_decode<xelection_result_store_t>({std::begin(result), std::end(result)});
             auto & current_group_nodes = election_result_store.result_of(network_id)
-                                                              .result_of(common::xnode_type_t::committee)
-                                                              .result_of(common::xcommittee_cluster_id)
-                                                              .result_of(common::xcommittee_group_id);
+                                             .result_of(common::xnode_type_t::committee)
+                                             .result_of(common::xcommittee_cluster_id)
+                                             .result_of(common::xcommittee_group_id);
 
             if (top::get<bool>(current_group_nodes.find(node_id))) {
                 xinfo("xtop_application::is_beacon_account is genesis node. %s", node_id.c_str());
@@ -437,6 +523,14 @@ bool xtop_application::is_beacon_account() const noexcept {
     }
 }
 
+void xtop_application::top_console_init() {
+    top::elect::MultilayerNetworkInterfacePtr net_module = std::make_shared<elect::MultilayerNetworkChainQuery>();
+    ChainCommandsPtr chain_cmd{nullptr};
+    chain_cmd = std::make_shared<ChainCommands>(net_module, m_sync_obj.get());
+    top::ChainInfo::Instance()->SetChainCmd(chain_cmd);
+    std::cout << "==== start chaininfo center ===\n";
+    xinfo("==== start chaininfo center ===");
+}
 
 NS_END2
 

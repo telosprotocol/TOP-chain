@@ -15,15 +15,15 @@
 #include "xmbus/xevent.h"
 #include "xmbus/xevent_store.h"
 #include "xmetrics/xmetrics.h"
+#include "xstatestore/xstatestore_face.h"
 
 #include <inttypes.h>
 
 NS_BEG2(top, loader)
 
-xconfig_onchain_loader_t::xconfig_onchain_loader_t(observer_ptr<store::xstore_face_t> const &     store_ptr,
-                                                   observer_ptr<mbus::xmessage_bus_face_t> const &     bus,
+xconfig_onchain_loader_t::xconfig_onchain_loader_t(observer_ptr<mbus::xmessage_bus_face_t> const &     bus,
                                                    observer_ptr<time::xchain_time_face_t> const & logic_timer)
-  : m_store_ptr{store_ptr}, m_bus{bus}, m_logic_timer{logic_timer} {
+  : m_bus{bus}, m_logic_timer{logic_timer} {
     // create actions
     m_action_map[UPDATE_ACTION_PARAMETER] = std::make_shared<config::xconfig_update_parameter_action_t>();
     m_action_map[XPROPOSAL_TYPE_TO_STR(tcc::proposal_type::proposal_update_parameter_incremental_add)] = std::make_shared<config::xconfig_incremental_add_update_parameter_action_t>();
@@ -107,31 +107,24 @@ void xconfig_onchain_loader_t::chain_timer(common::xlogic_time_t time) {
 void xconfig_onchain_loader_t::update_onchain_param(common::xlogic_time_t time) {
     xdbg("xconfig_onchain_loader_t::update_onchain_param,  logic time is %" PRIu64, time);
     std::lock_guard<std::mutex> lock(m_action_param_mutex);
-
-    auto block =  data::xblocktool_t::get_latest_connectted_state_changed_block(store::get_vblockstore(), std::string{sys_contract_rec_tcc_addr});
-    if (block == nullptr) {
-        xdbg("xconfig_onchain_loader_t::update_onchain_param latest connected light block null");
+    data::xunitstate_ptr_t unitstate = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_change_state(rec_tcc_contract_address);
+    if (nullptr == unitstate) {
+        xerror("xconfig_onchain_loader_t::update_onchain_param fail-load state.%s", rec_tcc_contract_address.value().c_str());
         return;
     }
 
-    if (block->get_height() < m_last_update_height) {
-        xdbg("xconfig_onchain_loader_t::update_onchain_param, height=%" PRIu64 ", last_update_height: %" PRIu64, block->get_height(), m_last_update_height);
+    if (unitstate->height() < m_last_update_height) {
+        xdbg("xconfig_onchain_loader_t::update_onchain_param, height=%" PRIu64 ", last_update_height: %" PRIu64, unitstate->height(), m_last_update_height);
         return;
     }
 
-    xdbg("xconfig_onchain_loader_t::update_onchain_param, current light height=%ld", block->get_height());
+    xdbg("xconfig_onchain_loader_t::update_onchain_param, current light height=%ld", unitstate->height());
 
-    m_last_update_height = block->get_height();
-    base::xauto_ptr<base::xvbstate_t> _bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(block.get(), metrics::statestore_access_from_xconfig_update);
-    if (nullptr == _bstate) {
-        xwarn("xconfig_onchain_loader_t::update_onchain_param get target state fail.block=%s", block->dump().c_str());
-        return;
-    }
-    data::xunit_bstate_t state(_bstate.get());
+    m_last_update_height = unitstate->height();
 
-    std::map<std::string, std::string> params = state.map_get(ONCHAIN_PARAMS);
+    std::map<std::string, std::string> params = unitstate->map_get(ONCHAIN_PARAMS);
     if (params.empty()) {
-        xwarn("xconfig_onchain_loader_t::update_onchain_param, get params map fail.");
+        xerror("xconfig_onchain_loader_t::update_onchain_param, get params map fail.");
         return;
     }
 
@@ -205,23 +198,21 @@ bool xconfig_onchain_loader_t::save_conf(const std::map<std::string, std::string
 }
 
 bool xconfig_onchain_loader_t::fetch_all(std::map<std::string, std::string> & params_map) {
-    if (m_store_ptr != nullptr) {
-        std::map<std::string, std::string> initial_values;
-        auto                               status = m_store_ptr->map_copy_get(sys_contract_rec_tcc_addr, ONCHAIN_PARAMS, initial_values);
-        if (status == 0) {
-            xinfo("xconfig_onchain_loader_t::fetch_all[tcc] second time get onchain parameters");
-            params_map.insert(initial_values.begin(), initial_values.end());
-        } else {
-            xinfo("xconfig_onchain_loader_t::fetch_all[tcc] first time get onchain parameters");
-            auto tx = std::make_shared<data::xtcc_transaction_t>();
-            params_map.insert(tx->m_initial_values.begin(), tx->m_initial_values.end());
-        }
-#ifdef DEBUG
-        for (auto & v : params_map) {
-            xdbg("xconfig_onchain_loader_t::fetch_all k=%s,v=%s", v.first.c_str(), v.second.c_str());
-        }
-#endif
+    std::map<std::string, std::string> initial_values;
+    auto status = statestore::xstatestore_hub_t::instance()->map_copy_get(rec_tcc_contract_address, ONCHAIN_PARAMS, initial_values);
+    if (status == 0) {
+        xinfo("xconfig_onchain_loader_t::fetch_all[tcc] second time get onchain parameters");
+        params_map.insert(initial_values.begin(), initial_values.end());
+    } else {
+        xinfo("xconfig_onchain_loader_t::fetch_all[tcc] first time get onchain parameters");
+        auto tx = std::make_shared<data::xtcc_transaction_t>();
+        params_map.insert(tx->m_initial_values.begin(), tx->m_initial_values.end());
     }
+#ifdef DEBUG
+    for (auto & v : params_map) {
+        xdbg("xconfig_onchain_loader_t::fetch_all k=%s,v=%s", v.first.c_str(), v.second.c_str());
+    }
+#endif
     return true;
 }
 

@@ -9,14 +9,14 @@
 #include "xgrpcservice/xgrpc_service.h"
 #include "xmbus/xbase_sync_event_monitor.hpp"
 #include "xmbus/xmessage_bus.h"
-#include "xstore/xstore.h"
 #include "xsyncbase/xsync_face.h"
+#include "xvledger/xvblockstore.h"
 
 #include <atomic>
 
 NS_BEG2(top, grpcmgr)
 
-int grpc_init(store::xstore_face_t * store, base::xvblockstore_t * block_store, sync::xsync_face_t * sync, uint16_t grpc_port);
+int grpc_init(base::xvblockstore_t * block_store, sync::xsync_face_t * sync, uint16_t grpc_port);
 
 class xgrpc_mgr_t;
 

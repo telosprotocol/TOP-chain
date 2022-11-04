@@ -267,7 +267,8 @@ XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(min_voter_dividend, uint64_t, important, 0
 #endif
 
 #if defined(XCHAIN_FORKED_BY_DEFAULT) && ((XCHAIN_FORKED_BY_DEFAULT) >= 10206)
-XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(workload_collection_interval, xinterval_t, normal, 180, 1, std::numeric_limits<xinterval_t>::max());
+//XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(workload_collection_interval, xinterval_t, normal, 180, 1, std::numeric_limits<xinterval_t>::max());
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(workload_collection_interval, xinterval_t, normal, 60, 1, std::numeric_limits<xinterval_t>::max());
 #else
 XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(workload_collection_interval, xinterval_t, normal, 12, 1, std::numeric_limits<xinterval_t>::max());
 #endif
@@ -525,11 +526,17 @@ XDECLARE_CONFIGURATION(msg_port, uint16_t, 19084);
 XDECLARE_CONFIGURATION(ws_port, uint16_t, 19085);
 XDECLARE_CONFIGURATION(evm_port, uint16_t, 8080);
 XDECLARE_CONFIGURATION(log_level, uint16_t, 0);
-#if defined(XBUILD_CI) || defined(XBUILD_DEV) || defined(XBUILD_GALILEO) || defined(XBUILD_BOUNTY)
-XDECLARE_CONFIGURATION(chain_id, uint32_t, 1023);
-#else
-XDECLARE_CONFIGURATION(chain_id, uint32_t, 980);
+
+#if defined(XBUILD_CONSORTIUM_TEST)
+    XDECLARE_CONFIGURATION(chain_id, uint32_t, 9999);
+#else 
+    #if defined(XBUILD_CI) || defined(XBUILD_DEV) || defined(XBUILD_GALILEO) || defined(XBUILD_BOUNTY)
+        XDECLARE_CONFIGURATION(chain_id, uint32_t, 1023);
+    #else
+        XDECLARE_CONFIGURATION(chain_id, uint32_t, 980);
+    #endif
 #endif
+
 XDECLARE_CONFIGURATION(network_id, uint32_t, 0);
 XDECLARE_CONFIGURATION(log_path, const char *, "/chain/log/clog"); // config log path
 XDECLARE_CONFIGURATION(db_path, const char *, "/chain/db_v2/cdb"); // config log path
@@ -586,6 +593,34 @@ XDECLARE_CONFIGURATION(root_hash, char const *, "beaa468a921c7cb0344da5b56fcf79c
 XDECLARE_CONFIGURATION(platform_business_port, std::uint16_t, 9000);
 XDECLARE_CONFIGURATION(platform_show_cmd, bool, false);
 XDECLARE_CONFIGURATION(platform_db_path, char const *, "/chain/db_v2/pdb");
+
+#if defined(XBUILD_CI) || defined(XBUILD_DEV)
+XDECLARE_CONFIGURATION(sync_table_state_height_gap, uint64_t, 30);
+XDECLARE_CONFIGURATION(keep_table_states_max_num, uint64_t, 40);
+XDECLARE_CONFIGURATION(prune_table_state_diff, uint64_t, 60);
+#else
+XDECLARE_CONFIGURATION(sync_table_state_height_gap, uint64_t, 1000);
+XDECLARE_CONFIGURATION(keep_table_states_max_num, uint64_t, 256);
+XDECLARE_CONFIGURATION(prune_table_state_diff, uint64_t, 512);
+#endif
+
+
+//consortium configuration
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(enable_node_whitelist, bool, normal, false, false, true);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(node_whitelist, char const *, normal, "", "", "");
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(enable_transaction_whitelist,  bool, normal, false, false, true);
+XDECLARE_ONCHAIN_GOVERNANCE_PARAMETER(transaction_whitelist, char const *, normal, "", "", "");
+
+XDECLARE_CONFIGURATION(node_reward_gas, bool, true); 
+XDECLARE_CONFIGURATION(enable_slash, bool, false);  
+XDECLARE_CONFIGURATION(enable_free_tgas, bool, false);  
+XDECLARE_CONFIGURATION(evm_token_type, char const *, "TOP");
+
+#if defined(XBUILD_CONSORTIUM_TEST)
+#define g_tx_deposit_fee (1)
+#else 
+#define g_tx_deposit_fee XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio)
+#endif 
 
 #undef XDECLARE_CONFIGURATION
 

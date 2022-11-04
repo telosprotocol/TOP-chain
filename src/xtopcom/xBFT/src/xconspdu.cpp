@@ -418,6 +418,9 @@ namespace top
             stream.write_short_string(m_block_object);
             stream << m_input_resource;
             stream << m_output_resource;
+            if (m_sync_targets & enum_xsync_target_block_output_offdata) {
+                stream << m_output_offdata;
+            }
             
             return (stream.size() - begin_size);
         }
@@ -433,6 +436,9 @@ namespace top
             stream.read_short_string(m_block_object);
             stream >> m_input_resource;
             stream >> m_output_resource;
+            if ( (m_sync_targets & enum_xsync_target_block_output_offdata) && (stream.size() > 0)) {
+                stream >> m_output_offdata;
+            }
             
             return (begin_size - stream.size());
         }

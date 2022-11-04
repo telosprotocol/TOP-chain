@@ -12,7 +12,7 @@ namespace top {
 namespace data {
 
 struct xtop_checkpoint_data {
-    uint64_t height;
+    uint64_t height{0};
     std::string hash;
 };
 using xcheckpoint_data_t = xtop_checkpoint_data;

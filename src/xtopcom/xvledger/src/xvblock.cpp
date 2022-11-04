@@ -127,8 +127,10 @@ namespace top
                 }
                 if(get_last_full_block_hash().empty())
                 {
-                    xerror("xvheader_t::is_valid,last_full_block_hash and last_full_block_height must set as valid value");
-                    return false;
+                    if (get_block_level() != enum_xvblock_level_unit) {  // XTODO unit level can has no last full hash and height
+                        xerror("xvheader_t::is_valid,last_full_block_hash and last_full_block_height must set as valid value");
+                        return false;
+                    }
                 }
             }
             
@@ -392,7 +394,8 @@ namespace top
         {
             char local_param_buf[256];
             #ifdef DEBUG
-            xprintf(local_param_buf,sizeof(local_param_buf),"{xvqcert:viewid=%" PRIu64 ",viewtoken=%u,clock=%" PRIu64 ",validator=0x%" PRIx64 " : %" PRIx64 ",auditor=0x%" PRIx64 " : %" PRIx64 ",parent_height=%" PRIu64 ",refcount=%d,this=%" PRIu64 ",consensus_flags=%x}",get_viewid(),get_viewtoken(),get_clock(),get_validator().high_addr,get_validator().low_addr,get_auditor().high_addr,get_auditor().low_addr,m_parent_height,get_refcount(),(uint64_t)this,get_consensus_flags());
+            xprintf(local_param_buf,sizeof(local_param_buf),"{xvqcert:viewid=%" PRIu64 ",viewtoken=%u,clock=%" PRIu64 ",validator=0x%" PRIx64 " : %" PRIx64 ",auditor=0x%" PRIx64 " : %" PRIx64 ",parent=%" PRIu64 ":%" PRIu64 ",nonce=%ld,expire=%d,drand=%ld,m_cryptos=%d,refcount=%d,this=%" PRIu64 ",consensus_flags=%x}",
+            get_viewid(),get_viewtoken(),get_clock(),get_validator().high_addr,get_validator().low_addr,get_auditor().high_addr,get_auditor().low_addr,m_parent_height,m_parent_viewid,m_nonce,m_expired,m_drand_height,m_cryptos,get_refcount(),(uint64_t)this,get_consensus_flags());
             #else
             
                 xprintf(local_param_buf,sizeof(local_param_buf),"{xvqcert:viewid=%" PRIu64 ",viewtoken=%u,clock=%" PRIu64 ",validator=0x%" PRIx64 " : %" PRIx64 ",auditor=0x%" PRIx64 " : %" PRIx64 ",consensus_flags=%x}",get_viewid(),get_viewtoken(),get_clock(),get_validator().high_addr,get_validator().low_addr,get_auditor().high_addr,get_auditor().low_addr,get_consensus_flags());
@@ -1249,6 +1252,25 @@ namespace top
             }
             return outentity->get_state_hash();
         }
+
+        const std::string xvoutput_t::get_output_offdata_hash() const
+        {
+            if (get_entitys().empty())
+            {
+                return std::string();
+            }
+            base::xvoutentity_t* outentity = get_primary_entity();
+            if (outentity == nullptr)
+            {
+                return std::string();
+            }
+            return outentity->get_output_offdata_hash();
+        }
+
+        const std::string xvoutput_t::get_account_indexs()
+        {
+            return query_resource(RESOURCE_ACCOUNT_INDEXS);
+        }
         
         std::string xvoutput_t::dump() const
         {
@@ -1606,7 +1628,7 @@ namespace top
             
 #ifdef DEBUG 
             char local_param_buf[512];
-        xprintf(local_param_buf,sizeof(local_param_buf),"{xvblock:account=%s,height=%" PRIu64 ",viewid=%" PRIu64 ",viewtoken=%u,class=%d,clock=%" PRIu64 ",flags=0x%x,validator=0x%" PRIx64 " : %" PRIx64 ",auditor=0x%" PRIx64 " : %" PRIx64 ",refcount=%d,this=%" PRIx64 ",block_version:0x%x,block_hash=%s -> last_block=%s}",get_account().c_str(),get_height(),get_viewid(),get_viewtoken(),get_block_class(),get_clock(),get_block_flags(),get_cert()->get_validator().high_addr,get_cert()->get_validator().low_addr,get_cert()->get_auditor().high_addr,get_cert()->get_auditor().low_addr,get_refcount(),(uint64_t)this,get_block_version(),xstring_utl::to_hex(m_cert_hash).c_str(),xstring_utl::to_hex(get_last_block_hash()).c_str());
+        xprintf(local_param_buf,sizeof(local_param_buf),"{xvblock:account=%s,height=%" PRIu64 ",viewid=%" PRIu64 ",viewtoken=%u,class=%d,clock=%" PRIu64 ",flags=0x%x,validator=0x%" PRIx64 " : %" PRIx64 ",auditor=0x%" PRIx64 " : %" PRIx64 ",refcount=%d,this=%" PRIx64 ",ver:0x%x,block_hash=%s -> last_block=%s}",get_account().c_str(),get_height(),get_viewid(),get_viewtoken(),get_block_class(),get_clock(),get_block_flags(),get_cert()->get_validator().high_addr,get_cert()->get_validator().low_addr,get_cert()->get_auditor().high_addr,get_cert()->get_auditor().low_addr,get_refcount(),(uint64_t)this,get_block_version(),xstring_utl::to_hex(m_cert_hash).c_str(),xstring_utl::to_hex(get_last_block_hash()).c_str());
             
 #else
             if(check_block_flag(enum_xvblock_flag_authenticated) && (false == m_dump_info.empty()) )
@@ -1615,7 +1637,7 @@ namespace top
             }
             
             char local_param_buf[256];
-        xprintf(local_param_buf,sizeof(local_param_buf),"{xvblock:account=%s,height=%" PRIu64 ",viewid=%" PRIu64 ",viewtoken=%u,clock=%" PRIu64 ",flags=0x%x,validator=0x%" PRIx64 " : %" PRIx64 ",auditor=0x%" PRIx64 " : %" PRIx64 "}",get_account().c_str(),get_height(),get_viewid(),get_viewtoken(),get_clock(),get_block_flags(),get_cert()->get_validator().high_addr,get_cert()->get_validator().low_addr,get_cert()->get_auditor().high_addr,get_cert()->get_auditor().low_addr);
+        xprintf(local_param_buf,sizeof(local_param_buf),"{xvblock:account=%s,height=%" PRIu64 ",viewid=%" PRIu64 ",viewtoken=%u,clock=%" PRIu64 ",flags=0x%x,validator=0x%" PRIx64 " : %" PRIx64 ",auditor=0x%" PRIx64 " : %" PRIx64 ",ver:0x%x}",get_account().c_str(),get_height(),get_viewid(),get_viewtoken(),get_clock(),get_block_flags(),get_cert()->get_validator().high_addr,get_cert()->get_validator().low_addr,get_cert()->get_auditor().high_addr,get_cert()->get_auditor().low_addr,get_block_version());
 
 #endif
             
@@ -1844,6 +1866,21 @@ namespace top
             
             return get_output()->set_resources_data(raw_resource_data);
         }
+
+        bool   xvblock_t::set_output_offdata(const std::string & raw_data) //check whether match hash first
+        {
+            if(get_output() == NULL)
+                return false;
+            
+            const std::string hash_to_check = get_cert()->hash(raw_data);
+            if(hash_to_check != get_output_offdata_hash() ) {
+                return false;
+            }
+            
+            m_output_offdata = raw_data;
+            xdbg("xvblock_t::set_output_offdata %s,offdata=%zu", dump().c_str(), raw_data.size());
+            return true;
+        }        
     
         xvinput_t *  xvblock_t::get_input() const
         {
@@ -2078,15 +2115,17 @@ namespace top
             
             if(get_input()->get_resources_hash().empty())//if no resources
                 return true;
-            
+
+            if (get_input()->get_resources_data().empty()) {
+                xwarn("xvblock_t::is_input_ready fail-resources empty.%s", dump().c_str());
+                return false;
+            }
+
             if(full_check_resources)
             {
                 const std::string _resources_hash = get_cert()->hash(get_input()->get_resources_data());
                 if(_resources_hash != get_input()->get_resources_hash()){
-                    if(_resources_hash.empty())
-                        xwarn("xvblock_t::xvblock_t,empty input_resources vs existing get_resources_hash(%s)",get_input()->get_resources_hash().c_str());
-                    else
-                        xerror("xvblock_t::xvblock_t,bad input_resources with wrong hash,existing-hash(%s) vs new_hash(%s)",get_input()->get_resources_hash().c_str(),_resources_hash.c_str());
+                    xerror("xvblock_t::is_input_ready,unmatch hash. %s vs %s", base::xstring_utl::to_hex(_resources_hash).c_str(), base::xstring_utl::to_hex(get_input()->get_resources_hash()).c_str());
                     return false;
                 }
             }
@@ -2106,20 +2145,50 @@ namespace top
             
             if(get_output()->get_resources_hash().empty())//if no resources
                 return true;
-            
+
+            if (get_output()->get_resources_data().empty()) {
+                xwarn("xvblock_t::is_output_ready fail-resources empty.%s", dump().c_str());
+                return false;
+            }
+
             if(full_check_resources)
             {
                 const std::string _resources_hash = get_cert()->hash(get_output()->get_resources_data());
                 if(_resources_hash != get_output()->get_resources_hash()){
-                    if(_resources_hash.empty())
-                        xwarn("xvblock_t::xvblock_t,empty _voutput_resources vs existing get_resources_hash(%s)",get_output()->get_resources_hash().c_str());
-                    else
-                        xerror("xvblock_t::xvblock_t,bad _voutput_resources with wrong hash,existing-hash(%s) vs new_hash(%s)",get_output()->get_resources_hash().c_str(),_resources_hash.c_str());
+                    xerror("xvblock_t::is_output_ready,unmatch hash. %s vs %s", base::xstring_utl::to_hex(_resources_hash).c_str(), base::xstring_utl::to_hex(get_output()->get_resources_hash()).c_str());
                     return false;
                 }
             }
             
             return true;
+        }
+
+        bool  xvblock_t::is_output_offdata_ready(bool full_check_resources) const {
+            if (get_output_offdata_hash().empty())
+                return true;
+            if (get_output_offdata().empty()) {
+                xwarn("xvblock_t::is_output_offdata_ready fail-offdata empty.%s", dump().c_str());
+                return false;                
+            }
+            if(full_check_resources)
+            {
+                const std::string _resources_hash = get_cert()->hash(get_output_offdata());
+                if(_resources_hash != get_output_offdata_hash()){
+                    xerror("xvblock_t::is_output_offdata_ready,unmatch hash. %s vs %s", base::xstring_utl::to_hex(_resources_hash).c_str(), base::xstring_utl::to_hex(get_output_offdata_hash()).c_str());
+                    return false;
+                }
+            }
+            return true;   
+        }
+
+        bool xvblock_t::is_body_and_offdata_ready(bool full_check_resources) const {
+            if (is_input_ready(full_check_resources)
+                && is_output_ready(full_check_resources)
+                && is_output_offdata_ready(full_check_resources)) {
+                return true;
+            }
+            xwarn("xvblock_t::is_body_and_offdata_ready fail.%s", dump().c_str());
+            return false;
         }
         
         bool  xvblock_t::is_valid(bool deep_test) const  //just check height/view/hash/account and last_hash/last_qc_hash

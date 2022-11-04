@@ -119,6 +119,7 @@ class xvm_output_t {
  public:
     std::error_code m_ec;
     int64_t         m_tgas_balance_change{0};
+    uint64_t        m_total_gas_burn{0};
     std::vector<xcons_transaction_ptr_t> m_contract_create_txs;
     xvm_gasfee_detail_t m_gasfee_detail;
 };

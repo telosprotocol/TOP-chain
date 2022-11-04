@@ -30,7 +30,6 @@ public:
     xhttp_server(shared_ptr<xrpc_edge_vhost> edge_vhost,
                  common::xip2_t xip2,
                  bool archive_flag = false,
-                 observer_ptr<store::xstore_face_t> store = nullptr,
                  observer_ptr<base::xvblockstore_t> block_store = nullptr,
                  observer_ptr<base::xvtxstore_t> txstore = nullptr,
                  observer_ptr<elect::ElectMain> elect_main = nullptr,

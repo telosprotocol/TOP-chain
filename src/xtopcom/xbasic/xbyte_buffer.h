@@ -121,4 +121,20 @@ unsigned long from_bytes<unsigned long>(xbytes_t const & input, std::error_code 
 template <>
 unsigned long long from_bytes<unsigned long long>(xbytes_t const & input, std::error_code & ec);
 
+class xtop_bytes_helper {
+    xbytes_t const & bytes_;
+
+public:
+    xtop_bytes_helper(xtop_bytes_helper const &) = delete;
+    xtop_bytes_helper & operator=(xtop_bytes_helper const &) = delete;
+    xtop_bytes_helper(xtop_bytes_helper &&) = delete;
+    xtop_bytes_helper & operator=(xtop_bytes_helper &&) = delete;
+    ~xtop_bytes_helper() = default;
+
+    explicit xtop_bytes_helper(xbytes_t const & bytes) noexcept;
+
+    bool start_with(xbytes_t const & prefix) const noexcept;
+};
+using xbytes_helper_t = xtop_bytes_helper;
+
 NS_END1

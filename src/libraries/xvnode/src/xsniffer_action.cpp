@@ -7,16 +7,16 @@
 #include "xdata/xtx_factory.h"
 #include "xvm/manager/xmessage_ids.h"
 #include "xvnetwork/xmessage.h"
+#include "xstatestore/xstatestore_face.h"
 
 NS_BEG4(top, vnode, components, sniffing)
 
-void xtop_sniffer_action::call(observer_ptr<store::xstore_face_t> store,
-                               observer_ptr<xtxpool_service_v2::xtxpool_proxy_face> const & txpool,
+void xtop_sniffer_action::call(observer_ptr<xtxpool_service_v2::xtxpool_proxy_face> const & txpool,
                                common::xaccount_address_t const & address,
                                std::string const & action_name,
                                std::string const & action_params,
-                               const uint64_t timestamp) {
-    data::xaccount_ptr_t account = store->query_account(address.value());
+                               const uint64_t timestamp) {                              
+    data::xunitstate_ptr_t account = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(address);  
     assert(account != nullptr);
     auto tx = data::xtx_factory::create_v2_run_contract_tx(address,
                                                       account->account_send_trans_number(),
@@ -34,14 +34,13 @@ void xtop_sniffer_action::call(observer_ptr<store::xstore_face_t> store,
           timestamp);
 }
 
-void xtop_sniffer_action::call(observer_ptr<store::xstore_face_t> store,
-                               observer_ptr<xtxpool_service_v2::xtxpool_proxy_face> const & txpool,
+void xtop_sniffer_action::call(observer_ptr<xtxpool_service_v2::xtxpool_proxy_face> const & txpool,
                                common::xaccount_address_t const & source_address,
                                common::xaccount_address_t const & target_address,
                                std::string const & action_name,
                                std::string const & action_params,
                                uint64_t timestamp) {
-    data::xaccount_ptr_t account = store->query_account(source_address.value());
+    data::xunitstate_ptr_t account = statestore::xstatestore_hub_t::instance()->get_unit_latest_connectted_state(source_address);
     assert(account != nullptr);
     auto tx = data::xtx_factory::create_v2_run_contract_tx(source_address,
                                                       target_address,

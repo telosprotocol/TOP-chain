@@ -6,7 +6,7 @@
 
 #include "xbase/xobject_ptr.h"
 #include "xconfig/xconfig_face.h"
-#include "xstore/xstore_face.h"
+
 #include "xmbus/xmessage_bus.h"
 
 #include "xchain_timer/xchain_timer.h"
@@ -19,8 +19,7 @@ NS_BEG2(top, loader)
 class xconfig_onchain_loader_t : public config::xconfig_loader_face_t
                                , public std::enable_shared_from_this<xconfig_onchain_loader_t> {
 public:
-    xconfig_onchain_loader_t(observer_ptr<store::xstore_face_t> const & store_ptr,
-                             observer_ptr<mbus::xmessage_bus_face_t> const & bus,
+    xconfig_onchain_loader_t(observer_ptr<mbus::xmessage_bus_face_t> const & bus,
                              observer_ptr<time::xchain_time_face_t> const & logic_timer);
 
     void start() override;
@@ -43,7 +42,6 @@ private:
     std::mutex m_action_param_mutex;
     std::map<std::string, config::xconfig_update_action_ptr_t> m_action_map{};
 
-    observer_ptr<store::xstore_face_t> m_store_ptr{nullptr};
     observer_ptr<mbus::xmessage_bus_face_t> m_bus{nullptr};
     observer_ptr<time::xchain_time_face_t> m_logic_timer{nullptr};
     uint64_t m_last_update_height{0};

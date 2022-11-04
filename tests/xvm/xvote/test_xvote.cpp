@@ -2,7 +2,7 @@
 #include "xvm/xvm_trace.h"
 #include <gtest/gtest.h>
 #include "xbase/xobject_ptr.h"
-#include "xstore/xstore_face.h"
+
 
 using namespace top;
 using namespace top::xvm;

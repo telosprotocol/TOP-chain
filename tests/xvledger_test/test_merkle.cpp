@@ -251,7 +251,7 @@ TEST_F(test_merkle, merkle_valid_path) {
             leafs.push_back(v);
             //std::cout <<  v << " ";
         }
-         std::cout << std::endl;
+        //  std::cout << std::endl;
   
         for (int index = 0; index < count; index++) {
             xmerkle_t<test_hash_mock_t, std::string> merkle;
@@ -289,7 +289,7 @@ TEST_F(test_merkle, merkle_invalid_path_level_signature) {
             leafs.push_back(v);
             //std::cout <<  v << " ";
         }
-         std::cout << std::endl;
+        //  std::cout << std::endl;
   
         for (int index = 0; index < count; index++) {
             xmerkle_t<test_hash_mock_t, std::string> merkle;

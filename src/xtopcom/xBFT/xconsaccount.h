@@ -33,7 +33,7 @@ namespace top
             virtual void*   query_interface(const int32_t _enum_xobject_type_) override;
 
             bool            is_mailbox_over_limit(const int32_t max_mailbox_num) ;
-
+            virtual bool    fire_clock(base::xvblock_t & latest_clock_block,int32_t cur_thread_id,uint64_t timenow_ms) override;
         protected:
             virtual bool    on_clock_fire(const base::xvevent_t & event,xcsobject_t* from_parent,const int32_t cur_thread_id,const uint64_t timenow_ms) override; //clock block always pass by higher layer to lower layer
             
