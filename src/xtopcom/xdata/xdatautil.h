@@ -129,5 +129,88 @@ inline uint256_t hex_to_uint256(const std::string& str) {
     return uint256_t(ret_vec.data());
 }
 
+inline std::string hex_str_to_bin_str(const std::string & hex_str) {
+    auto it = hex_str.begin();
+    if (hex_str.size() >= 2 && hex_str[0] == '0' && hex_str[1] == 'x') {
+        it += 2;
+    }
+    std::string bin_str;
+    for (; it != hex_str.end(); ++it) {
+        switch (*it) {
+        case '0': {
+            bin_str.append("0000");
+            break;
+        }
+        case '1': {
+            bin_str.append("0001");
+            break;
+        }
+        case '2': {
+            bin_str.append("0010");
+            break;
+        }
+        case '3': {
+            bin_str.append("0011");
+            break;
+        }
+        case '4': {
+            bin_str.append("0100");
+            break;
+        }
+        case '5': {
+            bin_str.append("0101");
+            break;
+        }
+        case '6': {
+            bin_str.append("0110");
+            break;
+        }
+        case '7': {
+            bin_str.append("0111");
+            break;
+        }
+        case '8': {
+            bin_str.append("1000");
+            break;
+        }
+        case '9': {
+            bin_str.append("1001");
+            break;
+        }
+        case 'A':
+        case 'a': {
+            bin_str.append("1010");
+            break;
+        }
+        case 'B':
+        case 'b': {
+            bin_str.append("1011");
+            break;
+        }
+        case 'C':
+        case 'c': {
+            bin_str.append("1100");
+            break;
+        }
+        case 'D':
+        case 'd': {
+            bin_str.append("1101");
+            break;
+        }
+        case 'E':
+        case 'e': {
+            bin_str.append("1110");
+            break;
+        }
+        case 'F':
+        case 'f': {
+            bin_str.append("1111");
+            break;
+        }
+        }
+    }
+    return bin_str;
+}
+
 }  // namespace data
 }  // namespace top

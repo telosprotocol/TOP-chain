@@ -1,8 +1,14 @@
 [workspace]
 members = [
     "engine",
+    "engine-eth2-types",
+    "engine-eth2-utility",
     "engine-precompiles",
     "engine-sdk",
     "engine-transactions",
     "engine-types",
 ]
+
+[patch]
+[patch.crates-io]
+eth2_hashing = { path = "engine-eth2-hashing" }
