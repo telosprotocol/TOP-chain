@@ -38,7 +38,7 @@ bool xstate_tablestate_reseter_sample::exec_reset_tablestate() {
                 evm_common::u256 token_value{tep1_token_iter.value().get<std::string>()};
                 xdbg("        TEP1 token %s, value %s", top::to_string(token_id).c_str(), token_value.str().c_str());
                 // set unit bstate
-                // account_set_tep1_token(account, token_id, token_value);
+                account_set_tep1_token(account, token_id, token_value);
             }
         }
 
@@ -52,7 +52,7 @@ bool xstate_tablestate_reseter_sample::exec_reset_tablestate() {
                 uint64_t property_value = std::atoll(top_balance_iter.value().get<std::string>().c_str());
                 xdbg("        TOP balance %s, value: % " PRIu64, property_name.c_str(), property_value);
                 // set unit bstate
-                // account_set_top_balance(account, property_name, property_value);
+                account_set_top_balance(account, property_name, property_value);
             }
         }
 
