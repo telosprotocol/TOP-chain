@@ -461,7 +461,7 @@ int32_t xbstate_ctx_t::token_deposit(const std::string & key, base::vtoken_t add
 
 int32_t xbstate_ctx_t::set_token_balance(std::string const & key, base::vtoken_t const new_balance) {
     xdbg("xbstate_ctx_t::set_token_balance,property_modify_enter.address=%s,height=%ld,propname=%s,token=%ld", account_address().to_string().c_str(), height(), key.c_str(), new_balance);
-    auto propobj = load_token_for_write(key);
+    auto const propobj = load_token_for_write(key);
     CHECK_PROPERTY_NULL_RETURN(propobj, "xbstate_ctx_t::set_token_balance", key);
     if (new_balance < 0) {
         xwarn("xbstate_ctx_t::token_withdraw fail-can't do set. add_token=%ld", new_balance);
