@@ -18,8 +18,7 @@ class xworkpool_dispatcher
   : public xcons_dispatcher
   , public std::enable_shared_from_this<xworkpool_dispatcher> {
 public:
-    xworkpool_dispatcher(observer_ptr<mbus::xmessage_bus_face_t> const &mb,
-            std::shared_ptr<xcons_service_para_face> const & p_para, std::shared_ptr<xblock_maker_face> const & block_maker);
+    xworkpool_dispatcher(std::shared_ptr<xcons_service_para_face> const & p_para, std::shared_ptr<xblock_maker_face> const & block_maker);
     virtual ~xworkpool_dispatcher();
 
 public:
@@ -45,7 +44,6 @@ protected:
     void              on_clock(base::xvblock_t * clock_block) override;
 
 protected:
-    observer_ptr<mbus::xmessage_bus_face_t>  m_mbus;
     std::mutex                               m_mutex;
     xbatch_paker_map                         m_packers;
     std::shared_ptr<xcons_service_para_face> m_para;

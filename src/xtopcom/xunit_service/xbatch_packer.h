@@ -15,11 +15,21 @@
 
 NS_BEG2(top, xunit_service)
 using xconsensus::xcsaccount_t;
+
+class xpack_strategy_t {
+public:
+    void clear();
+    uint32_t get_tx_num_threshold_first_time(uint64_t vc_time_ms);
+    int32_t get_timer_interval() const;
+    uint32_t get_tx_num_threshold(uint64_t cur_time) const;
+private:
+    uint64_t m_vc_time_ms{0};
+};
+
 // default block service entry
 class xbatch_packer : public xcsaccount_t, public base::xtimersink_t {
 public:
-    explicit xbatch_packer(observer_ptr<mbus::xmessage_bus_face_t> const   &mb,
-                           base::xtable_index_t &                          tableid,
+    explicit xbatch_packer(base::xtable_index_t &                          tableid,
                            const std::string &                             account_id,
                            std::shared_ptr<xcons_service_para_face> const &para,
                            std::shared_ptr<xblock_maker_face> const &      block_maker,
@@ -75,7 +85,7 @@ private:
     void    check_latest_cert_block(base::xvblock_t* _cert_block, const xconsensus::xcsview_fire* viewfire, std::error_code & ec);
     void    reset_leader_info();
     void    make_receipts_and_send(data::xblock_t * commit_block, data::xblock_t * cert_block);
-    virtual uint32_t calculate_min_tx_num(bool first_packing);
+    virtual uint32_t calculate_min_tx_num(bool first_packing, uint64_t time_ms);
     virtual int32_t set_vote_extend_data(base::xvblock_t * proposal_block, const uint256_t & hash, bool is_leader);
     virtual void clear_for_new_view();
     virtual void send_receipts(base::xvblock_t *vblock);
@@ -84,17 +94,10 @@ private:
     bool    do_state_sync(uint64_t sync_height);
 
 private:
-    observer_ptr<mbus::xmessage_bus_face_t>  m_mbus;
     base::xtable_index_t                     m_tableid;
     volatile uint64_t                        m_last_view_id;
     std::shared_ptr<xcons_service_para_face> m_para;
-    std::shared_ptr<xblock_maker_face>       m_block_maker;
     std::shared_ptr<xproposal_maker_face>    m_proposal_maker;
-    uint64_t                                 m_cons_start_time_ms;
-    static constexpr uint32_t                m_empty_block_max_num{2};
-    std::string                              m_account_id;
-    std::string                              m_latest_cert_block_hash;
-    bool                                     m_can_make_empty_block{false};
     common::xlogic_time_t                    m_start_time;
     base::xtimer_t*                          m_raw_timer{nullptr};
     // m_is_leader to decide if timer need to do packing units and then start consensus
@@ -109,7 +112,7 @@ private:
     // record last xip in case of consensus success but leader xip changed.
     xvip2_t                                  m_last_xip2{};
     common::xaccount_address_t               m_table_addr;
-    uint8_t                                  m_try_proposal_times{0};
+    xpack_strategy_t                         m_pack_strategy;
 };
 
 using xbatch_packer_ptr_t = xobject_ptr_t<xbatch_packer>;

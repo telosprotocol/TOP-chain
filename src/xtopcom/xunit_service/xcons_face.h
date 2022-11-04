@@ -260,7 +260,7 @@ using xcons_dispatcher_ptr = std::shared_ptr<xcons_dispatcher>;
 
 class xcons_dispatcher_builder_face {
 public:
-    virtual xcons_dispatcher_ptr build(observer_ptr<mbus::xmessage_bus_face_t> const &mb, xcons_service_para_ptr const &, e_cons_type cons_type) = 0;
+    virtual xcons_dispatcher_ptr build(xcons_service_para_ptr const &, e_cons_type cons_type) = 0;
 };
 
 using xcons_dispatcher_builder_ptr = std::shared_ptr<xcons_dispatcher_builder_face>;

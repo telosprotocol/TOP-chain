@@ -9,8 +9,7 @@ NS_BEG2(top, xunit_service)
 // default block service entry
 class xrelay_packer2 : public xbatch_packer {
 public:
-    explicit xrelay_packer2(observer_ptr<mbus::xmessage_bus_face_t> const & mb,
-                            base::xtable_index_t & tableid,
+    explicit xrelay_packer2(base::xtable_index_t & tableid,
                             const std::string & account_id,
                             std::shared_ptr<xcons_service_para_face> const & para,
                             std::shared_ptr<xblock_maker_face> const & block_maker,
@@ -35,7 +34,7 @@ private:
     virtual int32_t set_vote_extend_data(base::xvblock_t * proposal_block, const uint256_t & hash, bool is_leader) override;
     virtual void clear_for_new_view() override;
     virtual void send_receipts(base::xvblock_t *vblock) override;
-    virtual uint32_t calculate_min_tx_num(bool first_packing) override;
+    virtual uint32_t calculate_min_tx_num(bool first_packing, uint64_t time_ms) override;
     virtual bool set_election_round(bool is_leader, data::xblock_consensus_para_t & proposal_para) override;
     bool    get_election_round(const xvip2_t & xip, uint64_t & election_round);
     void    get_elect_set(const xvip2_t & xip, xelection_cache_face::elect_set & elect_set);
