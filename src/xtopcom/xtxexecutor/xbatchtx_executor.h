@@ -18,6 +18,7 @@ struct xexecute_output_t {
    std::vector<xatomictx_output_t> pack_outputs;
    std::vector<xatomictx_output_t> nopack_outputs;
    std::vector<xatomictx_output_t> drop_outputs;
+   uint64_t                        total_gas_fee{0};
    bool empty() const {return pack_outputs.empty() && nopack_outputs.empty() && drop_outputs.empty();}
 };
 

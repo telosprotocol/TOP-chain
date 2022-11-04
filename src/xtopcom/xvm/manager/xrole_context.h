@@ -7,6 +7,7 @@
 #include "xbase/xns_macro.h"
 #include "xblockstore/xsyncvstore_face.h"
 #include "xdata/xblock_statistics_data.h"
+#include "xdata/xblock_statistics_cons_data.h"
 #include "xdata/xfulltableblock_account_data.h"
 
 #include "xtxpool_service_v2/xrequest_tx_receiver_face.h"
@@ -159,6 +160,14 @@ protected:
      */
     data::xfulltableblock_statistic_accounts fulltableblock_statistic_accounts(data::xstatistics_data_t const& block_statistic_data, base::xvnodesrv_t * node_service);
 
+    /**
+     * @brief 
+     * 
+     * @param block_statistic_data 
+     * @param node_service 
+     * @return data::xfulltableblock_statistic_accounts 
+     */
+    data::xfulltableblock_statistic_accounts fulltableblock_statistic_cons_accounts(data::xstatistics_cons_data_t const& block_statistic_data, base::xvnodesrv_t * node_service);
 protected:
     observer_ptr<store::xsyncvstore_t>                                          m_syncstore{};
     std::shared_ptr<xtxpool_service_v2::xrequest_tx_receiver_face>              m_unit_service{};

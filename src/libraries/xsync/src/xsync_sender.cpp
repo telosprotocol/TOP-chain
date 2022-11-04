@@ -10,6 +10,7 @@
 #include "xdata/xdatautil.h"
 #include "xsyncbase/xmessage_ids.h"
 #include "xsync/xsync_util.h"
+#include <inttypes.h>
 
 NS_BEG2(top, sync)
 
@@ -423,7 +424,7 @@ bool xsync_sender_t::send_message(
             const vnetwork::xvnode_address_t &self_addr,
             const vnetwork::xvnode_address_t &target_addr) {
 
-    xsync_dbg("xsync_sender_t %s %s send to %s", self_addr.to_string().c_str(), metric_key.c_str(),target_addr.to_string().c_str());
+
 
     base::xstream_t stream(base::xcontext_t::instance());
     auto header = make_object_ptr<xsync_message_header_t>(RandomUint64());
@@ -433,6 +434,9 @@ bool xsync_sender_t::send_message(
 
     xmessage_t msg;
     xmessage_pack_t::pack_message(_msg, ((int) _msg.payload().size()) >= m_min_compress_threshold, msg);
+
+    xsync_dbg("xsync_sender_t %s %s send to %s message id  with message id %" PRIx32, self_addr.to_string().c_str(), 
+            metric_key.c_str(),target_addr.to_string().c_str(),  static_cast<std::uint32_t>(msg.id()));
 
     std::string pkg_metric_name = "sync_pkgs_" + metric_key + "_send";
     std::string bytes_metric_name = "sync_pkgs_" + metric_key + "_send";

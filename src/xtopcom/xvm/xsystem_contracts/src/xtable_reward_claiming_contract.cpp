@@ -115,7 +115,8 @@ void xtop_table_reward_claiming_contract::recv_voter_dividend_reward(uint64_t is
         return;
     }
 
-    XCONTRACT_ENSURE(sys_contract_zec_reward_addr == source_address, "xtop_table_reward_claiming_contract::recv_voter_dividend_reward from invalid address: " + source_address);
+    XCONTRACT_ENSURE(((sys_contract_zec_reward_addr == source_address) || (sys_contract_zec_consortium_reward_addr == source_address)) ,
+                     "xtop_table_reward_claiming_contract::recv_voter_dividend_reward from invalid address: " + source_address);
     std::map<std::string, std::string> adv_votes;
     std::string base_addr{};
     uint32_t table_id{static_cast<uint32_t>(-1)};
@@ -327,7 +328,7 @@ void xtop_table_reward_claiming_contract::recv_node_reward(uint64_t issuance_clo
          issuance_clock_height,
          rewards.size());
 
-    XCONTRACT_ENSURE(sys_contract_zec_reward_addr == source_address,
+    XCONTRACT_ENSURE(((sys_contract_zec_reward_addr == source_address) || (sys_contract_zec_consortium_reward_addr == source_address)),
                      "[xtop_table_reward_claiming_contract::recv_node_reward] working reward is not from zec workload contract but from " + source_address);
 
     for (auto const & account_reward : rewards) {

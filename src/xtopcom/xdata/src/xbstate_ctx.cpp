@@ -439,6 +439,22 @@ int32_t xbstate_ctx_t::token_deposit(const std::string & key, base::vtoken_t add
     return xsuccess;
 }
 
+int32_t xbstate_ctx_t::token_update(const std::string& key, base::vtoken_t update_token)
+{
+    xdbg("xbstate_ctx_t::token_update,property_modify_enter.address=%s,height=%ld,propname=%s,token=%ld", account_address().c_str(), height(), key.c_str(), update_token);
+    auto propobj = load_token_for_write(key);
+    CHECK_PROPERTY_NULL_RETURN(propobj, "xbstate_ctx_t::token_update", key);
+    if (update_token < 0) {
+        xwarn("xbstate_ctx_t::token_update fail-can't do update. propname=%ld,update_token=%ld", key.c_str(), update_token);
+        return xaccount_property_operate_fail;
+    }
+
+    auto left_token = propobj->update(update_token, m_canvas.get());
+    xassert(left_token >= 0);
+    return xsuccess;
+}
+
+
 int32_t xbstate_ctx_t::uint64_add(const std::string & key, uint64_t change) {
     if (change == 0) {
         return xsuccess;

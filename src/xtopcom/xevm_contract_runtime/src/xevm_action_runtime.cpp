@@ -31,8 +31,12 @@ evm_common::xevm_transaction_result_t xtop_action_runtime<data::xevm_consensus_a
     evm_common::xevm_transaction_result_t result;
 
     // try {
-
-    auto storage = top::make_unique<evm::xevm_storage>(m_evm_statectx);
+    auto default_token_type = XGET_CONFIG(evm_token_type);
+    if(default_token_type.empty()) {
+        xinfo("xtop_action_runtime<data::execute default_token_type is empty.");
+        xassert(false);
+    }
+    auto storage = top::make_unique<evm::xevm_storage>(m_evm_statectx, default_token_type);
     std::shared_ptr<top::evm::xevm_logic_face_t> logic_ptr =
         std::make_shared<top::contract_runtime::evm::xevm_logic_t>(std::move(storage), m_evm_statectx, tx_ctx, evm_contract_manager_);
     top::evm::evm_import_instance::instance()->add_evm_logic(logic_ptr);

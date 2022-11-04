@@ -209,6 +209,10 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DXUSE_JEMALLOC=ON"
         echo "BUILD WITH XUSE_JEMALLOC"
     ;;
+    build_consortium_test)
+        CMAKE_EXTRA_OPTIONS+=" -DXBUILD_CONSORTIUM_TEST=ON"
+        echo "Build Consortium testnet"
+    ;;
     *)
         echo "unknown build option: "$option
     ;;

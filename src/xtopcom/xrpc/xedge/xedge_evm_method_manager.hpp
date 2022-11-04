@@ -17,14 +17,15 @@
 #include "xedge_rpc_handler.h"
 #include "xmetrics/xmetrics.h"
 #include "xrpc/xrpc_query_manager.h"
+#include "xrpc/xrpc_eth_query_manager.h"
 #include "xrpc/xerror/xrpc_error.h"
 #include "xrpc/xjson_proc.h"
 #include "xrpc/xrpc_define.h"
 #include "xrpc/xrpc_method.h"
 #include "xrpc/xuint_format.h"
-
+#include "xdbstore/xstore_face.h"
 #include "xtxstore/xtxstore_face.h"
-#include "xtxstore/xtransaction_prepare.h"
+#include "xverifier/xtx_verifier.h"
 #include "xverifier/xblacklist_verifier.h"
 #include "xverifier/xwhitelist_verifier.h"
 #include "xvledger/xvblock.h"
@@ -77,6 +78,9 @@ protected:
     unordered_map<pair<string, string>, tx_method_handler> m_edge_tx_method_map;
     unique_ptr<xedge_local_method<T>> m_edge_local_method_ptr;
     std::shared_ptr<xrpc_query_manager> m_rpc_query_mgr;
+    std::shared_ptr<xrpc_eth_query_manager> m_rpc_eth_query_mgr;
+    unique_ptr<xfilter_manager>  m_rule_mgr_ptr;
+    //observer_ptr<store::xstore_face_t> m_store;
     top::observer_ptr<base::xvtxstore_t> m_txstore;
     bool m_archive_flag{false};  // for local query
     bool m_enable_sign{true};
@@ -177,13 +181,16 @@ void xedge_evm_method_base<T>::do_method(shared_ptr<conn_type> & response, xjson
         }
     } else {
         if (m_archive_flag) {
-            xdbg("local arc query method: %s", method.c_str());
-            json_proc.m_request_json["params"]["version"] = version;
+            xdbg("local exchange query method: %s", method.c_str());
+            m_rule_mgr_ptr->filter_eth(json_proc);
+            const string & version = json_proc.m_request_json["jsonrpc"].asString();
+            string strMethod = json_proc.m_request_json["method"].asString();
             string strErrorMsg = RPC_OK_MSG;
             uint32_t nErrorCode = 0;
-            m_rpc_query_mgr->call_method(method, json_proc.m_request_json["params"], json_proc.m_response_json["data"], strErrorMsg, nErrorCode);
-            json_proc.m_response_json[RPC_ERRNO] = nErrorCode;
-            json_proc.m_response_json[RPC_ERRMSG] = strErrorMsg;
+            m_rpc_eth_query_mgr->call_method(strMethod, json_proc.m_request_json["params"], json_proc.m_response_json, strErrorMsg, nErrorCode);
+            json_proc.m_response_json["id"] = json_proc.m_request_json["id"];  // edge_msg.m_client_id;
+            json_proc.m_response_json["jsonrpc"] = version;
+
             write_response(response, json_proc.get_response());
             return;
         } else {
@@ -228,17 +235,9 @@ void xedge_evm_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, 
     }
 
     if (m_archive_flag) {
-        data::xcons_transaction_ptr_t cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());
-        txexecutor::xtransaction_prepare_t tx_prepare(nullptr, cons_tx);
-        int32_t ret = tx_prepare.check();
-        if (ret != xsuccess) {
-            XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_prepare", 1);
-            //std::string err = std::string("transaction txpool check error (") + std::to_string(ret) + ")";
-            throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, tx_prepare.get_err_msg(ret)};
-        }
-        // 3. tx duration expire check
+        // tx duration expire check
         uint64_t now = xverifier::xtx_utl::get_gmttime_s();
-        ret = xverifier::xtx_verifier::verify_tx_fire_expiration(tx.get(), now, true);
+        int32_t ret = xverifier::xtx_verifier::verify_tx_fire_expiration(tx.get(), now, true);
         if (ret) {
             XMETRICS_COUNTER_INCREMENT("xtransaction_cache_fail_expiration", 1);
             throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "duration expiration check failed"};

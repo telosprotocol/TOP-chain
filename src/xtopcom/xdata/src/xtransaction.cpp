@@ -3,31 +3,46 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "xdata/xtransaction.h"
-
+#include <cinttypes>
 #include "xbase/xutl.h"
 #include "xcommon/xerror/xerror.h"
-#include <cinttypes>
+#include "xconfig/xconfig_register.h"
+#include "xconfig/xpredefined_configurations.h"
 
 namespace top { namespace data {
 
 bool xtransaction_t::transaction_type_check() const {
+
     switch (get_tx_type()) {
 #ifdef ENABLE_CREATE_USER  // debug use
-        case xtransaction_type_create_user_account:
+            case xtransaction_type_create_user_account:
 #endif
-        case xtransaction_type_deploy_evm_contract:
-        case xtransaction_type_run_contract:
-        case xtransaction_type_transfer:
-        case xtransaction_type_vote:
-        case xtransaction_type_abolish_vote:
-        case xtransaction_type_pledge_token_tgas:
-        case xtransaction_type_redeem_token_tgas:
-        case xtransaction_type_pledge_token_vote:
-        case xtransaction_type_redeem_token_vote:
-            return true;
-        default:
-            return false;
+            case xtransaction_type_deploy_evm_contract:
+            case xtransaction_type_run_contract:
+            case xtransaction_type_transfer:
+                return true;
+            case xtransaction_type_vote:
+            case xtransaction_type_abolish_vote:
+            case xtransaction_type_pledge_token_vote:
+            case xtransaction_type_redeem_token_vote: {
+                if (XGET_CONFIG(node_reward_gas) == false) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } break;
+            case xtransaction_type_pledge_token_tgas:
+            case xtransaction_type_redeem_token_tgas: {
+                if (XGET_CONFIG(enable_free_tgas)) {
+                    return true;
+                } else {
+                    return false;
+                }
+            } break;
+            default:
+                return false;
     }
+
 }
 
 std::string xtransaction_t::transaction_type_to_string(uint16_t type) {

@@ -102,7 +102,19 @@ int32_t xaccount_context_t::create_user_account(const std::string& address) {
     if (ret != xsuccess) {
         return ret;
     }
+    
+    auto default_token_type = XGET_CONFIG(evm_token_type);
+    xinfo("xaccount_context_t::create_user_account token type is %s.", default_token_type.c_str());
+    if (default_token_type.empty()) {
+        xerror("xaccount_context_t::create_user_account  configuration evm token empty");
+        return ret;
+    }
 
+    if (default_token_type == "TOP") {
+        xinfo("xaccount_context_t::create_user_account  configuration evm base token is top");
+        return ret;
+    }
+    
     auto fork_config = top::chain_fork::xtop_chain_fork_config_center::chain_fork_config();
     if (top::chain_fork::xtop_chain_fork_config_center::is_forked(fork_config.v1_6_0_version_point, get_timer_height())) {
         evm_common::u256 eth_token = 10000000000000000000ULL;
@@ -169,7 +181,7 @@ int32_t xaccount_context_t::token_transfer_out(const data::xproperty_asset& asse
         return -1;
     }
 
-    if(get_address() == sys_contract_zec_reward_addr) {
+    if(get_address() == sys_contract_zec_reward_addr || get_address() == sys_contract_zec_consortium_reward_addr) {
         return xstore_success;
     }
 
@@ -279,14 +291,14 @@ int32_t xaccount_context_t::check_used_tgas(uint64_t &cur_tgas_usage, uint64_t d
           last_hour, m_timer_height, get_used_tgas(), calc_decayed_tgas(), m_account->tgas_balance(), get_token_price(), get_total_tgas(), cur_tgas_usage, deposit);
 
     auto available_tgas = get_available_tgas();
-    xdbg("tgas_disk account: %s, total tgas usage adding this tx : %d", get_address().c_str(), cur_tgas_usage);
-    if(cur_tgas_usage > (available_tgas + deposit / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio))){
+    xdbg("tgas_disk account: %s, total tgas usage adding this tx : %d available_tgas %lu ", get_address().c_str(), cur_tgas_usage, available_tgas);
+    if(cur_tgas_usage > (available_tgas + deposit / g_tx_deposit_fee)){
         xdbg("tgas_disk xtransaction_not_enough_pledge_token_tgas");
         deposit_usage = deposit;
         cur_tgas_usage = available_tgas;
         return xtransaction_not_enough_pledge_token_tgas;
     } else if(cur_tgas_usage > available_tgas){
-        deposit_usage = (cur_tgas_usage - available_tgas) * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio);
+        deposit_usage = (cur_tgas_usage - available_tgas) * g_tx_deposit_fee;
         cur_tgas_usage = available_tgas;
         xdbg("tgas_disk tx deposit_usage: %d", deposit_usage);
     }
@@ -312,6 +324,7 @@ int32_t xaccount_context_t::update_tgas_sender(uint64_t tgas_usage, const uint32
         incr_used_tgas(tgas_usage);
     }
     available_balance_to_other_balance(data::XPROPERTY_BALANCE_BURN, base::vtoken_t(deposit_usage));
+    m_total_gas_burn += deposit_usage;
     xdbg("xaccount_context_t::update_tgas_sender tgas_usage: %llu, deposit: %u, deposit_usage: %llu", tgas_usage, deposit, deposit_usage);
     return ret;
 }
@@ -337,14 +350,14 @@ int32_t xaccount_context_t::update_tgas_contract_recv(uint64_t sender_used_depos
             deal_used_tgas -= min_tgas;
             m_cur_used_tgas = min_tgas;
 
-            uint64_t deposit_tgas = (deposit - sender_used_deposit) / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio);
+            uint64_t deposit_tgas = (deposit - sender_used_deposit) / g_tx_deposit_fee;
             xassert(deposit_tgas >= old_send_frozen_tgas);
             deposit_tgas -= old_send_frozen_tgas;
             if(deal_used_tgas > deposit_tgas){
                 xdbg("tgas_disk contract tx tgas calc not enough tgas, deal_used_tgas: %d, deposit: %d", deal_used_tgas, deposit);
                 return xtransaction_contract_not_enough_tgas;
             } else {
-                deposit_usage = deal_used_tgas * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio);
+                deposit_usage = deal_used_tgas * g_tx_deposit_fee;
                 xdbg("tgas_disk contract tx tgas calc deposit_usage: %d", deposit_usage);
                 uint64_t used_tgas = calc_decayed_tgas();
                 used_tgas += min_tgas;
@@ -370,14 +383,14 @@ int32_t xaccount_context_t::calc_resource(uint64_t& tgas, uint32_t deposit, uint
     auto available_tgas = get_available_tgas();
     int32_t ret{0};
     xdbg("tgas_disk used_tgas: %llu, available_tgas: %llu, tgas: %llu, deposit: %u, used_deposit: %u", used_tgas, available_tgas, tgas, deposit, used_deposit);
-    if(tgas > (available_tgas + (deposit - used_deposit) / XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio))){
+    if(tgas > (available_tgas + (deposit - used_deposit) / g_tx_deposit_fee)){
         xdbg("tgas_disk xtransaction_not_enough_pledge_token_tgas");
         set_used_tgas(available_tgas + used_tgas);
         tgas = available_tgas - used_tgas;
         used_deposit = deposit;
         ret = xtransaction_not_enough_pledge_token_tgas;
     } else if(tgas > available_tgas){
-        used_deposit += (tgas - available_tgas) * XGET_ONCHAIN_GOVERNANCE_PARAMETER(tx_deposit_gas_exchange_ratio);
+        used_deposit += (tgas - available_tgas) * g_tx_deposit_fee;
         set_used_tgas(available_tgas + used_tgas);
     } else {
         set_used_tgas(used_tgas + tgas);
@@ -386,6 +399,7 @@ int32_t xaccount_context_t::calc_resource(uint64_t& tgas, uint32_t deposit, uint
     if (used_deposit > 0) {
         xdbg("xaccount_context_t::calc_resource balance withdraw used_deposit=%u", used_deposit);
         ret = available_balance_to_other_balance(data::XPROPERTY_BALANCE_BURN, base::vtoken_t(used_deposit));
+        m_total_gas_burn += used_deposit;
     }
     return ret;
 }
@@ -1473,6 +1487,11 @@ xaccount_context_t::get_blockchain_height(const std::string & owner) const {
     }
     xdbg("xaccount_context_t::get_blockchain_height owner=%s,height=%" PRIu64 "", owner.c_str(), height);
     return height;
+}
+
+void xaccount_context_t::cacl_total_gas_burn(uint64_t gas)
+{
+    m_total_gas_burn += gas;
 }
 
 }  // namespace store
