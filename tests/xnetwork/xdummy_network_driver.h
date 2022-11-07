@@ -9,7 +9,6 @@
 using top::network::xdht_node_t;
 using top::network::xnetwork_message_ready_callback_t;
 using top::network::xnode_t;
-using top::network::xtransmission_property_t;
 using top::network::p2p::xdht_host_face_t;
 
 NS_BEG3(top, tests, network)
@@ -70,11 +69,7 @@ public:
         return {};
     }
 
-    void
-    send_to(common::xnode_id_t const &,
-            xbyte_buffer_t const &,
-            xtransmission_property_t const &) const
-    {
+    void send_to(common::xnode_id_t const &, xbyte_buffer_t const &) const {
         m_counter_send_to++;
         m_counter++;
     }

@@ -5,7 +5,6 @@
 #include "xcommon/xmessage_category.h"
 #include "xcommon/xsharding_info.h"
 #include "xdata/xelect_transaction.hpp"
-#include "xnetwork/xmessage_transmission_property.h"
 #include "xvnetwork/xaddress.h"
 #include "xvnetwork/xmessage_ready_callback.h"
 #include "xvnetwork/xmessage.h"
@@ -59,11 +58,7 @@ class vhost_mock : public vnetwork::tests::xdummy_vhost_t {
      * \param transmission_property Transmission property.
      */
     virtual
-    void
-    send(xmessage_t const & message,
-         xvnode_address_t const & src,
-         xvnode_address_t const & dst,
-         network::xtransmission_property_t const & transmission_property = {}) {
+    void send(xmessage_t const & message, xvnode_address_t const & src, xvnode_address_t const & dst) {
         std::lock_guard<std::mutex> lock(m_mutex);
         for (auto item = m_cb_map.begin(); item != m_cb_map.end(); item++) {
             if (dst.node_id() == item->first.node_id()) {

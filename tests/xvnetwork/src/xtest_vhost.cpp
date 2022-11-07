@@ -56,11 +56,10 @@ TEST_F(xvhost_fixture_t, func_host_node_id) {
 TEST_F(xvhost_fixture_t, broadcast_address_empty) {
     common::xnode_address_t                src_v1 = get_address(test_version1, test_network_id);
     common::xnode_address_t                dst_empty_account_address = get_dst_group_address(test_version1, test_network_id, test_zone_id, test_cluster_id, test_group_id);
-    top::network::xtransmission_property_t transmission_propert;
 
     EXPECT_TRUE(dst_empty_account_address.account_address().empty());
     EXPECT_FALSE(dst_empty_account_address.empty());
-    EXPECT_THROW(vhost_test_ptr->send(test_msg, src_v1, dst_empty_account_address, transmission_propert), top::error::xtop_error_t);
+    EXPECT_THROW(vhost_test_ptr->send(test_msg, src_v1, dst_empty_account_address), top::error::xtop_error_t);
 }
 
 TEST_F(xvhost_fixture_t, func_msg) {
@@ -71,12 +70,11 @@ TEST_F(xvhost_fixture_t, func_msg) {
     common::xnode_address_t dst_group_address = get_dst_group_address(test_version1, test_network_id, test_zone_id, test_cluster_id, test_group_id);
     int &                   m_cnt = tests::network::xdummy_network_driver.m_counter;
     m_cnt = 0;
-    top::network::xtransmission_property_t transmission_propert;
 
-    vhost_test_ptr->send(test_msg, src_v2, dst_v1, transmission_propert);  // xinfo : version different send + 1
-    vhost_test_ptr->send(test_msg, src_v1, dst_v1, transmission_propert);  // normal send from src to dst send + 1
+    vhost_test_ptr->send(test_msg, src_v2, dst_v1);  // xinfo : version different send + 1
+    vhost_test_ptr->send(test_msg, src_v1, dst_v1);  // normal send from src to dst send + 1
     EXPECT_EQ(m_cnt, 2);
-    vhost_test_ptr->send(test_msg, src_v1, empty_dst, transmission_propert);  // empty_dst : broadcast
+    vhost_test_ptr->send(test_msg, src_v1, empty_dst);  // empty_dst : broadcast
     EXPECT_EQ(m_cnt, 3);
 }
 

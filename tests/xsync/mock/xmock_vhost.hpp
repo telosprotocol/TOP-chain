@@ -40,12 +40,7 @@ public:
 
     common::xnode_id_t const & host_node_id() const noexcept override { return m_node_id; }
 
-    void
-    send(vnetwork::xmessage_t const & message,
-         xvnode_address_t const & src,
-         xvnode_address_t const & dst,
-         network::xtransmission_property_t const & transmission_property = {}) override {
-
+    void send(vnetwork::xmessage_t const & message, xvnode_address_t const & src, xvnode_address_t const & dst) override {
         m_unicast_cb(src, dst, message);
     }
 
