@@ -308,9 +308,7 @@ void ApiMethod::list_accounts(std::ostringstream & out_str) {
     for (size_t i = 0; i < keys.size(); ++i) {
         auto path = g_keystore_dir + "/" + keys[i];
         auto key_info = attach_parse_keystore(path, out_str);
-        std::string account = key_info["account_address"].asString();
-        if (account.empty())
-            account = key_info["account address"].asString();
+        std::string account = xcrypto::get_account_address_from_json_keystore(key_info);
         top::base::xvaccount_t _vaccount(account);
         if (_vaccount.is_eth_address())
             std::transform(account.begin() + 1, account.end(), account.begin() + 1, ::tolower);
@@ -630,7 +628,7 @@ int ApiMethod::set_default_miner(const std::string & pub_key, const std::string 
                     target_kf = kf_path;
                 }
             }
-            if (name == "account address" || name == "account_address") {
+            if (target_node_id.empty() && (name == "account address" || name == "account_address")) {
                 target_node_id = key_info_js[name].asString();
                 top::base::xvaccount_t _vaccount(target_node_id);
                 if (_vaccount.is_eth_address())
@@ -964,9 +962,7 @@ void ApiMethod::register_node(const std::string & mortgage_d,
             auto public_key = key_info["public_key"].asString();
             if (public_key == signing_key) {
                 found = true;
-                std::string account = key_info["account_address"].asString();
-                if (account.empty())
-                    account = key_info["account address"].asString();
+                std::string account = xcrypto::get_account_address_from_json_keystore(key_info);
                 top::base::xvaccount_t _vaccount(account);
                 if (_vaccount.is_eth_address())
                     std::transform(account.begin()+1, account.end(), account.begin()+1, ::tolower);
@@ -1122,9 +1118,7 @@ void ApiMethod::update_miner_info(const std::string & role,
         auto key_info = parse_keystore(path);
         if (key_info["public_key"] == node_sign_key) {
             found = true;
-            std::string account = key_info["account_address"].asString();
-            if (account.empty())
-                account = key_info["account address"].asString();
+            std::string account = xcrypto::get_account_address_from_json_keystore(key_info);
 
             if (account == g_userinfo.account) {
                 break;
