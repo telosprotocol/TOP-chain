@@ -111,99 +111,6 @@ void xtop_vhost::stop() {
     m_network_driver->unregister_message_ready_notify();
 }
 
-// [Deprecated]
-void xtop_vhost::send(xmessage_t const & message,
-                      common::xnode_address_t const & src,
-                      common::xnode_address_t const & dst,
-                      network::xtransmission_property_t const & transmission_property) {
-    assert(false);
-    if (!running()) {
-        xwarn("[vnetwork] vhost not run");
-        return;
-    }
-
-    assert(!src.empty());
-    assert(!src.account_address().empty());
-
-#if defined DEBUG
-    if (common::has<common::xnode_type_t::storage>(src.type())) {
-        assert(src.zone_id() == common::xstorage_zone_id);
-        assert(src.cluster_id() == common::xdefault_cluster_id);
-        assert(src.group_id() == common::xarchive_group_id);
-    }
-
-    if (dst.account_address().has_value() && common::has<common::xnode_type_t::storage>(dst.type())) {
-        assert(dst.zone_id() == common::xstorage_zone_id);
-        assert(dst.cluster_id() == common::xdefault_cluster_id);
-        assert(dst.group_id() == common::xarchive_group_id);
-    }
-#endif
-
-    try {
-        if (dst.election_round() != src.election_round()) {
-            xinfo("[vnetwork] dst version %s, src version %s", dst.election_round().to_string().c_str(), src.election_round().to_string().c_str());
-        }
-
-        // auto const target_vnetwork = vnetwork(xvnetwork_id_t{ m_network_info });
-        // auto const target_vnetwork = vnetwork(m_network_id);
-        // assert(target_vnetwork);
-
-        if (!dst.account_address().empty()) {
-            assert(m_chain_timer != nullptr);
-            xvnetwork_message_t const vnetwork_message{src, dst, message, m_chain_timer->logic_time()};
-            auto const bytes_message = top::codec::msgpack_encode(vnetwork_message);
-
-            assert(m_network_driver);
-            xdbg("[vnetwork] send msg from %s to %s msg hash %" PRIx64 " msg id %" PRIx32,
-                 src.account_address().to_string().c_str(),
-                 dst.account_address().to_string().c_str(),
-                 vnetwork_message.hash(),
-                 static_cast<std::uint32_t>(message.id()));
-            auto new_hash_val = base::xhash32_t::digest(std::string((char *)bytes_message.data(), bytes_message.size()));
-            xdbg("[vnetwork] send msg %" PRIx32 " [hash: %" PRIx64 "] [to_hash:%u]", static_cast<std::uint32_t>(message.id()), message.hash(), new_hash_val);
-            #if VHOST_METRICS
-            XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vhost_send" +
-                                           std::to_string(static_cast<std::uint32_t>(message.id())),
-                                       1);
-            #endif
-
-            #if VHOST_METRICS
-            XMETRICS_COUNTER_INCREMENT("vhost_" + std::to_string(static_cast<std::uint16_t>(common::get_message_category(message.id()))) + "_out_vhost_send_size" +
-                                           std::to_string(static_cast<std::uint32_t>(message.id())),
-                                       bytes_message.size());
-            #endif
-
-            // m_network_driver->send_to(dst.account_address(), bytes_message, transmission_property);
-
-            std::error_code ec{};
-            auto message_type = vnetwork_message.message_id();
-            if (src.network_id() == common::xnetwork_id_t{top::config::to_chainid(XGET_CONFIG(chain_name))} && src.zone_id() == common::xfrozen_zone_id &&
-                src.cluster_id() == common::xdefault_cluster_id && src.group_id() == common::xdefault_group_id &&
-                (message_type == sync::xmessage_id_sync_frozen_gossip || message_type == sync::xmessage_id_sync_get_blocks || message_type == sync::xmessage_id_sync_blocks ||
-                 message_type == sync::xmessage_id_sync_frozen_broadcast_chain_state || message_type == sync::xmessage_id_sync_frozen_response_chain_state)) {
-                m_network_driver->send_to_through_root(src.xip2(), dst.node_id(), bytes_message, ec);
-            } else {
-                m_network_driver->send_to(src.xip2(), dst.xip2(), bytes_message,ec);
-            }
-            msg_metrics(vnetwork_message, metrics::message_send_category_begin);
-
-        } else if (dst.empty()) {
-            assert(false);
-            // broadcast(message, src);
-        } else {
-            // crose broadcast is not correct by using send_to
-            if (dst.cluster_address() != src.cluster_address()) {
-                top::error::throw_error({ xvnetwork_errc_t::cluster_address_not_match }, "src " + src.to_string() + " dst " + dst.to_string());
-            }
-            assert(false);
-            // broadcast(message, src);
-        }
-    } catch (top::error::xtop_error_t const & eh) {
-        xwarn("xtop_error_t caught. cateogry: %s; exception:%s; error code: %d; error msg: %s", eh.code().category().name(), eh.what(), eh.code().value(), eh.code().message().c_str());
-        throw;
-    }
-}
-
 void xtop_vhost::send_to_through_frozen(common::xnode_address_t const & src, common::xnode_address_t const & dst, xmessage_t const & message, std::error_code & ec) {
     assert(src.zone_id() == common::xfrozen_zone_id);
     assert(src.cluster_id() == common::xdefault_cluster_id);
@@ -247,21 +154,12 @@ void xtop_vhost::send_to(common::xnode_address_t const & src, common::xnode_addr
     }
 
     xvnetwork_message_t const vmsg{src, dst, message, m_chain_timer->logic_time()};
-    auto bytes = codec::msgpack_encode(vmsg);
-    // m_network_driver->send_to(dst.account_address(), bytes, {});
+    auto const bytes = codec::msgpack_encode(vmsg);
 
     on_network_data_ready(host_node_id(), bytes);
 
-    // auto message_type = vmsg.message_id();
-    // if (src.network_id() == common::xnetwork_id_t{top::config::to_chainid(XGET_CONFIG(chain_name))} && src.zone_id() == common::xfrozen_zone_id &&
-    //     src.cluster_id() == common::xdefault_cluster_id && src.group_id() == common::xdefault_group_id &&
-    //     (message_type == sync::xmessage_id_sync_frozen_gossip || message_type == sync::xmessage_id_sync_get_blocks || message_type == sync::xmessage_id_sync_blocks ||
-    //      message_type == sync::xmessage_id_sync_frozen_broadcast_chain_state || message_type == sync::xmessage_id_sync_frozen_response_chain_state)) {
-    //     m_network_driver->send_to_through_root(convert_to_p2p_xip2(src), dst.node_id(), bytes, ec);
-    // } else {
     m_network_driver->send_to(src.xip2(), dst.xip2(), bytes, ec);
-    // }
-    
+
     msg_metrics(vmsg, metrics::message_send_category_begin);
 }
 

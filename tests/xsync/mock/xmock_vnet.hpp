@@ -90,10 +90,7 @@ public:
         return m_address;
     }
 
-    void
-    send_to(xvnode_address_t const & to,
-            xmessage_t const & message,
-            network::xtransmission_property_t const & transmission_property = {}) override {
+    void send_to(xvnode_address_t const & to, xmessage_t const & message) override {
         m_vhost->send(message, m_address, to);
     }
 

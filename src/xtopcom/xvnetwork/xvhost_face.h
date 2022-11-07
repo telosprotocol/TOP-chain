@@ -16,7 +16,6 @@
 #include "xdata/xelect_transaction.hpp"
 #include "xdata/xelection/xelection_result_store.h"
 #include "xdata/xnode_info.h"
-#include "xnetwork/xmessage_transmission_property.h"
 #include "xvnetwork/xaddress.h"
 #include "xvnetwork/xmessage.h"
 #include "xvnetwork/xmessage_ready_callback.h"
@@ -72,25 +71,6 @@ public:
      * @param vaddr The virtual address that don't need to monitor the message sent to it.
      */
     virtual void unregister_message_ready_notify(xvnode_address_t const & vaddr) = 0;
-
-    // virtual
-    // void
-    // handshake(xvnode_address_t const & src, std::vector<xvnode_address_t> const & seeds) = 0;
-
-    /**
-     * @brief [Deprecated] Send message.
-     * @param message The message to be sent.
-     * @param src The send address of the message.
-     * @param dst The receive address of the message.
-     * @param transmission_property Transmission property.
-     */
-    virtual void send(xmessage_t const & message,
-                      xvnode_address_t const & src,
-                      xvnode_address_t const & dst,
-                      network::xtransmission_property_t const & transmission_property = {}) = 0;
-
-    // virtual void send(common::xnode_address_t const & src, common::xip2_t const & dst, xmessage_t const & message, std::error_code & ec) = 0;
-    // virtual void broadcast(common::xnode_address_t const & src, common::xip2_t const & dst, xmessage_t const & message, std::error_code & ec) = 0;
 
     virtual void send_to_through_frozen(common::xnode_address_t const & src, common::xnode_address_t const & dst, xmessage_t const & message, std::error_code & ec) = 0;
     virtual void send_to(common::xnode_address_t const & src, common::xnode_address_t const & dst, xmessage_t const & message, std::error_code & ec) = 0;
