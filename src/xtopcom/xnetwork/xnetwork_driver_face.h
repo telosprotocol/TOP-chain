@@ -9,21 +9,11 @@
 #include "xnetwork/xmessage_transmission_property.h"
 #include "xnetwork/xnetwork_message_ready_callback.h"
 #include "xnetwork/xnode.h"
-#include "xnetwork/xp2p/xdht_host_face.h"
 #include "xcommon/xsharding_info.h"
-#include "xdata/xdata_common.h"
 
 #include <vector>
+
 NS_BEG2(top, network)
-
-enum class xenum_socket_type : std::uint8_t
-{
-    invalid,
-    udp,
-    tcp
-};
-
-using xsocket_type_t = xenum_socket_type;
 
 class xtop_network_driver_face : public xbasic_runnable_t<xtop_network_driver_face>
 {
@@ -101,11 +91,11 @@ public:
     bool
     p2p_bootstrap(std::vector<xdht_node_t> const & seeds) const = 0;
 
-    virtual
-    void
-    direct_send_to(xnode_t const & to,
-                   xbyte_buffer_t verification_data,
-                   xtransmission_property_t const & transmission_property) = 0;
+    //virtual
+    //void
+    //direct_send_to(xnode_t const & to,
+    //               xbyte_buffer_t verification_data,
+    //               xtransmission_property_t const & transmission_property) = 0;
 
     virtual
     std::vector<common::xnode_id_t>
@@ -114,10 +104,6 @@ public:
     virtual
     std::size_t
     neighbor_size_upper_limit() const noexcept = 0;
-
-    virtual
-    p2p::xdht_host_face_t const &
-    dht_host() const noexcept = 0;
 };
 
 using xnetwork_driver_face_t = xtop_network_driver_face;
