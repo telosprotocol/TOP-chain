@@ -22,8 +22,7 @@ public:
     void
     send(xmessage_t const & msg,
          xvnode_address_t const & from,
-         xvnode_address_t const & to,
-         top::network::xtransmission_property_t const &) override {
+         xvnode_address_t const & to) override {
         if(_send_cb != nullptr) {
             _send_cb(msg, from, to);
         }

@@ -394,38 +394,6 @@ void xtxpool_service::on_message_unit_receipt(vnetwork::xvnode_address_t const &
     XMETRICS_GAUGE(metrics::txpool_receipt_tx, (ret == xsuccess) ? 1 : 0);
 }
 
-// void xtxpool_service::on_message_neighbor_sync_req(vnetwork::xvnode_address_t const & sender, vnetwork::xmessage_t const & message) {
-//     (void)sender;
-//     XMETRICS_TIME_RECORD("txpool_message_neighbor_sync");
-//     base::xstream_t stream(top::base::xcontext_t::instance(), (uint8_t *)message.payload().data(), (uint32_t)message.payload().size());
-//     xneighbor_sync_req_t sync_req;
-//     auto ret = sync_req.serialize_from(stream);
-
-//     if (ret <= 0) {
-//         xerror("xtxpool_service::on_message_neighbor_sync_req sync_req serialize_from fail ret:%d", ret);
-//         return;
-//     }
-
-//     xinfo("xtxpool_service::on_message_neighbor_sync_req sync table:%d,at_node:%s,msg id:%x,hash:%x", sync_req.m_table_sid, m_vnetwork_str.c_str(), message.id(),
-//     message.hash());
-
-//     base::xtable_index_t table_idx(sync_req.m_table_sid);
-//     auto receipts = m_para->get_txpool()->get_receipts(table_idx.get_zone_index(), table_idx.get_subaddr());
-
-//     for (uint32_t i = 0; i < receipts.size();) {
-//         xneighbor_sync_rsp_t neighbor_sync_rsp;
-//         uint32_t num = (neighbor_sync_receipt_num_max < (receipts.size() - i)) ? neighbor_sync_receipt_num_max : (receipts.size() - i);
-//         neighbor_sync_rsp.m_receipts.insert(neighbor_sync_rsp.m_receipts.end(), receipts.begin() + i, receipts.begin() + i + num);
-
-//         base::xstream_t stream(base::xcontext_t::instance());
-//         vnetwork::xmessage_t msg;
-//         neighbor_sync_rsp.serialize_to(stream);
-//         msg = vnetwork::xmessage_t({stream.data(), stream.data() + stream.size()}, xtxpool_v2::xtxpool_msg_neighbor_sync_rsp);
-//         m_vnet_driver->send_to(sender, msg);
-//         i += num;
-//     }
-// }
-
 void xtxpool_service::push_send_fail_record(int32_t err_type) {
 #ifdef ENABLE_METRICS
     if (err_type == xsuccess) {

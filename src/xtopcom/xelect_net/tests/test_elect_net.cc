@@ -382,7 +382,6 @@ void TestElectNet::TestForVhost() {
 
     // send_to
     common::xnode_id_t node_id {RandomString(40)};
-    network::xtransmission_property_t transmission_property;
 
     common::xnetwork_id_t nid {0};
     common::xzone_id_t zid {1};
@@ -395,8 +394,8 @@ void TestElectNet::TestForVhost() {
     vnetwork::xvnetwork_message_t const vnetwork_message{ src, dst, message, 0};
     auto const bytes_message = top::codec::msgpack_encode(vnetwork_message);
 
-    net_driver->send_to(node_id, bytes_message, transmission_property);
-    
+    net_driver->send_to(node_id, bytes_message);
+
 
     // spead_rumor
     net_driver->spread_rumor(bytes_message);
@@ -408,11 +407,6 @@ void TestElectNet::TestForVhost() {
     // p2p_bootstrap
     std::vector<network::xdht_node_t> seeds;
     net_driver->p2p_bootstrap(seeds);
-
-    // direct send
-    network::xnode_t to;
-    xbyte_buffer_t verification_data;
-    net_driver->direct_send_to(to, verification_data, transmission_property);
 
     // neighbors
     ASSERT_TRUE(net_driver->neighbors().size() == 0);

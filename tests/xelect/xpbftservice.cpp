@@ -157,25 +157,18 @@ namespace top
             return true;
         }
 
-        void  xvnetwork_test::send_to(vnetwork::xvnode_address_t const & from,vnetwork::xvnode_address_t const & to,vnetwork::xmessage_t const & message, network::xtransmission_property_t const & transmission_property)
-        {
-            //printf("xvnetwork_driver_face::send_to,from(%s), to(%s) \n",from.account_address().to_string().c_str(),to.account_address().to_string().c_str());
-            if(to.account_address().empty())
-            {
-                for(std::vector<xvnetwork_node_t*>::iterator it = shard_nodes.begin(); it != shard_nodes.end(); ++it)
-                {
+        void xvnetwork_test::send_to(vnetwork::xvnode_address_t const & from, vnetwork::xvnode_address_t const & to, vnetwork::xmessage_t const & message) {
+            // printf("xvnetwork_driver_face::send_to,from(%s), to(%s) \n",from.account_address().to_string().c_str(),to.account_address().to_string().c_str());
+            if (to.account_address().empty()) {
+                for (std::vector<xvnetwork_node_t *>::iterator it = shard_nodes.begin(); it != shard_nodes.end(); ++it) {
                     xvnetwork_node_t * _node = *it;
-                    if(_node->address() != from)
+                    if (_node->address() != from)
                         _node->on_msg_in(from, to, message, 0);
                 }
-            }
-            else
-            {
-                for(std::vector<xvnetwork_node_t*>::iterator it = shard_nodes.begin(); it != shard_nodes.end(); ++it)
-                {
+            } else {
+                for (std::vector<xvnetwork_node_t *>::iterator it = shard_nodes.begin(); it != shard_nodes.end(); ++it) {
                     xvnetwork_node_t * _node = *it;
-                    if(_node->address() == to)
-                    {
+                    if (_node->address() == to) {
                         _node->on_msg_in(from, to, message, 0);
                     }
                 }
@@ -333,10 +326,9 @@ namespace top
             return true;
         }
 
-        void    xvnetwork_node_t::send_to(xvnode_address_t const & to,vnetwork::xmessage_t const & message,
-                                          network::xtransmission_property_t const & transmission_property)
+        void    xvnetwork_node_t::send_to(xvnode_address_t const & to,vnetwork::xmessage_t const & message)
         {
-            return _network->send_to(_node_address,to, message,transmission_property);
+            return _network->send_to(_node_address,to, message);
         }
 
         void    xvnetwork_node_t::broadcast(vnetwork::xmessage_t const & message)

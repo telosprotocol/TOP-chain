@@ -88,8 +88,7 @@ namespace top
                 return _node_address;
             }
 
-            virtual void    send_to(xvnode_address_t const & to,vnetwork::xmessage_t const & message,
-                                    network::xtransmission_property_t const & transmission_property = {});
+            virtual void    send_to(xvnode_address_t const & to,vnetwork::xmessage_t const & message);
 
             virtual void    broadcast(vnetwork::xmessage_t const & message);
 
@@ -181,7 +180,7 @@ namespace top
         public:
             bool    start_consensus(uint64_t seq_id);
         public:
-            void    send_to(vnetwork::xvnode_address_t const & from,vnetwork::xvnode_address_t const & to,vnetwork::xmessage_t const & message, network::xtransmission_property_t const & transmission_property = {});
+            void    send_to(vnetwork::xvnode_address_t const & from,vnetwork::xvnode_address_t const & to,vnetwork::xmessage_t const & message);
             void    broadcast(vnetwork::xvnode_address_t const & from,vnetwork::xmessage_t const & message);
             void    forward_broadcast_message(vnetwork::xvnode_address_t const & from,vnetwork::xvnode_address_t const & to,vnetwork::xmessage_t const & message);
 

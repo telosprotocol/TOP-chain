@@ -47,7 +47,7 @@ TEST_F(xvnetwork_driver_fixture_t, test_send_to_ec) {
     for (auto i = 1u; i < max_net_id; ++i) {
         xvnode_address_t dst = get_address(test_version1, common::xnetwork_id_t{i}, test_zone_id, test_cluster_id, test_group_id);
         vnetwork_driver_test_ptr->send_to(dst_xip2, test_msg, ec);
-        vnetwork_driver_test_ptr->send_to(dst, test_msg, top::network::xtransmission_property_t{});
+        vnetwork_driver_test_ptr->send_to(dst, test_msg);
     }
     EXPECT_TRUE(ec == xvnetwork_errc2_t::success);
     EXPECT_EQ(m_cnt1, 2 * (max_net_id - 1));
@@ -58,7 +58,7 @@ TEST_F(xvnetwork_driver_fixture_t, test_send_to_ec) {
     m_cnt2 = 0;
     ec = xvnetwork_errc2_t::success;
     for (auto i = 1u; i < max_net_id; ++i) {
-        vnetwork_driver_test_ptr->send_to(empty_dst, test_msg, top::network::xtransmission_property_t{});
+        vnetwork_driver_test_ptr->send_to(empty_dst, test_msg);
     }
     EXPECT_TRUE(ec == xvnetwork_errc2_t::success);
     EXPECT_EQ(m_cnt2, max_net_id - 1);

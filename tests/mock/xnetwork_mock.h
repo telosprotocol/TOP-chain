@@ -105,14 +105,11 @@ public:
         }
     }
 
-    virtual void
-    send_to(top::common::xnode_address_t const &                 to,
-            xmessage_t const &                       message,
-            network::xtransmission_property_t const &transmission_property) {
+    virtual void send_to(top::common::xnode_address_t const & to, xmessage_t const & message) {
         {
             std::lock_guard<std::recursive_mutex> guard(s_mutex);
             auto vip = xcons_utl::to_xip2(to);
-            auto                                  net_it = s_nodes.find(vip);
+            auto net_it = s_nodes.find(vip);
             if (net_it != s_nodes.end()) {
                 auto from = xcons_utl::to_xip2(address());
                 if (from.low_addr != vip.low_addr) {
@@ -268,13 +265,10 @@ protected:
     }
 
 public:
-    virtual void
-    send_to(top::common::xnode_address_t const &                 to,
-            xmessage_t const &                       message,
-            network::xtransmission_property_t const &transmission_property) {
+    virtual void send_to(top::common::xnode_address_t const & to, xmessage_t const & message) {
         {
             std::lock_guard<std::recursive_mutex> guard(s_mutex);
-            auto                                  net_it = s_nodes.find(xcons_utl::to_xip2(to));
+            auto net_it = s_nodes.find(xcons_utl::to_xip2(to));
             auto from = address();
             if (net_it != s_nodes.end()) {
                 if (xcons_utl::to_xip2(from).low_addr != xcons_utl::to_xip2(to).low_addr) {
