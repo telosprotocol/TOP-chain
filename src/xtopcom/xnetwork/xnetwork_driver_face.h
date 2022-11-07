@@ -6,7 +6,6 @@
 
 #include "xbasic/xbyte_buffer.h"
 #include "xbasic/xrunnable.h"
-#include "xnetwork/xmessage_transmission_property.h"
 #include "xnetwork/xnetwork_message_ready_callback.h"
 #include "xnetwork/xnode.h"
 #include "xcommon/xsharding_info.h"
@@ -47,8 +46,7 @@ public:
     virtual
     void
     send_to(common::xnode_id_t const & node_id,
-            xbyte_buffer_t const & bytes_message,
-            xtransmission_property_t const & transmission_property) const = 0;
+            xbyte_buffer_t const & bytes_message) const = 0;
 
     /**
      * \brief Spread the rumor.
@@ -90,12 +88,6 @@ public:
     virtual
     bool
     p2p_bootstrap(std::vector<xdht_node_t> const & seeds) const = 0;
-
-    //virtual
-    //void
-    //direct_send_to(xnode_t const & to,
-    //               xbyte_buffer_t verification_data,
-    //               xtransmission_property_t const & transmission_property) = 0;
 
     virtual
     std::vector<common::xnode_id_t>

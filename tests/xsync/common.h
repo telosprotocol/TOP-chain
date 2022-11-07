@@ -87,18 +87,6 @@ public:
 
 class xmock_vhost_sync_t : public top::tests::vnetwork::xtop_dummy_vhost {
 public:
-    void send(top::vnetwork::xmessage_t const & message,
-                      top::vnetwork::xvnode_address_t const & src,
-                      top::vnetwork::xvnode_address_t const & dst,
-                      top::network::xtransmission_property_t const & transmission_property = {}) override {
-
-        xmsg_item_t item;
-        item.m_message = message;
-        item.m_src = src;
-        item.m_dst = dst;
-        m_items.push_back(item);
-    }
-
     bool read_msg(top::vnetwork::xmessage_t & message,
                       top::vnetwork::xvnode_address_t & src,
                       top::vnetwork::xvnode_address_t & dst) {

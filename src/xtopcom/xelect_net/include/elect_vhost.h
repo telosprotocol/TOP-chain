@@ -69,8 +69,7 @@ public:
      */
     virtual void send_to(
             common::xnode_id_t const & node_id,
-            xbyte_buffer_t const & bytes_message,
-            network::xtransmission_property_t const & transmission_property) const;
+            xbyte_buffer_t const & bytes_message) const;
     /**
      * @brief Spread the rumor
      * 
@@ -112,26 +111,9 @@ public:
      * 
      */
     virtual void unregister_message_ready_notify();
-    /**
-     * @brief not implement yet
-     * 
-     * @param seeds TODO
-     * @return true TODO
-     * @return false TODO
-     */
 #if 0
     virtual bool p2p_bootstrap(std::vector<network::xdht_node_t> const & seeds) const;
-    /**
-     * @brief not implement yet
-     * 
-     * @param to TODO
-     * @param verification_data TODO
-     * @param transmission_property TODO
-     */
-    virtual void direct_send_to(
-            network::xnode_t const & to,
-            xbyte_buffer_t verification_data,
-            network::xtransmission_property_t const & transmission_property);
+
     /**
      * @brief not implement
      * 
@@ -144,12 +126,6 @@ public:
      * @return std::size_t TODO
      */
     virtual std::size_t neighbor_size_upper_limit() const noexcept;
-    /**
-     * @brief not implement
-     * 
-     * @return network::p2p::xdht_host_face_t const& TODO
-     */
-    network::p2p::xdht_host_face_t const & dht_host() const noexcept;
     /**
      * @brief start the network driver
      * 
