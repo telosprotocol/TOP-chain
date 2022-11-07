@@ -6,7 +6,6 @@
 #include "xcommon/xsharding_info.h"
 #include "xdata/xelect_transaction.hpp"
 #include "xnetwork/xmessage_transmission_property.h"
-#include "xnetwork/xnode.h"
 #include "xvnetwork/xaddress.h"
 #include "xvnetwork/xmessage_ready_callback.h"
 #include "xvnetwork/xmessage.h"
