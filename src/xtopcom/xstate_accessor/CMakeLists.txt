@@ -1,5 +1,9 @@
 add_compile_options(-Wpedantic)
 
+if (XBUILD_TEST)
+    add_definitions(-DXENABLE_TESTS)
+endif()
+
 aux_source_directory(./src src_dir)
 add_library(xstate_accessor STATIC ${src_dir})
 

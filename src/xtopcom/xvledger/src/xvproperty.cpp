@@ -7,6 +7,8 @@
 #include "../xvproperty.h"
 #include "xmetrics/xmetrics.h"
 
+#include <cassert>
+
 namespace top
 {
     namespace base
@@ -357,7 +359,8 @@ namespace top
         }
 
         vtoken_t xtokenvar_t::set(vtoken_t const token_amount, xvcanvas_t * canvas) {
-            std::lock_guard<std::recursive_mutex> locker(((xvexegroup_t *)get_parent_unit())->get_mutex());
+            assert(dynamic_cast<xvexegroup_t *>(get_parent_unit()) != nullptr);
+            std::lock_guard<std::recursive_mutex> locker(dynamic_cast<xvexegroup_t *>(get_parent_unit())->get_mutex());
 
             xassert(token_amount >= 0);
             if (static_cast<int64_t>(token_amount) < 0) {

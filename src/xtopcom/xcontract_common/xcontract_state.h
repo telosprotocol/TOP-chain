@@ -379,13 +379,13 @@ public:
     /// @param symbol Simbol of the token.
     /// @param ec Log the error code in the call.
     /// @return The token amount.
-    evm_common::u256 balance(state_accessor::properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol, std::error_code & ec) const;
+    evm_common::u256 balance(state_accessor::properties::xproperty_identifier_t const & property_id, std::error_code & ec) const;
 
     /// @brief Get the balance from the state. Throw xtop_error_t exception when any error occurs.
     /// @param property_id Property ID.
     /// @param symbol Simbol of the token.
     /// @return The token amount.
-    evm_common::u256 balance(state_accessor::properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol) const;
+    evm_common::u256 balance(state_accessor::properties::xproperty_identifier_t const & property_id) const;
 
     /// @brief Deposit tokens into state.
     /// @param property_id Property ID.

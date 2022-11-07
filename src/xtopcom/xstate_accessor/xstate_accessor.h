@@ -82,17 +82,23 @@ public:
 
     /// @brief Deposit token.
     /// @param property_id Property ID.
-    /// @param symbol Token symblol.
     /// @param amount Amount to deposit.
     /// @param ec Log the error code in the operation.
     void deposit(properties::xproperty_identifier_t const & property_id, common::xtoken_t amount, std::error_code & ec);
 
     /// @brief Get balance.
     /// @param property_id Name of balance property.
-    /// @param symbol Token symbol.
     /// @param ec Log the error code in the operation.
     /// @return The balance.
-    evm_common::u256 balance(properties::xproperty_identifier_t const & property_id, common::xsymbol_t const & symbol, std::error_code & ec) const;
+    evm_common::u256 balance(properties::xproperty_identifier_t const & property_id, std::error_code & ec) const;
+
+
+    /// @brief Set new balance.
+    /// @param property_id Name of balance property.
+    /// @param new_balance New balance value.
+    /// @param ec Error in the operation if any
+    /// @return New balance value.
+    evm_common::u256 balance(properties::xproperty_identifier_t const & property_id, evm_common::u256 const & new_balance, std::error_code & ec);
 
     /// @brief Get nonce.
     /// @param property_id Property ID.
@@ -122,6 +128,8 @@ public:
                                                                       common::xaccount_address_t const & address,
                                                                       std::error_code & ec) const;
 
+    xbytes_t get_property_serialized_value(properties::xtypeless_property_identifier_t const & property_id, std::error_code & ec) const;
+
     /// @brief Set property.
     /// @param property_id Property ID.
     /// @param value Value to be set.
@@ -133,6 +141,8 @@ public:
     /// @param property_id Property ID.
     /// @param ec Log the error code in the operation.
     void clear_property(properties::xproperty_identifier_t const & property_id, std::error_code & ec);
+
+    void set_property_by_serialized_value(properties::xtypeless_property_identifier_t const & property_id, xbytes_t const & serialized_data, std::error_code & ec);
 
     /// @brief Update property cell value. Only map and deque are supported.
     /// @param proprty_id Property ID.
