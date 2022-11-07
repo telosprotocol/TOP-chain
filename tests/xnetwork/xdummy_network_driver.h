@@ -115,13 +115,6 @@ public:
         return true;
     }
 
-    void
-    direct_send_to(top::network::xnode_t const &,
-                   xbyte_buffer_t,
-                   xtransmission_property_t const &)
-    {
-    }
-
     std::vector<common::xnode_id_t>
     neighbors() const
     {
@@ -132,13 +125,6 @@ public:
     neighbor_size_upper_limit() const noexcept
     {
         return 0;
-    }
-
-    xdht_host_face_t const &
-    dht_host() const noexcept
-    {
-        static xdht_host_face_t *fact = nullptr;
-        return *fact;
     }
 
 public:
