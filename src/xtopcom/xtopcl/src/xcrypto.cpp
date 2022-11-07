@@ -42,6 +42,17 @@ static bool g_is_key = false;  // false for owner key, true for worker key
 static string g_owner_account;
 const std::string CRYPTO_KDF = "scypt";  // scypt or pbkdf2
 
+std::string get_account_address_from_json_keystore(xJson::Value const & keystore_json) {
+    if (keystore_json.isMember("account_address") && !keystore_json["account_address"].asString().empty()) {
+        return keystore_json["account_address"].asString();
+    }
+    // compatible old "account address"
+    if (keystore_json.isMember("account address") && !keystore_json["account address"].asString().empty()) {
+        return keystore_json["account address"].asString();
+    }
+    return "";
+}
+
 int get_top_ed_key(const string & pw, const xJson::Value & key_info, CryptoPP::byte * key) {
     // parse hkdf params
     auto salt_hex = key_info["crypto"]["kdfparams"]["salt"].asString();
@@ -112,10 +123,7 @@ bool parse_keystore(std::string const & keystore_path, xJson::Value & keystore_i
 }
 
 bool decrypt_get_kdf_key(std::string const & password, xJson::Value const & keystore_info, std::string & kdf_key) {
-    std::string account = keystore_info["account_address"].asString();
-    if (account.empty()) {
-        account = keystore_info["account address"].asString();
-    }
+    std::string account = get_account_address_from_json_keystore(keystore_info);
 
     CryptoPP::byte key[derived_key_len];
     if (top::base::xvaccount_t::get_addrtype_from_account(account) == top::base::enum_vaccount_addr_type_secp256k1_user_account) {
@@ -143,10 +151,7 @@ bool decrypt_keystore_by_password(std::string const & password, xJson::Value con
 }
 
 bool decrypt_keystore_by_kdf_key(std::string const & kdf_key, xJson::Value const & keystore_info, std::string & pri_key) {
-    std::string account = keystore_info["account_address"].asString();
-    if (account.empty()) {
-        account = keystore_info["account address"].asString();
-    }
+    std::string account = get_account_address_from_json_keystore(keystore_info);
 
     if (top::base::xvaccount_t::get_addrtype_from_account(account) == top::base::enum_vaccount_addr_type_secp256k1_user_account) {
         // derive ciphertext
@@ -471,9 +476,7 @@ void fill_eth_aes_info(const std::string & pw, const string & raw_text, AES_INFO
 // update
 void update_keystore_file(const std::string & pw, const string & raw_text, std::ofstream & key_file, xJson::Value & key_info) {
     AES_INFO aes_info;
-    std::string account = key_info["account_address"].asString();
-    if (account.empty())
-        account = key_info["account address"].asString();
+    std::string account = get_account_address_from_json_keystore(key_info);
 
     if (top::base::xvaccount_t::get_addrtype_from_account(account) == top::base::enum_vaccount_addr_type_secp256k1_user_account) {
         fill_aes_info(pw, raw_text, aes_info);
