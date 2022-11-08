@@ -449,4 +449,45 @@ xreceiptid_pairs_ptr_t xreceiptid_check_t::get_modified_pairs(const base::xrecei
 // }
 
 
+void xreceiptid_all_table_states::add_table_receiptid_state(xtable_shortid_t sid, const base::xreceiptid_state_ptr_t & receiptid_state) {
+    m_all_states[sid] = receiptid_state;
+}
+
+bool  xreceiptid_all_table_states::get_two_table_pair(xtable_shortid_t table1, xtable_shortid_t table2, xreceiptid_pair_t & pair, uint64_t & height) const {
+    auto table1_iter = m_all_states.find(table1);
+    if (table1_iter == m_all_states.end()) {
+        return false;
+    }
+    table1_iter->second->find_pair(table2, pair);
+    height = table1_iter->second->get_block_height();
+    return true;
+}
+
+std::vector<xreceiptid_unfinish_info_t> xreceiptid_all_table_states::get_unfinish_info() const {
+    std::vector<xreceiptid_unfinish_info_t> infos;
+    for (auto & table1 : m_all_states) {
+        for (auto & table2 : m_all_states) {
+            xreceiptid_pair_t table1_table2_pair;
+            uint64_t table1_height = 0;
+            get_two_table_pair(table1.first, table2.first, table1_table2_pair, table1_height);
+
+            xreceiptid_pair_t table2_table1_pair;
+            uint64_t table2_height = 0;
+            get_two_table_pair(table2.first, table1.first, table2_table1_pair, table2_height);
+            
+            xreceiptid_unfinish_info_t info;
+            if (table1_table2_pair.get_sendid_max() > table2_table1_pair.get_recvid_max() || table1_table2_pair.get_unconfirm_rsp_num() > 0) {
+                info.source_height = table1_height;
+                info.target_height = table2_height;
+                info.source_id = table1.first;
+                info.target_id = table2.first;
+                info.unrecv_num = table1_table2_pair.get_sendid_max() - table2_table1_pair.get_recvid_max();
+                info.unconfirm_num = table1_table2_pair.get_unconfirm_rsp_num();
+                infos.push_back(info);
+            }
+        }
+    }
+    return infos;
+}
+
 NS_END2

@@ -283,6 +283,8 @@ void xtxpool_service_mgr::on_timer() {
             }
         }
     }
+
+    m_para->get_txpool()->refresh_black_addr_txs();
 }
 
 std::shared_ptr<xtxpool_service_mgr_face> xtxpool_service_mgr_instance::create_xtxpool_service_mgr_inst(const observer_ptr<base::xvblockstore_t> & blockstore,

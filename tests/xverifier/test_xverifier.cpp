@@ -1,7 +1,8 @@
 #include "gtest/gtest.h"
 #include "xtxexecutor/xunit_service_error.h"
 
-
+#include "xconfig/xconfig_register.h"
+#include "xverifier/xblacklist_verifier.h"
 #include "xconfig/xconfig_face.h"
 #include "xloader/xconfig_onchain_loader.h"
 #include "xdata/xtransaction_maker.hpp"
@@ -461,4 +462,19 @@ TEST_F(test_xverifier, address_is_valid) {
     ASSERT_NE(top::xverifier::xverifier_success , top::xverifier::xtx_utl::address_is_valid ("T00000LRZAf5veEyzcVaYwdVCcYTh2nWdMwdVCcYTh2nWdMwdVCcYTh2nWdM"));   
     ASSERT_NE(top::xverifier::xverifier_success , top::xverifier::xtx_utl::address_is_valid ("T80000d49b8d3eb074344b153a8caf93f5daa277a61"));   
     ASSERT_NE(top::xverifier::xverifier_success , top::xverifier::xtx_utl::address_is_valid ("T80000d49b8d3eb074344b153a8caf93f5daa277a6194edaa277a6194e"));
+}
+
+TEST_F(test_xverifier, verify_send_tx_validation_BENCH) {
+    data::xtransaction_ptr_t trx_ptr = make_a_normal_transfer_tx();
+    uint64_t time_begin = base::xtime_utl::time_now_ms();
+
+    uint32_t total_count = 100000;
+    for (uint32_t i = 0; i < total_count; i++) {
+        xverifier::xtx_verifier::verify_send_tx_validation(trx_ptr.get());
+    }
+
+    uint64_t time_finish = base::xtime_utl::time_now_ms();
+
+    // TODO(jimmy) need do optimize total_count=100000 time_ms=6501
+    std::cout << "total_count=" << total_count << " time_ms=" << time_finish - time_begin << std::endl;
 }

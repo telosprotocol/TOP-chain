@@ -196,6 +196,11 @@ std::shared_ptr<xtx_entry> xtxpool_table_t::pop_tx(const tx_info_t & txinfo, boo
     return nullptr;
 }
 
+void xtxpool_table_t::clear_black_address_txs(std::string const& black_addr) {
+    std::lock_guard<std::mutex> lck(m_mgr_mutex);
+    m_txmgr_table.clear_black_address_txs(black_addr);
+}
+
 void xtxpool_table_t::update_id_state(const std::vector<update_id_state_para> & para_vec) {
     {
         std::lock_guard<std::mutex> lck(m_mgr_mutex);

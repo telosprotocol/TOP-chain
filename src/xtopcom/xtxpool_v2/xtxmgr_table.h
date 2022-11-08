@@ -37,6 +37,7 @@ public:
     const std::vector<xtxpool_table_lacking_receipt_ids_t> get_lacking_discrete_confirm_tx_ids(const std::map<base::xtable_shortid_t, xneed_confirm_ids> & need_confirm_ids_map,
                                                                                                uint32_t & total_num) const;
     void clear_expired_txs();
+    void clear_black_address_txs(std::string const& black_addr);
     void update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state);
 
 private:
