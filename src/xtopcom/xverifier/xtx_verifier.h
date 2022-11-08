@@ -6,9 +6,9 @@
 
 #include <string>
 #include "xdata/xtransaction.h"
-#include "xconfig/xconfig_register.h"
 #include "xbasic/xmemory.hpp"
-
+#include "xverifier/xblacklist_verifier.h"
+#include "xverifier/xwhitelist_verifier.h"
 
 NS_BEG2(top, xverifier)
 
