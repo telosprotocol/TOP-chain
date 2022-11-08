@@ -150,3 +150,6 @@ NS_END2
 
 #define XGET_CONFIG(NAME) static_cast<top::config::xconfig_register_t const &>(top::config::xconfig_register_t::get_instance()).get<top::config::x ## NAME ## _configuration_t>()
 #define XGET_ONCHAIN_GOVERNANCE_PARAMETER(NAME) static_cast<top::config::xconfig_register_t const &>(top::config::xconfig_register_t::get_instance()).get<top::config::x ## NAME ## _onchain_goverance_parameter_t>()
+
+#define XSET_CONFIG(NAME, v) top::config::xconfig_register_t::get_instance().set(top::config::x ## NAME ## _configuration_t::name, v)
+#define XSET_ONCHAIN_GOVERNANCE_PARAMETER(NAME, v)top::config::xconfig_register_t::get_instance().set(top::config::x ## NAME ## _onchain_goverance_parameter_t::name, v)

@@ -180,6 +180,26 @@ void xsend_tx_account_t::erase(uint64_t nonce, bool clear_follower) {
     }
 }
 
+void xsend_tx_account_t::erase_tx_from_black_addr() {
+    for (auto iter = m_txs.begin(); iter != m_txs.end();) {
+        m_send_tx_queue_internal->erase_tx(iter->second->get_tx()->get_tx_hash_256());
+        xinfo("xsend_tx_account_t::erase_tx_from_black_addr tx=%s",iter->second->get_tx()->dump().c_str());
+        iter = m_txs.erase(iter);
+    }
+}
+
+void xsend_tx_account_t::erase_tx_to_black_addr(std::string const & addr) {
+    for (auto iter = m_txs.begin(); iter != m_txs.end();) {
+        if (iter->second->get_tx()->get_target_addr() == addr) {
+            m_send_tx_queue_internal->erase_tx(iter->second->get_tx()->get_tx_hash_256());
+            xinfo("xsend_tx_account_t::erase_tx_to_black_addr tx=%s",iter->second->get_tx()->dump().c_str());
+            iter = m_txs.erase(iter);
+        } else {
+            iter++;
+        }
+    }
+}
+
 int32_t xsend_tx_queue_t::push_tx(const std::shared_ptr<xtx_entry> & tx_ent, uint64_t latest_nonce) {
     clear_expired_txs();
     std::shared_ptr<xtx_entry> to_be_droped_tx = nullptr;
@@ -298,6 +318,24 @@ const std::shared_ptr<xtx_entry> xsend_tx_queue_t::pop_tx(const tx_info_t & txin
         m_send_tx_accounts.erase(txinfo.get_addr());
     }
     return tx_ent;
+}
+
+void xsend_tx_queue_t::pop_tx_by_black_addr(std::string const& black_addr) {
+    auto iter = m_send_tx_accounts.find(black_addr);
+    if (iter != m_send_tx_accounts.end()) {
+        std::shared_ptr<xsend_tx_account_t> sendtx_account = iter->second;
+        sendtx_account->erase_tx_from_black_addr();
+        m_send_tx_accounts.erase(iter);
+    }
+
+    for (iter = m_send_tx_accounts.begin(); iter != m_send_tx_accounts.end();) {
+        iter->second->erase_tx_to_black_addr(black_addr);
+        if (iter->second->empty()) {
+            iter = m_send_tx_accounts.erase(iter);
+        } else {
+            iter++;
+        }
+    }
 }
 
 const std::shared_ptr<xtx_entry> xsend_tx_queue_t::find(const std::string & account_addr, const uint256_t & hash) const {

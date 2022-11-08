@@ -207,6 +207,10 @@ void xtxmgr_table_t::clear_expired_txs() {
 #endif
 }
 
+void xtxmgr_table_t::clear_black_address_txs(std::string const& black_addr) {
+    m_send_tx_queue.pop_tx_by_black_addr(black_addr);
+}
+
 void xtxmgr_table_t::update_receiptid_state(const base::xreceiptid_state_ptr_t & receiptid_state) {
     m_new_receipt_queue.update_receiptid_state(receiptid_state);
 }

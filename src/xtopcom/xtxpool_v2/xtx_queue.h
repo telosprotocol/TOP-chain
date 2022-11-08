@@ -95,6 +95,8 @@ public:
     void update_latest_nonce(uint64_t latest_nonce);
     const std::vector<xcons_transaction_ptr_t> get_continuous_txs(uint32_t max_num, uint64_t upper_nonce, uint64_t lower_nonce) const;
     void erase(uint64_t nonce, bool clear_follower);
+    void erase_tx_from_black_addr();
+    void erase_tx_to_black_addr(std::string const & addr);
     bool empty() const {
         return m_txs.empty();
     }
@@ -116,6 +118,7 @@ public:
     int32_t push_tx(const std::shared_ptr<xtx_entry> & tx_ent, uint64_t latest_nonce);
     const std::vector<xcons_transaction_ptr_t> get_txs(uint32_t max_num, base::xvblock_t * cert_block) const;
     const std::shared_ptr<xtx_entry> pop_tx(const tx_info_t & txinfo, bool clear_follower);
+    void pop_tx_by_black_addr(std::string const& black_addr);
     const std::shared_ptr<xtx_entry> find(const std::string & account_addr, const uint256_t & hash) const;
     void updata_latest_nonce(const std::string & account_addr, uint64_t latest_nonce);
     void clear_expired_txs();

@@ -496,3 +496,55 @@ TEST_F(test_txmgr_table, repeat_receipt) {
     bool is_repeat = txmgr_table.is_repeat_tx(tx_ent);
     ASSERT_EQ(is_repeat, true);
 }
+
+TEST_F(test_txmgr_table, clear_black_addr_tx) {
+    std::string table_addr = xdatamock_address::make_consensus_table_address(1);
+    xtxpool_role_info_t shard(0, 0, 0, common::xnode_type_t::consensus_auditor);
+    xtxpool_statistic_t statistic;
+    xtable_state_cache_t table_state_cache(nullptr, table_addr);
+    xtxpool_table_info_t table_para(table_addr, &shard, &statistic, &table_state_cache);
+    xtxpool_resources resource(nullptr, nullptr, nullptr);
+    xtxmgr_table_t txmgr_table(&table_para, &resource);
+    uint256_t last_tx_hash = {};
+    uint64_t now = xverifier::xtx_utl::get_gmttime_s();
+
+    {
+        std::vector<xcons_transaction_ptr_t> txs = test_xtxpool_util_t::create_cons_transfer_txs(0, 1, 2);
+        txs[0]->set_push_pool_timestamp(now);
+
+        xtx_para_t para;
+
+        // push first time
+        std::shared_ptr<xtx_entry> tx_ent = std::make_shared<xtx_entry>(txs[0], para);
+        int32_t ret = txmgr_table.push_send_tx(tx_ent, 0);
+        ASSERT_EQ(0, ret);
+        auto tx_tmp = txmgr_table.query_tx(txs[0]->get_transaction()->get_source_addr(), txs[0]->get_transaction()->digest());
+        ASSERT_NE(tx_tmp, nullptr);
+
+        // pop out
+        txmgr_table.clear_black_address_txs(txs[0]->get_source_addr());
+
+        tx_tmp = txmgr_table.query_tx(txs[0]->get_transaction()->get_source_addr(), txs[0]->get_transaction()->digest());
+        ASSERT_EQ(tx_tmp, nullptr);
+    }
+
+    {
+        std::vector<xcons_transaction_ptr_t> txs = test_xtxpool_util_t::create_cons_transfer_txs(0, 1, 2);
+        txs[0]->set_push_pool_timestamp(now);
+
+        xtx_para_t para;
+
+        // push first time
+        std::shared_ptr<xtx_entry> tx_ent = std::make_shared<xtx_entry>(txs[0], para);
+        int32_t ret = txmgr_table.push_send_tx(tx_ent, 0);
+        ASSERT_EQ(0, ret);
+        auto tx_tmp = txmgr_table.query_tx(txs[0]->get_transaction()->get_source_addr(), txs[0]->get_transaction()->digest());
+        ASSERT_NE(tx_tmp, nullptr);
+
+        // pop out
+        txmgr_table.clear_black_address_txs(txs[0]->get_target_addr());
+
+        tx_tmp = txmgr_table.query_tx(txs[0]->get_transaction()->get_source_addr(), txs[0]->get_transaction()->digest());
+        ASSERT_EQ(tx_tmp, nullptr);
+    }
+}
