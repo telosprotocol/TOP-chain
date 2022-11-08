@@ -119,6 +119,7 @@ void xconfig_register_t::init_static_config() {
     XADD_OFFCHAIN_PARAMETER(fulltable_interval_block_num);
     XADD_OFFCHAIN_PARAMETER(local_blacklist);
     XADD_OFFCHAIN_PARAMETER(local_whitelist);
+    XADD_OFFCHAIN_PARAMETER(local_toggle_whitelist);
 
     XADD_OFFCHAIN_PARAMETER(slash_fulltable_interval);
     XADD_OFFCHAIN_PARAMETER(slash_table_split_num);
