@@ -17,13 +17,21 @@ build = "../build.rs"
 crate_type = ["rlib", "staticlib"]
 
 [dependencies]
+bls = { git = "https://github.com/aurora-is-near/lighthouse.git", rev = "b624c3f0d3c5bc9ea46faa14c9cb2d90ee1e1dec", features = ["milagro"]}
 engine-precompiles = { path = "../engine-precompiles", default-features = false }
 engine-sdk = { path = "../engine-sdk", default-features = false }
 engine-transactions = { path = "../engine-transactions", default-features = false }
 engine-types = { path = "../engine-types", default-features = false }
 evm = { git = "https://github.com/rust-blockchain/evm.git", rev = "07ae4451bb1d8d1cc81e5e07685691e68220a7d2", default-features = false }
+ethereum-types = "0.9.2"
+eth2_hashing = "0.2.0"
+engine-eth2-types =  { path = "../engine-eth2-types", default-features = false }
+engine-eth2-utility =  { path = "../engine-eth2-utility", default-features = false }
 hex = { version = "0.4", default-features = false }
 protobuf = "2.27.1"
+getrandom = "0.2.7"
+rlp = "0.4.2"
+tree_hash = { git = "https://github.com/aurora-is-near/lighthouse.git", rev = "b624c3f0d3c5bc9ea46faa14c9cb2d90ee1e1dec" }
 
 [features]
 default = ["std"]
