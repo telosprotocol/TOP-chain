@@ -312,10 +312,12 @@ uint64_t xstatestore_prune_t::prune_exec_cons(uint64_t from_height, uint64_t to_
         }
     }
 
-    xdbg("xstatestore_prune_t::prune_exec_cons table:%s lowest keep height:%llu,root:%s",
+    xinfo("xstatestore_prune_t::prune_exec_cons table:%s lowest keep height:%llu,root:%s,from:%llu,to:%llu",
          get_account().to_string().c_str(),
          lowest_keep_height,
-         lowest_keep_root.as_hex_str().c_str());
+         lowest_keep_root.as_hex_str().c_str(),
+         from_height,
+         to_height);
 
     xtablestate_and_offdata_prune_info_t prune_info;
     xaccounts_prune_info_t accounts_prune_info;
@@ -338,7 +340,10 @@ uint64_t xstatestore_prune_t::prune_exec_cons(uint64_t from_height, uint64_t to_
                 std::error_code ec1;
                 xdbg("xstatestore_prune_t::prune_exec_cons prune mpt before.table:%s,height:%llu,root:%s", m_table_addr.to_string().c_str(), height, root.as_hex_str().c_str());
                 // mpt prune.
-                lowest_keep_mpt->prune(root, ec1);
+                {
+                    XMETRICS_TIME_RECORD("state_mpt_prune");
+                    lowest_keep_mpt->prune(root, ec1);
+                }
                 if (ec1) {
                     xwarn("xstatestore_prune_t::prune_exec_cons prune mpt fail.table:%s,height:%llu,root:%s", m_table_addr.to_string().c_str(), height, root.as_hex_str().c_str());
                 } else {
@@ -354,6 +359,7 @@ uint64_t xstatestore_prune_t::prune_exec_cons(uint64_t from_height, uint64_t to_
 
     if (delete_mpt_num > 0) {
         std::error_code ec;
+        XMETRICS_TIME_RECORD("state_mpt_commit_pruned");
         lowest_keep_mpt->commit_pruned(ec);
         if (ec) {
             xwarn("xstatestore_prune_t::prune_exec_cons mpt commit prune fail table %s from %llu to %llu", m_table_addr.to_string().c_str(), from_height, to_height);
