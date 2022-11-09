@@ -318,6 +318,20 @@ TEST_F(test_state_prune, prune_exec_cons) {
         base::xauto_ptr<base::xvaccountobj_t> account_obj(base::xvchain_t::instance().get_account(base::xvaccount_t(account)));
         EXPECT_EQ(54, account_obj->get_lowest_executed_block_height());
     }
+
+    {
+        auto block = blockstore->load_block_object(mocktable.get_vaccount(), 98, base::enum_xvblock_flag_committed, false);
+        EXPECT_NE(block, nullptr);
+        evm_common::xh256_t root;
+        auto ret = data::xblockextract_t::get_state_root(block.get(), root);
+        EXPECT_EQ(ret, true);
+
+        std::error_code ec;
+        auto mpt = state_mpt::xtop_state_mpt::create(common::xaccount_address_t(mocktable.get_vaccount().get_account()), xhash256_t(root.to_bytes()), base::xvchain_t::instance().get_xdbstore(), ec);
+        xassert(mpt != nullptr);
+
+        mpt->prune(xhash256_t(root.to_bytes()), ec);
+    }
 }
 
 TEST_F(test_state_prune, prune_height) {
