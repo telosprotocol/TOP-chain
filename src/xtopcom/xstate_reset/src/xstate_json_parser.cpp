@@ -112,13 +112,13 @@ xstate_json_parser::xstate_json_parser(base::xvaccount_t const & table_account, 
     }                                                                                                                                                                              \
     }
 
-    if (m_fork_name == "TEST_FORK") {
-        ADD_ONE_FORK(TEST_FORK);
+    // if (m_fork_name == "TEST_FORK") {
+    //     ADD_ONE_FORK(TEST_FORK);
         // } else if (m_fork_name == "xxx") {
         //     ADD_ONE_FORK(xxx);
-    } else {
-        xerror("not support this fork :%s", m_fork_name.c_str());
-    }
+    // } else {
+    //     xerror("not support this fork :%s", m_fork_name.c_str());
+    // }
 
 #undef CONCAT_SHARDING_VARIABLE_NAME
 #undef SHARDING_SWITCH_CASE_64

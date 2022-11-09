@@ -21,10 +21,11 @@ void xtop_eth_fork_info_contract::setup() {
 void xtop_eth_fork_info_contract::on_timer(common::xlogic_time_t const current_time) {
     xinfo("xtop_eth_fork_info_contract::on_timer % " PRIu64 "", current_time);
 
-    if (chain_fork::xutility_t::is_forked(fork_points::TEST_FORK, current_time) && STRING_GET(data::XPROPERTY_CONTRACT_TABLE_FORK_INFO_KEY) == "") {
-        xinfo("xtop_eth_fork_info_contract::do_fork: TEST_FORK");
-        STRING_SET(data::XPROPERTY_CONTRACT_TABLE_FORK_INFO_KEY, "fork_info");
-    }
+    /// Sample Code
+    /// if (chain_fork::xutility_t::is_forked(fork_points::TEST_FORK, current_time) && STRING_GET(data::XPROPERTY_CONTRACT_TABLE_FORK_INFO_KEY) == "") {
+    ///     xinfo("xtop_eth_fork_info_contract::do_fork: TEST_FORK");
+    ///     STRING_SET(data::XPROPERTY_CONTRACT_TABLE_FORK_INFO_KEY, "fork_info");
+    /// }
 }
 
 NS_END4
