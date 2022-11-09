@@ -20,7 +20,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          ref: dev/v1.7_i3 # dev branch
+          ref: dev/main
           submodules: recursive
 
       - name: Build XTOP DEBUG
