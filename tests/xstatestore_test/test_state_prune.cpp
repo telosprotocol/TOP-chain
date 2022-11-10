@@ -270,9 +270,9 @@ TEST_F(test_state_prune, prune_exec_cons) {
         std::string value_state;
         xdb->read(state_key, value_state);
         EXPECT_EQ(value_state.empty(), (h <= 30 && block->get_block_class() != base::enum_xvblock_class_full));
-        std::string value_offdata;
-        xdb->read(offdata_key, value_offdata);
-        EXPECT_EQ(value_offdata.empty(), (h <= 30 && block->get_block_class() != base::enum_xvblock_class_nil));
+        // std::string value_offdata;
+        // xdb->read(offdata_key, value_offdata);
+        // EXPECT_EQ(value_offdata.empty(), (h <= 30 && block->get_block_class() != base::enum_xvblock_class_nil));
 
         evm_common::xh256_t root;
         auto ret = data::xblockextract_t::get_state_root(block.get(), root);
@@ -300,9 +300,9 @@ TEST_F(test_state_prune, prune_exec_cons) {
         std::string value_state;
         xdb->read(state_key, value_state);
         EXPECT_EQ(value_state.empty(), (h <= 55 && block->get_block_class() != base::enum_xvblock_class_full));
-        std::string value_offdata;
-        xdb->read(offdata_key, value_offdata);
-        EXPECT_EQ(value_offdata.empty(), (h <= 55 && block->get_block_class() != base::enum_xvblock_class_nil));
+        // std::string value_offdata;
+        // xdb->read(offdata_key, value_offdata);
+        // EXPECT_EQ(value_offdata.empty(), (h <= 55 && block->get_block_class() != base::enum_xvblock_class_nil));
 
         evm_common::xh256_t root;
         auto ret = data::xblockextract_t::get_state_root(block.get(), root);
@@ -317,6 +317,20 @@ TEST_F(test_state_prune, prune_exec_cons) {
         auto account = mock_unit.get_account();
         base::xauto_ptr<base::xvaccountobj_t> account_obj(base::xvchain_t::instance().get_account(base::xvaccount_t(account)));
         EXPECT_EQ(54, account_obj->get_lowest_executed_block_height());
+    }
+
+    {
+        auto block = blockstore->load_block_object(mocktable.get_vaccount(), 98, base::enum_xvblock_flag_committed, false);
+        EXPECT_NE(block, nullptr);
+        evm_common::xh256_t root;
+        auto ret = data::xblockextract_t::get_state_root(block.get(), root);
+        EXPECT_EQ(ret, true);
+
+        std::error_code ec;
+        auto mpt = state_mpt::xtop_state_mpt::create(common::xaccount_address_t(mocktable.get_vaccount().get_account()), xhash256_t(root.to_bytes()), base::xvchain_t::instance().get_xdbstore(), ec);
+        xassert(mpt != nullptr);
+
+        mpt->prune(xhash256_t(root.to_bytes()), ec);
     }
 }
 

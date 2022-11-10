@@ -20,20 +20,27 @@
 #include "xunit_service/xerror/xerror.h"
 #include "xstatestore/xstatestore_face.h"
 #include "xsync/xsync_on_demand.h"
+#include "xbase/xutl.h"
 
 #include <cinttypes>
 NS_BEG2(top, xunit_service)
 
-#define MIN_TRANSACTION_NUM_FOR_FIRST_PACKING (10)
+#define MIN_TRANSACTION_NUM_FOR_HIGH_TPS (30)
+#define MIN_TRANSACTION_NUM_FOR_MIDDLE_TPS (20)
+#define MIN_TRANSACTION_NUM_FOR_LOW_TPS (10)
 
-xbatch_packer::xbatch_packer(observer_ptr<mbus::xmessage_bus_face_t> const   &mb,
-                             base::xtable_index_t                             &tableid,
+#define TRY_MAKE_BLOCK_TIMER_INTERVAL (30)
+#define TRY_HIGH_TPS_TIME_WINDOW (250)
+#define TRY_MIDDLE_AND_HIGH_TPS_TIME_WINDOW (500)
+#define TRY_LOW_MIDDLE_AND_HIGH_TPS_TIME_WINDOW (750)
+
+xbatch_packer::xbatch_packer(base::xtable_index_t                             &tableid,
                              const std::string &                              account_id,
                              std::shared_ptr<xcons_service_para_face> const & para,
                              std::shared_ptr<xblock_maker_face> const &       block_maker,
                              base::xcontext_t &                               _context,
                              const uint32_t                                   target_thread_id)
-  : xcsaccount_t(_context, target_thread_id, account_id), m_mbus(mb), m_tableid(tableid), m_last_view_id(0), m_para(para), m_block_maker(block_maker), m_account_id(account_id), m_table_addr(account_id) {
+  : xcsaccount_t(_context, target_thread_id, account_id), m_tableid(tableid), m_last_view_id(0), m_para(para), m_table_addr(account_id) {
     auto cert_auth = m_para->get_resources()->get_certauth();
     m_last_xip2.high_addr = -1;
     m_last_xip2.low_addr = -1;
@@ -211,6 +218,7 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     xassert(view_ev != nullptr);
     xassert(view_ev->get_viewid() >= m_last_view_id);
     xassert(view_ev->get_account() == get_account());
+    m_raw_timer->stop();
     reset_leader_info();
     xdbg_info("xbatch_packer::on_view_fire account=%s,clock=%ld,viewid=%ld,start_time=%ld", get_account().c_str(), view_ev->get_clock(), view_ev->get_viewid(), m_start_time);
     auto local_xip = get_xip2_addr();
@@ -294,10 +302,10 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     uint16_t rotate_mode = enum_rotate_mode_rotate_by_view_id;
     xvip2_t leader_xip = leader_election->get_leader_xip(m_last_view_id, get_account(), _cert_block.get(), local_xip, local_xip, election_epoch, rotate_mode);
     bool is_leader_node = xcons_utl::xip_equals(leader_xip, local_xip);
-    xunit_info("xbatch_packer::on_view_fire is_leader=%d account=%s,viewid=%ld,clock=%ld,cert_height=%ld,cert_viewid=%ld,this:%p node:%s xip:%s,leader:%s,rotate_mode:%d",
+    xunit_info("xbatch_packer::on_view_fire is_leader=%d account=%s,viewid=%ld,clock=%ld,cert_height=%ld,cert_viewid=%ld,this:%p node:%s xip:%s,leader:%s,rotate_mode:%d,timenow_ms:%llu",
             is_leader_node, get_account().c_str(), view_ev->get_viewid(), view_ev->get_clock(), _cert_block->get_height(),
             _cert_block->get_viewid(), this, node_account.c_str(),
-            xcons_utl::xip_to_hex(local_xip).c_str(), xcons_utl::xip_to_hex(leader_xip).c_str(), rotate_mode);
+            xcons_utl::xip_to_hex(local_xip).c_str(), xcons_utl::xip_to_hex(leader_xip).c_str(), rotate_mode, timenow_ms);
     XMETRICS_GAUGE(metrics::cons_view_fire_is_leader, is_leader_node ? 1 : 0);
     if (!is_leader_node) {
         XMETRICS_GAUGE(metrics::cons_view_fire_succ, 1);
@@ -330,9 +338,11 @@ bool xbatch_packer::on_view_fire(const base::xvevent_t & event, xcsobject_t * fr
     set_election_round(true, *m_leader_cs_para);
 
     m_is_leader = true;
-    m_leader_packed = start_proposal(calculate_min_tx_num(true));
+    m_leader_packed = start_proposal(calculate_min_tx_num(true, timenow_ms));
     if (!m_leader_packed) {
-        m_raw_timer->start(m_timer_repeat_time_ms, 0);
+        m_raw_timer->start(m_pack_strategy.get_timer_interval(), 0);
+    } else {
+        m_pack_strategy.clear();
     }
     return true;
 }
@@ -424,7 +434,7 @@ bool xbatch_packer::check_state_sync(base::xvblock_t * cert_block) {
         mbus::xevent_behind_ptr_t ev =
             make_object_ptr<mbus::xevent_behind_on_demand_t>(get_account(), latest_executed_height + 1, sync_num, false, "lack_of_table_block", "", false);
         base::xvchain_t::instance().get_xevmbus()->push_event(ev);
-        xwarn("xbatch_packer::check_state_sync try sync table blocks.account=%s,full_height=%ld,commit_height=%ld,execute_height=%ld,try sync h %llu num %u", 
+        xwarn("xbatch_packer::check_state_sync try sync table blocks.account=%s,full_height=%ld,commit_height=%ld,execute_height=%ld,try sync h %llu num %u",
             get_account().c_str(), latest_full_height, latest_committed_height, latest_executed_height, latest_executed_height + 1, sync_num);
         XMETRICS_GAUGE(metrics::cons_invoke_sync_block_count, 1);
     }
@@ -436,9 +446,11 @@ bool  xbatch_packer::on_timer_fire(const int32_t thread_id, const int64_t timer_
         return true;
     }
     // xunit_dbg("xbatch_packer::on_timer_fire retry start proposal.this:%p node:%s", this, m_para->get_resources()->get_account().c_str());
-    m_leader_packed = start_proposal(calculate_min_tx_num(false));
+    m_leader_packed = start_proposal(calculate_min_tx_num(false, current_time_ms));
     if (!m_leader_packed) {
-        m_raw_timer->start(m_timer_repeat_time_ms, 0);
+        m_raw_timer->start(m_pack_strategy.get_timer_interval(), 0);
+    } else {
+        m_pack_strategy.clear();
     }
     return true;
 }
@@ -586,7 +598,18 @@ xvip2_t xbatch_packer::get_child_xip(const xvip2_t & local_xip, const std::strin
 }
 
 bool xbatch_packer::reset_xip_addr(const xvip2_t & new_addr) {
-    reset_leader_info();  // fade xip should not be leader
+    // reset_leader_info();  // fade xip should not be leader
+
+    // for simple, keep leadership. because in most cases,leadership not change when round changed.
+    if (m_is_leader) {
+        xinfo("xbatch_packer::reset_xip_addr round changed,keep leadership,account:%s,old xip:%s,new xip:%s",
+              get_account().c_str(),
+              xcons_utl::xip_to_hex(get_xip2_addr()).c_str(),
+              xcons_utl::xip_to_hex(new_addr).c_str());
+        XMETRICS_GAUGE(metrics::cons_round_changed_keep_leadership, 1);
+        set_xip(*m_leader_cs_para, new_addr);  // set leader xip
+        set_election_round(true, *m_leader_cs_para);
+    }
 
     if (!is_xip2_empty(get_xip2_addr())) {
         m_last_xip2 = get_xip2_addr();
@@ -659,7 +682,7 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
         }
         vblock->add_ref();
         mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_consensus_data_t>(vblock, is_leader);
-        m_mbus->push_event(ev);
+        m_para->get_resources()->get_bus()->push_event(ev);
 
         XMETRICS_GAUGE(metrics::cons_tableblock_total_succ, 1);
         if (is_leader) {
@@ -687,7 +710,7 @@ bool  xbatch_packer::on_replicate_finish(const base::xvevent_t & event,xcsobject
         xassert(vblock->is_body_and_offdata_ready(false));
         vblock->add_ref();
         mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_consensus_data_t>(vblock, is_leader);
-        m_mbus->push_event(ev);
+        m_para->get_resources()->get_bus()->push_event(ev);
     }
     return true; //stop handle anymore
 }
@@ -730,12 +753,13 @@ void xbatch_packer::make_receipts_and_send(data::xblock_t * commit_block, data::
     }
 }
 
-uint32_t xbatch_packer::calculate_min_tx_num(bool first_packing) {
-    uint32_t min_tx_num = 0;
+uint32_t xbatch_packer::calculate_min_tx_num(bool first_packing, uint64_t time_ms) {
+    xunit_dbg("xbatch_packer::calculate_min_tx_num account:%s,viewid:%llu,first_packing:%d,time_ms:%llu", get_account().c_str(), m_last_view_id, first_packing, time_ms);
     if (first_packing) {
-        min_tx_num = MIN_TRANSACTION_NUM_FOR_FIRST_PACKING;
+        return m_pack_strategy.get_tx_num_threshold_first_time(time_ms);
+    } else {
+        return m_pack_strategy.get_tx_num_threshold(time_ms);
     }
-    return min_tx_num;
 }
 
 int32_t xbatch_packer::set_vote_extend_data(base::xvblock_t * proposal_block, const uint256_t & hash, bool is_leader) {
@@ -760,5 +784,35 @@ bool xbatch_packer::set_election_round(bool is_leader, data::xblock_consensus_pa
     return true;
 }
 
+void xpack_strategy_t::clear() {
+    m_vc_time_ms = 0;
+}
+
+uint32_t xpack_strategy_t::get_tx_num_threshold_first_time(uint64_t vc_time_ms) {
+    m_vc_time_ms = vc_time_ms;
+    return MIN_TRANSACTION_NUM_FOR_HIGH_TPS;
+}
+
+int32_t xpack_strategy_t::get_timer_interval() const {
+    return TRY_MAKE_BLOCK_TIMER_INTERVAL;
+}
+
+uint32_t xpack_strategy_t::get_tx_num_threshold(uint64_t cur_time) const {
+    if (m_vc_time_ms == 0 || cur_time <= m_vc_time_ms) {
+        xerror("xpack_strategy_t::get_tx_num_threshold vc_time:%llu and cur_time:%llu invalid", m_vc_time_ms, cur_time);
+        return 0;
+    }
+    uint64_t time_diff = cur_time - m_vc_time_ms;
+
+    if (time_diff <= TRY_HIGH_TPS_TIME_WINDOW) {
+        return MIN_TRANSACTION_NUM_FOR_HIGH_TPS;
+    } else if (time_diff <= TRY_MIDDLE_AND_HIGH_TPS_TIME_WINDOW) {
+        return MIN_TRANSACTION_NUM_FOR_MIDDLE_TPS;
+    } else if (time_diff <= TRY_LOW_MIDDLE_AND_HIGH_TPS_TIME_WINDOW) {
+        return MIN_TRANSACTION_NUM_FOR_LOW_TPS;
+    } else {
+        return 0;
+    }
+}
 
 NS_END2

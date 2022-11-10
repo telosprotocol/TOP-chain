@@ -116,6 +116,7 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     cons_tableblock_backup_succ,
     cons_tableblock_total_succ,
     cons_pacemaker_tc_discontinuity,
+    cons_round_changed_keep_leadership,
 
     cons_table_leader_make_proposal_succ,
     cons_fail_make_proposal_table_state,
