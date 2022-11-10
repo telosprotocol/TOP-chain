@@ -1,6 +1,6 @@
 #include "xbasic/xbyte_buffer.h"
 #include "xbasic/xhex.h"
-#include "xevm_contract_runtime/sys_contract/xevm_eth2_bridge_contract.h"
+#include "xevm_contract_runtime/sys_contract/xevm_eth2_client_contract.h"
 #include "xevm_runner/evm_engine_interface.h"
 #include "xevm_common/xcrosschain/xeth2.h"
 
@@ -1074,23 +1074,6 @@ TEST(rust_lib, verify_bls_signatures) {
         pubkeys_data.insert(pubkeys_data.end(), pubkey.begin(), pubkey.end());
     }
     EXPECT_TRUE(unsafe_verify_bls_signatures(from_hex(sync_committee_signature_101).data(), pubkeys_data.data(), pubkeys_data.size(), from_hex(signing_root_100).data()));
-}
-
-TEST(rust_lib, next_sync_committee_tree_root) {
-    xsync_committee_t committee;
-    int cnt = 0;
-    for (auto s : next_sync_committee_participant_pubkeys_100) {
-        committee.pubkeys.emplace_back(from_hex(s));
-        cnt++;
-        if (cnt > 5) {
-            break;
-        }
-    }
-    committee.aggregate_pubkey = from_hex(next_sync_committee_aggregate_pubkey_101);
-    auto rlp = committee.encode_rlp();
-    xbytes_t hash_bytes(32);
-    EXPECT_TRUE(unsafe_sync_committee_root(rlp.data(), rlp.size(), hash_bytes.data()));
-    printf("root: %s\n", to_hex(hash_bytes).c_str());
 }
 
 }  // namespace tests
