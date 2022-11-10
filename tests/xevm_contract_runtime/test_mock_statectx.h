@@ -26,7 +26,7 @@ public:
     }
 
     std::string get_table_address() const override {
-        return eth_table_address.value();
+        return eth_table_address.to_string();
     }
 
     bool is_state_dirty() const override {

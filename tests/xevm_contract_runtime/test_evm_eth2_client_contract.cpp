@@ -159,9 +159,6 @@ TEST_F(xeth2_contract_fixture_t, encode_decode_header_update) {
     update.beacon_header.parent_root = h256(4);
     update.beacon_header.state_root = h256(5);
     update.execution_block_hash = h256(6);
-    for (auto i = 0; i < 32; i++) {
-        update.execution_hash_branch.emplace_back(h256(rand()).to_bytes());
-    }
     auto b = update.encode_rlp();
     xheader_update_t update_decode;
     EXPECT_TRUE(update_decode.decode_rlp(b));
@@ -176,9 +173,6 @@ TEST_F(xeth2_contract_fixture_t, encode_decode_finalized_header_update) {
     update.header_update.beacon_header.parent_root = h256(4);
     update.header_update.beacon_header.state_root = h256(5);
     update.header_update.execution_block_hash = h256(6);
-    for (auto i = 0; i < 32; i++) {
-        update.header_update.execution_hash_branch.emplace_back(h256(rand()).to_bytes());
-    }
     for (auto i = 0; i < 16; i++) {
         update.finality_branch.emplace_back(h256(rand()).to_bytes());
     }
@@ -214,9 +208,6 @@ TEST_F(xeth2_contract_fixture_t, encode_decode_light_client_update) {
     update.finality_update.header_update.beacon_header.parent_root = h256(4);
     update.finality_update.header_update.beacon_header.state_root = h256(5);
     update.finality_update.header_update.execution_block_hash = h256(6);
-    for (auto i = 0; i < 32; i++) {
-        update.finality_update.header_update.execution_hash_branch.emplace_back(h256(rand()).to_bytes());
-    }
     for (auto i = 0; i < 16; i++) {
         update.finality_update.finality_branch.emplace_back(h256(rand()).to_bytes());
     }
@@ -361,10 +352,6 @@ xlight_client_update_t parse_update_data(const char * data_ptr) {
         static_cast<h256>(from_hex(j["finality_update"]["header_update"]["beacon_header"]["state_root"].get<std::string>()));
     res.finality_update.header_update.beacon_header.body_root = static_cast<h256>(from_hex(j["finality_update"]["header_update"]["beacon_header"]["body_root"].get<std::string>()));
     res.finality_update.header_update.execution_block_hash = static_cast<h256>(from_hex(j["finality_update"]["header_update"]["execution_block_hash"].get<std::string>()));
-    auto const & execution_hash_branch_array = j["finality_update"]["header_update"]["execution_hash_branch"];
-    for (auto const b : execution_hash_branch_array) {
-        res.finality_update.header_update.execution_hash_branch.emplace_back(from_hex(b.get<std::string>()));
-    }
     auto const & finality_branch_array = j["finality_update"]["finality_branch"];
     for (auto const b : finality_branch_array) {
         res.finality_update.finality_branch.emplace_back(from_hex(b.get<std::string>()));
@@ -415,6 +402,20 @@ TEST_F(xeth2_contract_fixture_t, test_submit_update_two_periods) {
     EXPECT_TRUE(m_contract.submit_beacon_chain_light_client_update(m_contract_state, update_101));
     EXPECT_EQ(m_contract.last_block_number(m_contract_state), headers.back().number);
     EXPECT_FALSE(m_contract.is_known_execution_header(m_contract_state, m_contract.get_finalized_beacon_header(m_contract_state).execution_block_hash));
+}
+
+TEST_F(xeth2_contract_fixture_t, test_init) {
+    auto init_param_rlp = from_hex(init_param_rlp_hex);
+    xinit_input_t init_param;
+    EXPECT_TRUE(init_param.decode_rlp(init_param_rlp));
+    EXPECT_TRUE(m_contract.init(m_contract_state, init_param));
+}
+
+TEST_F(xeth2_contract_fixture_t, test_update) {
+    auto update_param_rlp = from_hex(update_param_rlp_hex);
+    xlight_client_update_t update_param;
+    EXPECT_TRUE(update_param.decode_rlp(update_param_rlp));
+    // EXPECT_TRUE(m_contract.init(m_contract_state, init_param));
 }
 
 }  // namespace tests

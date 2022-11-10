@@ -256,39 +256,27 @@ struct xsync_committee_update_t {
 struct xheader_update_t {
     xbeacon_block_header_t beacon_header;
     h256 execution_block_hash;
-    std::vector<xbytes_t> execution_hash_branch;
 
     bool operator==(xheader_update_t const & rhs) const {
-        return (this->beacon_header == rhs.beacon_header) && (this->execution_block_hash == rhs.execution_block_hash) && (this->execution_hash_branch == rhs.execution_hash_branch);
+        return (this->beacon_header == rhs.beacon_header) && (this->execution_block_hash == rhs.execution_block_hash);
     }
 
     xbytes_t encode_rlp() const {
-        assert(!execution_hash_branch.empty());
-        for (auto const & b : execution_hash_branch) {
-            assert(b.size() == HASH_LEN);
-        }
         xbytes_t out;
         auto const & item1 = RLP::encode(beacon_header.encode_rlp());
         out.insert(out.end(), item1.begin(), item1.end());
         auto const & item2 = RLP::encode(execution_block_hash.to_bytes());
         out.insert(out.end(), item2.begin(), item2.end());
-        auto const & item3 = RLP::encodeList(execution_hash_branch);
-        out.insert(out.end(), item3.begin(), item3.end());
         return RLP::encodeList(out);
     }
 
     bool decode_rlp(xbytes_t const & bytes) {
         auto const & items = RLP::decodeList(bytes);
-        assert(items.decoded.size() >= 3);
+        assert(items.decoded.size() == 2);
         if (false == beacon_header.decode_rlp(items.decoded.at(0))) {
             return false;
         }
         execution_block_hash = static_cast<h256>(items.decoded.at(1));
-        for (size_t i = 2; i < items.decoded.size(); ++i) {
-            auto const & b = items.decoded.at(i);
-            assert(b.size() == HASH_LEN);
-            execution_hash_branch.emplace_back(b);
-        }
         return true;
     }
 };
@@ -357,7 +345,7 @@ struct xlight_client_update_t {
 
     bool decode_rlp(xbytes_t const & bytes) {
         auto const & items = RLP::decodeList(bytes);
-        assert(items.decoded.size() == 5);
+        assert(items.decoded.size() == 4 || items.decoded.size() == 5);
         if (false == attested_beacon_header.decode_rlp(items.decoded.at(0))) {
             return false;
         }
@@ -368,8 +356,10 @@ struct xlight_client_update_t {
         if (false == finality_update.decode_rlp(items.decoded.at(3))) {
             return false;
         }
-        if (false == sync_committee_update.decode_rlp(items.decoded.at(4))) {
-            return false;
+        if (items.decoded.size() == 5) {
+            if (false == sync_committee_update.decode_rlp(items.decoded.at(4))) {
+                return false;
+            }
         }
         return true;
     }

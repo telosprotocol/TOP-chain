@@ -24,7 +24,6 @@ using namespace evm_common::eth2;
 #define SYNC_COMMITTEE_TREE_DEPTH 5U
 #define SYNC_COMMITTEE_TREE_INDEX 23U
 
-const h256 domain = static_cast<h256>(from_hex("070000004a26c58b08add8089b75caa540848881a8d4f0af0be83417a85c0f45"));
 constexpr uint64_t hashes_gc_threshold = 51000;
 
 static uint64_t compute_epoch_at_slot(uint64_t const slot) {
@@ -104,10 +103,15 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
     // "4b469132": "finalized_beacon_block_root()",
     // "074b1681": "finalized_beacon_block_slot()",
     // "3ae8d743": "get_light_client_state()",
+    // "d398572f": "is_confirmed(uint256,bytes32)",
+    // "6d571daf": "is_known(uint256,bytes32)",
     // "43b1378b": "is_known_execution_header(bytes32)",
+    // "b15ad2e8": "get_height()"
     // "1eeaebb2": "last_block_number()",
     // "2e139f0c": "submit_beacon_chain_light_client_update(bytes)",
-    // "3c1a38b6": "submit_execution_header(bytes)"
+    // "3c1a38b6": "submit_execution_header(bytes)",
+    // "d826f88f": "reset()",
+    // "b5a61069": "disable_reset()",
     //--------------------------------------------------------------
 
     constexpr uint32_t method_id_init{0x4ddf47d4};
@@ -117,11 +121,13 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
     constexpr uint32_t method_id_finalized_beacon_block_root{0x4b469132};
     constexpr uint32_t method_id_finalized_beacon_block_slot{0x074b1681};
     constexpr uint32_t method_id_get_light_client_state{0x3ae8d743};
+    constexpr uint32_t method_id_is_confirmed{0xd398572f};
+    constexpr uint32_t method_id_is_known{0x6d571daf};
     constexpr uint32_t method_id_is_known_execution_header{0x43b1378b};
+    constexpr uint32_t method_id_get_height{0xb15ad2e8};
     constexpr uint32_t method_id_last_block_number{0x1eeaebb2};
     constexpr uint32_t method_id_submit_beacon_chain_light_client_update{0x2e139f0c};
     constexpr uint32_t method_id_submit_execution_header{0x3c1a38b6};
-
     constexpr uint32_t method_id_reset{0xd826f88f};
     constexpr uint32_t method_id_disable_reset{0xb5a61069};
 
@@ -168,7 +174,6 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
 #endif
             err.fail_status = precompile_error::Revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
-            err.cost = 50000;
             xwarn("[xtop_evm_eth2_client_contract::execute] caller %s not in the list", context.caller.to_hex_string().c_str());
             return false;
         }
@@ -182,7 +187,6 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
         if (ec) {
             err.fail_status = precompile_error::Revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
-            err.cost = 50000;
             xwarn("[xtop_evm_eth2_client_contract::execute] abi_decoder.extract bytes error");
             return false;
         }
@@ -190,14 +194,12 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
         if (false == init_put.decode_rlp(headers_rlp)) {
             err.fail_status = precompile_error::Revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
-            err.cost = 50000;
             xwarn("[xtop_evm_eth2_client_contract::execute] init_put decode error");
             return false;
         }
         if (!init(state, init_put)) {
             err.fail_status = precompile_error::Revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
-            err.cost = 50000;
             xwarn("[xtop_evm_eth2_client_contract::execute] init headers error");
             return false;
         }
@@ -261,6 +263,31 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
         output.output = client_state.encode_rlp();
         return true;
     }
+    case method_id_is_confirmed:
+    case method_id_is_known: {
+        abi_decoder.extract<evm_common::u256>(ec);
+        if (ec) {
+            err.fail_status = precompile_error::Revert;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+            xwarn("[xtop_evm_eth2_client_contract::execute] abi_decoder.extract bytes error");
+            return false;
+        }
+        auto hash_bytes = abi_decoder.decode_bytes(32, ec);
+        if (ec) {
+            err.fail_status = precompile_error::Revert;
+            err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
+            xwarn("[xtop_evm_eth2_client_contract::execute] abi_decoder.extract bytes error");
+            return false;
+        }
+        uint32_t is_known{0};
+        if (is_known_execution_header(state, static_cast<h256>(hash_bytes))) {
+            is_known = 1;
+        }
+        output.exit_status = Returned;
+        output.cost = 0;
+        output.output = evm_common::toBigEndian(static_cast<evm_common::u256>(is_known));
+        return true;
+    }
     case method_id_is_known_execution_header: {
         auto hash_bytes = abi_decoder.decode_bytes(32, ec);
         if (ec) {
@@ -278,6 +305,7 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
         output.output = evm_common::toBigEndian(static_cast<evm_common::u256>(is_known));
         return true;
     }
+    case method_id_get_height:
     case method_id_last_block_number: {
         auto number = last_block_number(state);
         output.exit_status = Returned;
@@ -293,7 +321,6 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
 #endif
             err.fail_status = precompile_error::Revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
-            err.cost = 50000;
             xwarn("[xtop_evm_eth2_client_contract::execute] caller %s not in the list", context.caller.to_hex_string().c_str());
             return false;
         }
@@ -307,7 +334,6 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
         if (ec) {
             err.fail_status = precompile_error::Revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
-            err.cost = 50000;
             xwarn("[xtop_evm_eth2_client_contract::execute] abi_decoder.extract bytes error");
             return false;
         }
@@ -315,14 +341,12 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
         if (false == update.decode_rlp(update_bytes)) {
             err.fail_status = precompile_error::Revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
-            err.cost = 50000;
             xwarn("[xtop_evm_eth2_client_contract::execute] update decode error");
             return false;
         }
         if (!submit_beacon_chain_light_client_update(state, update)) {
             err.fail_status = precompile_error::Revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
-            err.cost = 50000;
             xwarn("[xtop_evm_eth2_client_contract::execute] submit_beacon_chain_light_client_update error");
             return false;
         }
@@ -342,7 +366,6 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
 #endif
             err.fail_status = precompile_error::Revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
-            err.cost = 50000;
             xwarn("[xtop_evm_eth2_client_contract::execute] caller %s not in the list", context.caller.to_hex_string().c_str());
             return false;
         }
@@ -356,7 +379,6 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
         if (ec) {
             err.fail_status = precompile_error::Revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
-            err.cost = 50000;
             xwarn("[xtop_evm_eth2_client_contract::execute] abi_decoder.extract bytes error");
             return false;
         }
@@ -397,14 +419,12 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
 #endif
             err.fail_status = precompile_error::Revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
-            err.cost = 50000;
             xwarn("[xtop_evm_eth2_client_contract::execute] caller %s not in the list", context.caller.to_hex_string().c_str());
             return false;
         }
         if (!reset(state)) {
             err.fail_status = precompile_error::Revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
-            err.cost = 50000;
             xwarn("[xtop_evm_eth2_client_contract::execute] reset error");
             return false;
         }
@@ -421,7 +441,6 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
 #endif
             err.fail_status = precompile_error::Revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
-            err.cost = 50000;
             xwarn("[xtop_evm_eth2_client_contract::execute] caller %s not in the list", context.caller.to_hex_string().c_str());
             return false;
         }
@@ -488,10 +507,6 @@ bool xtop_evm_eth2_client_contract::reset(state_ptr state) {
     xexecution_header_info_t execution_header;
     auto execution_header_bytes = execution_header.encode_rlp();
     state->string_set(data::system_contract::XPROPERTY_FINALIZED_EXECUTION_HEADER, {execution_header_bytes.begin(), execution_header_bytes.end()});
-    xsync_committee_t committee;
-    auto committee_bytes = committee.encode_rlp();
-    state->string_set(data::system_contract::XPROPERTY_CURRENT_SYNC_COMMITTEE, {committee_bytes.begin(), committee_bytes.end()});
-    state->string_set(data::system_contract::XPROPERTY_NEXT_SYNC_COMMITTEE, {committee_bytes.begin(), committee_bytes.end()});
     xinfo("[xtop_evm_eth2_client_contract::reset] reset success");
     return true;
 }
