@@ -8,6 +8,7 @@
 #include "xchain_fork/xutility.h"
 #include "xdata/xnative_contract_address.h"
 #include "xstate_reset/xstate_tablestate_reseter_sample.h"
+#include "xstate_reset/xstate_tablestate_reseter_continuous_sample.h"
 #include "xstatectx/xstatectx.h"
 
 NS_BEG2(top, state_reset)
@@ -51,29 +52,7 @@ bool xstate_reseter::exec_reset() {
         return false;
     }
 
-    /// TODO : 2 && 3 fork time && contract properties should be linked,
-    /// as each fork-time corresponse a extra properties sring value changed from A to B
-    /// so this code shoud be used multi-time and each fork chooses a fork point one after another.
-    /// sample code:
-    // // 2. check fork time
-    // auto const & fork_config = chain_fork::xchain_fork_config_center_t::chain_fork_config();
-    // auto if_forked = chain_fork::xchain_fork_config_center_t::is_forked(fork_config.__TODO__SOME_FORK_POINT, m_current_time_block_height);
-    // if (!if_forked) {
-    //     return false;
-    // }
-    // // 3. check contract properties is unset.
-    // assert(m_statectx_ptr != nullptr);
-    // auto fork_info_contract_unit_state = m_statectx_ptr->load_unit_state(base::xvaccount_t{m_corresponse_contract_address});
-    // if (fork_info_contract_unit_state == nullptr) {
-    //     return false;
-    // }
-    // auto fork_properties = fork_info_contract_unit_state->string_get(std::string{data::XPROPERTY_CONTRACT_TABLE_FORK_INFO_KEY});
-    // if (fork_properties != "") {
-    //     xinfo("xstate_reseter:check_contract_properties false");
-    //     return false;
-    // }
-
-    /// used like this:
+    // 2 && 3 fork time && contract properties should be linked.
     assert(!m_corresponse_contract_address.empty());
     auto fork_info_contract_unit_state = m_statectx_ptr->load_unit_state(base::xvaccount_t{m_corresponse_contract_address});
     if (fork_info_contract_unit_state == nullptr) {
@@ -84,14 +63,23 @@ bool xstate_reseter::exec_reset() {
 #define IS_FORK_POINT_FROM(from_properties, fork_point)                                                                                                                            \
     (chain_fork::xutility_t::is_forked(fork_points::fork_point, m_current_time_block_height) && fork_properties == from_properties)
 
-    // if (IS_FORK_POINT_FROM("", TEST_FORK)) {  // use last fork point as sample code
-    //     // test_fork_reset
-    //     xstate_tablestate_reseter_base_ptr reseter_ptr = top::make_unique<xstate_tablestate_reseter_sample>(m_statectx_ptr, "TEST_FORK");
-    //     return reseter_ptr->exec_reset_tablestate();
-    // }
-    // else if(IS_FORK_POINT_FROM...) { // every fork point code should be keeped.
-    //   ...
-    // }
+    /// @brief Sample fork code, one and for all.
+    /// if (IS_FORK_POINT_FROM("", TEST_FORK)) {
+    ///     xstate_tablestate_reseter_base_ptr reseter_ptr = top::make_unique<xstate_tablestate_reseter_sample>(m_statectx_ptr, "TEST_FORK");
+    ///     return reseter_ptr->exec_reset_tablestate();
+    /// }
+
+    /// @brief Sample fork code, continues block 
+    /// if (IS_FORK_POINT_FROM("", TEST_FORK)) {
+    ///     xstate_tablestate_reseter_base_ptr reseter_ptr = top::make_unique<xstate_tablestate_reseter_continuous_sample>(m_statectx_ptr, "TEST_FORK");
+    ///     auto fork_index_properties = fork_info_contract_unit_state->string_get(std::string{data::XPROPERTY_CONTRACT_TABLE_FORK_INDEX_KEY});
+    ///     return reseter_ptr->exec_reset_tablestate(static_cast<std::size_t>(atoi(fork_index_properties.c_str())));
+    /// }
+
+    /// @brief Sample fork code every fork point code should be keeped.
+    /// else if (IS_FORK_POINT_FROM...) {
+    ///     ...
+    /// }
 
     return false;
 

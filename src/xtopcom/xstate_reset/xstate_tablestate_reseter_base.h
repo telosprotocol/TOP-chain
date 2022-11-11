@@ -20,7 +20,8 @@ class xstate_tablestate_reseter_base {
 public:
     xstate_tablestate_reseter_base(statectx::xstatectx_face_ptr_t statectx_ptr);
 
-    virtual bool exec_reset_tablestate() = 0;
+    //! In override methods, parameter cnt must have default value = 0;
+    virtual bool exec_reset_tablestate(std::size_t cnt = 0) = 0;
 
 protected:
     void account_set_tep1_token(std::string const & account_address, common::xtoken_id_t const & token_id, evm_common::u256 const & token_value);
