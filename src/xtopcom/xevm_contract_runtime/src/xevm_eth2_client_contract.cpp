@@ -104,7 +104,6 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
     // "074b1681": "finalized_beacon_block_slot()",
     // "3ae8d743": "get_light_client_state()",
     // "d398572f": "is_confirmed(uint256,bytes32)",
-    // "6d571daf": "is_known(uint256,bytes32)",
     // "43b1378b": "is_known_execution_header(bytes32)",
     // "b15ad2e8": "get_height()"
     // "1eeaebb2": "last_block_number()",
@@ -122,7 +121,6 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
     constexpr uint32_t method_id_finalized_beacon_block_slot{0x074b1681};
     constexpr uint32_t method_id_get_light_client_state{0x3ae8d743};
     constexpr uint32_t method_id_is_confirmed{0xd398572f};
-    constexpr uint32_t method_id_is_known{0x6d571daf};
     constexpr uint32_t method_id_is_known_execution_header{0x43b1378b};
     constexpr uint32_t method_id_get_height{0xb15ad2e8};
     constexpr uint32_t method_id_last_block_number{0x1eeaebb2};
@@ -263,9 +261,8 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
         output.output = client_state.encode_rlp();
         return true;
     }
-    case method_id_is_confirmed:
-    case method_id_is_known: {
-        abi_decoder.extract<evm_common::u256>(ec);
+    case method_id_is_confirmed: {
+        u256 height = abi_decoder.extract<evm_common::u256>(ec);
         if (ec) {
             err.fail_status = precompile_error::Revert;
             err.minor_status = static_cast<uint32_t>(precompile_error_ExitRevert::Reverted);
@@ -279,13 +276,13 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
             xwarn("[xtop_evm_eth2_client_contract::execute] abi_decoder.extract bytes error");
             return false;
         }
-        uint32_t is_known{0};
-        if (is_known_execution_header(state, static_cast<h256>(hash_bytes))) {
-            is_known = 1;
+        uint32_t confirmed{0};
+        if (is_confirmed(state, height, static_cast<h256>(hash_bytes))) {
+            confirmed = 1;
         }
         output.exit_status = Returned;
         output.cost = 0;
-        output.output = evm_common::toBigEndian(static_cast<evm_common::u256>(is_known));
+        output.output = evm_common::toBigEndian(static_cast<evm_common::u256>(confirmed));
         return true;
     }
     case method_id_is_known_execution_header: {
@@ -516,15 +513,15 @@ bool xtop_evm_eth2_client_contract::disable_reset(state_ptr state) {
     return set_flag(state);
 }
 
-uint64_t xtop_evm_eth2_client_contract::last_block_number(state_ptr const & state) {
+uint64_t xtop_evm_eth2_client_contract::last_block_number(state_ptr const & state) const {
     return get_finalized_execution_header(state).block_number;
 }
 
-h256 xtop_evm_eth2_client_contract::block_hash_safe(state_ptr const & state, uint64_t const block_number) {
-    return get_finalized_execution_blocks(state, block_number);
+h256 xtop_evm_eth2_client_contract::block_hash_safe(state_ptr const & state, u256 const block_number) const {
+    return get_finalized_execution_blocks(state, static_cast<uint64_t>(block_number));
 }
 
-bool xtop_evm_eth2_client_contract::is_known_execution_header(state_ptr const & state, h256 const & hash) {
+bool xtop_evm_eth2_client_contract::is_known_execution_header(state_ptr const & state, h256 const & hash) const {
     auto const & header = get_unfinalized_headers(state, hash);
     if (header.empty()) {
         return false;
@@ -532,7 +529,18 @@ bool xtop_evm_eth2_client_contract::is_known_execution_header(state_ptr const & 
     return true;
 }
 
-h256 xtop_evm_eth2_client_contract::finalized_beacon_block_root(state_ptr const & state) {
+bool xtop_evm_eth2_client_contract::is_confirmed(state_ptr state, u256 const height, h256 const & hash_bytes) const {
+    h256 hash = static_cast<h256>(hash_bytes);
+    h256 origin_hash = get_finalized_execution_blocks(state, static_cast<uint64_t>(height));
+    if (hash != origin_hash) {
+        xwarn("[xtop_evm_eth2_client_contract::is_confirmed] hash mismatch: %s, %s", hash.hex().c_str(), origin_hash.hex().c_str());
+        return false;
+    }
+    xinfo("[xtop_evm_eth2_client_contract::is_confirmed] is_confirmed: %s", hash.hex().c_str());
+    return true;
+}
+
+h256 xtop_evm_eth2_client_contract::finalized_beacon_block_root(state_ptr const & state) const {
     auto const & finalized_beacon_header = get_finalized_beacon_header(state);
     if (finalized_beacon_header.empty()) {
         xwarn("xtop_evm_eth2_client_contract::finalized_beacon_block_root get_finalized_beacon_header empty");
@@ -541,7 +549,7 @@ h256 xtop_evm_eth2_client_contract::finalized_beacon_block_root(state_ptr const 
     return finalized_beacon_header.beacon_block_root;
 }
 
-uint64_t xtop_evm_eth2_client_contract::finalized_beacon_block_slot(state_ptr const & state) {
+uint64_t xtop_evm_eth2_client_contract::finalized_beacon_block_slot(state_ptr const & state) const {
     auto const & finalized_beacon_header = get_finalized_beacon_header(state);
     if (finalized_beacon_header.empty()) {
         xwarn("xtop_evm_eth2_client_contract::finalized_beacon_block_slot get_finalized_beacon_header empty");
@@ -550,7 +558,7 @@ uint64_t xtop_evm_eth2_client_contract::finalized_beacon_block_slot(state_ptr co
     return finalized_beacon_header.header.slot;
 }
 
-xextended_beacon_block_header_t xtop_evm_eth2_client_contract::finalized_beacon_block_header(state_ptr const & state) {
+xextended_beacon_block_header_t xtop_evm_eth2_client_contract::finalized_beacon_block_header(state_ptr const & state) const {
     auto const & finalized_beacon_header = get_finalized_beacon_header(state);
     if (finalized_beacon_header.empty()) {
         xwarn("xtop_evm_eth2_client_contract::finalized_beacon_block_header get_finalized_beacon_header empty");
@@ -559,7 +567,7 @@ xextended_beacon_block_header_t xtop_evm_eth2_client_contract::finalized_beacon_
     return finalized_beacon_header;
 }
 
-xlight_client_state_t xtop_evm_eth2_client_contract::get_light_client_state(state_ptr const & state) {
+xlight_client_state_t xtop_evm_eth2_client_contract::get_light_client_state(state_ptr const & state) const {
     auto const & finalized_beacon_header = get_finalized_beacon_header(state);
     if (finalized_beacon_header.empty()) {
         xwarn("xtop_evm_eth2_client_contract::get_light_client_state get_finalized_beacon_header empty");
@@ -835,7 +843,7 @@ void xtop_evm_eth2_client_contract::release_finalized_execution_blocks(state_ptr
     }
 }
 
-h256 xtop_evm_eth2_client_contract::get_finalized_execution_blocks(state_ptr const & state, uint64_t const height) {
+h256 xtop_evm_eth2_client_contract::get_finalized_execution_blocks(state_ptr const & state, uint64_t const height) const {
     auto str = state->map_get(data::system_contract::XPROPERTY_FINALIZED_EXECUTION_BLOCKS, std::to_string(height));
     if (str.empty()) {
         xwarn("xtop_evm_eth2_client_contract::get_finalized_execution_blocks map_get empty, height: %lu", height);
@@ -860,7 +868,7 @@ bool xtop_evm_eth2_client_contract::del_finalized_execution_blocks(state_ptr con
     return true;
 }
 
-xexecution_header_info_t xtop_evm_eth2_client_contract::get_unfinalized_headers(state_ptr const & state, h256 const & hash) {
+xexecution_header_info_t xtop_evm_eth2_client_contract::get_unfinalized_headers(state_ptr const & state, h256 const & hash) const {
     auto k = hash.asBytes();
     auto str = state->map_get(data::system_contract::XPROPERTY_UNFINALIZED_HEADERS, {k.begin(), k.end()});
     if (str.empty()) {
@@ -893,7 +901,7 @@ bool xtop_evm_eth2_client_contract::del_unfinalized_headers(state_ptr const & st
     return true;
 }
 
-xextended_beacon_block_header_t xtop_evm_eth2_client_contract::get_finalized_beacon_header(state_ptr const & state) {
+xextended_beacon_block_header_t xtop_evm_eth2_client_contract::get_finalized_beacon_header(state_ptr const & state) const {
     auto const & v = state->string_get(data::system_contract::XPROPERTY_FINALIZED_BEACON_HEADER);
     if (v.empty()) {
         xwarn("xtop_evm_eth2_client_contract::get_finalized_beacon_header empty");
@@ -915,7 +923,7 @@ bool xtop_evm_eth2_client_contract::set_finalized_beacon_header(state_ptr const 
     return true;
 }
 
-xexecution_header_info_t xtop_evm_eth2_client_contract::get_finalized_execution_header(state_ptr const & state) {
+xexecution_header_info_t xtop_evm_eth2_client_contract::get_finalized_execution_header(state_ptr const & state) const {
     auto const & v = state->string_get(data::system_contract::XPROPERTY_FINALIZED_EXECUTION_HEADER);
     if (v.empty()) {
         xwarn("xtop_evm_eth2_client_contract::get_finalized_execution_header empty");
@@ -937,7 +945,7 @@ bool xtop_evm_eth2_client_contract::set_finalized_execution_header(state_ptr con
     return true;
 }
 
-xsync_committee_t xtop_evm_eth2_client_contract::get_current_sync_committee(state_ptr const & state) {
+xsync_committee_t xtop_evm_eth2_client_contract::get_current_sync_committee(state_ptr const & state) const {
     auto const & v = state->string_get(data::system_contract::XPROPERTY_CURRENT_SYNC_COMMITTEE);
     if (v.empty()) {
         xwarn("xtop_evm_eth2_client_contract::get_current_sync_committee empty");
@@ -959,7 +967,7 @@ bool xtop_evm_eth2_client_contract::set_current_sync_committee(state_ptr const &
     return true;
 }
 
-xsync_committee_t xtop_evm_eth2_client_contract::get_next_sync_committee(state_ptr const & state) {
+xsync_committee_t xtop_evm_eth2_client_contract::get_next_sync_committee(state_ptr const & state) const {
     auto const & v = state->string_get(data::system_contract::XPROPERTY_NEXT_SYNC_COMMITTEE);
     if (v.empty()) {
         xwarn("xtop_evm_eth2_client_contract::get_next_sync_committee empty");
