@@ -18,6 +18,7 @@ enum class xeth2_client_net_t : uint8_t {
     eth2_net_kiln,
     eth2_net_ropsten,
     eth2_net_goerli,
+    eth2_net_sepolia,
 };
 
 class xtop_evm_eth2_client_contract : public xtop_evm_syscontract_face {
@@ -36,13 +37,14 @@ public:
 
     bool init(state_ptr const & state, evm_common::eth2::xinit_input_t const & init_input);
     bool initialized(state_ptr const & state);
-    uint64_t last_block_number(state_ptr const & state);
-    h256 block_hash_safe(state_ptr const & state, uint64_t const block_number);
-    bool is_known_execution_header(state_ptr const & state, h256 const & hash);
-    h256 finalized_beacon_block_root(state_ptr const & state);
-    uint64_t finalized_beacon_block_slot(state_ptr const & state);
-    evm_common::eth2::xextended_beacon_block_header_t finalized_beacon_block_header(state_ptr const & state);
-    evm_common::eth2::xlight_client_state_t get_light_client_state(state_ptr const & state);
+    uint64_t last_block_number(state_ptr const & state) const;
+    h256 block_hash_safe(state_ptr const & state, u256 const block_number) const;
+    bool is_confirmed(state_ptr state, u256 const height, h256 const & hash_bytes) const;
+    bool is_known_execution_header(state_ptr const & state, h256 const & hash) const;
+    h256 finalized_beacon_block_root(state_ptr const & state) const;
+    uint64_t finalized_beacon_block_slot(state_ptr const & state) const;
+    evm_common::eth2::xextended_beacon_block_header_t finalized_beacon_block_header(state_ptr const & state) const;
+    evm_common::eth2::xlight_client_state_t get_light_client_state(state_ptr const & state) const;
     bool submit_beacon_chain_light_client_update(state_ptr const & state, evm_common::eth2::xlight_client_update_t const & update);
     bool submit_execution_header(state_ptr const & state, evm_common::xeth_header_t const & block_header);
     bool reset(state_ptr state);
@@ -62,19 +64,19 @@ private:
     void release_finalized_execution_blocks(state_ptr const & state, uint64_t number);
 
     // properties
-    h256 get_finalized_execution_blocks(state_ptr const & state, uint64_t const height);
+    h256 get_finalized_execution_blocks(state_ptr const & state, uint64_t const height) const;
     bool set_finalized_execution_blocks(state_ptr const & state, uint64_t const height, h256 const & hash);
     bool del_finalized_execution_blocks(state_ptr const & state, uint64_t const height);
-    evm_common::eth2::xexecution_header_info_t get_unfinalized_headers(state_ptr const & state, h256 const & hash);
+    evm_common::eth2::xexecution_header_info_t get_unfinalized_headers(state_ptr const & state, h256 const & hash) const;
     bool set_unfinalized_headers(state_ptr const & state, h256 const & hash, evm_common::eth2::xexecution_header_info_t const & info);
     bool del_unfinalized_headers(state_ptr const & state, h256 const & hash);
-    evm_common::eth2::xextended_beacon_block_header_t get_finalized_beacon_header(state_ptr const & state);
+    evm_common::eth2::xextended_beacon_block_header_t get_finalized_beacon_header(state_ptr const & state) const;
     bool set_finalized_beacon_header(state_ptr const & state, evm_common::eth2::xextended_beacon_block_header_t const & beacon);
-    evm_common::eth2::xexecution_header_info_t get_finalized_execution_header(state_ptr const & state);
+    evm_common::eth2::xexecution_header_info_t get_finalized_execution_header(state_ptr const & state) const;
     bool set_finalized_execution_header(state_ptr const & state, evm_common::eth2::xexecution_header_info_t const & info);
-    evm_common::eth2::xsync_committee_t get_current_sync_committee(state_ptr const & state);
+    evm_common::eth2::xsync_committee_t get_current_sync_committee(state_ptr const & state) const;
     bool set_current_sync_committee(state_ptr const & state, evm_common::eth2::xsync_committee_t const & committee);
-    evm_common::eth2::xsync_committee_t get_next_sync_committee(state_ptr const & state);
+    evm_common::eth2::xsync_committee_t get_next_sync_committee(state_ptr const & state) const;
     bool set_next_sync_committee(state_ptr const & state, evm_common::eth2::xsync_committee_t const & committee);
     int get_flag(state_ptr state) const;
     bool set_flag(state_ptr state);

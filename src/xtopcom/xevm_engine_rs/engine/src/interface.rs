@@ -322,6 +322,8 @@ mod interface {
             netstr = "ropsten".to_string();
         } else if version == 3 {
             netstr = "goerli".to_string();
+        } else if version == 4 {
+            netstr = "sepolia".to_string();
         } else {
             return false;
         }

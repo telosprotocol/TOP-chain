@@ -33,6 +33,7 @@ pub enum Network {
     Kiln,
     Ropsten,
     Goerli,
+    Sepolia,
 }
 
 impl FromStr for Network {
@@ -43,6 +44,7 @@ impl FromStr for Network {
             "kiln" => Ok(Network::Kiln),
             "ropsten" => Ok(Network::Ropsten),
             "goerli" => Ok(Network::Goerli),
+            "sepolia" => Ok(Network::Sepolia),
             _ => Err(format!("Unknown network {}", input)),
         }
     }
@@ -92,6 +94,13 @@ impl NetworkConfig {
                 ],
                 bellatrix_fork_version: [0x80, 0x00, 0x00, 0x71],
                 bellatrix_fork_epoch: 750,
+            },
+            Network::Sepolia => Self {
+                genesis_validators_root: [
+                    216, 234, 23, 31, 60, 148, 174, 162, 30, 188, 66, 161, 237, 97, 5, 42, 207, 63, 146, 9, 192, 14, 78, 251, 170, 221, 172, 9, 237, 155, 128, 120,
+                ],
+                bellatrix_fork_version: [0x90, 0x00, 0x00, 0x71],
+                bellatrix_fork_epoch: 100,
             },
         }
     }
