@@ -5,7 +5,6 @@
 #pragma once
 
 #include "xbase/xns_macro.h"
-
 #include <cassert>
 #include <list>
 #include <mutex>
@@ -23,6 +22,8 @@ private:
     mutable std::mutex mutex_;
 
 public:
+    xlru_cache_specialize() : max_size_{0} {
+    }
     xlru_cache_specialize(size_t const max_size) : max_size_{max_size} {
     }
 

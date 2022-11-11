@@ -4,6 +4,7 @@
 
 #include "xstate_mpt/xstate_mpt.h"
 
+#include "xdata/xblocktool.h"
 #include "xdata/xtable_bstate.h"
 #include "xevm_common/trie/xtrie_kv_db.h"
 #include "xmetrics/xmetrics.h"
@@ -12,6 +13,32 @@
 
 namespace top {
 namespace state_mpt {
+
+xmpt_node_cache_imp_t * xmpt_node_cache_t::_node_cache_imp = nullptr;
+
+xmpt_node_cache_imp_t* xmpt_node_cache_t::instance() {
+    if(_node_cache_imp)
+        return _node_cache_imp;
+
+    _node_cache_imp = new xmpt_node_cache_imp_t();
+    return _node_cache_imp;
+}
+
+xmpt_node_cache_imp_t::xmpt_node_cache_imp_t() {
+    auto all_tables = data::xblocktool_t::make_all_table_addresses();
+    for (auto & table : all_tables) {
+        m_node_cache_map[table] = std::make_shared<evm_common::trie::xnode_cache_t>(100000);
+    }
+}
+
+std::shared_ptr<evm_common::trie::xnode_cache_t> xmpt_node_cache_imp_t::get_node_cache(const std::string & table) {
+    auto iter = m_node_cache_map.find(table);
+    if (iter == m_node_cache_map.end()) {
+        xassert(false);
+        return nullptr;
+    }
+    return iter->second;
+}
 
 std::string xaccount_info_t::encode() {
     base::xstream_t stream(base::xcontext_t::instance());
@@ -47,7 +74,11 @@ std::shared_ptr<xtop_state_mpt> xtop_state_mpt::create(const common::xaccount_ad
 void xtop_state_mpt::init(const common::xaccount_address_t & table, const xhash256_t & root, base::xvdbstore_t * db, std::error_code & ec) {
     m_table_address = table;
     auto const kv_db = std::make_shared<evm_common::trie::xkv_db_t>(db, table);
-    m_db = evm_common::trie::xtrie_db_t::NewDatabase(kv_db);
+    auto node_cache = xmpt_node_cache_t::instance()->get_node_cache(table.to_string());
+    if (node_cache == nullptr) {
+        return;
+    }
+    m_db = evm_common::trie::xtrie_db_t::NewDatabase(kv_db, node_cache);
     m_trie = evm_common::trie::xsecure_trie_t::build_from(root, m_db, ec);
     if (ec) {
         xwarn("xtop_state_mpt::init trie with %s %s maybe not complete yes", table.to_string().c_str(), root.as_hex_str().c_str());

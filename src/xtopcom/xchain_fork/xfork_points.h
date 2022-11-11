@@ -33,5 +33,6 @@ using xfork_point_t = xtop_fork_point;
 
 extern top::optional<xfork_point_t> v1_7_0_block_fork_point;
 extern top::optional<xfork_point_t> v1_7_0_sync_point;
+extern top::optional<xfork_point_t> xbft_msg_upgrade;
 
 NS_END2

@@ -11,6 +11,7 @@
 #include "xevm_common/trie/xtrie_db.h"
 #include "xstate_mpt/xerror.h"
 
+#if 0
 namespace top {
 namespace state_mpt {
 
@@ -63,3 +64,4 @@ using xstate_mpt_caching_db_t = xtop_state_mpt_caching_db;
 
 }  // namespace state_mpt
 }  // namespace top
+#endif

@@ -19,11 +19,16 @@ constexpr uint32_t IdealBatchSize = 1024;
 
 constexpr auto PreimagePrefix = ConstBytes<11>("secure-key-");
 
-std::shared_ptr<xtop_trie_db> xtop_trie_db::NewDatabase(xkv_db_face_ptr_t diskdb) {
-    return NewDatabaseWithConfig(std::move(diskdb), nullptr);
+std::shared_ptr<xtop_trie_db> xtop_trie_db::NewDatabase(xkv_db_face_ptr_t diskdb, std::shared_ptr<xnode_cache_t> node_cache) {
+    return NewDatabaseWithConfig(std::move(diskdb), nullptr, node_cache);
 }
 
-std::shared_ptr<xtop_trie_db> xtop_trie_db::NewDatabaseWithConfig(xkv_db_face_ptr_t diskdb, xtrie_db_config_ptr_t /*config*/) {
+std::shared_ptr<xtop_trie_db> xtop_trie_db::NewDatabase(xkv_db_face_ptr_t diskdb) {
+    std::shared_ptr<xnode_cache_t> node_cache = std::make_shared<xnode_cache_t>(100000);
+    return NewDatabaseWithConfig(std::move(diskdb), nullptr, node_cache);
+}
+
+std::shared_ptr<xtop_trie_db> xtop_trie_db::NewDatabaseWithConfig(xkv_db_face_ptr_t diskdb, xtrie_db_config_ptr_t /*config*/, std::shared_ptr<xnode_cache_t> node_cache) {
     //if (config != nullptr && config->Cache_size > 0) {
     //    if (config->Journal.empty()) {
     //        // todo
@@ -32,7 +37,7 @@ std::shared_ptr<xtop_trie_db> xtop_trie_db::NewDatabaseWithConfig(xkv_db_face_pt
     //    }
     //}
 
-    return std::make_shared<xtop_trie_db>(std::move(diskdb));
+    return std::make_shared<xtop_trie_db>(std::move(diskdb), node_cache);
 }
 
 void xtop_trie_db::insert(xhash256_t hash, int32_t const size, xtrie_node_face_ptr_t const & node) {
@@ -69,9 +74,9 @@ void xtop_trie_db::insertPreimage(xhash256_t hash, xbytes_t const & preimage) {
 
 xtrie_node_face_ptr_t xtop_trie_db::node(xhash256_t hash) {
     // todo:
-    if (cleans_.contains(hash)) {
+    if (cleans_->contains(hash)) {
         // todo clean mark hit
-        return xtrie_node_rlp::mustDecodeNode(hash, cleans_.at(hash));
+        return xtrie_node_rlp::mustDecodeNode(hash, cleans_->at(hash));
     }
     if (dirties_.find(hash) != dirties_.end()) {
         // todo dirty mark hit
@@ -85,7 +90,7 @@ xtrie_node_face_ptr_t xtop_trie_db::node(xhash256_t hash) {
         return nullptr;
     }
     // put into clean cache
-    cleans_.insert({hash, enc});
+    cleans_->insert({hash, enc});
     return xtrie_node_rlp::mustDecodeNode(hash, enc);
 }
 
@@ -97,8 +102,8 @@ xbytes_t xtop_trie_db::Node(xhash256_t hash, std::error_code & ec) {
     }
 
     // Retrieve the node from the clean cache if available
-    if (cleans_.contains(hash)) {
-        return cleans_.at(hash);
+    if (cleans_->contains(hash)) {
+        return cleans_->at(hash);
     }
 
     // Retrieve the node from the dirty cache if available
@@ -113,7 +118,7 @@ xbytes_t xtop_trie_db::Node(xhash256_t hash, std::error_code & ec) {
         return xbytes_t{};
     }
     // put into clean cache
-    cleans_.insert({hash, enc});
+    cleans_->insert({hash, enc});
     return enc;
 }
 
@@ -199,7 +204,7 @@ void xtop_trie_db::commit(xhash256_t hash, std::map<xbytes_t, xbytes_t> & data, 
     dirties_.erase(hash);
 
     // and move it to cleans:
-    cleans_.insert({hash, enc});
+    cleans_->insert({hash, enc});
     // todo mark size everywhere with cleans/dirties' insert/erase/...
 }
 
@@ -208,7 +213,7 @@ void xtop_trie_db::prune(xhash256_t const & hash, std::error_code & ec) {
         return;
     }
 
-    cleans_.erase(hash);
+    // cleans_->erase(hash);
 
     assert(dirties_.find(hash) == dirties_.end());
 
@@ -222,6 +227,9 @@ void xtop_trie_db::commit_pruned(std::error_code & ec) {
 
     std::vector<xbytes_t> pruned_keys;
     pruned_keys.reserve(pruned_hashes_.size());
+    for (auto & hash : pruned_hashes_) {
+        cleans_->erase(hash); 
+    }
     std::transform(std::begin(pruned_hashes_), std::end(pruned_hashes_), std::back_inserter(pruned_keys), [](xhash256_t const & hash) { return hash.to_bytes(); });
     diskdb_->DeleteBatch(pruned_keys, ec);
     if (ec) {
