@@ -45,7 +45,7 @@ public:
     enum enum_query_account_type { query_account_table = 0, query_account_unit, query_account_system};
 
     xdb_export_tools_t(std::string const & db_path);
-
+    ~xdb_export_tools_t();
     static std::vector<std::string> get_system_contract_accounts();
     static std::vector<std::string> get_table_accounts();
     std::vector<std::string> get_db_unit_accounts();
