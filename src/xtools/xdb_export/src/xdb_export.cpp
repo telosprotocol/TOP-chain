@@ -75,6 +75,10 @@ xdb_export_tools_t::xdb_export_tools_t(std::string const & db_path) {
     contract::xcontract_manager_t::set_nodesrv_ptr(m_nodesvr_ptr);
 }
 
+xdb_export_tools_t::~xdb_export_tools_t() {
+    m_store->close();
+}
+
 std::vector<std::string> xdb_export_tools_t::get_system_contract_accounts() {
     std::vector<std::string> v;
     const std::vector<std::string> unit = {
