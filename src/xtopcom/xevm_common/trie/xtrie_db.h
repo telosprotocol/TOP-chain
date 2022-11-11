@@ -32,13 +32,16 @@ using xtrie_db_config_ptr_t = std::shared_ptr<xtrie_db_config_t>;
 class xtop_trie_cache_node;
 using xtrie_cache_node_t = xtop_trie_cache_node;
 
+using xnode_cache_t = basic::xlru_cache_specialize<xhash256_t, xbytes_t>;
+
 class xtop_trie_db {
 private:
     friend class xtop_trie_cache_node;
     xkv_db_face_ptr_t diskdb_;  // Persistent storage for matured trie nodes
 
     // std::map<xhash256_t, xbytes_t> cleans_;
-    basic::xlru_cache_specialize<xhash256_t, xbytes_t> cleans_{2000}; // TODO(jimmy) 10000
+    // basic::xlru_cache_specialize<xhash256_t, xbytes_t> cleans_{20000}; // TODO(jimmy) 10000
+    std::shared_ptr<xnode_cache_t> cleans_;
     std::map<xhash256_t, xtrie_cache_node_t> dirties_;
     std::unordered_set<xhash256_t> pruned_hashes_;
 
@@ -48,19 +51,20 @@ private:
     std::map<xhash256_t, xbytes_t> preimages_;  // Preimages of nodes from the secure trie
 
 public:
-    explicit xtop_trie_db(xkv_db_face_ptr_t diskdb) : diskdb_(std::move(diskdb)) {
+    explicit xtop_trie_db(xkv_db_face_ptr_t diskdb, std::shared_ptr<xnode_cache_t> node_cache) : diskdb_(std::move(diskdb)), cleans_(node_cache) {
     }
 
 public:
     // NewDatabase creates a new trie database to store ephemeral trie content before
     // its written out to disk or garbage collected. No read cache is created, so all
     // data retrievals will hit the underlying disk database.
+    static std::shared_ptr<xtop_trie_db> NewDatabase(xkv_db_face_ptr_t diskdb, std::shared_ptr<xnode_cache_t> node_cache);
     static std::shared_ptr<xtop_trie_db> NewDatabase(xkv_db_face_ptr_t diskdb);
 
     // NewDatabaseWithConfig creates a new trie database to store ephemeral trie content
     // before its written out to disk or garbage collected. It also acts as a read cache
     // for nodes loaded from disk.
-    static std::shared_ptr<xtop_trie_db> NewDatabaseWithConfig(xkv_db_face_ptr_t diskdb, xtrie_db_config_ptr_t config);
+    static std::shared_ptr<xtop_trie_db> NewDatabaseWithConfig(xkv_db_face_ptr_t diskdb, xtrie_db_config_ptr_t config, std::shared_ptr<xnode_cache_t> node_cache);
 
 public:
     xkv_db_face_ptr_t DiskDB() {

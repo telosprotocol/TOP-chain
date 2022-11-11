@@ -242,6 +242,7 @@ XDEFINE_CONFIGURATION(platform_url_endpoints);
 XDEFINE_CONFIGURATION(sync_table_state_height_gap);
 XDEFINE_CONFIGURATION(keep_table_states_max_num);
 XDEFINE_CONFIGURATION(prune_table_state_diff);
+XDEFINE_CONFIGURATION(prune_table_state_max);
 
 XDEFINE_CONFIGURATION(table_fork_info_interval);
 

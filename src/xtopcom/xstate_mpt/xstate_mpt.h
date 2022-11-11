@@ -26,6 +26,22 @@ public:
     base::xaccount_index_t m_index;
 };
 
+class xmpt_node_cache_imp_t {
+public:
+    xmpt_node_cache_imp_t();
+    std::shared_ptr<evm_common::trie::xnode_cache_t> get_node_cache(const std::string & table);
+private:
+    std::map<std::string, std::shared_ptr<evm_common::trie::xnode_cache_t>> m_node_cache_map;
+    evm_common::trie::xnode_cache_t m_node_cache_empty;
+};
+
+class xmpt_node_cache_t {
+public:
+    static xmpt_node_cache_imp_t * instance();
+private:
+    static xmpt_node_cache_imp_t * _node_cache_imp;
+};
+
 class xtop_state_mpt {
 public:
     xtop_state_mpt() = default;
