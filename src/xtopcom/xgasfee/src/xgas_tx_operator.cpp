@@ -131,7 +131,7 @@ evm_common::u256 xtop_gas_tx_operator::tx_disk_tgas() const {
     evm_common::u256 multiple{1};
     // evm deploy tx
     if (recver_str().empty() || recver() == eth_zero_address) {
-        multiple = 1200000UL;
+        multiple = XGET_ONCHAIN_GOVERNANCE_PARAMETER(eth_contract_deploy_multiple);
     }
     evm_common::u256 disk_tgas = multiple * m_tx->get_transaction()->get_tx_len();
     return disk_tgas;
