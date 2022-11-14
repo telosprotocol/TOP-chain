@@ -210,7 +210,7 @@ void xrpc_eth_query_manager::eth_getTransactionByHash(xJson::Value & js_req, xJs
         return;
     }
 
-    std::string block_hash = top::to_hex_prefixed(sendindex->get_txindex()->get_block_hash());
+    std::string block_hash = top::to_hex_prefixed(sendindex->get_block_hash());
     std::string block_num = xrpc_eth_parser_t::uint64_to_hex_prefixed(sendindex->get_txindex()->get_block_height());
     std::string tx_index = xrpc_eth_parser_t::uint64_to_hex_prefixed(sendindex->get_transaction_index());
     xtx_location_t txlocation(block_hash, block_num, tx_hash, tx_index);
