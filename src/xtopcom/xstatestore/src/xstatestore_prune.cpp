@@ -89,12 +89,14 @@ bool xstatestore_prune_t::need_prune(uint64_t exec_height) {
 bool xstatestore_prune_t::get_prune_section(uint64_t exec_height, uint64_t & from_height, uint64_t & to_height) {
     uint64_t keep_table_states_max_num = XGET_CONFIG(keep_table_states_max_num);
     uint64_t prune_table_state_diff = XGET_CONFIG(prune_table_state_diff);
+    uint64_t prune_table_state_max = XGET_CONFIG(prune_table_state_max);
     std::lock_guard<std::mutex> l(m_prune_lock);
     if (exec_height < m_pruned_height + prune_table_state_diff) {
         return false;
     }
     from_height = m_pruned_height + 1;
-    to_height = exec_height - keep_table_states_max_num;
+    uint64_t to_height_max = exec_height - keep_table_states_max_num;
+    to_height = to_height_max < (m_pruned_height + prune_table_state_max) ? to_height_max : (m_pruned_height + prune_table_state_max);
     return true;
 }
 
@@ -114,7 +116,7 @@ void xstatestore_prune_t::prune_imp(uint64_t exec_height) {
         return;
     }
 
-    xdbg("xstatestore_prune_t::prune_imp in table:%", m_table_addr.to_string().c_str());
+    xdbg("xstatestore_prune_t::prune_imp in table:%s exec_height:%llu,from_height:%llu,to_height:%llu", m_table_addr.to_string().c_str(), exec_height, from_height, to_height);
     bool is_storage_node = base::xvchain_t::instance().is_storage_node();
     bool is_consensus_node = base::xvchain_t::instance().has_other_node();
     uint64_t pruned_height;
