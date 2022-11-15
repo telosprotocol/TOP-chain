@@ -121,6 +121,7 @@ namespace top
            
            static const std::string  get_account_prefix_key(const std::string & key);
            static const std::string  get_account_address_from_key(const std::string & key);
+           static const std::string  get_txhash_from_txindex_key(const std::string & key);
        };
 
     }//end of namespace of base

@@ -2,6 +2,8 @@
 #include "../xdbtool_util.h"
 #include "xdbstore/xstore.h"
 #include "json/json.h"
+#include "xdata/xblockextract.h"
+#include "xbasic/xhex.h"
 
 NS_BEG2(top, db_export)
 
@@ -26,19 +28,133 @@ xdb_read_tools_t::~xdb_read_tools_t() {
     }
 }
 
+bool xdb_read_tools_t::is_match_function_name(std::string const & func_name) {
+    static std::vector<std::string> names = {
+        "db_read_block",
+        "db_read_txindex",
+        "db_read_meta",
+        "db_data_parse",
+    };
+
+    for (auto & v : names) {
+        if (v == func_name) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool xdb_read_tools_t::process_function(std::string const & func_name, int argc, char ** argv) {
+    if (func_name == "db_read_meta") {
+        if (argc != 4) return false;
+        std::string address = argv[3];
+        db_read_meta(address);
+    } else if (func_name == "db_data_parse") {
+        if (argc != 3) return false;
+        db_data_parse();
+    } else if (func_name == "db_read_block") {
+        if (argc != 5) return false;
+        db_read_block(argv[3], std::stoi(argv[4]));
+    } else if (func_name == "db_read_txindex") {
+        if (argc != 4) return false;
+        db_read_txindex(argv[3]);
+    } else {
+        xassert(false);
+        return false;
+    }
+    return true;
+}
+
 void xdb_read_tools_t::db_read_block(std::string const & address, const uint64_t height) {
     std::cout << "db_read_block start: " << std::endl;
     if (m_xvblockdb_ptr != nullptr) {
         std::vector<base::xvbindex_t*> vector_index = m_xvblockdb_ptr->load_index_from_db(address, height);
         for (auto it = vector_index.begin(); it != vector_index.end(); ++it) {
             base::xvbindex_t* index = (base::xvbindex_t*)*it;
-            std::cout << index->dump().c_str() << ", block_hash=" << base::xstring_utl::to_hex(index->get_block_hash()) << \
-            ", last_block_hash=" << base::xstring_utl::to_hex(index->get_last_block_hash()) <<  ", block_clock=" << index->get_this_block()->get_clock() << \
-            ", block_class=" <<  index->get_block_class() << std::endl;
+            base::xvblock_t*  block = index->get_this_block();
+            if (block == nullptr) {
+                std::cout << "fail load block object.index=" << index->dump() << std::endl;
+                continue;
+            }
+
+            std::cout << index->dump() << ", block_hash=" << base::xstring_utl::to_hex(index->get_block_hash()) << \
+            ",last_block_hash=" << base::xstring_utl::to_hex(index->get_last_block_hash()) <<  
+            ",clock=" << index->get_this_block()->get_clock() <<
+            ",class=" <<  index->get_this_block()->get_block_class() << 
+            ",ver=" << index->get_this_block()->get_block_version() << std::endl;
+
+            if (index->get_this_block()->get_block_class() != base::enum_xvblock_class_nil) {
+                if (false == m_xvblockdb_ptr->load_block_input(index)) {
+                    std::cout << "fail load block input" << std::endl;
+                    continue;
+                }
+                if (false == m_xvblockdb_ptr->load_block_output(index)) {
+                    std::cout << "fail load block output" << std::endl;
+                    continue;
+                }
+                if (false == m_xvblockdb_ptr->load_block_output_offdata(index, index->get_this_block())) {
+                    std::cout << "fail load block output_offdata" << std::endl;
+                    continue;
+                }
+
+                std::vector<xobject_ptr_t<base::xvtxindex_t>> sub_txs;
+                if (false == index->get_this_block()->extract_sub_txs(sub_txs)) {
+                    std::cout << "fail extract sub txs" << std::endl;
+                    continue;
+                }
+                std::cout << "sub txs count " << sub_txs.size() << std::endl;
+                for (auto & v : sub_txs) {
+                    base::enum_txindex_type txindex_type = base::xvtxkey_t::transaction_subtype_to_txindex_type(v->get_tx_phase_type());
+                    const std::string tx_key = base::xvdbkey_t::create_tx_index_key(v->get_tx_hash(), txindex_type);
+                    std::string tx_bin = m_xvdb_ptr->get_value(tx_key);
+                    if (tx_bin.empty()) {
+                        std::cout << "fail load txindex " << base::xvtxkey_t::transaction_hash_subtype_to_string(v->get_tx_hash(), v->get_tx_phase_type()) << std::endl;
+                        continue;
+                    } else {
+                        std::cout << "load txindex " << base::xvtxkey_t::transaction_hash_subtype_to_string(v->get_tx_hash(), v->get_tx_phase_type()) << std::endl;
+                    }
+                }
+            }
+
             (*it)->release_ref();   //release ptr that reference added by read_index_from_db
         }
     }
 
+}
+
+void xdb_read_tools_t::db_read_txindex(std::string const & hex_txhash, base::enum_txindex_type txindex_type) {
+    std::string txhash = top::to_string(top::from_hex(hex_txhash));
+    const std::string tx_key = base::xvdbkey_t::create_tx_index_key(txhash, txindex_type);
+    std::string tx_idx_bin = m_xvdb_ptr->get_value(tx_key);
+    if (tx_idx_bin.empty()) {
+        std::cout << "fail load txindex " << hex_txhash << std::endl;
+        return;
+    }
+
+    base::xauto_ptr<base::xvtxindex_t> txindex(new base::xvtxindex_t());
+    if (txindex->serialize_from_string(tx_idx_bin) <= 0) {
+        std::cout << "fail unserialize from send txindex " << hex_txhash << std::endl;
+        return;
+    }
+    txindex->set_tx_hash(txhash);
+    std::cout << "load txindex " << txindex->dump() << std::endl;
+
+    std::vector<base::xvbindex_t*> vector_index = m_xvblockdb_ptr->load_index_from_db(txindex->get_block_addr(), txindex->get_block_height());
+    for (auto & bindex : vector_index) {
+        if (bindex->check_block_flag(base::enum_xvblock_flag_committed)) {
+            if (bindex->get_block_hash() != txindex->get_block_hash()) {                
+                std::cout << "wrong blockhash txindex " << txindex->dump() << std::endl;                 
+            }
+        }
+
+        bindex->release_ref();   //release ptr that reference added by read_index_from_db
+    }    
+}
+
+void xdb_read_tools_t::db_read_txindex(std::string const & hex_txhash) {
+    db_read_txindex(hex_txhash, base::enum_txindex_type_send);
+    db_read_txindex(hex_txhash, base::enum_txindex_type_receive);
+    db_read_txindex(hex_txhash, base::enum_txindex_type_confirm);
 }
 
 void xdb_read_tools_t::db_read_meta(std::string const & address) {

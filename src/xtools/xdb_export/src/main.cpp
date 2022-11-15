@@ -1,6 +1,7 @@
 #include "../xdb_export.h"
 #include "../xdb_reset.h"
 #include "../xdb_read.h"
+#include "../xdb_write.h"
 #include "xbase/xhash.h"
 #include "xmigrate/xvmigrate.h"
 #include "xconfig/xpredefined_configurations.h"
@@ -58,6 +59,9 @@ void usage() {
     std::cout << "        - db_compact_db [db_path]" << std::endl;
     std::cout << "        - db_parse_type_size [db_path] " << std::endl;
     std::cout << "        - db_read_block [db_path] <account> <height> " << std::endl;
+    std::cout << "        - db_read_txindex [db_path] <hex_txhash> " << std::endl;  // ./xdb_export ./db_v3/ db_read_txindex txhash send/recv/confirm
+    std::cout << "        - correct_all_txindex [db_path] " << std::endl;// ./xdb_export ./db_v3/ correct_all_txindex
+    std::cout << "        - correct_one_txindex [db_path] <hex_txhash> " << std::endl; // ./xdb_export ./db_v3/ correct_one_txindex   txhash
     std::cout << "        - db_prune [db_path] " << std::endl;
     std::cout << "        - export <exported.json> <table_address0:height0[,table_address1:height1,...]> [account0[,account1,...]]" << std::endl;
     std::cout << "-------  end  -------" << std::endl;
@@ -117,30 +121,18 @@ int main(int argc, char ** argv) {
 
     std::string function_name{argv[2]};
 
-
-    if (function_name == "db_read_meta") {
-        if (argc != 4) {
-            xassert(false);
-            usage();
-            return -1;
-        }
-        std::string address = argv[3];
+    if (xdb_read_tools_t::is_match_function_name(function_name)) {
         xdb_read_tools_t read_tools{db_path};
-        read_tools.db_read_meta(address);
+        read_tools.process_function(function_name, argc, argv);
         return 0;
     }
 
-    if (function_name == "db_data_parse") {
-        if (argc != 3) {
-            xassert(false);
-            usage();
-            return -1;
-        }
-        xdb_read_tools_t read_tools{db_path};
-        read_tools.db_data_parse();
+    if (xdb_write_tools_t::is_match_function_name(function_name)) {
+        xdb_write_tools_t write_tools{db_path};
+        write_tools.process_function(function_name, argc, argv);
         return 0;
     }
-    
+
     if (function_name == "db_compact_db") {
         if (argc != 4) {
             usage();
@@ -161,16 +153,6 @@ int main(int argc, char ** argv) {
         xdb_export_tools_t tools_v3{v3_db_path};
         std::cout << "db_prune start" << std::endl;
         tools_v3.prune_db();
-        return 0;
-    }
-
-    if (function_name == "db_read_block") {
-        if (argc != 5) {
-            usage();
-            return -1;
-        }
-        xdb_read_tools_t read_tools{db_path};
-        read_tools.db_read_block(argv[3], std::stoi(argv[4]));
         return 0;
     }
 
