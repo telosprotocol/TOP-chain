@@ -570,16 +570,18 @@ int32_t xtxpool_table_t::verify_send_tx(const xcons_transaction_ptr_t & tx, bool
 }
 
 bool xtxpool_table_t::verify_send_tx_after_get_txs(const xcons_transaction_ptr_t & tx) {
-    if (xverifier::xblacklist_utl_t::is_black_address(tx->get_source_addr(), tx->get_target_addr())) {
-        tx_info_t info(tx);
-        pop_tx(info, true);
-        xwarn("xtxpool_table_t::verify_send_tx_after_get_txs fail-pop black addr tx,tx:%s", tx->dump().c_str());
-        return false;
-    }
+    if (tx->is_send_or_self_tx()) {
+        if (xverifier::xblacklist_utl_t::is_black_address(tx->get_source_addr(), tx->get_target_addr())) {
+            tx_info_t info(tx);
+            pop_tx(info, true);
+            xwarn("xtxpool_table_t::verify_send_tx_after_get_txs fail-pop black addr tx,tx:%s", tx->dump().c_str());
+            return false;
+        }
 
-    if (xverifier::xwhitelist_utl::is_white_address(tx->get_source_addr())) {
-        xwarn("xtxpool_table_t::verify_send_tx_after_get_txs fail-whitelist limit address,tx:%s", tx->dump().c_str());
-        return false;
+        if (xverifier::xwhitelist_utl::is_white_address(tx->get_source_addr())) {
+            xwarn("xtxpool_table_t::verify_send_tx_after_get_txs fail-whitelist limit address,tx:%s", tx->dump().c_str());
+            return false;
+        }
     }
     return true;
 }
