@@ -158,10 +158,12 @@ namespace top
             
             //sanity check and verify for packet
             bool    safe_check_for_proposal_packet(base::xcspdu_t & packet,xproposal_msg_t & out_msg);//sanity check for proposal msg
+            bool    safe_check_for_proposal_packet(base::xcspdu_t & packet,xproposal_msg_v2_t & out_msg);
             bool    safe_check_for_vote_packet(base::xcspdu_t & in_packet,xvote_msg_t & out_msg);//sanity check for vote msg
             bool    safe_check_for_commit_packet(base::xcspdu_t & in_packet,xcommit_msg_t & out_msg);
             bool    safe_check_for_sync_request_packet(base::xcspdu_t & packet,xsync_request_t & _syncrequest_msg);
             bool    safe_check_for_sync_respond_packet(base::xcspdu_t & packet,xsync_respond_t & _sync_respond_msg);
+            bool    safe_check_for_sync_respond_v2_packet(base::xcspdu_t & packet,xsync_respond_v2_t & _sync_respond_msg);
             
         protected:
             inline std::map<uint64_t,xproposal_t*> &    get_proposals()  {return m_proposal_blocks;}

@@ -1842,6 +1842,34 @@ namespace top
             if(old_ptr != NULL)
                 old_ptr->release_ref();
         }
+
+        bool   xvblock_t::set_input(const std::string & input_data) {
+            if (m_vinput_ptr != nullptr) {
+                m_vinput_ptr->close();
+                m_vinput_ptr->release_ref();
+            }
+            xvinput_t*  vinput_ptr = xvblock_t::create_input_object(input_data);
+            xassert(vinput_ptr != NULL); //should has value
+            if(vinput_ptr != NULL)
+            {
+                m_vinput_ptr = vinput_ptr;
+            }
+            return true;
+        }
+
+        bool   xvblock_t::set_output(const std::string & output_data) {
+            if (m_voutput_ptr != nullptr) {
+                m_voutput_ptr->close();
+                m_voutput_ptr->release_ref();
+            }
+            xvoutput_t*  voutput_ptr = xvblock_t::create_output_object(output_data);
+            xassert(voutput_ptr != NULL); //should has value
+            if(voutput_ptr != NULL)
+            {
+                m_voutput_ptr = voutput_ptr;
+            }
+            return true;
+        }
         
         bool   xvblock_t::set_input_resources(const std::string & raw_resource_data)//check whether match hash first
         {
@@ -2522,7 +2550,93 @@ namespace top
             }
             return (begin_size - stream.size());
         }
-    
+
+        int32_t xvblock_t::do_write_header_and_qcert(xstream_t & stream) {
+                        const int32_t begin_size = stream.size();
+
+            std::string vqcert_bin;
+            get_cert()->serialize_to_string(vqcert_bin);
+            
+            std::string vheader_bin;
+            get_header()->serialize_to_string(vheader_bin);
+
+            stream.write_tiny_string(m_cert_hash);
+            stream.write_compact_var(m_next_next_viewid);
+            stream.write_compact_var(vqcert_bin);
+            stream.write_compact_var(vheader_bin);
+            return (stream.size() - begin_size);
+        }
+
+        int32_t xvblock_t::do_read_header_and_qcert(xstream_t & stream) {
+            //start read hash
+            const int32_t begin_size = stream.size();
+            stream.read_tiny_string(m_cert_hash);
+            stream.read_compact_var(m_next_next_viewid);
+            //------------------------------read xvqcert------------------------------//
+            std::string vqcert_bin;
+            stream.read_compact_var(vqcert_bin);
+            xassert(vqcert_bin.empty() == false);
+            if(vqcert_bin.empty() == false)
+            {
+                xvqcert_t*  qcert_ptr = xvblock_t::create_qcert_object(vqcert_bin);
+                xassert(qcert_ptr != NULL); //should has value
+                if(qcert_ptr != NULL)
+                {
+                    #if DEBUG
+                        const std::string vcert_hash = qcert_ptr->hash(vqcert_bin);
+                        if( (m_cert_hash.empty() == false) && (vcert_hash != m_cert_hash) ) //test match
+                        {
+                            xerror("xvblock_t::do_read, vqcert not match with stored hash, vcert_hash:%s but ask %s",vcert_hash.c_str(),m_cert_hash.c_str());
+                        }   
+                        else
+                    #endif
+                        {
+                            m_vqcert_ptr = qcert_ptr;
+                        }
+                }
+            }
+            if(NULL == m_vqcert_ptr) {
+                 return enum_xerror_code_bad_block;
+            }
+
+            //------------------------------read xvheader_t------------------------------//
+            std::string vheader_bin;
+            stream.read_compact_var(vheader_bin);
+            xassert(vheader_bin.empty() == false);
+            if(vheader_bin.empty() == false)
+            {
+                xvheader_t*  vheader_ptr = xvblock_t::create_header_object(vheader_bin);
+                xassert(vheader_ptr != NULL); //should has value
+                if(vheader_ptr != NULL)
+                {
+                    m_vheader_ptr = vheader_ptr;
+                }
+            }
+            if(NULL == m_vheader_ptr) {
+                return enum_xerror_code_bad_block;
+            }
+
+            m_vinput_ptr = new xvinput_t();
+            m_voutput_ptr = new xvoutput_t();
+
+            return (begin_size - stream.size());
+        }
+
+        int32_t xvblock_t::serialize_header_and_qcert_to_string(std::string & bin_data) {
+            base::xautostream_t<1024> _stream(base::xcontext_t::instance());
+            auto ret = do_write_header_and_qcert(_stream);
+            if (ret <= 0) {
+                return ret;
+            }
+            bin_data.assign((const char*)_stream.data(),_stream.size());
+            return ret;
+        }
+
+        int32_t xvblock_t::serialize_header_and_qcert_from_string(const std::string & bin_data) {
+            xstream_t _stream(xcontext_t::instance(),(uint8_t*)bin_data.data(),(uint32_t)bin_data.size());
+            return do_read_header_and_qcert(_stream);
+        }
+
         bool xvblock_t::set_parent_block(const std::string parent_addr, uint32_t parent_entity_id)
         {
             m_parent_account = parent_addr;
@@ -2749,6 +2863,36 @@ namespace top
             {
                 xerror("xvblock_t::create_block_object,bad vblock_serialized_data");
                 _data_obj_ptr->release_ref();
+                return NULL;
+            }
+            
+            block_ptr->dump2(); //genereate dump information before return, to improve performance
+            return block_ptr;
+        }
+
+        base::xvblock_t*  xvblock_t::create_block_object_header_and_qcert(const std::string & vblock_serialized_data)
+        {
+            if(vblock_serialized_data.empty()) //check first
+                return NULL;
+
+            xvblock_t block;
+            bool ret = block.serialize_header_and_qcert_from_string(vblock_serialized_data);
+            if(ret <= 0)
+            {
+                xerror("xvblock_t::create_block_object,bad vblock_serialized_data that not follow spec");
+                return NULL;
+            }
+            xvblock_t* block_ptr = new xvblock_t(block);
+            if( (block_ptr->get_cert() == NULL) || (block_ptr->get_header() == NULL) )
+            {
+                xerror("xvblock_t::create_block_object,bad vblock_serialized_data");
+                block_ptr->release_ref();
+                return NULL;
+            }
+            if((block_ptr->get_input() == NULL) || (block_ptr->get_output() == NULL) )
+            {
+                xerror("xvblock_t::create_block_object,bad vblock_serialized_data");
+                block_ptr->release_ref();
                 return NULL;
             }
             

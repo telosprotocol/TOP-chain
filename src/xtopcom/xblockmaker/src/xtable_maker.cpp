@@ -600,6 +600,7 @@ int32_t xtable_maker_t::verify_proposal(base::xvblock_t* proposal_block, const x
 }
 
 bool xtable_maker_t::verify_proposal_with_local(base::xvblock_t *proposal_block, base::xvblock_t *local_block) const {
+#if 0
     const std::vector<base::xventity_t*> & _proposal_table_inentitys = proposal_block->get_input()->get_entitys();
     const std::vector<base::xventity_t*> & _local_table_inentitys = local_block->get_input()->get_entitys();
     if (_proposal_table_inentitys.size() != _local_table_inentitys.size()) {
@@ -647,6 +648,7 @@ bool xtable_maker_t::verify_proposal_with_local(base::xvblock_t *proposal_block,
             return false;
         }
     }
+#endif
 
     if (local_block->get_input_hash() != proposal_block->get_input_hash()) {
         xwarn("xtable_maker_t::verify_proposal_with_local fail-input hash not match. %s %s",
@@ -681,14 +683,30 @@ bool xtable_maker_t::verify_proposal_with_local(base::xvblock_t *proposal_block,
             ((data::xblock_t*)local_block)->dump_cert().c_str());
         return false;
     }
-    bool bret = proposal_block->set_output_resources(local_block->get_output()->get_resources_data());
+
+    std::string vinput_bin;
+    local_block->get_input()->serialize_to_string(vinput_bin);
+    std::string voutput_bin;
+    local_block->get_output()->serialize_to_string(voutput_bin);
+
+    bool bret = proposal_block->set_input(vinput_bin);
+    if (!bret) {
+        xerror("xtable_maker_t::verify_proposal_with_local fail-set proposal block input fail");
+        return false;
+    }
+    bret = proposal_block->set_output(voutput_bin);
     if (!bret) {
         xerror("xtable_maker_t::verify_proposal_with_local fail-set proposal block output fail");
         return false;
     }
+    bret = proposal_block->set_output_resources(local_block->get_output()->get_resources_data());
+    if (!bret) {
+        xerror("xtable_maker_t::verify_proposal_with_local fail-set proposal block output resource fail");
+        return false;
+    }
     bret = proposal_block->set_input_resources(local_block->get_input()->get_resources_data());
     if (!bret) {
-        xerror("xtable_maker_t::verify_proposal_with_local fail-set proposal block input fail");
+        xerror("xtable_maker_t::verify_proposal_with_local fail-set proposal block input resource fail");
         return false;
     }
     bret = proposal_block->set_output_offdata(local_block->get_output_offdata());

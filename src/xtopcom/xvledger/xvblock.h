@@ -631,6 +631,7 @@ namespace top
 
         public: //create object from serialized data
             static xvblock_t*          create_block_object(const std::string  & vblock_serialized_data);
+            static xvblock_t*          create_block_object_header_and_qcert(const std::string & vblock_serialized_data);
             static xvheader_t*         create_header_object(const std::string & vheader_serialized_data);
             static xvqcert_t*          create_qcert_object(const std::string  & vqcert_serialized_data);
             static xvinput_t*          create_input_object(const std::string  & vinput_serialized_data);
@@ -741,6 +742,9 @@ namespace top
             bool                        is_full_state_block();  // used for full-block sync
             uint64_t                    get_block_size();
 
+            bool                        set_input(const std::string & input_data);
+            bool                        set_output(const std::string & output_data);
+
             //check whether match hash of resource first
             bool                        set_input_resources(const std::string & raw_resource_data);
             bool                        set_output_resources(const std::string & raw_resource_data);
@@ -794,6 +798,11 @@ namespace top
             virtual int32_t             serialize_from(xstream_t & stream) override final;//not allow subclass change behavior
         public://still public serialize_to
             virtual int32_t             serialize_to(xstream_t & stream) override final; //not allow subclass change behavior
+
+            int32_t                     do_write_header_and_qcert(xstream_t & stream);
+            int32_t                     do_read_header_and_qcert(xstream_t & stream);
+            int32_t                     serialize_header_and_qcert_to_string(std::string & bin_data);
+            int32_t                     serialize_header_and_qcert_from_string(const std::string & bin_data);
         private:
             std::string                 m_cert_hash;        //hash(vqcert_bin)
 

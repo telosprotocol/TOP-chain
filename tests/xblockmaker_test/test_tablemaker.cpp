@@ -1279,3 +1279,62 @@ TEST_F(test_tablemaker, account_index_upgrade_tool) {
         EXPECT_EQ(account_index.get_latest_tx_nonce(), nonce);
     }
 }
+
+TEST_F(test_tablemaker, vblock_serialize) {
+    mock::xvchain_creator creator(true);
+    base::xvblockstore_t * blockstore = creator.get_blockstore();
+    auto xdb = creator.get_xdb();
+
+    uint64_t max_block_height = 10;
+    mock::xdatamock_table mocktable(1, 4);
+    mocktable.genrate_table_chain(max_block_height, blockstore);
+    const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
+    xassert(tableblocks.size() == max_block_height + 1);
+
+    xvblock_ptr_t block = tableblocks[max_block_height];
+
+    std::string bin_data;
+    bool ret1 = block->serialize_header_and_qcert_to_string(bin_data);
+    EXPECT_EQ(ret1, true);
+
+    xvblock_t block2;
+    bool ret2 = block2.serialize_header_and_qcert_from_string(bin_data);
+    EXPECT_EQ(ret1, ret2);
+}
+
+TEST_F(test_tablemaker, proposal_msg_v2) {
+    mock::xvchain_creator creator(true);
+    base::xvblockstore_t * blockstore = creator.get_blockstore();
+    auto xdb = creator.get_xdb();
+
+    uint64_t max_block_height = 10;
+    mock::xdatamock_table mocktable(1, 4);
+    mocktable.genrate_table_chain(max_block_height, blockstore);
+    const std::vector<xblock_ptr_t> & tableblocks = mocktable.get_history_tables();
+    xassert(tableblocks.size() == max_block_height + 1);
+
+    xvblock_ptr_t block = tableblocks[max_block_height];
+
+    xconsensus::xproposal_msg_v2_t proposal_msg(*(block.get()));
+
+    xvblock_t block2;
+    bool ret = block2.serialize_header_and_qcert_from_string(proposal_msg.get_block_header_and_cert());
+
+    block2.get_input()->set_proposal(proposal_msg.get_input_proposal());
+
+    std::string vinput_bin;
+    block->get_input()->serialize_to_string(vinput_bin);
+    std::string voutput_bin;
+    block->get_output()->serialize_to_string(voutput_bin);
+
+    block2.set_input(vinput_bin);
+    block2.set_output(voutput_bin);
+
+    //check if block is valid.
+    std::string vheader_bin;
+    block2.get_header()->serialize_to_string(vheader_bin);
+
+    const std::string vheader_input_output      = vheader_bin + vinput_bin + voutput_bin;
+    const std::string vheader_input_output_hash = block2.get_cert()->hash(vheader_input_output);
+    assert(block2.get_cert()->get_header_hash() == vheader_input_output_hash);
+}
