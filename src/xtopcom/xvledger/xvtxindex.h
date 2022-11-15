@@ -87,6 +87,7 @@ namespace top
             inline enum_transaction_subtype    get_tx_phase_type()  const {return (enum_transaction_subtype)m_tx_phase_type;}
             inline bool                        is_self_tx() const {return m_tx_phase_type == enum_transaction_subtype_self;}
             const uint64_t                     get_block_clock()   const;
+            virtual std::string                dump()              const override;
         public:
             void set_tx_hash(std::string const & tx_hash);
             void set_block_addr(const std::string & block_addr) {m_block_addr = block_addr;}

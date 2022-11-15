@@ -187,5 +187,13 @@ namespace top
             return 0;
         }
 
+        std::string xvtxindex_t::dump() const
+        {
+            char local_param_buf[256];
+            xprintf(local_param_buf,sizeof(local_param_buf),"tx=%s,addr=%s,height=%ld,hash=%s", 
+                xvtxkey_t::transaction_hash_subtype_to_string(m_tx_hash, (enum_transaction_subtype)m_tx_phase_type).c_str(), m_block_addr.c_str(), m_block_height, base::xstring_utl::to_hex(m_block_hash).c_str());
+            return std::string(local_param_buf);
+        }
+
     };//end of namespace of base
 };//end of namespace of top

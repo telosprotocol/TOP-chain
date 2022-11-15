@@ -34,13 +34,19 @@ private:
 };
 
 class xdb_read_tools_t {
-
 public:
     xdb_read_tools_t(std::string const & db_path);
     ~xdb_read_tools_t();
+
+    static bool is_match_function_name(std::string const & func_name);
+    bool process_function(std::string const & func_name, int argc, char ** argv);
+
+protected:
     void db_read_block(std::string const & address, const uint64_t height);
     void db_read_meta(std::string const & address);
     void db_data_parse();
+    void db_read_txindex(std::string const & hex_txhash);
+    void db_read_txindex(std::string const & hex_txhash, base::enum_txindex_type txindex_type);
 
 private:
     bool db_scan_key_callback(const std::string& key, const std::string& value);

@@ -34,6 +34,12 @@ namespace top
             const std::string key_path = "t/" + org_tx_hash + "/" + xstring_utl::tostring(type);
             return key_path;
         }
+        const std::string xvdbkey_t::get_txhash_from_txindex_key(const std::string & key) {
+            if (key.size() == 36) {
+                return key.substr(2, 32);
+            }        
+            return {};
+        }
 
         //block-index ->linke block-object,block-state,block-offdata
         const std::string  xvdbkey_t::create_block_index_key(const xvaccount_t & account,const uint64_t target_height)//for main entry

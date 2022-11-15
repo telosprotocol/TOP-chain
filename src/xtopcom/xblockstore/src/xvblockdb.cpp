@@ -942,5 +942,18 @@ namespace top
             }  
             return vector_xvbindex_ptr;
         }
+        xobject_ptr_t<base::xvbindex_t> xvblockdb_t::load_committed_index_from_db(const base::xvaccount_t & account,const uint64_t target_height)
+        {
+            xobject_ptr_t<base::xvbindex_t> commit_bindex = nullptr;
+            std::vector<base::xvbindex_t*> vector_xvbindex_ptr = read_index_from_db(account, target_height);
+            for (auto & bindex : vector_xvbindex_ptr) {
+                if (bindex->check_block_flag(base::enum_xvblock_flag_committed)) {
+                    bindex->add_ref();
+                    commit_bindex.attach(bindex);
+                }
+                bindex->release_ref();
+            }
+            return commit_bindex;
+        }
     };//end of namespace of vstore
 };//end of namespace of top

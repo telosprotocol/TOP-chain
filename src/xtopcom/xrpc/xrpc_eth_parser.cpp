@@ -48,7 +48,7 @@ void xrpc_eth_parser_t::log_to_json(xlog_location_t const& loglocation, evm_comm
 }
 
 void xrpc_eth_parser_t::receipt_to_json(const std::string & tx_hash, xtxindex_detail_ptr_t const& sendindex, xJson::Value & js_v, std::error_code & ec) {
-    std::string block_hash = top::to_hex_prefixed(sendindex->get_txindex()->get_block_hash());
+    std::string block_hash = top::to_hex_prefixed(sendindex->get_block_hash());
     std::string block_num = uint64_to_hex_prefixed(sendindex->get_txindex()->get_block_height());
     std::string tx_idx = uint64_to_hex_prefixed((uint64_t)sendindex->get_transaction_index());
     common::xeth_address_t _from_addr = common::xeth_address_t::build_from(common::xaccount_address_t(sendindex->get_raw_tx()->get_source_addr()));
