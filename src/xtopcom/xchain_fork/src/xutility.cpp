@@ -23,10 +23,4 @@ bool xtop_utility::is_block_forked(uint64_t const target) noexcept {
     return xtop_utility::is_forked(fork_points::v1_7_0_block_fork_point, target);
 }
 
-bool xtop_utility::is_tx_forked_by_timestamp(uint64_t const fire_timestamp) noexcept {
-    auto const clock = fork_points::block_fork_point.value().point;
-    auto const clock_time_stamp = clock * 10 + base::TOP_BEGIN_GMTIME;
-    return fire_timestamp >= clock_time_stamp;
-}
-
 NS_END2

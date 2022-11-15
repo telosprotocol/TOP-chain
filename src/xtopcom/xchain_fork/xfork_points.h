@@ -31,15 +31,6 @@ struct xtop_fork_point {
 };
 using xfork_point_t = xtop_fork_point;
 
-extern top::optional<xfork_point_t> block_fork_point;  // should always keep block fork point
-extern top::optional<xfork_point_t> V3_0_0_0_block_fork_point;
-extern top::optional<xfork_point_t> tx_v2_fee_fork_point;
-extern top::optional<xfork_point_t> partly_remove_confirm;
-extern top::optional<xfork_point_t> add_rsp_id;
-extern top::optional<xfork_point_t> inner_table_tx;
-extern top::optional<xfork_point_t> eth_fork_point;
-extern top::optional<xfork_point_t> relay_fork_point;
-extern top::optional<xfork_point_t> v1_6_0_version_point;  // for v1.6.0 version control
 extern top::optional<xfork_point_t> v1_7_0_block_fork_point;
 extern top::optional<xfork_point_t> v1_7_0_sync_point;
 extern top::optional<xfork_point_t> TEST_FORK;

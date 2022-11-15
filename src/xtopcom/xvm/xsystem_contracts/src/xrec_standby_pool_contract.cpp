@@ -258,13 +258,8 @@ void xtop_rec_standby_pool_contract::nodeJoinNetwork2(common::xaccount_address_t
 bool xtop_rec_standby_pool_contract::nodeJoinNetworkImpl(std::string const & program_version,
                                                          data::system_contract::xreg_node_info const & node,
                                                          data::election::xstandby_result_store_t & standby_result_store) {
-#if defined(XENABLE_TESTS)
     auto const evm_enabled = true;
     auto const relay_enabled = true;
-#else
-    auto const evm_enabled = chain_fork::xutility_t::is_forked(fork_points::eth_fork_point, TIME());
-    auto const relay_enabled = chain_fork::xutility_t::is_forked(fork_points::relay_fork_point, TIME());
-#endif
 
     std::set<common::xnetwork_id_t> network_ids = node.m_network_ids;
 
@@ -403,8 +398,8 @@ bool xtop_rec_standby_pool_contract::nodeJoinNetworkImpl(std::string const & pro
 bool xtop_rec_standby_pool_contract::update_standby_node(data::system_contract::xreg_node_info const & reg_node,
                                                          xstandby_node_info_t & standby_node_info,
                                                          common::xlogic_time_t const current_logic_time) const {
-    auto const evm_enabled = chain_fork::xutility_t::is_forked(fork_points::eth_fork_point, current_logic_time);
-    auto const relay_enabled = chain_fork::xutility_t::is_forked(fork_points::relay_fork_point, current_logic_time);
+    auto const evm_enabled = true;
+    auto const relay_enabled = true;
 
     election::xstandby_node_info_t new_node_info;
     if (reg_node.can_be_rec()) {

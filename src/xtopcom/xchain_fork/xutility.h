@@ -19,7 +19,6 @@ class xtop_utility {
 public:
     static bool is_forked(top::optional<fork_points::xfork_point_t> const& fork_point, uint64_t target) noexcept;
     static bool is_block_forked(uint64_t target) noexcept;
-    static bool is_tx_forked_by_timestamp(uint64_t fire_timestamp) noexcept;
 };
 using xutility_t = xtop_utility;
 
