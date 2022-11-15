@@ -12,23 +12,25 @@ namespace top {
         bool xwhitelist_utl::is_white_address(std::string const& source_addr) {
             if (false == is_whitelist_enable()) {
                 return false;
-            }
-
+            }            
             auto write_addrs = whitelist_config();
 
             if (!write_addrs.empty()) {
                 if (std::find(write_addrs.begin(), write_addrs.end(), source_addr) != std::end(write_addrs)) {
                     return true;
                 }
+                xdbg("xwhitelist_utl::is_white_address not match white addrs. %zu, addr=%s", write_addrs.size(), source_addr.c_str());
             }
             return false;
         }
 
         bool xwhitelist_utl::is_whitelist_enable() {
             if (XGET_ONCHAIN_GOVERNANCE_PARAMETER(toggle_whitelist)) {
+                xdbg("xwhitelist_utl::is_whitelist_enable toggle_whitelist enable");
                 return true;
             }
             if (XGET_CONFIG(local_toggle_whitelist)) {
+                xdbg("xwhitelist_utl::is_whitelist_enable local_toggle_whitelist enable");
                 return true;
             }
             return false;
