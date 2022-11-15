@@ -13,11 +13,11 @@ NS_BEG2(top, fork_points)
 
 optional<xfork_point_t> v1_7_0_block_fork_point     = xfork_point_t{xfork_point_type_t::logic_time, 0, "v1.7 version control"};
 optional<xfork_point_t> v1_7_0_sync_point           = xfork_point_t{xfork_point_type_t::logic_time, 0, "v1.7 sync protocol fork"};
-optional<xfork_point_t> TEST_FORK                   = xfork_point_t{xfork_point_type_t::logic_time, 9428100, "test fork"};
+
 #else
 optional<xfork_point_t> v1_7_0_block_fork_point     = xfork_point_t{xfork_point_type_t::logic_time, 9459720, "v1.7 version control"};
 optional<xfork_point_t> v1_7_0_sync_point           = xfork_point_t{xfork_point_type_t::logic_time, 9460080, "v1.7 sync protocol fork"};
-optional<xfork_point_t> TEST_FORK                   = xfork_point_t{xfork_point_type_t::logic_time, 9428100, "test fork"};
+
 #endif
 
 NS_END2
