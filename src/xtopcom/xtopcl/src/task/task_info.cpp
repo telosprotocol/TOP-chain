@@ -14,12 +14,6 @@ namespace xChainSDK {
 
     task_info::task_info(){
         use_transaction = false;
-
-        auto fire_time = get_timestamp();
-        if (top::chain_fork::xutility_t::is_tx_forked_by_timestamp(fire_time)) {
-            trans_action = top::data::xtx_factory::create_tx(top::data::xtransaction_version_2);
-        } else {
-            trans_action = top::data::xtx_factory::create_tx(top::data::xtransaction_version_1);
-        }
+        trans_action = top::data::xtx_factory::create_tx(top::data::xtransaction_version_2);
     }
 }

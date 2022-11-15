@@ -853,11 +853,7 @@ std::shared_ptr<state_mpt::xstate_mpt_t> xtable_maker_t::create_new_mpt(const xh
     return mpt;
 }
 
-const std::string xeth_header_builder::build(const xblock_consensus_para_t & cs_para, const evm_common::xh256_t & state_root, const std::vector<txexecutor::xatomictx_output_t> & pack_txs_outputs) {
-    if (!top::chain_fork::xutility_t::is_forked(fork_points::eth_fork_point, cs_para.get_clock())) {
-        return {};
-    }
-    
+const std::string xeth_header_builder::build(const xblock_consensus_para_t & cs_para, const evm_common::xh256_t & state_root, const std::vector<txexecutor::xatomictx_output_t> & pack_txs_outputs) {   
     std::error_code ec;
     uint64_t gas_used = 0;
     data::xeth_receipts_t eth_receipts;

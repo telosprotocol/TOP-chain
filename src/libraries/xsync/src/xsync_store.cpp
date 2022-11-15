@@ -350,13 +350,9 @@ void xsync_store_t::set_fork_point() {
     }
 
     xdbg("xsync_store_t::forked clock:%llu", vb->get_height());
-    bool forked = chain_fork::xutility_t::is_forked(fork_points::block_fork_point, vb->get_height());
-    if (forked) {
-        xinfo("xsync_store_t::remove_empty_unit_forked already forked clock:%llu", vb->get_height());
-        m_remove_empty_unit_forked = true;
-    }
-
-    forked = chain_fork::xutility_t::is_forked(fork_points::v1_7_0_sync_point, vb->get_height());
+    // TODO(jimmy) remove fork points
+    m_remove_empty_unit_forked = true;
+    bool forked = chain_fork::xutility_t::is_forked(fork_points::v1_7_0_sync_point, vb->get_height());
     if (forked) {
         m_sync_forked = true;
         xinfo("xsync_store_t::block fork point already forked clock:%llu", vb->get_height());

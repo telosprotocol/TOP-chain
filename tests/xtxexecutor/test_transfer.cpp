@@ -24,7 +24,7 @@ class test_transfer : public testing::Test {
     void construct_tx(xtransaction_ptr_t & tx, bool is_eth_tx) {
         m_tx_mocker.construct_tx(tx, is_eth_tx);
         m_source_context = m_tx_mocker.get_source_context();
-        tx->set_fire_timestamp(fork_points::block_fork_point.value().point * 10);
+        tx->set_fire_timestamp(xtransaction_t::get_gmttime_s());
         m_target_context = m_tx_mocker.get_target_context();
         m_transfer_out_amount = m_tx_mocker.get_transfer_out_amount();
         m_deposit = m_tx_mocker.get_deposit();

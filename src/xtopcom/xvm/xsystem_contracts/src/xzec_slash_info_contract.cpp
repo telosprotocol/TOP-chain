@@ -88,12 +88,8 @@ void xzec_slash_info_contract::summarize_slash_info(std::string const & slash_in
                                      summarize_info, summarize_tableblock_count, cur_statistic_height)) {
         // set summarize info
         base::xstream_t stream(base::xcontext_t::instance());
-        if (top::chain_fork::xutility_t::is_forked(fork_points::eth_fork_point, TIME())) {
         summarize_info.serialize_to(stream);
-        } else {
-            auto summarize_info_v1 = static_cast<data::system_contract::xunqualified_node_info_v1_t>(summarize_info);
-            summarize_info_v1.serialize_to(stream);
-        }
+
         {
             XMETRICS_TIME_RECORD("sysContract_zecSlash_set_property_contract_unqualified_node_key");
             MAP_SET(data::system_contract::XPORPERTY_CONTRACT_UNQUALIFIED_NODE_KEY, "UNQUALIFIED_NODE", std::string((char *)stream.data(), stream.size()));

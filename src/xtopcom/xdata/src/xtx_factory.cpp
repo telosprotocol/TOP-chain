@@ -62,13 +62,7 @@ xtransaction_ptr_t xtx_factory::create_contract_subtx_transfer(const std::string
                                                                 const uint256_t & latest_sendtx_hash,
                                                                 uint64_t amount,
                                                                 uint64_t timestamp) {
-    xtransaction_ptr_t tx;
-    if (top::chain_fork::xutility_t::is_tx_forked_by_timestamp(timestamp)) {
-        tx = data::xtx_factory::create_tx(data::xtransaction_version_2);
-    } else {
-        tx = data::xtx_factory::create_tx(data::xtransaction_version_1);
-    }
-
+    xtransaction_ptr_t tx = data::xtx_factory::create_tx(data::xtransaction_version_2);
     data::xproperty_asset asset(amount);
     tx->make_tx_transfer(asset);
     tx->set_last_trans_hash_and_nonce(latest_sendtx_hash, latest_sendtx_nonce);
@@ -88,12 +82,7 @@ xtransaction_ptr_t xtx_factory::create_contract_subtx_call_contract(const std::s
                                                                     const std::string& func_name, 
                                                                     const std::string& func_param,
                                                                     uint64_t timestamp) {
-    xtransaction_ptr_t tx;
-    if (top::chain_fork::xutility_t::is_tx_forked_by_timestamp(timestamp)) {
-        tx = data::xtx_factory::create_tx(data::xtransaction_version_2);
-    } else {
-        tx = data::xtx_factory::create_tx(data::xtransaction_version_1);
-    }
+    xtransaction_ptr_t tx = data::xtx_factory::create_tx(data::xtransaction_version_2);
     data::xproperty_asset asset(0);
     tx->make_tx_run_contract(asset, func_name, func_param);
     tx->set_last_trans_hash_and_nonce(latest_sendtx_hash, latest_sendtx_nonce);
@@ -113,13 +102,7 @@ xtransaction_ptr_t xtx_factory::create_sys_contract_call_self_tx(const std::stri
                                                                  const std::string& func_param,
                                                                  const uint64_t timestamp,
                                                                  const uint16_t expire_duration) {
-    // XTODO if enable RPC_V2, should add fork time future
-    xtransaction_ptr_t tx;
-    if (top::chain_fork::xutility_t::is_tx_forked_by_timestamp(timestamp)) {
-        tx = data::xtx_factory::create_tx(data::xtransaction_version_2);
-    } else {
-        tx = data::xtx_factory::create_tx(data::xtransaction_version_1);
-    }
+    xtransaction_ptr_t tx = data::xtx_factory::create_tx(data::xtransaction_version_2);
     data::xproperty_asset asset(0);
     tx->make_tx_run_contract(asset, func_name, func_param);
     tx->set_last_trans_hash_and_nonce(latest_sendtx_hash, latest_sendtx_nonce);
@@ -137,14 +120,7 @@ xtransaction_ptr_t xtx_factory::create_nodejoin_tx(const std::string & sender,
                                                    const uint64_t & latest_sendtx_hash,
                                                    const std::string & func_param,
                                                    const uint32_t deposit) {
-    xtransaction_ptr_t tx;
-    auto fire_time = xtransaction_t::get_gmttime_s();
-    if (top::chain_fork::xutility_t::is_tx_forked_by_timestamp(fire_time)) {
-        tx = data::xtx_factory::create_tx(data::xtransaction_version_2);
-    } else {
-        tx = data::xtx_factory::create_tx(data::xtransaction_version_1);
-    }
-
+    xtransaction_ptr_t tx = data::xtx_factory::create_tx(data::xtransaction_version_2);
     tx->make_tx_run_contract("nodeJoinNetwork2", func_param);
     tx->set_last_nonce(latest_sendtx_nonce);
     tx->set_last_hash(latest_sendtx_hash);

@@ -698,12 +698,7 @@ void xzec_reward_contract::update_issuance_detail(data::system_contract::xissue_
             issue_detail.m_vote_reward_ratio,
             issue_detail.m_governance_reward_ratio);
     std::string issue_detail_str;
-    if (top::chain_fork::xutility_t::is_forked(fork_points::eth_fork_point, TIME())) {
-        issue_detail_str = issue_detail.to_string();
-    } else {
-        auto issue_detail_old = static_cast<data::system_contract::xissue_detail_v1>(issue_detail);
-        issue_detail_str = issue_detail_old.to_string();
-    }
+    issue_detail_str = issue_detail.to_string();
     try {
         STRING_SET(data::system_contract::XPROPERTY_REWARD_DETAIL, issue_detail_str);
     } catch (std::runtime_error & e) {
@@ -737,17 +732,11 @@ void xzec_reward_contract::get_reward_param(const common::xlogic_time_t current_
     onchain_param.auditor_group_zero_workload = XGET_ONCHAIN_GOVERNANCE_PARAMETER(auditor_group_zero_workload);
     onchain_param.validator_group_zero_workload = XGET_ONCHAIN_GOVERNANCE_PARAMETER(validator_group_zero_workload);
 
-    if (top::chain_fork::xutility_t::is_forked(fork_points::eth_fork_point, current_time)) {
-        onchain_param.evm_auditor_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(evm_auditor_reward_ratio);
-        onchain_param.evm_validator_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(evm_validator_reward_ratio);
-        onchain_param.evm_auditor_group_zero_workload = XGET_ONCHAIN_GOVERNANCE_PARAMETER(evm_auditor_group_zero_workload);
-        onchain_param.evm_validator_group_zero_workload = XGET_ONCHAIN_GOVERNANCE_PARAMETER(evm_validator_group_zero_workload);
-    } else {
-        onchain_param.evm_auditor_reward_ratio = 0;
-        onchain_param.evm_validator_reward_ratio = 0;
-        onchain_param.evm_auditor_group_zero_workload = 0;
-        onchain_param.evm_validator_group_zero_workload = 0;
-    }
+    onchain_param.evm_auditor_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(evm_auditor_reward_ratio);
+    onchain_param.evm_validator_reward_ratio = XGET_ONCHAIN_GOVERNANCE_PARAMETER(evm_validator_reward_ratio);
+    onchain_param.evm_auditor_group_zero_workload = XGET_ONCHAIN_GOVERNANCE_PARAMETER(evm_auditor_group_zero_workload);
+    onchain_param.evm_validator_group_zero_workload = XGET_ONCHAIN_GOVERNANCE_PARAMETER(evm_validator_group_zero_workload);
+
     auto total_ratio = onchain_param.edge_reward_ratio + onchain_param.archive_reward_ratio + onchain_param.validator_reward_ratio + onchain_param.auditor_reward_ratio +
                        onchain_param.vote_reward_ratio + onchain_param.governance_reward_ratio;
     xinfo(

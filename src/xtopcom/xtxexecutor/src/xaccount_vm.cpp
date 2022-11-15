@@ -69,9 +69,7 @@ int32_t xaccount_vm_t::exec_tx(store::xaccount_context_t * account_context, cons
     if (!create_txs.empty()) {
         for (auto & new_tx : create_txs) {            
             // TODO(jimmy) cross tx need not confirm now
-            if (top::chain_fork::xutility_t::is_forked(fork_points::v1_6_0_version_point, account_context->get_timer_height())) {
-                new_tx->set_not_need_confirm();
-            }
+            new_tx->set_not_need_confirm();
             ret = exec_one_tx(account_context, new_tx);
             if (ret != xsuccess) {  // contract create tx send action may not change property, it's ok
                 xwarn("xaccount_vm_t::exec_tx contract create tx fail. input_tx:%s new_tx:%s error:%s",
