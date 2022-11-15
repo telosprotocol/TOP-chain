@@ -38,6 +38,7 @@ public:
     BEGIN_CONTRACT_WITH_PARAM(xtable_vote_contract)
     CONTRACT_FUNCTION_PARAM(xtable_vote_contract, voteNode);
     CONTRACT_FUNCTION_PARAM(xtable_vote_contract, unvoteNode);
+    CONTRACT_FUNCTION_PARAM(xtable_vote_contract, on_timer);
     END_CONTRACT_WITH_PARAM
 
 private:
@@ -54,6 +55,13 @@ private:
      */
     void unvoteNode(vote_info_map_t const & vote_info);
 
+    /**
+     * @brief schedule
+     *
+     * @param timestamp time
+     */
+    void on_timer(common::xlogic_time_t timestamp);
+
     // vote related
     /**
      * @brief Set the vote info
@@ -63,12 +71,6 @@ private:
      * @param b_vote true - vote, false - unvote
      */
     void set_vote_info(common::xaccount_address_t const & account, vote_info_map_t const & vote_info, bool b_vote);
-
-    /**
-     * @brief report the stakes to the zec
-     *
-     */
-    void commit_stake();
 
     /**
      * @brief add vote info
@@ -141,12 +143,6 @@ private:
      * @return false
      */
     bool is_expire(const uint64_t onchain_timer_round);
-
-    /**
-     * @brief report total votes to zec
-     *
-     */
-    void commit_total_votes_num();
 
     /**
      * @brief split table vote report tx then report
