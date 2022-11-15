@@ -91,9 +91,8 @@ private:
      * @brief call calc_nodes_rewards_v2 and dispatch_all_reward
      *
      * @param onchain_timer_round chain timer round
-     * @param workload_str the workload str
      */
-    void        reward(const common::xlogic_time_t onchain_timer_round, std::string const& workload_str);
+    void        reward(const common::xlogic_time_t onchain_timer_round);
 
     /**
      * @brief Get the task id
