@@ -13,3 +13,6 @@
 [submodule "src/xtopcom/xdepends/libevent"]
 	path = src/xtopcom/xdepends/libevent
 	url = git@github.com:libevent/libevent.git
+[submodule "src/xtopcom/xdepends/GSL"]
+	path = src/xtopcom/xdepends/GSL
+	url = git@github.com:telosprotocol/GSL.git
