@@ -198,13 +198,14 @@ void xedge_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, cons
     }
     tx->set_len();
 
+#if 0  // for test
     // filter out black list transaction
     if (xverifier::xtx_verifier::verify_send_tx_validation(tx.get())) {
         xwarn_rpc("[sendTransaction_method] tx validation check fail. rpc:%s, %s, %s", tx->get_digest_hex_str().c_str(), tx->get_target_addr().c_str(), tx->get_source_addr().c_str());
         XMETRICS_COUNTER_INCREMENT("xtransaction_validation_fail", 1);
         throw xrpc_error{enum_xrpc_error_code::rpc_param_param_error, "tx validation check failed"};
     }
-
+#endif
     if (m_archive_flag) {
         data::xcons_transaction_ptr_t cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());
         txexecutor::xtransaction_prepare_t tx_prepare(nullptr, cons_tx);

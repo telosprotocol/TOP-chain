@@ -217,7 +217,7 @@ void xedge_evm_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, 
         json_proc.m_response_json["error"] = errinfo;
         return ;
     }
-
+#if 0  // for test
     // TODO(jimmy) refactor tx verifier
     if (xverifier::xtx_verifier::verify_send_tx_validation(tx.get())) {
         xJson::Value errinfo;
@@ -226,7 +226,7 @@ void xedge_evm_method_base<T>::sendTransaction_method(xjson_proc_t & json_proc, 
         json_proc.m_response_json["error"] = errinfo;
         return ;
     }
-
+#endif
     if (m_archive_flag) {
         data::xcons_transaction_ptr_t cons_tx = make_object_ptr<data::xcons_transaction_t>(tx.get());
         txexecutor::xtransaction_prepare_t tx_prepare(nullptr, cons_tx);
