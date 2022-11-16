@@ -11,6 +11,7 @@ mod interface {
     use crate::error::EngineErrorKind;
     use crate::prelude::*;
     use crate::{engine::Engine, proto_parameters::FunctionCallArgs};
+    use engine_eth2_types::eth2::PUBLIC_KEY_BYTES_LEN;
     use engine_sdk::{
         env::Env,
         io::{StorageIntermediate, IO},
@@ -20,7 +21,6 @@ mod interface {
     use hex::{encode, ToHex};
     use protobuf::Message;
     use tree_hash::TreeHash;
-    use engine_eth2_types::eth2::PUBLIC_KEY_BYTES_LEN;
 
     const HASH_LEN: usize = 32;
     const SIGNATURE_LEN: usize = 96;
@@ -180,7 +180,7 @@ mod interface {
     }
 
     #[no_mangle]
-    pub extern "C" fn unsafe_verify_merkle_proof(
+    pub extern "C" fn unsafe_merkle_proof(
         leaf_ptr: *const u8,
         branch_ptr: *const u8,
         branch_size: u64,
@@ -200,9 +200,6 @@ mod interface {
             return false;
         }
         let branch_data = unsafe { std::slice::from_raw_parts(branch_ptr, branch_size as usize) };
-        let root_hash = ethereum_types::H256::from_slice(unsafe {
-            std::slice::from_raw_parts(root_ptr, HASH_LEN)
-        });
         let branch_num = branch_size as usize / HASH_LEN;
         let mut branch: Vec<ethereum_types::H256> = Vec::new();
         for i in 0..branch_num {
@@ -224,7 +221,13 @@ mod interface {
                 merkle_root = hash(&input);
             }
         }
-        return root_hash == ethereum_types::H256::from_slice(&merkle_root);
+        unsafe {
+            for i in 0..HASH_LEN {
+                let ptr = (root_ptr as usize + i) as *mut u8;
+                std::ptr::write(ptr, merkle_root[i]);
+            }
+        }
+        return true;
     }
 
     #[no_mangle]
@@ -249,7 +252,8 @@ mod interface {
         let pubkeys_num = pubkeys_size as usize / PUBLIC_KEY_BYTES_LEN;
         let mut branch_pubkeys: Vec<bls::PublicKey> = Vec::new();
         for i in 0..pubkeys_num {
-            let raw = &pubkeys_all_in_one[i * PUBLIC_KEY_BYTES_LEN..((i + 1) * PUBLIC_KEY_BYTES_LEN)];
+            let raw =
+                &pubkeys_all_in_one[i * PUBLIC_KEY_BYTES_LEN..((i + 1) * PUBLIC_KEY_BYTES_LEN)];
             let branch = bls::PublicKey::deserialize(raw).unwrap();
             branch_pubkeys.push(branch);
         }
@@ -286,14 +290,17 @@ mod interface {
         domain_data_ptr: *const u8,
         signing_root_ptr: *mut u8,
     ) -> bool {
-        let object_root =
-            engine_eth2_types::H256::from(unsafe { std::slice::from_raw_parts(object_root_ptr, HASH_LEN) });
-        let domain =
-            engine_eth2_types::H256::from(unsafe { std::slice::from_raw_parts(domain_data_ptr, HASH_LEN) });
+        let object_root = engine_eth2_types::H256::from(unsafe {
+            std::slice::from_raw_parts(object_root_ptr, HASH_LEN)
+        });
+        let domain = engine_eth2_types::H256::from(unsafe {
+            std::slice::from_raw_parts(domain_data_ptr, HASH_LEN)
+        });
         let binding = engine_eth2_types::eth2::SigningData {
             object_root,
             domain,
-        }.tree_hash_root();
+        }
+        .tree_hash_root();
         let signing_root_data = binding.as_bytes();
         unsafe {
             for i in 0..HASH_LEN {
@@ -310,9 +317,9 @@ mod interface {
         version: u64,
         signing_root_ptr: *mut u8,
     ) -> bool {
-        let object_root =
-            engine_eth2_types::H256::from(unsafe { std::slice::from_raw_parts(object_root_ptr, HASH_LEN) });
-        
+        let object_root = engine_eth2_types::H256::from(unsafe {
+            std::slice::from_raw_parts(object_root_ptr, HASH_LEN)
+        });
         let mut netstr: String;
         if version == 0 {
             netstr = "mainnet".to_string();
@@ -338,7 +345,8 @@ mod interface {
         let binding = engine_eth2_types::eth2::SigningData {
             object_root,
             domain,
-        }.tree_hash_root();
+        }
+        .tree_hash_root();
         let signing_root_data = binding.as_bytes();
         unsafe {
             for i in 0..HASH_LEN {
@@ -363,18 +371,24 @@ mod interface {
             unsafe { std::slice::from_raw_parts(data_ptr, data_size as usize) };
         let pubkeys_num = data_size as usize / PUBLIC_KEY_BYTES_LEN;
 
-        let mut committee = engine_eth2_types::eth2::SyncCommittee{
-            pubkeys: engine_eth2_types::eth2::SyncCommitteePublicKeys(engine_types::Vec::<engine_eth2_types::eth2::PublicKeyBytes>::new()),
+        let mut committee = engine_eth2_types::eth2::SyncCommittee {
+            pubkeys: engine_eth2_types::eth2::SyncCommitteePublicKeys(engine_types::Vec::<
+                engine_eth2_types::eth2::PublicKeyBytes,
+            >::new()),
             aggregate_pubkey: engine_eth2_types::eth2::PublicKeyBytes([0; PUBLIC_KEY_BYTES_LEN]),
         };
         for i in 0..pubkeys_num {
-            let raw = &pubkeys_all_in_one[i * PUBLIC_KEY_BYTES_LEN..((i + 1) * PUBLIC_KEY_BYTES_LEN)];
+            let raw =
+                &pubkeys_all_in_one[i * PUBLIC_KEY_BYTES_LEN..((i + 1) * PUBLIC_KEY_BYTES_LEN)];
             let mut array = [0; PUBLIC_KEY_BYTES_LEN];
             array.copy_from_slice(&raw[0..PUBLIC_KEY_BYTES_LEN]);
             if i == (pubkeys_num - 1) {
                 committee.aggregate_pubkey = engine_eth2_types::eth2::PublicKeyBytes(array);
             } else {
-                committee.pubkeys.0.push(engine_eth2_types::eth2::PublicKeyBytes(array));
+                committee
+                    .pubkeys
+                    .0
+                    .push(engine_eth2_types::eth2::PublicKeyBytes(array));
             }
         }
         let binding = committee.tree_hash_root();

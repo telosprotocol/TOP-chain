@@ -21,56 +21,83 @@ TEST(rust_lib, verify_merkle_proof) {
     auto root = from_hex("81952b5c47f0703b5f2543a6dde2be50c5271e327c438e85c70874adf5b10e12");
     {
         xbytes_t branch_data{leaf_b01.begin(), leaf_b01.end()};
+        xbytes_t verify(32);
         branch_data.insert(branch_data.end(), node_b1x.begin(), node_b1x.end());
-        EXPECT_TRUE(unsafe_verify_merkle_proof(leaf_b00.data(), branch_data.data(), branch_data.size(), 2, 0b00, root.data()));
+        EXPECT_TRUE(unsafe_merkle_proof(leaf_b00.data(), branch_data.data(), branch_data.size(), 2, 0b00, verify.data()));
+        EXPECT_EQ(verify, root);
     }
     {
         xbytes_t branch_data{leaf_b00.begin(), leaf_b00.end()};
+        xbytes_t verify(32);
         branch_data.insert(branch_data.end(), node_b1x.begin(), node_b1x.end());
-        EXPECT_TRUE(unsafe_verify_merkle_proof(leaf_b01.data(), branch_data.data(), branch_data.size(), 2, 0b01, root.data()));
+        EXPECT_TRUE(unsafe_merkle_proof(leaf_b01.data(), branch_data.data(), branch_data.size(), 2, 0b01, verify.data()));
+        EXPECT_EQ(verify, root);
     }
     {
         xbytes_t branch_data{leaf_b11.begin(), leaf_b11.end()};
+        xbytes_t verify(32);
         branch_data.insert(branch_data.end(), node_b0x.begin(), node_b0x.end());
-        EXPECT_TRUE(unsafe_verify_merkle_proof(leaf_b10.data(), branch_data.data(), branch_data.size(), 2, 0b10, root.data()));
+        EXPECT_TRUE(unsafe_merkle_proof(leaf_b10.data(), branch_data.data(), branch_data.size(), 2, 0b10, verify.data()));
+        EXPECT_EQ(verify, root);
     }
     {
         xbytes_t branch_data{leaf_b10.begin(), leaf_b10.end()};
+        xbytes_t verify(32);
         branch_data.insert(branch_data.end(), node_b0x.begin(), node_b0x.end());
-        EXPECT_TRUE(unsafe_verify_merkle_proof(leaf_b11.data(), branch_data.data(), branch_data.size(), 2, 0b11, root.data()));
+        EXPECT_TRUE(unsafe_merkle_proof(leaf_b11.data(), branch_data.data(), branch_data.size(), 2, 0b11, verify.data()));
+        EXPECT_EQ(verify, root);
     }
     {
         xbytes_t branch_data{leaf_b10.begin(), leaf_b10.end()};
-        EXPECT_TRUE(unsafe_verify_merkle_proof(leaf_b11.data(), branch_data.data(), branch_data.size(), 1, 0b11, node_b1x.data()));
+        xbytes_t verify(32);
+        EXPECT_TRUE(unsafe_merkle_proof(leaf_b11.data(), branch_data.data(), branch_data.size(), 1, 0b11, verify.data()));
+        EXPECT_EQ(verify, node_b1x);
     }
     {
         xbytes_t branch_data;
-        EXPECT_FALSE(unsafe_verify_merkle_proof(leaf_b01.data(), branch_data.data(), branch_data.size(), 2, 0b01, node_b1x.data()));
+        xbytes_t verify(32);
+        EXPECT_FALSE(unsafe_merkle_proof(leaf_b01.data(), branch_data.data(), branch_data.size(), 2, 0b01, verify.data()));
+        EXPECT_NE(verify, node_b1x);
     }
     {
         xbytes_t branch_data{node_b1x.begin(), node_b1x.end()};
+        xbytes_t verify(32);
         branch_data.insert(branch_data.end(), leaf_b00.begin(), leaf_b00.end());
-        EXPECT_FALSE(unsafe_verify_merkle_proof(leaf_b01.data(), branch_data.data(), branch_data.size(), 2, 0b01, root.data()));
+        EXPECT_TRUE(unsafe_merkle_proof(leaf_b01.data(), branch_data.data(), branch_data.size(), 2, 0b01, verify.data()));
+        EXPECT_NE(verify, root);
     }
     {
         xbytes_t branch_data{leaf_b00.begin(), leaf_b00.end()};
-        EXPECT_FALSE(unsafe_verify_merkle_proof(leaf_b01.data(), branch_data.data(), branch_data.size(), 2, 0b01, root.data()));
+        xbytes_t verify(32);
+        EXPECT_FALSE(unsafe_merkle_proof(leaf_b01.data(), branch_data.data(), branch_data.size(), 2, 0b01, verify.data()));
+        EXPECT_NE(verify, root);
     }
     {
         xbytes_t branch_data{leaf_b00.begin(), leaf_b00.end()};
+        xbytes_t verify(32);
         branch_data.insert(branch_data.end(), node_b1x.begin(), node_b1x.end());
-        EXPECT_FALSE(unsafe_verify_merkle_proof(leaf_b01.data(), branch_data.data(), branch_data.size(), 2, 0b10, root.data()));
+        EXPECT_TRUE(unsafe_merkle_proof(leaf_b01.data(), branch_data.data(), branch_data.size(), 2, 0b10, verify.data()));
+        EXPECT_NE(verify, root);
     }
     {
         xbytes_t branch_data{leaf_b00.begin(), leaf_b00.end()};
+        xbytes_t verify(32);
         branch_data.insert(branch_data.end(), node_b1x.begin(), node_b1x.end());
-        EXPECT_FALSE(unsafe_verify_merkle_proof(leaf_b01.data(), branch_data.data(), branch_data.size(), 2, 0b10, node_b1x.data()));
+        EXPECT_TRUE(unsafe_merkle_proof(leaf_b01.data(), branch_data.data(), branch_data.size(), 2, 0b10, verify.data()));
+        EXPECT_NE(verify, node_b1x);
     }
-
     auto leaf = from_hex("D6D6D6D6D6D6D6D6D6D6D6D6D6D6D6D6D6D6D6D6D6D6D6D6D6D6D6D6D6D6D6D6");
     auto junk = from_hex("D7D7D7D7D7D7D7D7D7D7D7D7D7D7D7D7D7D7D7D7D7D7D7D7D7D7D7D7D7D7D7D7");
-    EXPECT_TRUE(unsafe_verify_merkle_proof(leaf.data(), nullptr, 0, 0, 0, leaf.data()));
-    EXPECT_FALSE(unsafe_verify_merkle_proof(leaf.data(), nullptr, 0, 0, 7, junk.data()));
+    {
+        xbytes_t verify(32);
+        EXPECT_TRUE(unsafe_merkle_proof(leaf.data(), nullptr, 0, 0, 0, verify.data()));
+        EXPECT_EQ(verify, leaf);
+    }
+    {
+        xbytes_t verify(32);
+        EXPECT_TRUE(unsafe_merkle_proof(leaf.data(), nullptr, 0, 0, 7, verify.data()));
+        EXPECT_NE(verify, junk);
+    }
 }
 
 TEST(rust_lib, beacon_tree_root) {

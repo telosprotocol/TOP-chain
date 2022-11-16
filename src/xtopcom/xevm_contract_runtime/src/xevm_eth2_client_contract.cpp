@@ -686,13 +686,20 @@ bool xtop_evm_eth2_client_contract::verify_finality_branch(state_ptr const & sta
     for (auto const & b : update.finality_update.finality_branch) {
         branch_data.insert(branch_data.end(), b.begin(), b.end());
     }
-    if (false == unsafe_verify_merkle_proof(update.finality_update.header_update.beacon_header.tree_hash_root().data(),
-                                            branch_data.data(),
-                                            branch_data.size(),
-                                            FINALITY_TREE_DEPTH,
-                                            FINALITY_TREE_INDEX,
-                                            update.attested_beacon_header.state_root.data())) {
-        xwarn("xtop_evm_eth2_client_contract::verify_finality_branch header unsafe_verify_merkle_proof error");
+    xbytes_t merkle_root(32);
+    if (false == unsafe_merkle_proof(update.finality_update.header_update.beacon_header.tree_hash_root().data(),
+                                     branch_data.data(),
+                                     branch_data.size(),
+                                     FINALITY_TREE_DEPTH,
+                                     FINALITY_TREE_INDEX,
+                                     merkle_root.data())) {
+        xwarn("xtop_evm_eth2_client_contract::verify_finality_branch header unsafe_merkle_proof error");
+        return false;
+    }
+    if (merkle_root != update.attested_beacon_header.state_root.asBytes()) {
+        xwarn("xtop_evm_eth2_client_contract::verify_finality_branch header root error: %s, %s",
+              to_hex(merkle_root).c_str(),
+              to_hex(update.attested_beacon_header.state_root).c_str());
         return false;
     }
     if (update_period != finalized_period) {
@@ -700,13 +707,21 @@ bool xtop_evm_eth2_client_contract::verify_finality_branch(state_ptr const & sta
         for (auto const & b : update.sync_committee_update.next_sync_committee_branch) {
             branch_data.insert(branch_data.end(), b.begin(), b.end());
         }
-        if (false == unsafe_verify_merkle_proof(update.sync_committee_update.next_sync_committee.tree_hash_root().data(),
-                                                branch_data.data(),
-                                                branch_data.size(),
-                                                SYNC_COMMITTEE_TREE_DEPTH,
-                                                SYNC_COMMITTEE_TREE_INDEX,
-                                                active_header.state_root.data())) {
-            xwarn("xtop_evm_eth2_client_contract::verify_finality_branch committee unsafe_verify_merkle_proof error");
+        xbytes_t merkle_root(32);
+        if (false == unsafe_merkle_proof(update.sync_committee_update.next_sync_committee.tree_hash_root().data(),
+                                         branch_data.data(),
+                                         branch_data.size(),
+                                         SYNC_COMMITTEE_TREE_DEPTH,
+                                         SYNC_COMMITTEE_TREE_INDEX,
+                                         merkle_root.data())) {
+            xwarn("xtop_evm_eth2_client_contract::verify_finality_branch committee unsafe_merkle_proof error");
+            return false;
+        }
+        if ((merkle_root != active_header.state_root.asBytes()) && (merkle_root != update.attested_beacon_header.state_root.asBytes())) {
+            xwarn("xtop_evm_eth2_client_contract::verify_finality_branch committee root error: %s, %s, %s",
+                  to_hex(merkle_root).c_str(),
+                  to_hex(update.attested_beacon_header.state_root).c_str(),
+                  to_hex(update.attested_beacon_header.state_root).c_str());
             return false;
         }
     }
