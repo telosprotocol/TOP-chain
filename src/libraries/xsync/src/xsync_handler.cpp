@@ -1407,7 +1407,7 @@ void xsync_handler_t::on_block_request_process(uint32_t msg_size, const vnetwork
         return;
     }
 
-    xsync_dbg("xsync_handler::on_block_request_process request  %" PRIx64 " self(%s) from(%s) %s ",
+    xsync_info("xsync_handler::on_block_request_process request  %" PRIx64 " self(%s) from(%s) %s ",
             msg_hash,  network_self.to_string().c_str(), from_address.to_string().c_str(), request_ptr->dump().c_str());
 
     if ((request_ptr->get_request_type() == enum_sync_block_request_demand)) {
@@ -1447,9 +1447,9 @@ void xsync_handler_t::on_block_response_process(uint32_t msg_size,
         return;
     }
 
-    xsync_dbg("xsync_handler_t:on_block_response_process receive  %" PRIx64 " wait(%ldms) session(%lx) type(%x) self(%s) from(%s)",
+    xsync_info("xsync_handler_t:on_block_response_process receive  %" PRIx64 " wait(%ldms) session(%lx) type(%x) self(%s) from(%s). account_dress %s.",
         msg_hash, get_time()-recv_time, response_ptr->get_sessionID(), response_ptr->get_request_type(), 
-        network_self.to_string().c_str(), from_address.to_string().c_str());
+        network_self.to_string().c_str(), from_address.to_string().c_str(), response_ptr->get_address().c_str());
 
     auto blocks_vec = response_ptr->get_all_xblock_ptr();
 

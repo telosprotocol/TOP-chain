@@ -56,8 +56,10 @@ void xsync_sender_t::send_gossip(const std::vector<xgossip_chain_info_ptr_t> &in
         std::error_code ec;
         m_vhost->send_to(self_xip, addr, msg, ec);
         if (ec) {
+            XMETRICS_GAUGE(metrics::xsync_sender_net_succ, 0);
             xwarn("send_gossip error, err category %s; err msg %s", ec.category().name(), ec.message().c_str());
-            return;
+        }else{
+            XMETRICS_GAUGE(metrics::xsync_sender_net_succ, 1);
         }
     }
 }
@@ -447,9 +449,11 @@ bool xsync_sender_t::send_message(
     else
         m_vhost->send_to(self_addr, target_addr, msg, ec);
     if (ec) {
+        XMETRICS_GAUGE(metrics::xsync_sender_net_succ, 0);
         xwarn("send_message error, err category %s; err msg %s", ec.category().name(), ec.message().c_str());
         return false;
     }
+     XMETRICS_GAUGE(metrics::xsync_sender_net_succ, 1);
     return true;
 }
 
