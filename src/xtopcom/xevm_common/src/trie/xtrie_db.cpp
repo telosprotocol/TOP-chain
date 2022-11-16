@@ -72,7 +72,7 @@ xtrie_node_face_ptr_t xtop_trie_db::node(xhash256_t hash) {
     xbytes_t value;
     if (cleans_.get(hash, value)) {
         // todo clean mark hit
-        return xtrie_node_rlp::mustDecodeNode(hash, value);
+        return xtrie_node_rlp::must_decode_node(hash, value);
     }
     if (dirties_.find(hash) != dirties_.end()) {
         // todo dirty mark hit
@@ -87,7 +87,7 @@ xtrie_node_face_ptr_t xtop_trie_db::node(xhash256_t hash) {
     }
     // put into clean cache
     cleans_.insert({hash, enc});
-    return xtrie_node_rlp::mustDecodeNode(hash, enc);
+    return xtrie_node_rlp::must_decode_node(hash, enc);
 }
 
 xbytes_t xtop_trie_db::Node(xhash256_t hash, std::error_code & ec) {
@@ -215,7 +215,7 @@ void xtop_trie_db::prune(xhash256_t const & hash, std::error_code & ec) {
     assert(dirties_.find(hash) == dirties_.end());
 
     pruned_hashes_.insert(hash);
-    xinfo("hash %s added to be pruned later", hash.as_hex_str().c_str());
+    // xinfo("hash %s added to be pruned later", hash.as_hex_str().c_str());
     XMETRICS_GAUGE(metrics::mpt_cached_pruned_trie_node_cnt, 1);
 }
 
@@ -267,7 +267,7 @@ xtrie_node_face_ptr_t xtrie_cache_node_t::obj(xhash256_t hash) {
         auto n = std::dynamic_pointer_cast<xtrie_raw_node_t>(node_);
         assert(n != nullptr);
 
-        return xtrie_node_rlp::mustDecodeNode(hash, n->data());
+        return xtrie_node_rlp::must_decode_node(hash, n->data());
     }
     return expandNode(std::make_shared<xtrie_hash_node_t>(hash), node_);
 }

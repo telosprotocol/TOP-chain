@@ -328,6 +328,7 @@ include_directories(src/xtopcom)  # xtopcom build warning will not print
 include_directories(SYSTEM src/xtopcom/third_party)
 include_directories(SYSTEM src/xtopcom/xdepends/include/trezor-crypto)
 include_directories(SYSTEM src/xtopcom/xdepends/include)
+include_directories(SYSTEM src/xtopcom/xdepends/GSL/include)
 include_directories(src/xtopcom/xtopcl/src)  # xtopcom build warning will not print
 include_directories(src/xtopcom/xtopcl/include)  # xtopcom build warning will not print
 
