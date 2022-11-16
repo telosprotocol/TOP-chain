@@ -184,6 +184,7 @@ std::vector<std::pair<xblock_ptr_t, base::xaccount_index_t>> xtable_maker_t::mak
 
 std::vector<std::pair<xblock_ptr_t, base::xaccount_index_t>> xtable_maker_t::make_units_v2(bool is_leader, const data::xblock_consensus_para_t & cs_para, statectx::xstatectx_ptr_t const& statectx_ptr, txexecutor::xexecute_output_t const& execute_output, std::error_code & ec) {
     // std::vector<xblock_ptr_t> batch_units;
+    XMETRICS_TIME_RECORD("cons_make_units_cost");
     std::vector<std::pair<xblock_ptr_t, base::xaccount_index_t>> batch_unit_and_index;
 
     // create units
@@ -358,6 +359,7 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
     std::shared_ptr<state_mpt::xstate_mpt_t> table_mpt = nullptr;
 
     if (new_version) {
+        XMETRICS_TIME_RECORD("cons_create_new_mpt_cost");
         evm_common::xh256_t last_state_root;
         auto ret = data::xblockextract_t::get_state_root(cs_para.get_latest_cert_block().get(), last_state_root);
         if (!ret) {
@@ -408,17 +410,20 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
 }
 
 xblock_ptr_t xtable_maker_t::leader_make_light_table(const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & table_result) {
-    XMETRICS_TIMER(metrics::cons_make_lighttable_tick);
+    // XMETRICS_TIMER(metrics::cons_make_lighttable_tick);
+    XMETRICS_TIME_RECORD("cons_make_lighttable_cost");
     return make_light_table_v2(true, table_para, cs_para, table_result);
 }
 
 xblock_ptr_t xtable_maker_t::backup_make_light_table(const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para, xtablemaker_result_t & table_result) {
-    XMETRICS_TIMER(metrics::cons_verify_lighttable_tick);
+    // XMETRICS_TIMER(metrics::cons_verify_lighttable_tick);
+    XMETRICS_TIME_RECORD("cons_verify_lighttable_cost");
     return make_light_table_v2(false, table_para, cs_para, table_result);
 }
 
 xblock_ptr_t xtable_maker_t::make_full_table(const xtablemaker_para_t & table_para, const xblock_consensus_para_t & cs_para, int32_t & error_code) {
-    XMETRICS_TIMER(metrics::cons_make_fulltable_tick);
+    // XMETRICS_TIMER(metrics::cons_make_fulltable_tick);
+    XMETRICS_TIME_RECORD("cons_make_fulltable_cost");
     std::vector<xblock_ptr_t> blocks_from_last_full;
     if (false == load_table_blocks_from_last_full(cs_para.get_latest_cert_block(), blocks_from_last_full)) {
         xerror("xtable_maker_t::make_full_table fail-load blocks. %s", cs_para.dump().c_str());
@@ -451,7 +456,7 @@ xblock_ptr_t xtable_maker_t::make_full_table(const xtablemaker_para_t & table_pa
 
 xblock_ptr_t xtable_maker_t::make_empty_table(const xtablemaker_para_t & table_para, const xblock_consensus_para_t & cs_para, int32_t & error_code) {
     // TODO(jimmy)
-    XMETRICS_TIME_RECORD("cons_tableblock_verfiy_proposal_imp_make_empty_table");
+    XMETRICS_TIME_RECORD("cons_make_emptytable_cost");
 
     // reset justify cert hash para
     const xblock_ptr_t & cert_block = cs_para.get_latest_cert_block();
@@ -497,7 +502,8 @@ bool    xtable_maker_t::load_table_blocks_from_last_full(const xblock_ptr_t & pr
 xblock_ptr_t xtable_maker_t::make_proposal(xtablemaker_para_t & table_para,
                                            const data::xblock_consensus_para_t & cs_para,
                                            xtablemaker_result_t & tablemaker_result) {
-    XMETRICS_TIMER(metrics::cons_tablemaker_make_proposal_tick);
+    // XMETRICS_TIMER(metrics::cons_tablemaker_make_proposal_tick);
+    XMETRICS_TIME_RECORD("cons_tablemaker_make_proposal_cost");
     std::lock_guard<std::mutex> l(m_lock);
     // check table maker state
     const xblock_ptr_t & latest_cert_block = cs_para.get_latest_cert_block();
@@ -539,7 +545,8 @@ xblock_ptr_t xtable_maker_t::make_proposal(xtablemaker_para_t & table_para,
 }
 
 int32_t xtable_maker_t::verify_proposal(base::xvblock_t* proposal_block, const xtablemaker_para_t & table_para, const data::xblock_consensus_para_t & cs_para) {
-    XMETRICS_TIMER(metrics::cons_tablemaker_verify_proposal_tick);
+    // XMETRICS_TIMER(metrics::cons_tablemaker_verify_proposal_tick);
+    XMETRICS_TIME_RECORD("cons_tablemaker_verify_proposal_cost");
     std::lock_guard<std::mutex> l(m_lock);
 
     // check table maker state
@@ -600,6 +607,7 @@ int32_t xtable_maker_t::verify_proposal(base::xvblock_t* proposal_block, const x
 }
 
 bool xtable_maker_t::verify_proposal_with_local(base::xvblock_t *proposal_block, base::xvblock_t *local_block) const {
+#if 0
     const std::vector<base::xventity_t*> & _proposal_table_inentitys = proposal_block->get_input()->get_entitys();
     const std::vector<base::xventity_t*> & _local_table_inentitys = local_block->get_input()->get_entitys();
     if (_proposal_table_inentitys.size() != _local_table_inentitys.size()) {
@@ -647,6 +655,7 @@ bool xtable_maker_t::verify_proposal_with_local(base::xvblock_t *proposal_block,
             return false;
         }
     }
+#endif
 
     if (local_block->get_input_hash() != proposal_block->get_input_hash()) {
         xwarn("xtable_maker_t::verify_proposal_with_local fail-input hash not match. %s %s",
@@ -681,14 +690,29 @@ bool xtable_maker_t::verify_proposal_with_local(base::xvblock_t *proposal_block,
             ((data::xblock_t*)local_block)->dump_cert().c_str());
         return false;
     }
-    bool bret = proposal_block->set_output_resources(local_block->get_output()->get_resources_data());
+
+    bool bret = false;
+    if (proposal_block->get_block_class() != base::enum_xvblock_class_nil) {
+        std::string vinput_bin;
+        local_block->get_input()->serialize_to_string(vinput_bin);
+        std::string voutput_bin;
+        local_block->get_output()->serialize_to_string(voutput_bin);
+
+        bret = proposal_block->set_input_output(vinput_bin, voutput_bin);
+        if (!bret) {
+            xerror("xtable_maker_t::verify_proposal_with_local fail-set proposal block input fail");
+            return false;
+        }        
+    }
+
+    bret = proposal_block->set_output_resources(local_block->get_output()->get_resources_data());
     if (!bret) {
-        xerror("xtable_maker_t::verify_proposal_with_local fail-set proposal block output fail");
+        xerror("xtable_maker_t::verify_proposal_with_local fail-set proposal block output resource fail");
         return false;
     }
     bret = proposal_block->set_input_resources(local_block->get_input()->get_resources_data());
     if (!bret) {
-        xerror("xtable_maker_t::verify_proposal_with_local fail-set proposal block input fail");
+        xerror("xtable_maker_t::verify_proposal_with_local fail-set proposal block input resource fail");
         return false;
     }
     bret = proposal_block->set_output_offdata(local_block->get_output_offdata());

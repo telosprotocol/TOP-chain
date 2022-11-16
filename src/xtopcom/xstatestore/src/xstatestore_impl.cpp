@@ -229,6 +229,8 @@ bool xstatestore_impl_t::get_accountindex_from_latest_connected_table(common::xa
 }
 
 bool xstatestore_impl_t::get_accountindex_from_table_block(common::xaccount_address_t const & account_address, base::xvblock_t * table_block, base::xaccount_index_t & account_index) const {
+    // todo: call too much, remote later.
+    XMETRICS_TIME_RECORD("statestore_getindex_cost");
     xtablestate_ext_ptr_t tablestate_ext = get_tablestate_ext_from_block(table_block);
     if (nullptr != tablestate_ext) {
         std::error_code ec;

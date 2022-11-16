@@ -227,6 +227,7 @@ void     xtablebuilder_t::make_table_block_para(const std::vector<std::pair<xblo
 }
 
 data::xblock_ptr_t  xtablebuilder_t::make_light_block(const data::xblock_ptr_t & prev_block, const data::xblock_consensus_para_t & cs_para, data::xtable_block_para_t const& lighttable_para) {
+    XMETRICS_TIME_RECORD("cons_build_light_table_cost");
     std::shared_ptr<base::xvblockmaker_t> vbmaker = nullptr;
     if (top::chain_fork::xutility_t::is_forked(fork_points::v1_7_0_block_fork_point, cs_para.get_clock())) {
         vbmaker = std::make_shared<data::xtable_build2_t>(prev_block.get(), lighttable_para, cs_para);

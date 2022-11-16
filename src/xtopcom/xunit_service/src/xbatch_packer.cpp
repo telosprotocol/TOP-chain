@@ -25,11 +25,15 @@
 #include <cinttypes>
 NS_BEG2(top, xunit_service)
 
-#define MIN_TRANSACTION_NUM_FOR_HIGH_TPS (30)
-#define MIN_TRANSACTION_NUM_FOR_MIDDLE_TPS (20)
-#define MIN_TRANSACTION_NUM_FOR_LOW_TPS (10)
+// #define MIN_TRANSACTION_NUM_FOR_HIGH_TPS (30)
+// #define MIN_TRANSACTION_NUM_FOR_MIDDLE_TPS (20)
+// #define MIN_TRANSACTION_NUM_FOR_LOW_TPS (10)
 
-#define TRY_MAKE_BLOCK_TIMER_INTERVAL (30)
+#define MIN_TRANSACTION_NUM_FOR_HIGH_TPS (180)
+#define MIN_TRANSACTION_NUM_FOR_MIDDLE_TPS (100)
+#define MIN_TRANSACTION_NUM_FOR_LOW_TPS (50)
+
+#define TRY_MAKE_BLOCK_TIMER_INTERVAL (50)
 #define TRY_HIGH_TPS_TIME_WINDOW (250)
 #define TRY_MIDDLE_AND_HIGH_TPS_TIME_WINDOW (500)
 #define TRY_LOW_MIDDLE_AND_HIGH_TPS_TIME_WINDOW (750)
@@ -619,9 +623,9 @@ bool xbatch_packer::reset_xip_addr(const xvip2_t & new_addr) {
 }
 
 bool xbatch_packer::set_fade_xip_addr(const xvip2_t & new_addr) {
-    if (xcons_utl::xip_equals(new_addr, get_xip2_addr())) {
-        reset_leader_info();  // fade xip should not be leader
-    }
+    // if (xcons_utl::xip_equals(new_addr, get_xip2_addr())) {
+    //     reset_leader_info();  // fade xip should not be leader
+    // }
     xdbg("xbatch_packer::set_fade_xip_addr set fade xip from %s to %s", xcons_utl::xip_to_hex(m_faded_xip2).c_str(), xcons_utl::xip_to_hex(new_addr).c_str());
     m_faded_xip2 = new_addr;
     return true;

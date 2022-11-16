@@ -24,6 +24,8 @@ namespace top
             enum_consensus_msg_type_sync_reqt   = 5, //request  sync command
             enum_consensus_msg_type_sync_resp   = 6, //response sync command
             enum_consensus_msg_type_vote_report = 7, //diagnostic or debug purpose
+            enum_consensus_msg_type_proposal_v2 = 8, //allow nil
+            enum_consensus_msg_type_sync_resp_v2= 9, //response sync command v2
             
             enum_xclockview_msg_type_clock_reqt = 11, //request pull clock certificaiton from peer
             enum_xclockview_msg_type_clock_resp = 12, //respond to send clock certification to peer
@@ -103,6 +105,35 @@ namespace top
             std::string         m_input_resource;            //input'resource for  proposal block
             std::string         m_output_resource;           //output'resource for proposal  block
             std::string         m_last_block_cert;           //the cert for last block
+        };
+
+        class xproposal_msg_v2_t : public xcsmsg_t
+        {
+        public:
+            static enum_consensus_msg_type  get_msg_type() {return enum_consensus_msg_type_proposal_v2;}
+        public:
+            xproposal_msg_v2_t();
+            xproposal_msg_v2_t(base::xvblock_t & proposal);
+     
+            virtual ~xproposal_msg_v2_t();
+        private:
+            xproposal_msg_v2_t(const xproposal_msg_v2_t&);
+            xproposal_msg_v2_t & operator = (const xproposal_msg_v2_t&);
+        public:
+            const std::string & get_block_object()    const {return m_block_object;}
+            const std::string & get_input_proposal()  const {return m_input_proposal;}
+ 
+            const uint16_t      get_expired_ms() const {return m_expired_ms;}
+            void                set_expired_ms(const uint16_t _expired_ms) {m_expired_ms = _expired_ms;}
+        protected:
+            //return how many bytes readout /writed in, return < 0(enum_xerror_code_type) when have error
+            virtual int32_t     do_write(base::xstream_t & stream) override;
+            virtual int32_t     do_read(base::xstream_t & stream)  override;
+        private:
+            uint8_t             m_version{0};
+            uint16_t            m_expired_ms;                //duration(ms) to expire for this proposal
+            std::string         m_block_object;              //header and certificate of this proposal block
+            std::string         m_input_proposal;            //input'proposal for proposal block
         };
         
         class xvote_msg_t : public xcsmsg_t
@@ -298,6 +329,47 @@ namespace top
         private:
             uint16_t            m_sync_targets;    //responds targets
             uint16_t            m_reserved;        //reserved for future
+            uint32_t            m_sync_cookie;     //token for sync
+            
+            std::string         m_block_object;    //must have as proof,= vblock 'serialized data include header and certification
+            std::string         m_input_resource;  //block 'input data,it might be nil  according m_sync_targets
+            std::string         m_output_resource; //block 'outut data,it might be nil  according m_sync_targets
+            std::string         m_output_offdata;
+        };
+
+        class xsync_respond_v2_t : public xcsmsg_t
+        {
+        public:
+            static enum_consensus_msg_type  get_msg_type() {return enum_consensus_msg_type_sync_resp_v2;}
+        public:
+            xsync_respond_v2_t();
+            xsync_respond_v2_t(const uint32_t targets,const uint32_t sync_cookie);
+            virtual ~xsync_respond_v2_t();
+        private:
+            xsync_respond_v2_t(const xsync_respond_v2_t&);
+            xsync_respond_v2_t & operator = (const xsync_respond_v2_t&);
+            
+        public:
+            const uint32_t        get_sync_targets()    const {return m_sync_targets;}//refer enum_xsync_requst_target
+            const uint32_t        get_sync_cookie()     const {return m_sync_cookie;}
+            const std::string&    get_block_object()    const {return m_block_object;}
+            void                  set_block_object(const std::string & object_in){m_block_object = object_in;}
+            
+            const std::string&    get_input_resource()     const {return m_input_resource;}
+            const std::string&    get_output_resource()    const {return m_output_resource;}
+            const std::string&    get_output_offdata()    const {return m_output_offdata;}
+            void                  set_input_resource(const std::string & input){ m_input_resource = input;}
+            void                  set_output_resource(const std::string & output){ m_output_resource = output;}
+            void                  set_output_offdata(const std::string & subblocks){ m_output_offdata = subblocks;}
+
+
+        protected:
+            //return how many bytes readout /writed in, return < 0(enum_xerror_code_type) when have error
+            virtual int32_t     do_write(base::xstream_t & stream) override;
+            virtual int32_t     do_read(base::xstream_t & stream)  override;
+        private:
+            uint8_t             m_version;
+            uint16_t            m_sync_targets;    //responds targets
             uint32_t            m_sync_cookie;     //token for sync
             
             std::string         m_block_object;    //must have as proof,= vblock 'serialized data include header and certification

@@ -1842,7 +1842,46 @@ namespace top
             if(old_ptr != NULL)
                 old_ptr->release_ref();
         }
-        
+
+        bool   xvblock_t::set_input_output(const std::string & input_data, const std::string & output_data) {
+            if (get_block_class() == base::enum_xvblock_class_nil) {
+                return true;
+            }
+            std::string vheader_bin;
+            get_header()->serialize_to_string(vheader_bin);
+
+            const std::string vheader_input_output = vheader_bin + input_data + output_data;
+            const std::string vheader_input_output_hash = get_cert()->hash(vheader_input_output);
+            if(get_cert()->get_header_hash() != vheader_input_output_hash)
+            {
+                xerror("xvblock_t::set_input_output, xvheader_t not match with xvqcert,[vheader+vinput+ voutput=%s] but ask %s",vheader_input_output_hash.c_str(), get_header_hash().c_str());
+                return false;
+            }
+
+            if (m_vinput_ptr != nullptr) {
+                m_vinput_ptr->close();
+                m_vinput_ptr->release_ref();
+            }
+            xvinput_t*  vinput_ptr = xvblock_t::create_input_object(input_data);
+            xassert(vinput_ptr != NULL); //should has value
+            if(vinput_ptr != NULL)
+            {
+                m_vinput_ptr = vinput_ptr;
+            }
+
+            if (m_voutput_ptr != nullptr) {
+                m_voutput_ptr->close();
+                m_voutput_ptr->release_ref();
+            }
+            xvoutput_t*  voutput_ptr = xvblock_t::create_output_object(output_data);
+            xassert(voutput_ptr != NULL); //should has value
+            if(voutput_ptr != NULL)
+            {
+                m_voutput_ptr = voutput_ptr;
+            }
+            return true;
+        }
+
         bool   xvblock_t::set_input_resources(const std::string & raw_resource_data)//check whether match hash first
         {
             if(get_input() == NULL)
@@ -2105,8 +2144,12 @@ namespace top
     
         bool  xvblock_t::is_input_ready(bool full_check_resources) const                  //nil-block return true because it dont need input
         {
-            if( (get_header() == NULL) || (get_cert() == NULL) || (get_input() == NULL) ) {
+            if( (get_header() == NULL) || (get_cert() == NULL) /*|| (get_input() == NULL)*/ ) {
                 xassert(0); //it should not happen,just put assert in case
+                return false;
+            }
+
+            if (get_input() == NULL) {
                 return false;
             }
             
@@ -2135,8 +2178,12 @@ namespace top
         
         bool  xvblock_t::is_output_ready(bool full_check_resources) const                  //nil-block return true because it dont need input
         {
-            if( (get_header() == NULL) || (get_cert() == NULL) || (get_output() == NULL)) {
+            if( (get_header() == NULL) || (get_cert() == NULL) /*|| (get_output() == NULL)*/) {
                 xassert(0); //it should not happen,just put assert in case
+                return false;
+            }
+
+            if (get_output() == NULL) {
                 return false;
             }
             
@@ -2193,7 +2240,7 @@ namespace top
         
         bool  xvblock_t::is_valid(bool deep_test) const  //just check height/view/hash/account and last_hash/last_qc_hash
         {
-            if( (get_header() == NULL) || (get_cert() == NULL) || (get_input() == NULL) || (get_output() == NULL)){
+            if( (get_header() == NULL) || (get_cert() == NULL) /* || (get_input() == NULL) || (get_output() == NULL)*/){
                 xassert(0);
                 return false;
             }
@@ -2307,6 +2354,10 @@ namespace top
         {
             return xdataobj_t::serialize_to(stream);
         }
+
+        void      xvblock_t::set_not_serialize_input_output(bool value) {
+            m_not_serialize_input_output = value;
+        }
     
         int32_t   xvblock_t::serialize_from(xstream_t & stream)//not allow subclass change behavior
         {
@@ -2329,7 +2380,8 @@ namespace top
             stream.write_compact_var(vqcert_bin);
         
             stream.write_compact_var(vheader_bin);
-            if(get_block_class() != enum_xvblock_class_nil)
+            xdbg("xvblock_t::do_write block:%s m_not_serialize_input_output:%d", dump().c_str(), m_not_serialize_input_output);
+            if(get_block_class() != enum_xvblock_class_nil && !m_not_serialize_input_output)
             {
                 std::string vinput_bin;
                 get_input()->serialize_to_string(vinput_bin);
@@ -2442,6 +2494,10 @@ namespace top
             std::string voutput_bin;
             if(get_block_class() != enum_xvblock_class_nil)
             {
+                if (stream.size() == 0) {
+                    xdbg("xvblock_t::do_read non nil block but no input output data.");
+                    return begin_size - stream.size();
+                }
                 stream.read_compact_var(vinput_bin);
                 xassert(vinput_bin.empty() == false);
                 if(vinput_bin.empty())
@@ -2485,7 +2541,6 @@ namespace top
                     return enum_xerror_code_bad_block;
                 }
             }
-            
             //------------------------------create input/output object------------------------------//
             if(vinput_bin.empty() == false)
             {
@@ -2719,7 +2774,7 @@ namespace top
         }
     
         //create a  xvheader_t from bin data(could be from DB or from network)
-        base::xvblock_t*  xvblock_t::create_block_object(const std::string & vblock_serialized_data)
+        base::xvblock_t*  xvblock_t::create_block_object(const std::string & vblock_serialized_data, bool check_input_output)
         {
             if(vblock_serialized_data.empty()) //check first
                 return NULL;
@@ -2745,13 +2800,20 @@ namespace top
                 _data_obj_ptr->release_ref();
                 return NULL;
             }
-            if((block_ptr->get_input() == NULL) || (block_ptr->get_output() == NULL) )
+            if(check_input_output && ((block_ptr->get_input() == NULL) || (block_ptr->get_output() == NULL)))
             {
                 xerror("xvblock_t::create_block_object,bad vblock_serialized_data");
                 _data_obj_ptr->release_ref();
                 return NULL;
             }
-            
+
+            if (check_input_output && block_ptr->get_block_class() != enum_xvblock_class_nil) {
+                if (block_ptr->get_input()->get_action_count() == 0) {
+                    _data_obj_ptr->release_ref();
+                    return NULL;
+                }
+            }
+
             block_ptr->dump2(); //genereate dump information before return, to improve performance
             return block_ptr;
         }
