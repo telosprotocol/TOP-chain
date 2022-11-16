@@ -79,7 +79,7 @@ namespace top
             m_expired_ms = 15000; //as default 15 seconds
             
             // only take proposal. proposal -> input ->output
-            m_input_proposal = proposal.get_input()->get_proposal();
+            m_input_proposal = proposal.get_proposal();
 //            m_input_resource  = proposal.get_input()->get_resources_data();
 //            m_output_resource = proposal.get_output()->get_resources_data();
             
@@ -118,6 +118,56 @@ namespace top
             stream >> m_input_proposal;
             stream >> m_input_resource;
             stream >> m_output_resource;
+ 
+            return (begin_size - stream.size());
+        }
+        
+        xproposal_msg_v2_t::xproposal_msg_v2_t()
+        {
+            m_expired_ms = 15000; //as default 15 seconds
+        }
+        
+        //using slow path
+        xproposal_msg_v2_t::xproposal_msg_v2_t(base::xvblock_t & proposal)
+        {
+            m_expired_ms = 15000; //as default 15 seconds
+            
+            // only take proposal. proposal -> input ->output
+            m_input_proposal = proposal.get_proposal();
+
+            proposal.set_not_serialize_input_output(true);
+            proposal.serialize_to_string(m_block_object);
+            proposal.set_not_serialize_input_output(false);
+        }
+ 
+        xproposal_msg_v2_t::~xproposal_msg_v2_t()
+        {
+        }
+    
+        //return how many bytes readout /writed in, return < 0(enum_xerror_code_type) when have error
+        int32_t     xproposal_msg_v2_t::do_write(base::xstream_t & stream)
+        {
+            const int32_t begin_size = stream.size();
+            
+            stream << m_version;
+            stream << m_expired_ms;
+            stream << m_block_object;
+            stream << m_input_proposal;
+ 
+            return (stream.size() - begin_size);
+        }
+        int32_t     xproposal_msg_v2_t::do_read(base::xstream_t & stream)
+        {
+            const int32_t begin_size = stream.size();
+
+            stream >> m_version;
+            if (m_version != 0) {
+                xassert(false);
+                return -1;
+            }
+            stream >> m_expired_ms;
+            stream >> m_block_object;
+            stream >> m_input_proposal;
  
             return (begin_size - stream.size());
         }
@@ -434,6 +484,62 @@ namespace top
             stream >> m_sync_cookie;
             
             stream.read_short_string(m_block_object);
+            stream >> m_input_resource;
+            stream >> m_output_resource;
+            if ( (m_sync_targets & enum_xsync_target_block_output_offdata) && (stream.size() > 0)) {
+                stream >> m_output_offdata;
+            }
+            
+            return (begin_size - stream.size());
+        }
+
+        xsync_respond_v2_t::xsync_respond_v2_t()
+        {
+            m_version = 0;
+            m_sync_targets = 0;
+        }
+        
+        xsync_respond_v2_t::xsync_respond_v2_t(const uint32_t targets,const uint32_t sync_cookie)
+        {
+            m_version = 0;
+            m_sync_targets      = targets;
+            m_sync_cookie       = sync_cookie;
+        }
+        
+        xsync_respond_v2_t::~xsync_respond_v2_t()
+        {
+        }
+        
+        //return how many bytes readout /writed in, return < 0(enum_xerror_code_type) when have error
+        int32_t     xsync_respond_v2_t::do_write(base::xstream_t & stream)
+        {
+            const int32_t begin_size = stream.size();
+            stream << m_version;
+            stream << m_sync_targets;
+            stream << m_sync_cookie;
+            
+            stream << m_block_object;
+            stream << m_input_resource;
+            stream << m_output_resource;
+            if (m_sync_targets & enum_xsync_target_block_output_offdata) {
+                stream << m_output_offdata;
+            }
+            
+            return (stream.size() - begin_size);
+        }
+        
+        int32_t     xsync_respond_v2_t::do_read(base::xstream_t & stream)
+        {
+            const int32_t begin_size = stream.size();
+            
+            stream >> m_version;
+            if (m_version != 0) {
+                return -1;
+            }
+            stream >> m_sync_targets;
+            stream >> m_sync_cookie;
+            
+            stream >> m_block_object;
             stream >> m_input_resource;
             stream >> m_output_resource;
             if ( (m_sync_targets & enum_xsync_target_block_output_offdata) && (stream.size() > 0)) {

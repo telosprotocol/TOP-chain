@@ -193,6 +193,7 @@ size_t xstatectx_t::do_snapshot() {
 }
 
 void xstatectx_t::do_commit(base::xvblock_t* current_block) {
+    XMETRICS_TIME_RECORD("cons_statectx_commit_cost");
     auto const & state_root_hash = data::xblockextract_t::get_state_root_from_block(current_block);
 
     std::vector<std::pair<data::xunitstate_ptr_t, std::string>> unitstate_units;

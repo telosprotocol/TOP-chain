@@ -4,6 +4,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <cinttypes>
+#include "xchain_fork/xutility.h"
 #include "xconsdriver.h"
 #include "xbase/xutl.h"
 
@@ -309,11 +310,13 @@ namespace top
             {
                 //TODO,add another protection for DDOS ,attacker may broadcast request frequently to eat bandwidth here
                 //add the requester'xip to set ,and filter the duplicated one
-                xsync_respond_t respond_msg(sync_targets,_syncrequest_msg.get_sync_cookie());
 
                 std::string block_object_bin;
+                std::string input_resource;
+                std::string output_resource;
+                std::string output_offdata;
+
                 _local_block->serialize_to_string(block_object_bin);
-                respond_msg.set_block_object(block_object_bin);
 
                 if(sync_targets & enum_xsync_target_block_input)
                 {
@@ -327,7 +330,7 @@ namespace top
                             return enum_xconsensus_error_bad_packet;
                         }
                     }
-                    respond_msg.set_input_resource(_local_block->get_input()->get_resources_data());
+                    input_resource = _local_block->get_input()->get_resources_data();
                 }
                 
                 if(sync_targets & enum_xsync_target_block_output)
@@ -342,7 +345,7 @@ namespace top
                             return enum_xconsensus_error_bad_packet;
                         }
                     }
-                    respond_msg.set_output_resource(_local_block->get_output()->get_resources_data());
+                    output_resource = _local_block->get_output()->get_resources_data();
                 }
 
                 if (sync_targets & enum_xsync_target_block_output_offdata) {
@@ -356,14 +359,33 @@ namespace top
                             return enum_xconsensus_error_bad_packet;
                         }
                     }
-                    respond_msg.set_output_offdata(_local_block->get_output_offdata());
+                    output_offdata = _local_block->get_output_offdata();
                 }
 
                 std::string msg_stream;
-                respond_msg.serialize_to_string(msg_stream);
+                uint8_t msg_type;
+                
+                bool forked = chain_fork::xutility_t::is_forked(fork_points::xbft_msg_upgrade, _local_block->get_clock());
+                if (forked) {
+                    xsync_respond_t respond_msg(sync_targets,_syncrequest_msg.get_sync_cookie());
+                    respond_msg.set_block_object(block_object_bin);
+                    respond_msg.set_input_resource(input_resource);
+                    respond_msg.set_output_resource(output_resource);
+                    respond_msg.set_output_offdata(output_offdata);
+                    respond_msg.serialize_to_string(msg_stream);
+                    msg_type = xsync_respond_t::get_msg_type();                    
+                } else {
+                    xsync_respond_v2_t respond_msg(sync_targets,_syncrequest_msg.get_sync_cookie());
+                    respond_msg.set_block_object(block_object_bin);
+                    respond_msg.set_input_resource(input_resource);
+                    respond_msg.set_output_resource(output_resource);
+                    respond_msg.set_output_offdata(output_offdata);
+                    respond_msg.serialize_to_string(msg_stream);
+                    msg_type = xsync_respond_v2_t::get_msg_type();    
+                }
 
                 xinfo("xBFTSyncdrv::handle_sync_request_msg,deliver a block for packet=%s,cert-block=%s,size=%zu,at node=0x%llx",packet.dump().c_str(),_local_block->dump().c_str(),msg_stream.size(), get_xip2_low_addr());
-                fire_pdu_event_up(xsync_respond_t::get_msg_type(), msg_stream, packet.get_msg_nonce() + 1, to_addr, from_addr, _local_block);
+                fire_pdu_event_up(msg_type, msg_stream, packet.get_msg_nonce() + 1, to_addr, from_addr, _local_block);
             }
             else
             {
@@ -377,12 +399,36 @@ namespace top
             //step#0: verified that replica and leader are valid by from_addr and to_addr at top layer like xconsnetwork or xconsnode_t. here just consider pass.
             base::xcspdu_t & packet = event_obj->_packet;
             //step#1: /do sanity check and verify proposal packet first, also do check whether behind too much
-            xsync_respond_t _sync_respond_msg;
-            if(safe_check_for_sync_respond_packet(packet,_sync_respond_msg) == false)
-            {
-                xwarn("xBFTSyncdrv::handle_sync_respond_msg,fail-safe_check_for_sync_respond_packet for packet=%s,at node=0x%llx",packet.dump().c_str(),get_xip2_low_addr());
-                return enum_xconsensus_error_bad_packet;
+
+            std::string block_object_bin;
+            std::string input_resource;
+            std::string output_resource;
+            std::string output_offdata;
+
+            if (event_obj->_packet.get_msg_type() == enum_consensus_msg_type_sync_resp) {
+                xsync_respond_t _sync_respond_msg;
+                if(safe_check_for_sync_respond_packet(packet,_sync_respond_msg) == false)
+                {
+                    xwarn("xBFTSyncdrv::handle_sync_respond_msg,fail-safe_check_for_sync_respond_packet for packet=%s,at node=0x%llx",packet.dump().c_str(),get_xip2_low_addr());
+                    return enum_xconsensus_error_bad_packet;
+                }
+                block_object_bin = _sync_respond_msg.get_block_object();
+                input_resource = _sync_respond_msg.get_input_resource();
+                output_resource = _sync_respond_msg.get_output_resource();
+                output_offdata = _sync_respond_msg.get_output_offdata();
+            } else {
+                xsync_respond_v2_t _sync_respond_msg;
+                if(safe_check_for_sync_respond_v2_packet(packet,_sync_respond_msg) == false)
+                {
+                    xwarn("xBFTSyncdrv::handle_sync_respond_msg,fail-safe_check_for_sync_respond_v2_packet for packet=%s,at node=0x%llx",packet.dump().c_str(),get_xip2_low_addr());
+                    return enum_xconsensus_error_bad_packet;
+                }
+                block_object_bin = _sync_respond_msg.get_block_object();
+                input_resource = _sync_respond_msg.get_input_resource();
+                output_resource = _sync_respond_msg.get_output_resource();
+                output_offdata = _sync_respond_msg.get_output_offdata();
             }
+
             //one view# just only have one cert
             {
                 base::xvblock_t* _local_cert_block = find_cert_block(packet.get_block_viewid());
@@ -403,25 +449,25 @@ namespace top
             }
 
             //step#2: veriry header/cert, input and output are consist with each others
-            base::xauto_ptr<base::xvblock_t> _sync_block(base::xvblock_t::create_block_object(_sync_respond_msg.get_block_object()));
+            base::xauto_ptr<base::xvblock_t> _sync_block(base::xvblock_t::create_block_object(block_object_bin));
             if( (!_sync_block) || (false == _sync_block->is_valid(false)) )
             {
                 xerror("xBFTSyncdrv::handle_sync_respond_msg,fail-invalid block from packet=%s,at node=0x%llx",packet.dump().c_str(),get_xip2_low_addr());
                 return enum_xconsensus_error_bad_block;
             }
             //then try to merge to local syncing request
-            if(_sync_block->set_input_resources(_sync_respond_msg.get_input_resource()) == false)//not match input hash  in header
+            if(_sync_block->set_input_resources(input_resource) == false)//not match input hash  in header
             {
                 xerror("xBFTSyncdrv::handle_sync_respond_msg,fail-block of bad input from packet=%s vs sync_block=%s,at node=0x%llx",packet.dump().c_str(),_sync_block->dump().c_str(),get_xip2_low_addr());
                 return enum_xconsensus_error_bad_block;
             }
-            if(_sync_block->set_output_resources(_sync_respond_msg.get_output_resource()) == false)//not match output hash in cert
+            if(_sync_block->set_output_resources(output_resource) == false)//not match output hash in cert
             {
                 xerror("xBFTSyncdrv::handle_sync_respond_msg,fail-block of bad output from packet=%s vs sync_block=%s,at node=0x%llx",packet.dump().c_str(),_sync_block->dump().c_str(),get_xip2_low_addr());
                 return enum_xconsensus_error_bad_block;
             }
 
-            if (_sync_block->set_output_offdata(_sync_respond_msg.get_output_offdata()) == false) {
+            if (_sync_block->set_output_offdata(output_offdata) == false) {
                 xerror("xBFTSyncdrv::handle_sync_respond_msg,fail-block of bad output offdata from packet=%s vs sync_block=%s,at node=0x%llx",packet.dump().c_str(),_sync_block->dump().c_str(),get_xip2_low_addr());
                 return enum_xconsensus_error_bad_block;                    
             }

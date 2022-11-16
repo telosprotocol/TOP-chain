@@ -109,6 +109,7 @@ const xcons_transaction_ptr_t xtxpool_t::pop_tx(const tx_info_t & txinfo) {
 }
 
 xpack_resource xtxpool_t::get_pack_resource(const xtxs_pack_para_t & pack_para) {
+    XMETRICS_TIME_RECORD("txpool_get_pack_resource_cost");
     auto table = get_txpool_table_by_addr(pack_para.get_table_addr());
     if (table == nullptr) {
         return {};
