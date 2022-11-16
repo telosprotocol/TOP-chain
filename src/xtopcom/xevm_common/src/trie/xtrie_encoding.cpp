@@ -107,7 +107,34 @@ std::size_t prefixLen(xbytes_t const & a, xbytes_t const & b) {
 
 // hasTerm returns whether a hex key has the terminator flag.
 bool hasTerm(xbytes_t const & s) {
-    return (s.size() > 0) && (s[s.size() - 1] == 16);
+    return (!s.empty()) && (s[s.size() - 1] == 16);
+}
+
+xbytes_t compact_to_hex(gsl::span<xbyte_t const> const compact) {
+    if (compact.empty()) {
+        return {};
+    }
+
+    auto base = key_bytes_to_hex(compact);
+
+    // delete terminator flag
+    if (base[0] < 2) {
+        base = {base.begin(), base.end() - 1};
+    }
+
+    auto const chop = 2 - (base[0] & 1);
+    return {base.begin() + chop, base.end()};
+}
+
+xbytes_t key_bytes_to_hex(gsl::span<xbyte_t const> const str) {
+    std::size_t const l = str.size() * 2 + 1;
+    auto nibbles = xbytes_t(l);
+    for (std::size_t index = 0; index < str.size(); ++index) {
+        nibbles[2 * index] = str[index] / 16;
+        nibbles[2 * index + 1] = str[index] % 16;
+    }
+    nibbles[l - 1] = 16;
+    return nibbles;
 }
 
 NS_END3
