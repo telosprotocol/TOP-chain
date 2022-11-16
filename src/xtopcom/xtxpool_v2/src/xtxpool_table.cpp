@@ -578,7 +578,7 @@ bool xtxpool_table_t::verify_send_tx_after_get_txs(const xcons_transaction_ptr_t
             return false;
         }
 
-        if (xverifier::xwhitelist_utl::is_white_address(tx->get_source_addr())) {
+        if (xverifier::xwhitelist_utl::is_white_address_limit(tx->get_source_addr())) {
             xwarn("xtxpool_table_t::verify_send_tx_after_get_txs fail-whitelist limit address,tx:%s", tx->dump().c_str());
             return false;
         }

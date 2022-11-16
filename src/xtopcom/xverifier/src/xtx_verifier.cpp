@@ -340,7 +340,7 @@ int32_t xtx_verifier::verify_send_tx_validation(data::xtransaction_t const * trx
         return xverifier_error::xverifier_error_tx_blacklist_invalid;
     }
 
-    if (xverifier::xwhitelist_utl::is_white_address(trx_ptr->get_source_addr())) {
+    if (xverifier::xwhitelist_utl::is_white_address_limit(trx_ptr->get_source_addr())) {
         xwarn("[xtx_verifier::verify_send_tx_validation] whitelist limit address,tx:%s", trx_ptr->dump().c_str());
         return xverifier_error::xverifier_error_tx_whitelist_invalid;
     }

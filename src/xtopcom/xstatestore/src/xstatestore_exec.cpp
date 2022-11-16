@@ -649,7 +649,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_tab
         return nullptr;            
     }
 
-    xinfo("xstatestore_executor_t::make_state_from_prev_state_and_table succ,block=%s",current_block->dump().c_str());
+    xinfo("xstatestore_executor_t::make_state_from_prev_state_and_table succ,block=%s,has_other_node=%d",current_block->dump().c_str(),base::xvchain_t::instance().has_other_node());
     return tablestate;
 }
 

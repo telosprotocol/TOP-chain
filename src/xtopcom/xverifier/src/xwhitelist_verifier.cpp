@@ -9,19 +9,21 @@
 namespace top {
     namespace xverifier {
 
-        bool xwhitelist_utl::is_white_address(std::string const& source_addr) {
+        bool xwhitelist_utl::is_white_address_limit(std::string const& source_addr) {
+            // 1. if whitelist not enable, it should not be limited
             if (false == is_whitelist_enable()) {
                 return false;
-            }            
+            }
+            // 2. if address in whitelist, it should not be limited
             auto write_addrs = whitelist_config();
-
             if (!write_addrs.empty()) {
                 if (std::find(write_addrs.begin(), write_addrs.end(), source_addr) != std::end(write_addrs)) {
-                    return true;
+                    return false;
                 }
-                xdbg("xwhitelist_utl::is_white_address not match white addrs. %zu, addr=%s", write_addrs.size(), source_addr.c_str());
             }
-            return false;
+            // 3. otherwise, it should be limited
+            xdbg("xwhitelist_utl::is_white_address_limit not match white addrs. %zu, addr=%s", write_addrs.size(), source_addr.c_str());
+            return true;
         }
 
         bool xwhitelist_utl::is_whitelist_enable() {

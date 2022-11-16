@@ -83,8 +83,9 @@ TEST_F(test_whitelist, config_set_get_some_addrs) {
     ASSERT_EQ(200, xverifier::xwhitelist_utl::whitelist_config().size());    
 }
 
-TEST_F(test_whitelist, is_white_address_toggle) {
+TEST_F(test_whitelist, is_white_address_limit_toggle) {
     clear_white_config();
+    enable_toggle_whitelist(true, true);
 
     std::vector<std::string> addrs;
     for (uint32_t i=0;i<100;i++) {
@@ -93,7 +94,7 @@ TEST_F(test_whitelist, is_white_address_toggle) {
         addrs.push_back(addr);
     }
     for (auto & addr : addrs) {
-        ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address(addr));
+        ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr));
     }
 
     for (uint32_t i=0;i<100;i++) {
@@ -102,28 +103,69 @@ TEST_F(test_whitelist, is_white_address_toggle) {
         addrs.push_back(addr);
     }
     for (auto & addr : addrs) {
-        ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address(addr));
+        ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr));
     }    
 
-    enable_toggle_whitelist(true, true);
-    for (auto & addr : addrs) {
-        ASSERT_TRUE(xverifier::xwhitelist_utl::is_white_address(addr));
+    std::vector<std::string> addrs2;
+    for (uint32_t i=0;i<100;i++) {
+        std::string addr = "T8000098e61050e7fb920ab57a441722cbb5fb161b77" + std::to_string(i);
+        addrs2.push_back(addr);
     }
+    for (auto & addr : addrs2) {
+        ASSERT_TRUE(xverifier::xwhitelist_utl::is_white_address_limit(addr));
+    }    
+
     enable_toggle_whitelist(false, true);
     for (auto & addr : addrs) {
-        ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address(addr));
-    }
+        ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr));
+    }    
+    for (auto & addr : addrs2) {
+        ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr));
+    }        
+}
+
+TEST_F(test_whitelist, is_white_address_limit_basic) {
+    clear_white_config();
+{
+    std::string addr = "T8000098e61050e7fb920ab57a441722cbb5fb161b990";
+    std::string addr2 = "T8000098e61050e7fb920ab57a441722cbb5fb161b991";
+    add_onchain_white_config(addr);
+    ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr));
+    ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr2));
     enable_toggle_whitelist(true, false);
-    for (auto & addr : addrs) {
-        ASSERT_TRUE(xverifier::xwhitelist_utl::is_white_address(addr));
-    }
+    ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr));
+    ASSERT_TRUE(xverifier::xwhitelist_utl::is_white_address_limit(addr2));
     enable_toggle_whitelist(false, false);
-    for (auto & addr : addrs) {
-        ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address(addr));
-    }    
+    ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr));
+    ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr2));    
     enable_toggle_whitelist(true, true);
+    ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr));
+    ASSERT_TRUE(xverifier::xwhitelist_utl::is_white_address_limit(addr2));    
+    enable_toggle_whitelist(false, true);
+    ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr));
+    ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr2));    
+}
+
+    clear_white_config();
+{
+    std::string addr = "T8000098e61050e7fb920ab57a441722cbb5fb161b990";
+    std::string addr2 = "T8000098e61050e7fb920ab57a441722cbb5fb161b991";
+    std::string addr1 = "T8000098e61050e7fb920ab57a441722cbb5fb161b992";
+    add_onchain_white_config(addr);
+    add_onchain_white_config(addr1);
+    ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr));
+    ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr2));
     enable_toggle_whitelist(true, false);
-    for (auto & addr : addrs) {
-        ASSERT_TRUE(xverifier::xwhitelist_utl::is_white_address(addr));
-    }    
+    ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr));
+    ASSERT_TRUE(xverifier::xwhitelist_utl::is_white_address_limit(addr2));
+    enable_toggle_whitelist(false, false);
+    ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr));
+    ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr2));    
+    enable_toggle_whitelist(true, true);
+    ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr));
+    ASSERT_TRUE(xverifier::xwhitelist_utl::is_white_address_limit(addr2));    
+    enable_toggle_whitelist(false, true);
+    ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr));
+    ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr2));    
+}
 }

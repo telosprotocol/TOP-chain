@@ -26,7 +26,7 @@ public:
      * @return true  means account addr included in whitelist
      * @return false  means account addr not included in whitelist
      */
-    static bool is_white_address(std::string const& source_addr);
+    static bool is_white_address_limit(std::string const& source_addr);
 
     /// helper
     static std::set<std::string>    whitelist_config();
