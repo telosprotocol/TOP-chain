@@ -527,6 +527,9 @@ TEST_F(test_state_prune, mpt_prune_BENCH) {
         // std::cout << "mpt commit:" << j+1 << std::endl;
         mpt_root_vec.push_back(base_mpt->get_root_hash(ec));
         // std::cout << "mpt get root:" << j+1 << std::endl;
+        if (j%50 == 0) {
+            std::cout << "mpt commit:" << j  << "/" << mpt_all_num << std::endl;
+        }
     }
 
     auto last_keep_mpt_root = mpt_root_vec[mpt_prune_num];
@@ -570,6 +573,9 @@ TEST_F(test_state_prune, mpt_prune_BENCH) {
         // db_read_last = db_read_now;
         if (ec) {
             assert(false);
+        }
+        if (l%50 == 0) {
+            std::cout << "mpt prune:" << l << "/" << mpt_prune_num << std::endl;
         }
     }
     auto t2 = base::xtime_utl::time_now_ms();

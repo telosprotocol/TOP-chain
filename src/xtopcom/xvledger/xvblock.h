@@ -630,7 +630,7 @@ namespace top
             static  const std::string  create_header_path(const std::string & account,const uint64_t height);
 
         public: //create object from serialized data
-            static xvblock_t*          create_block_object(const std::string  & vblock_serialized_data);
+            static xvblock_t*          create_block_object(const std::string  & vblock_serialized_data, bool check_input_output = true);
             static xvheader_t*         create_header_object(const std::string & vheader_serialized_data);
             static xvqcert_t*          create_qcert_object(const std::string  & vqcert_serialized_data);
             static xvinput_t*          create_input_object(const std::string  & vinput_serialized_data);
@@ -741,6 +741,9 @@ namespace top
             bool                        is_full_state_block();  // used for full-block sync
             uint64_t                    get_block_size();
 
+            bool                        set_input(const std::string & input_data);
+            bool                        set_output(const std::string & output_data);
+
             //check whether match hash of resource first
             bool                        set_input_resources(const std::string & raw_resource_data);
             bool                        set_output_resources(const std::string & raw_resource_data);
@@ -794,6 +797,7 @@ namespace top
             virtual int32_t             serialize_from(xstream_t & stream) override final;//not allow subclass change behavior
         public://still public serialize_to
             virtual int32_t             serialize_to(xstream_t & stream) override final; //not allow subclass change behavior
+            void                        set_not_serialize_input_output(bool value);
         private:
             std::string                 m_cert_hash;        //hash(vqcert_bin)
 
@@ -822,6 +826,7 @@ namespace top
             std::string                 m_vote_extend_data;
             std::string                 m_output_offdata;
             std::shared_ptr<xvblock_excontainer_base> m_excontainer{nullptr};
+            bool                        m_not_serialize_input_output{false};
         };
         using xvblock_ptr_t = xobject_ptr_t<base::xvblock_t>;
 
