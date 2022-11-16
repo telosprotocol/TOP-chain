@@ -111,6 +111,7 @@ void xtxmgr_table_t::update_id_state(const tx_info_t & txinfo, base::xtable_shor
 std::vector<xcons_transaction_ptr_t> xtxmgr_table_t::get_ready_txs(const xtxs_pack_para_t & pack_para, const xunconfirm_id_height & unconfirm_id_height) {
     uint32_t confirm_tx_num = 0;
     uint32_t recv_tx_num = 0;
+    xtxpool_info("xtxmgr_table_t::get_ready_txs table:%s in", m_xtable_info->get_table_addr().c_str());
     std::vector<xcons_transaction_ptr_t> ready_txs = m_new_receipt_queue.get_txs(pack_para.get_confirm_and_recv_txs_max_num(),
                                                                                  pack_para.get_confirm_txs_max_num(),
                                                                                  pack_para.get_table_state_highqc()->get_receiptid_state(),

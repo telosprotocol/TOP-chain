@@ -79,6 +79,9 @@ public:
     int32_t check_full() const {
         return m_xtable_info->check_send_tx_reached_upper_limit();
     }
+    const std::string & get_table_addr() const {
+        return m_xtable_info->get_table_addr();
+    }
 
 private:
     xsend_tx_set_t m_tx_set;

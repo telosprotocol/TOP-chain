@@ -226,6 +226,7 @@ const std::vector<xcons_transaction_ptr_t> xsend_tx_queue_t::get_txs(uint32_t ma
     std::vector<std::string> ordered_accounts;
     auto & send_txs = m_send_tx_queue_internal.get_queue();
     uint32_t continuous_tx_num = 0;
+    uint64_t get_index_total_cost = 0;
 
     for (auto it_send_tx = send_txs.begin(); (continuous_tx_num < max_num) && (it_send_tx != send_txs.end()); it_send_tx++) {
         auto & account_addr = it_send_tx->get()->get_tx()->get_source_addr();
@@ -250,7 +251,14 @@ const std::vector<xcons_transaction_ptr_t> xsend_tx_queue_t::get_txs(uint32_t ma
             }
         } else {
             base::xaccount_index_t account_index;
+            uint64_t now = base::xtime_utl::time_now_ms();
             auto ret = statestore::xstatestore_hub_t::instance()->get_accountindex_from_table_block(common::xaccount_address_t(account_addr), cert_block, account_index);
+            // todo: test code! remove later.
+            uint64_t now_1 = base::xtime_utl::time_now_ms();
+            get_index_total_cost += (now_1 - now);
+            if (now_1 >= now + 5) {
+                xtxpool_info("xsend_tx_queue_t::get_txs table:%s get_accountindex_from_table_block cost too much time:%llu", m_send_tx_queue_internal.get_table_addr().c_str(), now_1 - now);
+            }
             if (!ret) {
                 xwarn("xsend_tx_queue_t::get_txs mpt get account index fail account:%s", account_addr.c_str());
                 continue;
@@ -270,6 +278,11 @@ const std::vector<xcons_transaction_ptr_t> xsend_tx_queue_t::get_txs(uint32_t ma
                 xtxpool_dbg("xsend_tx_queue_t::get_txs ordered_accounts size:%u account:%s,nonce:%llu,lower_nonce:%llu", ordered_accounts.size(), account_addr.c_str(), nonce, lower_nonce);
             }
         }
+    }
+
+    // todo: test code! remove later.
+    if (get_index_total_cost >= 10) {
+        xtxpool_info("xsend_tx_queue_t::get_txs table:%s get_accountindex_from_table_block total cost:%llu", m_send_tx_queue_internal.get_table_addr().c_str(), get_index_total_cost);
     }
 
     std::vector<xcons_transaction_ptr_t> ret_txs;
