@@ -190,7 +190,9 @@ void xtop_rec_standby_pool_contract::nodeJoinNetwork2(common::xaccount_address_t
 
     bool new_node{false};
     for (const auto network_id : network_ids) {
-        assert(network_id == common::xnetwork_id_t{ base::enum_test_chain_id } || network_id == common::xnetwork_id_t{ base::enum_main_chain_id });
+        assert(network_id == common::xnetwork_id_t{ base::enum_test_chain_id } ||
+               network_id == common::xnetwork_id_t{ base::enum_main_chain_id } || 
+               network_id == common::xnetwork_id_t{ base::enum_consortium_id } );
 
         if (rec) {
             new_node_info.stake_container[common::xnode_type_t::rec] = stake;
@@ -341,7 +343,8 @@ bool xtop_rec_standby_pool_contract::nodeJoinNetworkImpl(std::string const & pro
     bool new_node{false};
     for (const auto network_id : network_ids) {
         assert(network_id == common::xnetwork_id_t{ base::enum_test_chain_id } ||
-               network_id == common::xnetwork_id_t{ base::enum_main_chain_id });
+               network_id == common::xnetwork_id_t{ base::enum_main_chain_id } ||
+               network_id == common::xnetwork_id_t{ base::enum_consortium_id } );
 
         if (rec) {
             new_node_info.stake_container[common::xnode_type_t::rec] = rec_stake;
@@ -531,7 +534,8 @@ bool xtop_rec_standby_pool_contract::update_standby_result_store(std::map<common
     bool updated{false};
     for (auto & standby_network_result_info : standby_result_store) {
         assert(top::get<common::xnetwork_id_t const>(standby_network_result_info).value() == base::enum_test_chain_id ||
-               top::get<common::xnetwork_id_t const>(standby_network_result_info).value() == base::enum_main_chain_id);
+               top::get<common::xnetwork_id_t const>(standby_network_result_info).value() == base::enum_main_chain_id || 
+               top::get<common::xnetwork_id_t const>(standby_network_result_info).value() == base::enum_consortium_id);
 
         auto & standby_network_storage_result = top::get<election::xstandby_network_storage_result_t>(standby_network_result_info);
         for (auto it = standby_network_storage_result.begin(); it != standby_network_storage_result.end();) {

@@ -207,6 +207,10 @@ public:
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(relay_election_interval);
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_list);
 #endif
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(enable_node_whitelist);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(node_whitelist);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(enable_transaction_whitelist);
+        XADD_ONCHAIN_GOVERNANCE_PARAMETER(transaction_whitelist);
 
 #if defined(XCHAIN_FORKED_BY_DEFAULT) && ((XCHAIN_FORKED_BY_DEFAULT) >= 10900)
         XADD_ONCHAIN_GOVERNANCE_PARAMETER(cross_chain_contract_tx_list);

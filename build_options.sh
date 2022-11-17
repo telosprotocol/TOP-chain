@@ -191,6 +191,10 @@ do
         CMAKE_EXTRA_OPTIONS+=" -DETH2_SEPOLIA=ON"
         echo "BUILD WITH ETH2_SEPOLIA"
     ;;
+    build_consortium)
+        CMAKE_EXTRA_OPTIONS+=" -DXBUILD_CONSORTIUM=ON"
+        echo "Build Consortium testnet"
+    ;;
     *)
         echo "unknown build option: "$option
     ;;
