@@ -134,6 +134,11 @@ void xconfig_register_t::init_static_config() {
 
     XADD_OFFCHAIN_PARAMETER(table_fork_info_interval);
 
+    // consortium parameters
+    XADD_OFFCHAIN_PARAMETER(enable_slash);
+    XADD_OFFCHAIN_PARAMETER(enable_free_tgas);
+    XADD_OFFCHAIN_PARAMETER(evm_token_type); 
+
     m_param_lock.release_write();
 }
 

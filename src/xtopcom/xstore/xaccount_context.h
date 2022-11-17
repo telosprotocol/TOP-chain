@@ -78,6 +78,8 @@ class xaccount_context_t {
     int32_t  update_tgas_contract_recv(uint64_t tgas_usage, const uint32_t deposit, uint64_t& deposit_usage, uint64_t& send_frozen_tgas, uint64_t deal_used_tgas);
     uint64_t get_total_tgas() const ;
     uint64_t get_available_tgas() const ;
+    uint64_t get_total_gas_burn() const { return m_total_gas_burn;}
+    void     cacl_total_gas_burn(uint64_t gas);
 
     int32_t  calc_resource(uint64_t& tgas, uint32_t deposit, uint32_t& used_deposit);
 
@@ -200,6 +202,8 @@ class xaccount_context_t {
 
     std::string         m_current_table_addr;
     uint64_t            m_current_table_commit_height{0};
+
+    uint64_t            m_total_gas_burn{0};
 };
 
 using xaccount_context_ptr_t = std::shared_ptr<xaccount_context_t>;

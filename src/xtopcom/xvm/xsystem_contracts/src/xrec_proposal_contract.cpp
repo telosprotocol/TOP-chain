@@ -105,7 +105,7 @@ void xrec_proposal_contract::submitProposal(const std::string & target,
     case proposal_type::proposal_add_parameter:
         {
             XCONTRACT_ENSURE(not MAP_FIELD_EXIST(ONCHAIN_PARAMS, target), "[xrec_proposal_contract::submitProposal] proposal_add_parameter target already exist");
-            if (target == "whitelist" || target == "blacklist") check_bwlist_proposal(value);
+            if (target == "whitelist" || target == "blacklist"  ||  target == "node_whitelist" || target == "transaction_whitelist") check_bwlist_proposal(value);
         }
 
         break;
@@ -115,13 +115,14 @@ void xrec_proposal_contract::submitProposal(const std::string & target,
     case proposal_type::proposal_update_parameter_incremental_add:
     case proposal_type::proposal_update_parameter_incremental_delete:
         // current only support whitelist/blacklist
-        XCONTRACT_ENSURE(target == "whitelist" || target == "blacklist" || target == "cross_chain_contract_tx_list" || target == "cross_chain_gasprice_list", "[xrec_proposal_contract::submitProposal] current target cannot support proposal_update_parameter_increamental_add/delete");
-        if (target == "whitelist" || target == "blacklist") {
-                check_bwlist_proposal(value);
+        XCONTRACT_ENSURE(target == "whitelist" || target == "blacklist" || target == "cross_chain_contract_tx_list" || target == "cross_chain_gasprice_list" \
+                         || target == "node_whitelist" || target == "transaction_whitelist" , "[xrec_proposal_contract::submitProposal] current target cannot support proposal_update_parameter_increamental_add/delete");
+        if (target == "whitelist" || target == "blacklist" ||  target == "node_whitelist" || target == "transaction_whitelist" ) {
+            check_bwlist_proposal(value);
         } else if (target == "cross_chain_contract_tx_list") {
-                check_cross_chain_contract_tx_list_proposal(value);
+            check_cross_chain_contract_tx_list_proposal(value);
         } else if (target == "cross_chain_gasprice_list") {
-                check_cross_chain_gasprice_list_proposal(value);
+            check_cross_chain_gasprice_list_proposal(value);
         }
 
         break;

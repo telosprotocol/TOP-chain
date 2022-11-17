@@ -109,6 +109,9 @@ public:
         REGISTER_QUERY_METHOD(queryProposal);
         REGISTER_QUERY_METHOD(getLatestTables);
         REGISTER_QUERY_METHOD(getChainId);
+
+        REGISTER_QUERY_METHOD(getConsortiumReward);
+        
         REGISTER_QUERY_METHOD(getCrossReceiptIds);
     }
     void call_method(std::string strMethod, xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
@@ -150,6 +153,8 @@ public:
     void getChainId(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     void getCrossReceiptIds(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
 
+    //consortium function
+    void getConsortiumReward(xJson::Value & js_req, xJson::Value & js_rsp, string & strResult, uint32_t & nErrorCode);
 private:
     void getBlock(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
     void getProperty(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode);
