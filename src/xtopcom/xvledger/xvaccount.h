@@ -368,12 +368,13 @@ namespace top
             static std::string compact_address_from(const std::string & data);
             static bool check_address(const std::string & account_addr, bool isTransaction = false);
             static bool valid_zone_and_subaddr(enum_xchain_zone_index zone_index, uint16_t subaddr);
-            static bool is_unit_address_type(enum_vaccount_addr_type addr_type);
+            static bool is_user_address_type(enum_vaccount_addr_type addr_type);
             static bool is_eth_address_type(enum_vaccount_addr_type addr_type);
             static bool is_table_address_type(enum_vaccount_addr_type addr_type);
             static bool is_contract_address_type(enum_vaccount_addr_type addr_type);
             static bool is_drand_address_type(enum_vaccount_addr_type addr_type);
             static bool is_timer_address_type(enum_vaccount_addr_type addr_type);
+            static bool is_unit_address_type(enum_vaccount_addr_type addr_type);
 
         protected:
             static bool get_ledger_fulladdr_from_account(const std::string & account_addr,uint32_t & ledger_id,uint16_t & ledger_sub_addr,uint32_t & account_index)
