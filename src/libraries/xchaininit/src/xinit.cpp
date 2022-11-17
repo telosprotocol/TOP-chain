@@ -216,16 +216,40 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
     std::string v3_db_path = XGET_CONFIG(db_path) + DB_PATH;
     config_center.set(config::xdb_path_configuration_t::name, v3_db_path);
 
-    return topchain_start(config_file);
+    return topchain_start("", config_file);
 }
 
-int topchain_start(const std::string& config_file) {
+int topchain_start(const std::string& datadir, const std::string& config_file) {
     auto hash_plugin = new xtop_hash_t();
     if (false == create_rootblock(config_file)) {
         return 1;
     }
 
     auto& config_center = top::config::xconfig_register_t::get_instance();
+
+    // load bwlist
+    std::string bwlist_path;
+    std::string dirpath;
+    if (datadir.empty()) {
+        dirpath = ".";  //current dir
+    } else {
+        dirpath = datadir;
+    }
+#ifdef _WIN32
+    bwlist_path = dirpath + "\\bwlist.json"
+#else
+    bwlist_path = dirpath + "/bwlist.json";
+#endif
+    std::map<std::string, std::string> bwlist;
+    auto ret = load_bwlist_content(bwlist_path, bwlist);
+    if (ret) {
+        for (auto const& item: bwlist) {
+            xinfo("bwlist load: key %s, value %s", item.first.c_str(), item.second.c_str());
+            config_center.set(item.first, item.second);
+        }
+    } else {
+        xwarn("load_bwlist_content failed! path=%s", bwlist_path.c_str());  // maybe has no file, it is ok.
+    }
 
     xchain_params chain_params;
     // attention: put chain_params.initconfig_using_configcenter behind config_center
@@ -472,14 +496,12 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
 
     std::string chain_db_path = datadir + DB_PATH;
     std::string log_path;
-    std::string bwlist_path;
+    
 #ifdef _WIN32
     log_path = datadir + "\\log";
-    bwlist_path = datadir + "\\bwlist.json"
     // TODO(smaug) mkdir in windows
 #else
     log_path = datadir + "/log";
-    bwlist_path = datadir + "/bwlist.json";
 
     std::string mk_cmd("mkdir -m 0755 -p ");
     mk_cmd += log_path;
@@ -536,19 +558,7 @@ int topchain_noparams_init(const std::string& pub_key, const std::string& pri_ke
     //init data_path into xvchain instance
     base::xvchain_t::instance().set_data_dir_path(datadir);
 
-    // load bwlist
-    std::map<std::string, std::string> bwlist;
-    auto ret = load_bwlist_content(bwlist_path, bwlist);
-    if (ret) {
-        for (auto const& item: bwlist) {
-            xdbg("key %s, value %s", item.first.c_str(), item.second.c_str());
-            config_center.set(item.first, item.second);
-        }
-    } else {
-        xdbg("load_bwlist_content failed!");
-    }
-
-    return topchain_start("");
+    return topchain_start(datadir, "");
 }
 
 }
