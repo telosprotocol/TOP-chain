@@ -82,7 +82,7 @@ namespace top
         {
             enum_main_chain_id          = 0,      //main chain for TOP asset
             enum_rootbeacon_chain_id    = 128,    //root beacon of TOP platform
-            
+            enum_consortium_id          = 255,     //for consortium
             enum_test_chain_id          = 255,    //for test purpose
             
             //service_chain_id defined as below ,that must >= 256

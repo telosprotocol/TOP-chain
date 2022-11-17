@@ -298,6 +298,10 @@ if (CROSS_TX_DBG)
     add_definitions(-DCROSS_TX_DBG)
 endif()
 
+if (XBUILD_CONSORTIUM)
+    add_definitions(-DXBUILD_CONSORTIUM)
+endif()
+
 if (${CMAKE_SYSTEM_NAME} STREQUAL Linux OR ${CMAKE_SYSTEM_NAME} STREQUAL Darwin)
 #  find_package(PkgConfig REQUIRED)
 

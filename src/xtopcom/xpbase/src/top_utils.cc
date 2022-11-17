@@ -308,5 +308,19 @@ std::string DecodePrivateString(const std::string & pri_key)
     else
         return top::HexDecode(pri_key);
 }
+int SplitString(const std::string & input,const char split_char,std::set<std::string> & values) {
+    if (input.empty())
+        return 0;
 
+    std::string::size_type prev_pos = 0, pos = 0;
+    while((pos = input.find(split_char, pos)) != std::string::npos)
+    {
+        std::string substring( input.substr(prev_pos, pos-prev_pos) );
+        values.insert(substring);
+        prev_pos = ++pos;
+    }
+
+    values.insert(input.substr(prev_pos, pos-prev_pos)); // Last word
+    return 0;    
+}
 }  // namespace top

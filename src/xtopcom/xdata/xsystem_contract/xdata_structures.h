@@ -660,6 +660,30 @@ private:
     std::int32_t do_read(base::xstream_t & stream) override;
 };
 
+
+struct xgroup_cons_reward_t final : public xserializable_based_on<void> {
+    std::string group_address_str;
+    std::map<std::string, uint64_t> m_leader_reward;
+
+    xgroup_cons_reward_t & operator+=(const xgroup_cons_reward_t & adder);
+
+private:
+    /**
+     * @brief write to stream
+     *
+     * @param stream
+     * @return std::int32_t
+     */
+    std::int32_t do_write(base::xstream_t & stream) const override;
+    /**
+     * @brief read from stream
+     *
+     * @param stream
+     * @return std::int32_t
+     */
+    std::int32_t do_read(base::xstream_t & stream) override;
+};
+
 struct xactivation_record final : public xserializable_based_on<void> {
     int activated{0};
     common::xlogic_time_t activation_time{0};

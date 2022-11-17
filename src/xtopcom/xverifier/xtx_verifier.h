@@ -98,10 +98,20 @@ public:
      */
     static int32_t verify_send_tx_legitimacy(data::xtransaction_t const * trx_ptr);
 
+    /**
+     * @brief check account if genesis account
+     * 
+     * @param account 
+     * @return true 
+     * @return false 
+     */
+    static bool  verify_check_genesis_account(const std::string& account);
+    
  private:
     static int32_t verify_burn_tx(data::xtransaction_t const * trx);
     static int32_t verify_local_tx(data::xtransaction_t const * trx);
     static int32_t verify_shard_contract_addr(data::xtransaction_t const * trx_ptr);
+    static bool    verify_register_whitelist(const std::string& account);
 };
 
 
