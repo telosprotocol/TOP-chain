@@ -185,18 +185,18 @@ namespace top
                 std::string msg_stream;
                 uint8_t msg_type;
 
-                bool forked = chain_fork::xutility_t::is_forked(fork_points::xbft_msg_upgrade, proposal->get_clock());
-                if (forked) {
-                    xproposal_msg_v2_t msg(*proposal);
-                    msg.set_expired_ms(_evt_obj->get_expired_ms() * 2);//add addtional seconds for replica
-                    msg.serialize_to_string(msg_stream);
-                    msg_type = xproposal_msg_v2_t::get_msg_type();
-                } else {
+                // bool forked = chain_fork::xutility_t::is_forked(fork_points::xbft_msg_upgrade, proposal->get_clock());
+                // if (forked) {
+                //     xproposal_msg_v2_t msg(*proposal);
+                //     msg.set_expired_ms(_evt_obj->get_expired_ms() * 2);//add addtional seconds for replica
+                //     msg.serialize_to_string(msg_stream);
+                //     msg_type = xproposal_msg_v2_t::get_msg_type();
+                // } else {
                     xproposal_msg_t msg(*proposal,NULL);
                     msg.set_expired_ms(_evt_obj->get_expired_ms() * 2);//add addtional seconds for replica
                     msg.serialize_to_string(msg_stream);
                     msg_type = xproposal_msg_t::get_msg_type();
-                }
+                // }
 
                 //addres of -1 means broadcast to all consensus node,0 means not specified address that upper layer need fillin based on message type
                 xvip2_t broadcast_addr = {(xvip_t)-1,(uint64_t)-1};

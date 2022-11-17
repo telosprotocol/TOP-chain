@@ -483,9 +483,13 @@ bool xproposal_maker_t::update_txpool_txs(const xblock_consensus_para_t & propos
     // get table batch txs for execute and make block
     auto & tablestate_highqc = table_para.get_tablestate();
     // raise pack tx num thresold. notice proposal size will be enlardged.
-    uint16_t all_txs_max_num = 40;  // TODO(jimmy) config paras
-    uint16_t confirm_and_recv_txs_max_num = 35;
-    uint16_t confirm_txs_max_num = 30;
+    // uint16_t all_txs_max_num = 40;  // TODO(jimmy) config paras
+    // uint16_t confirm_and_recv_txs_max_num = 35;
+    // uint16_t confirm_txs_max_num = 30;
+    
+    uint16_t all_txs_max_num = 200;  // TODO(jimmy) config paras
+    uint16_t confirm_and_recv_txs_max_num = 160;
+    uint16_t confirm_txs_max_num = 120;
 
     // TODO(jimmy)  proposal_para.get_table_account() == sys_contract_eth_table_block_addr_with_suffix
     if (proposal_para.get_table_account() == sys_contract_relay_table_block_addr) {
