@@ -345,6 +345,10 @@ enum E_SIMPLE_METRICS_TAG : size_t {
     xsync_recv_archive_blocks_size,
     xsync_recv_query_archive_height,
     xsync_recv_archive_height_list,
+    xsync_block_send_request,
+    xsync_block_recv_response,
+    xsync_block_request_count,
+    xsync_sender_net_succ,
 
     // txpool
     txpool_received_self_send_receipt_num,

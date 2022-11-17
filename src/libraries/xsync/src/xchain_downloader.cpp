@@ -132,6 +132,7 @@ bool xchain_downloader_t::on_timer(int64_t now) {
         }
 
         if (abort_overflow == result){
+            xsync_warn("chain_downloader execute net error,slef_address:%s target_address:%s.", m_address.c_str(), target_addr.to_string().c_str());
             return false;
         }
         break;
