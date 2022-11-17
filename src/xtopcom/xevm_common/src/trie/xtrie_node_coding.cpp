@@ -323,7 +323,7 @@ xtrie_node_face_ptr_t xtop_trie_node_rlp::decode_full(std::shared_ptr<xtrie_hash
         return n;
     }
     if (!val.empty()) {
-        xdbg("decodeFull: get value: %s", to_string(val).c_str());
+        xdbg("decodeFull: get value: %s", to_string(xbytes_t{std::begin(val), std::end(val)}).c_str());
         n->Children[16] = std::make_shared<xtrie_value_node_t>(xbytes_t{std::begin(val), std::end(val)});
     }
     return n;
