@@ -93,7 +93,7 @@ using xtrie_node_face_ptr_t = std::shared_ptr<xtrie_node_face_t>;
 // value&&hash node
 class xtop_trie_hash_node : public xtrie_node_face_t {
 private:
-    xbytes_t m_data{};
+    xhash256_t hash_{};
 
 public:
     xtop_trie_hash_node() = default;
@@ -103,11 +103,11 @@ public:
     xtop_trie_hash_node & operator=(xtop_trie_hash_node &&) = default;
     ~xtop_trie_hash_node() override = default;
 
-    explicit xtop_trie_hash_node(xbytes_t data);
+    explicit xtop_trie_hash_node(xbytes_t const & data);
     explicit xtop_trie_hash_node(xhash256_t const & hash);
 
 public:
-    xbytes_t const & data() const noexcept;
+    xhash256_t const & data() const noexcept;
 
 public:
     std::string fstring(std::string const & ind) const override;

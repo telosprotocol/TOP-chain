@@ -8,6 +8,8 @@
 #include "xbasic/xhash.hpp"
 #include "xevm_common/trie/xtrie_node.h"
 
+#include <gsl/span>
+
 #include <map>
 #include <memory>
 #include <system_error>
@@ -16,7 +18,7 @@ NS_BEG3(top, evm_common, trie)
 
 class xtop_kv_writer_face {
 public:
-    virtual void Put(xbytes_t const & key, xbytes_t const & value, std::error_code & ec) = 0;
+    virtual void Put(gsl::span<xbyte_t const> key, xbytes_t const & value, std::error_code & ec) = 0;
     virtual void PutBatch(std::map<xbytes_t, xbytes_t> const & batch, std::error_code & ec) = 0;
 
     virtual void PutDirect(xbytes_t const & key, xbytes_t const & value, std::error_code & ec) = 0;

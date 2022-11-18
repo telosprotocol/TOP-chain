@@ -10,6 +10,8 @@
 #include "xevm_common/common.h"
 #include "xevm_common/data.h"
 
+#include <gsl/span>
+
 #include <array>
 #include <exception>
 #include <iomanip>
@@ -364,7 +366,9 @@ public:
     static xbytes_t encodeList(const xbytes_t & encoded) noexcept;
 
     /// Encodes a block of data.
-    static xbytes_t encode(const xbytes_t & data) noexcept;
+    static xbytes_t encode(const xbytes_t & data);
+
+    static xbytes_t encode(gsl::span<xbyte_t const> bytes);
 
     /// Encodes a static array.
     template <std::size_t N>

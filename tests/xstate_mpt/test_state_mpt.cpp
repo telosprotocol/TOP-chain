@@ -74,9 +74,9 @@ public:
 TEST_F(test_state_mpt_fixture, test_db) {
     evm_common::trie::xkv_db_t mpt_db(m_db, TABLE_ADDRESS);
 
-    std::string k1{"key1"};
-    std::string k2{"key2"};
-    std::string k3{"key3"};
+    xbytes_t k1{'k', 'e', 'y', '1'};
+    xbytes_t k2{'k', 'e', 'y', '2'};
+    xbytes_t k3{'k', 'e', 'y', '3'};
     std::string v1{"value1"};
     std::string v2{"value2"};
     std::string v3{"value3"};
@@ -90,15 +90,15 @@ TEST_F(test_state_mpt_fixture, test_db) {
     EXPECT_EQ(ec.value(), static_cast<int>(evm_common::error::xerrc_t::trie_db_not_found));
 
     ec.clear();
-    mpt_db.Put({k1.begin(), k1.end()}, {v1.begin(), v1.end()}, ec);
+    mpt_db.Put(k1, {v1.begin(), v1.end()}, ec);
     EXPECT_EQ(ec.value(), 0);
 
     ec.clear();
-    mpt_db.Put({k2.begin(), k2.end()}, {v2.begin(), v2.end()}, ec);
+    mpt_db.Put(k2, {v2.begin(), v2.end()}, ec);
     EXPECT_EQ(ec.value(), 0);
 
     ec.clear();
-    mpt_db.Put({k3.begin(), k3.end()}, {v3.begin(), v3.end()}, ec);
+    mpt_db.Put(k3, {v3.begin(), v3.end()}, ec);
     EXPECT_EQ(ec.value(), 0);
 
     ec.clear();
