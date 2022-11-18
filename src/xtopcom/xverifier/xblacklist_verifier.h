@@ -27,8 +27,6 @@ public:
     static std::set<std::string>     black_config();
 
     std::vector<std::string>    refresh_and_get_new_addrs();
-private:
-    static void    parse_config_data(std::string const& data, std::set<std::string> & ret_addrs);
 
 private:
     std::set<std::string>    m_last_black_addrs;

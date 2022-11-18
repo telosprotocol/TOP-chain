@@ -219,15 +219,7 @@ int topchain_init(const std::string& config_file, const std::string& config_extr
     return topchain_start("", config_file);
 }
 
-int topchain_start(const std::string& datadir, const std::string& config_file) {
-    auto hash_plugin = new xtop_hash_t();
-    if (false == create_rootblock(config_file)) {
-        return 1;
-    }
-
-    auto& config_center = top::config::xconfig_register_t::get_instance();
-
-    // load bwlist
+void load_bwlist_config(const std::string& datadir, config::xconfig_register_t& config_center) {
     std::string bwlist_path;
     std::string dirpath;
     if (datadir.empty()) {
@@ -241,15 +233,24 @@ int topchain_start(const std::string& datadir, const std::string& config_file) {
     bwlist_path = dirpath + "/bwlist.json";
 #endif
     std::map<std::string, std::string> bwlist;
-    auto ret = load_bwlist_content(bwlist_path, bwlist);
+    auto ret = top::xverifier::xtx_utl::load_bwlist_content(bwlist_path, bwlist);
     if (ret) {
         for (auto const& item: bwlist) {
-            xinfo("bwlist load: key %s, value %s", item.first.c_str(), item.second.c_str());
+            xinfo("load_bwlist_config load: key %s, value %s", item.first.c_str(), item.second.c_str());
             config_center.set(item.first, item.second);
         }
     } else {
-        xwarn("load_bwlist_content failed! path=%s", bwlist_path.c_str());  // maybe has no file, it is ok.
+        xwarn("load_bwlist_config failed! path=%s", bwlist_path.c_str());  // maybe has no file, it is ok.
     }
+}
+
+int topchain_start(const std::string& datadir, const std::string& config_file) {
+    auto hash_plugin = new xtop_hash_t();
+    if (false == create_rootblock(config_file)) {
+        return 1;
+    }
+
+    auto& config_center = top::config::xconfig_register_t::get_instance();
 
     xchain_params chain_params;
     // attention: put chain_params.initconfig_using_configcenter behind config_center
@@ -281,6 +282,10 @@ int topchain_start(const std::string& datadir, const std::string& config_file) {
     auto xbase_info = base::xcontext_t::get_xbase_info();
     xwarn("=== topio start here ===");
     xwarn("=== xbase info: %s ===", xbase_info.c_str());
+
+    // load bwlist
+    load_bwlist_config(datadir, config_center);
+
     config_center.log_dump();
     std::cout << "=== topio start here ===" << std::endl;
     std::cout << "=== xbase info:" << xbase_info << " ===" << std::endl;
@@ -363,67 +368,6 @@ int topchain_start(const std::string& datadir, const std::string& config_file) {
 //     auto& user_params = data::xuser_params::get_instance();
 //     user_params.node_role_type = static_cast<top::common::xminer_type_t>(role_type);
 // }
-
-bool load_bwlist_content(std::string const& config_file, std::map<std::string, std::string>& result) {
-    if (config_file.empty()) {
-        xwarn("load local black/white list error!");
-        return false;
-    }
-
-    std::ifstream in(config_file);
-    if (!in.is_open()) {
-        xwarn("open local black/white list file %s error", config_file.c_str());
-        return false;
-    }
-    std::ostringstream oss;
-    oss << in.rdbuf();
-    in.close();
-    auto json_content = std::move(oss.str());
-    if (json_content.empty()) {
-        xwarn("black/white list config file %s empty", config_file.c_str());
-        return false;
-    }
-
-
-    xJson::Value  json_root;
-    xJson::Reader  reader;
-    bool ret = reader.parse(json_content, json_root);
-    if (!ret) {
-        xwarn("parse config file %s failed", config_file.c_str());
-        return false;
-    }
-
-
-    auto const members = json_root.getMemberNames();
-    for(auto const& member: members) {
-        if (json_root[member].isArray()) {
-            for (unsigned int i = 0; i < json_root[member].size(); ++i) {
-                try {
-                    auto const& addr = json_root[member][i].asString();
-                    if (addr.size() <= top::base::xvaccount_t::enum_vaccount_address_prefix_size) return false;
-                    top::base::xvaccount_t _vaccount(addr);
-                    if (!_vaccount.is_unit_address()) {
-                        return false;
-                    }
-                    if ( top::xverifier::xverifier_success != top::xverifier::xtx_utl::address_is_valid(addr)) return false;
-                } catch (...) {
-                    xwarn("parse config file %s failed", config_file.c_str());
-                    return false;
-                }
-
-                result[member] += json_root[member][i].asString() + ",";
-            }
-        } else {
-            xwarn("parse config file %s failed", config_file.c_str());
-            return false;
-        }
-
-    }
-
-    xdbg("load black/whitelist successfully!");
-    return true;
-
-}
 
 bool check_miner_info(const std::string &pub_key, const std::string &node_id, std::string& miner_type) {
     g_userinfo.account = node_id;

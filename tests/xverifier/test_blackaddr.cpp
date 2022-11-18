@@ -5,6 +5,7 @@
 #include <fstream>
 #include "xconfig/xconfig_register.h"
 #include "xverifier/xblacklist_verifier.h"
+#include "xverifier/xverifier_utl.h"
 #include "xconfig/xpredefined_configurations.h"
 
 using namespace top;
@@ -187,4 +188,31 @@ TEST_F(test_blackaddr, is_black_address_onchain_BENCH) {
 
     // before optimize total_count=100000 time_ms=5138
     std::cout << "total_count=" << total_count << " time_ms=" << time_finish - time_begin << std::endl;
+}
+
+TEST_F(test_blackaddr, bwlist_load_BENCH) {
+    clear_black_config();
+
+    // TODO should create bwlist.json in current directory
+    std::string config_file = "./bwlist.json";
+    std::map<std::string, std::string> result;
+
+    ASSERT_TRUE(xverifier::xtx_utl::load_bwlist_content(config_file, result));
+    ASSERT_EQ(result.size(), 2);
+
+    {
+        std::string local_blacklist = result["local_blacklist"];
+        std::cout << "local_blacklist:" << local_blacklist << std::endl;        
+        std::set<std::string> local_wl;
+        xverifier::xtx_utl::parse_bwlist_config_data(local_blacklist, local_wl);
+        ASSERT_EQ(local_wl.size(), 3);
+    }
+
+    {
+        std::string local_whitelist = result["local_whitelist"];
+        std::cout << "local_whitelist:" << local_whitelist << std::endl;
+        std::set<std::string> local_wl;
+        xverifier::xtx_utl::parse_bwlist_config_data(local_whitelist, local_wl);
+        ASSERT_EQ(local_wl.size(), 4);    
+    }
 }

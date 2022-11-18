@@ -38,24 +38,13 @@ namespace top {
             return false;
         }
 
-        void xwhitelist_utl::parse_config_data(std::string const& data, std::set<std::string> & ret_addrs) {
-            std::vector<std::string> vec;
-            if (!data.empty()) {
-                base::xstring_utl::split_string(data, ',', vec);
-                for (auto const& v: vec) {
-                    ret_addrs.insert(v);
-                }
-            }
-        }
-
         std::set<std::string> xwhitelist_utl::whitelist_config() {
-            // TODO(jimmy) local config should 
             auto offchain_config = XGET_CONFIG(local_whitelist);
             auto onchain_config = XGET_ONCHAIN_GOVERNANCE_PARAMETER(whitelist);
 
             std::set<std::string> local_wl;
-            parse_config_data(offchain_config, local_wl);
-            parse_config_data(onchain_config, local_wl);
+            xtx_utl::parse_bwlist_config_data(offchain_config, local_wl);
+            xtx_utl::parse_bwlist_config_data(onchain_config, local_wl);
 
             return local_wl;
         }

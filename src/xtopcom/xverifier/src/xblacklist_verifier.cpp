@@ -6,6 +6,7 @@
 #include "xconfig/xpredefined_configurations.h"
 #include "xconfig/xconfig_register.h"
 #include "xverifier/xverifier_errors.h"
+#include "xverifier/xverifier_utl.h"
 
 NS_BEG2(top, xverifier)
 
@@ -31,23 +32,13 @@ bool xtop_blacklist_utl::is_black_address(std::string const& tx_source_addr, std
     return false;
 }
 
-void xtop_blacklist_utl::parse_config_data(std::string const& data, std::set<std::string> & ret_addrs) {
-    std::vector<std::string> vec;
-    if (!data.empty()) {
-        base::xstring_utl::split_string(data, ',', vec);
-        for (auto const& v: vec) {
-            ret_addrs.insert(v);
-        }
-    }
-}
-
 std::set<std::string>  xtop_blacklist_utl::black_config() {
     std::string offchain_config = XGET_CONFIG(local_blacklist);
     std::string onchain_config = XGET_ONCHAIN_GOVERNANCE_PARAMETER(blacklist);
 
     std::set<std::string> res;
-    parse_config_data(offchain_config, res);
-    parse_config_data(onchain_config, res);
+    xtx_utl::parse_bwlist_config_data(offchain_config, res);
+    xtx_utl::parse_bwlist_config_data(onchain_config, res);
 
     return res;
 }

@@ -31,9 +31,6 @@ public:
     /// helper
     static std::set<std::string>    whitelist_config();
     static bool                     is_whitelist_enable();
-
-private:
-    static void parse_config_data(std::string const& data, std::set<std::string> & ret_addrs);
 };
 
 }  // namespace xverifier
