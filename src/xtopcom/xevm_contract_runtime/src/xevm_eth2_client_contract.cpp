@@ -459,6 +459,10 @@ bool xtop_evm_eth2_client_contract::execute(xbytes_t input,
 }
 
 bool xtop_evm_eth2_client_contract::init(state_ptr const & state, xinit_input_t const & init_input) {
+    if (initialized(state)) {
+        xwarn("xtop_evm_eth2_client_contract::init already");
+        return false;
+    }
     auto const & hash = init_input.finalized_execution_header.hash();
     if (hash != init_input.finalized_beacon_header.execution_block_hash) {
         xwarn("xtop_evm_eth2_client_contract::init hash mismatch %s, %s", hash.hex().c_str(), init_input.finalized_beacon_header.execution_block_hash.hex().c_str());
@@ -1007,7 +1011,7 @@ bool xtop_evm_eth2_client_contract::set_next_sync_committee(state_ptr const & st
 int xtop_evm_eth2_client_contract::get_flag(state_ptr state) const {
     auto flag_str = state->string_get(data::system_contract::XPROPERTY_RESET_FLAG);
     if (flag_str.empty()) {
-        return -1;
+        return 0;
     }
     return from_string<int>(flag_str);
 }
