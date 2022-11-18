@@ -545,5 +545,205 @@ TEST_F(xeth2_contract_fixture_t, test_init_and_update) {
     }
 }
 
+TEST_F(xeth2_contract_fixture_t, test_execute) {
+    m_contract.m_network = xeth2_client_net_t::eth2_net_sepolia;
+
+    {
+        contract_runtime::evm::sys_contract_precompile_output output;
+        contract_runtime::evm::sys_contract_precompile_error err;
+        EXPECT_FALSE(m_contract.execute({}, 0, m_context, false, m_statectx_observer, output, err));
+    }
+
+    std::string pack_initialized_hex{"158ef93e"};
+    auto pack_initialized = from_hex(pack_initialized_hex);
+    {
+        contract_runtime::evm::sys_contract_precompile_output output;
+        contract_runtime::evm::sys_contract_precompile_error err;
+        EXPECT_TRUE(m_contract.execute(pack_initialized, 0, m_context, false, m_statectx_observer, output, err));
+        EXPECT_EQ(evm_common::fromBigEndian<evm_common::u256>(output.output), 0);
+    }
+
+    auto init_param_rlp_hex_prefix = "4ddf47d40000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000c723";
+    auto init_param_rlp_hex_suffix = "0000000000000000000000000000000000000000000000000000000000";
+    auto pack_init_param_rlp = from_hex(init_param_rlp_hex_prefix + init_param_rlp_hex + init_param_rlp_hex_suffix);
+    {
+        contract_runtime::evm::sys_contract_precompile_output output;
+        contract_runtime::evm::sys_contract_precompile_error err;
+        EXPECT_FALSE(m_contract.execute(pack_init_param_rlp, 0, m_context, true, m_statectx_observer, output, err));
+    }
+    {
+        contract_runtime::evm::sys_contract_precompile_output output;
+        contract_runtime::evm::sys_contract_precompile_error err;
+        EXPECT_TRUE(m_contract.execute(pack_init_param_rlp, 0, m_context, false, m_statectx_observer, output, err));
+        auto cur_committee = m_contract.get_current_sync_committee(m_contract_state);
+        EXPECT_EQ(cur_committee.pubkeys.size(), 512);
+        EXPECT_EQ(cur_committee.aggregate_pubkey, from_hex("0xab2f06f681f10383788e9c7ab89275d602cbedbcfbaedcd4ed92c3bff7d15561ec7df684d43c531370157357806a8453"));
+        EXPECT_EQ(cur_committee.pubkeys[0], from_hex("0xab7eff4ef8696db334bce564bc273af0412bb4de547056326dff2037e1eca7abde039a51953948dd61d3d15925cd92f6"));
+        EXPECT_EQ(cur_committee.pubkeys[1], from_hex("0x87c5670e16a84e27529677881dbedc5c1d6ebb4e4ff58c13ece43d21d5b42dc89470f41059bfa6ebcf18167f97ddacaa"));
+        EXPECT_EQ(cur_committee.pubkeys[511], from_hex("0x8c64035c18e2d684b5800039a4e273b2d08a1ba037c72609fd9e73595d980637ef2b812204710e32dc91147bf034c19c"));
+        auto next_committee = m_contract.get_next_sync_committee(m_contract_state);
+        EXPECT_EQ(next_committee.pubkeys.size(), 512);
+        EXPECT_EQ(next_committee.aggregate_pubkey, from_hex("0xb99e31d04473fa778efc8a22ed4fa3b1048043244d33cbdcb509d11f5e3a74bdb501d7db06919cc2844209ab32cdd629"));
+        EXPECT_EQ(next_committee.pubkeys[0], from_hex("0xb01ee30d120b97e7b60ea89b9b6c537cdf20b6e36337e70d289ed5949355dd32679dc0a747525d6f2076f5be051d3a89"));
+        EXPECT_EQ(next_committee.pubkeys[1], from_hex("0xb549cef11bf7c8bcf4bb11e5cdf5a289fc4bf145826e96a446fb4c729a2c839a4d8d38629cc599eda7efa05f3cf3425b"));
+        EXPECT_EQ(next_committee.pubkeys[511], from_hex("0x949cf015ce50e27cf5c2ff1b8e2e066679905ac91164e3423d3fb7e05c64429e77e432db0f549acb99f91fb134b6edad"));
+        auto fin_header = m_contract.get_finalized_beacon_header(m_contract_state);
+        EXPECT_EQ(fin_header.header.slot, 1024000);
+        EXPECT_EQ(fin_header.header.proposer_index, 257);
+        EXPECT_EQ(fin_header.header.parent_root, h256(from_hex("0x96bd1ead9d2932de8b1c626d3a24884a867d01357842c2a73c2bf1e4791cc9e3")));
+        EXPECT_EQ(fin_header.header.state_root, h256(from_hex("0xb7fc02c07bb70b0cd9ff4f58067a058e3990c69f2066a167c1a7b9b6f7873335")));
+        EXPECT_EQ(fin_header.header.body_root, h256(from_hex("0x026612cc702610f126f8ac4fd7b0604628ff2acf8d34da41a89fdda31bfa9710")));
+        auto beacon_header_rlp = fin_header.header.encode_rlp();
+        xbytes_t beacon_header_hash(32);
+        EXPECT_TRUE(unsafe_beacon_header_root(beacon_header_rlp.data(), beacon_header_rlp.size(), beacon_header_hash.data()));
+        EXPECT_EQ(fin_header.beacon_block_root, h256(beacon_header_hash));
+        auto fin_exe_header = m_contract.get_finalized_execution_header(m_contract_state);
+        EXPECT_EQ(fin_exe_header.block_number, 2256927);
+        EXPECT_EQ(fin_exe_header.parent_hash, h256(from_hex("2dd3836685ab8c30353c295e078fdfe37d76386d3a2af2aa44025a46f247711f")));
+    }
+    {
+        contract_runtime::evm::sys_contract_precompile_output output;
+        contract_runtime::evm::sys_contract_precompile_error err;
+        EXPECT_FALSE(m_contract.execute(pack_init_param_rlp, 0, m_context, false, m_statectx_observer, output, err));
+    }
+    {
+        contract_runtime::evm::sys_contract_precompile_output output;
+        contract_runtime::evm::sys_contract_precompile_error err;
+        EXPECT_TRUE(m_contract.execute(pack_initialized, 0, m_context, false, m_statectx_observer, output, err));
+        EXPECT_EQ(evm_common::fromBigEndian<evm_common::u256>(output.output), 1);
+    }
+
+    {
+        std::string pack_headers_hex = "3c1a38b600000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000a24f90203b901fcf901f9a06632b7a9455cd1456636b6b06b6f673a09c4edf3cd9cd6689c91fa30ef3af34ba01dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d4934794d9a5179f091d85051d3c982785efd1455cec8699a067bbe9fe336cc7cf06baaae07638b32f977d8accfcca808e189a59bf4e0574c0a056e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421a056e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421b901000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000080832270208401c9c3808084636bfd6c80a0911b929540cbc36293ca429a65f9c46341d467c5b9ab3f795c4da92f32eb382a8800000000000000000780c0c080f90206b901fff901fca0783f4607ce15c419f3de8b1f3fae4b964656f74afc4cfe31e02540a1b5ae7258a01dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347940000000000000000000000000000000000000000a001926cf99b611347039e1acd243faf5a6df70d093a98e640853214c5ff4aea60a01893a523431ab12512d8bf4912ab8f330d4f022de0b36eb371bbd80bd36528c6a0e84b89e9e95d4b98ba2bcebce215439dc77d085b6493d28e1cc1015e3377cd07b901000000002001000002000a00000000000000000090000000000000000000800200000000000001000000000000000400000000000000000010000000000020000010800000000000000000000000214000040000400101040000000008000000000000400000000000000000000000080040001000040000000010000010000000000000000002000000000000000000000000000000000000000000000080100002000000100000020000000000000000040000000800004000000008000000000000000000000000000000000080000800000000000000000000000000000000001000000002000000000000200200000000000000000000100000000000000080832270218401c9c38083053f1f84636bfd7880a073cea960ef30b9133f787aeb45ca5853d181423d3e8f8d6843101366221c518e8800000000000000000780c0c080f90203b901fcf901f9a0f6e131934611cee32738a88f9a4e799f2a376e9f7b3a6b1425dc0a79dc1545eca01dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347948b0c2c4c8eb078bc6c01f48523764c8942c0c6c4a001926cf99b611347039e1acd243faf5a6df70d093a98e640853214c5ff4aea60a056e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421a056e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421b901000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000080832270228401c9c3808084636bfd8480a0e46ca8c19fb6db7a1764d1577afd022c3b16ac1357c9362dbd9f5248c3cdab308800000000000000000780c0c080f90206b901fff901fca07bd24aba090027fcbce6ecf67576f6ee6faa1e65fb9946b707c66d9bc4c52c3ca01dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347940000006916a87b82333f4245046623b23794c65ca0b944d4aed1b9c5af78074c78534cf2a4ad9ff913b4f6f6eef70decb44181b3fea01c363c8adfe52a547a49f113c0d05c7b4f07e30c728a14be7c61765493fb5857a0fc1198cc618fcbcbb3c49b78448a440dfcddb4723b2b3cf5e140aae35076aa83b9010060000000000000021000000000000040000040c0000000040000000000802000000008004001000010000000000400080000010000020000000000000024000010808000000000000004000800006000040100000001008200000100080000040440410010440001000000010000000040001000040008014000001010000000000000000002000000000810000000000000068900000100000000080080100002000000000202020180000000000200040000010800004000000008000000000004000200000000000000001680000800004200000000000000000000000802001000020012002000008080200800000000000000200000000000400201000480832270238401c9c3808323a07784636bfd9080a0cb0ce878edacef380a445acd2d73d987c92263cd54cfb67950f455c987650ae08800000000000000000780c0c080f90203b901fcf901f9a002c1c2ae5bea8e1f46a5c2589781ad00166141c696c37a54a65ca40752916672a01dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d4934794d9a5179f091d85051d3c982785efd1455cec8699a0b944d4aed1b9c5af78074c78534cf2a4ad9ff913b4f6f6eef70decb44181b3fea056e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421a056e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421b901000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000080832270248401c9c3808084636bfd9c80a02aad6e8b94949d70b18dcf73641f1e308b26043e468544c353bc3c7f362c91428800000000000000000780c0c08000000000000000000000000000000000000000000000000000000000";
+        contract_runtime::evm::sys_contract_precompile_output output;
+        contract_runtime::evm::sys_contract_precompile_error err;
+        EXPECT_TRUE(m_contract.execute(from_hex(pack_headers_hex), 0, m_context, false, m_statectx_observer, output, err));
+        
+        auto j = json::parse(sepolia_header_json_data_ptr);
+        auto it = j.begin() + 6;
+        for (; it != j.end(); ++it) {
+            xeth_header_t header;
+            EXPECT_TRUE(header.decode_rlp(from_hex(it->get<std::string>())));
+            EXPECT_TRUE(m_contract.submit_execution_header(m_contract_state, header));
+            EXPECT_TRUE(m_contract.is_known_execution_header(m_contract_state, header.hash()));
+            EXPECT_EQ(m_contract.block_hash_safe(m_contract_state, static_cast<uint64_t>(header.number)), h256());
+        }
+    }
+
+    auto update_param_rlp_hex_prefix = "2e139f0c00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000006596";
+    auto update_param_rlp_hex_suffix = "00000000000000000000";
+    auto pack_update_param_rlp = from_hex(update_param_rlp_hex_prefix + update_param_full_rlp_hex + update_param_rlp_hex_suffix);
+    {
+        contract_runtime::evm::sys_contract_precompile_output output;
+        contract_runtime::evm::sys_contract_precompile_error err;
+        EXPECT_TRUE(m_contract.execute(pack_update_param_rlp, 0, m_context, false, m_statectx_observer, output, err));
+        EXPECT_EQ(m_contract.last_block_number(m_contract_state), 2264207);
+        EXPECT_FALSE(m_contract.is_known_execution_header(m_contract_state, m_contract.get_finalized_beacon_header(m_contract_state).execution_block_hash));
+        {
+            auto cur_committee = m_contract.get_current_sync_committee(m_contract_state);
+            EXPECT_EQ(cur_committee.pubkeys.size(), 512);
+            EXPECT_EQ(cur_committee.aggregate_pubkey, from_hex("0xb99e31d04473fa778efc8a22ed4fa3b1048043244d33cbdcb509d11f5e3a74bdb501d7db06919cc2844209ab32cdd629"));
+            EXPECT_EQ(cur_committee.pubkeys[0], from_hex("0xb01ee30d120b97e7b60ea89b9b6c537cdf20b6e36337e70d289ed5949355dd32679dc0a747525d6f2076f5be051d3a89"));
+            EXPECT_EQ(cur_committee.pubkeys[1], from_hex("0xb549cef11bf7c8bcf4bb11e5cdf5a289fc4bf145826e96a446fb4c729a2c839a4d8d38629cc599eda7efa05f3cf3425b"));
+            EXPECT_EQ(cur_committee.pubkeys[511], from_hex("0x949cf015ce50e27cf5c2ff1b8e2e066679905ac91164e3423d3fb7e05c64429e77e432db0f549acb99f91fb134b6edad"));
+            auto next_committee = m_contract.get_next_sync_committee(m_contract_state);
+            EXPECT_EQ(next_committee.pubkeys.size(), 512);
+            EXPECT_EQ(next_committee.aggregate_pubkey, from_hex("0xb3f15a9a420fb103f15c8aea436c761f6e9a40f6f046712ad8bc8b05928419d51c12d4384568f4bf92b237b4891da267"));
+            EXPECT_EQ(next_committee.pubkeys[0], from_hex("0xa23710308d8e25a0bb1db53c8598e526235c5e91e4605e402f6a25c126687d9de146b75c39a31c69ab76bab514320e05"));
+            EXPECT_EQ(next_committee.pubkeys[1], from_hex("0xb01ee30d120b97e7b60ea89b9b6c537cdf20b6e36337e70d289ed5949355dd32679dc0a747525d6f2076f5be051d3a89"));
+            EXPECT_EQ(next_committee.pubkeys[511], from_hex("0x86b3ec14a8ffb811a0ecc3771f600d8b08c098537d100fba66def19e7ee4d1c397a311977bf37e6cd2d47a8a2ee8c223"));
+        }
+    }
+
+    std::string pack_last_block_number_hex{"1eeaebb2"};
+    auto pack_last_block_number = from_hex(pack_last_block_number_hex);
+    {
+        contract_runtime::evm::sys_contract_precompile_output output;
+        contract_runtime::evm::sys_contract_precompile_error err;
+        EXPECT_TRUE(m_contract.execute(pack_last_block_number, 0, m_context, false, m_statectx_observer, output, err));
+        EXPECT_EQ(evm_common::fromBigEndian<evm_common::u256>(output.output), 2264207);
+    }
+
+    std::string pack_get_light_client_state_hex{"3ae8d743"};
+    auto pack_get_light_client_state = from_hex(pack_get_light_client_state_hex);
+    {
+        contract_runtime::evm::sys_contract_precompile_output output;
+        contract_runtime::evm::sys_contract_precompile_error err;
+        EXPECT_TRUE(m_contract.execute(pack_get_light_client_state, 0, m_context, false, m_statectx_observer, output, err));
+    }
+
+    std::string pack_get_finalized_beacon_block_header_hex{"55b39f6e"};
+    auto pack_finalized_beacon_block_header = from_hex(pack_get_finalized_beacon_block_header_hex);
+    {
+        contract_runtime::evm::sys_contract_precompile_output output;
+        contract_runtime::evm::sys_contract_precompile_error err;
+        EXPECT_TRUE(m_contract.execute(pack_finalized_beacon_block_header, 0, m_context, false, m_statectx_observer, output, err));
+    }
+
+    std::string pack_get_finalized_beacon_block_slot_hex{"074b1681"};
+    auto pack_finalized_beacon_block_slot = from_hex(pack_get_finalized_beacon_block_slot_hex);
+    {
+        contract_runtime::evm::sys_contract_precompile_output output;
+        contract_runtime::evm::sys_contract_precompile_error err;
+        EXPECT_TRUE(m_contract.execute(pack_finalized_beacon_block_slot, 0, m_context, false, m_statectx_observer, output, err));
+    }
+
+    std::string pack_finalized_beacon_block_root_hex{"4b469132"};
+    auto pack_finalized_beacon_block_root = from_hex(pack_finalized_beacon_block_root_hex);
+    {
+        contract_runtime::evm::sys_contract_precompile_output output;
+        contract_runtime::evm::sys_contract_precompile_error err;
+        EXPECT_TRUE(m_contract.execute(pack_finalized_beacon_block_root, 0, m_context, false, m_statectx_observer, output, err));
+    }
+
+    std::string pack_is_known_execution_header_hex{"43b1378b351da499932c0b29f02dd639bf8576a028055758e07af9b4539ad2e0690680d2"};
+    auto pack_is_known_execution_header = from_hex(pack_is_known_execution_header_hex);
+    {
+        contract_runtime::evm::sys_contract_precompile_output output;
+        contract_runtime::evm::sys_contract_precompile_error err;
+        EXPECT_TRUE(m_contract.execute(pack_is_known_execution_header, 0, m_context, false, m_statectx_observer, output, err));
+    }
+
+    std::string pack_is_confirmed_hex{"d398572f0000000000000000000000000000000000000000000000000000000000227cfe351da499932c0b29f02dd639bf8576a028055758e07af9b4539ad2e0690680d2"};
+    auto pack_is_confirmed = from_hex(pack_is_confirmed_hex);
+    {
+        contract_runtime::evm::sys_contract_precompile_output output;
+        contract_runtime::evm::sys_contract_precompile_error err;
+        EXPECT_TRUE(m_contract.execute(pack_is_confirmed, 0, m_context, false, m_statectx_observer, output, err));
+    }
+
+    std::string pack_block_hash_safe_hex{"3bcdaaab0000000000000000000000000000000000000000000000000000000000227cfd"};
+    auto pack_block_hash_safe = from_hex(pack_block_hash_safe_hex);
+    {
+        contract_runtime::evm::sys_contract_precompile_output output;
+        contract_runtime::evm::sys_contract_precompile_error err;
+        EXPECT_TRUE(m_contract.execute(pack_block_hash_safe, 0, m_context, false, m_statectx_observer, output, err));
+    }
+
+    std::string reset_hex{"d826f88f"};
+    auto reset = from_hex(reset_hex);
+    {
+        contract_runtime::evm::sys_contract_precompile_output output;
+        contract_runtime::evm::sys_contract_precompile_error err;
+        EXPECT_TRUE(m_contract.execute(reset, 0, m_context, false, m_statectx_observer, output, err));
+    }
+
+    std::string disable_reset_hex{"b5a61069"};
+    auto disable_reset = from_hex(disable_reset_hex);
+    {
+        contract_runtime::evm::sys_contract_precompile_output output;
+        contract_runtime::evm::sys_contract_precompile_error err;
+        EXPECT_TRUE(m_contract.execute(disable_reset, 0, m_context, false, m_statectx_observer, output, err));
+    }
+
+    {
+        contract_runtime::evm::sys_contract_precompile_output output;
+        contract_runtime::evm::sys_contract_precompile_error err;
+        EXPECT_FALSE(m_contract.execute(reset, 0, m_context, false, m_statectx_observer, output, err));
+    }
+}
+
+
+
 }  // namespace tests
 }  // namespace top
