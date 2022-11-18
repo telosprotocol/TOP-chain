@@ -56,18 +56,18 @@ void Sync::Init(xhash256_t const & root, leaf_callback callback) {
 
 void Sync::AddSubTrie(xhash256_t const & root, xbytes_t const & path, xhash256_t const & parent, leaf_callback callback) {
     if (root == empty_root) {
-        xdbg("Sync::AddSubTrie hash root empty: %s", root.as_hex_str().c_str());
+        xinfo("Sync::AddSubTrie hash root empty: %s", root.as_hex_str().c_str());
         return;
     }
 
     if (membatch.hasNode(root.to_bytes())) {
-        xdbg("Sync::AddSubTrie already hash root: %s in membatch", root.as_hex_str().c_str());
+        xinfo("Sync::AddSubTrie already hash root: %s in membatch", root.as_hex_str().c_str());
         return;
     }
 
     assert(database != nullptr);
     if (HasTrieNode(database, root)) {
-        xdbg("Sync::AddSubTrie already hash root: %s in db", root.as_hex_str().c_str());
+        xinfo("Sync::AddSubTrie already hash root: %s in db", root.as_hex_str().c_str());
         return;
     }
 
@@ -206,6 +206,10 @@ void Sync::ProcessUnit(SyncResult const & result, std::error_code & ec) {
 }
 
 void Sync::Commit(xkv_db_face_ptr_t const & db) {
+    if (membatch.nodes.empty() && membatch.units.empty()) {
+        xinfo("Sync::Commit trie empty, commit nothing");
+        return;
+    }
     // make sure last write syncRoot, should call once
     assert(membatch.nodes.count(syncRoot.to_bytes()));
 
