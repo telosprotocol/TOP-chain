@@ -10,9 +10,9 @@ NS_BEG4(top, evm_common, trie, tests)
 
 class xmock_disk_db : public xkv_db_face_t {
 public:
-    void Put(xbytes_t const & key, xbytes_t const & value, std::error_code & ec) {
+    void Put(gsl::span<xbyte_t const> key, xbytes_t const & value, std::error_code & ec) override {
         xdbg("xmock_disk_db Put key: %s", top::to_hex(key).c_str());
-        m[key] = value;
+        m[xbytes_t{std::begin(key), std::end(key)}] = value;
     }
     void Delete(xbytes_t const & key, std::error_code & ec) {
         m.erase(key);
@@ -81,9 +81,9 @@ using xmock_disk_db_ptr = std::shared_ptr<xmock_disk_db>;
 
 class xmock_prove_db : public xkv_db_face_t {
 public:
-    void Put(xbytes_t const & key, xbytes_t const & value, std::error_code & ec) {
+    void Put(gsl::span<xbyte_t const> key, xbytes_t const & value, std::error_code & ec) override {
         xdbg("xmock_prove_db Put key: %s", top::to_hex(key).c_str());
-        m[key] = value;
+        m[xbytes_t{std::begin(key), std::end(key)}] = value;
     }
     void Delete(xbytes_t const & key, std::error_code & ec) {
         m.erase(key);

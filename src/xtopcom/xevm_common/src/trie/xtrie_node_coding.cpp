@@ -39,7 +39,8 @@ xbytes_t xtop_trie_node_rlp::EncodeToBytes(xtrie_node_face_ptr_t node) {
         auto hn = std::dynamic_pointer_cast<xtrie_hash_node_t>(node);
         assert(hn != nullptr);
 
-        return hn->data();
+        auto const hash_data = hn->data();
+        return xbytes_t{std::begin(hash_data), std::end(hash_data)};
     }
     case xtrie_node_type_t::valuenode: {
         auto vn = std::dynamic_pointer_cast<xtrie_value_node_t>(node);
@@ -274,54 +275,62 @@ xtrie_node_face_ptr_t xtop_trie_node_rlp::decode_node(std::shared_ptr<xtrie_hash
 }
 
 xtrie_node_face_ptr_t xtop_trie_node_rlp::decode_short(std::shared_ptr<xtrie_hash_node_t> hash, gsl::span<xbyte_t const> const elems, std::error_code & ec) {
-    gsl::span<xbyte_t const> kbuf, rest;
-    std::tie(kbuf, rest) = rlp::split_string(elems, ec);
+    // gsl::span<xbyte_t const> kbuf, rest;
+    auto const result = rlp::split_string(elems, ec);
     if (ec) {
         return nullptr;
     }
+    auto const & kbuf = std::get<0>(result);
+    auto const & rest = std::get<1>(result);
     auto flag = xnode_flag_t{std::move(hash)};
+
     auto key = compact_to_hex(kbuf);
     if (hasTerm(key)) {
         // value node
-        gsl::span<xbyte_t const> val, _;
-        std::tie(val, _) = rlp::split_string(rest, ec);
+        // gsl::span<xbyte_t const> val, _;
+        auto const result2 = rlp::split_string(rest, ec);
+        auto const & val = std::get<0>(result2);
         if (ec) {
             xwarn("decode error: %s", ec.message().c_str());
             return nullptr;
         }
-        return std::make_shared<xtrie_short_node_t>(key, std::make_shared<xtrie_value_node_t>(xbytes_t{std::begin(val), std::end(val)}), flag);
+        return std::make_shared<xtrie_short_node_t>(std::move(key), std::make_shared<xtrie_value_node_t>(xbytes_t{std::begin(val), std::end(val)}), flag);
     }
-    xtrie_node_face_ptr_t r;
-    gsl::span<xbyte_t const> _;
-    std::tie(r, _) = decode_ref(rest, ec);
+
+    // xtrie_node_face_ptr_t r;
+    // gsl::span<xbyte_t const> _;
+    auto result3 = decode_ref(rest, ec);
     if (ec) {
         xwarn("decode error: %s", ec.message().c_str());
         return nullptr;
     }
 
-    return std::make_shared<xtrie_short_node_t>(key, r, flag);
+    assert(!key.empty());
+    return std::make_shared<xtrie_short_node_t>(key, top::get<std::shared_ptr<xtrie_node_face_t>>(std::move(result3)), flag);
 }
 
 xtrie_node_face_ptr_t xtop_trie_node_rlp::decode_full(std::shared_ptr<xtrie_hash_node_t> hash, gsl::span<xbyte_t const> elems, std::error_code & ec) {
     auto n = std::make_shared<xtrie_full_node_t>(xnode_flag_t{std::move(hash)});
     for (std::size_t i = 0; i < 16; ++i) {
-        xtrie_node_face_ptr_t cld;
-        gsl::span<xbyte_t const> rest;
+        // xtrie_node_face_ptr_t cld;
+        // gsl::span<xbyte_t const> rest;
         xdbg("decodeFull: do decodeChildren: %zu , elems:size():%zu", i, elems.size());
-        std::tie(cld, rest) = decode_ref(elems, ec);
+        auto result = decode_ref(elems, ec);
         if (ec) {
             xwarn("decode error: %s", ec.message().c_str());
             return n;
         }
-        n->Children[i] = cld;
-        elems = rest;
+        n->Children[i] = top::get<std::shared_ptr<xtrie_node_face_t>>(result);
+        elems = top::get<gsl::span<xbyte_t const>>(result);
     }
-    gsl::span<xbyte_t const> val, _;
-    std::tie(val, _) = rlp::split_string(elems, ec);
+    // gsl::span<xbyte_t const> val, _;
+    auto const result = rlp::split_string(elems, ec);
     if (ec) {
         xwarn("decode error: %s", ec.message().c_str());
         return n;
     }
+
+    auto const & val = std::get<0>(result);
     if (!val.empty()) {
         xdbg("decodeFull: get value: %s", to_string(xbytes_t{std::begin(val), std::end(val)}).c_str());
         n->Children[16] = std::make_shared<xtrie_value_node_t>(xbytes_t{std::begin(val), std::end(val)});
@@ -330,10 +339,15 @@ xtrie_node_face_ptr_t xtop_trie_node_rlp::decode_full(std::shared_ptr<xtrie_hash
 }
 
 std::pair<xtrie_node_face_ptr_t, gsl::span<xbyte_t const>> xtop_trie_node_rlp::decode_ref(gsl::span<xbyte_t const> buf, std::error_code & ec) {
-    rlp::xrlp_elem_kind kind;
-    gsl::span<xbyte_t const> val, rest;
+    // rlp::xrlp_elem_kind kind;
+    // gsl::span<xbyte_t const> val, rest;
     xdbg("decodeRef: buf.size():%zu", buf.size());
-    std::tie(kind, val, rest) = rlp::split(buf, ec);
+    // std::tie(kind, val, rest) = rlp::split(buf, ec);
+    auto const result = rlp::split(buf, ec);
+    auto const kind = std::get<0>(result);
+    auto const & val = std::get<1>(result);
+    auto const & rest = std::get<2>(result);
+
     xdbg("decodeRef: split result: %zu %zu %zu", val.size(), rest.size(), buf.size());
     if (ec) {
         return std::make_pair(nullptr, buf);
@@ -360,8 +374,8 @@ std::pair<xtrie_node_face_ptr_t, gsl::span<xbyte_t const>> xtop_trie_node_rlp::d
         return std::make_pair(std::make_shared<xtrie_hash_node_t>(xbytes_t{std::begin(val), std::end(val)}), rest);
     }
 
-    xwarn("decode error :invalid RLP string size %d (want 0 or 32)", val.size());
-    return std::make_pair(nullptr, xbytes_t{});
+    xwarn("decode error :invalid RLP string size %zu (want 0 or 32)", val.size());
+    return std::make_pair(nullptr, gsl::span<xbyte_t const>{});
 }
 
 NS_END3
