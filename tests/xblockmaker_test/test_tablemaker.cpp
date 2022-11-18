@@ -1297,22 +1297,22 @@ TEST_F(test_tablemaker, proposal_msg_v2) {
 
     xconsensus::xproposal_msg_t proposal_msg_old(*(block.get()), nullptr);
     base::xauto_ptr<base::xvblock_t> block1(base::xvblock_t::create_block_object(proposal_msg_old.get_block_object()));
-    block1->get_input()->set_proposal(proposal_msg_old.get_input_proposal());
+    block1->set_proposal(proposal_msg_old.get_input_proposal());
     auto block_ptr1 = xblock_t::raw_vblock_to_object_ptr(block1.get());
     assert(block_ptr1 != nullptr);
 
     xconsensus::xproposal_msg_v2_t proposal_msg(*(block.get()));
     base::xauto_ptr<base::xvblock_t> block2(base::xvblock_t::create_block_object(proposal_msg.get_block_object(), false));
 
-    block2->get_input()->set_proposal(proposal_msg.get_input_proposal());
+    block2->set_proposal(proposal_msg.get_input_proposal());
 
     std::string vinput_bin;
     block->get_input()->serialize_to_string(vinput_bin);
     std::string voutput_bin;
     block->get_output()->serialize_to_string(voutput_bin);
 
-    block2->set_input(vinput_bin);
-    block2->set_output(voutput_bin);
+    auto ret = block2->set_input_output(vinput_bin, voutput_bin);
+    assert(ret);
 
     //check if block is valid.
     std::string vheader_bin;

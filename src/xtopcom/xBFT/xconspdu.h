@@ -130,6 +130,7 @@ namespace top
             virtual int32_t     do_write(base::xstream_t & stream) override;
             virtual int32_t     do_read(base::xstream_t & stream)  override;
         private:
+            uint8_t             m_version{0};
             uint16_t            m_expired_ms;                //duration(ms) to expire for this proposal
             std::string         m_block_object;              //header and certificate of this proposal block
             std::string         m_input_proposal;            //input'proposal for proposal block

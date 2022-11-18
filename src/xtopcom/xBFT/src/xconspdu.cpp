@@ -79,7 +79,7 @@ namespace top
             m_expired_ms = 15000; //as default 15 seconds
             
             // only take proposal. proposal -> input ->output
-            m_input_proposal = proposal.get_input()->get_proposal();
+            m_input_proposal = proposal.get_proposal();
 //            m_input_resource  = proposal.get_input()->get_resources_data();
 //            m_output_resource = proposal.get_output()->get_resources_data();
             
@@ -133,7 +133,7 @@ namespace top
             m_expired_ms = 15000; //as default 15 seconds
             
             // only take proposal. proposal -> input ->output
-            m_input_proposal = proposal.get_input()->get_proposal();
+            m_input_proposal = proposal.get_proposal();
 
             proposal.set_not_serialize_input_output(true);
             proposal.serialize_to_string(m_block_object);
@@ -149,6 +149,7 @@ namespace top
         {
             const int32_t begin_size = stream.size();
             
+            stream << m_version;
             stream << m_expired_ms;
             stream << m_block_object;
             stream << m_input_proposal;
@@ -159,6 +160,11 @@ namespace top
         {
             const int32_t begin_size = stream.size();
 
+            stream >> m_version;
+            if (m_version != 0) {
+                xassert(false);
+                return -1;
+            }
             stream >> m_expired_ms;
             stream >> m_block_object;
             stream >> m_input_proposal;

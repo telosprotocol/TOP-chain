@@ -498,8 +498,8 @@ namespace top
 
         public:
             //proposal usally include raw transaction & receipts. note:following methods are not thread-safe
-            virtual const std::string   get_proposal() const {return m_proposal;}
-            virtual bool                set_proposal(const std::string & proposal){m_proposal = proposal;return true;}
+            // virtual const std::string   get_proposal() const {return m_proposal;}
+            // virtual bool                set_proposal(const std::string & proposal){m_proposal = proposal;return true;}
 
             //root of input which usally present a root of merkle tree for input
             virtual const std::string   get_root_hash() const {return m_root_hash;}
@@ -511,7 +511,7 @@ namespace top
 
         protected: //proposal ==> input ==> output
             //just carry by object at memory,not included by serialized
-            std::string  m_proposal;    //raw proposal
+            // std::string  m_proposal;    //raw proposal
             std::string  m_root_hash;   //root of merkle tree constructed by input
         };
 
@@ -741,8 +741,7 @@ namespace top
             bool                        is_full_state_block();  // used for full-block sync
             uint64_t                    get_block_size();
 
-            bool                        set_input(const std::string & input_data);
-            bool                        set_output(const std::string & output_data);
+            bool                        set_input_output(const std::string & input_data, const std::string & output_data);
 
             //check whether match hash of resource first
             bool                        set_input_resources(const std::string & raw_resource_data);
@@ -797,6 +796,9 @@ namespace top
             virtual int32_t             serialize_from(xstream_t & stream) override final;//not allow subclass change behavior
         public://still public serialize_to
             virtual int32_t             serialize_to(xstream_t & stream) override final; //not allow subclass change behavior
+            //proposal usally include raw transaction & receipts. note:following methods are not thread-safe
+            virtual const std::string   get_proposal() const {return m_proposal;}
+            virtual bool                set_proposal(const std::string & proposal){m_proposal = proposal;return true;}
             void                        set_not_serialize_input_output(bool value);
         private:
             std::string                 m_cert_hash;        //hash(vqcert_bin)
@@ -826,6 +828,7 @@ namespace top
             std::string                 m_vote_extend_data;
             std::string                 m_output_offdata;
             std::shared_ptr<xvblock_excontainer_base> m_excontainer{nullptr};
+            std::string                 m_proposal;    //raw proposal
             bool                        m_not_serialize_input_output{false};
         };
         using xvblock_ptr_t = xobject_ptr_t<base::xvblock_t>;

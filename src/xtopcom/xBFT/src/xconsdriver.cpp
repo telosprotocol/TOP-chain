@@ -120,7 +120,7 @@ namespace top
                 }
 
                 if(   (false == proposal->is_body_and_offdata_ready(false))  //leader should has full block  XTODO no need check resource hash
-                   || (false == proposal->is_valid(true))
+                   /*|| (false == proposal->is_valid(true))*/
                    || (false == proposal->get_cert_hash().empty()) //proposal should not have build cert hash before verify muti-sign
                    || (proposal->check_block_flag(base::enum_xvblock_flag_authenticated)) )//proposal should not add authenticated flag
                 {
@@ -185,18 +185,18 @@ namespace top
                 std::string msg_stream;
                 uint8_t msg_type;
 
-                // bool forked = chain_fork::xutility_t::is_forked(fork_points::xbft_msg_upgrade, proposal->get_clock());
-                // if (forked) {
-                //     xproposal_msg_v2_t msg(*proposal);
-                //     msg.set_expired_ms(_evt_obj->get_expired_ms() * 2);//add addtional seconds for replica
-                //     msg.serialize_to_string(msg_stream);
-                //     msg_type = xproposal_msg_v2_t::get_msg_type();
-                // } else {
+                bool forked = chain_fork::xutility_t::is_forked(fork_points::xbft_msg_upgrade, proposal->get_clock());
+                if (forked) {
+                    xproposal_msg_v2_t msg(*proposal);
+                    msg.set_expired_ms(_evt_obj->get_expired_ms() * 2);//add addtional seconds for replica
+                    msg.serialize_to_string(msg_stream);
+                    msg_type = xproposal_msg_v2_t::get_msg_type();
+                } else {
                     xproposal_msg_t msg(*proposal,NULL);
                     msg.set_expired_ms(_evt_obj->get_expired_ms() * 2);//add addtional seconds for replica
                     msg.serialize_to_string(msg_stream);
                     msg_type = xproposal_msg_t::get_msg_type();
-                // }
+                }
 
                 //addres of -1 means broadcast to all consensus node,0 means not specified address that upper layer need fillin based on message type
                 xvip2_t broadcast_addr = {(xvip_t)-1,(uint64_t)-1};
@@ -320,7 +320,7 @@ namespace top
 
             //step#3: load proposal block and do safe check
             base::xauto_ptr<base::xvblock_t> _peer_block(base::xvblock_t::create_block_object(block_object_data, false));
-            if( (!_peer_block) || (false == _peer_block->is_valid(false)) )
+            if( (!_peer_block)/* || (false == _peer_block->is_valid(false))*/ )
             {
                 xerror("xBFTdriver_t::handle_proposal_msg,fail-invalid proposal from packet=%s,at node=0x%llx",packet.dump().c_str(),get_xip2_low_addr());
                 return enum_xconsensus_error_bad_proposal;
@@ -341,7 +341,7 @@ namespace top
                 return enum_xconsensus_error_bad_proposal; //that is not a qualified node for vote
             }
             //proposal ==> input ==> output
-            _peer_block->get_input()->set_proposal(input_proposal);  //copy proposal
+            _peer_block->set_proposal(input_proposal);  //copy proposal
             // if(_proposal_msg.get_input_resource().empty() == false)//carry input resource
             //     _peer_block->set_input_resources(_proposal_msg.get_input_resource());//copy proposal
             // if(_proposal_msg.get_ouput_resource().empty() == false)//carry output resource
