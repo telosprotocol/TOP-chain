@@ -185,4 +185,26 @@ public:
     xconfirm_rsp_ids_check_t  m_confirm_rsp_ids;
 };
 
+
+struct xreceiptid_unfinish_info_t {
+    uint64_t          source_height;
+    uint64_t          target_height;
+    xtable_shortid_t  source_id;
+    xtable_shortid_t  target_id;
+    uint32_t          unrecv_num{0};
+    uint32_t          unconfirm_num{0};
+};
+
+class xreceiptid_all_table_states {
+public:
+    void    add_table_receiptid_state(xtable_shortid_t sid, const base::xreceiptid_state_ptr_t & receiptid_state);
+    std::vector<xreceiptid_unfinish_info_t> get_unfinish_info() const;
+
+protected:
+    bool  get_two_table_pair(xtable_shortid_t table1, xtable_shortid_t table2, xreceiptid_pair_t & pair, uint64_t & height) const;
+
+private:
+    std::map<xtable_shortid_t, xreceiptid_state_ptr_t>  m_all_states;
+};
+
 NS_END2

@@ -494,6 +494,7 @@ XDECLARE_CONFIGURATION(fulltable_interval_block_num, std::uint32_t, 128); // TOD
 #endif
 XDECLARE_CONFIGURATION(local_blacklist, const char *, "");
 XDECLARE_CONFIGURATION(local_whitelist, const char *, "");
+XDECLARE_CONFIGURATION(local_toggle_whitelist, bool, false);
 #if defined(XBUILD_DEV) || defined(XBUILD_CI)
 XDECLARE_CONFIGURATION(slash_fulltable_interval, xinterval_t, 30); // 5 minutes
 XDECLARE_CONFIGURATION(slash_table_split_num, uint16_t, 4);

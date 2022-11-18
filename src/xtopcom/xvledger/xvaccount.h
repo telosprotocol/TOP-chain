@@ -89,9 +89,25 @@ namespace top
             enum_service_chain_id_start_reserved = 256,
         };
         
+        class xvledger_config_t {
+        public:
+            static std::map<base::enum_xchain_zone_index, uint16_t> const&  get_all_consensus_zone_subaddr_paris() {
+                static std::map<base::enum_xchain_zone_index, uint16_t> _pairs = {
+                    {enum_chain_zone_beacon_index, MAIN_CHAIN_REC_TABLE_USED_NUM},
+                    {enum_chain_zone_zec_index, MAIN_CHAIN_ZEC_TABLE_USED_NUM},
+                    {enum_chain_zone_consensus_index, enum_vbucket_has_tables_count},
+                    {enum_chain_zone_evm_index, MAIN_CHAIN_EVM_TABLE_USED_NUM},
+                    {enum_chain_zone_relay_index, MAIN_CHAIN_RELAY_TABLE_USED_NUM},
+                };
+                return _pairs;
+            }
+        };
+
         using xtable_shortid_t = uint16_t;//note: short table_id = [zone_index][book_index][table_index]
         using xtable_longid_t = uint32_t;//note: long table_id = [chain_id][zone_index][book_index][table_index]
         
+        #define make_table_shortid(zone_index, subaddr) ((uint16_t)((zone_index << 10) | subaddr))
+
         class xtable_index_t
         {
         public:       
@@ -114,7 +130,7 @@ namespace top
                 xassert(m_subaddr < enum_vbucket_has_tables_count);
             }
         public:
-            xtable_shortid_t        to_table_shortid() const {return (uint16_t)((m_zone_index << 10) | m_subaddr);}
+            xtable_shortid_t        to_table_shortid() const {return make_table_shortid(m_zone_index, m_subaddr);}
             enum_xchain_zone_index  get_zone_index() const {return m_zone_index;}
             uint8_t                 get_subaddr() const {
                 if (get_zone_index() == enum_chain_zone_evm_index)
@@ -352,12 +368,13 @@ namespace top
             static std::string compact_address_from(const std::string & data);
             static bool check_address(const std::string & account_addr, bool isTransaction = false);
             static bool valid_zone_and_subaddr(enum_xchain_zone_index zone_index, uint16_t subaddr);
-            static bool is_unit_address_type(enum_vaccount_addr_type addr_type);
+            static bool is_user_address_type(enum_vaccount_addr_type addr_type);
             static bool is_eth_address_type(enum_vaccount_addr_type addr_type);
             static bool is_table_address_type(enum_vaccount_addr_type addr_type);
             static bool is_contract_address_type(enum_vaccount_addr_type addr_type);
             static bool is_drand_address_type(enum_vaccount_addr_type addr_type);
             static bool is_timer_address_type(enum_vaccount_addr_type addr_type);
+            static bool is_unit_address_type(enum_vaccount_addr_type addr_type);
 
         protected:
             static bool get_ledger_fulladdr_from_account(const std::string & account_addr,uint32_t & ledger_id,uint16_t & ledger_sub_addr,uint32_t & account_index)

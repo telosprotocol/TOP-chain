@@ -5,6 +5,7 @@
 #pragma once
 
 #include <string>
+#include <map>
 
 #include "xcommon/xnode_id.h"
 #include "xbase/xutl.h"
@@ -65,6 +66,9 @@ public:
     static int32_t  judge_normal_contract_sendtx(data::xtransaction_ptr_t const& tx_ptr);
 
     static bool is_valid_hex_format(std::string const& str);
+
+    static bool load_bwlist_content(std::string const& config_file, std::map<std::string, std::string>& result);
+    static void parse_bwlist_config_data(std::string const& data, std::set<std::string> & ret_addrs);
 };
 
 

@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include "xconfig/xconfig_register.h"
-#include "xverifier/xverifier_errors.h"
-
+#include "xbase/xns_macro.h"
+#include <string>
+#include <set>
 #include <vector>
 
 NS_BEG2(top, xverifier)
@@ -18,11 +18,18 @@ NS_BEG2(top, xverifier)
  */
 class xtop_blacklist_utl {
 public:
+    static xtop_blacklist_utl & instance() {
+        static xtop_blacklist_utl _instance;
+        return _instance;
+    }
     static bool  is_black_address(std::string const& addr);
+    static bool  is_black_address(std::string const& tx_source_addr, std::string const& tx_target_addr);
+    static std::set<std::string>     black_config();
+
+    std::vector<std::string>    refresh_and_get_new_addrs();
 
 private:
-    static std::vector<std::string>  black_config();
-
+    std::set<std::string>    m_last_black_addrs;
 };
 
 using xblacklist_utl_t = xtop_blacklist_utl;

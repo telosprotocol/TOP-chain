@@ -321,19 +321,35 @@ TEST_F(test_proposal_contract, test_check_bwlist) {
     xrec_proposal_contract api{common::xnetwork_id_t{1}};
 
     {
-        auto addr_list = "T00000LMcqLyTzsk3HB8dhF51i6xEcVEuyX1Vx6p,T00000LRoHe2yUmmv5mkpcBhpeeypr24ZmSVVDfw,T80000bf73b170b3a14ec992e4c7a05625008e31b04161";
+        auto addr_list = "T00000LMcqLyTzsk3HB8dhF51i6xEcVEuyX1Vx6p,T00000LRoHe2yUmmv5mkpcBhpeeypr24ZmSVVDfw,T80000bf73b170b3a14ec992e4c7a05625008e31b04161,T200024uMvLFmyttx6Nccv4jKP3VfRq9NJ2mxcNxh@0";
         EXPECT_NO_THROW(api.check_bwlist_proposal(addr_list));
     }
 
-    // {
-    //     auto addr_list = "T200024uMvLFmyttx6Nccv4jKP3VfRq9NJ2mxcNxh";
-    //     EXPECT_ANY_THROW(api.check_bwlist_proposal(addr_list));
-    // }
-    // {
-    //     auto addr_list = "Ta0001";
-    //     EXPECT_ANY_THROW(api.check_bwlist_proposal(addr_list));
-    // }
-
+    {
+        // should be full address
+        auto addr_list = "T200024uMvLFmyttx6Nccv4jKP3VfRq9NJ2mxcNxh";
+        EXPECT_ANY_THROW(api.check_bwlist_proposal(addr_list));
+    }
+    {
+        auto addr_list = "Ta0001@0";
+        EXPECT_ANY_THROW(api.check_bwlist_proposal(addr_list));
+    }
+    {
+        auto addr_list = black_hole_addr;
+        EXPECT_ANY_THROW(api.check_bwlist_proposal(addr_list));
+    }
+    {
+        auto addr_list = genesis_root_addr_main_chain;
+        EXPECT_ANY_THROW(api.check_bwlist_proposal(addr_list));
+    }    
+    {
+        auto addr_list = sys_contract_beacon_timer_addr;
+        EXPECT_ANY_THROW(api.check_bwlist_proposal(addr_list));
+    }        
+    {
+        auto addr_list = sys_drand_addr;
+        EXPECT_ANY_THROW(api.check_bwlist_proposal(addr_list));
+    }            
 }
 
 
