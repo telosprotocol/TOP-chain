@@ -19,11 +19,11 @@ xtop_kv_db::xtop_kv_db(base::xvdbstore_t * db, common::xaccount_address_t table)
     m_node_key_prefix = base::xvdbkey_t::create_prunable_mpt_node_key_prefix(m_table.vaccount());
 }
 
-std::string xtop_kv_db::convert_key(xbytes_t const & key) const {
+std::string xtop_kv_db::convert_key(gsl::span<xbyte_t const> const key) const {
     return base::xvdbkey_t::create_prunable_mpt_node_key(m_node_key_prefix, std::string{key.begin(), key.end()});
 }
 
-void xtop_kv_db::Put(xbytes_t const & key, xbytes_t const & value, std::error_code & ec) {
+void xtop_kv_db::Put(gsl::span<xbyte_t const> const key, xbytes_t const & value, std::error_code & ec) {
     XMETRICS_COUNTER_INCREMENT("trie_put_nodes", 1);
     std::lock_guard<std::mutex> lock(m_mutex);
     if (m_db->set_value(convert_key(key), {value.begin(), value.end()}) == false) {

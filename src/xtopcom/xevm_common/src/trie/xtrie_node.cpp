@@ -60,21 +60,21 @@ xtop_trie_node_face::~xtop_trie_node_face() noexcept {
 
 #endif
 
-xtop_trie_hash_node::xtop_trie_hash_node(xbytes_t data)
-    : m_data{std::move(data)} {
+xtop_trie_hash_node::xtop_trie_hash_node(xbytes_t const & data)
+    : hash_{data} {
 }
 
-xtop_trie_hash_node::xtop_trie_hash_node(xhash256_t const & hash) : m_data{hash.begin(), hash.end()} {
+xtop_trie_hash_node::xtop_trie_hash_node(xhash256_t const & hash) : hash_{hash} {
 }
 
-xbytes_t const & xtop_trie_hash_node::data() const noexcept {
-    return m_data;
+xhash256_t const & xtop_trie_hash_node::data() const noexcept {
+    return hash_;
 }
 
 std::string xtop_trie_hash_node::fstring(std::string const & ind) const {
     // return fmt.Sprintf("<%x> ", []byte(n))
     std::ostringstream resp;
-    resp << "<" << to_hex(m_data) << "> ";
+    resp << "<" << hash_.as_hex_str() << "> ";
     return resp.str();
 }
 
