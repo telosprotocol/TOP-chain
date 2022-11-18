@@ -1,0 +1,15 @@
+{  
+    "local_toggle_whitelist":"1",
+    "local_blacklist":[
+        "T800007395bdb2fe4b990b4b6eb47fe548c7ff6816dc77",
+        "T80000261f782f9538611e8b581c70f2bb80f435f14913",
+        "T6000479c8cf33f10d9e88904ef1f5c21f648e82d672be"
+    ],
+     
+    "local_whitelist":[
+        "T8000021fb11d46d7da865140ad5581e61cce8401601ef",
+        "T80000d692515b996d5f110ace59b3758de5e769eff7c7",
+        "T80000261f782f9538611e8b581c70f2bb80f435f14913",
+        "T6000479c8cf33f10d9e88904ef1f5c21f648e82d672be"
+    ]
+}

@@ -7,6 +7,7 @@
 #include "xbasic/xmemory.hpp"
 #include "xdata/xtable_bstate.h"
 #include "xdata/xblockbuild.h"
+#include "xdata/xblocktool.h"
 #include "xmbus/xevent_behind.h"
 #include "xstatestore/xstatestore_exec.h"
 #include "xstatestore/xerror.h"
@@ -35,7 +36,12 @@ void xstatestore_executor_t::recover_execute_height(uint64_t old_executed_height
                   m_table_addr.to_string().c_str(),
                   old_executed_height,
                   i);
-            continue;
+            if (i == 0) {
+                base::xauto_ptr<base::xvblock_t> _genesis_block = data::xblocktool_t::create_genesis_empty_table(m_table_addr.to_string());
+                _block = _genesis_block;
+            } else {
+                continue;
+            }
         }
 
         std::error_code ec;
@@ -65,7 +71,7 @@ void xstatestore_executor_t::recover_execute_height(uint64_t old_executed_height
     }    
 
     // XTODO should not happen
-    xwarn("xstatestore_executor_t::xstatestore_executor_t fail-recover execute height. %s,height=%ld", m_table_addr.to_string().c_str(), old_executed_height);
+    xerror("xstatestore_executor_t::xstatestore_executor_t fail-recover execute height. %s,height=%ld", m_table_addr.to_string().c_str(), old_executed_height);
 }
 
 void xstatestore_executor_t::on_table_block_committed(base::xvblock_t* block) const {
@@ -649,7 +655,7 @@ xtablestate_ext_ptr_t xstatestore_executor_t::make_state_from_prev_state_and_tab
         return nullptr;            
     }
 
-    xinfo("xstatestore_executor_t::make_state_from_prev_state_and_table succ,block=%s",current_block->dump().c_str());
+    xinfo("xstatestore_executor_t::make_state_from_prev_state_and_table succ,block=%s,has_other_node=%d",current_block->dump().c_str(),base::xvchain_t::instance().has_other_node());
     return tablestate;
 }
 

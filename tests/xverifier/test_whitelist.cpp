@@ -4,218 +4,168 @@
 #include <string>
 #include <fstream>
 #include "xconfig/xconfig_register.h"
+#include "xconfig/xpredefined_configurations.h"
 #include "xverifier/xwhitelist_verifier.h"
 #include "xverifier/xverifier_utl.h"
 #include "json/json.h"
 
-using namespace top::xverifier;
+using namespace top;
 using namespace top::config;
 
-
-class xwhitelist_utl_test: public  top::xverifier::xwhitelist_utl {
-public:
-
-    // wl test function
-    static bool add_to_whitelist(std::string const & addr) {
-        wl.emplace_back(addr);
-        return true;
-    }
-
-    static bool delelte_from_whitelist(std::string const & addr) {
-        auto iter = std::find_if(wl.begin(), wl.end(), [&addr](std::string const& w) { return w == addr; });
-        if (iter != wl.end()) {
-            xwarn("[global_trace][xwhitelist_utl][delelte_from_whitelist][fail], cannot found!");
-            return false;
-        }
-
-        wl.erase(iter);
-        return true;
-    }
-
-    static void set_whitelist_to_config() {
-        // base::xstream_t stream(base::xcontext_t::instance());
-        // VECTOR_OBJECT_SERIALIZE(stream, wl);
-        // auto res = std::string(reinterpret_cast<char*>(stream.data()), stream.size());
-
-        auto res = generate_wl_string();
-
-        if (!top::config::xconfig_register_t::get_instance().set(top::config::xtop_whitelist_onchain_goverance_parameter::name, res)) {
-                assert(0);
-        }
-    }
-
-    static std::string generate_wl_string() {
-        if (xwhitelist_utl::wl.empty()) return "";
-
-        std::string res = wl[0];
-        for (size_t i = 1; i < wl.size(); ++i) {
-            res = res + "," + wl[i];
-        }
-        return res;
-    }
-
-    static void print_whitelist() {
-        xinfo("whitelist content begin:");
-        xinfo("value: %s", generate_wl_string().c_str());
-
-        xinfo("whitelist content end!");
-    }
-
-    static bool load_bwlist_content(std::string const& config_file, std::map<std::string, std::string>& result) {
-        if (config_file.empty()) {
-            xwarn("load local black/white list error!");
-            return false;
-        }
-
-        std::ifstream in(config_file);
-        if (!in.is_open()) {
-            xwarn("open local black/white list file %s error", config_file.c_str());
-            return false;
-        }
-        std::ostringstream oss;
-        oss << in.rdbuf();
-        in.close();
-        auto json_content = std::move(oss.str());
-        if (json_content.empty()) {
-            xwarn("black/white list config file %s empty", config_file.c_str());
-            return false;
-        }
-
-
-        xJson::Value  json_root;
-        xJson::Reader  reader;
-        bool ret = reader.parse(json_content, json_root);
-        if (!ret) {
-            xwarn("parse config file %s failed", config_file.c_str());
-            return false;
-        }
-
-
-        auto const members = json_root.getMemberNames();
-        for(auto const& member: members) {
-            if (json_root[member].isArray()) {
-                for (unsigned int i = 0; i < json_root[member].size(); ++i) {
-                    try {
-                        if ( top::xverifier::xverifier_success != top::xverifier::xtx_utl::address_is_valid(json_root[member][i].asString())) return false;
-                    } catch (...) {
-                        xwarn("parse config file %s failed", config_file.c_str());
-                        return false;
-                    }
-                    result[member] += json_root[member][i].asString() + ",";
-                }
-            } else {
-                xwarn("parse config file %s failed", config_file.c_str());
-                return false;
-            }
-
-
-        }
-
-        return true;
-    }
-};
-
 class test_whitelist : public testing::Test {
+public:
+    void  clear_white_config() {
+        std::string empty_config;
+        XSET_ONCHAIN_GOVERNANCE_PARAMETER(whitelist, empty_config);
+        XSET_CONFIG(local_whitelist, empty_config);
+        XSET_ONCHAIN_GOVERNANCE_PARAMETER(toggle_whitelist, false);
+        XSET_CONFIG(local_toggle_whitelist, false);
+    }
+    void enable_toggle_whitelist(bool enable, bool is_local) {
+        if (is_local) {
+            XSET_CONFIG(local_toggle_whitelist, enable);
+        } else {
+            XSET_ONCHAIN_GOVERNANCE_PARAMETER(toggle_whitelist, enable);
+        }
+    }
+    void add_onchain_white_config(std::string const& addr) {
+        std::string config = XGET_ONCHAIN_GOVERNANCE_PARAMETER(whitelist);
+        if (config.empty())
+            config = addr;
+        else
+            config += "," + addr;
+        XSET_ONCHAIN_GOVERNANCE_PARAMETER(whitelist, config);
+    }
+    void add_offchain_white_config(std::string const& addr) {
+        std::string config = XGET_CONFIG(local_whitelist);
+        if (config.empty())
+            config = addr;
+        else
+            config += "," + addr;
+        XSET_CONFIG(local_whitelist, config);
+    }    
 protected:
     void SetUp() override {}
     void TearDown() override {}
 };
 
-TEST_F(test_whitelist, whitelist) {
-    printf("## test whitelist begin --------------\n");
-    // init
-    xinfo("init:\n");
-    xwhitelist_utl_test::print_whitelist();
-    ASSERT_TRUE(top::config::xconfig_register_t::get_instance().set(top::config::xtop_whitelist_onchain_goverance_parameter::name, std::string{""}));
-    auto res = XGET_ONCHAIN_GOVERNANCE_PARAMETER(whitelist);
-    ASSERT_TRUE(res.empty());
+TEST_F(test_whitelist, config_set_get_error_config) {
+    clear_white_config();
+    std::string err_config = "T8000098e61050e7fb920ab57a441722cbb5fb161b99a5:T80000a3f71fd99641294271047dd8753919781f0e6e7e";
+    XSET_ONCHAIN_GOVERNANCE_PARAMETER(whitelist, err_config);
+    ASSERT_EQ(1, xverifier::xwhitelist_utl::whitelist_config().size());
 
-    xinfo("add:\n");
-    std::string test_addr = "T000001FiHkC1L9z6VftMEB3uke7MUJDy9ZcePhw";
-    for (auto i = 0; i < 2; ++i) {
-        auto tmp_addr = test_addr + std::to_string(i);
-
-        xwhitelist_utl_test::add_to_whitelist(tmp_addr);
-        xwhitelist_utl_test::print_whitelist();
-        auto wl_str = xwhitelist_utl_test::generate_wl_string();
-
-        xwhitelist_utl_test::set_whitelist_to_config();
-        res = XGET_ONCHAIN_GOVERNANCE_PARAMETER(whitelist);
-        xinfo("onchain config value: %zu %s", res.size(), res.c_str());
-        auto wl_config = xwhitelist_utl::get_whitelist_from_config();
-        xwhitelist_utl_test::print_whitelist();
-        auto wl_config_str = xwhitelist_utl_test::generate_wl_string();
-
-        ASSERT_EQ(wl_str, wl_config_str);
-    }
-
-    printf("## test whitelist end --------------\n");
-
+    clear_white_config();
+    XSET_CONFIG(local_whitelist, err_config);
+    ASSERT_EQ(1, xverifier::xwhitelist_utl::whitelist_config().size());
 }
 
-
-TEST_F(test_whitelist, load_local_whitelist) {
-    std::ofstream file_json;
-    file_json.open("bwlist.json");
-    int count = 4500;
-
-    xJson::Value root;
-
-    //whitelist
-    std::string target_whitelist_str = "";
-    std::string account_addr = "T00000LMxyqFyLC5ZWhH9AWdgFcK4bbL1kxyw11W";
-    xJson::Value white_arr(xJson::arrayValue);
-    for (auto i = 0; i < count; ++i) {
-        white_arr.append(xJson::Value(account_addr));
-        target_whitelist_str += account_addr + ",";
+TEST_F(test_whitelist, config_set_get_some_addrs) {
+    clear_white_config();
+    for (uint32_t i=0;i<100;i++) {
+        std::string config = "T8000098e61050e7fb920ab57a441722cbb5fb161b99" + std::to_string(i);
+        add_onchain_white_config(config);        
     }
-    root["local_whitelist"] = white_arr;
+    ASSERT_EQ(100, xverifier::xwhitelist_utl::whitelist_config().size());
 
-    //blacklist
-    std::string target_blacklist_str = "";
-    account_addr = "T00000LhXXoXe5KD6furgsEKJRpT3SuZLuN1MaCf";
-    xJson::Value black_arr(xJson::arrayValue);
-    for (auto i = 0; i < count; ++i) {
-        black_arr.append(xJson::Value(account_addr));
-        target_blacklist_str += account_addr + ",";
+    // add 100 repeat addrs
+    for (uint32_t i=0;i<100;i++) {
+        std::string config = "T8000098e61050e7fb920ab57a441722cbb5fb161b99" + std::to_string(i);
+        add_offchain_white_config(config);        
     }
-    root["local_blacklist"] = black_arr;
+    ASSERT_EQ(100, xverifier::xwhitelist_utl::whitelist_config().size());
 
-    xJson::StyledWriter writer;
-    file_json << writer.write(root);
-    file_json.close();
-
-
-    std::map<std::string, std::string> result;
-    ASSERT_TRUE(xwhitelist_utl_test::load_bwlist_content("bwlist.json", result));
-    ASSERT_EQ(target_whitelist_str, result["local_whitelist"]);
-    ASSERT_EQ(target_blacklist_str, result["local_blacklist"]);
-
+    // add 100 new addrs
+    for (uint32_t i=0;i<100;i++) {
+        std::string config = "T8000098e61050e7fb920ab57a441722cbb5fb161b88" + std::to_string(i);
+        add_offchain_white_config(config);        
+    }
+    ASSERT_EQ(200, xverifier::xwhitelist_utl::whitelist_config().size());    
 }
 
-TEST_F(test_whitelist, error_config) {
+TEST_F(test_whitelist, is_white_address_limit_toggle) {
+    clear_white_config();
+    enable_toggle_whitelist(true, true);
 
-    std::ofstream file_json;
-    file_json.open("bwlist.json");
-    int count = 2;
-
-    xJson::Value root;
-
-    //whitelist
-    std::string target_whitelist_str = "";
-    std::string account_addr = "T00000LhXXoXe5KD6furgsEKJRpT3SuZLuN1MaCf100";
-    xJson::Value white_arr(xJson::arrayValue);
-    for (auto i = 0; i < count; ++i) {
-        white_arr.append(xJson::Value(account_addr + std::to_string(i)));
-        target_whitelist_str += (account_addr + std::to_string(i)) + ",";
+    std::vector<std::string> addrs;
+    for (uint32_t i=0;i<100;i++) {
+        std::string addr = "T8000098e61050e7fb920ab57a441722cbb5fb161b99" + std::to_string(i);
+        add_onchain_white_config(addr);        
+        addrs.push_back(addr);
+    }
+    for (auto & addr : addrs) {
+        ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr));
     }
 
-    root["local_whitelist"] = white_arr;
+    for (uint32_t i=0;i<100;i++) {
+        std::string addr = "T8000098e61050e7fb920ab57a441722cbb5fb161b88" + std::to_string(i);
+        add_offchain_white_config(addr);        
+        addrs.push_back(addr);
+    }
+    for (auto & addr : addrs) {
+        ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr));
+    }    
 
-    xJson::StyledWriter writer;
-    file_json << writer.write(root);
-    file_json.close();
-    std::map<std::string, std::string> result;
-    ASSERT_FALSE(xwhitelist_utl_test::load_bwlist_content("bwlist.json", result));
+    std::vector<std::string> addrs2;
+    for (uint32_t i=0;i<100;i++) {
+        std::string addr = "T8000098e61050e7fb920ab57a441722cbb5fb161b77" + std::to_string(i);
+        addrs2.push_back(addr);
+    }
+    for (auto & addr : addrs2) {
+        ASSERT_TRUE(xverifier::xwhitelist_utl::is_white_address_limit(addr));
+    }    
 
+    enable_toggle_whitelist(false, true);
+    for (auto & addr : addrs) {
+        ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr));
+    }    
+    for (auto & addr : addrs2) {
+        ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr));
+    }        
+}
+
+TEST_F(test_whitelist, is_white_address_limit_basic) {
+    clear_white_config();
+{
+    std::string addr = "T8000098e61050e7fb920ab57a441722cbb5fb161b990";
+    std::string addr2 = "T8000098e61050e7fb920ab57a441722cbb5fb161b991";
+    add_onchain_white_config(addr);
+    ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr));
+    ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr2));
+    enable_toggle_whitelist(true, false);
+    ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr));
+    ASSERT_TRUE(xverifier::xwhitelist_utl::is_white_address_limit(addr2));
+    enable_toggle_whitelist(false, false);
+    ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr));
+    ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr2));    
+    enable_toggle_whitelist(true, true);
+    ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr));
+    ASSERT_TRUE(xverifier::xwhitelist_utl::is_white_address_limit(addr2));    
+    enable_toggle_whitelist(false, true);
+    ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr));
+    ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr2));    
+}
+
+    clear_white_config();
+{
+    std::string addr = "T8000098e61050e7fb920ab57a441722cbb5fb161b990";
+    std::string addr2 = "T8000098e61050e7fb920ab57a441722cbb5fb161b991";
+    std::string addr1 = "T8000098e61050e7fb920ab57a441722cbb5fb161b992";
+    add_onchain_white_config(addr);
+    add_onchain_white_config(addr1);
+    ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr));
+    ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr2));
+    enable_toggle_whitelist(true, false);
+    ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr));
+    ASSERT_TRUE(xverifier::xwhitelist_utl::is_white_address_limit(addr2));
+    enable_toggle_whitelist(false, false);
+    ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr));
+    ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr2));    
+    enable_toggle_whitelist(true, true);
+    ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr));
+    ASSERT_TRUE(xverifier::xwhitelist_utl::is_white_address_limit(addr2));    
+    enable_toggle_whitelist(false, true);
+    ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr));
+    ASSERT_FALSE(xverifier::xwhitelist_utl::is_white_address_limit(addr2));    
+}
 }

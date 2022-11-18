@@ -335,12 +335,12 @@ int32_t xtx_verifier::verify_send_tx_validation(data::xtransaction_t const * trx
         xwarn("xtx_verifier::verify_send_tx_validation, tx:%s digest check invalid", trx_ptr->dump().c_str());
         return xverifier_error::xverifier_error_tx_hash_invalid;
     }
-    if (xverifier::xblacklist_utl_t::is_black_address(trx_ptr->get_source_addr())) {
+    if (xverifier::xblacklist_utl_t::is_black_address(trx_ptr->get_source_addr(), trx_ptr->get_target_addr())) {
         xwarn("[xtx_verifier::verify_send_tx_validation] in black address,tx:%s", trx_ptr->dump().c_str());
         return xverifier_error::xverifier_error_tx_blacklist_invalid;
     }
 
-    if (xwhitelist_utl::check_whitelist_limit_tx(trx_ptr)) {
+    if (xverifier::xwhitelist_utl::is_white_address_limit(trx_ptr->get_source_addr())) {
         xwarn("[xtx_verifier::verify_send_tx_validation] whitelist limit address,tx:%s", trx_ptr->dump().c_str());
         return xverifier_error::xverifier_error_tx_whitelist_invalid;
     }

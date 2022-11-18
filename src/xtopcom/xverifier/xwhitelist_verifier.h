@@ -4,23 +4,11 @@
 
 #pragma once
 
-#include "xbase/xcontext.h"
-#include "xconfig/xconfig_register.h"
-#include "xconfig/xpredefined_configurations.h"
-#include "xdata/xtransaction.h"
-#include "xverifier/xverifier_errors.h"
-
 #include <string>
-#include <tuple>
-#include <vector>
+#include <set>
 
 namespace top {
 namespace xverifier {
-
-using onchain_whitelist = std::vector<std::string>; /// structure to store the whitelist
-/// the limit interface
-std::string const vote_interface = "voteNode";
-std::string const claim_reward_interface = "claimVoterDividend";
 
 /**
  * @brief utl for whitelist
@@ -38,22 +26,11 @@ public:
      * @return true  means account addr included in whitelist
      * @return false  means account addr not included in whitelist
      */
-    static bool include_in_whitelist(std::string const & addr);
-
-    /**
-     * @brief  judge limited tx
-     *
-     * @param tx  the tx to judge wheher limited
-     * @return true  means tx is limited
-     * @return false  means tx not limited
-     */
-    static bool check_whitelist_limit_tx(data::xtransaction_t const * tx);
+    static bool is_white_address_limit(std::string const& source_addr);
 
     /// helper
-    static onchain_whitelist get_whitelist_from_config();
-
-    /// the onchain whitelist
-    static onchain_whitelist wl;
+    static std::set<std::string>    whitelist_config();
+    static bool                     is_whitelist_enable();
 };
 
 }  // namespace xverifier

@@ -1202,7 +1202,41 @@ void xrpc_query_manager::getChainId(xJson::Value & js_req, xJson::Value & js_rsp
     std::string addr = sys_contract_rec_elect_rec_addr;
     std::string prop_name = std::string(XPROPERTY_CONTRACT_ELECTION_RESULT_KEY) + "_0";
     m_xrpc_query_func.query_account_property(j, addr, prop_name, xfull_node_compatible_mode_t::incompatible);
+
     js_rsp["chain_id"] = j["chain_id"];
+}
+
+void xrpc_query_manager::getCrossReceiptIds(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) {  
+    xJson::Value jv_tables_height;
+    base::xreceiptid_all_table_states all_states;
+    std::vector<std::string> addrs = data::xblocktool_t::make_all_table_addresses();
+    for (auto & addr : addrs) {
+        common::xaccount_address_t table_addr(addr);
+        xtablestate_ptr_t tablestate = statestore::xstatestore_hub_t::instance()->get_table_connectted_state(table_addr);
+        if (tablestate != nullptr) {
+            base::xreceiptid_state_ptr_t receipt_state = tablestate->get_receiptid_state();
+            if (nullptr != receipt_state) {
+                all_states.add_table_receiptid_state(table_addr.vaccount().get_short_table_id(), receipt_state);
+            }
+            jv_tables_height[table_addr.to_string()] = static_cast<unsigned long long>(tablestate->height());
+        } else {
+            xerror("xrpc_query_manager::getCrossReceiptIds fail-get tablestate.%s", addr.c_str());
+        }
+    }
+    
+    xJson::Value jv_unfinish_info; 
+    auto unfinish_infos = all_states.get_unfinish_info();
+    for (auto & info : unfinish_infos) {
+        xJson::Value v;
+        v["src_tableid"]        = info.source_id;
+        v["dst_tableid"]        = info.target_id;
+        v["unrecv"]             = info.unrecv_num;
+        v["unconfirm"]          = info.unconfirm_num;
+        jv_unfinish_info.append(v);
+    }
+
+    js_rsp["tables_height"] = jv_tables_height;
+    js_rsp["unfinish_infos"] = jv_unfinish_info;
 }
 
 void xrpc_query_manager::getStandbys(xJson::Value & js_req, xJson::Value & js_rsp, std::string & strResult, uint32_t & nErrorCode) {
