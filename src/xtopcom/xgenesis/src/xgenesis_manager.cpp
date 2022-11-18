@@ -211,6 +211,36 @@ base::xauto_ptr<base::xvblock_t> xtop_genesis_manager::create_genesis_of_evm_con
         }
         xinfo("[xtop_genesis_manager::create_genesis_of_contract_account] account: %s, create genesis block success", account.get_account().c_str());
         return genesis_block;
+    } else if (account.get_account() == evm_eth2_client_contract_address.to_string()) {
+        xobject_ptr_t<base::xvbstate_t> bstate =
+            make_object_ptr<base::xvbstate_t>(account.get_account(), uint64_t{0}, uint64_t{0}, std::string{}, std::string{}, uint64_t{0}, uint32_t{0}, uint16_t{0});
+        xobject_ptr_t<base::xvcanvas_t> canvas = make_object_ptr<base::xvcanvas_t>();
+        bstate->new_string_map_var(data::system_contract::XPROPERTY_FINALIZED_EXECUTION_BLOCKS, canvas.get());
+        bstate->new_string_map_var(data::system_contract::XPROPERTY_UNFINALIZED_HEADERS, canvas.get());
+        bstate->new_string_var(data::system_contract::XPROPERTY_FINALIZED_BEACON_HEADER, canvas.get());
+        bstate->new_string_var(data::system_contract::XPROPERTY_FINALIZED_EXECUTION_HEADER, canvas.get());
+        bstate->new_string_var(data::system_contract::XPROPERTY_CURRENT_SYNC_COMMITTEE, canvas.get());
+        bstate->new_string_var(data::system_contract::XPROPERTY_NEXT_SYNC_COMMITTEE, canvas.get());
+        bstate->new_string_var(data::system_contract::XPROPERTY_RESET_FLAG, canvas.get());
+        // create
+        base::xauto_ptr<base::xvblock_t> genesis_block = data::xblocktool_t::create_genesis_lightunit(bstate, canvas);
+        xassert(genesis_block != nullptr);
+        if (src == xenum_create_src_t::init && m_blockstore->exist_genesis_block(account)) {
+            auto const existed_genesis_block = m_blockstore->load_block_object(account, (uint64_t)0, (uint64_t)0, false);
+            if (existed_genesis_block->get_block_hash() == genesis_block->get_block_hash()) {
+                xinfo("[xtop_genesis_manager::create_genesis_of_evm_contract_account] account %s, genesis block already exists", account.get_account().c_str());
+                return nullptr;
+            } else {
+                // just delete it here and store new root block after
+                xwarn("[xtop_genesis_manager::create_genesis_of_evm_contract_account] account: %s genesis block exist but hash not match, replace it, %s, %s",
+                    account.get_account().c_str(),
+                    base::xstring_utl::to_hex(existed_genesis_block->get_block_hash()).c_str(),
+                    base::xstring_utl::to_hex(genesis_block->get_block_hash()).c_str());
+                m_blockstore->delete_block(account, existed_genesis_block.get());
+            }
+        }
+        xinfo("[xtop_genesis_manager::create_genesis_of_contract_account] account: %s, create genesis block success", account.get_account().c_str());
+        return genesis_block;
     }
     return nullptr;
 }
