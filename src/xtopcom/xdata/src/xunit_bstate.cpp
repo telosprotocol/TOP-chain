@@ -208,7 +208,7 @@ std::string xunit_bstate_t::get_storage(const std::string& index_str) const {
         evm_common::h256 value;
         //js_rsp["result"] = std::string("0x") + evm_common::toHex(value);
         //return;
-        value_str = std::string((char*)value.data(), value.size);
+        value_str = std::string((char*)value.data(), value.size());
     }
     return value_str;
 }
