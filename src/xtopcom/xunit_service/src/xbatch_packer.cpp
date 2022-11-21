@@ -355,17 +355,17 @@ bool xbatch_packer::do_state_sync(uint64_t sync_height) {
     }
 
     std::error_code ec;
-    xhash256_t state_root = data::xblockextract_t::get_state_root_from_block(sync_block.get());
+    auto const & state_root = data::xblockextract_t::get_state_root_from_block(sync_block.get());
     std::string table_bstate_hash_str = sync_block->get_fullstate_hash();
     xassert(!table_bstate_hash_str.empty());
-    xhash256_t table_bstate_hash(top::to_bytes(table_bstate_hash_str));
-    xhash256_t sync_block_hash(top::to_bytes(sync_block->get_block_hash()));
-    xinfo("xbatch_packer::do_state_sync sync state begin.table:%s,height:%llu,root:%s", get_account().c_str(), sync_height, state_root.as_hex_str().c_str());
+    evm_common::xh256_t const table_bstate_hash(top::to_bytes(table_bstate_hash_str));
+    evm_common::xh256_t const sync_block_hash(top::to_bytes(sync_block->get_block_hash()));
+    xinfo("xbatch_packer::do_state_sync sync state begin.table:%s,height:%llu,root:%s", get_account().c_str(), sync_height, state_root.hex().c_str());
     get_resources()->get_state_downloader()->sync_state(m_table_addr, sync_height, sync_block_hash, table_bstate_hash, state_root, true, ec);
     if (ec) {
-        xwarn("xbatch_packer::do_state_sync sync state fail.table:%s,height:%llu,root:%s ec:%s", get_account().c_str(), sync_height, state_root.as_hex_str().c_str(), ec.message().c_str());
+        xwarn("xbatch_packer::do_state_sync sync state fail.table:%s,height:%llu,root:%s ec:%s", get_account().c_str(), sync_height, state_root.hex().c_str(), ec.message().c_str());
     }
-    XMETRICS_GAUGE(metrics::cons_invoke_sync_state_count, 1);    
+    XMETRICS_GAUGE(metrics::cons_invoke_sync_state_count, 1);
     return true;
 }
 
@@ -670,7 +670,7 @@ bool xbatch_packer::on_proposal_finish(const base::xvevent_t & event, xcsobject_
         xunit_info("xbatch_packer::on_proposal_finish succ. leader:%d,proposal=%s,state_root=%s,at_node:%s,m_last_xip2:%s",
             is_leader,
             _evt_obj->get_target_proposal()->dump().c_str(),
-            data::xblockextract_t::get_state_root_from_block(_evt_obj->get_target_proposal()).as_hex_str().c_str(),
+            data::xblockextract_t::get_state_root_from_block(_evt_obj->get_target_proposal()).hex().c_str(),
             xcons_utl::xip_to_hex(get_xip2_addr()).c_str(),
             xcons_utl::xip_to_hex(m_last_xip2).c_str());
 

@@ -265,7 +265,7 @@ void xtop_stack_trie::hash() {
     }
 }
 
-xhash256_t xtop_stack_trie::Hash() {
+xh256_t xtop_stack_trie::Hash() {
     hash();
     if (m_val.size() != 32) {
         // If the node's RLP isn't 32 bytes long, the node will not
@@ -275,15 +275,15 @@ xhash256_t xtop_stack_trie::Hash() {
         utl::xkeccak256_t hasher;
         hasher.update(m_val.data(), m_val.size());
         hasher.get_hash(res);
-        return xhash256_t{res};
+        return xh256_t{res};
     }
-    return xhash256_t{m_val};
+    return xh256_t{m_val};
 }
 
-xhash256_t xtop_stack_trie::Commit(std::error_code & ec) {
+xh256_t xtop_stack_trie::Commit(std::error_code & ec) {
     if (m_db = nullptr) {
         ec = error::xerrc_t::trie_db_not_provided;
-        return xhash256_t{};
+        return xh256_t{};
     }
     if (m_val.size() != 32) {
         // If the node's RLP isn't 32 bytes long, the node will not
@@ -294,9 +294,9 @@ xhash256_t xtop_stack_trie::Commit(std::error_code & ec) {
         hasher.update(m_val.data(), m_val.size());
         hasher.get_hash(res);
         m_db->Put(res, m_val, ec);
-        return xhash256_t{res};
+        return xh256_t{res};
     }
-    return xhash256_t{m_val};
+    return xh256_t{m_val};
 }
 
 std::shared_ptr<xtop_stack_trie> xtop_stack_trie::newLeaf(xbytes_t const & key, xbytes_t const & val) {

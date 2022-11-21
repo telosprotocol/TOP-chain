@@ -7,6 +7,7 @@
 #include "xbasic/xmemory.hpp"
 #include "xcommon/xnode_id.h"
 #include "xevm_common/trie/xsecure_trie.h"
+#include "xevm_common/xfixed_hash.h"
 #include "xstate_mpt/xstate_mpt_store_fwd.h"
 #include "xstate_mpt/xstate_object.h"
 #include "xvledger/xvdbstore.h"
@@ -38,7 +39,7 @@ public:
     /// @param db Db interface.
     /// @param ec Log the error code.
     /// @return MPT with given root hash. Error occurred if cannot find root in db.
-    static std::shared_ptr<xtop_state_mpt> create(const common::xaccount_address_t & table, const xhash256_t & root, base::xvdbstore_t * db, std::error_code & ec);
+    static std::shared_ptr<xtop_state_mpt> create(const common::xaccount_address_t & table, const evm_common::xh256_t & root, base::xvdbstore_t * db, std::error_code & ec);
 
 public:
     /// @brief Get index of specific account.
@@ -87,22 +88,22 @@ public:
     /// @brief Commit all modifies to db.
     /// @param ec Log the error code.
     /// @return New root hash.
-    xhash256_t commit(std::error_code & ec);
+    evm_common::xh256_t commit(std::error_code & ec);
 
     void load_into(std::unique_ptr<xstate_mpt_store_t> const & state_mpt_store, std::error_code & ec);
 
-    void prune(xhash256_t const & old_trie_root_hash, std::error_code & ec) const;
+    void prune(evm_common::xh256_t const & old_trie_root_hash, std::error_code & ec) const;
 
     void commit_pruned(std::error_code & ec) const;
 
     /// @brief Update modifies to trie and calculate root hash.
     /// @param ec Log the error code.
     /// @return New root hash.
-    xhash256_t get_root_hash(std::error_code & ec);
+    evm_common::xh256_t get_root_hash(std::error_code & ec);
 
     /// @brief Get original root hash.
     /// @return Original root hash.
-    const xhash256_t & get_original_root_hash() const;
+    const evm_common::xh256_t & get_original_root_hash() const;
 
 private:
     /// @brief Internal interface to init an empty state MPT.
@@ -110,7 +111,7 @@ private:
     /// @param root Root hash of MPT.
     /// @param db Db interface.
     /// @param ec Log the error code.
-    void init(const common::xaccount_address_t & table, const xhash256_t & root, base::xvdbstore_t * db, std::error_code & ec);
+    void init(const common::xaccount_address_t & table, const evm_common::xh256_t & root, base::xvdbstore_t * db, std::error_code & ec);
 
     /// @brief Get or create state object of specific account.
     /// @param account Account string.
@@ -146,7 +147,7 @@ private:
 
     std::shared_ptr<evm_common::trie::xsecure_trie_t> m_trie{nullptr};
     std::shared_ptr<evm_common::trie::xtrie_db_t> m_db{nullptr};
-    xhash256_t m_original_root;
+    evm_common::xh256_t m_original_root;
 
     mutable std::mutex m_state_objects_lock;
     mutable std::mutex m_trie_lock;

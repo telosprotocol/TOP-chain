@@ -5,11 +5,9 @@
 #pragma once
 
 #include <string>
-#include "xbasic/xmemory.hpp"
 #include "xdata/xtable_bstate.h"
 #include "xdata/xunit_bstate.h"
 #include "xvledger/xaccountindex.h"
-#include "xcommon/xaccount_address.h"
 #include "xstate_mpt/xstate_mpt.h"
 
 NS_BEG2(top, statestore)
@@ -34,18 +32,18 @@ class xtablestate_store_t {
  public:
     xtablestate_store_t(const data::xtablestate_ptr_t & table_state, 
                                 std::shared_ptr<state_mpt::xstate_mpt_t> const& state_mpt, 
-                                xhash256_t const& state_root,
+                                evm_common::xh256_t const & state_root,
                                 std::vector<std::pair<data::xunitstate_ptr_t, std::string>> const& unitstates);
 
     const data::xtablestate_ptr_t &                      get_table_state() const {return m_table_state;}
     std::shared_ptr<state_mpt::xstate_mpt_t> const&    get_state_mpt() const {return m_state_mpt;}
-    xhash256_t const&                                    get_state_root() const {return m_state_root;}
+    evm_common::xh256_t const&                                    get_state_root() const {return m_state_root;}
     std::vector<std::pair<data::xunitstate_ptr_t, std::string>> const& get_unitstates() const {return m_unitstates;}
 
  private:
     data::xtablestate_ptr_t                     m_table_state{nullptr};
     std::shared_ptr<state_mpt::xstate_mpt_t>  m_state_mpt{nullptr};
-    xhash256_t                                  m_state_root;
+    evm_common::xh256_t m_state_root;
     std::vector<std::pair<data::xunitstate_ptr_t, std::string>>  m_unitstates;
 };
 

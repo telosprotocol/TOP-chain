@@ -358,12 +358,11 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
     std::shared_ptr<state_mpt::xstate_mpt_t> table_mpt = nullptr;
 
     if (new_version) {
-        evm_common::xh256_t last_state_root;
-        auto ret = data::xblockextract_t::get_state_root(cs_para.get_latest_cert_block().get(), last_state_root);
-        if (!ret) {
+        auto const & last_state_root = data::xblockextract_t::get_state_root(cs_para.get_latest_cert_block().get(), ec);
+        if (ec) {
             return nullptr;
         }
-        table_mpt = create_new_mpt(xhash256_t{last_state_root}, cs_para, statectx_ptr, batch_unit_and_index);
+        table_mpt = create_new_mpt(last_state_root, cs_para, statectx_ptr, batch_unit_and_index);
         if (table_mpt == nullptr) {
             return nullptr;
         }
@@ -372,8 +371,8 @@ xblock_ptr_t xtable_maker_t::make_light_table_v2(bool is_leader, const xtablemak
             xwarn("xtable_maker_t::make_light_table_v2 get mpt root hash fail.");
             return nullptr;
         }
-        xdbg("xtable_maker_t::make_light_table_v2 create mpt succ is_leader=%d,%s,root hash:%s", is_leader, cs_para.dump().c_str(), root_hash.as_hex_str().c_str());
-        state_root = evm_common::xh256_t(root_hash.to_bytes());
+        xdbg("xtable_maker_t::make_light_table_v2 create mpt succ is_leader=%d,%s,root hash:%s", is_leader, cs_para.dump().c_str(), root_hash.hex().c_str());
+        state_root = root_hash;
     }
 
     cs_para.set_ethheader(xeth_header_builder::build(cs_para, state_root, execute_output.pack_outputs));
@@ -431,9 +430,9 @@ xblock_ptr_t xtable_maker_t::make_full_table(const xtablemaker_para_t & table_pa
     data::xtablestate_ptr_t tablestate = table_para.get_tablestate();
     xassert(nullptr != tablestate);
 
-    evm_common::xh256_t last_state_root;
-    auto ret = data::xblockextract_t::get_state_root(cs_para.get_latest_cert_block().get(), last_state_root);
-    if (!ret) {
+    std::error_code ec;
+    auto const & last_state_root = data::xblockextract_t::get_state_root(cs_para.get_latest_cert_block().get(), ec);
+    if (ec) {
         return nullptr;
     }
 
@@ -459,9 +458,9 @@ xblock_ptr_t xtable_maker_t::make_empty_table(const xtablemaker_para_t & table_p
     data::xtablestate_ptr_t tablestate = table_para.get_tablestate();
     xassert(nullptr != tablestate);
 
-    evm_common::xh256_t last_state_root;
-    auto ret = data::xblockextract_t::get_state_root(cs_para.get_latest_cert_block().get(), last_state_root);
-    if (!ret) {
+    std::error_code ec;
+    auto const & last_state_root = data::xblockextract_t::get_state_root(cs_para.get_latest_cert_block().get(), ec);
+    if (ec) {
         return nullptr;
     }
     cs_para.set_ethheader(xeth_header_builder::build(cs_para, last_state_root));
@@ -665,7 +664,7 @@ bool xtable_maker_t::verify_proposal_with_local(base::xvblock_t *proposal_block,
         auto local_state_root = data::xblockextract_t::get_state_root_from_block(local_block);
         auto proposal_state_root = data::xblockextract_t::get_state_root_from_block(local_block);
         if (local_state_root != proposal_state_root) {
-            xerror("xtable_maker_t::verify_proposal_with_local fail-state root not match.%s proposal:%s local:%s",proposal_block->dump().c_str(),local_state_root.as_hex_str().c_str(),proposal_state_root.as_hex_str().c_str());
+            xerror("xtable_maker_t::verify_proposal_with_local fail-state root not match.%s proposal:%s local:%s",proposal_block->dump().c_str(),local_state_root.hex().c_str(),proposal_state_root.hex().c_str());
             return false;
         }
 
@@ -799,7 +798,7 @@ bool xtable_maker_t::get_new_account_indexes(const data::xblock_consensus_para_t
     return true;
 }
 
-std::shared_ptr<state_mpt::xstate_mpt_t> xtable_maker_t::create_new_mpt(const xhash256_t & last_mpt_root,
+std::shared_ptr<state_mpt::xstate_mpt_t> xtable_maker_t::create_new_mpt(evm_common::xh256_t const & last_mpt_root,
                                                                           const data::xblock_consensus_para_t & cs_para,
                                                                           const statectx::xstatectx_ptr_t & table_state_ctx,
                                                                           const std::vector<std::pair<xblock_ptr_t, base::xaccount_index_t>> & batch_unit_and_index) {
@@ -853,7 +852,7 @@ std::shared_ptr<state_mpt::xstate_mpt_t> xtable_maker_t::create_new_mpt(const xh
     return mpt;
 }
 
-const std::string xeth_header_builder::build(const xblock_consensus_para_t & cs_para, const evm_common::xh256_t & state_root, const std::vector<txexecutor::xatomictx_output_t> & pack_txs_outputs) {
+std::string xeth_header_builder::build(const xblock_consensus_para_t & cs_para, evm_common::xh256_t const & state_root, const std::vector<txexecutor::xatomictx_output_t> & pack_txs_outputs) {
     std::error_code ec;
     uint64_t gas_used = 0;
     data::xeth_receipts_t eth_receipts;

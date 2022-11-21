@@ -85,13 +85,13 @@ void test_state_sync_fixture::generate_state_mpt() {
     EXPECT_FALSE(ec);
     printf("hash: %s\n", to_hex(trie_hash.first).c_str());
 
-    auto callback = [&](std::vector<xbytes_t> const & path, xbytes_t const & key, xbytes_t const & value, xhash256_t const & req_hash, std::error_code & ec) {
-        printf("on account key: %s, value: %s, req: %s\n", to_hex(key).c_str(), to_hex(value).c_str(), req_hash.as_hex_str().c_str());
+    auto callback = [&](std::vector<xbytes_t> const & path, xbytes_t const & key, xbytes_t const & value, evm_common::xh256_t const & req_hash, std::error_code & ec) {
+        printf("on account key: %s, value: %s, req: %s\n", to_hex(key).c_str(), to_hex(value).c_str(), req_hash.hex().c_str());
     };
     auto sched = evm_common::trie::Sync::NewSync(kv_db);
     sched->Init(trie_hash.first, callback);
 
-    std::vector<xhash256_t> queue;
+    std::vector<evm_common::xh256_t> queue;
     auto res = sched->Missing(1);
     auto nodes = std::get<0>(res);
     queue.insert(queue.end(), nodes.begin(), nodes.end());
@@ -100,7 +100,7 @@ void test_state_sync_fixture::generate_state_mpt() {
             auto v = trie_db->Node(q, ec);
             EXPECT_FALSE(ec);
             evm_common::trie::SyncResult result;
-            result.Hash = xhash256_t(q);
+            result.Hash = evm_common::xh256_t(q);
             result.Data = v;
             printf("node hash: %s, node value: %s\n", to_hex(result.Hash).c_str(), to_hex(result.Data).c_str());
             sched->Process(result, ec);
@@ -168,7 +168,7 @@ void test_state_sync_fixture::sync_helper() {
             stream >> id;
             std::error_code ec;
             auto req = m_track_reqs.at(id);
-            if (table == table_account_address.to_string() && height == table_height && xhash256_t(hash) == block_hash) {
+            if (table == table_account_address.to_string() && height == table_height && evm_common::xh256_t(hash) == block_hash) {
                 req.nodes_response.emplace_back(state_bytes);
             }
             m_syncer->deliver_req(req);
@@ -218,7 +218,7 @@ TEST_F(test_state_sync_fixture, test_process_node_data_sucess) {
     std::error_code ec;
     auto res = m_syncer->m_sched->Missing(1);
     auto const & nodes = std::get<0>(res);
-    auto blob = node_map[nodes[0].as_hex_str()];
+    auto blob = node_map[nodes[0].hex()];
     auto hash = m_syncer->process_node_data(to_bytes(from_hex(blob)), ec);
     EXPECT_FALSE(ec);
     EXPECT_EQ(hash, nodes[0]);
@@ -243,13 +243,13 @@ TEST_F(test_state_sync_fixture, test_process_unit_data_sucess) {
         }
         if (!nodes.empty()) {
             auto const & node = nodes[0];
-            auto blob = node_map[node.as_hex_str()];
+            auto blob = node_map[node.hex()];
             m_syncer->process_node_data(to_bytes(from_hex(blob)), ec);
             EXPECT_FALSE(ec);
         }
         if (!units.empty()) {
             auto const & unit = units[0];
-            auto blob = unit_map[unit.as_hex_str()];
+            auto blob = unit_map[unit.hex()];
             auto hash = m_syncer->process_unit_data(to_bytes(from_hex(blob)), ec);
             EXPECT_EQ(hash, unit);
             EXPECT_FALSE(ec);
@@ -279,7 +279,7 @@ TEST_F(test_state_sync_fixture, test_process_trie_success) {
         if (!nodes.empty()) {
             state_sync::state_req req;
             auto const & node = nodes[0];
-            auto blob = node_map[node.as_hex_str()];
+            auto blob = node_map[node.hex()];
             req.trie_tasks.emplace(node);
             req.nodes_response.emplace_back(to_bytes(from_hex(blob)));
             m_syncer->process_trie(req, ec);
@@ -288,7 +288,7 @@ TEST_F(test_state_sync_fixture, test_process_trie_success) {
         if (!units.empty()) {
             state_sync::state_req req;
             auto const & unit = units[0];
-            auto blob = unit_map[unit.as_hex_str()];
+            auto blob = unit_map[unit.hex()];
             req.unit_tasks.emplace(std::make_pair(unit, xbytes_t{}));
             req.units_response.emplace_back(to_bytes(from_hex(blob)));
             m_syncer->process_trie(req, ec);
@@ -303,14 +303,14 @@ TEST_F(test_state_sync_fixture, test_process_trie_type_mismatch) {
     req.type = state_sync::state_req_type::enum_state_req_table;
 
     std::error_code ec;
-    req.trie_tasks.emplace(xhash256_t(from_hex(node_map.begin()->first)));
-    req.unit_tasks.emplace(std::make_pair(xhash256_t(from_hex(unit_map.begin()->first)), from_hex(unit_sync_map.begin()->first)));
+    req.trie_tasks.emplace(evm_common::xh256_t(from_hex(node_map.begin()->first)));
+    req.unit_tasks.emplace(std::make_pair(evm_common::xh256_t(from_hex(unit_map.begin()->first)), from_hex(unit_sync_map.begin()->first)));
     req.nodes_response.emplace_back(from_hex(node_map.begin()->second));
     req.units_response.emplace_back(from_hex(unit_map.begin()->second));
     
     m_syncer->process_trie(req, ec);
-    EXPECT_TRUE(req.trie_tasks.count(xhash256_t(from_hex(node_map.begin()->first))));
-    EXPECT_TRUE(req.unit_tasks.count(xhash256_t(from_hex(unit_map.begin()->first))));
+    EXPECT_TRUE(req.trie_tasks.count(evm_common::xh256_t(from_hex(node_map.begin()->first))));
+    EXPECT_TRUE(req.unit_tasks.count(evm_common::xh256_t(from_hex(unit_map.begin()->first))));
     EXPECT_TRUE(m_syncer->m_trie_tasks.empty());
     EXPECT_TRUE(m_syncer->m_unit_tasks.empty());
     EXPECT_FALSE(ec);
@@ -321,14 +321,14 @@ TEST_F(test_state_sync_fixture, test_process_trie_not_found) {
     req.type = state_sync::state_req_type::enum_state_req_trie;
 
     std::error_code ec;
-    req.trie_tasks.emplace(xhash256_t(from_hex(node_map.begin()->first)));
-    req.unit_tasks.emplace(std::make_pair(xhash256_t(from_hex(unit_map.begin()->first)), from_hex(unit_sync_map.begin()->first)));
+    req.trie_tasks.emplace(evm_common::xh256_t(from_hex(node_map.begin()->first)));
+    req.unit_tasks.emplace(std::make_pair(evm_common::xh256_t(from_hex(unit_map.begin()->first)), from_hex(unit_sync_map.begin()->first)));
     req.nodes_response.emplace_back(from_hex(node_map.begin()->second));
     req.units_response.emplace_back(from_hex(unit_map.begin()->second));
     
     m_syncer->process_trie(req, ec);
-    EXPECT_FALSE(req.trie_tasks.count(xhash256_t(from_hex(node_map.begin()->first))));
-    EXPECT_FALSE(req.unit_tasks.count(xhash256_t(from_hex(unit_map.begin()->first))));
+    EXPECT_FALSE(req.trie_tasks.count(evm_common::xh256_t(from_hex(node_map.begin()->first))));
+    EXPECT_FALSE(req.unit_tasks.count(evm_common::xh256_t(from_hex(unit_map.begin()->first))));
     EXPECT_TRUE(m_syncer->m_trie_tasks.empty());
     EXPECT_TRUE(m_syncer->m_unit_tasks.empty());
     EXPECT_FALSE(ec);
@@ -349,13 +349,13 @@ TEST_F(test_state_sync_fixture, test_process_table_sucess) {
 
 TEST_F(test_state_sync_fixture, test_fill_tasks_use_left_node_task) {
     state_sync::state_req req;
-    std::vector<xhash256_t> nodes;
+    std::vector<evm_common::xh256_t> nodes;
     std::vector<xbytes_t> units;
-    m_syncer->m_trie_tasks.emplace(xhash256_t(xbytes_t(32, 1)));
+    m_syncer->m_trie_tasks.emplace(evm_common::xh256_t(xbytes_t(32, 1)));
     m_syncer->fill_tasks(2, req, nodes, units);
 
     EXPECT_EQ(nodes.size(), 2);
-    EXPECT_EQ(nodes[0], xhash256_t(xbytes_t(32, 1)));
+    EXPECT_EQ(nodes[0], evm_common::xh256_t(xbytes_t(32, 1)));
     EXPECT_EQ(nodes[1], root_hash);
     EXPECT_TRUE(units.empty());
     EXPECT_EQ(req.n_items, 2);
@@ -363,9 +363,9 @@ TEST_F(test_state_sync_fixture, test_fill_tasks_use_left_node_task) {
 
 TEST_F(test_state_sync_fixture, test_fill_tasks_use_left_unit_task) {
     state_sync::state_req req;
-    std::vector<xhash256_t> nodes;
+    std::vector<evm_common::xh256_t> nodes;
     std::vector<xbytes_t> units;
-    m_syncer->m_unit_tasks.emplace(std::make_pair(xhash256_t(xbytes_t(32, 1)), xbytes_t(32, 2)));
+    m_syncer->m_unit_tasks.emplace(std::make_pair(evm_common::xh256_t(xbytes_t(32, 1)), xbytes_t(32, 2)));
     m_syncer->fill_tasks(2, req, nodes, units);
 
     EXPECT_EQ(nodes.size(), 1);
@@ -377,14 +377,14 @@ TEST_F(test_state_sync_fixture, test_fill_tasks_use_left_unit_task) {
 
 TEST_F(test_state_sync_fixture, test_fill_tasks_not_use_left_task) {
     state_sync::state_req req;
-    std::vector<xhash256_t> nodes;
+    std::vector<evm_common::xh256_t> nodes;
     std::vector<xbytes_t> units;
-    m_syncer->m_trie_tasks.emplace(xhash256_t(xbytes_t(32, 1)));
-    m_syncer->m_unit_tasks.emplace(std::make_pair(xhash256_t(xbytes_t(32, 2)), xbytes_t(32, 3)));
+    m_syncer->m_trie_tasks.emplace(evm_common::xh256_t(xbytes_t(32, 1)));
+    m_syncer->m_unit_tasks.emplace(std::make_pair(evm_common::xh256_t(xbytes_t(32, 2)), xbytes_t(32, 3)));
     m_syncer->fill_tasks(1, req, nodes, units);
 
     EXPECT_EQ(nodes.size(), 1);
-    EXPECT_EQ(nodes[0], xhash256_t(xbytes_t(32, 1)));
+    EXPECT_EQ(nodes[0], evm_common::xh256_t(xbytes_t(32, 1)));
     EXPECT_TRUE(units.empty());
     EXPECT_EQ(req.n_items, 1);
 }
@@ -420,7 +420,7 @@ TEST_F(test_state_sync_fixture, test_assign_trie_tasks) {
 
 TEST_F(test_state_sync_fixture, test_assign_trie_tasks_empty) {
     state_sync::state_req req;
-    std::vector<xhash256_t> nodes;
+    std::vector<evm_common::xh256_t> nodes;
     std::vector<xbytes_t> units;
     m_syncer->fill_tasks(1, req, nodes, units);
     m_syncer->assign_trie_tasks(m_peers);

@@ -322,13 +322,13 @@ TEST_F(test_state_mpt_fixture, test_basic) {
 // TODO: nedd to fix double commit
 TEST_F(test_state_mpt_fixture, test_create_twice_commit_twice) {
     std::error_code ec;
-    xhash256_t root_hash(random_bytes(32));
-    std::cout << root_hash.as_hex_str() << std::endl;
+    evm_common::xh256_t root_hash(random_bytes(32));
+    std::cout << root_hash.hex() << std::endl;
     auto s = state_mpt::xstate_mpt_t::create(TABLE_ADDRESS, root_hash, m_db, ec);
     EXPECT_NE(ec.value(), 0);
 
-    xhash256_t root_hash1;
-    std::cout << root_hash1.as_hex_str() << std::endl;
+    evm_common::xh256_t root_hash1;
+    std::cout << root_hash1.hex() << std::endl;
     ec.clear();
     auto s1 = state_mpt::xstate_mpt_t::create(TABLE_ADDRESS, root_hash1, m_db, ec);
     EXPECT_EQ(ec.value(), 0);
@@ -339,13 +339,13 @@ TEST_F(test_state_mpt_fixture, test_create_twice_commit_twice) {
     auto hash1 = s1->commit(ec);
     EXPECT_EQ(ec.value(), 0);
     // hash1;
-    std::cout << "hash1:" << hash1.as_hex_str() << std::endl;
+    std::cout << "hash1:" << hash1.hex() << std::endl;
 
     // s1->set_account_index(common::xaccount_address_t("T80000f1d16965a3f485af048ebcec8fd700dc92d54fa7"), base::xaccount_index_t(), ec);
     std::cout << "second commit" << std::endl;
     auto hash2 = s1->commit(ec);
     EXPECT_EQ(ec.value(), 0);
-    std::cout << "hash2:" << hash2.as_hex_str() << std::endl;
+    std::cout << "hash2:" << hash2.hex() << std::endl;
     ASSERT_EQ(hash1, hash2);
 }
 
@@ -360,7 +360,7 @@ TEST_F(test_state_mpt_fixture, test_trie_sync) {
     auto v1 = "e216a0e87f9bf2c49634104763d8674fc0dda3d6267d142ea963c76c04351c9c3d32ec";
 
     std::error_code ec;
-    auto sched = state_mpt::new_state_sync(TABLE_ADDRESS, xhash256_t(from_hex(k1, ec)), m_db, false);
+    auto sched = state_mpt::new_state_sync(TABLE_ADDRESS, evm_common::xh256_t(from_hex(k1, ec)), m_db, false);
     EXPECT_FALSE(ec);
     size_t fill = 128;
     // step 1
@@ -370,11 +370,11 @@ TEST_F(test_state_mpt_fixture, test_trie_sync) {
         auto paths = std::get<1>(res);
         auto units = std::get<2>(res);
         EXPECT_EQ(nodes.size(), 1);
-        EXPECT_TRUE(nodes[0]== xhash256_t(from_hex(k1, ec)));
+        EXPECT_TRUE(nodes[0]== evm_common::xh256_t(from_hex(k1, ec)));
         EXPECT_FALSE(ec);
         EXPECT_TRUE(units.empty());
         evm_common::trie::SyncResult data;
-        data.Hash = xhash256_t(from_hex(k1, ec));
+        data.Hash = evm_common::xh256_t(from_hex(k1, ec));
         EXPECT_FALSE(ec);
         data.Data = from_hex(v1, ec);
         EXPECT_FALSE(ec);
@@ -388,11 +388,11 @@ TEST_F(test_state_mpt_fixture, test_trie_sync) {
         auto paths = std::get<1>(res);
         auto units = std::get<2>(res);
         EXPECT_EQ(nodes.size(), 1);
-        EXPECT_TRUE(nodes[0]== xhash256_t(from_hex(k2, ec)));
+        EXPECT_TRUE(nodes[0] == evm_common::xh256_t(from_hex(k2, ec)));
         EXPECT_FALSE(ec);
         EXPECT_TRUE(units.empty());
         evm_common::trie::SyncResult data;
-        data.Hash = xhash256_t(from_hex(k2, ec));
+        data.Hash = evm_common::xh256_t(from_hex(k2, ec));
         EXPECT_FALSE(ec);
         data.Data = from_hex(v2, ec);
         EXPECT_FALSE(ec);
@@ -406,11 +406,11 @@ TEST_F(test_state_mpt_fixture, test_trie_sync) {
         auto paths = std::get<1>(res);
         auto units = std::get<2>(res);
         EXPECT_EQ(nodes.size(), 1);
-        EXPECT_TRUE(nodes[0]== xhash256_t(from_hex(k3, ec)));
+        EXPECT_TRUE(nodes[0] == evm_common::xh256_t(from_hex(k3, ec)));
         EXPECT_FALSE(ec);
         EXPECT_TRUE(units.empty());
         evm_common::trie::SyncResult data;
-        data.Hash = xhash256_t(from_hex(k3, ec));
+        data.Hash = evm_common::xh256_t(from_hex(k3, ec));
         EXPECT_FALSE(ec);
         data.Data = from_hex(v3, ec);
         EXPECT_FALSE(ec);
@@ -424,11 +424,11 @@ TEST_F(test_state_mpt_fixture, test_trie_sync) {
         auto paths = std::get<1>(res);
         auto units = std::get<2>(res);
         EXPECT_EQ(nodes.size(), 1);
-        EXPECT_TRUE(nodes[0]== xhash256_t(from_hex(k4, ec)));
+        EXPECT_TRUE(nodes[0] == evm_common::xh256_t(from_hex(k4, ec)));
         EXPECT_FALSE(ec);
         EXPECT_TRUE(units.empty());
         evm_common::trie::SyncResult data;
-        data.Hash = xhash256_t(from_hex(k4, ec));
+        data.Hash = evm_common::xh256_t(from_hex(k4, ec));
         EXPECT_FALSE(ec);
         data.Data = from_hex(v4, ec);
         EXPECT_FALSE(ec);
@@ -499,13 +499,13 @@ TEST_F(test_state_mpt_fixture, test_trie_callback) {
     EXPECT_FALSE(ec);
     printf("hash: %s\n", to_hex(trie_hash.first).c_str());
 
-    auto callback = [&](std::vector<xbytes_t> const & path, xbytes_t const & key, xbytes_t const & value, xhash256_t const & req_hash, std::error_code & ec) {
-        printf("on account key: %s, value: %s, req: %s\n", to_hex(key).c_str(), to_hex(value).c_str(), req_hash.as_hex_str().c_str());
+    auto callback = [&](std::vector<xbytes_t> const & path, xbytes_t const & key, xbytes_t const & value, evm_common::xh256_t const & req_hash, std::error_code & ec) {
+        printf("on account key: %s, value: %s, req: %s\n", to_hex(key).c_str(), to_hex(value).c_str(), req_hash.hex().c_str());
     };
     auto sched = evm_common::trie::Sync::NewSync(kv_db);
     sched->Init(trie_hash.first, callback);
 
-    std::vector<xhash256_t> queue;
+    std::vector<evm_common::xh256_t> queue;
     auto res = sched->Missing(1);
     auto nodes = std::get<0>(res);
     queue.insert(queue.end(), nodes.begin(), nodes.end());
@@ -514,7 +514,7 @@ TEST_F(test_state_mpt_fixture, test_trie_callback) {
             auto v = trie_db->Node(q, ec);
             EXPECT_FALSE(ec);
             evm_common::trie::SyncResult result;
-            result.Hash = xhash256_t(q);
+            result.Hash = evm_common::xh256_t(q);
             result.Data = v;
             printf("node hash: %s, node value: %s\n", to_hex(result.Hash).c_str(), to_hex(result.Data).c_str());
             sched->Process(result, ec);
@@ -529,12 +529,12 @@ TEST_F(test_state_mpt_fixture, test_trie_callback) {
     sched->Commit(kv_db);
 }
 
-std::map<xhash256_t, xbytes_t> create_node_hash_data(size_t count) {
+std::map<evm_common::xh256_t, xbytes_t> create_node_hash_data(size_t count) {
     top::common::xnetwork_id_t network_id{top::common::xtopchain_network_id};
     top::base::enum_vaccount_addr_type account_address_type{top::base::enum_vaccount_addr_type_secp256k1_user_account};
     top::base::enum_xchain_zone_index zone_index{top::base::enum_chain_zone_consensus_index};
 
-    std::map<xhash256_t, xbytes_t> data;
+    std::map<evm_common::xh256_t, xbytes_t> data;
     uint16_t ledger_id = top::base::xvaccount_t::make_ledger_id(static_cast<top::base::enum_xchain_id>(network_id.value()), zone_index);
     for (size_t i = 0; i < count; i++) {
         top::utl::xecprikey_t private_key;
@@ -548,7 +548,7 @@ std::map<xhash256_t, xbytes_t> create_node_hash_data(size_t count) {
         info.m_index = index;
         auto str = info.encode();
         auto hashvalue = utl::xkeccak256_t::digest(std::to_string(i));
-        xhash256_t key{to_bytes(hashvalue)};
+        evm_common::xh256_t key{to_bytes(hashvalue)};
         data[key] = {str.begin(), str.end()};
     }
     return data;
@@ -573,8 +573,8 @@ std::map<xbytes_t, xbytes_t> create_node_bytes_data(size_t count) {
         info.m_index = index;
         auto str = info.encode();
         auto hashvalue = utl::xkeccak256_t::digest(std::to_string(i));
-        xhash256_t key{to_bytes(hashvalue)};
-        data[to_bytes(key)] = {str.begin(), str.end()};
+        // xhash256_t key{to_bytes(hashvalue)};
+        data[to_bytes(hashvalue)] = {str.begin(), str.end()};
     }
     return data;
 }

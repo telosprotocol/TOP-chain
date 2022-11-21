@@ -75,7 +75,7 @@ void xtop_download_executer::run_state_sync(std::shared_ptr<xstate_sync_face_t> 
         xwarn("xtop_download_executer::run_state_sync thread overtime, maybe error, account: %s, height: %lu, root: %s, error: %s %s",
               res.account.to_string().c_str(),
               res.height,
-              res.root_hash.as_hex_str().c_str(),
+              res.root_hash.hex().c_str(),
               res.ec.category().name(),
               res.ec.message().c_str());
     }
