@@ -187,7 +187,7 @@ size_t xstatectx_t::do_snapshot() {
 }
 
 void xstatectx_t::do_commit(base::xvblock_t* current_block) {
-    xhash256_t state_root_hash = data::xblockextract_t::get_state_root_from_block(current_block);
+    auto const & state_root_hash = data::xblockextract_t::get_state_root_from_block(current_block);
 
     std::vector<std::pair<data::xunitstate_ptr_t, std::string>> unitstate_units;
     std::vector<statectx::xunitstate_ctx_ptr_t> unitctxs = get_modified_unit_ctx();

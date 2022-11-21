@@ -94,7 +94,7 @@ xbytes_t xtop_trie_node_rlp::EncodeNodesToBytes(std::array<xtrie_node_face_ptr_t
     return RLP::encodeList(encoded);
 }
 
-//xtrie_node_face_ptr_t xtop_trie_node_rlp::mustDecodeNode(xhash256_t const & hash_bytes, xbytes_t const & buf) {
+//xtrie_node_face_ptr_t xtop_trie_node_rlp::mustDecodeNode(xh256_t const & hash_bytes, xbytes_t const & buf) {
 //    std::error_code ec;
 //    auto n = decodeNode(hash_bytes, buf, ec);
 //    if (ec) {
@@ -163,7 +163,7 @@ xbytes_t xtop_trie_node_rlp::EncodeNodesToBytes(std::array<xtrie_node_face_ptr_t
 //    __builtin_unreachable();
 //}
 //
-//xtrie_node_face_ptr_t xtop_trie_node_rlp::decodeNode(xhash256_t const & hash_bytes, xbytes_t const & buf, std::error_code & ec) {
+//xtrie_node_face_ptr_t xtop_trie_node_rlp::decodeNode(xh256_t const & hash_bytes, xbytes_t const & buf, std::error_code & ec) {
 //    return decodeNode(std::make_shared<xtrie_hash_node_t>(hash_bytes), buf, ec);
 //}
 //
@@ -229,7 +229,7 @@ xbytes_t xtop_trie_node_rlp::EncodeNodesToBytes(std::array<xtrie_node_face_ptr_t
 //    return nullptr;
 //}
 
-xtrie_node_face_ptr_t xtop_trie_node_rlp::must_decode_node(xhash256_t const & hash_bytes, xbytes_t const & buf) {
+xtrie_node_face_ptr_t xtop_trie_node_rlp::must_decode_node(xh256_t const & hash_bytes, xbytes_t const & buf) {
     std::error_code ec;
     auto n = decode_node(hash_bytes, buf, ec);
     if (ec) {
@@ -238,7 +238,7 @@ xtrie_node_face_ptr_t xtop_trie_node_rlp::must_decode_node(xhash256_t const & ha
     return n;
 }
 
-xtrie_node_face_ptr_t xtop_trie_node_rlp::decode_node(xhash256_t const & hash_bytes, xbytes_t const & buf, std::error_code & ec) {
+xtrie_node_face_ptr_t xtop_trie_node_rlp::decode_node(xh256_t const & hash_bytes, xbytes_t const & buf, std::error_code & ec) {
     return decode_node(std::make_shared<xtrie_hash_node_t>(hash_bytes), buf, ec);
 }
 

@@ -29,17 +29,17 @@ bool xtop_state_downloader::is_syncing(const common::xaccount_address_t & table)
 
 void xtop_state_downloader::sync_state(const common::xaccount_address_t & table,
                                        const uint64_t height,
-                                       const xhash256_t & block_hash,
-                                       const xhash256_t & state_hash,
-                                       const xhash256_t & root_hash,
+                                       const evm_common::xh256_t & block_hash,
+                                       const evm_common::xh256_t & state_hash,
+                                       const evm_common::xh256_t & root_hash,
                                        bool sync_unit,
                                        std::error_code & ec) {
     if (block_hash.empty() || state_hash.empty()) {
         xwarn("xtop_state_downloader::sync_state table %s param invalid: %s, %s, %s",
               table.to_string().c_str(),
-              block_hash.as_hex_str().c_str(),
-              state_hash.as_hex_str().c_str(),
-              root_hash.as_hex_str().c_str());
+              block_hash.hex().c_str(),
+              state_hash.hex().c_str(),
+              root_hash.hex().c_str());
         ec = error::xerrc_t::downloader_param_invalid;
         return;
     }
@@ -83,7 +83,7 @@ void xtop_state_downloader::sync_state(const common::xaccount_address_t & table,
     xinfo("xtop_state_downloader::sync_state table: %s, height: %lu, root: %s, add to running task, table queue cnts: %zu, thread in: %ld, thread out: %ld",
           table.to_string().c_str(),
           height,
-          root_hash.as_hex_str().c_str(),
+          root_hash.hex().c_str(),
           m_running_tables.size(),
           total_in,
           total_out);
@@ -97,14 +97,14 @@ void xtop_state_downloader::process_trie_finish(const sync_result & res) {
             xwarn("xtop_state_downloader::sync_finish table: %s, height: %lu, root: %s, error: %s, %s, out from running task",
                   res.account.to_string().c_str(),
                   res.height,
-                  res.root_hash.as_hex_str().c_str(),
+                  res.root_hash.hex().c_str(),
                   res.ec.category().name(),
                   res.ec.message().c_str());
         } else {
             xinfo("xtop_state_downloader::sync_finish table: %s, height: %lu, root: %s out from running task",
                   res.account.to_string().c_str(),
                   res.height,
-                  res.root_hash.as_hex_str().c_str());
+                  res.root_hash.hex().c_str());
         }
         mbus::xevent_ptr_t ev = make_object_ptr<mbus::xevent_state_sync_t>(res.account, res.height, res.block_hash, res.state_hash, res.root_hash, res.ec);
         m_bus->push_event(ev);
@@ -112,7 +112,7 @@ void xtop_state_downloader::process_trie_finish(const sync_result & res) {
         xerror("xtop_state_downloader::sync_finish table: %s, height: %lu, root: %s not found in running task",
                res.account.to_string().c_str(),
                res.height,
-               res.root_hash.as_hex_str().c_str());
+               res.root_hash.hex().c_str());
     }
 }
 
@@ -169,20 +169,20 @@ void xtop_state_downloader::process_unit_finish(const sync_result & res) {
             xwarn("xtop_state_downloader::process_unit_finish unit: %s, height: %lu, block_hash: %s, error: %s, %s, out from running task",
                   res.account.to_string().c_str(),
                   res.height,
-                  res.block_hash.as_hex_str().c_str(),
+                  res.block_hash.hex().c_str(),
                   res.ec.category().name(),
                   res.ec.message().c_str());
         } else {
             xinfo("xtop_state_downloader::process_unit_finish unit: %s, height: %lu, block_hash: %s out from running task",
                   res.account.to_string().c_str(),
                   res.height,
-                  res.block_hash.as_hex_str().c_str());
+                  res.block_hash.hex().c_str());
         }
     } else {
         xerror("xtop_state_downloader::process_unit_finish unit: %s, height: %lu, block_hash: %s not found in running task",
                res.account.to_string().c_str(),
                res.height,
-               res.block_hash.as_hex_str().c_str());
+               res.block_hash.hex().c_str());
     }
 }
 
@@ -224,7 +224,7 @@ void xtop_state_downloader::process_trie_request(const vnetwork::xvnode_address_
     auto trie_db = evm_common::trie::xtrie_db_t::NewDatabase(kv_db);
     for (auto const & hash : nodes_hashes) {
         std::error_code ec;
-        auto v = trie_db->Node(xhash256_t(hash), ec);
+        auto v = trie_db->Node(evm_common::xh256_t(hash), ec);
         if (ec || v.empty()) {
             xwarn("xtop_state_downloader::process_trie_request node request error: %s %s, table: %s, id: %u, hash %s, data: %s",
                   ec.category().name(),
@@ -241,7 +241,7 @@ void xtop_state_downloader::process_trie_request(const vnetwork::xvnode_address_
     for (auto const & hash : units_hashes) {
         state_mpt::xaccount_info_t info;
         info.decode({hash.begin(), hash.end()});
-        // auto v = evm_common::trie::ReadUnitWithPrefix(kv_db, xhash256_t(hash));
+        // auto v = evm_common::trie::ReadUnitWithPrefix(kv_db, evm_common::xh256_t(hash));
         auto unitstate = statestore::xstatestore_hub_t::instance()->get_unit_state_by_accountindex(info.m_account, info.m_index);
         if (unitstate == nullptr) {
             xwarn("xtop_state_downloader::process_trie_request unit request not found, table: %s, id: %u, hash: %s", table.c_str(), id, to_hex(hash).c_str());

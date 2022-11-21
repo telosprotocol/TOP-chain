@@ -4,17 +4,17 @@
 
 #pragma once
 
-#include "xbasic/xhash.hpp"
 #include "xevm_common/trie/xtrie_db_fwd.h"
 #include "xevm_common/trie/xtrie_node_fwd.h"
 #include "xevm_common/trie/xtrie_pruner_fwd.h"
+#include "xevm_common/xfixed_hash.h"
 
 #include <unordered_set>
 
 NS_BEG3(top, evm_common, trie)
 
 class xtop_trie_pruner {
-    std::unordered_set<xhash256_t> trie_node_hashes_;
+    std::unordered_set<xh256_t> trie_node_hashes_;
 
 public:
     xtop_trie_pruner() = default;
@@ -26,7 +26,7 @@ public:
 
     void init(std::shared_ptr<xtrie_node_face_t> const & trie_root, std::shared_ptr<xtrie_db_t> const & trie_db, std::error_code & ec);
 
-    void prune(xhash256_t const & old_trie_root_hash, std::shared_ptr<xtrie_db_t> const & trie_db, std::error_code & ec);
+    void prune(xh256_t const & old_trie_root_hash, std::shared_ptr<xtrie_db_t> const & trie_db, std::error_code & ec);
 
 private:
     std::shared_ptr<xtrie_node_face_t> load_trie_node(std::shared_ptr<xtrie_node_face_t> const & trie_node, std::shared_ptr<xtrie_db_t> const & trie_db, std::error_code & ec);

@@ -3,6 +3,7 @@
 #include "xbasic/xhash.hpp"
 #include "xbasic/xhex.h"
 #include "xcommon/xnode_id.h"
+#include "xevm_common/xfixed_hash.h"
 #include "xstate_sync/xerror.h"
 #include "xstate_sync/xstate_sync_face.h"
 #include "xvledger/xvdbkey.h"
@@ -51,9 +52,9 @@ static std::vector<std::string> units_str = {
 
 static auto table_account_address = common::xaccount_address_t{"Ta0000@0"};
 static auto table_height = uint64_t(1000);
-static auto root_hash = xhash256_t(from_hex("53b0778865633f410f68d4f2b4143366b4241af27894d1c3532f5fe93caa7e22"));
-static auto block_hash = xhash256_t(from_hex("f631f8bcb19ee7f1c8b98e3f8b8f8d192d5b03df145bc1cff7d83c871467ced5"));
-static auto state_hash = xhash256_t(from_hex("c9575dbb2804b365a5967a9cb368ba21be4f4cba41e5f3dee51bd1f873428908"));
+static auto root_hash = evm_common::xh256_t(from_hex("53b0778865633f410f68d4f2b4143366b4241af27894d1c3532f5fe93caa7e22"));
+static auto block_hash = evm_common::xh256_t(from_hex("f631f8bcb19ee7f1c8b98e3f8b8f8d192d5b03df145bc1cff7d83c871467ced5"));
+static auto state_hash = evm_common::xh256_t(from_hex("c9575dbb2804b365a5967a9cb368ba21be4f4cba41e5f3dee51bd1f873428908"));
 static auto state_key = base::xvdbkey_t::create_prunable_state_key(table_account_address.to_string(), table_height, {block_hash.begin(), block_hash.end()});
 static auto state_bytes = from_hex("ccff40003500000044913111000100f60864640008546130303030403000000100b7ff00001b00001500a00f085461303030304030");
 static auto mismatch_state_bytes = from_hex("ccff4000210000007c131600000000000065650008546130303030403000000000");

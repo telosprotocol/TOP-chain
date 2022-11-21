@@ -4,11 +4,11 @@
 
 #pragma once
 
-#include "xbasic/xhash.hpp"
-#include "xtrie_kv_db_face.h"
 #include "xevm_common/trie/xtrie_db_fwd.h"
 #include "xevm_common/trie/xtrie_node_fwd.h"
 #include "xevm_common/trie/xtrie_pruner_fwd.h"
+#include "xevm_common/xfixed_hash.h"
+#include "xtrie_kv_db_face.h"
 
 #include <tuple>
 
@@ -16,10 +16,10 @@ NS_BEG3(top, evm_common, trie)
 
 // emptyRoot is the known root hash of an empty trie.
 XINLINE_CONSTEXPR auto empty_root_bytes = ConstHexBytes<32>("56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421");
-extern xhash256_t const empty_root;
+extern xh256_t const empty_root;
 
 // callback(paths, hexpath, leaf, parent_hash, ec);
-using leaf_callback = std::function<void(std::vector<xbytes_t> const &, xbytes_t const &, xbytes_t const &, xhash256_t const &, std::error_code &)>;
+using leaf_callback = std::function<void(std::vector<xbytes_t> const &, xbytes_t const &, xbytes_t const &, xh256_t const &, std::error_code &)>;
 
 class xtop_trie {
 private:
@@ -42,14 +42,14 @@ protected:
 public:
     std::shared_ptr<xtrie_db_t> const & trie_db() const noexcept;
 
-    static std::shared_ptr<xtop_trie> build_from(xhash256_t hash, std::shared_ptr<xtrie_db_t> db, std::error_code & ec);
+    static std::shared_ptr<xtop_trie> build_from(xh256_t const & hash, std::shared_ptr<xtrie_db_t> db, std::error_code & ec);
 
     // Reset drops the referenced root node and cleans all internal state.
     void reset();
 
     // Hash returns the root hash of the trie. It does not write to the
     // database and can be used even if the trie doesn't have one.
-    xhash256_t hash();
+    xh256_t hash();
 
     // Get returns the value for key stored in the trie.
     // The value bytes must not be modified by the caller.
@@ -91,7 +91,7 @@ public:
 
     // Commit writes all nodes to the trie's memory database, tracking the internal
     // and external (for account tries) references.
-    std::pair<xhash256_t, int32_t> commit(std::error_code & ec);
+    std::pair<xh256_t, int32_t> commit(std::error_code & ec);
 
     // Prove constructs a merkle proof for key. The result contains all encoded nodes
     // on the path to the value at key. The value itself is also included in the last
@@ -102,13 +102,13 @@ public:
     // with the node that proves the absence of the key.
     bool prove(xbytes_t const & key, uint32_t from_level, xkv_db_face_ptr_t const & proof_db, std::error_code & ec) const;
 
-    void prune(xhash256_t const & old_trie_root_hash, std::error_code & ec);
+    void prune(xh256_t const & old_trie_root_hash, std::error_code & ec);
     void commit_pruned(std::error_code & ec);
 
     std::string to_string() const;
 
     std::shared_ptr<xtrie_node_face_t> root() const noexcept;
-    xtrie_node_face_ptr_t resolve_hash(xhash256_t const & hash, std::error_code & ec) const;
+    xtrie_node_face_ptr_t resolve_hash(xh256_t const & hash, std::error_code & ec) const;
 
 private:
     std::tuple<xbytes_t, xtrie_node_face_ptr_t, bool> try_get(xtrie_node_face_ptr_t const & node, xbytes_t const & key, std::size_t pos, std::error_code & ec) const;

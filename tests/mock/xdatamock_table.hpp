@@ -266,10 +266,9 @@ class xdatamock_table : public base::xvaccount_t {
             _form_highest_blocks.push_back(_block);
         }
 
-
-        evm_common::xh256_t last_state_root;
-        auto ret = data::xblockextract_t::get_state_root(get_cert_block().get(), last_state_root);
-        xassert(ret);
+        std::error_code ec;
+        auto const & last_state_root = data::xblockextract_t::get_state_root(get_cert_block().get(), ec);
+        xassert(!ec);
         data::xeth_header_t eth_header;
         eth_header.set_state_root(last_state_root);
         std::string _ethheader_str = eth_header.serialize_to_string();
@@ -374,11 +373,10 @@ class xdatamock_table : public base::xvaccount_t {
         cs_para.set_justify_cert_hash(get_lock_block()->get_input_root_hash());
         cs_para.set_parent_height(0);
 
-        evm_common::xh256_t last_state_root;
-        auto ret = data::xblockextract_t::get_state_root(get_cert_block().get(), last_state_root);
-        xassert(ret);
         std::error_code ec;
-        auto table_mpt = state_mpt::xtop_state_mpt::create(common::xaccount_address_t{get_cert_block()->get_account()}, top::xhash256_t(last_state_root.to_bytes()), m_store.get(), ec);
+        auto const & last_state_root = data::xblockextract_t::get_state_root(get_cert_block().get(), ec);
+        xassert(!ec);
+        auto table_mpt = state_mpt::xtop_state_mpt::create(common::xaccount_address_t{get_cert_block()->get_account()}, last_state_root, m_store.get(), ec);
         if (ec) {
             xassert(false);
         }

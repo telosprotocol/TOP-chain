@@ -176,7 +176,7 @@ xtrie_node_face_ptr_t xtop_trie_committer::store(xtrie_node_face_ptr_t n, xtrie_
     if (false) {
         // todo leafCh
     } else {
-        db->insert(xhash256_t{hash->data()}, size, n);
+        db->insert(hash->data(), size, n);
     }
     return hash;
 }
