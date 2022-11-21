@@ -10,6 +10,8 @@
 #include "xutility/xxHash/xxhash.h" //from xxhash lib
 #undef XXH_INLINE_ALL
 
+#include <gsl/span>
+
 #include <algorithm>
 #include <array>
 #include <cstdint>
@@ -56,18 +58,18 @@ public:
         m_data.fill(0);
     }
 
-    template <typename T>
-    explicit
-    xtop_hash(T const value) : xtop_hash{}
-    {
-        XSTATIC_ASSERT(std::is_unsigned<T>::value && !std::is_floating_point<T>::value);
+    //template <typename T>
+    //explicit
+    //xtop_hash(T const value) : xtop_hash{}
+    //{
+    //    XSTATIC_ASSERT(std::is_unsigned<T>::value && !std::is_floating_point<T>::value);
 
-        for (auto i = m_data.size(); i != 0; --i, value >>= 8)
-        {
-            auto v = static_cast<xbyte_t>(value & 0xFF);
-            m_data[i - 1] = v;
-        }
-    }
+    //    for (auto i = m_data.size(); i != 0; --i, value >>= 8)
+    //    {
+    //        auto v = static_cast<xbyte_t>(value & 0xFF);
+    //        m_data[i - 1] = v;
+    //    }
+    //}
 
     explicit
     xtop_hash(std::array<xbyte_t, Bytes> const & src_data)
@@ -76,7 +78,7 @@ public:
     }
 
     explicit
-    xtop_hash(xbyte_buffer_t const & bytes,
+    xtop_hash(gsl::span<xbyte_t const> const bytes,
               xconstruction_option_t const & option = { xconstruction_option_t::size_match }) {
         if (bytes.size() == bytes_size) {
             std::memcpy(m_data.data(), bytes.data(), std::min(bytes.size(), bytes_size));

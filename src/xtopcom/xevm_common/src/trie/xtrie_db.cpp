@@ -52,7 +52,7 @@ void xtop_trie_db::insert(xhash256_t hash, int32_t const size, xtrie_node_face_p
     xdbg("xtop_trie_db::insert %s size:%d", hash.as_hex_str().c_str(), size);
     dirties_.insert({hash, entry});
 
-    if (oldest_ == xhash256_t{}) {
+    if (oldest_.empty()) {
         oldest_ = hash;
     } else {
         dirties_.at(newest_).flush_next_ = hash;
@@ -303,10 +303,10 @@ void xtrie_cache_node_t::forGatherChildren(xtrie_node_face_ptr_t n, onChildFunc 
         return;
     }
     case xtrie_node_type_t::hashnode: {
-        auto nn = std::dynamic_pointer_cast<xtrie_hash_node_t>(n);
+        auto const nn = std::dynamic_pointer_cast<xtrie_hash_node_t>(n);
         assert(nn != nullptr);
 
-        f(xhash256_t{nn->data()});
+        f(nn->data());
         return;
     }
     case xtrie_node_type_t::valuenode:
@@ -335,7 +335,7 @@ xtrie_node_face_ptr_t simplify_node(xtrie_node_face_ptr_t const & n) {
         auto const node = std::dynamic_pointer_cast<xtrie_full_node_t>(n);
         assert(node != nullptr);
 
-        auto raw_fullnode_ptr = std::make_shared<xtrie_raw_full_node_t>(node->Children);
+        auto raw_fullnode_ptr = std::make_shared<xtrie_raw_full_node_t>(node->children);
         for (std::size_t i = 0; i < raw_fullnode_ptr->Children.size(); ++i) {
             if (raw_fullnode_ptr->Children[i] != nullptr) {
                 raw_fullnode_ptr->Children[i] = simplify_node(raw_fullnode_ptr->Children[i]);
@@ -372,9 +372,9 @@ xtrie_node_face_ptr_t expandNode(std::shared_ptr<xtrie_hash_node_t> hash, xtrie_
         assert(node != nullptr);
 
         auto fullnode_ptr = std::make_shared<xtrie_full_node_t>(xnode_flag_t{hash});
-        for (std::size_t i = 0; i < fullnode_ptr->Children.size(); ++i) {
+        for (std::size_t i = 0; i < fullnode_ptr->children.size(); ++i) {
             if (node->Children[i] != nullptr) {
-                fullnode_ptr->Children[i] = expandNode(nullptr, node->Children[i]);
+                fullnode_ptr->children[i] = expandNode(nullptr, node->Children[i]);
             }
         }
         return fullnode_ptr;
