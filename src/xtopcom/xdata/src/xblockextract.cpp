@@ -69,7 +69,7 @@ std::vector<xlightunit_action_t> xblockextract_t::unpack_txactions(base::xvblock
             }
             xlightunit_action_t txaction(action);
             txactions.push_back(txaction);
-        }        
+        }
     }
 
     return txactions;
@@ -146,33 +146,32 @@ void xblockextract_t::unpack_ethheader(base::xvblock_t* _block, xeth_header_t & 
     }
 }
 
-bool xblockextract_t::get_state_root(base::xvblock_t* _block, evm_common::xh256_t & state_root) {
-    if (_block->get_height() == 0 || !base::xvblock_fork_t::is_block_match_version(_block->get_block_version(), base::enum_xvblock_fork_version_5_0_0)) {
-        xdbg("xblockextract_t::get_state_root block is old version or height = 0 block:%s", _block->dump().c_str());
-        state_root = evm_common::xh256_t();
-        return true;
+evm_common::xh256_t xblockextract_t::get_state_root(base::xvblock_t * block, std::error_code & ec) {
+    assert(!ec);
+
+    if (block->get_height() == 0 || !base::xvblock_fork_t::is_block_match_version(block->get_block_version(), base::enum_xvblock_fork_version_5_0_0)) {
+        xdbg("xblockextract_t::get_state_root block is old version or height = 0 block:%s", block->dump().c_str());
+        return evm_common::xh256_t{};
     }
 
     data::xeth_header_t ethheader;
-    std::error_code ec;
-    unpack_ethheader(_block, ethheader, ec);
+    unpack_ethheader(block, ethheader, ec);
     if (ec) {
-        return false;
+        return evm_common::xh256_t{};
     }
 
-   state_root = ethheader.get_state_root();
-   return true;
+    return ethheader.get_state_root();
 }
 
-xhash256_t xblockextract_t::get_state_root_from_block(base::xvblock_t * block) {
-    evm_common::xh256_t state_root;
-    auto ret = data::xblockextract_t::get_state_root(block, state_root);
-    if (!ret) {  // should not happen
+evm_common::xh256_t xblockextract_t::get_state_root_from_block(base::xvblock_t * block) {
+    std::error_code ec;
+    auto const & state_root = get_state_root(block, ec);
+    if (ec) {  // should not happen
         xerror("xblockextract_t::get_state_root_from_block get state root fail. block:%s", block->dump().c_str());
-        return xhash256_t{};
+        return evm_common::xh256_t{};
     }
-    xhash256_t root_hash = xhash256_t{state_root};
-    return root_hash;
+
+    return state_root;
 }
 
 xtransaction_ptr_t xblockextract_t::unpack_raw_tx(base::xvblock_t* _block, std::string const& txhash, std::error_code & ec) {
@@ -242,7 +241,7 @@ std::shared_ptr<xrelay_block> xblockextract_t::unpack_commit_relay_block_from_re
     siggroup.decodeBytes(top::to_bytes(extend_data), ec);
     if (ec) {
         xerror("xblockextract_t::unpack_commit_relay_block_from_relay_table fail-decode extend.block:%s", _block->dump().c_str());
-        return nullptr;        
+        return nullptr;
     }
 
     relayblock->set_viewid(_block->get_viewid());
@@ -262,8 +261,8 @@ xobject_ptr_t<base::xvblock_t> xblockextract_t::pack_relayblock_to_wrapblock(xre
         xemptyblock_build_t bbuild(sys_contract_relay_block_addr, relayblock.get_block_height(), relayblock.get_viewid(), bin_data);
         xobject_ptr_t<base::xvblock_t> _new_block = bbuild.build_new_block();
         xvip2_t target_xip{(xvip_t)(1),(uint64_t)1};// mock leader xip for xvblock rules
-        _new_block->get_cert()->set_validator(target_xip); 
-        _new_block->set_verify_signature(std::string(1,0));  // mock signature 
+        _new_block->get_cert()->set_validator(target_xip);
+        _new_block->set_verify_signature(std::string(1,0));  // mock signature
         _new_block->set_block_flag(base::enum_xvblock_flag_authenticated);
         return _new_block;
     }
@@ -290,7 +289,7 @@ xobject_ptr_t<base::xvblock_t> xblockextract_t::unpack_wrap_relayblock_from_rela
     std::shared_ptr<xrelay_block> relayblock = unpack_commit_relay_block_from_relay_table(_block, ec);
     if (ec) {
         ec = common::error::xerrc_t::invalid_block;
-        xerror("xblockextract_t::unpack_wrap_relayblock_from_relay_table fail-unpack commit relayblock.");        
+        xerror("xblockextract_t::unpack_wrap_relayblock_from_relay_table fail-unpack commit relayblock.");
         return nullptr;
     }
     if (nullptr == relayblock) {
@@ -300,7 +299,7 @@ xobject_ptr_t<base::xvblock_t> xblockextract_t::unpack_wrap_relayblock_from_rela
     xobject_ptr_t<base::xvblock_t> wrap_relayblock = pack_relayblock_to_wrapblock(*relayblock, ec);
     if (ec) {
         ec = common::error::xerrc_t::invalid_block;
-        xerror("xblockextract_t::unpack_wrap_relayblock_from_relay_table fail-pack relayblock.");        
+        xerror("xblockextract_t::unpack_wrap_relayblock_from_relay_table fail-pack relayblock.");
         return nullptr;
     }
     xinfo("xblockextract_t::unpack_wrap_relayblock_from_relay_table,%s,%s",relayblock->dump().c_str(),wrap_relayblock->dump().c_str());
@@ -308,6 +307,8 @@ xobject_ptr_t<base::xvblock_t> xblockextract_t::unpack_wrap_relayblock_from_rela
 }
 
 void xblockextract_t::get_tableheader_extra_from_block(base::xvblock_t* _block, data::xtableheader_extra_t &header_extra, std::error_code & ec) {
+    assert(!ec);
+
     auto & header_extra_str = _block->get_header()->get_extra_data();
     if (header_extra_str.empty()) {
         ec = common::error::xerrc_t::invalid_block;

@@ -32,9 +32,11 @@ void xaccount_info_t::decode(const std::string & str) {
 }
 
 std::shared_ptr<xtop_state_mpt> xtop_state_mpt::create(const common::xaccount_address_t & table,
-                                                       const xhash256_t & root,
+                                                       const evm_common::xh256_t & root,
                                                        base::xvdbstore_t * db,
                                                        std::error_code & ec) {
+    assert(!ec);
+
     auto mpt = std::make_shared<xtop_state_mpt>();
     mpt->init(table, root, db, ec);
     if (ec) {
@@ -44,13 +46,15 @@ std::shared_ptr<xtop_state_mpt> xtop_state_mpt::create(const common::xaccount_ad
     return mpt;
 }
 
-void xtop_state_mpt::init(const common::xaccount_address_t & table, const xhash256_t & root, base::xvdbstore_t * db, std::error_code & ec) {
+void xtop_state_mpt::init(const common::xaccount_address_t & table, const evm_common::xh256_t & root, base::xvdbstore_t * db, std::error_code & ec) {
+    assert(!ec);
+
     m_table_address = table;
     auto const kv_db = std::make_shared<evm_common::trie::xkv_db_t>(db, table);
     m_db = evm_common::trie::xtrie_db_t::NewDatabase(kv_db);
     m_trie = evm_common::trie::xsecure_trie_t::build_from(root, m_db, ec);
     if (ec) {
-        xwarn("xtop_state_mpt::init trie with %s %s maybe not complete yes", table.to_string().c_str(), root.as_hex_str().c_str());
+        xwarn("xtop_state_mpt::init trie with %s %s maybe not complete yes", table.to_string().c_str(), root.hex().c_str());
         return;
     }
     m_original_root = root;
@@ -229,7 +233,7 @@ void xtop_state_mpt::prune_unit(const common::xaccount_address_t & account, std:
     return;
 }
 
-xhash256_t xtop_state_mpt::get_root_hash(std::error_code & ec) {
+evm_common::xh256_t xtop_state_mpt::get_root_hash(std::error_code & ec) {
     std::lock_guard<std::mutex> lock(m_trie_lock);
     for (auto & acc : m_state_objects_pending) {
         auto obj = query_state_object(acc);
@@ -249,11 +253,11 @@ xhash256_t xtop_state_mpt::get_root_hash(std::error_code & ec) {
     return m_trie->hash();
 }
 
-const xhash256_t & xtop_state_mpt::get_original_root_hash() const {
+const evm_common::xh256_t & xtop_state_mpt::get_original_root_hash() const {
     return m_original_root;
 }
 
-xhash256_t xtop_state_mpt::commit(std::error_code & ec) {
+evm_common::xh256_t xtop_state_mpt::commit(std::error_code & ec) {
     get_root_hash(ec);
     if (ec) {
         xwarn("xtop_state_mpt::commit get_root_hash error, %s %s", ec.category().name(), ec.message().c_str());
@@ -286,7 +290,7 @@ xhash256_t xtop_state_mpt::commit(std::error_code & ec) {
     }
 
     std::lock_guard<std::mutex> lock(m_trie_lock);
-    std::pair<xhash256_t, int32_t> res;
+    std::pair<evm_common::xh256_t, int32_t> res;
     {
         XMETRICS_TIME_RECORD("state_mpt_trie_commit");
         res = m_trie->commit(ec);
@@ -307,7 +311,7 @@ xhash256_t xtop_state_mpt::commit(std::error_code & ec) {
 void xtop_state_mpt::load_into(std::unique_ptr<xstate_mpt_store_t> const & state_mpt_store, std::error_code & ec) {
 }
 
-void xtop_state_mpt::prune(xhash256_t const & old_trie_root_hash, std::error_code & ec) const {
+void xtop_state_mpt::prune(evm_common::xh256_t const & old_trie_root_hash, std::error_code & ec) const {
     assert(!ec);
     assert(m_trie != nullptr);
 

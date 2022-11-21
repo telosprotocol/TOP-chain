@@ -129,10 +129,9 @@ std::vector<std::string> xdb_export_tools_t::get_db_unit_accounts() {
             continue;
         }
 
-        evm_common::xh256_t state_root;
-        data::xblockextract_t::get_state_root(latest_block.get(), state_root);
-        xhash256_t root_hash = xhash256_t{state_root};
-        if (root_hash.empty()) {
+        std::error_code ec;
+        auto const & state_root = data::xblockextract_t::get_state_root(latest_block.get(), ec);
+        if (state_root.empty()) {
             base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_block.get());
             if (bstate == nullptr) {
                 std::cerr << table << " get_block_state null!" << std::endl;
@@ -144,7 +143,7 @@ std::vector<std::string> xdb_export_tools_t::get_db_unit_accounts() {
         } else {
             auto const kv_db = std::make_shared<evm_common::trie::xkv_db_t>(base::xvchain_t::instance().get_xdbstore(), common::xaccount_address_t(table));
             auto xtrie_db = evm_common::trie::xtrie_db_t::NewDatabase(kv_db);
-            auto const & leafs = top::evm_common::trie::xtrie_simple_iterator_t::trie_leafs(root_hash, make_observer(xtrie_db));
+            auto const & leafs = top::evm_common::trie::xtrie_simple_iterator_t::trie_leafs(state_root, make_observer(xtrie_db));
             for (auto & leaf : leafs) {
                 state_mpt::xaccount_info_t info;
                 info.decode({leaf.begin(), leaf.end()});
@@ -2155,11 +2154,8 @@ std::unordered_map<common::xaccount_address_t, uint64_t> xdb_export_tools_t::get
         return result;
     }
 
-    evm_common::xh256_t state_root;
-    data::xblockextract_t::get_state_root(table_block.get(), state_root);
-    xhash256_t const root_hash{state_root};
-
-    if (root_hash.empty()) {
+    auto const & root_hash = data::xblockextract_t::get_state_root(table_block.get(), ec);
+    if (ec || root_hash.empty()) {
         base::xauto_ptr<base::xvbstate_t> const bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(table_block.get());
         if (bstate == nullptr) {
             ec = xerrc_t::table_state_not_found;

@@ -22,12 +22,12 @@ XDEFINE_MSG_ID(xmessage_category_state_sync, xmessage_id_sync_unit_response, 0x0
 struct sync_result {
     common::xaccount_address_t account;
     uint64_t height{0};
-    xhash256_t block_hash;
-    xhash256_t state_hash;
-    xhash256_t root_hash;
+    evm_common::xh256_t block_hash;
+    evm_common::xh256_t state_hash;
+    evm_common::xh256_t root_hash;
     std::error_code ec;
 
-    sync_result(common::xaccount_address_t _account, uint64_t h, xhash256_t _block_hash, xhash256_t _state_hash, xhash256_t _root, std::error_code _ec)
+    sync_result(common::xaccount_address_t _account, uint64_t h, evm_common::xh256_t _block_hash, evm_common::xh256_t _state_hash, evm_common::xh256_t _root, std::error_code _ec)
       : account(_account), height(h), block_hash(_block_hash), state_hash(_state_hash), root_hash(_root), ec(_ec) {
     }
     sync_result() = default;
@@ -49,8 +49,8 @@ struct state_req {
     state_req_type type;
     common::xnode_address_t peer;
     uint32_t n_items{0};
-    std::set<xhash256_t> trie_tasks;
-    std::map<xhash256_t, xbytes_t> unit_tasks;
+    std::set<evm_common::xh256_t> trie_tasks;
+    std::map<evm_common::xh256_t, xbytes_t> unit_tasks;
     uint64_t start{0};
     uint64_t delivered{0};
     std::vector<xbytes_t> nodes_response;

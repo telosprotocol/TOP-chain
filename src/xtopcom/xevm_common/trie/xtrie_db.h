@@ -4,11 +4,11 @@
 
 #pragma once
 
-#include "xbasic/xhash.hpp"
 #include "xbasic/xlru_cache_specialize.h"
 #include "xevm_common/trie/xtrie_db_fwd.h"
 #include "xevm_common/trie/xtrie_kv_db_face.h"
 #include "xevm_common/trie/xtrie_node_fwd.h"
+#include "xevm_common/xfixed_hash.h"
 
 #include <functional>
 #include <map>
@@ -37,15 +37,15 @@ private:
     friend class xtop_trie_cache_node;
     xkv_db_face_ptr_t diskdb_;  // Persistent storage for matured trie nodes
 
-    // std::map<xhash256_t, xbytes_t> cleans_;
-    basic::xlru_cache_specialize<xhash256_t, xbytes_t> cleans_{2000}; // TODO(jimmy) 10000
-    std::map<xhash256_t, xtrie_cache_node_t> dirties_;
-    std::unordered_set<xhash256_t> pruned_hashes_;
+    // std::map<xh256_t, xbytes_t> cleans_;
+    basic::xlru_cache_specialize<xh256_t, xbytes_t> cleans_{2000}; // TODO(jimmy) 10000
+    std::map<xh256_t, xtrie_cache_node_t> dirties_;
+    std::unordered_set<xh256_t> pruned_hashes_;
 
-    xhash256_t oldest_;
-    xhash256_t newest_;
+    xh256_t oldest_;
+    xh256_t newest_;
 
-    std::map<xhash256_t, xbytes_t> preimages_;  // Preimages of nodes from the secure trie
+    std::map<xh256_t, xbytes_t> preimages_;  // Preimages of nodes from the secure trie
 
 public:
     explicit xtop_trie_db(xkv_db_face_ptr_t diskdb) : diskdb_(std::move(diskdb)) {
@@ -72,26 +72,26 @@ public:
     // The blob size must be specified to allow proper size tracking.
     // All nodes inserted by this function will be reference tracked
     // and in theory should only used for **trie nodes** insertion.
-    void insert(xhash256_t hash, int32_t size, xtrie_node_face_ptr_t const & node);
+    void insert(xh256_t hash, int32_t size, xtrie_node_face_ptr_t const & node);
 
     // insertPreimage writes a new trie node pre-image to the memory database if it's
     // yet unknown. The method will NOT make a copy of the slice,
     // only use if the preimage will NOT be changed later on.
     //
     // Note, this method assumes that the database's lock is held!
-    void insertPreimage(xhash256_t hash, xbytes_t const & preimage);
+    void insertPreimage(xh256_t hash, xbytes_t const & preimage);
 
     // node retrieves a cached trie node from memory, or returns nil if none can be
     // found in the memory cache.
-    xtrie_node_face_ptr_t node(xhash256_t hash);
+    xtrie_node_face_ptr_t node(xh256_t hash);
 
     // Node retrieves an encoded cached trie node from memory. If it cannot be found
     // cached, the method queries the persistent database for the content.
-    xbytes_t Node(xhash256_t hash, std::error_code & ec);
+    xbytes_t Node(xh256_t hash, std::error_code & ec);
 
-    xbytes_t preimage(xhash256_t hash) const;
+    xbytes_t preimage(xh256_t hash) const;
 
-    using AfterCommitCallback = std::function<void(xhash256_t const &)>;
+    using AfterCommitCallback = std::function<void(xh256_t const &)>;
 
     // Commit iterates over all the children of a particular node, writes them out
     // to disk, forcefully tearing down all references in both directions. As a side
@@ -99,19 +99,19 @@ public:
     //
     // Note, this method is a non-synchronized mutator. It is unsafe to call this
     // concurrently with other mutators.
-    void Commit(xhash256_t hash, AfterCommitCallback cb, std::error_code & ec);
+    void Commit(xh256_t hash, AfterCommitCallback cb, std::error_code & ec);
 
-    void commit(xhash256_t hash, std::map<xbytes_t, xbytes_t> & data, AfterCommitCallback cb, std::error_code & ec);
+    void commit(xh256_t hash, std::map<xbytes_t, xbytes_t> & data, AfterCommitCallback cb, std::error_code & ec);
 
-    void prune(xhash256_t const & hash, std::error_code & ec);
+    void prune(xh256_t const & hash, std::error_code & ec);
 
     void commit_pruned(std::error_code & ec);
 
 private:
     // commit is the private locked version of Commit.
-    // void commit(xhash256_t hash, AfterCommitCallback cb, std::error_code & ec);
+    // void commit(xh256_t hash, AfterCommitCallback cb, std::error_code & ec);
 
-    xbytes_t preimage_key(xhash256_t const & hash_key) const;
+    xbytes_t preimage_key(xh256_t const & hash_key) const;
 };
 using xtrie_db_t = xtop_trie_db;
 using xtrie_db_ptr_t = std::shared_ptr<xtrie_db_t>;
@@ -124,13 +124,13 @@ private:
     uint16_t size_;               // Byte size of the useful cached data
 
     uint32_t parents_;                         // Number of live nodes referencing this one
-    std::map<xhash256_t, uint16_t> children_;  // External children referenced by this node
+    std::map<xh256_t, uint16_t> children_;  // External children referenced by this node
 
-    xhash256_t flush_prev_;  // Previous node in the flush-list
-    xhash256_t flush_next_;  // Next node in the flush-list
+    xh256_t flush_prev_;  // Previous node in the flush-list
+    xh256_t flush_next_;  // Next node in the flush-list
 
 private:
-    xtop_trie_cache_node(xtrie_node_face_ptr_t node, uint16_t _size, xhash256_t _flushPrev) : node_{std::move(node)}, size_{_size}, flush_prev_{_flushPrev} {
+    xtop_trie_cache_node(xtrie_node_face_ptr_t node, uint16_t _size, xh256_t _flushPrev) : node_{std::move(node)}, size_{_size}, flush_prev_{_flushPrev} {
     }
 
 private:
@@ -140,9 +140,9 @@ private:
 
     // obj returns the decoded and expanded trie node, either directly from the cache,
     // or by regenerating it from the rlp encoded blob.
-    xtrie_node_face_ptr_t obj(xhash256_t hash);
+    xtrie_node_face_ptr_t obj(xh256_t hash);
 
-    using onChildFunc = std::function<void(xhash256_t const &)>;
+    using onChildFunc = std::function<void(xh256_t const &)>;
 
     // forChilds invokes the callback for all the tracked children of this node,
     // both the implicit ones from inside the node as well as the explicit ones

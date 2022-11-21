@@ -156,7 +156,7 @@ xtablestate_ext_ptr_t xstatestore_accessor_t::read_table_bstate_from_cache(commo
 }
 
 xtablestate_ext_ptr_t xstatestore_accessor_t::read_table_bstate_from_db(common::xaccount_address_t const& address, base::xvblock_t* block) const {
-    xhash256_t stateroot = m_store_base.get_state_root_from_block(block);
+    auto const & stateroot = m_store_base.get_state_root_from_block(block);
     std::error_code ec;
     std::shared_ptr<state_mpt::xstate_mpt_t> mpt = state_mpt::xstate_mpt_t::create(address, stateroot, m_store_base.get_dbstore(), ec);
     if (ec) {

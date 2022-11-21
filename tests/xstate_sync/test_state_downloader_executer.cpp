@@ -68,12 +68,12 @@ public:
                 state_sync::state_res res;
                 res.id = id;
                 if (type == 2 && (cnt % 2 != 0)) {
-                    if (table == table_account_address.to_string() && height == table_height && xhash256_t(hash) == block_hash) {
+                    if (table == table_account_address.to_string() && height == table_height && evm_common::xh256_t(hash) == block_hash) {
                         res.nodes.emplace_back(mismatch_state_bytes);
                     }
                 } else if (type == 3 && (cnt % 2 != 0)) {
                 } else {
-                    if (table == table_account_address.to_string() && height == table_height && xhash256_t(hash) == block_hash) {
+                    if (table == table_account_address.to_string() && height == table_height && evm_common::xh256_t(hash) == block_hash) {
                         res.nodes.emplace_back(state_bytes);
                     }
                 }
