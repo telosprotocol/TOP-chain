@@ -116,7 +116,7 @@ private:
     void update_receiptid_state(const xtablemaker_para_t & table_para, statectx::xstatectx_ptr_t const& statectx_ptr);
     void resource_plugin_make_txs(bool is_leader, statectx::xstatectx_ptr_t const& statectx_ptr, const data::xblock_consensus_para_t & cs_para, std::vector<xcons_transaction_ptr_t> & input_txs, std::error_code & ec);
     void rerource_plugin_make_resource(bool is_leader, const data::xblock_consensus_para_t & cs_para, data::xtable_block_para_t & lighttable_para, std::error_code & ec);
-    std::shared_ptr<state_mpt::xstate_mpt_t> create_new_mpt(const xhash256_t & last_mpt_root,
+    std::shared_ptr<state_mpt::xstate_mpt_t> create_new_mpt(evm_common::xh256_t const & last_mpt_root,
                                                               const data::xblock_consensus_para_t & cs_para,
                                                               const statectx::xstatectx_ptr_t & table_state_ctx,
                                                               const std::vector<std::pair<xblock_ptr_t, base::xaccount_index_t>> & batch_unit_and_index);
@@ -136,7 +136,7 @@ private:
 
 class xeth_header_builder {
 public:
-    static const std::string build(const xblock_consensus_para_t & cs_para, const evm_common::xh256_t & state_root, const std::vector<txexecutor::xatomictx_output_t> & pack_txs_outputs = {});
+    static std::string build(const xblock_consensus_para_t & cs_para, evm_common::xh256_t const & state_root, const std::vector<txexecutor::xatomictx_output_t> & pack_txs_outputs = {});
     static bool string_to_eth_header(const std::string & eth_header_str, data::xeth_header_t & eth_header);
 };
 

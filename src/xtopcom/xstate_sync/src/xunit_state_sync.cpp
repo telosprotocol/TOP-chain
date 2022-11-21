@@ -72,7 +72,7 @@ std::string xtop_unit_state_sync::symbol() const {
 }
 
 sync_result xtop_unit_state_sync::result() const {
-    return {m_account, m_index.get_latest_unit_height(), xhash256_t(to_bytes(m_index.get_latest_unit_hash())), xhash256_t(to_bytes(m_index.get_latest_state_hash())), {}, m_ec};
+    return {m_account, m_index.get_latest_unit_height(), evm_common::xh256_t(to_bytes(m_index.get_latest_unit_hash())), evm_common::xh256_t(to_bytes(m_index.get_latest_state_hash())), {}, m_ec};
 }
 
 bool xtop_unit_state_sync::is_done() const {

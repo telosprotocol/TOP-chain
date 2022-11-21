@@ -224,7 +224,7 @@ TEST_F(test_state_prune, prune_exec_cons) {
 
     xexecute_listener_test listener_test;
     statestore::xstatestore_executor_t state_executor{common::xaccount_address_t{mocktable.get_account()}, &listener_test};
-    std::error_code ec;
+
     for (uint64_t height = 0; height <= max_block_height - 2; height++) {
         auto block = blockstore->load_block_object(mocktable, height, base::enum_xvblock_flag_committed, false);
         xassert(block != nullptr);
@@ -233,18 +233,18 @@ TEST_F(test_state_prune, prune_exec_cons) {
     }
 
     for (uint64_t h = 1; h <= max_block_height - 2; h++) {
+        std::error_code ec;
+
         auto block = blockstore->load_block_object(mocktable.get_vaccount(), h, base::enum_xvblock_flag_committed, false);
         EXPECT_NE(block, nullptr);
-        evm_common::xh256_t root;
-        auto ret = data::xblockextract_t::get_state_root(block.get(), root);
-        EXPECT_EQ(ret, true);
+        auto const & root = data::xblockextract_t::get_state_root(block.get(), ec);
+        EXPECT_TRUE(!ec);
 
-        std::error_code ec;
         auto mpt = state_mpt::xtop_state_mpt::create(
-            common::xaccount_address_t(mocktable.get_vaccount().get_account()), xhash256_t(root.to_bytes()), base::xvchain_t::instance().get_xdbstore(), ec);
-        xdbg("prune_exec_cons test table:%s,height:%llu,hash:%s", mocktable.get_vaccount().get_account().c_str(), h, xhash256_t(root.to_bytes()).as_hex_str().c_str());
-        xassert(mpt != nullptr);
-        EXPECT_EQ(mpt != nullptr, true);
+            common::xaccount_address_t(mocktable.get_vaccount().get_account()), root, base::xvchain_t::instance().get_xdbstore(), ec);
+        xdbg("prune_exec_cons test table:%s,height:%llu,hash:%s", mocktable.get_vaccount().get_account().c_str(), h, root.hex().c_str());
+        EXPECT_TRUE(!ec);
+        EXPECT_TRUE(mpt != nullptr);
     }
 
     std::shared_ptr<xstatestore_resources_t> para;
@@ -263,6 +263,8 @@ TEST_F(test_state_prune, prune_exec_cons) {
     pruner.prune_imp(60);
 
     for (uint64_t h = 1; h <= max_block_height - 2; h++) {
+        std::error_code ec;
+
         auto block = blockstore->load_block_object(mocktable.get_vaccount(), h, base::enum_xvblock_flag_committed, false);
         EXPECT_NE(block, nullptr);
 
@@ -275,13 +277,11 @@ TEST_F(test_state_prune, prune_exec_cons) {
         // xdb->read(offdata_key, value_offdata);
         // EXPECT_EQ(value_offdata.empty(), (h <= 30 && block->get_block_class() != base::enum_xvblock_class_nil));
 
-        evm_common::xh256_t root;
-        auto ret = data::xblockextract_t::get_state_root(block.get(), root);
-        EXPECT_EQ(ret, true);
+        auto const & root = data::xblockextract_t::get_state_root(block.get(), ec);
+        EXPECT_EQ(!ec, true);
 
-        std::error_code ec;
         auto mpt = state_mpt::xtop_state_mpt::create(
-            common::xaccount_address_t(mocktable.get_vaccount().get_account()), xhash256_t(root.to_bytes()), base::xvchain_t::instance().get_xdbstore(), ec);
+            common::xaccount_address_t(mocktable.get_vaccount().get_account()), root, base::xvchain_t::instance().get_xdbstore(), ec);
         EXPECT_EQ(mpt != nullptr, (h > 20));
         EXPECT_EQ(ec.value() == 0, (h > 20));
     }
@@ -295,6 +295,8 @@ TEST_F(test_state_prune, prune_exec_cons) {
     pruner.prune_imp(80);
 
     for (uint64_t h = 1; h <= max_block_height - 2; h++) {
+        std::error_code ec;
+
         auto block = blockstore->load_block_object(mocktable.get_vaccount(), h, base::enum_xvblock_flag_committed, false);
         EXPECT_NE(block, nullptr);
         auto state_key = base::xvdbkey_t::create_prunable_state_key(mocktable.get_vaccount(), h, block->get_block_hash());
@@ -306,13 +308,11 @@ TEST_F(test_state_prune, prune_exec_cons) {
         // xdb->read(offdata_key, value_offdata);
         // EXPECT_EQ(value_offdata.empty(), (h <= 55 && block->get_block_class() != base::enum_xvblock_class_nil));
 
-        evm_common::xh256_t root;
-        auto ret = data::xblockextract_t::get_state_root(block.get(), root);
-        EXPECT_EQ(ret, true);
+        auto const & root = data::xblockextract_t::get_state_root(block.get(), ec);
+        EXPECT_EQ(!ec, true);
 
-        std::error_code ec;
         auto mpt = state_mpt::xtop_state_mpt::create(
-            common::xaccount_address_t(mocktable.get_vaccount().get_account()), xhash256_t(root.to_bytes()), base::xvchain_t::instance().get_xdbstore(), ec);
+            common::xaccount_address_t(mocktable.get_vaccount().get_account()), root, base::xvchain_t::instance().get_xdbstore(), ec);
         EXPECT_EQ(mpt != nullptr, (h > 40));
     }
 
@@ -323,18 +323,18 @@ TEST_F(test_state_prune, prune_exec_cons) {
     }
 
     {
+        std::error_code ec;
+
         auto block = blockstore->load_block_object(mocktable.get_vaccount(), 98, base::enum_xvblock_flag_committed, false);
         EXPECT_NE(block, nullptr);
-        evm_common::xh256_t root;
-        auto ret = data::xblockextract_t::get_state_root(block.get(), root);
-        EXPECT_EQ(ret, true);
+        auto const & root = data::xblockextract_t::get_state_root(block.get(), ec);
+        EXPECT_EQ(!ec, true);
 
-        std::error_code ec;
         auto mpt = state_mpt::xtop_state_mpt::create(
-            common::xaccount_address_t(mocktable.get_vaccount().get_account()), xhash256_t(root.to_bytes()), base::xvchain_t::instance().get_xdbstore(), ec);
+            common::xaccount_address_t(mocktable.get_vaccount().get_account()), root, base::xvchain_t::instance().get_xdbstore(), ec);
         xassert(mpt != nullptr);
 
-        mpt->prune(xhash256_t(root.to_bytes()), ec);
+        mpt->prune(root, ec);
     }
 }
 
@@ -481,9 +481,9 @@ TEST_F(test_state_prune, mpt_prune_BENCH) {
     auto table_addr = xblocktool_t::make_address_shard_table_account(tableid);
 
     std::vector<std::string> user_addrs;
-    std::vector<xhash256_t> mpt_root_vec;
+    std::vector<evm_common::xh256_t> mpt_root_vec;
 
-    xhash256_t null_root;
+    evm_common::xh256_t null_root;
     std::error_code ec;
     auto base_mpt = state_mpt::xtop_state_mpt::create(common::xaccount_address_t{table_addr}, null_root, xdbstore, ec);
     if (ec) {

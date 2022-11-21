@@ -120,7 +120,7 @@ std::shared_ptr<xtrie_node_face_t> xtop_trie_pruner::load_hash_node(std::shared_
     auto const node = trie_db->node(hash);
     if (!node) {
         ec = error::xerrc_t::trie_db_missing_node_error;
-        xwarn("trie node (%s) not found", hash.as_hex_str().c_str());
+        xwarn("trie node (%s) not found", hash.hex().c_str());
         return nullptr;
     }
 
@@ -137,7 +137,7 @@ void xtop_trie_pruner::load_full_node_children(std::shared_ptr<xtrie_full_node_t
     }
 }
 
-void xtop_trie_pruner::prune(xhash256_t const & old_trie_root_hash, std::shared_ptr<xtrie_db_t> const & trie_db, std::error_code & ec) {
+void xtop_trie_pruner::prune(xh256_t const & old_trie_root_hash, std::shared_ptr<xtrie_db_t> const & trie_db, std::error_code & ec) {
     assert(!ec);
 
     auto const trie_root = std::make_shared<xtrie_hash_node_t>(old_trie_root_hash);

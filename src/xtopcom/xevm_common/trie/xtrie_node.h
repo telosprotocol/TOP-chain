@@ -8,6 +8,7 @@
 #include "xbasic/xhash.hpp"
 #include "xevm_common/rlp/xrlp_encodable.h"
 #include "xevm_common/trie/xtrie_node_fwd.h"
+#include "xevm_common/xfixed_hash.h"
 
 #include <array>
 #include <memory>
@@ -94,7 +95,7 @@ using xtrie_node_face_ptr_t = std::shared_ptr<xtrie_node_face_t>;
 // value&&hash node
 class xtop_trie_hash_node : public xtrie_node_face_t {
 private:
-    xhash256_t hash_{};
+    xh256_t hash_{};
 
 public:
     xtop_trie_hash_node() = default;
@@ -107,7 +108,7 @@ public:
     explicit xtop_trie_hash_node(xbytes_t const & hash_data);
     explicit xtop_trie_hash_node(gsl::span<xbyte_t const> hash_data);
 
-    xhash256_t const & data() const noexcept;
+    xh256_t const & data() const noexcept;
 
     std::string fstring(std::string const & ind) const override;
     xtrie_node_cached_data_t cache() const override;

@@ -6,6 +6,8 @@
 
 #include "xevm_common/common_data.h"
 
+#include <gsl/span>
+
 #include <boost/functional/hash.hpp>
 
 #include <algorithm>
@@ -75,7 +77,7 @@ public:
     }
 
     /// Explicitly construct, copying from a byte array.
-    explicit FixedHash(xbytes_t const & _b, ConstructFromHashType _t = FailIfDifferent) {
+    explicit FixedHash(gsl::span<xbyte_t const> const _b, ConstructFromHashType _t = FailIfDifferent) {
         if (_b.size() == N)
             memcpy(m_data.data(), _b.data(), std::min<unsigned>(_b.size(), N));
         else {
@@ -336,6 +338,10 @@ public:
 
     void clear() {
         m_data.fill(0);
+    }
+
+    bool empty() const noexcept {
+        return std::all_of(std::begin(m_data), std::end(m_data), [](xbyte_t const byte) { return byte == 0; });
     }
 
 private:

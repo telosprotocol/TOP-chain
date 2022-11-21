@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include "assert.h"
-#include "xbase/xns_macro.h"
 #include "xbasic/xbyte_buffer.h"
 #include "xevm_common/trie/xtrie_kv_db_face.h"
 
@@ -62,7 +60,7 @@ public:
     void hash();
 
     // Hash returns the hash of the current node
-    xhash256_t Hash();
+    xh256_t Hash();
 
     // Commit will firstly hash the entrie trie if it's still not hashed
     // and then commit all nodes to the associated database. Actually most
@@ -71,7 +69,7 @@ public:
     //
     // The associated database is expected, otherwise the whole commit
     // functionality should be disabled.
-    xhash256_t Commit(std::error_code & ec);
+    xh256_t Commit(std::error_code & ec);
 
 public:
     xstack_trie_node_type_t type() {
