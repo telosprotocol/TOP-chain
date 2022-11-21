@@ -30,7 +30,7 @@ public:
         return new xtop_sharding_fork_info_contract(this->m_network_id);
     }
 
-    void on_timer(common::xlogic_time_t const current_time);
+    void on_timer(common::xlogic_time_t const trigger_time);
 
     BEGIN_CONTRACT_WITH_PARAM(xtop_sharding_fork_info_contract)
     CONTRACT_FUNCTION_PARAM(xtop_sharding_fork_info_contract, on_timer);

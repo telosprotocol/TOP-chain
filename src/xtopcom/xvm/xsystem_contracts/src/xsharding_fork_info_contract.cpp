@@ -21,8 +21,9 @@ void xtop_sharding_fork_info_contract::setup() {
     STRING_SET(data::XPROPERTY_CONTRACT_TABLE_FORK_INDEX_KEY, fork_index);
 }
 
-void xtop_sharding_fork_info_contract::on_timer(common::xlogic_time_t const current_time) {
-    xinfo("xtop_sharding_fork_info_contract::on_timer % " PRIu64 "", current_time);
+void xtop_sharding_fork_info_contract::on_timer(common::xlogic_time_t const trigger_time) {
+    auto current_time = TIME();
+    xinfo("xtop_sharding_fork_info_contract::on_timer % " PRIu64 " triggered at %" PRIu64 "", current_time, trigger_time);
 
     /// @brief Sample fork code, one and for all.
     /// if (chain_fork::xutility_t::is_forked(fork_points::TEST_FORK, current_time) && STRING_GET(data::XPROPERTY_CONTRACT_TABLE_FORK_INFO_KEY) == "") {
