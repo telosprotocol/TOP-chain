@@ -79,7 +79,7 @@ void xtop_trie_simple_iterator::get_value_node_leaf(std::shared_ptr<xtrie_value_
 }
 
 void xtop_trie_simple_iterator::get_full_node_leafs(std::shared_ptr<xtrie_full_node_t> const & full_node, observer_ptr<xtrie_db_t> const & trie_db, std::vector<xbytes_t> & leafs) {
-    for (auto const & child : full_node->Children) {
+    for (auto const & child : full_node->children) {
         if (child != nullptr) {
             get_trie_leafs(child, trie_db, leafs);
         }
