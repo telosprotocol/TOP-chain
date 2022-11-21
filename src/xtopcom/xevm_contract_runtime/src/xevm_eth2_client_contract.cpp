@@ -62,6 +62,7 @@ xtop_evm_eth2_client_contract::xtop_evm_eth2_client_contract() : m_network(xeth2
     if (m_whitelist.empty()) {
         xwarn("[xtop_evm_eth2_client_contract] whitelist empty!");
     }
+    xinfo("xtop_evm_eth2_client_contract network: %u", m_network);
 }
 
 xtop_evm_eth2_client_contract::xtop_evm_eth2_client_contract(xeth2_client_net_t version) : m_network(version) {
@@ -69,6 +70,7 @@ xtop_evm_eth2_client_contract::xtop_evm_eth2_client_contract(xeth2_client_net_t 
     if (m_whitelist.empty()) {
         xwarn("[xtop_evm_eth2_client_contract] whitelist empty!");
     }
+    xinfo("xtop_evm_eth2_client_contract network: %u", m_network);
 }
 
 std::set<std::string> xtop_evm_eth2_client_contract::load_whitelist() {

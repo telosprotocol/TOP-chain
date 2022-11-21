@@ -290,6 +290,10 @@ if (ETH_BRIDGE_TEST)
     add_definitions(-DETH_BRIDGE_TEST)
 endif()
 
+if (ETH2_SEPOLIA)
+    add_definitions(-DETH2_SEPOLIA)
+endif()
+
 if (PERIOD_MOCK)
     add_definitions(-DPERIOD_MOCK)
 endif()
