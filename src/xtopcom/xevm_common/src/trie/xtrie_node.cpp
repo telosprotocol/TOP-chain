@@ -60,11 +60,10 @@ xtop_trie_node_face::~xtop_trie_node_face() noexcept {
 
 #endif
 
-xtop_trie_hash_node::xtop_trie_hash_node(xbytes_t const & data)
-    : hash_{data} {
+xtop_trie_hash_node::xtop_trie_hash_node(xbytes_t const & hash_data) : hash_{hash_data} {
 }
 
-xtop_trie_hash_node::xtop_trie_hash_node(xhash256_t const & hash) : hash_{hash} {
+xtop_trie_hash_node::xtop_trie_hash_node(gsl::span<xbyte_t const> const hash_data) : hash_{hash_data} {
 }
 
 xhash256_t const & xtop_trie_hash_node::data() const noexcept {
@@ -168,6 +167,13 @@ void xtop_trie_short_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
     append(buf, RLP::encodeList(encoded));
 }
 
+xtop_trie_full_node::xtop_trie_full_node(xnode_flag_t f) : flags{std::move(f)} {
+}
+
+std::shared_ptr<xtop_trie_full_node> xtop_trie_full_node::clone() const {
+    return std::make_shared<xtop_trie_full_node>(*this);
+}
+
 std::string xtop_trie_full_node::fstring(std::string const & ind) const {
     /*
      * resp := fmt.Sprintf("[\n%s  ", ind)
@@ -182,8 +188,8 @@ std::string xtop_trie_full_node::fstring(std::string const & ind) const {
      */
     std::ostringstream resp;
     resp << "[\n  " << ind;
-    for (auto i = 0u; i < Children.size(); ++i) {
-        auto const & child = Children[i];
+    for (auto i = 0u; i < children.size(); ++i) {
+        auto const & child = children[i];
         if (child == nullptr) {
             resp << indices[i] << ": <nil> ";
         } else {
@@ -204,7 +210,7 @@ xtrie_node_type_t xtop_trie_full_node::type() const noexcept {
 
 void xtop_trie_full_node::EncodeRLP(xbytes_t & buf, std::error_code & ec) {
     xbytes_t encoded;
-    for (auto const & child : Children) {
+    for (auto const & child : children) {
         if (child == nullptr) {
             append(encoded, RLP::encode(nilValueNode.data()));  // 0x80 for empty bytes.
             continue;

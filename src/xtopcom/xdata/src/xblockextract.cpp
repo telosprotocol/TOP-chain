@@ -171,7 +171,7 @@ xhash256_t xblockextract_t::get_state_root_from_block(base::xvblock_t * block) {
         xerror("xblockextract_t::get_state_root_from_block get state root fail. block:%s", block->dump().c_str());
         return xhash256_t{};
     }
-    xhash256_t root_hash = xhash256_t(state_root.to_bytes());
+    xhash256_t root_hash = xhash256_t{state_root};
     return root_hash;
 }
 

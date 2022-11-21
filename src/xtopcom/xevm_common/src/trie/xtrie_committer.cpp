@@ -85,7 +85,7 @@ std::pair<xtrie_node_face_ptr_t, int32_t> xtop_trie_committer::commit(xtrie_node
         }
 
         auto collapsed = cn->clone();
-        collapsed->Children = hashedKids;
+        collapsed->children = hashedKids;
 
         auto const hashed_node = store(collapsed, db);
         assert(hashed_node != nullptr);
@@ -117,7 +117,7 @@ std::pair<std::array<xtrie_node_face_ptr_t, 17>, int32_t> xtop_trie_committer::c
     int32_t committed{0};
 
     for (std::size_t index = 0; index < 16; ++index) {
-        auto child = n->Children[index];
+        auto child = n->children[index];
         if (child == nullptr)
             continue;
 
@@ -146,8 +146,8 @@ std::pair<std::array<xtrie_node_face_ptr_t, 17>, int32_t> xtop_trie_committer::c
     }
 
     // For the 17th child, it's possible the type is valuenode.
-    if (n->Children[16] != nullptr) {
-        children[16] = n->Children[16];
+    if (n->children[16] != nullptr) {
+        children[16] = n->children[16];
     }
 
     return std::make_pair(children, committed);
@@ -195,7 +195,7 @@ int32_t xtop_trie_committer::estimateSize(xtrie_node_face_ptr_t n) {
 
         int32_t s = 3;
         for (std::size_t index = 0; index < 16; ++index) {
-            auto child = fullnode->Children[index];
+            auto child = fullnode->children[index];
             if (child != nullptr) {
                 s += estimateSize(child);
             } else {

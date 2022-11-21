@@ -76,7 +76,7 @@ std::shared_ptr<xtrie_short_node_t> xtop_trie_pruner::load_short_node(std::share
         assert(new_short_node != nullptr);
     }
 
-    auto const hash = xhash256_t{new_short_node->cache().hash_node()->data()};
+    auto const & hash = new_short_node->cache().hash_node()->data();
     assert(!hash.empty());
 
     trie_node_hashes_.insert(hash);
@@ -98,7 +98,7 @@ std::shared_ptr<xtrie_full_node_t> xtop_trie_pruner::load_full_node(std::shared_
         new_full_node = std::dynamic_pointer_cast<xtrie_full_node_t>(hash_result.second);
         assert(new_full_node != nullptr);
     }
-    auto const hash = xhash256_t{new_full_node->cache().hash_node()->data()};
+    auto const & hash = new_full_node->cache().hash_node()->data();
     assert(!hash.empty());
 
     trie_node_hashes_.insert(hash);
@@ -112,7 +112,7 @@ std::shared_ptr<xtrie_node_face_t> xtop_trie_pruner::load_hash_node(std::shared_
                                                                     std::error_code & ec) {
     assert(!ec);
 
-    auto const hash = xhash256_t{hash_node->data()};
+    auto const & hash = hash_node->data();
     assert(!hash.empty());
     assert(hash_node->data().size() == 32);
     trie_node_hashes_.insert(hash);
@@ -130,7 +130,7 @@ std::shared_ptr<xtrie_node_face_t> xtop_trie_pruner::load_hash_node(std::shared_
 void xtop_trie_pruner::load_full_node_children(std::shared_ptr<xtrie_full_node_t> const & full_node, std::shared_ptr<xtrie_db_t> const & trie_db, std::error_code & ec) {
     assert(!ec);
 
-    for (auto & child : full_node->Children) {
+    for (auto & child : full_node->children) {
         if (child != nullptr) {
             child = load_trie_node(child, trie_db, ec);
         }
@@ -197,7 +197,7 @@ void xtop_trie_pruner::try_prune_trie_node(std::shared_ptr<xtrie_node_face_t> co
 void xtop_trie_pruner::try_prune_hash_node(std::shared_ptr<xtrie_hash_node_t> const & hash_node, std::shared_ptr<xtrie_db_t> const & trie_db, std::error_code & ec) {
     assert(!ec);
 
-    auto const hash = xhash256_t{hash_node->data()};
+    auto const & hash = hash_node->data();
     assert(hash_node->data().size() == 32);
 
     if (trie_node_hashes_.find(hash) == std::end(trie_node_hashes_)) {
@@ -223,7 +223,7 @@ void xtop_trie_pruner::try_prune_short_node(std::shared_ptr<xtrie_short_node_t> 
         assert(new_short_node != nullptr);
     }
 
-    auto const hash = xhash256_t{new_short_node->cache().hash_node()->data()};
+    auto const & hash = new_short_node->cache().hash_node()->data();
     assert(!hash.empty());
 
     if (trie_node_hashes_.find(hash) == std::end(trie_node_hashes_)) {
@@ -245,11 +245,11 @@ void xtop_trie_pruner::try_prune_full_node(std::shared_ptr<xtrie_full_node_t> co
         assert(new_full_node != nullptr);
     }
 
-    auto const hash = xhash256_t{full_node->cache().hash_node()->data()};
+    auto const & hash = full_node->cache().hash_node()->data();
     assert(!hash.empty());
 
     if (trie_node_hashes_.find(hash) == std::end(trie_node_hashes_)) {
-        for (auto const & child : new_full_node->Children) {
+        for (auto const & child : new_full_node->children) {
             if (child != nullptr) {
                 try_prune_trie_node(child, trie_db, ec);
             }
