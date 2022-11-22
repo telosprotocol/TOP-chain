@@ -2422,8 +2422,8 @@ std::vector<xdb_export_tools_t::exported_account_bstate_data> xdb_export_tools_t
         }
 
         std::string bytes_data;
-        auto const successful = unit_vbstate->take_snapshot(bytes_data);
-        if (!successful) {
+        unit_vbstate->take_snapshot(bytes_data);
+        if (bytes_data.empty()) {
             ec = xerrc_t::unit_state_not_found;
             xwarn("account %s a height %" PRIu64 " state not found. xdb_export_tools_t::get_account_bstate_data returns {}", account_address.to_string().c_str(), account_height);
             assert(false);
