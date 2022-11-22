@@ -27,10 +27,16 @@ bool xstate_tablestate_reseter_continuous_sample::exec_reset_tablestate(std::siz
           cnt);
     std::size_t reset_account_cnt = 0;
     std::size_t skip_account_cnt = 0;
-    for (auto iter = m_json_parser.begin(); iter != m_json_parser.end(); ++iter) {
-        if (++skip_account_cnt < cnt * each_reset_maximum_reset_account_num) {
+
+    auto iter = m_json_parser.begin();
+    for (; iter != m_json_parser.end(); ++iter) {
+        if (skip_account_cnt < cnt * each_reset_maximum_reset_account_num) {
+            skip_account_cnt++;
             continue;
         }
+        break;
+    }
+    for (; iter != m_json_parser.end(); ++iter) {
         if (++reset_account_cnt > each_reset_maximum_reset_account_num) {
             break;
         }
