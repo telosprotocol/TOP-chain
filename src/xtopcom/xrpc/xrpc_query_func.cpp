@@ -93,6 +93,12 @@ bool xrpc_query_func::is_prop_name_not_set_property(const std::string & prop_nam
                                                    data::system_contract::XPROPERTY_ALL_HASHES,
                                                    data::system_contract::XPROPERTY_HEADERS,
                                                    data::system_contract::XPROPERTY_HEADERS_SUMMARY,
+                                                   data::system_contract::XPROPERTY_FINALIZED_EXECUTION_BLOCKS,
+                                                   data::system_contract::XPROPERTY_UNFINALIZED_HEADERS,
+                                                   data::system_contract::XPROPERTY_FINALIZED_BEACON_HEADER,
+                                                   data::system_contract::XPROPERTY_FINALIZED_EXECUTION_HEADER,
+                                                   data::system_contract::XPROPERTY_CURRENT_SYNC_COMMITTEE,
+                                                   data::system_contract::XPROPERTY_NEXT_SYNC_COMMITTEE,
                                                    PROPOSAL_MAP_ID,
                                                    VOTE_MAP_ID};
 
