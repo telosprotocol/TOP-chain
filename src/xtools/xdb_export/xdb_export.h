@@ -119,6 +119,20 @@ public:
                         std::ios_base::openmode open_mode,
                         std::error_code & ec) const;
 
+    struct exported_account_bstate_data {
+        common::xaccount_address_t account_address;
+        xbytes_t serialized_bstate;
+        uint64_t unit_height{0};
+    };
+
+    std::vector<exported_account_bstate_data> get_account_bstate_data(std::unordered_map<common::xaccount_address_t, uint64_t> const & accounts, std::error_code & ec) const;
+
+    void append_to_json(common::xtable_address_t const & table_address,
+                        uint64_t table_height,
+                        std::vector<exported_account_bstate_data> const & data,
+                        std::string const & file_path,
+                        std::error_code & ec) const;
+
 private:
     struct tx_ext_t {
         base::xtable_shortid_t  sendtableid;
