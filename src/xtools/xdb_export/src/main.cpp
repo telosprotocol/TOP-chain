@@ -429,6 +429,55 @@ int main(int argc, char ** argv) {
                 units, {common::xtoken_id_t::top, common::xtoken_id_t::eth, common::xtoken_id_t::usdt, common::xtoken_id_t::usdc}, {"$06"}, ec);
             tools.append_to_json(table_address, table_height, result, exported_file_path, ec);
         }
+    } else if (function_name == "export_bstate") {
+        if (argc < 5) {
+            usage();
+            return -1;
+        }
+
+        auto const & exported_file_path = argv[3];
+        auto const & table_query = argv[4];
+        std::string account_string;
+        if (argc == 6) {
+            account_string = argv[5];
+        }
+
+        std::vector<std::string> table_info;
+        top::base::xstring_utl::split_string(table_query, ',', table_info);
+        std::map<common::xtable_address_t, uint64_t> table_query_criteria;
+        for (auto const & t : table_info) {
+            std::vector<std::string> pair;
+            top::base::xstring_utl::split_string(t, ':', pair);
+
+            table_query_criteria.emplace(common::xtable_address_t::build_from(pair[0]), std::stoull(pair[1]));
+        }
+
+        std::vector<common::xaccount_address_t> queried_accounts;
+        if (!account_string.empty()) {
+            std::vector<std::string> accounts;
+            base::xstring_utl::split_string(account_string, ',', accounts);
+            std::transform(std::begin(accounts), std::end(accounts), std::back_inserter(queried_accounts), [](std::string const & acc) {
+                return common::xaccount_address_t::build_from(acc);
+            });
+        }
+
+        std::unordered_map<common::xaccount_address_t, uint64_t> accounts_info;
+        std::error_code ec;
+        for (auto const & tbl : table_query_criteria) {
+            ec.clear();
+
+            auto const & table_address = top::get<common::xtable_address_t const>(tbl);
+            auto const table_height = top::get<uint64_t>(tbl);
+            auto units = tools.get_unit_accounts(table_address, table_height, queried_accounts, ec);
+            if (ec) {
+                std::cerr << "get_unit_accounts on table " << table_address.to_string() << " at height " << table_height << " failed with error code " << ec.value() << " msg "
+                          << ec.message() << std::endl;
+                continue;
+            }
+
+            auto const result = tools.get_account_bstate_data(units, ec);
+            tools.append_to_json(table_address, table_height, result, exported_file_path, ec);
+        }
     } else {
         usage();
     }
