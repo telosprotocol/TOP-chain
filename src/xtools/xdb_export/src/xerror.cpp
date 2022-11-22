@@ -26,6 +26,9 @@ static char const * err_msg(int const ec) {
     case xerrc_t::unknown_token:
         return "unknown token";
 
+    case xerrc_t::unit_state_not_found:
+        return "unit state not found";
+
     default:
         return "unknown error";
     }
