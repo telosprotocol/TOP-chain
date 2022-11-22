@@ -1,6 +1,7 @@
 
 #include "gtest/gtest.h"
 #include "xstate_reset/xstate_tablestate_reseter_sample.h"
+#include "xstate_reset/xstate_tablestate_reseter_continuous_sample.h"
 #include "xstatectx/xstatectx_face.h"
 #include "xstatectx/xunitstate_ctx.h"
 
@@ -34,7 +35,7 @@ class xmock_statectx_t : public statectx::xstatectx_face_t {
         return;
     }
     std::string get_table_address() const override {
-        return "Ta0000@49";
+        return "Ta0000@0";
     }
     bool is_state_dirty() const override {
         // return true;
@@ -59,6 +60,15 @@ TEST(test_state_reset, json_parser) {
     // statectx::xstatectx_face_ptr_t mock_state = std::make_shared<xmock_statectx_t>();
     // xstate_tablestate_reseter_sample reseter{mock_state, "TEST_FORK"};
     // reseter.exec_reset_tablestate();
+    // EXPECT_FALSE(mock_state->is_state_dirty());
+}
+
+TEST(test_state_reset_continuous, json_parser) {
+    // statectx::xstatectx_face_ptr_t mock_state = std::make_shared<xmock_statectx_t>();
+    // xstate_tablestate_reseter_continuous_sample reseter{mock_state, "TEST_FORK"};
+    // reseter.exec_reset_tablestate(0);
+    // reseter.exec_reset_tablestate(1);
+    // reseter.exec_reset_tablestate(9);
     // EXPECT_FALSE(mock_state->is_state_dirty());
 }
 
