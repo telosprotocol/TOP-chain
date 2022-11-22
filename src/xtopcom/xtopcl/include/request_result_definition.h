@@ -68,6 +68,7 @@ const char CMD_VOTE_DIST[]{"listVoteUsed"};
 const char CMD_VOTER_REWARD[]{"queryVoterDividend"};
 const char CMD_GET_PROPOSAL[]{"queryProposal"};
 const char CMD_GET_ONCHAINPARAMS[]{"getCGP"};
+const char CMD_SET_INFO_REG[]{"node_info_reg"};
 
 using VoteDetailsResultPtr = std::shared_ptr<VoteDetailsResult>;
 using CandidateDetailsResultPtr = std::shared_ptr<CandidateDetailsResult>;

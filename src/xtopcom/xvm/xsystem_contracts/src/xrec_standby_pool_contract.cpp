@@ -23,6 +23,7 @@
 #include "xdata/xrootblock.h"
 #include "xdata/xsystem_contract/xdata_structures.h"
 #include "xvm/xserialization/xserialization.h"
+#include "xverifier/xtx_verifier.h"
 
 #ifdef STATIC_CONSENSUS
 #    include "xvm/xsystem_contracts/xelection/xstatic_election_center.h"
@@ -124,6 +125,27 @@ void xtop_rec_standby_pool_contract::nodeJoinNetwork2(common::xaccount_address_t
 
     XCONTRACT_ENSURE(node.m_account == node_id, "[xrec_standby_pool_contract_t][nodeJoinNetwork] storage data messed up?");
     XCONTRACT_ENSURE(node.m_network_ids.find(joined_network_id) != std::end(node.m_network_ids), "[xrec_standby_pool_contract_t][nodeJoinNetwork] network id is not matched. Joined network id: " + joined_network_id.to_string());
+
+
+//check account reg info from node manage contract
+#if defined(XBUILD_CONSORTIUM)
+
+    if (xverifier::xtx_verifier::verify_check_genesis_account(node_id.to_string())) {
+        std::string reg_node_info_str;
+        ret = MAP_GET2(data::system_contract::XPROPERTY_NODE_INFO_MAP_KEY, node_id.to_string(), reg_node_info_str, sys_contract_rec_node_manage_addr);
+
+        XCONTRACT_ENSURE((ret == 0 && !reg_node_info_str.empty()), "nodeJoinNetwork2 can't find account from node manage contract");
+
+        data::system_contract::xnode_manage_account_info_t reg_account_info;
+        base::xstream_t _stream(base::xcontext_t::instance(), (uint8_t*)reg_node_info_str.data(), reg_node_info_str.size());
+        if (_stream.size() > 0) {
+            reg_account_info.serialize_from(_stream);
+        }
+
+        XCONTRACT_ENSURE((reg_account_info.validity == true), "nodeJoinNetwork2 account from node manage contract is invalid");
+    }
+
+#endif
 
     auto standby_result_store = serialization::xmsgpack_t<xstandby_result_store_t>::deserialize_from_string_prop(*this, XPROPERTY_CONTRACT_STANDBYS_KEY);
     if (nodeJoinNetworkImpl(program_version, node, standby_result_store)) {

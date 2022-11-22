@@ -74,6 +74,11 @@ void xtop_contract_deploy::deploy_sys_contracts() {
 
     deploy(common::xaccount_address_t{sys_contract_rec_registration_addr}, xnode_type_t::committee, "all", enum_broadcast_policy_t::normal);
 
+#if defined(XBUILD_CONSORTIUM)
+    deploy(common::xaccount_address_t{sys_contract_rec_node_manage_addr}, xnode_type_t::committee, "all", enum_broadcast_policy_t::normal);
+#endif 
+
+
     deploy(common::xaccount_address_t{sys_contract_rec_standby_pool_addr},
            xnode_type_t::committee,
            "all",

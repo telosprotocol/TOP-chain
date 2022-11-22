@@ -239,7 +239,8 @@ int32_t xtx_verifier::sys_contract_tx_check(data::xtransaction_t const * trx_ptr
         sys_contract_rec_standby_pool_addr,
         sys_contract_sharding_vote_addr,
         sys_contract_rec_tcc_addr,
-        sys_contract_sharding_reward_claiming_addr
+        sys_contract_sharding_reward_claiming_addr,
+        sys_contract_rec_node_manage_addr
     };
 
     if (trx_ptr->get_target_action_name() == "nodeJoinNetwork") {

@@ -24,6 +24,7 @@ XINLINE_CONSTEXPR char const * sys_contract_rec_elect_rec_addr{ "T2000138JQPo5Tc
 XINLINE_CONSTEXPR char const * sys_contract_rec_elect_zec_addr{ "T2000138Kc9WynduqxJvX3VCU7XjHCR9YyKuBL1fx@0" };
 XINLINE_CONSTEXPR char const * sys_contract_rec_tcc_addr{ "T2000138Ao4jjYtrXoNwfzb6gdpD2XNBpqUv46p8B@0" };
 XINLINE_CONSTEXPR char const * sys_contract_rec_standby_pool_addr{ "T2000138CQwyzFxbWZ59mNjkq3eZ3eH41t7b5midm@0" };
+XINLINE_CONSTEXPR char const * sys_contract_rec_node_manage_addr{"T2000200000000000000000000000000000000010@0"};
 
 XINLINE_CONSTEXPR char const * sys_contract_zec_workload_addr{ "T200024uMvLFmyttx6Nccv4jKP3VfRq9NJ2mxcNxh@0" };
 XINLINE_CONSTEXPR char const * sys_contract_zec_vote_addr{ "T200024uPV1k6XjTm9No5yB2mxBPK9o2XqJKyhDUn@0" };
@@ -36,6 +37,7 @@ XINLINE_CONSTEXPR char const * sys_contract_zec_elect_eth_addr{"T200020000000000
 XINLINE_CONSTEXPR char const * sys_contract_zec_elect_relay_addr{"T2000200000000000000000000000000000000005@2"};
 //consortium contract
 XINLINE_CONSTEXPR char const * sys_contract_zec_consortium_reward_addr{"T2000200000000000000000000000000000000006@0"};
+
 
 XINLINE_CONSTEXPR char const * sys_contract_sharding_vote_addr{ "T20000MVfDLsBKVcy1wMp4CoEHWxUeBEAVBL9ZEa" };
 XINLINE_CONSTEXPR char const * sys_contract_sharding_reward_claiming_addr{ "T20000MTotTKfAJRxrfvEwEJvtgCqzH9GkpMmAUg" };

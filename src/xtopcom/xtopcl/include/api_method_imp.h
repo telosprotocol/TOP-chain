@@ -209,6 +209,7 @@ public:
     bool queryProposal(const user_info & uinfo, const std::string & target, std::ostringstream & out_str, std::function<void(GetProposalResult *)> func = nullptr);
     bool getCGP(const user_info & uinfo, const std::string & target, std::ostringstream & out_str, std::function<void(GetProposalResult *)> func = nullptr);
 
+    bool nodeInfoReg(const user_info & uinfo, const std::string & account_name, const std::string & account_cert, std::ostringstream & out_str, std::function<void(NodeRegResult *)> func = nullptr);
 private:
     bool hash_signature(top::data::xtransaction_t * trans_action, const std::array<uint8_t, PRI_KEY_LEN> & private_key);
 

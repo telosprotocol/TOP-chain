@@ -18,6 +18,7 @@
 #include "xdata/xrootblock.h"
 #include "xmetrics/xmetrics.h"
 #include "xstore/xstore_error.h"
+#include "xverifier/xtx_verifier.h"
 
 using top::base::xcontext_t;
 using top::base::xstream_t;
@@ -259,6 +260,27 @@ void xrec_registration_contract::registerNode2(const std::string & miner_type_na
                      "xrec_registration_contract::registerNode: account must be not empty");
 
     xstream_t stream(xcontext_t::instance(), reinterpret_cast<uint8_t *>(const_cast<char *>(trans_ptr->get_source_action_para().data())), static_cast<uint32_t>(trans_ptr->get_source_action_para().size()));
+
+//check account reg info from node manage contract
+#if defined(XBUILD_CONSORTIUM)
+
+    if (xverifier::xtx_verifier::verify_check_genesis_account(account.to_string())) {
+
+        std::string reg_node_info_str;
+        ret = MAP_GET2(data::system_contract::XPROPERTY_NODE_INFO_MAP_KEY, account.to_string(), reg_node_info_str, sys_contract_rec_node_manage_addr);
+
+        XCONTRACT_ENSURE((ret == 0 && !reg_node_info_str.empty()), "registerNode2 can't find account from node manage contract");
+
+        data::system_contract::xnode_manage_account_info_t reg_account_info;
+        base::xstream_t _stream(base::xcontext_t::instance(), (uint8_t*)reg_node_info_str.data(), reg_node_info_str.size());
+        if (_stream.size() > 0) {
+            reg_account_info.serialize_from(_stream);
+        }
+
+        XCONTRACT_ENSURE((reg_account_info.validity == true), "registerNode2 account from node manage contract is invalid");
+    }
+
+#endif
 
     data::xproperty_asset asset_out{0};
     stream >> asset_out.m_token_name;
