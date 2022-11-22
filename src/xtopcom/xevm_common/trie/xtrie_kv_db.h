@@ -23,7 +23,7 @@ public:
     bool Has(xbytes_t const & key, std::error_code & ec) override;
     bool HasDirect(xbytes_t const & key, std::error_code & ec) override;
 
-    void Put(xbytes_t const & key, xbytes_t const & value, std::error_code & ec) override;
+    void Put(gsl::span<xbyte_t const> key, xbytes_t const & value, std::error_code & ec) override;
     void PutBatch(std::map<xbytes_t, xbytes_t> const & batch, std::error_code & ec) override;
     void PutDirect(xbytes_t const & key, xbytes_t const & value, std::error_code & ec) override;
     void PutDirectBatch(std::map<xbytes_t, xbytes_t> const & batch, std::error_code & ec) override;
@@ -34,7 +34,7 @@ public:
     void DeleteDirectBatch(std::vector<xbytes_t> const & batch, std::error_code & ec) override;
 
 private:
-    std::string convert_key(xbytes_t const & key) const;
+    std::string convert_key(gsl::span<xbyte_t const> key) const;
 
     base::xvdbstore_t * m_db{nullptr};
     std::mutex m_mutex;

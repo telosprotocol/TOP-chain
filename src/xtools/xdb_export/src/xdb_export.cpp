@@ -131,8 +131,8 @@ std::vector<std::string> xdb_export_tools_t::get_db_unit_accounts() {
 
         evm_common::xh256_t state_root;
         data::xblockextract_t::get_state_root(latest_block.get(), state_root);
-        xhash256_t root_hash = xhash256_t(state_root.to_bytes());
-        if (root_hash == xhash256_t{}) {
+        xhash256_t root_hash = xhash256_t{state_root};
+        if (root_hash.empty()) {
             base::xauto_ptr<base::xvbstate_t> bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(latest_block.get());
             if (bstate == nullptr) {
                 std::cerr << table << " get_block_state null!" << std::endl;
@@ -2157,7 +2157,7 @@ std::unordered_map<common::xaccount_address_t, uint64_t> xdb_export_tools_t::get
 
     evm_common::xh256_t state_root;
     data::xblockextract_t::get_state_root(table_block.get(), state_root);
-    xhash256_t const root_hash{state_root.to_bytes()};
+    xhash256_t const root_hash{state_root};
 
     if (root_hash.empty()) {
         base::xauto_ptr<base::xvbstate_t> const bstate = base::xvchain_t::instance().get_xstatestore()->get_blkstate_store()->get_block_state(table_block.get());

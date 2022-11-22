@@ -232,7 +232,7 @@ xbytes_t RLP::encodeList(const xbytes_t & encoded) noexcept {
     return result;
 }
 
-xbytes_t RLP::encode(const xbytes_t & data) noexcept {
+xbytes_t RLP::encode(const xbytes_t & data) {
     if (data.size() == 1 && data[0] <= 0x7f) {
         // Fits in single byte, no header
         return data;
@@ -240,6 +240,17 @@ xbytes_t RLP::encode(const xbytes_t & data) noexcept {
 
     auto encoded = encodeHeader(data.size(), 0x80, 0xb7);
     encoded.insert(encoded.end(), data.begin(), data.end());
+    return encoded;
+}
+
+xbytes_t RLP::encode(gsl::span<xbyte_t const> const bytes) {
+    if (bytes.size() == 1 && bytes[0] <= 0x7f) {
+        // Fits in single byte, no header
+        return xbytes_t{bytes[0]};
+    }
+
+    auto encoded = encodeHeader(bytes.size(), 0x80, 0xb7);
+    encoded.insert(encoded.end(), std::begin(bytes), std::end(bytes));
     return encoded;
 }
 

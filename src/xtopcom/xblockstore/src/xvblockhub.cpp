@@ -2678,7 +2678,7 @@ namespace top
             }
             //extra_relay_block.build_finish();
             evm_common::h256 hash = extra_relay_block.get_block_hash();
-            std::string block_hash_str((char*)hash.data(), hash.size);
+            std::string block_hash_str((char*)hash.data(), hash.size());
             xdbg("xrelay_plugin::create_index,block=%s,relay=%s", new_raw_block.dump().c_str(), extra_relay_block.dump().c_str());
             new_index->set_extend_data(block_hash_str);
             return new_index;

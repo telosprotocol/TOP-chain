@@ -39,7 +39,7 @@ public:
         boost::multiprecision::number<boost::multiprecision::cpp_int_backend<N * 8, N * 8, boost::multiprecision::unsigned_magnitude, boost::multiprecision::unchecked, void>>;
 
     /// The size of the container.
-    enum { size = N };
+    // enum { size = N };
 
     /// A dummy flag to avoid accidental construction from pointer.
     enum ConstructFromPointerType { ConstructFromPointer };
@@ -233,6 +233,10 @@ public:
     /// @returns a constant byte pointer to the object's data.
     xbyte_t const * data() const {
         return m_data.data();
+    }
+
+    constexpr static size_t size() noexcept {
+        return N;
     }
 
     /// @returns begin iterator.

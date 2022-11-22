@@ -155,7 +155,7 @@ void Sync::Process(SyncResult const & result, std::error_code & ec) {
     auto req = nodeReqs.at(result.Hash);
     filled = true;
     // Decode the node data content and update the request
-    auto node = xtrie_node_rlp::decodeNode(result.Hash, result.Data, ec);
+    auto node = xtrie_node_rlp::decode_node(result.Hash, result.Data, ec);
     if (ec) {
         return;
     }
@@ -163,16 +163,16 @@ void Sync::Process(SyncResult const & result, std::error_code & ec) {
 
     // Create and schedule a request for all the children nodes
 
-    auto requests = children(req, node, ec);
+    auto const requests = children(req, node, ec);
     if (ec) {
         return;
     }
 
-    if (requests.size() == 0 && req->deps == 0) {
+    if (requests.empty() && req->deps == 0) {
         commit(req, ec);  // todo commit parameter ec has no error occasion.
     } else {
         req->deps += requests.size();
-        for (auto child : requests) {
+        for (auto const & child : requests) {
             schedule(child);
         }
     }
@@ -284,8 +284,8 @@ std::vector<std::shared_ptr<Sync::request>> Sync::children(std::shared_ptr<reque
         assert(node != nullptr);
 
         for (std::size_t i = 0; i < 17; ++i) {
-            if (node->Children[i] != nullptr) {
-                auto child = node->Children[i];
+            if (node->children[i] != nullptr) {
+                auto child = node->children[i];
                 xbytes_t combined_path;
                 combined_path.insert(combined_path.end(), req->path.begin(), req->path.end());
                 combined_path.insert(combined_path.end(), xbyte_t(i));
@@ -330,7 +330,7 @@ std::vector<std::shared_ptr<Sync::request>> Sync::children(std::shared_ptr<reque
             auto node = std::dynamic_pointer_cast<xtrie_hash_node_t>(child_p.second);
             assert(node != nullptr);
 
-            auto hash = xhash256_t{node->data()};
+            auto const & hash = node->data();
             if (membatch.hasNode(hash.to_bytes())) {
                 continue;
             }
