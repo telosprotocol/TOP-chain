@@ -118,7 +118,7 @@ data::xunitstate_ptr_t xstatestore_dbaccess_t::read_unit_bstate(common::xaccount
     const std::string state_db_bin = m_statestore_base.get_dbstore()->get_value(state_db_key);
     if(state_db_bin.empty()) {
         XMETRICS_GAUGE(metrics::statestore_get_unit_state_from_db, 0);
-        xwarn("xstatestore_dbaccess_t::read_unit_bstate,fail to read from db for account=%s,hash=%s", address.to_string().c_str(), base::xstring_utl::to_hex(block_hash).c_str());
+        xwarn("xstatestore_dbaccess_t::read_unit_bstate,fail to read from db for account=%s,height=%ld,hash=%s", address.to_string().c_str(), height, base::xstring_utl::to_hex(block_hash).c_str());
         return nullptr;
     }
 
@@ -126,7 +126,7 @@ data::xunitstate_ptr_t xstatestore_dbaccess_t::read_unit_bstate(common::xaccount
     if(nullptr == state_ptr) {//remove the error data for invalid data
         m_statestore_base.get_dbstore()->delete_value(state_db_key);
         xerror(
-            "xstatestore_dbaccess_t::read_unit_bstate,fail invalid data at db for account=%s,hash=%s", address.to_string().c_str(), base::xstring_utl::to_hex(block_hash).c_str());
+            "xstatestore_dbaccess_t::read_unit_bstate,fail invalid data at db for account=%s,height=%ld,hash=%s", address.to_string().c_str(), height, base::xstring_utl::to_hex(block_hash).c_str());
         return nullptr;
     }
     if (state_ptr->get_address() != address.to_string()) {
@@ -134,7 +134,7 @@ data::xunitstate_ptr_t xstatestore_dbaccess_t::read_unit_bstate(common::xaccount
         return nullptr;
     }
     XMETRICS_GAUGE(metrics::statestore_get_unit_state_from_db, 1);
-    xdbg("xstatestore_dbaccess_t::read_unit_bstate succ.account=%s,hash=%s", address.to_string().c_str(), base::xstring_utl::to_hex(block_hash).c_str());
+    xdbg("xstatestore_dbaccess_t::read_unit_bstate succ.account=%s,height=%ld,hash=%s", address.to_string().c_str(), height, base::xstring_utl::to_hex(block_hash).c_str());
     data::xunitstate_ptr_t unitstate = std::make_shared<data::xunit_bstate_t>(state_ptr.get());
     return unitstate;
 }
@@ -171,6 +171,7 @@ xtablestate_ext_ptr_t xstatestore_accessor_t::read_table_bstate_from_db(common::
     }
 
     xtablestate_ext_ptr_t tablestate = std::make_shared<xtablestate_ext_t>(table_bstate, mpt);
+    xdbg("xstatestore_accessor_t::read_table_bstate_from_db succ-read table bstate.block=%s", block->dump().c_str());
     return tablestate;
 }
 
