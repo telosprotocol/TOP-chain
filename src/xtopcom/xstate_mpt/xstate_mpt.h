@@ -145,8 +145,8 @@ private:
 
     common::xaccount_address_t m_table_address;
 
-    std::shared_ptr<evm_common::trie::xsecure_trie_t> m_trie{nullptr};
-    std::shared_ptr<evm_common::trie::xtrie_db_t> m_db{nullptr};
+    std::shared_ptr<evm_common::trie::xtrie_face_t> m_trie{nullptr};
+    std::shared_ptr<evm_common::trie::xtrie_db_t> m_trie_db{nullptr};
     evm_common::xh256_t m_original_root;
 
     mutable std::mutex m_state_objects_lock;
