@@ -71,6 +71,7 @@ void xtop_trie_db::insertPreimage(xh256_t hash, xbytes_t const & preimage) {
 
 xtrie_node_face_ptr_t xtop_trie_db::node(xh256_t hash) {
     std::lock_guard<std::mutex> lck(mutex);
+    XMETRICS_COUNTER_INCREMENT("trie_cache_visit", 1);
     // todo:
     xbytes_t value;
     if (cleans_.get(hash, value)) {
@@ -82,7 +83,7 @@ xtrie_node_face_ptr_t xtop_trie_db::node(xh256_t hash) {
         return dirties_.at(hash).obj(hash);
     }
     // todo mark miss hit
-
+    XMETRICS_COUNTER_INCREMENT("trie_cache_miss", 1);
     // retrieve from disk db
     auto enc = ReadTrieNode(diskdb_, hash);
     if (enc.empty()) {
